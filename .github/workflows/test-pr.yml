@@ -84,9 +84,9 @@ jobs:
           os_arch: ${{ matrix.release_suffix }}
           version: ${{ matrix.conjure_version }}
 
-      # we build using the test profile here, but don't run the tests.
-      # this way we build the conjure-oxide executable which is needed by the custom tests.
-      # and end up using the same profile as the "run tests" step to avoid recompilation.
+      - name: Build conjure-oxide (debug)
+        run: cargo build --bin conjure-oxide
+        if: ${{ matrix.compiler_profile == 'debug' }}
       - name: Build tests and examples (debug)
         run: cargo test --workspace --all-targets --no-run
         if: ${{ matrix.compiler_profile == 'debug' }}
@@ -94,8 +94,11 @@ jobs:
         run: cargo test --workspace --all-targets
         if: ${{ matrix.compiler_profile == 'debug' }}
 
+      - name: Build conjure-oxide (release)
+        run: cargo build --bin conjure-oxide --release
+        if: ${{ matrix.compiler_profile == 'release' }}
       - name: Build tests and examples (release)
-        run: cargo test --workspace --all-targets --release --no-run
+        run: cargo test --workspace --all-targets --no-run --release
         if: ${{ matrix.compiler_profile == 'release' }}
       - name: Run tests (release)
         run: cargo test --workspace --all-targets --release
