@@ -261,6 +261,10 @@ impl GroundDomain {
     ) -> Result<GroundDomain, DomainOpError> {
         todo!()
     }
+
+    pub fn is_finite(&self) -> bool {
+        todo!()
+    }
 }
 
 impl Typeable for GroundDomain {
