@@ -90,7 +90,7 @@ module.exports = grammar ({
       ))
     ),
 
-    range_list: $ => prec(2, commaSep1(choice($.int_range, $.integer))),
+    range_list: $ => prec(2, commaSep1(choice($.int_range, $.arithmetic_expr))),
 
     int_range: $ => seq(
       optional(field("lower", $.arithmetic_expr)), 
@@ -164,7 +164,7 @@ module.exports = grammar ({
       field("domain", $.domain)
     ),
 
-    index_domain_list: $ => commaSep1(choice($.int_domain, $.bool_domain)),
+    index_domain_list: $ => commaSep1(choice($.int_domain, $.bool_domain, $.identifier)),
 
     //letting statements
     letting_statement: $ => seq(

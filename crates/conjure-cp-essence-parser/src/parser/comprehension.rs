@@ -24,7 +24,7 @@ pub fn parse_comprehension(
         )
     })?;
 
-    let mut builder = ComprehensionBuilder::new(symbols_ptr);
+    let mut builder = ComprehensionBuilder::new(symbols_ptr.clone());
 
     // We need to track the return expression node separately since it appears first in syntax
     // but we need to parse generators first (to get variables in scope)
@@ -45,7 +45,7 @@ pub fn parse_comprehension(
 
                 // Parse the domain
                 let domain_node = field!(child, "domain");
-                let var_domain = parse_domain(domain_node, source_code)?;
+                let var_domain = parse_domain(domain_node, source_code, Some(symbols_ptr.clone()))?;
 
                 // Add generator using the builder
                 let decl = DeclarationPtr::new_var(var_name, var_domain);
@@ -126,7 +126,7 @@ pub fn parse_quantifier_expr(
                 variables.push(var_name);
             }
             "domain" => {
-                domain = Some(parse_domain(child, source_code)?);
+                domain = Some(parse_domain(child, source_code, Some(symbols_ptr.clone()))?);
             }
             "set_literal" | "matrix" | "tuple" | "record" => {
                 // Store the collection node to parse later
