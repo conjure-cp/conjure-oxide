@@ -97,7 +97,7 @@ fn parse_int_value(
         if let Some(decl_ptr) = symbols.lookup(&name) {
             if let Some(expr_ref) = decl_ptr.as_value_letting() {
                 if let Expression::Atomic(_, Atom::Literal(Literal::Int(i))) = &*expr_ref {
-                    return *i;
+                    *i
                 } else {
                     panic!(
                         "{} identifier '{}' is not an integer literal",
