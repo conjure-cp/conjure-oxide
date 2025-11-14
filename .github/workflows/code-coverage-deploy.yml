@@ -1,12 +1,11 @@
-name: "Coverage-Deploy"
+name: Coverage deployment
 # see https://securitylab.github.com/research/github-actions-preventing-pwn-requests/
 
 on:
   workflow_run:
-    workflows: ["Coverage (PR)"]
+    workflows: ["Coverage PR"]
     types:
       - completed
-
 
 # see https://github.com/JamesIves/github-pages-deploy-action/tree/dev
 permissions:
@@ -37,7 +36,6 @@ jobs:
             // from manual inspection in jq, seems to hold head.sha for PR, not
             // whatever GITHUB_SHA is.
             return callee_run.head_sha;
-
 
       - name: Download artifact
         uses: dawidd6/action-download-artifact@v11
@@ -199,10 +197,9 @@ jobs:
           workflow: code-coverage-main.yml
           branch: main
           name: main-doc-coverage-summary
- 
 
       - name: Get doc coverage links for main and PR
-        run: | 
+        run: |
           # url of run, to use for summary
           # the api call returns the url of the job which does not show the summary, so we change it to the run url instead, which does.
           MAIN_URL=$(gh api -X GET -F 'filter=latest' -F 'status=completed' -F 'check_name=Documentation Coverage' \
@@ -217,9 +214,8 @@ jobs:
 
           echo "MAIN_DOC_URL=$MAIN_URL" >> $GITHUB_ENV
           echo "PR_DOC_URL=$PR_URL" >> $GITHUB_ENV
-        env: 
+        env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
 
       - name: Find coverage comment
         uses: peter-evans/find-comment@v4
@@ -269,7 +265,6 @@ jobs:
           cat ./tools/code-coverage-diff/lcov/coverage_diff.txt
           echo 'EOFABC'
           } >> "$GITHUB_ENV"
-
 
       - name: Calculate coverage difference with previous historical lcov artifact
         if: steps.find_artifacts.outputs.result != '[]'

@@ -1,4 +1,4 @@
-name: "Coverage-main"
+name: Coverage main
 
 on:
   push:
@@ -7,12 +7,10 @@ on:
   workflow_dispatch:
 
 env:
-  CARGO_INCREMENTAL: "0"
   # we define the following 3 values as the defaults here, matrix jobs may overwrite their values.
   os: ubuntu-latest
   rust_release: nightly
   compiler_profile: debug
-
 
 jobs:
   doc-coverage:
@@ -23,13 +21,19 @@ jobs:
       - name: Checkout the repository
         uses: actions/checkout@v5
 
-      - name: Rust cache
-        uses: Swatinem/rust-cache@v2
+      - uses: actions/cache@v4
         with:
-          cache-on-failure: true
-          shared-key: ${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.workflow }}--${{ github.job }}
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+            ~/conjure
+          key: doccov--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.event.repository.updated_at }}
+          restore-keys: doccov--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}
 
-      - name: Install rust ${{ env.rust_release }}
+      - name: Install rust
         run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
 
       - name: Install pandoc
@@ -51,11 +55,10 @@ jobs:
 
       - name: Upload summary as artifact (for later use)
         uses: actions/upload-artifact@v5
-        with: 
+        with:
           name: main-doc-coverage-summary
           path: main-doc-coverage-summary.txt
           overwrite: true
-
 
   coverage:
     name: "Generate Code Coverage Reports"
@@ -65,13 +68,19 @@ jobs:
       - name: Checkout the repository
         uses: actions/checkout@v5
 
-      - name: Rust cache
-        uses: Swatinem/rust-cache@v2
+      - uses: actions/cache@v4
         with:
-          cache-on-failure: true
-          shared-key: ${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.workflow }}--${{ github.job }}
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+            ~/conjure
+          key: codecov--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.event.repository.updated_at }}
+          restore-keys: codecov--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}
 
-      - name: Install rust ${{ env.rust_release }}
+      - name: Install rust
         run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
 
       - uses: ./.github/actions/install-conjure
