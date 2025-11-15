@@ -117,6 +117,11 @@ fn main() -> io::Result<()> {
         }
     }
 
+    // All Features Test
+    let dest_list_features = Path::new(&out_dir).join("gen_tests_list_features.rs");
+    let mut f = File::create(dest_list_features)?;
+    write!(f,"#[test]fn list_features() -> Result<(), Box<dyn Error>> {{list_features_test()}}")?;
+
     Ok(())
 }
 
