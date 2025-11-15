@@ -24,7 +24,9 @@ jobs:
       - name: Checkout the repository
         uses: actions/checkout@v5
 
-      - uses: actions/cache@v4
+      - name: Restore cache
+        id: restore_cache
+        uses: actions/cache/restore@v4
         with:
           path: |
             ~/.cargo/bin/
@@ -64,6 +66,19 @@ jobs:
           path: pr-doc-coverage-summary.txt
           overwrite: false
 
+      - name: Save cache
+        if: ${{ always() && steps.restore_cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+            ~/conjure
+          key: doccov--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.event.repository.updated_at }}
+
   coverage:
     name: "Code"
     timeout-minutes: 120
@@ -72,7 +87,9 @@ jobs:
       - name: Checkout the repository
         uses: actions/checkout@v5
 
-      - uses: actions/cache@v4
+      - name: Restore cache
+        id: restore_cache
+        uses: actions/cache/restore@v4
         with:
           path: |
             ~/.cargo/bin/
@@ -119,3 +136,16 @@ jobs:
         with:
           name: code-coverage-${{ steps.sha.outputs.sha }}
           path: deploy/**
+
+      - name: Save cache
+        if: ${{ always() && steps.restore_cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+            ~/conjure
+          key: codecov--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.event.repository.updated_at }}

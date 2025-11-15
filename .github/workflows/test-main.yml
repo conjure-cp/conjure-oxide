@@ -62,8 +62,10 @@ jobs:
           submodules: recursive
           fetch-depth: 0
 
-      - uses: actions/cache@v4
+      - name: Restore cache
+        id: restore_cache
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.compiler_profile == 'debug' }}
+        uses: actions/cache/restore@v4
         with:
           path: |
             ~/.cargo/bin/
@@ -114,3 +116,16 @@ jobs:
         run: |
           which cargo-audit || cargo install cargo-audit
           cargo audit
+
+      - name: Save cache
+        if: ${{ always() && matrix.os == 'ubuntu-latest' && matrix.compiler_profile == 'debug' && steps.restore_cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+            ~/conjure
+          key: test--${{ matrix.os }}--${{ matrix.rust_release }}--${{ matrix.compiler_profile }}--${{ github.event.repository.updated_at }}
