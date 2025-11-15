@@ -1,7 +1,8 @@
 name: "Test"
 
-# We run this action for PRs for two configurations only (ubuntu/debug/stable and ubuntu/debug/nightly) with rust-cache enabled
-# On main, we run all configurations, without caching (to save space on GitHub)
+# We run this action for PRs for two configurations only (ubuntu/debug/stable and ubuntu/debug/nightly) with rust-cache enabled.
+# On main, we run all configurations, without caching (to save space on GitHub).
+# On main, we still enable the cache for the two PR configs. This helps us populate the cache for future PRs.
 
 on:
   push:
@@ -12,8 +13,8 @@ on:
       - tests-integration/**
       - Cargo.*
       - rust-toolchain.toml
-      - .github/workflows/test.yml
-      - .github/workflows/code-coverage-deploy.yml
+      - .github/workflows/test-pr.yml
+      - .github/workflows/test-main.yml
   workflow_dispatch:
 
 env:
@@ -63,6 +64,13 @@ jobs:
           submodules: recursive
           fetch-depth: 0
 
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.compiler_profile == 'debug' }}
+        with:
+          cache-on-failure: true
+          shared-key: ${{ matrix.os }}--${{ matrix.rust_release }}--${{ matrix.compiler_profile }}--${{ github.workflow }}--${{ github.job }}
+
       # Override RUSTUP_TOOLCHAIN to nightly when we are testing with nightly
       # This value is read from the rust-toolchain.toml file otherwise
       - name: Set RUSTUP_TOOLCHAIN
@@ -86,11 +94,11 @@ jobs:
           version: ${{ matrix.conjure_version }}
 
       - name: Run tests and build examples (debug)
-        run: cargo test --workspace --examples
+        run: cargo test --workspace --all-targets
         if: ${{ matrix.compiler_profile == 'debug' }}
 
       - name: Run tests and build examples (release)
-        run: cargo test --workspace --examples --release
+        run: cargo test --workspace --all-targets --release
         if: ${{ matrix.compiler_profile == 'release' }}
 
       - name: cargo-audit

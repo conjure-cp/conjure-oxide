@@ -484,6 +484,7 @@ pub enum Expression {
     AuxDeclaration(Metadata, Reference, Moo<Expression>),
 
     /// This expression is for encoding i32 ints as a vector of boolean expressions for cnf - using 2s complement
+    #[compatible(SAT)]
     SATInt(Metadata, Moo<Expression>),
 
     /// Addition over a pair of expressions (i.e. a + b) rather than a vec-expr like Expression::Sum.

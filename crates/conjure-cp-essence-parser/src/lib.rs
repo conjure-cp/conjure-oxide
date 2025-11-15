@@ -1,5 +1,6 @@
+pub mod diagnostics;
 pub mod errors;
-mod parser;
+pub mod parser;
 pub mod parser_legacy;
 
 pub use errors::EssenceParseError;
