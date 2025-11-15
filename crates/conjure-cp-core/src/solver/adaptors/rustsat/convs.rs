@@ -34,7 +34,7 @@ pub fn handle_lit(
         // not literal
         Expression::Not(_, _) => handle_not(l1, vars_added, inst),
 
-        _ => bug!("Literal expected"), // I assume it should be bug because of the idea that you are expecting. 
+        _ => bug!("Literal expected"), // I assume it should be bug because of the idea that you are expecting.
     }
 }
 
@@ -85,7 +85,9 @@ pub fn fetch_lit(name: Name, vars_added: &mut HashMap<Name, Lit>, inst: &mut Sat
     if !vars_added.contains_key(&name) {
         vars_added.insert(name.clone(), inst.new_lit());
     }
-    *(vars_added.get(&name).unwrap_or_else(|| bug!("Literal could not be fetched")))
+    *(vars_added
+        .get(&name)
+        .unwrap_or_else(|| bug!("Literal could not be fetched")))
 }
 
 pub fn handle_disjn(
@@ -98,7 +100,7 @@ pub fn handle_disjn(
     // literal => {
     // let lit: Lit = handle_lit(literal, vars_added, inst_in_use);
     // lits.add(lit);
-    
+
     for literal in disjn.iter() {
         let lit: Lit = handle_lit(literal, vars_added, inst_in_use);
         lits.add(lit);
