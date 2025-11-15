@@ -474,6 +474,7 @@ pub(super) fn run_partial_evaluator(expr: &Expr, symtab: &SymbolTable) -> Applic
         Expr::Lt(_, _, _) => Err(RuleNotApplicable),
         Expr::SafeDiv(_, _, _) => Err(RuleNotApplicable),
         Expr::UnsafeDiv(_, _, _) => Err(RuleNotApplicable),
+        Expr::Flatten(_, _, _) => Err(RuleNotApplicable), // TODO: check if anything can be done here
         Expr::AllDiff(m, e) => {
             let Some(vec) = Moo::unwrap_or_clone(e).unwrap_list() else {
                 return Err(RuleNotApplicable);
