@@ -67,11 +67,10 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
     if solve_args.no_run_solver {
         println!("{}", &rewritten_model);
 
-        // TODO: we want to be able to do let solver = match family {....}, but something weird is
-        // happening in the types..
+        // TODO: refactor since Solver now uses adaptor trait objects
         if let Some(path) = global_args.save_solver_input_file {
             eprintln!("Writing solver input file to {}", path.display());
-            let mut file = File::create(path).unwrap();
+            let mut file: Box<dyn std::io::Write> = Box::new(File::create(path)?);
 
             match global_args.solver {
                 SolverFamily::Sat => {

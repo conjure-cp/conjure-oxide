@@ -250,7 +250,7 @@ impl SolverAdaptor for Sat {
 
     fn write_solver_input_file(
         &self,
-        writer: &mut impl std::io::Write,
+        writer: &mut Box<dyn std::io::Write>,
     ) -> Result<(), std::io::Error> {
         // TODO: add comments saying what conjure oxide variables each clause has
         // e.g.

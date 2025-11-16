@@ -102,7 +102,7 @@ pub fn main() {
     }));
 
     // Did the solver run successfully?
-    let solver: Solver<Minion, ExecutionSuccess> = match result {
+    let solver: Solver<ExecutionSuccess> = match result {
         Ok(s) => s,
         Err(e) => {
             panic!("Error! {e:?}");
