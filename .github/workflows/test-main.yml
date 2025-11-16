@@ -94,18 +94,12 @@ jobs:
       - name: Build conjure-oxide (debug)
         run: cargo build --workspace
         if: ${{ matrix.compiler_profile == 'debug' }}
-      - name: Build tests and examples (debug)
-        run: cargo test --workspace --no-run
-        if: ${{ matrix.compiler_profile == 'debug' }}
       - name: Run tests (debug)
         run: cargo test --workspace
         if: ${{ matrix.compiler_profile == 'debug' }}
 
       - name: Build conjure-oxide (release)
         run: cargo build --workspace --release
-        if: ${{ matrix.compiler_profile == 'release' }}
-      - name: Build tests and examples (release)
-        run: cargo test --workspace --no-run --release
         if: ${{ matrix.compiler_profile == 'release' }}
       - name: Run tests (release)
         run: cargo test --workspace --release
