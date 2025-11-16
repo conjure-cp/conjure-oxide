@@ -20,7 +20,8 @@ check-unused-deps: .installed-cargo-extensions.checkpoint
 # run all tests
 # we need to build first, so the conjure-oxide executable is available during testing as it is needed by the custom tests.
 .PHONY: test
-	cargo build --workspace
+test:
+	cargo build --bin conjure-oxide
 	cargo test --workspace
 
 .PHONY: fix 
