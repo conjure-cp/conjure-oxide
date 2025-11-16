@@ -268,7 +268,9 @@ pub trait SolverAdaptor: private::Sealed + Any {
     ///
     /// + This function is ran after model loading but before solving - therefore, it is safe for
     ///   solving to mutate the model object.
-    fn write_solver_input_file(&self, writer: &mut impl Write) -> Result<(), std::io::Error>;
+    fn write_solver_input_file(&self, writer: &mut Box<dyn Write>) -> Result<(), std::io::Error>;
+
+    // fn box_clone(&self) -> Box<dyn SolverAdaptor>;
 }
 
 /// An abstract representation of a constraints solver.
@@ -284,18 +286,17 @@ pub trait SolverAdaptor: private::Sealed + Any {
 /// e.g. one adaptor may give solutions in a representation close to the solvers, while another may
 /// attempt to rewrite it back into Essence.
 ///
-#[derive(Clone)]
-pub struct Solver<A: SolverAdaptor, State: SolverState = Init> {
+pub struct Solver<State: SolverState = Init> {
     state: State,
-    adaptor: A,
+    adaptor: Box<dyn SolverAdaptor>,
     context: Option<Arc<RwLock<Context<'static>>>>,
 }
 
-impl<Adaptor: SolverAdaptor> Solver<Adaptor> {
-    pub fn new(solver_adaptor: Adaptor) -> Solver<Adaptor> {
+impl Solver {
+    pub fn new<A: SolverAdaptor>(solver_adaptor: A) -> Solver {
         let mut solver = Solver {
             state: Init,
-            adaptor: solver_adaptor,
+            adaptor: Box::new(solver_adaptor),
             context: None,
         };
 
@@ -308,8 +309,8 @@ impl<Adaptor: SolverAdaptor> Solver<Adaptor> {
     }
 }
 
-impl<A: SolverAdaptor> Solver<A, Init> {
-    pub fn load_model(mut self, model: Model) -> Result<Solver<A, ModelLoaded>, SolverError> {
+impl Solver<Init> {
+    pub fn load_model(mut self, model: Model) -> Result<Solver<ModelLoaded>, SolverError> {
         let solver_model = &mut self.adaptor.load_model(model.clone(), private::Internal)?;
         Ok(Solver {
             state: ModelLoaded,
@@ -319,11 +320,11 @@ impl<A: SolverAdaptor> Solver<A, Init> {
     }
 }
 
-impl<A: SolverAdaptor> Solver<A, ModelLoaded> {
+impl Solver<ModelLoaded> {
     pub fn solve(
         mut self,
         callback: SolverCallback,
-    ) -> Result<Solver<A, ExecutionSuccess>, SolverError> {
+    ) -> Result<Solver<ExecutionSuccess>, SolverError> {
         #[allow(clippy::unwrap_used)]
         let start_time = Instant::now();
 
@@ -356,7 +357,7 @@ impl<A: SolverAdaptor> Solver<A, ModelLoaded> {
     pub fn solve_mut(
         mut self,
         callback: SolverMutCallback,
-    ) -> Result<Solver<A, ExecutionSuccess>, SolverError> {
+    ) -> Result<Solver<ExecutionSuccess>, SolverError> {
         #[allow(clippy::unwrap_used)]
         let start_time = Instant::now();
 
@@ -396,12 +397,15 @@ impl<A: SolverAdaptor> Solver<A, ModelLoaded> {
     ///
     /// This function is only available in the `ModelLoaded` state as solvers are allowed to edit
     /// the model in place.
-    pub fn write_solver_input_file(&self, writer: &mut impl Write) -> Result<(), std::io::Error> {
+    pub fn write_solver_input_file(
+        &self,
+        writer: &mut Box<dyn Write>,
+    ) -> Result<(), std::io::Error> {
         self.adaptor.write_solver_input_file(writer)
     }
 }
 
-impl<A: SolverAdaptor> Solver<A, ExecutionSuccess> {
+impl Solver<ExecutionSuccess> {
     pub fn stats(&self) -> SolverStats {
         self.state.stats.clone()
     }
