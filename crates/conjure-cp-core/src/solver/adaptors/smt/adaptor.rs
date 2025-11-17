@@ -2,18 +2,22 @@ use z3::Solver;
 
 use super::convert_model::*;
 use super::store::*;
+use super::theories::*;
 
 use crate::{Model, solver::*};
 
+/// A [SolverAdaptor] for interacting with SMT solvers, specifically Z3.
 pub struct Smt {
     __non_constructable: private::Internal,
 
     /// Initially maps variables to unknown constants.
     /// Also used to store their solved literal values.
-    store: Store,
+    store: SymbolStore,
 
     /// Assertions are added to this solver instance when loading the model.
     solver_inst: Solver,
+
+    theory_config: TheoryConfig,
 }
 
 impl private::Sealed for Smt {}
@@ -22,8 +26,24 @@ impl Default for Smt {
     fn default() -> Self {
         Smt {
             __non_constructable: private::Internal,
-            store: Store::new(),
+            store: SymbolStore::new(TheoryConfig::default()),
             solver_inst: Solver::new(),
+            theory_config: TheoryConfig::default(),
+        }
+    }
+}
+
+impl Smt {
+    /// Constructs a new adaptor using the given theories for representing the relevant constructs.
+    pub fn new(int_theory: IntTheory, matrix_theory: MatrixTheory) -> Self {
+        let theories = TheoryConfig {
+            ints: int_theory,
+            matrices: matrix_theory,
+        };
+        Smt {
+            theory_config: theories.clone(),
+            store: SymbolStore::new(theories),
+            ..Default::default()
         }
     }
 }
@@ -37,7 +57,7 @@ impl SolverAdaptor for Smt {
         let solutions = self
             .solver_inst
             .solutions(&self.store, true)
-            .take_while(|store| (callback)(store.literals_map().unwrap()));
+            .take_while(|store| (callback)(store.as_literals_map().unwrap()));
 
         // Consume iterator and get whether there are solutions
         let search_complete = match solutions.count() {
@@ -65,6 +85,7 @@ impl SolverAdaptor for Smt {
         load_model_impl(
             &mut self.store,
             &mut self.solver_inst,
+            &self.theory_config,
             &submodel.symbols(),
             submodel.constraints().as_slice(),
         )?;

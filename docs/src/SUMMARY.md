@@ -1,19 +1,56 @@
-# Summary
+[Introduction](./intro.md)
 
-- [Introduction](./intro.md)
-  - [Useful Links](./links.md)
+# Getting Started
 
-- [Installation](./installation/installation.md)
+- [Installation](./getting_started/installation/index.md)
   - [Downloading a Nightly Release]()
   - [Building from Source]()
 - [Command Line Guide]()
-  - [Logging](./user-guide/logging.md)
-- [Tutorials]()
+  - [Logging](./getting_started/command-line/logging.md)
 
-- [Developer Documentation](./developer_docs/index.md)
+# User Guide
 
+- [Reading the docs]()
+- [Useful Tutorials]()
+
+# Developers Guide
+
+<!-- From the wiki -->
+- [Contributor's Guide](./developers_guide/contributors-guide/index.md)
+  - [How we work](./developers_guide/contributors-guide/how_we_work.md)
+  - [Setting up your development environment](./developers_guide/contributors-guide/set-dev-env.md)
+  - [Running and writing integration tests]()
+  - [What we didn't do]()
+
+- [Coding Resources and Conventions](./developers_guide/coding_resources/index.md)
+  - [Style Guide](./developers_guide/coding_resources/style_guide.md)
+  - [Crate Structure](./developers_guide/coding_resources/crate_structure.md)
+
+- [Design Documents](./developers_guide/design_documents/index.md)
+  - [2023‐11: High Level Plan](./developers_guide/design_documents/2023_11.md)
+  - [2024‐03: Implementing Uniplates and Biplates with Structure Preserving Trees](./developers_guide/design_documents/2024_03.md)
+  - [Expression rewriting, Rules and RuleSets](./developers_guide/design_documents/expression_rewriting.md)
+  - [Semantics of Rewriting Expressions with Side‐Effects](./developers_guide/design_documents/semantics-of-rewriting-expressions.md)
+  - [Ideal Scenario of Testing for Conjure-Oxide](./developers_guide/design_documents/ideal-scenario-of-testing.md)
+
+<!-- TODO: do we need this? -->
+- [CI/CD](./developers_guide/ci_cd/index.md)
+  - [Coverage](./developers_guide/ci_cd/coverage.md)
+  - [Github Actions: Cookbook](./developers_guide/ci_cd/github_actions.md)
+
+<!-- New additions -->
+- [Reading the docs]()
+- [Useful Resources]()
+
+# Documentation
+
+<!-- TODO: will we keep this? -->
+- [Developer Documentation](./documentation/dev_docs.md)
+<!-- TODO: will be moved -- likely the content of these will end off here -->
+- [Useful Links](./documentation/links.md)
 
 ---
 
-[For Interested Students](./interested-students.md)
-[Contributors](./contributors.md)
+<!-- TODO: will this still be needed? -->
+[For Interested Students](./footer/interested-students.md)
+[Contributors](./footer/contributors.md)

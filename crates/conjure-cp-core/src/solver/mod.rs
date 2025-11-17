@@ -120,6 +120,7 @@ use thiserror::Error;
 use crate::Model;
 use crate::ast::{Literal, Name};
 use crate::context::Context;
+use crate::solver::adaptors::smt::IntTheory;
 use crate::stats::SolverStats;
 
 use self::model_modifier::ModelModifier;
@@ -449,6 +450,8 @@ pub enum SolverError {
     #[error("error during solver execution: {0}")]
     Runtime(String),
 }
+
+pub type SolverResult<T> = Result<T, SolverError>;
 
 /// Returned from [SolverAdaptor] when solving is successful.
 pub struct SolveSuccess {
