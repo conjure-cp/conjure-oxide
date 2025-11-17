@@ -7,11 +7,22 @@ fn detects_undefined_variable() {
     // y is undefined
     let diagnostics = detect_semantic_errors(source);
 
-    assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic for undefined variable");
+    assert_eq!(
+        diagnostics.len(),
+        1,
+        "Expected exactly one diagnostic for undefined variable"
+    );
 
     let diag = &diagnostics[0];
 
-    check_diagnostic(diag, 1, 14, 1, 15, "Semantic Error: Undefined variable: 'y'");
+    check_diagnostic(
+        diag,
+        1,
+        14,
+        1,
+        15,
+        "Semantic Error: Undefined variable: 'y'",
+    );
 }
 
 #[test]
@@ -20,7 +31,12 @@ fn no_errors_for_valid_code() {
     let diagnostics = detect_semantic_errors(source);
 
     // should have no diagnostics
-    assert_eq!(diagnostics.len(), 0, "Expected no diagnostics for valid code, got: {:?}", diagnostics);
+    assert_eq!(
+        diagnostics.len(),
+        0,
+        "Expected no diagnostics for valid code, got: {:?}",
+        diagnostics
+    );
 }
 
 #[test]
@@ -28,9 +44,20 @@ fn range_points_to_error_location() {
     let source = "find x: int(1..10)\nsuch that x = undefined_var";
     let diagnostics = detect_semantic_errors(source);
 
-    assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic for undefined variable");
+    assert_eq!(
+        diagnostics.len(),
+        1,
+        "Expected exactly one diagnostic for undefined variable"
+    );
 
     let diag = &diagnostics[0];
 
-    check_diagnostic(diag, 1, 14, 1, 27, "Semantic Error: Undefined variable: 'undefined_var'");
+    check_diagnostic(
+        diag,
+        1,
+        14,
+        1,
+        27,
+        "Semantic Error: Undefined variable: 'undefined_var'",
+    );
 }
