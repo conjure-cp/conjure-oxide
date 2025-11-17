@@ -53,7 +53,6 @@ on:
 permissions:
   contents: write
 
-
 jobs:
   # check if anything has happened in the repo today
   #
@@ -75,7 +74,6 @@ jobs:
         if: ${{ github.event_name == 'schedule' }}
         run: test -z $(git rev-list  --after="24 hours" ${{ github.sha }}) && echo "::set-output name=should_run::false" &&  gh run list -b main -w Test -L 1 --json conclusion | jq '.[].conclusion == "success"'
 
-
   # From https://docs.github.com/en/actions/use-cases-and-examples/publishing-packages/publishing-docker-images#publishing-images-to-github-packages
   publish_container:
     name: Publish Container (conjure-oxide:nightly)
@@ -93,7 +91,6 @@ jobs:
       id-token: write
 
     steps:
-
       - name: Checkout repository
         uses: actions/checkout@v5
 
@@ -116,7 +113,7 @@ jobs:
         # step. The `images` value provides the base name for the tags and labels.
       - name: Extract metadata (tags, labels) for Docker
         id: meta
-        uses: docker/metadata-action@v5.8.0
+        uses: docker/metadata-action@v5.9.0
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           flavor: |
@@ -143,7 +140,6 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           provenance: false
 
-
   # From https://docs.github.com/en/actions/use-cases-and-examples/publishing-packages/publishing-docker-images#publishing-images-to-github-packages
   publish_build_container:
     name: Publish Container (conjure-oxide:build-environment-nightly)
@@ -162,7 +158,6 @@ jobs:
       id-token: write
 
     steps:
-
       - name: Checkout repository
         uses: actions/checkout@v5
 
@@ -185,7 +180,7 @@ jobs:
         # step. The `images` value provides the base name for the tags and labels.
       - name: Extract metadata (tags, labels) for Docker
         id: meta
-        uses: docker/metadata-action@v5.8.0
+        uses: docker/metadata-action@v5.9.0
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           flavor: |
@@ -215,7 +210,6 @@ jobs:
           target: build-environment
           provenance: false
 
-
   build_nightly_mac:
     name: "Build Nightly (${{ matrix.arch_name }}-${{ matrix.os_name }})"
     needs: check_date
@@ -224,7 +218,7 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          - macos-latest     # aarch64 mac
+          - macos-latest # aarch64 mac
 
         # platform and arch info for naming the binary
         include:
@@ -232,7 +226,6 @@ jobs:
             os_name: darwin
             arch_name: aarch64
             conjure_prefix: macos-arm
-
 
     runs-on: ${{ matrix.os }}
     env:
@@ -244,7 +237,6 @@ jobs:
 
       - name: Install rust
         run: rustup update stable && rustup default stable
-
 
       - name: Build release
         run: |
@@ -346,8 +338,7 @@ jobs:
           merge-multiple: true # put all releases in the same folder
           path: dist/
           pattern: artifact-*
-  
-          
+
       - name: Publish nightly release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -365,4 +356,3 @@ jobs:
           # create release
           gh release delete nightly || true # ensure release doesn't exist (don't fail if it doesn't, as it may not!)
           gh release create nightly --notes-from-tag --prerelease --title "nightly ($(date -I))" --verify-tag dist/*.zip
-

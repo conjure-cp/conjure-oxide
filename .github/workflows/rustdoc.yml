@@ -1,4 +1,4 @@
-name: "Rustdoc"
+name: Rustdoc
 
 on:
   push:
@@ -7,12 +7,10 @@ on:
   workflow_dispatch:
 
 env:
-  CARGO_INCREMENTAL: "0"
   # we define these in the env if they are not defined as matrix parameters
   os: ubuntu-latest
   rust_release: nightly
   compiler_profile: debug
-
 
 permissions:
   contents: write
@@ -26,11 +24,22 @@ jobs:
       - name: Checkout the repository
         uses: actions/checkout@v5
 
-      - name: Rust cache
-        uses: Swatinem/rust-cache@v2
+      - name: free_disk_space.sh
+        run: .github/workflows/tools/free_disk_space.sh
+
+      - name: Restore cache
+        id: restore_cache
+        uses: actions/cache/restore@v4
         with:
-          cache-on-failure: true
-          shared-key: ${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.workflow }}--${{ github.job }}
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+            ~/conjure
+          key: rustdoc--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.event.repository.updated_at }}
+          restore-keys: rustdoc--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}
 
       - name: Get Sha
         id: sha
@@ -38,7 +47,7 @@ jobs:
           echo -e "sha=${{ github.sha }}" >> "$GITHUB_OUTPUT"
           echo -e "sha=${{ github.sha }}"
 
-      - name: Install rust ${{ env.rust_release }}
+      - name: Install rust
         run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
 
       - name: Generate documentation
@@ -61,3 +70,16 @@ jobs:
           # do not overwrite previous deployments, such as those made by other
           # actions
           force: false
+
+      - name: Save cache
+        if: ${{ always() && steps.restore_cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+            ~/conjure
+          key: rustdoc--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.event.repository.updated_at }}
