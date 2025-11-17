@@ -1,4 +1,4 @@
-name: "Shear (check for unused dependencies)"
+name: Shear
 
 on:
   schedule:
@@ -10,7 +10,6 @@ on:
   workflow_dispatch:
 
 env:
-  CARGO_INCREMENTAL: "0"
   # we define the following 3 values as the defaults here, matrix jobs may overwrite their values.
   os: ubuntu-latest
   rust_release: nightly
@@ -20,7 +19,6 @@ env:
   conjure_version: 2.5.1
 
 jobs:
-
   shear:
     name: "cargo-shear"
 
@@ -32,6 +30,23 @@ jobs:
           submodules: recursive
           fetch-depth: 0
 
+      - name: free_disk_space.sh
+        run: .github/workflows/tools/free_disk_space.sh
+
+      - name: Restore cache
+        id: restore_cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+            ~/conjure
+          key: shear--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.event.repository.updated_at }}
+          restore-keys: shear--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}
+
       # Override RUSTUP_TOOLCHAIN to nightly when we are testing with nightly
       # This value is read from the rust-toolchain.toml file otherwise
       - name: Set RUSTUP_TOOLCHAIN
@@ -39,9 +54,7 @@ jobs:
         run: echo "RUSTUP_TOOLCHAIN=nightly" >> $GITHUB_ENV
 
       - name: rustup
-        run: |
-          rustup update ${{ env.rust_release }}
-          rustup default ${{ env.rust_release }}
+        run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
 
       - run: cargo build -vv --workspace
 
@@ -50,7 +63,21 @@ jobs:
           os_arch: ${{ env.release_suffix }}
           version: ${{ env.conjure_version }}
 
-      - name: cargo-shear
-        run: |
-          cargo +nightly install cargo-shear
-          RUSTC_WRAPPER="" cargo +nightly shear --expand
+      - name: install cargo-shear
+        run: which cargo-shear || cargo +nightly install cargo-shear
+
+      - name: run cargo-shear
+        run: RUSTC_WRAPPER="" cargo +nightly shear --expand
+
+      - name: Save cache
+        if: ${{ always() && steps.restore_cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+            ~/conjure
+          key: shear--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.event.repository.updated_at }}
