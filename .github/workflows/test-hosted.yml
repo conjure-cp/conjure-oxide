@@ -1,0 +1,77 @@
+name: Test PR (self-hosted)
+
+on:
+  pull_request:
+    paths:
+      - crates/**
+      - tests-integration/**
+      - Cargo.*
+      - rust-toolchain.toml
+      - .github/workflows/test-hosted.yml
+  workflow_dispatch:
+
+
+jobs:
+
+  test_hosted:
+    name: "Test (self-hosted)"
+
+    timeout-minutes: 120
+    strategy:
+      # run all combinations of the matrix even if one combination fails.
+      fail-fast: false
+      matrix:
+        compiler_profile:
+          - release
+          - debug
+        rust_release:
+          - stable
+          - nightly
+        conjure_version:
+          - 2.5.1
+        os:
+          - self-hosted
+
+    runs-on: ${{ matrix.os }}
+    container: ubuntu:latest
+
+    steps:
+
+      - uses: actions/checkout@v5
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      # Override RUSTUP_TOOLCHAIN to nightly when we are testing with nightly
+      # This value is read from the rust-toolchain.toml file otherwise
+      - name: Set RUSTUP_TOOLCHAIN
+        if: ${{ matrix.rust_release == 'nightly' }}
+        run: echo "RUSTUP_TOOLCHAIN=nightly" >> $GITHUB_ENV
+
+      - name: rustup
+        run: rustup update ${{ matrix.rust_release }} && rustup default ${{ matrix.rust_release }}
+
+      - uses: ./.github/actions/install-conjure
+        with:
+          os_arch: "linux"
+          version: ${{ matrix.conjure_version }}
+
+      - name: Build conjure-oxide (debug)
+        run: cargo build --bin conjure-oxide
+        if: ${{ matrix.compiler_profile == 'debug' }}
+      - name: Run tests (debug)
+        run: cargo test --workspace
+        if: ${{ matrix.compiler_profile == 'debug' }}
+
+      - name: Build conjure-oxide (release)
+        run: cargo build --bin conjure-oxide --release
+        if: ${{ matrix.compiler_profile == 'release' }}
+      - name: Run tests (release)
+        run: cargo test --workspace --release
+        if: ${{ matrix.compiler_profile == 'release' }}
+
+      - name: cargo-audit
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.compiler_profile == 'debug' }}
+        run: |
+          which cargo-audit ||cargo install cargo-audit
+          cargo audit
