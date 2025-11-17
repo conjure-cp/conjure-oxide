@@ -14,6 +14,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Copied from and slightly modified: https://github.com/apache/flink/blob/7de3392b47096fb0f4163b9217a5d344b7361791/tools/azure-pipelines/free_disk_space.sh
+# Changes:
+# We reordered the first `df -h call`` for better output
+# We do not remove llvm
+
 
 #
 # The Azure provided machines typically have the following disk allocation:
