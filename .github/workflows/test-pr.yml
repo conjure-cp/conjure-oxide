@@ -1,4 +1,4 @@
-name: Test PR (self-hosted)
+name: Test PR
 
 # We run this action for PRs for two configurations only (ubuntu/debug/stable and ubuntu/debug/nightly) with caching enabled
 # On main, we run all configurations, without caching (to save space on GitHub)
@@ -42,7 +42,6 @@ jobs:
         conjure_version:
           - 2.5.1
         os:
-          - self-hosted
           - ubuntu-latest
           # - macos-latest
         include:
@@ -61,7 +60,6 @@ jobs:
 
       - name: free_disk_space.sh
         run: .github/workflows/tools/free_disk_space.sh
-        if: ${{ matrix.os != 'self-hosted' }}
 
       - name: Restore cache
         id: restore_cache
