@@ -12,7 +12,7 @@ fn detects_keyword_as_identifier_find() {
 
     let diag = &diagnostics[0];
 
-    check_diagnostic(diag, 0, 5, 0, 9, "Keyword 'find' used as an identifier");
+    check_diagnostic(diag, 0, 5, 0, 9, "Semantic Error: Keyword 'find' used as identifier");
 }
 
 #[test]
@@ -26,7 +26,7 @@ fn detects_keyword_as_identifier_letting() {
 
     let diag = &diagnostics[0];
 
-    check_diagnostic(diag, 0, 5, 0, 12, "Keyword 'letting' used as an identifier");
+    check_diagnostic(diag, 0, 5, 0, 12, "Semantic Error: Keyword 'letting' used as identifier");
 }
 
 #[test]
@@ -40,5 +40,5 @@ fn detects_keyword_as_identifier_bool() {
 
     let diag = &diagnostics[0];
 
-    check_diagnostic(diag, 0, 5, 0, 9, "Keyword 'bool' used as an identifier");
+    check_diagnostic(diag, 0, 5, 0, 9, "Semantic Error: Keyword 'bool' used as identifier");
 }
