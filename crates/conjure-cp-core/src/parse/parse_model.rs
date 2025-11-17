@@ -15,7 +15,7 @@ use crate::ast::comprehension::ComprehensionBuilder;
 use crate::ast::records::RecordValue;
 use crate::ast::{
     AbstractLiteral, Atom, DeclarationPtr, Domain, Expression, Literal, Name, Range, RecordEntry,
-    SetAttr, SymbolTable,
+    SetAttr, FuncAttr, SizeAttr, PartialityAttr, JectivityAttr, SymbolTable,
 };
 use crate::ast::{DeclarationKind, Moo};
 use crate::context::Context;
@@ -310,6 +310,31 @@ fn parse_domain(
                 });
 
             Ok(Domain::Record(record_entries))
+        }
+        "DomainFunction" => {
+            let dom = domain_value.get(2).and_then(|v| v.as_object());
+            let domain_obj = dom.expect("domain object exists");
+            let domain = domain_obj
+                .iter()
+                .next()
+                .ok_or(Error::Parse("DomainSet is an empty object".to_owned()))?;
+            let domain = parse_domain(domain.0.as_str(), domain.1, symbols)?;
+
+            let codom = domain_value.get(3).and_then(|v| v.as_object());
+            let codomain_obj = codom.expect("domain object exists");
+            let codomain = codomain_obj
+                .iter()
+                .next()
+                .ok_or(Error::Parse("DomainSet is an empty object".to_owned()))?;
+            let codomain = parse_domain(codomain.0.as_str(), codomain.1, symbols)?;
+            //TODO : Proper Attr parsing
+            let attr = FuncAttr {
+                size_attr: SizeAttr::None,
+                partiality_attr: PartialityAttr::Partial,
+                jectivity_attr: JectivityAttr::None,
+            };
+            Ok(Domain::Function(attr, Box::new(domain), Box::new(codomain)))
+
         }
 
         _ => Err(Error::Parse(
