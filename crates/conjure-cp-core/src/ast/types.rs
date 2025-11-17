@@ -9,6 +9,7 @@ pub enum ReturnType {
     Set(Box<ReturnType>),
     Tuple(Vec<ReturnType>),
     Record(Vec<ReturnType>),
+    Function((Box<ReturnType>,Box<ReturnType>)),
 
     /// An unknown type
     ///

@@ -137,6 +137,7 @@ pub fn index_domains(matrix: AbstractLiteral<Literal>) -> Vec<Domain> {
             }
             AbstractLiteral::Tuple(_) => vec![],
             AbstractLiteral::Record(_) => vec![],
+            AbstractLiteral::Function(_) => vec![],
         }
     })
 }

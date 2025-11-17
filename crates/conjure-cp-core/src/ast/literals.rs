@@ -63,6 +63,8 @@ pub enum AbstractLiteral<T: AbstractLiteralValue> {
     Tuple(Vec<T>),
 
     Record(Vec<RecordValue<T>>),
+
+    Function(Vec<(T,T)>),
 }
 
 // TODO: use HasDomain instead once Expression::domain_of returns Domain not Option<Domain>
@@ -122,6 +124,9 @@ impl AbstractLiteral<Expression> {
             }
             AbstractLiteral::Tuple(_) => None,
             AbstractLiteral::Record(_) => None,
+            AbstractLiteral::Function(_) => {
+                todo!()
+            }
         }
     }
 }
@@ -193,6 +198,9 @@ impl Typeable for AbstractLiteral<Expression> {
                 }
                 Some(ReturnType::Record(item_types))
             }
+            AbstractLiteral::Function(_) => {
+                todo!()
+            }
         }
     }
 }
@@ -254,6 +262,9 @@ where
                     .join(",");
                 write!(f, "{{{entries_str}}}")
             }
+            AbstractLiteral::Function(_) => {
+                todo!()
+            }
         }
     }
 }
@@ -277,6 +288,10 @@ impl Hash for AbstractLiteral<Literal> {
             AbstractLiteral::Record(entries) => {
                 3.hash(state);
                 entries.hash(state);
+            }
+            AbstractLiteral::Function(elems) => {
+                4.hash(state);
+                elems.hash(state);
             }
         }
     }
@@ -314,6 +329,9 @@ where
                     f1_tree,
                     Box::new(move |x| AbstractLiteral::Record(f1_ctx(x))),
                 )
+            }
+            AbstractLiteral::Function(_) => {
+                todo!()
             }
         }
     }
@@ -372,6 +390,9 @@ where
                         Box::new(move |x| AbstractLiteral::Record(f1_ctx(x))),
                     )
                 }
+                AbstractLiteral::Function(_) => {
+                todo!()
+            }
             }
         }
     }
@@ -522,6 +543,9 @@ impl AbstractLiteral<Expression> {
                         })
                         .collect(),
                 ))
+            }
+            AbstractLiteral::Function(_) => {
+                todo!()
             }
         }
     }

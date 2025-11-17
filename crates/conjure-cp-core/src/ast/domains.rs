@@ -99,8 +99,11 @@ pub enum Domain {
     Tuple(Vec<Domain>),
 
     Record(Vec<RecordEntry>),
+
+    Function(FuncAttr, Box<Domain>, Box<Domain>),
 }
 
+// TODO: Should we change this to SizeAttr to reduce duplication code?
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
 pub enum SetAttr {
     None,
@@ -120,6 +123,48 @@ impl SetAttr {
             SetAttr::MinMaxSize(min, max) => size >= *min as usize && size <= *max as usize,
         }
     }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
+pub struct FuncAttr {
+    pub size_attr: SizeAttr,
+    pub partiality_attr: PartialityAttr,
+    pub jectivity_attr: JectivityAttr,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
+pub enum SizeAttr {
+    None,
+    Size(i32),
+    MinSize(i32),
+    MaxSize(i32),
+    MinMaxSize(i32, i32),
+}
+
+impl SizeAttr {
+    pub fn allows_size(&self, size: usize) -> bool {
+        match self {
+            SizeAttr::None => true,
+            SizeAttr::Size(n) => *n as usize == size,
+            SizeAttr::MinSize(n) => size >= *n as usize,
+            SizeAttr::MaxSize(n) => size <= *n as usize,
+            SizeAttr::MinMaxSize(min, max) => size >= *min as usize && size <= *max as usize,
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
+pub enum PartialityAttr {
+    Total,
+    Partial,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
+pub enum JectivityAttr {
+    None,
+    Injective,
+    Surjective,
+    Bijective,
 }
 
 impl Domain {
@@ -239,6 +284,28 @@ impl Domain {
                 }
                 _ => Ok(false),
             },
+            Domain::Function(func_attr, domain, codomain) => {
+                match lit {
+                    Literal::AbstractLiteral(AbstractLiteral::Function(lit_elems)) => {
+                        if !func_attr.size_attr.allows_size(lit_elems.len()) {
+                            return Ok(false);
+                        }
+                        for lit in lit_elems {
+                            let domain_element = &lit.0;
+                            let codomain_element = &lit.1;
+                            if !domain.contains(domain_element)?{
+                                return Ok(false);
+                            }
+                            if !codomain.contains(codomain_element)?{
+                                return Ok(false);
+                            }
+                        }
+                        Ok(true)
+                    }
+                    _ => Ok(false),
+                }
+
+            }
         }
     }
 
@@ -660,6 +727,9 @@ impl Domain {
                         .collect(),
                 ))
             }
+            Literal::AbstractLiteral(AbstractLiteral::Function(first_elems)) => {
+                todo!()
+            }
         }
     }
 
@@ -685,6 +755,7 @@ impl Domain {
             Domain::Tuple(_) => todo!(), // TODO: Can this be done?
             Domain::Matrix(_, _) => todo!(),
             Domain::Record(_) => todo!(),
+            Domain::Function(_,_ ,_ ) => todo!(),
         }
     }
 
@@ -756,6 +827,9 @@ impl Domain {
                     acc.checked_mul(len).ok_or(DomainOpError::TooLarge)
                 })?;
                 inner_sz.checked_pow(exp).ok_or(DomainOpError::TooLarge)
+            }
+            Domain::Function(_,_ ,_ ) => {
+                todo!()
             }
         }
     }
@@ -1017,7 +1091,15 @@ impl Display for Domain {
                     )
                 )
             }
+            Domain::Function(_, inner_from ,inner_to ) => {
+                write!(
+                    f,
+                    "function ({}) --> ({}) ",
+                    inner_from,inner_to
+                )
+            }
             Domain::Empty(return_type) => write!(f, "empty({return_type:?}"),
+
         }
     }
 }
@@ -1056,6 +1138,9 @@ impl Typeable for Domain {
                     item_types.push(item.domain.return_type()?);
                 }
                 Some(ReturnType::Record(item_types))
+            }
+            Domain::Function(_,domain ,codomain ) => {
+                Some(ReturnType::Function((Box::new(domain.return_type()?),Box::new(codomain.return_type()?))))
             }
         }
     }
