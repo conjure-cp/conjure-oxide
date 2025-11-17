@@ -1,6 +1,9 @@
+use std::string;
+
 use crate::diagnostics::diagnostics_api::{Diagnostic, Position, Range, Severity};
 use crate::parser::util::get_tree;
-use tree_sitter::Node;
+use crate::{EssenceParseError, field, named_child};
+use tree_sitter::{Node, TreeCursor};
 
 /// Traverses all nodes in the parse tree and prints all error and missing nodes with their kind and range.
 /// Prints each error or missing node's kind and range to stdout.
@@ -28,6 +31,38 @@ pub fn print_all_error_nodes(source: &str) {
         }
     } else {
         println!("[all errors] Could not parse source.");
+    }
+}
+
+/// Prints the kinds and text of all siblings of the given node.
+pub fn print_siblings(node: tree_sitter::Node, source: &str) {
+    if let Some(parent) = node.parent() {
+        let count = parent.child_count();
+        println!("Siblings of node '{}':", node.kind());
+        for i in 0..count {
+            if let Some(sibling) = parent.child(i) {
+                let text = sibling
+                    .utf8_text(source.as_bytes())
+                    .unwrap_or("<unreadable>");
+                println!(
+                    "  sibling[{}]: kind='{}', text='{}', range=({}:{})-({}:{}){}",
+                    i,
+                    sibling.kind(),
+                    text,
+                    sibling.start_position().row,
+                    sibling.start_position().column,
+                    sibling.end_position().row,
+                    sibling.end_position().column,
+                    if sibling.id() == node.id() {
+                        " <-- (target node)"
+                    } else {
+                        ""
+                    }
+                );
+            }
+        }
+    } else {
+        println!("Node '{}' has no parent, so no siblings.", node.kind());
     }
 }
 
@@ -70,33 +105,44 @@ pub fn detect_syntactic_errors(source: &str) -> Vec<Diagnostic> {
     };
 
     let root_node = tree.root_node();
+    let mut cursor = root_node.walk();
 
-    // Stack-based DFS, skip children of error/missing nodes (only report top-level errors)
-    let mut stack = vec![root_node];
-    while let Some(node) = stack.pop() {
+    let mut descend = true;
+    loop {
+        let node = cursor.node();
+
         // Detect all the missing nodes before since tree-sitter sometimes is not able to correctly identify a missing node.
-        // Use zero-width range check and move on to avoid duplicate diagnistics
+        // Use zero-width range check and move on to avoid duplicate diagnostics
         if node.start_position() == node.end_position() {
             diagnostics.push(classify_missing_token(node));
-            continue;
-        }
-
-        if (node.is_error())
-            || node.is_missing()
-                && (!node
-                    .parent()
-                    .is_some_and(|p| p.is_error() || p.is_missing()))
+            descend = false;
+        } else if (node.is_error() || node.is_missing())
+            && (!node
+                .parent()
+                .map_or(false, |p| p.is_error() || p.is_missing()))
         {
-            diagnostics.push(classify_syntax_error(node));
-            // stops traversing children of error/missing nodes (will do that when classifying)
-            continue;
+            diagnostics.push(classify_syntax_error(node, source));
+            descend = false;
+        } else {
+            descend = true;
         }
 
-        // Otherwise, traverse children
-        for i in (0..node.child_count()).rev() {
-            if let Some(child) = node.child(i) {
-                stack.push(child);
+        // TreeCursor traversal: preorder DFS, skip children of error/missing nodes
+        if descend && cursor.goto_first_child() {
+            continue;
+        }
+        if cursor.goto_next_sibling() {
+            continue;
+        }
+        // Go up until we can go to a next sibling, or break if at root
+        while cursor.goto_parent() {
+            if cursor.goto_next_sibling() {
+                break;
             }
+        }
+        // If we're back at the root and can't go further, break
+        if cursor.node() == root_node {
+            break;
         }
     }
 
@@ -104,11 +150,32 @@ pub fn detect_syntactic_errors(source: &str) -> Vec<Diagnostic> {
 }
 
 /// Classifies a syntax error node and returns a diagnostic for it.
-fn classify_syntax_error(node: Node) -> Diagnostic {
-    if node.start_position() == node.end_position() {
-        classify_missing_token(node)
+fn classify_syntax_error(node: Node, source: &str) -> Diagnostic {
+    let (start, end) = (node.start_position(), node.end_position());
+
+    let message = if node.child_count() == 1
+        && (node.child(0).unwrap().start_position()) == start
+        && (node.child(0).unwrap().end_position()) == end
+    {
+        // If no children (exept the token itself) - unexpected token
+        classify_unexpected_token_error(node, source)
     } else {
         classify_general_syntax_error(node)
+    };
+    Diagnostic {
+        range: Range {
+            start: Position {
+                line: start.row as u32,
+                character: start.column as u32,
+            },
+            end: Position {
+                line: end.row as u32,
+                character: end.column as u32,
+            },
+        },
+        severity: Severity::Error,
+        message,
+        source: "syntactic-error-detector",
     }
 }
 
@@ -145,13 +212,47 @@ fn classify_missing_token(node: Node) -> Diagnostic {
     }
 }
 
-/// Classifies a general syntax error that cannot be classified with other functions.
-fn classify_general_syntax_error(node: Node) -> Diagnostic {
-    let start = node.start_position();
-    let end = node.end_position();
-
-    // Try to provide more context in the message
+fn classify_unexpected_token_error(node: Node, source_code: &str) -> String {
+    println!(
+        "Error node: '{}' [{}:{}-{}:{}]",
+        node.kind(),
+        node.start_position().row,
+        node.start_position().column,
+        node.end_position().row,
+        node.end_position().column,
+    );
     let message = if let Some(parent) = node.parent() {
+        let src_token = &source_code[node.start_byte()..node.end_byte()];
+
+        if parent.kind() == "program" {
+            // Save cursor position
+            if let Some(prev_sib) = node.prev_sibling() {
+                format!(
+                    "Unexpected token '{}' at the end of '{}'",
+                    src_token,
+                    prev_sib.kind()
+                )
+            } else {
+                format!("Unexpected token '{}' ", src_token)
+            }
+        } else {
+            format!(
+                "Unexpected token '{}' inside '{}'",
+                src_token,
+                parent.kind()
+            )
+        }
+    // Error at root node (program)
+    } else {
+        format!("Unexpected token '{}", source_code)
+    };
+
+    message
+}
+
+/// Classifies a general syntax error that cannot be classified with other functions.
+fn classify_general_syntax_error(node: Node) -> String {
+    if let Some(parent) = node.parent() {
         format!(
             "Syntax error in '{}': unexpected or invalid '{}'.",
             parent.kind(),
@@ -159,30 +260,8 @@ fn classify_general_syntax_error(node: Node) -> Diagnostic {
         )
     } else {
         format!("Syntax error: unexpected or invalid '{}'.", node.kind())
-    };
-
-    Diagnostic {
-        range: Range {
-            start: Position {
-                line: start.row as u32,
-                character: start.column as u32,
-            },
-            end: Position {
-                line: end.row as u32,
-                character: end.column as u32,
-            },
-        },
-        severity: Severity::Error,
-        message,
-        source: "syntactic-error-detector",
     }
 }
-
-// fn classify_unexpected_token() -> Diagnostic {
-
-// }
-
-// if ERROR at top level children, uknown command
 
 /// Helper function for tests to compare the actual diagnostic with the expected one.
 pub fn check_diagnostic(
