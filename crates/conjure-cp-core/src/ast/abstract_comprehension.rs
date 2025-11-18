@@ -1,6 +1,7 @@
 use super::{Name, SymbolTable};
 use crate::ast::{DeclarationPtr, Domain, Expression, ReturnType, Typeable};
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, RcRefCellAsInner};
+use serde_with::serde_as;
 use std::{
     cell::RefCell,
     fmt::{Display, Formatter},
@@ -9,10 +10,12 @@ use std::{
 };
 use uniplate::Uniplate;
 
+#[serde_as]
 #[derive(Clone, PartialEq, Eq, Uniplate, Serialize, Deserialize, Debug)]
 pub struct AbstractComprehension {
     pub return_expr: Expression,
     pub qualifiers: Vec<Qualifier>,
+    #[serde_as(as = "RcRefCellAsInner")]
     pub symbols: Rc<RefCell<SymbolTable>>,
 }
 
