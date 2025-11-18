@@ -16,20 +16,19 @@ use tempfile::tempdir;
 use crate::utils::json::sort_json_object;
 use conjure_cp::Model;
 use conjure_cp::parse::tree_sitter::parse_essence_file;
-use conjure_cp::solver::{Solver, SolverAdaptor};
+use conjure_cp::solver::Solver;
 
 use glob::glob;
 
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
 pub fn get_solutions(
-    solver_adaptor: impl SolverAdaptor,
+    solver: Solver,
     model: Model,
     num_sols: i32,
     solver_input_file: &Option<PathBuf>,
 ) -> Result<Vec<BTreeMap<Name, Literal>>, anyhow::Error> {
-    let adaptor_name = solver_adaptor.get_name().unwrap_or("UNKNOWN".into());
-    let solver = Solver::new(solver_adaptor);
+    let adaptor_name = solver.get_name().unwrap_or("UNKNOWN".into());
 
     eprintln!("Building {adaptor_name} model...");
 

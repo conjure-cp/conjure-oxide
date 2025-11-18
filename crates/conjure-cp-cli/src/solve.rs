@@ -16,7 +16,7 @@ use conjure_cp::{
     ast::comprehension::USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS,
     context::Context,
     rule_engine::{resolve_rule_sets, rewrite_morph, rewrite_naive},
-    solver::{Solver, SolverAdaptor, adaptors},
+    solver::Solver,
 };
 use conjure_cp::{
     parse::conjure_json::model_from_json, rule_engine::get_rules, solver::SolverFamily,
@@ -63,51 +63,19 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
     let context = init_context(&global_args, input_file)?;
     let model = parse(&global_args, Arc::clone(&context))?;
     let rewritten_model = rewrite(model, &global_args, Arc::clone(&context))?;
+    let solver = init_solver(&global_args);
 
     if solve_args.no_run_solver {
         println!("{}", &rewritten_model);
 
-        // TODO: refactor since Solver now uses adaptor trait objects
         if let Some(path) = global_args.save_solver_input_file {
+            let solver = solver.load_model(rewritten_model)?;
             eprintln!("Writing solver input file to {}", path.display());
             let mut file: Box<dyn std::io::Write> = Box::new(File::create(path)?);
-
-            match global_args.solver {
-                SolverFamily::Sat => {
-                    let solver = Solver::new(adaptors::Sat::default());
-                    let solver = solver.load_model(rewritten_model)?;
-                    solver.write_solver_input_file(&mut file)?;
-                }
-                SolverFamily::Smt => {
-                    let solver = Solver::new(adaptors::Smt::new(
-                        global_args.smt_int_theory,
-                        global_args.smt_matrix_theory,
-                    ));
-                    let solver = solver.load_model(rewritten_model)?;
-                    solver.write_solver_input_file(&mut file)?;
-                }
-                SolverFamily::Minion => {
-                    let solver = Solver::new(adaptors::Minion::default());
-                    let solver = solver.load_model(rewritten_model)?;
-                    solver.write_solver_input_file(&mut file)?;
-                }
-            };
+            solver.write_solver_input_file(&mut file)?;
         }
     } else {
-        match global_args.solver {
-            SolverFamily::Sat => {
-                let adaptor = Sat::default();
-                run_solver(adaptor, &global_args, &solve_args, rewritten_model)
-            }
-            SolverFamily::Smt => {
-                let adaptor = Smt::new(global_args.smt_int_theory, global_args.smt_matrix_theory);
-                run_solver(adaptor, &global_args, &solve_args, rewritten_model)
-            }
-            SolverFamily::Minion => {
-                let adaptor = Minion::default();
-                run_solver(adaptor, &global_args, &solve_args, rewritten_model)
-            }
-        }?;
+        run_solver(solver, &global_args, &solve_args, rewritten_model)?
     }
 
     // still do postamble even if we didn't run the solver
@@ -120,7 +88,7 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
     Ok(())
 }
 
-/// Initialises the context for solving.
+/// Returns a new Context and Solver for solving.
 pub(crate) fn init_context(
     global_args: &GlobalArgs,
     input_file: PathBuf,
@@ -172,6 +140,17 @@ pub(crate) fn init_context(
     context.write().unwrap().file_name = Some(input_file.to_str().expect("").into());
 
     Ok(context)
+}
+
+pub(crate) fn init_solver(global_args: &GlobalArgs) -> Solver {
+    match global_args.solver {
+        SolverFamily::Minion => Solver::new(Minion::default()),
+        SolverFamily::Sat => Solver::new(Sat::default()),
+        SolverFamily::Smt => Solver::new(Smt::new(
+            global_args.smt_int_theory,
+            global_args.smt_matrix_theory,
+        )),
+    }
 }
 
 pub(crate) fn parse(
@@ -250,7 +229,7 @@ pub(crate) fn rewrite(
 }
 
 fn run_solver(
-    adaptor: impl SolverAdaptor,
+    solver: Solver,
     global_args: &GlobalArgs,
     cmd_args: &Args,
     model: Model,
@@ -267,7 +246,7 @@ fn run_solver(
     };
 
     let solutions = get_solutions(
-        adaptor,
+        solver,
         model,
         cmd_args.number_of_solutions,
         &global_args.save_solver_input_file,

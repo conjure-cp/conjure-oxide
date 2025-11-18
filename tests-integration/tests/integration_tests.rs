@@ -5,6 +5,7 @@ use conjure_cp::rule_engine::get_rules_grouped;
 use conjure_cp::defaults::DEFAULT_RULE_SETS;
 use conjure_cp::parse::tree_sitter::parse_essence_file_native;
 use conjure_cp::rule_engine::rewrite_naive;
+use conjure_cp::solver::Solver;
 use conjure_cp::solver::adaptors::*;
 use conjure_cp_cli::utils::testing::{normalize_solutions_for_comparison, read_human_rule_trace};
 use glob::glob;
@@ -345,55 +346,37 @@ fn integration_test_inner(
         Path::new(path).join(Path::new(&name))
     });
 
-    // Stage 3a: Run the model through the Minion solver (run unless explicitly disabled)
-    let solutions = if config.solve_with_minion {
-        let solved = get_solutions(
-            Minion::default(),
-            rewritten_model
-                .as_ref()
-                .expect("Rewritten model must be present in 2a")
-                .clone(),
-            0,
-            &solver_input_file,
-        )?;
-        let solutions_json =
-            save_solutions_json(&solved, path, essence_base, SolverFamily::Minion)?;
-        if verbose {
-            println!("Minion solutions: {solutions_json:#?}");
-        }
-        Some(solved)
+    let solver = if config.solve_with_minion {
+        Some(Solver::new(Minion::default()))
     } else if config.solve_with_sat {
-        let solved = get_solutions(
-            Sat::default(),
-            rewritten_model
-                .as_ref()
-                .expect("Rewritten model must be present in 2a")
-                .clone(),
-            0,
-            &solver_input_file,
-        )?;
-        let solutions_json = save_solutions_json(&solved, path, essence_base, SolverFamily::Sat)?;
-        if verbose {
-            println!("SAT solutions: {solutions_json:#?}");
-        }
-        Some(solved)
+        Some(Solver::new(Sat::default()))
     } else if config.solve_with_smt {
-        let solved = get_solutions(
-            Smt::default(),
-            rewritten_model
-                .as_ref()
-                .expect("Rewritten model must be present in 2a")
-                .clone(),
-            0,
-            &solver_input_file,
-        )?;
-        let solutions_json = save_solutions_json(&solved, path, essence_base, SolverFamily::Smt)?;
-        if verbose {
-            println!("SMT solutions: {solutions_json:#?}");
-        }
-        Some(solved)
+        Some(Solver::new(Smt::default()))
     } else {
         None
+    };
+
+    let solutions = if let Some(solver) = solver {
+        let name = solver.get_name().unwrap_or("UNKNOWN".into());
+        let family = solver.get_family();
+
+        let solved = get_solutions(
+            solver,
+            rewritten_model
+                .as_ref()
+                .expect("Rewritten model must be present in 2a")
+                .clone(),
+            0,
+            &solver_input_file,
+        )?;
+        let solutions_json = save_solutions_json(&solved, path, essence_base, family)?;
+        if verbose {
+            println!("{name} solutions: {solutions_json:#?}");
+        }
+        solved
+    } else {
+        println!("Warning: no solver specified");
+        Vec::new()
     };
 
     // Stage 3b: Check solutions against Conjure (only if explicitly enabled)
@@ -403,8 +386,7 @@ fn integration_test_inner(
             Arc::clone(&context),
         )?;
 
-        let username_solutions =
-            normalize_solutions_for_comparison(solutions.as_ref().expect("Solutions required"));
+        let username_solutions = normalize_solutions_for_comparison(&solutions);
         let conjure_solutions = normalize_solutions_for_comparison(&conjure_solutions);
 
         let mut conjure_solutions_json = solutions_to_json(&conjure_solutions);
@@ -458,17 +440,17 @@ fn integration_test_inner(
     if config.solve_with_minion {
         let expected_solutions_json =
             read_solutions_json(path, essence_base, "expected", SolverFamily::Minion)?;
-        let username_solutions_json = solutions_to_json(solutions.as_ref().unwrap_or(&vec![]));
+        let username_solutions_json = solutions_to_json(&solutions);
         assert_eq!(username_solutions_json, expected_solutions_json);
     } else if config.solve_with_sat {
         let expected_solutions_json =
             read_solutions_json(path, essence_base, "expected", SolverFamily::Sat)?;
-        let username_solutions_json = solutions_to_json(solutions.as_ref().unwrap_or(&vec![]));
+        let username_solutions_json = solutions_to_json(&solutions);
         assert_eq!(username_solutions_json, expected_solutions_json);
     } else if config.solve_with_smt {
         let expected_solutions_json =
             read_solutions_json(path, essence_base, "expected", SolverFamily::Smt)?;
-        let username_solutions_json = solutions_to_json(solutions.as_ref().unwrap_or(&vec![]));
+        let username_solutions_json = solutions_to_json(&solutions);
         assert_eq!(username_solutions_json, expected_solutions_json);
     }
 

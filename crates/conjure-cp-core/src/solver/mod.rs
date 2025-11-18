@@ -269,8 +269,6 @@ pub trait SolverAdaptor: private::Sealed + Any {
     /// + This function is ran after model loading but before solving - therefore, it is safe for
     ///   solving to mutate the model object.
     fn write_solver_input_file(&self, writer: &mut Box<dyn Write>) -> Result<(), std::io::Error>;
-
-    // fn box_clone(&self) -> Box<dyn SolverAdaptor>;
 }
 
 /// An abstract representation of a constraints solver.
@@ -306,6 +304,10 @@ impl Solver {
 
     pub fn get_family(&self) -> SolverFamily {
         self.adaptor.get_family()
+    }
+
+    pub fn get_name(&self) -> Option<String> {
+        self.adaptor.get_name()
     }
 }
 
