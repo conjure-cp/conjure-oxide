@@ -1,8 +1,12 @@
 use super::name::Name;
-use crate::ast::{Domain, Expression};
+use crate::ast::{Domain, Expression, ReturnType, Typeable};
 use minion_sys::ast::SymbolTable;
 use serde::{Deserialize, Serialize};
-use std::{cell::RefCell, fmt::{Display, Formatter}, rc::Rc};
+use std::{
+    cell::RefCell,
+    fmt::{Display, Formatter},
+    rc::Rc,
+};
 use uniplate::Uniplate;
 
 #[derive(Clone, PartialEq, Eq, Uniplate, Serialize, Deserialize, Debug)]
@@ -26,7 +30,11 @@ pub enum Generator {
 }
 
 impl AbstractComprehension {
-    pub fn new(return_expr: Expression, qualifiers: Vec<Qualifier>, symbols: Rc<RefCell<SymbolTable>>) -> Self {
+    pub fn new(
+        return_expr: Expression,
+        qualifiers: Vec<Qualifier>,
+        symbols: Rc<RefCell<SymbolTable>>,
+    ) -> Self {
         Self {
             return_expr,
             qualifiers,
@@ -39,19 +47,30 @@ impl AbstractComprehension {
     }
 
     pub fn add_domain_generator(&mut self, name: Name, domain: Domain) {
-        self.qualifiers.push(Qualifier::Generator(Generator::DomainGenerator(name, domain)));
+        self.qualifiers
+            .push(Qualifier::Generator(Generator::DomainGenerator(
+                name, domain,
+            )));
     }
 
     pub fn add_expression_generator(&mut self, name: Name, expr: Expression) {
-        self.qualifiers.push(Qualifier::Generator(Generator::ExpressionGenerator(name, expr)));
+        self.qualifiers
+            .push(Qualifier::Generator(Generator::ExpressionGenerator(
+                name, expr,
+            )));
     }
 
     pub fn add_condition(&mut self, condition: Expression) {
+        if condition.return_type() != Some(ReturnType::Bool) {
+            panic!("Condition expression must have boolean return type");
+        }
+
         self.qualifiers.push(Qualifier::Condition(condition));
     }
 
     pub fn add_letting(&mut self, name: Name, expr: Expression) {
-        self.qualifiers.push(Qualifier::ComprehensionLetting(name, expr));
+        self.qualifiers
+            .push(Qualifier::ComprehensionLetting(name, expr));
     }
 }
 
