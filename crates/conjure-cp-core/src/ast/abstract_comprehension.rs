@@ -1,6 +1,5 @@
-use super::name::Name;
-use crate::ast::{Domain, Expression, ReturnType, Typeable};
-use minion_sys::ast::SymbolTable;
+use super::{Name, SymbolTable};
+use crate::ast::{DeclarationPtr, Domain, Expression, ReturnType, Typeable};
 use serde::{Deserialize, Serialize};
 use std::{
     cell::RefCell,
@@ -47,6 +46,7 @@ impl AbstractComprehension {
     }
 
     pub fn add_domain_generator(&mut self, name: Name, domain: Domain) {
+        self.symbols.borrow_mut().insert(DeclarationPtr::new_var(name.clone(), domain.clone()));
         self.qualifiers
             .push(Qualifier::Generator(Generator::DomainGenerator(
                 name, domain,
@@ -54,6 +54,7 @@ impl AbstractComprehension {
     }
 
     pub fn add_expression_generator(&mut self, name: Name, expr: Expression) {
+        self.symbols.borrow_mut().insert(DeclarationPtr::new_var(name.clone(), expr.domain_of().unwrap()));
         self.qualifiers
             .push(Qualifier::Generator(Generator::ExpressionGenerator(
                 name, expr,
