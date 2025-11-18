@@ -37,6 +37,22 @@ impl AbstractComprehension {
     pub fn domain_of(&self) -> Option<Domain> {
         self.return_expr.domain_of()
     }
+
+    pub fn add_domain_generator(&mut self, name: Name, domain: Domain) {
+        self.qualifiers.push(Qualifier::Generator(Generator::DomainGenerator(name, domain)));
+    }
+
+    pub fn add_expression_generator(&mut self, name: Name, expr: Expression) {
+        self.qualifiers.push(Qualifier::Generator(Generator::ExpressionGenerator(name, expr)));
+    }
+
+    pub fn add_condition(&mut self, condition: Expression) {
+        self.qualifiers.push(Qualifier::Condition(condition));
+    }
+
+    pub fn add_letting(&mut self, name: Name, expr: Expression) {
+        self.qualifiers.push(Qualifier::ComprehensionLetting(name, expr));
+    }
 }
 
 impl Display for AbstractComprehension {
