@@ -1,13 +1,15 @@
 use super::name::Name;
 use crate::ast::{Domain, Expression};
+use minion_sys::ast::SymbolTable;
 use serde::{Deserialize, Serialize};
-use std::fmt::{Display, Formatter};
+use std::{cell::RefCell, fmt::{Display, Formatter}, rc::Rc};
 use uniplate::Uniplate;
 
 #[derive(Clone, PartialEq, Eq, Uniplate, Serialize, Deserialize, Debug)]
 pub struct AbstractComprehension {
     pub return_expr: Expression,
     pub qualifiers: Vec<Qualifier>,
+    pub symbols: Rc<RefCell<SymbolTable>>,
 }
 
 #[derive(Clone, PartialEq, Eq, Uniplate, Serialize, Deserialize, Debug)]
@@ -24,10 +26,11 @@ pub enum Generator {
 }
 
 impl AbstractComprehension {
-    pub fn new(return_expr: Expression, qualifiers: Vec<Qualifier>) -> Self {
+    pub fn new(return_expr: Expression, qualifiers: Vec<Qualifier>, symbols: Rc<RefCell<SymbolTable>>) -> Self {
         Self {
             return_expr,
             qualifiers,
+            symbols,
         }
     }
 
