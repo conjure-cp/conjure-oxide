@@ -1244,9 +1244,9 @@ impl Display for Expression {
             ),
             Expression::Flatten(_, n, m) => {
                 if let Some(n) = n {
-                    write!(f, "flatten({n}, {m}")
+                    write!(f, "flatten({n}, {m})")
                 } else {
-                    write!(f, "flatten({m}")
+                    write!(f, "flatten({m})")
                 }
             }
             Expression::AllDiff(_, e) => {
