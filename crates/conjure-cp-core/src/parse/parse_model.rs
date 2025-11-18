@@ -798,7 +798,6 @@ fn parse_indexing_slicing_op(
         "MkOpIndexing" => {
             match &value {
                 Value::Array(op_args) if op_args.len() == 2 => {
-                    println!("{}", &op_args[0]);
                     target = parse_expression(&op_args[0], scope).expect("expected an expression");
                     indices.push(Some(
                         parse_expression(&op_args[1], scope).expect("expected an expression"),
