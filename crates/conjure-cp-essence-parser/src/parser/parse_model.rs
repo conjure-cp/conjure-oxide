@@ -100,9 +100,7 @@ pub fn parse_essence_with_context(
 
         // check for errors (keyword as identifier)
         let result = keyword_as_identifier(root_node, &source_code);
-        if let Err(e) = result {
-            return Err(e);
-        }
+        result?
     }
     Ok(model)
 }
