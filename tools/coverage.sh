@@ -61,8 +61,6 @@ fi
 # https://doc.rust-lang.org/rustc/instrument-coverage.html
 # https://github.com/mozilla/grcov
 
-rm -rf target/debug/coverage
-
 export CARGO_INCREMENTAL=0 
 export RUSTFLAGS="$RUSTFLAGS -Cinstrument-coverage"
 export RUSTDOCFLAGS="$RUSTDOCFLAGS -C instrument-coverage -Zunstable-options --persist-doctests target/debug/doctestbins"
@@ -83,7 +81,7 @@ GRCOV_EXCLUDE_LINES=(
 )
 
 # construct an or regex
-GRCOV_EXCLUDE_FLAG="--excl-line=$(echo ${GRCOV_EXCLUDE_LINES[@]} | tr ' ' '|'})"
+GRCOV_EXCLUDE_FLAG="--excl-line=$(echo ${GRCOV_EXCLUDE_LINES[@]} | tr ' ' '|')"
 
 GRCOV_IGNORE_FLAGS=(
   '--ignore-not-existing'
@@ -106,13 +104,13 @@ echo_err "info: running tests"
 cargo +nightly test --workspace
 
 echo_err "info: generating coverage reports"
-grcov . -s . --binary-path ./target/debug -t html\
+grcov target/coverage -s . --binary-path ./target/debug -t html\
   "${GRCOV_IGNORE_FLAGS[@]}" ${GRCOV_EXCLUDE_FLAG}\
   -o ./target/debug/coverage || { echo_err "fatal: html coverage generation failed" ; exit 1; }
 
 echo_err "info: html coverage report generated to target/debug/coverage/index.html"
 
-grcov . -s . --binary-path ./target/debug -t lcov\
+grcov target/coverage -s . --binary-path ./target/debug -t lcov\
   "${GRCOV_IGNORE_FLAGS[@]}" ${GRCOV_EXCLUDE_FLAG}\
   -o ./target/debug/lcov.info || { echo_err "fatal: lcov coverage generation failed" ; exit 1; }
 

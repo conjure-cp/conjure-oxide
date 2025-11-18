@@ -14,7 +14,7 @@ use std::env;
 use std::error::Error;
 use std::fs;
 use std::fs::File;
-use tracing::{Level, Metadata as OtherMetadata, span};
+use tracing::{Level, span};
 use tracing_subscriber::{
     Layer, Registry, filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt,
 };
@@ -340,6 +340,11 @@ fn integration_test_inner(
         }
     }
 
+    let solver_input_file = env::var("OXIDE_TEST_SAVE_INPUT_FILE").ok().map(|_| {
+        let name = format!("{essence_base}.generated-input.txt");
+        Path::new(path).join(Path::new(&name))
+    });
+
     // Stage 3a: Run the model through the Minion solver (run unless explicitly disabled)
     let solutions = if config.solve_with_minion {
         let solved = get_solutions(
@@ -349,7 +354,7 @@ fn integration_test_inner(
                 .expect("Rewritten model must be present in 2a")
                 .clone(),
             0,
-            &None,
+            &solver_input_file,
         )?;
         let solutions_json =
             save_solutions_json(&solved, path, essence_base, SolverFamily::Minion)?;
@@ -365,7 +370,7 @@ fn integration_test_inner(
                 .expect("Rewritten model must be present in 2a")
                 .clone(),
             0,
-            &None,
+            &solver_input_file,
         )?;
         let solutions_json = save_solutions_json(&solved, path, essence_base, SolverFamily::Sat)?;
         if verbose {
@@ -380,7 +385,7 @@ fn integration_test_inner(
                 .expect("Rewritten model must be present in 2a")
                 .clone(),
             0,
-            &None,
+            &solver_input_file,
         )?;
         let solutions_json = save_solutions_json(&solved, path, essence_base, SolverFamily::Smt)?;
         if verbose {
@@ -545,30 +550,13 @@ pub fn create_scoped_subscriber(
     path: &str,
     test_name: &str,
 ) -> impl tracing::Subscriber + Send + Sync {
-    let target1_layer = create_file_layer_json(path, test_name);
-    let target2_layer = create_file_layer_human(path, test_name);
-    let layered = target1_layer.and_then(target2_layer);
-
-    let subscriber = Arc::new(tracing_subscriber::registry().with(layered))
+    let layer = create_file_layer_human(path, test_name);
+    let subscriber = Arc::new(tracing_subscriber::registry().with(layer))
         as Arc<dyn tracing::Subscriber + Send + Sync>;
     // setting this subscriber as the default
     let _default = tracing::subscriber::set_default(subscriber.clone());
 
     subscriber
-}
-
-fn create_file_layer_json(path: &str, test_name: &str) -> impl Layer<Registry> + Send + Sync {
-    let file = File::create(format!("{path}/{test_name}-generated-rule-trace.json"))
-        .expect("Unable to create log file");
-
-    fmt::layer()
-        .with_writer(file)
-        .with_level(false)
-        .with_target(false)
-        .without_time()
-        .with_filter(FilterFn::new(|meta: &OtherMetadata| {
-            meta.target() == "rule_engine"
-        }))
 }
 
 fn create_file_layer_human(path: &str, test_name: &str) -> impl Layer<Registry> + Send + Sync {
