@@ -451,6 +451,8 @@ pub enum SolverError {
     Runtime(String),
 }
 
+pub type SolverResult<T> = Result<T, SolverError>;
+
 /// Returned from [SolverAdaptor] when solving is successful.
 pub struct SolveSuccess {
     stats: SolverStats,
