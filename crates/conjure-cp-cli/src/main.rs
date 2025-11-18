@@ -1,15 +1,15 @@
 #![allow(clippy::unwrap_used)]
 mod cli;
+mod pretty;
 mod print_info_schema;
 mod solve;
-mod pretty;
 mod test_solve;
 use clap::{CommandFactory, Parser};
 use clap_complete::generate;
 use cli::{Cli, GlobalArgs};
+use pretty::run_pretty_command;
 use print_info_schema::run_print_info_schema_command;
 use solve::run_solve_command;
-use pretty::run_pretty_command;
 use std::fs::File;
 use std::io;
 use std::process::exit;
