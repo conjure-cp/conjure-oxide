@@ -80,7 +80,10 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
                     solver.write_solver_input_file(&mut file)?;
                 }
                 SolverFamily::Smt => {
-                    let solver = Solver::new(adaptors::Smt::new(global_args.smt_int_theory));
+                    let solver = Solver::new(adaptors::Smt::new(
+                        global_args.smt_int_theory,
+                        global_args.smt_matrix_theory,
+                    ));
                     let solver = solver.load_model(rewritten_model)?;
                     solver.write_solver_input_file(&mut file)?;
                 }
@@ -98,7 +101,7 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
                 run_solver(adaptor, &global_args, &solve_args, rewritten_model)
             }
             SolverFamily::Smt => {
-                let adaptor = Smt::new(global_args.smt_int_theory);
+                let adaptor = Smt::new(global_args.smt_int_theory, global_args.smt_matrix_theory);
                 run_solver(adaptor, &global_args, &solve_args, rewritten_model)
             }
             SolverFamily::Minion => {
