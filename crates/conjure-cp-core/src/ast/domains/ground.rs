@@ -109,6 +109,8 @@ impl GroundDomain {
                 Err(DomainOpError::WrongType)
             }
             // TODO: Eventually we may define semantics for joining record domains. This day is not today.
+            #[allow(unreachable_patterns)]
+            // Technically redundant but logically clearer to have both
             (GroundDomain::Record(_), _) | (_, GroundDomain::Record(_)) => {
                 Err(DomainOpError::WrongType)
             }
@@ -545,10 +547,12 @@ impl GroundDomain {
                     return false;
                 }
 
-                if ranges
-                    .iter()
-                    .any(|range| matches!(range, Range::UnboundedL(_) | Range::UnboundedR(_)))
-                {
+                if ranges.iter().any(|range| {
+                    matches!(
+                        range,
+                        Range::UnboundedL(_) | Range::UnboundedR(_) | Range::Unbounded
+                    )
+                }) {
                     return false;
                 }
             }

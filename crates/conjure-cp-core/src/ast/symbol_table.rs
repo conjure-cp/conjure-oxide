@@ -172,15 +172,18 @@ impl SymbolTable {
     /// This method can return domain references: if a ground domain is always required, use
     /// [`SymbolTable::resolve_domain`].
     pub fn domain(&self, name: &Name) -> Option<DomainPtr> {
-        self.lookup(name)?.domain()
+        if let Name::WithRepresentation(name, _) = name {
+            self.lookup(name)?.domain()
+        } else {
+            self.lookup(name)?.domain()
+        }
     }
 
     /// Looks up the domain of name, resolving domain references to ground domains.
     ///
     /// See [`SymbolTable::domain`].
     pub fn resolve_domain(&self, name: &Name) -> Option<Moo<GroundDomain>> {
-        let dom = self.domain(name)?;
-        dom.resolve()
+        self.domain(name)?.resolve()
     }
 
     /// Iterates over entries in the local symbol table only.

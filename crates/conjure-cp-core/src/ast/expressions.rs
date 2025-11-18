@@ -785,6 +785,7 @@ fn range_vec_bounds_i32(ranges: &Vec<Range<i32>>) -> Option<(i32, i32)> {
 impl Expression {
     /// Returns the possible values of the expression, recursing to leaf expressions
     pub fn domain_of(&self) -> Option<DomainPtr> {
+        //println!("domain_of {self}");
         let ret = match self {
             Expression::Union(_, a, b) => Some(Domain::new_set(
                 SetAttr::default(),
@@ -866,7 +867,7 @@ impl Expression {
                             None
                         }
                     },
-                    &b.domain_of()?.resolve()?.as_ref(),
+                    b.domain_of()?.resolve()?.as_ref(),
                 )
                 .map(DomainPtr::from)
                 .ok(),
@@ -884,13 +885,13 @@ impl Expression {
                                 None
                             }
                         },
-                        &b.domain_of()?.resolve()?.as_ref(),
+                        b.domain_of()?.resolve()?.as_ref(),
                     )
                     .unwrap_or_else(|err| bug!("Got {err} when computing domain of {self}"));
 
                 if let GroundDomain::Int(ranges) = domain {
                     let mut ranges = ranges;
-                    ranges.push(Range::Single(0.into()));
+                    ranges.push(Range::Single(0));
                     return Some(Domain::new_int(ranges));
                 } else {
                     bug!("Domain of {self} was not integer")

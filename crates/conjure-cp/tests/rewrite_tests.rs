@@ -8,6 +8,9 @@ use conjure_cp::{
     rule_engine::{Rule, get_all_rules, get_rule_by_name, resolve_rule_sets, rewrite_naive},
     solver::{Solver, SolverFamily, adaptors},
 };
+#[allow(unused_imports)]
+#[allow(clippy::single_component_path_imports)] // ensure this is linked so we can lookup rules
+use conjure_cp_rules;
 use pretty_assertions::assert_eq;
 use std::process::exit;
 use uniplate::Uniplate;
