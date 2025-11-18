@@ -6,7 +6,7 @@ use std::{
 use anyhow::{anyhow, Result};
 use clap::ValueHint;
 
-use conjure_cp_cli::utils::testing::{serialise_model};
+use conjure_cp_cli::utils::testing::{serialize_model};
 
 use crate::cli::{GlobalArgs, LOGGING_HELP_HEADING};
 use crate::solve::{init_context, parse};
@@ -33,7 +33,7 @@ pub fn run_pretty_command(global_args: GlobalArgs, pretty_args: Args) -> anyhow:
     
     // Running the correct method to acquire pretty string
     match pretty_args.output_format.as_str() {
-        "ast-json" => output = serialise_model(&model),
+        "ast-json" => output = serialize_model(&model),
         _ => panic!() // TODO: Sort that mess,
     }
 

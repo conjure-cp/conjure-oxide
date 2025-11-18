@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use clap::{Args, Parser, Subcommand, arg, command};
+use clap::{Args, Parser, Subcommand};
 
 use clap_complete::Shell;
 use conjure_cp::solver::SolverFamily;
