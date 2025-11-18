@@ -589,6 +589,7 @@ pub fn parse_expression(obj: &JsonValue, scope: &Rc<RefCell<SymbolTable>>) -> Op
             Value::Object(un_op) if unary_operator_names.any(|key| un_op.contains_key(*key)) => {
                 Some(parse_unary_op(un_op, unary_operators, scope).unwrap())
             }
+            Value::Object(op) if op.contains_key("MkOpFlatten") => parse_flatten_op(op, scope),
             Value::Object(op)
                 if op.contains_key("MkOpIndexing") || op.contains_key("MkOpSlicing") =>
             {
@@ -797,6 +798,7 @@ fn parse_indexing_slicing_op(
         "MkOpIndexing" => {
             match &value {
                 Value::Array(op_args) if op_args.len() == 2 => {
+                    println!("{}", &op_args[0]);
                     target = parse_expression(&op_args[0], scope).expect("expected an expression");
                     indices.push(Some(
                         parse_expression(&op_args[1], scope).expect("expected an expression"),
@@ -856,6 +858,26 @@ fn parse_indexing_slicing_op(
             Moo::new(target),
             indices,
         ))
+    }
+}
+
+fn parse_flatten_op(
+    op: &serde_json::Map<String, Value>,
+    scope: &Rc<RefCell<SymbolTable>>,
+) -> Option<Expression> {
+    let args = op.get("MkOpFlatten")?.as_array()?;
+
+    let n = parse_expression(&args[0], scope);
+    let matrix = parse_expression(&args[1], scope)?;
+
+    if let Some(n) = n {
+        Some(Expression::Flatten(
+            Metadata::new(),
+            Some(Moo::new(n)),
+            Moo::new(matrix),
+        ))
+    } else {
+        Some(Expression::Flatten(Metadata::new(), None, Moo::new(matrix)))
     }
 }
 
