@@ -123,13 +123,11 @@ module.exports = grammar ({
       "}"
     ),
 
-    set_domain: $ => choice(
-      seq(
+    set_domain: $ => seq(
         "set",
         optional(seq("(", $.set_attributes, ")")),
         "of",
         field("value_domain", $.domain)
-      )
     ),
 
     set_attributes: $ => choice(
@@ -184,9 +182,10 @@ module.exports = grammar ({
       field("or_expression", $.or_expr),
       field("implication", $.implication),
       field("iff_expr", $.iff_expr),
-      field("quantifier_expression_bool", $.quantifier_expr_bool),
+      field("list_combining_expression_bool", $.list_combining_expr_bool),
       field("sub_bool_expression", $.sub_bool_expr),
-      field("set_operation_bool", $.set_operation_bool)
+      field("set_operation_bool", $.set_operation_bool),
+      field("quantifier_expression", $.quantifier_expr),
     )),
 
     not_expr: $ => prec(20, seq("!", field("expression", choice($.bool_expr, $.comparison_expr, $.atom)))),
@@ -217,11 +216,22 @@ module.exports = grammar ({
 
     toInt_expr: $ => seq("toInt","(", field("expression", choice($.bool_expr, $.comparison_expr)), ")"),
 
-    quantifier_expr_bool: $ => prec(-10, seq(
-      field("quantifier", choice("and", "or", "allDiff")),
+    list_combining_expr_bool: $ => prec(-10, seq(
+      field("operator", choice("and", "or", "allDiff")),
       "(",
       field("arg", $.atom),
       ")"
+    )),
+
+    quantifier_expr: $ => prec(-5, seq(
+      field("quantifier", choice("forAll", "exists")),
+      field("variables", commaSep1($.identifier)),
+      choice(
+        seq("in", field("collection", choice($.set_literal, $.matrix, $.tuple, $.record, $.identifier, $.tuple_matrix_record_index_or_slice))),
+        seq(":", field("domain", $.domain))
+      ),
+      ".",
+      field("expression", choice($.bool_expr, $.comparison_expr))
     )),
 
     from_solution: $ => seq(
@@ -254,7 +264,7 @@ module.exports = grammar ({
       field("product_expression", $.product_expr),
       field("sum_expression", $.sum_expr),
       field("sub_arith_expression", $.sub_arith_expr),
-      field("quantifier_expression_arith", $.quantifier_expr_arith),
+      field("list_combining_expression_arith", $.list_combining_expr_arith),
     )),
 
     atom: $ => prec(-1, choice(
@@ -388,8 +398,8 @@ module.exports = grammar ({
 
     additive_op: $ => choice("+", "-"),
 
-    quantifier_expr_arith: $ => prec(-10, seq(
-      field("quantifier", choice("min", "max", "sum")),
+    list_combining_expr_arith: $ => prec(-10, seq(
+      field("operator", choice("min", "max", "sum")),
       "(",
       field("arg", $.atom),
       ")"
