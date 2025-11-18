@@ -1,4 +1,4 @@
-name: "Hygiene"
+name: Hygiene
 
 on:
   push:
@@ -20,7 +20,6 @@ on:
   workflow_dispatch:
 
 env:
-  CARGO_INCREMENTAL: "0"
   # we define the following 3 values as the defaults here, matrix jobs may overwrite their values.
   os: ubuntu-latest
   rust_release: stable
@@ -33,13 +32,39 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - name: free_disk_space.sh
+        run: .github/workflows/tools/free_disk_space.sh
+
+      - name: Restore cache
+        id: restore_cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+            ~/conjure
+          key: hygiene--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.event.repository.updated_at }}
+          restore-keys: hygiene--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}
+
       - name: "Install rust-toolchain.toml"
         run: rustup toolchain install
 
-      - name: Rust cache
-        uses: Swatinem/rust-cache@v2
-        with:
-          cache-on-failure: true
-          shared-key: ${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.workflow }}--${{ github.job }}
+      - run: RUSTFLAGS="-D warnings" cargo check $(EXTRA_CARGO_CHECK_FLAGS) --workspace --all-targets
+      - run: cargo clippy $(EXTRA_CARGO_CHECK_FLAGS) -- -D warnings -A clippy::unwrap_used -A clippy::expect_used
+      - run: cargo fmt --check
 
-      - run: make EXTRA_CARGO_CHECK_FLAGS=-v check
+      - name: Save cache
+        if: ${{ always() && steps.restore_cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+            ~/conjure
+          key: hygiene--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.event.repository.updated_at }}
