@@ -116,6 +116,7 @@ pub enum Expression {
     /// A safe matrix index.
     ///
     /// See [`Expression::UnsafeIndex`]
+    #[compatible(SMT)]
     SafeIndex(Metadata, Moo<Expression>, Vec<Expression>),
 
     /// A matrix slice: `a[indices]`.
@@ -147,6 +148,7 @@ pub enum Expression {
     /// - If b is false, then `toInt(b) == 0`
     ///
     /// - If b is true, then `toInt(b) == 1`
+    #[compatible(SMT)]
     ToInt(Metadata, Moo<Expression>),
 
     // todo (gskorokhod): Same reason as for Comprehension
@@ -154,23 +156,23 @@ pub enum Expression {
     Scope(Metadata, Moo<SubModel>),
 
     /// `|x|` - absolute value of `x`
-    #[compatible(JsonInput)]
+    #[compatible(JsonInput, SMT)]
     Abs(Metadata, Moo<Expression>),
 
     /// `sum(<vec_expr>)`
-    #[compatible(JsonInput)]
+    #[compatible(JsonInput, SMT)]
     Sum(Metadata, Moo<Expression>),
 
     /// `a * b * c * ...`
-    #[compatible(JsonInput)]
+    #[compatible(JsonInput, SMT)]
     Product(Metadata, Moo<Expression>),
 
     /// `min(<vec_expr>)`
-    #[compatible(JsonInput)]
+    #[compatible(JsonInput, SMT)]
     Min(Metadata, Moo<Expression>),
 
     /// `max(<vec_expr>)`
-    #[compatible(JsonInput)]
+    #[compatible(JsonInput, SMT)]
     Max(Metadata, Moo<Expression>),
 
     /// `not(a)`
@@ -220,19 +222,20 @@ pub enum Expression {
     #[compatible(JsonInput, SMT)]
     Neq(Metadata, Moo<Expression>, Moo<Expression>),
 
-    #[compatible(JsonInput)]
+    #[compatible(JsonInput, SMT)]
     Geq(Metadata, Moo<Expression>, Moo<Expression>),
 
-    #[compatible(JsonInput)]
+    #[compatible(JsonInput, SMT)]
     Leq(Metadata, Moo<Expression>, Moo<Expression>),
 
-    #[compatible(JsonInput)]
+    #[compatible(JsonInput, SMT)]
     Gt(Metadata, Moo<Expression>, Moo<Expression>),
 
-    #[compatible(JsonInput)]
+    #[compatible(JsonInput, SMT)]
     Lt(Metadata, Moo<Expression>, Moo<Expression>),
 
     /// Division after preventing division by zero, usually with a bubble
+    #[compatible(SMT)]
     SafeDiv(Metadata, Moo<Expression>, Moo<Expression>),
 
     /// Division with a possibly undefined value (division by 0)
@@ -240,6 +243,7 @@ pub enum Expression {
     UnsafeDiv(Metadata, Moo<Expression>, Moo<Expression>),
 
     /// Modulo after preventing mod 0, usually with a bubble
+    #[compatible(SMT)]
     SafeMod(Metadata, Moo<Expression>, Moo<Expression>),
 
     /// Modulo with a possibly undefined value (mod 0)
@@ -247,7 +251,7 @@ pub enum Expression {
     UnsafeMod(Metadata, Moo<Expression>, Moo<Expression>),
 
     /// Negation: `-x`
-    #[compatible(JsonInput)]
+    #[compatible(JsonInput, SMT)]
     Neg(Metadata, Moo<Expression>),
 
     /// Unsafe power`x**y` (possibly undefined)
