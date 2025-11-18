@@ -1,5 +1,6 @@
 mod adaptor;
 mod convert_model;
+mod helpers;
 mod store;
 mod theories;
 
