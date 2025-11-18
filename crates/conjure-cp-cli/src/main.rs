@@ -74,13 +74,13 @@ fn setup_logging(global_args: &GlobalArgs) -> anyhow::Result<()> {
     let json_layer = tracing_subscriber::fmt::layer()
         .json()
         .with_writer(Arc::new(json_log_file))
-        .with_filter(LevelFilter::TRACE);
+        .with_filter(LevelFilter::ERROR);
 
     let file_layer = tracing_subscriber::fmt::layer()
         .compact()
         .with_ansi(false)
         .with_writer(Arc::new(log_file))
-        .with_filter(LevelFilter::TRACE);
+        .with_filter(LevelFilter::ERROR);
 
     let default_stderr_level = if global_args.verbose {
         LevelFilter::DEBUG
