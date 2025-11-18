@@ -224,9 +224,7 @@ fn get_or_create_representation(
 ) -> Option<Vec<Box<dyn Representation>>> {
     // TODO: pick representations recursively for nested abstract domains: e.g. sets in sets.
 
-    let dom = symbols
-        .resolve_domain(name)
-        .unwrap_or_else(|| bug!("Domain of {name} could not be resolved"));
+    let dom = symbols.resolve_domain(name).unwrap();
     match dom.as_ref() {
         GroundDomain::Set(_, _) => None, // has no representations yet!
         GroundDomain::Tuple(elem_domains) => {

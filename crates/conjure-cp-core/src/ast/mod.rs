@@ -84,7 +84,7 @@ macro_rules! matrix {
     );
 
     ($($x:expr,)*;$domain:expr) => (
-        $crate::into_matrix![std::vec![$($x),*];domain]
+        $crate::into_matrix![std::vec![$($x),*];$domain]
     )
 }
 

@@ -70,7 +70,6 @@ fn index_matrix_to_atom_impl(expr: &Expr, symbols: &SymbolTable) -> ApplicationR
             )));
 
             let subject = repr.expression_down(symbols)?[&indices_as_name].clone();
-
             Ok(Reduction::pure(subject))
         } else {
             // indices are not constant -> flatten matrix and return [flattened_matrix][flattened_index_expr]

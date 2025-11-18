@@ -111,8 +111,13 @@ impl Domain {
     where
         T: Into<Range<IntVal>> + TryInto<Range<Int>> + Clone,
     {
-        if let Ok(int_rngs) = ranges.iter().cloned().map(TryInto::try_into).try_collect() {
-            return Moo::new(Domain::Ground(Moo::new(GroundDomain::Int(int_rngs))));
+        if let Ok(int_rngs) = ranges
+            .iter()
+            .cloned()
+            .map(TryInto::try_into)
+            .collect::<Result<Vec<_>, _>>()
+        {
+            return Domain::new_int_ground(int_rngs);
         }
         let unresolved_rngs: Vec<Range<IntVal>> = ranges.into_iter().map(Into::into).collect();
         Moo::new(Domain::Unresolved(Moo::new(UnresolvedDomain::Int(
@@ -122,7 +127,8 @@ impl Domain {
 
     /// Create a new ground integer domain with the given ranges
     pub fn new_int_ground(ranges: Vec<Range<Int>>) -> DomainPtr {
-        Moo::new(Domain::Ground(Moo::new(GroundDomain::Int(ranges))))
+        let rngs = Range::squeeze(&ranges);
+        Moo::new(Domain::Ground(Moo::new(GroundDomain::Int(rngs))))
     }
 
     /// Create a new set domain with the given element domain and attributes.

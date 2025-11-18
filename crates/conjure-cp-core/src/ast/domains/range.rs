@@ -86,6 +86,29 @@ impl<A: Ord + Clone> Range<A> {
             }
         }
     }
+
+    /// Given a slice of ranges, create a single range that spans from the start
+    /// of the leftmost range to the end of the rightmost range.
+    /// An empty slice is considered equivalent to `Range::unbounded`.
+    pub fn spanning(rngs: &[Range<A>]) -> Range<A> {
+        if rngs.is_empty() {
+            return Range::Unbounded;
+        }
+
+        let mut lo = rngs[0].low();
+        let mut hi = rngs[0].high();
+        for rng in rngs {
+            lo = match (lo, rng.low()) {
+                (Some(curr), Some(new)) => Some(curr.min(new)),
+                _ => None,
+            };
+            hi = match (hi, rng.high()) {
+                (Some(curr), Some(new)) => Some(curr.max(new)),
+                _ => None,
+            };
+        }
+        Range::new(lo.cloned(), hi.cloned())
+    }
 }
 
 impl<A: Num + Ord + Clone> Range<A> {

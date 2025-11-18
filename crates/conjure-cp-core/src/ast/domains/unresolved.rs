@@ -278,7 +278,14 @@ impl UnresolvedDomain {
                 })
                 .collect::<Option<_>>()
                 .map(GroundDomain::Record),
-            UnresolvedDomain::Reference(_) => None,
+            UnresolvedDomain::Reference(re) => re
+                .ptr
+                .as_domain_letting()
+                .unwrap_or_else(|| {
+                    bug!("Reference domain should point to domain letting, but got {re}")
+                })
+                .resolve()
+                .map(Moo::unwrap_or_clone),
         }
     }
 
@@ -325,6 +332,7 @@ impl UnresolvedDomain {
                 Err(DomainOpError::NotGround)
             }
             // TODO: Could we define semantics for merging record domains?
+            #[allow(unreachable_patterns)] // Technically redundant but logically makes sense
             (UnresolvedDomain::Record(_), _) | (_, UnresolvedDomain::Record(_)) => {
                 Err(DomainOpError::WrongType)
             }

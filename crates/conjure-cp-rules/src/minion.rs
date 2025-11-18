@@ -14,8 +14,8 @@ use conjure_cp::ast::categories::Category;
 use conjure_cp::{
     ast::Metadata,
     ast::{
-        Atom, Domain, Expression as Expr, Literal as Lit, MaybeTypeable, Range, Reference,
-        ReturnType, SymbolTable,
+        Atom, Expression as Expr, Literal as Lit, MaybeTypeable, Range, Reference, ReturnType,
+        SymbolTable,
     },
     into_matrix_expr, matrix_expr,
     rule_engine::{

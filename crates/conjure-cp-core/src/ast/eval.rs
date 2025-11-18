@@ -124,7 +124,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                 return None;
             };
 
-            domain.contains(lit).map(Lit::Bool).ok()
+            domain.contains(lit).ok().map(Into::into)
         }
         Expr::Atomic(_, Atom::Literal(c)) => Some(c.clone()),
         Expr::Atomic(_, Atom::Reference(_)) => None,
@@ -163,7 +163,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                         return None;
                     };
 
-                    assert_eq!(indices.len(), 1, "nested tuples not supported yet");
+                    assert!(indices.len() == 1, "nested tuples not supported yet");
 
                     let Lit::Int(index) = indices[0].clone() else {
                         return None;
@@ -183,7 +183,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                         return None;
                     };
 
-                    assert_eq!(indices.len(), 1, "nested record not supported yet");
+                    assert!(indices.len() == 1, "nested record not supported yet");
 
                     let Lit::Int(index) = indices[0].clone() else {
                         return None;
