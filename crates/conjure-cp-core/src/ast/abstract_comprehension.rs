@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::{
     cell::RefCell,
     fmt::{Display, Formatter},
+    ops::Deref,
     rc::Rc,
 };
 use uniplate::Uniplate;
@@ -45,16 +46,45 @@ impl AbstractComprehension {
         self.return_expr.domain_of()
     }
 
+    pub fn new_domain_generator(&mut self, domain: Domain) -> Name {
+        let name = self
+            .symbols
+            .borrow_mut()
+            .gensym(&domain)
+            .name()
+            .deref()
+            .to_owned();
+        self.add_domain_generator(name.clone(), domain);
+        name
+    }
+
     pub fn add_domain_generator(&mut self, name: Name, domain: Domain) {
-        self.symbols.borrow_mut().insert(DeclarationPtr::new_var(name.clone(), domain.clone()));
+        self.symbols
+            .borrow_mut()
+            .insert(DeclarationPtr::new_var(name.clone(), domain.clone()));
         self.qualifiers
             .push(Qualifier::Generator(Generator::DomainGenerator(
                 name, domain,
             )));
     }
 
+    pub fn new_expression_generator(&mut self, expr: Expression) -> Name {
+        let name = self
+            .symbols
+            .borrow_mut()
+            .gensym(&expr.domain_of().expect("Expression must have a domain"))
+            .name()
+            .deref()
+            .to_owned();
+        self.add_expression_generator(name.clone(), expr);
+        name
+    }
+
     pub fn add_expression_generator(&mut self, name: Name, expr: Expression) {
-        self.symbols.borrow_mut().insert(DeclarationPtr::new_var(name.clone(), expr.domain_of().unwrap()));
+        self.symbols.borrow_mut().insert(DeclarationPtr::new_var(
+            name.clone(),
+            expr.domain_of().unwrap(),
+        ));
         self.qualifiers
             .push(Qualifier::Generator(Generator::ExpressionGenerator(
                 name, expr,
