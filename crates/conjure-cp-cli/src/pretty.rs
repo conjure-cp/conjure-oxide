@@ -3,7 +3,7 @@ use std::{
     sync::{Arc},
 };
 
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow};
 use clap::ValueHint;
 
 use conjure_cp_cli::utils::testing::{serialize_model};
@@ -27,15 +27,13 @@ pub fn run_pretty_command(global_args: GlobalArgs, pretty_args: Args) -> anyhow:
     let input_file = pretty_args.input_file.clone();
     let context = init_context(&global_args, input_file)?;
     let model = parse(&global_args, Arc::clone(&context))?;
-
-    // Defining the variable to store the output;
-    let output: Result<String, serde_json::Error>; 
     
     // Running the correct method to acquire pretty string
-    match pretty_args.output_format.as_str() {
-        "ast-json" => output = serialize_model(&model),
-        _ => panic!() // TODO: Sort that mess,
-    }
+    let output = match pretty_args.output_format.as_str() {
+        "ast-json" => serialize_model(&model),
+        // "add_new_flag" => method(),
+        _ => return Err(anyhow!("Unknown output format {}; supports [ast-json]", &pretty_args.output_format)),
+    };
 
     if output.is_ok() {
         println!("{}", output.unwrap());
