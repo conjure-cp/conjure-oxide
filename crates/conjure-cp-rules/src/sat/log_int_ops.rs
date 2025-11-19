@@ -895,7 +895,7 @@ fn cnf_int_safediv(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     ))
 }
 
-/*
+
 /// Converts SafeMod of SATInts to a single SATInt
 ///
 /// ```text
@@ -903,8 +903,11 @@ fn cnf_int_safediv(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 ///
 /// ```
 #[register_rule(("SAT", 4100))]
-fn cnf_int_safemod(expr: &Expr, _: &SymbolTable) -> ApplicationResult {}
+fn cnf_int_safemod(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    
+}
 
+/*
 /// Converts SafePow of SATInts to a single SATInt
 ///
 /// ```text
