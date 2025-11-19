@@ -43,8 +43,8 @@ pub fn get_solutions(
             "Writing solver input file to {}",
             solver_input_file.display()
         );
-        let file = Box::new(std::fs::File::create(solver_input_file)?);
-        solver.write_solver_input_file(&mut (file as Box<dyn std::io::Write>))?;
+        let mut file = std::fs::File::create(solver_input_file)?;
+        solver.write_solver_input_file(&mut file)?;
     }
 
     eprintln!("Running {adaptor_name}...");

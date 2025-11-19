@@ -349,7 +349,7 @@ fn reduce_solve_xyz() {
         ))
         .unwrap();
 
-    let solver: Solver = Solver::new(adaptors::Minion::new());
+    let solver: Solver<adaptors::Minion> = Solver::new(adaptors::Minion::new());
     let solver = solver.load_model(model).unwrap();
     solver.solve(Box::new(|_| true)).unwrap();
 }
@@ -709,7 +709,7 @@ fn rewrite_solve_xyz() {
 
     assert!(rewritten_expr.iter().all(is_simple));
 
-    let solver: Solver = Solver::new(adaptors::Minion::new());
+    let solver: Solver<adaptors::Minion> = Solver::new(adaptors::Minion::new());
     let solver = solver.load_model(model).unwrap();
     solver.solve(Box::new(|_| true)).unwrap();
 }

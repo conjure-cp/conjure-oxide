@@ -171,7 +171,7 @@ impl SolverAdaptor for Minion {
 
     fn write_solver_input_file(
         &self,
-        writer: &mut Box<dyn std::io::Write>,
+        writer: &mut impl std::io::Write,
     ) -> Result<(), std::io::Error> {
         let model = self.model.as_ref().expect("Minion solver adaptor should have a model as write_solver_input_file should only be called in the LoadedModel state.");
         minion_sys::print::write_minion_file(writer, model)

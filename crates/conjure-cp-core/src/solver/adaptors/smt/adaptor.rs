@@ -102,7 +102,7 @@ impl SolverAdaptor for Smt {
 
     fn write_solver_input_file(
         &self,
-        writer: &mut Box<dyn std::io::Write>,
+        writer: &mut impl std::io::Write,
     ) -> Result<(), std::io::Error> {
         let smt2 = self.solver_inst.to_smt2();
         writer.write(smt2.as_bytes()).map(|_| ())
