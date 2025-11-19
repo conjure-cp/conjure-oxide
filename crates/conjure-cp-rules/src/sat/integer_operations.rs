@@ -830,6 +830,15 @@ fn cnf_int_safediv(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let denom_bits = tseytin_select_array(denom_bits[BITS - 1].clone(), &denom_bits.clone(), &minus_denom.clone(), &mut new_clauses, &mut new_symbols);
 
 
+    let minus_numer = tseytin_negate(&numer_bits.clone(), BITS, &mut new_clauses, &mut new_symbols);
+    let minus_denom = tseytin_negate(&denom_bits.clone(), BITS, &mut new_clauses, &mut new_symbols);
+
+    let sign_bit = tseytin_xor(numer_bits[BITS - 1].clone(), denom_bits[BITS - 1].clone(), &mut new_clauses, &mut new_symbols);
+
+    let numer_bits = tseytin_select_array(numer_bits[BITS - 1].clone(), &numer_bits.clone(), &minus_numer.clone(), &mut new_clauses, &mut new_symbols);
+    let denom_bits = tseytin_select_array(denom_bits[BITS - 1].clone(), &denom_bits.clone(), &minus_denom.clone(), &mut new_clauses, &mut new_symbols);
+
+
     let mut r = numer_bits.clone();
     r.extend(std::iter::repeat_n(r[bit_count - 1].clone(), bit_count));
     let mut d = std::iter::repeat_n(false.into(), bit_count).collect_vec();
