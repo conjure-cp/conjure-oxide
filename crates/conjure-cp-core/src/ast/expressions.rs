@@ -496,6 +496,19 @@ pub enum Expression {
     /// This is for compatibility with backends that do not support multiplication over vectors.
     #[compatible(SMT)]
     PairwiseProduct(Metadata, Moo<Expression>, Moo<Expression>),
+
+    /// Lexicographical < between two matrices
+    /// E.g. [1, 1] < [2, 1] and [1, 1] < [1, 2]
+    LexLt(Metadata, Moo<Expression>, Moo<Expression>),
+
+    /// Lexicographical > between two matrices
+    LexGt(Metadata, Moo<Expression>, Moo<Expression>),
+
+    /// Lexicographical <= between two matrices
+    LexLeq(Metadata, Moo<Expression>, Moo<Expression>),
+
+    /// Lexicographical >= between two matrices
+    LexGeq(Metadata, Moo<Expression>, Moo<Expression>),
 }
 
 // for the given matrix literal, return a bounded domain from the min to max of applying op to each
@@ -842,6 +855,10 @@ impl Expression {
                 .apply_i32(|a, b| Some(a * b), b.domain_of()?.resolve()?.as_ref())
                 .map(DomainPtr::from)
                 .ok(),
+            Expression::LexLt(..) => Some(Domain::Bool),
+            Expression::LexGt(..) => Some(Domain::Bool),
+            Expression::LexLeq(..) => Some(Domain::Bool),
+            Expression::LexGeq(..) => Some(Domain::Bool),
         };
         if let Some(dom) = &ret
             && let Some(ranges) = dom.as_int_ground()
@@ -1371,6 +1388,17 @@ impl Display for Expression {
 
             Expression::PairwiseSum(_, a, b) => write!(f, "PairwiseSum({a}, {b})"),
             Expression::PairwiseProduct(_, a, b) => write!(f, "PairwiseProduct({a}, {b})"),
+
+            Expression::LexLt(_, a, b) => write!(f, "({a} <lex {b})"),
+            Expression::LexLeq(_, a, b) => write!(f, "({a} <=lex {b})"),
+            Expression::LexGt(_, a, b) => write!(f, "({a} >lex {b})"),
+            Expression::LexGeq(_, a, b) => write!(f, "({a} >=lex {b})"),
+            Expression::FlatLexLt(_, a, b) => {
+                write!(f, "FlatLexLt({}, {})", pretty_vec(a), pretty_vec(b))
+            }
+            Expression::FlatLexLeq(_, a, b) => {
+                write!(f, "FlatLexLeq({}, {})", pretty_vec(a), pretty_vec(b))
+            }
         }
     }
 }
@@ -1471,6 +1499,10 @@ impl Typeable for Expression {
             Expression::SATInt(_, _) => ReturnType::Int,
             Expression::PairwiseSum(_, _, _) => ReturnType::Int,
             Expression::PairwiseProduct(_, _, _) => ReturnType::Int,
+            Expression::LexLt(..) => ReturnType::Bool,
+            Expression::LexGt(..) => ReturnType::Bool,
+            Expression::LexLeq(..) => ReturnType::Bool,
+            Expression::LexGeq(..) => ReturnType::Bool,
         }
     }
 }
