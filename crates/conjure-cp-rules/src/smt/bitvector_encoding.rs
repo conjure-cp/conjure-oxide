@@ -2,8 +2,17 @@ use conjure_cp::ast::{Expression, Metadata, Moo, SymbolTable};
 use conjure_cp::rule_engine::{
     ApplicationError, ApplicationResult, Reduction, register_rule, register_rule_set,
 };
+use conjure_cp::solver::SolverFamily;
+use conjure_cp::solver::adaptors::smt::{IntTheory, TheoryConfig};
 
-register_rule_set!("SmtBvInts", ("Base"));
+// Only applicable when the Bitvector theory is being used for integers
+register_rule_set!("SmtBvInts", ("Base"), |f: &SolverFamily| matches!(
+    f,
+    SolverFamily::Smt(TheoryConfig {
+        ints: IntTheory::Bv,
+        ..
+    })
+));
 
 #[register_rule(("SmtBvInts", 1000))]
 fn fold_list_exprs_pairwise(expr: &Expression, _: &SymbolTable) -> ApplicationResult {

@@ -29,7 +29,9 @@ use uniplate::Uniplate;
 
 use ApplicationError::RuleNotApplicable;
 
-register_rule_set!("Minion", ("Base"), (SolverFamily::Minion));
+register_rule_set!("Minion", ("Base"), |f: &SolverFamily| {
+    matches!(f, SolverFamily::Minion)
+});
 
 #[register_rule(("Minion", 4200))]
 fn introduce_producteq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {

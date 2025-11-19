@@ -8,7 +8,10 @@ use conjure_cp::rule_engine::{
 use conjure_cp::solver::SolverFamily;
 use uniplate::Uniplate;
 
-register_rule_set!("Smt", ("Base"), (SolverFamily::Smt));
+// These rules are applicable regardless of what theories are used.
+register_rule_set!("Smt", ("Base"), |f: &SolverFamily| {
+    matches!(f, SolverFamily::Smt(..))
+});
 
 #[register_rule(("Smt", 1000))]
 fn flatten_indomain(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
