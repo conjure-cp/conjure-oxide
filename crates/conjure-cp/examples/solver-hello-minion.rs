@@ -6,7 +6,7 @@ use conjure_cp::defaults::DEFAULT_RULE_SETS;
 use conjure_cp::{
     ast::{Literal, Name},
     rule_engine::rewrite_naive,
-    solver::states::ExecutionSuccess,
+    solver::{adaptors::Minion, states::ExecutionSuccess},
 };
 use itertools::Itertools;
 use std::collections::HashMap;

@@ -153,7 +153,7 @@ pub fn get_rules_grouped<'a>(
     Ok(grouped)
 }
 
-/// Resolves the final set of rule sets to apply based on target solver family and extra rule set names.
+/// Resolves the final set of rule sets to apply based on target solver and extra rule set names.
 ///
 /// # Arguments
 /// - `target_solver` The solver family we're targeting
