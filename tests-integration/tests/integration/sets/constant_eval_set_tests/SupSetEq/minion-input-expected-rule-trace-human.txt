@@ -1,0 +1,54 @@
+Model before rewriting:
+
+find a: bool
+find b: bool
+find c: bool
+
+such that
+
+(a = ({1,2,3} supsetEq {2,3})),
+(b = ({1,2,3} supsetEq {1,2,3})),
+(c = ({1,2,3} supsetEq {4}))
+
+--
+
+(a = ({1,2,3} supsetEq {2,3})),
+(b = ({1,2,3} supsetEq {1,2,3})),
+(c = ({1,2,3} supsetEq {4})), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(a = true),
+(b = true),
+(c = false) 
+
+--
+
+(a = true), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify(true, a) 
+
+--
+
+(b = true), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify(true, b) 
+
+--
+
+(c = false), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify(false, c) 
+
+--
+
+Final model:
+
+find a: bool
+find b: bool
+find c: bool
+
+such that
+
+Reify(true, a),
+Reify(true, b),
+Reify(false, c)
+

@@ -1,0 +1,205 @@
+Model before rewriting:
+
+letting n be 6
+letting price be [215,275,335,355,420,580;int(1..6)]
+letting total_ be 1505
+find x: matrix indexed by [[int(1..6)]] of int(0..100000)
+
+such that
+
+(total_ = sum([given i: int(1..6)
+
+such that
+
+product([price[i],x[i];int(1..2)])
+ | i: int(1..6),]))
+
+--
+
+(total_ = sum([given i: int(1..6)
+
+such that
+
+product([price[i],x#matrix_to_atom[i];int(1..2)])
+ | i: int(1..6),])), 
+   ~~> select_representation_matrix ([("Base", 8001)]) 
+(total_ = sum([given i: int(1..6)
+
+such that
+
+product([price[i],x#matrix_to_atom[i];int(1..2)])
+ | i: int(1..6),])) 
+new variables:
+  find x#matrix_to_atom_1: int(0..100000)
+  find x#matrix_to_atom_2: int(0..100000)
+  find x#matrix_to_atom_3: int(0..100000)
+  find x#matrix_to_atom_4: int(0..100000)
+  find x#matrix_to_atom_5: int(0..100000)
+  find x#matrix_to_atom_6: int(0..100000)
+--
+
+total_, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+1505 
+
+--
+
+Model before rewriting:
+
+find i: int(1..6)
+find __0: int(215..580)
+find __1: int(0..100000)
+
+such that
+
+(0 != product([__0,__1;int(1..2)]))
+
+--
+
+(0 != product([__0,__1;int(1..2)])), 
+   ~~> flatten_generic ([("Minion", 4200)]) 
+(0 != __2) 
+new variables:
+  find __2: int(0..58000000)
+new constraints:
+  __2 =aux product([__0,__1;int(1..2)])
+--
+
+product([__0,__1;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+product([__0,__1;int(1..)]) 
+
+--
+
+__2 =aux product([__0,__1;int(1..)]), 
+   ~~> introduce_producteq ([("Minion", 4200)]) 
+FlatProductEq(__1,__0,__2) 
+
+--
+
+Final model:
+
+find i: int(1..6)
+find __0: int(215..580)
+find __1: int(0..100000)
+find __2: int(0..58000000)
+
+such that
+
+(0 != __2),
+FlatProductEq(__1,__0,__2)
+
+Model before rewriting:
+
+given i: int(1..6)
+
+such that
+
+product([price[i],x#matrix_to_atom[i];int(1..2)])
+
+--
+
+price[i], 
+   ~~> index_to_bubble ([("Bubble", 6000)]) 
+{price[i] @ and([__inDomain(i,int(1..6));int(1..)])} 
+
+--
+
+product([{price[i] @ and([__inDomain(i,int(1..6));int(1..)])},x#matrix_to_atom[i];int(1..2)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+product([price[i],x#matrix_to_atom[i];int(1..2)]) 
+
+--
+
+x#matrix_to_atom[i], 
+   ~~> index_to_bubble ([("Bubble", 6000)]) 
+{x#matrix_to_atom[i] @ and([__inDomain(i,int(1..6));int(1..)])} 
+
+--
+
+product([price[i],{x#matrix_to_atom[i] @ and([__inDomain(i,int(1..6));int(1..)])};int(1..2)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+product([price[i],x#matrix_to_atom[i];int(1..2)]) 
+
+--
+
+price, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+[215,275,335,355,420,580;int(1..6)] 
+
+--
+
+product([[215,275,335,355,420,580;int(1..6)][i],x#matrix_to_atom[i];int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+product([[215,275,335,355,420,580;int(1..6)][i],x#matrix_to_atom[i];int(1..)]) 
+
+--
+
+[215,275,335,355,420,580;int(1..6)][i], 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+[215,275,335,355,420,580;int(1..)][i] 
+
+--
+
+Final model:
+
+given i: int(1..6)
+
+such that
+
+product([[215,275,335,355,420,580;int(1..)][i],x#matrix_to_atom[i];int(1..)])
+
+sum([given i: int(1..6)
+
+such that
+
+product([price[i],x#matrix_to_atom[i];int(1..2)])
+ | i: int(1..6),__0: int(215..580),__1: int(0..100000),__2: int(0..58000000),]), 
+   ~~> expand_comprehension_ac ([("Better_AC_Comprehension_Expansion", 2001)]) 
+sum([product([[215,275,335,355,420,580;int(1..)][1],x#matrix_to_atom[1];int(1..)]),product([[215,275,335,355,420,580;int(1..)][2],x#matrix_to_atom[2];int(1..)]),product([[215,275,335,355,420,580;int(1..)][3],x#matrix_to_atom[3];int(1..)]),product([[215,275,335,355,420,580;int(1..)][4],x#matrix_to_atom[4];int(1..)]),product([[215,275,335,355,420,580;int(1..)][5],x#matrix_to_atom[5];int(1..)]),product([[215,275,335,355,420,580;int(1..)][6],x#matrix_to_atom[6];int(1..)]);int(1..)]) 
+
+--
+
+(1505 = sum([product([[215,275,335,355,420,580;int(1..)][1],x#matrix_to_atom[1];int(1..)]),product([[215,275,335,355,420,580;int(1..)][2],x#matrix_to_atom[2];int(1..)]),product([[215,275,335,355,420,580;int(1..)][3],x#matrix_to_atom[3];int(1..)]),product([[215,275,335,355,420,580;int(1..)][4],x#matrix_to_atom[4];int(1..)]),product([[215,275,335,355,420,580;int(1..)][5],x#matrix_to_atom[5];int(1..)]),product([[215,275,335,355,420,580;int(1..)][6],x#matrix_to_atom[6];int(1..)]);int(1..)])), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(1505 = sum([product([215,x#matrix_to_atom[1];int(1..)]),product([275,x#matrix_to_atom[2];int(1..)]),product([335,x#matrix_to_atom[3];int(1..)]),product([355,x#matrix_to_atom[4];int(1..)]),product([420,x#matrix_to_atom[5];int(1..)]),product([580,x#matrix_to_atom[6];int(1..)]);int(1..)])) 
+
+--
+
+(1505 = sum([product([215,x#matrix_to_atom[1];int(1..)]),product([275,x#matrix_to_atom[2];int(1..)]),product([335,x#matrix_to_atom[3];int(1..)]),product([355,x#matrix_to_atom[4];int(1..)]),product([420,x#matrix_to_atom[5];int(1..)]),product([580,x#matrix_to_atom[6];int(1..)]);int(1..)])), 
+   ~~> index_matrix_to_atom ([("Base", 5000)]) 
+(1505 = sum([product([215,x#matrix_to_atom_1;int(1..)]),product([275,x#matrix_to_atom_2;int(1..)]),product([335,x#matrix_to_atom_3;int(1..)]),product([355,x#matrix_to_atom_4;int(1..)]),product([420,x#matrix_to_atom_5;int(1..)]),product([580,x#matrix_to_atom_6;int(1..)]);int(1..)])) 
+
+--
+
+(1505 = sum([product([215,x#matrix_to_atom_1;int(1..)]),product([275,x#matrix_to_atom_2;int(1..)]),product([335,x#matrix_to_atom_3;int(1..)]),product([355,x#matrix_to_atom_4;int(1..)]),product([420,x#matrix_to_atom_5;int(1..)]),product([580,x#matrix_to_atom_6;int(1..)]);int(1..)])), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+and([FlatWeightedSumLeq([215, 275, 335, 355, 420, 580],[x#matrix_to_atom_1, x#matrix_to_atom_2, x#matrix_to_atom_3, x#matrix_to_atom_4, x#matrix_to_atom_5, x#matrix_to_atom_6],1505),FlatWeightedSumGeq([215, 275, 335, 355, 420, 580],[x#matrix_to_atom_1, x#matrix_to_atom_2, x#matrix_to_atom_3, x#matrix_to_atom_4, x#matrix_to_atom_5, x#matrix_to_atom_6],1505);int(1..)]) 
+
+--
+
+and([FlatWeightedSumLeq([215, 275, 335, 355, 420, 580],[x#matrix_to_atom_1, x#matrix_to_atom_2, x#matrix_to_atom_3, x#matrix_to_atom_4, x#matrix_to_atom_5, x#matrix_to_atom_6],1505),FlatWeightedSumGeq([215, 275, 335, 355, 420, 580],[x#matrix_to_atom_1, x#matrix_to_atom_2, x#matrix_to_atom_3, x#matrix_to_atom_4, x#matrix_to_atom_5, x#matrix_to_atom_6],1505);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+FlatWeightedSumLeq([215, 275, 335, 355, 420, 580],[x#matrix_to_atom_1, x#matrix_to_atom_2, x#matrix_to_atom_3, x#matrix_to_atom_4, x#matrix_to_atom_5, x#matrix_to_atom_6],1505),
+FlatWeightedSumGeq([215, 275, 335, 355, 420, 580],[x#matrix_to_atom_1, x#matrix_to_atom_2, x#matrix_to_atom_3, x#matrix_to_atom_4, x#matrix_to_atom_5, x#matrix_to_atom_6],1505) 
+
+--
+
+Final model:
+
+letting n be 6
+letting price be [215,275,335,355,420,580;int(1..6)]
+letting total_ be 1505
+find x: matrix indexed by [[int(1..6)]] of int(0..100000)
+find x#matrix_to_atom_1: int(0..100000)
+find x#matrix_to_atom_2: int(0..100000)
+find x#matrix_to_atom_3: int(0..100000)
+find x#matrix_to_atom_4: int(0..100000)
+find x#matrix_to_atom_5: int(0..100000)
+find x#matrix_to_atom_6: int(0..100000)
+
+such that
+
+FlatWeightedSumLeq([215, 275, 335, 355, 420, 580],[x#matrix_to_atom_1, x#matrix_to_atom_2, x#matrix_to_atom_3, x#matrix_to_atom_4, x#matrix_to_atom_5, x#matrix_to_atom_6],1505),
+FlatWeightedSumGeq([215, 275, 335, 355, 420, 580],[x#matrix_to_atom_1, x#matrix_to_atom_2, x#matrix_to_atom_3, x#matrix_to_atom_4, x#matrix_to_atom_5, x#matrix_to_atom_6],1505)
+

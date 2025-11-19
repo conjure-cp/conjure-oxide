@@ -213,7 +213,7 @@ fn solver_specific_integration_test(
 ) -> Result<(), Box<dyn Error>> {
     let solver_name = solver.as_str();
 
-    let subscriber = create_scoped_subscriber(path, essence_base, &solver_name);
+    let subscriber = create_scoped_subscriber(path, essence_base, solver_name);
 
     // run tests in sequence not parallel when verbose logging, to ensure the logs are ordered
     // correctly
@@ -228,7 +228,7 @@ fn solver_specific_integration_test(
             integration_test_inner(path, essence_base, extension, config, solver)
         })
     } else {
-        let subscriber = create_scoped_subscriber(path, essence_base, &solver_name);
+        let subscriber = create_scoped_subscriber(path, essence_base, solver_name);
         tracing::subscriber::with_default(subscriber, || {
             integration_test_inner(path, essence_base, extension, config, solver)
         })
@@ -450,8 +450,13 @@ fn integration_test_inner(
 
         // Always overwrite these ones. Unlike the rest, we don't need to selectively do these
         // based on the test results, so they don't get done later.
-        // TODO Fix
-        copy_generated_to_expected(path, essence_base, "minion", "solutions.json", Some(solver))?;
+        copy_generated_to_expected(
+            path,
+            essence_base,
+            solver.as_str(),
+            "solutions.json",
+            Some(solver),
+        )?;
 
         if config.validate_rule_traces {
             copy_human_trace_generated_to_expected(path, essence_base, solver)?;
@@ -619,7 +624,7 @@ fn copy_generated_to_expected(
     extension: &str,
     solver: Option<SolverFamily>,
 ) -> Result<(), std::io::Error> {
-    let marker = solver.map_or("agnostic".into(), |s| s.as_str());
+    let marker = solver.map_or("agnostic", |s| s.as_str());
     std::fs::copy(
         format!("{path}/{marker}-{test_name}.generated-{stage}.{extension}"),
         format!("{path}/{marker}-{test_name}.expected-{stage}.{extension}"),
@@ -634,7 +639,7 @@ fn expected_exists_for(
     extension: &str,
     solver: Option<SolverFamily>,
 ) -> bool {
-    let marker = solver.map_or("agnostic".into(), |s| s.as_str());
+    let marker = solver.map_or("agnostic", |s| s.as_str());
     Path::new(&format!(
         "{path}/{marker}-{test_name}.expected-{stage}.{extension}"
     ))
@@ -677,7 +682,7 @@ pub fn create_scoped_subscriber(
     path: &str,
     test_name: &str,
     solver_name: &str,
-) -> (impl tracing::Subscriber + Send + Sync) {
+) -> impl tracing::Subscriber + Send + Sync {
     let target1_layer = create_file_layer_json(path, test_name, solver_name);
     let target2_layer = create_file_layer_human(path, test_name, solver_name);
     let layered = target1_layer.and_then(target2_layer);
@@ -714,7 +719,7 @@ fn create_file_layer_human(
     path: &str,
     test_name: &str,
     solver_name: &str,
-) -> (impl Layer<Registry> + Send + Sync) {
+) -> impl Layer<Registry> + Send + Sync {
     let file = File::create(format!(
         "{path}/{solver_name}-{test_name}-generated-rule-trace-human.txt"
     ))

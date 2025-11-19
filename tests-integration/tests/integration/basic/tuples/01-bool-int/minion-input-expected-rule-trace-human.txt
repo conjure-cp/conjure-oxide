@@ -1,0 +1,82 @@
+Model before rewriting:
+
+find x: tuple of ([bool, int(1..4)])
+
+such that
+
+(x[1] = false),
+(x[2] = 2)
+
+--
+
+x, 
+   ~~> select_representation ([("Base", 8000)]) 
+x#tuple_to_atom 
+new variables:
+  find x#tuple_to_atom_1: bool
+  find x#tuple_to_atom_2: int(1..4)
+--
+
+x#tuple_to_atom[1], 
+   ~~> tuple_index_to_bubble ([("Bubble", 8000)]) 
+{x#tuple_to_atom[1] @ and([(1 <= 2),(1 >= 1);int(1..)])} 
+
+--
+
+({x#tuple_to_atom[1] @ and([(1 <= 2),(1 >= 1);int(1..)])} = false),
+(x[2] = 2), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(x#tuple_to_atom[1] = false),
+(x[2] = 2) 
+
+--
+
+x, 
+   ~~> select_representation ([("Base", 8000)]) 
+x#tuple_to_atom 
+
+--
+
+x#tuple_to_atom[2], 
+   ~~> tuple_index_to_bubble ([("Bubble", 8000)]) 
+{x#tuple_to_atom[2] @ and([(2 <= 2),(2 >= 1);int(1..)])} 
+
+--
+
+(x#tuple_to_atom[1] = false),
+({x#tuple_to_atom[2] @ and([(2 <= 2),(2 >= 1);int(1..)])} = 2), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(x#tuple_to_atom[1] = false),
+(x#tuple_to_atom[2] = 2) 
+
+--
+
+x#tuple_to_atom[1], 
+   ~~> index_tuple_to_atom ([("Base", 2000)]) 
+x#tuple_to_atom_1 
+
+--
+
+(x#tuple_to_atom_1 = false), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify(false, x#tuple_to_atom_1) 
+
+--
+
+x#tuple_to_atom[2], 
+   ~~> index_tuple_to_atom ([("Base", 2000)]) 
+x#tuple_to_atom_2 
+
+--
+
+Final model:
+
+find x: tuple of ([bool, int(1..4)])
+find x#tuple_to_atom_1: bool
+find x#tuple_to_atom_2: int(1..4)
+
+such that
+
+Reify(false, x#tuple_to_atom_1),
+(x#tuple_to_atom_2 = 2)
+

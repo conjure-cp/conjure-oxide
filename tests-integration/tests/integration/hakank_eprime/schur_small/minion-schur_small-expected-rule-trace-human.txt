@@ -1,0 +1,279 @@
+Model before rewriting:
+
+letting n be 2
+letting num_boxes be 3
+find schur: matrix indexed by [[int(1..2)]] of int(1..3)
+
+such that
+
+and([given i: int(1..2)
+given j: int(1..2)
+given k: int(1..2)
+
+such that
+
+((sum([i,j;int(1..2)]) = k)) -> (!(and([(schur[i] = schur[j]),(schur[j] = schur[k]);int(1..2)])))
+ | i: int(1..2),j: int(1..2),k: int(1..2),])
+
+--
+
+and([given i: int(1..2)
+given j: int(1..2)
+given k: int(1..2)
+
+such that
+
+((sum([i,j;int(1..2)]) = k)) -> (!(and([(schur#matrix_to_atom[i] = schur#matrix_to_atom[j]),(schur#matrix_to_atom[j] = schur#matrix_to_atom[k]);int(1..2)])))
+ | i: int(1..2),j: int(1..2),k: int(1..2),]), 
+   ~~> select_representation_matrix ([("Base", 8001)]) 
+and([given i: int(1..2)
+given j: int(1..2)
+given k: int(1..2)
+
+such that
+
+((sum([i,j;int(1..2)]) = k)) -> (!(and([(schur#matrix_to_atom[i] = schur#matrix_to_atom[j]),(schur#matrix_to_atom[j] = schur#matrix_to_atom[k]);int(1..2)])))
+ | i: int(1..2),j: int(1..2),k: int(1..2),]) 
+new variables:
+  find schur#matrix_to_atom_1: int(1..3)
+  find schur#matrix_to_atom_2: int(1..3)
+--
+
+Model before rewriting:
+
+find i: int(1..2)
+find j: int(1..2)
+find k: int(1..2)
+find __0: bool
+find __1: bool
+
+such that
+
+(true != ((sum([i,j;int(1..2)]) = k)) -> (!(and([__0,__1;int(1..2)]))))
+
+--
+
+(true != ((sum([i,j;int(1..2)]) = k)) -> (!(and([__0,__1;int(1..2)])))), 
+   ~~> flatten_generic ([("Minion", 4200)]) 
+(true != __2) 
+new variables:
+  find __2: bool
+new constraints:
+  __2 =aux ((sum([i,j;int(1..2)]) = k)) -> (!(and([__0,__1;int(1..2)])))
+--
+
+__2 =aux ((sum([i,j;int(1..2)]) = k)) -> (!(and([__0,__1;int(1..2)]))), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify(((sum([i,j;int(1..2)]) = k)) -> (!(and([__0,__1;int(1..2)]))), __2) 
+
+--
+
+((sum([i,j;int(1..2)]) = k)) -> (!(and([__0,__1;int(1..2)]))), 
+   ~~> flatten_imply ([("Minion", 4200)]) 
+(__3) -> (!(and([__0,__1;int(1..2)]))) 
+new variables:
+  find __3: bool
+new constraints:
+  __3 =aux (sum([i,j;int(1..2)]) = k)
+--
+
+(__3) -> (!(and([__0,__1;int(1..2)]))), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
+ReifyImply(!(and([__0,__1;int(1..2)])), __3) 
+
+--
+
+__3 =aux (sum([i,j;int(1..2)]) = k), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify((sum([i,j;int(1..2)]) = k), __3) 
+
+--
+
+!(and([__0,__1;int(1..2)])), 
+   ~~> flatten_generic ([("Minion", 4200)]) 
+!(__4) 
+new variables:
+  find __4: bool
+new constraints:
+  __4 =aux and([__0,__1;int(1..2)])
+--
+
+__4 =aux and([__0,__1;int(1..2)]), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify(and([__0,__1;int(1..2)]), __4) 
+
+--
+
+!(__4), 
+   ~~> not_literal_to_wliteral ([("Minion", 4100)]) 
+WatchedLiteral(__4,false) 
+
+--
+
+sum([i,j;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+sum([i,j;int(1..)]) 
+
+--
+
+(sum([i,j;int(1..)]) = k), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+and([SumLeq([i, j], k),SumGeq([i, j], k);int(1..)]) 
+
+--
+
+and([__0,__1;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+and([__0,__1;int(1..)]) 
+
+--
+
+Final model:
+
+find i: int(1..2)
+find j: int(1..2)
+find k: int(1..2)
+find __0: bool
+find __1: bool
+find __2: bool
+find __3: bool
+find __4: bool
+
+such that
+
+(true != __2),
+Reify(ReifyImply(WatchedLiteral(__4,false), __3), __2),
+Reify(and([SumLeq([i, j], k),SumGeq([i, j], k);int(1..)]), __3),
+Reify(and([__0,__1;int(1..)]), __4)
+
+Model before rewriting:
+
+given i: int(1..2)
+given j: int(1..2)
+given k: int(1..2)
+
+such that
+
+((sum([i,j;int(1..2)]) = k)) -> (!(and([(schur#matrix_to_atom[i] = schur#matrix_to_atom[j]),(schur#matrix_to_atom[j] = schur#matrix_to_atom[k]);int(1..2)])))
+
+--
+
+schur#matrix_to_atom[i], 
+   ~~> index_to_bubble ([("Bubble", 6000)]) 
+{schur#matrix_to_atom[i] @ and([__inDomain(i,int(1..2));int(1..)])} 
+
+--
+
+((sum([i,j;int(1..2)]) = k)) -> (!(and([({schur#matrix_to_atom[i] @ and([__inDomain(i,int(1..2));int(1..)])} = schur#matrix_to_atom[j]),(schur#matrix_to_atom[j] = schur#matrix_to_atom[k]);int(1..2)]))), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+((sum([i,j;int(1..2)]) = k)) -> (!(and([(schur#matrix_to_atom[i] = schur#matrix_to_atom[j]),(schur#matrix_to_atom[j] = schur#matrix_to_atom[k]);int(1..2)]))) 
+
+--
+
+schur#matrix_to_atom[j], 
+   ~~> index_to_bubble ([("Bubble", 6000)]) 
+{schur#matrix_to_atom[j] @ and([__inDomain(j,int(1..2));int(1..)])} 
+
+--
+
+((sum([i,j;int(1..2)]) = k)) -> (!(and([(schur#matrix_to_atom[i] = {schur#matrix_to_atom[j] @ and([__inDomain(j,int(1..2));int(1..)])}),(schur#matrix_to_atom[j] = schur#matrix_to_atom[k]);int(1..2)]))), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+((sum([i,j;int(1..2)]) = k)) -> (!(and([(schur#matrix_to_atom[i] = schur#matrix_to_atom[j]),(schur#matrix_to_atom[j] = schur#matrix_to_atom[k]);int(1..2)]))) 
+
+--
+
+schur#matrix_to_atom[j], 
+   ~~> index_to_bubble ([("Bubble", 6000)]) 
+{schur#matrix_to_atom[j] @ and([__inDomain(j,int(1..2));int(1..)])} 
+
+--
+
+((sum([i,j;int(1..2)]) = k)) -> (!(and([(schur#matrix_to_atom[i] = schur#matrix_to_atom[j]),({schur#matrix_to_atom[j] @ and([__inDomain(j,int(1..2));int(1..)])} = schur#matrix_to_atom[k]);int(1..2)]))), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+((sum([i,j;int(1..2)]) = k)) -> (!(and([(schur#matrix_to_atom[i] = schur#matrix_to_atom[j]),(schur#matrix_to_atom[j] = schur#matrix_to_atom[k]);int(1..2)]))) 
+
+--
+
+schur#matrix_to_atom[k], 
+   ~~> index_to_bubble ([("Bubble", 6000)]) 
+{schur#matrix_to_atom[k] @ and([__inDomain(k,int(1..2));int(1..)])} 
+
+--
+
+((sum([i,j;int(1..2)]) = k)) -> (!(and([(schur#matrix_to_atom[i] = schur#matrix_to_atom[j]),(schur#matrix_to_atom[j] = {schur#matrix_to_atom[k] @ and([__inDomain(k,int(1..2));int(1..)])});int(1..2)]))), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+((sum([i,j;int(1..2)]) = k)) -> (!(and([(schur#matrix_to_atom[i] = schur#matrix_to_atom[j]),(schur#matrix_to_atom[j] = schur#matrix_to_atom[k]);int(1..2)]))) 
+
+--
+
+!(and([(schur#matrix_to_atom[i] = schur#matrix_to_atom[j]),(schur#matrix_to_atom[j] = schur#matrix_to_atom[k]);int(1..2)])), 
+   ~~> not_constraint_to_reify ([("Minion", 4090)]) 
+Reify(and([(schur#matrix_to_atom[i] = schur#matrix_to_atom[j]),(schur#matrix_to_atom[j] = schur#matrix_to_atom[k]);int(1..2)]), false) 
+
+--
+
+sum([i,j;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+sum([i,j;int(1..)]) 
+
+--
+
+(sum([i,j;int(1..)]) = k), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+and([SumLeq([i, j], k),SumGeq([i, j], k);int(1..)]) 
+
+--
+
+and([(schur#matrix_to_atom[i] = schur#matrix_to_atom[j]),(schur#matrix_to_atom[j] = schur#matrix_to_atom[k]);int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+and([(schur#matrix_to_atom[i] = schur#matrix_to_atom[j]),(schur#matrix_to_atom[j] = schur#matrix_to_atom[k]);int(1..)]) 
+
+--
+
+Final model:
+
+given i: int(1..2)
+given j: int(1..2)
+given k: int(1..2)
+
+such that
+
+(and([SumLeq([i, j], k),SumGeq([i, j], k);int(1..)])) -> (Reify(and([(schur#matrix_to_atom[i] = schur#matrix_to_atom[j]),(schur#matrix_to_atom[j] = schur#matrix_to_atom[k]);int(1..)]), false))
+
+and([given i: int(1..2)
+given j: int(1..2)
+given k: int(1..2)
+
+such that
+
+((sum([i,j;int(1..2)]) = k)) -> (!(and([(schur#matrix_to_atom[i] = schur#matrix_to_atom[j]),(schur#matrix_to_atom[j] = schur#matrix_to_atom[k]);int(1..2)])))
+ | i: int(1..2),j: int(1..2),k: int(1..2),__0: bool,__1: bool,__2: bool,__3: bool,__4: bool,]), 
+   ~~> expand_comprehension_ac ([("Better_AC_Comprehension_Expansion", 2001)]) 
+and([(and([SumLeq([1, 1], 2),SumGeq([1, 1], 2);int(1..)])) -> (Reify(and([(schur#matrix_to_atom[1] = schur#matrix_to_atom[1]),(schur#matrix_to_atom[1] = schur#matrix_to_atom[2]);int(1..)]), false));int(1..)]) 
+
+--
+
+and([(and([SumLeq([1, 1], 2),SumGeq([1, 1], 2);int(1..)])) -> (Reify(and([(schur#matrix_to_atom[1] = schur#matrix_to_atom[1]),(schur#matrix_to_atom[1] = schur#matrix_to_atom[2]);int(1..)]), false));int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+Reify(and([(schur#matrix_to_atom[1] = schur#matrix_to_atom[1]),(schur#matrix_to_atom[1] = schur#matrix_to_atom[2]);int(1..)]), false) 
+
+--
+
+Reify(and([(schur#matrix_to_atom[1] = schur#matrix_to_atom[1]),(schur#matrix_to_atom[1] = schur#matrix_to_atom[2]);int(1..)]), false), 
+   ~~> index_matrix_to_atom ([("Base", 5000)]) 
+Reify(and([(schur#matrix_to_atom_1 = schur#matrix_to_atom_1),(schur#matrix_to_atom_1 = schur#matrix_to_atom_2);int(1..)]), false) 
+
+--
+
+Final model:
+
+letting n be 2
+letting num_boxes be 3
+find schur: matrix indexed by [[int(1..2)]] of int(1..3)
+find schur#matrix_to_atom_1: int(1..3)
+find schur#matrix_to_atom_2: int(1..3)
+
+such that
+
+Reify(and([(schur#matrix_to_atom_1 = schur#matrix_to_atom_1),(schur#matrix_to_atom_1 = schur#matrix_to_atom_2);int(1..)]), false)
+

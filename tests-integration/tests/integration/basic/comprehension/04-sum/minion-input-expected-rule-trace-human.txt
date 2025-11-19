@@ -1,0 +1,124 @@
+Model before rewriting:
+
+find a: matrix indexed by [[int(1..2)]] of int(1..2)
+
+such that
+
+(sum([given i: int(1..2)
+
+such that
+
+a[i]
+ | i: int(1..2),]) = 3)
+
+--
+
+(sum([given i: int(1..2)
+
+such that
+
+a#matrix_to_atom[i]
+ | i: int(1..2),]) = 3), 
+   ~~> select_representation_matrix ([("Base", 8001)]) 
+(sum([given i: int(1..2)
+
+such that
+
+a#matrix_to_atom[i]
+ | i: int(1..2),]) = 3) 
+new variables:
+  find a#matrix_to_atom_1: int(1..2)
+  find a#matrix_to_atom_2: int(1..2)
+--
+
+Model before rewriting:
+
+find i: int(1..2)
+find __0: int(1..2)
+
+such that
+
+(0 != __0)
+
+--
+
+Final model:
+
+find i: int(1..2)
+find __0: int(1..2)
+
+such that
+
+(0 != __0)
+
+Model before rewriting:
+
+given i: int(1..2)
+
+such that
+
+a#matrix_to_atom[i]
+
+--
+
+a#matrix_to_atom[i], 
+   ~~> index_to_bubble ([("Bubble", 6000)]) 
+{a#matrix_to_atom[i] @ and([__inDomain(i,int(1..2));int(1..)])} 
+
+--
+
+{a#matrix_to_atom[i] @ and([__inDomain(i,int(1..2));int(1..)])}, 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+a#matrix_to_atom[i] 
+
+--
+
+Final model:
+
+given i: int(1..2)
+
+such that
+
+a#matrix_to_atom[i]
+
+sum([given i: int(1..2)
+
+such that
+
+a#matrix_to_atom[i]
+ | i: int(1..2),__0: int(1..2),]), 
+   ~~> expand_comprehension_ac ([("Better_AC_Comprehension_Expansion", 2001)]) 
+sum([a#matrix_to_atom[1],a#matrix_to_atom[2];int(1..)]) 
+
+--
+
+(sum([a#matrix_to_atom[1],a#matrix_to_atom[2];int(1..)]) = 3), 
+   ~~> index_matrix_to_atom ([("Base", 5000)]) 
+(sum([a#matrix_to_atom_1,a#matrix_to_atom_2;int(1..)]) = 3) 
+
+--
+
+(sum([a#matrix_to_atom_1,a#matrix_to_atom_2;int(1..)]) = 3), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+and([SumLeq([a#matrix_to_atom_1, a#matrix_to_atom_2], 3),SumGeq([a#matrix_to_atom_1, a#matrix_to_atom_2], 3);int(1..)]) 
+
+--
+
+and([SumLeq([a#matrix_to_atom_1, a#matrix_to_atom_2], 3),SumGeq([a#matrix_to_atom_1, a#matrix_to_atom_2], 3);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+SumLeq([a#matrix_to_atom_1, a#matrix_to_atom_2], 3),
+SumGeq([a#matrix_to_atom_1, a#matrix_to_atom_2], 3) 
+
+--
+
+Final model:
+
+find a: matrix indexed by [[int(1..2)]] of int(1..2)
+find a#matrix_to_atom_1: int(1..2)
+find a#matrix_to_atom_2: int(1..2)
+
+such that
+
+SumLeq([a#matrix_to_atom_1, a#matrix_to_atom_2], 3),
+SumGeq([a#matrix_to_atom_1, a#matrix_to_atom_2], 3)
+
