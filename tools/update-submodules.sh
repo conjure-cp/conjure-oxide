@@ -22,7 +22,6 @@ bash ./tools/plumbing/get_submodule_paths.sh |
 
 echo "=== Updating and resetting submodules ===" 1>&2
 
-git submodule init --recursive
 git submodule sync --recursive
 git submodule update --init --recursive
 
