@@ -887,7 +887,7 @@ fn cnf_int_safediv(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         Expr::SATInt(
             Metadata::new(),
             SATIntEncoding::Log,
-            Moo::new(into_matrix_expr!(quotient)),
+            Moo::new(into_matrix_expr!(out)),
             (min, max),
         ),
         new_clauses,
