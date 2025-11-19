@@ -24,6 +24,12 @@ test:
 	cargo build --bin conjure-oxide
 	cargo test --workspace
 
+.PHONY: test-accept
+test-accept:
+	cargo build --bin conjure-oxide
+	ACCEPT=true cargo test --workspace
+	cargo test --workspace
+
 .PHONY: fix 
 ## Tries to auto-fix hygiene issues reported by `make check`. 
 ## Fixes will not be applied if there are uncommitted changes: to always apply fixes, use `make fix-dirty`.
