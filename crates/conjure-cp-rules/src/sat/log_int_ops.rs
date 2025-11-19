@@ -923,6 +923,7 @@ fn tseytin_divmod(
 /// ```
 #[register_rule(("SAT", 4100))]
 fn cnf_int_safemod(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    // TODO: USES WRONG MOD CONVENTION FOR NEGATIVES
     let Expr::SafeMod(_, numer, denom) = expr else {
         return Err(RuleNotApplicable);
     };
