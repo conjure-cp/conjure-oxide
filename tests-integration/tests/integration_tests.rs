@@ -357,7 +357,7 @@ fn integration_test_inner(
     };
 
     let solutions = if let Some(solver) = solver {
-        let name = solver.get_name().unwrap_or("UNKNOWN".into());
+        let name = solver.get_name();
         let family = solver.get_family();
 
         let solved = get_solutions(
