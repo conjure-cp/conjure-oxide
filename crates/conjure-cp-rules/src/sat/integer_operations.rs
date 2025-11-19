@@ -625,7 +625,7 @@ fn tseytin_binary_min_max(
     out
 }
 
-// Selects between two boolean vectors depending on a condition
+// Selects between two boolean vectors depending on a condition (both vectors must be the same length)
 /// cond ? b : a
 ///
 /// cond = 1 => b
@@ -637,7 +637,9 @@ fn tseytin_select_array(cond: Expr,
     symbols: &mut SymbolTable)  -> Vec<Expr> {
     let mut out = vec![];
 
-    for i in 0..BITS {
+    let bit_count = a.len();
+
+    for i in 0..bit_count {
         out.push(tseytin_mux(cond.clone(), a[i].clone(), b[i].clone(), clauses, symbols));
     }
 
@@ -821,22 +823,22 @@ fn cnf_int_safediv(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let mut new_clauses = vec![];
     let mut quotient = vec![false.into(); bit_count];
 
-    let minus_numer = tseytin_negate(&numer_bits.clone(), BITS, &mut new_clauses, &mut new_symbols);
-    let minus_denom = tseytin_negate(&denom_bits.clone(), BITS, &mut new_clauses, &mut new_symbols);
+    let minus_numer = tseytin_negate(&numer_bits.clone(), bit_count, &mut new_clauses, &mut new_symbols);
+    let minus_denom = tseytin_negate(&denom_bits.clone(), bit_count, &mut new_clauses, &mut new_symbols);
 
-    let sign_bit = tseytin_xor(numer_bits[BITS - 1].clone(), denom_bits[BITS - 1].clone(), &mut new_clauses, &mut new_symbols);
+    let sign_bit = tseytin_xor(numer_bits[bit_count - 1].clone(), denom_bits[bit_count - 1].clone(), &mut new_clauses, &mut new_symbols);
 
-    let numer_bits = tseytin_select_array(numer_bits[BITS - 1].clone(), &numer_bits.clone(), &minus_numer.clone(), &mut new_clauses, &mut new_symbols);
-    let denom_bits = tseytin_select_array(denom_bits[BITS - 1].clone(), &denom_bits.clone(), &minus_denom.clone(), &mut new_clauses, &mut new_symbols);
+    let numer_bits = tseytin_select_array(numer_bits[bit_count - 1].clone(), &numer_bits.clone(), &minus_numer.clone(), &mut new_clauses, &mut new_symbols);
+    let denom_bits = tseytin_select_array(denom_bits[bit_count - 1].clone(), &denom_bits.clone(), &minus_denom.clone(), &mut new_clauses, &mut new_symbols);
 
 
-    let minus_numer = tseytin_negate(&numer_bits.clone(), BITS, &mut new_clauses, &mut new_symbols);
-    let minus_denom = tseytin_negate(&denom_bits.clone(), BITS, &mut new_clauses, &mut new_symbols);
+    let minus_numer = tseytin_negate(&numer_bits.clone(), bit_count, &mut new_clauses, &mut new_symbols);
+    let minus_denom = tseytin_negate(&denom_bits.clone(), bit_count, &mut new_clauses, &mut new_symbols);
 
-    let sign_bit = tseytin_xor(numer_bits[BITS - 1].clone(), denom_bits[BITS - 1].clone(), &mut new_clauses, &mut new_symbols);
+    let sign_bit = tseytin_xor(numer_bits[bit_count - 1].clone(), denom_bits[bit_count - 1].clone(), &mut new_clauses, &mut new_symbols);
 
-    let numer_bits = tseytin_select_array(numer_bits[BITS - 1].clone(), &numer_bits.clone(), &minus_numer.clone(), &mut new_clauses, &mut new_symbols);
-    let denom_bits = tseytin_select_array(denom_bits[BITS - 1].clone(), &denom_bits.clone(), &minus_denom.clone(), &mut new_clauses, &mut new_symbols);
+    let numer_bits = tseytin_select_array(numer_bits[bit_count - 1].clone(), &numer_bits.clone(), &minus_numer.clone(), &mut new_clauses, &mut new_symbols);
+    let denom_bits = tseytin_select_array(denom_bits[bit_count - 1].clone(), &denom_bits.clone(), &minus_denom.clone(), &mut new_clauses, &mut new_symbols);
 
 
     let mut r = numer_bits.clone();
@@ -887,7 +889,7 @@ fn cnf_int_safediv(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         }
     }
 
-    let minus_quotient = tseytin_negate(&quotient.clone(), BITS, &mut new_clauses, &mut new_symbols);
+    let minus_quotient = tseytin_negate(&quotient.clone(), bit_count, &mut new_clauses, &mut new_symbols);
 
     let out = tseytin_select_array(sign_bit, &quotient, &minus_quotient, &mut new_clauses, &mut new_symbols);
 
