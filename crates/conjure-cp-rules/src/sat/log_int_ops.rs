@@ -621,8 +621,7 @@ fn tseytin_binary_min_max(
         inequality_boolean(y.to_owned(), x.to_owned(), true, clauses, symbols)
     };
 
-    let out = tseytin_select_array(mask, x, y, clauses, symbols);
-    out
+    tseytin_select_array(mask, x, y, clauses, symbols);
 }
 
 // Selects between two boolean vectors depending on a condition (both vectors must be the same length)
@@ -828,13 +827,13 @@ fn cnf_int_safediv(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
     let sign_bit = tseytin_xor(numer_bits[bit_count - 1].clone(), denom_bits[bit_count - 1].clone(), &mut new_clauses, &mut new_symbols);
 
-    let numer_bits = tseytin_select_array(numer_bits[bit_count - 1].clone(), &numer_bits.clone(), &minus_numer.clone(), &mut new_clauses, &mut new_symbols);
-    let denom_bits = tseytin_select_array(denom_bits[bit_count - 1].clone(), &denom_bits.clone(), &minus_denom.clone(), &mut new_clauses, &mut new_symbols);
+    let numer_bits = tseytin_select_array(numer_bits[bit_count - 1].clone(), &numer_bits.clone(), &minus_numer, &mut new_clauses, &mut new_symbols);
+    let denom_bits = tseytin_select_array(denom_bits[bit_count - 1].clone(), &denom_bits.clone(), &minus_denom, &mut new_clauses, &mut new_symbols);
 
-    let mut r = numer_bits.clone();
+    let mut r = numer_bits;
     r.extend(std::iter::repeat_n(r[bit_count - 1].clone(), bit_count));
     let mut d = std::iter::repeat_n(false.into(), bit_count).collect_vec();
-    d.extend(denom_bits.clone());
+    d.extend(denom_bits);
 
     let minus_d = tseytin_negate(
         &d.clone(),
