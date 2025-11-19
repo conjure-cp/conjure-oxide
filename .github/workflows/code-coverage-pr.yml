@@ -1,4 +1,4 @@
-name: "Coverage-PR"
+name: Coverage PR
 
 on:
   pull_request:
@@ -6,11 +6,10 @@ on:
       - crates/**
       - tests-integration/**
       - tools/coverage.sh
-      - .github/workflows/code-coverage.yml
+      - .github/workflows/code-coverage-pr.yml
   workflow_dispatch:
 
 env:
-  CARGO_INCREMENTAL: "0"
   # we define the following 3 values as the defaults here, matrix jobs may overwrite their values.
   os: ubuntu-latest
   rust_release: nightly
@@ -25,13 +24,24 @@ jobs:
       - name: Checkout the repository
         uses: actions/checkout@v5
 
-      - name: Rust cache
-        uses: Swatinem/rust-cache@v2
-        with:
-          cache-on-failure: true
-          shared-key: ${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.workflow }}--${{ github.job }}
+      - name: free_disk_space.sh
+        run: .github/workflows/tools/free_disk_space.sh
 
-      - name: Install rust ${{ env.rust_release }}
+      - name: Restore cache
+        id: restore_cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+            ~/conjure
+          key: doccov--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.event.repository.updated_at }}
+          restore-keys: doccov--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}
+
+      - name: Install rust
         run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
 
       - name: Install pandoc
@@ -59,6 +69,19 @@ jobs:
           path: pr-doc-coverage-summary.txt
           overwrite: false
 
+      - name: Save cache
+        if: ${{ always() && steps.restore_cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+            ~/conjure
+          key: doccov--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.event.repository.updated_at }}
+
   coverage:
     name: "Code"
     timeout-minutes: 120
@@ -67,11 +90,22 @@ jobs:
       - name: Checkout the repository
         uses: actions/checkout@v5
 
-      - name: Rust cache
-        uses: Swatinem/rust-cache@v2
+      - name: free_disk_space.sh
+        run: .github/workflows/tools/free_disk_space.sh
+
+      - name: Restore cache
+        id: restore_cache
+        uses: actions/cache/restore@v4
         with:
-          cache-on-failure: true
-          shared-key: ${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.workflow }}--${{ github.job }}
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+            ~/conjure
+          key: codecov--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.event.repository.updated_at }}
+          restore-keys: codecov--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}
 
       - name: Get Sha
         id: sha
@@ -85,7 +119,7 @@ jobs:
             echo -e "sha=${{ github.sha }}"
           fi
 
-      - name: Install rust ${{ env.rust_release }}
+      - name: Install rust
         run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
 
       - uses: ./.github/actions/install-conjure
@@ -108,3 +142,16 @@ jobs:
         with:
           name: code-coverage-${{ steps.sha.outputs.sha }}
           path: deploy/**
+
+      - name: Save cache
+        if: ${{ always() && steps.restore_cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+            ~/conjure
+          key: codecov--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.event.repository.updated_at }}
