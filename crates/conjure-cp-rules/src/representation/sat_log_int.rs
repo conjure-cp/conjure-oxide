@@ -123,7 +123,10 @@ impl Representation for SATLogInt {
                 let decl = st.lookup(&name).unwrap();
                 (
                     name,
-                    Expression::Atomic(Metadata::new(), Atom::Reference(decl)),
+                    Expression::Atomic(
+                        Metadata::new(),
+                        Atom::Reference(conjure_cp::ast::Reference { ptr: decl }),
+                    ),
                 )
             })
             .collect())

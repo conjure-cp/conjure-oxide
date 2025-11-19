@@ -7,60 +7,48 @@ find z: int(2..5)
 
 such that
 
-(UnsafeDiv(sum([sum([x,y;int(1..2)]),z;int(1..2)]), a) = 3)
+(UnsafeDiv(sum([sum([x,y;int(1..)]),z;int(1..)]), a) = 3)
 
 --
 
-sum([sum([x,y;int(1..2)]),z;int(1..2)]), 
+sum([sum([x,y;int(1..)]),z;int(1..)]), 
    ~~> normalise_associative_commutative ([("Base", 8900)]) 
-sum([x,y,z;int(1..2)]) 
+sum([x,y,z;int(1..)]) 
 
 --
 
-UnsafeDiv(sum([x,y,z;int(1..2)]), a), 
+UnsafeDiv(sum([x,y,z;int(1..)]), a), 
    ~~> div_to_bubble ([("Bubble", 6000)]) 
-{SafeDiv(sum([x,y,z;int(1..2)]), a) @ (a != 0)} 
+{SafeDiv(sum([x,y,z;int(1..)]), a) @ (a != 0)} 
 
 --
 
-({SafeDiv(sum([x,y,z;int(1..2)]), a) @ (a != 0)} = 3), 
+({SafeDiv(sum([x,y,z;int(1..)]), a) @ (a != 0)} = 3), 
    ~~> bubble_up ([("Bubble", 8800)]) 
-{(SafeDiv(sum([x,y,z;int(1..2)]), a) = 3) @ (a != 0)} 
+{(SafeDiv(sum([x,y,z;int(1..)]), a) = 3) @ (a != 0)} 
 
 --
 
-{(SafeDiv(sum([x,y,z;int(1..2)]), a) = 3) @ (a != 0)}, 
+{(SafeDiv(sum([x,y,z;int(1..)]), a) = 3) @ (a != 0)}, 
    ~~> expand_bubble ([("Bubble", 8900)]) 
-and([(SafeDiv(sum([x,y,z;int(1..2)]), a) = 3),(a != 0);int(1..)]) 
+and([(SafeDiv(sum([x,y,z;int(1..)]), a) = 3),(a != 0);int(1..)]) 
 
 --
 
-and([(SafeDiv(sum([x,y,z;int(1..2)]), a) = 3),(a != 0);int(1..)]), 
+and([(SafeDiv(sum([x,y,z;int(1..)]), a) = 3),(a != 0);int(1..)]), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(SafeDiv(sum([x,y,z;int(1..2)]), a) = 3),
+(SafeDiv(sum([x,y,z;int(1..)]), a) = 3),
 (a != 0) 
 
 --
 
-SafeDiv(sum([x,y,z;int(1..2)]), a), 
+SafeDiv(sum([x,y,z;int(1..)]), a), 
    ~~> flatten_generic ([("Minion", 4200)]) 
 SafeDiv(__0, a) 
 new variables:
   find __0: int(6..14)
 new constraints:
-  __0 =aux sum([x,y,z;int(1..2)])
---
-
-(SafeDiv(__0, a) = 3), 
-   ~~> introduce_diveq ([("Minion", 4200)]) 
-DivEq(__0, a, 3) 
-
---
-
-sum([x,y,z;int(1..2)]), 
-   ~~> matrix_to_list ([("Base", 2000)]) 
-sum([x,y,z;int(1..)]) 
-
+  __0 =aux sum([x,y,z;int(1..)])
 --
 
 __0 =aux sum([x,y,z;int(1..)]), 
@@ -69,14 +57,20 @@ and([SumLeq([x, y, z], __0),SumGeq([x, y, z], __0);int(1..)])
 
 --
 
-DivEq(__0, a, 3),
+(SafeDiv(__0, a) = 3),
 (a != 0),
 and([SumLeq([x, y, z], __0),SumGeq([x, y, z], __0);int(1..)]), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-DivEq(__0, a, 3),
+(SafeDiv(__0, a) = 3),
 (a != 0),
 SumLeq([x, y, z], __0),
 SumGeq([x, y, z], __0) 
+
+--
+
+(SafeDiv(__0, a) = 3), 
+   ~~> introduce_diveq ([("Minion", 4200)]) 
+DivEq(__0, a, 3) 
 
 --
 

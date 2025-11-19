@@ -14,9 +14,9 @@ use std::env;
 use std::error::Error;
 use std::fs;
 use std::fs::File;
-use tracing::{Level, Metadata as OtherMetadata, span};
+use tracing::{span, Level, Metadata as OtherMetadata};
 use tracing_subscriber::{
-    Layer, Registry, filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt,
+    filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt, Layer, Registry,
 };
 use tree_morph::{helpers::select_panic, prelude::*};
 
@@ -50,9 +50,8 @@ use serde::Deserialize;
 struct TestConfig {
     extra_rewriter_asserts: Vec<String>,
 
-    parse_model_default: bool, // Stage 1a: Reads and verifies the Essence model file
-    enable_native_parser: bool, // Stage 1b: Runs the native parser if enabled
-    apply_rewrite_rules: bool, // Stage 2a: Applies predefined rules to the model
+    enable_native_parser: bool, // Stage 1a: Use the native parser instead of the legacy parser
+    apply_rewrite_rules: bool,  // Stage 2a: Applies predefined rules to the model
     enable_extra_validation: bool, // Stage 2b: Runs additional validation checks
 
     // NOTE: when adding a new solver config, make sure to update num_solvers_enabled!
@@ -77,12 +76,11 @@ impl Default for TestConfig {
             solve_with_smt: false,
             enable_morph_impl: false,
             enable_rewriter_impl: true,
-            parse_model_default: true,
             enable_native_parser: true,
             apply_rewrite_rules: true,
             enable_extra_validation: false,
             solve_with_minion: true,
-            compare_solver_solutions: false,
+            compare_solver_solutions: true,
             validate_rule_traces: true,
         }
     }
@@ -94,10 +92,6 @@ fn env_var_override_bool(key: &str, default: bool) -> bool {
 impl TestConfig {
     fn merge_env(self) -> Self {
         Self {
-            parse_model_default: env_var_override_bool(
-                "PARSE_MODEL_DEFAULT",
-                self.parse_model_default,
-            ),
             enable_morph_impl: env_var_override_bool("ENABLE_MORPH_IMPL", self.enable_morph_impl),
             enable_naive_impl: env_var_override_bool("ENABLE_NAIVE_IMPL", self.enable_naive_impl),
             enable_native_parser: env_var_override_bool(
@@ -133,7 +127,6 @@ impl TestConfig {
 }
 
 fn main() {
-    // maybe wonky, check
     let _guard = create_scoped_subscriber("./logs", "test_log", "none_solver");
 
     // creating a span and log a message
@@ -199,6 +192,18 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
         )?;
     }
 
+    if config.solve_with_smt {
+        solver_specific_integration_test(
+            path,
+            essence_base,
+            extension,
+            &config,
+            SolverFamily::Sat,
+            verbose,
+            accept,
+        )?;
+    }
+
     Ok(())
 }
 
@@ -213,7 +218,7 @@ fn solver_specific_integration_test(
 ) -> Result<(), Box<dyn Error>> {
     let solver_name = solver.as_str();
 
-    let subscriber = create_scoped_subscriber(path, essence_base, solver_name);
+    let subscriber = create_scoped_subscriber(path, essence_base, &solver_name);
 
     // run tests in sequence not parallel when verbose logging, to ensure the logs are ordered
     // correctly
@@ -228,7 +233,7 @@ fn solver_specific_integration_test(
             integration_test_inner(path, essence_base, extension, config, solver)
         })
     } else {
-        let subscriber = create_scoped_subscriber(path, essence_base, solver_name);
+        let subscriber = create_scoped_subscriber(path, essence_base, &solver_name);
         tracing::subscriber::with_default(subscriber, || {
             integration_test_inner(path, essence_base, extension, config, solver)
         })
@@ -244,8 +249,8 @@ fn solver_specific_integration_test(
 /// This function operates in multiple stages:
 ///
 /// - **Parsing Stage**
-///   - **Stage 1a (Default)**: Reads the Essence model file and verifies that it parses correctly.
-///   - **Stage 1b (Optional)**: Runs the native parser if explicitly enabled.
+///   - **Stage 1a (Default)**: Reads the Essence model file and verifies that it parses correctly using the native parser.
+///   - **Stage 1b (Optional)**: Reads the Essence model file and verifies that it parses correctly using the legacy parser.
 ///
 /// - **Rewrite Stage**
 ///   - **Stage 2a (Default)**: Applies a set of rules to the parsed model and validates the result.
@@ -279,15 +284,6 @@ fn integration_test_inner(
     let accept = env::var("ACCEPT").unwrap_or("false".to_string()) == "true";
     let verbose = env::var("VERBOSE").unwrap_or("false".to_string()) == "true";
 
-    // When running accept=true, only regenerate the expected files for these tests if the test
-    // fails.
-    //
-    // This reduces unnecessary git diffs when only the id of items in a model changes. These
-    // change every run of the tester, but do not change the correctness of the model.
-    let mut parsed_model_dirty = false;
-    let mut parsed_native_model_dirty = false;
-    let mut rewritten_model_dirty = false;
-
     if verbose {
         println!("Running integration test for {path}/{essence_base}, ACCEPT={accept}");
     }
@@ -295,30 +291,29 @@ fn integration_test_inner(
     // File path
     let file_path = format!("{path}/{essence_base}.{extension}");
 
-    // Stage 1a: Parse the model using the normal parser (run unless explicitly disabled)
-    let parsed_model = if config.parse_model_default {
-        let parsed = parse_essence_file(&file_path, context.clone())?;
+    // Stage 1a: Parse the model using the selected parser
+    let parsed_model = if config.enable_native_parser {
+        let model = parse_essence_file_native(&file_path, context.clone())?;
         if verbose {
-            println!("Parsed model: {parsed:#?}");
+            println!("Parsed model (native): {model:#?}");
         }
-        save_model_json(&parsed, path, essence_base, "parse", None)?;
-        Some(parsed)
-    } else {
-        None
-    };
-
-    // Stage 1b: Run native parser (only if explicitly enabled)
-    let mut model_native = None;
-    if config.enable_native_parser {
-        let mn = parse_essence_file_native(&file_path, context.clone())?;
-        save_model_json(&mn, path, essence_base, "parse", None)?;
-        model_native = Some(mn);
+        save_model_json(&model, path, essence_base, "parse", None)?;
 
         {
             let mut ctx = context.as_ref().write().unwrap();
             ctx.file_name = Some(format!("{path}/{essence_base}.{extension}"));
         }
-    }
+
+        model
+    // Stage 1b: Parse the model using the legacy parser
+    } else {
+        let model = parse_essence_file(&file_path, context.clone())?;
+        if verbose {
+            println!("Parsed model (legacy): {model:#?}");
+        }
+        save_model_json(&model, path, essence_base, "parse")?;
+        model
+    };
 
     // Stage 2a: Rewrite the model using the rule engine (run unless explicitly disabled)
     let rewritten_model = if config.apply_rewrite_rules {
@@ -326,7 +321,7 @@ fn integration_test_inner(
 
         let rule_sets = resolve_rule_sets(solver, DEFAULT_RULE_SETS)?;
 
-        let mut model = parsed_model.expect("Model must be parsed in 1a");
+        let mut model = parsed_model;
 
         let rewritten = if config.enable_naive_impl {
             rewrite_naive(&model, &rule_sets, false, false)?
@@ -376,6 +371,11 @@ fn integration_test_inner(
         }
     }
 
+    let solver_input_file = env::var("OXIDE_TEST_SAVE_INPUT_FILE").ok().map(|_| {
+        let name = format!("{essence_base}.generated-input.txt");
+        Path::new(path).join(Path::new(&name))
+    });
+
     // Stage 3a: Run the model through the Minion solver (run unless explicitly disabled)
 
     let model_arg = rewritten_model
@@ -414,49 +414,18 @@ fn integration_test_inner(
         );
     }
 
-    // Before testing against the generated tests, if the generated tests don't exist, make them.
-    //
-    // We rewrite out-of-date tests (if necessary) after testing them.
+    // When ACCEPT=true, copy all generated files to expected
     if accept {
-        // Overwrite expected parse and rewrite models if enabled
-        if config.enable_native_parser
-            && !expected_exists_for(path, essence_base, "parse", "serialised.json", None)
-        {
-            model_native.clone().expect("model_native should exist");
-            copy_generated_to_expected(path, essence_base, "parse", "serialised.json", None)?;
-        }
-        if config.parse_model_default
-            && !expected_exists_for(path, essence_base, "parse", "serialised.json", None)
-        {
-            copy_generated_to_expected(path, essence_base, "parse", "serialised.json", None)?;
-        }
-        if config.apply_rewrite_rules
-            && !expected_exists_for(
-                path,
-                essence_base,
-                "rewrite",
-                "serialised.json",
-                Some(solver),
-            )
-        {
-            copy_generated_to_expected(
-                path,
-                essence_base,
-                "rewrite",
-                "serialised.json",
-                Some(solver),
-            )?;
+        copy_generated_to_expected(path, essence_base, "parse", "serialised.json")?;
+
+        if config.apply_rewrite_rules {
+            copy_generated_to_expected(path, essence_base, "rewrite", "serialised.json")?;
         }
 
         // Always overwrite these ones. Unlike the rest, we don't need to selectively do these
         // based on the test results, so they don't get done later.
-        copy_generated_to_expected(
-            path,
-            essence_base,
-            solver.as_str(),
-            "solutions.json",
-            Some(solver),
-        )?;
+        // TODO Fix
+        copy_generated_to_expected(path, essence_base, "minion", "solutions.json", Some(solver))?;
 
         if config.validate_rule_traces {
             copy_human_trace_generated_to_expected(path, essence_base, solver)?;
@@ -464,101 +433,17 @@ fn integration_test_inner(
         }
     }
 
-    // Check Stage 1b (native parser)
-    if config.enable_native_parser {
-        let expected_model =
-            read_model_json(&context, path, essence_base, "expected", "parse", None);
-
-        // A JSON reading error could just mean that the ast has changed since the file was
-        // generated.
-        //
-        // When ACCEPT=true, regenerate the json instead of failing the test.
-        match expected_model {
-            Err(_) if accept => {
-                parsed_native_model_dirty = true;
-            }
-            Err(e) => {
-                return Err(Box::new(e));
-            }
-            Ok(expected_model) => {
-                let model_native = model_native
-                    .clone()
-                    .expect("model_native should exist here");
-                if accept {
-                    parsed_native_model_dirty = model_native != expected_model;
-                } else {
-                    assert_eq!(model_native, expected_model);
-                }
-            }
-        }
-    }
-
-    // Check Stage 1a (parsed model)
-    if config.parse_model_default {
-        let expected_model =
-            read_model_json(&context, path, essence_base, "expected", "parse", None);
-        let model_from_file =
-            read_model_json(&context, path, essence_base, "generated", "parse", None);
-
-        // A JSON reading error could just mean that the ast has changed since the file was
-        // generated.
-        //
-        // When ACCEPT=true, regenerate the json instead of failing the test.
-        match (expected_model, model_from_file) {
-            (Err(_), _) | (_, Err(_)) if accept => {
-                parsed_model_dirty = true;
-            }
-
-            (Err(e), _) => {
-                return Err(Box::new(e));
-            }
-
-            (_, Err(e)) => {
-                return Err(Box::new(e));
-            }
-
-            (Ok(expected_model), Ok(model_from_file)) if accept => {
-                parsed_model_dirty = model_from_file != expected_model;
-            }
-
-            (Ok(expected_model), Ok(model_from_file)) => {
-                assert_eq!(model_from_file, expected_model);
-            }
-        }
-    }
+    // Check Stage 1: Compare parsed model with expected
+    let expected_model = read_model_json(&context, path, essence_base, "expected", "parse", None)?;
+    let model_from_file = read_model_json(&context, path, essence_base, "generated", "parse", None)?;
+    assert_eq!(model_from_file, expected_model);
 
     // Check Stage 2a (rewritten model)
     if config.apply_rewrite_rules {
-        let expected_model = read_model_json(
-            &context,
-            path,
-            essence_base,
-            "expected",
-            "rewrite",
-            Some(solver),
-        );
-        // A JSON reading error could just mean that the ast has changed since the file was
-        // generated.
-        //
-        // When ACCEPT=true, regenerate the json instead of failing the test.
-        match expected_model {
-            Err(_) if accept => {
-                rewritten_model_dirty = true;
-            }
-            Err(e) => {
-                return Err(Box::new(e));
-            }
-            Ok(expected_model) => {
-                let rewritten_model =
-                    rewritten_model.expect("Rewritten model must be present in 2a");
-
-                if accept {
-                    rewritten_model_dirty = rewritten_model != expected_model;
-                } else {
-                    assert_eq!(rewritten_model, expected_model);
-                }
-            }
-        }
+        let expected_model = read_model_json(&context, path, essence_base, "expected", "rewrite", Some(solver))?;
+        let generated_model =
+            read_model_json(&context, path, essence_base, "generated", "rewrite", Some(solver))?;
+        assert_eq!(generated_model, expected_model);
     }
 
     // Check Stage 3a (solutions)
@@ -579,26 +464,7 @@ fn integration_test_inner(
         );
     };
 
-    if accept {
-        // Overwrite expected parse and rewrite models if needed
-        if config.enable_native_parser && parsed_native_model_dirty {
-            model_native.expect("model_native should exist");
-            copy_generated_to_expected(path, essence_base, "parse", "serialised.json", None)?;
-        }
-        if config.parse_model_default && parsed_model_dirty {
-            copy_generated_to_expected(path, essence_base, "parse", "serialised.json", None)?;
-        }
-        if config.apply_rewrite_rules && rewritten_model_dirty {
-            copy_generated_to_expected(
-                path,
-                essence_base,
-                "rewrite",
-                "serialised.json",
-                Some(solver),
-            )?;
-        }
-    }
-    save_stats_json(context, path, essence_base, solver)?;
+    save_stats_json(context, path, essence_base)?;
 
     Ok(())
 }
@@ -608,7 +474,6 @@ fn copy_human_trace_generated_to_expected(
     test_name: &str,
     solver: SolverFamily,
 ) -> Result<(), std::io::Error> {
-    //  WBHYn NO GENERTE
     let solver_name = solver.as_str();
     std::fs::copy(
         format!("{path}/{solver_name}-{test_name}-generated-rule-trace-human.txt"),
@@ -624,26 +489,12 @@ fn copy_generated_to_expected(
     extension: &str,
     solver: Option<SolverFamily>,
 ) -> Result<(), std::io::Error> {
-    let marker = solver.map_or("agnostic", |s| s.as_str());
+    let marker = solver.map_or("agnostic".into(), |s| s.as_str());
     std::fs::copy(
         format!("{path}/{marker}-{test_name}.generated-{stage}.{extension}"),
         format!("{path}/{marker}-{test_name}.expected-{stage}.{extension}"),
     )?;
     Ok(())
-}
-
-fn expected_exists_for(
-    path: &str,
-    test_name: &str,
-    stage: &str,
-    extension: &str,
-    solver: Option<SolverFamily>,
-) -> bool {
-    let marker = solver.map_or("agnostic", |s| s.as_str());
-    Path::new(&format!(
-        "{path}/{marker}-{test_name}.expected-{stage}.{extension}"
-    ))
-    .exists()
 }
 
 fn assert_vector_operators_have_partially_evaluated(model: &conjure_cp::Model) {
@@ -683,11 +534,8 @@ pub fn create_scoped_subscriber(
     test_name: &str,
     solver_name: &str,
 ) -> impl tracing::Subscriber + Send + Sync {
-    let target1_layer = create_file_layer_json(path, test_name, solver_name);
-    let target2_layer = create_file_layer_human(path, test_name, solver_name);
-    let layered = target1_layer.and_then(target2_layer);
-
-    let subscriber = Arc::new(tracing_subscriber::registry().with(layered))
+    let layer = create_file_layer_human(path, test_name, solver_name);
+    let subscriber = Arc::new(tracing_subscriber::registry().with(layer))
         as Arc<dyn tracing::Subscriber + Send + Sync>;
     // setting this subscriber as the default
     let _default = tracing::subscriber::set_default(subscriber.clone());
@@ -695,31 +543,11 @@ pub fn create_scoped_subscriber(
     subscriber
 }
 
-fn create_file_layer_json(
-    path: &str,
-    test_name: &str,
-    solver_name: &str,
-) -> impl Layer<Registry> + Send + Sync {
-    let file = File::create(format!(
-        "{path}/{solver_name}-{test_name}-generated-rule-trace.json"
-    ))
-    .expect("Unable to create log file");
-
-    fmt::layer()
-        .with_writer(file)
-        .with_level(false)
-        .with_target(false)
-        .without_time()
-        .with_filter(FilterFn::new(|meta: &OtherMetadata| {
-            meta.target() == "rule_engine"
-        }))
-}
-
 fn create_file_layer_human(
     path: &str,
     test_name: &str,
     solver_name: &str,
-) -> impl Layer<Registry> + Send + Sync {
+) -> (impl Layer<Registry> + Send + Sync) {
     let file = File::create(format!(
         "{path}/{solver_name}-{test_name}-generated-rule-trace-human.txt"
     ))

@@ -8,23 +8,23 @@ find z: int(-1..1)
 
 such that
 
-(x = sum([sum([-(y),-((sum([z,1;int(1..2)]) - a));int(1..2)]),b;int(1..2)]))
+(x = sum([sum([-(y),-((sum([z,1;int(1..)]) - a));int(1..)]),b;int(1..)]))
 
 --
 
-sum([sum([-(y),-((sum([z,1;int(1..2)]) - a));int(1..2)]),b;int(1..2)]), 
+sum([sum([-(y),-((sum([z,1;int(1..)]) - a));int(1..)]),b;int(1..)]), 
    ~~> normalise_associative_commutative ([("Base", 8900)]) 
-sum([-(y),-((sum([z,1;int(1..2)]) - a)),b;int(1..2)]) 
+sum([-(y),-((sum([z,1;int(1..)]) - a)),b;int(1..)]) 
 
 --
 
-(sum([z,1;int(1..2)]) - a), 
+(sum([z,1;int(1..)]) - a), 
    ~~> minus_to_sum ([("Base", 8400)]) 
-sum([sum([z,1;int(1..2)]),-(a);int(1..)]) 
+sum([sum([z,1;int(1..)]),-(a);int(1..)]) 
 
 --
 
-sum([sum([z,1;int(1..2)]),-(a);int(1..)]), 
+sum([sum([z,1;int(1..)]),-(a);int(1..)]), 
    ~~> normalise_associative_commutative ([("Base", 8900)]) 
 sum([z,1,-(a);int(1..)]) 
 
@@ -36,27 +36,21 @@ sum([-(z),-(1),-(-(a));int(1..)])
 
 --
 
-(x = sum([-(y),sum([-(z),-(1),-(-(a));int(1..)]),b;int(1..2)])), 
+(x = sum([-(y),sum([-(z),-(1),-(-(a));int(1..)]),b;int(1..)])), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(x = sum([-(y),sum([-(z),-1,-(-(a));int(1..)]),b;int(1..2)])) 
+(x = sum([-(y),sum([-(z),-1,-(-(a));int(1..)]),b;int(1..)])) 
 
 --
 
-sum([-(y),sum([-(z),-1,-(-(a));int(1..)]),b;int(1..2)]), 
+sum([-(y),sum([-(z),-1,-(-(a));int(1..)]),b;int(1..)]), 
    ~~> normalise_associative_commutative ([("Base", 8900)]) 
-sum([-(y),-(z),-1,-(-(a)),b;int(1..2)]) 
+sum([-(y),-(z),-1,-(-(a)),b;int(1..)]) 
 
 --
 
 -(-(a)), 
    ~~> elmininate_double_negation ([("Base", 8400)]) 
 a 
-
---
-
-sum([-(y),-(z),-1,a,b;int(1..2)]), 
-   ~~> matrix_to_list ([("Base", 2000)]) 
-sum([-(y),-(z),-1,a,b;int(1..)]) 
 
 --
 

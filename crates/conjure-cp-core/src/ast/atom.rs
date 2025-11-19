@@ -1,4 +1,3 @@
-use crate::{ast::declaration::serde::DeclarationPtrAsId, bug};
 use std::{borrow::Borrow, cell::Ref};
 use uniplate::Uniplate;
 
@@ -11,10 +10,8 @@ use super::{
 use derivative::Derivative;
 use polyquine::Quine;
 use serde::{Deserialize, Serialize};
-use serde_with::serde_as;
 
 /// An `Atom` is an indivisible expression, such as a literal or a reference.
-#[serde_as]
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate, Derivative, Quine)]
 #[derivative(Hash)]
 #[uniplate()]
@@ -24,22 +21,22 @@ use serde_with::serde_as;
 #[biplate(to=RecordValue<Literal>)]
 #[biplate(to=DeclarationPtr)]
 #[biplate(to=Name)]
+#[biplate(to=super::Reference)]
 #[path_prefix(conjure_cp::ast)]
 pub enum Atom {
     Literal(Literal),
-    // FIXME: check if these are the hashing semantics we want.
     #[polyquine_skip]
-    Reference(#[serde_as(as = "DeclarationPtrAsId")] DeclarationPtr),
+    Reference(super::Reference),
 }
 
 impl Atom {
     pub fn new_ref(decl: DeclarationPtr) -> Atom {
-        Atom::Reference(decl)
+        Atom::Reference(super::Reference::new(decl))
     }
 
     pub fn into_declaration(self) -> DeclarationPtr {
         match self {
-            Atom::Reference(decl) => decl,
+            Atom::Reference(reference) => reference.into_ptr(),
             _ => panic!("Called into_declaration on a non-reference Atom"),
         }
     }
@@ -49,7 +46,7 @@ impl CategoryOf for Atom {
     fn category_of(&self) -> Category {
         match self {
             Atom::Literal(_) => Category::Constant,
-            Atom::Reference(declaration_ptr) => declaration_ptr.category_of(),
+            Atom::Reference(reference) => reference.category_of(),
         }
     }
 }
@@ -58,9 +55,7 @@ impl HasDomain for Atom {
     fn domain_of(&self) -> Domain {
         match self {
             Atom::Literal(literal) => literal.domain_of(),
-            Atom::Reference(ptr) => ptr.domain().unwrap_or_else(|| {
-                bug!("reference ({name}) should have a domain", name = ptr.name())
-            }),
+            Atom::Reference(reference) => reference.domain_of(),
         }
     }
 }
@@ -69,7 +64,7 @@ impl std::fmt::Display for Atom {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Atom::Literal(x) => x.fmt(f),
-            Atom::Reference(x) => x.name().fmt(f),
+            Atom::Reference(x) => x.fmt(f),
         }
     }
 }
@@ -82,6 +77,12 @@ impl From<Literal> for Atom {
 
 impl From<DeclarationPtr> for Atom {
     fn from(value: DeclarationPtr) -> Self {
+        Atom::Reference(super::Reference::new(value))
+    }
+}
+
+impl From<super::Reference> for Atom {
+    fn from(value: super::Reference) -> Self {
         Atom::Reference(value)
     }
 }
@@ -180,7 +181,7 @@ impl TryFrom<Atom> for Name {
 
     fn try_from(value: Atom) -> Result<Self, Self::Error> {
         match value {
-            Atom::Reference(x) => Ok(x.name().clone()),
+            Atom::Reference(x) => Ok(x.ptr().name().clone()),
             _ => Err("Cannot convert non-reference atom to Name"),
         }
     }
@@ -191,7 +192,7 @@ impl<'a> TryFrom<&'a Atom> for Ref<'a, Name> {
 
     fn try_from(value: &'a Atom) -> Result<Self, Self::Error> {
         match value {
-            Atom::Reference(x) => Ok(x.name()),
+            Atom::Reference(x) => Ok(x.ptr().name()),
             _ => Err("Cannot convert non-reference atom to Name"),
         }
     }
