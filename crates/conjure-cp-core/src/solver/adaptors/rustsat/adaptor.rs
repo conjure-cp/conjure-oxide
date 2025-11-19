@@ -236,8 +236,16 @@ impl SolverAdaptor for Sat {
         SolverFamily::Sat
     }
 
-    fn get_name(&self) -> &'static str {
-        "SAT"
+    fn get_name(&self) -> Option<String> {
+        Some("SAT".to_string())
+    }
+
+    fn add_adaptor_info_to_stats(&self, stats: SolverStats) -> SolverStats {
+        SolverStats {
+            solver_adaptor: self.get_name(),
+            solver_family: Some(self.get_family()),
+            ..stats
+        }
     }
 
     fn write_solver_input_file(

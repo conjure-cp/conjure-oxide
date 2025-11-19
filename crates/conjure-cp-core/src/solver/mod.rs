@@ -240,12 +240,14 @@ pub trait SolverAdaptor: private::Sealed + Any {
     fn get_family(&self) -> SolverFamily;
 
     /// Gets the name of the solver adaptor for pretty printing.
-    fn get_name(&self) -> &'static str;
+    fn get_name(&self) -> Option<String> {
+        None
+    }
 
     /// Adds the solver adaptor name and family (if they exist) to the given stats object.
     fn add_adaptor_info_to_stats(&self, stats: SolverStats) -> SolverStats {
         SolverStats {
-            solver_adaptor: Some(String::from(self.get_name())),
+            solver_adaptor: self.get_name(),
             solver_family: Some(self.get_family()),
             ..stats
         }
@@ -304,7 +306,7 @@ impl Solver {
         self.adaptor.get_family()
     }
 
-    pub fn get_name(&self) -> &'static str {
+    pub fn get_name(&self) -> Option<String> {
         self.adaptor.get_name()
     }
 }

@@ -28,7 +28,7 @@ pub fn get_solutions(
     num_sols: i32,
     solver_input_file: &Option<PathBuf>,
 ) -> Result<Vec<BTreeMap<Name, Literal>>, anyhow::Error> {
-    let adaptor_name = solver.get_name();
+    let adaptor_name = solver.get_name().unwrap_or("UNKNOWN".into());
 
     eprintln!("Building {adaptor_name} model...");
 
