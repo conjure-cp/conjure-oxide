@@ -96,8 +96,8 @@ impl SolverAdaptor for Smt {
         SolverFamily::Smt
     }
 
-    fn get_name(&self) -> Option<String> {
-        Some("SMT".to_string())
+    fn get_name(&self) -> &'static str {
+        "SMT"
     }
 
     fn write_solver_input_file(

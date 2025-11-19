@@ -165,8 +165,8 @@ impl SolverAdaptor for Minion {
         SolverFamily::Minion
     }
 
-    fn get_name(&self) -> Option<String> {
-        Some("Minion".to_owned())
+    fn get_name(&self) -> &'static str {
+        "Minion"
     }
 
     fn write_solver_input_file(
