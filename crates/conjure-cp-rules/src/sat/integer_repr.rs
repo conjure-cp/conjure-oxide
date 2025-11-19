@@ -31,7 +31,7 @@ fn int_domain_to_expr(subject: Expr, ranges: &Vec<Range<i32>>) -> Expr {
     Expr::Or(Metadata::new(), Moo::new(into_matrix_expr!(output)))
 }
 
-/// This function confirms that all of the input expressions are SATInts, and returns vectors for each input of their bits
+/// This function confirms that all of the input expressions are log SATInts, and returns vectors for each input of their bits
 /// This function also extends all vectors such that they have the same lengths
 /// The vector lengths is either `n` for bit_count = Some(n), otherwise the length of the longest operand
 pub fn validate_log_int_operands(
