@@ -621,8 +621,7 @@ fn tseytin_binary_min_max(
         inequality_boolean(y.to_owned(), x.to_owned(), true, clauses, symbols)
     };
 
-    let out = tseytin_select_array(mask, x, y, clauses, symbols);
-    out
+    tseytin_select_array(mask, x, y, clauses, symbols)
 }
 
 // Selects between two boolean vectors depending on a condition (both vectors must be the same length)
@@ -976,7 +975,7 @@ fn cnf_int_safemod(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     // The restoring-division algorithm uses a 2*bit_count wide "r" register.
     // The final remainder is stored in the upper half of that register.
     let bit_count = numer_bits.len();
-    let mut remainder: Vec<Expr> = full_remainder
+    let remainder: Vec<Expr> = full_remainder
         .iter()
         .skip(bit_count)
         .take(new_bit_count)
@@ -985,7 +984,7 @@ fn cnf_int_safemod(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
     let minus_remainder = tseytin_negate(&remainder.clone(), new_bit_count, &mut new_clauses, &mut new_symbols);
 
-    let mut out = tseytin_select_array(numer_sign, &remainder, &minus_remainder, &mut new_clauses, &mut new_symbols);
+    let out = tseytin_select_array(numer_sign, &remainder, &minus_remainder, &mut new_clauses, &mut new_symbols);
 
     Ok(Reduction::cnf(
         Expr::SATInt(
