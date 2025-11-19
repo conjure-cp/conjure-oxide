@@ -621,7 +621,7 @@ fn tseytin_binary_min_max(
         inequality_boolean(y.to_owned(), x.to_owned(), true, clauses, symbols)
     };
 
-    tseytin_select_array(mask, x, y, clauses, symbols);
+    tseytin_select_array(mask, x, y, clauses, symbols)
 }
 
 // Selects between two boolean vectors depending on a condition (both vectors must be the same length)
