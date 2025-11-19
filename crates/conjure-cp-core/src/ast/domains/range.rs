@@ -238,6 +238,14 @@ impl<A: Num + Ord + Clone> Range<A> {
             Range::UnboundedL(_) | Range::UnboundedR(_) | Range::Unbounded => None,
         }
     }
+
+    pub fn values(rngs: &[Range<A>]) -> Option<impl Iterator<Item = A>> {
+        let itrs = rngs
+            .iter()
+            .map(Range::iter)
+            .collect::<Option<Vec<RangeIterator<A>>>>()?;
+        Some(itrs.into_iter().flatten())
+    }
 }
 
 /// Iterator for Range<A> that yields values lazily

@@ -1,4 +1,0 @@
-#!/bin/bash
-
-cargo test tests_integration_basic_matrix_13_index_matrix_literal_2d
-cargo test tests_integration_hakank_eprime_xkcd
