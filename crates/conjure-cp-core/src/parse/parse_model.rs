@@ -313,7 +313,7 @@ fn parse_domain(
         }
 
         _ => Err(Error::Parse(
-            "FindOrGiven[2] is an unknown object".to_owned(), // consider covered
+            format!("{} is an unknown object",&domain_name[6..]).to_owned(), // consider covered
         )),
     }
 }
