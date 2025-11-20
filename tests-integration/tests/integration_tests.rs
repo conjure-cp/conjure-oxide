@@ -298,7 +298,7 @@ fn integration_test_inner(
         if verbose {
             println!("Parsed model (native): {model:#?}");
         }
-        save_model_json(&model, path, essence_base, "parse", None)?;
+        save_model_json(&model, path, essence_base, "parse", Some(solver))?;
 
         {
             let mut ctx = context.as_ref().write().unwrap();
@@ -312,7 +312,7 @@ fn integration_test_inner(
         if verbose {
             println!("Parsed model (legacy): {model:#?}");
         }
-        save_model_json(&model, path, essence_base, "parse", None)?;
+        save_model_json(&model, path, essence_base, "parse", Some(solver))?;
         model
     };
 
@@ -422,7 +422,7 @@ fn integration_test_inner(
 
     // When ACCEPT=true, copy all generated files to expected
     if accept {
-        copy_generated_to_expected(path, essence_base, "parse", "serialised.json", None)?;
+        copy_generated_to_expected(path, essence_base, "parse", "serialised.json", Some(solver))?;
 
         if config.apply_rewrite_rules {
             copy_generated_to_expected(
@@ -448,6 +448,50 @@ fn integration_test_inner(
             copy_human_trace_generated_to_expected(path, essence_base, solver)?;
         }
     }
+    // Check Stage 1: Compare parsed model with expected
+    let expected_model = read_model_json(
+        &context,
+        path,
+        essence_base,
+        "expected",
+        "parse",
+        Some(solver),
+    )?;
+    let model_from_file = read_model_json(
+        &context,
+        path,
+        essence_base,
+        "generated",
+        "parse",
+        Some(solver),
+    )?;
+    assert_eq!(model_from_file, expected_model);
+
+    // Check Stage 2a (rewritten model)
+    if config.apply_rewrite_rules {
+        let expected_model = read_model_json(
+            &context,
+            path,
+            essence_base,
+            "expected",
+            "rewrite",
+            Some(solver),
+        )?;
+        let generated_model = read_model_json(
+            &context,
+            path,
+            essence_base,
+            "generated",
+            "rewrite",
+            Some(solver),
+        )?;
+        assert_eq!(generated_model, expected_model);
+    }
+
+    // Check Stage 3a (solutions)
+    let expected_solutions_json = read_solutions_json(path, essence_base, "expected", solver)?;
+    let username_solutions_json = solutions_to_json(&solutions);
+    assert_eq!(username_solutions_json, expected_solutions_json);
 
     // TODO: Implement rule trace validation for morph
     if config.validate_rule_traces && !config.enable_morph_impl {
