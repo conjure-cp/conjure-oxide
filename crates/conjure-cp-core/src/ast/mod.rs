@@ -2,6 +2,7 @@ pub mod categories;
 pub mod pretty;
 pub mod serde;
 
+pub mod abstract_comprehension;
 pub mod ac_operators;
 mod atom;
 mod cnf_clause;
