@@ -299,7 +299,6 @@ fn slice_matrix_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
     let slice = index_domains[hole_dim as usize]
         .values()
         .expect("index domain should be finite and enumerable")
-        .into_iter()
         .map(|i| {
             let mut indices_as_lits = indices_as_lits.clone();
             indices_as_lits[hole_dim as usize] = Some(i);

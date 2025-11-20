@@ -137,7 +137,7 @@ impl AbstractLiteral<Expression> {
 
 impl HasDomain for AbstractLiteral<Literal> {
     fn domain_of(&self) -> DomainPtr {
-        Domain::from_literal_vec(&vec![Literal::AbstractLiteral(self.clone())])
+        Domain::from_literal_vec(&[Literal::AbstractLiteral(self.clone())])
             .expect("abstract literals should be correctly typed")
     }
 }
