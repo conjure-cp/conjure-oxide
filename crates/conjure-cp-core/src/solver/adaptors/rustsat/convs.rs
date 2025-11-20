@@ -34,7 +34,7 @@ pub fn handle_lit(
         // not literal
         Expression::Not(_, _) => handle_not(l1, vars_added, inst),
 
-        _ => bug!("Literal expected"), // I assume it should be bug because of the idea that you are expecting.
+        _ => bug!("Literal expected"), 
     }
 }
 
@@ -49,7 +49,7 @@ pub fn handle_not(
             let a = Moo::unwrap_or_clone(ref_a);
             handle_atom(a, false, vars_added, inst)
         }
-        _ => bug!("Not Expression Expected"), // I assume it should be todo because of the idea that you are expecting.
+        _ => bug!("Not Expression Expected"), 
     }
 }
 
@@ -96,10 +96,6 @@ pub fn handle_disjn(
     inst_in_use: &mut SatInstance,
 ) {
     let mut lits = Clause::new();
-
-    // literal => {
-    // let lit: Lit = handle_lit(literal, vars_added, inst_in_use);
-    // lits.add(lit);
 
     for literal in disjn.iter() {
         let lit: Lit = handle_lit(literal, vars_added, inst_in_use);

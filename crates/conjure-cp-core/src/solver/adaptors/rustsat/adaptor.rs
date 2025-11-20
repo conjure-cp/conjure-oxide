@@ -223,7 +223,6 @@ impl SolverAdaptor for Sat {
 
         for find_ref in decisions {
             let domain = find_ref.1.domain().unwrap_or_else(|| {
-                // Not sure what should happen here, but I'm assuming you can't call a solver without a domain
                 bug!("All decision variables should have domains at this time");
             });
 
