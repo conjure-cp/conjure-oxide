@@ -153,8 +153,8 @@ pub fn index_domains(matrix: AbstractLiteral<Literal>) -> Vec<Moo<GroundDomain>>
 /// See [`enumerate_indices`]. This function zips the two given lists of index domains, performs a
 /// union on each pair, and returns an enumerating iterator over the new list of domains.
 pub fn enumerate_index_union_indices(
-    a_domains: &Vec<Moo<GroundDomain>>,
-    b_domains: &Vec<Moo<GroundDomain>>,
+    a_domains: &[Moo<GroundDomain>],
+    b_domains: &[Moo<GroundDomain>],
 ) -> Result<impl Iterator<Item = Vec<Literal>>, DomainOpError> {
     if a_domains.len() != b_domains.len() {
         return Err(DomainOpError::WrongType);
