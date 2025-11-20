@@ -96,13 +96,13 @@ impl SolverAdaptor for Smt {
         SolverFamily::Smt
     }
 
-    fn get_name(&self) -> Option<String> {
-        Some("SMT".to_string())
+    fn get_name(&self) -> &'static str {
+        "SMT"
     }
 
     fn write_solver_input_file(
         &self,
-        writer: &mut impl std::io::Write,
+        writer: &mut Box<dyn std::io::Write>,
     ) -> Result<(), std::io::Error> {
         let smt2 = self.solver_inst.to_smt2();
         writer.write(smt2.as_bytes()).map(|_| ())
