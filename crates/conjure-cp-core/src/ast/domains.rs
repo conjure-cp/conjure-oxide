@@ -93,6 +93,7 @@ pub enum Domain {
     Empty(ReturnType),
     Reference(Name),
     Set(SetAttr, Box<Domain>),
+    MSet(SetAttr, Box<Domain>),
     /// A n-dimensional matrix with a value domain and n-index domains
     Matrix(Box<Domain>, Vec<Domain>),
     // A tuple of n domains (e.g. (int, bool))
@@ -156,6 +157,21 @@ impl Domain {
                 Literal::AbstractLiteral(AbstractLiteral::Set(lit_elems)) => {
                     // check if the literal's size is allowed by the set attribute
                     if !set_attr.allows_size(lit_elems.len()) {
+                        return Ok(false);
+                    }
+
+                    for elem in lit_elems {
+                        if !inner_domain.contains(elem)? {
+                            return Ok(false);
+                        }
+                    }
+                    Ok(true)
+                }
+                _ => Ok(false),
+            },
+            Domain::MSet(mset_attr, inner_domain) => match lit {
+                Literal::AbstractLiteral(AbstractLiteral::MSet(lit_elems)) => {
+                    if !mset_attr.allows_size(lit_elems.len()) {
                         return Ok(false);
                     }
 
@@ -544,6 +560,20 @@ impl Domain {
 
                 Ok(Domain::Set(SetAttr::None, Box::new(elem_domain)))
             }
+            Literal::AbstractLiteral(AbstractLiteral::MSet(_)) => {
+                let mut all_elems = vec![];
+
+                for lit in literals {
+                    let Literal::AbstractLiteral(AbstractLiteral::MSet(elems)) = lit else {
+                        return Err(DomainOpError::InputWrongType);
+                    };
+
+                    all_elems.extend(elems);
+                }
+                let elem_domain = Domain::from_literal_vec(all_elems)?;
+
+                Ok(Domain::MSet(SetAttr::None, Box::new(elem_domain))) // TODO @cc398 : check SetAttr here should be None??
+            }
 
             l @ Literal::AbstractLiteral(AbstractLiteral::Matrix(_, _)) => {
                 let mut first_index_domain = vec![];
@@ -682,6 +712,7 @@ impl Domain {
             // ~niklasdewally: don't know how to define this for collections, so leaving it for
             // now... However, it definitely can be done, as matrices can be indexed by matrices.
             Domain::Set(_, _) => todo!(),
+            Domain::MSet(_, _) => todo!(),
             Domain::Tuple(_) => todo!(), // TODO: Can this be done?
             Domain::Matrix(_, _) => todo!(),
             Domain::Record(_) => todo!(),
@@ -718,6 +749,23 @@ impl Domain {
             Domain::Set(set_attr, inner_domain) => {
                 let inner_len = inner_domain.length()?;
                 let (min_sz, max_sz) = match set_attr {
+                    SetAttr::None => (0, inner_len),
+                    SetAttr::Size(n) => (*n as u64, *n as u64),
+                    SetAttr::MinSize(n) => (*n as u64, inner_len),
+                    SetAttr::MaxSize(n) => (0, *n as u64),
+                    SetAttr::MinMaxSize(min, max) => (*min as u64, *max as u64),
+                };
+                let mut ans = 0u64;
+                for sz in min_sz..=max_sz {
+                    let c = count_combinations(inner_len, sz)?;
+                    ans = ans.checked_add(c).ok_or(DomainOpError::TooLarge)?;
+                }
+                Ok(ans)
+            }
+            Domain::MSet(mset_attr, inner_domain) => {
+                // TODO @cc398: the domain attr for mset could be slightly different than in a set
+                let inner_len = inner_domain.length()?;
+                let (min_sz, max_sz) = match mset_attr {
                     SetAttr::None => (0, inner_len),
                     SetAttr::Size(n) => (*n as u64, *n as u64),
                     SetAttr::MinSize(n) => (*n as u64, inner_len),
@@ -991,6 +1039,9 @@ impl Display for Domain {
             Domain::Set(_, domain) => {
                 write!(f, "set of ({domain})")
             }
+            Domain::MSet(_, domain) => {
+                write!(f, "mset of ({domain})") // TODO @cc398 : check this.
+            }
             Domain::Matrix(value_domain, index_domains) => {
                 write!(
                     f,
@@ -1029,6 +1080,7 @@ impl Typeable for Domain {
             Domain::Int(_) => Some(ReturnType::Int),
             Domain::Empty(return_type) => Some(return_type.clone()),
             Domain::Set(_, domain) => Some(ReturnType::Set(Box::new(domain.return_type()?))),
+            Domain::MSet(_, domain) => Some(ReturnType::MSet(Box::new(domain.return_type()?))),
             Domain::Reference(_) => None, // todo!("add ReturnType for Domain::Reference"),
             Domain::Matrix(item_domain, index_domains) => {
                 assert!(

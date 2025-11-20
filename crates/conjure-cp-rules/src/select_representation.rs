@@ -199,6 +199,7 @@ fn domain_needs_representation(domain: &Domain) -> bool {
         Domain::Bool | Domain::Int(_) => false,
         Domain::Matrix(_, _) => false, // we special case these elsewhere
         Domain::Set(_, _) | Domain::Tuple(_) | Domain::Record(_) => true,
+        Domain::MSet(_, _) => false, // TODO @cc398 : I don't know what is going on here.
         Domain::Reference(_) => unreachable!("domain should be resolved"),
         Domain::Empty(_) => false, // _ => false,
     }
