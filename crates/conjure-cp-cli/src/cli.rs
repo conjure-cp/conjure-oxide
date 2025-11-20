@@ -1,12 +1,12 @@
 use std::path::PathBuf;
 
-use clap::{Args, Parser, Subcommand, arg, command};
+use clap::{Args, Parser, Subcommand};
 
 use clap_complete::Shell;
 use conjure_cp::solver::SolverFamily;
 use conjure_cp::solver::adaptors::smt::{IntTheory, MatrixTheory};
 
-use crate::{solve, test_solve};
+use crate::{pretty, solve, test_solve};
 
 pub(crate) const DEBUG_HELP_HEADING: Option<&str> = Some("Debug");
 pub(crate) const LOGGING_HELP_HEADING: Option<&str> = Some("Logging & Output");
@@ -27,6 +27,7 @@ pub enum Command {
     TestSolve(test_solve::Args),
     /// Generate a completion script for the shell provided
     Completion(CompletionArgs),
+    Pretty(pretty::Args),
     // Run the language server
     ServerLSP,
 }
