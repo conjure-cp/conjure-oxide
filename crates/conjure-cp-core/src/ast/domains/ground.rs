@@ -424,27 +424,27 @@ impl GroundDomain {
     /// # Examples
     ///
     /// ```
-    /// use conjure_cp_core::ast::{Domain,Range};
-    /// use conjure_cp_core::{domain_int,range};
+    /// use conjure_cp_core::ast::{GroundDomain, Range};
+    /// use conjure_cp_core::{domain_int_ground,range};
     /// use std::collections::BTreeSet;
     ///
     /// let elements = BTreeSet::from([1,2,3,4,5]);
     ///
-    /// let domain = Domain::from_set_i32(&elements);
+    /// let domain = GroundDomain::from_set_i32(&elements);
     ///
-    /// assert_eq!(domain,domain_int!(1..5));
+    /// assert_eq!(domain,domain_int_ground!(1..5));
     /// ```
     ///
     /// ```
     /// use conjure_cp_core::ast::{GroundDomain,Range};
-    /// use conjure_cp_core::{domain_int,range};
+    /// use conjure_cp_core::{domain_int_ground,range};
     /// use std::collections::BTreeSet;
     ///
     /// let elements = BTreeSet::from([1,2,4,5,7,8,9,10]);
     ///
     /// let domain = GroundDomain::from_set_i32(&elements);
     ///
-    /// assert_eq!(domain,domain_int!(1..2,4..5,7..10));
+    /// assert_eq!(domain,domain_int_ground!(1..2,4..5,7..10));
     /// ```
     ///
     /// ```
@@ -582,59 +582,59 @@ impl GroundDomain {
     /// ```
     /// use conjure_cp_core::ast::{Range, Literal, ReturnType, GroundDomain};
     ///
-    /// let domain = GroundDomain::from_literal_vec(vec![]);
+    /// let domain = GroundDomain::from_literal_vec(&vec![]);
     /// assert_eq!(domain,Ok(GroundDomain::Empty(ReturnType::Unknown)));
     /// ```
     ///
     /// ```
     /// use conjure_cp_core::ast::{GroundDomain,Range,Literal, AbstractLiteral};
-    /// use conjure_cp_core::{domain_int, range, matrix};
+    /// use conjure_cp_core::{domain_int_ground, range, matrix};
     ///
     /// // `[1,2;int(2..3)], [4,5; int(2..3)]` has domain
     /// // `matrix indexed by [int(2..3)] of int(1..2,4..5)`
     ///
-    /// let matrix_1 = Literal::AbstractLiteral(matrix![Literal::Int(1),Literal::Int(2);domain_int!(2..3)]);
-    /// let matrix_2 = Literal::AbstractLiteral(matrix![Literal::Int(4),Literal::Int(5);domain_int!(2..3)]);
+    /// let matrix_1 = Literal::AbstractLiteral(matrix![Literal::Int(1),Literal::Int(2);domain_int_ground!(2..3)]);
+    /// let matrix_2 = Literal::AbstractLiteral(matrix![Literal::Int(4),Literal::Int(5);domain_int_ground!(2..3)]);
     ///
-    /// let domain = GroundDomain::from_literal_vec(vec![matrix_1,matrix_2]);
+    /// let domain = GroundDomain::from_literal_vec(&vec![matrix_1,matrix_2]);
     ///
     /// let expected_domain = Ok(GroundDomain::Matrix(
-    ///     domain_int!(1..2,4..5),vec![domain_int!(2..3)]));
+    ///     domain_int_ground!(1..2,4..5),vec![domain_int_ground!(2..3)]));
     ///
     /// assert_eq!(domain,expected_domain);
     /// ```
     ///
     /// ```
     /// use conjure_cp_core::ast::{GroundDomain,Range,Literal, AbstractLiteral,DomainOpError};
-    /// use conjure_cp_core::{domain_int, range, matrix};
+    /// use conjure_cp_core::{domain_int_ground, range, matrix};
     ///
     /// // `[1,2;int(2..3)], [4,5; int(1..2)]` cannot be combined
     /// // `matrix indexed by [int(2..3)] of int(1..2,4..5)`
     ///
-    /// let matrix_1 = Literal::AbstractLiteral(matrix![Literal::Int(1),Literal::Int(2);domain_int!(2..3)]);
-    /// let matrix_2 = Literal::AbstractLiteral(matrix![Literal::Int(4),Literal::Int(5);domain_int!(1..2)]);
+    /// let matrix_1 = Literal::AbstractLiteral(matrix![Literal::Int(1),Literal::Int(2);domain_int_ground!(2..3)]);
+    /// let matrix_2 = Literal::AbstractLiteral(matrix![Literal::Int(4),Literal::Int(5);domain_int_ground!(1..2)]);
     ///
-    /// let domain = GroundDomain::from_literal_vec(vec![matrix_1,matrix_2]);
+    /// let domain = GroundDomain::from_literal_vec(&vec![matrix_1,matrix_2]);
     ///
     /// assert_eq!(domain,Err(DomainOpError::WrongType));
     /// ```
     ///
     /// ```
     /// use conjure_cp_core::ast::{GroundDomain,Range,Literal, AbstractLiteral};
-    /// use conjure_cp_core::{domain_int,range, matrix};
+    /// use conjure_cp_core::{domain_int_ground,range, matrix};
     ///
     /// // `[[1,2; int(1..2)];int(2)], [[4,5; int(1..2)]; int(2)]` has domain
     /// // `matrix indexed by [int(2),int(1..2)] of int(1..2,4..5)`
     ///
     ///
-    /// let matrix_1 = Literal::AbstractLiteral(matrix![Literal::AbstractLiteral(matrix![Literal::Int(1),Literal::Int(2);domain_int!(1..2)]); domain_int!(2)]);
-    /// let matrix_2 = Literal::AbstractLiteral(matrix![Literal::AbstractLiteral(matrix![Literal::Int(4),Literal::Int(5);domain_int!(1..2)]); domain_int!(2)]);
+    /// let matrix_1 = Literal::AbstractLiteral(matrix![Literal::AbstractLiteral(matrix![Literal::Int(1),Literal::Int(2);domain_int_ground!(1..2)]); domain_int_ground!(2)]);
+    /// let matrix_2 = Literal::AbstractLiteral(matrix![Literal::AbstractLiteral(matrix![Literal::Int(4),Literal::Int(5);domain_int_ground!(1..2)]); domain_int_ground!(2)]);
     ///
-    /// let domain = GroundDomain::from_literal_vec(vec![matrix_1,matrix_2]);
+    /// let domain = GroundDomain::from_literal_vec(&vec![matrix_1,matrix_2]);
     ///
     /// let expected_domain = Ok(GroundDomain::Matrix(
-    ///     domain_int!(1..2,4..5),
-    ///     vec![domain_int!(2),domain_int!(1..2)]));
+    ///     domain_int_ground!(1..2,4..5),
+    ///     vec![domain_int_ground!(2),domain_int_ground!(1..2)]));
     ///
     /// assert_eq!(domain,expected_domain);
     /// ```

@@ -7,7 +7,7 @@ use std::collections::VecDeque;
 use itertools::{Itertools, izip};
 use uniplate::Uniplate as _;
 
-use crate::ast::{Domain, DomainPtr, GroundDomain, DomainOpError, Moo, Range};
+use crate::ast::{DomainOpError, GroundDomain, Moo, Range};
 
 use super::{AbstractLiteral, Literal};
 
@@ -24,17 +24,18 @@ use super::{AbstractLiteral, Literal};
 /// # Example
 ///
 /// ```
-/// use conjure_cp_core::ast::{Domain,Range,Literal,matrix};
-/// let index_domains = vec![Domain::Bool,Domain::Int(vec![Range::Bounded(1,2)])];
+/// use std::collections::HashSet;
+/// use conjure_cp_core::ast::{GroundDomain,Moo,Range,Literal,matrix};
+/// let index_domains = vec![Moo::new(GroundDomain::Bool),Moo::new(GroundDomain::Int(vec![Range::Bounded(1,2)]))];
 ///
-/// let expected_indices = vec![
+/// let expected_indices = HashSet::from([
 ///   vec![Literal::Bool(false),Literal::Int(1)],
 ///   vec![Literal::Bool(false),Literal::Int(2)],
 ///   vec![Literal::Bool(true),Literal::Int(1)],
 ///   vec![Literal::Bool(true),Literal::Int(2)]
-///   ];
+///   ]);
 ///
-/// let actual_indices: Vec<_> = matrix::enumerate_indices(index_domains).collect();
+/// let actual_indices: HashSet<_> = matrix::enumerate_indices(index_domains).collect();
 ///
 /// assert_eq!(actual_indices, expected_indices);
 /// ```
@@ -152,8 +153,8 @@ pub fn index_domains(matrix: AbstractLiteral<Literal>) -> Vec<Moo<GroundDomain>>
 /// See [`enumerate_indices`]. This function zips the two given lists of index domains, performs a
 /// union on each pair, and returns an enumerating iterator over the new list of domains.
 pub fn enumerate_index_union_indices(
-    a_domains: Vec<Moo<GroundDomain>>,
-    b_domains: Vec<Moo<GroundDomain>>,
+    a_domains: &Vec<Moo<GroundDomain>>,
+    b_domains: &Vec<Moo<GroundDomain>>,
 ) -> Result<impl Iterator<Item = Vec<Literal>>, DomainOpError> {
     if a_domains.len() != b_domains.len() {
         return Err(DomainOpError::WrongType);
@@ -161,9 +162,9 @@ pub fn enumerate_index_union_indices(
     let idx_domains: Result<Vec<_>, _> = a_domains
         .iter()
         .zip(b_domains.iter())
-        .map(|(a, b)| Moo::new(a.union(b)))
+        .map(|(a, b)| a.union(b))
         .collect();
-    let idx_domains = idx_domains?;
+    let idx_domains = idx_domains?.into_iter().map(Moo::new).collect();
 
     Ok(enumerate_indices(idx_domains))
 }
