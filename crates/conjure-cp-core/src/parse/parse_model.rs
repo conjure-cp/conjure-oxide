@@ -188,8 +188,7 @@ fn parse_domain(
                     .as_object()
                     .ok_or(error!("DomainReference[0] is not an object"))?["Name"]
                     .as_str()
-                    .ok_or(error!("DomainReference[0].Name is not a string"))?
-                    .into(),
+                    .ok_or(error!("DomainReference[0].Name is not a string"))?,
             );
             let ptr = symbols
                 .lookup(&name)

@@ -59,9 +59,9 @@ impl Reference {
     }
 }
 
-impl Into<Expression> for Reference {
-    fn into(self) -> Expression {
-        Expression::Atomic(Metadata::new(), self.into())
+impl From<Reference> for Expression {
+    fn from(value: Reference) -> Self {
+        Expression::Atomic(Metadata::new(), value.into())
     }
 }
 

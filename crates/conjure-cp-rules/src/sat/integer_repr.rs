@@ -112,7 +112,7 @@ fn integer_decision_representation(expr: &Expr, symbols: &SymbolTable) -> Applic
         // add domain ranges as constraints if this is the first time the representation is added
         Ok(Reduction::new(
             cnf_int.clone(),
-            vec![int_domain_to_expr(cnf_int, &ranges)], // contains domain rules
+            vec![int_domain_to_expr(cnf_int, ranges)], // contains domain rules
             symbols,
         ))
     } else {

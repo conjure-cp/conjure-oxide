@@ -140,7 +140,6 @@ impl Representation for MatrixToAtom {
                     self1.index_domains[current_dim]
                         .values()
                         .unwrap()
-                        .into_iter()
                         .map(|i| {
                             let mut current_index_1 = current_index.clone();
                             current_index_1.push(i);

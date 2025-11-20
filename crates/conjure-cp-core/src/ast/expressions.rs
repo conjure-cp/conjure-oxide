@@ -717,7 +717,7 @@ fn bounded_i32_domain_for_matrix_literal_monotonic(
         return None;
     };
 
-    let (mut current_min, mut current_max) = range_vec_bounds_i32(&ranges)?;
+    let (mut current_min, mut current_max) = range_vec_bounds_i32(ranges)?;
 
     for expr in exprs {
         let dom = expr.domain_of()?;
@@ -725,7 +725,7 @@ fn bounded_i32_domain_for_matrix_literal_monotonic(
             return None;
         };
 
-        let (min, max) = range_vec_bounds_i32(&ranges)?;
+        let (min, max) = range_vec_bounds_i32(ranges)?;
 
         // all the possible new values for current_min / current_max
         let minmax = op(min, current_max)?;
@@ -810,14 +810,21 @@ impl Expression {
                 if let Some((elem_domain, _)) = dom.as_matrix() {
                     return Some(elem_domain);
                 }
+
+                // may actually use the value in the future
+                #[allow(clippy::redundant_pattern_matching)]
                 if let Some(_) = dom.as_tuple() {
                     // TODO: We can implement proper indexing for tuples
                     return None;
                 }
+
+                // may actually use the value in the future
+                #[allow(clippy::redundant_pattern_matching)]
                 if let Some(_) = dom.as_record() {
                     // TODO: We can implement proper indexing for records
                     return None;
                 }
+
                 bug!("subject of an index operation should support indexing")
             }
             Expression::UnsafeSlice(_, matrix, indices)
@@ -902,7 +909,7 @@ impl Expression {
                 .resolve()?
                 .apply_i32(
                     |x, y| if y != 0 { Some(x % y) } else { None },
-                    &b.domain_of()?.resolve()?.as_ref(),
+                    b.domain_of()?.resolve()?.as_ref(),
                 )
                 .map(DomainPtr::from)
                 .ok(),
@@ -912,13 +919,13 @@ impl Expression {
                     .resolve()?
                     .apply_i32(
                         |x, y| if y != 0 { Some(x % y) } else { None },
-                        &b.domain_of()?.resolve()?.as_ref(),
+                        b.domain_of()?.resolve()?.as_ref(),
                     )
                     .unwrap_or_else(|err| bug!("Got {err} when computing domain of {self}"));
 
                 if let GroundDomain::Int(ranges) = domain {
                     let mut ranges = ranges;
-                    ranges.push(Range::Single(0.into()));
+                    ranges.push(Range::Single(0));
                     return Some(Domain::new_int(ranges));
                 } else {
                     bug!("Domain of {self} was not integer")
@@ -935,7 +942,7 @@ impl Expression {
                             None
                         }
                     },
-                    &b.domain_of()?.resolve()?.as_ref(),
+                    b.domain_of()?.resolve()?.as_ref(),
                 )
                 .map(DomainPtr::from)
                 .ok(),
@@ -986,7 +993,7 @@ impl Expression {
             Expression::Minus(_, a, b) => a
                 .domain_of()?
                 .resolve()?
-                .apply_i32(|x, y| Some(x - y), &b.domain_of()?.resolve()?.as_ref())
+                .apply_i32(|x, y| Some(x - y), b.domain_of()?.resolve()?.as_ref())
                 .map(DomainPtr::from)
                 .ok(),
             Expression::FlatAllDiff(_, _) => Some(Domain::new_bool()),
@@ -997,7 +1004,7 @@ impl Expression {
             Expression::Abs(_, a) => a
                 .domain_of()?
                 .resolve()?
-                .apply_i32(|a, _| Some(a.abs()), &a.domain_of()?.resolve()?.as_ref())
+                .apply_i32(|a, _| Some(a.abs()), a.domain_of()?.resolve()?.as_ref())
                 .map(DomainPtr::from)
                 .ok(),
             Expression::MinionPow(_, _, _, _) => Some(Domain::new_bool()),
@@ -1014,13 +1021,13 @@ impl Expression {
             Expression::PairwiseSum(_, a, b) => a
                 .domain_of()?
                 .resolve()?
-                .apply_i32(|a, b| Some(a + b), &b.domain_of()?.resolve()?.as_ref())
+                .apply_i32(|a, b| Some(a + b), b.domain_of()?.resolve()?.as_ref())
                 .map(DomainPtr::from)
                 .ok(),
             Expression::PairwiseProduct(_, a, b) => a
                 .domain_of()?
                 .resolve()?
-                .apply_i32(|a, b| Some(a * b), &b.domain_of()?.resolve()?.as_ref())
+                .apply_i32(|a, b| Some(a * b), b.domain_of()?.resolve()?.as_ref())
                 .map(DomainPtr::from)
                 .ok(),
         };

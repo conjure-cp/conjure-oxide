@@ -166,7 +166,6 @@ fn flatten_matrix_slice(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let elements: Vec<Expr> = mat_idxs[slice_dim]
         .values()
         .map_err(|_| DomainError)?
-        .into_iter()
         .map(|lit| {
             let mut new_idx = other_idxs.clone();
             new_idx.insert(slice_dim, Expr::Atomic(Metadata::new(), Atom::Literal(lit)));

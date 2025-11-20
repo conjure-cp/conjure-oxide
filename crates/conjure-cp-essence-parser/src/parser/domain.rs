@@ -133,7 +133,7 @@ fn parse_matrix_domain(
             ),
         )?,
         source_code,
-        symbols.clone(),
+        symbols,
     )?;
     Ok(Domain::new_matrix(value_domain, domains))
 }
