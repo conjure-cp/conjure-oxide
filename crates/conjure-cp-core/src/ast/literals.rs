@@ -15,8 +15,41 @@ use super::domains::HasDomain;
 use super::{Atom, Domain, Expression, Range, records::RecordValue};
 use super::{Moo, ReturnType, SetAttr, Typeable};
 
+#[derive(
+    Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate, Hash, Quine, Default,
+)]
+#[uniplate(walk_into=[AbstractLiteral<Literal>, TernaryVal])]
+#[biplate(to=Atom)]
+#[biplate(to=AbstractLiteral<Literal>)]
+#[biplate(to=AbstractLiteral<Expression>)]
+#[biplate(to=RecordValue<Literal>)]
+#[biplate(to=RecordValue<Expression>)]
+#[biplate(to=Expression)]
+#[path_prefix(conjure_cp::ast)]
+/// A Ternary Value Type used for assignment of truth-value literals in SAT problems
+/// DontCare is passed when the value of some literal does not affect the solution of the constraint problem
+pub enum TernaryVal {
+    /// Positive assignment.
+    True,
+    /// Negative assignment.
+    False,
+    /// Formula is satisfied, no matter the assignment.
+    #[default]
+    DontCare,
+}
+
+impl Display for TernaryVal {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match &self {
+            TernaryVal::True => write!(f, "0: True"),
+            TernaryVal::False => write!(f, "1: False"),
+            TernaryVal::DontCare => write!(f, "2: DontCare"),
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate, Hash, Quine)]
-#[uniplate(walk_into=[AbstractLiteral<Literal>])]
+#[uniplate(walk_into=[AbstractLiteral<Literal>, TernaryVal])]
 #[biplate(to=Atom)]
 #[biplate(to=AbstractLiteral<Literal>)]
 #[biplate(to=AbstractLiteral<Expression>)]
@@ -28,6 +61,7 @@ use super::{Moo, ReturnType, SetAttr, Typeable};
 pub enum Literal {
     Int(i32),
     Bool(bool),
+    Ternary(TernaryVal),
     //abstract literal variant ends in Literal, but that's ok
     #[allow(clippy::enum_variant_names)]
     AbstractLiteral(AbstractLiteral<Literal>),
@@ -38,6 +72,7 @@ impl HasDomain for Literal {
         match self {
             Literal::Int(i) => Domain::Int(vec![Range::Single(*i)]),
             Literal::Bool(_) => Domain::Bool,
+            Literal::Ternary(_) => Domain::Ternary,
             Literal::AbstractLiteral(abstract_literal) => abstract_literal.domain_of(),
         }
     }
@@ -382,12 +417,24 @@ where
     }
 }
 
+// for i32
 impl TryFrom<Literal> for i32 {
     type Error = &'static str;
 
     fn try_from(value: Literal) -> Result<Self, Self::Error> {
         match value {
             Literal::Int(i) => Ok(i),
+            _ => Err("Cannot convert non-i32 literal to i32"),
+        }
+    }
+}
+
+impl TryFrom<&Literal> for i32 {
+    type Error = &'static str;
+
+    fn try_from(value: &Literal) -> Result<Self, Self::Error> {
+        match value {
+            Literal::Int(i) => Ok(*i),
             _ => Err("Cannot convert non-i32 literal to i32"),
         }
     }
@@ -417,17 +464,7 @@ impl TryFrom<&Moo<Literal>> for i32 {
     }
 }
 
-impl TryFrom<&Literal> for i32 {
-    type Error = &'static str;
-
-    fn try_from(value: &Literal) -> Result<Self, Self::Error> {
-        match value {
-            Literal::Int(i) => Ok(*i),
-            _ => Err("Cannot convert non-i32 literal to i32"),
-        }
-    }
-}
-
+// for bool---------
 impl TryFrom<Literal> for bool {
     type Error = &'static str;
 
@@ -450,6 +487,29 @@ impl TryFrom<&Literal> for bool {
     }
 }
 
+// for ternary
+impl TryFrom<Literal> for TernaryVal {
+    type Error = &'static str;
+
+    fn try_from(value: Literal) -> Result<Self, Self::Error> {
+        match value {
+            Literal::Ternary(t) => Ok(t),
+            _ => Err("Cannot convert non-ternary literal to ternary"),
+        }
+    }
+}
+
+impl TryFrom<&Literal> for TernaryVal {
+    type Error = &'static str;
+
+    fn try_from(value: &Literal) -> Result<Self, Self::Error> {
+        match value {
+            Literal::Ternary(t) => Ok(*t),
+            _ => Err("Cannot convert non-ternary literal to ternary"),
+        }
+    }
+}
+
 impl From<i32> for Literal {
     fn from(i: i32) -> Self {
         Literal::Int(i)
@@ -466,6 +526,12 @@ impl From<Literal> for Ustr {
     fn from(value: Literal) -> Self {
         // TODO: avoid the temporary-allocation of a string by format! here?
         Ustr::from(&format!("{value}"))
+    }
+}
+
+impl From<TernaryVal> for Literal {
+    fn from(t: TernaryVal) -> Self {
+        Literal::Ternary(t)
     }
 }
 
@@ -538,6 +604,7 @@ impl Display for Literal {
         match &self {
             Literal::Int(i) => write!(f, "{i}"),
             Literal::Bool(b) => write!(f, "{b}"),
+            Literal::Ternary(t) => write!(f, "{t}"),
             Literal::AbstractLiteral(l) => write!(f, "{l:?}"),
         }
     }

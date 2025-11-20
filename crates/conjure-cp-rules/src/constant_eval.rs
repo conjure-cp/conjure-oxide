@@ -524,7 +524,8 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                             lits.insert(x.clone());
                         }
                     }
-                    Lit::AbstractLiteral(_) => return None, // Reject AbstractLiteral cases
+                    Lit::AbstractLiteral(_) => return None,
+                    Lit::Ternary(_) => todo!(),
                 }
             }
             Some(Lit::Bool(true))
@@ -537,7 +538,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                 };
 
                 match x {
-                    Lit::Int(_) | Lit::Bool(_) => {
+                    Lit::Int(_) | Lit::Bool(_) | Lit::Ternary(_) => {
                         if lits.contains(x) {
                             return Some(Lit::Bool(false));
                         } else {
