@@ -8,14 +8,7 @@ fn unexpected_closing_paren() {
     let diagnostics = detect_syntactic_errors(source);
     assert!(!diagnostics.is_empty(), "Expected at least one diagnostic");
     let diag = &diagnostics[0];
-    check_diagnostic(
-        diag,
-        0,
-        17,
-        0,
-        18,
-        "Unexpected token ')' at the end of 'find'",
-    );
+    check_diagnostic(diag, 0, 17, 0, 18, "Unexpected ')' at the end of 'find'");
 }
 
 #[test]
@@ -24,14 +17,7 @@ fn unexpected_identifier_in_range() {
     let diagnostics = detect_syntactic_errors(source);
     assert!(!diagnostics.is_empty(), "Expected at least one diagnostic");
     let diag = &diagnostics[0];
-    check_diagnostic(
-        diag,
-        0,
-        16,
-        0,
-        17,
-        "Unexpected token 'x' inside 'int_domain'",
-    );
+    check_diagnostic(diag, 0, 16, 0, 17, "Unexpected 'x' inside 'int_domain'");
 }
 
 #[test]
@@ -49,7 +35,7 @@ such that x = 6;
         15,
         1,
         16,
-        "Unexpected token ';' at the end of 'such that'",
+        "Unexpected ';' at the end of 'such that'",
     );
 }
 
@@ -59,14 +45,7 @@ fn unexpected_extra_comma_in_find() {
     let diagnostics = detect_syntactic_errors(source);
     assert!(!diagnostics.is_empty(), "Expected at least one diagnostic");
     let diag = &diagnostics[0];
-    check_diagnostic(
-        diag,
-        0,
-        6,
-        0,
-        7,
-        "Unexpected token ',' inside 'variable_list'",
-    );
+    check_diagnostic(diag, 0, 6, 0, 7, "Unexpected ',' inside 'variable_list'");
 }
 
 #[test]
@@ -78,14 +57,7 @@ such that x -> %9
     let diagnostics = detect_syntactic_errors(source);
     assert!(!diagnostics.is_empty());
     let diag = &diagnostics[0];
-    check_diagnostic(
-        diag,
-        1,
-        15,
-        1,
-        16,
-        "Unexpected token '%' inside 'implication'",
-    );
+    check_diagnostic(diag, 1, 15, 1, 16, "Unexpected '%' inside 'implication'");
 }
 
 #[test]
@@ -94,14 +66,7 @@ fn unexpected_token_in_matrix_domain() {
     let diagnostics = detect_syntactic_errors(source);
     assert!(!diagnostics.is_empty());
     let diag = &diagnostics[0];
-    check_diagnostic(
-        diag,
-        0,
-        32,
-        0,
-        33,
-        "Unexpected token '&' inside 'matrix_domain'",
-    );
+    check_diagnostic(diag, 0, 32, 0, 33, "Unexpected '&' inside 'matrix_domain'");
 }
 
 #[test]
@@ -111,14 +76,7 @@ fn unexpected_token_in_set_literal() {
     assert!(!diagnostics.is_empty());
     let diag = &diagnostics[0];
 
-    check_diagnostic(
-        diag,
-        1,
-        21,
-        1,
-        22,
-        "Unexpected token '@' inside 'set_literal'",
-    );
+    check_diagnostic(diag, 1, 21, 1, 22, "Unexpected '@' inside 'set_literal'");
 }
 
 // Multiple unexpected tokens
@@ -133,25 +91,11 @@ such that x = {1, 2, @}";
 
     // First unexpected token: ';' at the end of domain
     let diag1 = &diagnostics[0];
-    check_diagnostic(
-        diag1,
-        0,
-        18,
-        0,
-        19,
-        "Unexpected token ';' at the end of 'find'",
-    );
+    check_diagnostic(diag1, 0, 18, 0, 19, "Unexpected ';' at the end of 'find'");
 
     // Second unexpected token: '@' in set literal
     let diag2 = &diagnostics[1];
-    check_diagnostic(
-        diag2,
-        1,
-        21,
-        1,
-        22,
-        "Unexpected token '@' inside 'set_literal'",
-    );
+    check_diagnostic(diag2, 1, 21, 1, 22, "Unexpected '@' inside 'set_literal'");
 }
 
 #[test]
@@ -169,7 +113,7 @@ such that a = allDiff([1,2,4,1]x)";
         31,
         1,
         32,
-        "Unexpected token 'x' inside 'quantifier_expr_bool'",
+        "Unexpected 'x' inside 'quantifier_expr_bool'",
     );
 }
 
@@ -188,6 +132,6 @@ such that a = allDiff([1,2,4,1])8";
         32,
         1,
         33,
-        "Unexpected token '8' at the end of 'such that'",
+        "Unexpected '8' at the end of 'such that'",
     );
 }
