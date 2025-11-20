@@ -52,6 +52,9 @@ jobs:
       - name: "Install rust-toolchain.toml"
         run: rustup toolchain install
 
+      - name: Initialise submodules
+        run: make setup
+
       - run: RUSTFLAGS="-D warnings" cargo check $(EXTRA_CARGO_CHECK_FLAGS) --workspace --all-targets
       - run: cargo clippy $(EXTRA_CARGO_CHECK_FLAGS) -- -D warnings -A clippy::unwrap_used -A clippy::expect_used
       - run: cargo fmt --check
