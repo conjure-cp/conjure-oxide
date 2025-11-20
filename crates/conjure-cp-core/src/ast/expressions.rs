@@ -258,6 +258,11 @@ pub enum Expression {
     /// `UnsafePow` after preventing undefinedness
     SafePow(Metadata, Moo<Expression>, Moo<Expression>),
 
+    /// Flatten matrix operator
+    /// `flatten(M)` or `flatten(n, M)`
+    /// where M is a matrix and n is an optional integer argument indicating depth of flattening
+    Flatten(Metadata, Option<Moo<Expression>>, Moo<Expression>),
+
     /// `allDiff(<vec_expr>)`
     #[compatible(JsonInput)]
     AllDiff(Metadata, Moo<Expression>),
@@ -751,6 +756,31 @@ impl Expression {
             Expression::MinionDivEqUndefZero(_, _, _, _) => Some(Domain::Bool),
             Expression::MinionModuloEqUndefZero(_, _, _, _) => Some(Domain::Bool),
             Expression::FlatIneq(_, _, _, _) => Some(Domain::Bool),
+            Expression::Flatten(_, n, m) => {
+                if let Some(expr) = n {
+                    if let Some(ReturnType::Int) = expr.return_type() {
+                        // TODO: handle flatten with depth argument
+                        return None;
+                    }
+                } else {
+                    let mut domain = m.domain_of()?;
+                    let mut total_size = 1;
+                    let mut index_domains: Vec<Domain> = Vec::new();
+                    // get the deepest element domain
+                    while let Domain::Matrix(elem, indexes) = domain {
+                        index_domains.extend(indexes.into_iter());
+                        domain = *elem;
+                    }
+
+                    // calculate total flattened size
+                    for i in &index_domains {
+                        total_size *= i.length().ok()?;
+                    }
+                    let new_index_domain = Domain::Int(vec![Range::Bounded(1, total_size.try_into().unwrap())]);
+                    return Some(Domain::Matrix(Box::new(domain), vec![new_index_domain]));
+                }
+                None
+            }
             Expression::AllDiff(_, _) => Some(Domain::Bool),
             Expression::FlatWatchedLiteral(_, _, _) => Some(Domain::Bool),
             Expression::MinionReify(_, _, _) => Some(Domain::Bool),
@@ -1212,6 +1242,13 @@ impl Display for Expression {
                 box2.clone(),
                 box3.clone()
             ),
+            Expression::Flatten(_, n, m) => {
+                if let Some(n) = n {
+                    write!(f, "flatten({n}, {m})")
+                } else {
+                    write!(f, "flatten({m})")
+                }
+            }
             Expression::AllDiff(_, e) => {
                 write!(f, "allDiff({e})")
             }
@@ -1400,6 +1437,13 @@ impl Typeable for Expression {
             Expression::FlatSumLeq(_, _, _) => Some(ReturnType::Bool),
             Expression::MinionDivEqUndefZero(_, _, _, _) => Some(ReturnType::Bool),
             Expression::FlatIneq(_, _, _, _) => Some(ReturnType::Bool),
+            Expression::Flatten(_, _, matrix) => {
+                let mut flat_type = matrix.return_type()?;
+                while let ReturnType::Matrix(inner) = flat_type {
+                    flat_type = *inner;
+                }
+                Some(flat_type)
+            },
             Expression::AllDiff(_, _) => Some(ReturnType::Bool),
             Expression::Bubble(_, inner, _) => inner.return_type(),
             Expression::FlatWatchedLiteral(_, _, _) => Some(ReturnType::Bool),
