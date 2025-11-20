@@ -5,38 +5,20 @@ find b: bool
 
 such that
 
-and([or([a,b;int(1..2)]),or([!(a),b;int(1..2)]);int(1..2)])
+and([or([a,b;int(1..)]),or([!(a),b;int(1..)]);int(1..)])
+
+--
+
+and([or([a,b;int(1..)]),or([!(a),b;int(1..)]);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+or([a,b;int(1..)]),
+or([!(a),b;int(1..)]) 
 
 --
 
 !(a), 
    ~~> not_literal_to_wliteral ([("Minion", 4100)]) 
 WatchedLiteral(a,false) 
-
---
-
-and([or([a,b;int(1..2)]),or([WatchedLiteral(a,false),b;int(1..2)]);int(1..2)]), 
-   ~~> matrix_to_list ([("Base", 2000)]) 
-and([or([a,b;int(1..2)]),or([WatchedLiteral(a,false),b;int(1..2)]);int(1..)]) 
-
---
-
-and([or([a,b;int(1..2)]),or([WatchedLiteral(a,false),b;int(1..2)]);int(1..)]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
-or([a,b;int(1..2)]),
-or([WatchedLiteral(a,false),b;int(1..2)]) 
-
---
-
-or([a,b;int(1..2)]), 
-   ~~> matrix_to_list ([("Base", 2000)]) 
-or([a,b;int(1..)]) 
-
---
-
-or([WatchedLiteral(a,false),b;int(1..2)]), 
-   ~~> matrix_to_list ([("Base", 2000)]) 
-or([WatchedLiteral(a,false),b;int(1..)]) 
 
 --
 

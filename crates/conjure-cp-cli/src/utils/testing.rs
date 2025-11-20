@@ -20,10 +20,10 @@ use conjure_cp::error::Error;
 use crate::utils::conjure::solutions_to_json;
 use crate::utils::json::sort_json_object;
 use crate::utils::misc::to_set;
-use conjure_cp::Model as ConjureModel;
 use conjure_cp::ast::Name::User;
 use conjure_cp::ast::{Literal, Name};
 use conjure_cp::solver::SolverFamily;
+use conjure_cp::Model as ConjureModel;
 
 /// Converts a SerdeModel to JSON with stable IDs.
 ///
@@ -126,7 +126,7 @@ pub fn save_model_json(
 ) -> Result<(), std::io::Error> {
     let marker = solver.map_or("agnostic".into(), |s| s.as_str());
 
-    let generated_json_str = serialise_model(model)?;
+    let generated_json_str = serialize_model(model)?;
     let filename = format!("{path}/{marker}-{test_name}.generated-{test_stage}.serialised.json");
     println!("saving: {filename}");
     File::create(&filename)?.write_all(generated_json_str.as_bytes())?;
@@ -262,7 +262,7 @@ pub fn read_human_rule_trace(
 ) -> Result<Vec<String>, std::io::Error> {
     let solver_name = solver.as_str();
     let filename = format!("{path}/{solver_name}-{test_name}-{prefix}-rule-trace-human.txt");
-    let rules_trace: Vec<String> = read_to_string(&filename)?
+    let rules_trace: Vec<String> = read_with_path(filename)?
         .lines()
         .map(String::from)
         .collect();
