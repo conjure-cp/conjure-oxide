@@ -12,7 +12,7 @@ pub struct Smt {
 
     /// Initially maps variables to unknown constants.
     /// Also used to store their solved literal values.
-    store: Store,
+    store: SymbolStore,
 
     /// Assertions are added to this solver instance when loading the model.
     solver_inst: Solver,
@@ -26,18 +26,23 @@ impl Default for Smt {
     fn default() -> Self {
         Smt {
             __non_constructable: private::Internal,
-            store: Store::new(),
+            store: SymbolStore::new(TheoryConfig::default()),
             solver_inst: Solver::new(),
-            theory_config: Default::default(),
+            theory_config: TheoryConfig::default(),
         }
     }
 }
 
 impl Smt {
     /// Constructs a new adaptor using the given theories for representing the relevant constructs.
-    pub fn new(int_theory: IntTheory) -> Self {
+    pub fn new(int_theory: IntTheory, matrix_theory: MatrixTheory) -> Self {
+        let theories = TheoryConfig {
+            ints: int_theory,
+            matrices: matrix_theory,
+        };
         Smt {
-            theory_config: TheoryConfig { ints: int_theory },
+            theory_config: theories.clone(),
+            store: SymbolStore::new(theories),
             ..Default::default()
         }
     }
@@ -52,7 +57,7 @@ impl SolverAdaptor for Smt {
         let solutions = self
             .solver_inst
             .solutions(&self.store, true)
-            .take_while(|store| (callback)(store.literals_map().unwrap()));
+            .take_while(|store| (callback)(store.as_literals_map().unwrap()));
 
         // Consume iterator and get whether there are solutions
         let search_complete = match solutions.count() {
@@ -91,13 +96,13 @@ impl SolverAdaptor for Smt {
         SolverFamily::Smt
     }
 
-    fn get_name(&self) -> Option<String> {
-        Some("SMT".to_string())
+    fn get_name(&self) -> &'static str {
+        "SMT"
     }
 
     fn write_solver_input_file(
         &self,
-        writer: &mut impl std::io::Write,
+        writer: &mut Box<dyn std::io::Write>,
     ) -> Result<(), std::io::Error> {
         let smt2 = self.solver_inst.to_smt2();
         writer.write(smt2.as_bytes()).map(|_| ())
