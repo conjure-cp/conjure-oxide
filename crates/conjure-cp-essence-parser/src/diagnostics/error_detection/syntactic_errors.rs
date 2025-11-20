@@ -65,7 +65,7 @@ pub fn detect_syntactic_errors(source: &str) -> Vec<Diagnostic> {
 
     let (tree, _) = match get_tree(source) {
         Some(tree) => tree,
-        None => {
+        _none => {
             let last_line = source.lines().count().saturating_sub(1);
             let last_char = source.lines().last().map(|l| l.len()).unwrap_or(0);
             diagnostics.push(Diagnostic {
@@ -90,25 +90,25 @@ pub fn detect_syntactic_errors(source: &str) -> Vec<Diagnostic> {
     let root_node = tree.root_node();
     let mut cursor = root_node.walk();
 
-    let mut descend = true;
+    // let mut descend = true;
     loop {
         let node = cursor.node();
 
         // Detect all the missing nodes before since tree-sitter sometimes is not able to correctly identify a missing node.
         // Use zero-width range check and move on to avoid duplicate diagnostics
-        if node.start_position() == node.end_position() {
+        let descend = if node.start_position() == node.end_position() {
             diagnostics.push(classify_missing_token(node));
-            descend = false;
+            false
         } else if (node.is_error() || node.is_missing())
             && (!node
                 .parent()
                 .map_or(false, |p| p.is_error() || p.is_missing()))
         {
             diagnostics.push(classify_syntax_error(node, source));
-            descend = false;
+            false
         } else {
-            descend = true;
-        }
+            true
+        };
 
         // TreeCursor traversal: preorder DFS, skip children of error/missing nodes
         if descend && cursor.goto_first_child() {
@@ -134,15 +134,6 @@ pub fn detect_syntactic_errors(source: &str) -> Vec<Diagnostic> {
 
 /// Classifies a syntax error node and returns a diagnostic for it.
 fn classify_syntax_error(node: Node, source: &str) -> Diagnostic {
-    println!(
-        "Error node: '{}' [{}:{}-{}:{}], children: {}",
-        node.kind(),
-        node.start_position().row,
-        node.start_position().column,
-        node.end_position().row,
-        node.end_position().column,
-        node.child_count()
-    );
     let (start, end) = (node.start_position(), node.end_position());
 
     if node.is_missing() {
@@ -225,30 +216,25 @@ fn classify_unexpected_token_error(node: Node, source_code: &str) -> String {
     // );
     let message = if let Some(parent) = node.parent() {
         let src_token = &source_code[node.start_byte()..node.end_byte()];
-        // print_siblings(node, source_code);
 
         // Unexpected token at the end of a statement
         if parent.kind() == "program" {
             // Save cursor position
             if let Some(prev_sib) = node.prev_sibling().and_then(|n| n.prev_sibling()) {
                 format!(
-                    "Unexpected token '{}' at the end of '{}'",
+                    "Unexpected '{}' at the end of '{}'",
                     src_token,
                     prev_sib.kind()
                 )
             } else {
-                format!("Unexpected token '{}' ", src_token)
+                format!("Unexpected '{}' ", src_token)
             }
         } else {
-            format!(
-                "Unexpected token '{}' inside '{}'",
-                src_token,
-                parent.kind()
-            )
+            format!("Unexpected '{}' inside '{}'", src_token, parent.kind())
         }
     // Error at root node (program)
     } else {
-        format!("Unexpected token '{}", source_code)
+        format!("Unexpected '{}", source_code)
     };
 
     message
