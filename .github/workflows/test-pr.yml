@@ -89,6 +89,9 @@ jobs:
           os_arch: ${{ matrix.release_suffix }}
           version: ${{ matrix.conjure_version }}
 
+      - name: Initialise submodules
+        run: make setup
+
       - name: Build conjure-oxide (debug)
         run: cargo build --bin conjure-oxide
         if: ${{ matrix.compiler_profile == 'debug' }}

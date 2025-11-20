@@ -17,16 +17,23 @@ check:
 check-unused-deps: .installed-cargo-extensions.checkpoint
 	cargo +nightly shear --expand
 
+.PHONY: setup
+setup:
+	git submodule sync --recursive
+	git submodule update --init --recursive
+
+.PHONY: build-bin
+build-bin: setup
+	cargo build --bin conjure-oxide
+
 # run all tests
 # we need to build first, so the conjure-oxide executable is available during testing as it is needed by the custom tests.
 .PHONY: test
-test:
-	cargo build --bin conjure-oxide
+test: build-bin
 	cargo test --workspace
 
 .PHONY: test-accept
-test-accept:
-	cargo build --bin conjure-oxide
+test-accept: build-bin
 	ACCEPT=true cargo test --workspace
 	cargo test --workspace
 

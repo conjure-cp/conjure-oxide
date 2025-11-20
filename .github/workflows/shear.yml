@@ -56,6 +56,9 @@ jobs:
       - name: rustup
         run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
 
+      - name: Initialise submodules
+        run: make setup
+
       - run: cargo build -vv --workspace
 
       - uses: ./.github/actions/install-conjure

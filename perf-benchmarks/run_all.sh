@@ -58,6 +58,9 @@ echo "baseline ref: ${git_ref}" >/dev/stderr
 
 popd >/dev/null 2>/dev/null
 
+echo "======= INITIALISING SUBMODULES =======" >/dev/stderr
+make setup
+
 echo "======= COMPILING CONJURE_OXIDE (baseline) =======" >/dev/stderr
 pushd "$baseline_dir" >/dev/null
 
