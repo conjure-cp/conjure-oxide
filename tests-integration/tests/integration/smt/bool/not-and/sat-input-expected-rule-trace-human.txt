@@ -1,0 +1,62 @@
+Model before rewriting:
+
+find x: bool
+find y: bool
+find z: bool
+
+such that
+
+!(and([y,z;int(1..)]))
+
+--
+
+and([y,z;int(1..)]), 
+   ~~> apply_tseytin_and_or ([("SAT", 8500)]) 
+__0 
+new variables:
+  find __0: bool
+new clauses:
+  (¬__0 \/ y)
+  (¬__0 \/ z)
+  (__0 \/ ¬y \/ ¬z)
+--
+
+!(__0), 
+   ~~> apply_tseytin_not ([("SAT", 9005)]) 
+__1 
+new variables:
+  find __1: bool
+new clauses:
+  (¬__0 \/ ¬__1)
+  (__0 \/ __1)
+--
+
+__1, 
+   ~~> remove_single_atom ([("SAT", 8400)]) 
+true 
+
+new clauses:
+  (__1)
+--
+
+Final model:
+
+find x: bool
+find y: bool
+find z: bool
+find __0: bool
+find __1: bool
+
+such that
+
+true
+
+clauses:
+
+(¬__0 \/ y),
+(¬__0 \/ z),
+(__0 \/ ¬y \/ ¬z),
+(¬__0 \/ ¬__1),
+(__0 \/ __1),
+(__1)
+

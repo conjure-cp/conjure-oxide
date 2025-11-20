@@ -372,21 +372,27 @@ fn integration_test_inner(
         }
     }
 
-    let solver_input_file = env::var("OXIDE_TEST_SAVE_INPUT_FILE").ok().map(|_| {
-        let name = format!("{essence_base}.generated-input.txt");
-        Path::new(path).join(Path::new(&name))
-    });
+    // let solver_input_file = env::var("OXIDE_TEST_SAVE_INPUT_FILE").ok().map(|_| {
+    //     let name = format!("{essence_base}.generated-input.txt");
+    //     Path::new(path).join(Path::new(&name))
+    // });
 
     // Stage 3a: Run the model through the solver (run unless explicitly disabled)
     let model_arg = rewritten_model
         .as_ref()
         .expect("Rewritten model must be present in 2a")
         .clone();
-    let solutions = match solver {
-        SolverFamily::Minion => get_solutions(Solver::new(Minion::default()), model_arg, 0, &None),
-        SolverFamily::Sat => get_solutions(Solver::new(Sat::default()), model_arg, 0, &None),
-        SolverFamily::Smt => get_solutions(Solver::new(Smt::default()), model_arg, 0, &None),
-    }?;
+
+    let solutions = get_solutions(
+        match solver {
+            SolverFamily::Minion => Solver::new(Minion::default()),
+            SolverFamily::Sat => Solver::new(Sat::default()),
+            SolverFamily::Smt => Solver::new(Smt::default()),
+        },
+        model_arg,
+        0,
+        &None,
+    )?;
     let solutions_json = save_solutions_json(&solutions, path, essence_base, solver)?;
     if verbose {
         println!("{solver} solutions: {solutions_json:#?}");
@@ -430,7 +436,6 @@ fn integration_test_inner(
 
         // Always overwrite these ones. Unlike the rest, we don't need to selectively do these
         // based on the test results, so they don't get done later.
-        // TODO Fix
         copy_generated_to_expected(
             path,
             essence_base,
