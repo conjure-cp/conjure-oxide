@@ -34,7 +34,7 @@ pub fn handle_lit(
         // not literal
         Expression::Not(_, _) => handle_not(l1, vars_added, inst),
 
-        _ => bug!("Literal expected"), 
+        _ => bug!("Literal expected"),
     }
 }
 
@@ -49,7 +49,7 @@ pub fn handle_not(
             let a = Moo::unwrap_or_clone(ref_a);
             handle_atom(a, false, vars_added, inst)
         }
-        _ => bug!("Not Expression Expected"), 
+        _ => bug!("Not Expression Expected"),
     }
 }
 
