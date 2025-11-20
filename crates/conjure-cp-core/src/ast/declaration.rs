@@ -214,13 +214,13 @@ impl DeclarationPtr {
     /// # Examples
     ///
     /// ```
-    /// use conjure_cp_core::ast::{DeclarationPtr,Name,records::RecordEntry,Domain,Range};
+    /// use conjure_cp_core::ast::{DeclarationPtr,Name,RecordEntry,Domain,Range};
     ///
     /// // create declaration for field A in `find rec: record {A: int(0..1), B: int(0..2)}`
     ///
     /// let field = RecordEntry {
     ///     name: Name::User("n".into()),
-    ///     domain: Domain::Int(vec![Range::Bounded(1,5)])
+    ///     domain: Domain::new_int(vec![Range::Bounded(1,5)])
     /// };
     ///
     /// let declaration = DeclarationPtr::new_record_field(field);
@@ -239,12 +239,12 @@ impl DeclarationPtr {
     /// # Examples
     ///
     /// ```
-    /// use conjure_cp_core::ast::{DeclarationPtr,Name,Domain,Range};
+    /// use conjure_cp_core::ast::{DeclarationPtr, Name, Domain, Range, GroundDomain};
     ///
     /// // find a: int(1..5)
-    /// let declaration = DeclarationPtr::new_var(Name::User("a".into()),Domain::Int(vec![Range::Bounded(1,5)]));
+    /// let declaration = DeclarationPtr::new_var(Name::User("a".into()),Domain::new_int(vec![Range::Bounded(1,5)]));
     ///
-    /// assert!(declaration.domain().is_some_and(|x| x == Domain::Int(vec![Range::Bounded(1,5)])))
+    /// assert!(declaration.domain().is_some_and(|x| x.as_ground().unwrap() == &GroundDomain::Int(vec![Range::Bounded(1,5)])))
     ///
     /// ```
     pub fn domain(&self) -> Option<DomainPtr> {
@@ -270,7 +270,7 @@ impl DeclarationPtr {
     /// use conjure_cp_core::ast::{DeclarationPtr,DeclarationKind,Name,Domain,Range};
     ///
     /// // find a: int(1..5)
-    /// let declaration = DeclarationPtr::new_var(Name::User("a".into()),Domain::Int(vec![Range::Bounded(1,5)]));
+    /// let declaration = DeclarationPtr::new_var(Name::User("a".into()),Domain::new_int(vec![Range::Bounded(1,5)]));
     /// assert!(matches!(&declaration.kind() as &DeclarationKind, DeclarationKind::DecisionVariable(_)))
     /// ```
     pub fn kind(&self) -> Ref<'_, DeclarationKind> {
@@ -285,7 +285,7 @@ impl DeclarationPtr {
     /// use conjure_cp_core::ast::{DeclarationPtr,Name,Domain,Range};
     ///
     /// // find a: int(1..5)
-    /// let declaration = DeclarationPtr::new_var(Name::User("a".into()),Domain::Int(vec![Range::Bounded(1,5)]));
+    /// let declaration = DeclarationPtr::new_var(Name::User("a".into()),Domain::new_int(vec![Range::Bounded(1,5)]));
     ///
     /// assert_eq!(&declaration.name() as &Name, &Name::User("a".into()))
     /// ```
@@ -373,7 +373,7 @@ impl DeclarationPtr {
     /// use conjure_cp_core::ast::{DeclarationPtr, Domain, Range, Name};
     ///
     /// // find a: int(1..5)
-    /// let mut declaration = DeclarationPtr::new_var(Name::User("a".into()),Domain::Int(vec![Range::Bounded(1,5)]));
+    /// let mut declaration = DeclarationPtr::new_var(Name::User("a".into()),Domain::new_int(vec![Range::Bounded(1,5)]));
     ///
     /// let old_name = declaration.replace_name(Name::User("b".into()));
     /// assert_eq!(old_name,Name::User("a".into()));
@@ -414,7 +414,7 @@ impl DeclarationPtr {
     /// use conjure_cp_core::ast::{DeclarationPtr,Name,Domain,Range};
     ///
     /// // find a: int(1..5)
-    /// let declaration = DeclarationPtr::new_var(Name::User("a".into()),Domain::Int(vec![Range::Bounded(1,5)]));
+    /// let declaration = DeclarationPtr::new_var(Name::User("a".into()),Domain::new_int(vec![Range::Bounded(1,5)]));
     ///
     /// let mut declaration2 = declaration.clone();
     ///

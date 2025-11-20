@@ -46,10 +46,10 @@ fn negated_eq_to_neq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                 if let Some(Set(_)) = c.as_ref().maybe_return_type() {
                     return Err(RuleNotApplicable);
                 }
-                if let Some(Matrix(_)) = b.as_ref().return_type() {
+                if let Some(Matrix(_)) = b.as_ref().maybe_return_type() {
                     return Err(RuleNotApplicable);
                 }
-                if let Some(Matrix(_)) = c.as_ref().return_type() {
+                if let Some(Matrix(_)) = c.as_ref().maybe_return_type() {
                     return Err(RuleNotApplicable);
                 }
                 Ok(Reduction::pure(essence_expr!(&b != &c)))

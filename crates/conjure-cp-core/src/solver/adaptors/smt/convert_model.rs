@@ -16,9 +16,9 @@ use super::helpers::*;
 use super::store::SymbolStore;
 use super::{IntTheory, TheoryConfig};
 
-use crate::Model;
 use crate::ast::*;
 use crate::solver::{SolverError, SolverResult};
+use crate::{Model, bug};
 
 /// Converts the given variables and constraints to assertions by mutating the given model.
 ///
@@ -45,7 +45,7 @@ pub fn load_model_impl(
             continue;
         }
         let (sym, ast, restriction) = var_to_ast(&name, &var, theory_config)?;
-        store.insert(name, (decl.domain().unwrap(), ast, sym));
+        store.insert(name, (decl.resolved_domain().unwrap(), ast, sym));
         solver.assert(restriction);
     }
     for expr in model.iter() {
@@ -63,7 +63,11 @@ fn var_to_ast(
     theories: &TheoryConfig,
 ) -> SolverResult<(Symbol, Dynamic, Bool)> {
     let sym = name_to_symbol(name)?;
-    let (sort, restrict_fn) = domain_to_sort(&var.domain, theories)?;
+    let dom = var
+        .domain
+        .resolve()
+        .unwrap_or_else(|| bug!("could not resolve domain for {}", name));
+    let (sort, restrict_fn) = domain_to_sort(dom.as_ref(), theories)?;
     let new_const = Dynamic::new_const(sym.clone(), &sort);
 
     let restriction = (restrict_fn)(&new_const);

@@ -130,8 +130,8 @@ impl AbstractLiteral<Expression> {
     }
 
     pub fn list(exprs: Vec<Expression>) -> Self {
-        let domain = Domain::Int(vec![Range::UnboundedR(1)]);
-        AbstractLiteral::Matrix(exprs, Box::new(domain))
+        let domain = Domain::new_int_ground(vec![Range::UnboundedR(1)]);
+        AbstractLiteral::Matrix(exprs, domain)
     }
 }
 

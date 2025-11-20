@@ -8,8 +8,7 @@ use crate::ast::{
         range::Range,
     },
 };
-use crate::range;
-use crate::{bug, domain_int, matrix_expr};
+use crate::{bug, domain_int, matrix_expr, range};
 use conjure_cp_core::ast::pretty::pretty_vec;
 use conjure_cp_core::ast::{Name, ReturnType, eval_constant};
 use itertools::Itertools;
