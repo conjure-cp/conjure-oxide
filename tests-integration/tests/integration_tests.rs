@@ -5,8 +5,8 @@ use conjure_cp::rule_engine::get_rules_grouped;
 use conjure_cp::defaults::DEFAULT_RULE_SETS;
 use conjure_cp::parse::tree_sitter::parse_essence_file_native;
 use conjure_cp::rule_engine::rewrite_naive;
-use conjure_cp::solver::adaptors::*;
 use conjure_cp::solver::Solver;
+use conjure_cp::solver::adaptors::*;
 use conjure_cp_cli::utils::testing::{normalize_solutions_for_comparison, read_human_rule_trace};
 use glob::glob;
 use itertools::Itertools;
@@ -15,9 +15,9 @@ use std::env;
 use std::error::Error;
 use std::fs;
 use std::fs::File;
-use tracing::{span, Level};
+use tracing::{Level, span};
 use tracing_subscriber::{
-    filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt, Layer, Registry,
+    Layer, Registry, filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt,
 };
 use tree_morph::{helpers::select_panic, prelude::*};
 

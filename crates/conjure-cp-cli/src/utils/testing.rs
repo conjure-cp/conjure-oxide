@@ -20,10 +20,10 @@ use conjure_cp::error::Error;
 use crate::utils::conjure::solutions_to_json;
 use crate::utils::json::sort_json_object;
 use crate::utils::misc::to_set;
+use conjure_cp::Model as ConjureModel;
 use conjure_cp::ast::Name::User;
 use conjure_cp::ast::{Literal, Name};
 use conjure_cp::solver::SolverFamily;
-use conjure_cp::Model as ConjureModel;
 
 /// Converts a SerdeModel to JSON with stable IDs.
 ///
