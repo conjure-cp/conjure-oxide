@@ -56,6 +56,19 @@ install-cargo-extensions: .installed-cargo-extensions.checkpoint
 coverage:
 	./tools/coverage.sh
 
+gen_test:
+	export ACCEPT=true
+	cargo build --bin conjure-oxide
+	cargo test --workspace
+
+
+untest:
+	cd tests-integration/tests/integration/
+	find -type f -name '**generated**' -delete
+	find -type f -name '**expected**' -delete
+	find -type f -name '**stats**' -delete
+
+
 .PHONY: help
 ## Shows this help text
 help: show-help
