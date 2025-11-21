@@ -1,4 +1,5 @@
 use crate::diagnostics::diagnostics_api::{Diagnostic, Position, Range, Severity};
+use crate::parser::traversal::WalkDFS;
 use crate::parser::util::get_tree;
 use tree_sitter::Node;
 
@@ -88,44 +89,26 @@ pub fn detect_syntactic_errors(source: &str) -> Vec<Diagnostic> {
     };
 
     let root_node = tree.root_node();
-    let mut cursor = root_node.walk();
+    // Retract (do not descend) if the node is missing, error, or their parent is missing/error
+    let retract = |node: &tree_sitter::Node| {
+        node.is_missing() || node.is_error() || node.start_position() == node.end_position()
+    };
 
-    // let mut descend = true;
-    loop {
-        let node = cursor.node();
-
-        // Detect all the missing nodes before since tree-sitter sometimes is not able to correctly identify a missing node.
-        // Use zero-width range check and move on to avoid duplicate diagnostics
-        let descend = if node.start_position() == node.end_position() {
+    for node in WalkDFS::with_retract(&root_node, &retract) {
+        // Tree-sitter sometimes fails to insert a MISSING node, do a range check to be sure
+        if node.start_position() == node.end_position() {
             diagnostics.push(classify_missing_token(node));
-            false
-        } else if (node.is_error() || node.is_missing())
-            && (!node
+            continue;
+        }
+
+        // Only classify error nodes whose parent is not error/missing
+        if node.is_error()
+            && !node
                 .parent()
-                .is_some_and(|p| p.is_error() || p.is_missing()))
+                .is_some_and(|p| p.is_error() || p.is_missing())
         {
             diagnostics.push(classify_syntax_error(node, source));
-            false
-        } else {
-            true
-        };
-
-        // TreeCursor traversal: preorder DFS, skip children of error/missing nodes
-        if descend && cursor.goto_first_child() {
             continue;
-        }
-        if cursor.goto_next_sibling() {
-            continue;
-        }
-        // Go up until we can go to a next sibling, or break if at root
-        while cursor.goto_parent() {
-            if cursor.goto_next_sibling() {
-                break;
-            }
-        }
-        // If we're back at the root and can't go further, break
-        if cursor.node() == root_node {
-            break;
         }
     }
 
@@ -206,14 +189,6 @@ fn classify_missing_token(node: Node) -> Diagnostic {
 }
 
 fn classify_unexpected_token_error(node: Node, source_code: &str) -> String {
-    // println!(
-    //     "Error node: '{}' [{}:{}-{}:{}]",
-    //     node.kind(),
-    //     node.start_position().row,
-    //     node.start_position().column,
-    //     node.end_position().row,
-    //     node.end_position().column,
-    // );
     if let Some(parent) = node.parent() {
         let src_token = &source_code[node.start_byte()..node.end_byte()];
 
