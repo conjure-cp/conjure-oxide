@@ -1,4 +1,4 @@
-use conjure_cp::ast::{DeclarationPtr, Domain};
+use conjure_cp::ast::{DeclarationPtr, DomainPtr, GroundDomain, Moo};
 use itertools::Itertools;
 
 use super::prelude::*;
@@ -13,7 +13,7 @@ pub struct TupleToAtom {
     indices: Vec<Literal>,
 
     // the element domains for each item in the tuple.
-    elem_domain: Vec<Domain>,
+    elem_domain: Vec<Moo<GroundDomain>>,
 }
 
 impl TupleToAtom {
@@ -38,11 +38,11 @@ impl Representation for TupleToAtom {
     fn init(name: &Name, symtab: &SymbolTable) -> Option<Self> {
         let domain = symtab.resolve_domain(name)?;
 
-        if !domain.is_finite().expect("should be finite?") {
+        if !domain.is_finite() {
             return None;
         }
 
-        let Domain::Tuple(elem_domain) = domain else {
+        let GroundDomain::Tuple(elem_domain) = domain.as_ref() else {
             return None;
         };
 
@@ -54,7 +54,7 @@ impl Representation for TupleToAtom {
         Some(TupleToAtom {
             src_var: name.clone(),
             indices,
-            elem_domain,
+            elem_domain: elem_domain.clone(),
         })
     }
 
@@ -123,7 +123,7 @@ impl Representation for TupleToAtom {
         Ok(self
             .names()
             .zip(self.elem_domain.iter().cloned())
-            .map(|(name, domain)| DeclarationPtr::new_var(name, domain))
+            .map(|(name, domain)| DeclarationPtr::new_var(name, DomainPtr::from(domain)))
             .collect())
     }
 

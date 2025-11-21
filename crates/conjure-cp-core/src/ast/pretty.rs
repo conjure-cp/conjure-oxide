@@ -5,9 +5,9 @@
 
 use std::fmt::Display;
 
-use itertools::Itertools;
-
 use super::{CnfClause, Expression, Name, SymbolTable};
+use crate::ast::domains::HasDomain;
+use itertools::Itertools;
 
 /// Pretty prints a `Vec<Expression>` as if it were a top level constraint list in a `such that`.
 ///
@@ -88,7 +88,7 @@ pub fn pretty_vec<T: Display>(elems: &[T]) -> String {
 pub fn pretty_variable_declaration(symbol_table: &SymbolTable, var_name: &Name) -> Option<String> {
     let decl = symbol_table.lookup(var_name)?;
     let var = decl.as_var()?;
-    let domain = &var.domain;
+    let domain = &var.domain_of();
     Some(format!("find {var_name}: {domain}"))
 }
 

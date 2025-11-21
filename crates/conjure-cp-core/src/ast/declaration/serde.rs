@@ -41,10 +41,10 @@ use super::{Declaration, DeclarationKind, DeclarationPtr, DeclarationPtrInner};
 ///     c: i32
 /// }
 ///
-/// let declaration = DeclarationPtr::new_var(Name::User("a".into()),Domain::Int(vec![Range::Bounded(1,5)]));
+/// let declaration = DeclarationPtr::new_var(Name::User("a".into()),Domain::new_int(vec![Range::Bounded(1,5)]));
 /// let mut declarations: Vec<(i32,DeclarationPtr)>  = vec![];
 /// for i in (1..=2) {
-///     declarations.push((i,DeclarationPtr::new_var(Name::User(format!("{i}").into()),Domain::Int(vec![Range::Bounded(1,5)]))));
+///     declarations.push((i,DeclarationPtr::new_var(Name::User(format!("{i}").into()),Domain::new_int(vec![Range::Bounded(1,5)]))));
 /// }
 ///
 /// let foo = Foo {
@@ -165,11 +165,11 @@ impl<'de> DeserializeAs<'de, DeclarationPtr> for DeclarationPtrAsId {
 ///     c: i32
 /// }
 ///
-/// let declaration = DeclarationPtr::new_var(Name::User("a".into()),Domain::Int(vec![Range::Bounded(1,5)]));
+/// let declaration = DeclarationPtr::new_var(Name::User("a".into()),Domain::new_int(vec![Range::Bounded(1,5)]));
 /// let mut declarations = vec![];
 ///
 /// for i in (1..=2) {
-///     let d = DeclarationPtr::new_var(Name::User(format!("{i}").into()),Domain::Int(vec![Range::Bounded(1,5)]));
+///     let d = DeclarationPtr::new_var(Name::User(format!("{i}").into()),Domain::new_int(vec![Range::Bounded(1,5)]));
 ///     declarations.push((i,d));
 /// }
 ///
@@ -184,7 +184,7 @@ impl<'de> DeserializeAs<'de, DeclarationPtr> for DeclarationPtrAsId {
 /// let expected_json = json!({
 ///     "declaration": {
 ///         "name": { "User": "a"},
-///         "kind": {"DecisionVariable": {"domain": {"Int": [{"Bounded": [1,5]}]}, "category":
+///         "kind": {"DecisionVariable": {"domain": { "Ground": {"Int": [{"Bounded": [1,5]}]}}, "category":
 ///         "Decision"}},
 ///         "id": 0
 ///     },
@@ -193,13 +193,13 @@ impl<'de> DeserializeAs<'de, DeclarationPtr> for DeclarationPtrAsId {
 ///         [1,{
 ///         "name": { "User": "1"},
 ///         "id": 1,
-///         "kind": {"DecisionVariable": {"domain": {"Int": [{"Bounded": [1,5]}]},
+///         "kind": {"DecisionVariable": {"domain": { "Ground": {"Int": [{"Bounded": [1,5]}]}},
 ///         "category":"Decision"}},
 ///         }],
 ///         [2,{
 ///         "name": { "User": "2"},
 ///         "id": 2,
-///         "kind": {"DecisionVariable": {"domain": {"Int": [{"Bounded": [1,5]}]},"category":
+///         "kind": {"DecisionVariable": {"domain": { "Ground": {"Int": [{"Bounded": [1,5]}]}},"category":
 ///         "Decision"}},
 ///         }]
 ///     ],
@@ -234,7 +234,7 @@ impl<'de> DeserializeAs<'de, DeclarationPtr> for DeclarationPtrAsId {
 /// let input_json = json!({
 ///     "declaration": {
 ///         "name": { "User": "a"},
-///         "kind": {"DecisionVariable": {"domain": {"Int": [{"Bounded": [0,5]}]}, "category":
+///         "kind": {"DecisionVariable": {"domain": {"Ground": {"Int": [{"Bounded": [0,5]}]}}, "category":
 ///         "Decision"}},
 ///         "id": 10,
 ///     },
@@ -242,13 +242,13 @@ impl<'de> DeserializeAs<'de, DeclarationPtr> for DeclarationPtrAsId {
 ///     "declarations": [
 ///         [1,{
 ///         "name": { "User": "1"},
-///         "kind": {"DecisionVariable": {"domain": {"Int": [{"Bounded": [0,5]}]}, "category":
+///         "kind": {"DecisionVariable": {"domain": {"Ground": {"Int": [{"Bounded": [0,5]}]}}, "category":
 ///         "Decision"}},
 ///         "id": 11,
 ///         }],
 ///         [2,{
 ///         "name": { "User": "2"},
-///         "kind": {"DecisionVariable": {"domain": {"Int": [{"Bounded": [0,5]}]}, "category":
+///         "kind": {"DecisionVariable": {"domain": {"Ground": {"Int": [{"Bounded": [0,5]}]}}, "category":
 ///         "Decision"}},
 ///         "id": 12,
 ///         }]

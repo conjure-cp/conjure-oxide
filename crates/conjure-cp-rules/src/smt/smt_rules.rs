@@ -1,11 +1,11 @@
 use conjure_cp::ast::{Expression as Expr, *};
-use conjure_cp::essence_expr;
 use conjure_cp::rule_engine::ApplicationError;
 use conjure_cp::rule_engine::{
     ApplicationError::{DomainError, RuleNotApplicable},
     ApplicationResult, Reduction, register_rule, register_rule_set,
 };
 use conjure_cp::solver::SolverFamily;
+use conjure_cp::{bug, essence_expr};
 use uniplate::Uniplate;
 
 // These rules are applicable regardless of what theories are used.
@@ -19,17 +19,18 @@ fn flatten_indomain(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let new_expr = match domain {
+    let dom = domain.resolve().ok_or(RuleNotApplicable)?;
+    let new_expr = match dom.as_ref() {
         // Bool values are always in the bool domain
-        Domain::Bool => Ok(Expr::Atomic(
+        GroundDomain::Bool => Ok(Expr::Atomic(
             Metadata::new(),
             Atom::Literal(Literal::Bool(true)),
         )),
-        Domain::Empty(_) => Ok(Expr::Atomic(
+        GroundDomain::Empty(_) => Ok(Expr::Atomic(
             Metadata::new(),
             Atom::Literal(Literal::Bool(false)),
         )),
-        Domain::Int(ranges) => {
+        GroundDomain::Int(ranges) => {
             let elements: Vec<_> = ranges
                 .iter()
                 .map(|range| match range {
@@ -57,6 +58,7 @@ fn flatten_indomain(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                         let bound = Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Int(*l)));
                         Expr::Geq(Metadata::new(), inner.clone(), Moo::new(bound))
                     }
+                    Range::Unbounded => bug!("integer domains should not have unbounded ranges"),
                 })
                 .collect();
             Ok(Expr::Or(
@@ -82,8 +84,11 @@ fn flatten_matrix_eq_neq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         _ => return Err(RuleNotApplicable),
     };
 
-    let (Some(Domain::Matrix(_, a_idx_domains)), Some(Domain::Matrix(_, b_idx_domains))) =
-        (a.domain_of(), b.domain_of())
+    let dom_a = a.domain_of().ok_or(RuleNotApplicable)?;
+    let dom_b = b.domain_of().ok_or(RuleNotApplicable)?;
+
+    let (Some((_, a_idx_domains)), Some((_, b_idx_domains))) =
+        (dom_a.as_matrix_ground(), dom_b.as_matrix_ground())
     else {
         return Err(RuleNotApplicable);
     };
@@ -135,7 +140,9 @@ fn flatten_matrix_slice(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::SafeSlice(_, m, slice_idxs) = expr else {
         return Err(RuleNotApplicable);
     };
-    let Some(Domain::Matrix(_, mat_idxs)) = m.domain_of() else {
+
+    let dom = m.domain_of().ok_or(RuleNotApplicable)?;
+    let Some((_, mat_idxs)) = dom.as_matrix_ground() else {
         return Err(RuleNotApplicable);
     };
 
@@ -159,7 +166,6 @@ fn flatten_matrix_slice(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let elements: Vec<Expr> = mat_idxs[slice_dim]
         .values()
         .map_err(|_| DomainError)?
-        .into_iter()
         .map(|lit| {
             let mut new_idx = other_idxs.clone();
             new_idx.insert(slice_dim, Expr::Atomic(Metadata::new(), Atom::Literal(lit)));
@@ -177,7 +183,7 @@ fn flatten_matrix_slice(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// This rule is very similar to `matrix_ref_to_atom`, but turns the matrix reference into a slice rather its atoms.
 /// Other rules like `flatten_matrix_slice` take care of actually turning the slice into the matrix elements.
 #[register_rule(("Smt", 999))]
-fn matrix_ref_to_slice(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+fn matrix_ref_to_slice(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     if let Expr::SafeSlice(_, _, _)
     | Expr::UnsafeSlice(_, _, _)
     | Expr::SafeIndex(_, _, _)
@@ -191,8 +197,8 @@ fn matrix_ref_to_slice(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
             continue;
         };
 
-        let Some(Domain::Matrix(_, index_domains)) = decl.domain().map(|x| x.resolve(symbols))
-        else {
+        let dom = decl.resolved_domain().ok_or(RuleNotApplicable)?;
+        let GroundDomain::Matrix(_, index_domains) = dom.as_ref() else {
             continue;
         };
 

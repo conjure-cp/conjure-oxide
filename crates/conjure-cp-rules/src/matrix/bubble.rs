@@ -1,5 +1,5 @@
-use conjure_cp::ast::Metadata;
-use conjure_cp::ast::{Domain, Expression, Moo, SymbolTable};
+use conjure_cp::ast::{DomainPtr, GroundDomain, Metadata};
+use conjure_cp::ast::{Expression, Moo, SymbolTable};
 use conjure_cp::rule_engine::{
     ApplicationError, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
     register_rule,
@@ -9,7 +9,7 @@ use itertools::{Itertools as _, izip};
 
 /// Converts an unsafe index to a safe index using a bubble expression.
 #[register_rule(("Bubble", 6000))]
-fn index_to_bubble(expr: &Expression, symtab: &SymbolTable) -> ApplicationResult {
+fn index_to_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
     let Expression::UnsafeIndex(_, subject, indices) = expr else {
         return Err(RuleNotApplicable);
     };
@@ -17,19 +17,22 @@ fn index_to_bubble(expr: &Expression, symtab: &SymbolTable) -> ApplicationResult
     let domain = subject
         .domain_of()
         .ok_or(ApplicationError::DomainError)?
-        .resolve(symtab);
+        .resolve()
+        .ok_or(RuleNotApplicable)?;
 
     // TODO: tuple, this is a hack right now just to avoid the rule being applied to tuples, but could we safely modify the rule to
     // handle tuples as well?
-    if matches!(domain, Domain::Tuple(_)) || matches!(domain, Domain::Record(_)) {
+    if matches!(domain.as_ref(), GroundDomain::Tuple(_))
+        || matches!(domain.as_ref(), GroundDomain::Record(_))
+    {
         return Err(RuleNotApplicable);
     }
 
-    let Domain::Matrix(_, index_domains) = domain else {
+    let GroundDomain::Matrix(_, index_domains) = domain.as_ref() else {
         bug!(
             "subject of an index expression should have a matrix domain. subject: {:?}, with domain: {:?}",
             subject,
-            domain
+            domain.as_ref()
         );
     };
 
@@ -42,7 +45,11 @@ fn index_to_bubble(expr: &Expression, symtab: &SymbolTable) -> ApplicationResult
     let bubble_constraints = Moo::new(into_matrix_expr![
         izip!(index_domains, indices)
             .map(|(domain, index)| {
-                Expression::InDomain(Metadata::new(), Moo::new(index.clone()), domain)
+                Expression::InDomain(
+                    Metadata::new(),
+                    Moo::new(index.clone()),
+                    DomainPtr::from(domain.clone()),
+                )
             })
             .collect_vec()
     ]);
@@ -62,14 +69,18 @@ fn index_to_bubble(expr: &Expression, symtab: &SymbolTable) -> ApplicationResult
 
 /// Converts an unsafe slice to a safe slice using a bubble expression.
 #[register_rule(("Bubble", 6000))]
-fn slice_to_bubble(expr: &Expression, symtab: &SymbolTable) -> ApplicationResult {
+fn slice_to_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
     let Expression::UnsafeSlice(_, subject, indices) = expr else {
         return Err(RuleNotApplicable);
     };
 
-    let domain = subject.domain_of().ok_or(ApplicationError::DomainError)?;
+    let domain = subject
+        .domain_of()
+        .ok_or(ApplicationError::DomainError)?
+        .resolve()
+        .ok_or(RuleNotApplicable)?;
 
-    let Domain::Matrix(_, index_domains) = domain.clone().resolve(symtab) else {
+    let GroundDomain::Matrix(_, index_domains) = domain.as_ref() else {
         bug!(
             "subject of a slice expression should have a matrix domain. subject: {:?}, with domain: {:?}",
             subject,
@@ -89,7 +100,14 @@ fn slice_to_bubble(expr: &Expression, symtab: &SymbolTable) -> ApplicationResult
             .filter_map(|(domain, index)| {
                 index
                     .clone()
-                    .map(|index| Expression::InDomain(Metadata::new(), Moo::new(index), domain))
+                    // TODO(perf): This pattern of "take something with a ground domain G and re-wrap it in Moo(Domain::Ground(G))" is fairly common...
+                    .map(|index| {
+                        Expression::InDomain(
+                            Metadata::new(),
+                            Moo::new(index),
+                            DomainPtr::from(domain.clone()),
+                        )
+                    })
             })
             .collect_vec()
     ]);

@@ -9,11 +9,10 @@ use derivative::Derivative;
 use serde::{Deserialize, Serialize};
 use uniplate::{Biplate, Tree, Uniplate};
 
-use crate::ast::Expression;
+use crate::ast::{Expression, Typeable};
 use crate::context::Context;
 
 use super::serde::{HasId, ObjId};
-use super::types::Typeable;
 use super::{DeclarationPtr, Name, SubModel};
 use super::{ReturnType, SymbolTable};
 
@@ -80,8 +79,8 @@ impl Default for Model {
 }
 
 impl Typeable for Model {
-    fn return_type(&self) -> Option<ReturnType> {
-        Some(ReturnType::Bool)
+    fn return_type(&self) -> ReturnType {
+        ReturnType::Bool
     }
 }
 

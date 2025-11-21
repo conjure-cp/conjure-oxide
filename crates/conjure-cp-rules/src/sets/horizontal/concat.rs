@@ -12,29 +12,20 @@ use conjure_cp::rule_engine::{
 #[register_rule(("Base", 8700))]
 fn subseteq_intersect(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
-        Expr::SubsetEq(_, a, rhs) => {
-            if let Some(ReturnType::Set(_)) = a.as_ref().return_type() {
-                match &**rhs {
-                    Expr::Intersect(_, b, c) => {
-                        if let Some(ReturnType::Set(_)) = b.as_ref().return_type() {
-                            if let Some(ReturnType::Set(_)) = c.as_ref().return_type() {
-                                let expr1 = Expr::SubsetEq(Metadata::new(), a.clone(), b.clone());
-                                let expr2 = Expr::SubsetEq(Metadata::new(), a.clone(), c.clone());
-                                Ok(Reduction::pure(Expr::And(
-                                    Metadata::new(),
-                                    Moo::new(matrix_expr![expr1, expr2]),
-                                )))
-                            } else {
-                                Err(RuleNotApplicable)
-                            }
-                        } else {
-                            Err(RuleNotApplicable)
-                        }
-                    }
-                    _ => Err(RuleNotApplicable),
+        Expr::SubsetEq(_, a, rhs) if matches!(a.as_ref().return_type(), ReturnType::Set(_)) => {
+            match rhs.as_ref() {
+                Expr::Intersect(_, b, c)
+                    if matches!(b.as_ref().return_type(), ReturnType::Set(_))
+                        && matches!(c.as_ref().return_type(), ReturnType::Set(_)) =>
+                {
+                    let expr1 = Expr::SubsetEq(Metadata::new(), a.clone(), b.clone());
+                    let expr2 = Expr::SubsetEq(Metadata::new(), a.clone(), c.clone());
+                    Ok(Reduction::pure(Expr::And(
+                        Metadata::new(),
+                        Moo::new(matrix_expr![expr1, expr2]),
+                    )))
                 }
-            } else {
-                Err(RuleNotApplicable)
+                _ => Err(RuleNotApplicable),
             }
         }
         _ => Err(RuleNotApplicable),
@@ -45,29 +36,20 @@ fn subseteq_intersect(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 #[register_rule(("Base", 8700))]
 fn union_subseteq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
-        Expr::SubsetEq(_, lhs, c) => {
-            if let Some(ReturnType::Set(_)) = c.as_ref().return_type() {
-                match &**lhs {
-                    Expr::Union(_, a, b) => {
-                        if let Some(ReturnType::Set(_)) = a.as_ref().return_type() {
-                            if let Some(ReturnType::Set(_)) = b.as_ref().return_type() {
-                                let expr1 = Expr::SubsetEq(Metadata::new(), a.clone(), b.clone());
-                                let expr2 = Expr::SubsetEq(Metadata::new(), a.clone(), c.clone());
-                                Ok(Reduction::pure(Expr::And(
-                                    Metadata::new(),
-                                    Moo::new(matrix_expr![expr1, expr2]),
-                                )))
-                            } else {
-                                Err(RuleNotApplicable)
-                            }
-                        } else {
-                            Err(RuleNotApplicable)
-                        }
-                    }
-                    _ => Err(RuleNotApplicable),
+        Expr::SubsetEq(_, lhs, c) if matches!(c.as_ref().return_type(), ReturnType::Set(_)) => {
+            match lhs.as_ref() {
+                Expr::Union(_, a, b)
+                    if matches!(a.as_ref().return_type(), ReturnType::Set(_))
+                        && matches!(b.as_ref().return_type(), ReturnType::Set(_)) =>
+                {
+                    let expr1 = Expr::SubsetEq(Metadata::new(), a.clone(), b.clone());
+                    let expr2 = Expr::SubsetEq(Metadata::new(), a.clone(), c.clone());
+                    Ok(Reduction::pure(Expr::And(
+                        Metadata::new(),
+                        Moo::new(matrix_expr![expr1, expr2]),
+                    )))
                 }
-            } else {
-                Err(RuleNotApplicable)
+                _ => Err(RuleNotApplicable),
             }
         }
         _ => Err(RuleNotApplicable),

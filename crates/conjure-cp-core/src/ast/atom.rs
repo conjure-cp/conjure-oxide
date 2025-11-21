@@ -2,7 +2,7 @@ use std::{borrow::Borrow, cell::Ref};
 use uniplate::Uniplate;
 
 use super::{
-    AbstractLiteral, DeclarationPtr, Domain, Expression, Literal, Moo, Name,
+    AbstractLiteral, DeclarationPtr, DomainPtr, Expression, Literal, Moo, Name,
     categories::{Category, CategoryOf},
     domains::HasDomain,
     records::RecordValue,
@@ -52,7 +52,7 @@ impl CategoryOf for Atom {
 }
 
 impl HasDomain for Atom {
-    fn domain_of(&self) -> Domain {
+    fn domain_of(&self) -> DomainPtr {
         match self {
             Atom::Literal(literal) => literal.domain_of(),
             Atom::Reference(reference) => reference.domain_of(),

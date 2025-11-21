@@ -1,5 +1,7 @@
+use itertools::Itertools;
 use polyquine::Quine;
 use serde::{Deserialize, Serialize};
+use std::fmt::{Display, Formatter};
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, Hash, Quine)]
 pub enum ReturnType {
@@ -20,7 +22,27 @@ pub enum ReturnType {
     Unknown,
 }
 
-/// Something with a return type
+/// Guaranteed to always typecheck
 pub trait Typeable {
-    fn return_type(&self) -> Option<ReturnType>;
+    fn return_type(&self) -> ReturnType;
+}
+
+impl Display for ReturnType {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ReturnType::Bool => write!(f, "Bool"),
+            ReturnType::Int => write!(f, "Int"),
+            ReturnType::Matrix(inner) => write!(f, "Matrix of {inner}"),
+            ReturnType::Set(inner) => write!(f, "Set of {inner}"),
+            ReturnType::Tuple(types) => {
+                let inners = types.iter().map(|t| format!("{}", t)).join(", ");
+                write!(f, "({inners})")
+            }
+            ReturnType::Record(types) => {
+                let inners = types.iter().map(|t| format!("{}", t)).join(", ");
+                write!(f, "Record {{ {inners} }}")
+            }
+            ReturnType::Unknown => write!(f, "?"),
+        }
+    }
 }

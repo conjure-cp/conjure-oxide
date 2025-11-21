@@ -11,12 +11,12 @@ use std::cell::RefCell;
 use std::collections::BTreeSet;
 use std::collections::btree_map::Entry;
 use std::collections::{BTreeMap, VecDeque};
+use std::hash::{Hash, Hasher};
 use std::rc::Rc;
 use std::sync::atomic::{AtomicU32, Ordering};
 
 use super::declaration::{DeclarationPtr, serde::DeclarationPtrFull};
 use super::serde::{DefaultWithId, HasId, ObjId};
-use super::types::Typeable;
 use itertools::{Itertools as _, izip};
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
@@ -24,7 +24,7 @@ use uniplate::Tree;
 use uniplate::{Biplate, Uniplate};
 
 use super::name::Name;
-use super::{Domain, Expression, ReturnType, SubModel};
+use super::{DomainPtr, Expression, GroundDomain, Moo, ReturnType, SubModel, Typeable};
 use derivative::Derivative;
 
 // Count symbol tables per thread / model.
@@ -92,6 +92,12 @@ pub struct SymbolTable {
     next_machine_name: RefCell<i32>,
 }
 
+impl Hash for SymbolTable {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.id.hash(state);
+    }
+}
+
 impl SymbolTable {
     /// Creates an empty symbol table.
     pub fn new() -> SymbolTable {
@@ -152,23 +158,19 @@ impl SymbolTable {
 
     /// Looks up the return type for name if it has one and is in scope.
     pub fn return_type(&self, name: &Name) -> Option<ReturnType> {
-        self.lookup(name).and_then(|x| x.return_type())
+        self.lookup(name).map(|x| x.return_type())
     }
 
     /// Looks up the return type for name if has one and is in the local scope.
     pub fn return_type_local(&self, name: &Name) -> Option<ReturnType> {
-        self.lookup_local(name).and_then(|x| x.return_type())
+        self.lookup_local(name).map(|x| x.return_type())
     }
 
     /// Looks up the domain of name if it has one and is in scope.
     ///
     /// This method can return domain references: if a ground domain is always required, use
     /// [`SymbolTable::resolve_domain`].
-    pub fn domain(&self, name: &Name) -> Option<Domain> {
-        // TODO: do not clone here: in the future, we might want to wrap all domains in Rc's to get
-        // clone-on-write behaviour (saving memory in scenarios such as matrix decomposition where
-        // a lot of the domains would be the same).
-
+    pub fn domain(&self, name: &Name) -> Option<DomainPtr> {
         if let Name::WithRepresentation(name, _) = name {
             self.lookup(name)?.domain()
         } else {
@@ -179,8 +181,8 @@ impl SymbolTable {
     /// Looks up the domain of name, resolving domain references to ground domains.
     ///
     /// See [`SymbolTable::domain`].
-    pub fn resolve_domain(&self, name: &Name) -> Option<Domain> {
-        self.domain(name).map(|domain| domain.resolve(self))
+    pub fn resolve_domain(&self, name: &Name) -> Option<Moo<GroundDomain>> {
+        self.domain(name)?.resolve()
     }
 
     /// Iterates over entries in the local symbol table only.
@@ -212,7 +214,7 @@ impl SymbolTable {
 
     /// Creates a new variable in this symbol table with a unique name, and returns its
     /// declaration.
-    pub fn gensym(&mut self, domain: &Domain) -> DeclarationPtr {
+    pub fn gensym(&mut self, domain: &DomainPtr) -> DeclarationPtr {
         let num = *self.next_machine_name.borrow();
         *(self.next_machine_name.borrow_mut()) += 1;
         let decl = DeclarationPtr::new_var(Name::Machine(num), domain.clone());

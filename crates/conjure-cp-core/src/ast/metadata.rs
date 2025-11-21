@@ -2,6 +2,7 @@ use crate::ast::ReturnType;
 use polyquine::Quine;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Display};
+use std::hash::Hash;
 use uniplate::derive_unplateable;
 
 derive_unplateable!(Metadata);
@@ -35,15 +36,8 @@ impl Display for Metadata {
     }
 }
 
-// impl<T> Display for Metadata<T> where T: for<'a> MetadataKind<'a> {
-//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-//         write!(f, "Metadata")
-//     }
-// }
-
-//
-// impl<T> Metadata<T> where T: for<'a> MetadataKind<'a> {
-//     fn new(a: T) -> Metadata<T> {
-//         Metadata { a }
-//     }
-// }
+impl Hash for Metadata {
+    fn hash<H: std::hash::Hasher>(&self, _state: &mut H) {
+        // Dummy method - Metadata is ignored when hashing an Expression
+    }
+}

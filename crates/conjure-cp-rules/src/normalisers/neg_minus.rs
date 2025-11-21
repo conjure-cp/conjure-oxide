@@ -120,10 +120,10 @@ fn simplify_negation_of_product(expr: &Expr, _: &SymbolTable) -> ApplicationResu
 fn minus_to_sum(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (lhs, rhs) = match expr {
         Expr::Minus(_, lhs, rhs) => {
-            if let Some(Set(_)) = lhs.as_ref().return_type() {
+            if matches!(lhs.as_ref().return_type(), Set(_)) {
                 return Err(RuleNotApplicable);
             }
-            if let Some(Set(_)) = rhs.as_ref().return_type() {
+            if matches!(rhs.as_ref().return_type(), Set(_)) {
                 return Err(RuleNotApplicable);
             }
             (lhs.clone(), rhs.clone())
