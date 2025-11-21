@@ -219,7 +219,7 @@ pub fn save_solutions_json(
 
     let solver_name = match solver {
         SolverFamily::Sat => "sat",
-        SolverFamily::Smt => "smt",
+        SolverFamily::Smt(..) => "smt",
         SolverFamily::Minion => "minion",
     };
 
@@ -237,7 +237,7 @@ pub fn read_solutions_json(
 ) -> Result<JsonValue, anyhow::Error> {
     let solver_name = match solver {
         SolverFamily::Sat => "sat",
-        SolverFamily::Smt => "smt",
+        SolverFamily::Smt(..) => "smt",
         SolverFamily::Minion => "minion",
     };
 

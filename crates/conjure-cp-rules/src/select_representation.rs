@@ -6,7 +6,10 @@ use conjure_cp::{
         ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
         register_rule_set,
     },
-    solver::SolverFamily,
+    solver::{
+        SolverFamily,
+        adaptors::smt::{MatrixTheory, TheoryConfig},
+    },
 };
 use itertools::Itertools;
 use std::sync::Arc;
@@ -14,11 +17,15 @@ use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 use uniplate::Biplate;
 
-register_rule_set!(
-    "Representations",
-    ("Base"),
-    (SolverFamily::Sat, SolverFamily::Minion)
-);
+register_rule_set!("Representations", ("Base"), |f: &SolverFamily| matches!(
+    f,
+    SolverFamily::Sat
+        | SolverFamily::Minion
+        | SolverFamily::Smt(TheoryConfig {
+            matrices: MatrixTheory::Atomic,
+            ..
+        })
+));
 
 // special case rule to select representations for matrices in one go.
 //
