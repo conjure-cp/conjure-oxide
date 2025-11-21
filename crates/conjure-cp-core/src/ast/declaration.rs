@@ -4,6 +4,7 @@ use std::any::TypeId;
 // allow use of Declaration in this file, and nowhere else
 use std::cell::{Cell, Ref, RefCell, RefMut};
 use std::fmt::{Debug, Display};
+use std::ops::Deref;
 use std::rc::Rc;
 
 use ::serde::{Deserialize, Serialize};
@@ -254,6 +255,21 @@ impl DeclarationPtr {
             DeclarationKind::DomainLetting(domain) => Some(domain.clone()),
             DeclarationKind::Given(domain) => Some(domain.clone()),
             DeclarationKind::RecordField(domain) => Some(domain.clone()),
+            DeclarationKind::ElementsOf(e) => match e.domain_of()? {
+                Domain::Bool | Domain::Int(_) => None,
+                Domain::Empty(ty) => Some(Domain::Empty(ty)),
+                Domain::Reference(_name) => todo!(
+                    "This will be converted to use `DeclarationPtr` or removed entirely soon; See issue #1183"
+                ),
+                Domain::Set(_attrs, inner) => Some(inner.deref().clone()),
+                Domain::Matrix(inner, _idx) => Some(inner.deref().clone()),
+                Domain::Tuple(_item_domains) => {
+                    todo!("Destructuring tuples is not yet implemented")
+                }
+                Domain::Record(_entry_domains) => {
+                    todo!("Destructuring records is not yet implemented")
+                }
+            },
         }
     }
 
@@ -457,6 +473,7 @@ impl CategoryOf for DeclarationPtr {
         match &self.kind() as &DeclarationKind {
             DeclarationKind::DecisionVariable(decision_variable) => decision_variable.category_of(),
             DeclarationKind::ValueLetting(expression) => expression.category_of(),
+            DeclarationKind::ElementsOf(_) => Category::Quantified,
             DeclarationKind::DomainLetting(_) => Category::Constant,
             DeclarationKind::Given(_) => Category::Parameter,
             DeclarationKind::RecordField(_) => Category::Bottom,
@@ -491,6 +508,17 @@ impl Typeable for DeclarationPtr {
             DeclarationKind::DomainLetting(domain) => domain.return_type(),
             DeclarationKind::Given(domain) => domain.return_type(),
             DeclarationKind::RecordField(domain) => domain.return_type(),
+            DeclarationKind::ElementsOf(expr) => match expr.return_type()? {
+                ReturnType::Unknown => Some(ReturnType::Unknown),
+                // Invalid (can't loop over an atomic type)
+                ReturnType::Int | ReturnType::Bool => None,
+                // Loop over the items of a collection
+                ReturnType::Matrix(inner) | ReturnType::Set(inner) => Some(inner.deref().clone()),
+                // Destructure a structure with heterogeneous elements
+                ReturnType::Tuple(_inners) | ReturnType::Record(_inners) => {
+                    todo!("Destructuring tuples and records is not yet implemented")
+                }
+            },
         }
     }
 }
@@ -612,9 +640,41 @@ impl Declaration {
 #[biplate(to=DeclarationPtr)]
 #[biplate(to=Declaration)]
 pub enum DeclarationKind {
+    /// A decision variable
+    /// ```ignore
+    /// find x : <domain>
+    /// ```
+    /// or an induction variable of a comprehension
+    /// ```ignore
+    /// [... | x : <domain>, ...]
+    /// ```
     DecisionVariable(DecisionVariable),
+
+    /// An induction variable in a comprehension over the elements of a collection
+    /// ```ignore
+    /// x <- <expression>
+    /// ```
+    ElementsOf(Expression),
+
+    /// A constant declaration
+    /// ```ignore
+    /// letting x be 42
+    /// ```
     ValueLetting(Expression),
+
+    /// A domain declaration
+    /// ```ignore
+    /// letting Dx be domain int(1..5)
+    /// ...
+    /// find x : Dx
+    /// ```
     DomainLetting(Domain),
+
+    /// A model parameter. May have an infinite domain.
+    /// When its value is supplied via a `.param` file, becomes equivalent to a value `letting`.
+    /// ```ignore
+    /// given x : int
+    /// ```
     Given(Domain),
 
     /// A named field inside a record type.
