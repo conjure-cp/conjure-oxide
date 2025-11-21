@@ -33,7 +33,7 @@ pub fn print_all_error_nodes(source: &str) {
 }
 
 /// Helper function
-pub fn print_diagnostics(diags: &Vec<Diagnostic>) {
+pub fn print_diagnostics(diags: &[Diagnostic]) {
     for (i, diag) in diags.iter().enumerate() {
         println!(
             "Diagnostic {}:\n  Range: ({}:{}) - ({}:{})\n  Severity: {:?}\n  Message: {}\n  Source: {}\n",
@@ -102,7 +102,7 @@ pub fn detect_syntactic_errors(source: &str) -> Vec<Diagnostic> {
         } else if (node.is_error() || node.is_missing())
             && (!node
                 .parent()
-                .map_or(false, |p| p.is_error() || p.is_missing()))
+                .is_some_and(|p| p.is_error() || p.is_missing()))
         {
             diagnostics.push(classify_syntax_error(node, source));
             false
@@ -168,9 +168,9 @@ fn classify_syntax_error(node: Node, source: &str) -> Diagnostic {
 /// For misplaces integers - one ERROR node with no children, for everything else, one child node
 /// !is_named() is used to detect string literals
 fn is_unexpected_token(node: Node) -> bool {
-    return node.child_count() == 0
+    node.child_count() == 0
         || node.child_count() == 1
-            && (!node.child(0).unwrap().is_named() || (node.child(0).unwrap().is_error()));
+            && (!node.child(0).unwrap().is_named() || (node.child(0).unwrap().is_error()))
 }
 /// Classifies a missing token node and generates a diagnostic with a context-aware message.
 fn classify_missing_token(node: Node) -> Diagnostic {
@@ -214,7 +214,7 @@ fn classify_unexpected_token_error(node: Node, source_code: &str) -> String {
     //     node.end_position().row,
     //     node.end_position().column,
     // );
-    let message = if let Some(parent) = node.parent() {
+    if let Some(parent) = node.parent() {
         let src_token = &source_code[node.start_byte()..node.end_byte()];
 
         // Unexpected token at the end of a statement
@@ -235,9 +235,7 @@ fn classify_unexpected_token_error(node: Node, source_code: &str) -> String {
     // Error at root node (program)
     } else {
         format!("Unexpected '{}", source_code)
-    };
-
-    message
+    }
 }
 
 /// Classifies a general syntax error that cannot be classified with other functions.
@@ -278,5 +276,5 @@ fn error_at_start() {
     let diagnostics = detect_syntactic_errors(source);
     assert!(!diagnostics.is_empty(), "Expected at least one diagnostic");
     let diag = &diagnostics[0];
-    check_diagnostic(diag, 0, 0, 0, 19, "Failed to read the source code'");
+    check_diagnostic(diag, 0, 0, 0, 19, "Failed to read the source code");
 }
