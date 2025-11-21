@@ -4,7 +4,7 @@ use crate::{
     matrix_expr,
 };
 
-use super::{Expression, Literal, MaybeTypeable};
+use super::{Expression, Literal, Typeable};
 
 /// The possible kinds of associative-commutative (AC) operator.
 ///
@@ -23,7 +23,7 @@ impl ACOperatorKind {
     /// The child expression given should be of type matrix.
     pub fn as_expression(&self, child_expr: Expression) -> Expression {
         assert!(
-            matches!(child_expr.maybe_return_type(), Some(ReturnType::Matrix(_))),
+            matches!(child_expr.return_type(), ReturnType::Matrix(_)),
             "The child expression given to ACOperatorKind::to_expression should be of type matrix."
         );
         let box_expr = Moo::new(child_expr);
@@ -82,14 +82,14 @@ impl ACOperatorKind {
     /// and x.
     pub fn make_skip_operation(&self, guard_expr: Expression, tail_expr: Expression) -> Expression {
         assert!(
-            matches!(guard_expr.maybe_return_type(), Some(ReturnType::Bool)),
+            matches!(guard_expr.return_type(), ReturnType::Bool),
             "The guard expression in a skipping operation should be type boolean."
         );
 
         match self {
             ACOperatorKind::And => {
                 assert!(
-                    matches!(tail_expr.maybe_return_type(), Some(ReturnType::Bool)),
+                    matches!(tail_expr.return_type(), ReturnType::Bool),
                     "The tail expression in an and skipping operation should be type boolean."
                 );
                 let tail_expr_boxed = Moo::new(tail_expr);
@@ -98,7 +98,7 @@ impl ACOperatorKind {
             }
             ACOperatorKind::Or => {
                 assert!(
-                    matches!(tail_expr.maybe_return_type(), Some(ReturnType::Bool)),
+                    matches!(tail_expr.return_type(), ReturnType::Bool),
                     "The tail expression in an or skipping operation should be type boolean."
                 );
                 Expression::And(
@@ -108,7 +108,7 @@ impl ACOperatorKind {
             }
             ACOperatorKind::Product => {
                 assert!(
-                    matches!(tail_expr.maybe_return_type(), Some(ReturnType::Int)),
+                    matches!(tail_expr.return_type(), ReturnType::Int),
                     "The tail expression in a product skipping operation should be type int."
                 );
                 let guard_expr_boxed = Moo::new(guard_expr);
@@ -123,7 +123,7 @@ impl ACOperatorKind {
             ACOperatorKind::Sum => {
                 let guard_expr_boxed = Moo::new(guard_expr);
                 assert!(
-                    matches!(tail_expr.maybe_return_type(), Some(ReturnType::Int)),
+                    matches!(tail_expr.return_type(), ReturnType::Int),
                     "The tail expression in a sum skipping operation should be type int."
                 );
                 Expression::Product(

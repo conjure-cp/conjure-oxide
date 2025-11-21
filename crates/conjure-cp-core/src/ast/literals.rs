@@ -4,15 +4,13 @@ use std::fmt::{Display, Formatter};
 use std::hash::Hash;
 use ustr::Ustr;
 
+use super::{
+    Atom, Domain, DomainPtr, Expression, GroundDomain, Metadata, Moo, Range, ReturnType, SetAttr,
+    Typeable, domains::HasDomain, domains::Int, records::RecordValue,
+};
+use crate::ast::pretty::pretty_vec;
 use polyquine::Quine;
 use uniplate::{Biplate, Tree, Uniplate};
-
-use crate::ast::pretty::pretty_vec;
-use crate::ast::{DomainPtr, GroundDomain, Metadata};
-
-use super::domains::HasDomain;
-use super::{Atom, Domain, Expression, Range, domains::Int, records::RecordValue};
-use super::{MaybeTypeable, Moo, ReturnType, SetAttr};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate, Hash, Quine)]
 #[uniplate(walk_into=[AbstractLiteral<Literal>])]
@@ -142,39 +140,33 @@ impl HasDomain for AbstractLiteral<Literal> {
     }
 }
 
-impl MaybeTypeable for AbstractLiteral<Expression> {
-    fn maybe_return_type(&self) -> Option<ReturnType> {
+impl Typeable for AbstractLiteral<Expression> {
+    fn return_type(&self) -> ReturnType {
         match self {
             AbstractLiteral::Set(items) if items.is_empty() => {
-                Some(ReturnType::Set(Box::new(ReturnType::Unknown)))
+                ReturnType::Set(Box::new(ReturnType::Unknown))
             }
             AbstractLiteral::Set(items) => {
-                let item_type = items[0].maybe_return_type()?;
+                let item_type = items[0].return_type();
 
                 // if any items do not have a type, return none.
-                let item_types: Option<Vec<ReturnType>> =
-                    items.iter().map(|x| x.maybe_return_type()).collect();
-
-                let item_types = item_types?;
+                let item_types: Vec<ReturnType> = items.iter().map(|x| x.return_type()).collect();
 
                 assert!(
                     item_types.iter().all(|x| x == &item_type),
                     "all items in a set should have the same type"
                 );
 
-                Some(ReturnType::Set(Box::new(item_type)))
+                ReturnType::Set(Box::new(item_type))
             }
             AbstractLiteral::Matrix(items, _) if items.is_empty() => {
-                Some(ReturnType::Matrix(Box::new(ReturnType::Unknown)))
+                ReturnType::Matrix(Box::new(ReturnType::Unknown))
             }
             AbstractLiteral::Matrix(items, _) => {
-                let item_type = items[0].maybe_return_type()?;
+                let item_type = items[0].return_type();
 
                 // if any items do not have a type, return none.
-                let item_types: Option<Vec<ReturnType>> =
-                    items.iter().map(|x| x.maybe_return_type()).collect();
-
-                let item_types = item_types?;
+                let item_types: Vec<ReturnType> = items.iter().map(|x| x.return_type()).collect();
 
                 assert!(
                     item_types.iter().all(|x| x == &item_type),
@@ -182,25 +174,25 @@ impl MaybeTypeable for AbstractLiteral<Expression> {
                     items = pretty_vec(items),
                     types = items
                         .iter()
-                        .map(|x| x.maybe_return_type())
-                        .collect::<Vec<Option<ReturnType>>>()
+                        .map(|x| x.return_type())
+                        .collect::<Vec<ReturnType>>()
                 );
 
-                Some(ReturnType::Matrix(Box::new(item_type)))
+                ReturnType::Matrix(Box::new(item_type))
             }
             AbstractLiteral::Tuple(items) => {
                 let mut item_types = vec![];
                 for item in items {
-                    item_types.push(item.maybe_return_type()?);
+                    item_types.push(item.return_type());
                 }
-                Some(ReturnType::Tuple(item_types))
+                ReturnType::Tuple(item_types)
             }
             AbstractLiteral::Record(items) => {
                 let mut item_types = vec![];
                 for item in items {
-                    item_types.push(item.value.maybe_return_type()?);
+                    item_types.push(item.value.return_type());
                 }
-                Some(ReturnType::Record(item_types))
+                ReturnType::Record(item_types)
             }
         }
     }

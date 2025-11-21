@@ -17,7 +17,6 @@ use std::sync::atomic::{AtomicU32, Ordering};
 
 use super::declaration::{DeclarationPtr, serde::DeclarationPtrFull};
 use super::serde::{DefaultWithId, HasId, ObjId};
-use super::types::MaybeTypeable;
 use itertools::{Itertools as _, izip};
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
@@ -25,7 +24,7 @@ use uniplate::Tree;
 use uniplate::{Biplate, Uniplate};
 
 use super::name::Name;
-use super::{DomainPtr, Expression, GroundDomain, Moo, ReturnType, SubModel};
+use super::{DomainPtr, Expression, GroundDomain, Moo, ReturnType, SubModel, Typeable};
 use derivative::Derivative;
 
 // Count symbol tables per thread / model.
@@ -159,12 +158,12 @@ impl SymbolTable {
 
     /// Looks up the return type for name if it has one and is in scope.
     pub fn return_type(&self, name: &Name) -> Option<ReturnType> {
-        self.lookup(name).and_then(|x| x.maybe_return_type())
+        self.lookup(name).map(|x| x.return_type())
     }
 
     /// Looks up the return type for name if has one and is in the local scope.
     pub fn return_type_local(&self, name: &Name) -> Option<ReturnType> {
-        self.lookup_local(name).and_then(|x| x.maybe_return_type())
+        self.lookup_local(name).map(|x| x.return_type())
     }
 
     /// Looks up the domain of name if it has one and is in scope.

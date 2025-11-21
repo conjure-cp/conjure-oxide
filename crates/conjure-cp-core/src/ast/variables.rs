@@ -1,15 +1,11 @@
 use std::fmt::Display;
 
+use super::categories::{Category, CategoryOf};
 use crate::representation::Representation;
 use conjure_cp_core::ast::DomainPtr;
+use conjure_cp_core::ast::domains::HasDomain;
 use derivative::Derivative;
 use serde::{Deserialize, Serialize};
-
-use super::{
-    ReturnType,
-    categories::{Category, CategoryOf},
-    types::MaybeTypeable,
-};
 
 /// Represents a decision variable within a computational model.
 ///
@@ -68,9 +64,9 @@ impl CategoryOf for DecisionVariable {
     }
 }
 
-impl MaybeTypeable for DecisionVariable {
-    fn maybe_return_type(&self) -> Option<ReturnType> {
-        todo!()
+impl HasDomain for DecisionVariable {
+    fn domain_of(&self) -> DomainPtr {
+        self.domain.clone()
     }
 }
 

@@ -1,7 +1,7 @@
 use crate::ast::domains::set_attr::SetAttr;
 use crate::ast::{
-    DeclarationKind, DomainOpError, Expression, Literal, MaybeTypeable, Metadata, Moo,
-    RecordEntryGround, Reference,
+    DeclarationKind, DomainOpError, Expression, Literal, Metadata, Moo, RecordEntryGround,
+    Reference, Typeable,
     domains::{
         GroundDomain,
         domain::{DomainPtr, Int},
@@ -94,12 +94,12 @@ impl Display for IntVal {
 impl IntVal {
     pub fn new_ref(re: &Reference) -> Option<IntVal> {
         match re.ptr.kind().deref() {
-            DeclarationKind::ValueLetting(expr) => match expr.maybe_return_type() {
-                Some(ReturnType::Int) => Some(IntVal::Reference(re.clone())),
+            DeclarationKind::ValueLetting(expr) => match expr.return_type() {
+                ReturnType::Int => Some(IntVal::Reference(re.clone())),
                 _ => None,
             },
-            DeclarationKind::Given(dom) => match dom.maybe_return_type() {
-                Some(ReturnType::Int) => Some(IntVal::Reference(re.clone())),
+            DeclarationKind::Given(dom) => match dom.return_type() {
+                ReturnType::Int => Some(IntVal::Reference(re.clone())),
                 _ => None,
             },
             DeclarationKind::DomainLetting(_)
@@ -109,7 +109,7 @@ impl IntVal {
     }
 
     pub fn new_expr(value: Moo<Expression>) -> Option<IntVal> {
-        if value.maybe_return_type() != Some(ReturnType::Int) {
+        if value.return_type() != ReturnType::Int {
             return None;
         }
         Some(IntVal::Expr(value))
@@ -339,30 +339,28 @@ impl UnresolvedDomain {
     }
 }
 
-impl MaybeTypeable for UnresolvedDomain {
-    fn maybe_return_type(&self) -> Option<ReturnType> {
+impl Typeable for UnresolvedDomain {
+    fn return_type(&self) -> ReturnType {
         match self {
-            UnresolvedDomain::Reference(re) => re.maybe_return_type(),
-            UnresolvedDomain::Int(_) => Some(ReturnType::Int),
-            UnresolvedDomain::Set(_attr, inner) => inner
-                .maybe_return_type()
-                .map(|ty| ReturnType::Set(Box::new(ty))),
-            UnresolvedDomain::Matrix(inner, _idx) => inner
-                .maybe_return_type()
-                .map(|ty| ReturnType::Matrix(Box::new(ty))),
+            UnresolvedDomain::Reference(re) => re.return_type(),
+            UnresolvedDomain::Int(_) => ReturnType::Int,
+            UnresolvedDomain::Set(_attr, inner) => ReturnType::Set(Box::new(inner.return_type())),
+            UnresolvedDomain::Matrix(inner, _idx) => {
+                ReturnType::Matrix(Box::new(inner.return_type()))
+            }
             UnresolvedDomain::Tuple(inners) => {
                 let mut inner_types = Vec::new();
                 for inner in inners {
-                    inner_types.push(inner.maybe_return_type()?);
+                    inner_types.push(inner.return_type());
                 }
-                Some(ReturnType::Tuple(inner_types))
+                ReturnType::Tuple(inner_types)
             }
             UnresolvedDomain::Record(entries) => {
                 let mut entry_types = Vec::new();
                 for entry in entries {
-                    entry_types.push(entry.domain.maybe_return_type()?);
+                    entry_types.push(entry.domain.return_type());
                 }
-                Some(ReturnType::Record(entry_types))
+                ReturnType::Record(entry_types)
             }
         }
     }

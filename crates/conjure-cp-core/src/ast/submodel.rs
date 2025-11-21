@@ -1,5 +1,6 @@
 use super::{
-    Atom, DeclarationPtr, Literal, Moo,
+    Atom, CnfClause, DeclarationPtr, Expression, Literal, Metadata, Moo, ReturnType, SymbolTable,
+    Typeable,
     comprehension::Comprehension,
     declaration::DeclarationKind,
     pretty::{
@@ -13,8 +14,7 @@ use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use uniplate::{Biplate, Tree, Uniplate};
 
-use super::{CnfClause, Expression, ReturnType, SymbolTable, types::MaybeTypeable};
-use crate::{ast::Metadata, bug, into_matrix_expr};
+use crate::{bug, into_matrix_expr};
 use std::hash::{Hash, Hasher};
 use std::{
     cell::{Ref, RefCell, RefMut},
@@ -200,9 +200,9 @@ impl SubModel {
     }
 }
 
-impl MaybeTypeable for SubModel {
-    fn maybe_return_type(&self) -> Option<super::ReturnType> {
-        Some(ReturnType::Bool)
+impl Typeable for SubModel {
+    fn return_type(&self) -> ReturnType {
+        ReturnType::Bool
     }
 }
 

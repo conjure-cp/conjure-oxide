@@ -64,7 +64,7 @@ fn var_to_ast(
 ) -> SolverResult<(Symbol, Dynamic, Bool)> {
     let sym = name_to_symbol(name)?;
     let dom = var
-        .domain
+        .domain_of()
         .resolve()
         .unwrap_or_else(|| bug!("could not resolve domain for {}", name));
     let (sort, restrict_fn) = domain_to_sort(dom.as_ref(), theories)?;

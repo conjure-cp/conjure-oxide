@@ -4,8 +4,8 @@ use crate::ast::domains::range::Range;
 use crate::ast::domains::set_attr::SetAttr;
 use crate::ast::domains::unresolved::{IntVal, UnresolvedDomain};
 use crate::ast::{
-    DeclarationPtr, DomainOpError, Literal, MaybeTypeable, Moo, RecordEntry, RecordEntryGround,
-    Reference, ReturnType, Typeable,
+    DeclarationPtr, DomainOpError, Literal, Moo, RecordEntry, RecordEntryGround, Reference,
+    ReturnType, Typeable,
 };
 use itertools::Itertools;
 use polyquine::Quine;
@@ -82,9 +82,9 @@ pub trait HasDomain {
     fn domain_of(&self) -> DomainPtr;
 }
 
-impl<T: HasDomain> MaybeTypeable for T {
-    fn maybe_return_type(&self) -> Option<ReturnType> {
-        self.domain_of().maybe_return_type()
+impl<T: HasDomain> Typeable for T {
+    fn return_type(&self) -> ReturnType {
+        self.domain_of().return_type()
     }
 }
 
@@ -265,12 +265,12 @@ impl Domain {
 
     /// True if this is [GroundDomain::Bool]
     pub fn is_bool(&self) -> bool {
-        self.maybe_return_type() == Some(ReturnType::Bool)
+        self.return_type() == ReturnType::Bool
     }
 
     /// True if this is a [GroundDomain::Int] or an [UnresolvedDomain::Int]
     pub fn is_int(&self) -> bool {
-        self.maybe_return_type() == Some(ReturnType::Int)
+        self.return_type() == ReturnType::Int
     }
 
     /// If this domain is [GroundDomain::Int] or [UnresolveDomain::Int], get
@@ -537,11 +537,11 @@ impl Domain {
     }
 }
 
-impl MaybeTypeable for Domain {
-    fn maybe_return_type(&self) -> Option<ReturnType> {
+impl Typeable for Domain {
+    fn return_type(&self) -> ReturnType {
         match self {
-            Domain::Ground(dom) => Some(dom.return_type()),
-            Domain::Unresolved(dom) => dom.maybe_return_type(),
+            Domain::Ground(dom) => dom.return_type(),
+            Domain::Unresolved(dom) => dom.return_type(),
         }
     }
 }

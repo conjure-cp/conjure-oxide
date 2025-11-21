@@ -1,6 +1,7 @@
-use conjure_cp::ast::GroundDomain;
 use conjure_cp::{
-    ast::{Atom, Expression as Expr, Metadata, Name, SubModel, SymbolTable, serde::HasId},
+    ast::{
+        Atom, Expression as Expr, GroundDomain, Metadata, Name, SubModel, SymbolTable, serde::HasId,
+    },
     bug,
     representation::Representation,
     rule_engine::{
