@@ -1,0 +1,462 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Expression rewriting, Rules and RuleSets - Conjure Oxide</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../../favicon.svg">
+        <link rel="shortcut icon" href="../../favicon.png">
+        <link rel="stylesheet" href="../../css/variables.css">
+        <link rel="stylesheet" href="../../css/general.css">
+        <link rel="stylesheet" href="../../css/chrome.css">
+        <link rel="stylesheet" href="../../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../../";
+            const default_light_theme = "light";
+            const default_dark_theme = "coal";
+            window.path_to_searchindex_js = "../../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Conjure Oxide</h1>
+
+                    <div class="right-buttons">
+                        <a href="../../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        
+                        <!-- maturity: draft
+authors: Georgii Skorokhod, Hanaa Khan
+created: 16-02-24
+---- -->
+<!-- TODO edit more -->
+<h1 id="expression-rewriting-rules-and-rulesets"><a class="header" href="#expression-rewriting-rules-and-rulesets">Expression rewriting, Rules and RuleSets</a></h1>
+<blockquote>
+<p>NOTE: Once the rewrite engine API is finalized, we should possibly make a separate page for it</p>
+</blockquote>
+<h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
+<p>Conjure uses Essence, a high-level DSL for constraints modelling, and converts it into a solver-specific representation of the problem.
+To do that, we parse the Essence file into an AST, then use a rule engine to walk the expression tree and rewrite constraints into a format that is accepted by the solver before passing the AST to a solver adapter.</p>
+<p>The high-level process is as follows:</p>
+<ol>
+<li>Start with a deterministically ordered list of rules</li>
+<li>For each node in the expression tree:
+<ul>
+<li>Find all rules that can be applied to it</li>
+<li>If there are none, keep traversing the tree. Otherwise:
+<ul>
+<li>Take the rules with the highest priority</li>
+<li>If there is only one, apply it</li>
+<li>If there are multiple, use some strategy to choose a rule
+(The rule selection logic is separate from the rewrite engine itself)
+For testing, we currently just choose the first rule</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>When there are no more rules to apply, the rewrite is complete</li>
+</ol>
+<p>We want the rewrite process to:</p>
+<ul>
+<li>be <strong>flexible</strong> - instead of hard coding the rules, we want an easy way to extend the list of rules and to decide which rules to use, both for ourselves and for any users who may wish to use conjure-oxide in their projects</li>
+<li>be <strong>deterministic</strong> (in a loose sense of the term) - for a given input, set of rules, and a given set of answers to all rule selection questions (see above), the rewriter must always produce the same output</li>
+<li>happen in a single step, instead of doing multiple passes over the model (like it is done in Saville Row currently)</li>
+</ul>
+<h2 id="rules"><a class="header" href="#rules">Rules</a></h2>
+<hr />
+<h3 id="overview-1"><a class="header" href="#overview-1">Overview</a></h3>
+<p>Rules are the fundamental part of the rewrite engine.
+They consist of:</p>
+<ul>
+<li>A unique <strong>name</strong></li>
+<li>An application function which takes an <code>Expression</code> and either rewrites it or errors if the rule is not applicable.
+(checking applicability and applying the rule are not separated to avoid code duplication and inefficiency - their logic is the same)</li>
+</ul>
+<p>We may also store other metadata in the <code>Rule</code> struct, for example the names of the <code>RuleSet</code>'s that it belongs to</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct Rule&lt;'a&gt; {
+    pub name: &amp;'a str,
+    pub application: fn(&amp;Expression) -&gt; Result&lt;Expression, RuleApplicationError&gt;,
+    pub rule_sets: &amp;'a [(&amp;'a str, u8)], // (name, priority). At runtime, we add the rule to rulesets
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="registering-rules"><a class="header" href="#registering-rules">Registering Rules</a></h3>
+<p>The main way to register rules is by defining their application function and decorating it with the <code>#[register_rule()]</code> macro.
+When this macro is invoked, it creates a static <code>Rule</code> object and adds it to a global rule registry. Rules may be registered from the <code>conjure_oxide</code> crate, or any downstream crate (so, users may define their own rules)</p>
+<p>Currently, the <code>register_rule</code> macro has the following syntax:</p>
+<pre><code>#[register_rule(("&lt;RuleSet name&gt;", &lt;Rule priority within the ruleset&gt;))]
+</code></pre>
+<h4 id="example"><a class="header" href="#example">Example</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use conjure_core::ast::Expression;
+use conjure_core::rule::RuleApplicationError;
+use conjure_rules::register_rule;
+
+#[register_rule(("RuleSetName", 10))]
+fn identity(expr: &amp;Expression) -&gt; Result&lt;Expression, RuleApplicationError&gt; {
+   Ok(expr.clone())
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="getting-rules-from-the-registry"><a class="header" href="#getting-rules-from-the-registry">Getting Rules from the registry</a></h3>
+<p>Rules may be retrieved using the following functions:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub fn get_rule_by_name(name: &amp;str) -&gt; Option&lt;&amp;'static Rule&lt;'static&gt;&gt;
+<span class="boring">}</span></code></pre></pre>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub fn get_rules() -&gt; Vec&lt;&amp;'static Rule&lt;'static&gt;&gt;
+<span class="boring">}</span></code></pre></pre>
+<ul>
+<li><code>get_rules()</code> returns a vector of static references to <code>Rule</code> structs</li>
+<li><code>get_rule_by_name()</code> returns a static reference to a specific rule, if it exists</li>
+</ul>
+<h2 id="rule-sets"><a class="header" href="#rule-sets">Rule Sets</a></h2>
+<hr />
+<p>Rule sets group some <code>Rule</code>s together and map them to their priorities.
+The <code>rewrite</code> function takes a set of <code>RuleSet</code>'s and uses it to resolve a final list of rules, ordered by their priority.</p>
+<p>The RuleSet object contains the following fields:</p>
+<ul>
+<li><code>name</code> The name of the rule set.</li>
+<li><code>order</code> The order of the rule set.</li>
+<li><code>rules</code> A map of rules to their priorities. This is evaluated lazily at runtime.</li>
+<li><code>solvers</code> The solvers that this RuleSet applies for</li>
+<li><code>solver_families</code> The solver families that this RuleSrt applies for</li>
+</ul>
+<blockquote>
+<p>NOTE: A <code>RuleSet</code> would apply if EITHER of the following is true:</p>
+<ul>
+<li>The target solver belongs to its list of <code>solvers</code></li>
+<li>The target solver belongs to a family that is listed in <code>solver_families</code>, even if it is not explicitly named in <code>solvers</code></li>
+</ul>
+</blockquote>
+<p>It provides the following public methods:</p>
+<ul>
+<li><code>get_dependencies() -&gt; &amp;HashSet&lt;&amp;'static RuleSet&gt;</code> Get the dependency <code>RuleSet</code>s of this <code>RuleSet</code> (evaluating them lazily if necessary)</li>
+<li><code>get_rules() -&gt; &amp;HashMap&lt;&amp;'a Rule&lt;'a&gt;, u8&gt;</code> Get a map of rules to their priorities (performing lazy evaluation - "reversing the arrows" - if necessary)</li>
+</ul>
+<h3 id="registering-rule-sets"><a class="header" href="#registering-rule-sets">Registering Rule Sets</a></h3>
+<p>Like <code>Rule</code>s, <code>RuleSet</code>s may be registered from anywhere within the <code>conjure_oxide</code> crate or any downstream crate.
+They are registered using the <code>register_rule_set!</code> macro using the following syntax:</p>
+<pre><code>register_rule_set!("&lt;Rule set name&gt;", &lt;order&gt;, ("&lt;name of dependency RuleSet&gt;", ...), (&lt;list of solver families&gt;), (&lt;list of solvers&gt;));
+</code></pre>
+<p>If a bracketed list is omited, the corresponding list would be empty. However, you must not break the order.
+For example:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>register_rule_set!("MyRuleSet", 10) // This is legal (rule set will have no dependencies, solvers or solver families)
+register_rule_set!("MyRuleSet", 10, ("DependencyRS")) // Also legal
+register_rule_set!("MyRuleSet", 10, (SolverFamily::CNF)) // This is illegal because dependencies come before solver families
+register_rule_set!("MyRuleSet", 10, (), (SolverFamily::CNF)) // But this is fine
+<span class="boring">}</span></code></pre></pre>
+<h4 id="example-1"><a class="header" href="#example-1">Example</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>register_rule_set!("MyRuleSet", 10, ("DependencyRuleSet", "AnotherRuleSet"), (SolverFamily::CNF), (SolverName::Minion));
+<span class="boring">}</span></code></pre></pre>
+<h4 id="adding-rules-to-rulesets"><a class="header" href="#adding-rules-to-rulesets">Adding Rules to RuleSets</a></h4>
+<p>Notice that we do not add any rules to the <code>RuleSet</code> when we register it.
+Instead, the <code>Rule</code> contains the names of the RuleSets that it needs to be added to.</p>
+<p>At runtime, when we first request the <code>rules</code> from a <code>RuleSet</code>, it retrieves a list of all the rules that reference it by name from the registry, and stores static references to the rules along with their priorities.</p>
+<p>This is done to allow us to statically initialize <code>Rule</code>s and <code>RuleSet</code>s in a decentralized way across multiple files and store them in a single registry. Dynamic data structures (like <code>Vec</code> or <code>HashMap</code>) cannot be initialized at this stage (Rust has no "life before <code>main()</code>"), so we have to initialize them lazily at runtime.</p>
+<p><img src="./expression_rewriting_diagram.png" alt="image" /></p>
+<p>Internally, we would sometimes refer to this lazy initialization as "reversing the arrows".</p>
+<h3 id="getting-rulesets-from-the-registry"><a class="header" href="#getting-rulesets-from-the-registry">Getting RuleSets from the registry</a></h3>
+<p>Similarly to <code>Rule</code>s, <code>RuleSet</code>s may be retrieved using the following functions:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub fn get_rule_set_by_name(name: &amp;str) -&gt; Option&lt;&amp;'static RuleSet&lt;'static&gt;&gt;
+<span class="boring">}</span></code></pre></pre>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub fn get_rule_sets() -&gt; Vec&lt;&amp;'static RuleSet&lt;'static&gt;&gt;
+<span class="boring">}</span></code></pre></pre>
+<h2 id="resolving-a-final-list-of-rules"><a class="header" href="#resolving-a-final-list-of-rules">Resolving a final list of <code>Rule</code>s</a></h2>
+<hr />
+<p>Our <code>rewrite</code> function takes an <code>Expression</code> along with a list of <code>RuleSet</code>s to apply:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub fn rewrite&lt;'a&gt;(
+    expression: &amp;Expression,
+    rule_sets: &amp;Vec&lt;&amp;'a RuleSet&lt;'a&gt;&gt;,
+) -&gt; Result&lt;Expression, RewriteError&gt;
+<span class="boring">}</span></code></pre></pre>
+<p>Before we start rewriting the AST, we must first resolve the final list of rules to apply.</p>
+<p>This is done via the following steps:</p>
+<ol>
+<li>
+<p>Add all given RuleSet's to a set of rulesets</p>
+</li>
+<li>
+<p>Recursively look up all their dependencies by name and add them to the set as well</p>
+</li>
+<li>
+<p>Once we have a final set of <code>RuleSet</code>s:</p>
+<ol>
+<li>
+<p>Construct a <code>HashMap&lt;&amp;Rule, priority&gt;)</code>. This will hold our final mapping of rules to priorities</p>
+</li>
+<li>
+<p>Loop over all the rules of every <code>RuleSet</code></p>
+</li>
+<li>
+<p>If a rule is not yet present in the final <code>HashMap</code>, add it and its priority within the <code>RuleSet</code></p>
+</li>
+<li>
+<p>If it is already present:</p>
+<ul>
+<li>Compare the order of the current <code>RuleSet</code> and the one that the rule originally came from</li>
+<li>If the new <code>RuleSet</code> has a higher order, update the <code>Rule</code>'s priority</li>
+</ul>
+</li>
+</ol>
+</li>
+<li>
+<p>Once all rules have been added to the <code>HashMap</code>:</p>
+<ol>
+<li>Take all its keys and put them in a vector</li>
+<li>Sort it by rule priority</li>
+<li>In the case that two rules have the same priority, sort them lexicographically by <code>name</code></li>
+</ol>
+</li>
+</ol>
+<p>In the end, we should have a final deterministically ordered list of rules and a <code>HashMap</code> that maps them to their priorities.
+Now, we can proceed with rewriting.</p>
+<h3 id="why-all-this-weirdness"><a class="header" href="#why-all-this-weirdness">Why all this weirdness?</a></h3>
+<h4 id="rule-ordering"><a class="header" href="#rule-ordering">Rule ordering</a></h4>
+<p>We want to always have a single deterministic ordering of <code>Rule</code>s. This way, for a given set of rules, the <code>select_rule</code> strategy would always give the same result.</p>
+<p>Think of it as a multiple choice quiz: if we want to know that the same numbers in the answer sheet actually correspond to the same set of answers, we must make sure that all students get the questions in the same order.</p>
+<p>This is why we sort <code>Rule</code>s by priority, and then use their name (which is guaranteed to be unique) as a tie breaker.</p>
+<p>Normally, one would just construct a vector of <code>Rule</code>s and use it as the final ordering, but we cannot do that, because rules are registered in a decentralized way across many files, and when we get them from the rule registry, they are not guaranteed to be in any specific order</p>
+<h4 id="ruleset-ordering"><a class="header" href="#ruleset-ordering">RuleSet ordering</a></h4>
+<p>As part of resolving the list of rules to use, we need to take rules from multiple <code>RuleSet</code>s and put these rules and their priorities in a <code>HashMap</code>. However, the <code>RuleSet</code>s may overlap (i.e. contain the same rules but with different priorities), and we want to make sure that, for a given set of <code>RuleSet</code>s, the final rule priorities will always be the same.</p>
+<p>Normally, this would not be an issues - entries in the <code>HashMap</code> would be added and updated as needed as we loop over the <code>RuleSet</code>s. However, since the <code>RuleSet</code>s are stored in a decentralised registry and are not guaranteed to come in any particular order (i.e. this order may change every time we recompile the project), we need to ensure that the order in which the entries are added to the <code>HashMap</code> (and thus the final rule priorities) doesn't change.</p>
+<p>To achieve this, we use the following algorithm:</p>
+<ol>
+<li>Loop over all given <code>RuleSet</code>s</li>
+<li>Loop over all the rules in a <code>RuleSet</code>
+<ul>
+<li>If the rule is not present in the <code>HashMap</code>, add it</li>
+<li>If the rule is already there:
+<ul>
+<li>If this <code>RuleSet</code> has a higher <code>order</code> then the one that the rule came from, update its priority</li>
+<li>Otherwise, don't change anything</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<blockquote>
+<p>NOTE: The <code>order</code> of a <code>RuleSet</code> should not be thought of as a "priority" and does not affect the priorities of the rules in it.
+It only provides a consistent order of operations when resolving the final set of rules</p>
+</blockquote>
+<hr />
+<p><em>This section had been taken from the 'Expression rewriting, Rules and RuleSets' page of the conjure-oxide wiki</em></p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../../developers_guide/design_documents/2024_03.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../../developers_guide/design_documents/semantics-of-rewriting-expressions.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../../developers_guide/design_documents/2024_03.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../../developers_guide/design_documents/semantics-of-rewriting-expressions.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../../elasticlunr.min.js"></script>
+        <script src="../../mark.min.js"></script>
+        <script src="../../searcher.js"></script>
+
+        <script src="../../clipboard.min.js"></script>
+        <script src="../../highlight.js"></script>
+        <script src="../../book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>

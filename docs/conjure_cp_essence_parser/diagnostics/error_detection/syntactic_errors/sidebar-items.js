@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["check_diagnostic","detect_syntactic_errors","print_all_error_nodes"]};

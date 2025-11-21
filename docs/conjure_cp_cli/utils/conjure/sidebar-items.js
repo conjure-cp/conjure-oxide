@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["get_solutions","get_solutions_from_conjure","solutions_to_json"]};
