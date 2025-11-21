@@ -1,9 +1,8 @@
 use std::collections::HashSet;
 
+use crate::ast::Typeable;
 use crate::{
-    ast::{
-        Atom, Expression as Expr, Literal as Lit, MaybeTypeable as _, Metadata, Moo, ReturnType,
-    },
+    ast::{Atom, Expression as Expr, Literal as Lit, Metadata, Moo, ReturnType},
     into_matrix_expr,
     rule_engine::{ApplicationError::RuleNotApplicable, ApplicationResult, Reduction},
 };
@@ -119,7 +118,7 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
         Expr::Atomic(_, _) => Err(RuleNotApplicable),
         Expr::Scope(_, _) => Err(RuleNotApplicable),
         Expr::ToInt(_, expression) => {
-            if let Some(ReturnType::Int) = expression.maybe_return_type() {
+            if expression.return_type() == ReturnType::Int {
                 Ok(Reduction::pure(Moo::unwrap_or_clone(expression.clone())))
             } else {
                 Err(RuleNotApplicable)

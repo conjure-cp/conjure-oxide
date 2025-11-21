@@ -2,15 +2,15 @@
 
 use std::{cell::RefCell, collections::BTreeSet, fmt::Display, rc::Rc, sync::atomic::AtomicBool};
 
+use crate::{ast::Metadata, into_matrix_expr, matrix_expr};
+use conjure_cp_core::ast::ReturnType;
 use itertools::Itertools as _;
 use serde::{Deserialize, Serialize};
 use uniplate::{Biplate, Uniplate};
 
-use crate::{ast::Metadata, into_matrix_expr, matrix_expr};
-
 use super::{
     DeclarationPtr, Domain, DomainPtr, Expression, Moo, Name, Range, SubModel, SymbolTable,
-    ac_operators::ACOperatorKind,
+    Typeable, ac_operators::ACOperatorKind,
 };
 
 // TODO: move this global setting somewhere better?
@@ -85,6 +85,15 @@ impl Comprehension {
     /// True iff expr only references induction variables.
     pub fn is_induction_guard(&self, expr: &Expression) -> bool {
         is_induction_guard(&(self.induction_vars.clone().into_iter().collect()), expr)
+    }
+}
+
+impl Typeable for Comprehension {
+    fn return_type(&self) -> ReturnType {
+        self.return_expression_submodel
+            .clone()
+            .into_single_expression()
+            .return_type()
     }
 }
 

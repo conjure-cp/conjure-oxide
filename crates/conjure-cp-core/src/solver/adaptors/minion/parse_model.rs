@@ -1,7 +1,7 @@
 //! Parse / `load_model` step of running Minion.
 
 use crate::Model as ConjureModel;
-use crate::ast::{self as conjure_ast, Moo, Range};
+use crate::ast::{self as conjure_ast, HasDomain, Moo, Range};
 use crate::solver::SolverError::{
     ModelFeatureNotImplemented, ModelFeatureNotSupported, ModelInvalid,
 };
@@ -111,7 +111,7 @@ fn load_var(
     search_var: bool,
     minion_model: &mut MinionModel,
 ) -> Result<(), SolverError> {
-    match &var.domain.as_ground() {
+    match &var.domain_of().as_ground() {
         Some(conjure_ast::GroundDomain::Int(ranges)) => {
             load_intdomain_var(name, ranges, search_var, minion_model)
         }

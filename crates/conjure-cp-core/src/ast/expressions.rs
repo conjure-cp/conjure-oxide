@@ -26,7 +26,7 @@ use super::categories::{Category, CategoryOf};
 use super::comprehension::Comprehension;
 use super::domains::HasDomain as _;
 use super::records::RecordValue;
-use super::{DeclarationPtr, Domain, MaybeTypeable, Range, Reference, SubModel};
+use super::{DeclarationPtr, Domain, Range, Reference, SubModel, Typeable};
 
 // Ensure that this type doesn't get too big
 //
@@ -1563,94 +1563,102 @@ impl Display for Expression {
     }
 }
 
-impl MaybeTypeable for Expression {
-    fn maybe_return_type(&self) -> Option<ReturnType> {
+impl Typeable for Expression {
+    fn return_type(&self) -> ReturnType {
         match self {
-            Expression::Union(_, subject, _) => {
-                Some(ReturnType::Set(Box::new(subject.maybe_return_type()?)))
-            }
+            Expression::Union(_, subject, _) => ReturnType::Set(Box::new(subject.return_type())),
             Expression::Intersect(_, subject, _) => {
-                Some(ReturnType::Set(Box::new(subject.maybe_return_type()?)))
+                ReturnType::Set(Box::new(subject.return_type()))
             }
-            Expression::In(_, _, _) => Some(ReturnType::Bool),
-            Expression::Supset(_, _, _) => Some(ReturnType::Bool),
-            Expression::SupsetEq(_, _, _) => Some(ReturnType::Bool),
-            Expression::Subset(_, _, _) => Some(ReturnType::Bool),
-            Expression::SubsetEq(_, _, _) => Some(ReturnType::Bool),
-            Expression::AbstractLiteral(_, lit) => lit.maybe_return_type(),
-            Expression::UnsafeIndex(_, subject, _) | Expression::SafeIndex(_, subject, _) => {
-                let mut elem_typ = subject.maybe_return_type()?;
-                let ReturnType::Matrix(_) = elem_typ else {
-                    return None;
-                };
-
-                // unwrap the return types of n-d matrices to get to the real element typetype.
-                while let ReturnType::Matrix(new_elem_typ) = elem_typ {
-                    elem_typ = *new_elem_typ;
+            Expression::In(_, _, _) => ReturnType::Bool,
+            Expression::Supset(_, _, _) => ReturnType::Bool,
+            Expression::SupsetEq(_, _, _) => ReturnType::Bool,
+            Expression::Subset(_, _, _) => ReturnType::Bool,
+            Expression::SubsetEq(_, _, _) => ReturnType::Bool,
+            Expression::AbstractLiteral(_, lit) => lit.return_type(),
+            Expression::UnsafeIndex(_, subject, idx) | Expression::SafeIndex(_, subject, idx) => {
+                let subject_ty = subject.return_type();
+                match subject_ty {
+                    ReturnType::Matrix(_) => {
+                        // For n-dimensional matrices, unwrap the element type until
+                        // we either get to the innermost element type or the last index
+                        let mut elem_typ = subject_ty;
+                        let mut idx_len = idx.len();
+                        while idx_len > 0
+                            && let ReturnType::Matrix(new_elem_typ) = &elem_typ
+                        {
+                            elem_typ = *new_elem_typ.clone();
+                            idx_len -= 1;
+                        }
+                        elem_typ
+                    }
+                    // TODO: We can implement indexing for these eventually
+                    ReturnType::Record(_) | ReturnType::Tuple(_) => ReturnType::Unknown,
+                    _ => bug!(
+                        "Invalid indexing operation: expected the operand to be a collection, got {self}: {subject_ty}"
+                    ),
                 }
-
-                Some(elem_typ)
             }
             Expression::UnsafeSlice(_, subject, _) | Expression::SafeSlice(_, subject, _) => {
-                Some(ReturnType::Matrix(Box::new(subject.maybe_return_type()?)))
+                ReturnType::Matrix(Box::new(subject.return_type()))
             }
-            Expression::InDomain(_, _, _) => Some(ReturnType::Bool),
-            Expression::Comprehension(_, _) => None,
-            Expression::Root(_, _) => Some(ReturnType::Bool),
-            Expression::DominanceRelation(_, _) => Some(ReturnType::Bool),
-            Expression::FromSolution(_, expr) => expr.maybe_return_type(),
-            Expression::Metavar(_, _) => None,
-            Expression::Atomic(_, atom) => atom.maybe_return_type(),
-            Expression::Scope(_, scope) => scope.maybe_return_type(),
-            Expression::Abs(_, _) => Some(ReturnType::Int),
-            Expression::Sum(_, _) => Some(ReturnType::Int),
-            Expression::Product(_, _) => Some(ReturnType::Int),
-            Expression::Min(_, _) => Some(ReturnType::Int),
-            Expression::Max(_, _) => Some(ReturnType::Int),
-            Expression::Not(_, _) => Some(ReturnType::Bool),
-            Expression::Or(_, _) => Some(ReturnType::Bool),
-            Expression::Imply(_, _, _) => Some(ReturnType::Bool),
-            Expression::Iff(_, _, _) => Some(ReturnType::Bool),
-            Expression::And(_, _) => Some(ReturnType::Bool),
-            Expression::Eq(_, _, _) => Some(ReturnType::Bool),
-            Expression::Neq(_, _, _) => Some(ReturnType::Bool),
-            Expression::Geq(_, _, _) => Some(ReturnType::Bool),
-            Expression::Leq(_, _, _) => Some(ReturnType::Bool),
-            Expression::Gt(_, _, _) => Some(ReturnType::Bool),
-            Expression::Lt(_, _, _) => Some(ReturnType::Bool),
-            Expression::SafeDiv(_, _, _) => Some(ReturnType::Int),
-            Expression::UnsafeDiv(_, _, _) => Some(ReturnType::Int),
-            Expression::FlatAllDiff(_, _) => Some(ReturnType::Bool),
-            Expression::FlatSumGeq(_, _, _) => Some(ReturnType::Bool),
-            Expression::FlatSumLeq(_, _, _) => Some(ReturnType::Bool),
-            Expression::MinionDivEqUndefZero(_, _, _, _) => Some(ReturnType::Bool),
-            Expression::FlatIneq(_, _, _, _) => Some(ReturnType::Bool),
-            Expression::AllDiff(_, _) => Some(ReturnType::Bool),
-            Expression::Bubble(_, inner, _) => inner.maybe_return_type(),
-            Expression::FlatWatchedLiteral(_, _, _) => Some(ReturnType::Bool),
-            Expression::MinionReify(_, _, _) => Some(ReturnType::Bool),
-            Expression::MinionReifyImply(_, _, _) => Some(ReturnType::Bool),
-            Expression::MinionWInIntervalSet(_, _, _) => Some(ReturnType::Bool),
-            Expression::MinionWInSet(_, _, _) => Some(ReturnType::Bool),
-            Expression::MinionElementOne(_, _, _, _) => Some(ReturnType::Bool),
-            Expression::AuxDeclaration(_, _, _) => Some(ReturnType::Bool),
-            Expression::UnsafeMod(_, _, _) => Some(ReturnType::Int),
-            Expression::SafeMod(_, _, _) => Some(ReturnType::Int),
-            Expression::MinionModuloEqUndefZero(_, _, _, _) => Some(ReturnType::Bool),
-            Expression::Neg(_, _) => Some(ReturnType::Int),
-            Expression::UnsafePow(_, _, _) => Some(ReturnType::Int),
-            Expression::SafePow(_, _, _) => Some(ReturnType::Int),
-            Expression::Minus(_, _, _) => Some(ReturnType::Int),
-            Expression::FlatAbsEq(_, _, _) => Some(ReturnType::Bool),
-            Expression::FlatMinusEq(_, _, _) => Some(ReturnType::Bool),
-            Expression::FlatProductEq(_, _, _, _) => Some(ReturnType::Bool),
-            Expression::FlatWeightedSumLeq(_, _, _, _) => Some(ReturnType::Bool),
-            Expression::FlatWeightedSumGeq(_, _, _, _) => Some(ReturnType::Bool),
-            Expression::MinionPow(_, _, _, _) => Some(ReturnType::Bool),
-            Expression::ToInt(_, _) => Some(ReturnType::Int),
-            Expression::SATInt(_, _) => Some(ReturnType::Int),
-            Expression::PairwiseSum(_, _, _) => Some(ReturnType::Int),
-            Expression::PairwiseProduct(_, _, _) => Some(ReturnType::Int),
+            Expression::InDomain(_, _, _) => ReturnType::Bool,
+            Expression::Comprehension(_, comp) => comp.return_type(),
+            Expression::Root(_, _) => ReturnType::Bool,
+            Expression::DominanceRelation(_, _) => ReturnType::Bool,
+            Expression::FromSolution(_, expr) => expr.return_type(),
+            Expression::Metavar(_, _) => ReturnType::Unknown,
+            Expression::Atomic(_, atom) => atom.return_type(),
+            Expression::Scope(_, scope) => scope.return_type(),
+            Expression::Abs(_, _) => ReturnType::Int,
+            Expression::Sum(_, _) => ReturnType::Int,
+            Expression::Product(_, _) => ReturnType::Int,
+            Expression::Min(_, _) => ReturnType::Int,
+            Expression::Max(_, _) => ReturnType::Int,
+            Expression::Not(_, _) => ReturnType::Bool,
+            Expression::Or(_, _) => ReturnType::Bool,
+            Expression::Imply(_, _, _) => ReturnType::Bool,
+            Expression::Iff(_, _, _) => ReturnType::Bool,
+            Expression::And(_, _) => ReturnType::Bool,
+            Expression::Eq(_, _, _) => ReturnType::Bool,
+            Expression::Neq(_, _, _) => ReturnType::Bool,
+            Expression::Geq(_, _, _) => ReturnType::Bool,
+            Expression::Leq(_, _, _) => ReturnType::Bool,
+            Expression::Gt(_, _, _) => ReturnType::Bool,
+            Expression::Lt(_, _, _) => ReturnType::Bool,
+            Expression::SafeDiv(_, _, _) => ReturnType::Int,
+            Expression::UnsafeDiv(_, _, _) => ReturnType::Int,
+            Expression::FlatAllDiff(_, _) => ReturnType::Bool,
+            Expression::FlatSumGeq(_, _, _) => ReturnType::Bool,
+            Expression::FlatSumLeq(_, _, _) => ReturnType::Bool,
+            Expression::MinionDivEqUndefZero(_, _, _, _) => ReturnType::Bool,
+            Expression::FlatIneq(_, _, _, _) => ReturnType::Bool,
+            Expression::AllDiff(_, _) => ReturnType::Bool,
+            Expression::Bubble(_, inner, _) => inner.return_type(),
+            Expression::FlatWatchedLiteral(_, _, _) => ReturnType::Bool,
+            Expression::MinionReify(_, _, _) => ReturnType::Bool,
+            Expression::MinionReifyImply(_, _, _) => ReturnType::Bool,
+            Expression::MinionWInIntervalSet(_, _, _) => ReturnType::Bool,
+            Expression::MinionWInSet(_, _, _) => ReturnType::Bool,
+            Expression::MinionElementOne(_, _, _, _) => ReturnType::Bool,
+            Expression::AuxDeclaration(_, _, _) => ReturnType::Bool,
+            Expression::UnsafeMod(_, _, _) => ReturnType::Int,
+            Expression::SafeMod(_, _, _) => ReturnType::Int,
+            Expression::MinionModuloEqUndefZero(_, _, _, _) => ReturnType::Bool,
+            Expression::Neg(_, _) => ReturnType::Int,
+            Expression::UnsafePow(_, _, _) => ReturnType::Int,
+            Expression::SafePow(_, _, _) => ReturnType::Int,
+            Expression::Minus(_, _, _) => ReturnType::Int,
+            Expression::FlatAbsEq(_, _, _) => ReturnType::Bool,
+            Expression::FlatMinusEq(_, _, _) => ReturnType::Bool,
+            Expression::FlatProductEq(_, _, _, _) => ReturnType::Bool,
+            Expression::FlatWeightedSumLeq(_, _, _, _) => ReturnType::Bool,
+            Expression::FlatWeightedSumGeq(_, _, _, _) => ReturnType::Bool,
+            Expression::MinionPow(_, _, _, _) => ReturnType::Bool,
+            Expression::ToInt(_, _) => ReturnType::Int,
+            Expression::SATInt(_, _) => ReturnType::Int,
+            Expression::PairwiseSum(_, _, _) => ReturnType::Int,
+            Expression::PairwiseProduct(_, _, _) => ReturnType::Int,
         }
     }
 }

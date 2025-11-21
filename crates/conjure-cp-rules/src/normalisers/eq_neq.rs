@@ -1,6 +1,6 @@
 //! Normalising rules for `Neq` and `Eq`.
 
-use conjure_cp::ast::{Expression as Expr, MaybeTypeable, SymbolTable};
+use conjure_cp::ast::{Expression as Expr, SymbolTable, Typeable};
 use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
 };
@@ -40,16 +40,10 @@ fn negated_eq_to_neq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
         Expr::Not(_, a) => match a.as_ref() {
             Expr::Eq(_, b, c) if (b.is_safe() && c.is_safe()) => {
-                if let Some(Set(_)) = b.as_ref().maybe_return_type() {
+                if matches!(b.as_ref().return_type(), Set(_) | Matrix(_)) {
                     return Err(RuleNotApplicable);
                 }
-                if let Some(Set(_)) = c.as_ref().maybe_return_type() {
-                    return Err(RuleNotApplicable);
-                }
-                if let Some(Matrix(_)) = b.as_ref().maybe_return_type() {
-                    return Err(RuleNotApplicable);
-                }
-                if let Some(Matrix(_)) = c.as_ref().maybe_return_type() {
+                if matches!(c.as_ref().return_type(), Set(_) | Matrix(_)) {
                     return Err(RuleNotApplicable);
                 }
                 Ok(Reduction::pure(essence_expr!(&b != &c)))
