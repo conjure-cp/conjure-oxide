@@ -135,7 +135,7 @@ pub fn save_stats_json(
     test_name: &str,
 ) -> Result<(), std::io::Error> {
     #[allow(clippy::unwrap_used)]
-    let stats = context.read().unwrap().clone();
+    let stats = context.read().unwrap().stats.clone();
     let generated_json = sort_json_object(&serde_json::to_value(stats)?, false);
 
     // serialise to string
@@ -219,7 +219,7 @@ pub fn save_solutions_json(
 
     let solver_name = match solver {
         SolverFamily::Sat => "sat",
-        SolverFamily::Smt => "smt",
+        SolverFamily::Smt(..) => "smt",
         SolverFamily::Minion => "minion",
     };
 
@@ -237,7 +237,7 @@ pub fn read_solutions_json(
 ) -> Result<JsonValue, anyhow::Error> {
     let solver_name = match solver {
         SolverFamily::Sat => "sat",
-        SolverFamily::Smt => "smt",
+        SolverFamily::Smt(..) => "smt",
         SolverFamily::Minion => "minion",
     };
 
