@@ -36,13 +36,13 @@ impl Default for Smt {
 impl Smt {
     /// Constructs a new adaptor using the given theories for representing the relevant constructs.
     pub fn new(int_theory: IntTheory, matrix_theory: MatrixTheory) -> Self {
-        let theories = TheoryConfig {
+        let theory_config = TheoryConfig {
             ints: int_theory,
             matrices: matrix_theory,
         };
         Smt {
-            theory_config: theories.clone(),
-            store: SymbolStore::new(theories),
+            theory_config,
+            store: SymbolStore::new(theory_config),
             ..Default::default()
         }
     }
@@ -93,7 +93,7 @@ impl SolverAdaptor for Smt {
     }
 
     fn get_family(&self) -> SolverFamily {
-        SolverFamily::Smt
+        SolverFamily::Smt(self.theory_config)
     }
 
     fn get_name(&self) -> &'static str {

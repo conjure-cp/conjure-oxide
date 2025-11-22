@@ -6,6 +6,7 @@ use conjure_cp::defaults::DEFAULT_RULE_SETS;
 use conjure_cp::parse::tree_sitter::parse_essence_file_native;
 use conjure_cp::rule_engine::rewrite_naive;
 use conjure_cp::solver::Solver;
+use conjure_cp::solver::adaptors::smt::TheoryConfig;
 use conjure_cp::solver::adaptors::*;
 use conjure_cp_cli::utils::testing::{normalize_solutions_for_comparison, read_human_rule_trace};
 use glob::glob;
@@ -284,7 +285,7 @@ fn integration_test_inner(
         let solver_fam = if config.solve_with_sat {
             SolverFamily::Sat
         } else if config.solve_with_smt {
-            SolverFamily::Smt
+            SolverFamily::Smt(TheoryConfig::default())
         } else {
             SolverFamily::Minion
         };
@@ -448,8 +449,12 @@ fn integration_test_inner(
         let username_solutions_json = solutions_to_json(&solutions);
         assert_eq!(username_solutions_json, expected_solutions_json);
     } else if config.solve_with_smt {
-        let expected_solutions_json =
-            read_solutions_json(path, essence_base, "expected", SolverFamily::Smt)?;
+        let expected_solutions_json = read_solutions_json(
+            path,
+            essence_base,
+            "expected",
+            SolverFamily::Smt(TheoryConfig::default()),
+        )?;
         let username_solutions_json = solutions_to_json(&solutions);
         assert_eq!(username_solutions_json, expected_solutions_json);
     }
