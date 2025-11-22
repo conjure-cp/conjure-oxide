@@ -1,7 +1,7 @@
 use conjure_cp::parse::tree_sitter::parse_essence_file;
 use conjure_cp::context::Context;
 use conjure_cp_cli::utils::testing::{
-    read_model_json, serialize_model
+    read_model_json, save_model_json
 };
 use conjure_cp::Model;
 
@@ -10,69 +10,84 @@ use std::path::Path;
 use std::sync::Arc;
 use std::sync::RwLock;
 use std::error::Error;
-use std::fs::File;
+use std::fs;
+
 use std::io::Write;
 
 // Designed to test if an Essence feature can be parsed correctly into the AST and complete a roundtrip
 // Does not consider rewriting or solving
-fn roundtrip_test(path: &str, essence_base: &str, extension: &str) -> Result<(), Box<dyn Error>> {
+fn roundtrip_test(path: &str, filename: &str, extension: &str) -> Result<(), Box<dyn Error>> {
     /*
-    When ACCEPT=true:
-        Convert an Essence file into an ast-json using conjure
-        Attempt to create a model in conjure-oxide by parsing the ast-json
-        Save the model back out as a JSON
+    Parses Essence file
+    Saves generated AST model JSON
+    Saves generated Essence
 
-    Parse your ground-truth JSON back to being a model
-    Output it as a new JSON
-    Compare the two
+    Compares expected and generated AST model JSON
+    Compares expected and generated Essence
+
+    Parses generated Essence back to being a model
+    Saves new model as Essence (generated2)
+    Compare initally generated Essence with newly generated Essence
     */
+
     let accept = env::var("ACCEPT").unwrap_or("false".to_string()) == "true";
 
-    let file_path = format!("{path}/{essence_base}.{extension}");
+    let file_path = format!("{path}/{filename}.{extension}");
     let context: Arc<RwLock<Context<'static>>> = Default::default();
+    
+    let initial_model = parse_essence_file(&file_path, context.clone())?;
+    save_model_json(&initial_model, path, filename, "parse")?;
+    save_essence(&initial_model, path, filename, "generated")?;
 
+    // When ACCEPT = true, copy over generated to expected
     if accept {
-        // When accept, always parse a new model because this will be used to remake in the AST
-        // Essence is only parsed when ACCEPT=true
-        let parsed = parse_essence_file(&file_path, context.clone())?;
-        save_parse_model_json(&parsed, path, essence_base, "expected")?;
+        std::fs::copy(
+            format!("{path}/{filename}.generated-parse.serialised.json"),
+            format!("{path}/{filename}.expected-parse.serialised.json"),
+        )?;
+        std::fs::copy(
+            format!("{path}/{filename}.generated-essence.essence"),
+            format!("{path}/{filename}.expected-essence.essence"),
+        )?;
     }
+
     // Ensures ACCEPT=true has been run at least once
-    if !Path::new(&format!("{path}/{essence_base}.expected-parse.serialised.json")).exists(){
+    if !Path::new(&format!("{path}/{filename}.expected-parse.serialised.json")).exists(){
         return Err(Box::new(std::io::Error::new(
             std::io::ErrorKind::NotFound,
             format!("Expected output file not found: Run with ACCEPT=true"),
         )));
     }
-    let model = read_model_json(&context.clone(), path,essence_base,"expected","parse")?;
-    save_parse_model_json(&model, path, essence_base, "generated")?;
 
-    // Compare the two models
-    let expected_model = read_model_json(&context, path, essence_base, "expected", "parse");
-    let model_from_file = read_model_json(&context, path, essence_base, "generated", "parse");
-    match (expected_model, model_from_file) {
-        (Err(e), _) | (_, Err(e)) => {
-            return Err(Box::new(e));
-        }
-        (Ok(expected_model), Ok(model_from_file)) => {
-            assert_eq!(model_from_file, expected_model);
-        }
-    }
+    // Compare the expected and generated model
+    let expected_model = read_model_json(&context, path, filename, "expected", "parse")?;
+    let generated_model = read_model_json(&context, path, filename, "generated", "parse")?;
+    assert_eq!(generated_model, expected_model);
+
+    // Compares essence files
+    let expected_essence = fs::read_to_string(&format!("{path}/{filename}.expected-essence.essence"))?;
+    let generated_essence = fs::read_to_string(&format!("{path}/{filename}.generated-essence.essence"))?;
+    assert_eq!(expected_essence,generated_essence);
+
+    // Compares roundtrip
+    let new_model = parse_essence_file(&format!("{path}/{filename}.generated-essence.essence"), context.clone())?;
+    save_essence(&new_model, path, filename, "generated2")?;
+    let new_generated_essence = fs::read_to_string(&format!("{path}/{filename}.generated2-essence.essence"))?;
+    assert_eq!(generated_essence,new_generated_essence);
 
     Ok(())
 }
 
-/* Saves the model, but allows for direct saving as "expected",
-   as opposed to copying and renaming as done in integration_tests.rs */
-fn save_parse_model_json(
+/* Saves a model as an Essence file */
+fn save_essence(
     model: &Model,
     path: &str,
     test_name: &str,
     model_type: &str,
 ) -> Result<(), std::io::Error> {
-    let generated_json_str = serialize_model(model)?;
-    let filename = format!("{path}/{test_name}.{model_type}-parse.serialised.json");
-    File::create(&filename)?.write_all(generated_json_str.as_bytes())?;
+    let filename = format!("{path}/{test_name}.{model_type}-essence.essence");
+    let mut file = fs::File::create(&filename)?;
+    write!(file,"{}",model)?;
     Ok(())
 }
 
