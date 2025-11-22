@@ -1,6 +1,6 @@
-import * as path from 'path';
-import { window } from 'vscode';
-import { workspace, ExtensionContext } from 'vscode';
+// import * as path from 'path';
+// import { window } from 'vscode';
+import { ExtensionContext } from 'vscode';
 
 import {
 	LanguageClient,
@@ -8,7 +8,7 @@ import {
 	ServerOptions,
 	TransportKind
 } from 'vscode-languageclient/node';
-import { vscode } from 'vscx'
+// import { vscode } from 'vscx'
 
 export function activate(context: ExtensionContext) {
 	tryStartLanguageServer(context);
