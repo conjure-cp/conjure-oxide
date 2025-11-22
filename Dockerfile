@@ -20,6 +20,9 @@ RUN yum install -y wget zip;
 # using clang not gcc as Rust's bindgen library requires libclang
 RUN yum install -y llvm-toolset;
 
+# openssl headers for Rust's openssl-sys crate
+RUN yum install -y openssl-devel;
+
 # nodejs: required to build treesitter grammar
 
 # treesitter builds fail on the version of node found in this containers
