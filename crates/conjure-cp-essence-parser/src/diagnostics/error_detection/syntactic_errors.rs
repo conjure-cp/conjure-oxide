@@ -66,7 +66,7 @@ pub fn detect_syntactic_errors(source: &str) -> Vec<Diagnostic> {
 
     let (tree, _) = match get_tree(source) {
         Some(tree) => tree,
-        _none => {
+        None => {
             let last_line = source.lines().count().saturating_sub(1);
             let last_char = source.lines().last().map(|l| l.len()).unwrap_or(0);
             diagnostics.push(Diagnostic {
