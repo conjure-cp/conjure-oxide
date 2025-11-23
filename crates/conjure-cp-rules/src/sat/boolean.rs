@@ -249,7 +249,10 @@ pub fn tseytin_xor(
 
 // BOOLEAN SAT ENCODING RULES:
 
-register_rule_set!("SAT", ("Base"), (SolverFamily::Sat));
+register_rule_set!("SAT", ("Base"), |f: &SolverFamily| matches!(
+    f,
+    SolverFamily::Sat
+));
 
 /// Converts a single boolean atom to a clause
 ///
