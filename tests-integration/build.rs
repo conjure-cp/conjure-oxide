@@ -168,16 +168,13 @@ fn write_custom_test(file: &mut File, path: String) -> io::Result<()> {
     )
 }
 
-fn write_roundtrip_test(
-    file: &mut File,
-    path: String,
-) -> io::Result<()> {
-        write!(
-            file,
-            include_str!("./tests/roundtrip_test_template"),
-            test_name = path.replace("./", "").replace(['/', '-'], "_"),
-            test_dir = path,
-            essence_file = "input",
-            ext = "essence"
-        )
+fn write_roundtrip_test(file: &mut File, path: String) -> io::Result<()> {
+    write!(
+        file,
+        include_str!("./tests/roundtrip_test_template"),
+        test_name = path.replace("./", "").replace(['/', '-'], "_"),
+        test_dir = path,
+        essence_file = "input",
+        ext = "essence"
+    )
 }
