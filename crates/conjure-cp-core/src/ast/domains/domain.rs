@@ -10,6 +10,7 @@ use itertools::Itertools;
 use polyquine::Quine;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
+use std::thread_local;
 use uniplate::Uniplate;
 
 /// The integer type used in all domain code (int ranges, set sizes, etc)
@@ -87,14 +88,18 @@ impl<T: HasDomain> Typeable for T {
     }
 }
 
+// Domain::Bool is completely static, so reuse the same chunk of memory
+// for all bool domains to avoid many small memory allocations
+thread_local! {
+    static BOOL_DOMAIN: DomainPtr =
+        Moo::new(Domain::Ground(Moo::new(GroundDomain::Bool)));
+}
+
 impl Domain {
     /// Create a new boolean domain and return a pointer to it.
     /// Boolean domains are always ground (see [GroundDomain::Bool]).
     pub fn bool() -> DomainPtr {
-        // TODO(perf): Since this is completely static, and we're using references, we may save
-        // some minor memory allocations by initialising one static Moo::(...Bool)
-        // and passing that around instead of creating new ones every time
-        Moo::new(Domain::Ground(Moo::new(GroundDomain::Bool)))
+        BOOL_DOMAIN.with(Clone::clone)
     }
 
     /// Create a new empty domain of the given type and return a pointer to it.
