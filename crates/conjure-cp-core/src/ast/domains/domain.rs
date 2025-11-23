@@ -90,7 +90,7 @@ impl<T: HasDomain> Typeable for T {
 impl Domain {
     /// Create a new boolean domain and return a pointer to it.
     /// Boolean domains are always ground (see [GroundDomain::Bool]).
-    pub fn new_bool() -> DomainPtr {
+    pub fn bool() -> DomainPtr {
         // TODO(perf): Since this is completely static, and we're using references, we may save
         // some minor memory allocations by initialising one static Moo::(...Bool)
         // and passing that around instead of creating new ones every time
@@ -99,14 +99,14 @@ impl Domain {
 
     /// Create a new empty domain of the given type and return a pointer to it.
     /// Empty domains are always ground (see [GroundDomain::Empty]).
-    pub fn new_empty(ty: ReturnType) -> DomainPtr {
+    pub fn empty(ty: ReturnType) -> DomainPtr {
         Moo::new(Domain::Ground(Moo::new(GroundDomain::Empty(ty))))
     }
 
     /// Create a new int domain with the given ranges.
     /// If the ranges are all ground, the variant will be [GroundDomain::Int].
     /// Otherwise, it will be [UnresolvedDomain::Int].
-    pub fn new_int<T>(ranges: Vec<T>) -> DomainPtr
+    pub fn int<T>(ranges: Vec<T>) -> DomainPtr
     where
         T: Into<Range<IntVal>> + TryInto<Range<Int>> + Clone,
     {
@@ -116,7 +116,7 @@ impl Domain {
             .map(TryInto::try_into)
             .collect::<Result<Vec<_>, _>>()
         {
-            return Domain::new_int_ground(int_rngs);
+            return Domain::int_ground(int_rngs);
         }
         let unresolved_rngs: Vec<Range<IntVal>> = ranges.into_iter().map(Into::into).collect();
         Moo::new(Domain::Unresolved(Moo::new(UnresolvedDomain::Int(
@@ -125,7 +125,7 @@ impl Domain {
     }
 
     /// Create a new ground integer domain with the given ranges
-    pub fn new_int_ground(ranges: Vec<Range<Int>>) -> DomainPtr {
+    pub fn int_ground(ranges: Vec<Range<Int>>) -> DomainPtr {
         let rngs = Range::squeeze(&ranges);
         Moo::new(Domain::Ground(Moo::new(GroundDomain::Int(rngs))))
     }
@@ -133,7 +133,7 @@ impl Domain {
     /// Create a new set domain with the given element domain and attributes.
     /// If the element domain and the attributes are ground, the variant
     /// will be [GroundDomain::Set]. Otherwise, it will be [UnresolvedDomain::Set].
-    pub fn new_set<T>(attr: T, inner_dom: DomainPtr) -> DomainPtr
+    pub fn set<T>(attr: T, inner_dom: DomainPtr) -> DomainPtr
     where
         T: Into<SetAttr<IntVal>> + TryInto<SetAttr<Int>> + Clone,
     {
@@ -154,7 +154,7 @@ impl Domain {
     /// Create a new matrix domain with the given element domain and index domains.
     /// If the given domains are all ground, the variant will be [GroundDomain::Matrix].
     /// Otherwise, it will be [UnresolvedDomain::Matrix].
-    pub fn new_matrix(inner_dom: DomainPtr, idx_doms: Vec<DomainPtr>) -> DomainPtr {
+    pub fn matrix(inner_dom: DomainPtr, idx_doms: Vec<DomainPtr>) -> DomainPtr {
         if let Domain::Ground(gd) = inner_dom.as_ref()
             && let Some(idx_gds) = as_grounds(&idx_doms)
         {
@@ -171,7 +171,7 @@ impl Domain {
     /// Create a new tuple domain with the given element domains.
     /// If the given domains are all ground, the variant will be [GroundDomain::Tuple].
     /// Otherwise, it will be [UnresolvedDomain::Tuple].
-    pub fn new_tuple(inner_doms: Vec<DomainPtr>) -> DomainPtr {
+    pub fn tuple(inner_doms: Vec<DomainPtr>) -> DomainPtr {
         if let Some(inner_gds) = as_grounds(&inner_doms) {
             return Moo::new(Domain::Ground(Moo::new(GroundDomain::Tuple(inner_gds))));
         }
@@ -183,7 +183,7 @@ impl Domain {
     /// Create a new tuple domain with the given entries.
     /// If the entries are all ground, the variant will be [GroundDomain::Record].
     /// Otherwise, it will be [UnresolvedDomain::Record].
-    pub fn new_record(entries: Vec<RecordEntry>) -> DomainPtr {
+    pub fn record(entries: Vec<RecordEntry>) -> DomainPtr {
         if let Ok(entries_gds) = entries.iter().cloned().map(TryInto::try_into).try_collect() {
             return Moo::new(Domain::Ground(Moo::new(GroundDomain::Record(entries_gds))));
         }
@@ -193,7 +193,7 @@ impl Domain {
     }
 
     /// Create a new [UnresolvedDomain::Reference] domain from a domain letting
-    pub fn new_ref(ptr: DeclarationPtr) -> Option<DomainPtr> {
+    pub fn reference(ptr: DeclarationPtr) -> Option<DomainPtr> {
         ptr.as_domain_letting()?;
         Some(Moo::new(Domain::Unresolved(Moo::new(
             UnresolvedDomain::Reference(Reference::new(ptr)),
@@ -583,8 +583,8 @@ mod tests {
 
     #[test]
     fn test_negative_product() {
-        let d1 = Domain::new_int(vec![Range::Bounded(-2, 1)]);
-        let d2 = Domain::new_int(vec![Range::Bounded(-2, 1)]);
+        let d1 = Domain::int(vec![Range::Bounded(-2, 1)]);
+        let d2 = Domain::int(vec![Range::Bounded(-2, 1)]);
         let res = d1
             .as_ground()
             .unwrap()
@@ -613,8 +613,8 @@ mod tests {
 
     #[test]
     fn test_length_basic() {
-        assert_eq!(Domain::new_empty(ReturnType::Int).length(), Ok(0));
-        assert_eq!(Domain::new_bool().length(), Ok(2));
+        assert_eq!(Domain::empty(ReturnType::Int).length(), Ok(0));
+        assert_eq!(Domain::bool().length(), Ok(2));
         assert_eq!(domain_int!(1..3, 5, 7..9).length(), Ok(7));
         assert_eq!(
             domain_int!(1..2, 5..).length(),
@@ -624,23 +624,23 @@ mod tests {
     #[test]
     fn test_length_set_basic() {
         // {∅, {1}, {2}, {3}, {1,2}, {1,3}, {2,3}, {1,2,3}}
-        let s = Domain::new_set(SetAttr::default(), domain_int!(1..3));
+        let s = Domain::set(SetAttr::default(), domain_int!(1..3));
         assert_eq!(s.length(), Ok(8));
 
         // {{1,2}, {1,3}, {2,3}}
-        let s = Domain::new_set(SetAttr::new_size(2), domain_int!(1..3));
+        let s = Domain::set(SetAttr::new_size(2), domain_int!(1..3));
         assert_eq!(s.length(), Ok(3));
 
         // {{1}, {2}, {3}, {1,2}, {1,3}, {2,3}}
-        let s = Domain::new_set(SetAttr::new_min_max_size(1, 2), domain_int!(1..3));
+        let s = Domain::set(SetAttr::new_min_max_size(1, 2), domain_int!(1..3));
         assert_eq!(s.length(), Ok(6));
 
         // {{1}, {2}, {3}, {1,2}, {1,3}, {2,3}, {1,2,3}}
-        let s = Domain::new_set(SetAttr::new_min_size(1), domain_int!(1..3));
+        let s = Domain::set(SetAttr::new_min_size(1), domain_int!(1..3));
         assert_eq!(s.length(), Ok(7));
 
         // {∅, {1}, {2}, {3}, {1,2}, {1,3}, {2,3}}
-        let s = Domain::new_set(SetAttr::new_max_size(2), domain_int!(1..3));
+        let s = Domain::set(SetAttr::new_max_size(2), domain_int!(1..3));
         assert_eq!(s.length(), Ok(7));
     }
 
@@ -652,10 +652,10 @@ mod tests {
         // {∅, {1}}, {∅, {2}}, {∅, {1, 2}},            -- all size 2
         // {{1}, {2}}, {{1}, {1, 2}}, {{2}, {1, 2}}
         // }
-        let s2 = Domain::new_set(
+        let s2 = Domain::set(
             SetAttr::new_max_size(2),
             // {∅, {1}, {2}, {1,2}}
-            Domain::new_set(SetAttr::default(), domain_int!(1..2)),
+            Domain::set(SetAttr::default(), domain_int!(1..2)),
         );
         assert_eq!(s2.length(), Ok(11));
     }
@@ -663,41 +663,41 @@ mod tests {
     #[test]
     fn test_length_set_unbounded_inner() {
         // leaf domain is unbounded
-        let s2_bad = Domain::new_set(
+        let s2_bad = Domain::set(
             SetAttr::new_max_size(2),
-            Domain::new_set(SetAttr::default(), domain_int!(1..)),
+            Domain::set(SetAttr::default(), domain_int!(1..)),
         );
         assert_eq!(s2_bad.length(), Err(DomainOpError::Unbounded));
     }
 
     #[test]
     fn test_length_set_overflow() {
-        let s = Domain::new_set(SetAttr::default(), domain_int!(1..20));
+        let s = Domain::set(SetAttr::default(), domain_int!(1..20));
         assert!(s.length().is_ok());
 
         // current way of calculating the formula overflows for anything larger than this
-        let s = Domain::new_set(SetAttr::default(), domain_int!(1..63));
+        let s = Domain::set(SetAttr::default(), domain_int!(1..63));
         assert_eq!(s.length(), Err(DomainOpError::TooLarge));
     }
 
     #[test]
     fn test_length_tuple() {
         // 3 ways to pick first element, 2 ways to pick second element
-        let t = Domain::new_tuple(vec![domain_int!(1..3), Domain::new_bool()]);
+        let t = Domain::tuple(vec![domain_int!(1..3), Domain::bool()]);
         assert_eq!(t.length(), Ok(6));
     }
 
     #[test]
     fn test_length_record() {
         // 3 ways to pick rec.a, 2 ways to pick rec.b
-        let t = Domain::new_record(vec![
+        let t = Domain::record(vec![
             RecordEntry {
                 name: Name::user("a"),
                 domain: domain_int!(1..3),
             },
             RecordEntry {
                 name: Name::user("b"),
-                domain: Domain::new_bool(),
+                domain: Domain::bool(),
             },
         ]);
         assert_eq!(t.length(), Ok(6));
@@ -706,29 +706,26 @@ mod tests {
     #[test]
     fn test_length_matrix_basic() {
         // 3 booleans -> [T, T, T], [T, T, F], ..., [F, F, F]
-        let m = Domain::new_matrix(Domain::new_bool(), vec![domain_int!(1..3)]);
+        let m = Domain::matrix(Domain::bool(), vec![domain_int!(1..3)]);
         assert_eq!(m.length(), Ok(8));
 
         // 2 numbers, each 1..3 -> 3*3 options
-        let m = Domain::new_matrix(domain_int!(1..3), vec![domain_int!(1..2)]);
+        let m = Domain::matrix(domain_int!(1..3), vec![domain_int!(1..2)]);
         assert_eq!(m.length(), Ok(9));
     }
 
     #[test]
     fn test_length_matrix_2d() {
         // 2x3 matrix of booleans -> (2**2)**3 = 64 options
-        let m = Domain::new_matrix(
-            Domain::new_bool(),
-            vec![domain_int!(1..2), domain_int!(1..3)],
-        );
+        let m = Domain::matrix(Domain::bool(), vec![domain_int!(1..2), domain_int!(1..3)]);
         assert_eq!(m.length(), Ok(64));
     }
 
     #[test]
     fn test_length_matrix_of_sets() {
         // 3 sets drawn from 1..2; 4**3 = 64 total options
-        let m = Domain::new_matrix(
-            Domain::new_set(SetAttr::default(), domain_int!(1..2)),
+        let m = Domain::matrix(
+            Domain::set(SetAttr::default(), domain_int!(1..2)),
             vec![domain_int!(1..3)],
         );
         assert_eq!(m.length(), Ok(64));

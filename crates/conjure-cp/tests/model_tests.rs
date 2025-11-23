@@ -11,8 +11,8 @@ fn modify_domain() {
 
     let name_a = Name::user("a");
 
-    let d1 = Domain::new_int(vec![Range::Bounded(1, 3)]);
-    let d2 = Domain::new_int(vec![Range::Bounded(1, 2)]);
+    let d1 = Domain::int(vec![Range::Bounded(1, 3)]);
+    let d2 = Domain::int(vec![Range::Bounded(1, 2)]);
 
     let mut decl_a = DeclarationPtr::new_var(name_a, d1.clone());
 

@@ -81,17 +81,17 @@ mod test {
         let mut symbols = SymbolTable::new();
         let x = DeclarationPtr::new_var(
             Name::User("x".into()),
-            Domain::new_int(vec![conjure_cp_core::ast::Range::Bounded(0, 10)]),
+            Domain::int(vec![conjure_cp_core::ast::Range::Bounded(0, 10)]),
         );
 
         let y = DeclarationPtr::new_var(
             Name::User("y".into()),
-            Domain::new_int(vec![conjure_cp_core::ast::Range::Bounded(0, 10)]),
+            Domain::int(vec![conjure_cp_core::ast::Range::Bounded(0, 10)]),
         );
 
         let a = DeclarationPtr::new_var(
             Name::User("a".into()),
-            Domain::new_int(vec![conjure_cp_core::ast::Range::Bounded(0, 10)]),
+            Domain::int(vec![conjure_cp_core::ast::Range::Bounded(0, 10)]),
         );
 
         // Clone the Rc when inserting!

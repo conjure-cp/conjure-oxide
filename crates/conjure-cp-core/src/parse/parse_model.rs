@@ -179,7 +179,7 @@ fn parse_domain(
 ) -> Result<DomainPtr> {
     match domain_name {
         "DomainInt" => Ok(parse_int_domain(domain_value, symbols)?),
-        "DomainBool" => Ok(Domain::new_bool()),
+        "DomainBool" => Ok(Domain::bool()),
         "DomainReference" => {
             let name = Name::user(
                 domain_value
@@ -193,7 +193,8 @@ fn parse_domain(
             let ptr = symbols
                 .lookup(&name)
                 .ok_or(error!(format!("Name {name} not found")))?;
-            let dom = Domain::new_ref(ptr).ok_or(error!("Could not construct reference domain"))?;
+            let dom =
+                Domain::reference(ptr).ok_or(error!("Could not construct reference domain"))?;
             Ok(dom)
         }
         "DomainSet" => {
@@ -204,7 +205,7 @@ fn parse_domain(
                 .next()
                 .ok_or(Error::Parse("DomainSet is an empty object".to_owned()))?;
             let domain = parse_domain(domain.0.as_str(), domain.1, symbols)?;
-            Ok(Domain::new_set(SetAttr::default(), domain))
+            Ok(Domain::set(SetAttr::default(), domain))
         }
 
         "DomainMatrix" => {
@@ -250,7 +251,7 @@ fn parse_domain(
                 value_domain = new_value_domain.clone()
             }
 
-            Ok(Domain::new_matrix(value_domain, index_domains))
+            Ok(Domain::matrix(value_domain, index_domains))
         }
         "DomainTuple" => {
             let domain_value = domain_value
@@ -271,7 +272,7 @@ fn parse_domain(
                 })
                 .collect::<Result<Vec<DomainPtr>>>()?;
 
-            Ok(Domain::new_tuple(domain))
+            Ok(Domain::tuple(domain))
         }
         "DomainRecord" => {
             let domain_value = domain_value
@@ -315,7 +316,7 @@ fn parse_domain(
                         .expect("record field to not already be in the symbol table")
                 });
 
-            Ok(Domain::new_record(record_entries))
+            Ok(Domain::record(record_entries))
         }
 
         _ => Err(Error::Parse(
@@ -360,7 +361,7 @@ fn parse_int_domain(v: &JsonValue, symbols: &SymbolTable) -> Result<DomainPtr> {
             _ => return throw_error!("DomainInt[1] contains an unknown object"),
         }
     }
-    Ok(Domain::new_int(ranges))
+    Ok(Domain::int(ranges))
 }
 
 /// Parses a (possibly) integer value inside the range of a domain

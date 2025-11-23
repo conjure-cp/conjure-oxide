@@ -41,10 +41,10 @@ use super::{Declaration, DeclarationKind, DeclarationPtr, DeclarationPtrInner};
 ///     c: i32
 /// }
 ///
-/// let declaration = DeclarationPtr::new_var(Name::User("a".into()),Domain::new_int(vec![Range::Bounded(1,5)]));
+/// let declaration = DeclarationPtr::new_var(Name::User("a".into()),Domain::int(vec![Range::Bounded(1,5)]));
 /// let mut declarations: Vec<(i32,DeclarationPtr)>  = vec![];
 /// for i in (1..=2) {
-///     declarations.push((i,DeclarationPtr::new_var(Name::User(format!("{i}").into()),Domain::new_int(vec![Range::Bounded(1,5)]))));
+///     declarations.push((i,DeclarationPtr::new_var(Name::User(format!("{i}").into()),Domain::int(vec![Range::Bounded(1,5)]))));
 /// }
 ///
 /// let foo = Foo {
@@ -165,11 +165,11 @@ impl<'de> DeserializeAs<'de, DeclarationPtr> for DeclarationPtrAsId {
 ///     c: i32
 /// }
 ///
-/// let declaration = DeclarationPtr::new_var(Name::User("a".into()),Domain::new_int(vec![Range::Bounded(1,5)]));
+/// let declaration = DeclarationPtr::new_var(Name::User("a".into()),Domain::int(vec![Range::Bounded(1,5)]));
 /// let mut declarations = vec![];
 ///
 /// for i in (1..=2) {
-///     let d = DeclarationPtr::new_var(Name::User(format!("{i}").into()),Domain::new_int(vec![Range::Bounded(1,5)]));
+///     let d = DeclarationPtr::new_var(Name::User(format!("{i}").into()),Domain::int(vec![Range::Bounded(1,5)]));
 ///     declarations.push((i,d));
 /// }
 ///

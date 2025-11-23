@@ -76,7 +76,7 @@ fn matrix_to_list(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
         any_changes = true;
         new_children
-            .push_back(into_matrix_expr![elems;Domain::new_int_ground(vec![Range::UnboundedR(1)])]);
+            .push_back(into_matrix_expr![elems;Domain::int_ground(vec![Range::UnboundedR(1)])]);
     }
 
     let new_expr = expr.with_children(new_children);

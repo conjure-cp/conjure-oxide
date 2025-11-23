@@ -18,7 +18,7 @@ pub fn parse_domain(
             source_code,
             symbols,
         ),
-        "bool_domain" => Ok(Domain::new_bool()),
+        "bool_domain" => Ok(Domain::bool()),
         "int_domain" => Ok(parse_int_domain(domain, source_code)),
         "identifier" => {
             let variable_name = &source_code[domain.start_byte()..domain.end_byte()];
@@ -34,7 +34,7 @@ pub fn parse_domain(
                     format!("'{name}' is not defined"),
                     Some(domain.range()),
                 ))?;
-            let dom = Domain::new_ref(decl).ok_or(EssenceParseError::syntax_error(
+            let dom = Domain::reference(decl).ok_or(EssenceParseError::syntax_error(
                 format!("'{}' is not a valid domain declaration", name),
                 Some(domain.range()),
             ))?;
@@ -51,7 +51,7 @@ pub fn parse_domain(
 /// Parse an integer domain. Can be a single integer or a range.
 fn parse_int_domain(int_domain: Node, source_code: &str) -> DomainPtr {
     if int_domain.child_count() == 1 {
-        Domain::new_int(vec![Range::Bounded(i32::MIN, i32::MAX)])
+        Domain::int(vec![Range::Bounded(i32::MIN, i32::MAX)])
     } else {
         let mut ranges: Vec<Range<i32>> = Vec::new();
         let range_list = int_domain
@@ -97,7 +97,7 @@ fn parse_int_domain(int_domain: Node, source_code: &str) -> DomainPtr {
                 _ => panic!("unsupported int range type"),
             }
         }
-        Domain::new_int(ranges)
+        Domain::int(ranges)
     }
 }
 
@@ -110,7 +110,7 @@ fn parse_tuple_domain(
     for domain in named_children(&tuple_domain) {
         domains.push(parse_domain(domain, source_code, symbols.clone())?);
     }
-    Ok(Domain::new_tuple(domains))
+    Ok(Domain::tuple(domains))
 }
 
 fn parse_matrix_domain(
@@ -135,7 +135,7 @@ fn parse_matrix_domain(
         source_code,
         symbols,
     )?;
-    Ok(Domain::new_matrix(value_domain, domains))
+    Ok(Domain::matrix(value_domain, domains))
 }
 
 fn parse_record_domain(
@@ -155,7 +155,7 @@ fn parse_record_domain(
         let domain = parse_domain(domain_node, source_code, symbols.clone())?;
         record_entries.push(RecordEntry { name, domain });
     }
-    Ok(Domain::new_record(record_entries))
+    Ok(Domain::record(record_entries))
 }
 
 fn parse_set_domain(
@@ -239,7 +239,7 @@ fn parse_set_domain(
     }
 
     if let Some(domain) = value_domain {
-        Ok(Domain::new_set(set_attribute.unwrap_or_default(), domain))
+        Ok(Domain::set(set_attribute.unwrap_or_default(), domain))
     } else {
         Err(EssenceParseError::syntax_error(
             "Set domain must have a value domain".to_string(),
