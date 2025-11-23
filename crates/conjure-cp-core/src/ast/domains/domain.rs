@@ -1,11 +1,10 @@
-use crate::ast::Expression;
-use crate::ast::domains::ground::GroundDomain;
-use crate::ast::domains::range::Range;
-use crate::ast::domains::set_attr::SetAttr;
-use crate::ast::domains::unresolved::{IntVal, UnresolvedDomain};
+use super::ground::GroundDomain;
+use super::range::Range;
+use super::set_attr::SetAttr;
+use super::unresolved::{IntVal, UnresolvedDomain};
 use crate::ast::{
-    DeclarationPtr, DomainOpError, Literal, Moo, RecordEntry, RecordEntryGround, Reference,
-    ReturnType, Typeable,
+    DeclarationPtr, DomainOpError, Expression, Literal, Moo, RecordEntry, RecordEntryGround,
+    Reference, ReturnType, Typeable,
 };
 use itertools::Itertools;
 use polyquine::Quine;
@@ -495,6 +494,7 @@ impl Domain {
         None
     }
 
+    /// Compute the intersection of two domains
     pub fn union(&self, other: &Domain) -> Result<Domain, DomainOpError> {
         match (self, other) {
             (Domain::Ground(a), Domain::Ground(b)) => Ok(Domain::Ground(Moo::new(a.union(b)?))),
@@ -508,6 +508,7 @@ impl Domain {
         }
     }
 
+    /// Compute the intersection of two ground domains
     pub fn intersect(&self, other: &Domain) -> Result<Domain, DomainOpError> {
         match (self, other) {
             (Domain::Ground(a), Domain::Ground(b)) => {
@@ -517,6 +518,7 @@ impl Domain {
         }
     }
 
+    /// If the domain is ground, return an iterator over its values
     pub fn values(&self) -> Result<impl Iterator<Item = Literal>, DomainOpError> {
         if let Some(gd) = self.as_ground() {
             return gd.values();
@@ -524,6 +526,15 @@ impl Domain {
         Err(DomainOpError::NotGround)
     }
 
+    /// If the domain is ground, return its size bound
+    pub fn length(&self) -> Result<u64, DomainOpError> {
+        if let Some(gd) = self.as_ground() {
+            return gd.length();
+        }
+        Err(DomainOpError::NotGround)
+    }
+
+    /// Construct a ground domain from a slice of values
     pub fn from_literal_vec(vals: &[Literal]) -> Result<DomainPtr, DomainOpError> {
         GroundDomain::from_literal_vec(vals).map(DomainPtr::from)
     }
@@ -562,4 +573,164 @@ fn as_grounds(doms: &[DomainPtr]) -> Option<Vec<Moo<GroundDomain>>> {
             _ => None,
         })
         .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::ast::Name;
+    use crate::{domain_int, range};
+
+    #[test]
+    fn test_negative_product() {
+        let d1 = Domain::new_int(vec![Range::Bounded(-2, 1)]);
+        let d2 = Domain::new_int(vec![Range::Bounded(-2, 1)]);
+        let res = d1
+            .as_ground()
+            .unwrap()
+            .apply_i32(|a, b| Some(a * b), d2.as_ground().unwrap())
+            .unwrap();
+
+        assert!(matches!(res, GroundDomain::Int(_)));
+        if let GroundDomain::Int(ranges) = res {
+            assert!(!ranges.contains(&Range::Bounded(-4, 4)));
+        }
+    }
+
+    #[test]
+    fn test_negative_div() {
+        let d1 = GroundDomain::Int(vec![Range::Bounded(-2, 1)]);
+        let d2 = GroundDomain::Int(vec![Range::Bounded(-2, 1)]);
+        let res = d1
+            .apply_i32(|a, b| if b != 0 { Some(a / b) } else { None }, &d2)
+            .unwrap();
+
+        assert!(matches!(res, GroundDomain::Int(_)));
+        if let GroundDomain::Int(ranges) = res {
+            assert!(!ranges.contains(&Range::Bounded(-4, 4)));
+        }
+    }
+
+    #[test]
+    fn test_length_basic() {
+        assert_eq!(Domain::new_empty(ReturnType::Int).length(), Ok(0));
+        assert_eq!(Domain::new_bool().length(), Ok(2));
+        assert_eq!(domain_int!(1..3, 5, 7..9).length(), Ok(7));
+        assert_eq!(
+            domain_int!(1..2, 5..).length(),
+            Err(DomainOpError::Unbounded)
+        );
+    }
+    #[test]
+    fn test_length_set_basic() {
+        // {∅, {1}, {2}, {3}, {1,2}, {1,3}, {2,3}, {1,2,3}}
+        let s = Domain::new_set(SetAttr::default(), domain_int!(1..3));
+        assert_eq!(s.length(), Ok(8));
+
+        // {{1,2}, {1,3}, {2,3}}
+        let s = Domain::new_set(SetAttr::new_size(2), domain_int!(1..3));
+        assert_eq!(s.length(), Ok(3));
+
+        // {{1}, {2}, {3}, {1,2}, {1,3}, {2,3}}
+        let s = Domain::new_set(SetAttr::new_min_max_size(1, 2), domain_int!(1..3));
+        assert_eq!(s.length(), Ok(6));
+
+        // {{1}, {2}, {3}, {1,2}, {1,3}, {2,3}, {1,2,3}}
+        let s = Domain::new_set(SetAttr::new_min_size(1), domain_int!(1..3));
+        assert_eq!(s.length(), Ok(7));
+
+        // {∅, {1}, {2}, {3}, {1,2}, {1,3}, {2,3}}
+        let s = Domain::new_set(SetAttr::new_max_size(2), domain_int!(1..3));
+        assert_eq!(s.length(), Ok(7));
+    }
+
+    #[test]
+    fn test_length_set_nested() {
+        // {
+        // ∅,                                          -- all size 0
+        // {∅}, {{1}}, {{2}}, {{1, 2}},                -- all size 1
+        // {∅, {1}}, {∅, {2}}, {∅, {1, 2}},            -- all size 2
+        // {{1}, {2}}, {{1}, {1, 2}}, {{2}, {1, 2}}
+        // }
+        let s2 = Domain::new_set(
+            SetAttr::new_max_size(2),
+            // {∅, {1}, {2}, {1,2}}
+            Domain::new_set(SetAttr::default(), domain_int!(1..2)),
+        );
+        assert_eq!(s2.length(), Ok(11));
+    }
+
+    #[test]
+    fn test_length_set_unbounded_inner() {
+        // leaf domain is unbounded
+        let s2_bad = Domain::new_set(
+            SetAttr::new_max_size(2),
+            Domain::new_set(SetAttr::default(), domain_int!(1..)),
+        );
+        assert_eq!(s2_bad.length(), Err(DomainOpError::Unbounded));
+    }
+
+    #[test]
+    fn test_length_set_overflow() {
+        let s = Domain::new_set(SetAttr::default(), domain_int!(1..20));
+        assert!(s.length().is_ok());
+
+        // current way of calculating the formula overflows for anything larger than this
+        let s = Domain::new_set(SetAttr::default(), domain_int!(1..63));
+        assert_eq!(s.length(), Err(DomainOpError::TooLarge));
+    }
+
+    #[test]
+    fn test_length_tuple() {
+        // 3 ways to pick first element, 2 ways to pick second element
+        let t = Domain::new_tuple(vec![domain_int!(1..3), Domain::new_bool()]);
+        assert_eq!(t.length(), Ok(6));
+    }
+
+    #[test]
+    fn test_length_record() {
+        // 3 ways to pick rec.a, 2 ways to pick rec.b
+        let t = Domain::new_record(vec![
+            RecordEntry {
+                name: Name::user("a"),
+                domain: domain_int!(1..3),
+            },
+            RecordEntry {
+                name: Name::user("b"),
+                domain: Domain::new_bool(),
+            },
+        ]);
+        assert_eq!(t.length(), Ok(6));
+    }
+
+    #[test]
+    fn test_length_matrix_basic() {
+        // 3 booleans -> [T, T, T], [T, T, F], ..., [F, F, F]
+        let m = Domain::new_matrix(Domain::new_bool(), vec![domain_int!(1..3)]);
+        assert_eq!(m.length(), Ok(8));
+
+        // 2 numbers, each 1..3 -> 3*3 options
+        let m = Domain::new_matrix(domain_int!(1..3), vec![domain_int!(1..2)]);
+        assert_eq!(m.length(), Ok(9));
+    }
+
+    #[test]
+    fn test_length_matrix_2d() {
+        // 2x3 matrix of booleans -> (2**2)**3 = 64 options
+        let m = Domain::new_matrix(
+            Domain::new_bool(),
+            vec![domain_int!(1..2), domain_int!(1..3)],
+        );
+        assert_eq!(m.length(), Ok(64));
+    }
+
+    #[test]
+    fn test_length_matrix_of_sets() {
+        // 3 sets drawn from 1..2; 4**3 = 64 total options
+        let m = Domain::new_matrix(
+            Domain::new_set(SetAttr::default(), domain_int!(1..2)),
+            vec![domain_int!(1..3)],
+        );
+        assert_eq!(m.length(), Ok(64));
+    }
 }

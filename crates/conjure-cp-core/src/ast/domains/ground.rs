@@ -840,7 +840,7 @@ impl Display for GroundDomain {
             GroundDomain::Empty(ty) => write!(f, "empty({ty:?})"),
             GroundDomain::Bool => write!(f, "bool"),
             GroundDomain::Int(ranges) => {
-                if ranges.iter().all(Range::is_bounded) {
+                if ranges.iter().all(Range::is_lower_or_upper_bounded) {
                     let rngs: String = ranges.iter().map(|r| format!("{r}")).join(", ");
                     write!(f, "int({})", rngs)
                 } else {

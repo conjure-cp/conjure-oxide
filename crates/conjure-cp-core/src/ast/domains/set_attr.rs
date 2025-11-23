@@ -24,7 +24,7 @@ impl<A> SetAttr<A> {
     }
 
     pub fn new_max_size(max: A) -> Self {
-        Self::new(Range::UnboundedR(max))
+        Self::new(Range::UnboundedL(max))
     }
 
     pub fn new_size(sz: A) -> Self {

@@ -371,7 +371,7 @@ impl Display for UnresolvedDomain {
         match &self {
             UnresolvedDomain::Reference(re) => write!(f, "{re}"),
             UnresolvedDomain::Int(ranges) => {
-                if ranges.iter().all(Range::is_bounded) {
+                if ranges.iter().all(Range::is_lower_or_upper_bounded) {
                     let rngs: String = ranges.iter().map(|r| format!("{r}")).join(", ");
                     write!(f, "int({})", rngs)
                 } else {

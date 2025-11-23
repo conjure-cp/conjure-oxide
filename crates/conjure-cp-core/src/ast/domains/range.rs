@@ -17,7 +17,7 @@ pub enum Range<A = Int> {
 impl<A> Range<A> {
     /// Whether the range is **bounded** on either side. A bounded range may still be infinite.
     /// See also: [Range::is_finite].
-    pub fn is_bounded(&self) -> bool {
+    pub fn is_lower_or_upper_bounded(&self) -> bool {
         match &self {
             Range::Single(_)
             | Range::Bounded(_, _)
@@ -27,7 +27,12 @@ impl<A> Range<A> {
         }
     }
 
-    /// Whether the range is **finite**. See also: [Range::is_bounded].
+    /// Whether the range is **unbounded** on both sides.
+    pub fn is_unbounded(&self) -> bool {
+        !self.is_lower_or_upper_bounded()
+    }
+
+    /// Whether the range is **finite**. See also: [Range::is_lower_or_upper_bounded].
     pub fn is_finite(&self) -> bool {
         match &self {
             Range::Single(_) | Range::Bounded(_, _) => true,
@@ -283,5 +288,147 @@ impl<A: Display> Display for Range<A> {
             Range::UnboundedL(i) => write!(f, "..{i}"),
             Range::Unbounded => write!(f, ""),
         }
+    }
+}
+
+#[allow(unused_imports)]
+mod test {
+    use super::*;
+    use crate::range;
+
+    #[test]
+    pub fn test_range_macros() {
+        assert_eq!(range!(1..3), Range::Bounded(1, 3));
+        assert_eq!(range!(1..), Range::UnboundedR(1));
+        assert_eq!(range!(..3), Range::UnboundedL(3));
+        assert_eq!(range!(1), Range::Single(1));
+    }
+
+    #[test]
+    pub fn test_range_low() {
+        assert_eq!(range!(1..3).low(), Some(&1));
+        assert_eq!(range!(1..).low(), Some(&1));
+        assert_eq!(range!(1).low(), Some(&1));
+        assert_eq!(range!(..3).low(), None);
+        assert_eq!(Range::<Int>::Unbounded.low(), None);
+    }
+
+    #[test]
+    pub fn test_range_high() {
+        assert_eq!(range!(1..3).high(), Some(&3));
+        assert_eq!(range!(1..).high(), None);
+        assert_eq!(range!(1).high(), Some(&1));
+        assert_eq!(range!(..3).high(), Some(&3));
+        assert_eq!(Range::<Int>::Unbounded.high(), None);
+    }
+
+    #[test]
+    pub fn test_range_is_finite() {
+        assert!(range!(1..3).is_finite());
+        assert!(range!(1).is_finite());
+        assert!(!range!(1..).is_finite());
+        assert!(!range!(..3).is_finite());
+        assert!(!Range::<Int>::Unbounded.is_finite());
+    }
+
+    #[test]
+    pub fn test_range_bounded() {
+        assert!(range!(1..3).is_lower_or_upper_bounded());
+        assert!(range!(1).is_lower_or_upper_bounded());
+        assert!(range!(1..).is_lower_or_upper_bounded());
+        assert!(range!(..3).is_lower_or_upper_bounded());
+        assert!(!Range::<Int>::Unbounded.is_lower_or_upper_bounded());
+    }
+
+    #[test]
+    pub fn test_range_length() {
+        assert_eq!(range!(1..3).length(), Some(3));
+        assert_eq!(range!(1).length(), Some(1));
+        assert_eq!(range!(1..).length(), None);
+        assert_eq!(range!(..3).length(), None);
+        assert_eq!(Range::<Int>::Unbounded.length(), None);
+    }
+
+    #[test]
+    pub fn test_range_contains_value() {
+        assert!(range!(1..3).contains(&2));
+        assert!(!range!(1..3).contains(&4));
+        assert!(range!(1).contains(&1));
+        assert!(!range!(1).contains(&2));
+        assert!(Range::Unbounded.contains(&42));
+    }
+
+    #[test]
+    pub fn test_range_overlaps() {
+        assert!(range!(1..3).overlaps(&range!(2..4)));
+        assert!(range!(1..3).overlaps(&range!(3..5)));
+        assert!(!range!(1..3).overlaps(&range!(4..6)));
+        assert!(Range::Unbounded.overlaps(&range!(1..3)));
+    }
+
+    #[test]
+    pub fn test_range_touches_left() {
+        assert!(range!(1..2).touches_left(&range!(3..4)));
+        assert!(range!(1..2).touches_left(&range!(3)));
+        assert!(range!(-5..-4).touches_left(&range!(-3..2)));
+        assert!(!range!(1..2).touches_left(&range!(4..5)));
+        assert!(!range!(1..2).touches_left(&range!(2..3)));
+        assert!(!range!(3..4).touches_left(&range!(1..2)));
+    }
+
+    #[test]
+    pub fn test_range_touches_right() {
+        assert!(range!(3..4).touches_right(&range!(1..2)));
+        assert!(range!(3).touches_right(&range!(1..2)));
+        assert!(range!(0..1).touches_right(&range!(-2..-1)));
+        assert!(!range!(1..2).touches_right(&range!(3..4)));
+        assert!(!range!(2..3).touches_right(&range!(1..2)));
+        assert!(!range!(1..2).touches_right(&range!(1..2)));
+    }
+
+    #[test]
+    pub fn test_range_is_before() {
+        assert!(range!(1..2).is_before(&range!(4..5)));
+        assert!(range!(1..2).is_before(&range!(4..)));
+        assert!(!range!(1..2).is_before(&range!(3..)));
+        assert!(!range!(1..2).is_before(&range!(..4)));
+        assert!(!range!(1..2).is_before(&range!(2..4)));
+        assert!(!range!(3..4).is_before(&range!(1..2)));
+        assert!(!range!(1..2).is_before(&Range::Unbounded));
+    }
+
+    #[test]
+    pub fn test_range_is_after() {
+        assert!(range!(5..6).is_after(&range!(1..2)));
+        assert!(range!(4..5).is_after(&range!(..2)));
+        assert!(!range!(4..5).is_after(&range!(..3)));
+        assert!(!range!(2..3).is_after(&range!(1..2)));
+        assert!(!range!(1..2).is_after(&range!(3..4)));
+        assert!(!range!(1..2).is_after(&Range::Unbounded));
+    }
+
+    #[test]
+    pub fn test_range_squeeze() {
+        let input = vec![range!(2..3), range!(4), range!(..1), range!(6..8)];
+        let squeezed = Range::squeeze(&input);
+        assert_eq!(squeezed, vec![range!(..4), range!(6..8)]);
+    }
+
+    #[test]
+    pub fn test_range_spanning() {
+        assert_eq!(Range::<Int>::spanning(&[]), Range::Unbounded);
+        assert_eq!(Range::spanning(&[range!(1..2), range!(4..5)]), range!(1..5));
+        assert_eq!(
+            Range::spanning(&[range!(..0), range!(2..4)]),
+            Range::UnboundedL(4)
+        );
+        assert_eq!(
+            Range::spanning(&[range!(0), range!(2..3), range!(5..)]),
+            Range::UnboundedR(0)
+        );
+        assert_eq!(
+            Range::spanning(&[range!(..0), range!(2..)]),
+            Range::Unbounded
+        );
     }
 }
