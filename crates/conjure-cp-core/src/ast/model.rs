@@ -281,6 +281,7 @@ impl SerdeModel {
             let symbol_table_id = submodel.symbols().id();
             if !id_list.contains(&symbol_table_id) {
                 id_list.push(symbol_table_id);
+                println!("id for submodel {}", symbol_table_id);
             }
         }
 
@@ -289,6 +290,7 @@ impl SerdeModel {
             let decl_id = decl_ptr.id();
             if !id_list.contains(&decl_id) {
                 id_list.push(decl_id);
+                println!("id for declaration {} -- {}", decl_id, decl_ptr);
             }
         }
 

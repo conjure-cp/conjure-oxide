@@ -18,6 +18,10 @@ pub fn parse_essence_file_native(
     path: &str,
     context: Arc<RwLock<Context<'static>>>,
 ) -> Result<Model, EssenceParseError> {
+    let binding = context.clone();
+    let guard = binding.read().expect("poisoned RwLock");
+    println!("{:#?}", *guard);
+
     let source_code = fs::read_to_string(path)
         .unwrap_or_else(|_| panic!("Failed to read the source code file {path}"));
     parse_essence_with_context(&source_code, context)

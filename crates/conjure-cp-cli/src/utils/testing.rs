@@ -39,6 +39,10 @@ fn model_tojson_with_stable_ids(model: &SerdeModel) -> Result<JsonValue, JsonErr
         .map(|(k, v)| (k as u64, v as u64))
         .collect();
 
+    // println!("{:#?}", model);
+    println!("{}", model);
+    println!("{:#?}", id_map);
+
     // Serialize the model to JSON
     let mut json = serde_json::to_value(model)?;
 
@@ -98,7 +102,6 @@ pub fn assert_eq_any_order<T: Eq + Hash + Debug + Clone>(a: &Vec<Vec<T>>, b: &Ve
         b_rows.push(hash_row);
     }
 
-    println!("{a_rows:?},{b_rows:?}");
     for row in a_rows {
         assert!(b_rows.contains(&row));
     }
@@ -128,7 +131,6 @@ pub fn save_model_json(
 
     let generated_json_str = serialize_model(model)?;
     let filename = format!("{path}/{marker}-{test_name}.generated-{test_stage}.serialised.json");
-    println!("saving: {filename}");
     File::create(&filename)?.write_all(generated_json_str.as_bytes())?;
     Ok(())
 }
@@ -171,7 +173,6 @@ pub fn read_model_json(
     let marker = solver.map_or("agnostic".into(), |s| s.as_str());
 
     let filepath = format!("{path}/{marker}-{test_name}.{prefix}-{test_stage}.serialised.json");
-    println!("reading: {filepath}");
 
     let expected_json_str = std::fs::read_to_string(filepath)?;
     let expected_model: SerdeModel = serde_json::from_str(&expected_json_str)?;
