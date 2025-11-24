@@ -94,8 +94,7 @@ fn main() -> io::Result<()> {
                     })
                     .collect();
 
-                let essence_files = std::iter::zip(stems, exts).collect();
-
+                let essence_files: Vec<(String, String)> = std::iter::zip(stems, exts).collect();
                 write_integration_test(&mut f, subdir.path().display().to_string(), essence_files)?;
             }
         }
@@ -125,13 +124,65 @@ fn main() -> io::Result<()> {
 
     for subdir in WalkDir::new(test_dir) {
         let subdir = subdir?;
-        if subdir.file_type().is_dir()
-            && read_dir(subdir.path())
-                .unwrap_or_else(|_| std::fs::read_dir(subdir.path()).unwrap())
+        // Checks every subdirectory
+        if subdir.file_type().is_dir() {
+            println!("Subdir {}", subdir.file_name().display());
+            // Finds essence / eprime filenames
+            let names: Vec<String> = read_dir(subdir.path())?
                 .filter_map(Result::ok)
-                .any(|entry| entry.file_name() == "input.essence" && entry.path().is_file())
-        {
-            write_roundtrip_test(&mut f, subdir.path().display().to_string())?;
+                .map(|entry| entry.path())
+                .filter(|path| {
+                    path.extension()
+                        .is_some_and(|ext| ext == "essence" || ext == "eprime")
+                })
+                // Ensures not to include test result files
+                .filter(|path| {
+                    path.file_stem()
+                        .and_then(|name| name.to_str())
+                        .is_some_and(|name| {
+                            !name.contains(".generated") && !name.contains(".expected")
+                        })
+                })
+                // Stores the filename in the collected vector
+                .filter_map(|path| {
+                    path.file_stem()
+                        .and_then(|stem| stem.to_str())
+                        .map(|s| s.to_owned())
+                })
+                .collect();
+            // Finds essence / eprime file extensions
+            let exts: Vec<String> = read_dir(subdir.path())?
+                .filter_map(Result::ok)
+                .map(|entry| entry.path())
+                .filter(|path| {
+                    path.extension()
+                        .is_some_and(|ext| ext == "essence" || ext == "eprime")
+                })
+                // Ensures not to include test result files
+                .filter(|path| {
+                    path.file_stem()
+                        .and_then(|name| name.to_str())
+                        .is_some_and(|name| {
+                            !name.contains(".generated") && !name.contains(".expected")
+                        })
+                })
+                // Stores the extension in the collected vector
+                .filter_map(|path| {
+                    path.extension()
+                        .and_then(|ext| ext.to_str())
+                        .map(|s| s.to_owned())
+                })
+                .collect();
+
+            let essence_files: Vec<(String, String)> = std::iter::zip(names, exts).collect();
+            // There should only be one test file per directory
+            if essence_files.len() == 1 {
+                write_roundtrip_test(
+                    &mut f,
+                    subdir.path().display().to_string(),
+                    essence_files[0].clone(),
+                )?;
+            }
         }
     }
 
@@ -168,13 +219,17 @@ fn write_custom_test(file: &mut File, path: String) -> io::Result<()> {
     )
 }
 
-fn write_roundtrip_test(file: &mut File, path: String) -> io::Result<()> {
+fn write_roundtrip_test(
+    file: &mut File,
+    path: String,
+    essence_file: (String, String),
+) -> io::Result<()> {
     write!(
         file,
         include_str!("./tests/roundtrip_test_template"),
         test_name = path.replace("./", "").replace(['/', '-'], "_"),
         test_dir = path,
-        essence_file = "input",
-        ext = "essence"
+        essence_file = essence_file.0,
+        ext = essence_file.1
     )
 }
