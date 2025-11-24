@@ -421,6 +421,12 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
             ),
             parse_atom(Moo::unwrap_or_clone(z))?,
         )),
+        conjure_ast::Expression::FlatLexLt(_metadata, lhs, rhs) => Ok(
+            minion_ast::Constraint::LexLess(parse_atoms(lhs)?, parse_atoms(rhs)?),
+        ),
+        conjure_ast::Expression::FlatLexLeq(_metadata, lhs, rhs) => Ok(
+            minion_ast::Constraint::LexLeq(parse_atoms(lhs)?, parse_atoms(rhs)?),
+        ),
         x => Err(ModelFeatureNotSupported(format!("{x:?}"))),
     }
 }

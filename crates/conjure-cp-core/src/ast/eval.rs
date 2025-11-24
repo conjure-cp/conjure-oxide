@@ -587,6 +587,12 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                 _ => None,
             }
         }
+        Expr::LexLt(_, a, b) => None, // TODO: implement
+        Expr::LexGt(_, a, b) => None,
+        Expr::LexLeq(_, a, b) => None,
+        Expr::LexGeq(_, a, b) => None,
+        Expr::FlatLexLt(_, a, b) => None,
+        Expr::FlatLexLeq(_, a, b) => None,
     }
 }
 

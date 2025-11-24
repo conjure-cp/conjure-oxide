@@ -497,18 +497,32 @@ pub enum Expression {
     #[compatible(SMT)]
     PairwiseProduct(Metadata, Moo<Expression>, Moo<Expression>),
 
-    /// Lexicographical < between two matrices
-    /// E.g. [1, 1] < [2, 1] and [1, 1] < [1, 2]
+    /// Lexicographical < between two matrices.
+    ///
+    /// A <lex B iff: A[i] < B[i] for some i /\ (A[j] > B[j] for some j -> i < j)
+    /// I.e. A must be less than B at some index i, and if it is greater than B at another index j,
+    /// then j comes after i.
+    /// I.e. A must be greater than B at the first index where they differ.
+    ///
+    /// E.g. [1, 1] <lex [2, 1] and [1, 1] <lex [1, 2]
     LexLt(Metadata, Moo<Expression>, Moo<Expression>),
-
-    /// Lexicographical > between two matrices
-    LexGt(Metadata, Moo<Expression>, Moo<Expression>),
 
     /// Lexicographical <= between two matrices
     LexLeq(Metadata, Moo<Expression>, Moo<Expression>),
 
+    /// Lexicographical > between two matrices
+    /// This is a parser-level construct, and is immediately normalised to LexLt(b, a)
+    LexGt(Metadata, Moo<Expression>, Moo<Expression>),
+
     /// Lexicographical >= between two matrices
+    /// This is a parser-level construct, and is immediately normalised to LexLeq(b, a)
     LexGeq(Metadata, Moo<Expression>, Moo<Expression>),
+
+    /// Low-level minion constraint. See Expression::LexLt
+    FlatLexLt(Metadata, Vec<Atom>, Vec<Atom>),
+
+    /// Low-level minion constraint. See Expression::LexLeq
+    FlatLexLeq(Metadata, Vec<Atom>, Vec<Atom>),
 }
 
 // for the given matrix literal, return a bounded domain from the min to max of applying op to each
@@ -855,10 +869,12 @@ impl Expression {
                 .apply_i32(|a, b| Some(a * b), b.domain_of()?.resolve()?.as_ref())
                 .map(DomainPtr::from)
                 .ok(),
-            Expression::LexLt(..) => Some(Domain::Bool),
-            Expression::LexGt(..) => Some(Domain::Bool),
-            Expression::LexLeq(..) => Some(Domain::Bool),
-            Expression::LexGeq(..) => Some(Domain::Bool),
+            Expression::LexLt(..) => Some(Domain::bool()),
+            Expression::LexLeq(..) => Some(Domain::bool()),
+            Expression::LexGt(..) => Some(Domain::bool()),
+            Expression::LexGeq(..) => Some(Domain::bool()),
+            Expression::FlatLexLt(..) => Some(Domain::bool()),
+            Expression::FlatLexLeq(..) => Some(Domain::bool()),
         };
         if let Some(dom) = &ret
             && let Some(ranges) = dom.as_int_ground()
@@ -1503,6 +1519,8 @@ impl Typeable for Expression {
             Expression::LexGt(..) => ReturnType::Bool,
             Expression::LexLeq(..) => ReturnType::Bool,
             Expression::LexGeq(..) => ReturnType::Bool,
+            Expression::FlatLexLt(..) => ReturnType::Bool,
+            Expression::FlatLexLeq(..) => ReturnType::Bool,
         }
     }
 }
