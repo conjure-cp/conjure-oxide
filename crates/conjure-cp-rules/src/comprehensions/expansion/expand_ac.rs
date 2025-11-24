@@ -10,7 +10,7 @@ use conjure_cp::{
         SubModel, SymbolTable, Typeable as _,
         ac_operators::ACOperatorKind,
         comprehension::{Comprehension, USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS},
-        serde::{HasId as _, ObjId},
+        serde::{HasId as _, ObjectId},
     },
     bug,
     context::Context,
@@ -183,7 +183,7 @@ pub fn expand_ac(
         // These are stored as a map of (old declaration id) -> (new declaration ptr), as
         // declaration pointers do not implement hash.
         //
-        let mut machine_name_translations: HashMap<ObjId, DeclarationPtr> = HashMap::new();
+        let mut machine_name_translations: HashMap<ObjectId, DeclarationPtr> = HashMap::new();
 
         // Populate `machine_name_translations`
         for (name, decl) in child_symtab.into_iter_local() {
@@ -200,7 +200,7 @@ pub fn expand_ac(
                 );
             };
 
-            let id = decl.id();
+            let id = decl.object_id();
             let new_decl = symtab.gensym(&decl.domain().unwrap());
 
             machine_name_translations.insert(id, new_decl);
@@ -210,7 +210,7 @@ pub fn expand_ac(
         #[allow(clippy::arc_with_non_send_sync)]
         let return_expression = return_expression.transform_bi(&move |atom: Atom| {
             if let Atom::Reference(ref decl) = atom
-                && let id = decl.id()
+                && let id = decl.ptr.object_id()
                 && let Some(new_decl) = machine_name_translations.get(&id)
             {
                 Atom::Reference(conjure_cp::ast::Reference::new(new_decl.clone()))

@@ -47,7 +47,7 @@ fn select_representation_matrix(expr: &Expr, symbols: &SymbolTable) -> Applicati
         .clone()
         .into_iter_local()
         .filter_map(|(n, decl)| {
-            let id = decl.id();
+            let id = decl.object_id();
             decl.as_var().map(|x| (n, id, x.clone()))
         })
         .filter(|(_, _, var)| {
@@ -117,7 +117,10 @@ fn select_representation_matrix(expr: &Expr, symbols: &SymbolTable) -> Applicati
             let has_changed_ptr = Arc::clone(&has_changed_ptr);
 
             // only do things if this inscope and not shadowed..
-            if x.symbols().lookup(&old_name).is_none_or(|x| x.id() == id) {
+            if x.symbols()
+                .lookup(&old_name)
+                .is_none_or(|x| x.object_id() == id)
+            {
                 let root = x.root_mut_unchecked();
                 *root = root.transform_bi(&move |n: Name| {
                     if n == old_name {

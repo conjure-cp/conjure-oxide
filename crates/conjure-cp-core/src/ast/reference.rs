@@ -46,8 +46,8 @@ impl Reference {
         self.ptr.name()
     }
 
-    pub fn id(&self) -> crate::ast::serde::ObjId {
-        self.ptr.id()
+    pub fn id(&self) -> crate::ast::serde::ObjectId {
+        self.ptr.object_id()
     }
 
     pub fn domain(&self) -> Option<DomainPtr> {

@@ -4,6 +4,7 @@ use std::path::Path;
 use std::{io, vec};
 
 use conjure_cp::ast::records::RecordValue;
+use conjure_cp::ast::serde::GlobalId;
 use conjure_cp::bug;
 use itertools::Itertools as _;
 use std::fs::File;
@@ -33,15 +34,9 @@ pub const REWRITE_SERIALISED_JSON_MAX_LINES: usize = 1000;
 ///
 /// This ensures that the same model structure always produces the same IDs,
 /// regardless of the order in which objects were created in memory.
-fn model_tojson_with_stable_ids(model: &SerdeModel) -> Result<JsonValue, JsonError> {
+fn model_to_json_with_stable_ids(model: &SerdeModel) -> Result<JsonValue, JsonError> {
     // Collect stable ID mapping using uniplate traversal on the SerdeModel
-    let id_map_u32 = model.collect_stable_id_mapping();
-
-    // Convert to u64 for JSON processing (serde_json::Number only has as_u64())
-    let id_map: HashMap<u64, u64> = id_map_u32
-        .into_iter()
-        .map(|(k, v)| (k as u64, v as u64))
-        .collect();
+    let id_map = model.collect_stable_id_mapping();
 
     // Serialize the model to JSON
     let mut json = serde_json::to_value(model)?;
@@ -53,23 +48,15 @@ fn model_tojson_with_stable_ids(model: &SerdeModel) -> Result<JsonValue, JsonErr
 }
 
 /// Recursively replaces all IDs in the JSON with their stable counterparts.
-///
-/// This is applied to all fields that are called "id" or "ptr" - be mindful
-/// of potential naming clashes in the future!
-fn replace_ids(value: &mut JsonValue, id_map: &HashMap<u64, u64>) {
+fn replace_ids(value: &mut JsonValue, id_map: &HashMap<GlobalId, GlobalId>) {
     match value {
         JsonValue::Object(map) => {
-            // Replace IDs in three places:
-            // - "id" fields (SymbolTable IDs)
-            // - "parent" fields (SymbolTable nesting)
-            // - "ptr" fields (DeclarationPtr IDs)
-            for (k, v) in map.iter_mut() {
-                if (k == "id" || k == "ptr" || k == "parent")
-                    && let JsonValue::Number(n) = v
-                    && let Some(id) = n.as_u64()
-                    && let Some(&stable_id) = id_map.get(&id)
+            for (_, v) in map.iter_mut() {
+                if let Ok(id) = serde_json::from_value::<GlobalId>(v.clone())
+                    && let Some(stable_id) = id_map.get(&id)
                 {
-                    *v = JsonValue::Number(stable_id.into());
+                    *v = serde_json::to_value(stable_id)
+                        .expect("serialization of a GlobalId to always succeed");
                 }
             }
 
@@ -112,7 +99,7 @@ pub fn serialize_model(model: &ConjureModel) -> Result<String, JsonError> {
     let serde_model: SerdeModel = model.clone().into();
 
     // Convert to JSON with stable IDs
-    let json_with_stable_ids = model_tojson_with_stable_ids(&serde_model)?;
+    let json_with_stable_ids = model_to_json_with_stable_ids(&serde_model)?;
 
     // Sort JSON object keys for consistent output
     let sorted_json = sort_json_object(&json_with_stable_ids, false);
