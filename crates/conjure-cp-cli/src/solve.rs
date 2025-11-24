@@ -10,7 +10,6 @@ use std::{
 
 use anyhow::{anyhow, ensure};
 use clap::ValueHint;
-use conjure_cp::defaults::DEFAULT_RULE_SETS;
 use conjure_cp::{
     Model,
     ast::comprehension::USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS,
@@ -18,6 +17,7 @@ use conjure_cp::{
     rule_engine::{resolve_rule_sets, rewrite_morph, rewrite_naive},
     solver::Solver,
 };
+use conjure_cp::{defaults::DEFAULT_RULE_SETS, solver::adaptors::smt::TheoryConfig};
 use conjure_cp::{
     parse::conjure_json::model_from_json, rule_engine::get_rules, solver::SolverFamily,
 };
@@ -63,7 +63,7 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
     let context = init_context(&global_args, input_file)?;
     let model = parse(&global_args, Arc::clone(&context))?;
     let rewritten_model = rewrite(model, &global_args, Arc::clone(&context))?;
-    let solver = init_solver(&global_args);
+    let solver = init_solver(global_args.solver);
 
     if solve_args.no_run_solver {
         println!("{}", &rewritten_model);
@@ -142,14 +142,11 @@ pub(crate) fn init_context(
     Ok(context)
 }
 
-pub(crate) fn init_solver(global_args: &GlobalArgs) -> Solver {
-    match global_args.solver {
+pub(crate) fn init_solver(family: SolverFamily) -> Solver {
+    match family {
         SolverFamily::Minion => Solver::new(Minion::default()),
         SolverFamily::Sat => Solver::new(Sat::default()),
-        SolverFamily::Smt => Solver::new(Smt::new(
-            global_args.smt_int_theory,
-            global_args.smt_matrix_theory,
-        )),
+        SolverFamily::Smt(TheoryConfig { ints, matrices }) => Solver::new(Smt::new(ints, matrices)),
     }
 }
 

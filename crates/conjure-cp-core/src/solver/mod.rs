@@ -108,6 +108,7 @@ use std::error::Error;
 use std::fmt::{Debug, Display};
 use std::io::Write;
 use std::rc::Rc;
+use std::str::FromStr;
 use std::sync::{Arc, RwLock};
 use std::time::Instant;
 
@@ -120,7 +121,7 @@ use thiserror::Error;
 use crate::Model;
 use crate::ast::{Literal, Name};
 use crate::context::Context;
-use crate::solver::adaptors::smt::IntTheory;
+use crate::solver::adaptors::smt::{IntTheory, MatrixTheory, TheoryConfig};
 use crate::stats::SolverStats;
 
 use self::model_modifier::ModelModifier;
@@ -135,24 +136,54 @@ mod private;
 pub mod states;
 
 #[derive(
-    Debug,
-    EnumString,
-    EnumIter,
-    Display,
-    PartialEq,
-    Eq,
-    Hash,
-    Clone,
-    Copy,
-    Serialize,
-    Deserialize,
-    JsonSchema,
-    ValueEnum,
+    Debug, EnumIter, Display, PartialEq, Eq, Hash, Clone, Copy, Serialize, Deserialize, JsonSchema,
 )]
 pub enum SolverFamily {
     Sat,
-    Smt,
+    Smt(TheoryConfig),
     Minion,
+}
+
+impl FromStr for SolverFamily {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let s = s.trim().to_ascii_lowercase();
+
+        match s.as_str() {
+            "minion" => Ok(SolverFamily::Minion),
+            "sat" => Ok(SolverFamily::Sat),
+            "smt" => Ok(SolverFamily::Smt(TheoryConfig::default())),
+            other => {
+                // allow forms like `smt-bv-atomic` or `smt-lia-arrays`
+                if other.starts_with("smt-") {
+                    let parts = other.split('-').skip(1);
+                    let mut ints = IntTheory::default();
+                    let mut matrices = MatrixTheory::default();
+
+                    for token in parts {
+                        match token {
+                            "lia" => ints = IntTheory::Lia,
+                            "bv" => ints = IntTheory::Bv,
+                            "arrays" => matrices = MatrixTheory::Arrays,
+                            "atomic" => matrices = MatrixTheory::Atomic,
+                            other_token => {
+                                return Err(format!(
+                                    "unknown SMT theory option '{other_token}', must be one of bv|lia|arrays|atomic"
+                                ));
+                            }
+                        }
+                    }
+
+                    Ok(SolverFamily::Smt(TheoryConfig { ints, matrices }))
+                } else {
+                    Err(format!(
+                        "unknown solver family '{other}', expected 'minion', 'sat' or 'smt[(bv|lia)-(arrays|atomic)]'"
+                    ))
+                }
+            }
+        }
+    }
 }
 
 /// The type for user-defined callbacks for use with [Solver].
