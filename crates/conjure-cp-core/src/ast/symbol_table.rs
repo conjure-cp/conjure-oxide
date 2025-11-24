@@ -15,7 +15,7 @@ use std::rc::Rc;
 use std::sync::atomic::{AtomicU32, Ordering};
 
 use super::declaration::{DeclarationPtr, serde::DeclarationPtrFull};
-use super::serde::{DefaultWithId, HasId, ObjId};
+use super::serde::{DefaultWithId, HasId, ObjectId};
 use super::types::Typeable;
 use itertools::{Itertools as _, izip};
 use serde::{Deserialize, Serialize};
@@ -84,7 +84,7 @@ pub struct SymbolTable {
 
     /// A unique id for this symbol table, for serialisation and debugging.
     #[derivative(PartialEq = "ignore")] // eq by value not id.
-    id: ObjId,
+    id: ObjectId,
 
     #[serde_as(as = "Option<RcRefCellAsId>")]
     parent: Option<Rc<RefCell<SymbolTable>>>,
@@ -388,13 +388,14 @@ impl Iterator for IntoIter {
 }
 
 impl HasId for SymbolTable {
-    fn id(&self) -> ObjId {
+    const TYPE_NAME: &'static str = "symtab";
+    fn object_id(&self) -> ObjectId {
         self.id
     }
 }
 
 impl DefaultWithId for SymbolTable {
-    fn default_with_id(id: ObjId) -> Self {
+    fn default_with_object_id(id: ObjectId) -> Self {
         Self {
             table: BTreeMap::new(),
             id,

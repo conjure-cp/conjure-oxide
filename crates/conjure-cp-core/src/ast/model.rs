@@ -10,9 +10,10 @@ use serde::{Deserialize, Serialize};
 use uniplate::{Biplate, Tree, Uniplate};
 
 use crate::ast::Expression;
+use crate::ast::serde::GlobalId;
 use crate::context::Context;
 
-use super::serde::{HasId, ObjId};
+use super::serde::{HasId, ObjectId};
 use super::types::Typeable;
 use super::{DeclarationPtr, Name, SubModel};
 use super::{ReturnType, SymbolTable};
@@ -191,11 +192,11 @@ impl SerdeModel {
         // See super::serde::RcRefCellToInner, super::serde::RcRefCellToId.
 
         // Store the definitive versions of all symbol tables by id.
-        let mut tables: HashMap<ObjId, Rc<RefCell<SymbolTable>>> = HashMap::new();
+        let mut tables: HashMap<ObjectId, Rc<RefCell<SymbolTable>>> = HashMap::new();
 
         // Find the definitive versions by traversing the sub-models.
         for submodel in self.submodel.universe() {
-            let id = submodel.symbols().id();
+            let id = submodel.symbols().object_id();
 
             // ids should be unique!
             assert_eq!(
@@ -211,7 +212,7 @@ impl SerdeModel {
 
             #[allow(clippy::unwrap_used)]
             if let Some(parent) = parent_mut {
-                let parent_id = parent.borrow().id();
+                let parent_id = parent.borrow().object_id();
 
                 *parent = tables.get(&parent_id).unwrap().clone();
             }
@@ -221,17 +222,17 @@ impl SerdeModel {
         // dummy values with the correct ids, but nothing else.
 
         // Store the definitive version of all declarations by id.
-        let mut all_declarations: HashMap<ObjId, DeclarationPtr> = HashMap::new();
+        let mut all_declarations: HashMap<ObjectId, DeclarationPtr> = HashMap::new();
         for table in tables.values() {
             for (_, decl) in table.as_ref().borrow().clone().into_iter_local() {
-                let id = decl.id();
+                let id = decl.object_id();
                 all_declarations.insert(id, decl);
             }
         }
 
         // Swizzle declaration pointers in expressions (references, auxdecls) using their ids and `all_declarations`.
         *self.submodel.constraints_mut() = self.submodel.constraints().transform_bi(&move |decl: DeclarationPtr| {
-                let id = decl.id();
+                let id = decl.object_id();
                         all_declarations
                             .get(&id)
                             .unwrap_or_else(|| panic!("A declaration used in the expression tree should exist in the symbol table. The missing declaration has id {id}."))
@@ -273,12 +274,12 @@ impl SerdeModel {
     /// Returns a mapping from original ID to stable sequential ID (0, 1, 2, ...).
     /// IDs are assigned in the order they are encountered during traversal, ensuring
     /// stability across identical model structures.
-    pub fn collect_stable_id_mapping(&self) -> HashMap<ObjId, ObjId> {
-        let mut id_list: Vec<ObjId> = Vec::new();
+    pub fn collect_stable_id_mapping(&self) -> HashMap<GlobalId, GlobalId> {
+        let mut id_list: Vec<GlobalId> = Vec::new();
 
         // Collect SymbolTable IDs by traversing all SubModels
         for submodel in self.submodel.universe() {
-            let symbol_table_id = submodel.symbols().id();
+            let symbol_table_id = submodel.symbols().global_id();
             if !id_list.contains(&symbol_table_id) {
                 id_list.push(symbol_table_id);
             }
@@ -286,7 +287,7 @@ impl SerdeModel {
 
         // Collect DeclarationPtr IDs by traversing the constraints expression tree
         for decl_ptr in Biplate::<DeclarationPtr>::universe_bi(self.submodel.constraints()) {
-            let decl_id = decl_ptr.id();
+            let decl_id = decl_ptr.global_id();
             if !id_list.contains(&decl_id) {
                 id_list.push(decl_id);
             }
@@ -294,8 +295,15 @@ impl SerdeModel {
 
         // Create stable mapping: original_id -> stable_id
         let mut id_map = HashMap::new();
-        for (stable_id, &original_id) in id_list.iter().enumerate() {
-            id_map.insert(original_id, stable_id as ObjId);
+        for (stable_id, original_id) in id_list.into_iter().enumerate() {
+            let type_name = original_id.type_name;
+            id_map.insert(
+                original_id,
+                GlobalId {
+                    type_name,
+                    oid: stable_id as ObjectId,
+                },
+            );
         }
 
         id_map
