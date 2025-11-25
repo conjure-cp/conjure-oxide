@@ -1,10 +1,14 @@
 use conjure_cp::{
-    ast::Metadata,
-    ast::{Atom, Domain, Expression as Expr, Name, SubModel, SymbolTable, serde::HasId},
+    ast::{Atom, Domain, Expression as Expr, Metadata, Name, SubModel, SymbolTable, serde::HasId},
     bug,
     representation::Representation,
     rule_engine::{
         ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
+        register_rule_set,
+    },
+    solver::{
+        SolverFamily,
+        adaptors::smt::{MatrixTheory, TheoryConfig},
     },
 };
 use itertools::Itertools;
@@ -12,10 +16,21 @@ use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 use uniplate::Biplate;
+
+register_rule_set!("Representations", ("Base"), |f: &SolverFamily| matches!(
+    f,
+    SolverFamily::Sat
+        | SolverFamily::Minion
+        | SolverFamily::Smt(TheoryConfig {
+            matrices: MatrixTheory::Atomic,
+            ..
+        })
+));
+
 // special case rule to select representations for matrices in one go.
 //
 // we know that they only have one possible representation, so this rule adds a representation for all matrices in the model.
-#[register_rule(("Base", 8001))]
+#[register_rule(("Representations", 8001))]
 fn select_representation_matrix(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Root(_, _) = expr else {
         return Err(RuleNotApplicable);
@@ -118,7 +133,7 @@ fn select_representation_matrix(expr: &Expr, symbols: &SymbolTable) -> Applicati
     }
 }
 
-#[register_rule(("Base", 8000))]
+#[register_rule(("Representations", 8000))]
 fn select_representation(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     // thing we are representing must be a reference
     let Expr::Atomic(_, Atom::Reference(decl)) = expr else {

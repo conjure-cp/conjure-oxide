@@ -5,6 +5,8 @@ use conjure_cp::rule_engine::get_rules_grouped;
 use conjure_cp::defaults::DEFAULT_RULE_SETS;
 use conjure_cp::parse::tree_sitter::parse_essence_file_native;
 use conjure_cp::rule_engine::rewrite_naive;
+use conjure_cp::solver::Solver;
+use conjure_cp::solver::adaptors::smt::TheoryConfig;
 use conjure_cp::solver::adaptors::*;
 use conjure_cp_cli::utils::testing::{normalize_solutions_for_comparison, read_human_rule_trace};
 use glob::glob;
@@ -14,7 +16,7 @@ use std::env;
 use std::error::Error;
 use std::fs;
 use std::fs::File;
-use tracing::{Level, Metadata as OtherMetadata, span};
+use tracing::{Level, span};
 use tracing_subscriber::{
     Layer, Registry, filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt,
 };
@@ -283,7 +285,7 @@ fn integration_test_inner(
         let solver_fam = if config.solve_with_sat {
             SolverFamily::Sat
         } else if config.solve_with_smt {
-            SolverFamily::Smt
+            SolverFamily::Smt(TheoryConfig::default())
         } else {
             SolverFamily::Minion
         };
@@ -340,55 +342,42 @@ fn integration_test_inner(
         }
     }
 
-    // Stage 3a: Run the model through the Minion solver (run unless explicitly disabled)
-    let solutions = if config.solve_with_minion {
-        let solved = get_solutions(
-            Minion::default(),
-            rewritten_model
-                .as_ref()
-                .expect("Rewritten model must be present in 2a")
-                .clone(),
-            0,
-            &None,
-        )?;
-        let solutions_json =
-            save_solutions_json(&solved, path, essence_base, SolverFamily::Minion)?;
-        if verbose {
-            println!("Minion solutions: {solutions_json:#?}");
-        }
-        Some(solved)
+    let solver_input_file = env::var("OXIDE_TEST_SAVE_INPUT_FILE").ok().map(|_| {
+        let name = format!("{essence_base}.generated-input.txt");
+        Path::new(path).join(Path::new(&name))
+    });
+
+    let solver = if config.solve_with_minion {
+        Some(Solver::new(Minion::default()))
     } else if config.solve_with_sat {
-        let solved = get_solutions(
-            Sat::default(),
-            rewritten_model
-                .as_ref()
-                .expect("Rewritten model must be present in 2a")
-                .clone(),
-            0,
-            &None,
-        )?;
-        let solutions_json = save_solutions_json(&solved, path, essence_base, SolverFamily::Sat)?;
-        if verbose {
-            println!("SAT solutions: {solutions_json:#?}");
-        }
-        Some(solved)
+        Some(Solver::new(Sat::default()))
     } else if config.solve_with_smt {
-        let solved = get_solutions(
-            Smt::default(),
-            rewritten_model
-                .as_ref()
-                .expect("Rewritten model must be present in 2a")
-                .clone(),
-            0,
-            &None,
-        )?;
-        let solutions_json = save_solutions_json(&solved, path, essence_base, SolverFamily::Smt)?;
-        if verbose {
-            println!("SMT solutions: {solutions_json:#?}");
-        }
-        Some(solved)
+        Some(Solver::new(Smt::default()))
     } else {
         None
+    };
+
+    let solutions = if let Some(solver) = solver {
+        let name = solver.get_name();
+        let family = solver.get_family();
+
+        let solved = get_solutions(
+            solver,
+            rewritten_model
+                .as_ref()
+                .expect("Rewritten model must be present in 2a")
+                .clone(),
+            0,
+            &solver_input_file,
+        )?;
+        let solutions_json = save_solutions_json(&solved, path, essence_base, family)?;
+        if verbose {
+            println!("{name} solutions: {solutions_json:#?}");
+        }
+        solved
+    } else {
+        println!("Warning: no solver specified");
+        Vec::new()
     };
 
     // Stage 3b: Check solutions against Conjure (only if explicitly enabled)
@@ -398,8 +387,7 @@ fn integration_test_inner(
             Arc::clone(&context),
         )?;
 
-        let username_solutions =
-            normalize_solutions_for_comparison(solutions.as_ref().expect("Solutions required"));
+        let username_solutions = normalize_solutions_for_comparison(&solutions);
         let conjure_solutions = normalize_solutions_for_comparison(&conjure_solutions);
 
         let mut conjure_solutions_json = solutions_to_json(&conjure_solutions);
@@ -453,17 +441,21 @@ fn integration_test_inner(
     if config.solve_with_minion {
         let expected_solutions_json =
             read_solutions_json(path, essence_base, "expected", SolverFamily::Minion)?;
-        let username_solutions_json = solutions_to_json(solutions.as_ref().unwrap_or(&vec![]));
+        let username_solutions_json = solutions_to_json(&solutions);
         assert_eq!(username_solutions_json, expected_solutions_json);
     } else if config.solve_with_sat {
         let expected_solutions_json =
             read_solutions_json(path, essence_base, "expected", SolverFamily::Sat)?;
-        let username_solutions_json = solutions_to_json(solutions.as_ref().unwrap_or(&vec![]));
+        let username_solutions_json = solutions_to_json(&solutions);
         assert_eq!(username_solutions_json, expected_solutions_json);
     } else if config.solve_with_smt {
-        let expected_solutions_json =
-            read_solutions_json(path, essence_base, "expected", SolverFamily::Smt)?;
-        let username_solutions_json = solutions_to_json(solutions.as_ref().unwrap_or(&vec![]));
+        let expected_solutions_json = read_solutions_json(
+            path,
+            essence_base,
+            "expected",
+            SolverFamily::Smt(TheoryConfig::default()),
+        )?;
+        let username_solutions_json = solutions_to_json(&solutions);
         assert_eq!(username_solutions_json, expected_solutions_json);
     }
 
@@ -545,30 +537,13 @@ pub fn create_scoped_subscriber(
     path: &str,
     test_name: &str,
 ) -> impl tracing::Subscriber + Send + Sync {
-    let target1_layer = create_file_layer_json(path, test_name);
-    let target2_layer = create_file_layer_human(path, test_name);
-    let layered = target1_layer.and_then(target2_layer);
-
-    let subscriber = Arc::new(tracing_subscriber::registry().with(layered))
+    let layer = create_file_layer_human(path, test_name);
+    let subscriber = Arc::new(tracing_subscriber::registry().with(layer))
         as Arc<dyn tracing::Subscriber + Send + Sync>;
     // setting this subscriber as the default
     let _default = tracing::subscriber::set_default(subscriber.clone());
 
     subscriber
-}
-
-fn create_file_layer_json(path: &str, test_name: &str) -> impl Layer<Registry> + Send + Sync {
-    let file = File::create(format!("{path}/{test_name}-generated-rule-trace.json"))
-        .expect("Unable to create log file");
-
-    fmt::layer()
-        .with_writer(file)
-        .with_level(false)
-        .with_target(false)
-        .without_time()
-        .with_filter(FilterFn::new(|meta: &OtherMetadata| {
-            meta.target() == "rule_engine"
-        }))
 }
 
 fn create_file_layer_human(path: &str, test_name: &str) -> impl Layer<Registry> + Send + Sync {
