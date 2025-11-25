@@ -589,69 +589,82 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             }
         }
         Expr::LexLt(_, a, b) => {
+            // TODO: handle != length lists
             let lt = vec_expr_pairs_op::<i32, _>(a, b, |pairs| {
-                pairs.iter().find_map(|(a, b)| match a.cmp(b) {
-                    CmpOrdering::Less => Some(true),
-                    CmpOrdering::Greater => Some(false),
-                    CmpOrdering::Equal => None,
-                })
-            })
-            .unwrap_or(false);
+                pairs
+                    .iter()
+                    .find_map(|(a, b)| match a.cmp(b) {
+                        CmpOrdering::Less => Some(true),     // First difference is <
+                        CmpOrdering::Greater => Some(false), // First difference is >
+                        CmpOrdering::Equal => None,          // No difference
+                    })
+                    .unwrap_or(false) // Equal
+            })?;
             Some(lt.into())
         }
         Expr::LexLeq(_, a, b) => {
             let lt = vec_expr_pairs_op::<i32, _>(a, b, |pairs| {
-                pairs.iter().find_map(|(a, b)| match a.cmp(b) {
-                    CmpOrdering::Less => Some(true),
-                    CmpOrdering::Greater => Some(false),
-                    CmpOrdering::Equal => None,
-                })
-            })
-            .unwrap_or(true);
+                pairs
+                    .iter()
+                    .find_map(|(a, b)| match a.cmp(b) {
+                        CmpOrdering::Less => Some(true),
+                        CmpOrdering::Greater => Some(false),
+                        CmpOrdering::Equal => None,
+                    })
+                    .unwrap_or(true)
+            })?;
             Some(lt.into())
         }
         Expr::LexGt(_, a, b) => {
             let lt = vec_expr_pairs_op::<i32, _>(a, b, |pairs| {
-                pairs.iter().find_map(|(a, b)| match a.cmp(b) {
-                    CmpOrdering::Less => Some(false),
-                    CmpOrdering::Greater => Some(true),
-                    CmpOrdering::Equal => None,
-                })
-            })
-            .unwrap_or(false);
+                pairs
+                    .iter()
+                    .find_map(|(a, b)| match a.cmp(b) {
+                        CmpOrdering::Less => Some(false),
+                        CmpOrdering::Greater => Some(true),
+                        CmpOrdering::Equal => None,
+                    })
+                    .unwrap_or(false)
+            })?;
             Some(lt.into())
         }
         Expr::LexGeq(_, a, b) => {
             let lt = vec_expr_pairs_op::<i32, _>(a, b, |pairs| {
-                pairs.iter().find_map(|(a, b)| match a.cmp(b) {
-                    CmpOrdering::Less => Some(false),
-                    CmpOrdering::Greater => Some(true),
-                    CmpOrdering::Equal => None,
-                })
-            })
-            .unwrap_or(true);
+                pairs
+                    .iter()
+                    .find_map(|(a, b)| match a.cmp(b) {
+                        CmpOrdering::Less => Some(false),
+                        CmpOrdering::Greater => Some(true),
+                        CmpOrdering::Equal => None,
+                    })
+                    .unwrap_or(true)
+            })?;
             Some(lt.into())
         }
         Expr::FlatLexLt(_, a, b) => {
             let lt = atoms_pairs_op::<i32, _>(a, b, |pairs| {
-                pairs.iter().find_map(|(a, b)| match a.cmp(b) {
-                    CmpOrdering::Less => Some(true),
-                    CmpOrdering::Greater => Some(false),
-                    CmpOrdering::Equal => None,
-                })
-            })
-            .unwrap_or(false);
+                pairs
+                    .iter()
+                    .find_map(|(a, b)| match a.cmp(b) {
+                        CmpOrdering::Less => Some(true),
+                        CmpOrdering::Greater => Some(false),
+                        CmpOrdering::Equal => None,
+                    })
+                    .unwrap_or(false)
+            })?;
             Some(lt.into())
         }
         Expr::FlatLexLeq(_, a, b) => {
             let lt = atoms_pairs_op::<i32, _>(a, b, |pairs| {
-                pairs.iter().find_map(|(a, b)| match a.cmp(b) {
-                    CmpOrdering::Less => Some(true),
-                    CmpOrdering::Greater => Some(false),
-                    CmpOrdering::Equal => None,
-                })
-            })
-            .unwrap_or(true);
+                pairs
+                    .iter()
+                    .find_map(|(a, b)| match a.cmp(b) {
+                        CmpOrdering::Less => Some(true),
+                        CmpOrdering::Greater => Some(false),
+                        CmpOrdering::Equal => None,
+                    })
+                    .unwrap_or(true)
+            })?;
             Some(lt.into())
         }
     }
@@ -722,7 +735,7 @@ where
     f(a)
 }
 
-fn vec_expr_pairs_op<T, A>(a: &Expr, b: &Expr, f: fn(Vec<(T, T)>) -> Option<A>) -> Option<A>
+fn vec_expr_pairs_op<T, A>(a: &Expr, b: &Expr, f: fn(Vec<(T, T)>) -> A) -> Option<A>
 where
     T: TryFrom<Lit>,
 {
@@ -732,17 +745,17 @@ where
     )
     .map(|(a, b)| Some((unwrap_expr(a)?, unwrap_expr(b)?)))
     .collect::<Option<Vec<(T, T)>>>()?;
-    f(lit_pairs)
+    Some(f(lit_pairs))
 }
 
-fn atoms_pairs_op<T, A>(a: &[Atom], b: &[Atom], f: fn(Vec<(T, T)>) -> Option<A>) -> Option<A>
+fn atoms_pairs_op<T, A>(a: &[Atom], b: &[Atom], f: fn(Vec<(T, T)>) -> A) -> Option<A>
 where
     T: TryFrom<Atom>,
 {
     let lit_pairs = Iterator::zip(a.iter(), b.iter())
         .map(|(a, b)| Some((a.clone().try_into().ok()?, b.clone().try_into().ok()?)))
         .collect::<Option<Vec<(T, T)>>>()?;
-    f(lit_pairs)
+    Some(f(lit_pairs))
 }
 
 #[allow(dead_code)]

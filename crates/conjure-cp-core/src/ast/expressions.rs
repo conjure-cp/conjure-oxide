@@ -1110,6 +1110,12 @@ impl From<Atom> for Expression {
     }
 }
 
+impl From<Literal> for Expression {
+    fn from(value: Literal) -> Self {
+        Expression::Atomic(Metadata::new(), value.into())
+    }
+}
+
 impl From<Moo<Expression>> for Expression {
     fn from(val: Moo<Expression>) -> Self {
         val.as_ref().clone()
