@@ -789,6 +789,30 @@ fn parse_abs_record(abs_record: &Value, scope: &Rc<RefCell<SymbolTable>>) -> Opt
     ))
 }
 
+//parses an abstract function as an expression
+fn parse_abs_function(abs_function: &Value, scope: &Rc<RefCell<SymbolTable>>) -> Option<Expression> {
+    let entries = abs_function.as_array()?;
+    let mut assignments = vec![];
+
+    for entry in entries {
+        //expect("Explicit function assignment is not an array");
+        let entry = entry.as_array()?;
+        let expression = entry
+        .iter()
+        .map(|values| parse_expression(values, scope))
+        .map(|values| values.expect("invalid subexpression")) // Ensure valid expressions
+        .collect::<Vec<Expression>>(); // Collect all expressions
+        let domain_value = expression.get(0).expect("Invalid function domain");
+        let codomain_value = expression.get(1).expect("Invalid function codomain");
+        let tuple = (domain_value.clone(),codomain_value.clone());
+        assignments.push(tuple);
+    }
+    Some(Expression::AbstractLiteral(
+        Metadata::new(),
+        AbstractLiteral::Function(assignments),
+    ))
+}
+
 fn parse_comprehension(
     comprehension: &serde_json::Map<String, Value>,
     scope: Rc<RefCell<SymbolTable>>,
@@ -1093,6 +1117,8 @@ fn parse_constant(
                     return parse_abs_tuple(arr, scope);
                 } else if let Some(arr) = obj.get("AbsLitRecord") {
                     return parse_abs_record(arr, scope);
+                } else if let Some(arr) = obj.get("AbsLitFunction") {
+                    return parse_abs_function(arr, scope);
                 }
             }
             None

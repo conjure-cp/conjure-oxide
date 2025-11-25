@@ -391,8 +391,8 @@ where
                     )
                 }
                 AbstractLiteral::Function(_) => {
-                todo!()
-            }
+                    todo!()
+                }
             }
         }
     }
