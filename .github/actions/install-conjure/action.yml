@@ -13,7 +13,7 @@ runs:
   using: composite
   steps:
     - run:  |
-          if [ "$(conjure --version | head -n2 | tail -n1)" == "Release version ${{ inputs.version }}" ]; then
+          if conjure --version | grep -iq conjure ; then
             echo "Found conjure, not fetching again."
           else
             mkdir -p "${HOME}/conjure"
@@ -26,7 +26,7 @@ runs:
 
             echo "Adding conjure to path."
             # this prepends to path (so imagemagick doesnt interfere!), and does not take effect until the next step runs.
-            echo "${HOME}/conjure/conjure-v${{ inputs.version }}-${{ inputs.os_arch }}-with-solvers/" >> ${GITHUB_PATH}
+            echo "${HOME}/conjure/conjure-v${{ inputs.version }}-${{ inputs.os_arch }}-with-solvers/" >> "${GITHUB_PATH}"
           fi
       shell: bash
 

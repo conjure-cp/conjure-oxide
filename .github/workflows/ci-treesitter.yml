@@ -1,0 +1,103 @@
+name: Treesitter
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - crates/tree-sitter-essence/**
+  pull_request:
+    paths:
+      - crates/tree-sitter-essence/**
+
+env:
+  # we define the following 3 values as the defaults here, matrix jobs may overwrite their values.
+  # os: ubuntu-latest # commented out here as it is always defined in matrix jobs
+  rust_release: stable
+  compiler_profile: debug
+
+# see: https://github.com/tree-sitter/workflows
+jobs:
+  test:
+    name: Test parser
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 2
+          path: repo
+
+      - name: free_disk_space.sh
+        run: .github/workflows/tools/free_disk_space.sh
+
+      - name: Restore cache
+        id: restore_cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+            ~/conjure
+          key: treesitter--${{ matrix.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.event.repository.updated_at }}
+          restore-keys: treesitter--${{ matrix.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}
+
+        # the tree-sitter actions expect this!
+      - name: Make tree-sitter-essence the root directory
+        run: cp -r repo/crates/tree-sitter-essence/* .
+
+      - name: Set up tree-sitter
+        uses: tree-sitter/setup-action/cli@v2
+
+      - name: Run parser and binding tests
+        uses: tree-sitter/parser-test-action@v3
+        with:
+          test-rust: true
+
+      - name: Save cache
+        if: ${{ always() && steps.restore_cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+            ~/conjure
+          key: treesitter--${{ matrix.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.event.repository.updated_at }}
+
+  fuzz:
+    name: Fuzz scanner
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 2
+          path: repo
+
+      - name: Check for scanner changes
+        id: scanner-check
+        run: |-
+          if git diff --quiet HEAD^ -- repo/crates/tree-sitter-essence/scanner.c; then
+            printf 'changed=false\n' >> "$GITHUB_OUTPUT"
+          else
+            printf 'changed=true\n' >> "$GITHUB_OUTPUT"
+          fi
+
+        # the tree-sitter actions expect this!
+      - name: Make tree-sitter-essence the root directory
+        run: cp -r repo/crates/tree-sitter-essence/* .
+
+      - name: Run the fuzzer
+        uses: tree-sitter/fuzz-action@v4
+        if: steps.scanner-check.outputs.changed == 'true'

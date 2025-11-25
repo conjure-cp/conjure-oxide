@@ -1,42 +1,71 @@
-name: "Hygiene"
-  
+name: Hygiene
+
 on:
   push:
     branches:
       - main # run for pushes to the main branch. other branches need to create a PR if they want testing.
     paths:
-      - conjure_oxide/**
-      - solvers/**
       - crates/**
+      - tests-integration/**
       - Cargo.*
-      - conjure_oxide/tests/**
-      - .github/workflows/lint.yml
+      - rust-toolchain.toml
+      - .github/workflows/hygiene.yml
   pull_request:
     paths:
-      - conjure_oxide/**
-      - solvers/**
       - crates/**
+      - tests-integration/**
       - Cargo.*
-      - conjure_oxide/tests/**
-      - .github/workflows/lint.yml
+      - rust-toolchain.toml
+      - .github/workflows/hygiene.yml
   workflow_dispatch:
 
 env:
-  SCCACHE_GHA_ENABLED: "true"
-  RUSTC_WRAPPER: "sccache"
-  SCCACHE_GHA_VERSION: 5
+  # we define the following 3 values as the defaults here, matrix jobs may overwrite their values.
+  os: ubuntu-latest
+  rust_release: stable
+  compiler_profile: debug
+  READ_ONLY_GITHUB_TOKEN: ${{ secrets.PUBLIC_REPO_TOKEN }}
 
 jobs:
   Check:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 120
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/checkout@v5
+
+      - name: free_disk_space.sh
+        run: .github/workflows/tools/free_disk_space.sh
+
+      - name: Restore cache
+        id: restore_cache
+        uses: actions/cache/restore@v4
         with:
-          components: rustfmt
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+            ~/conjure
+          key: hygiene--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.event.repository.updated_at }}
+          restore-keys: hygiene--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}
 
-      - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.3
+      - name: "Install rust-toolchain.toml"
+        run: rustup toolchain install
 
-      - run: make EXTRA_CARGO_CHECK_FLAGS=-v check
+      - run: RUSTFLAGS="-D warnings" cargo check $(EXTRA_CARGO_CHECK_FLAGS) --workspace --all-targets
+      - run: cargo clippy $(EXTRA_CARGO_CHECK_FLAGS) -- -D warnings -A clippy::unwrap_used -A clippy::expect_used
+      - run: cargo fmt --check
+
+      - name: Save cache
+        if: ${{ always() && steps.restore_cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+            ~/conjure
+          key: hygiene--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.event.repository.updated_at }}

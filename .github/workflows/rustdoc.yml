@@ -1,0 +1,85 @@
+name: Rustdoc
+
+on:
+  push:
+    branches:
+      - main # run for pushes to the main branch
+  workflow_dispatch:
+
+env:
+  # we define these in the env if they are not defined as matrix parameters
+  os: ubuntu-latest
+  rust_release: nightly
+  compiler_profile: debug
+
+permissions:
+  contents: write
+
+jobs:
+  rustdoc:
+    name: "Generate Rustdoc documentation"
+    timeout-minutes: 120
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v5
+
+      - name: free_disk_space.sh
+        run: .github/workflows/tools/free_disk_space.sh
+
+      - name: Restore cache
+        id: restore_cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+            ~/conjure
+          key: rustdoc--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.event.repository.updated_at }}
+          restore-keys: rustdoc--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}
+
+      - name: Get Sha
+        id: sha
+        run: |
+          echo -e "sha=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+          echo -e "sha=${{ github.sha }}"
+
+      - name: Install rust
+        run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
+
+      - name: Generate documentation
+        working-directory: .
+        run: |
+          ./tools/gen_docs.sh
+
+      - name: Move all html to correct folders for deployment
+        run: |
+          mkdir deploy
+          cp -r target/doc/* deploy
+
+      - name: Deploy to Github Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: ./deploy
+          target-folder: "docs"
+          branch: gh-pages
+          commit-message: "Actions: Rustdoc documentation for ${{ steps.sha.outputs.result }}"
+          # do not overwrite previous deployments, such as those made by other
+          # actions
+          force: false
+
+      - name: Save cache
+        if: ${{ always() && steps.restore_cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+            ~/conjure
+          key: rustdoc--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.event.repository.updated_at }}

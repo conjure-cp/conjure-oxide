@@ -1,29 +1,102 @@
 [workspace]
 resolver = "2"
 
-default-members = [
-    "conjure_oxide",
-    "crates/conjure_core",
-    "solvers/minion",
-]
+default-members = ["crates/conjure-cp", "tests-integration", "crates/conjure-cp-cli"]
 
 members = [
-    "conjure_oxide",
-    "crates/conjure_core",
-    "crates/enum_compatability_macro",
-    "crates/conjure_macros",
-    "solvers/minion",
+    "crates/conjure-cp-cli",
+    "crates/conjure-cp",
+    "crates/conjure-cp-core",
+    "crates/conjure-cp-rules",
+    "crates/conjure-cp-essence-parser",
+    "crates/conjure-cp-essence-macros",
+    "crates/conjure-cp-enum-compatibility-macro",
+    "crates/conjure-cp-rule-macros",
+    "crates/minion-sys",
     "crates/tree-sitter-essence",
-    "crates/tree_morph",
+    "crates/tree-morph",
+    "crates/conjure-cp-lsp",
+
+  # internal crates, not to be pushed to crates io
+  "tests-integration"
 ]
+
+[workspace.dependencies]
+
+
+anyhow = "1.0.100"
+clap = { version = "4.5.51", features = ["derive"] }
+clap_complete = "4.5.60"
+defile = "0.2.1"
+derivative = "2.2.0"
+git-version = "0.3.9"
+glob = "0.3.2"
+itertools = "0.14"
+linkme = "0.3.35"
+log = "0.4.27"
+paste = "1.0.15"
+pretty_assertions = "1.4.1"
+proc-macro2 = "1.0.103"
+project-root = "0.2.2"
+quote = "1.0.42"
+rayon = "1.8.0"
+regex = "1.12.2"
+rustsat = "0.7.4"
+rustsat-minisat = "0.7.4"
+schemars = "1.1.0"
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.145"
+serde_with = "3.15.1"
+static_assertions = "1.1.0"
+strum = "0.27.2"
+strum_macros = "0.27.2"
+syn = { version = "2.0.110", features = ["parsing","visit-mut","full"] }
+tempfile = "3.23.0"
+thiserror = "2.0.17"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["ansi","env-filter","json",] }
+tree-sitter = "0.25.10"
+tree-sitter-haskell = "0.23.0"
+trybuild = "1.0.114"
+uniplate = "0.4.5"
+ustr = { version = "1.1.0", features = ["serde"] }
+versions = "7.0.0"
+walkdir = "2.5.0"
+polyquine = "0.0.7"
+num-traits = "0.2.19"
+
+# Always use release profile options for z3 crate to minimise size
+[profile.dev.package.z3-sys]
+opt-level = 3
+debug = false
+strip = "none"
+debug-assertions = false
+overflow-checks = false
+incremental = false
+
+[profile.release.package.z3-sys]
+opt-level = 3
+debug = false
+strip = "none"
+debug-assertions = false
+overflow-checks = false
+incremental = false
 
 [workspace.lints.clippy]
 unwrap_used = "allow"
 expect_used = "allow"
-wildcard_imports = "warn"
 
-[profile.dev]
-codegen-units = 1
 
-[profile.release]
-codegen-units = 1
+assigning_clones = "warn"         # use clone_from where possible
+cloned_instead_of_copied = "warn" # use copy instead of clone where possible
+collection_is_never_read = "warn"
+enum_glob_use = "warn"            # do not allow `use Enum::*`
+implicit_clone = "warn"           # use .clone() instead of .to_owned()
+redundant_clone = "warn"          # this is a nursery lint, so might give false-negatives.
+
+[profile.profiling]
+inherits = "release"
+debug = true
+
+[workspace.metadata.cargo-shear]
+ignored = ["paste", "git-version", "linkme", "defile", "conjure-cp"]

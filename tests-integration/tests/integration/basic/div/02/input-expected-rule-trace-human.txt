@@ -1,0 +1,30 @@
+Model before rewriting:
+
+find a: int(0..3)
+
+such that
+
+(a >= UnsafeDiv(4, 2))
+
+--
+
+(a >= UnsafeDiv(4, 2)), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(a >= 2) 
+
+--
+
+(a >= 2), 
+   ~~> geq_to_ineq ([("Minion", 4100)]) 
+Ineq(2, a, 0) 
+
+--
+
+Final model:
+
+find a: int(0..3)
+
+such that
+
+Ineq(2, a, 0)
+

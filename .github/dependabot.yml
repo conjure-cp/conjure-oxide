@@ -1,7 +1,6 @@
 version: 2
 
 updates:
-
   - package-ecosystem: cargo
     directory: /
     schedule:
@@ -11,7 +10,21 @@ updates:
     groups:
       all:
         patterns:
-          - '*'
+          - "*"
+    labels:
+      - "dependencies"
+      - "dependencies::rust"
+
+  - package-ecosystem: rust-toolchain
+    directory: /
+    schedule:
+      interval: weekly
+    assignees:
+      - ozgurakgun
+    groups:
+      all:
+        patterns:
+          - "*"
     labels:
       - "dependencies"
       - "dependencies::rust"
@@ -26,6 +39,15 @@ updates:
       - "dependencies"
       - "dependencies::submodules"
 
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: monthly
+    assignees:
+      - ozgurakgun
+    labels:
+      - "dependencies"
+      - "dependencies::ci"
 
   - package-ecosystem: pip
     directory: /tools/essence-feature-usage-stats/
@@ -40,4 +62,3 @@ updates:
     labels:
       - "dependencies"
       - "dependencies::python"
-

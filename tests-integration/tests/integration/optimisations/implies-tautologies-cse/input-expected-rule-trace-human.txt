@@ -1,0 +1,1425 @@
+Model before rewriting:
+
+find a: bool
+find b: bool
+find c: bool
+find d: bool
+find e: bool
+find l: int(1..10)
+find m: int(1..10)
+find n: int(1..10)
+find o: int(1..10)
+find p: int(1..10)
+find q: int(1..10)
+find r: int(1..10)
+find x: bool
+find y: bool
+find z: bool
+
+such that
+
+(x) -> (x),
+or([(a) -> (z),(z) -> (a);int(1..2)]),
+or([(b) -> (c),(b) -> (!(c));int(1..2)]),
+((l = 10)) -> ((l = 10)),
+or([((n < 6)) -> ((m % 2 = 0)),((m % 2 = 0)) -> ((n < 6));int(1..2)]),
+or([or([or([((n < 6)) -> ((m % 2 = 0)),a;int(1..2)]),b;int(1..2)]),((m % 2 = 0)) -> ((n < 6));int(1..2)]),
+(o = n),
+(d = (n < 6)),
+(p = m % 2),
+or([((o < 6)) -> ((p = 0)),((m % 2 = 0)) -> (d);int(1..2)]),
+or([or([or([((o < 6)) -> ((p = 0)),a;int(1..2)]),b;int(1..2)]),((m % 2 = 0)) -> (d);int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n < 6)),((UnsafeDiv(q, 2) = r)) -> (!((n < 6)));int(1..2)]),
+or([or([or([((UnsafeDiv(q, 2) = r)) -> ((n < 6)),a;int(1..2)]),b;int(1..2)]),((UnsafeDiv(q, 2) = r)) -> (!((n < 6)));int(1..2)])
+
+--
+
+(x) -> (x),
+or([(a) -> (z),(z) -> (a);int(1..2)]),
+or([(b) -> (c),(b) -> (!(c));int(1..2)]),
+((l = 10)) -> ((l = 10)),
+or([((n < 6)) -> ((m % 2 = 0)),((m % 2 = 0)) -> ((n < 6));int(1..2)]),
+or([or([or([((n < 6)) -> ((m % 2 = 0)),a;int(1..2)]),b;int(1..2)]),((m % 2 = 0)) -> ((n < 6));int(1..2)]),
+(o = n),
+(d = (n < 6)),
+(p = m % 2),
+or([((o < 6)) -> ((p = 0)),((m % 2 = 0)) -> (d);int(1..2)]),
+or([or([or([((o < 6)) -> ((p = 0)),a;int(1..2)]),b;int(1..2)]),((m % 2 = 0)) -> (d);int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n < 6)),((UnsafeDiv(q, 2) = r)) -> (!((n < 6)));int(1..2)]),
+or([or([or([((UnsafeDiv(q, 2) = r)) -> ((n < 6)),a;int(1..2)]),b;int(1..2)]),((UnsafeDiv(q, 2) = r)) -> (!((n < 6)));int(1..2)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+or([(a) -> (z),(z) -> (a);int(1..2)]),
+or([(b) -> (c),(b) -> (!(c));int(1..2)]),
+((l = 10)) -> ((l = 10)),
+or([((n < 6)) -> ((m % 2 = 0)),((m % 2 = 0)) -> ((n < 6));int(1..2)]),
+or([or([or([((n < 6)) -> ((m % 2 = 0)),a;int(1..2)]),b;int(1..2)]),((m % 2 = 0)) -> ((n < 6));int(1..2)]),
+(o = n),
+(d = (n < 6)),
+(p = m % 2),
+or([((o < 6)) -> ((p = 0)),((m % 2 = 0)) -> (d);int(1..2)]),
+or([or([or([((o < 6)) -> ((p = 0)),a;int(1..2)]),b;int(1..2)]),((m % 2 = 0)) -> (d);int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n < 6)),((UnsafeDiv(q, 2) = r)) -> (!((n < 6)));int(1..2)]),
+or([or([or([((UnsafeDiv(q, 2) = r)) -> ((n < 6)),a;int(1..2)]),b;int(1..2)]),((UnsafeDiv(q, 2) = r)) -> (!((n < 6)));int(1..2)]) 
+
+--
+
+or([or([or([((n < 6)) -> ((m % 2 = 0)),a;int(1..2)]),b;int(1..2)]),((m % 2 = 0)) -> ((n < 6));int(1..2)]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+or([((n < 6)) -> ((m % 2 = 0)),a,b,((m % 2 = 0)) -> ((n < 6));int(1..2)]) 
+
+--
+
+or([or([or([((o < 6)) -> ((p = 0)),a;int(1..2)]),b;int(1..2)]),((m % 2 = 0)) -> (d);int(1..2)]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+or([((o < 6)) -> ((p = 0)),a,b,((m % 2 = 0)) -> (d);int(1..2)]) 
+
+--
+
+or([or([or([((UnsafeDiv(q, 2) = r)) -> ((n < 6)),a;int(1..2)]),b;int(1..2)]),((UnsafeDiv(q, 2) = r)) -> (!((n < 6)));int(1..2)]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+or([((UnsafeDiv(q, 2) = r)) -> ((n < 6)),a,b,((UnsafeDiv(q, 2) = r)) -> (!((n < 6)));int(1..2)]) 
+
+--
+
+(n < 6), 
+   ~~> lt_to_leq ([("Minion", 8400)]) 
+(n <= sum([6,-1;int(1..)])) 
+
+--
+
+or([(a) -> (z),(z) -> (a);int(1..2)]),
+or([(b) -> (c),(b) -> (!(c));int(1..2)]),
+((l = 10)) -> ((l = 10)),
+or([((n <= sum([6,-1;int(1..)]))) -> ((m % 2 = 0)),((m % 2 = 0)) -> ((n < 6));int(1..2)]),
+or([((n < 6)) -> ((m % 2 = 0)),a,b,((m % 2 = 0)) -> ((n < 6));int(1..2)]),
+(o = n),
+(d = (n < 6)),
+(p = m % 2),
+or([((o < 6)) -> ((p = 0)),((m % 2 = 0)) -> (d);int(1..2)]),
+or([((o < 6)) -> ((p = 0)),a,b,((m % 2 = 0)) -> (d);int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n < 6)),((UnsafeDiv(q, 2) = r)) -> (!((n < 6)));int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n < 6)),a,b,((UnsafeDiv(q, 2) = r)) -> (!((n < 6)));int(1..2)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+or([(a) -> (z),(z) -> (a);int(1..2)]),
+or([(b) -> (c),(b) -> (!(c));int(1..2)]),
+((l = 10)) -> ((l = 10)),
+or([((n <= 5)) -> ((m % 2 = 0)),((m % 2 = 0)) -> ((n < 6));int(1..2)]),
+or([((n < 6)) -> ((m % 2 = 0)),a,b,((m % 2 = 0)) -> ((n < 6));int(1..2)]),
+(o = n),
+(d = (n < 6)),
+(p = m % 2),
+or([((o < 6)) -> ((p = 0)),((m % 2 = 0)) -> (d);int(1..2)]),
+or([((o < 6)) -> ((p = 0)),a,b,((m % 2 = 0)) -> (d);int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n < 6)),((UnsafeDiv(q, 2) = r)) -> (!((n < 6)));int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n < 6)),a,b,((UnsafeDiv(q, 2) = r)) -> (!((n < 6)));int(1..2)]) 
+
+--
+
+(n < 6), 
+   ~~> lt_to_leq ([("Minion", 8400)]) 
+(n <= sum([6,-1;int(1..)])) 
+
+--
+
+or([(a) -> (z),(z) -> (a);int(1..2)]),
+or([(b) -> (c),(b) -> (!(c));int(1..2)]),
+((l = 10)) -> ((l = 10)),
+or([((n <= 5)) -> ((m % 2 = 0)),((m % 2 = 0)) -> ((n <= sum([6,-1;int(1..)])));int(1..2)]),
+or([((n < 6)) -> ((m % 2 = 0)),a,b,((m % 2 = 0)) -> ((n < 6));int(1..2)]),
+(o = n),
+(d = (n < 6)),
+(p = m % 2),
+or([((o < 6)) -> ((p = 0)),((m % 2 = 0)) -> (d);int(1..2)]),
+or([((o < 6)) -> ((p = 0)),a,b,((m % 2 = 0)) -> (d);int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n < 6)),((UnsafeDiv(q, 2) = r)) -> (!((n < 6)));int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n < 6)),a,b,((UnsafeDiv(q, 2) = r)) -> (!((n < 6)));int(1..2)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+or([(a) -> (z),(z) -> (a);int(1..2)]),
+or([(b) -> (c),(b) -> (!(c));int(1..2)]),
+((l = 10)) -> ((l = 10)),
+or([((n <= 5)) -> ((m % 2 = 0)),((m % 2 = 0)) -> ((n <= 5));int(1..2)]),
+or([((n < 6)) -> ((m % 2 = 0)),a,b,((m % 2 = 0)) -> ((n < 6));int(1..2)]),
+(o = n),
+(d = (n < 6)),
+(p = m % 2),
+or([((o < 6)) -> ((p = 0)),((m % 2 = 0)) -> (d);int(1..2)]),
+or([((o < 6)) -> ((p = 0)),a,b,((m % 2 = 0)) -> (d);int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n < 6)),((UnsafeDiv(q, 2) = r)) -> (!((n < 6)));int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n < 6)),a,b,((UnsafeDiv(q, 2) = r)) -> (!((n < 6)));int(1..2)]) 
+
+--
+
+(n < 6), 
+   ~~> lt_to_leq ([("Minion", 8400)]) 
+(n <= sum([6,-1;int(1..)])) 
+
+--
+
+or([(a) -> (z),(z) -> (a);int(1..2)]),
+or([(b) -> (c),(b) -> (!(c));int(1..2)]),
+((l = 10)) -> ((l = 10)),
+or([((n <= 5)) -> ((m % 2 = 0)),((m % 2 = 0)) -> ((n <= 5));int(1..2)]),
+or([((n <= sum([6,-1;int(1..)]))) -> ((m % 2 = 0)),a,b,((m % 2 = 0)) -> ((n < 6));int(1..2)]),
+(o = n),
+(d = (n < 6)),
+(p = m % 2),
+or([((o < 6)) -> ((p = 0)),((m % 2 = 0)) -> (d);int(1..2)]),
+or([((o < 6)) -> ((p = 0)),a,b,((m % 2 = 0)) -> (d);int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n < 6)),((UnsafeDiv(q, 2) = r)) -> (!((n < 6)));int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n < 6)),a,b,((UnsafeDiv(q, 2) = r)) -> (!((n < 6)));int(1..2)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+or([(a) -> (z),(z) -> (a);int(1..2)]),
+or([(b) -> (c),(b) -> (!(c));int(1..2)]),
+((l = 10)) -> ((l = 10)),
+or([((n <= 5)) -> ((m % 2 = 0)),((m % 2 = 0)) -> ((n <= 5));int(1..2)]),
+or([((n <= 5)) -> ((m % 2 = 0)),a,b,((m % 2 = 0)) -> ((n < 6));int(1..2)]),
+(o = n),
+(d = (n < 6)),
+(p = m % 2),
+or([((o < 6)) -> ((p = 0)),((m % 2 = 0)) -> (d);int(1..2)]),
+or([((o < 6)) -> ((p = 0)),a,b,((m % 2 = 0)) -> (d);int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n < 6)),((UnsafeDiv(q, 2) = r)) -> (!((n < 6)));int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n < 6)),a,b,((UnsafeDiv(q, 2) = r)) -> (!((n < 6)));int(1..2)]) 
+
+--
+
+(n < 6), 
+   ~~> lt_to_leq ([("Minion", 8400)]) 
+(n <= sum([6,-1;int(1..)])) 
+
+--
+
+or([(a) -> (z),(z) -> (a);int(1..2)]),
+or([(b) -> (c),(b) -> (!(c));int(1..2)]),
+((l = 10)) -> ((l = 10)),
+or([((n <= 5)) -> ((m % 2 = 0)),((m % 2 = 0)) -> ((n <= 5));int(1..2)]),
+or([((n <= 5)) -> ((m % 2 = 0)),a,b,((m % 2 = 0)) -> ((n <= sum([6,-1;int(1..)])));int(1..2)]),
+(o = n),
+(d = (n < 6)),
+(p = m % 2),
+or([((o < 6)) -> ((p = 0)),((m % 2 = 0)) -> (d);int(1..2)]),
+or([((o < 6)) -> ((p = 0)),a,b,((m % 2 = 0)) -> (d);int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n < 6)),((UnsafeDiv(q, 2) = r)) -> (!((n < 6)));int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n < 6)),a,b,((UnsafeDiv(q, 2) = r)) -> (!((n < 6)));int(1..2)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+or([(a) -> (z),(z) -> (a);int(1..2)]),
+or([(b) -> (c),(b) -> (!(c));int(1..2)]),
+((l = 10)) -> ((l = 10)),
+or([((n <= 5)) -> ((m % 2 = 0)),((m % 2 = 0)) -> ((n <= 5));int(1..2)]),
+or([((n <= 5)) -> ((m % 2 = 0)),a,b,((m % 2 = 0)) -> ((n <= 5));int(1..2)]),
+(o = n),
+(d = (n < 6)),
+(p = m % 2),
+or([((o < 6)) -> ((p = 0)),((m % 2 = 0)) -> (d);int(1..2)]),
+or([((o < 6)) -> ((p = 0)),a,b,((m % 2 = 0)) -> (d);int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n < 6)),((UnsafeDiv(q, 2) = r)) -> (!((n < 6)));int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n < 6)),a,b,((UnsafeDiv(q, 2) = r)) -> (!((n < 6)));int(1..2)]) 
+
+--
+
+(n < 6), 
+   ~~> lt_to_leq ([("Minion", 8400)]) 
+(n <= sum([6,-1;int(1..)])) 
+
+--
+
+or([(a) -> (z),(z) -> (a);int(1..2)]),
+or([(b) -> (c),(b) -> (!(c));int(1..2)]),
+((l = 10)) -> ((l = 10)),
+or([((n <= 5)) -> ((m % 2 = 0)),((m % 2 = 0)) -> ((n <= 5));int(1..2)]),
+or([((n <= 5)) -> ((m % 2 = 0)),a,b,((m % 2 = 0)) -> ((n <= 5));int(1..2)]),
+(o = n),
+(d = (n <= sum([6,-1;int(1..)]))),
+(p = m % 2),
+or([((o < 6)) -> ((p = 0)),((m % 2 = 0)) -> (d);int(1..2)]),
+or([((o < 6)) -> ((p = 0)),a,b,((m % 2 = 0)) -> (d);int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n < 6)),((UnsafeDiv(q, 2) = r)) -> (!((n < 6)));int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n < 6)),a,b,((UnsafeDiv(q, 2) = r)) -> (!((n < 6)));int(1..2)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+or([(a) -> (z),(z) -> (a);int(1..2)]),
+or([(b) -> (c),(b) -> (!(c));int(1..2)]),
+((l = 10)) -> ((l = 10)),
+or([((n <= 5)) -> ((m % 2 = 0)),((m % 2 = 0)) -> ((n <= 5));int(1..2)]),
+or([((n <= 5)) -> ((m % 2 = 0)),a,b,((m % 2 = 0)) -> ((n <= 5));int(1..2)]),
+(o = n),
+(d = (n <= 5)),
+(p = m % 2),
+or([((o < 6)) -> ((p = 0)),((m % 2 = 0)) -> (d);int(1..2)]),
+or([((o < 6)) -> ((p = 0)),a,b,((m % 2 = 0)) -> (d);int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n < 6)),((UnsafeDiv(q, 2) = r)) -> (!((n < 6)));int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n < 6)),a,b,((UnsafeDiv(q, 2) = r)) -> (!((n < 6)));int(1..2)]) 
+
+--
+
+(o < 6), 
+   ~~> lt_to_leq ([("Minion", 8400)]) 
+(o <= sum([6,-1;int(1..)])) 
+
+--
+
+or([(a) -> (z),(z) -> (a);int(1..2)]),
+or([(b) -> (c),(b) -> (!(c));int(1..2)]),
+((l = 10)) -> ((l = 10)),
+or([((n <= 5)) -> ((m % 2 = 0)),((m % 2 = 0)) -> ((n <= 5));int(1..2)]),
+or([((n <= 5)) -> ((m % 2 = 0)),a,b,((m % 2 = 0)) -> ((n <= 5));int(1..2)]),
+(o = n),
+(d = (n <= 5)),
+(p = m % 2),
+or([((o <= sum([6,-1;int(1..)]))) -> ((p = 0)),((m % 2 = 0)) -> (d);int(1..2)]),
+or([((o < 6)) -> ((p = 0)),a,b,((m % 2 = 0)) -> (d);int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n < 6)),((UnsafeDiv(q, 2) = r)) -> (!((n < 6)));int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n < 6)),a,b,((UnsafeDiv(q, 2) = r)) -> (!((n < 6)));int(1..2)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+or([(a) -> (z),(z) -> (a);int(1..2)]),
+or([(b) -> (c),(b) -> (!(c));int(1..2)]),
+((l = 10)) -> ((l = 10)),
+or([((n <= 5)) -> ((m % 2 = 0)),((m % 2 = 0)) -> ((n <= 5));int(1..2)]),
+or([((n <= 5)) -> ((m % 2 = 0)),a,b,((m % 2 = 0)) -> ((n <= 5));int(1..2)]),
+(o = n),
+(d = (n <= 5)),
+(p = m % 2),
+or([((o <= 5)) -> ((p = 0)),((m % 2 = 0)) -> (d);int(1..2)]),
+or([((o < 6)) -> ((p = 0)),a,b,((m % 2 = 0)) -> (d);int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n < 6)),((UnsafeDiv(q, 2) = r)) -> (!((n < 6)));int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n < 6)),a,b,((UnsafeDiv(q, 2) = r)) -> (!((n < 6)));int(1..2)]) 
+
+--
+
+(o < 6), 
+   ~~> lt_to_leq ([("Minion", 8400)]) 
+(o <= sum([6,-1;int(1..)])) 
+
+--
+
+or([(a) -> (z),(z) -> (a);int(1..2)]),
+or([(b) -> (c),(b) -> (!(c));int(1..2)]),
+((l = 10)) -> ((l = 10)),
+or([((n <= 5)) -> ((m % 2 = 0)),((m % 2 = 0)) -> ((n <= 5));int(1..2)]),
+or([((n <= 5)) -> ((m % 2 = 0)),a,b,((m % 2 = 0)) -> ((n <= 5));int(1..2)]),
+(o = n),
+(d = (n <= 5)),
+(p = m % 2),
+or([((o <= 5)) -> ((p = 0)),((m % 2 = 0)) -> (d);int(1..2)]),
+or([((o <= sum([6,-1;int(1..)]))) -> ((p = 0)),a,b,((m % 2 = 0)) -> (d);int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n < 6)),((UnsafeDiv(q, 2) = r)) -> (!((n < 6)));int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n < 6)),a,b,((UnsafeDiv(q, 2) = r)) -> (!((n < 6)));int(1..2)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+or([(a) -> (z),(z) -> (a);int(1..2)]),
+or([(b) -> (c),(b) -> (!(c));int(1..2)]),
+((l = 10)) -> ((l = 10)),
+or([((n <= 5)) -> ((m % 2 = 0)),((m % 2 = 0)) -> ((n <= 5));int(1..2)]),
+or([((n <= 5)) -> ((m % 2 = 0)),a,b,((m % 2 = 0)) -> ((n <= 5));int(1..2)]),
+(o = n),
+(d = (n <= 5)),
+(p = m % 2),
+or([((o <= 5)) -> ((p = 0)),((m % 2 = 0)) -> (d);int(1..2)]),
+or([((o <= 5)) -> ((p = 0)),a,b,((m % 2 = 0)) -> (d);int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n < 6)),((UnsafeDiv(q, 2) = r)) -> (!((n < 6)));int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n < 6)),a,b,((UnsafeDiv(q, 2) = r)) -> (!((n < 6)));int(1..2)]) 
+
+--
+
+(n < 6), 
+   ~~> lt_to_leq ([("Minion", 8400)]) 
+(n <= sum([6,-1;int(1..)])) 
+
+--
+
+or([(a) -> (z),(z) -> (a);int(1..2)]),
+or([(b) -> (c),(b) -> (!(c));int(1..2)]),
+((l = 10)) -> ((l = 10)),
+or([((n <= 5)) -> ((m % 2 = 0)),((m % 2 = 0)) -> ((n <= 5));int(1..2)]),
+or([((n <= 5)) -> ((m % 2 = 0)),a,b,((m % 2 = 0)) -> ((n <= 5));int(1..2)]),
+(o = n),
+(d = (n <= 5)),
+(p = m % 2),
+or([((o <= 5)) -> ((p = 0)),((m % 2 = 0)) -> (d);int(1..2)]),
+or([((o <= 5)) -> ((p = 0)),a,b,((m % 2 = 0)) -> (d);int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n <= sum([6,-1;int(1..)]))),((UnsafeDiv(q, 2) = r)) -> (!((n < 6)));int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n < 6)),a,b,((UnsafeDiv(q, 2) = r)) -> (!((n < 6)));int(1..2)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+or([(a) -> (z),(z) -> (a);int(1..2)]),
+or([(b) -> (c),(b) -> (!(c));int(1..2)]),
+((l = 10)) -> ((l = 10)),
+or([((n <= 5)) -> ((m % 2 = 0)),((m % 2 = 0)) -> ((n <= 5));int(1..2)]),
+or([((n <= 5)) -> ((m % 2 = 0)),a,b,((m % 2 = 0)) -> ((n <= 5));int(1..2)]),
+(o = n),
+(d = (n <= 5)),
+(p = m % 2),
+or([((o <= 5)) -> ((p = 0)),((m % 2 = 0)) -> (d);int(1..2)]),
+or([((o <= 5)) -> ((p = 0)),a,b,((m % 2 = 0)) -> (d);int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n <= 5)),((UnsafeDiv(q, 2) = r)) -> (!((n < 6)));int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n < 6)),a,b,((UnsafeDiv(q, 2) = r)) -> (!((n < 6)));int(1..2)]) 
+
+--
+
+(n < 6), 
+   ~~> lt_to_leq ([("Minion", 8400)]) 
+(n <= sum([6,-1;int(1..)])) 
+
+--
+
+or([(a) -> (z),(z) -> (a);int(1..2)]),
+or([(b) -> (c),(b) -> (!(c));int(1..2)]),
+((l = 10)) -> ((l = 10)),
+or([((n <= 5)) -> ((m % 2 = 0)),((m % 2 = 0)) -> ((n <= 5));int(1..2)]),
+or([((n <= 5)) -> ((m % 2 = 0)),a,b,((m % 2 = 0)) -> ((n <= 5));int(1..2)]),
+(o = n),
+(d = (n <= 5)),
+(p = m % 2),
+or([((o <= 5)) -> ((p = 0)),((m % 2 = 0)) -> (d);int(1..2)]),
+or([((o <= 5)) -> ((p = 0)),a,b,((m % 2 = 0)) -> (d);int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n <= 5)),((UnsafeDiv(q, 2) = r)) -> (!((n <= sum([6,-1;int(1..)]))));int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n < 6)),a,b,((UnsafeDiv(q, 2) = r)) -> (!((n < 6)));int(1..2)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+or([(a) -> (z),(z) -> (a);int(1..2)]),
+or([(b) -> (c),(b) -> (!(c));int(1..2)]),
+((l = 10)) -> ((l = 10)),
+or([((n <= 5)) -> ((m % 2 = 0)),((m % 2 = 0)) -> ((n <= 5));int(1..2)]),
+or([((n <= 5)) -> ((m % 2 = 0)),a,b,((m % 2 = 0)) -> ((n <= 5));int(1..2)]),
+(o = n),
+(d = (n <= 5)),
+(p = m % 2),
+or([((o <= 5)) -> ((p = 0)),((m % 2 = 0)) -> (d);int(1..2)]),
+or([((o <= 5)) -> ((p = 0)),a,b,((m % 2 = 0)) -> (d);int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n <= 5)),((UnsafeDiv(q, 2) = r)) -> (!((n <= 5)));int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n < 6)),a,b,((UnsafeDiv(q, 2) = r)) -> (!((n < 6)));int(1..2)]) 
+
+--
+
+(n < 6), 
+   ~~> lt_to_leq ([("Minion", 8400)]) 
+(n <= sum([6,-1;int(1..)])) 
+
+--
+
+or([(a) -> (z),(z) -> (a);int(1..2)]),
+or([(b) -> (c),(b) -> (!(c));int(1..2)]),
+((l = 10)) -> ((l = 10)),
+or([((n <= 5)) -> ((m % 2 = 0)),((m % 2 = 0)) -> ((n <= 5));int(1..2)]),
+or([((n <= 5)) -> ((m % 2 = 0)),a,b,((m % 2 = 0)) -> ((n <= 5));int(1..2)]),
+(o = n),
+(d = (n <= 5)),
+(p = m % 2),
+or([((o <= 5)) -> ((p = 0)),((m % 2 = 0)) -> (d);int(1..2)]),
+or([((o <= 5)) -> ((p = 0)),a,b,((m % 2 = 0)) -> (d);int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n <= 5)),((UnsafeDiv(q, 2) = r)) -> (!((n <= 5)));int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n <= sum([6,-1;int(1..)]))),a,b,((UnsafeDiv(q, 2) = r)) -> (!((n < 6)));int(1..2)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+or([(a) -> (z),(z) -> (a);int(1..2)]),
+or([(b) -> (c),(b) -> (!(c));int(1..2)]),
+((l = 10)) -> ((l = 10)),
+or([((n <= 5)) -> ((m % 2 = 0)),((m % 2 = 0)) -> ((n <= 5));int(1..2)]),
+or([((n <= 5)) -> ((m % 2 = 0)),a,b,((m % 2 = 0)) -> ((n <= 5));int(1..2)]),
+(o = n),
+(d = (n <= 5)),
+(p = m % 2),
+or([((o <= 5)) -> ((p = 0)),((m % 2 = 0)) -> (d);int(1..2)]),
+or([((o <= 5)) -> ((p = 0)),a,b,((m % 2 = 0)) -> (d);int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n <= 5)),((UnsafeDiv(q, 2) = r)) -> (!((n <= 5)));int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n <= 5)),a,b,((UnsafeDiv(q, 2) = r)) -> (!((n < 6)));int(1..2)]) 
+
+--
+
+(n < 6), 
+   ~~> lt_to_leq ([("Minion", 8400)]) 
+(n <= sum([6,-1;int(1..)])) 
+
+--
+
+or([(a) -> (z),(z) -> (a);int(1..2)]),
+or([(b) -> (c),(b) -> (!(c));int(1..2)]),
+((l = 10)) -> ((l = 10)),
+or([((n <= 5)) -> ((m % 2 = 0)),((m % 2 = 0)) -> ((n <= 5));int(1..2)]),
+or([((n <= 5)) -> ((m % 2 = 0)),a,b,((m % 2 = 0)) -> ((n <= 5));int(1..2)]),
+(o = n),
+(d = (n <= 5)),
+(p = m % 2),
+or([((o <= 5)) -> ((p = 0)),((m % 2 = 0)) -> (d);int(1..2)]),
+or([((o <= 5)) -> ((p = 0)),a,b,((m % 2 = 0)) -> (d);int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n <= 5)),((UnsafeDiv(q, 2) = r)) -> (!((n <= 5)));int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n <= 5)),a,b,((UnsafeDiv(q, 2) = r)) -> (!((n <= sum([6,-1;int(1..)]))));int(1..2)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+or([(a) -> (z),(z) -> (a);int(1..2)]),
+or([(b) -> (c),(b) -> (!(c));int(1..2)]),
+((l = 10)) -> ((l = 10)),
+or([((n <= 5)) -> ((m % 2 = 0)),((m % 2 = 0)) -> ((n <= 5));int(1..2)]),
+or([((n <= 5)) -> ((m % 2 = 0)),a,b,((m % 2 = 0)) -> ((n <= 5));int(1..2)]),
+(o = n),
+(d = (n <= 5)),
+(p = m % 2),
+or([((o <= 5)) -> ((p = 0)),((m % 2 = 0)) -> (d);int(1..2)]),
+or([((o <= 5)) -> ((p = 0)),a,b,((m % 2 = 0)) -> (d);int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n <= 5)),((UnsafeDiv(q, 2) = r)) -> (!((n <= 5)));int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n <= 5)),a,b,((UnsafeDiv(q, 2) = r)) -> (!((n <= 5)));int(1..2)]) 
+
+--
+
+m % 2, 
+   ~~> mod_to_bubble ([("Bubble", 6000)]) 
+{SafeMod(m,2) @ (2 != 0)} 
+
+--
+
+or([(a) -> (z),(z) -> (a);int(1..2)]),
+or([(b) -> (c),(b) -> (!(c));int(1..2)]),
+((l = 10)) -> ((l = 10)),
+or([((n <= 5)) -> (({SafeMod(m,2) @ (2 != 0)} = 0)),((m % 2 = 0)) -> ((n <= 5));int(1..2)]),
+or([((n <= 5)) -> ((m % 2 = 0)),a,b,((m % 2 = 0)) -> ((n <= 5));int(1..2)]),
+(o = n),
+(d = (n <= 5)),
+(p = m % 2),
+or([((o <= 5)) -> ((p = 0)),((m % 2 = 0)) -> (d);int(1..2)]),
+or([((o <= 5)) -> ((p = 0)),a,b,((m % 2 = 0)) -> (d);int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n <= 5)),((UnsafeDiv(q, 2) = r)) -> (!((n <= 5)));int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n <= 5)),a,b,((UnsafeDiv(q, 2) = r)) -> (!((n <= 5)));int(1..2)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+or([(a) -> (z),(z) -> (a);int(1..2)]),
+or([(b) -> (c),(b) -> (!(c));int(1..2)]),
+((l = 10)) -> ((l = 10)),
+or([((n <= 5)) -> ((SafeMod(m,2) = 0)),((m % 2 = 0)) -> ((n <= 5));int(1..2)]),
+or([((n <= 5)) -> ((m % 2 = 0)),a,b,((m % 2 = 0)) -> ((n <= 5));int(1..2)]),
+(o = n),
+(d = (n <= 5)),
+(p = m % 2),
+or([((o <= 5)) -> ((p = 0)),((m % 2 = 0)) -> (d);int(1..2)]),
+or([((o <= 5)) -> ((p = 0)),a,b,((m % 2 = 0)) -> (d);int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n <= 5)),((UnsafeDiv(q, 2) = r)) -> (!((n <= 5)));int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n <= 5)),a,b,((UnsafeDiv(q, 2) = r)) -> (!((n <= 5)));int(1..2)]) 
+
+--
+
+m % 2, 
+   ~~> mod_to_bubble ([("Bubble", 6000)]) 
+{SafeMod(m,2) @ (2 != 0)} 
+
+--
+
+or([(a) -> (z),(z) -> (a);int(1..2)]),
+or([(b) -> (c),(b) -> (!(c));int(1..2)]),
+((l = 10)) -> ((l = 10)),
+or([((n <= 5)) -> ((SafeMod(m,2) = 0)),(({SafeMod(m,2) @ (2 != 0)} = 0)) -> ((n <= 5));int(1..2)]),
+or([((n <= 5)) -> ((m % 2 = 0)),a,b,((m % 2 = 0)) -> ((n <= 5));int(1..2)]),
+(o = n),
+(d = (n <= 5)),
+(p = m % 2),
+or([((o <= 5)) -> ((p = 0)),((m % 2 = 0)) -> (d);int(1..2)]),
+or([((o <= 5)) -> ((p = 0)),a,b,((m % 2 = 0)) -> (d);int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n <= 5)),((UnsafeDiv(q, 2) = r)) -> (!((n <= 5)));int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n <= 5)),a,b,((UnsafeDiv(q, 2) = r)) -> (!((n <= 5)));int(1..2)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+or([(a) -> (z),(z) -> (a);int(1..2)]),
+or([(b) -> (c),(b) -> (!(c));int(1..2)]),
+((l = 10)) -> ((l = 10)),
+or([((n <= 5)) -> ((SafeMod(m,2) = 0)),((SafeMod(m,2) = 0)) -> ((n <= 5));int(1..2)]),
+or([((n <= 5)) -> ((m % 2 = 0)),a,b,((m % 2 = 0)) -> ((n <= 5));int(1..2)]),
+(o = n),
+(d = (n <= 5)),
+(p = m % 2),
+or([((o <= 5)) -> ((p = 0)),((m % 2 = 0)) -> (d);int(1..2)]),
+or([((o <= 5)) -> ((p = 0)),a,b,((m % 2 = 0)) -> (d);int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n <= 5)),((UnsafeDiv(q, 2) = r)) -> (!((n <= 5)));int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n <= 5)),a,b,((UnsafeDiv(q, 2) = r)) -> (!((n <= 5)));int(1..2)]) 
+
+--
+
+m % 2, 
+   ~~> mod_to_bubble ([("Bubble", 6000)]) 
+{SafeMod(m,2) @ (2 != 0)} 
+
+--
+
+or([(a) -> (z),(z) -> (a);int(1..2)]),
+or([(b) -> (c),(b) -> (!(c));int(1..2)]),
+((l = 10)) -> ((l = 10)),
+or([((n <= 5)) -> ((SafeMod(m,2) = 0)),((SafeMod(m,2) = 0)) -> ((n <= 5));int(1..2)]),
+or([((n <= 5)) -> (({SafeMod(m,2) @ (2 != 0)} = 0)),a,b,((m % 2 = 0)) -> ((n <= 5));int(1..2)]),
+(o = n),
+(d = (n <= 5)),
+(p = m % 2),
+or([((o <= 5)) -> ((p = 0)),((m % 2 = 0)) -> (d);int(1..2)]),
+or([((o <= 5)) -> ((p = 0)),a,b,((m % 2 = 0)) -> (d);int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n <= 5)),((UnsafeDiv(q, 2) = r)) -> (!((n <= 5)));int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n <= 5)),a,b,((UnsafeDiv(q, 2) = r)) -> (!((n <= 5)));int(1..2)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+or([(a) -> (z),(z) -> (a);int(1..2)]),
+or([(b) -> (c),(b) -> (!(c));int(1..2)]),
+((l = 10)) -> ((l = 10)),
+or([((n <= 5)) -> ((SafeMod(m,2) = 0)),((SafeMod(m,2) = 0)) -> ((n <= 5));int(1..2)]),
+or([((n <= 5)) -> ((SafeMod(m,2) = 0)),a,b,((m % 2 = 0)) -> ((n <= 5));int(1..2)]),
+(o = n),
+(d = (n <= 5)),
+(p = m % 2),
+or([((o <= 5)) -> ((p = 0)),((m % 2 = 0)) -> (d);int(1..2)]),
+or([((o <= 5)) -> ((p = 0)),a,b,((m % 2 = 0)) -> (d);int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n <= 5)),((UnsafeDiv(q, 2) = r)) -> (!((n <= 5)));int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n <= 5)),a,b,((UnsafeDiv(q, 2) = r)) -> (!((n <= 5)));int(1..2)]) 
+
+--
+
+m % 2, 
+   ~~> mod_to_bubble ([("Bubble", 6000)]) 
+{SafeMod(m,2) @ (2 != 0)} 
+
+--
+
+or([(a) -> (z),(z) -> (a);int(1..2)]),
+or([(b) -> (c),(b) -> (!(c));int(1..2)]),
+((l = 10)) -> ((l = 10)),
+or([((n <= 5)) -> ((SafeMod(m,2) = 0)),((SafeMod(m,2) = 0)) -> ((n <= 5));int(1..2)]),
+or([((n <= 5)) -> ((SafeMod(m,2) = 0)),a,b,(({SafeMod(m,2) @ (2 != 0)} = 0)) -> ((n <= 5));int(1..2)]),
+(o = n),
+(d = (n <= 5)),
+(p = m % 2),
+or([((o <= 5)) -> ((p = 0)),((m % 2 = 0)) -> (d);int(1..2)]),
+or([((o <= 5)) -> ((p = 0)),a,b,((m % 2 = 0)) -> (d);int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n <= 5)),((UnsafeDiv(q, 2) = r)) -> (!((n <= 5)));int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n <= 5)),a,b,((UnsafeDiv(q, 2) = r)) -> (!((n <= 5)));int(1..2)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+or([(a) -> (z),(z) -> (a);int(1..2)]),
+or([(b) -> (c),(b) -> (!(c));int(1..2)]),
+((l = 10)) -> ((l = 10)),
+or([((n <= 5)) -> ((SafeMod(m,2) = 0)),((SafeMod(m,2) = 0)) -> ((n <= 5));int(1..2)]),
+or([((n <= 5)) -> ((SafeMod(m,2) = 0)),a,b,((SafeMod(m,2) = 0)) -> ((n <= 5));int(1..2)]),
+(o = n),
+(d = (n <= 5)),
+(p = m % 2),
+or([((o <= 5)) -> ((p = 0)),((m % 2 = 0)) -> (d);int(1..2)]),
+or([((o <= 5)) -> ((p = 0)),a,b,((m % 2 = 0)) -> (d);int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n <= 5)),((UnsafeDiv(q, 2) = r)) -> (!((n <= 5)));int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n <= 5)),a,b,((UnsafeDiv(q, 2) = r)) -> (!((n <= 5)));int(1..2)]) 
+
+--
+
+m % 2, 
+   ~~> mod_to_bubble ([("Bubble", 6000)]) 
+{SafeMod(m,2) @ (2 != 0)} 
+
+--
+
+or([(a) -> (z),(z) -> (a);int(1..2)]),
+or([(b) -> (c),(b) -> (!(c));int(1..2)]),
+((l = 10)) -> ((l = 10)),
+or([((n <= 5)) -> ((SafeMod(m,2) = 0)),((SafeMod(m,2) = 0)) -> ((n <= 5));int(1..2)]),
+or([((n <= 5)) -> ((SafeMod(m,2) = 0)),a,b,((SafeMod(m,2) = 0)) -> ((n <= 5));int(1..2)]),
+(o = n),
+(d = (n <= 5)),
+(p = {SafeMod(m,2) @ (2 != 0)}),
+or([((o <= 5)) -> ((p = 0)),((m % 2 = 0)) -> (d);int(1..2)]),
+or([((o <= 5)) -> ((p = 0)),a,b,((m % 2 = 0)) -> (d);int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n <= 5)),((UnsafeDiv(q, 2) = r)) -> (!((n <= 5)));int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n <= 5)),a,b,((UnsafeDiv(q, 2) = r)) -> (!((n <= 5)));int(1..2)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+or([(a) -> (z),(z) -> (a);int(1..2)]),
+or([(b) -> (c),(b) -> (!(c));int(1..2)]),
+((l = 10)) -> ((l = 10)),
+or([((n <= 5)) -> ((SafeMod(m,2) = 0)),((SafeMod(m,2) = 0)) -> ((n <= 5));int(1..2)]),
+or([((n <= 5)) -> ((SafeMod(m,2) = 0)),a,b,((SafeMod(m,2) = 0)) -> ((n <= 5));int(1..2)]),
+(o = n),
+(d = (n <= 5)),
+(p = SafeMod(m,2)),
+or([((o <= 5)) -> ((p = 0)),((m % 2 = 0)) -> (d);int(1..2)]),
+or([((o <= 5)) -> ((p = 0)),a,b,((m % 2 = 0)) -> (d);int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n <= 5)),((UnsafeDiv(q, 2) = r)) -> (!((n <= 5)));int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n <= 5)),a,b,((UnsafeDiv(q, 2) = r)) -> (!((n <= 5)));int(1..2)]) 
+
+--
+
+m % 2, 
+   ~~> mod_to_bubble ([("Bubble", 6000)]) 
+{SafeMod(m,2) @ (2 != 0)} 
+
+--
+
+or([(a) -> (z),(z) -> (a);int(1..2)]),
+or([(b) -> (c),(b) -> (!(c));int(1..2)]),
+((l = 10)) -> ((l = 10)),
+or([((n <= 5)) -> ((SafeMod(m,2) = 0)),((SafeMod(m,2) = 0)) -> ((n <= 5));int(1..2)]),
+or([((n <= 5)) -> ((SafeMod(m,2) = 0)),a,b,((SafeMod(m,2) = 0)) -> ((n <= 5));int(1..2)]),
+(o = n),
+(d = (n <= 5)),
+(p = SafeMod(m,2)),
+or([((o <= 5)) -> ((p = 0)),(({SafeMod(m,2) @ (2 != 0)} = 0)) -> (d);int(1..2)]),
+or([((o <= 5)) -> ((p = 0)),a,b,((m % 2 = 0)) -> (d);int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n <= 5)),((UnsafeDiv(q, 2) = r)) -> (!((n <= 5)));int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n <= 5)),a,b,((UnsafeDiv(q, 2) = r)) -> (!((n <= 5)));int(1..2)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+or([(a) -> (z),(z) -> (a);int(1..2)]),
+or([(b) -> (c),(b) -> (!(c));int(1..2)]),
+((l = 10)) -> ((l = 10)),
+or([((n <= 5)) -> ((SafeMod(m,2) = 0)),((SafeMod(m,2) = 0)) -> ((n <= 5));int(1..2)]),
+or([((n <= 5)) -> ((SafeMod(m,2) = 0)),a,b,((SafeMod(m,2) = 0)) -> ((n <= 5));int(1..2)]),
+(o = n),
+(d = (n <= 5)),
+(p = SafeMod(m,2)),
+or([((o <= 5)) -> ((p = 0)),((SafeMod(m,2) = 0)) -> (d);int(1..2)]),
+or([((o <= 5)) -> ((p = 0)),a,b,((m % 2 = 0)) -> (d);int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n <= 5)),((UnsafeDiv(q, 2) = r)) -> (!((n <= 5)));int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n <= 5)),a,b,((UnsafeDiv(q, 2) = r)) -> (!((n <= 5)));int(1..2)]) 
+
+--
+
+m % 2, 
+   ~~> mod_to_bubble ([("Bubble", 6000)]) 
+{SafeMod(m,2) @ (2 != 0)} 
+
+--
+
+or([(a) -> (z),(z) -> (a);int(1..2)]),
+or([(b) -> (c),(b) -> (!(c));int(1..2)]),
+((l = 10)) -> ((l = 10)),
+or([((n <= 5)) -> ((SafeMod(m,2) = 0)),((SafeMod(m,2) = 0)) -> ((n <= 5));int(1..2)]),
+or([((n <= 5)) -> ((SafeMod(m,2) = 0)),a,b,((SafeMod(m,2) = 0)) -> ((n <= 5));int(1..2)]),
+(o = n),
+(d = (n <= 5)),
+(p = SafeMod(m,2)),
+or([((o <= 5)) -> ((p = 0)),((SafeMod(m,2) = 0)) -> (d);int(1..2)]),
+or([((o <= 5)) -> ((p = 0)),a,b,(({SafeMod(m,2) @ (2 != 0)} = 0)) -> (d);int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n <= 5)),((UnsafeDiv(q, 2) = r)) -> (!((n <= 5)));int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n <= 5)),a,b,((UnsafeDiv(q, 2) = r)) -> (!((n <= 5)));int(1..2)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+or([(a) -> (z),(z) -> (a);int(1..2)]),
+or([(b) -> (c),(b) -> (!(c));int(1..2)]),
+((l = 10)) -> ((l = 10)),
+or([((n <= 5)) -> ((SafeMod(m,2) = 0)),((SafeMod(m,2) = 0)) -> ((n <= 5));int(1..2)]),
+or([((n <= 5)) -> ((SafeMod(m,2) = 0)),a,b,((SafeMod(m,2) = 0)) -> ((n <= 5));int(1..2)]),
+(o = n),
+(d = (n <= 5)),
+(p = SafeMod(m,2)),
+or([((o <= 5)) -> ((p = 0)),((SafeMod(m,2) = 0)) -> (d);int(1..2)]),
+or([((o <= 5)) -> ((p = 0)),a,b,((SafeMod(m,2) = 0)) -> (d);int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n <= 5)),((UnsafeDiv(q, 2) = r)) -> (!((n <= 5)));int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n <= 5)),a,b,((UnsafeDiv(q, 2) = r)) -> (!((n <= 5)));int(1..2)]) 
+
+--
+
+UnsafeDiv(q, 2), 
+   ~~> div_to_bubble ([("Bubble", 6000)]) 
+{SafeDiv(q, 2) @ (2 != 0)} 
+
+--
+
+or([(a) -> (z),(z) -> (a);int(1..2)]),
+or([(b) -> (c),(b) -> (!(c));int(1..2)]),
+((l = 10)) -> ((l = 10)),
+or([((n <= 5)) -> ((SafeMod(m,2) = 0)),((SafeMod(m,2) = 0)) -> ((n <= 5));int(1..2)]),
+or([((n <= 5)) -> ((SafeMod(m,2) = 0)),a,b,((SafeMod(m,2) = 0)) -> ((n <= 5));int(1..2)]),
+(o = n),
+(d = (n <= 5)),
+(p = SafeMod(m,2)),
+or([((o <= 5)) -> ((p = 0)),((SafeMod(m,2) = 0)) -> (d);int(1..2)]),
+or([((o <= 5)) -> ((p = 0)),a,b,((SafeMod(m,2) = 0)) -> (d);int(1..2)]),
+or([(({SafeDiv(q, 2) @ (2 != 0)} = r)) -> ((n <= 5)),((UnsafeDiv(q, 2) = r)) -> (!((n <= 5)));int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n <= 5)),a,b,((UnsafeDiv(q, 2) = r)) -> (!((n <= 5)));int(1..2)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+or([(a) -> (z),(z) -> (a);int(1..2)]),
+or([(b) -> (c),(b) -> (!(c));int(1..2)]),
+((l = 10)) -> ((l = 10)),
+or([((n <= 5)) -> ((SafeMod(m,2) = 0)),((SafeMod(m,2) = 0)) -> ((n <= 5));int(1..2)]),
+or([((n <= 5)) -> ((SafeMod(m,2) = 0)),a,b,((SafeMod(m,2) = 0)) -> ((n <= 5));int(1..2)]),
+(o = n),
+(d = (n <= 5)),
+(p = SafeMod(m,2)),
+or([((o <= 5)) -> ((p = 0)),((SafeMod(m,2) = 0)) -> (d);int(1..2)]),
+or([((o <= 5)) -> ((p = 0)),a,b,((SafeMod(m,2) = 0)) -> (d);int(1..2)]),
+or([((SafeDiv(q, 2) = r)) -> ((n <= 5)),((UnsafeDiv(q, 2) = r)) -> (!((n <= 5)));int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n <= 5)),a,b,((UnsafeDiv(q, 2) = r)) -> (!((n <= 5)));int(1..2)]) 
+
+--
+
+UnsafeDiv(q, 2), 
+   ~~> div_to_bubble ([("Bubble", 6000)]) 
+{SafeDiv(q, 2) @ (2 != 0)} 
+
+--
+
+or([(a) -> (z),(z) -> (a);int(1..2)]),
+or([(b) -> (c),(b) -> (!(c));int(1..2)]),
+((l = 10)) -> ((l = 10)),
+or([((n <= 5)) -> ((SafeMod(m,2) = 0)),((SafeMod(m,2) = 0)) -> ((n <= 5));int(1..2)]),
+or([((n <= 5)) -> ((SafeMod(m,2) = 0)),a,b,((SafeMod(m,2) = 0)) -> ((n <= 5));int(1..2)]),
+(o = n),
+(d = (n <= 5)),
+(p = SafeMod(m,2)),
+or([((o <= 5)) -> ((p = 0)),((SafeMod(m,2) = 0)) -> (d);int(1..2)]),
+or([((o <= 5)) -> ((p = 0)),a,b,((SafeMod(m,2) = 0)) -> (d);int(1..2)]),
+or([((SafeDiv(q, 2) = r)) -> ((n <= 5)),(({SafeDiv(q, 2) @ (2 != 0)} = r)) -> (!((n <= 5)));int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n <= 5)),a,b,((UnsafeDiv(q, 2) = r)) -> (!((n <= 5)));int(1..2)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+or([(a) -> (z),(z) -> (a);int(1..2)]),
+or([(b) -> (c),(b) -> (!(c));int(1..2)]),
+((l = 10)) -> ((l = 10)),
+or([((n <= 5)) -> ((SafeMod(m,2) = 0)),((SafeMod(m,2) = 0)) -> ((n <= 5));int(1..2)]),
+or([((n <= 5)) -> ((SafeMod(m,2) = 0)),a,b,((SafeMod(m,2) = 0)) -> ((n <= 5));int(1..2)]),
+(o = n),
+(d = (n <= 5)),
+(p = SafeMod(m,2)),
+or([((o <= 5)) -> ((p = 0)),((SafeMod(m,2) = 0)) -> (d);int(1..2)]),
+or([((o <= 5)) -> ((p = 0)),a,b,((SafeMod(m,2) = 0)) -> (d);int(1..2)]),
+or([((SafeDiv(q, 2) = r)) -> ((n <= 5)),((SafeDiv(q, 2) = r)) -> (!((n <= 5)));int(1..2)]),
+or([((UnsafeDiv(q, 2) = r)) -> ((n <= 5)),a,b,((UnsafeDiv(q, 2) = r)) -> (!((n <= 5)));int(1..2)]) 
+
+--
+
+UnsafeDiv(q, 2), 
+   ~~> div_to_bubble ([("Bubble", 6000)]) 
+{SafeDiv(q, 2) @ (2 != 0)} 
+
+--
+
+or([(a) -> (z),(z) -> (a);int(1..2)]),
+or([(b) -> (c),(b) -> (!(c));int(1..2)]),
+((l = 10)) -> ((l = 10)),
+or([((n <= 5)) -> ((SafeMod(m,2) = 0)),((SafeMod(m,2) = 0)) -> ((n <= 5));int(1..2)]),
+or([((n <= 5)) -> ((SafeMod(m,2) = 0)),a,b,((SafeMod(m,2) = 0)) -> ((n <= 5));int(1..2)]),
+(o = n),
+(d = (n <= 5)),
+(p = SafeMod(m,2)),
+or([((o <= 5)) -> ((p = 0)),((SafeMod(m,2) = 0)) -> (d);int(1..2)]),
+or([((o <= 5)) -> ((p = 0)),a,b,((SafeMod(m,2) = 0)) -> (d);int(1..2)]),
+or([((SafeDiv(q, 2) = r)) -> ((n <= 5)),((SafeDiv(q, 2) = r)) -> (!((n <= 5)));int(1..2)]),
+or([(({SafeDiv(q, 2) @ (2 != 0)} = r)) -> ((n <= 5)),a,b,((UnsafeDiv(q, 2) = r)) -> (!((n <= 5)));int(1..2)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+or([(a) -> (z),(z) -> (a);int(1..2)]),
+or([(b) -> (c),(b) -> (!(c));int(1..2)]),
+((l = 10)) -> ((l = 10)),
+or([((n <= 5)) -> ((SafeMod(m,2) = 0)),((SafeMod(m,2) = 0)) -> ((n <= 5));int(1..2)]),
+or([((n <= 5)) -> ((SafeMod(m,2) = 0)),a,b,((SafeMod(m,2) = 0)) -> ((n <= 5));int(1..2)]),
+(o = n),
+(d = (n <= 5)),
+(p = SafeMod(m,2)),
+or([((o <= 5)) -> ((p = 0)),((SafeMod(m,2) = 0)) -> (d);int(1..2)]),
+or([((o <= 5)) -> ((p = 0)),a,b,((SafeMod(m,2) = 0)) -> (d);int(1..2)]),
+or([((SafeDiv(q, 2) = r)) -> ((n <= 5)),((SafeDiv(q, 2) = r)) -> (!((n <= 5)));int(1..2)]),
+or([((SafeDiv(q, 2) = r)) -> ((n <= 5)),a,b,((UnsafeDiv(q, 2) = r)) -> (!((n <= 5)));int(1..2)]) 
+
+--
+
+UnsafeDiv(q, 2), 
+   ~~> div_to_bubble ([("Bubble", 6000)]) 
+{SafeDiv(q, 2) @ (2 != 0)} 
+
+--
+
+or([(a) -> (z),(z) -> (a);int(1..2)]),
+or([(b) -> (c),(b) -> (!(c));int(1..2)]),
+((l = 10)) -> ((l = 10)),
+or([((n <= 5)) -> ((SafeMod(m,2) = 0)),((SafeMod(m,2) = 0)) -> ((n <= 5));int(1..2)]),
+or([((n <= 5)) -> ((SafeMod(m,2) = 0)),a,b,((SafeMod(m,2) = 0)) -> ((n <= 5));int(1..2)]),
+(o = n),
+(d = (n <= 5)),
+(p = SafeMod(m,2)),
+or([((o <= 5)) -> ((p = 0)),((SafeMod(m,2) = 0)) -> (d);int(1..2)]),
+or([((o <= 5)) -> ((p = 0)),a,b,((SafeMod(m,2) = 0)) -> (d);int(1..2)]),
+or([((SafeDiv(q, 2) = r)) -> ((n <= 5)),((SafeDiv(q, 2) = r)) -> (!((n <= 5)));int(1..2)]),
+or([((SafeDiv(q, 2) = r)) -> ((n <= 5)),a,b,(({SafeDiv(q, 2) @ (2 != 0)} = r)) -> (!((n <= 5)));int(1..2)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+or([(a) -> (z),(z) -> (a);int(1..2)]),
+or([(b) -> (c),(b) -> (!(c));int(1..2)]),
+((l = 10)) -> ((l = 10)),
+or([((n <= 5)) -> ((SafeMod(m,2) = 0)),((SafeMod(m,2) = 0)) -> ((n <= 5));int(1..2)]),
+or([((n <= 5)) -> ((SafeMod(m,2) = 0)),a,b,((SafeMod(m,2) = 0)) -> ((n <= 5));int(1..2)]),
+(o = n),
+(d = (n <= 5)),
+(p = SafeMod(m,2)),
+or([((o <= 5)) -> ((p = 0)),((SafeMod(m,2) = 0)) -> (d);int(1..2)]),
+or([((o <= 5)) -> ((p = 0)),a,b,((SafeMod(m,2) = 0)) -> (d);int(1..2)]),
+or([((SafeDiv(q, 2) = r)) -> ((n <= 5)),((SafeDiv(q, 2) = r)) -> (!((n <= 5)));int(1..2)]),
+or([((SafeDiv(q, 2) = r)) -> ((n <= 5)),a,b,((SafeDiv(q, 2) = r)) -> (!((n <= 5)));int(1..2)]) 
+
+--
+
+(a) -> (z), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
+Ineq(a, z, 0) 
+
+--
+
+(z) -> (a), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
+Ineq(z, a, 0) 
+
+--
+
+(b) -> (c), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
+Ineq(b, c, 0) 
+
+--
+
+(b) -> (!(c)), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
+ReifyImply(!(c), b) 
+
+--
+
+(d = (n <= 5)), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify((n <= 5), d) 
+
+--
+
+((l = 10)) -> ((l = 10)), 
+   ~~> flatten_imply ([("Minion", 4200)]) 
+(__0) -> ((l = 10)) 
+new variables:
+  find __0: bool
+new constraints:
+  __0 =aux (l = 10)
+--
+
+(__0) -> ((l = 10)), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
+ReifyImply((l = 10), __0) 
+
+--
+
+__0 =aux (l = 10), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify((l = 10), __0) 
+
+--
+
+((n <= 5)) -> ((SafeMod(m,2) = 0)), 
+   ~~> flatten_imply ([("Minion", 4200)]) 
+(__1) -> ((SafeMod(m,2) = 0)) 
+new variables:
+  find __1: bool
+new constraints:
+  __1 =aux (n <= 5)
+--
+
+(__1) -> ((SafeMod(m,2) = 0)), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
+ReifyImply((SafeMod(m,2) = 0), __1) 
+
+--
+
+__1 =aux (n <= 5), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify((n <= 5), __1) 
+
+--
+
+(SafeMod(m,2) = 0), 
+   ~~> introduce_modeq ([("Minion", 4200)]) 
+ModEq(m, 2, 0) 
+
+--
+
+((SafeMod(m,2) = 0)) -> ((n <= 5)), 
+   ~~> flatten_imply ([("Minion", 4200)]) 
+(__2) -> ((n <= 5)) 
+new variables:
+  find __2: bool
+new constraints:
+  __2 =aux (SafeMod(m,2) = 0)
+--
+
+(__2) -> ((n <= 5)), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
+ReifyImply((n <= 5), __2) 
+
+--
+
+__2 =aux (SafeMod(m,2) = 0), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify((SafeMod(m,2) = 0), __2) 
+
+--
+
+((n <= 5)) -> ((SafeMod(m,2) = 0)), 
+   ~~> flatten_imply ([("Minion", 4200)]) 
+(__3) -> ((SafeMod(m,2) = 0)) 
+new variables:
+  find __3: bool
+new constraints:
+  __3 =aux (n <= 5)
+--
+
+(__3) -> ((SafeMod(m,2) = 0)), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
+ReifyImply((SafeMod(m,2) = 0), __3) 
+
+--
+
+__3 =aux (n <= 5), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify((n <= 5), __3) 
+
+--
+
+(SafeMod(m,2) = 0), 
+   ~~> introduce_modeq ([("Minion", 4200)]) 
+ModEq(m, 2, 0) 
+
+--
+
+((SafeMod(m,2) = 0)) -> ((n <= 5)), 
+   ~~> flatten_imply ([("Minion", 4200)]) 
+(__4) -> ((n <= 5)) 
+new variables:
+  find __4: bool
+new constraints:
+  __4 =aux (SafeMod(m,2) = 0)
+--
+
+(__4) -> ((n <= 5)), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
+ReifyImply((n <= 5), __4) 
+
+--
+
+__4 =aux (SafeMod(m,2) = 0), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify((SafeMod(m,2) = 0), __4) 
+
+--
+
+(p = SafeMod(m,2)), 
+   ~~> introduce_modeq ([("Minion", 4200)]) 
+ModEq(m, 2, p) 
+
+--
+
+((o <= 5)) -> ((p = 0)), 
+   ~~> flatten_imply ([("Minion", 4200)]) 
+(__5) -> ((p = 0)) 
+new variables:
+  find __5: bool
+new constraints:
+  __5 =aux (o <= 5)
+--
+
+(__5) -> ((p = 0)), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
+ReifyImply((p = 0), __5) 
+
+--
+
+__5 =aux (o <= 5), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify((o <= 5), __5) 
+
+--
+
+((SafeMod(m,2) = 0)) -> (d), 
+   ~~> flatten_imply ([("Minion", 4200)]) 
+(__6) -> (d) 
+new variables:
+  find __6: bool
+new constraints:
+  __6 =aux (SafeMod(m,2) = 0)
+--
+
+(__6) -> (d), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
+Ineq(__6, d, 0) 
+
+--
+
+__6 =aux (SafeMod(m,2) = 0), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify((SafeMod(m,2) = 0), __6) 
+
+--
+
+((o <= 5)) -> ((p = 0)), 
+   ~~> flatten_imply ([("Minion", 4200)]) 
+(__7) -> ((p = 0)) 
+new variables:
+  find __7: bool
+new constraints:
+  __7 =aux (o <= 5)
+--
+
+(__7) -> ((p = 0)), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
+ReifyImply((p = 0), __7) 
+
+--
+
+__7 =aux (o <= 5), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify((o <= 5), __7) 
+
+--
+
+((SafeMod(m,2) = 0)) -> (d), 
+   ~~> flatten_imply ([("Minion", 4200)]) 
+(__8) -> (d) 
+new variables:
+  find __8: bool
+new constraints:
+  __8 =aux (SafeMod(m,2) = 0)
+--
+
+(__8) -> (d), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
+Ineq(__8, d, 0) 
+
+--
+
+__8 =aux (SafeMod(m,2) = 0), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify((SafeMod(m,2) = 0), __8) 
+
+--
+
+((SafeDiv(q, 2) = r)) -> ((n <= 5)), 
+   ~~> flatten_imply ([("Minion", 4200)]) 
+(__9) -> ((n <= 5)) 
+new variables:
+  find __9: bool
+new constraints:
+  __9 =aux (SafeDiv(q, 2) = r)
+--
+
+(__9) -> ((n <= 5)), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
+ReifyImply((n <= 5), __9) 
+
+--
+
+__9 =aux (SafeDiv(q, 2) = r), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify((SafeDiv(q, 2) = r), __9) 
+
+--
+
+((SafeDiv(q, 2) = r)) -> (!((n <= 5))), 
+   ~~> flatten_imply ([("Minion", 4200)]) 
+(__10) -> (!((n <= 5))) 
+new variables:
+  find __10: bool
+new constraints:
+  __10 =aux (SafeDiv(q, 2) = r)
+--
+
+(__10) -> (!((n <= 5))), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
+ReifyImply(!((n <= 5)), __10) 
+
+--
+
+__10 =aux (SafeDiv(q, 2) = r), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify((SafeDiv(q, 2) = r), __10) 
+
+--
+
+!((n <= 5)), 
+   ~~> flatten_generic ([("Minion", 4200)]) 
+!(__11) 
+new variables:
+  find __11: bool
+new constraints:
+  __11 =aux (n <= 5)
+--
+
+__11 =aux (n <= 5), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify((n <= 5), __11) 
+
+--
+
+((SafeDiv(q, 2) = r)) -> ((n <= 5)), 
+   ~~> flatten_imply ([("Minion", 4200)]) 
+(__12) -> ((n <= 5)) 
+new variables:
+  find __12: bool
+new constraints:
+  __12 =aux (SafeDiv(q, 2) = r)
+--
+
+(__12) -> ((n <= 5)), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
+ReifyImply((n <= 5), __12) 
+
+--
+
+__12 =aux (SafeDiv(q, 2) = r), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify((SafeDiv(q, 2) = r), __12) 
+
+--
+
+((SafeDiv(q, 2) = r)) -> (!((n <= 5))), 
+   ~~> flatten_imply ([("Minion", 4200)]) 
+(__13) -> (!((n <= 5))) 
+new variables:
+  find __13: bool
+new constraints:
+  __13 =aux (SafeDiv(q, 2) = r)
+--
+
+(__13) -> (!((n <= 5))), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
+ReifyImply(!((n <= 5)), __13) 
+
+--
+
+__13 =aux (SafeDiv(q, 2) = r), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify((SafeDiv(q, 2) = r), __13) 
+
+--
+
+!((n <= 5)), 
+   ~~> flatten_generic ([("Minion", 4200)]) 
+!(__14) 
+new variables:
+  find __14: bool
+new constraints:
+  __14 =aux (n <= 5)
+--
+
+__14 =aux (n <= 5), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify((n <= 5), __14) 
+
+--
+
+(SafeMod(m,2) = 0), 
+   ~~> introduce_modeq ([("Minion", 4200)]) 
+ModEq(m, 2, 0) 
+
+--
+
+(SafeMod(m,2) = 0), 
+   ~~> introduce_modeq ([("Minion", 4200)]) 
+ModEq(m, 2, 0) 
+
+--
+
+(SafeMod(m,2) = 0), 
+   ~~> introduce_modeq ([("Minion", 4200)]) 
+ModEq(m, 2, 0) 
+
+--
+
+(SafeMod(m,2) = 0), 
+   ~~> introduce_modeq ([("Minion", 4200)]) 
+ModEq(m, 2, 0) 
+
+--
+
+(SafeDiv(q, 2) = r), 
+   ~~> introduce_diveq ([("Minion", 4200)]) 
+DivEq(q, 2, r) 
+
+--
+
+(SafeDiv(q, 2) = r), 
+   ~~> introduce_diveq ([("Minion", 4200)]) 
+DivEq(q, 2, r) 
+
+--
+
+(SafeDiv(q, 2) = r), 
+   ~~> introduce_diveq ([("Minion", 4200)]) 
+DivEq(q, 2, r) 
+
+--
+
+(SafeDiv(q, 2) = r), 
+   ~~> introduce_diveq ([("Minion", 4200)]) 
+DivEq(q, 2, r) 
+
+--
+
+!(c), 
+   ~~> not_literal_to_wliteral ([("Minion", 4100)]) 
+WatchedLiteral(c,false) 
+
+--
+
+(n <= 5), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(n, 5, 0) 
+
+--
+
+(n <= 5), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(n, 5, 0) 
+
+--
+
+(n <= 5), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(n, 5, 0) 
+
+--
+
+(n <= 5), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(n, 5, 0) 
+
+--
+
+!(__11), 
+   ~~> not_literal_to_wliteral ([("Minion", 4100)]) 
+WatchedLiteral(__11,false) 
+
+--
+
+(n <= 5), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(n, 5, 0) 
+
+--
+
+!(__14), 
+   ~~> not_literal_to_wliteral ([("Minion", 4100)]) 
+WatchedLiteral(__14,false) 
+
+--
+
+(n <= 5), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(n, 5, 0) 
+
+--
+
+(n <= 5), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(n, 5, 0) 
+
+--
+
+(o <= 5), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(o, 5, 0) 
+
+--
+
+(o <= 5), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(o, 5, 0) 
+
+--
+
+(n <= 5), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(n, 5, 0) 
+
+--
+
+(n <= 5), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(n, 5, 0) 
+
+--
+
+or([Ineq(a, z, 0),Ineq(z, a, 0);int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+or([Ineq(a, z, 0),Ineq(z, a, 0);int(1..)]) 
+
+--
+
+or([Ineq(b, c, 0),ReifyImply(WatchedLiteral(c,false), b);int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+or([Ineq(b, c, 0),ReifyImply(WatchedLiteral(c,false), b);int(1..)]) 
+
+--
+
+or([ReifyImply(ModEq(m, 2, 0), __1),ReifyImply(Ineq(n, 5, 0), __2);int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+or([ReifyImply(ModEq(m, 2, 0), __1),ReifyImply(Ineq(n, 5, 0), __2);int(1..)]) 
+
+--
+
+or([ReifyImply(ModEq(m, 2, 0), __3),a,b,ReifyImply(Ineq(n, 5, 0), __4);int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+or([ReifyImply(ModEq(m, 2, 0), __3),a,b,ReifyImply(Ineq(n, 5, 0), __4);int(1..)]) 
+
+--
+
+or([ReifyImply((p = 0), __5),Ineq(__6, d, 0);int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+or([ReifyImply((p = 0), __5),Ineq(__6, d, 0);int(1..)]) 
+
+--
+
+or([ReifyImply((p = 0), __7),a,b,Ineq(__8, d, 0);int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+or([ReifyImply((p = 0), __7),a,b,Ineq(__8, d, 0);int(1..)]) 
+
+--
+
+or([ReifyImply(Ineq(n, 5, 0), __9),ReifyImply(WatchedLiteral(__11,false), __10);int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+or([ReifyImply(Ineq(n, 5, 0), __9),ReifyImply(WatchedLiteral(__11,false), __10);int(1..)]) 
+
+--
+
+or([ReifyImply(Ineq(n, 5, 0), __12),a,b,ReifyImply(WatchedLiteral(__14,false), __13);int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+or([ReifyImply(Ineq(n, 5, 0), __12),a,b,ReifyImply(WatchedLiteral(__14,false), __13);int(1..)]) 
+
+--
+
+Final model:
+
+find a: bool
+find b: bool
+find c: bool
+find d: bool
+find e: bool
+find l: int(1..10)
+find m: int(1..10)
+find n: int(1..10)
+find o: int(1..10)
+find p: int(1..10)
+find q: int(1..10)
+find r: int(1..10)
+find x: bool
+find y: bool
+find z: bool
+find __0: bool
+find __1: bool
+find __2: bool
+find __3: bool
+find __4: bool
+find __5: bool
+find __6: bool
+find __7: bool
+find __8: bool
+find __9: bool
+find __10: bool
+find __11: bool
+find __12: bool
+find __13: bool
+find __14: bool
+
+such that
+
+or([Ineq(a, z, 0),Ineq(z, a, 0);int(1..)]),
+or([Ineq(b, c, 0),ReifyImply(WatchedLiteral(c,false), b);int(1..)]),
+ReifyImply((l = 10), __0),
+or([ReifyImply(ModEq(m, 2, 0), __1),ReifyImply(Ineq(n, 5, 0), __2);int(1..)]),
+or([ReifyImply(ModEq(m, 2, 0), __3),a,b,ReifyImply(Ineq(n, 5, 0), __4);int(1..)]),
+(o = n),
+Reify(Ineq(n, 5, 0), d),
+ModEq(m, 2, p),
+or([ReifyImply((p = 0), __5),Ineq(__6, d, 0);int(1..)]),
+or([ReifyImply((p = 0), __7),a,b,Ineq(__8, d, 0);int(1..)]),
+or([ReifyImply(Ineq(n, 5, 0), __9),ReifyImply(WatchedLiteral(__11,false), __10);int(1..)]),
+or([ReifyImply(Ineq(n, 5, 0), __12),a,b,ReifyImply(WatchedLiteral(__14,false), __13);int(1..)]),
+Reify((l = 10), __0),
+Reify(Ineq(n, 5, 0), __1),
+Reify(ModEq(m, 2, 0), __2),
+Reify(Ineq(n, 5, 0), __3),
+Reify(ModEq(m, 2, 0), __4),
+Reify(Ineq(o, 5, 0), __5),
+Reify(ModEq(m, 2, 0), __6),
+Reify(Ineq(o, 5, 0), __7),
+Reify(ModEq(m, 2, 0), __8),
+Reify(DivEq(q, 2, r), __9),
+Reify(DivEq(q, 2, r), __10),
+Reify(Ineq(n, 5, 0), __11),
+Reify(DivEq(q, 2, r), __12),
+Reify(DivEq(q, 2, r), __13),
+Reify(Ineq(n, 5, 0), __14)
+
