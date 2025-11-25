@@ -80,7 +80,7 @@ fn parse_matrix(
                 symbols_ptr.clone(),
             )?);
         } else {
-            domain = Some(parse_domain(child, source_code)?);
+            domain = Some(parse_domain(child, source_code, symbols_ptr.clone())?);
         }
     }
     if domain.is_none() {
