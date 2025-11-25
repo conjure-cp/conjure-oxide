@@ -1,0 +1,124 @@
+name: Test PR
+
+# We run this action for PRs for two configurations only (ubuntu/debug/stable and ubuntu/debug/nightly) with caching enabled
+# On main, we run all configurations, without caching (to save space on GitHub)
+
+on:
+  pull_request:
+    paths:
+      - crates/**
+      - tests-integration/**
+      - Cargo.*
+      - rust-toolchain.toml
+      - .github/workflows/test-pr.yml
+  workflow_dispatch:
+
+env:
+  # we define the following 3 values as the defaults here, matrix jobs may overwrite their values.
+  os: ubuntu-latest
+  rust_release: stable
+  compiler_profile: debug
+  READ_ONLY_GITHUB_TOKEN: ${{ secrets.PUBLIC_REPO_TOKEN }}
+
+jobs:
+  # test-pr and test-main are identical, except for:
+  # - rust cache, and
+  # - its smaller scope (see commented out options in the matrix)
+
+  test_pr:
+    name: "Test (PR)"
+    if: ${{ github.event_name == 'pull_request' }}
+
+    timeout-minutes: 120
+    strategy:
+      # run all combinations of the matrix even if one combination fails.
+      fail-fast: false
+      matrix:
+        compiler_profile:
+          # - release
+          - debug
+        rust_release:
+          - stable
+          - nightly
+        conjure_version:
+          - 2.5.1
+        os:
+          - ubuntu-latest
+          # - macos-latest
+        include:
+          - os: ubuntu-latest
+            release_suffix: linux
+          # - os: macos-latest
+          #   release_suffix: macos-arm
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: free_disk_space.sh
+        run: .github/workflows/tools/free_disk_space.sh
+
+      - name: Restore cache
+        id: restore_cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+            ~/conjure
+          key: test--${{ matrix.os }}--${{ matrix.rust_release }}--${{ matrix.compiler_profile }}--${{ github.event.repository.updated_at }}
+          restore-keys: test--${{ matrix.os }}--${{ matrix.rust_release }}--${{ matrix.compiler_profile }}
+
+      # Override RUSTUP_TOOLCHAIN to nightly when we are testing with nightly
+      # This value is read from the rust-toolchain.toml file otherwise
+      - name: Set RUSTUP_TOOLCHAIN
+        if: ${{ matrix.rust_release == 'nightly' }}
+        run: echo "RUSTUP_TOOLCHAIN=nightly" >> $GITHUB_ENV
+
+      - name: rustup
+        run: rustup update ${{ matrix.rust_release }} && rustup default ${{ matrix.rust_release }}
+
+      - uses: ./.github/actions/install-conjure
+        with:
+          os_arch: ${{ matrix.release_suffix }}
+          version: ${{ matrix.conjure_version }}
+
+      - name: Build conjure-oxide (debug)
+        run: cargo build --bin conjure-oxide
+        if: ${{ matrix.compiler_profile == 'debug' }}
+      - name: Run tests (debug)
+        run: cargo test --workspace
+        if: ${{ matrix.compiler_profile == 'debug' }}
+
+      - name: Build conjure-oxide (release)
+        run: cargo build --bin conjure-oxide --release
+        if: ${{ matrix.compiler_profile == 'release' }}
+      - name: Run tests (release)
+        run: cargo test --workspace --release
+        if: ${{ matrix.compiler_profile == 'release' }}
+
+      - name: cargo-audit
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.compiler_profile == 'debug' }}
+        run: |
+          which cargo-audit ||cargo install cargo-audit
+          cargo audit
+
+      - name: Save cache
+        if: ${{ always() && steps.restore_cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+            ~/conjure
+          key: test--${{ matrix.os }}--${{ matrix.rust_release }}--${{ matrix.compiler_profile }}--${{ github.event.repository.updated_at }}

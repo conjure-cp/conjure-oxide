@@ -1,0 +1,157 @@
+name: Coverage PR
+
+on:
+  pull_request:
+    paths:
+      - crates/**
+      - tests-integration/**
+      - tools/coverage.sh
+      - .github/workflows/code-coverage-pr.yml
+  workflow_dispatch:
+
+env:
+  # we define the following 3 values as the defaults here, matrix jobs may overwrite their values.
+  os: ubuntu-latest
+  rust_release: nightly
+  compiler_profile: debug
+
+jobs:
+  doc-coverage:
+    name: "Documentation"
+    timeout-minutes: 120
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v5
+
+      - name: free_disk_space.sh
+        run: .github/workflows/tools/free_disk_space.sh
+
+      - name: Restore cache
+        id: restore_cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+            ~/conjure
+          key: doccov--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.event.repository.updated_at }}
+          restore-keys: doccov--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}
+
+      - name: Install rust
+        run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
+
+      - name: Install pandoc
+        uses: pandoc/actions/setup@v1
+
+      - name: Generate documentation coverage report
+        run: |
+          echo "# Documentation Coverage Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          ./tools/ci/generate-doc-coverage-summary-md.bash >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "PR: [#${{github.event.pull_request.number}}](${{github.event.pull_request.html_url}})" >> $GITHUB_STEP_SUMMARY
+          echo "Commit: [${{github.event.pull_request.head.sha}}](https://github.com/conjure-cp/conjure-oxide/compare/${{github.event.pull_request.head.sha}})" >> $GITHUB_STEP_SUMMARY
+          echo ""  >> $GITHUB_STEP_SUMMARY
+          ./tools/ci/generate-doc-coverage-report-md.bash >> $GITHUB_STEP_SUMMARY
+
+      - name: Generate summary
+        run: |
+          ./tools/ci/generate-doc-coverage-summary-md.bash > pr-doc-coverage-summary.txt
+
+      - name: Upload summary as artifact (for later use)
+        uses: actions/upload-artifact@v5
+        with:
+          name: pr-doc-coverage-summary
+          path: pr-doc-coverage-summary.txt
+          overwrite: false
+
+      - name: Save cache
+        if: ${{ always() && steps.restore_cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+            ~/conjure
+          key: doccov--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.event.repository.updated_at }}
+
+  coverage:
+    name: "Code"
+    timeout-minutes: 120
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v5
+
+      - name: free_disk_space.sh
+        run: .github/workflows/tools/free_disk_space.sh
+
+      - name: Restore cache
+        id: restore_cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+            ~/conjure
+          key: codecov--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.event.repository.updated_at }}
+          restore-keys: codecov--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}
+
+      - name: Get Sha
+        id: sha
+        run: |
+          if [[ ${{ github.event_name }} == 'pull_request' ]]
+          then
+            echo -e "sha=${{ github.event.pull_request.head.sha }}" >> "$GITHUB_OUTPUT"
+            echo -e "sha=${{ github.event.pull_request.head.sha }}"
+          else
+            echo -e "sha=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+            echo -e "sha=${{ github.sha }}"
+          fi
+
+      - name: Install rust
+        run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
+
+      - uses: ./.github/actions/install-conjure
+        with:
+          os_arch: linux
+          version: 2.5.1
+
+      - name: Generate code coverage reports
+        run: |
+          ./tools/coverage.sh
+
+      - run: |
+          mkdir -p deploy/
+          cp -r target/debug/coverage/* deploy/     # html
+          cp target/debug/lcov.info deploy/         # used for comments
+          echo "${{github.event.pull_request.number}}" > deploy/prnumber
+
+      - name: Archive code coverage results for deployment
+        uses: actions/upload-artifact@v5
+        with:
+          name: code-coverage-${{ steps.sha.outputs.sha }}
+          path: deploy/**
+
+      - name: Save cache
+        if: ${{ always() && steps.restore_cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+            ~/conjure
+          key: codecov--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.event.repository.updated_at }}
