@@ -78,6 +78,7 @@ impl Representation for SATLogInt {
         &self,
         value: Literal,
     ) -> Result<std::collections::BTreeMap<Name, Literal>, ApplicationError> {
+        panic("This should not have been called. It's a big suprise!");
         let Literal::Int(mut value_i32) = value else {
             return Err(ApplicationError::RuleNotApplicable);
         };
