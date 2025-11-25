@@ -56,6 +56,13 @@ install-cargo-extensions: .installed-cargo-extensions.checkpoint
 coverage:
 	./tools/coverage.sh
 
+
+clean-tests:
+	find ./tests-integration/tests/integration/ -type f -name '**generated**' -delete
+	find ./tests-integration/tests/integration/ -type f -name '**expected**' -delete
+	find ./tests-integration/tests/integration/ -type f -name '**stats**' -delete
+
+
 .PHONY: help
 ## Shows this help text
 help: show-help
