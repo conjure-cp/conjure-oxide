@@ -139,7 +139,6 @@ pub fn index_domains(matrix: AbstractLiteral<Literal>) -> Vec<Moo<GroundDomain>>
             .collect_vec();
         match element {
             AbstractLiteral::Set(_) => vec![],
-            AbstractLiteral::MSet(_) => vec![], // TODO @cc398: check this line
             AbstractLiteral::Matrix(_, domain) => {
                 let mut index_domains = vec![domain];
                 index_domains.extend(child_index_domains);
