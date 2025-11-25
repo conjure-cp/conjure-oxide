@@ -22,7 +22,7 @@ such that
 
 product([price[i],x#matrix_to_atom[i];int(1..2)])
  | i: int(1..6),])), 
-   ~~> select_representation_matrix ([("Base", 8001)]) 
+   ~~> select_representation_matrix ([("Representations", 8001)]) 
 (total_ = sum([given i: int(1..6)
 
 such that
@@ -47,7 +47,7 @@ total_,
 Model before rewriting:
 
 find i: int(1..6)
-find __0: int(215..580)
+find __0: int(215, 275, 335, 355, 420, 580)
 find __1: int(0..100000)
 
 such that
@@ -80,7 +80,7 @@ FlatProductEq(__1,__0,__2)
 Final model:
 
 find i: int(1..6)
-find __0: int(215..580)
+find __0: int(215, 275, 335, 355, 420, 580)
 find __1: int(0..100000)
 find __2: int(0..58000000)
 
@@ -154,7 +154,7 @@ sum([given i: int(1..6)
 such that
 
 product([price[i],x#matrix_to_atom[i];int(1..2)])
- | i: int(1..6),__0: int(215..580),__1: int(0..100000),__2: int(0..58000000),]), 
+ | i: int(1..6),__0: int(215, 275, 335, 355, 420, 580),__1: int(0..100000),__2: int(0..58000000),]), 
    ~~> expand_comprehension_ac ([("Better_AC_Comprehension_Expansion", 2001)]) 
 sum([product([[215,275,335,355,420,580;int(1..)][1],x#matrix_to_atom[1];int(1..)]),product([[215,275,335,355,420,580;int(1..)][2],x#matrix_to_atom[2];int(1..)]),product([[215,275,335,355,420,580;int(1..)][3],x#matrix_to_atom[3];int(1..)]),product([[215,275,335,355,420,580;int(1..)][4],x#matrix_to_atom[4];int(1..)]),product([[215,275,335,355,420,580;int(1..)][5],x#matrix_to_atom[5];int(1..)]),product([[215,275,335,355,420,580;int(1..)][6],x#matrix_to_atom[6];int(1..)]);int(1..)]) 
 

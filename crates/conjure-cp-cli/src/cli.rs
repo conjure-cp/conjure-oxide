@@ -4,7 +4,6 @@ use clap::{Args, Parser, Subcommand, arg, command};
 
 use clap_complete::Shell;
 use conjure_cp::solver::SolverFamily;
-use conjure_cp::solver::adaptors::smt::IntTheory;
 
 use crate::{solve, test_solve};
 
@@ -27,6 +26,8 @@ pub enum Command {
     TestSolve(test_solve::Args),
     /// Generate a completion script for the shell provided
     Completion(CompletionArgs),
+    // Run the language server
+    ServerLSP,
 }
 
 /// Global command line arguments.
@@ -57,7 +58,6 @@ pub struct GlobalArgs {
     /// Solver family to use
     #[arg(
         long,
-        value_enum,
         value_name = "SOLVER",
         default_value_t = SolverFamily::Minion,
         short = 's',
@@ -114,15 +114,6 @@ pub struct GlobalArgs {
     /// Use the experimental optimized / dirty-clean rewriter, instead of the default rewriter
     #[arg(long, default_value_t = false, global = true, help_heading = EXPERIMENTAL_HELP_HEADING)]
     pub use_optimised_rewriter: bool,
-
-    /// SMT integer theory to use when `--solver smt` is selected
-    #[arg(long,
-        value_enum,
-        default_value_t = IntTheory::Lia,
-        global = true,
-        help = "SMT integer theory to use (lia | bv)"
-    )]
-    pub smt_int_theory: IntTheory,
 
     /// Exit after all comprehensions have been unrolled, printing the number of expressions at that point.
     ///

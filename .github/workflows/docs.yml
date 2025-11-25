@@ -1,4 +1,4 @@
-name: "Documentation"
+name: Documentation
 
 on:
   push:
@@ -10,6 +10,9 @@ on:
 
 permissions:
   contents: write
+
+env:
+  READ_ONLY_GITHUB_TOKEN: ${{ secrets.PUBLIC_REPO_TOKEN }}
 
 jobs:
   generate_docs:
@@ -28,13 +31,10 @@ jobs:
         working-directory: docs
         run: |
           mdbook build
-          mkdir -p book/tree-morph
-          cp ../crates/tree-morph/src/docs/lib.md book/tree-morph/README.md
-
       - name: Deploy to Github Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          commit-message: "Actions: Deploy the documentation site 🚀"
+          commit-message: "Actions: Deploy the documentation site"
           folder: docs/book
           target-folder: ""
           # remove all pages that dont exist anymore, except in these dirs
