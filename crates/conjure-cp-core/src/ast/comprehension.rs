@@ -2,15 +2,15 @@
 
 use std::{cell::RefCell, collections::BTreeSet, fmt::Display, rc::Rc, sync::atomic::AtomicBool};
 
+use crate::{ast::Metadata, into_matrix_expr, matrix_expr};
+use conjure_cp_core::ast::ReturnType;
 use itertools::Itertools as _;
 use serde::{Deserialize, Serialize};
 use uniplate::{Biplate, Uniplate};
 
-use crate::{ast::Metadata, into_matrix_expr, matrix_expr};
-
 use super::{
-    DeclarationPtr, Domain, Expression, Moo, Name, Range, SubModel, SymbolTable,
-    ac_operators::ACOperatorKind,
+    DeclarationPtr, Domain, DomainPtr, Expression, Moo, Name, Range, SubModel, SymbolTable,
+    Typeable, ac_operators::ACOperatorKind,
 };
 
 // TODO: move this global setting somewhere better?
@@ -29,7 +29,7 @@ pub static USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS: AtomicBool = AtomicBool::n
 // ~ nikdewally, 10/06/25
 
 /// A comprehension.
-#[derive(Clone, PartialEq, Eq, Uniplate, Serialize, Deserialize, Debug)]
+#[derive(Clone, PartialEq, Eq, Hash, Uniplate, Serialize, Deserialize, Debug)]
 #[biplate(to=SubModel)]
 #[biplate(to=Expression)]
 #[non_exhaustive]
@@ -43,7 +43,7 @@ pub struct Comprehension {
 }
 
 impl Comprehension {
-    pub fn domain_of(&self) -> Option<Domain> {
+    pub fn domain_of(&self) -> Option<DomainPtr> {
         let return_expr_domain = self
             .return_expression_submodel
             .clone()
@@ -51,9 +51,9 @@ impl Comprehension {
             .domain_of()?;
 
         // return a list (matrix with index domain int(1..)) of return_expr elements
-        Some(Domain::Matrix(
-            Box::new(return_expr_domain),
-            vec![Domain::Int(vec![Range::UnboundedR(1)])],
+        Some(Domain::matrix(
+            return_expr_domain,
+            vec![Domain::int(vec![Range::UnboundedR(1)])],
         ))
     }
 
@@ -88,6 +88,15 @@ impl Comprehension {
     }
 }
 
+impl Typeable for Comprehension {
+    fn return_type(&self) -> ReturnType {
+        self.return_expression_submodel
+            .clone()
+            .into_single_expression()
+            .return_type()
+    }
+}
+
 impl Display for Comprehension {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let generators: String = self
@@ -96,10 +105,10 @@ impl Display for Comprehension {
             .clone()
             .into_iter_local()
             .map(|(name, decl): (Name, DeclarationPtr)| {
-                let domain: Domain = decl.domain().unwrap();
+                let domain: DomainPtr = decl.domain().unwrap();
                 (name, domain)
             })
-            .map(|(name, domain): (Name, Domain)| format!("{name}: {domain}"))
+            .map(|(name, domain)| format!("{name}: {domain}"))
             .join(",");
 
         let guards = self
