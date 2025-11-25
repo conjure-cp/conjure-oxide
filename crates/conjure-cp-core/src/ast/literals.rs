@@ -262,8 +262,12 @@ where
                     .join(",");
                 write!(f, "{{{entries_str}}}")
             }
-            AbstractLiteral::Function(_) => {
-                todo!()
+            AbstractLiteral::Function(entries) => {
+                let entries_str: String = entries
+                    .iter()
+                    .map(|entry| format!("{} --> {}", entry.0, entry.1))
+                    .join(",");
+                write!(f, "function({entries_str})")
             }
         }
     }
