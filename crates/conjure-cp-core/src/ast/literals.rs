@@ -6,7 +6,7 @@ use std::hash::Hasher;
 use ustr::Ustr;
 
 use polyquine::Quine;
-use uniplate::{Biplate, Uniplate};
+use uniplate::{Biplate, Tree, Uniplate};
 
 use crate::ast::Metadata;
 use crate::ast::pretty::pretty_vec;
@@ -330,8 +330,34 @@ where
                     Box::new(move |x| AbstractLiteral::Record(f1_ctx(x))),
                 )
             }
-            AbstractLiteral::Function(_) => {
-                todo!()
+            AbstractLiteral::Function(entries) => {
+                let entry_count = entries.len();
+                let flattened: Vec<T> = entries
+                    .iter()
+                    .flat_map(|(lhs, rhs)| [lhs.clone(), rhs.clone()])
+                    .collect();
+
+                let (f1_tree, f1_ctx) =
+                    <Vec<T> as Biplate<AbstractLiteral<T>>>::biplate(&flattened);
+                (
+                    f1_tree,
+                    Box::new(move |x| {
+                        let rebuilt = f1_ctx(x);
+                        assert_eq!(
+                            rebuilt.len(),
+                            entry_count * 2,
+                            "number of function literal children should remain unchanged"
+                        );
+
+                        let mut iter = rebuilt.into_iter();
+                        let mut pairs = Vec::with_capacity(entry_count);
+                        while let (Some(lhs), Some(rhs)) = (iter.next(), iter.next()) {
+                            pairs.push((lhs, rhs));
+                        }
+
+                        AbstractLiteral::Function(pairs)
+                    }),
+                )
             }
         }
     }
@@ -390,8 +416,33 @@ where
                         Box::new(move |x| AbstractLiteral::Record(f1_ctx(x))),
                     )
                 }
-                AbstractLiteral::Function(_) => {
-                    todo!()
+                AbstractLiteral::Function(entries) => {
+                    let entry_count = entries.len();
+                    let flattened: Vec<U> = entries
+                        .iter()
+                        .flat_map(|(lhs, rhs)| [lhs.clone(), rhs.clone()])
+                        .collect();
+
+                    let (f1_tree, f1_ctx) = <Vec<U> as Biplate<To>>::biplate(&flattened);
+                    (
+                        f1_tree,
+                        Box::new(move |x| {
+                            let rebuilt = f1_ctx(x);
+                            assert_eq!(
+                                rebuilt.len(),
+                                entry_count * 2,
+                                "number of function literal children should remain unchanged"
+                            );
+
+                            let mut iter = rebuilt.into_iter();
+                            let mut pairs = Vec::with_capacity(entry_count);
+                            while let (Some(lhs), Some(rhs)) = (iter.next(), iter.next()) {
+                                pairs.push((lhs, rhs));
+                            }
+
+                            AbstractLiteral::Function(pairs)
+                        }),
+                    )
                 }
             }
         }
