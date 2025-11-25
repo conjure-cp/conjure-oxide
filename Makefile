@@ -57,7 +57,7 @@ coverage:
 	./tools/coverage.sh
 
 
-untest:
+clean-tests:
 	find ./tests-integration/tests/integration/ -type f -name '**generated**' -delete
 	find ./tests-integration/tests/integration/ -type f -name '**expected**' -delete
 	find ./tests-integration/tests/integration/ -type f -name '**stats**' -delete
