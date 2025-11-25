@@ -8,13 +8,14 @@ use std::rc::Rc;
 
 use ::serde::{Deserialize, Serialize};
 
-use uniplate::{Biplate, Tree, Uniplate};
-
 use super::categories::{Category, CategoryOf};
 use super::name::Name;
 use super::serde::{DefaultWithId, HasId, ObjId};
-use super::types::Typeable;
-use super::{DecisionVariable, Domain, Expression, RecordEntry, ReturnType};
+use super::{
+    DecisionVariable, DomainPtr, Expression, GroundDomain, Moo, RecordEntry, ReturnType, Typeable,
+};
+use crate::ast::domains::HasDomain;
+use uniplate::{Biplate, Tree, Uniplate};
 
 thread_local! {
     // make each thread have its own id counter.
@@ -115,7 +116,7 @@ impl DeclarationPtr {
     /// // letting MyDomain be int(1..5)
     /// let declaration = DeclarationPtr::new(
     ///     Name::User("MyDomain".into()),
-    ///     DeclarationKind::DomainLetting(Domain::Int(vec![
+    ///     DeclarationKind::DomainLetting(Domain::int(vec![
     ///         Range::Bounded(1,5)])));
     /// ```
     pub fn new(name: Name, kind: DeclarationKind) -> DeclarationPtr {
@@ -132,10 +133,10 @@ impl DeclarationPtr {
     /// // find x: int(1..5)
     /// let declaration = DeclarationPtr::new_var(
     ///     Name::User("x".into()),
-    ///     Domain::Int(vec![Range::Bounded(1,5)]));
+    ///     Domain::int(vec![Range::Bounded(1,5)]));
     ///
     /// ```
-    pub fn new_var(name: Name, domain: Domain) -> DeclarationPtr {
+    pub fn new_var(name: Name, domain: DomainPtr) -> DeclarationPtr {
         let kind =
             DeclarationKind::DecisionVariable(DecisionVariable::new(domain, Category::Decision));
         DeclarationPtr::new(name, kind)
@@ -144,7 +145,7 @@ impl DeclarationPtr {
     /// Creates a new decision variable with the quantified category.
     ///
     /// This is useful to represent a quantified / induction variable in a comprehension.
-    pub fn new_var_quantified(name: Name, domain: Domain) -> DeclarationPtr {
+    pub fn new_var_quantified(name: Name, domain: DomainPtr) -> DeclarationPtr {
         let kind =
             DeclarationKind::DecisionVariable(DecisionVariable::new(domain, Category::Quantified));
 
@@ -161,10 +162,10 @@ impl DeclarationPtr {
     /// // letting MyDomain be int(1..5)
     /// let declaration = DeclarationPtr::new_domain_letting(
     ///     Name::User("MyDomain".into()),
-    ///     Domain::Int(vec![Range::Bounded(1,5)]));
+    ///     Domain::int(vec![Range::Bounded(1,5)]));
     ///
     /// ```
-    pub fn new_domain_letting(name: Name, domain: Domain) -> DeclarationPtr {
+    pub fn new_domain_letting(name: Name, domain: DomainPtr) -> DeclarationPtr {
         let kind = DeclarationKind::DomainLetting(domain);
         DeclarationPtr::new(name, kind)
     }
@@ -201,10 +202,10 @@ impl DeclarationPtr {
     /// // given n: int(1..5)
     /// let declaration = DeclarationPtr::new_given(
     ///     Name::User("n".into()),
-    ///     Domain::Int(vec![Range::Bounded(1,5)]));
+    ///     Domain::int(vec![Range::Bounded(1,5)]));
     ///
     /// ```
-    pub fn new_given(name: Name, domain: Domain) -> DeclarationPtr {
+    pub fn new_given(name: Name, domain: DomainPtr) -> DeclarationPtr {
         let kind = DeclarationKind::Given(domain);
         DeclarationPtr::new(name, kind)
     }
@@ -214,13 +215,13 @@ impl DeclarationPtr {
     /// # Examples
     ///
     /// ```
-    /// use conjure_cp_core::ast::{DeclarationPtr,Name,records::RecordEntry,Domain,Range};
+    /// use conjure_cp_core::ast::{DeclarationPtr,Name,RecordEntry,Domain,Range};
     ///
     /// // create declaration for field A in `find rec: record {A: int(0..1), B: int(0..2)}`
     ///
     /// let field = RecordEntry {
     ///     name: Name::User("n".into()),
-    ///     domain: Domain::Int(vec![Range::Bounded(1,5)])
+    ///     domain: Domain::int(vec![Range::Bounded(1,5)])
     /// };
     ///
     /// let declaration = DeclarationPtr::new_record_field(field);
@@ -239,22 +240,27 @@ impl DeclarationPtr {
     /// # Examples
     ///
     /// ```
-    /// use conjure_cp_core::ast::{DeclarationPtr,Name,Domain,Range};
+    /// use conjure_cp_core::ast::{DeclarationPtr, Name, Domain, Range, GroundDomain};
     ///
     /// // find a: int(1..5)
-    /// let declaration = DeclarationPtr::new_var(Name::User("a".into()),Domain::Int(vec![Range::Bounded(1,5)]));
+    /// let declaration = DeclarationPtr::new_var(Name::User("a".into()),Domain::int(vec![Range::Bounded(1,5)]));
     ///
-    /// assert!(declaration.domain().is_some_and(|x| x == Domain::Int(vec![Range::Bounded(1,5)])))
+    /// assert!(declaration.domain().is_some_and(|x| x.as_ground().unwrap() == &GroundDomain::Int(vec![Range::Bounded(1,5)])))
     ///
     /// ```
-    pub fn domain(&self) -> Option<Domain> {
+    pub fn domain(&self) -> Option<DomainPtr> {
         match &self.kind() as &DeclarationKind {
-            DeclarationKind::DecisionVariable(var) => Some(var.domain.clone()),
+            DeclarationKind::DecisionVariable(var) => Some(var.domain_of()),
             DeclarationKind::ValueLetting(e) => e.domain_of(),
             DeclarationKind::DomainLetting(domain) => Some(domain.clone()),
             DeclarationKind::Given(domain) => Some(domain.clone()),
             DeclarationKind::RecordField(domain) => Some(domain.clone()),
         }
+    }
+
+    /// Gets the domain of the declaration and fully resolve it
+    pub fn resolved_domain(&self) -> Option<Moo<GroundDomain>> {
+        self.domain()?.resolve()
     }
 
     /// Gets the kind of the declaration.
@@ -265,7 +271,7 @@ impl DeclarationPtr {
     /// use conjure_cp_core::ast::{DeclarationPtr,DeclarationKind,Name,Domain,Range};
     ///
     /// // find a: int(1..5)
-    /// let declaration = DeclarationPtr::new_var(Name::User("a".into()),Domain::Int(vec![Range::Bounded(1,5)]));
+    /// let declaration = DeclarationPtr::new_var(Name::User("a".into()),Domain::int(vec![Range::Bounded(1,5)]));
     /// assert!(matches!(&declaration.kind() as &DeclarationKind, DeclarationKind::DecisionVariable(_)))
     /// ```
     pub fn kind(&self) -> Ref<'_, DeclarationKind> {
@@ -280,7 +286,7 @@ impl DeclarationPtr {
     /// use conjure_cp_core::ast::{DeclarationPtr,Name,Domain,Range};
     ///
     /// // find a: int(1..5)
-    /// let declaration = DeclarationPtr::new_var(Name::User("a".into()),Domain::Int(vec![Range::Bounded(1,5)]));
+    /// let declaration = DeclarationPtr::new_var(Name::User("a".into()),Domain::int(vec![Range::Bounded(1,5)]));
     ///
     /// assert_eq!(&declaration.name() as &Name, &Name::User("a".into()))
     /// ```
@@ -313,7 +319,7 @@ impl DeclarationPtr {
     }
 
     /// This declaration as a domain letting, if it is one.
-    pub fn as_domain_letting(&self) -> Option<Ref<'_, Domain>> {
+    pub fn as_domain_letting(&self) -> Option<Ref<'_, DomainPtr>> {
         Ref::filter_map(self.borrow(), |x| {
             if let DeclarationKind::DomainLetting(domain) = &x.kind {
                 Some(domain)
@@ -325,7 +331,7 @@ impl DeclarationPtr {
     }
 
     /// This declaration as a mutable domain letting, if it is one.
-    pub fn as_domain_letting_mut(&mut self) -> Option<RefMut<'_, Domain>> {
+    pub fn as_domain_letting_mut(&mut self) -> Option<RefMut<'_, DomainPtr>> {
         RefMut::filter_map(self.borrow_mut(), |x| {
             if let DeclarationKind::DomainLetting(domain) = &mut x.kind {
                 Some(domain)
@@ -368,7 +374,7 @@ impl DeclarationPtr {
     /// use conjure_cp_core::ast::{DeclarationPtr, Domain, Range, Name};
     ///
     /// // find a: int(1..5)
-    /// let mut declaration = DeclarationPtr::new_var(Name::User("a".into()),Domain::Int(vec![Range::Bounded(1,5)]));
+    /// let mut declaration = DeclarationPtr::new_var(Name::User("a".into()),Domain::int(vec![Range::Bounded(1,5)]));
     ///
     /// let old_name = declaration.replace_name(Name::User("b".into()));
     /// assert_eq!(old_name,Name::User("a".into()));
@@ -409,7 +415,7 @@ impl DeclarationPtr {
     /// use conjure_cp_core::ast::{DeclarationPtr,Name,Domain,Range};
     ///
     /// // find a: int(1..5)
-    /// let declaration = DeclarationPtr::new_var(Name::User("a".into()),Domain::Int(vec![Range::Bounded(1,5)]));
+    /// let declaration = DeclarationPtr::new_var(Name::User("a".into()),Domain::int(vec![Range::Bounded(1,5)]));
     ///
     /// let mut declaration2 = declaration.clone();
     ///
@@ -484,7 +490,7 @@ impl DefaultWithId for DeclarationPtr {
 }
 
 impl Typeable for DeclarationPtr {
-    fn return_type(&self) -> Option<ReturnType> {
+    fn return_type(&self) -> ReturnType {
         match &self.kind() as &DeclarationKind {
             DeclarationKind::DecisionVariable(var) => var.return_type(),
             DeclarationKind::ValueLetting(expression) => expression.return_type(),
@@ -614,10 +620,10 @@ impl Declaration {
 pub enum DeclarationKind {
     DecisionVariable(DecisionVariable),
     ValueLetting(Expression),
-    DomainLetting(Domain),
-    Given(Domain),
+    DomainLetting(DomainPtr),
+    Given(DomainPtr),
 
     /// A named field inside a record type.
     /// e.g. A, B in record{A: int(0..1), B: int(0..2)}
-    RecordField(Domain),
+    RecordField(DomainPtr),
 }
