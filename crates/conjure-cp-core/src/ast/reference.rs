@@ -8,7 +8,7 @@ use std::fmt::{Display, Formatter};
 use uniplate::Uniplate;
 
 use super::{
-    Domain, Name,
+    DomainPtr, Expression, GroundDomain, Metadata, Moo, Name,
     categories::{Category, CategoryOf},
     domains::HasDomain,
 };
@@ -50,8 +50,18 @@ impl Reference {
         self.ptr.id()
     }
 
-    pub fn domain(&self) -> Option<Domain> {
+    pub fn domain(&self) -> Option<DomainPtr> {
         self.ptr.domain()
+    }
+
+    pub fn resolved_domain(&self) -> Option<Moo<GroundDomain>> {
+        self.domain()?.resolve()
+    }
+}
+
+impl From<Reference> for Expression {
+    fn from(value: Reference) -> Self {
+        Expression::Atomic(Metadata::new(), value.into())
     }
 }
 
@@ -68,7 +78,7 @@ impl CategoryOf for Reference {
 }
 
 impl HasDomain for Reference {
-    fn domain_of(&self) -> Domain {
+    fn domain_of(&self) -> DomainPtr {
         self.ptr.domain().unwrap_or_else(|| {
             bug!(
                 "reference ({name}) should have a domain",
