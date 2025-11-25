@@ -247,10 +247,7 @@ fn add_return_expression_to_generator_model(
 
     // for sum/product we want to put integer expressions into dummy variables,
     // for and/or we want to put boolean expressions into dummy variables.
-    let dummy_var_type = ac_operator
-        .identity()
-        .return_type()
-        .expect("identity value of an ACOpKind should always have a ReturnType");
+    let dummy_var_type = ac_operator.identity().return_type();
 
     'outer: loop {
         let focus: &mut Expression = zipper.focus_mut();
@@ -430,8 +427,7 @@ fn can_be_dummy_variable(expr: &Expression, dummy_variable_type: &ReturnType) ->
     };
 
     // is the expression the same type as the dummy variable?
-    expr.return_type()
-        .is_some_and(|x| x == *dummy_variable_type)
+    expr.return_type() == *dummy_variable_type
 }
 
 /// Returns `true` if `expr` or its descendants contains non-induction variables.
