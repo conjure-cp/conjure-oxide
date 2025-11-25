@@ -51,7 +51,8 @@ pub trait AbstractLiteralValue:
 impl AbstractLiteralValue for Expression {}
 impl AbstractLiteralValue for Literal {}
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Quine)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Quine, Uniplate)]
+#[uniplate()]
 #[path_prefix(conjure_cp::ast)]
 pub enum AbstractLiteral<T: AbstractLiteralValue> {
     Set(Vec<T>),
@@ -296,107 +297,6 @@ impl Hash for AbstractLiteral<Literal> {
             AbstractLiteral::Function(elems) => {
                 4.hash(state);
                 elems.hash(state);
-            }
-        }
-    }
-}
-
-impl<T> Uniplate for AbstractLiteral<T>
-where
-    T: AbstractLiteralValue + Biplate<AbstractLiteral<T>>,
-{
-    fn uniplate(&self) -> (Tree<Self>, Box<dyn Fn(Tree<Self>) -> Self>) {
-        // walking into T
-        match self {
-            AbstractLiteral::Set(vec) => {
-                let (f1_tree, f1_ctx) = <_ as Biplate<AbstractLiteral<T>>>::biplate(vec);
-                (f1_tree, Box::new(move |x| AbstractLiteral::Set(f1_ctx(x))))
-            }
-            AbstractLiteral::Matrix(elems, index_domain) => {
-                let index_domain = index_domain.clone();
-                let (f1_tree, f1_ctx) = <_ as Biplate<AbstractLiteral<T>>>::biplate(elems);
-                (
-                    f1_tree,
-                    Box::new(move |x| AbstractLiteral::Matrix(f1_ctx(x), index_domain.clone())),
-                )
-            }
-            AbstractLiteral::Tuple(elems) => {
-                let (f1_tree, f1_ctx) = <_ as Biplate<AbstractLiteral<T>>>::biplate(elems);
-                (
-                    f1_tree,
-                    Box::new(move |x| AbstractLiteral::Tuple(f1_ctx(x))),
-                )
-            }
-            AbstractLiteral::Record(entries) => {
-                let (f1_tree, f1_ctx) = <_ as Biplate<AbstractLiteral<T>>>::biplate(entries);
-                (
-                    f1_tree,
-                    Box::new(move |x| AbstractLiteral::Record(f1_ctx(x))),
-                )
-            }
-            AbstractLiteral::Function(_) => {
-                todo!()
-            }
-        }
-    }
-}
-
-impl<U, To> Biplate<To> for AbstractLiteral<U>
-where
-    To: Uniplate,
-    U: AbstractLiteralValue + Biplate<AbstractLiteral<U>> + Biplate<To>,
-    RecordValue<U>: Biplate<AbstractLiteral<U>> + Biplate<To>,
-{
-    fn biplate(&self) -> (Tree<To>, Box<dyn Fn(Tree<To>) -> Self>) {
-        if std::any::TypeId::of::<To>() == std::any::TypeId::of::<AbstractLiteral<U>>() {
-            // To ==From => return One(self)
-
-            unsafe {
-                // SAFETY: asserted the type equality above
-                let self_to = std::mem::transmute::<&AbstractLiteral<U>, &To>(self).clone();
-                let tree = Tree::One(self_to);
-                let ctx = Box::new(move |x| {
-                    let Tree::One(x) = x else {
-                        panic!();
-                    };
-
-                    std::mem::transmute::<&To, &AbstractLiteral<U>>(&x).clone()
-                });
-
-                (tree, ctx)
-            }
-        } else {
-            // walking into T
-            match self {
-                AbstractLiteral::Set(vec) => {
-                    let (f1_tree, f1_ctx) = <_ as Biplate<To>>::biplate(vec);
-                    (f1_tree, Box::new(move |x| AbstractLiteral::Set(f1_ctx(x))))
-                }
-                AbstractLiteral::Matrix(elems, index_domain) => {
-                    let index_domain = index_domain.clone();
-                    let (f1_tree, f1_ctx) = <Vec<U> as Biplate<To>>::biplate(elems);
-                    (
-                        f1_tree,
-                        Box::new(move |x| AbstractLiteral::Matrix(f1_ctx(x), index_domain.clone())),
-                    )
-                }
-                AbstractLiteral::Tuple(elems) => {
-                    let (f1_tree, f1_ctx) = <_ as Biplate<To>>::biplate(elems);
-                    (
-                        f1_tree,
-                        Box::new(move |x| AbstractLiteral::Tuple(f1_ctx(x))),
-                    )
-                }
-                AbstractLiteral::Record(entries) => {
-                    let (f1_tree, f1_ctx) = <_ as Biplate<To>>::biplate(entries);
-                    (
-                        f1_tree,
-                        Box::new(move |x| AbstractLiteral::Record(f1_ctx(x))),
-                    )
-                }
-                AbstractLiteral::Function(_) => {
-                    todo!()
-                }
             }
         }
     }
