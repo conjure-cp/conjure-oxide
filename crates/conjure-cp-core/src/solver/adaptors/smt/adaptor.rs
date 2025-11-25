@@ -36,13 +36,13 @@ impl Default for Smt {
 impl Smt {
     /// Constructs a new adaptor using the given theories for representing the relevant constructs.
     pub fn new(int_theory: IntTheory, matrix_theory: MatrixTheory) -> Self {
-        let theories = TheoryConfig {
+        let theory_config = TheoryConfig {
             ints: int_theory,
             matrices: matrix_theory,
         };
         Smt {
-            theory_config: theories.clone(),
-            store: SymbolStore::new(theories),
+            theory_config,
+            store: SymbolStore::new(theory_config),
             ..Default::default()
         }
     }
@@ -93,16 +93,16 @@ impl SolverAdaptor for Smt {
     }
 
     fn get_family(&self) -> SolverFamily {
-        SolverFamily::Smt
+        SolverFamily::Smt(self.theory_config)
     }
 
-    fn get_name(&self) -> Option<String> {
-        Some("SMT".to_string())
+    fn get_name(&self) -> &'static str {
+        "SMT"
     }
 
     fn write_solver_input_file(
         &self,
-        writer: &mut impl std::io::Write,
+        writer: &mut Box<dyn std::io::Write>,
     ) -> Result<(), std::io::Error> {
         let smt2 = self.solver_inst.to_smt2();
         writer.write(smt2.as_bytes()).map(|_| ())
