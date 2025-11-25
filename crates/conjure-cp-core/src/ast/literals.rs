@@ -6,7 +6,7 @@ use std::hash::Hasher;
 use ustr::Ustr;
 
 use polyquine::Quine;
-use uniplate::{Biplate, Tree, Uniplate};
+use uniplate::{Biplate, Uniplate};
 
 use crate::ast::Metadata;
 use crate::ast::pretty::pretty_vec;
@@ -65,7 +65,7 @@ pub enum AbstractLiteral<T: AbstractLiteralValue> {
 
     Record(Vec<RecordValue<T>>),
 
-    Function(Vec<(T,T)>),
+    Function(Vec<(T, T)>),
 }
 
 // TODO: use HasDomain instead once Expression::domain_of returns Domain not Option<Domain>
@@ -125,9 +125,7 @@ impl AbstractLiteral<Expression> {
             }
             AbstractLiteral::Tuple(_) => None,
             AbstractLiteral::Record(_) => None,
-            AbstractLiteral::Function(_) => {
-                todo!()
-            }
+            AbstractLiteral::Function(_) => None,
         }
     }
 }
@@ -199,9 +197,7 @@ impl Typeable for AbstractLiteral<Expression> {
                 }
                 Some(ReturnType::Record(item_types))
             }
-            AbstractLiteral::Function(_) => {
-                todo!()
-            }
+            AbstractLiteral::Function(_) => None,
         }
     }
 }

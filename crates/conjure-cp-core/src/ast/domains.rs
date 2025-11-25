@@ -284,28 +284,25 @@ impl Domain {
                 }
                 _ => Ok(false),
             },
-            Domain::Function(func_attr, domain, codomain) => {
-                match lit {
-                    Literal::AbstractLiteral(AbstractLiteral::Function(lit_elems)) => {
-                        if !func_attr.size_attr.allows_size(lit_elems.len()) {
+            Domain::Function(func_attr, domain, codomain) => match lit {
+                Literal::AbstractLiteral(AbstractLiteral::Function(lit_elems)) => {
+                    if !func_attr.size_attr.allows_size(lit_elems.len()) {
+                        return Ok(false);
+                    }
+                    for lit in lit_elems {
+                        let domain_element = &lit.0;
+                        let codomain_element = &lit.1;
+                        if !domain.contains(domain_element)? {
                             return Ok(false);
                         }
-                        for lit in lit_elems {
-                            let domain_element = &lit.0;
-                            let codomain_element = &lit.1;
-                            if !domain.contains(domain_element)?{
-                                return Ok(false);
-                            }
-                            if !codomain.contains(codomain_element)?{
-                                return Ok(false);
-                            }
+                        if !codomain.contains(codomain_element)? {
+                            return Ok(false);
                         }
-                        Ok(true)
                     }
-                    _ => Ok(false),
+                    Ok(true)
                 }
-
-            }
+                _ => Ok(false),
+            },
         }
     }
 
@@ -727,7 +724,7 @@ impl Domain {
                         .collect(),
                 ))
             }
-            Literal::AbstractLiteral(AbstractLiteral::Function(first_elems)) => {
+            Literal::AbstractLiteral(AbstractLiteral::Function(_)) => {
                 todo!()
             }
         }
@@ -755,7 +752,7 @@ impl Domain {
             Domain::Tuple(_) => todo!(), // TODO: Can this be done?
             Domain::Matrix(_, _) => todo!(),
             Domain::Record(_) => todo!(),
-            Domain::Function(_,_ ,_ ) => todo!(),
+            Domain::Function(_, _, _) => todo!(),
         }
     }
 
@@ -828,7 +825,7 @@ impl Domain {
                 })?;
                 inner_sz.checked_pow(exp).ok_or(DomainOpError::TooLarge)
             }
-            Domain::Function(_,_ ,_ ) => {
+            Domain::Function(_, _, _) => {
                 todo!()
             }
         }
@@ -1091,15 +1088,10 @@ impl Display for Domain {
                     )
                 )
             }
-            Domain::Function(_, inner_from ,inner_to ) => {
-                write!(
-                    f,
-                    "function ({}) --> ({}) ",
-                    inner_from,inner_to
-                )
+            Domain::Function(_, inner_from, inner_to) => {
+                write!(f, "function ({}) --> ({}) ", inner_from, inner_to)
             }
             Domain::Empty(return_type) => write!(f, "empty({return_type:?}"),
-
         }
     }
 }
@@ -1139,9 +1131,10 @@ impl Typeable for Domain {
                 }
                 Some(ReturnType::Record(item_types))
             }
-            Domain::Function(_,domain ,codomain ) => {
-                Some(ReturnType::Function((Box::new(domain.return_type()?),Box::new(codomain.return_type()?))))
-            }
+            Domain::Function(_, domain, codomain) => Some(ReturnType::Function((
+                Box::new(domain.return_type()?),
+                Box::new(codomain.return_type()?),
+            ))),
         }
     }
 }

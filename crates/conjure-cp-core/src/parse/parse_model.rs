@@ -6,17 +6,17 @@ use std::rc::Rc;
 use std::sync::{Arc, RwLock};
 use ustr::Ustr;
 
+use serde_json::Map as JsonMap;
 use serde_json::Value;
 use serde_json::Value as JsonValue;
-use serde_json::Map as  JsonMap;
 
 use crate::ast::Metadata;
 use crate::ast::ac_operators::ACOperatorKind;
 use crate::ast::comprehension::ComprehensionBuilder;
 use crate::ast::records::RecordValue;
 use crate::ast::{
-    AbstractLiteral, Atom, DeclarationPtr, Domain, Expression, Literal, Name, Range, RecordEntry,
-    SetAttr, FuncAttr, SizeAttr, PartialityAttr, JectivityAttr, SymbolTable,
+    AbstractLiteral, Atom, DeclarationPtr, Domain, Expression, FuncAttr, JectivityAttr, Literal,
+    Name, PartialityAttr, Range, RecordEntry, SetAttr, SizeAttr, SymbolTable,
 };
 use crate::ast::{DeclarationKind, Moo};
 use crate::context::Context;
@@ -313,7 +313,9 @@ fn parse_domain(
             Ok(Domain::Record(record_entries))
         }
         "DomainFunction" => {
-            let domain = domain_value.get(2).and_then(|v| v.as_object())
+            let domain = domain_value
+                .get(2)
+                .and_then(|v| v.as_object())
                 .ok_or(error!("Function domain is not an object"))?;
             let domain = domain
                 .iter()
@@ -321,8 +323,10 @@ fn parse_domain(
                 .ok_or(Error::Parse("DomainSet is an empty object".to_owned()))?;
             let domain = parse_domain(domain.0.as_str(), domain.1, symbols)?;
 
-            let codomain = domain_value.get(3).and_then(|v| v.as_object())
-                .ok_or(error!("Function codomain is not an object"))?;    
+            let codomain = domain_value
+                .get(3)
+                .and_then(|v| v.as_object())
+                .ok_or(error!("Function codomain is not an object"))?;
             let codomain = codomain
                 .iter()
                 .next()
@@ -330,34 +334,42 @@ fn parse_domain(
             let codomain = parse_domain(codomain.0.as_str(), codomain.1, symbols)?;
 
             // Attribute parsing
-            let attributes = domain_value.get(1).and_then(|v| v.as_array())
+            let attributes = domain_value
+                .get(1)
+                .and_then(|v| v.as_array())
                 .ok_or(error!("Function attributes is not a json array"))?;
-            let size = attributes.get(0).and_then(|v| v.as_object())
-                .ok_or(error!("Function size attributes is not an object"))?;    
-            let size = parse_size_attr(size,symbols)?;
-            let partiality = attributes.get(1).and_then(|v| v.as_str())
+            let size = attributes
+                .get(0)
+                .and_then(|v| v.as_object())
+                .ok_or(error!("Function size attributes is not an object"))?;
+            let size = parse_size_attr(size, symbols)?;
+            let partiality = attributes
+                .get(1)
+                .and_then(|v| v.as_str())
                 .ok_or(error!("Function partiality is not a string"))?;
             let partiality = match partiality {
                 "PartialityAttr_Partial" => Some(PartialityAttr::Partial),
                 "PartialityAttr_Total" => Some(PartialityAttr::Total),
-                _ => None
+                _ => None,
             };
-            if partiality.is_none(){
-                return Err(Error::Parse("Partiality is an unknown type".to_owned()))
-            } 
+            if partiality.is_none() {
+                return Err(Error::Parse("Partiality is an unknown type".to_owned()));
+            }
             let partiality = partiality.unwrap();
-            let jectivity = attributes.get(2).and_then(|v| v.as_str())
+            let jectivity = attributes
+                .get(2)
+                .and_then(|v| v.as_str())
                 .ok_or(error!("Function jectivity is not a string"))?;
             let jectivity = match jectivity {
                 "JectivityAttr_Injective" => Some(JectivityAttr::Injective),
                 "JectivityAttr_Surjective" => Some(JectivityAttr::Surjective),
                 "JectivityAttr_Bijective" => Some(JectivityAttr::Bijective),
                 "JectivityAttr_None" => Some(JectivityAttr::None),
-                _ => None
+                _ => None,
             };
-            if jectivity.is_none(){
-                return Err(Error::Parse("Jectivity is an unknown type".to_owned()))
-            } 
+            if jectivity.is_none() {
+                return Err(Error::Parse("Jectivity is an unknown type".to_owned()));
+            }
             let jectivity = jectivity.unwrap();
 
             let attr = FuncAttr {
@@ -367,7 +379,6 @@ fn parse_domain(
             };
 
             Ok(Domain::Function(attr, Box::new(domain), Box::new(codomain)))
-
         }
 
         _ => Err(Error::Parse(
@@ -496,38 +507,51 @@ fn parse_domain_value_int(obj: &JsonValue, symbols: &SymbolTable) -> Option<i32>
         .or_else(|| try_parse_reference(obj, symbols))
 }
 
-fn parse_size_attr(attr_map : &JsonMap<String, JsonValue>, symbols: &mut SymbolTable,) -> Result<SizeAttr>{
+fn parse_size_attr(
+    attr_map: &JsonMap<String, JsonValue>,
+    symbols: &mut SymbolTable,
+) -> Result<SizeAttr> {
     let attr_obj = attr_map
-                .iter()
-                .next()
-                .ok_or(Error::Parse("SizeAttr is an empty object".to_owned()))?;
+        .iter()
+        .next()
+        .ok_or(Error::Parse("SizeAttr is an empty object".to_owned()))?;
     match attr_obj.0.as_str() {
         "SizeAttr_None" => Ok(SizeAttr::None),
         "SizeAttr_MinSize" => {
-            let size_int = parse_domain_value_int(attr_obj.1, symbols).ok_or(error!("Could not parse int domain constant"))?;
+            let size_int = parse_domain_value_int(attr_obj.1, symbols)
+                .ok_or(error!("Could not parse int domain constant"))?;
             Ok(SizeAttr::MinSize(size_int))
-        },
+        }
         "SizeAttr_MaxSize" => {
-            let size_int = parse_domain_value_int(attr_obj.1, symbols).ok_or(error!("Could not parse int domain constant"))?;
+            let size_int = parse_domain_value_int(attr_obj.1, symbols)
+                .ok_or(error!("Could not parse int domain constant"))?;
             Ok(SizeAttr::MaxSize(size_int))
-        },
+        }
         "SizeAttr_MinMaxSize" => {
-            let min_max = attr_obj.1.as_array()
+            let min_max = attr_obj
+                .1
+                .as_array()
                 .ok_or(error!("SizeAttr MinMaxSize is not a json array"))?;
-            let min = min_max.get(0).ok_or(error!("SizeAttr Min is not present"))?;
-            let min_int = parse_domain_value_int(min, symbols).ok_or(error!("Could not parse int domain constant"))?;
-            let max  = min_max.get(1).ok_or(error!("SizeAttr Max is not present"))?;
-            let max_int = parse_domain_value_int(max, symbols).ok_or(error!("Could not parse int domain constant"))?;
+            let min = min_max
+                .get(0)
+                .ok_or(error!("SizeAttr Min is not present"))?;
+            let min_int = parse_domain_value_int(min, symbols)
+                .ok_or(error!("Could not parse int domain constant"))?;
+            let max = min_max
+                .get(1)
+                .ok_or(error!("SizeAttr Max is not present"))?;
+            let max_int = parse_domain_value_int(max, symbols)
+                .ok_or(error!("Could not parse int domain constant"))?;
             Ok(SizeAttr::MinMaxSize(min_int, max_int))
-        },
+        }
         "SizeAttr_Size" => {
-            let size_int = parse_domain_value_int(attr_obj.1, symbols).ok_or(error!("Could not parse int domain constant"))?;
+            let size_int = parse_domain_value_int(attr_obj.1, symbols)
+                .ok_or(error!("Could not parse int domain constant"))?;
             Ok(SizeAttr::Size(size_int))
-        },
+        }
         _ => Err(Error::Parse("SizeAttr is an unknown type".to_owned())),
     }
 }
-
 
 // this needs an explicit type signature to force the closures to have the same type
 type BinOp = Box<dyn Fn(Metadata, Moo<Expression>, Moo<Expression>) -> Expression>;
@@ -790,7 +814,10 @@ fn parse_abs_record(abs_record: &Value, scope: &Rc<RefCell<SymbolTable>>) -> Opt
 }
 
 //parses an abstract function as an expression
-fn parse_abs_function(abs_function: &Value, scope: &Rc<RefCell<SymbolTable>>) -> Option<Expression> {
+fn parse_abs_function(
+    abs_function: &Value,
+    scope: &Rc<RefCell<SymbolTable>>,
+) -> Option<Expression> {
     let entries = abs_function.as_array()?;
     let mut assignments = vec![];
 
@@ -798,13 +825,13 @@ fn parse_abs_function(abs_function: &Value, scope: &Rc<RefCell<SymbolTable>>) ->
         //expect("Explicit function assignment is not an array");
         let entry = entry.as_array()?;
         let expression = entry
-        .iter()
-        .map(|values| parse_expression(values, scope))
-        .map(|values| values.expect("invalid subexpression")) // Ensure valid expressions
-        .collect::<Vec<Expression>>(); // Collect all expressions
+            .iter()
+            .map(|values| parse_expression(values, scope))
+            .map(|values| values.expect("invalid subexpression")) // Ensure valid expressions
+            .collect::<Vec<Expression>>(); // Collect all expressions
         let domain_value = expression.get(0).expect("Invalid function domain");
         let codomain_value = expression.get(1).expect("Invalid function codomain");
-        let tuple = (domain_value.clone(),codomain_value.clone());
+        let tuple = (domain_value.clone(), codomain_value.clone());
         assignments.push(tuple);
     }
     Some(Expression::AbstractLiteral(

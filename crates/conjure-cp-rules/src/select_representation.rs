@@ -190,7 +190,9 @@ fn domain_needs_representation(domain: &Domain) -> bool {
     match domain {
         Domain::Bool | Domain::Int(_) => false,
         Domain::Matrix(_, _) => false, // we special case these elsewhere
-        Domain::Set(_, _) | Domain::Tuple(_) | Domain::Record(_) | Domain::Function(_, _, _) => true,
+        Domain::Set(_, _) | Domain::Tuple(_) | Domain::Record(_) | Domain::Function(_, _, _) => {
+            true
+        }
         Domain::Reference(_) => unreachable!("domain should be resolved"),
         Domain::Empty(_) => false, // _ => false,
     }
