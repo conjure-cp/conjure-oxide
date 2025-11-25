@@ -165,13 +165,13 @@ impl SolverAdaptor for Minion {
         SolverFamily::Minion
     }
 
-    fn get_name(&self) -> Option<String> {
-        Some("Minion".to_owned())
+    fn get_name(&self) -> &'static str {
+        "Minion"
     }
 
     fn write_solver_input_file(
         &self,
-        writer: &mut impl std::io::Write,
+        writer: &mut Box<dyn std::io::Write>,
     ) -> Result<(), std::io::Error> {
         let model = self.model.as_ref().expect("Minion solver adaptor should have a model as write_solver_input_file should only be called in the LoadedModel state.");
         minion_sys::print::write_minion_file(writer, model)

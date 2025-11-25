@@ -1,93 +1,80 @@
 // Basic syntactic error detection helpers for the LSP API.
 
 use crate::diagnostics::diagnostics_api::{Diagnostic, Position, Range, Severity};
-use crate::parser::util::get_tree;
-use tree_sitter::Node;
+use crate::parse_essence_with_context;
+use conjure_cp_core::context::Context;
+use std::sync::{Arc, RwLock};
 
 /// Detects very simple semantic issues in source and returns a vector
 /// of Diagnostics.
 pub fn detect_semantic_errors(source: &str) -> Vec<Diagnostic> {
     let mut diagnostics = Vec::new();
+    let context = Arc::new(RwLock::new(Context::default()));
 
-    let (tree, _source) = match get_tree(source) {
-        Some(tree) => tree,
-        // essence cannot be parsed
-        None => {
-            // get the position of last character to get the range of the entire source code
-            let last_line = source.lines().count().saturating_sub(1);
-            let last_char = source.lines().last().map(|l| l.len()).unwrap_or(0);
-            diagnostics.push(Diagnostic {
-                range: Range {
-                    start: Position {
-                        line: 0,
-                        character: 0,
-                    },
-                    end: Position {
-                        line: last_line as u32,
-                        character: last_char as u32,
-                    },
-                },
-                severity: Severity::Error,
-                message: "Failed to read the source code".to_string(),
-                source: "Tree-Sitter-Parse-Error",
-            });
-            return diagnostics;
+    match parse_essence_with_context(source, context) {
+        Ok(_model) => {
+            // no errors, all good
+            println!("No semantic errors detected");
         }
-    };
-    let root_node = tree.root_node();
-
-    // print the tree
-    println!("=== Tree S-expression ===");
-    println!("{}", root_node.to_sexp());
-    println!("=========================\n");
-
-    // call semantic error detection functions
-    keyword_as_identifier(root_node, source, &mut diagnostics);
+        Err(err) => {
+            println!("Semantic error detected: {:?}", err);
+            diagnostics.push(error_to_diagnostic(&err));
+        }
+    }
 
     diagnostics
 }
 
-const KEYWORDS: [&str; 21] = [
-    "forall", "exists", "such", "that", "letting", "find", "minimise", "maximise", "subject", "to",
-    "where", "and", "or", "not", "if", "then", "else", "in", "sum", "product", "bool",
-];
-
-// keyword as identifier error and push to diagnostics
-fn keyword_as_identifier(root: Node, src: &str, diagnostics: &mut Vec<Diagnostic>) {
-    let mut stack = vec![root];
-    while let Some(node) = stack.pop() {
-        println!("Visiting node kind: {}", node.kind());
-        if (node.kind() == "variable" || node.kind() == "identifier" || node.kind() == "parameter")
-            && let Ok(text) = node.utf8_text(src.as_bytes())
-        {
-            let ident = text.trim();
-            if KEYWORDS.contains(&ident) {
-                let start_point = node.start_position();
-                let end_point = node.end_position();
-                diagnostics.push(Diagnostic {
-                    range: Range {
-                        start: Position {
-                            line: start_point.row as u32,
-                            character: start_point.column as u32,
-                        },
-                        end: Position {
-                            line: end_point.row as u32,
-                            character: end_point.column as u32,
-                        },
-                    },
-                    severity: Severity::Error,
-                    message: format!("Keyword '{}' used as an identifier", ident),
-                    source: "semantic-error-detector",
-                });
-                print!("{:?}", diagnostics.last().unwrap());
+pub fn error_to_diagnostic(err: &crate::errors::EssenceParseError) -> Diagnostic {
+    match err {
+        crate::EssenceParseError::SyntaxError { msg, range } => {
+            let (start, end) = range_to_position(range);
+            Diagnostic {
+                range: Range { start, end },
+                severity: Severity::Error,
+                source: "semantic error detection",
+                message: format!("Semantic Error: {}", msg),
             }
         }
+        _ => Diagnostic {
+            range: Range {
+                start: Position {
+                    line: 0,
+                    character: 0,
+                },
+                end: Position {
+                    line: 0,
+                    character: 1,
+                },
+            },
+            severity: Severity::Error,
+            source: "semantic error detection",
+            message: format!("{}", err),
+        },
+    }
+}
 
-        // push children onto stack (must be inside the while loop!)
-        for i in 0..node.child_count() {
-            if let Some(child) = node.child(i) {
-                stack.push(child);
-            }
-        }
+fn range_to_position(range: &Option<tree_sitter::Range>) -> (Position, Position) {
+    match range {
+        Some(r) => (
+            Position {
+                line: r.start_point.row as u32,
+                character: r.start_point.column as u32,
+            },
+            Position {
+                line: r.end_point.row as u32,
+                character: r.end_point.column as u32,
+            },
+        ),
+        None => (
+            Position {
+                line: 0,
+                character: 0,
+            },
+            Position {
+                line: 0,
+                character: 0,
+            },
+        ),
     }
 }
