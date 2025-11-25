@@ -58,10 +58,9 @@ coverage:
 
 
 untest:
-	cd tests-integration/tests/integration/
-	find -type f -name '**generated**' -delete
-	find -type f -name '**expected**' -delete
-	find -type f -name '**stats**' -delete
+	find ./tests-integration/tests/integration/ -type f -name '**generated**' -delete
+	find ./tests-integration/tests/integration/ -type f -name '**expected**' -delete
+	find ./tests-integration/tests/integration/ -type f -name '**stats**' -delete
 
 
 .PHONY: help
