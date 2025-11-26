@@ -132,6 +132,16 @@ pub struct FuncAttr {
     pub jectivity_attr: JectivityAttr,
 }
 
+impl Display for FuncAttr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "({}{}{})",
+            self.size_attr, self.partiality_attr, self.jectivity_attr
+        )
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
 pub enum SizeAttr {
     None,
@@ -153,10 +163,31 @@ impl SizeAttr {
     }
 }
 
+impl Display for SizeAttr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            SizeAttr::None => write!(f, ""),
+            SizeAttr::Size(n) => write!(f, " size({})", n),
+            SizeAttr::MinSize(n) => write!(f, " maxSize({})", n),
+            SizeAttr::MaxSize(n) => write!(f, " minSize({})", n),
+            SizeAttr::MinMaxSize(min, max) => write!(f, " minSize({}) maxSize({})", min, max),
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
 pub enum PartialityAttr {
     Total,
     Partial,
+}
+
+impl Display for PartialityAttr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            PartialityAttr::Total => write!(f, " total"),
+            PartialityAttr::Partial => write!(f, " partial"),
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
@@ -165,6 +196,17 @@ pub enum JectivityAttr {
     Injective,
     Surjective,
     Bijective,
+}
+
+impl Display for JectivityAttr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            JectivityAttr::None => write!(f, ""),
+            JectivityAttr::Injective => write!(f, " injective"),
+            JectivityAttr::Surjective => write!(f, " surjective"),
+            JectivityAttr::Bijective => write!(f, " bijective"),
+        }
+    }
 }
 
 impl Domain {
@@ -1088,8 +1130,8 @@ impl Display for Domain {
                     )
                 )
             }
-            Domain::Function(_, inner_from, inner_to) => {
-                write!(f, "function ({}) --> ({}) ", inner_from, inner_to)
+            Domain::Function(attribute, inner_from, inner_to) => {
+                write!(f, "function{} {} --> {} ", attribute, inner_from, inner_to)
             }
             Domain::Empty(return_type) => write!(f, "empty({return_type:?}"),
         }
