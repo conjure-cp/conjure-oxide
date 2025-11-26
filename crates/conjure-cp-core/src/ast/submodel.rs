@@ -252,9 +252,10 @@ impl Display for SubModel {
             }
         }
 
-        writeln!(f, "\nsuch that\n")?;
-
-        writeln!(f, "{}", pretty_expressions_as_top_level(self.constraints()))?;
+        if !self.constraints().is_empty() {
+            writeln!(f, "\nsuch that\n")?;
+            writeln!(f, "{}", pretty_expressions_as_top_level(self.constraints()))?;
+        }
 
         if !self.clauses().is_empty() {
             writeln!(f, "\nclauses:\n")?;
