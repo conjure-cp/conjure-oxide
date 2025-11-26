@@ -1,7 +1,7 @@
-use crate::ast::domains::set_attr::SetAttr;
+use crate::ast::domains::attrs::SetAttr;
 use crate::ast::{
-    DeclarationKind, DomainOpError, Expression, Literal, Metadata, Moo, RecordEntryGround,
-    Reference, Typeable,
+    DeclarationKind, DomainOpError, Expression, FuncAttr, Literal, Metadata, Moo,
+    RecordEntryGround, Reference, Typeable,
     domains::{
         GroundDomain,
         domain::{DomainPtr, Int},
@@ -78,6 +78,29 @@ impl From<SetAttr<Int>> for SetAttr<IntVal> {
         SetAttr {
             size: value.size.into(),
         }
+    }
+}
+
+impl From<FuncAttr<Int>> for FuncAttr<IntVal> {
+    fn from(value: FuncAttr<Int>) -> Self {
+        FuncAttr {
+            size: value.size.into(),
+            partiality: value.partiality,
+            jectivity: value.jectivity,
+        }
+    }
+}
+
+impl TryInto<FuncAttr<Int>> for FuncAttr<IntVal> {
+    type Error = DomainOpError;
+
+    fn try_into(self) -> Result<FuncAttr<Int>, Self::Error> {
+        let size: Range<Int> = self.size.try_into()?;
+        Ok(FuncAttr {
+            size,
+            jectivity: self.jectivity,
+            partiality: self.partiality,
+        })
     }
 }
 
@@ -206,6 +229,16 @@ impl SetAttr<IntVal> {
     }
 }
 
+impl FuncAttr<IntVal> {
+    pub fn resolve(&self) -> Option<FuncAttr<Int>> {
+        Some(FuncAttr {
+            size: self.size.resolve()?,
+            partiality: self.partiality.clone(),
+            jectivity: self.jectivity.clone(),
+        })
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Uniplate, Quine)]
 #[path_prefix(conjure_cp::ast)]
 pub struct RecordEntry {
@@ -240,7 +273,10 @@ pub enum UnresolvedDomain {
     /// A reference to a domain letting
     #[polyquine_skip]
     Reference(Reference),
+    /// A record
     Record(Vec<RecordEntry>),
+    /// A function with attributes, domain, and range
+    Function(FuncAttr<IntVal>, DomainPtr, DomainPtr),
 }
 
 impl UnresolvedDomain {
@@ -285,6 +321,15 @@ impl UnresolvedDomain {
                 })
                 .resolve()
                 .map(Moo::unwrap_or_clone),
+            UnresolvedDomain::Function(attr, dom, rng) => {
+                if let Some(attr_gd) = attr.resolve()
+                    && let Some(dom_gd) = dom.resolve()
+                    && let Some(rng_gd) = rng.resolve()
+                {
+                    return Some(GroundDomain::Function(attr_gd, dom_gd, rng_gd));
+                }
+                None
+            }
         }
     }
 
@@ -335,6 +380,11 @@ impl UnresolvedDomain {
             (UnresolvedDomain::Record(_), _) | (_, UnresolvedDomain::Record(_)) => {
                 Err(DomainOpError::WrongType)
             }
+            #[allow(unreachable_patterns)]
+            // Technically redundant but logically clearer to have both
+            (UnresolvedDomain::Function(_, _, _), _) | (_, UnresolvedDomain::Function(_, _, _)) => {
+                Err(DomainOpError::WrongType)
+            }
         }
     }
 }
@@ -361,6 +411,9 @@ impl Typeable for UnresolvedDomain {
                     entry_types.push(entry.domain.return_type());
                 }
                 ReturnType::Record(entry_types)
+            }
+            UnresolvedDomain::Function(_, dom, rng) => {
+                ReturnType::Function(Box::new(dom.return_type()), Box::new(rng.return_type()))
             }
         }
     }
@@ -404,6 +457,9 @@ impl Display for UnresolvedDomain {
                             .collect_vec()
                     )
                 )
+            }
+            UnresolvedDomain::Function(attribute, inner_from, inner_to) => {
+                write!(f, "function{} {} --> {} ", attribute, inner_from, inner_to)
             }
         }
     }

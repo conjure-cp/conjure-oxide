@@ -51,3 +51,51 @@ impl<A: Display> Display for SetAttr<A> {
         }
     }
 }
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
+#[path_prefix(conjure_cp::ast)]
+pub struct FuncAttr<A = Int> {
+    pub size: Range<A>,
+    pub partiality: PartialityAttr,
+    pub jectivity: JectivityAttr,
+}
+
+impl<A: Display> Display for FuncAttr<A> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "({}{}{})", self.size, self.partiality, self.jectivity)
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
+pub enum PartialityAttr {
+    Total,
+    Partial,
+}
+
+impl Display for PartialityAttr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            PartialityAttr::Total => write!(f, " total"),
+            PartialityAttr::Partial => write!(f, " partial"),
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
+pub enum JectivityAttr {
+    None,
+    Injective,
+    Surjective,
+    Bijective,
+}
+
+impl Display for JectivityAttr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            JectivityAttr::None => write!(f, ""),
+            JectivityAttr::Injective => write!(f, " injective"),
+            JectivityAttr::Surjective => write!(f, " surjective"),
+            JectivityAttr::Bijective => write!(f, " bijective"),
+        }
+    }
+}

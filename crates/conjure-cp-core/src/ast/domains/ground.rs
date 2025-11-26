@@ -1,6 +1,7 @@
 use crate::ast::pretty::pretty_vec;
 use crate::ast::{
-    AbstractLiteral, Domain, DomainOpError, Literal, Moo, RecordEntry, SetAttr, Typeable,
+    AbstractLiteral, Domain, DomainOpError, FuncAttr, HasDomain, Literal, Moo, RecordEntry,
+    SetAttr, Typeable,
     domains::{domain::Int, range::Range},
 };
 use crate::range;
@@ -61,7 +62,10 @@ pub enum GroundDomain {
     Matrix(Moo<GroundDomain>, Vec<Moo<GroundDomain>>),
     /// A tuple of N elements, each with its own domain
     Tuple(Vec<Moo<GroundDomain>>),
+    /// A record
     Record(Vec<RecordEntryGround>),
+    /// A function with a domain and range
+    Function(FuncAttr, Moo<GroundDomain>, Moo<GroundDomain>),
 }
 
 impl GroundDomain {
@@ -112,6 +116,11 @@ impl GroundDomain {
             #[allow(unreachable_patterns)]
             // Technically redundant but logically clearer to have both
             (GroundDomain::Record(_), _) | (_, GroundDomain::Record(_)) => {
+                Err(DomainOpError::WrongType)
+            }
+            #[allow(unreachable_patterns)]
+            // Technically redundant but logically clearer to have both
+            (GroundDomain::Function(_, _, _), _) | (_, GroundDomain::Function(_, _, _)) => {
                 Err(DomainOpError::WrongType)
             }
         }
@@ -268,6 +277,9 @@ impl GroundDomain {
                 })?;
                 inner_sz.checked_pow(exp).ok_or(DomainOpError::TooLarge)
             }
+            GroundDomain::Function(_, _, _) => {
+                todo!("Length bound of functions is not yet supported")
+            }
         }
     }
 
@@ -373,6 +385,26 @@ impl GroundDomain {
                         if entry.name != lit_entry.name
                             || !(entry.domain.contains(&lit_entry.value)?)
                         {
+                            return Ok(false);
+                        }
+                    }
+                    Ok(true)
+                }
+                _ => Ok(false),
+            },
+            GroundDomain::Function(func_attr, domain, codomain) => match lit {
+                Literal::AbstractLiteral(AbstractLiteral::Function(lit_elems)) => {
+                    let sz = Int::try_from(lit_elems.len()).expect("Should convert");
+                    if !func_attr.size.contains(&sz) {
+                        return Ok(false);
+                    }
+                    for lit in lit_elems {
+                        let domain_element = &lit.0;
+                        let codomain_element = &lit.1;
+                        if !domain.contains(domain_element)? {
+                            return Ok(false);
+                        }
+                        if !codomain.contains(codomain_element)? {
                             return Ok(false);
                         }
                     }
@@ -804,6 +836,32 @@ impl GroundDomain {
                         .collect(),
                 ))
             }
+            Literal::AbstractLiteral(AbstractLiteral::Function(items)) => {
+                if items.is_empty() {
+                    return Err(DomainOpError::NotGround);
+                }
+
+                let (x1, y1) = &items[0];
+                let d1 = x1.domain_of();
+                let d1 = d1.as_ground().ok_or(DomainOpError::NotGround)?;
+                let d2 = y1.domain_of();
+                let d2 = d2.as_ground().ok_or(DomainOpError::NotGround)?;
+
+                // Check that all items have the same domains
+                for (x, y) in items {
+                    let dx = x.domain_of();
+                    let dx = dx.as_ground().ok_or(DomainOpError::NotGround)?;
+
+                    let dy = y.domain_of();
+                    let dy = dy.as_ground().ok_or(DomainOpError::NotGround)?;
+
+                    if (dx != d1) || (dy != d2) {
+                        return Err(DomainOpError::WrongType);
+                    }
+                }
+
+                todo!();
+            }
         }
     }
 }
@@ -829,6 +887,9 @@ impl Typeable for GroundDomain {
                     entry_types.push(entry.domain.return_type());
                 }
                 ReturnType::Record(entry_types)
+            }
+            GroundDomain::Function(_, dom, rng) => {
+                ReturnType::Function(Box::new(dom.return_type()), Box::new(rng.return_type()))
             }
         }
     }
@@ -873,6 +934,9 @@ impl Display for GroundDomain {
                             .collect_vec()
                     )
                 )
+            }
+            GroundDomain::Function(attribute, inner_from, inner_to) => {
+                write!(f, "function{} {} --> {} ", attribute, inner_from, inner_to)
             }
         }
     }

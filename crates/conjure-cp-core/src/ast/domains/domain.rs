@@ -1,10 +1,10 @@
+use super::attrs::SetAttr;
 use super::ground::GroundDomain;
 use super::range::Range;
-use super::set_attr::SetAttr;
 use super::unresolved::{IntVal, UnresolvedDomain};
 use crate::ast::{
-    DeclarationPtr, DomainOpError, Expression, Literal, Moo, RecordEntry, RecordEntryGround,
-    Reference, ReturnType, Typeable,
+    DeclarationPtr, DomainOpError, Expression, FuncAttr, Literal, Moo, RecordEntry,
+    RecordEntryGround, Reference, ReturnType, Typeable,
 };
 use itertools::Itertools;
 use polyquine::Quine;
@@ -202,6 +202,29 @@ impl Domain {
         ptr.as_domain_letting()?;
         Some(Moo::new(Domain::Unresolved(Moo::new(
             UnresolvedDomain::Reference(Reference::new(ptr)),
+        ))))
+    }
+
+    /// Create a new function domain
+    pub fn function<T>(attrs: T, dom: DomainPtr, rng: DomainPtr) -> DomainPtr
+    where
+        T: Into<FuncAttr<IntVal>> + TryInto<FuncAttr<Int>> + Clone,
+    {
+        if let Ok(attrs_gd) = attrs.clone().try_into()
+            && let Some(dom_gd) = dom.as_ground()
+            && let Some(rng_gd) = rng.as_ground()
+        {
+            return Moo::new(Domain::Ground(Moo::new(GroundDomain::Function(
+                attrs_gd,
+                Moo::new(dom_gd.clone()),
+                Moo::new(rng_gd.clone()),
+            ))));
+        }
+
+        Moo::new(Domain::Unresolved(Moo::new(UnresolvedDomain::Function(
+            attrs.into(),
+            dom,
+            rng,
         ))))
     }
 
