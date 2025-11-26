@@ -70,7 +70,7 @@ impl<A: Display> Display for FuncAttr<A> {
             Range::UnboundedR(l) => format!("minSize({l})"),
             Range::Unbounded => "".to_string(),
         };
-        let mut strs = vec![
+        let mut strs = [
             size_str,
             self.partiality.to_string(),
             self.jectivity.to_string(),

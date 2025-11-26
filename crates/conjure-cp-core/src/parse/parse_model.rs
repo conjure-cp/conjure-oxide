@@ -346,7 +346,7 @@ fn parse_domain(
                 .and_then(|v| v.as_array())
                 .ok_or(error!("Function attributes is not a json array"))?;
             let size = attributes
-                .get(0)
+                .first()
                 .and_then(|v| v.as_object())
                 .ok_or(error!("Function size attributes is not an object"))?;
             let size = parse_size_attr(size, symbols)?;
@@ -419,7 +419,7 @@ fn parse_size_attr(
                 .as_array()
                 .ok_or(error!("SizeAttr MinMaxSize is not a json array"))?;
             let min = min_max
-                .get(0)
+                .first()
                 .ok_or(error!("SizeAttr Min is not present"))?;
             let min_int = parse_domain_value_int(min, symbols)
                 .ok_or(error!("Could not parse int domain constant"))?;
@@ -835,7 +835,7 @@ fn parse_abs_function(
             .map(|values| parse_expression(values, scope))
             .map(|values| values.expect("invalid subexpression")) // Ensure valid expressions
             .collect::<Vec<Expression>>(); // Collect all expressions
-        let domain_value = expression.get(0).expect("Invalid function domain");
+        let domain_value = expression.first().expect("Invalid function domain");
         let codomain_value = expression.get(1).expect("Invalid function codomain");
         let tuple = (domain_value.clone(), codomain_value.clone());
         assignments.push(tuple);
