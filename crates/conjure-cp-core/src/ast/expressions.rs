@@ -785,7 +785,7 @@ impl Expression {
             Expression::FlatIneq(_, _, _, _) => Some(Domain::bool()),
             Expression::Flatten(_, n, m) => {
                 if let Some(expr) = n {
-                    if let Some(ReturnType::Int) = expr.return_type() {
+                    if expr.return_type() == ReturnType::Int {
                         // TODO: handle flatten with depth argument
                         return None;
                     }
@@ -793,18 +793,13 @@ impl Expression {
                     let mut domain = m.domain_of()?;
                     let mut total_size = 1;
                     let mut index_domains: Vec<Domain> = Vec::new();
-                    // get the deepest element domain
-                    while let Domain::Matrix(elem, indexes) = domain {
-                        index_domains.extend(indexes.into_iter());
-                        domain = *elem;
-                    }
 
                     // calculate total flattened size
                     for i in &index_domains {
                         total_size *= i.length().ok()?;
                     }
-                    let new_index_domain = Domain::Int(vec![Range::Bounded(1, total_size.try_into().unwrap())]);
-                    return Some(Domain::Matrix(Box::new(domain), vec![new_index_domain]));
+                    let new_index_domain = Domain::int(vec![Range::Bounded(1, total_size.try_into().unwrap())]);
+                    return Some(Domain::matrix(domain, vec![new_index_domain]));
                 }
                 None
             }
