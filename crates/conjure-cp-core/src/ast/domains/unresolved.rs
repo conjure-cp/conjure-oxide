@@ -459,7 +459,7 @@ impl Display for UnresolvedDomain {
                 )
             }
             UnresolvedDomain::Function(attribute, inner_from, inner_to) => {
-                write!(f, "function{} {} --> {} ", attribute, inner_from, inner_to)
+                write!(f, "function {} {} --> {} ", attribute, inner_from, inner_to)
             }
         }
     }

@@ -936,7 +936,7 @@ impl Display for GroundDomain {
                 )
             }
             GroundDomain::Function(attribute, inner_from, inner_to) => {
-                write!(f, "function{} {} --> {} ", attribute, inner_from, inner_to)
+                write!(f, "function {} {} --> {} ", attribute, inner_from, inner_to)
             }
         }
     }
