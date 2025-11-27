@@ -1,5 +1,5 @@
 #![allow(dead_code)]
-use crate::ast::{AbstractLiteral, Atom, Expression as Expr, Literal as Lit, matrix};
+use crate::ast::{AbstractLiteral, Atom, Expression as Expr, Literal as Lit, Metadata, matrix};
 use crate::into_matrix;
 use itertools::{Itertools as _, izip};
 use std::cmp::Ordering as CmpOrdering;
@@ -589,8 +589,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             }
         }
         Expr::LexLt(_, a, b) => {
-            // TODO: handle != length lists
-            let lt = vec_expr_pairs_op::<i32, _>(a, b, |pairs| {
+            let lt = vec_expr_pairs_op::<i32, _>(a, b, |pairs, (a_len, b_len)| {
                 pairs
                     .iter()
                     .find_map(|(a, b)| match a.cmp(b) {
@@ -598,12 +597,12 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                         CmpOrdering::Greater => Some(false), // First difference is >
                         CmpOrdering::Equal => None,          // No difference
                     })
-                    .unwrap_or(false) // Equal
+                    .unwrap_or(a_len < b_len) // [1,1] <lex [1,1,x]
             })?;
             Some(lt.into())
         }
         Expr::LexLeq(_, a, b) => {
-            let lt = vec_expr_pairs_op::<i32, _>(a, b, |pairs| {
+            let lt = vec_expr_pairs_op::<i32, _>(a, b, |pairs, (a_len, b_len)| {
                 pairs
                     .iter()
                     .find_map(|(a, b)| match a.cmp(b) {
@@ -611,38 +610,16 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                         CmpOrdering::Greater => Some(false),
                         CmpOrdering::Equal => None,
                     })
-                    .unwrap_or(true)
+                    .unwrap_or(a_len <= b_len) // [1,1] <=lex [1,1,x]
             })?;
             Some(lt.into())
         }
-        Expr::LexGt(_, a, b) => {
-            let lt = vec_expr_pairs_op::<i32, _>(a, b, |pairs| {
-                pairs
-                    .iter()
-                    .find_map(|(a, b)| match a.cmp(b) {
-                        CmpOrdering::Less => Some(false),
-                        CmpOrdering::Greater => Some(true),
-                        CmpOrdering::Equal => None,
-                    })
-                    .unwrap_or(false)
-            })?;
-            Some(lt.into())
-        }
+        Expr::LexGt(_, a, b) => eval_constant(&Expr::LexLt(Metadata::new(), b.clone(), a.clone())),
         Expr::LexGeq(_, a, b) => {
-            let lt = vec_expr_pairs_op::<i32, _>(a, b, |pairs| {
-                pairs
-                    .iter()
-                    .find_map(|(a, b)| match a.cmp(b) {
-                        CmpOrdering::Less => Some(false),
-                        CmpOrdering::Greater => Some(true),
-                        CmpOrdering::Equal => None,
-                    })
-                    .unwrap_or(true)
-            })?;
-            Some(lt.into())
+            eval_constant(&Expr::LexLeq(Metadata::new(), b.clone(), a.clone()))
         }
         Expr::FlatLexLt(_, a, b) => {
-            let lt = atoms_pairs_op::<i32, _>(a, b, |pairs| {
+            let lt = atoms_pairs_op::<i32, _>(a, b, |pairs, (a_len, b_len)| {
                 pairs
                     .iter()
                     .find_map(|(a, b)| match a.cmp(b) {
@@ -650,12 +627,12 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                         CmpOrdering::Greater => Some(false),
                         CmpOrdering::Equal => None,
                     })
-                    .unwrap_or(false)
+                    .unwrap_or(a_len < b_len)
             })?;
             Some(lt.into())
         }
         Expr::FlatLexLeq(_, a, b) => {
-            let lt = atoms_pairs_op::<i32, _>(a, b, |pairs| {
+            let lt = atoms_pairs_op::<i32, _>(a, b, |pairs, (a_len, b_len)| {
                 pairs
                     .iter()
                     .find_map(|(a, b)| match a.cmp(b) {
@@ -663,7 +640,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                         CmpOrdering::Greater => Some(false),
                         CmpOrdering::Equal => None,
                     })
-                    .unwrap_or(true)
+                    .unwrap_or(a_len <= b_len)
             })?;
             Some(lt.into())
         }
@@ -717,6 +694,35 @@ where
     Some(f(a))
 }
 
+type PairsCallback<T, A> = fn(Vec<(T, T)>, (usize, usize)) -> A;
+
+/// Calls the given function on each consecutive pair of elements in the list expressions.
+/// Also passes the length of the two lists.
+fn vec_expr_pairs_op<T, A>(a: &Expr, b: &Expr, f: PairsCallback<T, A>) -> Option<A>
+where
+    T: TryFrom<Lit>,
+{
+    let a_exprs = a.clone().unwrap_matrix_unchecked()?.0;
+    let b_exprs = b.clone().unwrap_matrix_unchecked()?.0;
+    let lens = (a_exprs.len(), b_exprs.len());
+
+    let lit_pairs = std::iter::zip(a_exprs, b_exprs)
+        .map(|(a, b)| Some((unwrap_expr(&a)?, unwrap_expr(&b)?)))
+        .collect::<Option<Vec<(T, T)>>>()?;
+    Some(f(lit_pairs, lens))
+}
+
+/// Same as [`vec_expr_pairs_op`], but over slices of atoms.
+fn atoms_pairs_op<T, A>(a: &[Atom], b: &[Atom], f: PairsCallback<T, A>) -> Option<A>
+where
+    T: TryFrom<Atom>,
+{
+    let lit_pairs = Iterator::zip(a.iter(), b.iter())
+        .map(|(a, b)| Some((a.clone().try_into().ok()?, b.clone().try_into().ok()?)))
+        .collect::<Option<Vec<(T, T)>>>()?;
+    Some(f(lit_pairs, (a.len(), b.len())))
+}
+
 pub fn opt_vec_op<T, A>(f: fn(Vec<T>) -> Option<A>, a: &[Expr]) -> Option<A>
 where
     T: TryFrom<Lit>,
@@ -733,29 +739,6 @@ where
     // FIXME: deal with explicit matrix domains
     let a = a.iter().map(unwrap_expr).collect::<Option<Vec<T>>>()?;
     f(a)
-}
-
-fn vec_expr_pairs_op<T, A>(a: &Expr, b: &Expr, f: fn(Vec<(T, T)>) -> A) -> Option<A>
-where
-    T: TryFrom<Lit>,
-{
-    let lit_pairs = Iterator::zip(
-        a.clone().unwrap_matrix_unchecked()?.0.iter(),
-        b.clone().unwrap_matrix_unchecked()?.0.iter(),
-    )
-    .map(|(a, b)| Some((unwrap_expr(a)?, unwrap_expr(b)?)))
-    .collect::<Option<Vec<(T, T)>>>()?;
-    Some(f(lit_pairs))
-}
-
-fn atoms_pairs_op<T, A>(a: &[Atom], b: &[Atom], f: fn(Vec<(T, T)>) -> A) -> Option<A>
-where
-    T: TryFrom<Atom>,
-{
-    let lit_pairs = Iterator::zip(a.iter(), b.iter())
-        .map(|(a, b)| Some((a.clone().try_into().ok()?, b.clone().try_into().ok()?)))
-        .collect::<Option<Vec<(T, T)>>>()?;
-    Some(f(lit_pairs))
 }
 
 #[allow(dead_code)]
