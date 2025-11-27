@@ -16,12 +16,10 @@ use std::result::Result::Ok;
 use tracing_subscriber::filter::DynFilterFn;
 use ustr::Ustr;
 
-use crate::ast::Domain::{Bool, Int};
-
 use rustsat_minisat::core::Minisat;
 
-use crate::ast::Metadata;
 use crate::ast::{Atom, Expression, Literal, Name};
+use crate::ast::{GroundDomain, Metadata};
 use crate::solver::SearchComplete::NoSolutions;
 use crate::solver::adaptors::rustsat::convs::handle_cnf;
 use crate::solver::{
@@ -195,10 +193,14 @@ impl SolverAdaptor for Sat {
         let mut var_map: HashMap<Name, Lit> = HashMap::new();
 
         for find_ref in decisions {
-            let domain = find_ref.1.domain().unwrap();
+            let domain = find_ref
+                .1
+                .domain()
+                .expect("Decision variable should have a domain");
+            let domain = domain.as_ground().expect("Domain should be ground");
 
             // only decision variables with boolean domains or representations using booleans are supported at this time
-            if (domain != Bool
+            if (domain != &GroundDomain::Bool
                 && (sym_tab
                     .get_representation(&find_ref.0, &["sat_log_int"])
                     .is_none()))
@@ -208,7 +210,7 @@ impl SolverAdaptor for Sat {
                 ))?;
             }
             // only boolean variables should be passed to the solver
-            if (domain == Bool) {
+            if (domain == &GroundDomain::Bool) {
                 let name = find_ref.0;
                 finds.push(name);
             }

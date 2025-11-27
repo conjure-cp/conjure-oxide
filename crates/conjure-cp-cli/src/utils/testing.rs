@@ -11,7 +11,7 @@ use std::io::Write;
 use std::sync::{Arc, RwLock};
 use uniplate::Uniplate;
 
-use conjure_cp::ast::{AbstractLiteral, Domain, SerdeModel};
+use conjure_cp::ast::{AbstractLiteral, GroundDomain, Moo, SerdeModel};
 use conjure_cp::context::Context;
 use serde_json::{Error as JsonError, Value as JsonValue};
 
@@ -219,7 +219,7 @@ pub fn save_solutions_json(
 
     let solver_name = match solver {
         SolverFamily::Sat => "sat",
-        SolverFamily::Smt => "smt",
+        SolverFamily::Smt(..) => "smt",
         SolverFamily::Minion => "minion",
     };
 
@@ -237,7 +237,7 @@ pub fn read_solutions_json(
 ) -> Result<JsonValue, anyhow::Error> {
     let solver_name = match solver {
         SolverFamily::Sat => "sat",
-        SolverFamily::Smt => "smt",
+        SolverFamily::Smt(..) => "smt",
         SolverFamily::Minion => "minion",
     };
 
@@ -295,7 +295,7 @@ pub fn normalize_solutions_for_comparison(
                         // actually matter)
 
                         let mut matrix =
-                            AbstractLiteral::Matrix(elems, Box::new(Domain::Int(vec![])));
+                            AbstractLiteral::Matrix(elems, Moo::new(GroundDomain::Int(vec![])));
                         matrix = matrix.transform(&move |x: AbstractLiteral<Literal>| match x {
                             AbstractLiteral::Matrix(items, _) => {
                                 let items = items
@@ -307,7 +307,7 @@ pub fn normalize_solutions_for_comparison(
                                     })
                                     .collect_vec();
 
-                                AbstractLiteral::Matrix(items, Box::new(Domain::Int(vec![])))
+                                AbstractLiteral::Matrix(items, Moo::new(GroundDomain::Int(vec![])))
                             }
                             x => x,
                         });
