@@ -23,6 +23,14 @@ fn normalise_lex_gt_geq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     }
 }
 
+/// Turn lexicographical less-than into flat Minion constraints.
+///
+/// Minion does not support different-length lists being compared, so we need to truncate the longer.
+/// Luckily, we can use the fact that [1,1,1] < [1,1,1,x] for any x, e.g. "cat" <lex "cats".
+///
+/// - [a,b,c,d] <=lex [e,f,g] <-> [a,b,c] <lex [d,e,f]
+/// - [a,b,c] <lex [d,e,f,g] <-> [a,b,c] <=lex [d,e,f]
+/// - Everything else stays the same, with the longer matrix being chopped off
 #[register_rule(("Minion", 2000))]
 fn flatten_lex_lt_leq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (a, b) = match expr {
@@ -37,23 +45,36 @@ fn flatten_lex_lt_leq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         _ => return Err(RuleNotApplicable),
     };
 
-    if a.len() != b.len() {
-        return Err(ApplicationError::DomainError);
-    }
-
-    let atoms_a: Vec<Atom> = a
+    let mut atoms_a: Vec<Atom> = a
         .into_iter()
         .map(|e| e.try_into().map_err(|_| RuleNotApplicable))
         .collect::<Result<Vec<_>, ApplicationError>>()?;
-    let atoms_b: Vec<Atom> = b
+    let mut atoms_b: Vec<Atom> = b
         .into_iter()
         .map(|e| e.try_into().map_err(|_| RuleNotApplicable))
         .collect::<Result<Vec<_>, ApplicationError>>()?;
 
-    let new_expr = match expr {
-        Expr::LexLt(..) => Expr::FlatLexLt(Metadata::new(), atoms_a, atoms_b),
-        Expr::LexLeq(..) => Expr::FlatLexLeq(Metadata::new(), atoms_a, atoms_b),
-        _ => unreachable!(),
+    let new_expr = if atoms_a.len() == atoms_b.len() {
+        // Same length, keep the same comparator
+        match expr {
+            Expr::LexLt(..) => Expr::FlatLexLt(Metadata::new(), atoms_a, atoms_b),
+            Expr::LexLeq(..) => Expr::FlatLexLeq(Metadata::new(), atoms_a, atoms_b),
+            _ => unreachable!(),
+        }
+    } else {
+        // Different lengths; might need to use a different comparator
+        // Doing out the 4 cases (which longer * original comparator), it can be determined from
+        // whether the first matrix is longer
+        let first_longer = atoms_a.len() > atoms_b.len();
+
+        let min_len = atoms_a.len().min(atoms_b.len());
+        atoms_a.truncate(min_len);
+        atoms_b.truncate(min_len);
+
+        match first_longer {
+            true => Expr::FlatLexLt(Metadata::new(), atoms_a, atoms_b),
+            false => Expr::FlatLexLeq(Metadata::new(), atoms_a, atoms_b),
+        }
     };
 
     Ok(Reduction::pure(new_expr))
