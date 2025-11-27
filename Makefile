@@ -17,6 +17,11 @@ check:
 check-unused-deps: .installed-cargo-extensions.checkpoint
 	cargo +nightly shear --expand
 
+.PHONY: build
+## Builds the conjure-oxide executable
+build:
+	cargo build --bin conjure-oxide
+
 .PHONY: test
 ## Runs all tests
 test:
