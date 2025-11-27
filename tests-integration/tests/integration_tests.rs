@@ -39,8 +39,8 @@ use conjure_cp_cli::utils::conjure::solutions_to_json;
 use conjure_cp_cli::utils::conjure::{get_solutions, get_solutions_from_conjure};
 use conjure_cp_cli::utils::testing::save_stats_json;
 use conjure_cp_cli::utils::testing::{
-    read_model_json, read_model_json_prefix, read_solutions_json, save_model_json,
-    save_solutions_json, REWRITE_SERIALISED_JSON_MAX_LINES,
+    REWRITE_SERIALISED_JSON_MAX_LINES, read_model_json, read_model_json_prefix,
+    read_solutions_json, save_model_json, save_solutions_json,
 };
 #[allow(clippy::single_component_path_imports, unused_imports)]
 use conjure_cp_rules;
