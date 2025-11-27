@@ -87,7 +87,9 @@ fn flatten_lex_lt_leq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// E.g. if |a| > |b| then a > b if they are equal for the length of b
 ///
 /// If they are the same length, then the strictness of the comparison comes into effect.
-#[register_rule(("Smt", 999))]
+///
+/// Must be applied before matrix_to_list since this enumerates over operand indices.
+#[register_rule(("Smt", 2001))]
 fn expand_lex_lt_leq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (a, b) = match expr {
         Expr::LexLt(_, a, b) | Expr::LexLeq(_, a, b) => (a, b),
@@ -103,7 +105,7 @@ fn expand_lex_lt_leq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    if a_idx_domains.len() != 1 && b_idx_domains.len() != 1 {
+    if a_idx_domains.len() != 1 || b_idx_domains.len() != 1 {
         return Err(RuleNotApplicable);
     }
 
