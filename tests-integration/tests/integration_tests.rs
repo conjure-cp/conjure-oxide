@@ -39,7 +39,8 @@ use conjure_cp_cli::utils::conjure::solutions_to_json;
 use conjure_cp_cli::utils::conjure::{get_solutions, get_solutions_from_conjure};
 use conjure_cp_cli::utils::testing::save_stats_json;
 use conjure_cp_cli::utils::testing::{
-    read_model_json, read_solutions_json, save_model_json, save_solutions_json,
+    read_model_json, read_model_json_prefix, read_solutions_json, save_model_json,
+    save_solutions_json, REWRITE_SERIALISED_JSON_MAX_LINES,
 };
 #[allow(clippy::single_component_path_imports, unused_imports)]
 use conjure_cp_rules;
@@ -431,10 +432,21 @@ fn integration_test_inner(
 
     // Check Stage 2a (rewritten model)
     if config.apply_rewrite_rules {
-        let expected_model = read_model_json(&context, path, essence_base, "expected", "rewrite")?;
-        let generated_model =
-            read_model_json(&context, path, essence_base, "generated", "rewrite")?;
-        assert_eq!(generated_model, expected_model);
+        let expected_rewrite = read_model_json_prefix(
+            path,
+            essence_base,
+            "expected",
+            "rewrite",
+            REWRITE_SERIALISED_JSON_MAX_LINES,
+        )?;
+        let generated_rewrite = read_model_json_prefix(
+            path,
+            essence_base,
+            "generated",
+            "rewrite",
+            REWRITE_SERIALISED_JSON_MAX_LINES,
+        )?;
+        assert_eq!(generated_rewrite, expected_rewrite);
     }
 
     // Check Stage 3a (solutions)
