@@ -10,7 +10,7 @@
 #    systems, see manylinux_2_28 documentation.
 
 # --platform=$TARGETPLATFORM is for podman compatibility
-FROM --platform=$TARGETPLATFORM 'quay.io/pypa/manylinux_2_28' as build-environment
+FROM --platform=$TARGETPLATFORM 'quay.io/pypa/manylinux_2_28' AS build-environment
 ARG TARGETPLATFORM
 
 # download wget for downloading node below, and zip for our nightly build CI.
@@ -19,6 +19,9 @@ RUN yum install -y wget zip;
 # llvm / clang: for C++ dependencies (Minion, SAT) and bindgen.
 # using clang not gcc as Rust's bindgen library requires libclang
 RUN yum install -y llvm-toolset;
+
+# openssl headers for Rust's openssl-sys crate
+RUN yum install -y openssl-devel;
 
 # nodejs: required to build treesitter grammar
 
@@ -47,12 +50,12 @@ RUN if [ "$TARGETPLATFORM"  == "linux/amd64" ]; then ARCH="x64";\
 # rustup
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y;
 
-ENV PATH "/root/.cargo/bin:$PATH"
+ENV PATH="/root/.cargo/bin:$PATH"
 
 ###########################################################
 # 2) builder: a container that builds conjure oxide.
 
-FROM build-environment as builder
+FROM build-environment AS builder
 
 # grab conjure oxide source
 WORKDIR /build
@@ -68,6 +71,6 @@ FROM ghcr.io/conjure-cp/conjure:main
 
 # conjure should do this already, but for forwards compatibility
 RUN mkdir -p /opt/conjure;
-ENV PATH /opt/conjure:$PATH
+ENV PATH=/opt/conjure:$PATH
 
 COPY --from=builder /build/target/release/conjure-oxide /opt/conjure/conjure-oxide
