@@ -496,6 +496,33 @@ pub enum Expression {
     /// This is for compatibility with backends that do not support multiplication over vectors.
     #[compatible(SMT)]
     PairwiseProduct(Metadata, Moo<Expression>, Moo<Expression>),
+
+    /// Lexicographical < between two matrices.
+    ///
+    /// A <lex B iff: A[i] < B[i] for some i /\ (A[j] > B[j] for some j -> i < j)
+    /// I.e. A must be less than B at some index i, and if it is greater than B at another index j,
+    /// then j comes after i.
+    /// I.e. A must be greater than B at the first index where they differ.
+    ///
+    /// E.g. [1, 1] <lex [2, 1] and [1, 1] <lex [1, 2]
+    LexLt(Metadata, Moo<Expression>, Moo<Expression>),
+
+    /// Lexicographical <= between two matrices
+    LexLeq(Metadata, Moo<Expression>, Moo<Expression>),
+
+    /// Lexicographical > between two matrices
+    /// This is a parser-level construct, and is immediately normalised to LexLt(b, a)
+    LexGt(Metadata, Moo<Expression>, Moo<Expression>),
+
+    /// Lexicographical >= between two matrices
+    /// This is a parser-level construct, and is immediately normalised to LexLeq(b, a)
+    LexGeq(Metadata, Moo<Expression>, Moo<Expression>),
+
+    /// Low-level minion constraint. See Expression::LexLt
+    FlatLexLt(Metadata, Vec<Atom>, Vec<Atom>),
+
+    /// Low-level minion constraint. See Expression::LexLeq
+    FlatLexLeq(Metadata, Vec<Atom>, Vec<Atom>),
 }
 
 // for the given matrix literal, return a bounded domain from the min to max of applying op to each
@@ -842,6 +869,12 @@ impl Expression {
                 .apply_i32(|a, b| Some(a * b), b.domain_of()?.resolve()?.as_ref())
                 .map(DomainPtr::from)
                 .ok(),
+            Expression::LexLt(..) => Some(Domain::bool()),
+            Expression::LexLeq(..) => Some(Domain::bool()),
+            Expression::LexGt(..) => Some(Domain::bool()),
+            Expression::LexGeq(..) => Some(Domain::bool()),
+            Expression::FlatLexLt(..) => Some(Domain::bool()),
+            Expression::FlatLexLeq(..) => Some(Domain::bool()),
         };
         if let Some(dom) = &ret
             && let Some(ranges) = dom.as_int_ground()
@@ -1074,6 +1107,12 @@ impl From<bool> for Expression {
 impl From<Atom> for Expression {
     fn from(value: Atom) -> Self {
         Expression::Atomic(Metadata::new(), value)
+    }
+}
+
+impl From<Literal> for Expression {
+    fn from(value: Literal) -> Self {
+        Expression::Atomic(Metadata::new(), value.into())
     }
 }
 
@@ -1371,6 +1410,17 @@ impl Display for Expression {
 
             Expression::PairwiseSum(_, a, b) => write!(f, "PairwiseSum({a}, {b})"),
             Expression::PairwiseProduct(_, a, b) => write!(f, "PairwiseProduct({a}, {b})"),
+
+            Expression::LexLt(_, a, b) => write!(f, "({a} <lex {b})"),
+            Expression::LexLeq(_, a, b) => write!(f, "({a} <=lex {b})"),
+            Expression::LexGt(_, a, b) => write!(f, "({a} >lex {b})"),
+            Expression::LexGeq(_, a, b) => write!(f, "({a} >=lex {b})"),
+            Expression::FlatLexLt(_, a, b) => {
+                write!(f, "FlatLexLt({}, {})", pretty_vec(a), pretty_vec(b))
+            }
+            Expression::FlatLexLeq(_, a, b) => {
+                write!(f, "FlatLexLeq({}, {})", pretty_vec(a), pretty_vec(b))
+            }
         }
     }
 }
@@ -1471,6 +1521,12 @@ impl Typeable for Expression {
             Expression::SATInt(_, _) => ReturnType::Int,
             Expression::PairwiseSum(_, _, _) => ReturnType::Int,
             Expression::PairwiseProduct(_, _, _) => ReturnType::Int,
+            Expression::LexLt(..) => ReturnType::Bool,
+            Expression::LexGt(..) => ReturnType::Bool,
+            Expression::LexLeq(..) => ReturnType::Bool,
+            Expression::LexGeq(..) => ReturnType::Bool,
+            Expression::FlatLexLt(..) => ReturnType::Bool,
+            Expression::FlatLexLeq(..) => ReturnType::Bool,
         }
     }
 }

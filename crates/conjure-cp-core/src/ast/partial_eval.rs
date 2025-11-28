@@ -524,6 +524,12 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
         Expr::SATInt(_, _) => Err(RuleNotApplicable),
         Expr::PairwiseSum(_, _, _) => Err(RuleNotApplicable),
         Expr::PairwiseProduct(_, _, _) => Err(RuleNotApplicable),
+        Expr::LexLt(_, _, _) => Err(RuleNotApplicable),
+        Expr::LexLeq(_, _, _) => Err(RuleNotApplicable),
+        Expr::LexGt(_, _, _) => Err(RuleNotApplicable),
+        Expr::LexGeq(_, _, _) => Err(RuleNotApplicable),
+        Expr::FlatLexLt(_, _, _) => Err(RuleNotApplicable),
+        Expr::FlatLexLeq(_, _, _) => Err(RuleNotApplicable),
     }
 }
 
