@@ -18,14 +18,14 @@ use std::io::Write;
 // Allows for different configurations of parsers per test
 #[derive(Deserialize)]
 struct TestConfig {
-    parsers: Vec<String>
+    parsers: Vec<String>,
 }
 
 // The default test configuration is both enabled
 impl Default for TestConfig {
     fn default() -> Self {
         Self {
-            parsers: vec!(format!("legacy"),format!("native"))
+            parsers: vec![format!("legacy"), format!("native")],
         }
     }
 }
@@ -41,7 +41,6 @@ fn roundtrip_test(path: &str, filename: &str, extension: &str) -> Result<(), Box
             Default::default()
         };
     // Runs native parser
-    println!("{:?}",file_config.parsers);
     if file_config.parsers.contains(&format!("native")) {
         let new_filename = filename.to_owned() + "-native";
         roundtrip_test_inner(
