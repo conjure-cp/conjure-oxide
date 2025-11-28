@@ -798,7 +798,8 @@ impl Expression {
                     for i in &index_domains {
                         total_size *= i.length().ok()?;
                     }
-                    let new_index_domain = Domain::int(vec![Range::Bounded(1, total_size.try_into().unwrap())]);
+                    let new_index_domain =
+                        Domain::int(vec![Range::Bounded(1, total_size.try_into().unwrap())]);
                     return Some(Domain::matrix(domain, vec![new_index_domain]));
                 }
                 None
@@ -1477,7 +1478,24 @@ impl Typeable for Expression {
             Expression::FlatSumLeq(_, _, _) => ReturnType::Bool,
             Expression::MinionDivEqUndefZero(_, _, _, _) => ReturnType::Bool,
             Expression::FlatIneq(_, _, _, _) => ReturnType::Bool,
-            Expression::Flatten(_, _, matrix) => matrix.return_type(),
+            Expression::Flatten(_, _, matrix) => {
+                let matrix_type = matrix.return_type();
+                match matrix_type {
+                    ReturnType::Matrix(_) => {
+                        // unwrap until we get to innermost element
+                        let mut elem_type = matrix_type;
+                        while let ReturnType::Matrix(new_elem_type) = &elem_type {
+                            elem_type = *new_elem_type.clone();
+                        }
+                        elem_type
+                    }
+                    // TODO: We can implement indexing for these eventually
+                    ReturnType::Record(_) | ReturnType::Tuple(_) => ReturnType::Unknown,
+                    _ => bug!(
+                        "Invalid indexing operation: expected the operand to be a collection, got {self}: {matrix_type}"
+                    ),
+                }
+            }
             Expression::AllDiff(_, _) => ReturnType::Bool,
             Expression::Bubble(_, inner, _) => inner.return_type(),
             Expression::FlatWatchedLiteral(_, _, _) => ReturnType::Bool,
