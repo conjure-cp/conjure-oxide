@@ -524,6 +524,7 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
         Expr::SATInt(_, _) => Err(RuleNotApplicable),
         Expr::PairwiseSum(_, _, _) => Err(RuleNotApplicable),
         Expr::PairwiseProduct(_, _, _) => Err(RuleNotApplicable),
+        Expr::Defined(_,_ ) => todo!(),
     }
 }
 

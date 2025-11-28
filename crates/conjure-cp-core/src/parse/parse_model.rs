@@ -695,6 +695,10 @@ pub fn parse_expression(obj: &JsonValue, scope: &Rc<RefCell<SymbolTable>>) -> Op
             "MkOpToInt",
             Box::new(Expression::ToInt) as Box<dyn Fn(_, _) -> _>,
         ),
+        (
+            "MkOpDefined",
+            Box::new(Expression::Defined) as Box<dyn Fn(_,_) -> _>,
+        ),
     ]
     .into_iter()
     .collect();

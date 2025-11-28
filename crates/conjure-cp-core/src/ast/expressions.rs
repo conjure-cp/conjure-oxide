@@ -250,6 +250,10 @@ pub enum Expression {
     #[compatible(JsonInput, SMT)]
     Neg(Metadata, Moo<Expression>),
 
+    /// Set of values function is defined for
+    #[compatible(JsonInput)]
+    Defined(Metadata, Moo<Expression>),
+
     /// Unsafe power`x**y` (possibly undefined)
     ///
     /// Defined when (X!=0 \\/ Y!=0) /\ Y>=0
@@ -842,6 +846,7 @@ impl Expression {
                 .apply_i32(|a, b| Some(a * b), b.domain_of()?.resolve()?.as_ref())
                 .map(DomainPtr::from)
                 .ok(),
+            Expression::Defined(_,function ) => function.domain_of(),
         };
         if let Some(dom) = &ret
             && let Some(ranges) = dom.as_int_ground()
@@ -1371,6 +1376,7 @@ impl Display for Expression {
 
             Expression::PairwiseSum(_, a, b) => write!(f, "PairwiseSum({a}, {b})"),
             Expression::PairwiseProduct(_, a, b) => write!(f, "PairwiseProduct({a}, {b})"),
+            Expression::Defined(_,function ) => write!(f,"defined({function})")
         }
     }
 }
@@ -1471,6 +1477,7 @@ impl Typeable for Expression {
             Expression::SATInt(_, _) => ReturnType::Int,
             Expression::PairwiseSum(_, _, _) => ReturnType::Int,
             Expression::PairwiseProduct(_, _, _) => ReturnType::Int,
+            Expression::Defined(_,function ) => function.return_type(),
         }
     }
 }
