@@ -18,16 +18,14 @@ use std::io::Write;
 // Allows for different configurations of parsers per test
 #[derive(Deserialize)]
 struct TestConfig {
-    enable_native_parser: bool,
-    enable_legacy_parser: bool,
+    parsers: Vec<String>
 }
 
 // The default test configuration is both enabled
 impl Default for TestConfig {
     fn default() -> Self {
         Self {
-            enable_native_parser: true,
-            enable_legacy_parser: true,
+            parsers: vec!(format!("legacy"),format!("native"))
         }
     }
 }
@@ -36,7 +34,6 @@ impl Default for TestConfig {
 // Does not consider rewriting or solving
 fn roundtrip_test(path: &str, filename: &str, extension: &str) -> Result<(), Box<dyn Error>> {
     // Reads in a config.toml in the test directory
-    // Config file must contain all variables, including ones the same as the default
     let file_config: TestConfig =
         if let Ok(config_contents) = fs::read_to_string(format!("{path}/config.toml")) {
             toml::from_str(&config_contents).unwrap()
@@ -44,7 +41,8 @@ fn roundtrip_test(path: &str, filename: &str, extension: &str) -> Result<(), Box
             Default::default()
         };
     // Runs native parser
-    if file_config.enable_native_parser {
+    println!("{:?}",file_config.parsers);
+    if file_config.parsers.contains(&format!("native")) {
         let new_filename = filename.to_owned() + "-native";
         roundtrip_test_inner(
             path,
@@ -55,7 +53,7 @@ fn roundtrip_test(path: &str, filename: &str, extension: &str) -> Result<(), Box
         )?;
     }
     // Runs legacy Conjure parser
-    if file_config.enable_legacy_parser {
+    if file_config.parsers.contains(&format!("legacy")) {
         let new_filename = filename.to_owned() + "-legacy";
         roundtrip_test_inner(
             path,
