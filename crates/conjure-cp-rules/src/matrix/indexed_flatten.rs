@@ -11,7 +11,7 @@ use itertools::{Itertools, chain, izip};
 use uniplate::Uniplate;
 
 #[register_rule(("Base", 8001))]
-fn flatten_matrix(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+fn indexed_flatten_matrix(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     match expr {
         Expr::SafeIndex(_, subject, index) | Expr::UnsafeIndex(_, subject, index) => {
             if let Expr::Flatten(_, n, matrix) = subject.as_ref() {
