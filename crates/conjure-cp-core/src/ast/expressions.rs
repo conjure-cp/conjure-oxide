@@ -1487,10 +1487,8 @@ impl Typeable for Expression {
                         while let ReturnType::Matrix(new_elem_type) = &elem_type {
                             elem_type = *new_elem_type.clone();
                         }
-                        elem_type
+                        ReturnType::Matrix(Box::new(elem_type))
                     }
-                    // TODO: We can implement indexing for these eventually
-                    ReturnType::Record(_) | ReturnType::Tuple(_) => ReturnType::Unknown,
                     _ => bug!(
                         "Invalid indexing operation: expected the operand to be a collection, got {self}: {matrix_type}"
                     ),
