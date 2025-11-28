@@ -1,20 +1,15 @@
-use conjure_cp::ast::{
-    Atom, Expression as Expr, GroundDomain, Literal, Metadata, Moo, Name, Range, SymbolTable,
-    matrix,
-};
+use conjure_cp::ast::{Atom, Expression as Expr, GroundDomain, Name, SymbolTable, matrix};
 use conjure_cp::into_matrix_expr;
-use conjure_cp::rule_engine::Rule;
 use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
 };
-use itertools::{Itertools, chain, izip};
-use uniplate::Uniplate;
+use itertools::Itertools;
 
 #[register_rule(("Base", 8000))]
 fn flatten_matrix(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     if let Expr::Flatten(_, n, matrix) = expr {
-        if let Some(_) = n {
-            // TODO
+        if n.is_some() {
+            // TODO handle flatten with n dimension option
             return Err(RuleNotApplicable);
         }
 
@@ -43,7 +38,7 @@ fn flatten_matrix(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         };
 
         let Ok(matrix_values) = repr.expression_down(symbols) else {
-            return Err(RuleNotApplicable)
+            return Err(RuleNotApplicable);
         };
 
         let flat_values = matrix::enumerate_indices(index_domains.clone())

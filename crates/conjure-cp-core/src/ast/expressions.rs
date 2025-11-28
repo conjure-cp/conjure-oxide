@@ -790,9 +790,9 @@ impl Expression {
                         return None;
                     }
                 } else {
-                    let mut domain = m.domain_of()?;
+                    let domain = m.domain_of()?;
                     let mut total_size = 1;
-                    let mut index_domains: Vec<Domain> = Vec::new();
+                    let index_domains: Vec<Domain> = Vec::new();
 
                     // calculate total flattened size
                     for i in &index_domains {
