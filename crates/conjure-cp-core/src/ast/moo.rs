@@ -10,11 +10,12 @@
 //
 // ~niklasdewally 13/08/25
 
-use std::{collections::VecDeque, fmt::Display, ops::Deref, sync::Arc};
-
 use polyquine::Quine;
 use proc_macro2::TokenStream;
 use serde::{Deserialize, Serialize};
+use std::hash::{Hash, Hasher};
+use std::ops::DerefMut;
+use std::{collections::VecDeque, fmt::Display, ops::Deref, sync::Arc};
 use uniplate::{
     Biplate, Tree, Uniplate,
     impl_helpers::{transmute_if_same_type, try_transmute_if_same_type},
@@ -85,6 +86,12 @@ impl<T> Deref for Moo<T> {
 
     fn deref(&self) -> &Self::Target {
         self.inner.deref()
+    }
+}
+
+impl<T: Clone> DerefMut for Moo<T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        Moo::make_mut(self)
     }
 }
 
@@ -193,5 +200,17 @@ impl<T: Serialize> Serialize for Moo<T> {
 impl<T: Display> Display for Moo<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         (**self).fmt(f)
+    }
+}
+
+impl<T: Hash> Hash for Moo<T> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        (**self).hash(state);
+    }
+}
+
+impl<T> From<T> for Moo<T> {
+    fn from(value: T) -> Self {
+        Moo::new(value)
     }
 }
