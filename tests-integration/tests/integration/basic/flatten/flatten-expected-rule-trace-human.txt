@@ -28,21 +28,45 @@ new variables:
   find a#matrix_to_atom_2_2: int(1..5)
 --
 
-flatten(a#matrix_to_atom)[1], 
-   ~~> index_to_bubble ([("Bubble", 6000)]) 
-{flatten(a#matrix_to_atom)[1] @ and([__inDomain(1,int(1..4));int(1..)])} 
+flatten(a#matrix_to_atom), 
+   ~~> flatten_matrix ([("Base", 8000)]) 
+[a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2;int(1..)] 
 
 --
 
-({flatten(a#matrix_to_atom)[1] @ and([__inDomain(1,int(1..4));int(1..)])} = b[1]),
-(flatten(a#matrix_to_atom)[2] = b[2]),
-(flatten(a#matrix_to_atom)[3] = b[3]),
-(flatten(a#matrix_to_atom)[4] = b[4]), 
+flatten(a#matrix_to_atom), 
+   ~~> flatten_matrix ([("Base", 8000)]) 
+[a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2;int(1..)] 
+
+--
+
+flatten(a#matrix_to_atom), 
+   ~~> flatten_matrix ([("Base", 8000)]) 
+[a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2;int(1..)] 
+
+--
+
+flatten(a#matrix_to_atom), 
+   ~~> flatten_matrix ([("Base", 8000)]) 
+[a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2;int(1..)] 
+
+--
+
+[a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2;int(1..)][1], 
+   ~~> index_to_bubble ([("Bubble", 6000)]) 
+{[a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2;int(1..)][1] @ and([__inDomain(1,int(1..));int(1..)])} 
+
+--
+
+({[a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2;int(1..)][1] @ and([__inDomain(1,int(1..));int(1..)])} = b[1]),
+([a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2;int(1..)][2] = b[2]),
+([a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2;int(1..)][3] = b[3]),
+([a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2;int(1..)][4] = b[4]), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(flatten(a#matrix_to_atom)[1] = b[1]),
-(flatten(a#matrix_to_atom)[2] = b[2]),
-(flatten(a#matrix_to_atom)[3] = b[3]),
-(flatten(a#matrix_to_atom)[4] = b[4]) 
+(a#matrix_to_atom_1_1 = b[1]),
+([a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2;int(1..)][2] = b[2]),
+([a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2;int(1..)][3] = b[3]),
+([a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2;int(1..)][4] = b[4]) 
 
 --
 
@@ -52,33 +76,33 @@ b[1],
 
 --
 
-(flatten(a#matrix_to_atom)[1] = {b[1] @ and([__inDomain(1,int(1..4));int(1..)])}),
-(flatten(a#matrix_to_atom)[2] = b[2]),
-(flatten(a#matrix_to_atom)[3] = b[3]),
-(flatten(a#matrix_to_atom)[4] = b[4]), 
+(a#matrix_to_atom_1_1 = {b[1] @ and([__inDomain(1,int(1..4));int(1..)])}),
+([a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2;int(1..)][2] = b[2]),
+([a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2;int(1..)][3] = b[3]),
+([a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2;int(1..)][4] = b[4]), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(flatten(a#matrix_to_atom)[1] = b[1]),
-(flatten(a#matrix_to_atom)[2] = b[2]),
-(flatten(a#matrix_to_atom)[3] = b[3]),
-(flatten(a#matrix_to_atom)[4] = b[4]) 
+(a#matrix_to_atom_1_1 = b[1]),
+([a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2;int(1..)][2] = b[2]),
+([a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2;int(1..)][3] = b[3]),
+([a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2;int(1..)][4] = b[4]) 
 
 --
 
-flatten(a#matrix_to_atom)[2], 
+[a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2;int(1..)][2], 
    ~~> index_to_bubble ([("Bubble", 6000)]) 
-{flatten(a#matrix_to_atom)[2] @ and([__inDomain(2,int(1..4));int(1..)])} 
+{[a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2;int(1..)][2] @ and([__inDomain(2,int(1..));int(1..)])} 
 
 --
 
-(flatten(a#matrix_to_atom)[1] = b[1]),
-({flatten(a#matrix_to_atom)[2] @ and([__inDomain(2,int(1..4));int(1..)])} = b[2]),
-(flatten(a#matrix_to_atom)[3] = b[3]),
-(flatten(a#matrix_to_atom)[4] = b[4]), 
+(a#matrix_to_atom_1_1 = b[1]),
+({[a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2;int(1..)][2] @ and([__inDomain(2,int(1..));int(1..)])} = b[2]),
+([a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2;int(1..)][3] = b[3]),
+([a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2;int(1..)][4] = b[4]), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(flatten(a#matrix_to_atom)[1] = b[1]),
-(flatten(a#matrix_to_atom)[2] = b[2]),
-(flatten(a#matrix_to_atom)[3] = b[3]),
-(flatten(a#matrix_to_atom)[4] = b[4]) 
+(a#matrix_to_atom_1_1 = b[1]),
+({a#matrix_to_atom_1_2 @ false} = b[2]),
+([a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2;int(1..)][3] = b[3]),
+([a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2;int(1..)][4] = b[4]) 
 
 --
 
@@ -88,33 +112,33 @@ b[2],
 
 --
 
-(flatten(a#matrix_to_atom)[1] = b[1]),
-(flatten(a#matrix_to_atom)[2] = {b[2] @ and([__inDomain(2,int(1..4));int(1..)])}),
-(flatten(a#matrix_to_atom)[3] = b[3]),
-(flatten(a#matrix_to_atom)[4] = b[4]), 
+(a#matrix_to_atom_1_1 = b[1]),
+({a#matrix_to_atom_1_2 @ false} = {b[2] @ and([__inDomain(2,int(1..4));int(1..)])}),
+([a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2;int(1..)][3] = b[3]),
+([a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2;int(1..)][4] = b[4]), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(flatten(a#matrix_to_atom)[1] = b[1]),
-(flatten(a#matrix_to_atom)[2] = b[2]),
-(flatten(a#matrix_to_atom)[3] = b[3]),
-(flatten(a#matrix_to_atom)[4] = b[4]) 
+(a#matrix_to_atom_1_1 = b[1]),
+({a#matrix_to_atom_1_2 @ false} = b[2]),
+([a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2;int(1..)][3] = b[3]),
+([a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2;int(1..)][4] = b[4]) 
 
 --
 
-flatten(a#matrix_to_atom)[3], 
+[a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2;int(1..)][3], 
    ~~> index_to_bubble ([("Bubble", 6000)]) 
-{flatten(a#matrix_to_atom)[3] @ and([__inDomain(3,int(1..4));int(1..)])} 
+{[a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2;int(1..)][3] @ and([__inDomain(3,int(1..));int(1..)])} 
 
 --
 
-(flatten(a#matrix_to_atom)[1] = b[1]),
-(flatten(a#matrix_to_atom)[2] = b[2]),
-({flatten(a#matrix_to_atom)[3] @ and([__inDomain(3,int(1..4));int(1..)])} = b[3]),
-(flatten(a#matrix_to_atom)[4] = b[4]), 
+(a#matrix_to_atom_1_1 = b[1]),
+({a#matrix_to_atom_1_2 @ false} = b[2]),
+({[a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2;int(1..)][3] @ and([__inDomain(3,int(1..));int(1..)])} = b[3]),
+([a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2;int(1..)][4] = b[4]), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(flatten(a#matrix_to_atom)[1] = b[1]),
-(flatten(a#matrix_to_atom)[2] = b[2]),
-(flatten(a#matrix_to_atom)[3] = b[3]),
-(flatten(a#matrix_to_atom)[4] = b[4]) 
+(a#matrix_to_atom_1_1 = b[1]),
+({a#matrix_to_atom_1_2 @ false} = b[2]),
+({a#matrix_to_atom_2_1 @ false} = b[3]),
+([a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2;int(1..)][4] = b[4]) 
 
 --
 
@@ -124,33 +148,33 @@ b[3],
 
 --
 
-(flatten(a#matrix_to_atom)[1] = b[1]),
-(flatten(a#matrix_to_atom)[2] = b[2]),
-(flatten(a#matrix_to_atom)[3] = {b[3] @ and([__inDomain(3,int(1..4));int(1..)])}),
-(flatten(a#matrix_to_atom)[4] = b[4]), 
+(a#matrix_to_atom_1_1 = b[1]),
+({a#matrix_to_atom_1_2 @ false} = b[2]),
+({a#matrix_to_atom_2_1 @ false} = {b[3] @ and([__inDomain(3,int(1..4));int(1..)])}),
+([a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2;int(1..)][4] = b[4]), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(flatten(a#matrix_to_atom)[1] = b[1]),
-(flatten(a#matrix_to_atom)[2] = b[2]),
-(flatten(a#matrix_to_atom)[3] = b[3]),
-(flatten(a#matrix_to_atom)[4] = b[4]) 
+(a#matrix_to_atom_1_1 = b[1]),
+({a#matrix_to_atom_1_2 @ false} = b[2]),
+({a#matrix_to_atom_2_1 @ false} = b[3]),
+([a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2;int(1..)][4] = b[4]) 
 
 --
 
-flatten(a#matrix_to_atom)[4], 
+[a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2;int(1..)][4], 
    ~~> index_to_bubble ([("Bubble", 6000)]) 
-{flatten(a#matrix_to_atom)[4] @ and([__inDomain(4,int(1..4));int(1..)])} 
+{[a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2;int(1..)][4] @ and([__inDomain(4,int(1..));int(1..)])} 
 
 --
 
-(flatten(a#matrix_to_atom)[1] = b[1]),
-(flatten(a#matrix_to_atom)[2] = b[2]),
-(flatten(a#matrix_to_atom)[3] = b[3]),
-({flatten(a#matrix_to_atom)[4] @ and([__inDomain(4,int(1..4));int(1..)])} = b[4]), 
+(a#matrix_to_atom_1_1 = b[1]),
+({a#matrix_to_atom_1_2 @ false} = b[2]),
+({a#matrix_to_atom_2_1 @ false} = b[3]),
+({[a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2;int(1..)][4] @ and([__inDomain(4,int(1..));int(1..)])} = b[4]), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(flatten(a#matrix_to_atom)[1] = b[1]),
-(flatten(a#matrix_to_atom)[2] = b[2]),
-(flatten(a#matrix_to_atom)[3] = b[3]),
-(flatten(a#matrix_to_atom)[4] = b[4]) 
+(a#matrix_to_atom_1_1 = b[1]),
+({a#matrix_to_atom_1_2 @ false} = b[2]),
+({a#matrix_to_atom_2_1 @ false} = b[3]),
+({a#matrix_to_atom_2_2 @ false} = b[4]) 
 
 --
 
@@ -160,15 +184,15 @@ b[4],
 
 --
 
-(flatten(a#matrix_to_atom)[1] = b[1]),
-(flatten(a#matrix_to_atom)[2] = b[2]),
-(flatten(a#matrix_to_atom)[3] = b[3]),
-(flatten(a#matrix_to_atom)[4] = {b[4] @ and([__inDomain(4,int(1..4));int(1..)])}), 
+(a#matrix_to_atom_1_1 = b[1]),
+({a#matrix_to_atom_1_2 @ false} = b[2]),
+({a#matrix_to_atom_2_1 @ false} = b[3]),
+({a#matrix_to_atom_2_2 @ false} = {b[4] @ and([__inDomain(4,int(1..4));int(1..)])}), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(flatten(a#matrix_to_atom)[1] = b[1]),
-(flatten(a#matrix_to_atom)[2] = b[2]),
-(flatten(a#matrix_to_atom)[3] = b[3]),
-(flatten(a#matrix_to_atom)[4] = b[4]) 
+(a#matrix_to_atom_1_1 = b[1]),
+({a#matrix_to_atom_1_2 @ false} = b[2]),
+({a#matrix_to_atom_2_1 @ false} = b[3]),
+({a#matrix_to_atom_2_2 @ false} = b[4]) 
 
 --
 
@@ -178,15 +202,15 @@ b,
 
 --
 
-(flatten(a#matrix_to_atom)[1] = [1,2,3,4;int(1..4)][1]),
-(flatten(a#matrix_to_atom)[2] = b[2]),
-(flatten(a#matrix_to_atom)[3] = b[3]),
-(flatten(a#matrix_to_atom)[4] = b[4]), 
+(a#matrix_to_atom_1_1 = [1,2,3,4;int(1..4)][1]),
+({a#matrix_to_atom_1_2 @ false} = b[2]),
+({a#matrix_to_atom_2_1 @ false} = b[3]),
+({a#matrix_to_atom_2_2 @ false} = b[4]), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(flatten(a#matrix_to_atom)[1] = 1),
-(flatten(a#matrix_to_atom)[2] = b[2]),
-(flatten(a#matrix_to_atom)[3] = b[3]),
-(flatten(a#matrix_to_atom)[4] = b[4]) 
+(a#matrix_to_atom_1_1 = 1),
+({a#matrix_to_atom_1_2 @ false} = b[2]),
+({a#matrix_to_atom_2_1 @ false} = b[3]),
+({a#matrix_to_atom_2_2 @ false} = b[4]) 
 
 --
 
@@ -196,239 +220,36 @@ b,
 
 --
 
-(flatten(a#matrix_to_atom)[1] = 1),
-(flatten(a#matrix_to_atom)[2] = [1,2,3,4;int(1..4)][2]),
-(flatten(a#matrix_to_atom)[3] = b[3]),
-(flatten(a#matrix_to_atom)[4] = b[4]), 
+(a#matrix_to_atom_1_1 = 1),
+({a#matrix_to_atom_1_2 @ false} = [1,2,3,4;int(1..4)][2]),
+({a#matrix_to_atom_2_1 @ false} = b[3]),
+({a#matrix_to_atom_2_2 @ false} = b[4]), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(flatten(a#matrix_to_atom)[1] = 1),
-(flatten(a#matrix_to_atom)[2] = 2),
-(flatten(a#matrix_to_atom)[3] = b[3]),
-(flatten(a#matrix_to_atom)[4] = b[4]) 
+(a#matrix_to_atom_1_1 = 1),
+({a#matrix_to_atom_1_2 @ false} = 2),
+({a#matrix_to_atom_2_1 @ false} = b[3]),
+({a#matrix_to_atom_2_2 @ false} = b[4]) 
 
 --
 
-b, 
-   ~~> substitute_value_lettings ([("Base", 5000)]) 
-[1,2,3,4;int(1..4)] 
+({a#matrix_to_atom_1_2 @ false} = 2), 
+   ~~> bubble_up ([("Bubble", 8800)]) 
+{(a#matrix_to_atom_1_2 = 2) @ false} 
 
 --
 
-(flatten(a#matrix_to_atom)[1] = 1),
-(flatten(a#matrix_to_atom)[2] = 2),
-(flatten(a#matrix_to_atom)[3] = [1,2,3,4;int(1..4)][3]),
-(flatten(a#matrix_to_atom)[4] = b[4]), 
+{(a#matrix_to_atom_1_2 = 2) @ false}, 
+   ~~> expand_bubble ([("Bubble", 8900)]) 
+and([(a#matrix_to_atom_1_2 = 2),false;int(1..)]) 
+
+--
+
+(a#matrix_to_atom_1_1 = 1),
+and([(a#matrix_to_atom_1_2 = 2),false;int(1..)]),
+({a#matrix_to_atom_2_1 @ false} = b[3]),
+({a#matrix_to_atom_2_2 @ false} = b[4]), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(flatten(a#matrix_to_atom)[1] = 1),
-(flatten(a#matrix_to_atom)[2] = 2),
-(flatten(a#matrix_to_atom)[3] = 3),
-(flatten(a#matrix_to_atom)[4] = b[4]) 
-
---
-
-b, 
-   ~~> substitute_value_lettings ([("Base", 5000)]) 
-[1,2,3,4;int(1..4)] 
-
---
-
-(flatten(a#matrix_to_atom)[1] = 1),
-(flatten(a#matrix_to_atom)[2] = 2),
-(flatten(a#matrix_to_atom)[3] = 3),
-(flatten(a#matrix_to_atom)[4] = [1,2,3,4;int(1..4)][4]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
-(flatten(a#matrix_to_atom)[1] = 1),
-(flatten(a#matrix_to_atom)[2] = 2),
-(flatten(a#matrix_to_atom)[3] = 3),
-(flatten(a#matrix_to_atom)[4] = 4) 
-
---
-
-flatten(a#matrix_to_atom)[1], 
-   ~~> flatten_generic ([("Minion", 4200)]) 
-__0[1] 
-new variables:
-  find __0: matrix indexed by [[int(1..4)]] of int(1..5)
-new constraints:
-  __0 =aux flatten(a#matrix_to_atom)
---
-
-(__0#matrix_to_atom[1] = 1),
-(flatten(a#matrix_to_atom)[2] = 2),
-(flatten(a#matrix_to_atom)[3] = 3),
-(flatten(a#matrix_to_atom)[4] = 4),
-__0#matrix_to_atom =aux flatten(a#matrix_to_atom), 
-   ~~> select_representation_matrix ([("Representations", 8001)]) 
-(__0#matrix_to_atom[1] = 1),
-(flatten(a#matrix_to_atom)[2] = 2),
-(flatten(a#matrix_to_atom)[3] = 3),
-(flatten(a#matrix_to_atom)[4] = 4),
-__0#matrix_to_atom =aux flatten(a#matrix_to_atom) 
-new variables:
-  find __0#matrix_to_atom_1: int(1..5)
-  find __0#matrix_to_atom_2: int(1..5)
-  find __0#matrix_to_atom_3: int(1..5)
-  find __0#matrix_to_atom_4: int(1..5)
---
-
-(__0#matrix_to_atom[1] = 1),
-(flatten(a#matrix_to_atom)[2] = 2),
-(flatten(a#matrix_to_atom)[3] = 3),
-(flatten(a#matrix_to_atom)[4] = 4),
-__0#matrix_to_atom =aux flatten(a#matrix_to_atom), 
-   ~~> index_matrix_to_atom ([("Base", 5000)]) 
-(__0#matrix_to_atom_1 = 1),
-(flatten(a#matrix_to_atom)[2] = 2),
-(flatten(a#matrix_to_atom)[3] = 3),
-(flatten(a#matrix_to_atom)[4] = 4),
-__0#matrix_to_atom =aux flatten(a#matrix_to_atom) 
-
---
-
-flatten(a#matrix_to_atom)[2], 
-   ~~> flatten_generic ([("Minion", 4200)]) 
-__1[2] 
-new variables:
-  find __1: matrix indexed by [[int(1..4)]] of int(1..5)
-new constraints:
-  __1 =aux flatten(a#matrix_to_atom)
---
-
-(__0#matrix_to_atom_1 = 1),
-(__1#matrix_to_atom[2] = 2),
-(flatten(a#matrix_to_atom)[3] = 3),
-(flatten(a#matrix_to_atom)[4] = 4),
-__0#matrix_to_atom =aux flatten(a#matrix_to_atom),
-__1#matrix_to_atom =aux flatten(a#matrix_to_atom), 
-   ~~> select_representation_matrix ([("Representations", 8001)]) 
-(__0#matrix_to_atom_1 = 1),
-(__1#matrix_to_atom[2] = 2),
-(flatten(a#matrix_to_atom)[3] = 3),
-(flatten(a#matrix_to_atom)[4] = 4),
-__0#matrix_to_atom =aux flatten(a#matrix_to_atom),
-__1#matrix_to_atom =aux flatten(a#matrix_to_atom) 
-new variables:
-  find __1#matrix_to_atom_1: int(1..5)
-  find __1#matrix_to_atom_2: int(1..5)
-  find __1#matrix_to_atom_3: int(1..5)
-  find __1#matrix_to_atom_4: int(1..5)
---
-
-(__0#matrix_to_atom_1 = 1),
-(__1#matrix_to_atom[2] = 2),
-(flatten(a#matrix_to_atom)[3] = 3),
-(flatten(a#matrix_to_atom)[4] = 4),
-__0#matrix_to_atom =aux flatten(a#matrix_to_atom),
-__1#matrix_to_atom =aux flatten(a#matrix_to_atom), 
-   ~~> index_matrix_to_atom ([("Base", 5000)]) 
-(__0#matrix_to_atom_1 = 1),
-(__1#matrix_to_atom_2 = 2),
-(flatten(a#matrix_to_atom)[3] = 3),
-(flatten(a#matrix_to_atom)[4] = 4),
-__0#matrix_to_atom =aux flatten(a#matrix_to_atom),
-__1#matrix_to_atom =aux flatten(a#matrix_to_atom) 
-
---
-
-flatten(a#matrix_to_atom)[3], 
-   ~~> flatten_generic ([("Minion", 4200)]) 
-__2[3] 
-new variables:
-  find __2: matrix indexed by [[int(1..4)]] of int(1..5)
-new constraints:
-  __2 =aux flatten(a#matrix_to_atom)
---
-
-(__0#matrix_to_atom_1 = 1),
-(__1#matrix_to_atom_2 = 2),
-(__2#matrix_to_atom[3] = 3),
-(flatten(a#matrix_to_atom)[4] = 4),
-__0#matrix_to_atom =aux flatten(a#matrix_to_atom),
-__1#matrix_to_atom =aux flatten(a#matrix_to_atom),
-__2#matrix_to_atom =aux flatten(a#matrix_to_atom), 
-   ~~> select_representation_matrix ([("Representations", 8001)]) 
-(__0#matrix_to_atom_1 = 1),
-(__1#matrix_to_atom_2 = 2),
-(__2#matrix_to_atom[3] = 3),
-(flatten(a#matrix_to_atom)[4] = 4),
-__0#matrix_to_atom =aux flatten(a#matrix_to_atom),
-__1#matrix_to_atom =aux flatten(a#matrix_to_atom),
-__2#matrix_to_atom =aux flatten(a#matrix_to_atom) 
-new variables:
-  find __2#matrix_to_atom_1: int(1..5)
-  find __2#matrix_to_atom_2: int(1..5)
-  find __2#matrix_to_atom_3: int(1..5)
-  find __2#matrix_to_atom_4: int(1..5)
---
-
-(__0#matrix_to_atom_1 = 1),
-(__1#matrix_to_atom_2 = 2),
-(__2#matrix_to_atom[3] = 3),
-(flatten(a#matrix_to_atom)[4] = 4),
-__0#matrix_to_atom =aux flatten(a#matrix_to_atom),
-__1#matrix_to_atom =aux flatten(a#matrix_to_atom),
-__2#matrix_to_atom =aux flatten(a#matrix_to_atom), 
-   ~~> index_matrix_to_atom ([("Base", 5000)]) 
-(__0#matrix_to_atom_1 = 1),
-(__1#matrix_to_atom_2 = 2),
-(__2#matrix_to_atom_3 = 3),
-(flatten(a#matrix_to_atom)[4] = 4),
-__0#matrix_to_atom =aux flatten(a#matrix_to_atom),
-__1#matrix_to_atom =aux flatten(a#matrix_to_atom),
-__2#matrix_to_atom =aux flatten(a#matrix_to_atom) 
-
---
-
-flatten(a#matrix_to_atom)[4], 
-   ~~> flatten_generic ([("Minion", 4200)]) 
-__3[4] 
-new variables:
-  find __3: matrix indexed by [[int(1..4)]] of int(1..5)
-new constraints:
-  __3 =aux flatten(a#matrix_to_atom)
---
-
-(__0#matrix_to_atom_1 = 1),
-(__1#matrix_to_atom_2 = 2),
-(__2#matrix_to_atom_3 = 3),
-(__3#matrix_to_atom[4] = 4),
-__0#matrix_to_atom =aux flatten(a#matrix_to_atom),
-__1#matrix_to_atom =aux flatten(a#matrix_to_atom),
-__2#matrix_to_atom =aux flatten(a#matrix_to_atom),
-__3#matrix_to_atom =aux flatten(a#matrix_to_atom), 
-   ~~> select_representation_matrix ([("Representations", 8001)]) 
-(__0#matrix_to_atom_1 = 1),
-(__1#matrix_to_atom_2 = 2),
-(__2#matrix_to_atom_3 = 3),
-(__3#matrix_to_atom[4] = 4),
-__0#matrix_to_atom =aux flatten(a#matrix_to_atom),
-__1#matrix_to_atom =aux flatten(a#matrix_to_atom),
-__2#matrix_to_atom =aux flatten(a#matrix_to_atom),
-__3#matrix_to_atom =aux flatten(a#matrix_to_atom) 
-new variables:
-  find __3#matrix_to_atom_1: int(1..5)
-  find __3#matrix_to_atom_2: int(1..5)
-  find __3#matrix_to_atom_3: int(1..5)
-  find __3#matrix_to_atom_4: int(1..5)
---
-
-(__0#matrix_to_atom_1 = 1),
-(__1#matrix_to_atom_2 = 2),
-(__2#matrix_to_atom_3 = 3),
-(__3#matrix_to_atom[4] = 4),
-__0#matrix_to_atom =aux flatten(a#matrix_to_atom),
-__1#matrix_to_atom =aux flatten(a#matrix_to_atom),
-__2#matrix_to_atom =aux flatten(a#matrix_to_atom),
-__3#matrix_to_atom =aux flatten(a#matrix_to_atom), 
-   ~~> index_matrix_to_atom ([("Base", 5000)]) 
-(__0#matrix_to_atom_1 = 1),
-(__1#matrix_to_atom_2 = 2),
-(__2#matrix_to_atom_3 = 3),
-(__3#matrix_to_atom_4 = 4),
-__0#matrix_to_atom =aux flatten(a#matrix_to_atom),
-__1#matrix_to_atom =aux flatten(a#matrix_to_atom),
-__2#matrix_to_atom =aux flatten(a#matrix_to_atom),
-__3#matrix_to_atom =aux flatten(a#matrix_to_atom) 
+false 
 
 --
 
@@ -436,39 +257,12 @@ Final model:
 
 find a: matrix indexed by [[int(1..2), int(1..2)]] of int(1..5)
 letting b be [1,2,3,4;int(1..4)]
-find __0: matrix indexed by [[int(1..4)]] of int(1..5)
-find __1: matrix indexed by [[int(1..4)]] of int(1..5)
-find __2: matrix indexed by [[int(1..4)]] of int(1..5)
-find __3: matrix indexed by [[int(1..4)]] of int(1..5)
 find a#matrix_to_atom_1_1: int(1..5)
 find a#matrix_to_atom_1_2: int(1..5)
 find a#matrix_to_atom_2_1: int(1..5)
 find a#matrix_to_atom_2_2: int(1..5)
-find __0#matrix_to_atom_1: int(1..5)
-find __0#matrix_to_atom_2: int(1..5)
-find __0#matrix_to_atom_3: int(1..5)
-find __0#matrix_to_atom_4: int(1..5)
-find __1#matrix_to_atom_1: int(1..5)
-find __1#matrix_to_atom_2: int(1..5)
-find __1#matrix_to_atom_3: int(1..5)
-find __1#matrix_to_atom_4: int(1..5)
-find __2#matrix_to_atom_1: int(1..5)
-find __2#matrix_to_atom_2: int(1..5)
-find __2#matrix_to_atom_3: int(1..5)
-find __2#matrix_to_atom_4: int(1..5)
-find __3#matrix_to_atom_1: int(1..5)
-find __3#matrix_to_atom_2: int(1..5)
-find __3#matrix_to_atom_3: int(1..5)
-find __3#matrix_to_atom_4: int(1..5)
 
 such that
 
-(__0#matrix_to_atom_1 = 1),
-(__1#matrix_to_atom_2 = 2),
-(__2#matrix_to_atom_3 = 3),
-(__3#matrix_to_atom_4 = 4),
-__0#matrix_to_atom =aux flatten(a#matrix_to_atom),
-__1#matrix_to_atom =aux flatten(a#matrix_to_atom),
-__2#matrix_to_atom =aux flatten(a#matrix_to_atom),
-__3#matrix_to_atom =aux flatten(a#matrix_to_atom)
+false
 
