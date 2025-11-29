@@ -678,8 +678,12 @@ pub fn parse_expression(obj: &JsonValue, scope: &Rc<RefCell<SymbolTable>>) -> Op
             Box::new(Expression::PreImage) as Box<dyn Fn(_, _, _) -> _>,
         ),
         (
-           "MkOpInverse",
-            Box::new(Expression::Inverse) as Box<dyn Fn(_, _, _) -> _>, 
+            "MkOpInverse",
+            Box::new(Expression::Inverse) as Box<dyn Fn(_, _, _) -> _>,
+        ),
+        (
+            "MkOpRestrict",
+            Box::new(Expression::Restrict) as Box<dyn Fn(_, _, _) -> _>,
         ),
     ]
     .into_iter()

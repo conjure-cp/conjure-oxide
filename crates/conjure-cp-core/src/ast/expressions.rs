@@ -10,7 +10,7 @@ use crate::ast::literals::AbstractLiteral;
 use crate::ast::literals::Literal;
 use crate::ast::pretty::{pretty_expressions_as_top_level, pretty_vec};
 use crate::ast::{Atom, DomainPtr};
-use crate::ast::{GroundDomain, Metadata};
+use crate::ast::{GroundDomain, Metadata, UnresolvedDomain};
 use crate::bug;
 use conjure_cp_enum_compatibility_macro::document_compatibility;
 use itertools::Itertools;
@@ -257,7 +257,6 @@ pub enum Expression {
     /// Set of codomain values function is defined for
     #[compatible(JsonInput)]
     Range(Metadata, Moo<Expression>),
-
 
     /// Unsafe power`x**y` (possibly undefined)
     ///
@@ -517,6 +516,9 @@ pub enum Expression {
 
     #[compatible(JsonInput)]
     Inverse(Metadata, Moo<Expression>, Moo<Expression>),
+
+    #[compatible(JsonInput)]
+    Restrict(Metadata, Moo<Expression>, Moo<Expression>),
   
     /// Lexicographical < between two matrices.
     ///
@@ -890,39 +892,38 @@ impl Expression {
                 .apply_i32(|a, b| Some(a * b), b.domain_of()?.resolve()?.as_ref())
                 .map(DomainPtr::from)
                 .ok(),
-            Expression::Defined(_, function) => {
-                match function.domain_of()?.resolve()?.as_ref() {
-                    GroundDomain::Function(_, domain, _) => Some(domain.clone().into()),
-                    // Not defined for anything other than a function
-                    _ => None,
-                }
-            }
-            Expression::Range(_, function) => {
-                match function.domain_of()?.resolve()?.as_ref() {
-                    GroundDomain::Function(_, _, codomain) => Some(codomain.clone().into()),
-                    // Not defined for anything other than a function
-                    _ => None,
-                }
-            }
-            Expression::Image(_, function, _) => {
-                match function.domain_of()?.resolve()?.as_ref() {
-                    GroundDomain::Function(_, _, codomain) => Some(codomain.clone().into()),
-                    // Not defined for anything other than a function
-                    _ => None,
-                }
-            }
-            Expression::ImageSet(_, function, _) => {
-                match function.domain_of()?.resolve()?.as_ref() {
-                    GroundDomain::Function(_, _, codomain) => Some(codomain.clone().into()),
-                    // Not defined for anything other than a function
-                    _ => None,
-                }
-            }
-            Expression::PreImage(_, function, _) => {
-                match function.domain_of()?.resolve()?.as_ref() {
-                    GroundDomain::Function(_, domain, _) => Some(domain.clone().into()),
-                    // Not defined for anything other than a function
-                    _ => None,
+            Expression::Defined(_, function) => get_function_domain(function),
+            Expression::Range(_, function) => get_function_codomain(function),
+            Expression::Image(_, function, _) => get_function_codomain(function),
+            Expression::ImageSet(_, function, _) => get_function_codomain(function),
+            Expression::PreImage(_, function, _) => get_function_domain(function),
+            Expression::Restrict(_, function, new_domain) => {
+                let function_domain = function.domain_of()?.clone();
+                match function_domain.resolve().as_ref() {
+                    Some(d) => {
+                        match d.as_ref() {
+                            GroundDomain::Function(attrs, _, codomain) => Some(Domain::function(
+                                attrs.clone(),
+                                new_domain.domain_of()?,
+                                codomain.clone().into(),
+                            )),
+                            // Not defined for anything other than a function
+                            _ => None,
+                        }
+                    }
+                    None => {
+                        match function_domain.as_unresolved()? {
+                            UnresolvedDomain::Function(attrs, _, codomain) => {
+                                Some(Domain::function(
+                                    attrs.clone(),
+                                    new_domain.domain_of()?,
+                                    codomain.clone().into(),
+                                ))
+                            }
+                            // Not defined for anything other than a function
+                            _ => None,
+                        }
+                    }
                 }
             }
             Expression::Inverse(..) => Some(Domain::bool()),
@@ -1119,6 +1120,46 @@ impl Expression {
             .into_iter()
             .map(|x| x.category_of())
             .collect()
+    }
+}
+
+pub fn get_function_domain(function: &Moo<Expression>) -> Option<DomainPtr> {
+    let function_domain = function.domain_of()?.clone();
+    match function_domain.resolve().as_ref() {
+        Some(d) => {
+            match d.as_ref() {
+                GroundDomain::Function(_, domain, _) => Some(domain.clone().into()),
+                // Not defined for anything other than a function
+                _ => None,
+            }
+        }
+        None => {
+            match function_domain.as_unresolved()? {
+                UnresolvedDomain::Function(_, domain, _) => Some(domain.clone().into()),
+                // Not defined for anything other than a function
+                _ => None,
+            }
+        }
+    }
+}
+
+pub fn get_function_codomain(function: &Moo<Expression>) -> Option<DomainPtr> {
+    let function_domain = function.domain_of()?.clone();
+    match function_domain.resolve().as_ref() {
+        Some(d) => {
+            match d.as_ref() {
+                GroundDomain::Function(_, _, codomain) => Some(codomain.clone().into()),
+                // Not defined for anything other than a function
+                _ => None,
+            }
+        }
+        None => {
+            match function_domain.as_unresolved()? {
+                UnresolvedDomain::Function(_, _, codomain) => Some(codomain.clone().into()),
+                // Not defined for anything other than a function
+                _ => None,
+            }
+        }
     }
 }
 
@@ -1473,7 +1514,8 @@ impl Display for Expression {
             Expression::Image(_, function, elems) => write!(f, "image({function},{elems})"),
             Expression::ImageSet(_, function, elems) => write!(f, "imageSet({function},{elems})"),
             Expression::PreImage(_, function, elems) => write!(f, "preImage({function},{elems})"),
-            Expression::Inverse(_,a ,b ) => write!(f,"inverse({a},{b})"),
+            Expression::Inverse(_, a, b) => write!(f, "inverse({a},{b})"),
+            Expression::Restrict(_, function, domain) => write!(f, "restrict({function},{domain})"),
 
             Expression::LexLt(_, a, b) => write!(f, "({a} <lex {b})"),
             Expression::LexLeq(_, a, b) => write!(f, "({a} <=lex {b})"),
@@ -1594,7 +1636,7 @@ impl Typeable for Expression {
                     ),
                 }
             }
-            Expression::Range(_, function)  => {
+            Expression::Range(_, function) => {
                 let subject = function.return_type();
                 match subject {
                     ReturnType::Function(_, codomain) => *codomain,
@@ -1625,6 +1667,17 @@ impl Typeable for Expression {
                 let subject = function.return_type();
                 match subject {
                     ReturnType::Function(domain, _) => *domain,
+                    _ => bug!(
+                        "Invalid preImage operation: expected the operand to be a function, got {self}: {subject}"
+                    ),
+                }
+            }
+            Expression::Restrict(_, function, new_domain) => {
+                let subject = function.return_type();
+                match subject {
+                    ReturnType::Function(_, codomain) => {
+                        ReturnType::Function(Box::new(new_domain.return_type()), codomain)
+                    }
                     _ => bug!(
                         "Invalid preImage operation: expected the operand to be a function, got {self}: {subject}"
                     ),
