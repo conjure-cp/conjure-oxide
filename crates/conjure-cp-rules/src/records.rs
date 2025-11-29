@@ -1,7 +1,7 @@
-use conjure_cp::ast::AbstractLiteral;
 use conjure_cp::ast::Expression as Expr;
 use conjure_cp::ast::Moo;
 use conjure_cp::ast::SymbolTable;
+use conjure_cp::ast::{AbstractLiteral, GroundDomain};
 use conjure_cp::into_matrix_expr;
 use conjure_cp::matrix_expr;
 use conjure_cp::rule_engine::{
@@ -9,7 +9,6 @@ use conjure_cp::rule_engine::{
 };
 
 use conjure_cp::ast::Atom;
-use conjure_cp::ast::Domain;
 use conjure_cp::ast::Expression;
 use conjure_cp::ast::Literal;
 use conjure_cp::ast::Metadata;
@@ -40,9 +39,7 @@ fn index_record_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
             .unwrap()[0]
             .clone();
 
-        // let decl = symbols.lookup(name).unwrap();
-
-        let Some(Domain::Record(_)) = decl.domain().map(|x| x.resolve(symbols)) else {
+        let Some(GroundDomain::Record(_)) = decl.resolved_domain().as_deref() else {
             return Err(RuleNotApplicable);
         };
 
@@ -75,7 +72,7 @@ fn index_record_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
 }
 
 #[register_rule(("Bubble", 8000))]
-fn record_index_to_bubble(expr: &Expr, symtab: &SymbolTable) -> ApplicationResult {
+fn record_index_to_bubble(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // annoyingly, let chaining only works in if-lets, not let-elses,otherwise I could avoid the
     // indentation here!
     if let Expr::UnsafeIndex(_, subject, indices) = expr
@@ -89,9 +86,10 @@ fn record_index_to_bubble(expr: &Expr, symtab: &SymbolTable) -> ApplicationResul
         let domain = subject
             .domain_of()
             .ok_or(ApplicationError::DomainError)?
-            .resolve(symtab);
+            .resolve()
+            .ok_or(ApplicationError::DomainError)?;
 
-        let Domain::Record(elems) = domain else {
+        let GroundDomain::Record(elems) = domain.as_ref() else {
             return Err(RuleNotApplicable);
         };
 
@@ -157,7 +155,7 @@ fn record_index_to_bubble(expr: &Expr, symtab: &SymbolTable) -> ApplicationResul
 
 // dealing with equality over 2 record variables
 #[register_rule(("Base", 2000))]
-fn record_equality(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+fn record_equality(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // annoyingly, let chaining only works in if-lets, not let-elses, otherwise I could avoid the
     // indentation here!
 
@@ -171,18 +169,18 @@ fn record_equality(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         // .. that have been represented with record_to_atom
         && reprs.first().is_none_or(|x| x.as_str() == "record_to_atom")
         && reprs2.first().is_none_or(|x| x.as_str() == "record_to_atom")
-        && let Some(domain) = decl.domain().map(|x| x.resolve(symbols))
-        && let Some(domain2) = decl2.domain().map(|x| x.resolve(symbols))
+        && let Some(domain) = decl.resolved_domain()
+        && let Some(domain2) = decl2.resolved_domain()
 
         // .. and have record variable domains
-        && let Domain::Record(entries) = domain
-        && let Domain::Record(entries2) = domain2
+        && let GroundDomain::Record(entries) = domain.as_ref()
+        && let GroundDomain::Record(entries2) = domain2.as_ref()
 
         // we only support equality over records of the same size
         && entries.len() == entries2.len()
 
         // assuming all record entry names must match for equality
-        && izip!(&entries,&entries2).all(|(entry1,entry2)| entry1.name == entry2.name)
+        && izip!(entries,entries2).all(|(entry1,entry2)| entry1.name == entry2.name)
     {
         let mut equality_constraints = vec![];
         // unroll the equality into equality constraints for each field
@@ -224,18 +222,17 @@ fn record_equality(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
 // dealing with equality where the left is a record variable, and the right is a constant record
 #[register_rule(("Base", 2000))]
-fn record_to_const(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+fn record_to_const(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     if let Expr::Eq(_, left, right) = expr
         && let Expr::Atomic(_, Atom::Reference(decl)) = &**left
         && let Name::WithRepresentation(_, reprs) = &decl.name() as &Name
         && reprs.first().is_none_or(|x| x.as_str() == "record_to_atom")
     {
         let domain = decl
-            .domain()
-            .map(|x| x.resolve(symbols))
+            .resolved_domain()
             .ok_or(ApplicationError::DomainError)?;
 
-        let Domain::Record(entries) = domain else {
+        let GroundDomain::Record(entries) = domain.as_ref() else {
             return Err(RuleNotApplicable);
         };
 

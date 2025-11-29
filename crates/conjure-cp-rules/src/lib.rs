@@ -4,17 +4,15 @@
 //!
 #![doc = include_str!("./rule_semantics.md")]
 
-pub use constant_eval::eval_constant;
-
 mod base;
 mod bottom_up_adaptor;
 mod bubble;
 mod comprehensions;
 mod constant_eval;
+mod lex;
 mod matrix;
 mod minion;
 mod normalisers;
-mod partial_eval;
 mod records;
 mod representation;
 mod select_representation;
