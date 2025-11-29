@@ -11,6 +11,7 @@ pub enum ReturnType {
     Set(Box<ReturnType>),
     Tuple(Vec<ReturnType>),
     Record(Vec<ReturnType>),
+    Function(Box<ReturnType>, Box<ReturnType>),
 
     /// An unknown type
     ///
@@ -41,6 +42,9 @@ impl Display for ReturnType {
             ReturnType::Record(types) => {
                 let inners = types.iter().map(|t| format!("{}", t)).join(", ");
                 write!(f, "Record {{ {inners} }}")
+            }
+            ReturnType::Function(ty1, ty2) => {
+                write!(f, "Function ({ty1} -> {ty2})")
             }
             ReturnType::Unknown => write!(f, "?"),
         }

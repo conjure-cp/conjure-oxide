@@ -146,6 +146,7 @@ pub fn index_domains(matrix: AbstractLiteral<Literal>) -> Vec<Moo<GroundDomain>>
             }
             AbstractLiteral::Tuple(_) => vec![],
             AbstractLiteral::Record(_) => vec![],
+            AbstractLiteral::Function(_) => vec![],
         }
     })
 }
