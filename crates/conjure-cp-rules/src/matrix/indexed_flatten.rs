@@ -1,4 +1,4 @@
-use conjure_cp::ast::{Atom, Expression as Expr, GroundDomain, Literal, Name, SymbolTable, matrix};
+use conjure_cp::ast::{Atom, Expression as Expr, GroundDomain, Literal, Moo, Name, SymbolTable};
 use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
 };
@@ -51,21 +51,43 @@ fn indexed_flatten_matrix(expr: &Expr, symbols: &SymbolTable) -> ApplicationResu
                     return Err(RuleNotApplicable);
                 };
 
-                let flat_values = matrix::enumerate_indices(index_domains.clone())
-                    .map(|i| {
-                        matrix_values[&Name::Represented(Box::new((
-                            name.as_ref().clone(),
-                            "matrix_to_atom".into(),
-                            i.iter().join("_").into(),
-                        )))]
-                            .clone()
-                    })
-                    .collect_vec();
-                return Ok(Reduction::pure(flat_values[(index as usize) - 1].clone()));
+                let flat_index = ndim_to_flat_index(index_domains.clone(), index as usize - 1);
+                println!("{}", flat_index.iter().join("_"));
+
+                let flat_value = matrix_values[&Name::Represented(Box::new((
+                    name.as_ref().clone(),
+                    "matrix_to_atom".into(),
+                    flat_index.iter().join("_").into(),
+                )))]
+                    .clone();
+
+                return Ok(Reduction::pure(flat_value));
             }
 
             Err(RuleNotApplicable)
         }
         _ => Err(RuleNotApplicable),
     }
+}
+
+// Given index domains for a multi-dimensional matrix and the nth index in the flattened matrix, find the coordinates in the original matrix
+fn ndim_to_flat_index(index_domains: Vec<Moo<GroundDomain>>, index: usize) -> Vec<usize> {
+    let mut remaining = index;
+    let mut multipliers = vec![1; index_domains.len()];
+
+    for i in (0..index_domains.len() - 1).rev() {
+        multipliers[i] = multipliers[i + 1] * index_domains[i + 1].as_ref().length().unwrap();
+    }
+
+    let mut coords = vec![0; index_domains.len()];
+    for i in 0..index_domains.len() {
+        coords[i] = remaining / multipliers[i] as usize;
+        remaining %= multipliers[i] as usize;
+    }
+
+    // adjust for 1-based indexing
+    for coord in coords.iter_mut() {
+        *coord += 1;
+    }
+    coords
 }
