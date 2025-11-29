@@ -258,6 +258,26 @@ pub fn parse_binary_expression(
             Moo::new(left),
             Moo::new(right),
         )),
+        "<lex" => Ok(Expression::LexLt(
+            Metadata::new(),
+            Moo::new(left),
+            Moo::new(right),
+        )),
+        ">lex" => Ok(Expression::LexGt(
+            Metadata::new(),
+            Moo::new(left),
+            Moo::new(right),
+        )),
+        "<=lex" => Ok(Expression::LexLeq(
+            Metadata::new(),
+            Moo::new(left),
+            Moo::new(right),
+        )),
+        ">=lex" => Ok(Expression::LexGeq(
+            Metadata::new(),
+            Moo::new(left),
+            Moo::new(right),
+        )),
         "in" => Ok(Expression::In(
             Metadata::new(),
             Moo::new(left),
