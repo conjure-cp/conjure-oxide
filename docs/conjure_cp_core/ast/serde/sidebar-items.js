@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["RcRefCellAsId","RcRefCellAsInner"],"trait":["DefaultWithId","HasId"],"type":["ObjId"]};

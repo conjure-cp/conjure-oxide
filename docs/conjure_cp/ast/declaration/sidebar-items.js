@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["DeclarationKind"],"mod":["serde"],"struct":["DeclarationPtr"]};

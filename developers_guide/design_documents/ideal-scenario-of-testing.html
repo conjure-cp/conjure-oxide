@@ -1,0 +1,356 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Ideal Scenario of Testing for Conjure-Oxide - Conjure Oxide</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../../favicon.svg">
+        <link rel="shortcut icon" href="../../favicon.png">
+        <link rel="stylesheet" href="../../css/variables.css">
+        <link rel="stylesheet" href="../../css/general.css">
+        <link rel="stylesheet" href="../../css/chrome.css">
+        <link rel="stylesheet" href="../../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../../";
+            const default_light_theme = "light";
+            const default_dark_theme = "coal";
+            window.path_to_searchindex_js = "../../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Conjure Oxide</h1>
+
+                    <div class="right-buttons">
+                        <a href="../../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        
+                        <!-- maturity: draft
+authors: EEJDempster (? no real name), Hanaa Khan
+created: 01-04-24
+---- -->
+<!-- TODO edit more -->
+<h1 id="ideal-scenario-of-testing-for-conjure-oxide-dec-2024"><a class="header" href="#ideal-scenario-of-testing-for-conjure-oxide-dec-2024">Ideal Scenario of Testing for Conjure-Oxide (Dec 2024)</a></h1>
+<h2 id="introduction"><a class="header" href="#introduction">Introduction</a></h2>
+<h3 id="what-is-the-goal-of-this-document"><a class="header" href="#what-is-the-goal-of-this-document">What is the goal of this document?</a></h3>
+<p>The goal of this document is to provide an ideal testing outline for Conjure-Oxide, a project in development. To do so, this document will be split into definitions (of Conjure-Oxide and other relevant components, as well as key testing terms), current Conjure-Oxide testing, and idealised (to an extent) Conjure-Oxide testing. When discussing idealised testing, any key limitations will also be discussed. Further, this document will address the use of GitHub actions in this project, including code coverage.</p>
+<h3 id="what-is-conjure-oxide"><a class="header" href="#what-is-conjure-oxide">What is Conjure-Oxide</a></h3>
+<p>Conjure-Oxide is a constraint modelling tool which is implemented in Rust. Of note, it is a reimplementation of the Conjure automated constraint modelling tool and the Savile Row Modelling Assistant, functionally merged and rewritten in Rust - largely because Rust is an efficient high-performance language. Conjure-Oxide takes in a problem written in a high level constraint language, which is called Essence, and creates a model from this. This model is then transformed into a solver-friendly form, and solved using one of the available back-ends. At the moment, these solver back-ends include Minion (a Constraint Satisfiability Problem (CSP) solver) and in-development translation and bindings to a SAT (Propositional Satisfiability Problem) solver. To put it simply, Conjure-Oxide is a compiler to different modelling languages, the result of which is passed into the respective solver. These solvers act as back-ends and must be given bindings to Conjure-Oxide, but are not actually part of it themselves.</p>
+<h3 id="how-is-the-model-made-solver-friendly"><a class="header" href="#how-is-the-model-made-solver-friendly">How is the model made 'solver-friendly'?</a></h3>
+<p>Conjure-Oxide has a rule engine, which applies rules onto the model passed in as Essence, to lower the level of the language into one which can be parsed and solved by the back-end solvers. This engine applies rewriting rules, such as (x = - y) to (x + y = 0), to transform the model. As Essence is a fairly high-level language, with compatibility for sets and matrices and a number of keywords, there are a lot of rewrite rules which may be needed before the model can be passed into a solver. This translation is one of the key roles of Conjure-Oxide, and this rule application refines the language from a higher level to a lower level. The exact rules applied and the degree of simplification varies on the language requirement of the solver: for example, Minion has higher-level language compatibility than a SAT solver<sup class="footnote-reference" id="fr-1-1"><a href="#footnote-1">1</a></sup>.</p>
+<h3 id="conjure-and-savile-row"><a class="header" href="#conjure-and-savile-row">Conjure and Savile Row</a></h3>
+<p>Also relevant to the testing of Conjure-Oxide is Conjure and Savile Row <sup class="footnote-reference" id="fr-2-1"><a href="#footnote-2">2</a></sup>. This is because as Conjure-Oxide is a merge and reimplementation of these programs, the testing can be performed comparatively against Conjure and Savile Row. When this document uses the term "Conjure suite", it refers to both Conjure and Savile Row, being used in combination, generally using the Minion solver. Where there is deviation from this, it will be explicitly clarified.</p>
+<h4 id="what-is-conjure"><a class="header" href="#what-is-conjure">What is Conjure?</a></h4>
+<p>Conjure is a constraint modelling tool, implemented in Haskell. It uses a rule engine similarly to Conjure-Oxide to simplify from Essence to Essence' (a subset of Essence which is slightly lower-level), and this "refinement" produces the lower-level model to pass to Savile Row.</p>
+<h4 id="what-is-savile-row"><a class="header" href="#what-is-savile-row">What is Savile Row?</a></h4>
+<p>Savile Row is a constraint modelling assistant which translates from Essence' to a solver-friendly language. Alongside translating the model to the target language, it can reformat the model with an additional set of rules. This provides a performance increase by improving the model itself. Functionally, the better a model is, the faster a solver will solve it.</p>
+<h4 id="what-is-minion"><a class="header" href="#what-is-minion">What is Minion?}</a></h4>
+<p>Minion is a Constraint Satisfiability Problem solver, which has bindings to both Conjure suite and Conjure-Oxide. Minion is a fast, scalable, CSP solver, designed to be capable of solving difficult models while still being time optimised. This is the main solver in use by both the Conjure suite and by Conjure-Oxide, due to its flexibility and efficiency.</p>
+<h2 id="definitions-for-testing"><a class="header" href="#definitions-for-testing">Definitions for Testing</a></h2>
+<p>Two main forms of testing will be addressed within this document: correctness testing and performance testing. Fuzz testing (inputting malformed instances to see the program response) is not currently intended as part of testing Conjure-Oxide, and so will not be outlined or addressed. Metamorphic testing may have applications to this project, and so will be defined, but will not be considered as part of the ideal implementation at present as it is not possible to implement at this point in time.</p>
+<h3 id="what-is-correctness-testing"><a class="header" href="#what-is-correctness-testing">What is correctness testing?</a></h3>
+<p>In the field of computer science, correctness can be formally defined as a program which behaves as expected by it's formal specification, in all cases. As such, testing for correctness essentially consists of testing that the program produced the correct result for all given test cases. Correctness testing does not require exhaustiveness (checking all inputs on all states), but instead requires testing that all (or most) states function with varied inputs, which can then be used as a proof of correctness.</p>
+<h3 id="what-is-performance-testing"><a class="header" href="#what-is-performance-testing">What is performance testing?</a></h3>
+<p>Performance testing refers to a range of methodologies designed to measure or evaluate a software's performance. By performance, this generally refers to time taken to complete a process and the stability under load. The time taken for processes will vary not only by system, but also by device depending on factors such as background processes. As not all performance testing methodologies are relevant to Conjure-Oxide, they will not be outlined in this document. The two most common forms of performance testing are load testing and stress testing.
+<strong>Load testing</strong> examines the performance of a program to support its expected usage, and is used to identify bottlenecks in software, as well as possibly identify a relationship of usage to time.
+<strong>Stress testing</strong> places the program under extremely high load to see the ability of the software to function under exceptional load. This is generally used to find the functional upper load of a program before it breaks.</p>
+<h3 id="what-is-metamorphic-testing"><a class="header" href="#what-is-metamorphic-testing">What is metamorphic testing?</a></h3>
+<p>Most tests use <strong>oracles</strong>, where the answer is known and is explicitly checked against. This is what is done in correctness testing, as laid out above. Metamorphic testing, instead, uses <strong>Metamorphic relations</strong> to generate new test cases from existing previous ones. A metamorphic relation is the relation between the test (the inputs) and the result (the outputs). An example of this is (sin(x) = sin( \pi -x)), where, regardless of x, there is a consistent relation between the input and output. As such, test cases can be generated to test the correctness of this output.</p>
+<h2 id="test-scenario-for-conjure-oxide"><a class="header" href="#test-scenario-for-conjure-oxide">Test Scenario for Conjure-Oxide</a></h2>
+<p>As Conjure-Oxide is a reimplementation, it is possible to perform a large amount of the testing comparatively. By this, it means that testing can be done independently on Conjure-Oxide, and the results can be directly compared against the results of the same test being ran in the Conjure suite. This is true not only for the correctness testing, but also for the performance testing. Tests run in the Conjure suite are run by Conjure, which uses Savile Row and the required solvers to produce the correct output.</p>
+<h3 id="correctness-testing"><a class="header" href="#correctness-testing">Correctness Testing</a></h3>
+<p>There are several areas which should be tested for correctness in Conjure-Oxide: that the Essence is correctly parsed; that the correct Essence translation is generated; that the correct rules are applied in the correct order; and finally that the correct solution is reached by Minion. For something to be 'correct' in Conjure-Oxide, it means it must behave as expected. As Conjure-Oxide reimplements Conjure and Savile Row, the expected behaviour is that of the Conjure suite. As such, correctness testing is performed exclusively comparative to the results produced by this suite.
+Correctness testing as implemented is looking to ensure that all expected files match the files which are actually produced. Where there is a difference, the initial assumption is that Conjure-Oxide has the mistake. This is not necessarily always correct - the Conjure suite may have bugs or areas where it is not producing the expected outcome - but usually is.</p>
+<h3 id="current-correctness-testing"><a class="header" href="#current-correctness-testing">Current Correctness Testing</a></h3>
+<p>Correctness testing is the main form of testing performed in Conjure-Oxide at present, mainly through integration testing. Integration testing tests how the whole application works together as a whole, and as such is the most applicable to test all areas of testing needing to be done in Conjure-Oxide. In the current testing implementation, a test model is produced, and then the parse, rule-based transformation and result file are compared against those produced by calling the same test case on Conjure. In this, we assume that the result produced by the Conjure suite is always going to be correct.  Theoretically, this is completely functional - as Conjure-Oxide is a reimplementation, any bugs which exist in Conjure or Savile Row could also exist in Conjure-Oxide without causing Conjure-Oxide to violate it's correctness. However, this defeats the point of an evolving project, so assuming the complete correctness of the Conjure suite is not sufficient for testing.</p>
+<h3 id="comparative-correctness-testing"><a class="header" href="#comparative-correctness-testing">Comparative Correctness Testing</a></h3>
+<p>As it is possible to perform the testing comparatively, the current implementation forms a functional basis for any ideal implementation, because it is built on this comparison. The current implementation functions well (although with limitations, as addressed below) in showing a degree of correctness, however it is not necessarily holistic enough to show the full correctness of the project. The primary solution for this issue is simply increasing the test coverage through developing a broader repository of models to be tested. Conjure has a very broad set of translation rules, meaning that there is a large number of rules which can be reimplemented in Conjure-Oxide. This enables a demonstration of the functionality of Conjure-Oxide in more scenarios, by ensuring not only are all rules tested individually, but rules in combination, with specific priority, are also tested and return results as expected.
+There may be some benefit to having tests that are not solved and compared against results from the Conjure suite, but rather solved independently (e.g., by mathematicians) and then compared to the results of the same model produced by Conjure-Oxide. By proving these results as correct, it is possible to go beyond simply assuming Conjure and Savile Row are always right. However, this is not particularly feasible in a broader implementation and would be fairly limited in scale due to this, especially as Conjure-Oxide is not a large project.
+Solver Testing
+Part of the larger Conjure-Oxide project is the implementation of a Satisfiability (SAT) solver. This implementation will require integration testing alongside the rest of the Conjure-Oxide project. As Conjure has a SAT solver, this is possible to be done comparatively, although would require the implementation of the ability to select a specific solver to solve a model. The comparative testing would simply compare the translated essence to SAT, and the output of the Conjure suite's SAT solver to that of the Conjure-Oxide SAT solver, and debug where the tests do not pass.</p>
+<h3 id="limitations-of-correctness-testing"><a class="header" href="#limitations-of-correctness-testing">Limitations of Correctness Testing</a></h3>
+<p>Conjure-Oxide is, in part, a refinement based program. A large part of it's function is to refine from Essence down to a solver-friendly language. One part of the way that this is done in Conjure-Oxide is through a rule engine. This rule engine applies modifications to the constraints problems given to the project. At current, we just assume the rules applied are true. For example, (x = -y + z) becoming (x + y - z = 0) is a simple transformation which could be made by the rule engine. We do not formally prove that this transformation is correct, we just assume that it is the correct transformation. In simpler transformations such as this one, that is a valid assumption - it is possible to confirm that the modification is correct with minimal effort. In cases where more complex rules may be applied, the lack of a proof poses a limitation on the project. In an ideal scenario, this limitation could be removed by having proofs for every single rule applied in the rule engine, therefore not having to rely on an assumed correctness.
+Another of the primary limitations in correctness testing as implemented is that it assumes that the output being produced by Minion (or the SAT solver in development) is correct. As there are no known bugs in Minion, this is an acceptable assumption to make. That said, it is not necessarily accurate that all output from Minion is correct. Other mature (having existed, and been used and updated, over a protracted period of time), state of the art solvers can produce incorrect results<sup class="footnote-reference" id="fr-3-1"><a href="#footnote-3">3</a></sup>.</p>
+<p>If Minion has similar unknown bugs, it may fail to fulfil the correctness element of correctness testing.
+The SAT solver which is being implemented is in it's infancy and as such is much less reliable. It is likely that it will have a number of bugs and logical errors which will be gradually harder to find as time goes on (operating under the assumption that easy-to find and solve bugs will be removed earlier, leaving only more hidden or complex bugs).</p>
+<h3 id="performance-testing"><a class="header" href="#performance-testing">Performance Testing</a></h3>
+<p>It is of note that a large motivation behind the reimplementation of the Conjure suite into a single Rust program is to improve the performance of the compilation from Essence to a solver-friendly language, without compromising on the time taken to solve a model. Currently, Conjure translates Essence into Essence', and then Savile Row refines and reformats the resultant Essence' into a solver-friendly language. Conjure-Oxide translates directly from Essence into a solver-friendly language, which should cut down on the amount of steps necessary and as such result in a shorter translation time.
+When testing for overall performance of Conjure-Oxide, the primary metrics that we are are concerned with is the total time taken for a model to be parsed, translated, and solved through the solver back-end. This total time can be split into two components: the translation time and the time taken by the solver. We can also use solver nodes as a measure of performance of the solver, as the time the solver takes may vary depending on background processes. In the performance testing addressed in this document, though there will be consideration for the solver time, the primary measurement of value is translation time.</p>
+<h3 id="current-performance-testing"><a class="header" href="#current-performance-testing">Current Performance Testing</a></h3>
+<p>At present, there is no formal performance testing implemented in Conjure-Oxide. While stats files are generated on each test run, tracking a number of fields (rewrite time, solver time, solver nodes, total time, etc.), nothing is done with this information. As such, while there is some measure of 'performance', it lacks context, is not reliable (since data is produced from a single run) and overall does not create a measure of Conjure-Oxide's performance.
+Performance testing, both <strong>load</strong> and <strong>stress</strong> based, can be performed both comparatively (as in checking speed or efficiency of one program directly against another (or several other) programs), but also individually on the given program. As such, both 'methods' of Performance testing will be discussed.</p>
+<h3 id="performance-testing-of-just-conjure-oxide"><a class="header" href="#performance-testing-of-just-conjure-oxide">Performance Testing of just Conjure-Oxide</a></h3>
+<p>Sole examination of the performance of Conjure-Oxide cannot show whether there is a performance improvement as desired. However, the goal of individual performance testing is rather to enable the development of a relationship between complexity (of translation) and time (to translate). In addition, this will allow for the identification of any notable bottlenecks in the program, allowing these specific problem areas to be targeted for improvement.
+To performance test a program, a number of things need to be established. Firstly, what the metric(s) are being considered - as established above, for Conjure-Oxide this is the translation-, and to some degree solver-, time. Secondly, what is the independent variable - as in, what is being varied to result in different outputs. In Conjure-Oxide, this will be size or complexity of a given Essence file. Size and complexity will be defined contextually below.</p>
+<h4 id="distinction-between-size-and-complexity"><a class="header" href="#distinction-between-size-and-complexity">Distinction between Size and Complexity</a></h4>
+<p>Size and complexity of a given Essence file are separate, although certainly correlated. Put simply, size refers more directly to the number of components that make up an Essence input problem, whereas complexity refers to specific aspects which complicate translation, rather than directly increase its size.
+When applying rules to a model, the rules are applied by priority. The implementation of this is essentially that each rule is checked against the model, and if it applies, it is applied to transform the model in order of priority (e.g., two rules are valid, the higher priority rule is the one selected). Use of a dirty-clean (this will not try to apply rules to a finished model) or naive (this will try and apply all rules until they have all been checked, applied, checked again, etc.) rewriter will also result in variance on translation time, so when experiments are being defined it is best to account that all models are using the same version of the rewriter.
+Size refers to the number of variables, constraints, or size of input data (for example, a larger set or array) given as part of an input file. A 'larger' problem has more constraints and variables than a 'smaller' one. This will impact translation time (the relationship of this change should be examined by the performance testing) because there is more to parse and translate, even if the actual rule application is simple.
+On the other hand, in this context, complexity can be loosely defined as elements of the model which make it difficult to translate, without regard for the size. Features which could increase complexity include nesting, conditional constraints, dynamic constraints, etc.
+When testing for size, it is best to use very simple, repeated rules, and when testing complexity it is best to try to ensure that this is not also linked into increasing size, although these two features are tied together and therefore difficult to isolate from one another.</p>
+<h4 id="performance-experiments-to-run"><a class="header" href="#performance-experiments-to-run">Performance Experiments to run</a></h4>
+<p>There are two main types of experiment to be considered in the performance testing of Conjure-Oxide. \textbf{Load testing}, where the size or complexity is varied in order to measure translation time under different conditions; and \textbf{stress testing}, specifically to see whether higher complexity or larger files disproportionately increase translation time. As stress testing requires some measure of what is proportional and what is not, load testing is addressed first.</p>
+<h4 id="load-testing-for-conjure-oxide"><a class="header" href="#load-testing-for-conjure-oxide">Load testing for Conjure-Oxide</a></h4>
+<p>When designing performance testing for a system, there are several considerations to be made. Primarily, it is of importance that data gathered and aggregated is suitable to be used for graphing and building relationships. To do this, data must be reliable, consistent and accurate. Single runs of data cannot provide this, as many factors may influence the results. In order to fulfil these needs, substantial amounts of data should be gathered. Anomalies should be removed (for example, using interquartile range or using Z-Scores) or simply averaged over (this is less accurate but more achievable). As size or complexity varies, these averaged results should be plotted into a graph. This is the most effective way of providing understanding of the relationship between size/complexity and translation time.</p>
+<h4 id="stress-testing-for-conjure-oxide"><a class="header" href="#stress-testing-for-conjure-oxide">Stress testing for Conjure-Oxide</a></h4>
+<p>Once a relationship has been established by load testing, stress testing can occur. Although it is possible to see the point at which a program fails without prior load testing, having determined the relationship between size/complexity and time allows for a consideration of what is disproportionate. Implementing this in Conjure-Oxide would simply involve the program under abnormally high load to find it's breaking point, using repeated results to ensure reliability and accuracy of the data.</p>
+<h3 id="additional-performance-profiling"><a class="header" href="#additional-performance-profiling">Additional Performance Profiling</a></h3>
+<p>Many parts of Conjure-Oxide (such as specific rules, string manipulations, memory allocation to solvers, etc.) are also not capable of being directly examined for their complexity, and the complexity of these things cannot be manipulated to perform experiments as outlined above. However, it is important that these are still being tested for their performance. This is because it is important to catch irregular memory allowances, excessive time spending, expensive Rust functions, etc., in order to ensure that Conjure-Oxide runs both as quickly and as smoothly as possible, One way to do this is to run profilers, such as Perf, which allow for the areas that time or memory is being spent to be analysed more specifically. Given this analysis, it is then possible to examine these areas for improvements, as was done in Issue #288<sup class="footnote-reference" id="fr-4-1"><a href="#footnote-4">4</a></sup>.</p>
+<h3 id="comparative-performance-testing"><a class="header" href="#comparative-performance-testing">Comparative Performance Testing</a></h3>
+<p>As established, Conjure-Oxide is a reimplementation of a pre-existing set of programs, these being Conjure and Savile Row. One of the primary goals of this reimplementation is to improve the performance of Translation time, while also ensuring that the time taken to solve a given essence problem is not worsened. Considering that Minion is simply rebound to Conjure-Oxide, much as it was in the Conjure suite, it is unlikely that these bindings would be responsible for a slower solve time. As such, the primary impact on solve time is the model passed into the solver. A worse model will take substantially more time than a model which has been well translated and refined, and substantial increases in the time taken to solve should be avoided. Performance testing should be performed on the Conjure suite (primarily on Savile Row, since the time of Conjure is amortised over each instance) to establish the relationship of size/complexity to time, as in Conjure-Oxide. The results of both may then be plotted on one graph, to see at which point(s) Conjure-Oxide is faster than Savile Row at translation, and vice versa.
+Comparative testing also allows for the solver nodes (which represent, to some degree, solver time) from both the Conjure suite and Conjure-Oxide. As established, the goal of Conjure-Oxide is to improve translation performance without sacrificing solving performance. As such, it is vital to also consider at which size/complexity of translation the solver nodes start to vastly differ between Conjure suite and Conjure-Oxide, and to examine the rules to see why this is (and whether there is a requisite decrease in translation time which could possibly balance this increase). Though having a small number of nodes which differ (e.g., by 10) is not an issue, when there is a large disparity between number of solver nodes, this reflects poorer quality translation or (possibly) an issue with the binding to Rust.</p>
+<h3 id="limitations-of-performance-testing"><a class="header" href="#limitations-of-performance-testing">Limitations of Performance Testing</a></h3>
+<p>One limitation of performance testing is the impact that other processes running on the computer or server when testing. Other processes running at the same time mean that less threads can be allocated to Conjure-Oxide or its solver backends when dealing with a model, and as such slow down the speed at which these models can be parsed, translated, and solved. However, this is mainly removed as an issue by a combination of repeated runs, and identifying and removing anomalies (using Z-Score).
+Another issue present in performance testing is that completely decoupling size and complexity is rather difficult, if not entirely impossible. This is because there is overlap in the definitions, and because as a model becomes more complex, it often becomes larger, and vice versa. Although fully separating these two metrics is the aim in an ideal scenario, an actual implementation would struggle to follow through with this requirement.</p>
+<h2 id="github-actions-and-testing"><a class="header" href="#github-actions-and-testing">GitHub Actions and Testing</a></h2>
+<p>GitHub Actions allow for integration of the CI'/CD pipeline to GitHub and the automation of the software development cycle. Automated workflows can be used to build, test and deploy code into a GitHub VM, allowing for flexibility in the development of a project.</p>
+<h3 id="what-is-a-workflow"><a class="header" href="#what-is-a-workflow">What is a workflow?</a></h3>
+<p>In GitHub Actions, a workflow is an automated process which is set up within a GitHub repository with the aim to accomplish a specific task. They are triggered by an Event, such as pushing or pulling code. Workflows are made up of the combination of a trigger (the Event) and a set of processes (made up of Jobs, which are sets of steps in a workflow).</p>
+<h3 id="test-rerun"><a class="header" href="#test-rerun">Test Rerun</a></h3>
+<p>This involves the automated rerunning of tests when a push or pull request is made on the GitHub repository. This is already implemented in Conjure-Oxide, through "test.yml". Test.yml runs tests every push request made to the main branch, and on all pull requests. This allows for correctness testing to be performed on all pushes made to the main, to ensure that no additional tests fail.</p>
+<h3 id="code-coverage"><a class="header" href="#code-coverage">Code Coverage</a></h3>
+<p>When pushes are made to the main branch of Conjure-Oxide on GitHub, a code coverage automated workflow is run. This workflow generates a documentation coverage report which outlines what percentage of the code in the repository is being executed when tests are run. The higher the percentage, the more of the code can be relied upon as working under test conditions. This is also already implemented in the GitHub repository, through "code-coverage.yml", "code-coverage-main.yml" and "code-coverage-deploy.yml". One of the goals of correctness testing is to increase the code coverage percentage, because this would show that more of the code is functioning correctly.</p>
+<h3 id="automated-performance-testing"><a class="header" href="#automated-performance-testing">Automated Performance Testing</a></h3>
+<p>GitHub workflows can be used to create further custom processed to be automated. Automating performance testing in GitHub allows for them to be run routinely (e.g., every X pushes, or every X days) to ensure consistent performance of the project. As they occur automatically, this means that benchmarks can be set, and failue on any of these benchmarks can reuslt in a flag, allowing for early detection when performance of the program begins to regress, or fall far behind that of the Conjure suite. GitHub Actions allow for the results to be placed into files, and from here an interactive dashboard could be generated (as in PR #291. <sup class="footnote-reference" id="fr-5-1"><a href="#footnote-5">5</a></sup></p>
+<h2 id="brief-outline-of-possible-future-sub-projects"><a class="header" href="#brief-outline-of-possible-future-sub-projects">Brief Outline of Possible Future Sub-Projects</a></h2>
+<p>Having outlined at least a portion of the ideal testing scenario above, as well as some limitations of this scenario, it is now possible to outline to some degree future sub-projects which could be added to the overall Conjure-Oxide project.</p>
+<h3 id="improving-code-coverage"><a class="header" href="#improving-code-coverage">Improving Code Coverage</a></h3>
+<p>One method of improving the code coverage is by creating a broader repository of integration tests. This project focuses on the correctness aspect of the testing, and in itself can be split into several sub-projects or subsumed into other projects (e.g., if someone is writing a parser, they may decide to write the tests for this parser). The code coverage report is updated every-time a PR is made, and by examining the coverage report (see: {Code Coverage Report}), it is possible to see which areas would benefit from additional testing. Although code coverage testing itself is not concerned with correctness, increasing the amount of correctness testing increases code coverage, and so they are related. It may be beneficial to target areas of the code which have a very low line or function coverage, as this is likely easier to increase.</p>
+<h3 id="producing-proofs-for-correctness"><a class="header" href="#producing-proofs-for-correctness">Producing Proofs for Correctness</a></h3>
+<p>As established, one of the limitations of the current correctness testing is that there is an assumption of correctness, that being that we either assume the Conjure suite is correct, or we assume that the rules we are applying are correct. These assumptions are largely valid, but do limit the factual correctness of the project. One possible sub-project, which would have a heavy reliance on mathematical knowledge, is to produce these proofs. This does not necessarily have to be exhaustive: in the case of the correctness testing exhausting the proofs would be extremely time consuming, but having proofs to additionally prove correctness overcomes one of the project limitations. In the case of proving the existing rules, though there are a currently increasing set of rules, they are finite, so this may be more manageable as a project.</p>
+<h3 id="measuring-performance-through-load-testing"><a class="header" href="#measuring-performance-through-load-testing">Measuring Performance Through Load Testing</a></h3>
+<p>The outline of this subproject is to fulfil, at least in part, the requirement for performance testing on this project. There are several ways that this could be approached, all of which vary somewhat, so this project is flexible in its details.
+One method which may be effective regarding performance testing is to use GitHub Actions to automate the performance testing, as outlined in GitHub Actions and Testing. This is because this would allow flexibility and repeated performance testing, as well as the ability to flag early on when there is a performance decrease. To outline this, it would be necessary to make a directory of tests to be run for their performance, and then create the GitHub workflow to repeatedly run tests on that directory and aggregate the translation time. This can then be plotted graphically and statistically analysed.</p>
+<h3 id="comparative-load-testing"><a class="header" href="#comparative-load-testing">Comparative Load Testing</a></h3>
+<p>This is an extension of the above project, in that it cannot be created until there is a basis of load performance testing. The essential outline of this project is to repeat the above, except aggregating the data from the results of Savile Row's rewriter, and then graph both Conjure-Oxide and Conjure suite together. This will allow for a direct visual comparison, as well as help with statistical analysis. Furthermore, if GitHub Actions are used, it is possible to flag where there is a large degree of difference in rewriter or solver between Conjure suite and Conjure-Oxide.</p>
+<h3 id="benchmark-testing-for-performance"><a class="header" href="#benchmark-testing-for-performance">Benchmark Testing for Performance</a></h3>
+<p>Another sub-project which is possible to derive from this document is to benchmark test elements of the project which cannot be done by varied-load testing, as outlined in the Performance Testing section. Tools, such as Perf, can measure benchmarks and find specific problem areas. When problem areas have been found, these can be raised as an issue, and either fixed as part of this sub-project, or given to another member of the project to complete. This kind of benchmark testing will ensure that the entirety of the Conjure-Oxide is running as efficiently as possible.</p>
+<h3 id="possible-stress-testing"><a class="header" href="#possible-stress-testing">Possible Stress Testing</a></h3>
+<p>There is also the possibility of adding stress testing to see at which point the rewrite engine fails to be able to parse through an extremely long or especially complex model. This can be done following much the same outline as that of \textit{Measuring Performance Through Load Testing}, however rather than gradually changing the load (dictated by size or complexity) on the system, the change is rapid, in order to find the system's point of failure. As with load testing, this may also be automated by GitHub Actions, though this is a lower priority, as the failure point is less likely to change than the overall system performance.</p>
+<h2 id="conclusion"><a class="header" href="#conclusion">Conclusion</a></h2>
+<p>This document outlines definitions relevant for understanding both the project and the types of testing most applicable. A scenario of testing is then produced, which outlines what testing exists and what testing can be added, as well as any large limitations on an implementation of this ideal state. This allows for any individuals working on testing in the future to have a holistic overview of the state of testing on this project. Finally, a number of smaller sub-projects are outlined as a product of this document, aiming to improve the tested-ness of Conjure-Oxide and compare its success as a reimplementation to Conjure and Savile Row.
+In the future, it may also be worth examining the possibility and likelihood of being able to apply Metamorphic testing to Conjure-Oxide, to ensure consistency in it's results by developing metamorphic relations between input and output. At present, this is not feasible, and although this document is idealised, it is not intended to be entirely unreasonable or detached from the current reality of the project.</p>
+<hr />
+<p><em>This section had been taken from the 'Ideal Scenario of Testing (Dec 2024)' page of the conjure-oxide wiki</em></p>
+<hr>
+<ol class="footnote-definition"><li id="footnote-1">
+<p>Ian P. Gent, Chris Jefferson, and Ian Miguel. 2006. MINION: A Fast, Scalable, Constraint Solver. In Proceedings of the 2006 conference on ECAI 2006: 17th European Conference on Artificial Intelligence August 29 -- September 1, 2006, Riva del Garda, Italy. IOS Press, NLD, 98–102. <a href="#fr-1-1">↩</a></p>
+</li>
+<li id="footnote-2">
+<p>Hussain, B. S. 2017. Model Selection and Testing for an Automated Constraint Modelling Toolchain; Thesis <a href="#fr-2-1">↩</a></p>
+</li>
+<li id="footnote-3">
+<p>{Berg, J., Bogaerts, B., Nordström, J., Oertel, A., &amp; Vandesande, D. 2023. Certified Core-Guided MaxSAT Solving. \textit{Lecture Notes in Computer Science}, 1–22. https://doi.org/10.1007/978-3-031-38499-8_1 <a href="#fr-3-1">↩</a></p>
+</li>
+<li id="footnote-4">
+<p>conjure-cp. 2024, April 3. Possible optimisation: Intern the UserName in Name · Issue #288 · conjure-cp/conjure-oxide. \textit{GitHub}. https://github.com/conjure-cp/conjure-oxide/issues/288 <a href="#fr-4-1">↩</a></p>
+</li>
+<li id="footnote-5">
+<p>conjure-cp. 2024, April 3. Benchmark Visualizer: Conjure Native vs Oxide · Pull Request #291 · conjure-cp/conjure-oxide. GitHub. https://github.com/conjure-cp/conjure-oxide/pull/291 <a href="#fr-5-1">↩</a></p>
+</li>
+</ol>
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../../developers_guide/design_documents/semantics-of-rewriting-expressions.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../../developers_guide/ci_cd/index.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../../developers_guide/design_documents/semantics-of-rewriting-expressions.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../../developers_guide/ci_cd/index.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../../elasticlunr.min.js"></script>
+        <script src="../../mark.min.js"></script>
+        <script src="../../searcher.js"></script>
+
+        <script src="../../clipboard.min.js"></script>
+        <script src="../../highlight.js"></script>
+        <script src="../../book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>
