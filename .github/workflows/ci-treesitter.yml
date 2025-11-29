@@ -27,11 +27,10 @@ jobs:
           - windows-latest
     runs-on: ${{ matrix.os }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v5
+      - uses: actions/checkout@v5
         with:
-          fetch-depth: 2
-          path: repo
+          submodules: recursive
+          fetch-depth: 0
 
       - name: free_disk_space.sh
         run: .github/workflows/tools/free_disk_space.sh
@@ -52,7 +51,7 @@ jobs:
 
         # the tree-sitter actions expect this!
       - name: Make tree-sitter-essence the root directory
-        run: cp -r repo/crates/tree-sitter-essence/* .
+        run: cp -r crates/tree-sitter-essence/* .
 
       - name: Set up tree-sitter
         uses: tree-sitter/setup-action/cli@v2
@@ -79,16 +78,15 @@ jobs:
     name: Fuzz scanner
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v5
+      - uses: actions/checkout@v5
         with:
-          fetch-depth: 2
-          path: repo
+          submodules: recursive
+          fetch-depth: 0
 
       - name: Check for scanner changes
         id: scanner-check
         run: |-
-          if git diff --quiet HEAD^ -- repo/crates/tree-sitter-essence/scanner.c; then
+          if git diff --quiet HEAD^ -- crates/tree-sitter-essence/scanner.c; then
             printf 'changed=false\n' >> "$GITHUB_OUTPUT"
           else
             printf 'changed=true\n' >> "$GITHUB_OUTPUT"
@@ -96,7 +94,7 @@ jobs:
 
         # the tree-sitter actions expect this!
       - name: Make tree-sitter-essence the root directory
-        run: cp -r repo/crates/tree-sitter-essence/* .
+        run: cp -r crates/tree-sitter-essence/* .
 
       - name: Run the fuzzer
         uses: tree-sitter/fuzz-action@v4
