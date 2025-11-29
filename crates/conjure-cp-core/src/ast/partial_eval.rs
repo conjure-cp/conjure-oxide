@@ -528,6 +528,7 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
         Expr::Image(_, _, _) => todo!(),
         Expr::ImageSet(_, _, _) => todo!(),
         Expr::PreImage(_, _, _) => todo!(),
+        Expr::Inverse(_,_,_) => todo!(),
         Expr::LexLt(_, _, _) => Err(RuleNotApplicable),
         Expr::LexLeq(_, _, _) => Err(RuleNotApplicable),
         Expr::LexGt(_, _, _) => Err(RuleNotApplicable),

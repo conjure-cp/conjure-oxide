@@ -509,6 +509,9 @@ pub enum Expression {
 
     #[compatible(JsonInput)]
     PreImage(Metadata, Moo<Expression>, Moo<Expression>),
+
+    #[compatible(JsonInput)]
+    Inverse(Metadata, Moo<Expression>, Moo<Expression>),
   
     /// Lexicographical < between two matrices.
     ///
@@ -904,6 +907,7 @@ impl Expression {
                     _ => None,
                 }
             }
+            Expression::Inverse(..) => Some(Domain::bool()),
             Expression::LexLt(..) => Some(Domain::bool()),
             Expression::LexLeq(..) => Some(Domain::bool()),
             Expression::LexGt(..) => Some(Domain::bool()),
@@ -1445,10 +1449,12 @@ impl Display for Expression {
 
             Expression::PairwiseSum(_, a, b) => write!(f, "PairwiseSum({a}, {b})"),
             Expression::PairwiseProduct(_, a, b) => write!(f, "PairwiseProduct({a}, {b})"),
+
             Expression::Defined(_, function) => write!(f, "defined({function})"),
             Expression::Image(_, function, elems) => write!(f, "image({function},{elems})"),
             Expression::ImageSet(_, function, elems) => write!(f, "imageSet({function},{elems})"),
             Expression::PreImage(_, function, elems) => write!(f, "preImage({function},{elems})"),
+            Expression::Inverse(_,a ,b ) => write!(f,"inverse({a},{b})"),
 
             Expression::LexLt(_, a, b) => write!(f, "({a} <lex {b})"),
             Expression::LexLeq(_, a, b) => write!(f, "({a} <=lex {b})"),
@@ -1588,6 +1594,7 @@ impl Typeable for Expression {
                     ),
                 }
             }
+            Expression::Inverse(..) => ReturnType::Bool,
             Expression::LexLt(..) => ReturnType::Bool,
             Expression::LexGt(..) => ReturnType::Bool,
             Expression::LexLeq(..) => ReturnType::Bool,
