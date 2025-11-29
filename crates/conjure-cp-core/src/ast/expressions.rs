@@ -250,9 +250,14 @@ pub enum Expression {
     #[compatible(JsonInput, SMT)]
     Neg(Metadata, Moo<Expression>),
 
-    /// Set of values function is defined for
+    /// Set of domain values function is defined for
     #[compatible(JsonInput)]
     Defined(Metadata, Moo<Expression>),
+
+    /// Set of codomain values function is defined for
+    #[compatible(JsonInput)]
+    Range(Metadata, Moo<Expression>),
+
 
     /// Unsafe power`x**y` (possibly undefined)
     ///
@@ -885,7 +890,20 @@ impl Expression {
                 .apply_i32(|a, b| Some(a * b), b.domain_of()?.resolve()?.as_ref())
                 .map(DomainPtr::from)
                 .ok(),
-            Expression::Defined(_, function) => function.domain_of(),
+            Expression::Defined(_, function) => {
+                match function.domain_of()?.resolve()?.as_ref() {
+                    GroundDomain::Function(_, domain, _) => Some(domain.clone().into()),
+                    // Not defined for anything other than a function
+                    _ => None,
+                }
+            }
+            Expression::Range(_, function) => {
+                match function.domain_of()?.resolve()?.as_ref() {
+                    GroundDomain::Function(_, _, codomain) => Some(codomain.clone().into()),
+                    // Not defined for anything other than a function
+                    _ => None,
+                }
+            }
             Expression::Image(_, function, _) => {
                 match function.domain_of()?.resolve()?.as_ref() {
                     GroundDomain::Function(_, _, codomain) => Some(codomain.clone().into()),
@@ -1451,6 +1469,7 @@ impl Display for Expression {
             Expression::PairwiseProduct(_, a, b) => write!(f, "PairwiseProduct({a}, {b})"),
 
             Expression::Defined(_, function) => write!(f, "defined({function})"),
+            Expression::Range(_, function) => write!(f, "range({function})"),
             Expression::Image(_, function, elems) => write!(f, "image({function},{elems})"),
             Expression::ImageSet(_, function, elems) => write!(f, "imageSet({function},{elems})"),
             Expression::PreImage(_, function, elems) => write!(f, "preImage({function},{elems})"),
@@ -1566,7 +1585,24 @@ impl Typeable for Expression {
             Expression::SATInt(_, _) => ReturnType::Int,
             Expression::PairwiseSum(_, _, _) => ReturnType::Int,
             Expression::PairwiseProduct(_, _, _) => ReturnType::Int,
-            Expression::Defined(_, function) => function.return_type(),
+            Expression::Defined(_, function) => {
+                let subject = function.return_type();
+                match subject {
+                    ReturnType::Function(domain, _) => *domain,
+                    _ => bug!(
+                        "Invalid defined operation: expected the operand to be a function, got {self}: {subject}"
+                    ),
+                }
+            }
+            Expression::Range(_, function)  => {
+                let subject = function.return_type();
+                match subject {
+                    ReturnType::Function(_, codomain) => *codomain,
+                    _ => bug!(
+                        "Invalid range operation: expected the operand to be a function, got {self}: {subject}"
+                    ),
+                }
+            }
             Expression::Image(_, function, _) => {
                 let subject = function.return_type();
                 match subject {

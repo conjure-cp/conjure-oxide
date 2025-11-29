@@ -525,6 +525,7 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
         Expr::PairwiseSum(_, _, _) => Err(RuleNotApplicable),
         Expr::PairwiseProduct(_, _, _) => Err(RuleNotApplicable),
         Expr::Defined(_, _) => todo!(),
+        Expr::Range(_, _) => todo!(),
         Expr::Image(_, _, _) => todo!(),
         Expr::ImageSet(_, _, _) => todo!(),
         Expr::PreImage(_, _, _) => todo!(),

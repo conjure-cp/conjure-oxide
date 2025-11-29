@@ -589,6 +589,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             }
         }
         Expr::Defined(_, _) => todo!(),
+        Expr::Range(_, _) => todo!(),
         Expr::Image(_, _, _) => todo!(),
         Expr::ImageSet(_, _, _) => todo!(),
         Expr::PreImage(_, _, _) => todo!(),
