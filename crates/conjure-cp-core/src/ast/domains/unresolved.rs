@@ -321,12 +321,12 @@ impl UnresolvedDomain {
                 })
                 .resolve()
                 .map(Moo::unwrap_or_clone),
-            UnresolvedDomain::Function(attr, dom, rng) => {
+            UnresolvedDomain::Function(attr, dom, cdom) => {
                 if let Some(attr_gd) = attr.resolve()
                     && let Some(dom_gd) = dom.resolve()
-                    && let Some(rng_gd) = rng.resolve()
+                    && let Some(cdom_gd) = cdom.resolve()
                 {
-                    return Some(GroundDomain::Function(attr_gd, dom_gd, rng_gd));
+                    return Some(GroundDomain::Function(attr_gd, dom_gd, cdom_gd));
                 }
                 None
             }
@@ -412,8 +412,8 @@ impl Typeable for UnresolvedDomain {
                 }
                 ReturnType::Record(entry_types)
             }
-            UnresolvedDomain::Function(_, dom, rng) => {
-                ReturnType::Function(Box::new(dom.return_type()), Box::new(rng.return_type()))
+            UnresolvedDomain::Function(_, dom, cdom) => {
+                ReturnType::Function(Box::new(dom.return_type()), Box::new(cdom.return_type()))
             }
         }
     }
@@ -458,8 +458,8 @@ impl Display for UnresolvedDomain {
                     )
                 )
             }
-            UnresolvedDomain::Function(attribute, inner_from, inner_to) => {
-                write!(f, "function {} {} --> {} ", attribute, inner_from, inner_to)
+            UnresolvedDomain::Function(attribute, domain, codomain) => {
+                write!(f, "function {} {} --> {} ", attribute, domain, codomain)
             }
         }
     }

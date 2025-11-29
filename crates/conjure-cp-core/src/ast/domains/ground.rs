@@ -888,8 +888,8 @@ impl Typeable for GroundDomain {
                 }
                 ReturnType::Record(entry_types)
             }
-            GroundDomain::Function(_, dom, rng) => {
-                ReturnType::Function(Box::new(dom.return_type()), Box::new(rng.return_type()))
+            GroundDomain::Function(_, dom, cdom) => {
+                ReturnType::Function(Box::new(dom.return_type()), Box::new(cdom.return_type()))
             }
         }
     }
@@ -935,8 +935,8 @@ impl Display for GroundDomain {
                     )
                 )
             }
-            GroundDomain::Function(attribute, inner_from, inner_to) => {
-                write!(f, "function {} {} --> {} ", attribute, inner_from, inner_to)
+            GroundDomain::Function(attribute, domain, codomain) => {
+                write!(f, "function {} {} --> {} ", attribute, domain, codomain)
             }
         }
     }

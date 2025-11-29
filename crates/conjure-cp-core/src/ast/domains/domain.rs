@@ -206,25 +206,25 @@ impl Domain {
     }
 
     /// Create a new function domain
-    pub fn function<T>(attrs: T, dom: DomainPtr, rng: DomainPtr) -> DomainPtr
+    pub fn function<T>(attrs: T, dom: DomainPtr, cdom: DomainPtr) -> DomainPtr
     where
         T: Into<FuncAttr<IntVal>> + TryInto<FuncAttr<Int>> + Clone,
     {
         if let Ok(attrs_gd) = attrs.clone().try_into()
             && let Some(dom_gd) = dom.as_ground()
-            && let Some(rng_gd) = rng.as_ground()
+            && let Some(cdom_gd) = cdom.as_ground()
         {
             return Moo::new(Domain::Ground(Moo::new(GroundDomain::Function(
                 attrs_gd,
                 Moo::new(dom_gd.clone()),
-                Moo::new(rng_gd.clone()),
+                Moo::new(cdom_gd.clone()),
             ))));
         }
 
         Moo::new(Domain::Unresolved(Moo::new(UnresolvedDomain::Function(
             attrs.into(),
             dom,
-            rng,
+            cdom,
         ))))
     }
 
