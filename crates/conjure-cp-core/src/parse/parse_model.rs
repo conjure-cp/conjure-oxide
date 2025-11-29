@@ -649,6 +649,18 @@ pub fn parse_expression(obj: &JsonValue, scope: &Rc<RefCell<SymbolTable>>) -> Op
             "MkOpPow",
             Box::new(Expression::UnsafePow) as Box<dyn Fn(_, _, _) -> _>,
         ),
+        (
+            "MkOpImage",
+            Box::new(Expression::Image) as Box<dyn Fn(_, _, _) -> _>,
+        ),
+        (
+            "MkOpImageSet",
+            Box::new(Expression::ImageSet) as Box<dyn Fn(_, _, _) -> _>,
+        ),
+        (
+            "MkOpPreImage",
+            Box::new(Expression::PreImage) as Box<dyn Fn(_, _, _) -> _>,
+        ),
     ]
     .into_iter()
     .collect();
@@ -697,7 +709,7 @@ pub fn parse_expression(obj: &JsonValue, scope: &Rc<RefCell<SymbolTable>>) -> Op
         ),
         (
             "MkOpDefined",
-            Box::new(Expression::Defined) as Box<dyn Fn(_,_) -> _>,
+            Box::new(Expression::Defined) as Box<dyn Fn(_, _) -> _>,
         ),
     ]
     .into_iter()
@@ -744,6 +756,14 @@ pub fn parse_expression(obj: &JsonValue, scope: &Rc<RefCell<SymbolTable>>) -> Op
                 .contains_key("AbsLitSet")
             {
                 Some(parse_abs_lit(&abslit["AbstractLiteral"]["AbsLitSet"], scope).unwrap())
+            } else if abslit["AbstractLiteral"]
+                .as_object()?
+                .contains_key("AbsLitFunction")
+            {
+                Some(
+                    parse_abs_function(&abslit["AbstractLiteral"]["AbsLitFunction"], scope)
+                        .unwrap(),
+                )
             } else {
                 Some(parse_abstract_matrix_as_expr(obj, scope).unwrap())
             }

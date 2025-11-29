@@ -500,6 +500,15 @@ pub enum Expression {
     /// This is for compatibility with backends that do not support multiplication over vectors.
     #[compatible(SMT)]
     PairwiseProduct(Metadata, Moo<Expression>, Moo<Expression>),
+
+    #[compatible(JsonInput)]
+    Image(Metadata, Moo<Expression>, Moo<Expression>),
+
+    #[compatible(JsonInput)]
+    ImageSet(Metadata, Moo<Expression>, Moo<Expression>),
+
+    #[compatible(JsonInput)]
+    PreImage(Metadata, Moo<Expression>, Moo<Expression>),
 }
 
 // for the given matrix literal, return a bounded domain from the min to max of applying op to each
@@ -846,7 +855,28 @@ impl Expression {
                 .apply_i32(|a, b| Some(a * b), b.domain_of()?.resolve()?.as_ref())
                 .map(DomainPtr::from)
                 .ok(),
-            Expression::Defined(_,function ) => function.domain_of(),
+            Expression::Defined(_, function) => function.domain_of(),
+            Expression::Image(_, function, _) => {
+                match function.domain_of()?.resolve()?.as_ref() {
+                    GroundDomain::Function(_, _, codomain) => Some(codomain.clone().into()),
+                    // Not defined for anything other than a function
+                    _ => None,
+                }
+            }
+            Expression::ImageSet(_, function, _) => {
+                match function.domain_of()?.resolve()?.as_ref() {
+                    GroundDomain::Function(_, _, codomain) => Some(codomain.clone().into()),
+                    // Not defined for anything other than a function
+                    _ => None,
+                }
+            }
+            Expression::PreImage(_, function, _) => {
+                match function.domain_of()?.resolve()?.as_ref() {
+                    GroundDomain::Function(_, domain, _) => Some(domain.clone().into()),
+                    // Not defined for anything other than a function
+                    _ => None,
+                }
+            }
         };
         if let Some(dom) = &ret
             && let Some(ranges) = dom.as_int_ground()
@@ -1376,7 +1406,10 @@ impl Display for Expression {
 
             Expression::PairwiseSum(_, a, b) => write!(f, "PairwiseSum({a}, {b})"),
             Expression::PairwiseProduct(_, a, b) => write!(f, "PairwiseProduct({a}, {b})"),
-            Expression::Defined(_,function ) => write!(f,"defined({function})")
+            Expression::Defined(_, function) => write!(f, "defined({function})"),
+            Expression::Image(_, function, elems) => write!(f, "image({function},{elems})"),
+            Expression::ImageSet(_, function, elems) => write!(f, "imageSet({function},{elems})"),
+            Expression::PreImage(_, function, elems) => write!(f, "preImage({function},{elems})"),
         }
     }
 }
@@ -1477,7 +1510,34 @@ impl Typeable for Expression {
             Expression::SATInt(_, _) => ReturnType::Int,
             Expression::PairwiseSum(_, _, _) => ReturnType::Int,
             Expression::PairwiseProduct(_, _, _) => ReturnType::Int,
-            Expression::Defined(_,function ) => function.return_type(),
+            Expression::Defined(_, function) => function.return_type(),
+            Expression::Image(_, function, _) => {
+                let subject = function.return_type();
+                match subject {
+                    ReturnType::Function(_, codomain) => *codomain,
+                    _ => bug!(
+                        "Invalid image operation: expected the operand to be a function, got {self}: {subject}"
+                    ),
+                }
+            }
+            Expression::ImageSet(_, function, _) => {
+                let subject = function.return_type();
+                match subject {
+                    ReturnType::Function(_, codomain) => *codomain,
+                    _ => bug!(
+                        "Invalid imageSet operation: expected the operand to be a function, got {self}: {subject}"
+                    ),
+                }
+            }
+            Expression::PreImage(_, function, _) => {
+                let subject = function.return_type();
+                match subject {
+                    ReturnType::Function(domain, _) => *domain,
+                    _ => bug!(
+                        "Invalid preImage operation: expected the operand to be a function, got {self}: {subject}"
+                    ),
+                }
+            }
         }
     }
 }
