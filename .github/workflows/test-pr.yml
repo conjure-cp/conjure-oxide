@@ -109,16 +109,3 @@ jobs:
         run: |
           which cargo-audit ||cargo install cargo-audit
           cargo audit
-
-      - name: Save cache
-        if: ${{ always() && steps.restore_cache.outputs.cache-hit != 'true' }}
-        uses: actions/cache/save@v4
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-            ~/conjure
-          key: test--${{ matrix.os }}--${{ matrix.rust_release }}--${{ matrix.compiler_profile }}--${{ github.event.repository.updated_at }}

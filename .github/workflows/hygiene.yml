@@ -58,7 +58,7 @@ jobs:
       - run: cargo fmt --check
 
       - name: Save cache
-        if: ${{ always() && steps.restore_cache.outputs.cache-hit != 'true' }}
+        if: ${{ always() && github.ref == 'refs/heads/main' && steps.restore_cache.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@v4
         with:
           path: |
