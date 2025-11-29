@@ -1,0 +1,84 @@
+Model before rewriting:
+
+find a: matrix indexed by [[int(1..2)]] of int(1..2)
+find b: matrix indexed by [[int(1..2)]] of int(1..2)
+
+such that
+
+(a >=lex b),
+(a[1] = 1)
+
+--
+
+(a >=lex b), 
+   ~~> normalise_lex_gt_geq ([("Base", 9000)]) 
+(b <=lex a) 
+
+--
+
+a[1], 
+   ~~> index_to_bubble ([("Bubble", 6000)]) 
+{a[1] @ and([__inDomain(1,int(1..2));int(1..)])} 
+
+--
+
+(b <=lex a),
+({a[1] @ and([__inDomain(1,int(1..2));int(1..)])} = 1), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(b <=lex a),
+(a[1] = 1) 
+
+--
+
+(b <=lex a), 
+   ~~> expand_lex_lt_leq ([("Smt", 2001)]) 
+or([(b[1] < a[1]),and([(b[1] = a[1]),or([(b[2] < a[2]),and([(b[2] = a[2]),true;int(1..)]);int(1..)]);int(1..)]);int(1..)]) 
+
+--
+
+or([(b[1] < a[1]),and([(b[1] = a[1]),or([(b[2] < a[2]),and([(b[2] = a[2]),true;int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+(a[1] = 1), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+or([(b[1] < a[1]),and([(b[1] = a[1]),or([(b[2] < a[2]),and([(b[2] = a[2]);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+(a[1] = 1) 
+
+--
+
+and([(b[2] = a[2]);int(1..)]), 
+   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+(b[2] = a[2]) 
+
+--
+
+or([(b[1] < a[1]),and([(b[1] = a[1]),or([(b[2] < a[2]),(b[2] = a[2]);int(1..)]);int(1..)]);int(1..)]), 
+   ~~> distribute_or_over_and ([("Base", 8400)]) 
+and([or([(b[1] < a[1]),(b[1] = a[1]);int(1..)]),or([(b[1] < a[1]),or([(b[2] < a[2]),(b[2] = a[2]);int(1..)]);int(1..)]);int(1..)]) 
+
+--
+
+and([or([(b[1] < a[1]),(b[1] = a[1]);int(1..)]),or([(b[1] < a[1]),or([(b[2] < a[2]),(b[2] = a[2]);int(1..)]);int(1..)]);int(1..)]),
+(a[1] = 1), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+or([(b[1] < a[1]),(b[1] = a[1]);int(1..)]),
+or([(b[1] < a[1]),or([(b[2] < a[2]),(b[2] = a[2]);int(1..)]);int(1..)]),
+(a[1] = 1) 
+
+--
+
+or([(b[1] < a[1]),or([(b[2] < a[2]),(b[2] = a[2]);int(1..)]);int(1..)]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+or([(b[1] < a[1]),(b[2] < a[2]),(b[2] = a[2]);int(1..)]) 
+
+--
+
+Final model:
+
+find a: matrix indexed by [[int(1..2)]] of int(1..2)
+find b: matrix indexed by [[int(1..2)]] of int(1..2)
+
+such that
+
+or([(b[1] < a[1]),(b[1] = a[1]);int(1..)]),
+or([(b[1] < a[1]),(b[2] < a[2]),(b[2] = a[2]);int(1..)]),
+(a[1] = 1)
+
