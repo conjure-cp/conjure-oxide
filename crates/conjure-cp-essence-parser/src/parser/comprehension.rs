@@ -111,7 +111,7 @@ pub fn parse_quantifier_expr(
     })?;
 
     // Create the comprehension builder
-    let mut builder = ComprehensionBuilder::new(symbols_ptr);
+    let mut builder = ComprehensionBuilder::new(symbols_ptr.clone());
 
     // First pass: collect domain/collection, variables
     let mut domain = None;
@@ -126,7 +126,7 @@ pub fn parse_quantifier_expr(
                 variables.push(var_name);
             }
             "domain" => {
-                domain = Some(parse_domain(child, source_code)?);
+                domain = Some(parse_domain(child, source_code, Some(symbols_ptr.clone()))?);
             }
             "set_literal" | "matrix" | "tuple" | "record" => {
                 // Store the collection node to parse later
