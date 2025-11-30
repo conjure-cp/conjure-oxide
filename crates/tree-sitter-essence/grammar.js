@@ -164,7 +164,7 @@ module.exports = grammar ({
       field("domain", $.domain)
     ),
 
-    index_domain_list: $ => commaSep1(choice($.int_domain, $.bool_domain)),
+    index_domain_list: $ => commaSep1($.domain),
 
     //letting statements
     letting_statement: $ => seq(
