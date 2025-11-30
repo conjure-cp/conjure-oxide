@@ -224,7 +224,7 @@ module.exports = grammar ({
     )),
 
     quantifier_expr: $ => prec(-5, seq(
-      field("quantifier", choice("forAll", "exists")),
+      field("operator", choice("forAll", "exists")),
       field("variables", commaSep1($.identifier)),
       choice(
         seq("in", field("collection", choice($.set_literal, $.matrix, $.tuple, $.record, $.identifier, $.tuple_matrix_record_index_or_slice))),
