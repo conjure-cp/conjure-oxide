@@ -1,6 +1,9 @@
 use super::util::named_children;
 use crate::EssenceParseError;
-use conjure_cp_core::ast::{DeclarationPtr, Domain, DomainPtr, IntVal, Name, Range, RecordEntry, Reference, SetAttr, SymbolTable};
+use conjure_cp_core::ast::{
+    DeclarationPtr, Domain, DomainPtr, IntVal, Name, Range, RecordEntry, Reference, SetAttr,
+    SymbolTable,
+};
 use core::panic;
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -24,7 +27,10 @@ pub fn parse_domain(
         "identifier" => {
             let decl = get_declaration_ptr_from_identifier(domain, source_code, &symbols)?;
             let dom = Domain::reference(decl).ok_or(EssenceParseError::syntax_error(
-                format!("'{}' is not a valid domain declaration", &source_code[domain.start_byte()..domain.end_byte()]),
+                format!(
+                    "'{}' is not a valid domain declaration",
+                    &source_code[domain.start_byte()..domain.end_byte()]
+                ),
                 Some(domain.range()),
             ))?;
             Ok(dom)
@@ -59,9 +65,13 @@ fn get_declaration_ptr_from_identifier(
 }
 
 /// Parse an integer domain. Can be a single integer or a range.
-fn parse_int_domain(int_domain: Node, source_code: &str, symbols_ptr: &Option<Rc<RefCell<SymbolTable>>>) -> DomainPtr {
+fn parse_int_domain(
+    int_domain: Node,
+    source_code: &str,
+    symbols_ptr: &Option<Rc<RefCell<SymbolTable>>>,
+) -> DomainPtr {
     if int_domain.child_count() == 1 {
-        return Domain::int(vec![Range::Bounded(i32::MIN, i32::MAX)])
+        return Domain::int(vec![Range::Bounded(i32::MIN, i32::MAX)]);
     }
     let mut ranges: Vec<Range<i32>> = Vec::new();
     let mut ranges_unresolved: Vec<Range<IntVal>> = Vec::new();
@@ -75,42 +85,64 @@ fn parse_int_domain(int_domain: Node, source_code: &str, symbols_ptr: &Option<Rc
                 match value {
                     Ok(integer) => ranges.push(Range::Single(integer)),
                     Err(decl) => {
-                        ranges_unresolved.push(Range::Single(IntVal::Reference(Reference::new(decl))));
+                        ranges_unresolved
+                            .push(Range::Single(IntVal::Reference(Reference::new(decl))));
                     }
                 }
             }
             "int_range" => {
-                let lower_bound: Option<Result<i32, DeclarationPtr>> = match domain_component.child_by_field_name("lower") {
-                    Some(lower_node) => Some(parse_int_domain_component(lower_node, source_code, symbols_ptr)),
-                    None => None,
-                };
-                let upper_bound: Option<Result<i32, DeclarationPtr>> = match domain_component.child_by_field_name("upper") {
-                    Some(upper_node) => Some(parse_int_domain_component(upper_node, source_code, symbols_ptr)),
-                    None => None,
-                };
+                let lower_bound: Option<Result<i32, DeclarationPtr>> =
+                    match domain_component.child_by_field_name("lower") {
+                        Some(lower_node) => Some(parse_int_domain_component(
+                            lower_node,
+                            source_code,
+                            symbols_ptr,
+                        )),
+                        None => None,
+                    };
+                let upper_bound: Option<Result<i32, DeclarationPtr>> =
+                    match domain_component.child_by_field_name("upper") {
+                        Some(upper_node) => Some(parse_int_domain_component(
+                            upper_node,
+                            source_code,
+                            symbols_ptr,
+                        )),
+                        None => None,
+                    };
 
                 match (lower_bound, upper_bound) {
                     (Some(Ok(lower)), Some(Ok(upper))) => ranges.push(Range::Bounded(lower, upper)),
                     (Some(Ok(lower)), Some(Err(decl))) => {
-                        ranges_unresolved.push(Range::Bounded(IntVal::Const(lower), IntVal::Reference(Reference::new(decl))));
+                        ranges_unresolved.push(Range::Bounded(
+                            IntVal::Const(lower),
+                            IntVal::Reference(Reference::new(decl)),
+                        ));
                     }
                     (Some(Err(decl)), Some(Ok(upper))) => {
-                        ranges_unresolved.push(Range::Bounded(IntVal::Reference(Reference::new(decl)), IntVal::Const(upper)));
+                        ranges_unresolved.push(Range::Bounded(
+                            IntVal::Reference(Reference::new(decl)),
+                            IntVal::Const(upper),
+                        ));
                     }
                     (Some(Err(decl_lower)), Some(Err(decl_upper))) => {
-                        ranges_unresolved.push(Range::Bounded(IntVal::Reference(Reference::new(decl_lower)), IntVal::Reference(Reference::new(decl_upper))));
+                        ranges_unresolved.push(Range::Bounded(
+                            IntVal::Reference(Reference::new(decl_lower)),
+                            IntVal::Reference(Reference::new(decl_upper)),
+                        ));
                     }
                     (Some(Ok(lower)), None) => {
                         ranges.push(Range::UnboundedR(lower));
                     }
                     (Some(Err(decl)), None) => {
-                        ranges_unresolved.push(Range::UnboundedR(IntVal::Reference(Reference::new(decl))));
+                        ranges_unresolved
+                            .push(Range::UnboundedR(IntVal::Reference(Reference::new(decl))));
                     }
                     (None, Some(Ok(upper))) => {
                         ranges.push(Range::UnboundedL(upper));
                     }
                     (None, Some(Err(decl))) => {
-                        ranges_unresolved.push(Range::UnboundedL(IntVal::Reference(Reference::new(decl))));
+                        ranges_unresolved
+                            .push(Range::UnboundedL(IntVal::Reference(Reference::new(decl))));
                     }
                     (None, None) => {
                         ranges.push(Range::Unbounded);
@@ -125,16 +157,18 @@ fn parse_int_domain(int_domain: Node, source_code: &str, symbols_ptr: &Option<Rc
         for range in ranges {
             match range {
                 Range::Single(i) => ranges_unresolved.push(Range::Single(IntVal::Const(i))),
-                Range::Bounded(l, u) => ranges_unresolved.push(Range::Bounded(IntVal::Const(l), IntVal::Const(u))),
+                Range::Bounded(l, u) => {
+                    ranges_unresolved.push(Range::Bounded(IntVal::Const(l), IntVal::Const(u)))
+                }
                 Range::UnboundedL(l) => ranges_unresolved.push(Range::UnboundedL(IntVal::Const(l))),
                 Range::UnboundedR(u) => ranges_unresolved.push(Range::UnboundedR(IntVal::Const(u))),
                 Range::Unbounded => ranges_unresolved.push(Range::Unbounded),
             }
         }
-        return Domain::int(ranges_unresolved)
+        return Domain::int(ranges_unresolved);
     }
 
-    Domain::int(ranges)  
+    Domain::int(ranges)
 }
 
 fn parse_int_domain_component(
@@ -153,7 +187,7 @@ fn parse_int_domain_component(
         return Err(decl.unwrap());
     }
     panic!("'{}' is not a valid integer", text);
-}   
+}
 
 fn parse_tuple_domain(
     tuple_domain: Node,
