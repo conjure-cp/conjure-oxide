@@ -519,7 +519,7 @@ pub enum Expression {
 
     #[compatible(JsonInput)]
     Restrict(Metadata, Moo<Expression>, Moo<Expression>),
-  
+
     /// Lexicographical < between two matrices.
     ///
     /// A <lex B iff: A[i] < B[i] for some i /\ (A[j] > B[j] for some j -> i < j)
@@ -898,7 +898,7 @@ impl Expression {
             Expression::ImageSet(_, function, _) => get_function_codomain(function),
             Expression::PreImage(_, function, _) => get_function_domain(function),
             Expression::Restrict(_, function, new_domain) => {
-                let function_domain = function.domain_of()?.clone();
+                let function_domain = function.domain_of()?;
                 match function_domain.resolve().as_ref() {
                     Some(d) => {
                         match d.as_ref() {
@@ -917,7 +917,7 @@ impl Expression {
                                 Some(Domain::function(
                                     attrs.clone(),
                                     new_domain.domain_of()?,
-                                    codomain.clone().into(),
+                                    codomain.clone(),
                                 ))
                             }
                             // Not defined for anything other than a function
@@ -1124,7 +1124,7 @@ impl Expression {
 }
 
 pub fn get_function_domain(function: &Moo<Expression>) -> Option<DomainPtr> {
-    let function_domain = function.domain_of()?.clone();
+    let function_domain = function.domain_of()?;
     match function_domain.resolve().as_ref() {
         Some(d) => {
             match d.as_ref() {
@@ -1135,7 +1135,7 @@ pub fn get_function_domain(function: &Moo<Expression>) -> Option<DomainPtr> {
         }
         None => {
             match function_domain.as_unresolved()? {
-                UnresolvedDomain::Function(_, domain, _) => Some(domain.clone().into()),
+                UnresolvedDomain::Function(_, domain, _) => Some(domain.clone()),
                 // Not defined for anything other than a function
                 _ => None,
             }
@@ -1144,7 +1144,7 @@ pub fn get_function_domain(function: &Moo<Expression>) -> Option<DomainPtr> {
 }
 
 pub fn get_function_codomain(function: &Moo<Expression>) -> Option<DomainPtr> {
-    let function_domain = function.domain_of()?.clone();
+    let function_domain = function.domain_of()?;
     match function_domain.resolve().as_ref() {
         Some(d) => {
             match d.as_ref() {
@@ -1155,7 +1155,7 @@ pub fn get_function_codomain(function: &Moo<Expression>) -> Option<DomainPtr> {
         }
         None => {
             match function_domain.as_unresolved()? {
-                UnresolvedDomain::Function(_, _, codomain) => Some(codomain.clone().into()),
+                UnresolvedDomain::Function(_, _, codomain) => Some(codomain.clone()),
                 // Not defined for anything other than a function
                 _ => None,
             }
