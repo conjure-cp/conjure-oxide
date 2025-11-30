@@ -243,7 +243,7 @@ module.exports = grammar ({
 
     comparison_expr: $ => prec(5, prec.left(seq(
       field("left", choice($.bool_expr, $.arithmetic_expr)), 
-      field("operator", choice("=", "!=", "<=", ">=", "<", ">")),
+      field("operator", choice("=", "!=", "<lex", "<=lex", ">lex", ">=lex", "<=", ">=", "<", ">")),
       field("right", choice($.bool_expr, $.arithmetic_expr))
     ))),
 

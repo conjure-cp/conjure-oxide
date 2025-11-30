@@ -5,7 +5,7 @@ use serde::Serialize;
 use std::fmt;
 use uniplate::Uniplate;
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate, Quine)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Uniplate, Quine)]
 pub struct CnfClause {
     // This represents a cnf clause in its simplest form, it should only contain literals
     literals: Vec<Expression>,
