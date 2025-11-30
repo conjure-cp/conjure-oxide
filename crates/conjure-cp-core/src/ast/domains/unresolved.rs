@@ -81,6 +81,15 @@ impl From<SetAttr<Int>> for SetAttr<IntVal> {
     }
 }
 
+impl TryInto<SetAttr<Int>> for SetAttr<IntVal> {
+    type Error = DomainOpError;
+
+    fn try_into(self) -> Result<SetAttr<Int>, Self::Error> {
+        let size: Range<Int> = self.size.try_into()?;
+        Ok(SetAttr { size })
+    }
+}
+
 impl From<FuncAttr<Int>> for FuncAttr<IntVal> {
     fn from(value: FuncAttr<Int>) -> Self {
         FuncAttr {

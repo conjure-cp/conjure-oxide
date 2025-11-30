@@ -44,10 +44,10 @@ impl<A> Default for SetAttr<A> {
 impl<A: Display> Display for SetAttr<A> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self.size {
-            Range::Single(x) => write!(f, "(size {x})"),
-            Range::Bounded(l, r) => write!(f, "(minSize {l}, maxSize {r})"),
-            Range::UnboundedL(r) => write!(f, "(maxSize {r})"),
-            Range::UnboundedR(l) => write!(f, "(minSize {l})"),
+            Range::Single(x) => write!(f, "(size({x}))"),
+            Range::Bounded(l, r) => write!(f, "(minSize({l}), maxSize({r}))"),
+            Range::UnboundedL(r) => write!(f, "(maxSize({r}))"),
+            Range::UnboundedR(l) => write!(f, "(minSize({l}))"),
             Range::Unbounded => write!(f, ""),
         }
     }

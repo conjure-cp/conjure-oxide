@@ -2,7 +2,6 @@ use std::collections::{HashSet, VecDeque};
 use std::fmt::{Display, Formatter};
 use tracing::trace;
 
-use crate::ast::Moo;
 use crate::ast::Name;
 use crate::ast::ReturnType;
 use crate::ast::SetAttr;
@@ -11,6 +10,7 @@ use crate::ast::literals::Literal;
 use crate::ast::pretty::{pretty_expressions_as_top_level, pretty_vec};
 use crate::ast::{Atom, DomainPtr};
 use crate::ast::{GroundDomain, Metadata, UnresolvedDomain};
+use crate::ast::{IntVal, Moo};
 use crate::bug;
 use conjure_cp_enum_compatibility_macro::document_compatibility;
 use itertools::Itertools;
@@ -650,11 +650,11 @@ impl Expression {
         //println!("domain_of {self}");
         let ret = match self {
             Expression::Union(_, a, b) => Some(Domain::set(
-                SetAttr::default(),
+                SetAttr::<IntVal>::default(),
                 a.domain_of()?.union(&b.domain_of()?).ok()?,
             )),
             Expression::Intersect(_, a, b) => Some(Domain::set(
-                SetAttr::default(),
+                SetAttr::<IntVal>::default(),
                 a.domain_of()?.intersect(&b.domain_of()?).ok()?,
             )),
             Expression::In(_, _, _) => Some(Domain::bool()),

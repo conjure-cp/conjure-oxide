@@ -206,7 +206,13 @@ fn parse_domain(
                 .next()
                 .ok_or(Error::Parse("DomainSet is an empty object".to_owned()))?;
             let domain = parse_domain(domain.0.as_str(), domain.1, symbols)?;
-            Ok(Domain::set(SetAttr::default(), domain))
+            let size = domain_value
+                .get(1)
+                .and_then(|v| v.as_object())
+                .ok_or(error!("Set size attributes is not an object"))?;
+            let size = parse_size_attr(size, symbols)?;
+            let attr: SetAttr<IntVal> = SetAttr { size };
+            Ok(Domain::set(attr, domain))
         }
 
         "DomainMatrix" => {
