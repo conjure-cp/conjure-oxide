@@ -874,12 +874,28 @@
           "value": "matrix"
         },
         {
-          "type": "STRING",
-          "value": "indexed"
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "STRING",
+              "value": "indexed"
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
         },
         {
-          "type": "STRING",
-          "value": "by"
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "STRING",
+              "value": "by"
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
         },
         {
           "type": "STRING",
@@ -1262,11 +1278,7 @@
           "members": [
             {
               "type": "SYMBOL",
-              "name": "int_domain"
-            },
-            {
-              "type": "SYMBOL",
-              "name": "bool_domain"
+              "name": "domain"
             }
           ]
         },
@@ -1287,11 +1299,7 @@
                     "members": [
                       {
                         "type": "SYMBOL",
-                        "name": "int_domain"
-                      },
-                      {
-                        "type": "SYMBOL",
-                        "name": "bool_domain"
+                        "name": "domain"
                       }
                     ]
                   }
@@ -2887,25 +2895,29 @@
       "value": ".."
     },
     "sub_arith_expr": {
-      "type": "SEQ",
-      "members": [
-        {
-          "type": "STRING",
-          "value": "("
-        },
-        {
-          "type": "FIELD",
-          "name": "expression",
-          "content": {
-            "type": "SYMBOL",
-            "name": "arithmetic_expr"
+      "type": "PREC",
+      "value": 100,
+      "content": {
+        "type": "SEQ",
+        "members": [
+          {
+            "type": "STRING",
+            "value": "("
+          },
+          {
+            "type": "FIELD",
+            "name": "expression",
+            "content": {
+              "type": "SYMBOL",
+              "name": "arithmetic_expr"
+            }
+          },
+          {
+            "type": "STRING",
+            "value": ")"
           }
-        },
-        {
-          "type": "STRING",
-          "value": ")"
-        }
-      ]
+        ]
+      }
     },
     "negative_expr": {
       "type": "PREC",
@@ -3193,6 +3205,5 @@
   "precedences": [],
   "externals": [],
   "inline": [],
-  "supertypes": [],
-  "reserved": {}
+  "supertypes": []
 }

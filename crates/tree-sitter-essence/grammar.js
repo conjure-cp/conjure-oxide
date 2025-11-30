@@ -107,8 +107,8 @@ module.exports = grammar ({
 
     matrix_domain: $ => seq(
       "matrix",
-      "indexed",
-      "by",
+      optional("indexed"),
+      optional("by"),
       "[",
       field("index_domain_list", $.index_domain_list),
       "]",
@@ -166,7 +166,7 @@ module.exports = grammar ({
       field("domain", $.domain)
     ),
 
-    index_domain_list: $ => commaSep1(choice($.int_domain, $.bool_domain)),
+    index_domain_list: $ => commaSep1(choice($.domain)),
 
     //letting statements
     letting_statement: $ => seq(
