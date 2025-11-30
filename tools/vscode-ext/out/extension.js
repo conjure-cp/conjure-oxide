@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.activate = activate;
 const node_1 = require("vscode-languageclient/node");
+// import { vscode } from 'vscx'
 function activate(context) {
     tryStartLanguageServer(context);
 }
@@ -9,7 +10,7 @@ function tryStartLanguageServer(context) {
     //for future, possibly may want version checking
     console.log("Before setup");
     let serveroptions = {
-        command: "conjure-oxide", args: ["server-lsp"]
+        command: "conjure-oxide", args: ["server-lsp"] 
     };
     let clientoptions = {
         documentSelector: [{ scheme: 'file', language: 'essence' }]
