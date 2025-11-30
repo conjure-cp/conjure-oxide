@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use itertools::Itertools;
 use z3::{Model, Solvable, SortKind, Symbol, ast::*};
 
-use crate::ast::{AbstractLiteral, Domain, Literal, Name, Range};
+use crate::ast::{AbstractLiteral, Domain, GroundDomain, Literal, Moo, Name, Range};
 use crate::solver::{SolverError, SolverResult};
 
 use super::helpers::*;
@@ -12,7 +12,7 @@ use super::{IntTheory, TheoryConfig};
 /// Maps CO variable names to their CO domains, Z3 symbolic constants, and Z3 symbols.
 #[derive(Clone, Debug)]
 pub struct SymbolStore {
-    map: HashMap<Name, (Domain, Dynamic, Symbol)>,
+    map: HashMap<Name, (Moo<GroundDomain>, Dynamic, Symbol)>,
     theories: TheoryConfig,
 }
 
@@ -27,12 +27,12 @@ impl SymbolStore {
     pub fn insert(
         &mut self,
         name: Name,
-        val: (Domain, Dynamic, Symbol),
-    ) -> Option<(Domain, Dynamic, Symbol)> {
+        val: (Moo<GroundDomain>, Dynamic, Symbol),
+    ) -> Option<(Moo<GroundDomain>, Dynamic, Symbol)> {
         self.map.insert(name, val)
     }
 
-    pub fn get(&self, name: &Name) -> Option<&(Domain, Dynamic, Symbol)> {
+    pub fn get(&self, name: &Name) -> Option<&(Moo<GroundDomain>, Dynamic, Symbol)> {
         self.map.get(name)
     }
 }
@@ -61,8 +61,8 @@ impl Solvable for SymbolStore {
             .iter()
             .map(|(name, (domain, ast, _))| {
                 let (other, _) = model.map.get(name).unwrap();
-                match domain {
-                    Domain::Matrix(_, idx_domains) => {
+                match domain.as_ref() {
+                    GroundDomain::Matrix(_, idx_domains) => {
                         // Rather than just setting `array != other_array`, we need to do it for every element
                         // Otherwise, Z3 can generate new arrays which are equal over the domain
                         // but different otherwise (and this loops infinitely)
@@ -139,7 +139,7 @@ impl Solvable for LiteralStore {
 /// it must enumerate over all elements in the index domain and evaluate the elements as literals.
 fn interpret(
     model: &Model,
-    value: (&Domain, &Dynamic),
+    value: (&Moo<GroundDomain>, &Dynamic),
     model_completion: bool,
     theories: &TheoryConfig,
 ) -> SolverResult<(Dynamic, Literal)> {
@@ -188,15 +188,17 @@ fn interpret(
         }
         (_, SortKind::Array) => {
             let arr_ast = lit_ast.as_array().unwrap();
-            let Domain::Matrix(val_domain, idx_domains) = domain else {
+            let GroundDomain::Matrix(val_domain, idx_domains) = domain.as_ref() else {
                 return Err(SolverError::Runtime(format!(
                     "non-matrix variable interpreted as array: {domain}"
                 )));
             };
 
             let inner_domain = match idx_domains.as_slice() {
-                [idx_domain] => *val_domain.clone(),
-                [idx_domain, tail @ ..] => Domain::Matrix(val_domain.clone(), tail.to_vec()),
+                [idx_domain] => val_domain.clone(),
+                [idx_domain, tail @ ..] => {
+                    Moo::new(GroundDomain::Matrix(val_domain.clone(), tail.to_vec()))
+                }
                 [] => return Err(SolverError::Runtime("empty matrix index domain".into())),
             };
 
@@ -211,7 +213,7 @@ fn interpret(
 
             Ok(Literal::AbstractLiteral(AbstractLiteral::Matrix(
                 elements,
-                Box::new(domain.clone()),
+                domain.clone(),
             )))
         }
         _ => Err(SolverError::RuntimeNotImplemented(format!(

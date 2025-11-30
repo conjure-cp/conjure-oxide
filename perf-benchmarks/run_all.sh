@@ -79,7 +79,7 @@ models_slow="$(find models/slow -iname '*.eprime' | sort)"
 
 for model in $models_fast; do
 	echo "=======[ $model ]======="
-	hyperfine --warmup 2 \
+	hyperfine --ignore-failure --warmup 2 \
 		--command-name "baseline" "$baseline_bin solve ${EXTRA_FLAGS} --no-run-solver $model" \
 		--command-name current "$after_bin solve ${EXTRA_FLAGS} --no-run-solver $model"
 	echo ""
@@ -87,7 +87,7 @@ done
 
 for model in $models_slow; do
 	echo "=======[ $model ]======="
-	hyperfine --warmup 1 --runs 5 \
+	hyperfine --ignore-failure --warmup 1 --runs 5 \
 		--command-name "baseline" "$baseline_bin solve ${EXTRA_FLAGS} --no-run-solver $model" \
 		--command-name current "$after_bin solve ${EXTRA_FLAGS} --no-run-solver $model"
 	echo ""

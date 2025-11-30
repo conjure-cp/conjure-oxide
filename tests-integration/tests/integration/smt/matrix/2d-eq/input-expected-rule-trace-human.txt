@@ -1,7 +1,7 @@
 Model before rewriting:
 
-find m: matrix indexed by [[int(0,1), int(0,1)]] of int(0..1)
-find m2: matrix indexed by [[int(0,1), int(0,1)]] of int(0..1)
+find m: matrix indexed by [[int(0..1), int(0..1)]] of int(0..1)
+find m2: matrix indexed by [[int(0..1), int(0..1)]] of int(0..1)
 
 such that
 
@@ -26,11 +26,11 @@ and([(m[0, 0] = m2[0, 0]),(m[0, 1] = m2[0, 1]),(m[1, 0] = m2[1, 0]),(m[1, 1] = m
 
 m[0, 0], 
    ~~> index_to_bubble ([("Bubble", 6000)]) 
-{m[0, 0] @ and([__inDomain(0,int(0,1)),__inDomain(0,int(0,1));int(1..)])} 
+{m[0, 0] @ and([__inDomain(0,int(0..1)),__inDomain(0,int(0..1));int(1..)])} 
 
 --
 
-({m[0, 0] @ and([__inDomain(0,int(0,1)),__inDomain(0,int(0,1));int(1..)])} = m2[0, 0]),
+({m[0, 0] @ and([__inDomain(0,int(0..1)),__inDomain(0,int(0..1));int(1..)])} = m2[0, 0]),
 (m[0, 1] = m2[0, 1]),
 (m[1, 0] = m2[1, 0]),
 (m[1, 1] = m2[1, 1]), 
@@ -44,11 +44,11 @@ m[0, 0],
 
 m2[0, 0], 
    ~~> index_to_bubble ([("Bubble", 6000)]) 
-{m2[0, 0] @ and([__inDomain(0,int(0,1)),__inDomain(0,int(0,1));int(1..)])} 
+{m2[0, 0] @ and([__inDomain(0,int(0..1)),__inDomain(0,int(0..1));int(1..)])} 
 
 --
 
-(m[0, 0] = {m2[0, 0] @ and([__inDomain(0,int(0,1)),__inDomain(0,int(0,1));int(1..)])}),
+(m[0, 0] = {m2[0, 0] @ and([__inDomain(0,int(0..1)),__inDomain(0,int(0..1));int(1..)])}),
 (m[0, 1] = m2[0, 1]),
 (m[1, 0] = m2[1, 0]),
 (m[1, 1] = m2[1, 1]), 
@@ -62,12 +62,12 @@ m2[0, 0],
 
 m[0, 1], 
    ~~> index_to_bubble ([("Bubble", 6000)]) 
-{m[0, 1] @ and([__inDomain(0,int(0,1)),__inDomain(1,int(0,1));int(1..)])} 
+{m[0, 1] @ and([__inDomain(0,int(0..1)),__inDomain(1,int(0..1));int(1..)])} 
 
 --
 
 (m[0, 0] = m2[0, 0]),
-({m[0, 1] @ and([__inDomain(0,int(0,1)),__inDomain(1,int(0,1));int(1..)])} = m2[0, 1]),
+({m[0, 1] @ and([__inDomain(0,int(0..1)),__inDomain(1,int(0..1));int(1..)])} = m2[0, 1]),
 (m[1, 0] = m2[1, 0]),
 (m[1, 1] = m2[1, 1]), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
@@ -80,12 +80,12 @@ m[0, 1],
 
 m2[0, 1], 
    ~~> index_to_bubble ([("Bubble", 6000)]) 
-{m2[0, 1] @ and([__inDomain(0,int(0,1)),__inDomain(1,int(0,1));int(1..)])} 
+{m2[0, 1] @ and([__inDomain(0,int(0..1)),__inDomain(1,int(0..1));int(1..)])} 
 
 --
 
 (m[0, 0] = m2[0, 0]),
-(m[0, 1] = {m2[0, 1] @ and([__inDomain(0,int(0,1)),__inDomain(1,int(0,1));int(1..)])}),
+(m[0, 1] = {m2[0, 1] @ and([__inDomain(0,int(0..1)),__inDomain(1,int(0..1));int(1..)])}),
 (m[1, 0] = m2[1, 0]),
 (m[1, 1] = m2[1, 1]), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
@@ -98,13 +98,13 @@ m2[0, 1],
 
 m[1, 0], 
    ~~> index_to_bubble ([("Bubble", 6000)]) 
-{m[1, 0] @ and([__inDomain(1,int(0,1)),__inDomain(0,int(0,1));int(1..)])} 
+{m[1, 0] @ and([__inDomain(1,int(0..1)),__inDomain(0,int(0..1));int(1..)])} 
 
 --
 
 (m[0, 0] = m2[0, 0]),
 (m[0, 1] = m2[0, 1]),
-({m[1, 0] @ and([__inDomain(1,int(0,1)),__inDomain(0,int(0,1));int(1..)])} = m2[1, 0]),
+({m[1, 0] @ and([__inDomain(1,int(0..1)),__inDomain(0,int(0..1));int(1..)])} = m2[1, 0]),
 (m[1, 1] = m2[1, 1]), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
 (m[0, 0] = m2[0, 0]),
@@ -116,13 +116,13 @@ m[1, 0],
 
 m2[1, 0], 
    ~~> index_to_bubble ([("Bubble", 6000)]) 
-{m2[1, 0] @ and([__inDomain(1,int(0,1)),__inDomain(0,int(0,1));int(1..)])} 
+{m2[1, 0] @ and([__inDomain(1,int(0..1)),__inDomain(0,int(0..1));int(1..)])} 
 
 --
 
 (m[0, 0] = m2[0, 0]),
 (m[0, 1] = m2[0, 1]),
-(m[1, 0] = {m2[1, 0] @ and([__inDomain(1,int(0,1)),__inDomain(0,int(0,1));int(1..)])}),
+(m[1, 0] = {m2[1, 0] @ and([__inDomain(1,int(0..1)),__inDomain(0,int(0..1));int(1..)])}),
 (m[1, 1] = m2[1, 1]), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
 (m[0, 0] = m2[0, 0]),
@@ -134,14 +134,14 @@ m2[1, 0],
 
 m[1, 1], 
    ~~> index_to_bubble ([("Bubble", 6000)]) 
-{m[1, 1] @ and([__inDomain(1,int(0,1)),__inDomain(1,int(0,1));int(1..)])} 
+{m[1, 1] @ and([__inDomain(1,int(0..1)),__inDomain(1,int(0..1));int(1..)])} 
 
 --
 
 (m[0, 0] = m2[0, 0]),
 (m[0, 1] = m2[0, 1]),
 (m[1, 0] = m2[1, 0]),
-({m[1, 1] @ and([__inDomain(1,int(0,1)),__inDomain(1,int(0,1));int(1..)])} = m2[1, 1]), 
+({m[1, 1] @ and([__inDomain(1,int(0..1)),__inDomain(1,int(0..1));int(1..)])} = m2[1, 1]), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
 (m[0, 0] = m2[0, 0]),
 (m[0, 1] = m2[0, 1]),
@@ -152,14 +152,14 @@ m[1, 1],
 
 m2[1, 1], 
    ~~> index_to_bubble ([("Bubble", 6000)]) 
-{m2[1, 1] @ and([__inDomain(1,int(0,1)),__inDomain(1,int(0,1));int(1..)])} 
+{m2[1, 1] @ and([__inDomain(1,int(0..1)),__inDomain(1,int(0..1));int(1..)])} 
 
 --
 
 (m[0, 0] = m2[0, 0]),
 (m[0, 1] = m2[0, 1]),
 (m[1, 0] = m2[1, 0]),
-(m[1, 1] = {m2[1, 1] @ and([__inDomain(1,int(0,1)),__inDomain(1,int(0,1));int(1..)])}), 
+(m[1, 1] = {m2[1, 1] @ and([__inDomain(1,int(0..1)),__inDomain(1,int(0..1));int(1..)])}), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
 (m[0, 0] = m2[0, 0]),
 (m[0, 1] = m2[0, 1]),
@@ -170,8 +170,8 @@ m2[1, 1],
 
 Final model:
 
-find m: matrix indexed by [[int(0,1), int(0,1)]] of int(0..1)
-find m2: matrix indexed by [[int(0,1), int(0,1)]] of int(0..1)
+find m: matrix indexed by [[int(0..1), int(0..1)]] of int(0..1)
+find m2: matrix indexed by [[int(0..1), int(0..1)]] of int(0..1)
 
 such that
 
