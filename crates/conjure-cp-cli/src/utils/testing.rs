@@ -1,5 +1,6 @@
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fmt::Debug;
+use std::path::Path;
 use std::{io, vec};
 
 use conjure_cp::ast::records::RecordValue;
@@ -7,7 +8,7 @@ use conjure_cp::bug;
 use itertools::Itertools as _;
 use std::fs::File;
 use std::hash::Hash;
-use std::io::Write;
+use std::io::{BufRead, BufReader, Write};
 use std::sync::{Arc, RwLock};
 use uniplate::Uniplate;
 
@@ -24,6 +25,9 @@ use conjure_cp::Model as ConjureModel;
 use conjure_cp::ast::Name::User;
 use conjure_cp::ast::{Literal, Name};
 use conjure_cp::solver::SolverFamily;
+
+/// Limit how many lines of the rewrite serialisation we persist/compare in integration tests.
+pub const REWRITE_SERIALISED_JSON_MAX_LINES: usize = 1000;
 
 /// Converts a SerdeModel to JSON with stable IDs.
 ///
@@ -124,6 +128,7 @@ pub fn save_model_json(
     test_stage: &str,
 ) -> Result<(), std::io::Error> {
     let generated_json_str = serialize_model(model)?;
+    let generated_json_str = maybe_truncate_serialised_json(generated_json_str, test_stage);
     let filename = format!("{path}/{test_name}.generated-{test_stage}.serialised.json");
     File::create(&filename)?.write_all(generated_json_str.as_bytes())?;
     Ok(())
@@ -167,6 +172,18 @@ pub fn read_model_json(
     let expected_model: SerdeModel = serde_json::from_str(&expected_json_str)?;
 
     Ok(expected_model.initialise(ctx.clone()).unwrap())
+}
+
+/// Reads only the first `max_lines` from a serialised model JSON file.
+pub fn read_model_json_prefix(
+    path: &str,
+    test_name: &str,
+    prefix: &str,
+    test_stage: &str,
+    max_lines: usize,
+) -> Result<String, std::io::Error> {
+    let filename = format!("{path}/{test_name}.{prefix}-{test_stage}.serialised.json");
+    read_first_n_lines(filename, max_lines)
 }
 
 pub fn minion_solutions_from_json(
@@ -376,4 +393,28 @@ pub fn normalize_solutions_for_comparison(
     // Remove duplicates
     normalized = normalized.into_iter().unique().collect();
     normalized
+}
+
+fn maybe_truncate_serialised_json(serialised: String, test_stage: &str) -> String {
+    if test_stage == "rewrite" {
+        truncate_to_first_lines(&serialised, REWRITE_SERIALISED_JSON_MAX_LINES)
+    } else {
+        serialised
+    }
+}
+
+fn truncate_to_first_lines(content: &str, max_lines: usize) -> String {
+    content.lines().take(max_lines).join("\n")
+}
+
+fn read_first_n_lines<P: AsRef<Path>>(filename: P, n: usize) -> io::Result<String> {
+    let reader = BufReader::new(File::open(&filename)?);
+    let lines = reader
+        .lines()
+        .chunks(n)
+        .into_iter()
+        .next()
+        .unwrap()
+        .collect::<Result<Vec<_>, _>>()?;
+    Ok(lines.join("\n"))
 }
