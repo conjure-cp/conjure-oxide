@@ -31,27 +31,28 @@ jobs:
         with:
           submodules: recursive
           fetch-depth: 0
+          path: repo
 
       - name: free_disk_space.sh
-        run: .github/workflows/tools/free_disk_space.sh
+        run: repo/.github/workflows/tools/free_disk_space.sh
 
-      - name: Restore cache
-        id: restore_cache
-        uses: actions/cache/restore@v4
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-            ~/conjure
-          key: treesitter--${{ matrix.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.event.repository.updated_at }}
-          restore-keys: treesitter--${{ matrix.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}
+      # - name: Restore cache
+      #   id: restore_cache
+      #   uses: actions/cache/restore@v4
+      #   with:
+      #     path: |
+      #       ~/.cargo/bin/
+      #       ~/.cargo/registry/index/
+      #       ~/.cargo/registry/cache/
+      #       ~/.cargo/git/db/
+      #       target/
+      #       ~/conjure
+      #     key: treesitter--${{ matrix.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.event.repository.updated_at }}
+      #     restore-keys: treesitter--${{ matrix.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}
 
         # the tree-sitter actions expect this!
       - name: Make tree-sitter-essence the root directory
-        run: cp -r crates/tree-sitter-essence/* .
+        run: cp -r repo/crates/tree-sitter-essence/* .
 
       - name: Set up tree-sitter
         uses: tree-sitter/setup-action/cli@v2
@@ -61,18 +62,18 @@ jobs:
         with:
           test-rust: true
 
-      - name: Save cache
-        if: ${{ always() && steps.restore_cache.outputs.cache-hit != 'true' }}
-        uses: actions/cache/save@v4
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-            ~/conjure
-          key: treesitter--${{ matrix.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.event.repository.updated_at }}
+      # - name: Save cache
+      #   if: ${{ always() && steps.restore_cache.outputs.cache-hit != 'true' }}
+      #   uses: actions/cache/save@v4
+      #   with:
+      #     path: |
+      #       ~/.cargo/bin/
+      #       ~/.cargo/registry/index/
+      #       ~/.cargo/registry/cache/
+      #       ~/.cargo/git/db/
+      #       target/
+      #       ~/conjure
+      #     key: treesitter--${{ matrix.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.event.repository.updated_at }}
 
   fuzz:
     name: Fuzz scanner
@@ -82,11 +83,12 @@ jobs:
         with:
           submodules: recursive
           fetch-depth: 0
+          path: repo
 
       - name: Check for scanner changes
         id: scanner-check
         run: |-
-          if git diff --quiet HEAD^ -- crates/tree-sitter-essence/scanner.c; then
+          if git diff --quiet HEAD^ -- repo/crates/tree-sitter-essence/scanner.c; then
             printf 'changed=false\n' >> "$GITHUB_OUTPUT"
           else
             printf 'changed=true\n' >> "$GITHUB_OUTPUT"
@@ -94,7 +96,7 @@ jobs:
 
         # the tree-sitter actions expect this!
       - name: Make tree-sitter-essence the root directory
-        run: cp -r crates/tree-sitter-essence/* .
+        run: cp -r repo/crates/tree-sitter-essence/* .
 
       - name: Run the fuzzer
         uses: tree-sitter/fuzz-action@v4
