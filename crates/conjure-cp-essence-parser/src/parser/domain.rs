@@ -68,7 +68,6 @@ fn parse_int_domain(int_domain: Node, source_code: &str, symbols_ptr: &Option<Rc
     let range_list = int_domain
         .child_by_field_name("ranges")
         .expect("No range list found for int domain");
-    let mut unresolved = false;
     for domain_component in named_children(&range_list) {
         match domain_component.kind() {
             "arithmetic_expr" => {
@@ -76,7 +75,6 @@ fn parse_int_domain(int_domain: Node, source_code: &str, symbols_ptr: &Option<Rc
                 match value {
                     Ok(integer) => ranges.push(Range::Single(integer)),
                     Err(decl) => {
-                        unresolved = true;
                         ranges_unresolved.push(Range::Single(IntVal::Reference(Reference::new(decl))));
                     }
                 }
@@ -94,29 +92,24 @@ fn parse_int_domain(int_domain: Node, source_code: &str, symbols_ptr: &Option<Rc
                 match (lower_bound, upper_bound) {
                     (Some(Ok(lower)), Some(Ok(upper))) => ranges.push(Range::Bounded(lower, upper)),
                     (Some(Ok(lower)), Some(Err(decl))) => {
-                        unresolved = true;
                         ranges_unresolved.push(Range::Bounded(IntVal::Const(lower), IntVal::Reference(Reference::new(decl))));
                     }
                     (Some(Err(decl)), Some(Ok(upper))) => {
-                        unresolved = true;
                         ranges_unresolved.push(Range::Bounded(IntVal::Reference(Reference::new(decl)), IntVal::Const(upper)));
                     }
                     (Some(Err(decl_lower)), Some(Err(decl_upper))) => {
-                        unresolved = true;
                         ranges_unresolved.push(Range::Bounded(IntVal::Reference(Reference::new(decl_lower)), IntVal::Reference(Reference::new(decl_upper))));
                     }
                     (Some(Ok(lower)), None) => {
                         ranges.push(Range::UnboundedR(lower));
                     }
                     (Some(Err(decl)), None) => {
-                        unresolved = true;
                         ranges_unresolved.push(Range::UnboundedR(IntVal::Reference(Reference::new(decl))));
                     }
                     (None, Some(Ok(upper))) => {
                         ranges.push(Range::UnboundedL(upper));
                     }
                     (None, Some(Err(decl))) => {
-                        unresolved = true;
                         ranges_unresolved.push(Range::UnboundedL(IntVal::Reference(Reference::new(decl))));
                     }
                     (None, None) => {
@@ -128,7 +121,7 @@ fn parse_int_domain(int_domain: Node, source_code: &str, symbols_ptr: &Option<Rc
         }
     }
 
-    if unresolved {
+    if !ranges_unresolved.is_empty() {
         for range in ranges {
             match range {
                 Range::Single(i) => ranges_unresolved.push(Range::Single(IntVal::Const(i))),
