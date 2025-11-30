@@ -7,14 +7,19 @@ Roundtrip tests do not consider rewriting or solving.
 ## Full Test Structure
 The structure of a roundtrip test is shown in the following diagram:
 <img src="./roundtripTest.jpeg" width="500">
+
+
+The first phase tests that the parser is still performing as expected. As with the other tests in the suite, if the expected should genuinely have changed the suite can be run with `ACCEPT=true` to overwrite these expected files with whatever is generated.
 - The test parses a provided Essence or Essence' file.
-- Otherwise, is the parse fails; it saves the generated error outputs and compares this to the expected version.
 - If this parse is valid, it saves the generated AST model JSON and generated Essence representation and compare these to the expected versions.
-This phase tests that the parser is still performing as expected. As with the other tests in the suite, if the expected should genuinely have changed the suite can be run with `ACCEPT=true` to overwrite these expected files with whatever is generated.
+- Otherwise, is the parse fails; it saves the generated error outputs and compares this to the expected version.
+
+
+Now the second phase tests that the structure of the input does not change during parsing without applying any rules to it, ensuring validity.
+
 - Now if the initial parse was successful the roundtrip phase of the test occurs. 
 - The newly generated Essence is then parsed back into Conjure-Oxide and used to generate a new AST and output Essence file
 - This new Essence file is then compared with the previously generated one and asserted equal.
-This phase tests that the structure of the input does not change during parsing without applying any rules to it, ensuring validity.
 
 ## Multiple Parsers
 Roundtrip tests support both the 'legacy' and 'native' parser.
