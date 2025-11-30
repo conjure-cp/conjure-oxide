@@ -126,7 +126,6 @@ fn main() -> io::Result<()> {
         let subdir = subdir?;
         // Checks every subdirectory
         if subdir.file_type().is_dir() {
-            println!("Subdir {}", subdir.file_name().display());
             // Finds essence / eprime filenames
             let names: Vec<String> = read_dir(subdir.path())?
                 .filter_map(Result::ok)
