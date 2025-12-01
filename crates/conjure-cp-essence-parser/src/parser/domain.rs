@@ -81,32 +81,64 @@ fn parse_int_domain(
     for domain_component in named_children(&range_list) {
         match domain_component.kind() {
             "arithmetic_expr" => {
-                let value = parse_int_domain_component(domain_component, source_code, symbols_ptr);
-                match value {
-                    Ok(integer) => ranges.push(Range::Single(integer)),
-                    Err(decl) => {
-                        ranges_unresolved
-                            .push(Range::Single(IntVal::Reference(Reference::new(decl))));
-                    }
+                let text = &source_code[domain_component.start_byte()..domain_component.end_byte()];
+                // Try parsing as a literal integer first
+                if let Ok(integer) = text.parse::<i32>() {
+                    ranges.push(Range::Single(integer));
+                    continue;
+                }
+                // Otherwise, treat as a reference
+                let decl =
+                    get_declaration_ptr_from_identifier(domain_component, source_code, symbols_ptr);
+                if let Ok(decl) = decl {
+                    ranges_unresolved.push(Range::Single(IntVal::Reference(Reference::new(decl))));
+                } else {
+                    panic!("'{}' is not a valid integer", text);
                 }
             }
             "int_range" => {
                 let lower_bound: Option<Result<i32, DeclarationPtr>> =
                     match domain_component.child_by_field_name("lower") {
-                        Some(lower_node) => Some(parse_int_domain_component(
-                            lower_node,
-                            source_code,
-                            symbols_ptr,
-                        )),
+                        Some(lower_node) => {
+                            // Try parsing as a literal integer first
+                            let text = &source_code[lower_node.start_byte()..lower_node.end_byte()];
+                            if let Ok(integer) = text.parse::<i32>() {
+                                Some(Ok(integer))
+                            } else {
+                                let decl = get_declaration_ptr_from_identifier(
+                                    lower_node,
+                                    source_code,
+                                    symbols_ptr,
+                                );
+                                if let Ok(decl) = decl {
+                                    Some(Err(decl))
+                                } else {
+                                    panic!("'{}' is not a valid integer", text);
+                                }
+                            }
+                        }
                         None => None,
                     };
                 let upper_bound: Option<Result<i32, DeclarationPtr>> =
                     match domain_component.child_by_field_name("upper") {
-                        Some(upper_node) => Some(parse_int_domain_component(
-                            upper_node,
-                            source_code,
-                            symbols_ptr,
-                        )),
+                        Some(upper_node) => {
+                            // Try parsing as a literal integer first
+                            let text = &source_code[upper_node.start_byte()..upper_node.end_byte()];
+                            if let Ok(integer) = text.parse::<i32>() {
+                                Some(Ok(integer))
+                            } else {
+                                let decl = get_declaration_ptr_from_identifier(
+                                    upper_node,
+                                    source_code,
+                                    symbols_ptr,
+                                );
+                                if let Ok(decl) = decl {
+                                    Some(Err(decl))
+                                } else {
+                                    panic!("'{}' is not a valid integer", text);
+                                }
+                            }
+                        }
                         None => None,
                     };
 
@@ -169,24 +201,6 @@ fn parse_int_domain(
     }
 
     Domain::int(ranges)
-}
-
-fn parse_int_domain_component(
-    domain_component: Node,
-    source_code: &str,
-    symbols_ptr: &Option<Rc<RefCell<SymbolTable>>>,
-) -> Result<i32, DeclarationPtr> {
-    let text = &source_code[domain_component.start_byte()..domain_component.end_byte()];
-    // Try parsing as a literal integer first
-    if let Ok(integer) = text.parse::<i32>() {
-        return Ok(integer);
-    }
-
-    let decl = get_declaration_ptr_from_identifier(domain_component, source_code, symbols_ptr);
-    if decl.is_ok() {
-        return Err(decl.unwrap());
-    }
-    panic!("'{}' is not a valid integer", text);
 }
 
 fn parse_tuple_domain(
