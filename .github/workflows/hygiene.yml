@@ -24,6 +24,8 @@ env:
   os: ubuntu-latest
   rust_release: stable
   compiler_profile: debug
+  CARGO_INCREMENTAL: 0 # for smaller cache size
+
   READ_ONLY_GITHUB_TOKEN: ${{ secrets.PUBLIC_REPO_TOKEN }}
 
 jobs:
@@ -31,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: free_disk_space.sh
         run: .github/workflows/tools/free_disk_space.sh
@@ -58,7 +60,7 @@ jobs:
       - run: cargo fmt --check
 
       - name: Save cache
-        if: ${{ always() && steps.restore_cache.outputs.cache-hit != 'true' }}
+        if: ${{ always() && github.ref == 'refs/heads/main' && steps.restore_cache.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@v4
         with:
           path: |
