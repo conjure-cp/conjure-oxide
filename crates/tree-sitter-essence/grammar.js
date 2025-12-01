@@ -107,8 +107,8 @@ module.exports = grammar ({
 
     matrix_domain: $ => seq(
       "matrix",
-      "indexed",
-      "by",
+      optional("indexed"),
+      optional("by"),
       "[",
       field("index_domain_list", $.index_domain_list),
       "]",
