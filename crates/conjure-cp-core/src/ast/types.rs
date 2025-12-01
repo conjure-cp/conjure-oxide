@@ -35,6 +35,7 @@ impl Display for ReturnType {
             ReturnType::Int => write!(f, "Int"),
             ReturnType::Matrix(inner) => write!(f, "Matrix of {inner}"),
             ReturnType::Set(inner) => write!(f, "Set of {inner}"),
+            ReturnType::MSet(inner) => write!(f, "Multiset of {inner}"),
             ReturnType::Tuple(types) => {
                 let inners = types.iter().map(|t| format!("{}", t)).join(", ");
                 write!(f, "({inners})")

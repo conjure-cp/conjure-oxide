@@ -156,6 +156,13 @@ impl Domain {
         ))))
     }
 
+    /// Create a new multiset domain with the given element domain and attributes
+    pub fn multiset<T>(attr: T, inner_dom: DomainPtr) -> DomainPtr {
+        // MSet can have attributes. What does it mean for an attribute to be ground?
+        // Domain can be ground or unresolved.
+        // TODO cc398
+    }
+
     /// Create a new matrix domain with the given element domain and index domains.
     /// If the given domains are all ground, the variant will be [GroundDomain::Matrix].
     /// Otherwise, it will be [UnresolvedDomain::Matrix].
@@ -415,6 +422,8 @@ impl Domain {
         }
         None
     }
+
+    /// TODO @cc398 : getters for MSet
 
     /// If this is a tuple domain, get pointers to its element domains.
     pub fn as_tuple(&self) -> Option<Vec<DomainPtr>> {
