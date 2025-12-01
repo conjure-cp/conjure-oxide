@@ -303,7 +303,7 @@ module.exports = grammar ({
 
     matrix: $ => seq(
       "[",
-      optional(field("elements", commaSep1($.arithmetic_expr))),
+      optional(field("elements", commaSep1(choice($.bool_expr, $.arithmetic_expr, $.comparison_expr)))),
       optional(seq(
         ";",
         field("domain", choice($.int_domain, $.bool_domain))
