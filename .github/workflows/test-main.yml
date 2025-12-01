@@ -22,6 +22,8 @@ env:
   os: ubuntu-latest
   rust_release: stable
   compiler_profile: debug
+  CARGO_INCREMENTAL: 0 # for smaller cache size
+
   READ_ONLY_GITHUB_TOKEN: ${{ secrets.PUBLIC_REPO_TOKEN }}
 
 jobs:
@@ -58,7 +60,7 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           submodules: recursive
           fetch-depth: 0
