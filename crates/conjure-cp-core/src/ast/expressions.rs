@@ -2,7 +2,6 @@ use std::collections::{HashSet, VecDeque};
 use std::fmt::{Display, Formatter};
 use tracing::trace;
 
-use crate::ast::Moo;
 use crate::ast::Name;
 use crate::ast::ReturnType;
 use crate::ast::SetAttr;
@@ -10,7 +9,8 @@ use crate::ast::literals::AbstractLiteral;
 use crate::ast::literals::Literal;
 use crate::ast::pretty::{pretty_expressions_as_top_level, pretty_vec};
 use crate::ast::{Atom, DomainPtr};
-use crate::ast::{GroundDomain, Metadata};
+use crate::ast::{GroundDomain, Metadata, UnresolvedDomain};
+use crate::ast::{IntVal, Moo};
 use crate::bug;
 use conjure_cp_enum_compatibility_macro::document_compatibility;
 use itertools::Itertools;
@@ -249,6 +249,14 @@ pub enum Expression {
     /// Negation: `-x`
     #[compatible(JsonInput, SMT)]
     Neg(Metadata, Moo<Expression>),
+
+    /// Set of domain values function is defined for
+    #[compatible(JsonInput)]
+    Defined(Metadata, Moo<Expression>),
+
+    /// Set of codomain values function is defined for
+    #[compatible(JsonInput)]
+    Range(Metadata, Moo<Expression>),
 
     /// Unsafe power`x**y` (possibly undefined)
     ///
@@ -502,6 +510,21 @@ pub enum Expression {
     #[compatible(SMT)]
     PairwiseProduct(Metadata, Moo<Expression>, Moo<Expression>),
 
+    #[compatible(JsonInput)]
+    Image(Metadata, Moo<Expression>, Moo<Expression>),
+
+    #[compatible(JsonInput)]
+    ImageSet(Metadata, Moo<Expression>, Moo<Expression>),
+
+    #[compatible(JsonInput)]
+    PreImage(Metadata, Moo<Expression>, Moo<Expression>),
+
+    #[compatible(JsonInput)]
+    Inverse(Metadata, Moo<Expression>, Moo<Expression>),
+
+    #[compatible(JsonInput)]
+    Restrict(Metadata, Moo<Expression>, Moo<Expression>),
+
     /// Lexicographical < between two matrices.
     ///
     /// A <lex B iff: A[i] < B[i] for some i /\ (A[j] > B[j] for some j -> i < j)
@@ -632,11 +655,11 @@ impl Expression {
         //println!("domain_of {self}");
         let ret = match self {
             Expression::Union(_, a, b) => Some(Domain::set(
-                SetAttr::default(),
+                SetAttr::<IntVal>::default(),
                 a.domain_of()?.union(&b.domain_of()?).ok()?,
             )),
             Expression::Intersect(_, a, b) => Some(Domain::set(
-                SetAttr::default(),
+                SetAttr::<IntVal>::default(),
                 a.domain_of()?.intersect(&b.domain_of()?).ok()?,
             )),
             Expression::In(_, _, _) => Some(Domain::bool()),
@@ -895,6 +918,41 @@ impl Expression {
                 .apply_i32(|a, b| Some(a * b), b.domain_of()?.resolve()?.as_ref())
                 .map(DomainPtr::from)
                 .ok(),
+            Expression::Defined(_, function) => get_function_domain(function),
+            Expression::Range(_, function) => get_function_codomain(function),
+            Expression::Image(_, function, _) => get_function_codomain(function),
+            Expression::ImageSet(_, function, _) => get_function_codomain(function),
+            Expression::PreImage(_, function, _) => get_function_domain(function),
+            Expression::Restrict(_, function, new_domain) => {
+                let function_domain = function.domain_of()?;
+                match function_domain.resolve().as_ref() {
+                    Some(d) => {
+                        match d.as_ref() {
+                            GroundDomain::Function(attrs, _, codomain) => Some(Domain::function(
+                                attrs.clone(),
+                                new_domain.domain_of()?,
+                                codomain.clone().into(),
+                            )),
+                            // Not defined for anything other than a function
+                            _ => None,
+                        }
+                    }
+                    None => {
+                        match function_domain.as_unresolved()? {
+                            UnresolvedDomain::Function(attrs, _, codomain) => {
+                                Some(Domain::function(
+                                    attrs.clone(),
+                                    new_domain.domain_of()?,
+                                    codomain.clone(),
+                                ))
+                            }
+                            // Not defined for anything other than a function
+                            _ => None,
+                        }
+                    }
+                }
+            }
+            Expression::Inverse(..) => Some(Domain::bool()),
             Expression::LexLt(..) => Some(Domain::bool()),
             Expression::LexLeq(..) => Some(Domain::bool()),
             Expression::LexGt(..) => Some(Domain::bool()),
@@ -1088,6 +1146,46 @@ impl Expression {
             .into_iter()
             .map(|x| x.category_of())
             .collect()
+    }
+}
+
+pub fn get_function_domain(function: &Moo<Expression>) -> Option<DomainPtr> {
+    let function_domain = function.domain_of()?;
+    match function_domain.resolve().as_ref() {
+        Some(d) => {
+            match d.as_ref() {
+                GroundDomain::Function(_, domain, _) => Some(domain.clone().into()),
+                // Not defined for anything other than a function
+                _ => None,
+            }
+        }
+        None => {
+            match function_domain.as_unresolved()? {
+                UnresolvedDomain::Function(_, domain, _) => Some(domain.clone()),
+                // Not defined for anything other than a function
+                _ => None,
+            }
+        }
+    }
+}
+
+pub fn get_function_codomain(function: &Moo<Expression>) -> Option<DomainPtr> {
+    let function_domain = function.domain_of()?;
+    match function_domain.resolve().as_ref() {
+        Some(d) => {
+            match d.as_ref() {
+                GroundDomain::Function(_, _, codomain) => Some(codomain.clone().into()),
+                // Not defined for anything other than a function
+                _ => None,
+            }
+        }
+        None => {
+            match function_domain.as_unresolved()? {
+                UnresolvedDomain::Function(_, _, codomain) => Some(codomain.clone()),
+                // Not defined for anything other than a function
+                _ => None,
+            }
+        }
     }
 }
 
@@ -1444,6 +1542,14 @@ impl Display for Expression {
             Expression::PairwiseSum(_, a, b) => write!(f, "PairwiseSum({a}, {b})"),
             Expression::PairwiseProduct(_, a, b) => write!(f, "PairwiseProduct({a}, {b})"),
 
+            Expression::Defined(_, function) => write!(f, "defined({function})"),
+            Expression::Range(_, function) => write!(f, "range({function})"),
+            Expression::Image(_, function, elems) => write!(f, "image({function},{elems})"),
+            Expression::ImageSet(_, function, elems) => write!(f, "imageSet({function},{elems})"),
+            Expression::PreImage(_, function, elems) => write!(f, "preImage({function},{elems})"),
+            Expression::Inverse(_, a, b) => write!(f, "inverse({a},{b})"),
+            Expression::Restrict(_, function, domain) => write!(f, "restrict({function},{domain})"),
+
             Expression::LexLt(_, a, b) => write!(f, "({a} <lex {b})"),
             Expression::LexLeq(_, a, b) => write!(f, "({a} <=lex {b})"),
             Expression::LexGt(_, a, b) => write!(f, "({a} >lex {b})"),
@@ -1570,6 +1676,63 @@ impl Typeable for Expression {
             Expression::SATInt(_, _) => ReturnType::Int,
             Expression::PairwiseSum(_, _, _) => ReturnType::Int,
             Expression::PairwiseProduct(_, _, _) => ReturnType::Int,
+            Expression::Defined(_, function) => {
+                let subject = function.return_type();
+                match subject {
+                    ReturnType::Function(domain, _) => *domain,
+                    _ => bug!(
+                        "Invalid defined operation: expected the operand to be a function, got {self}: {subject}"
+                    ),
+                }
+            }
+            Expression::Range(_, function) => {
+                let subject = function.return_type();
+                match subject {
+                    ReturnType::Function(_, codomain) => *codomain,
+                    _ => bug!(
+                        "Invalid range operation: expected the operand to be a function, got {self}: {subject}"
+                    ),
+                }
+            }
+            Expression::Image(_, function, _) => {
+                let subject = function.return_type();
+                match subject {
+                    ReturnType::Function(_, codomain) => *codomain,
+                    _ => bug!(
+                        "Invalid image operation: expected the operand to be a function, got {self}: {subject}"
+                    ),
+                }
+            }
+            Expression::ImageSet(_, function, _) => {
+                let subject = function.return_type();
+                match subject {
+                    ReturnType::Function(_, codomain) => *codomain,
+                    _ => bug!(
+                        "Invalid imageSet operation: expected the operand to be a function, got {self}: {subject}"
+                    ),
+                }
+            }
+            Expression::PreImage(_, function, _) => {
+                let subject = function.return_type();
+                match subject {
+                    ReturnType::Function(domain, _) => *domain,
+                    _ => bug!(
+                        "Invalid preImage operation: expected the operand to be a function, got {self}: {subject}"
+                    ),
+                }
+            }
+            Expression::Restrict(_, function, new_domain) => {
+                let subject = function.return_type();
+                match subject {
+                    ReturnType::Function(_, codomain) => {
+                        ReturnType::Function(Box::new(new_domain.return_type()), codomain)
+                    }
+                    _ => bug!(
+                        "Invalid preImage operation: expected the operand to be a function, got {self}: {subject}"
+                    ),
+                }
+            }
+            Expression::Inverse(..) => ReturnType::Bool,
             Expression::LexLt(..) => ReturnType::Bool,
             Expression::LexGt(..) => ReturnType::Bool,
             Expression::LexLeq(..) => ReturnType::Bool,

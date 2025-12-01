@@ -592,6 +592,13 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                 _ => None,
             }
         }
+        Expr::Defined(_, _) => todo!(),
+        Expr::Range(_, _) => todo!(),
+        Expr::Image(_, _, _) => todo!(),
+        Expr::ImageSet(_, _, _) => todo!(),
+        Expr::PreImage(_, _, _) => todo!(),
+        Expr::Inverse(_, _, _) => todo!(),
+        Expr::Restrict(_, _, _) => todo!(),
         Expr::LexLt(_, a, b) => {
             let lt = vec_expr_pairs_op::<i32, _>(a, b, |pairs, (a_len, b_len)| {
                 pairs
