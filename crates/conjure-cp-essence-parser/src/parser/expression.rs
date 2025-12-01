@@ -104,7 +104,9 @@ fn parse_boolean_expression(
         "list_combining_expr_bool" => {
             parse_list_combining_expression(&inner, source_code, root, symbols_ptr)
         }
-        "quantifier_expr" => parse_quantifier_or_aggregate_expr(&inner, source_code, root, symbols_ptr),
+        "quantifier_expr" => {
+            parse_quantifier_or_aggregate_expr(&inner, source_code, root, symbols_ptr)
+        }
         _ => Err(EssenceParseError::syntax_error(
             format!("Expected boolean expression, found '{}'", inner.kind()),
             Some(inner.range()),

@@ -72,7 +72,10 @@ fn parse_matrix(
     let mut elements = vec![];
     let mut domain: Option<DomainPtr> = None;
     for child in named_children(node) {
-        if child.kind() == "arithmetic_expr" || child.kind() == "bool_expr" || child.kind() == "comparison_expr" {
+        if child.kind() == "arithmetic_expr"
+            || child.kind() == "bool_expr"
+            || child.kind() == "comparison_expr"
+        {
             elements.push(parse_expression(
                 child,
                 source_code,
