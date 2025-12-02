@@ -243,7 +243,7 @@ module.exports = grammar ({
         seq(":", field("domain", $.domain))
       ),
       ".",
-      field("expression", $.arithmetic_expr)
+      field("expression", choice($.arithmetic_expr, $.atom))
     )),
 
     from_solution: $ => seq(
