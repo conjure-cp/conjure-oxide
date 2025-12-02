@@ -898,15 +898,9 @@ impl Expression {
                 .ok(),
             Expression::MinionPow(_, _, _, _) => Some(Domain::bool()),
             Expression::ToInt(_, _) => Some(Domain::int(vec![Range::Bounded(0, 1)])),
-            Expression::SATInt(_, _) => {
-                Some(Domain::int_ground(vec![Range::Bounded(
-                    i8::MIN.into(),
-                    i8::MAX.into(),
-                )])) // BITS
-            } // A CnfInt can represent any i8 integer at the moment
-            // A CnfInt contains multiple boolean expressions and represents the integer
-            // formed when these booleans are treated as the bits in an integer encoding.
-            // So the 'domain of' should be an integer
+            Expression::SATInt(_, _, _, (low, high)) => {
+                Some(Domain::int_ground(vec![Range::Bounded(*low, *high)]))
+            }
             Expression::PairwiseSum(_, a, b) => a
                 .domain_of()?
                 .resolve()?
@@ -1674,7 +1668,7 @@ impl Typeable for Expression {
             Expression::FlatWeightedSumGeq(_, _, _, _) => ReturnType::Bool,
             Expression::MinionPow(_, _, _, _) => ReturnType::Bool,
             Expression::ToInt(_, _) => ReturnType::Int,
-            Expression::SATInt(_, _) => ReturnType::Int,
+            Expression::SATInt(..) => ReturnType::Int,
             Expression::PairwiseSum(_, _, _) => ReturnType::Int,
             Expression::PairwiseProduct(_, _, _) => ReturnType::Int,
             Expression::Defined(_, function) => {

@@ -1,4 +1,4 @@
-use conjure_cp::ast::SymbolTable;
+use conjure_cp::ast::{SATIntEncoding, SymbolTable};
 use conjure_cp::ast::{Expression as Expr, GroundDomain};
 use conjure_cp::rule_engine::{
     ApplicationError, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
@@ -112,8 +112,8 @@ fn integer_decision_representation(expr: &Expr, symbols: &SymbolTable) -> Applic
         .iter()
         .fold((i32::MAX, i32::MIN), |(min_a, max_b), range| {
             (
-                min_a.min(*range.lower_bound().unwrap()),
-                max_b.max(*range.upper_bound().unwrap()),
+                min_a.min(*range.low().unwrap()),
+                max_b.max(*range.high().unwrap()),
             )
         });
 

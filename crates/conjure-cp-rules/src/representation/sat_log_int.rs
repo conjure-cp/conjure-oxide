@@ -49,8 +49,8 @@ impl Representation for SATLogInt {
             ranges
                 .iter()
                 .try_fold((i32::MAX, i32::MIN), |(min_a, max_b), range| {
-                    let lb = range.lower_bound()?;
-                    let ub = range.upper_bound()?;
+                    let lb = range.low()?;
+                    let ub = range.high()?;
                     Some((min_a.min(*lb), max_b.max(*ub)))
                 })?;
 
