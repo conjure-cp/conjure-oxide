@@ -31,7 +31,7 @@ fn rule_in(expr: &Expression, symbol: &SymbolTable) -> ApplicationResult {
                     Moo::new(Expr::AbstractComprehension(
                         Metadata::new(),
                         Moo::new(comprehension.with_return_value(
-                            expr1
+                            expr1,
                         )),
                     )),
                 )))
