@@ -1,5 +1,6 @@
 // https://conjure-cp.github.io/conjure-oxide/docs/conjure_core/representation/trait.Representation.html
 use conjure_cp::ast::GroundDomain;
+use conjure_cp::bug;
 use conjure_cp::{
     ast::{Atom, DeclarationPtr, Domain, Expression, Literal, Metadata, Name, SymbolTable},
     register_representation,
@@ -61,7 +62,7 @@ impl Representation for SATLogInt {
                 let max_possible = (1i64 << (bits - 1)) - 1;
                 (min as i64) >= min_possible && (max as i64) <= max_possible
             })
-            .unwrap();
+            .unwrap_or_else(|| bug!("Should never be reached: i32 integer should always be with storable with 32 bits.")); // safe unwrap as i32 fits in 32 bits
 
         Some(SATLogInt {
             src_var: name.clone(),

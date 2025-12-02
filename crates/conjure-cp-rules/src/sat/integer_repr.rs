@@ -23,8 +23,7 @@ fn int_domain_to_expr(subject: Expr, ranges: &Vec<Range<i32>>) -> Expr {
         match range {
             Range::Single(x) => output.push(essence_expr!(&value = &x)),
             Range::Bounded(x, y) => output.push(essence_expr!("&value >= &x /\\ &value <= &y")),
-            _ => bug!("Unbounded domains not supported for SAT"), // Range::UnboundedR(x) => output.push(essence_expr!(&value >= &x)),
-                                                                  // Range::UnboundedL(x) => output.push(essence_expr!(&value <= &x)),
+            _ => bug!("Unbounded domains not supported for SAT"),
         }
     }
 
