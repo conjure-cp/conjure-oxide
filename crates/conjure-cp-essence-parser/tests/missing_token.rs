@@ -55,7 +55,7 @@ such that
     assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
     let diag = &diagnostics[0];
 
-    check_diagnostic(diag, 1, 9, 1, 9, "Missing 'bool_expr'");
+    check_diagnostic(diag, 1, 9, 1, 9, "Missing 'atom'");
 }
 
 #[test]
@@ -99,10 +99,10 @@ such that 5 =
     check_diagnostic(
         diag,
         1,
-        13,
+        12,
         1,
         13,
-        "Missing right operand in 'comparison' expression",
+        "Unexpected '=' at the end of 'such that'",
     );
 }
 
@@ -118,9 +118,9 @@ such that x /\\
     check_diagnostic(
         diag,
         1,
-        14,
+        12,
         1,
         14,
-        "Missing right operand in 'and' expression",
+        "Unexpected '/\\' at the end of 'such that'",
     );
 }
