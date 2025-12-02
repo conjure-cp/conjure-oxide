@@ -1,12 +1,17 @@
 use conjure_cp::{
-    ast::{Atom, Domain, Expression as Expr, Metadata, Name, SubModel, SymbolTable, serde::HasId},
+    ast::{
+        Atom, Expression as Expr, GroundDomain, Metadata, Name, SubModel, SymbolTable, serde::HasId,
+    },
     bug,
     representation::Representation,
     rule_engine::{
         ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
         register_rule_set,
     },
-    solver::SolverFamily,
+    solver::{
+        SolverFamily,
+        adaptors::smt::{MatrixTheory, TheoryConfig},
+    },
 };
 use itertools::Itertools;
 use std::sync::Arc;
@@ -14,11 +19,15 @@ use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 use uniplate::Biplate;
 
-register_rule_set!(
-    "Representations",
-    ("Base"),
-    (SolverFamily::Sat, SolverFamily::Minion)
-);
+register_rule_set!("Representations", ("Base"), |f: &SolverFamily| matches!(
+    f,
+    SolverFamily::Sat
+        | SolverFamily::Minion
+        | SolverFamily::Smt(TheoryConfig {
+            matrices: MatrixTheory::Atomic,
+            ..
+        })
+));
 
 // special case rule to select representations for matrices in one go.
 //
@@ -38,18 +47,18 @@ fn select_representation_matrix(expr: &Expr, symbols: &SymbolTable) -> Applicati
             decl.as_var().map(|x| (n, id, x.clone()))
         })
         .filter(|(_, _, var)| {
-            let Domain::Matrix(valdom, indexdoms) = &var.domain else {
+            let Some((valdom, indexdoms)) = var.domain.as_matrix_ground() else {
                 return false;
             };
 
             // TODO: loosen these requirements once we are able to
-            if !matches!(valdom.as_ref(), Domain::Bool | Domain::Int(_)) {
+            if !matches!(valdom.as_ref(), GroundDomain::Bool | GroundDomain::Int(_)) {
                 return false;
             }
 
             if indexdoms
                 .iter()
-                .any(|x| !matches!(x, Domain::Bool | Domain::Int(_)))
+                .any(|x| !matches!(x.as_ref(), GroundDomain::Bool | GroundDomain::Int(_)))
             {
                 return false;
             }
@@ -193,14 +202,16 @@ fn needs_representation(name: &Name, symbols: &SymbolTable) -> bool {
 }
 
 /// Returns whether `domain` needs representing.
-fn domain_needs_representation(domain: &Domain) -> bool {
+fn domain_needs_representation(domain: &GroundDomain) -> bool {
     // very simple implementation for nows
     match domain {
-        Domain::Bool | Domain::Int(_) => false,
-        Domain::Matrix(_, _) => false, // we special case these elsewhere
-        Domain::Set(_, _) | Domain::Tuple(_) | Domain::Record(_) => true,
-        Domain::Reference(_) => unreachable!("domain should be resolved"),
-        Domain::Empty(_) => false, // _ => false,
+        GroundDomain::Bool | GroundDomain::Int(_) => false,
+        GroundDomain::Matrix(_, _) => false, // we special case these elsewhere
+        GroundDomain::Set(_, _)
+        | GroundDomain::Tuple(_)
+        | GroundDomain::Record(_)
+        | GroundDomain::Function(_, _, _) => true,
+        GroundDomain::Empty(_) => false,
     }
 }
 
@@ -218,16 +229,20 @@ fn get_or_create_representation(
 ) -> Option<Vec<Box<dyn Representation>>> {
     // TODO: pick representations recursively for nested abstract domains: e.g. sets in sets.
 
-    match symbols.resolve_domain(name).unwrap() {
-        Domain::Set(_, _) => None, // has no representations yet!
-        Domain::Tuple(elem_domains) => {
-            if elem_domains.iter().any(domain_needs_representation) {
+    let dom = symbols.resolve_domain(name).unwrap();
+    match dom.as_ref() {
+        GroundDomain::Set(_, _) => None, // has no representations yet!
+        GroundDomain::Tuple(elem_domains) => {
+            if elem_domains
+                .iter()
+                .any(|d| domain_needs_representation(d.as_ref()))
+            {
                 bug!("representing nested abstract domains is not implemented");
             }
 
             symbols.get_or_add_representation(name, &["tuple_to_atom"])
         }
-        Domain::Record(entries) => {
+        GroundDomain::Record(entries) => {
             if entries
                 .iter()
                 .any(|entry| domain_needs_representation(&entry.domain))

@@ -90,7 +90,7 @@ module.exports = grammar ({
       ))
     ),
 
-    range_list: $ => prec(2, commaSep1(choice($.int_range, $.integer))),
+    range_list: $ => prec(2, commaSep1(choice($.int_range, $.arithmetic_expr))),
 
     int_range: $ => seq(
       optional(field("lower", $.arithmetic_expr)), 
@@ -107,8 +107,8 @@ module.exports = grammar ({
 
     matrix_domain: $ => seq(
       "matrix",
-      "indexed",
-      "by",
+      optional("indexed"),
+      optional("by"),
       "[",
       field("index_domain_list", $.index_domain_list),
       "]",
@@ -166,7 +166,7 @@ module.exports = grammar ({
       field("domain", $.domain)
     ),
 
-    index_domain_list: $ => commaSep1(choice($.int_domain, $.bool_domain)),
+    index_domain_list: $ => commaSep1(choice($.domain)),
 
     //letting statements
     letting_statement: $ => seq(
@@ -233,7 +233,7 @@ module.exports = grammar ({
 
     comparison_expr: $ => prec(5, prec.left(seq(
       field("left", choice($.bool_expr, $.arithmetic_expr)), 
-      field("operator", choice("=", "!=", "<=", ">=", "<", ">")),
+      field("operator", choice("=", "!=", "<lex", "<=lex", ">lex", ">=lex", "<=", ">=", "<", ">")),
       field("right", choice($.bool_expr, $.arithmetic_expr))
     ))),
 

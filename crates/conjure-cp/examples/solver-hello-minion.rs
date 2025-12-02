@@ -6,7 +6,7 @@ use conjure_cp::defaults::DEFAULT_RULE_SETS;
 use conjure_cp::{
     ast::{Literal, Name},
     rule_engine::rewrite_naive,
-    solver::{adaptors::Minion, states::ExecutionSuccess},
+    solver::states::ExecutionSuccess,
 };
 use itertools::Itertools;
 use std::collections::HashMap;
@@ -102,7 +102,7 @@ pub fn main() {
     }));
 
     // Did the solver run successfully?
-    let solver: Solver<Minion, ExecutionSuccess> = match result {
+    let solver: Solver<ExecutionSuccess> = match result {
         Ok(s) => s,
         Err(e) => {
             panic!("Error! {e:?}");
