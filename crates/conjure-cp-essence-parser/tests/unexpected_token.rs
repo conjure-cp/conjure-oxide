@@ -135,3 +135,45 @@ such that a = allDiff([1,2,4,1])8";
         "Unexpected '8' at the end of 'such that'",
     );
 }
+
+#[test]
+fn unexpected_colon_used_as_identifier() {
+    let source = "find :,b,c: int(1..3)";
+    // using : instead of identifier
+    let diagnostics = detect_syntactic_errors(source);
+
+    // Should be exactly one diagnostic
+    assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
+
+    let diag = &diagnostics[0];
+
+    check_diagnostic(
+        diag,
+        0,
+        5,
+        0,
+        6,
+        "Unexpected ':' inside 'variable_list'",
+    );
+}
+
+#[test]
+fn unexpected_keyword() {
+    let source = "find a,b,c: int(1..3)\nprint a";
+    // trying to use print as a keyword
+    let diagnostics = detect_syntactic_errors(source);
+
+    // Should be exactly one diagnostic
+    assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
+
+    let diag = &diagnostics[0];
+
+    check_diagnostic(
+        diag,
+        1,
+        0,
+        1,
+        5,
+        "Unexpected keyword 'print'",
+    );
+}

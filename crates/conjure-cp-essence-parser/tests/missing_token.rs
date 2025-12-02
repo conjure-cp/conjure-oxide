@@ -124,3 +124,35 @@ such that x /\\
         "Missing right operand in 'and' expression",
     );
 }
+
+#[test]
+fn missing_start_of_domain() {
+    let source = "find x: int(..3)";
+    let diagnostics = detect_syntactic_errors(source);
+    assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
+    let diag = &diagnostics[0];
+    check_diagnostic(
+        diag,
+        0,
+        12,
+        0,
+        12,
+        "Missing start value in 'domain'",
+    );
+}
+
+#[test]
+fn missing_end_of_domain() {
+    let source = "find x: int(1..)";
+    let diagnostics = detect_syntactic_errors(source);
+    assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
+    let diag = &diagnostics[0];
+    check_diagnostic(
+        diag,
+        0,
+        15,
+        0,
+        15,
+        "Missing end value in 'domain'",
+    );
+}

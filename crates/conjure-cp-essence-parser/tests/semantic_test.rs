@@ -61,3 +61,27 @@ fn range_points_to_error_location() {
         "Semantic Error: Undefined variable: 'undefined_var'",
     );
 }
+
+// not enforced in conjure
+#[test]
+fn domain_start_greater_than_end() {
+    let source = "find x: int(10..1)";
+    let diagnostics = detect_semantic_errors(source);
+
+    assert_eq!(
+        diagnostics.len(),
+        1,
+        "Expected exactly one diagnostic for undefined variable"
+    );
+
+    let diag = &diagnostics[0];
+
+    check_diagnostic(
+        diag,
+        0,
+        12,
+        0,
+        17,
+        "Semantic Error: Start value greater than end value in 'domain'",
+    );
+}
