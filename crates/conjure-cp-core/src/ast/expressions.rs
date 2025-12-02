@@ -2,7 +2,6 @@ use std::collections::{HashSet, VecDeque};
 use std::fmt::{Display, Formatter};
 use tracing::trace;
 
-use crate::ast::Moo;
 use crate::ast::Name;
 use crate::ast::ReturnType;
 use crate::ast::SetAttr;
@@ -10,7 +9,8 @@ use crate::ast::literals::AbstractLiteral;
 use crate::ast::literals::Literal;
 use crate::ast::pretty::{pretty_expressions_as_top_level, pretty_vec};
 use crate::ast::{Atom, DomainPtr};
-use crate::ast::{GroundDomain, Metadata};
+use crate::ast::{GroundDomain, Metadata, UnresolvedDomain};
+use crate::ast::{IntVal, Moo};
 use crate::bug;
 use conjure_cp_enum_compatibility_macro::document_compatibility;
 use itertools::Itertools;
@@ -250,6 +250,14 @@ pub enum Expression {
     #[compatible(JsonInput, SMT)]
     Neg(Metadata, Moo<Expression>),
 
+    /// Set of domain values function is defined for
+    #[compatible(JsonInput)]
+    Defined(Metadata, Moo<Expression>),
+
+    /// Set of codomain values function is defined for
+    #[compatible(JsonInput)]
+    Range(Metadata, Moo<Expression>),
+
     /// Unsafe power`x**y` (possibly undefined)
     ///
     /// Defined when (X!=0 \\/ Y!=0) /\ Y>=0
@@ -258,6 +266,11 @@ pub enum Expression {
 
     /// `UnsafePow` after preventing undefinedness
     SafePow(Metadata, Moo<Expression>, Moo<Expression>),
+
+    /// Flatten matrix operator
+    /// `flatten(M)` or `flatten(n, M)`
+    /// where M is a matrix and n is an optional integer argument indicating depth of flattening
+    Flatten(Metadata, Option<Moo<Expression>>, Moo<Expression>),
 
     /// `allDiff(<vec_expr>)`
     #[compatible(JsonInput)]
@@ -496,6 +509,48 @@ pub enum Expression {
     /// This is for compatibility with backends that do not support multiplication over vectors.
     #[compatible(SMT)]
     PairwiseProduct(Metadata, Moo<Expression>, Moo<Expression>),
+
+    #[compatible(JsonInput)]
+    Image(Metadata, Moo<Expression>, Moo<Expression>),
+
+    #[compatible(JsonInput)]
+    ImageSet(Metadata, Moo<Expression>, Moo<Expression>),
+
+    #[compatible(JsonInput)]
+    PreImage(Metadata, Moo<Expression>, Moo<Expression>),
+
+    #[compatible(JsonInput)]
+    Inverse(Metadata, Moo<Expression>, Moo<Expression>),
+
+    #[compatible(JsonInput)]
+    Restrict(Metadata, Moo<Expression>, Moo<Expression>),
+
+    /// Lexicographical < between two matrices.
+    ///
+    /// A <lex B iff: A[i] < B[i] for some i /\ (A[j] > B[j] for some j -> i < j)
+    /// I.e. A must be less than B at some index i, and if it is greater than B at another index j,
+    /// then j comes after i.
+    /// I.e. A must be greater than B at the first index where they differ.
+    ///
+    /// E.g. [1, 1] <lex [2, 1] and [1, 1] <lex [1, 2]
+    LexLt(Metadata, Moo<Expression>, Moo<Expression>),
+
+    /// Lexicographical <= between two matrices
+    LexLeq(Metadata, Moo<Expression>, Moo<Expression>),
+
+    /// Lexicographical > between two matrices
+    /// This is a parser-level construct, and is immediately normalised to LexLt(b, a)
+    LexGt(Metadata, Moo<Expression>, Moo<Expression>),
+
+    /// Lexicographical >= between two matrices
+    /// This is a parser-level construct, and is immediately normalised to LexLeq(b, a)
+    LexGeq(Metadata, Moo<Expression>, Moo<Expression>),
+
+    /// Low-level minion constraint. See Expression::LexLt
+    FlatLexLt(Metadata, Vec<Atom>, Vec<Atom>),
+
+    /// Low-level minion constraint. See Expression::LexLeq
+    FlatLexLeq(Metadata, Vec<Atom>, Vec<Atom>),
 }
 
 // for the given matrix literal, return a bounded domain from the min to max of applying op to each
@@ -600,11 +655,11 @@ impl Expression {
         //println!("domain_of {self}");
         let ret = match self {
             Expression::Union(_, a, b) => Some(Domain::set(
-                SetAttr::default(),
+                SetAttr::<IntVal>::default(),
                 a.domain_of()?.union(&b.domain_of()?).ok()?,
             )),
             Expression::Intersect(_, a, b) => Some(Domain::set(
-                SetAttr::default(),
+                SetAttr::<IntVal>::default(),
                 a.domain_of()?.intersect(&b.domain_of()?).ok()?,
             )),
             Expression::In(_, _, _) => Some(Domain::bool()),
@@ -778,6 +833,27 @@ impl Expression {
             Expression::MinionDivEqUndefZero(_, _, _, _) => Some(Domain::bool()),
             Expression::MinionModuloEqUndefZero(_, _, _, _) => Some(Domain::bool()),
             Expression::FlatIneq(_, _, _, _) => Some(Domain::bool()),
+            Expression::Flatten(_, n, m) => {
+                if let Some(expr) = n {
+                    if expr.return_type() == ReturnType::Int {
+                        // TODO: handle flatten with depth argument
+                        return None;
+                    }
+                } else {
+                    let domain = m.domain_of()?;
+                    let mut total_size = 1;
+                    let index_domains: Vec<Domain> = Vec::new();
+
+                    // calculate total flattened size
+                    for i in &index_domains {
+                        total_size *= i.length().ok()?;
+                    }
+                    let new_index_domain =
+                        Domain::int(vec![Range::Bounded(1, total_size.try_into().unwrap())]);
+                    return Some(Domain::matrix(domain, vec![new_index_domain]));
+                }
+                None
+            }
             Expression::AllDiff(_, _) => Some(Domain::bool()),
             Expression::FlatWatchedLiteral(_, _, _) => Some(Domain::bool()),
             Expression::MinionReify(_, _, _) => Some(Domain::bool()),
@@ -842,6 +918,47 @@ impl Expression {
                 .apply_i32(|a, b| Some(a * b), b.domain_of()?.resolve()?.as_ref())
                 .map(DomainPtr::from)
                 .ok(),
+            Expression::Defined(_, function) => get_function_domain(function),
+            Expression::Range(_, function) => get_function_codomain(function),
+            Expression::Image(_, function, _) => get_function_codomain(function),
+            Expression::ImageSet(_, function, _) => get_function_codomain(function),
+            Expression::PreImage(_, function, _) => get_function_domain(function),
+            Expression::Restrict(_, function, new_domain) => {
+                let function_domain = function.domain_of()?;
+                match function_domain.resolve().as_ref() {
+                    Some(d) => {
+                        match d.as_ref() {
+                            GroundDomain::Function(attrs, _, codomain) => Some(Domain::function(
+                                attrs.clone(),
+                                new_domain.domain_of()?,
+                                codomain.clone().into(),
+                            )),
+                            // Not defined for anything other than a function
+                            _ => None,
+                        }
+                    }
+                    None => {
+                        match function_domain.as_unresolved()? {
+                            UnresolvedDomain::Function(attrs, _, codomain) => {
+                                Some(Domain::function(
+                                    attrs.clone(),
+                                    new_domain.domain_of()?,
+                                    codomain.clone(),
+                                ))
+                            }
+                            // Not defined for anything other than a function
+                            _ => None,
+                        }
+                    }
+                }
+            }
+            Expression::Inverse(..) => Some(Domain::bool()),
+            Expression::LexLt(..) => Some(Domain::bool()),
+            Expression::LexLeq(..) => Some(Domain::bool()),
+            Expression::LexGt(..) => Some(Domain::bool()),
+            Expression::LexGeq(..) => Some(Domain::bool()),
+            Expression::FlatLexLt(..) => Some(Domain::bool()),
+            Expression::FlatLexLeq(..) => Some(Domain::bool()),
         };
         if let Some(dom) = &ret
             && let Some(ranges) = dom.as_int_ground()
@@ -1032,6 +1149,46 @@ impl Expression {
     }
 }
 
+pub fn get_function_domain(function: &Moo<Expression>) -> Option<DomainPtr> {
+    let function_domain = function.domain_of()?;
+    match function_domain.resolve().as_ref() {
+        Some(d) => {
+            match d.as_ref() {
+                GroundDomain::Function(_, domain, _) => Some(domain.clone().into()),
+                // Not defined for anything other than a function
+                _ => None,
+            }
+        }
+        None => {
+            match function_domain.as_unresolved()? {
+                UnresolvedDomain::Function(_, domain, _) => Some(domain.clone()),
+                // Not defined for anything other than a function
+                _ => None,
+            }
+        }
+    }
+}
+
+pub fn get_function_codomain(function: &Moo<Expression>) -> Option<DomainPtr> {
+    let function_domain = function.domain_of()?;
+    match function_domain.resolve().as_ref() {
+        Some(d) => {
+            match d.as_ref() {
+                GroundDomain::Function(_, _, codomain) => Some(codomain.clone().into()),
+                // Not defined for anything other than a function
+                _ => None,
+            }
+        }
+        None => {
+            match function_domain.as_unresolved()? {
+                UnresolvedDomain::Function(_, _, codomain) => Some(codomain.clone()),
+                // Not defined for anything other than a function
+                _ => None,
+            }
+        }
+    }
+}
+
 impl TryFrom<&Expression> for i32 {
     type Error = ();
 
@@ -1074,6 +1231,12 @@ impl From<bool> for Expression {
 impl From<Atom> for Expression {
     fn from(value: Atom) -> Self {
         Expression::Atomic(Metadata::new(), value)
+    }
+}
+
+impl From<Literal> for Expression {
+    fn from(value: Literal) -> Self {
+        Expression::Atomic(Metadata::new(), value.into())
     }
 }
 
@@ -1249,6 +1412,13 @@ impl Display for Expression {
                 box2.clone(),
                 box3.clone()
             ),
+            Expression::Flatten(_, n, m) => {
+                if let Some(n) = n {
+                    write!(f, "flatten({n}, {m})")
+                } else {
+                    write!(f, "flatten({m})")
+                }
+            }
             Expression::AllDiff(_, e) => {
                 write!(f, "allDiff({e})")
             }
@@ -1371,6 +1541,25 @@ impl Display for Expression {
 
             Expression::PairwiseSum(_, a, b) => write!(f, "PairwiseSum({a}, {b})"),
             Expression::PairwiseProduct(_, a, b) => write!(f, "PairwiseProduct({a}, {b})"),
+
+            Expression::Defined(_, function) => write!(f, "defined({function})"),
+            Expression::Range(_, function) => write!(f, "range({function})"),
+            Expression::Image(_, function, elems) => write!(f, "image({function},{elems})"),
+            Expression::ImageSet(_, function, elems) => write!(f, "imageSet({function},{elems})"),
+            Expression::PreImage(_, function, elems) => write!(f, "preImage({function},{elems})"),
+            Expression::Inverse(_, a, b) => write!(f, "inverse({a},{b})"),
+            Expression::Restrict(_, function, domain) => write!(f, "restrict({function},{domain})"),
+
+            Expression::LexLt(_, a, b) => write!(f, "({a} <lex {b})"),
+            Expression::LexLeq(_, a, b) => write!(f, "({a} <=lex {b})"),
+            Expression::LexGt(_, a, b) => write!(f, "({a} >lex {b})"),
+            Expression::LexGeq(_, a, b) => write!(f, "({a} >=lex {b})"),
+            Expression::FlatLexLt(_, a, b) => {
+                write!(f, "FlatLexLt({}, {})", pretty_vec(a), pretty_vec(b))
+            }
+            Expression::FlatLexLeq(_, a, b) => {
+                write!(f, "FlatLexLeq({}, {})", pretty_vec(a), pretty_vec(b))
+            }
         }
     }
 }
@@ -1445,6 +1634,22 @@ impl Typeable for Expression {
             Expression::FlatSumLeq(_, _, _) => ReturnType::Bool,
             Expression::MinionDivEqUndefZero(_, _, _, _) => ReturnType::Bool,
             Expression::FlatIneq(_, _, _, _) => ReturnType::Bool,
+            Expression::Flatten(_, _, matrix) => {
+                let matrix_type = matrix.return_type();
+                match matrix_type {
+                    ReturnType::Matrix(_) => {
+                        // unwrap until we get to innermost element
+                        let mut elem_type = matrix_type;
+                        while let ReturnType::Matrix(new_elem_type) = &elem_type {
+                            elem_type = *new_elem_type.clone();
+                        }
+                        ReturnType::Matrix(Box::new(elem_type))
+                    }
+                    _ => bug!(
+                        "Invalid indexing operation: expected the operand to be a collection, got {self}: {matrix_type}"
+                    ),
+                }
+            }
             Expression::AllDiff(_, _) => ReturnType::Bool,
             Expression::Bubble(_, inner, _) => inner.return_type(),
             Expression::FlatWatchedLiteral(_, _, _) => ReturnType::Bool,
@@ -1471,6 +1676,69 @@ impl Typeable for Expression {
             Expression::SATInt(_, _) => ReturnType::Int,
             Expression::PairwiseSum(_, _, _) => ReturnType::Int,
             Expression::PairwiseProduct(_, _, _) => ReturnType::Int,
+            Expression::Defined(_, function) => {
+                let subject = function.return_type();
+                match subject {
+                    ReturnType::Function(domain, _) => *domain,
+                    _ => bug!(
+                        "Invalid defined operation: expected the operand to be a function, got {self}: {subject}"
+                    ),
+                }
+            }
+            Expression::Range(_, function) => {
+                let subject = function.return_type();
+                match subject {
+                    ReturnType::Function(_, codomain) => *codomain,
+                    _ => bug!(
+                        "Invalid range operation: expected the operand to be a function, got {self}: {subject}"
+                    ),
+                }
+            }
+            Expression::Image(_, function, _) => {
+                let subject = function.return_type();
+                match subject {
+                    ReturnType::Function(_, codomain) => *codomain,
+                    _ => bug!(
+                        "Invalid image operation: expected the operand to be a function, got {self}: {subject}"
+                    ),
+                }
+            }
+            Expression::ImageSet(_, function, _) => {
+                let subject = function.return_type();
+                match subject {
+                    ReturnType::Function(_, codomain) => *codomain,
+                    _ => bug!(
+                        "Invalid imageSet operation: expected the operand to be a function, got {self}: {subject}"
+                    ),
+                }
+            }
+            Expression::PreImage(_, function, _) => {
+                let subject = function.return_type();
+                match subject {
+                    ReturnType::Function(domain, _) => *domain,
+                    _ => bug!(
+                        "Invalid preImage operation: expected the operand to be a function, got {self}: {subject}"
+                    ),
+                }
+            }
+            Expression::Restrict(_, function, new_domain) => {
+                let subject = function.return_type();
+                match subject {
+                    ReturnType::Function(_, codomain) => {
+                        ReturnType::Function(Box::new(new_domain.return_type()), codomain)
+                    }
+                    _ => bug!(
+                        "Invalid preImage operation: expected the operand to be a function, got {self}: {subject}"
+                    ),
+                }
+            }
+            Expression::Inverse(..) => ReturnType::Bool,
+            Expression::LexLt(..) => ReturnType::Bool,
+            Expression::LexGt(..) => ReturnType::Bool,
+            Expression::LexLeq(..) => ReturnType::Bool,
+            Expression::LexGeq(..) => ReturnType::Bool,
+            Expression::FlatLexLt(..) => ReturnType::Bool,
+            Expression::FlatLexLeq(..) => ReturnType::Bool,
         }
     }
 }

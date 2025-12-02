@@ -90,7 +90,7 @@ module.exports = grammar ({
       ))
     ),
 
-    range_list: $ => prec(2, commaSep1(choice($.int_range, $.integer))),
+    range_list: $ => prec(2, commaSep1(choice($.int_range, $.arithmetic_expr))),
 
     int_range: $ => seq(
       optional(field("lower", $.arithmetic_expr)), 
@@ -233,7 +233,7 @@ module.exports = grammar ({
 
     comparison_expr: $ => prec(5, prec.left(seq(
       field("left", choice($.bool_expr, $.arithmetic_expr)), 
-      field("operator", choice("=", "!=", "<=", ">=", "<", ">")),
+      field("operator", choice("=", "!=", "<lex", "<=lex", ">lex", ">=lex", "<=", ">=", "<", ">")),
       field("right", choice($.bool_expr, $.arithmetic_expr))
     ))),
 
