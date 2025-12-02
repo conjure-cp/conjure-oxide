@@ -48,8 +48,8 @@ pub struct DomainGenerator {
 #[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Hash)]
 pub struct ExpressionGenerator {
     #[serde_as(as = "DeclarationPtrFull")]
-    decl: DeclarationPtr,
-    expression: Expression,
+    pub decl: DeclarationPtr,
+    pub expression: Expression,
 }
 
 impl AbstractComprehension {
@@ -86,7 +86,7 @@ impl AbstractComprehensionBuilder {
     pub fn new(symbols: Rc<RefCell<SymbolTable>>) -> Self {
         Self {
             qualifiers: vec![],
-            symbols: symbols,
+            symbols,
         }
     }
 
@@ -139,7 +139,7 @@ impl AbstractComprehensionBuilder {
         self.qualifiers
             .push(Qualifier::ComprehensionLetting(ComprehensionLetting {
                 decl: letting_decl.clone(),
-                expression: expression,
+                expression,
             }));
 
         letting_decl
