@@ -1,0 +1,121 @@
+Model before rewriting:
+
+find x: bool
+
+such that
+
+(x = or([given i: int(0..5)
+
+such that
+
+(product([i,i;int(1..)]) = i)
+ | i: int(0..5),]))
+
+--
+
+(x = or([given i: int(0..5)
+
+such that
+
+(product([i,i;int(1..)]) = i)
+ | i: int(0..5),])), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify(or([given i: int(0..5)
+
+such that
+
+(product([i,i;int(1..)]) = i)
+ | i: int(0..5),]), x) 
+
+--
+
+Model before rewriting:
+
+find i: int(0..5)
+
+such that
+
+(false != (product([i,i;int(1..)]) = i))
+
+--
+
+(false != (product([i,i;int(1..)]) = i)), 
+   ~~> flatten_generic ([("Minion", 4200)]) 
+(false != __0) 
+new variables:
+  find __0: bool
+new constraints:
+  __0 =aux (product([i,i;int(1..)]) = i)
+--
+
+__0 =aux (product([i,i;int(1..)]) = i), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify((product([i,i;int(1..)]) = i), __0) 
+
+--
+
+(product([i,i;int(1..)]) = i), 
+   ~~> introduce_producteq ([("Minion", 4200)]) 
+FlatProductEq(i,i,i) 
+
+--
+
+Final model:
+
+find i: int(0..5)
+find __0: bool
+
+such that
+
+(false != __0),
+Reify(FlatProductEq(i,i,i), __0)
+
+Model before rewriting:
+
+given i: int(0..5)
+
+such that
+
+(product([i,i;int(1..)]) = i)
+
+--
+
+(product([i,i;int(1..)]) = i), 
+   ~~> introduce_producteq ([("Minion", 4200)]) 
+FlatProductEq(i,i,i) 
+
+--
+
+Final model:
+
+given i: int(0..5)
+
+such that
+
+FlatProductEq(i,i,i)
+
+or([given i: int(0..5)
+
+such that
+
+(product([i,i;int(1..)]) = i)
+ | i: int(0..5),__0: bool,]), 
+   ~~> expand_comprehension_ac ([("Better_AC_Comprehension_Expansion", 2001)]) 
+or([FlatProductEq(0,0,0),FlatProductEq(1,1,1);int(1..)]) 
+
+--
+
+Reify(or([FlatProductEq(0,0,0),FlatProductEq(1,1,1);int(1..)]), x), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+Reify(true, x) 
+
+--
+
+Final model:
+
+find x: bool
+
+such that
+
+Reify(true, x)
+

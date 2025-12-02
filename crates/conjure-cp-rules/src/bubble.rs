@@ -25,7 +25,7 @@ register_rule_set!("Bubble", ("Base"));
 #[register_rule(("Bubble", 8900))]
 fn expand_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
     match expr {
-        Expression::Bubble(_, a, b) if a.return_type() == Some(ReturnType::Bool) => {
+        Expression::Bubble(_, a, b) if a.return_type() == ReturnType::Bool => {
             let a = Moo::unwrap_or_clone(Moo::clone(a));
             let b = Moo::unwrap_or_clone(Moo::clone(b));
             Ok(Reduction::pure(Expression::And(
@@ -47,7 +47,7 @@ fn bubble_up(expr: &Expression, syms: &SymbolTable) -> ApplicationResult {
     // do not put root inside a bubble
     //
     // also do not bubble bubbles inside bubbles, as this does nothing productive it just shuffles
-    // the conditions around, shuffles them back, then gets stuck in a loop doing this adfinitum
+    // the conditions around, shuffles them back, then gets stuck in a loop doing this ad infinitum
     if matches!(expr, Expression::Root(_, _) | Expression::Bubble(_, _, _)) {
         return Err(RuleNotApplicable);
     }
@@ -68,7 +68,7 @@ fn bubble_up(expr: &Expression, syms: &SymbolTable) -> ApplicationResult {
     let mut bubbled_conditions = vec![];
     for e in sub.iter_mut() {
         if let Expression::Bubble(_, a, b) = e
-            && a.return_type() != Some(ReturnType::Bool)
+            && a.return_type() != ReturnType::Bool
         {
             let a = Moo::unwrap_or_clone(Moo::clone(a));
             let b = Moo::unwrap_or_clone(Moo::clone(b));
