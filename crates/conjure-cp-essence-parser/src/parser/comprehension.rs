@@ -32,7 +32,7 @@ pub fn parse_comprehension(
     // set return expression node and parse generators/conditions
     for child in named_children(node) {
         match child.kind() {
-            "arithmetic_expr" | "bool_expr" | "comparison_expr" => {
+            "arithmetic_expr" | "bool_expr" | "comparison_expr" | "atom" => {
                 // Store the return expression node to parse later
                 return_expr_node = Some(child);
             }
