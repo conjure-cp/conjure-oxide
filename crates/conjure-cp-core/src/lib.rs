@@ -28,17 +28,28 @@ mod utils;
 /// use conjure_cp_core::{domain_int,range,ast::Domain};
 ///
 /// let a = 2*10;
-/// assert_eq!(domain_int!(1..5,a+2,), Domain::Int(vec![range!(1..5),range!(a+2)]));
-/// assert_eq!(domain_int!(), Domain::Int(vec![]));
+/// assert_eq!(domain_int!(1..5,a+2,), Domain::int(vec![range!(1..5),range!(a+2)]));
+/// assert_eq!(domain_int!(), Domain::int_ground(vec![]))
 /// ```
 #[macro_export]
 macro_rules! domain_int {
-    () => {$crate::ast::Domain::Int(vec![])};
+    () => {$crate::ast::Domain::int_ground(vec![])};
 
     // when parsing expressions, rust groups 1..2 into a single token tree, (1..2)
     // however, we want it to be three seperate token trees [1,..,2] for parsing.
     // use defile to turn it back into 3 token trees
-    ($($e:expr),+ $(,)?) => {::defile::defile! { $crate::ast::Domain::Int(vec![$($crate::range!(@$e)),+]) } };
+    ($($e:expr),+ $(,)?) => {::defile::defile! { $crate::ast::Domain::int(vec![$($crate::range!(@$e)),+]) } };
+}
+
+/// Creates a [`GroundDomain::Int`]
+#[macro_export]
+macro_rules! domain_int_ground {
+    () => {$crate::ast::GroundDomain::Int(vec![]).into()};
+
+    // when parsing expressions, rust groups 1..2 into a single token tree, (1..2)
+    // however, we want it to be three seperate token trees [1,..,2] for parsing.
+    // use defile to turn it back into 3 token trees
+    ($($e:expr),+ $(,)?) => {::defile::defile! { $crate::ast::GroundDomain::Int(vec![$($crate::range!(@$e)),+]).into() } };
 }
 
 /// Creates a [`Range`](ast::Range).
