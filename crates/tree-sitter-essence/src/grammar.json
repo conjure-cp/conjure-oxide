@@ -1965,7 +1965,7 @@
                         },
                         {
                           "type": "SYMBOL",
-                          "name": "tuple_matrix_record_index_or_slice"
+                          "name": "index_or_slice"
                         }
                       ]
                     }
@@ -2129,7 +2129,7 @@
                         },
                         {
                           "type": "SYMBOL",
-                          "name": "tuple_matrix_record_index_or_slice"
+                          "name": "index_or_slice"
                         }
                       ]
                     }
@@ -2540,10 +2540,10 @@
           },
           {
             "type": "FIELD",
-            "name": "tuple_matrix_record_index_or_slice",
+            "name": "index_or_slice",
             "content": {
               "type": "SYMBOL",
-              "name": "tuple_matrix_record_index_or_slice"
+              "name": "index_or_slice"
             }
           },
           {
@@ -2560,6 +2560,14 @@
             "content": {
               "type": "SYMBOL",
               "name": "set_operation"
+            }
+          },
+          {
+            "type": "FIELD",
+            "name": "flatten",
+            "content": {
+              "type": "SYMBOL",
+              "name": "flatten"
             }
           }
         ]
@@ -3093,12 +3101,12 @@
         }
       ]
     },
-    "tuple_matrix_record_index_or_slice": {
+    "index_or_slice": {
       "type": "SEQ",
       "members": [
         {
           "type": "FIELD",
-          "name": "tuple_or_matrix",
+          "name": "collection",
           "content": {
             "type": "CHOICE",
             "members": [
@@ -3113,6 +3121,14 @@
               {
                 "type": "SYMBOL",
                 "name": "matrix"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "record"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "flatten"
               }
             ]
           }
@@ -3176,6 +3192,56 @@
           }
         ]
       }
+    },
+    "flatten": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "flatten"
+        },
+        {
+          "type": "STRING",
+          "value": "("
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "FIELD",
+              "name": "depth",
+              "content": {
+                "type": "SEQ",
+                "members": [
+                  {
+                    "type": "SYMBOL",
+                    "name": "integer"
+                  },
+                  {
+                    "type": "STRING",
+                    "value": ","
+                  }
+                ]
+              }
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
+        },
+        {
+          "type": "FIELD",
+          "name": "expression",
+          "content": {
+            "type": "SYMBOL",
+            "name": "atom"
+          }
+        },
+        {
+          "type": "STRING",
+          "value": ")"
+        }
+      ]
     },
     "indices": {
       "type": "SEQ",
