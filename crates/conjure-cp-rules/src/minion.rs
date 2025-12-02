@@ -14,8 +14,8 @@ use conjure_cp::ast::categories::Category;
 use conjure_cp::{
     ast::Metadata,
     ast::{
-        Atom, Domain, Expression as Expr, Literal as Lit, Range, Reference, ReturnType,
-        SymbolTable, Typeable,
+        Atom, Expression as Expr, Literal as Lit, Range, Reference, ReturnType, SymbolTable,
+        Typeable,
     },
     into_matrix_expr, matrix_expr,
     rule_engine::{
@@ -29,7 +29,9 @@ use uniplate::Uniplate;
 
 use ApplicationError::RuleNotApplicable;
 
-register_rule_set!("Minion", ("Base"), (SolverFamily::Minion));
+register_rule_set!("Minion", ("Base"), |f: &SolverFamily| {
+    matches!(f, SolverFamily::Minion)
+});
 
 #[register_rule(("Minion", 4200))]
 fn introduce_producteq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
@@ -827,7 +829,7 @@ fn introduce_wininterval_set_from_indomain(expr: &Expr, _: &SymbolTable) -> Appl
         return Err(RuleNotApplicable);
     };
 
-    let Domain::Int(ranges) = domain else {
+    let Some(ranges) = domain.as_int_ground() else {
         return Err(RuleNotApplicable);
     };
 
@@ -843,7 +845,7 @@ fn introduce_wininterval_set_from_indomain(expr: &Expr, _: &SymbolTable) -> Appl
                 out_ranges.push(*x);
                 out_ranges.push(*y);
             }
-            Range::UnboundedR(_) | Range::UnboundedL(_) => {
+            Range::UnboundedR(_) | Range::UnboundedL(_) | Range::Unbounded => {
                 return Err(RuleNotApplicable);
             }
         }
@@ -1342,14 +1344,10 @@ fn y_plus_k_geq_x_to_ineq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
 #[register_rule(("Minion", 4100))]
 fn not_literal_to_wliteral(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    use Domain::Bool;
     match expr {
         Expr::Not(m, expr) => {
             if let Expr::Atomic(_, Atom::Reference(reference)) = (**expr).clone()
-                && reference
-                    .ptr()
-                    .domain()
-                    .is_some_and(|x| matches!(&x as &Domain, Bool))
+                && reference.ptr().domain().is_some_and(|d| d.is_bool())
             {
                 return Ok(Reduction::pure(Expr::FlatWatchedLiteral(
                     m.clone_dirty(),
@@ -1418,7 +1416,7 @@ fn bool_eq_to_reify(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
     // e does not have to be valid minion constraint yet, as long as we know it can turn into one
     // (i.e. it is boolean).
-    let Some(ReturnType::Bool) = e.as_ref().return_type() else {
+    if e.as_ref().return_type() != ReturnType::Bool {
         return Err(RuleNotApplicable);
     };
 

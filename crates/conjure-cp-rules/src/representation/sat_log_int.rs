@@ -1,4 +1,6 @@
 // https://conjure-cp.github.io/conjure-oxide/docs/conjure_core/representation/trait.Representation.html
+use conjure_cp::ast::GroundDomain;
+use conjure_cp::bug;
 use conjure_cp::{
     ast::{Atom, DeclarationPtr, Domain, Expression, Literal, Metadata, Name, SymbolTable},
     register_representation,
@@ -35,11 +37,11 @@ impl Representation for SATLogInt {
     fn init(name: &Name, symtab: &SymbolTable) -> Option<Self> {
         let domain = symtab.resolve_domain(name)?;
 
-        if !domain.is_finite().expect("should be finite?") {
+        if !domain.is_finite() {
             return None;
         }
 
-        let Domain::Int(ranges) = domain else {
+        let GroundDomain::Int(ranges) = domain.as_ref() else {
             return None;
         };
 
@@ -48,8 +50,8 @@ impl Representation for SATLogInt {
             ranges
                 .iter()
                 .try_fold((i32::MAX, i32::MIN), |(min_a, max_b), range| {
-                    let lb = range.lower_bound()?;
-                    let ub = range.upper_bound()?;
+                    let lb = range.low()?;
+                    let ub = range.high()?;
                     Some((min_a.min(*lb), max_b.max(*ub)))
                 })?;
 
@@ -60,7 +62,7 @@ impl Representation for SATLogInt {
                 let max_possible = (1i64 << (bits - 1)) - 1;
                 (min as i64) >= min_possible && (max as i64) <= max_possible
             })
-            .unwrap();
+            .unwrap_or_else(|| bug!("Should never be reached: i32 integer should always be with storable with 32 bits.")); // safe unwrap as i32 fits in 32 bits
 
         Some(SATLogInt {
             src_var: name.clone(),
@@ -150,7 +152,7 @@ impl Representation for SATLogInt {
     fn declaration_down(&self) -> Result<Vec<DeclarationPtr>, ApplicationError> {
         Ok(self
             .names()
-            .map(|name| DeclarationPtr::new_var(name, Domain::Bool))
+            .map(|name| DeclarationPtr::new_var(name, Domain::bool()))
             .collect())
     }
 

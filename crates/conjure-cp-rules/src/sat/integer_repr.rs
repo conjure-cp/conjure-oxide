@@ -1,4 +1,4 @@
-use conjure_cp::ast::Expression as Expr;
+use conjure_cp::ast::{Expression as Expr, GroundDomain};
 use conjure_cp::ast::{SATIntEncoding, SymbolTable};
 use conjure_cp::rule_engine::{
     ApplicationError, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
@@ -6,7 +6,7 @@ use conjure_cp::rule_engine::{
 };
 
 use conjure_cp::ast::Metadata;
-use conjure_cp::ast::{Atom, Domain, Literal, Moo, Range};
+use conjure_cp::ast::{Atom, Literal, Moo, Range};
 use conjure_cp::into_matrix_expr;
 
 use conjure_cp::{bug, essence_expr};
@@ -23,8 +23,7 @@ fn int_domain_to_expr(subject: Expr, ranges: &Vec<Range<i32>>) -> Expr {
         match range {
             Range::Single(x) => output.push(essence_expr!(&value = &x)),
             Range::Bounded(x, y) => output.push(essence_expr!("&value >= &x /\\ &value <= &y")),
-            _ => bug!("Unbounded domains not supported for SAT"), // Range::UnboundedR(x) => output.push(essence_expr!(&value >= &x)),
-                                                                  // Range::UnboundedL(x) => output.push(essence_expr!(&value <= &x)),
+            _ => bug!("Unbounded domains not supported for SAT"),
         }
     }
 
@@ -103,7 +102,8 @@ fn integer_decision_representation(expr: &Expr, symbols: &SymbolTable) -> Applic
     //     .ok_or(RuleNotApplicable)?;
 
     // thing we are representing must be an integer
-    let Domain::Int(ranges) = name.domain().unwrap() else {
+    let dom = name.resolved_domain().ok_or(RuleNotApplicable)?;
+    let GroundDomain::Int(ranges) = dom.as_ref() else {
         return Err(RuleNotApplicable);
     };
 
@@ -111,8 +111,8 @@ fn integer_decision_representation(expr: &Expr, symbols: &SymbolTable) -> Applic
         .iter()
         .fold((i32::MAX, i32::MIN), |(min_a, max_b), range| {
             (
-                min_a.min(*range.lower_bound().unwrap()),
-                max_b.max(*range.upper_bound().unwrap()),
+                min_a.min(*range.low().unwrap()),
+                max_b.max(*range.high().unwrap()),
             )
         });
 
@@ -145,7 +145,7 @@ fn integer_decision_representation(expr: &Expr, symbols: &SymbolTable) -> Applic
         // add domain ranges as constraints if this is the first time the representation is added
         Ok(Reduction::new(
             cnf_int.clone(),
-            vec![int_domain_to_expr(cnf_int, &ranges)], // contains domain rules
+            vec![int_domain_to_expr(cnf_int, ranges)], // contains domain rules
             symbols,
         ))
     } else {

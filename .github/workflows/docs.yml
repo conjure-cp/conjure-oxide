@@ -11,13 +11,16 @@ on:
 permissions:
   contents: write
 
+env:
+  READ_ONLY_GITHUB_TOKEN: ${{ secrets.PUBLIC_REPO_TOKEN }}
+
 jobs:
   generate_docs:
     name: "Generate documentation site"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Install mdbook
         run: |

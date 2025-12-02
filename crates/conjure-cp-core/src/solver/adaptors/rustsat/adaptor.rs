@@ -16,12 +16,10 @@ use std::result::Result::Ok;
 use tracing_subscriber::filter::DynFilterFn;
 use ustr::Ustr;
 
-use crate::ast::Domain::{Bool, Int};
-
 use rustsat_minisat::core::Minisat;
 
-use crate::ast::Metadata;
 use crate::ast::{Atom, Expression, Literal, Name};
+use crate::ast::{GroundDomain, Metadata};
 use crate::solver::SearchComplete::NoSolutions;
 use crate::solver::adaptors::rustsat::convs::handle_cnf;
 use crate::solver::{
@@ -97,13 +95,25 @@ impl SolverAdaptor for Sat {
     ) -> Result<SolveSuccess, SolverError> {
         let mut solver = &mut self.solver_inst;
 
-        let cnf: (Cnf, BasicVarManager) = self.model_inst.clone().unwrap().into_cnf();
+        let cnf: (Cnf, BasicVarManager) = self
+            .model_inst
+            .clone()
+            .ok_or_else(|| SolverError::Runtime("Model instance is missing".to_string()))?
+            .into_cnf();
 
         (*(solver)).add_cnf(cnf.0);
 
         let mut has_sol = false;
         loop {
-            let res = solver.solve().unwrap();
+            let res = match solver.solve() {
+                Ok(r) => r,
+                Err(e) => {
+                    return Err(SolverError::Runtime(format!(
+                        "Solver encountered an error during solving: {}",
+                        e
+                    )));
+                }
+            };
 
             match res {
                 SolverResult::Sat => {}
@@ -130,19 +140,34 @@ impl SolverAdaptor for Sat {
                 }
             };
 
-            let mut sol = solver.full_solution().unwrap();
+            let mut sol: Assignment = match solver.full_solution() {
+                Ok(s) => s,
+                Err(e) => {
+                    return Err(SolverError::Runtime(format!(
+                        "Solver encountered an error when retrieving solution: {}",
+                        e
+                    )));
+                }
+            };
 
-            // add DontCares into the solution
-            for (name, lit) in self.var_map.clone().unwrap() {
+            let var_map = self.var_map.clone().ok_or_else(|| {
+                SolverError::Runtime("Variable map is missing when retrieving solution".to_string())
+            })?;
+
+            let find_refs = self.decision_refs.clone().ok_or_else(|| {
+                SolverError::Runtime(
+                    "Decision references are missing when retrieving solution".to_string(),
+                )
+            })?;
+
+            let mut has_sol = false;
+            for (name, lit) in &var_map {
                 let inserter = sol.var_value(lit.var());
                 sol.assign_var(lit.var(), inserter);
             }
+
             has_sol = true;
-            let sol_old = get_ref_sols(
-                self.decision_refs.clone().unwrap(),
-                sol.clone(),
-                self.var_map.clone().unwrap(),
-            );
+            let sol_old = get_ref_sols(find_refs.clone(), sol.clone(), var_map.clone());
 
             tracing::info!("old solution {:#?}", sol_old);
 
@@ -175,7 +200,7 @@ impl SolverAdaptor for Sat {
             for lit_i in blocking_vec {
                 blocking_cl.add(lit_i);
             }
-            solver.add_clause(blocking_cl).unwrap();
+            solver.add_clause(blocking_cl);
         }
     }
 
@@ -195,10 +220,14 @@ impl SolverAdaptor for Sat {
         let mut var_map: HashMap<Name, Lit> = HashMap::new();
 
         for find_ref in decisions {
-            let domain = find_ref.1.domain().unwrap();
+            let domain = find_ref
+                .1
+                .domain()
+                .expect("Decision variable should have a domain");
+            let domain = domain.as_ground().expect("Domain should be ground");
 
             // only decision variables with boolean domains or representations using booleans are supported at this time
-            if (domain != Bool
+            if (domain != &GroundDomain::Bool
                 && (sym_tab
                     .get_representation(&find_ref.0, &["sat_log_int"])
                     .is_none()))
@@ -208,7 +237,7 @@ impl SolverAdaptor for Sat {
                 ))?;
             }
             // only boolean variables should be passed to the solver
-            if (domain == Bool) {
+            if (domain == &GroundDomain::Bool) {
                 let name = find_ref.0;
                 finds.push(name);
             }
@@ -236,21 +265,13 @@ impl SolverAdaptor for Sat {
         SolverFamily::Sat
     }
 
-    fn get_name(&self) -> Option<String> {
-        Some("SAT".to_string())
-    }
-
-    fn add_adaptor_info_to_stats(&self, stats: SolverStats) -> SolverStats {
-        SolverStats {
-            solver_adaptor: self.get_name(),
-            solver_family: Some(self.get_family()),
-            ..stats
-        }
+    fn get_name(&self) -> &'static str {
+        "SAT"
     }
 
     fn write_solver_input_file(
         &self,
-        writer: &mut impl std::io::Write,
+        writer: &mut Box<dyn std::io::Write>,
     ) -> Result<(), std::io::Error> {
         // TODO: add comments saying what conjure oxide variables each clause has
         // e.g.
@@ -261,7 +282,9 @@ impl SolverAdaptor for Sat {
         // This will require handwriting a dimacs writer, but that should be easy. For now, just
         // let rustsat write the dimacs.
 
-        let model = self.model_inst.clone().expect("model should exist when we write the solver input file, as we should be in the LoadedModel state");
+        let model = self.model_inst.clone().unwrap_or_else(|| {
+            bug!("model should exist when we write the solver input file, as we should be in the LoadedModel state");
+        });
         let (cnf, var_manager): (Cnf, BasicVarManager) = model.into_cnf();
         cnf.write_dimacs(writer, var_manager.n_used())
     }
