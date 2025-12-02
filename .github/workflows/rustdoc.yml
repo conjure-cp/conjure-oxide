@@ -11,6 +11,7 @@ env:
   os: ubuntu-latest
   rust_release: nightly
   compiler_profile: debug
+  CARGO_INCREMENTAL: 0 # for smaller cache size
 
 permissions:
   contents: write
@@ -22,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: free_disk_space.sh
         run: .github/workflows/tools/free_disk_space.sh

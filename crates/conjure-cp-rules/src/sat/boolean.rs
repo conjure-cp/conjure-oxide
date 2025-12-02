@@ -14,7 +14,7 @@ use conjure_cp::ast::{Domain, SymbolTable};
 use crate::utils::is_literal;
 
 fn create_bool_aux(symbols: &mut SymbolTable) -> Expr {
-    let name = symbols.gensym(&Domain::Bool);
+    let name = symbols.gensym(&Domain::bool());
 
     symbols.insert(name.clone());
 
@@ -270,9 +270,9 @@ fn remove_single_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    // Find the position of the first reference atom with domain == Some(Domain::Bool)
+    // Find the position of the first reference atom with boolean domain
     let Some(pos) = children.iter().position(
-        |e| matches!(e, Expr::Atomic(_, Atom::Reference(x)) if x.domain() == Some(Domain::Bool)),
+        |e| matches!(e, Expr::Atomic(_, Atom::Reference(x)) if x.domain().is_some_and(|d| d.is_bool())),
     ) else {
         return Err(RuleNotApplicable);
     };

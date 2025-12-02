@@ -1,7 +1,9 @@
 use conjure_cp::rule_engine::register_rule;
 
+use conjure_cp::ast::DomainPtr;
 use conjure_cp::{
     ast::{Atom, Expression as Expr, SymbolTable},
+    bug,
     rule_engine::{ApplicationError::RuleNotApplicable, ApplicationResult, Reduction},
 };
 
@@ -40,7 +42,10 @@ fn substitute_domain_lettings(expr: &Expr, symbols: &SymbolTable) -> Application
         };
 
         let old_domain = var.domain;
-        var.domain = old_domain.clone().resolve(symbols);
+        let domain_gd = old_domain
+            .resolve()
+            .unwrap_or_else(|| bug!("Domain of {} could not be resolved", decl.name()));
+        var.domain = DomainPtr::from(domain_gd);
         if old_domain != var.domain {
             decl.as_var_mut().unwrap().domain = var.domain;
             has_changed = true;
