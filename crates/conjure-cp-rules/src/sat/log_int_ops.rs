@@ -629,21 +629,29 @@ fn tseytin_binary_min_max(
 ///
 /// cond = 1 => b
 /// cond = 0 => a
-fn tseytin_select_array(cond: Expr,
+fn tseytin_select_array(
+    cond: Expr,
     a: &[Expr],
     b: &[Expr],
     clauses: &mut Vec<CnfClause>,
-    symbols: &mut SymbolTable)  -> Vec<Expr> {
+    symbols: &mut SymbolTable,
+) -> Vec<Expr> {
     let mut out = vec![];
 
     let bit_count = a.len();
 
     for i in 0..bit_count {
-        out.push(tseytin_mux(cond.clone(), a[i].clone(), b[i].clone(), clauses, symbols));
+        out.push(tseytin_mux(
+            cond.clone(),
+            a[i].clone(),
+            b[i].clone(),
+            clauses,
+            symbols,
+        ));
     }
 
     out
-    }
+}
 
 /// Converts max of SATInts to a single SATInt
 ///
@@ -817,16 +825,44 @@ fn cnf_int_safediv(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let mut new_symbols = symbols.clone();
     let mut new_clauses = vec![];
 
-    let (quotient, _remainder, sign_bit, _numer_sign) = tseytin_divmod(
-        &numer_bits,
-        &denom_bits,
+    let (quotient, remainder, sign_bit, _numer_sign, _abs_denom) =
+        tseytin_divmod(&numer_bits, &denom_bits, &mut new_clauses, &mut new_symbols);
+
+    let minus_quotient = tseytin_negate(
+        &quotient.clone(),
+        bit_count,
         &mut new_clauses,
         &mut new_symbols,
     );
 
-    let minus_quotient = tseytin_negate(&quotient.clone(), bit_count, &mut new_clauses, &mut new_symbols);
+    let minus_quotient_plus_one = tseytin_negate(
+        &tseytin_add_two_power(
+            &quotient.clone(),
+            0,
+            bit_count,
+            &mut new_clauses,
+            &mut new_symbols,
+        ),
+        bit_count,
+        &mut new_clauses,
+        &mut new_symbols,
+    );
 
-    let mut out = tseytin_select_array(sign_bit, &quotient, &minus_quotient, &mut new_clauses, &mut new_symbols);
+    let quotient_if_signs_differ = tseytin_select_array(
+        tseytin_or(&remainder, &mut new_clauses, &mut new_symbols),
+        &minus_quotient,
+        &minus_quotient_plus_one,
+        &mut new_clauses,
+        &mut new_symbols,
+    );
+
+    let mut out = tseytin_select_array(
+        sign_bit,
+        &quotient,
+        &quotient_if_signs_differ,
+        &mut new_clauses,
+        &mut new_symbols,
+    );
 
     let new_bit_count = bit_magnitude(min).max(bit_magnitude(max));
     out.truncate(new_bit_count);
@@ -843,7 +879,7 @@ fn cnf_int_safediv(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     ))
 }
 
-/// Shared restoring-division core. Returns (quotient, remainder, sign_bit (quotient sign), numer_sign).
+/// Shared restoring-division core. Returns (quotient, remainder, sign_bit (quotient sign), denom_sign, |denom|).
 fn tseytin_divmod(
     // Using "Restoring division" algorithm
     // https://en.wikipedia.org/wiki/Division_algorithm#Restoring_division
@@ -851,7 +887,7 @@ fn tseytin_divmod(
     denom_bits: &[Expr],
     clauses: &mut Vec<CnfClause>,
     symbols: &mut SymbolTable,
-) -> (Vec<Expr>, Vec<Expr>, Expr, Expr) {
+) -> (Vec<Expr>, Vec<Expr>, Expr, Expr, Vec<Expr>) {
     let bit_count = numer_bits.len();
 
     let mut quotient = vec![false.into(); bit_count];
@@ -895,7 +931,13 @@ fn tseytin_divmod(
         }
         r[0] = false.into();
 
-        rminusd = tseytin_int_adder(&r.clone(), &minus_d.clone(), 2 * bit_count, clauses, symbols);
+        rminusd = tseytin_int_adder(
+            &r.clone(),
+            &minus_d.clone(),
+            2 * bit_count,
+            clauses,
+            symbols,
+        );
 
         // q[i] = inverse of sign bit - 1 if positive, 0 if negative
         quotient[i] = tseytin_not(rminusd[2 * bit_count - 1].clone(), clauses, symbols);
@@ -911,9 +953,8 @@ fn tseytin_divmod(
         }
     }
 
-    (quotient, r, sign_bit, numer_sign)
+    (quotient, r, sign_bit, denom_sign, abs_denom)
 }
-
 
 /// Converts SafeMod of SATInts to a single SATInt
 ///
@@ -943,15 +984,13 @@ fn cnf_int_safemod(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let mut max = 0;
 
     if *numer_min < 0 && 0 < *numer_max {
-        min = 1-b;
-        max = b-1;
-    }
-    else if *numer_min >= 0 {
+        min = 1 - b;
+        max = b - 1;
+    } else if *numer_min >= 0 {
         min = 0;
-        max = b-1;
-    }
-    else if *numer_max <= 0 {
-        min = 1-b;
+        max = b - 1;
+    } else if *numer_max <= 0 {
+        min = 1 - b;
         max = 0;
     }
 
@@ -964,12 +1003,8 @@ fn cnf_int_safemod(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let mut new_symbols = symbols.clone();
     let mut new_clauses = vec![];
 
-    let (_quotient, full_remainder, _sign_bit, numer_sign) = tseytin_divmod(
-        &numer_bits,
-        &denom_bits,
-        &mut new_clauses,
-        &mut new_symbols,
-    );
+    let (_quotient, full_remainder, sign_bit, denom_sign, abs_denom) =
+        tseytin_divmod(&numer_bits, &denom_bits, &mut new_clauses, &mut new_symbols);
 
     let new_bit_count = bit_magnitude(min).max(bit_magnitude(max));
 
@@ -983,9 +1018,47 @@ fn cnf_int_safemod(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         .cloned()
         .collect();
 
-    let minus_remainder = tseytin_negate(&remainder.clone(), new_bit_count, &mut new_clauses, &mut new_symbols);
+    let minus_remainder = tseytin_negate(
+        &remainder.clone(),
+        new_bit_count,
+        &mut new_clauses,
+        &mut new_symbols,
+    );
 
-    let out = tseytin_select_array(numer_sign, &remainder, &minus_remainder, &mut new_clauses, &mut new_symbols);
+    let denom_minus_remainder = tseytin_int_adder(
+        &abs_denom,
+        &minus_remainder,
+        new_bit_count,
+        &mut new_clauses,
+        &mut new_symbols,
+    );
+
+    let subtract_condition = tseytin_and(
+        &vec![
+            sign_bit.clone(),
+            tseytin_or(&remainder.clone(), &mut new_clauses, &mut new_symbols),
+        ],
+        &mut new_clauses,
+        &mut new_symbols,
+    );
+
+    let pos_out = tseytin_select_array(
+        subtract_condition,
+        &remainder,
+        &denom_minus_remainder,
+        &mut new_clauses,
+        &mut new_symbols,
+    );
+
+    let neg_out = tseytin_negate(&pos_out, new_bit_count, &mut new_clauses, &mut new_symbols);
+
+    let out = tseytin_select_array(
+        denom_sign,
+        &pos_out,
+        &neg_out,
+        &mut new_clauses,
+        &mut new_symbols,
+    );
 
     Ok(Reduction::cnf(
         Expr::SATInt(

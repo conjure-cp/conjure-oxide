@@ -111,6 +111,7 @@ pub fn tseytin_or(
     new_expr
 }
 
+
 /// Applies the Tseytin iff transformation to two variables, returns the new expression, symbol table and clauses
 pub fn tseytin_iff(
     x: Expr,
