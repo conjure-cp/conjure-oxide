@@ -9,6 +9,7 @@ pub enum ReturnType {
     Bool,
     Matrix(Box<ReturnType>),
     Set(Box<ReturnType>),
+    MSet(Box<ReturnType>),
     Tuple(Vec<ReturnType>),
     Record(Vec<ReturnType>),
     Function(Box<ReturnType>, Box<ReturnType>),
