@@ -260,7 +260,7 @@ fn parse_record_domain(
     Ok(Domain::record(record_entries))
 }
 
-fn parse_set_domain(
+pub fn parse_set_domain(
     set_domain: Node,
     source_code: &str,
     symbols: Option<Rc<RefCell<SymbolTable>>>,
