@@ -109,6 +109,8 @@ module.exports = grammar ({
       "matrix",
       optional("indexed"),
       optional("by"),
+      optional("indexed"),
+      optional("by"),
       "[",
       field("index_domain_list", $.index_domain_list),
       "]",
