@@ -1,5 +1,5 @@
 use super::{Name, SymbolTable};
-use crate::ast::{DeclarationPtr, Domain, Expression, ReturnType, Typeable};
+use crate::ast::{DeclarationPtr, Domain, Expression, ReturnType, Typeable, ac_operators::ACOperatorKind};
 use serde::{Deserialize, Serialize, RcRefCellAsInner};
 use serde_with::serde_as;
 use std::{
@@ -32,19 +32,29 @@ pub enum Generator {
     ExpressionGenerator(Name, Expression),
 }
 
-impl AbstractComprehension {
+pub struct AbstractComprehensionBuilder{
+    pub qualifiers: Vec<Qualifier>,
+    pub symbols: Rc<RefCell<SymbolTable>>,
+}
+
+//this is the method that allows you to build an abstract comprehension
+impl AbstractComprehensionBuilder {
+    // this method creates an abstract comprehension builder with:
+        // a symbol table
+        // empty list of qualifiers
+        // and no return exp yet -- that will be added in the with_return_value method
     pub fn new(
-        return_expr: Expression,
-        qualifiers: Vec<Qualifier>,
         symbols: Rc<RefCell<SymbolTable>>,
     ) -> Self {
         Self {
-            return_expr,
-            qualifiers,
-            symbols,
+            qualifiers: vec![],
+            symbols: Rc::new(RefCell::new(SymbolTable::with_parent(
+                symbol_table_ptr,)))
         }
     }
 
+    // TODO: figure out how to return a domain when this is dependent on the final result of the comprehension
+    // Potentially unresolved domain?? tbd
     pub fn domain_of(&self) -> Option<Domain> {
         self.return_expr.domain_of()
     }
@@ -94,6 +104,7 @@ impl AbstractComprehension {
             )));
     }
 
+    //this is the same as the add guard method
     pub fn add_condition(&mut self, condition: Expression) {
         if condition.return_type() != Some(ReturnType::Bool) {
             panic!("Condition expression must have boolean return type");
@@ -105,6 +116,22 @@ impl AbstractComprehension {
     pub fn add_letting(&mut self, name: Name, expr: Expression) {
         self.qualifiers
             .push(Qualifier::ComprehensionLetting(name, expr));
+    }
+
+    //the lack of the generator_symboltable and return_expr_symboltable
+    // are explained bc 1. we dont have separate symboltables for each part
+    // 2. it is unclear why there would be a need to access each one uniquely
+
+    // TODO: make a pub fn with_return_value :)
+    pub fn with_return_value(
+        self, 
+        mut expression: Expression,
+    ) -> AbstractComprehension {
+        AbstractComprehension {
+            return_expr: expression,   
+            qualifiers: self.qualifiers,
+            symbols: self.symbols,          
+        }
     }
 }
 
