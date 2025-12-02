@@ -1,5 +1,5 @@
-use conjure_cp::ast::{SATIntEncoding, SymbolTable};
 use conjure_cp::ast::{Expression as Expr, GroundDomain};
+use conjure_cp::ast::{SATIntEncoding, SymbolTable};
 use conjure_cp::rule_engine::{
     ApplicationError, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
     register_rule,
