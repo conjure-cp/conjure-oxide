@@ -36,6 +36,94 @@
     "fields": {}
   },
   {
+    "type": "aggregate_expr",
+    "named": true,
+    "fields": {
+      "collection": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "identifier",
+            "named": true
+          },
+          {
+            "type": "index_or_slice",
+            "named": true
+          },
+          {
+            "type": "matrix",
+            "named": true
+          },
+          {
+            "type": "record",
+            "named": true
+          },
+          {
+            "type": "set_literal",
+            "named": true
+          },
+          {
+            "type": "tuple",
+            "named": true
+          }
+        ]
+      },
+      "domain": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "domain",
+            "named": true
+          }
+        ]
+      },
+      "expression": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "arithmetic_expr",
+            "named": true
+          }
+        ]
+      },
+      "operator": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "max",
+            "named": false
+          },
+          {
+            "type": "min",
+            "named": false
+          },
+          {
+            "type": "sum",
+            "named": false
+          }
+        ]
+      },
+      "variables": {
+        "multiple": true,
+        "required": true,
+        "types": [
+          {
+            "type": ",",
+            "named": false
+          },
+          {
+            "type": "identifier",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
     "type": "and_expr",
     "named": true,
     "fields": {
@@ -101,6 +189,16 @@
           }
         ]
       },
+      "aggregate_expression": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "aggregate_expr",
+            "named": true
+          }
+        ]
+      },
       "atom": {
         "multiple": false,
         "required": false,
@@ -121,6 +219,16 @@
           }
         ]
       },
+      "list_combining_expression_arith": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "list_combining_expr_arith",
+            "named": true
+          }
+        ]
+      },
       "negative_expression": {
         "multiple": false,
         "required": false,
@@ -137,16 +245,6 @@
         "types": [
           {
             "type": "product_expr",
-            "named": true
-          }
-        ]
-      },
-      "quantifier_expression_arith": {
-        "multiple": false,
-        "required": false,
-        "types": [
-          {
-            "type": "quantifier_expr_arith",
             "named": true
           }
         ]
@@ -353,6 +451,16 @@
           }
         ]
       },
+      "list_combining_expression_bool": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "list_combining_expr_bool",
+            "named": true
+          }
+        ]
+      },
       "not_expression": {
         "multiple": false,
         "required": false,
@@ -373,12 +481,12 @@
           }
         ]
       },
-      "quantifier_expression_bool": {
+      "quantifier_expression": {
         "multiple": false,
         "required": false,
         "types": [
           {
-            "type": "quantifier_expr_bool",
+            "type": "quantifier_expr",
             "named": true
           }
         ]
@@ -1146,6 +1254,74 @@
     }
   },
   {
+    "type": "list_combining_expr_arith",
+    "named": true,
+    "fields": {
+      "arg": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "atom",
+            "named": true
+          }
+        ]
+      },
+      "operator": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "max",
+            "named": false
+          },
+          {
+            "type": "min",
+            "named": false
+          },
+          {
+            "type": "sum",
+            "named": false
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "list_combining_expr_bool",
+    "named": true,
+    "fields": {
+      "arg": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "atom",
+            "named": true
+          }
+        ]
+      },
+      "operator": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "allDiff",
+            "named": false
+          },
+          {
+            "type": "and",
+            "named": false
+          },
+          {
+            "type": "or",
+            "named": false
+          }
+        ]
+      }
+    }
+  },
+  {
     "type": "matrix",
     "named": true,
     "fields": {
@@ -1173,6 +1349,14 @@
           },
           {
             "type": "arithmetic_expr",
+            "named": true
+          },
+          {
+            "type": "bool_expr",
+            "named": true
+          },
+          {
+            "type": "comparison_expr",
             "named": true
           }
         ]
@@ -1497,68 +1681,88 @@
     }
   },
   {
-    "type": "quantifier_expr_arith",
+    "type": "quantifier_expr",
     "named": true,
     "fields": {
-      "arg": {
+      "collection": {
         "multiple": false,
-        "required": true,
+        "required": false,
         "types": [
           {
-            "type": "atom",
+            "type": "identifier",
+            "named": true
+          },
+          {
+            "type": "index_or_slice",
+            "named": true
+          },
+          {
+            "type": "matrix",
+            "named": true
+          },
+          {
+            "type": "record",
+            "named": true
+          },
+          {
+            "type": "set_literal",
+            "named": true
+          },
+          {
+            "type": "tuple",
             "named": true
           }
         ]
       },
-      "quantifier": {
+      "domain": {
         "multiple": false,
-        "required": true,
+        "required": false,
         "types": [
           {
-            "type": "max",
-            "named": false
-          },
-          {
-            "type": "min",
-            "named": false
-          },
-          {
-            "type": "sum",
-            "named": false
-          }
-        ]
-      }
-    }
-  },
-  {
-    "type": "quantifier_expr_bool",
-    "named": true,
-    "fields": {
-      "arg": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "atom",
+            "type": "domain",
             "named": true
           }
         ]
       },
-      "quantifier": {
+      "expression": {
         "multiple": false,
         "required": true,
         "types": [
           {
-            "type": "allDiff",
+            "type": "bool_expr",
+            "named": true
+          },
+          {
+            "type": "comparison_expr",
+            "named": true
+          }
+        ]
+      },
+      "operator": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "exists",
             "named": false
           },
           {
-            "type": "and",
+            "type": "forAll",
+            "named": false
+          }
+        ]
+      },
+      "variables": {
+        "multiple": true,
+        "required": true,
+        "types": [
+          {
+            "type": ",",
             "named": false
           },
           {
-            "type": "or",
-            "named": false
+            "type": "identifier",
+            "named": true
           }
         ]
       }
@@ -2010,6 +2214,10 @@
     "named": false
   },
   {
+    "type": ".",
+    "named": false
+  },
+  {
     "type": "..",
     "named": false
   },
@@ -2126,6 +2334,10 @@
     "named": false
   },
   {
+    "type": "exists",
+    "named": false
+  },
+  {
     "type": "false",
     "named": false
   },
@@ -2135,6 +2347,10 @@
   },
   {
     "type": "flatten",
+    "named": false
+  },
+  {
+    "type": "forAll",
     "named": false
   },
   {

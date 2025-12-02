@@ -113,7 +113,7 @@ such that a = allDiff([1,2,4,1]x)";
         31,
         1,
         32,
-        "Unexpected 'x' inside 'quantifier_expr_bool'",
+        "Unexpected 'x' inside 'list_combining_expr_bool'",
     );
 }
 
