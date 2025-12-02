@@ -7,6 +7,7 @@ use conjure_cp_core::ast::comprehension::ComprehensionBuilder;
 use conjure_cp_core::ast::{DeclarationPtr, Expression, Metadata, Moo, Name, SymbolTable};
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::vec;
 use tree_sitter::Node;
 
 pub fn parse_comprehension(
@@ -90,4 +91,139 @@ pub fn parse_comprehension(
         Metadata::new(),
         Moo::new(comprehension),
     ))
+}
+
+/// Parse comprehension-style expressions
+/// - `forAll vars : domain . expr` → `And(Comprehension(...))`
+/// - `sum vars : domain . expr` → `Sum(Comprehension(...))`
+pub fn parse_quantifier_or_aggregate_expr(
+    node: &Node,
+    source_code: &str,
+    root: &Node,
+    symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
+) -> Result<Expression, EssenceParseError> {
+    // Quantifier and aggregate expressions require a symbol table
+    let symbols_ptr = symbols_ptr.ok_or_else(|| {
+        EssenceParseError::syntax_error(
+            "Quantifier and aggregate expressions require a symbol table".to_string(),
+            Some(node.range()),
+        )
+    })?;
+
+    // Create the comprehension builder
+    let mut builder = ComprehensionBuilder::new(symbols_ptr.clone());
+
+    // First pass: collect domain/collection, variables
+    let mut domain = None;
+    let mut collection_node = None;
+    let mut variables = vec![];
+
+    for child in named_children(node) {
+        match child.kind() {
+            "identifier" => {
+                let var_name_str = &source_code[child.start_byte()..child.end_byte()];
+                let var_name = Name::user(var_name_str);
+                variables.push(var_name);
+            }
+            "domain" => {
+                domain = Some(parse_domain(child, source_code, Some(symbols_ptr.clone()))?);
+            }
+            "set_literal" | "matrix" | "tuple" | "record" => {
+                // Store the collection node to parse later
+                collection_node = Some(child);
+            }
+            _ => continue,
+        }
+    }
+
+    // We need either a domain or a collection
+    if domain.is_none() && collection_node.is_none() {
+        return Err(EssenceParseError::syntax_error(
+            "Quantifier and aggregate expressions require a domain or collection".to_string(),
+            Some(node.range()),
+        ));
+    }
+
+    if variables.is_empty() {
+        return Err(EssenceParseError::syntax_error(
+            "Quantifier and aggregate expressions require variables".to_string(),
+            Some(node.range()),
+        ));
+    }
+
+    // Get the operator type
+    let operator_node = field!(node, "operator");
+    let operator_str = &source_code[operator_node.start_byte()..operator_node.end_byte()];
+
+    let (ac_operator_kind, wrapper) = match operator_str {
+        "forAll" => (ACOperatorKind::And, "And"),
+        "exists" => (ACOperatorKind::Or, "Or"),
+        "sum" => (ACOperatorKind::Sum, "Sum"),
+        "min" => (ACOperatorKind::Sum, "Min"), // AC operator doesn't matter for non-boolean aggregates
+        "max" => (ACOperatorKind::Sum, "Max"),
+        _ => {
+            return Err(EssenceParseError::syntax_error(
+                format!("Unknown operator: {}", operator_str),
+                Some(operator_node.range()),
+            ));
+        }
+    };
+
+    // Add variables as generators
+    if let Some(dom) = domain {
+        for var_name in variables {
+            let decl = DeclarationPtr::new_var(var_name, dom.clone());
+            builder = builder.generator(decl);
+        }
+    } else if let Some(_coll_node) = collection_node {
+        // TODO: support collection domains
+        return Err(EssenceParseError::syntax_error(
+            "Collection domains in quantifier and aggregate expressions not yet supported"
+                .to_string(),
+            Some(node.range()),
+        ));
+    }
+
+    // Parse the expression (after variables are in the symbol table)
+    let expression_node = node.child_by_field_name("expression").ok_or_else(|| {
+        EssenceParseError::syntax_error(
+            "Quantifier or aggregate expression missing return expression".to_string(),
+            Some(node.range()),
+        )
+    })?;
+    let expression = parse_expression(
+        expression_node,
+        source_code,
+        root,
+        Some(builder.return_expr_symboltable()),
+    )?;
+
+    // Build the comprehension
+    let comprehension = builder.with_return_value(expression, Some(ac_operator_kind));
+    let wrapped_comprehension = Expression::Comprehension(Metadata::new(), Moo::new(comprehension));
+
+    // Wrap in the appropriate expression type
+    match wrapper {
+        "And" => Ok(Expression::And(
+            Metadata::new(),
+            Moo::new(wrapped_comprehension),
+        )),
+        "Or" => Ok(Expression::Or(
+            Metadata::new(),
+            Moo::new(wrapped_comprehension),
+        )),
+        "Sum" => Ok(Expression::Sum(
+            Metadata::new(),
+            Moo::new(wrapped_comprehension),
+        )),
+        "Min" => Ok(Expression::Min(
+            Metadata::new(),
+            Moo::new(wrapped_comprehension),
+        )),
+        "Max" => Ok(Expression::Max(
+            Metadata::new(),
+            Moo::new(wrapped_comprehension),
+        )),
+        _ => unreachable!(),
+    }
 }
