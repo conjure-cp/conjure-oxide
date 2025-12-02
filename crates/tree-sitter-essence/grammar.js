@@ -1,528 +1,373 @@
-module.exports = grammar({
-  name: "essence",
+module.exports = grammar ({
+  name: 'essence',
 
-  extras: ($) => [$.single_line_comment, /\s/, $.language_declaration],
+  extras: $ => [
+    $.single_line_comment,
+    /\s/,
+    $.language_declaration
+  ],
 
   rules: {
     // Top-level statements
-    program: ($) =>
-      repeat(
-        choice(
-          seq(
-            // Single Essence expression.
-            // Not part of Essence syntax but used to parse Essence fragments outside a full Essence file.
-            "_FRAGMENT_EXPRESSION",
-            commaSep1(
-              choice(
-                field("atom", $.atom),
-                field("bool_expr", $.bool_expr),
-                field("comparison_expr", $.comparison_expr),
-                field("arithmetic_expr", $.arithmetic_expr)
-              )
-            )
-          ),
-          seq("find", commaSep1(field("find_statement", $.find_statement))),
-          seq(
-            "such that",
-            commaSep1(
-              choice(
-                field("bool_expr", $.bool_expr),
-                field("atom", $.atom),
-                field("comparison_expr", $.comparison_expr)
-              )
-            )
-          ),
-          seq(
-            "letting",
-            commaSep1(field("letting_statement", $.letting_statement))
-          ),
-          field("dominance_relation", $.dominance_relation)
-          // field("find", $.FIND),
-          // field("letting", $.LETTING),
-          // field("such_that", $.SUCH_THAT),
-        )
+    program: $ => repeat(choice(
+      seq(
+        // Single Essence expression.
+        // Not part of Essence syntax but used to parse Essence fragments outside a full Essence file.
+        "_FRAGMENT_EXPRESSION",
+        commaSep1(choice(
+          field("atom", $.atom),
+          field("bool_expr", $.bool_expr),
+          field("comparison_expr", $.comparison_expr),
+          field("arithmetic_expr", $.arithmetic_expr)
+        ))
       ),
+      seq("find", commaSep1(field("find_statement", $.find_statement))),
+      seq(
+        "such that", 
+        commaSep1(choice(field("bool_expr", $.bool_expr), field("atom", $.atom), field("comparison_expr", $.comparison_expr))), 
+      ),
+      seq("letting", commaSep1(field("letting_statement", $.letting_statement))),
+      field("dominance_relation", $.dominance_relation),
+      // field("find", $.FIND),
+      // field("letting", $.LETTING),
+      // field("such_that", $.SUCH_THAT),
+    )),
 
-    SUCH_THAT: ($) => "such that",
-    FIND: ($) => "find",
-    LETTING: ($) => "letting",
-    COLON: ($) => ":",
+    SUCH_THAT: $ => "such that",
+    FIND: $ => "find",
+    LETTING: $ => "letting",
+    COLON: $ => ":",
 
-    single_line_comment: ($) => token(seq("$", /.*/)),
+    single_line_comment: $ => token(seq('$', /.*/)),
 
-    language_declaration: ($) => token(seq("language", /.*/)),
+    language_declaration: $ => token(seq("language", /.*/)),
 
     //general
-    constant: ($) =>
-      choice(
-        field("integer", $.integer),
-        field("true", $.TRUE),
-        field("false", $.FALSE)
-      ),
+    constant: $ => choice(
+      field("integer", $.integer),
+      field("true", $.TRUE),
+      field("false", $.FALSE)
+    ),
 
-    integer: ($) => choice(/[0-9]+/, /-[0-9]+/),
+    integer: $ => choice(/[0-9]+/, /-[0-9]+/),
     //integer: $ => token(/[0-9]+/),
 
-    TRUE: ($) => choice("true", "TRUE"),
+    TRUE: $ => choice("true", "TRUE"),
 
-    FALSE: ($) => choice("false", "FALSE"),
+    FALSE: $ => choice("false", "FALSE"),
 
-    identifier: ($) => /[a-zA-Z_][a-zA-Z0-9_]*/,
+    identifier: $ => /[a-zA-Z_][a-zA-Z0-9_]*/,
 
     //meta-variable (aka template argument)
-    metavar: ($) => seq("&", field("identifier", $.identifier)),
+    metavar: $ => seq("&", field("identifier", $.identifier)),
 
     //find statements
-    find_statement: ($) =>
-      seq(
-        field("variables", $.variable_list),
-        field("colon", $.COLON),
-        field("domain", $.domain)
-      ),
-    variable_list: ($) => commaSep1($.identifier),
+    find_statement: $ => seq(
+      field("variables", $.variable_list),
+      field("colon", $.COLON),
+      field("domain", $.domain),
+    ),
+    variable_list: $ => commaSep1($.identifier),
 
-    domain: ($) =>
-      choice(
-        field("bool_domain", $.bool_domain),
-        field("int_domain", $.int_domain),
-        field("variable_domain", $.identifier),
-        field("tuple_domain", $.tuple_domain),
-        field("matrix_domain", $.matrix_domain),
-        field("record_domain", $.record_domain),
-        field("set_domain", $.set_domain),
-        field("set_domain", $.set_domain)
-      ),
-    bool_domain: ($) => "bool",
+    domain: $ => choice(
+      field("bool_domain", $.bool_domain),
+      field("int_domain", $.int_domain),
+      field("variable_domain", $.identifier),
+      field("tuple_domain", $.tuple_domain),
+      field("matrix_domain", $.matrix_domain),
+      field("record_domain", $.record_domain),
+      field("set_domain", $.set_domain),
+      field("set_domain", $.set_domain),
+    ),
+    bool_domain: $ => "bool",
 
-    int_domain: ($) =>
-      seq("int", optional(seq("(", field("ranges", $.range_list), ")"))),
+    int_domain: $ => seq(
+      "int",
+      optional(seq(
+        "(",
+        field("ranges", $.range_list),
+        ")"
+      ))
+    ),
 
-    range_list: ($) => prec(2, commaSep1(choice($.int_range, $.atom))),
+    range_list: $ => prec(2, commaSep1(choice($.int_range, $.arithmetic_expr))),
 
-    int_range: ($) =>
-      seq(
-        optional(field("lower", $.atom)),
-        "..",
-        optional(field("upper", $.atom))
-      ),
+    int_range: $ => seq(
+      optional(field("lower", $.arithmetic_expr)), 
+      "..", 
+      optional(field("upper", $.arithmetic_expr))
+    ),
 
-    tuple_domain: ($) => seq(optional("tuple"), "(", commaSep1($.domain), ")"),
+    tuple_domain: $ => seq(
+      optional("tuple"),
+      "(",
+      commaSep1($.domain),
+      ")"
+    ),
 
-    matrix_domain: ($) =>
-      seq(
-        "matrix",
-        optional("indexed"),
-        optional("by"),
-        optional("indexed"),
-        optional("by"),
-        "[",
-        field("index_domain_list", $.index_domain_list),
-        "]",
-        "of",
-        field("value_domain", $.domain)
-      ),
+    matrix_domain: $ => seq(
+      "matrix",
+      optional("indexed"),
+      optional("by"),
+      optional("indexed"),
+      optional("by"),
+      "[",
+      field("index_domain_list", $.index_domain_list),
+      "]",
+      "of",
+      field("value_domain", $.domain)
+    ),
 
-    record_domain: ($) =>
-      seq(
-        "record",
-        "{",
-        commaSep1(field("name_domain_pair", $.name_domain_pair)),
-        "}"
-      ),
+    record_domain: $ => seq(
+      "record",
+      "{",
+      commaSep1(field("name_domain_pair", $.name_domain_pair)),
+      "}"
+    ),
 
-    set_domain: ($) =>
-      seq(
+    set_domain: $ => seq(
         "set",
         optional(seq("(", $.set_attributes, ")")),
         "of",
         field("value_domain", $.domain)
-      ),
+    ),
 
-    set_attributes: ($) =>
-      choice(
-        seq(field("attribute", "size"), field("size_value", $.integer)),
-        seq(field("attribute", "minSize"), field("min_value", $.integer)),
-        seq(field("attribute", "maxSize"), field("max_value", $.integer)),
-        seq(
-          field("attribute", "minSize"),
-          field("min_value", $.integer),
-          ",",
-          field("attribute", "maxSize"),
-          field("max_value", $.integer)
-        )
-      ),
-
-    set_literal: ($) =>
+    set_attributes: $ => choice(
       seq(
-        "{",
-        field(
-          "element",
-          commaSep1(
-            choice($.bool_expr, $.arithmetic_expr, $.comparison_expr, $.atom)
-          )
-        ),
-        "}"
+        field("attribute", "size"),
+        field("size_value", $.integer)
       ),
+      seq(
+        field("attribute", "minSize"),
+        field("min_value", $.integer)
+      ),
+      seq(
+        field("attribute", "maxSize"),
+        field("max_value", $.integer)
+      ),
+      seq(
+        field("attribute", "minSize"),
+        field("min_value", $.integer),
+        ",",
+        field("attribute", "maxSize"),
+        field("max_value", $.integer)
+      )
+    ),
 
-    name_domain_pair: ($) =>
-      seq(field("name", $.identifier), ":", field("domain", $.domain)),
+    set_literal: $ => seq(
+      "{",
+      field("element", commaSep1(choice($.bool_expr, $.arithmetic_expr, $.comparison_expr))),
+      "}"
+    ),
 
-    index_domain_list: ($) => commaSep1($.domain),
+    name_domain_pair: $ => seq(
+      field("name", $.identifier),
+      ":",
+      field("domain", $.domain)
+    ),
+
+    index_domain_list: $ => commaSep1($.domain),
 
     //letting statements
-    letting_statement: ($) =>
-      seq(
-        field("variable_list", $.variable_list),
-        field("be", "be"),
-        optional(field("domain", "domain")),
-        field(
-          "expr_or_domain",
-          choice($.bool_expr, $.arithmetic_expr, $.domain, $.atom)
-        )
-      ),
+    letting_statement: $ => seq(
+      field("variable_list", $.variable_list), 
+      field("be", "be"), 
+      optional(field ("domain", "domain")),
+      field("expr_or_domain", choice($.bool_expr, $.arithmetic_expr, $.domain))
+    ),
 
-    // Constraints
-    bool_expr: ($) =>
-      prec(
-        2,
-        choice(
-          field("not_expression", $.not_expr),
-          field("and_expression", $.and_expr),
-          field("or_expression", $.or_expr),
-          field("implication", $.implication),
-          field("iff_expr", $.iff_expr),
-          field("list_combining_expression_bool", $.list_combining_expr_bool),
-          field("sub_bool_expression", $.sub_bool_expr),
-          field("set_operation_bool", $.set_operation_bool),
-          field("quantifier_expression", $.quantifier_expr)
-        )
-      ),
+    // Constraints 
+    bool_expr: $ => prec(2, choice(
+      field("atom", $.atom),
+      field("not_expression", $.not_expr),
+      field("and_expression", $.and_expr),
+      field("or_expression", $.or_expr),
+      field("implication", $.implication),
+      field("iff_expr", $.iff_expr),
+      field("list_combining_expression_bool", $.list_combining_expr_bool),
+      field("sub_bool_expression", $.sub_bool_expr),
+      field("set_operation_bool", $.set_operation_bool),
+      field("quantifier_expression", $.quantifier_expr),
+    )),
 
-    not_expr: ($) =>
-      prec(
-        20,
-        seq(
-          "!",
-          field("expression", choice($.bool_expr, $.comparison_expr, $.atom))
-        )
-      ),
+    not_expr: $ => prec(20, seq("!", field("expression", choice($.bool_expr, $.comparison_expr, $.atom)))),
+    
+    and_expr: $ => prec(-1, prec.left(seq(
+      field("left", choice($.bool_expr, $.comparison_expr, $.atom)), 
+      field("operator", "/\\"),
+      field("right", choice($.bool_expr, $.comparison_expr, $.atom))
+    ))),
+    
+    or_expr: $ => prec(-2, prec.left(seq(
+      field("left", choice($.bool_expr, $.comparison_expr, $.atom)), 
+      field("operator", "\\/"),
+      field("right", choice($.bool_expr, $.comparison_expr, $.atom))
+    ))),
+    
+    implication: $ => prec(-4, prec.left(seq(
+      field("left", choice($.bool_expr, $.comparison_expr, $.atom)), 
+      field("operator", "->"), 
+      field("right", choice($.bool_expr, $.comparison_expr, $.atom))
+    ))),
 
-    and_expr: ($) =>
-      prec(
-        -1,
-        prec.left(
-          seq(
-            field("left", choice($.bool_expr, $.comparison_expr, $.atom)),
-            field("operator", "/\\"),
-            field("right", choice($.bool_expr, $.comparison_expr, $.atom))
-          )
-        )
-      ),
+    iff_expr: $ => prec(-4, prec.left(seq(
+      field("left", choice($.bool_expr, $.comparison_expr, $.sub_bool_expr, $.atom)), 
+      field("operator", "<->"), 
+      field("right", choice($.bool_expr, $.comparison_expr, $.sub_bool_expr, $.atom))
+    ))),
 
-    or_expr: ($) =>
-      prec(
-        -2,
-        prec.left(
-          seq(
-            field("left", choice($.bool_expr, $.comparison_expr, $.atom)),
-            field("operator", "\\/"),
-            field("right", choice($.bool_expr, $.comparison_expr, $.atom))
-          )
-        )
-      ),
+    toInt_expr: $ => seq("toInt","(", field("expression", choice($.bool_expr, $.comparison_expr)), ")"),
 
-    implication: ($) =>
-      prec(
-        -4,
-        prec.left(
-          seq(
-            field("left", choice($.bool_expr, $.comparison_expr, $.atom)),
-            field("operator", "->"),
-            field("right", choice($.bool_expr, $.comparison_expr, $.atom))
-          )
-        )
-      ),
+    list_combining_expr_bool: $ => prec(-10, seq(
+      field("operator", choice("and", "or", "allDiff")),
+      "(",
+      field("arg", $.atom),
+      ")"
+    )),
 
-    iff_expr: ($) =>
-      prec(
-        -4,
-        prec.left(
-          seq(
-            field("left", choice($.bool_expr, $.comparison_expr, $.atom)),
-            field("operator", "<->"),
-            field("right", choice($.bool_expr, $.comparison_expr, $.atom))
-          )
-        )
-      ),
-
-    toInt_expr: ($) =>
-      seq(
-        "toInt",
-        "(",
-        field("expression", choice($.bool_expr, $.comparison_expr, $.atom)),
-        ")"
-      ),
-
-    list_combining_expr_bool: ($) =>
-      prec(
-        -10,
-        seq(
-          field("operator", choice("and", "or", "allDiff")),
-          "(",
-          field("arg", $.atom),
-          ")"
-        )
-      ),
-
-    quantifier_expr: ($) =>
-      prec(
-        -5,
-        seq(
-          field("operator", choice("forAll", "exists")),
-          field("variables", commaSep1($.identifier)),
-          choice(
-            seq(
-              "in",
-              field(
-                "collection",
-                choice(
-                  $.set_literal,
-                  $.matrix,
-                  $.tuple,
-                  $.record,
-                  $.identifier,
-                  $.tuple_matrix_record_index_or_slice
-                )
-              )
-            ),
-            seq(":", field("domain", $.domain))
-          ),
-          ".",
-          field("expression", choice($.bool_expr, $.comparison_expr))
-        )
-      ),
-
-    aggregate_expr: ($) =>
-      prec(
-        -5,
-        seq(
-          field("operator", choice("sum", "min", "max")),
-          field("variables", commaSep1($.identifier)),
-          choice(
-            seq(
-              "in",
-              field(
-                "collection",
-                choice(
-                  $.set_literal,
-                  $.matrix,
-                  $.tuple,
-                  $.record,
-                  $.identifier,
-                  $.tuple_matrix_record_index_or_slice
-                )
-              )
-            ),
-            seq(":", field("domain", $.domain))
-          ),
-          ".",
-          field("expression", $.arithmetic_expr)
-        )
-      ),
-
-    from_solution: ($) =>
-      seq("fromSolution", "(", field("variable", $.identifier), ")"),
-
-    comparison_expr: ($) =>
-      prec(
-        5,
-        prec.left(
-          seq(
-            field("left", choice($.bool_expr, $.arithmetic_expr, $.atom)),
-            field(
-              "operator",
-              choice(
-                "=",
-                "!=",
-                "<lex",
-                "<=lex",
-                ">lex",
-                ">=lex",
-                "<=",
-                ">=",
-                "<",
-                ">"
-              )
-            ),
-            field("right", choice($.bool_expr, $.arithmetic_expr, $.atom))
-          )
-        )
-      ),
-
-    sub_bool_expr: ($) =>
-      seq(
-        "(",
-        field("expression", choice($.bool_expr, $.comparison_expr)),
-        ")"
-      ),
-
-    set_operation_bool: ($) =>
-      seq(
-        field("left", $.atom),
-        field(
-          "operator",
-          choice("in", "subset", "subsetEq", "supset", "supsetEq")
-        ),
-        field("right", $.atom)
-      ),
-
-    arithmetic_expr: ($) =>
-      prec(
-        3,
-        choice(
-          field("toInt_expr", $.toInt_expr),
-          field("negative_expression", $.negative_expr),
-          field("absolute_value", $.abs_value),
-          field("exponentiation", $.exponent),
-          field("product_expression", $.product_expr),
-          field("sum_expression", $.sum_expr),
-          field("sub_arith_expression", $.sub_arith_expr),
-          field("list_combining_expression_arith", $.list_combining_expr_arith),
-          field("aggregate_expression", $.aggregate_expr)
-        )
-      ),
-
-    atom: ($) =>
-      prec(
-        -1,
-        choice(
-          field("sub_atom_expression", $.sub_atom_expr),
-          field("constant", $.constant),
-          field("variable", $.identifier),
-          field("metavar", $.metavar),
-          field("tuple", $.tuple),
-          field("matrix", $.matrix),
-          field("comprehension", $.comprehension),
-          field("record", $.record),
-          field("from_solution", $.from_solution),
-          field(
-            "tuple_matrix_record_index_or_slice",
-            $.tuple_matrix_record_index_or_slice
-          ),
-          field("set_literal", $.set_literal),
-          field("set_operation", $.set_operation)
-        )
-      ),
-
-    sub_atom_expr: ($) => seq("(", field("expression", $.atom), ")"),
-
-    tuple: ($) =>
-      prec(
-        -5,
-        seq(
-          "(",
-          field("element", choice($.arithmetic_expr, $.atom)),
-          ",",
-          field("element", commaSep1(choice($.arithmetic_expr, $.atom))),
-          ")"
-        )
-      ),
-
-    matrix: ($) =>
-      seq(
-        "[",
-        optional(
-          field(
-            "elements",
-            commaSep1(
-              choice($.bool_expr, $.arithmetic_expr, $.comparison_expr, $.atom)
-            )
-          )
-        ),
-        optional(
-          seq(";", field("domain", choice($.int_domain, $.bool_domain)))
-        ),
-        "]"
-      ),
-
-    comprehension: ($) =>
-      prec(
-        1,
-        seq(
-          "[",
-          field(
-            "expression",
-            choice($.arithmetic_expr, $.bool_expr, $.comparison_expr, $.atom)
-          ),
-          "|",
-          field(
-            "generator_or_condition",
-            commaSep1(
-              choice(
-                $.generator,
-                $.condition
-                // TODO: add letting statement support
-              )
-            )
-          ),
-          "]"
-        )
-      ),
-
-    generator: ($) =>
+    quantifier_expr: $ => prec(-5, seq(
+      field("operator", choice("forAll", "exists")),
+      field("variables", commaSep1($.identifier)),
       choice(
-        // i : int(1..5)
-        seq(
-          field("variable", choice($.identifier, $.tuple)),
-          ":",
-          field("domain", $.domain)
-        ),
-        // i <- [1,2,3]
-        seq(
-          field("variable", choice($.identifier, $.tuple)),
-          "<-",
-          field("collection", choice($.arithmetic_expr, $.identifier, $.matrix))
-        )
+        seq("in", field("collection", choice($.set_literal, $.matrix, $.tuple, $.record, $.identifier, $.tuple_matrix_record_index_or_slice))),
+        seq(":", field("domain", $.domain))
       ),
+      ".",
+      field("expression", choice($.bool_expr, $.comparison_expr))
+    )),
 
-    condition: ($) =>
-      field("expression", choice($.bool_expr, $.comparison_expr, $.atom)),
+    aggregate_expr: $ => prec(-5, seq(
+      field("operator", choice("sum", "min", "max")),
+      field("variables", commaSep1($.identifier)),
+      choice(
+        seq("in", field("collection", choice($.set_literal, $.matrix, $.tuple, $.record, $.identifier, $.tuple_matrix_record_index_or_slice))),
+        seq(":", field("domain", $.domain))
+      ),
+      ".",
+      field("expression", $.arithmetic_expr)
+    )),
 
-    record: ($) =>
+    from_solution: $ => seq(
+      "fromSolution",
+      "(",
+      field("variable", $.identifier),
+      ")"
+    ),
+
+    comparison_expr: $ => prec(5, prec.left(seq(
+      field("left", choice($.bool_expr, $.arithmetic_expr)), 
+      field("operator", choice("=", "!=", "<lex", "<=lex", ">lex", ">=lex", "<=", ">=", "<", ">")),
+      field("right", choice($.bool_expr, $.arithmetic_expr))
+    ))),
+
+    sub_bool_expr: $ => prec(10, seq("(", field("expression", choice($.bool_expr, $.comparison_expr, $.atom)), ")")),
+
+    set_operation_bool: $ => seq(
+      field("left", $.atom),
+      field("operator", choice("in", "subset", "subsetEq", "supset", "supsetEq")),
+      field("right", $.atom)
+    ),
+    
+    arithmetic_expr: $ => prec(3, choice(
+      field("atom", $.atom),
+      field("toInt_expr", $.toInt_expr),
+      field("negative_expression", $.negative_expr),
+      field("absolute_value", $.abs_value),
+      field("exponentiation", $.exponent),
+      field("product_expression", $.product_expr),
+      field("sum_expression", $.sum_expr),
+      field("sub_arith_expression", $.sub_arith_expr),
+      field("list_combining_expression_arith", $.list_combining_expr_arith),
+      field("aggregate_expression", $.aggregate_expr),
+    )),
+
+    atom: $ => prec(-1, choice(
+      field("constant", $.constant),
+      field("variable", $.identifier),
+      field("metavar", $.metavar),
+      field("tuple", $.tuple),
+      field("matrix", $.matrix),
+      field("comprehension", $.comprehension),
+      field("record", $.record),
+      field("from_solution", $.from_solution),
+      field("tuple_matrix_record_index_or_slice", $.tuple_matrix_record_index_or_slice),
+      field("set_literal", $.set_literal),
+      field("set_operation", $.set_operation),
+    )),
+
+    tuple: $ => prec(-5, seq(
+      "(",
+      field("element", $.arithmetic_expr),
+      ",",
+      field("element", commaSep1($.arithmetic_expr)),
+      ")"
+    )),
+
+    matrix: $ => seq(
+      "[",
+      optional(field("elements", commaSep1(choice($.bool_expr, $.arithmetic_expr, $.comparison_expr)))),
+      optional(seq(
+        ";",
+        field("domain", choice($.int_domain, $.bool_domain))
+      )),
+      "]"
+    ),
+
+    comprehension: $ => prec(1, seq(
+      "[",
+      field("expression", choice($.arithmetic_expr, $.bool_expr, $.comparison_expr)),
+      "|",
+      field("generator_or_condition", commaSep1(choice(
+        $.generator,
+        $.condition,
+        // TODO: add letting statement support
+      ))),
+      "]"
+    )),
+
+    generator: $ => choice(
+      // i : int(1..5)
       seq(
-        "record",
-        "{",
-        commaSep1(field("name_value_pair", $.name_value_pair)),
-        "}"
+        field("variable", choice($.identifier, $.tuple)),
+        ":",
+        field("domain", $.domain)
       ),
-
-    name_value_pair: ($) =>
+      // i <- [1,2,3]
       seq(
-        field("name", $.identifier),
-        "=",
-        field(
-          "value",
-          choice($.arithmetic_expr, $.bool_expr, $.comparison_expr, $.atom)
-        )
-      ),
+        field("variable", choice($.identifier, $.tuple)),
+        "<-",
+        field("collection", choice($.arithmetic_expr, $.identifier, $.matrix))
+      )
+    ),
 
-    tuple_matrix_record_index_or_slice: ($) =>
-      seq(
-        field("tuple_or_matrix", choice($.identifier, $.tuple, $.matrix)),
-        "[",
-        field("indices", $.indices),
-        "]"
-      ),
+    condition: $ => field("expression", choice($.bool_expr, $.comparison_expr)),
+
+    record: $ => seq(
+      "record",
+      "{",
+      commaSep1(field("name_value_pair", $.name_value_pair)),
+      "}"
+    ),
+
+    name_value_pair: $ => seq(
+      field("name", $.identifier),
+      "=",
+      field("value", choice($.arithmetic_expr, $.bool_expr, $.comparison_expr))
+    ),
+
+    tuple_matrix_record_index_or_slice: $ => seq(
+      field("tuple_or_matrix", choice($.identifier, $.tuple, $.matrix)),
+      "[",
+      field("indices", $.indices),
+      "]"
+    ),
 
     // TODO: add unary set operation support (powerSet)
-    set_operation: ($) =>
-      prec.left(
-        seq(
-          field("left", $.atom),
-          field("operator", choice("union", "intersect")),
-          field("right", $.atom)
-        )
-      ),
+    set_operation: $ => prec.left(seq(
+      field("left", $.atom),
+      field("operator", choice("union", "intersect")),
+      field("right", $.atom)
+    )),
 
     // binary_set_operation: $ => prec.left(seq(
     //   field("left", $.atom),
@@ -535,93 +380,50 @@ module.exports = grammar({
     //   field("argument", $.atom)
     // )),
 
-    indices: ($) =>
-      commaSep1(
-        choice(
-          field("index", choice($.arithmetic_expr, $.atom)),
-          field("null_index", $.null_index)
-        )
-      ),
+    indices: $ => commaSep1(choice(field("index", $.arithmetic_expr), field("null_index", $.null_index))),
 
-    null_index: ($) => "..",
+    null_index: $ => "..",
 
-    sub_arith_expr: ($) =>
-      seq("(", field("expression", $.arithmetic_expr), ")"),
+    sub_arith_expr: $ => seq("(", field("expression", $.arithmetic_expr), ")"),
 
-    negative_expr: ($) =>
-      prec(
-        15,
-        prec.left(
-          seq("-", field("expression", choice($.arithmetic_expr, $.atom)))
-        )
-      ),
+    negative_expr: $ => prec(15, prec.left(seq("-", field("expression", $.arithmetic_expr)))),
+    
+    abs_value: $ => prec(20, seq("|", field("expression", $.arithmetic_expr), "|")),
+    
+    exponent: $ => prec(18, prec.right(seq(
+      field("left", $.arithmetic_expr), 
+      field("operator", "**"),
+      field("right", $.arithmetic_expr)
+    ))),
 
-    abs_value: ($) =>
-      prec(
-        20,
-        seq("|", field("expression", choice($.arithmetic_expr, $.atom)), "|")
-      ),
+    product_expr: $ => prec(10, prec.left(seq(
+      field("left", $.arithmetic_expr), 
+      field("operator", $.mulitcative_op), 
+      field("right", $.arithmetic_expr)
+    ))),
+    
+    mulitcative_op: $ => choice("*", "/", "%"),
+    
+    sum_expr: $ => prec(1, prec.left(seq(
+      field("left", $.arithmetic_expr), 
+      field("operator", $.additive_op), 
+      field("right", $.arithmetic_expr)
+    ))),
 
-    exponent: ($) =>
-      prec(
-        18,
-        prec.right(
-          seq(
-            field("left", choice($.arithmetic_expr, $.atom)),
-            field("operator", "**"),
-            field("right", choice($.arithmetic_expr, $.atom))
-          )
-        )
-      ),
+    additive_op: $ => choice("+", "-"),
 
-    product_expr: ($) =>
-      prec(
-        10,
-        prec.left(
-          seq(
-            field("left", choice($.arithmetic_expr, $.atom)),
-            field("operator", $.mulitcative_op),
-            field("right", choice($.arithmetic_expr, $.atom))
-          )
-        )
-      ),
+    list_combining_expr_arith: $ => prec(-10, seq(
+      field("operator", choice("min", "max", "sum")),
+      "(",
+      field("arg", $.atom),
+      ")"
+    )),
 
-    mulitcative_op: ($) => choice("*", "/", "%"),
-
-    sum_expr: ($) =>
-      prec(
-        1,
-        prec.left(
-          seq(
-            field("left", choice($.arithmetic_expr, $.atom)),
-            field("operator", $.additive_op),
-            field("right", choice($.arithmetic_expr, $.atom))
-          )
-        )
-      ),
-
-    additive_op: ($) => choice("+", "-"),
-
-    list_combining_expr_arith: ($) =>
-      prec(
-        -10,
-        seq(
-          field("operator", choice("min", "max", "sum")),
-          "(",
-          field("arg", $.atom),
-          ")"
-        )
-      ),
-
-    dominance_relation: ($) =>
-      seq(
-        "dominanceRelation",
-        field(
-          "expression",
-          choice($.bool_expr, $.comparison_expr, $.arithmetic_expr, $.atom)
-        )
-      ),
-  },
+    dominance_relation: $ => seq(
+      "dominanceRelation",
+      field("expression", choice($.bool_expr, $.comparison_expr, $.arithmetic_expr)),
+    )
+  }
 });
 
 function commaSep1(rule) {
