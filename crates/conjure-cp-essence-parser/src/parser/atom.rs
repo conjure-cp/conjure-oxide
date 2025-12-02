@@ -63,7 +63,7 @@ fn parse_flatten(
     symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
 ) -> Result<Expression, EssenceParseError> {
     let expr_node = field!(node, "expression");
-    let expr = parse_atom(&expr_node, source_code, root, symbols_ptr.clone())?;
+    let expr = parse_atom(&expr_node, source_code, root, symbols_ptr)?;
 
     if node.child_by_field_name("depth").is_some() {
         let depth_node = field!(node, "depth");
