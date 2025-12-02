@@ -43,7 +43,7 @@ pub fn parse_atom(
             parse_abstract(node, source_code, symbols_ptr)
                 .map(|l| Expression::AbstractLiteral(Metadata::new(), l))
         }
-        "tuple_matrix_record_index_or_slice" => {
+        "index_or_slice" => {
             parse_index_or_slice(node, source_code, root, symbols_ptr)
         }
         // for now, assume is binary since powerset isn't implemented
@@ -64,7 +64,7 @@ fn parse_index_or_slice(
     symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
 ) -> Result<Expression, EssenceParseError> {
     let collection = parse_atom(
-        &field!(node, "tuple_or_matrix"),
+        &field!(node, "collection"),
         source_code,
         root,
         symbols_ptr.clone(),
