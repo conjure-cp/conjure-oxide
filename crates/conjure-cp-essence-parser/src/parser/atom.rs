@@ -67,10 +67,10 @@ fn parse_flatten(
 
     if node.child_by_field_name("depth").is_some() {
         let depth_node = field!(node, "depth");
-        let depth = parse_constant(&depth_node, source_code)?;
+        let depth = parse_int(&depth_node, source_code)?;
         let depth_expression = Expression::Atomic(
             Metadata::new(),
-            Atom::Literal(depth),
+            Atom::Literal(Literal::Int(depth)),
         );
         Ok(Expression::Flatten(
             Metadata::new(),
