@@ -27,8 +27,8 @@ pub enum Qualifier {
 #[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Hash)]
 pub struct ComprehensionLetting {
     #[serde_as(as = "DeclarationPtrFull")]
-    decl: DeclarationPtr,
-    expression: Expression,
+    pub decl: DeclarationPtr,
+    pub expression: Expression,
 }
 
 #[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Hash)]
@@ -41,7 +41,7 @@ pub enum Generator {
 #[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Hash)]
 pub struct DomainGenerator {
     #[serde_as(as = "DeclarationPtrFull")]
-    decl: DeclarationPtr,
+    pub decl: DeclarationPtr,
 }
 
 #[serde_as]
