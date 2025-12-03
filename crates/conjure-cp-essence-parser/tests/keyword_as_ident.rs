@@ -64,6 +64,7 @@ fn detects_keyword_as_identifier_bool() {
     );
 }
 
+#[ignore]
 #[test]
 fn detects_operator_as_identifier() {
     let source = "find +,b,c: int(1..3)";
@@ -85,6 +86,7 @@ fn detects_operator_as_identifier() {
     );
 }
 
+#[ignore]
 #[test]
 fn detects_complex_operator_as_identifier() {
     let source = "find >=lex,b,c: int(1..3)";

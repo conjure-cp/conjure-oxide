@@ -63,6 +63,7 @@ fn range_points_to_error_location() {
 }
 
 // not enforced in conjure
+#[ignore]
 #[test]
 fn domain_start_greater_than_end() {
     let source = "find x: int(10..1)";
@@ -83,5 +84,80 @@ fn domain_start_greater_than_end() {
         0,
         17,
         "Semantic Error: Start value greater than end value in 'domain'",
+    );
+}
+
+#[ignore]
+#[test]
+fn incorrect_type_for_equation() {
+    let source = "
+    letting y be false\n
+    find x: int(5..10)\n
+    such that 5 + y = 6";
+    let diagnostics = detect_semantic_errors(source);
+
+    assert_eq!(
+        diagnostics.len(),
+        1,
+        "Expected exactly one diagnostic for undefined variable"
+    );
+
+    let diag = &diagnostics[0];
+
+    check_diagnostic(
+        diag,
+        2,
+        14,
+        2,
+        15,
+        "Semantic Error: Incorrect type 'bool' for variable 'y', expected 'int'",
+    );
+}
+
+#[ignore]
+#[test]
+fn dividing_over_zero() {
+    let source = "find x: int(5..10)\nsuch that x/0 = 3";
+    let diagnostics = detect_semantic_errors(source);
+
+    assert_eq!(
+        diagnostics.len(),
+        1,
+        "Expected exactly one diagnostic for undefined variable"
+    );
+
+    let diag = &diagnostics[0];
+
+    check_diagnostic(
+        diag,
+        1,
+        10,
+        1,
+        13,
+        "Semantic Error: Division over zero attempted",
+    );
+}
+
+#[ignore]
+#[test]
+fn duplicate_declaration_of_variable() {
+    let source = "find x: int(1..10)\nfind x: int(2..3)";
+    let diagnostics = detect_semantic_errors(source);
+
+    assert_eq!(
+        diagnostics.len(),
+        1,
+        "Expected exactly one diagnostic for undefined variable"
+    );
+
+    let diag = &diagnostics[0];
+
+    check_diagnostic(
+        diag,
+        1,
+        5,
+        1,
+        6,
+        "Semantic Error: Redeclaration of variable 'x' which was previously defined",
     );
 }

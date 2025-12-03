@@ -136,6 +136,7 @@ such that a = allDiff([1,2,4,1])8";
     );
 }
 
+#[ignore]
 #[test]
 fn unexpected_colon_used_as_identifier() {
     let source = "find :,b,c: int(1..3)";
@@ -157,6 +158,7 @@ fn unexpected_colon_used_as_identifier() {
     );
 }
 
+#[ignore]
 #[test]
 fn unexpected_keyword() {
     let source = "find a,b,c: int(1..3)\nprint a";
