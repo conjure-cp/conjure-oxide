@@ -1,8 +1,8 @@
-<
+<!--
 status: draft
 author: Yi Xin Chong
 last updated: 3-12-2025 1:39am
->
+-->
 
 # LSP Diagnostics API syntactic and semantic testing
 ## Introduction
@@ -21,4 +21,4 @@ There are two types of error when trying to diagnose a given Essence file, which
 #### Undeclared variables
 #### Incorrect variable type for expression
 #### Unsafe division expression
-#### Redeclaration of variables
+#### Duplicate declaration of a variable
