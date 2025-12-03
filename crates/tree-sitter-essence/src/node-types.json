@@ -52,6 +52,10 @@
             "named": true
           },
           {
+            "type": "index_or_slice",
+            "named": true
+          },
+          {
             "type": "matrix",
             "named": true
           },
@@ -65,10 +69,6 @@
           },
           {
             "type": "tuple",
-            "named": true
-          },
-          {
-            "type": "tuple_matrix_record_index_or_slice",
             "named": true
           }
         ]
@@ -303,12 +303,32 @@
           }
         ]
       },
+      "flatten": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "flatten",
+            "named": true
+          }
+        ]
+      },
       "from_solution": {
         "multiple": false,
         "required": false,
         "types": [
           {
             "type": "from_solution",
+            "named": true
+          }
+        ]
+      },
+      "index_or_slice": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "index_or_slice",
             "named": true
           }
         ]
@@ -379,16 +399,6 @@
         "types": [
           {
             "type": "tuple",
-            "named": true
-          }
-        ]
-      },
-      "tuple_matrix_record_index_or_slice": {
-        "multiple": false,
-        "required": false,
-        "types": [
-          {
-            "type": "tuple_matrix_record_index_or_slice",
             "named": true
           }
         ]
@@ -880,6 +890,36 @@
     }
   },
   {
+    "type": "flatten",
+    "named": true,
+    "fields": {
+      "depth": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": ",",
+            "named": false
+          },
+          {
+            "type": "integer",
+            "named": true
+          }
+        ]
+      },
+      "expression": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "atom",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
     "type": "from_solution",
     "named": true,
     "fields": {
@@ -1060,6 +1100,48 @@
           "named": true
         }
       ]
+    }
+  },
+  {
+    "type": "index_or_slice",
+    "named": true,
+    "fields": {
+      "collection": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "flatten",
+            "named": true
+          },
+          {
+            "type": "identifier",
+            "named": true
+          },
+          {
+            "type": "matrix",
+            "named": true
+          },
+          {
+            "type": "record",
+            "named": true
+          },
+          {
+            "type": "tuple",
+            "named": true
+          }
+        ]
+      },
+      "indices": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "indices",
+            "named": true
+          }
+        ]
+      }
     }
   },
   {
@@ -1657,6 +1739,10 @@
             "named": true
           },
           {
+            "type": "index_or_slice",
+            "named": true
+          },
+          {
             "type": "matrix",
             "named": true
           },
@@ -1670,10 +1756,6 @@
           },
           {
             "type": "tuple",
-            "named": true
-          },
-          {
-            "type": "tuple_matrix_record_index_or_slice",
             "named": true
           }
         ]
@@ -2147,40 +2229,6 @@
     }
   },
   {
-    "type": "tuple_matrix_record_index_or_slice",
-    "named": true,
-    "fields": {
-      "indices": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "indices",
-            "named": true
-          }
-        ]
-      },
-      "tuple_or_matrix": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "identifier",
-            "named": true
-          },
-          {
-            "type": "matrix",
-            "named": true
-          },
-          {
-            "type": "tuple",
-            "named": true
-          }
-        ]
-      }
-    }
-  },
-  {
     "type": "variable_list",
     "named": true,
     "fields": {},
@@ -2373,6 +2421,10 @@
   },
   {
     "type": "find",
+    "named": false
+  },
+  {
+    "type": "flatten",
     "named": false
   },
   {

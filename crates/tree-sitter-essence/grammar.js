@@ -228,7 +228,7 @@ module.exports = grammar ({
       field("operator", choice("forAll", "exists")),
       field("variables", commaSep1($.identifier)),
       choice(
-        seq("in", field("collection", choice($.set_literal, $.matrix, $.tuple, $.record, $.identifier, $.tuple_matrix_record_index_or_slice))),
+        seq("in", field("collection", choice($.set_literal, $.matrix, $.tuple, $.record, $.identifier, $.index_or_slice))),
         seq(":", field("domain", $.domain))
       ),
       ".",
@@ -239,7 +239,7 @@ module.exports = grammar ({
       field("operator", choice("sum", "min", "max")),
       field("variables", commaSep1($.identifier)),
       choice(
-        seq("in", field("collection", choice($.set_literal, $.matrix, $.tuple, $.record, $.identifier, $.tuple_matrix_record_index_or_slice))),
+        seq("in", field("collection", choice($.set_literal, $.matrix, $.tuple, $.record, $.identifier, $.index_or_slice))),
         seq(":", field("domain", $.domain))
       ),
       ".",
@@ -289,9 +289,10 @@ module.exports = grammar ({
       field("comprehension", $.comprehension),
       field("record", $.record),
       field("from_solution", $.from_solution),
-      field("tuple_matrix_record_index_or_slice", $.tuple_matrix_record_index_or_slice),
+      field("index_or_slice", $.index_or_slice),
       field("set_literal", $.set_literal),
       field("set_operation", $.set_operation),
+      field("flatten", $.flatten)
     )),
 
     sub_atom_expr: $ => seq("(", field("expression", $.atom), ")"),
@@ -356,8 +357,8 @@ module.exports = grammar ({
       field("value", choice($.arithmetic_expr, $.bool_expr, $.comparison_expr, $.atom))
     ),
 
-    tuple_matrix_record_index_or_slice: $ => seq(
-      field("tuple_or_matrix", choice($.identifier, $.tuple, $.matrix)),
+    index_or_slice: $ => seq(
+      field("collection", choice($.identifier, $.tuple, $.matrix, $.record, $.flatten)),
       "[",
       field("indices", $.indices),
       "]"
@@ -380,6 +381,14 @@ module.exports = grammar ({
     //   "powerSet",
     //   field("argument", $.atom)
     // )),
+
+    flatten: $ => seq(
+      "flatten",
+      "(",
+      optional(field("depth", seq($.integer, ","))),
+      field("expression", $.atom),
+      ")"
+    ),
 
     indices: $ => commaSep1(choice(field("index", choice($.arithmetic_expr, $.atom)), field("null_index", $.null_index))),
 
