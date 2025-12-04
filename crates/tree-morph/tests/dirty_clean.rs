@@ -1,7 +1,5 @@
 use std::collections::HashMap;
-use std::sync::atomic::Ordering;
 
-use std::sync::atomic::AtomicUsize;
 use tracing_subscriber;
 use tree_morph::prelude::*;
 use tree_morph_macros::named_rule;
@@ -12,7 +10,6 @@ use uniplate::Uniplate;
 enum Expr {
     Add(Box<Expr>, Box<Expr>),
     Mul(Box<Expr>, Box<Expr>),
-    Sub(Box<Expr>, Box<Expr>),
     Val(i32),
 }
 
@@ -99,7 +96,13 @@ fn left_branch_clean() {
     for name in meta.attempted.keys() {
         let attempted = *meta.attempted.get(name).unwrap();
         let applicable = *meta.applicable.get(name).unwrap_or(&0);
-        println!("Rule: {}: {}/{} ({:.2}%)",name, applicable, attempted, applicable / attempted)
+        println!(
+            "Rule: {}: {}/{} ({:.2}%)",
+            name,
+            applicable,
+            attempted,
+            applicable / attempted
+        )
     }
 
     dbg!(expr);

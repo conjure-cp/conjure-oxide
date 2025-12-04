@@ -10,7 +10,6 @@ use crate::update::Update;
 
 use paste::paste;
 use std::fmt;
-use std::fmt::Debug;
 use tracing::{debug, info, instrument, trace};
 use uniplate::{Uniplate, tagged_zipper::TaggedZipper};
 
@@ -30,38 +29,7 @@ where
     pub(crate) selector: SelectorFn<T, M, R>,
 }
 
-impl<T, M, R> fmt::Debug for Engine<T, M, R>
-where
-    T: Uniplate,
-    R: Rule<T, M>,
-{
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("Engine")
-            .field("event_handlers", &self.event_handlers)
-            .field(
-                "rule_groups",
-                &format_args!(
-                    "\n{}",
-                    self.rule_groups
-                        .iter()
-                        .enumerate()
-                        .map(|(i, rules)| {
-                            let names: Vec<String> = rules
-                                .iter()
-                                .map(|rule| format!("  - {}", rule.name()))
-                                .collect();
-                            format!("Rule Group {}:\n{}", i, names.join("\n"))
-                        })
-                        .collect::<Vec<String>>()
-                        .join("\n\n")
-                ),
-            )
-            .field("selector", &self.selector)
-            .finish()
-    }
-}
-
-impl<T, M: fmt::Debug, R> Engine<T, M, R>
+impl<T, M, R> Engine<T, M, R>
 where
     T: Uniplate,
     R: Rule<T, M>,
@@ -225,6 +193,7 @@ where
             // Return here after every successful rule application
 
             for (level, rules) in self.rule_groups.iter().enumerate() {
+                debug!("Checking Level {} with {} Rules", level, rules.len());
                 // Try each rule group in the whole tree
 
                 while zipper.go_next_dirty(level).is_some() {
@@ -318,7 +287,6 @@ macro_rules! movement_fns {
 struct EngineZipper<'events, T, M, R>
 where
     T: Uniplate,
-    M: fmt::Debug,
     R: Rule<T, M>,
 {
     inner: TaggedZipper<T, EngineNodeState, fn(&T) -> EngineNodeState>,
@@ -326,25 +294,9 @@ where
     meta: M,
 }
 
-impl<'events, T, M, R> fmt::Debug for EngineZipper<'events, T, M, R>
-where
-    T: Uniplate,
-    M: Debug,
-    R: Rule<T, M>,
-{
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("EngineZipper")
-            .field("inner", &"TaggedZiper (Hidden, Part of Uniplate)")
-            .field("event_handlers", &self.event_handlers)
-            .field("meta", &self.meta)
-            .finish()
-    }
-}
-
 impl<'events, T, M, R> EngineZipper<'events, T, M, R>
 where
     T: Uniplate,
-    M: Debug,
     R: Rule<T, M>,
 {
     pub fn new(tree: T, meta: M, event_handlers: &'events EventHandlers<T, M, R>) -> Self {
@@ -399,7 +351,7 @@ where
     /// Mark the current focus as visited at the given level.
     /// Calling `go_next_dirty` with the same level will no longer yield this node.
     pub fn set_dirty_from(&mut self, level: usize) {
-        trace!("Setting dirty from level {}", level);
+        trace!("Setting level = {}", level);
         self.inner.tag_mut().set_dirty_from(level);
     }
 
@@ -415,7 +367,6 @@ where
 impl<T, M, R> From<EngineZipper<'_, T, M, R>> for (T, M)
 where
     T: Uniplate,
-    M: Debug,
     R: Rule<T, M>,
 {
     fn from(val: EngineZipper<'_, T, M, R>) -> Self {
