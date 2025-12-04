@@ -1,3 +1,5 @@
+[//]: # (Author: Jamie Melton)
+
 # Creating Documentation
 
 As an organisation, we want Conjure Oxide to be thoroughly documented so that new members of our growing team can integrate smoothly. Whether you are currently on a project or not, contributing to our documentation is essential to achieving this goal.
@@ -48,6 +50,11 @@ All unassigned child issues are available for anyone to work on!
 
 
 4. Once you are happy with your documentation, request a review from one or more other members of your team.
+
+   > **Important**
+   >
+   > Place any contributors to the documentation in a comment on the first line of the file.
+   > For instance, `[//]: # (Author: Jamie Melton)` has been placed at the top of this page.
 
 5. When your team is happy with this documentation, request a review from the current book editors.
 
