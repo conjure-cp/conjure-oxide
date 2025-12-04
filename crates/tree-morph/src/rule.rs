@@ -169,13 +169,27 @@ macro_rules! rule_fns {
     };
 }
 
+/// For debugging and tracing, it is helpful to see rules by a meaningful name. 
+/// We can create a rule using this struct and pass it into our list of rules directly, 
+/// or we can make use of the `named_rule` macro (see tree-morph-macros).
+///
+///  ```
+/// #[named_rule("CustomName")]
+/// fn my_rule(_: &mut Commands<Expr, Meta>, expr: &Expr, _: &Meta) -> Option<Expr> {
+///     // rule implementation
+/// }
+/// ```
+/// This macro will return a helper function called `my_rule` which returns the NamedRule for us to
+/// use. We can add this to our list of rules with `vec![my_rule()]`. 
+///
+/// If a name is not specified, the functions name will be it's identifier. 
 pub struct NamedRule<F> {
     name: &'static str,
     function: F,
 }
 
 impl<F> NamedRule<F> {
-    /// TODO: Document
+    /// Create a Rule with a specified name. 
     pub fn new(name: &'static str, function: F) -> Self {
         Self { name, function }
     }
