@@ -1,6 +1,6 @@
 # Creating Documentation
 
-As an organisation, we want Conjure Oxide to be as well documented as possible so that new members of our growing team can integrate themselves as smoothly as possible. Whether you are already on a project or not, contributing to our documentation is vital to achieve this goal.
+As an organisation, we want Conjure Oxide to be thoroughly documented so that new members of our growing team can integrate smoothly. Whether you are currently on a project or not, contributing to our documentation is essential to achieving this goal.
 
 To make creating and implementing documentation as smooth as possible, we ask that you follow the workflow as outlined below. 
 
@@ -8,35 +8,44 @@ To make creating and implementing documentation as smooth as possible, we ask th
 
 1. Identify the documentation you will write.
 
-    In many cases, contributors of documentation will be documenting projects that they are currently working on and/or have completed working on. That being said, there are still many opportunities to contribute to documentation if you are currently not on a project or looking for a small side project. In this case, please refer to [issue #1334](https://github.com/conjure-cp/conjure-oxide/issues/1334) which tracks all documentation writing issues. All unassigned child issues are free for anyone to contribute to! 
+   In many cases, documentation contributors will be writing about projects they are currently working on or have already completed. 
+However, there are still plenty of opportunities to contribute to documentation, even if you are not actively involved in a project or are seeking a small side project. 
+In such cases, please refer to [issue #1334](https://github.com/conjure-cp/conjure-oxide/issues/1334), which tracks all documentation writing tasks.
+All unassigned child issues are available for anyone to work on! 
 
-    There may also be a case where you discover that important or useful documentation is currently not present in this book. If you find this to be the case and would like to take this documentation on as a side project, we welcome you do to so!
+   You may come across instances where important or useful documentation is missing from this book. If you notice such gaps and would like to address them as a side project, we encourage you to do so!
 
-2. If the issue is not already present, open a child issue on our documentation tracking [issue #1334](https://github.com/conjure-cp/conjure-oxide/issues/1334)
+2. If the issue is not already present, open a child issue on our documentation tracking issue [#1334](https://github.com/conjure-cp/conjure-oxide/issues/1334).
 
-    Make the title of this issue the documentation you will be writing.
+    Make the title of this issue the name of the documentation you will be writing.
 
-3. Link your child issue to a pr request
-    #### File type and naming convention
+3. Link your child issue to a pr request.
 
-    All documentation written for the Conjure Oxide book uses markdown. If you are unsure about markdown and its syntax, we reccommend that you take time to read [this guide](https://www.markdownguide.org/getting-started/). 
+    #### File type and naming convention:
 
-    When naming the file, we ask that you keep the name as close as possible to the heading of the documentation and use '_' to represent whitespace. For instance, the title of this documentation page is 'Creating Documentation', so the files name is 'creating_documentation.md'.
+   All documentation for the Conjure Oxide book should be written in markdown. If you're unfamiliar with markdown or need a refresher on its syntax, we recommend reviewing [this guide](https://www.markdownguide.org/getting-started/). 
 
-    #### Where to place documentation
+   When naming your documentation file, match the file name as closely as possible to the heading of the documentation and use underscores ('_') to replace spaces. For example, if your documentation page is titled "Creating Documentation," name the file `creating_documentation.md`.
 
-    All documentation should be placed at some location inside of the `/docs/src` directory. This directory is set up such that each markdown file is in a directory that corresponds to the section it is found in. For instance, this file is located in `/docs/src/developers_guide/contributors_guide/`. 
+    #### Where to place documentation:
 
-    If you know where your documentation should go in the book, we ask that you place it there. That being said, there is no requirement for you to know exactly where your documenation should live - moving documentation around is very quick and simple to do. If you are uncertain where your documentation should live, we ask that you place the file in `/docs/src/misc` that way the documentation can be moved to a more appropriate spot later.
+   Place all documentation files in an appropriate location within the `/docs/src` directory. Each markdown file should be stored in the directory that matches its section in the documentation structure. For example, this file is located at `/docs/src/developers_guide/contributors_guide/`. 
 
-    #### Viewing documenation on the book
+   If you know where your documentation belongs in the book, please place it in the appropriate directory. However, it's not required to know the exact location—moving files is quick and easy. If you're unsure where your documentation should go, place the file in `/docs/src/misc` so it can be relocated later to a more suitable section.
+
+    #### Viewing documentation on the book:
 
     You must ensure that the documentation you write formats as expected in the book. To do so, follow these steps:
 
     - Open `/docs/src/SUMMARY.md`.
-    - If you have a definite location for your documenation, link the documentation in the appropriate section using the following format: `\[ Section title \]\(path/to/file\)`.
-    - If you are unsure where your documenation should reside, place the documentation at any location, **but remember to delete this link once you're happy with your documentations formatting**.
+    - If you have a definite location for your documentation, link the documentation in the appropriate section using the following format: `[ Section title ](path/to/file)`.
+    - If you are unsure where your documentation should reside, place the documentation at any location, **but remember to delete this link once you're happy with your document's formatting**.
     - In your terminal, ensure that you are in the `/docs` directory and type in the following command `mdbooks serve --open`
+
+   > **Important**
+   >
+   > Be sure to assign yourself and any other contributors working on the documentation to your child issue and pull request. This helps us keep track of who is responsible for each piece of documentation and ensures proper assignment.
+
 
 4. Once you are happy with your documentation, request a review from one or more other members of your team.
 
@@ -44,12 +53,11 @@ To make creating and implementing documentation as smooth as possible, we ask th
 
     The current book editors are: *JamieASM* and *HKhan-5*.
 
-6. Assuming no adjustments are required, the documentation will then be merged in and the child issue will be closed.
+6. Assuming no adjustments are required, the documentation will then be merged in, and the child issue will be closed.
 
 ---
 
 ## Still unsure?
 
-If you have any questions or concerns, please do not hesitate to get into contact with the current book editors (JamieASM and HKhan-5). 
-
-Furthermore, if you have any ideas on how this process can be improved or made smoother, feel free to share your ideas with them! 
+If you have any questions or concerns, please post them on the documentation discussion board. A book editor will respond to you promptly.
+Likewise, if you have suggestions for improving or streamlining this process, feel free to share your ideas with the book editors! Your feedback is always welcome. 
