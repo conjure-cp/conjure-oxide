@@ -180,7 +180,7 @@ macro_rules! rule_fns {
 /// }
 /// ```
 /// This macro will return a helper function called `my_rule` which returns the NamedRule for us to
-/// use. We can add this to our list of rules with `vec![my_rule()]`. 
+/// use. We can add this to our list of rules with `vec![my_rule]`. 
 ///
 /// If a name is not specified, the functions name will be it's identifier. 
 pub struct NamedRule<F> {
@@ -190,7 +190,7 @@ pub struct NamedRule<F> {
 
 impl<F> NamedRule<F> {
     /// Create a Rule with a specified name. 
-    pub fn new(name: &'static str, function: F) -> Self {
+    pub const fn new(name: &'static str, function: F) -> Self {
         Self { name, function }
     }
 }

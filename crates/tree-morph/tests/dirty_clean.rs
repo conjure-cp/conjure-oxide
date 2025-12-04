@@ -78,7 +78,7 @@ fn left_branch_clean() {
     };
 
     let engine = EngineBuilder::new()
-        .add_rule_group(vec![rule_eval_add(), rule_eval_mul()])
+        .add_rule_group(vec![rule_eval_add, rule_eval_mul])
         .add_before_rule(|node, meta, rule| {
             meta.num_applications += 1;
             let attempt = meta.attempted.entry(rule.name().to_owned()).or_insert(0);

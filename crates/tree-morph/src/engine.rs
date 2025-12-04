@@ -9,7 +9,6 @@ use crate::rule::apply_into_update;
 use crate::update::Update;
 
 use paste::paste;
-use std::fmt;
 use tracing::{debug, info, instrument, trace};
 use uniplate::{Uniplate, tagged_zipper::TaggedZipper};
 
