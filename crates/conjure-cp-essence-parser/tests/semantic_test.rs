@@ -134,7 +134,7 @@ fn dividing_over_zero() {
         10,
         1,
         13,
-        "Semantic Error: Division over zero attempted",
+        "Semantic Error: Unsafe division attempted",
     );
 }
 

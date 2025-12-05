@@ -18,7 +18,7 @@ fn detects_keyword_as_identifier_find() {
         5,
         0,
         9,
-        "Semantic Error: Keyword 'find' used as identifier",
+        "Keyword 'find' used as identifier",
     );
 }
 
@@ -39,7 +39,7 @@ fn detects_keyword_as_identifier_letting() {
         5,
         0,
         12,
-        "Semantic Error: Keyword 'letting' used as identifier",
+        "Keyword 'letting' used as identifier",
     );
 }
 
@@ -60,7 +60,7 @@ fn detects_keyword_as_identifier_bool() {
         5,
         0,
         9,
-        "Semantic Error: Keyword 'bool' used as identifier",
+        "Keyword 'bool' used as identifier",
     );
 }
 
@@ -82,7 +82,7 @@ fn detects_operator_as_identifier() {
         5,
         0,
         6,
-        "Semantic Error: Operator '+' used as identifier",
+        "Operator '+' used as identifier",
     );
 }
 
@@ -104,6 +104,6 @@ fn detects_complex_operator_as_identifier() {
         5,
         0,
         10,
-        "Semantic Error: Operator '>=lex' used as identifier",
+        "Operator '>=lex' used as identifier",
     );
 }

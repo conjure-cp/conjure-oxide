@@ -176,6 +176,6 @@ fn unexpected_keyword() {
         0,
         1,
         5,
-        "Unexpected keyword 'print'",
+        "Unexpected 'print'",
     );
 }
