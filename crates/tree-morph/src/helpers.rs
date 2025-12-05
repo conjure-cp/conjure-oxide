@@ -11,6 +11,7 @@ use std::{collections::VecDeque, fmt::Display, io::Write};
 
 use crate::prelude::{Rule, Update};
 use multipeek::multipeek;
+use tracing::debug;
 use uniplate::Uniplate;
 
 /// Returns the first [`Update`] if the iterator only yields one, otherwise calls `select`.
@@ -27,7 +28,10 @@ where
 {
     let mut rs = multipeek(rs);
     if rs.peek_nth(1).is_none() {
-        return rs.next().map(|(_, u)| u);
+        return rs.next().map(|(r, u)| {
+            debug!("Selected Rule '{}'", r.name());
+            u
+        });
     }
     select(t, &mut rs)
 }
@@ -50,7 +54,10 @@ where
     T: Uniplate,
     R: Rule<T, M>,
 {
-    rs.next().map(|(_, u)| u)
+    rs.next().map(|(r, u)| {
+        debug!("Selected Rule '{}'", r.name());
+        u
+    })
 }
 
 /// Panics when called by the engine, printing the original subtree and all applicable rules
