@@ -34,7 +34,7 @@ where
     R: Rule<T, M>,
 {
     #[instrument(skip(self, subtree, meta, rules))]
-    fn select_rule(&self, subtree: &T, meta: &mut M, rules: &Vec<R>) -> Option<Update<T, M>> {
+    fn select_rule(&self, subtree: &T, meta: &mut M, rules: &[R]) -> Option<Update<T, M>> {
         trace!("Beginning Rule Checks");
         let applicable = &mut rules.iter().filter_map(|rule| {
             self.event_handlers.trigger_before_rule(subtree, meta, rule);
