@@ -52,6 +52,17 @@ pub fn enumerate_indices(
         .multi_cartesian_product()
 }
 
+/// Returns the number of possible elements indexable by the given index domains.
+///
+/// In short, returns the product of the sizes of the given indices.
+pub fn num_elements(index_domains: &[Moo<GroundDomain>]) -> Result<u64, DomainOpError> {
+    let idx_dom_lengths = index_domains
+        .iter()
+        .map(|d| d.length())
+        .collect::<Result<Vec<_>, _>>()?;
+    Ok(idx_dom_lengths.iter().product())
+}
+
 /// Flattens a multi-dimensional matrix literal into a one-dimensional slice of its elements.
 ///
 /// The elements of the matrix are returned in row-major ordering (see [`enumerate_indices`]).
