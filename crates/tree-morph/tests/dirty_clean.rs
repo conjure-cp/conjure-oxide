@@ -46,7 +46,6 @@ struct Meta {
     num_applications: u32,
     attempted: HashMap<String, usize>,
     applicable: HashMap<String, usize>,
-    applied: HashMap<String, usize>,
 }
 
 #[test]
@@ -59,7 +58,7 @@ fn left_branch_clean() {
     // Top Level is +
     // Left Branch has two Nested Subtractions which do not have any rules
     // So atoms
-    // Right brigh has Mul and Add which DO have rules
+    // Right branch has Mul and Add which DO have rules
     let expr = Expr::Add(
         Box::new(Expr::Add(
             Box::new(Expr::Val(1)),
@@ -74,17 +73,16 @@ fn left_branch_clean() {
         num_applications: 0,
         attempted: HashMap::new(),
         applicable: HashMap::new(),
-        applied: HashMap::new(),
     };
 
     let engine = EngineBuilder::new()
         .add_rule_group(vec![rule_eval_add, rule_eval_mul])
-        .add_before_rule(|node, meta, rule| {
+        .add_before_rule(|_, meta, rule| {
             meta.num_applications += 1;
             let attempt = meta.attempted.entry(rule.name().to_owned()).or_insert(0);
             *attempt += 1
         })
-        .add_after_rule(|node, meta, rule, success| {
+        .add_after_rule(|_, meta, rule, success| {
             if success {
                 let attempt = meta.applicable.entry(rule.name().to_owned()).or_insert(0);
                 *attempt += 1
