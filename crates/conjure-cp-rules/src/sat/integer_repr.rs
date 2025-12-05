@@ -1,12 +1,12 @@
-use conjure_cp::ast::Expression as Expr;
 use conjure_cp::ast::SymbolTable;
+use conjure_cp::ast::{Expression as Expr, GroundDomain};
 use conjure_cp::rule_engine::{
     ApplicationError, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
     register_rule,
 };
 
 use conjure_cp::ast::Metadata;
-use conjure_cp::ast::{Atom, Domain, Literal, Moo, Range};
+use conjure_cp::ast::{Atom, Literal, Moo, Range};
 use conjure_cp::into_matrix_expr;
 
 use conjure_cp::essence_expr;
@@ -29,6 +29,7 @@ fn int_domain_to_expr(subject: Expr, ranges: &Vec<Range<i32>>) -> Expr {
             Range::Bounded(x, y) => output.push(essence_expr!("&value >= &x /\\ &value <= &y")),
             Range::UnboundedR(x) => output.push(essence_expr!(&value >= &x)),
             Range::UnboundedL(x) => output.push(essence_expr!(&value <= &x)),
+            Range::Unbounded => todo!(),
         }
     }
 
@@ -36,7 +37,6 @@ fn int_domain_to_expr(subject: Expr, ranges: &Vec<Range<i32>>) -> Expr {
 }
 
 /// This function confirms that all of the input expressions are SATInts, and returns vectors for each input of their bits
-#[allow(dead_code)]
 pub fn validate_sat_int_operands(exprs: Vec<Expr>) -> Result<Vec<Vec<Expr>>, ApplicationError> {
     let out: Result<Vec<Vec<_>>, _> = exprs
         .into_iter()
@@ -83,7 +83,8 @@ fn integer_decision_representation(expr: &Expr, symbols: &SymbolTable) -> Applic
     //     .ok_or(RuleNotApplicable)?;
 
     // thing we are representing must be an integer
-    let Domain::Int(ranges) = name.domain().unwrap() else {
+    let dom = name.resolved_domain().ok_or(RuleNotApplicable)?;
+    let GroundDomain::Int(ranges) = dom.as_ref() else {
         return Err(RuleNotApplicable);
     };
 
@@ -111,7 +112,7 @@ fn integer_decision_representation(expr: &Expr, symbols: &SymbolTable) -> Applic
         // add domain ranges as constraints if this is the first time the representation is added
         Ok(Reduction::new(
             cnf_int.clone(),
-            vec![int_domain_to_expr(cnf_int, &ranges)], // contains domain rules
+            vec![int_domain_to_expr(cnf_int, ranges)], // contains domain rules
             symbols,
         ))
     } else {

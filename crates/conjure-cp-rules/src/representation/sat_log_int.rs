@@ -1,4 +1,5 @@
 // https://conjure-cp.github.io/conjure-oxide/docs/conjure_core/representation/trait.Representation.html
+use conjure_cp::ast::GroundDomain;
 use conjure_cp::{
     ast::{Atom, DeclarationPtr, Domain, Expression, Literal, Metadata, Name, Range, SymbolTable},
     register_representation,
@@ -37,11 +38,11 @@ impl Representation for SATLogInt {
     fn init(name: &Name, symtab: &SymbolTable) -> Option<Self> {
         let domain = symtab.resolve_domain(name)?;
 
-        if !domain.is_finite().expect("should be finite?") {
+        if !domain.is_finite() {
             return None;
         }
 
-        let Domain::Int(ranges) = domain else {
+        let GroundDomain::Int(ranges) = domain.as_ref() else {
             return None;
         };
 
@@ -123,7 +124,10 @@ impl Representation for SATLogInt {
                 let decl = st.lookup(&name).unwrap();
                 (
                     name,
-                    Expression::Atomic(Metadata::new(), Atom::Reference(decl)),
+                    Expression::Atomic(
+                        Metadata::new(),
+                        Atom::Reference(conjure_cp::ast::Reference { ptr: decl }),
+                    ),
                 )
             })
             .collect())
@@ -132,7 +136,7 @@ impl Representation for SATLogInt {
     fn declaration_down(&self) -> Result<Vec<DeclarationPtr>, ApplicationError> {
         Ok(self
             .names()
-            .map(|name| DeclarationPtr::new_var(name, Domain::Bool))
+            .map(|name| DeclarationPtr::new_var(name, Domain::bool()))
             .collect())
     }
 

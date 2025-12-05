@@ -1,5 +1,7 @@
 #![allow(clippy::legacy_numeric_constants)]
+use std::cell::RefCell;
 use std::collections::BTreeSet;
+use std::rc::Rc;
 
 use tree_sitter::Node;
 
@@ -14,7 +16,7 @@ use conjure_cp_core::ast::{Name, SymbolTable};
 pub fn parse_letting_statement(
     letting_statement: Node,
     source_code: &str,
-    existing_symbols: Option<&SymbolTable>,
+    existing_symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
 ) -> Result<SymbolTable, EssenceParseError> {
     let mut symbol_table = SymbolTable::new();
 
@@ -40,17 +42,18 @@ pub fn parse_letting_statement(
                         expr_or_domain,
                         source_code,
                         &letting_statement,
-                        existing_symbols,
+                        existing_symbols_ptr.clone(),
                     )?,
                 ));
             }
         }
         "domain" => {
             for name in temp_symbols {
-                let domain = parse_domain(expr_or_domain, source_code)?;
+                let domain =
+                    parse_domain(expr_or_domain, source_code, existing_symbols_ptr.clone())?;
 
                 // If it's a record domain, add the field names to the symbol table
-                if let conjure_cp_core::ast::Domain::Record(ref entries) = domain {
+                if let Some(entries) = domain.as_record() {
                     for entry in entries {
                         // Add each field name as a record field declaration
                         symbol_table.insert(DeclarationPtr::new_record_field(entry.clone()));

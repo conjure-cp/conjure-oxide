@@ -14,11 +14,14 @@ use conjure_cp::ast::{Domain, SymbolTable};
 use crate::utils::is_literal;
 
 fn create_bool_aux(symbols: &mut SymbolTable) -> Expr {
-    let name = symbols.gensym(&Domain::Bool);
+    let name = symbols.gensym(&Domain::bool());
 
     symbols.insert(name.clone());
 
-    Expr::Atomic(Metadata::new(), Atom::Reference(name))
+    Expr::Atomic(
+        Metadata::new(),
+        Atom::Reference(conjure_cp::ast::Reference::new(name)),
+    )
 }
 
 fn create_clause(exprs: Vec<Expr>) -> Option<CnfClause> {
@@ -246,7 +249,10 @@ pub fn tseytin_xor(
 
 // BOOLEAN SAT ENCODING RULES:
 
-register_rule_set!("SAT", ("Base"), (SolverFamily::Sat));
+register_rule_set!("SAT", ("Base"), |f: &SolverFamily| matches!(
+    f,
+    SolverFamily::Sat
+));
 
 /// Converts a single boolean atom to a clause
 ///
@@ -259,16 +265,31 @@ register_rule_set!("SAT", ("Base"), (SolverFamily::Sat));
 /// ```
 #[register_rule(("SAT", 8400))]
 fn remove_single_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
-    let Expr::Atomic(_, atom) = expr else {
+    // The single atom must not be within another expression
+    let Expr::Root(_, children) = expr else {
         return Err(RuleNotApplicable);
     };
 
-    let Atom::Reference(_) = atom else {
+    // Find the position of the first reference atom with boolean domain
+    let Some(pos) = children.iter().position(
+        |e| matches!(e, Expr::Atomic(_, Atom::Reference(x)) if x.domain().is_some_and(|d| d.is_bool())),
+    ) else {
         return Err(RuleNotApplicable);
     };
 
-    let new_clauses = vec![CnfClause::new(vec![expr.clone()])];
-    let new_expr = essence_expr!(true);
+    // Clone the children since expr is borrowed immutably
+    let mut new_children = children.clone();
+
+    let removed = new_children.remove(pos);
+
+    let new_clauses = vec![CnfClause::new(vec![removed])];
+
+    // If now empty, replace with `true`
+    if new_children.is_empty() {
+        new_children.push(essence_expr!(true));
+    }
+
+    let new_expr = Expr::Root(Metadata::new(), new_children);
 
     Ok(Reduction::cnf(new_expr, new_clauses, symbols.clone()))
 }

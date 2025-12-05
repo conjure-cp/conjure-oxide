@@ -1,10 +1,16 @@
 use conjure_cp::{
-    ast::Metadata,
-    ast::{Atom, Domain, Expression as Expr, Name, SubModel, SymbolTable, serde::HasId},
+    ast::{
+        Atom, Expression as Expr, GroundDomain, Metadata, Name, SubModel, SymbolTable, serde::HasId,
+    },
     bug,
     representation::Representation,
     rule_engine::{
         ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
+        register_rule_set,
+    },
+    solver::{
+        SolverFamily,
+        adaptors::smt::{MatrixTheory, TheoryConfig},
     },
 };
 use itertools::Itertools;
@@ -12,10 +18,21 @@ use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 use uniplate::Biplate;
+
+register_rule_set!("Representations", ("Base"), |f: &SolverFamily| matches!(
+    f,
+    SolverFamily::Sat
+        | SolverFamily::Minion
+        | SolverFamily::Smt(TheoryConfig {
+            matrices: MatrixTheory::Atomic,
+            ..
+        })
+));
+
 // special case rule to select representations for matrices in one go.
 //
 // we know that they only have one possible representation, so this rule adds a representation for all matrices in the model.
-#[register_rule(("Base", 8001))]
+#[register_rule(("Representations", 8001))]
 fn select_representation_matrix(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Root(_, _) = expr else {
         return Err(RuleNotApplicable);
@@ -30,18 +47,18 @@ fn select_representation_matrix(expr: &Expr, symbols: &SymbolTable) -> Applicati
             decl.as_var().map(|x| (n, id, x.clone()))
         })
         .filter(|(_, _, var)| {
-            let Domain::Matrix(valdom, indexdoms) = &var.domain else {
+            let Some((valdom, indexdoms)) = var.domain.as_matrix_ground() else {
                 return false;
             };
 
             // TODO: loosen these requirements once we are able to
-            if !matches!(valdom.as_ref(), Domain::Bool | Domain::Int(_)) {
+            if !matches!(valdom.as_ref(), GroundDomain::Bool | GroundDomain::Int(_)) {
                 return false;
             }
 
             if indexdoms
                 .iter()
-                .any(|x| !matches!(x, Domain::Bool | Domain::Int(_)))
+                .any(|x| !matches!(x.as_ref(), GroundDomain::Bool | GroundDomain::Int(_)))
             {
                 return false;
             }
@@ -118,7 +135,7 @@ fn select_representation_matrix(expr: &Expr, symbols: &SymbolTable) -> Applicati
     }
 }
 
-#[register_rule(("Base", 8000))]
+#[register_rule(("Representations", 8000))]
 fn select_representation(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     // thing we are representing must be a reference
     let Expr::Atomic(_, Atom::Reference(decl)) = expr else {
@@ -129,7 +146,7 @@ fn select_representation(expr: &Expr, symbols: &SymbolTable) -> ApplicationResul
 
     // thing we are representing must be a variable
     {
-        decl.as_var().ok_or(RuleNotApplicable)?;
+        decl.ptr().as_var().ok_or(RuleNotApplicable)?;
     }
 
     if !needs_representation(&name, symbols) {
@@ -158,11 +175,14 @@ fn select_representation(expr: &Expr, symbols: &SymbolTable) -> ApplicationResul
     //
     //
     // see: issue #932
-    let mut decl = decl.clone().detach();
-    decl.replace_name(new_name);
+    let mut decl_ptr = decl.clone().into_ptr().detach();
+    decl_ptr.replace_name(new_name);
 
     Ok(Reduction::with_symbols(
-        Expr::Atomic(Metadata::new(), Atom::Reference(decl)),
+        Expr::Atomic(
+            Metadata::new(),
+            Atom::Reference(conjure_cp::ast::Reference::new(decl_ptr)),
+        ),
         symbols,
     ))
 }
@@ -182,14 +202,16 @@ fn needs_representation(name: &Name, symbols: &SymbolTable) -> bool {
 }
 
 /// Returns whether `domain` needs representing.
-fn domain_needs_representation(domain: &Domain) -> bool {
+fn domain_needs_representation(domain: &GroundDomain) -> bool {
     // very simple implementation for nows
     match domain {
-        Domain::Bool | Domain::Int(_) => false,
-        Domain::Matrix(_, _) => false, // we special case these elsewhere
-        Domain::Set(_, _) | Domain::Tuple(_) | Domain::Record(_) => true,
-        Domain::Reference(_) => unreachable!("domain should be resolved"),
-        Domain::Empty(_) => false, // _ => false,
+        GroundDomain::Bool | GroundDomain::Int(_) => false,
+        GroundDomain::Matrix(_, _) => false, // we special case these elsewhere
+        GroundDomain::Set(_, _)
+        | GroundDomain::Tuple(_)
+        | GroundDomain::Record(_)
+        | GroundDomain::Function(_, _, _) => true,
+        GroundDomain::Empty(_) => false,
     }
 }
 
@@ -207,16 +229,20 @@ fn get_or_create_representation(
 ) -> Option<Vec<Box<dyn Representation>>> {
     // TODO: pick representations recursively for nested abstract domains: e.g. sets in sets.
 
-    match symbols.resolve_domain(name).unwrap() {
-        Domain::Set(_, _) => None, // has no representations yet!
-        Domain::Tuple(elem_domains) => {
-            if elem_domains.iter().any(domain_needs_representation) {
+    let dom = symbols.resolve_domain(name).unwrap();
+    match dom.as_ref() {
+        GroundDomain::Set(_, _) => None, // has no representations yet!
+        GroundDomain::Tuple(elem_domains) => {
+            if elem_domains
+                .iter()
+                .any(|d| domain_needs_representation(d.as_ref()))
+            {
                 bug!("representing nested abstract domains is not implemented");
             }
 
             symbols.get_or_add_representation(name, &["tuple_to_atom"])
         }
-        Domain::Record(entries) => {
+        GroundDomain::Record(entries) => {
             if entries
                 .iter()
                 .any(|entry| domain_needs_representation(&entry.domain))

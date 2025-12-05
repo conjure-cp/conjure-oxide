@@ -92,11 +92,14 @@ where
         directions: [up, down, right]
     }
 
+    /// Register an event handler to be called before attempting a rule
     pub fn add_before_rule(mut self, handler: fn(&T, &mut M, &R)) -> Self {
         self.event_handlers.add_before_rule(handler);
         self
     }
 
+    /// Register an event handler to be called after attempting a rule
+    /// The boolean signifies whether the rule is applicable
     pub fn add_after_rule(mut self, handler: fn(&T, &mut M, &R, bool)) -> Self {
         self.event_handlers.add_after_rule(handler);
         self

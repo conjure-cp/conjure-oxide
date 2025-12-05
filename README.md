@@ -48,6 +48,9 @@ The following crates define the `conjure-oxide` system:
   rules used by `conjure-oxide`.
 - [`tests-integration`](./tests-integration) is an internal crate containing
   integration tests for `conjure-oxide`.
+- [`conjure-cp-lsp`](./crates/conjure-cp-lsp/) implements the language server
+  for use in a VSCode extension (as outlined in Language Server Protocol) for
+  `conjure-oxide`.
 
 ### Ecosystem crates
 
@@ -72,7 +75,7 @@ but are kept in their own repositories:
 ## Licence
 
 This project is being produced by staff and students of University of St
-Andrews, and is licenced under the [Mozilla Public Licence 2.0](./LICENCE).
+Andrews, and is licenced under the [Mozilla Public Licence 2.0](./LICENSE).
 
 <!-- vim: cc=80
 -->

@@ -5,6 +5,8 @@ use conjure_cp::rule_engine::get_rules_grouped;
 use conjure_cp::defaults::DEFAULT_RULE_SETS;
 use conjure_cp::parse::tree_sitter::parse_essence_file_native;
 use conjure_cp::rule_engine::rewrite_naive;
+use conjure_cp::solver::Solver;
+use conjure_cp::solver::adaptors::smt::TheoryConfig;
 use conjure_cp::solver::adaptors::*;
 use conjure_cp_cli::utils::testing::{normalize_solutions_for_comparison, read_human_rule_trace};
 use glob::glob;
@@ -14,7 +16,7 @@ use std::env;
 use std::error::Error;
 use std::fs;
 use std::fs::File;
-use tracing::{Level, Metadata as OtherMetadata, span};
+use tracing::{Level, span};
 use tracing_subscriber::{
     Layer, Registry, filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt,
 };
@@ -37,7 +39,8 @@ use conjure_cp_cli::utils::conjure::solutions_to_json;
 use conjure_cp_cli::utils::conjure::{get_solutions, get_solutions_from_conjure};
 use conjure_cp_cli::utils::testing::save_stats_json;
 use conjure_cp_cli::utils::testing::{
-    read_model_json, read_solutions_json, save_model_json, save_solutions_json,
+    REWRITE_SERIALISED_JSON_MAX_LINES, read_model_json, read_model_json_prefix,
+    read_solutions_json, save_model_json, save_solutions_json,
 };
 #[allow(clippy::single_component_path_imports, unused_imports)]
 use conjure_cp_rules;
@@ -50,9 +53,8 @@ use serde::Deserialize;
 struct TestConfig {
     extra_rewriter_asserts: Vec<String>,
 
-    parse_model_default: bool, // Stage 1a: Reads and verifies the Essence model file
-    enable_native_parser: bool, // Stage 1b: Runs the native parser if enabled
-    apply_rewrite_rules: bool, // Stage 2a: Applies predefined rules to the model
+    enable_native_parser: bool, // Stage 1a: Use the native parser instead of the legacy parser
+    apply_rewrite_rules: bool,  // Stage 2a: Applies predefined rules to the model
     enable_extra_validation: bool, // Stage 2b: Runs additional validation checks
 
     // NOTE: when adding a new solver config, make sure to update num_solvers_enabled!
@@ -77,12 +79,11 @@ impl Default for TestConfig {
             solve_with_smt: false,
             enable_morph_impl: false,
             enable_rewriter_impl: true,
-            parse_model_default: true,
             enable_native_parser: true,
             apply_rewrite_rules: true,
             enable_extra_validation: false,
             solve_with_minion: true,
-            compare_solver_solutions: false,
+            compare_solver_solutions: true,
             validate_rule_traces: true,
         }
     }
@@ -94,10 +95,6 @@ fn env_var_override_bool(key: &str, default: bool) -> bool {
 impl TestConfig {
     fn merge_env(self) -> Self {
         Self {
-            parse_model_default: env_var_override_bool(
-                "PARSE_MODEL_DEFAULT",
-                self.parse_model_default,
-            ),
             enable_morph_impl: env_var_override_bool("ENABLE_MORPH_IMPL", self.enable_morph_impl),
             enable_naive_impl: env_var_override_bool("ENABLE_NAIVE_IMPL", self.enable_naive_impl),
             enable_native_parser: env_var_override_bool(
@@ -203,8 +200,8 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
 /// This function operates in multiple stages:
 ///
 /// - **Parsing Stage**
-///   - **Stage 1a (Default)**: Reads the Essence model file and verifies that it parses correctly.
-///   - **Stage 1b (Optional)**: Runs the native parser if explicitly enabled.
+///   - **Stage 1a (Default)**: Reads the Essence model file and verifies that it parses correctly using the native parser.
+///   - **Stage 1b (Optional)**: Reads the Essence model file and verifies that it parses correctly using the legacy parser.
 ///
 /// - **Rewrite Stage**
 ///   - **Stage 2a (Default)**: Applies a set of rules to the parsed model and validates the result.
@@ -236,15 +233,6 @@ fn integration_test_inner(
     let accept = env::var("ACCEPT").unwrap_or("false".to_string()) == "true";
     let verbose = env::var("VERBOSE").unwrap_or("false".to_string()) == "true";
 
-    // When running accept=true, only regenerate the expected files for these tests if the test
-    // fails.
-    //
-    // This reduces unnecessary git diffs when only the id of items in a model changes. These
-    // change every run of the tester, but do not change the correctness of the model.
-    let mut parsed_model_dirty = false;
-    let mut parsed_native_model_dirty = false;
-    let mut rewritten_model_dirty = false;
-
     if verbose {
         println!("Running integration test for {path}/{essence_base}, ACCEPT={accept}");
     }
@@ -267,30 +255,29 @@ fn integration_test_inner(
     // File path
     let file_path = format!("{path}/{essence_base}.{extension}");
 
-    // Stage 1a: Parse the model using the normal parser (run unless explicitly disabled)
-    let parsed_model = if config.parse_model_default {
-        let parsed = parse_essence_file(&file_path, context.clone())?;
+    // Stage 1a: Parse the model using the selected parser
+    let parsed_model = if config.enable_native_parser {
+        let model = parse_essence_file_native(&file_path, context.clone())?;
         if verbose {
-            println!("Parsed model: {parsed:#?}");
+            println!("Parsed model (native): {model:#?}");
         }
-        save_model_json(&parsed, path, essence_base, "parse")?;
-        Some(parsed)
-    } else {
-        None
-    };
-
-    // Stage 1b: Run native parser (only if explicitly enabled)
-    let mut model_native = None;
-    if config.enable_native_parser {
-        let mn = parse_essence_file_native(&file_path, context.clone())?;
-        save_model_json(&mn, path, essence_base, "parse")?;
-        model_native = Some(mn);
+        save_model_json(&model, path, essence_base, "parse")?;
 
         {
             let mut ctx = context.as_ref().write().unwrap();
             ctx.file_name = Some(format!("{path}/{essence_base}.{extension}"));
         }
-    }
+
+        model
+    // Stage 1b: Parse the model using the legacy parser
+    } else {
+        let model = parse_essence_file(&file_path, context.clone())?;
+        if verbose {
+            println!("Parsed model (legacy): {model:#?}");
+        }
+        save_model_json(&model, path, essence_base, "parse")?;
+        model
+    };
 
     // Stage 2a: Rewrite the model using the rule engine (run unless explicitly disabled)
     let rewritten_model = if config.apply_rewrite_rules {
@@ -299,14 +286,14 @@ fn integration_test_inner(
         let solver_fam = if config.solve_with_sat {
             SolverFamily::Sat
         } else if config.solve_with_smt {
-            SolverFamily::Smt
+            SolverFamily::Smt(TheoryConfig::default())
         } else {
             SolverFamily::Minion
         };
 
         let rule_sets = resolve_rule_sets(solver_fam, DEFAULT_RULE_SETS)?;
 
-        let mut model = parsed_model.expect("Model must be parsed in 1a");
+        let mut model = parsed_model;
 
         let rewritten = if config.enable_naive_impl {
             rewrite_naive(&model, &rule_sets, false, false)?
@@ -356,66 +343,52 @@ fn integration_test_inner(
         }
     }
 
-    // Stage 3a: Run the model through the Minion solver (run unless explicitly disabled)
-    let solutions = if config.solve_with_minion {
-        let solved = get_solutions(
-            Minion::default(),
-            rewritten_model
-                .as_ref()
-                .expect("Rewritten model must be present in 2a")
-                .clone(),
-            0,
-            &None,
-        )?;
-        let solutions_json =
-            save_solutions_json(&solved, path, essence_base, SolverFamily::Minion)?;
-        if verbose {
-            println!("Minion solutions: {solutions_json:#?}");
-        }
-        Some(solved)
+    let solver_input_file = env::var("OXIDE_TEST_SAVE_INPUT_FILE").ok().map(|_| {
+        let name = format!("{essence_base}.generated-input.txt");
+        Path::new(path).join(Path::new(&name))
+    });
+
+    let solver = if config.solve_with_minion {
+        Some(Solver::new(Minion::default()))
     } else if config.solve_with_sat {
-        let solved = get_solutions(
-            Sat::default(),
-            rewritten_model
-                .as_ref()
-                .expect("Rewritten model must be present in 2a")
-                .clone(),
-            0,
-            &None,
-        )?;
-        let solutions_json = save_solutions_json(&solved, path, essence_base, SolverFamily::Sat)?;
-        if verbose {
-            println!("SAT solutions: {solutions_json:#?}");
-        }
-        Some(solved)
+        Some(Solver::new(Sat::default()))
     } else if config.solve_with_smt {
-        let solved = get_solutions(
-            Smt::default(),
-            rewritten_model
-                .as_ref()
-                .expect("Rewritten model must be present in 2a")
-                .clone(),
-            0,
-            &None,
-        )?;
-        let solutions_json = save_solutions_json(&solved, path, essence_base, SolverFamily::Smt)?;
-        if verbose {
-            println!("SMT solutions: {solutions_json:#?}");
-        }
-        Some(solved)
+        Some(Solver::new(Smt::default()))
     } else {
         None
     };
 
+    let solutions = if let Some(solver) = solver {
+        let name = solver.get_name();
+        let family = solver.get_family();
+
+        let solved = get_solutions(
+            solver,
+            rewritten_model
+                .as_ref()
+                .expect("Rewritten model must be present in 2a")
+                .clone(),
+            0,
+            &solver_input_file,
+        )?;
+        let solutions_json = save_solutions_json(&solved, path, essence_base, family)?;
+        if verbose {
+            println!("{name} solutions: {solutions_json:#?}");
+        }
+        solved
+    } else {
+        println!("Warning: no solver specified");
+        Vec::new()
+    };
+
     // Stage 3b: Check solutions against Conjure (only if explicitly enabled)
-    if config.compare_solver_solutions || accept && config.num_solvers_enabled() > 0 {
+    if config.compare_solver_solutions && config.num_solvers_enabled() > 0 {
         let conjure_solutions: Vec<BTreeMap<Name, Literal>> = get_solutions_from_conjure(
             &format!("{path}/{essence_base}.{extension}"),
             Arc::clone(&context),
         )?;
 
-        let username_solutions =
-            normalize_solutions_for_comparison(solutions.as_ref().expect("Solutions required"));
+        let username_solutions = normalize_solutions_for_comparison(&solutions);
         let conjure_solutions = normalize_solutions_for_comparison(&conjure_solutions);
 
         let mut conjure_solutions_json = solutions_to_json(&conjure_solutions);
@@ -430,30 +403,14 @@ fn integration_test_inner(
         );
     }
 
-    // Before testing against the generated tests, if the generated tests don't exist, make them.
-    //
-    // We rewrite out-of-date tests (if necessary) after testing them.
+    // When ACCEPT=true, copy all generated files to expected
     if accept {
-        // Overwrite expected parse and rewrite models if enabled
-        if config.enable_native_parser
-            && !expected_exists_for(path, essence_base, "parse", "serialised.json")
-        {
-            model_native.clone().expect("model_native should exist");
-            copy_generated_to_expected(path, essence_base, "parse", "serialised.json")?;
-        }
-        if config.parse_model_default
-            && !expected_exists_for(path, essence_base, "parse", "serialised.json")
-        {
-            copy_generated_to_expected(path, essence_base, "parse", "serialised.json")?;
-        }
-        if config.apply_rewrite_rules
-            && !expected_exists_for(path, essence_base, "rewrite", "serialised.json")
-        {
+        copy_generated_to_expected(path, essence_base, "parse", "serialised.json")?;
+
+        if config.apply_rewrite_rules {
             copy_generated_to_expected(path, essence_base, "rewrite", "serialised.json")?;
         }
 
-        // Always overwrite these ones. Unlike the rest, we don't need to selectively do these
-        // based on the test results, so they don't get done later.
         if config.solve_with_minion {
             copy_generated_to_expected(path, essence_base, "minion", "solutions.json")?;
         } else if config.solve_with_sat {
@@ -468,108 +425,49 @@ fn integration_test_inner(
         }
     }
 
-    // Check Stage 1b (native parser)
-    if config.enable_native_parser {
-        let expected_model = read_model_json(&context, path, essence_base, "expected", "parse");
-
-        // A JSON reading error could just mean that the ast has changed since the file was
-        // generated.
-        //
-        // When ACCEPT=true, regenerate the json instead of failing the test.
-        match expected_model {
-            Err(_) if accept => {
-                parsed_native_model_dirty = true;
-            }
-            Err(e) => {
-                return Err(Box::new(e));
-            }
-            Ok(expected_model) => {
-                let model_native = model_native
-                    .clone()
-                    .expect("model_native should exist here");
-                if accept {
-                    parsed_native_model_dirty = model_native != expected_model;
-                } else {
-                    assert_eq!(model_native, expected_model);
-                }
-            }
-        }
-    }
-
-    // Check Stage 1a (parsed model)
-    if config.parse_model_default {
-        let expected_model = read_model_json(&context, path, essence_base, "expected", "parse");
-        let model_from_file = read_model_json(&context, path, essence_base, "generated", "parse");
-
-        // A JSON reading error could just mean that the ast has changed since the file was
-        // generated.
-        //
-        // When ACCEPT=true, regenerate the json instead of failing the test.
-        match (expected_model, model_from_file) {
-            (Err(_), _) | (_, Err(_)) if accept => {
-                parsed_model_dirty = true;
-            }
-
-            (Err(e), _) => {
-                return Err(Box::new(e));
-            }
-
-            (_, Err(e)) => {
-                return Err(Box::new(e));
-            }
-
-            (Ok(expected_model), Ok(model_from_file)) if accept => {
-                parsed_model_dirty = model_from_file != expected_model;
-            }
-
-            (Ok(expected_model), Ok(model_from_file)) => {
-                assert_eq!(model_from_file, expected_model);
-            }
-        }
-    }
+    // Check Stage 1: Compare parsed model with expected
+    let expected_model = read_model_json(&context, path, essence_base, "expected", "parse")?;
+    let model_from_file = read_model_json(&context, path, essence_base, "generated", "parse")?;
+    assert_eq!(model_from_file, expected_model);
 
     // Check Stage 2a (rewritten model)
     if config.apply_rewrite_rules {
-        let expected_model = read_model_json(&context, path, essence_base, "expected", "rewrite");
-        // A JSON reading error could just mean that the ast has changed since the file was
-        // generated.
-        //
-        // When ACCEPT=true, regenerate the json instead of failing the test.
-        match expected_model {
-            Err(_) if accept => {
-                rewritten_model_dirty = true;
-            }
-            Err(e) => {
-                return Err(Box::new(e));
-            }
-            Ok(expected_model) => {
-                let rewritten_model =
-                    rewritten_model.expect("Rewritten model must be present in 2a");
-
-                if accept {
-                    rewritten_model_dirty = rewritten_model != expected_model;
-                } else {
-                    assert_eq!(rewritten_model, expected_model);
-                }
-            }
-        }
+        let expected_rewrite = read_model_json_prefix(
+            path,
+            essence_base,
+            "expected",
+            "rewrite",
+            REWRITE_SERIALISED_JSON_MAX_LINES,
+        )?;
+        let generated_rewrite = read_model_json_prefix(
+            path,
+            essence_base,
+            "generated",
+            "rewrite",
+            REWRITE_SERIALISED_JSON_MAX_LINES,
+        )?;
+        assert_eq!(generated_rewrite, expected_rewrite);
     }
 
     // Check Stage 3a (solutions)
     if config.solve_with_minion {
         let expected_solutions_json =
             read_solutions_json(path, essence_base, "expected", SolverFamily::Minion)?;
-        let username_solutions_json = solutions_to_json(solutions.as_ref().unwrap_or(&vec![]));
+        let username_solutions_json = solutions_to_json(&solutions);
         assert_eq!(username_solutions_json, expected_solutions_json);
     } else if config.solve_with_sat {
         let expected_solutions_json =
             read_solutions_json(path, essence_base, "expected", SolverFamily::Sat)?;
-        let username_solutions_json = solutions_to_json(solutions.as_ref().unwrap_or(&vec![]));
+        let username_solutions_json = solutions_to_json(&solutions);
         assert_eq!(username_solutions_json, expected_solutions_json);
     } else if config.solve_with_smt {
-        let expected_solutions_json =
-            read_solutions_json(path, essence_base, "expected", SolverFamily::Smt)?;
-        let username_solutions_json = solutions_to_json(solutions.as_ref().unwrap_or(&vec![]));
+        let expected_solutions_json = read_solutions_json(
+            path,
+            essence_base,
+            "expected",
+            SolverFamily::Smt(TheoryConfig::default()),
+        )?;
+        let username_solutions_json = solutions_to_json(&solutions);
         assert_eq!(username_solutions_json, expected_solutions_json);
     }
 
@@ -586,19 +484,6 @@ fn integration_test_inner(
         );
     };
 
-    if accept {
-        // Overwrite expected parse and rewrite models if needed
-        if config.enable_native_parser && parsed_native_model_dirty {
-            model_native.expect("model_native should exist");
-            copy_generated_to_expected(path, essence_base, "parse", "serialised.json")?;
-        }
-        if config.parse_model_default && parsed_model_dirty {
-            copy_generated_to_expected(path, essence_base, "parse", "serialised.json")?;
-        }
-        if config.apply_rewrite_rules && rewritten_model_dirty {
-            copy_generated_to_expected(path, essence_base, "rewrite", "serialised.json")?;
-        }
-    }
     save_stats_json(context, path, essence_base)?;
 
     Ok(())
@@ -626,10 +511,6 @@ fn copy_generated_to_expected(
         format!("{path}/{test_name}.expected-{stage}.{extension}"),
     )?;
     Ok(())
-}
-
-fn expected_exists_for(path: &str, test_name: &str, stage: &str, extension: &str) -> bool {
-    Path::new(&format!("{path}/{test_name}.expected-{stage}.{extension}")).exists()
 }
 
 fn assert_vector_operators_have_partially_evaluated(model: &conjure_cp::Model) {
@@ -668,30 +549,13 @@ pub fn create_scoped_subscriber(
     path: &str,
     test_name: &str,
 ) -> impl tracing::Subscriber + Send + Sync {
-    let target1_layer = create_file_layer_json(path, test_name);
-    let target2_layer = create_file_layer_human(path, test_name);
-    let layered = target1_layer.and_then(target2_layer);
-
-    let subscriber = Arc::new(tracing_subscriber::registry().with(layered))
+    let layer = create_file_layer_human(path, test_name);
+    let subscriber = Arc::new(tracing_subscriber::registry().with(layer))
         as Arc<dyn tracing::Subscriber + Send + Sync>;
     // setting this subscriber as the default
     let _default = tracing::subscriber::set_default(subscriber.clone());
 
     subscriber
-}
-
-fn create_file_layer_json(path: &str, test_name: &str) -> impl Layer<Registry> + Send + Sync {
-    let file = File::create(format!("{path}/{test_name}-generated-rule-trace.json"))
-        .expect("Unable to create log file");
-
-    fmt::layer()
-        .with_writer(file)
-        .with_level(false)
-        .with_target(false)
-        .without_time()
-        .with_filter(FilterFn::new(|meta: &OtherMetadata| {
-            meta.target() == "rule_engine"
-        }))
 }
 
 fn create_file_layer_human(path: &str, test_name: &str) -> impl Layer<Registry> + Send + Sync {

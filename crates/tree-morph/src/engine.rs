@@ -267,8 +267,7 @@ macro_rules! movement_fns {
         directions: [$($dir:ident),*]
     ) => {
         paste! {
-            $(#[instrument(skip(self))]
-            fn [<go_ $dir>](&mut self) -> Option<()> {
+            $(fn [<go_ $dir>](&mut self) -> Option<()> {
                 self.inner.zipper().[<has_ $dir>]().then(|| {
                     self.event_handlers
                         .[<trigger_before_ $dir>](self.inner.focus(), &mut self.meta);

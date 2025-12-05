@@ -1,4 +1,3 @@
-use core::fmt;
 use paste::paste;
 use uniplate::Uniplate;
 
@@ -71,11 +70,6 @@ macro_rules! event_handlers {
     }};
 }
 
-impl<T: Uniplate, M, R> fmt::Debug for EventHandlers<T, M, R> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("EventHandlers TODO: Add Counters").finish()
-    }
-}
 // We don't need event handlers for "left" since we never move left
 event_handlers! {
     directions: [up, down, right]
