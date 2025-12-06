@@ -41,7 +41,7 @@ fn flatten_indomain(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                     Range::Bounded(l, r) => {
                         let l_expr = Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Int(*l)));
                         let r_expr = Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Int(*r)));
-                        let lit = AbstractLiteral::list(vec![
+                        let lit = AbstractLiteral::matrix_implied_indices(vec![
                             Expr::Geq(Metadata::new(), inner.clone(), Moo::new(l_expr)),
                             Expr::Leq(Metadata::new(), inner.clone(), Moo::new(r_expr)),
                         ]);
@@ -65,7 +65,7 @@ fn flatten_indomain(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                 Metadata::new(),
                 Moo::new(Expr::AbstractLiteral(
                     Metadata::new(),
-                    AbstractLiteral::list(elements),
+                    AbstractLiteral::matrix_implied_indices(elements),
                 )),
             ))
         }
@@ -113,7 +113,7 @@ fn flatten_matrix_eq_neq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                 Metadata::new(),
                 Moo::new(Expr::AbstractLiteral(
                     Metadata::new(),
-                    AbstractLiteral::list(eqs),
+                    AbstractLiteral::matrix_implied_indices(eqs),
                 )),
             )
         }
@@ -123,7 +123,7 @@ fn flatten_matrix_eq_neq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                 Metadata::new(),
                 Moo::new(Expr::AbstractLiteral(
                     Metadata::new(),
-                    AbstractLiteral::list(neqs),
+                    AbstractLiteral::matrix_implied_indices(neqs),
                 )),
             )
         }
@@ -174,7 +174,7 @@ fn flatten_matrix_slice(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         .collect();
     Ok(Reduction::pure(Expr::AbstractLiteral(
         Metadata::new(),
-        AbstractLiteral::list(elements),
+        AbstractLiteral::matrix_implied_indices(elements),
     )))
 }
 
@@ -212,4 +212,41 @@ fn matrix_ref_to_slice(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     }
 
     Err(RuleNotApplicable)
+}
+
+/// This rule is applicable in SMT when atomic representation is not used for matrices.
+///
+/// Namely, it unwraps flatten(m) into [m[1, 1], m[1, 2], ...]
+#[register_rule(("Smt", 999))]
+fn unwrap_flatten_matrix_nonatomic(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    // TODO: depth not supported yet
+    let Expr::Flatten(_, None, m) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let dom = m.domain_of().ok_or(RuleNotApplicable)?;
+    let Some(GroundDomain::Matrix(_, index_domains)) = dom.resolve().map(Moo::unwrap_or_clone)
+    else {
+        return Err(RuleNotApplicable);
+    };
+
+    let elems: Vec<Expr> = matrix::enumerate_indices(index_domains)
+        .map(|lits| {
+            let idxs: Vec<Expr> = lits.into_iter().map(Into::into).collect();
+            Expr::SafeIndex(Metadata::new(), m.clone(), idxs)
+        })
+        .collect();
+
+    let new_dom = GroundDomain::Int(vec![Range::Bounded(
+        1,
+        elems
+            .len()
+            .try_into()
+            .expect("length of matrix should be able to be held in Int type"),
+    )]);
+    let new_expr = Expr::AbstractLiteral(
+        Metadata::new(),
+        AbstractLiteral::Matrix(elems, new_dom.into()),
+    );
+    Ok(Reduction::pure(new_expr))
 }

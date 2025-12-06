@@ -130,11 +130,6 @@ impl AbstractLiteral<Expression> {
             AbstractLiteral::Function(_) => None,
         }
     }
-
-    pub fn list(exprs: Vec<Expression>) -> Self {
-        let domain = Domain::int_ground(vec![Range::UnboundedR(1)]);
-        AbstractLiteral::Matrix(exprs, domain)
-    }
 }
 
 impl HasDomain for AbstractLiteral<Literal> {

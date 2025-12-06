@@ -2,7 +2,6 @@ use std::collections::{HashSet, VecDeque};
 use std::fmt::{Display, Formatter};
 use tracing::trace;
 
-use crate::ast::Name;
 use crate::ast::ReturnType;
 use crate::ast::SetAttr;
 use crate::ast::literals::AbstractLiteral;
@@ -11,6 +10,7 @@ use crate::ast::pretty::{pretty_expressions_as_top_level, pretty_vec};
 use crate::ast::{Atom, DomainPtr};
 use crate::ast::{GroundDomain, Metadata, UnresolvedDomain};
 use crate::ast::{IntVal, Moo};
+use crate::ast::{Name, matrix};
 use crate::bug;
 use conjure_cp_enum_compatibility_macro::document_compatibility;
 use itertools::Itertools;
@@ -840,17 +840,19 @@ impl Expression {
                         return None;
                     }
                 } else {
-                    let domain = m.domain_of()?;
-                    let mut total_size = 1;
-                    let index_domains: Vec<Domain> = Vec::new();
+                    // TODO: currently only works for matrices
+                    let dom = m.domain_of()?.resolve()?;
+                    let (val_dom, idx_doms) = match dom.as_ref() {
+                        GroundDomain::Matrix(val, idx) => (val, idx),
+                        _ => return None,
+                    };
+                    let num_elems = matrix::num_elements(idx_doms).ok()? as i32;
 
-                    // calculate total flattened size
-                    for i in &index_domains {
-                        total_size *= i.length().ok()?;
-                    }
-                    let new_index_domain =
-                        Domain::int(vec![Range::Bounded(1, total_size.try_into().unwrap())]);
-                    return Some(Domain::matrix(domain, vec![new_index_domain]));
+                    let new_index_domain = Domain::int(vec![Range::Bounded(1, num_elems)]);
+                    return Some(Domain::matrix(
+                        val_dom.clone().into(),
+                        vec![new_index_domain],
+                    ));
                 }
                 None
             }
