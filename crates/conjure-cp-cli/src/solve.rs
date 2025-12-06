@@ -10,6 +10,7 @@ use std::{
 
 use anyhow::{anyhow, ensure};
 use clap::ValueHint;
+use conjure_cp::defaults::DEFAULT_RULE_SETS;
 use conjure_cp::{
     Model,
     ast::comprehension::USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS,
@@ -17,7 +18,6 @@ use conjure_cp::{
     rule_engine::{resolve_rule_sets, rewrite_morph, rewrite_naive},
     solver::Solver,
 };
-use conjure_cp::{defaults::DEFAULT_RULE_SETS, solver::adaptors::smt::TheoryConfig};
 use conjure_cp::{
     parse::conjure_json::model_from_json, rule_engine::get_rules, solver::SolverFamily,
 };
@@ -25,6 +25,9 @@ use conjure_cp::{parse::tree_sitter::parse_essence_file_native, solver::adaptors
 use conjure_cp_cli::find_conjure::conjure_executable;
 use conjure_cp_cli::utils::conjure::{get_solutions, solutions_to_json};
 use serde_json::to_string_pretty;
+
+#[cfg(feature = "smt")]
+use conjure_cp::solver::adaptors::smt::TheoryConfig;
 
 use crate::cli::{GlobalArgs, LOGGING_HELP_HEADING};
 
@@ -146,6 +149,7 @@ pub(crate) fn init_solver(family: SolverFamily) -> Solver {
     match family {
         SolverFamily::Minion => Solver::new(Minion::default()),
         SolverFamily::Sat => Solver::new(Sat::default()),
+        #[cfg(feature = "smt")]
         SolverFamily::Smt(TheoryConfig { ints, matrices }) => Solver::new(Smt::new(ints, matrices)),
     }
 }

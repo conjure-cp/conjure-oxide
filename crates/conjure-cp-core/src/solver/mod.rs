@@ -121,8 +121,10 @@ use thiserror::Error;
 use crate::Model;
 use crate::ast::{Literal, Name};
 use crate::context::Context;
-use crate::solver::adaptors::smt::{IntTheory, MatrixTheory, TheoryConfig};
 use crate::stats::SolverStats;
+
+#[cfg(feature = "smt")]
+use crate::solver::adaptors::smt::{IntTheory, MatrixTheory, TheoryConfig};
 
 use self::model_modifier::ModelModifier;
 use self::states::{ExecutionSuccess, Init, ModelLoaded, SolverState};
@@ -140,8 +142,9 @@ pub mod states;
 )]
 pub enum SolverFamily {
     Sat,
-    Smt(TheoryConfig),
     Minion,
+    #[cfg(feature = "smt")]
+    Smt(TheoryConfig),
 }
 
 impl FromStr for SolverFamily {
@@ -153,9 +156,11 @@ impl FromStr for SolverFamily {
         match s.as_str() {
             "minion" => Ok(SolverFamily::Minion),
             "sat" => Ok(SolverFamily::Sat),
+            #[cfg(feature = "smt")]
             "smt" => Ok(SolverFamily::Smt(TheoryConfig::default())),
             other => {
                 // allow forms like `smt-bv-atomic` or `smt-lia-arrays`
+                #[cfg(feature = "smt")]
                 if other.starts_with("smt-") {
                     let parts = other.split('-').skip(1);
                     let mut ints = IntTheory::default();
@@ -175,12 +180,11 @@ impl FromStr for SolverFamily {
                         }
                     }
 
-                    Ok(SolverFamily::Smt(TheoryConfig { ints, matrices }))
-                } else {
-                    Err(format!(
-                        "unknown solver family '{other}', expected 'minion', 'sat' or 'smt[(bv|lia)-(arrays|atomic)]'"
-                    ))
+                    return Ok(SolverFamily::Smt(TheoryConfig { ints, matrices }));
                 }
+                Err(format!(
+                    "unknown solver family '{other}', expected 'minion', 'sat' or 'smt[(bv|lia)-(arrays|atomic)]'"
+                ))
             }
         }
     }
