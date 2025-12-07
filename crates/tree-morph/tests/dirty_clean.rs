@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use tracing::info;
 use tracing_subscriber;
 use tree_morph::prelude::*;
 use tree_morph_macros::named_rule;
@@ -87,6 +88,9 @@ fn left_branch_clean() {
                 let attempt = meta.applicable.entry(rule.name().to_owned()).or_insert(0);
                 *attempt += 1
             }
+        })
+        .add_after_apply(|_, _, rule| {
+            info!("FROM TESTING: APPLYING RULE '{}'", rule.name())
         })
         .build();
     let (expr, meta) = engine.morph(expr, meta);

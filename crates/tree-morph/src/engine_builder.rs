@@ -105,6 +105,12 @@ where
         self
     }
 
+    /// Register an event handler to be called after applying a rule
+    pub fn add_after_apply(mut self, handler: fn(&T, &mut M, &R)) -> Self {
+        self.event_handlers.add_after_apply(handler);
+        self
+    }
+
     /// Sets the selector function to be used when multiple rules are applicable to the same node.
     ///
     /// See the [`morph`](Engine::morph) method of the Engine type for more information.

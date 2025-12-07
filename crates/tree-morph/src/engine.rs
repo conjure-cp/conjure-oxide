@@ -34,7 +34,12 @@ where
     R: Rule<T, M>,
 {
     #[instrument(skip(self, subtree, meta, rules))]
-    fn select_rule(&self, subtree: &T, meta: &mut M, rules: &[R]) -> Option<Update<T, M>> {
+    fn select_rule<'a>(
+        &self,
+        subtree: &T,
+        meta: &mut M,
+        rules: &'a [R],
+    ) -> Option<(&'a R, Update<T, M>)> {
         trace!("Beginning Rule Checks");
         let applicable = &mut rules.iter().filter_map(|rule| {
             self.event_handlers.trigger_before_rule(subtree, meta, rule);
@@ -49,6 +54,7 @@ where
 
             Some((rule, update?))
         });
+        trace!("Finished Rule Checks");
         one_or_select(self.selector, subtree, applicable)
     }
 
@@ -202,7 +208,8 @@ where
                     // Choose one transformation from all applicable rules at this level
                     let selected = self.select_rule(subtree, &mut zipper.meta, rules);
 
-                    if let Some(mut update) = selected {
+                    if let Some((rule, mut update)) = selected {
+                        debug!("Applying Rule '{}'", rule.name());
                         // Replace the current subtree, invalidating subtree node states
                         zipper.inner.replace_focus(update.new_subtree);
 
@@ -219,6 +226,12 @@ where
                             // since the `transform` command may redefine the whole tree
                             zipper.inner.replace_focus(new_tree);
                         }
+
+                        self.event_handlers.trigger_on_apply(
+                            zipper.inner.focus(),
+                            &mut zipper.meta,
+                            rule,
+                        );
 
                         continue 'main;
                     } else {
