@@ -1,6 +1,6 @@
 use crate::ast::pretty::pretty_vec;
 use crate::ast::{
-    AbstractLiteral, Domain, DomainOpError, Literal, Moo, RecordEntry, SetAttr, Typeable,
+    AbstractLiteral, Domain, DomainOpError, Literal, Moo, RecordEntry, SetAttr, MSetAttr, Typeable,
     domains::{domain::Int, range::Range},
 };
 use crate::range;
@@ -56,6 +56,8 @@ pub enum GroundDomain {
     Int(Vec<Range<Int>>),
     /// A set of elements drawn from the inner domain
     Set(SetAttr<Int>, Moo<GroundDomain>),
+    /// A multiset of elements drawn from the inner domain
+    MSet(MSetAttr<Int>, Moo<GroundDomain>),
     /// An N-dimensional matrix of elements drawn from the inner domain,
     /// and indices from the n index domains
     Matrix(Moo<GroundDomain>, Vec<Moo<GroundDomain>>),
@@ -89,6 +91,10 @@ impl GroundDomain {
             (GroundDomain::Set(_, _), _) | (_, GroundDomain::Set(_, _)) => {
                 Err(DomainOpError::WrongType)
             }
+            (GroundDomain::MSet(_, in1), GroundDomain::MSet(_, in2)) => Ok(GroundDomain::MSet(
+                MSetAttr::default(),
+                Moo::new(in1.union(in2)?),
+            )),
             (GroundDomain::Matrix(in1, idx1), GroundDomain::Matrix(in2, idx2)) if idx1 == idx2 => {
                 Ok(GroundDomain::Matrix(
                     Moo::new(in1.union(in2)?),
@@ -241,6 +247,10 @@ impl GroundDomain {
                     ans = ans.checked_add(c).ok_or(DomainOpError::TooLarge)?;
                 }
                 Ok(ans)
+            }
+            GroundDomain::MSet(mset_attr, inner_domain) => {
+                // TODO @cc398
+                Ok(0);
             }
             GroundDomain::Tuple(domains) => {
                 let mut ans = 1u64;

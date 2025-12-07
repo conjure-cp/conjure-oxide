@@ -29,7 +29,7 @@ pub use cnf_clause::CnfClause;
 pub use declaration::{DeclarationKind, DeclarationPtr};
 pub use domains::{
     Domain, DomainOpError, DomainPtr, GroundDomain, HasDomain, IntVal, Range, RecordEntry,
-    RecordEntryGround, SetAttr, UnresolvedDomain,
+    RecordEntryGround, SetAttr, MSetAttr, UnresolvedDomain,
 };
 pub use eval::eval_constant;
 pub use expressions::Expression;
