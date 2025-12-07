@@ -132,12 +132,5 @@ fn missing_start_of_domain() {
     let diagnostics = detect_syntactic_errors(source);
     assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
     let diag = &diagnostics[0];
-    check_diagnostic(
-        diag,
-        0,
-        12,
-        0,
-        12,
-        "Missing start value in 'domain'",
-    );
+    check_diagnostic(diag, 0, 12, 0, 12, "Missing start value in 'domain'");
 }

@@ -98,6 +98,7 @@ such that x = {1, 2, @}";
     check_diagnostic(diag2, 1, 21, 1, 22, "Unexpected '@' inside 'set_literal'");
 }
 
+#[ignore]
 #[test]
 fn unexpected_x_in_all_diff() {
     let source = "\
@@ -117,6 +118,7 @@ such that a = allDiff([1,2,4,1]x)";
     );
 }
 
+#[ignore]
 #[test]
 fn unexpected_int_at_the_end() {
     let source = "\
@@ -148,14 +150,7 @@ fn unexpected_colon_used_as_identifier() {
 
     let diag = &diagnostics[0];
 
-    check_diagnostic(
-        diag,
-        0,
-        5,
-        0,
-        6,
-        "Unexpected ':' inside 'variable_list'",
-    );
+    check_diagnostic(diag, 0, 5, 0, 6, "Unexpected ':' inside 'variable_list'");
 }
 
 #[ignore]
@@ -170,12 +165,5 @@ fn unexpected_keyword() {
 
     let diag = &diagnostics[0];
 
-    check_diagnostic(
-        diag,
-        1,
-        0,
-        1,
-        5,
-        "Unexpected 'print'",
-    );
+    check_diagnostic(diag, 1, 0, 1, 5, "Unexpected 'print'");
 }

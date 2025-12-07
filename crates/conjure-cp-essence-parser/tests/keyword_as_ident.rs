@@ -12,14 +12,7 @@ fn detects_keyword_as_identifier_find() {
 
     let diag = &diagnostics[0];
 
-    check_diagnostic(
-        diag,
-        0,
-        5,
-        0,
-        9,
-        "Keyword 'find' used as identifier",
-    );
+    check_diagnostic(diag, 0, 5, 0, 9, "Semantic Error: Keyword 'find' used as identifier");
 }
 
 #[test]
@@ -33,14 +26,7 @@ fn detects_keyword_as_identifier_letting() {
 
     let diag = &diagnostics[0];
 
-    check_diagnostic(
-        diag,
-        0,
-        5,
-        0,
-        12,
-        "Keyword 'letting' used as identifier",
-    );
+    check_diagnostic(diag, 0, 5, 0, 12, "Semantic Error: Keyword 'letting' used as identifier");
 }
 
 #[test]
@@ -54,14 +40,7 @@ fn detects_keyword_as_identifier_bool() {
 
     let diag = &diagnostics[0];
 
-    check_diagnostic(
-        diag,
-        0,
-        5,
-        0,
-        9,
-        "Keyword 'bool' used as identifier",
-    );
+    check_diagnostic(diag, 0, 5, 0, 9, "Semantic Error: Keyword 'bool' used as identifier");
 }
 
 #[ignore]
@@ -76,14 +55,7 @@ fn detects_operator_as_identifier() {
 
     let diag = &diagnostics[0];
 
-    check_diagnostic(
-        diag,
-        0,
-        5,
-        0,
-        6,
-        "Operator '+' used as identifier",
-    );
+    check_diagnostic(diag, 0, 5, 0, 6, "Semantic Error: Operator '+' used as identifier");
 }
 
 #[ignore]
@@ -98,12 +70,5 @@ fn detects_complex_operator_as_identifier() {
 
     let diag = &diagnostics[0];
 
-    check_diagnostic(
-        diag,
-        0,
-        5,
-        0,
-        10,
-        "Operator '>=lex' used as identifier",
-    );
+    check_diagnostic(diag, 0, 5, 0, 10, "Semantic Error: Operator '>=lex' used as identifier");
 }
