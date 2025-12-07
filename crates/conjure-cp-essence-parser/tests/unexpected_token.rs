@@ -98,7 +98,6 @@ such that x = {1, 2, @}";
     check_diagnostic(diag2, 1, 21, 1, 22, "Unexpected '@' inside 'set_literal'");
 }
 
-#[ignore]
 #[test]
 fn unexpected_x_in_all_diff() {
     let source = "\
@@ -118,7 +117,6 @@ such that a = allDiff([1,2,4,1]x)";
     );
 }
 
-#[ignore]
 #[test]
 fn unexpected_int_at_the_end() {
     let source = "\
