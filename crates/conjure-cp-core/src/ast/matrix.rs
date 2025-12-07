@@ -52,6 +52,17 @@ pub fn enumerate_indices(
         .multi_cartesian_product()
 }
 
+/// Returns the number of possible elements indexable by the given index domains.
+///
+/// In short, returns the product of the sizes of the given indices.
+pub fn num_elements(index_domains: &[Moo<GroundDomain>]) -> Result<u64, DomainOpError> {
+    let idx_dom_lengths = index_domains
+        .iter()
+        .map(|d| d.length())
+        .collect::<Result<Vec<_>, _>>()?;
+    Ok(idx_dom_lengths.iter().product())
+}
+
 /// Flattens a multi-dimensional matrix literal into a one-dimensional slice of its elements.
 ///
 /// The elements of the matrix are returned in row-major ordering (see [`enumerate_indices`]).
@@ -168,4 +179,23 @@ pub fn enumerate_index_union_indices(
     let idx_domains = idx_domains?.into_iter().map(Moo::new).collect();
 
     Ok(enumerate_indices(idx_domains))
+}
+
+// Given index domains for a multi-dimensional matrix and the nth index in the flattened matrix, find the coordinates in the original matrix
+pub fn flat_index_to_full_index(index_domains: &[Moo<GroundDomain>], index: u64) -> Vec<Literal> {
+    let mut remaining = index;
+    let mut multipliers = vec![1; index_domains.len()];
+
+    for i in (1..index_domains.len()).rev() {
+        multipliers[i - 1] = multipliers[i] * index_domains[i].as_ref().length().unwrap();
+    }
+
+    let mut coords = Vec::new();
+    for m in multipliers.iter() {
+        // adjust for 1-based indexing
+        coords.push(((remaining / m + 1) as i32).into());
+        remaining %= *m;
+    }
+
+    coords
 }
