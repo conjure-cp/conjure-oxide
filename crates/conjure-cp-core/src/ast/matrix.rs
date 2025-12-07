@@ -180,3 +180,22 @@ pub fn enumerate_index_union_indices(
 
     Ok(enumerate_indices(idx_domains))
 }
+
+// Given index domains for a multi-dimensional matrix and the nth index in the flattened matrix, find the coordinates in the original matrix
+pub fn flat_index_to_full_index(index_domains: &[Moo<GroundDomain>], index: u64) -> Vec<Literal> {
+    let mut remaining = index;
+    let mut multipliers = vec![1; index_domains.len()];
+
+    for i in (1..index_domains.len()).rev() {
+        multipliers[i - 1] = multipliers[i] * index_domains[i].as_ref().length().unwrap();
+    }
+
+    let mut coords = Vec::new();
+    for m in multipliers.iter() {
+        // adjust for 1-based indexing
+        coords.push(((remaining / m + 1) as i32).into());
+        remaining %= *m;
+    }
+
+    coords
+}
