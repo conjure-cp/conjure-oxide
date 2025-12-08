@@ -4,17 +4,31 @@ use syn::{FnArg, GenericArgument, ItemFn, PathArguments, Type, parse_macro_input
 
 /// Creates a named rule wrapper function for tree-morph rules.
 ///
-/// This macro transforms a rule function to return an `impl Rule<T, M>`
+/// This macro transforms a rule function into a `NamedRule`.
 /// by wrapping it in a `NamedRule`.
 ///
-///  ```
+///  ```rust
+/// use tree_morph::prelude::*;
+/// use tree_morph_macros::named_rule;
+/// use uniplate::Uniplate;
+///
+/// #[derive(Debug, Clone, PartialEq, Eq, Uniplate)]
+/// #[uniplate()]
+/// enum Expr {
+///     # Add(Box<Expr>, Box<Expr>),
+///    // Snip
+/// }
+///
+/// struct Meta;
+///
 /// #[named_rule("CustomName")]
 /// fn my_rule(_: &mut Commands<Expr, Meta>, expr: &Expr, _: &Meta) -> Option<Expr> {
-///     // rule implementation
+///     /// rule implementation
+///     # None
 /// }
 /// ```
 ///
-/// The above function will be transformed to return `impl Rule<Expr, Meta>` and
+/// The above function will be transformed into a `NamedRule` and
 /// have its name set to "CustomName". If not specified, the name will simply be
 /// the function identifier. In the above case it will be "my_rule".
 ///
