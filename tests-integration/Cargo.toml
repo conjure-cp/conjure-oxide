@@ -3,16 +3,28 @@ name = "tests-integration"
 version = "0.1.0"
 edition = "2024"
 
+[features]
+default = ["smt"]
+smt = ["conjure-cp-cli/smt"]
+extra-rule-checks = ["conjure-cp-cli/extra-rule-checks"]
+
 [lints]
 workspace = true
 
+[dependencies]
+serde = { version = "1.0.228", features = ["derive"] }
+
 [build-dependencies]
 walkdir = "2.5.0"
+serde = { version = "1.0.228", features = ["derive"] }
+toml = "0.9.8"
 
 [dev-dependencies]
 conjure-cp = { path = "../crates/conjure-cp" }
 conjure-cp-rules = { path = "../crates/conjure-cp-rules" }
-conjure-cp-cli = { path = "../crates/conjure-cp-cli" }
+# disable default features because when building tests the "smt"/"extra-rule-checks"
+# features are controlled by this crate instead
+conjure-cp-cli = { path = "../crates/conjure-cp-cli", default-features = false }
 git-version = "0.3.9"
 glob = "0.3.3"
 itertools = "0.14.0"
