@@ -153,7 +153,7 @@ fn unexpected_colon_used_as_identifier() {
 
 #[ignore]
 #[test]
-fn unexpected_keyword() {
+fn unexpected_print_keyword() {
     let source = "find a,b,c: int(1..3)\nprint a";
     // trying to use print as a keyword
     let diagnostics = detect_syntactic_errors(source);
@@ -163,5 +163,5 @@ fn unexpected_keyword() {
 
     let diag = &diagnostics[0];
 
-    check_diagnostic(diag, 1, 0, 1, 5, "Unexpected 'print'");
+    check_diagnostic(diag, 1, 0, 1, 7, "Unexpected expression 'print a'");
 }
