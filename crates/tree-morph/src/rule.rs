@@ -171,12 +171,29 @@ macro_rules! rule_fns {
 
 /// For debugging and tracing, it is helpful to see rules by a meaningful name.
 /// We can create a rule using this struct and pass it into our list of rules directly,
-/// or we can make use of the `named_rule` macro (see tree-morph-macros).
+/// or we can make use of the `named_rule` macro (see [`tree-morph-macros`]).
 ///
-///  ```
+/// This struct and macro is for the short form way of defining named rules. You can change the name
+/// of the rule by implementing the `Rule` trait as well.
+///
+///  ```rust
+/// use tree_morph::prelude::*;
+/// use tree_morph_macros::named_rule;
+/// use uniplate::Uniplate;
+///
+/// #[derive(Debug, Clone, PartialEq, Eq, Uniplate)]
+/// #[uniplate()]
+/// enum Expr {
+///     # Add(Box<Expr>, Box<Expr>),
+///    // Snip
+/// }
+///
+/// struct Meta;
+/// 
 /// #[named_rule("CustomName")]
 /// fn my_rule(_: &mut Commands<Expr, Meta>, expr: &Expr, _: &Meta) -> Option<Expr> {
-///     // rule implementation
+///     /// rule implementation
+///     # None
 /// }
 /// ```
 /// This macro will return a helper function called `my_rule` which returns the NamedRule for us to
