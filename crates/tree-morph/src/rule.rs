@@ -189,7 +189,7 @@ macro_rules! rule_fns {
 /// }
 ///
 /// struct Meta;
-/// 
+///
 /// #[named_rule("CustomName")]
 /// fn my_rule(_: &mut Commands<Expr, Meta>, expr: &Expr, _: &Meta) -> Option<Expr> {
 ///     /// rule implementation

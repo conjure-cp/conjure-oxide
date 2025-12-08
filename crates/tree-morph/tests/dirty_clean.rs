@@ -89,9 +89,7 @@ fn left_branch_clean() {
                 *attempt += 1
             }
         })
-        .add_after_apply(|_, _, rule| {
-            info!("FROM TESTING: APPLYING RULE '{}'", rule.name())
-        })
+        .add_after_apply(|_, _, rule| info!("FROM TESTING: APPLYING RULE '{}'", rule.name()))
         .build();
     let (expr, meta) = engine.morph(expr, meta);
 

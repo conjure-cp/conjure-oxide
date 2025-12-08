@@ -36,8 +36,10 @@ where
 }
 
 /// A uniform type for selector functions such as `select_first`.
-pub type SelectorFn<T, M, R> =
-    for<'a> fn(&T, &mut dyn Iterator<Item = (&'a R, Update<T, M>)>) -> Option<(&'a R, Update<T, M>)>;
+pub type SelectorFn<T, M, R> = for<'a> fn(
+    &T,
+    &mut dyn Iterator<Item = (&'a R, Update<T, M>)>,
+) -> Option<(&'a R, Update<T, M>)>;
 
 /// Returns the first available ([`Rule`], [`Update`]) if there is one, otherwise returns `None`.
 ///
