@@ -1,0 +1,1539 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Conjure Oxide</title>
+        <meta name="robots" content="noindex">
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "coal";
+            window.path_to_searchindex_js = "searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Conjure Oxide</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        
+                        <h1 id="conjure-oxide"><a class="header" href="#conjure-oxide">Conjure Oxide</a></h1>
+<p>Welcome to the documentation of Conjure Oxide, a next generation constraints
+modelling tool written in Rust. It supports models written in the Essence and
+Essence Prime constraints modelling languages.</p>
+<p>Conjure Oxide is in the early stages of development, so most Essence language
+features are not supported yet. However, it does currently support most of
+Essence Prime.</p>
+<p>This site contains the user documentation for Conjure Oxide; other useful links can be found on the <a href="./documentation/links.html">useful links</a> page.</p>
+<h2 id="contributing"><a class="header" href="#contributing">Contributing</a></h2>
+<p>The project is primarily developed by students and staff at the University of
+St Andrews, but we also welcome outside contributors; for more information see the
+<a href="./developers_guide/contributors-guide/index.html">contributor's guide</a>.</p>
+<!-- original link: https://github.com/conjure-cp/conjure-oxide/blob/main/CONTRIBUTING.md -->
+<h2 id="licence"><a class="header" href="#licence">Licence</a></h2>
+<p>The Conjure Oxide source and documentation are released under the <a href="https://github.com/conjure-cp/conjure-oxide/blob/main/LICENSE">Mozilla Public Licence v2.0</a>.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="installation"><a class="header" href="#installation">Installation</a></h1>
+<p>To install Conjure Oxide, either <a href="getting_started/installation/">build it from source</a>, or use a <a href="getting_started/installation/">nightly release</a>.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="logging"><a class="header" href="#logging">Logging</a></h1>
+<p><strong>This document is a work in progress - for a full list of logging options,
+see Conjure Oxide's <code>--help</code> output.</strong></p>
+<h2 id="to-stderr"><a class="header" href="#to-stderr">To <code>stderr</code></a></h2>
+<p>Using <code>--verbose</code>, and the <code>RUST_LOG</code> environment variable, you can control the
+contents, and formatting of, Conjure Oxide's <code>stderr</code> output:</p>
+<ul>
+<li>
+<p><strong><code>--verbose</code></strong> changes the formatting of the logs for improved readability,
+including printing source locations and line numbers for log events. It also
+enables the printing of the log levels <code>INFO</code> and above.</p>
+</li>
+<li>
+<p>The <strong><code>RUST_LOG</code></strong> environment variable can be used to customise the
+log levels that are printed depending on the module . For more
+information, see:
+<a href="https://docs.rs/env_logger/latest/env_logger/#enabling-logging">https://docs.rs/env_logger/latest/env_logger/#enabling-logging</a>.</p>
+</li>
+</ul>
+<h3 id="example-logging-rule-applications"><a class="header" href="#example-logging-rule-applications">Example: Logging Rule Applications</a></h3>
+<p>Different log levels provide different information about the rules applied to
+the model:</p>
+<ul>
+<li>
+<p><code>INFO</code> provides information on the rules that were applied to the model.</p>
+</li>
+<li>
+<p><code>TRACE</code> additionally prints the rules that were attempted and why they were
+not applicable.</p>
+</li>
+</ul>
+<p>To see TRACE logs in a pretty format (mainly useful for
+debugging):</p>
+<pre><code class="language-sh">$ RUST_LOG=trace conjure-oxide solve --verbose &lt;model&gt;
+</code></pre>
+<p>Or, using cargo:</p>
+<pre><code class="language-sh">$ RUST_LOG=trace cargo run -- solve --verbose &lt;model&gt;
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><!-- maturity: draft
+authors: Jamie Melton, Georgii Skorokhod, Özgür Akgün
+created: 24-10-25
+---- -->
+<h1 id="contributors-guide"><a class="header" href="#contributors-guide">Contributors Guide</a></h1>
+<p>We love your input! We want to make contributing to this project as easy and transparent as possible, whether it's:</p>
+<ul>
+<li>Reporting a bug</li>
+<li>Discussing the current state of the code</li>
+<li>Submitting a fix</li>
+<li>Proposing new features</li>
+<li>Becoming a maintainer</li>
+</ul>
+<h2 id="contributing-1"><a class="header" href="#contributing-1">Contributing</a></h2>
+<p>This project is open-source: you can find the source code on
+<a href="https://github.com/conjure-cp/conjure-oxide">Github</a>, and issues, questions,
+or feature requests can be posted on the <a href="https://github.com/conjure-cp/conjure-oxide/issues">Github issue
+tracker</a>.</p>
+<p>Currently, Conjure Oxide has been primarily developed by students and staff at the <a href="https://www.st-andrews.ac.uk/">University of St Andrews</a>. That being said, we welcome and encourage contributions from individuals outside the University. Over the course of this section, we will expand further into <strong>how</strong> you can contribute.</p>
+<p>For more detailed information reguarding our contributing process, please refer to <a href="https://github.com/conjure-cp/conjure-oxide/blob/main/CONTRIBUTING.md">CONTRIBUTING.md</a></p>
+<h2 id="licence-1"><a class="header" href="#licence-1">Licence</a></h2>
+<p>This project is entirely open-source, with all code released under the <a href="https://www.mozilla.org/en-US/MPL/2.0/">MPL 2.0</a> license, unless stated otherwise.</p>
+<hr />
+<p><em>This section had been adapted from the 'home' page of the conjure-oxide wiki, and <a href="https://github.com/conjure-cp/conjure-oxide/blob/main/CONTRIBUTING.md">CONTRIBUTING.md</a></em></p>
+<div style="break-before: page; page-break-before: always;"></div><!-- TODO: Edit this -->
+<h1 id="how-we-work"><a class="header" href="#how-we-work">How We Work</a></h1>
+<p>This is our Constitution, but in contrast to a real constitution of a company we intend this document to be a living document. Please feel free to suggest edits and improvements.</p>
+<h2 id="principles"><a class="header" href="#principles">Principles</a></h2>
+<ul>
+<li><a href="https://en.wikipedia.org/wiki/Good_faith">Assume good faith</a>.</li>
+<li>Take responsibility for your work.</li>
+<li>Look for opportunites to help others.</li>
+<li>Make it easy for others to help you.</li>
+</ul>
+<h2 id="social-contract"><a class="header" href="#social-contract">Social contract</a></h2>
+<p>We agree to adhere to the following guidelines when engaging in group work.</p>
+<ul>
+<li>We communicate in English as a common, shared language.</li>
+<li>We include all group members in meetings, group chats, messages, and social events.</li>
+<li>We turn up on time to meetings.</li>
+<li>We pay attention and contribute to group discussions.</li>
+<li>We contribute to the group tasks.</li>
+<li>We listen to each other’s opinions.</li>
+<li>We share ideas and do not disregard other people’s thoughts or feelings.</li>
+<li>We are respectful towards one another and treat each other with care and courtesy.</li>
+<li>We complete tasks on time and to the best of our ability.</li>
+<li>We do not make assumptions about individual abilities.</li>
+</ul>
+<h2 id="logistics"><a class="header" href="#logistics">Logistics</a></h2>
+<ul>
+<li><strong>GitHub</strong>: We use GitHub as our main platform for code collaboration and version control.</li>
+<li><strong>Teams</strong>: We use Teams for day to day communications.</li>
+<li><strong>Weekly report</strong>: We use a web form to provide an update to the supervisors every week. This is not assessed and doesn't strictly follow the reflective writing methods. However, <a href="https://reflection.ed.ac.uk/reflectors-toolkit/reflecting-on-experience/gibbs-reflective-cycle">this resource on the Gibbs reflective cycle</a> may still be helpful when approaching the weekly form and how to use the form effectively.</li>
+<li><strong>Weekly meetings</strong>: The whole group meets once a week. Before this meeting everyone fills in the weekly report. We take minutes at these meetings.</li>
+</ul>
+<h2 id="best-practices-for-collaboration"><a class="header" href="#best-practices-for-collaboration">Best Practices for Collaboration</a></h2>
+<h3 id="1-start-with-early-pull-requests-prs"><a class="header" href="#1-start-with-early-pull-requests-prs">1. Start with Early Pull Requests (PRs)</a></h3>
+<ul>
+<li>Don’t wait until everything is perfect; submitting early PRs allows the team to provide feedback sooner. This helps catch potential issues early and encourages collaboration.</li>
+<li>Even if your code isn’t complete, opening a draft PR can be a good way to start discussions and ensure alignment.</li>
+</ul>
+<h3 id="2-show-dont-tell"><a class="header" href="#2-show-dont-tell">2. Show, Don’t Tell</a></h3>
+<ul>
+<li>Share your experiences and insights! Use GitHub or Microsoft Teams to share updates, challenges, and breakthroughs with the rest of the team.</li>
+<li>Showing real examples means other can more easily help you, it can help others understand your approach and may inspire new ideas.</li>
+<li>High-level explanations can inadvertantly hide important details. Showing the actual artefact (whether it's code, a design document or something else) together with your high-level commentary eliminates this risk.</li>
+</ul>
+<h3 id="3-begin-with-specifications"><a class="header" href="#3-begin-with-specifications">3. Begin with Specifications</a></h3>
+<ul>
+<li>Before you start coding, document your plan. Write out specifications or create a rough outline of what you're working on, including examples where possible.</li>
+<li>Having a clear plan makes it easier to get feedback and helps others understand the purpose and scope of your work.</li>
+</ul>
+<h3 id="4-share-failures-as-much-as-successes"><a class="header" href="#4-share-failures-as-much-as-successes">4. Share Failures as Much as Successes</a></h3>
+<ul>
+<li>When something doesn’t work, share it! Learning from mistakes and discussing setbacks is invaluable.</li>
+<li>A failed attempt can often be as educational as a successful one, and it may prevent others from encountering the same issue.</li>
+</ul>
+<h3 id="5-ask-good-questions"><a class="header" href="#5-ask-good-questions">5. Ask Good Questions</a></h3>
+<ul>
+<li>Don’t hesitate to reach out when you're stuck, but try to ask thoughtful, specific questions.</li>
+<li>Providing context and sharing what you've tried will help others give more helpful answers.</li>
+</ul>
+<h2 id="final-thoughts"><a class="header" href="#final-thoughts">Final Thoughts</a></h2>
+<ul>
+<li><strong>Collaboration</strong> is key to our success, so feel free to communicate openly.</li>
+<li><strong>Continuous improvement</strong> is encouraged—keep looking for ways to improve your code, processes, and knowledge.</li>
+</ul>
+<hr />
+<p><em>This section had been taken from the 'How we work' page of the conjure-oxide wiki</em></p>
+<div style="break-before: page; page-break-before: always;"></div><!-- maturity: draft
+authors: Georgii Skorokhod, Niklas Dewally
+created: 31-03-25
+---- -->
+<h1 id="setting-up-your-development-environment"><a class="header" href="#setting-up-your-development-environment">Setting up your development environment</a></h1>
+<p>Conjure Oxide supports Linux and Mac.</p>
+<p>Windows users should install <a href="https://learn.microsoft.com/en-us/windows/wsl/setup/environment#set-up-your-linux-username-and-password">WSL</a> and follow the Linux (Ubuntu) instructions below:</p>
+<details><summary><b>Linux (Debian/Ubuntu)</b></summary>
+<p><strong>The following software is required:</strong></p>
+<ul>
+<li>The latest version of stable Rust, installed using <a href="https://www.rust-lang.org/tools/install">Rustup</a>.</li>
+<li>A C/C++ compilation toolchain and libraries:
+<ul>
+<li>Debian, Ubuntu and derivatives: <code>sudo apt install build-essential libclang-dev</code></li>
+<li>Fedora: <code>sudo dnf group install c-development</code> and <code>sudo dnf install clang-devel</code></li>
+</ul>
+</li>
+</ul>
+<ul>
+<li><a href="https://github.com/conjure-cp/conjure">Conjure</a>.
+<ul>
+<li><strong>Ensure that Conjure is placed early in your PATH to avoid conflicts with ImageMagick's <code>conjure</code> command!</strong></li>
+</ul>
+</li>
+</ul>
+</details>
+<details><summary><b>MacOS</b></summary>
+<p><strong>The following software is required:</strong></p>
+<ul>
+<li>the latest version of stable Rust, installed using <a href="https://www.rust-lang.org/tools/install">Rustup</a>.</li>
+<li>an XCode Command Line Tools installation (installable using <code>xcode-select --install</code>)</li>
+<li>CMake: <code>brew install cmake</code> (for SAT solving)</li>
+<li><a href="https://github.com/conjure-cp/conjure">Conjure</a>.</li>
+</ul>
+</details>
+<details><summary><b>St Andrews CS Linux Systems</b></summary>
+<ol>
+<li>
+<p>Download and install the <em>pre-built binaries</em> for <a href="https://github.com/conjure-cp/conjure">Conjure</a>. Place these in <code>/cs/home/&lt;username&gt;/usr/bin</code> or elsewhere in your <code>$PATH</code>.</p>
+</li>
+<li>
+<p>Install <code>rustup</code> and the latest version of Rust through <code>rustup</code>.
+<em>The school provided Rust version does not work</em>.</p>
+<ul>
+<li>By default, <code>rustup</code> installs to your local home directory; therefore, you may need to re-install <code>rustup</code> and Rust after restarting a machine or when using a new lab PC.</li>
+</ul>
+</li>
+</ol>
+</details>
+<hr />
+<h3 id="improving-compilation-speed"><a class="header" href="#improving-compilation-speed">Improving Compilation Speed</a></h3>
+<p>Installing <a href="https://github.com/mozilla/sccache">sccache</a> improves compilation speeds of this project by caching crates and C/C++ dependencies system-wide.</p>
+<ul>
+<li>Install <a href="https://github.com/mozilla/sccache">sccache</a> and follow the setup instructions for Rust. Minion detects and uses sccache out of the box, so no C++ specific installation steps are required.</li>
+</ul>
+<hr />
+<p><em>This section had been taken from the 'Setting up your development environment' page of the conjure-oxide wiki</em></p>
+<div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><!-- TODO: Edit this -->
+<blockquote>
+<p><em>"Omit needless words"</em></p>
+<p>(c) William Strunk</p>
+</blockquote>
+<h1 id="key-points"><a class="header" href="#key-points">Key Points</a></h1>
+<h2 id="resources"><a class="header" href="#resources">Resources</a></h2>
+<p>See:</p>
+<ul>
+<li>the <a href="https://github.com/rust-lang/rfcs/blob/master/text/1574-more-api-documentation-conventions.md">Rust doc style conventions</a></li>
+</ul>
+<h2 id="dos"><a class="header" href="#dos">Do's</a></h2>
+<p>Our documentation is inline with the code. The reader is likely to skim it while scrolling through the file and trying to understand what it does. So, our doc strings should:</p>
+<ul>
+<li>Be as brief and clear as possible</li>
+<li>Ideally, fit comfortably on a standard monitor without obscuring the code</li>
+<li>Contain key information about the method / structure, such as:
+<ul>
+<li>A single sentence explaining its purpose</li>
+<li>A brief overview of arguments / return types</li>
+<li>Example snippets for non-trivial methods</li>
+</ul>
+</li>
+<li>Explain any details that are <strong>not</strong> obvious from the method signature, such as:
+<ul>
+<li>Details of the method's "contract" that can't be easily encoded in the type system
+<blockquote>
+<p>(E.g: <em>"The input must be a sorted slice of positive integers"</em>; <em>"The given expression will be modified in-place"</em>)</p>
+</blockquote>
+</li>
+<li>Non-trivial situations where the method may <code>panic!</code> or cause unintended behaviour
+<blockquote>
+<p>(E.g: <em>"Panics if the connection terminates while the stream is being read"</em>)</p>
+</blockquote>
+</li>
+<li>Any <code>unsafe</code> things a method does
+<blockquote>
+<p>(E.g: <em>"We type-cast the given pointer with <code>mem::transmute</code>. This is safe because..."</em>)</p>
+</blockquote>
+</li>
+<li>Special cases</li>
+</ul>
+</li>
+</ul>
+<h2 id="donts"><a class="header" href="#donts">Don'ts</a></h2>
+<p>Documentation generally should <strong>not</strong>:</p>
+<ul>
+<li>Repeat itself</li>
+<li>Use long, vague, or overly complex sentences</li>
+<li>Re-state things that are obvious from the types / signature of the method</li>
+<li>Explain implementation details</li>
+<li>Explain high-level architectural decisions
+(Consider making a wiki page or opening an RFC issue instead!)</li>
+</ul>
+<p>And finally...
+Please, don't ask ChatGPT to document your code for you!
+I know that writing documentation can be tedious, but you can always:</p>
+<ul>
+<li>Write a one-sentence doc string for now and come back to it later</li>
+<li>Ask others if you don't quite understand what a method does</li>
+</ul>
+<h1 id="types-and-tests-are-documentation"><a class="header" href="#types-and-tests-are-documentation">Types and Tests are Documentation</a></h1>
+<p>Documentation is great, but we should also use the type system and other rust features to our advantage!</p>
+<ul>
+<li>
+<p>A lot of things (e.g: error conditions, thread safety, state) can be encoded in the types of arguments / return values.
+This is usually better than just <code>panic!</code>-ing and adding a doc string to explain why.</p>
+</li>
+<li>
+<p>Tests are also a great way to illustrate the behaviour of your code and any special cases - and they also help with catching bugs!</p>
+</li>
+</ul>
+<h1 id="example-snippets"><a class="header" href="#example-snippets">Example Snippets</a></h1>
+<p>For non-trivial methods and user-facing API's, it may be useful to include an example.
+Examples should be minimal but complete snippets of code that illustrate a method's behaviour.</p>
+<p>If you wrap your example in a code block:</p>
+<pre><code class="language-markdown">```rust ... ```
+</code></pre>
+<p>Our CI will even run it and complain if the example does not compile / contains an error!</p>
+<p>However, don't feel obliged to include an example for every method!
+For simple methods they may not be necessary.</p>
+<h1 id="examples"><a class="header" href="#examples">Examples</a></h1>
+<p>⚠️ Good but a bit wordy:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>/// Checks if the OPTIMIZATIONS environment variable is set to "1".
+///
+/// # Returns
+/// - true if the environment variable is set to "1".
+/// - false if the environment variable is not set or set to any other value.
+fn optimizations_enabled() -&gt; bool {
+    match env::var("OPTIMIZATIONS") {
+        Ok(val) =&gt; val == "1",
+        Err(_) =&gt; false, // Assume optimizations are disabled if the environment variable is not set
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<p>✅ Since everything else is obvious from the signature, we can just say:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>/// Checks if the OPTIMIZATIONS environment variable is set to "1"
+fn optimizations_enabled() -&gt; bool { ... }
+<span class="boring">}</span></code></pre></pre>
+<p>⚠️ Not bad, but sounds a bit robotic</p>
+<pre><code class="language-markdown"># Side-Effects
+- When the model is rewritten, related data structures such as the symbol table (which tracks variable names and types)
+  or other top-level constraints may also be updated to reflect these changes. These updates are applied to the returned model,
+  ensuring that all related components stay consistent and aligned with the changes made during the rewrite.
+- The function collects statistics about the rewriting process, including the number of rule applications
+  and the total runtime of the rewriter. These statistics are then stored in the model's context for
+  performance monitoring and analysis.
+</code></pre>
+<p>✅ Same idea but shorter</p>
+<pre><code class="language-markdown"># Side-Effects
+- Rules can apply side-effects to the model (e.g. adding new constraints or variables).
+  The original model is cloned and a modified copy is returned.
+- Rule engine statistics (e.g. number of rule applications, run time) are collected and stored in the new model's context.
+</code></pre>
+<p>⚠️ A bit too detailed</p>
+<pre><code class="language-markdown"># Parameters
+- `expression`: A reference to the [`Expression`] that will be evaluated against the given rules. This is the main
+   target for rule transformations and is expected to remain unchanged during the function execution.
+- `model`: A reference to the [`Model`] that provides context for rule evaluation, such as constraints and symbols.
+  Rules may depend on information in the model to determine if they can be applied.
+- `rules`: A vector of references to [`Rule`]s that define the transformations to be applied to the expression.
+  Each rule is applied independently, and all applicable rules are collected.
+- `stats`: A mutable reference to [`RewriterStats`] used to track statistics about rule application, such as
+  the number of attempts and successful applications.
+</code></pre>
+<p>✅ Just describing the meaning of arguments will do</p>
+<p>(Details of the rewriting process belong on the wiki, and details of underlying types such as <code>Model</code> or <code>Expression</code> are already documented next to their implementations)</p>
+<pre><code class="language-markdown">- `expression`: A reference to the [`Expression`] to evaluate.
+- `model`: A reference to the [`Model`] for access to the symbol table and context.
+- `rules`: A vector of references to [`Rule`]s to try.
+- `stats`: A mutable reference to [`RewriterStats`] used to track the number of rule applications and other statistics.
+</code></pre>
+<hr />
+<p><em>This section had been taken from the 'Documentation Style' page of the conjure-oxide wiki</em></p>
+<div style="break-before: page; page-break-before: always;"></div><!-- TODO: Edit this -->
+<blockquote>
+<p><em>"Omit needless words"</em></p>
+<p>(c) William Strunk</p>
+</blockquote>
+<h1 id="key-points-1"><a class="header" href="#key-points-1">Key Points</a></h1>
+<h2 id="resources-1"><a class="header" href="#resources-1">Resources</a></h2>
+<p>See:</p>
+<ul>
+<li>the <a href="https://github.com/rust-lang/rfcs/blob/master/text/1574-more-api-documentation-conventions.md">Rust doc style conventions</a></li>
+</ul>
+<h2 id="dos-1"><a class="header" href="#dos-1">Do's</a></h2>
+<p>Our documentation is inline with the code. The reader is likely to skim it while scrolling through the file and trying to understand what it does. So, our doc strings should:</p>
+<ul>
+<li>Be as brief and clear as possible</li>
+<li>Ideally, fit comfortably on a standard monitor without obscuring the code</li>
+<li>Contain key information about the method / structure, such as:
+<ul>
+<li>A single sentence explaining its purpose</li>
+<li>A brief overview of arguments / return types</li>
+<li>Example snippets for non-trivial methods</li>
+</ul>
+</li>
+<li>Explain any details that are <strong>not</strong> obvious from the method signature, such as:
+<ul>
+<li>Details of the method's "contract" that can't be easily encoded in the type system
+<blockquote>
+<p>(E.g: <em>"The input must be a sorted slice of positive integers"</em>; <em>"The given expression will be modified in-place"</em>)</p>
+</blockquote>
+</li>
+<li>Non-trivial situations where the method may <code>panic!</code> or cause unintended behaviour
+<blockquote>
+<p>(E.g: <em>"Panics if the connection terminates while the stream is being read"</em>)</p>
+</blockquote>
+</li>
+<li>Any <code>unsafe</code> things a method does
+<blockquote>
+<p>(E.g: <em>"We type-cast the given pointer with <code>mem::transmute</code>. This is safe because..."</em>)</p>
+</blockquote>
+</li>
+<li>Special cases</li>
+</ul>
+</li>
+</ul>
+<h2 id="donts-1"><a class="header" href="#donts-1">Don'ts</a></h2>
+<p>Documentation generally should <strong>not</strong>:</p>
+<ul>
+<li>Repeat itself</li>
+<li>Use long, vague, or overly complex sentences</li>
+<li>Re-state things that are obvious from the types / signature of the method</li>
+<li>Explain implementation details</li>
+<li>Explain high-level architectural decisions
+(Consider making a wiki page or opening an RFC issue instead!)</li>
+</ul>
+<p>And finally...
+Please, don't ask ChatGPT to document your code for you!
+I know that writing documentation can be tedious, but you can always:</p>
+<ul>
+<li>Write a one-sentence doc string for now and come back to it later</li>
+<li>Ask others if you don't quite understand what a method does</li>
+</ul>
+<h1 id="types-and-tests-are-documentation-1"><a class="header" href="#types-and-tests-are-documentation-1">Types and Tests are Documentation</a></h1>
+<p>Documentation is great, but we should also use the type system and other rust features to our advantage!</p>
+<ul>
+<li>
+<p>A lot of things (e.g: error conditions, thread safety, state) can be encoded in the types of arguments / return values.
+This is usually better than just <code>panic!</code>-ing and adding a doc string to explain why.</p>
+</li>
+<li>
+<p>Tests are also a great way to illustrate the behaviour of your code and any special cases - and they also help with catching bugs!</p>
+</li>
+</ul>
+<h1 id="example-snippets-1"><a class="header" href="#example-snippets-1">Example Snippets</a></h1>
+<p>For non-trivial methods and user-facing API's, it may be useful to include an example.
+Examples should be minimal but complete snippets of code that illustrate a method's behaviour.</p>
+<p>If you wrap your example in a code block:</p>
+<pre><code class="language-markdown">```rust ... ```
+</code></pre>
+<p>Our CI will even run it and complain if the example does not compile / contains an error!</p>
+<p>However, don't feel obliged to include an example for every method!
+For simple methods they may not be necessary.</p>
+<h1 id="examples-1"><a class="header" href="#examples-1">Examples</a></h1>
+<p>⚠️ Good but a bit wordy:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>/// Checks if the OPTIMIZATIONS environment variable is set to "1".
+///
+/// # Returns
+/// - true if the environment variable is set to "1".
+/// - false if the environment variable is not set or set to any other value.
+fn optimizations_enabled() -&gt; bool {
+    match env::var("OPTIMIZATIONS") {
+        Ok(val) =&gt; val == "1",
+        Err(_) =&gt; false, // Assume optimizations are disabled if the environment variable is not set
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<p>✅ Since everything else is obvious from the signature, we can just say:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>/// Checks if the OPTIMIZATIONS environment variable is set to "1"
+fn optimizations_enabled() -&gt; bool { ... }
+<span class="boring">}</span></code></pre></pre>
+<p>⚠️ Not bad, but sounds a bit robotic</p>
+<pre><code class="language-markdown"># Side-Effects
+- When the model is rewritten, related data structures such as the symbol table (which tracks variable names and types)
+  or other top-level constraints may also be updated to reflect these changes. These updates are applied to the returned model,
+  ensuring that all related components stay consistent and aligned with the changes made during the rewrite.
+- The function collects statistics about the rewriting process, including the number of rule applications
+  and the total runtime of the rewriter. These statistics are then stored in the model's context for
+  performance monitoring and analysis.
+</code></pre>
+<p>✅ Same idea but shorter</p>
+<pre><code class="language-markdown"># Side-Effects
+- Rules can apply side-effects to the model (e.g. adding new constraints or variables).
+  The original model is cloned and a modified copy is returned.
+- Rule engine statistics (e.g. number of rule applications, run time) are collected and stored in the new model's context.
+</code></pre>
+<p>⚠️ A bit too detailed</p>
+<pre><code class="language-markdown"># Parameters
+- `expression`: A reference to the [`Expression`] that will be evaluated against the given rules. This is the main
+   target for rule transformations and is expected to remain unchanged during the function execution.
+- `model`: A reference to the [`Model`] that provides context for rule evaluation, such as constraints and symbols.
+  Rules may depend on information in the model to determine if they can be applied.
+- `rules`: A vector of references to [`Rule`]s that define the transformations to be applied to the expression.
+  Each rule is applied independently, and all applicable rules are collected.
+- `stats`: A mutable reference to [`RewriterStats`] used to track statistics about rule application, such as
+  the number of attempts and successful applications.
+</code></pre>
+<p>✅ Just describing the meaning of arguments will do</p>
+<p>(Details of the rewriting process belong on the wiki, and details of underlying types such as <code>Model</code> or <code>Expression</code> are already documented next to their implementations)</p>
+<pre><code class="language-markdown">- `expression`: A reference to the [`Expression`] to evaluate.
+- `model`: A reference to the [`Model`] for access to the symbol table and context.
+- `rules`: A vector of references to [`Rule`]s to try.
+- `stats`: A mutable reference to [`RewriterStats`] used to track the number of rule applications and other statistics.
+</code></pre>
+<hr />
+<p><em>This section had been taken from the 'Crate Structure' page of the conjure-oxide wiki</em></p>
+<div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><!-- maturity: draft
+authors: Niklas Dewally, Hanaa Khan
+created: 08-12-23
+---- -->
+<!-- TODO: highlight essence syntax -->
+<!-- TODO: put stuff from 'improve this page', and to make complete documentation for all the crates (they all point back to the regular docs, idk if they'll need more specificity), into the 'things you could do' page -->
+<h1 id="202311-high-level-plan"><a class="header" href="#202311-high-level-plan">2023‐11: High Level Plan</a></h1>
+<p><em>This page is a summary of discussions about the architecture of the project circa November 2023.</em></p>
+<p>In brief:</p>
+<img src="developers_guide/design_documents/./handDrawnDiagram.jpeg" width="300">
+<h2 id="conjure-oxide-1"><a class="header" href="#conjure-oxide-1">Conjure Oxide</a></h2>
+<h3 id="model-rewriting-engine"><a class="header" href="#model-rewriting-engine">Model Rewriting Engine</a></h3>
+<p>The purpose of the model rewriting engine is to turn a high level constraints model into one that can be run by various solvers.
+It incrementally rewrites a given model by applying a series of rules.</p>
+<p>Rules have the type:</p>
+<pre><code class="language-rs">rule :: fn(Expr) -&gt; Result&lt;Expr,Error&gt;
+</code></pre>
+<p>The use of <code>Result</code> here allows for the type checking of the Model at each stage (amongst other things).</p>
+<p>A sketch of a rewriting algorithm is below. As we are using a <code>Result</code> type, backtracks occur when an <code>Err</code> is returned.</p>
+<pre><code>fn apply(rules,x) {
+  new_rules = getApplicable(rules)
+
+  if shouldStop(x) {
+    return Ok(x)
+  }
+ 
+ // Recursive case - multiple rules
+  while len(rules') &gt; 0 {
+   rule = select(new_rules)
+   new_rules.remove(rule)
+   res = apply(rules,rule(x))
+
+   if res is Ok, return Ok
+  }
+
+  // No rules - base case
+  if (compatibleWithSolver(x)) {
+    return Ok(x)
+  }
+
+  return Err()
+}
+</code></pre>
+<p>This is, in effect, a recursive tree search algorithm. The behaviour of the search can be changed by changing the following functions:</p>
+<ul>
+<li>getApplicable: <code>fn(Vec&lt;Rule&gt;) -&gt; Vec&lt;Rule&gt;</code></li>
+<li>select: <code>fn(Vec&lt;Rule&gt;) -&gt; Vec&lt;Rule&gt;</code></li>
+<li>shouldStop: <code>fn(x) -&gt; bool</code></li>
+</ul>
+<hr />
+<p>The following functions are also important to implement the rewriting engine:</p>
+<pre><code class="language-haskell">domainOf:: Expr -&gt; Domain
+typeOf:: Expr -&gt; Type
+typeOfDomain:: Domain -&gt; Type
+categoryOf:: Expr -&gt; Category
+
+data Category = Decision | Unknown | Quantified
+</code></pre>
+<h3 id="solver-adaptors"><a class="header" href="#solver-adaptors">Solver Adaptors</a></h3>
+<p>Once we have a Model object that only uses constraints supported by a particular solver, we are able to translate it to a form the solver understands.</p>
+<p>The solver adaptor layer translates a Model into solver specific data-structures, and then runs the solvers.</p>
+<p>If the given Model isn't compatible with the solver, the use of a <code>Result</code> type here could allow a type error to be thrown.</p>
+<h2 id="other-crates-inside-this-repository"><a class="header" href="#other-crates-inside-this-repository">Other crates inside this repository</a></h2>
+<p>This repository contains the code for Conjure Oxide as well as the code for some of its dependencies and related works.</p>
+<p>Currently, these are just Rust crates that provide low level bindings to various solvers.</p>
+<!-- TODO: is this still the case? should rewrite slightly if not -->
+<p>There should be a strict separation of concerns between each crate and Conjure Oxide. In particular, each crate in this project should be considered a separate piece of work that could be independently published and used. Therefore:</p>
+<ul>
+<li>The crate should have its own complete documentation and examples.</li>
+<li>The public API should be safe and make sense outside the context of Conjure Oxide.</li>
+</ul>
+<h3 id="solver-crates"><a class="header" href="#solver-crates">Solver Crates</a></h3>
+<p>Each solver crate should have a API that matches the data structures
+used by the solver itself.</p>
+<p>Eventually, there will be a way to generically call solvers using common
+functions and data structures. However, this is to be defined entirely in Conjure Oxide
+and should not affect how the solver crates are written. See <a href="developers_guide/design_documents/2023_11.html#solver-adaptors">Solver Adaptors</a>.</p>
+<!-- ## Improve this page
+
+---
+
+- [ ] Add details about solution returning.
+- [ ] Typeset the diagram using graphviz.
+- [ ] Add solutions returning to the diagram.
+- [ ] What specific error type do rules use? -->
+<hr />
+<p><em>This section had been taken from the '2023‐11: High Level Plan' page of the conjure-oxide wiki</em></p>
+<div style="break-before: page; page-break-before: always;"></div><!-- maturity: draft
+authors: Niklas Dewally, Hanaa Khan
+created: 21-03-24
+---- -->
+<!-- TODOs -->
+<h1 id="202403-implementing-uniplates-and-biplates-with-structure-preserving-trees"><a class="header" href="#202403-implementing-uniplates-and-biplates-with-structure-preserving-trees">2024‐03: Implementing Uniplates and Biplates with Structure Preserving Trees</a></h1>
+<h2 id="contents"><a class="header" href="#contents">Contents:</a></h2>
+<ul>
+<li><a href="developers_guide/design_documents/2024_03.html#recap-uniplates-and-biplates">Recap: Uniplates and Biplates</a></li>
+<li><a href="developers_guide/design_documents/2024_03.html#definition-of-children">Definition of Children</a></li>
+<li><a href="developers_guide/design_documents/2024_03.html#storing-the-structure-of-children">Storing The Structure of Children</a></li>
+<li><a href="developers_guide/design_documents/2024_03.html#uniplates-and-biplates-using-structure-preserving-trees">Uniplates and Biplates Using Structure Preserving Trees</a></li>
+</ul>
+<p>Comments and discussion about this document can be found in issue <a href="https://github.com/conjure-cp/conjure-oxide/issues/261">#261</a>.</p>
+<hr />
+<p>In <a href="https://github.com/conjure-cp/conjure-oxide/pull/180">#180</a> and <a href="https://github.com/conjure-cp/conjure-oxide/pull/259">#259</a> we implemented the basic Uniplate interface and a derive macro to automatically implement it for <code>enum</code> types. However, our current implementation is incorrect and problematic: we have defined children wrong; and our children list does not preserve structure, making more complex nested structures hard to recreate in the context function.</p>
+<h2 id="recap-uniplates-and-biplates"><a class="header" href="#recap-uniplates-and-biplates">Recap: Uniplates and Biplates</a></h2>
+<p><em>A quick recap of what we are trying to do - for details, see the <a href="https://hackage.haskell.org/package/uniplate">Uniplate Haskell docs</a>, our Github Issues, and the paper.</em></p>
+<!-- TODO: which paper?? n are there other issues besides the stated one -->
+<p>Uniplates are an easy way to perform recursion over complex recursive data types.</p>
+<p>It is typically used with enums containing multiple variants, many of which may be different types.</p>
+<pre><code class="language-hs">data T = A T [Integer]
+       | B T T
+       | C T U
+       | D [T]
+</code></pre>
+<p>With Uniplate, one can perform a map over this with very little or no boilerplate.</p>
+<p>This is implemented with a single function <code>uniplate</code> that returns a <em>list of children</em> of the current object and a <em>context</em> function to rebuild the object from a list of children.</p>
+<p>Biplates provide recursion over instances of type <code>T</code> within some other type <code>U</code>. They are implemented with a single function <code>biplate</code> of similar type to <code>uniplate</code> (returning <em>children</em> and a <em>context</em> function).</p>
+<p>These functions are able to be implemented on any data type through macros making Uniplate operations boilerplate free.</p>
+<h2 id="definition-of-children"><a class="header" href="#definition-of-children">Definition of Children</a></h2>
+<p>We currently take <em>children of T</em> to mean <em>direct descendants of T inside T</em>. However, the correct definition of children is <em>maximal substructures of type T</em>.</p>
+<p>For example, consider these Haskell types:</p>
+<pre><code class="language-hs">data T = A T [Integer]
+       | B T T
+       | C T U
+       | D [T]
+
+data U = E T T
+       | F Integer
+       | G [T] T
+</code></pre>
+<p>Our current implementation would define children as the following:</p>
+<pre><code class="language-hs">children (A t1 _) = [t1]
+children (B t1 t2) = [t1, t2]
+children (C t1 u) = [t1]
+children (D ts) = ts
+</code></pre>
+<p>However, the proper definition should support transitive children - i.e. T contains a U which contains a T:</p>
+<pre><code class="language-hs">children (A t1 _) = [t1]
+children (B t1 t2) = [t1, t2]
+children (C t1 (E t2 t3)) = [t1,t2,t3]
+children (C t1 (F _)) = [t1]
+children (C t1 (G ts t3)) = [t1] ++ ts ++ [t3]
+children (D ts) = ts
+</code></pre>
+<p>While a seemingly small difference, this complicates how we reconstruct a node from its children: we now need to create a context that takes a list of children and creates an arbitrarily deeply nested data structure containing multiple different types. In particular, the challenge is keeping track of which elements of the children list go into which fields of the enum we are creating.</p>
+<p>We already had this problem dealing with children from lists, but a more general approach is needed.</p>
+<h2 id="storing-the-structure-of-children"><a class="header" href="#storing-the-structure-of-children">Storing The Structure of Children</a></h2>
+<p>How do we know which children go into which fields of the enum variant?</p>
+<p>For example, consider this complicated instance of <code>T</code>:</p>
+<pre><code class="language-hs">data T = A T [Integer]
+       | B T T
+       | C T U 
+       | D [T]
+
+data U = E T T
+       | F Integer
+       | G [T] T
+
+myT = C(D([t0,...,t5),G([t6,...,t12],t13))
+</code></pre>
+<p>Its list of children is: <code>[t0,...,t13]</code>.</p>
+<p>Try creating a function to recreate <code>myT</code> based on a new list of children. <em>Hint: it is difficult, and even more so in full generality!</em></p>
+<p>If we instead consider children to be a tree, where each field in the original enum variant is its own branch, we get:</p>
+<pre><code class="language-hs">data Tree A = Zero | One A | Many [(Tree A)]
+
+myTChildren = 
+  Many [(Many [One(t0),...,One(t5)]),      -- C([XXX], _) field 1 of C
+        (Many [                            -- C([_],XXX)  field 2 of C
+          (Many [One(t6),...,One(t12)]),   -- G([XXX],_)  field 2.1 of C
+          (One  t13))]                     -- G([_],XXX)) field 2.2 of C
+</code></pre>
+<p>This captures, in a type-independent way, the following structural information:</p>
+<ol>
+<li><code>myT</code> has two fields.</li>
+<li>The first field is a container of Ts.</li>
+<li>The second field contains two inner fields: one is a container of Ts, one is a single T.</li>
+</ol>
+<p><strong>Representing non-recursive and primitive types</strong></p>
+<p>Often primitive and non-recursive types are found in the middle of enum variants. How do we say <em>“we don’t care about this field, it does not contain a T”</em> with our <code>Tree</code> type? <code>Zero</code> can be used for this.</p>
+<p>For example:</p>
+<pre><code class="language-hs">data V = V1 V Integer W
+       | V2 Integer
+
+data W = W1 V V
+
+myV = (V1 
+        (V2 1) 
+        1 
+        (W1 
+          (V2 2) 
+          (V2 3)))
+
+myVChildren = 
+  (Many [
+    (One v1),  -- V1(XXX,_,_)
+    Zero,      -- V1(_,XXX,_) 
+    (Many [    -- V1(_,_,XXX)
+      (One v2),
+      (One v3)
+   ]))
+</code></pre>
+<p>This additionally encodes the information that the second field of <code>myV</code> has no Ts at all.</p>
+<p>While this information isn’t too useful for finding or traversing over the target type, it means that the tree structure defines the structure of the target type completely: there are always the same number of tree branches as there are fields in the enum variant.</p>
+<h2 id="uniplates-and-biplates-using-structure-preserving-trees"><a class="header" href="#uniplates-and-biplates-using-structure-preserving-trees">Uniplates and Biplates Using Structure Preserving Trees</a></h2>
+<p>Recall that the <code>uniplate</code> function returns all <em>children</em> of a data structure alongside a <em>context</em> function that rebuilds the data structure using some new children.</p>
+<p>To implement this, for each field in an enum variant, we need to ask the questions: <em>“how do we get the type <code>T</code>s in the type <code>U</code>”</em>, and <em>"how can we rebuild this <code>U</code> based on some new children of type <code>T</code>?"</em>.</p>
+<p>This is just a <code>Biplate&lt;U,T&gt;</code>, which gives us the <em>type <code>T</code> children within a type <code>U</code></em> as well as a <em>context function to reconstruct the <code>U</code> from the <code>T</code></em>.</p>
+<p>Therefore:</p>
+<ul>
+<li>
+<p>We build the <em>children</em> tree by combining the children trees of all fields of the enum (such that each field’s children is a branch on the tree).</p>
+</li>
+<li>
+<p>We build the <em>context</em> function by calling each fields context function on each branch of the input tree.</p>
+</li>
+</ul>
+<p>This is effectively a recursive invocation of <code>Biplate</code>.</p>
+<p>What happens when we reach a T? Under the normal definition, <code>Biplate&lt;T,T&gt;</code> would return its children. This is wrong - we want to return <code>T</code> here, not its children!</p>
+<p>When <code>T == U</code> we need to change the definition of a Biplate: <strong><code>Biplate&lt;T,T&gt;</code> operates over the input structure, not its children.</strong></p>
+<p>For our example AST:</p>
+<pre><code class="language-hs">data T = A T [Integer]
+       | B T T
+       | C T U 
+       | D [T]
+
+data U = E T T
+       | F Integer
+       | G [T] T
+</code></pre>
+<p>Here are some Biplate and Uniplates and their resultant children trees:</p>
+<ul>
+<li>
+<p><code>Biplate&lt;Integer,T&gt; 1</code> is <code>Zero</code>.</p>
+</li>
+<li>
+<p><code>Uniplate&lt;T&gt; (A t [1,2,3])</code> is <code>(Many [Biplate&lt;T,T&gt; t ,Zero])</code>.</p>
+<p>This evaluates to <code>(Many [(One t),Zero])</code></p>
+</li>
+<li>
+<p><code>Biplate&lt;T,T&gt; t</code> is <code>One t</code>.</p>
+</li>
+<li>
+<p><code>Biplate&lt;T,U&gt; (G ts t1)</code> is <code>(Many [Biplate&lt;T,[T]&gt; ts , Biplate&lt;T,T&gt; t ])</code>.</p>
+<p>This evaluates to <code>(Many [(Many [(One t0),...(One tn)]),(One t)])</code></p>
+</li>
+<li>
+<p><code>Uniplate&lt;T,T&gt; (C t (G ts t1))</code> is <code>(Many [Biplate&lt;T,T&gt; t, Biplate&lt;U,T&gt; (G ts t1))</code></p>
+<p>This evaluates to <code>(Many [(One t), (Many [(Many [(One t0),...,(One tn)]), (One t)]))</code></p>
+</li>
+</ul>
+<!-- vim: cc=100 spell
+-->
+<hr />
+<p><em>This section had been taken from the '2024‐03: Implementing Uniplates and Biplates with Structure Preserving Trees' page of the conjure-oxide wiki</em></p>
+<div style="break-before: page; page-break-before: always;"></div><!-- maturity: draft
+authors: Georgii Skorokhod, Hanaa Khan
+created: 16-02-24
+---- -->
+<!-- TODO edit more -->
+<h1 id="expression-rewriting-rules-and-rulesets"><a class="header" href="#expression-rewriting-rules-and-rulesets">Expression rewriting, Rules and RuleSets</a></h1>
+<blockquote>
+<p>NOTE: Once the rewrite engine API is finalized, we should possibly make a separate page for it</p>
+</blockquote>
+<h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
+<p>Conjure uses Essence, a high-level DSL for constraints modelling, and converts it into a solver-specific representation of the problem.
+To do that, we parse the Essence file into an AST, then use a rule engine to walk the expression tree and rewrite constraints into a format that is accepted by the solver before passing the AST to a solver adapter.</p>
+<p>The high-level process is as follows:</p>
+<ol>
+<li>Start with a deterministically ordered list of rules</li>
+<li>For each node in the expression tree:
+<ul>
+<li>Find all rules that can be applied to it</li>
+<li>If there are none, keep traversing the tree. Otherwise:
+<ul>
+<li>Take the rules with the highest priority</li>
+<li>If there is only one, apply it</li>
+<li>If there are multiple, use some strategy to choose a rule
+(The rule selection logic is separate from the rewrite engine itself)
+For testing, we currently just choose the first rule</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>When there are no more rules to apply, the rewrite is complete</li>
+</ol>
+<p>We want the rewrite process to:</p>
+<ul>
+<li>be <strong>flexible</strong> - instead of hard coding the rules, we want an easy way to extend the list of rules and to decide which rules to use, both for ourselves and for any users who may wish to use conjure-oxide in their projects</li>
+<li>be <strong>deterministic</strong> (in a loose sense of the term) - for a given input, set of rules, and a given set of answers to all rule selection questions (see above), the rewriter must always produce the same output</li>
+<li>happen in a single step, instead of doing multiple passes over the model (like it is done in Saville Row currently)</li>
+</ul>
+<h2 id="rules"><a class="header" href="#rules">Rules</a></h2>
+<hr />
+<h3 id="overview-1"><a class="header" href="#overview-1">Overview</a></h3>
+<p>Rules are the fundamental part of the rewrite engine.
+They consist of:</p>
+<ul>
+<li>A unique <strong>name</strong></li>
+<li>An application function which takes an <code>Expression</code> and either rewrites it or errors if the rule is not applicable.
+(checking applicability and applying the rule are not separated to avoid code duplication and inefficiency - their logic is the same)</li>
+</ul>
+<p>We may also store other metadata in the <code>Rule</code> struct, for example the names of the <code>RuleSet</code>'s that it belongs to</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct Rule&lt;'a&gt; {
+    pub name: &amp;'a str,
+    pub application: fn(&amp;Expression) -&gt; Result&lt;Expression, RuleApplicationError&gt;,
+    pub rule_sets: &amp;'a [(&amp;'a str, u8)], // (name, priority). At runtime, we add the rule to rulesets
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="registering-rules"><a class="header" href="#registering-rules">Registering Rules</a></h3>
+<p>The main way to register rules is by defining their application function and decorating it with the <code>#[register_rule()]</code> macro.
+When this macro is invoked, it creates a static <code>Rule</code> object and adds it to a global rule registry. Rules may be registered from the <code>conjure_oxide</code> crate, or any downstream crate (so, users may define their own rules)</p>
+<p>Currently, the <code>register_rule</code> macro has the following syntax:</p>
+<pre><code>#[register_rule(("&lt;RuleSet name&gt;", &lt;Rule priority within the ruleset&gt;))]
+</code></pre>
+<h4 id="example"><a class="header" href="#example">Example</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use conjure_core::ast::Expression;
+use conjure_core::rule::RuleApplicationError;
+use conjure_rules::register_rule;
+
+#[register_rule(("RuleSetName", 10))]
+fn identity(expr: &amp;Expression) -&gt; Result&lt;Expression, RuleApplicationError&gt; {
+   Ok(expr.clone())
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="getting-rules-from-the-registry"><a class="header" href="#getting-rules-from-the-registry">Getting Rules from the registry</a></h3>
+<p>Rules may be retrieved using the following functions:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub fn get_rule_by_name(name: &amp;str) -&gt; Option&lt;&amp;'static Rule&lt;'static&gt;&gt;
+<span class="boring">}</span></code></pre></pre>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub fn get_rules() -&gt; Vec&lt;&amp;'static Rule&lt;'static&gt;&gt;
+<span class="boring">}</span></code></pre></pre>
+<ul>
+<li><code>get_rules()</code> returns a vector of static references to <code>Rule</code> structs</li>
+<li><code>get_rule_by_name()</code> returns a static reference to a specific rule, if it exists</li>
+</ul>
+<h2 id="rule-sets"><a class="header" href="#rule-sets">Rule Sets</a></h2>
+<hr />
+<p>Rule sets group some <code>Rule</code>s together and map them to their priorities.
+The <code>rewrite</code> function takes a set of <code>RuleSet</code>'s and uses it to resolve a final list of rules, ordered by their priority.</p>
+<p>The RuleSet object contains the following fields:</p>
+<ul>
+<li><code>name</code> The name of the rule set.</li>
+<li><code>order</code> The order of the rule set.</li>
+<li><code>rules</code> A map of rules to their priorities. This is evaluated lazily at runtime.</li>
+<li><code>solvers</code> The solvers that this RuleSet applies for</li>
+<li><code>solver_families</code> The solver families that this RuleSrt applies for</li>
+</ul>
+<blockquote>
+<p>NOTE: A <code>RuleSet</code> would apply if EITHER of the following is true:</p>
+<ul>
+<li>The target solver belongs to its list of <code>solvers</code></li>
+<li>The target solver belongs to a family that is listed in <code>solver_families</code>, even if it is not explicitly named in <code>solvers</code></li>
+</ul>
+</blockquote>
+<p>It provides the following public methods:</p>
+<ul>
+<li><code>get_dependencies() -&gt; &amp;HashSet&lt;&amp;'static RuleSet&gt;</code> Get the dependency <code>RuleSet</code>s of this <code>RuleSet</code> (evaluating them lazily if necessary)</li>
+<li><code>get_rules() -&gt; &amp;HashMap&lt;&amp;'a Rule&lt;'a&gt;, u8&gt;</code> Get a map of rules to their priorities (performing lazy evaluation - "reversing the arrows" - if necessary)</li>
+</ul>
+<h3 id="registering-rule-sets"><a class="header" href="#registering-rule-sets">Registering Rule Sets</a></h3>
+<p>Like <code>Rule</code>s, <code>RuleSet</code>s may be registered from anywhere within the <code>conjure_oxide</code> crate or any downstream crate.
+They are registered using the <code>register_rule_set!</code> macro using the following syntax:</p>
+<pre><code>register_rule_set!("&lt;Rule set name&gt;", &lt;order&gt;, ("&lt;name of dependency RuleSet&gt;", ...), (&lt;list of solver families&gt;), (&lt;list of solvers&gt;));
+</code></pre>
+<p>If a bracketed list is omited, the corresponding list would be empty. However, you must not break the order.
+For example:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>register_rule_set!("MyRuleSet", 10) // This is legal (rule set will have no dependencies, solvers or solver families)
+register_rule_set!("MyRuleSet", 10, ("DependencyRS")) // Also legal
+register_rule_set!("MyRuleSet", 10, (SolverFamily::CNF)) // This is illegal because dependencies come before solver families
+register_rule_set!("MyRuleSet", 10, (), (SolverFamily::CNF)) // But this is fine
+<span class="boring">}</span></code></pre></pre>
+<h4 id="example-1"><a class="header" href="#example-1">Example</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>register_rule_set!("MyRuleSet", 10, ("DependencyRuleSet", "AnotherRuleSet"), (SolverFamily::CNF), (SolverName::Minion));
+<span class="boring">}</span></code></pre></pre>
+<h4 id="adding-rules-to-rulesets"><a class="header" href="#adding-rules-to-rulesets">Adding Rules to RuleSets</a></h4>
+<p>Notice that we do not add any rules to the <code>RuleSet</code> when we register it.
+Instead, the <code>Rule</code> contains the names of the RuleSets that it needs to be added to.</p>
+<p>At runtime, when we first request the <code>rules</code> from a <code>RuleSet</code>, it retrieves a list of all the rules that reference it by name from the registry, and stores static references to the rules along with their priorities.</p>
+<p>This is done to allow us to statically initialize <code>Rule</code>s and <code>RuleSet</code>s in a decentralized way across multiple files and store them in a single registry. Dynamic data structures (like <code>Vec</code> or <code>HashMap</code>) cannot be initialized at this stage (Rust has no "life before <code>main()</code>"), so we have to initialize them lazily at runtime.</p>
+<p><img src="developers_guide/design_documents/./expression_rewriting_diagram.png" alt="image" /></p>
+<p>Internally, we would sometimes refer to this lazy initialization as "reversing the arrows".</p>
+<h3 id="getting-rulesets-from-the-registry"><a class="header" href="#getting-rulesets-from-the-registry">Getting RuleSets from the registry</a></h3>
+<p>Similarly to <code>Rule</code>s, <code>RuleSet</code>s may be retrieved using the following functions:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub fn get_rule_set_by_name(name: &amp;str) -&gt; Option&lt;&amp;'static RuleSet&lt;'static&gt;&gt;
+<span class="boring">}</span></code></pre></pre>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub fn get_rule_sets() -&gt; Vec&lt;&amp;'static RuleSet&lt;'static&gt;&gt;
+<span class="boring">}</span></code></pre></pre>
+<h2 id="resolving-a-final-list-of-rules"><a class="header" href="#resolving-a-final-list-of-rules">Resolving a final list of <code>Rule</code>s</a></h2>
+<hr />
+<p>Our <code>rewrite</code> function takes an <code>Expression</code> along with a list of <code>RuleSet</code>s to apply:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub fn rewrite&lt;'a&gt;(
+    expression: &amp;Expression,
+    rule_sets: &amp;Vec&lt;&amp;'a RuleSet&lt;'a&gt;&gt;,
+) -&gt; Result&lt;Expression, RewriteError&gt;
+<span class="boring">}</span></code></pre></pre>
+<p>Before we start rewriting the AST, we must first resolve the final list of rules to apply.</p>
+<p>This is done via the following steps:</p>
+<ol>
+<li>
+<p>Add all given RuleSet's to a set of rulesets</p>
+</li>
+<li>
+<p>Recursively look up all their dependencies by name and add them to the set as well</p>
+</li>
+<li>
+<p>Once we have a final set of <code>RuleSet</code>s:</p>
+<ol>
+<li>
+<p>Construct a <code>HashMap&lt;&amp;Rule, priority&gt;)</code>. This will hold our final mapping of rules to priorities</p>
+</li>
+<li>
+<p>Loop over all the rules of every <code>RuleSet</code></p>
+</li>
+<li>
+<p>If a rule is not yet present in the final <code>HashMap</code>, add it and its priority within the <code>RuleSet</code></p>
+</li>
+<li>
+<p>If it is already present:</p>
+<ul>
+<li>Compare the order of the current <code>RuleSet</code> and the one that the rule originally came from</li>
+<li>If the new <code>RuleSet</code> has a higher order, update the <code>Rule</code>'s priority</li>
+</ul>
+</li>
+</ol>
+</li>
+<li>
+<p>Once all rules have been added to the <code>HashMap</code>:</p>
+<ol>
+<li>Take all its keys and put them in a vector</li>
+<li>Sort it by rule priority</li>
+<li>In the case that two rules have the same priority, sort them lexicographically by <code>name</code></li>
+</ol>
+</li>
+</ol>
+<p>In the end, we should have a final deterministically ordered list of rules and a <code>HashMap</code> that maps them to their priorities.
+Now, we can proceed with rewriting.</p>
+<h3 id="why-all-this-weirdness"><a class="header" href="#why-all-this-weirdness">Why all this weirdness?</a></h3>
+<h4 id="rule-ordering"><a class="header" href="#rule-ordering">Rule ordering</a></h4>
+<p>We want to always have a single deterministic ordering of <code>Rule</code>s. This way, for a given set of rules, the <code>select_rule</code> strategy would always give the same result.</p>
+<p>Think of it as a multiple choice quiz: if we want to know that the same numbers in the answer sheet actually correspond to the same set of answers, we must make sure that all students get the questions in the same order.</p>
+<p>This is why we sort <code>Rule</code>s by priority, and then use their name (which is guaranteed to be unique) as a tie breaker.</p>
+<p>Normally, one would just construct a vector of <code>Rule</code>s and use it as the final ordering, but we cannot do that, because rules are registered in a decentralized way across many files, and when we get them from the rule registry, they are not guaranteed to be in any specific order</p>
+<h4 id="ruleset-ordering"><a class="header" href="#ruleset-ordering">RuleSet ordering</a></h4>
+<p>As part of resolving the list of rules to use, we need to take rules from multiple <code>RuleSet</code>s and put these rules and their priorities in a <code>HashMap</code>. However, the <code>RuleSet</code>s may overlap (i.e. contain the same rules but with different priorities), and we want to make sure that, for a given set of <code>RuleSet</code>s, the final rule priorities will always be the same.</p>
+<p>Normally, this would not be an issues - entries in the <code>HashMap</code> would be added and updated as needed as we loop over the <code>RuleSet</code>s. However, since the <code>RuleSet</code>s are stored in a decentralised registry and are not guaranteed to come in any particular order (i.e. this order may change every time we recompile the project), we need to ensure that the order in which the entries are added to the <code>HashMap</code> (and thus the final rule priorities) doesn't change.</p>
+<p>To achieve this, we use the following algorithm:</p>
+<ol>
+<li>Loop over all given <code>RuleSet</code>s</li>
+<li>Loop over all the rules in a <code>RuleSet</code>
+<ul>
+<li>If the rule is not present in the <code>HashMap</code>, add it</li>
+<li>If the rule is already there:
+<ul>
+<li>If this <code>RuleSet</code> has a higher <code>order</code> then the one that the rule came from, update its priority</li>
+<li>Otherwise, don't change anything</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<blockquote>
+<p>NOTE: The <code>order</code> of a <code>RuleSet</code> should not be thought of as a "priority" and does not affect the priorities of the rules in it.
+It only provides a consistent order of operations when resolving the final set of rules</p>
+</blockquote>
+<hr />
+<p><em>This section had been taken from the 'Expression rewriting, Rules and RuleSets' page of the conjure-oxide wiki</em></p>
+<div style="break-before: page; page-break-before: always;"></div><!-- maturity: draft
+authors: Felix Leitner, Niklas Dewally, Hanaa Khan
+created: 19-09-24
+---- -->
+<!-- TODO edit more -->
+<!-- syntax highlighting -->
+<h1 id="semantics-of-rewriting-expressions-with-sideeffects"><a class="header" href="#semantics-of-rewriting-expressions-with-sideeffects">Semantics of Rewriting Expressions with Side‐Effects</a></h1>
+<h2 id="overview-2"><a class="header" href="#overview-2">Overview</a></h2>
+<hr />
+<p>When rewriting expressions, a rule may occasionally introduce new variables and constraints. For example, a rule which handles the <code>Min</code> expression may introduce a new variable <code>aux</code> which represents the minimum value itself, and introduce constraints <code>aux &lt;= x</code> for each <code>x</code> in the original <code>Min</code> expression. Conjure and Conjure Oxide provide similar methods of achieving these "side-effects".</p>
+<h2 id="reductions"><a class="header" href="#reductions">Reductions</a></h2>
+<hr />
+<p>In Conjure Oxide, reduction rules return <code>Reduction</code> values. These contain a new expression, a new (possibly empty) set of top-level constraints, and a new (possibly empty) symbol table. The two latter values are brought up to the top of the AST during rewriting and joined to the model. These reductions, or "local sub-models" therefore can define new requirements which must hold across the model for the change that is made to a specific node of the AST to be valid.</p>
+<p>The example with <code>Min</code> given in the overview is one case where plain <code>Reduction</code>s are used, as a new variable with a new domain is introduced, along with constraints which must hold for that variable.</p>
+<h2 id="bubbles"><a class="header" href="#bubbles">Bubbles</a></h2>
+<hr />
+<p>Reductions are not enough in all cases. For example, when handling a possibly undefined value, changes must be made in the context of the current expression. Simply introducing new top-level constraints may lead to incorrect reductions in these cases. The <code>Bubble</code> expression and associated rules take care of this, bringing new constraints up the tree gradually and expanding in the correct context.</p>
+<p>Essentially, <code>Bubble</code> expressions are a way of attaching a constraint to an expression to say "X is only valid if Y holds". One example of this is how Conjure Oxide handles division. Since the division expression may possibly be undefined, a constraint must be attached to it which asserts the divisor is != 0.</p>
+<p>An example of division handling is shown below. Bubbles are shown as <code>{X @ Y}</code>, where X is the expression that Y is attached to.</p>
+<pre><code>!(a = b / c)                 Original expression
+
+!(a = {(b / c) @ c != 0})    b/c is possibly undefined, so introduce a bubble saying the divisor is != 0
+
+!({(a = b / c) @ c != 0})    "bubble up" the expression, since b / c is not a bool-type expression
+
+!(a = b / c /\ c != 0)       Now that X is a bool-type expression, we can simply expand the bubble into a conjunction
+</code></pre>
+<p>Why not just use <code>Reduction</code>s to assert at the top-level of the model that <code>c != 0</code>? In the context of undefinedness handling, the final reduction is dependent on the context it occurs in. In the above example, if we continue by simplifying (apply DeMorgan's), we can see that it becomes <code>a != b / c \/ c = 0</code>. Thus, c = 0 is a valid assignment for this example to be true, and setting <code>c != 0</code> on the top-level would be incorrect.</p>
+<p>In Conjure Oxide, Bubbles are often combined with the power of <code>Reduction</code>s to provide support for solvers like Minion.</p>
+<hr />
+<p><em>This section had been taken from the 'Semantics of Rewriting Expressions with Side‐Effects' page of the conjure-oxide wiki</em></p>
+<div style="break-before: page; page-break-before: always;"></div><!-- maturity: draft
+authors: EEJDempster (? no real name), Hanaa Khan
+created: 01-04-24
+---- -->
+<!-- TODO edit more -->
+<h1 id="ideal-scenario-of-testing-for-conjure-oxide-dec-2024"><a class="header" href="#ideal-scenario-of-testing-for-conjure-oxide-dec-2024">Ideal Scenario of Testing for Conjure-Oxide (Dec 2024)</a></h1>
+<h2 id="introduction"><a class="header" href="#introduction">Introduction</a></h2>
+<h3 id="what-is-the-goal-of-this-document"><a class="header" href="#what-is-the-goal-of-this-document">What is the goal of this document?</a></h3>
+<p>The goal of this document is to provide an ideal testing outline for Conjure-Oxide, a project in development. To do so, this document will be split into definitions (of Conjure-Oxide and other relevant components, as well as key testing terms), current Conjure-Oxide testing, and idealised (to an extent) Conjure-Oxide testing. When discussing idealised testing, any key limitations will also be discussed. Further, this document will address the use of GitHub actions in this project, including code coverage.</p>
+<h3 id="what-is-conjure-oxide"><a class="header" href="#what-is-conjure-oxide">What is Conjure-Oxide</a></h3>
+<p>Conjure-Oxide is a constraint modelling tool which is implemented in Rust. Of note, it is a reimplementation of the Conjure automated constraint modelling tool and the Savile Row Modelling Assistant, functionally merged and rewritten in Rust - largely because Rust is an efficient high-performance language. Conjure-Oxide takes in a problem written in a high level constraint language, which is called Essence, and creates a model from this. This model is then transformed into a solver-friendly form, and solved using one of the available back-ends. At the moment, these solver back-ends include Minion (a Constraint Satisfiability Problem (CSP) solver) and in-development translation and bindings to a SAT (Propositional Satisfiability Problem) solver. To put it simply, Conjure-Oxide is a compiler to different modelling languages, the result of which is passed into the respective solver. These solvers act as back-ends and must be given bindings to Conjure-Oxide, but are not actually part of it themselves.</p>
+<h3 id="how-is-the-model-made-solver-friendly"><a class="header" href="#how-is-the-model-made-solver-friendly">How is the model made 'solver-friendly'?</a></h3>
+<p>Conjure-Oxide has a rule engine, which applies rules onto the model passed in as Essence, to lower the level of the language into one which can be parsed and solved by the back-end solvers. This engine applies rewriting rules, such as (x = - y) to (x + y = 0), to transform the model. As Essence is a fairly high-level language, with compatibility for sets and matrices and a number of keywords, there are a lot of rewrite rules which may be needed before the model can be passed into a solver. This translation is one of the key roles of Conjure-Oxide, and this rule application refines the language from a higher level to a lower level. The exact rules applied and the degree of simplification varies on the language requirement of the solver: for example, Minion has higher-level language compatibility than a SAT solver<sup class="footnote-reference" id="fr-1-1"><a href="#footnote-1">1</a></sup>.</p>
+<h3 id="conjure-and-savile-row"><a class="header" href="#conjure-and-savile-row">Conjure and Savile Row</a></h3>
+<p>Also relevant to the testing of Conjure-Oxide is Conjure and Savile Row <sup class="footnote-reference" id="fr-2-1"><a href="#footnote-2">2</a></sup>. This is because as Conjure-Oxide is a merge and reimplementation of these programs, the testing can be performed comparatively against Conjure and Savile Row. When this document uses the term "Conjure suite", it refers to both Conjure and Savile Row, being used in combination, generally using the Minion solver. Where there is deviation from this, it will be explicitly clarified.</p>
+<h4 id="what-is-conjure"><a class="header" href="#what-is-conjure">What is Conjure?</a></h4>
+<p>Conjure is a constraint modelling tool, implemented in Haskell. It uses a rule engine similarly to Conjure-Oxide to simplify from Essence to Essence' (a subset of Essence which is slightly lower-level), and this "refinement" produces the lower-level model to pass to Savile Row.</p>
+<h4 id="what-is-savile-row"><a class="header" href="#what-is-savile-row">What is Savile Row?</a></h4>
+<p>Savile Row is a constraint modelling assistant which translates from Essence' to a solver-friendly language. Alongside translating the model to the target language, it can reformat the model with an additional set of rules. This provides a performance increase by improving the model itself. Functionally, the better a model is, the faster a solver will solve it.</p>
+<h4 id="what-is-minion"><a class="header" href="#what-is-minion">What is Minion?}</a></h4>
+<p>Minion is a Constraint Satisfiability Problem solver, which has bindings to both Conjure suite and Conjure-Oxide. Minion is a fast, scalable, CSP solver, designed to be capable of solving difficult models while still being time optimised. This is the main solver in use by both the Conjure suite and by Conjure-Oxide, due to its flexibility and efficiency.</p>
+<h2 id="definitions-for-testing"><a class="header" href="#definitions-for-testing">Definitions for Testing</a></h2>
+<p>Two main forms of testing will be addressed within this document: correctness testing and performance testing. Fuzz testing (inputting malformed instances to see the program response) is not currently intended as part of testing Conjure-Oxide, and so will not be outlined or addressed. Metamorphic testing may have applications to this project, and so will be defined, but will not be considered as part of the ideal implementation at present as it is not possible to implement at this point in time.</p>
+<h3 id="what-is-correctness-testing"><a class="header" href="#what-is-correctness-testing">What is correctness testing?</a></h3>
+<p>In the field of computer science, correctness can be formally defined as a program which behaves as expected by it's formal specification, in all cases. As such, testing for correctness essentially consists of testing that the program produced the correct result for all given test cases. Correctness testing does not require exhaustiveness (checking all inputs on all states), but instead requires testing that all (or most) states function with varied inputs, which can then be used as a proof of correctness.</p>
+<h3 id="what-is-performance-testing"><a class="header" href="#what-is-performance-testing">What is performance testing?</a></h3>
+<p>Performance testing refers to a range of methodologies designed to measure or evaluate a software's performance. By performance, this generally refers to time taken to complete a process and the stability under load. The time taken for processes will vary not only by system, but also by device depending on factors such as background processes. As not all performance testing methodologies are relevant to Conjure-Oxide, they will not be outlined in this document. The two most common forms of performance testing are load testing and stress testing.
+<strong>Load testing</strong> examines the performance of a program to support its expected usage, and is used to identify bottlenecks in software, as well as possibly identify a relationship of usage to time.
+<strong>Stress testing</strong> places the program under extremely high load to see the ability of the software to function under exceptional load. This is generally used to find the functional upper load of a program before it breaks.</p>
+<h3 id="what-is-metamorphic-testing"><a class="header" href="#what-is-metamorphic-testing">What is metamorphic testing?</a></h3>
+<p>Most tests use <strong>oracles</strong>, where the answer is known and is explicitly checked against. This is what is done in correctness testing, as laid out above. Metamorphic testing, instead, uses <strong>Metamorphic relations</strong> to generate new test cases from existing previous ones. A metamorphic relation is the relation between the test (the inputs) and the result (the outputs). An example of this is (sin(x) = sin( \pi -x)), where, regardless of x, there is a consistent relation between the input and output. As such, test cases can be generated to test the correctness of this output.</p>
+<h2 id="test-scenario-for-conjure-oxide"><a class="header" href="#test-scenario-for-conjure-oxide">Test Scenario for Conjure-Oxide</a></h2>
+<p>As Conjure-Oxide is a reimplementation, it is possible to perform a large amount of the testing comparatively. By this, it means that testing can be done independently on Conjure-Oxide, and the results can be directly compared against the results of the same test being ran in the Conjure suite. This is true not only for the correctness testing, but also for the performance testing. Tests run in the Conjure suite are run by Conjure, which uses Savile Row and the required solvers to produce the correct output.</p>
+<h3 id="correctness-testing"><a class="header" href="#correctness-testing">Correctness Testing</a></h3>
+<p>There are several areas which should be tested for correctness in Conjure-Oxide: that the Essence is correctly parsed; that the correct Essence translation is generated; that the correct rules are applied in the correct order; and finally that the correct solution is reached by Minion. For something to be 'correct' in Conjure-Oxide, it means it must behave as expected. As Conjure-Oxide reimplements Conjure and Savile Row, the expected behaviour is that of the Conjure suite. As such, correctness testing is performed exclusively comparative to the results produced by this suite.
+Correctness testing as implemented is looking to ensure that all expected files match the files which are actually produced. Where there is a difference, the initial assumption is that Conjure-Oxide has the mistake. This is not necessarily always correct - the Conjure suite may have bugs or areas where it is not producing the expected outcome - but usually is.</p>
+<h3 id="current-correctness-testing"><a class="header" href="#current-correctness-testing">Current Correctness Testing</a></h3>
+<p>Correctness testing is the main form of testing performed in Conjure-Oxide at present, mainly through integration testing. Integration testing tests how the whole application works together as a whole, and as such is the most applicable to test all areas of testing needing to be done in Conjure-Oxide. In the current testing implementation, a test model is produced, and then the parse, rule-based transformation and result file are compared against those produced by calling the same test case on Conjure. In this, we assume that the result produced by the Conjure suite is always going to be correct.  Theoretically, this is completely functional - as Conjure-Oxide is a reimplementation, any bugs which exist in Conjure or Savile Row could also exist in Conjure-Oxide without causing Conjure-Oxide to violate it's correctness. However, this defeats the point of an evolving project, so assuming the complete correctness of the Conjure suite is not sufficient for testing.</p>
+<h3 id="comparative-correctness-testing"><a class="header" href="#comparative-correctness-testing">Comparative Correctness Testing</a></h3>
+<p>As it is possible to perform the testing comparatively, the current implementation forms a functional basis for any ideal implementation, because it is built on this comparison. The current implementation functions well (although with limitations, as addressed below) in showing a degree of correctness, however it is not necessarily holistic enough to show the full correctness of the project. The primary solution for this issue is simply increasing the test coverage through developing a broader repository of models to be tested. Conjure has a very broad set of translation rules, meaning that there is a large number of rules which can be reimplemented in Conjure-Oxide. This enables a demonstration of the functionality of Conjure-Oxide in more scenarios, by ensuring not only are all rules tested individually, but rules in combination, with specific priority, are also tested and return results as expected.
+There may be some benefit to having tests that are not solved and compared against results from the Conjure suite, but rather solved independently (e.g., by mathematicians) and then compared to the results of the same model produced by Conjure-Oxide. By proving these results as correct, it is possible to go beyond simply assuming Conjure and Savile Row are always right. However, this is not particularly feasible in a broader implementation and would be fairly limited in scale due to this, especially as Conjure-Oxide is not a large project.
+Solver Testing
+Part of the larger Conjure-Oxide project is the implementation of a Satisfiability (SAT) solver. This implementation will require integration testing alongside the rest of the Conjure-Oxide project. As Conjure has a SAT solver, this is possible to be done comparatively, although would require the implementation of the ability to select a specific solver to solve a model. The comparative testing would simply compare the translated essence to SAT, and the output of the Conjure suite's SAT solver to that of the Conjure-Oxide SAT solver, and debug where the tests do not pass.</p>
+<h3 id="limitations-of-correctness-testing"><a class="header" href="#limitations-of-correctness-testing">Limitations of Correctness Testing</a></h3>
+<p>Conjure-Oxide is, in part, a refinement based program. A large part of it's function is to refine from Essence down to a solver-friendly language. One part of the way that this is done in Conjure-Oxide is through a rule engine. This rule engine applies modifications to the constraints problems given to the project. At current, we just assume the rules applied are true. For example, (x = -y + z) becoming (x + y - z = 0) is a simple transformation which could be made by the rule engine. We do not formally prove that this transformation is correct, we just assume that it is the correct transformation. In simpler transformations such as this one, that is a valid assumption - it is possible to confirm that the modification is correct with minimal effort. In cases where more complex rules may be applied, the lack of a proof poses a limitation on the project. In an ideal scenario, this limitation could be removed by having proofs for every single rule applied in the rule engine, therefore not having to rely on an assumed correctness.
+Another of the primary limitations in correctness testing as implemented is that it assumes that the output being produced by Minion (or the SAT solver in development) is correct. As there are no known bugs in Minion, this is an acceptable assumption to make. That said, it is not necessarily accurate that all output from Minion is correct. Other mature (having existed, and been used and updated, over a protracted period of time), state of the art solvers can produce incorrect results<sup class="footnote-reference" id="fr-3-1"><a href="#footnote-3">3</a></sup>.</p>
+<p>If Minion has similar unknown bugs, it may fail to fulfil the correctness element of correctness testing.
+The SAT solver which is being implemented is in it's infancy and as such is much less reliable. It is likely that it will have a number of bugs and logical errors which will be gradually harder to find as time goes on (operating under the assumption that easy-to find and solve bugs will be removed earlier, leaving only more hidden or complex bugs).</p>
+<h3 id="performance-testing"><a class="header" href="#performance-testing">Performance Testing</a></h3>
+<p>It is of note that a large motivation behind the reimplementation of the Conjure suite into a single Rust program is to improve the performance of the compilation from Essence to a solver-friendly language, without compromising on the time taken to solve a model. Currently, Conjure translates Essence into Essence', and then Savile Row refines and reformats the resultant Essence' into a solver-friendly language. Conjure-Oxide translates directly from Essence into a solver-friendly language, which should cut down on the amount of steps necessary and as such result in a shorter translation time.
+When testing for overall performance of Conjure-Oxide, the primary metrics that we are are concerned with is the total time taken for a model to be parsed, translated, and solved through the solver back-end. This total time can be split into two components: the translation time and the time taken by the solver. We can also use solver nodes as a measure of performance of the solver, as the time the solver takes may vary depending on background processes. In the performance testing addressed in this document, though there will be consideration for the solver time, the primary measurement of value is translation time.</p>
+<h3 id="current-performance-testing"><a class="header" href="#current-performance-testing">Current Performance Testing</a></h3>
+<p>At present, there is no formal performance testing implemented in Conjure-Oxide. While stats files are generated on each test run, tracking a number of fields (rewrite time, solver time, solver nodes, total time, etc.), nothing is done with this information. As such, while there is some measure of 'performance', it lacks context, is not reliable (since data is produced from a single run) and overall does not create a measure of Conjure-Oxide's performance.
+Performance testing, both <strong>load</strong> and <strong>stress</strong> based, can be performed both comparatively (as in checking speed or efficiency of one program directly against another (or several other) programs), but also individually on the given program. As such, both 'methods' of Performance testing will be discussed.</p>
+<h3 id="performance-testing-of-just-conjure-oxide"><a class="header" href="#performance-testing-of-just-conjure-oxide">Performance Testing of just Conjure-Oxide</a></h3>
+<p>Sole examination of the performance of Conjure-Oxide cannot show whether there is a performance improvement as desired. However, the goal of individual performance testing is rather to enable the development of a relationship between complexity (of translation) and time (to translate). In addition, this will allow for the identification of any notable bottlenecks in the program, allowing these specific problem areas to be targeted for improvement.
+To performance test a program, a number of things need to be established. Firstly, what the metric(s) are being considered - as established above, for Conjure-Oxide this is the translation-, and to some degree solver-, time. Secondly, what is the independent variable - as in, what is being varied to result in different outputs. In Conjure-Oxide, this will be size or complexity of a given Essence file. Size and complexity will be defined contextually below.</p>
+<h4 id="distinction-between-size-and-complexity"><a class="header" href="#distinction-between-size-and-complexity">Distinction between Size and Complexity</a></h4>
+<p>Size and complexity of a given Essence file are separate, although certainly correlated. Put simply, size refers more directly to the number of components that make up an Essence input problem, whereas complexity refers to specific aspects which complicate translation, rather than directly increase its size.
+When applying rules to a model, the rules are applied by priority. The implementation of this is essentially that each rule is checked against the model, and if it applies, it is applied to transform the model in order of priority (e.g., two rules are valid, the higher priority rule is the one selected). Use of a dirty-clean (this will not try to apply rules to a finished model) or naive (this will try and apply all rules until they have all been checked, applied, checked again, etc.) rewriter will also result in variance on translation time, so when experiments are being defined it is best to account that all models are using the same version of the rewriter.
+Size refers to the number of variables, constraints, or size of input data (for example, a larger set or array) given as part of an input file. A 'larger' problem has more constraints and variables than a 'smaller' one. This will impact translation time (the relationship of this change should be examined by the performance testing) because there is more to parse and translate, even if the actual rule application is simple.
+On the other hand, in this context, complexity can be loosely defined as elements of the model which make it difficult to translate, without regard for the size. Features which could increase complexity include nesting, conditional constraints, dynamic constraints, etc.
+When testing for size, it is best to use very simple, repeated rules, and when testing complexity it is best to try to ensure that this is not also linked into increasing size, although these two features are tied together and therefore difficult to isolate from one another.</p>
+<h4 id="performance-experiments-to-run"><a class="header" href="#performance-experiments-to-run">Performance Experiments to run</a></h4>
+<p>There are two main types of experiment to be considered in the performance testing of Conjure-Oxide. \textbf{Load testing}, where the size or complexity is varied in order to measure translation time under different conditions; and \textbf{stress testing}, specifically to see whether higher complexity or larger files disproportionately increase translation time. As stress testing requires some measure of what is proportional and what is not, load testing is addressed first.</p>
+<h4 id="load-testing-for-conjure-oxide"><a class="header" href="#load-testing-for-conjure-oxide">Load testing for Conjure-Oxide</a></h4>
+<p>When designing performance testing for a system, there are several considerations to be made. Primarily, it is of importance that data gathered and aggregated is suitable to be used for graphing and building relationships. To do this, data must be reliable, consistent and accurate. Single runs of data cannot provide this, as many factors may influence the results. In order to fulfil these needs, substantial amounts of data should be gathered. Anomalies should be removed (for example, using interquartile range or using Z-Scores) or simply averaged over (this is less accurate but more achievable). As size or complexity varies, these averaged results should be plotted into a graph. This is the most effective way of providing understanding of the relationship between size/complexity and translation time.</p>
+<h4 id="stress-testing-for-conjure-oxide"><a class="header" href="#stress-testing-for-conjure-oxide">Stress testing for Conjure-Oxide</a></h4>
+<p>Once a relationship has been established by load testing, stress testing can occur. Although it is possible to see the point at which a program fails without prior load testing, having determined the relationship between size/complexity and time allows for a consideration of what is disproportionate. Implementing this in Conjure-Oxide would simply involve the program under abnormally high load to find it's breaking point, using repeated results to ensure reliability and accuracy of the data.</p>
+<h3 id="additional-performance-profiling"><a class="header" href="#additional-performance-profiling">Additional Performance Profiling</a></h3>
+<p>Many parts of Conjure-Oxide (such as specific rules, string manipulations, memory allocation to solvers, etc.) are also not capable of being directly examined for their complexity, and the complexity of these things cannot be manipulated to perform experiments as outlined above. However, it is important that these are still being tested for their performance. This is because it is important to catch irregular memory allowances, excessive time spending, expensive Rust functions, etc., in order to ensure that Conjure-Oxide runs both as quickly and as smoothly as possible, One way to do this is to run profilers, such as Perf, which allow for the areas that time or memory is being spent to be analysed more specifically. Given this analysis, it is then possible to examine these areas for improvements, as was done in Issue #288<sup class="footnote-reference" id="fr-4-1"><a href="#footnote-4">4</a></sup>.</p>
+<h3 id="comparative-performance-testing"><a class="header" href="#comparative-performance-testing">Comparative Performance Testing</a></h3>
+<p>As established, Conjure-Oxide is a reimplementation of a pre-existing set of programs, these being Conjure and Savile Row. One of the primary goals of this reimplementation is to improve the performance of Translation time, while also ensuring that the time taken to solve a given essence problem is not worsened. Considering that Minion is simply rebound to Conjure-Oxide, much as it was in the Conjure suite, it is unlikely that these bindings would be responsible for a slower solve time. As such, the primary impact on solve time is the model passed into the solver. A worse model will take substantially more time than a model which has been well translated and refined, and substantial increases in the time taken to solve should be avoided. Performance testing should be performed on the Conjure suite (primarily on Savile Row, since the time of Conjure is amortised over each instance) to establish the relationship of size/complexity to time, as in Conjure-Oxide. The results of both may then be plotted on one graph, to see at which point(s) Conjure-Oxide is faster than Savile Row at translation, and vice versa.
+Comparative testing also allows for the solver nodes (which represent, to some degree, solver time) from both the Conjure suite and Conjure-Oxide. As established, the goal of Conjure-Oxide is to improve translation performance without sacrificing solving performance. As such, it is vital to also consider at which size/complexity of translation the solver nodes start to vastly differ between Conjure suite and Conjure-Oxide, and to examine the rules to see why this is (and whether there is a requisite decrease in translation time which could possibly balance this increase). Though having a small number of nodes which differ (e.g., by 10) is not an issue, when there is a large disparity between number of solver nodes, this reflects poorer quality translation or (possibly) an issue with the binding to Rust.</p>
+<h3 id="limitations-of-performance-testing"><a class="header" href="#limitations-of-performance-testing">Limitations of Performance Testing</a></h3>
+<p>One limitation of performance testing is the impact that other processes running on the computer or server when testing. Other processes running at the same time mean that less threads can be allocated to Conjure-Oxide or its solver backends when dealing with a model, and as such slow down the speed at which these models can be parsed, translated, and solved. However, this is mainly removed as an issue by a combination of repeated runs, and identifying and removing anomalies (using Z-Score).
+Another issue present in performance testing is that completely decoupling size and complexity is rather difficult, if not entirely impossible. This is because there is overlap in the definitions, and because as a model becomes more complex, it often becomes larger, and vice versa. Although fully separating these two metrics is the aim in an ideal scenario, an actual implementation would struggle to follow through with this requirement.</p>
+<h2 id="github-actions-and-testing"><a class="header" href="#github-actions-and-testing">GitHub Actions and Testing</a></h2>
+<p>GitHub Actions allow for integration of the CI'/CD pipeline to GitHub and the automation of the software development cycle. Automated workflows can be used to build, test and deploy code into a GitHub VM, allowing for flexibility in the development of a project.</p>
+<h3 id="what-is-a-workflow"><a class="header" href="#what-is-a-workflow">What is a workflow?</a></h3>
+<p>In GitHub Actions, a workflow is an automated process which is set up within a GitHub repository with the aim to accomplish a specific task. They are triggered by an Event, such as pushing or pulling code. Workflows are made up of the combination of a trigger (the Event) and a set of processes (made up of Jobs, which are sets of steps in a workflow).</p>
+<h3 id="test-rerun"><a class="header" href="#test-rerun">Test Rerun</a></h3>
+<p>This involves the automated rerunning of tests when a push or pull request is made on the GitHub repository. This is already implemented in Conjure-Oxide, through "test.yml". Test.yml runs tests every push request made to the main branch, and on all pull requests. This allows for correctness testing to be performed on all pushes made to the main, to ensure that no additional tests fail.</p>
+<h3 id="code-coverage"><a class="header" href="#code-coverage">Code Coverage</a></h3>
+<p>When pushes are made to the main branch of Conjure-Oxide on GitHub, a code coverage automated workflow is run. This workflow generates a documentation coverage report which outlines what percentage of the code in the repository is being executed when tests are run. The higher the percentage, the more of the code can be relied upon as working under test conditions. This is also already implemented in the GitHub repository, through "code-coverage.yml", "code-coverage-main.yml" and "code-coverage-deploy.yml". One of the goals of correctness testing is to increase the code coverage percentage, because this would show that more of the code is functioning correctly.</p>
+<h3 id="automated-performance-testing"><a class="header" href="#automated-performance-testing">Automated Performance Testing</a></h3>
+<p>GitHub workflows can be used to create further custom processed to be automated. Automating performance testing in GitHub allows for them to be run routinely (e.g., every X pushes, or every X days) to ensure consistent performance of the project. As they occur automatically, this means that benchmarks can be set, and failue on any of these benchmarks can reuslt in a flag, allowing for early detection when performance of the program begins to regress, or fall far behind that of the Conjure suite. GitHub Actions allow for the results to be placed into files, and from here an interactive dashboard could be generated (as in PR #291. <sup class="footnote-reference" id="fr-5-1"><a href="#footnote-5">5</a></sup></p>
+<h2 id="brief-outline-of-possible-future-sub-projects"><a class="header" href="#brief-outline-of-possible-future-sub-projects">Brief Outline of Possible Future Sub-Projects</a></h2>
+<p>Having outlined at least a portion of the ideal testing scenario above, as well as some limitations of this scenario, it is now possible to outline to some degree future sub-projects which could be added to the overall Conjure-Oxide project.</p>
+<h3 id="improving-code-coverage"><a class="header" href="#improving-code-coverage">Improving Code Coverage</a></h3>
+<p>One method of improving the code coverage is by creating a broader repository of integration tests. This project focuses on the correctness aspect of the testing, and in itself can be split into several sub-projects or subsumed into other projects (e.g., if someone is writing a parser, they may decide to write the tests for this parser). The code coverage report is updated every-time a PR is made, and by examining the coverage report (see: {Code Coverage Report}), it is possible to see which areas would benefit from additional testing. Although code coverage testing itself is not concerned with correctness, increasing the amount of correctness testing increases code coverage, and so they are related. It may be beneficial to target areas of the code which have a very low line or function coverage, as this is likely easier to increase.</p>
+<h3 id="producing-proofs-for-correctness"><a class="header" href="#producing-proofs-for-correctness">Producing Proofs for Correctness</a></h3>
+<p>As established, one of the limitations of the current correctness testing is that there is an assumption of correctness, that being that we either assume the Conjure suite is correct, or we assume that the rules we are applying are correct. These assumptions are largely valid, but do limit the factual correctness of the project. One possible sub-project, which would have a heavy reliance on mathematical knowledge, is to produce these proofs. This does not necessarily have to be exhaustive: in the case of the correctness testing exhausting the proofs would be extremely time consuming, but having proofs to additionally prove correctness overcomes one of the project limitations. In the case of proving the existing rules, though there are a currently increasing set of rules, they are finite, so this may be more manageable as a project.</p>
+<h3 id="measuring-performance-through-load-testing"><a class="header" href="#measuring-performance-through-load-testing">Measuring Performance Through Load Testing</a></h3>
+<p>The outline of this subproject is to fulfil, at least in part, the requirement for performance testing on this project. There are several ways that this could be approached, all of which vary somewhat, so this project is flexible in its details.
+One method which may be effective regarding performance testing is to use GitHub Actions to automate the performance testing, as outlined in GitHub Actions and Testing. This is because this would allow flexibility and repeated performance testing, as well as the ability to flag early on when there is a performance decrease. To outline this, it would be necessary to make a directory of tests to be run for their performance, and then create the GitHub workflow to repeatedly run tests on that directory and aggregate the translation time. This can then be plotted graphically and statistically analysed.</p>
+<h3 id="comparative-load-testing"><a class="header" href="#comparative-load-testing">Comparative Load Testing</a></h3>
+<p>This is an extension of the above project, in that it cannot be created until there is a basis of load performance testing. The essential outline of this project is to repeat the above, except aggregating the data from the results of Savile Row's rewriter, and then graph both Conjure-Oxide and Conjure suite together. This will allow for a direct visual comparison, as well as help with statistical analysis. Furthermore, if GitHub Actions are used, it is possible to flag where there is a large degree of difference in rewriter or solver between Conjure suite and Conjure-Oxide.</p>
+<h3 id="benchmark-testing-for-performance"><a class="header" href="#benchmark-testing-for-performance">Benchmark Testing for Performance</a></h3>
+<p>Another sub-project which is possible to derive from this document is to benchmark test elements of the project which cannot be done by varied-load testing, as outlined in the Performance Testing section. Tools, such as Perf, can measure benchmarks and find specific problem areas. When problem areas have been found, these can be raised as an issue, and either fixed as part of this sub-project, or given to another member of the project to complete. This kind of benchmark testing will ensure that the entirety of the Conjure-Oxide is running as efficiently as possible.</p>
+<h3 id="possible-stress-testing"><a class="header" href="#possible-stress-testing">Possible Stress Testing</a></h3>
+<p>There is also the possibility of adding stress testing to see at which point the rewrite engine fails to be able to parse through an extremely long or especially complex model. This can be done following much the same outline as that of \textit{Measuring Performance Through Load Testing}, however rather than gradually changing the load (dictated by size or complexity) on the system, the change is rapid, in order to find the system's point of failure. As with load testing, this may also be automated by GitHub Actions, though this is a lower priority, as the failure point is less likely to change than the overall system performance.</p>
+<h2 id="conclusion"><a class="header" href="#conclusion">Conclusion</a></h2>
+<p>This document outlines definitions relevant for understanding both the project and the types of testing most applicable. A scenario of testing is then produced, which outlines what testing exists and what testing can be added, as well as any large limitations on an implementation of this ideal state. This allows for any individuals working on testing in the future to have a holistic overview of the state of testing on this project. Finally, a number of smaller sub-projects are outlined as a product of this document, aiming to improve the tested-ness of Conjure-Oxide and compare its success as a reimplementation to Conjure and Savile Row.
+In the future, it may also be worth examining the possibility and likelihood of being able to apply Metamorphic testing to Conjure-Oxide, to ensure consistency in it's results by developing metamorphic relations between input and output. At present, this is not feasible, and although this document is idealised, it is not intended to be entirely unreasonable or detached from the current reality of the project.</p>
+<hr />
+<p><em>This section had been taken from the 'Ideal Scenario of Testing (Dec 2024)' page of the conjure-oxide wiki</em></p>
+<hr>
+<ol class="footnote-definition"><li id="footnote-1">
+<p>Ian P. Gent, Chris Jefferson, and Ian Miguel. 2006. MINION: A Fast, Scalable, Constraint Solver. In Proceedings of the 2006 conference on ECAI 2006: 17th European Conference on Artificial Intelligence August 29 -- September 1, 2006, Riva del Garda, Italy. IOS Press, NLD, 98–102. <a href="#fr-1-1">↩</a></p>
+</li>
+<li id="footnote-2">
+<p>Hussain, B. S. 2017. Model Selection and Testing for an Automated Constraint Modelling Toolchain; Thesis <a href="#fr-2-1">↩</a></p>
+</li>
+<li id="footnote-3">
+<p>{Berg, J., Bogaerts, B., Nordström, J., Oertel, A., &amp; Vandesande, D. 2023. Certified Core-Guided MaxSAT Solving. \textit{Lecture Notes in Computer Science}, 1–22. https://doi.org/10.1007/978-3-031-38499-8_1 <a href="#fr-3-1">↩</a></p>
+</li>
+<li id="footnote-4">
+<p>conjure-cp. 2024, April 3. Possible optimisation: Intern the UserName in Name · Issue #288 · conjure-cp/conjure-oxide. \textit{GitHub}. https://github.com/conjure-cp/conjure-oxide/issues/288 <a href="#fr-4-1">↩</a></p>
+</li>
+<li id="footnote-5">
+<p>conjure-cp. 2024, April 3. Benchmark Visualizer: Conjure Native vs Oxide · Pull Request #291 · conjure-cp/conjure-oxide. GitHub. https://github.com/conjure-cp/conjure-oxide/pull/291 <a href="#fr-5-1">↩</a></p>
+</li>
+</ol><div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><!-- TODO: Edit this -->
+<h2 id="user-guide"><a class="header" href="#user-guide">User Guide</a></h2>
+<ol>
+<li>
+<p>Run coverage with <code>./tools/coverage.sh</code>.</p>
+</li>
+<li>
+<p>Open this in a web-browser by opening <code>target/debug/coverage/index.html</code>.</p>
+</li>
+<li>
+<p>An <code>lcov</code> file is generated at <code>target/debug/lcov.info</code> for in-editor coverage.</p>
+<ul>
+<li>If you use VSCode, configuration for this should be provided when you clone the repo. Click the "watch" button in the status bar to view coverage for a file.</li>
+</ul>
+</li>
+</ol>
+<h2 id="implementation"><a class="header" href="#implementation">Implementation</a></h2>
+<p>See the code for full details: <a href="https://github.com/conjure-cp/conjure-oxide/blob/main/tools/coverage.sh">tools/coverage.sh</a>.</p>
+<p>A high level overview is:</p>
+<ol>
+<li>The project is built and tested using instrumentation based coverage.</li>
+<li>Grcov is used to aggregate these reports into <code>lcov.info</code> and <code>html</code> formats.</li>
+<li>The <code>lcov.info</code> file can be used with the <code>lcov</code> command to generate summaries and get coverage information. This is used to make the summaries in our PR coverage comments.</li>
+</ol>
+<p><strong>Reading:</strong></p>
+<ol>
+<li><a href="https://github.com/mozilla/grcov">grcov readme - how to generate coverage reports</a>.</li>
+<li><a href="https://doc.rust-lang.org/rustc/instrument-coverage.html">rustc book - details on instrumentation based coverage</a>.</li>
+</ol>
+<h3 id="doc-coverage"><a class="header" href="#doc-coverage">Doc Coverage</a></h3>
+<p><strong>Text:</strong> This prints a doc coverage table for all crates in the repo:</p>
+<pre><code class="language-sh">RUSTDOCFLAGS='-Z unstable-options --show-coverage' cargo +nightly doc --workspace --no-deps 
+</code></pre>
+<p><strong>JSON:</strong>
+Although we don't use it yet, we can get doc coverage information as JSON. This will be useful for prettier and more useful output:</p>
+<pre><code class="language-sh">RUSTDOCFLAGS='-Z unstable-options --show-coverage --output-format json' cargo +nightly doc --workspace --no-deps 
+</code></pre>
+<p><strong>Reading</strong></p>
+<p>See the unstable options section of the rustdoc book. <a href="https://doc.rust-lang.org/rustdoc/unstable-features.html">Link</a>.</p>
+<hr />
+<p><em>This section had been taken from the 'Coverage' page of the conjure-oxide wiki</em></p>
+<div style="break-before: page; page-break-before: always;"></div><!-- TODO: Edit this -->
+<ul>
+<li>This document lists common patterns and issues we've had in our Github actions, and practical solutions to them.</li>
+<li>The first point of reference should be the official documentation, but if that is ever unclear, here would be a good place to look!</li>
+</ul>
+<p>Terminology used in this document:</p>
+<ul>
+<li>A <em>workflow</em> contains multiple independently ran <em>tasks</em>. Each task runs a series of <em>steps</em>. Steps can call predefined <em>actions</em>, or run shell commands.</li>
+</ul>
+<details>
+<summary><h3 id="i-want-to-have-a-step-output-multilined--complex-text"><a class="header" href="#i-want-to-have-a-step-output-multilined--complex-text">I want to have a step output multilined / complex text</a></h3></summary>
+<pre><code class="language-yml">- name: Calculate PR doc coverage
+  id: prddoc
+  run: |
+    RUSTDOCFLAGS='-Z unstable-options --show-coverage' cargo +nightly doc --workspace --no-deps &gt; coverage.md
+    echo 'coverage&lt;&lt;EOFABC' &gt;&gt; $GITHUB_OUTPUT
+    echo "$(cat coverage.md)" &gt;&gt; $GITHUB_OUTPUT
+    echo 'EOFABC' &gt;&gt; $GITHUB_OUTPUT```
+</code></pre>
+<p>The entire output of <code>cargo doc</code> can be substituted into later jobs by using <code>${{ steps.prdoc.outputs.coverage }}</code></p>
+</details> 
+<details>
+<summary><h3 id="workflow_run-i-want-a-workflow-that-runs-on-a-pr-and-can-write-to-the-repo"><a class="header" href="#workflow_run-i-want-a-workflow-that-runs-on-a-pr-and-can-write-to-the-repo">workflow_run: I want a workflow that runs on a PR and can write to the repo</a></h3></summary>
+<p>PR branches and their workflows typically live in on a branch on an external fork. Therefore, they cannot write to the repository. The solution is to split things into two workflows - one that runs on the PR with read-only permissions, and one that runs on main and can write to the repository. This is called a <code>workflow_run</code> workflow. Read <a href="https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_run">the docs</a>.</p>
+<p><strong>The workflow_run workflow should not run any user provided code as it has secrets in scope.</strong></p>
+</details> 
+<details>
+<summary><h3 id="i-want-to-access-the-calling-pr-in-a-workflow_run-workflow"><a class="header" href="#i-want-to-access-the-calling-pr-in-a-workflow_run-workflow">I want to access the calling PR in a workflow_run workflow</a></h3></summary>
+<p><code>workflow_run</code> jobs do not get access to the calling workflows detail. While one can access some things via the Github API such as head_sha, head_repo, this may not give any PR information. <a href="https://securitylab.github.com/research/github-actions-preventing-pwn-requests/">Github</a> recommends saving the PR number to an artifact, and using this number to fetch the PR info through the API:</p>
+<p>Example from <a href="https://securitylab.github.com/research/github-actions-preventing-pwn-requests/">this github blog post</a> - see this for more explanation and details!</p>
+<pre><code class="language-yml">name: Receive PR
+
+# read-only repo token
+# no access to secrets
+on:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:        
+      - uses: actions/checkout@v2
+
+      # imitation of a build process
+      - name: Build
+        run: /bin/bash ./build.sh
+
+      - name: Save PR number
+        run: |
+          mkdir -p ./pr
+          echo ${{ github.event.number }} &gt; ./pr/NR
+      - uses: actions/upload-artifact@v2
+        with:
+          name: pr
+          path: pr/
+</code></pre>
+<pre><code class="language-yml">name: Comment on the pull request
+
+# read-write repo token
+# access to secrets
+on:
+  workflow_run:
+    workflows: ["Receive PR"]
+    types:
+      - completed
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    if: &gt;
+      github.event.workflow_run.event == 'pull_request' &amp;&amp;
+      github.event.workflow_run.conclusion == 'success'
+    steps:
+      - name: 'Download artifact'
+        uses: actions/github-script@v3.1.0
+        with:
+          script: |
+            var artifacts = await github.actions.listWorkflowRunArtifacts({
+               owner: context.repo.owner,
+               repo: context.repo.repo,
+               run_id: ${{github.event.workflow_run.id }},
+            });
+            var matchArtifact = artifacts.data.artifacts.filter((artifact) =&gt; {
+              return artifact.name == "pr"
+            })[0];
+            var download = await github.actions.downloadArtifact({
+               owner: context.repo.owner,
+               repo: context.repo.repo,
+               artifact_id: matchArtifact.id,
+               archive_format: 'zip',
+            });
+            var fs = require('fs');
+            fs.writeFileSync('${{github.workspace}}/pr.zip', Buffer.from(download.data));
+      - run: unzip pr.zip
+
+      - name: 'Comment on PR'
+        uses: actions/github-script@v3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            var fs = require('fs');
+            var issue_number = Number(fs.readFileSync('./NR'));
+            await github.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue_number,
+              body: 'Everything is OK. Thank you for the PR!'
+            });
+
+</code></pre>
+</details>
+<details>
+<summary><h3 id="how-do-i-get-x-commit-inside-a-pr-workflow-what-do-all-the-different-github-shas-mean"><a class="header" href="#how-do-i-get-x-commit-inside-a-pr-workflow-what-do-all-the-different-github-shas-mean">How do I get x commit inside a PR workflow? What do all the different github sha's mean?</a></h3></summary>
+<p><strong>If you are running in a workflow_run workflow, you will need to get the calling PR first. See <a href="https://github.com/conjure-cp/conjure-oxide/wiki/_new#i-want-to-access-the-calling-pr-in-a-workflow_run-workflow">I want to access the calling PR in a workflow_run workflow</a> instead.</strong></p>
+<p>The default <code>github.sha</code> is a temporary commit representing the state of the repo should the PR be merged now. You probably want <code>github.event.pull_request.head.sha</code>. Read <a href="https://www.kenmuse.com/blog/the-many-shas-of-a-github-pull-request/">The many SHAs of a github pull request</a>.</p>
+</details>
+<hr />
+<p><em>This section had been taken from the 'Github Actions' page of the conjure-oxide wiki</em></p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="developer-documentation"><a class="header" href="#developer-documentation">Developer Documentation</a></h1>
+<p>Developer documentation is hosted on the <a href="https://github.com/conjure-cp/conjure-oxide/wiki">Github Wiki</a>.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="useful-links"><a class="header" href="#useful-links">Useful Links</a></h1>
+<h2 id="api-documentation"><a class="header" href="#api-documentation">API Documentation</a></h2>
+<ul>
+<li><a href="https://conjure-cp.github.io/conjure-oxide/docs/conjure_cp/index.html">conjure-cp</a></li>
+</ul>
+<!--- This link seems to be dead. Cannot find an equivalent on the docs --->
+<!-- md-dead-link-check: off -->
+<ul>
+<li><a href="https://conjure-cp.github.io/conjure-oxide/docs/tree_morph/index.html">tree-morph</a></li>
+</ul>
+ <!-- md-dead-link-check: on -->
+<ul>
+<li><a href="https://conjure-cp.github.io/conjure-oxide/docs/minion_sys/index.html">minion-sys</a></li>
+</ul>
+<h3 id="internal-crates"><a class="header" href="#internal-crates">Internal crates</a></h3>
+<p>The following crates are internal, and are re-exported by <code>conjure-cp</code>:</p>
+<ul>
+<li><a href="https://conjure-cp.github.io/conjure-oxide/docs/conjure_cp_cli/index.html">conjure-cp-cli</a></li>
+<li><a href="https://conjure-cp.github.io/conjure-oxide/docs/conjure_cp_core/index.html">conjure-cp-core</a></li>
+<li><a href="https://conjure-cp.github.io/conjure-oxide/docs/conjure_cp_essence_macros/">conjure-cp-essence-macros</a></li>
+<li><a href="https://conjure-cp.github.io/conjure-oxide/docs/conjure_cp_essence_parser">conjure-cp-essence-parser</a></li>
+<li><a href="https://conjure-cp.github.io/conjure-oxide/docs/conjure_cp_rule_macros">conjure-cp-rule-macros</a></li>
+<li><a href="https://conjure-cp.github.io/conjure-oxide/docs/conjure_cp_enum_compatibility_macro">conjure-cp-enum-compatibility-macro</a></li>
+</ul>
+<h2 id="code-coverage-1"><a class="header" href="#code-coverage-1">Code Coverage</a></h2>
+<p>Code coverage reports can be found <a href="https://conjure-cp.github.io/conjure-oxide/coverage/main/">here</a>.</p>
+<h2 id="miscellaneous"><a class="header" href="#miscellaneous">Miscellaneous</a></h2>
+<ul>
+<li><a href="https://conjure-cp.github.io/conjure-oxide/tools/essence-feature-usage-stats/">Essence feature usage stats</a></li>
+<li><a href="https://conjure-cp.github.io/conjure-blocks/">Conjure blocks</a></li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="for-interested-students"><a class="header" href="#for-interested-students">For Interested Students</a></h1>
+<p>This project is developed as part of the "Artificial Intelligence for Decision
+Making" Vertically Integrated Project module. For more information on the VIP, <a href="https://ozgurakgun.github.io/vip">click here</a>.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="contributors"><a class="header" href="#contributors">Contributors</a></h1>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+        <script>
+        window.addEventListener('load', function() {
+            MathJax.Hub.Register.StartupHook('End', function() {
+                window.setTimeout(window.print, 100);
+            });
+        });
+        </script>
+
+
+    </div>
+    </body>
+</html>
