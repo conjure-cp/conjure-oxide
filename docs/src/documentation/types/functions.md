@@ -1,3 +1,6 @@
+[//]: # (Author: Nicholas Davidson)
+[//]: # (Last Updated: 09/12/2025)
+
 # Functions
 ## What Are Functions
 A function is a binary relation on two sets, from elements of a domain to elements of a codomain. 

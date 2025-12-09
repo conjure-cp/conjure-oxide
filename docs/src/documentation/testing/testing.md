@@ -1,4 +1,7 @@
-# Testing Framework
+[//]: # (Author: Nicholas Davidson)
+[//]: # (Last Updated: 09/12/2025)
+
+# Testing
 ## Types of Tests
 Conjure-Oxide currently has four forms of tests:
 - Integration tests

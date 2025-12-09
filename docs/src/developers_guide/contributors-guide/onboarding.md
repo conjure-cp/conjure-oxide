@@ -1,3 +1,6 @@
+[//]: # (Author: Nicholas Davidson)
+[//]: # (Last Updated: 09/12/2025)
+
 # Onboarding
 Congratulations you have made it onto the VIP. You are going to really enjoy it; however, it might not be the easiest time getting up to speed.
 You will need to spend at least the first few weeks on the project learning, and so do not expect to be contributing right away.

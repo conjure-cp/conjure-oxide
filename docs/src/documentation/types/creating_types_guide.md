@@ -1,4 +1,7 @@
-# Guide to Creating Types
+[//]: # (Author: Nicholas Davidson)
+[//]: # (Last Updated: 09/12/2025)
+
+# Creating Types Guide
 Currently Conjure-Oxide does not have any support for Essence's sequences, relations, partitions or variants.
 This guide outlines the process of creating support for those types to the AST. This does not currently cover rewriting rules or solving.
 ## Creating the Type

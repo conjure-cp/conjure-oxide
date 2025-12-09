@@ -1,3 +1,6 @@
+[//]: # (Author: Calum Cooke)
+[//]: # (Last Updated: 09/12/2025)
+
 # Multisets
 ## What Are Multisets
 A multiset is a datatype for storing a set of objects where objects can occur more than once, but the ordering of objects does not matter.
