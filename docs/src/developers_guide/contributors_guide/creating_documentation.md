@@ -1,4 +1,6 @@
 [//]: # (Author: Jamie Melton)
+[//]: # (Last Updated: 09/12/2025)
+
 
 # Creating Documentation
 
@@ -53,14 +55,20 @@ All unassigned child issues are available for anyone to work on!
 
    > **Important**
    >
-   > Place any contributors to the documentation in a comment on the first line of the file.
-   > For instance, `[//]: # (Author: Jamie Melton)` has been placed at the top of this page.
+   > Place any contributors to the documentation and the date where the documentation was last updated in a comment on the first and second lines of the file.
+   > For instance:
+   >
+   > `[//]: # (Author: Jamie Melton)`
+   >
+   > `[//]: # (Last Updated: 09/12/2025)`
+   >
+   > has been placed at the top of this file.
 
-5. When your team is happy with this documentation, request a review from the current book editors.
+6. When your team is happy with this documentation, request a review from the current book editors.
 
     The current book editors are: *JamieASM* and *HKhan-5*.
 
-6. Assuming no adjustments are required, the documentation will then be merged in, and the child issue will be closed.
+7. Assuming no adjustments are required, the documentation will then be merged in, and the child issue will be closed.
 
 ---
 
