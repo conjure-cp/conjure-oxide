@@ -32,7 +32,7 @@ Use the [coverage script](#how-to-test) to find which files are badly covered, a
 
 ## Quirks and Implications
 ### Cloning (instead of Forking) the Repository
-For the most up to date testing advice, look at the [contributor's guide](./developers_guide/contributors-guide/index.md). As of Decemember 2025, we primarily work by cloning the main repository instead of working in our own forks. To prevent remote code execution, GitHub prevents a GH Action from running code on a fork. This means that our Action for reporting test coverage whenever you push your commits only works if your upstream branch is in the main repository (and not your own fork of it).
+For the most up to date testing advice, look at the [contributing guide](https://github.com/conjure-cp/conjure-oxide/blob/main/CONTRIBUTING.md). As of Decemember 2025, we primarily work by cloning the main repository instead of working in our own forks. To prevent remote code execution, GitHub prevents a GH Action from running code on a fork. This means that our Action for reporting test coverage whenever you push your commits only works if your upstream branch is in the main repository (and not your own fork of it).
 
 ### Macros
 The coverage script builds conjure-oxide, runs `cargo test`, then runs `grcov` to generate the report. Whenever conjure-oxide gets built, a lot of the macros get expanded (e.g. the derive macro may create multiple implementations of a function). These are treated as seperate functions in the report.
