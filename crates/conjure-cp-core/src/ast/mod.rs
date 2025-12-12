@@ -1,3 +1,4 @@
+pub mod abstract_comprehension;
 pub mod ac_operators;
 mod atom;
 pub mod categories;
