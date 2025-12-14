@@ -28,11 +28,23 @@ This rule matches against `a != b` where `a` and `b` are expression with the ret
 
 ## subset_to_subset_eq_neq
 
+This rule matches against `a subset b` where `a` and `b` are expressions with the return type `Set`. The expression is rewritten into `and([(a subsetEq b),(a != b); int(1..2)])`
+
 ## supset_to_subset
+
+This rule matches against `a supset b` where `a` and `b` are expressions with the return type `Set`. The expression is rewritten into `(b subset a)`
 
 ## supset_eq_to_subset_eq
 
+This rule matches against `a supsetEq b` where `a` and `b` are expressions with the return type `Set`. The expression is rewritten into `(b subsetEq a)`
+
 ## union_set
+
+This rule matches against any comprehension that contains a generator of the form `i <- A union B`, where `A` and `B` are expressions with the return type `Set`. The expression is rewritten into two comprehensions combined using `flatten`, one iterating over `A` and the other iterating over `B` but excluding any elements already in `A`.
+
+The rewritten expression for some comprehension `[ return_expr | i <- A union B, qualifiers...]` looks like `flatten([[ return_expr | i <- A, qualifiers...], [ return_expr | i <- B, !(i in A), qualifiers...]; int(1..2)])`
+
+The generator can be in any position within the comprehension's list of qualifiers. Only one such generator is rewritten at a time.
 
 ## rule_in
 
