@@ -1,3 +1,6 @@
+[//]: # (Author: Leia McAlister-Young)
+[//]: # (Last Updated: 15/12/2025)
+
 # Essence Parser
 The parser converts incoming Essence programs in Conjure Oxide to the [Model Object](https://conjure-cp.github.io/conjure-oxide/docs/conjure_core/ast/struct.Model.html) that the rule engine takes in. The relevant parts of the Model object are the SymbolTable and Expression objects. The symbol table is essentially a list of the variables and their corresponding domains. The Expression object is a recursive object that holds all the constraints of the problem, nested into one object. The parser has two main parts. The first is the `tree-sitter-essence` crate, which is a general Essence parser using the library tree-sitter. The second part is the `conjure-cp-essence-parser` crate which is Rust code that uses the grammar to parse Essence programs and convert them into the above-mentioned Model object.
 
