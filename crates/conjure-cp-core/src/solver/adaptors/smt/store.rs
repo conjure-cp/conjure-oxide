@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use itertools::Itertools;
-use z3::{Model, Solvable, SortKind, Symbol, ast::*};
+use z3::{Context, Model, Solvable, SortKind, Symbol, Translate, ast::*};
 
 use crate::ast::{AbstractLiteral, Domain, GroundDomain, Literal, Moo, Name, Range};
 use crate::solver::{SolverError, SolverResult};
@@ -91,6 +91,21 @@ impl Solvable for SymbolStore {
             })
             .collect();
         Bool::or(bools.as_slice())
+    }
+}
+
+unsafe impl Translate for SymbolStore {
+    fn translate(&self, ctx: &Context) -> Self {
+        let mut new_map = HashMap::new();
+        for (name, (domain, ast, sym)) in self.map.iter() {
+            let new_ast = ast.translate(ctx);
+            let new_sym = sym.clone(); // Symbols are not translated
+            new_map.insert(name.clone(), (domain.clone(), new_ast, new_sym));
+        }
+        SymbolStore {
+            map: new_map,
+            theories: self.theories,
+        }
     }
 }
 
