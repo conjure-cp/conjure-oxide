@@ -1,7 +1,7 @@
 use super::SymbolTable;
 use super::declaration::{DeclarationPtr, serde::DeclarationPtrFull};
 use super::serde::RcRefCellAsInner;
-use crate::ast::{DomainPtr, Expression, ReturnType, Typeable};
+use crate::ast::{DomainPtr, Expression, Name, ReturnType, Typeable};
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use std::fmt::{Display, Formatter};
@@ -74,20 +74,29 @@ impl Hash for AbstractComprehension {
 
 pub struct AbstractComprehensionBuilder {
     pub qualifiers: Vec<Qualifier>,
+
+    /// The symbol table used in the return expression, containing symbols
+    /// declared in generators.
     pub symbols: Rc<RefCell<SymbolTable>>,
 }
 
-//this is the method that allows you to build an abstract comprehension
 impl AbstractComprehensionBuilder {
-    // this method creates an abstract comprehension builder with:
-    // a symbol table
-    // empty list of qualifiers
-    // and no return exp yet -- that will be added in the with_return_value method
-    pub fn new(symbols: Rc<RefCell<SymbolTable>>) -> Self {
+    /// Creates an [AbstractComprehensionBuilder] with:
+    /// - An inner scope which inherits from the given symbol table
+    /// - An empty list of qualifiers
+    ///
+    /// Changes to the inner scope do not affect the given symbol table.
+    ///
+    /// The return expression is passed when finalizing the comprehension, in [with_return_value].
+    pub fn new(symbols: &Rc<RefCell<SymbolTable>>) -> Self {
         Self {
             qualifiers: vec![],
-            symbols,
+            symbols: Rc::new(RefCell::new(SymbolTable::with_parent(symbols.clone()))),
         }
+    }
+
+    pub fn symbols(&self) -> Rc<RefCell<SymbolTable>> {
+        self.symbols.clone()
     }
 
     pub fn new_domain_generator(&mut self, domain: DomainPtr) -> DeclarationPtr {
@@ -103,24 +112,35 @@ impl AbstractComprehensionBuilder {
         generator_decl
     }
 
-    pub fn new_expression_generator(&mut self, expr: Expression) -> DeclarationPtr {
-        let generator_decl = self
-            .symbols
+    /// Creates a new expression generator with the given expression and variable name.
+    ///
+    /// The variable "takes from" the expression, that is, it can be any element in the expression.
+    ///
+    /// E.g. in `[ x | x <- some_set ]`, `x` can be any element of `some_set`.
+    pub fn new_expression_generator(mut self, expr: Expression, name: Name) -> Self {
+        let domain = expr
+            .domain_of()
+            .expect("Expression must have a domain")
+            .element_domain()
+            .expect("Expression must contain elements with uniform domain");
+
+        // Create a new given variable in the return expr symbol table
+        self.symbols
             .borrow_mut()
-            .gensym(&expr.domain_of().expect("Expression must have a domain"));
+            .insert(DeclarationPtr::new_given(name.clone(), domain.clone()));
 
         self.qualifiers
             .push(Qualifier::Generator(Generator::ExpressionGenerator(
                 ExpressionGenerator {
-                    decl: generator_decl.clone(),
+                    decl: DeclarationPtr::new_var(name, domain),
                     expression: expr,
                 },
             )));
 
-        generator_decl
+        self
     }
 
-    //this is the same as the add guard method
+    /// See [crate::ast::comprehension::ComprehensionBuilder::guard]
     pub fn add_condition(&mut self, condition: Expression) {
         if condition.return_type() != ReturnType::Bool {
             panic!("Condition expression must have boolean return type");
@@ -145,11 +165,10 @@ impl AbstractComprehensionBuilder {
         letting_decl
     }
 
-    //the lack of the generator_symboltable and return_expr_symboltable
+    // The lack of the generator_symboltable and return_expr_symboltable
     // are explained bc 1. we dont have separate symboltables for each part
     // 2. it is unclear why there would be a need to access each one uniquely
 
-    // TODO: make a pub fn with_return_value :)
     pub fn with_return_value(self, expression: Expression) -> AbstractComprehension {
         AbstractComprehension {
             return_expr: expression,

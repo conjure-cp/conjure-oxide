@@ -396,6 +396,14 @@ impl UnresolvedDomain {
             }
         }
     }
+
+    pub fn element_domain(&self) -> Option<DomainPtr> {
+        match self {
+            UnresolvedDomain::Set(_, inner_dom) => Some(inner_dom.clone()),
+            UnresolvedDomain::Matrix(value_domain, _) => Some(value_domain.clone()),
+            _ => None,
+        }
+    }
 }
 
 impl Typeable for UnresolvedDomain {
