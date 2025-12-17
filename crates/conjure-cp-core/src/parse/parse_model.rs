@@ -927,21 +927,15 @@ fn parse_comprehension(
                 match name.as_str() {
                     "GenDomainNoRepr" => {
                         let name = gen_inner.pointer("/0/Single/Name")?.as_str()?;
-                        let (domain_name, domain_value) = gen_inner
-                            .pointer("/GenDomainNoRepr/1")?
-                            .as_object()?
-                            .iter()
-                            .next()?;
+                        let (domain_name, domain_value) =
+                            gen_inner.pointer("/1")?.as_object()?.iter().next()?;
                         let domain = parse_domain(
                             domain_name,
                             domain_value,
                             &mut generator_symboltable.borrow_mut(),
                         )
                         .ok()?;
-                        comprehension.generator(DeclarationPtr::new_var(
-                            Name::User(Ustr::from(name)),
-                            domain,
-                        ))
+                        comprehension.generator(DeclarationPtr::new_var(name.into(), domain))
                     }
                     // TODO: this is temporary until comprehensions support "in expr" generators
                     // currently only supports a single generator of this type
