@@ -5,7 +5,7 @@ use std::{collections::HashMap, fmt::Display};
 use crate::print::{print_const_array, print_constraint_array, print_var_array};
 
 pub type VarName = String;
-pub type Tuple = (Constant, Constant);
+pub type Tuple = Vec<Constant>;
 pub type TwoVars = (Var, Var);
 
 /// A Minion model.
