@@ -189,9 +189,9 @@ impl FromStr for SolverFamily {
 /// The type for user-defined callbacks for use with [Solver].
 ///
 /// Note that this enforces thread safety
-pub type SolverCallback = Box<dyn Fn(HashMap<Name, Literal>) -> bool + Send>;
+pub type SolverCallback = Box<dyn Fn(HashMap<Name, Literal>) -> bool + Send + Sync>;
 pub type SolverMutCallback =
-    Box<dyn Fn(HashMap<Name, Literal>, Box<dyn ModelModifier>) -> bool + Send>;
+    Box<dyn Fn(HashMap<Name, Literal>, Box<dyn ModelModifier>) -> bool + Send + Sync>;
 
 /// A common interface for calling underlying solver APIs inside a [`Solver`].
 ///
