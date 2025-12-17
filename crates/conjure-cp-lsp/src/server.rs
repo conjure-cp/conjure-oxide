@@ -10,6 +10,16 @@ use tower_lsp::{
     },
 };
 
+use conjure_cp_essence_parser::diagnostics::diagnostics_api::get_diagnostics;
+use conjure_cp_essence_parser::diagnostics::diagnostics_api::Diagnostic as ParserDiagnostic;
+use conjure_cp_essence_parser::diagnostics::diagnostics_api::Severity as ParserSeverity;
+use tower_lsp::lsp_types::Range as LspRange;
+use tower_lsp::lsp_types::Position as LspPosition;
+use conjure_cp_essence_parser::diagnostics::diagnostics_api::Range as ParserRange;
+use conjure_cp_essence_parser::diagnostics::diagnostics_api::Position as ParserPosition;
+
+use tower_lsp::lsp_types::Diagnostic as LspDiagnostic;
+
 #[derive(Debug, Serialize, Deserialize)]
 struct NotifactionParams {
     title: String,
@@ -81,6 +91,18 @@ impl LanguageServer for Backend {
             Err(Error::invalid_request())
         }
     }
+    // underline errors on file open
+    async fn did_open(&self, params: tower_lsp::lsp_types::DidOpenTextDocumentParams) {
+        // get_diagnostics takes in source code as &str and returns Vec<Diagnostic>
+        let diagnostics = get_diagnostics(&params.text_document.text); // get diagnostics from cp-essence-parser
+        let lsp_diagnostics = convert_diagnostics(diagnostics); // convert to LSP diagnostics
+
+        self.client.publish_diagnostics(
+            params.text_document.uri,
+            lsp_diagnostics,
+            None,
+        ).await;
+    }
 }
 
 #[tokio::main]
@@ -91,4 +113,42 @@ pub async fn main() {
     let (service, socket) = LspService::build(|client| Backend { client }).finish();
 
     Server::new(stdin, stdout, socket).serve(service).await;
+}
+
+// convert diagnostics from cp-essence-parser to LSP diagnostics
+pub fn convert_diagnostics(diagnostics: Vec<ParserDiagnostic>) -> Vec<LspDiagnostic> {
+    // map each ParserDiagnostic to LspDiagnostic
+    diagnostics.into_iter().map(|diag| {
+        LspDiagnostic {
+            range: parser_to_lsp_range(diag.range),
+            severity: match diag.severity {
+                ParserSeverity::Error => Some(tower_lsp::lsp_types::DiagnosticSeverity::ERROR),
+                ParserSeverity::Warn => Some(tower_lsp::lsp_types::DiagnosticSeverity::WARNING),
+                ParserSeverity::Info => Some(tower_lsp::lsp_types::DiagnosticSeverity::INFORMATION),
+                ParserSeverity::Hint => Some(tower_lsp::lsp_types::DiagnosticSeverity::HINT),
+            },
+            code: None, // for now
+            code_description: None, // also for now
+            source: Some(diag.source.to_string()),
+            message: diag.message,
+            related_information: None,
+            tags: None,
+            data: None,
+        }
+    }).collect()
+}
+
+// playing that position converts properly
+pub fn parser_to_lsp_range(range: ParserRange) -> LspRange {
+    LspRange {
+        start: parser_to_lsp_position(range.start),
+        end: parser_to_lsp_position(range.end),
+    }
+}
+
+pub fn parser_to_lsp_position(position: ParserPosition) -> LspPosition {
+    LspPosition {
+        line: position.line,
+        character: position.character,
+    }
 }
