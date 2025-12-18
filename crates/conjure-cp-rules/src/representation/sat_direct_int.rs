@@ -8,7 +8,7 @@ use conjure_cp::{
     rule_engine::ApplicationError,
 };
 
-register_representation!(SATLogInt, "sat_log_int");
+register_representation!(SATLogInt, "sat_direct_int");
 
 #[derive(Clone, Debug)]
 pub struct SATLogInt {
@@ -33,7 +33,7 @@ impl SATLogInt {
     }
 
     /// Gets the representation variable name for a specific index.
-    fn index_to_name(&self, index: u32) -> Name {
+    fn index_to_name(&self, index: i32) -> Name {
         Name::Represented(Box::new((
             self.src_var.clone(),
             self.repr_name().into(),
@@ -78,8 +78,8 @@ impl Representation for SATLogInt {
 
         Some(SATLogInt {
             src_var: name.clone(),
-            upper_bound: min,
-            lower_bound: max,
+            lower_bound: min,
+            upper_bound: max,
         })
     }
 
@@ -114,32 +114,31 @@ impl Representation for SATLogInt {
         &self,
         values: &std::collections::BTreeMap<Name, Literal>,
     ) -> Result<Literal, ApplicationError> {
-        let mut out: i32 = 0;
-        let mut power: i32 = 1;
+        let mut found_value: Option<i32> = None;
 
-        for name in self.names() {
-            let value = values
+        for value_candidate in self.lower_bound..self.upper_bound {
+            let name = self.index_to_name(value_candidate);
+            let value_literal = values
                 .get(&name)
                 .ok_or(ApplicationError::RuleNotApplicable)?;
 
-            if let Literal::Int(value) = value {
-                out += *value * power;
-                power <<= 1;
+            if let Literal::Bool(true) = value_literal {
+                if found_value.is_some() {
+                    // More than one variable is true, which is an error for direct encoding
+                    return Err(ApplicationError::RuleNotApplicable);
+                }
+                found_value = Some(value_candidate);
+            } else if let Literal::Bool(false) = value_literal {
+                // This is fine, continue
             } else {
+                // Not a boolean literal, error
                 return Err(ApplicationError::RuleNotApplicable);
             }
         }
 
-        let sign_bit = 1 << (self.bits - 1);
-        // Mask to `BITS` bits
-        out &= (sign_bit << 1) - 1;
-
-        // If the sign bit is set, convert to negative using two's complement
-        if out & sign_bit != 0 {
-            out -= sign_bit << 1;
-        }
-
-        Ok(Literal::Int(out))
+        found_value
+            .map(Literal::Int)
+            .ok_or(ApplicationError::RuleNotApplicable)
     }
 
     /// Returns [`Expression`]s representing each boolean representation variable.
@@ -177,7 +176,7 @@ impl Representation for SATLogInt {
 
     /// The rule name for this representaion.
     fn repr_name(&self) -> &str {
-        "sat_log_int"
+        "sat_direct_int"
     }
 
     /// Makes a clone of `self` into a `Representation` trait object.
