@@ -61,7 +61,7 @@ fn cnf_int_ineq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 /// SATInt(a) = SATInt(b) ~> Bool
 ///
 /// ```
-#[register_rule(("SAT_Log", 9100))] // temp disbaled
+#[register_rule(("SAT_Log", 9100))]
 fn cnf_int_eq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Eq(_, lhs, rhs) = expr else {
         return Err(RuleNotApplicable);

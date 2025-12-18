@@ -159,6 +159,13 @@ fn integer_decision_representation_log(expr: &Expr, symbols: &SymbolTable) -> Ap
         return Err(RuleNotApplicable);
     };
 
+    // thing we are representing must be a variable
+    // symbols
+    //     .lookup(name)
+    //     .ok_or(RuleNotApplicable)?
+    //     .as_var()
+    //     .ok_or(RuleNotApplicable)?;
+
     // thing we are representing must be an integer
     let dom = name.resolved_domain().ok_or(RuleNotApplicable)?;
     let GroundDomain::Int(ranges) = dom.as_ref() else {
@@ -200,9 +207,12 @@ fn integer_decision_representation_log(expr: &Expr, symbols: &SymbolTable) -> Ap
     );
 
     if !repr_exists {
-        let domain_constraint = int_domain_to_expr(cnf_int.clone(), ranges);
-        let clauses = vec![conjure_cp::ast::CnfClause::new(vec![domain_constraint])];
-        Ok(Reduction::cnf(cnf_int, clauses, symbols))
+        // add domain ranges as constraints if this is the first time the representation is added
+        Ok(Reduction::new(
+            cnf_int.clone(),
+            vec![int_domain_to_expr(cnf_int, ranges)], // contains domain rules
+            symbols,
+        ))
     } else {
         Ok(Reduction::pure(cnf_int))
     }
