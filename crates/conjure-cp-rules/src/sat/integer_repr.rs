@@ -39,6 +39,8 @@ pub fn validate_log_int_operands(
 ) -> Result<Vec<Vec<Expr>>, ApplicationError> {
     // TODO: In the future it may be possible to optimize operations between integers with different bit sizes
     // Collect inner bit vectors from each SATInt
+
+    // TODO: this file should be encoding agnostic so this needs to moved to the log_int_ops.rs file, do this once the direct ints have been merged to main though 
     let mut out: Vec<Vec<Expr>> = exprs
         .into_iter()
         .map(|expr| {
@@ -161,7 +163,7 @@ fn integer_decision_representation(expr: &Expr, symbols: &SymbolTable) -> Applic
 ///  SATInt([true,true,false,false,false,false,false,false;int(1..)])
 ///
 /// ```
-#[register_rule(("SAT", 9500))]
+//#[register_rule(("SAT", 9500))] Temporarily disabled log rule until multi encodings supported
 fn literal_cnf_int(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let value = {
         if let Expr::Atomic(_, Atom::Literal(Literal::Int(v))) = expr {
