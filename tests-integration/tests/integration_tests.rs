@@ -60,7 +60,8 @@ struct TestConfig {
     // NOTE: when adding a new solver config, make sure to update num_solvers_enabled!
     solve_with_minion: bool, // Stage 3a: Solves the model using Minion
     solve_with_sat: bool,    // TODO - add stage mark
-    solve_with_smt: bool,    // TODO - add stage mark
+    sat_encoding: String,
+    solve_with_smt: bool, // TODO - add stage mark
 
     compare_solver_solutions: bool, // Stage 3b: Compares Minion and Conjure solutions
     validate_rule_traces: bool,     // Stage 4a: Checks rule traces against expected outputs
@@ -76,6 +77,7 @@ impl Default for TestConfig {
             extra_rewriter_asserts: vec!["vector_operators_have_partially_evaluated".into()],
             enable_naive_impl: true,
             solve_with_sat: false,
+            sat_encoding: "log".to_string(),
             solve_with_smt: false,
             enable_morph_impl: false,
             enable_rewriter_impl: true,
@@ -111,6 +113,7 @@ impl TestConfig {
             ),
             solve_with_minion: env_var_override_bool("SOLVE_WITH_MINION", self.solve_with_minion),
             solve_with_sat: env_var_override_bool("SOLVE_WITH_SAT", self.solve_with_sat),
+            sat_encoding: env::var("SAT_ENCODING").unwrap_or(self.sat_encoding),
             solve_with_smt: env_var_override_bool("SOLVE_WITH_SMT", self.solve_with_smt),
             compare_solver_solutions: env_var_override_bool(
                 "COMPARE_SOLVER_SOLUTIONS",
@@ -291,7 +294,19 @@ fn integration_test_inner(
             SolverFamily::Minion
         };
 
-        let rule_sets = resolve_rule_sets(solver_fam, DEFAULT_RULE_SETS)?;
+        let mut extra_rules = vec![];
+        if config.solve_with_sat {
+            match config.sat_encoding.as_str() {
+                "log" => extra_rules.push("SAT_Log"),
+                "direct" => extra_rules.push("SAT_Direct"),
+                _ => panic!("Unknown SAT encoding: {}", config.sat_encoding),
+            }
+        }
+
+        let mut rules_to_load = DEFAULT_RULE_SETS.to_vec();
+        rules_to_load.extend(extra_rules);
+
+        let rule_sets = resolve_rule_sets(solver_fam, &rules_to_load)?;
 
         let mut model = parsed_model;
 

@@ -200,7 +200,9 @@ fn integer_decision_representation_log(expr: &Expr, symbols: &SymbolTable) -> Ap
     );
 
     if !repr_exists {
-        Ok(Reduction::with_symbols(cnf_int.clone(), symbols))
+        let domain_constraint = int_domain_to_expr(cnf_int.clone(), ranges);
+        let clauses = vec![conjure_cp::ast::CnfClause::new(vec![domain_constraint])];
+        Ok(Reduction::cnf(cnf_int, clauses, symbols))
     } else {
         Ok(Reduction::pure(cnf_int))
     }
