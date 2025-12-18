@@ -1,6 +1,6 @@
 Model before rewriting:
 
-find a: int(1..2)
+find a: int(1..n)
 letting n be 2
 
 such that
@@ -11,6 +11,12 @@ such that
 
 (a < n), 
    ~~> lt_to_leq ([("Minion", 8400)]) 
+(a <= sum([n,-1;int(1..)])) 
+
+--
+
+(a <= sum([n,-1;int(1..)])), 
+   ~~> substitute_domain_lettings ([("Base", 5000)]) 
 (a <= sum([n,-1;int(1..)])) 
 
 --

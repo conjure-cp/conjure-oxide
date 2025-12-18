@@ -547,12 +547,20 @@ unsafe fn constraint_add_args(
             read_var(i, r_constr, c)?;
             Ok(())
         }
+        Constraint::LexLess(a, b) => {
+            read_list(i, r_constr, a)?;
+            read_list(i, r_constr, b)?;
+            Ok(())
+        }
+        Constraint::LexLeq(a, b) => {
+            read_list(i, r_constr, a)?;
+            read_list(i, r_constr, b)?;
+            Ok(())
+        }
         //Constraint::LitSumGeq(_, _, _) => todo!(),
         //Constraint::Gcc(_, _, _) => todo!(),
         //Constraint::GccWeak(_, _, _) => todo!(),
         //Constraint::LexLeqRv(_, _) => todo!(),
-        //Constraint::LexLeq(_, _) => todo!(),
-        //Constraint::LexLess(_, _) => todo!(),
         //Constraint::LexLeqQuick(_, _) => todo!(),
         //Constraint::LexLessQuick(_, _) => todo!(),
         //Constraint::WatchVecNeq(_, _) => todo!(),

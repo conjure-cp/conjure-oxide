@@ -9,6 +9,7 @@ use super::{
     Typeable, domains::HasDomain, domains::Int, records::RecordValue,
 };
 use crate::ast::pretty::pretty_vec;
+use crate::bug;
 use polyquine::Quine;
 use uniplate::{Biplate, Tree, Uniplate};
 
@@ -65,6 +66,8 @@ pub enum AbstractLiteral<T: AbstractLiteralValue> {
     Tuple(Vec<T>),
 
     Record(Vec<RecordValue<T>>),
+
+    Function(Vec<(T, T)>),
 }
 
 // TODO: use HasDomain instead once Expression::domain_of returns Domain not Option<Domain>
@@ -124,12 +127,8 @@ impl AbstractLiteral<Expression> {
             }
             AbstractLiteral::Tuple(_) => None,
             AbstractLiteral::Record(_) => None,
+            AbstractLiteral::Function(_) => None,
         }
-    }
-
-    pub fn list(exprs: Vec<Expression>) -> Self {
-        let domain = Domain::int_ground(vec![Range::UnboundedR(1)]);
-        AbstractLiteral::Matrix(exprs, domain)
     }
 }
 
@@ -194,6 +193,29 @@ impl Typeable for AbstractLiteral<Expression> {
                 }
                 ReturnType::Record(item_types)
             }
+            AbstractLiteral::Function(items) => {
+                if items.is_empty() {
+                    return ReturnType::Function(
+                        Box::new(ReturnType::Unknown),
+                        Box::new(ReturnType::Unknown),
+                    );
+                }
+
+                // Check that all items have the same return type
+                let (x1, y1) = &items[0];
+                let (t1, t2) = (x1.return_type(), y1.return_type());
+                for (x, y) in items {
+                    let (tx, ty) = (x.return_type(), y.return_type());
+                    if tx != t1 {
+                        bug!("Expected {t1}, got {x}: {tx}");
+                    }
+                    if ty != t2 {
+                        bug!("Expected {t2}, got {y}: {ty}");
+                    }
+                }
+
+                ReturnType::Function(Box::new(t1), Box::new(t2))
+            }
         }
     }
 }
@@ -256,6 +278,13 @@ where
                     .join(",");
                 write!(f, "{{{entries_str}}}")
             }
+            AbstractLiteral::Function(entries) => {
+                let entries_str: String = entries
+                    .iter()
+                    .map(|entry| format!("{} --> {}", entry.0, entry.1))
+                    .join(",");
+                write!(f, "function({entries_str})")
+            }
         }
     }
 }
@@ -291,6 +320,35 @@ where
                 (
                     f1_tree,
                     Box::new(move |x| AbstractLiteral::Record(f1_ctx(x))),
+                )
+            }
+            AbstractLiteral::Function(entries) => {
+                let entry_count = entries.len();
+                let flattened: Vec<T> = entries
+                    .iter()
+                    .flat_map(|(lhs, rhs)| [lhs.clone(), rhs.clone()])
+                    .collect();
+
+                let (f1_tree, f1_ctx) =
+                    <Vec<T> as Biplate<AbstractLiteral<T>>>::biplate(&flattened);
+                (
+                    f1_tree,
+                    Box::new(move |x| {
+                        let rebuilt = f1_ctx(x);
+                        assert_eq!(
+                            rebuilt.len(),
+                            entry_count * 2,
+                            "number of function literal children should remain unchanged"
+                        );
+
+                        let mut iter = rebuilt.into_iter();
+                        let mut pairs = Vec::with_capacity(entry_count);
+                        while let (Some(lhs), Some(rhs)) = (iter.next(), iter.next()) {
+                            pairs.push((lhs, rhs));
+                        }
+
+                        AbstractLiteral::Function(pairs)
+                    }),
                 )
             }
         }
@@ -348,6 +406,34 @@ where
                     (
                         f1_tree,
                         Box::new(move |x| AbstractLiteral::Record(f1_ctx(x))),
+                    )
+                }
+                AbstractLiteral::Function(entries) => {
+                    let entry_count = entries.len();
+                    let flattened: Vec<U> = entries
+                        .iter()
+                        .flat_map(|(lhs, rhs)| [lhs.clone(), rhs.clone()])
+                        .collect();
+
+                    let (f1_tree, f1_ctx) = <Vec<U> as Biplate<To>>::biplate(&flattened);
+                    (
+                        f1_tree,
+                        Box::new(move |x| {
+                            let rebuilt = f1_ctx(x);
+                            assert_eq!(
+                                rebuilt.len(),
+                                entry_count * 2,
+                                "number of function literal children should remain unchanged"
+                            );
+
+                            let mut iter = rebuilt.into_iter();
+                            let mut pairs = Vec::with_capacity(entry_count);
+                            while let (Some(lhs), Some(rhs)) = (iter.next(), iter.next()) {
+                                pairs.push((lhs, rhs));
+                            }
+
+                            AbstractLiteral::Function(pairs)
+                        }),
                     )
                 }
             }
@@ -501,6 +587,7 @@ impl AbstractLiteral<Expression> {
                         .collect(),
                 ))
             }
+            AbstractLiteral::Function(_) => todo!("Implement into_literals for functions"),
         }
     }
 }
