@@ -29,7 +29,7 @@ use std::cmp;
 ///  SATInt([true;int(1..), (3, 3)])
 ///
 /// ```
-#[register_rule(("SAT", 9500))]
+#[register_rule(("SAT_Direct", 9500))]
 fn literal_sat_direct_int(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let value = {
         if let Expr::Atomic(_, Atom::Literal(Literal::Int(value))) = expr {
@@ -124,7 +124,7 @@ pub fn validate_direct_int_operands(
 /// SATInt(a) = SATInt(b) ~> Bool
 ///
 /// ```
-#[register_rule(("SAT", 9100))]
+#[register_rule(("SAT_Direct", 9100))]
 fn eq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Eq(_, lhs, rhs) = expr else {
         return Err(RuleNotApplicable);
@@ -166,7 +166,7 @@ fn eq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 /// SATInt(a) != SATInt(b) ~> Bool
 ///
 /// ```
-#[register_rule(("SAT", 9100))]
+#[register_rule(("SAT_Direct", 9100))]
 fn neq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Eq(_, lhs, rhs) = expr else {
         return Err(RuleNotApplicable);
