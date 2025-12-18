@@ -3,14 +3,13 @@ use std::process::exit;
 use std::sync::Arc;
 
 use clap::ValueHint;
-use conjure_cp::solver::{SolverFamily, adaptors::*};
 use conjure_cp_cli::utils::conjure::{
     get_solutions, get_solutions_from_conjure, solutions_to_json,
 };
 use conjure_cp_cli::utils::testing::normalize_solutions_for_comparison;
 
 use crate::cli::GlobalArgs;
-use crate::solve;
+use crate::solve::{self, init_solver};
 
 #[derive(Clone, Debug, clap::Args)]
 pub struct Args {
@@ -27,37 +26,16 @@ pub fn run_test_solve_command(global_args: GlobalArgs, local_args: Args) -> anyh
     let model = solve::parse(&global_args, Arc::clone(&context))?;
     let rewritten_model = solve::rewrite(model, &global_args, Arc::clone(&context))?;
 
+    let solver = init_solver(&global_args);
+
     // now we are stealing from the integration tester
 
-    let our_solutions = match global_args.solver {
-        SolverFamily::Sat => {
-            let adaptor = Sat::default();
-            get_solutions(
-                adaptor,
-                rewritten_model,
-                0,
-                &global_args.save_solver_input_file,
-            )
-        }
-        conjure_cp::solver::SolverFamily::Smt => {
-            let adaptor = Smt::default();
-            get_solutions(
-                adaptor,
-                rewritten_model,
-                0,
-                &global_args.save_solver_input_file,
-            )
-        }
-        SolverFamily::Minion => {
-            let adaptor = Minion::default();
-            get_solutions(
-                adaptor,
-                rewritten_model,
-                0,
-                &global_args.save_solver_input_file,
-            )
-        }
-    }?;
+    let our_solutions = get_solutions(
+        solver,
+        rewritten_model,
+        0,
+        &global_args.save_solver_input_file,
+    )?;
 
     let conjure_solutions =
         get_solutions_from_conjure(input_file.to_str().unwrap(), Arc::clone(&context))?;

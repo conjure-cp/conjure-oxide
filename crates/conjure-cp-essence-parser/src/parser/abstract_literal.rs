@@ -2,7 +2,7 @@ use crate::expression::parse_expression;
 use crate::parser::domain::parse_domain;
 use crate::util::named_children;
 use crate::{EssenceParseError, field};
-use conjure_cp_core::ast::{AbstractLiteral, Domain, Expression, SymbolTable};
+use conjure_cp_core::ast::{AbstractLiteral, DomainPtr, Expression, SymbolTable};
 use conjure_cp_core::{domain_int, range};
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -70,9 +70,12 @@ fn parse_matrix(
     symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
 ) -> Result<AbstractLiteral<Expression>, EssenceParseError> {
     let mut elements = vec![];
-    let mut domain: Option<Domain> = None;
+    let mut domain: Option<DomainPtr> = None;
     for child in named_children(node) {
-        if child.kind() == "arithmetic_expr" {
+        if child.kind() == "arithmetic_expr"
+            || child.kind() == "bool_expr"
+            || child.kind() == "comparison_expr"
+        {
             elements.push(parse_expression(
                 child,
                 source_code,
@@ -80,7 +83,7 @@ fn parse_matrix(
                 symbols_ptr.clone(),
             )?);
         } else {
-            domain = Some(parse_domain(child, source_code)?);
+            domain = Some(parse_domain(child, source_code, symbols_ptr.clone())?);
         }
     }
     if domain.is_none() {
@@ -88,7 +91,7 @@ fn parse_matrix(
         domain = Some(domain_int!(1..count));
     }
 
-    Ok(AbstractLiteral::Matrix(elements, Box::new(domain.unwrap())))
+    Ok(AbstractLiteral::Matrix(elements, domain.unwrap()))
 }
 
 fn parse_set_literal(

@@ -5,8 +5,8 @@ use quote::quote;
 use syn::punctuated::Punctuated;
 use syn::token::Comma;
 use syn::{
-    Ident, ItemFn, LitInt, LitStr, Path, Result, parenthesized, parse::Parse, parse::ParseStream,
-    parse_macro_input,
+    ExprClosure, Ident, ItemFn, LitInt, LitStr, Result, parenthesized, parse::Parse,
+    parse::ParseStream, parse_macro_input,
 };
 
 #[derive(Debug)]
@@ -99,7 +99,7 @@ fn parse_parenthesized<T: Parse>(input: ParseStream) -> Result<Vec<T>> {
 struct RuleSetArgs {
     name: LitStr,
     dependencies: Vec<LitStr>,
-    solver_families: Vec<Path>,
+    applies_fn: Option<ExprClosure>,
 }
 
 impl Parse for RuleSetArgs {
@@ -110,7 +110,7 @@ impl Parse for RuleSetArgs {
             return Ok(Self {
                 name,
                 dependencies: Vec::new(),
-                solver_families: Vec::new(),
+                applies_fn: None,
             });
         }
 
@@ -121,18 +121,17 @@ impl Parse for RuleSetArgs {
             return Ok(Self {
                 name,
                 dependencies,
-                solver_families: Vec::new(),
+                applies_fn: None,
             });
         }
 
         input.parse::<Comma>()?;
-        let solver_families =
-            parse_parenthesized::<Path>(input).or(input.parse::<Path>().map(|p| vec![p]))?;
+        let applies_fn = input.parse::<ExprClosure>()?;
 
         Ok(Self {
             name,
             dependencies,
-            solver_families,
+            applies_fn: Some(applies_fn),
         })
     }
 }
@@ -151,7 +150,7 @@ pub fn register_rule_set(args: TokenStream) -> TokenStream {
     let RuleSetArgs {
         name,
         dependencies,
-        solver_families,
+        applies_fn,
     } = parse_macro_input!(args as RuleSetArgs);
 
     let static_name = format!("CONJURE_GEN_RULE_SET_{}", name.value()).to_uppercase();
@@ -161,14 +160,17 @@ pub fn register_rule_set(args: TokenStream) -> TokenStream {
         #(#dependencies),*
     };
 
-    let solver_families = quote! {
-        #(#solver_families),*
+    let applies_to_family = match applies_fn {
+        // Does not apply by default, e.g. only used as a dependency
+        None => quote! { |_: &::conjure_cp::solver::SolverFamily| false },
+        Some(func) => quote! { #func },
     };
 
     let expanded = quote! {
         use ::conjure_cp::rule_engine::_dependencies::*; // ToDo idk if we need to explicitly do that?
         #[::conjure_cp::rule_engine::_dependencies::distributed_slice(::conjure_cp::rule_engine::RULE_SETS_DISTRIBUTED_SLICE)]
-        pub static #static_ident: ::conjure_cp::rule_engine::RuleSet<'static> = ::conjure_cp::rule_engine::RuleSet::new(#name, &[#dependencies], &[#solver_families]);
+        pub static #static_ident: ::conjure_cp::rule_engine::RuleSet<'static> =
+            ::conjure_cp::rule_engine::RuleSet::new(#name, &[#dependencies], #applies_to_family);
     };
 
     TokenStream::from(expanded)
