@@ -99,7 +99,7 @@ impl Representation for SATLogInt {
             let name = self.index_to_name(value_candidate);
             let value_literal = values
                 .get(&name)
-                .ok_or({ ApplicationError::RuleNotApplicable })?;
+                .ok_or(ApplicationError::RuleNotApplicable)?;
 
             if let Literal::Int(1) = value_literal {
                 if found_value.is_some() {

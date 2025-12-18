@@ -5,21 +5,13 @@ use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
 };
 
-use conjure_cp::ast::AbstractLiteral::Matrix;
 use conjure_cp::ast::Metadata;
 use conjure_cp::ast::Moo;
 use conjure_cp::into_matrix_expr;
 
-use itertools::Itertools;
-
-use super::boolean::{
-    tseytin_and, tseytin_iff, tseytin_imply, tseytin_mux, tseytin_not, tseytin_or, tseytin_xor,
-};
-use super::integer_repr::{bit_magnitude, match_bits_length, validate_log_int_operands};
+use super::boolean::{tseytin_and, tseytin_iff, tseytin_not, tseytin_or, tseytin_xor};
 
 use conjure_cp::ast::CnfClause;
-
-use std::cmp;
 
 /// Converts an integer literal to SATInt form
 ///
