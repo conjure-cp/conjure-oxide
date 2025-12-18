@@ -125,7 +125,7 @@ pub fn validate_direct_int_operands(
 ///
 /// ```
 #[register_rule(("SAT", 9100))]
-fn cnf_int_eq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+fn eq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Eq(_, lhs, rhs) = expr else {
         return Err(RuleNotApplicable);
     };
