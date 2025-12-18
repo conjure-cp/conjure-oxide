@@ -169,7 +169,7 @@ impl Representation for SATLogInt {
             .map(|name| DeclarationPtr::new_var(name, Domain::bool()))
             .collect();
 
-        println!("call decl_down: {:#?}", temp_a);
+        // println!("call decl_down: {:#?}", temp_a);
 
         Ok(temp_a)
     }
