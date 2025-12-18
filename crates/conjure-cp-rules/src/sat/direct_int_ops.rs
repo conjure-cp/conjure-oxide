@@ -268,10 +268,13 @@ fn sat_direct_lt(
         b_or = tseytin_or(
             &vec![
                 b_or,
-                b_iter.next().unwrap_or(&Expr::Atomic(
-                    Metadata::new(),
-                    Atom::Literal(Literal::Bool(true)),
-                )).clone(),
+                b_iter
+                    .next()
+                    .unwrap_or(&Expr::Atomic(
+                        Metadata::new(),
+                        Atom::Literal(Literal::Bool(true)),
+                    ))
+                    .clone(),
             ],
             clauses,
             symbols,
