@@ -172,7 +172,8 @@ fn neq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let (binding, _, _) = validate_direct_int_operands(vec![lhs.as_ref().clone(), rhs.as_ref().clone()])?;
+    let (binding, _, _) =
+        validate_direct_int_operands(vec![lhs.as_ref().clone(), rhs.as_ref().clone()])?;
     let [lhs_bits, rhs_bits] = binding.as_slice() else {
         return Err(RuleNotApplicable);
     };
