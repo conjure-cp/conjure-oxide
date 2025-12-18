@@ -21,6 +21,35 @@ use conjure_cp::ast::CnfClause;
 
 use std::cmp;
 
+/// Converts an integer literal to SATInt form
+///
+/// ```text
+///  3
+///  ~~>
+///  SATInt([true;int(1..), (3, 3)])
+///
+/// ```
+#[register_rule(("SAT", 9500))]
+fn literal_sat_direct_int(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    let value = {
+        if let Expr::Atomic(_, Atom::Literal(Literal::Int(value))) = expr {
+            *value
+        } else {
+            return Err(RuleNotApplicable);
+        }
+    };
+
+    Ok(Reduction::pure(Expr::SATInt(
+        Metadata::new(),
+        SATIntEncoding::Direct,
+        Moo::new(into_matrix_expr!(vec![Expr::Atomic(
+                    Metadata::new(),
+                    Atom::Literal(Literal::Bool(true)),
+                )])),
+        (value, value),
+    )))
+}
+
 /// This function confirms that all of the input expressions are direct SATInts, and returns vectors for each input of their bits
 /// This function also extends all inputs to have the same range, and returns the new range
 pub fn validate_direct_int_operands(
@@ -31,20 +60,20 @@ pub fn validate_direct_int_operands(
 
     // Iterate over all inputs
     // Check they are direct and calulate a lower and upper bound
-    let global_min: i32 = std::i32::MAX;
-    let global_max: i32 = std::i32::MIN;
+    let mut global_min: i32 = std::i32::MAX;
+    let mut global_max: i32 = std::i32::MIN;
 
-    for operand in exprs {
-        let Expr::SATInt(_, SATIntEncoding::Direct, inner, (local_min, local_max)) = operand else {
+    for operand in &exprs {
+        let Expr::SATInt(_, SATIntEncoding::Direct, _, (local_min, local_max)) = operand else {
             return Err(RuleNotApplicable);
         };
-        global_min = global_min.min(local_min);
-        global_max = global_max.max(local_max);
+        global_min = global_min.min(*local_min);
+        global_max = global_max.max(*local_max);
     }
 
     // build out by iterating over each operand and expanding it to match the new bounds
 
-    let mut out: Vec<Vec<Expr>> = exprs
+    let out: Vec<Vec<Expr>> = exprs
         .into_iter()
         .map(|expr| {
             let Expr::SATInt(_, SATIntEncoding::Direct, inner, (local_min, local_max)) = expr
@@ -62,6 +91,7 @@ pub fn validate_direct_int_operands(
 
             let mut bits = Vec::with_capacity(v.len() + prefix_len + postfix_len);
 
+            // add 0s to start
             bits.extend(
                 std::iter::repeat(Expr::Atomic(
                     Metadata::new(),
@@ -69,7 +99,10 @@ pub fn validate_direct_int_operands(
                 ))
                 .take(prefix_len),
             );
+
             bits.extend(v);
+
+            // add 0s to end
             bits.extend(
                 std::iter::repeat(Expr::Atomic(
                     Metadata::new(),
@@ -82,7 +115,7 @@ pub fn validate_direct_int_operands(
         })
         .collect::<Result<_, _>>()?;
 
-    Ok(out)
+    Ok((out, global_min, global_max))
 }
 
 /// Converts a = expression between two direct SATInts to a boolean expression in cnf
