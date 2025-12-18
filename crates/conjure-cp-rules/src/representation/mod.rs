@@ -6,11 +6,11 @@ mod prelude {
     pub use conjure_cp::{
         ast::Metadata,
         ast::{
-            matrix, AbstractLiteral, Atom, DeclarationPtr, Expression, Literal, Name, RecordEntry,
-            SymbolTable,
+            AbstractLiteral, Atom, DeclarationPtr, Expression, Literal, Name, RecordEntry,
+            SymbolTable, matrix,
         },
         bug, into_matrix, register_representation,
-        representation::{get_repr_rule, Representation},
+        representation::{Representation, get_repr_rule},
         rule_engine::{ApplicationError, ApplicationError::RuleNotApplicable, ApplicationResult},
     };
 }

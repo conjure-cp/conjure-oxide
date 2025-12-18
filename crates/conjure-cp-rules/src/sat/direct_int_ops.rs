@@ -29,7 +29,7 @@ use std::cmp;
 ///  SATInt([true;int(1..), (3, 3)])
 ///
 /// ```
-#[register_rule(("SAT", 9500))]
+#[register_rule(("SAT_Direct", 9500))]
 fn literal_sat_direct_int(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let value = {
         if let Expr::Atomic(_, Atom::Literal(Literal::Int(value))) = expr {
@@ -124,7 +124,7 @@ pub fn validate_direct_int_operands(
 /// SATInt(a) = SATInt(b) ~> Bool
 ///
 /// ```
-#[register_rule(("SAT", 9100))]
+#[register_rule(("SAT_Direct", 9100))]
 fn eq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     // TODO: this could be optimized by just going over the sections of both vectors where the ranges intersect
     // this does require enforcing structure separately
@@ -168,7 +168,7 @@ fn eq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 /// SATInt(a) != SATInt(b) ~> Bool
 ///
 /// ```
-#[register_rule(("SAT", 9100))]
+#[register_rule(("SAT_Direct", 9100))]
 fn neq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Neq(_, lhs, rhs) = expr else {
         return Err(RuleNotApplicable);
@@ -202,76 +202,4 @@ fn neq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     }
 
     Ok(Reduction::cnf(output, new_clauses, new_symbols))
-}
-
-/// Converts a </>/<=/>= expression between two direct SATInts to a boolean expression in cnf
-///
-/// ```text
-/// SATInt(a) </>/<=/>= SATInt(b) ~> Bool
-///
-/// ```
-#[register_rule(("SAT", 9100))]
-fn ineq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
-    let (lhs, rhs, strict) = match expr {
-        Expr::Lt(_, x, y) => (y, x, true),
-        Expr::Gt(_, x, y) => (x, y, true),
-        Expr::Leq(_, x, y) => (y, x, false),
-        Expr::Geq(_, x, y) => (x, y, false),
-        _ => return Err(RuleNotApplicable),
-    };
-
-    let (binding, _, _) =
-        validate_direct_int_operands(vec![lhs.as_ref().clone(), rhs.as_ref().clone()])?;
-    let [lhs_bits, rhs_bits] = binding.as_slice() else {
-        return Err(RuleNotApplicable);
-    };
-
-    let output = sat_direct_lt(
-        lhs_bits.clone(),
-        rhs_bits.clone(),
-        strict,
-        &mut new_clauses,
-        &mut new_symbols,
-    );
-    Ok(Reduction::cnf(output, new_clauses, new_symbols))
-}
-
-fn sat_direct_lt(
-    a: Vec<Expr>,
-    b: Vec<Expr>,
-    strict: bool,
-    clauses: &mut Vec<CnfClause>,
-    symbols: &mut SymbolTable,
-) -> Expr {
-    let mut b_or;
-    let a_iter = a.iter();
-    let b_iter = b.iter();
-
-    if strict {
-        b_or = b_iter.next().unwrap();
-    } else {
-        b_or = Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(true)));
-    }
-
-    let mut cum_result;
-    let mut not_b_or;
-    let mut a_and_not_b;
-    for elem in a {
-        not_b_or = tseytin_not(b_or, clauses, symbols);
-        a_and_not_b = tseytin_or(vec![elem, not_b_or], clauses, symbols);
-        cum_result = tseytin_or(vec![cum_result, a_and_not_b], clauses, symbols);
-        b_or = tseytin_or(
-            vec![
-                b_or,
-                b_iter.next().unwrap_or(Expr::Atomic(
-                    Metadata::new(),
-                    Atom::Literal(Literal::Bool(true)),
-                )),
-            ],
-            clauses,
-            symbols,
-        )
-    }
-
-    cum_result
 }

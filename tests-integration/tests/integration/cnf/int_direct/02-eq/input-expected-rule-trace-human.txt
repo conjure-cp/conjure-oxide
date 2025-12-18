@@ -1,0 +1,79 @@
+Model before rewriting:
+
+find a: int(0..2)
+
+such that
+
+(a = 1)
+
+--
+
+a, 
+   ~~> integer_decision_representation ([("SAT_Direct", 9500)]) 
+SATInt(Direct, [a#sat_direct_int_00,a#sat_direct_int_01;int(1..)] [0, 2]) 
+new variables:
+  find a#sat_direct_int_00: bool
+  find a#sat_direct_int_01: bool
+--
+
+1, 
+   ~~> literal_sat_direct_int ([("SAT_Direct", 9500)]) 
+SATInt(Direct, [true;int(1..)] [1, 1]) 
+
+--
+
+(SATInt(Direct, [a#sat_direct_int_00,a#sat_direct_int_01;int(1..)] [0, 2]) = SATInt(Direct, [true;int(1..)] [1, 1])), 
+   ~~> eq_sat_direct ([("SAT_Direct", 9100)]) 
+__3 
+new variables:
+  find __0: bool
+  find __1: bool
+  find __2: bool
+  find __3: bool
+new clauses:
+  (a#sat_direct_int_00 \/ __0)
+  (¬a#sat_direct_int_00 \/ ¬__0)
+  (¬__1 \/ __0)
+  (__1 \/ ¬__0)
+  (¬a#sat_direct_int_01 \/ __2)
+  (a#sat_direct_int_01 \/ ¬__2)
+  (¬__3 \/ __2)
+  (¬__3 \/ __1)
+  (__3 \/ ¬__2 \/ ¬__1)
+--
+
+__3, 
+   ~~> remove_single_atom ([("SAT", 8400)]) 
+true 
+
+new clauses:
+  (__3)
+--
+
+Final model:
+
+find a: int(0..2)
+find __0: bool
+find __1: bool
+find __2: bool
+find __3: bool
+find a#sat_direct_int_00: bool
+find a#sat_direct_int_01: bool
+
+such that
+
+true
+
+clauses:
+
+(a#sat_direct_int_00 \/ __0),
+(¬a#sat_direct_int_00 \/ ¬__0),
+(¬__1 \/ __0),
+(__1 \/ ¬__0),
+(¬a#sat_direct_int_01 \/ __2),
+(a#sat_direct_int_01 \/ ¬__2),
+(¬__3 \/ __2),
+(¬__3 \/ __1),
+(__3 \/ ¬__2 \/ ¬__1),
+(__3)
+
