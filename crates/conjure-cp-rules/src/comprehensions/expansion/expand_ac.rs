@@ -213,7 +213,7 @@ pub fn expand_ac(
                 && let id = decl.id()
                 && let Some(new_decl) = machine_name_translations.get(&id)
             {
-                Atom::Reference(new_decl.clone())
+                Atom::Reference(conjure_cp::ast::Reference::new(new_decl.clone()))
             } else {
                 atom
             }
@@ -247,10 +247,7 @@ fn add_return_expression_to_generator_model(
 
     // for sum/product we want to put integer expressions into dummy variables,
     // for and/or we want to put boolean expressions into dummy variables.
-    let dummy_var_type = ac_operator
-        .identity()
-        .return_type()
-        .expect("identity value of an ACOpKind should always have a ReturnType");
+    let dummy_var_type = ac_operator.identity().return_type();
 
     'outer: loop {
         let focus: &mut Expression = zipper.focus_mut();
@@ -296,7 +293,10 @@ fn add_return_expression_to_generator_model(
             // introduce dummy var and continue
             let dummy_domain = focus.domain_of().unwrap();
             let dummy_decl = symtab.gensym(&dummy_domain);
-            *focus = Expression::Atomic(Metadata::new(), Atom::Reference(dummy_decl));
+            *focus = Expression::Atomic(
+                Metadata::new(),
+                Atom::Reference(conjure_cp::ast::Reference::new(dummy_decl)),
+            );
 
             // go to next node
             while zipper.go_right().is_none() {
@@ -325,7 +325,10 @@ fn add_return_expression_to_generator_model(
                     // introduce dummy var and continue
                     let dummy_domain = focus.domain_of().unwrap();
                     let dummy_decl = symtab.gensym(&dummy_domain);
-                    *focus = Expression::Atomic(Metadata::new(), Atom::Reference(dummy_decl));
+                    *focus = Expression::Atomic(
+                        Metadata::new(),
+                        Atom::Reference(conjure_cp::ast::Reference::new(dummy_decl)),
+                    );
 
                     // go to next node
                     while zipper.go_right().is_none() {
@@ -353,7 +356,10 @@ fn add_return_expression_to_generator_model(
             // introduce dummy var and continue
             let dummy_domain = focus.domain_of().unwrap();
             let dummy_decl = symtab.gensym(&dummy_domain);
-            *focus = Expression::Atomic(Metadata::new(), Atom::Reference(dummy_decl));
+            *focus = Expression::Atomic(
+                Metadata::new(),
+                Atom::Reference(conjure_cp::ast::Reference::new(dummy_decl)),
+            );
 
             // go to next node
             while zipper.go_right().is_none() {
@@ -421,8 +427,7 @@ fn can_be_dummy_variable(expr: &Expression, dummy_variable_type: &ReturnType) ->
     };
 
     // is the expression the same type as the dummy variable?
-    expr.return_type()
-        .is_some_and(|x| x == *dummy_variable_type)
+    expr.return_type() == *dummy_variable_type
 }
 
 /// Returns `true` if `expr` or its descendants contains non-induction variables.

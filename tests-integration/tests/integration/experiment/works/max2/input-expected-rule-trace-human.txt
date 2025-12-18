@@ -7,50 +7,42 @@ find x: int(1..4)
 such that
 
 (max([a,b;int(1..2)]) >= 2),
-(x = sum([max([a,b;int(1..2)]),1;int(1..2)]))
+(x = sum([max([a,b;int(1..2)]),1;int(1..)]))
 
 --
 
-(max([a,b;int(1..2)]) >= 2), 
-   ~~> flatten_generic ([("Minion", 4200)]) 
-(__0 >= 2) 
+(x = sum([max([a,b;int(1..2)]),1;int(1..)])), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+and([SumLeq([1, __0], x),SumGeq([1, __0], x);int(1..)]) 
 new variables:
   find __0: int(1..4)
 new constraints:
   __0 =aux max([a,b;int(1..2)])
 --
 
-(__0 >= 2), 
-   ~~> geq_to_ineq ([("Minion", 4100)]) 
-Ineq(2, __0, 0) 
+(max([a,b;int(1..2)]) >= 2),
+and([SumLeq([1, __0], x),SumGeq([1, __0], x);int(1..)]),
+__0 =aux max([a,b;int(1..2)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(max([a,b;int(1..2)]) >= 2),
+SumLeq([1, __0], x),
+SumGeq([1, __0], x),
+__0 =aux max([a,b;int(1..2)]) 
 
 --
 
-sum([max([a,b;int(1..2)]),1;int(1..2)]), 
-   ~~> matrix_to_list ([("Base", 2000)]) 
-sum([max([a,b;int(1..2)]),1;int(1..)]) 
-
---
-
-(x = sum([max([a,b;int(1..2)]),1;int(1..)])), 
-   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
-and([SumLeq([1, __1], x),SumGeq([1, __1], x);int(1..)]) 
+(max([a,b;int(1..2)]) >= 2), 
+   ~~> flatten_generic ([("Minion", 4200)]) 
+(__1 >= 2) 
 new variables:
   find __1: int(1..4)
 new constraints:
   __1 =aux max([a,b;int(1..2)])
 --
 
-Ineq(2, __0, 0),
-and([SumLeq([1, __1], x),SumGeq([1, __1], x);int(1..)]),
-__0 =aux max([a,b;int(1..2)]),
-__1 =aux max([a,b;int(1..2)]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
-Ineq(2, __0, 0),
-SumLeq([1, __1], x),
-SumGeq([1, __1], x),
-__0 =aux max([a,b;int(1..2)]),
-__1 =aux max([a,b;int(1..2)]) 
+(__1 >= 2), 
+   ~~> geq_to_ineq ([("Minion", 4100)]) 
+Ineq(2, __1, 0) 
 
 --
 
@@ -124,9 +116,9 @@ find __3: int(1..4)
 
 such that
 
-Ineq(2, __0, 0),
-SumLeq([1, __1], x),
-SumGeq([1, __1], x),
+Ineq(2, __1, 0),
+SumLeq([1, __0], x),
+SumGeq([1, __0], x),
 __0 =aux __2,
 __1 =aux __3,
 Ineq(a, __2, 0),

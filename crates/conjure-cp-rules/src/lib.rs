@@ -4,24 +4,24 @@
 //!
 #![doc = include_str!("./rule_semantics.md")]
 
-pub use constant_eval::eval_constant;
-
 mod base;
 mod bottom_up_adaptor;
 mod bubble;
 mod comprehensions;
 mod constant_eval;
+mod lex;
 mod matrix;
 mod minion;
 mod normalisers;
-mod partial_eval;
 mod records;
 mod representation;
 mod select_representation;
+mod smt;
 mod subsitute_lettings;
 mod tuple;
 mod utils;
 
+mod sat;
 mod sets;
 
 /// Denotes a block of code as extra, optional checks for a rule. Primarily, these are checks that

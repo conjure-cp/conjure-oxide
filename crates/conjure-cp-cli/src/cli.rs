@@ -1,11 +1,11 @@
 use std::path::PathBuf;
 
-use clap::{Args, Parser, Subcommand, arg, command};
+use clap::{Args, Parser, Subcommand};
 
 use clap_complete::Shell;
 use conjure_cp::solver::SolverFamily;
 
-use crate::{solve, test_solve};
+use crate::{pretty, solve, test_solve};
 
 pub(crate) const DEBUG_HELP_HEADING: Option<&str> = Some("Debug");
 pub(crate) const LOGGING_HELP_HEADING: Option<&str> = Some("Logging & Output");
@@ -26,6 +26,9 @@ pub enum Command {
     TestSolve(test_solve::Args),
     /// Generate a completion script for the shell provided
     Completion(CompletionArgs),
+    Pretty(pretty::Args),
+    // Run the language server
+    ServerLSP,
 }
 
 /// Global command line arguments.
@@ -56,7 +59,6 @@ pub struct GlobalArgs {
     /// Solver family to use
     #[arg(
         long,
-        value_enum,
         value_name = "SOLVER",
         default_value_t = SolverFamily::Minion,
         short = 's',
@@ -122,6 +124,12 @@ pub struct GlobalArgs {
     /// rewriting.
     #[arg(long, default_value_t = false, global = true, help_heading = DEBUG_HELP_HEADING)]
     pub exit_after_unrolling: bool,
+
+    /// Stop the solver after the given timeout.
+    ///
+    /// Currently only SMT supports this feature.
+    #[arg(long, global = true, help_heading = OPTIMISATIONS_HELP_HEADING)]
+    pub solver_timeout: Option<humantime::Duration>,
 }
 
 #[derive(Debug, Clone, Args)]

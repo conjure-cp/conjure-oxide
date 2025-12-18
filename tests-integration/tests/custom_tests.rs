@@ -4,7 +4,7 @@ use std::env;
 use std::error::Error;
 use std::fs;
 use std::path::PathBuf;
-use std::process::{Command, Output};
+use std::process::Command;
 
 pub fn custom_test(test_dir: &str) -> Result<(), Box<dyn Error>> {
     let accept = env::var("ACCEPT").unwrap_or("false".to_string()) == "true";
@@ -25,23 +25,21 @@ pub fn custom_test(test_dir: &str) -> Result<(), Box<dyn Error>> {
     let expected_output_path = test_path.join("stdout.expected");
     let expected_error_path = test_path.join("stderr.expected");
 
-    // Get conjure_oxide binary path from test binary path:
+    // Get conjure-oxide binary path from test binary path:
     // The test binary is at target/XX/deps/TESTPROGNAME and conjure_oxide is at target/XX/conjure-oxide
     // so from test binary, need to go up two directories and add 'conjure-oxide'
-    let mut conjure_oxide_path = env::current_exe().unwrap();
-    conjure_oxide_path.pop();
-    conjure_oxide_path.pop();
-    conjure_oxide_path.push("conjure-oxide");
+    let mut conjure_prefix = env::current_exe().unwrap();
+    conjure_prefix.pop();
+    conjure_prefix.pop();
 
-    // Modify PATH so run.sh can find conjure_oxide
     let mut path_var = env::var("PATH").unwrap_or_else(|_| "".to_string());
-    let conjure_dir = conjure_oxide_path.parent().unwrap().to_str().unwrap();
+    let conjure_dir = conjure_prefix.display();
     path_var = format!("{conjure_dir}:{path_var}");
 
     // Execute the test script in the correct directory
-    let output: Output = Command::new("sh")
+    let output = Command::new("sh")
         .arg("run.sh")
-        .current_dir(&test_path)
+        .current_dir(test_path)
         .env("PATH", path_var)
         .output()?;
 
@@ -66,8 +64,8 @@ pub fn custom_test(test_dir: &str) -> Result<(), Box<dyn Error>> {
             String::new()
         };
 
-        assert_eq!(expected_output, actual_output, "Standard output mismatch");
         assert_eq!(expected_error, actual_error, "Standard error mismatch");
+        assert_eq!(expected_output, actual_output, "Standard output mismatch");
     }
 
     Ok(())

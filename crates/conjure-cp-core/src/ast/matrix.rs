@@ -7,7 +7,7 @@ use std::collections::VecDeque;
 use itertools::{Itertools, izip};
 use uniplate::Uniplate as _;
 
-use crate::ast::{Domain, Range};
+use crate::ast::{DomainOpError, GroundDomain, Moo, Range};
 
 use super::{AbstractLiteral, Literal};
 
@@ -24,28 +24,43 @@ use super::{AbstractLiteral, Literal};
 /// # Example
 ///
 /// ```
-/// use conjure_cp_core::ast::{Domain,Range,Literal,matrix};
-/// let index_domains = vec![Domain::Bool,Domain::Int(vec![Range::Bounded(1,2)])];
+/// use std::collections::HashSet;
+/// use conjure_cp_core::ast::{GroundDomain,Moo,Range,Literal,matrix};
+/// let index_domains = vec![Moo::new(GroundDomain::Bool),Moo::new(GroundDomain::Int(vec![Range::Bounded(1,2)]))];
 ///
-/// let expected_indices = vec![
+/// let expected_indices = HashSet::from([
 ///   vec![Literal::Bool(false),Literal::Int(1)],
 ///   vec![Literal::Bool(false),Literal::Int(2)],
 ///   vec![Literal::Bool(true),Literal::Int(1)],
 ///   vec![Literal::Bool(true),Literal::Int(2)]
-///   ];
+///   ]);
 ///
-/// let actual_indices: Vec<_> = matrix::enumerate_indices(index_domains).collect();
+/// let actual_indices: HashSet<_> = matrix::enumerate_indices(index_domains).collect();
 ///
 /// assert_eq!(actual_indices, expected_indices);
 /// ```
-pub fn enumerate_indices(index_domains: Vec<Domain>) -> impl Iterator<Item = Vec<Literal>> {
+pub fn enumerate_indices(
+    index_domains: Vec<Moo<GroundDomain>>,
+) -> impl Iterator<Item = Vec<Literal>> {
     index_domains
         .into_iter()
         .map(|x| {
             x.values()
                 .expect("index domain should be enumerable with .values()")
+                .collect_vec()
         })
         .multi_cartesian_product()
+}
+
+/// Returns the number of possible elements indexable by the given index domains.
+///
+/// In short, returns the product of the sizes of the given indices.
+pub fn num_elements(index_domains: &[Moo<GroundDomain>]) -> Result<u64, DomainOpError> {
+    let idx_dom_lengths = index_domains
+        .iter()
+        .map(|d| d.length())
+        .collect::<Result<Vec<_>, _>>()?;
+    Ok(idx_dom_lengths.iter().product())
 }
 
 /// Flattens a multi-dimensional matrix literal into a one-dimensional slice of its elements.
@@ -93,9 +108,9 @@ pub fn flatten_enumerate(
 
     let index_domains = index_domains(matrix)
         .into_iter()
-        .map(|mut x| match x {
+        .map(|mut x| match Moo::make_mut(&mut x) {
             // give unboundedr index domains an end
-            Domain::Int(ref mut ranges) if ranges.len() == 1 && !elems.is_empty() => {
+            GroundDomain::Int(ranges) if ranges.len() == 1 && !elems.is_empty() => {
                 if let Range::UnboundedR(start) = ranges[0] {
                     ranges[0] = Range::Bounded(start, start + (elems.len() as i32 - 1));
                 };
@@ -115,28 +130,72 @@ pub fn flatten_enumerate(
 /// + If `matrix` is not a matrix.
 ///
 /// + If the number or type of elements in each dimension is inconsistent.
-pub fn index_domains(matrix: AbstractLiteral<Literal>) -> Vec<Domain> {
+pub fn index_domains(matrix: AbstractLiteral<Literal>) -> Vec<Moo<GroundDomain>> {
     let AbstractLiteral::Matrix(_, _) = matrix else {
         panic!("matrix should be a matrix");
     };
 
     matrix.cata(&move |element: AbstractLiteral<Literal>,
-                       child_index_domains: VecDeque<Vec<Domain>>| {
+                       child_index_domains: VecDeque<Vec<Moo<GroundDomain>>>| {
         assert!(
             child_index_domains.iter().all_equal(),
             "each child of a matrix should have the same index domain"
         );
 
-        let child_index_domains = child_index_domains.front().cloned().unwrap_or(vec![]);
+        let child_index_domains = child_index_domains
+            .front()
+            .unwrap_or(&vec![])
+            .iter()
+            .cloned()
+            .collect_vec();
         match element {
             AbstractLiteral::Set(_) => vec![],
             AbstractLiteral::Matrix(_, domain) => {
-                let mut index_domains = vec![*domain];
+                let mut index_domains = vec![domain];
                 index_domains.extend(child_index_domains);
                 index_domains
             }
             AbstractLiteral::Tuple(_) => vec![],
             AbstractLiteral::Record(_) => vec![],
+            AbstractLiteral::Function(_) => vec![],
         }
     })
+}
+
+/// See [`enumerate_indices`]. This function zips the two given lists of index domains, performs a
+/// union on each pair, and returns an enumerating iterator over the new list of domains.
+pub fn enumerate_index_union_indices(
+    a_domains: &[Moo<GroundDomain>],
+    b_domains: &[Moo<GroundDomain>],
+) -> Result<impl Iterator<Item = Vec<Literal>>, DomainOpError> {
+    if a_domains.len() != b_domains.len() {
+        return Err(DomainOpError::WrongType);
+    }
+    let idx_domains: Result<Vec<_>, _> = a_domains
+        .iter()
+        .zip(b_domains.iter())
+        .map(|(a, b)| a.union(b))
+        .collect();
+    let idx_domains = idx_domains?.into_iter().map(Moo::new).collect();
+
+    Ok(enumerate_indices(idx_domains))
+}
+
+// Given index domains for a multi-dimensional matrix and the nth index in the flattened matrix, find the coordinates in the original matrix
+pub fn flat_index_to_full_index(index_domains: &[Moo<GroundDomain>], index: u64) -> Vec<Literal> {
+    let mut remaining = index;
+    let mut multipliers = vec![1; index_domains.len()];
+
+    for i in (1..index_domains.len()).rev() {
+        multipliers[i - 1] = multipliers[i] * index_domains[i].as_ref().length().unwrap();
+    }
+
+    let mut coords = Vec::new();
+    for m in multipliers.iter() {
+        // adjust for 1-based indexing
+        coords.push(((remaining / m + 1) as i32).into());
+        remaining %= *m;
+    }
+
+    coords
 }

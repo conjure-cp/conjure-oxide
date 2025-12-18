@@ -6,18 +6,19 @@ use std::{
     path::PathBuf,
     process::exit,
     sync::{Arc, RwLock},
+    time::Duration,
 };
 
 use anyhow::{anyhow, ensure};
 use clap::ValueHint;
-use conjure_cp::defaults::DEFAULT_RULE_SETS;
 use conjure_cp::{
     Model,
     ast::comprehension::USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS,
     context::Context,
     rule_engine::{resolve_rule_sets, rewrite_morph, rewrite_naive},
-    solver::{Solver, SolverAdaptor, adaptors},
+    solver::Solver,
 };
+use conjure_cp::{defaults::DEFAULT_RULE_SETS, solver::adaptors::smt::TheoryConfig};
 use conjure_cp::{
     parse::conjure_json::model_from_json, rule_engine::get_rules, solver::SolverFamily,
 };
@@ -63,49 +64,19 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
     let context = init_context(&global_args, input_file)?;
     let model = parse(&global_args, Arc::clone(&context))?;
     let rewritten_model = rewrite(model, &global_args, Arc::clone(&context))?;
+    let solver = init_solver(&global_args);
 
     if solve_args.no_run_solver {
         println!("{}", &rewritten_model);
 
-        // TODO: we want to be able to do let solver = match family {....}, but something weird is
-        // happening in the types..
         if let Some(path) = global_args.save_solver_input_file {
+            let solver = solver.load_model(rewritten_model)?;
             eprintln!("Writing solver input file to {}", path.display());
-            let mut file = File::create(path).unwrap();
-
-            match global_args.solver {
-                SolverFamily::Sat => {
-                    let solver = Solver::new(adaptors::Sat::default());
-                    let solver = solver.load_model(rewritten_model)?;
-                    solver.write_solver_input_file(&mut file)?;
-                }
-                SolverFamily::Smt => {
-                    let solver = Solver::new(adaptors::Smt::default());
-                    let solver = solver.load_model(rewritten_model)?;
-                    solver.write_solver_input_file(&mut file)?;
-                }
-                SolverFamily::Minion => {
-                    let solver = Solver::new(adaptors::Minion::default());
-                    let solver = solver.load_model(rewritten_model)?;
-                    solver.write_solver_input_file(&mut file)?;
-                }
-            };
+            let mut file: Box<dyn std::io::Write> = Box::new(File::create(path)?);
+            solver.write_solver_input_file(&mut file)?;
         }
     } else {
-        match global_args.solver {
-            SolverFamily::Sat => {
-                let adaptor = Sat::default();
-                run_solver(adaptor, &global_args, &solve_args, rewritten_model)
-            }
-            SolverFamily::Smt => {
-                let adaptor = Smt::default();
-                run_solver(adaptor, &global_args, &solve_args, rewritten_model)
-            }
-            SolverFamily::Minion => {
-                let adaptor = Minion::default();
-                run_solver(adaptor, &global_args, &solve_args, rewritten_model)
-            }
-        }?;
+        run_solver(solver, &global_args, &solve_args, rewritten_model)?
     }
 
     // still do postamble even if we didn't run the solver
@@ -118,7 +89,7 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
     Ok(())
 }
 
-/// Initialises the context for solving.
+/// Returns a new Context and Solver for solving.
 pub(crate) fn init_context(
     global_args: &GlobalArgs,
     input_file: PathBuf,
@@ -170,6 +141,22 @@ pub(crate) fn init_context(
     context.write().unwrap().file_name = Some(input_file.to_str().expect("").into());
 
     Ok(context)
+}
+
+pub(crate) fn init_solver(global_args: &GlobalArgs) -> Solver {
+    let family = global_args.solver;
+    let solver_timeout = global_args
+        .solver_timeout
+        .map(|dur| Duration::from(dur).as_millis());
+
+    match family {
+        SolverFamily::Minion => Solver::new(Minion::default()),
+        SolverFamily::Sat => Solver::new(Sat::default()),
+        SolverFamily::Smt(TheoryConfig { ints, matrices }) => {
+            let timeout_ms = solver_timeout.map(|ms| u64::try_from(ms).expect("Timeout too large"));
+            Solver::new(Smt::new(timeout_ms, ints, matrices))
+        }
+    }
 }
 
 pub(crate) fn parse(
@@ -248,7 +235,7 @@ pub(crate) fn rewrite(
 }
 
 fn run_solver(
-    adaptor: impl SolverAdaptor,
+    solver: Solver,
     global_args: &GlobalArgs,
     cmd_args: &Args,
     model: Model,
@@ -265,7 +252,7 @@ fn run_solver(
     };
 
     let solutions = get_solutions(
-        adaptor,
+        solver,
         model,
         cmd_args.number_of_solutions,
         &global_args.save_solver_input_file,

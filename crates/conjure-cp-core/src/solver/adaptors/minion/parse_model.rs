@@ -1,16 +1,7 @@
 //! Parse / `load_model` step of running Minion.
 
-use itertools::Itertools as _;
-use minion_ast::Model as MinionModel;
-use minion_sys::ast as minion_ast;
-use minion_sys::error::MinionError;
-use minion_sys::{get_from_table, run_minion};
-use std::cell::Ref;
-use std::cell::RefCell;
-use std::rc::Rc;
-
 use crate::Model as ConjureModel;
-use crate::ast::{self as conjure_ast, Moo};
+use crate::ast::{self as conjure_ast, HasDomain, Moo, Range};
 use crate::solver::SolverError::{
     ModelFeatureNotImplemented, ModelFeatureNotSupported, ModelInvalid,
 };
@@ -18,6 +9,15 @@ use crate::solver::SolverFamily;
 use crate::solver::SolverMutCallback;
 use crate::solver::{SolverCallback, SolverError};
 use crate::stats::SolverStats;
+use itertools::Itertools as _;
+use minion_ast::Model as MinionModel;
+use minion_sys::ast as minion_ast;
+use minion_sys::ast::{Constant, Constraint, Var};
+use minion_sys::error::MinionError;
+use minion_sys::{get_from_table, run_minion};
+use std::cell::Ref;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 /// Converts a conjure-oxide model to a `minion_sys` model.
 pub fn model_to_minion(model: ConjureModel) -> Result<MinionModel, SolverError> {
@@ -111,11 +111,13 @@ fn load_var(
     search_var: bool,
     minion_model: &mut MinionModel,
 ) -> Result<(), SolverError> {
-    match &var.domain {
-        conjure_ast::Domain::Int(ranges) => {
+    match &var.domain_of().as_ground() {
+        Some(conjure_ast::GroundDomain::Int(ranges)) => {
             load_intdomain_var(name, ranges, search_var, minion_model)
         }
-        conjure_ast::Domain::Bool => load_booldomain_var(name, search_var, minion_model),
+        Some(conjure_ast::GroundDomain::Bool) => {
+            load_booldomain_var(name, search_var, minion_model)
+        }
         x => Err(ModelFeatureNotSupported(format!("{x:?}"))),
     }
 }
@@ -129,21 +131,23 @@ fn load_intdomain_var(
 ) -> Result<(), SolverError> {
     let str_name = name_to_string(name.to_owned());
 
-    if ranges.len() != 1 {
-        return Err(ModelFeatureNotImplemented(format!(
-            "variable {:?} has {:?} ranges. Multiple ranges / SparseBound is not yet supported.",
-            str_name,
-            ranges.len()
-        )));
+    // If the int domain has holes, e.g x: int(1, 3, 5..8)
+    // convert it to a single range x: int(1..8)
+    // and add a w-inset constraint, e.g. w-inset(x, [1, 3, 5, 6, 7, 8])
+    if ranges.len() > 1 {
+        let values = Range::values(ranges)
+            .expect("ranges should be finite")
+            .map(Constant::Integer)
+            .collect_vec();
+        minion_model
+            .constraints
+            .push(Constraint::WInset(Var::NameRef(str_name.clone()), values));
     }
-
-    let range = ranges
-        .first()
-        .ok_or(ModelInvalid(format!("variable {str_name:?} has no range")))?;
+    let range = Range::spanning(ranges);
 
     let (low, high) = match range {
-        conjure_ast::Range::Bounded(x, y) => Ok((x.to_owned(), y.to_owned())),
-        conjure_ast::Range::Single(x) => Ok((x.to_owned(), x.to_owned())),
+        Range::Bounded(x, y) => Ok((x.to_owned(), y.to_owned())),
+        Range::Single(x) => Ok((x.to_owned(), x.to_owned())),
         #[allow(unreachable_patterns)]
         x => Err(ModelFeatureNotSupported(format!("{x:?}"))),
     }?;
@@ -351,9 +355,12 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
             parse_atomic_expr(Moo::unwrap_or_clone(b))?,
         )),
 
-        conjure_ast::Expression::FlatWatchedLiteral(_metadata, decl, k) => Ok(
-            minion_ast::Constraint::WLiteral(parse_name(decl.name().clone())?, parse_literal(k)?),
-        ),
+        conjure_ast::Expression::FlatWatchedLiteral(_metadata, reference, k) => {
+            Ok(minion_ast::Constraint::WLiteral(
+                parse_name(reference.ptr().name().clone())?,
+                parse_literal(k)?,
+            ))
+        }
         conjure_ast::Expression::MinionReify(_metadata, e, v) => Ok(minion_ast::Constraint::Reify(
             Box::new(parse_expr(Moo::unwrap_or_clone(e))?),
             parse_atom(v)?,
@@ -366,9 +373,9 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
             ))
         }
 
-        conjure_ast::Expression::AuxDeclaration(_metadata, decl, expr) => {
+        conjure_ast::Expression::AuxDeclaration(_metadata, reference, expr) => {
             Ok(minion_ast::Constraint::Eq(
-                parse_name(decl.name().clone())?,
+                parse_name(reference.ptr().name().clone())?,
                 parse_atomic_expr(Moo::unwrap_or_clone(expr))?,
             ))
         }
@@ -414,6 +421,12 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
             ),
             parse_atom(Moo::unwrap_or_clone(z))?,
         )),
+        conjure_ast::Expression::FlatLexLt(_metadata, lhs, rhs) => Ok(
+            minion_ast::Constraint::LexLess(parse_atoms(lhs)?, parse_atoms(rhs)?),
+        ),
+        conjure_ast::Expression::FlatLexLeq(_metadata, lhs, rhs) => Ok(
+            minion_ast::Constraint::LexLeq(parse_atoms(lhs)?, parse_atoms(rhs)?),
+        ),
         x => Err(ModelFeatureNotSupported(format!("{x:?}"))),
     }
 }
@@ -445,7 +458,7 @@ fn parse_atom(atom: conjure_ast::Atom) -> Result<minion_ast::Var, SolverError> {
         conjure_ast::Atom::Literal(l) => {
             Ok(minion_ast::Var::ConstantAsVar(parse_literal_as_int(l)?))
         }
-        conjure_ast::Atom::Reference(declaration) => Ok(parse_name(declaration.name().clone()))?,
+        conjure_ast::Atom::Reference(reference) => Ok(parse_name(reference.name().clone()))?,
 
         x => Err(ModelFeatureNotSupported(format!(
             "expected a literal or a reference but got `{x}`"

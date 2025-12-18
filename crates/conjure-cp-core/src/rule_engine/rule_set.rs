@@ -36,22 +36,24 @@ pub struct RuleSet<'a> {
     /// The names of the rule sets that this rule set depends on.
     dependency_rs_names: &'a [&'a str],
     dependencies: OnceLock<HashSet<&'a RuleSet<'a>>>,
-    /// The solver families that this rule set applies to.
-    pub solver_families: &'a [SolverFamily],
+
+    /// Returns whether the rule set applies to the given solver family.
+    /// The implementation is specified via an argument to [`register_rule_set!`].
+    applies_to_family_fn: fn(&SolverFamily) -> bool,
 }
 
 impl<'a> RuleSet<'a> {
     pub const fn new(
         name: &'a str,
         dependencies: &'a [&'a str],
-        solver_families: &'a [SolverFamily],
+        applies_to_family_fn: fn(&SolverFamily) -> bool,
     ) -> Self {
         Self {
             name,
             dependency_rs_names: dependencies,
-            solver_families,
             rules: OnceLock::new(),
             dependencies: OnceLock::new(),
+            applies_to_family_fn,
         }
     }
 
@@ -147,6 +149,10 @@ impl<'a> RuleSet<'a> {
 
         dependencies
     }
+
+    pub fn applies_to_family(&self, family: &SolverFamily) -> bool {
+        (self.applies_to_family_fn)(family)
+    }
 }
 
 impl PartialEq for RuleSet<'_> {
@@ -166,20 +172,14 @@ impl Hash for RuleSet<'_> {
 impl Display for RuleSet<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let n_rules = self.get_rules().len();
-        let solver_families = self
-            .solver_families
-            .iter()
-            .map(|f| f.to_string())
-            .collect::<Vec<String>>();
 
         write!(
             f,
             "RuleSet {{\n\
             \tname: {}\n\
             \trules: {}\n\
-            \tsolver_families: {:?}\n\
         }}",
-            self.name, n_rules, solver_families
+            self.name, n_rules
         )
     }
 }

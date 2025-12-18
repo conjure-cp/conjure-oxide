@@ -39,12 +39,14 @@ pub fn parse_essence_with_context(
     let mut model = Model::new(context);
     // let symbols = model.as_submodel().symbols().clone();
     let root_node = tree.root_node();
+    let symbols_ptr = model.as_submodel().symbols_ptr_unchecked().clone();
     for statement in named_children(&root_node) {
         match statement.kind() {
             "single_line_comment" => {}
             "language_declaration" => {}
             "find_statement" => {
-                let var_hashmap = parse_find_statement(statement, &source_code)?;
+                let var_hashmap =
+                    parse_find_statement(statement, &source_code, Some(symbols_ptr.clone()))?;
                 for (name, domain) in var_hashmap {
                     model
                         .as_submodel_mut()
@@ -53,29 +55,25 @@ pub fn parse_essence_with_context(
                 }
             }
             "bool_expr" | "atom" | "comparison_expr" => {
-                let current_symbols = model.as_submodel().symbols().clone();
-
                 model.as_submodel_mut().add_constraint(parse_expression(
                     statement,
                     &source_code,
                     &statement,
-                    Some(&current_symbols),
+                    Some(symbols_ptr.clone()),
                 )?);
             }
             "language_label" => {}
             "letting_statement" => {
-                let current_symbols = model.as_submodel().symbols().clone();
                 let letting_vars =
-                    parse_letting_statement(statement, &source_code, Some(&current_symbols))?;
+                    parse_letting_statement(statement, &source_code, Some(symbols_ptr.clone()))?;
                 model.as_submodel_mut().symbols_mut().extend(letting_vars);
             }
             "dominance_relation" => {
                 let inner = statement
                     .child_by_field_name("expression")
                     .expect("Expected a sub-expression inside `dominanceRelation`");
-                let current_symbols = model.as_submodel().symbols().clone();
                 let expr =
-                    parse_expression(inner, &source_code, &statement, Some(&current_symbols))?;
+                    parse_expression(inner, &source_code, &statement, Some(symbols_ptr.clone()))?;
                 let dominance = Expression::DominanceRelation(Metadata::new(), Moo::new(expr));
                 if model.dominance.is_some() {
                     return Err(EssenceParseError::syntax_error(
@@ -100,8 +98,49 @@ pub fn parse_essence_with_context(
                 ));
             }
         }
+
+        // check for errors (keyword as identifier)
+        let result = keyword_as_identifier(root_node, &source_code);
+        result?
     }
     Ok(model)
+}
+
+const KEYWORDS: [&str; 21] = [
+    "forall", "exists", "such", "that", "letting", "find", "minimise", "maximise", "subject", "to",
+    "where", "and", "or", "not", "if", "then", "else", "in", "sum", "product", "bool",
+];
+
+fn keyword_as_identifier(root: tree_sitter::Node, src: &str) -> Result<(), EssenceParseError> {
+    let mut stack = vec![root];
+    while let Some(node) = stack.pop() {
+        if (node.kind() == "variable" || node.kind() == "identifier" || node.kind() == "parameter")
+            && let Ok(text) = node.utf8_text(src.as_bytes())
+        {
+            let ident = text.trim();
+            if KEYWORDS.contains(&ident) {
+                let start_point = node.start_position();
+                let end_point = node.end_position();
+                return Err(EssenceParseError::syntax_error(
+                    format!("Keyword '{ident}' used as identifier"),
+                    Some(tree_sitter::Range {
+                        start_byte: node.start_byte(),
+                        end_byte: node.end_byte(),
+                        start_point,
+                        end_point,
+                    }),
+                ));
+            }
+        }
+
+        // push children onto stack
+        for i in 0..node.child_count() {
+            if let Some(child) = node.child(i) {
+                stack.push(child);
+            }
+        }
+    }
+    Ok(())
 }
 
 pub fn parse_essence(src: &str) -> Result<Model, EssenceParseError> {

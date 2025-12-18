@@ -1,38 +1,58 @@
 Model before rewriting:
 
-find class: matrix indexed by [[int(1..10)]] of int(1..2)
+find class: matrix indexed by [[int(1..n)]] of int(1..2)
 letting n be 10
 
 such that
 
-and([given a: int(1..10)
-given b: int(1..10)
-given c: int(1..10)
+and([given a: int(1..n)
+given b: int(1..n)
+given c: int(1..n)
 
 such that
 
-(and([and([(sum([UnsafePow(a, 2),UnsafePow(b, 2);int(1..2)]) = UnsafePow(c, 2)),(a <= b);int(1..2)]),(b <= c);int(1..2)])) -> (or([(class[a] != class[b]),(class[b] != class[c]),(class[c] != class[a]);int(1..3)]))
- | a: int(1..10),b: int(1..10),c: int(1..10),])
+(and([and([(sum([UnsafePow(a, 2),UnsafePow(b, 2);int(1..)]) = UnsafePow(c, 2)),(a <= b);int(1..)]),(b <= c);int(1..)])) -> (or([(class[a] != class[b]),(class[b] != class[c]),(class[c] != class[a]);int(1..3)]))
+ | a: int(1..n),b: int(1..n),c: int(1..n),])
 
 --
 
-and([given a: int(1..10)
-given b: int(1..10)
-given c: int(1..10)
+and([given a: int(1..n)
+given b: int(1..n)
+given c: int(1..n)
 
 such that
 
-(and([and([(sum([UnsafePow(a, 2),UnsafePow(b, 2);int(1..2)]) = UnsafePow(c, 2)),(a <= b);int(1..2)]),(b <= c);int(1..2)])) -> (or([(class#matrix_to_atom[a] != class#matrix_to_atom[b]),(class#matrix_to_atom[b] != class#matrix_to_atom[c]),(class#matrix_to_atom[c] != class#matrix_to_atom[a]);int(1..3)]))
- | a: int(1..10),b: int(1..10),c: int(1..10),]), 
-   ~~> select_representation_matrix ([("Base", 8001)]) 
-and([given a: int(1..10)
-given b: int(1..10)
-given c: int(1..10)
+(and([and([(sum([UnsafePow(a, 2),UnsafePow(b, 2);int(1..)]) = UnsafePow(c, 2)),(a <= b);int(1..)]),(b <= c);int(1..)])) -> (or([(class[a] != class[b]),(class[b] != class[c]),(class[c] != class[a]);int(1..3)]))
+ | a: int(1..n),b: int(1..n),c: int(1..n),]), 
+   ~~> substitute_domain_lettings ([("Base", 5000)]) 
+and([given a: int(1..n)
+given b: int(1..n)
+given c: int(1..n)
 
 such that
 
-(and([and([(sum([UnsafePow(a, 2),UnsafePow(b, 2);int(1..2)]) = UnsafePow(c, 2)),(a <= b);int(1..2)]),(b <= c);int(1..2)])) -> (or([(class#matrix_to_atom[a] != class#matrix_to_atom[b]),(class#matrix_to_atom[b] != class#matrix_to_atom[c]),(class#matrix_to_atom[c] != class#matrix_to_atom[a]);int(1..3)]))
- | a: int(1..10),b: int(1..10),c: int(1..10),]) 
+(and([and([(sum([UnsafePow(a, 2),UnsafePow(b, 2);int(1..)]) = UnsafePow(c, 2)),(a <= b);int(1..)]),(b <= c);int(1..)])) -> (or([(class[a] != class[b]),(class[b] != class[c]),(class[c] != class[a]);int(1..3)]))
+ | a: int(1..n),b: int(1..n),c: int(1..n),]) 
+
+--
+
+and([given a: int(1..n)
+given b: int(1..n)
+given c: int(1..n)
+
+such that
+
+(and([and([(sum([UnsafePow(a, 2),UnsafePow(b, 2);int(1..)]) = UnsafePow(c, 2)),(a <= b);int(1..)]),(b <= c);int(1..)])) -> (or([(class#matrix_to_atom[a] != class#matrix_to_atom[b]),(class#matrix_to_atom[b] != class#matrix_to_atom[c]),(class#matrix_to_atom[c] != class#matrix_to_atom[a]);int(1..3)]))
+ | a: int(1..n),b: int(1..n),c: int(1..n),]), 
+   ~~> select_representation_matrix ([("Representations", 8001)]) 
+and([given a: int(1..n)
+given b: int(1..n)
+given c: int(1..n)
+
+such that
+
+(and([and([(sum([UnsafePow(a, 2),UnsafePow(b, 2);int(1..)]) = UnsafePow(c, 2)),(a <= b);int(1..)]),(b <= c);int(1..)])) -> (or([(class#matrix_to_atom[a] != class#matrix_to_atom[b]),(class#matrix_to_atom[b] != class#matrix_to_atom[c]),(class#matrix_to_atom[c] != class#matrix_to_atom[a]);int(1..3)]))
+ | a: int(1..n),b: int(1..n),c: int(1..n),]) 
 new variables:
   find class#matrix_to_atom_1: int(1..2)
   find class#matrix_to_atom_10: int(1..2)
@@ -48,22 +68,22 @@ new variables:
 
 Model before rewriting:
 
-find a: int(1..10)
-find b: int(1..10)
-find c: int(1..10)
+find a: int(1..n)
+find b: int(1..n)
+find c: int(1..n)
 find __0: bool
 find __1: bool
 find __2: bool
 
 such that
 
-(true != (and([and([(sum([UnsafePow(a, 2),UnsafePow(b, 2);int(1..2)]) = UnsafePow(c, 2)),(a <= b);int(1..2)]),(b <= c);int(1..2)])) -> (or([__0,__1,__2;int(1..3)])))
+(true != (and([and([(sum([UnsafePow(a, 2),UnsafePow(b, 2);int(1..)]) = UnsafePow(c, 2)),(a <= b);int(1..)]),(b <= c);int(1..)])) -> (or([__0,__1,__2;int(1..3)])))
 
 --
 
-and([and([(sum([UnsafePow(a, 2),UnsafePow(b, 2);int(1..2)]) = UnsafePow(c, 2)),(a <= b);int(1..2)]),(b <= c);int(1..2)]), 
+and([and([(sum([UnsafePow(a, 2),UnsafePow(b, 2);int(1..)]) = UnsafePow(c, 2)),(a <= b);int(1..)]),(b <= c);int(1..)]), 
    ~~> normalise_associative_commutative ([("Base", 8900)]) 
-and([(sum([UnsafePow(a, 2),UnsafePow(b, 2);int(1..2)]) = UnsafePow(c, 2)),(a <= b),(b <= c);int(1..2)]) 
+and([(sum([UnsafePow(a, 2),UnsafePow(b, 2);int(1..)]) = UnsafePow(c, 2)),(a <= b),(b <= c);int(1..)]) 
 
 --
 
@@ -73,9 +93,9 @@ UnsafePow(a, 2),
 
 --
 
-(true != (and([(sum([{SafePow(a, 2) @ and([or([(a != 0),(2 != 0);int(1..)]),(2 >= 0);int(1..)])},UnsafePow(b, 2);int(1..2)]) = UnsafePow(c, 2)),(a <= b),(b <= c);int(1..2)])) -> (or([__0,__1,__2;int(1..3)]))), 
+(true != (and([(sum([{SafePow(a, 2) @ and([or([(a != 0),(2 != 0);int(1..)]),(2 >= 0);int(1..)])},UnsafePow(b, 2);int(1..)]) = UnsafePow(c, 2)),(a <= b),(b <= c);int(1..)])) -> (or([__0,__1,__2;int(1..3)]))), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(true != (and([(sum([SafePow(a, 2),UnsafePow(b, 2);int(1..2)]) = UnsafePow(c, 2)),(a <= b),(b <= c);int(1..2)])) -> (or([__0,__1,__2;int(1..3)]))) 
+(true != (and([(sum([SafePow(a, 2),UnsafePow(b, 2);int(1..)]) = UnsafePow(c, 2)),(a <= b),(b <= c);int(1..)])) -> (or([__0,__1,__2;int(1..3)]))) 
 
 --
 
@@ -85,9 +105,9 @@ UnsafePow(b, 2),
 
 --
 
-(true != (and([(sum([SafePow(a, 2),{SafePow(b, 2) @ and([or([(b != 0),(2 != 0);int(1..)]),(2 >= 0);int(1..)])};int(1..2)]) = UnsafePow(c, 2)),(a <= b),(b <= c);int(1..2)])) -> (or([__0,__1,__2;int(1..3)]))), 
+(true != (and([(sum([SafePow(a, 2),{SafePow(b, 2) @ and([or([(b != 0),(2 != 0);int(1..)]),(2 >= 0);int(1..)])};int(1..)]) = UnsafePow(c, 2)),(a <= b),(b <= c);int(1..)])) -> (or([__0,__1,__2;int(1..3)]))), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(true != (and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..2)]) = UnsafePow(c, 2)),(a <= b),(b <= c);int(1..2)])) -> (or([__0,__1,__2;int(1..3)]))) 
+(true != (and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..)]) = UnsafePow(c, 2)),(a <= b),(b <= c);int(1..)])) -> (or([__0,__1,__2;int(1..3)]))) 
 
 --
 
@@ -97,34 +117,40 @@ UnsafePow(c, 2),
 
 --
 
-(true != (and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..2)]) = {SafePow(c, 2) @ and([or([(c != 0),(2 != 0);int(1..)]),(2 >= 0);int(1..)])}),(a <= b),(b <= c);int(1..2)])) -> (or([__0,__1,__2;int(1..3)]))), 
+(true != (and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..)]) = {SafePow(c, 2) @ and([or([(c != 0),(2 != 0);int(1..)]),(2 >= 0);int(1..)])}),(a <= b),(b <= c);int(1..)])) -> (or([__0,__1,__2;int(1..3)]))), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(true != (and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..2)]) = SafePow(c, 2)),(a <= b),(b <= c);int(1..2)])) -> (or([__0,__1,__2;int(1..3)]))) 
+(true != (and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..)]) = SafePow(c, 2)),(a <= b),(b <= c);int(1..)])) -> (or([__0,__1,__2;int(1..3)]))) 
 
 --
 
-(true != (and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..2)]) = SafePow(c, 2)),(a <= b),(b <= c);int(1..2)])) -> (or([__0,__1,__2;int(1..3)]))), 
+(true != (and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..)]) = SafePow(c, 2)),(a <= b),(b <= c);int(1..)])) -> (or([__0,__1,__2;int(1..3)]))), 
+   ~~> substitute_domain_lettings ([("Base", 5000)]) 
+(true != (and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..)]) = SafePow(c, 2)),(a <= b),(b <= c);int(1..)])) -> (or([__0,__1,__2;int(1..3)]))) 
+
+--
+
+(true != (and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..)]) = SafePow(c, 2)),(a <= b),(b <= c);int(1..)])) -> (or([__0,__1,__2;int(1..3)]))), 
    ~~> flatten_generic ([("Minion", 4200)]) 
 (true != __3) 
 new variables:
   find __3: bool
 new constraints:
-  __3 =aux (and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..2)]) = SafePow(c, 2)),(a <= b),(b <= c);int(1..2)])) -> (or([__0,__1,__2;int(1..3)]))
+  __3 =aux (and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..)]) = SafePow(c, 2)),(a <= b),(b <= c);int(1..)])) -> (or([__0,__1,__2;int(1..3)]))
 --
 
-__3 =aux (and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..2)]) = SafePow(c, 2)),(a <= b),(b <= c);int(1..2)])) -> (or([__0,__1,__2;int(1..3)])), 
+__3 =aux (and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..)]) = SafePow(c, 2)),(a <= b),(b <= c);int(1..)])) -> (or([__0,__1,__2;int(1..3)])), 
    ~~> bool_eq_to_reify ([("Minion", 4400)]) 
-Reify((and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..2)]) = SafePow(c, 2)),(a <= b),(b <= c);int(1..2)])) -> (or([__0,__1,__2;int(1..3)])), __3) 
+Reify((and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..)]) = SafePow(c, 2)),(a <= b),(b <= c);int(1..)])) -> (or([__0,__1,__2;int(1..3)])), __3) 
 
 --
 
-(and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..2)]) = SafePow(c, 2)),(a <= b),(b <= c);int(1..2)])) -> (or([__0,__1,__2;int(1..3)])), 
+(and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..)]) = SafePow(c, 2)),(a <= b),(b <= c);int(1..)])) -> (or([__0,__1,__2;int(1..3)])), 
    ~~> flatten_imply ([("Minion", 4200)]) 
 (__4) -> (or([__0,__1,__2;int(1..3)])) 
 new variables:
   find __4: bool
 new constraints:
-  __4 =aux and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..2)]) = SafePow(c, 2)),(a <= b),(b <= c);int(1..2)])
+  __4 =aux and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..)]) = SafePow(c, 2)),(a <= b),(b <= c);int(1..)])
 --
 
 (__4) -> (or([__0,__1,__2;int(1..3)])), 
@@ -133,26 +159,68 @@ ReifyImply(or([__0,__1,__2;int(1..3)]), __4)
 
 --
 
-__4 =aux and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..2)]) = SafePow(c, 2)),(a <= b),(b <= c);int(1..2)]), 
+__4 =aux and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..)]) = SafePow(c, 2)),(a <= b),(b <= c);int(1..)]), 
    ~~> bool_eq_to_reify ([("Minion", 4400)]) 
-Reify(and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..2)]) = SafePow(c, 2)),(a <= b),(b <= c);int(1..2)]), __4) 
+Reify(and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..)]) = SafePow(c, 2)),(a <= b),(b <= c);int(1..)]), __4) 
 
 --
 
-(sum([SafePow(a, 2),SafePow(b, 2);int(1..2)]) = SafePow(c, 2)), 
+(sum([SafePow(a, 2),SafePow(b, 2);int(1..)]) = SafePow(c, 2)), 
    ~~> flatten_eq ([("Minion", 4200)]) 
 (__5 = __6) 
 new variables:
   find __5: int(2..200)
   find __6: int(1..100)
 new constraints:
-  __5 =aux sum([SafePow(a, 2),SafePow(b, 2);int(1..2)])
+  __5 =aux sum([SafePow(a, 2),SafePow(b, 2);int(1..)])
   __6 =aux SafePow(c, 2)
+--
+
+__5 =aux sum([SafePow(a, 2),SafePow(b, 2);int(1..)]), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+and([SumLeq([__7, __8], __5),SumGeq([__7, __8], __5);int(1..)]) 
+new variables:
+  find __7: int(1..100)
+  find __8: int(1..100)
+new constraints:
+  __7 =aux SafePow(a, 2)
+  __8 =aux SafePow(b, 2)
+--
+
+(true != __3),
+Reify(ReifyImply(or([__0,__1,__2;int(1..3)]), __4), __3),
+Reify(and([(__5 = __6),(a <= b),(b <= c);int(1..)]), __4),
+and([SumLeq([__7, __8], __5),SumGeq([__7, __8], __5);int(1..)]),
+__6 =aux SafePow(c, 2),
+__7 =aux SafePow(a, 2),
+__8 =aux SafePow(b, 2), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(true != __3),
+Reify(ReifyImply(or([__0,__1,__2;int(1..3)]), __4), __3),
+Reify(and([(__5 = __6),(a <= b),(b <= c);int(1..)]), __4),
+SumLeq([__7, __8], __5),
+SumGeq([__7, __8], __5),
+__6 =aux SafePow(c, 2),
+__7 =aux SafePow(a, 2),
+__8 =aux SafePow(b, 2) 
+
 --
 
 __6 =aux SafePow(c, 2), 
    ~~> introduce_poweq ([("Minion", 4200)]) 
 MinionPow(c,2,__6) 
+
+--
+
+__7 =aux SafePow(a, 2), 
+   ~~> introduce_poweq ([("Minion", 4200)]) 
+MinionPow(a,2,__7) 
+
+--
+
+__8 =aux SafePow(b, 2), 
+   ~~> introduce_poweq ([("Minion", 4200)]) 
+MinionPow(b,2,__8) 
 
 --
 
@@ -171,60 +239,6 @@ Ineq(b, c, 0)
 or([__0,__1,__2;int(1..3)]), 
    ~~> matrix_to_list ([("Base", 2000)]) 
 or([__0,__1,__2;int(1..)]) 
-
---
-
-and([(__5 = __6),Ineq(a, b, 0),Ineq(b, c, 0);int(1..2)]), 
-   ~~> matrix_to_list ([("Base", 2000)]) 
-and([(__5 = __6),Ineq(a, b, 0),Ineq(b, c, 0);int(1..)]) 
-
---
-
-sum([SafePow(a, 2),SafePow(b, 2);int(1..2)]), 
-   ~~> matrix_to_list ([("Base", 2000)]) 
-sum([SafePow(a, 2),SafePow(b, 2);int(1..)]) 
-
---
-
-__5 =aux sum([SafePow(a, 2),SafePow(b, 2);int(1..)]), 
-   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
-and([SumLeq([__7, __8], __5),SumGeq([__7, __8], __5);int(1..)]) 
-new variables:
-  find __7: int(1..100)
-  find __8: int(1..100)
-new constraints:
-  __7 =aux SafePow(a, 2)
-  __8 =aux SafePow(b, 2)
---
-
-(true != __3),
-Reify(ReifyImply(or([__0,__1,__2;int(1..)]), __4), __3),
-Reify(and([(__5 = __6),Ineq(a, b, 0),Ineq(b, c, 0);int(1..)]), __4),
-and([SumLeq([__7, __8], __5),SumGeq([__7, __8], __5);int(1..)]),
-MinionPow(c,2,__6),
-__7 =aux SafePow(a, 2),
-__8 =aux SafePow(b, 2), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
-(true != __3),
-Reify(ReifyImply(or([__0,__1,__2;int(1..)]), __4), __3),
-Reify(and([(__5 = __6),Ineq(a, b, 0),Ineq(b, c, 0);int(1..)]), __4),
-SumLeq([__7, __8], __5),
-SumGeq([__7, __8], __5),
-MinionPow(c,2,__6),
-__7 =aux SafePow(a, 2),
-__8 =aux SafePow(b, 2) 
-
---
-
-__7 =aux SafePow(a, 2), 
-   ~~> introduce_poweq ([("Minion", 4200)]) 
-MinionPow(a,2,__7) 
-
---
-
-__8 =aux SafePow(b, 2), 
-   ~~> introduce_poweq ([("Minion", 4200)]) 
-MinionPow(b,2,__8) 
 
 --
 
@@ -256,19 +270,19 @@ MinionPow(b,2,__8)
 
 Model before rewriting:
 
-given a: int(1..10)
-given b: int(1..10)
-given c: int(1..10)
+given a: int(1..n)
+given b: int(1..n)
+given c: int(1..n)
 
 such that
 
-(and([and([(sum([UnsafePow(a, 2),UnsafePow(b, 2);int(1..2)]) = UnsafePow(c, 2)),(a <= b);int(1..2)]),(b <= c);int(1..2)])) -> (or([(class#matrix_to_atom[a] != class#matrix_to_atom[b]),(class#matrix_to_atom[b] != class#matrix_to_atom[c]),(class#matrix_to_atom[c] != class#matrix_to_atom[a]);int(1..3)]))
+(and([and([(sum([UnsafePow(a, 2),UnsafePow(b, 2);int(1..)]) = UnsafePow(c, 2)),(a <= b);int(1..)]),(b <= c);int(1..)])) -> (or([(class#matrix_to_atom[a] != class#matrix_to_atom[b]),(class#matrix_to_atom[b] != class#matrix_to_atom[c]),(class#matrix_to_atom[c] != class#matrix_to_atom[a]);int(1..3)]))
 
 --
 
-and([and([(sum([UnsafePow(a, 2),UnsafePow(b, 2);int(1..2)]) = UnsafePow(c, 2)),(a <= b);int(1..2)]),(b <= c);int(1..2)]), 
+and([and([(sum([UnsafePow(a, 2),UnsafePow(b, 2);int(1..)]) = UnsafePow(c, 2)),(a <= b);int(1..)]),(b <= c);int(1..)]), 
    ~~> normalise_associative_commutative ([("Base", 8900)]) 
-and([(sum([UnsafePow(a, 2),UnsafePow(b, 2);int(1..2)]) = UnsafePow(c, 2)),(a <= b),(b <= c);int(1..2)]) 
+and([(sum([UnsafePow(a, 2),UnsafePow(b, 2);int(1..)]) = UnsafePow(c, 2)),(a <= b),(b <= c);int(1..)]) 
 
 --
 
@@ -278,9 +292,9 @@ UnsafePow(a, 2),
 
 --
 
-(and([(sum([{SafePow(a, 2) @ and([or([(a != 0),(2 != 0);int(1..)]),(2 >= 0);int(1..)])},UnsafePow(b, 2);int(1..2)]) = UnsafePow(c, 2)),(a <= b),(b <= c);int(1..2)])) -> (or([(class#matrix_to_atom[a] != class#matrix_to_atom[b]),(class#matrix_to_atom[b] != class#matrix_to_atom[c]),(class#matrix_to_atom[c] != class#matrix_to_atom[a]);int(1..3)])), 
+(and([(sum([{SafePow(a, 2) @ and([or([(a != 0),(2 != 0);int(1..)]),(2 >= 0);int(1..)])},UnsafePow(b, 2);int(1..)]) = UnsafePow(c, 2)),(a <= b),(b <= c);int(1..)])) -> (or([(class#matrix_to_atom[a] != class#matrix_to_atom[b]),(class#matrix_to_atom[b] != class#matrix_to_atom[c]),(class#matrix_to_atom[c] != class#matrix_to_atom[a]);int(1..3)])), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(and([(sum([SafePow(a, 2),UnsafePow(b, 2);int(1..2)]) = UnsafePow(c, 2)),(a <= b),(b <= c);int(1..2)])) -> (or([(class#matrix_to_atom[a] != class#matrix_to_atom[b]),(class#matrix_to_atom[b] != class#matrix_to_atom[c]),(class#matrix_to_atom[c] != class#matrix_to_atom[a]);int(1..3)])) 
+(and([(sum([SafePow(a, 2),UnsafePow(b, 2);int(1..)]) = UnsafePow(c, 2)),(a <= b),(b <= c);int(1..)])) -> (or([(class#matrix_to_atom[a] != class#matrix_to_atom[b]),(class#matrix_to_atom[b] != class#matrix_to_atom[c]),(class#matrix_to_atom[c] != class#matrix_to_atom[a]);int(1..3)])) 
 
 --
 
@@ -290,9 +304,9 @@ UnsafePow(b, 2),
 
 --
 
-(and([(sum([SafePow(a, 2),{SafePow(b, 2) @ and([or([(b != 0),(2 != 0);int(1..)]),(2 >= 0);int(1..)])};int(1..2)]) = UnsafePow(c, 2)),(a <= b),(b <= c);int(1..2)])) -> (or([(class#matrix_to_atom[a] != class#matrix_to_atom[b]),(class#matrix_to_atom[b] != class#matrix_to_atom[c]),(class#matrix_to_atom[c] != class#matrix_to_atom[a]);int(1..3)])), 
+(and([(sum([SafePow(a, 2),{SafePow(b, 2) @ and([or([(b != 0),(2 != 0);int(1..)]),(2 >= 0);int(1..)])};int(1..)]) = UnsafePow(c, 2)),(a <= b),(b <= c);int(1..)])) -> (or([(class#matrix_to_atom[a] != class#matrix_to_atom[b]),(class#matrix_to_atom[b] != class#matrix_to_atom[c]),(class#matrix_to_atom[c] != class#matrix_to_atom[a]);int(1..3)])), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..2)]) = UnsafePow(c, 2)),(a <= b),(b <= c);int(1..2)])) -> (or([(class#matrix_to_atom[a] != class#matrix_to_atom[b]),(class#matrix_to_atom[b] != class#matrix_to_atom[c]),(class#matrix_to_atom[c] != class#matrix_to_atom[a]);int(1..3)])) 
+(and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..)]) = UnsafePow(c, 2)),(a <= b),(b <= c);int(1..)])) -> (or([(class#matrix_to_atom[a] != class#matrix_to_atom[b]),(class#matrix_to_atom[b] != class#matrix_to_atom[c]),(class#matrix_to_atom[c] != class#matrix_to_atom[a]);int(1..3)])) 
 
 --
 
@@ -302,9 +316,9 @@ UnsafePow(c, 2),
 
 --
 
-(and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..2)]) = {SafePow(c, 2) @ and([or([(c != 0),(2 != 0);int(1..)]),(2 >= 0);int(1..)])}),(a <= b),(b <= c);int(1..2)])) -> (or([(class#matrix_to_atom[a] != class#matrix_to_atom[b]),(class#matrix_to_atom[b] != class#matrix_to_atom[c]),(class#matrix_to_atom[c] != class#matrix_to_atom[a]);int(1..3)])), 
+(and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..)]) = {SafePow(c, 2) @ and([or([(c != 0),(2 != 0);int(1..)]),(2 >= 0);int(1..)])}),(a <= b),(b <= c);int(1..)])) -> (or([(class#matrix_to_atom[a] != class#matrix_to_atom[b]),(class#matrix_to_atom[b] != class#matrix_to_atom[c]),(class#matrix_to_atom[c] != class#matrix_to_atom[a]);int(1..3)])), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..2)]) = SafePow(c, 2)),(a <= b),(b <= c);int(1..2)])) -> (or([(class#matrix_to_atom[a] != class#matrix_to_atom[b]),(class#matrix_to_atom[b] != class#matrix_to_atom[c]),(class#matrix_to_atom[c] != class#matrix_to_atom[a]);int(1..3)])) 
+(and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..)]) = SafePow(c, 2)),(a <= b),(b <= c);int(1..)])) -> (or([(class#matrix_to_atom[a] != class#matrix_to_atom[b]),(class#matrix_to_atom[b] != class#matrix_to_atom[c]),(class#matrix_to_atom[c] != class#matrix_to_atom[a]);int(1..3)])) 
 
 --
 
@@ -314,9 +328,9 @@ class#matrix_to_atom[a],
 
 --
 
-(and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..2)]) = SafePow(c, 2)),(a <= b),(b <= c);int(1..2)])) -> (or([({class#matrix_to_atom[a] @ and([__inDomain(a,int(1..10));int(1..)])} != class#matrix_to_atom[b]),(class#matrix_to_atom[b] != class#matrix_to_atom[c]),(class#matrix_to_atom[c] != class#matrix_to_atom[a]);int(1..3)])), 
+(and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..)]) = SafePow(c, 2)),(a <= b),(b <= c);int(1..)])) -> (or([({class#matrix_to_atom[a] @ and([__inDomain(a,int(1..10));int(1..)])} != class#matrix_to_atom[b]),(class#matrix_to_atom[b] != class#matrix_to_atom[c]),(class#matrix_to_atom[c] != class#matrix_to_atom[a]);int(1..3)])), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..2)]) = SafePow(c, 2)),(a <= b),(b <= c);int(1..2)])) -> (or([(class#matrix_to_atom[a] != class#matrix_to_atom[b]),(class#matrix_to_atom[b] != class#matrix_to_atom[c]),(class#matrix_to_atom[c] != class#matrix_to_atom[a]);int(1..3)])) 
+(and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..)]) = SafePow(c, 2)),(a <= b),(b <= c);int(1..)])) -> (or([(class#matrix_to_atom[a] != class#matrix_to_atom[b]),(class#matrix_to_atom[b] != class#matrix_to_atom[c]),(class#matrix_to_atom[c] != class#matrix_to_atom[a]);int(1..3)])) 
 
 --
 
@@ -326,9 +340,9 @@ class#matrix_to_atom[b],
 
 --
 
-(and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..2)]) = SafePow(c, 2)),(a <= b),(b <= c);int(1..2)])) -> (or([(class#matrix_to_atom[a] != {class#matrix_to_atom[b] @ and([__inDomain(b,int(1..10));int(1..)])}),(class#matrix_to_atom[b] != class#matrix_to_atom[c]),(class#matrix_to_atom[c] != class#matrix_to_atom[a]);int(1..3)])), 
+(and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..)]) = SafePow(c, 2)),(a <= b),(b <= c);int(1..)])) -> (or([(class#matrix_to_atom[a] != {class#matrix_to_atom[b] @ and([__inDomain(b,int(1..10));int(1..)])}),(class#matrix_to_atom[b] != class#matrix_to_atom[c]),(class#matrix_to_atom[c] != class#matrix_to_atom[a]);int(1..3)])), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..2)]) = SafePow(c, 2)),(a <= b),(b <= c);int(1..2)])) -> (or([(class#matrix_to_atom[a] != class#matrix_to_atom[b]),(class#matrix_to_atom[b] != class#matrix_to_atom[c]),(class#matrix_to_atom[c] != class#matrix_to_atom[a]);int(1..3)])) 
+(and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..)]) = SafePow(c, 2)),(a <= b),(b <= c);int(1..)])) -> (or([(class#matrix_to_atom[a] != class#matrix_to_atom[b]),(class#matrix_to_atom[b] != class#matrix_to_atom[c]),(class#matrix_to_atom[c] != class#matrix_to_atom[a]);int(1..3)])) 
 
 --
 
@@ -338,9 +352,9 @@ class#matrix_to_atom[b],
 
 --
 
-(and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..2)]) = SafePow(c, 2)),(a <= b),(b <= c);int(1..2)])) -> (or([(class#matrix_to_atom[a] != class#matrix_to_atom[b]),({class#matrix_to_atom[b] @ and([__inDomain(b,int(1..10));int(1..)])} != class#matrix_to_atom[c]),(class#matrix_to_atom[c] != class#matrix_to_atom[a]);int(1..3)])), 
+(and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..)]) = SafePow(c, 2)),(a <= b),(b <= c);int(1..)])) -> (or([(class#matrix_to_atom[a] != class#matrix_to_atom[b]),({class#matrix_to_atom[b] @ and([__inDomain(b,int(1..10));int(1..)])} != class#matrix_to_atom[c]),(class#matrix_to_atom[c] != class#matrix_to_atom[a]);int(1..3)])), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..2)]) = SafePow(c, 2)),(a <= b),(b <= c);int(1..2)])) -> (or([(class#matrix_to_atom[a] != class#matrix_to_atom[b]),(class#matrix_to_atom[b] != class#matrix_to_atom[c]),(class#matrix_to_atom[c] != class#matrix_to_atom[a]);int(1..3)])) 
+(and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..)]) = SafePow(c, 2)),(a <= b),(b <= c);int(1..)])) -> (or([(class#matrix_to_atom[a] != class#matrix_to_atom[b]),(class#matrix_to_atom[b] != class#matrix_to_atom[c]),(class#matrix_to_atom[c] != class#matrix_to_atom[a]);int(1..3)])) 
 
 --
 
@@ -350,9 +364,9 @@ class#matrix_to_atom[c],
 
 --
 
-(and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..2)]) = SafePow(c, 2)),(a <= b),(b <= c);int(1..2)])) -> (or([(class#matrix_to_atom[a] != class#matrix_to_atom[b]),(class#matrix_to_atom[b] != {class#matrix_to_atom[c] @ and([__inDomain(c,int(1..10));int(1..)])}),(class#matrix_to_atom[c] != class#matrix_to_atom[a]);int(1..3)])), 
+(and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..)]) = SafePow(c, 2)),(a <= b),(b <= c);int(1..)])) -> (or([(class#matrix_to_atom[a] != class#matrix_to_atom[b]),(class#matrix_to_atom[b] != {class#matrix_to_atom[c] @ and([__inDomain(c,int(1..10));int(1..)])}),(class#matrix_to_atom[c] != class#matrix_to_atom[a]);int(1..3)])), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..2)]) = SafePow(c, 2)),(a <= b),(b <= c);int(1..2)])) -> (or([(class#matrix_to_atom[a] != class#matrix_to_atom[b]),(class#matrix_to_atom[b] != class#matrix_to_atom[c]),(class#matrix_to_atom[c] != class#matrix_to_atom[a]);int(1..3)])) 
+(and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..)]) = SafePow(c, 2)),(a <= b),(b <= c);int(1..)])) -> (or([(class#matrix_to_atom[a] != class#matrix_to_atom[b]),(class#matrix_to_atom[b] != class#matrix_to_atom[c]),(class#matrix_to_atom[c] != class#matrix_to_atom[a]);int(1..3)])) 
 
 --
 
@@ -362,9 +376,9 @@ class#matrix_to_atom[c],
 
 --
 
-(and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..2)]) = SafePow(c, 2)),(a <= b),(b <= c);int(1..2)])) -> (or([(class#matrix_to_atom[a] != class#matrix_to_atom[b]),(class#matrix_to_atom[b] != class#matrix_to_atom[c]),({class#matrix_to_atom[c] @ and([__inDomain(c,int(1..10));int(1..)])} != class#matrix_to_atom[a]);int(1..3)])), 
+(and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..)]) = SafePow(c, 2)),(a <= b),(b <= c);int(1..)])) -> (or([(class#matrix_to_atom[a] != class#matrix_to_atom[b]),(class#matrix_to_atom[b] != class#matrix_to_atom[c]),({class#matrix_to_atom[c] @ and([__inDomain(c,int(1..10));int(1..)])} != class#matrix_to_atom[a]);int(1..3)])), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..2)]) = SafePow(c, 2)),(a <= b),(b <= c);int(1..2)])) -> (or([(class#matrix_to_atom[a] != class#matrix_to_atom[b]),(class#matrix_to_atom[b] != class#matrix_to_atom[c]),(class#matrix_to_atom[c] != class#matrix_to_atom[a]);int(1..3)])) 
+(and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..)]) = SafePow(c, 2)),(a <= b),(b <= c);int(1..)])) -> (or([(class#matrix_to_atom[a] != class#matrix_to_atom[b]),(class#matrix_to_atom[b] != class#matrix_to_atom[c]),(class#matrix_to_atom[c] != class#matrix_to_atom[a]);int(1..3)])) 
 
 --
 
@@ -374,9 +388,9 @@ class#matrix_to_atom[a],
 
 --
 
-(and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..2)]) = SafePow(c, 2)),(a <= b),(b <= c);int(1..2)])) -> (or([(class#matrix_to_atom[a] != class#matrix_to_atom[b]),(class#matrix_to_atom[b] != class#matrix_to_atom[c]),(class#matrix_to_atom[c] != {class#matrix_to_atom[a] @ and([__inDomain(a,int(1..10));int(1..)])});int(1..3)])), 
+(and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..)]) = SafePow(c, 2)),(a <= b),(b <= c);int(1..)])) -> (or([(class#matrix_to_atom[a] != class#matrix_to_atom[b]),(class#matrix_to_atom[b] != class#matrix_to_atom[c]),(class#matrix_to_atom[c] != {class#matrix_to_atom[a] @ and([__inDomain(a,int(1..10));int(1..)])});int(1..3)])), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..2)]) = SafePow(c, 2)),(a <= b),(b <= c);int(1..2)])) -> (or([(class#matrix_to_atom[a] != class#matrix_to_atom[b]),(class#matrix_to_atom[b] != class#matrix_to_atom[c]),(class#matrix_to_atom[c] != class#matrix_to_atom[a]);int(1..3)])) 
+(and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..)]) = SafePow(c, 2)),(a <= b),(b <= c);int(1..)])) -> (or([(class#matrix_to_atom[a] != class#matrix_to_atom[b]),(class#matrix_to_atom[b] != class#matrix_to_atom[c]),(class#matrix_to_atom[c] != class#matrix_to_atom[a]);int(1..3)])) 
 
 --
 
@@ -392,18 +406,6 @@ Ineq(b, c, 0)
 
 --
 
-and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..2)]) = SafePow(c, 2)),Ineq(a, b, 0),Ineq(b, c, 0);int(1..2)]), 
-   ~~> matrix_to_list ([("Base", 2000)]) 
-and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..2)]) = SafePow(c, 2)),Ineq(a, b, 0),Ineq(b, c, 0);int(1..)]) 
-
---
-
-sum([SafePow(a, 2),SafePow(b, 2);int(1..2)]), 
-   ~~> matrix_to_list ([("Base", 2000)]) 
-sum([SafePow(a, 2),SafePow(b, 2);int(1..)]) 
-
---
-
 or([(class#matrix_to_atom[a] != class#matrix_to_atom[b]),(class#matrix_to_atom[b] != class#matrix_to_atom[c]),(class#matrix_to_atom[c] != class#matrix_to_atom[a]);int(1..3)]), 
    ~~> matrix_to_list ([("Base", 2000)]) 
 or([(class#matrix_to_atom[a] != class#matrix_to_atom[b]),(class#matrix_to_atom[b] != class#matrix_to_atom[c]),(class#matrix_to_atom[c] != class#matrix_to_atom[a]);int(1..)]) 
@@ -412,21 +414,21 @@ or([(class#matrix_to_atom[a] != class#matrix_to_atom[b]),(class#matrix_to_atom[b
 
 Final model:
 
-given a: int(1..10)
-given b: int(1..10)
-given c: int(1..10)
+given a: int(1..n)
+given b: int(1..n)
+given c: int(1..n)
 
 such that
 
 (and([(sum([SafePow(a, 2),SafePow(b, 2);int(1..)]) = SafePow(c, 2)),Ineq(a, b, 0),Ineq(b, c, 0);int(1..)])) -> (or([(class#matrix_to_atom[a] != class#matrix_to_atom[b]),(class#matrix_to_atom[b] != class#matrix_to_atom[c]),(class#matrix_to_atom[c] != class#matrix_to_atom[a]);int(1..)]))
 
-and([given a: int(1..10)
-given b: int(1..10)
-given c: int(1..10)
+and([given a: int(1..n)
+given b: int(1..n)
+given c: int(1..n)
 
 such that
 
-(and([and([(sum([UnsafePow(a, 2),UnsafePow(b, 2);int(1..2)]) = UnsafePow(c, 2)),(a <= b);int(1..2)]),(b <= c);int(1..2)])) -> (or([(class#matrix_to_atom[a] != class#matrix_to_atom[b]),(class#matrix_to_atom[b] != class#matrix_to_atom[c]),(class#matrix_to_atom[c] != class#matrix_to_atom[a]);int(1..3)]))
+(and([and([(sum([UnsafePow(a, 2),UnsafePow(b, 2);int(1..)]) = UnsafePow(c, 2)),(a <= b);int(1..)]),(b <= c);int(1..)])) -> (or([(class#matrix_to_atom[a] != class#matrix_to_atom[b]),(class#matrix_to_atom[b] != class#matrix_to_atom[c]),(class#matrix_to_atom[c] != class#matrix_to_atom[a]);int(1..3)]))
  | a: int(1..10),b: int(1..10),c: int(1..10),__0: bool,__1: bool,__2: bool,__3: bool,__4: bool,__5: int(2..200),__6: int(1..100),__7: int(1..100),__8: int(1..100),]), 
    ~~> expand_comprehension_ac ([("Better_AC_Comprehension_Expansion", 2001)]) 
 and([(and([(sum([SafePow(3, 2),SafePow(4, 2);int(1..)]) = SafePow(5, 2)),Ineq(3, 4, 0),Ineq(4, 5, 0);int(1..)])) -> (or([(class#matrix_to_atom[3] != class#matrix_to_atom[4]),(class#matrix_to_atom[4] != class#matrix_to_atom[5]),(class#matrix_to_atom[5] != class#matrix_to_atom[3]);int(1..)])),(and([(sum([SafePow(6, 2),SafePow(8, 2);int(1..)]) = SafePow(10, 2)),Ineq(6, 8, 0),Ineq(8, 10, 0);int(1..)])) -> (or([(class#matrix_to_atom[6] != class#matrix_to_atom[8]),(class#matrix_to_atom[8] != class#matrix_to_atom[10]),(class#matrix_to_atom[10] != class#matrix_to_atom[6]);int(1..)]));int(1..)]) 
