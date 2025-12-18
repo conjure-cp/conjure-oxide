@@ -203,3 +203,80 @@ fn neq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
     Ok(Reduction::cnf(output, new_clauses, new_symbols))
 }
+
+/// Converts a </>/<=/>= expression between two direct SATInts to a boolean expression in cnf
+///
+/// ```text
+/// SATInt(a) </>/<=/>= SATInt(b) ~> Bool
+///
+/// ```
+#[register_rule(("SAT", 9100))]
+fn ineq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    let (lhs, rhs, strict) = match expr {
+        Expr::Lt(_, x, y) => (y, x, true),
+        Expr::Gt(_, x, y) => (x, y, true),
+        Expr::Leq(_, x, y) => (y, x, false),
+        Expr::Geq(_, x, y) => (x, y, false),
+        _ => return Err(RuleNotApplicable),
+    };
+
+    let (binding, _, _) =
+        validate_direct_int_operands(vec![lhs.as_ref().clone(), rhs.as_ref().clone()])?;
+    let [lhs_bits, rhs_bits] = binding.as_slice() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let mut new_symbols = symbols.clone();
+    let mut new_clauses = vec![];
+
+    let output = sat_direct_lt(
+        lhs_bits.clone(),
+        rhs_bits.clone(),
+        strict,
+        &mut new_clauses,
+        &mut new_symbols,
+    );
+    Ok(Reduction::cnf(output, new_clauses, new_symbols))
+}
+
+fn sat_direct_lt(
+    a: Vec<Expr>,
+    b: Vec<Expr>,
+    strict: bool,
+    clauses: &mut Vec<CnfClause>,
+    symbols: &mut SymbolTable,
+) -> Expr {
+    let mut b_or;
+    let mut a_iter = a.iter();
+    let mut b_iter = b.iter();
+
+    let mut cum_result;
+    if strict {
+        b_or = b_iter.next().unwrap().clone();
+        cum_result = Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false)));
+    } else {
+        b_or = Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(true)));
+        cum_result = a_iter.next().unwrap().clone();
+    }
+
+    let mut not_b_or;
+    let mut a_and_not_b;
+    for elem in a_iter {
+        not_b_or = tseytin_not(b_or.clone(), clauses, symbols);
+        a_and_not_b = tseytin_or(&vec![elem.clone(), not_b_or], clauses, symbols);
+        cum_result = tseytin_or(&vec![cum_result, a_and_not_b], clauses, symbols);
+        b_or = tseytin_or(
+            &vec![
+                b_or,
+                b_iter.next().unwrap_or(&Expr::Atomic(
+                    Metadata::new(),
+                    Atom::Literal(Literal::Bool(true)),
+                )).clone(),
+            ],
+            clauses,
+            symbols,
+        )
+    }
+
+    cum_result
+}
