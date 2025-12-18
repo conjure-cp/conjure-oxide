@@ -158,3 +158,44 @@ fn eq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
     Ok(Reduction::cnf(output, new_clauses, new_symbols))
 }
+
+/// Converts a != expression between two direct SATInts to a boolean expression in cnf
+///
+/// ```text
+/// SATInt(a) != SATInt(b) ~> Bool
+///
+/// ```
+#[register_rule(("SAT", 9100))]
+fn neq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    let Expr::Eq(_, lhs, rhs) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let (binding, _, _) = validate_direct_int_operands(vec![lhs.as_ref().clone(), rhs.as_ref().clone()])?;
+    let [lhs_bits, rhs_bits] = binding.as_slice() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let bit_count = lhs_bits.len();
+
+    let mut output = true.into();
+    let mut new_symbols = symbols.clone();
+    let mut new_clauses = vec![];
+    let mut comparison;
+
+    for i in 0..bit_count {
+        comparison = tseytin_xor(
+            lhs_bits[i].clone(),
+            rhs_bits[i].clone(),
+            &mut new_clauses,
+            &mut new_symbols,
+        );
+        output = tseytin_or(
+            &vec![comparison, output],
+            &mut new_clauses,
+            &mut new_symbols,
+        );
+    }
+
+    Ok(Reduction::cnf(output, new_clauses, new_symbols))
+}
