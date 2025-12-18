@@ -4,4 +4,4 @@ mod neq;
 mod subset;
 mod supset;
 mod supseteq;
-mod in_rule;
+// mod in_rule;

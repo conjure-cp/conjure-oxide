@@ -122,7 +122,6 @@ impl AbstractComprehensionBuilder {
     // are explained bc 1. we dont have separate symboltables for each part
     // 2. it is unclear why there would be a need to access each one uniquely
 
-    // TODO: make a pub fn with_return_value :)
     pub fn with_return_value(
         self, 
         mut expression: Expression,
