@@ -1,6 +1,5 @@
 // https://conjure-cp.github.io/conjure-oxide/docs/conjure_core/representation/trait.Representation.html
 use conjure_cp::ast::GroundDomain;
-use conjure_cp::bug;
 use conjure_cp::{
     ast::{Atom, DeclarationPtr, Domain, Expression, Literal, Metadata, Name, SymbolTable},
     register_representation,
@@ -22,14 +21,6 @@ impl SATLogInt {
     /// Returns the names of the representation variable
     fn names(&self) -> impl Iterator<Item = Name> + '_ {
         (self.lower_bound..self.upper_bound).map(move |index| self.index_to_name(index))
-        /*
-         * BITS = 8 =>
-         * 0..8
-         *
-         * RANGE = n..m =>
-         * n..m (not 0..BITS)
-         *
-         * */
     }
 
     /// Gets the representation variable name for a specific index.
@@ -65,17 +56,6 @@ impl Representation for SATLogInt {
                     Some((min_a.min(*lb), max_b.max(*ub)))
                 })?;
 
-        // calculate the bits needed to represent the integer
-        // let bit_count = (1..=32)
-        //     .find(|&bits| {
-        //         let min_possible = -(1i64 << (bits - 1));
-        //         let max_possible = (1i64 << (bits - 1)) - 1;
-        //         (min as i64) >= min_possible && (max as i64) <= max_possible
-        //     })
-        //     .unwrap_or_else(|| bug!("Should never be reached: i32 integer should always be with storable with 32 bits.")); // safe unwrap as i32 fits in 32 bits
-
-        // find the range
-
         Some(SATLogInt {
             src_var: name.clone(),
             lower_bound: min,
@@ -99,7 +79,6 @@ impl Representation for SATLogInt {
 
         let mut result = std::collections::BTreeMap::new();
 
-        println!("value_down");
         // name_0 is the least significant bit, name_<final> is the sign bit
         for name in self.names() {
             result.insert(name, Literal::Bool((value_i32 & 1) != 0));
@@ -118,21 +97,19 @@ impl Representation for SATLogInt {
 
         for value_candidate in self.lower_bound..self.upper_bound {
             let name = self.index_to_name(value_candidate);
-            let value_literal = values.get(&name).ok_or({
-                println!("MEOW 7");
-                ApplicationError::RuleNotApplicable
-            })?;
+            let value_literal = values
+                .get(&name)
+                .ok_or({ ApplicationError::RuleNotApplicable })?;
 
             if let Literal::Int(1) = value_literal {
-                // if found_value.is_some() {
-                //     // More than one variable is true, which is an error for direct encoding
-                //     return Err(ApplicationError::RuleNotApplicable);
-                // }
+                if found_value.is_some() {
+                    // More than one variable is true, which is an error for direct encoding
+                    return Err(ApplicationError::RuleNotApplicable);
+                }
                 found_value = Some(value_candidate);
             } else if let Literal::Int(0) = value_literal {
                 // This is fine, continue
             } else {
-                println!("MEOW 6");
                 // Not a boolean literal, error
                 return Err(ApplicationError::RuleNotApplicable);
             }
@@ -148,7 +125,6 @@ impl Representation for SATLogInt {
         &self,
         st: &SymbolTable,
     ) -> Result<std::collections::BTreeMap<Name, Expression>, ApplicationError> {
-        println!("expression down");
         Ok(self
             .names()
             .map(|name| {
@@ -170,8 +146,6 @@ impl Representation for SATLogInt {
             .names()
             .map(|name| DeclarationPtr::new_var(name, Domain::bool()))
             .collect();
-
-        // println!("call decl_down: {:#?}", temp_a);
 
         Ok(temp_a)
     }

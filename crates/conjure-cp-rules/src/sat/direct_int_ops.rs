@@ -65,7 +65,6 @@ pub fn validate_direct_int_operands(
 
     for operand in &exprs {
         let Expr::SATInt(_, SATIntEncoding::Direct, _, (local_min, local_max)) = operand else {
-            println!("MEOW 1");
             return Err(RuleNotApplicable);
         };
         global_min = global_min.min(*local_min);
@@ -79,12 +78,10 @@ pub fn validate_direct_int_operands(
         .map(|expr| {
             let Expr::SATInt(_, SATIntEncoding::Direct, inner, (local_min, local_max)) = expr
             else {
-                println!("MEOW 2");
                 return Err(RuleNotApplicable);
             };
 
             let Some(v) = inner.as_ref().clone().unwrap_list() else {
-                println!("MEOW 3");
                 return Err(RuleNotApplicable);
             };
 
@@ -130,14 +127,12 @@ pub fn validate_direct_int_operands(
 #[register_rule(("SAT", 9100))]
 fn eq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Eq(_, lhs, rhs) = expr else {
-        println!("MEOW 4");
         return Err(RuleNotApplicable);
     };
 
     let (binding, _, _) =
         validate_direct_int_operands(vec![lhs.as_ref().clone(), rhs.as_ref().clone()])?;
     let [lhs_bits, rhs_bits] = binding.as_slice() else {
-        println!("MEOW 5");
         return Err(RuleNotApplicable);
     };
 
