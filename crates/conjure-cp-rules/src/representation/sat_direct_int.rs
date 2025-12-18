@@ -118,19 +118,21 @@ impl Representation for SATLogInt {
 
         for value_candidate in self.lower_bound..self.upper_bound {
             let name = self.index_to_name(value_candidate);
-            let value_literal = values
-                .get(&name)
-                .ok_or(ApplicationError::RuleNotApplicable)?;
+            let value_literal = values.get(&name).ok_or({
+                println!("MEOW 7");
+                ApplicationError::RuleNotApplicable
+            })?;
 
-            if let Literal::Bool(true) = value_literal {
-                if found_value.is_some() {
-                    // More than one variable is true, which is an error for direct encoding
-                    return Err(ApplicationError::RuleNotApplicable);
-                }
+            if let Literal::Int(1) = value_literal {
+                // if found_value.is_some() {
+                //     // More than one variable is true, which is an error for direct encoding
+                //     return Err(ApplicationError::RuleNotApplicable);
+                // }
                 found_value = Some(value_candidate);
-            } else if let Literal::Bool(false) = value_literal {
+            } else if let Literal::Int(0) = value_literal {
                 // This is fine, continue
             } else {
+                println!("MEOW 6");
                 // Not a boolean literal, error
                 return Err(ApplicationError::RuleNotApplicable);
             }
