@@ -16,12 +16,14 @@ const BITS: i32 = 8;
 #[derive(Clone, Debug)]
 pub struct SATLogInt {
     src_var: Name,
+    range: Range<i32>
 }
 
 impl SATLogInt {
     /// Returns the names of the representation variable
     fn names(&self) -> impl Iterator<Item = Name> + '_ {
-        (0..BITS).map(move |index| self.index_to_name(index))
+        self.range.map(move |index| self.index_to_name(index))
+        // (5..10).map(move |index| self.index_to_name(index))
     }
 
     /// Gets the representation variable name for a specific index.
@@ -36,30 +38,39 @@ impl SATLogInt {
 
 impl Representation for SATLogInt {
     fn init(name: &Name, symtab: &SymbolTable) -> Option<Self> {
+        
         let domain = symtab.resolve_domain(name)?;
 
         if !domain.is_finite() {
             return None;
         }
 
+        //  maybe??
         let GroundDomain::Int(ranges) = domain.as_ref() else {
             return None;
         };
 
+        // let range = match ranges {
+        //     Int(vec_ranges) => vec_ranges.0,
+        //     _ => None
+        // };
+
         // Essence only supports decision variables with finite domains
-        if !ranges
-            .iter()
-            .all(|x| matches!(x, Range::Bounded(_, _)) || matches!(x, Range::Single(_)))
-        {
-            return None;
-        }
+        // if !ranges
+        //     .iter()
+        //     .all(|x| matches!(x, Range::Bounded(_, _)) || matches!(x, Range::Single(_)))
+        // {
+        //     return None;
+        // }
 
         Some(SATLogInt {
             src_var: name.clone(),
+            range: ranges.0
         })
     }
 
     fn variable_name(&self) -> &Name {
+        println!("var_name call {:#?}",&self.src_var);
         &self.src_var
     }
 
@@ -79,6 +90,8 @@ impl Representation for SATLogInt {
             value_i32 >>= 1;
         }
 
+        println!("value_down {:#?}", result);
+
         Ok(result)
     }
 
@@ -88,6 +101,8 @@ impl Representation for SATLogInt {
     ) -> Result<Literal, ApplicationError> {
         let mut out: i32 = 0;
         let mut power: i32 = 1;
+
+        println!("value_up");
 
         for name in self.names() {
             let value = values
@@ -111,6 +126,8 @@ impl Representation for SATLogInt {
             out -= sign_bit << 1;
         }
 
+        println!("out: {}", out);
+
         Ok(Literal::Int(out))
     }
 
@@ -118,26 +135,35 @@ impl Representation for SATLogInt {
         &self,
         st: &SymbolTable,
     ) -> Result<std::collections::BTreeMap<Name, Expression>, ApplicationError> {
-        Ok(self
-            .names()
-            .map(|name| {
-                let decl = st.lookup(&name).unwrap();
-                (
-                    name,
-                    Expression::Atomic(
-                        Metadata::new(),
-                        Atom::Reference(conjure_cp::ast::Reference { ptr: decl }),
-                    ),
-                )
-            })
-            .collect())
+        let mut a = self
+        .names()
+        .map(|name| {
+            let decl = st.lookup(&name).unwrap();
+            (
+                name,
+                Expression::Atomic(
+                    Metadata::new(),
+                    Atom::Reference(conjure_cp::ast::Reference { ptr: decl }),
+                ),
+            )
+        })
+        .collect();
+        println!("expression down call {:#?}", a);
+        Ok(
+            a
+        )
     }
 
     fn declaration_down(&self) -> Result<Vec<DeclarationPtr>, ApplicationError> {
-        Ok(self
-            .names()
-            .map(|name| DeclarationPtr::new_var(name, Domain::bool()))
-            .collect())
+
+        let mut a = self
+        .names()
+        .map(|name| DeclarationPtr::new_var(name, Domain::bool()))
+        .collect();
+
+        println!("call decl down: {:#?}", a);
+
+        Ok(a)
     }
 
     fn repr_name(&self) -> &str {
