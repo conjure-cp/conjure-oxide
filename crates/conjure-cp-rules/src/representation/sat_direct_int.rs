@@ -99,6 +99,7 @@ impl Representation for SATLogInt {
 
         let mut result = std::collections::BTreeMap::new();
 
+        println!("value_down");
         // name_0 is the least significant bit, name_<final> is the sign bit
         for name in self.names() {
             result.insert(name, Literal::Bool((value_i32 & 1) != 0));
@@ -146,6 +147,7 @@ impl Representation for SATLogInt {
         &self,
         st: &SymbolTable,
     ) -> Result<std::collections::BTreeMap<Name, Expression>, ApplicationError> {
+        println!("expression down");
         Ok(self
             .names()
             .map(|name| {

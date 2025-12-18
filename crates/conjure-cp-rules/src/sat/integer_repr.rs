@@ -1,8 +1,8 @@
 use conjure_cp::ast::{Expression as Expr, GroundDomain};
 use conjure_cp::ast::{SATIntEncoding, SymbolTable};
 use conjure_cp::rule_engine::{
-    ApplicationError, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
-    register_rule,
+    register_rule, ApplicationError, ApplicationError::RuleNotApplicable, ApplicationResult,
+    Reduction,
 };
 
 use conjure_cp::ast::Metadata;
@@ -121,11 +121,11 @@ fn integer_decision_representation(expr: &Expr, symbols: &SymbolTable) -> Applic
     let new_name = &name.name().to_owned();
 
     let repr_exists = symbols
-        .get_representation(new_name, &["sat_log_int"])
+        .get_representation(new_name, &["sat_direct_int"])
         .is_some();
 
     let representation = symbols
-        .get_or_add_representation(new_name, &["sat_log_int"])
+        .get_or_add_representation(new_name, &["sat_direct_int"])
         .ok_or(RuleNotApplicable)?;
 
     let bits = representation[0]
@@ -136,7 +136,7 @@ fn integer_decision_representation(expr: &Expr, symbols: &SymbolTable) -> Applic
 
     let cnf_int = Expr::SATInt(
         Metadata::new(),
-        SATIntEncoding::Log,
+        SATIntEncoding::Direct,
         Moo::new(into_matrix_expr!(bits)),
         (min, max),
     );
@@ -190,6 +190,7 @@ fn literal_cnf_int(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
     Ok(Reduction::pure(Expr::SATInt(
         Metadata::new(),
+        // NOTE: change this later
         SATIntEncoding::Log,
         Moo::new(into_matrix_expr!(binary_encoding)),
         (value, value),
