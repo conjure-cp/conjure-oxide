@@ -58,10 +58,10 @@ fn error_node_out_of_range(node: &tree_sitter::Node, source: &str) -> bool {
     let start = node.start_position();
     let end = node.end_position();
 
-    let start_line_len = lines.get(start.row as usize).map_or(0, |l| l.len());
-    let end_line_len = lines.get(end.row as usize).map_or(0, |l| l.len());
+    let start_line_len = lines.get(start.row).map_or(0, |l| l.len());
+    let end_line_len = lines.get(end.row).map_or(0, |l| l.len());
 
-    (start.column as usize > start_line_len) || (end.column as usize > end_line_len)
+    (start.column > start_line_len) || (end.column > end_line_len)
 }
 
 /// Detects syntactic issues in the essence source text and returns a vector of Diagnostics.
@@ -131,7 +131,7 @@ pub fn detect_syntactic_errors(source: &str) -> Vec<Diagnostic> {
 /// Classifies a syntax error node and returns a diagnostic for it.
 fn classify_syntax_error(node: Node, source: &str) -> Diagnostic {
     if node.is_missing() {
-        return classify_missing_token(node);
+        classify_missing_token(node)
     } else if node.is_error() {
         classify_unexpected_token_error(node, source)
     } else {
@@ -183,23 +183,18 @@ fn classify_unexpected_token_error(node: Node, source_code: &str) -> Diagnostic 
 
         // ERROR node is the direct child of the root node
         if parent.kind() == "program" {
-            let li = node.start_position().row as usize;
+            let li = node.start_position().row;
             let line_text = source_code.lines().nth(li).unwrap_or("");
 
             // happens when the malformed line is the first
             // Tree-sitter places the error node out of range, needs separate handling
-            if error_node_out_of_range(&node, source_code) {
+            if error_node_out_of_range(&node, source_code) || node.start_position().column == 0 {
                 (
                     format!("Malformed line {}: '{}'", li + 1, line_text),
                     true,
                     li,
                 )
-            } else if node.start_position().column == 0 {
-                (
-                    format!("Malformed line {}: '{}'", li + 1, line_text),
-                    true,
-                    li,
-                )
+
             // Unexpected tokens
 
             // Tree-sitter classified a line but found unexpected token at the end of it
