@@ -23,7 +23,6 @@ struct Backend {
 
 impl Backend {
     pub async fn handle_diagnostic(&self, uri: &Url) {
-        // if let Ok(path) = uri.to_file_path().ok() {
         let file_path = uri.to_file_path().ok();
         
         if let Some(path) = file_path {
@@ -60,7 +59,7 @@ impl LanguageServer for Backend {
                     work_done_progress_options: Default::default(),
                 }),
                 text_document_sync: Some(TextDocumentSyncCapability::Kind(
-                    TextDocumentSyncKind::FULL,
+                    TextDocumentSyncKind::FULL, //on sync event, return ONE vector containing full text
                 )),
                 // hover_provider: Some(HoverProviderCapability::Simple(true)),
                 ..ServerCapabilities::default()
@@ -93,8 +92,19 @@ impl LanguageServer for Backend {
     async fn did_change(&self, params: DidChangeTextDocumentParams) {
         let uri = &params.text_document.uri;
         dbg!("did change", uri);
+        
+        //if change occurred
+        if let Some(change) = params.content_changes.first() {
+            //extract diagnostics from full text
+            let diagnostics = get_diagnostics(&change.text);
+            let lsp_diagnostics = convert_diagnostics(diagnostics);
 
-        self.handle_diagnostic(uri).await;
+            //publish diagnostics
+            self.client
+                .publish_diagnostics(uri.clone(), lsp_diagnostics, None)
+                .await;
+        }
+        
     }
 }
 
