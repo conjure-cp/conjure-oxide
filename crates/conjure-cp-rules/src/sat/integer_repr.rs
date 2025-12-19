@@ -130,7 +130,7 @@ fn integer_decision_representation(expr: &Expr, symbols: &SymbolTable) -> Applic
         .get_or_add_representation(new_name, &["sat_direct_int"])
         .ok_or(RuleNotApplicable)?;
 
-    let bits = representation[0]
+    let bits: Vec<Expr> = representation[0]
         .clone()
         .expression_down(&symbols)?
         .into_values()
@@ -139,17 +139,28 @@ fn integer_decision_representation(expr: &Expr, symbols: &SymbolTable) -> Applic
     let cnf_int = Expr::SATInt(
         Metadata::new(),
         SATIntEncoding::Direct,
-        Moo::new(into_matrix_expr!(bits)),
+        Moo::new(into_matrix_expr!(bits.clone())),
         (min, max),
     );
 
     if !repr_exists {
-        // add domain ranges as constraints if this is the first time the representation is added
-        Ok(Reduction::new(
-            cnf_int.clone(),
-            vec![int_domain_to_expr(cnf_int, ranges)], // contains domain rules
-            symbols,
-        ))
+        // Domain constraint: the integer must take one of its valid values
+        let constraints = vec![int_domain_to_expr(cnf_int.clone(), ranges)];
+
+        // At-Most-One constraints: only one bit can be true.
+        let mut clauses = vec![];
+        for i in 0..bits.len() {
+            for j in i + 1..bits.len() {
+                clauses.push(conjure_cp::ast::CnfClause::new(vec![
+                    Expr::Not(Metadata::new(), Moo::new(bits[i].clone())),
+                    Expr::Not(Metadata::new(), Moo::new(bits[j].clone())),
+                ]));
+            }
+        }
+
+        let mut reduction = Reduction::cnf(cnf_int, clauses, symbols);
+        reduction.new_top = constraints;
+        Ok(reduction)
     } else {
         Ok(Reduction::pure(cnf_int))
     }

@@ -249,35 +249,29 @@ fn sat_direct_lt(
     clauses: &mut Vec<CnfClause>,
     symbols: &mut SymbolTable,
 ) -> Expr {
-    let mut b_or;
-    let a_iter = a.iter();
-    let mut b_iter = b.iter();
+    let mut b_or = Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false)));
+    let mut cum_result = Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false)));
 
-    let mut cum_result;
-    
-    b_or = b_iter.next().unwrap().clone();
-    cum_result = Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false)));
-
-    let mut not_b_or;
-    let mut a_and_not_b;
-    for elem in a_iter {
-        not_b_or = tseytin_not(b_or.clone(), clauses, symbols);
-        a_and_not_b = tseytin_and(&vec![elem.clone(), not_b_or], clauses, symbols);
-        cum_result = tseytin_or(&vec![cum_result, a_and_not_b], clauses, symbols);
+    for i in 0..a.len() {
+        // b_or is prefix_or of b up to index i: B_i = b_0 | ... | b_i
         b_or = tseytin_or(
             &vec![
                 b_or,
-                b_iter
-                    .next()
-                    .unwrap_or(&Expr::Atomic(
-                        Metadata::new(),
-                        Atom::Literal(Literal::Bool(true)),
-                    ))
-                    .clone(),
+                b.get(i).cloned().unwrap_or(Expr::Atomic(
+                    Metadata::new(),
+                    Atom::Literal(Literal::Bool(false)),
+                )),
             ],
             clauses,
             symbols,
-        )
+        );
+
+        // a < b if there exists i such that a=i and b > i.
+        // b > i is equivalent to NOT(B_i) assuming one-hotness.
+        let not_b_or = tseytin_not(b_or.clone(), clauses, symbols);
+        let a_i_and_not_b_i = tseytin_and(&vec![a[i].clone(), not_b_or], clauses, symbols);
+
+        cum_result = tseytin_or(&vec![cum_result, a_i_and_not_b_i], clauses, symbols);
     }
 
     cum_result
