@@ -255,7 +255,6 @@ fn literal_cnf_int(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
     Ok(Reduction::pure(Expr::SATInt(
         Metadata::new(),
-        // NOTE: change this later
         SATIntEncoding::Log,
         Moo::new(into_matrix_expr!(binary_encoding)),
         (value, value),

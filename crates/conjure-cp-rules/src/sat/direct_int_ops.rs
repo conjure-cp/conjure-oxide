@@ -160,7 +160,7 @@ fn eq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 /// SATInt(a) != SATInt(b) ~> Bool
 ///
 /// ```
-/// 
+///
 /// True iff at least one value position differs.
 #[register_rule(("SAT_Direct", 9100))]
 fn neq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
