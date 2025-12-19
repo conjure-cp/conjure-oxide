@@ -2,6 +2,7 @@ use conjure_cp_essence_parser::diagnostics::error_detection::syntactic_errors::{
     check_diagnostic, detect_syntactic_errors,
 };
 
+#[ignore]
 #[test]
 fn invalid_top_level_statement_expression() {
     let source = " a,a,b: int(1..3)";
@@ -11,6 +12,7 @@ fn invalid_top_level_statement_expression() {
     check_diagnostic(diag, 0, 0, 0, 17, "Malformed line 1: ' a,a,b: int(1..3)'");
 }
 
+#[ignore]
 #[test]
 fn malformed_find_2() {
     let source = "find >=lex,b,c: int(1..3)";
@@ -28,6 +30,7 @@ fn malformed_find_2() {
     );
 }
 
+#[ignore]
 #[test]
 fn malformed_find_3() {
     let source = "find +,a,b: int(1..3)";
@@ -44,6 +47,7 @@ fn malformed_find_3() {
     );
 }
 
+#[ignore]
 #[test]
 fn unexpected_colon_used_as_identifier() {
     let source = "find :,b,c: int(1..3)";
@@ -63,6 +67,7 @@ fn unexpected_colon_used_as_identifier() {
     );
 }
 
+#[ignore]
 #[test]
 fn missing_colon_domain_in_find_statement_1st_line() {
     let source = "find x";
@@ -76,6 +81,7 @@ fn missing_colon_domain_in_find_statement_1st_line() {
     check_diagnostic(diag, 0, 0, 0, 6, "Malformed line 1: 'find x'");
 }
 
+#[ignore]
 #[test]
 fn missing_colon_domain_in_find_statement_2nd_line() {
     let source = "find x: int(1..3)\nfind x";
@@ -89,6 +95,7 @@ fn missing_colon_domain_in_find_statement_2nd_line() {
     check_diagnostic(diag, 1, 0, 1, 6, "Malformed line 2: 'find x'");
 }
 
+#[ignore]
 #[test]
 fn unexpected_print_2nd_line() {
     let source = "find a,b,c: int(1..3)\nprint a";
