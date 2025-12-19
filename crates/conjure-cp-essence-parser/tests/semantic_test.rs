@@ -1,4 +1,5 @@
 use conjure_cp_essence_parser::diagnostics::error_detection::semantic_errors::detect_semantic_errors;
+use conjure_cp_essence_parser::diagnostics::error_detection::syntactic_errors::check_diagnostic;
 
 #[test]
 fn detects_undefined_variable() {
@@ -139,7 +140,7 @@ fn dividing_over_zero() {
 
 #[ignore]
 #[test]
-fn dividing_over_zero() {
+fn invalid_index() {
     let source = "letting s be (0,1,1,0)
                 \nletting t be (0,0,0,1)
                 \nfind a : bool such that a = (s[5] = t[1])";
