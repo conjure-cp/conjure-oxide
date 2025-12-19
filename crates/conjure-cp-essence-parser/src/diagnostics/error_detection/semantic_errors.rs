@@ -17,7 +17,7 @@ pub fn detect_semantic_errors(source: &str) -> Vec<Diagnostic> {
             println!("No semantic errors detected");
         }
         Err(err) => {
-            println!("Semantic error detected: {:?}", err);
+            // println!("Semantic error detected: {:?}", err);
             diagnostics.push(error_to_diagnostic(&err));
         }
     }
