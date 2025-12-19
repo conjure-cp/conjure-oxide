@@ -1,5 +1,4 @@
 use conjure_cp_essence_parser::diagnostics::error_detection::semantic_errors::detect_semantic_errors;
-use conjure_cp_essence_parser::diagnostics::error_detection::syntactic_errors::check_diagnostic;
 
 #[test]
 fn detects_keyword_as_identifier_find() {
@@ -61,49 +60,5 @@ fn detects_keyword_as_identifier_bool() {
         0,
         9,
         "Semantic Error: Keyword 'bool' used as identifier",
-    );
-}
-
-#[ignore]
-#[test]
-fn detects_operator_as_identifier() {
-    let source = "find +,b,c: int(1..3)";
-    // using + operator instead of identifier
-    let diagnostics = detect_semantic_errors(source);
-
-    // Should be exactly one diagnostic
-    assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
-
-    let diag = &diagnostics[0];
-
-    check_diagnostic(
-        diag,
-        0,
-        5,
-        0,
-        6,
-        "Semantic Error: Operator '+' used as identifier",
-    );
-}
-
-#[ignore]
-#[test]
-fn detects_complex_operator_as_identifier() {
-    let source = "find >=lex,b,c: int(1..3)";
-    // using >=lex operator instead of identifier
-    let diagnostics = detect_semantic_errors(source);
-
-    // Should be exactly one diagnostic
-    assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
-
-    let diag = &diagnostics[0];
-
-    check_diagnostic(
-        diag,
-        0,
-        5,
-        0,
-        10,
-        "Semantic Error: Operator '>=lex' used as identifier",
     );
 }

@@ -1,5 +1,4 @@
 use conjure_cp_essence_parser::diagnostics::error_detection::semantic_errors::detect_semantic_errors;
-use conjure_cp_essence_parser::diagnostics::error_detection::syntactic_errors::check_diagnostic;
 
 #[test]
 fn detects_undefined_variable() {
@@ -140,6 +139,32 @@ fn dividing_over_zero() {
 
 #[ignore]
 #[test]
+fn dividing_over_zero() {
+    let source = "letting s be (0,1,1,0)
+                \nletting t be (0,0,0,1)
+                \nfind a : bool such that a = (s[5] = t[1])";
+    let diagnostics = detect_semantic_errors(source);
+
+    assert_eq!(
+        diagnostics.len(),
+        1,
+        "Expected exactly one diagnostic for undefined variable"
+    );
+
+    let diag = &diagnostics[0];
+
+    check_diagnostic(
+        diag,
+        2,
+        31,
+        2,
+        32,
+        "Semantic Error: Index out of bounds",
+    );
+}
+
+#[ignore]
+#[test]
 fn duplicate_declaration_of_variable() {
     let source = "find x: int(1..10)\nfind x: int(2..3)";
     let diagnostics = detect_semantic_errors(source);
@@ -159,5 +184,29 @@ fn duplicate_declaration_of_variable() {
         1,
         6,
         "Semantic Error: Redeclaration of variable 'x' which was previously defined",
+    );
+}
+
+#[ignore]
+#[test]
+fn extra_comma_in_variable_list() {
+    let source = "find x,: int(1..10)";
+    let diagnostics = detect_semantic_errors(source);
+
+    assert_eq!(
+        diagnostics.len(),
+        1,
+        "Expected exactly one diagnostic for undefined variable"
+    );
+
+    let diag = &diagnostics[0];
+
+    check_diagnostic(
+        diag,
+        0,
+        6,
+        0,
+        7,
+        "Semantic Error: Extra ',' at the end of 'variable_list'",
     );
 }
