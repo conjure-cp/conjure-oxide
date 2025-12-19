@@ -84,7 +84,7 @@ fn missing_colon_domain_in_find_statement_1st_line() {
 #[ignore]
 #[test]
 fn missing_colon_domain_in_find_statement_2nd_line() {
-    let source = "find x: int(1..3)\nfind x";
+    let source = "find x: int(1..3)\nfind y";
     let diagnostics = detect_syntactic_errors(source);
 
     // Should be exactly one diagnostic
@@ -92,7 +92,7 @@ fn missing_colon_domain_in_find_statement_2nd_line() {
 
     let diag = &diagnostics[0];
 
-    check_diagnostic(diag, 1, 0, 1, 6, "Malformed line 2: 'find x'");
+    check_diagnostic(diag, 1, 0, 1, 6, "Malformed line 2: 'find y'");
 }
 
 #[ignore]
