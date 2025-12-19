@@ -59,7 +59,7 @@ impl Representation for SatDirectInt {
         Some(SatDirectInt {
             src_var: name.clone(),
             lower_bound: min,
-            upper_bound: max,
+            upper_bound: max + 1,
         })
     }
 

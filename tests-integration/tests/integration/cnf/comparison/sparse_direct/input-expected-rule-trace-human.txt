@@ -1,0 +1,284 @@
+Model before rewriting:
+
+find x: int(1..2)
+
+such that
+
+(x > 1)
+
+--
+
+x, 
+   ~~> integer_decision_representation ([("SAT_Direct", 9500)]) 
+SATInt(Direct, [x#sat_direct_int_01,x#sat_direct_int_02;int(1..)] [1, 2]) 
+new variables:
+  find x#sat_direct_int_01: bool
+  find x#sat_direct_int_02: bool
+new constraints:
+  or([and([(SATInt(Direct, [x#sat_direct_int_01,x#sat_direct_int_02;int(1..)] [1, 2]) >= 1),(SATInt(Direct, [x#sat_direct_int_01,x#sat_direct_int_02;int(1..)] [1, 2]) <= 2);int(1..)]);int(1..)])
+--
+
+1, 
+   ~~> literal_sat_direct_int ([("SAT_Direct", 9500)]) 
+SATInt(Direct, [true;int(1..)] [1, 1]) 
+
+--
+
+1, 
+   ~~> literal_sat_direct_int ([("SAT_Direct", 9500)]) 
+SATInt(Direct, [true;int(1..)] [1, 1]) 
+
+--
+
+2, 
+   ~~> literal_sat_direct_int ([("SAT_Direct", 9500)]) 
+SATInt(Direct, [true;int(1..)] [2, 2]) 
+
+--
+
+(SATInt(Direct, [x#sat_direct_int_01,x#sat_direct_int_02;int(1..)] [1, 2]) > SATInt(Direct, [true;int(1..)] [1, 1])), 
+   ~~> ineq_sat_direct ([("SAT", 9100)]) 
+__6 
+new variables:
+  find __0: bool
+  find __1: bool
+  find __2: bool
+  find __3: bool
+  find __4: bool
+  find __5: bool
+  find __6: bool
+  find __7: bool
+new clauses:
+  (¬x#sat_direct_int_01 \/ ¬__0)
+  (x#sat_direct_int_01 \/ __0)
+  (¬__1 \/ __0)
+  (__1 \/ ¬__0)
+  (¬__1 \/ __2)
+  (¬__2 \/ __1)
+  (¬x#sat_direct_int_01 \/ __3)
+  (¬x#sat_direct_int_02 \/ __3)
+  (¬__3 \/ x#sat_direct_int_01 \/ x#sat_direct_int_02)
+  (¬__3 \/ ¬__4)
+  (__3 \/ __4)
+  (¬__5)
+  (¬__5 \/ __4)
+  (¬__2 \/ __6)
+  (¬__5 \/ __6)
+  (¬__6 \/ __2 \/ __5)
+  (¬__3 \/ __7)
+  (__7)
+--
+
+(SATInt(Direct, [x#sat_direct_int_01,x#sat_direct_int_02;int(1..)] [1, 2]) >= SATInt(Direct, [true;int(1..)] [1, 1])), 
+   ~~> ineq_sat_direct ([("SAT", 9100)]) 
+__16 
+new variables:
+  find __8: bool
+  find __9: bool
+  find __10: bool
+  find __11: bool
+  find __12: bool
+  find __13: bool
+  find __14: bool
+  find __15: bool
+  find __16: bool
+new clauses:
+  (¬__8)
+  (¬__9 \/ x#sat_direct_int_01)
+  (¬__9 \/ __8)
+  (__9 \/ ¬x#sat_direct_int_01 \/ ¬__8)
+  (¬__9 \/ __10)
+  (¬__10 \/ __9)
+  (__11)
+  (¬__11 \/ ¬__12)
+  (__11 \/ __12)
+  (¬__13 \/ x#sat_direct_int_02)
+  (¬__13 \/ __12)
+  (__13 \/ ¬x#sat_direct_int_02 \/ ¬__12)
+  (¬__10 \/ __14)
+  (¬__13 \/ __14)
+  (¬__14 \/ __10 \/ __13)
+  (¬__11 \/ __15)
+  (__15)
+  (¬__14 \/ ¬__16)
+  (__14 \/ __16)
+--
+
+(SATInt(Direct, [x#sat_direct_int_01,x#sat_direct_int_02;int(1..)] [1, 2]) <= SATInt(Direct, [true;int(1..)] [2, 2])), 
+   ~~> ineq_sat_direct ([("SAT", 9100)]) 
+__25 
+new variables:
+  find __17: bool
+  find __18: bool
+  find __19: bool
+  find __20: bool
+  find __21: bool
+  find __22: bool
+  find __23: bool
+  find __24: bool
+  find __25: bool
+new clauses:
+  (¬x#sat_direct_int_01 \/ ¬__17)
+  (x#sat_direct_int_01 \/ __17)
+  (¬__18)
+  (¬__18 \/ __17)
+  (¬__18 \/ __19)
+  (¬__19 \/ __18)
+  (¬x#sat_direct_int_01 \/ __20)
+  (¬x#sat_direct_int_02 \/ __20)
+  (¬__20 \/ x#sat_direct_int_01 \/ x#sat_direct_int_02)
+  (¬__20 \/ ¬__21)
+  (__20 \/ __21)
+  (¬__22 \/ __21)
+  (__22 \/ ¬__21)
+  (¬__19 \/ __23)
+  (¬__22 \/ __23)
+  (¬__23 \/ __19 \/ __22)
+  (¬__20 \/ __24)
+  (__24)
+  (¬__23 \/ ¬__25)
+  (__23 \/ __25)
+--
+
+or([and([__16,__25;int(1..)]);int(1..)]), 
+   ~~> remove_unit_vector_or ([("Base", 8800)]) 
+and([__16,__25;int(1..)]) 
+
+--
+
+__6,
+and([__16,__25;int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+__6,
+__16,
+__25 
+
+--
+
+__6,
+__16,
+__25, 
+   ~~> remove_single_atom ([("SAT", 8400)]) 
+__16,
+__25 
+
+new clauses:
+  (__6)
+--
+
+__16,
+__25, 
+   ~~> remove_single_atom ([("SAT", 8400)]) 
+__25 
+
+new clauses:
+  (__16)
+--
+
+__25, 
+   ~~> remove_single_atom ([("SAT", 8400)]) 
+true 
+
+new clauses:
+  (__25)
+--
+
+Final model:
+
+find x: int(1..2)
+find __0: bool
+find __1: bool
+find __2: bool
+find __3: bool
+find __4: bool
+find __5: bool
+find __6: bool
+find __7: bool
+find __8: bool
+find __9: bool
+find __10: bool
+find __11: bool
+find __12: bool
+find __13: bool
+find __14: bool
+find __15: bool
+find __16: bool
+find __17: bool
+find __18: bool
+find __19: bool
+find __20: bool
+find __21: bool
+find __22: bool
+find __23: bool
+find __24: bool
+find __25: bool
+find x#sat_direct_int_01: bool
+find x#sat_direct_int_02: bool
+
+such that
+
+true
+
+clauses:
+
+(¬x#sat_direct_int_01 \/ ¬__0),
+(x#sat_direct_int_01 \/ __0),
+(¬__1 \/ __0),
+(__1 \/ ¬__0),
+(¬__1 \/ __2),
+(¬__2 \/ __1),
+(¬x#sat_direct_int_01 \/ __3),
+(¬x#sat_direct_int_02 \/ __3),
+(¬__3 \/ x#sat_direct_int_01 \/ x#sat_direct_int_02),
+(¬__3 \/ ¬__4),
+(__3 \/ __4),
+(¬__5),
+(¬__5 \/ __4),
+(¬__2 \/ __6),
+(¬__5 \/ __6),
+(¬__6 \/ __2 \/ __5),
+(¬__3 \/ __7),
+(__7),
+(¬__8),
+(¬__9 \/ x#sat_direct_int_01),
+(¬__9 \/ __8),
+(__9 \/ ¬x#sat_direct_int_01 \/ ¬__8),
+(¬__9 \/ __10),
+(¬__10 \/ __9),
+(__11),
+(¬__11 \/ ¬__12),
+(__11 \/ __12),
+(¬__13 \/ x#sat_direct_int_02),
+(¬__13 \/ __12),
+(__13 \/ ¬x#sat_direct_int_02 \/ ¬__12),
+(¬__10 \/ __14),
+(¬__13 \/ __14),
+(¬__14 \/ __10 \/ __13),
+(¬__11 \/ __15),
+(__15),
+(¬__14 \/ ¬__16),
+(__14 \/ __16),
+(¬x#sat_direct_int_01 \/ ¬__17),
+(x#sat_direct_int_01 \/ __17),
+(¬__18),
+(¬__18 \/ __17),
+(¬__18 \/ __19),
+(¬__19 \/ __18),
+(¬x#sat_direct_int_01 \/ __20),
+(¬x#sat_direct_int_02 \/ __20),
+(¬__20 \/ x#sat_direct_int_01 \/ x#sat_direct_int_02),
+(¬__20 \/ ¬__21),
+(__20 \/ __21),
+(¬__22 \/ __21),
+(__22 \/ ¬__21),
+(¬__19 \/ __23),
+(¬__22 \/ __23),
+(¬__23 \/ __19 \/ __22),
+(¬__20 \/ __24),
+(__24),
+(¬__23 \/ ¬__25),
+(__23 \/ __25),
+(__6),
+(__16),
+(__25)
+

@@ -207,11 +207,11 @@ fn neq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 /// Note: < and <= are rewritten by swapping operands to reuse lt logic.
 #[register_rule(("SAT", 9100))]
 fn ineq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
-    let (lhs, rhs, strict) = match expr {
-        Expr::Lt(_, x, y) => (y, x, true),
-        Expr::Gt(_, x, y) => (x, y, true),
-        Expr::Leq(_, x, y) => (y, x, false),
-        Expr::Geq(_, x, y) => (x, y, false),
+    let (lhs, rhs, negate) = match expr {
+        Expr::Lt(_, x, y) => (x, y, false),
+        Expr::Gt(_, x, y) => (y, x, false),
+        Expr::Leq(_, x, y) => (y, x, true),
+        Expr::Geq(_, x, y) => (x, y, true),
         _ => return Err(RuleNotApplicable),
     };
 
@@ -224,21 +224,24 @@ fn ineq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let mut new_symbols = symbols.clone();
     let mut new_clauses = vec![];
 
-    let output = sat_direct_lt(
+    let mut output = sat_direct_lt(
         lhs_bits.clone(),
         rhs_bits.clone(),
-        strict,
         &mut new_clauses,
         &mut new_symbols,
     );
+
+    if negate {
+        output = tseytin_not(output, &mut new_clauses, &mut new_symbols);
+    }
+
     Ok(Reduction::cnf(output, new_clauses, new_symbols))
 }
 
-/// Encodes a < b (or <= if !strict) for one-hot direct integers using prefix OR logic.
+/// Encodes a < b for one-hot direct integers using prefix OR logic.
 fn sat_direct_lt(
     a: Vec<Expr>,
     b: Vec<Expr>,
-    strict: bool,
     clauses: &mut Vec<CnfClause>,
     symbols: &mut SymbolTable,
 ) -> Expr {
@@ -247,19 +250,15 @@ fn sat_direct_lt(
     let mut b_iter = b.iter();
 
     let mut cum_result;
-    if strict {
-        b_or = b_iter.next().unwrap().clone();
-        cum_result = Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false)));
-    } else {
-        b_or = Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(true)));
-        cum_result = a_iter.next().unwrap().clone();
-    }
+    
+    b_or = b_iter.next().unwrap().clone();
+    cum_result = Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false)));
 
     let mut not_b_or;
     let mut a_and_not_b;
     for elem in a_iter {
         not_b_or = tseytin_not(b_or.clone(), clauses, symbols);
-        a_and_not_b = tseytin_or(&vec![elem.clone(), not_b_or], clauses, symbols);
+        a_and_not_b = tseytin_and(&vec![elem.clone(), not_b_or], clauses, symbols);
         cum_result = tseytin_or(&vec![cum_result, a_and_not_b], clauses, symbols);
         b_or = tseytin_or(
             &vec![
