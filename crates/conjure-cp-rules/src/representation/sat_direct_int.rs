@@ -91,17 +91,18 @@ impl Representation for SatDirectInt {
                 .get(&name)
                 .ok_or(ApplicationError::RuleNotApplicable)?;
 
-            if let Literal::Int(1) = value_literal {
+            let is_true = match value_literal {
+                Literal::Int(1) | Literal::Bool(true) => true,
+                Literal::Int(0) | Literal::Bool(false) => false,
+                _ => return Err(ApplicationError::RuleNotApplicable),
+            };
+
+            if is_true {
                 if found_value.is_some() {
                     // More than one variable is true, which is an error for direct encoding
                     return Err(ApplicationError::RuleNotApplicable);
                 }
                 found_value = Some(value_candidate);
-            } else if let Literal::Int(0) = value_literal {
-                // This is fine, continue
-            } else {
-                // Not a boolean literal, error
-                return Err(ApplicationError::RuleNotApplicable);
             }
         }
 

@@ -208,9 +208,13 @@ fn neq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 #[register_rule(("SAT", 9100))]
 fn ineq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let (lhs, rhs, negate) = match expr {
+        // A < B -> sat_direct_lt(A, B)
         Expr::Lt(_, x, y) => (x, y, false),
+        // A > B -> sat_direct_lt(B, A)
         Expr::Gt(_, x, y) => (y, x, false),
+        // A <= B -> NOT (B < A)
         Expr::Leq(_, x, y) => (y, x, true),
+        // A >= B -> NOT (A < B)
         Expr::Geq(_, x, y) => (x, y, true),
         _ => return Err(RuleNotApplicable),
     };
