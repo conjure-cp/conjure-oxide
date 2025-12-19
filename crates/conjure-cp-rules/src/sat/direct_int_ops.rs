@@ -176,7 +176,7 @@ fn neq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
     let bit_count = lhs_bits.len();
 
-    let mut output = true.into();
+    let mut output = false.into();
     let mut new_symbols = symbols.clone();
     let mut new_clauses = vec![];
     let mut comparison;
