@@ -43,7 +43,7 @@ fn literal_sat_direct_int(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 }
 
 /// This function confirms that all of the input expressions are direct SATInts, and returns vectors for each input of their bits
-/// This function also extends all inputs to have the same range, and returns the new range
+/// This function also normalizes direct SATInt operands to a common value range by zero-padding.
 pub fn validate_direct_int_operands(
     exprs: Vec<Expr>,
 ) -> Result<(Vec<Vec<Expr>>, i32, i32), ApplicationError> {
@@ -114,8 +114,8 @@ pub fn validate_direct_int_operands(
 ///
 /// ```text
 /// SATInt(a) = SATInt(b) ~> Bool
-///
 /// ```
+/// NOTE: This rule reduces to AND_i (a[i] ≡ b[i]) and does not enforce one-hotness.
 #[register_rule(("SAT_Direct", 9100))]
 fn eq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     // TODO: this could be optimized by just going over the sections of both vectors where the ranges intersect
@@ -160,6 +160,8 @@ fn eq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 /// SATInt(a) != SATInt(b) ~> Bool
 ///
 /// ```
+/// 
+/// True iff at least one value position differs.
 #[register_rule(("SAT_Direct", 9100))]
 fn neq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Neq(_, lhs, rhs) = expr else {
@@ -202,6 +204,7 @@ fn neq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 /// SATInt(a) </>/<=/>= SATInt(b) ~> Bool
 ///
 /// ```
+/// Note: < and <= are rewritten by swapping operands to reuse lt logic.
 #[register_rule(("SAT", 9100))]
 fn ineq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let (lhs, rhs, strict) = match expr {
@@ -231,6 +234,7 @@ fn ineq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     Ok(Reduction::cnf(output, new_clauses, new_symbols))
 }
 
+/// Encodes a < b (or <= if !strict) for one-hot direct integers using prefix OR logic.
 fn sat_direct_lt(
     a: Vec<Expr>,
     b: Vec<Expr>,
