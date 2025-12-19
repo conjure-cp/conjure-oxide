@@ -1,6 +1,9 @@
 use tower_lsp::{
-    Client, LanguageServer, LspService, Server,
-    jsonrpc::{Result}, //add Error if needed later, currently unused
+    Client,
+    LanguageServer,
+    LspService,
+    Server,
+    jsonrpc::Result, //add Error if needed later, currently unused
     lsp_types::*,
 };
 
@@ -11,11 +14,11 @@ use tokio::sync::RwLock;
 #[derive(Debug)]
 pub struct Backend {
     pub client: Client,
-    pub documents: Arc<RwLock<HashMap<String,String>>>, //caching document
+    pub documents: Arc<RwLock<HashMap<String, String>>>, //caching document
 }
 
 impl Backend {
-    pub fn new(client: Client, documents: Arc<RwLock<HashMap<String,String>>>) -> Self {
+    pub fn new(client: Client, documents: Arc<RwLock<HashMap<String, String>>>) -> Self {
         Backend { client, documents }
     }
 }
@@ -65,7 +68,7 @@ impl LanguageServer for Backend {
         self.handle_did_save(params).await;
     }
     async fn did_change(&self, params: DidChangeTextDocumentParams) {
-        self.handle_did_change(params).await;        
+        self.handle_did_change(params).await;
     }
 }
 
@@ -75,7 +78,8 @@ pub async fn main() {
     let stdout = tokio::io::stdout();
     let documents = Arc::new(RwLock::new(HashMap::new()));
 
-    let (service, socket) = LspService::build(|client| Backend::new(client, Arc::clone(&documents))).finish();
+    let (service, socket) =
+        LspService::build(|client| Backend::new(client, Arc::clone(&documents))).finish();
 
     Server::new(stdin, stdout, socket).serve(service).await;
 }
