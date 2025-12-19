@@ -7,17 +7,16 @@ use conjure_cp::{
     rule_engine::ApplicationError,
 };
 
-register_representation!(SATLogInt, "sat_direct_int");
+register_representation!(SatDirectInt, "sat_direct_int");
 
 #[derive(Clone, Debug)]
-pub struct SATLogInt {
+pub struct SatDirectInt {
     src_var: Name,
     upper_bound: i32,
     lower_bound: i32,
-    // look into multiple
 }
 
-impl SATLogInt {
+impl SatDirectInt {
     /// Returns the names of the representation variable
     fn names(&self) -> impl Iterator<Item = Name> + '_ {
         (self.lower_bound..self.upper_bound).map(move |index| self.index_to_name(index))
@@ -33,7 +32,7 @@ impl SATLogInt {
     }
 }
 
-impl Representation for SATLogInt {
+impl Representation for SatDirectInt {
     /// Creates a log int representation object for the given name.
     fn init(name: &Name, symtab: &SymbolTable) -> Option<Self> {
         let domain = symtab.resolve_domain(name)?;
@@ -56,7 +55,7 @@ impl Representation for SATLogInt {
                     Some((min_a.min(*lb), max_b.max(*ub)))
                 })?;
 
-        Some(SATLogInt {
+        Some(SatDirectInt {
             src_var: name.clone(),
             lower_bound: min,
             upper_bound: max,
