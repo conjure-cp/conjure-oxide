@@ -173,16 +173,21 @@ fn classify_missing_token(node: Node) -> Diagnostic {
     }
 }
 fn classify_unexpected_token_error(node: Node, source_code: &str) -> Diagnostic {
-    // compute message, whole_line flag and line_index in one expression to avoid unused-assignment warnings
     let (message, whole_line, line_index) = if let Some(parent) = node.parent() {
         let start_byte = node.start_byte().min(source_code.len());
         let end_byte = node.end_byte().min(source_code.len());
         let src_token = &source_code[start_byte..end_byte];
 
+        // Malformed entire lines
+        // Tree-sitter cannot apply any grammar rule to a line
+
+        // ERROR node is the direct child of the root node
         if parent.kind() == "program" {
             let li = node.start_position().row as usize;
             let line_text = source_code.lines().nth(li).unwrap_or("");
 
+            // happens when the malformed line is the first
+            // Tree-sitter places the error node out of range, needs separate handling
             if error_node_out_of_range(&node, source_code) {
                 (
                     format!("Malformed line {}: '{}'", li + 1, line_text),
@@ -195,6 +200,9 @@ fn classify_unexpected_token_error(node: Node, source_code: &str) -> Diagnostic 
                     true,
                     li,
                 )
+            // Unexpected tokens
+
+            // Tree-sitter classified a line but found unexpected token at the end of it
             } else if let Some(prev_sib) = node.prev_sibling().and_then(|n| n.prev_sibling()) {
                 (
                     format!(
@@ -208,6 +216,7 @@ fn classify_unexpected_token_error(node: Node, source_code: &str) -> Diagnostic 
             } else {
                 (format!("Unexpected '{}'", src_token), false, li)
             }
+        // Unexpected tokens inside constructs
         } else {
             (
                 format!("Unexpected '{}' inside '{}'", src_token, parent.kind()),

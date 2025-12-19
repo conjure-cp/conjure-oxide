@@ -1,5 +1,5 @@
 use conjure_cp_essence_parser::diagnostics::error_detection::syntactic_errors::{
-    check_diagnostic, detect_syntactic_errors, print_diagnostics,
+    check_diagnostic, detect_syntactic_errors,
 };
 
 #[test]
@@ -67,7 +67,6 @@ fn unexpected_colon_used_as_identifier() {
 fn missing_colon_domain_in_find_statement_1st_line() {
     let source = "find x";
     let diagnostics = detect_syntactic_errors(source);
-    print_diagnostics(&diagnostics);
 
     // Should be exactly one diagnostic
     assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
@@ -81,7 +80,6 @@ fn missing_colon_domain_in_find_statement_1st_line() {
 fn missing_colon_domain_in_find_statement_2nd_line() {
     let source = "find x: int(1..3)\nfind x";
     let diagnostics = detect_syntactic_errors(source);
-    print_diagnostics(&diagnostics);
 
     // Should be exactly one diagnostic
     assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
