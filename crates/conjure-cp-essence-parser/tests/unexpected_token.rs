@@ -135,3 +135,36 @@ such that a = allDiff([1,2,4,1])8";
         "Unexpected '8' at the end of 'such that'",
     );
 }
+
+#[test]
+fn unexpected_operand_at_end() {
+    let source = "\
+find x, a, b: int(1..3)+
+";
+    let diags = detect_syntactic_errors(source);
+    assert!(!diags.is_empty(), "Expected at least one diagnostic");
+    let diag = &diags[0];
+    check_diagnostic(diag, 0, 23, 0, 24, "Unexpected '+' at the end of 'find'");
+}
+
+#[test]
+fn unexpected_operand_middle_no_comma() {
+    let source = "\
+find x-, b: int(1..3)
+";
+    let diags = detect_syntactic_errors(source);
+    assert!(!diags.is_empty(), "Expected at least one diagnostic");
+    let diag = &diags[0];
+    check_diagnostic(diag, 0, 6, 0, 7, "Unexpected '-' inside 'variable_list'");
+}
+
+#[test]
+fn unexpected_operand_middle_comma() {
+    let source = "\
+find x,-, b: int(1..3)
+";
+    let diags = detect_syntactic_errors(source);
+    assert!(!diags.is_empty(), "Expected at least one diagnostic");
+    let diag = &diags[0];
+    check_diagnostic(diag, 0, 6, 0, 8, "Unexpected ',-' inside 'variable_list'");
+}

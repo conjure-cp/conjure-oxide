@@ -11,15 +11,17 @@ pub fn print_all_error_nodes(source: &str) {
         println!("{}", root_node.to_sexp());
         let mut stack = vec![root_node];
         while let Some(node) = stack.pop() {
-            if node.is_error() || node.is_missing() {
+            if node.is_error() || node.is_missing() || node.has_error() {
                 println!(
-                    "[all errors] Error node: '{}' [{}:{}-{}:{}] (children: {})",
+                    "Error: '{}' [{}:{}-{}:{}] (children: {}) parent: {}",
                     node.kind(),
                     node.start_position().row,
                     node.start_position().column,
                     node.end_position().row,
                     node.end_position().column,
-                    node.child_count()
+                    node.child_count(),
+                    node.parent()
+                        .map_or("None".to_string(), |p| p.kind().to_string())
                 );
             }
             for i in (0..node.child_count()).rev() {
@@ -48,6 +50,18 @@ pub fn print_diagnostics(diags: &[Diagnostic]) {
             diag.source
         );
     }
+}
+
+/// Returns true if the node's start or end column is out of range for its line in the source.
+fn error_node_out_of_range(node: &tree_sitter::Node, source: &str) -> bool {
+    let lines: Vec<&str> = source.lines().collect();
+    let start = node.start_position();
+    let end = node.end_position();
+
+    let start_line_len = lines.get(start.row as usize).map_or(0, |l| l.len());
+    let end_line_len = lines.get(end.row as usize).map_or(0, |l| l.len());
+
+    (start.column as usize > start_line_len) || (end.column as usize > end_line_len)
 }
 
 /// Detects syntactic issues in the essence source text and returns a vector of Diagnostics.
@@ -100,9 +114,8 @@ pub fn detect_syntactic_errors(source: &str) -> Vec<Diagnostic> {
             diagnostics.push(classify_missing_token(node));
             continue;
         }
-
         // Only classify error nodes whose parent is not error/missing
-        if node.is_error()
+        if (node.is_error())
             && !node
                 .parent()
                 .is_some_and(|p| p.is_error() || p.is_missing())
@@ -117,44 +130,15 @@ pub fn detect_syntactic_errors(source: &str) -> Vec<Diagnostic> {
 
 /// Classifies a syntax error node and returns a diagnostic for it.
 fn classify_syntax_error(node: Node, source: &str) -> Diagnostic {
-    let (start, end) = (node.start_position(), node.end_position());
-
     if node.is_missing() {
         return classify_missing_token(node);
-    }
-
-    let message = if is_unexpected_token(node) {
-        // If no children (exept the token itself) - unexpected token
+    } else if node.is_error() {
         classify_unexpected_token_error(node, source)
     } else {
         classify_general_syntax_error(node)
-    };
-    Diagnostic {
-        range: Range {
-            start: Position {
-                line: start.row as u32,
-                character: start.column as u32,
-            },
-            end: Position {
-                line: end.row as u32,
-                character: end.column as u32,
-            },
-        },
-        severity: Severity::Error,
-        message,
-        source: "syntactic-error-detector",
     }
 }
 
-/// When an unexpected sybmol is part of the grammar - token, CST produces one ERROR node
-/// If not part of the grammar - two nested ERROR nodes.
-/// For misplaces integers - one ERROR node with no children, for everything else, one child node
-/// !is_named() is used to detect string literals
-fn is_unexpected_token(node: Node) -> bool {
-    node.child_count() == 0
-        || node.child_count() == 1
-            && (!node.child(0).unwrap().is_named() || (node.child(0).unwrap().is_error()))
-}
 /// Classifies a missing token node and generates a diagnostic with a context-aware message.
 fn classify_missing_token(node: Node) -> Diagnostic {
     let start = node.start_position();
@@ -168,6 +152,7 @@ fn classify_missing_token(node: Node) -> Diagnostic {
             _ => format!("Missing '{}'", node.kind()),
         }
     } else {
+        print!("Hello");
         format!("Missing '{}'", node.kind())
     };
 
@@ -187,35 +172,91 @@ fn classify_missing_token(node: Node) -> Diagnostic {
         source: "syntactic-error-detector",
     }
 }
+fn classify_unexpected_token_error(node: Node, source_code: &str) -> Diagnostic {
+    // compute message, whole_line flag and line_index in one expression to avoid unused-assignment warnings
+    let (message, whole_line, line_index) = if let Some(parent) = node.parent() {
+        let start_byte = node.start_byte().min(source_code.len());
+        let end_byte = node.end_byte().min(source_code.len());
+        let src_token = &source_code[start_byte..end_byte];
 
-fn classify_unexpected_token_error(node: Node, source_code: &str) -> String {
-    if let Some(parent) = node.parent() {
-        let src_token = &source_code[node.start_byte()..node.end_byte()];
-
-        // Unexpected token at the end of a statement
         if parent.kind() == "program" {
-            // Save cursor position
-            if let Some(prev_sib) = node.prev_sibling().and_then(|n| n.prev_sibling()) {
-                format!(
-                    "Unexpected '{}' at the end of '{}'",
-                    src_token,
-                    prev_sib.kind()
+            let li = node.start_position().row as usize;
+            let line_text = source_code.lines().nth(li).unwrap_or("");
+
+            if error_node_out_of_range(&node, source_code) {
+                (
+                    format!("Malformed line {}: '{}'", li + 1, line_text),
+                    true,
+                    li,
+                )
+            } else if node.start_position().column == 0 {
+                (
+                    format!("Malformed line {}: '{}'", li + 1, line_text),
+                    true,
+                    li,
+                )
+            } else if let Some(prev_sib) = node.prev_sibling().and_then(|n| n.prev_sibling()) {
+                (
+                    format!(
+                        "Unexpected '{}' at the end of '{}'",
+                        src_token,
+                        prev_sib.kind()
+                    ),
+                    false,
+                    li,
                 )
             } else {
-                format!("Unexpected '{}' ", src_token)
+                (format!("Unexpected '{}'", src_token), false, li)
             }
         } else {
-            format!("Unexpected '{}' inside '{}'", src_token, parent.kind())
+            (
+                format!("Unexpected '{}' inside '{}'", src_token, parent.kind()),
+                false,
+                0,
+            )
         }
-    // Error at root node (program)
     } else {
-        format!("Unexpected '{}", source_code)
+        (format!("Unexpected '{}'", source_code), false, 0)
+    };
+
+    // compute range once based on whole_line flag or node positions
+    let (start, end) = if whole_line {
+        let li = line_index;
+        let line_text = source_code.lines().nth(li).unwrap_or("");
+        (
+            Position {
+                line: li as u32,
+                character: 0,
+            },
+            Position {
+                line: li as u32,
+                character: line_text.len() as u32,
+            },
+        )
+    } else {
+        (
+            Position {
+                line: node.start_position().row as u32,
+                character: node.start_position().column as u32,
+            },
+            Position {
+                line: node.end_position().row as u32,
+                character: node.end_position().column as u32,
+            },
+        )
+    };
+
+    Diagnostic {
+        range: Range { start, end },
+        severity: Severity::Error,
+        message,
+        source: "syntactic-error-detector",
     }
 }
 
 /// Classifies a general syntax error that cannot be classified with other functions.
-fn classify_general_syntax_error(node: Node) -> String {
-    if let Some(parent) = node.parent() {
+fn classify_general_syntax_error(node: Node) -> Diagnostic {
+    let message = if let Some(parent) = node.parent() {
         format!(
             "Syntax error in '{}': unexpected or invalid '{}'.",
             parent.kind(),
@@ -223,6 +264,22 @@ fn classify_general_syntax_error(node: Node) -> String {
         )
     } else {
         format!("Syntax error: unexpected or invalid '{}'.", node.kind())
+    };
+
+    Diagnostic {
+        range: Range {
+            start: Position {
+                line: node.start_position().row as u32,
+                character: node.start_position().column as u32,
+            },
+            end: Position {
+                line: node.end_position().row as u32,
+                character: node.end_position().column as u32,
+            },
+        },
+        severity: Severity::Error,
+        message,
+        source: "syntactic-error-detector",
     }
 }
 
