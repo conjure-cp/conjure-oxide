@@ -1,3 +1,4 @@
+use conjure_cp::ast::abstract_comprehension::{Generator, Qualifier};
 use conjure_cp::ast::{Expression as Expr, *};
 use conjure_cp::rule_engine::ApplicationError;
 use conjure_cp::rule_engine::{
@@ -247,6 +248,42 @@ fn unwrap_flatten_matrix_nonatomic(expr: &Expr, _: &SymbolTable) -> ApplicationR
     let new_expr = Expr::AbstractLiteral(
         Metadata::new(),
         AbstractLiteral::Matrix(elems, new_dom.into()),
+    );
+    Ok(Reduction::pure(new_expr))
+}
+
+/// Expands a sum over an "in set" comprehension to a list.
+///
+/// TODO: We currently only support one "in set" generator.
+/// This rule can be made much more general and nicer.
+#[register_rule(("Smt", 999))]
+fn unwrap_abstract_comprehension_sum(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    let Expr::Sum(_, inner) = expr else {
+        return Err(RuleNotApplicable);
+    };
+    let Expr::AbstractComprehension(_, comp) = inner.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let [Qualifier::Generator(Generator::ExpressionGenerator(generator))] = &comp.qualifiers[..]
+    else {
+        return Err(RuleNotApplicable);
+    };
+
+    let set = &generator.expression;
+    let elem_domain = generator.decl.domain().ok_or(DomainError)?;
+    let list: Vec<_> = elem_domain
+        .values()
+        .map_err(|_| DomainError)?
+        .map(|lit| essence_expr!("&lit * toInt(&lit in &set)"))
+        .collect();
+
+    let new_expr = Expr::Sum(
+        Metadata::new(),
+        Moo::new(Expr::AbstractLiteral(
+            Metadata::new(),
+            AbstractLiteral::matrix_implied_indices(list),
+        )),
     );
     Ok(Reduction::pure(new_expr))
 }
