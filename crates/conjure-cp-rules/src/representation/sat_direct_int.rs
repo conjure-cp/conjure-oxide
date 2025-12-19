@@ -70,7 +70,7 @@ impl Representation for SatDirectInt {
 
     fn value_down(
         &self,
-        value: Literal,
+        _value: Literal,
     ) -> Result<std::collections::BTreeMap<Name, Literal>, ApplicationError> {
         // NOTE: It's unclear where and when `value_down` would be called for
         // direct encoding. This is also never called in log encoding, so we

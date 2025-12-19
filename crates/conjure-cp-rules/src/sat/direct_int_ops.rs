@@ -250,7 +250,7 @@ fn sat_direct_lt(
     symbols: &mut SymbolTable,
 ) -> Expr {
     let mut b_or;
-    let mut a_iter = a.iter();
+    let a_iter = a.iter();
     let mut b_iter = b.iter();
 
     let mut cum_result;
