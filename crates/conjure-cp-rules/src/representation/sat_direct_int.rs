@@ -1,5 +1,6 @@
 // https://conjure-cp.github.io/conjure-oxide/docs/conjure_core/representation/trait.Representation.html
 use conjure_cp::ast::GroundDomain;
+use conjure_cp::bug;
 use conjure_cp::{
     ast::{Atom, DeclarationPtr, Domain, Expression, Literal, Metadata, Name, SymbolTable},
     register_representation,
@@ -17,12 +18,12 @@ pub struct SatDirectInt {
 }
 
 impl SatDirectInt {
-    /// Returns the names of the representation variable
+    /// Returns the names of the boolean variables used in the direct encoding.
     fn names(&self) -> impl Iterator<Item = Name> + '_ {
         (self.lower_bound..self.upper_bound).map(move |index| self.index_to_name(index))
     }
 
-    /// Gets the representation variable name for a specific index.
+    /// Gets the representation variable name corresponding to a concrete integer value.
     fn index_to_name(&self, index: i32) -> Name {
         Name::Represented(Box::new((
             self.src_var.clone(),
@@ -33,7 +34,7 @@ impl SatDirectInt {
 }
 
 impl Representation for SatDirectInt {
-    /// Creates a log int representation object for the given name.
+    /// Creates a direct int representation object for the given name.
     fn init(name: &Name, symtab: &SymbolTable) -> Option<Self> {
         let domain = symtab.resolve_domain(name)?;
 
@@ -67,24 +68,14 @@ impl Representation for SatDirectInt {
         &self.src_var
     }
 
-    /// Given the integer assignment for `self`, creates assignments for its representation variables.
     fn value_down(
         &self,
         value: Literal,
     ) -> Result<std::collections::BTreeMap<Name, Literal>, ApplicationError> {
-        let Literal::Int(mut value_i32) = value else {
-            return Err(ApplicationError::RuleNotApplicable);
-        };
-
-        let mut result = std::collections::BTreeMap::new();
-
-        // name_0 is the least significant bit, name_<final> is the sign bit
-        for name in self.names() {
-            result.insert(name, Literal::Bool((value_i32 & 1) != 0));
-            value_i32 >>= 1;
-        }
-
-        Ok(result)
+        // FIXME: It's unclear where and when `value_down` would be called for
+        // direct encoding. This is also never called in log encoding, so we
+        // deliberately fail here to surface unexpected usage.
+        bug!("value_down is not implemented for direct encoding and should not be called")
     }
 
     /// Given the values for its boolean representation variables, creates an assignment for `self` - the integer form.
@@ -149,7 +140,7 @@ impl Representation for SatDirectInt {
         Ok(temp_a)
     }
 
-    /// The rule name for this representaion.
+    /// The rule name for this representation.
     fn repr_name(&self) -> &str {
         "sat_direct_int"
     }
