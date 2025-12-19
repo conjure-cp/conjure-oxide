@@ -52,17 +52,17 @@ The client and server communicate asynchronously through I/O streams. Communicat
 A client and server declare their capabilities during the initialisation handshake. These capabilities reflect what the server and client actually support, and so when new features are added these capabilities must be updated. Capabilities essentially allow for server and client to inform the other whether or not they support specific types of requests, ensuring that requests are not made needlessly. For example, `text_document_sync` indicates that the server supports syncing, meaning that the client will communicate on sync events (such as on-change and on-save).
 
 ## Client
-The Client is a VSCode extention, in TypeScript. As such, the client represents the installed extention which is actively being used by a user. Broadly, we consider the client to be the the VSCode IDE in any instance where a `.essence` file is open.
+The Client is a VSCode extension, in TypeScript. As such, the client represents the installed extension which is actively being used by a user. Broadly, we consider the client to be the the VSCode IDE in any instance where a `.essence` file is open.
 
 ### Key Structure
-The Client itself is programmed within a TypeScript file, called `extention.ts`. This simply launches the client, which then launches the server using `ServerOptions` to call `conjure-oxide server-lsp`.
+The Client itself is programmed within a TypeScript file, called `extension.ts`. This simply launches the client, which then launches the server using `ServerOptions` to call `conjure-oxide server-lsp`.
 
 Additionally, there is a `syntaxes/essence.tmLanguage.json` file, which lays out the syntactic grammar of Essence in a TextMate file. This file is what allows for Syntax Highlighting. The reason that this file exists, alongside the highlighting which will be performed by the server, is that this is extremely lightweight to implement. There are often performance costs associated with an LSP, as they can be large and require a lot of computation. As such, TextMate grammars allow for simple highlighting to occur before the LSP loads/while it is performing computation. `language-configuration.json` provides autoclosing of brackets, speech marks, etc.
 
-The client also requires a number of `package[-lock].json` files. The functionality of these files is to declare to the VSCode IDE what the extention is called, where it is sourced within the codebase, and what it's functionality is. These files also establish the dependencies which are required for the client to function.
+The client also requires a number of `package[-lock].json` files. The functionality of these files is to declare to the VSCode IDE what the extension is called, where it is sourced within the codebase, and what it's functionality is. These files also establish the dependencies which are required for the client to function.
 
 ### Syntax Highlighting
-As addressed above, syntax highlighting is implemented through a TextMate grammar. The basis of this grammar is that outlined by Conjure's VSCode Extention[^bignote]
+As addressed above, syntax highlighting is implemented through a TextMate grammar. The basis of this grammar is that outlined by Conjure's VSCode extension[^bignote]
 ‌
 ## Server
 The server is a Rust server, created using tower-lsp. This library was used as it abstracts over the low-level implementation details. The implementation also abstracts over the implementation of the Diagnostic API and the parser, both of which are implemented and manipulated further downstream (if we consider the client and server to be the frontmost end of the project). This allows for the server to implement new functionality freely, so long as the information is capable of being provided by the Diagnostic API. Essentially, the implementation of the Language Server here is a higher level construct which makes requests to other levels (e.g. Diagnostics) when required. This allows for the code of the server to be fairly simple and easy to follow.
@@ -98,7 +98,7 @@ Not yet implemented, though this will be the next functionality added to the ser
 
 ## Development 
 ### How to use (for development)
-At the current stage of development, the extension is not being released. This means that functionality is being tested using VSCode's Extention Development environment. In order to ensure that this works as intended, compile `extension.ts` using `npm run compile` (or ctrl-shift-b and select this). Then launch the Extention Development environment, and this will cause the client to run. Due to the structure of the client-server, the server will then run and link to the client, and the LSP can then be tested. 
+At the current stage of development, the extension is not being released. This means that functionality is being tested using VSCode's extension Development environment. In order to ensure that this works as intended, compile `extension.ts` using `npm run compile` (or ctrl-shift-b and select this). Then launch the extension Development environment, and this will cause the client to run. Due to the structure of the client-server, the server will then run and link to the client, and the LSP can then be tested. 
 
 It is worth noting that a copy of conjure-oxide **MUST** be installed in order for the client to work. Testing the server requires for an updated install. 
 
