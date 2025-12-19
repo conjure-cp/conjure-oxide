@@ -287,3 +287,44 @@ fn unwrap_abstract_comprehension_sum(expr: &Expr, _: &SymbolTable) -> Applicatio
     );
     Ok(Reduction::pure(new_expr))
 }
+
+/// Unwraps a subsetEq expression into checking membership equality.
+///
+/// Any elements not in the domain of one set must not be in the other set.
+#[register_rule(("Smt", 999))]
+fn unwrap_subseteq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    let Expr::SubsetEq(_, a, b) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let dom_a = a.domain_of().and_then(|d| d.resolve()).ok_or(DomainError)?;
+    let dom_b = b.domain_of().and_then(|d| d.resolve()).ok_or(DomainError)?;
+
+    let GroundDomain::Set(_, elem_dom_a) = dom_a.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
+    let GroundDomain::Set(_, elem_dom_b) = dom_b.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let domain_a_iter = elem_dom_a.values().map_err(|_| DomainError)?;
+    let memberships = domain_a_iter
+        .map(|lit| {
+            let b_contains = elem_dom_b.contains(&lit).map_err(|_| DomainError)?;
+            match b_contains {
+                true => Ok(essence_expr!("(&lit in &a) <-> (&lit in &b)")),
+                false => Ok(essence_expr!("!(&lit in &a)")),
+            }
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+
+    let new_expr = Expr::And(
+        Metadata::new(),
+        Moo::new(Expr::AbstractLiteral(
+            Metadata::new(),
+            AbstractLiteral::matrix_implied_indices(memberships),
+        )),
+    );
+
+    Ok(Reduction::pure(new_expr))
+}
