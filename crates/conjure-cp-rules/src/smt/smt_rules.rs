@@ -312,7 +312,7 @@ fn unwrap_subseteq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         .map(|lit| {
             let b_contains = elem_dom_b.contains(&lit).map_err(|_| DomainError)?;
             match b_contains {
-                true => Ok(essence_expr!("(&lit in &a) <-> (&lit in &b)")),
+                true => Ok(essence_expr!("(&lit in &a) -> (&lit in &b)")),
                 false => Ok(essence_expr!("!(&lit in &a)")),
             }
         })
