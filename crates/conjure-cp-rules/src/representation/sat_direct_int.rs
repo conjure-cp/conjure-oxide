@@ -72,7 +72,7 @@ impl Representation for SatDirectInt {
         &self,
         value: Literal,
     ) -> Result<std::collections::BTreeMap<Name, Literal>, ApplicationError> {
-        // FIXME: It's unclear where and when `value_down` would be called for
+        // NOTE: It's unclear where and when `value_down` would be called for
         // direct encoding. This is also never called in log encoding, so we
         // deliberately fail here to surface unexpected usage.
         bug!("value_down is not implemented for direct encoding and should not be called")
