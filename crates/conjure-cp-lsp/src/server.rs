@@ -4,10 +4,7 @@ use serde_json::Value;
 use tower_lsp::{
     Client, LanguageServer, LspService, Server,
     jsonrpc::{Error, Result},
-    lsp_types::{
-        ExecuteCommandOptions, ExecuteCommandParams, InitializeParams, InitializeResult,
-        InitializedParams, MessageType, ServerCapabilities, notification::Notification,
-    },
+    lsp_types::*,
 };
 
 use conjure_cp_essence_parser::diagnostics::diagnostics_api::get_diagnostics;
@@ -20,24 +17,38 @@ use conjure_cp_essence_parser::diagnostics::diagnostics_api::Position as ParserP
 
 use tower_lsp::lsp_types::Diagnostic as LspDiagnostic;
 
+use tokio::fs;
+
 #[derive(Debug, Serialize, Deserialize)]
-struct NotifactionParams {
-    title: String,
-    message: String,
-    description: String,
-}
-
-enum CustomNotifciation {}
-
-impl Notification for CustomNotifciation {
-    type Params = NotifactionParams;
-
-    const METHOD: &'static str = "custom/notification";
-}
 
 #[derive(Debug)]
 struct Backend {
     client: Client,
+}
+
+impl Backend {
+    pub async fn handle_diagnostic(&self, uri: &Url) {
+        // if let Ok(path) = uri.to_file_path().ok() {
+        let file_path = uri.to_file_path().ok();
+        
+        if let Some(path) = file_path {
+            match fs::read_to_string(&path).await {
+                Ok(content) => {
+                    // get_diagnostics takes in source code as &str and returns Vec<Diagnostic>
+                    let diagnostics = get_diagnostics(&content); // get diagnostics from cp-essence-parser
+                    let lsp_diagnostics = convert_diagnostics(diagnostics); // convert to LSP diagnostics // convert to LSP diagnostics
+                    
+                    // Publish diagnostics back to the client
+                    self.client
+                        .publish_diagnostics(uri.clone(), lsp_diagnostics, None)
+                        .await;
+                }
+                Err(e) => {
+                    eprintln! ("Failed to read file {}: {}", path. display(), e);
+                }
+            }
+        }
+    }
 }
 
 #[tower_lsp::async_trait]
@@ -53,6 +64,10 @@ impl LanguageServer for Backend {
                     commands: vec![String::from("custom.notification")],
                     work_done_progress_options: Default::default(),
                 }),
+                text_document_sync: Some(TextDocumentSyncCapability::Kind(
+                    TextDocumentSyncKind::FULL,
+                )),
+                // hover_provider: Some(HoverProviderCapability::Simple(true)),
                 ..ServerCapabilities::default()
             },
         })
@@ -66,42 +81,25 @@ impl LanguageServer for Backend {
     async fn shutdown(&self) -> Result<()> {
         Ok(())
     }
-    async fn execute_command(&self, params: ExecuteCommandParams) -> Result<Option<Value>> {
-        if params.command == "custom.notification" {
-            //one of the commands that we support (see line 34)
-            self.client
-                .send_notification::<CustomNotifciation>(NotifactionParams {
-                    //send_notification is defined by the client
-                    title: String::from("Hello Notification"),
-                    message: String::from("This is a test message"),
-                    description: String::from("This is a description"),
-                })
-                .await;
-
-            self.client
-                .log_message(
-                    MessageType::INFO,
-                    format!("Command executed successfully with params: {params:?}"),
-                )
-                .await;
-            Ok(None)
-        }
-        //can add additional commands here in an if-else block
-        else {
-            Err(Error::invalid_request())
-        }
-    }
     // underline errors on file open
-    async fn did_open(&self, params: tower_lsp::lsp_types::DidOpenTextDocumentParams) {
+    async fn did_open(&self, params: DidOpenTextDocumentParams) {
+        let uri = &params.text_document.uri;
+        dbg!("did open", uri);
         // get_diagnostics takes in source code as &str and returns Vec<Diagnostic>
-        let diagnostics = get_diagnostics(&params.text_document.text); // get diagnostics from cp-essence-parser
-        let lsp_diagnostics = convert_diagnostics(diagnostics); // convert to LSP diagnostics
 
-        self.client.publish_diagnostics(
-            params.text_document.uri,
-            lsp_diagnostics,
-            None,
-        ).await;
+        self.handle_diagnostic(uri).await;
+    }
+    async fn did_save(&self, params: DidSaveTextDocumentParams) {
+        let uri = &params.text_document.uri;
+        dbg!("did save", uri);
+
+        self.handle_diagnostic(uri).await;
+    }
+    async fn did_change(&self, params: DidChangeTextDocumentParams) {
+        let uri = &params.text_document.uri;
+        dbg!("did change", uri);
+
+        self.handle_diagnostic(uri).await;
     }
 }
 

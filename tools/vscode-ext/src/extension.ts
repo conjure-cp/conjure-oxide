@@ -8,7 +8,6 @@ import {
 	ServerOptions,
 	TransportKind
 } from 'vscode-languageclient/node';
-import { vscode } from 'vscx'
 
 export function activate(context: ExtensionContext) {
 	tryStartLanguageServer(context);
