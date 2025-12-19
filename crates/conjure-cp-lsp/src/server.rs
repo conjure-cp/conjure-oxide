@@ -1,9 +1,6 @@
-use serde::{Deserialize, Serialize};
-use serde_json::Value;
-
 use tower_lsp::{
     Client, LanguageServer, LspService, Server,
-    jsonrpc::{Error, Result},
+    jsonrpc::{Result}, //add Error if needed later, currently unused
     lsp_types::*,
 };
 
@@ -18,8 +15,6 @@ use conjure_cp_essence_parser::diagnostics::diagnostics_api::Position as ParserP
 use tower_lsp::lsp_types::Diagnostic as LspDiagnostic;
 
 use tokio::fs;
-
-#[derive(Debug, Serialize, Deserialize)]
 
 #[derive(Debug)]
 struct Backend {
