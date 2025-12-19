@@ -153,14 +153,7 @@ fn dividing_over_zero() {
 
     let diag = &diagnostics[0];
 
-    check_diagnostic(
-        diag,
-        2,
-        31,
-        2,
-        32,
-        "Semantic Error: Index out of bounds",
-    );
+    check_diagnostic(diag, 2, 31, 2, 32, "Semantic Error: Index out of bounds");
 }
 
 #[ignore]

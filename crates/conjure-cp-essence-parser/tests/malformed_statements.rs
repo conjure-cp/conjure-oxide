@@ -1,5 +1,5 @@
 use conjure_cp_essence_parser::diagnostics::error_detection::syntactic_errors::{
-    check_diagnostic, detect_syntactic_errors, print_diagnostics
+    check_diagnostic, detect_syntactic_errors, print_diagnostics,
 };
 
 #[ignore]
@@ -15,14 +15,7 @@ fn detects_operator_as_identifier() {
 
     let diag = &diagnostics[0];
 
-    check_diagnostic(
-        diag,
-        0,
-        0,
-        0,
-        20,
-        "Malformed 'find' statement",
-    );
+    check_diagnostic(diag, 0, 0, 0, 20, "Malformed 'find' statement");
 }
 
 #[ignore]
@@ -38,14 +31,7 @@ fn detects_complex_operator_as_identifier() {
 
     let diag = &diagnostics[0];
 
-    check_diagnostic(
-        diag,
-        0,
-        0,
-        0,
-        24,
-        "Malformed 'find_statement'",
-    );
+    check_diagnostic(diag, 0, 0, 0, 24, "Malformed 'find_statement'");
 }
 
 #[ignore]
