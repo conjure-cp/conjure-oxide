@@ -152,7 +152,6 @@ fn classify_missing_token(node: Node) -> Diagnostic {
             _ => format!("Missing '{}'", node.kind()),
         }
     } else {
-        print!("Hello");
         format!("Missing '{}'", node.kind())
     };
 
