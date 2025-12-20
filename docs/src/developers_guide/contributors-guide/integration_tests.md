@@ -15,20 +15,30 @@ Integration testing is done to test how the different components, like the rust 
 
 The tests manually recreate models using rust to ensure constraints are passed to the solver correctly, and that the results are as expected. 
 
-[Rust integration tests](https://doc.rust-lang.org/rust-by-example/testing/integration_testing.html) are written ...
+### Writing Integration Tests
 
-<!-- ### Writing Integration Tests -->
+[Rust integration tests](https://doc.rust-lang.org/rust-by-example/testing/integration_testing.html) follow a similar format. 
 
+They contain imports, a static `SOLS_COUNTER` to store the number of solutions found, and a callback function that increments at every solution and returns true to make the solver continue searching for solutions. 
+
+The test function should be annotated with `#[test]` and include `#[allow(clippy::panic_in_result_fn)]` to suppress a warning for ease of testing. 
+
+The new model is created with `Model::new()`, and its symbol table is populated with variables.
+
+The solver must then be run using `minion_sys::run_minion` which takes the model and callback function. 
+
+Lastly, the results are verified to ensure the number of solutions found match the expected solutions.
 
 ### Running Integration Tests
 
-They are run with the following commands: 
+They are run with the standard command that executes the testing suite: 
 ```bash
 cargo test
 ``` 
-or 
+
+Or with the following command that is used for new tests or changing behaviour. It overwrites the old expected file with new actual output instead of just failing when output doesnt match: 
 ```bash
-cargo test ACCRPT=true
+cargo test ACCEPT=true
 ```
 
 ## Essence Tests
