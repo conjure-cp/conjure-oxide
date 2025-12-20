@@ -9,7 +9,7 @@ created: 20-11-2025
 
 
 
-<!-- TODOs -->
+<!-- TODOs: explain function domains -->
 
 
 
@@ -116,11 +116,59 @@ Apart from decision variables, the following terms in Essence can have a domain:
   - `{1, 2, 3}: set (size 3) of int(1..3)`
 
 - **Constant declarations** (`letting`s):
-  Lettings contain an expression, so $dom(|| \verb |letting x be <expr>| ||) \equiv dom(|| \verb |expr| ||)$.
+  Lettings map to an expression, so $dom(\verb |letting x be <expr>|) \equiv dom( \verb |<expr>| )$.
 
 
 
 ### List of Domains in Essence
+
+```
+D :=   bool
+     | int(ranges)
+     | set (attrs) of D
+     | matrix indexed by [D, ...] of D
+     | tuple (D, ...)
+     | record {name: D, ...}
+     | function D1 -> D2
+```
+
+Essence supports the following domains:
+
+- `bool`: boolean values (`True, False`).
+
+- `int(<ranges>)`: integers belonging to one of a list of ranges.
+
+  Ranges can be:
+
+  - A single value (e.g. `42`)
+  - Bounded on both sides (e,g. `1..3`, meaning $1 \leq x \leq 3$)
+  - Unbounded on the left (e.g. `..3`, meaning $x \leq 3$)
+  - Unbounded on the right (e.g. `1..`, meaning $x \geq 1$)
+
+  If the list of ranges is empty (`x: int`), the domain is **unbounded** and **infinite** (`x` can be any integer). If the list contains any unbounded ranges, the domain is likewise **infinite**.
+  For example:
+
+  ```
+  x: int(..1, 3, 5..8, 42..)
+  ```
+
+- `set <attr> of <inner>`: a set whose elements are drawn from the `<inner>` domain.
+  The optional set attributes specify its minimum / maximum *cardinality* (i.e. number of elements)
+
+- `matrix indexed by [<idx>] of <inner>`: a matrix, whose elements are drawn from 
+  `<inner>` and indices for each dimension are drawn from the corresponding `<idx>`.
+  (For a more detailed explanation, see above)
+
+- `tuple (D1, ..., Dn)`: an ordered tuple of elements, whose elements are drawn from the specified domains: $\forall i \, . \, t[i] \in D_i$.
+
+- `record`: a *named tuple* - similar to an ordinary tuple domain, except its elements are indexed via human-friendly names. For example:
+
+  ``` 
+  find worker: record {salary: int(20..50), age: int(18..100)}
+  such that worker.salary % 10 = 0
+  ```
+
+- `function`: TODO function people pls explain
 
 ### Domains vs Types
 
