@@ -107,6 +107,8 @@ If wishing to just run the server (though without a client it will be incapable 
 ### Development Directions
 When developing, ensure that whatever functionality is being added has it's respective capability communicated to the client during the initialisation handshake, otherwise the triggering events will not be communicated by the client. 
 
+Furthermore, it is of note that the server and client communicate over standard input and output. As such, nothing which will be called by the server, including the server itself, should ever write onto or read from the stdin and stdout streams. This should always be handled by the tower-lsp library, to ensure that the communication occurring is JSONrpc as expected by the client. Any incorrectly formed writing to the stream will cause the client to close the server and disconnect.
+
 ## References
 [^bignote]:
    conjure-cp (2025). conjure-vs-code/syntaxes/essence.tmLanguage.json at main · conjure-cp/conjure-vs-code. [online] GitHub. Available at: https://github.com/conjure-cp/conjure-vs-code/blob/main/syntaxes/essence.tmLanguage.json
