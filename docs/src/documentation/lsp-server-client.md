@@ -98,7 +98,7 @@ Not yet implemented, though this will be the next functionality added to the ser
 
 ## Development 
 ### How to use (for development)
-At the current stage of development, the extension is not being released. This means that functionality is being tested using VSCode's extension Development environment. In order to ensure that this works as intended, compile `extension.ts` using `npm run compile` (or ctrl-shift-b and select this). Then launch the extension Development environment, and this will cause the client to run. Due to the structure of the client-server, the server will then run and link to the client, and the LSP can then be tested. 
+At the current stage of development, the extension is not being released. This means that functionality is being tested using VSCode's extension Development environment. In order to ensure that this works as intended, compile `extension.ts` using `npm run compile` (or ctrl-shift-b and select this). Then launch the extension Development environment, and this will cause the client to run. Due to the structure of the client-server, the server will then run and link to the client, and the LSP can then be tested. Please ensure that `npm install` has been run in advance/all required node modules are installed, otherwise the client will not be able to launch. 
 
 It is worth noting that a copy of conjure-oxide **MUST** be installed in order for the client to work. Testing the server requires for an updated install. 
 
