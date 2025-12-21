@@ -14,6 +14,7 @@ env:
   os: ubuntu-latest
   rust_release: nightly
   compiler_profile: debug
+  CARGO_INCREMENTAL: 0 # for smaller cache size
 
 jobs:
   doc-coverage:
@@ -22,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: free_disk_space.sh
         run: .github/workflows/tools/free_disk_space.sh
@@ -69,26 +70,13 @@ jobs:
           path: pr-doc-coverage-summary.txt
           overwrite: false
 
-      - name: Save cache
-        if: ${{ always() && steps.restore_cache.outputs.cache-hit != 'true' }}
-        uses: actions/cache/save@v4
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-            ~/conjure
-          key: doccov--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.event.repository.updated_at }}
-
   coverage:
     name: "Code"
     timeout-minutes: 120
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: free_disk_space.sh
         run: .github/workflows/tools/free_disk_space.sh
@@ -142,16 +130,3 @@ jobs:
         with:
           name: code-coverage-${{ steps.sha.outputs.sha }}
           path: deploy/**
-
-      - name: Save cache
-        if: ${{ always() && steps.restore_cache.outputs.cache-hit != 'true' }}
-        uses: actions/cache/save@v4
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-            ~/conjure
-          key: codecov--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.event.repository.updated_at }}
