@@ -8,7 +8,7 @@ created:
 
 As sets are not a type that exists in Essence Prime, they require representation in another form, such as with a matrix. Due to the variety of different set operators that exist, we first attempt to apply horizontal set rules to rewrite operations involving sets into comprehensions. This makes it easier to later apply vertical rules, as any set decision variable will only exist inside of a comprehension generator.
 
-Horizontal rules apply any set operations, such as intersections or union, that involve comparing or manipulating several sets. Once these operations are complete, sets can be unfolded using vertical rules. 
+Horizontal rules apply any set operations, such as intersections or union, that involve comparing or manipulating several sets without consideration of an underlying representation using a different type. Once these operations are complete, sets can be represented as other types using vertical rules. 
 
 Broadly speaking, there are two categories that we can divide set operations into: those that return booleans and those that return sets. 
 
