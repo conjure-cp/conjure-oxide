@@ -46,6 +46,7 @@
 # Documentation
 
 - [Essence Parser](./documentation/Essence-Parser.md)
+  - [ProTrace Module](./documentation/ProTrace-module.md)
 - [Sets]()
   - [Expression Rewriting: Rules and RuleSets](./documentation/sets/expression_rewriting:_rules_and_rulesets.md)
   - [Horizontal Set Rules](./documentation/sets/conjure-horizontal-set-rules.md)
