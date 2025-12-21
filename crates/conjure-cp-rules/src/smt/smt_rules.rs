@@ -328,3 +328,51 @@ fn unwrap_subseteq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
     Ok(Reduction::pure(new_expr))
 }
+
+/// Unwraps equality between sets into checking membership equality.
+///
+/// This is an optimisation over unwrap_subseteq to avoid unnecessary additional -> exprs
+/// where a single <-> is enough. This must apply before eq_to_subset_eq.
+#[register_rule(("Smt", 8801))]
+fn unwrap_set_eq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    let Expr::Eq(_, a, b) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let dom_a = a.domain_of().and_then(|d| d.resolve()).ok_or(DomainError)?;
+    let dom_b = b.domain_of().and_then(|d| d.resolve()).ok_or(DomainError)?;
+
+    let GroundDomain::Set(_, elem_dom_a) = dom_a.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
+    let GroundDomain::Set(_, elem_dom_b) = dom_b.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let union_val_iter = elem_dom_a
+        .union(elem_dom_b)
+        .and_then(|d| d.values())
+        .map_err(|_| DomainError)?;
+    let memberships = union_val_iter
+        .map(|lit| {
+            let a_contains = elem_dom_a.contains(&lit).map_err(|_| DomainError)?;
+            let b_contains = elem_dom_b.contains(&lit).map_err(|_| DomainError)?;
+            match (a_contains, b_contains) {
+                (true, true) => Ok(essence_expr!("(&lit in &a) <-> (&lit in &b)")),
+                (true, false) => Ok(essence_expr!("!(&lit in &a)")),
+                (false, true) => Ok(essence_expr!("!(&lit in &b)")),
+                (false, false) => unreachable!(),
+            }
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+
+    let new_expr = Expr::And(
+        Metadata::new(),
+        Moo::new(Expr::AbstractLiteral(
+            Metadata::new(),
+            AbstractLiteral::matrix_implied_indices(memberships),
+        )),
+    );
+
+    Ok(Reduction::pure(new_expr))
+}
