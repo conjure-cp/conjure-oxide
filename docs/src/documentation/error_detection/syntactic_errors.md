@@ -1,5 +1,5 @@
 [//]: # (Author: Soph Morgulchik)
-[//]: # (Last Updated: 20/12/2025)
+[//]: # (Last Updated: 21/12/2025)
 # Syntactic Errors Detection
 
 ## Overview

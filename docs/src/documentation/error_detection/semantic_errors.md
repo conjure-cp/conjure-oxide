@@ -1,3 +1,5 @@
+[//]: # (Author: Soph Morgulchik)
+[//]: # (Last Updated: 21/12/2025)
 # Semantic Errors Detection
 
 ## Overview
