@@ -36,7 +36,6 @@
   - [Semantics of Rewriting Expressions with Side‐Effects](./developers_guide/design_documents/semantics-of-rewriting-expressions.md)
   - [Ideal Scenario of Testing for Conjure-Oxide](./developers_guide/design_documents/ideal-scenario-of-testing.md)
 
-<!-- TODO: do we need this? -->
 - [CI/CD](./developers_guide/ci_cd/index.md)
   - [Coverage](./developers_guide/ci_cd/coverage.md)
   - [Github Actions: Cookbook](./developers_guide/ci_cd/github_actions.md)
@@ -49,11 +48,9 @@
 
 - [Horizontal Set Rules](./documentation/conjure-horizontal-set-rules.md)
 - [Vertical Set Rules: Occurrence Representation](./documentation/Conjure-Vertical-Set-Rules:-Occurrence-Representation.md)
-<!-- TODO: will be moved -- likely the content of these will end off here -->
 - [Useful Links](./documentation/links.md)
 
 ---
 
-<!-- TODO: will this still be needed? -->
 [For Interested Students](./footer/interested-students.md)
 [Contributors](./footer/contributors.md)
