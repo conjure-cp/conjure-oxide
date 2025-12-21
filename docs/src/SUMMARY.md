@@ -33,7 +33,6 @@
   - [2023‐11: High Level Plan](./developers_guide/design_documents/2023_11.md)
   - [2024‐03: Implementing Uniplates and Biplates with Structure Preserving Trees](./developers_guide/design_documents/2024_03.md)
   - [Semantics of Rewriting Expressions with Side‐Effects](./developers_guide/design_documents/semantics-of-rewriting-expressions.md)
-  - [Ideal Scenario of Testing for Conjure-Oxide](./developers_guide/design_documents/ideal-scenario-of-testing.md)
   - [What we didn't do](./developers_guide/design_documents/what_we_didnt_do.md)
 
 - [CI/CD](./developers_guide/ci_cd/index.md)

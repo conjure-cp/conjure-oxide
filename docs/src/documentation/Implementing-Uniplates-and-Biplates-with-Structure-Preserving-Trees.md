@@ -4,7 +4,7 @@
 # Introduction 
 
 <!-- ## Contents
-- [Recap: Uniplates and Biplates](#recap-uniplates-and-biplates.)
+- [Recap: Uniplates and Biplates](#recap-uniplates-and-biplates)
 - [Definition of Children](#definition-of-children)
 - [Storing The Structure of Children](#storing-the-structure-of-children)
 - [Uniplates and Biplates Using Structure Preserving Trees](#uniplates-and-biplates-using-structure-preserving-trees) -->
