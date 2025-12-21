@@ -46,7 +46,7 @@
 # Documentation
 
 - [Essence Parser](./documentation/Essence-Parser.md)
-  - [Tree Morph Benchmarking](./documentation/tree‐morph-benchmarking.md)
+  - [Tree Morph Benchmarking](./documentation/tree_morph_benchmarking.md)
   - [ProTrace Module](./documentation/ProTrace-module.md)
 - [Sets]()
   - [Expression Rewriting: Rules and RuleSets](./documentation/sets/expression_rewriting:_rules_and_rulesets.md)
