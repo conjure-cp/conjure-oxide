@@ -13,7 +13,7 @@ Calls `parse_essence_with_context` from `parse_model.rs` which parses Essence in
 
 `fn error_to_diagnostic(err: &crate::errors::EssenceParseError) -> Diagnostic `
 
-The function converts an `EssenceParseError` into a `Diagnostic` by pattern-matching on the error variant. When an error includes an associated source range and message, the optional `tree_sitter::Range` is converted into two `Position` structures using `range_to_position(range)`, and a `Diagnostic` is created with this range, an error severity, "semantic error detection" as the source, and an appropriate error message. For all other error variants, a fallback `Diagnostic` is produced.
+The function converts an `EssenceParseError` into a `Diagnostic` by pattern-matching on the error variant. When an error includes an associated source range and message, the optional `tree_sitter::Range` is converted into two `Position` structures using `range_to_position(range)`, and a `Diagnostic` is created with this range, an error severity, `semantic error detection` as the source, and an appropriate error message. For all other error variants, a fallback `Diagnostic` is produced.
 
 `fn range_to_position(range: &Option<tree_sitter::Range>)`
 

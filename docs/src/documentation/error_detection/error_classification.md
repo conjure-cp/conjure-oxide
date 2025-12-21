@@ -4,7 +4,7 @@ __AST__ - Abstract Syntax Tree. Generated when the CST is parsed and Model struc
 
 # Syntax Errors 
 Surface level mistakes in the Essence format. 
-Lead to an invalid CST. They are caught by the tree-sitter when an Essence expression does not match any rules in the current grammar and cause the CST to have ERROR nodes. 
+Lead to an invalid CST. They are caught by the tree-sitter when an Essence expression does not match any rules in the current grammar and cause the CST to have `ERROR` nodes. 
 
 Detected by inspecting and contextualising the CST. 
 
@@ -13,7 +13,7 @@ Detected by inspecting and contextualising the CST.
 Expected token is absent.
 
 ### Detection:
-_MISSING_ node inserted or zero range node in the CST. 
+`MISSING` node inserted or zero range node in the CST. 
 
 ### Example 1: Missing identifier(s)
 ```text
@@ -35,20 +35,20 @@ find x: tuple()
 Symbol(s) that are not supposed to be there according to the grammar rule tree-sitter is matching. Can be tokens belonging to the grammar or any foreign symbols. 
 
 ### Detection: 
-_ERROR_ node wrapping the unexpected symbol(s).
+`ERROR` node wrapping the unexpected symbol(s).
 
-### Example 1: Extra ')' at the end
+### Example 1: Extra `)` at the end
 
 ```text
 find x: int(1..2))
 ```
 
-### Example 2: Unexpected '%' in implication
+### Example 2: Unexpected `%` in implication
 ```text
 find x: int(1..3)
 such that x -> %9
 ```
-### Example 3: Unexpected '&' inside matrix domain
+### Example 3: Unexpected `&` inside matrix domain
 ```text
 find x: matrix indexed by [int, &] of int
 ```
@@ -59,9 +59,9 @@ find x: matrix indexed by [int, &] of int
 A line that cannot be parsed by the tree-sitter using any of the grammar rules. 
 
 ### Detection: 
-_ERROR_ node that is a direct child of the root node _program_ and precedes the nodes if the parsed line. 
+`ERROR` node that is a direct child of the root node `program` and precedes the nodes if the parsed line. 
 
-### Example 1: Invalid 'print x' 
+### Example 1: Invalid `print x`
 ```text
 find x: int(1..5)
 print x 
@@ -69,7 +69,7 @@ print x
 
 ### Example 2: Malformed find statement
 
-More of an edge case. Even though the keyword _find_ is present, tree-sitter does not parse the line using the _find_statement_ rule since the first symbol after _find_ cannot be parsed an an identifier. 
+More of an edge case. Even though the keyword `find` is present, tree-sitter does not parse the line using the `find_statement` rule since the first symbol after `find` cannot be parsed an an identifier. 
 ```text
 find +,a,b: int(1..3)
 ```
@@ -83,17 +83,17 @@ These errors concern the logical context of an expression rather than its surfac
 
 ## 1. Keywords as Identifiers  
 ### Description: 
-Using grammar keywords (e.g _find_, _bool_) as a variable name. 
+Using grammar keywords (e.g `find`, `bool`) as a variable name. 
 
 ### Detection: 
 Compare the variable names against the set of keywords that should not be allowed. 
 
-### Example 1: Keyword "bool" as an identifier. 
+### Example 1: Keyword `bool` as an identifier. 
 ```text
 find bool: bool
 ```
 
-### Example 2: Keyword "letting" used as an identifier. 
+### Example 2: Keyword `letting` used as an identifier. 
 ```text
 find letting,b,c: int(1..3)
 ```
@@ -103,7 +103,7 @@ find letting,b,c: int(1..3)
 Variable used but not declared.
 
 ### Detection:
-Checking that the identifier used in a constraint was previsouly declared in a _find_ or _letting_statement_.
+Checking that the identifier used in a constraint was previsouly declared in a `find` or `letting_statement`.
 
 ### Example: x was not declared before 
 ```text
@@ -128,7 +128,7 @@ find x: int(10..5)
 Attempt to do an operation on illegal types. 
 
 ### Detection: 
-Enforcing types on operations and catching a mismatch between expected types and node _kind_ that is being parsed. 
+Enforcing types on operations and catching a mismatch between expected types and node `kind` that is being parsed. 
 
 ### Example: Adding an integer and boolean. 
 ```text
@@ -154,7 +154,8 @@ At the moment says no solutions found. Would want to explicitly dissalow it.
 ## 6. Invalid indexing
 
 ### Description: 
-Tuples and matrices are indexed from 1. Negative, zero or index out of bounds is invalid. 
+Tuples and matrices are indexed from 1. 
+Negative, zero or index out of bounds is invalid. 
 
 ### Example: s tuple index of out bounds. 
 ```text
