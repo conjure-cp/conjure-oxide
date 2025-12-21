@@ -47,7 +47,7 @@
 
 # Documentation
 
-
+- [Horizontal Set Rules](./documentation/conjure-horizontal-set-rules.md)
 <!-- TODO: will be moved -- likely the content of these will end off here -->
 - [Useful Links](./documentation/links.md)
 
