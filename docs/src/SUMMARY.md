@@ -48,8 +48,10 @@
 
 - [Creating Custom Tests](./documentation/Custom-Tests.md)
 - [Essence Parser](./documentation/Essence-Parser.md)
-- [Horizontal Set Rules](./documentation/conjure-horizontal-set-rules.md)
-- [Vertical Set Rules: Occurrence Representation](./documentation/Conjure-Vertical-Set-Rules:-Occurrence-Representation.md)
+- [Sets]()
+  - [Expression Rewriting: Rules and RuleSets](./documentation/sets/expression_rewriting:_rules_and_rulesets.md)
+  - [Horizontal Set Rules](./documentation/sets/conjure-horizontal-set-rules.md)
+  - [Vertical Set Rules: Occurrence Representation](./documentation/sets/Conjure-Vertical-Set-Rules:-Occurrence-Representation.md)
 - [LSP]()
   - [Essence Error Catalog for Error Underlining](./documentation/LSP/Essence-Error-Catalog-for-LSP-Error-Underlining-implementation.md)
 - [Useful Links](./documentation/links.md)
