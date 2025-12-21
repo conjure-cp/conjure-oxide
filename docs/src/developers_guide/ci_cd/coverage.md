@@ -1,4 +1,5 @@
-<!-- TODO: Edit this -->
+[//]: # (Author: Niklad DeWally)
+[//]: # (Last Updated: 11/02/2024)
 
 ## User Guide
 

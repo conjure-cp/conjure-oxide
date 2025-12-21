@@ -48,6 +48,7 @@
 
 - [Horizontal Set Rules](./documentation/conjure-horizontal-set-rules.md)
 - [Vertical Set Rules: Occurrence Representation](./documentation/Conjure-Vertical-Set-Rules:-Occurrence-Representation.md)
+- [Creating Custom Tests](./documentation/Custom-Tests.md)
 - [Useful Links](./documentation/links.md)
 
 ---
