@@ -1,14 +1,15 @@
 # AbstractComprehension
 
-`Abstract Comprehensions` are a distinct version of a `Comprehension` that is, as of now, used when creating Set Rules. `Abstract Comprehensions` are currently a temporary feature and may be significantly refactored or integrated into the current `Comprehension` type. 
+`Abstract Comprehensions` are a distinct version of a comprehensions to `Comprehension` intended for ease of use. `Abstract Comprehensions` are currently a temporary feature and may be refactored or integrated into the current `Comprehension` type eventually. 
 
 ## Comprehensions Use
 
-Comprehensions can be used to construct representations of lists. A comprehension is declared using square brackets '[]' that contain a generator expression (such as a = i) followed by a "|" and a comma separated list of conditions that are boolean expressions. 
+Comprehensions can be used to construct representations of lists. A comprehension is declared using square brackets '[]' that contain a return expression (such as a = i) followed by a "|" and a comma separated list of qualifiers that are either generators, conditions, or letting statements. 
+
 Examples include:
-[i-1 | i <- [5,6,7]] 
+[ i-1 | i <- [5,6,7]] 
 or 
-[i = a | a in b] (in-set rule)
+[ i = a | i <- b] (in-set rule)
 
 More details on the use of comprehensions in the language of Essence can be found at: https://conjure.readthedocs.io/en/latest/essence.html#comprehensions
 
