@@ -34,7 +34,7 @@ const KEYWORDS: [&str; 21] = [
 
 Called at the end of `parse_model_with_context`. Performs this validation by traversing the CST using DFS. Starting from the root node, it iterates over all child nodes and inspects nodes of kind `variable`, `identifier`, or `parameter`. For each such node, the corresponding source text is extracted and compared against a predefined list of reserved Essence keywords. If a match is found, the function reports an `EssenceParseError` with a source range derived from the CST node and an error message. 
 
-## Hot To Test 
+## How To Test 
  ```bash 
 cargo test -p conjure-cp-essence-parser --test semantic_test
 cargo test -p conjure-cp-essence-parser --test keyword_as_ident
