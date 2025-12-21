@@ -231,6 +231,74 @@ To achieve this, we use the following algorithm:
 > NOTE: The `order` of a `RuleSet` should not be thought of as a "priority" and does not affect the priorities of the rules in it.
 > It only provides a consistent order of operations when resolving the final set of rules
 
+## Concrete Example:  SAT Backend Pipeline
+
+To see how rules and rulesets work in practice, let's walk through the SAT backend's transformation of a simple Essence model. 
+
+> **Note:** The actual RuleSet names and groupings in the codebase may differ from this simplified explanation, but the general priority ordering and transformation pipeline described here is accurate.
+
+### Input Model
+
+```essence
+find x : int(1..3)
+find y : int(2..5)
+such that x > y
+```
+
+### Transformation Pipeline
+
+The SAT backend applies rules in three priority groups:
+
+#### 1. Integer Representation Rules (Highest Priority)
+
+**RuleSet**: `integer_repr`
+
+These rules convert integer variables into `SATInt` representations (boolean vectors):
+
+```rust
+#[register_rule(("integer_repr", 100))]
+fn integer_decision_representation(expr: &Expression) -> Result<Expression, RuleApplicationError> {
+    // Converts:  find x : int(1..3)
+    // Into: SATInt([bool_0, bool_1, ... ])
+}
+```
+
+#### 2. Operation Transformation Rules
+
+**RuleSet**: `integer_operations`
+
+These rules convert operations on `SATInt`s into boolean expressions:
+
+```rust
+#[register_rule(("integer_operations", 50))]
+fn cnf_int_ineq(expr: &Expression) -> Result<Expression, RuleApplicationError> {
+    // Converts: SATInt(x) > SATInt(y)
+    // Into: complex boolean expression
+}
+```
+
+#### 3. Tseitin Transformation Rules (Lowest Priority)
+
+**RuleSet**: `boolean`
+
+These rules convert the resulting boolean expressions into CNF:
+
+```rust
+#[register_rule(("boolean", 10))]
+fn tseitin_and(expr: &Expression) -> Result<Expression, RuleApplicationError> {
+    // Converts: A AND B
+    // Into: auxiliary variable C with clauses enforcing C <-> A AND B
+}
+```
+
+### Viewing the Transformations
+
+You can see this pipeline in action using logging:
+
+```bash
+RUST_LOG=TRACE cargo run -- solve --solver sat my_problem.essence --verbose
+```
+
 ---
 
 *This section had been taken from the 'Expression rewriting, Rules and RuleSets' page of the conjure-oxide wiki*
