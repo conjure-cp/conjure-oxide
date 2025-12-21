@@ -32,7 +32,6 @@
 - [Design Documents](./developers_guide/design_documents/index.md)
   - [2023‐11: High Level Plan](./developers_guide/design_documents/2023_11.md)
   - [2024‐03: Implementing Uniplates and Biplates with Structure Preserving Trees](./developers_guide/design_documents/2024_03.md)
-  - [Expression rewriting, Rules and RuleSets](./developers_guide/design_documents/expression_rewriting.md)
   - [Semantics of Rewriting Expressions with Side‐Effects](./developers_guide/design_documents/semantics-of-rewriting-expressions.md)
   - [Ideal Scenario of Testing for Conjure-Oxide](./developers_guide/design_documents/ideal-scenario-of-testing.md)
 
@@ -46,7 +45,6 @@
 
 # Documentation
 
-- [Creating Custom Tests](./documentation/Custom-Tests.md)
 - [Essence Parser](./documentation/Essence-Parser.md)
 - [Sets]()
   - [Expression Rewriting: Rules and RuleSets](./documentation/sets/expression_rewriting:_rules_and_rulesets.md)
@@ -54,6 +52,8 @@
   - [Vertical Set Rules: Occurrence Representation](./documentation/sets/Conjure-Vertical-Set-Rules:-Occurrence-Representation.md)
 - [LSP]()
   - [Essence Error Catalog for Error Underlining](./documentation/LSP/Essence-Error-Catalog-for-LSP-Error-Underlining-implementation.md)
+- [Testing: The Ideal Scenario](./documentation/testing/ideal-scenario-of-testing.md)
+  - [Creating Custom Tests](./documentation/testing/Custom-Tests.md)
 - [Useful Links](./documentation/links.md)
 
 ---
