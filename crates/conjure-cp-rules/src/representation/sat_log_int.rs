@@ -1,7 +1,8 @@
 // https://conjure-cp.github.io/conjure-oxide/docs/conjure_core/representation/trait.Representation.html
 use conjure_cp::ast::GroundDomain;
+use conjure_cp::bug;
 use conjure_cp::{
-    ast::{Atom, DeclarationPtr, Domain, Expression, Literal, Metadata, Name, Range, SymbolTable},
+    ast::{Atom, DeclarationPtr, Domain, Expression, Literal, Metadata, Name, SymbolTable},
     register_representation,
     representation::Representation,
     rule_engine::ApplicationError,
@@ -9,23 +10,20 @@ use conjure_cp::{
 
 register_representation!(SATLogInt, "sat_log_int");
 
-// The number of bits used to represent the integer.
-// This is a fixed value for the representation, but could be made dynamic if needed.
-const BITS: i32 = 8;
-
 #[derive(Clone, Debug)]
 pub struct SATLogInt {
     src_var: Name,
+    bits: u32,
 }
 
 impl SATLogInt {
     /// Returns the names of the representation variable
     fn names(&self) -> impl Iterator<Item = Name> + '_ {
-        (0..BITS).map(move |index| self.index_to_name(index))
+        (0..self.bits).map(move |index| self.index_to_name(index))
     }
 
     /// Gets the representation variable name for a specific index.
-    fn index_to_name(&self, index: i32) -> Name {
+    fn index_to_name(&self, index: u32) -> Name {
         Name::Represented(Box::new((
             self.src_var.clone(),
             self.repr_name().into(),
@@ -35,6 +33,7 @@ impl SATLogInt {
 }
 
 impl Representation for SATLogInt {
+    /// Creates a log int representation object for the given name.
     fn init(name: &Name, symtab: &SymbolTable) -> Option<Self> {
         let domain = symtab.resolve_domain(name)?;
 
@@ -46,23 +45,37 @@ impl Representation for SATLogInt {
             return None;
         };
 
-        // Essence only supports decision variables with finite domains
-        if !ranges
-            .iter()
-            .all(|x| matches!(x, Range::Bounded(_, _)) || matches!(x, Range::Single(_)))
-        {
-            return None;
-        }
+        // Determine min/max and return None if range is unbounded
+        let (min, max) =
+            ranges
+                .iter()
+                .try_fold((i32::MAX, i32::MIN), |(min_a, max_b), range| {
+                    let lb = range.low()?;
+                    let ub = range.high()?;
+                    Some((min_a.min(*lb), max_b.max(*ub)))
+                })?;
+
+        // calculate the bits needed to represent the integer
+        let bit_count = (1..=32)
+            .find(|&bits| {
+                let min_possible = -(1i64 << (bits - 1));
+                let max_possible = (1i64 << (bits - 1)) - 1;
+                (min as i64) >= min_possible && (max as i64) <= max_possible
+            })
+            .unwrap_or_else(|| bug!("Should never be reached: i32 integer should always be with storable with 32 bits.")); // safe unwrap as i32 fits in 32 bits
 
         Some(SATLogInt {
             src_var: name.clone(),
+            bits: bit_count,
         })
     }
 
+    /// The variable being represented.
     fn variable_name(&self) -> &Name {
         &self.src_var
     }
 
+    /// Given the integer assignment for `self`, creates assignments for its representation variables.
     fn value_down(
         &self,
         value: Literal,
@@ -73,7 +86,7 @@ impl Representation for SATLogInt {
 
         let mut result = std::collections::BTreeMap::new();
 
-        // name_0 is the least significant bit, name_<BITS-1> is the sign bit
+        // name_0 is the least significant bit, name_<final> is the sign bit
         for name in self.names() {
             result.insert(name, Literal::Bool((value_i32 & 1) != 0));
             value_i32 >>= 1;
@@ -82,6 +95,7 @@ impl Representation for SATLogInt {
         Ok(result)
     }
 
+    /// Given the values for its boolean representation variables, creates an assignment for `self` - the integer form.
     fn value_up(
         &self,
         values: &std::collections::BTreeMap<Name, Literal>,
@@ -102,7 +116,7 @@ impl Representation for SATLogInt {
             }
         }
 
-        let sign_bit = 1 << (BITS - 1);
+        let sign_bit = 1 << (self.bits - 1);
         // Mask to `BITS` bits
         out &= (sign_bit << 1) - 1;
 
@@ -114,6 +128,7 @@ impl Representation for SATLogInt {
         Ok(Literal::Int(out))
     }
 
+    /// Returns [`Expression`]s representing each boolean representation variable.
     fn expression_down(
         &self,
         st: &SymbolTable,
@@ -133,6 +148,7 @@ impl Representation for SATLogInt {
             .collect())
     }
 
+    /// Creates declarations for the boolean representation variables of `self`.
     fn declaration_down(&self) -> Result<Vec<DeclarationPtr>, ApplicationError> {
         Ok(self
             .names()
@@ -140,10 +156,12 @@ impl Representation for SATLogInt {
             .collect())
     }
 
+    /// The rule name for this representaion.
     fn repr_name(&self) -> &str {
         "sat_log_int"
     }
 
+    /// Makes a clone of `self` into a `Representation` trait object.
     fn box_clone(&self) -> Box<dyn Representation> {
         Box::new(self.clone()) as _
     }
