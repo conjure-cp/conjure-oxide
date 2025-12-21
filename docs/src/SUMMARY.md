@@ -19,10 +19,9 @@
 - [Contributor's Guide](./developers_guide/contributors_guide/index.md)
   - [How we work](./developers_guide/contributors_guide/how_we_work.md)
   - [Setting up your development environment](./developers_guide/contributors_guide/set-dev-env.md)
+  - [Git Flow](./developers_guide/contributors_guide/Git-Flow.md)
   - [Writing Documentation Guides](./developers_guide/contributors_guide/creating_documentation_guides.md)
   - [Writing Documentation in Code](./developers_guide/contributors_guide/creating_documentation_code.md)
-  - [Running and writing integration tests]()
-  - [What we didn't do](./developers_guide/contributors_guide/what_we_didnt_do.md)
 
 - [Coding Resources and Conventions](./developers_guide/coding_resources/index.md)
   - [Style Guide](./developers_guide/coding_resources/style_guide.md)
@@ -34,6 +33,7 @@
   - [2024‐03: Implementing Uniplates and Biplates with Structure Preserving Trees](./developers_guide/design_documents/2024_03.md)
   - [Semantics of Rewriting Expressions with Side‐Effects](./developers_guide/design_documents/semantics-of-rewriting-expressions.md)
   - [Ideal Scenario of Testing for Conjure-Oxide](./developers_guide/design_documents/ideal-scenario-of-testing.md)
+  - [What we didn't do](./developers_guide/design_documents/what_we_didnt_do.md)
 
 - [CI/CD](./developers_guide/ci_cd/index.md)
   - [Coverage](./developers_guide/ci_cd/coverage.md)
