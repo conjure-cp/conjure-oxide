@@ -148,7 +148,7 @@ This unified approach ensures consistent scoping behavior across all comprehensi
 # Testing
 
 ## Integration Testing
-The native parser (`parse_essence_file_native`) is used by default for all integration tests in the `tests-integration` crate, which include a range of tests for every feature currently supported. There is also rountrip testing specifically for testing the parser's error messages which is part of the integration test suite.
+The native parser (`parse_essence_file_native`) is used by default for all integration tests in the `tests-integration` crate, which include a range of tests for every feature currently supported. Also incuded in the integraiton testing suite is roundtrip testing. Some of the roundtrip tests test the parser's error messages.
 
 To explicitly disable the native parser for a specific test, add a `config.toml` file in the test directory with:
 ```toml
