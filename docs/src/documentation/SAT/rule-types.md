@@ -22,7 +22,7 @@ They are a type of rule that implements shared behaviour using a trait[^8]. The 
 
 [^1]: Graham Hutton, *Programming in Haskell (2nd Ed)*; Miran Lipovača, *Learn You a Haskell for Great Good!*  
 [^2]: https://amelia.how/posts/the-gmachine-in-detail.html  
-[^3]: Alonzo Church, *The Calculi of Lambda Conversion*  
+[^3]: Read the section of this text on 'Functional Rust'  
 [^4]: In Rust: `std::Result<T, E>`  
 [^5]: Particularly nice in Rust due to ownership and error handling  
 [^6]: Extra memory is freed when the function exits  
