@@ -52,8 +52,8 @@ pub fn validate_direct_int_operands(
 
     // Iterate over all inputs
     // Check they are direct and calulate a lower and upper bound
-    let mut global_min: i32 = std::i32::MAX;
-    let mut global_max: i32 = std::i32::MIN;
+    let mut global_min: i32 = i32::MAX;
+    let mut global_max: i32 = i32::MIN;
 
     for operand in &exprs {
         let Expr::SATInt(_, SATIntEncoding::Direct, _, (local_min, local_max)) = operand else {
@@ -84,24 +84,18 @@ pub fn validate_direct_int_operands(
             let mut bits = Vec::with_capacity(v.len() + prefix_len + postfix_len);
 
             // add 0s to start
-            bits.extend(
-                std::iter::repeat(Expr::Atomic(
-                    Metadata::new(),
-                    Atom::Literal(Literal::Bool(false)),
-                ))
-                .take(prefix_len),
-            );
+            bits.extend(std::iter::repeat_n(
+                Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false))),
+                prefix_len,
+            ));
 
             bits.extend(v);
 
             // add 0s to end
-            bits.extend(
-                std::iter::repeat(Expr::Atomic(
-                    Metadata::new(),
-                    Atom::Literal(Literal::Bool(false)),
-                ))
-                .take(postfix_len),
-            );
+            bits.extend(std::iter::repeat_n(
+                Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false))),
+                postfix_len,
+            ));
 
             Ok(bits)
         })
@@ -252,24 +246,14 @@ fn sat_direct_lt(
     let mut b_or = Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false)));
     let mut cum_result = Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false)));
 
-    for i in 0..a.len() {
+    for (a_i, b_i) in a.iter().zip(b.iter()) {
         // b_or is prefix_or of b up to index i: B_i = b_0 | ... | b_i
-        b_or = tseytin_or(
-            &vec![
-                b_or,
-                b.get(i).cloned().unwrap_or(Expr::Atomic(
-                    Metadata::new(),
-                    Atom::Literal(Literal::Bool(false)),
-                )),
-            ],
-            clauses,
-            symbols,
-        );
+        b_or = tseytin_or(&vec![b_or, b_i.clone()], clauses, symbols);
 
         // a < b if there exists i such that a=i and b > i.
         // b > i is equivalent to NOT(B_i) assuming one-hotness.
         let not_b_or = tseytin_not(b_or.clone(), clauses, symbols);
-        let a_i_and_not_b_i = tseytin_and(&vec![a[i].clone(), not_b_or], clauses, symbols);
+        let a_i_and_not_b_i = tseytin_and(&vec![a_i.clone(), not_b_or], clauses, symbols);
 
         cum_result = tseytin_or(&vec![cum_result, a_i_and_not_b_i], clauses, symbols);
     }
