@@ -62,9 +62,24 @@ In this type of application, Rust offers two advantages:
 1. The `Return` type, even though it records a success/failure, can be pattern-matched using the `match` construct to access the data structure which the functions are performing side effects on.
 2. The aforementioned `?` operator can be used to force the code to return an error type as soon as it is 'raised' -- that is, returned by one of the functions in the call stack. 
 
-This example would look like this in rust-like functional (pseudo)code:
+This example would look like this in rust-like functional code:
 
 ```rust
+fn returns_a_result(a: i32, b: i32) -> Result<i32, MyError> {
+    // Some code here...
+    
+    // The ?  operator propagates errors immediately
+    let foo1 = maybe_returns_my_error1(a)?;
+    
+    // Some more code...
+    let foo2 = maybe_returns_my_error2(b)?;
+    
+    // Even more code...
+    let foo3 = maybe_returns_my_error3(a, b)?;
+    
+    // If we get here, all operations succeeded
+    Ok()
+}
 ```
 
 ### Side Effects
