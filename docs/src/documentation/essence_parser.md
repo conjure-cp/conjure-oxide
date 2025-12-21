@@ -34,7 +34,7 @@ The precedence levels throughout the grammar are based on the Essence Prime oper
 Currently, the grammar allows for any combination of letters, numbers, and underscores to be parsed as variable identifiers. This includes reserved keywords of the Essence language such as 'find' or 'letting'. This is incorrect and such keywords shouldn't be allowed as variables. Tree-sitter doesn't support lookahead assertions or negative matches, so grammar rules cannot exclude specific patterns or words from identifier rules. Checking for keywords as variables happens during semantic checking (see Diagnostics section).
 
 ### Error Detection
-Error detection from tree-sitter is unpredictable and can be confusing, as it simply creates ERROR nodes in the parse tree without detailed information about what was invalid. Similar errors will produce ERROR nodes in different places and impact the surrounding tree strucure in varying ways, depending on the context. More sophisticated error detection and messsaging has been implemented through [Diagnostics](./error_detection)
+Error detection from tree-sitter is unpredictable and can be confusing, as it simply creates ERROR nodes in the parse tree without detailed information about what was invalid. Similar errors will produce ERROR nodes in different places and impact the surrounding tree strucure in varying ways, depending on the context. More sophisticated error detection and messsaging has been implemented through Diagnostics.
 
 # Rust Parser
 This is the second part of the parser and is contained in the [conjure-cp-essence-parser](https://github.com/conjure-cp/conjure-oxide/tree/main/crates/conjure-cp-essence-parser) crate. The primary function is `parse_essence_file_native`, shown below, which takes in the path to the input and the context and returns the Model or an error. 
@@ -163,5 +163,5 @@ The `conjure-cp-essence-parser` crate contains its own unit tests that specifica
 cargo test -p conjure-cp-essence-parser
 ```
 
-For more details on parser testing, see the [parser testing documentation](./lsp_tests.md).
+For more details on parser testing, see the parser testing documentation.
 
