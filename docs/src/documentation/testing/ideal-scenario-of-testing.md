@@ -1,5 +1,5 @@
 <!--
-authors: Liz Dempster, Hanaa Khan
+authors: Liz Dempstergit 
 last-updated: 21-12-25
 ---- -->
 

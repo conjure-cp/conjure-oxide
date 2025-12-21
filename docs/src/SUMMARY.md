@@ -27,6 +27,7 @@
   - [Style Guide](./developers_guide/coding_resources/style_guide.md)
   - [Crate Structure](./developers_guide/coding_resources/crate_structure.md)
   - [Benchmarking Guide](./developers_guide/coding_resources/benchmarking-guide.md)
+  - [Code Coverage](./developers_guide/coding_resources/coverage.md)
 
 - [Design Documents](./developers_guide/design_documents/index.md)
   - [2023‐11: High Level Plan](./developers_guide/design_documents/2023_11.md)
