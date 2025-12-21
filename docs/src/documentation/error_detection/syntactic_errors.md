@@ -54,6 +54,13 @@ The different cases are distinguished based on the position of the `ERROR` node 
 
 - **Parent is another token node**: unexpected tokens occur inside a construct, indicating that the rule was only partially matched.
 
+## How To Test 
+```bash 
+cargo test -p conjure-cp-essence-parser --test malformed_top_level
+cargo test -p conjure-cp-essence-parser --test missing_token
+cargo test -p conjure-cp-essence-parser --test unexpected_token
+```
+
 
 ## Examples
 
