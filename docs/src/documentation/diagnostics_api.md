@@ -3,7 +3,7 @@
 # Diagnostics API for LSP Server
 
 ## Overview
-The Diagnostics API provides tree-sitter and parser–based diagnostics for Essence source files (for error underlining, syntax highlighting, and hover info). It also exposes general LSP-compatible data structures for consumption by editors and tools. Currently, the main functionality of the Diagnostics API is to parse Essence source code and report syntactic errors found by walking the CST (using tree-sitter) and report syntactic errors by attempting a semantic parse and reporting parser errors. It serialises diagnostics exposing a `get_diagnostics()` function, which returns both semantic and syntactic errors as a `Vec` of `Diagnostic`s.
+The Diagnostics API provides tree-sitter and parser–based diagnostics for Essence source files (for error underlining, syntax highlighting, and hover info). It also exposes general LSP-compatible data structures for consumption by editors and tools. Currently, the main functionality of the Diagnostics API is to parse Essence source code and report syntactic errors found by walking the CST (using tree-sitter) and report semantic errors by attempting a semantic parse and reporting parser errors. It serialises diagnostics exposing a `get_diagnostics()` function, which returns both semantic and syntactic errors as a `Vec` of `Diagnostic`s.
 
 ## Structure
 ```bash
@@ -19,9 +19,9 @@ crates/conjure-cp-essence-parser/src/diagnostics/
 ### Key Functions
 - `get_diagnostics(source: &str) -> Vec<Diagnostic)` serves as the main entrypoint. It aggregates `detect_semantic_errors(source)` and `detect_syntactic_errors(source)` into a single diagnostics vector, returning a combined, deduplicated-by-call vector of `Diagnostic`s. That's the funciton you would call for error detection and underlining.
 
-- `detect_syntactic_errors(source: &str) -> Vec<Diagnostic)` Parses with tree-sitter and walks the CST using DFS with early retract on error/missing/zero-length nodes to avoid duplicates. More information on that in [link to error detection docs].
+- `detect_syntactic_errors(source: &str) -> Vec<Diagnostic)` Parses with tree-sitter and walks the CST using DFS with early retract on error/missing/zero-length nodes to avoid duplicates. More information on that in [error detection docs](error_detection/error_classification.md).
 
-- `detect_semantic_errors(source: &str) -> Vec<Diagnostic)` Runs `parse_essence_with_context` and, on `Err(EssenceParseError)`, maps the error into a `Diagnostic` using `error_to_diagnostic`. More information on that in [link to error detection docs].
+- `detect_semantic_errors(source: &str) -> Vec<Diagnostic)` Runs `parse_essence_with_context` and, on `Err(EssenceParseError)`, maps the error into a `Diagnostic` using `error_to_diagnostic`. More information on that in [error detection docs](error_detection/error_classification.md).
 
 - Helpers (for debugging and/or testing):
     - `print_all_error_nodes(source: &str)`: prints all tree-sitter error/missing nodes with spans.
