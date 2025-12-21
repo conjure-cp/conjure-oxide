@@ -22,6 +22,7 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
         Expr::SubsetEq(_, _, _) => Err(RuleNotApplicable),
         Expr::AbstractLiteral(_, _) => Err(RuleNotApplicable),
         Expr::Comprehension(_, _) => Err(RuleNotApplicable),
+        Expr::AbstractComprehension(_, _) => Err(RuleNotApplicable),
         Expr::DominanceRelation(_, _) => Err(RuleNotApplicable),
         Expr::FromSolution(_, _) => Err(RuleNotApplicable),
         Expr::Metavar(_, _) => Err(RuleNotApplicable),
