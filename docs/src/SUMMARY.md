@@ -46,9 +46,11 @@
 
 # Documentation
 
+- [Creating Custom Tests](./documentation/Custom-Tests.md)
 - [Horizontal Set Rules](./documentation/conjure-horizontal-set-rules.md)
 - [Vertical Set Rules: Occurrence Representation](./documentation/Conjure-Vertical-Set-Rules:-Occurrence-Representation.md)
-- [Creating Custom Tests](./documentation/Custom-Tests.md)
+- [LSP]()
+  - [Essence Error Classifications](./documentation/LSP/Essence-Error-Catalog-for-LSP-Error-Underlining-implementation.md)
 - [Useful Links](./documentation/links.md)
 
 ---
