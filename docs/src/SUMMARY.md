@@ -49,6 +49,8 @@
 - [Developer Documentation](./documentation/dev_docs.md)
 <!-- TODO: will be moved -- likely the content of these will end off here -->
 - [Useful Links](./documentation/links.md)
+- [Side Projects]()
+  - [Conjure Blocks](./documentation/side_projects/Conjure-Blocks.md)
 
 ---
 
