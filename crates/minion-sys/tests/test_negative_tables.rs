@@ -1,4 +1,4 @@
-// There are three letter x, y, and z, which are each integers between 1 and 3 inclusive, where x + y = z
+// There are three letter x, y, and z, which are each integers between 0 and 1 inclusive, where its binary and accepts every binary triple except all zeros and all ones
 
 use std::collections::HashMap;
 use std::sync::Mutex;
@@ -9,25 +9,24 @@ use minion_sys::get_from_table;
 
 #[test]
 #[allow(clippy::panic_in_result_fn)]
-fn test_table_constraint() -> Result<(), MinionError> {
+fn test_negative_table_constraint() -> Result<(), MinionError> {
     let mut model = Model::new();
 
-    // Declares variables (x, y, z), explicitly setting the integers to be between 1 and 3
+    // Declares variables (x, y, z), explicitly setting the integers to be between 0 and 1 
     model
         .named_variables
-        .add_var(String::from("x"), VarDomain::Bound(1, 3));
+        .add_var(String::from("x"), VarDomain::Bound(0, 1));
     model
         .named_variables
-        .add_var(String::from("y"), VarDomain::Bound(1, 3));
+        .add_var(String::from("y"), VarDomain::Bound(0, 1));
     model
         .named_variables
-        .add_var(String::from("z"), VarDomain::Bound(1, 3));
+        .add_var(String::from("z"), VarDomain::Bound(0, 1));
 
-    // Defines the table data (a list of tuples)
-    let table_data = vec![
-        vec![Constant::Integer(1), Constant::Integer(1), Constant::Integer(2)],
-        vec![Constant::Integer(1), Constant::Integer(2), Constant::Integer(3)],
-        vec![Constant::Integer(2), Constant::Integer(1), Constant::Integer(3)],
+    // Defines the forbidden table data (a list of tuples)
+    let forbidden_table_data = vec![
+        vec![Constant::Integer(1), Constant::Integer(1), Constant::Integer(1)],
+        vec![Constant::Integer(0), Constant::Integer(0), Constant::Integer(0)],
     ];
     // Builds the Table constraint 
     let vars = vec![
@@ -38,14 +37,14 @@ fn test_table_constraint() -> Result<(), MinionError> {
     
     model
         .constraints
-        .push(Constraint::Table(vars, table_data));
+        .push(Constraint::NegativeTable(vars, forbidden_table_data));
 
     // Runs the solver via the Minion interface
     minion_sys::run_minion(model, callback)?;
 
     // Asserts that we found exactly 3 solutions (one for each row in the table)
     let guard = SOLS_COUNTER.lock().unwrap();
-    assert_eq!(*guard, 3);
+    assert_eq!(*guard, 6);
     assert_ne!(get_from_table("Nodes".into()), None);
     Ok(())
 }
