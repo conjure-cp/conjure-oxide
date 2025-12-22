@@ -21,7 +21,13 @@ such that x > y
 cargo run -- solve --solver sat my_problem.essence
 ```
 
-**Expected output:**
+### Minion Solver
+
+```bash
+cargo run -- solve --solver minion my_problem.essence
+```
+
+**Expected output for both solvers:**
 
 ```json
 Solutions:
@@ -35,12 +41,6 @@ Solutions:
     }
   }
 ]
-```
-
-### Minion Solver
-
-```bash
-cargo run -- solve --solver minion my_problem.essence
 ```
 
 ## Understanding What Happened
