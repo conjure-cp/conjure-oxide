@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.activate = activate;
+const path = require("path");
 const node_1 = require("vscode-languageclient/node");
 function activate(context) {
     tryStartLanguageServer(context);
@@ -8,8 +9,9 @@ function activate(context) {
 function tryStartLanguageServer(context) {
     //for future, possibly may want version checking
     console.log("Before setup");
+    const serverPath = path.join(__dirname, '../../../target/release/conjure-oxide');
     let serveroptions = {
-        command: "conjure-oxide", args: ["server-lsp"]
+        command: serverPath, args: ["server-lsp"]
     };
     let clientoptions = {
         documentSelector: [{ scheme: 'file', language: 'essence' }]

@@ -1,5 +1,7 @@
 pub mod serde;
 
+use serde::DeclarationPtrFull;
+
 use std::any::TypeId;
 // allow use of Declaration in this file, and nowhere else
 use std::cell::{Cell, Ref, RefCell, RefMut};
@@ -7,6 +9,7 @@ use std::fmt::{Debug, Display};
 use std::rc::Rc;
 
 use ::serde::{Deserialize, Serialize};
+use serde_with::serde_as;
 
 use super::categories::{Category, CategoryOf};
 use super::name::Name;
@@ -210,6 +213,18 @@ impl DeclarationPtr {
         DeclarationPtr::new(name, kind)
     }
 
+    /// Creates a new given declaration backed by a quantified declaration.
+    ///
+    /// This is used in abstract comprehensions, where a variable in the return expression
+    /// is "given", but also references its counterpart in the generator.
+    pub fn new_given_quantified(decl: &DeclarationPtr) -> Option<DeclarationPtr> {
+        let kind = DeclarationKind::GivenQuantified(GivenQuantified {
+            domain: decl.domain()?,
+            generator: decl.clone(),
+        });
+        Some(DeclarationPtr::new(decl.name().clone(), kind))
+    }
+
     /// Creates a new record field declaration.
     ///
     /// # Examples
@@ -254,6 +269,7 @@ impl DeclarationPtr {
             DeclarationKind::ValueLetting(e) => e.domain_of(),
             DeclarationKind::DomainLetting(domain) => Some(domain.clone()),
             DeclarationKind::Given(domain) => Some(domain.clone()),
+            DeclarationKind::GivenQuantified(inner) => Some(inner.domain.clone()),
             DeclarationKind::RecordField(domain) => Some(domain.clone()),
         }
     }
@@ -465,6 +481,7 @@ impl CategoryOf for DeclarationPtr {
             DeclarationKind::ValueLetting(expression) => expression.category_of(),
             DeclarationKind::DomainLetting(_) => Category::Constant,
             DeclarationKind::Given(_) => Category::Parameter,
+            DeclarationKind::GivenQuantified(..) => Category::Parameter,
             DeclarationKind::RecordField(_) => Category::Bottom,
         }
     }
@@ -496,6 +513,7 @@ impl Typeable for DeclarationPtr {
             DeclarationKind::ValueLetting(expression) => expression.return_type(),
             DeclarationKind::DomainLetting(domain) => domain.return_type(),
             DeclarationKind::Given(domain) => domain.return_type(),
+            DeclarationKind::GivenQuantified(inner) => inner.domain.return_type(),
             DeclarationKind::RecordField(domain) => domain.return_type(),
         }
     }
@@ -623,7 +641,28 @@ pub enum DeclarationKind {
     DomainLetting(DomainPtr),
     Given(DomainPtr),
 
+    GivenQuantified(GivenQuantified),
+
     /// A named field inside a record type.
     /// e.g. A, B in record{A: int(0..1), B: int(0..2)}
     RecordField(DomainPtr),
+}
+
+#[serde_as]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate)]
+pub struct GivenQuantified {
+    domain: DomainPtr,
+
+    #[serde_as(as = "DeclarationPtrFull")]
+    generator: DeclarationPtr,
+}
+
+impl GivenQuantified {
+    pub fn domain(&self) -> &DomainPtr {
+        &self.domain
+    }
+
+    pub fn generator(&self) -> &DeclarationPtr {
+        &self.generator
+    }
 }
