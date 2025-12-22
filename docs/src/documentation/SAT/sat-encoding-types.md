@@ -8,6 +8,10 @@ There are three different types of SAT Encodings planned in conjure oxide. Of th
 
 Each type of encoding has pros and cons, and a different one may be selected based on the type of constraint problem.
 
+### SATInt Expression
+
+All encodings are stored using the same `SATInt` expression type. This expression type holds: an enum specifying the encoding, a bitvector of boolean expressions (these can be literals, variables, or complex operations), and the domain of the integer. This expression cannot be created through parsing and should only be created by SAT rules.
+
 ### Logarithmic Encoding
 
 The base principle is quite simple: encode an integer as a bitvector. This allows us to represent integers as a series of boolean constraints -- one for each bit. 
