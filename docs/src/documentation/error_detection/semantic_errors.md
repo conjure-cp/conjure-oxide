@@ -3,7 +3,7 @@
 # Semantic Errors Detection
 
 ## Overview
-Semantic errors are not picked up by the tree-sitter parser and result in a valid CST but an invalid AST. They are detected at the stage of parsing the CST into a Rust [`Model` object](https://conjure-cp.github.io/conjure-oxide/docs/conjure_core/ast/struct.Model.html) representing the Essence problem. The errors generated from the [Essence parser](./documentation/essence_parser.md) are extracted and reported via [Diagnostics API](./documentation/diagnostics_api.md)).
+Semantic errors are not picked up by the tree-sitter parser and result in a valid CST but an invalid AST. They are detected at the stage of parsing the CST into a Rust [`Model` object](https://conjure-cp.github.io/conjure-oxide/docs/conjure_core/ast/struct.Model.html) representing the Essence problem. The errors generated from the [Essence parser](https://conjure-cp.github.io/conjure-oxide/docs/conjure_cp_essence_parser/parser/index.html) are extracted and reported via [Diagnostics API](https://conjure-cp.github.io/conjure-oxide/docs/conjure_cp_essence_parser/diagnostics/diagnostics_api/index.html).
 
 The semantic errors detected include type errors, omitted declarations, invalid indexing and using keywords as identifiers. 
 
