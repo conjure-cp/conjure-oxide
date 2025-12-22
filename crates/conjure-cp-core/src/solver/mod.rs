@@ -165,22 +165,29 @@ impl FromStr for SolverFamily {
                     let parts = other.split('-').skip(1);
                     let mut ints = IntTheory::default();
                     let mut matrices = MatrixTheory::default();
+                    let mut unwrap_alldiff = false;
 
                     for token in parts {
                         match token {
+                            "" => {}
                             "lia" => ints = IntTheory::Lia,
                             "bv" => ints = IntTheory::Bv,
                             "arrays" => matrices = MatrixTheory::Arrays,
                             "atomic" => matrices = MatrixTheory::Atomic,
+                            "nodiscrete" => unwrap_alldiff = true,
                             other_token => {
                                 return Err(format!(
-                                    "unknown SMT theory option '{other_token}', must be one of bv|lia|arrays|atomic"
+                                    "unknown SMT theory option '{other_token}', must be one of bv|lia|arrays|atomic|nodiscrete"
                                 ));
                             }
                         }
                     }
 
-                    return Ok(SolverFamily::Smt(TheoryConfig { ints, matrices }));
+                    return Ok(SolverFamily::Smt(TheoryConfig {
+                        ints,
+                        matrices,
+                        unwrap_alldiff,
+                    }));
                 }
                 Err(format!(
                     "unknown solver family '{other}', expected 'minion', 'sat' or 'smt[(bv|lia)-(arrays|atomic)]'"
