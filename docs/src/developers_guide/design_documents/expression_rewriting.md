@@ -281,7 +281,7 @@ fn cnf_int_ineq(expr: &Expression) -> Result<Expression, RuleApplicationError> {
 
 **RuleSet**: `boolean`
 
-These rules convert the resulting boolean expressions into CNF:
+These rules convert the resulting boolean expressions into Conjunctive Normal Form:
 
 ```rust
 #[register_rule(("boolean", 10))]

@@ -26,7 +26,7 @@ Direct encodings are the most straightforward type of encoding - it involves cre
 
 Order follows the same principle as direct encoding, but instead of each boolean variable 'specifying' a value in the way that direct encodings do, each bit specifies whether the integer corresponding to it is less than or equal to the integer variable's value.
 
-### Why want to add multiple types of encoding?
+### Why have multiple types of encoding?
 
 Only logarithmic encodings are currently implemented in conjure-oxide. We're planning to include other encodings such as direct and order encodings. This is motivated by their potential advantages over the log encoding in some cases.
 
