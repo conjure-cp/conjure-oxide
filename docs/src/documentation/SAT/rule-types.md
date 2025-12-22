@@ -16,15 +16,21 @@ Now that we know how rules are called, we can move on to how the rules themselve
 
 Essence (which is the input language of conjure oxide) defines domains that are not present in the type systems of the different solvers’ input languages, meaning they need to be encoded in some way into the input languages. The encoding is done using *representation rules*.
 
-They are a type of rule that implements shared behaviour using a trait[^8]. The representation rules must change Essence expressions into the target solver’s input language while preserving all relevant information.
+Representation rules implement shared behaviour using a trait[^8]. The representation rules must change Essence variables into the target solver’s input language while preserving all of the relevant information. To actually do this, write a struct that implements the relevant trait. The rule engine can then use this to encode unsupported decision variable types.
+
+### Transformation Rules
+
+After all of the variables in the symbol table have been encoded into the relevant types, the next thing to do is to convert all of the constraints in the conjure oxide AST into a form that has a one-to-one parallel with the input language of the target solver.
+
+This done is using transformation rules, each of which is registered with a 'priority' and can then be used by the rule engine to convert the AST into a format that can be used by the solver adaptor. 
 
 ---
 
-[^1]: Graham Hutton, *Programming in Haskell (2nd Ed)*; Miran Lipovača, *Learn You a Haskell for Great Good!*  
+[^1]: Take a look at Graham Hutton's *Programming in Haskell (2nd Ed)*, and Miran Lipovača's *Learn You a Haskell for Great Good!* for a lighter read  
 [^2]: https://amelia.how/posts/the-gmachine-in-detail.html  
 [^3]: Read the section of this text on 'Functional Rust'  
-[^4]: In Rust: `std::Result<T, E>`  
-[^5]: Particularly nice in Rust due to ownership and error handling  
+[^4]: In Rust, this is `std::Result<T, E>`  
+[^5]: Particularly nice in Rust due to the way it does ownership and error handling  
 [^6]: Extra memory is freed when the function exits  
 [^7]: Unless `unwrap` is used  
 [^8]: See project documentation
