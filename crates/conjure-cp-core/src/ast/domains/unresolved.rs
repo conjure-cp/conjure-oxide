@@ -134,6 +134,10 @@ impl IntVal {
                 ReturnType::Int => Some(IntVal::Reference(re.clone())),
                 _ => None,
             },
+            DeclarationKind::GivenQuantified(inner) => match inner.domain().return_type() {
+                ReturnType::Int => Some(IntVal::Reference(re.clone())),
+                _ => None,
+            },
             DeclarationKind::DomainLetting(_)
             | DeclarationKind::RecordField(_)
             | DeclarationKind::DecisionVariable(_) => None,
@@ -160,7 +164,7 @@ impl IntVal {
                     _ => bug!("Expected integer expression, got: {expr}"),
                 },
                 // If this is an int given we will be able to resolve it eventually, but not yet
-                DeclarationKind::Given(_) => None,
+                DeclarationKind::Given(_) | DeclarationKind::GivenQuantified(..) => None,
                 DeclarationKind::DomainLetting(_)
                 | DeclarationKind::RecordField(_)
                 | DeclarationKind::DecisionVariable(_) => bug!(
@@ -394,6 +398,16 @@ impl UnresolvedDomain {
             (UnresolvedDomain::Function(_, _, _), _) | (_, UnresolvedDomain::Function(_, _, _)) => {
                 Err(DomainOpError::WrongType)
             }
+        }
+    }
+
+    pub fn element_domain(&self) -> Option<DomainPtr> {
+        match self {
+            UnresolvedDomain::Set(_, inner_dom) => Some(inner_dom.clone()),
+            UnresolvedDomain::Matrix(_, _) => {
+                todo!("Unwrap one dimension of the domain")
+            }
+            _ => None,
         }
     }
 }

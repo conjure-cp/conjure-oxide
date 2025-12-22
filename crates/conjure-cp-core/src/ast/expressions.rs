@@ -7,6 +7,7 @@ use crate::ast::SetAttr;
 use crate::ast::literals::AbstractLiteral;
 use crate::ast::literals::Literal;
 use crate::ast::pretty::{pretty_expressions_as_top_level, pretty_vec};
+use crate::ast::sat_encoding::SATIntEncoding;
 use crate::ast::{Atom, DomainPtr};
 use crate::ast::{GroundDomain, Metadata, UnresolvedDomain};
 use crate::ast::{IntVal, Moo};
@@ -20,6 +21,7 @@ use ustr::Ustr;
 use polyquine::Quine;
 use uniplate::{Biplate, Uniplate};
 
+use super::abstract_comprehension::AbstractComprehension;
 use super::ac_operators::ACOperatorKind;
 use super::categories::{Category, CategoryOf};
 use super::comprehension::Comprehension;
@@ -89,6 +91,10 @@ pub enum Expression {
     // This makes implementing Quine tricky (it doesnt support Rc, by design). Skip it for now.
     #[polyquine_skip]
     Comprehension(Metadata, Moo<Comprehension>),
+
+    /// Higher-level abstract comprehension
+    #[polyquine_skip] // no idea what this is lol but it stops rustc screaming at me
+    AbstractComprehension(Metadata, Moo<AbstractComprehension>),
 
     /// Defines dominance ("Solution A is preferred over Solution B")
     DominanceRelation(Metadata, Moo<Expression>),
@@ -496,9 +502,9 @@ pub enum Expression {
     #[polyquine_skip]
     AuxDeclaration(Metadata, Reference, Moo<Expression>),
 
-    /// This expression is for encoding i32 ints as a vector of boolean expressions for cnf - using 2s complement
+    /// This expression is for encoding ints for the SAT solver, it stores the encoding type, the vector of booleans and the min/max for the int.
     #[compatible(SAT)]
-    SATInt(Metadata, Moo<Expression>),
+    SATInt(Metadata, SATIntEncoding, Moo<Expression>, (i32, i32)),
 
     /// Addition over a pair of expressions (i.e. a + b) rather than a vec-expr like Expression::Sum.
     /// This is for compatibility with backends that do not support addition over vectors.
@@ -672,6 +678,7 @@ impl Expression {
             Expression::FromSolution(_, expr) => Some(expr.domain_of()),
             Expression::Metavar(_, _) => None,
             Expression::Comprehension(_, comprehension) => comprehension.domain_of(),
+            Expression::AbstractComprehension(_, comprehension) => comprehension.domain_of(),
             Expression::UnsafeIndex(_, matrix, _) | Expression::SafeIndex(_, matrix, _) => {
                 let dom = matrix.domain_of()?;
                 if let Some((elem_domain, _)) = dom.as_matrix() {
@@ -899,15 +906,9 @@ impl Expression {
                 .ok(),
             Expression::MinionPow(_, _, _, _) => Some(Domain::bool()),
             Expression::ToInt(_, _) => Some(Domain::int(vec![Range::Bounded(0, 1)])),
-            Expression::SATInt(_, _) => {
-                Some(Domain::int_ground(vec![Range::Bounded(
-                    i8::MIN.into(),
-                    i8::MAX.into(),
-                )])) // BITS
-            } // A CnfInt can represent any i8 integer at the moment
-            // A CnfInt contains multiple boolean expressions and represents the integer
-            // formed when these booleans are treated as the bits in an integer encoding.
-            // So the 'domain of' should be an integer
+            Expression::SATInt(_, _, _, (low, high)) => {
+                Some(Domain::int_ground(vec![Range::Bounded(*low, *high)]))
+            }
             Expression::PairwiseSum(_, a, b) => a
                 .domain_of()?
                 .resolve()?
@@ -1330,6 +1331,7 @@ impl Display for Expression {
 
             Expression::AbstractLiteral(_, l) => l.fmt(f),
             Expression::Comprehension(_, c) => c.fmt(f),
+            Expression::AbstractComprehension(_, c) => c.fmt(f),
             Expression::UnsafeIndex(_, e1, e2) | Expression::SafeIndex(_, e1, e2) => {
                 write!(f, "{e1}{}", pretty_vec(e2))
             }
@@ -1537,8 +1539,8 @@ impl Display for Expression {
                 write!(f, "toInt({expr})")
             }
 
-            Expression::SATInt(_, e) => {
-                write!(f, "SATInt({e})")
+            Expression::SATInt(_, encoding, bits, (min, max)) => {
+                write!(f, "SATInt({encoding:?}, {bits} [{min}, {max}])")
             }
 
             Expression::PairwiseSum(_, a, b) => write!(f, "PairwiseSum({a}, {b})"),
@@ -1607,6 +1609,7 @@ impl Typeable for Expression {
             }
             Expression::InDomain(_, _, _) => ReturnType::Bool,
             Expression::Comprehension(_, comp) => comp.return_type(),
+            Expression::AbstractComprehension(_, comp) => comp.return_type(),
             Expression::Root(_, _) => ReturnType::Bool,
             Expression::DominanceRelation(_, _) => ReturnType::Bool,
             Expression::FromSolution(_, expr) => expr.return_type(),
@@ -1675,7 +1678,7 @@ impl Typeable for Expression {
             Expression::FlatWeightedSumGeq(_, _, _, _) => ReturnType::Bool,
             Expression::MinionPow(_, _, _, _) => ReturnType::Bool,
             Expression::ToInt(_, _) => ReturnType::Int,
-            Expression::SATInt(_, _) => ReturnType::Int,
+            Expression::SATInt(..) => ReturnType::Int,
             Expression::PairwiseSum(_, _, _) => ReturnType::Int,
             Expression::PairwiseProduct(_, _, _) => ReturnType::Int,
             Expression::Defined(_, function) => {

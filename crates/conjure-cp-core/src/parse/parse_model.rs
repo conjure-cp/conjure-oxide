@@ -10,6 +10,7 @@ use serde_json::Map as JsonMap;
 use serde_json::Value;
 use serde_json::Value as JsonValue;
 
+use crate::ast::abstract_comprehension::AbstractComprehensionBuilder;
 use crate::ast::ac_operators::ACOperatorKind;
 use crate::ast::comprehension::ComprehensionBuilder;
 use crate::ast::records::RecordValue;
@@ -917,31 +918,35 @@ fn parse_comprehension(
 
     let generators_and_guards = value.pointer("/1")?.as_array()?.iter();
 
-    for value in generators_and_guards {
-        let value = value.as_object()?;
-        let (name, value) = value.iter().next()?;
+    for gen_or_guard in generators_and_guards {
+        let (name, inner) = gen_or_guard.as_object()?.iter().next()?;
         comprehension = match name.as_str() {
             "Generator" => {
                 // TODO: more things than GenDomainNoRepr and Single names here?
-                let name = value.pointer("/GenDomainNoRepr/0/Single/Name")?.as_str()?;
-                let (domain_name, domain_value) = value
-                    .pointer("/GenDomainNoRepr/1")?
-                    .as_object()?
-                    .iter()
-                    .next()?;
-                let domain = parse_domain(
-                    domain_name,
-                    domain_value,
-                    &mut generator_symboltable.borrow_mut(),
-                )
-                .ok()?;
-                comprehension.generator(DeclarationPtr::new_var(
-                    Name::User(Ustr::from(name)),
-                    domain,
-                ))
+                let (name, gen_inner) = inner.as_object()?.iter().next()?;
+                match name.as_str() {
+                    "GenDomainNoRepr" => {
+                        let name = gen_inner.pointer("/0/Single/Name")?.as_str()?;
+                        let (domain_name, domain_value) =
+                            gen_inner.pointer("/1")?.as_object()?.iter().next()?;
+                        let domain = parse_domain(
+                            domain_name,
+                            domain_value,
+                            &mut generator_symboltable.borrow_mut(),
+                        )
+                        .ok()?;
+                        comprehension.generator(DeclarationPtr::new_var(name.into(), domain))
+                    }
+                    // TODO: this is temporary until comprehensions support "in expr" generators
+                    // currently only supports a single generator of this type
+                    "GenInExpr" => return parse_in_expr_comprehension(scope, value, gen_inner),
+                    _ => {
+                        bug!("unknown generator type inside comprehension {name}");
+                    }
+                }
             }
 
-            "Condition" => comprehension.guard(parse_expression(value, &generator_symboltable)?),
+            "Condition" => comprehension.guard(parse_expression(inner, &generator_symboltable)?),
 
             x => {
                 bug!("unknown field inside comprehension {x}");
@@ -954,6 +959,27 @@ fn parse_comprehension(
     Some(Expression::Comprehension(
         Metadata::new(),
         Moo::new(comprehension.with_return_value(expr, comprehension_kind)),
+    ))
+}
+
+fn parse_in_expr_comprehension(
+    scope: Rc<RefCell<SymbolTable>>,
+    comprehension_value: &Value,
+    gen_inner: &Value,
+) -> Option<Expression> {
+    let name = gen_inner.pointer("/0/Single/Name")?.as_str()?;
+    let expr = parse_expression(gen_inner.pointer("/1")?, &scope)?;
+
+    let comprehension =
+        AbstractComprehensionBuilder::new(&scope).new_expression_generator(expr, name.into());
+    let expr = parse_expression(
+        comprehension_value.pointer("/0")?,
+        &comprehension.return_expr_symbols(),
+    )?;
+
+    Some(Expression::AbstractComprehension(
+        Metadata::new(),
+        Moo::new(comprehension.with_return_value(expr)),
     ))
 }
 

@@ -864,6 +864,14 @@ impl GroundDomain {
             }
         }
     }
+
+    pub fn element_domain(&self) -> Option<Moo<GroundDomain>> {
+        match self {
+            GroundDomain::Set(_, inner) => Some(inner.clone()),
+            GroundDomain::Matrix(_, _) => todo!("Unwrap one dimension of the domain"),
+            _ => None,
+        }
+    }
 }
 
 impl Typeable for GroundDomain {

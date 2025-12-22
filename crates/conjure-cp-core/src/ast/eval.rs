@@ -145,6 +145,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             }
         }
         Expr::Comprehension(_, _) => None,
+        Expr::AbstractComprehension(_, _) => None,
         Expr::UnsafeIndex(_, subject, indices) | Expr::SafeIndex(_, subject, indices) => {
             let subject: Lit = subject.as_ref().clone().into_literal()?;
             let indices: Vec<Lit> = indices
@@ -579,7 +580,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                 _ => None,
             }
         }
-        Expr::SATInt(_, _) => None,
+        Expr::SATInt(..) => None,
         Expr::PairwiseSum(_, a, b) => {
             match ((**a).clone().into_literal()?, (**b).clone().into_literal()?) {
                 (Lit::Int(a_int), Lit::Int(b_int)) => Some(Lit::Int(a_int + b_int)),

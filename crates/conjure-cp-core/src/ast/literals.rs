@@ -533,7 +533,19 @@ impl AbstractLiteral<Expression> {
     /// Otherwise, returns `None`.
     pub fn into_literals(self) -> Option<AbstractLiteral<Literal>> {
         match self {
-            AbstractLiteral::Set(_) => todo!(),
+            AbstractLiteral::Set(elements) => {
+                let literals = elements
+                    .into_iter()
+                    .map(|expr| match expr {
+                        Expression::Atomic(_, Atom::Literal(lit)) => Some(lit),
+                        Expression::AbstractLiteral(_, abslit) => {
+                            Some(Literal::AbstractLiteral(abslit.into_literals()?))
+                        }
+                        _ => None,
+                    })
+                    .collect::<Option<Vec<_>>>()?;
+                Some(AbstractLiteral::Set(literals))
+            }
             AbstractLiteral::Matrix(items, domain) => {
                 let mut literals = vec![];
                 for item in items {

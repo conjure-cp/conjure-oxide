@@ -574,6 +574,13 @@ impl Domain {
         }
         Err(DomainOpError::NotGround)
     }
+
+    pub fn element_domain(&self) -> Option<DomainPtr> {
+        match self {
+            Domain::Ground(gd) => gd.element_domain().map(DomainPtr::from),
+            Domain::Unresolved(ud) => ud.element_domain(),
+        }
+    }
 }
 
 impl Typeable for Domain {

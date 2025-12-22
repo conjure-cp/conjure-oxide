@@ -1,0 +1,32 @@
+Model before rewriting:
+
+letting s be 0
+find x: set (minSize(1)) of int(-7, -3..-2, 5, 8)
+
+such that
+
+(s = sum([ i | i <- x ]))
+
+--
+
+s, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+0 
+
+--
+
+sum([ i | i <- x ]), 
+   ~~> unwrap_abstract_comprehension_sum ([("Smt", 999)]) 
+sum([product([-7,toInt(-7 in x);int(1..)]),product([-3,toInt(-3 in x);int(1..)]),product([-2,toInt(-2 in x);int(1..)]),product([5,toInt(5 in x);int(1..)]),product([8,toInt(8 in x);int(1..)]);int(1..)]) 
+
+--
+
+Final model:
+
+letting s be 0
+find x: set (minSize(1)) of int(-7, -3..-2, 5, 8)
+
+such that
+
+(0 = sum([product([-7,toInt(-7 in x);int(1..)]),product([-3,toInt(-3 in x);int(1..)]),product([-2,toInt(-2 in x);int(1..)]),product([5,toInt(5 in x);int(1..)]),product([8,toInt(8 in x);int(1..)]);int(1..)]))
+
