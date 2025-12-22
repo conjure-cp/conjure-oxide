@@ -1,7 +1,5 @@
-<!-- maturity: draft
-Authors: Hanaa Khan
-Last Updated: 21-12-25
----- -->
+[//]: # (Author: Hanaa Khan)
+[//]: # (Last Updated: 21-12-25)
 
 # Glossary
 
