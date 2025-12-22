@@ -1,0 +1,19 @@
+language ESSENCE 1.2.0
+$ prob019.essence: Magic Squares
+$ Problem details available at http://www.csplib.org/Problems/prob019/
+$ 05 September 2007
+
+letting n be 3
+ 
+letting Index be domain int(1..3),
+        Value be domain int(1..9)
+ 
+find square : matrix indexed by [Index,Index] of Value,
+find s : int(1..24)
+
+such that
+    allDiff(flatten(square)),
+    forAll r : Index . (sum c : Index . square[r,c]) = s,
+    forAll c : Index . (sum r : Index . square[r,c]) = s,
+    (sum d : Index . square[d,d]) = s,
+    (sum d : Index . square[d,4-d]) = s
