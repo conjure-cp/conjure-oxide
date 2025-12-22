@@ -3,7 +3,9 @@ use std::collections::HashMap;
 use itertools::Itertools;
 use z3::{Context, Model, Solvable, SortKind, Symbol, Translate, ast::*};
 
-use crate::ast::{AbstractLiteral, Domain, GroundDomain, Literal, Moo, Name, Range};
+use crate::ast::{
+    AbstractLiteral, Domain, GroundDomain, Literal, Moo, Name, Range, ReturnType, Typeable,
+};
 use crate::solver::{SolverError, SolverResult};
 
 use super::helpers::*;
@@ -81,6 +83,16 @@ impl Solvable for SymbolStore {
                                     })
                             })
                             .map(|(a, b)| a.ne(b))
+                            .collect();
+                        Bool::or(&neqs)
+                    }
+                    GroundDomain::Set(_, elem_domain) => {
+                        let set = ast.as_set().unwrap();
+                        let other_set = other.as_set().unwrap();
+                        let neqs: Vec<_> = domain_to_ast_vec(&self.theories, elem_domain)
+                            .unwrap()
+                            .iter()
+                            .map(|ast| set.member(ast).ne(other_set.member(ast)))
                             .collect();
                         Bool::or(&neqs)
                     }
@@ -167,13 +179,13 @@ fn interpret(
             "could not interpret variable: {var_ast}"
         )))?;
 
-    let literal = match (theories.ints, lit_ast.sort_kind()) {
-        (_, SortKind::Bool) => {
+    let literal = match (theories.ints, domain.as_ref()) {
+        (_, GroundDomain::Bool) => {
             let bool_ast = lit_ast.as_bool().unwrap();
             let bool = bool_ast.as_bool().unwrap();
             Ok(Literal::Bool(bool))
         }
-        (Lia, SortKind::Int) => {
+        (Lia, GroundDomain::Int(_)) => {
             let int_ast = lit_ast.as_int().unwrap();
             let int = int_ast
                 .as_i64()
@@ -186,7 +198,7 @@ fn interpret(
                 })?;
             Ok(Literal::Int(int))
         }
-        (Bv, SortKind::BV) => {
+        (Bv, GroundDomain::Int(_)) => {
             // BVs do not sign-extend when returning u64s (if they are < 64 bits)
             // To correctly retrieve negative numbers, we downsize to a u32 and then bit-wise
             // interpret it as an i32, rather than casting.
@@ -201,13 +213,8 @@ fn interpret(
             let signed = i32::from_ne_bytes(unsigned_32.to_ne_bytes());
             Ok(Literal::Int(signed))
         }
-        (_, SortKind::Array) => {
+        (_, GroundDomain::Matrix(val_domain, idx_domains)) => {
             let arr_ast = lit_ast.as_array().unwrap();
-            let GroundDomain::Matrix(val_domain, idx_domains) = domain.as_ref() else {
-                return Err(SolverError::Runtime(format!(
-                    "non-matrix variable interpreted as array: {domain}"
-                )));
-            };
 
             let inner_domain = match idx_domains.as_slice() {
                 [idx_domain] => val_domain.clone(),
@@ -231,8 +238,32 @@ fn interpret(
                 domain.clone(),
             )))
         }
+        (_, GroundDomain::Set(_, val_domain)) => {
+            let set_ast = lit_ast.as_set().unwrap();
+
+            // Collect every member of the domain that is in the set
+            let dom_iter = val_domain
+                .values()
+                .map_err(|_| SolverError::Runtime("could not construct domain iterator".into()))?;
+            let members: Result<Vec<Literal>, SolverError> = dom_iter
+                .map(|lit| {
+                    // We want to bubble errors up but also only collect set members
+                    let lit_ast = literal_to_ast(theories, &lit)?;
+                    let is_member = model
+                        .eval(&set_ast.member(&lit_ast), model_completion)
+                        .unwrap()
+                        .as_bool()
+                        .unwrap();
+                    Ok(is_member.then_some(lit))
+                })
+                .filter_map(|res: Result<Option<Literal>, SolverError>| res.ok().flatten().map(Ok))
+                .collect();
+            let members = members?;
+
+            Ok(Literal::AbstractLiteral(AbstractLiteral::Set(members)))
+        }
         _ => Err(SolverError::RuntimeNotImplemented(format!(
-            "conversion from AST to literal not implemented: {lit_ast}"
+            "conversion from AST to literal of type '{domain}' not implemented: {lit_ast}"
         ))),
     }?;
     Ok((lit_ast, literal))
