@@ -1,3 +1,4 @@
+use conjure_cp::ast::matrix::safe_index_optimised;
 use conjure_cp::ast::{
     AbstractLiteral, Expression as Expr, GroundDomain, Metadata, Moo, SymbolTable,
 };
@@ -8,7 +9,6 @@ use conjure_cp::rule_engine::{
 };
 use conjure_cp::solver::SolverFamily;
 use conjure_cp::solver::adaptors::smt::TheoryConfig;
-use itertools::Itertools;
 
 // Only applicable when unwrap_alldiff is enabled in the SMT adaptor
 register_rule_set!("SmtUnwrapAllDiff", ("Base"), |f: &SolverFamily| matches!(
@@ -41,10 +41,10 @@ fn unwrap_alldiff(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             let idx_iter = idx_domain.values().map_err(|_| DomainError)?;
             let occurences = idx_iter
                 .map(|idx| {
-                    let elem = Expr::SafeIndex(Metadata::new(), m.clone(), vec![idx.into()]);
-                    essence_expr!("toInt(&elem = &lit)")
+                    let elem = safe_index_optimised(m.as_ref().clone(), idx).ok_or(DomainError)?;
+                    Ok(essence_expr!("toInt(&elem = &lit)"))
                 })
-                .collect_vec();
+                .collect::<Result<Vec<_>, _>>()?;
             let occurences_list = Expr::AbstractLiteral(
                 Metadata::new(),
                 AbstractLiteral::matrix_implied_indices(occurences),
