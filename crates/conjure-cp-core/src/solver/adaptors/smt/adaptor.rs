@@ -40,16 +40,7 @@ impl Default for Smt {
 
 impl Smt {
     /// Constructs a new adaptor using the given theories for representing the relevant constructs.
-    pub fn new(
-        timeout_msec: Option<u64>,
-        int_theory: IntTheory,
-        matrix_theory: MatrixTheory,
-    ) -> Self {
-        let theory_config = TheoryConfig {
-            ints: int_theory,
-            matrices: matrix_theory,
-        };
-
+    pub fn new(timeout_msec: Option<u64>, theory_config: TheoryConfig) -> Self {
         let mut solver_cfg = Config::new();
         timeout_msec.inspect(|ms| solver_cfg.set_timeout_msec(*ms));
 
