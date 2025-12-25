@@ -22,6 +22,7 @@
   - [Creating Documentation](./developers_guide/contributors_guide/creating_documentation.md)
   - [Running and writing integration tests]()
   - [What we didn't do]()
+  - [Onboarding](./developers_guide/contributors-guide/onboarding.md)
 
 - [Coding Resources and Conventions](./developers_guide/coding_resources/index.md)
   - [Style Guide](./developers_guide/coding_resources/style_guide.md)
@@ -49,6 +50,12 @@
 - [Developer Documentation](./documentation/dev_docs.md)
 <!-- TODO: will be moved -- likely the content of these will end off here -->
 - [Useful Links](./documentation/links.md)
+- [Testing](./documentation/testing/testing.md)
+  - [Roundtrip Testing](./documentation/testing/roundtrip/roundtrip_testing.md)
+- [Types]()
+  - [Creating Types Guide](./documentation/types/creating_types_guide.md)
+  - [Functions](./documentation/types/functions.md)
+  - [Multisets](./documentation/types/multisets.md)
 
 ---
 
