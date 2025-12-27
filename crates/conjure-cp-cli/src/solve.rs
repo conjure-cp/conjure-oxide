@@ -6,10 +6,12 @@ use std::{
     path::PathBuf,
     process::exit,
     sync::{Arc, RwLock},
+    time::Duration,
 };
 
 use anyhow::{anyhow, ensure};
 use clap::ValueHint;
+use conjure_cp::defaults::DEFAULT_RULE_SETS;
 use conjure_cp::{
     Model,
     ast::comprehension::USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS,
@@ -17,7 +19,6 @@ use conjure_cp::{
     rule_engine::{resolve_rule_sets, rewrite_morph, rewrite_naive},
     solver::Solver,
 };
-use conjure_cp::{defaults::DEFAULT_RULE_SETS, solver::adaptors::smt::TheoryConfig};
 use conjure_cp::{
     parse::conjure_json::model_from_json, rule_engine::get_rules, solver::SolverFamily,
 };
@@ -63,7 +64,7 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
     let context = init_context(&global_args, input_file)?;
     let model = parse(&global_args, Arc::clone(&context))?;
     let rewritten_model = rewrite(model, &global_args, Arc::clone(&context))?;
-    let solver = init_solver(global_args.solver);
+    let solver = init_solver(&global_args);
 
     if solve_args.no_run_solver {
         println!("{}", &rewritten_model);
@@ -142,11 +143,20 @@ pub(crate) fn init_context(
     Ok(context)
 }
 
-pub(crate) fn init_solver(family: SolverFamily) -> Solver {
+pub(crate) fn init_solver(global_args: &GlobalArgs) -> Solver {
+    let family = global_args.solver;
+    let solver_timeout = global_args
+        .solver_timeout
+        .map(|dur| Duration::from(dur).as_millis());
+
     match family {
         SolverFamily::Minion => Solver::new(Minion::default()),
         SolverFamily::Sat => Solver::new(Sat::default()),
-        SolverFamily::Smt(TheoryConfig { ints, matrices }) => Solver::new(Smt::new(ints, matrices)),
+        #[cfg(feature = "smt")]
+        SolverFamily::Smt(theory_cfg) => {
+            let timeout_ms = solver_timeout.map(|ms| u64::try_from(ms).expect("Timeout too large"));
+            Solver::new(Smt::new(timeout_ms, theory_cfg))
+        }
     }
 }
 
