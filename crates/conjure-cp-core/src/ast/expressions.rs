@@ -658,8 +658,7 @@ fn range_vec_bounds_i32(ranges: &Vec<Range<i32>>) -> Option<(i32, i32)> {
 impl Expression {
     /// Returns the possible values of the expression, recursing to leaf expressions
     pub fn domain_of(&self) -> Option<DomainPtr> {
-        //println!("domain_of {self}");
-        let ret = match self {
+        match self {
             Expression::Union(_, a, b) => Some(Domain::set(
                 SetAttr::<IntVal>::default(),
                 a.domain_of()?.union(&b.domain_of()?).ok()?,
@@ -938,17 +937,7 @@ impl Expression {
             Expression::LexGeq(..) => Some(Domain::bool()),
             Expression::FlatLexLt(..) => Some(Domain::bool()),
             Expression::FlatLexLeq(..) => Some(Domain::bool()),
-        };
-        if let Some(dom) = &ret
-            && let Some(ranges) = dom.as_int_ground()
-            && ranges.len() > 1
-        {
-            // TODO: (flm8) the Minion bindings currently only support single ranges for domains, so we use the min/max bounds
-            // Once they support a full domain as we define it, we can remove this conversion
-            let (min, max) = range_vec_bounds_i32(ranges)?;
-            return Some(Domain::int(vec![Range::Bounded(min, max)]));
         }
-        ret
     }
 
     pub fn get_meta(&self) -> Metadata {
