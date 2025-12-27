@@ -55,7 +55,7 @@ such that
     assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
     let diag = &diagnostics[0];
 
-    check_diagnostic(diag, 1, 9, 1, 9, "Missing 'bool_expr'");
+    check_diagnostic(diag, 1, 9, 1, 9, "Missing 'atom'");
 }
 
 #[test]
