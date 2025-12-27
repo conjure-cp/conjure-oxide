@@ -49,6 +49,7 @@
 - [Developer Documentation](./documentation/dev_docs.md)
 <!-- TODO: will be moved -- likely the content of these will end off here -->
 - [Useful Links](./documentation/links.md)
+- [Error Detection](https://github.com/conjure-cp/conjure-oxide/tree/main/docs/src/documentation/error_detection)
 
 ---
 
