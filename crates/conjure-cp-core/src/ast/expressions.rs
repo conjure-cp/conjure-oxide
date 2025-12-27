@@ -772,7 +772,7 @@ impl Expression {
                 if let GroundDomain::Int(ranges) = domain {
                     let mut ranges = ranges;
                     ranges.push(Range::Single(0));
-                    return Some(Domain::int(ranges));
+                    Some(Domain::int(ranges))
                 } else {
                     bug!("Domain of {self} was not integer")
                 }
@@ -799,7 +799,7 @@ impl Expression {
                 if let GroundDomain::Int(ranges) = domain {
                     let mut ranges = ranges;
                     ranges.push(Range::Single(0));
-                    return Some(Domain::int(ranges));
+                    Some(Domain::int(ranges))
                 } else {
                     bug!("Domain of {self} was not integer")
                 }
