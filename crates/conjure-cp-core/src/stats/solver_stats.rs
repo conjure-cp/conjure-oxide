@@ -14,6 +14,7 @@ pub struct SolverStats {
     /// Wall time as measured by Conjure-Oxide (not the solver).
     pub conjure_solver_wall_time_s: f64,
 
+    pub solver_time_to_first_solve: Option<f64>,
     // This is set by Solver, not SolverAdaptor
     /// The solver family used for this run.
     pub solver_family: Option<SolverFamily>,
