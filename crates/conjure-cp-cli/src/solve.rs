@@ -27,9 +27,6 @@ use conjure_cp_cli::find_conjure::conjure_executable;
 use conjure_cp_cli::utils::conjure::{get_solutions, solutions_to_json};
 use serde_json::to_string_pretty;
 
-#[cfg(feature = "smt")]
-use conjure_cp::solver::adaptors::smt::TheoryConfig;
-
 use crate::cli::{GlobalArgs, LOGGING_HELP_HEADING};
 
 #[derive(Clone, Debug, clap::Args)]
@@ -156,9 +153,9 @@ pub(crate) fn init_solver(global_args: &GlobalArgs) -> Solver {
         SolverFamily::Minion => Solver::new(Minion::default()),
         SolverFamily::Sat => Solver::new(Sat::default()),
         #[cfg(feature = "smt")]
-        SolverFamily::Smt(TheoryConfig { ints, matrices }) => {
+        SolverFamily::Smt(theory_cfg) => {
             let timeout_ms = solver_timeout.map(|ms| u64::try_from(ms).expect("Timeout too large"));
-            Solver::new(Smt::new(timeout_ms, ints, matrices))
+            Solver::new(Smt::new(timeout_ms, theory_cfg))
         }
     }
 }
