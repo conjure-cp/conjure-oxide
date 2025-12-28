@@ -72,8 +72,7 @@ impl SolverAdaptor for Smt {
             let solutions = solver
                 .into_solutions_with_statistics(store_send.recover(), true)
                 .take_while(|(store, stats)| (callback)(store.as_literals_map().unwrap()))
-                .enumerate()
-                .inspect(|(i, (store, z3_stats))| {
+                .inspect(|(store, z3_stats)| {
                     if stats.solver_time_to_first_solve.is_none() {
                         let time = z3_stats.value("time");
                         if let Some(z3::StatisticsValue::Double(time)) = time {
