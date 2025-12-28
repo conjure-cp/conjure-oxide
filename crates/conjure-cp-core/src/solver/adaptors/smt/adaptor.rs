@@ -64,8 +64,8 @@ impl SolverAdaptor for Smt {
     ) -> Result<SolveSuccess, SolverError> {
         let solver_send = self.solver_inst.synchronized();
         let store_send = self.store.synchronized();
-        let stats: SolverStats = Default::default();
-        let mut final_z3_stats: Option<Statistics> = None;
+        let mut stats: SolverStats = Default::default();
+        let mut final_z3_time: Option<f64> = None;
 
         // Apply config when getting solutions
         let search_complete = with_z3_config(&self.solver_cfg, move || {
@@ -74,7 +74,10 @@ impl SolverAdaptor for Smt {
                 .into_solutions_with_statistics(store_send.recover(), true)
                 .take_while(|(store, _)| (callback)(store.as_literals_map().unwrap()))
                 .inspect(|(store, z3_stats)| {
-                    final_z3_stats = Some(z3_stats);
+                    let time = z3_stats.value("time");
+                    if let Some(z3::StatisticsValue::Double(time)) = time {
+                        final_z3_time = Some(time);
+                    }
                 });
 
             // Consume iterator and get whether there are solutions
@@ -83,11 +86,9 @@ impl SolverAdaptor for Smt {
                 _ => SearchComplete::HasSolutions,
             }
         });
-        if let Some(z3_stats) = final_z3_stats {
-            let time = z3_stats.value("time");
-            if let Some(z3::StatisticsValue::Double(time)) = time {
-                stats.conjure_solver_wall_time_s += time;
-            }
+
+        if let Some(time) = final_z3_time {
+            stats.conjure_solver_wall_time_s += time;
         }
 
         Ok(SolveSuccess {
