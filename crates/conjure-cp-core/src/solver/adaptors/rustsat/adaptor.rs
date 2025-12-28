@@ -20,14 +20,15 @@ use rustsat_minisat::core::Minisat;
 
 use crate::ast::{Atom, Expression, Literal, Name};
 use crate::ast::{GroundDomain, Metadata};
-use crate::solver::SearchComplete::NoSolutions;
 use crate::solver::adaptors::rustsat::convs::handle_cnf;
+use crate::solver::adaptors::rustsat::SatConf;
+use crate::solver::SearchComplete::NoSolutions;
 use crate::solver::{
-    self, SearchStatus, SolveSuccess, SolverAdaptor, SolverCallback, SolverError, SolverFamily,
-    SolverMutCallback, private,
+    self, private, SearchStatus, SolveSuccess, SolverAdaptor, SolverCallback, SolverError,
+    SolverFamily, SolverMutCallback,
 };
 use crate::stats::SolverStats;
-use crate::{Model as ConjureModel, ast as conjure_ast, bug};
+use crate::{ast as conjure_ast, bug, Model as ConjureModel};
 use crate::{into_matrix_expr, matrix_expr};
 
 use rustsat::instances::{BasicVarManager, Cnf, ManageVars, SatInstance};
@@ -42,6 +43,7 @@ pub struct Sat {
     var_map: Option<HashMap<Name, Lit>>,
     solver_inst: Minisat,
     decision_refs: Option<Vec<Name>>,
+    config: SatConf,
 }
 
 impl private::Sealed for Sat {}
@@ -54,9 +56,16 @@ impl Default for Sat {
             var_map: None,
             model_inst: None,
             decision_refs: None,
+            config: SatConf::default(),
         }
     }
 }
+
+// impl Sat {
+//     fn new_from_conf(conf: SatConf) -> Result<Self, SolverError> {
+//         SolverError()
+//     }
+// }
 
 fn get_ref_sols(
     find_refs: Vec<Name>,
@@ -262,7 +271,7 @@ impl SolverAdaptor for Sat {
     fn init_solver(&mut self, _: private::Internal) {}
 
     fn get_family(&self) -> SolverFamily {
-        SolverFamily::Sat
+        SolverFamily::Sat(self.config)
     }
 
     fn get_name(&self) -> &'static str {

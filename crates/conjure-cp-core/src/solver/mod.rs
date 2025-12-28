@@ -118,10 +118,12 @@ use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumIter, EnumString};
 use thiserror::Error;
 
-use crate::Model;
 use crate::ast::{Literal, Name};
 use crate::context::Context;
 use crate::stats::SolverStats;
+use crate::Model;
+
+use crate::solver::adaptors::rustsat::*;
 
 #[cfg(feature = "smt")]
 use crate::solver::adaptors::smt::{IntTheory, MatrixTheory, TheoryConfig};
@@ -141,7 +143,7 @@ pub mod states;
     Debug, EnumIter, Display, PartialEq, Eq, Hash, Clone, Copy, Serialize, Deserialize, JsonSchema,
 )]
 pub enum SolverFamily {
-    Sat,
+    Sat(SatConf),
     Minion,
     #[cfg(feature = "smt")]
     Smt(TheoryConfig),
@@ -155,10 +157,11 @@ impl FromStr for SolverFamily {
 
         match s.as_str() {
             "minion" => Ok(SolverFamily::Minion),
-            "sat" => Ok(SolverFamily::Sat),
+            "sat" => Ok(SolverFamily::Sat(SatConf::default())),
             #[cfg(feature = "smt")]
             "smt" => Ok(SolverFamily::Smt(TheoryConfig::default())),
             other => {
+                // allow forms like `sat-bv-minisat`, `sat-bv` etc
                 // allow forms like `smt-bv-atomic` or `smt-lia-arrays`
                 #[cfg(feature = "smt")]
                 if other.starts_with("smt-") {
@@ -189,8 +192,9 @@ impl FromStr for SolverFamily {
                         unwrap_alldiff,
                     }));
                 }
+
                 Err(format!(
-                    "unknown solver family '{other}', expected 'minion', 'sat' or 'smt[(bv|lia)-(arrays|atomic)]'"
+                    "unknown solver family '{other}', expected 'minion', 'sat'[(bv|order|direct)-(minisat|kissat|cadical)] or 'smt[(bv|lia)-(arrays|atomic)]'"
                 ))
             }
         }
