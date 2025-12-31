@@ -21,7 +21,7 @@ use rustsat_minisat::core::Minisat;
 use crate::ast::{Atom, Expression, Literal, Name};
 use crate::ast::{GroundDomain, Metadata};
 use crate::solver::adaptors::rustsat::convs::handle_cnf;
-use crate::solver::adaptors::rustsat::SatConf;
+use crate::solver::adaptors::rustsat::{SatConf, SatSolverType};
 use crate::solver::SearchComplete::NoSolutions;
 use crate::solver::{
     self, private, SearchStatus, SolveSuccess, SolverAdaptor, SolverCallback, SolverError,
@@ -61,11 +61,21 @@ impl Default for Sat {
     }
 }
 
-// impl Sat {
-//     fn new_from_conf(conf: SatConf) -> Result<Self, SolverError> {
-//         SolverError()
-//     }
-// }
+impl Sat {
+    fn new_from_conf(conf: SatConf) -> Self {
+        Sat {
+            __non_constructable: private::Internal,
+            solver_inst: match conf.solver_variant {
+                SatSolverType::Minisat => Minisat::default(),
+                _ => todo!("yet to add CaDiCaL, Kissat and others"),
+            },
+            var_map: None,
+            model_inst: None,
+            decision_refs: None,
+            config: conf,
+        }
+    }
+}
 
 fn get_ref_sols(
     find_refs: Vec<Name>,
