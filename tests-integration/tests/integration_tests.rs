@@ -47,7 +47,7 @@ use conjure_cp_cli::utils::testing::{
 #[allow(clippy::single_component_path_imports, unused_imports)]
 use conjure_cp_rules;
 use pretty_assertions::assert_eq;
-use tests_::TestConfig;
+use tests_integration::TestConfig;
 
 fn main() {
     let _guard = create_scoped_subscriber("./logs", "test_log");
@@ -78,7 +78,7 @@ fn main() {
 static GUARD: Mutex<()> = Mutex::new(());
 
 // wrapper to conditionally enforce sequential execution
-fn _test(path: &str, essence_base: &str, extension: &str) -> Result<(), Box<dyn Error>> {
+fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(), Box<dyn Error>> {
     let verbose = env::var("VERBOSE").unwrap_or("false".to_string()) == "true";
     let accept = env::var("ACCEPT").unwrap_or("false".to_string()) == "true";
 
@@ -92,10 +92,14 @@ fn _test(path: &str, essence_base: &str, extension: &str) -> Result<(), Box<dyn 
         let _guard = GUARD.lock().unwrap_or_else(|e| e.into_inner());
 
         // set the subscriber as default
-        tracing::subscriber::with_default(subscriber, || _test_inner(path, essence_base, extension))
+        tracing::subscriber::with_default(subscriber, || {
+            integration_test_inner(path, essence_base, extension)
+        })
     } else {
         let subscriber = create_scoped_subscriber(path, essence_base);
-        tracing::subscriber::with_default(subscriber, || _test_inner(path, essence_base, extension))
+        tracing::subscriber::with_default(subscriber, || {
+            integration_test_inner(path, essence_base, extension)
+        })
     }
 }
 
@@ -132,7 +136,11 @@ fn _test(path: &str, essence_base: &str, extension: &str) -> Result<(), Box<dyn 
 ///
 /// Returns an error if any stage fails due to a mismatch with expected results or file I/O issues.
 #[allow(clippy::unwrap_used)]
-fn _test_inner(path: &str, essence_base: &str, extension: &str) -> Result<(), Box<dyn Error>> {
+fn integration_test_inner(
+    path: &str,
+    essence_base: &str,
+    extension: &str,
+) -> Result<(), Box<dyn Error>> {
     let context: Arc<RwLock<Context<'static>>> = Default::default();
     let accept = env::var("ACCEPT").unwrap_or("false".to_string()) == "true";
     let verbose = env::var("VERBOSE").unwrap_or("false".to_string()) == "true";
@@ -188,7 +196,7 @@ fn _test_inner(path: &str, essence_base: &str, extension: &str) -> Result<(), Bo
         // rule set selection based on solver
 
         let solver_fam = if config.solve_with_sat {
-            SolverFamily::Sat
+            SolverFamily::Sat(rustsat::SatConf::default())
         } else if config.solve_with_smt {
             #[cfg(not(feature = "smt"))]
             panic!("Test {path} uses 'solve_with_smt=true', but the 'smt' feature is disabled!");
@@ -366,8 +374,12 @@ fn _test_inner(path: &str, essence_base: &str, extension: &str) -> Result<(), Bo
         let username_solutions_json = solutions_to_json(&solutions);
         assert_eq!(username_solutions_json, expected_solutions_json);
     } else if config.solve_with_sat {
-        let expected_solutions_json =
-            read_solutions_json(path, essence_base, "expected", SolverFamily::Sat)?;
+        let expected_solutions_json = read_solutions_json(
+            path,
+            essence_base,
+            "expected",
+            SolverFamily::Sat(rustsat::SatConf::default()),
+        )?;
         let username_solutions_json = solutions_to_json(&solutions);
         assert_eq!(username_solutions_json, expected_solutions_json);
     } else if config.solve_with_smt {

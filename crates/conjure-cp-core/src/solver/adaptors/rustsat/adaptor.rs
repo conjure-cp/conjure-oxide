@@ -41,7 +41,7 @@ pub struct Sat {
     __non_constructable: private::Internal,
     model_inst: Option<SatInstance>,
     var_map: Option<HashMap<Name, Lit>>,
-    solver_inst: Minisat,
+    // solver_inst: Minisat,
     decision_refs: Option<Vec<Name>>,
     config: SatConf,
 }
@@ -52,7 +52,7 @@ impl Default for Sat {
     fn default() -> Self {
         Sat {
             __non_constructable: private::Internal,
-            solver_inst: Minisat::default(),
+            // solver_inst: Minisat::default(),
             var_map: None,
             model_inst: None,
             decision_refs: None,
@@ -65,10 +65,10 @@ impl Sat {
     fn new_from_conf(conf: SatConf) -> Self {
         Sat {
             __non_constructable: private::Internal,
-            solver_inst: match conf.solver_variant {
-                SatSolverType::Minisat => Minisat::default(),
-                _ => todo!("yet to add CaDiCaL, Kissat and others"),
-            },
+            // solver_inst: match conf.solver_variant {
+            //     SatSolverType::Minisat => Minisat::default(),
+            //     _ => todo!("yet to add CaDiCaL, Kissat and others"),
+            // },
             var_map: None,
             model_inst: None,
             decision_refs: None,
@@ -112,7 +112,12 @@ impl SolverAdaptor for Sat {
         callback: SolverCallback,
         _: private::Internal,
     ) -> Result<SolveSuccess, SolverError> {
-        let mut solver = &mut self.solver_inst;
+        // let mut solver = &mut self.solver_inst;
+
+        let mut solver = &mut match self.config.solver_variant {
+            SatSolverType::Minisat => Minisat::default(),
+            _ => todo!("yet to implement this one"),
+        };
 
         let cnf: (Cnf, BasicVarManager) = self
             .model_inst
