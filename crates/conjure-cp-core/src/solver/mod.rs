@@ -106,6 +106,8 @@ use std::cell::OnceCell;
 use std::collections::HashMap;
 use std::error::Error;
 use std::fmt::{Debug, Display};
+use std::fs;
+use std::fs::File;
 use std::io::Write;
 use std::rc::Rc;
 use std::str::FromStr;
@@ -157,7 +159,17 @@ impl FromStr for SolverFamily {
 
         match s.as_str() {
             "minion" => Ok(SolverFamily::Minion),
-            "sat" => Ok(SolverFamily::Sat(SatConf::default())),
+            "sat" => {
+                let config: SatConf = if let Ok(config_contents) = fs::read_to_string({
+                    let path = "./sat.toml";
+                    path
+                }) {
+                    toml::from_str(&config_contents).unwrap_or_default()
+                } else {
+                    Default::default()
+                };
+                Ok(SolverFamily::Sat(config))
+            }
             #[cfg(feature = "smt")]
             "smt" => Ok(SolverFamily::Smt(TheoryConfig::default())),
             other => {

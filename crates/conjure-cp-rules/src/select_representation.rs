@@ -1,19 +1,19 @@
 use conjure_cp::{
     ast::{
-        Atom, Expression as Expr, GroundDomain, Metadata, Name, SubModel, SymbolTable, serde::HasId,
+        serde::HasId, Atom, Expression as Expr, GroundDomain, Metadata, Name, SubModel, SymbolTable,
     },
     bug,
     representation::Representation,
     rule_engine::{
-        ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
-        register_rule_set,
+        register_rule, register_rule_set, ApplicationError::RuleNotApplicable, ApplicationResult,
+        Reduction,
     },
     solver::SolverFamily,
 };
 use itertools::Itertools;
-use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
+use std::sync::Arc;
 use uniplate::Biplate;
 
 #[cfg(feature = "smt")]
@@ -30,7 +30,8 @@ register_rule_set!("Representations", ("Base"), |f: &SolverFamily| {
     ) {
         return true;
     }
-    matches!(f, SolverFamily::Sat | SolverFamily::Minion)
+    // TODO:Fixes?
+    matches!(f, SolverFamily::Sat(_) | SolverFamily::Minion)
 });
 
 // special case rule to select representations for matrices in one go.

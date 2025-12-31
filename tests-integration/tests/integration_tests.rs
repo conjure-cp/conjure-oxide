@@ -5,8 +5,8 @@ use conjure_cp::rule_engine::get_rules_grouped;
 use conjure_cp::defaults::DEFAULT_RULE_SETS;
 use conjure_cp::parse::tree_sitter::parse_essence_file_native;
 use conjure_cp::rule_engine::rewrite_naive;
-use conjure_cp::solver::Solver;
 use conjure_cp::solver::adaptors::*;
+use conjure_cp::solver::Solver;
 use conjure_cp_cli::utils::testing::{normalize_solutions_for_comparison, read_human_rule_trace};
 use glob::glob;
 use itertools::Itertools;
@@ -15,9 +15,9 @@ use std::env;
 use std::error::Error;
 use std::fs;
 use std::fs::File;
-use tracing::{Level, span};
+use tracing::{span, Level};
 use tracing_subscriber::{
-    Layer, Registry, filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt,
+    filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt, Layer, Registry,
 };
 use tree_morph::{helpers::select_panic, prelude::*};
 
@@ -41,13 +41,13 @@ use conjure_cp_cli::utils::conjure::solutions_to_json;
 use conjure_cp_cli::utils::conjure::{get_solutions, get_solutions_from_conjure};
 use conjure_cp_cli::utils::testing::save_stats_json;
 use conjure_cp_cli::utils::testing::{
-    REWRITE_SERIALISED_JSON_MAX_LINES, read_model_json, read_model_json_prefix,
-    read_solutions_json, save_model_json, save_solutions_json,
+    read_model_json, read_model_json_prefix, read_solutions_json, save_model_json,
+    save_solutions_json, REWRITE_SERIALISED_JSON_MAX_LINES,
 };
 #[allow(clippy::single_component_path_imports, unused_imports)]
 use conjure_cp_rules;
 use pretty_assertions::assert_eq;
-use tests_integration::TestConfig;
+use tests_::TestConfig;
 
 fn main() {
     let _guard = create_scoped_subscriber("./logs", "test_log");
@@ -56,14 +56,14 @@ fn main() {
     let test_span = span!(Level::TRACE, "test_span");
     let _enter: span::Entered<'_> = test_span.enter();
 
-    for entry in glob("conjure_cp_cli/tests/integration/*").expect("Failed to read glob pattern") {
+    for entry in glob("conjure_cp_cli/tests//*").expect("Failed to read glob pattern") {
         match entry {
             Ok(path) => println!("File: {path:?}"),
             Err(e) => println!("Error: {e:?}"),
         }
     }
 
-    let file_path = Path::new("conjure_cp_cli/tests/integration/*"); // using relative path
+    let file_path = Path::new("conjure_cp_cli/tests//*"); // using relative path
 
     let base_name = file_path.file_stem().and_then(|stem| stem.to_str());
 
@@ -78,7 +78,7 @@ fn main() {
 static GUARD: Mutex<()> = Mutex::new(());
 
 // wrapper to conditionally enforce sequential execution
-fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(), Box<dyn Error>> {
+fn _test(path: &str, essence_base: &str, extension: &str) -> Result<(), Box<dyn Error>> {
     let verbose = env::var("VERBOSE").unwrap_or("false".to_string()) == "true";
     let accept = env::var("ACCEPT").unwrap_or("false".to_string()) == "true";
 
@@ -92,18 +92,14 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
         let _guard = GUARD.lock().unwrap_or_else(|e| e.into_inner());
 
         // set the subscriber as default
-        tracing::subscriber::with_default(subscriber, || {
-            integration_test_inner(path, essence_base, extension)
-        })
+        tracing::subscriber::with_default(subscriber, || _test_inner(path, essence_base, extension))
     } else {
         let subscriber = create_scoped_subscriber(path, essence_base);
-        tracing::subscriber::with_default(subscriber, || {
-            integration_test_inner(path, essence_base, extension)
-        })
+        tracing::subscriber::with_default(subscriber, || _test_inner(path, essence_base, extension))
     }
 }
 
-/// Runs an integration test for a given Conjure model by:
+/// Runs an  test for a given Conjure model by:
 /// 1. Parsing the model from an Essence file.
 /// 2. Rewriting the model according to predefined rule sets.
 /// 3. Solving the model using the Minion solver and validating the solutions.
@@ -136,17 +132,13 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
 ///
 /// Returns an error if any stage fails due to a mismatch with expected results or file I/O issues.
 #[allow(clippy::unwrap_used)]
-fn integration_test_inner(
-    path: &str,
-    essence_base: &str,
-    extension: &str,
-) -> Result<(), Box<dyn Error>> {
+fn _test_inner(path: &str, essence_base: &str, extension: &str) -> Result<(), Box<dyn Error>> {
     let context: Arc<RwLock<Context<'static>>> = Default::default();
     let accept = env::var("ACCEPT").unwrap_or("false".to_string()) == "true";
     let verbose = env::var("VERBOSE").unwrap_or("false".to_string()) == "true";
 
     if verbose {
-        println!("Running integration test for {path}/{essence_base}, ACCEPT={accept}");
+        println!("Running test for {path}/{essence_base}, ACCEPT={accept}");
     }
 
     let file_config: TestConfig =

@@ -5,7 +5,7 @@ use conjure_cp::solver::SolverFamily;
 use conjure_cp::ast::Metadata;
 use conjure_cp::ast::{Atom, CnfClause, Expression as Expr, Literal, Moo};
 use conjure_cp::rule_engine::{
-    ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
+    register_rule, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
 };
 
 use conjure_cp::ast::AbstractLiteral::Matrix;
@@ -251,7 +251,8 @@ pub fn tseytin_xor(
 
 register_rule_set!("SAT", ("Base"), |f: &SolverFamily| matches!(
     f,
-    SolverFamily::Sat
+    // TODO: fix this and change it to actually use the correct stuff
+    SolverFamily::Sat(_)
 ));
 
 /// Converts a single boolean atom to a clause
