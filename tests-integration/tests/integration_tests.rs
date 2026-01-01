@@ -146,7 +146,7 @@ fn integration_test_inner(
     let verbose = env::var("VERBOSE").unwrap_or("false".to_string()) == "true";
 
     if verbose {
-        println!("Running test for {path}/{essence_base}, ACCEPT={accept}");
+        println!("Running integration test for {path}/{essence_base}, ACCEPT={accept}");
     }
 
     let file_config: TestConfig =
@@ -196,7 +196,11 @@ fn integration_test_inner(
         // rule set selection based on solver
 
         let solver_fam = if config.solve_with_sat {
-            SolverFamily::Sat(rustsat::SatConf::default())
+            SolverFamily::Sat({
+                // NOTE: Not default: once again, figure out incomplete configs
+                let conf: rustsat::SatConf = toml::from_str("./sat.toml").unwrap_or_default();
+                conf
+            })
         } else if config.solve_with_smt {
             #[cfg(not(feature = "smt"))]
             panic!("Test {path} uses 'solve_with_smt=true', but the 'smt' feature is disabled!");

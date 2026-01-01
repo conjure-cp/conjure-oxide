@@ -151,7 +151,7 @@ pub(crate) fn init_solver(global_args: &GlobalArgs) -> Solver {
 
     match family {
         SolverFamily::Minion => Solver::new(Minion::default()),
-        SolverFamily::Sat(_) => Solver::new(Sat::default()),
+        SolverFamily::Sat(conf) => Solver::new(Sat::new_from_conf(conf)),
         #[cfg(feature = "smt")]
         SolverFamily::Smt(theory_cfg) => {
             let timeout_ms = solver_timeout.map(|ms| u64::try_from(ms).expect("Timeout too large"));

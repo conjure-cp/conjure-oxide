@@ -62,7 +62,7 @@ impl Default for Sat {
 }
 
 impl Sat {
-    fn new_from_conf(conf: SatConf) -> Self {
+    pub fn new_from_conf(conf: SatConf) -> Self {
         Sat {
             __non_constructable: private::Internal,
             // solver_inst: match conf.solver_variant {
