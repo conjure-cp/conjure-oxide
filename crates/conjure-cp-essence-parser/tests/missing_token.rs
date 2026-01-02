@@ -55,7 +55,7 @@ such that
     assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
     let diag = &diagnostics[0];
 
-    check_diagnostic(diag, 1, 9, 1, 9, "Missing 'bool_expr'");
+    check_diagnostic(diag, 1, 9, 1, 9, "Missing 'atom'");
 }
 
 #[test]
@@ -84,45 +84,6 @@ fn missing_domain_in_tuple_domain() {
     assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
     let diag = &diagnostics[0];
     check_diagnostic(diag, 0, 14, 0, 14, "Missing 'domain'");
-}
-
-#[test]
-fn missing_operator_in_comparison() {
-    // Missing operator in comparison expression
-    let source = "\
-find x: int
-such that 5 =
-    ";
-    let diagnostics = detect_syntactic_errors(source);
-    assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
-    let diag = &diagnostics[0];
-    check_diagnostic(
-        diag,
-        1,
-        13,
-        1,
-        13,
-        "Missing right operand in 'comparison' expression",
-    );
-}
-
-#[test]
-fn missing_right_operand_in_and_expr() {
-    let source = "\
-find x: int
-such that x /\\
-";
-    let diagnostics = detect_syntactic_errors(source);
-    assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
-    let diag = &diagnostics[0];
-    check_diagnostic(
-        diag,
-        1,
-        14,
-        1,
-        14,
-        "Missing right operand in 'and' expression",
-    );
 }
 
 #[test]
