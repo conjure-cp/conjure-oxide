@@ -236,6 +236,7 @@ pub fn save_solutions_json(
 
     let solver_name = match solver {
         SolverFamily::Sat => "sat",
+        #[cfg(feature = "smt")]
         SolverFamily::Smt(..) => "smt",
         SolverFamily::Minion => "minion",
     };
@@ -254,6 +255,7 @@ pub fn read_solutions_json(
 ) -> Result<JsonValue, anyhow::Error> {
     let solver_name = match solver {
         SolverFamily::Sat => "sat",
+        #[cfg(feature = "smt")]
         SolverFamily::Smt(..) => "smt",
         SolverFamily::Minion => "minion",
     };
@@ -379,6 +381,24 @@ pub fn normalize_solutions_for_comparison(
                             x => x,
                         });
                         updates.push((k, Literal::AbstractLiteral(record)));
+                    }
+                    Literal::AbstractLiteral(AbstractLiteral::Set(members)) => {
+                        let set = AbstractLiteral::Set(members).transform(&move |x| match x {
+                            AbstractLiteral::Set(members) => {
+                                let members = members
+                                    .into_iter()
+                                    .map(|x| match x {
+                                        Literal::Bool(false) => Literal::Int(0),
+                                        Literal::Bool(true) => Literal::Int(1),
+                                        x => x,
+                                    })
+                                    .collect_vec();
+
+                                AbstractLiteral::Set(members)
+                            }
+                            x => x,
+                        });
+                        updates.push((k, Literal::AbstractLiteral(set)));
                     }
                     e => bug!("unexpected literal type: {e:?}"),
                 }

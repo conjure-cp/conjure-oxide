@@ -113,7 +113,7 @@ such that a = allDiff([1,2,4,1]x)";
         31,
         1,
         32,
-        "Unexpected 'x' inside 'quantifier_expr_bool'",
+        "Unexpected 'x' inside 'list_combining_expr_bool'",
     );
 }
 
@@ -133,5 +133,22 @@ such that a = allDiff([1,2,4,1])8";
         1,
         33,
         "Unexpected '8' at the end of 'such that'",
+    );
+}
+
+#[test]
+fn unexpected_token_in_identifier() {
+    let source = "find v@lue: int(1..3)";
+    let diagnostics = detect_syntactic_errors(source);
+    assert!(!diagnostics.is_empty(), "Expected at least one diagnostic");
+    let diag = &diagnostics[0];
+
+    check_diagnostic(
+        diag,
+        0,
+        6,
+        0,
+        10,
+        "Unexpected '@lue' inside 'find_statement'",
     );
 }

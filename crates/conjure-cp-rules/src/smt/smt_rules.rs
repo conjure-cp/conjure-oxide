@@ -1,3 +1,4 @@
+use conjure_cp::ast::abstract_comprehension::{Generator, Qualifier};
 use conjure_cp::ast::{Expression as Expr, *};
 use conjure_cp::rule_engine::ApplicationError;
 use conjure_cp::rule_engine::{
@@ -41,7 +42,7 @@ fn flatten_indomain(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                     Range::Bounded(l, r) => {
                         let l_expr = Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Int(*l)));
                         let r_expr = Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Int(*r)));
-                        let lit = AbstractLiteral::list(vec![
+                        let lit = AbstractLiteral::matrix_implied_indices(vec![
                             Expr::Geq(Metadata::new(), inner.clone(), Moo::new(l_expr)),
                             Expr::Leq(Metadata::new(), inner.clone(), Moo::new(r_expr)),
                         ]);
@@ -65,7 +66,7 @@ fn flatten_indomain(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                 Metadata::new(),
                 Moo::new(Expr::AbstractLiteral(
                     Metadata::new(),
-                    AbstractLiteral::list(elements),
+                    AbstractLiteral::matrix_implied_indices(elements),
                 )),
             ))
         }
@@ -113,7 +114,7 @@ fn flatten_matrix_eq_neq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                 Metadata::new(),
                 Moo::new(Expr::AbstractLiteral(
                     Metadata::new(),
-                    AbstractLiteral::list(eqs),
+                    AbstractLiteral::matrix_implied_indices(eqs),
                 )),
             )
         }
@@ -123,7 +124,7 @@ fn flatten_matrix_eq_neq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                 Metadata::new(),
                 Moo::new(Expr::AbstractLiteral(
                     Metadata::new(),
-                    AbstractLiteral::list(neqs),
+                    AbstractLiteral::matrix_implied_indices(neqs),
                 )),
             )
         }
@@ -174,7 +175,7 @@ fn flatten_matrix_slice(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         .collect();
     Ok(Reduction::pure(Expr::AbstractLiteral(
         Metadata::new(),
-        AbstractLiteral::list(elements),
+        AbstractLiteral::matrix_implied_indices(elements),
     )))
 }
 
@@ -212,4 +213,166 @@ fn matrix_ref_to_slice(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     }
 
     Err(RuleNotApplicable)
+}
+
+/// This rule is applicable in SMT when atomic representation is not used for matrices.
+///
+/// Namely, it unwraps flatten(m) into [m[1, 1], m[1, 2], ...]
+#[register_rule(("Smt", 999))]
+fn unwrap_flatten_matrix_nonatomic(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    // TODO: depth not supported yet
+    let Expr::Flatten(_, None, m) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let dom = m.domain_of().ok_or(RuleNotApplicable)?;
+    let Some(GroundDomain::Matrix(_, index_domains)) = dom.resolve().map(Moo::unwrap_or_clone)
+    else {
+        return Err(RuleNotApplicable);
+    };
+
+    let elems: Vec<Expr> = matrix::enumerate_indices(index_domains)
+        .map(|lits| {
+            let idxs: Vec<Expr> = lits.into_iter().map(Into::into).collect();
+            Expr::SafeIndex(Metadata::new(), m.clone(), idxs)
+        })
+        .collect();
+
+    let new_dom = GroundDomain::Int(vec![Range::Bounded(
+        1,
+        elems
+            .len()
+            .try_into()
+            .expect("length of matrix should be able to be held in Int type"),
+    )]);
+    let new_expr = Expr::AbstractLiteral(
+        Metadata::new(),
+        AbstractLiteral::Matrix(elems, new_dom.into()),
+    );
+    Ok(Reduction::pure(new_expr))
+}
+
+/// Expands a sum over an "in set" comprehension to a list.
+///
+/// TODO: We currently only support one "in set" generator.
+/// This rule can be made much more general and nicer.
+#[register_rule(("Smt", 999))]
+fn unwrap_abstract_comprehension_sum(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    let Expr::Sum(_, inner) = expr else {
+        return Err(RuleNotApplicable);
+    };
+    let Expr::AbstractComprehension(_, comp) = inner.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let [Qualifier::Generator(Generator::ExpressionGenerator(generator))] = &comp.qualifiers[..]
+    else {
+        return Err(RuleNotApplicable);
+    };
+
+    let set = &generator.expression;
+    let elem_domain = generator.decl.domain().ok_or(DomainError)?;
+    let list: Vec<_> = elem_domain
+        .values()
+        .map_err(|_| DomainError)?
+        .map(|lit| essence_expr!("&lit * toInt(&lit in &set)"))
+        .collect();
+
+    let new_expr = Expr::Sum(
+        Metadata::new(),
+        Moo::new(Expr::AbstractLiteral(
+            Metadata::new(),
+            AbstractLiteral::matrix_implied_indices(list),
+        )),
+    );
+    Ok(Reduction::pure(new_expr))
+}
+
+/// Unwraps a subsetEq expression into checking membership equality.
+///
+/// Any elements not in the domain of one set must not be in the other set.
+#[register_rule(("Smt", 999))]
+fn unwrap_subseteq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    let Expr::SubsetEq(_, a, b) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let dom_a = a.domain_of().and_then(|d| d.resolve()).ok_or(DomainError)?;
+    let dom_b = b.domain_of().and_then(|d| d.resolve()).ok_or(DomainError)?;
+
+    let GroundDomain::Set(_, elem_dom_a) = dom_a.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
+    let GroundDomain::Set(_, elem_dom_b) = dom_b.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let domain_a_iter = elem_dom_a.values().map_err(|_| DomainError)?;
+    let memberships = domain_a_iter
+        .map(|lit| {
+            let b_contains = elem_dom_b.contains(&lit).map_err(|_| DomainError)?;
+            match b_contains {
+                true => Ok(essence_expr!("(&lit in &a) -> (&lit in &b)")),
+                false => Ok(essence_expr!("!(&lit in &a)")),
+            }
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+
+    let new_expr = Expr::And(
+        Metadata::new(),
+        Moo::new(Expr::AbstractLiteral(
+            Metadata::new(),
+            AbstractLiteral::matrix_implied_indices(memberships),
+        )),
+    );
+
+    Ok(Reduction::pure(new_expr))
+}
+
+/// Unwraps equality between sets into checking membership equality.
+///
+/// This is an optimisation over unwrap_subseteq to avoid unnecessary additional -> exprs
+/// where a single <-> is enough. This must apply before eq_to_subset_eq.
+#[register_rule(("Smt", 8801))]
+fn unwrap_set_eq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    let Expr::Eq(_, a, b) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let dom_a = a.domain_of().and_then(|d| d.resolve()).ok_or(DomainError)?;
+    let dom_b = b.domain_of().and_then(|d| d.resolve()).ok_or(DomainError)?;
+
+    let GroundDomain::Set(_, elem_dom_a) = dom_a.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
+    let GroundDomain::Set(_, elem_dom_b) = dom_b.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let union_val_iter = elem_dom_a
+        .union(elem_dom_b)
+        .and_then(|d| d.values())
+        .map_err(|_| DomainError)?;
+    let memberships = union_val_iter
+        .map(|lit| {
+            let a_contains = elem_dom_a.contains(&lit).map_err(|_| DomainError)?;
+            let b_contains = elem_dom_b.contains(&lit).map_err(|_| DomainError)?;
+            match (a_contains, b_contains) {
+                (true, true) => Ok(essence_expr!("(&lit in &a) <-> (&lit in &b)")),
+                (true, false) => Ok(essence_expr!("!(&lit in &a)")),
+                (false, true) => Ok(essence_expr!("!(&lit in &b)")),
+                (false, false) => unreachable!(),
+            }
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+
+    let new_expr = Expr::And(
+        Metadata::new(),
+        Moo::new(Expr::AbstractLiteral(
+            Metadata::new(),
+            AbstractLiteral::matrix_implied_indices(memberships),
+        )),
+    );
+
+    Ok(Reduction::pure(new_expr))
 }

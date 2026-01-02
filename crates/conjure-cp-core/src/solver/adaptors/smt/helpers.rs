@@ -68,9 +68,12 @@ pub fn domain_to_sort(
                     "empty matrix index domain".into(),
                 )),
             }?;
+
+            // No need to constrain the indices themselves, that's done through SafeIndex/InDomain
             let idx_domain = &idx_domains[0];
             let (domain_sort, _) = domain_to_sort(idx_domain.as_ref(), theories)?;
 
+            // Use the lower dimension's restricting fn to restrict all indexes in this dimension
             let idx_asts = domain_to_ast_vec(theories, idx_domain.as_ref())?;
             let restrict_fn = move |ast: &Dynamic| {
                 let arr = ast.as_array().unwrap();
@@ -84,6 +87,33 @@ pub fn domain_to_sort(
                 Sort::array(&domain_sort, &range_sort),
                 Box::new(restrict_fn),
             ))
+        }
+
+        (_, GroundDomain::Set(attr, elem_domain)) => {
+            let (val_sort, _) = domain_to_sort(elem_domain, theories)?;
+
+            // Restrict the size of the set
+            let member_asts = domain_to_ast_vec(theories, elem_domain)?;
+            let attr_size = attr.size.clone();
+            let restrict_fn = move |ast: &Dynamic| {
+                let set = ast.as_set().unwrap();
+                let is_member: Vec<_> = member_asts
+                    .iter()
+                    .map(|val| set.member(val).ite(&Int::from(1), &Int::from(0)))
+                    .collect();
+                let size = Int::add(&is_member);
+                match attr_size {
+                    Range::Single(n) => size.eq(Int::from(n)),
+                    Range::UnboundedL(r) => size.le(Int::from(r)),
+                    Range::UnboundedR(l) => size.ge(Int::from(l)),
+                    Range::Bounded(l, r) => {
+                        Bool::and(&[size.ge(Int::from(l)), size.le(Int::from(r))])
+                    }
+                    Range::Unbounded => Bool::from_bool(true),
+                }
+            };
+
+            Ok((Sort::set(&val_sort), Box::new(restrict_fn)))
         }
 
         _ => Err(SolverError::ModelFeatureNotImplemented(format!(

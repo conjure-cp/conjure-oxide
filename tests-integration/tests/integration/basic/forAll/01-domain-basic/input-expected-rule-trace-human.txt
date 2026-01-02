@@ -1,0 +1,133 @@
+Model before rewriting:
+
+find x: bool
+
+such that
+
+(x = and([given i: int(1..5)
+
+such that
+
+(i > 0)
+ | i: int(1..5),]))
+
+--
+
+(x = and([given i: int(1..5)
+
+such that
+
+(i > 0)
+ | i: int(1..5),])), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify(and([given i: int(1..5)
+
+such that
+
+(i > 0)
+ | i: int(1..5),]), x) 
+
+--
+
+Model before rewriting:
+
+find i: int(1..5)
+
+such that
+
+(true != (i > 0))
+
+--
+
+(i > 0), 
+   ~~> gt_to_geq ([("Minion", 8400)]) 
+(sum([i,-1;int(1..)]) >= 0) 
+
+--
+
+(sum([i,-1;int(1..)]) >= 0), 
+   ~~> y_plus_k_geq_x_to_ineq ([("Minion", 4800)]) 
+Ineq(0, i, -1) 
+
+--
+
+(true != Ineq(0, i, -1)), 
+   ~~> flatten_generic ([("Minion", 4200)]) 
+(true != __0) 
+new variables:
+  find __0: bool
+new constraints:
+  __0 =aux Ineq(0, i, -1)
+--
+
+__0 =aux Ineq(0, i, -1), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify(Ineq(0, i, -1), __0) 
+
+--
+
+Final model:
+
+find i: int(1..5)
+find __0: bool
+
+such that
+
+(true != __0),
+Reify(Ineq(0, i, -1), __0)
+
+Model before rewriting:
+
+given i: int(1..5)
+
+such that
+
+(i > 0)
+
+--
+
+(i > 0), 
+   ~~> gt_to_geq ([("Minion", 8400)]) 
+(sum([i,-1;int(1..)]) >= 0) 
+
+--
+
+(sum([i,-1;int(1..)]) >= 0), 
+   ~~> y_plus_k_geq_x_to_ineq ([("Minion", 4800)]) 
+Ineq(0, i, -1) 
+
+--
+
+Final model:
+
+given i: int(1..5)
+
+such that
+
+Ineq(0, i, -1)
+
+and([given i: int(1..5)
+
+such that
+
+(i > 0)
+ | i: int(1..5),__0: bool,]), 
+   ~~> expand_comprehension_ac ([("Better_AC_Comprehension_Expansion", 2001)]) 
+and([;int(1..)]) 
+
+--
+
+Reify(and([;int(1..)]), x), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+Reify(true, x) 
+
+--
+
+Final model:
+
+find x: bool
+
+such that
+
+Reify(true, x)
+
