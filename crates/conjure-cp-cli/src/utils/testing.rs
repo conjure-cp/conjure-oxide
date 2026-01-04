@@ -53,8 +53,8 @@ fn replace_ids(value: &mut JsonValue, id_map: &HashMap<GlobalId, GlobalId>) {
         JsonValue::Object(map) => {
             for (_, v) in map.iter_mut() {
                 if let Ok(id) = serde_json::from_value::<GlobalId>(v.clone())
-                    && let Some(stable_id) = id_map.get(&id)
                 {
+                    let stable_id = id_map.get(&id).expect("all ids referenced in the json to be in the id map.");
                     *v = serde_json::to_value(stable_id)
                         .expect("serialization of a GlobalId to always succeed");
                 }

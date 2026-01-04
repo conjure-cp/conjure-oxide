@@ -1,4 +1,8 @@
 #![allow(clippy::expect_used)]
+use conjure_cp::ast::serde::GlobalId;
+use conjure_cp::ast::serde::HasId;
+use conjure_cp::ast::SubModel;
+use conjure_cp::ast::SymbolTable;
 use conjure_cp::bug;
 use conjure_cp::rule_engine::get_rules_grouped;
 
@@ -10,6 +14,7 @@ use conjure_cp::solver::adaptors::*;
 use conjure_cp_cli::utils::testing::{normalize_solutions_for_comparison, read_human_rule_trace};
 use glob::glob;
 use itertools::Itertools;
+use uniplate::Uniplate;
 use std::collections::BTreeMap;
 use std::env;
 use std::error::Error;

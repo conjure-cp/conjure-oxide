@@ -6,9 +6,11 @@ use std::rc::Rc;
 use std::sync::{Arc, RwLock};
 
 use derivative::Derivative;
+use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use uniplate::{Biplate, Tree, Uniplate};
 
+use crate::ast::symbol_table;
 use crate::ast::{Expression, types::Typeable};
 use crate::context::Context;
 
@@ -281,6 +283,25 @@ impl SerdeModel {
             let symbol_table_id = submodel.symbols().global_id();
             if !id_list.contains(&symbol_table_id) {
                 id_list.push(symbol_table_id);
+            }
+        }
+
+        // check that all symbol table parents are contained in submodels, as otherwise they wont
+        // be serialized!
+        for submodel in self.submodel.universe() {
+            let mut symbol_table = submodel.symbols_ptr_unchecked().clone();
+            loop {
+                let Some(parent) = symbol_table.borrow_mut().parent_mut_unchecked().clone() else {
+                    break;
+                };
+
+                symbol_table = parent;
+
+                let symbol_table_ref = symbol_table.borrow();
+                assert!(
+                    id_list.contains(&symbol_table_ref.global_id()),
+                    "expect all parent symbol-tables to be contained inside a submodel"
+                );
             }
         }
 
