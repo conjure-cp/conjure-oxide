@@ -1,7 +1,8 @@
+use crate::ast::domains::MSetAttr;
 use crate::ast::pretty::pretty_vec;
 use crate::ast::{
-    AbstractLiteral, Domain, DomainOpError, FuncAttr, HasDomain, Literal, Moo, RecordEntry,
-    SetAttr, Typeable,
+    AbstractLiteral, Domain, DomainOpError, FuncAttr, HasDomain, Literal, Moo,
+    RecordEntry, SetAttr, Typeable,
     domains::{domain::Int, range::Range},
 };
 use crate::range;
@@ -258,8 +259,21 @@ impl GroundDomain {
                 Ok(ans)
             }
             GroundDomain::MSet(mset_attr, inner_domain) => {
-                // TODO @cc398
-                Ok(0);
+                let inner_len = inner_domain.length()?;
+                let (min_sz, max_sz) = match mset_attr.size {
+                    Range::Unbounded => (0, inner_len),
+                    Range::Single(n) => (n as u64, n as u64),
+                    Range::UnboundedR(n) => (n as u64, inner_len),
+                    Range::UnboundedL(n) => (0, n as u64),
+                    Range::Bounded(min, max) => (min as u64, max as u64),
+                };
+                let mut ans = 0u64;
+                for sz in min_sz..=max_sz {
+                    let c = count_combinations(inner_len, sz)?;
+                    ans = ans.checked_add(c).ok_or(DomainOpError::TooLarge)?;
+                }
+                Ok(ans)
+                // TODO @cc398 check (taken from above)
             }
             GroundDomain::Tuple(domains) => {
                 let mut ans = 1u64;
@@ -319,6 +333,23 @@ impl GroundDomain {
                     // check if the literal's size is allowed by the set attribute
                     let sz = lit_elems.len().to_i32().ok_or(DomainOpError::TooLarge)?;
                     if !set_attr.size.contains(&sz) {
+                        return Ok(false);
+                    }
+
+                    for elem in lit_elems {
+                        if !inner_domain.contains(elem)? {
+                            return Ok(false);
+                        }
+                    }
+                    Ok(true)
+                }
+                _ => Ok(false),
+            },
+            GroundDomain::MSet(mset_attr, inner_domain) => match lit {
+                Literal::AbstractLiteral(AbstractLiteral::MSet(lit_elems)) => {
+                    // check if the literal's size is allowed by the mset attribute
+                    let sz = lit_elems.len().to_i32().ok_or(DomainOpError::TooLarge)?;
+                    if !mset_attr.size.contains(&sz) {
                         return Ok(false);
                     }
 
@@ -727,7 +758,20 @@ impl GroundDomain {
 
                 Ok(GroundDomain::Set(SetAttr::default(), Moo::new(elem_domain)))
             }
+            Literal::AbstractLiteral(AbstractLiteral::MSet(_)) => {
+                let mut all_elems = vec![];
 
+                for lit in literals {
+                    let Literal::AbstractLiteral(AbstractLiteral::MSet(elems)) = lit else {
+                        return Err(DomainOpError::WrongType);
+                    };
+
+                    all_elems.extend(elems.clone());
+                }
+                let elem_domain = GroundDomain::from_literal_vec(&all_elems)?;
+
+                Ok(GroundDomain::MSet(MSetAttr::default(), Moo::new(elem_domain)))
+            }
             l @ Literal::AbstractLiteral(AbstractLiteral::Matrix(_, _)) => {
                 let mut first_index_domain = vec![];
                 // flatten index domains of n-d matrix into list
@@ -878,6 +922,7 @@ impl GroundDomain {
     pub fn element_domain(&self) -> Option<Moo<GroundDomain>> {
         match self {
             GroundDomain::Set(_, inner) => Some(inner.clone()),
+            GroundDomain::MSet(_, inner) => Some(inner.clone()), // TODO @cc398 : check
             GroundDomain::Matrix(_, _) => todo!("Unwrap one dimension of the domain"),
             _ => None,
         }
@@ -891,6 +936,7 @@ impl Typeable for GroundDomain {
             GroundDomain::Bool => ReturnType::Bool,
             GroundDomain::Int(_) => ReturnType::Int,
             GroundDomain::Set(_attr, inner) => ReturnType::Set(Box::new(inner.return_type())),
+            GroundDomain::MSet(_attr, inner) => ReturnType::MSet(Box::new(inner.return_type())),
             GroundDomain::Matrix(inner, _idx) => ReturnType::Matrix(Box::new(inner.return_type())),
             GroundDomain::Tuple(inners) => {
                 let mut inner_types = Vec::new();
@@ -927,6 +973,7 @@ impl Display for GroundDomain {
                 }
             }
             GroundDomain::Set(attrs, inner_dom) => write!(f, "set {attrs} of {inner_dom}"),
+            GroundDomain::MSet(attrs, inner_dom) => write!(f, "mset {attrs} of {inner_dom}"),
             GroundDomain::Matrix(value_domain, index_domains) => {
                 write!(
                     f,

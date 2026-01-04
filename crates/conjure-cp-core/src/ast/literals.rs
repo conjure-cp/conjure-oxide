@@ -8,6 +8,7 @@ use super::{
     Atom, Domain, DomainPtr, Expression, GroundDomain, Metadata, Moo, Range, ReturnType, SetAttr,
     Typeable, domains::HasDomain, domains::Int, records::RecordValue,
 };
+use crate::ast::domains::MSetAttr;
 use crate::ast::pretty::pretty_vec;
 use crate::bug;
 use polyquine::Quine;
@@ -59,6 +60,8 @@ impl AbstractLiteralValue for Literal {
 pub enum AbstractLiteral<T: AbstractLiteralValue> {
     Set(Vec<T>),
 
+    MSet(Vec<T>),
+
     /// A 1 dimensional matrix slice with an index domain.
     Matrix(Vec<T>, T::Dom),
 
@@ -90,6 +93,24 @@ impl AbstractLiteral<Expression> {
                     .expect("taking the union of all item domains of a set literal should succeed");
 
                 Some(Domain::set(SetAttr::<Int>::default(), item_domain))
+            }
+
+            AbstractLiteral::MSet(items) => {
+                // ensure that all items have a domain, or return None
+                let item_domains: Vec<DomainPtr> = items
+                    .iter()
+                    .map(|x| x.domain_of())
+                    .collect::<Option<Vec<DomainPtr>>>()?;
+
+                // union all item domains together
+                let mut item_domain_iter = item_domains.iter().cloned();
+                let first_item = item_domain_iter.next()?;
+                let item_domain = item_domains
+                    .iter()
+                    .try_fold(first_item, |x, y| x.union(y))
+                    .expect("taking the union of all item domains of a set literal should succeed");
+
+                Some(Domain::mset(MSetAttr::<Int>::default(), item_domain))
             }
 
             AbstractLiteral::Matrix(items, _) => {
@@ -157,6 +178,22 @@ impl Typeable for AbstractLiteral<Expression> {
                 );
 
                 ReturnType::Set(Box::new(item_type))
+            }
+            AbstractLiteral::MSet(items) if items.is_empty() => {
+                ReturnType::MSet(Box::new(ReturnType::Unknown))
+            }
+            AbstractLiteral::MSet(items) => {
+                let item_type = items[0].return_type();
+
+                // if any items do not have a type, return none.
+                let item_types: Vec<ReturnType> = items.iter().map(|x| x.return_type()).collect();
+
+                assert!(
+                    item_types.iter().all(|x| x == &item_type),
+                    "all items in a set should have the same type"
+                );
+
+                ReturnType::MSet(Box::new(item_type))
             }
             AbstractLiteral::Matrix(items, _) if items.is_empty() => {
                 ReturnType::Matrix(Box::new(ReturnType::Unknown))
@@ -263,6 +300,10 @@ where
                 let elems_str: String = elems.iter().map(|x| format!("{x}")).join(",");
                 write!(f, "{{{elems_str}}}")
             }
+            AbstractLiteral::MSet(elems) => {
+                let elems_str: String = elems.iter().map(|x| format!("{x}")).join(",");
+                write!(f, "{{{elems_str}}}")
+            }
             AbstractLiteral::Matrix(elems, index_domain) => {
                 let elems_str: String = elems.iter().map(|x| format!("{x}")).join(",");
                 write!(f, "[{elems_str};{index_domain}]")
@@ -299,6 +340,10 @@ where
             AbstractLiteral::Set(vec) => {
                 let (f1_tree, f1_ctx) = <_ as Biplate<AbstractLiteral<T>>>::biplate(vec);
                 (f1_tree, Box::new(move |x| AbstractLiteral::Set(f1_ctx(x))))
+            }
+            AbstractLiteral::MSet(vec) => {
+                let (f1_tree, f1_ctx) = <_ as Biplate<AbstractLiteral<T>>>::biplate(vec);
+                (f1_tree, Box::new(move |x| AbstractLiteral::MSet(f1_ctx(x))))
             }
             AbstractLiteral::Matrix(elems, index_domain) => {
                 let index_domain = index_domain.clone();
@@ -385,6 +430,10 @@ where
                 AbstractLiteral::Set(vec) => {
                     let (f1_tree, f1_ctx) = <_ as Biplate<To>>::biplate(vec);
                     (f1_tree, Box::new(move |x| AbstractLiteral::Set(f1_ctx(x))))
+                }
+                AbstractLiteral::MSet(vec) => {
+                    let (f1_tree, f1_ctx) = <_ as Biplate<To>>::biplate(vec);
+                    (f1_tree, Box::new(move |x| AbstractLiteral::MSet(f1_ctx(x))))
                 }
                 AbstractLiteral::Matrix(elems, index_domain) => {
                     let index_domain = index_domain.clone();
@@ -545,6 +594,19 @@ impl AbstractLiteral<Expression> {
                     })
                     .collect::<Option<Vec<_>>>()?;
                 Some(AbstractLiteral::Set(literals))
+            }
+            AbstractLiteral::MSet(elements) => {
+                let literals = elements
+                    .into_iter()
+                    .map(|expr| match expr {
+                        Expression::Atomic(_, Atom::Literal(lit)) => Some(lit),
+                        Expression::AbstractLiteral(_, abslit) => {
+                            Some(Literal::AbstractLiteral(abslit.into_literals()?))
+                        }
+                        _ => None,
+                    })
+                    .collect::<Option<Vec<_>>>()?;
+                Some(AbstractLiteral::MSet(literals))
             }
             AbstractLiteral::Matrix(items, domain) => {
                 let mut literals = vec![];
