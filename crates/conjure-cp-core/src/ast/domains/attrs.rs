@@ -53,12 +53,11 @@ impl<A: Display> Display for SetAttr<A> {
     }
 }
 
-
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
 #[path_prefix(conjure_cp::ast)]
 pub struct MSetAttr<A = Int> {
     pub size: Range<A>,
-    pub occurrence: Range<A>
+    pub occurrence: Range<A>,
 }
 
 impl<A> MSetAttr<A> {
@@ -115,7 +114,6 @@ impl<A> Default for MSetAttr<A> {
         }
     }
 }
-
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
 #[path_prefix(conjure_cp::ast)]

@@ -158,8 +158,8 @@ impl Domain {
     }
 
     /// Create a new multiset domain with the given element domain and attributes
-    pub fn mset<T>(attr: T, inner_dom: DomainPtr) -> DomainPtr 
-    where 
+    pub fn mset<T>(attr: T, inner_dom: DomainPtr) -> DomainPtr
+    where
         T: Into<MSetAttr<IntVal>> + TryInto<MSetAttr<Int>> + Clone,
     {
         if let Domain::Ground(gd) = inner_dom.as_ref()

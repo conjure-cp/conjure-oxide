@@ -1,8 +1,8 @@
 use crate::ast::domains::MSetAttr;
 use crate::ast::pretty::pretty_vec;
 use crate::ast::{
-    AbstractLiteral, Domain, DomainOpError, FuncAttr, HasDomain, Literal, Moo,
-    RecordEntry, SetAttr, Typeable,
+    AbstractLiteral, Domain, DomainOpError, FuncAttr, HasDomain, Literal, Moo, RecordEntry,
+    SetAttr, Typeable,
     domains::{domain::Int, range::Range},
 };
 use crate::range;
@@ -770,7 +770,10 @@ impl GroundDomain {
                 }
                 let elem_domain = GroundDomain::from_literal_vec(&all_elems)?;
 
-                Ok(GroundDomain::MSet(MSetAttr::default(), Moo::new(elem_domain)))
+                Ok(GroundDomain::MSet(
+                    MSetAttr::default(),
+                    Moo::new(elem_domain),
+                ))
             }
             l @ Literal::AbstractLiteral(AbstractLiteral::Matrix(_, _)) => {
                 let mut first_index_domain = vec![];
