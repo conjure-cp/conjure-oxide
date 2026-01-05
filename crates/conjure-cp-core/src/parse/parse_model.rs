@@ -804,7 +804,7 @@ pub fn parse_expression(obj: &JsonValue, scope: &Rc<RefCell<SymbolTable>>) -> Op
                 .as_object()?
                 .contains_key("AbsLitMSet")
             {
-                Some(parse_abs_lit(&abslit["AbstractLiteral"]["AbsLitMSet"], scope).unwrap())
+                Some(parse_abs_mset(&abslit["AbstractLiteral"]["AbsLitMSet"], scope).unwrap())
             } else {
                 Some(parse_abstract_matrix_as_expr(obj, scope).unwrap())
             }
@@ -842,6 +842,20 @@ fn parse_abs_lit(abs_set: &Value, scope: &Rc<RefCell<SymbolTable>>) -> Option<Ex
     Some(Expression::AbstractLiteral(
         Metadata::new(),
         AbstractLiteral::Set(expressions),
+    ))
+}
+
+fn parse_abs_mset(abs_set: &Value, scope: &Rc<RefCell<SymbolTable>>) -> Option<Expression> {
+    let values = abs_set.as_array()?; // Ensure it's an array
+    let expressions = values
+        .iter()
+        .map(|values| parse_expression(values, scope))
+        .map(|values| values.expect("invalid subexpression")) // Ensure valid expressions
+        .collect::<Vec<Expression>>(); // Collect all expressions
+
+    Some(Expression::AbstractLiteral(
+        Metadata::new(),
+        AbstractLiteral::MSet(expressions),
     ))
 }
 
@@ -1255,7 +1269,7 @@ fn parse_constant(
                 if let Some(arr) = obj.get("AbsLitSet") {
                     return parse_abs_lit(arr, scope);
                 } else if let Some(arr) = obj.get("AbsLitMSet") {
-                    return parse_abs_lit(arr, scope);
+                    return parse_abs_mset(arr, scope);
                 } else if let Some(arr) = obj.get("AbsLitMatrix") {
                     return parse_abstract_matrix_as_expr(arr, scope);
                 } else if let Some(arr) = obj.get("AbsLitTuple") {
