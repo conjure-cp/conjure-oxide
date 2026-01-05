@@ -14,7 +14,7 @@ This site contains the user documentation for Conjure Oxide; other useful links 
 
 The project is primarily developed by students and staff at the University of
 St Andrews, but we also welcome outside contributors; for more information see the 
-[contributor's guide](./developers_guide/contributors-guide/index.md).
+[contributor's guide](./developers_guide/contributors_guide/index.md).
 
 <!-- original link: https://github.com/conjure-cp/conjure-oxide/blob/main/CONTRIBUTING.md -->
 
