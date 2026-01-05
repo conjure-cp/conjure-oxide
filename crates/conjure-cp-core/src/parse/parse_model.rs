@@ -800,6 +800,11 @@ pub fn parse_expression(obj: &JsonValue, scope: &Rc<RefCell<SymbolTable>>) -> Op
                     parse_abs_function(&abslit["AbstractLiteral"]["AbsLitFunction"], scope)
                         .unwrap(),
                 )
+            } else if abslit["AbstractLiteral"]
+                .as_object()?
+                .contains_key("AbsLitMSet")
+            {
+                Some(parse_abs_lit(&abslit["AbstractLiteral"]["AbsLitMSet"], scope).unwrap())
             } else {
                 Some(parse_abstract_matrix_as_expr(obj, scope).unwrap())
             }
@@ -1248,6 +1253,8 @@ fn parse_constant(
         Some(Value::Object(int)) if int.contains_key("ConstantAbstract") => {
             if let Some(Value::Object(obj)) = int.get("ConstantAbstract") {
                 if let Some(arr) = obj.get("AbsLitSet") {
+                    return parse_abs_lit(arr, scope);
+                } else if let Some(arr) = obj.get("AbsLitMSet") {
                     return parse_abs_lit(arr, scope);
                 } else if let Some(arr) = obj.get("AbsLitMatrix") {
                     return parse_abstract_matrix_as_expr(arr, scope);
