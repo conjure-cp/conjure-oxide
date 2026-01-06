@@ -5,7 +5,7 @@
 
 ## Introduction
 
-Integration testing and Essence Testing are different ways of describing and testing the ssame problem, but at different levels. The Rust file can be used by developers to test the interface directly, whereas the Essence file can be used by high-level users to specify complex problems abstractly.
+Integration testing and Essence Testing are different ways of describing and testing the same problem, but at different levels. The Rust file can be used by developers to test the interface directly, whereas the Essence file can be used by high-level users to specify complex problems abstractly.
 
 ## Integration Tests
 
@@ -16,6 +16,10 @@ The tests manually recreate models using rust to ensure constraints are passed t
 ### Writing Integration Tests
 
 [Rust integration tests](https://doc.rust-lang.org/rust-by-example/testing/integration_testing.html) follow a similar format. 
+
+<!-- TODO: add code block here eg for line 25-31 -->
+```rust
+```
 
 They contain imports, a static `SOLS_COUNTER` to store the number of solutions found, and a callback function that increments at every solution and returns true to make the solver continue searching for solutions. 
 
