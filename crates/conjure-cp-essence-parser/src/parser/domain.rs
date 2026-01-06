@@ -80,7 +80,7 @@ fn parse_int_domain(
         .expect("No range list found for int domain");
     for domain_component in named_children(&range_list) {
         match domain_component.kind() {
-            "arithmetic_expr" => {
+            "atom" => {
                 let text = &source_code[domain_component.start_byte()..domain_component.end_byte()];
                 // Try parsing as a literal integer first
                 if let Ok(integer) = text.parse::<i32>() {
