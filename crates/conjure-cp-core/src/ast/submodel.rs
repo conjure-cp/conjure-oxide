@@ -243,6 +243,9 @@ impl Display for SubModel {
                 DeclarationKind::Given(d) => {
                     writeln!(f, "given {name}: {d}")?;
                 }
+                DeclarationKind::GivenQuantified(inner) => {
+                    writeln!(f, "given {name}: {}", inner.domain())?;
+                }
 
                 DeclarationKind::RecordField(_) => {
                     // Do not print a record field as it is an internal type
