@@ -15,15 +15,15 @@ The tests manually recreate models using rust to ensure constraints are passed t
 
 ### Writing Integration Tests
 
-[Rust integration tests](https://doc.rust-lang.org/rust-by-example/testing/integration_testing.html) follow a similar format, but there are different ways to write them. 
+[Rust integration tests](https://doc.rust-lang.org/rust-by-example/testing/integration_testing.html) follow a similar format, where some tests can use all, some, or none of the following common syntax. 
 
-They contain imports, a static `SOLS_COUNTER` to store the number of solutions found, and a callback function that increments at every solution and returns true to make the solver continue searching for solutions. 
+They often contain imports, a static `SOLS_COUNTER` to store the number of solutions found, and a callback function that increments at every solution and returns true to make the solver continue searching for solutions. 
 
 ```rust
 static SOLS_COUNTER: Mutex<i32> = Mutex::new(0);
 ```
 
-The test function should be annotated with `#[test]`, and can include `#[allow(clippy::panic_in_result_fn)]` to suppress a warning for ease of testing. 
+The test function should be annotated with `#[test]`, and can include `#[allow(clippy::panic_in_result_fn)]` to suppress a warning for ease of testing when the panic is expected. 
 
 When testing a model, the new model is created with `Model::new()`, and its symbol table is populated with variables.
 
