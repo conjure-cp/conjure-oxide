@@ -15,21 +15,36 @@ The tests manually recreate models using rust to ensure constraints are passed t
 
 ### Writing Integration Tests
 
-[Rust integration tests](https://doc.rust-lang.org/rust-by-example/testing/integration_testing.html) follow a similar format. 
-
-<!-- TODO: add code block here eg for line 25-31 -->
-```rust
-```
+[Rust integration tests](https://doc.rust-lang.org/rust-by-example/testing/integration_testing.html) follow a similar format, but there are different ways to write them. 
 
 They contain imports, a static `SOLS_COUNTER` to store the number of solutions found, and a callback function that increments at every solution and returns true to make the solver continue searching for solutions. 
 
-The test function should be annotated with `#[test]` and include `#[allow(clippy::panic_in_result_fn)]` to suppress a warning for ease of testing. 
+```rust
+static SOLS_COUNTER: Mutex<i32> = Mutex::new(0);
+```
 
-The new model is created with `Model::new()`, and its symbol table is populated with variables.
+The test function should be annotated with `#[test]`, and can include `#[allow(clippy::panic_in_result_fn)]` to suppress a warning for ease of testing. 
+
+When testing a model, the new model is created with `Model::new()`, and its symbol table is populated with variables.
+
+```rust
+let mut model = Model::new();
+
+model
+    .named_variables
+    .add_var(String::from("a"), VarDomain::Bool);
+model
+    .named_variables
+    .add_var(String::from("b"), VarDomain::Bool);
+```
 
 The solver must then be run using `minion_sys::run_minion` which takes the model and callback function. 
 
-Lastly, the results are verified to ensure the number of solutions found match the expected solutions.
+```rust
+minion_sys::run_minion(model, callback)?;
+```
+
+Lastly, the results are verified to ensure the number of solutions found match the expected solutions. 
 
 ### Running Integration Tests
 
