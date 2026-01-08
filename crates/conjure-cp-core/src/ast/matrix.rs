@@ -7,7 +7,7 @@ use std::collections::VecDeque;
 use itertools::{Itertools, izip};
 use uniplate::Uniplate as _;
 
-use crate::ast::{DomainOpError, GroundDomain, Moo, Range};
+use crate::ast::{DomainOpError, Expression as Expr, GroundDomain, Metadata, Moo, Range};
 
 use super::{AbstractLiteral, Literal};
 
@@ -198,4 +198,51 @@ pub fn flat_index_to_full_index(index_domains: &[Moo<GroundDomain>], index: u64)
     }
 
     coords
+}
+
+/// This is the same as `m[x]` except when `m` is of the forms:
+///
+/// - `n[..]`, then it produces n[x] instead of n[..][x]
+/// - `flatten(n)`, then it produces `n[y]` instead of `flatten(n)[y]`,
+///   where `y` is the full index corresponding to flat index `x`
+///
+/// # Returns
+/// + `Some(expr)` if the safe indexing could be constructed
+/// + `None` if it could not be constructed (e.g. invalid index type)
+pub fn safe_index_optimised(m: Expr, idx: Literal) -> Option<Expr> {
+    match m {
+        Expr::SafeSlice(_, mat, idxs) => {
+            // TODO: support >1 slice index (i.e. multidimensional slices)
+
+            let mut idxs = idxs;
+            let (slice_idx, _) = idxs.iter().find_position(|opt| opt.is_none())?;
+            let _ = idxs[slice_idx].replace(idx.into());
+
+            let Some(idxs) = idxs.into_iter().collect::<Option<Vec<_>>>() else {
+                todo!("slice expression should not contain more than one unspecified index")
+            };
+
+            Some(Expr::SafeIndex(Metadata::new(), mat, idxs))
+        }
+        Expr::Flatten(_, None, inner) => {
+            // Similar to indexed_flatten_matrix rule, but we don't care about out of bounds here
+            let Literal::Int(index) = idx else {
+                return None;
+            };
+
+            let dom = inner.domain_of().and_then(|dom| dom.resolve())?;
+            let GroundDomain::Matrix(_, index_domains) = dom.as_ref() else {
+                return None;
+            };
+            let flat_index = flat_index_to_full_index(index_domains, (index - 1) as u64);
+            let flat_index: Vec<Expr> = flat_index.into_iter().map(Into::into).collect();
+
+            Some(Expr::SafeIndex(Metadata::new(), inner, flat_index))
+        }
+        _ => Some(Expr::SafeIndex(
+            Metadata::new(),
+            Moo::new(m),
+            vec![idx.into()],
+        )),
+    }
 }
