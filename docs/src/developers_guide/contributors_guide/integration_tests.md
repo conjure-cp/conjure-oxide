@@ -1,19 +1,39 @@
-[//]: # (Author: Hanaa Khan)
-[//]: # (Lasr Updated: 21-12-25)
+[//]: # (Author: Hanaa Khan, Georgii Skorokhod)
+[//]: # (Last Updated: 21-12-25)
 
 # Testing
 
 ## Introduction
 
+<!-- TODO- fix -->
 Integration testing and Essence Testing are different ways of describing and testing the same problem, but at different levels. The Rust file can be used by developers to test the interface directly, whereas the Essence file can be used by high-level users to specify complex problems abstractly.
 
 ## Integration Tests
 
-Integration testing is done to test how the different components, like the rust interface and the underlying solver (eg C++ Minion solver), work together. 
+Integration tests are located under `tests-integration/tests/integration`.
 
-The tests manually recreate models using rust to ensure constraints are passed to the solver correctly, and that the results are as expected. 
+Each test contains: 
+- An Essence model
+- A JSON file containing all the expected solutions to the model
+- JSON dumps of the original model AST and model AST after rewriting
+- The expected and actual rule traces
+
+The tests run conjure-oxide with that Essence file as input. Conjure-oxide first rewrites the model into Essence', then runs it through a solver (Minion by default; some solvers use SAT or SMT instead) and gets the solution.
+
+The tests check that:
+- The produced solutions match the ones we expected to get
+- The rewritten model is the same as expected
+- (Optionally) that the rule trace is as expected
+
+Test configuration (e.g. which solver to use) is done in config.toml files in each test directory. If it is not present, the default Minion solver will be used.
+
+The source code of the testing harness is (mostly) in `tests-integration/tests/integration_tests.rs`.
 
 ### Writing Integration Tests
+
+Information about writing integration tests can be found in `../coding_resources/integration_tests_implementation.md`.
+
+<!-- TODO: remove and document in a separate page. 
 
 [Rust integration tests](https://doc.rust-lang.org/rust-by-example/testing/integration_testing.html) follow a similar format, where some tests can use all, some, or none of the following common syntax. 
 
@@ -44,7 +64,7 @@ The solver must then be run using `minion_sys::run_minion` which takes the model
 minion_sys::run_minion(model, callback)?;
 ```
 
-Lastly, the results are verified to ensure the number of solutions found match the expected solutions. 
+Lastly, the results are verified to ensure the number of solutions found match the expected solutions.  -->
 
 ### Running Integration Tests
 

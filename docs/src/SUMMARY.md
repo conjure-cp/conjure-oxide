@@ -26,6 +26,7 @@
 - [Coding Resources and Conventions](./developers_guide/coding_resources/index.md)
   - [Style Guide](./developers_guide/coding_resources/style_guide.md)
   - [Crate Structure](./developers_guide/coding_resources/crate_structure.md)
+  - [Integration Testing Implementation](./developers_guide/coding_resources/integration_tests_implementation.md)
 
 - [Design Documents](./developers_guide/design_documents/index.md)
   - [2023‐11: High Level Plan](./developers_guide/design_documents/2023_11.md)
