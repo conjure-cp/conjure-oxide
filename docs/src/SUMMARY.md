@@ -16,9 +16,10 @@
 # Developers Guide
 
 <!-- From the wiki -->
-- [Contributor's Guide](./developers_guide/contributors-guide/index.md)
-  - [How we work](./developers_guide/contributors-guide/how_we_work.md)
-  - [Setting up your development environment](./developers_guide/contributors-guide/set-dev-env.md)
+- [Contributor's Guide](./developers_guide/contributors_guide/index.md)
+  - [How we work](./developers_guide/contributors_guide/how_we_work.md)
+  - [Setting up your development environment](./developers_guide/contributors_guide/set-dev-env.md)
+  - [Creating Documentation](./developers_guide/contributors_guide/creating_documentation.md)
   - [Running and writing integration tests]()
   - [What we didn't do]()
 
@@ -49,6 +50,7 @@
 <!-- TODO: will be moved -- likely the content of these will end off here -->
 - [Useful Links](./documentation/links.md)
 - [Essence Parser](./documentation/essence_parser.md)
+- [Error Detection](./documentation/error_detection)
 
 ---
 

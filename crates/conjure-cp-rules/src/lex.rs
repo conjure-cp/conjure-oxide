@@ -1,3 +1,4 @@
+use conjure_cp::ast::matrix::safe_index_optimised;
 use conjure_cp::ast::{Atom, Expression as Expr, Literal, Metadata, Moo, SymbolTable};
 use conjure_cp::essence_expr;
 use conjure_cp::rule_engine::{ApplicationError, ApplicationResult, Reduction, register_rule};
@@ -139,35 +140,11 @@ fn lex_lt_to_recursive_or(
         ([], [..]) => true.into(),   // Base case: a is shorter
 
         ([a_idx, a_tail @ ..], [b_idx, b_tail @ ..]) => {
-            let a_at_idx = index_maybe_slice(a, a_idx);
-            let b_at_idx = index_maybe_slice(b, b_idx);
+            let a_at_idx = safe_index_optimised(a.clone(), a_idx.clone()).unwrap();
+            let b_at_idx = safe_index_optimised(b.clone(), b_idx.clone()).unwrap();
             let tail = lex_lt_to_recursive_or(a, b, a_tail, b_tail, allow_eq);
 
             essence_expr!(r"&a_at_idx < &b_at_idx \/ (&a_at_idx = &b_at_idx /\ &tail)")
         }
-    }
-}
-
-/// This is the same as m[x] except when m is of the form n[..]
-/// Then it produces n[x] instead of n[..][x]
-fn index_maybe_slice(m: &Expr, x: &Literal) -> Expr {
-    match m {
-        Expr::SafeSlice(_, mat, idxs) => {
-            // TODO: support >1 slice index (i.e. multidimensional slices)
-
-            let mut idxs = idxs.clone();
-            let (slice_idx, _) = idxs
-                .iter()
-                .find_position(|opt| opt.is_none())
-                .expect("slice expression must contain one unspecified index");
-            let _ = idxs[slice_idx].replace(x.clone().into());
-
-            let Some(idxs) = idxs.into_iter().collect::<Option<Vec<_>>>() else {
-                todo!("slice expression should not contain more than one unspecified index")
-            };
-
-            Expr::SafeIndex(Metadata::new(), mat.clone(), idxs)
-        }
-        _ => Expr::SafeIndex(Metadata::new(), Moo::new(m.clone()), vec![x.clone().into()]),
     }
 }
