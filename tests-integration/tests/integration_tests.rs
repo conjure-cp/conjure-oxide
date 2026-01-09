@@ -206,7 +206,19 @@ fn integration_test_inner(
             SolverFamily::Minion
         };
 
-        let rule_sets = resolve_rule_sets(solver_fam, DEFAULT_RULE_SETS)?;
+        let mut extra_rules = vec![];
+        if config.solve_with_sat {
+            match config.sat_encoding.as_str() {
+                "log" => extra_rules.push("SAT_Log"),
+                "direct" => extra_rules.push("SAT_Direct"),
+                _ => panic!("Unknown SAT encoding: {}", config.sat_encoding),
+            }
+        }
+
+        let mut rules_to_load = DEFAULT_RULE_SETS.to_vec();
+        rules_to_load.extend(extra_rules);
+
+        let rule_sets = resolve_rule_sets(solver_fam, &rules_to_load)?;
 
         let mut model = parsed_model;
 
