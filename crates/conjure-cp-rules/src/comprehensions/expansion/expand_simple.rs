@@ -7,7 +7,7 @@ use conjure_cp::{
     ast::{
         Atom, DeclarationKind, DeclarationPtr, Expression, Model, Name, SymbolTable,
         comprehension::{Comprehension, USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS},
-        serde::{HasId as _, ObjId},
+        serde::{HasId as _, ObjectId},
     },
     bug,
     context::Context,
@@ -137,7 +137,7 @@ pub fn expand_simple(
         // These are stored as a map of (old declaration id) -> (new declaration ptr), as
         // declaration pointers do not implement hash.
         //
-        let mut machine_name_translations: HashMap<ObjId, DeclarationPtr> = HashMap::new();
+        let mut machine_name_translations: HashMap<ObjectId, DeclarationPtr> = HashMap::new();
 
         // Populate `machine_name_translations`
         for (name, decl) in child_symtab.into_iter_local() {
@@ -154,7 +154,7 @@ pub fn expand_simple(
                 );
             };
 
-            let id = decl.id();
+            let id = decl.object_id();
             let new_decl = symtab.gensym(&decl.domain().unwrap());
 
             machine_name_translations.insert(id, new_decl);

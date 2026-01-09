@@ -6,35 +6,75 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
+use serde::Deserialize;
 use serde::Serialize;
-use serde::de::Deserialize;
 use serde::de::Error;
 use serde_with::{DeserializeAs, SerializeAs};
+use ustr::Ustr;
 
 /// A unique id, used to distinguish between objects of the same type.
-///
-///
-/// This is used for pointer translation during (de)serialisation.
-pub type ObjId = u32;
+pub type ObjectId = u32;
 
-/// A type with an [`ObjectId`].
+/// A unique "global" id, used to distinguish between objects of any type.
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, Debug)]
+#[non_exhaustive]
+pub struct GlobalId {
+    pub type_name: Ustr,
+    pub oid: ObjectId,
+}
+
+/// A type with an id.
 ///
-/// Each object of the implementing type has a unique id; however, ids are not unique for different
-/// type of objects.
+/// Each object of the implementing type has a unique [`ObjectId`]; however, object ids are not unique
+/// for different type of objects. For this, use the [`GlobalId`] instead.
 ///
 /// Implementing types should ensure that the id is updated when an object is cloned.
 pub trait HasId {
-    /// The id of this object.
+    /// A unique string to identify this type.
+    const TYPE_NAME: &'static str;
+
+    /// The [`ObjectId`] of this object.
     ///
-    /// Each object of this type has a unique id; however, ids are not unique for different type of
-    /// objects.
-    fn id(&self) -> ObjId;
+    /// Each object of this type has a unique [`ObjectId`]; however, object ids are not unique for
+    /// different type of objects.
+    fn object_id(&self) -> ObjectId;
+
+    /// The [`GlobalId`] for this object.
+    ///
+    /// This id is unique for objects of any type, so can be used to compare two objects of
+    /// different types.
+    fn global_id(&self) -> GlobalId {
+        GlobalId {
+            type_name: Self::TYPE_NAME.into(),
+            oid: self.object_id(),
+        }
+    }
 }
 
 /// A type that can be created with default values and an id.
 pub trait DefaultWithId: HasId {
-    /// Creates a new default value of type `T`, but with the given id.
-    fn default_with_id(id: ObjId) -> Self;
+    /// Creates a new default value of type `T`, but with the given [`ObjId`].
+    fn default_with_object_id(id: ObjectId) -> Self;
+
+    /// Creates a new default value of type `T`, but with the given [`GlobalId`].
+    ///
+    /// # Panics
+    ///
+    /// If the type associated with the given global id is not the type being constructed.
+    fn default_with_global_id(id: GlobalId) -> Self
+    where
+        Self: Sized,
+    {
+        if id.type_name != Self::TYPE_NAME {
+            panic!(
+                "Expected global id for an object of type {}, but got a global id for an object of type {}",
+                id.type_name,
+                Self::TYPE_NAME
+            );
+        };
+
+        Self::default_with_object_id(id.oid)
+    }
 }
 
 /// De/Serialize an `Rc<RefCell<T>>` as the id of the inner value `T`.
@@ -58,8 +98,8 @@ where
     where
         S: serde::Serializer,
     {
-        let id = (**source).borrow().id();
-        serializer.serialize_u32(id)
+        let id = (**source).borrow().global_id();
+        id.serialize(serializer)
     }
 }
 
@@ -72,8 +112,8 @@ where
     where
         D: serde::Deserializer<'de>,
     {
-        let id = u32::deserialize(deserializer).map_err(Error::custom)?;
-        Ok(Rc::new(RefCell::new(T::default_with_id(id))))
+        let id = GlobalId::deserialize(deserializer).map_err(Error::custom)?;
+        Ok(Rc::new(RefCell::new(T::default_with_global_id(id))))
     }
 }
 
