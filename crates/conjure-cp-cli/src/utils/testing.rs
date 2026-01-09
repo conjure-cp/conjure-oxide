@@ -3,8 +3,6 @@ use std::fmt::Debug;
 use std::path::Path;
 use std::{io, vec};
 
-use conjure_cp::ast::records::RecordValue;
-use conjure_cp::bug;
 use itertools::Itertools as _;
 use std::fs::File;
 use std::hash::Hash;
@@ -289,130 +287,31 @@ pub fn read_human_rule_trace(
 pub fn normalize_solutions_for_comparison(
     input_solutions: &[BTreeMap<Name, Literal>],
 ) -> Vec<BTreeMap<Name, Literal>> {
-    let mut normalized = input_solutions.to_vec();
+    input_solutions
+        .iter()
+        .cloned()
+        .unique()
+        .map(|mut solset| {
+            solset.retain(|name, _| !matches!(name, Name::Machine(_)));
+            solset
+                .into_iter()
+                .map(|(name, lit)| (name, normalize_literal(lit)))
+                .collect::<BTreeMap<_, _>>()
+        })
+        .collect::<Vec<_>>()
+}
 
-    for solset in &mut normalized {
-        // remove machine names
-        let keys_to_remove: Vec<Name> = solset
-            .keys()
-            .filter(|k| matches!(k, Name::Machine(_)))
-            .cloned()
-            .collect();
-        for k in keys_to_remove {
-            solset.remove(&k);
-        }
-
-        let mut updates = vec![];
-        for (k, v) in solset.clone() {
-            if let Name::User(_) = k {
-                match v {
-                    Literal::Bool(true) => updates.push((k, Literal::Int(1))),
-                    Literal::Bool(false) => updates.push((k, Literal::Int(0))),
-                    Literal::Int(_) => {}
-                    Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, _)) => {
-                        // make all domains the same (this is just in the tester so the types dont
-                        // actually matter)
-
-                        let mut matrix =
-                            AbstractLiteral::Matrix(elems, Moo::new(GroundDomain::Int(vec![])));
-                        matrix = matrix.transform(&move |x: AbstractLiteral<Literal>| match x {
-                            AbstractLiteral::Matrix(items, _) => {
-                                let items = items
-                                    .into_iter()
-                                    .map(|x| match x {
-                                        Literal::Bool(false) => Literal::Int(0),
-                                        Literal::Bool(true) => Literal::Int(1),
-                                        x => x,
-                                    })
-                                    .collect_vec();
-
-                                AbstractLiteral::Matrix(items, Moo::new(GroundDomain::Int(vec![])))
-                            }
-                            x => x,
-                        });
-                        updates.push((k, Literal::AbstractLiteral(matrix)));
-                    }
-                    Literal::AbstractLiteral(AbstractLiteral::Tuple(elems)) => {
-                        // just the same as matrix but with tuples instead
-                        // only conversion needed is to convert bools to ints
-                        let mut tuple = AbstractLiteral::Tuple(elems);
-                        tuple = tuple.transform(
-                            &(move |x: AbstractLiteral<Literal>| match x {
-                                AbstractLiteral::Tuple(items) => {
-                                    let items = items
-                                        .into_iter()
-                                        .map(|x| match x {
-                                            Literal::Bool(false) => Literal::Int(0),
-                                            Literal::Bool(true) => Literal::Int(1),
-                                            x => x,
-                                        })
-                                        .collect_vec();
-
-                                    AbstractLiteral::Tuple(items)
-                                }
-                                x => x,
-                            }),
-                        );
-                        updates.push((k, Literal::AbstractLiteral(tuple)));
-                    }
-                    Literal::AbstractLiteral(AbstractLiteral::Record(entries)) => {
-                        // just the same as matrix but with tuples instead
-                        // only conversion needed is to convert bools to ints
-                        let mut record = AbstractLiteral::Record(entries);
-                        record = record.transform(&move |x: AbstractLiteral<Literal>| match x {
-                            AbstractLiteral::Record(entries) => {
-                                let entries = entries
-                                    .into_iter()
-                                    .map(|x| {
-                                        let RecordValue { name, value } = x;
-                                        {
-                                            let value = match value {
-                                                Literal::Bool(false) => Literal::Int(0),
-                                                Literal::Bool(true) => Literal::Int(1),
-                                                x => x,
-                                            };
-                                            RecordValue { name, value }
-                                        }
-                                    })
-                                    .collect_vec();
-
-                                AbstractLiteral::Record(entries)
-                            }
-                            x => x,
-                        });
-                        updates.push((k, Literal::AbstractLiteral(record)));
-                    }
-                    Literal::AbstractLiteral(AbstractLiteral::Set(members)) => {
-                        let set = AbstractLiteral::Set(members).transform(&move |x| match x {
-                            AbstractLiteral::Set(members) => {
-                                let members = members
-                                    .into_iter()
-                                    .map(|x| match x {
-                                        Literal::Bool(false) => Literal::Int(0),
-                                        Literal::Bool(true) => Literal::Int(1),
-                                        x => x,
-                                    })
-                                    .collect_vec();
-
-                                AbstractLiteral::Set(members)
-                            }
-                            x => x,
-                        });
-                        updates.push((k, Literal::AbstractLiteral(set)));
-                    }
-                    e => bug!("unexpected literal type: {e:?}"),
-                }
-            }
-        }
-
-        for (k, v) in updates {
-            solset.insert(k, v);
-        }
-    }
-
-    // Remove duplicates
-    normalized = normalized.into_iter().unique().collect();
-    normalized
+/// Turn all booleans in the literal into 0 or 1, and give matrices the same domain.
+#[doc(hidden)]
+fn normalize_literal(literal: Literal) -> Literal {
+    literal.transform(&|lit| match lit {
+        Literal::Bool(true) => Literal::Int(1),
+        Literal::Bool(false) => Literal::Int(0),
+        Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, _)) => Literal::AbstractLiteral(
+            AbstractLiteral::Matrix(elems, Moo::new(GroundDomain::Int(vec![]))),
+        ),
+        x => x,
+    })
 }
 
 fn maybe_truncate_serialised_json(serialised: String, test_stage: &str) -> String {
