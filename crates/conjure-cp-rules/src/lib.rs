@@ -13,14 +13,19 @@ mod lex;
 mod matrix;
 mod minion;
 mod normalisers;
-mod records;
-mod representation;
 mod sat;
-mod select_representation;
 mod sets;
 mod subsitute_lettings;
-mod tuple;
 mod utils;
+
+// TODO (repr): general representation rules
+// mod representation;
+// mod select_representation;
+
+// TODO (repr): record representation rules
+// mod records;
+// TODO (repr): tuple representation rules
+// mod tuple;
 
 #[cfg(feature = "smt")]
 mod smt;

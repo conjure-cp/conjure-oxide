@@ -89,6 +89,7 @@ pub fn get_solutions(
     // Get the representations for each variable by name, since some variables are
     // divided into multiple auxiliary variables(see crate::representation::Representation)
     let names = symbols.clone().into_iter().map(|x| x.0).collect_vec();
+
     let representations = names
         .into_iter()
         .filter_map(|x| symbols.representations_for(&x).map(|repr| (x, repr)))
