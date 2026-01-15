@@ -3,8 +3,8 @@
 //! See the item documentation for [`SymbolTable`] for more details.
 
 use crate::bug;
-use crate::representation::{Representation, get_repr_rule};
 use std::any::TypeId;
+// use crate::representation::{Representation, get_repr_rule};
 
 use std::collections::BTreeSet;
 use std::collections::btree_map::Entry;

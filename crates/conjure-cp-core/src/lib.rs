@@ -13,10 +13,12 @@ mod bug;
 pub mod context;
 pub mod error;
 pub mod parse;
-pub mod representation;
 pub mod rule_engine;
 pub mod solver;
 pub mod stats;
+
+// TODO (repr): new representations module
+// pub mod representation;
 
 // Various internal helper functions
 mod utils;

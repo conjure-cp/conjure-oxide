@@ -1,7 +1,6 @@
 use std::fmt::Display;
 
 use super::categories::{Category, CategoryOf};
-use crate::representation::Representation;
 use conjure_cp_core::ast::DomainPtr;
 use conjure_cp_core::ast::domains::HasDomain;
 use derivative::Derivative;
@@ -34,12 +33,12 @@ use serde::{Deserialize, Serialize};
 pub struct DecisionVariable {
     pub domain: DomainPtr,
 
+    // TODO (repr): store representation of decision variables
     // use this through [`Declaration`] - in the future, this probably will be stored in
     // declaration / domain, not here.
-    #[serde(skip)]
-    #[derivative(Hash = "ignore", PartialEq = "ignore")]
-    pub(super) representations: Vec<Vec<Box<dyn Representation>>>,
-
+    // #[serde(skip)]
+    // #[derivative(Hash = "ignore", PartialEq = "ignore")]
+    // pub(super) representations: Vec<Vec<Box<dyn Representation>>>,
     /// Category - should be quantified or decision variable
     pub(super) category: Category,
 }
@@ -52,7 +51,7 @@ impl DecisionVariable {
         );
         DecisionVariable {
             domain,
-            representations: vec![],
+            // representations: vec![],
             category,
         }
     }
