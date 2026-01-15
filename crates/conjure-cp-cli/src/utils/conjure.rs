@@ -88,35 +88,36 @@ pub fn get_solutions(
 
     // Get the representations for each variable by name, since some variables are
     // divided into multiple auxiliary variables(see crate::representation::Representation)
-    let names = symbols.clone().into_iter().map(|x| x.0).collect_vec();
+    // let names = symbols.clone().into_iter().map(|x| x.0).collect_vec();
 
-    let representations = names
-        .into_iter()
-        .filter_map(|x| symbols.representations_for(&x).map(|repr| (x, repr)))
-        .filter_map(|(name, reprs)| {
-            if reprs.is_empty() {
-                return None;
-            }
-            assert!(
-                reprs.len() <= 1,
-                "multiple representations for a variable is not yet implemented"
-            );
-
-            assert_eq!(
-                reprs[0].len(),
-                1,
-                "nested representations are not yet implemented"
-            );
-            Some((name, reprs[0][0].clone()))
-        })
-        .collect_vec();
+    // TODO (repr): handle representations in get_solutions
+    // let representations = names
+    //     .into_iter()
+    //     .filter_map(|x| symbols.representations_for(&x).map(|repr| (x, repr)))
+    //     .filter_map(|(name, reprs)| {
+    //         if reprs.is_empty() {
+    //             return None;
+    //         }
+    //         assert!(
+    //             reprs.len() <= 1,
+    //             "multiple representations for a variable is not yet implemented"
+    //         );
+    //
+    //         assert_eq!(
+    //             reprs[0].len(),
+    //             1,
+    //             "nested representations are not yet implemented"
+    //         );
+    //         Some((name, reprs[0][0].clone()))
+    //     })
+    //     .collect_vec();
 
     for sol in sols.iter_mut() {
         // Get the value of complex variables using their auxiliary variables
-        for (name, representation) in representations.iter() {
-            let value = representation.value_up(sol).unwrap();
-            sol.insert(name.clone(), value);
-        }
+        // for (name, representation) in representations.iter() {
+        //     let value = representation.value_up(sol).unwrap();
+        //     sol.insert(name.clone(), value);
+        // }
 
         // Remove auxiliary variables since we've found the value of the
         // variable they represent
@@ -124,7 +125,8 @@ pub fn get_solutions(
             .clone()
             .into_iter()
             .filter(|(name, _)| {
-                !matches!(name, Name::Represented(_)) && !matches!(name, Name::Machine(_))
+                // !matches!(name, Name::Represented(_)) &&
+                !matches!(name, Name::Machine(_))
             })
             .collect();
     }
