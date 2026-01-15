@@ -163,10 +163,10 @@ pub fn name_to_symbol(name: &Name) -> SolverResult<Symbol> {
     match name {
         Name::User(ustr) => Ok(Symbol::String((*ustr).into())),
         Name::Machine(num) => Ok(Symbol::Int(*num as u32)),
-        Name::Represented(parts) => {
-            let (name, rule_str, suffix) = parts.as_ref();
-            Ok(Symbol::String(format!("{name}#{rule_str}_{suffix}")))
-        }
+        // Name::Represented(parts) => {
+        //     let (name, rule_str, suffix) = parts.as_ref();
+        //     Ok(Symbol::String(format!("{name}#{rule_str}_{suffix}")))
+        // }
         _ => Err(SolverError::ModelFeatureNotImplemented(format!(
             "variable '{name}' name is unsupported"
         ))),

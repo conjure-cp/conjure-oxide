@@ -60,17 +60,17 @@ fn load_symbol_table(
             let Some(var) = decl.as_var() else {
                 continue;
             }; // ignore lettings, etc.
-            //
 
-            // this variable has representations, so ignore it
-            if !conjure_model
-                .as_submodel()
-                .symbols()
-                .representations_for(&name)
-                .is_none_or(|x| x.is_empty())
-            {
-                continue;
-            };
+            // TODO (repr): handle representations in Minion solver adaptor `load_symbol_table`
+            // // this variable has representations, so ignore it
+            // if !conjure_model
+            //     .as_submodel()
+            //     .symbols()
+            //     .representations_for(&name)
+            //     .is_none_or(|x| x.is_empty())
+            // {
+            //     continue;
+            // };
 
             load_var(&name, &var, false, minion_model)?;
         }
@@ -86,15 +86,16 @@ fn load_symbol_table(
             }; // ignore lettings, etc.
             //
 
-            // this variable has representations, so ignore it
-            if !conjure_model
-                .as_submodel()
-                .symbols()
-                .representations_for(&name)
-                .is_none_or(|x| x.is_empty())
-            {
-                continue;
-            };
+            // TODO (repr): handle representations in Minion solver adaptor `load_symbol_table`
+            // // this variable has representations, so ignore it
+            // if !conjure_model
+            //     .as_submodel()
+            //     .symbols()
+            //     .representations_for(&name)
+            //     .is_none_or(|x| x.is_empty())
+            // {
+            //     continue;
+            // };
 
             let is_search_var = !matches!(name, conjure_ast::Name::Machine(_));
 
@@ -202,11 +203,12 @@ fn name_to_string(name: conjure_ast::Name) -> String {
     match name {
         // print machine names in a custom, easier to regex, way.
         conjure_ast::Name::Machine(x) => format!("__conjure_machine_name_{x}"),
-        conjure_ast::Name::Represented(fields) => {
-            let (name, rule, suffix) = *fields;
-            let name = name_to_string(name);
-            format!("__conjure_represented_name__{name}__{rule}___{suffix}")
-        }
+        // TODO (repr): parse represented variable names in minion solver adaptor
+        // conjure_ast::Name::Represented(fields) => {
+        //     let (name, rule, suffix) = *fields;
+        //     let name = name_to_string(name);
+        //     format!("__conjure_represented_name__{name}__{rule}___{suffix}")
+        // }
         x => format!("{x}"),
     }
 }

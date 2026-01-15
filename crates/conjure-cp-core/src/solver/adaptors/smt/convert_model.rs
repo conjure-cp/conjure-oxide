@@ -37,13 +37,14 @@ pub fn load_model_impl(
             /// Ignore lettings, etc
             continue;
         };
-        if !symbols
-            .representations_for(&name)
-            .is_none_or(|reps| reps.is_empty())
-        {
-            /// This variable has representations; ignore it
-            continue;
-        }
+        // TODO (repr): handle representation variables in SMT solver adaptor
+        // if !symbols
+        //     .representations_for(&name)
+        //     .is_none_or(|reps| reps.is_empty())
+        // {
+        //     /// This variable has representations; ignore it
+        //     continue;
+        // }
         let (sym, ast, restriction) = var_to_ast(&name, &var, theory_config)?;
         store.insert(name, (decl.resolved_domain().unwrap(), ast, sym));
         solver.assert(restriction);

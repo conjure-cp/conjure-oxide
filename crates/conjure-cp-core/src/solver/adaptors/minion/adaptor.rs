@@ -48,13 +48,16 @@ fn parse_name(minion_name: &str) -> Name {
 
     if let Some(caps) = MACHINE_NAME_RE.captures(minion_name) {
         conjure_ast::Name::Machine(caps[1].parse::<i32>().unwrap())
-    } else if let Some(caps) = REPRESENTED_NAME_RE.captures(minion_name) {
-        conjure_ast::Name::Represented(Box::new((
-            parse_name(&caps[1]),
-            Ustr::from(&caps[2]),
-            Ustr::from(&caps[3]),
-        )))
-    } else {
+    }
+    // TODO (repr): handle represented variable names in Minion adaptor
+    // else if let Some(caps) = REPRESENTED_NAME_RE.captures(minion_name) {
+    //     conjure_ast::Name::Represented(Box::new((
+    //         parse_name(&caps[1]),
+    //         Ustr::from(&caps[2]),
+    //         Ustr::from(&caps[3]),
+    //     )))
+    // }
+    else {
         conjure_ast::Name::User(Ustr::from(minion_name))
     }
 }

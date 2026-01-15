@@ -337,11 +337,11 @@ impl SymbolTable {
     /// This method can return domain references: if a ground domain is always required, use
     /// [`SymbolTable::resolve_domain`].
     pub fn domain(&self, name: &Name) -> Option<DomainPtr> {
-        if let Name::WithRepresentation(name, _) = name {
-            self.lookup(name)?.domain()
-        } else {
-            self.lookup(name)?.domain()
-        }
+        // if let Name::WithRepresentation(name, _) = name {
+        //     self.lookup(name)?.domain()
+        // } else {
+        self.lookup(name)?.domain()
+        // }
     }
 
     /// Looks up the domain of name, resolving domain references to ground domains.
@@ -403,105 +403,108 @@ impl SymbolTable {
         &self.parent
     }
 
-    /// Gets the representation `representation` for `name`.
-    ///
-    /// # Returns
-    ///
-    /// + `None` if `name` does not exist, is not a decision variable, or does not have that representation.
-    pub fn get_representation(
-        &self,
-        name: &Name,
-        representation: &[&str],
-    ) -> Option<Vec<Box<dyn Representation>>> {
-        // TODO: move representation stuff to declaration / variable to avoid cloning? (we have to
-        // move inside of an rc here, so cannot return borrows)
-        //
-        // Also would prevent constant "does exist" "is var" checks.
-        //
-        // The reason it is not there now is because I'm getting serde issues...
-        //
-        // Also might run into issues putting get_or_add into declaration/variable, as that
-        // requires us to mutably borrow both the symbol table, and the variable inside the symbol
-        // table..
+    // TODO (repr): implement SymbolTable::get_representation
+    // /// Gets the representation `representation` for `name`.
+    // ///
+    // /// # Returns
+    // ///
+    // /// + `None` if `name` does not exist, is not a decision variable, or does not have that representation.
+    // pub fn get_representation(
+    //     &self,
+    //     name: &Name,
+    //     representation: &[&str],
+    // ) -> Option<Vec<Box<dyn Representation>>> {
+    //     // TODO: move representation stuff to declaration / variable to avoid cloning? (we have to
+    //     // move inside of an rc here, so cannot return borrows)
+    //     //
+    //     // Also would prevent constant "does exist" "is var" checks.
+    //     //
+    //     // The reason it is not there now is because I'm getting serde issues...
+    //     //
+    //     // Also might run into issues putting get_or_add into declaration/variable, as that
+    //     // requires us to mutably borrow both the symbol table, and the variable inside the symbol
+    //     // table..
+    //
+    //     let decl = self.lookup(name)?;
+    //     let var = &decl.as_var()?;
+    //
+    //     var.representations
+    //         .iter()
+    //         .find(|x| &x.iter().map(|r| r.repr_name()).collect_vec()[..] == representation)
+    //         .cloned()
+    // }
 
-        let decl = self.lookup(name)?;
-        let var = &decl.as_var()?;
+    // TODO (repr): implement SymbolTable::representations_for
+    // /// Gets all initialised representations for `name`.
+    // ///
+    // /// # Returns
+    // ///
+    // /// + `None` if `name` does not exist, or is not a decision variable.
+    // pub fn representations_for(&self, name: &Name) -> Option<Vec<Vec<Box<dyn Representation>>>> {
+    //     let decl = self.lookup(name)?;
+    //     decl.as_var().map(|x| x.representations.clone())
+    // }
 
-        var.representations
-            .iter()
-            .find(|x| &x.iter().map(|r| r.repr_name()).collect_vec()[..] == representation)
-            .cloned()
-    }
-
-    /// Gets all initialised representations for `name`.
-    ///
-    /// # Returns
-    ///
-    /// + `None` if `name` does not exist, or is not a decision variable.
-    pub fn representations_for(&self, name: &Name) -> Option<Vec<Vec<Box<dyn Representation>>>> {
-        let decl = self.lookup(name)?;
-        decl.as_var().map(|x| x.representations.clone())
-    }
-
-    /// Gets the representation `representation` for `name`, creating it if it does not exist.
-    ///
-    /// If the representation does not exist, this method initialises the representation in this
-    /// symbol table, adding the representation to `name`, and the declarations for the represented
-    /// variables to the symbol table.
-    ///
-    /// # Usage
-    ///
-    /// Representations for variable references should be selected and created by the
-    /// `select_representation` rule. Therefore, this method should not be used in other rules.
-    /// Consider using [`get_representation`](`SymbolTable::get_representation`) instead.
-    ///
-    /// # Returns
-    ///
-    /// + `None` if `name` does not exist, is not a decision variable, or cannot be given that
-    ///   representation.
-    pub fn get_or_add_representation(
-        &mut self,
-        name: &Name,
-        representation: &[&str],
-    ) -> Option<Vec<Box<dyn Representation>>> {
-        // Lookup the declaration reference
-        let mut decl = self.lookup(name)?;
-
-        if let Some(var) = decl.as_var()
-            && let Some(existing_reprs) = var
-                .representations
-                .iter()
-                .find(|x| &x.iter().map(|r| r.repr_name()).collect_vec()[..] == representation)
-                .cloned()
-        {
-            return Some(existing_reprs); // Found: return early
-        }
-        // Representation not found
-
-        // TODO: nested representations logic...
-        if representation.len() != 1 {
-            bug!("nested representations not implemented")
-        }
-        let repr_name_str = representation[0];
-        let repr_init_fn = get_repr_rule(repr_name_str)?;
-
-        let reprs = vec![repr_init_fn(name, self)?];
-
-        // Get mutable access to the variable part
-        let mut var = decl.as_var_mut()?;
-
-        for repr_instance in &reprs {
-            repr_instance
-                .declaration_down()
-                .ok()?
-                .into_iter()
-                .for_each(|x| self.update_insert(x));
-        }
-
-        var.representations.push(reprs.clone());
-
-        Some(reprs)
-    }
+    // TODO (repr): implement SymbolTable::get_or_add_representation
+    // /// Gets the representation `representation` for `name`, creating it if it does not exist.
+    // ///
+    // /// If the representation does not exist, this method initialises the representation in this
+    // /// symbol table, adding the representation to `name`, and the declarations for the represented
+    // /// variables to the symbol table.
+    // ///
+    // /// # Usage
+    // ///
+    // /// Representations for variable references should be selected and created by the
+    // /// `select_representation` rule. Therefore, this method should not be used in other rules.
+    // /// Consider using [`get_representation`](`SymbolTable::get_representation`) instead.
+    // ///
+    // /// # Returns
+    // ///
+    // /// + `None` if `name` does not exist, is not a decision variable, or cannot be given that
+    // ///   representation.
+    // pub fn get_or_add_representation(
+    //     &mut self,
+    //     name: &Name,
+    //     representation: &[&str],
+    // ) -> Option<Vec<Box<dyn Representation>>> {
+    //     // Lookup the declaration reference
+    //     let mut decl = self.lookup(name)?;
+    //
+    //     if let Some(var) = decl.as_var()
+    //         && let Some(existing_reprs) = var
+    //             .representations
+    //             .iter()
+    //             .find(|x| &x.iter().map(|r| r.repr_name()).collect_vec()[..] == representation)
+    //             .cloned()
+    //     {
+    //         return Some(existing_reprs); // Found: return early
+    //     }
+    //     // Representation not found
+    //
+    //     // TODO: nested representations logic...
+    //     if representation.len() != 1 {
+    //         bug!("nested representations not implemented")
+    //     }
+    //     let repr_name_str = representation[0];
+    //     let repr_init_fn = get_repr_rule(repr_name_str)?;
+    //
+    //     let reprs = vec![repr_init_fn(name, self)?];
+    //
+    //     // Get mutable access to the variable part
+    //     let mut var = decl.as_var_mut()?;
+    //
+    //     for repr_instance in &reprs {
+    //         repr_instance
+    //             .declaration_down()
+    //             .ok()?
+    //             .into_iter()
+    //             .for_each(|x| self.update_insert(x));
+    //     }
+    //
+    //     var.representations.push(reprs.clone());
+    //
+    //     Some(reprs)
+    // }
 }
 
 impl IntoIterator for SymbolTable {
