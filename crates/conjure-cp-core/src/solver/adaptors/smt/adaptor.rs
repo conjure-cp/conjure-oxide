@@ -65,7 +65,6 @@ impl SolverAdaptor for Smt {
         let solver_send = self.solver_inst.synchronized();
         let store_send = self.store.synchronized();
         let mut stats: SolverStats = Default::default();
-        let mut final_z3_time: Option<f64> = None;
 
         // Apply config when getting solutions
         let (search_complete, final_z3_time) = with_z3_config(&self.solver_cfg, move || {
@@ -91,7 +90,7 @@ impl SolverAdaptor for Smt {
         });
 
         if let Some(time) = final_z3_time {
-            stats.conjure_solver_wall_time_s += time;
+            stats.solver_wall_time_s = time;
         }
 
         Ok(SolveSuccess {

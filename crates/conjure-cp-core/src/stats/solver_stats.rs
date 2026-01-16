@@ -1,3 +1,4 @@
+use educe::Educe;
 use schemars::JsonSchema;
 use serde::Serialize;
 use serde_with::skip_serializing_none;
@@ -5,7 +6,8 @@ use serde_with::skip_serializing_none;
 use crate::solver::SolverFamily;
 
 #[skip_serializing_none]
-#[derive(Default, Serialize, Clone, JsonSchema, Debug)]
+#[derive(Serialize, Clone, JsonSchema, Debug, Educe)]
+#[educe(Default)]
 #[serde(rename_all = "camelCase")]
 #[allow(dead_code)]
 // Statistics for a run of a solver.
@@ -13,6 +15,12 @@ pub struct SolverStats {
     #[serde(rename = "conjureSolverWallTime_s")]
     /// Wall time as measured by Conjure-Oxide (not the solver).
     pub conjure_solver_wall_time_s: f64,
+
+    /// Wall time as measured by the solver
+    /// This may be NaN if the solver adaptor does not implement this statistic
+    #[educe(Default = f64::NAN)]
+    #[serde(rename = "solverWallTime_s")]
+    pub solver_wall_time_s: f64,
 
     // This is set by Solver, not SolverAdaptor
     /// The solver family used for this run.
