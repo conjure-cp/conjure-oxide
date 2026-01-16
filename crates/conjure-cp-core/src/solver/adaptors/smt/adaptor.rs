@@ -68,23 +68,26 @@ impl SolverAdaptor for Smt {
         let mut final_z3_time: Option<f64> = None;
 
         // Apply config when getting solutions
-        let search_complete = with_z3_config(&self.solver_cfg, move || {
+        let (search_complete, final_z3_time) = with_z3_config(&self.solver_cfg, move || {
             let solver = solver_send.recover();
+            let mut final_z3_time: Option<f64> = None;
+
             let solutions = solver
                 .into_solutions_with_statistics(store_send.recover(), true)
-                .take_while(|(store, _)| (callback)(store.as_literals_map().unwrap()))
-                .inspect(|(store, z3_stats)| {
+                .take_while(|(store, z3_stats)| {
                     let time = z3_stats.value("time");
                     if let Some(z3::StatisticsValue::Double(time)) = time {
                         final_z3_time = Some(time);
                     }
+                    (callback)(store.as_literals_map().unwrap())
                 });
 
             // Consume iterator and get whether there are solutions
-            match solutions.count() {
+            let search_complete = match solutions.count() {
                 0 => SearchComplete::NoSolutions,
                 _ => SearchComplete::HasSolutions,
-            }
+            };
+            (search_complete, final_z3_time)
         });
 
         if let Some(time) = final_z3_time {
