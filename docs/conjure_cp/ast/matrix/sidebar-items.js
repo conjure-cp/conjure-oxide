@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["enumerate_index_union_indices","enumerate_indices","flat_index_to_full_index","flatten","flatten_enumerate","index_domains","num_elements","safe_index_optimised"]};
