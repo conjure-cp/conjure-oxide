@@ -16,11 +16,11 @@ pub struct SolverStats {
     /// Wall time as measured by Conjure-Oxide (not the solver).
     pub conjure_solver_wall_time_s: f64,
 
-    /// Wall time as measured by the solver
-    /// This may be NaN if the solver adaptor does not implement this statistic
+    /// Solver time as measured by the solver itself
+    /// This may be NaN if the solver or adaptor does not implement this statistic
     #[educe(Default = f64::NAN)]
-    #[serde(rename = "solverWallTime_s")]
-    pub solver_wall_time_s: f64,
+    #[serde(rename = "solverTime_s")]
+    pub solver_time_s: f64,
 
     // This is set by Solver, not SolverAdaptor
     /// The solver family used for this run.

@@ -90,7 +90,7 @@ impl SolverAdaptor for Smt {
         });
 
         if let Some(time) = final_z3_time {
-            stats.solver_wall_time_s = time;
+            stats.solver_time_s = time;
         }
 
         Ok(SolveSuccess {
