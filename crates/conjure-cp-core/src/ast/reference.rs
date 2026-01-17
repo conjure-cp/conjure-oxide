@@ -19,7 +19,9 @@ use super::{
 /// 1. Encapsulate the serde pragmas (e.g., serializing as IDs rather than full objects)
 /// 2. Enable type-directed traversals of references via uniplate
 #[serde_as]
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate, Derivative)]
+#[derive(
+    Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, Uniplate, Derivative,
+)]
 #[derivative(Hash)]
 #[uniplate()]
 #[biplate(to=DeclarationPtr)]
