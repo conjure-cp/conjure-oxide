@@ -4,18 +4,18 @@ use std::{
 };
 
 pub trait RewriteCache<T> {
-    fn get(&self, subtree: &T) -> Option<T>;
+    fn get(&self, subtree: &T, level: usize) -> Option<T>;
 
-    fn insert(&mut self, from: T, to: T);
+    fn insert(&mut self, from: T, to: T, level: usize);
 }
 
 pub struct NoCache;
 impl<T> RewriteCache<T> for NoCache {
-    fn get(&self, _: &T) -> Option<T> {
+    fn get(&self, _: &T, _: usize) -> Option<T> {
         None
     }
 
-    fn insert(&mut self, _: T, _: T) {}
+    fn insert(&mut self, _: T, _: T, _: usize) {}
 }
 
 pub struct HashMapCache<T>
@@ -49,9 +49,10 @@ where
         }
     }
 
-    fn hash(&self, term: &T) -> u64 {
+    fn hash(&self, term: &T, level: usize) -> u64 {
         let mut hasher = DefaultHasher::new();
         term.hash(&mut hasher);
+        level.hash(&mut hasher);
         hasher.finish()
     }
 }
@@ -60,13 +61,13 @@ impl<T> RewriteCache<T> for HashMapCache<T>
 where
     T: Hash + Clone + Eq,
 {
-    fn get(&self, subtree: &T) -> Option<T> {
-        self.map.get(&self.hash(subtree)).cloned()
+    fn get(&self, subtree: &T, level: usize) -> Option<T> {
+        self.map.get(&self.hash(subtree, level)).cloned()
     }
 
-    fn insert(&mut self, from: T, to: T) {
-        let from_hash = self.hash(&from);
-        let to_hash = self.hash(&to);
+    fn insert(&mut self, from: T, to: T, level: usize) {
+        let from_hash = self.hash(&from, level);
+        let to_hash = self.hash(&to, level);
 
         if self.map.contains_key(&from_hash) {
             panic!("Overriding an existing mapping loses transitive closure.");

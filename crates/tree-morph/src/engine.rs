@@ -211,7 +211,7 @@ where
                     trace!("Got Dirty, Level {}", level);
                     let subtree = zipper.inner.focus();
 
-                    if let Some(cached) = self.cache.get(subtree) {
+                    if let Some(cached) = self.cache.get(subtree, level) {
                         debug!("Using Cached Results");
                         zipper.inner.replace_focus(cached);
                         zipper.mark_dirty_to_root();
@@ -243,7 +243,8 @@ where
                             // since the `transform` command may redefine the whole tree
                             zipper.inner.replace_focus(new_tree);
                         } else {
-                            self.cache.insert(original, replacement);
+                            debug!("Adding to Cache");
+                            self.cache.insert(original, replacement, level);
                         }
 
                         self.event_handlers.trigger_on_apply(
