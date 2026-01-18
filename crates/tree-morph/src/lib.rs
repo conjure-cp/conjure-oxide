@@ -4,10 +4,12 @@
 pub mod commands;
 pub mod engine;
 pub mod engine_builder;
+pub mod engine_zipper;
 mod events;
 pub mod helpers;
 pub mod rule;
 mod update;
+pub mod cache;
 
 /// Re-exported functions and types for convenience.
 pub mod prelude {
