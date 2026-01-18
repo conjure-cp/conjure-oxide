@@ -85,10 +85,6 @@ fn setup() -> (
         HashMapCache<Expr>,
     >,
 ) {
-    // let _ = tracing_subscriber::fmt()
-    //     .with_max_level(tracing::Level::DEBUG)
-    //     .try_init();
-
     let meta = Meta {
         applied: HashMap::new(),
         attempts: HashMap::new(),
@@ -115,10 +111,6 @@ fn setup_nocache() -> (
         NoCache,
     >,
 ) {
-    // let _ = tracing_subscriber::fmt()
-    //     .with_max_level(tracing::Level::DEBUG)
-    //     .try_init();
-
     let meta = Meta {
         applied: HashMap::new(),
         attempts: HashMap::new(),
@@ -142,10 +134,6 @@ fn no_cache() {
 
     let (expr, meta) = engine.morph(expr, meta);
 
-    dbg!(expr);
-    dbg!(meta);
-    return;
-
     assert_eq!(
         expr,
         Expr::Quad(
@@ -161,7 +149,7 @@ fn no_cache() {
 
     assert_eq!(meta.applied.keys().len(), 1);
 
-    assert_eq!(meta.applied.get("c->d"), Some(1).as_ref());
+    assert_eq!(meta.applied.get("c->d"), Some(4).as_ref());
 }
 
 #[test]
@@ -176,10 +164,6 @@ fn basic_caching() {
     let (meta, engine) = setup();
 
     let (expr, meta) = engine.morph(expr, meta);
-
-    dbg!(expr);
-    dbg!(meta);
-    return;
 
     assert_eq!(
         expr,
@@ -209,8 +193,18 @@ fn transitive_no_caching() {
     let (meta, engine) = setup_nocache();
     let (expr, meta) = engine.morph(expr, meta);
 
-    dbg!(expr);
-    dbg!(meta);
+    assert_eq!(
+        expr,
+        Expr::Triple(
+            Box::new(Expr::D),
+            Box::new(Expr::D),
+            Box::new(Expr::D),
+        )
+    );
+
+    assert_eq!(meta.applied.get("a->b"), Some(1).as_ref());
+    assert_eq!(meta.applied.get("b->c"), Some(2).as_ref());
+    assert_eq!(meta.applied.get("c->d"), Some(3).as_ref());
 }
 
 #[test]
@@ -224,37 +218,16 @@ fn transitive_caching() {
     let (meta, engine) = setup();
     let (expr, meta) = engine.morph(expr, meta);
 
-    dbg!(expr);
-    dbg!(meta);
-}
-
-
-#[test]
-fn transitive_no_caching_reverse() {
-    let expr = Expr::Triple(
-        Box::new(Expr::C),
-        Box::new(Expr::B),
-        Box::new(Expr::A), 
+    assert_eq!(
+        expr,
+        Expr::Triple(
+            Box::new(Expr::D),
+            Box::new(Expr::D),
+            Box::new(Expr::D),
+        )
     );
 
-    let (meta, engine) = setup_nocache();
-    let (expr, meta) = engine.morph(expr, meta);
-
-    dbg!(expr);
-    dbg!(meta);
-}
-
-#[test]
-fn transitive_caching_reverse() {
-    let expr = Expr::Triple(
-        Box::new(Expr::C),
-        Box::new(Expr::B),
-        Box::new(Expr::A), 
-    );
-
-    let (meta, engine) = setup();
-    let (expr, meta) = engine.morph(expr, meta);
-
-    dbg!(expr);
-    dbg!(meta);
+    assert_eq!(meta.applied.get("a->b"), Some(1).as_ref());
+    assert_eq!(meta.applied.get("b->c"), Some(1).as_ref());
+    assert_eq!(meta.applied.get("c->d"), Some(1).as_ref());
 }
