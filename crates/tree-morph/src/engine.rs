@@ -16,11 +16,11 @@ use uniplate::Uniplate;
 /// An engine for exhaustively transforming trees with user-defined rules.
 ///
 /// See the [`morph`](Engine::morph) method for more information.
-pub struct Engine<T, M, R, C = NoCache>
+pub struct Engine<T, M, R, C>
 where
     T: Uniplate,
     R: Rule<T, M>,
-    C: RewriteCache<T>
+    C: RewriteCache<T>,
 {
     pub(crate) event_handlers: EventHandlers<T, M, R>,
 
@@ -29,13 +29,14 @@ where
 
     pub(crate) selector: SelectorFn<T, M, R>,
 
-    pub(crate) cache: C
+    pub(crate) cache: C,
 }
 
-impl<T, M, R> Engine<T, M, R>
+impl<T, M, R, C> Engine<T, M, R, C>
 where
     T: Uniplate,
     R: Rule<T, M>,
+    C: RewriteCache<T>,
 {
     #[instrument(skip(self, subtree, meta, rules))]
     fn select_rule<'a>(
@@ -188,8 +189,9 @@ where
     /// assert_eq!(result, Expr::Val(4));
     /// assert_eq!(num_applications, 3); // Now the sub-expression (1 * 2) is evaluated first
     /// ```
+    /// TODO: mut self vs &mut self vs RefCell
     #[instrument(skip(self, tree, meta))]
-    pub fn morph(&self, tree: T, meta: M) -> (T, M)
+    pub fn morph(mut self, tree: T, meta: M) -> (T, M)
     where
         T: Uniplate,
         R: Rule<T, M>,
@@ -209,11 +211,22 @@ where
                     trace!("Got Dirty, Level {}", level);
                     let subtree = zipper.inner.focus();
 
+                    if let Some(cached) = self.cache.get(subtree) {
+                        debug!("Using Cached Results");
+                        zipper.inner.replace_focus(cached);
+                        zipper.mark_dirty_to_root();
+                        continue 'main;
+                    }
+
                     // Choose one transformation from all applicable rules at this level
                     let selected = self.select_rule(subtree, &mut zipper.meta, rules);
 
                     if let Some((rule, mut update)) = selected {
                         debug!("Applying Rule '{}'", rule.name());
+
+                        let replacement = update.new_subtree.clone();
+                        let original = subtree.clone();
+
                         // Replace the current subtree, invalidating subtree node states
                         zipper.inner.replace_focus(update.new_subtree);
 
@@ -229,6 +242,8 @@ where
                             // This must unfortunately throw all node states away,
                             // since the `transform` command may redefine the whole tree
                             zipper.inner.replace_focus(new_tree);
+                        } else {
+                            self.cache.insert(original, replacement);
                         }
 
                         self.event_handlers.trigger_on_apply(
