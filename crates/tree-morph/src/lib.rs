@@ -15,7 +15,7 @@ pub mod prelude {
     pub use crate::engine::Engine;
     pub use crate::engine_builder::EngineBuilder;
     pub use crate::helpers::select_first;
-    pub use crate::rule::{Rule, RuleFn};
+    pub use crate::rule::{NamedRule, Rule, RuleFn};
     pub use crate::rule_fns;
     pub use crate::update::Update;
 }
