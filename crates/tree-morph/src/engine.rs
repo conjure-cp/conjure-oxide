@@ -3,7 +3,7 @@
 //! See the [`morph`](Engine::morph) for more information.
 
 use crate::cache::{NoCache, RewriteCache};
-use crate::engine_zipper::EngineZipper;
+use crate::engine_zipper::{EngineZipper, NaiveZipper};
 use crate::events::EventHandlers;
 use crate::helpers::{SelectorFn, one_or_select};
 use crate::prelude::Rule;
@@ -189,9 +189,9 @@ where
     /// assert_eq!(result, Expr::Val(4));
     /// assert_eq!(num_applications, 3); // Now the sub-expression (1 * 2) is evaluated first
     /// ```
-    /// TODO: mut self vs &mut self vs RefCell
+    /// TODO: mut self vs &mut self vs RefCell or D.I
     #[instrument(skip(self, tree, meta))]
-    pub fn morph(mut self, tree: T, meta: M) -> (T, M)
+    pub fn morph(&mut self, tree: T, meta: M) -> (T, M)
     where
         T: Uniplate,
         R: Rule<T, M>,
@@ -266,5 +266,57 @@ where
         }
         info!("Finished Morph");
         zipper.into()
+    }
+
+    pub fn morph_naive(mut self, tree: T, meta: M) -> (T, M)
+    where
+        T: Uniplate,
+        R: Rule<T, M>,
+    {
+        let mut zipper = NaiveZipper::new(tree, meta, &self.event_handlers);
+        info!("Beginning Naive Morph");
+
+        'main: loop {
+            for (_, rules) in self.rule_groups.iter().enumerate() {
+                while zipper.get_next().is_some() {
+                    let subtree = zipper.inner.focus();
+                    // Choose one transformation from all applicable rules at this level
+                    let selected = self.select_rule(subtree, &mut zipper.meta, rules);
+
+                    if let Some((rule, mut update)) = selected {
+                        zipper.inner.replace_focus(update.new_subtree);
+                        zipper.go_to_root();
+
+                        let (new_tree, root_transformed) = update
+                            .commands
+                            .apply(zipper.inner.focus().clone(), &mut zipper.meta);
+
+                        if root_transformed {
+                            trace!("Root transformed.");
+                            zipper.inner.replace_focus(new_tree);
+                        }
+
+                        self.event_handlers.trigger_on_apply(
+                            zipper.inner.focus(),
+                            &mut zipper.meta,
+                            rule,
+                        );
+
+                        continue 'main;
+                    } else {
+                        debug!("Nothing Applicable");
+                    }
+                }
+            }
+
+            break;
+        }
+
+        info!("Finished Naive Morph");
+
+        let meta = zipper.meta;
+        let tree = zipper.inner.rebuild_root();
+
+        (tree, meta)
     }
 }

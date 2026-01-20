@@ -1,6 +1,6 @@
 use paste::paste;
-use uniplate::{Uniplate, tagged_zipper::TaggedZipper};
 use tracing::{instrument, trace};
+use uniplate::{Uniplate, tagged_zipper::TaggedZipper, zipper::Zipper};
 
 use crate::{events::EventHandlers, rule::Rule};
 
@@ -139,5 +139,70 @@ where
         let meta = val.meta;
         let tree = val.inner.rebuild_root();
         (tree, meta)
+    }
+}
+
+macro_rules! movement_fns_naive {
+    (
+        directions: [$($dir:ident),*]
+    ) => {
+        paste! {
+            $(fn [<go_ $dir>](&mut self) -> Option<()> {
+                self.inner.[<has_ $dir>]().then(|| {
+                    self.event_handlers
+                        .[<trigger_before_ $dir>](self.inner.focus(), &mut self.meta);
+                    self.inner.[<go_ $dir>]().expect("zipper movement failed despite check");
+                    trace!(concat!("Go ", stringify!($dir)));
+                    self.event_handlers
+                        .[<trigger_after_ $dir>](self.inner.focus(), &mut self.meta);
+                })
+            })*
+        }
+    };
+}
+
+/// A Naive Zipper. For testing, debugging and benching
+pub(crate) struct NaiveZipper<'events, T, M, R>
+where
+    T: Uniplate,
+    R: Rule<T, M>,
+{
+    pub(crate) inner: Zipper<T>,
+    event_handlers: &'events EventHandlers<T, M, R>,
+    pub(crate) meta: M,
+}
+
+impl<'events, T, M, R> NaiveZipper<'events, T, M, R>
+where
+    T: Uniplate,
+    R: Rule<T, M>,
+{
+    pub fn new(tree: T, meta: M, event_handlers: &'events EventHandlers<T, M, R>) -> Self {
+        NaiveZipper {
+            inner: Zipper::new(tree),
+            event_handlers,
+            meta,
+        }
+    }
+
+    pub fn get_next(&mut self) -> Option<()> {
+        self.inner
+            .go_down()
+            .or_else(|| self.inner.go_right())
+            .or_else(|| {
+                while self.inner.go_up().is_some() {
+                    if self.inner.go_right().is_some() {
+                        return Some(());
+                    }
+                }
+                None
+            })
+    }
+
+    // We never move left in the tree
+    movement_fns_naive! { directions: [up, down, right] }
+
+    pub fn go_to_root(&mut self) {
+        while self.go_up().is_some() {}
     }
 }

@@ -70,6 +70,7 @@ where
         let to_hash = self.hash(&to, level);
 
         if self.map.contains_key(&from_hash) {
+            // TODO: Change mapping from hash -> Vec<T> -- Leave it as single for now
             panic!("Overriding an existing mapping loses transitive closure.");
         }
 
