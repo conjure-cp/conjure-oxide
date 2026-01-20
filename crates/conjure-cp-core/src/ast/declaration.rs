@@ -13,7 +13,7 @@ use serde_with::serde_as;
 
 use super::categories::{Category, CategoryOf};
 use super::name::Name;
-use super::serde::{DefaultWithId, HasId, ObjId};
+use super::serde::{DefaultWithId, HasId, ObjectId};
 use super::{
     DecisionVariable, DomainPtr, Expression, GroundDomain, Moo, RecordEntry, ReturnType, Typeable,
 };
@@ -75,7 +75,7 @@ struct DeclarationPtrInner {
     // keys to be unchanging.
     //
     // See:  https://rust-lang.github.io/rust-clippy/master/index.html#mutable_key_type
-    id: ObjId,
+    id: ObjectId,
 
     // The contents of the declaration itself should be mutable.
     value: RefCell<Declaration>,
@@ -91,7 +91,7 @@ impl DeclarationPtrInner {
 
     // SAFETY: only use if you are really really sure you arn't going to break the id invariants of
     // DeclarationPtr and HasId!
-    fn new_with_id_unchecked(value: RefCell<Declaration>, id: ObjId) -> Rc<DeclarationPtrInner> {
+    fn new_with_id_unchecked(value: RefCell<Declaration>, id: ObjectId) -> Rc<DeclarationPtrInner> {
         Rc::new(DeclarationPtrInner { id, value })
     }
 }
@@ -487,13 +487,14 @@ impl CategoryOf for DeclarationPtr {
     }
 }
 impl HasId for DeclarationPtr {
-    fn id(&self) -> ObjId {
+    const TYPE_NAME: &'static str = "decl";
+    fn object_id(&self) -> ObjectId {
         self.inner.id
     }
 }
 
 impl DefaultWithId for DeclarationPtr {
-    fn default_with_id(id: ObjId) -> Self {
+    fn default_with_object_id(id: ObjectId) -> Self {
         DeclarationPtr {
             inner: DeclarationPtrInner::new_with_id_unchecked(
                 RefCell::new(Declaration {

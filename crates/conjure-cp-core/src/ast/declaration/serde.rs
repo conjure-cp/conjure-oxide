@@ -118,7 +118,7 @@ impl SerializeAs<DeclarationPtr> for DeclarationPtrAsId {
     where
         S: serde::Serializer,
     {
-        let id = source.id();
+        let id = source.object_id();
         serializer.serialize_u32(id)
     }
 }
@@ -129,7 +129,7 @@ impl<'de> DeserializeAs<'de, DeclarationPtr> for DeclarationPtrAsId {
         D: serde::Deserializer<'de>,
     {
         let id = u32::deserialize(deserializer)?;
-        Ok(DeclarationPtr::default_with_id(id))
+        Ok(DeclarationPtr::default_with_object_id(id))
     }
 }
 
@@ -296,7 +296,7 @@ impl SerializeAs<DeclarationPtr> for DeclarationPtrFull {
     where
         S: serde::Serializer,
     {
-        let id = source.id();
+        let id = source.object_id();
         let decl: &Declaration = &source.borrow();
         let x = DeclarationSe {
             name: &decl.name,
