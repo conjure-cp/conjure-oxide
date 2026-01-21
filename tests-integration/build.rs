@@ -212,7 +212,8 @@ fn write_integration_test(
         let mut ignore_attr = "";
 
         if config.skip {
-            ignore_attr = "#[ignore = \"this test has been disabled ('skip=true' in its config.toml)\"]\n"
+            ignore_attr =
+                "#[ignore = \"this test has been disabled ('skip=true' in its config.toml)\"]\n"
         } else if cfg!(not(feature = "smt")) && config.solve_with_smt {
             ignore_attr = "#[ignore = \"this test uses 'solve_with_smt=true', but the 'smt' feature is disabled!\"]\n"
         }

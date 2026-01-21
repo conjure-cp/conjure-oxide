@@ -27,7 +27,7 @@ pub struct TestConfig {
     pub enable_rewriter_impl: bool,
 
     // Generate this test but do not run it
-    pub skip: bool
+    pub skip: bool,
 }
 
 impl Default for TestConfig {
@@ -46,7 +46,7 @@ impl Default for TestConfig {
             solve_with_minion: true,
             compare_solver_solutions: true,
             validate_rule_traces: true,
-            skip: false
+            skip: false,
         }
     }
 }
@@ -89,7 +89,7 @@ impl TestConfig {
                 self.enable_rewriter_impl,
             ),
             extra_rewriter_asserts: self.extra_rewriter_asserts, // Not overridden by env vars
-            skip: self.skip
+            skip: self.skip,
         }
     }
 
