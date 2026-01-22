@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Generator","Qualifier"],"struct":["AbstractComprehension","AbstractComprehensionBuilder","ComprehensionLetting","DomainGenerator","ExpressionGenerator"]};

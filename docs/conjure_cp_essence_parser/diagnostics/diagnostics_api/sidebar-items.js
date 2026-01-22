@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Severity","SymbolKind"],"fn":["get_diagnostics"],"struct":["Diagnostic","DocumentSymbol","Position","Range"]};
