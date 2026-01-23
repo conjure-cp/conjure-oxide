@@ -46,7 +46,7 @@ pub fn rewrite_morph<'a>(
         select_first
     };
 
-    let engine = EngineBuilder::new()
+    let mut engine = EngineBuilder::new()
         .set_selector(selector)
         .append_rule_groups(rules_grouped)
         .build();
