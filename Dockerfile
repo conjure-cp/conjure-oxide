@@ -23,6 +23,9 @@ RUN yum install -y llvm-toolset;
 # openssl headers for Rust's openssl-sys crate
 RUN yum install -y openssl-devel;
 
+# Install openssl dependencies
+RUN yum install -y openssl-libs perl-IPC-Cmd perl-Time-Piece;
+
 # nodejs: required to build treesitter grammar
 
 # treesitter builds fail on the version of node found in this containers
