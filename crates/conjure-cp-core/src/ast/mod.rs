@@ -25,6 +25,7 @@ mod variables;
 
 mod moo;
 mod partial_eval;
+mod assignment;
 
 pub use atom::Atom;
 pub use cnf_clause::CnfClause;
