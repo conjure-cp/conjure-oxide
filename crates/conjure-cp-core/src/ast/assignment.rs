@@ -57,7 +57,11 @@ impl AssignmentBuilder {
         }
     }
 
-    pub fn insert(&mut self, var: DeclarationPtr, value: Literal) -> Result<(), AssignmentError> {
+    pub fn insert(
+        self,
+        var: DeclarationPtr,
+        value: Literal,
+    ) -> Result<AssignmentBuilder, AssignmentError> {
         let Some(dv) = var.as_var() else {
             return Err(AssignmentError::NotVariable(var));
         };
@@ -79,11 +83,14 @@ impl AssignmentBuilder {
             return Err(AssignmentError::UnknownVariable(var.clone()));
         }
 
-        self.data.insert(var.clone(), value.clone());
+        let mut ans = self;
+
+        ans.data.insert(var.clone(), value.clone());
         // TODO (repr): Propagate assignments of representation variables
 
-        self.unassigned.remove(&var);
-        Ok(())
+        ans.unassigned.remove(&var);
+
+        Ok(ans)
     }
 
     pub fn build(self) -> Result<Assignment, AssignmentError> {
