@@ -23,10 +23,11 @@ mod symbol_table;
 mod types;
 mod variables;
 
+mod assignment;
 mod moo;
 mod partial_eval;
-mod assignment;
 
+pub use assignment::{Assignment, AssignmentBuilder, AssignmentError};
 pub use atom::Atom;
 pub use cnf_clause::CnfClause;
 pub use declaration::{DeclarationKind, DeclarationPtr};
