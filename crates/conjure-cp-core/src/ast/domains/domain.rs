@@ -629,7 +629,7 @@ impl Domain {
     /// Returns true if `lit` is a valid value of this domain
     pub fn contains(&self, lit: &Literal) -> Result<bool, DomainOpError> {
         if let Some(gd) = self.as_ground() {
-            return gd.contains(lit);
+            return Ok(gd.contains(lit));
         }
         Err(DomainOpError::NotGround)
     }
