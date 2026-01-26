@@ -32,29 +32,26 @@ pub enum AssignmentError {
 pub struct AssignmentBuilder {
     symbol_table: Rc<RefCell<SymbolTable>>,
     data: BTreeMap<DeclarationPtr, Literal>,
-    unassigned: BTreeSet<DeclarationPtr>,
 }
 
 pub struct Assignment {
-    pub symbol_table: Rc<RefCell<SymbolTable>>,
     pub data: BTreeMap<DeclarationPtr, Literal>,
 }
 
 impl AssignmentBuilder {
     pub(super) fn new(symbol_table: Rc<RefCell<SymbolTable>>) -> Self {
-        let st = symbol_table.borrow().clone();
-        let unassigned: BTreeSet<DeclarationPtr> = st
-            .into_iter()
-            .filter_map(|(_, v)| match v.category_of() {
-                Category::Decision => Some(v),
-                _ => None,
-            })
-            .collect();
         Self {
             symbol_table,
-            unassigned,
             data: BTreeMap::new(),
         }
+    }
+
+    fn get_unassigned(&self) -> BTreeSet<DeclarationPtr> {
+        self.symbol_table.borrow().clone().into_iter().filter_map(|(_, v)| match v.category_of() {
+            Category::Decision => Some(v),
+            _ => None,
+        })
+            .collect()
     }
 
     pub fn insert(
@@ -88,19 +85,16 @@ impl AssignmentBuilder {
         ans.data.insert(var.clone(), value.clone());
         // TODO (repr): Propagate assignments of representation variables
 
-        ans.unassigned.remove(&var);
-
         Ok(ans)
     }
 
     pub fn build(self) -> Result<Assignment, AssignmentError> {
-        if self.unassigned.is_empty() {
+        let ua = self.get_unassigned().into_iter().collect_vec();
+        if ua.is_empty() {
             return Ok(Assignment {
-                symbol_table: self.symbol_table,
                 data: self.data,
             });
         }
-        let ua = self.unassigned.into_iter().collect_vec();
         Err(AssignmentError::IncompleteAssignment(ua))
     }
 }
