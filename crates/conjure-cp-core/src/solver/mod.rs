@@ -102,7 +102,7 @@
 #![allow(clippy::manual_non_exhaustive)]
 
 use std::any::Any;
-use std::cell::OnceCell;
+use std::cell::{OnceCell, RefCell};
 use std::collections::HashMap;
 use std::error::Error;
 use std::fmt::{Debug, Display};
@@ -112,16 +112,16 @@ use std::str::FromStr;
 use std::sync::{Arc, RwLock};
 use std::time::Instant;
 
+use crate::Model;
+use crate::ast::SymbolTable;
+use crate::ast::{Assignment, AssignmentBuilder, Literal, Name};
+use crate::context::Context;
+use crate::stats::SolverStats;
 use clap::ValueEnum;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumIter, EnumString};
 use thiserror::Error;
-
-use crate::Model;
-use crate::ast::{Assignment, Literal, Name};
-use crate::context::Context;
-use crate::stats::SolverStats;
 
 #[cfg(feature = "smt")]
 use crate::solver::adaptors::smt::{IntTheory, MatrixTheory, TheoryConfig};
@@ -206,9 +206,32 @@ impl FromStr for SolverFamily {
 pub type SolverCallback = Box<dyn Fn(Assignment) -> bool + Send + Sync>;
 pub type SolverMutCallback = Box<dyn Fn(Assignment, Box<dyn ModelModifier>) -> bool + Send + Sync>;
 
-pub(super) type SolverCallbackRaw = Box<dyn Fn(HashMap<Name, Literal>) -> bool + Send + Sync>;
-pub(super) type SolverMutCallbackRaw =
-    Box<dyn Fn(HashMap<Name, Literal>, Box<dyn ModelModifier>) -> bool + Send + Sync>;
+//
+// pub(super) type SolverCallbackRaw = Box<dyn Fn(HashMap<Name, Literal>) -> bool + Send + Sync>;
+// pub(super) type SolverMutCallbackRaw =
+//     Box<dyn Fn(HashMap<Name, Literal>, Box<dyn ModelModifier>) -> bool + Send + Sync>;
+//
+// impl SolverCallback {
+//     pub fn mk_callback_raw(&self, md: Arc<RwLock<Model>>) -> SolverCallbackRaw {
+//         Box::new(|raw_sol: HashMap<Name, Literal>| {
+//             let mut sol_ok = true;
+//             let mut ab = md.read().unwrap().as_submodel().new_assignment();
+//
+//             for (name, value) in raw_sol {
+//                 ab.insert_mut(name, value).unwrap_or_else(|e| {
+//                     eprintln!("Error reading solution from solver: {e}");
+//                     sol_ok = false;
+//                 });
+//             }
+//
+//             let res = ab.build();
+//             if sol_ok && let Ok(sol) = res {
+//                 return self(sol);
+//             }
+//             true
+//         })
+//     }
+// }
 
 /// A common interface for calling underlying solver APIs inside a [`Solver`].
 ///

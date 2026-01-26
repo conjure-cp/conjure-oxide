@@ -39,7 +39,7 @@ pub struct Assignment {
 }
 
 impl AssignmentBuilder {
-    pub(super) fn new(symbol_table: Rc<RefCell<SymbolTable>>) -> Self {
+    pub fn new(symbol_table: Rc<RefCell<SymbolTable>>) -> Self {
         Self {
             symbol_table,
             data: BTreeMap::new(),

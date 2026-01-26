@@ -45,8 +45,8 @@ fn assignment_ok() {
 
     let ab = m.as_submodel().new_assignment();
     let res = ab
-        .insert(x, true.into())
-        .and_then(|ab| ab.insert(y, 2.into()))
+        .insert(Name::user("x"), true.into())
+        .and_then(|ab| ab.insert(Name::user("y"), 2.into()))
         .and_then(AssignmentBuilder::build);
     assert!(res.is_ok());
 }
