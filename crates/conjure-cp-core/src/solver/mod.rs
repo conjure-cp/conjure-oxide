@@ -119,7 +119,7 @@ use strum_macros::{Display, EnumIter, EnumString};
 use thiserror::Error;
 
 use crate::Model;
-use crate::ast::{Literal, Name};
+use crate::ast::{Assignment, Literal, Name};
 use crate::context::Context;
 use crate::stats::SolverStats;
 
@@ -197,11 +197,17 @@ impl FromStr for SolverFamily {
     }
 }
 
-/// The type for user-defined callbacks for use with [Solver].
+/// The public type for user-defined callbacks for use with [Solver].
+///
+/// Uses [Assignment], which is tied to a specific [SymbolTable] and is guaranteed
+/// to be a valid and complete assignment of the variables in that [SymbolTable].
 ///
 /// Note that this enforces thread safety
-pub type SolverCallback = Box<dyn Fn(HashMap<Name, Literal>) -> bool + Send + Sync>;
-pub type SolverMutCallback =
+pub type SolverCallback = Box<dyn Fn(Assignment) -> bool + Send + Sync>;
+pub type SolverMutCallback = Box<dyn Fn(Assignment, Box<dyn ModelModifier>) -> bool + Send + Sync>;
+
+pub(super) type SolverCallbackRaw = Box<dyn Fn(HashMap<Name, Literal>) -> bool + Send + Sync>;
+pub(super) type SolverMutCallbackRaw =
     Box<dyn Fn(HashMap<Name, Literal>, Box<dyn ModelModifier>) -> bool + Send + Sync>;
 
 /// A common interface for calling underlying solver APIs inside a [`Solver`].
