@@ -1,6 +1,6 @@
-# Quick Start Guide
+# Quick Start Guide to Running your first Essence Model
 
-This guide walks you through running your first Essence model with Conjure Oxide. 
+This guide walks you through running your first Essence model with Conjure Oxide.
 
 ## Your First Problem
 
@@ -12,6 +12,8 @@ find y : int(2..5)
 
 such that x > y
 ```
+
+If you are curious about more complex models, you can check out the models that we use to test Conjure Oxide, available in the `tests-integration/tests/integration` directory of the repository.
 
 ## Running with Different Solvers
 
