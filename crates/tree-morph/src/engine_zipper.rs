@@ -1,3 +1,5 @@
+//! Define the EngineNodes and the EngineZiper
+
 use paste::paste;
 use tracing::{instrument, trace};
 use uniplate::{Uniplate, tagged_zipper::TaggedZipper, zipper::Zipper};
@@ -200,7 +202,7 @@ where
     }
 
     // We never move left in the tree
-    movement_fns_naive! { directions: [up, down, right] }
+    movement_fns_naive! { directions: [up] }
 
     pub fn go_to_root(&mut self) {
         while self.go_up().is_some() {}

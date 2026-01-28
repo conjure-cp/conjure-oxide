@@ -130,7 +130,7 @@ fn no_cache() {
         Box::new(Expr::C),
     );
 
-    let (meta, engine) = setup_nocache();
+    let (meta, mut engine) = setup_nocache();
 
     let (expr, meta) = engine.morph(expr, meta);
 
@@ -161,7 +161,7 @@ fn basic_caching() {
         Box::new(Expr::C),
     );
 
-    let (meta, engine) = setup();
+    let (meta, mut engine) = setup();
 
     let (expr, meta) = engine.morph(expr, meta);
 
@@ -190,7 +190,7 @@ fn transitive_no_caching() {
         Box::new(Expr::C),
     );
 
-    let (meta, engine) = setup_nocache();
+    let (meta, mut engine) = setup_nocache();
     let (expr, meta) = engine.morph(expr, meta);
 
     assert_eq!(
@@ -215,7 +215,7 @@ fn transitive_caching() {
         Box::new(Expr::C),
     );
 
-    let (meta, engine) = setup();
+    let (meta, mut engine) = setup();
     let (expr, meta) = engine.morph(expr, meta);
 
     assert_eq!(

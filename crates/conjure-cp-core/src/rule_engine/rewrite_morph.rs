@@ -49,6 +49,7 @@ pub fn rewrite_morph<'a>(
     let mut engine = EngineBuilder::new()
         .set_selector(selector)
         .append_rule_groups(rules_grouped)
+        .add_cacher(HashMapCache::new())
         .build();
     let (expr, symbol_table) = engine.morph(submodel.root().clone(), submodel.symbols().clone());
 

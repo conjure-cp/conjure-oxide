@@ -13,7 +13,7 @@ use crate::{
 
 use itertools::Itertools;
 use std::{process::exit, sync::Arc, time::Instant};
-use tracing::{Level, span, trace};
+use tracing::{trace};
 use uniplate::{Biplate, Uniplate};
 
 /// A naive, exhaustive rewriter for development purposes. Applies rules in priority order,

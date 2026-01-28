@@ -2,7 +2,7 @@
 //!
 //! See the [`morph`](Engine::morph) for more information.
 
-use crate::cache::{NoCache, RewriteCache};
+use crate::cache::{CacheResult, RewriteCache};
 use crate::engine_zipper::{EngineZipper, NaiveZipper};
 use crate::events::EventHandlers;
 use crate::helpers::{SelectorFn, one_or_select};
@@ -211,12 +211,20 @@ where
                     trace!("Got Dirty, Level {}", level);
                     let subtree = zipper.inner.focus();
 
-                    if let Some(cached) = self.cache.get(subtree, level) {
-                        debug!("Using Cached Results");
-                        zipper.inner.replace_focus(cached);
-                        zipper.mark_dirty_to_root();
-                        continue 'main;
-                    }
+                    match self.cache.get(subtree, level) {
+                        CacheResult::NoRewrite => {
+                            debug!("Using Cached Results - Nothing Applicable");
+                            zipper.set_dirty_from(level + 1);
+                            continue;
+                        }
+                        CacheResult::Rewrite(cached) => {
+                            debug!("Using Cached Results");
+                            zipper.inner.replace_focus(cached);
+                            zipper.mark_dirty_to_root();
+                            continue 'main;
+                        }
+                        _ => (),
+                    };
 
                     // Choose one transformation from all applicable rules at this level
                     let selected = self.select_rule(subtree, &mut zipper.meta, rules);
@@ -244,7 +252,7 @@ where
                             zipper.inner.replace_focus(new_tree);
                         } else {
                             debug!("Adding to Cache");
-                            self.cache.insert(original, replacement, level);
+                            self.cache.insert(original, Some(replacement), level);
                         }
 
                         self.event_handlers.trigger_on_apply(
@@ -256,6 +264,7 @@ where
                         continue 'main;
                     } else {
                         debug!("Nothing Applicable");
+                        self.cache.insert(subtree.clone(), None, level);
                         zipper.set_dirty_from(level + 1);
                     }
                 }
@@ -268,7 +277,13 @@ where
         zipper.into()
     }
 
-    pub fn morph_naive(mut self, tree: T, meta: M) -> (T, M)
+    /// Exhaustively rewrites a tree using user-defined rule groups.
+    ///
+    /// This function is naive. There are no performance optimisations built in. Every time a rule
+    /// is applied, it will go back up to the root of the tree and retry from the very top.
+    ///
+    /// It is not recommended to use this function besides testing and for correctness.
+    pub fn morph_naive(&self, tree: T, meta: M) -> (T, M)
     where
         T: Uniplate,
         R: Rule<T, M>,
@@ -277,7 +292,7 @@ where
         info!("Beginning Naive Morph");
 
         'main: loop {
-            for (_, rules) in self.rule_groups.iter().enumerate() {
+            for rules in self.rule_groups.iter() {
                 while zipper.get_next().is_some() {
                     let subtree = zipper.inner.focus();
                     // Choose one transformation from all applicable rules at this level
