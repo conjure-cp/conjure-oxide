@@ -15,14 +15,15 @@ mod minion;
 mod normalisers;
 mod records;
 mod representation;
+mod sat;
 mod select_representation;
-mod smt;
+mod sets;
 mod subsitute_lettings;
 mod tuple;
 mod utils;
 
-mod sat;
-mod sets;
+#[cfg(feature = "smt")]
+mod smt;
 
 /// Denotes a block of code as extra, optional checks for a rule. Primarily, these are checks that
 /// are too expensive to do normally, or are implicit in the rule priorities and application order.

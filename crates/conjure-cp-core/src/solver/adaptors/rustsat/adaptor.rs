@@ -123,10 +123,7 @@ impl SolverAdaptor for Sat {
                             conjure_solver_wall_time_s: -1.0,
                             solver_family: Some(self.get_family()),
                             solver_adaptor: Some("SAT".to_string()),
-                            nodes: None,
-                            satisfiable: None,
-                            sat_vars: None,
-                            sat_clauses: None,
+                            ..Default::default()
                         },
                         status: if has_sol {
                             SearchStatus::Complete(solver::SearchComplete::HasSolutions)
@@ -184,10 +181,7 @@ impl SolverAdaptor for Sat {
                             conjure_solver_wall_time_s: -1.0,
                             solver_family: Some(self.get_family()),
                             solver_adaptor: Some("SAT".to_string()),
-                            nodes: None,
-                            satisfiable: None,
-                            sat_vars: None,
-                            sat_clauses: None,
+                            ..Default::default()
                         },
                         status: SearchStatus::Incomplete(solver::SearchIncomplete::UserTerminated),
                     });
@@ -228,9 +222,12 @@ impl SolverAdaptor for Sat {
 
             // only decision variables with boolean domains or representations using booleans are supported at this time
             if (domain != &GroundDomain::Bool
-                && (sym_tab
+                && sym_tab
                     .get_representation(&find_ref.0, &["sat_log_int"])
-                    .is_none()))
+                    .is_none()
+                && sym_tab
+                    .get_representation(&find_ref.0, &["sat_direct_int"])
+                    .is_none())
             {
                 Err(SolverError::ModelInvalid(
                     "Only Boolean Decision Variables supported".to_string(),
