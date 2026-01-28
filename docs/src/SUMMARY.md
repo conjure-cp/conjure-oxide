@@ -5,6 +5,7 @@
 - [Installation](./getting_started/installation/index.md)
   - [Downloading a Nightly Release]()
   - [Building from Source]()
+- [Quick Start](./getting_started/quick-start.md)
 - [Command Line Guide]()
   - [Logging](./getting_started/command-line/logging.md)
 
@@ -33,6 +34,7 @@
   - [Expression rewriting, Rules and RuleSets](./developers_guide/design_documents/expression_rewriting.md)
   - [Semantics of Rewriting Expressions with Side‐Effects](./developers_guide/design_documents/semantics-of-rewriting-expressions.md)
   - [Ideal Scenario of Testing for Conjure-Oxide](./developers_guide/design_documents/ideal-scenario-of-testing.md)
+  - [Functional Rust](./developers_guide/design_documents/functional-rust.md)
 
 <!-- TODO: do we need this? -->
 - [CI/CD](./developers_guide/ci_cd/index.md)
@@ -47,6 +49,10 @@
 
 <!-- TODO: will we keep this? -->
 - [Developer Documentation](./documentation/dev_docs.md)
+
+- [SAT Encoding Types](./documentation/SAT/sat-encoding-types.md)
+- [Rule Types](./documentation/SAT/rule-types.md)
+
 <!-- TODO: will be moved -- likely the content of these will end off here -->
 - [Useful Links](./documentation/links.md)
 - [Essence Parser](./documentation/essence_parser.md)
