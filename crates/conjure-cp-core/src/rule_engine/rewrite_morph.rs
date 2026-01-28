@@ -1,5 +1,5 @@
 use itertools::Itertools;
-use tree_morph::{helpers::select_panic, prelude::*};
+use tree_morph::{helpers::select_panic, prelude::*, cache::HashMapCache};
 
 use crate::{Model, bug};
 
@@ -46,9 +46,10 @@ pub fn rewrite_morph<'a>(
         select_first
     };
 
-    let engine = EngineBuilder::new()
+    let mut engine = EngineBuilder::new()
         .set_selector(selector)
         .append_rule_groups(rules_grouped)
+        .add_cacher(HashMapCache::new())
         .build();
     let (expr, symbol_table) = engine.morph(submodel.root().clone(), submodel.symbols().clone());
 
