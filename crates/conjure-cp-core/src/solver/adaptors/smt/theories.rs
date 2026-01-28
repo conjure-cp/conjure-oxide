@@ -8,6 +8,7 @@ use strum_macros::{Display, EnumIter, EnumString};
 pub struct TheoryConfig {
     pub ints: IntTheory,
     pub matrices: MatrixTheory,
+    pub unwrap_alldiff: bool,
 }
 
 /// The theory to use when encoding CO integers through the SMT solver adaptor.
