@@ -254,6 +254,10 @@ register_rule_set!("SAT", ("Base"), |f: &SolverFamily| matches!(
     SolverFamily::Sat
 ));
 
+register_rule_set!("SAT_Direct", ("SAT"));
+
+register_rule_set!("SAT_Log", ("SAT"));
+
 /// Converts a single boolean atom to a clause
 ///
 /// ```text

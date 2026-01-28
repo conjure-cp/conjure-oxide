@@ -927,33 +927,9 @@ impl Expression {
             Expression::ImageSet(_, function, _) => get_function_codomain(function),
             Expression::PreImage(_, function, _) => get_function_domain(function),
             Expression::Restrict(_, function, new_domain) => {
-                let function_domain = function.domain_of()?;
-                match function_domain.resolve().as_ref() {
-                    Some(d) => {
-                        match d.as_ref() {
-                            GroundDomain::Function(attrs, _, codomain) => Some(Domain::function(
-                                attrs.clone(),
-                                new_domain.domain_of()?,
-                                codomain.clone().into(),
-                            )),
-                            // Not defined for anything other than a function
-                            _ => None,
-                        }
-                    }
-                    None => {
-                        match function_domain.as_unresolved()? {
-                            UnresolvedDomain::Function(attrs, _, codomain) => {
-                                Some(Domain::function(
-                                    attrs.clone(),
-                                    new_domain.domain_of()?,
-                                    codomain.clone(),
-                                ))
-                            }
-                            // Not defined for anything other than a function
-                            _ => None,
-                        }
-                    }
-                }
+                let (attrs, _, codom) = function.domain_of()?.as_function()?;
+                let new_dom = new_domain.domain_of()?;
+                Some(Domain::function(attrs, new_dom, codom))
             }
             Expression::Inverse(..) => Some(Domain::bool()),
             Expression::LexLt(..) => Some(Domain::bool()),
@@ -1055,11 +1031,11 @@ impl Expression {
         }
     }
 
-    /// If the expression is a list, returns the inner expressions.
+    /// If the expression is a list, returns a *copied* vector of the inner expressions.
     ///
     /// A list is any a matrix with the domain `int(1..)`. This includes matrix literals without
     /// any explicitly specified domain.
-    pub fn unwrap_list(self) -> Option<Vec<Expression>> {
+    pub fn unwrap_list(&self) -> Option<Vec<Expression>> {
         match self {
             Expression::AbstractLiteral(_, matrix @ AbstractLiteral::Matrix(_, _)) => {
                 matrix.unwrap_list().cloned()
