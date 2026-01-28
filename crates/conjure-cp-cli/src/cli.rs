@@ -124,6 +124,12 @@ pub struct GlobalArgs {
     /// rewriting.
     #[arg(long, default_value_t = false, global = true, help_heading = DEBUG_HELP_HEADING)]
     pub exit_after_unrolling: bool,
+
+    /// Stop the solver after the given timeout.
+    ///
+    /// Currently only SMT supports this feature.
+    #[arg(long, global = true, help_heading = OPTIMISATIONS_HELP_HEADING)]
+    pub solver_timeout: Option<humantime::Duration>,
 }
 
 #[derive(Debug, Clone, Args)]
