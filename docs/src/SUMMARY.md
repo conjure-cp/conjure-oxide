@@ -50,6 +50,8 @@
 - [Developer Documentation](./documentation/dev_docs.md)
 <!-- TODO: will be moved -- likely the content of these will end off here -->
 - [Useful Links](./documentation/links.md)
+- [Essence Parser](./documentation/essence_parser.md)
+- [Error Detection](./documentation/error_detection)
 
 ---
 
