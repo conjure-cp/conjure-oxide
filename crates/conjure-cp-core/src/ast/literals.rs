@@ -302,7 +302,7 @@ where
             }
             AbstractLiteral::MSet(elems) => {
                 let elems_str: String = elems.iter().map(|x| format!("{x}")).join(",");
-                write!(f, "{{{elems_str}}}")
+                write!(f, "mset({elems_str})")
             }
             AbstractLiteral::Matrix(elems, index_domain) => {
                 let elems_str: String = elems.iter().map(|x| format!("{x}")).join(",");
