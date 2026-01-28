@@ -542,6 +542,65 @@ impl Domain {
         None
     }
 
+    /// If this is a function domain, get its (attributes, domain, co-domain)
+    pub fn as_function(&self) -> Option<(FuncAttr<IntVal>, Moo<Domain>, Moo<Domain>)> {
+        if let Some(GroundDomain::Function(attrs, dom, codom)) = self.as_ground() {
+            return Some((
+                attrs.clone().into(),
+                dom.clone().into(),
+                codom.clone().into(),
+            ));
+        }
+        if let Some(UnresolvedDomain::Function(attrs, dom, codom)) = self.as_unresolved() {
+            return Some((attrs.clone(), dom.clone(), codom.clone()));
+        }
+        None
+    }
+
+    /// If this is a function domain, convert it to unresolved and get mutable references to
+    /// its (attrs, domain, co-domain).
+    /// The domain always becomes [UnresolvedDomain::Function] after this operation.
+    pub fn as_function_mut(
+        &mut self,
+    ) -> Option<(&mut FuncAttr<IntVal>, &mut Moo<Domain>, &mut Moo<Domain>)> {
+        if let Some(GroundDomain::Function(attrs, dom, codom)) = self.as_ground() {
+            *self = Domain::Unresolved(Moo::new(UnresolvedDomain::Function(
+                attrs.clone().into(),
+                dom.clone().into(),
+                codom.clone().into(),
+            )));
+        }
+
+        if let Some(UnresolvedDomain::Function(attrs, dom, codom)) = self.as_unresolved_mut() {
+            return Some((attrs, dom, codom));
+        }
+        None
+    }
+
+    /// If this is a [GroundDomain::Function], get its (attrs, domain, co-domain)
+    pub fn as_function_ground(
+        &self,
+    ) -> Option<(&FuncAttr, &Moo<GroundDomain>, &Moo<GroundDomain>)> {
+        if let Some(GroundDomain::Function(attrs, dom, codom)) = self.as_ground() {
+            return Some((attrs, dom, codom));
+        }
+        None
+    }
+
+    /// If this is a [GroundDomain::Function], get mutable references to its (attrs, domain, co-domain)
+    pub fn as_function_ground_mut(
+        &mut self,
+    ) -> Option<(
+        &mut FuncAttr,
+        &mut Moo<GroundDomain>,
+        &mut Moo<GroundDomain>,
+    )> {
+        if let Some(GroundDomain::Function(attrs, dom, codom)) = self.as_ground_mut() {
+            return Some((attrs, dom, codom));
+        }
+        None
+    }
+
     /// Compute the intersection of two domains
     pub fn union(&self, other: &Domain) -> Result<Domain, DomainOpError> {
         match (self, other) {
