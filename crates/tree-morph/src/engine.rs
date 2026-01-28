@@ -213,12 +213,12 @@ where
 
                     match self.cache.get(subtree, level) {
                         CacheResult::NoRewrite => {
-                            debug!("Using Cached Results - Nothing Applicable");
+                            debug!("Cache Hit - Nothing Applicable");
                             zipper.set_dirty_from(level + 1);
                             continue;
                         }
                         CacheResult::Rewrite(cached) => {
-                            debug!("Using Cached Results");
+                            debug!("Cache Hit");
                             zipper.inner.replace_focus(cached);
                             zipper.mark_dirty_to_root();
                             continue 'main;

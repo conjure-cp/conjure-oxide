@@ -1,5 +1,5 @@
 use itertools::Itertools;
-use tree_morph::{helpers::select_panic, prelude::*};
+use tree_morph::{helpers::select_panic, prelude::*, cache::HashMapCache};
 
 use crate::{Model, bug};
 
