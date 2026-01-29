@@ -1262,12 +1262,8 @@ fn cnf_int_safepow(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         rmax = i32::pow(*bmax, *emax as u32);
     }
 
-    let bits = usize::max(bit_magnitude(rmin), bit_magnitude(rmax));
 
-    let binding = validate_log_int_operands(vec![base.as_ref().clone()], None)?;
-    let [base_bits] = binding.as_slice() else {
-        return Err(RuleNotApplicable);
-    };
+    validate_log_int_operands(vec![base.as_ref().clone()], None)?;
 
     let binding = validate_log_int_operands(vec![exp.as_ref().clone()], None)?;
     let [exp_bits] = binding.as_slice() else {
