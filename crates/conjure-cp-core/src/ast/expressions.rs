@@ -2,7 +2,6 @@ use std::collections::{HashSet, VecDeque};
 use std::fmt::{Display, Formatter};
 use tracing::trace;
 
-use crate::ast::Name;
 use crate::ast::ReturnType;
 use crate::ast::SetAttr;
 use crate::ast::literals::AbstractLiteral;
@@ -12,6 +11,7 @@ use crate::ast::sat_encoding::SATIntEncoding;
 use crate::ast::{Atom, DomainPtr};
 use crate::ast::{GroundDomain, Metadata, UnresolvedDomain};
 use crate::ast::{IntVal, Moo};
+use crate::ast::{Name, matrix};
 use crate::bug;
 use conjure_cp_enum_compatibility_macro::document_compatibility;
 use itertools::Itertools;
@@ -21,6 +21,7 @@ use ustr::Ustr;
 use polyquine::Quine;
 use uniplate::{Biplate, Uniplate};
 
+use super::abstract_comprehension::AbstractComprehension;
 use super::ac_operators::ACOperatorKind;
 use super::categories::{Category, CategoryOf};
 use super::comprehension::Comprehension;
@@ -90,6 +91,10 @@ pub enum Expression {
     // This makes implementing Quine tricky (it doesnt support Rc, by design). Skip it for now.
     #[polyquine_skip]
     Comprehension(Metadata, Moo<Comprehension>),
+
+    /// Higher-level abstract comprehension
+    #[polyquine_skip] // no idea what this is lol but it stops rustc screaming at me
+    AbstractComprehension(Metadata, Moo<AbstractComprehension>),
 
     /// Defines dominance ("Solution A is preferred over Solution B")
     DominanceRelation(Metadata, Moo<Expression>),
@@ -673,6 +678,7 @@ impl Expression {
             Expression::FromSolution(_, expr) => Some(expr.domain_of()),
             Expression::Metavar(_, _) => None,
             Expression::Comprehension(_, comprehension) => comprehension.domain_of(),
+            Expression::AbstractComprehension(_, comprehension) => comprehension.domain_of(),
             Expression::UnsafeIndex(_, matrix, _) | Expression::SafeIndex(_, matrix, _) => {
                 let dom = matrix.domain_of()?;
                 if let Some((elem_domain, _)) = dom.as_matrix() {
@@ -841,17 +847,19 @@ impl Expression {
                         return None;
                     }
                 } else {
-                    let domain = m.domain_of()?;
-                    let mut total_size = 1;
-                    let index_domains: Vec<Domain> = Vec::new();
+                    // TODO: currently only works for matrices
+                    let dom = m.domain_of()?.resolve()?;
+                    let (val_dom, idx_doms) = match dom.as_ref() {
+                        GroundDomain::Matrix(val, idx) => (val, idx),
+                        _ => return None,
+                    };
+                    let num_elems = matrix::num_elements(idx_doms).ok()? as i32;
 
-                    // calculate total flattened size
-                    for i in &index_domains {
-                        total_size *= i.length().ok()?;
-                    }
-                    let new_index_domain =
-                        Domain::int(vec![Range::Bounded(1, total_size.try_into().unwrap())]);
-                    return Some(Domain::matrix(domain, vec![new_index_domain]));
+                    let new_index_domain = Domain::int(vec![Range::Bounded(1, num_elems)]);
+                    return Some(Domain::matrix(
+                        val_dom.clone().into(),
+                        vec![new_index_domain],
+                    ));
                 }
                 None
             }
@@ -919,33 +927,9 @@ impl Expression {
             Expression::ImageSet(_, function, _) => get_function_codomain(function),
             Expression::PreImage(_, function, _) => get_function_domain(function),
             Expression::Restrict(_, function, new_domain) => {
-                let function_domain = function.domain_of()?;
-                match function_domain.resolve().as_ref() {
-                    Some(d) => {
-                        match d.as_ref() {
-                            GroundDomain::Function(attrs, _, codomain) => Some(Domain::function(
-                                attrs.clone(),
-                                new_domain.domain_of()?,
-                                codomain.clone().into(),
-                            )),
-                            // Not defined for anything other than a function
-                            _ => None,
-                        }
-                    }
-                    None => {
-                        match function_domain.as_unresolved()? {
-                            UnresolvedDomain::Function(attrs, _, codomain) => {
-                                Some(Domain::function(
-                                    attrs.clone(),
-                                    new_domain.domain_of()?,
-                                    codomain.clone(),
-                                ))
-                            }
-                            // Not defined for anything other than a function
-                            _ => None,
-                        }
-                    }
-                }
+                let (attrs, _, codom) = function.domain_of()?.as_function()?;
+                let new_dom = new_domain.domain_of()?;
+                Some(Domain::function(attrs, new_dom, codom))
             }
             Expression::Inverse(..) => Some(Domain::bool()),
             Expression::LexLt(..) => Some(Domain::bool()),
@@ -1047,11 +1031,11 @@ impl Expression {
         }
     }
 
-    /// If the expression is a list, returns the inner expressions.
+    /// If the expression is a list, returns a *copied* vector of the inner expressions.
     ///
     /// A list is any a matrix with the domain `int(1..)`. This includes matrix literals without
     /// any explicitly specified domain.
-    pub fn unwrap_list(self) -> Option<Vec<Expression>> {
+    pub fn unwrap_list(&self) -> Option<Vec<Expression>> {
         match self {
             Expression::AbstractLiteral(_, matrix @ AbstractLiteral::Matrix(_, _)) => {
                 matrix.unwrap_list().cloned()
@@ -1323,6 +1307,7 @@ impl Display for Expression {
 
             Expression::AbstractLiteral(_, l) => l.fmt(f),
             Expression::Comprehension(_, c) => c.fmt(f),
+            Expression::AbstractComprehension(_, c) => c.fmt(f),
             Expression::UnsafeIndex(_, e1, e2) | Expression::SafeIndex(_, e1, e2) => {
                 write!(f, "{e1}{}", pretty_vec(e2))
             }
@@ -1600,6 +1585,7 @@ impl Typeable for Expression {
             }
             Expression::InDomain(_, _, _) => ReturnType::Bool,
             Expression::Comprehension(_, comp) => comp.return_type(),
+            Expression::AbstractComprehension(_, comp) => comp.return_type(),
             Expression::Root(_, _) => ReturnType::Bool,
             Expression::DominanceRelation(_, _) => ReturnType::Bool,
             Expression::FromSolution(_, expr) => expr.return_type(),
