@@ -10,7 +10,7 @@ Each function is self-contained[^6], meaning that the only things preserved are 
 
 The rule application is able to use this to avoid a situation where the rule engine fails unexpectedly and loses a large amount of work, or worse, a situation where a rule seems to have been applied and is visible in the trace but has not actually affected the tree because it failed[^7].
 
-Now that we know how rules are called, we can move on to how the rules themselves are designed. Broadly, there are two categories that we can divide the rules into: **Transformation Rules** and **Representation Rules**. This is because, despite being applied in the same step in the process, they have different purposes from each other, but all rules of either type share a common goal.
+Now that we know how rules are called, we can move on to how the rules themselves are designed. Broadly, there are two categories that we can divide the rules into: **Representation Rules** and **Transformation Rules**. This is because, despite being applied in the same step in the process, they have different purposes from each other, but all rules of either type share a common goal.
 
 ### Representation Rules
 

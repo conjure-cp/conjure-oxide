@@ -53,7 +53,7 @@ int returnAnExitCode(int a, int b) {
 }
 ```
 
-This means that, like rust, an error is not an exception getting `thrown', but a value that is being returned. However, unlike rust, they require these exit codes to be set and returned at the end.
+This means that, like rust, an error is not an exception getting 'thrown', but a value that is being returned. However, unlike rust, they require these exit codes to be set and returned at the end.
 
 This also means that the function calls must be done on some top-level data structure, and that global structure needs to be accessed at the end rather than being able to simply access the top-level data structure through the returned value.
 
