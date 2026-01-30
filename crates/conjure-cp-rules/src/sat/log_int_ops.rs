@@ -523,8 +523,8 @@ pub fn log_minimize_bits(int: Expr) -> Expr {
 }
 
 pub fn cnf_add(
-    x: &Vec<Expr>,
-    y: &Vec<Expr>,
+    x: &[Expr],
+    y: &[Expr],
     clauses: &mut Vec<CnfClause>,
     symbols: &mut SymbolTable,
 ) -> Vec<Expr> {
