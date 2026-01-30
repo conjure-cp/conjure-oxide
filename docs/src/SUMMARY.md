@@ -25,6 +25,7 @@
   - [What we didn't do]()
 
 - [Coding Resources and Conventions](./developers_guide/coding_resources/index.md)
+  - [Functional Rust](./getting_started/functional-rust.md)
   - [Style Guide](./developers_guide/coding_resources/style_guide.md)
   - [Crate Structure](./developers_guide/coding_resources/crate_structure.md)
 
@@ -34,7 +35,6 @@
   - [Expression rewriting, Rules and RuleSets](./developers_guide/design_documents/expression_rewriting.md)
   - [Semantics of Rewriting Expressions with Side‐Effects](./developers_guide/design_documents/semantics-of-rewriting-expressions.md)
   - [Ideal Scenario of Testing for Conjure-Oxide](./developers_guide/design_documents/ideal-scenario-of-testing.md)
-  - [Functional Rust](./developers_guide/design_documents/functional-rust.md)
 
 <!-- TODO: do we need this? -->
 - [CI/CD](./developers_guide/ci_cd/index.md)
