@@ -543,9 +543,7 @@ pub fn cnf_add(
 
     output.push(carry);
 
-    let result = tseytin_int_adder(&x, &y, x.len(), clauses, symbols);
-
-    minimize_bits(&result)
+    minimize_bits(&output)
 }
 
 fn product_of_ranges(ranges: Vec<&(i32, i32)>) -> (i32, i32) {
@@ -981,7 +979,7 @@ fn cnf_int_safediv(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let mut new_clauses = vec![];
 
     let (quotient, remainder, sign_bit, _numer_sign, _abs_denom) =
-        tseytin_divmod(&numer_bits, &denom_bits, &mut new_clauses, &mut new_symbols);
+        tseytin_divmod(numer_bits, denom_bits, &mut new_clauses, &mut new_symbols);
 
     let minus_quotient = tseytin_negate(
         &quotient.clone(),
@@ -1057,21 +1055,21 @@ fn tseytin_divmod(
     let sign_bit = tseytin_xor(numer_sign.clone(), denom_sign.clone(), clauses, symbols);
 
     let abs_numer = tseytin_select_array(
-        numer_sign.clone(),
-        &numer_bits.to_vec(),
-        &minus_numer.clone(),
+        numer_sign,
+        numer_bits,
+        &minus_numer,
         clauses,
         symbols,
     );
     let abs_denom = tseytin_select_array(
         denom_sign.clone(),
-        &denom_bits.to_vec(),
-        &minus_denom.clone(),
+        denom_bits,
+        &minus_denom,
         clauses,
         symbols,
     );
 
-    let mut r = abs_numer.clone();
+    let mut r = abs_numer;
     r.extend(std::iter::repeat_n(r[bit_count - 1].clone(), bit_count));
     let mut d = std::iter::repeat_n(false.into(), bit_count).collect_vec();
     d.extend(abs_denom.clone());
@@ -1159,7 +1157,7 @@ fn cnf_int_safemod(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let mut new_clauses = vec![];
 
     let (_quotient, full_remainder, sign_bit, denom_sign, abs_denom) =
-        tseytin_divmod(&numer_bits, &denom_bits, &mut new_clauses, &mut new_symbols);
+        tseytin_divmod(numer_bits, denom_bits, &mut new_clauses, &mut new_symbols);
 
     let new_bit_count = bit_magnitude(min).max(bit_magnitude(max));
 
@@ -1190,7 +1188,7 @@ fn cnf_int_safemod(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
     let subtract_condition = tseytin_and(
         &vec![
-            sign_bit.clone(),
+            sign_bit,
             tseytin_or(&remainder.clone(), &mut new_clauses, &mut new_symbols),
         ],
         &mut new_clauses,
@@ -1261,7 +1259,6 @@ fn cnf_int_safepow(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         rmin = i32::pow(*bmin, *emin as u32);
         rmax = i32::pow(*bmax, *emax as u32);
     }
-
 
     validate_log_int_operands(vec![base.as_ref().clone()], None)?;
 

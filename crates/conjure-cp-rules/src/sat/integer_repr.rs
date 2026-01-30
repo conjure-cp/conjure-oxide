@@ -278,8 +278,8 @@ pub fn int_to_log(value: i32) -> Expr {
     )
 }
 
-pub fn minimize_bits(value: &Vec<Expr>) -> Vec<Expr> {
-    let mut result = value.clone();
+pub fn minimize_bits(value: &[Expr]) -> Vec<Expr> {
+    let mut result = value.to_owned();
 
     while result.len() >= 2 && result[result.len() - 1] == result[result.len() - 2] {
         result.pop();
