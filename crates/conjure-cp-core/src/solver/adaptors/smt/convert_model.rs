@@ -88,10 +88,12 @@ where
         (_, Expression::Atomic(_, atom)) => atom_to_ast(thr, store, atom),
 
         // Equality is part of the SMT core theory (anything can be compared)
+        // Some types (matrices, sets) must be compared element-wise, since the SMT solver can
+        //  always extend them to make them technically eq/neq in "SMT land", but not in "Oxide land"
+        // This is done during rewriting by rules which unwrap Eq/Neqs over these types
         (_, Expression::Eq(_, a, b)) => {
             binary_op(thr, store, a, b, |a: Dynamic, b: Dynamic| a.eq(b))
         }
-
         (_, Expression::Neq(_, a, b)) => {
             binary_op(thr, store, a, b, |a: Dynamic, b: Dynamic| a.ne(b))
         }
@@ -145,8 +147,7 @@ where
         (Bv, Expression::SafeMod(_, a, b)) => {
             binary_op(thr, store, a, b, |a: BV, b: BV| a.bvsrem(b))
         }
-        (Bv, Expression::SafePow(_, a, b)) => todo!(),
-
+        // (Bv, Expression::SafePow(_, a, b)) => todo!(),
         (Bv, Expression::PairwiseSum(_, a, b)) => {
             binary_op(thr, store, a, b, |a: BV, b: BV| a.bvadd(b))
         }
@@ -168,6 +169,11 @@ where
         }
         (_, Expression::AllDiff(_, a)) => {
             list_op(thr, store, a, |asts: &[Dynamic]| Dynamic::distinct(asts))
+        }
+
+        // === Expressions involving sets
+        (_, Expression::In(_, x, s)) => {
+            binary_op(thr, store, x, s, |x: Dynamic, s: Set| s.member(&x))
         }
 
         _ => Err(SolverError::ModelFeatureNotImplemented(format!(

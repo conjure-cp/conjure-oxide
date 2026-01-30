@@ -21,6 +21,7 @@ use ustr::Ustr;
 use polyquine::Quine;
 use uniplate::{Biplate, Uniplate};
 
+use super::abstract_comprehension::AbstractComprehension;
 use super::ac_operators::ACOperatorKind;
 use super::categories::{Category, CategoryOf};
 use super::comprehension::Comprehension;
@@ -90,6 +91,10 @@ pub enum Expression {
     // This makes implementing Quine tricky (it doesnt support Rc, by design). Skip it for now.
     #[polyquine_skip]
     Comprehension(Metadata, Moo<Comprehension>),
+
+    /// Higher-level abstract comprehension
+    #[polyquine_skip] // no idea what this is lol but it stops rustc screaming at me
+    AbstractComprehension(Metadata, Moo<AbstractComprehension>),
 
     /// Defines dominance ("Solution A is preferred over Solution B")
     DominanceRelation(Metadata, Moo<Expression>),
@@ -673,6 +678,7 @@ impl Expression {
             Expression::FromSolution(_, expr) => Some(expr.domain_of()),
             Expression::Metavar(_, _) => None,
             Expression::Comprehension(_, comprehension) => comprehension.domain_of(),
+            Expression::AbstractComprehension(_, comprehension) => comprehension.domain_of(),
             Expression::UnsafeIndex(_, matrix, _) | Expression::SafeIndex(_, matrix, _) => {
                 let dom = matrix.domain_of()?;
                 if let Some((elem_domain, _)) = dom.as_matrix() {
@@ -921,33 +927,9 @@ impl Expression {
             Expression::ImageSet(_, function, _) => get_function_codomain(function),
             Expression::PreImage(_, function, _) => get_function_domain(function),
             Expression::Restrict(_, function, new_domain) => {
-                let function_domain = function.domain_of()?;
-                match function_domain.resolve().as_ref() {
-                    Some(d) => {
-                        match d.as_ref() {
-                            GroundDomain::Function(attrs, _, codomain) => Some(Domain::function(
-                                attrs.clone(),
-                                new_domain.domain_of()?,
-                                codomain.clone().into(),
-                            )),
-                            // Not defined for anything other than a function
-                            _ => None,
-                        }
-                    }
-                    None => {
-                        match function_domain.as_unresolved()? {
-                            UnresolvedDomain::Function(attrs, _, codomain) => {
-                                Some(Domain::function(
-                                    attrs.clone(),
-                                    new_domain.domain_of()?,
-                                    codomain.clone(),
-                                ))
-                            }
-                            // Not defined for anything other than a function
-                            _ => None,
-                        }
-                    }
-                }
+                let (attrs, _, codom) = function.domain_of()?.as_function()?;
+                let new_dom = new_domain.domain_of()?;
+                Some(Domain::function(attrs, new_dom, codom))
             }
             Expression::Inverse(..) => Some(Domain::bool()),
             Expression::LexLt(..) => Some(Domain::bool()),
@@ -1049,11 +1031,11 @@ impl Expression {
         }
     }
 
-    /// If the expression is a list, returns the inner expressions.
+    /// If the expression is a list, returns a *copied* vector of the inner expressions.
     ///
     /// A list is any a matrix with the domain `int(1..)`. This includes matrix literals without
     /// any explicitly specified domain.
-    pub fn unwrap_list(self) -> Option<Vec<Expression>> {
+    pub fn unwrap_list(&self) -> Option<Vec<Expression>> {
         match self {
             Expression::AbstractLiteral(_, matrix @ AbstractLiteral::Matrix(_, _)) => {
                 matrix.unwrap_list().cloned()
@@ -1325,6 +1307,7 @@ impl Display for Expression {
 
             Expression::AbstractLiteral(_, l) => l.fmt(f),
             Expression::Comprehension(_, c) => c.fmt(f),
+            Expression::AbstractComprehension(_, c) => c.fmt(f),
             Expression::UnsafeIndex(_, e1, e2) | Expression::SafeIndex(_, e1, e2) => {
                 write!(f, "{e1}{}", pretty_vec(e2))
             }
@@ -1602,6 +1585,7 @@ impl Typeable for Expression {
             }
             Expression::InDomain(_, _, _) => ReturnType::Bool,
             Expression::Comprehension(_, comp) => comp.return_type(),
+            Expression::AbstractComprehension(_, comp) => comp.return_type(),
             Expression::Root(_, _) => ReturnType::Bool,
             Expression::DominanceRelation(_, _) => ReturnType::Bool,
             Expression::FromSolution(_, expr) => expr.return_type(),
