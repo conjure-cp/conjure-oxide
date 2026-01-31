@@ -1,9 +1,32 @@
 use itertools::Itertools;
-use tree_morph::{helpers::select_panic, prelude::*, cache::HashMapCache};
+use tree_morph::{cache::HashMapCache, helpers::select_panic, prelude::*};
 
 use crate::{Model, bug};
 
 use super::{RuleSet, get_rules_grouped};
+
+pub struct MorphConfig {
+    use_cache: bool,
+    use_naive: bool,
+}
+
+impl MorphConfig {
+    pub fn new(use_cache: bool, use_naive: bool) -> Self {
+        Self {
+            use_cache,
+            use_naive,
+        }
+    }
+}
+
+impl Default for MorphConfig {
+    fn default() -> Self {
+        Self {
+            use_cache: false,
+            use_naive: false,
+        }
+    }
+}
 
 /// Rewrites a `Model` by applying rule sets using an optimized, tree-morphing rewriter.
 ///
@@ -33,6 +56,7 @@ pub fn rewrite_morph<'a>(
     mut model: Model,
     rule_sets: &Vec<&'a RuleSet<'a>>,
     prop_multiple_equally_applicable: bool,
+    morph_config: MorphConfig,
 ) -> Model {
     let submodel = model.as_submodel_mut();
     let rules_grouped = get_rules_grouped(rule_sets)
@@ -46,12 +70,17 @@ pub fn rewrite_morph<'a>(
         select_first
     };
 
-    let mut engine = EngineBuilder::new()
+    let engine = EngineBuilder::new()
         .set_selector(selector)
         .append_rule_groups(rules_grouped)
-        .add_cacher(HashMapCache::new())
-        .build();
-    let (expr, symbol_table) = engine.morph(submodel.root().clone(), submodel.symbols().clone());
+        .use_naive(morph_config.use_naive);
+
+    let (expr, symbol_table) = match morph_config.use_cache {
+        true => engine.add_cacher(HashMapCache::new()).build().morph(submodel.root().clone(), submodel.symbols().clone()),
+        false => engine.build().morph(submodel.root().clone(), submodel.symbols().clone())
+    };
+
+    // let (expr, symbol_table) = engine.morph(submodel.root().clone(), submodel.symbols().clone());
 
     *submodel.symbols_mut() = symbol_table;
     submodel.replace_root(expr);
