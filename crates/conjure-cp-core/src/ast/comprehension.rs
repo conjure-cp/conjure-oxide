@@ -1,6 +1,6 @@
 #![allow(clippy::arc_with_non_send_sync)]
 
-use std::{cell::RefCell, collections::BTreeSet, fmt::Display, rc::Rc, sync::atomic::AtomicBool};
+use std::{collections::BTreeSet, fmt::Display, sync::atomic::AtomicBool};
 
 use crate::{ast::Metadata, into_matrix_expr, matrix_expr};
 use conjure_cp_core::ast::ReturnType;
@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use uniplate::{Biplate, Uniplate};
 
 use super::{
-    DeclarationPtr, Domain, DomainPtr, Expression, Moo, Name, Range, SubModel, SymbolTable,
+    DeclarationPtr, Domain, DomainPtr, Expression, Moo, Name, Range, SubModel, SymbolTablePtr,
     Typeable, ac_operators::ACOperatorKind,
 };
 
@@ -132,33 +132,29 @@ pub struct ComprehensionBuilder {
     // symbol table containing all the generators
     // for now, this is just used during parsing - a new symbol table is created using this when we initialise the comprehension
     // this is not ideal, but i am chucking all this code very soon anyways...
-    generator_symboltable: Rc<RefCell<SymbolTable>>,
-    return_expr_symboltable: Rc<RefCell<SymbolTable>>,
+    generator_symboltable: SymbolTablePtr,
+    return_expr_symboltable: SymbolTablePtr,
     induction_variables: BTreeSet<Name>,
 }
 
 impl ComprehensionBuilder {
-    pub fn new(symbol_table_ptr: Rc<RefCell<SymbolTable>>) -> Self {
+    pub fn new(symbol_table_ptr: SymbolTablePtr) -> Self {
         ComprehensionBuilder {
             guards: vec![],
-            generator_symboltable: Rc::new(RefCell::new(SymbolTable::with_parent(
-                symbol_table_ptr.clone(),
-            ))),
-            return_expr_symboltable: Rc::new(RefCell::new(SymbolTable::with_parent(
-                symbol_table_ptr,
-            ))),
+            generator_symboltable: SymbolTablePtr::with_parent(symbol_table_ptr.clone()),
+            return_expr_symboltable: SymbolTablePtr::with_parent(symbol_table_ptr.clone()),
             induction_variables: BTreeSet::new(),
         }
     }
 
     /// The symbol table for the comprehension generators
-    pub fn generator_symboltable(&mut self) -> Rc<RefCell<SymbolTable>> {
-        Rc::clone(&self.generator_symboltable)
+    pub fn generator_symboltable(&mut self) -> SymbolTablePtr {
+        self.generator_symboltable.clone()
     }
 
     /// The symbol table for the comprehension return expression
-    pub fn return_expr_symboltable(&mut self) -> Rc<RefCell<SymbolTable>> {
-        Rc::clone(&self.return_expr_symboltable)
+    pub fn return_expr_symboltable(&mut self) -> SymbolTablePtr {
+        self.return_expr_symboltable.clone()
     }
 
     pub fn guard(mut self, guard: Expression) -> Self {
@@ -174,13 +170,11 @@ impl ComprehensionBuilder {
         self.induction_variables.insert(name.clone());
 
         // insert into generator symbol table as a variable
-        (*self.generator_symboltable)
-            .borrow_mut()
-            .insert(declaration);
+        self.generator_symboltable.write().insert(declaration);
 
         // insert into return expression symbol table as a given
-        (*self.return_expr_symboltable)
-            .borrow_mut()
+        self.return_expr_symboltable
+            .write()
             .insert(DeclarationPtr::new_given(name, domain));
 
         self
@@ -198,13 +192,8 @@ impl ComprehensionBuilder {
         mut expression: Expression,
         comprehension_kind: Option<ACOperatorKind>,
     ) -> Comprehension {
-        let parent_symboltable = self
-            .generator_symboltable
-            .as_ref()
-            .borrow_mut()
-            .parent_mut_unchecked()
-            .clone()
-            .unwrap();
+        let parent_symboltable = self.generator_symboltable.read().parent().clone().unwrap();
+
         let mut generator_submodel = SubModel::new(parent_symboltable.clone());
         let mut return_expression_submodel = SubModel::new(parent_symboltable);
 
@@ -228,8 +217,8 @@ impl ComprehensionBuilder {
         induction_guards =
             Biplate::<DeclarationPtr>::transform_bi(&induction_guards, &move |decl| {
                 if induction_variables_2.contains(&decl.name()) {
-                    (*generator_symboltable_ptr)
-                        .borrow()
+                    generator_symboltable_ptr
+                        .read()
                         .lookup_local(&decl.name())
                         .unwrap()
                 } else {
@@ -246,8 +235,8 @@ impl ComprehensionBuilder {
         // fix other guard pointers so that they all point to variables in the return expr model
         other_guards = Biplate::<DeclarationPtr>::transform_bi(&other_guards, &move |decl| {
             if induction_variables_2.contains(&decl.name()) {
-                (*return_expr_symboltable_ptr)
-                    .borrow()
+                return_expr_symboltable_ptr
+                    .read()
                     .lookup_local(&decl.name())
                     .unwrap()
             } else {

@@ -58,8 +58,8 @@ pub fn reset_declaration_id_unchecked() {
 /// See their documentation for more information.
 #[derive(Clone, Debug)]
 pub struct DeclarationPtr
-// where
-//     Self: Send + Sync,
+where
+    Self: Send + Sync,
 {
     // the shared bits of the pointer
     inner: Arc<DeclarationPtrInner>,

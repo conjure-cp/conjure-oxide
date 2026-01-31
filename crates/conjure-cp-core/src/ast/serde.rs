@@ -5,9 +5,7 @@
 
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_with::{DeserializeAs, SerializeAs};
-use std::cell::RefCell;
 use std::fmt::Display;
-use std::rc::Rc;
 use ustr::Ustr;
 
 /// A unique id, used to distinguish between objects of the same type.
@@ -61,29 +59,6 @@ pub(super) trait IdPtr: HasId + DefaultWithId {
 
     /// Re-construct the pointer given the ID and inner data
     fn with_id_and_data(id: ObjId, data: Self::Data) -> Self;
-}
-
-// TEMPORARY (so existing code builds);
-// We will get rid of all bare Rc<RefCell>'s in the future!
-
-impl<T> HasId for Rc<RefCell<T>>
-where
-    T: HasId,
-{
-    const TYPE_NAME: &'static str = T::TYPE_NAME;
-
-    fn id(&self) -> ObjId {
-        self.borrow().id()
-    }
-}
-
-impl<T> DefaultWithId for Rc<RefCell<T>>
-where
-    T: DefaultWithId,
-{
-    fn default_with_id(id: ObjId) -> Self {
-        Rc::new(RefCell::new(T::default_with_id(id)))
-    }
 }
 
 /// Serialises the object's ID. The actual data is **NOT stored**.
@@ -178,42 +153,5 @@ where
     {
         let stored = PtrAsInnerStored::deserialize(deserializer)?;
         Ok(T::with_id_and_data(stored.id, stored.data))
-    }
-}
-
-// TODO: temporary, remove when we are no longer using
-//       raw Rc<RefCell>s for symbol tables
-
-/// De/Serialize an `Rc<RefCell<T>>` as its inner value `T`.
-///
-/// This makes no attempt to restore the pointers - each value is de-serialized into a new
-/// Rc<RefCell<T>> with a reference count of one.
-///
-/// The shared references can be reconstructed using the ids stored, as before serialization these
-/// were unique for each separate instance of `T` in memory. See [`RcRefCellAsId`].
-pub struct RcRefCellAsInner;
-
-impl<T> SerializeAs<Rc<RefCell<T>>> for RcRefCellAsInner
-where
-    T: Serialize + HasId,
-{
-    fn serialize_as<S>(source: &Rc<RefCell<T>>, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        (**source).borrow().serialize(serializer)
-    }
-}
-
-impl<'de, T> DeserializeAs<'de, Rc<RefCell<T>>> for RcRefCellAsInner
-where
-    T: Deserialize<'de> + HasId + DefaultWithId,
-{
-    fn deserialize_as<D>(deserializer: D) -> Result<Rc<RefCell<T>>, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let val = T::deserialize(deserializer)?;
-        Ok(Rc::new(RefCell::new(val)))
     }
 }

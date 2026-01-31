@@ -1,21 +1,16 @@
-#![allow(clippy::arc_with_non_send_sync)] // uniplate needs this
-use std::cell::RefCell;
 use std::collections::{HashMap, VecDeque};
 use std::fmt::{Debug, Display};
-use std::rc::Rc;
 use std::sync::{Arc, RwLock};
 
 use derivative::Derivative;
 use serde::{Deserialize, Serialize};
 use uniplate::{Biplate, Tree, Uniplate};
 
-use crate::ast::abstract_comprehension::AbstractComprehension;
-use crate::ast::{Expression, Typeable};
 use crate::context::Context;
 
+use super::abstract_comprehension::AbstractComprehension;
 use super::serde::{HasId, ObjId};
-use super::{DeclarationPtr, Name, SubModel};
-use super::{ReturnType, SymbolTable};
+use super::{DeclarationPtr, Expression, Name, ReturnType, SubModel, SymbolTablePtr, Typeable};
 
 /// An Essence model.
 ///
@@ -191,28 +186,25 @@ impl SerdeModel {
         // See super::serde::RcRefCellToInner, super::serde::RcRefCellToId.
 
         // Store the definitive versions of all symbol tables by id.
-        let mut tables: HashMap<ObjId, Rc<RefCell<SymbolTable>>> = HashMap::new();
+        let mut tables: HashMap<ObjId, SymbolTablePtr> = HashMap::new();
 
         // Find the definitive versions by traversing the sub-models.
         for submodel in self.submodel.universe() {
-            let id = submodel.symbols().id();
+            let table_ptr = submodel.symbols_ptr_unchecked().clone();
+            let id = table_ptr.id();
 
             // ids should be unique!
-            assert_eq!(
-                tables.insert(id, submodel.symbols_ptr_unchecked().clone()),
-                None
-            );
+            assert_eq!(tables.insert(id, table_ptr), None);
         }
 
         // Restore parent pointers using `tables`.
         for table in tables.clone().into_values() {
-            let mut table_mut = table.borrow_mut();
+            let mut table_mut = table.write();
             let parent_mut = table_mut.parent_mut_unchecked();
 
             #[allow(clippy::unwrap_used)]
             if let Some(parent) = parent_mut {
-                let parent_id = parent.borrow().id();
-
+                let parent_id = parent.id();
                 *parent = tables.get(&parent_id).unwrap().clone();
             }
         }
@@ -223,9 +215,9 @@ impl SerdeModel {
         // Store the definitive version of all declarations by id.
         let mut all_declarations: HashMap<ObjId, DeclarationPtr> = HashMap::new();
         for table in tables.values() {
-            for (_, decl) in table.as_ref().borrow().clone().into_iter_local() {
+            for (_, decl) in table.read().iter_local() {
                 let id = decl.id();
-                all_declarations.insert(id, decl);
+                all_declarations.insert(id, decl.clone());
             }
         }
 
@@ -278,7 +270,7 @@ impl SerdeModel {
 
         // Collect SymbolTable IDs by traversing all SubModels
         for submodel in self.submodel.universe() {
-            let symbol_table_id = submodel.symbols().id();
+            let symbol_table_id = submodel.symbols_ptr_unchecked().id();
             if !id_list.contains(&symbol_table_id) {
                 id_list.push(symbol_table_id);
             }
@@ -320,8 +312,8 @@ impl SerdeModel {
 
         let comps: VecDeque<AbstractComprehension> = self.submodel.constraints().universe_bi();
         for comp in comps {
-            let symbol_table_id_1 = comp.generator_symbols.borrow().id();
-            let symbol_table_id_2 = comp.return_expr_symbols.borrow().id();
+            let symbol_table_id_1 = comp.generator_symbols.id();
+            let symbol_table_id_2 = comp.return_expr_symbols.id();
             if !id_list.contains(&symbol_table_id_1) {
                 id_list.push(symbol_table_id_1);
             }
@@ -329,14 +321,14 @@ impl SerdeModel {
                 id_list.push(symbol_table_id_2);
             }
 
-            for decl in comp.generator_symbols.borrow().clone().into_iter_local() {
-                let decl_id = decl.1.id();
+            for (_name, decl) in comp.generator_symbols.read().iter_local() {
+                let decl_id = decl.id();
                 if !id_list.contains(&decl_id) {
                     id_list.push(decl_id);
                 }
             }
 
-            for decl in comp.return_expr_symbols.borrow().clone().into_iter_local() {
+            for decl in comp.return_expr_symbols.read().iter_local() {
                 let decl_id = decl.1.id();
                 if !id_list.contains(&decl_id) {
                     id_list.push(decl_id);

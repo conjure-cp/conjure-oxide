@@ -8,6 +8,7 @@ use super::{
     records::RecordValue,
 };
 use derivative::Derivative;
+use parking_lot::MappedRwLockReadGuard;
 use polyquine::Quine;
 use serde::{Deserialize, Serialize};
 
@@ -182,6 +183,17 @@ impl TryFrom<Atom> for Name {
     fn try_from(value: Atom) -> Result<Self, Self::Error> {
         match value {
             Atom::Reference(x) => Ok(x.ptr().name().clone()),
+            _ => Err("Cannot convert non-reference atom to Name"),
+        }
+    }
+}
+
+impl<'a> TryFrom<&'a Atom> for MappedRwLockReadGuard<'a, Name> {
+    type Error = &'static str;
+
+    fn try_from(value: &'a Atom) -> Result<Self, Self::Error> {
+        match value {
+            Atom::Reference(x) => Ok(x.ptr().name()),
             _ => Err("Cannot convert non-reference atom to Name"),
         }
     }
