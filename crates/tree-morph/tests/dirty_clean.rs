@@ -76,7 +76,7 @@ fn left_branch_clean() {
         applicable: HashMap::new(),
     };
 
-    let engine = EngineBuilder::new()
+    let mut engine = EngineBuilder::new()
         .add_rule_group(vec![rule_eval_add, rule_eval_mul])
         .add_before_rule(|_, meta, rule| {
             meta.num_applications += 1;

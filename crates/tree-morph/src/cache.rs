@@ -15,7 +15,7 @@ pub enum CacheResult<T> {
     Unknown,
 
     /// The Subtree exists in cache but no rule is applicable. 
-    NoRewrite,
+    Terminal,
 
     /// The Subtree exists in cache and there is a pre computed value.
     Rewrite(T),
@@ -112,7 +112,7 @@ where
 
         match self.map.get(&hashed).unwrap() {
             Some(res) => CacheResult::Rewrite(res.clone()),
-            None => CacheResult::NoRewrite,
+            None => CacheResult::Terminal,
         }
     }
 

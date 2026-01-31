@@ -24,6 +24,8 @@ where
     selector: SelectorFn<T, M, R>,
 
     cache: C,
+
+    use_naive: bool,
 }
 
 macro_rules! add_handler_fns {
@@ -58,6 +60,7 @@ where
             rule_groups: Vec::new(),
             selector: select_first,
             cache: NoCache,
+            use_naive: false,
         }
     }
 }
@@ -144,8 +147,18 @@ where
             event_handlers: self.event_handlers,
             rule_groups: self.rule_groups,
             selector: self.selector,
+            use_naive: self.use_naive,
             cache: cacher,
         }
+    }
+    
+
+    /// Enable or Disable the Naive Implementation
+    ///
+    /// Should only be used for testing and benchmarking.
+    pub fn use_naive(mut self, enabled: bool) -> Self {
+        self.use_naive = enabled;
+        self
     }
 }
 

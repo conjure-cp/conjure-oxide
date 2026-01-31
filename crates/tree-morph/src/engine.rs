@@ -10,7 +10,7 @@ use crate::prelude::Rule;
 use crate::rule::apply_into_update;
 use crate::update::Update;
 
-use tracing::{debug, info, instrument, trace};
+use tracing::{debug, error, info, instrument, trace};
 use uniplate::Uniplate;
 
 /// An engine for exhaustively transforming trees with user-defined rules.
@@ -212,7 +212,7 @@ where
                     let subtree = zipper.inner.focus();
 
                     match self.cache.get(subtree, level) {
-                        CacheResult::NoRewrite => {
+                        CacheResult::Terminal => {
                             debug!("Cache Hit - Nothing Applicable");
                             zipper.set_dirty_from(level + 1);
                             continue;
@@ -246,12 +246,15 @@ where
                             .apply(zipper.inner.focus().clone(), &mut zipper.meta);
 
                         if root_transformed {
-                            trace!("Root transformed, clearing state.");
+                            debug!("Root transformed, clearing state.");
                             // This must unfortunately throw all node states away,
                             // since the `transform` command may redefine the whole tree
                             zipper.inner.replace_focus(new_tree);
                         } else {
                             debug!("Adding to Cache");
+                            if original == replacement {
+                                panic!("Replacement is the same as Original. Rule is returning the same tree.");
+                            }
                             self.cache.insert(original, Some(replacement), level);
                         }
 

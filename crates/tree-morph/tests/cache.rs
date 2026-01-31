@@ -7,7 +7,6 @@ use uniplate::Uniplate;
 #[derive(Debug, Clone, PartialEq, Eq, Uniplate, Hash)]
 #[uniplate()]
 enum Expr {
-    Double(Box<Expr>, Box<Expr>),
     Triple(Box<Expr>, Box<Expr>, Box<Expr>),
     Quad(Box<Expr>, Box<Expr>, Box<Expr>, Box<Expr>),
     A,
@@ -23,7 +22,7 @@ struct Meta {
 }
 
 #[named_rule("a->b")]
-fn a_to_b(cmd: &mut Commands<Expr, Meta>, expr: &Expr, meta: &Meta) -> Option<Expr> {
+fn a_to_b(cmd: &mut Commands<Expr, Meta>, expr: &Expr, _meta: &Meta) -> Option<Expr> {
     cmd.mut_meta(Box::new(|m| {
         *m.attempts.entry("a->b".into()).or_default().deref_mut() += 1
     }));
@@ -39,7 +38,7 @@ fn a_to_b(cmd: &mut Commands<Expr, Meta>, expr: &Expr, meta: &Meta) -> Option<Ex
 }
 
 #[named_rule("b->c")]
-fn b_to_c(cmd: &mut Commands<Expr, Meta>, expr: &Expr, meta: &Meta) -> Option<Expr> {
+fn b_to_c(cmd: &mut Commands<Expr, Meta>, expr: &Expr, _meta: &Meta) -> Option<Expr> {
     cmd.mut_meta(Box::new(|m| {
         *m.attempts.entry("b->c".into()).or_default().deref_mut() += 1
     }));
@@ -55,7 +54,7 @@ fn b_to_c(cmd: &mut Commands<Expr, Meta>, expr: &Expr, meta: &Meta) -> Option<Ex
 }
 
 #[named_rule("c->d")]
-fn c_to_d(cmd: &mut Commands<Expr, Meta>, expr: &Expr, meta: &Meta) -> Option<Expr> {
+fn c_to_d(cmd: &mut Commands<Expr, Meta>, expr: &Expr, _meta: &Meta) -> Option<Expr> {
     cmd.mut_meta(Box::new(|m| {
         *m.attempts.entry("c->d".into()).or_default().deref_mut() += 1
     }));

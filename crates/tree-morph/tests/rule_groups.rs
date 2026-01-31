@@ -38,7 +38,7 @@ fn same_group() {
     // [a]
     let expr = Expr::Wrap(Box::new(Expr::A));
 
-    let engine = EngineBuilder::new()
+    let mut engine = EngineBuilder::new()
         .add_rule(rule_unwrap_a as RuleFn<_, _>)
         .add_rule(rule_a_to_b as RuleFn<_, _>)
         .build();
@@ -55,7 +55,7 @@ fn a_to_b_first() {
     // [a]
     let expr = Expr::Wrap(Box::new(Expr::A));
 
-    let engine = EngineBuilder::new()
+    let mut engine = EngineBuilder::new()
         .add_rule(rule_a_to_b as RuleFn<_, _>)
         .add_rule(rule_unwrap_a as RuleFn<_, _>)
         .build();
