@@ -1,4 +1,4 @@
-use std::{borrow::Borrow, cell::Ref};
+use std::borrow::Borrow;
 use uniplate::Uniplate;
 
 use super::{
@@ -182,17 +182,6 @@ impl TryFrom<Atom> for Name {
     fn try_from(value: Atom) -> Result<Self, Self::Error> {
         match value {
             Atom::Reference(x) => Ok(x.ptr().name().clone()),
-            _ => Err("Cannot convert non-reference atom to Name"),
-        }
-    }
-}
-
-impl<'a> TryFrom<&'a Atom> for Ref<'a, Name> {
-    type Error = &'static str;
-
-    fn try_from(value: &'a Atom) -> Result<Self, Self::Error> {
-        match value {
-            Atom::Reference(x) => Ok(x.ptr().name()),
             _ => Err("Cannot convert non-reference atom to Name"),
         }
     }

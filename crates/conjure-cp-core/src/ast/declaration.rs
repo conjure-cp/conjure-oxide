@@ -1,40 +1,34 @@
-pub mod serde;
-
-use serde::DeclarationPtrFull;
-
-use std::any::TypeId;
-// allow use of Declaration in this file, and nowhere else
-use std::cell::{Cell, Ref, RefCell, RefMut};
-use std::fmt::{Debug, Display};
-use std::rc::Rc;
-
-use ::serde::{Deserialize, Serialize};
-use serde_with::serde_as;
-
 use super::categories::{Category, CategoryOf};
 use super::name::Name;
-use super::serde::{DefaultWithId, HasId, ObjId};
+use super::serde::{DefaultWithId, HasId, IdPtr, ObjId, PtrAsInner};
 use super::{
-    DecisionVariable, DomainPtr, Expression, GroundDomain, Moo, RecordEntry, ReturnType, Typeable,
+    DecisionVariable, DomainPtr, Expression, GroundDomain, HasDomain, Moo, RecordEntry, ReturnType,
+    Typeable,
 };
-use crate::ast::domains::HasDomain;
+use parking_lot::{
+    MappedRwLockReadGuard, MappedRwLockWriteGuard, RwLock, RwLockReadGuard, RwLockWriteGuard,
+};
+use serde::{Deserialize, Serialize};
+use serde_with::serde_as;
+use std::any::TypeId;
+use std::fmt::{Debug, Display};
+use std::mem;
+use std::sync::Arc;
+use std::sync::atomic::{AtomicU32, Ordering};
 use uniplate::{Biplate, Tree, Uniplate};
 
-thread_local! {
-    // make each thread have its own id counter.
-    static DECLARATION_PTR_ID_COUNTER: Cell<u32> = const { Cell::new(0) };
-
-    // We run integration tests in parallel threads - making this thread local ensures that
-    // declarations in a test always have the same id, instead of the ids depending on how many
-    // threads are running, how they are scheduled, etc.
-}
+/// Global counter of declarations.
+/// Note that the counter is shared between all threads
+/// Thus, when running multiple models in parallel, IDs may
+/// be different with every run depending on scheduling order
+static DECLARATION_PTR_ID_COUNTER: AtomicU32 = const { AtomicU32::new(0) };
 
 #[doc(hidden)]
 /// Resets the id counter of `DeclarationPtr` to 0.
 ///
 /// This is probably always a bad idea.
 pub fn reset_declaration_id_unchecked() {
-    DECLARATION_PTR_ID_COUNTER.set(0);
+    let _ = DECLARATION_PTR_ID_COUNTER.swap(0, Ordering::Relaxed);
 }
 
 /// A shared pointer to a [`Declaration`].
@@ -63,13 +57,16 @@ pub fn reset_declaration_id_unchecked() {
 ///
 /// See their documentation for more information.
 #[derive(Clone, Debug)]
-pub struct DeclarationPtr {
+pub struct DeclarationPtr
+// where
+//     Self: Send + Sync,
+{
     // the shared bits of the pointer
-    inner: Rc<DeclarationPtrInner>,
+    inner: Arc<DeclarationPtrInner>,
 }
 
 // The bits of a declaration that are shared between all pointers.
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 struct DeclarationPtrInner {
     // We don't want this to be mutable, as `HashMap` and `BTreeMap` rely on the hash or order of
     // keys to be unchanging.
@@ -78,15 +75,15 @@ struct DeclarationPtrInner {
     id: ObjId,
 
     // The contents of the declaration itself should be mutable.
-    value: RefCell<Declaration>,
+    value: RwLock<Declaration>,
 }
 
 impl DeclarationPtrInner {
-    fn new(value: RefCell<Declaration>) -> Rc<DeclarationPtrInner> {
-        Rc::new(DeclarationPtrInner {
+    fn new(value: RwLock<Declaration>) -> Arc<DeclarationPtrInner> {
+        Arc::new(DeclarationPtrInner {
             id: ObjId {
                 type_name: ustr::ustr(DeclarationPtr::TYPE_NAME),
-                object_id: DECLARATION_PTR_ID_COUNTER.replace(DECLARATION_PTR_ID_COUNTER.get() + 1),
+                object_id: DECLARATION_PTR_ID_COUNTER.fetch_add(1, Ordering::Relaxed),
             },
             value,
         })
@@ -94,8 +91,8 @@ impl DeclarationPtrInner {
 
     // SAFETY: only use if you are really really sure you arn't going to break the id invariants of
     // DeclarationPtr and HasId!
-    fn new_with_id_unchecked(value: RefCell<Declaration>, id: ObjId) -> Rc<DeclarationPtrInner> {
-        Rc::new(DeclarationPtrInner { id, value })
+    fn new_with_id_unchecked(value: RwLock<Declaration>, id: ObjId) -> Arc<DeclarationPtrInner> {
+        Arc::new(DeclarationPtrInner { id, value })
     }
 }
 
@@ -108,7 +105,7 @@ impl DeclarationPtr {
     /// Creates a `DeclarationPtr` for the given `Declaration`.
     fn from_declaration(declaration: Declaration) -> DeclarationPtr {
         DeclarationPtr {
-            inner: DeclarationPtrInner::new(RefCell::new(declaration)),
+            inner: DeclarationPtrInner::new(RwLock::new(declaration)),
         }
     }
 
@@ -293,7 +290,7 @@ impl DeclarationPtr {
     /// let declaration = DeclarationPtr::new_var(Name::User("a".into()),Domain::int(vec![Range::Bounded(1,5)]));
     /// assert!(matches!(&declaration.kind() as &DeclarationKind, DeclarationKind::DecisionVariable(_)))
     /// ```
-    pub fn kind(&self) -> Ref<'_, DeclarationKind> {
+    pub fn kind(&self) -> MappedRwLockReadGuard<'_, DeclarationKind> {
         self.map(|x| &x.kind)
     }
 
@@ -309,13 +306,13 @@ impl DeclarationPtr {
     ///
     /// assert_eq!(&declaration.name() as &Name, &Name::User("a".into()))
     /// ```
-    pub fn name(&self) -> Ref<'_, Name> {
+    pub fn name(&self) -> MappedRwLockReadGuard<'_, Name> {
         self.map(|x| &x.name)
     }
 
     /// This declaration as a decision variable, if it is one.
-    pub fn as_var(&self) -> Option<Ref<'_, DecisionVariable>> {
-        Ref::filter_map(self.borrow(), |x| {
+    pub fn as_var(&self) -> Option<MappedRwLockReadGuard<'_, DecisionVariable>> {
+        RwLockReadGuard::try_map(self.read(), |x| {
             if let DeclarationKind::DecisionVariable(var) = &x.kind {
                 Some(var)
             } else {
@@ -326,8 +323,8 @@ impl DeclarationPtr {
     }
 
     /// This declaration as a mutable decision variable, if it is one.
-    pub fn as_var_mut(&mut self) -> Option<RefMut<'_, DecisionVariable>> {
-        RefMut::filter_map(self.borrow_mut(), |x| {
+    pub fn as_var_mut(&mut self) -> Option<MappedRwLockWriteGuard<'_, DecisionVariable>> {
+        RwLockWriteGuard::try_map(self.write(), |x| {
             if let DeclarationKind::DecisionVariable(var) = &mut x.kind {
                 Some(var)
             } else {
@@ -338,8 +335,8 @@ impl DeclarationPtr {
     }
 
     /// This declaration as a domain letting, if it is one.
-    pub fn as_domain_letting(&self) -> Option<Ref<'_, DomainPtr>> {
-        Ref::filter_map(self.borrow(), |x| {
+    pub fn as_domain_letting(&self) -> Option<MappedRwLockReadGuard<'_, DomainPtr>> {
+        RwLockReadGuard::try_map(self.read(), |x| {
             if let DeclarationKind::DomainLetting(domain) = &x.kind {
                 Some(domain)
             } else {
@@ -350,8 +347,8 @@ impl DeclarationPtr {
     }
 
     /// This declaration as a mutable domain letting, if it is one.
-    pub fn as_domain_letting_mut(&mut self) -> Option<RefMut<'_, DomainPtr>> {
-        RefMut::filter_map(self.borrow_mut(), |x| {
+    pub fn as_domain_letting_mut(&mut self) -> Option<MappedRwLockWriteGuard<'_, DomainPtr>> {
+        RwLockWriteGuard::try_map(self.write(), |x| {
             if let DeclarationKind::DomainLetting(domain) = &mut x.kind {
                 Some(domain)
             } else {
@@ -362,10 +359,10 @@ impl DeclarationPtr {
     }
 
     /// This declaration as a value letting, if it is one.
-    pub fn as_value_letting(&self) -> Option<Ref<'_, Expression>> {
-        Ref::filter_map(self.borrow(), |x| {
-            if let DeclarationKind::ValueLetting(e) = &x.kind {
-                Some(e)
+    pub fn as_value_letting(&self) -> Option<MappedRwLockReadGuard<'_, Expression>> {
+        RwLockReadGuard::try_map(self.read(), |x| {
+            if let DeclarationKind::ValueLetting(expression) = &x.kind {
+                Some(expression)
             } else {
                 None
             }
@@ -374,10 +371,10 @@ impl DeclarationPtr {
     }
 
     /// This declaration as a mutable value letting, if it is one.
-    pub fn as_value_letting_mut(&mut self) -> Option<RefMut<'_, Expression>> {
-        RefMut::filter_map(self.borrow_mut(), |x| {
-            if let DeclarationKind::ValueLetting(e) = &mut x.kind {
-                Some(e)
+    pub fn as_value_letting_mut(&mut self) -> Option<MappedRwLockWriteGuard<'_, Expression>> {
+        RwLockWriteGuard::try_map(self.write(), |x| {
+            if let DeclarationKind::ValueLetting(expression) = &mut x.kind {
+                Some(expression)
             } else {
                 None
             }
@@ -400,7 +397,7 @@ impl DeclarationPtr {
     /// assert_eq!(&declaration.name() as &Name,&Name::User("b".into()));
     /// ```
     pub fn replace_name(&mut self, name: Name) -> Name {
-        let mut decl = self.borrow_mut();
+        let mut decl = self.write();
         std::mem::replace(&mut decl.name, name)
     }
 
@@ -411,16 +408,22 @@ impl DeclarationPtr {
     // These are mostly wrappers over RefCell, Ref, and RefMut methods, re-exported here for
     // convenience.
 
-    /// Immutably borrows the declaration.
-    fn borrow(&self) -> Ref<'_, Declaration> {
-        // unlike refcell.borrow(), this never panics
-        self.inner.value.borrow()
+    /// Read the underlying [Declaration].
+    ///
+    /// Will block the current thread until no other thread has a write lock.
+    /// Attempting to get a read lock if the current thread already has one
+    /// **will** cause it to deadlock.
+    /// The lock is released when the returned guard goes out of scope.
+    fn read(&self) -> RwLockReadGuard<'_, Declaration> {
+        self.inner.value.read()
     }
 
-    /// Mutably borrows the declaration.
-    fn borrow_mut(&mut self) -> RefMut<'_, Declaration> {
-        // unlike refcell.borrow_mut(), this never panics
-        self.inner.value.borrow_mut()
+    /// Write the underlying [Declaration].
+    ///
+    /// Will block the current thread until no other thread has a read or write lock.
+    /// The lock is released when the returned guard goes out of scope.
+    fn write(&mut self) -> RwLockWriteGuard<'_, Declaration> {
+        self.inner.value.write()
     }
 
     /// Creates a new declaration pointer with the same contents as `self` that is not shared with
@@ -455,25 +458,32 @@ impl DeclarationPtr {
     pub fn detach(self) -> DeclarationPtr {
         // despite having the same contents, the new declaration pointer is unshared, so it should
         // get a new id.
+        let value = self.inner.value.read().clone();
         DeclarationPtr {
-            inner: DeclarationPtrInner::new(self.inner.value.clone()),
+            inner: DeclarationPtrInner::new(RwLock::new(value)),
         }
     }
 
     /// Applies `f` to the declaration, returning the result as a reference.
-    fn map<U>(&self, f: impl FnOnce(&Declaration) -> &U) -> Ref<'_, U> {
-        Ref::map(self.borrow(), f)
+    fn map<U>(&self, f: impl FnOnce(&Declaration) -> &U) -> MappedRwLockReadGuard<'_, U> {
+        RwLockReadGuard::map(self.read(), f)
     }
 
     /// Applies mutable function `f` to the declaration, returning the result as a mutable reference.
-    fn map_mut<U>(&mut self, f: impl FnOnce(&mut Declaration) -> &mut U) -> RefMut<'_, U> {
-        RefMut::map(self.borrow_mut(), f)
+    fn map_mut<U>(
+        &mut self,
+        f: impl FnOnce(&mut Declaration) -> &mut U,
+    ) -> MappedRwLockWriteGuard<'_, U> {
+        RwLockWriteGuard::map(self.write(), f)
     }
 
     /// Replaces the declaration with a new one, returning the old value, without deinitialising
     /// either one.
     fn replace(&mut self, declaration: Declaration) -> Declaration {
-        self.inner.value.replace(declaration)
+        let mut guard = self.write();
+        let ans = mem::replace(&mut *guard, declaration);
+        drop(guard);
+        ans
     }
 }
 
@@ -500,7 +510,7 @@ impl DefaultWithId for DeclarationPtr {
     fn default_with_id(id: ObjId) -> Self {
         DeclarationPtr {
             inner: DeclarationPtrInner::new_with_id_unchecked(
-                RefCell::new(Declaration {
+                RwLock::new(Declaration {
                     name: Name::User("_UNKNOWN".into()),
                     kind: DeclarationKind::ValueLetting(false.into()),
                 }),
@@ -525,7 +535,7 @@ impl Typeable for DeclarationPtr {
 
 impl Uniplate for DeclarationPtr {
     fn uniplate(&self) -> (Tree<Self>, Box<dyn Fn(Tree<Self>) -> Self>) {
-        let decl = self.borrow();
+        let decl = self.read();
         let (tree, recons) = Biplate::<DeclarationPtr>::biplate(&decl as &Declaration);
 
         let self2 = self.clone();
@@ -534,7 +544,7 @@ impl Uniplate for DeclarationPtr {
             Box::new(move |x| {
                 let mut self3 = self2.clone();
                 let inner = recons(x);
-                *(&mut self3.borrow_mut() as &mut Declaration) = inner;
+                *(&mut self3.write() as &mut Declaration) = inner;
                 self3
             }),
         )
@@ -562,7 +572,7 @@ where
             }
         } else {
             // call biplate on the enclosed declaration
-            let decl = self.borrow();
+            let decl = self.read();
             let (tree, recons) = Biplate::<To>::biplate(&decl as &Declaration);
 
             let self2 = self.clone();
@@ -571,10 +581,24 @@ where
                 Box::new(move |x| {
                     let mut self3 = self2.clone();
                     let inner = recons(x);
-                    *(&mut self3.borrow_mut() as &mut Declaration) = inner;
+                    *(&mut self3.write() as &mut Declaration) = inner;
                     self3
                 }),
             )
+        }
+    }
+}
+
+impl IdPtr for DeclarationPtr {
+    type Data = Declaration;
+
+    fn get_data(&self) -> Self::Data {
+        self.read().clone()
+    }
+
+    fn with_id_and_data(id: ObjId, data: Self::Data) -> Self {
+        Self {
+            inner: DeclarationPtrInner::new_with_id_unchecked(RwLock::new(data), id),
         }
     }
 }
@@ -608,7 +632,7 @@ impl std::hash::Hash for DeclarationPtr {
 
 impl Display for DeclarationPtr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let value: &Declaration = &self.borrow();
+        let value: &Declaration = &self.read();
         value.fmt(f)
     }
 }
@@ -618,7 +642,7 @@ impl Display for DeclarationPtr {
 #[biplate(to=DeclarationPtr)]
 #[biplate(to=Name)]
 /// The contents of a declaration
-struct Declaration {
+pub(super) struct Declaration {
     /// The name of the declared symbol.
     name: Name,
 
@@ -657,7 +681,7 @@ pub enum DeclarationKind {
 pub struct GivenQuantified {
     domain: DomainPtr,
 
-    #[serde_as(as = "DeclarationPtrFull")]
+    #[serde_as(as = "PtrAsInner")]
     generator: DeclarationPtr,
 }
 

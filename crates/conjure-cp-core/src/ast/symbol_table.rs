@@ -6,7 +6,7 @@ use crate::bug;
 use crate::representation::{Representation, get_repr_rule};
 
 use super::comprehension::Comprehension;
-use super::serde::RcRefCellAsId;
+use super::serde::{AsId, PtrAsInner};
 use std::cell::RefCell;
 use std::collections::BTreeSet;
 use std::collections::btree_map::Entry;
@@ -15,7 +15,7 @@ use std::hash::{Hash, Hasher};
 use std::rc::Rc;
 use std::sync::atomic::{AtomicU32, Ordering};
 
-use super::declaration::{DeclarationPtr, serde::DeclarationPtrFull};
+use super::declaration::DeclarationPtr;
 use super::serde::{DefaultWithId, HasId, ObjId};
 use itertools::{Itertools as _, izip};
 use serde::{Deserialize, Serialize};
@@ -80,14 +80,14 @@ static ID_COUNTER: AtomicU32 = const { AtomicU32::new(0) };
 #[serde_as]
 #[derive(Serialize, Deserialize)]
 pub struct SymbolTable {
-    #[serde_as(as = "Vec<(_,DeclarationPtrFull)>")]
+    #[serde_as(as = "Vec<(_,PtrAsInner)>")]
     table: BTreeMap<Name, DeclarationPtr>,
 
     /// A unique id for this symbol table, for serialisation and debugging.
     #[derivative(PartialEq = "ignore")] // eq by value not id.
     id: ObjId,
 
-    #[serde_as(as = "Option<RcRefCellAsId>")]
+    #[serde_as(as = "Option<AsId>")]
     parent: Option<Rc<RefCell<SymbolTable>>>,
 
     next_machine_name: RefCell<i32>,

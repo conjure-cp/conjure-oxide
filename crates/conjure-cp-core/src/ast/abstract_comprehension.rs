@@ -1,6 +1,6 @@
 use super::SymbolTable;
-use super::declaration::{DeclarationPtr, serde::DeclarationPtrFull};
-use super::serde::RcRefCellAsInner;
+use super::declaration::DeclarationPtr;
+use super::serde::{PtrAsInner, RcRefCellAsInner};
 use crate::ast::{DomainPtr, Expression, Name, ReturnType, SubModel, Typeable};
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
@@ -94,7 +94,7 @@ pub enum Qualifier {
 #[biplate(to=Expression)]
 #[biplate(to=SubModel)]
 pub struct ComprehensionLetting {
-    #[serde_as(as = "DeclarationPtrFull")]
+    #[serde_as(as = "PtrAsInner")]
     pub decl: DeclarationPtr,
     pub expression: Expression,
 }
@@ -112,7 +112,7 @@ pub enum Generator {
 #[biplate(to=Expression)]
 #[biplate(to=SubModel)]
 pub struct DomainGenerator {
-    #[serde_as(as = "DeclarationPtrFull")]
+    #[serde_as(as = "PtrAsInner")]
     pub decl: DeclarationPtr,
 }
 
@@ -121,7 +121,7 @@ pub struct DomainGenerator {
 #[biplate(to=Expression)]
 #[biplate(to=SubModel)]
 pub struct ExpressionGenerator {
-    #[serde_as(as = "DeclarationPtrFull")]
+    #[serde_as(as = "PtrAsInner")]
     pub decl: DeclarationPtr,
     pub expression: Expression,
 }
