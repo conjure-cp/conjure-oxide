@@ -57,6 +57,8 @@
 - [Useful Links](./documentation/links.md)
 - [Essence Parser](./documentation/essence_parser.md)
 - [Error Detection](./documentation/error_detection)
+- [Side Projects]()
+  - [Conjure Blocks](./documentation/side_projects/Conjure-Blocks.md)
 
 ---
 
