@@ -121,7 +121,7 @@ impl SymbolTable {
         );
         SymbolTable {
             id: ObjId {
-                type_name: "SymbolTable".into(),
+                type_name: SymbolTable::TYPE_NAME.into(),
                 object_id: id,
             },
             table: BTreeMap::new(),
@@ -401,6 +401,7 @@ impl Iterator for IntoIter {
 }
 
 impl HasId for SymbolTable {
+    const TYPE_NAME: &'static str = "SymbolTable";
     fn id(&self) -> ObjId {
         self.id.clone()
     }
@@ -422,7 +423,7 @@ impl Clone for SymbolTable {
         Self {
             table: self.table.clone(),
             id: ObjId {
-                type_name: "SymbolTable".into(),
+                type_name: SymbolTable::TYPE_NAME.into(),
                 object_id: ID_COUNTER.with(|x| x.fetch_add(1, Ordering::Relaxed)),
             },
             parent: self.parent.clone(),

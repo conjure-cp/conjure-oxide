@@ -85,7 +85,7 @@ impl DeclarationPtrInner {
     fn new(value: RefCell<Declaration>) -> Rc<DeclarationPtrInner> {
         Rc::new(DeclarationPtrInner {
             id: ObjId {
-                type_name: ustr::ustr("DeclarationPtrInner"),
+                type_name: ustr::ustr(DeclarationPtr::TYPE_NAME),
                 object_id: DECLARATION_PTR_ID_COUNTER.replace(DECLARATION_PTR_ID_COUNTER.get() + 1),
             },
             value,
@@ -490,6 +490,7 @@ impl CategoryOf for DeclarationPtr {
     }
 }
 impl HasId for DeclarationPtr {
+    const TYPE_NAME: &'static str = "DeclarationPtrInner";
     fn id(&self) -> ObjId {
         self.inner.id.clone()
     }

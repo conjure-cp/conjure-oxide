@@ -35,6 +35,8 @@ impl Display for ObjId {
 ///
 /// Implementing types should ensure that the id is updated when an object is cloned.
 pub trait HasId {
+    const TYPE_NAME: &'static str;
+
     /// The id of this object.
     fn id(&self) -> ObjId;
 }
@@ -81,6 +83,7 @@ where
         D: serde::Deserializer<'de>,
     {
         let id = ObjId::deserialize(deserializer).map_err(Error::custom)?;
+        assert_eq!(id.type_name.as_str(), T::TYPE_NAME);
         Ok(Rc::new(RefCell::new(T::default_with_id(id))))
     }
 }

@@ -134,6 +134,7 @@ impl<'de> DeserializeAs<'de, DeclarationPtr> for DeclarationPtrAsId {
         D: serde::Deserializer<'de>,
     {
         let id = ObjId::deserialize(deserializer)?;
+        assert_eq!(id.type_name.as_str(), DeclarationPtr::TYPE_NAME);
         Ok(DeclarationPtr::default_with_id(id))
     }
 }
