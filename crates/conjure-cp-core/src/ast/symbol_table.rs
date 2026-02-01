@@ -441,7 +441,7 @@ impl Default for SymbolTable {
 impl SymbolTable {
     #[doc(hidden)]
     // FIXME: remove me once we get SymbolTablePtr
-    //
+
     /// Mainly for uniplate usage
     pub fn clone_with_same_id(&self) -> Self {
         // Biplate<Symboltable> instances need to ensure that symbol tables keep their ids.
