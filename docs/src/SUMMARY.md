@@ -5,6 +5,7 @@
 - [Installation](./getting_started/installation/index.md)
   - [Downloading a Nightly Release]()
   - [Building from Source]()
+- [Quick Start](./getting_started/quick-start.md)
 - [Command Line Guide]()
   - [Logging](./getting_started/command-line/logging.md)
 
@@ -16,14 +17,16 @@
 # Developers Guide
 
 <!-- From the wiki -->
-- [Contributor's Guide](./developers_guide/contributors-guide/index.md)
-  - [How we work](./developers_guide/contributors-guide/how_we_work.md)
-  - [Setting up your development environment](./developers_guide/contributors-guide/set-dev-env.md)
+- [Contributor's Guide](./developers_guide/contributors_guide/index.md)
+  - [How we work](./developers_guide/contributors_guide/how_we_work.md)
+  - [Setting up your development environment](./developers_guide/contributors_guide/set-dev-env.md)
+  - [Creating Documentation](./developers_guide/contributors_guide/creating_documentation.md)
   - [Running and writing integration tests]()
   - [What we didn't do]()
   - [Onboarding](./developers_guide/contributors-guide/onboarding.md)
 
 - [Coding Resources and Conventions](./developers_guide/coding_resources/index.md)
+  - [Functional Rust](./getting_started/functional-rust.md)
   - [Style Guide](./developers_guide/coding_resources/style_guide.md)
   - [Crate Structure](./developers_guide/coding_resources/crate_structure.md)
 
@@ -47,6 +50,10 @@
 
 <!-- TODO: will we keep this? -->
 - [Developer Documentation](./documentation/dev_docs.md)
+
+- [SAT Encoding Types](./documentation/SAT/sat-encoding-types.md)
+- [Rule Types](./documentation/SAT/rule-types.md)
+
 <!-- TODO: will be moved -- likely the content of these will end off here -->
 - [Useful Links](./documentation/links.md)
 - [Testing](./documentation/testing/testing.md)
@@ -55,6 +62,10 @@
   - [Creating Types Guide](./documentation/types/creating_types_guide.md)
   - [Functions](./documentation/types/functions.md)
   - [Multisets](./documentation/types/multisets.md)
+- [Essence Parser](./documentation/essence_parser.md)
+- [Error Detection](./documentation/error_detection)
+- [Side Projects]()
+  - [Conjure Blocks](./documentation/side_projects/Conjure-Blocks.md)
 
 ---
 
