@@ -222,7 +222,7 @@ fn integer_decision_representation_order(expr: &Expr, symbols: &SymbolTable) -> 
         for i in 1..bits.len() {
             clauses.push(conjure_cp::ast::CnfClause::new(vec![
                 Expr::Not(Metadata::new(), Moo::new(bits[i].clone())),
-                bits[i-1].clone(),
+                bits[i - 1].clone(),
             ]));
         }
 

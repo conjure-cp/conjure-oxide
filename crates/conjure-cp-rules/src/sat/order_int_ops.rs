@@ -5,9 +5,9 @@ use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
 };
 
+use crate::sat::boolean::{tseytin_and, tseytin_iff};
 use conjure_cp::ast::Metadata;
 use conjure_cp::ast::Moo;
-use crate::sat::boolean::{tseytin_and, tseytin_iff};
 use conjure_cp::into_matrix_expr;
 
 /// This function confirms that all of the input expressions are order SATInts, and returns vectors for each input of their bits
@@ -32,8 +32,7 @@ pub fn validate_order_int_operands(
     let out: Vec<Vec<Expr>> = exprs
         .into_iter()
         .map(|expr| {
-            let Expr::SATInt(_, SATIntEncoding::Order, inner, (local_min, local_max)) = expr
-            else {
+            let Expr::SATInt(_, SATIntEncoding::Order, inner, (local_min, local_max)) = expr else {
                 return Err(RuleNotApplicable);
             };
 
@@ -137,5 +136,3 @@ fn eq_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
     Ok(Reduction::cnf(output, new_clauses, new_symbols))
 }
-
-

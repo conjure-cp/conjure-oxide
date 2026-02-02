@@ -36,7 +36,7 @@ impl SatOrderInt {
 impl Representation for SatOrderInt {
     /// Creates a order int representation object for the given name.
     fn init(name: &Name, symtab: &SymbolTable) -> Option<Self> {
-                let domain = symtab.resolve_domain(name)?;
+        let domain = symtab.resolve_domain(name)?;
 
         if !domain.is_finite() {
             return None;
@@ -100,7 +100,7 @@ impl Representation for SatOrderInt {
             if !is_true && first_false_candidate.is_none() {
                 first_false_candidate = Some(value_candidate);
             }
-            
+
             if is_true && first_false_candidate.is_some() {
                 // we have a true after a false
                 return Err(ApplicationError::RuleNotApplicable);
@@ -144,7 +144,6 @@ impl Representation for SatOrderInt {
 
         Ok(temp_a)
     }
-
 
     /// The rule name for this representation.
     fn repr_name(&self) -> &str {

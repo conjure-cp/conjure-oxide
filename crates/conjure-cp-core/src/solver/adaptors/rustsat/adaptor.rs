@@ -229,8 +229,8 @@ impl SolverAdaptor for Sat {
                     .get_representation(&find_ref.0, &["sat_direct_int"])
                     .is_none()
                 && sym_tab
-                .get_representation(&find_ref.0, &["sat_order_int"])
-                .is_none())
+                    .get_representation(&find_ref.0, &["sat_order_int"])
+                    .is_none())
             {
                 Err(SolverError::ModelInvalid(
                     "Only Boolean Decision Variables supported".to_string(),
