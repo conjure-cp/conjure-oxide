@@ -10,4 +10,6 @@ register_rule_set!("SAT", ("Base"), |f: &SolverFamily| matches!(
 
 register_rule_set!("SAT_Direct", ("SAT"));
 
+register_rule_set!("SAT_Order", ("SAT"));
+
 register_rule_set!("SAT_Log", ("SAT"));

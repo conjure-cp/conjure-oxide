@@ -166,6 +166,11 @@ fn integer_decision_representation(expr: &Expr, symbols: &SymbolTable) -> Applic
     }
 }
 
+#[register_rule(("SAT_Order", 9500))]
+fn integer_decision_representation_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult{
+    panic!("Our naurrr");
+}
+
 /// Converts an integer decision variable to SATInt form (Log encoding)
 #[register_rule(("SAT_Log", 9500))]
 fn integer_decision_representation_log(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
