@@ -281,7 +281,7 @@ fn tseytin_int_adder(
     output
 }
 
-// Returns: result, carry, new symbol table, new clauses
+/// This function adds two booleans and a carry boolean using the full-adder logic circuit, it is intended for use in a binary adder.
 fn tseytin_full_adder(
     a: Expr,
     b: Expr,
@@ -298,6 +298,7 @@ fn tseytin_full_adder(
     (result, carryout)
 }
 
+/// This function adds two booleans using the half-adder logic circuit, it is intended for use in a binary adder.
 fn tseytin_half_adder(
     a: Expr,
     b: Expr,
@@ -310,7 +311,7 @@ fn tseytin_half_adder(
     (result, carry)
 }
 
-/// this function is for specifically adding a power of two constant to a cnf int
+/// this function is for specifically adding a power of two constant to a cnf int.
 fn tseytin_add_two_power(
     expr: &[Expr],
     exponent: usize,
@@ -335,7 +336,7 @@ fn tseytin_add_two_power(
     result
 }
 
-// Returns result, new symbol table, new clauses
+/// This function multiplies to binary values using the shif-add multiplication algorithm.
 fn cnf_shift_add_multiply(
     x: &[Expr],
     y: &[Expr],
@@ -388,6 +389,11 @@ fn cnf_shift_add_multiply(
     s
 }
 
+
+/// This function calculates the range of the product of multiple integers.
+/// E.g. 
+/// a : [2, 5], b : [-1, 2], c : [-10, -6], d : [0, 3]
+/// a * b * c *d : [-300, 150]
 fn product_of_ranges(ranges: Vec<&(i32, i32)>) -> (i32, i32) {
     if ranges.is_empty() {
         return (1, 1); // product of zero numbers = 1
@@ -606,6 +612,8 @@ fn cnf_int_min(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     ))
 }
 
+
+/// General function for getting the min or max of two log integers.
 fn tseytin_binary_min_max(
     x: &[Expr],
     y: &[Expr],
