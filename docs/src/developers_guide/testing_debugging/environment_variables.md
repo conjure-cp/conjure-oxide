@@ -21,9 +21,9 @@ Useful variables are included below. Those marked with "Test Config" can also be
 
 | Variable Name | Possible Values | Test Config | Effect |
 | ------------- | --------------- | ----------- | ------ |
-| ACCEPT        | `true` `false`  |  | Accepts all output as ground truth and overwrite "expected" files. This includes parsing, rule rewriting (i.e. the trace and final model), and solutions.
+| ACCEPT        | `true` `false`  |  | Accepts all output as ground truth and overwrite "expected" files. This includes parsing, rule rewriting (trace and rewritten model), and solutions.
 | VERBOSE       | `true` `false`  |  | Prints additional information for each testing stage, including the rewritten model and solutions.
-| SAVE_INPUT | `true` `false` | | Saves the problem to an untracked file in the solver-specific format.
+| SAVE_INPUT | `true` `false` | | Saves the rewritten problem to an untracked file in the solver-specific format.
 | ENABLE_MORPH_IMPL | TODO | ✓ | TODO
 | ENABLE_NAIVE_IMPL | TODO | ✓ | TODO
 | ENABLE_NATIVE_PARSER | TODO | ✓ | TODO
