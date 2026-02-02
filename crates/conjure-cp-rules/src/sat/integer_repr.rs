@@ -226,6 +226,11 @@ fn integer_decision_representation_order(expr: &Expr, symbols: &SymbolTable) -> 
             ]));
         }
 
+        if !bits.is_empty() {
+            // Domain constraint: a >= min, which is b_min.
+            clauses.push(conjure_cp::ast::CnfClause::new(vec![bits[0].clone()]));
+        }
+
         let mut reduction = Reduction::cnf(cnf_int, clauses, symbols);
         reduction.new_top = constraints;
         Ok(reduction)
