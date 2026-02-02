@@ -202,7 +202,8 @@ impl SolverFamily {
         match self {
             SolverFamily::Minion => "minion",
             SolverFamily::Sat => "sat",
-            SolverFamily::Smt => "smt",
+            #[cfg(feature = "smt")]
+            SolverFamily::Smt(_) => "smt",
         }
     }
 }
