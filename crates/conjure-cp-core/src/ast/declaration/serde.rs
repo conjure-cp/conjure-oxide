@@ -1,6 +1,6 @@
 use std::cell::RefCell;
 
-use crate::ast::serde::{DefaultWithId, ObjId};
+use crate::ast::serde::DefaultWithId;
 use crate::ast::{Name, serde::HasId};
 use serde::Deserialize;
 use serde::Serialize;
@@ -56,11 +56,8 @@ use super::{Declaration, DeclarationKind, DeclarationPtr, DeclarationPtrInner};
 /// let json = serde_json::to_value(foo).unwrap();
 ///
 /// let expected_json = json!({
-///     "declaration": {"type_name": "DeclarationPtrInner", "object_id": 0},
-///     "declarations": [
-///       [1, { "type_name": "DeclarationPtrInner", "object_id": 1}],
-///       [2, { "type_name": "DeclarationPtrInner", "object_id": 2}]
-///       ],
+///     "declaration": 0,
+///     "declarations": [(1,1),(2,2)],
 ///     "c": 3
 /// });
 ///
@@ -73,7 +70,7 @@ use super::{Declaration, DeclarationKind, DeclarationPtr, DeclarationPtrInner};
 /// use serde::Deserialize;
 /// use serde_json::json;
 /// use serde_with::serde_as;
-/// use conjure_cp_core::ast::{serde::{HasId,ObjId},declaration::serde::DeclarationPtrAsId,Name,DeclarationKind, DeclarationPtr,Domain,Range, ReturnType};
+/// use conjure_cp_core::ast::{serde::{HasId},declaration::serde::DeclarationPtrAsId,Name,DeclarationKind, DeclarationPtr,Domain,Range, ReturnType};
 ///
 /// // some struct containing a DeclarationPtr.
 /// #[serde_as]
@@ -89,11 +86,8 @@ use super::{Declaration, DeclarationKind, DeclarationPtr, DeclarationPtrInner};
 /// }
 ///
 /// let input_json = json!({
-///     "declaration": { "type_name": "DeclarationPtrInner", "object_id": 10},
-///     "declarations": [
-///       [11, { "type_name": "DeclarationPtrInner", "object_id": 11}],
-///       [12, { "type_name": "DeclarationPtrInner", "object_id": 12}]
-///       ],
+///     "declaration": 10,
+///     "declarations": [(11,11),(12,12)],
 ///     "c": 3
 /// });
 ///
@@ -112,10 +106,11 @@ use super::{Declaration, DeclarationKind, DeclarationPtr, DeclarationPtrInner};
 ///
 /// // but ids should be the same
 ///
-/// assert_eq!(*&foo.declaration.id(),ObjId {type_name: "DeclarationPtrInner".into(), object_id: 10});
-/// assert_eq!(*&foo.declarations[0].1.id(), ObjId { type_name: "DeclarationPtrInner".into(), object_id: 11});
-/// assert_eq!(*&foo.declarations[1].1.id(), ObjId { type_name: "DeclarationPtrInner".into(), object_id: 12});
+/// assert_eq!(*&foo.declaration.id(),10);
+/// assert_eq!(*&foo.declarations[0].1.id(),11);
+/// assert_eq!(*&foo.declarations[1].1.id(),12);
 /// ```
+///
 pub struct DeclarationPtrAsId;
 
 impl SerializeAs<DeclarationPtr> for DeclarationPtrAsId {
@@ -124,7 +119,7 @@ impl SerializeAs<DeclarationPtr> for DeclarationPtrAsId {
         S: serde::Serializer,
     {
         let id = source.id();
-        id.serialize(serializer)
+        serializer.serialize_u32(id)
     }
 }
 
@@ -133,8 +128,7 @@ impl<'de> DeserializeAs<'de, DeclarationPtr> for DeclarationPtrAsId {
     where
         D: serde::Deserializer<'de>,
     {
-        let id = ObjId::deserialize(deserializer)?;
-        assert_eq!(id.type_name.as_str(), DeclarationPtr::TYPE_NAME);
+        let id = u32::deserialize(deserializer)?;
         Ok(DeclarationPtr::default_with_id(id))
     }
 }
@@ -192,19 +186,19 @@ impl<'de> DeserializeAs<'de, DeclarationPtr> for DeclarationPtrAsId {
 ///         "name": { "User": "a"},
 ///         "kind": {"DecisionVariable": {"domain": { "Ground": {"Int": [{"Bounded": [1,5]}]}}, "category":
 ///         "Decision"}},
-///         "id": {"type_name": "DeclarationPtrInner", "object_id": 0}
+///         "id": 0
 ///     },
 ///
 ///     "declarations": [
 ///         [1,{
 ///         "name": { "User": "1"},
-///         "id": {"type_name": "DeclarationPtrInner", "object_id": 1},
+///         "id": 1,
 ///         "kind": {"DecisionVariable": {"domain": { "Ground": {"Int": [{"Bounded": [1,5]}]}},
 ///         "category":"Decision"}},
 ///         }],
 ///         [2,{
 ///         "name": { "User": "2"},
-///         "id": {"type_name": "DeclarationPtrInner", "object_id": 2},
+///         "id": 2,
 ///         "kind": {"DecisionVariable": {"domain": { "Ground": {"Int": [{"Bounded": [1,5]}]}},"category":
 ///         "Decision"}},
 ///         }]
@@ -222,7 +216,7 @@ impl<'de> DeserializeAs<'de, DeclarationPtr> for DeclarationPtrAsId {
 /// use serde::Deserialize;
 /// use serde_json::json;
 /// use serde_with::serde_as;
-/// use conjure_cp_core::ast::{serde::{HasId,ObjId},declaration::serde::DeclarationPtrFull,Name,DeclarationKind, DeclarationPtr,Domain,Range, ReturnType};
+/// use conjure_cp_core::ast::{serde::{HasId},declaration::serde::DeclarationPtrFull,Name,DeclarationKind, DeclarationPtr,Domain,Range, ReturnType};
 ///
 /// // some struct containing a DeclarationPtr.
 /// #[serde_as]
@@ -242,7 +236,7 @@ impl<'de> DeserializeAs<'de, DeclarationPtr> for DeclarationPtrAsId {
 ///         "name": { "User": "a"},
 ///         "kind": {"DecisionVariable": {"domain": {"Ground": {"Int": [{"Bounded": [0,5]}]}}, "category":
 ///         "Decision"}},
-///         "id": {"type_name": "DeclarationPtrInner", "object_id": 10},
+///         "id": 10,
 ///     },
 ///
 ///     "declarations": [
@@ -250,13 +244,13 @@ impl<'de> DeserializeAs<'de, DeclarationPtr> for DeclarationPtrAsId {
 ///         "name": { "User": "1"},
 ///         "kind": {"DecisionVariable": {"domain": {"Ground": {"Int": [{"Bounded": [0,5]}]}}, "category":
 ///         "Decision"}},
-///         "id": {"type_name": "DeclarationPtrInner", "object_id": 11},
+///         "id": 11,
 ///         }],
 ///         [2,{
 ///         "name": { "User": "2"},
 ///         "kind": {"DecisionVariable": {"domain": {"Ground": {"Int": [{"Bounded": [0,5]}]}}, "category":
 ///         "Decision"}},
-///         "id": {"type_name": "DeclarationPtrInner", "object_id": 12},
+///         "id": 12,
 ///         }]
 ///     ],
 ///     "c": 3
@@ -274,9 +268,9 @@ impl<'de> DeserializeAs<'de, DeclarationPtr> for DeclarationPtrAsId {
 /// assert!(matches!(&foo.declarations[1].1.kind() as &DeclarationKind,&DeclarationKind::DecisionVariable(_)));
 ///
 /// // ids should be the same as in the json
-/// assert_eq!(*&foo.declaration.id(), ObjId {type_name: "DeclarationPtrInner".into(), object_id: 10});
-/// assert_eq!(*&foo.declarations[0].1.id(), ObjId {type_name: "DeclarationPtrInner".into(), object_id: 11});
-/// assert_eq!(*&foo.declarations[1].1.id(), ObjId {type_name: "DeclarationPtrInner".into(), object_id: 12});
+/// assert_eq!(*&foo.declaration.id(),10);
+/// assert_eq!(*&foo.declarations[0].1.id(),11);
+/// assert_eq!(*&foo.declarations[1].1.id(),12);
 /// ```
 pub struct DeclarationPtrFull;
 
@@ -287,14 +281,14 @@ pub struct DeclarationPtrFull;
 struct DeclarationSe<'a> {
     name: &'a Name,
     kind: &'a DeclarationKind,
-    id: ObjId,
+    id: u32,
 }
 
 #[derive(Deserialize)]
 struct DeclarationDe {
     name: Name,
     kind: DeclarationKind,
-    id: ObjId,
+    id: u32,
 }
 
 impl SerializeAs<DeclarationPtr> for DeclarationPtrFull {

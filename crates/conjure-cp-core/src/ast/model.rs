@@ -9,7 +9,6 @@ use derivative::Derivative;
 use serde::{Deserialize, Serialize};
 use uniplate::{Biplate, Tree, Uniplate};
 
-use crate::ast::abstract_comprehension::AbstractComprehension;
 use crate::ast::{Expression, Typeable};
 use crate::context::Context;
 
@@ -282,79 +281,20 @@ impl SerdeModel {
             if !id_list.contains(&symbol_table_id) {
                 id_list.push(symbol_table_id);
             }
-
-            // Assuming that all declarations are defined in a symbol table,
-            // collect Declaration IDs by traversing each SubModel's symbol table.
-
-            for decl in submodel.symbols().clone().into_iter_local() {
-                let decl_id = decl.1.id();
-                if !id_list.contains(&decl_id) {
-                    id_list.push(decl_id);
-                }
-            }
         }
-        // Collect IDs by traversing the expression tree
-        //
-        // (Some expressions, e.g. AbstractComprehensions contain SymbolTable's not
-        // contained in submodels).
-        // let exprs: VecDeque<Expression> = self.submodel.universe_bi();
-        // // for symtab in Biplate::<SymbolTable>::universe_bi(&exprs) {
-        //     let symbol_table_id = symtab.id();
-        //     if !id_list.contains(&symbol_table_id) {
-        //         id_list.push(symbol_table_id);
-        //     }
-        //
-        //     for decl in symtab.clone().into_iter_local() {
-        //         let decl_id = decl.1.id();
-        //         if !id_list.contains(&decl_id) {
-        //             id_list.push(decl_id);
-        //         }
-        //     }
-        // }
 
-        // the above doesnt work, as uniplate clones the symbol tables, which change their ids.
-        //
-        // FIXME: add SymbolTablePtr then redo this using that
-
-        // HACK: special case abstract comprehension
-
-        let comps: VecDeque<AbstractComprehension> = self.submodel.constraints().universe_bi();
-        for comp in comps {
-            let symbol_table_id_1 = comp.generator_symbols.borrow().id();
-            let symbol_table_id_2 = comp.return_expr_symbols.borrow().id();
-            if !id_list.contains(&symbol_table_id_1) {
-                id_list.push(symbol_table_id_1);
-            }
-            if !id_list.contains(&symbol_table_id_2) {
-                id_list.push(symbol_table_id_2);
-            }
-
-            for decl in comp.generator_symbols.borrow().clone().into_iter_local() {
-                let decl_id = decl.1.id();
-                if !id_list.contains(&decl_id) {
-                    id_list.push(decl_id);
-                }
-            }
-
-            for decl in comp.return_expr_symbols.borrow().clone().into_iter_local() {
-                let decl_id = decl.1.id();
-                if !id_list.contains(&decl_id) {
-                    id_list.push(decl_id);
-                }
+        // Collect DeclarationPtr IDs by traversing the constraints expression tree
+        for decl_ptr in Biplate::<DeclarationPtr>::universe_bi(self.submodel.constraints()) {
+            let decl_id = decl_ptr.id();
+            if !id_list.contains(&decl_id) {
+                id_list.push(decl_id);
             }
         }
 
         // Create stable mapping: original_id -> stable_id
         let mut id_map = HashMap::new();
-        for (stable_id, original_id) in id_list.into_iter().enumerate() {
-            let type_name = original_id.type_name;
-            id_map.insert(
-                original_id,
-                ObjId {
-                    object_id: stable_id as u32,
-                    type_name,
-                },
-            );
+        for (stable_id, &original_id) in id_list.iter().enumerate() {
+            id_map.insert(original_id, stable_id as ObjId);
         }
 
         id_map

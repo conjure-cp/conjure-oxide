@@ -4,40 +4,30 @@
 //! [`serde_as`](https://docs.rs/serde_with/3.12.0/serde_with/index.html) annotation on AST types.
 
 use std::cell::RefCell;
-use std::fmt::Display;
 use std::rc::Rc;
 
-use serde::Deserialize;
 use serde::Serialize;
+use serde::de::Deserialize;
 use serde::de::Error;
 use serde_with::{DeserializeAs, SerializeAs};
-use ustr::Ustr;
 
-/// A unique id, used to disting
+/// A unique id, used to distinguish between objects of the same type.
+///
 ///
 /// This is used for pointer translation during (de)serialisation.
-#[derive(Clone, Debug, PartialOrd, Ord, PartialEq, Eq, Serialize, Deserialize, Hash)]
-pub struct ObjId {
-    /// a unique identifier of the type of this object
-    pub type_name: Ustr,
-
-    /// unique between objects of the same type
-    pub object_id: u32,
-}
-
-impl Display for ObjId {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "obj_id_{}_{}", self.type_name, self.object_id)
-    }
-}
+pub type ObjId = u32;
 
 /// A type with an [`ObjectId`].
 ///
+/// Each object of the implementing type has a unique id; however, ids are not unique for different
+/// type of objects.
+///
 /// Implementing types should ensure that the id is updated when an object is cloned.
 pub trait HasId {
-    const TYPE_NAME: &'static str;
-
     /// The id of this object.
+    ///
+    /// Each object of this type has a unique id; however, ids are not unique for different type of
+    /// objects.
     fn id(&self) -> ObjId;
 }
 
@@ -69,7 +59,7 @@ where
         S: serde::Serializer,
     {
         let id = (**source).borrow().id();
-        id.serialize(serializer)
+        serializer.serialize_u32(id)
     }
 }
 
@@ -82,8 +72,7 @@ where
     where
         D: serde::Deserializer<'de>,
     {
-        let id = ObjId::deserialize(deserializer).map_err(Error::custom)?;
-        assert_eq!(id.type_name.as_str(), T::TYPE_NAME);
+        let id = u32::deserialize(deserializer).map_err(Error::custom)?;
         Ok(Rc::new(RefCell::new(T::default_with_id(id))))
     }
 }

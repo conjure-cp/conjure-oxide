@@ -20,7 +20,6 @@ use super::serde::{DefaultWithId, HasId, ObjId};
 use itertools::{Itertools as _, izip};
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
-use tracing::trace;
 use uniplate::Tree;
 use uniplate::{Biplate, Uniplate};
 
@@ -112,18 +111,8 @@ impl SymbolTable {
 
     fn new_inner(parent: Option<Rc<RefCell<SymbolTable>>>) -> SymbolTable {
         let id = ID_COUNTER.with(|x| x.fetch_add(1, Ordering::Relaxed));
-        trace!(
-            "new symbol table: id = {id}  parent_id = {}",
-            parent
-                .as_ref()
-                .map(|x| x.borrow().id().to_string())
-                .unwrap_or(String::from("none"))
-        );
         SymbolTable {
-            id: ObjId {
-                type_name: SymbolTable::TYPE_NAME.into(),
-                object_id: id,
-            },
+            id,
             table: BTreeMap::new(),
             next_machine_name: RefCell::new(0),
             parent,
@@ -401,9 +390,8 @@ impl Iterator for IntoIter {
 }
 
 impl HasId for SymbolTable {
-    const TYPE_NAME: &'static str = "SymbolTable";
     fn id(&self) -> ObjId {
-        self.id.clone()
+        self.id
     }
 }
 
@@ -422,10 +410,7 @@ impl Clone for SymbolTable {
     fn clone(&self) -> Self {
         Self {
             table: self.table.clone(),
-            id: ObjId {
-                type_name: SymbolTable::TYPE_NAME.into(),
-                object_id: ID_COUNTER.with(|x| x.fetch_add(1, Ordering::Relaxed)),
-            },
+            id: ID_COUNTER.with(|x| x.fetch_add(1, Ordering::Relaxed)),
             parent: self.parent.clone(),
             next_machine_name: self.next_machine_name.clone(),
         }
@@ -438,30 +423,11 @@ impl Default for SymbolTable {
     }
 }
 
-impl SymbolTable {
-    #[doc(hidden)]
-    // FIXME: remove me once we get SymbolTablePtr
-
-    /// Mainly for uniplate usage
-    pub fn clone_with_same_id(&self) -> Self {
-        // Biplate<Symboltable> instances need to ensure that symbol tables keep their ids.
-        //
-        // this is because we use uniplate to gather symbol table ids in
-        // SerdeModel::collect_stable_id_mappings(),
-        Self {
-            table: self.table.clone(),
-            id: self.id.clone(),
-            parent: self.parent.clone(),
-            next_machine_name: self.next_machine_name.clone(),
-        }
-    }
-}
-
 impl Uniplate for SymbolTable {
     fn uniplate(&self) -> (Tree<Self>, Box<dyn Fn(Tree<Self>) -> Self>) {
         // do not recurse up parents, that would be weird?
-        let self2 = self.clone_with_same_id();
-        (Tree::Zero, Box::new(move |_| self2.clone_with_same_id()))
+        let self2 = self.clone();
+        (Tree::Zero, Box::new(move |_| self2.clone()))
     }
 }
 

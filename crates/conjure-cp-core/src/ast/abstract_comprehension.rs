@@ -1,18 +1,14 @@
 use super::SymbolTable;
 use super::declaration::{DeclarationPtr, serde::DeclarationPtrFull};
 use super::serde::RcRefCellAsInner;
-use crate::ast::{DomainPtr, Expression, Name, ReturnType, SubModel, Typeable};
+use crate::ast::{DomainPtr, Expression, Name, ReturnType, Typeable};
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
-use std::collections::VecDeque;
 use std::fmt::{Display, Formatter};
 use std::{cell::RefCell, hash::Hash, hash::Hasher, rc::Rc};
-use uniplate::{Biplate, Tree, Uniplate};
 
 #[serde_as]
-#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Uniplate)]
-#[biplate(to=Expression)]
-#[biplate(to=SubModel)]
+#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug)]
 pub struct AbstractComprehension {
     pub return_expr: Expression,
     pub qualifiers: Vec<Qualifier>,
@@ -32,57 +28,7 @@ pub struct AbstractComprehension {
     pub generator_symbols: Rc<RefCell<SymbolTable>>,
 }
 
-// FIXME: remove this: https://github.com/conjure-cp/conjure-oxide/issues/1428
-impl Biplate<SymbolTable> for AbstractComprehension {
-    fn biplate(
-        &self,
-    ) -> (
-        uniplate::Tree<SymbolTable>,
-        Box<dyn Fn(uniplate::Tree<SymbolTable>) -> Self>,
-    ) {
-        let return_expr_symbols: SymbolTable = (*self.return_expr_symbols).borrow().clone();
-        let generator_symbols: SymbolTable = (*self.generator_symbols).borrow().clone();
-
-        let (tables_in_exprs_tree, tables_in_exprs_ctx) =
-            Biplate::<SymbolTable>::biplate(&Biplate::<Expression>::children_bi(self));
-
-        let tree = Tree::Many(VecDeque::from([
-            Tree::One(return_expr_symbols),
-            Tree::One(generator_symbols),
-            tables_in_exprs_tree,
-        ]));
-
-        let self2 = self.clone();
-        let ctx = Box::new(move |tree: Tree<SymbolTable>| {
-            let Tree::Many(vs) = tree else {
-                panic!();
-            };
-
-            let Tree::One(return_expr_symbols) = vs[0].clone() else {
-                panic!();
-            };
-
-            let Tree::One(generator_symbols) = vs[1].clone() else {
-                panic!();
-            };
-
-            let self3 = self2.with_children_bi(tables_in_exprs_ctx(vs[2].clone()));
-
-            // WARN: I can't remember if i should change inside the refcell here, or make an new
-            // one (resulting in this symbol table being detached).
-
-            *(self3.return_expr_symbols.borrow_mut()) = return_expr_symbols;
-            *(self3.generator_symbols.borrow_mut()) = generator_symbols;
-
-            self3
-        });
-
-        (tree, ctx)
-    }
-}
-#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Hash, Uniplate)]
-#[biplate(to=Expression)]
-#[biplate(to=SubModel)]
+#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Hash)]
 pub enum Qualifier {
     Generator(Generator),
     Condition(Expression),
@@ -90,36 +36,28 @@ pub enum Qualifier {
 }
 
 #[serde_as]
-#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Hash, Uniplate)]
-#[biplate(to=Expression)]
-#[biplate(to=SubModel)]
+#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Hash)]
 pub struct ComprehensionLetting {
     #[serde_as(as = "DeclarationPtrFull")]
     pub decl: DeclarationPtr,
     pub expression: Expression,
 }
 
-#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Hash, Uniplate)]
-#[biplate(to=Expression)]
-#[biplate(to=SubModel)]
+#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Hash)]
 pub enum Generator {
     DomainGenerator(DomainGenerator),
     ExpressionGenerator(ExpressionGenerator),
 }
 
 #[serde_as]
-#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Hash, Uniplate)]
-#[biplate(to=Expression)]
-#[biplate(to=SubModel)]
+#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Hash)]
 pub struct DomainGenerator {
     #[serde_as(as = "DeclarationPtrFull")]
     pub decl: DeclarationPtr,
 }
 
 #[serde_as]
-#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Hash, Uniplate)]
-#[biplate(to=Expression)]
-#[biplate(to=SubModel)]
+#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Hash)]
 pub struct ExpressionGenerator {
     #[serde_as(as = "DeclarationPtrFull")]
     pub decl: DeclarationPtr,
@@ -140,7 +78,7 @@ impl Typeable for AbstractComprehension {
 
 impl Hash for AbstractComprehension {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        (*self.return_expr_symbols).borrow().hash(state);
+        self.return_expr_symbols.borrow().hash(state);
         self.return_expr.hash(state);
         self.qualifiers.hash(state);
     }
