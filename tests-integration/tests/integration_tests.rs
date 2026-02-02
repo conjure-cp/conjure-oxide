@@ -270,7 +270,8 @@ fn integration_test_inner(
         }
     }
 
-    let solver_input_file = env::var("OXIDE_TEST_SAVE_INPUT_FILE").ok().map(|_| {
+    let save_input = env::var("SAVE_INPUT").unwrap_or("false".to_string()) == "true";
+    let solver_input_file = save_input.then(|| {
         let name = format!("{essence_base}.generated-input.txt");
         Path::new(path).join(Path::new(&name))
     });
