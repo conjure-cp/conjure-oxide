@@ -636,6 +636,12 @@ fn tseytin_select_array(
     clauses: &mut Vec<CnfClause>,
     symbols: &mut SymbolTable,
 ) -> Vec<Expr> {
+    assert_eq!(
+        a.len(),
+        b.len(),
+        "Input vectors 'a' and 'b' must have the same length"
+    );
+
     let mut out = vec![];
 
     let bit_count = a.len();
