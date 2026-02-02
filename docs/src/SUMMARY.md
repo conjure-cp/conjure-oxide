@@ -34,6 +34,10 @@
   - [Semantics of Rewriting Expressions with Side‐Effects](./developers_guide/design_documents/semantics-of-rewriting-expressions.md)
   - [Ideal Scenario of Testing for Conjure-Oxide](./developers_guide/design_documents/ideal-scenario-of-testing.md)
 
+- [Testing and Debugging](./developers_guide/testing_debugging/index.md)
+  - [Integration Testing](./developers_guide/testing_debugging/integration_testing.md)
+  - [Environment Variables](./developers_guide/testing_debugging/environment_variables.md)
+
 <!-- TODO: do we need this? -->
 - [CI/CD](./developers_guide/ci_cd/index.md)
   - [Coverage](./developers_guide/ci_cd/coverage.md)
