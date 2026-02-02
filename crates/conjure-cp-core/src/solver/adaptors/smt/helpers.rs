@@ -1,7 +1,8 @@
-use z3::{Sort, Symbol, ast::*};
-
-use crate::ast::{Atom, Domain, Literal, Name, Range};
+use crate::ast::{Atom, Domain, Literal, Moo, Name, Range};
+use crate::bug;
 use crate::solver::{SolverError, SolverResult};
+use conjure_cp_core::ast::GroundDomain;
+use z3::{Sort, Symbol, ast::*};
 
 use super::store::SymbolStore;
 use super::{IntTheory, TheoryConfig};
@@ -16,18 +17,18 @@ type RestrictFn = Box<dyn Fn(&Dynamic) -> Bool>;
 /// Returns the Oxide domain as a Z3 sort, along with a function to restrict a variable of that sort
 /// to the original domain's restrictions.
 pub fn domain_to_sort(
-    domain: &Domain,
+    domain: &GroundDomain,
     theories: &TheoryConfig,
 ) -> SolverResult<(Sort, RestrictFn)> {
     use IntTheory::{Bv, Lia};
 
     match (theories.ints, domain) {
         // Booleans of course have the same domain in SMT, so no restriction required
-        (_, Domain::Bool) => Ok((Sort::bool(), Box::new(|_| Bool::from_bool(true)))),
+        (_, GroundDomain::Bool) => Ok((Sort::bool(), Box::new(|_| Bool::from_bool(true)))),
 
         // Return a disjunction of the restrictions each range of the domain enforces
         // I.e. `x: int(1, 3..5)` -> `or([x = 1, x >= 3 /\ x <= 5])`
-        (Lia, Domain::Int(ranges)) => {
+        (Lia, GroundDomain::Int(ranges)) => {
             let ranges = ranges.clone();
             let restrict_fn = move |ast: &Dynamic| {
                 let int = ast.as_int().unwrap();
@@ -39,7 +40,7 @@ pub fn domain_to_sort(
             };
             Ok((Sort::int(), Box::new(restrict_fn)))
         }
-        (Bv, Domain::Int(ranges)) => {
+        (Bv, GroundDomain::Int(ranges)) => {
             let ranges = ranges.clone();
             let restrict_fn = move |ast: &Dynamic| {
                 let bv = ast.as_bv().unwrap();
@@ -52,7 +53,7 @@ pub fn domain_to_sort(
             Ok((Sort::bitvector(BV_SIZE), Box::new(restrict_fn)))
         }
 
-        (_, Domain::Matrix(val_domain, idx_domains)) => {
+        (_, GroundDomain::Matrix(val_domain, idx_domains)) => {
             // We constrain the inner values of the domain recursively
             // I.e. every way to index the array must give a value in the correct domain
 
@@ -60,17 +61,20 @@ pub fn domain_to_sort(
                 [_] => domain_to_sort(val_domain, theories),
                 [_, tail @ ..] => {
                     // Treat as a matrix containing (n-1)-dimensional matrices
-                    let inner_domain = Domain::Matrix(val_domain.clone(), tail.to_vec());
+                    let inner_domain = GroundDomain::Matrix(val_domain.clone(), tail.to_vec());
                     domain_to_sort(&inner_domain, theories)
                 }
                 [] => Err(SolverError::ModelInvalid(
                     "empty matrix index domain".into(),
                 )),
             }?;
-            let idx_domain = &idx_domains[0];
-            let (domain_sort, _) = domain_to_sort(idx_domain, theories)?;
 
-            let idx_asts = domain_to_ast_vec(theories, idx_domain)?;
+            // No need to constrain the indices themselves, that's done through SafeIndex/InDomain
+            let idx_domain = &idx_domains[0];
+            let (domain_sort, _) = domain_to_sort(idx_domain.as_ref(), theories)?;
+
+            // Use the lower dimension's restricting fn to restrict all indexes in this dimension
+            let idx_asts = domain_to_ast_vec(theories, idx_domain.as_ref())?;
             let restrict_fn = move |ast: &Dynamic| {
                 let arr = ast.as_array().unwrap();
                 let restrictions: Vec<_> = idx_asts
@@ -85,6 +89,33 @@ pub fn domain_to_sort(
             ))
         }
 
+        (_, GroundDomain::Set(attr, elem_domain)) => {
+            let (val_sort, _) = domain_to_sort(elem_domain, theories)?;
+
+            // Restrict the size of the set
+            let member_asts = domain_to_ast_vec(theories, elem_domain)?;
+            let attr_size = attr.size.clone();
+            let restrict_fn = move |ast: &Dynamic| {
+                let set = ast.as_set().unwrap();
+                let is_member: Vec<_> = member_asts
+                    .iter()
+                    .map(|val| set.member(val).ite(&Int::from(1), &Int::from(0)))
+                    .collect();
+                let size = Int::add(&is_member);
+                match attr_size {
+                    Range::Single(n) => size.eq(Int::from(n)),
+                    Range::UnboundedL(r) => size.le(Int::from(r)),
+                    Range::UnboundedR(l) => size.ge(Int::from(l)),
+                    Range::Bounded(l, r) => {
+                        Bool::and(&[size.ge(Int::from(l)), size.le(Int::from(r))])
+                    }
+                    Range::Unbounded => Bool::from_bool(true),
+                }
+            };
+
+            Ok((Sort::set(&val_sort), Box::new(restrict_fn)))
+        }
+
         _ => Err(SolverError::ModelFeatureNotImplemented(format!(
             "sort for '{domain}' not implemented"
         ))),
@@ -94,13 +125,12 @@ pub fn domain_to_sort(
 /// Returns a domain as a vector of Z3 AST literals.
 pub fn domain_to_ast_vec(
     theory_config: &TheoryConfig,
-    domain: &Domain,
+    domain: &GroundDomain,
 ) -> SolverResult<Vec<Dynamic>> {
     let lits = domain
         .values()
         .map_err(|err| SolverError::Runtime(err.to_string()))?;
-    lits.iter()
-        .map(|lit| literal_to_ast(theory_config, lit))
+    lits.map(|lit| literal_to_ast(theory_config, &lit))
         .collect()
 }
 
@@ -111,6 +141,7 @@ pub fn int_range_to_int_restriction(var: &Int, range: &Range<i32>) -> Bool {
         Range::UnboundedL(r) => var.le(Int::from(*r)),
         Range::UnboundedR(l) => var.ge(Int::from(*l)),
         Range::Bounded(l, r) => Bool::and(&[var.ge(Int::from(*l)), var.le(Int::from(*r))]),
+        _ => bug!("int ranges should not be unbounded"),
     }
 }
 
@@ -124,6 +155,7 @@ pub fn int_range_to_bv_restriction(var: &BV, range: &Range<i32>) -> Bool {
             var.bvsge(BV::from_i64(*l as i64, BV_SIZE)),
             var.bvsle(BV::from_i64(*r as i64, BV_SIZE)),
         ]),
+        _ => bug!("int ranges should not be unbounded"),
     }
 }
 

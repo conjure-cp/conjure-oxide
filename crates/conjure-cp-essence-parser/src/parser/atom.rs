@@ -43,9 +43,8 @@ pub fn parse_atom(
             parse_abstract(node, source_code, symbols_ptr)
                 .map(|l| Expression::AbstractLiteral(Metadata::new(), l))
         }
-        "tuple_matrix_record_index_or_slice" => {
-            parse_index_or_slice(node, source_code, root, symbols_ptr)
-        }
+        "flatten" => parse_flatten(node, source_code, root, symbols_ptr),
+        "index_or_slice" => parse_index_or_slice(node, source_code, root, symbols_ptr),
         // for now, assume is binary since powerset isn't implemented
         // TODO: add powerset support under "set_operation"
         "set_operation" => parse_binary_expression(node, source_code, root, symbols_ptr),
@@ -57,6 +56,30 @@ pub fn parse_atom(
     }
 }
 
+fn parse_flatten(
+    node: &Node,
+    source_code: &str,
+    root: &Node,
+    symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
+) -> Result<Expression, EssenceParseError> {
+    let expr_node = field!(node, "expression");
+    let expr = parse_atom(&expr_node, source_code, root, symbols_ptr)?;
+
+    if node.child_by_field_name("depth").is_some() {
+        let depth_node = field!(node, "depth");
+        let depth = parse_int(&depth_node, source_code)?;
+        let depth_expression =
+            Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(depth)));
+        Ok(Expression::Flatten(
+            Metadata::new(),
+            Some(Moo::new(depth_expression)),
+            Moo::new(expr),
+        ))
+    } else {
+        Ok(Expression::Flatten(Metadata::new(), None, Moo::new(expr)))
+    }
+}
+
 fn parse_index_or_slice(
     node: &Node,
     source_code: &str,
@@ -64,7 +87,7 @@ fn parse_index_or_slice(
     symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
 ) -> Result<Expression, EssenceParseError> {
     let collection = parse_atom(
-        &field!(node, "tuple_or_matrix"),
+        &field!(node, "collection"),
         source_code,
         root,
         symbols_ptr.clone(),

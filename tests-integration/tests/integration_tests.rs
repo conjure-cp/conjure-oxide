@@ -21,6 +21,9 @@ use tracing_subscriber::{
 };
 use tree_morph::{helpers::select_panic, prelude::*};
 
+#[cfg(feature = "smt")]
+use conjure_cp::solver::adaptors::smt::TheoryConfig;
+
 use uniplate::Biplate;
 
 use std::path::Path;
@@ -38,94 +41,13 @@ use conjure_cp_cli::utils::conjure::solutions_to_json;
 use conjure_cp_cli::utils::conjure::{get_solutions, get_solutions_from_conjure};
 use conjure_cp_cli::utils::testing::save_stats_json;
 use conjure_cp_cli::utils::testing::{
-    read_model_json, read_solutions_json, save_model_json, save_solutions_json,
+    REWRITE_SERIALISED_JSON_MAX_LINES, read_model_json, read_model_json_prefix,
+    read_solutions_json, save_model_json, save_solutions_json,
 };
 #[allow(clippy::single_component_path_imports, unused_imports)]
 use conjure_cp_rules;
 use pretty_assertions::assert_eq;
-use serde::Deserialize;
-
-#[derive(Deserialize, Debug)]
-#[serde(default)]
-#[serde(deny_unknown_fields)]
-struct TestConfig {
-    extra_rewriter_asserts: Vec<String>,
-
-    enable_native_parser: bool, // Stage 1a: Use the native parser instead of the legacy parser
-    apply_rewrite_rules: bool,  // Stage 2a: Applies predefined rules to the model
-    enable_extra_validation: bool, // Stage 2b: Runs additional validation checks
-
-    // NOTE: when adding a new solver config, make sure to update num_solvers_enabled!
-    solve_with_minion: bool, // Stage 3a: Solves the model using Minion
-    solve_with_sat: bool,    // TODO - add stage mark
-    solve_with_smt: bool,    // TODO - add stage mark
-
-    compare_solver_solutions: bool, // Stage 3b: Compares Minion and Conjure solutions
-    validate_rule_traces: bool,     // Stage 4a: Checks rule traces against expected outputs
-
-    enable_morph_impl: bool,
-    enable_naive_impl: bool,
-    enable_rewriter_impl: bool,
-}
-
-impl Default for TestConfig {
-    fn default() -> Self {
-        Self {
-            extra_rewriter_asserts: vec!["vector_operators_have_partially_evaluated".into()],
-            enable_naive_impl: true,
-            solve_with_sat: false,
-            solve_with_smt: false,
-            enable_morph_impl: false,
-            enable_rewriter_impl: true,
-            enable_native_parser: true,
-            apply_rewrite_rules: true,
-            enable_extra_validation: false,
-            solve_with_minion: true,
-            compare_solver_solutions: true,
-            validate_rule_traces: true,
-        }
-    }
-}
-
-fn env_var_override_bool(key: &str, default: bool) -> bool {
-    env::var(key).ok().map(|s| s == "true").unwrap_or(default)
-}
-impl TestConfig {
-    fn merge_env(self) -> Self {
-        Self {
-            enable_morph_impl: env_var_override_bool("ENABLE_MORPH_IMPL", self.enable_morph_impl),
-            enable_naive_impl: env_var_override_bool("ENABLE_NAIVE_IMPL", self.enable_naive_impl),
-            enable_native_parser: env_var_override_bool(
-                "ENABLE_NATIVE_PARSER",
-                self.enable_native_parser,
-            ),
-            apply_rewrite_rules: env_var_override_bool(
-                "APPLY_REWRITE_RULES",
-                self.apply_rewrite_rules,
-            ),
-            enable_extra_validation: env_var_override_bool(
-                "ENABLE_EXTRA_VALIDATION",
-                self.enable_extra_validation,
-            ),
-            solve_with_minion: env_var_override_bool("SOLVE_WITH_MINION", self.solve_with_minion),
-            solve_with_sat: env_var_override_bool("SOLVE_WITH_SAT", self.solve_with_sat),
-            solve_with_smt: env_var_override_bool("SOLVE_WITH_SMT", self.solve_with_smt),
-            compare_solver_solutions: env_var_override_bool(
-                "COMPARE_SOLVER_SOLUTIONS",
-                self.compare_solver_solutions,
-            ),
-            validate_rule_traces: env_var_override_bool(
-                "VALIDATE_RULE_TRACES",
-                self.validate_rule_traces,
-            ),
-            enable_rewriter_impl: env_var_override_bool(
-                "ENABLE_REWRITER_IMPL",
-                self.enable_rewriter_impl,
-            ),
-            extra_rewriter_asserts: self.extra_rewriter_asserts, // Not overridden by env vars
-        }
-    }
-}
+use tests_integration::TestConfig;
 
 fn main() {
     let _guard = create_scoped_subscriber("./logs", "test_log", "none_solver");
@@ -321,7 +243,19 @@ fn integration_test_inner(
     // let rewritten_model = if config.apply_rewrite_rules {
     //     // rule set selection based on solver
 
-    //     let rule_sets = resolve_rule_sets(solver, DEFAULT_RULE_SETS)?;
+        let solver_fam = if config.solve_with_sat {
+            SolverFamily::Sat
+        } else if config.solve_with_smt {
+            // SolverFamily::Smt
+             #[cfg(not(feature = "smt"))]
+            panic!("Test {path} uses 'solve_with_smt=true', but the 'smt' feature is disabled!");
+            #[cfg(feature = "smt")]
+            SolverFamily::Smt(TheoryConfig::default())
+        } else {
+            SolverFamily::Minion
+        };
+
+        let rule_sets = resolve_rule_sets(solver_fam, DEFAULT_RULE_SETS)?;
 
     //     let mut model = parsed_model;
 
@@ -373,38 +307,53 @@ fn integration_test_inner(
     //     }
     // }
 
-    // // let solver_input_file = env::var("OXIDE_TEST_SAVE_INPUT_FILE").ok().map(|_| {
-    // //     let name = format!("{essence_base}.generated-input.txt");
-    // //     Path::new(path).join(Path::new(&name))
-    // // });
+    let solver_input_file = env::var("OXIDE_TEST_SAVE_INPUT_FILE").ok().map(|_| {
+        let name = format!("{essence_base}.generated-input.txt");
+        Path::new(path).join(Path::new(&name))
+    });
 
-    // // Stage 3a: Run the model through the solver (run unless explicitly disabled)
-    // let model_arg = rewritten_model
-    //     .as_ref()
-    //     .expect("Rewritten model must be present in 2a")
-    //     .clone();
+    let solver = if config.solve_with_minion {
+        Some(Solver::new(Minion::default()))
+    } else if config.solve_with_sat {
+        Some(Solver::new(Sat::default()))
+    } else if config.solve_with_smt {
+        #[cfg(not(feature = "smt"))]
+        panic!("Test {path} uses 'solve_with_smt=true', but the 'smt' feature is disabled!");
+        #[cfg(feature = "smt")]
+        Some(Solver::new(Smt::default()))
+    } else {
+        None
+    };
 
-    // let solutions = get_solutions(
-    //     match solver {
-    //         SolverFamily::Minion => Solver::new(Minion::default()),
-    //         SolverFamily::Sat => Solver::new(Sat::default()),
-    //         SolverFamily::Smt => Solver::new(Smt::default()),
-    //     },
-    //     model_arg,
-    //     0,
-    //     &None,
-    // )?;
-    // let solutions_json = save_solutions_json(&solutions, path, essence_base, solver)?;
-    // if verbose {
-    //     println!("{solver} solutions: {solutions_json:#?}");
-    // }
+    let solutions = if let Some(solver) = solver {
+        let name = solver.get_name();
+        let family = solver.get_family();
 
-    // // Stage 3b: Check solutions against Conjure (only if explicitly enabled)
-    // if config.compare_solver_solutions || accept {
-    //     let conjure_solutions: Vec<BTreeMap<Name, Literal>> = get_solutions_from_conjure(
-    //         &format!("{path}/{essence_base}.{extension}"),
-    //         Arc::clone(&context),
-    //     )?;
+        let solved = get_solutions(
+            solver,
+            rewritten_model
+                .as_ref()
+                .expect("Rewritten model must be present in 2a")
+                .clone(),
+            0,
+            &solver_input_file,
+        )?;
+        let solutions_json = save_solutions_json(&solved, path, essence_base, family)?;
+        if verbose {
+            println!("{name} solutions: {solutions_json:#?}");
+        }
+        solved
+    } else {
+        println!("Warning: no solver specified");
+        Vec::new()
+    };
+
+    // Stage 3b: Check solutions against Conjure (only if explicitly enabled)
+    if config.compare_solver_solutions && config.num_solvers_enabled() > 0 {
+        let conjure_solutions: Vec<BTreeMap<Name, Literal>> = get_solutions_from_conjure(
+            &format!("{path}/{essence_base}.{extension}"),
+            Arc::clone(&context),
+        )?;
 
     //     let username_solutions = normalize_solutions_for_comparison(&solutions);
     //     let conjure_solutions = normalize_solutions_for_comparison(&conjure_solutions);
@@ -468,31 +417,51 @@ fn integration_test_inner(
     // )?;
     // assert_eq!(model_from_file, expected_model);
 
-    // // Check Stage 2a (rewritten model)
-    // if config.apply_rewrite_rules {
-    //     let expected_model = read_model_json(
-    //         &context,
-    //         path,
-    //         essence_base,
-    //         "expected",
-    //         "rewrite",
-    //         Some(solver),
-    //     )?;
-    //     let generated_model = read_model_json(
-    //         &context,
-    //         path,
-    //         essence_base,
-    //         "generated",
-    //         "rewrite",
-    //         Some(solver),
-    //     )?;
-    //     assert_eq!(generated_model, expected_model);
-    // }
+    // Check Stage 2a (rewritten model)
+    if config.apply_rewrite_rules {
+        let expected_rewrite = read_model_json_prefix(
+            path,
+            essence_base,
+            "expected",
+            "rewrite",
+            REWRITE_SERIALISED_JSON_MAX_LINES,
+        )?;
+        let generated_rewrite = read_model_json_prefix(
+            path,
+            essence_base,
+            "generated",
+            "rewrite",
+            REWRITE_SERIALISED_JSON_MAX_LINES,
+        )?;
+        assert_eq!(generated_rewrite, expected_rewrite);
+    }
 
-    // // Check Stage 3a (solutions)
-    // let expected_solutions_json = read_solutions_json(path, essence_base, "expected", solver)?;
-    // let username_solutions_json = solutions_to_json(&solutions);
-    // assert_eq!(username_solutions_json, expected_solutions_json);
+    // Check Stage 3a (solutions)
+    if config.solve_with_minion {
+        let expected_solutions_json =
+            read_solutions_json(path, essence_base, "expected", SolverFamily::Minion)?;
+        let username_solutions_json = solutions_to_json(&solutions);
+        assert_eq!(username_solutions_json, expected_solutions_json);
+    } else if config.solve_with_sat {
+        let expected_solutions_json =
+            read_solutions_json(path, essence_base, "expected", SolverFamily::Sat)?;
+        let username_solutions_json = solutions_to_json(&solutions);
+        assert_eq!(username_solutions_json, expected_solutions_json);
+    } else if config.solve_with_smt {
+        #[cfg(not(feature = "smt"))]
+        panic!("Test {path} uses 'solve_with_smt=true', but the 'smt' feature is disabled!");
+        #[cfg(feature = "smt")]
+        {
+            let expected_solutions_json = read_solutions_json(
+                path,
+                essence_base,
+                "expected",
+                SolverFamily::Smt(TheoryConfig::default()),
+            )?;
+            let username_solutions_json = solutions_to_json(&solutions);
+            assert_eq!(username_solutions_json, expected_solutions_json);
+        }
+    }
 
     // // TODO: Implement rule trace validation for morph
     // if config.validate_rule_traces && !config.enable_morph_impl {

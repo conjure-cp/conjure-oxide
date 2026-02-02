@@ -6,6 +6,7 @@ use std::{
     path::PathBuf,
     process::exit,
     sync::{Arc, RwLock},
+    time::Duration,
 };
 
 use anyhow::{anyhow, ensure};
@@ -143,13 +144,19 @@ pub(crate) fn init_context(
 }
 
 pub(crate) fn init_solver(global_args: &GlobalArgs) -> Solver {
-    match global_args.solver {
+    let family = global_args.solver;
+    let solver_timeout = global_args
+        .solver_timeout
+        .map(|dur| Duration::from(dur).as_millis());
+
+    match family {
         SolverFamily::Minion => Solver::new(Minion::default()),
         SolverFamily::Sat => Solver::new(Sat::default()),
-        SolverFamily::Smt => Solver::new(Smt::new(
-            global_args.smt_int_theory,
-            global_args.smt_matrix_theory,
-        )),
+        #[cfg(feature = "smt")]
+        SolverFamily::Smt(theory_cfg) => {
+            let timeout_ms = solver_timeout.map(|ms| u64::try_from(ms).expect("Timeout too large"));
+            Solver::new(Smt::new(timeout_ms, theory_cfg))
+        }
     }
 }
 

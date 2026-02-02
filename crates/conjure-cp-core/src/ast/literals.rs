@@ -2,18 +2,16 @@ use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 use std::hash::Hash;
-use std::hash::Hasher;
 use ustr::Ustr;
 
+use super::{
+    Atom, Domain, DomainPtr, Expression, GroundDomain, Metadata, Moo, Range, ReturnType, SetAttr,
+    Typeable, domains::HasDomain, domains::Int, records::RecordValue,
+};
+use crate::ast::pretty::pretty_vec;
+use crate::bug;
 use polyquine::Quine;
 use uniplate::{Biplate, Tree, Uniplate};
-
-use crate::ast::Metadata;
-use crate::ast::pretty::pretty_vec;
-
-use super::domains::HasDomain;
-use super::{Atom, Domain, Expression, Range, records::RecordValue};
-use super::{Moo, ReturnType, SetAttr, Typeable};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate, Hash, Quine)]
 #[uniplate(walk_into=[AbstractLiteral<Literal>])]
@@ -34,10 +32,10 @@ pub enum Literal {
 }
 
 impl HasDomain for Literal {
-    fn domain_of(&self) -> Domain {
+    fn domain_of(&self) -> DomainPtr {
         match self {
-            Literal::Int(i) => Domain::Int(vec![Range::Single(*i)]),
-            Literal::Bool(_) => Domain::Bool,
+            Literal::Int(i) => Domain::int(vec![Range::Single(*i)]),
+            Literal::Bool(_) => Domain::bool(),
             Literal::AbstractLiteral(abstract_literal) => abstract_literal.domain_of(),
         }
     }
@@ -47,52 +45,59 @@ impl HasDomain for Literal {
 pub trait AbstractLiteralValue:
     Clone + Eq + PartialEq + Display + Uniplate + Biplate<RecordValue<Self>> + 'static
 {
+    type Dom: Clone + Eq + PartialEq + Display + Quine + From<GroundDomain> + Into<DomainPtr>;
 }
-impl AbstractLiteralValue for Expression {}
-impl AbstractLiteralValue for Literal {}
+impl AbstractLiteralValue for Expression {
+    type Dom = DomainPtr;
+}
+impl AbstractLiteralValue for Literal {
+    type Dom = Moo<GroundDomain>;
+}
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Quine)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
 #[path_prefix(conjure_cp::ast)]
 pub enum AbstractLiteral<T: AbstractLiteralValue> {
     Set(Vec<T>),
 
     /// A 1 dimensional matrix slice with an index domain.
-    Matrix(Vec<T>, Box<Domain>),
+    Matrix(Vec<T>, T::Dom),
 
     // a tuple of literals
     Tuple(Vec<T>),
 
     Record(Vec<RecordValue<T>>),
+
+    Function(Vec<(T, T)>),
 }
 
 // TODO: use HasDomain instead once Expression::domain_of returns Domain not Option<Domain>
 impl AbstractLiteral<Expression> {
-    pub fn domain_of(&self) -> Option<Domain> {
+    pub fn domain_of(&self) -> Option<DomainPtr> {
         match self {
             AbstractLiteral::Set(items) => {
                 // ensure that all items have a domain, or return None
-                let item_domains: Vec<Domain> = items
+                let item_domains: Vec<DomainPtr> = items
                     .iter()
                     .map(|x| x.domain_of())
-                    .collect::<Option<Vec<Domain>>>()?;
+                    .collect::<Option<Vec<DomainPtr>>>()?;
 
                 // union all item domains together
                 let mut item_domain_iter = item_domains.iter().cloned();
                 let first_item = item_domain_iter.next()?;
                 let item_domain = item_domains
                     .iter()
-                    .try_fold(first_item, |x: Domain, y| x.union(y))
+                    .try_fold(first_item, |x, y| x.union(y))
                     .expect("taking the union of all item domains of a set literal should succeed");
 
-                Some(Domain::Set(SetAttr::None, Box::new(item_domain)))
+                Some(Domain::set(SetAttr::<Int>::default(), item_domain))
             }
 
             AbstractLiteral::Matrix(items, _) => {
                 // ensure that all items have a domain, or return None
-                let item_domains: Vec<Domain> = items
+                let item_domains = items
                     .iter()
                     .map(|x| x.domain_of())
-                    .collect::<Option<Vec<Domain>>>()?;
+                    .collect::<Option<Vec<DomainPtr>>>()?;
 
                 // union all item domains together
                 let mut item_domain_iter = item_domains.iter().cloned();
@@ -101,7 +106,7 @@ impl AbstractLiteral<Expression> {
 
                 let item_domain = item_domains
                     .iter()
-                    .try_fold(first_item, |x: Domain, y| x.union(y))
+                    .try_fold(first_item, |x, y| x.union(y))
                     .expect(
                         "taking the union of all item domains of a matrix literal should succeed",
                     );
@@ -112,65 +117,55 @@ impl AbstractLiteral<Expression> {
                 let mut e = Expression::AbstractLiteral(Metadata::new(), self.clone());
                 while let Expression::AbstractLiteral(_, AbstractLiteral::Matrix(elems, idx)) = e {
                     assert!(
-                        !matches!(idx.as_ref(), Domain::Matrix(_, _)),
-                        "n-dimensional matrix literals should be represented as a matrix inside a matrix"
+                        idx.as_matrix().is_none(),
+                        "n-dimensional matrix literals should be represented as a matrix inside a matrix, got {idx}"
                     );
-                    new_index_domain.push(idx.as_ref().clone());
+                    new_index_domain.push(idx);
                     e = elems[0].clone();
                 }
-                Some(Domain::Matrix(Box::new(item_domain), new_index_domain))
+                Some(Domain::matrix(item_domain, new_index_domain))
             }
             AbstractLiteral::Tuple(_) => None,
             AbstractLiteral::Record(_) => None,
+            AbstractLiteral::Function(_) => None,
         }
-    }
-
-    pub fn list(exprs: Vec<Expression>) -> Self {
-        let domain = Domain::Int(vec![Range::UnboundedR(1)]);
-        AbstractLiteral::Matrix(exprs, Box::new(domain))
     }
 }
 
 impl HasDomain for AbstractLiteral<Literal> {
-    fn domain_of(&self) -> Domain {
-        Domain::from_literal_vec(vec![Literal::AbstractLiteral(self.clone())])
+    fn domain_of(&self) -> DomainPtr {
+        Domain::from_literal_vec(&[Literal::AbstractLiteral(self.clone())])
             .expect("abstract literals should be correctly typed")
     }
 }
 
 impl Typeable for AbstractLiteral<Expression> {
-    fn return_type(&self) -> Option<ReturnType> {
+    fn return_type(&self) -> ReturnType {
         match self {
             AbstractLiteral::Set(items) if items.is_empty() => {
-                Some(ReturnType::Set(Box::new(ReturnType::Unknown)))
+                ReturnType::Set(Box::new(ReturnType::Unknown))
             }
             AbstractLiteral::Set(items) => {
-                let item_type = items[0].return_type()?;
+                let item_type = items[0].return_type();
 
                 // if any items do not have a type, return none.
-                let item_types: Option<Vec<ReturnType>> =
-                    items.iter().map(|x| x.return_type()).collect();
-
-                let item_types = item_types?;
+                let item_types: Vec<ReturnType> = items.iter().map(|x| x.return_type()).collect();
 
                 assert!(
                     item_types.iter().all(|x| x == &item_type),
                     "all items in a set should have the same type"
                 );
 
-                Some(ReturnType::Set(Box::new(item_type)))
+                ReturnType::Set(Box::new(item_type))
             }
             AbstractLiteral::Matrix(items, _) if items.is_empty() => {
-                Some(ReturnType::Matrix(Box::new(ReturnType::Unknown)))
+                ReturnType::Matrix(Box::new(ReturnType::Unknown))
             }
             AbstractLiteral::Matrix(items, _) => {
-                let item_type = items[0].return_type()?;
+                let item_type = items[0].return_type();
 
                 // if any items do not have a type, return none.
-                let item_types: Option<Vec<ReturnType>> =
-                    items.iter().map(|x| x.return_type()).collect();
-
-                let item_types = item_types?;
+                let item_types: Vec<ReturnType> = items.iter().map(|x| x.return_type()).collect();
 
                 assert!(
                     item_types.iter().all(|x| x == &item_type),
@@ -179,24 +174,47 @@ impl Typeable for AbstractLiteral<Expression> {
                     types = items
                         .iter()
                         .map(|x| x.return_type())
-                        .collect::<Vec<Option<ReturnType>>>()
+                        .collect::<Vec<ReturnType>>()
                 );
 
-                Some(ReturnType::Matrix(Box::new(item_type)))
+                ReturnType::Matrix(Box::new(item_type))
             }
             AbstractLiteral::Tuple(items) => {
                 let mut item_types = vec![];
                 for item in items {
-                    item_types.push(item.return_type()?);
+                    item_types.push(item.return_type());
                 }
-                Some(ReturnType::Tuple(item_types))
+                ReturnType::Tuple(item_types)
             }
             AbstractLiteral::Record(items) => {
                 let mut item_types = vec![];
                 for item in items {
-                    item_types.push(item.value.return_type()?);
+                    item_types.push(item.value.return_type());
                 }
-                Some(ReturnType::Record(item_types))
+                ReturnType::Record(item_types)
+            }
+            AbstractLiteral::Function(items) => {
+                if items.is_empty() {
+                    return ReturnType::Function(
+                        Box::new(ReturnType::Unknown),
+                        Box::new(ReturnType::Unknown),
+                    );
+                }
+
+                // Check that all items have the same return type
+                let (x1, y1) = &items[0];
+                let (t1, t2) = (x1.return_type(), y1.return_type());
+                for (x, y) in items {
+                    let (tx, ty) = (x.return_type(), y.return_type());
+                    if tx != t1 {
+                        bug!("Expected {t1}, got {x}: {tx}");
+                    }
+                    if ty != t2 {
+                        bug!("Expected {t2}, got {y}: {ty}");
+                    }
+                }
+
+                ReturnType::Function(Box::new(t1), Box::new(t2))
             }
         }
     }
@@ -210,7 +228,7 @@ where
     ///
     /// This acts as a variable sized list.
     pub fn matrix_implied_indices(elems: Vec<T>) -> Self {
-        AbstractLiteral::Matrix(elems, Box::new(Domain::Int(vec![Range::UnboundedR(1)])))
+        AbstractLiteral::Matrix(elems, GroundDomain::Int(vec![Range::UnboundedR(1)]).into())
     }
 
     /// If the AbstractLiteral is a list, returns its elements.
@@ -222,7 +240,8 @@ where
             return None;
         };
 
-        let Domain::Int(ranges) = domain.as_ref() else {
+        let domain: DomainPtr = domain.clone().into();
+        let Some(GroundDomain::Int(ranges)) = domain.as_ground() else {
             return None;
         };
 
@@ -259,29 +278,12 @@ where
                     .join(",");
                 write!(f, "{{{entries_str}}}")
             }
-        }
-    }
-}
-
-impl Hash for AbstractLiteral<Literal> {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        match self {
-            AbstractLiteral::Set(vec) => {
-                0.hash(state);
-                vec.hash(state);
-            }
-            AbstractLiteral::Matrix(elems, index_domain) => {
-                1.hash(state);
-                elems.hash(state);
-                index_domain.hash(state);
-            }
-            AbstractLiteral::Tuple(elems) => {
-                2.hash(state);
-                elems.hash(state);
-            }
-            AbstractLiteral::Record(entries) => {
-                3.hash(state);
-                entries.hash(state);
+            AbstractLiteral::Function(entries) => {
+                let entries_str: String = entries
+                    .iter()
+                    .map(|entry| format!("{} --> {}", entry.0, entry.1))
+                    .join(",");
+                write!(f, "function({entries_str})")
             }
         }
     }
@@ -318,6 +320,35 @@ where
                 (
                     f1_tree,
                     Box::new(move |x| AbstractLiteral::Record(f1_ctx(x))),
+                )
+            }
+            AbstractLiteral::Function(entries) => {
+                let entry_count = entries.len();
+                let flattened: Vec<T> = entries
+                    .iter()
+                    .flat_map(|(lhs, rhs)| [lhs.clone(), rhs.clone()])
+                    .collect();
+
+                let (f1_tree, f1_ctx) =
+                    <Vec<T> as Biplate<AbstractLiteral<T>>>::biplate(&flattened);
+                (
+                    f1_tree,
+                    Box::new(move |x| {
+                        let rebuilt = f1_ctx(x);
+                        assert_eq!(
+                            rebuilt.len(),
+                            entry_count * 2,
+                            "number of function literal children should remain unchanged"
+                        );
+
+                        let mut iter = rebuilt.into_iter();
+                        let mut pairs = Vec::with_capacity(entry_count);
+                        while let (Some(lhs), Some(rhs)) = (iter.next(), iter.next()) {
+                            pairs.push((lhs, rhs));
+                        }
+
+                        AbstractLiteral::Function(pairs)
+                    }),
                 )
             }
         }
@@ -375,6 +406,34 @@ where
                     (
                         f1_tree,
                         Box::new(move |x| AbstractLiteral::Record(f1_ctx(x))),
+                    )
+                }
+                AbstractLiteral::Function(entries) => {
+                    let entry_count = entries.len();
+                    let flattened: Vec<U> = entries
+                        .iter()
+                        .flat_map(|(lhs, rhs)| [lhs.clone(), rhs.clone()])
+                        .collect();
+
+                    let (f1_tree, f1_ctx) = <Vec<U> as Biplate<To>>::biplate(&flattened);
+                    (
+                        f1_tree,
+                        Box::new(move |x| {
+                            let rebuilt = f1_ctx(x);
+                            assert_eq!(
+                                rebuilt.len(),
+                                entry_count * 2,
+                                "number of function literal children should remain unchanged"
+                            );
+
+                            let mut iter = rebuilt.into_iter();
+                            let mut pairs = Vec::with_capacity(entry_count);
+                            while let (Some(lhs), Some(rhs)) = (iter.next(), iter.next()) {
+                                pairs.push((lhs, rhs));
+                            }
+
+                            AbstractLiteral::Function(pairs)
+                        }),
                     )
                 }
             }
@@ -474,7 +533,19 @@ impl AbstractLiteral<Expression> {
     /// Otherwise, returns `None`.
     pub fn into_literals(self) -> Option<AbstractLiteral<Literal>> {
         match self {
-            AbstractLiteral::Set(_) => todo!(),
+            AbstractLiteral::Set(elements) => {
+                let literals = elements
+                    .into_iter()
+                    .map(|expr| match expr {
+                        Expression::Atomic(_, Atom::Literal(lit)) => Some(lit),
+                        Expression::AbstractLiteral(_, abslit) => {
+                            Some(Literal::AbstractLiteral(abslit.into_literals()?))
+                        }
+                        _ => None,
+                    })
+                    .collect::<Option<Vec<_>>>()?;
+                Some(AbstractLiteral::Set(literals))
+            }
             AbstractLiteral::Matrix(items, domain) => {
                 let mut literals = vec![];
                 for item in items {
@@ -488,7 +559,7 @@ impl AbstractLiteral<Expression> {
                     literals.push(literal);
                 }
 
-                Some(AbstractLiteral::Matrix(literals, domain))
+                Some(AbstractLiteral::Matrix(literals, domain.resolve()?))
             }
             AbstractLiteral::Tuple(items) => {
                 let mut literals = vec![];
@@ -528,6 +599,7 @@ impl AbstractLiteral<Expression> {
                         .collect(),
                 ))
             }
+            AbstractLiteral::Function(_) => todo!("Implement into_literals for functions"),
         }
     }
 }
@@ -554,20 +626,21 @@ mod tests {
     fn matrix_uniplate_universe() {
         // Can we traverse through matrices with uniplate?
         let my_matrix: AbstractLiteral<Literal> = into_matrix![
-            vec![Literal::AbstractLiteral(matrix![Literal::Bool(true);Domain::Bool]); 5];
-            Domain::Bool
+            vec![Literal::AbstractLiteral(matrix![Literal::Bool(true);Moo::new(GroundDomain::Bool)]); 5];
+            Moo::new(GroundDomain::Bool)
         ];
 
-        let expected_index_domains = vec![Domain::Bool; 6];
-        let actual_index_domains: Vec<Domain> = my_matrix.cata(&move |elem, children| {
-            let mut res = vec![];
-            res.extend(children.into_iter().flatten());
-            if let AbstractLiteral::Matrix(_, index_domain) = elem {
-                res.push(*index_domain);
-            }
+        let expected_index_domains = vec![Moo::new(GroundDomain::Bool); 6];
+        let actual_index_domains: Vec<Moo<GroundDomain>> =
+            my_matrix.cata(&move |elem, children| {
+                let mut res = vec![];
+                res.extend(children.into_iter().flatten());
+                if let AbstractLiteral::Matrix(_, index_domain) = elem {
+                    res.push(index_domain);
+                }
 
-            res
-        });
+                res
+            });
 
         assert_eq!(actual_index_domains, expected_index_domains);
     }

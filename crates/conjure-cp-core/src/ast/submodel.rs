@@ -1,5 +1,6 @@
 use super::{
-    Atom, DeclarationPtr, Literal, Moo,
+    Atom, CnfClause, DeclarationPtr, Expression, Literal, Metadata, Moo, ReturnType, SymbolTable,
+    Typeable,
     comprehension::Comprehension,
     declaration::DeclarationKind,
     pretty::{
@@ -13,15 +14,14 @@ use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use uniplate::{Biplate, Tree, Uniplate};
 
-use crate::{ast::Metadata, bug, into_matrix_expr};
+use crate::{bug, into_matrix_expr};
+use std::hash::{Hash, Hasher};
 use std::{
     cell::{Ref, RefCell, RefMut},
     collections::VecDeque,
     fmt::Display,
     rc::Rc,
 };
-
-use super::{CnfClause, Expression, ReturnType, SymbolTable, types::Typeable};
 
 /// A sub-model, representing a lexical scope in the model.
 ///
@@ -201,8 +201,16 @@ impl SubModel {
 }
 
 impl Typeable for SubModel {
-    fn return_type(&self) -> Option<super::ReturnType> {
-        Some(ReturnType::Bool)
+    fn return_type(&self) -> ReturnType {
+        ReturnType::Bool
+    }
+}
+
+impl Hash for SubModel {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.symbols.borrow().hash(state);
+        self.constraints.hash(state);
+        self.cnf_clauses.hash(state);
     }
 }
 
@@ -235,6 +243,9 @@ impl Display for SubModel {
                 DeclarationKind::Given(d) => {
                     writeln!(f, "given {name}: {d}")?;
                 }
+                DeclarationKind::GivenQuantified(inner) => {
+                    writeln!(f, "given {name}: {}", inner.domain())?;
+                }
 
                 DeclarationKind::RecordField(_) => {
                     // Do not print a record field as it is an internal type
@@ -244,9 +255,10 @@ impl Display for SubModel {
             }
         }
 
-        writeln!(f, "\nsuch that\n")?;
-
-        writeln!(f, "{}", pretty_expressions_as_top_level(self.constraints()))?;
+        if !self.constraints().is_empty() {
+            writeln!(f, "\nsuch that\n")?;
+            writeln!(f, "{}", pretty_expressions_as_top_level(self.constraints()))?;
+        }
 
         if !self.clauses().is_empty() {
             writeln!(f, "\nclauses:\n")?;

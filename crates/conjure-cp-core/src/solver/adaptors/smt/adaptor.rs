@@ -1,4 +1,6 @@
-use z3::Solver;
+use std::sync::Mutex;
+
+use z3::{Config, PrepareSynchronized, Solver, Translate, with_z3_config};
 
 use super::convert_model::*;
 use super::store::*;
@@ -17,6 +19,8 @@ pub struct Smt {
     /// Assertions are added to this solver instance when loading the model.
     solver_inst: Solver,
 
+    solver_cfg: Config,
+
     theory_config: TheoryConfig,
 }
 
@@ -28,6 +32,7 @@ impl Default for Smt {
             __non_constructable: private::Internal,
             store: SymbolStore::new(TheoryConfig::default()),
             solver_inst: Solver::new(),
+            solver_cfg: Config::new(),
             theory_config: TheoryConfig::default(),
         }
     }
@@ -35,14 +40,14 @@ impl Default for Smt {
 
 impl Smt {
     /// Constructs a new adaptor using the given theories for representing the relevant constructs.
-    pub fn new(int_theory: IntTheory, matrix_theory: MatrixTheory) -> Self {
-        let theories = TheoryConfig {
-            ints: int_theory,
-            matrices: matrix_theory,
-        };
+    pub fn new(timeout_msec: Option<u64>, theory_config: TheoryConfig) -> Self {
+        let mut solver_cfg = Config::new();
+        timeout_msec.inspect(|ms| solver_cfg.set_timeout_msec(*ms));
+
         Smt {
-            theory_config: theories.clone(),
-            store: SymbolStore::new(theories),
+            theory_config,
+            solver_cfg,
+            store: SymbolStore::new(theory_config),
             ..Default::default()
         }
     }
@@ -54,16 +59,22 @@ impl SolverAdaptor for Smt {
         callback: SolverCallback,
         _: private::Internal,
     ) -> Result<SolveSuccess, SolverError> {
-        let solutions = self
-            .solver_inst
-            .solutions(&self.store, true)
-            .take_while(|store| (callback)(store.as_literals_map().unwrap()));
+        let solver_send = self.solver_inst.synchronized();
+        let store_send = self.store.synchronized();
 
-        // Consume iterator and get whether there are solutions
-        let search_complete = match solutions.count() {
-            0 => SearchComplete::NoSolutions,
-            _ => SearchComplete::HasSolutions,
-        };
+        // Apply config when getting solutions
+        let search_complete = with_z3_config(&self.solver_cfg, move || {
+            let solver = solver_send.recover();
+            let solutions = solver
+                .solutions(store_send.recover(), true)
+                .take_while(|store| (callback)(store.as_literals_map().unwrap()));
+
+            // Consume iterator and get whether there are solutions
+            match solutions.count() {
+                0 => SearchComplete::NoSolutions,
+                _ => SearchComplete::HasSolutions,
+            }
+        });
 
         Ok(SolveSuccess {
             // TODO: get solver stats
@@ -93,7 +104,7 @@ impl SolverAdaptor for Smt {
     }
 
     fn get_family(&self) -> SolverFamily {
-        SolverFamily::Smt
+        SolverFamily::Smt(self.theory_config)
     }
 
     fn get_name(&self) -> &'static str {
