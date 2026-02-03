@@ -300,65 +300,27 @@ fn integration_test_inner(
         None
     };
 
-
-    // // Stage 2b: Check model properties (extra_asserts) (Verify additional model properties)
-    // // (e.g., ensure vector operators are evaluated). (only if explicitly enabled)
-    // if config.enable_extra_validation {
-    //     for extra_assert in config.extra_rewriter_asserts.clone() {
-    //         match extra_assert.as_str() {
-    //             "vector_operators_have_partially_evaluated" => {
-    //                 assert_vector_operators_have_partially_evaluated(
-    //                     rewritten_model.as_ref().expect("Rewritten model required"),
-    //                 );
-    //             }
-    //             x => println!("Unrecognised extra assert: {x}"),
-    //         };
-    //     }
-    // }
+    // Stage 2b: Check model properties (extra_asserts) (Verify additional model properties)
+    // (e.g., ensure vector operators are evaluated). (only if explicitly enabled)
+    if config.enable_extra_validation {
+        for extra_assert in config.extra_rewriter_asserts.clone() {
+            match extra_assert.as_str() {
+                "vector_operators_have_partially_evaluated" => {
+                    assert_vector_operators_have_partially_evaluated(
+                        rewritten_model.as_ref().expect("Rewritten model required"),
+                    );
+                }
+                x => println!("Unrecognised extra assert: {x}"),
+            };
+        }
+    }
 
     let solver_input_file = env::var("OXIDE_TEST_SAVE_INPUT_FILE").ok().map(|_| {
         let name = format!("{essence_base}.generated-input.txt");
         Path::new(path).join(Path::new(&name))
     });
 
-    // let solver = if config.solve_with_minion {
-    //     println!("Calling accept asjkl;dasgfjkl;adsfjkl;");
-    //     Some(Solver::new(Minion::default()))
-    // } else if config.solve_with_sat {
-    //     Some(Solver::new(Sat::default()))
-    // } else if config.solve_with_smt {
-    //     #[cfg(not(feature = "smt"))]
-    //     panic!("Test {path} uses 'solve_with_smt=true', but the 'smt' feature is disabled!");
-    //     #[cfg(feature = "smt")]
-    //     Some(Solver::new(Smt::default()))
-    // } else {
-    //     None
-    // };
-
     println!("Calling accept asjkl;dasgfjkl;adsfjkl;");
-        
-    // let solutions = if let Some(solver) = solver {
-    //     let name = solver.get_name();
-    //     let family = solver.get_family();
-
-    //     let solved = get_solutions(
-    //         solver,
-    //         rewritten_model
-    //             .as_ref()
-    //             .expect("Rewritten model must be present in 2a")
-    //             .clone(),
-    //         0,
-    //         &solver_input_file,
-    //     )?;
-    //     let solutions_json = save_solutions_json(&solved, path, essence_base, family)?;
-    //     if verbose {
-    //         println!("{name} solutions: {solutions_json:#?}");
-    //     }
-    //     solved
-    // } else {
-    //     println!("Warning: no solver specified");
-    //     Vec::new()
-    // };
 
     let solver = match solver_fam {
         SolverFamily::Minion => Solver::new(Minion::default()),
@@ -388,27 +350,27 @@ fn integration_test_inner(
     println!("Calling accept asjkl;dasgfjkl;adsfjkl;");
 
     // Stage 3b: Check solutions against Conjure (only if explicitly enabled)
-    // if config.compare_solver_solutions && config.num_solvers_enabled() > 0 {
-    //     let conjure_solutions: Vec<BTreeMap<Name, Literal>> = get_solutions_from_conjure(
-    //         &format!("{path}/{essence_base}.{extension}"),
-    //         Arc::clone(&context),
-    //     )?;
+    if config.compare_solver_solutions && config.num_solvers_enabled() > 0 {
+        let conjure_solutions: Vec<BTreeMap<Name, Literal>> = get_solutions_from_conjure(
+            &format!("{path}/{essence_base}.{extension}"),
+            Arc::clone(&context),
+        )?;
     // }
 
-    //     let username_solutions = normalize_solutions_for_comparison(&solutions);
-    //     let conjure_solutions = normalize_solutions_for_comparison(&conjure_solutions);
+        let username_solutions = normalize_solutions_for_comparison(&solutions);
+        let conjure_solutions = normalize_solutions_for_comparison(&conjure_solutions);
 
-    //     let mut conjure_solutions_json = solutions_to_json(&conjure_solutions);
-    //     let mut username_solutions_json = solutions_to_json(&username_solutions);
+        let mut conjure_solutions_json = solutions_to_json(&conjure_solutions);
+        let mut username_solutions_json = solutions_to_json(&username_solutions);
 
-    //     conjure_solutions_json.sort_all_objects();
-    //     username_solutions_json.sort_all_objects();
+        conjure_solutions_json.sort_all_objects();
+        username_solutions_json.sort_all_objects();
 
-    //     assert_eq!(
-    //         username_solutions_json, conjure_solutions_json,
-    //         "Solutions (<) do not match conjure (>)!"
-    //     );
-    // }
+        assert_eq!(
+            username_solutions_json, conjure_solutions_json,
+            "Solutions (<) do not match conjure (>)!"
+        );
+    }
 
     // When ACCEPT=true, copy all generated files to expected
     println!("Calling accept");
@@ -524,17 +486,17 @@ fn integration_test_inner(
     }
 
     // // TODO: Implement rule trace validation for morph
-    // if config.validate_rule_traces && !config.enable_morph_impl {
-    //     let generated = read_human_rule_trace(path, essence_base, "generated", &solver)?;
-    //     let expected = read_human_rule_trace(path, essence_base, "expected", &solver)?;
+    if config.validate_rule_traces && !config.enable_morph_impl {
+        let generated = read_human_rule_trace(path, essence_base, "generated", &solver_fam)?;
+        let expected = read_human_rule_trace(path, essence_base, "expected", &solver_fam)?;
 
-    //     assert_eq!(
-    //         expected, generated,
-    //         "Generated rule trace does not match the expected trace!"
-    //     );
-    // };
+        assert_eq!(
+            expected, generated,
+            "Generated rule trace does not match the expected trace!"
+        );
+    };
 
-    // save_stats_json(context, path, essence_base, solver)?;
+    save_stats_json(context, path, essence_base, solver_fam)?;
 
     Ok(())
 }
