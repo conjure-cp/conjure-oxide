@@ -114,11 +114,12 @@ impl AbstractComprehensionBuilder {
             .expect("Expression must contain elements with uniform domain");
 
         let generator_decl = DeclarationPtr::new_var_quantified(name, domain);
+        self.symbols.borrow_mut().insert(generator_decl.clone());
 
         self.qualifiers
             .push(Qualifier::Generator(Generator::ExpressionGenerator(
                 ExpressionGenerator {
-                    decl: generator_decl.clone(),
+                    decl: generator_decl,
                     expression: expr,
                 },
             )));
