@@ -1,14 +1,15 @@
 use super::SymbolTable;
 use super::declaration::{DeclarationPtr, serde::DeclarationPtrFull};
-use super::serde::RcRefCellAsInner;
 use crate::ast::{DomainPtr, Expression, Name, ReturnType, Typeable};
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
+use uniplate::Uniplate;
 use std::fmt::{Display, Formatter};
 use std::{cell::RefCell, hash::Hash, hash::Hasher, rc::Rc};
 
 #[serde_as]
-#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug)]
+#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Uniplate)]
+#[biplate(to=Expression)]
 pub struct AbstractComprehension {
     pub return_expr: Expression,
     pub qualifiers: Vec<Qualifier>,
@@ -105,7 +106,7 @@ impl AbstractComprehensionBuilder {
     /// The variable "takes from" the expression, that is, it can be any element in the expression.
     ///
     /// E.g. in `[ x | x <- some_set ]`, `x` can be any element of `some_set`.
-    pub fn add_expression_generator(&mut self, expr: Expression, name: Name) -> DeclarationPtr {
+    pub fn add_expression_generator(mut self, expr: Expression, name: Name) -> Self {
         let domain = expr
             .domain_of()
             .expect("Expression must have a domain")
@@ -122,19 +123,22 @@ impl AbstractComprehensionBuilder {
                 },
             )));
 
-        generator_decl
+        self
     }
 
-    pub fn new_expression_generator(&mut self, expr: Expression) -> DeclarationPtr {
+    pub fn new_expression_generator(self, expr: Expression) -> DeclarationPtr {
         let domain = expr
             .domain_of()
             .expect("Expression must have a domain")
             .element_domain()
             .expect("Expression must contain elements with uniform domain");
 
-        let name = *self.symbols.borrow_mut().gensym(&domain).name();
+        let decl_ptr = self.symbols.borrow_mut().gensym(&domain);
+        let name = decl_ptr.name().clone();
 
-        self.add_expression_generator(expr, name)
+        self.add_expression_generator(expr, name);
+
+        decl_ptr
     }
 
     //this is the same as the add guard method
@@ -161,10 +165,6 @@ impl AbstractComprehensionBuilder {
 
         letting_decl
     }
-
-    //the lack of the generator_symboltable and return_expr_symboltable
-    // are explained bc 1. we dont have separate symboltables for each part
-    // 2. it is unclear why there would be a need to access each one uniquely
 
     pub fn with_return_value(self, expression: Expression) -> AbstractComprehension {
         AbstractComprehension {
