@@ -2,11 +2,9 @@ use super::util::named_children;
 use crate::EssenceParseError;
 use conjure_cp_core::ast::{
     DeclarationPtr, Domain, DomainPtr, IntVal, Name, Range, RecordEntry, Reference, SetAttr,
-    SymbolTable,
+    SymbolTablePtr,
 };
 use core::panic;
-use std::cell::RefCell;
-use std::rc::Rc;
 use std::str::FromStr;
 use tree_sitter::Node;
 
@@ -14,7 +12,7 @@ use tree_sitter::Node;
 pub fn parse_domain(
     domain: Node,
     source_code: &str,
-    symbols: Option<Rc<RefCell<SymbolTable>>>,
+    symbols: Option<SymbolTablePtr>,
 ) -> Result<DomainPtr, EssenceParseError> {
     match domain.kind() {
         "domain" => parse_domain(
@@ -46,7 +44,7 @@ pub fn parse_domain(
 fn get_declaration_ptr_from_identifier(
     identifier: Node,
     source_code: &str,
-    symbols_ptr: &Option<Rc<RefCell<SymbolTable>>>,
+    symbols_ptr: &Option<SymbolTablePtr>,
 ) -> Result<DeclarationPtr, EssenceParseError> {
     let name = Name::user(&source_code[identifier.start_byte()..identifier.end_byte()]);
     let decl = symbols_ptr
@@ -55,7 +53,7 @@ fn get_declaration_ptr_from_identifier(
             "context needed to resolve identifier".to_string(),
             Some(identifier.range()),
         ))?
-        .borrow()
+        .read()
         .lookup(&name)
         .ok_or(EssenceParseError::syntax_error(
             format!("'{name}' is not defined"),
@@ -68,7 +66,7 @@ fn get_declaration_ptr_from_identifier(
 fn parse_int_domain(
     int_domain: Node,
     source_code: &str,
-    symbols_ptr: &Option<Rc<RefCell<SymbolTable>>>,
+    symbols_ptr: &Option<SymbolTablePtr>,
 ) -> DomainPtr {
     if int_domain.child_count() == 1 {
         return Domain::int(vec![Range::Bounded(i32::MIN, i32::MAX)]);
@@ -206,7 +204,7 @@ fn parse_int_domain(
 fn parse_tuple_domain(
     tuple_domain: Node,
     source_code: &str,
-    symbols: Option<Rc<RefCell<SymbolTable>>>,
+    symbols: Option<SymbolTablePtr>,
 ) -> Result<DomainPtr, EssenceParseError> {
     let mut domains: Vec<DomainPtr> = Vec::new();
     for domain in named_children(&tuple_domain) {
@@ -218,7 +216,7 @@ fn parse_tuple_domain(
 fn parse_matrix_domain(
     matrix_domain: Node,
     source_code: &str,
-    symbols: Option<Rc<RefCell<SymbolTable>>>,
+    symbols: Option<SymbolTablePtr>,
 ) -> Result<DomainPtr, EssenceParseError> {
     let mut domains: Vec<DomainPtr> = Vec::new();
     let index_domain_list = matrix_domain
@@ -243,7 +241,7 @@ fn parse_matrix_domain(
 fn parse_record_domain(
     record_domain: Node,
     source_code: &str,
-    symbols: Option<Rc<RefCell<SymbolTable>>>,
+    symbols: Option<SymbolTablePtr>,
 ) -> Result<DomainPtr, EssenceParseError> {
     let mut record_entries: Vec<RecordEntry> = Vec::new();
     for record_entry in named_children(&record_domain) {
@@ -263,7 +261,7 @@ fn parse_record_domain(
 pub fn parse_set_domain(
     set_domain: Node,
     source_code: &str,
-    symbols: Option<Rc<RefCell<SymbolTable>>>,
+    symbols: Option<SymbolTablePtr>,
 ) -> Result<DomainPtr, EssenceParseError> {
     let mut set_attribute: Option<SetAttr> = None;
     let mut value_domain: Option<DomainPtr> = None;

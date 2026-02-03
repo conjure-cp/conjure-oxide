@@ -2,18 +2,6 @@ use std::collections::{HashSet, VecDeque};
 use std::fmt::{Display, Formatter};
 use tracing::trace;
 
-use crate::ast::ReturnType;
-use crate::ast::SetAttr;
-use crate::ast::SymbolTable;
-use crate::ast::literals::AbstractLiteral;
-use crate::ast::literals::Literal;
-use crate::ast::pretty::{pretty_expressions_as_top_level, pretty_vec};
-use crate::ast::sat_encoding::SATIntEncoding;
-use crate::ast::{Atom, DomainPtr};
-use crate::ast::{GroundDomain, Metadata, UnresolvedDomain};
-use crate::ast::{IntVal, Moo};
-use crate::ast::{Name, matrix};
-use crate::bug;
 use conjure_cp_enum_compatibility_macro::document_compatibility;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
@@ -22,13 +10,21 @@ use ustr::Ustr;
 use polyquine::Quine;
 use uniplate::{Biplate, Uniplate};
 
+use crate::bug;
+
 use super::abstract_comprehension::AbstractComprehension;
 use super::ac_operators::ACOperatorKind;
 use super::categories::{Category, CategoryOf};
 use super::comprehension::Comprehension;
 use super::domains::HasDomain as _;
+use super::pretty::{pretty_expressions_as_top_level, pretty_vec};
 use super::records::RecordValue;
-use super::{DeclarationPtr, Domain, Range, Reference, SubModel, Typeable};
+use super::sat_encoding::SATIntEncoding;
+use super::{
+    AbstractLiteral, Atom, DeclarationPtr, Domain, DomainPtr, GroundDomain, IntVal, Literal,
+    Metadata, Moo, Name, Range, Reference, ReturnType, SetAttr, SubModel, SymbolTable,
+    SymbolTablePtr, Typeable, UnresolvedDomain, matrix,
+};
 
 // Ensure that this type doesn't get too big
 //
@@ -76,6 +72,7 @@ static_assertions::assert_eq_size!([u8; 104], Expression);
 #[biplate(to=Reference)]
 #[biplate(to=SubModel)]
 #[biplate(to=SymbolTable)]
+#[biplate(to=SymbolTablePtr)]
 #[biplate(to=Vec<Expression>)]
 #[path_prefix(conjure_cp::ast)]
 pub enum Expression {
@@ -1729,7 +1726,6 @@ impl Typeable for Expression {
 
 #[cfg(test)]
 mod tests {
-
     use crate::matrix_expr;
 
     use super::*;

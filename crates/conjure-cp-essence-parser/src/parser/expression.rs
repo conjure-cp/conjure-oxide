@@ -2,10 +2,8 @@ use crate::errors::EssenceParseError;
 use crate::parser::atom::parse_atom;
 use crate::parser::comprehension::parse_quantifier_or_aggregate_expr;
 use crate::{field, named_child};
-use conjure_cp_core::ast::{Expression, Metadata, Moo, SymbolTable};
+use conjure_cp_core::ast::{Expression, Metadata, Moo, SymbolTablePtr};
 use conjure_cp_core::{domain_int, matrix_expr, range};
-use std::cell::RefCell;
-use std::rc::Rc;
 use tree_sitter::Node;
 
 /// Parse an Essence expression into its Conjure AST representation.
@@ -13,7 +11,7 @@ pub fn parse_expression(
     node: Node,
     source_code: &str,
     root: &Node,
-    symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
+    symbols_ptr: Option<SymbolTablePtr>,
 ) -> Result<Expression, EssenceParseError> {
     match node.kind() {
         "atom" => parse_atom(&node, source_code, root, symbols_ptr),
@@ -39,7 +37,7 @@ fn parse_dominance_relation(
     node: &Node,
     source_code: &str,
     root: &Node,
-    symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
+    symbols_ptr: Option<SymbolTablePtr>,
 ) -> Result<Expression, EssenceParseError> {
     if root.kind() == "dominance_relation" {
         return Err(EssenceParseError::syntax_error(
@@ -62,7 +60,7 @@ fn parse_arithmetic_expression(
     node: &Node,
     source_code: &str,
     root: &Node,
-    symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
+    symbols_ptr: Option<SymbolTablePtr>,
 ) -> Result<Expression, EssenceParseError> {
     let inner = named_child!(node);
     match inner.kind() {
@@ -90,7 +88,7 @@ fn parse_boolean_expression(
     node: &Node,
     source_code: &str,
     root: &Node,
-    symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
+    symbols_ptr: Option<SymbolTablePtr>,
 ) -> Result<Expression, EssenceParseError> {
     let inner = named_child!(node);
     match inner.kind() {
@@ -118,7 +116,7 @@ fn parse_list_combining_expression(
     node: &Node,
     source_code: &str,
     root: &Node,
-    symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
+    symbols_ptr: Option<SymbolTablePtr>,
 ) -> Result<Expression, EssenceParseError> {
     let operator_node = field!(node, "operator");
     let operator_str = &source_code[operator_node.start_byte()..operator_node.end_byte()];
@@ -144,7 +142,7 @@ fn parse_unary_expression(
     node: &Node,
     source_code: &str,
     root: &Node,
-    symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
+    symbols_ptr: Option<SymbolTablePtr>,
 ) -> Result<Expression, EssenceParseError> {
     let inner = parse_expression(field!(node, "expression"), source_code, root, symbols_ptr)?;
     match node.kind() {
@@ -164,7 +162,7 @@ pub fn parse_binary_expression(
     node: &Node,
     source_code: &str,
     root: &Node,
-    symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
+    symbols_ptr: Option<SymbolTablePtr>,
 ) -> Result<Expression, EssenceParseError> {
     let parse_subexpr = |expr: Node| parse_expression(expr, source_code, root, symbols_ptr.clone());
 

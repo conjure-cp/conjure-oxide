@@ -1,7 +1,7 @@
-use crate::ast::declaration::serde::DeclarationPtrAsId;
-use crate::ast::serde::HasId;
+use crate::ast::serde::{AsId, HasId};
 use crate::{ast::DeclarationPtr, bug};
 use derivative::Derivative;
+use parking_lot::MappedRwLockReadGuard;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use std::fmt::{Display, Formatter};
@@ -27,7 +27,7 @@ use super::{
 #[biplate(to=DeclarationPtr)]
 #[biplate(to=Name)]
 pub struct Reference {
-    #[serde_as(as = "DeclarationPtrAsId")]
+    #[serde_as(as = "AsId")]
     pub ptr: DeclarationPtr,
 }
 
@@ -44,7 +44,7 @@ impl Reference {
         self.ptr
     }
 
-    pub fn name(&self) -> std::cell::Ref<'_, Name> {
+    pub fn name(&self) -> MappedRwLockReadGuard<'_, Name> {
         self.ptr.name()
     }
 

@@ -2,16 +2,14 @@ use crate::expression::parse_expression;
 use crate::parser::domain::parse_domain;
 use crate::util::named_children;
 use crate::{EssenceParseError, field};
-use conjure_cp_core::ast::{AbstractLiteral, DomainPtr, Expression, SymbolTable};
+use conjure_cp_core::ast::{AbstractLiteral, DomainPtr, Expression, SymbolTablePtr};
 use conjure_cp_core::{domain_int, range};
-use std::cell::RefCell;
-use std::rc::Rc;
 use tree_sitter::Node;
 
 pub fn parse_abstract(
     node: &Node,
     source_code: &str,
-    symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
+    symbols_ptr: Option<SymbolTablePtr>,
 ) -> Result<AbstractLiteral<Expression>, EssenceParseError> {
     match node.kind() {
         "record" => parse_record(node, source_code, symbols_ptr),
@@ -28,7 +26,7 @@ pub fn parse_abstract(
 fn parse_record(
     node: &Node,
     source_code: &str,
-    symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
+    symbols_ptr: Option<SymbolTablePtr>,
 ) -> Result<AbstractLiteral<Expression>, EssenceParseError> {
     let mut values = Vec::new();
     for child in node.children_by_field_name("name_value_pair", &mut node.walk()) {
@@ -50,7 +48,7 @@ fn parse_record(
 fn parse_tuple(
     node: &Node,
     source_code: &str,
-    symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
+    symbols_ptr: Option<SymbolTablePtr>,
 ) -> Result<AbstractLiteral<Expression>, EssenceParseError> {
     let mut elements = Vec::new();
     for child in named_children(node) {
@@ -67,7 +65,7 @@ fn parse_tuple(
 fn parse_matrix(
     node: &Node,
     source_code: &str,
-    symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
+    symbols_ptr: Option<SymbolTablePtr>,
 ) -> Result<AbstractLiteral<Expression>, EssenceParseError> {
     let mut elements = vec![];
     let mut domain: Option<DomainPtr> = None;
@@ -97,7 +95,7 @@ fn parse_matrix(
 fn parse_set_literal(
     node: &Node,
     source_code: &str,
-    symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
+    symbols_ptr: Option<SymbolTablePtr>,
 ) -> Result<AbstractLiteral<Expression>, EssenceParseError> {
     let mut elements = Vec::new();
     for child in named_children(node) {

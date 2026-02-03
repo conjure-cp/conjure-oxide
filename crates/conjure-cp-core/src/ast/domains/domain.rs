@@ -199,7 +199,7 @@ impl Domain {
 
     /// Create a new [UnresolvedDomain::Reference] domain from a domain letting
     pub fn reference(ptr: DeclarationPtr) -> Option<DomainPtr> {
-        ptr.as_domain_letting()?;
+        let _ = ptr.as_domain_letting()?;
         Some(Moo::new(Domain::Unresolved(Moo::new(
             UnresolvedDomain::Reference(Reference::new(ptr)),
         ))))

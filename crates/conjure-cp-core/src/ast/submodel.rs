@@ -1,13 +1,13 @@
 use super::{
     Atom, CnfClause, DeclarationPtr, Expression, Literal, Metadata, Moo, ReturnType, SymbolTable,
-    Typeable,
+    SymbolTablePtr, Typeable,
     comprehension::Comprehension,
     declaration::DeclarationKind,
     pretty::{
         pretty_clauses, pretty_domain_letting_declaration, pretty_expressions_as_top_level,
         pretty_value_letting_declaration, pretty_variable_declaration,
     },
-    serde::RcRefCellAsInner,
+    serde::PtrAsInner,
 };
 use itertools::izip;
 use serde::{Deserialize, Serialize};
@@ -15,13 +15,9 @@ use serde_with::serde_as;
 use uniplate::{Biplate, Tree, Uniplate};
 
 use crate::{bug, into_matrix_expr};
-use std::hash::{Hash, Hasher};
-use std::{
-    cell::{Ref, RefCell, RefMut},
-    collections::VecDeque,
-    fmt::Display,
-    rc::Rc,
-};
+use parking_lot::{RwLockReadGuard, RwLockWriteGuard};
+use std::hash::Hash;
+use std::{collections::VecDeque, fmt::Display};
 
 /// A sub-model, representing a lexical scope in the model.
 ///
@@ -30,11 +26,11 @@ use std::{
 /// The expression tree is formed of a root node of type [`Expression::Root`], which contains a
 /// vector of top-level constraints.
 #[serde_as]
-#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Eq, Debug, Hash, Serialize, Deserialize)]
 pub struct SubModel {
     constraints: Moo<Expression>,
-    #[serde_as(as = "RcRefCellAsInner")]
-    symbols: Rc<RefCell<SymbolTable>>,
+    #[serde_as(as = "PtrAsInner")]
+    symbols: SymbolTablePtr,
     cnf_clauses: Vec<CnfClause>, // CNF clauses
 }
 
@@ -47,7 +43,7 @@ impl SubModel {
     pub(super) fn new_top_level() -> SubModel {
         SubModel {
             constraints: Moo::new(Expression::Root(Metadata::new(), vec![])),
-            symbols: Rc::new(RefCell::new(SymbolTable::new())),
+            symbols: SymbolTablePtr::new(),
             cnf_clauses: Vec::new(),
         }
     }
@@ -55,10 +51,10 @@ impl SubModel {
     /// Creates a new [`Submodel`] as a child scope of `parent`.
     ///
     /// `parent` should be the symbol table of the containing scope of this sub-model.
-    pub fn new(parent: Rc<RefCell<SymbolTable>>) -> SubModel {
+    pub fn new(parent: SymbolTablePtr) -> SubModel {
         SubModel {
             constraints: Moo::new(Expression::Root(Metadata::new(), vec![])),
-            symbols: Rc::new(RefCell::new(SymbolTable::with_parent(parent))),
+            symbols: SymbolTablePtr::with_parent(parent),
             cnf_clauses: Vec::new(),
         }
     }
@@ -67,7 +63,7 @@ impl SubModel {
     ///
     /// The caller should only mutate the returned symbol table if this method was called on a
     /// mutable model.
-    pub fn symbols_ptr_unchecked(&self) -> &Rc<RefCell<SymbolTable>> {
+    pub fn symbols_ptr_unchecked(&self) -> &SymbolTablePtr {
         &self.symbols
     }
 
@@ -75,18 +71,18 @@ impl SubModel {
     ///
     /// The caller should only mutate the returned symbol table if this method was called on a
     /// mutable model.
-    pub fn symbols_ptr_unchecked_mut(&mut self) -> &mut Rc<RefCell<SymbolTable>> {
+    pub fn symbols_ptr_unchecked_mut(&mut self) -> &mut SymbolTablePtr {
         &mut self.symbols
     }
 
     /// The symbol table for this sub-model as a reference.
-    pub fn symbols(&self) -> Ref<'_, SymbolTable> {
-        (*self.symbols).borrow()
+    pub fn symbols(&self) -> RwLockReadGuard<'_, SymbolTable> {
+        self.symbols.read()
     }
 
     /// The symbol table for this sub-model as a mutable reference.
-    pub fn symbols_mut(&mut self) -> RefMut<'_, SymbolTable> {
-        (*self.symbols).borrow_mut()
+    pub fn symbols_mut(&mut self) -> RwLockWriteGuard<'_, SymbolTable> {
+        self.symbols.write()
     }
 
     /// The root node of this sub-model.
@@ -203,14 +199,6 @@ impl SubModel {
 impl Typeable for SubModel {
     fn return_type(&self) -> ReturnType {
         ReturnType::Bool
-    }
-}
-
-impl Hash for SubModel {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.symbols.borrow().hash(state);
-        self.constraints.hash(state);
-        self.cnf_clauses.hash(state);
     }
 }
 
@@ -429,8 +417,7 @@ impl Biplate<Comprehension> for SubModel {
         Box<dyn Fn(Tree<Comprehension>) -> Self>,
     ) {
         let (f1_tree, f1_ctx) = <_ as Biplate<Comprehension>>::biplate(&self.constraints);
-        let (f2_tree, f2_ctx) =
-            <SymbolTable as Biplate<Comprehension>>::biplate(&self.symbols.borrow());
+        let (f2_tree, f2_ctx) = <SymbolTable as Biplate<Comprehension>>::biplate(&self.symbols());
 
         let tree = Tree::Many(VecDeque::from([f1_tree, f2_tree]));
         let self2 = self.clone();

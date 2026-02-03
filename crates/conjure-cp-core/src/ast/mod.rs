@@ -45,7 +45,7 @@ pub use partial_eval::run_partial_evaluator;
 pub use reference::Reference;
 pub use sat_encoding::SATIntEncoding;
 pub use submodel::SubModel;
-pub use symbol_table::SymbolTable;
+pub use symbol_table::{SymbolTable, SymbolTablePtr};
 pub use types::*;
 pub use variables::DecisionVariable;
 

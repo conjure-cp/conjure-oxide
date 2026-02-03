@@ -4,9 +4,7 @@ use crate::util::named_children;
 use crate::{EssenceParseError, field};
 use conjure_cp_core::ast::ac_operators::ACOperatorKind;
 use conjure_cp_core::ast::comprehension::ComprehensionBuilder;
-use conjure_cp_core::ast::{DeclarationPtr, Expression, Metadata, Moo, Name, SymbolTable};
-use std::cell::RefCell;
-use std::rc::Rc;
+use conjure_cp_core::ast::{DeclarationPtr, Expression, Metadata, Moo, Name, SymbolTablePtr};
 use std::vec;
 use tree_sitter::Node;
 
@@ -14,7 +12,7 @@ pub fn parse_comprehension(
     node: &Node,
     source_code: &str,
     root: &Node,
-    symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
+    symbols_ptr: Option<SymbolTablePtr>,
 ) -> Result<Expression, EssenceParseError> {
     // Comprehensions require a symbol table passed in
     let symbols_ptr = symbols_ptr.ok_or_else(|| {
@@ -100,7 +98,7 @@ pub fn parse_quantifier_or_aggregate_expr(
     node: &Node,
     source_code: &str,
     root: &Node,
-    symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
+    symbols_ptr: Option<SymbolTablePtr>,
 ) -> Result<Expression, EssenceParseError> {
     // Quantifier and aggregate expressions require a symbol table
     let symbols_ptr = symbols_ptr.ok_or_else(|| {
