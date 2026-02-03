@@ -221,7 +221,7 @@ impl DeclarationPtr {
     /// This is used in abstract comprehensions, where a variable in the return expression
     /// is "given", but also references its counterpart in the generator.
     pub fn new_given_quantified(decl: &DeclarationPtr) -> Option<DeclarationPtr> {
-        let kind = DeclarationKind::GivenQuantified(GivenQuantified {
+        let kind = DeclarationKind::Quantified(GivenQuantified {
             domain: decl.domain()?,
             generator: decl.clone(),
         });
@@ -272,7 +272,7 @@ impl DeclarationPtr {
             DeclarationKind::ValueLetting(e) => e.domain_of(),
             DeclarationKind::DomainLetting(domain) => Some(domain.clone()),
             DeclarationKind::Given(domain) => Some(domain.clone()),
-            DeclarationKind::GivenQuantified(inner) => Some(inner.domain.clone()),
+            DeclarationKind::Quantified(inner) => Some(inner.domain.clone()),
             DeclarationKind::RecordField(domain) => Some(domain.clone()),
         }
     }
@@ -484,7 +484,7 @@ impl CategoryOf for DeclarationPtr {
             DeclarationKind::ValueLetting(expression) => expression.category_of(),
             DeclarationKind::DomainLetting(_) => Category::Constant,
             DeclarationKind::Given(_) => Category::Parameter,
-            DeclarationKind::GivenQuantified(..) => Category::Parameter,
+            DeclarationKind::Quantified(..) => Category::Parameter,
             DeclarationKind::RecordField(_) => Category::Bottom,
         }
     }
@@ -517,7 +517,7 @@ impl Typeable for DeclarationPtr {
             DeclarationKind::ValueLetting(expression) => expression.return_type(),
             DeclarationKind::DomainLetting(domain) => domain.return_type(),
             DeclarationKind::Given(domain) => domain.return_type(),
-            DeclarationKind::GivenQuantified(inner) => inner.domain.return_type(),
+            DeclarationKind::Quantified(inner) => inner.domain.return_type(),
             DeclarationKind::RecordField(domain) => domain.return_type(),
         }
     }
@@ -645,7 +645,7 @@ pub enum DeclarationKind {
     DomainLetting(DomainPtr),
     Given(DomainPtr),
 
-    GivenQuantified(GivenQuantified),
+    Quantified(Quantified),
 
     /// A named field inside a record type.
     /// e.g. A, B in record{A: int(0..1), B: int(0..2)}
@@ -654,14 +654,14 @@ pub enum DeclarationKind {
 
 #[serde_as]
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate)]
-pub struct GivenQuantified {
+pub struct Quantified {
     domain: DomainPtr,
 
     #[serde_as(as = "DeclarationPtrFull")]
     generator: DeclarationPtr,
 }
 
-impl GivenQuantified {
+impl Quantified {
     pub fn domain(&self) -> &DomainPtr {
         &self.domain
     }

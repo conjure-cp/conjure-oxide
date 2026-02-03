@@ -243,7 +243,7 @@ impl Display for SubModel {
                 DeclarationKind::Given(d) => {
                     writeln!(f, "given {name}: {d}")?;
                 }
-                DeclarationKind::GivenQuantified(inner) => {
+                DeclarationKind::Quantified(inner) => {
                     writeln!(f, "given {name}: {}", inner.domain())?;
                 }
 
