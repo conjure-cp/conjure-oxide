@@ -228,7 +228,7 @@ fn integration_test_inner(
         if verbose {
             println!("Parsed model (native): {model:#?}");
         }
-        save_model_json(&model, path, essence_base, "parse", Some(solver_fam))?;
+        save_model_json(&model, path, essence_base, "parse", None)?;
 
         model
     // Stage 1b: Parse the model using the legacy parser
@@ -237,7 +237,7 @@ fn integration_test_inner(
         if verbose {
             println!("Parsed model (legacy): {model:#?}");
         }
-        save_model_json(&model, path, essence_base, "parse", Some(solver_fam))?;
+        save_model_json(&model, path, essence_base, "parse", None)?;
         model
     };
 
@@ -399,7 +399,7 @@ fn integration_test_inner(
     if accept {
         println!("Calling accept");
 
-        copy_generated_to_expected(path, essence_base, "parse", "serialised.json", Some(solver_fam))?;
+        copy_generated_to_expected(path, essence_base, "parse", "serialised.json", None)?;
         println!("Calling accept-oof");
 
         if config.apply_rewrite_rules {
@@ -443,7 +443,7 @@ fn integration_test_inner(
         essence_base,
         "expected",
         "parse",
-        Some(solver_fam),
+        None,
     )?;
     let model_from_file = read_model_json(
         &context,
@@ -451,7 +451,7 @@ fn integration_test_inner(
         essence_base,
         "generated",
         "parse",
-        Some(solver_fam),
+        None,
     )?;
     assert_eq!(model_from_file, expected_model);
 
