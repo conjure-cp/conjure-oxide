@@ -122,6 +122,8 @@ jobs:
       - name: Deploy to reports repository
         if: ${{ env.REPORTS_TOKEN != '' && (github.event_name == 'pull_request_target' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)) }}
         uses: JamesIves/github-pages-deploy-action@v4
+        env:
+          GITHUB_TOKEN: ${{ env.REPORTS_TOKEN }}
         with:
           repository-name: conjure-cp/conjure-oxide-reports
           branch: main
