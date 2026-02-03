@@ -6,8 +6,8 @@ use conjure_cp::defaults::DEFAULT_RULE_SETS;
 use conjure_cp::parse::tree_sitter::parse_essence_file_native;
 use conjure_cp::rule_engine::rewrite_naive;
 use conjure_cp::solver;
-use conjure_cp::solver::adaptors::*;
 use conjure_cp::solver::Solver;
+use conjure_cp::solver::adaptors::*;
 use conjure_cp_cli::utils::testing::{normalize_solutions_for_comparison, read_human_rule_trace};
 use glob::glob;
 use itertools::Itertools;
@@ -16,9 +16,9 @@ use std::env;
 use std::error::Error;
 use std::fs;
 use std::fs::File;
-use tracing::{span, Level};
+use tracing::{Level, span};
 use tracing_subscriber::{
-    filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt, Layer, Registry,
+    Layer, Registry, filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt,
 };
 use tree_morph::{helpers::select_panic, prelude::*};
 
@@ -42,8 +42,8 @@ use conjure_cp_cli::utils::conjure::solutions_to_json;
 use conjure_cp_cli::utils::conjure::{get_solutions, get_solutions_from_conjure};
 use conjure_cp_cli::utils::testing::save_stats_json;
 use conjure_cp_cli::utils::testing::{
-    read_model_json, read_model_json_prefix, read_solutions_json, save_model_json,
-    save_solutions_json, REWRITE_SERIALISED_JSON_MAX_LINES,
+    REWRITE_SERIALISED_JSON_MAX_LINES, read_model_json, read_model_json_prefix,
+    read_solutions_json, save_model_json, save_solutions_json,
 };
 #[allow(clippy::single_component_path_imports, unused_imports)]
 use conjure_cp_rules;
@@ -140,9 +140,6 @@ fn solver_specific_integration_test(
     verbose: bool,
     accept: bool,
 ) -> Result<(), Box<dyn Error>> {
-
-    println!("Solver-Specific Integration test for solver: {}", solver.as_str());
-
     let solver_name = solver.as_str();
 
     let subscriber = create_scoped_subscriber(path, essence_base, &solver_name);
@@ -207,7 +204,6 @@ fn integration_test_inner(
     config: &TestConfig,
     solver_fam: SolverFamily,
 ) -> Result<(), Box<dyn Error>> {
-    println!("Inner Integration test for solver: {}", solver_fam.as_str());
     let context: Arc<RwLock<Context<'static>>> = Default::default();
     let accept = env::var("ACCEPT").unwrap_or("false".to_string()) == "true";
     let verbose = env::var("VERBOSE").unwrap_or("false".to_string()) == "true";
@@ -243,7 +239,6 @@ fn integration_test_inner(
     };
 
     // // Stage 2a: Rewrite the model using the rule engine (run unless explicitly disabled)
-
 
     let rewritten_model = if config.apply_rewrite_rules {
         // rule set selection based on solver
@@ -292,7 +287,6 @@ fn integration_test_inner(
         if verbose {
             println!("Rewritten model: {rewritten:#?}");
         }
-        // println!("Rewritten model: {rewritten:#?}");
 
         save_model_json(&rewritten, path, essence_base, "rewrite", Some(solver_fam))?;
         Some(rewritten)
@@ -320,8 +314,6 @@ fn integration_test_inner(
         Path::new(path).join(Path::new(&name))
     });
 
-    println!("Calling accept asjkl;dasgfjkl;adsfjkl;");
-
     let solver = match solver_fam {
         SolverFamily::Minion => Solver::new(Minion::default()),
         SolverFamily::Sat => Solver::new(Sat::default()),
@@ -347,7 +339,6 @@ fn integration_test_inner(
         }
         solved
     };
-    println!("Calling accept asjkl;dasgfjkl;adsfjkl;");
 
     // Stage 3b: Check solutions against Conjure (only if explicitly enabled)
     if config.compare_solver_solutions && config.num_solvers_enabled() > 0 {
@@ -355,7 +346,6 @@ fn integration_test_inner(
             &format!("{path}/{essence_base}.{extension}"),
             Arc::clone(&context),
         )?;
-    // }
 
         let username_solutions = normalize_solutions_for_comparison(&solutions);
         let conjure_solutions = normalize_solutions_for_comparison(&conjure_solutions);
@@ -373,11 +363,8 @@ fn integration_test_inner(
     }
 
     // When ACCEPT=true, copy all generated files to expected
-    println!("Calling accept");
     if accept {
-
         copy_generated_to_expected(path, essence_base, "parse", "serialised.json", None)?;
-        println!("Calling accept-oof");
 
         if config.apply_rewrite_rules {
             copy_generated_to_expected(
@@ -388,7 +375,6 @@ fn integration_test_inner(
                 Some(solver_fam),
             )?;
         }
-        println!("Calling accept2");
 
         // Always overwrite these ones. Unlike the rest, we don't need to selectively do these
         // based on the test results, so they don't get done later.
@@ -397,8 +383,7 @@ fn integration_test_inner(
             SolverFamily::Minion => "minion",
             SolverFamily::Sat => "sat",
             SolverFamily::Smt(_) => "smt",
-        }; 
-        println!("Calling accept3");
+        };
 
         copy_generated_to_expected(
             path,
@@ -414,22 +399,9 @@ fn integration_test_inner(
     }
 
     // Check Stage 1: Compare parsed model with expected
-    let expected_model = read_model_json(
-        &context,
-        path,
-        essence_base,
-        "expected",
-        "parse",
-        None,
-    )?;
-    let model_from_file = read_model_json(
-        &context,
-        path,
-        essence_base,
-        "generated",
-        "parse",
-        None,
-    )?;
+    let expected_model = read_model_json(&context, path, essence_base, "expected", "parse", None)?;
+    let model_from_file =
+        read_model_json(&context, path, essence_base, "generated", "parse", None)?;
     assert_eq!(model_from_file, expected_model);
 
     // Check Stage 2a (rewritten model)
@@ -454,17 +426,12 @@ fn integration_test_inner(
     }
 
     // Check Stage 3a (solutions)
-    println!("Calling meow11");
     if config.solve_with_minion {
-        println!("Calling minion meow11");
-
         let expected_solutions_json =
             read_solutions_json(path, essence_base, "expected", SolverFamily::Minion)?;
         let username_solutions_json = solutions_to_json(&solutions);
         assert_eq!(username_solutions_json, expected_solutions_json);
     } else if config.solve_with_sat {
-        println!("Calling sat meow11");
-
         let expected_solutions_json =
             read_solutions_json(path, essence_base, "expected", SolverFamily::Sat)?;
         let username_solutions_json = solutions_to_json(&solutions);
@@ -507,7 +474,7 @@ fn copy_human_trace_generated_to_expected(
     solver: SolverFamily,
 ) -> Result<(), std::io::Error> {
     let solver_name = solver.as_str();
-    println!("copying: {path}/{solver_name}-{test_name}-generated-rule-trace-human.txt to {path}/{solver_name}-{test_name}-expected-rule-trace-human.txt");
+    // println!("copying: {path}/{solver_name}-{test_name}-generated-rule-trace-human.txt to {path}/{solver_name}-{test_name}-expected-rule-trace-human.txt");
     std::fs::copy(
         format!("{path}/{solver_name}-{test_name}-generated-rule-trace-human.txt"),
         format!("{path}/{solver_name}-{test_name}-expected-rule-trace-human.txt"),
@@ -522,13 +489,12 @@ fn copy_generated_to_expected(
     extension: &str,
     solver: Option<SolverFamily>,
 ) -> Result<(), std::io::Error> {
-
     let marker = solver.map_or("agnostic".into(), |s| s.as_str());
-    
-    println!("copying: {path}/{marker}-{test_name}.generated-{stage}.{extension} to {path}/{marker}-{test_name}.expected-{stage}.{extension}");
-    
+
+    // println!("copying: {path}/{marker}-{test_name}.generated-{stage}.{extension} to {path}/{marker}-{test_name}.expected-{stage}.{extension}");
+
     std::fs::copy(
-    format!("{path}/{marker}-{test_name}.generated-{stage}.{extension}"),
+        format!("{path}/{marker}-{test_name}.generated-{stage}.{extension}"),
         format!("{path}/{marker}-{test_name}.expected-{stage}.{extension}"),
     )?;
     Ok(())

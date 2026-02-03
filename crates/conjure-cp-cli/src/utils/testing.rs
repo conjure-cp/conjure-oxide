@@ -22,10 +22,10 @@ use conjure_cp::error::Error;
 use crate::utils::conjure::solutions_to_json;
 use crate::utils::json::sort_json_object;
 use crate::utils::misc::to_set;
+use conjure_cp::Model as ConjureModel;
 use conjure_cp::ast::Name::User;
 use conjure_cp::ast::{Literal, Name};
 use conjure_cp::solver::SolverFamily;
-use conjure_cp::Model as ConjureModel;
 
 /// Limit how many lines of the rewrite serialisation we persist/compare in integration tests.
 pub const REWRITE_SERIALISED_JSON_MAX_LINES: usize = 1000;
@@ -122,7 +122,7 @@ pub fn save_model_json(
     test_stage: &str,
     solver: Option<SolverFamily>,
 ) -> Result<(), std::io::Error> {
-    let marker = solver.map_or("agnostic".into(), |s| s.as_str());
+    let marker = solver.map_or("agnostic", |s| s.as_str());
 
     let generated_json_str = serialize_model(model)?;
     let generated_json_str = maybe_truncate_serialised_json(generated_json_str, test_stage);
@@ -167,7 +167,7 @@ pub fn read_model_json(
     test_stage: &str,
     solver: Option<SolverFamily>,
 ) -> Result<ConjureModel, std::io::Error> {
-    let marker = solver.map_or("agnostic".into(), |s| s.as_str());
+    let marker = solver.map_or("agnostic", |s| s.as_str());
 
     let filepath = format!("{path}/{marker}-{test_name}.{prefix}-{test_stage}.serialised.json");
 
@@ -186,7 +186,7 @@ pub fn read_model_json_prefix(
     solver: Option<SolverFamily>,
     max_lines: usize,
 ) -> Result<String, std::io::Error> {
-    let marker = solver.map_or("agnostic".into(), |s| s.as_str());
+    let marker = solver.map_or("agnostic", |s| s.as_str());
     let filename = format!("{path}/{marker}-{test_name}.{prefix}-{test_stage}.serialised.json");
     println!("reading: {}", filename);
     read_first_n_lines(filename, max_lines)
@@ -264,7 +264,7 @@ pub fn read_solutions_json(
     };
     let filename =
         format!("{path}/{solver_name}-{test_name}.{prefix}-{solver_name}.solutions.json");
-    let expected_json_str = std::fs::read_to_string(filename)?;
+    let _expected_json_str = std::fs::read_to_string(filename)?;
     let expected_json_str = read_with_path(format!(
         "{path}/{solver_name}-{test_name}.{prefix}-{solver_name}.solutions.json"
     ))?;
