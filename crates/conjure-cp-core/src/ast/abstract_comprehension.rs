@@ -1,7 +1,7 @@
 use super::SymbolTable;
 use super::declaration::{DeclarationPtr, serde::DeclarationPtrFull};
 use super::serde::RcRefCellAsInner;
-use crate::ast::{DomainPtr, Expression, ReturnType, Typeable};
+use crate::ast::{DomainPtr, Expression, Name, ReturnType, Typeable};
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use std::fmt::{Display, Formatter};
@@ -12,8 +12,6 @@ use std::{cell::RefCell, hash::Hash, hash::Hasher, rc::Rc};
 pub struct AbstractComprehension {
     pub return_expr: Expression,
     pub qualifiers: Vec<Qualifier>,
-    #[serde_as(as = "RcRefCellAsInner")]
-    pub symbols: Rc<RefCell<SymbolTable>>,
 }
 
 #[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Hash)]
@@ -66,7 +64,6 @@ impl Typeable for AbstractComprehension {
 
 impl Hash for AbstractComprehension {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        self.symbols.borrow().hash(state);
         self.return_expr.hash(state);
         self.qualifiers.hash(state);
     }
@@ -103,11 +100,19 @@ impl AbstractComprehensionBuilder {
         generator_decl
     }
 
-    pub fn new_expression_generator(&mut self, expr: Expression) -> DeclarationPtr {
-        let generator_decl = self
-            .symbols
-            .borrow_mut()
-            .gensym(&expr.domain_of().expect("Expression must have a domain"));
+    /// Creates a new expression generator with the given expression and variable name.
+    ///
+    /// The variable "takes from" the expression, that is, it can be any element in the expression.
+    ///
+    /// E.g. in `[ x | x <- some_set ]`, `x` can be any element of `some_set`.
+    pub fn add_expression_generator(&mut self, expr: Expression, name: Name) -> DeclarationPtr {
+        let domain = expr
+            .domain_of()
+            .expect("Expression must have a domain")
+            .element_domain()
+            .expect("Expression must contain elements with uniform domain");
+
+        let generator_decl = DeclarationPtr::new_var_quantified(name, domain);
 
         self.qualifiers
             .push(Qualifier::Generator(Generator::ExpressionGenerator(
@@ -118,6 +123,18 @@ impl AbstractComprehensionBuilder {
             )));
 
         generator_decl
+    }
+
+    pub fn new_expression_generator(&mut self, expr: Expression) -> DeclarationPtr {
+        let domain = expr
+            .domain_of()
+            .expect("Expression must have a domain")
+            .element_domain()
+            .expect("Expression must contain elements with uniform domain");
+
+        let name = *self.symbols.borrow_mut().gensym(&domain).name();
+
+        self.add_expression_generator(expr, name)
     }
 
     //this is the same as the add guard method
@@ -149,12 +166,10 @@ impl AbstractComprehensionBuilder {
     // are explained bc 1. we dont have separate symboltables for each part
     // 2. it is unclear why there would be a need to access each one uniquely
 
-    // TODO: make a pub fn with_return_value :)
     pub fn with_return_value(self, expression: Expression) -> AbstractComprehension {
         AbstractComprehension {
             return_expr: expression,
             qualifiers: self.qualifiers,
-            symbols: self.symbols,
         }
     }
 }

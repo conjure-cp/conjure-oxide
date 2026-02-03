@@ -971,7 +971,7 @@ fn parse_in_expr_comprehension(
     let expr = parse_expression(gen_inner.pointer("/1")?, &scope)?;
 
     let comprehension =
-        AbstractComprehensionBuilder::new(&scope).new_expression_generator(expr, name.into());
+        AbstractComprehensionBuilder::new(&scope).add_expression_generator(expr, name.into());
     let expr = parse_expression(
         comprehension_value.pointer("/0")?,
         &comprehension.return_expr_symbols(),
