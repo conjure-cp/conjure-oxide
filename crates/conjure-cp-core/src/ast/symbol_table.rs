@@ -4,6 +4,7 @@
 
 use crate::bug;
 use crate::representation::{Representation, get_repr_rule};
+use std::any::TypeId;
 
 use std::collections::BTreeSet;
 use std::collections::btree_map::Entry;
@@ -129,6 +130,65 @@ impl IdPtr for SymbolTablePtr {
 
     fn with_id_and_data(id: ObjId, data: Self::Data) -> Self {
         Self::new_with_id_and_data(id, data)
+    }
+}
+
+// TODO: this code is almost exactly copied from [DeclarationPtr].
+//       It should be possible to eliminate the duplication...
+//       Perhaps by merging SymbolTablePtr and DeclarationPtr together?
+//       (Alternatively, a macro?)
+
+impl Uniplate for SymbolTablePtr {
+    fn uniplate(&self) -> (Tree<Self>, Box<dyn Fn(Tree<Self>) -> Self>) {
+        let symtab = self.read();
+        let (tree, recons) = Biplate::<SymbolTablePtr>::biplate(&symtab as &SymbolTable);
+
+        let self2 = self.clone();
+        (
+            tree,
+            Box::new(move |x| {
+                let self3 = self2.clone();
+                *(self3.write()) = recons(x);
+                self3
+            }),
+        )
+    }
+}
+
+impl<To> Biplate<To> for SymbolTablePtr
+where
+    SymbolTable: Biplate<To>,
+    To: Uniplate,
+{
+    fn biplate(&self) -> (Tree<To>, Box<dyn Fn(Tree<To>) -> Self>) {
+        if TypeId::of::<To>() == TypeId::of::<Self>() {
+            unsafe {
+                let self_as_to = std::mem::transmute::<&Self, &To>(self).clone();
+                (
+                    Tree::One(self_as_to),
+                    Box::new(move |x| {
+                        let Tree::One(x) = x else { panic!() };
+
+                        let x_as_self = std::mem::transmute::<&To, &Self>(&x);
+                        x_as_self.clone()
+                    }),
+                )
+            }
+        } else {
+            // call biplate on the enclosed declaration
+            let decl = self.read();
+            let (tree, recons) = Biplate::<To>::biplate(&decl as &SymbolTable);
+
+            let self2 = self.clone();
+            (
+                tree,
+                Box::new(move |x| {
+                    let self3 = self2.clone();
+                    *(self3.write()) = recons(x);
+                    self3
+                }),
+            )
+        }
     }
 }
 
@@ -496,9 +556,23 @@ impl Default for SymbolTable {
     }
 }
 
+// TODO: if we could override `Uniplate` impl but still derive `Biplate` instances,
+//       we could remove some of this manual code
 impl Uniplate for SymbolTable {
     fn uniplate(&self) -> (Tree<Self>, Box<dyn Fn(Tree<Self>) -> Self>) {
         // do not recurse up parents, that would be weird?
+        let self2 = self.clone();
+        (Tree::Zero, Box::new(move |_| self2.clone()))
+    }
+}
+
+impl Biplate<SymbolTablePtr> for SymbolTable {
+    fn biplate(
+        &self,
+    ) -> (
+        Tree<SymbolTablePtr>,
+        Box<dyn Fn(Tree<SymbolTablePtr>) -> Self>,
+    ) {
         let self2 = self.clone();
         (Tree::Zero, Box::new(move |_| self2.clone()))
     }

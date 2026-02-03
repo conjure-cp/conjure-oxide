@@ -8,7 +8,6 @@ use uniplate::{Biplate, Tree, Uniplate};
 
 use crate::context::Context;
 
-use super::abstract_comprehension::AbstractComprehension;
 use super::serde::{HasId, ObjId};
 use super::{DeclarationPtr, Expression, Name, ReturnType, SubModel, SymbolTablePtr, Typeable};
 
@@ -268,72 +267,36 @@ impl SerdeModel {
     pub fn collect_stable_id_mapping(&self) -> HashMap<ObjId, ObjId> {
         let mut id_list: Vec<ObjId> = Vec::new();
 
+        let mut visit = |id: ObjId| {
+            if !id_list.contains(&id) {
+                id_list.push(id);
+            }
+        };
+
         // Collect SymbolTable IDs by traversing all SubModels
         for submodel in self.submodel.universe() {
-            let symbol_table_id = submodel.symbols_ptr_unchecked().id();
-            if !id_list.contains(&symbol_table_id) {
-                id_list.push(symbol_table_id);
-            }
+            // Record ID of this symbol tables
+            let symbol_table = submodel.symbols_ptr_unchecked();
+            visit(symbol_table.id());
 
-            // Assuming that all declarations are defined in a symbol table,
-            // collect Declaration IDs by traversing each SubModel's symbol table.
-
-            for decl in submodel.symbols().clone().into_iter_local() {
-                let decl_id = decl.1.id();
-                if !id_list.contains(&decl_id) {
-                    id_list.push(decl_id);
-                }
-            }
+            // Collect Declaration IDs by traversing each SubModel's symbol table.
+            // (Assuming that all declarations in the model have to come from some symbol table!)
+            symbol_table
+                .read()
+                .iter_local()
+                .for_each(|(_, decl)| visit(decl.id()));
         }
-        // Collect IDs by traversing the expression tree
-        //
-        // (Some expressions, e.g. AbstractComprehensions contain SymbolTable's not
+
+        // Collect remaining IDs by traversing the expression tree
+        // (Some expressions, e.g. AbstractComprehensions, contain SymbolTable's not
         // contained in submodels).
-        // let exprs: VecDeque<Expression> = self.submodel.universe_bi();
-        // // for symtab in Biplate::<SymbolTable>::universe_bi(&exprs) {
-        //     let symbol_table_id = symtab.id();
-        //     if !id_list.contains(&symbol_table_id) {
-        //         id_list.push(symbol_table_id);
-        //     }
-        //
-        //     for decl in symtab.clone().into_iter_local() {
-        //         let decl_id = decl.1.id();
-        //         if !id_list.contains(&decl_id) {
-        //             id_list.push(decl_id);
-        //         }
-        //     }
-        // }
-
-        // the above doesnt work, as uniplate clones the symbol tables, which change their ids.
-        //
-        // FIXME: add SymbolTablePtr then redo this using that
-
-        // HACK: special case abstract comprehension
-
-        let comps: VecDeque<AbstractComprehension> = self.submodel.constraints().universe_bi();
-        for comp in comps {
-            let symbol_table_id_1 = comp.generator_symbols.id();
-            let symbol_table_id_2 = comp.return_expr_symbols.id();
-            if !id_list.contains(&symbol_table_id_1) {
-                id_list.push(symbol_table_id_1);
-            }
-            if !id_list.contains(&symbol_table_id_2) {
-                id_list.push(symbol_table_id_2);
-            }
-
-            for (_name, decl) in comp.generator_symbols.read().iter_local() {
-                let decl_id = decl.id();
-                if !id_list.contains(&decl_id) {
-                    id_list.push(decl_id);
-                }
-            }
-
-            for decl in comp.return_expr_symbols.read().iter_local() {
-                let decl_id = decl.1.id();
-                if !id_list.contains(&decl_id) {
-                    id_list.push(decl_id);
-                }
-            }
+        let exprs: VecDeque<Expression> = self.submodel.universe_bi();
+        for symbol_table in Biplate::<SymbolTablePtr>::universe_bi(&exprs) {
+            visit(symbol_table.id());
+            symbol_table
+                .read()
+                .iter_local()
+                .for_each(|(_, decl)| visit(decl.id()));
         }
 
         // Create stable mapping: original_id -> stable_id

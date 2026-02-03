@@ -9,6 +9,9 @@ use uniplate::Uniplate;
 
 #[serde_as]
 #[derive(Clone, PartialEq, Eq, Hash, Serialize, Deserialize, Debug, Uniplate)]
+#[biplate(to=Expression)]
+#[biplate(to=SubModel)]
+#[biplate(to=SymbolTablePtr)]
 pub struct AbstractComprehension {
     pub return_expr: Expression,
     pub qualifiers: Vec<Qualifier>,
