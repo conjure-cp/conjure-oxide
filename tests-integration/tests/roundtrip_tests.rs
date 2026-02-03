@@ -107,25 +107,29 @@ fn roundtrip_test_inner(
                 Some(conjure_cp::solver::SolverFamily::Minion),
             )?;
             save_essence(&initial_model, path, output_filename, "generated")?;
-
+            
             // When ACCEPT = true, copy over generated to expected
             if accept {
-                std::fs::copy(
-                    format!("{path}/{output_filename}.generated-parse.serialised.json"),
-                    format!("{path}/{output_filename}.expected-parse.serialised.json"),
-                )?;
-                std::fs::copy(
-                    format!("{path}/{output_filename}.generated-essence.essence"),
-                    format!("{path}/{output_filename}.expected-essence.essence"),
-                )?;
-            }
+                println!("AAHH1");
 
+                std::fs::copy(
+                    format!("{path}/minion-{output_filename}.generated-parse.serialised.json"),
+                    format!("{path}/minion-{output_filename}.expected-parse.serialised.json"),
+                )?;
+                std::fs::copy(
+                    format!("{path}/minion-{output_filename}.generated-essence.essence"),
+                    format!("{path}/minion-{output_filename}.expected-essence.essence"),
+                )?;
+
+                println!("AAHH2");
+            }
+            
             // Ensures ACCEPT=true has been run at least once
             if !accept
-                && !Path::new(&format!(
-                    "{path}/{output_filename}.expected-parse.serialised.json"
-                ))
-                .exists()
+            && !Path::new(&format!(
+                "{path}/minion-{output_filename}.expected-parse.serialised.json"
+            ))
+            .exists()
             {
                 return Err(Box::new(std::io::Error::new(
                     std::io::ErrorKind::NotFound,
@@ -142,6 +146,7 @@ fn roundtrip_test_inner(
                 "parse",
                 Some(conjure_cp::solver::SolverFamily::Minion),
             )?;
+
             let generated_model = read_model_json(
                 &context,
                 path,
@@ -154,21 +159,21 @@ fn roundtrip_test_inner(
 
             // Compares essence files
             let expected_essence = fs::read_to_string(&format!(
-                "{path}/{output_filename}.expected-essence.essence"
+                "{path}/minion-{output_filename}.expected-essence.essence"
             ))?;
             let generated_essence = fs::read_to_string(&format!(
-                "{path}/{output_filename}.generated-essence.essence"
+                "{path}/minion-{output_filename}.generated-essence.essence"
             ))?;
             assert_eq!(expected_essence, generated_essence);
 
             // Compares roundtrip
             let new_model = parse(
-                &format!("{path}/{output_filename}.generated-essence.essence"),
+                &format!("{path}/minion-{output_filename}.generated-essence.essence"),
                 context.clone(),
             )?;
             save_essence(&new_model, path, output_filename, "generated2")?;
             let new_generated_essence = fs::read_to_string(&format!(
-                "{path}/{output_filename}.generated2-essence.essence"
+                "{path}/minion-{output_filename}.generated-essence.essence"
             ))?;
             assert_eq!(generated_essence, new_generated_essence);
         }
@@ -179,14 +184,14 @@ fn roundtrip_test_inner(
             // When ACCEPT = true, copy over generated to expected
             if accept {
                 std::fs::copy(
-                    format!("{path}/{output_filename}.generated-error.txt"),
-                    format!("{path}/{output_filename}.expected-error.txt"),
+                    format!("{path}/minion-{output_filename}.generated-error.txt"),
+                    format!("{path}/minion-{output_filename}.expected-error.txt"),
                 )?;
             }
 
             // Ensures ACCEPT=true has been run at least once
             if !accept
-                && !Path::new(&format!("{path}/{output_filename}.expected-error.txt")).exists()
+                && !Path::new(&format!("{path}/minion-{output_filename}.expected-error.txt")).exists()
             {
                 return Err(Box::new(std::io::Error::new(
                     std::io::ErrorKind::NotFound,
@@ -195,9 +200,9 @@ fn roundtrip_test_inner(
             }
 
             let expected_error =
-                fs::read_to_string(&format!("{path}/{output_filename}.expected-error.txt"))?;
+                fs::read_to_string(&format!("{path}/minion-{output_filename}.expected-error.txt"))?;
             let generated_error =
-                fs::read_to_string(&format!("{path}/{output_filename}.generated-error.txt"))?;
+                fs::read_to_string(&format!("{path}/minion-{output_filename}.generated-error.txt"))?;
             assert_eq!(expected_error, generated_error);
         }
     }
@@ -212,7 +217,7 @@ fn save_essence(
     test_name: &str,
     model_type: &str,
 ) -> Result<(), std::io::Error> {
-    let filename = format!("{path}/{test_name}.{model_type}-essence.essence");
+    let filename = format!("{path}/minion-{test_name}.{model_type}-essence.essence");
     let mut file = fs::File::create(&filename)?;
     write!(file, "{}", model)?;
     Ok(())
@@ -225,7 +230,7 @@ fn save_parse_error(
     test_name: &str,
     model_type: &str,
 ) -> Result<(), std::io::Error> {
-    let filename = format!("{path}/{test_name}.{model_type}-error.txt");
+    let filename = format!("{path}/minion-{test_name}.{model_type}-error.txt");
     let mut file = fs::File::create(&filename)?;
     write!(file, "{}", error)?;
     Ok(())
