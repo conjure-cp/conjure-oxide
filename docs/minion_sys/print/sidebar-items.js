@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["write_constraints_section","write_minion_file","write_search_section","write_variable_declaration","write_variables_section"]};

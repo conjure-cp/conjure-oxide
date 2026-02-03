@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["DEBUG_HELP_HEADING","EXPERIMENTAL_HELP_HEADING","LOGGING_HELP_HEADING","OPTIMISATIONS_HELP_HEADING"],"enum":["Command","ShellTypes"],"struct":["Cli","CompletionArgs","GlobalArgs"]};

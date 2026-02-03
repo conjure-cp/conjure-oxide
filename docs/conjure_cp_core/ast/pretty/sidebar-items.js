@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["pretty_clauses","pretty_domain_letting_declaration","pretty_expressions_as_conjunction","pretty_expressions_as_top_level","pretty_value_letting_declaration","pretty_variable_declaration","pretty_vec"]};
