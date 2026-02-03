@@ -262,9 +262,9 @@ pub fn read_solutions_json(
         SolverFamily::Smt(..) => "smt",
         SolverFamily::Minion => "minion",
     };
-    let filename =
-        format!("{path}/{solver_name}-{test_name}.{prefix}-{solver_name}.solutions.json");
-    let _expected_json_str = std::fs::read_to_string(filename)?;
+    // let filename =
+    //     format!("{path}/{solver_name}-{test_name}.{prefix}-{solver_name}.solutions.json");
+    // let _expected_json_str = std::fs::read_to_string(filename)?;
     let expected_json_str = read_with_path(format!(
         "{path}/{solver_name}-{test_name}.{prefix}-{solver_name}.solutions.json"
     ))?;
