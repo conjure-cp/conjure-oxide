@@ -244,12 +244,25 @@ fn integration_test_inner(
 
     // // Stage 2a: Rewrite the model using the rule engine (run unless explicitly disabled)
 
-    let rule_sets = resolve_rule_sets(solver_fam, DEFAULT_RULE_SETS)?;
 
     let rewritten_model = if config.apply_rewrite_rules {
         // rule set selection based on solver
 
-        let rule_sets = resolve_rule_sets(solver_fam, DEFAULT_RULE_SETS)?;
+        let mut extra_rules = vec![];
+
+        // TODO (ss504): figure out why this is only here for sat
+        if solver_fam == SolverFamily::Sat {
+            match config.sat_encoding.as_str() {
+                "log" => extra_rules.push("SAT_Log"),
+                "direct" => extra_rules.push("SAT_Direct"),
+                _ => panic!("Unknown SAT encoding: {}", config.sat_encoding),
+            }
+        }
+
+        let mut rules_to_load = DEFAULT_RULE_SETS.to_vec();
+        rules_to_load.extend(extra_rules);
+
+        let rule_sets = resolve_rule_sets(solver_fam, &rules_to_load)?;
 
         let mut model = parsed_model;
 
@@ -279,8 +292,8 @@ fn integration_test_inner(
         if verbose {
             println!("Rewritten model: {rewritten:#?}");
         }
+        // println!("Rewritten model: {rewritten:#?}");
 
-        println!("Saving rewrite for solver: {}", solver_fam.as_str());
         save_model_json(&rewritten, path, essence_base, "rewrite", Some(solver_fam))?;
         Some(rewritten)
     } else {
@@ -375,12 +388,12 @@ fn integration_test_inner(
     println!("Calling accept asjkl;dasgfjkl;adsfjkl;");
 
     // Stage 3b: Check solutions against Conjure (only if explicitly enabled)
-    if config.compare_solver_solutions && config.num_solvers_enabled() > 0 {
-        let conjure_solutions: Vec<BTreeMap<Name, Literal>> = get_solutions_from_conjure(
-            &format!("{path}/{essence_base}.{extension}"),
-            Arc::clone(&context),
-        )?;
-    }
+    // if config.compare_solver_solutions && config.num_solvers_enabled() > 0 {
+    //     let conjure_solutions: Vec<BTreeMap<Name, Literal>> = get_solutions_from_conjure(
+    //         &format!("{path}/{essence_base}.{extension}"),
+    //         Arc::clone(&context),
+    //     )?;
+    // }
 
     //     let username_solutions = normalize_solutions_for_comparison(&solutions);
     //     let conjure_solutions = normalize_solutions_for_comparison(&conjure_solutions);
@@ -398,8 +411,8 @@ fn integration_test_inner(
     // }
 
     // When ACCEPT=true, copy all generated files to expected
+    println!("Calling accept");
     if accept {
-        println!("Calling accept");
 
         copy_generated_to_expected(path, essence_base, "parse", "serialised.json", None)?;
         println!("Calling accept-oof");
