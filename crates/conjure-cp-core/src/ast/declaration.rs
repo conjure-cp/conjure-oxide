@@ -221,7 +221,7 @@ impl DeclarationPtr {
     /// This is used in abstract comprehensions, where a variable in the return expression
     /// is "given", but also references its counterpart in the generator.
     pub fn new_given_quantified(decl: &DeclarationPtr) -> Option<DeclarationPtr> {
-        let kind = DeclarationKind::Quantified(GivenQuantified {
+        let kind = DeclarationKind::Quantified(Quantified {
             domain: decl.domain()?,
             generator: decl.clone(),
         });
