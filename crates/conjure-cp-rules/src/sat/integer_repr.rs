@@ -39,6 +39,8 @@ pub fn validate_log_int_operands(
 ) -> Result<Vec<Vec<Expr>>, ApplicationError> {
     // TODO: In the future it may be possible to optimize operations between integers with different bit sizes
     // Collect inner bit vectors from each SATInt
+
+    // TODO: this file should be encoding agnostic so this needs to moved to the log_int_ops.rs file, do this once the direct ints have been merged to main though
     let mut out: Vec<Vec<Expr>> = exprs
         .into_iter()
         .map(|expr| {
@@ -87,8 +89,86 @@ pub fn validate_log_int_operands(
 ///  ...
 ///
 /// ```
-#[register_rule(("SAT", 9500))]
+#[register_rule(("SAT_Direct", 9500))]
 fn integer_decision_representation(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    // thing we are representing must be a reference
+    let Expr::Atomic(_, Atom::Reference(name)) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    // thing we are representing must be a variable
+    // symbols
+    //     .lookup(name)
+    //     .ok_or(RuleNotApplicable)?
+    //     .as_var()
+    //     .ok_or(RuleNotApplicable)?;
+
+    // thing we are representing must be an integer
+    let dom = name.resolved_domain().ok_or(RuleNotApplicable)?;
+    let GroundDomain::Int(ranges) = dom.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let (min, max) = ranges
+        .iter()
+        .fold((i32::MAX, i32::MIN), |(min_a, max_b), range| {
+            (
+                min_a.min(*range.low().unwrap()),
+                max_b.max(*range.high().unwrap()),
+            )
+        });
+
+    let mut symbols = symbols.clone();
+
+    let new_name = &name.name().to_owned();
+
+    let repr_exists = symbols
+        .get_representation(new_name, &["sat_direct_int"])
+        .is_some();
+
+    let representation = symbols
+        .get_or_add_representation(new_name, &["sat_direct_int"])
+        .ok_or(RuleNotApplicable)?;
+
+    let bits: Vec<Expr> = representation[0]
+        .clone()
+        .expression_down(&symbols)?
+        .into_values()
+        .collect();
+
+    let cnf_int = Expr::SATInt(
+        Metadata::new(),
+        SATIntEncoding::Direct,
+        Moo::new(into_matrix_expr!(bits.clone())),
+        (min, max),
+    );
+
+    if !repr_exists {
+        // Domain constraint: the integer must take one of its valid values
+        let constraints = vec![int_domain_to_expr(cnf_int.clone(), ranges)];
+
+        // At-Most-One constraints: only one bit can be true.
+        let mut clauses = vec![];
+        for i in 0..bits.len() {
+            for j in i + 1..bits.len() {
+                clauses.push(conjure_cp::ast::CnfClause::new(vec![
+                    Expr::Not(Metadata::new(), Moo::new(bits[i].clone())),
+                    Expr::Not(Metadata::new(), Moo::new(bits[j].clone())),
+                ]));
+            }
+        }
+
+        let mut reduction = Reduction::cnf(cnf_int, clauses, symbols);
+        reduction.new_top = constraints;
+        Ok(reduction)
+    } else {
+        Ok(Reduction::pure(cnf_int))
+    }
+}
+
+/// Converts an integer decision variable to SATInt form (Log encoding)
+#[register_rule(("SAT_Log", 9500))]
+fn integer_decision_representation_log(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     // thing we are representing must be a reference
     let Expr::Atomic(_, Atom::Reference(name)) = expr else {
         return Err(RuleNotApplicable);
@@ -161,7 +241,7 @@ fn integer_decision_representation(expr: &Expr, symbols: &SymbolTable) -> Applic
 ///  SATInt([true,true,false,false,false,false,false,false;int(1..)])
 ///
 /// ```
-#[register_rule(("SAT", 9500))]
+#[register_rule(("SAT_Log", 9500))]
 fn literal_cnf_int(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let value = {
         if let Expr::Atomic(_, Atom::Literal(Literal::Int(v))) = expr {
