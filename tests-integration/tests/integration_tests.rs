@@ -204,8 +204,9 @@ fn integration_test_inner(
     essence_base: &str,
     extension: &str,
     config: &TestConfig,
-    solver: SolverFamily,
+    solver_fam: SolverFamily,
 ) -> Result<(), Box<dyn Error>> {
+    println!("Inner Integration test for solver: {}", solver_fam.as_str());
     let context: Arc<RwLock<Context<'static>>> = Default::default();
     let accept = env::var("ACCEPT").unwrap_or("false".to_string()) == "true";
     let verbose = env::var("VERBOSE").unwrap_or("false".to_string()) == "true";
@@ -227,8 +228,7 @@ fn integration_test_inner(
         if verbose {
             println!("Parsed model (native): {model:#?}");
         }
-        println!("Calling 1");
-        save_model_json(&model, path, essence_base, "parse", Some(solver))?;
+        save_model_json(&model, path, essence_base, "parse", Some(solver_fam))?;
 
         model
     // Stage 1b: Parse the model using the legacy parser
@@ -237,28 +237,24 @@ fn integration_test_inner(
         if verbose {
             println!("Parsed model (legacy): {model:#?}");
         }
-        println!("Calling 2");
-        save_model_json(&model, path, essence_base, "parse", Some(solver))?;
+        save_model_json(&model, path, essence_base, "parse", Some(solver_fam))?;
         model
     };
 
     // // Stage 2a: Rewrite the model using the rule engine (run unless explicitly disabled)
 
-    let solver_fam = solver.clone();
+    let solver_fam = solver_fam.clone();
 
     let rule_sets = resolve_rule_sets(solver_fam, DEFAULT_RULE_SETS)?;
 
     let rewritten_model = if config.apply_rewrite_rules {
         // rule set selection based on solver
 
-        println!("Calling meow");
         let mut model = parsed_model;
 
         let rewritten = if config.enable_naive_impl {
-            println!("Calling meow1");
             rewrite_naive(&model, &rule_sets, false, false)?
         } else if config.enable_morph_impl {
-            println!("Calling meow2");
             let submodel = model.as_submodel_mut();
             let rules_grouped = get_rules_grouped(&rule_sets)
                 .unwrap_or_else(|_| bug!("get_rule_priorities() failed!"))
@@ -283,12 +279,12 @@ fn integration_test_inner(
             println!("Rewritten model: {rewritten:#?}");
         }
 
-        println!("Calling meow4");
-        save_model_json(&rewritten, path, essence_base, "rewrite", Some(solver))?;
+        save_model_json(&rewritten, path, essence_base, "rewrite", Some(solver_fam))?;
         Some(rewritten)
     } else {
         None
     };
+
 
     // // Stage 2b: Check model properties (extra_asserts) (Verify additional model properties)
     // // (e.g., ensure vector operators are evaluated). (only if explicitly enabled)
@@ -304,30 +300,60 @@ fn integration_test_inner(
     //         };
     //     }
     // }
-    println!("Calling meow5");
 
     let solver_input_file = env::var("OXIDE_TEST_SAVE_INPUT_FILE").ok().map(|_| {
         let name = format!("{essence_base}.generated-input.txt");
         Path::new(path).join(Path::new(&name))
     });
 
-    let solver = if config.solve_with_minion {
-        Some(Solver::new(Minion::default()))
-    } else if config.solve_with_sat {
-        Some(Solver::new(Sat::default()))
-    } else if config.solve_with_smt {
-        #[cfg(not(feature = "smt"))]
-        panic!("Test {path} uses 'solve_with_smt=true', but the 'smt' feature is disabled!");
-        #[cfg(feature = "smt")]
-        Some(Solver::new(Smt::default()))
-    } else {
-        None
-    };
+    // let solver = if config.solve_with_minion {
+    //     println!("Calling accept asjkl;dasgfjkl;adsfjkl;");
+    //     Some(Solver::new(Minion::default()))
+    // } else if config.solve_with_sat {
+    //     Some(Solver::new(Sat::default()))
+    // } else if config.solve_with_smt {
+    //     #[cfg(not(feature = "smt"))]
+    //     panic!("Test {path} uses 'solve_with_smt=true', but the 'smt' feature is disabled!");
+    //     #[cfg(feature = "smt")]
+    //     Some(Solver::new(Smt::default()))
+    // } else {
+    //     None
+    // };
+
+    println!("Calling accept asjkl;dasgfjkl;adsfjkl;");
         
-    println!("Calling meow6");
-    let solutions = if let Some(solver) = solver {
+    // let solutions = if let Some(solver) = solver {
+    //     let name = solver.get_name();
+    //     let family = solver.get_family();
+
+    //     let solved = get_solutions(
+    //         solver,
+    //         rewritten_model
+    //             .as_ref()
+    //             .expect("Rewritten model must be present in 2a")
+    //             .clone(),
+    //         0,
+    //         &solver_input_file,
+    //     )?;
+    //     let solutions_json = save_solutions_json(&solved, path, essence_base, family)?;
+    //     if verbose {
+    //         println!("{name} solutions: {solutions_json:#?}");
+    //     }
+    //     solved
+    // } else {
+    //     println!("Warning: no solver specified");
+    //     Vec::new()
+    // };
+
+    let solver = match solver_fam {
+        SolverFamily::Minion => Solver::new(Minion::default()),
+        SolverFamily::Sat => Solver::new(Sat::default()),
+        #[cfg(feature = "smt")]
+        SolverFamily::Smt(_) => Solver::new(Smt::default()),
+    };
+
+    let solutions = {
         let name = solver.get_name();
-        let family = solver.get_family();
 
         let solved = get_solutions(
             solver,
@@ -338,17 +364,14 @@ fn integration_test_inner(
             0,
             &solver_input_file,
         )?;
-        let solutions_json = save_solutions_json(&solved, path, essence_base, family)?;
+        let solutions_json = save_solutions_json(&solved, path, essence_base, solver_fam)?;
         if verbose {
             println!("{name} solutions: {solutions_json:#?}");
         }
         solved
-    } else {
-        println!("Warning: no solver specified");
-        Vec::new()
     };
+    println!("Calling accept asjkl;dasgfjkl;adsfjkl;");
 
-    println!("Calling meow7");
     // Stage 3b: Check solutions against Conjure (only if explicitly enabled)
     if config.compare_solver_solutions && config.num_solvers_enabled() > 0 {
         let conjure_solutions: Vec<BTreeMap<Name, Literal>> = get_solutions_from_conjure(
@@ -356,7 +379,6 @@ fn integration_test_inner(
             Arc::clone(&context),
         )?;
     }
-    println!("Calling meow8");
 
     //     let username_solutions = normalize_solutions_for_comparison(&solutions);
     //     let conjure_solutions = normalize_solutions_for_comparison(&conjure_solutions);
@@ -414,7 +436,6 @@ fn integration_test_inner(
         }
     }
 
-    println!("Calling meow9");
     // Check Stage 1: Compare parsed model with expected
     let expected_model = read_model_json(
         &context,
@@ -434,7 +455,6 @@ fn integration_test_inner(
     )?;
     assert_eq!(model_from_file, expected_model);
 
-    println!("Calling meow10");
     // Check Stage 2a (rewritten model)
     if config.apply_rewrite_rules {
         let expected_rewrite = read_model_json_prefix(
@@ -466,7 +486,7 @@ fn integration_test_inner(
         let username_solutions_json = solutions_to_json(&solutions);
         assert_eq!(username_solutions_json, expected_solutions_json);
     } else if config.solve_with_sat {
-        println!("Calling minion meow11");
+        println!("Calling sat meow11");
 
         let expected_solutions_json =
             read_solutions_json(path, essence_base, "expected", SolverFamily::Sat)?;
