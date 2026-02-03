@@ -49,7 +49,9 @@ jobs:
         with:
           folder: ./deploy
           target-folder: "coverage/${{ steps.sha.outputs.result }}"
-          branch: gh-pages
+          repository-name: conjure-cp/conjure-oxide-reports
+          branch: main
+          token: ${{ secrets.CONJURE_OXIDE_REPORTS_TOKEN }}
           commit-message: "Actions: Code Coverage for ${{ steps.sha.outputs.result }}"
 
   indexes:
@@ -63,8 +65,10 @@ jobs:
       - name: Checkout the pages repository
         uses: actions/checkout@v6
         with:
-          ref: "gh-pages"
+          repository: conjure-cp/conjure-oxide-reports
+          ref: "main"
           path: "pages"
+          token: ${{ secrets.CONJURE_OXIDE_REPORTS_TOKEN }}
 
       - name: Set shas
         id: sha
@@ -89,7 +93,9 @@ jobs:
         with:
           folder: ./pages/coverage/
           target-folder: ./coverage/
-          branch: gh-pages
+          repository-name: conjure-cp/conjure-oxide-reports
+          branch: main
+          token: ${{ secrets.CONJURE_OXIDE_REPORTS_TOKEN }}
           commit-message: "Actions: Update coverage indexes"
 
   comment:
@@ -173,7 +179,7 @@ jobs:
         id: lcov
         run: |
           sudo apt-get install -y lcov
-          wget https://${{github.repository_owner}}.github.io/conjure-oxide/coverage/main/lcov.info
+          wget https://${{github.repository_owner}}.github.io/conjure-oxide-reports/coverage/main/lcov.info
           lcov --summary lcov.info > cov.txt
           echo "main<<EOFABC" >> $GITHUB_OUTPUT
           echo "$(cat cov.txt | tail -n +3)" >> $GITHUB_OUTPUT
@@ -325,13 +331,13 @@ jobs:
 
             ### Code Coverage Summary
 
-            **This PR**: [Detailed Report](https://${{ github.repository_owner }}.github.io/conjure-oxide/coverage/${{ steps.sha.outputs.result }}/index.html)
+            **This PR**: [Detailed Report](https://${{ github.repository_owner }}.github.io/conjure-oxide-reports/coverage/${{ steps.sha.outputs.result }}/index.html)
 
             ```
             ${{ steps.lcov.outputs.pr }}
             ```
 
-            **Main**: [Detailed Report](https://${{ github.repository_owner }}.github.io/conjure-oxide/coverage/main/index.html)
+            **Main**: [Detailed Report](https://${{ github.repository_owner }}.github.io/conjure-oxide-reports/coverage/main/index.html)
 
             ```
             ${{ steps.lcov.outputs.main }}
@@ -366,13 +372,13 @@ jobs:
 
             ### Code Coverage Summary
 
-            **This PR**: [Detailed Report](https://${{ github.repository_owner }}.github.io/conjure-oxide/coverage/${{ steps.sha.outputs.result }}/index.html)
+            **This PR**: [Detailed Report](https://${{ github.repository_owner }}.github.io/conjure-oxide-reports/coverage/${{ steps.sha.outputs.result }}/index.html)
 
             ```
             ${{ steps.lcov.outputs.pr }}
             ```
 
-            **Main**: [Detailed Report](https://${{ github.repository_owner }}.github.io/conjure-oxide/coverage/main/index.html)
+            **Main**: [Detailed Report](https://${{ github.repository_owner }}.github.io/conjure-oxide-reports/coverage/main/index.html)
 
             ```
             ${{ steps.lcov.outputs.main }}
