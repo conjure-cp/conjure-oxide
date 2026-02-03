@@ -75,7 +75,7 @@ mod test {
     #[test]
     pub fn test_parse_expressions() {
         let src = "x >= 5, y = a / 2";
-        let mut symbols = SymbolTablePtr::new();
+        let symbols = SymbolTablePtr::new();
         let x = DeclarationPtr::new_var(
             Name::User("x".into()),
             Domain::int(vec![conjure_cp_core::ast::Range::Bounded(0, 10)]),

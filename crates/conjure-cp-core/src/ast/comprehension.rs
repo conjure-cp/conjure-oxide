@@ -142,7 +142,7 @@ impl ComprehensionBuilder {
         ComprehensionBuilder {
             guards: vec![],
             generator_symboltable: SymbolTablePtr::with_parent(symbol_table_ptr.clone()),
-            return_expr_symboltable: SymbolTablePtr::with_parent(symbol_table_ptr.clone()),
+            return_expr_symboltable: SymbolTablePtr::with_parent(symbol_table_ptr),
             induction_variables: BTreeSet::new(),
         }
     }
