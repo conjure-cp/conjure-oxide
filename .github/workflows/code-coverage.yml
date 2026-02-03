@@ -1,0 +1,123 @@
+name: Code Coverage
+
+# WARNING: This workflow runs on `pull_request_target` and checks out PR code.
+# It therefore executes untrusted code with access to repository secrets, including
+# `CONJURE_OXIDE_REPORTS_TOKEN`. This is an intentional tradeoff to allow fork PR
+# deployments without artifacts. Do not add other sensitive secrets to this repo.
+
+on:
+  pull_request_target:
+    paths:
+      - crates/**
+      - tests-integration/**
+      - tools/coverage.sh
+      - .github/workflows/code-coverage.yml
+      - .github/workflows/doc-coverage.yml
+      - .github/workflows/rustdoc.yml
+  push:
+    branches:
+      - main
+    paths:
+      - crates/**
+      - tests-integration/**
+      - tools/coverage.sh
+      - .github/workflows/code-coverage.yml
+      - .github/workflows/doc-coverage.yml
+      - .github/workflows/rustdoc.yml
+  workflow_dispatch:
+
+env:
+  os: ubuntu-latest
+  rust_release: nightly
+  compiler_profile: debug
+  CARGO_INCREMENTAL: 0
+
+permissions:
+  contents: read
+
+jobs:
+  coverage:
+    name: "Code Coverage"
+    timeout-minutes: 120
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR
+        if: ${{ github.event_name == 'pull_request_target' }}
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Checkout repository
+        if: ${{ github.event_name != 'pull_request_target' }}
+        uses: actions/checkout@v6
+
+      - name: free_disk_space.sh
+        run: .github/workflows/tools/free_disk_space.sh
+
+      - name: Restore cache
+        id: restore_cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+            ~/conjure
+          key: codecov--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.event.repository.updated_at }}
+          restore-keys: codecov--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}
+
+      - name: Install rust
+        run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
+
+      - uses: ./.github/actions/install-conjure
+        with:
+          os_arch: linux
+          version: 2.5.1
+
+      - name: Generate code coverage reports
+        run: |
+          ./tools/coverage.sh
+
+      - name: Prepare deploy folder
+        run: |
+          mkdir -p deploy/
+          cp -r target/debug/coverage/* deploy/     # html
+          cp target/debug/lcov.info deploy/         # keep lcov for inspection
+
+      - name: Set deploy target
+        id: deploy
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request_target" ]]; then
+            echo "folder=coverage-code/pr-${{ github.event.pull_request.number }}" >> "$GITHUB_OUTPUT"
+            echo "label=pr-${{ github.event.pull_request.number }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "folder=coverage-code/main" >> "$GITHUB_OUTPUT"
+            echo "label=main" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Deploy to reports repository
+        if: ${{ secrets.CONJURE_OXIDE_REPORTS_TOKEN != '' }}
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          repository-name: conjure-cp/conjure-oxide-reports
+          branch: main
+          token: ${{ secrets.CONJURE_OXIDE_REPORTS_TOKEN }}
+          folder: ./deploy
+          target-folder: ${{ steps.deploy.outputs.folder }}
+          commit-message: "Actions: Code coverage for ${{ steps.deploy.outputs.label }}"
+
+      - name: Save cache
+        if: ${{ always() && steps.restore_cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+            ~/conjure
+          key: codecov--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.event.repository.updated_at }}
