@@ -94,6 +94,11 @@ pub trait Rule<T: Uniplate, M> {
     ///
     /// See the [Rule] trait documentation for more information.
     fn apply(&self, commands: &mut Commands<T, M>, subtree: &T, meta: &M) -> Option<T>;
+
+    /// Return the name of the rule, will default to anonymous if not specified.
+    fn name(&self) -> &str {
+        "Anonymous Rule"
+    }
 }
 
 // Allows the user to pass closures and function pointers directly as rules
@@ -162,4 +167,61 @@ macro_rules! rule_fns {
     [$($x:expr),+ $(,)?] => {
         vec![$( $x as ::tree_morph::prelude::RuleFn<_, _>, )*]
     };
+}
+
+/// For debugging and tracing, it is helpful to see rules by a meaningful name.
+/// We can create a rule using this struct and pass it into our list of rules directly,
+/// or we can make use of the `named_rule` macro (see [`tree-morph-macros`]).
+///
+/// This struct and macro is for the short form way of defining named rules. You can change the name
+/// of the rule by implementing the `Rule` trait as well.
+///
+///  ```rust
+/// use tree_morph::prelude::*;
+/// use tree_morph_macros::named_rule;
+/// use uniplate::Uniplate;
+///
+/// #[derive(Debug, Clone, PartialEq, Eq, Uniplate)]
+/// #[uniplate()]
+/// enum Expr {
+///     # Add(Box<Expr>, Box<Expr>),
+///    // Snip
+/// }
+///
+/// struct Meta;
+///
+/// #[named_rule("CustomName")]
+/// fn my_rule(_: &mut Commands<Expr, Meta>, expr: &Expr, _: &Meta) -> Option<Expr> {
+///     /// rule implementation
+///     # None
+/// }
+/// ```
+/// This macro will return a helper function called `my_rule` which returns the NamedRule for us to
+/// use. We can add this to our list of rules with `vec![my_rule]`.
+///
+/// If a name is not specified, the functions name will be it's identifier.
+pub struct NamedRule<F> {
+    name: &'static str,
+    function: F,
+}
+
+impl<F> NamedRule<F> {
+    /// Create a Rule with a specified name.
+    pub const fn new(name: &'static str, function: F) -> Self {
+        Self { name, function }
+    }
+}
+
+impl<T, M, F> Rule<T, M> for NamedRule<F>
+where
+    T: Uniplate,
+    F: Fn(&mut Commands<T, M>, &T, &M) -> Option<T>,
+{
+    fn apply(&self, commands: &mut Commands<T, M>, subtree: &T, meta: &M) -> Option<T> {
+        (self.function)(commands, subtree, meta)
+    }
+
+    fn name(&self) -> &str {
+        self.name
+    }
 }
