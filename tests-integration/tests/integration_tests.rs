@@ -250,6 +250,19 @@ fn integration_test_inner(
     let rewritten_model = if config.apply_rewrite_rules {
         // rule set selection based on solver
 
+        let solver_fam = if config.solve_with_sat {
+            SolverFamily::Sat
+        } else if config.solve_with_smt {
+            #[cfg(not(feature = "smt"))]
+            panic!("Test {path} uses 'solve_with_smt=true', but the 'smt' feature is disabled!");
+            #[cfg(feature = "smt")]
+            SolverFamily::Smt(TheoryConfig::default())
+        } else {
+            SolverFamily::Minion
+        };
+
+        let rule_sets = resolve_rule_sets(solver_fam, DEFAULT_RULE_SETS)?;
+
         let mut model = parsed_model;
 
         let rewritten = if config.enable_naive_impl {

@@ -17,6 +17,7 @@ pub struct TestConfig {
     pub solve_with_minion: bool, // Stage 3a: Solves the model using Minion
     pub solve_with_sat: bool,    // TODO - add stage mark
     pub solve_with_smt: bool,    // TODO - add stage mark
+    pub sat_encoding: String,
 
     pub compare_solver_solutions: bool, // Stage 3b: Compares Minion and Conjure solutions
     pub validate_rule_traces: bool,     // Stage 4a: Checks rule traces against expected outputs
@@ -35,6 +36,7 @@ impl Default for TestConfig {
             solve_with_smt: false,
             enable_morph_impl: false,
             enable_rewriter_impl: true,
+            sat_encoding: "log".to_string(),
             enable_native_parser: true,
             apply_rewrite_rules: true,
             enable_extra_validation: false,
@@ -69,6 +71,7 @@ impl TestConfig {
             solve_with_minion: env_var_override_bool("SOLVE_WITH_MINION", self.solve_with_minion),
             solve_with_sat: env_var_override_bool("SOLVE_WITH_SAT", self.solve_with_sat),
             solve_with_smt: env_var_override_bool("SOLVE_WITH_SMT", self.solve_with_smt),
+            sat_encoding: env::var("SAT_ENCODING").unwrap_or(self.sat_encoding),
             compare_solver_solutions: env_var_override_bool(
                 "COMPARE_SOLVER_SOLUTIONS",
                 self.compare_solver_solutions,

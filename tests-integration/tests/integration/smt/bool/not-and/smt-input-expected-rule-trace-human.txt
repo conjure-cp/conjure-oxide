@@ -1,0 +1,28 @@
+Model before rewriting:
+
+find x: bool
+find y: bool
+find z: bool
+
+such that
+
+!(and([y,z;int(1..)]))
+
+--
+
+!(and([y,z;int(1..)])), 
+   ~~> distribute_not_over_and ([("Base", 8400)]) 
+or([!(y),!(z);int(1..)]) 
+
+--
+
+Final model:
+
+find x: bool
+find y: bool
+find z: bool
+
+such that
+
+or([!(y),!(z);int(1..)])
+

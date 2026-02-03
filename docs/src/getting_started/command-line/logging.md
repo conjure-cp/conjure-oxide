@@ -41,4 +41,24 @@ Or, using cargo:
 $ RUST_LOG=trace cargo run -- solve --verbose <model>
 ```
 
+### Example: Tracing SAT Solver Rules
 
+When working with the SAT solver, you can trace the complete transformation pipeline:
+
+```bash
+RUST_LOG=TRACE cargo run -- solve --solver sat my_problem.essence --verbose
+```
+
+This will show: 
+- Integer-to-boolean conversions
+- Operation transformations 
+- Tseitin transformations
+- All rules that were tried and applied
+
+For more detailed testing output (including JSON traces and rewritten models), run specific tests:
+
+```bash
+cargo test <test_name>
+```
+
+This generates `.json` and `.txt` files containing rule traces, parsed Essence, solutions, and the rewritten model.
