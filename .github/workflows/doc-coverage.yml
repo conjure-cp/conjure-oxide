@@ -6,6 +6,15 @@ name: Documentation Coverage
 # deployments without artifacts. Do not add other sensitive secrets to this repo.
 
 on:
+  pull_request:
+    paths:
+      - crates/**
+      - tests-integration/**
+      - tools/ci/generate-doc-coverage-summary-md.bash
+      - tools/ci/generate-doc-coverage-report-md.bash
+      - .github/workflows/doc-coverage.yml
+      - .github/workflows/code-coverage.yml
+      - .github/workflows/rustdoc.yml
   pull_request_target:
     paths:
       - crates/**
@@ -111,7 +120,7 @@ jobs:
           fi
 
       - name: Deploy to reports repository
-        if: ${{ env.REPORTS_TOKEN != '' }}
+        if: ${{ env.REPORTS_TOKEN != '' && (github.event_name == 'pull_request_target' || github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           repository-name: conjure-cp/conjure-oxide-reports
