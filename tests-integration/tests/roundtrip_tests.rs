@@ -121,7 +121,6 @@ fn roundtrip_test_inner(
                     format!("{path}/agnostic-{output_filename}.expected-essence.essence"),
                 )?;
 
-                println!("AAHH2");
             }
             
             // Ensures ACCEPT=true has been run at least once
@@ -136,6 +135,7 @@ fn roundtrip_test_inner(
                     format!("Expected output file not found: Run with ACCEPT=true"),
                 )));
             }
+            println!("AAHH2");
 
             // Compare the expected and generated model
             let expected_model = read_model_json(
@@ -144,7 +144,7 @@ fn roundtrip_test_inner(
                 output_filename,
                 "expected",
                 "parse",
-                Some(conjure_cp::solver::SolverFamily::Minion),
+                None,
             )?;
 
             let generated_model = read_model_json(
@@ -153,7 +153,7 @@ fn roundtrip_test_inner(
                 output_filename,
                 "generated",
                 "parse",
-                Some(conjure_cp::solver::SolverFamily::Minion),
+                None,
             )?;
             assert_eq!(generated_model, expected_model);
 
