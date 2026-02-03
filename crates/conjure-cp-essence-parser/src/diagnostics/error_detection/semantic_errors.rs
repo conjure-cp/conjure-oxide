@@ -14,10 +14,8 @@ pub fn detect_semantic_errors(source: &str) -> Vec<Diagnostic> {
     match parse_essence_with_context(source, context) {
         Ok(_model) => {
             // no errors, all good
-            println!("No semantic errors detected");
         }
         Err(err) => {
-            println!("Semantic error detected: {:?}", err);
             diagnostics.push(error_to_diagnostic(&err));
         }
     }

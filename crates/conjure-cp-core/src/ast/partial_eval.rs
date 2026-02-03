@@ -523,7 +523,7 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
         Expr::MinionWInIntervalSet(_, _, _) => Err(RuleNotApplicable),
         Expr::MinionWInSet(_, _, _) => Err(RuleNotApplicable),
         Expr::MinionElementOne(_, _, _, _) => Err(RuleNotApplicable),
-        Expr::SATInt(_, _) => Err(RuleNotApplicable),
+        Expr::SATInt(_, _, _, _) => Err(RuleNotApplicable),
         Expr::PairwiseSum(_, _, _) => Err(RuleNotApplicable),
         Expr::PairwiseProduct(_, _, _) => Err(RuleNotApplicable),
         Expr::Defined(_, _) => todo!(),
