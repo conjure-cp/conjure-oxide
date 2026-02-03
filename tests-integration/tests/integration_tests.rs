@@ -5,6 +5,7 @@ use conjure_cp::rule_engine::get_rules_grouped;
 use conjure_cp::defaults::DEFAULT_RULE_SETS;
 use conjure_cp::parse::tree_sitter::parse_essence_file_native;
 use conjure_cp::rule_engine::rewrite_naive;
+use conjure_cp::solver;
 use conjure_cp::solver::adaptors::*;
 use conjure_cp::solver::Solver;
 use conjure_cp_cli::utils::testing::{normalize_solutions_for_comparison, read_human_rule_trace};
@@ -243,23 +244,10 @@ fn integration_test_inner(
 
     // // Stage 2a: Rewrite the model using the rule engine (run unless explicitly disabled)
 
-    let solver_fam = solver_fam.clone();
-
     let rule_sets = resolve_rule_sets(solver_fam, DEFAULT_RULE_SETS)?;
 
     let rewritten_model = if config.apply_rewrite_rules {
         // rule set selection based on solver
-
-        let solver_fam = if config.solve_with_sat {
-            SolverFamily::Sat
-        } else if config.solve_with_smt {
-            #[cfg(not(feature = "smt"))]
-            panic!("Test {path} uses 'solve_with_smt=true', but the 'smt' feature is disabled!");
-            #[cfg(feature = "smt")]
-            SolverFamily::Smt(TheoryConfig::default())
-        } else {
-            SolverFamily::Minion
-        };
 
         let rule_sets = resolve_rule_sets(solver_fam, DEFAULT_RULE_SETS)?;
 
@@ -292,6 +280,7 @@ fn integration_test_inner(
             println!("Rewritten model: {rewritten:#?}");
         }
 
+        println!("Saving rewrite for solver: {}", solver_fam.as_str());
         save_model_json(&rewritten, path, essence_base, "rewrite", Some(solver_fam))?;
         Some(rewritten)
     } else {

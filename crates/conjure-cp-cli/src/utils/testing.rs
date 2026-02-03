@@ -127,6 +127,7 @@ pub fn save_model_json(
     let generated_json_str = serialize_model(model)?;
     let generated_json_str = maybe_truncate_serialised_json(generated_json_str, test_stage);
     let filename = format!("{path}/{marker}-{test_name}.generated-{test_stage}.serialised.json");
+    println!("saving: {}", filename);
     File::create(&filename)?.write_all(generated_json_str.as_bytes())?;
     Ok(())
 }
