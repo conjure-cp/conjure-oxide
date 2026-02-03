@@ -40,6 +40,8 @@ jobs:
     name: "Code Coverage"
     timeout-minutes: 120
     runs-on: ubuntu-latest
+    env:
+      REPORTS_TOKEN: ${{ secrets.CONJURE_OXIDE_REPORTS_TOKEN }}
     steps:
       - name: Checkout PR
         if: ${{ github.event_name == 'pull_request_target' }}
@@ -99,12 +101,12 @@ jobs:
           fi
 
       - name: Deploy to reports repository
-        if: ${{ secrets.CONJURE_OXIDE_REPORTS_TOKEN != '' }}
+        if: ${{ env.REPORTS_TOKEN != '' }}
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           repository-name: conjure-cp/conjure-oxide-reports
           branch: main
-          token: ${{ secrets.CONJURE_OXIDE_REPORTS_TOKEN }}
+          token: ${{ env.REPORTS_TOKEN }}
           folder: ./deploy
           target-folder: ${{ steps.deploy.outputs.folder }}
           commit-message: "Actions: Code coverage for ${{ steps.deploy.outputs.label }}"
