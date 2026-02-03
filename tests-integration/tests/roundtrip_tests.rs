@@ -1,7 +1,7 @@
-use conjure_cp::Model;
 use conjure_cp::context::Context;
 use conjure_cp::parse::tree_sitter::EssenceParseError;
 use conjure_cp::parse::tree_sitter::{parse_essence_file, parse_essence_file_native};
+use conjure_cp::Model;
 use conjure_cp_cli::utils::testing::{read_model_json, save_model_json};
 
 use std::env;
@@ -99,7 +99,13 @@ fn roundtrip_test_inner(
     let initial_parse = parse(&file_path, context.clone());
     match initial_parse {
         Ok(initial_model) => {
-            save_model_json(&initial_model, path, output_filename, "parse")?;
+            save_model_json(
+                &initial_model,
+                path,
+                output_filename,
+                "parse",
+                Some(conjure_cp::solver::SolverFamily::Minion),
+            )?;
             save_essence(&initial_model, path, output_filename, "generated")?;
 
             // When ACCEPT = true, copy over generated to expected
@@ -128,10 +134,22 @@ fn roundtrip_test_inner(
             }
 
             // Compare the expected and generated model
-            let expected_model =
-                read_model_json(&context, path, output_filename, "expected", "parse")?;
-            let generated_model =
-                read_model_json(&context, path, output_filename, "generated", "parse")?;
+            let expected_model = read_model_json(
+                &context,
+                path,
+                output_filename,
+                "expected",
+                "parse",
+                Some(conjure_cp::solver::SolverFamily::Minion),
+            )?;
+            let generated_model = read_model_json(
+                &context,
+                path,
+                output_filename,
+                "generated",
+                "parse",
+                Some(conjure_cp::solver::SolverFamily::Minion),
+            )?;
             assert_eq!(generated_model, expected_model);
 
             // Compares essence files

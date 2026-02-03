@@ -4,7 +4,7 @@ use std::path::Path;
 use std::{io, vec};
 
 use conjure_cp::ast::records::RecordValue;
-use conjure_cp::bug;
+use conjure_cp::{bug, solver};
 use itertools::Itertools as _;
 use std::fs::File;
 use std::hash::Hash;
@@ -21,10 +21,10 @@ use conjure_cp::error::Error;
 use crate::utils::conjure::solutions_to_json;
 use crate::utils::json::sort_json_object;
 use crate::utils::misc::to_set;
-use conjure_cp::Model as ConjureModel;
 use conjure_cp::ast::Name::User;
 use conjure_cp::ast::{Literal, Name};
 use conjure_cp::solver::SolverFamily;
+use conjure_cp::Model as ConjureModel;
 
 /// Limit how many lines of the rewrite serialisation we persist/compare in integration tests.
 pub const REWRITE_SERIALISED_JSON_MAX_LINES: usize = 1000;
@@ -191,9 +191,12 @@ pub fn read_model_json_prefix(
     test_name: &str,
     prefix: &str,
     test_stage: &str,
+    solver: Option<SolverFamily>,
     max_lines: usize,
 ) -> Result<String, std::io::Error> {
-    let filename = format!("{path}/{test_name}.{prefix}-{test_stage}.serialised.json");
+    let marker = solver.map_or("agnostic".into(), |s| s.as_str());
+    let filename = format!("{path}/{marker}-{test_name}.{prefix}-{test_stage}.serialised.json");
+    println!("reading: {}", filename);
     read_first_n_lines(filename, max_lines)
 }
 
@@ -261,18 +264,17 @@ pub fn read_solutions_json(
 ) -> Result<JsonValue, anyhow::Error> {
     // let solver_name = solver.as_str();
 
-    let filename =
-        format!("{path}/{solver_name}-{test_name}.{prefix}-{solver_name}.solutions.json");
-    let expected_json_str = std::fs::read_to_string(filename)?;
     let solver_name = match solver {
         SolverFamily::Sat => "sat",
         #[cfg(feature = "smt")]
         SolverFamily::Smt(..) => "smt",
         SolverFamily::Minion => "minion",
     };
-
+    let filename =
+        format!("{path}/{solver_name}-{test_name}.{prefix}-{solver_name}.solutions.json");
+    let expected_json_str = std::fs::read_to_string(filename)?;
     let expected_json_str = read_with_path(format!(
-        "{path}/{test_name}.{prefix}-{solver_name}.solutions.json"
+        "{path}/{solver_name}-{test_name}.{prefix}-{solver_name}.solutions.json"
     ))?;
 
     let expected_solutions: JsonValue =

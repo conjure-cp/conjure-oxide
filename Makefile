@@ -65,10 +65,9 @@ install-cargo-extensions: .installed-cargo-extensions.checkpoint
 	touch .installed-cargo-extensions.checkpoint
 
 test-clean:
-	cd tests-integration/tests/integration/
 	find -type f -name '**generated**' -delete
 	find -type f -name '**expected**' -delete
-	find -type f -name '**stats**' -delete
+	find -type f -wholename 'tests-integration/tests/integration/**stats**' -delete
 
 .PHONY: help
 ## Shows this help text
