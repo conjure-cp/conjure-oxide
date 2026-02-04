@@ -23,7 +23,7 @@
   - [Creating Documentation](./developers_guide/contributors_guide/creating_documentation.md)
   - [Running and writing integration tests]()
   - [What we didn't do]()
-  - [Onboarding](./developers_guide/contributors-guide/onboarding.md)
+  - [Onboarding](./developers_guide/contributors_guide/onboarding.md)
 
 - [Coding Resources and Conventions](./developers_guide/coding_resources/index.md)
   - [Functional Rust](./getting_started/functional-rust.md)

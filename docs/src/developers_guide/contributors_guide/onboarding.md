@@ -8,13 +8,13 @@ You will need to spend at least the first few weeks on the project learning, and
 Here are some tips for starting out.
 
 ## What You Need to Learn
-The VIP fundamentally involves the development of a constraint modelling tool in the Rust programming language; and as such, learning about constraint programming and Rust will be the initial challenges.
+The VIP fundamentally involves the development of a constraint modelling tool in the Rust programming language. Therefore, learning about constraint programming and Rust will be your initial challenges.
 Getting a solid understanding of Rust and constraints now will stand you in good stead for the rest of the project so do not worry that spending time learning is not productive, this learning is expected.
 
 ### Constraint Programming
 Constraint programming is a paradigm for solving combinatorial problems. Instead of defining an algorithm to solve a complex problem, we instead model it as a constraint satisfaction problem (CSP), and let one of many optimised solver programs solve it from there.
 
-Whilst not essential to be a fully-fledged constraint programmer it is useful to understand roughly how this works. There are good video lectures online that would be worth a watch for a general understanding.
+Whilst not essential to be a fully-fledged constraint programmer it is useful to understand roughly how this works. There are good video lectures online that would be worth a watch for a general understanding, such as the CP Summer School lectures - `http://www.youtube.com/playlist?list=PLcByDTr7vRTYJ2s6DL-3bzjGwtQif33y3`
 
 Conjure-Oxide uses the input language Essence. Getting an understanding of how to code in Essence will be really useful when it comes to debugging and testing anything. Reading through Essence's documentation: `https://conjure.readthedocs.io/en/latest/essence.html` will be useful for this. Another very useful method of learning Essence and some aspects of constraint programming is to explore the selection of example Jupyter notebooks: `http://www.github.com/ozgurakgun/notebooks`.
 
