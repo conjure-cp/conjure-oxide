@@ -54,7 +54,7 @@
 - [Useful Links](./documentation/links.md)
 - [Essence Parser](./documentation/essence_parser.md)
 <!-- TODO: add the error detection documentations -->
-- [Error Detection](./documentation/error_detection)
+- [Error Detection](./documentation/error_detection/error_classification.md)
 - [Side Projects]()
   - [Conjure Blocks](./documentation/side_projects/Conjure-Blocks.md)
 
