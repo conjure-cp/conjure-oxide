@@ -47,15 +47,13 @@
 
 # Documentation
 
-<!-- TODO: will we keep this? -->
-- [Developer Documentation](./documentation/dev_docs.md)
-
 - [SAT Encoding Types](./documentation/SAT/sat-encoding-types.md)
 - [Rule Types](./documentation/SAT/rule-types.md)
 
 <!-- TODO: will be moved -- likely the content of these will end off here -->
 - [Useful Links](./documentation/links.md)
 - [Essence Parser](./documentation/essence_parser.md)
+<!-- TODO: add the error detection documentations -->
 - [Error Detection](./documentation/error_detection)
 - [Side Projects]()
   - [Conjure Blocks](./documentation/side_projects/Conjure-Blocks.md)
