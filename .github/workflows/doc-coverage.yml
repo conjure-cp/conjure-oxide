@@ -58,12 +58,17 @@ jobs:
         if: ${{ github.event_name == 'pull_request_target' }}
         uses: actions/checkout@v6
         with:
+          # Avoid checkout's default auth header so deploy uses REPORTS_TOKEN.
           repository: ${{ github.event.pull_request.head.repo.full_name }}
           ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
 
       - name: Checkout repository
         if: ${{ github.event_name != 'pull_request_target' }}
         uses: actions/checkout@v6
+        with:
+          # Avoid checkout's default auth header so deploy uses REPORTS_TOKEN.
+          persist-credentials: false
 
       - name: free_disk_space.sh
         run: .github/workflows/tools/free_disk_space.sh
