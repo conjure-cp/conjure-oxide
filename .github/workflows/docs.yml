@@ -18,6 +18,10 @@ on:
       - .github/workflows/docs.yml
   workflow_dispatch:
 
+concurrency:
+  group: reports-deploy
+  cancel-in-progress: false
+
 permissions:
   contents: read
   issues: write
@@ -25,7 +29,7 @@ permissions:
 
 jobs:
   generate_docs:
-    name: "Generate documentation site"
+    name: "Generate"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout PR
@@ -58,10 +62,10 @@ jobs:
         id: deploy
         run: |
           if [[ "${{ github.event_name }}" == "pull_request_target" ]]; then
-            echo "folder=book/pr-${{ github.event.pull_request.number }}" >> "$GITHUB_OUTPUT"
+            echo "folder=pr/${{ github.event.pull_request.number }}/book" >> "$GITHUB_OUTPUT"
             echo "label=pr-${{ github.event.pull_request.number }}" >> "$GITHUB_OUTPUT"
           else
-            echo "folder=book/main" >> "$GITHUB_OUTPUT"
+            echo "folder=main/book" >> "$GITHUB_OUTPUT"
             echo "label=main" >> "$GITHUB_OUTPUT"
           fi
 
@@ -86,12 +90,6 @@ jobs:
           token: ${{ steps.reports-token.outputs.token }}
           folder: docs/book
           target-folder: ${{ steps.deploy.outputs.folder }}
-          # remove all pages that dont exist anymore, except in these dirs
-          clean-exclude: |
-            coverage-docs/**
-            coverage-code/**
-            rustdoc/**
-            book/**
 
           # do not overwrite previous deployments, such as those made by other
           # actions
@@ -110,7 +108,7 @@ jobs:
         continue-on-error: true
         uses: actions/github-script@v8
         env:
-          REPORT_URL: https://${{ github.repository_owner }}.github.io/conjure-oxide-reports/book/pr-${{ github.event.pull_request.number }}/
+          REPORT_URL: https://${{ github.repository_owner }}.github.io/conjure-oxide-reports/pr/${{ github.event.pull_request.number }}/book/
         with:
           github-token: ${{ steps.bot-token.outputs.token }}
           script: |
@@ -121,7 +119,7 @@ jobs:
               const marker = "<!-- docs-book-report -->";
               const body = [
                 marker,
-                "## Documentation Preview",
+                "## Book Preview",
                 "",
                 `Preview: ${process.env.REPORT_URL}`
               ].join("\n");

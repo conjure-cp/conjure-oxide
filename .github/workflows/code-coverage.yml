@@ -26,6 +26,10 @@ on:
       - .github/workflows/rustdoc.yml
   workflow_dispatch:
 
+concurrency:
+  group: reports-deploy
+  cancel-in-progress: false
+
 env:
   os: ubuntu-latest
   rust_release: nightly
@@ -39,7 +43,7 @@ permissions:
 
 jobs:
   coverage:
-    name: "Code Coverage"
+    name: "Generate"
     timeout-minutes: 120
     runs-on: ubuntu-latest
     steps:
@@ -102,10 +106,10 @@ jobs:
         id: deploy
         run: |
           if [[ "${{ github.event_name }}" == "pull_request_target" ]]; then
-            echo "folder=coverage-code/pr-${{ github.event.pull_request.number }}" >> "$GITHUB_OUTPUT"
+            echo "folder=pr/${{ github.event.pull_request.number }}/coverage-code" >> "$GITHUB_OUTPUT"
             echo "label=pr-${{ github.event.pull_request.number }}" >> "$GITHUB_OUTPUT"
           else
-            echo "folder=coverage-code/main" >> "$GITHUB_OUTPUT"
+            echo "folder=main/coverage-code" >> "$GITHUB_OUTPUT"
             echo "label=main" >> "$GITHUB_OUTPUT"
           fi
 
@@ -162,7 +166,7 @@ jobs:
           pr_hits, pr_found, pr_pct = parse_lcov(pathlib.Path("deploy/lcov.info"))
 
           owner = os.environ["REPO_OWNER"]
-          main_url = f"https://{owner}.github.io/conjure-oxide-reports/coverage-code/main/lcov.info"
+          main_url = f"https://{owner}.github.io/conjure-oxide-reports/main/coverage-code/lcov.info"
           main_available = "false"
           main_hits = 0
           main_found = 0
@@ -179,7 +183,7 @@ jobs:
           except (urllib.error.URLError, TimeoutError):
             pass
 
-          report_url = f"https://{owner}.github.io/conjure-oxide-reports/coverage-code/pr-{os.environ['PR_NUMBER']}/index.html"
+          report_url = f"https://{owner}.github.io/conjure-oxide-reports/pr/{os.environ['PR_NUMBER']}/coverage-code/index.html"
           out = os.environ["GITHUB_OUTPUT"]
           with open(out, "a", encoding="utf-8") as f:
             f.write(f"report_url={report_url}\n")

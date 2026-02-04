@@ -6,6 +6,10 @@ on:
       - main # run for pushes to the main branch
   workflow_dispatch:
 
+concurrency:
+  group: reports-deploy
+  cancel-in-progress: false
+
 env:
   # we define these in the env if they are not defined as matrix parameters
   os: ubuntu-latest
@@ -18,7 +22,7 @@ permissions:
 
 jobs:
   rustdoc:
-    name: "Generate Rustdoc documentation"
+    name: "Generate"
     timeout-minutes: 120
     runs-on: ubuntu-latest
     steps:
@@ -83,7 +87,7 @@ jobs:
           GITHUB_TOKEN: ${{ steps.reports-token.outputs.token }}
         with:
           folder: ./deploy
-          target-folder: "rustdoc"
+          target-folder: "main/rustdoc"
           repository-name: conjure-cp/conjure-oxide-reports
           branch: main
           token: ${{ steps.reports-token.outputs.token }}
