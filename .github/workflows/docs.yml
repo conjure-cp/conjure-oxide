@@ -18,6 +18,10 @@ on:
       - .github/workflows/docs.yml
   workflow_dispatch:
 
+concurrency:
+  group: reports-deploy
+  cancel-in-progress: false
+
 permissions:
   contents: read
   issues: write
@@ -25,7 +29,7 @@ permissions:
 
 jobs:
   generate_docs:
-    name: "Generate documentation site"
+    name: "Generate"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout PR

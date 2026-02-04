@@ -26,6 +26,10 @@ on:
       - .github/workflows/rustdoc.yml
   workflow_dispatch:
 
+concurrency:
+  group: reports-deploy
+  cancel-in-progress: false
+
 env:
   os: ubuntu-latest
   rust_release: nightly
@@ -39,7 +43,7 @@ permissions:
 
 jobs:
   coverage:
-    name: "Code Coverage"
+    name: "Generate"
     timeout-minutes: 120
     runs-on: ubuntu-latest
     steps:
