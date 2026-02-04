@@ -21,13 +21,11 @@ jobs:
     name: "Generate Rustdoc documentation"
     timeout-minutes: 120
     runs-on: ubuntu-latest
-    env:
-      REPORTS_TOKEN: ${{ secrets.CONJURE_OXIDE_REPORTS_TOKEN }}
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v6
         with:
-          # Avoid checkout's auth header so deploy uses REPORTS_TOKEN.
+          # Avoid checkout's auth header so deploy uses the app token.
           persist-credentials: false
           # Keep checkout detached to avoid worktree branch-name collisions.
           ref: ${{ github.sha }}
@@ -68,17 +66,27 @@ jobs:
           mkdir deploy
           cp -r target/doc/* deploy
 
+      - name: Create reports app token
+        id: reports-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.CONJURE_BOT_ID }}
+          private-key: ${{ secrets.CONJURE_BOT_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: |
+            conjure-oxide-reports
+
       - name: Deploy to Github Pages
-        if: ${{ env.REPORTS_TOKEN != '' }}
+        if: ${{ steps.reports-token.outputs.token != '' }}
         uses: JamesIves/github-pages-deploy-action@v4
         env:
-          GITHUB_TOKEN: ${{ env.REPORTS_TOKEN }}
+          GITHUB_TOKEN: ${{ steps.reports-token.outputs.token }}
         with:
           folder: ./deploy
-          target-folder: "docs"
+          target-folder: "rustdoc"
           repository-name: conjure-cp/conjure-oxide-reports
           branch: main
-          token: ${{ env.REPORTS_TOKEN }}
+          token: ${{ steps.reports-token.outputs.token }}
           commit-message: "Actions: Rustdoc documentation for ${{ steps.sha.outputs.sha }}"
           # do not overwrite previous deployments, such as those made by other
           # actions
