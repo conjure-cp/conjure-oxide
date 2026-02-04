@@ -2,7 +2,7 @@ name: Code Coverage
 
 # WARNING: This workflow runs on `pull_request_target` and checks out PR code.
 # It therefore executes untrusted code with access to repository secrets, including
-# `CONJURE_OXIDE_REPORTS_TOKEN`. This is an intentional tradeoff to allow fork PR
+# `CONJURE_BOT_PRIVATE_KEY`. This is an intentional tradeoff to allow fork PR
 # deployments without artifacts. Do not add other sensitive secrets to this repo.
 
 on:
@@ -42,14 +42,12 @@ jobs:
     name: "Code Coverage"
     timeout-minutes: 120
     runs-on: ubuntu-latest
-    env:
-      REPORTS_TOKEN: ${{ secrets.CONJURE_OXIDE_REPORTS_TOKEN }}
     steps:
       - name: Checkout PR
         if: ${{ github.event_name == 'pull_request_target' }}
         uses: actions/checkout@v6
         with:
-          # Avoid checkout's default auth header so deploy uses REPORTS_TOKEN.
+          # Avoid checkout's default auth header so deploy uses the app token.
           repository: ${{ github.event.pull_request.head.repo.full_name }}
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
@@ -58,7 +56,7 @@ jobs:
         if: ${{ github.event_name != 'pull_request_target' }}
         uses: actions/checkout@v6
         with:
-          # Avoid checkout's default auth header so deploy uses REPORTS_TOKEN.
+          # Avoid checkout's default auth header so deploy uses the app token.
           persist-credentials: false
 
       - name: free_disk_space.sh
@@ -107,15 +105,26 @@ jobs:
             echo "label=main" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Create reports app token
+        if: ${{ github.event_name == 'pull_request_target' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+        id: reports-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.CONJURE_BOT_ID }}
+          private-key: ${{ secrets.CONJURE_BOT_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: |
+            conjure-oxide-reports
+
       - name: Deploy to reports repository
-        if: ${{ env.REPORTS_TOKEN != '' && (github.event_name == 'pull_request_target' || github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
+        if: ${{ github.event_name == 'pull_request_target' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
         uses: JamesIves/github-pages-deploy-action@v4
         env:
-          GITHUB_TOKEN: ${{ env.REPORTS_TOKEN }}
+          GITHUB_TOKEN: ${{ steps.reports-token.outputs.token }}
         with:
           repository-name: conjure-cp/conjure-oxide-reports
           branch: main
-          token: ${{ env.REPORTS_TOKEN }}
+          token: ${{ steps.reports-token.outputs.token }}
           folder: ./deploy
           target-folder: ${{ steps.deploy.outputs.folder }}
           commit-message: "Actions: Code coverage for ${{ steps.deploy.outputs.label }}"
@@ -180,6 +189,14 @@ jobs:
             f.write(f"delta_pp={delta_pp:+.2f}\n")
           PY
 
+      - name: Create conjure-bot token
+        if: ${{ github.event_name == 'pull_request_target' }}
+        id: bot-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.CONJURE_BOT_ID }}
+          private-key: ${{ secrets.CONJURE_BOT_PRIVATE_KEY }}
+
       - name: Comment code coverage on PR
         if: ${{ github.event_name == 'pull_request_target' }}
         continue-on-error: true
@@ -195,7 +212,7 @@ jobs:
           MAIN_PCT: ${{ steps.stats.outputs.main_pct }}
           DELTA_PP: ${{ steps.stats.outputs.delta_pp }}
         with:
-          github-token: ${{ secrets.CONJURE_OXIDE_COMMENT_TOKEN }}
+          github-token: ${{ steps.bot-token.outputs.token }}
           script: |
             const prNumber = context.payload.pull_request?.number;
             if (!prNumber) return;
@@ -224,7 +241,7 @@ jobs:
               });
 
               const existing = comments.find(
-                c => c.user?.login === "github-actions[bot]" && c.body?.includes(marker)
+                c => c.body?.includes(marker)
               );
 
               if (existing) {
