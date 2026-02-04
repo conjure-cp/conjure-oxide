@@ -14,16 +14,23 @@ env:
   CARGO_INCREMENTAL: 0 # for smaller cache size
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   rustdoc:
     name: "Generate Rustdoc documentation"
     timeout-minutes: 120
     runs-on: ubuntu-latest
+    env:
+      REPORTS_TOKEN: ${{ secrets.CONJURE_OXIDE_REPORTS_TOKEN }}
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v6
+        with:
+          # Avoid checkout's auth header so deploy uses REPORTS_TOKEN.
+          persist-credentials: false
+          # Keep checkout detached to avoid worktree branch-name collisions.
+          ref: ${{ github.sha }}
 
       - name: free_disk_space.sh
         run: .github/workflows/tools/free_disk_space.sh
@@ -62,14 +69,17 @@ jobs:
           cp -r target/doc/* deploy
 
       - name: Deploy to Github Pages
+        if: ${{ env.REPORTS_TOKEN != '' }}
         uses: JamesIves/github-pages-deploy-action@v4
+        env:
+          GITHUB_TOKEN: ${{ env.REPORTS_TOKEN }}
         with:
           folder: ./deploy
           target-folder: "docs"
           repository-name: conjure-cp/conjure-oxide-reports
           branch: main
-          token: ${{ secrets.CONJURE_OXIDE_REPORTS_TOKEN }}
-          commit-message: "Actions: Rustdoc documentation for ${{ steps.sha.outputs.result }}"
+          token: ${{ env.REPORTS_TOKEN }}
+          commit-message: "Actions: Rustdoc documentation for ${{ steps.sha.outputs.sha }}"
           # do not overwrite previous deployments, such as those made by other
           # actions
           force: false
