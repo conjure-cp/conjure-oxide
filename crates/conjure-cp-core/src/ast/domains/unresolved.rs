@@ -134,7 +134,7 @@ impl IntVal {
                 ReturnType::Int => Some(IntVal::Reference(re.clone())),
                 _ => None,
             },
-            DeclarationKind::Quantified(inner) => match inner.domain().return_type() {
+            DeclarationKind::Quantified(domain) => match domain.return_type() {
                 ReturnType::Int => Some(IntVal::Reference(re.clone())),
                 _ => None,
             },

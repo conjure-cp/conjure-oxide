@@ -112,8 +112,7 @@ impl AbstractComprehensionBuilder {
             .expect("Expression must have a domain")
             .element_domain()
             .expect("Expression must contain elements with uniform domain");
-
-        let generator_decl = DeclarationPtr::new_var_quantified(name, domain);
+        let generator_decl = DeclarationPtr::new_var_quantified(name, domain.clone());
         self.symbols.borrow_mut().insert(generator_decl.clone());
 
         self.qualifiers
