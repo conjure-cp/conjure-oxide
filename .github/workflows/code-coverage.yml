@@ -50,6 +50,8 @@ jobs:
           # Avoid checkout's default auth header so deploy uses the app token.
           repository: ${{ github.event.pull_request.head.repo.full_name }}
           ref: ${{ github.event.pull_request.head.sha }}
+          submodules: recursive
+          fetch-depth: 0
           persist-credentials: false
 
       - name: Checkout repository
@@ -57,6 +59,8 @@ jobs:
         uses: actions/checkout@v6
         with:
           # Avoid checkout's default auth header so deploy uses the app token.
+          submodules: recursive
+          fetch-depth: 0
           persist-credentials: false
 
       - name: free_disk_space.sh
@@ -233,31 +237,53 @@ jobs:
                 mainLine
               ].join("\n");
 
-              const { data: comments } = await github.rest.issues.listComments({
+              const comments = await github.paginate(github.rest.issues.listComments, {
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: prNumber,
                 per_page: 100
               });
 
-              const existing = comments.find(
+              // Keep a single code coverage comment per PR: update newest, delete older duplicates.
+              const matching = comments
+                .filter(
                 c => c.body?.includes(marker)
-              );
+                )
+                .sort((a, b) => Date.parse(b.updated_at) - Date.parse(a.updated_at));
 
-              if (existing) {
+              let keepComment;
+
+              if (matching.length > 0) {
+                keepComment = matching[0];
                 await github.rest.issues.updateComment({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
-                  comment_id: existing.id,
+                  comment_id: keepComment.id,
                   body
                 });
               } else {
-                await github.rest.issues.createComment({
+                const created = await github.rest.issues.createComment({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   issue_number: prNumber,
                   body
                 });
+                keepComment = created.data;
+              }
+
+              for (const comment of matching) {
+                if (comment.id === keepComment.id) {
+                  continue;
+                }
+                try {
+                  await github.rest.issues.deleteComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    comment_id: comment.id
+                  });
+                } catch (deleteError) {
+                  console.log(`Skipping code coverage comment cleanup for ${comment.id}: ${deleteError.message || deleteError}`);
+                }
               }
             } catch (error) {
               console.log(`Skipping code coverage PR comment: ${error.message || error}`);
