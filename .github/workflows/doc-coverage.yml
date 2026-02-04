@@ -119,6 +119,14 @@ jobs:
             echo "label=main" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Debug reports token presence
+        run: |
+          if [[ -z "${REPORTS_TOKEN:-}" ]]; then
+            echo "REPORTS_TOKEN is empty"
+          else
+            echo "REPORTS_TOKEN length: ${#REPORTS_TOKEN}"
+          fi
+
       - name: Deploy to reports repository
         if: ${{ env.REPORTS_TOKEN != '' && (github.event_name == 'pull_request_target' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)) }}
         uses: JamesIves/github-pages-deploy-action@v4

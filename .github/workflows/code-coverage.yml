@@ -97,6 +97,14 @@ jobs:
           cp -r target/debug/coverage/* deploy/     # html
           cp target/debug/lcov.info deploy/         # keep lcov for inspection
 
+      - name: Debug reports token presence
+        run: |
+          if [[ -z "${REPORTS_TOKEN:-}" ]]; then
+            echo "REPORTS_TOKEN is empty"
+          else
+            echo "REPORTS_TOKEN length: ${#REPORTS_TOKEN}"
+          fi
+
       - name: Set deploy target
         id: deploy
         run: |
