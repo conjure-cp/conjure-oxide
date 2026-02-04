@@ -37,6 +37,7 @@ env:
 permissions:
   contents: read
   issues: write
+  pull-requests: write
 
 jobs:
   doc-coverage:
@@ -228,46 +229,50 @@ jobs:
             const prNumber = context.payload.pull_request?.number;
             if (!prNumber) return;
 
-            const marker = "<!-- coverage-docs-report -->";
-            const mainLine = process.env.MAIN_AVAILABLE === "true"
-              ? `Main: ${process.env.MAIN_DOCS_PCT}% documented, ${process.env.MAIN_EXAMPLES_PCT}% with examples (${process.env.MAIN_EXAMPLES}/${process.env.MAIN_DOCS}/${process.env.MAIN_TOTAL})\nDelta: docs ${process.env.DELTA_DOCS_PP} pp, examples ${process.env.DELTA_EXAMPLES_PP} pp`
-              : "Main baseline: unavailable (run main documentation coverage first)";
+            try {
+              const marker = "<!-- coverage-docs-report -->";
+              const mainLine = process.env.MAIN_AVAILABLE === "true"
+                ? `Main: ${process.env.MAIN_DOCS_PCT}% documented, ${process.env.MAIN_EXAMPLES_PCT}% with examples (${process.env.MAIN_EXAMPLES}/${process.env.MAIN_DOCS}/${process.env.MAIN_TOTAL})\nDelta: docs ${process.env.DELTA_DOCS_PP} pp, examples ${process.env.DELTA_EXAMPLES_PP} pp`
+                : "Main baseline: unavailable (run main documentation coverage first)";
 
-            const body = [
-              marker,
-              "## Documentation Coverage",
-              "",
-              `Report: ${process.env.REPORT_URL}`,
-              "",
-              `This PR: ${process.env.PR_DOCS_PCT}% documented, ${process.env.PR_EXAMPLES_PCT}% with examples (${process.env.PR_EXAMPLES}/${process.env.PR_DOCS}/${process.env.PR_TOTAL})`,
-              mainLine
-            ].join("\n");
+              const body = [
+                marker,
+                "## Documentation Coverage",
+                "",
+                `Report: ${process.env.REPORT_URL}`,
+                "",
+                `This PR: ${process.env.PR_DOCS_PCT}% documented, ${process.env.PR_EXAMPLES_PCT}% with examples (${process.env.PR_EXAMPLES}/${process.env.PR_DOCS}/${process.env.PR_TOTAL})`,
+                mainLine
+              ].join("\n");
 
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: prNumber,
-              per_page: 100
-            });
-
-            const existing = comments.find(
-              c => c.user?.login === "github-actions[bot]" && c.body?.includes(marker)
-            );
-
-            if (existing) {
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: existing.id,
-                body
-              });
-            } else {
-              await github.rest.issues.createComment({
+              const { data: comments } = await github.rest.issues.listComments({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: prNumber,
-                body
+                per_page: 100
               });
+
+              const existing = comments.find(
+                c => c.user?.login === "github-actions[bot]" && c.body?.includes(marker)
+              );
+
+              if (existing) {
+                await github.rest.issues.updateComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: existing.id,
+                  body
+                });
+              } else {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: prNumber,
+                  body
+                });
+              }
+            } catch (error) {
+              console.log(`Skipping docs coverage PR comment: ${error.message || error}`);
             }
 
       - name: Save cache

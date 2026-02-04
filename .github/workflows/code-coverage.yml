@@ -35,6 +35,7 @@ env:
 permissions:
   contents: read
   issues: write
+  pull-requests: write
 
 jobs:
   coverage:
@@ -198,46 +199,50 @@ jobs:
             const prNumber = context.payload.pull_request?.number;
             if (!prNumber) return;
 
-            const marker = "<!-- coverage-code-report -->";
-            const mainLine = process.env.MAIN_AVAILABLE === "true"
-              ? `Main: ${process.env.MAIN_PCT}% lines (${process.env.MAIN_HITS}/${process.env.MAIN_FOUND})\nDelta vs main: ${process.env.DELTA_PP} pp`
-              : "Main baseline: unavailable (run main coverage first)";
+            try {
+              const marker = "<!-- coverage-code-report -->";
+              const mainLine = process.env.MAIN_AVAILABLE === "true"
+                ? `Main: ${process.env.MAIN_PCT}% lines (${process.env.MAIN_HITS}/${process.env.MAIN_FOUND})\nDelta vs main: ${process.env.DELTA_PP} pp`
+                : "Main baseline: unavailable (run main coverage first)";
 
-            const body = [
-              marker,
-              "## Code Coverage",
-              "",
-              `Report: ${process.env.COVERAGE_URL}`,
-              "",
-              `This PR: ${process.env.PR_PCT}% lines (${process.env.PR_HITS}/${process.env.PR_FOUND})`,
-              mainLine
-            ].join("\n");
+              const body = [
+                marker,
+                "## Code Coverage",
+                "",
+                `Report: ${process.env.COVERAGE_URL}`,
+                "",
+                `This PR: ${process.env.PR_PCT}% lines (${process.env.PR_HITS}/${process.env.PR_FOUND})`,
+                mainLine
+              ].join("\n");
 
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: prNumber,
-              per_page: 100
-            });
-
-            const existing = comments.find(
-              c => c.user?.login === "github-actions[bot]" && c.body?.includes(marker)
-            );
-
-            if (existing) {
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: existing.id,
-                body
-              });
-            } else {
-              await github.rest.issues.createComment({
+              const { data: comments } = await github.rest.issues.listComments({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: prNumber,
-                body
+                per_page: 100
               });
+
+              const existing = comments.find(
+                c => c.user?.login === "github-actions[bot]" && c.body?.includes(marker)
+              );
+
+              if (existing) {
+                await github.rest.issues.updateComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: existing.id,
+                  body
+                });
+              } else {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: prNumber,
+                  body
+                });
+              }
+            } catch (error) {
+              console.log(`Skipping code coverage PR comment: ${error.message || error}`);
             }
 
       - name: Save cache
