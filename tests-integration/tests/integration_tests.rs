@@ -139,6 +139,9 @@ fn solver_specific_integration_test(
     verbose: bool,
     accept: bool,
 ) -> Result<(), Box<dyn Error>> {
+
+    println!("SOLVER SPECIFIC");
+
     let solver_name = solver.as_str();
 
     let subscriber = create_scoped_subscriber(path, essence_base, &solver_name);
@@ -214,8 +217,10 @@ fn integration_test_inner(
     // File path
     let file_path = format!("{path}/{essence_base}.{extension}");
 
+    
     // Stage 1a: Parse the model using the selected parser
     let parsed_model = if config.enable_native_parser {
+        println!("unmeow1");
         {
             let mut ctx = context.as_ref().write().unwrap();
             ctx.file_name = Some(format!("{path}/{essence_base}.{extension}"));
@@ -224,8 +229,10 @@ fn integration_test_inner(
         if verbose {
             println!("Parsed model (native): {model:#?}");
         }
+        println!("meow1");
         save_model_json(&model, path, essence_base, "parse", None)?;
-
+        println!("meow1");
+        
         model
     // Stage 1b: Parse the model using the legacy parser
     } else {
@@ -236,7 +243,6 @@ fn integration_test_inner(
         save_model_json(&model, path, essence_base, "parse", None)?;
         model
     };
-
     // // Stage 2a: Rewrite the model using the rule engine (run unless explicitly disabled)
 
     let rewritten_model = if config.apply_rewrite_rules {
@@ -292,6 +298,7 @@ fn integration_test_inner(
     } else {
         None
     };
+    println!("meow2");
 
     // Stage 2b: Check model properties (extra_asserts) (Verify additional model properties)
     // (e.g., ensure vector operators are evaluated). (only if explicitly enabled)
@@ -319,6 +326,8 @@ fn integration_test_inner(
         #[cfg(feature = "smt")]
         SolverFamily::Smt(_) => Solver::new(Smt::default()),
     };
+
+    println!("meow3");
 
     let solutions = {
         let name = solver.get_name();
@@ -360,6 +369,8 @@ fn integration_test_inner(
             "Solutions (<) do not match conjure (>)!"
         );
     }
+
+    println!("meow4");
 
     // When ACCEPT=true, copy all generated files to expected
     if accept {
@@ -423,6 +434,8 @@ fn integration_test_inner(
         )?;
         assert_eq!(generated_rewrite, expected_rewrite);
     }
+
+    println!("meow5");
 
     // Check Stage 3a (solutions)
     if config.solve_with_minion {

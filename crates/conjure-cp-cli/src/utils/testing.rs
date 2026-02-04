@@ -36,7 +36,9 @@ pub const REWRITE_SERIALISED_JSON_MAX_LINES: usize = 1000;
 /// regardless of the order in which objects were created in memory.
 fn model_to_json_with_stable_ids(model: &SerdeModel) -> Result<JsonValue, JsonError> {
     // Collect stable ID mapping using uniplate traversal on the SerdeModel
+    println!("ungoofball1");
     let id_map = model.collect_stable_id_mapping();
+    println!("ungoofball2");
 
     // Serialize the model to JSON
     let mut json = serde_json::to_value(model)?;
@@ -104,9 +106,10 @@ pub fn assert_eq_any_order<T: Eq + Hash + Debug + Clone>(a: &Vec<Vec<T>>, b: &Ve
 
 pub fn serialize_model(model: &ConjureModel) -> Result<String, JsonError> {
     let serde_model: SerdeModel = model.clone().into();
-
+    
     // Convert to JSON with stable IDs
     let json_with_stable_ids = model_to_json_with_stable_ids(&serde_model)?;
+    println!("goofball1");
 
     // Sort JSON object keys for consistent output
     let sorted_json = sort_json_object(&json_with_stable_ids, false);
@@ -123,8 +126,9 @@ pub fn save_model_json(
     solver: Option<SolverFamily>,
 ) -> Result<(), std::io::Error> {
     let marker = solver.map_or("agnostic", |s| s.as_str());
-
+    println!("AAAH1!");
     let generated_json_str = serialize_model(model)?;
+    println!("AAAH!");
     let generated_json_str = maybe_truncate_serialised_json(generated_json_str, test_stage);
     let filename = format!("{path}/{marker}-{test_name}.generated-{test_stage}.serialised.json");
     println!("saving: {}", filename);
