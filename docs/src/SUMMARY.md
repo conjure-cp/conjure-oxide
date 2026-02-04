@@ -5,6 +5,7 @@
 - [Installation](./getting_started/installation/index.md)
   - [Downloading a Nightly Release]()
   - [Building from Source]()
+- [Quick Start](./getting_started/quick-start.md)
 - [Command Line Guide]()
   - [Logging](./getting_started/command-line/logging.md)
 
@@ -25,6 +26,7 @@
 
 - [Coding Resources and Conventions](./developers_guide/coding_resources/index.md)
   - [Glossary](./developers_guide/coding_resources/glossary.md)
+  - [Functional Rust](./getting_started/functional-rust.md)
   - [Style Guide](./developers_guide/coding_resources/style_guide.md)
   - [Crate Structure](./developers_guide/coding_resources/crate_structure.md)
 
@@ -48,10 +50,16 @@
 
 <!-- TODO: will we keep this? -->
 - [Developer Documentation](./documentation/dev_docs.md)
+
+- [SAT Encoding Types](./documentation/SAT/sat-encoding-types.md)
+- [Rule Types](./documentation/SAT/rule-types.md)
+
 <!-- TODO: will be moved -- likely the content of these will end off here -->
 - [Useful Links](./documentation/links.md)
 - [Essence Parser](./documentation/essence_parser.md)
 - [Error Detection](./documentation/error_detection)
+- [Side Projects]()
+  - [Conjure Blocks](./documentation/side_projects/Conjure-Blocks.md)
 
 ---
 
