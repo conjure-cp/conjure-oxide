@@ -4,8 +4,8 @@
 name: Vale Linter
 on:
     pull_request:
-        # branches:
-        # - "docs/**" # Should only run on documentation changes although we could change this to run for doc files instead?
+        branches:
+            - "main" # Runs on each PR back to main.
 jobs:
     vale:
         name: Vale Runner
@@ -19,8 +19,6 @@ jobs:
                   files: ./docs
                   # Fail immediately when errors are found
                   fail_on_error: true
-                  # Set reporter type
-                  reporter: github-pr-check
                   # Apply to all files in the repo, regardless of changes.
                   filter_mode: nofilter
                   # Vale CLI flags: set minimum alert level to error
