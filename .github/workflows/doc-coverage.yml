@@ -6,15 +6,6 @@ name: Documentation Coverage
 # deployments without artifacts. Do not add other sensitive secrets to this repo.
 
 on:
-  pull_request:
-    paths:
-      - crates/**
-      - tests-integration/**
-      - tools/ci/generate-doc-coverage-summary-md.bash
-      - tools/ci/generate-doc-coverage-report-md.bash
-      - .github/workflows/doc-coverage.yml
-      - .github/workflows/code-coverage.yml
-      - .github/workflows/rustdoc.yml
   pull_request_target:
     paths:
       - crates/**
@@ -102,7 +93,7 @@ jobs:
             echo ""
             ./tools/ci/generate-doc-coverage-summary-md.bash
             echo ""
-            if [[ "${{ github.event_name }}" == "pull_request_target" || "${{ github.event_name }}" == "pull_request" ]]; then
+            if [[ "${{ github.event_name }}" == "pull_request_target" ]]; then
               echo "PR: [#${{ github.event.pull_request.number }}](${{ github.event.pull_request.html_url }})"
               echo "Commit: [${{ github.event.pull_request.head.sha }}](https://github.com/${{ github.event.pull_request.head.repo.full_name }}/commit/${{ github.event.pull_request.head.sha }})"
             else
@@ -117,7 +108,7 @@ jobs:
       - name: Set deploy target
         id: deploy
         run: |
-          if [[ "${{ github.event_name }}" == "pull_request_target" || "${{ github.event_name }}" == "pull_request" ]]; then
+          if [[ "${{ github.event_name }}" == "pull_request_target" ]]; then
             echo "folder=coverage-docs/pr-${{ github.event.pull_request.number }}" >> "$GITHUB_OUTPUT"
             echo "label=pr-${{ github.event.pull_request.number }}" >> "$GITHUB_OUTPUT"
           else
@@ -125,16 +116,8 @@ jobs:
             echo "label=main" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Debug reports token presence
-        run: |
-          if [[ -z "${REPORTS_TOKEN:-}" ]]; then
-            echo "REPORTS_TOKEN is empty"
-          else
-            echo "REPORTS_TOKEN length: ${#REPORTS_TOKEN}"
-          fi
-
       - name: Deploy to reports repository
-        if: ${{ env.REPORTS_TOKEN != '' && (github.event_name == 'pull_request_target' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)) }}
+        if: ${{ env.REPORTS_TOKEN != '' && (github.event_name == 'pull_request_target' || github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
         uses: JamesIves/github-pages-deploy-action@v4
         env:
           GITHUB_TOKEN: ${{ env.REPORTS_TOKEN }}
@@ -147,7 +130,7 @@ jobs:
           commit-message: "Actions: Doc coverage for ${{ steps.deploy.outputs.label }}"
 
       - name: Compute documentation coverage stats for PR
-        if: ${{ github.event_name == 'pull_request_target' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) }}
+        if: ${{ github.event_name == 'pull_request_target' }}
         id: stats
         env:
           REPO_OWNER: ${{ github.repository_owner }}
@@ -222,7 +205,8 @@ jobs:
           PY
 
       - name: Comment documentation coverage on PR
-        if: ${{ github.event_name == 'pull_request_target' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) }}
+        if: ${{ github.event_name == 'pull_request_target' }}
+        continue-on-error: true
         uses: actions/github-script@v8
         env:
           REPORT_URL: ${{ steps.stats.outputs.report_url }}
