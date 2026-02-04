@@ -112,7 +112,7 @@ jobs:
         id: deploy
         run: |
           if [[ "${{ github.event_name }}" == "pull_request_target" ]]; then
-            echo "folder=pr-${{ github.event.pull_request.number }}/coverage-docs" >> "$GITHUB_OUTPUT"
+            echo "folder=pr/${{ github.event.pull_request.number }}/coverage-docs" >> "$GITHUB_OUTPUT"
             echo "label=pr-${{ github.event.pull_request.number }}" >> "$GITHUB_OUTPUT"
           else
             echo "folder=main/coverage-docs" >> "$GITHUB_OUTPUT"
@@ -199,7 +199,7 @@ jobs:
           except (urllib.error.URLError, TimeoutError):
             pass
 
-          report_url = f"https://{owner}.github.io/conjure-oxide-reports/pr-{os.environ['PR_NUMBER']}/coverage-docs/index.html"
+          report_url = f"https://{owner}.github.io/conjure-oxide-reports/pr/{os.environ['PR_NUMBER']}/coverage-docs/index.html"
           out = os.environ["GITHUB_OUTPUT"]
           with open(out, "a", encoding="utf-8") as f:
             f.write(f"report_url={report_url}\n")

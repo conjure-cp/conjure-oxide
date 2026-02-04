@@ -62,7 +62,7 @@ jobs:
         id: deploy
         run: |
           if [[ "${{ github.event_name }}" == "pull_request_target" ]]; then
-            echo "folder=pr-${{ github.event.pull_request.number }}/book" >> "$GITHUB_OUTPUT"
+            echo "folder=pr/${{ github.event.pull_request.number }}/book" >> "$GITHUB_OUTPUT"
             echo "label=pr-${{ github.event.pull_request.number }}" >> "$GITHUB_OUTPUT"
           else
             echo "folder=main/book" >> "$GITHUB_OUTPUT"
@@ -108,7 +108,7 @@ jobs:
         continue-on-error: true
         uses: actions/github-script@v8
         env:
-          REPORT_URL: https://${{ github.repository_owner }}.github.io/conjure-oxide-reports/pr-${{ github.event.pull_request.number }}/book/
+          REPORT_URL: https://${{ github.repository_owner }}.github.io/conjure-oxide-reports/pr/${{ github.event.pull_request.number }}/book/
         with:
           github-token: ${{ steps.bot-token.outputs.token }}
           script: |
