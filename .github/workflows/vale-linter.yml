@@ -1,0 +1,26 @@
+# Taken directly from the Vale GitHub Action documentation
+# https://github.com/marketplace/actions/vale-linter
+
+name: Vale Linter
+on:
+    pull_request:
+        branches:
+            - "docs/**" # Should only run on documentation changes although we could change this to run for doc files instead?
+jobs:
+    vale:
+        name: Vale Runner
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - uses: errata-ai/vale-action@v2.1.1
+              with:
+                  # Path to documentation files
+                  files: "docs/**/*.md" # Fail immediately when errors are found
+                  fail_on_error: true
+                  # Set reporter type
+                  reporter: github-pr-check
+                  # Apply to all files in the repo, regardless of changes.
+                  filter_mode: nofilter
+                  # Vale CLI flags: set minimum alert level to error
+                  vale_flags: "--minAlertLevel=error --no-wrap"
