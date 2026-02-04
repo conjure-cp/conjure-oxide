@@ -45,6 +45,7 @@ env:
 
 permissions:
   contents: read
+  issues: write
 
 jobs:
   doc-coverage:
@@ -101,7 +102,7 @@ jobs:
             echo ""
             ./tools/ci/generate-doc-coverage-summary-md.bash
             echo ""
-            if [[ "${{ github.event_name }}" == "pull_request_target" ]]; then
+            if [[ "${{ github.event_name }}" == "pull_request_target" || "${{ github.event_name }}" == "pull_request" ]]; then
               echo "PR: [#${{ github.event.pull_request.number }}](${{ github.event.pull_request.html_url }})"
               echo "Commit: [${{ github.event.pull_request.head.sha }}](https://github.com/${{ github.event.pull_request.head.repo.full_name }}/commit/${{ github.event.pull_request.head.sha }})"
             else
@@ -116,7 +117,7 @@ jobs:
       - name: Set deploy target
         id: deploy
         run: |
-          if [[ "${{ github.event_name }}" == "pull_request_target" ]]; then
+          if [[ "${{ github.event_name }}" == "pull_request_target" || "${{ github.event_name }}" == "pull_request" ]]; then
             echo "folder=coverage-docs/pr-${{ github.event.pull_request.number }}" >> "$GITHUB_OUTPUT"
             echo "label=pr-${{ github.event.pull_request.number }}" >> "$GITHUB_OUTPUT"
           else
@@ -144,6 +145,146 @@ jobs:
           folder: ./deploy
           target-folder: ${{ steps.deploy.outputs.folder }}
           commit-message: "Actions: Doc coverage for ${{ steps.deploy.outputs.label }}"
+
+      - name: Compute documentation coverage stats for PR
+        if: ${{ github.event_name == 'pull_request_target' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) }}
+        id: stats
+        env:
+          REPO_OWNER: ${{ github.repository_owner }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          python3 - <<'PY'
+          import os
+          import re
+          import urllib.request
+          import urllib.error
+          from pathlib import Path
+
+          pattern = re.compile(r"--\s*(\d+)/(\d+)/(\d+)")
+
+          def parse_markdown(path: Path):
+            text = path.read_text(encoding="utf-8")
+            examples = 0
+            docs = 0
+            total = 0
+            for line in text.splitlines():
+              m = pattern.search(line)
+              if m:
+                examples += int(m.group(1))
+                docs += int(m.group(2))
+                total += int(m.group(3))
+            docs_pct = (100.0 * docs / total) if total else 0.0
+            examples_pct = (100.0 * examples / total) if total else 0.0
+            return examples, docs, total, docs_pct, examples_pct
+
+          pr_examples, pr_docs, pr_total, pr_docs_pct, pr_examples_pct = parse_markdown(Path("deploy/index.md"))
+
+          owner = os.environ["REPO_OWNER"]
+          main_url = f"https://{owner}.github.io/conjure-oxide-reports/coverage-docs/main/index.md"
+          main_available = "false"
+          main_examples = 0
+          main_docs = 0
+          main_total = 0
+          main_docs_pct = 0.0
+          main_examples_pct = 0.0
+          delta_docs_pp = 0.0
+          delta_examples_pp = 0.0
+
+          try:
+            with urllib.request.urlopen(main_url, timeout=15) as resp:
+              main_md = resp.read().decode("utf-8")
+            main_path = Path("/tmp/main-doc-index.md")
+            main_path.write_text(main_md, encoding="utf-8")
+            main_examples, main_docs, main_total, main_docs_pct, main_examples_pct = parse_markdown(main_path)
+            delta_docs_pp = pr_docs_pct - main_docs_pct
+            delta_examples_pp = pr_examples_pct - main_examples_pct
+            main_available = "true"
+          except (urllib.error.URLError, TimeoutError):
+            pass
+
+          report_url = f"https://{owner}.github.io/conjure-oxide-reports/coverage-docs/pr-{os.environ['PR_NUMBER']}/index.html"
+          out = os.environ["GITHUB_OUTPUT"]
+          with open(out, "a", encoding="utf-8") as f:
+            f.write(f"report_url={report_url}\n")
+            f.write(f"pr_docs={pr_docs}\n")
+            f.write(f"pr_examples={pr_examples}\n")
+            f.write(f"pr_total={pr_total}\n")
+            f.write(f"pr_docs_pct={pr_docs_pct:.2f}\n")
+            f.write(f"pr_examples_pct={pr_examples_pct:.2f}\n")
+            f.write(f"main_available={main_available}\n")
+            f.write(f"main_docs={main_docs}\n")
+            f.write(f"main_examples={main_examples}\n")
+            f.write(f"main_total={main_total}\n")
+            f.write(f"main_docs_pct={main_docs_pct:.2f}\n")
+            f.write(f"main_examples_pct={main_examples_pct:.2f}\n")
+            f.write(f"delta_docs_pp={delta_docs_pp:+.2f}\n")
+            f.write(f"delta_examples_pp={delta_examples_pp:+.2f}\n")
+          PY
+
+      - name: Comment documentation coverage on PR
+        if: ${{ github.event_name == 'pull_request_target' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) }}
+        uses: actions/github-script@v8
+        env:
+          REPORT_URL: ${{ steps.stats.outputs.report_url }}
+          PR_DOCS: ${{ steps.stats.outputs.pr_docs }}
+          PR_EXAMPLES: ${{ steps.stats.outputs.pr_examples }}
+          PR_TOTAL: ${{ steps.stats.outputs.pr_total }}
+          PR_DOCS_PCT: ${{ steps.stats.outputs.pr_docs_pct }}
+          PR_EXAMPLES_PCT: ${{ steps.stats.outputs.pr_examples_pct }}
+          MAIN_AVAILABLE: ${{ steps.stats.outputs.main_available }}
+          MAIN_DOCS: ${{ steps.stats.outputs.main_docs }}
+          MAIN_EXAMPLES: ${{ steps.stats.outputs.main_examples }}
+          MAIN_TOTAL: ${{ steps.stats.outputs.main_total }}
+          MAIN_DOCS_PCT: ${{ steps.stats.outputs.main_docs_pct }}
+          MAIN_EXAMPLES_PCT: ${{ steps.stats.outputs.main_examples_pct }}
+          DELTA_DOCS_PP: ${{ steps.stats.outputs.delta_docs_pp }}
+          DELTA_EXAMPLES_PP: ${{ steps.stats.outputs.delta_examples_pp }}
+        with:
+          script: |
+            const prNumber = context.payload.pull_request?.number;
+            if (!prNumber) return;
+
+            const marker = "<!-- coverage-docs-report -->";
+            const mainLine = process.env.MAIN_AVAILABLE === "true"
+              ? `Main: ${process.env.MAIN_DOCS_PCT}% documented, ${process.env.MAIN_EXAMPLES_PCT}% with examples (${process.env.MAIN_EXAMPLES}/${process.env.MAIN_DOCS}/${process.env.MAIN_TOTAL})\nDelta: docs ${process.env.DELTA_DOCS_PP} pp, examples ${process.env.DELTA_EXAMPLES_PP} pp`
+              : "Main baseline: unavailable (run main documentation coverage first)";
+
+            const body = [
+              marker,
+              "## Documentation Coverage",
+              "",
+              `Report: ${process.env.REPORT_URL}`,
+              "",
+              `This PR: ${process.env.PR_DOCS_PCT}% documented, ${process.env.PR_EXAMPLES_PCT}% with examples (${process.env.PR_EXAMPLES}/${process.env.PR_DOCS}/${process.env.PR_TOTAL})`,
+              mainLine
+            ].join("\n");
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              per_page: 100
+            });
+
+            const existing = comments.find(
+              c => c.user?.login === "github-actions[bot]" && c.body?.includes(marker)
+            );
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body
+              });
+            }
 
       - name: Save cache
         if: ${{ always() && steps.restore_cache.outputs.cache-hit != 'true' }}
