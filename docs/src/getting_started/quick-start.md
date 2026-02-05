@@ -23,6 +23,14 @@ If you are curious about more complex models, you can check out the models that 
 cargo run -- solve --solver sat my_problem.essence
 ```
 
+> [!WARNING]
+> Currently, running the command above will cause the following error:
+>
+> `model invalid: Only Boolean Decision Variables supported`
+>
+> This because the SAT option for the solver argument only currently enables the base (boolean) rule set and does not specify an integer SAT ruleset to include. This is something we are currently working on, and should be resolved soon.
+
+
 ### Minion Solver
 
 ```bash
