@@ -98,7 +98,7 @@ fn rule_expand_sqr(cmds: &mut Commands<Expr, i32>, subtree: &Expr, meta: &i32) -
    None
 }
 ```
-Now we have everything in place to start using tree-morph to apply our transformation rules to evaluate expressions. The following ``#[test]`` block checks that ``my_expression`` does indeed hold a value of ``9``.
+Now we have everything in place to start using tree-morph to apply our transformation rules to evaluate expressions. The following code block checks that ``my_expression`` does indeed hold a value of ``9``.
 
 ```rust
 # use tree_morph::prelude::*;
@@ -138,7 +138,6 @@ Now we have everything in place to start using tree-morph to apply our transform
 #     }
 #     None
 # }
-#[test]
 fn check_my_expression() {
    let my_expression = Expr::Sqr(Box::new(Expr::Add(
        Box::new(Expr::Val(1)),
@@ -153,6 +152,7 @@ fn check_my_expression() {
    );
    assert_eq!(result, Expr::Val(9));
 }
+check_my_expression();
 ```
 The ``morph`` function is the core function of the crate, and handles the bulk application of transformation rules to the tree. We input the set of rules, a decision function, and some metadata, returning a ``(tree, metadata)`` tuple. Running ``cargo test --test file_name`` in a directory containing the file with this code will verify that tree-morph is indeed doing what it should do! In the following sections we explore some of tree-morph's features in more depth.
 
@@ -295,7 +295,6 @@ The following test block verifies that two addition operations take place.
 #     }
 #     None
 # }
-#[test]
 fn number_of_operations() {
     let my_expression = Expr::Sqr(Box::new(Expr::Add(
         Box::new(Expr::Val(1)),
@@ -313,6 +312,7 @@ fn number_of_operations() {
     );
     assert_eq!(metaresult.num_applications_addition, 2);
 }
+number_of_operations();
 ```
 Running ``cargo test --test file_name`` in a directory containing the file with this code will verify that indeed two addition operations are successfully undertaken.
 
@@ -364,7 +364,6 @@ It is now clear why ``assert_eq!(metaresult.num_applications_addition, 2);`` hol
 #     }
 #     None
 # }
-#[test]
 fn number_of_operations() {
 #      let my_expression = Expr::Sqr(Box::new(Expr::Add(
 #          Box::new(Expr::Val(1)),
@@ -386,6 +385,7 @@ fn number_of_operations() {
     );
     // --snip--
 }
+number_of_operations();
 ```
 Now that ``rule_expand_sqr`` has a lower priority, the addition operation will be applied first, and hence ``metaresult.num_applications_addition`` should equal 1. If we make the following change to the test, we can verify this directly.
 ```rust
@@ -429,7 +429,6 @@ Now that ``rule_expand_sqr`` has a lower priority, the addition operation will b
 #     }
 #     None
 # }
-#[test]
 fn number_of_operations() {
 #      let my_expression = Expr::Sqr(Box::new(Expr::Add(
 #          Box::new(Expr::Val(1)),
@@ -451,6 +450,7 @@ fn number_of_operations() {
     );
        assert_eq!(metaresult.num_applications_addition, 1); //new, only one addition performed
 }
+number_of_operations();
 ```
 ## Selector Functions
 The second input in the ``morph`` function is a **selector function** from the ``tree_morph::helpers`` crate. Selector functions are what tree-morph uses if there is ever ambiguity in what rule to apply. Ambiguity can arise when two rules are both applicable at the same time, and have the same priority as assigned via rule groupings. We have various ways to deal with this in tree-morph, and in our example we have used ``select_panic``, which causes rust to `panic!` if there is ever ambiguity.
