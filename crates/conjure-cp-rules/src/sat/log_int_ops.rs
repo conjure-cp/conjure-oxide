@@ -336,7 +336,7 @@ fn tseytin_add_two_power(
     result
 }
 
-/// This function multiplies to binary values using the shif-add multiplication algorithm.
+/// This function multiplies to binary values using the shift-add multiplication algorithm.
 fn cnf_shift_add_multiply(
     x: &[Expr],
     y: &[Expr],
@@ -389,9 +389,8 @@ fn cnf_shift_add_multiply(
     s
 }
 
-
 /// This function calculates the range of the product of multiple integers.
-/// E.g. 
+/// E.g.
 /// a : [2, 5], b : [-1, 2], c : [-10, -6], d : [0, 3]
 /// a * b * c *d : [-300, 150]
 fn product_of_ranges(ranges: Vec<&(i32, i32)>) -> (i32, i32) {
@@ -611,7 +610,6 @@ fn cnf_int_min(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         new_symbols,
     ))
 }
-
 
 /// General function for getting the min or max of two log integers.
 fn tseytin_binary_min_max(
