@@ -275,20 +275,21 @@ impl SerdeModel {
     /// stability across identical model structures.
     pub fn collect_stable_id_mapping(&self) -> HashMap<ObjId, ObjId> {
         let mut id_list: Vec<ObjId> = Vec::new();
-
         // Collect SymbolTable IDs by traversing all SubModels
         for submodel in self.submodel.universe() {
             let symbol_table_id = submodel.symbols().id();
             if !id_list.contains(&symbol_table_id) {
                 id_list.push(symbol_table_id);
             }
-
+            
             // Assuming that all declarations are defined in a symbol table,
             // collect Declaration IDs by traversing each SubModel's symbol table.
-
+            
             for decl in submodel.symbols().clone().into_iter_local() {
+                println!("what is going on here?");
                 let decl_id = decl.1.id();
                 if !id_list.contains(&decl_id) {
+                    println!("what is going on here2?");
                     id_list.push(decl_id);
                 }
             }
@@ -317,8 +318,15 @@ impl SerdeModel {
         // FIXME: add SymbolTablePtr then redo this using that
 
         // HACK: special case abstract comprehension
+        
+        println!("brasduh");
+        // let comps: VecDeque<AbstractComprehension> = self.submodel.constraints().universe_bi();
+        let a= self.submodel.constraints();
+        println!("brasduhasd");
 
-        let comps: VecDeque<AbstractComprehension> = self.submodel.constraints().universe_bi();
+        let comps: VecDeque<AbstractComprehension> = a.universe_bi();
+
+        println!("bruh");
         for comp in comps {
             let symbol_table_id_1 = comp.generator_symbols.borrow().id();
             let symbol_table_id_2 = comp.return_expr_symbols.borrow().id();
@@ -343,6 +351,7 @@ impl SerdeModel {
                 }
             }
         }
+        println!("bruh1");
 
         // Create stable mapping: original_id -> stable_id
         let mut id_map = HashMap::new();
