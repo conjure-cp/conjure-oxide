@@ -2,7 +2,7 @@ name: Documentation Coverage
 
 # WARNING: This workflow runs on `pull_request_target` and checks out PR code.
 # It therefore executes untrusted code with access to repository secrets, including
-# `CONJURE_OXIDE_REPORTS_TOKEN`. This is an intentional tradeoff to allow fork PR
+# `CONJURE_BOT_PRIVATE_KEY`. This is an intentional tradeoff to allow fork PR
 # deployments without artifacts. Do not add other sensitive secrets to this repo.
 
 on:
@@ -28,6 +28,7 @@ on:
       - .github/workflows/rustdoc.yml
   workflow_dispatch:
 
+
 env:
   os: ubuntu-latest
   rust_release: nightly
@@ -41,17 +42,15 @@ permissions:
 
 jobs:
   doc-coverage:
-    name: "Documentation Coverage"
+    name: "Generate"
     timeout-minutes: 120
     runs-on: ubuntu-latest
-    env:
-      REPORTS_TOKEN: ${{ secrets.CONJURE_OXIDE_REPORTS_TOKEN }}
     steps:
       - name: Checkout PR
         if: ${{ github.event_name == 'pull_request_target' }}
         uses: actions/checkout@v6
         with:
-          # Avoid checkout's default auth header so deploy uses REPORTS_TOKEN.
+          # Avoid checkout's default auth header so deploy uses the app token.
           repository: ${{ github.event.pull_request.head.repo.full_name }}
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
@@ -60,7 +59,7 @@ jobs:
         if: ${{ github.event_name != 'pull_request_target' }}
         uses: actions/checkout@v6
         with:
-          # Avoid checkout's default auth header so deploy uses REPORTS_TOKEN.
+          # Avoid checkout's default auth header so deploy uses the app token.
           persist-credentials: false
 
       - name: free_disk_space.sh
@@ -110,22 +109,33 @@ jobs:
         id: deploy
         run: |
           if [[ "${{ github.event_name }}" == "pull_request_target" ]]; then
-            echo "folder=coverage-docs/pr-${{ github.event.pull_request.number }}" >> "$GITHUB_OUTPUT"
+            echo "folder=pr/${{ github.event.pull_request.number }}/coverage-docs" >> "$GITHUB_OUTPUT"
             echo "label=pr-${{ github.event.pull_request.number }}" >> "$GITHUB_OUTPUT"
           else
-            echo "folder=coverage-docs/main" >> "$GITHUB_OUTPUT"
+            echo "folder=main/coverage-docs" >> "$GITHUB_OUTPUT"
             echo "label=main" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Create reports app token
+        if: ${{ github.event_name == 'pull_request_target' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+        uses: actions/create-github-app-token@v2
+        id: reports-token
+        with:
+          app-id: ${{ secrets.CONJURE_BOT_ID }}
+          private-key: ${{ secrets.CONJURE_BOT_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: |
+            conjure-oxide-reports
+
       - name: Deploy to reports repository
-        if: ${{ env.REPORTS_TOKEN != '' && (github.event_name == 'pull_request_target' || github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
+        if: ${{ github.event_name == 'pull_request_target' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
         uses: JamesIves/github-pages-deploy-action@v4
         env:
-          GITHUB_TOKEN: ${{ env.REPORTS_TOKEN }}
+          GITHUB_TOKEN: ${{ steps.reports-token.outputs.token }}
         with:
           repository-name: conjure-cp/conjure-oxide-reports
           branch: main
-          token: ${{ env.REPORTS_TOKEN }}
+          token: ${{ steps.reports-token.outputs.token }}
           folder: ./deploy
           target-folder: ${{ steps.deploy.outputs.folder }}
           commit-message: "Actions: Doc coverage for ${{ steps.deploy.outputs.label }}"
@@ -164,7 +174,7 @@ jobs:
           pr_examples, pr_docs, pr_total, pr_docs_pct, pr_examples_pct = parse_markdown(Path("deploy/index.md"))
 
           owner = os.environ["REPO_OWNER"]
-          main_url = f"https://{owner}.github.io/conjure-oxide-reports/coverage-docs/main/index.md"
+          main_url = f"https://{owner}.github.io/conjure-oxide-reports/main/coverage-docs/index.md"
           main_available = "false"
           main_examples = 0
           main_docs = 0
@@ -186,7 +196,7 @@ jobs:
           except (urllib.error.URLError, TimeoutError):
             pass
 
-          report_url = f"https://{owner}.github.io/conjure-oxide-reports/coverage-docs/pr-{os.environ['PR_NUMBER']}/index.html"
+          report_url = f"https://{owner}.github.io/conjure-oxide-reports/pr/{os.environ['PR_NUMBER']}/coverage-docs/index.html"
           out = os.environ["GITHUB_OUTPUT"]
           with open(out, "a", encoding="utf-8") as f:
             f.write(f"report_url={report_url}\n")
@@ -204,6 +214,14 @@ jobs:
             f.write(f"delta_docs_pp={delta_docs_pp:+.2f}\n")
             f.write(f"delta_examples_pp={delta_examples_pp:+.2f}\n")
           PY
+
+      - name: Create conjure-bot token
+        if: ${{ github.event_name == 'pull_request_target' }}
+        id: bot-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.CONJURE_BOT_ID }}
+          private-key: ${{ secrets.CONJURE_BOT_PRIVATE_KEY }}
 
       - name: Comment documentation coverage on PR
         if: ${{ github.event_name == 'pull_request_target' }}
@@ -225,7 +243,7 @@ jobs:
           DELTA_DOCS_PP: ${{ steps.stats.outputs.delta_docs_pp }}
           DELTA_EXAMPLES_PP: ${{ steps.stats.outputs.delta_examples_pp }}
         with:
-          github-token: ${{ secrets.CONJURE_OXIDE_COMMENT_TOKEN }}
+          github-token: ${{ steps.bot-token.outputs.token }}
           script: |
             const prNumber = context.payload.pull_request?.number;
             if (!prNumber) return;
@@ -246,31 +264,53 @@ jobs:
                 mainLine
               ].join("\n");
 
-              const { data: comments } = await github.rest.issues.listComments({
+              const comments = await github.paginate(github.rest.issues.listComments, {
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: prNumber,
                 per_page: 100
               });
 
-              const existing = comments.find(
-                c => c.user?.login === "github-actions[bot]" && c.body?.includes(marker)
-              );
+              // Keep a single docs coverage comment per PR: update newest, delete older duplicates.
+              const matching = comments
+                .filter(
+                c => c.body?.includes(marker)
+                )
+                .sort((a, b) => Date.parse(b.updated_at) - Date.parse(a.updated_at));
 
-              if (existing) {
+              let keepComment;
+
+              if (matching.length > 0) {
+                keepComment = matching[0];
                 await github.rest.issues.updateComment({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
-                  comment_id: existing.id,
+                  comment_id: keepComment.id,
                   body
                 });
               } else {
-                await github.rest.issues.createComment({
+                const created = await github.rest.issues.createComment({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   issue_number: prNumber,
                   body
                 });
+                keepComment = created.data;
+              }
+
+              for (const comment of matching) {
+                if (comment.id === keepComment.id) {
+                  continue;
+                }
+                try {
+                  await github.rest.issues.deleteComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    comment_id: comment.id
+                  });
+                } catch (deleteError) {
+                  console.log(`Skipping docs coverage comment cleanup for ${comment.id}: ${deleteError.message || deleteError}`);
+                }
               }
             } catch (error) {
               console.log(`Skipping docs coverage PR comment: ${error.message || error}`);
