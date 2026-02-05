@@ -55,9 +55,7 @@ jobs:
       - name: "Install rust-toolchain.toml"
         run: rustup toolchain install
 
-      - run: RUSTFLAGS="-D warnings" cargo check $(EXTRA_CARGO_CHECK_FLAGS) --workspace --all-targets
-      - run: cargo clippy $(EXTRA_CARGO_CHECK_FLAGS) -- -D warnings -A clippy::unwrap_used -A clippy::expect_used
-      - run: cargo fmt --check
+      - run: make check
 
       - name: Save cache
         if: ${{ always() && github.ref == 'refs/heads/main' && steps.restore_cache.outputs.cache-hit != 'true' }}
