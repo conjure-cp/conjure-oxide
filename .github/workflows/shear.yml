@@ -59,6 +59,9 @@ jobs:
       - name: rustup
         run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
 
+      - name: Install rustfmt for nightly
+        run: rustup component add rustfmt --toolchain nightly
+
       - run: cargo build -vv --workspace
 
       - uses: ./.github/actions/install-conjure
