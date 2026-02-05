@@ -25,7 +25,7 @@ pub fn print_all_error_nodes(source: &str) {
                 );
             }
             for i in (0..node.child_count()).rev() {
-                if let Some(child) = node.child(i) {
+                if let Some(child) = u32::try_from(i).ok().and_then(|i| node.child(i)) {
                     stack.push(child);
                 }
             }
