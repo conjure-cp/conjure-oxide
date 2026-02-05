@@ -252,6 +252,10 @@ fn literal_cnf_int(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     };
     //TODO: Adding constant optimization to all int operations should hopefully make this rule redundant
 
+    Ok(Reduction::pure(int_to_log(value)))
+}
+
+pub fn int_to_log(value: i32) -> Expr {
     let mut binary_encoding = vec![];
 
     let bit_count = bit_magnitude(value);
@@ -266,12 +270,22 @@ fn literal_cnf_int(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         value_mut >>= 1;
     }
 
-    Ok(Reduction::pure(Expr::SATInt(
+    Expr::SATInt(
         Metadata::new(),
         SATIntEncoding::Log,
         Moo::new(into_matrix_expr!(binary_encoding)),
         (value, value),
-    )))
+    )
+}
+
+pub fn minimize_bits(value: &[Expr]) -> Vec<Expr> {
+    let mut result = value.to_owned();
+
+    while result.len() >= 2 && result[result.len() - 1] == result[result.len() - 2] {
+        result.pop();
+    }
+
+    result
 }
 
 /// Determine the number of bits required to encode an i32 in 2s complement
