@@ -112,6 +112,9 @@ Now we have everything in place to start using tree-morph to apply our transform
 #     Sqr(Box<Expr>),
 #     Val(i32),
 # }
+# struct Meta {
+# num_applications_addition: i32,
+# }
 # fn rule_eval_add(cmds: &mut Commands<Expr, i32>, subtree: &Expr, meta: &i32) -> Option<Expr> {
 #     if let Expr::Add(a, b) = subtree {
 #         if let (Expr::Val(a_v), Expr::Val(b_v)) = (a.as_ref(), b.as_ref()) {
@@ -139,18 +142,19 @@ Now we have everything in place to start using tree-morph to apply our transform
 #     None
 # }
 fn check_my_expression() {
-   let my_expression = Expr::Sqr(Box::new(Expr::Add(
-       Box::new(Expr::Val(1)),
-       Box::new(Expr::Val(2)),
-   )));
-
-   let (result, _) = morph(
-       vec![rule_fns![rule_eval_add, rule_eval_mul, rule_expand_sqr]],
-       tree_morph::helpers::select_panic,
-       my_expression.clone(),
-       0,
-   );
-   assert_eq!(result, Expr::Val(9));
+    let my_expression = Expr::Sqr(Box::new(Expr::Add(
+        Box::new(Expr::Val(1)),
+        Box::new(Expr::Val(2)),
+    )));
+    let engine = EngineBuilder::new()
+        .set_selector(tree_morph::helpers::select_panic)
+        .append_rule_groups(vec![vec![rule_eval_add, rule_eval_mul, rule_expand_sqr]])
+        .build();
+    let (result, _) = engine.morph(
+        my_expression,
+        0,
+    );
+    assert_eq!(result, Expr::Val(9));
 }
 check_my_expression();
 ```
@@ -300,14 +304,15 @@ fn number_of_operations() {
         Box::new(Expr::Val(1)),
         Box::new(Expr::Val(2)),
     )));
-
     let metadata = Meta {
         num_applications_addition: 0,
     };
-    let (result, metaresult) = morph(
-        vec![rule_fns![rule_eval_add, rule_eval_mul, rule_expand_sqr]],
-        tree_morph::helpers::select_panic,
-        my_expression.clone(),
+    let engine = EngineBuilder::new()
+        .set_selector(tree_morph::helpers::select_panic)
+        .add_rule_group(vec![rule_eval_add, rule_eval_mul, rule_expand_sqr])
+        .build();
+    let (result, metaresult) = engine.morph(
+        my_expression,
         metadata,
     );
     assert_eq!(metaresult.num_applications_addition, 2);
@@ -374,13 +379,14 @@ fn number_of_operations() {
 #          num_applications_addition: 0,
 #      };
     // --snip--
-    let (result, metaresult) = morph(
-        vec![
-            rule_fns![rule_eval_add, rule_eval_mul],
-            rule_fns![rule_expand_sqr],
-        ], //new
-        tree_morph::helpers::select_panic,
-        my_expression.clone(),
+    let engine = EngineBuilder::new()
+        .set_selector(tree_morph::helpers::select_panic)
+        .append_rule_groups(vec![
+            vec![rule_eval_add, rule_eval_mul],
+            vec![rule_expand_sqr]])
+        .build();
+    let (result, metaresult) = engine.morph(
+        my_expression,
         metadata,
     );
     // --snip--
@@ -439,16 +445,17 @@ fn number_of_operations() {
 #          num_applications_addition: 0,
 #      };
     // --snip--
-    let (result, metaresult) = morph(
-        vec![
-            rule_fns![rule_eval_add, rule_eval_mul],
-            rule_fns![rule_expand_sqr],
-        ], //new
-        tree_morph::helpers::select_panic,
-        my_expression.clone(),
+    let engine = EngineBuilder::new()
+        .set_selector(tree_morph::helpers::select_panic)
+        .append_rule_groups(vec![
+            vec![rule_eval_add, rule_eval_mul],
+            vec![rule_expand_sqr]])
+        .build();
+    let (result, metaresult) = engine.morph(
+        my_expression,
         metadata,
     );
-       assert_eq!(metaresult.num_applications_addition, 1); //new, only one addition performed
+    assert_eq!(metaresult.num_applications_addition, 1); //new, only one addition performed
 }
 number_of_operations();
 ```
