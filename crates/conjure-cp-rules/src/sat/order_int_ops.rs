@@ -5,7 +5,7 @@ use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
 };
 
-use crate::sat::boolean::{tseytin_and, tseytin_iff};
+use crate::sat::boolean::{tseytin_and, tseytin_iff, tseytin_not, tseytin_or};
 use conjure_cp::ast::Metadata;
 use conjure_cp::ast::Moo;
 use conjure_cp::into_matrix_expr;
@@ -65,6 +65,18 @@ pub fn validate_order_int_operands(
         .collect::<Result<_, _>>()?;
 
     Ok((out, global_min, global_max))
+}
+
+/// Encodes a < b for order integers.
+///
+/// `x < y` iff `exists i . (y_i and not x_i and for all j < i . (x_j iff y_j))`
+fn sat_order_lt(
+    a_bits: Vec<Expr>,
+    b_bits: Vec<Expr>,
+    clauses: &mut Vec<conjure_cp::ast::CnfClause>,
+    symbols: &mut SymbolTable,
+) -> Expr {
+    panic!("We need to implement sat_order_lt");
 }
 
 /// Converts an integer literal to SATInt form
@@ -132,6 +144,50 @@ fn eq_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
             &mut new_clauses,
             &mut new_symbols,
         );
+    }
+
+    Ok(Reduction::cnf(output, new_clauses, new_symbols))
+}
+
+/// Converts a </>/<=/>= expression between two order SATInts to a boolean expression in cnf
+///
+/// ```text
+/// SATInt(a) </>/<=/>= SATInt(b) ~> Bool
+///
+/// ```
+/// Note: < and <= are rewritten by swapping operands to reuse lt logic.
+#[register_rule(("SAT_Order", 9100))]
+fn ineq_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    let (lhs, rhs, negate) = match expr {
+        // A < B -> sat_order_lt(A, B)
+        Expr::Lt(_, x, y) => (x, y, false),
+        // A > B -> sat_order_lt(B, A)
+        Expr::Gt(_, x, y) => (y, x, false),
+        // A <= B -> NOT (B < A)
+        Expr::Leq(_, x, y) => (y, x, true),
+        // A >= B -> NOT (A < B)
+        Expr::Geq(_, x, y) => (x, y, true),
+        _ => return Err(RuleNotApplicable),
+    };
+
+    let (binding, _, _) =
+        validate_order_int_operands(vec![lhs.as_ref().clone(), rhs.as_ref().clone()])?;
+    let [lhs_bits, rhs_bits] = binding.as_slice() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let mut new_symbols = symbols.clone();
+    let mut new_clauses = vec![];
+
+    let mut output = sat_order_lt(
+        lhs_bits.clone(),
+        rhs_bits.clone(),
+        &mut new_clauses,
+        &mut new_symbols,
+    );
+
+    if negate {
+        output = tseytin_not(output, &mut new_clauses, &mut new_symbols);
     }
 
     Ok(Reduction::cnf(output, new_clauses, new_symbols))
