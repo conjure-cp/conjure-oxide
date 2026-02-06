@@ -76,7 +76,34 @@ fn sat_order_lt(
     clauses: &mut Vec<conjure_cp::ast::CnfClause>,
     symbols: &mut SymbolTable,
 ) -> Expr {
-    panic!("We need to implement sat_order_lt");
+    let mut result = Expr::Atomic(
+        Metadata::new(), 
+        Atom::Literal(Literal::Bool(false))
+    );
+    let mut current_prefix_eq = Expr::Atomic(
+        Metadata::new(), 
+        Atom::Literal(Literal::Bool(true))
+    );
+
+    for (a_i, b_i) in a_bits.iter().zip(b_bits.iter()) {
+        // (b_i AND NOT a_i)
+        let not_a_i = tseytin_not(a_i.clone(), clauses, symbols);
+        let b_i_and_not_a_i = tseytin_and(&vec![b_i.clone(), not_a_i], clauses, symbols);
+
+        // (current_prefix_eq AND b_i_and_not_a_i)
+        let current_condition =
+            tseytin_and(&vec![current_prefix_eq.clone(), b_i_and_not_a_i], clauses, symbols);
+
+        // Accumulate into result: result OR current_condition
+        result = tseytin_or(&vec![result, current_condition], clauses, symbols);
+
+        // Update prefix equality: current_prefix_eq AND (a_i IFF b_i)
+        let a_i_iff_b_i = tseytin_iff(a_i.clone(), b_i.clone(), clauses, symbols);
+        current_prefix_eq =
+            tseytin_and(&vec![current_prefix_eq.clone(), a_i_iff_b_i], clauses, symbols);
+    }
+
+    result
 }
 
 /// Converts an integer literal to SATInt form
