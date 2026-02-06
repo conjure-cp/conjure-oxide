@@ -273,8 +273,7 @@ fn neg_sat_direct(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let (binding, old_min, old_max) =
-        validate_direct_int_operands(vec![value.as_ref().clone()])?;
+    let (binding, old_min, old_max) = validate_direct_int_operands(vec![value.as_ref().clone()])?;
     let [val_bits] = binding.as_slice() else {
         return Err(RuleNotApplicable);
     };
@@ -285,12 +284,10 @@ fn neg_sat_direct(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let mut out = val_bits.clone();
     out.reverse();
 
-    Ok(Reduction::pure(
-        Expr::SATInt(
-            Metadata::new(),
-            SATIntEncoding::Direct,
-            Moo::new(into_matrix_expr!(out)),
-            (new_min, new_max),
-        ),
-    ))
+    Ok(Reduction::pure(Expr::SATInt(
+        Metadata::new(),
+        SATIntEncoding::Direct,
+        Moo::new(into_matrix_expr!(out)),
+        (new_min, new_max),
+    )))
 }
