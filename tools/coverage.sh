@@ -12,6 +12,7 @@ usage () {
   echo_err ''
   echo_err 'Generate code coverage reports for the repository.'
   echo_err 'This generates target/debug/coverage/lcov.info (for editors) and target/debug/coverage/index.html.'
+  echo_err 'If diff-cover is available, also generates target/debug/coverage/diff-coverage.html for changed lines.'
 }
 
 if [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
@@ -116,7 +117,31 @@ grcov target/coverage -s . --binary-path ./target/debug -t lcov\
 
 echo_err "info: lcov coverage report generated to target/debug/lcov.info"
 
+# Optional: diff-only coverage report for PR changes
+if command -v python3 &> /dev/null; then
+  if python3 -c "import diff_cover" &> /dev/null; then
+    BASE_REF="${BASE_REF:-origin/main}"
+    if git rev-parse --verify --quiet "$BASE_REF" > /dev/null; then
+      echo_err "info: generating diff-only coverage report against ${BASE_REF}"
+      DIFF_COVER_FAIL_UNDER="${DIFF_COVER_FAIL_UNDER:-0}"
+      python3 -m diff_cover.diff_cover_tool \
+        --compare-branch "$BASE_REF" \
+        --fail-under "$DIFF_COVER_FAIL_UNDER" \
+        --format "html:./target/debug/coverage/diff-coverage.html,json:./target/debug/coverage/diff-coverage.json" \
+        ./target/debug/lcov.info
+      echo_err "info: diff-only coverage report generated to target/debug/coverage/diff-coverage.html"
+    else
+      echo_err "info: base ref '${BASE_REF}' not found; skipping diff-only coverage"
+      echo_err "info: ensure the base ref is fetched (e.g., git fetch origin main)"
+    fi
+  else
+    echo_err "info: diff-cover not installed; skipping diff-only coverage"
+    echo_err "info: install with: python3 -m pip install diff-cover"
+  fi
+else
+  echo_err "info: python3 not found; skipping diff-only coverage"
+fi
+
 echo "info: coverage HTML report path: $(realpath ./target/debug/coverage/index.html)"
 
 rm -rf ./target/coverage/*.profraw
-
