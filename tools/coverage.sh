@@ -43,7 +43,7 @@ fi
 cargo locate-project &>/dev/null || { echo_err "Cannot find a rust project"; usage; exit 1; }
 
 PROJECT_ROOT=$(dirname $(cargo locate-project | jq -r .root 2> /dev/null))
-TARGET_DIR=$(cargo metadata 2> /dev/null | jq -r .target_directory 2>/dev/null)
+TARGET_DIR=$(cargo metadata --format-version 1 | jq -r .target_directory)
 
 cd "$PROJECT_ROOT"
 
@@ -69,8 +69,8 @@ export RUSTDOCFLAGS="$RUSTDOCFLAGS -C instrument-coverage -Zunstable-options --p
 # If give a path to the LLVM_PROFILE_FILE envvar, you can ensure that the passed directory
 # is created automatically to place all profiling files there. 
 # This was done to avoid the presence of 80+ files in the project's root directory.
-export LLVM_PROFILE_FILE='target/coverage/conjure-oxide-%p-%m.profraw'
-mkdir -p target/coverage
+export LLVM_PROFILE_FILE="${TARGET_DIR}/coverage/conjure-oxide-%p-%m.profraw"
+mkdir -p "${TARGET_DIR}/coverage"
 
 # regex patterns to ignore
 GRCOV_EXCLUDE_LINES=(
@@ -105,13 +105,13 @@ echo_err "info: running tests"
 cargo +nightly test --workspace
 
 echo_err "info: generating coverage reports"
-grcov target/coverage -s . --binary-path ./target/debug -t html\
+grcov "${TARGET_DIR}/coverage" -s . --binary-path ./target/debug -t html\
   "${GRCOV_IGNORE_FLAGS[@]}" ${GRCOV_EXCLUDE_FLAG}\
   -o ./target/debug/coverage || { echo_err "fatal: html coverage generation failed" ; exit 1; }
 
 echo_err "info: html coverage report generated to target/debug/coverage/index.html"
 
-grcov target/coverage -s . --binary-path ./target/debug -t lcov\
+grcov "${TARGET_DIR}/coverage" -s . --binary-path ./target/debug -t lcov\
   "${GRCOV_IGNORE_FLAGS[@]}" ${GRCOV_EXCLUDE_FLAG}\
   -o ./target/debug/lcov.info || { echo_err "fatal: lcov coverage generation failed" ; exit 1; }
 
@@ -144,4 +144,4 @@ fi
 
 echo "info: coverage HTML report path: $(realpath ./target/debug/coverage/index.html)"
 
-rm -rf ./target/coverage/*.profraw
+rm -rf "${TARGET_DIR}/coverage"/*.profraw
