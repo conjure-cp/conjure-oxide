@@ -1,0 +1,330 @@
+name: Documentation Coverage
+
+# WARNING: This workflow runs on `pull_request_target` and checks out PR code.
+# It therefore executes untrusted code with access to repository secrets, including
+# `CONJURE_BOT_PRIVATE_KEY`. This is an intentional tradeoff to allow fork PR
+# deployments without artifacts. Do not add other sensitive secrets to this repo.
+
+on:
+  pull_request_target:
+    paths:
+      - crates/**
+      - tests-integration/**
+      - tools/ci/generate-doc-coverage-summary-md.bash
+      - tools/ci/generate-doc-coverage-report-md.bash
+      - .github/workflows/doc-coverage.yml
+      - .github/workflows/code-coverage.yml
+      - .github/workflows/rustdoc.yml
+  push:
+    branches:
+      - main
+    paths:
+      - crates/**
+      - tests-integration/**
+      - tools/ci/generate-doc-coverage-summary-md.bash
+      - tools/ci/generate-doc-coverage-report-md.bash
+      - .github/workflows/doc-coverage.yml
+      - .github/workflows/code-coverage.yml
+      - .github/workflows/rustdoc.yml
+  workflow_dispatch:
+
+
+env:
+  os: ubuntu-latest
+  rust_release: nightly
+  compiler_profile: debug
+  CARGO_INCREMENTAL: 0
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  doc-coverage:
+    name: "Generate"
+    timeout-minutes: 120
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR
+        if: ${{ github.event_name == 'pull_request_target' }}
+        uses: actions/checkout@v6
+        with:
+          # Avoid checkout's default auth header so deploy uses the app token.
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+
+      - name: Checkout repository
+        if: ${{ github.event_name != 'pull_request_target' }}
+        uses: actions/checkout@v6
+        with:
+          # Avoid checkout's default auth header so deploy uses the app token.
+          persist-credentials: false
+
+      - name: free_disk_space.sh
+        run: .github/workflows/tools/free_disk_space.sh
+
+      - name: Restore cache
+        id: restore_cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+            ~/conjure
+          key: doccov--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.event.repository.updated_at }}
+          restore-keys: doccov--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}
+
+      - name: Install rust
+        run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
+
+      - name: Install pandoc
+        uses: pandoc/actions/setup@v1
+
+      - name: Build documentation coverage report
+        run: |
+          mkdir -p deploy
+          {
+            echo "# Documentation Coverage Report"
+            echo ""
+            ./tools/ci/generate-doc-coverage-summary-md.bash
+            echo ""
+            if [[ "${{ github.event_name }}" == "pull_request_target" ]]; then
+              echo "PR: [#${{ github.event.pull_request.number }}](${{ github.event.pull_request.html_url }})"
+              echo "Commit: [${{ github.event.pull_request.head.sha }}](https://github.com/${{ github.event.pull_request.head.repo.full_name }}/commit/${{ github.event.pull_request.head.sha }})"
+            else
+              echo "Commit: [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})"
+            fi
+            echo ""
+            ./tools/ci/generate-doc-coverage-report-md.bash
+          } > deploy/index.md
+
+          pandoc -f gfm -t html -s deploy/index.md -o deploy/index.html
+
+      - name: Set deploy target
+        id: deploy
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request_target" ]]; then
+            echo "folder=pr/${{ github.event.pull_request.number }}/coverage-docs" >> "$GITHUB_OUTPUT"
+            echo "label=pr-${{ github.event.pull_request.number }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "folder=main/coverage-docs" >> "$GITHUB_OUTPUT"
+            echo "label=main" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create reports app token
+        if: ${{ github.event_name == 'pull_request_target' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+        uses: actions/create-github-app-token@v2
+        id: reports-token
+        with:
+          app-id: ${{ secrets.CONJURE_BOT_ID }}
+          private-key: ${{ secrets.CONJURE_BOT_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: |
+            conjure-oxide-reports
+
+      - name: Deploy to reports repository
+        if: ${{ github.event_name == 'pull_request_target' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+        uses: JamesIves/github-pages-deploy-action@v4
+        env:
+          GITHUB_TOKEN: ${{ steps.reports-token.outputs.token }}
+        with:
+          repository-name: conjure-cp/conjure-oxide-reports
+          branch: main
+          token: ${{ steps.reports-token.outputs.token }}
+          folder: ./deploy
+          target-folder: ${{ steps.deploy.outputs.folder }}
+          commit-message: "Actions: Doc coverage for ${{ steps.deploy.outputs.label }}"
+
+      - name: Compute documentation coverage stats for PR
+        if: ${{ github.event_name == 'pull_request_target' }}
+        id: stats
+        env:
+          REPO_OWNER: ${{ github.repository_owner }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          python3 - <<'PY'
+          import os
+          import re
+          import urllib.request
+          import urllib.error
+          from pathlib import Path
+
+          pattern = re.compile(r"--\s*(\d+)/(\d+)/(\d+)")
+
+          def parse_markdown(path: Path):
+            text = path.read_text(encoding="utf-8")
+            examples = 0
+            docs = 0
+            total = 0
+            for line in text.splitlines():
+              m = pattern.search(line)
+              if m:
+                examples += int(m.group(1))
+                docs += int(m.group(2))
+                total += int(m.group(3))
+            docs_pct = (100.0 * docs / total) if total else 0.0
+            examples_pct = (100.0 * examples / total) if total else 0.0
+            return examples, docs, total, docs_pct, examples_pct
+
+          pr_examples, pr_docs, pr_total, pr_docs_pct, pr_examples_pct = parse_markdown(Path("deploy/index.md"))
+
+          owner = os.environ["REPO_OWNER"]
+          main_url = f"https://{owner}.github.io/conjure-oxide-reports/main/coverage-docs/index.md"
+          main_available = "false"
+          main_examples = 0
+          main_docs = 0
+          main_total = 0
+          main_docs_pct = 0.0
+          main_examples_pct = 0.0
+          delta_docs_pp = 0.0
+          delta_examples_pp = 0.0
+
+          try:
+            with urllib.request.urlopen(main_url, timeout=15) as resp:
+              main_md = resp.read().decode("utf-8")
+            main_path = Path("/tmp/main-doc-index.md")
+            main_path.write_text(main_md, encoding="utf-8")
+            main_examples, main_docs, main_total, main_docs_pct, main_examples_pct = parse_markdown(main_path)
+            delta_docs_pp = pr_docs_pct - main_docs_pct
+            delta_examples_pp = pr_examples_pct - main_examples_pct
+            main_available = "true"
+          except (urllib.error.URLError, TimeoutError):
+            pass
+
+          report_url = f"https://{owner}.github.io/conjure-oxide-reports/pr/{os.environ['PR_NUMBER']}/coverage-docs/index.html"
+          out = os.environ["GITHUB_OUTPUT"]
+          with open(out, "a", encoding="utf-8") as f:
+            f.write(f"report_url={report_url}\n")
+            f.write(f"pr_docs={pr_docs}\n")
+            f.write(f"pr_examples={pr_examples}\n")
+            f.write(f"pr_total={pr_total}\n")
+            f.write(f"pr_docs_pct={pr_docs_pct:.2f}\n")
+            f.write(f"pr_examples_pct={pr_examples_pct:.2f}\n")
+            f.write(f"main_available={main_available}\n")
+            f.write(f"main_docs={main_docs}\n")
+            f.write(f"main_examples={main_examples}\n")
+            f.write(f"main_total={main_total}\n")
+            f.write(f"main_docs_pct={main_docs_pct:.2f}\n")
+            f.write(f"main_examples_pct={main_examples_pct:.2f}\n")
+            f.write(f"delta_docs_pp={delta_docs_pp:+.2f}\n")
+            f.write(f"delta_examples_pp={delta_examples_pp:+.2f}\n")
+          PY
+
+      - name: Create conjure-bot token
+        if: ${{ github.event_name == 'pull_request_target' }}
+        id: bot-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.CONJURE_BOT_ID }}
+          private-key: ${{ secrets.CONJURE_BOT_PRIVATE_KEY }}
+
+      - name: Comment documentation coverage on PR
+        if: ${{ github.event_name == 'pull_request_target' }}
+        continue-on-error: true
+        uses: actions/github-script@v8
+        env:
+          REPORT_URL: ${{ steps.stats.outputs.report_url }}
+          PR_DOCS: ${{ steps.stats.outputs.pr_docs }}
+          PR_EXAMPLES: ${{ steps.stats.outputs.pr_examples }}
+          PR_TOTAL: ${{ steps.stats.outputs.pr_total }}
+          PR_DOCS_PCT: ${{ steps.stats.outputs.pr_docs_pct }}
+          PR_EXAMPLES_PCT: ${{ steps.stats.outputs.pr_examples_pct }}
+          MAIN_AVAILABLE: ${{ steps.stats.outputs.main_available }}
+          MAIN_DOCS: ${{ steps.stats.outputs.main_docs }}
+          MAIN_EXAMPLES: ${{ steps.stats.outputs.main_examples }}
+          MAIN_TOTAL: ${{ steps.stats.outputs.main_total }}
+          MAIN_DOCS_PCT: ${{ steps.stats.outputs.main_docs_pct }}
+          MAIN_EXAMPLES_PCT: ${{ steps.stats.outputs.main_examples_pct }}
+          DELTA_DOCS_PP: ${{ steps.stats.outputs.delta_docs_pp }}
+          DELTA_EXAMPLES_PP: ${{ steps.stats.outputs.delta_examples_pp }}
+        with:
+          github-token: ${{ steps.bot-token.outputs.token }}
+          script: |
+            const prNumber = context.payload.pull_request?.number;
+            if (!prNumber) return;
+
+            try {
+              const marker = "<!-- coverage-docs-report -->";
+              const mainLine = process.env.MAIN_AVAILABLE === "true"
+                ? `Main: ${process.env.MAIN_DOCS_PCT}% documented, ${process.env.MAIN_EXAMPLES_PCT}% with examples (${process.env.MAIN_EXAMPLES}/${process.env.MAIN_DOCS}/${process.env.MAIN_TOTAL})\nDelta: docs ${process.env.DELTA_DOCS_PP} pp, examples ${process.env.DELTA_EXAMPLES_PP} pp`
+                : "Main baseline: unavailable (run main documentation coverage first)";
+
+              const body = [
+                marker,
+                "## Documentation Coverage",
+                "",
+                `Report: ${process.env.REPORT_URL}`,
+                "",
+                `This PR: ${process.env.PR_DOCS_PCT}% documented, ${process.env.PR_EXAMPLES_PCT}% with examples (${process.env.PR_EXAMPLES}/${process.env.PR_DOCS}/${process.env.PR_TOTAL})`,
+                mainLine
+              ].join("\n");
+
+              const comments = await github.paginate(github.rest.issues.listComments, {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                per_page: 100
+              });
+
+              // Keep a single docs coverage comment per PR: update newest, delete older duplicates.
+              const matching = comments
+                .filter(
+                c => c.body?.includes(marker)
+                )
+                .sort((a, b) => Date.parse(b.updated_at) - Date.parse(a.updated_at));
+
+              let keepComment;
+
+              if (matching.length > 0) {
+                keepComment = matching[0];
+                await github.rest.issues.updateComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: keepComment.id,
+                  body
+                });
+              } else {
+                const created = await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: prNumber,
+                  body
+                });
+                keepComment = created.data;
+              }
+
+              for (const comment of matching) {
+                if (comment.id === keepComment.id) {
+                  continue;
+                }
+                try {
+                  await github.rest.issues.deleteComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    comment_id: comment.id
+                  });
+                } catch (deleteError) {
+                  console.log(`Skipping docs coverage comment cleanup for ${comment.id}: ${deleteError.message || deleteError}`);
+                }
+              }
+            } catch (error) {
+              console.log(`Skipping docs coverage PR comment: ${error.message || error}`);
+            }
+
+      - name: Save cache
+        if: ${{ always() && steps.restore_cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+            ~/conjure
+          key: doccov--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.event.repository.updated_at }}

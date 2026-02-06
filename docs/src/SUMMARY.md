@@ -5,6 +5,7 @@
 - [Installation](./getting_started/installation/index.md)
   - [Downloading a Nightly Release]()
   - [Building from Source]()
+- [Quick Start](./getting_started/quick-start.md)
 - [Command Line Guide]()
   - [Logging](./getting_started/command-line/logging.md)
 
@@ -24,6 +25,8 @@
   - [Writing Documentation in Code](./developers_guide/contributors_guide/creating_documentation_code.md)
 
 - [Coding Resources and Conventions](./developers_guide/coding_resources/index.md)
+  - [Glossary](./developers_guide/coding_resources/glossary.md)
+  - [Functional Rust](./getting_started/functional-rust.md)
   - [Style Guide](./developers_guide/coding_resources/style_guide.md)
   - [Crate Structure](./developers_guide/coding_resources/crate_structure.md)
   - [Benchmarking Guide](./developers_guide/coding_resources/benchmarking-guide.md)
@@ -56,7 +59,16 @@
 - [Testing: The Ideal Scenario](./documentation/testing/ideal-scenario-of-testing.md)
   - [Creating Custom Tests](./documentation/testing/Custom-Tests.md)
 - [Implementing Uniplates and Biplates with Structure Preserving Trees](./documentation/Implementing-Uniplates-and-Biplates-with-Structure-Preserving-Trees.md)
+- [SAT Encoding Types](./documentation/SAT/sat-encoding-types.md)
+- [Rule Types](./documentation/SAT/rule-types.md)
+
+<!-- TODO: will be moved -- likely the content of these will end off here -->
 - [Useful Links](./documentation/links.md)
+- [Essence Parser](./documentation/essence_parser.md)
+<!-- TODO: add the error detection documentations -->
+- [Error Detection](./documentation/error_detection/error_classification.md)
+- [Side Projects]()
+  - [Conjure Blocks](./documentation/side_projects/Conjure-Blocks.md)
 
 ---
 
