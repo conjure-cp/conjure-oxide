@@ -19,7 +19,7 @@ runs:
       shell: bash
 
     - run: |
-        if conjure --version | grep -iq conjure ; then
+        if [ "$(conjure --version | tail -n1 | cut -d " " -f2)" == "v${{ inputs.version }}" ]; then
           echo "Found conjure, not fetching again."
         else
           mkdir -p "${HOME}/conjure"
