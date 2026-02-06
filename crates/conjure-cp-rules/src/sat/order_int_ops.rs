@@ -69,40 +69,23 @@ pub fn validate_order_int_operands(
 
 /// Encodes a < b for order integers.
 ///
-/// `x < y` iff `exists i . (y_i and not x_i and for all j < i . (x_j iff y_j))`
+/// `x < y` iff `exists i . (NOT x_i AND y_i)`
 fn sat_order_lt(
     a_bits: Vec<Expr>,
     b_bits: Vec<Expr>,
     clauses: &mut Vec<conjure_cp::ast::CnfClause>,
     symbols: &mut SymbolTable,
 ) -> Expr {
-    let mut result = Expr::Atomic(
-        Metadata::new(), 
-        Atom::Literal(Literal::Bool(false))
-    );
-    let mut current_prefix_eq = Expr::Atomic(
-        Metadata::new(), 
-        Atom::Literal(Literal::Bool(true))
-    );
+    let mut result = Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false)));
 
     for (a_i, b_i) in a_bits.iter().zip(b_bits.iter()) {
-        // (b_i AND NOT a_i)
+        // (NOT a_i AND b_i)
         let not_a_i = tseytin_not(a_i.clone(), clauses, symbols);
-        let b_i_and_not_a_i = tseytin_and(&vec![b_i.clone(), not_a_i], clauses, symbols);
+        let current_term = tseytin_and(&vec![not_a_i, b_i.clone()], clauses, symbols);
 
-        // (current_prefix_eq AND b_i_and_not_a_i)
-        let current_condition =
-            tseytin_and(&vec![current_prefix_eq.clone(), b_i_and_not_a_i], clauses, symbols);
-
-        // Accumulate into result: result OR current_condition
-        result = tseytin_or(&vec![result, current_condition], clauses, symbols);
-
-        // Update prefix equality: current_prefix_eq AND (a_i IFF b_i)
-        let a_i_iff_b_i = tseytin_iff(a_i.clone(), b_i.clone(), clauses, symbols);
-        current_prefix_eq =
-            tseytin_and(&vec![current_prefix_eq.clone(), a_i_iff_b_i], clauses, symbols);
+        // accumulate (NOT a_i AND b_i) into OR term
+        result = tseytin_or(&vec![result, current_term], clauses, symbols);
     }
-
     result
 }
 
