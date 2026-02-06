@@ -6,6 +6,7 @@ on:
       - main # run for pushes to the main branch
   workflow_dispatch:
 
+
 env:
   # we define these in the env if they are not defined as matrix parameters
   os: ubuntu-latest
@@ -14,23 +15,28 @@ env:
   CARGO_INCREMENTAL: 0 # for smaller cache size
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   rustdoc:
-    name: "Generate Rustdoc documentation"
+    name: "Generate"
     timeout-minutes: 120
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v6
+        with:
+          # Avoid checkout's auth header so deploy uses the app token.
+          persist-credentials: false
+          # Keep checkout detached to avoid worktree branch-name collisions.
+          ref: ${{ github.sha }}
 
       - name: free_disk_space.sh
         run: .github/workflows/tools/free_disk_space.sh
 
       - name: Restore cache
         id: restore_cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: |
             ~/.cargo/bin/
@@ -61,22 +67,35 @@ jobs:
           mkdir deploy
           cp -r target/doc/* deploy
 
+      - name: Create reports app token
+        id: reports-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.CONJURE_BOT_ID }}
+          private-key: ${{ secrets.CONJURE_BOT_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: |
+            conjure-oxide-reports
+
       - name: Deploy to Github Pages
+        if: ${{ steps.reports-token.outputs.token != '' }}
         uses: JamesIves/github-pages-deploy-action@v4
+        env:
+          GITHUB_TOKEN: ${{ steps.reports-token.outputs.token }}
         with:
           folder: ./deploy
-          target-folder: "docs"
+          target-folder: "main/rustdoc"
           repository-name: conjure-cp/conjure-oxide-reports
           branch: main
-          token: ${{ secrets.CONJURE_OXIDE_REPORTS_TOKEN }}
-          commit-message: "Actions: Rustdoc documentation for ${{ steps.sha.outputs.result }}"
+          token: ${{ steps.reports-token.outputs.token }}
+          commit-message: "Actions: Rustdoc documentation for ${{ steps.sha.outputs.sha }}"
           # do not overwrite previous deployments, such as those made by other
           # actions
           force: false
 
       - name: Save cache
         if: ${{ always() && steps.restore_cache.outputs.cache-hit != 'true' }}
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: |
             ~/.cargo/bin/
