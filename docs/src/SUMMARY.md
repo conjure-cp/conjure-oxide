@@ -25,6 +25,7 @@
   - [What we didn't do]()
 
 - [Coding Resources and Conventions](./developers_guide/coding_resources/index.md)
+  - [Glossary](./developers_guide/coding_resources/glossary.md)
   - [Functional Rust](./getting_started/functional-rust.md)
   - [Style Guide](./developers_guide/coding_resources/style_guide.md)
   - [Crate Structure](./developers_guide/coding_resources/crate_structure.md)
