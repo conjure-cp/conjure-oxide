@@ -101,7 +101,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
                 num_applications_addition: 0,
                 num_applications_multiplication: 0,
             };
-            let engine = EngineBuilder::new()
+            let mut engine = EngineBuilder::new()
                 .append_rule_groups(rules.clone())
                 .build();
             engine.morph(

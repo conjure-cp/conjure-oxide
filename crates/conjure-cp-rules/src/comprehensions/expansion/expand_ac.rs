@@ -14,7 +14,7 @@ use conjure_cp::{
     },
     bug,
     context::Context,
-    rule_engine::{resolve_rule_sets, rewrite_morph, rewrite_naive},
+    rule_engine::{resolve_rule_sets, rewrite_morph, rewrite_naive, MorphConfig},
     solver::{Solver, SolverError, SolverFamily, adaptors::Minion},
 };
 use tracing::warn;
@@ -94,7 +94,7 @@ pub fn expand_ac(
     let rule_sets = resolve_rule_sets(SolverFamily::Minion, extra_rule_sets).unwrap();
 
     let generator_model = if USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS.load(Ordering::Relaxed) {
-        rewrite_morph(generator_model, &rule_sets, false)
+        rewrite_morph(generator_model, &rule_sets, false, MorphConfig::default())
     } else {
         rewrite_naive(&generator_model, &rule_sets, false, false).unwrap()
     };
@@ -119,7 +119,7 @@ pub fn expand_ac(
 
     let return_expression_model =
         if USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS.load(Ordering::Relaxed) {
-            rewrite_morph(return_expression_model, &rule_sets, false)
+            rewrite_morph(return_expression_model, &rule_sets, false, MorphConfig::default())
         } else {
             rewrite_naive(&return_expression_model, &rule_sets, false, false).unwrap()
         };

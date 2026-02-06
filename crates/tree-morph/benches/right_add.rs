@@ -66,7 +66,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
             let meta = Meta {
                 num_applications: 0,
             };
-            let engine = EngineBuilder::new()
+            let mut engine = EngineBuilder::new()
                 .append_rule_groups(rules.clone())
                 .build();
             engine.morph(
