@@ -22,6 +22,7 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
         Expr::SubsetEq(_, _, _) => Err(RuleNotApplicable),
         Expr::AbstractLiteral(_, _) => Err(RuleNotApplicable),
         Expr::Comprehension(_, _) => Err(RuleNotApplicable),
+        Expr::AbstractComprehension(_, _) => Err(RuleNotApplicable),
         Expr::DominanceRelation(_, _) => Err(RuleNotApplicable),
         Expr::FromSolution(_, _) => Err(RuleNotApplicable),
         Expr::Metavar(_, _) => Err(RuleNotApplicable),
@@ -471,6 +472,7 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
         Expr::Lt(_, _, _) => Err(RuleNotApplicable),
         Expr::SafeDiv(_, _, _) => Err(RuleNotApplicable),
         Expr::UnsafeDiv(_, _, _) => Err(RuleNotApplicable),
+        Expr::Flatten(_, _, _) => Err(RuleNotApplicable), // TODO: check if anything can be done here
         Expr::AllDiff(m, e) => {
             let Some(vec) = Moo::unwrap_or_clone(e.clone()).unwrap_list() else {
                 return Err(RuleNotApplicable);
@@ -521,9 +523,16 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
         Expr::MinionWInIntervalSet(_, _, _) => Err(RuleNotApplicable),
         Expr::MinionWInSet(_, _, _) => Err(RuleNotApplicable),
         Expr::MinionElementOne(_, _, _, _) => Err(RuleNotApplicable),
-        Expr::SATInt(_, _) => Err(RuleNotApplicable),
+        Expr::SATInt(_, _, _, _) => Err(RuleNotApplicable),
         Expr::PairwiseSum(_, _, _) => Err(RuleNotApplicable),
         Expr::PairwiseProduct(_, _, _) => Err(RuleNotApplicable),
+        Expr::Defined(_, _) => todo!(),
+        Expr::Range(_, _) => todo!(),
+        Expr::Image(_, _, _) => todo!(),
+        Expr::ImageSet(_, _, _) => todo!(),
+        Expr::PreImage(_, _, _) => todo!(),
+        Expr::Inverse(_, _, _) => todo!(),
+        Expr::Restrict(_, _, _) => todo!(),
         Expr::LexLt(_, _, _) => Err(RuleNotApplicable),
         Expr::LexLeq(_, _, _) => Err(RuleNotApplicable),
         Expr::LexGt(_, _, _) => Err(RuleNotApplicable),

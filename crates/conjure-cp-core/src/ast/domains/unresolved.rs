@@ -1,7 +1,7 @@
-use crate::ast::domains::set_attr::SetAttr;
+use crate::ast::domains::attrs::SetAttr;
 use crate::ast::{
-    DeclarationKind, DomainOpError, Expression, Literal, Metadata, Moo, RecordEntryGround,
-    Reference, Typeable,
+    DeclarationKind, DomainOpError, Expression, FuncAttr, Literal, Metadata, Moo,
+    RecordEntryGround, Reference, Typeable,
     domains::{
         GroundDomain,
         domain::{DomainPtr, Int},
@@ -81,6 +81,38 @@ impl From<SetAttr<Int>> for SetAttr<IntVal> {
     }
 }
 
+impl TryInto<SetAttr<Int>> for SetAttr<IntVal> {
+    type Error = DomainOpError;
+
+    fn try_into(self) -> Result<SetAttr<Int>, Self::Error> {
+        let size: Range<Int> = self.size.try_into()?;
+        Ok(SetAttr { size })
+    }
+}
+
+impl From<FuncAttr<Int>> for FuncAttr<IntVal> {
+    fn from(value: FuncAttr<Int>) -> Self {
+        FuncAttr {
+            size: value.size.into(),
+            partiality: value.partiality,
+            jectivity: value.jectivity,
+        }
+    }
+}
+
+impl TryInto<FuncAttr<Int>> for FuncAttr<IntVal> {
+    type Error = DomainOpError;
+
+    fn try_into(self) -> Result<FuncAttr<Int>, Self::Error> {
+        let size: Range<Int> = self.size.try_into()?;
+        Ok(FuncAttr {
+            size,
+            jectivity: self.jectivity,
+            partiality: self.partiality,
+        })
+    }
+}
+
 impl Display for IntVal {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -99,6 +131,10 @@ impl IntVal {
                 _ => None,
             },
             DeclarationKind::Given(dom) => match dom.return_type() {
+                ReturnType::Int => Some(IntVal::Reference(re.clone())),
+                _ => None,
+            },
+            DeclarationKind::GivenQuantified(inner) => match inner.domain().return_type() {
                 ReturnType::Int => Some(IntVal::Reference(re.clone())),
                 _ => None,
             },
@@ -128,7 +164,7 @@ impl IntVal {
                     _ => bug!("Expected integer expression, got: {expr}"),
                 },
                 // If this is an int given we will be able to resolve it eventually, but not yet
-                DeclarationKind::Given(_) => None,
+                DeclarationKind::Given(_) | DeclarationKind::GivenQuantified(..) => None,
                 DeclarationKind::DomainLetting(_)
                 | DeclarationKind::RecordField(_)
                 | DeclarationKind::DecisionVariable(_) => bug!(
@@ -206,6 +242,16 @@ impl SetAttr<IntVal> {
     }
 }
 
+impl FuncAttr<IntVal> {
+    pub fn resolve(&self) -> Option<FuncAttr<Int>> {
+        Some(FuncAttr {
+            size: self.size.resolve()?,
+            partiality: self.partiality.clone(),
+            jectivity: self.jectivity.clone(),
+        })
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Uniplate, Quine)]
 #[path_prefix(conjure_cp::ast)]
 pub struct RecordEntry {
@@ -240,7 +286,10 @@ pub enum UnresolvedDomain {
     /// A reference to a domain letting
     #[polyquine_skip]
     Reference(Reference),
+    /// A record
     Record(Vec<RecordEntry>),
+    /// A function with attributes, domain, and range
+    Function(FuncAttr<IntVal>, DomainPtr, DomainPtr),
 }
 
 impl UnresolvedDomain {
@@ -285,6 +334,15 @@ impl UnresolvedDomain {
                 })
                 .resolve()
                 .map(Moo::unwrap_or_clone),
+            UnresolvedDomain::Function(attr, dom, cdom) => {
+                if let Some(attr_gd) = attr.resolve()
+                    && let Some(dom_gd) = dom.resolve()
+                    && let Some(cdom_gd) = cdom.resolve()
+                {
+                    return Some(GroundDomain::Function(attr_gd, dom_gd, cdom_gd));
+                }
+                None
+            }
         }
     }
 
@@ -335,6 +393,21 @@ impl UnresolvedDomain {
             (UnresolvedDomain::Record(_), _) | (_, UnresolvedDomain::Record(_)) => {
                 Err(DomainOpError::WrongType)
             }
+            #[allow(unreachable_patterns)]
+            // Technically redundant but logically clearer to have both
+            (UnresolvedDomain::Function(_, _, _), _) | (_, UnresolvedDomain::Function(_, _, _)) => {
+                Err(DomainOpError::WrongType)
+            }
+        }
+    }
+
+    pub fn element_domain(&self) -> Option<DomainPtr> {
+        match self {
+            UnresolvedDomain::Set(_, inner_dom) => Some(inner_dom.clone()),
+            UnresolvedDomain::Matrix(_, _) => {
+                todo!("Unwrap one dimension of the domain")
+            }
+            _ => None,
         }
     }
 }
@@ -361,6 +434,9 @@ impl Typeable for UnresolvedDomain {
                     entry_types.push(entry.domain.return_type());
                 }
                 ReturnType::Record(entry_types)
+            }
+            UnresolvedDomain::Function(_, dom, cdom) => {
+                ReturnType::Function(Box::new(dom.return_type()), Box::new(cdom.return_type()))
             }
         }
     }
@@ -404,6 +480,9 @@ impl Display for UnresolvedDomain {
                             .collect_vec()
                     )
                 )
+            }
+            UnresolvedDomain::Function(attribute, domain, codomain) => {
+                write!(f, "function {} {} --> {} ", attribute, domain, codomain)
             }
         }
     }

@@ -1,0 +1,56 @@
+Model before rewriting:
+
+find a: matrix indexed by [[int(1..2), int(1..2), int(1..2)]] of int(1..8)
+
+such that
+
+(flatten(0, a)[1] = [1,2,3,4;int(1..4)]),
+(flatten(0, a)[2] = [5,6,7,8;int(1..4)])
+
+--
+
+(flatten(0, a#matrix_to_atom)[1] = [1,2,3,4;int(1..4)]),
+(flatten(0, a#matrix_to_atom)[2] = [5,6,7,8;int(1..4)]), 
+   ~~> select_representation_matrix ([("Representations", 8001)]) 
+(flatten(0, a#matrix_to_atom)[1] = [1,2,3,4;int(1..4)]),
+(flatten(0, a#matrix_to_atom)[2] = [5,6,7,8;int(1..4)]) 
+new variables:
+  find a#matrix_to_atom_1_1_1: int(1..8)
+  find a#matrix_to_atom_1_1_2: int(1..8)
+  find a#matrix_to_atom_1_2_1: int(1..8)
+  find a#matrix_to_atom_1_2_2: int(1..8)
+  find a#matrix_to_atom_2_1_1: int(1..8)
+  find a#matrix_to_atom_2_1_2: int(1..8)
+  find a#matrix_to_atom_2_2_1: int(1..8)
+  find a#matrix_to_atom_2_2_2: int(1..8)
+--
+
+(flatten(0, a#matrix_to_atom)[1] = [1,2,3,4;int(1..4)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+(flatten(0, a#matrix_to_atom)[1] = [1,2,3,4;int(1..)]) 
+
+--
+
+(flatten(0, a#matrix_to_atom)[2] = [5,6,7,8;int(1..4)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+(flatten(0, a#matrix_to_atom)[2] = [5,6,7,8;int(1..)]) 
+
+--
+
+Final model:
+
+find a: matrix indexed by [[int(1..2), int(1..2), int(1..2)]] of int(1..8)
+find a#matrix_to_atom_1_1_1: int(1..8)
+find a#matrix_to_atom_1_1_2: int(1..8)
+find a#matrix_to_atom_1_2_1: int(1..8)
+find a#matrix_to_atom_1_2_2: int(1..8)
+find a#matrix_to_atom_2_1_1: int(1..8)
+find a#matrix_to_atom_2_1_2: int(1..8)
+find a#matrix_to_atom_2_2_1: int(1..8)
+find a#matrix_to_atom_2_2_2: int(1..8)
+
+such that
+
+(flatten(0, a#matrix_to_atom)[1] = [1,2,3,4;int(1..)]),
+(flatten(0, a#matrix_to_atom)[2] = [5,6,7,8;int(1..)])
+

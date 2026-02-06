@@ -33,14 +33,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: free_disk_space.sh
         run: .github/workflows/tools/free_disk_space.sh
 
       - name: Restore cache
         id: restore_cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: |
             ~/.cargo/bin/
@@ -55,13 +55,11 @@ jobs:
       - name: "Install rust-toolchain.toml"
         run: rustup toolchain install
 
-      - run: RUSTFLAGS="-D warnings" cargo check $(EXTRA_CARGO_CHECK_FLAGS) --workspace --all-targets
-      - run: cargo clippy $(EXTRA_CARGO_CHECK_FLAGS) -- -D warnings -A clippy::unwrap_used -A clippy::expect_used
-      - run: cargo fmt --check
+      - run: make check
 
       - name: Save cache
         if: ${{ always() && github.ref == 'refs/heads/main' && steps.restore_cache.outputs.cache-hit != 'true' }}
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: |
             ~/.cargo/bin/
