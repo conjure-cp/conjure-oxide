@@ -21,7 +21,7 @@
   - [How we work](./developers_guide/contributors_guide/how_we_work.md)
   - [Setting up your development environment](./developers_guide/contributors_guide/set-dev-env.md)
   - [Creating Documentation](./developers_guide/contributors_guide/creating_documentation.md)
-  - [Running and writing integration tests]()
+  - [Running and writing integration tests](./developers_guide/contributors_guide/integration_tests.md)
   - [What we didn't do]()
 
 - [Coding Resources and Conventions](./developers_guide/coding_resources/index.md)
@@ -29,6 +29,7 @@
   - [Functional Rust](./getting_started/functional-rust.md)
   - [Style Guide](./developers_guide/coding_resources/style_guide.md)
   - [Crate Structure](./developers_guide/coding_resources/crate_structure.md)
+  - [Integration Testing Implementation](./developers_guide/coding_resources/integration_tests_implementation.md)
 
 - [Design Documents](./developers_guide/design_documents/index.md)
   - [2023‐11: High Level Plan](./developers_guide/design_documents/2023_11.md)
