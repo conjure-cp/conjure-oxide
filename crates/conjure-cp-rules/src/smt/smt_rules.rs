@@ -309,12 +309,9 @@ fn unwrap_subseteq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
     let domain_a_iter = elem_dom_a.values().map_err(|_| DomainError)?;
     let memberships = domain_a_iter
-        .map(|lit| {
-            let b_contains = elem_dom_b.contains(&lit).map_err(|_| DomainError)?;
-            match b_contains {
-                true => Ok(essence_expr!("(&lit in &a) -> (&lit in &b)")),
-                false => Ok(essence_expr!("!(&lit in &a)")),
-            }
+        .map(|lit| match elem_dom_b.contains(&lit) {
+            true => Ok(essence_expr!("(&lit in &a) -> (&lit in &b)")),
+            false => Ok(essence_expr!("!(&lit in &a)")),
         })
         .collect::<Result<Vec<_>, _>>()?;
 
@@ -354,16 +351,14 @@ fn unwrap_set_eq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         .and_then(|d| d.values())
         .map_err(|_| DomainError)?;
     let memberships = union_val_iter
-        .map(|lit| {
-            let a_contains = elem_dom_a.contains(&lit).map_err(|_| DomainError)?;
-            let b_contains = elem_dom_b.contains(&lit).map_err(|_| DomainError)?;
-            match (a_contains, b_contains) {
+        .map(
+            |lit| match (elem_dom_a.contains(&lit), elem_dom_b.contains(&lit)) {
                 (true, true) => Ok(essence_expr!("(&lit in &a) <-> (&lit in &b)")),
                 (true, false) => Ok(essence_expr!("!(&lit in &a)")),
                 (false, true) => Ok(essence_expr!("!(&lit in &b)")),
                 (false, false) => unreachable!(),
-            }
-        })
+            },
+        )
         .collect::<Result<Vec<_>, _>>()?;
 
     let new_expr = Expr::And(

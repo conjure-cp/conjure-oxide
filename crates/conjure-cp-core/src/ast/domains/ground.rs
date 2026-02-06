@@ -283,43 +283,47 @@ impl GroundDomain {
         }
     }
 
-    pub fn contains(&self, lit: &Literal) -> Result<bool, DomainOpError> {
+    pub fn contains(&self, lit: &Literal) -> bool {
         // not adding a generic wildcard condition for all domains, so that this gives a compile
         // error when a domain is added.
         match self {
             // empty domain can't contain anything
-            GroundDomain::Empty(_) => Ok(false),
+            GroundDomain::Empty(_) => false,
             GroundDomain::Bool => match lit {
-                Literal::Bool(_) => Ok(true),
-                _ => Ok(false),
+                Literal::Bool(_) => true,
+                _ => false,
             },
             GroundDomain::Int(ranges) => match lit {
                 Literal::Int(x) => {
                     // unconstrained int domain - contains all integers
                     if ranges.is_empty() {
-                        return Ok(true);
+                        return true;
                     };
 
-                    Ok(ranges.iter().any(|range| range.contains(x)))
+                    ranges.iter().any(|range| range.contains(x))
                 }
-                _ => Ok(false),
+                _ => false,
             },
             GroundDomain::Set(set_attr, inner_domain) => match lit {
                 Literal::AbstractLiteral(AbstractLiteral::Set(lit_elems)) => {
                     // check if the literal's size is allowed by the set attribute
-                    let sz = lit_elems.len().to_i32().ok_or(DomainOpError::TooLarge)?;
+                    let sz: Int = match lit_elems.len().try_into() {
+                        Ok(sz) => sz,
+                        Err(_) => return false,
+                    };
+
                     if !set_attr.size.contains(&sz) {
-                        return Ok(false);
+                        return false;
                     }
 
                     for elem in lit_elems {
-                        if !inner_domain.contains(elem)? {
-                            return Ok(false);
+                        if !inner_domain.contains(elem) {
+                            return false;
                         }
                     }
-                    Ok(true)
+                    true
                 }
-                _ => Ok(false),
+                _ => false,
             },
             GroundDomain::Matrix(elem_domain, index_domains) => {
                 match lit {
@@ -333,7 +337,7 @@ impl GroundDomain {
                             .expect("a matrix should have at least one index domain")
                             != *idx_domain
                         {
-                            return Ok(false);
+                            return false;
                         };
 
                         let next_elem_domain = if index_domains.is_empty() {
@@ -346,71 +350,70 @@ impl GroundDomain {
                         };
 
                         for elem in elems {
-                            if !next_elem_domain.contains(elem)? {
-                                return Ok(false);
+                            if !next_elem_domain.contains(elem) {
+                                return false;
                             }
                         }
 
-                        Ok(true)
+                        true
                     }
-                    _ => Ok(false),
+                    _ => false,
                 }
             }
             GroundDomain::Tuple(elem_domains) => {
                 match lit {
                     Literal::AbstractLiteral(AbstractLiteral::Tuple(literal_elems)) => {
                         if elem_domains.len() != literal_elems.len() {
-                            return Ok(false);
+                            return false;
                         }
 
                         // for every element in the tuple literal, check if it is in the corresponding domain
                         for (elem_domain, elem) in itertools::izip!(elem_domains, literal_elems) {
-                            if !elem_domain.contains(elem)? {
-                                return Ok(false);
+                            if !elem_domain.contains(elem) {
+                                return false;
                             }
                         }
 
-                        Ok(true)
+                        true
                     }
-                    _ => Ok(false),
+                    _ => false,
                 }
             }
             GroundDomain::Record(entries) => match lit {
                 Literal::AbstractLiteral(AbstractLiteral::Record(lit_entries)) => {
                     if entries.len() != lit_entries.len() {
-                        return Ok(false);
+                        return false;
                     }
 
                     for (entry, lit_entry) in itertools::izip!(entries, lit_entries) {
-                        if entry.name != lit_entry.name
-                            || !(entry.domain.contains(&lit_entry.value)?)
+                        if entry.name != lit_entry.name || !entry.domain.contains(&lit_entry.value)
                         {
-                            return Ok(false);
+                            return false;
                         }
                     }
-                    Ok(true)
+                    true
                 }
-                _ => Ok(false),
+                _ => false,
             },
             GroundDomain::Function(func_attr, domain, codomain) => match lit {
                 Literal::AbstractLiteral(AbstractLiteral::Function(lit_elems)) => {
                     let sz = Int::try_from(lit_elems.len()).expect("Should convert");
                     if !func_attr.size.contains(&sz) {
-                        return Ok(false);
+                        return false;
                     }
                     for lit in lit_elems {
                         let domain_element = &lit.0;
                         let codomain_element = &lit.1;
-                        if !domain.contains(domain_element)? {
-                            return Ok(false);
+                        if !domain.contains(domain_element) {
+                            return false;
                         }
-                        if !codomain.contains(codomain_element)? {
-                            return Ok(false);
+                        if !codomain.contains(codomain_element) {
+                            return false;
                         }
                     }
-                    Ok(true)
+                    true
                 }
-                _ => Ok(false),
+                _ => false,
             },
         }
     }

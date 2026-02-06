@@ -26,6 +26,7 @@ use uniplate::{Biplate, Uniplate};
 
 use super::name::Name;
 use super::{DomainPtr, Expression, GroundDomain, Moo, ReturnType, SubModel, Typeable};
+use crate::ast::assignment::AssignmentBuilder;
 use derivative::Derivative;
 
 // Count symbol tables per thread / model.

@@ -14,6 +14,7 @@ use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use uniplate::{Biplate, Tree, Uniplate};
 
+use crate::ast::assignment::AssignmentBuilder;
 use crate::{bug, into_matrix_expr};
 use std::hash::{Hash, Hasher};
 use std::{
@@ -197,6 +198,11 @@ impl SubModel {
             1 => constraints[0].clone(),
             _ => Expression::And(Metadata::new(), Moo::new(into_matrix_expr![constraints])),
         }
+    }
+
+    /// Build a new assignment of variables in this model
+    pub fn new_assignment(&self) -> AssignmentBuilder {
+        AssignmentBuilder::new(self.symbols.clone())
     }
 }
 

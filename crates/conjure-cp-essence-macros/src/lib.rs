@@ -10,7 +10,7 @@ use expand::{expand_expr, expand_expr_vec};
 /// ## Input
 /// The input can be one of the following:
 /// - The raw Essence tokens (`essence_expr!(2 + 2)`)
-/// - A string literal (`essence_expr!("2 + 2")`)
+/// - A string literal (`essence_expr!("2 + 2")`)symbol_table
 ///
 /// The macro may reference variables in the current scope (called "metavars")
 /// using the syntax `&<name>`. For example:
