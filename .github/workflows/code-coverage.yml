@@ -52,6 +52,12 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
+      - name: Fetch base ref (PR)
+        if: ${{ github.event_name == 'pull_request_target' }}
+        run: |
+          git remote add upstream https://github.com/${{ github.repository }}.git
+          git fetch --no-tags --prune upstream ${{ github.event.pull_request.base.ref }}
+
       - name: Checkout repository
         if: ${{ github.event_name != 'pull_request_target' }}
         uses: actions/checkout@v6
@@ -81,12 +87,18 @@ jobs:
       - name: Install rust
         run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
 
+      - name: Install diff-cover
+        run: python3 -m pip install --upgrade pip diff-cover
+
       - uses: ./.github/actions/install-conjure
         with:
           os_arch: linux
           version: 2.5.1
 
       - name: Generate code coverage reports
+        env:
+          BASE_REF: ${{ github.event_name == 'pull_request_target' && format('upstream/{0}', github.event.pull_request.base.ref) || 'origin/main' }}
+          DIFF_COVER_FAIL_UNDER: 0
         run: |
           ./tools/coverage.sh
 
@@ -141,6 +153,7 @@ jobs:
           python3 - <<'PY'
           import os
           import pathlib
+          import json
           import urllib.request
           import urllib.error
 
@@ -178,6 +191,26 @@ jobs:
             pass
 
           report_url = f"https://{owner}.github.io/conjure-oxide-reports/pr/{os.environ['PR_NUMBER']}/coverage-code/index.html"
+          diff_report_url = f"https://{owner}.github.io/conjure-oxide-reports/pr/{os.environ['PR_NUMBER']}/coverage-code/diff-coverage.html"
+
+          diff_available = "false"
+          diff_total_lines = 0
+          diff_violations = 0
+          diff_pct = 0.0
+          diff_changed_lines = 0
+          diff_path = pathlib.Path("deploy/diff-coverage.json")
+          if diff_path.exists():
+            try:
+              diff_data = json.loads(diff_path.read_text(encoding="utf-8"))
+              diff_total_lines = int(diff_data.get("total_num_lines", 0))
+              diff_violations = int(diff_data.get("total_num_violations", 0))
+              diff_pct = float(diff_data.get("total_percent_covered", 0.0))
+              diff_changed_lines = int(diff_data.get("num_changed_lines", 0))
+              diff_available = "true"
+            except (json.JSONDecodeError, ValueError, TypeError):
+              pass
+          diff_covered_lines = max(diff_total_lines - diff_violations, 0)
+
           out = os.environ["GITHUB_OUTPUT"]
           with open(out, "a", encoding="utf-8") as f:
             f.write(f"report_url={report_url}\n")
@@ -189,6 +222,12 @@ jobs:
             f.write(f"main_found={main_found}\n")
             f.write(f"main_pct={main_pct:.2f}\n")
             f.write(f"delta_pp={delta_pp:+.2f}\n")
+            f.write(f"diff_report_url={diff_report_url}\n")
+            f.write(f"diff_available={diff_available}\n")
+            f.write(f"diff_pct={diff_pct:.2f}\n")
+            f.write(f"diff_covered_lines={diff_covered_lines}\n")
+            f.write(f"diff_total_lines={diff_total_lines}\n")
+            f.write(f"diff_changed_lines={diff_changed_lines}\n")
           PY
 
       - name: Create conjure-bot token
@@ -205,6 +244,7 @@ jobs:
         uses: actions/github-script@v8
         env:
           COVERAGE_URL: ${{ steps.stats.outputs.report_url }}
+          DIFF_URL: ${{ steps.stats.outputs.diff_report_url }}
           PR_HITS: ${{ steps.stats.outputs.pr_hits }}
           PR_FOUND: ${{ steps.stats.outputs.pr_found }}
           PR_PCT: ${{ steps.stats.outputs.pr_pct }}
@@ -213,6 +253,11 @@ jobs:
           MAIN_FOUND: ${{ steps.stats.outputs.main_found }}
           MAIN_PCT: ${{ steps.stats.outputs.main_pct }}
           DELTA_PP: ${{ steps.stats.outputs.delta_pp }}
+          DIFF_AVAILABLE: ${{ steps.stats.outputs.diff_available }}
+          DIFF_PCT: ${{ steps.stats.outputs.diff_pct }}
+          DIFF_COVERED: ${{ steps.stats.outputs.diff_covered_lines }}
+          DIFF_TOTAL: ${{ steps.stats.outputs.diff_total_lines }}
+          DIFF_CHANGED: ${{ steps.stats.outputs.diff_changed_lines }}
         with:
           github-token: ${{ steps.bot-token.outputs.token }}
           script: |
@@ -225,13 +270,23 @@ jobs:
                 ? `Main: ${process.env.MAIN_PCT}% lines (${process.env.MAIN_HITS}/${process.env.MAIN_FOUND})\nDelta vs main: ${process.env.DELTA_PP} pp`
                 : "Main baseline: unavailable (run main coverage first)";
 
+              const diffAvailable = process.env.DIFF_AVAILABLE === "true";
+              const diffReportLine = diffAvailable
+                ? `Diff report: ${process.env.DIFF_URL}`
+                : "Diff report: unavailable (diff-cover not generated)";
+              const diffLine = diffAvailable
+                ? `Diff: ${process.env.DIFF_PCT}% lines (${process.env.DIFF_COVERED}/${process.env.DIFF_TOTAL} measured; ${process.env.DIFF_CHANGED} changed)`
+                : "Diff coverage: unavailable";
+
               const body = [
                 marker,
                 "## Code Coverage",
                 "",
                 `Report: ${process.env.COVERAGE_URL}`,
+                diffReportLine,
                 "",
                 `This PR: ${process.env.PR_PCT}% lines (${process.env.PR_HITS}/${process.env.PR_FOUND})`,
+                diffLine,
                 mainLine
               ].join("\n");
 
