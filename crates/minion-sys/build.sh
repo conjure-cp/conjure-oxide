@@ -6,7 +6,8 @@ set -x
 SCRIPT_DIR="$(readlink -f "$(dirname "$0")")"
 cd "$SCRIPT_DIR"
 
-git submodule update --init --recursive --remote -- vendor
+REPO_ROOT="$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel)"
+git -C "$REPO_ROOT" submodule update --init --recursive -- crates/minion-sys/vendor
 
 if [[ -z "$OUT_DIR" ]]; then
   echo "OUT_DIR env variable does not exist - did you run this script through cargo build?"
