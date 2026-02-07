@@ -16,7 +16,7 @@ pub fn parse_atom(
     symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
 ) -> Result<Expression, EssenceParseError> {
     match node.kind() {
-        "atom" => parse_atom(&named_child!(node), source_code, root, symbols_ptr),
+        "atom" | "sub_atom_expr" => parse_atom(&named_child!(node), source_code, root, symbols_ptr),
         "metavar" => {
             let ident = field!(node, "identifier");
             let name_str = &source_code[ident.start_byte()..ident.end_byte()];
@@ -123,7 +123,7 @@ fn parse_index(
     symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
 ) -> Result<Option<Expression>, EssenceParseError> {
     match node.kind() {
-        "arithmetic_expr" => Ok(Some(parse_expression(
+        "arithmetic_expr" | "atom" => Ok(Some(parse_expression(
             *node,
             source_code,
             node,

@@ -34,7 +34,7 @@ pub fn parse_letting_statement(
         .child_by_field_name("expr_or_domain")
         .expect("No domain or expression found for letting statement");
     match expr_or_domain.kind() {
-        "bool_expr" | "arithmetic_expr" => {
+        "bool_expr" | "arithmetic_expr" | "atom" => {
             for name in temp_symbols {
                 symbol_table.insert(DeclarationPtr::new_value_letting(
                     Name::user(name),
