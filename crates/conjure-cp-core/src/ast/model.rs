@@ -9,7 +9,6 @@ use derivative::Derivative;
 use serde::{Deserialize, Serialize};
 use uniplate::{Biplate, Tree, Uniplate};
 
-use crate::ast::abstract_comprehension::AbstractComprehension;
 use crate::ast::{Expression, Typeable};
 use crate::context::Context;
 
@@ -318,31 +317,33 @@ impl SerdeModel {
 
         // HACK: special case abstract comprehension
 
-        let comps: VecDeque<AbstractComprehension> = self.submodel.constraints().universe_bi();
-        for comp in comps {
-            let symbol_table_id_1 = comp.generator_symbols.borrow().id();
-            let symbol_table_id_2 = comp.return_expr_symbols.borrow().id();
-            if !id_list.contains(&symbol_table_id_1) {
-                id_list.push(symbol_table_id_1);
-            }
-            if !id_list.contains(&symbol_table_id_2) {
-                id_list.push(symbol_table_id_2);
-            }
+        // TODO: Commented out block below (comps for abstract comprehension) because symbol tables were removed from abstract comprehension but I don't know if I need to replace anything to get ids for stuff
 
-            for decl in comp.generator_symbols.borrow().clone().into_iter_local() {
-                let decl_id = decl.1.id();
-                if !id_list.contains(&decl_id) {
-                    id_list.push(decl_id);
-                }
-            }
+        // let comps: VecDeque<AbstractComprehension> = self.submodel.constraints().universe_bi();
+        // for comp in comps {
+        //     let symbol_table_id_1 = comp.generator_symbols.borrow().id();
+        //     let symbol_table_id_2 = comp.return_expr_symbols.borrow().id();
+        //     if !id_list.contains(&symbol_table_id_1) {
+        //         id_list.push(symbol_table_id_1);
+        //     }
+        //     if !id_list.contains(&symbol_table_id_2) {
+        //         id_list.push(symbol_table_id_2);
+        //     }
 
-            for decl in comp.return_expr_symbols.borrow().clone().into_iter_local() {
-                let decl_id = decl.1.id();
-                if !id_list.contains(&decl_id) {
-                    id_list.push(decl_id);
-                }
-            }
-        }
+        //     for decl in comp.generator_symbols.borrow().clone().into_iter_local() {
+        //         let decl_id = decl.1.id();
+        //         if !id_list.contains(&decl_id) {
+        //             id_list.push(decl_id);
+        //         }
+        //     }
+
+        //     for decl in comp.return_expr_symbols.borrow().clone().into_iter_local() {
+        //         let decl_id = decl.1.id();
+        //         if !id_list.contains(&decl_id) {
+        //             id_list.push(decl_id);
+        //         }
+        //     }
+        // }
 
         // Create stable mapping: original_id -> stable_id
         let mut id_map = HashMap::new();
