@@ -117,6 +117,12 @@ grcov "${TARGET_DIR}/coverage" -s . --binary-path ./target/debug -t lcov\
 
 echo_err "info: lcov coverage report generated to target/debug/lcov.info"
 
+# diff-cover's LCOV parser is strict about FN/FNDA. Rust can emit commas in
+# function names, which makes those lines look malformed to diff-cover.
+# We keep the full LCOV for editors and filter FN/FNDA only for diff coverage.
+DIFF_COVER_LCOV=./target/debug/diff-cover.lcov
+awk '!/^(FN|FNDA):/' ./target/debug/lcov.info > "$DIFF_COVER_LCOV"
+
 # Optional: diff-only coverage report for PR changes
 if command -v python3 &> /dev/null; then
   if python3 -c "import diff_cover" &> /dev/null; then
@@ -128,7 +134,7 @@ if command -v python3 &> /dev/null; then
         --compare-branch "$BASE_REF" \
         --fail-under "$DIFF_COVER_FAIL_UNDER" \
         --format "html:./target/debug/coverage/diff-coverage.html,json:./target/debug/coverage/diff-coverage.json" \
-        ./target/debug/lcov.info
+        "$DIFF_COVER_LCOV"
       echo_err "info: diff-only coverage report generated to target/debug/coverage/diff-coverage.html"
     else
       echo_err "info: base ref '${BASE_REF}' not found; skipping diff-only coverage"
