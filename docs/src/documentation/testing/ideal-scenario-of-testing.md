@@ -1,11 +1,9 @@
-<!-- maturity: draft
-authors: EEJDempster (? no real name), Hanaa Khan
-created: 01-04-24
+<!--
+authors: Liz Dempstergit 
+last-updated: 21-12-25
 ---- -->
 
-<!-- TODO edit more -->
-
-# Ideal Scenario of Testing for Conjure-Oxide (Dec 2024)
+# Ideal Scenario of Testing for Conjure-Oxide
 
 ## Introduction
 
@@ -27,7 +25,7 @@ Also relevant to the testing of Conjure-Oxide is Conjure and Savile Row [^2]. Th
 Conjure is a constraint modelling tool, implemented in Haskell. It uses a rule engine similarly to Conjure-Oxide to simplify from Essence to Essence' (a subset of Essence which is slightly lower-level), and this "refinement" produces the lower-level model to pass to Savile Row. 
 #### What is Savile Row?
 Savile Row is a constraint modelling assistant which translates from Essence' to a solver-friendly language. Alongside translating the model to the target language, it can reformat the model with an additional set of rules. This provides a performance increase by improving the model itself. Functionally, the better a model is, the faster a solver will solve it.
-#### What is Minion?}
+#### What is Minion?
 Minion is a Constraint Satisfiability Problem solver, which has bindings to both Conjure suite and Conjure-Oxide. Minion is a fast, scalable, CSP solver, designed to be capable of solving difficult models while still being time optimised. This is the main solver in use by both the Conjure suite and by Conjure-Oxide, due to its flexibility and efficiency.
 ## Definitions for Testing
 Two main forms of testing will be addressed within this document: correctness testing and performance testing. Fuzz testing (inputting malformed instances to see the program response) is not currently intended as part of testing Conjure-Oxide, and so will not be outlined or addressed. Metamorphic testing may have applications to this project, and so will be defined, but will not be considered as part of the ideal implementation at present as it is not possible to implement at this point in time.
