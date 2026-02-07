@@ -1,6 +1,9 @@
+use std::iter::FusedIterator;
 use std::sync::Mutex;
 
-use z3::{Config, PrepareSynchronized, Solver, Translate, with_z3_config};
+use z3::{
+    Config, PrepareSynchronized, SatResult, Solvable, Solver, Statistics, Translate, with_z3_config,
+};
 
 use super::convert_model::*;
 use super::store::*;
@@ -61,24 +64,37 @@ impl SolverAdaptor for Smt {
     ) -> Result<SolveSuccess, SolverError> {
         let solver_send = self.solver_inst.synchronized();
         let store_send = self.store.synchronized();
+        let mut stats: SolverStats = Default::default();
 
         // Apply config when getting solutions
-        let search_complete = with_z3_config(&self.solver_cfg, move || {
+        let (search_complete, final_z3_time) = with_z3_config(&self.solver_cfg, move || {
             let solver = solver_send.recover();
+            let mut final_z3_time: Option<f64> = None;
+
             let solutions = solver
-                .solutions(store_send.recover(), true)
-                .take_while(|store| (callback)(store.as_literals_map().unwrap()));
+                .into_solutions_with_statistics(store_send.recover(), true)
+                .take_while(|(store, z3_stats)| {
+                    let time = z3_stats.value("time");
+                    if let Some(z3::StatisticsValue::Double(time)) = time {
+                        final_z3_time = Some(time);
+                    }
+                    (callback)(store.as_literals_map().unwrap())
+                });
 
             // Consume iterator and get whether there are solutions
-            match solutions.count() {
+            let search_complete = match solutions.count() {
                 0 => SearchComplete::NoSolutions,
                 _ => SearchComplete::HasSolutions,
-            }
+            };
+            (search_complete, final_z3_time)
         });
 
+        if let Some(time) = final_z3_time {
+            stats.solver_time_s = time;
+        }
+
         Ok(SolveSuccess {
-            // TODO: get solver stats
-            stats: Default::default(),
+            stats,
             status: SearchStatus::Complete(search_complete),
         })
     }
@@ -117,5 +133,55 @@ impl SolverAdaptor for Smt {
     ) -> Result<(), std::io::Error> {
         let smt2 = self.solver_inst.to_smt2();
         writer.write(smt2.as_bytes()).map(|_| ())
+    }
+}
+
+trait IntoSolutionsWithStatistics {
+    fn into_solutions_with_statistics<T: Solvable>(
+        self,
+        t: T,
+        model_completion: bool,
+    ) -> impl FusedIterator<Item = (T::ModelInstance, Statistics)>;
+}
+
+impl IntoSolutionsWithStatistics for z3::Solver {
+    fn into_solutions_with_statistics<T: Solvable>(
+        self,
+        t: T,
+        model_completion: bool,
+    ) -> impl FusedIterator<Item = (T::ModelInstance, Statistics)> {
+        SolverStatsIterator {
+            solver: self,
+            ast: t,
+            model_completion,
+        }
+        .fuse()
+    }
+}
+
+struct SolverStatsIterator<T> {
+    solver: Solver,
+    ast: T,
+    model_completion: bool,
+}
+
+// copy-pasted from upstream except this runs get_statistics
+impl<T: Solvable> Iterator for SolverStatsIterator<T> {
+    type Item = (T::ModelInstance, Statistics);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.solver.check() {
+            SatResult::Sat => {
+                // right after we solve, before we generate the model grab statistics
+                let stats = self.solver.get_statistics();
+                let model = self.solver.get_model()?;
+                let instance = self.ast.read_from_model(&model, self.model_completion)?;
+                let counterexample = self.ast.generate_constraint(&instance);
+                self.solver.assert(counterexample);
+                // and return them through the iterator
+                Some((instance, stats))
+            }
+            _ => None,
+        }
     }
 }

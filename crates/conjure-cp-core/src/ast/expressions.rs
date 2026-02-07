@@ -4,6 +4,7 @@ use tracing::trace;
 
 use crate::ast::ReturnType;
 use crate::ast::SetAttr;
+use crate::ast::SymbolTable;
 use crate::ast::literals::AbstractLiteral;
 use crate::ast::literals::Literal;
 use crate::ast::pretty::{pretty_expressions_as_top_level, pretty_vec};
@@ -59,21 +60,23 @@ static_assertions::assert_eq_size!([u8; 104], Expression);
 /// used to build rules and conditions for the model.
 #[document_compatibility]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, Serialize, Deserialize, Uniplate, Quine)]
-#[biplate(to=Metadata)]
-#[biplate(to=Atom)]
-#[biplate(to=DeclarationPtr)]
-#[biplate(to=Name)]
-#[biplate(to=Reference)]
-#[biplate(to=Vec<Expression>)]
-#[biplate(to=Option<Expression>)]
-#[biplate(to=SubModel)]
-#[biplate(to=Comprehension)]
+#[biplate(to=AbstractComprehension)]
 #[biplate(to=AbstractLiteral<Expression>)]
 #[biplate(to=AbstractLiteral<Literal>)]
+#[biplate(to=Atom)]
+#[biplate(to=Comprehension)]
+#[biplate(to=DeclarationPtr)]
+#[biplate(to=DomainPtr)]
+#[biplate(to=Literal)]
+#[biplate(to=Metadata)]
+#[biplate(to=Name)]
+#[biplate(to=Option<Expression>)]
 #[biplate(to=RecordValue<Expression>)]
 #[biplate(to=RecordValue<Literal>)]
-#[biplate(to=Literal)]
-#[biplate(to=DomainPtr)]
+#[biplate(to=Reference)]
+#[biplate(to=SubModel)]
+#[biplate(to=SymbolTable)]
+#[biplate(to=Vec<Expression>)]
 #[path_prefix(conjure_cp::ast)]
 pub enum Expression {
     AbstractLiteral(Metadata, AbstractLiteral<Expression>),
@@ -658,8 +661,7 @@ fn range_vec_bounds_i32(ranges: &Vec<Range<i32>>) -> Option<(i32, i32)> {
 impl Expression {
     /// Returns the possible values of the expression, recursing to leaf expressions
     pub fn domain_of(&self) -> Option<DomainPtr> {
-        //println!("domain_of {self}");
-        let ret = match self {
+        match self {
             Expression::Union(_, a, b) => Some(Domain::set(
                 SetAttr::<IntVal>::default(),
                 a.domain_of()?.union(&b.domain_of()?).ok()?,
@@ -773,7 +775,7 @@ impl Expression {
                 if let GroundDomain::Int(ranges) = domain {
                     let mut ranges = ranges;
                     ranges.push(Range::Single(0));
-                    return Some(Domain::int(ranges));
+                    Some(Domain::int(ranges))
                 } else {
                     bug!("Domain of {self} was not integer")
                 }
@@ -800,7 +802,7 @@ impl Expression {
                 if let GroundDomain::Int(ranges) = domain {
                     let mut ranges = ranges;
                     ranges.push(Range::Single(0));
-                    return Some(Domain::int(ranges));
+                    Some(Domain::int(ranges))
                 } else {
                     bug!("Domain of {self} was not integer")
                 }
@@ -927,33 +929,9 @@ impl Expression {
             Expression::ImageSet(_, function, _) => get_function_codomain(function),
             Expression::PreImage(_, function, _) => get_function_domain(function),
             Expression::Restrict(_, function, new_domain) => {
-                let function_domain = function.domain_of()?;
-                match function_domain.resolve().as_ref() {
-                    Some(d) => {
-                        match d.as_ref() {
-                            GroundDomain::Function(attrs, _, codomain) => Some(Domain::function(
-                                attrs.clone(),
-                                new_domain.domain_of()?,
-                                codomain.clone().into(),
-                            )),
-                            // Not defined for anything other than a function
-                            _ => None,
-                        }
-                    }
-                    None => {
-                        match function_domain.as_unresolved()? {
-                            UnresolvedDomain::Function(attrs, _, codomain) => {
-                                Some(Domain::function(
-                                    attrs.clone(),
-                                    new_domain.domain_of()?,
-                                    codomain.clone(),
-                                ))
-                            }
-                            // Not defined for anything other than a function
-                            _ => None,
-                        }
-                    }
-                }
+                let (attrs, _, codom) = function.domain_of()?.as_function()?;
+                let new_dom = new_domain.domain_of()?;
+                Some(Domain::function(attrs, new_dom, codom))
             }
             Expression::Inverse(..) => Some(Domain::bool()),
             Expression::LexLt(..) => Some(Domain::bool()),
@@ -962,17 +940,7 @@ impl Expression {
             Expression::LexGeq(..) => Some(Domain::bool()),
             Expression::FlatLexLt(..) => Some(Domain::bool()),
             Expression::FlatLexLeq(..) => Some(Domain::bool()),
-        };
-        if let Some(dom) = &ret
-            && let Some(ranges) = dom.as_int_ground()
-            && ranges.len() > 1
-        {
-            // TODO: (flm8) the Minion bindings currently only support single ranges for domains, so we use the min/max bounds
-            // Once they support a full domain as we define it, we can remove this conversion
-            let (min, max) = range_vec_bounds_i32(ranges)?;
-            return Some(Domain::int(vec![Range::Bounded(min, max)]));
         }
-        ret
     }
 
     pub fn get_meta(&self) -> Metadata {
@@ -1055,11 +1023,11 @@ impl Expression {
         }
     }
 
-    /// If the expression is a list, returns the inner expressions.
+    /// If the expression is a list, returns a *copied* vector of the inner expressions.
     ///
     /// A list is any a matrix with the domain `int(1..)`. This includes matrix literals without
     /// any explicitly specified domain.
-    pub fn unwrap_list(self) -> Option<Vec<Expression>> {
+    pub fn unwrap_list(&self) -> Option<Vec<Expression>> {
         match self {
             Expression::AbstractLiteral(_, matrix @ AbstractLiteral::Matrix(_, _)) => {
                 matrix.unwrap_list().cloned()
