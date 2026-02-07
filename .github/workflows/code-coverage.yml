@@ -84,6 +84,11 @@ jobs:
           key: codecov--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.event.repository.updated_at }}
           restore-keys: codecov--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}
 
+      - name: Clean coverage output
+        run: |
+          rm -rf target/debug/coverage
+          rm -f target/debug/diff-cover.lcov target/debug/lcov.info
+
       - name: Install rust
         run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
 
