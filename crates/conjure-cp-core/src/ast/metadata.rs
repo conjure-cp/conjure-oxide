@@ -12,6 +12,7 @@ derive_unplateable!(Metadata);
 pub struct Metadata {
     pub clean: bool,
     pub etype: Option<ReturnType>,
+    pub span_id: Option<u32>,
 }
 
 impl Metadata {
@@ -19,6 +20,15 @@ impl Metadata {
         Metadata {
             clean: false,
             etype: None,
+            span_id: None,
+        }
+    }
+
+    pub fn with_span_id(span_id: u32) -> Metadata {
+        Metadata {
+            clean: false,
+            etype: None,
+            span_id: Some(span_id),
         }
     }
 
