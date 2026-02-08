@@ -135,7 +135,7 @@ fn keyword_as_identifier(root: tree_sitter::Node, src: &str) -> Result<(), Essen
 
         // push children onto stack
         for i in 0..node.child_count() {
-            if let Some(child) = node.child(i) {
+            if let Some(child) = u32::try_from(i).ok().and_then(|i| node.child(i)) {
                 stack.push(child);
             }
         }
