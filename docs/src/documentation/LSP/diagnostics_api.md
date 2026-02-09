@@ -19,9 +19,9 @@ crates/conjure-cp-essence-parser/src/diagnostics/
 ### Key Functions
 - `get_diagnostics(source: &str) -> Vec<Diagnostic)` serves as the main entrypoint. It aggregates `detect_semantic_errors(source)` and `detect_syntactic_errors(source)` into a single diagnostics vector, returning a combined, deduplicated-by-call vector of `Diagnostic`s. That's the funciton you would call for error detection and underlining.
 
-- `detect_syntactic_errors(source: &str) -> Vec<Diagnostic)` Parses with tree-sitter and walks the CST using DFS with early retract on error/missing/zero-length nodes to avoid duplicates. More information on that in [error detection docs](error_detection/error_classification.md).
+- `detect_syntactic_errors(source: &str) -> Vec<Diagnostic)` Parses with tree-sitter and walks the CST using DFS with early retract on error/missing/zero-length nodes to avoid duplicates. More information on that in [error detection docs](../error_detection/error_classification.md).
 
-- `detect_semantic_errors(source: &str) -> Vec<Diagnostic)` Runs `parse_essence_with_context` and, on `Err(EssenceParseError)`, maps the error into a `Diagnostic` using `error_to_diagnostic`. More information on that in [error detection docs](error_detection/error_classification.md).
+- `detect_semantic_errors(source: &str) -> Vec<Diagnostic)` Runs `parse_essence_with_context` and, on `Err(EssenceParseError)`, maps the error into a `Diagnostic` using `error_to_diagnostic`. More information on that in [error detection docs](../error_detection/error_classification.md).
 
 - Helpers (for debugging and/or testing):
     - `print_all_error_nodes(source: &str)`: prints all tree-sitter error/missing nodes with spans.

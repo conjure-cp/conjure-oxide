@@ -9,4 +9,4 @@ The LSP architecture follows a client-server model where the client (editor exte
 
 When the client requests diagnostics (on open, one edit, on hover... etc.), the LSP forwards this request to the Diagnostics API (for more details see [Diagnostics API](./diagnostics_api.md)), which responds with a list of diagnostics which the server converts to `tower-lsp`-compatible types and publishes to the client.
 
-![LSP Structure Diagram](assets/lsp_structure.svg)
+![LSP Structure Diagram](../assets/lsp_structure.svg)
