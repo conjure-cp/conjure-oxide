@@ -20,7 +20,7 @@ pub struct SatDirectInt {
 impl SatDirectInt {
     /// Returns the names of the boolean variables used in the direct encoding.
     fn names(&self) -> impl Iterator<Item = Name> + '_ {
-        (self.lower_bound..self.upper_bound).map(move |index| self.index_to_name(index))
+        (self.lower_bound..=self.upper_bound).map(|index| self.index_to_name(index))
     }
 
     /// Gets the representation variable name corresponding to a concrete integer value.
@@ -28,7 +28,7 @@ impl SatDirectInt {
         Name::Represented(Box::new((
             self.src_var.clone(),
             self.repr_name().into(),
-            format!("{index:02}").into(), // stored as _00, _01, ...
+            format!("{index}").into(), // stored as _00, _01, ...
         )))
     }
 }
@@ -59,7 +59,7 @@ impl Representation for SatDirectInt {
         Some(SatDirectInt {
             src_var: name.clone(),
             lower_bound: min,
-            upper_bound: max + 1,
+            upper_bound: max,
         })
     }
 
@@ -85,7 +85,7 @@ impl Representation for SatDirectInt {
     ) -> Result<Literal, ApplicationError> {
         let mut found_value: Option<i32> = None;
 
-        for value_candidate in self.lower_bound..self.upper_bound {
+        for value_candidate in self.lower_bound..=self.upper_bound {
             let name = self.index_to_name(value_candidate);
             let value_literal = values
                 .get(&name)
@@ -118,10 +118,12 @@ impl Representation for SatDirectInt {
     ) -> Result<std::collections::BTreeMap<Name, Expression>, ApplicationError> {
         Ok(self
             .names()
-            .map(|name| {
+            .enumerate()
+            .map(|(index, name)| {
                 let decl = st.lookup(&name).unwrap();
                 (
-                    name,
+                    // Machine names are used so that the derived ordering matches the correct ordering of the representation variables
+                    Name::Machine(index as i32),
                     Expression::Atomic(
                         Metadata::new(),
                         Atom::Reference(conjure_cp::ast::Reference { ptr: decl }),
