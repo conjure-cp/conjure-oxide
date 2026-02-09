@@ -18,12 +18,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
-              with:
-                  fetch-depth: 0 #This means that it will fetch the entire history of the repository. This is necessary for the next step in which it manually fetch the latest commit from the intended branch to compare the changes with.
-            - name: Fetch latest commit from the PR
-              run: |
-                  git fetch origin pull/${{ github.event.pull_request.number }}/head:pr
-                  git checkout pr
+
             - uses: errata-ai/vale-action@v2.1.1
               with:
                   # Path to documentation files
