@@ -75,6 +75,7 @@ fn parse_matrix(
         if child.kind() == "arithmetic_expr"
             || child.kind() == "bool_expr"
             || child.kind() == "comparison_expr"
+            || child.kind() == "atom"
         {
             elements.push(parse_expression(
                 child,
