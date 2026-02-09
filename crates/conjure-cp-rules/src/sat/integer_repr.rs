@@ -90,7 +90,7 @@ pub fn validate_log_int_operands(
 ///
 /// ```
 #[register_rule(("SAT_Direct", 9500))]
-fn integer_decision_representation(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+fn integer_decision_representation_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     // thing we are representing must be a reference
     let Expr::Atomic(_, Atom::Reference(name)) = expr else {
         return Err(RuleNotApplicable);
