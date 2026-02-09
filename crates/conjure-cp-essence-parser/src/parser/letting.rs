@@ -1,7 +1,5 @@
 #![allow(clippy::legacy_numeric_constants)]
-use std::cell::RefCell;
 use std::collections::BTreeSet;
-use std::rc::Rc;
 
 use tree_sitter::Node;
 
@@ -10,13 +8,13 @@ use super::util::named_children;
 use crate::errors::EssenceParseError;
 use crate::expression::parse_expression;
 use conjure_cp_core::ast::DeclarationPtr;
-use conjure_cp_core::ast::{Name, SymbolTable};
+use conjure_cp_core::ast::{Name, SymbolTable, SymbolTablePtr};
 
 /// Parse a letting statement into a SymbolTable containing the declared symbols
 pub fn parse_letting_statement(
     letting_statement: Node,
     source_code: &str,
-    existing_symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
+    existing_symbols_ptr: Option<SymbolTablePtr>,
 ) -> Result<SymbolTable, EssenceParseError> {
     let mut symbol_table = SymbolTable::new();
 
