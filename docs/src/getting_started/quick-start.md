@@ -7,7 +7,7 @@ This guide walks you through running your first Essence model with Conjure Oxide
 Create a file called `my_problem.essence` with the following content:
 
 ```essence
-find x :  int(1..3)
+find x : int(1..3)
 find y : int(2..5)
 
 such that x > y
