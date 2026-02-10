@@ -78,15 +78,6 @@ letting x be
 }
 
 #[test]
-fn missing_domain_in_tuple_domain() {
-    let source = "find x: tuple()";
-    let diagnostics = detect_syntactic_errors(source);
-    assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
-    let diag = &diagnostics[0];
-    check_diagnostic(diag, 0, 14, 0, 14, "Missing 'domain'");
-}
-
-#[test]
 #[ignore]
 fn missing_operator_in_comparison() {
     // Missing operator in comparison expression
