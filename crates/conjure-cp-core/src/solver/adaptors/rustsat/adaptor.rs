@@ -243,8 +243,8 @@ impl SolverAdaptor for Sat {
                     }
                 }
 
-                conjure_ast::DeclarationKind::ValueLetting(expression) => {},
-                conjure_ast::DeclarationKind::DomainLetting(moo) => {},
+                conjure_ast::DeclarationKind::ValueLetting(expression) => {}
+                conjure_ast::DeclarationKind::DomainLetting(moo) => {}
                 conjure_ast::DeclarationKind::Given(moo) => todo!(),
                 conjure_ast::DeclarationKind::GivenQuantified(given_quantified) => todo!(),
                 conjure_ast::DeclarationKind::RecordField(moo) => todo!(),
