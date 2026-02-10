@@ -1,9 +1,11 @@
 use super::SymbolTable;
 use super::declaration::{DeclarationPtr, serde::DeclarationPtrFull};
+use super::serde::RcRefCellAsInner;
 use crate::ast::{DomainPtr, Expression, Name, ReturnType, Typeable};
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
-use uniplate::Uniplate;
+use uniplate::{Biplate, Uniplate, Tree};
+use std::collections::VecDeque;
 use std::fmt::{Display, Formatter};
 use std::{cell::RefCell, hash::Hash, hash::Hasher, rc::Rc};
 
@@ -13,6 +15,51 @@ use std::{cell::RefCell, hash::Hash, hash::Hasher, rc::Rc};
 pub struct AbstractComprehension {
     pub return_expr: Expression,
     pub qualifiers: Vec<Qualifier>,
+
+    #[serde_as(as = "RcRefCellAsInner")]
+    pub symbols: Rc<RefCell<SymbolTable>>,
+}
+
+// FIXME: remove this: https://github.com/conjure-cp/conjure-oxide/issues/1428
+impl Biplate<SymbolTable> for AbstractComprehension {
+    fn biplate(
+        &self,
+    ) -> (
+        uniplate::Tree<SymbolTable>,
+        Box<dyn Fn(uniplate::Tree<SymbolTable>) -> Self>,
+    ) {
+        let symbols: SymbolTable = (*self.symbols).borrow().clone();
+
+        let (tables_in_exprs_tree, tables_in_exprs_ctx) =
+            Biplate::<SymbolTable>::biplate(&Biplate::<Expression>::children_bi(self));
+
+        let tree = Tree::Many(VecDeque::from([
+            Tree::One(symbols),
+            tables_in_exprs_tree,
+        ]));
+
+        let self2 = self.clone();
+        let ctx = Box::new(move |tree: Tree<SymbolTable>| {
+            let Tree::Many(vs) = tree else {
+                panic!();
+            };
+
+            let Tree::One(symbols) = vs[0].clone() else {
+                panic!();
+            };
+
+            let self3 = self2.with_children_bi(tables_in_exprs_ctx(vs[1].clone()));
+
+            // WARN: I can't remember if i should change inside the refcell here, or make an new
+            // one (resulting in this symbol table being detached).
+
+            *(self3.symbols.borrow_mut()) = symbols;
+
+            self3
+        });
+
+        (tree, ctx)
+    }
 }
 
 #[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Hash)]
@@ -65,6 +112,7 @@ impl Typeable for AbstractComprehension {
 
 impl Hash for AbstractComprehension {
     fn hash<H: Hasher>(&self, state: &mut H) {
+        (*self.symbols).borrow().hash(state);
         self.return_expr.hash(state);
         self.qualifiers.hash(state);
     }
@@ -81,15 +129,20 @@ impl AbstractComprehensionBuilder {
     // a symbol table
     // empty list of qualifiers
     // and no return exp yet -- that will be added in the with_return_value method
-    pub fn new(symbols: Rc<RefCell<SymbolTable>>) -> Self {
+    pub fn new(symbols: &Rc<RefCell<SymbolTable>>) -> Self {
         Self {
             qualifiers: vec![],
-            symbols,
+            symbols: Rc::new(RefCell::new(SymbolTable::with_parent(symbols.clone()))),
         }
     }
 
-    pub fn new_domain_generator(&mut self, domain: DomainPtr) -> DeclarationPtr {
-        let generator_decl = self.symbols.borrow_mut().gensym(&domain);
+    pub fn symbols(&self) -> Rc<RefCell<SymbolTable>> {
+        self.symbols.clone()
+    }
+
+    pub fn add_domain_generator(mut self, domain: DomainPtr, name: Name) {
+        let generator_decl = DeclarationPtr::new_var_quantified(name, domain);
+        self.symbols.borrow_mut().update_insert(generator_decl.clone());
 
         self.qualifiers
             .push(Qualifier::Generator(Generator::DomainGenerator(
@@ -97,6 +150,13 @@ impl AbstractComprehensionBuilder {
                     decl: generator_decl.clone(),
                 },
             )));
+    }
+
+    pub fn new_domain_generator(self, domain: DomainPtr) -> DeclarationPtr {
+        let generator_decl = self.symbols.borrow_mut().gensym(&domain);
+        let name = generator_decl.name().clone();
+
+        self.add_domain_generator(domain, name);
 
         generator_decl
     }
@@ -113,7 +173,7 @@ impl AbstractComprehensionBuilder {
             .element_domain()
             .expect("Expression must contain elements with uniform domain");
         let generator_decl = DeclarationPtr::new_var_quantified(name, domain.clone());
-        self.symbols.borrow_mut().insert(generator_decl.clone());
+        self.symbols.borrow_mut().update_insert(generator_decl.clone());
 
         self.qualifiers
             .push(Qualifier::Generator(Generator::ExpressionGenerator(
@@ -170,6 +230,7 @@ impl AbstractComprehensionBuilder {
         AbstractComprehension {
             return_expr: expression,
             qualifiers: self.qualifiers,
+            symbols: self.symbols,
         }
     }
 }
