@@ -222,7 +222,8 @@ impl SolverAdaptor for Sat {
             let domain = domain.as_ground().expect("Domain should be ground");
 
             // only decision variables with boolean domains or representations using booleans are supported at this time
-            if (domain != &GroundDomain::Bool
+            if (
+                domain != &GroundDomain::Bool
                 // TODO (repr): handle representations in rustsat solver adaptor
                 // && sym_tab
                 //     .get_representation(&find_ref.0, &["sat_log_int"])
@@ -233,8 +234,7 @@ impl SolverAdaptor for Sat {
                 // && sym_tab
                 //     .get_representation(&find_ref.0, &["sat_order_int"])
                 //     .is_none()
-            )
-            {
+            ) {
                 Err(SolverError::ModelInvalid(
                     "Only Boolean Decision Variables supported".to_string(),
                 ))?;
