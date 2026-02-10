@@ -173,7 +173,8 @@ pub(crate) fn parse(
 
     tracing::info!(target: "file", "Input file: {}", input_file);
     if global_args.use_native_parser {
-        parse_essence_file_native(input_file.as_str(), context.clone()).map_err(|e| e.into())
+        parse_essence_file_native(input_file.as_str(), context.clone())
+            .map_err(|e| anyhow::anyhow!(e.pretty_format()))
     } else {
         conjure_executable()
             .map_err(|e| anyhow!("Could not find correct conjure executable: {e}"))?;
