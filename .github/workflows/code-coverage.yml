@@ -1,0 +1,361 @@
+name: Code Coverage
+
+# WARNING: This workflow runs on `pull_request_target` and checks out PR code.
+# It therefore executes untrusted code with access to repository secrets, including
+# `CONJURE_BOT_PRIVATE_KEY`. This is an intentional tradeoff to allow fork PR
+# deployments without artifacts. Do not add other sensitive secrets to this repo.
+
+on:
+  pull_request_target:
+    paths:
+      - crates/**
+      - tests-integration/**
+      - tools/coverage.sh
+  push:
+    branches:
+      - main
+    paths:
+      - crates/**
+      - tests-integration/**
+      - tools/coverage.sh
+      - .github/workflows/code-coverage.yml
+      - .github/workflows/doc-coverage.yml
+      - .github/workflows/rustdoc.yml
+  workflow_dispatch:
+
+
+env:
+  os: ubuntu-latest
+  rust_release: nightly
+  compiler_profile: debug
+  CARGO_INCREMENTAL: 0
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  coverage:
+    name: "Generate"
+    timeout-minutes: 120
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR
+        if: ${{ github.event_name == 'pull_request_target' }}
+        uses: actions/checkout@v6
+        with:
+          # Avoid checkout's default auth header so deploy uses the app token.
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.sha }}
+          submodules: recursive
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Fetch base ref (PR)
+        if: ${{ github.event_name == 'pull_request_target' }}
+        run: |
+          git remote add upstream https://github.com/${{ github.repository }}.git
+          git fetch --no-tags --prune upstream ${{ github.event.pull_request.base.ref }}
+
+      - name: Checkout repository
+        if: ${{ github.event_name != 'pull_request_target' }}
+        uses: actions/checkout@v6
+        with:
+          # Avoid checkout's default auth header so deploy uses the app token.
+          submodules: recursive
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: free_disk_space.sh
+        run: .github/workflows/tools/free_disk_space.sh
+
+      - name: Restore cache
+        id: restore_cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+            ~/conjure
+          key: codecov--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.event.repository.updated_at }}
+          restore-keys: codecov--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}
+
+      - name: Clean coverage output
+        run: |
+          rm -rf target/debug/coverage
+          rm -f target/debug/diff-cover.lcov target/debug/lcov.info
+
+      - name: Install rust
+        run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
+
+      - name: Install diff-cover
+        run: python3 -m pip install --upgrade pip diff-cover
+
+      - uses: ./.github/actions/install-conjure
+        with:
+          os_arch: linux
+          version: 2.5.1
+
+      - name: Generate code coverage reports
+        env:
+          BASE_REF: ${{ github.event_name == 'pull_request_target' && format('upstream/{0}', github.event.pull_request.base.ref) || 'origin/main' }}
+          DIFF_COVER_FAIL_UNDER: 0
+        run: |
+          ./tools/coverage.sh
+
+      - name: Prepare deploy folder
+        run: |
+          mkdir -p deploy/
+          cp -r target/debug/coverage/* deploy/     # html
+          cp target/debug/lcov.info deploy/         # keep lcov for inspection
+
+      - name: Set deploy target
+        id: deploy
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request_target" ]]; then
+            echo "folder=pr/${{ github.event.pull_request.number }}/coverage-code" >> "$GITHUB_OUTPUT"
+            echo "label=pr-${{ github.event.pull_request.number }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "folder=main/coverage-code" >> "$GITHUB_OUTPUT"
+            echo "label=main" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create reports app token
+        if: ${{ github.event_name == 'pull_request_target' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+        id: reports-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.CONJURE_BOT_ID }}
+          private-key: ${{ secrets.CONJURE_BOT_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: |
+            conjure-oxide-reports
+
+      - name: Deploy to reports repository
+        if: ${{ github.event_name == 'pull_request_target' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+        uses: JamesIves/github-pages-deploy-action@v4
+        env:
+          GITHUB_TOKEN: ${{ steps.reports-token.outputs.token }}
+        with:
+          repository-name: conjure-cp/conjure-oxide-reports
+          branch: main
+          token: ${{ steps.reports-token.outputs.token }}
+          folder: ./deploy
+          target-folder: ${{ steps.deploy.outputs.folder }}
+          commit-message: "Actions: Code coverage for ${{ steps.deploy.outputs.label }}"
+
+      - name: Compute code coverage stats for PR
+        if: ${{ github.event_name == 'pull_request_target' }}
+        id: stats
+        env:
+          REPO_OWNER: ${{ github.repository_owner }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          python3 - <<'PY'
+          import os
+          import pathlib
+          import json
+          import urllib.request
+          import urllib.error
+
+          def parse_lcov(path: pathlib.Path):
+            hits = 0
+            found = 0
+            with path.open("r", encoding="utf-8") as f:
+              for raw in f:
+                line = raw.strip()
+                if line.startswith("LH:"):
+                  hits += int(line[3:])
+                elif line.startswith("LF:"):
+                  found += int(line[3:])
+            pct = (100.0 * hits / found) if found else 0.0
+            return hits, found, pct
+
+          pr_hits, pr_found, pr_pct = parse_lcov(pathlib.Path("deploy/lcov.info"))
+
+          owner = os.environ["REPO_OWNER"]
+          main_url = f"https://{owner}.github.io/conjure-oxide-reports/main/coverage-code/lcov.info"
+          main_available = "false"
+          main_hits = 0
+          main_found = 0
+          main_pct = 0.0
+          delta_pp = 0.0
+          try:
+            with urllib.request.urlopen(main_url, timeout=15) as resp:
+              main_data = resp.read().decode("utf-8")
+            main_path = pathlib.Path("/tmp/main-lcov.info")
+            main_path.write_text(main_data, encoding="utf-8")
+            main_hits, main_found, main_pct = parse_lcov(main_path)
+            delta_pp = pr_pct - main_pct
+            main_available = "true"
+          except (urllib.error.URLError, TimeoutError):
+            pass
+
+          report_url = f"https://{owner}.github.io/conjure-oxide-reports/pr/{os.environ['PR_NUMBER']}/coverage-code/index.html"
+          diff_report_url = f"https://{owner}.github.io/conjure-oxide-reports/pr/{os.environ['PR_NUMBER']}/coverage-code/diff-coverage.html"
+
+          diff_available = "false"
+          diff_total_lines = 0
+          diff_violations = 0
+          diff_pct = 0.0
+          diff_changed_lines = 0
+          diff_path = pathlib.Path("deploy/diff-coverage.json")
+          if diff_path.exists():
+            try:
+              diff_data = json.loads(diff_path.read_text(encoding="utf-8"))
+              diff_total_lines = int(diff_data.get("total_num_lines", 0))
+              diff_violations = int(diff_data.get("total_num_violations", 0))
+              diff_pct = float(diff_data.get("total_percent_covered", 0.0))
+              diff_changed_lines = int(diff_data.get("num_changed_lines", 0))
+              diff_available = "true"
+            except (json.JSONDecodeError, ValueError, TypeError):
+              pass
+          diff_covered_lines = max(diff_total_lines - diff_violations, 0)
+
+          out = os.environ["GITHUB_OUTPUT"]
+          with open(out, "a", encoding="utf-8") as f:
+            f.write(f"report_url={report_url}\n")
+            f.write(f"pr_hits={pr_hits}\n")
+            f.write(f"pr_found={pr_found}\n")
+            f.write(f"pr_pct={pr_pct:.2f}\n")
+            f.write(f"main_available={main_available}\n")
+            f.write(f"main_hits={main_hits}\n")
+            f.write(f"main_found={main_found}\n")
+            f.write(f"main_pct={main_pct:.2f}\n")
+            f.write(f"delta_pp={delta_pp:+.2f}\n")
+            f.write(f"diff_report_url={diff_report_url}\n")
+            f.write(f"diff_available={diff_available}\n")
+            f.write(f"diff_pct={diff_pct:.2f}\n")
+            f.write(f"diff_covered_lines={diff_covered_lines}\n")
+            f.write(f"diff_total_lines={diff_total_lines}\n")
+            f.write(f"diff_changed_lines={diff_changed_lines}\n")
+          PY
+
+      - name: Create conjure-bot token
+        if: ${{ github.event_name == 'pull_request_target' }}
+        id: bot-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.CONJURE_BOT_ID }}
+          private-key: ${{ secrets.CONJURE_BOT_PRIVATE_KEY }}
+
+      - name: Comment code coverage on PR
+        if: ${{ github.event_name == 'pull_request_target' }}
+        continue-on-error: true
+        uses: actions/github-script@v8
+        env:
+          COVERAGE_URL: ${{ steps.stats.outputs.report_url }}
+          DIFF_URL: ${{ steps.stats.outputs.diff_report_url }}
+          PR_HITS: ${{ steps.stats.outputs.pr_hits }}
+          PR_FOUND: ${{ steps.stats.outputs.pr_found }}
+          PR_PCT: ${{ steps.stats.outputs.pr_pct }}
+          MAIN_AVAILABLE: ${{ steps.stats.outputs.main_available }}
+          MAIN_HITS: ${{ steps.stats.outputs.main_hits }}
+          MAIN_FOUND: ${{ steps.stats.outputs.main_found }}
+          MAIN_PCT: ${{ steps.stats.outputs.main_pct }}
+          DELTA_PP: ${{ steps.stats.outputs.delta_pp }}
+          DIFF_AVAILABLE: ${{ steps.stats.outputs.diff_available }}
+          DIFF_PCT: ${{ steps.stats.outputs.diff_pct }}
+          DIFF_COVERED: ${{ steps.stats.outputs.diff_covered_lines }}
+          DIFF_TOTAL: ${{ steps.stats.outputs.diff_total_lines }}
+          DIFF_CHANGED: ${{ steps.stats.outputs.diff_changed_lines }}
+        with:
+          github-token: ${{ steps.bot-token.outputs.token }}
+          script: |
+            const prNumber = context.payload.pull_request?.number;
+            if (!prNumber) return;
+
+            try {
+              const marker = "<!-- coverage-code-report -->";
+              const mainLine = process.env.MAIN_AVAILABLE === "true"
+                ? `Main: ${process.env.MAIN_PCT}% lines (${process.env.MAIN_HITS}/${process.env.MAIN_FOUND})\nDelta vs main: ${process.env.DELTA_PP} pp`
+                : "Main baseline: unavailable (run main coverage first)";
+
+              const diffAvailable = process.env.DIFF_AVAILABLE === "true";
+              const diffReportLine = diffAvailable
+                ? `Diff report: ${process.env.DIFF_URL}`
+                : "Diff report: unavailable (diff-cover not generated)";
+              const diffLine = diffAvailable
+                ? `Diff: ${process.env.DIFF_PCT}% lines (${process.env.DIFF_COVERED}/${process.env.DIFF_TOTAL} measured; ${process.env.DIFF_CHANGED} changed)`
+                : "Diff coverage: unavailable";
+
+              const body = [
+                marker,
+                "## Code Coverage",
+                "",
+                `Report: ${process.env.COVERAGE_URL}`,
+                diffReportLine,
+                "",
+                `This PR: ${process.env.PR_PCT}% lines (${process.env.PR_HITS}/${process.env.PR_FOUND})`,
+                diffLine,
+                mainLine
+              ].join("\n");
+
+              const comments = await github.paginate(github.rest.issues.listComments, {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                per_page: 100
+              });
+
+              // Keep a single code coverage comment per PR: update newest, delete older duplicates.
+              const matching = comments
+                .filter(
+                c => c.body?.includes(marker)
+                )
+                .sort((a, b) => Date.parse(b.updated_at) - Date.parse(a.updated_at));
+
+              let keepComment;
+
+              if (matching.length > 0) {
+                keepComment = matching[0];
+                await github.rest.issues.updateComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: keepComment.id,
+                  body
+                });
+              } else {
+                const created = await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: prNumber,
+                  body
+                });
+                keepComment = created.data;
+              }
+
+              for (const comment of matching) {
+                if (comment.id === keepComment.id) {
+                  continue;
+                }
+                try {
+                  await github.rest.issues.deleteComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    comment_id: comment.id
+                  });
+                } catch (deleteError) {
+                  console.log(`Skipping code coverage comment cleanup for ${comment.id}: ${deleteError.message || deleteError}`);
+                }
+              }
+            } catch (error) {
+              console.log(`Skipping code coverage PR comment: ${error.message || error}`);
+            }
+
+      - name: Save cache
+        if: ${{ always() && steps.restore_cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+            ~/conjure
+          key: codecov--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.event.repository.updated_at }}
