@@ -98,11 +98,22 @@ module.exports = grammar ({
       optional(field("upper", $.arithmetic_expr))
     ),
 
-    tuple_domain: $ => seq(
-      optional("tuple"),
-      "(",
-      commaSep1($.domain),
-      ")"
+    tuple_domain: $ => choice(
+      // explicit 'tuple' form: allows empty, singleton, or multi-arity
+      seq(
+        "tuple",
+        "(",
+        optional(commaSep1($.domain)),
+        ")"
+      ),
+      // parenthesized form without 'tuple' is allowed only for arity >= 2
+      seq(
+        "(",
+        $.domain,
+        ",",
+        commaSep1($.domain),
+        ")"
+      )
     ),
 
     matrix_domain: $ => seq(
@@ -296,13 +307,23 @@ module.exports = grammar ({
       field("flatten", $.flatten)
     )),
 
-    tuple: $ => prec(-5, seq(
-      "(",
-      field("element", $.arithmetic_expr),
-      ",",
-      field("element", commaSep1($.arithmetic_expr)),
-      ")"
-    )),
+    tuple: $ => choice(
+      // explicit tuple value using the 'tuple' keyword (allows empty, singleton, multi-arity)
+      prec(-5, seq(
+        "tuple",
+        "(",
+        optional(commaSep1($.arithmetic_expr)),
+        ")"
+      )),
+      // parenthesized tuple value without keyword (arity >= 2)
+      prec(-5, seq(
+        "(",
+        field("element", $.arithmetic_expr),
+        ",",
+        field("element", commaSep1($.arithmetic_expr)),
+        ")"
+      ))
+    ),
 
     matrix: $ => seq(
       "[",
