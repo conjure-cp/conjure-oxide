@@ -166,7 +166,7 @@ fn integer_decision_representation_direct(expr: &Expr, symbols: &SymbolTable) ->
     }
 }
 
-#[register_rule(("SAT_Order", 9500))]
+#[register_rule(("SAT_Order", 4800))]
 fn integer_decision_representation_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     // thing we are representing must be a reference
     let Expr::Atomic(_, Atom::Reference(name)) = expr else {
@@ -315,7 +315,7 @@ fn integer_decision_representation_log(expr: &Expr, symbols: &SymbolTable) -> Ap
 ///
 /// ```
 #[register_rule(("SAT_Log", 4500))]
-fn literal_cnf_int(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+fn literal_cnf_int_log(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let value = {
         if let Expr::Atomic(_, Atom::Literal(Literal::Int(v))) = expr {
             *v

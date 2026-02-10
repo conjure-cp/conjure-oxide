@@ -267,7 +267,7 @@ fn sat_direct_lt(
 /// -SATInt(a) ~> SATInt(b)
 ///
 /// ```
-#[register_rule(("SAT_Direct", 9100))]
+#[register_rule(("SAT_Direct", 4700))]
 fn neg_sat_direct(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::Neg(_, value) = expr else {
         return Err(RuleNotApplicable);
