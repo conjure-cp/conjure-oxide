@@ -308,20 +308,20 @@ module.exports = grammar ({
 
     sub_atom_expr: $ => seq("(", field("expression", $.atom), ")"),
 
-    tuple: $ => choice(
+    tuple: $ => prec(-5,choice(
       // explicit tuple value using the 'tuple' keyword (allows empty, singleton, multi-arity)
-      prec(-5, seq(
+      seq(
         "tuple",
         "(",
-        optional(commaSep1($.arithmetic_expr)),
+        optional(commaSep1(choice($.arithmetic_expr, $.atom))),
         ")"
-      )),
+      ),
       // parenthesized tuple value without keyword (arity >= 2)
-      prec(-5, seq(
+      seq(
         "(",
-        field("element", $.arithmetic_expr),
+        field("element", choice($.arithmetic_expr, $.atom)),
         ",",
-        field("element", commaSep1($.arithmetic_expr)),
+        field("element", commaSep1(choice($.arithmetic_expr, $.atom))),
         ")"
       ))
     ),
