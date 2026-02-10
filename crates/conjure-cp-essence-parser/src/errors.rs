@@ -18,6 +18,8 @@ pub enum EssenceParseError {
     SyntaxError {
         msg: String,
         range: Option<tree_sitter::Range>,
+        file_name: Option<String>,
+        source_code: Option<String>,
     },
     #[error("JSON Error: {0}")]
     JsonError(#[from] JsonError),
@@ -29,7 +31,13 @@ pub enum EssenceParseError {
 
 impl EssenceParseError {
     pub fn syntax_error(msg: String, range: Option<tree_sitter::Range>) -> Self {
-        EssenceParseError::SyntaxError { msg, range }
+        EssenceParseError::SyntaxError {
+            msg,
+            range,
+            file_name: None,
+            source_code: None,
+        }
+    }
     }
 }
 

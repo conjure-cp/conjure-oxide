@@ -62,6 +62,7 @@ fn mk_expr(node: Node, src: &str, root: &Node, tt: &TokenTree) -> Result<TokenSt
                 EssenceParseError::SyntaxError {
                     msg,
                     range: Some(rng),
+                    ..
                 } => {
                     let lines: Vec<&str> = src.lines().collect();
                     let start_line = rng.start_point.row;

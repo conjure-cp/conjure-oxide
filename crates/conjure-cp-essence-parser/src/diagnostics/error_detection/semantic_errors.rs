@@ -25,7 +25,7 @@ pub fn detect_semantic_errors(source: &str) -> Vec<Diagnostic> {
 
 pub fn error_to_diagnostic(err: &crate::errors::EssenceParseError) -> Diagnostic {
     match err {
-        crate::EssenceParseError::SyntaxError { msg, range } => {
+        crate::EssenceParseError::SyntaxError { msg, range, .. } => {
             let (start, end) = range_to_position(range);
             Diagnostic {
                 range: Range { start, end },
