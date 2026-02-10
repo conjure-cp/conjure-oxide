@@ -102,7 +102,17 @@ impl<A: Display> Display for MSetAttr<A> {
             Range::Unbounded => "".to_string(),
         };
 
-        write!(f, "{size_str}, {occ_str}")
+        let mut strs = [
+            size_str,
+            occ_str,
+        ]
+        .iter()
+        .filter(|s| !s.is_empty())
+        .join(", ");
+        if !strs.is_empty() {
+            strs = format!("({})", strs);
+        }
+        write!(f, "{strs}")
     }
 }
 
