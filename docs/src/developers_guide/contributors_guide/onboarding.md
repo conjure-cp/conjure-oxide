@@ -2,13 +2,13 @@
 [//]: # (Last Updated: 09/12/2025)
 
 # Onboarding
-Congratulations you have made it onto the VIP. You are going to really enjoy it; however, it might not be the easiest time getting up to speed.
-You will need to spend at least the first few weeks on the project learning, and so do not expect to be contributing right away.
+Congratulations you are joining a very exciting project, pushing forward the field of Constraint Programming. 
+However, there is a lot to learn before you are up to speed. Expect to spend the first few weeks on the project learning, and so do not rush starting to contribute right away.
 
 Here are some tips for starting out.
 
 ## What You Need to Learn
-The VIP fundamentally involves the development of a constraint modelling tool in the Rust programming language. Therefore, learning about constraint programming and Rust will be your initial challenges.
+The Conjure-Oxide project fundamentally involves the development of a constraint modelling tool in the Rust programming language. Therefore, learning about constraint programming and Rust will be your initial challenges.
 Getting a solid understanding of Rust and constraints now will stand you in good stead for the rest of the project so do not worry that spending time learning is not productive, this learning is expected.
 
 ### Constraint Programming
@@ -32,13 +32,13 @@ This is a fundamentally cooperative project, and so do not be afraid to ask for 
 This stage will take a while, but understanding the core of the program will be tremendously helpful when you start implementing it.
 
 ## Selecting a Project
-Once you have spent time learning you will feel ready to select a project and begin contributing. There are lots that can be done in Conjure-Oxide, so if you have an idea of a project that is great, but also consider talking to Oz for ideas, as he knows what is suitable for new starts. Do not feel rushed into selecting a project. Having a good understanding of the VIP before you start writing code, will really facilitate your productivity later in the semester.
+Once you have spent time learning you will feel ready to select a project and begin contributing. There are lots that can be done in Conjure-Oxide, so if you have an idea of a project that is great, but also consider asking on our [GitHub Dicussions page](https://github.com/conjure-cp/conjure-oxide/discussions) for ideas, because there are many tasks new starts could reasonably achieve. Do not feel rushed into selecting a project. Having a good understanding of the system before you start writing code, will really facilitate your productivity later in the semester.
 
 ### Selecting a Starter Project
 Whilst you are familiarising yourself with the codebase, you may want to try tackling a couple smaller starter projects. There are always little issues in the codebase needing addressed and working on one of these, while you learn, can be a fantastic way to get a confidence boost from feeling productive. These issues are specifically marked with `good first issue` on GitHub. However, be aware that taking on a wide project with a lot of reach, even if small, can be very challenging for a new start, as it requires deeply understanding many different areas of the code.
 
 ### Selecting a Project Early to Help Learn
-If the scale of the codebase is feeling overwhelming, then consider talking to Oz and selecting a project earlier on. The project would not need to be well defined at this point but even if you are not initially implementing features, having a project in mind can help focus your learning of the codebase. This narrows the scope of what you try to understand and helps make the codebase less overwhelming. However, you must ensure you still a good general understanding of Conjure-Oxide as a whole, or this will make expanding your project harder in the future.
+If the scale of the codebase is feeling overwhelming, then consider talking to the project lead [@ozgurakgun](https://github.com/ozgurakgun) and selecting a project earlier on. The project would not need to be well defined at this point but even if you are not initially implementing features, having a project in mind can help focus your learning of the codebase. This narrows the scope of what you try to understand and helps make the codebase less overwhelming. However, you must ensure you still a good general understanding of Conjure-Oxide as a whole, or this will make expanding your project harder in the future.
 
 ## The Most Important Things
 You should realise that it is okay to spend time learning and not contributing, and you should not feel bad, it is expected. If you get a good understanding now it will help you in the future.
