@@ -974,7 +974,7 @@ fn parse_in_expr_comprehension(
         AbstractComprehensionBuilder::new(&Rc::clone(&scope)).add_expression_generator(expr, name.into());
     let expr = parse_expression(
         comprehension_value.pointer("/0")?,
-        &Rc::clone(&comprehension.symbols),
+        &Rc::clone(&comprehension.symbols()),
     )?;
 
     Some(Expression::AbstractComprehension(
