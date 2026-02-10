@@ -1,8 +1,6 @@
 #![allow(clippy::unwrap_used)]
 #![allow(clippy::expect_used)]
-use std::cell::RefCell;
 use std::collections::HashMap;
-use std::rc::Rc;
 use std::sync::{Arc, RwLock};
 use ustr::Ustr;
 
@@ -17,6 +15,7 @@ use crate::ast::records::RecordValue;
 use crate::ast::{
     AbstractLiteral, Atom, DeclarationPtr, Domain, Expression, FuncAttr, IntVal, JectivityAttr,
     Literal, MSetAttr, Name, PartialityAttr, Range, RecordEntry, SetAttr, SymbolTable,
+    SymbolTablePtr,
 };
 use crate::ast::{DeclarationKind, Moo};
 use crate::ast::{DomainPtr, Metadata};
@@ -136,7 +135,7 @@ fn parse_variable(v: &JsonValue, symtab: &mut SymbolTable) -> Result<()> {
         )))
 }
 
-fn parse_letting(v: &JsonValue, scope: &Rc<RefCell<SymbolTable>>) -> Result<()> {
+fn parse_letting(v: &JsonValue, scope: &SymbolTablePtr) -> Result<()> {
     let arr = v.as_array().ok_or(error!("Letting is not an array"))?;
     let name = arr[0]
         .as_object()
@@ -146,7 +145,7 @@ fn parse_letting(v: &JsonValue, scope: &Rc<RefCell<SymbolTable>>) -> Result<()> 
     let name = Name::User(Ustr::from(name));
     // value letting
     if let Some(value) = parse_expression(&arr[1], scope) {
-        let mut symtab = scope.borrow_mut();
+        let mut symtab = scope.write();
         symtab
             .insert(DeclarationPtr::new_value_letting(name.clone(), value))
             .ok_or(Error::Parse(format!(
@@ -163,7 +162,7 @@ fn parse_letting(v: &JsonValue, scope: &Rc<RefCell<SymbolTable>>) -> Result<()> 
             .next()
             .ok_or(error!("Letting[1].Domain is an empty object"))?;
 
-        let mut symtab = scope.borrow_mut();
+        let mut symtab = scope.write();
         let domain = parse_domain(domain.0, domain.1, &mut symtab)?;
 
         symtab
@@ -650,7 +649,7 @@ fn parse_domain_value_int(obj: &JsonValue, symbols: &SymbolTable) -> Option<i32>
 type BinOp = Box<dyn Fn(Metadata, Moo<Expression>, Moo<Expression>) -> Expression>;
 type UnaryOp = Box<dyn Fn(Metadata, Moo<Expression>) -> Expression>;
 
-pub fn parse_expression(obj: &JsonValue, scope: &Rc<RefCell<SymbolTable>>) -> Option<Expression> {
+pub fn parse_expression(obj: &JsonValue, scope: &SymbolTablePtr) -> Option<Expression> {
     let binary_operators: HashMap<&str, BinOp> = [
         (
             "MkOpIn",
@@ -850,14 +849,14 @@ pub fn parse_expression(obj: &JsonValue, scope: &Rc<RefCell<SymbolTable>>) -> Op
             otherwise => bug!("Unhandled Op {:#?}", otherwise),
         },
         Value::Object(comprehension) if comprehension.contains_key("Comprehension") => {
-            Some(parse_comprehension(comprehension, Rc::clone(scope), None).unwrap())
+            Some(parse_comprehension(comprehension, scope.clone(), None).unwrap())
         }
         Value::Object(refe) if refe.contains_key("Reference") => {
             let name = refe["Reference"].as_array()?[0].as_object()?["Name"].as_str()?;
             let user_name = Name::User(Ustr::from(name));
 
             let declaration: DeclarationPtr = scope
-                .borrow()
+                .read()
                 .lookup(&user_name)
                 .or_else(|| bug!("Could not find reference {user_name}"))?;
 
@@ -911,7 +910,7 @@ pub fn parse_expression(obj: &JsonValue, scope: &Rc<RefCell<SymbolTable>>) -> Op
     }
 }
 
-fn parse_abs_lit(abs_set: &Value, scope: &Rc<RefCell<SymbolTable>>) -> Option<Expression> {
+fn parse_abs_lit(abs_set: &Value, scope: &SymbolTablePtr) -> Option<Expression> {
     let values = abs_set.as_array()?; // Ensure it's an array
     let expressions = values
         .iter()
@@ -925,7 +924,7 @@ fn parse_abs_lit(abs_set: &Value, scope: &Rc<RefCell<SymbolTable>>) -> Option<Ex
     ))
 }
 
-fn parse_abs_mset(abs_set: &Value, scope: &Rc<RefCell<SymbolTable>>) -> Option<Expression> {
+fn parse_abs_mset(abs_set: &Value, scope: &SymbolTablePtr) -> Option<Expression> {
     let values = abs_set.as_array()?; // Ensure it's an array
     let expressions = values
         .iter()
@@ -939,7 +938,7 @@ fn parse_abs_mset(abs_set: &Value, scope: &Rc<RefCell<SymbolTable>>) -> Option<E
     ))
 }
 
-fn parse_abs_tuple(abs_tuple: &Value, scope: &Rc<RefCell<SymbolTable>>) -> Option<Expression> {
+fn parse_abs_tuple(abs_tuple: &Value, scope: &SymbolTablePtr) -> Option<Expression> {
     let values = abs_tuple.as_array()?; // Ensure it's an array
     let expressions = values
         .iter()
@@ -954,7 +953,7 @@ fn parse_abs_tuple(abs_tuple: &Value, scope: &Rc<RefCell<SymbolTable>>) -> Optio
 }
 
 //parses an abstract record as an expression
-fn parse_abs_record(abs_record: &Value, scope: &Rc<RefCell<SymbolTable>>) -> Option<Expression> {
+fn parse_abs_record(abs_record: &Value, scope: &SymbolTablePtr) -> Option<Expression> {
     let entries = abs_record.as_array()?; // Ensure it's an array
     let mut rec = vec![];
 
@@ -979,10 +978,7 @@ fn parse_abs_record(abs_record: &Value, scope: &Rc<RefCell<SymbolTable>>) -> Opt
 }
 
 //parses an abstract function as an expression
-fn parse_abs_function(
-    abs_function: &Value,
-    scope: &Rc<RefCell<SymbolTable>>,
-) -> Option<Expression> {
+fn parse_abs_function(abs_function: &Value, scope: &SymbolTablePtr) -> Option<Expression> {
     let entries = abs_function.as_array()?;
     let mut assignments = vec![];
 
@@ -1007,11 +1003,11 @@ fn parse_abs_function(
 
 fn parse_comprehension(
     comprehension: &serde_json::Map<String, Value>,
-    scope: Rc<RefCell<SymbolTable>>,
+    scope: SymbolTablePtr,
     comprehension_kind: Option<ACOperatorKind>,
 ) -> Option<Expression> {
     let value = &comprehension["Comprehension"];
-    let mut comprehension = ComprehensionBuilder::new(Rc::clone(&scope));
+    let mut comprehension = ComprehensionBuilder::new(scope.clone());
     let generator_symboltable = comprehension.generator_symboltable();
     let return_expr_symboltable = comprehension.return_expr_symboltable();
 
@@ -1031,7 +1027,7 @@ fn parse_comprehension(
                         let domain = parse_domain(
                             domain_name,
                             domain_value,
-                            &mut generator_symboltable.borrow_mut(),
+                            &mut generator_symboltable.write(),
                         )
                         .ok()?;
                         comprehension.generator(DeclarationPtr::new_var(name.into(), domain))
@@ -1062,7 +1058,7 @@ fn parse_comprehension(
 }
 
 fn parse_in_expr_comprehension(
-    scope: Rc<RefCell<SymbolTable>>,
+    scope: SymbolTablePtr,
     comprehension_value: &Value,
     gen_inner: &Value,
 ) -> Option<Expression> {
@@ -1085,7 +1081,7 @@ fn parse_in_expr_comprehension(
 fn parse_bin_op(
     bin_op: &serde_json::Map<String, Value>,
     binary_operators: HashMap<&str, BinOp>,
-    scope: &Rc<RefCell<SymbolTable>>,
+    scope: &SymbolTablePtr,
 ) -> Option<Expression> {
     // we know there is a single key value pair in this object
     // extract the value, ignore the key
@@ -1105,7 +1101,7 @@ fn parse_bin_op(
 
 fn parse_indexing_slicing_op(
     op: &serde_json::Map<String, Value>,
-    scope: &Rc<RefCell<SymbolTable>>,
+    scope: &SymbolTablePtr,
 ) -> Option<Expression> {
     // we know there is a single key value pair in this object
     // extract the value, ignore the key
@@ -1193,7 +1189,7 @@ fn parse_indexing_slicing_op(
 
 fn parse_flatten_op(
     op: &serde_json::Map<String, Value>,
-    scope: &Rc<RefCell<SymbolTable>>,
+    scope: &SymbolTablePtr,
 ) -> Option<Expression> {
     let args = op.get("MkOpFlatten")?.as_array()?;
 
@@ -1214,7 +1210,7 @@ fn parse_flatten_op(
 fn parse_unary_op(
     un_op: &serde_json::Map<String, Value>,
     unary_operators: HashMap<&str, UnaryOp>,
-    scope: &Rc<RefCell<SymbolTable>>,
+    scope: &SymbolTablePtr,
 ) -> Option<Expression> {
     let (key, value) = un_op.into_iter().next()?;
     let constructor = unary_operators.get(key.as_str())?;
@@ -1231,7 +1227,7 @@ fn parse_unary_op(
                 "MkOpProduct" => Some(ACOperatorKind::Product),
                 _ => None,
             };
-            Some(parse_comprehension(comprehension, Rc::clone(scope), comprehension_kind).unwrap())
+            Some(parse_comprehension(comprehension, scope.clone(), comprehension_kind).unwrap())
         }
         _ => parse_expression(value, scope),
     }?;
@@ -1242,7 +1238,7 @@ fn parse_unary_op(
 // Takes in { AbstractLiteral: .... }
 fn parse_abstract_matrix_as_expr(
     value: &serde_json::Value,
-    scope: &Rc<RefCell<SymbolTable>>,
+    scope: &SymbolTablePtr,
 ) -> Option<Expression> {
     parser_trace!("trying to parse an abstract literal matrix");
     let (values, domain_name, domain_value) =
@@ -1300,7 +1296,7 @@ fn parse_abstract_matrix_as_expr(
         parser_trace!(".. successfully parsed empty values ",);
     }
 
-    let mut symbols = scope.borrow_mut();
+    let mut symbols = scope.write();
     match parse_domain(domain_name, domain_value, &mut symbols) {
         Ok(domain) => {
             parser_trace!("... sucessfully parsed domain as {domain}");
@@ -1315,7 +1311,7 @@ fn parse_abstract_matrix_as_expr(
 
 fn parse_constant(
     constant: &serde_json::Map<String, Value>,
-    scope: &Rc<RefCell<SymbolTable>>,
+    scope: &SymbolTablePtr,
 ) -> Option<Expression> {
     match &constant.get("Constant") {
         Some(Value::Object(int)) if int.contains_key("ConstantInt") => {

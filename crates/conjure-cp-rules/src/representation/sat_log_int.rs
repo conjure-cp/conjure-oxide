@@ -135,10 +135,12 @@ impl Representation for SATLogInt {
     ) -> Result<std::collections::BTreeMap<Name, Expression>, ApplicationError> {
         Ok(self
             .names()
-            .map(|name| {
+            .enumerate()
+            .map(|(index, name)| {
                 let decl = st.lookup(&name).unwrap();
                 (
-                    name,
+                    // Machine names are used so that the derived ordering matches the correct ordering of the representation variables
+                    Name::Machine(index as i32),
                     Expression::Atomic(
                         Metadata::new(),
                         Atom::Reference(conjure_cp::ast::Reference { ptr: decl }),
