@@ -71,7 +71,7 @@ jobs:
       - name: Restore cache
         id: restore_cache
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.compiler_profile == 'debug' }}
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: |
             ~/.cargo/bin/
@@ -119,7 +119,7 @@ jobs:
 
       - name: Save cache
         if: ${{ always() && matrix.os == 'ubuntu-latest' && matrix.compiler_profile == 'debug' && steps.restore_cache.outputs.cache-hit != 'true' }}
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: |
             ~/.cargo/bin/

@@ -3,31 +3,37 @@
 //! These are used in combination with the
 //! [`serde_as`](https://docs.rs/serde_with/3.12.0/serde_with/index.html) annotation on AST types.
 
-use std::cell::RefCell;
-use std::rc::Rc;
-
-use serde::Serialize;
-use serde::de::Deserialize;
-use serde::de::Error;
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_with::{DeserializeAs, SerializeAs};
+use std::fmt::Display;
+use ustr::Ustr;
 
 /// A unique id, used to distinguish between objects of the same type.
 ///
 ///
 /// This is used for pointer translation during (de)serialisation.
-pub type ObjId = u32;
+#[derive(Clone, Debug, PartialOrd, Ord, PartialEq, Eq, Serialize, Deserialize, Hash)]
+pub struct ObjId {
+    /// a unique identifier of the type of this object
+    pub type_name: Ustr,
+
+    /// unique between objects of the same type
+    pub object_id: u32,
+}
+
+impl Display for ObjId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "obj_id_{}_{}", self.type_name, self.object_id)
+    }
+}
 
 /// A type with an [`ObjectId`].
 ///
-/// Each object of the implementing type has a unique id; however, ids are not unique for different
-/// type of objects.
-///
 /// Implementing types should ensure that the id is updated when an object is cloned.
 pub trait HasId {
+    const TYPE_NAME: &'static str;
+
     /// The id of this object.
-    ///
-    /// Each object of this type has a unique id; however, ids are not unique for different type of
-    /// objects.
     fn id(&self) -> ObjId;
 }
 
@@ -37,101 +43,115 @@ pub trait DefaultWithId: HasId {
     fn default_with_id(id: ObjId) -> Self;
 }
 
-/// De/Serialize an `Rc<RefCell<T>>` as the id of the inner value `T`.
+/// A "fat pointer" to some shared data with an ID, such as [DeclarationPtr] or [SymbolTablePtr].
 ///
-/// On de-serialization, each object is created as the default value for that type, except with the
-/// id's being retained.
+/// These are usually an [Arc] containing
+/// - A unique, immutable ID
+/// - A shared container for the data, such as an [RwLock]
 ///
-/// It is left to the user to fix these values before use. Before serialization, each object in
-/// memory has a unique id; using this information, re-constructing the shared pointers should be
-/// possible, as long as the contents of each object were also stored, e.g. with
-/// [`RcRefCellAsInner`].
-pub struct RcRefCellAsId;
+/// Implementing this trait makes it possible to serialise the **contents** of such pointers
+/// with [PtrAsInner]; See its docstring for more information.
+pub(super) trait IdPtr: HasId + DefaultWithId {
+    type Data: Serialize + for<'de> Deserialize<'de>;
 
-// https://docs.rs/serde_with/3.12.0/serde_with/trait.SerializeAs.html#implementing-a-converter-type
+    /// Get a copy of the underlying data
+    fn get_data(&self) -> Self::Data;
 
-impl<T> SerializeAs<Rc<RefCell<T>>> for RcRefCellAsId
+    /// Re-construct the pointer given the ID and inner data
+    fn with_id_and_data(id: ObjId, data: Self::Data) -> Self;
+}
+
+/// Serialises the object's ID. The actual data is **NOT stored**.
+///
+/// # WARNING
+///
+/// The object is de-serialised with the correct ID, but an empty default value.
+///
+/// After de-serialising an entire structure, it is **the user's responsibility**
+/// to find a complete copy of the object and restore the shared pointer to it.
+/// This should be possible as long as at least one instance of the object has
+/// been serialised with [PtrAsInner].
+///
+/// See the de-serialisation code for [Model] for an example.
+///
+pub struct AsId;
+
+impl<T> SerializeAs<T> for AsId
 where
     T: HasId,
 {
-    fn serialize_as<S>(source: &Rc<RefCell<T>>, serializer: S) -> Result<S::Ok, S::Error>
+    fn serialize_as<S>(source: &T, serializer: S) -> Result<S::Ok, S::Error>
     where
-        S: serde::Serializer,
+        S: Serializer,
     {
-        let id = (**source).borrow().id();
-        serializer.serialize_u32(id)
+        source.id().serialize(serializer)
     }
 }
 
-// https://docs.rs/serde_with/3.12.0/serde_with/trait.DeserializeAs.html
-impl<'de, T> DeserializeAs<'de, Rc<RefCell<T>>> for RcRefCellAsId
+impl<'de, T> DeserializeAs<'de, T> for AsId
 where
     T: HasId + DefaultWithId,
 {
-    fn deserialize_as<D>(deserializer: D) -> Result<Rc<RefCell<T>>, D::Error>
+    fn deserialize_as<D>(deserializer: D) -> Result<T, D::Error>
     where
-        D: serde::Deserializer<'de>,
+        D: Deserializer<'de>,
     {
-        let id = u32::deserialize(deserializer).map_err(Error::custom)?;
-        Ok(Rc::new(RefCell::new(T::default_with_id(id))))
+        let id = ObjId::deserialize(deserializer)?;
+        Ok(T::default_with_id(id))
     }
 }
 
-/// De/Serialize an `Rc<RefCell<T>>` as its inner value `T`.
+/// Serialises a shared pointer to some object `x` as a tuple `(ID, X)`, where:
+/// - `ID` is the unique and immutable ID of the object. (See: [HasId])
+/// - `X` is a full copy of the object's value.
+///   (See `x`'s implementation of the [Serialize] trait for details)
 ///
-/// This makes no attempt to restore the pointers - each value is de-serialized into a new
-/// Rc<RefCell<T>> with a reference count of one.
+/// On de-serialisation, **independent copies** of the object with the same ID are created.
 ///
-/// The shared references can be reconstructed using the ids stored, as before serialization these
-/// were unique for each separate instance of `T` in memory. See [`RcRefCellAsId`].
-pub struct RcRefCellAsInner;
+/// # WARNING
+///
+/// De-serialisation makes **no attempt** to restore shared pointers.
+/// Two pointers to the same value `x` will be de-serialised as **two separate copies**
+/// of it, `x'` and `x''`. Mutating the value of `x'` will **not** change the value of `x''`.
+///
+/// After de-serialising an entire structure, it is the user's responsibility to go through it
+/// and manually restore the shared pointers. See the de-serialisation code for [Model]
+/// for an example.
+pub struct PtrAsInner;
 
-impl<T> SerializeAs<Rc<RefCell<T>>> for RcRefCellAsInner
+#[derive(Serialize, Deserialize)]
+struct PtrAsInnerStored<T> {
+    id: ObjId,
+    #[serde(flatten)]
+    data: T,
+}
+
+impl<T> SerializeAs<T> for PtrAsInner
 where
-    T: Serialize + HasId,
+    T: IdPtr,
 {
-    fn serialize_as<S>(source: &Rc<RefCell<T>>, serializer: S) -> Result<S::Ok, S::Error>
+    fn serialize_as<S>(source: &T, serializer: S) -> Result<S::Ok, S::Error>
     where
-        S: serde::Serializer,
+        S: Serializer,
     {
-        (**source).borrow().serialize(serializer)
+        let stored = PtrAsInnerStored {
+            id: source.id(),
+            data: source.get_data(),
+        };
+        stored.serialize(serializer)
     }
 }
 
-impl<T> SerializeAs<Rc<T>> for RcRefCellAsInner
+impl<'de, T> DeserializeAs<'de, T> for PtrAsInner
 where
-    T: Serialize + HasId,
+    T: IdPtr,
+    T::Data: Deserialize<'de>,
 {
-    fn serialize_as<S>(source: &Rc<T>, serializer: S) -> Result<S::Ok, S::Error>
+    fn deserialize_as<D>(deserializer: D) -> Result<T, D::Error>
     where
-        S: serde::Serializer,
+        D: Deserializer<'de>,
     {
-        source.serialize(serializer)
-    }
-}
-
-impl<'de, T> DeserializeAs<'de, Rc<RefCell<T>>> for RcRefCellAsInner
-where
-    T: Deserialize<'de> + HasId + DefaultWithId,
-{
-    fn deserialize_as<D>(deserializer: D) -> Result<Rc<RefCell<T>>, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let val = T::deserialize(deserializer)?;
-        Ok(Rc::new(RefCell::new(val)))
-    }
-}
-
-impl<'de, T> DeserializeAs<'de, Rc<T>> for RcRefCellAsInner
-where
-    T: Deserialize<'de> + HasId + DefaultWithId,
-{
-    fn deserialize_as<D>(deserializer: D) -> Result<Rc<T>, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let val = T::deserialize(deserializer)?;
-        Ok(Rc::new(val))
+        let stored = PtrAsInnerStored::deserialize(deserializer)?;
+        Ok(T::with_id_and_data(stored.id, stored.data))
     }
 }

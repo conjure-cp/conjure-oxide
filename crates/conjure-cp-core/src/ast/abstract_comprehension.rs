@@ -1,14 +1,17 @@
-use super::SymbolTable;
-use super::declaration::{DeclarationPtr, serde::DeclarationPtrFull};
-use super::serde::RcRefCellAsInner;
-use crate::ast::{DomainPtr, Expression, Name, ReturnType, Typeable};
+use super::declaration::DeclarationPtr;
+use super::serde::PtrAsInner;
+use super::{DomainPtr, Expression, Name, ReturnType, SubModel, SymbolTablePtr, Typeable};
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use std::fmt::{Display, Formatter};
-use std::{cell::RefCell, hash::Hash, hash::Hasher, rc::Rc};
+use std::hash::Hash;
+use uniplate::Uniplate;
 
 #[serde_as]
-#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug)]
+#[derive(Clone, PartialEq, Eq, Hash, Serialize, Deserialize, Debug, Uniplate)]
+#[biplate(to=Expression)]
+#[biplate(to=SubModel)]
+#[biplate(to=SymbolTablePtr)]
 pub struct AbstractComprehension {
     pub return_expr: Expression,
     pub qualifiers: Vec<Qualifier>,
@@ -17,15 +20,15 @@ pub struct AbstractComprehension {
     ///
     /// Variables from generator expressions are "given" in the context of the return expression.
     /// That is, they are constants which are different for each expansion of the comprehension.
-    #[serde_as(as = "RcRefCellAsInner")]
-    pub return_expr_symbols: Rc<RefCell<SymbolTable>>,
+    #[serde_as(as = "PtrAsInner")]
+    pub return_expr_symbols: SymbolTablePtr,
 
     /// The scope for variables in generator expressions.
     ///
     /// Variables declared in generator expressions are decision variables, since they do not
     /// have a constant value.
-    #[serde_as(as = "RcRefCellAsInner")]
-    pub generator_symbols: Rc<RefCell<SymbolTable>>,
+    #[serde_as(as = "PtrAsInner")]
+    pub generator_symbols: SymbolTablePtr,
 }
 
 #[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Hash)]
@@ -36,30 +39,38 @@ pub enum Qualifier {
 }
 
 #[serde_as]
-#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Hash)]
+#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Hash, Uniplate)]
+#[biplate(to=Expression)]
+#[biplate(to=SubModel)]
 pub struct ComprehensionLetting {
-    #[serde_as(as = "DeclarationPtrFull")]
+    #[serde_as(as = "PtrAsInner")]
     pub decl: DeclarationPtr,
     pub expression: Expression,
 }
 
-#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Hash)]
+#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Hash, Uniplate)]
+#[biplate(to=Expression)]
+#[biplate(to=SubModel)]
 pub enum Generator {
     DomainGenerator(DomainGenerator),
     ExpressionGenerator(ExpressionGenerator),
 }
 
 #[serde_as]
-#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Hash)]
+#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Hash, Uniplate)]
+#[biplate(to=Expression)]
+#[biplate(to=SubModel)]
 pub struct DomainGenerator {
-    #[serde_as(as = "DeclarationPtrFull")]
+    #[serde_as(as = "PtrAsInner")]
     pub decl: DeclarationPtr,
 }
 
 #[serde_as]
-#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Hash)]
+#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Hash, Uniplate)]
+#[biplate(to=Expression)]
+#[biplate(to=SubModel)]
 pub struct ExpressionGenerator {
-    #[serde_as(as = "DeclarationPtrFull")]
+    #[serde_as(as = "PtrAsInner")]
     pub decl: DeclarationPtr,
     pub expression: Expression,
 }
@@ -76,14 +87,6 @@ impl Typeable for AbstractComprehension {
     }
 }
 
-impl Hash for AbstractComprehension {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.return_expr_symbols.borrow().hash(state);
-        self.return_expr.hash(state);
-        self.qualifiers.hash(state);
-    }
-}
-
 pub struct AbstractComprehensionBuilder {
     pub qualifiers: Vec<Qualifier>,
 
@@ -91,13 +94,13 @@ pub struct AbstractComprehensionBuilder {
     ///
     /// Variables from generator expressions are "given" in the context of the return expression.
     /// That is, they are constants which are different for each expansion of the comprehension.
-    pub return_expr_symbols: Rc<RefCell<SymbolTable>>,
+    pub return_expr_symbols: SymbolTablePtr,
 
     /// The scope for variables in generator expressions.
     ///
     /// Variables declared in generator expressions are decision variables in their original
     /// context, since they do not have a constant value.
-    pub generator_symbols: Rc<RefCell<SymbolTable>>,
+    pub generator_symbols: SymbolTablePtr,
 }
 
 impl AbstractComprehensionBuilder {
@@ -108,24 +111,24 @@ impl AbstractComprehensionBuilder {
     /// Changes to the inner scope do not affect the given symbol table.
     ///
     /// The return expression is passed when finalizing the comprehension, in [with_return_value].
-    pub fn new(symbols: &Rc<RefCell<SymbolTable>>) -> Self {
+    pub fn new(symbols: &SymbolTablePtr) -> Self {
         Self {
             qualifiers: vec![],
-            return_expr_symbols: Rc::new(RefCell::new(SymbolTable::with_parent(symbols.clone()))),
-            generator_symbols: Rc::new(RefCell::new(SymbolTable::with_parent(symbols.clone()))),
+            return_expr_symbols: SymbolTablePtr::with_parent(symbols.clone()),
+            generator_symbols: SymbolTablePtr::with_parent(symbols.clone()),
         }
     }
 
-    pub fn return_expr_symbols(&self) -> Rc<RefCell<SymbolTable>> {
+    pub fn return_expr_symbols(&self) -> SymbolTablePtr {
         self.return_expr_symbols.clone()
     }
 
-    pub fn generator_symbols(&self) -> Rc<RefCell<SymbolTable>> {
+    pub fn generator_symbols(&self) -> SymbolTablePtr {
         self.generator_symbols.clone()
     }
 
     pub fn new_domain_generator(&mut self, domain: DomainPtr) -> DeclarationPtr {
-        let generator_decl = self.return_expr_symbols.borrow_mut().gensym(&domain);
+        let generator_decl = self.return_expr_symbols.write().gensym(&domain);
 
         self.qualifiers
             .push(Qualifier::Generator(Generator::DomainGenerator(
@@ -155,12 +158,8 @@ impl AbstractComprehensionBuilder {
         let return_expr_ptr = DeclarationPtr::new_given_quantified(&generator_ptr)
             .expect("Return expression declaration must not be None");
 
-        self.return_expr_symbols
-            .borrow_mut()
-            .insert(return_expr_ptr);
-        self.generator_symbols
-            .borrow_mut()
-            .insert(generator_ptr.clone());
+        self.return_expr_symbols.write().insert(return_expr_ptr);
+        self.generator_symbols.write().insert(generator_ptr.clone());
 
         self.qualifiers
             .push(Qualifier::Generator(Generator::ExpressionGenerator(
@@ -183,7 +182,7 @@ impl AbstractComprehensionBuilder {
     }
 
     pub fn new_letting(&mut self, expression: Expression) -> DeclarationPtr {
-        let letting_decl = self.return_expr_symbols.borrow_mut().gensym(
+        let letting_decl = self.return_expr_symbols.write().gensym(
             &expression
                 .domain_of()
                 .expect("Expression must have a domain"),
