@@ -1,0 +1,688 @@
+Model before rewriting:
+
+letting A be false
+letting NotA be !(!(!(A)))
+find b: int(1..20)
+
+such that
+
+(NotA) -> ((b < 3))
+
+--
+
+NotA, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+!(!(!(A))) 
+
+--
+
+!(!(!(A))), 
+   ~~> remove_double_negation ([("Base", 8400)]) 
+!(A) 
+
+--
+
+A, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+false 
+
+--
+
+(!(false)) -> ((b < 3)), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(b < 3) 
+
+--
+
+b, 
+   ~~> integer_decision_representation_log ([("SAT_Log", 4800)]) 
+SATInt(Log, [b#sat_log_int_00,b#sat_log_int_01,b#sat_log_int_02,b#sat_log_int_03,b#sat_log_int_04,b#sat_log_int_05;int(1..)] [1, 20]) 
+new variables:
+  find b#sat_log_int_00: bool
+  find b#sat_log_int_01: bool
+  find b#sat_log_int_02: bool
+  find b#sat_log_int_03: bool
+  find b#sat_log_int_04: bool
+  find b#sat_log_int_05: bool
+new constraints:
+  or([and([(SATInt(Log, [b#sat_log_int_00,b#sat_log_int_01,b#sat_log_int_02,b#sat_log_int_03,b#sat_log_int_04,b#sat_log_int_05;int(1..)] [1, 20]) >= 1),(SATInt(Log, [b#sat_log_int_00,b#sat_log_int_01,b#sat_log_int_02,b#sat_log_int_03,b#sat_log_int_04,b#sat_log_int_05;int(1..)] [1, 20]) <= 20);int(1..)]);int(1..)])
+--
+
+or([and([(SATInt(Log, [b#sat_log_int_00,b#sat_log_int_01,b#sat_log_int_02,b#sat_log_int_03,b#sat_log_int_04,b#sat_log_int_05;int(1..)] [1, 20]) >= 1),(SATInt(Log, [b#sat_log_int_00,b#sat_log_int_01,b#sat_log_int_02,b#sat_log_int_03,b#sat_log_int_04,b#sat_log_int_05;int(1..)] [1, 20]) <= 20);int(1..)]);int(1..)]), 
+   ~~> remove_unit_vector_or ([("Base", 8800)]) 
+and([(SATInt(Log, [b#sat_log_int_00,b#sat_log_int_01,b#sat_log_int_02,b#sat_log_int_03,b#sat_log_int_04,b#sat_log_int_05;int(1..)] [1, 20]) >= 1),(SATInt(Log, [b#sat_log_int_00,b#sat_log_int_01,b#sat_log_int_02,b#sat_log_int_03,b#sat_log_int_04,b#sat_log_int_05;int(1..)] [1, 20]) <= 20);int(1..)]) 
+
+--
+
+(SATInt(Log, [b#sat_log_int_00,b#sat_log_int_01,b#sat_log_int_02,b#sat_log_int_03,b#sat_log_int_04,b#sat_log_int_05;int(1..)] [1, 20]) < 3),
+and([(SATInt(Log, [b#sat_log_int_00,b#sat_log_int_01,b#sat_log_int_02,b#sat_log_int_03,b#sat_log_int_04,b#sat_log_int_05;int(1..)] [1, 20]) >= 1),(SATInt(Log, [b#sat_log_int_00,b#sat_log_int_01,b#sat_log_int_02,b#sat_log_int_03,b#sat_log_int_04,b#sat_log_int_05;int(1..)] [1, 20]) <= 20);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(SATInt(Log, [b#sat_log_int_00,b#sat_log_int_01,b#sat_log_int_02,b#sat_log_int_03,b#sat_log_int_04,b#sat_log_int_05;int(1..)] [1, 20]) < 3),
+(SATInt(Log, [b#sat_log_int_00,b#sat_log_int_01,b#sat_log_int_02,b#sat_log_int_03,b#sat_log_int_04,b#sat_log_int_05;int(1..)] [1, 20]) >= 1),
+(SATInt(Log, [b#sat_log_int_00,b#sat_log_int_01,b#sat_log_int_02,b#sat_log_int_03,b#sat_log_int_04,b#sat_log_int_05;int(1..)] [1, 20]) <= 20) 
+
+--
+
+3, 
+   ~~> literal_cnf_int ([("SAT_Log", 4500)]) 
+SATInt(Log, [true,true,false;int(1..)] [3, 3]) 
+
+--
+
+(SATInt(Log, [b#sat_log_int_00,b#sat_log_int_01,b#sat_log_int_02,b#sat_log_int_03,b#sat_log_int_04,b#sat_log_int_05;int(1..)] [1, 20]) < SATInt(Log, [true,true,false;int(1..)] [3, 3])), 
+   ~~> cnf_int_ineq ([("SAT_Log", 4600)]) 
+__26 
+new variables:
+  find __0: bool
+  find __1: bool
+  find __2: bool
+  find __3: bool
+  find __4: bool
+  find __5: bool
+  find __6: bool
+  find __7: bool
+  find __8: bool
+  find __9: bool
+  find __10: bool
+  find __11: bool
+  find __12: bool
+  find __13: bool
+  find __14: bool
+  find __15: bool
+  find __16: bool
+  find __17: bool
+  find __18: bool
+  find __19: bool
+  find __20: bool
+  find __21: bool
+  find __22: bool
+  find __23: bool
+  find __24: bool
+  find __25: bool
+  find __26: bool
+new clauses:
+  (¬b#sat_log_int_00 \/ ¬__0)
+  (b#sat_log_int_00 \/ __0)
+  (¬__1 \/ __0)
+  (__1 \/ ¬__0)
+  (¬b#sat_log_int_01 \/ ¬__2)
+  (b#sat_log_int_01 \/ __2)
+  (¬__3 \/ __2)
+  (__3 \/ ¬__2)
+  (¬b#sat_log_int_01 \/ __4)
+  (b#sat_log_int_01 \/ ¬__4)
+  (¬__5 \/ __4)
+  (¬__5 \/ __1)
+  (__5 \/ ¬__4 \/ ¬__1)
+  (¬__3 \/ __6)
+  (¬__5 \/ __6)
+  (¬__6 \/ __3 \/ __5)
+  (¬b#sat_log_int_02 \/ ¬__7)
+  (b#sat_log_int_02 \/ __7)
+  (¬__8)
+  (¬__8 \/ __7)
+  (b#sat_log_int_02 \/ __9)
+  (¬b#sat_log_int_02 \/ ¬__9)
+  (¬__10 \/ __9)
+  (¬__10 \/ __6)
+  (__10 \/ ¬__9 \/ ¬__6)
+  (¬__8 \/ __11)
+  (¬__10 \/ __11)
+  (¬__11 \/ __8 \/ __10)
+  (¬b#sat_log_int_03 \/ ¬__12)
+  (b#sat_log_int_03 \/ __12)
+  (¬__13)
+  (¬__13 \/ __12)
+  (b#sat_log_int_03 \/ __14)
+  (¬b#sat_log_int_03 \/ ¬__14)
+  (¬__15 \/ __14)
+  (¬__15 \/ __11)
+  (__15 \/ ¬__14 \/ ¬__11)
+  (¬__13 \/ __16)
+  (¬__15 \/ __16)
+  (¬__16 \/ __13 \/ __15)
+  (¬b#sat_log_int_04 \/ ¬__17)
+  (b#sat_log_int_04 \/ __17)
+  (¬__18)
+  (¬__18 \/ __17)
+  (b#sat_log_int_04 \/ __19)
+  (¬b#sat_log_int_04 \/ ¬__19)
+  (¬__20 \/ __19)
+  (¬__20 \/ __16)
+  (__20 \/ ¬__19 \/ ¬__16)
+  (¬__18 \/ __21)
+  (¬__20 \/ __21)
+  (¬__21 \/ __18 \/ __20)
+  (__22)
+  (¬__23 \/ __22)
+  (¬__23 \/ b#sat_log_int_05)
+  (__23 \/ ¬__22 \/ ¬b#sat_log_int_05)
+  (b#sat_log_int_05 \/ __24)
+  (¬b#sat_log_int_05 \/ ¬__24)
+  (¬__25 \/ __24)
+  (¬__25 \/ __21)
+  (__25 \/ ¬__24 \/ ¬__21)
+  (¬__23 \/ __26)
+  (¬__25 \/ __26)
+  (¬__26 \/ __23 \/ __25)
+--
+
+1, 
+   ~~> literal_cnf_int ([("SAT_Log", 4500)]) 
+SATInt(Log, [true,false;int(1..)] [1, 1]) 
+
+--
+
+(SATInt(Log, [b#sat_log_int_00,b#sat_log_int_01,b#sat_log_int_02,b#sat_log_int_03,b#sat_log_int_04,b#sat_log_int_05;int(1..)] [1, 20]) >= SATInt(Log, [true,false;int(1..)] [1, 1])), 
+   ~~> cnf_int_ineq ([("SAT_Log", 4600)]) 
+__52 
+new variables:
+  find __27: bool
+  find __28: bool
+  find __29: bool
+  find __30: bool
+  find __31: bool
+  find __32: bool
+  find __33: bool
+  find __34: bool
+  find __35: bool
+  find __36: bool
+  find __37: bool
+  find __38: bool
+  find __39: bool
+  find __40: bool
+  find __41: bool
+  find __42: bool
+  find __43: bool
+  find __44: bool
+  find __45: bool
+  find __46: bool
+  find __47: bool
+  find __48: bool
+  find __49: bool
+  find __50: bool
+  find __51: bool
+  find __52: bool
+new clauses:
+  (¬__27 \/ b#sat_log_int_00)
+  (__27 \/ ¬b#sat_log_int_00)
+  (__28)
+  (¬__29 \/ b#sat_log_int_01)
+  (¬__29 \/ __28)
+  (__29 \/ ¬b#sat_log_int_01 \/ ¬__28)
+  (b#sat_log_int_01 \/ __30)
+  (¬b#sat_log_int_01 \/ ¬__30)
+  (¬__31 \/ __30)
+  (¬__31 \/ __27)
+  (__31 \/ ¬__30 \/ ¬__27)
+  (¬__29 \/ __32)
+  (¬__31 \/ __32)
+  (¬__32 \/ __29 \/ __31)
+  (__33)
+  (¬__34 \/ b#sat_log_int_02)
+  (¬__34 \/ __33)
+  (__34 \/ ¬b#sat_log_int_02 \/ ¬__33)
+  (b#sat_log_int_02 \/ __35)
+  (¬b#sat_log_int_02 \/ ¬__35)
+  (¬__36 \/ __35)
+  (¬__36 \/ __32)
+  (__36 \/ ¬__35 \/ ¬__32)
+  (¬__34 \/ __37)
+  (¬__36 \/ __37)
+  (¬__37 \/ __34 \/ __36)
+  (__38)
+  (¬__39 \/ b#sat_log_int_03)
+  (¬__39 \/ __38)
+  (__39 \/ ¬b#sat_log_int_03 \/ ¬__38)
+  (b#sat_log_int_03 \/ __40)
+  (¬b#sat_log_int_03 \/ ¬__40)
+  (¬__41 \/ __40)
+  (¬__41 \/ __37)
+  (__41 \/ ¬__40 \/ ¬__37)
+  (¬__39 \/ __42)
+  (¬__41 \/ __42)
+  (¬__42 \/ __39 \/ __41)
+  (__43)
+  (¬__44 \/ b#sat_log_int_04)
+  (¬__44 \/ __43)
+  (__44 \/ ¬b#sat_log_int_04 \/ ¬__43)
+  (b#sat_log_int_04 \/ __45)
+  (¬b#sat_log_int_04 \/ ¬__45)
+  (¬__46 \/ __45)
+  (¬__46 \/ __42)
+  (__46 \/ ¬__45 \/ ¬__42)
+  (¬__44 \/ __47)
+  (¬__46 \/ __47)
+  (¬__47 \/ __44 \/ __46)
+  (¬b#sat_log_int_05 \/ ¬__48)
+  (b#sat_log_int_05 \/ __48)
+  (¬__49 \/ __48)
+  (¬__49)
+  (b#sat_log_int_05 \/ __50)
+  (¬b#sat_log_int_05 \/ ¬__50)
+  (¬__51 \/ __50)
+  (¬__51 \/ __47)
+  (__51 \/ ¬__50 \/ ¬__47)
+  (¬__49 \/ __52)
+  (¬__51 \/ __52)
+  (¬__52 \/ __49 \/ __51)
+--
+
+20, 
+   ~~> literal_cnf_int ([("SAT_Log", 4500)]) 
+SATInt(Log, [false,false,true,false,true,false;int(1..)] [20, 20]) 
+
+--
+
+(SATInt(Log, [b#sat_log_int_00,b#sat_log_int_01,b#sat_log_int_02,b#sat_log_int_03,b#sat_log_int_04,b#sat_log_int_05;int(1..)] [1, 20]) <= SATInt(Log, [false,false,true,false,true,false;int(1..)] [20, 20])), 
+   ~~> cnf_int_ineq ([("SAT_Log", 4600)]) 
+__78 
+new variables:
+  find __53: bool
+  find __54: bool
+  find __55: bool
+  find __56: bool
+  find __57: bool
+  find __58: bool
+  find __59: bool
+  find __60: bool
+  find __61: bool
+  find __62: bool
+  find __63: bool
+  find __64: bool
+  find __65: bool
+  find __66: bool
+  find __67: bool
+  find __68: bool
+  find __69: bool
+  find __70: bool
+  find __71: bool
+  find __72: bool
+  find __73: bool
+  find __74: bool
+  find __75: bool
+  find __76: bool
+  find __77: bool
+  find __78: bool
+new clauses:
+  (¬__53 \/ ¬b#sat_log_int_00)
+  (__53 \/ b#sat_log_int_00)
+  (¬b#sat_log_int_01 \/ ¬__54)
+  (b#sat_log_int_01 \/ __54)
+  (¬__55)
+  (¬__55 \/ __54)
+  (b#sat_log_int_01 \/ __56)
+  (¬b#sat_log_int_01 \/ ¬__56)
+  (¬__57 \/ __56)
+  (¬__57 \/ __53)
+  (__57 \/ ¬__56 \/ ¬__53)
+  (¬__55 \/ __58)
+  (¬__57 \/ __58)
+  (¬__58 \/ __55 \/ __57)
+  (¬b#sat_log_int_02 \/ ¬__59)
+  (b#sat_log_int_02 \/ __59)
+  (¬__60 \/ __59)
+  (__60 \/ ¬__59)
+  (¬b#sat_log_int_02 \/ __61)
+  (b#sat_log_int_02 \/ ¬__61)
+  (¬__62 \/ __61)
+  (¬__62 \/ __58)
+  (__62 \/ ¬__61 \/ ¬__58)
+  (¬__60 \/ __63)
+  (¬__62 \/ __63)
+  (¬__63 \/ __60 \/ __62)
+  (¬b#sat_log_int_03 \/ ¬__64)
+  (b#sat_log_int_03 \/ __64)
+  (¬__65)
+  (¬__65 \/ __64)
+  (b#sat_log_int_03 \/ __66)
+  (¬b#sat_log_int_03 \/ ¬__66)
+  (¬__67 \/ __66)
+  (¬__67 \/ __63)
+  (__67 \/ ¬__66 \/ ¬__63)
+  (¬__65 \/ __68)
+  (¬__67 \/ __68)
+  (¬__68 \/ __65 \/ __67)
+  (¬b#sat_log_int_04 \/ ¬__69)
+  (b#sat_log_int_04 \/ __69)
+  (¬__70 \/ __69)
+  (__70 \/ ¬__69)
+  (¬b#sat_log_int_04 \/ __71)
+  (b#sat_log_int_04 \/ ¬__71)
+  (¬__72 \/ __71)
+  (¬__72 \/ __68)
+  (__72 \/ ¬__71 \/ ¬__68)
+  (¬__70 \/ __73)
+  (¬__72 \/ __73)
+  (¬__73 \/ __70 \/ __72)
+  (__74)
+  (¬__75 \/ __74)
+  (¬__75 \/ b#sat_log_int_05)
+  (__75 \/ ¬__74 \/ ¬b#sat_log_int_05)
+  (b#sat_log_int_05 \/ __76)
+  (¬b#sat_log_int_05 \/ ¬__76)
+  (¬__77 \/ __76)
+  (¬__77 \/ __73)
+  (__77 \/ ¬__76 \/ ¬__73)
+  (¬__75 \/ __78)
+  (¬__77 \/ __78)
+  (¬__78 \/ __75 \/ __77)
+--
+
+__26,
+__52,
+__78, 
+   ~~> remove_single_atom ([("SAT", 4300)]) 
+__52,
+__78 
+
+new clauses:
+  (__26)
+--
+
+__52,
+__78, 
+   ~~> remove_single_atom ([("SAT", 4300)]) 
+__78 
+
+new clauses:
+  (__52)
+--
+
+__78, 
+   ~~> remove_single_atom ([("SAT", 4300)]) 
+true 
+
+new clauses:
+  (__78)
+--
+
+Final model:
+
+letting A be false
+letting NotA be !(!(!(A)))
+find b: int(1..20)
+find __0: bool
+find __1: bool
+find __2: bool
+find __3: bool
+find __4: bool
+find __5: bool
+find __6: bool
+find __7: bool
+find __8: bool
+find __9: bool
+find __10: bool
+find __11: bool
+find __12: bool
+find __13: bool
+find __14: bool
+find __15: bool
+find __16: bool
+find __17: bool
+find __18: bool
+find __19: bool
+find __20: bool
+find __21: bool
+find __22: bool
+find __23: bool
+find __24: bool
+find __25: bool
+find __26: bool
+find __27: bool
+find __28: bool
+find __29: bool
+find __30: bool
+find __31: bool
+find __32: bool
+find __33: bool
+find __34: bool
+find __35: bool
+find __36: bool
+find __37: bool
+find __38: bool
+find __39: bool
+find __40: bool
+find __41: bool
+find __42: bool
+find __43: bool
+find __44: bool
+find __45: bool
+find __46: bool
+find __47: bool
+find __48: bool
+find __49: bool
+find __50: bool
+find __51: bool
+find __52: bool
+find __53: bool
+find __54: bool
+find __55: bool
+find __56: bool
+find __57: bool
+find __58: bool
+find __59: bool
+find __60: bool
+find __61: bool
+find __62: bool
+find __63: bool
+find __64: bool
+find __65: bool
+find __66: bool
+find __67: bool
+find __68: bool
+find __69: bool
+find __70: bool
+find __71: bool
+find __72: bool
+find __73: bool
+find __74: bool
+find __75: bool
+find __76: bool
+find __77: bool
+find __78: bool
+find b#sat_log_int_00: bool
+find b#sat_log_int_01: bool
+find b#sat_log_int_02: bool
+find b#sat_log_int_03: bool
+find b#sat_log_int_04: bool
+find b#sat_log_int_05: bool
+
+such that
+
+true
+
+clauses:
+
+(¬b#sat_log_int_00 \/ ¬__0),
+(b#sat_log_int_00 \/ __0),
+(¬__1 \/ __0),
+(__1 \/ ¬__0),
+(¬b#sat_log_int_01 \/ ¬__2),
+(b#sat_log_int_01 \/ __2),
+(¬__3 \/ __2),
+(__3 \/ ¬__2),
+(¬b#sat_log_int_01 \/ __4),
+(b#sat_log_int_01 \/ ¬__4),
+(¬__5 \/ __4),
+(¬__5 \/ __1),
+(__5 \/ ¬__4 \/ ¬__1),
+(¬__3 \/ __6),
+(¬__5 \/ __6),
+(¬__6 \/ __3 \/ __5),
+(¬b#sat_log_int_02 \/ ¬__7),
+(b#sat_log_int_02 \/ __7),
+(¬__8),
+(¬__8 \/ __7),
+(b#sat_log_int_02 \/ __9),
+(¬b#sat_log_int_02 \/ ¬__9),
+(¬__10 \/ __9),
+(¬__10 \/ __6),
+(__10 \/ ¬__9 \/ ¬__6),
+(¬__8 \/ __11),
+(¬__10 \/ __11),
+(¬__11 \/ __8 \/ __10),
+(¬b#sat_log_int_03 \/ ¬__12),
+(b#sat_log_int_03 \/ __12),
+(¬__13),
+(¬__13 \/ __12),
+(b#sat_log_int_03 \/ __14),
+(¬b#sat_log_int_03 \/ ¬__14),
+(¬__15 \/ __14),
+(¬__15 \/ __11),
+(__15 \/ ¬__14 \/ ¬__11),
+(¬__13 \/ __16),
+(¬__15 \/ __16),
+(¬__16 \/ __13 \/ __15),
+(¬b#sat_log_int_04 \/ ¬__17),
+(b#sat_log_int_04 \/ __17),
+(¬__18),
+(¬__18 \/ __17),
+(b#sat_log_int_04 \/ __19),
+(¬b#sat_log_int_04 \/ ¬__19),
+(¬__20 \/ __19),
+(¬__20 \/ __16),
+(__20 \/ ¬__19 \/ ¬__16),
+(¬__18 \/ __21),
+(¬__20 \/ __21),
+(¬__21 \/ __18 \/ __20),
+(__22),
+(¬__23 \/ __22),
+(¬__23 \/ b#sat_log_int_05),
+(__23 \/ ¬__22 \/ ¬b#sat_log_int_05),
+(b#sat_log_int_05 \/ __24),
+(¬b#sat_log_int_05 \/ ¬__24),
+(¬__25 \/ __24),
+(¬__25 \/ __21),
+(__25 \/ ¬__24 \/ ¬__21),
+(¬__23 \/ __26),
+(¬__25 \/ __26),
+(¬__26 \/ __23 \/ __25),
+(¬__27 \/ b#sat_log_int_00),
+(__27 \/ ¬b#sat_log_int_00),
+(__28),
+(¬__29 \/ b#sat_log_int_01),
+(¬__29 \/ __28),
+(__29 \/ ¬b#sat_log_int_01 \/ ¬__28),
+(b#sat_log_int_01 \/ __30),
+(¬b#sat_log_int_01 \/ ¬__30),
+(¬__31 \/ __30),
+(¬__31 \/ __27),
+(__31 \/ ¬__30 \/ ¬__27),
+(¬__29 \/ __32),
+(¬__31 \/ __32),
+(¬__32 \/ __29 \/ __31),
+(__33),
+(¬__34 \/ b#sat_log_int_02),
+(¬__34 \/ __33),
+(__34 \/ ¬b#sat_log_int_02 \/ ¬__33),
+(b#sat_log_int_02 \/ __35),
+(¬b#sat_log_int_02 \/ ¬__35),
+(¬__36 \/ __35),
+(¬__36 \/ __32),
+(__36 \/ ¬__35 \/ ¬__32),
+(¬__34 \/ __37),
+(¬__36 \/ __37),
+(¬__37 \/ __34 \/ __36),
+(__38),
+(¬__39 \/ b#sat_log_int_03),
+(¬__39 \/ __38),
+(__39 \/ ¬b#sat_log_int_03 \/ ¬__38),
+(b#sat_log_int_03 \/ __40),
+(¬b#sat_log_int_03 \/ ¬__40),
+(¬__41 \/ __40),
+(¬__41 \/ __37),
+(__41 \/ ¬__40 \/ ¬__37),
+(¬__39 \/ __42),
+(¬__41 \/ __42),
+(¬__42 \/ __39 \/ __41),
+(__43),
+(¬__44 \/ b#sat_log_int_04),
+(¬__44 \/ __43),
+(__44 \/ ¬b#sat_log_int_04 \/ ¬__43),
+(b#sat_log_int_04 \/ __45),
+(¬b#sat_log_int_04 \/ ¬__45),
+(¬__46 \/ __45),
+(¬__46 \/ __42),
+(__46 \/ ¬__45 \/ ¬__42),
+(¬__44 \/ __47),
+(¬__46 \/ __47),
+(¬__47 \/ __44 \/ __46),
+(¬b#sat_log_int_05 \/ ¬__48),
+(b#sat_log_int_05 \/ __48),
+(¬__49 \/ __48),
+(¬__49),
+(b#sat_log_int_05 \/ __50),
+(¬b#sat_log_int_05 \/ ¬__50),
+(¬__51 \/ __50),
+(¬__51 \/ __47),
+(__51 \/ ¬__50 \/ ¬__47),
+(¬__49 \/ __52),
+(¬__51 \/ __52),
+(¬__52 \/ __49 \/ __51),
+(¬__53 \/ ¬b#sat_log_int_00),
+(__53 \/ b#sat_log_int_00),
+(¬b#sat_log_int_01 \/ ¬__54),
+(b#sat_log_int_01 \/ __54),
+(¬__55),
+(¬__55 \/ __54),
+(b#sat_log_int_01 \/ __56),
+(¬b#sat_log_int_01 \/ ¬__56),
+(¬__57 \/ __56),
+(¬__57 \/ __53),
+(__57 \/ ¬__56 \/ ¬__53),
+(¬__55 \/ __58),
+(¬__57 \/ __58),
+(¬__58 \/ __55 \/ __57),
+(¬b#sat_log_int_02 \/ ¬__59),
+(b#sat_log_int_02 \/ __59),
+(¬__60 \/ __59),
+(__60 \/ ¬__59),
+(¬b#sat_log_int_02 \/ __61),
+(b#sat_log_int_02 \/ ¬__61),
+(¬__62 \/ __61),
+(¬__62 \/ __58),
+(__62 \/ ¬__61 \/ ¬__58),
+(¬__60 \/ __63),
+(¬__62 \/ __63),
+(¬__63 \/ __60 \/ __62),
+(¬b#sat_log_int_03 \/ ¬__64),
+(b#sat_log_int_03 \/ __64),
+(¬__65),
+(¬__65 \/ __64),
+(b#sat_log_int_03 \/ __66),
+(¬b#sat_log_int_03 \/ ¬__66),
+(¬__67 \/ __66),
+(¬__67 \/ __63),
+(__67 \/ ¬__66 \/ ¬__63),
+(¬__65 \/ __68),
+(¬__67 \/ __68),
+(¬__68 \/ __65 \/ __67),
+(¬b#sat_log_int_04 \/ ¬__69),
+(b#sat_log_int_04 \/ __69),
+(¬__70 \/ __69),
+(__70 \/ ¬__69),
+(¬b#sat_log_int_04 \/ __71),
+(b#sat_log_int_04 \/ ¬__71),
+(¬__72 \/ __71),
+(¬__72 \/ __68),
+(__72 \/ ¬__71 \/ ¬__68),
+(¬__70 \/ __73),
+(¬__72 \/ __73),
+(¬__73 \/ __70 \/ __72),
+(__74),
+(¬__75 \/ __74),
+(¬__75 \/ b#sat_log_int_05),
+(__75 \/ ¬__74 \/ ¬b#sat_log_int_05),
+(b#sat_log_int_05 \/ __76),
+(¬b#sat_log_int_05 \/ ¬__76),
+(¬__77 \/ __76),
+(¬__77 \/ __73),
+(__77 \/ ¬__76 \/ ¬__73),
+(¬__75 \/ __78),
+(¬__77 \/ __78),
+(¬__78 \/ __75 \/ __77),
+(__26),
+(__52),
+(__78)
+

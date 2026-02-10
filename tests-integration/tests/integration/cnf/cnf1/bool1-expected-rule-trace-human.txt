@@ -9,56 +9,56 @@ and([or([a,b;int(1..)]),or([!(a),b;int(1..)]);int(1..)])
 
 --
 
-!(a), 
-   ~~> apply_tseytin_not ([("SAT", 9005)]) 
-__0 
-new variables:
-  find __0: bool
-new clauses:
-  (¬a \/ ¬__0)
-  (a \/ __0)
---
-
-and([or([a,b;int(1..)]),or([__0,b;int(1..)]);int(1..)]), 
+and([or([a,b;int(1..)]),or([!(a),b;int(1..)]);int(1..)]), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
 or([a,b;int(1..)]),
-or([__0,b;int(1..)]) 
+or([!(a),b;int(1..)]) 
 
 --
 
 or([a,b;int(1..)]), 
-   ~~> apply_tseytin_and_or ([("SAT", 8500)]) 
+   ~~> apply_tseytin_and_or ([("SAT", 4400)]) 
+__0 
+new variables:
+  find __0: bool
+new clauses:
+  (¬a \/ __0)
+  (¬b \/ __0)
+  (¬__0 \/ a \/ b)
+--
+
+!(a), 
+   ~~> apply_tseytin_not ([("SAT", 4400)]) 
 __1 
 new variables:
   find __1: bool
 new clauses:
-  (¬a \/ __1)
-  (¬b \/ __1)
-  (¬__1 \/ a \/ b)
+  (¬a \/ ¬__1)
+  (a \/ __1)
 --
 
-or([__0,b;int(1..)]), 
-   ~~> apply_tseytin_and_or ([("SAT", 8500)]) 
+or([__1,b;int(1..)]), 
+   ~~> apply_tseytin_and_or ([("SAT", 4400)]) 
 __2 
 new variables:
   find __2: bool
 new clauses:
-  (¬__0 \/ __2)
+  (¬__1 \/ __2)
   (¬b \/ __2)
-  (¬__2 \/ __0 \/ b)
+  (¬__2 \/ __1 \/ b)
 --
 
-__1,
+__0,
 __2, 
-   ~~> remove_single_atom ([("SAT", 8400)]) 
+   ~~> remove_single_atom ([("SAT", 4300)]) 
 __2 
 
 new clauses:
-  (__1)
+  (__0)
 --
 
 __2, 
-   ~~> remove_single_atom ([("SAT", 8400)]) 
+   ~~> remove_single_atom ([("SAT", 4300)]) 
 true 
 
 new clauses:
@@ -79,14 +79,14 @@ true
 
 clauses:
 
-(¬a \/ ¬__0),
-(a \/ __0),
-(¬a \/ __1),
-(¬b \/ __1),
-(¬__1 \/ a \/ b),
-(¬__0 \/ __2),
+(¬a \/ __0),
+(¬b \/ __0),
+(¬__0 \/ a \/ b),
+(¬a \/ ¬__1),
+(a \/ __1),
+(¬__1 \/ __2),
 (¬b \/ __2),
-(¬__2 \/ __0 \/ b),
-(__1),
+(¬__2 \/ __1 \/ b),
+(__0),
 (__2)
 
