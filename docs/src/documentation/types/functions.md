@@ -30,13 +30,13 @@ Jectivity is also stored as an Enum inside Conjure-Oxide.
 
 There are seven operators which are defined on functions. These are represented as `Expressions` in Conjure-Oxide.
 
-- Defined(f) - Returns the set of values in the domain for which a function f is defined.
-- Image(f, x) - Returns the element of the codomain which is mapped to domain element x, in function f.
-- ImageSet(f, x) - Returns the set of elements of the codomain which is mapped to domain element x, in function f.
-- Inverse (f1, f2) - Returns a boolean representing if functions f1 and f2 are inverses of each other.
-- PreImage(f, x) - Returns the set of elements of the domain which map to codomain element x, in function f.
-- Range(f) - Returns the set of values in the domain for which a function f is defined.
-- Restrict(f, D) - Returns a sub-function of f which has its mapping restricted to values in the domain D.
+- `Defined(f)` - Returns the set of values in the domain for which a function f is defined.
+- `Image(f, x)` - Returns the element of the codomain which is mapped to domain element x, in function f.
+- `ImageSet(f, x)` - Returns the set of elements of the codomain which is mapped to domain element x, in function f.
+- `Inverse (f1, f2)` - Returns a boolean representing if functions f1 and f2 are inverses of each other.
+- `PreImage(f, x)` - Returns the set of elements of the domain which map to codomain element x, in function f.
+- `Range(f)` - Returns the set of values in the domain for which a function f is defined.
+- `Restrict(f, D)` - Returns a sub-function of f which has its mapping restricted to values in the domain D.
 
 ## Note on Implementation
 
