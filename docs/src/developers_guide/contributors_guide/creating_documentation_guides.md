@@ -1,7 +1,6 @@
 [//]: # (Author: Jamie Melton)
 [//]: # (Last Updated: 09/12/2025)
 
-
 # Creating Documentation
 
 As an organisation, we want Conjure Oxide to be thoroughly documented so that new members of our growing team can integrate smoothly. Whether you are currently on a project or not, contributing to our documentation is essential to achieving this goal.

@@ -1,5 +1,6 @@
+> NOTE: Once the rewrite engine API is finalized, we should possibly make a separate page for it
 <!-- maturity: draft
-authors: Georgii Skorokhod, Hanaa Khan
+authors: Georgii Skorokhod
 created: 16-02-24
 ---- -->
 
@@ -9,7 +10,7 @@ created: 16-02-24
 
 > NOTE: Once the rewrite engine API is finalised, we should possibly make a separate page for it.
 
-## Overview
+# Overview
 
 Conjure uses Essence, a high-level DSL for constraints modelling, and converts it into a solver-specific representation of the problem.
 To do that, we parse the Essence file into an AST, then use a rule engine to walk the expression tree and rewrite constraints into a format that is accepted by the solver before passing the AST to a solver adapter. 
@@ -31,11 +32,9 @@ We want the rewrite process to:
 - be **deterministic** (in a loose sense of the term) - for a given input, set of rules, and a given set of answers to all rule selection questions (see above), the rewriter must always produce the same output
 - happen in a single step, instead of doing multiple passes over the model (like it is done in Saville Row currently)
 
-## Rules 
+# Rules 
 
----
-
-### Overview
+## Overview
 
 Rules are the fundamental part of the rewrite engine.
 They consist of:
@@ -53,7 +52,7 @@ pub struct Rule<'a> {
 }
 ```
 
-### Registering Rules
+## Registering Rules
 
 The main way to register rules is by defining their application function and decorating it with the `#[register_rule()]` macro.
 When this macro is invoked, it creates a static `Rule` object and adds it to a global rule registry. Rules may be registered from the `conjure_oxide` crate, or any downstream crate (so, users may define their own rules).
@@ -63,7 +62,7 @@ Currently, the `register_rule` macro has the following syntax:
 #[register_rule(("<RuleSet name>", <Rule priority within the ruleset>))]
 ```
 
-#### Example
+### Example
 
 ```rust
 use conjure_core::ast::Expression;
@@ -76,7 +75,7 @@ fn identity(expr: &Expression) -> Result<Expression, RuleApplicationError> {
 }
 ```
 
-### Getting Rules from the registry
+## Getting Rules from the registry
 
 Rules may be retrieved using the following functions:
 
@@ -91,9 +90,7 @@ pub fn get_rules() -> Vec<&'static Rule<'static>>
 - `get_rules()` returns a vector of static references to `Rule` structs
 - `get_rule_by_name()` returns a static reference to a specific rule, if it exists
 
-## Rule Sets
-
----
+# Rule Sets
 
 Rule sets group some `Rule`s together and map them to their priorities.
 The `rewrite` function takes a set of `RuleSet`s and uses it to resolve a final list of rules, ordered by their priority.
@@ -106,7 +103,8 @@ The `RuleSet` object contains the following fields:
 - `solvers` The solvers that this `RuleSet` applies for.
 - `solver_families` The solver families that this `RuleSet` applies for.
 
-> NOTE: A `RuleSet` would apply if EITHER of the following is true:
+> [!NOTE] 
+> A `RuleSet` would apply if EITHER of the following is true:
 >  - The target solver belongs to its list of `solvers`
 >  - The target solver belongs to a family that is listed in `solver_families`, even if it is not explicitly named in `solvers`
 
@@ -115,7 +113,7 @@ It provides the following public methods:
 - `get_dependencies() -> &HashSet<&'static RuleSet>` Get the dependency `RuleSet`s of this `RuleSet` (evaluating them lazily if necessary)
 - `get_rules() -> &HashMap<&'a Rule<'a>, u8>` Get a map of rules to their priorities (performing lazy evaluation - "reversing the arrows" - if necessary)
 
-### Registering Rule Sets
+## Registering Rule Sets
 
 Like `Rule`s, `RuleSet`s may be registered from anywhere within the `conjure_oxide` crate or any downstream crate.
 They are registered using the `register_rule_set!` macro using the following syntax:
@@ -133,13 +131,13 @@ register_rule_set!("MyRuleSet", 10, (SolverFamily::CNF)) // This is illegal beca
 register_rule_set!("MyRuleSet", 10, (), (SolverFamily::CNF)) // But this is fine
 ```
 
-#### Example
+### Example
 
 ```rust
 register_rule_set!("MyRuleSet", 10, ("DependencyRuleSet", "AnotherRuleSet"), (SolverFamily::CNF), (SolverName::Minion));
 ```
 
-#### Adding Rules to RuleSets
+### Adding Rules to RuleSets
 
 Notice that we do not add any rules to the `RuleSet` when we register it.
 Instead, the `Rule` contains the names of the `RuleSets` that it needs to be added to.
@@ -148,11 +146,11 @@ At runtime, when we first request the `rules` from a `RuleSet`, it retrieves a l
 
 This is done to allow us to statically initialise `Rule`s and `RuleSet`s in a decentralised way across multiple files and store them in a single registry. Dynamic data structures (like `Vec` or `HashMap`) cannot be initialised at this stage (Rust has no "life before `main()`"), so we have to initialise them lazily at runtime.
 
-![image](./expression_rewriting_diagram.png)
+![image](https://github.com/conjure-cp/conjure-oxide/assets/64529579/6d63547c-6ba0-4eeb-b6ad-0f6ef46f4c43)
 
 Internally, we would sometimes refer to this lazy initialisation as "reversing the arrows".
 
-### Getting RuleSets from the registry
+## Getting RuleSets from the registry
 
 Similarly to `Rule`s, `RuleSet`s may be retrieved using the following functions:
 
@@ -164,9 +162,7 @@ pub fn get_rule_set_by_name(name: &str) -> Option<&'static RuleSet<'static>>
 pub fn get_rule_sets() -> Vec<&'static RuleSet<'static>>
 ```
 
-## Resolving a final list of `Rule`s
-
----
+# Resolving a final list of `Rule`s
 
 Our `rewrite` function takes an `Expression` along with a list of `RuleSet`s to apply:
 
@@ -201,9 +197,9 @@ This is done via the following steps:
 In the end, we should have a final deterministically ordered list of rules and a `HashMap` that maps them to their priorities.
 Now, we can proceed with rewriting.
 
-### Why all this weirdness?
+## Why all this weirdness?
 
-#### Rule ordering
+### Rule ordering
 
 We want to always have a single deterministic ordering of `Rule`s. This way, for a given set of rules, the `select_rule` strategy would always give the same result. 
 
@@ -213,7 +209,7 @@ This is why we sort `Rule`s by priority, and then use their name (which is guara
 
 Normally, one would just construct a vector of `Rule`s and use it as the final ordering, but we cannot do that, because rules are registered in a decentralised way across many files, and when we get them from the rule registry, they are not guaranteed to be in any specific order
 
-#### RuleSet ordering
+### RuleSet ordering
 
 As part of resolving the list of rules to use, we need to take rules from multiple `RuleSet`s and put these rules and their priorities in a `HashMap`. However, the `RuleSet`s may overlap (i.e. contain the same rules but with different priorities), and we want to make sure that, for a given set of `RuleSet`s, the final rule priorities will always be the same.
 
@@ -228,6 +224,9 @@ To achieve this, we use the following algorithm:
         - If this `RuleSet` has a higher `order` than the one that the rule came from, update its priority
         - Otherwise, don't change anything
 
+> [!NOTE] 
+> The `order` of a `RuleSet` should not be thought of as a "priority" and does not affect the priorities of the rules in it.
+> It only provides a consistent order of operations when resolving the final set of rules
 > NOTE: The `order` of a `RuleSet` should not be thought of as a "priority" and does not affect the priorities of the rules in it.
 > It only provides a consistent order of operations when resolving the final set of rules
 

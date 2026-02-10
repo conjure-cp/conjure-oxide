@@ -1,13 +1,14 @@
 <!-- TODO: Edit this -->
 
+# Github Actions Cookbook
+
 * This document lists common patterns and issues we've had in our Github actions, and practical solutions to them. 
 * The first point of reference should be the official documentation, but if that is ever unclear, here would be a good place to look!
 
 Terminology used in this document: 
  * A *workflow* contains multiple independently ran *tasks*. Each task runs a series of *steps*. Steps can call predefined *actions*, or run shell commands.
 
-<details>
-<summary><h3>I want to have a step output multilined / complex text</h3></summary>
+## I want to have a step output multilined / complex text
 
 ```yml
 - name: Calculate PR doc coverage
@@ -20,18 +21,15 @@ Terminology used in this document:
 ```
 
 The entire output of `cargo doc` can be substituted into later jobs by using `${{ steps.prdoc.outputs.coverage }}`
-</details> 
-<details>
-<summary><h3>workflow_run: I want a workflow that runs on a PR and can write to the repo</h3></summary>
+
+## workflow_run: I want a workflow that runs on a PR and can write to the repo
 
 PR branches and their workflows typically live in on a branch on an external fork. Therefore, they cannot write to the repository. The solution is to split things into two workflows - one that runs on the PR with read-only permissions, and one that runs on main and can write to the repository. This is called a `workflow_run` workflow. Read [the docs](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_run).
 
 
 **The workflow_run workflow should not run any user provided code as it has secrets in scope.**
 
-</details> 
-<details>
-<summary><h3>I want to access the calling PR in a workflow_run workflow</h3></summary>
+## I want to access the calling PR in a workflow_run workflow
 
 `workflow_run` jobs do not get access to the calling workflows detail. While one can access some things via the Github API such as head_sha, head_repo, this may not give any PR information. [Github](https://securitylab.github.com/research/github-actions-preventing-pwn-requests/) recommends saving the PR number to an artifact, and using this number to fetch the PR info through the API:
 
@@ -121,17 +119,13 @@ jobs:
             });
 
 ```
-</details>
-<details>
-<summary><h3>How do I get x commit inside a PR workflow? What do all the different github sha's mean?</h3></summary>
+
+## How do I get x commit inside a PR workflow? What do all the different github sha's mean?
 
 **If you are running in a workflow_run workflow, you will need to get the calling PR first. See [I want to access the calling PR in a workflow_run workflow](https://github.com/conjure-cp/conjure-oxide/wiki/_new#i-want-to-access-the-calling-pr-in-a-workflow_run-workflow) instead.**
 
 
 The default `github.sha` is a temporary commit representing the state of the repo should the PR be merged now. You probably want `github.event.pull_request.head.sha`. Read [The many SHAs of a github pull request](https://www.kenmuse.com/blog/the-many-shas-of-a-github-pull-request/).
-
-
-</details>
 
 ---
 
