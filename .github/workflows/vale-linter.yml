@@ -1,0 +1,34 @@
+# Taken directly from the Vale GitHub Action documentation
+# https://github.com/marketplace/actions/vale-linter
+
+name: Vale Linter
+on:
+    pull_request_target:
+        branches: [main]
+
+permissions:
+    pull-requests: write
+    contents: read
+    checks: write
+jobs:
+    vale:
+        name: Vale Runner
+        env:
+            REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - uses: errata-ai/vale-action@v2.1.1
+              with:
+                  # Path to documentation files
+                  files: ./docs
+                  # Fail immediately when errors are found
+                  fail_on_error: true
+                  # Reporter is the way in which the CI shows you the errors in documentation.
+                  # For more information, check https://github.com/reviewdog/reviewdog?tab=readme-ov-file#reporters
+                  reporter: github-check
+                  # Apply to all files in the repo, regardless of changes.
+                  filter_mode: nofilter
+                  # Vale CLI flags: set minimum alert level to error
+                  vale_flags: "--minAlertLevel=error --no-wrap"

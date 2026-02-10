@@ -260,3 +260,34 @@ fn sat_direct_lt(
 
     cum_result
 }
+
+/// Converts a - expression for a SATInt to a new SATInt
+///
+/// ```text
+/// -SATInt(a) ~> SATInt(b)
+///
+/// ```
+#[register_rule(("SAT_Direct", 9100))]
+fn neg_sat_direct(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    let Expr::Neg(_, value) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let (binding, old_min, old_max) = validate_direct_int_operands(vec![value.as_ref().clone()])?;
+    let [val_bits] = binding.as_slice() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let new_min = -old_max;
+    let new_max = -old_min;
+
+    let mut out = val_bits.clone();
+    out.reverse();
+
+    Ok(Reduction::pure(Expr::SATInt(
+        Metadata::new(),
+        SATIntEncoding::Direct,
+        Moo::new(into_matrix_expr!(out)),
+        (new_min, new_max),
+    )))
+}
