@@ -215,8 +215,6 @@ fn parse_domain(
             Ok(Domain::set(attr, domain))
         }
         "DomainMSet" => {
-            // confirm it's an object, confirm the object is not empty, Parse the attributes, thne create an Ok()
-
             let dom = domain_value
                 .get(2)
                 .and_then(|v| v.as_object())
