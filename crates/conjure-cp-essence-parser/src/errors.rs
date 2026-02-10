@@ -49,26 +49,22 @@ impl EssenceParseError {
                 source_code,
             } => {
                 // If we have all the info, format nicely
-                if let (Some(range), Some(file_name), Some(source_code)) = (range, file_name, source_code) {
+                if let (Some(range), Some(file_name), Some(source_code)) =
+                    (range, file_name, source_code)
+                {
                     let line_num = range.start_point.row + 1; // tree-sitter uses 0-indexed rows
                     let col_num = range.start_point.column + 1; // tree-sitter uses 0-indexed columns
-                    
+
                     // Get the specific line from source code
                     let lines: Vec<&str> = source_code.lines().collect();
                     let line_content = lines.get(range.start_point.row).unwrap_or(&"");
-                    
+
                     // Build the pointer line (spaces + ^)
                     let pointer = " ".repeat(range.start_point.column) + "^";
-                    
+
                     format!(
                         "{}:{}:{}:\n  |\n{} | {}\n  | {}\n{}",
-                        file_name,
-                        line_num,
-                        col_num,
-                        line_num,
-                        line_content,
-                        pointer,
-                        msg
+                        file_name, line_num, col_num, line_num, line_content, pointer, msg
                     )
                 } else {
                     // Fall back to simple format

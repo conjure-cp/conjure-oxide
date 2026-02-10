@@ -20,18 +20,16 @@ pub fn parse_essence_file_native(
 ) -> Result<Model, EssenceParseError> {
     let source_code = fs::read_to_string(path)
         .unwrap_or_else(|_| panic!("Failed to read the source code file {path}"));
-    
+
     parse_essence_with_context(&source_code, context).map_err(|e| {
         // Enhance the error with file name and source code
         match e {
-            EssenceParseError::SyntaxError { msg, range, .. } => {
-                EssenceParseError::SyntaxError {
-                    msg,
-                    range,
-                    file_name: Some(path.to_string()),
-                    source_code: Some(source_code.clone()),
-                }
-            }
+            EssenceParseError::SyntaxError { msg, range, .. } => EssenceParseError::SyntaxError {
+                msg,
+                range,
+                file_name: Some(path.to_string()),
+                source_code: Some(source_code.clone()),
+            },
             other => other,
         }
     })
