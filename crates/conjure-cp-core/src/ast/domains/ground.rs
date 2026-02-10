@@ -271,7 +271,7 @@ impl GroundDomain {
                 for sz in min_sz..=max_sz {
                     // need  "multichoose", ((n  k)) == (n+k-1  k)
                     // Where n=inner_len and k=sz
-                    let c = count_combinations(inner_len+sz-1, sz)?;
+                    let c = count_combinations(inner_len + sz - 1, sz)?;
                     ans = ans.checked_add(c).ok_or(DomainOpError::TooLarge)?;
                 }
                 Ok(ans)

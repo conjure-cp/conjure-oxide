@@ -16,7 +16,7 @@ use crate::ast::comprehension::ComprehensionBuilder;
 use crate::ast::records::RecordValue;
 use crate::ast::{
     AbstractLiteral, Atom, DeclarationPtr, Domain, Expression, FuncAttr, IntVal, JectivityAttr,
-    Literal, Name, PartialityAttr, Range, RecordEntry, SetAttr, SymbolTable,
+    Literal, MSetAttr, Name, PartialityAttr, Range, RecordEntry, SetAttr, SymbolTable,
 };
 use crate::ast::{DeclarationKind, Moo};
 use crate::ast::{DomainPtr, Metadata};
@@ -214,6 +214,40 @@ fn parse_domain(
             let size = parse_size_attr(size, symbols)?;
             let attr: SetAttr<IntVal> = SetAttr { size };
             Ok(Domain::set(attr, domain))
+        }
+        "DomainMSet" => {
+            // confirm it's an object, confirm the object is not empty, Parse the attributes, thne create an Ok()
+
+            let dom = domain_value
+                .get(2)
+                .and_then(|v| v.as_object())
+                .expect("domain object exists");
+            let domain = dom
+                .iter()
+                .next()
+                .ok_or(Error::Parse("DomainMSet is an empty object".to_owned()))?;
+            let domain = parse_domain(domain.0.as_str(), domain.1, symbols)?;
+
+            // Parse Attributes
+            let attributes = domain_value
+                .get(1)
+                .and_then(|v| v.as_array())
+                .ok_or(error!("MSet attributes is not a json array"))?;
+
+            let size = attributes
+                .first()
+                .and_then(|v| v.as_object())
+                .ok_or(error!("MSet size attributes is not an object"))?;
+            let size = parse_size_attr(size, symbols)?;
+
+            let occurrence = attributes
+                .get(1)
+                .and_then(|v| v.as_object())
+                .ok_or(error!("MSet occurrence attributes is not an object"))?;
+            let occurrence = parse_occur_attr(occurrence, symbols)?;
+
+            let attr: MSetAttr<IntVal> = MSetAttr { size, occurrence };
+            Ok(Domain::mset(attr, domain))
         }
 
         "DomainMatrix" => {
@@ -443,6 +477,52 @@ fn parse_size_attr(
             Ok(Range::Single(size_int.into()))
         }
         _ => Err(Error::Parse("SizeAttr is an unknown type".to_owned())),
+    }
+}
+
+fn parse_occur_attr(
+    attr_map: &JsonMap<String, JsonValue>,
+    symbols: &mut SymbolTable,
+) -> Result<Range<IntVal>> {
+    let attr_obj = attr_map
+        .iter()
+        .next()
+        .ok_or(Error::Parse("OccurAttr is an empty object".to_owned()))?;
+    match attr_obj.0.as_str() {
+        "OccurAttr_None" => Ok(Range::Unbounded),
+        "OccurAttr_MinOccur" => {
+            let size_int = parse_domain_value_int(attr_obj.1, symbols)
+                .ok_or(error!("Could not parse int domain constant"))?;
+            Ok(Range::UnboundedR(size_int.into()))
+        }
+        "OccurAttr_MaxOccur" => {
+            let size_int = parse_domain_value_int(attr_obj.1, symbols)
+                .ok_or(error!("Could not parse int domain constant"))?;
+            Ok(Range::UnboundedL(size_int.into()))
+        }
+        "OccurAttr_MinMaxOccur" => {
+            let min_max = attr_obj
+                .1
+                .as_array()
+                .ok_or(error!("OccurAttr MinMaxOccur is not a json array"))?;
+            let min = min_max
+                .first()
+                .ok_or(error!("OccurAttr Min is not present"))?;
+            let min_int = parse_domain_value_int(min, symbols)
+                .ok_or(error!("Could not parse int domain constant"))?;
+            let max = min_max
+                .get(1)
+                .ok_or(error!("OccurAttr Max is not present"))?;
+            let max_int = parse_domain_value_int(max, symbols)
+                .ok_or(error!("Could not parse int domain constant"))?;
+            Ok(Range::Bounded(min_int.into(), max_int.into()))
+        }
+        "OccurAttr_Size" => {
+            let size_int = parse_domain_value_int(attr_obj.1, symbols)
+                .ok_or(error!("Could not parse int domain constant"))?;
+            Ok(Range::Single(size_int.into()))
+        }
+        _ => Err(Error::Parse("OccurAttr is an unknown type".to_owned())),
     }
 }
 
