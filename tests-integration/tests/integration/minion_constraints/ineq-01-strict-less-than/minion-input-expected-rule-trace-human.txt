@@ -1,0 +1,32 @@
+Model before rewriting:
+
+find x: int(1..4)
+find y: int(1..4)
+
+such that
+
+(x < y)
+
+--
+
+(x < y), 
+   ~~> lt_to_leq ([("Minion", 8400)]) 
+(x <= sum([y,-1;int(1..)])) 
+
+--
+
+(x <= sum([y,-1;int(1..)])), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+SumGeq([-1, y], x) 
+
+--
+
+Final model:
+
+find x: int(1..4)
+find y: int(1..4)
+
+such that
+
+SumGeq([-1, y], x)
+
