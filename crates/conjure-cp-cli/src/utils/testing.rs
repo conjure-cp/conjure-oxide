@@ -107,7 +107,6 @@ pub fn serialize_model(model: &ConjureModel) -> Result<String, JsonError> {
     
     // Convert to JSON with stable IDs
     let json_with_stable_ids = model_to_json_with_stable_ids(&serde_model)?;
-    println!("goofball1");
 
     // Sort JSON object keys for consistent output
     let sorted_json = sort_json_object(&json_with_stable_ids, false);
