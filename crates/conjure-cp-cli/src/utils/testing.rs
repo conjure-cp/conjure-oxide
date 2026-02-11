@@ -123,9 +123,7 @@ pub fn save_model_json(
     solver: Option<SolverFamily>,
 ) -> Result<(), std::io::Error> {
     let marker = solver.map_or("agnostic", |s| s.as_str());
-    println!("AAAH1!");
     let generated_json_str = serialize_model(model)?;
-    println!("AAAH!");
     let generated_json_str = maybe_truncate_serialised_json(generated_json_str, test_stage);
     let filename = format!("{path}/{marker}-{test_name}.generated-{test_stage}.serialised.json");
     println!("saving: {}", filename);
