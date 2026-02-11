@@ -139,7 +139,6 @@ fn solver_specific_integration_test(
     verbose: bool,
     accept: bool,
 ) -> Result<(), Box<dyn Error>> {
-
     let solver_name = solver.as_str();
 
     let subscriber = create_scoped_subscriber(path, essence_base, &solver_name);
@@ -215,7 +214,6 @@ fn integration_test_inner(
     // File path
     let file_path = format!("{path}/{essence_base}.{extension}");
 
-    
     // Stage 1a: Parse the model using the selected parser
     let parsed_model = if config.enable_native_parser {
         {
@@ -227,7 +225,7 @@ fn integration_test_inner(
             println!("Parsed model (native): {model:#?}");
         }
         save_model_json(&model, path, essence_base, "parse", None)?;
-        
+
         model
     // Stage 1b: Parse the model using the legacy parser
     } else {
@@ -363,7 +361,6 @@ fn integration_test_inner(
         );
     }
 
-
     // When ACCEPT=true, copy all generated files to expected
     if accept {
         copy_generated_to_expected(path, essence_base, "parse", "serialised.json", None)?;
@@ -426,7 +423,6 @@ fn integration_test_inner(
         )?;
         assert_eq!(generated_rewrite, expected_rewrite);
     }
-
 
     // Check Stage 3a (solutions)
     if config.solve_with_minion {

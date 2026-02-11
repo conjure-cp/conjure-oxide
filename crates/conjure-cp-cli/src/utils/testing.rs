@@ -104,7 +104,7 @@ pub fn assert_eq_any_order<T: Eq + Hash + Debug + Clone>(a: &Vec<Vec<T>>, b: &Ve
 
 pub fn serialize_model(model: &ConjureModel) -> Result<String, JsonError> {
     let serde_model: SerdeModel = model.clone().into();
-    
+
     // Convert to JSON with stable IDs
     let json_with_stable_ids = model_to_json_with_stable_ids(&serde_model)?;
 
