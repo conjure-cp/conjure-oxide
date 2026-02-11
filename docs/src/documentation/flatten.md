@@ -7,7 +7,10 @@ created: 21-12-25
 ## Usage in Essence
 With one argument, `flatten(M)` returns a one-dimensional matrix containing all the elements of the input matrix. 
 
-With two arguments, `flatten(n,M)` the first n+1 dimensions are flattened into one dimension. This feature has not yet been implemented.
+With two arguments, `flatten(n,M)` the first n+1 dimensions are flattened into one dimension. 
+
+> [WARNING!]
+> `flatten(n,M)` has not yet been implemented.
 
 ## Expression variant
 The `Flatten` variant of `Expression` in the AST has structure defined as
