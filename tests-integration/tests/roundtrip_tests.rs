@@ -110,7 +110,6 @@ fn roundtrip_test_inner(
             
             // When ACCEPT = true, copy over generated to expected
             if accept {
-                println!("AAHH1");
 
                 std::fs::copy(
                     format!("{path}/agnostic-{output_filename}.generated-parse.serialised.json"),
@@ -135,7 +134,6 @@ fn roundtrip_test_inner(
                     format!("Expected output file not found: Run with ACCEPT=true"),
                 )));
             }
-            println!("AAHH2");
 
             // Compare the expected and generated model
             let expected_model = read_model_json(
