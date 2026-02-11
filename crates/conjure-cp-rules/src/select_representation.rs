@@ -150,7 +150,8 @@ fn select_representation(expr: &Expr, symbols: &SymbolTable) -> ApplicationResul
 
     // thing we are representing must be a variable
     {
-        decl.ptr().as_var().ok_or(RuleNotApplicable)?;
+        let guard = decl.ptr().as_var().ok_or(RuleNotApplicable)?;
+        drop(guard);
     }
 
     if !needs_representation(&name, symbols) {

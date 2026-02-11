@@ -255,6 +255,7 @@ fn integration_test_inner(
             match config.sat_encoding.as_str() {
                 "log" => extra_rules.push("SAT_Log"),
                 "direct" => extra_rules.push("SAT_Direct"),
+                "order" => extra_rules.push("SAT_Order"),
                 _ => panic!("Unknown SAT encoding: {}", config.sat_encoding),
             }
         }

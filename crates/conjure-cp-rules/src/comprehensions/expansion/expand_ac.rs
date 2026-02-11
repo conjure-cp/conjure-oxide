@@ -1,6 +1,5 @@
 use std::{
     collections::{HashMap, VecDeque},
-    rc::Rc,
     sync::{Arc, Mutex, RwLock, atomic::Ordering},
 };
 
@@ -46,7 +45,7 @@ pub fn expand_ac(
     // In the generator symbol-table, induction variables are decision variables (as we are
     // solving for them), but in the return expression symbol table they are givens.
     let induction_vars_2 = comprehension.induction_vars.clone();
-    let generator_symtab_ptr = Rc::clone(comprehension.generator_submodel.symbols_ptr_unchecked());
+    let generator_symtab_ptr = comprehension.generator_submodel.symbols_ptr_unchecked();
     let return_expression =
         comprehension
             .clone()
@@ -56,8 +55,8 @@ pub fn expand_ac(
                 if induction_vars_2.contains(&decl.name()) {
                     // ... use the generator symbol tables version of it
 
-                    (*generator_symtab_ptr)
-                        .borrow()
+                    generator_symtab_ptr
+                        .read()
                         .lookup_local(&decl.name())
                         .unwrap()
                 } else {
