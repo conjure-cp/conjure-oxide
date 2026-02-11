@@ -1,9 +1,9 @@
 use std::fs;
 use std::sync::{Arc, RwLock};
 
-use conjure_cp_core::Model;
 use conjure_cp_core::ast::{DeclarationPtr, Expression, Metadata, Moo};
 use conjure_cp_core::context::Context;
+use conjure_cp_core::Model;
 #[allow(unused)]
 use uniplate::Uniplate;
 
@@ -18,10 +18,6 @@ pub fn parse_essence_file_native(
     path: &str,
     context: Arc<RwLock<Context<'static>>>,
 ) -> Result<Model, EssenceParseError> {
-    let binding = context.clone();
-    let guard = binding.read().expect("poisoned RwLock");
-    println!("{:#?}", *guard);
-
     let source_code = fs::read_to_string(path)
         .unwrap_or_else(|_| panic!("Failed to read the source code file {path}"));
     parse_essence_with_context(&source_code, context)
@@ -41,7 +37,6 @@ pub fn parse_essence_with_context(
     };
 
     let mut model = Model::new(context);
-    // let symbols = model.as_submodel().symbols().clone();
     let root_node = tree.root_node();
     let symbols_ptr = model.as_submodel().symbols_ptr_unchecked().clone();
     for statement in named_children(&root_node) {

@@ -22,10 +22,10 @@ use conjure_cp::error::Error;
 use crate::utils::conjure::solutions_to_json;
 use crate::utils::json::sort_json_object;
 use crate::utils::misc::to_set;
-use conjure_cp::Model as ConjureModel;
 use conjure_cp::ast::Name::User;
 use conjure_cp::ast::{Literal, Name};
 use conjure_cp::solver::SolverFamily;
+use conjure_cp::Model as ConjureModel;
 
 /// Limit how many lines of the rewrite serialisation we persist/compare in integration tests.
 pub const REWRITE_SERIALISED_JSON_MAX_LINES: usize = 1000;
@@ -253,17 +253,12 @@ pub fn read_solutions_json(
     prefix: &str,
     solver: SolverFamily,
 ) -> Result<JsonValue, anyhow::Error> {
-    // let solver_name = solver.as_str();
-
     let solver_name = match solver {
         SolverFamily::Sat => "sat",
         #[cfg(feature = "smt")]
         SolverFamily::Smt(..) => "smt",
         SolverFamily::Minion => "minion",
     };
-    // let filename =
-    //     format!("{path}/{solver_name}-{test_name}.{prefix}-{solver_name}.solutions.json");
-    // let _expected_json_str = std::fs::read_to_string(filename)?;
     let expected_json_str = read_with_path(format!(
         "{path}/{solver_name}-{test_name}.{prefix}-{solver_name}.solutions.json"
     ))?;
