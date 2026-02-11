@@ -1,9 +1,9 @@
 use std::fs;
 use std::sync::{Arc, RwLock};
 
+use conjure_cp_core::Model;
 use conjure_cp_core::ast::{DeclarationPtr, Expression, Metadata, Moo};
 use conjure_cp_core::context::Context;
-use conjure_cp_core::Model;
 #[allow(unused)]
 use uniplate::Uniplate;
 
