@@ -298,7 +298,6 @@ impl SerdeModel {
                 .iter_local()
                 .for_each(|(_, decl)| visit(decl.id()));
         }
-        println!("bruh1");
 
         // Create stable mapping: original_id -> stable_id
         let mut id_map = HashMap::new();

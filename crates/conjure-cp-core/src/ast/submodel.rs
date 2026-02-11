@@ -121,7 +121,6 @@ impl SubModel {
         let Expression::Root(_, constraints) = self.constraints.as_ref() else {
             bug!("The top level expression in a submodel should be Expr::Root");
         };
-        println!("cons");
         constraints
     }
 

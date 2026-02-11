@@ -36,9 +36,7 @@ pub const REWRITE_SERIALISED_JSON_MAX_LINES: usize = 1000;
 /// regardless of the order in which objects were created in memory.
 fn model_to_json_with_stable_ids(model: &SerdeModel) -> Result<JsonValue, JsonError> {
     // Collect stable ID mapping using uniplate traversal on the SerdeModel
-    println!("ungoofball1");
     let id_map = model.collect_stable_id_mapping();
-    println!("ungoofball2");
 
     // Serialize the model to JSON
     let mut json = serde_json::to_value(model)?;
