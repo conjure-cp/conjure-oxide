@@ -1,6 +1,5 @@
 use std::collections::BTreeMap;
 use std::path::PathBuf;
-use std::rc::Rc;
 use std::string::ToString;
 use std::sync::{Arc, Mutex, RwLock};
 
@@ -33,7 +32,7 @@ pub fn get_solutions(
     eprintln!("Building {adaptor_name} model...");
 
     // Create for later since we consume the model when loading it
-    let symbols_rc = Rc::clone(model.as_submodel().symbols_ptr_unchecked());
+    let symbols_ptr = model.as_submodel().symbols_ptr_unchecked().clone();
 
     let solver = solver.load_model(model)?;
 
@@ -85,7 +84,7 @@ pub fn get_solutions(
     #[allow(clippy::unwrap_used)]
     let mut sols_guard = (*all_solutions_ref).lock().unwrap();
     let sols = &mut *sols_guard;
-    let symbols = symbols_rc.borrow();
+    let symbols = symbols_ptr.read();
 
     // Get the representations for each variable by name, since some variables are
     // divided into multiple auxiliary variables(see crate::representation::Representation)
