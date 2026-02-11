@@ -85,10 +85,10 @@ impl<A> MSetAttr<A> {
 impl<A: Display> Display for MSetAttr<A> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let size_str = match &self.size {
-            Range::Single(x) => format!("size {x} "),
-            Range::Bounded(l, r) => format!("minSize {l} , maxSize {r} "),
-            Range::UnboundedL(r) => format!("maxSize {r} "),
-            Range::UnboundedR(l) => format!("minSize {l} "),
+            Range::Single(x) => format!("size {x}"),
+            Range::Bounded(l, r) => format!("minSize {l} , maxSize {r}"),
+            Range::UnboundedL(r) => format!("maxSize {r}"),
+            Range::UnboundedR(l) => format!("minSize {l}"),
             Range::Unbounded => "".to_string(),
         };
 
@@ -96,9 +96,9 @@ impl<A: Display> Display for MSetAttr<A> {
         // so for single ranges it is still presented as min and max occurrence.
         let occ_str = match &self.occurrence {
             Range::Single(x) => format!("minOccur {x}, maxOccur {x}"),
-            Range::Bounded(l, r) => format!("minOccur {l} , maxOccur {r} "),
-            Range::UnboundedL(r) => format!("maxOccur {r} "),
-            Range::UnboundedR(l) => format!("minOccur {l} "),
+            Range::Bounded(l, r) => format!("minOccur {l} , maxOccur {r}"),
+            Range::UnboundedL(r) => format!("maxOccur {r}"),
+            Range::UnboundedR(l) => format!("minOccur {l}"),
             Range::Unbounded => "".to_string(),
         };
 
