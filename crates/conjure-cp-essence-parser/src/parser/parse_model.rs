@@ -32,7 +32,7 @@ pub fn parse_essence_file_native(
             },
             other => other,
         };
-        
+
         // Wrap single error in a collection
         Box::new(ParseErrorCollection::new(vec![enhanced_error]))
     })
