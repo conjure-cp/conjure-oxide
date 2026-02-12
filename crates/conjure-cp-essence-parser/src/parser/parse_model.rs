@@ -10,20 +10,20 @@ use uniplate::Uniplate;
 use super::find::parse_find_statement;
 use super::letting::parse_letting_statement;
 use super::util::{get_tree, named_children};
-use crate::errors::EssenceParseError;
+use crate::errors::{EssenceParseError, ParseErrorCollection};
 use crate::expression::parse_expression;
 
 /// Parse an Essence file into a Model using the tree-sitter parser.
 pub fn parse_essence_file_native(
     path: &str,
     context: Arc<RwLock<Context<'static>>>,
-) -> Result<Model, EssenceParseError> {
+) -> Result<Model, Box<ParseErrorCollection>> {
     let source_code = fs::read_to_string(path)
         .unwrap_or_else(|_| panic!("Failed to read the source code file {path}"));
 
     parse_essence_with_context(&source_code, context).map_err(|e| {
         // Enhance the error with file name and source code
-        match e {
+        let enhanced_error = match e {
             EssenceParseError::ParseError { msg, range, .. } => EssenceParseError::ParseError {
                 msg,
                 range,
