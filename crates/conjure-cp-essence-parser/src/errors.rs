@@ -6,7 +6,7 @@ use serde_json::Error as JsonError;
 pub enum EssenceParseError {
     TreeSitterError(String),
     ConjurePrettyError(String),
-    SyntaxError {
+    ParseError {
         msg: String,
         range: Option<tree_sitter::Range>,
         file_name: Option<String>,
@@ -19,7 +19,7 @@ pub enum EssenceParseError {
 
 impl EssenceParseError {
     pub fn syntax_error(msg: String, range: Option<tree_sitter::Range>) -> Self {
-        EssenceParseError::SyntaxError {
+        EssenceParseError::ParseError {
             msg,
             range,
             file_name: None,
@@ -37,7 +37,7 @@ impl std::fmt::Display for EssenceParseError {
             EssenceParseError::ConjurePrettyError(msg) => {
                 write!(f, "Error running `conjure pretty`: {}", msg)
             }
-            EssenceParseError::SyntaxError {
+            EssenceParseError::ParseError {
                 msg,
                 range,
                 file_name,
@@ -112,10 +112,10 @@ impl std::fmt::Display for ParseErrorCollection {
         indices.sort_by(|&a, &b| {
             match (&self.errors[a], &self.errors[b]) {
                 (
-                    EssenceParseError::SyntaxError {
+                    EssenceParseError::ParseError {
                         range: Some(r1), ..
                     },
-                    EssenceParseError::SyntaxError {
+                    EssenceParseError::ParseError {
                         range: Some(r2), ..
                     },
                 ) => {
@@ -128,10 +128,10 @@ impl std::fmt::Display for ParseErrorCollection {
                     }
                 }
                 // Errors without ranges go last
-                (EssenceParseError::SyntaxError { range: Some(_), .. }, _) => {
+                (EssenceParseError::ParseError { range: Some(_), .. }, _) => {
                     std::cmp::Ordering::Less
                 }
-                (_, EssenceParseError::SyntaxError { range: Some(_), .. }) => {
+                (_, EssenceParseError::ParseError { range: Some(_), .. }) => {
                     std::cmp::Ordering::Greater
                 }
                 _ => std::cmp::Ordering::Equal,

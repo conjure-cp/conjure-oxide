@@ -59,7 +59,7 @@ fn mk_expr(node: Node, src: &str, root: &Node, tt: &TokenTree) -> Result<TokenSt
         Ok(expr) => Ok(expr.ctor_tokens()),
         Err(err) => {
             let error_message = match err {
-                EssenceParseError::SyntaxError {
+                EssenceParseError::ParseError {
                     msg,
                     range: Some(rng),
                     ..
