@@ -1,6 +1,6 @@
 use conjure_cp::Model;
 use conjure_cp::context::Context;
-use conjure_cp::parse::tree_sitter::EssenceParseError;
+use conjure_cp::parse::tree_sitter::errors::{EssenceParseError, ParseErrorCollection};
 use conjure_cp::parse::tree_sitter::{parse_essence_file, parse_essence_file_native};
 use conjure_cp_cli::utils::testing::{read_model_json, save_model_json};
 
@@ -54,13 +54,9 @@ fn roundtrip_test(path: &str, filename: &str, extension: &str) -> Result<(), Box
     // Runs legacy Conjure parser
     if file_config.parsers.contains(&format!("legacy")) {
         let new_filename = filename.to_owned() + "-legacy";
-        roundtrip_test_inner(
-            path,
-            &filename,
-            &new_filename,
-            extension,
-            parse_essence_file,
-        )?;
+        roundtrip_test_inner(path, &filename, &new_filename, extension, |path, ctx| {
+            parse_essence_file(path, ctx).map_err(|e| Box::new(ParseErrorCollection::new(vec![e])))
+        })?;
     }
     Ok(())
 }
@@ -71,7 +67,7 @@ fn roundtrip_test_inner(
     input_filename: &str,
     output_filename: &str,
     extension: &str,
-    parse: fn(&str, Arc<RwLock<Context<'static>>>) -> Result<Model, EssenceParseError>,
+    parse: fn(&str, Arc<RwLock<Context<'static>>>) -> Result<Model, Box<ParseErrorCollection>>,
 ) -> Result<(), Box<dyn Error>> {
     /*
     Parses Essence file
@@ -202,7 +198,7 @@ fn save_essence(
 
 /* Saves a error message as a text file */
 fn save_parse_error(
-    error: &EssenceParseError,
+    error: &ParseErrorCollection,
     path: &str,
     test_name: &str,
     model_type: &str,
