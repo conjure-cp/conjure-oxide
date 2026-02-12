@@ -54,9 +54,13 @@ fn roundtrip_test(path: &str, filename: &str, extension: &str) -> Result<(), Box
     // Runs legacy Conjure parser
     if file_config.parsers.contains(&format!("legacy")) {
         let new_filename = filename.to_owned() + "-legacy";
-        roundtrip_test_inner(path, &filename, &new_filename, extension, |path, ctx| {
-            parse_essence_file(path, ctx).map_err(|e| Box::new(ParseErrorCollection::new(vec![e])))
-        })?;
+        roundtrip_test_inner(
+            path,
+            &filename,
+            &new_filename,
+            extension,
+            parse_essence_file,
+        )?;
     }
     Ok(())
 }
