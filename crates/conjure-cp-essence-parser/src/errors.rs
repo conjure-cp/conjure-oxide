@@ -92,3 +92,61 @@ impl From<ConjureParseError> for EssenceParseError {
         }
     }
 }
+
+/// Collection of parse errors
+#[derive(Debug)]
+pub struct ParseErrorCollection {
+    pub errors: Vec<EssenceParseError>,
+}
+
+impl ParseErrorCollection {
+    pub fn new(errors: Vec<EssenceParseError>) -> Self {
+        Self { errors }
+    }
+}
+
+impl std::fmt::Display for ParseErrorCollection {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        // Create indices sorted by line and column
+        let mut indices: Vec<usize> = (0..self.errors.len()).collect();
+        indices.sort_by(|&a, &b| {
+            match (&self.errors[a], &self.errors[b]) {
+                (
+                    EssenceParseError::SyntaxError {
+                        range: Some(r1), ..
+                    },
+                    EssenceParseError::SyntaxError {
+                        range: Some(r2), ..
+                    },
+                ) => {
+                    // Compare by row first, then by column
+                    match r1.start_point.row.cmp(&r2.start_point.row) {
+                        std::cmp::Ordering::Equal => {
+                            r1.start_point.column.cmp(&r2.start_point.column)
+                        }
+                        other => other,
+                    }
+                }
+                // Errors without ranges go last
+                (EssenceParseError::SyntaxError { range: Some(_), .. }, _) => {
+                    std::cmp::Ordering::Less
+                }
+                (_, EssenceParseError::SyntaxError { range: Some(_), .. }) => {
+                    std::cmp::Ordering::Greater
+                }
+                _ => std::cmp::Ordering::Equal,
+            }
+        });
+
+        // Print out each error using Display
+        for (i, &idx) in indices.iter().enumerate() {
+            if i > 0 {
+                write!(f, "\n\n")?;
+            }
+            write!(f, "{}", self.errors[idx])?;
+        }
+        Ok(())
+    }
+}
+
+impl std::error::Error for ParseErrorCollection {}
