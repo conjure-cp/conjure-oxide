@@ -1,31 +1,19 @@
 pub use conjure_cp_core::error::Error as ConjureParseError;
 use conjure_cp_core::error::Error;
 use serde_json::Error as JsonError;
-use thiserror::Error as ThisError;
 
-#[derive(Debug, ThisError)]
+#[derive(Debug)]
 pub enum EssenceParseError {
-    #[error("Could not parse Essence AST: {0}")]
     TreeSitterError(String),
-    #[error("Error running `conjure pretty`: {0}")]
     ConjurePrettyError(String),
-    #[error("Essence syntax error: {msg}{}",
-        match range {
-            Some(range) => format!(" at {}-{}", range.start_point, range.end_point),
-            None => "".to_string(),
-        }
-    )]
     SyntaxError {
         msg: String,
         range: Option<tree_sitter::Range>,
         file_name: Option<String>,
         source_code: Option<String>,
     },
-    #[error("JSON Error: {0}")]
-    JsonError(#[from] JsonError),
-    #[error("Error: {0} is not yet implemented.")]
+    JsonError(JsonError),
     NotImplemented(String),
-    #[error("Error: {0}")]
     Other(Error),
 }
 
@@ -38,17 +26,24 @@ impl EssenceParseError {
             source_code: None,
         }
     }
+}
 
-    /// Format the error in a pretty way with source context
-    pub fn pretty_format(&self) -> String {
+impl std::fmt::Display for EssenceParseError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            EssenceParseError::TreeSitterError(msg) => {
+                write!(f, "Could not parse Essence AST: {}", msg)
+            }
+            EssenceParseError::ConjurePrettyError(msg) => {
+                write!(f, "Error running `conjure pretty`: {}", msg)
+            }
             EssenceParseError::SyntaxError {
                 msg,
                 range,
                 file_name,
                 source_code,
             } => {
-                // If we have all the info, format nicely
+                // If we have all the info, format nicely with source context
                 if let (Some(range), Some(file_name), Some(source_code)) =
                     (range, file_name, source_code)
                 {
@@ -62,22 +57,30 @@ impl EssenceParseError {
                     // Build the pointer line (spaces + ^)
                     let pointer = " ".repeat(range.start_point.column) + "^";
 
-                    format!(
+                    write!(
+                        f,
                         "{}:{}:{}:\n  |\n{} | {}\n  | {}\n{}",
                         file_name, line_num, col_num, line_num, line_content, pointer, msg
                     )
                 } else {
-                    // Fall back to simple format
-                    format!("{}", self)
+                    // Fall back to simple format without context
+                    write!(f, "Essence syntax error: {}", msg)?;
+                    if let Some(range) = range {
+                        write!(f, " at {}-{}", range.start_point, range.end_point)?;
+                    }
+                    Ok(())
                 }
             }
-            _ => {
-                // For other error types, use the Display impl
-                format!("{}", self)
+            EssenceParseError::JsonError(err) => write!(f, "JSON Error: {}", err),
+            EssenceParseError::NotImplemented(msg) => {
+                write!(f, "Error: {} is not yet implemented.", msg)
             }
+            EssenceParseError::Other(err) => write!(f, "Error: {}", err),
         }
     }
 }
+
+impl std::error::Error for EssenceParseError {}
 
 impl From<ConjureParseError> for EssenceParseError {
     fn from(value: ConjureParseError) -> Self {
