@@ -22,8 +22,13 @@ pub struct Args {
 pub fn run_pretty_command(global_args: GlobalArgs, pretty_args: Args) -> anyhow::Result<()> {
     // Preamble
     let input_file = pretty_args.input_file.clone();
-    let context = init_context(&global_args, input_file)?;
-    let model = parse(&global_args, Arc::clone(&context))?;
+    let context = init_context(&global_args, input_file, None)?;
+
+    // TODO: This is very hacky
+    let ctx_lock = context.read().unwrap();
+    let file = ctx_lock.input_file_name.as_ref().unwrap();
+
+    let model = parse(&global_args, Arc::clone(&context), file)?;
 
     // Running the correct method to acquire pretty string
     let output = match pretty_args.output_format.as_str() {

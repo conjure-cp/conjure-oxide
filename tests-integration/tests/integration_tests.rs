@@ -177,7 +177,7 @@ fn integration_test_inner(
 
         {
             let mut ctx = context.as_ref().write().unwrap();
-            ctx.file_name = Some(format!("{path}/{essence_base}.{extension}"));
+            ctx.input_file_name = Some(format!("{path}/{essence_base}.{extension}"));
         }
 
         model
