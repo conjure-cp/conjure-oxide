@@ -289,11 +289,10 @@ fn user_friendly_token_name_article() {
 }
 #[test]
 fn malformed_line() {
-    let source = "find >=lex,b,c: int(1..3)";
+    let source = " a,a,b: int(1..3)";
     let (tree, _) = get_tree(source).expect("Should parse");
     let root_node = tree.root_node();
 
-    // Find the first error node in the tree
     let error_node = WalkDFS::with_retract(&root_node, &|_node| false)
         .find(|node| node.is_error())
         .expect("Should find an error node");
