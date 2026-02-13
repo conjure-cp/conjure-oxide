@@ -4,9 +4,6 @@ use crate::parser::util::get_tree;
 use capitalize::Capitalize;
 use tree_sitter::Node;
 
-/// Helper function to see all the error nodes tree-sitter generated.
-/// Prints each error or missing node's.
-
 /// Helper function
 pub fn print_diagnostics(diags: &[Diagnostic]) {
     for (i, diag) in diags.iter().enumerate() {
