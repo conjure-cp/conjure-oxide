@@ -276,7 +276,7 @@ fn cnf_int_ineq(expr: &Expression) -> Result<Expression, RuleApplicationError> {
 }
 ```
 
-#### 3. Tseitin Transformation Rules (Lowest Priority)
+#### 3. Tseytin Transformation Rules (Lowest Priority)
 
 **RuleSet**: `boolean`
 
