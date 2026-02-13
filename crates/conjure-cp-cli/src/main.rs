@@ -22,7 +22,7 @@ use git_version::git_version;
 use tracing_subscriber::filter::{FilterFn, LevelFilter};
 use tracing_subscriber::layer::SubscriberExt as _;
 use tracing_subscriber::util::SubscriberInitExt as _;
-use tracing_subscriber::{EnvFilter, Layer, fmt};
+use tracing_subscriber::{fmt, EnvFilter, Layer};
 
 use conjure_cp_lsp::server;
 
@@ -62,13 +62,17 @@ fn setup_logging(global_args: &GlobalArgs) -> anyhow::Result<()> {
     // It consists of composable layers, each of which logs to a different place in a different
     // format.
     let json_log_file = File::options()
+        .read(true)
+        .write(true)
         .create(true)
-        .append(true)
+        .append(false)
         .open("conjure_oxide_log.json")?;
 
     let log_file = File::options()
+        .read(true)
+        .write(true)
         .create(true)
-        .append(true)
+        .append(false)
         .open("conjure_oxide.log")?;
 
     // get log level from env-var RUST_LOG
