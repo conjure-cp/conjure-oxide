@@ -22,7 +22,7 @@ use git_version::git_version;
 use tracing_subscriber::filter::{FilterFn, LevelFilter};
 use tracing_subscriber::layer::SubscriberExt as _;
 use tracing_subscriber::util::SubscriberInitExt as _;
-use tracing_subscriber::{fmt, EnvFilter, Layer};
+use tracing_subscriber::{EnvFilter, Layer, fmt};
 
 use conjure_cp_lsp::server;
 
@@ -104,6 +104,7 @@ fn setup_logging(global_args: &GlobalArgs) -> anyhow::Result<()> {
     // only setup logs IF the argument is passed
     if global_args.logfile {
         let json_log_file = File::options()
+            .truncate(true)
             .read(true)
             .write(true)
             .create(true)
@@ -111,6 +112,7 @@ fn setup_logging(global_args: &GlobalArgs) -> anyhow::Result<()> {
             .open("conjure_oxide_log.json")?;
 
         let log_file = File::options()
+            .truncate(true)
             .read(true)
             .write(true)
             .create(true)
