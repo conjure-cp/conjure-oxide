@@ -134,6 +134,10 @@ pub struct GlobalArgs {
     /// Encoding to use for SAT
     #[arg(long, value_name = "SAT_ENCODING", global = true, help_heading = OPTIMISATIONS_HELP_HEADING)]
     pub sat_encoding: Option<String>,
+
+    /// Generate conjure logfiles
+    #[arg(long, value_name = "LOGGING", global = false, help_heading = LOGGING_HELP_HEADING)]
+    pub logfile: bool,
 }
 
 #[derive(Debug, Clone, Args)]

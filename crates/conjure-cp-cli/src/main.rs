@@ -61,32 +61,6 @@ fn setup_logging(global_args: &GlobalArgs) -> anyhow::Result<()> {
     //
     // It consists of composable layers, each of which logs to a different place in a different
     // format.
-    let json_log_file = File::options()
-        .read(true)
-        .write(true)
-        .create(true)
-        .append(false)
-        .open("conjure_oxide_log.json")?;
-
-    let log_file = File::options()
-        .read(true)
-        .write(true)
-        .create(true)
-        .append(false)
-        .open("conjure_oxide.log")?;
-
-    // get log level from env-var RUST_LOG
-
-    let json_layer = tracing_subscriber::fmt::layer()
-        .json()
-        .with_writer(Arc::new(json_log_file))
-        .with_filter(LevelFilter::TRACE);
-
-    let file_layer = tracing_subscriber::fmt::layer()
-        .compact()
-        .with_ansi(false)
-        .with_writer(Arc::new(log_file))
-        .with_filter(LevelFilter::TRACE);
 
     let default_stderr_level = if global_args.verbose {
         LevelFilter::DEBUG
@@ -126,13 +100,43 @@ fn setup_logging(global_args: &GlobalArgs) -> anyhow::Result<()> {
             .with_filter(EnvFilter::new("rule_engine_human=trace"))
             .with_filter(FilterFn::new(|meta| meta.target() == "rule_engine_human"))
     });
-    // load the loggers
-    tracing_subscriber::registry()
-        .with(json_layer)
-        .with(stderr_layer)
-        .with(file_layer)
-        .with(human_rule_trace_layer)
-        .init();
+
+    // only setup logs IF the argument is passed
+    if global_args.logfile {
+        let json_log_file = File::options()
+            .read(true)
+            .write(true)
+            .create(true)
+            .append(false)
+            .open("conjure_oxide_log.json")?;
+
+        let log_file = File::options()
+            .read(true)
+            .write(true)
+            .create(true)
+            .append(false)
+            .open("conjure_oxide.log")?;
+
+        // get log level from env-var RUST_LOG
+        let json_layer = tracing_subscriber::fmt::layer()
+            .json()
+            .with_writer(Arc::new(json_log_file))
+            .with_filter(LevelFilter::TRACE);
+
+        let file_layer = tracing_subscriber::fmt::layer()
+            .compact()
+            .with_ansi(false)
+            .with_writer(Arc::new(log_file))
+            .with_filter(LevelFilter::TRACE);
+
+        // load the loggers
+        tracing_subscriber::registry()
+            .with(json_layer)
+            .with(stderr_layer)
+            .with(file_layer)
+            .with(human_rule_trace_layer)
+            .init();
+    }
 
     Ok(())
 }
