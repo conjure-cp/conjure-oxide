@@ -132,7 +132,7 @@ Variable used but not declared.
 
 ### Detection
 
-Checking that the identifier used in a constraint was previsouly declared in a `find` or `letting_statement`.
+Checking that the identifier used in a constraint was previously declared in a `find` or `letting_statement`.
 
 ### Example: x was not declared before
 
