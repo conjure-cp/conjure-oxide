@@ -130,6 +130,10 @@ pub struct GlobalArgs {
     /// Currently only SMT supports this feature.
     #[arg(long, global = true, help_heading = OPTIMISATIONS_HELP_HEADING)]
     pub solver_timeout: Option<humantime::Duration>,
+
+    /// Encoding to use for SAT
+    #[arg(long, value_name = "SAT_ENCODING", global = true, help_heading = OPTIMISATIONS_HELP_HEADING)]
+    pub sat_encoding: Option<String>,
 }
 
 #[derive(Debug, Clone, Args)]
