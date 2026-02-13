@@ -44,9 +44,6 @@ fn error_node_out_of_range(node: &tree_sitter::Node, source: &str) -> bool {
 ///
 /// # Returns
 /// * `Vec<Diagnostic>` - A vector of diagnostics describing syntactic issues found in the source.
-///
-// ...existing code...
-
 pub fn detect_syntactic_errors(source: &str) -> Vec<Diagnostic> {
     let mut diagnostics = Vec::new();
     let mut malformed_lines_reported = HashSet::new();
