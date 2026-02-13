@@ -2,8 +2,8 @@ use crate::diagnostics::diagnostics_api::{Diagnostic, Position, Range, Severity}
 use crate::parser::traversal::WalkDFS;
 use crate::parser::util::get_tree;
 use capitalize::Capitalize;
+use std::collections::HashSet;
 use tree_sitter::Node;
-
 /// Helper function
 pub fn print_diagnostics(diags: &[Diagnostic]) {
     for (i, diag) in diags.iter().enumerate() {
@@ -46,7 +46,6 @@ fn error_node_out_of_range(node: &tree_sitter::Node, source: &str) -> bool {
 /// * `Vec<Diagnostic>` - A vector of diagnostics describing syntactic issues found in the source.
 ///
 // ...existing code...
-use std::collections::HashSet;
 
 pub fn detect_syntactic_errors(source: &str) -> Vec<Diagnostic> {
     let mut diagnostics = Vec::new();
