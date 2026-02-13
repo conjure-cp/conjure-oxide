@@ -6,36 +6,6 @@ use tree_sitter::Node;
 
 /// Helper function to see all the error nodes tree-sitter generated.
 /// Prints each error or missing node's.
-pub fn print_all_error_nodes(source: &str) {
-    if let Some((tree, _)) = get_tree(source) {
-        let root_node = tree.root_node();
-        println!("{}", root_node.to_sexp());
-        let mut stack = vec![root_node];
-        while let Some(node) = stack.pop() {
-            if node.is_error() || node.is_missing() {
-                println!(
-                    "Error node: '{}' [{}:{}-{}:{}] (children: {}) parent: {}",
-                    node.kind(),
-                    node.start_position().row,
-                    node.start_position().column,
-                    node.end_position().row,
-                    node.end_position().column,
-                    node.child_count(),
-                    node.parent()
-                        .map_or("None".to_string(), |p| p.kind().to_string())
-                );
-            }
-            // Always traverse all children, regardless of error state
-            for i in (0..node.child_count()).rev() {
-                if let Some(child) = u32::try_from(i).ok().and_then(|i| node.child(i)) {
-                    stack.push(child);
-                }
-            }
-        }
-    } else {
-        println!("[all errors] Could not parse source.");
-    }
-}
 
 /// Helper function
 pub fn print_diagnostics(diags: &[Diagnostic]) {
@@ -250,7 +220,7 @@ pub fn check_diagnostic(
 /// Coverts a token name into a more user-friendly format for error messages.
 /// Removes underscores, replaces certain keywords with more natural language, and adds appropriate articles.
 fn user_friendly_token_name(token: &str, article: bool) -> String {
-    if token.contains("atom") {
+    let capitalized = if token.contains("atom") {
         "Expression".to_string()
     } else if token == "COLON" {
         ":".to_string()
@@ -260,22 +230,22 @@ fn user_friendly_token_name(token: &str, article: bool) -> String {
             .replace("int", "Integer")
             .replace("expr", "Expression")
             .replace('_', " ");
-        let capitalized = friendly_name
+        friendly_name
             .split_whitespace()
             .map(|word| word.capitalize())
             .collect::<Vec<_>>()
-            .join(" ");
+            .join(" ")
+    };
 
-        if !article {
-            return capitalized;
-        }
-        let first_char = capitalized.chars().next().unwrap();
-        let article = match first_char.to_ascii_lowercase() {
-            'a' | 'e' | 'i' | 'o' | 'u' => "an",
-            _ => "a",
-        };
-        format!("{} {}", article, capitalized)
+    if !article {
+        return capitalized;
     }
+    let first_char = capitalized.chars().next().unwrap();
+    let article = match first_char.to_ascii_lowercase() {
+        'a' | 'e' | 'i' | 'o' | 'u' => "an",
+        _ => "a",
+    };
+    format!("{} {}", article, capitalized)
 }
 
 fn generate_a_syntax_err_diagnostic(
@@ -309,4 +279,31 @@ fn error_at_start() {
     assert!(!diagnostics.is_empty(), "Expected at least one diagnostic");
     let diag = &diagnostics[0];
     check_diagnostic(diag, 0, 0, 0, 19, "Failed to read the source code");
+}
+
+#[test]
+fn user_friendly_token_name_article() {
+    assert_eq!(
+        user_friendly_token_name("int_domain", false),
+        "Integer Domain"
+    );
+    assert_eq!(
+        user_friendly_token_name("int_domain", true),
+        "an Integer Domain"
+    );
+    // assert_eq!(user_friendly_token_name("atom", true), "an Expression");
+    assert_eq!(user_friendly_token_name("COLON", false), ":");
+}
+#[test]
+fn malformed_line() {
+    let source = "find >=lex,b,c: int(1..3)";
+    let (tree, _) = get_tree(source).expect("Should parse");
+    let root_node = tree.root_node();
+
+    // Find the first error node in the tree
+    let error_node = WalkDFS::with_retract(&root_node, &|_node| false)
+        .find(|node| node.is_error())
+        .expect("Should find an error node");
+
+    assert!(is_malformed_line_error(&error_node, source));
 }
