@@ -22,7 +22,7 @@ use git_version::git_version;
 use tracing_subscriber::filter::{FilterFn, LevelFilter};
 use tracing_subscriber::layer::SubscriberExt as _;
 use tracing_subscriber::util::SubscriberInitExt as _;
-use tracing_subscriber::{EnvFilter, Layer, fmt};
+use tracing_subscriber::{fmt, EnvFilter, Layer};
 
 use conjure_cp_lsp::server;
 
@@ -105,7 +105,6 @@ fn setup_logging(global_args: &GlobalArgs) -> anyhow::Result<()> {
     if global_args.logfile {
         let json_log_file = File::options()
             .truncate(true)
-            .read(true)
             .write(true)
             .create(true)
             .append(false)
@@ -113,7 +112,6 @@ fn setup_logging(global_args: &GlobalArgs) -> anyhow::Result<()> {
 
         let log_file = File::options()
             .truncate(true)
-            .read(true)
             .write(true)
             .create(true)
             .append(false)
