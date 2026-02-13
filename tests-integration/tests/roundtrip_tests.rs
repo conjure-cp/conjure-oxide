@@ -1,6 +1,6 @@
 use conjure_cp::Model;
 use conjure_cp::context::Context;
-use conjure_cp::parse::tree_sitter::errors::{EssenceParseError, ParseErrorCollection};
+use conjure_cp::parse::tree_sitter::errors::ParseErrorCollection;
 use conjure_cp::parse::tree_sitter::{parse_essence_file, parse_essence_file_native};
 use conjure_cp_cli::utils::testing::{read_model_json, save_model_json};
 
