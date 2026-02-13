@@ -4,7 +4,7 @@ inputs:
   version:
     description: "The version of conjure to install."
     required: false
-    default: "2.5.1"
+    default: "2.6.0"
   os_arch:
     description: 'The OS / Architecture to use. Supported values are ["linux","macos-arm","macos-intel"]'
     required: true
@@ -19,7 +19,7 @@ runs:
       shell: bash
 
     - run: |
-        if conjure --version | grep -iq conjure ; then
+        if [ "$(conjure --version | tail -n1 | cut -d " " -f2)" == "v${{ inputs.version }}" ]; then
           echo "Found conjure, not fetching again."
         else
           mkdir -p "${HOME}/conjure"
@@ -34,7 +34,7 @@ runs:
 
     - name: Check that conjure is installed correctly
       run: |
-        if [ "$(conjure --version | head -n2 | tail -n1)" != "Release version ${{ inputs.version }}" ]; then
+        if [ "$(conjure --version | tail -n1 | cut -d " " -f2)" != "v${{ inputs.version }}" ]; then
           echo "Correct conjure not found in path."
           conjure --version
           exit 1
