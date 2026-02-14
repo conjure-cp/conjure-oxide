@@ -1,4 +1,4 @@
-use std::{borrow::Borrow, cell::Ref};
+use std::borrow::Borrow;
 use uniplate::Uniplate;
 
 use super::{
@@ -8,6 +8,7 @@ use super::{
     records::RecordValue,
 };
 use derivative::Derivative;
+use parking_lot::MappedRwLockReadGuard;
 use polyquine::Quine;
 use serde::{Deserialize, Serialize};
 
@@ -187,7 +188,7 @@ impl TryFrom<Atom> for Name {
     }
 }
 
-impl<'a> TryFrom<&'a Atom> for Ref<'a, Name> {
+impl<'a> TryFrom<&'a Atom> for MappedRwLockReadGuard<'a, Name> {
     type Error = &'static str;
 
     fn try_from(value: &'a Atom) -> Result<Self, Self::Error> {
