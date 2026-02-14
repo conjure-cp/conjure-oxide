@@ -1,10 +1,10 @@
+use super::attrs::SetAttr;
 use super::ground::GroundDomain;
 use super::range::Range;
-use super::set_attr::SetAttr;
 use super::unresolved::{IntVal, UnresolvedDomain};
 use crate::ast::{
-    DeclarationPtr, DomainOpError, Expression, Literal, Moo, RecordEntry, RecordEntryGround,
-    Reference, ReturnType, Typeable,
+    DeclarationPtr, DomainOpError, Expression, FuncAttr, Literal, Moo, RecordEntry,
+    RecordEntryGround, Reference, ReturnType, Typeable,
 };
 use itertools::Itertools;
 use polyquine::Quine;
@@ -199,9 +199,32 @@ impl Domain {
 
     /// Create a new [UnresolvedDomain::Reference] domain from a domain letting
     pub fn reference(ptr: DeclarationPtr) -> Option<DomainPtr> {
-        ptr.as_domain_letting()?;
+        let _ = ptr.as_domain_letting()?;
         Some(Moo::new(Domain::Unresolved(Moo::new(
             UnresolvedDomain::Reference(Reference::new(ptr)),
+        ))))
+    }
+
+    /// Create a new function domain
+    pub fn function<T>(attrs: T, dom: DomainPtr, cdom: DomainPtr) -> DomainPtr
+    where
+        T: Into<FuncAttr<IntVal>> + TryInto<FuncAttr<Int>> + Clone,
+    {
+        if let Ok(attrs_gd) = attrs.clone().try_into()
+            && let Some(dom_gd) = dom.as_ground()
+            && let Some(cdom_gd) = cdom.as_ground()
+        {
+            return Moo::new(Domain::Ground(Moo::new(GroundDomain::Function(
+                attrs_gd,
+                Moo::new(dom_gd.clone()),
+                Moo::new(cdom_gd.clone()),
+            ))));
+        }
+
+        Moo::new(Domain::Unresolved(Moo::new(UnresolvedDomain::Function(
+            attrs.into(),
+            dom,
+            cdom,
         ))))
     }
 
@@ -499,6 +522,65 @@ impl Domain {
         None
     }
 
+    /// If this is a function domain, get its (attributes, domain, co-domain)
+    pub fn as_function(&self) -> Option<(FuncAttr<IntVal>, Moo<Domain>, Moo<Domain>)> {
+        if let Some(GroundDomain::Function(attrs, dom, codom)) = self.as_ground() {
+            return Some((
+                attrs.clone().into(),
+                dom.clone().into(),
+                codom.clone().into(),
+            ));
+        }
+        if let Some(UnresolvedDomain::Function(attrs, dom, codom)) = self.as_unresolved() {
+            return Some((attrs.clone(), dom.clone(), codom.clone()));
+        }
+        None
+    }
+
+    /// If this is a function domain, convert it to unresolved and get mutable references to
+    /// its (attrs, domain, co-domain).
+    /// The domain always becomes [UnresolvedDomain::Function] after this operation.
+    pub fn as_function_mut(
+        &mut self,
+    ) -> Option<(&mut FuncAttr<IntVal>, &mut Moo<Domain>, &mut Moo<Domain>)> {
+        if let Some(GroundDomain::Function(attrs, dom, codom)) = self.as_ground() {
+            *self = Domain::Unresolved(Moo::new(UnresolvedDomain::Function(
+                attrs.clone().into(),
+                dom.clone().into(),
+                codom.clone().into(),
+            )));
+        }
+
+        if let Some(UnresolvedDomain::Function(attrs, dom, codom)) = self.as_unresolved_mut() {
+            return Some((attrs, dom, codom));
+        }
+        None
+    }
+
+    /// If this is a [GroundDomain::Function], get its (attrs, domain, co-domain)
+    pub fn as_function_ground(
+        &self,
+    ) -> Option<(&FuncAttr, &Moo<GroundDomain>, &Moo<GroundDomain>)> {
+        if let Some(GroundDomain::Function(attrs, dom, codom)) = self.as_ground() {
+            return Some((attrs, dom, codom));
+        }
+        None
+    }
+
+    /// If this is a [GroundDomain::Function], get mutable references to its (attrs, domain, co-domain)
+    pub fn as_function_ground_mut(
+        &mut self,
+    ) -> Option<(
+        &mut FuncAttr,
+        &mut Moo<GroundDomain>,
+        &mut Moo<GroundDomain>,
+    )> {
+        if let Some(GroundDomain::Function(attrs, dom, codom)) = self.as_ground_mut() {
+            return Some((attrs, dom, codom));
+        }
+        None
+    }
+
     /// Compute the intersection of two domains
     pub fn union(&self, other: &Domain) -> Result<Domain, DomainOpError> {
         match (self, other) {
@@ -550,6 +632,13 @@ impl Domain {
             return gd.contains(lit);
         }
         Err(DomainOpError::NotGround)
+    }
+
+    pub fn element_domain(&self) -> Option<DomainPtr> {
+        match self {
+            Domain::Ground(gd) => gd.element_domain().map(DomainPtr::from),
+            Domain::Unresolved(ud) => ud.element_domain(),
+        }
     }
 }
 
@@ -629,7 +718,7 @@ mod tests {
     #[test]
     fn test_length_set_basic() {
         // {∅, {1}, {2}, {3}, {1,2}, {1,3}, {2,3}, {1,2,3}}
-        let s = Domain::set(SetAttr::default(), domain_int!(1..3));
+        let s = Domain::set(SetAttr::<IntVal>::default(), domain_int!(1..3));
         assert_eq!(s.length(), Ok(8));
 
         // {{1,2}, {1,3}, {2,3}}
@@ -660,7 +749,7 @@ mod tests {
         let s2 = Domain::set(
             SetAttr::new_max_size(2),
             // {∅, {1}, {2}, {1,2}}
-            Domain::set(SetAttr::default(), domain_int!(1..2)),
+            Domain::set(SetAttr::<IntVal>::default(), domain_int!(1..2)),
         );
         assert_eq!(s2.length(), Ok(11));
     }
@@ -670,18 +759,18 @@ mod tests {
         // leaf domain is unbounded
         let s2_bad = Domain::set(
             SetAttr::new_max_size(2),
-            Domain::set(SetAttr::default(), domain_int!(1..)),
+            Domain::set(SetAttr::<IntVal>::default(), domain_int!(1..)),
         );
         assert_eq!(s2_bad.length(), Err(DomainOpError::Unbounded));
     }
 
     #[test]
     fn test_length_set_overflow() {
-        let s = Domain::set(SetAttr::default(), domain_int!(1..20));
+        let s = Domain::set(SetAttr::<IntVal>::default(), domain_int!(1..20));
         assert!(s.length().is_ok());
 
         // current way of calculating the formula overflows for anything larger than this
-        let s = Domain::set(SetAttr::default(), domain_int!(1..63));
+        let s = Domain::set(SetAttr::<IntVal>::default(), domain_int!(1..63));
         assert_eq!(s.length(), Err(DomainOpError::TooLarge));
     }
 
@@ -730,7 +819,7 @@ mod tests {
     fn test_length_matrix_of_sets() {
         // 3 sets drawn from 1..2; 4**3 = 64 total options
         let m = Domain::matrix(
-            Domain::set(SetAttr::default(), domain_int!(1..2)),
+            Domain::set(SetAttr::<IntVal>::default(), domain_int!(1..2)),
             vec![domain_int!(1..3)],
         );
         assert_eq!(m.length(), Ok(64));

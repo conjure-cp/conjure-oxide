@@ -3,9 +3,7 @@ use crate::parser::abstract_literal::parse_abstract;
 use crate::parser::comprehension::parse_comprehension;
 use crate::util::named_children;
 use crate::{EssenceParseError, field, named_child};
-use conjure_cp_core::ast::{Atom, Expression, Literal, Metadata, Moo, Name, SymbolTable};
-use std::cell::RefCell;
-use std::rc::Rc;
+use conjure_cp_core::ast::{Atom, Expression, Literal, Metadata, Moo, Name, SymbolTablePtr};
 use tree_sitter::Node;
 use ustr::Ustr;
 
@@ -13,10 +11,10 @@ pub fn parse_atom(
     node: &Node,
     source_code: &str,
     root: &Node,
-    symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
+    symbols_ptr: Option<SymbolTablePtr>,
 ) -> Result<Expression, EssenceParseError> {
     match node.kind() {
-        "atom" => parse_atom(&named_child!(node), source_code, root, symbols_ptr),
+        "atom" | "sub_atom_expr" => parse_atom(&named_child!(node), source_code, root, symbols_ptr),
         "metavar" => {
             let ident = field!(node, "identifier");
             let name_str = &source_code[ident.start_byte()..ident.end_byte()];
@@ -43,9 +41,8 @@ pub fn parse_atom(
             parse_abstract(node, source_code, symbols_ptr)
                 .map(|l| Expression::AbstractLiteral(Metadata::new(), l))
         }
-        "tuple_matrix_record_index_or_slice" => {
-            parse_index_or_slice(node, source_code, root, symbols_ptr)
-        }
+        "flatten" => parse_flatten(node, source_code, root, symbols_ptr),
+        "index_or_slice" => parse_index_or_slice(node, source_code, root, symbols_ptr),
         // for now, assume is binary since powerset isn't implemented
         // TODO: add powerset support under "set_operation"
         "set_operation" => parse_binary_expression(node, source_code, root, symbols_ptr),
@@ -57,14 +54,38 @@ pub fn parse_atom(
     }
 }
 
+fn parse_flatten(
+    node: &Node,
+    source_code: &str,
+    root: &Node,
+    symbols_ptr: Option<SymbolTablePtr>,
+) -> Result<Expression, EssenceParseError> {
+    let expr_node = field!(node, "expression");
+    let expr = parse_atom(&expr_node, source_code, root, symbols_ptr)?;
+
+    if node.child_by_field_name("depth").is_some() {
+        let depth_node = field!(node, "depth");
+        let depth = parse_int(&depth_node, source_code)?;
+        let depth_expression =
+            Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(depth)));
+        Ok(Expression::Flatten(
+            Metadata::new(),
+            Some(Moo::new(depth_expression)),
+            Moo::new(expr),
+        ))
+    } else {
+        Ok(Expression::Flatten(Metadata::new(), None, Moo::new(expr)))
+    }
+}
+
 fn parse_index_or_slice(
     node: &Node,
     source_code: &str,
     root: &Node,
-    symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
+    symbols_ptr: Option<SymbolTablePtr>,
 ) -> Result<Expression, EssenceParseError> {
     let collection = parse_atom(
-        &field!(node, "tuple_or_matrix"),
+        &field!(node, "collection"),
         source_code,
         root,
         symbols_ptr.clone(),
@@ -97,10 +118,10 @@ fn parse_index_or_slice(
 fn parse_index(
     node: &Node,
     source_code: &str,
-    symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
+    symbols_ptr: Option<SymbolTablePtr>,
 ) -> Result<Option<Expression>, EssenceParseError> {
     match node.kind() {
-        "arithmetic_expr" => Ok(Some(parse_expression(
+        "arithmetic_expr" | "atom" => Ok(Some(parse_expression(
             *node,
             source_code,
             node,
@@ -117,12 +138,12 @@ fn parse_index(
 fn parse_variable(
     node: &Node,
     source_code: &str,
-    symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
+    symbols_ptr: Option<SymbolTablePtr>,
 ) -> Result<Atom, EssenceParseError> {
     let raw_name = &source_code[node.start_byte()..node.end_byte()];
     let name = Name::user(raw_name.trim());
     if let Some(symbols) = symbols_ptr {
-        if let Some(decl) = symbols.borrow().lookup(&name) {
+        if let Some(decl) = symbols.read().lookup(&name) {
             Ok(Atom::Reference(conjure_cp_core::ast::Reference::new(decl)))
         } else {
             Err(EssenceParseError::syntax_error(

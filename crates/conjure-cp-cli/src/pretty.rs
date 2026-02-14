@@ -37,10 +37,7 @@ pub fn run_pretty_command(global_args: GlobalArgs, pretty_args: Args) -> anyhow:
         }
     };
 
-    if output.is_ok() {
-        println!("{}", output.unwrap());
-        Ok(())
-    } else {
-        Err(anyhow!("Could not pretty print"))
-    }
+    let output = output.map_err(|err| anyhow!("Could not pretty print: {err}"))?;
+    print!("{output}");
+    Ok(())
 }

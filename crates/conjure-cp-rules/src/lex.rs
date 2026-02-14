@@ -1,3 +1,4 @@
+use conjure_cp::ast::matrix::safe_index_optimised;
 use conjure_cp::ast::{Atom, Expression as Expr, Literal, Metadata, Moo, SymbolTable};
 use conjure_cp::essence_expr;
 use conjure_cp::rule_engine::{ApplicationError, ApplicationResult, Reduction, register_rule};
@@ -139,20 +140,10 @@ fn lex_lt_to_recursive_or(
         ([], [..]) => true.into(),   // Base case: a is shorter
 
         ([a_idx, a_tail @ ..], [b_idx, b_tail @ ..]) => {
-            let (a_at_idx, b_at_idx) = (
-                Expr::SafeIndex(
-                    Metadata::new(),
-                    Moo::new(a.clone()),
-                    vec![a_idx.clone().into()],
-                ),
-                Expr::SafeIndex(
-                    Metadata::new(),
-                    Moo::new(b.clone()),
-                    vec![b_idx.clone().into()],
-                ),
-            );
-
+            let a_at_idx = safe_index_optimised(a.clone(), a_idx.clone()).unwrap();
+            let b_at_idx = safe_index_optimised(b.clone(), b_idx.clone()).unwrap();
             let tail = lex_lt_to_recursive_or(a, b, a_tail, b_tail, allow_eq);
+
             essence_expr!(r"&a_at_idx < &b_at_idx \/ (&a_at_idx = &b_at_idx /\ &tail)")
         }
     }

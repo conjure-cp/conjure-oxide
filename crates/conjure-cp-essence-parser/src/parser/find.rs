@@ -1,20 +1,18 @@
 #![allow(clippy::legacy_numeric_constants)]
 
-use std::cell::RefCell;
 use std::collections::BTreeMap;
-use std::rc::Rc;
 use tree_sitter::Node;
 
 use super::domain::parse_domain;
 use super::util::named_children;
 use crate::EssenceParseError;
-use conjure_cp_core::ast::{DomainPtr, Name, SymbolTable};
+use conjure_cp_core::ast::{DomainPtr, Name, SymbolTablePtr};
 
 /// Parse a find statement into a map of decision variable names to their domains.
 pub fn parse_find_statement(
     find_statement: Node,
     source_code: &str,
-    symbols: Option<Rc<RefCell<SymbolTable>>>,
+    symbols: Option<SymbolTablePtr>,
 ) -> Result<BTreeMap<Name, DomainPtr>, EssenceParseError> {
     let mut vars = BTreeMap::new();
 

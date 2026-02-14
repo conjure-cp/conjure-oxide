@@ -1,26 +1,48 @@
 name: Documentation
 
+# WARNING: This workflow runs on `pull_request_target` and checks out PR code.
+# It therefore executes untrusted code with access to repository secrets, including
+# `CONJURE_BOT_PRIVATE_KEY`. This is an intentional tradeoff to allow fork PR
+# deployments without artifacts. Do not add other sensitive secrets to this repo.
+
 on:
+  pull_request_target:
+    paths:
+      - docs/**
   push:
     branches:
       - main
     paths:
       - docs/**
+      - .github/workflows/docs.yml
   workflow_dispatch:
 
-permissions:
-  contents: write
 
-env:
-  READ_ONLY_GITHUB_TOKEN: ${{ secrets.PUBLIC_REPO_TOKEN }}
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
 
 jobs:
   generate_docs:
-    name: "Generate documentation site"
+    name: "Generate"
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout the repository
-        uses: actions/checkout@v5
+      - name: Checkout PR
+        if: ${{ github.event_name == 'pull_request_target' }}
+        uses: actions/checkout@v6
+        with:
+          # Avoid checkout's default auth header so deploy uses the app token.
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+
+      - name: Checkout repository
+        if: ${{ github.event_name != 'pull_request_target' }}
+        uses: actions/checkout@v6
+        with:
+          # Avoid checkout's default auth header so deploy uses the app token.
+          persist-credentials: false
 
       - name: Install mdbook
         run: |
@@ -31,18 +53,117 @@ jobs:
         working-directory: docs
         run: |
           mdbook build
-      - name: Deploy to Github Pages
-        uses: JamesIves/github-pages-deploy-action@v4
+
+      - name: Set deploy target
+        id: deploy
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request_target" ]]; then
+            echo "folder=pr/${{ github.event.pull_request.number }}/book" >> "$GITHUB_OUTPUT"
+            echo "label=pr-${{ github.event.pull_request.number }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "folder=main/book" >> "$GITHUB_OUTPUT"
+            echo "label=main" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create reports app token
+        id: reports-token
+        uses: actions/create-github-app-token@v2
         with:
-          commit-message: "Actions: Deploy the documentation site"
+          app-id: ${{ secrets.CONJURE_BOT_ID }}
+          private-key: ${{ secrets.CONJURE_BOT_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: |
+            conjure-oxide-reports
+
+      - name: Deploy docs to reports repository
+        uses: JamesIves/github-pages-deploy-action@v4
+        env:
+          GITHUB_TOKEN: ${{ steps.reports-token.outputs.token }}
+        with:
+          commit-message: "Actions: Deploy docs for ${{ steps.deploy.outputs.label }}"
+          repository-name: conjure-cp/conjure-oxide-reports
+          branch: main
+          token: ${{ steps.reports-token.outputs.token }}
           folder: docs/book
-          target-folder: ""
-          # remove all pages that dont exist anymore, except in these dirs
-          clean-exclude: |
-            docs/**
-            coverage/**
-            tools/**
+          target-folder: ${{ steps.deploy.outputs.folder }}
 
           # do not overwrite previous deployments, such as those made by other
           # actions
           force: false
+
+      - name: Create conjure-bot token
+        if: ${{ github.event_name == 'pull_request_target' }}
+        id: bot-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.CONJURE_BOT_ID }}
+          private-key: ${{ secrets.CONJURE_BOT_PRIVATE_KEY }}
+
+      - name: Comment docs preview on PR
+        if: ${{ github.event_name == 'pull_request_target' }}
+        continue-on-error: true
+        uses: actions/github-script@v8
+        env:
+          REPORT_URL: https://${{ github.repository_owner }}.github.io/conjure-oxide-reports/pr/${{ github.event.pull_request.number }}/book/
+        with:
+          github-token: ${{ steps.bot-token.outputs.token }}
+          script: |
+            const prNumber = context.payload.pull_request?.number;
+            if (!prNumber) return;
+
+            try {
+              const marker = "<!-- docs-book-report -->";
+              const body = [
+                marker,
+                "## Book Preview",
+                "",
+                `Preview: ${process.env.REPORT_URL}`
+              ].join("\n");
+
+              const comments = await github.paginate(github.rest.issues.listComments, {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                per_page: 100
+              });
+
+              // Keep a single docs preview comment per PR: update newest, delete older duplicates.
+              const matching = comments
+                .filter(c => c.body?.includes(marker))
+                .sort((a, b) => Date.parse(b.updated_at) - Date.parse(a.updated_at));
+
+              let keepComment;
+
+              if (matching.length > 0) {
+                keepComment = matching[0];
+                await github.rest.issues.updateComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: keepComment.id,
+                  body
+                });
+              } else {
+                const created = await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: prNumber,
+                  body
+                });
+                keepComment = created.data;
+              }
+
+              for (const comment of matching) {
+                if (comment.id === keepComment.id) continue;
+                try {
+                  await github.rest.issues.deleteComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    comment_id: comment.id
+                  });
+                } catch (deleteError) {
+                  console.log(`Skipping docs preview comment cleanup for ${comment.id}: ${deleteError.message || deleteError}`);
+                }
+              }
+            } catch (error) {
+              console.log(`Skipping docs preview PR comment: ${error.message || error}`);
+            }
