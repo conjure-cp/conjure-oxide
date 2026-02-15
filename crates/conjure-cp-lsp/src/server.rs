@@ -1,3 +1,6 @@
+use conjure_cp_core::ast::Model;
+use tree_sitter::Tree;
+
 use tower_lsp::{
     Client,
     LanguageServer,
@@ -11,15 +14,27 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
+
+#[derive(Debug)]
+pub struct cacheCont {
+    //ast
+    //cst
+    //sourcemap
+    pub ast: Model,
+    pub cst: Tree,
+    pub contents: String
+}
+
 #[derive(Debug)]
 pub struct Backend {
     pub client: Client,
     pub documents: Arc<RwLock<HashMap<String, String>>>, //caching document
+    pub cache: HashMap<Url,cacheCont>,
 }
 
 impl Backend {
     pub fn new(client: Client, documents: Arc<RwLock<HashMap<String, String>>>) -> Self {
-        Backend { client, documents }
+        Backend { client, documents } //add cache here
     }
 }
 
