@@ -11,7 +11,6 @@ use std::{
 
 use anyhow::{anyhow, ensure};
 use clap::ValueHint;
-use conjure_cp::defaults::DEFAULT_RULE_SETS;
 use conjure_cp::{
     Model,
     ast::comprehension::USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS,
@@ -19,6 +18,7 @@ use conjure_cp::{
     rule_engine::{resolve_rule_sets, rewrite_morph, rewrite_naive},
     solver::Solver,
 };
+use conjure_cp::{ast::DeclarationKind, defaults::DEFAULT_RULE_SETS};
 use conjure_cp::{
     parse::conjure_json::model_from_json, rule_engine::get_rules, solver::SolverFamily,
 };
@@ -78,6 +78,8 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
     // parse models
     let problem_model = parse(&global_args, Arc::clone(&context), input_file_name)?;
 
+    dbg!(&problem_model);
+
     let unified_model = match param_file_name {
         Some(param_file_name) => {
             let param_model = parse(&global_args, Arc::clone(&context), param_file_name)?;
@@ -87,7 +89,12 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
         None => problem_model,
     };
 
+    dbg!(&unified_model);
+
     let rewritten_model = rewrite(unified_model, &global_args, Arc::clone(&context))?;
+
+    dbg!(&rewritten_model);
+
     let solver = init_solver(&global_args);
 
     if solve_args.no_run_solver {
@@ -113,8 +120,49 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
     Ok(())
 }
 
-pub(crate) fn merge_models(problem_model: Model, param_model: Model) -> anyhow::Result<Model> {
-    todo!()
+pub(crate) fn merge_models(mut problem_model: Model, param_model: Model) -> anyhow::Result<Model> {
+    {
+        let mut symbol_table = problem_model
+            .as_submodel_mut()
+            .symbols_ptr_unchecked()
+            .write();
+
+        let param_table = param_model.as_submodel().symbols_ptr_unchecked().write();
+
+        for (name, decl) in symbol_table.clone().iter_local() {
+            match *decl.kind() {
+                DeclarationKind::Given(ref domain) => {
+                    // TODO: fix error message
+                    let param_value = param_table
+                        .lookup(name)
+                        .ok_or_else(|| anyhow!("given without letting"))?;
+
+                    let DeclarationKind::ValueLetting(ref expr) = *param_value.kind() else {
+                        return Err(anyhow!("not the right kind"));
+                    };
+
+                    symbol_table.update_insert(param_value.clone());
+                }
+                DeclarationKind::GivenQuantified(ref given) => {
+                    // TODO: fix error message
+                    let param_value = param_table
+                        .lookup(name)
+                        .ok_or_else(|| anyhow!("given without letting"))?;
+
+                    let DeclarationKind::ValueLetting(ref expr) = *param_value.kind() else {
+                        return Err(anyhow!("not the right kind"));
+                    };
+
+                    symbol_table.update_insert(param_value.clone());
+                }
+                _ => {
+                    continue;
+                }
+            }
+        }
+    }
+
+    Ok(problem_model)
 }
 
 /// Returns a new Context and Solver for solving.
