@@ -16,7 +16,7 @@ use crate::ast::{
     AbstractLiteral, Atom, DeclarationPtr, Domain, Expression, FuncAttr, IntVal, JectivityAttr,
     Literal, Name, PartialityAttr, Range, RecordEntry, SetAttr, SymbolTable, SymbolTablePtr,
 };
-use crate::ast::{DeclarationKind, Moo};
+use crate::ast::Moo;
 use crate::ast::{DomainPtr, Metadata};
 use crate::context::Context;
 use crate::error::{Error, Result};
@@ -402,6 +402,9 @@ fn parse_size_attr(
     attr_map: &JsonMap<String, JsonValue>,
     symbols: &mut SymbolTable,
 ) -> Result<Range<IntVal>> {
+    let scope = SymbolTablePtr::new();
+    *scope.write() = symbols.clone();
+
     let attr_obj = attr_map
         .iter()
         .next()
@@ -409,14 +412,14 @@ fn parse_size_attr(
     match attr_obj.0.as_str() {
         "SizeAttr_None" => Ok(Range::Unbounded),
         "SizeAttr_MinSize" => {
-            let size_int = parse_domain_value_int(attr_obj.1, symbols)
+            let size = parse_expression_to_int_val(attr_obj.1, &scope)
                 .ok_or(error!("Could not parse int domain constant"))?;
-            Ok(Range::UnboundedR(size_int.into()))
+            Ok(Range::UnboundedR(size))
         }
         "SizeAttr_MaxSize" => {
-            let size_int = parse_domain_value_int(attr_obj.1, symbols)
+            let size = parse_expression_to_int_val(attr_obj.1, &scope)
                 .ok_or(error!("Could not parse int domain constant"))?;
-            Ok(Range::UnboundedL(size_int.into()))
+            Ok(Range::UnboundedL(size))
         }
         "SizeAttr_MinMaxSize" => {
             let min_max = attr_obj
@@ -426,25 +429,28 @@ fn parse_size_attr(
             let min = min_max
                 .first()
                 .ok_or(error!("SizeAttr Min is not present"))?;
-            let min_int = parse_domain_value_int(min, symbols)
+            let min_int = parse_expression_to_int_val(min, &scope)
                 .ok_or(error!("Could not parse int domain constant"))?;
             let max = min_max
                 .get(1)
                 .ok_or(error!("SizeAttr Max is not present"))?;
-            let max_int = parse_domain_value_int(max, symbols)
+            let max_int = parse_expression_to_int_val(max, &scope)
                 .ok_or(error!("Could not parse int domain constant"))?;
-            Ok(Range::Bounded(min_int.into(), max_int.into()))
+            Ok(Range::Bounded(min_int, max_int))
         }
         "SizeAttr_Size" => {
-            let size_int = parse_domain_value_int(attr_obj.1, symbols)
+            let size = parse_expression_to_int_val(attr_obj.1, &scope)
                 .ok_or(error!("Could not parse int domain constant"))?;
-            Ok(Range::Single(size_int.into()))
+            Ok(Range::Single(size))
         }
         _ => Err(Error::Parse("SizeAttr is an unknown type".to_owned())),
     }
 }
 
 fn parse_int_domain(v: &JsonValue, symbols: &SymbolTable) -> Result<DomainPtr> {
+    let scope = SymbolTablePtr::new();
+    *scope.write() = symbols.clone();
+
     let mut ranges = Vec::new();
     let arr = v
         .as_array()
@@ -466,14 +472,22 @@ fn parse_int_domain(v: &JsonValue, symbols: &SymbolTable) -> Result<DomainPtr> {
                     .ok_or(error!("RangeBounded is not an array".to_owned()))?;
                 let mut nums = Vec::new();
                 for item in arr.iter() {
-                    let num = parse_domain_value_int(item, symbols)
+                    let num = parse_expression_to_int_val(item, &scope)
                         .ok_or(error!("Could not parse int domain constant"))?;
                     nums.push(num);
                 }
-                ranges.push(Range::Bounded(nums[0], nums[1]));
+                let lower = nums
+                    .first()
+                    .cloned()
+                    .ok_or(error!("RangeBounded lower bound missing"))?;
+                let upper = nums
+                    .get(1)
+                    .cloned()
+                    .ok_or(error!("RangeBounded upper bound missing"))?;
+                ranges.push(Range::Bounded(lower, upper));
             }
             "RangeSingle" => {
-                let num = parse_domain_value_int(range.1, symbols)
+                let num = parse_expression_to_int_val(range.1, &scope)
                     .ok_or(error!("Could not parse int domain constant"))?;
                 ranges.push(Range::Single(num));
             }
@@ -483,85 +497,21 @@ fn parse_int_domain(v: &JsonValue, symbols: &SymbolTable) -> Result<DomainPtr> {
     Ok(Domain::int(ranges))
 }
 
-/// Parses a (possibly) integer value inside the range of a domain
-///
-/// 1. (positive number) Constant/ConstantInt/1
-///
-/// 2. (negative number) Op/MkOpNegate/Constant/ConstantInt/1
-///
-/// Unlike `parse_constant` this handles the negation operator. `parse_constant` expects the
-/// negation to already have been handled as an expression; however, here we do not expect domain
-/// values to be part of larger expressions, only negated.
-///
-fn parse_domain_value_int(obj: &JsonValue, symbols: &SymbolTable) -> Option<i32> {
-    parser_trace!("trying to parse domain value: {}", obj);
+fn parse_expression_to_int_val(obj: &JsonValue, scope: &SymbolTablePtr) -> Option<IntVal> {
+    parser_trace!("trying to parse domain value as expression: {}", obj);
+    let expr = parse_expression(obj, scope)?;
 
-    fn try_parse_positive_int(obj: &JsonValue) -> Option<i32> {
-        parser_trace!(".. trying as a positive domain value: {}", obj);
-        // Positive number: Constant/ConstantInt/1
+    if let Some(Literal::Int(i)) = expr.clone().into_literal() {
+        return Some(IntVal::Const(i));
+    }
 
-        let leaf_node = obj
-            .pointer("/Constant/ConstantInt/1")
-            .or_else(|| obj.pointer("/ConstantInt/1"))?;
-
-        match leaf_node.as_i64()?.try_into() {
-            Ok(x) => {
-                parser_trace!(".. success!");
-                Some(x)
-            }
-            Err(_) => {
-                println!("Could not convert integer constant to i32: {leaf_node:#?}");
-                None
-            }
+    if let Expression::Atomic(_, Atom::Reference(reference)) = &expr {
+        if let Some(reference_val) = IntVal::new_ref(reference) {
+            return Some(reference_val);
         }
     }
 
-    fn try_parse_negative_int(obj: &JsonValue) -> Option<i32> {
-        // Negative number: Op/MkOpNegate/Constant/ConstantInt/1
-
-        // Unwrap negation operator, giving us a Constant/ConstantInt/1
-        //
-        // This is just a positive constant, so try to parse it as such
-
-        parser_trace!(".. trying as a negative domain value: {}", obj);
-        let inner_constant_node = obj.pointer("/Op/MkOpNegate")?;
-        let inner_num = try_parse_positive_int(inner_constant_node)?;
-
-        parser_trace!(".. success!");
-        Some(-inner_num)
-    }
-
-    // it will be too annoying to store references inside all our int domain ranges, so just
-    // resolve them here.
-    //
-    // this matches savilerow, where lettings must be declared before they are used.
-    //
-    // TODO: we shouldn't do this long term, add support for ranges containing domain references.
-    fn try_parse_reference(obj: &JsonValue, symbols: &SymbolTable) -> Option<i32> {
-        parser_trace!(".. trying as a domain reference: {}", obj);
-        let inner_name = obj.pointer("/Reference/0/Name")?.as_str()?;
-        parser_trace!(
-            ".. found domain reference to {}, trying to resolve it",
-            inner_name
-        );
-        let name = Name::User(Ustr::from(inner_name));
-        let decl = symbols.lookup(&name)?;
-        let DeclarationKind::ValueLetting(d) = &decl.kind() as &DeclarationKind else {
-            parser_trace!(".. name exists but is not a value letting!");
-            return None;
-        };
-
-        let a = d.clone().into_literal()?;
-        let Literal::Int(a) = a else {
-            return None;
-        };
-
-        Some(a)
-    }
-
-    try_parse_positive_int(obj)
-        .or_else(|| try_parse_negative_int(obj))
-        .or_else(|| try_parse_reference(obj, symbols))
+    IntVal::new_expr(Moo::new(expr))
 }
 
 // this needs an explicit type signature to force the closures to have the same type
@@ -569,6 +519,8 @@ type BinOp = Box<dyn Fn(Metadata, Moo<Expression>, Moo<Expression>) -> Expressio
 type UnaryOp = Box<dyn Fn(Metadata, Moo<Expression>) -> Expression>;
 
 pub fn parse_expression(obj: &JsonValue, scope: &SymbolTablePtr) -> Option<Expression> {
+    let fail = |_stage: &str| -> Option<Expression> { None };
+
     let binary_operators: HashMap<&str, BinOp> = [
         (
             "MkOpIn",
@@ -754,10 +706,10 @@ pub fn parse_expression(obj: &JsonValue, scope: &SymbolTablePtr) -> Option<Expre
     match obj {
         Value::Object(op) if op.contains_key("Op") => match &op["Op"] {
             Value::Object(bin_op) if binary_operator_names.any(|key| bin_op.contains_key(*key)) => {
-                Some(parse_bin_op(bin_op, binary_operators, scope).unwrap())
+                parse_bin_op(bin_op, binary_operators, scope)
             }
             Value::Object(un_op) if unary_operator_names.any(|key| un_op.contains_key(*key)) => {
-                Some(parse_unary_op(un_op, unary_operators, scope).unwrap())
+                parse_unary_op(un_op, unary_operators, scope)
             }
             Value::Object(op) if op.contains_key("MkOpFlatten") => parse_flatten_op(op, scope),
             Value::Object(op)
@@ -768,16 +720,28 @@ pub fn parse_expression(obj: &JsonValue, scope: &SymbolTablePtr) -> Option<Expre
             otherwise => bug!("Unhandled Op {:#?}", otherwise),
         },
         Value::Object(comprehension) if comprehension.contains_key("Comprehension") => {
-            Some(parse_comprehension(comprehension, scope.clone(), None).unwrap())
+            parse_comprehension(comprehension, scope.clone(), None)
         }
         Value::Object(refe) if refe.contains_key("Reference") => {
-            let name = refe["Reference"].as_array()?[0].as_object()?["Name"].as_str()?;
+            let Some(ref_arr) = refe["Reference"].as_array() else {
+                return fail("Reference.as_array");
+            };
+            let Some(ref_obj) = ref_arr.first().and_then(|x| x.as_object()) else {
+                return fail("Reference[0].as_object");
+            };
+            let Some(name) = ref_obj.get("Name").and_then(|x| x.as_str()) else {
+                return fail("Reference[0].Name.as_str");
+            };
             let user_name = Name::User(Ustr::from(name));
 
-            let declaration: DeclarationPtr = scope
+            let declaration: DeclarationPtr = match scope
                 .read()
                 .lookup(&user_name)
-                .or_else(|| bug!("Could not find reference {user_name}"))?;
+                .or_else(|| bug!("Could not find reference {user_name}"))
+            {
+                Some(declaration) => declaration,
+                None => return fail("Reference.lookup"),
+            };
 
             Some(Expression::Atomic(
                 Metadata::new(),
@@ -785,42 +749,35 @@ pub fn parse_expression(obj: &JsonValue, scope: &SymbolTablePtr) -> Option<Expre
             ))
         }
         Value::Object(abslit) if abslit.contains_key("AbstractLiteral") => {
-            if abslit["AbstractLiteral"]
-                .as_object()?
-                .contains_key("AbsLitSet")
-            {
-                Some(parse_abs_lit(&abslit["AbstractLiteral"]["AbsLitSet"], scope).unwrap())
-            } else if abslit["AbstractLiteral"]
-                .as_object()?
-                .contains_key("AbsLitFunction")
-            {
-                Some(
-                    parse_abs_function(&abslit["AbstractLiteral"]["AbsLitFunction"], scope)
-                        .unwrap(),
-                )
+            let Some(abstract_literal) = abslit["AbstractLiteral"].as_object() else {
+                return fail("AbstractLiteral.as_object");
+            };
+
+            if abstract_literal.contains_key("AbsLitSet") {
+                parse_abs_lit(&abslit["AbstractLiteral"]["AbsLitSet"], scope)
+            } else if abstract_literal.contains_key("AbsLitFunction") {
+                parse_abs_function(&abslit["AbstractLiteral"]["AbsLitFunction"], scope)
             } else {
-                Some(parse_abstract_matrix_as_expr(obj, scope).unwrap())
+                parse_abstract_matrix_as_expr(obj, scope)
             }
         }
 
-        Value::Object(constant) if constant.contains_key("Constant") => Some(
-            parse_constant(constant, scope)
-                .or_else(|| parse_abstract_matrix_as_expr(obj, scope))
-                .unwrap(),
-        ),
+        Value::Object(constant) if constant.contains_key("Constant") => {
+            parse_constant(constant, scope).or_else(|| parse_abstract_matrix_as_expr(obj, scope))
+        }
 
         Value::Object(constant) if constant.contains_key("ConstantAbstract") => {
-            Some(parse_abstract_matrix_as_expr(obj, scope).unwrap())
+            parse_abstract_matrix_as_expr(obj, scope)
         }
 
         Value::Object(constant) if constant.contains_key("ConstantInt") => {
-            Some(parse_constant(constant, scope).unwrap())
+            parse_constant(constant, scope)
         }
         Value::Object(constant) if constant.contains_key("ConstantBool") => {
-            Some(parse_constant(constant, scope).unwrap())
+            parse_constant(constant, scope)
         }
 
-        _ => None,
+        _ => fail("no_match"),
     }
 }
 
@@ -906,30 +863,56 @@ fn parse_comprehension(
     scope: SymbolTablePtr,
     comprehension_kind: Option<ACOperatorKind>,
 ) -> Option<Expression> {
+    let fail = |_stage: &str| -> Option<Expression> { None };
+
     let value = &comprehension["Comprehension"];
     let mut comprehension = ComprehensionBuilder::new(scope.clone());
     let generator_symboltable = comprehension.generator_symboltable();
     let return_expr_symboltable = comprehension.return_expr_symboltable();
 
-    let generators_and_guards = value.pointer("/1")?.as_array()?.iter();
+    let Some(generators_and_guards_array) = value.pointer("/1").and_then(Value::as_array) else {
+        return fail("Comprehension.pointer(/1).as_array");
+    };
+    let generators_and_guards = generators_and_guards_array.iter();
 
     for gen_or_guard in generators_and_guards {
-        let (name, inner) = gen_or_guard.as_object()?.iter().next()?;
+        let Some(gen_or_guard_obj) = gen_or_guard.as_object() else {
+            return fail("generator_or_guard.as_object");
+        };
+        let Some((name, inner)) = gen_or_guard_obj.iter().next() else {
+            return fail("generator_or_guard.iter().next");
+        };
         comprehension = match name.as_str() {
             "Generator" => {
                 // TODO: more things than GenDomainNoRepr and Single names here?
-                let (name, gen_inner) = inner.as_object()?.iter().next()?;
+                let Some(generator_obj) = inner.as_object() else {
+                    return fail("Generator.inner.as_object");
+                };
+                let Some((name, gen_inner)) = generator_obj.iter().next() else {
+                    return fail("Generator.inner.iter().next");
+                };
                 match name.as_str() {
                     "GenDomainNoRepr" => {
-                        let name = gen_inner.pointer("/0/Single/Name")?.as_str()?;
-                        let (domain_name, domain_value) =
-                            gen_inner.pointer("/1")?.as_object()?.iter().next()?;
-                        let domain = parse_domain(
+                        let Some(name) =
+                            gen_inner.pointer("/0/Single/Name").and_then(Value::as_str)
+                        else {
+                            return fail("GenDomainNoRepr.pointer(/0/Single/Name).as_str");
+                        };
+                        let Some(domain_obj) = gen_inner.pointer("/1").and_then(Value::as_object)
+                        else {
+                            return fail("GenDomainNoRepr.pointer(/1).as_object");
+                        };
+                        let Some((domain_name, domain_value)) = domain_obj.iter().next() else {
+                            return fail("GenDomainNoRepr.domain.iter().next");
+                        };
+                        let domain = match parse_domain(
                             domain_name,
                             domain_value,
                             &mut generator_symboltable.write(),
-                        )
-                        .ok()?;
+                        ) {
+                            Ok(domain) => domain,
+                            Err(_) => return None,
+                        };
                         comprehension.generator(DeclarationPtr::new_var(name.into(), domain))
                     }
                     // TODO: this is temporary until comprehensions support "in expr" generators
@@ -941,7 +924,11 @@ fn parse_comprehension(
                 }
             }
 
-            "Condition" => comprehension.guard(parse_expression(inner, &generator_symboltable)?),
+            "Condition" => {
+                let expr = parse_expression(inner, &generator_symboltable)
+                    .or_else(|| fail("Condition.parse_expression"))?;
+                comprehension.guard(expr)
+            }
 
             x => {
                 bug!("unknown field inside comprehension {x}");
@@ -949,7 +936,11 @@ fn parse_comprehension(
         }
     }
 
-    let expr = parse_expression(value.pointer("/0")?, &return_expr_symboltable)?;
+    let Some(return_expr_value) = value.pointer("/0") else {
+        return fail("Comprehension.pointer(/0)");
+    };
+    let expr = parse_expression(return_expr_value, &return_expr_symboltable)
+        .or_else(|| fail("Comprehension.return_expr.parse_expression"))?;
 
     Some(Expression::Comprehension(
         Metadata::new(),
@@ -962,15 +953,24 @@ fn parse_in_expr_comprehension(
     comprehension_value: &Value,
     gen_inner: &Value,
 ) -> Option<Expression> {
-    let name = gen_inner.pointer("/0/Single/Name")?.as_str()?;
-    let expr = parse_expression(gen_inner.pointer("/1")?, &scope)?;
+    let fail = |_stage: &str| -> Option<Expression> { None };
+
+    let Some(name) = gen_inner.pointer("/0/Single/Name").and_then(Value::as_str) else {
+        return fail("GenInExpr.pointer(/0/Single/Name).as_str");
+    };
+    let Some(generator_expr) = gen_inner.pointer("/1") else {
+        return fail("GenInExpr.pointer(/1)");
+    };
+    let expr =
+        parse_expression(generator_expr, &scope).or_else(|| fail("GenInExpr.parse_expression"))?;
 
     let comprehension =
         AbstractComprehensionBuilder::new(&scope).new_expression_generator(expr, name.into());
-    let expr = parse_expression(
-        comprehension_value.pointer("/0")?,
-        &comprehension.return_expr_symbols(),
-    )?;
+    let Some(return_expr_value) = comprehension_value.pointer("/0") else {
+        return fail("comprehension_value.pointer(/0)");
+    };
+    let expr = parse_expression(return_expr_value, &comprehension.return_expr_symbols())
+        .or_else(|| fail("GenInExpr.return_expr.parse_expression"))?;
 
     Some(Expression::AbstractComprehension(
         Metadata::new(),
@@ -1112,8 +1112,14 @@ fn parse_unary_op(
     unary_operators: HashMap<&str, UnaryOp>,
     scope: &SymbolTablePtr,
 ) -> Option<Expression> {
-    let (key, value) = un_op.into_iter().next()?;
-    let constructor = unary_operators.get(key.as_str())?;
+    let fail = |_stage: &str| -> Option<Expression> { None };
+
+    let Some((key, value)) = un_op.iter().next() else {
+        return fail("un_op.iter().next");
+    };
+    let Some(constructor) = unary_operators.get(key.as_str()) else {
+        return fail("unary_operators.get");
+    };
 
     // unops are the main things that contain comprehensions
     //
@@ -1127,10 +1133,12 @@ fn parse_unary_op(
                 "MkOpProduct" => Some(ACOperatorKind::Product),
                 _ => None,
             };
-            Some(parse_comprehension(comprehension, scope.clone(), comprehension_kind).unwrap())
+            parse_comprehension(comprehension, scope.clone(), comprehension_kind)
+                .or_else(|| fail("value.Comprehension.parse_comprehension"))
         }
-        _ => parse_expression(value, scope),
-    }?;
+        _ => parse_expression(value, scope).or_else(|| fail("value.parse_expression")),
+    }
+    .or_else(|| fail("arg"))?;
 
     Some(constructor(Metadata::new(), Moo::new(arg)))
 }
@@ -1217,13 +1225,7 @@ fn parse_constant(
         Some(Value::Object(int)) if int.contains_key("ConstantInt") => {
             let int_32: i32 = match int["ConstantInt"].as_array()?[1].as_i64()?.try_into() {
                 Ok(x) => x,
-                Err(_) => {
-                    println!(
-                        "Could not convert integer constant to i32: {:#?}",
-                        int["ConstantInt"]
-                    );
-                    return None;
-                }
+                Err(_) => return None,
             };
 
             Some(Expression::Atomic(
