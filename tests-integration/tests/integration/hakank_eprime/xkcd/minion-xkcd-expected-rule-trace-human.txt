@@ -3,32 +3,48 @@ Model before rewriting:
 letting n be 6
 letting price be [215,275,335,355,420,580;int(1..6)]
 letting total_ be 1505
-find x: matrix indexed by [[int(1..6)]] of int(0..100000)
+find x: matrix indexed by [[int(1..n)]] of int(0..100000)
 
 such that
 
-(total_ = sum([given i: int(1..6)
+(total_ = sum([given i: int(1..n)
 
 such that
 
 product([price[i],x[i];int(1..2)])
- | i: int(1..6),]))
+ | i: int(1..n),]))
 
 --
 
-(total_ = sum([given i: int(1..6)
+(total_ = sum([given i: int(1..n)
+
+such that
+
+product([price[i],x[i];int(1..2)])
+ | i: int(1..n),])), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(1505 = sum([given i: int(1..n)
+
+such that
+
+product([price[i],x[i];int(1..2)])
+ | i: int(1..n),])) 
+
+--
+
+(1505 = sum([given i: int(1..n)
 
 such that
 
 product([price[i],x#matrix_to_atom[i];int(1..2)])
- | i: int(1..6),])), 
+ | i: int(1..n),])), 
    ~~> select_representation_matrix ([("Representations", 8001)]) 
-(total_ = sum([given i: int(1..6)
+(1505 = sum([given i: int(1..n)
 
 such that
 
 product([price[i],x#matrix_to_atom[i];int(1..2)])
- | i: int(1..6),])) 
+ | i: int(1..n),])) 
 new variables:
   find x#matrix_to_atom_1: int(0..100000)
   find x#matrix_to_atom_2: int(0..100000)
@@ -38,15 +54,9 @@ new variables:
   find x#matrix_to_atom_6: int(0..100000)
 --
 
-total_, 
-   ~~> substitute_value_lettings ([("Base", 5000)]) 
-1505 
-
---
-
 Model before rewriting:
 
-find i: int(1..6)
+find i: int(1..n)
 find __0: int(215, 275, 335, 355, 420, 580)
 find __1: int(0..100000)
 
@@ -79,7 +89,7 @@ FlatProductEq(__1,__0,__2)
 
 Final model:
 
-find i: int(1..6)
+find i: int(1..n)
 find __0: int(215, 275, 335, 355, 420, 580)
 find __1: int(0..100000)
 find __2: int(0..58000000)
@@ -91,7 +101,7 @@ FlatProductEq(__1,__0,__2)
 
 Model before rewriting:
 
-given i: int(1..6)
+given i: int(1..n)
 
 such that
 
@@ -143,18 +153,18 @@ product([[215,275,335,355,420,580;int(1..6)][i],x#matrix_to_atom[i];int(1..)])
 
 Final model:
 
-given i: int(1..6)
+given i: int(1..n)
 
 such that
 
 product([[215,275,335,355,420,580;int(1..)][i],x#matrix_to_atom[i];int(1..)])
 
-sum([given i: int(1..6)
+sum([given i: int(1..n)
 
 such that
 
 product([price[i],x#matrix_to_atom[i];int(1..2)])
- | i: int(1..6),__0: int(215, 275, 335, 355, 420, 580),__1: int(0..100000),__2: int(0..58000000),]), 
+ | i: int(1..n),__0: int(215, 275, 335, 355, 420, 580),__1: int(0..100000),__2: int(0..58000000),]), 
    ~~> expand_comprehension_ac ([("Better_AC_Comprehension_Expansion", 2001)]) 
 sum([product([[215,275,335,355,420,580;int(1..)][1],x#matrix_to_atom[1];int(1..)]),product([[215,275,335,355,420,580;int(1..)][2],x#matrix_to_atom[2];int(1..)]),product([[215,275,335,355,420,580;int(1..)][3],x#matrix_to_atom[3];int(1..)]),product([[215,275,335,355,420,580;int(1..)][4],x#matrix_to_atom[4];int(1..)]),product([[215,275,335,355,420,580;int(1..)][5],x#matrix_to_atom[5];int(1..)]),product([[215,275,335,355,420,580;int(1..)][6],x#matrix_to_atom[6];int(1..)]);int(1..)]) 
 
@@ -190,7 +200,7 @@ Final model:
 letting n be 6
 letting price be [215,275,335,355,420,580;int(1..6)]
 letting total_ be 1505
-find x: matrix indexed by [[int(1..6)]] of int(0..100000)
+find x: matrix indexed by [[int(1..n)]] of int(0..100000)
 find x#matrix_to_atom_1: int(0..100000)
 find x#matrix_to_atom_2: int(0..100000)
 find x#matrix_to_atom_3: int(0..100000)

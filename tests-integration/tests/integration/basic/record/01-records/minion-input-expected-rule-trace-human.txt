@@ -88,18 +88,6 @@ new variables:
   find z#record_to_atom_2: int(0..9)
 --
 
-(x#record_to_atom[1] = true),
-(x#record_to_atom[2] = 3),
-(y#record_to_atom = {a: false,b: 4}),
-(y#record_to_atom = z#record_to_atom), 
-   ~~> substitute_domain_lettings ([("Base", 5000)]) 
-(x#record_to_atom[1] = true),
-(x#record_to_atom[2] = 3),
-(y#record_to_atom = {a: false,b: 4}),
-(y#record_to_atom = z#record_to_atom) 
-
---
-
 x#record_to_atom[1], 
    ~~> index_record_to_atom ([("Base", 2000)]) 
 x#record_to_atom_1 
@@ -211,9 +199,9 @@ Final model:
 letting R be domain record of ([a: bool, b: int(0..9)])
 
 
-find x: record of ([a: bool, b: int(0..9)])
-find y: record of ([a: bool, b: int(0..9)])
-find z: record of ([a: bool, b: int(0..9)])
+find x: R
+find y: R
+find z: R
 find x#record_to_atom_1: bool
 find x#record_to_atom_2: int(0..9)
 find y#record_to_atom_1: bool
