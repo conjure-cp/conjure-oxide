@@ -8,6 +8,12 @@ such that
 
 --
 
+(x = (2,3)), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(x = Tuple([Int(2), Int(3)])) 
+
+--
+
 x, 
    ~~> select_representation ([("Representations", 8000)]) 
 x#tuple_to_atom 
@@ -16,13 +22,13 @@ new variables:
   find x#tuple_to_atom_2: int(1..5)
 --
 
-(x#tuple_to_atom = (2,3)), 
+(x#tuple_to_atom = Tuple([Int(2), Int(3)])), 
    ~~> tuple_to_constant ([("Base", 2000)]) 
-and([(x#tuple_to_atom[1] = (2,3)[1]),(x#tuple_to_atom[2] = (2,3)[2]);int(1..)]) 
+and([(x#tuple_to_atom[1] = Tuple([Int(2), Int(3)])[1]),(x#tuple_to_atom[2] = Tuple([Int(2), Int(3)])[2]);int(1..)]) 
 
 --
 
-and([(x#tuple_to_atom[1] = (2,3)[1]),(x#tuple_to_atom[2] = (2,3)[2]);int(1..)]), 
+and([(x#tuple_to_atom[1] = Tuple([Int(2), Int(3)])[1]),(x#tuple_to_atom[2] = Tuple([Int(2), Int(3)])[2]);int(1..)]), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
 (x#tuple_to_atom[1] = 2),
 (x#tuple_to_atom[2] = 3) 
