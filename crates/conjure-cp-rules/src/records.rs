@@ -236,12 +236,23 @@ fn record_to_const(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             return Err(RuleNotApplicable);
         };
 
-        let Expr::AbstractLiteral(_, AbstractLiteral::Record(entries2)) = &**right else {
-            return Err(RuleNotApplicable);
+        let rhs_record_names: Vec<Name> = match right.as_ref() {
+            Expr::AbstractLiteral(_, AbstractLiteral::Record(entries2)) => {
+                entries2.iter().map(|x| x.name.clone()).collect()
+            }
+            Expr::Atomic(
+                _,
+                Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Record(entries2))),
+            ) => entries2.iter().map(|x| x.name.clone()).collect(),
+            _ => return Err(RuleNotApplicable),
         };
 
+        if entries.len() != rhs_record_names.len() {
+            return Err(RuleNotApplicable);
+        }
+
         for i in 0..entries.len() {
-            if entries[i].name != entries2[i].name {
+            if entries[i].name != rhs_record_names[i] {
                 return Err(RuleNotApplicable);
             }
         }

@@ -235,8 +235,12 @@ fn tuple_to_constant(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let Expr::AbstractLiteral(_, AbstractLiteral::Tuple(elems2)) = &**right else {
-        return Err(RuleNotApplicable);
+    let rhs_tuple_len = match right.as_ref() {
+        Expr::AbstractLiteral(_, AbstractLiteral::Tuple(elems2)) => elems2.len(),
+        Expr::Atomic(_, Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Tuple(elems2)))) => {
+            elems2.len()
+        }
+        _ => return Err(RuleNotApplicable),
     };
 
     if reprs.first().is_none_or(|x| x.as_str() != "tuple_to_atom") {
@@ -253,7 +257,7 @@ fn tuple_to_constant(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    if elems.len() != elems2.len() {
+    if elems.len() != rhs_tuple_len {
         return Err(RuleNotApplicable);
     }
 
