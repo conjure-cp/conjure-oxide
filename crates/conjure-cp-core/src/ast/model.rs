@@ -1,4 +1,4 @@
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::fmt::{Debug, Display};
 use std::sync::{Arc, RwLock};
 
@@ -266,6 +266,7 @@ impl SerdeModel {
     /// stability across identical model structures.
     pub fn collect_stable_id_mapping(&self) -> HashMap<ObjId, ObjId> {
         let mut id_list: Vec<ObjId> = Vec::new();
+        let mut visited_symbol_tables: HashSet<ObjId> = HashSet::new();
 
         let mut visit = |id: ObjId| {
             if !id_list.contains(&id) {
@@ -273,30 +274,44 @@ impl SerdeModel {
             }
         };
 
+        let mut visit_symbol_table_chain = |symbol_table: SymbolTablePtr| {
+            let mut current = Some(symbol_table);
+
+            while let Some(table) = current {
+                let table_id = table.id();
+                if !visited_symbol_tables.insert(table_id.clone()) {
+                    break;
+                }
+
+                visit(table_id);
+
+                current = {
+                    let table_ref = table.read();
+                    table_ref
+                        .iter_local()
+                        .for_each(|(_, decl)| visit(decl.id()));
+                    table_ref.parent().clone()
+                };
+            }
+        };
+
         // Collect SymbolTable IDs by traversing all SubModels
         for submodel in self.submodel.universe() {
-            // Record ID of this symbol tables
-            let symbol_table = submodel.symbols_ptr_unchecked();
-            visit(symbol_table.id());
-
-            // Collect Declaration IDs by traversing each SubModel's symbol table.
-            // (Assuming that all declarations in the model have to come from some symbol table!)
-            symbol_table
-                .read()
-                .iter_local()
-                .for_each(|(_, decl)| visit(decl.id()));
+            visit_symbol_table_chain(submodel.symbols_ptr_unchecked().clone());
         }
 
         // Collect remaining IDs by traversing the expression tree
         // (Some expressions, e.g. AbstractComprehensions, contain SymbolTable's not
         // contained in submodels).
-        let exprs: VecDeque<Expression> = self.submodel.universe_bi();
+        let mut exprs: VecDeque<Expression> = self.submodel.universe_bi();
+        if let Some(dominance) = &self.dominance {
+            exprs.push_back(dominance.clone());
+        }
         for symbol_table in Biplate::<SymbolTablePtr>::universe_bi(&exprs) {
-            visit(symbol_table.id());
-            symbol_table
-                .read()
-                .iter_local()
-                .for_each(|(_, decl)| visit(decl.id()));
+            visit_symbol_table_chain(symbol_table);
+        }
+        for declaration in Biplate::<DeclarationPtr>::universe_bi(&exprs) {
+            visit(declaration.id());
         }
 
         // Create stable mapping: original_id -> stable_id
