@@ -1,9 +1,12 @@
 #![allow(dead_code)]
-use crate::ast::{AbstractLiteral, Atom, Expression as Expr, Literal as Lit, Metadata, matrix};
+use crate::ast::{
+    AbstractLiteral, Atom, DeclarationKind, Expression as Expr, Literal as Lit, Metadata, matrix,
+};
 use crate::into_matrix;
 use itertools::{Itertools as _, izip};
 use std::cmp::Ordering as CmpOrdering;
 use std::collections::HashSet;
+use std::ops::Deref;
 
 /// Simplify an expression to a constant if possible
 /// Returns:
@@ -128,7 +131,10 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             domain.contains(lit).ok().map(Into::into)
         }
         Expr::Atomic(_, Atom::Literal(c)) => Some(c.clone()),
-        Expr::Atomic(_, Atom::Reference(_)) => None,
+        Expr::Atomic(_, Atom::Reference(reference)) => match reference.ptr().kind().deref() {
+            DeclarationKind::ValueLetting(expr) => eval_constant(expr),
+            _ => None,
+        },
         Expr::AbstractLiteral(_, a) => {
             if let AbstractLiteral::Set(s) = a {
                 let mut copy = Vec::new();

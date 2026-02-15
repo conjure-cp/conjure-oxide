@@ -51,7 +51,11 @@ fn select_representation_matrix(expr: &Expr, symbols: &SymbolTable) -> Applicati
             decl.as_var().map(|x| (n, id, x.clone()))
         })
         .filter(|(_, _, var)| {
-            let Some((valdom, indexdoms)) = var.domain.as_matrix_ground() else {
+            let Some(resolved_domain) = var.domain.resolve() else {
+                return false;
+            };
+
+            let GroundDomain::Matrix(valdom, indexdoms) = resolved_domain.as_ref() else {
                 return false;
             };
 

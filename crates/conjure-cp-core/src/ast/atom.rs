@@ -2,8 +2,9 @@ use std::borrow::Borrow;
 use uniplate::Uniplate;
 
 use super::{
-    AbstractLiteral, DeclarationPtr, DomainPtr, Expression, Literal, Moo, Name,
+    AbstractLiteral, DeclarationKind, DeclarationPtr, DomainPtr, Expression, Literal, Moo, Name,
     categories::{Category, CategoryOf},
+    eval_constant,
     domains::HasDomain,
     records::RecordValue,
 };
@@ -11,6 +12,7 @@ use derivative::Derivative;
 use parking_lot::MappedRwLockReadGuard;
 use polyquine::Quine;
 use serde::{Deserialize, Serialize};
+use std::ops::Deref;
 
 /// An `Atom` is an indivisible expression, such as a literal or a reference.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate, Derivative, Quine)]
@@ -245,8 +247,14 @@ impl TryFrom<&Atom> for i32 {
     type Error = &'static str;
 
     fn try_from(value: &Atom) -> Result<Self, Self::Error> {
-        let lit: &Literal = value.try_into()?;
-        lit.try_into()
+        match value {
+            Atom::Literal(lit) => lit.try_into(),
+            Atom::Reference(reference) => {
+                let lit = eval_reference_literal(reference)?;
+                lit.try_into()
+                    .map_err(|_| "Cannot convert non-int reference atom to i32")
+            }
+        }
     }
 }
 
@@ -263,7 +271,23 @@ impl TryFrom<&Atom> for bool {
     type Error = &'static str;
 
     fn try_from(value: &Atom) -> Result<Self, Self::Error> {
-        let lit: &Literal = value.try_into()?;
-        lit.try_into()
+        match value {
+            Atom::Literal(lit) => lit.try_into(),
+            Atom::Reference(reference) => {
+                let lit = eval_reference_literal(reference)?;
+                lit.try_into()
+                    .map_err(|_| "Cannot convert non-bool reference atom to bool")
+            }
+        }
+    }
+}
+
+fn eval_reference_literal(reference: &super::Reference) -> Result<Literal, &'static str> {
+    let decl_kind = reference.ptr().kind();
+    match decl_kind.deref() {
+        DeclarationKind::ValueLetting(expr) => {
+            eval_constant(expr).ok_or("Cannot convert non-constant reference atom to literal")
+        }
+        _ => Err("Cannot convert non-value-letting reference atom to literal"),
     }
 }

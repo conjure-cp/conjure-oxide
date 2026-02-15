@@ -111,7 +111,8 @@ fn load_var(
     search_var: bool,
     minion_model: &mut MinionModel,
 ) -> Result<(), SolverError> {
-    match &var.domain_of().as_ground() {
+    let resolved_domain = var.domain_of().resolve();
+    match resolved_domain.as_deref() {
         Some(conjure_ast::GroundDomain::Int(ranges)) => {
             load_intdomain_var(name, ranges, search_var, minion_model)
         }
