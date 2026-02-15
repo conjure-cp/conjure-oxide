@@ -135,29 +135,15 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             DeclarationKind::ValueLetting(expr) => eval_constant(expr),
             _ => None,
         },
-        Expr::AbstractLiteral(_, a) => {
-            if let AbstractLiteral::Set(s) = a {
-                let mut copy = Vec::new();
-                for expr in s.iter() {
-                    if let Expr::Atomic(_, Atom::Literal(lit)) = expr {
-                        copy.push(lit.clone());
-                    } else {
-                        return None;
-                    }
-                }
-                Some(Lit::AbstractLiteral(AbstractLiteral::Set(copy)))
-            } else {
-                None
-            }
-        }
+        Expr::AbstractLiteral(_, a) => Some(Lit::AbstractLiteral(a.clone().into_literals()?)),
         Expr::Comprehension(_, _) => None,
         Expr::AbstractComprehension(_, _) => None,
         Expr::UnsafeIndex(_, subject, indices) | Expr::SafeIndex(_, subject, indices) => {
-            let subject: Lit = subject.as_ref().clone().into_literal()?;
+            let subject: Lit = eval_constant(subject.as_ref())?;
             let indices: Vec<Lit> = indices
                 .iter()
                 .cloned()
-                .map(|x| x.into_literal())
+                .map(|x| eval_constant(&x))
                 .collect::<Option<Vec<Lit>>>()?;
 
             match subject {
@@ -209,7 +195,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             }
         }
         Expr::UnsafeSlice(_, subject, indices) | Expr::SafeSlice(_, subject, indices) => {
-            let subject: Lit = subject.as_ref().clone().into_literal()?;
+            let subject: Lit = eval_constant(subject.as_ref())?;
             let Lit::AbstractLiteral(subject @ AbstractLiteral::Matrix(_, _)) = subject else {
                 return None;
             };
@@ -229,7 +215,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                     // the outer option represents success of this iterator, the inner the index
                     // slice.
                     match x {
-                        Some(x) => x.into_literal().map(Some),
+                        Some(x) => eval_constant(&x).map(Some),
                         None => Some(None),
                     }
                 })
@@ -578,7 +564,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         Expr::Metavar(_, _) => None,
         Expr::MinionElementOne(_, _, _, _) => None,
         Expr::ToInt(_, expression) => {
-            let lit = (**expression).clone().into_literal()?;
+            let lit = eval_constant(expression.as_ref())?;
             match lit {
                 Lit::Int(_) => Some(lit),
                 Lit::Bool(true) => Some(Lit::Int(1)),
@@ -588,13 +574,13 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         }
         Expr::SATInt(..) => None,
         Expr::PairwiseSum(_, a, b) => {
-            match ((**a).clone().into_literal()?, (**b).clone().into_literal()?) {
+            match (eval_constant(a.as_ref())?, eval_constant(b.as_ref())?) {
                 (Lit::Int(a_int), Lit::Int(b_int)) => Some(Lit::Int(a_int + b_int)),
                 _ => None,
             }
         }
         Expr::PairwiseProduct(_, a, b) => {
-            match ((**a).clone().into_literal()?, (**b).clone().into_literal()?) {
+            match (eval_constant(a.as_ref())?, eval_constant(b.as_ref())?) {
                 (Lit::Int(a_int), Lit::Int(b_int)) => Some(Lit::Int(a_int * b_int)),
                 _ => None,
             }

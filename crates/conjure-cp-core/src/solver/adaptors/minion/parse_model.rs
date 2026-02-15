@@ -17,6 +17,7 @@ use minion_sys::error::MinionError;
 use minion_sys::{get_from_table, run_minion};
 use std::cell::Ref;
 use std::cell::RefCell;
+use std::ops::Deref;
 use std::rc::Rc;
 
 /// Converts a conjure-oxide model to a `minion_sys` model.
@@ -439,9 +440,15 @@ fn parse_atomic_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Var, S
             parse_atomic_expr(Moo::unwrap_or_clone(inner_expr))
         }
         conjure_ast::Expression::Atomic(_, atom) => parse_atom(atom),
-        _ => Err(ModelInvalid(format!(
-            "expected atomic expression, got {expr:?}"
-        ))),
+        expr => {
+            if let Some(lit) = conjure_ast::eval_constant(&expr) {
+                return Ok(minion_ast::Var::ConstantAsVar(parse_literal_as_int(lit)?));
+            }
+
+            Err(ModelInvalid(format!(
+                "expected atomic expression, got {expr:?}"
+            )))
+        }
     }
 }
 
@@ -459,11 +466,37 @@ fn parse_atom(atom: conjure_ast::Atom) -> Result<minion_ast::Var, SolverError> {
         conjure_ast::Atom::Literal(l) => {
             Ok(minion_ast::Var::ConstantAsVar(parse_literal_as_int(l)?))
         }
-        conjure_ast::Atom::Reference(reference) => Ok(parse_name(reference.name().clone()))?,
+        conjure_ast::Atom::Reference(reference) => parse_reference_atom(reference),
 
         x => Err(ModelFeatureNotSupported(format!(
             "expected a literal or a reference but got `{x}`"
         ))),
+    }
+}
+
+fn parse_reference_atom(reference: conjure_ast::Reference) -> Result<minion_ast::Var, SolverError> {
+    let decl_kind = reference.ptr().kind();
+
+    match decl_kind.deref() {
+        conjure_ast::DeclarationKind::ValueLetting(expr) => {
+            if let Some(lit) = conjure_ast::eval_constant(expr) {
+                return Ok(minion_ast::Var::ConstantAsVar(parse_literal_as_int(lit)?));
+            }
+
+            if let conjure_ast::Expression::Atomic(_, inner_atom) = expr {
+                return parse_atom(inner_atom.clone());
+            }
+
+            Err(ModelFeatureNotSupported(format!(
+                "value letting '{}' did not resolve to an atomic expression: {expr}",
+                reference.name()
+            )))
+        }
+        conjure_ast::DeclarationKind::DomainLetting(_) => Err(ModelFeatureNotSupported(format!(
+            "domain reference used where atom expected: {}",
+            reference.name()
+        ))),
+        _ => Ok(parse_name(reference.name().clone()))?,
     }
 }
 

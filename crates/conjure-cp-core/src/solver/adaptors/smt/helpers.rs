@@ -1,7 +1,8 @@
-use crate::ast::{Atom, Domain, Literal, Moo, Name, Range};
+use crate::ast::{Atom, DeclarationKind, Domain, Expression, Literal, Moo, Name, Range, eval_constant};
 use crate::bug;
 use crate::solver::{SolverError, SolverResult};
 use conjure_cp_core::ast::GroundDomain;
+use std::ops::Deref;
 use z3::{Sort, Symbol, ast::*};
 
 use super::store::SymbolStore;
@@ -180,14 +181,33 @@ pub fn atom_to_ast(
     atom: &Atom,
 ) -> SolverResult<Dynamic> {
     match atom {
-        Atom::Reference(decl) => store
-            .get(&decl.name())
-            .ok_or(SolverError::ModelInvalid(format!(
-                "variable '{}' does not exist",
-                decl.name()
-            )))
-            .map(|(_, ast, _)| ast)
-            .cloned(),
+        Atom::Reference(reference) => {
+            if let Some((_, ast, _)) = store.get(&reference.name()) {
+                return Ok(ast.clone());
+            }
+
+            let decl_kind = reference.ptr().kind();
+            match decl_kind.deref() {
+                DeclarationKind::ValueLetting(expr) => {
+                    if let Some(lit) = eval_constant(expr) {
+                        return literal_to_ast(theory_config, &lit);
+                    }
+
+                    if let Expression::Atomic(_, inner_atom) = expr {
+                        return atom_to_ast(theory_config, store, inner_atom);
+                    }
+
+                    Err(SolverError::ModelFeatureNotImplemented(format!(
+                        "value letting '{}' did not resolve to an atomic expression: {expr}",
+                        reference.name()
+                    )))
+                }
+                _ => Err(SolverError::ModelInvalid(format!(
+                    "variable '{}' does not exist",
+                    reference.name()
+                ))),
+            }
+        }
         Atom::Literal(lit) => literal_to_ast(theory_config, lit),
         _ => Err(SolverError::ModelFeatureNotImplemented(format!(
             "atom sort not implemented: {atom}"

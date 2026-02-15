@@ -100,7 +100,6 @@ pub fn model_from_json(str: &str, context: Arc<RwLock<Context<'static>>>) -> Res
                     })
                     .collect();
                 m.as_submodel_mut().add_constraints(constraints);
-                // println!("Nb constraints {}", m.constraints.len());
             }
             otherwise => bug!("Unhandled Statement {:#?}", otherwise),
         }
