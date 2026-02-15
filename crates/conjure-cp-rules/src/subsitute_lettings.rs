@@ -1,9 +1,7 @@
 use conjure_cp::rule_engine::register_rule;
 
-use conjure_cp::ast::DomainPtr;
 use conjure_cp::{
     ast::{Atom, Expression as Expr, SymbolTable},
-    bug,
     rule_engine::{ApplicationError::RuleNotApplicable, ApplicationResult, Reduction},
 };
 
@@ -24,37 +22,4 @@ fn substitute_value_lettings(expr: &Expr, _: &SymbolTable) -> ApplicationResult 
     let value = decl.ptr().as_value_letting().ok_or(RuleNotApplicable)?;
 
     Ok(Reduction::pure(value.clone()))
-}
-
-/// Substitutes domain lettings for their values in the symbol table.
-#[register_rule(("Base", 5000))]
-fn substitute_domain_lettings(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
-    let Expr::Root(_, _) = expr else {
-        return Err(RuleNotApplicable);
-    };
-
-    let mut new_symbols = symbols.clone();
-    let mut has_changed = false;
-
-    for (_, mut decl) in symbols.clone().into_iter_local() {
-        let Some(mut var) = decl.as_var().map(|x| x.clone()) else {
-            continue;
-        };
-
-        let old_domain = var.domain;
-        let domain_gd = old_domain
-            .resolve()
-            .unwrap_or_else(|| bug!("Domain of {} could not be resolved", decl.name()));
-        var.domain = DomainPtr::from(domain_gd);
-        if old_domain != var.domain {
-            decl.as_var_mut().unwrap().domain = var.domain;
-            has_changed = true;
-            new_symbols.update_insert(decl);
-        };
-    }
-    if has_changed {
-        Ok(Reduction::with_symbols(expr.clone(), new_symbols))
-    } else {
-        Err(RuleNotApplicable)
-    }
 }
