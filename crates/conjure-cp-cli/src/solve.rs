@@ -181,6 +181,16 @@ pub(crate) fn init_context(
         extra_rule_sets.pop_if(|x| x == &"Better_AC_Comprehension_Expansion");
     }
 
+    if target_family == SolverFamily::Sat {
+        let sat_encoding_to_use = global_args.sat_encoding.as_deref().unwrap_or("log");
+        match sat_encoding_to_use {
+            "log" => extra_rule_sets.push("SAT_Log"),
+            "direct" => extra_rule_sets.push("SAT_Direct"),
+            "order" => extra_rule_sets.push("SAT_Order"),
+            _ => panic!("Unknown SAT encoding: {}", sat_encoding_to_use),
+        }
+    }
+
     let rule_sets = match resolve_rule_sets(target_family, &extra_rule_sets) {
         Ok(rs) => rs,
         Err(e) => {

@@ -43,6 +43,6 @@ pub fn run_pretty_command(global_args: GlobalArgs, pretty_args: Args) -> anyhow:
     };
 
     let output = output.map_err(|err| anyhow!("Could not pretty print: {err}"))?;
-    println!("{output}");
+    print!("{output}");
     Ok(())
 }
