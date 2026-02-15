@@ -6,13 +6,13 @@ use conjure_cp_core::ast::{Expression, SymbolTablePtr};
 #[allow(unused)]
 use uniplate::Uniplate;
 
-pub fn parse_expr(src: &str, symbols_ptr: SymbolTablePtr) -> Result<Expression, EssenceParseError> {
+pub fn parse_expr(src: &str, symbols_ptr: SymbolTablePtr) -> Result<Expression, Box<EssenceParseError>> {
     let exprs = parse_exprs(src, symbols_ptr)?;
     if exprs.len() != 1 {
-        return Err(EssenceParseError::syntax_error(
+        return Err(Box::new(EssenceParseError::syntax_error(
             "Expected a single expression".to_string(),
             None,
-        ));
+        )));
     }
     Ok(exprs[0].clone())
 }
@@ -20,7 +20,7 @@ pub fn parse_expr(src: &str, symbols_ptr: SymbolTablePtr) -> Result<Expression, 
 pub fn parse_exprs(
     src: &str,
     symbols_ptr: SymbolTablePtr,
-) -> Result<Vec<Expression>, EssenceParseError> {
+) -> Result<Vec<Expression>, Box<EssenceParseError>> {
     let (tree, source_code) = get_tree(src).ok_or(EssenceParseError::TreeSitterError(
         "Failed to parse Essence source code".to_string(),
     ))?;

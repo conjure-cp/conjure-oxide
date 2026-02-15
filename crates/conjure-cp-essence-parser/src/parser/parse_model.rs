@@ -23,7 +23,7 @@ pub fn parse_essence_file_native(
 
     parse_essence_with_context(&source_code, context).map_err(|e| {
         // Enhance the error with file name and source code
-        let enhanced_error = match e {
+        let enhanced_error = match *e {
             EssenceParseError::ParseError { msg, range, .. } => EssenceParseError::ParseError {
                 msg,
                 range,
@@ -41,13 +41,13 @@ pub fn parse_essence_file_native(
 pub fn parse_essence_with_context(
     src: &str,
     context: Arc<RwLock<Context<'static>>>,
-) -> Result<Model, EssenceParseError> {
+) -> Result<Model, Box<EssenceParseError>> {
     let (tree, source_code) = match get_tree(src) {
         Some(tree) => tree,
         None => {
-            return Err(EssenceParseError::TreeSitterError(
+            return Err(Box::new(EssenceParseError::TreeSitterError(
                 "Failed to parse source code".to_string(),
-            ));
+            )));
         }
     };
 
@@ -91,26 +91,26 @@ pub fn parse_essence_with_context(
                     parse_expression(inner, &source_code, &statement, Some(symbols_ptr.clone()))?;
                 let dominance = Expression::DominanceRelation(Metadata::new(), Moo::new(expr));
                 if model.dominance.is_some() {
-                    return Err(EssenceParseError::syntax_error(
+                    return Err(Box::new(EssenceParseError::syntax_error(
                         "Duplicate dominance relation".to_string(),
                         None,
-                    ));
+                    )));
                 }
                 model.dominance = Some(dominance);
             }
             "ERROR" => {
                 let raw_expr = &source_code[statement.start_byte()..statement.end_byte()];
-                return Err(EssenceParseError::syntax_error(
+                return Err(Box::new(EssenceParseError::syntax_error(
                     format!("'{raw_expr}' is not a valid expression"),
                     Some(statement.range()),
-                ));
+                )));
             }
             _ => {
                 let kind = statement.kind();
-                return Err(EssenceParseError::syntax_error(
+                return Err(Box::new(EssenceParseError::syntax_error(
                     format!("Unrecognized top level statement kind: {kind}"),
                     Some(statement.range()),
-                ));
+                )));
             }
         }
 
@@ -126,7 +126,7 @@ const KEYWORDS: [&str; 21] = [
     "where", "and", "or", "not", "if", "then", "else", "in", "sum", "product", "bool",
 ];
 
-fn keyword_as_identifier(root: tree_sitter::Node, src: &str) -> Result<(), EssenceParseError> {
+fn keyword_as_identifier(root: tree_sitter::Node, src: &str) -> Result<(), Box<EssenceParseError>> {
     let mut stack = vec![root];
     while let Some(node) = stack.pop() {
         if (node.kind() == "variable" || node.kind() == "identifier" || node.kind() == "parameter")
@@ -136,7 +136,7 @@ fn keyword_as_identifier(root: tree_sitter::Node, src: &str) -> Result<(), Essen
             if KEYWORDS.contains(&ident) {
                 let start_point = node.start_position();
                 let end_point = node.end_position();
-                return Err(EssenceParseError::syntax_error(
+                return Err(Box::new(EssenceParseError::syntax_error(
                     format!("Keyword '{ident}' used as identifier"),
                     Some(tree_sitter::Range {
                         start_byte: node.start_byte(),
@@ -144,7 +144,7 @@ fn keyword_as_identifier(root: tree_sitter::Node, src: &str) -> Result<(), Essen
                         start_point,
                         end_point,
                     }),
-                ));
+                )));
             }
         }
 
@@ -158,7 +158,7 @@ fn keyword_as_identifier(root: tree_sitter::Node, src: &str) -> Result<(), Essen
     Ok(())
 }
 
-pub fn parse_essence(src: &str) -> Result<Model, EssenceParseError> {
+pub fn parse_essence(src: &str) -> Result<Model, Box<EssenceParseError>> {
     let context = Arc::new(RwLock::new(Context::default()));
     parse_essence_with_context(src, context)
 }

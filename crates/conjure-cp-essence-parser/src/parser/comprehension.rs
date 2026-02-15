@@ -13,7 +13,7 @@ pub fn parse_comprehension(
     source_code: &str,
     root: &Node,
     symbols_ptr: Option<SymbolTablePtr>,
-) -> Result<Expression, EssenceParseError> {
+) -> Result<Expression, Box<EssenceParseError>> {
     // Comprehensions require a symbol table passed in
     let symbols_ptr = symbols_ptr.ok_or_else(|| {
         EssenceParseError::syntax_error(
@@ -99,7 +99,7 @@ pub fn parse_quantifier_or_aggregate_expr(
     source_code: &str,
     root: &Node,
     symbols_ptr: Option<SymbolTablePtr>,
-) -> Result<Expression, EssenceParseError> {
+) -> Result<Expression, Box<EssenceParseError>> {
     // Quantifier and aggregate expressions require a symbol table
     let symbols_ptr = symbols_ptr.ok_or_else(|| {
         EssenceParseError::syntax_error(
@@ -136,17 +136,17 @@ pub fn parse_quantifier_or_aggregate_expr(
 
     // We need either a domain or a collection
     if domain.is_none() && collection_node.is_none() {
-        return Err(EssenceParseError::syntax_error(
+        return Err(Box::new(EssenceParseError::syntax_error(
             "Quantifier and aggregate expressions require a domain or collection".to_string(),
             Some(node.range()),
-        ));
+        )));
     }
 
     if variables.is_empty() {
-        return Err(EssenceParseError::syntax_error(
+        return Err(Box::new(EssenceParseError::syntax_error(
             "Quantifier and aggregate expressions require variables".to_string(),
             Some(node.range()),
-        ));
+        )));
     }
 
     // Get the operator type
@@ -160,10 +160,10 @@ pub fn parse_quantifier_or_aggregate_expr(
         "min" => (ACOperatorKind::Sum, "Min"), // AC operator doesn't matter for non-boolean aggregates
         "max" => (ACOperatorKind::Sum, "Max"),
         _ => {
-            return Err(EssenceParseError::syntax_error(
+            return Err(Box::new(EssenceParseError::syntax_error(
                 format!("Unknown operator: {}", operator_str),
                 Some(operator_node.range()),
-            ));
+            )));
         }
     };
 
@@ -175,11 +175,11 @@ pub fn parse_quantifier_or_aggregate_expr(
         }
     } else if let Some(_coll_node) = collection_node {
         // TODO: support collection domains
-        return Err(EssenceParseError::syntax_error(
+        return Err(Box::new(EssenceParseError::syntax_error(
             "Collection domains in quantifier and aggregate expressions not yet supported"
                 .to_string(),
             Some(node.range()),
-        ));
+        )));
     }
 
     // Parse the expression (after variables are in the symbol table)

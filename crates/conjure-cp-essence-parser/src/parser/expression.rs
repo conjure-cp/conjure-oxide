@@ -12,24 +12,24 @@ pub fn parse_expression(
     source_code: &str,
     root: &Node,
     symbols_ptr: Option<SymbolTablePtr>,
-) -> Result<Expression, EssenceParseError> {
+) -> Result<Expression, Box<EssenceParseError>> {
     match node.kind() {
         "atom" => parse_atom(&node, source_code, root, symbols_ptr),
         "bool_expr" => parse_boolean_expression(&node, source_code, root, symbols_ptr),
         "arithmetic_expr" => parse_arithmetic_expression(&node, source_code, root, symbols_ptr),
         "comparison_expr" => parse_binary_expression(&node, source_code, root, symbols_ptr),
         "dominance_relation" => parse_dominance_relation(&node, source_code, root, symbols_ptr),
-        "ERROR" => Err(EssenceParseError::syntax_error(
+        "ERROR" => Err(Box::new(EssenceParseError::syntax_error(
             format!(
                 "'{}' is not a valid expression",
                 &source_code[node.start_byte()..node.end_byte()]
             ),
             Some(node.range()),
-        )),
-        _ => Err(EssenceParseError::syntax_error(
+        ))),
+        _ => Err(Box::new(EssenceParseError::syntax_error(
             format!("Unknown expression kind: '{}'", node.kind()),
             Some(node.range()),
-        )),
+        ))),
     }
 }
 
@@ -38,12 +38,12 @@ fn parse_dominance_relation(
     source_code: &str,
     root: &Node,
     symbols_ptr: Option<SymbolTablePtr>,
-) -> Result<Expression, EssenceParseError> {
+) -> Result<Expression, Box<EssenceParseError>> {
     if root.kind() == "dominance_relation" {
-        return Err(EssenceParseError::syntax_error(
+        return Err(Box::new(EssenceParseError::syntax_error(
             "Nested dominance relations are not allowed".to_string(),
             Some(node.range()),
-        ));
+        )));
     }
 
     // NB: In all other cases, we keep the root the same;
@@ -61,7 +61,7 @@ fn parse_arithmetic_expression(
     source_code: &str,
     root: &Node,
     symbols_ptr: Option<SymbolTablePtr>,
-) -> Result<Expression, EssenceParseError> {
+) -> Result<Expression, Box<EssenceParseError>> {
     let inner = named_child!(node);
     match inner.kind() {
         "atom" => parse_atom(&inner, source_code, root, symbols_ptr),
@@ -77,10 +77,10 @@ fn parse_arithmetic_expression(
         "aggregate_expr" => {
             parse_quantifier_or_aggregate_expr(&inner, source_code, root, symbols_ptr)
         }
-        _ => Err(EssenceParseError::syntax_error(
+        _ => Err(Box::new(EssenceParseError::syntax_error(
             format!("Expected arithmetic expression, found: {}", inner.kind()),
             Some(inner.range()),
-        )),
+        ))),
     }
 }
 
@@ -89,7 +89,7 @@ fn parse_boolean_expression(
     source_code: &str,
     root: &Node,
     symbols_ptr: Option<SymbolTablePtr>,
-) -> Result<Expression, EssenceParseError> {
+) -> Result<Expression, Box<EssenceParseError>> {
     let inner = named_child!(node);
     match inner.kind() {
         "atom" => parse_atom(&inner, source_code, root, symbols_ptr),
@@ -105,10 +105,10 @@ fn parse_boolean_expression(
         "quantifier_expr" => {
             parse_quantifier_or_aggregate_expr(&inner, source_code, root, symbols_ptr)
         }
-        _ => Err(EssenceParseError::syntax_error(
+        _ => Err(Box::new(EssenceParseError::syntax_error(
             format!("Expected boolean expression, found '{}'", inner.kind()),
             Some(inner.range()),
-        )),
+        ))),
     }
 }
 
@@ -117,7 +117,7 @@ fn parse_list_combining_expression(
     source_code: &str,
     root: &Node,
     symbols_ptr: Option<SymbolTablePtr>,
-) -> Result<Expression, EssenceParseError> {
+) -> Result<Expression, Box<EssenceParseError>> {
     let operator_node = field!(node, "operator");
     let operator_str = &source_code[operator_node.start_byte()..operator_node.end_byte()];
 
@@ -131,10 +131,10 @@ fn parse_list_combining_expression(
         "min" => Ok(Expression::Min(Metadata::new(), Moo::new(inner))),
         "max" => Ok(Expression::Max(Metadata::new(), Moo::new(inner))),
         "allDiff" => Ok(Expression::AllDiff(Metadata::new(), Moo::new(inner))),
-        _ => Err(EssenceParseError::syntax_error(
+        _ => Err(Box::new(EssenceParseError::syntax_error(
             format!("Invalid operator: '{operator_str}'"),
             Some(operator_node.range()),
-        )),
+        ))),
     }
 }
 
@@ -143,7 +143,7 @@ fn parse_unary_expression(
     source_code: &str,
     root: &Node,
     symbols_ptr: Option<SymbolTablePtr>,
-) -> Result<Expression, EssenceParseError> {
+) -> Result<Expression, Box<EssenceParseError>> {
     let inner = parse_expression(field!(node, "expression"), source_code, root, symbols_ptr)?;
     match node.kind() {
         "negative_expr" => Ok(Expression::Neg(Metadata::new(), Moo::new(inner))),
@@ -151,10 +151,10 @@ fn parse_unary_expression(
         "not_expr" => Ok(Expression::Not(Metadata::new(), Moo::new(inner))),
         "toInt_expr" => Ok(Expression::ToInt(Metadata::new(), Moo::new(inner))),
         "sub_bool_expr" | "sub_arith_expr" => Ok(inner),
-        _ => Err(EssenceParseError::syntax_error(
+        _ => Err(Box::new(EssenceParseError::syntax_error(
             format!("Unrecognised unary operation: '{}'", node.kind()),
             Some(node.range()),
-        )),
+        ))),
     }
 }
 
@@ -163,7 +163,7 @@ pub fn parse_binary_expression(
     source_code: &str,
     root: &Node,
     symbols_ptr: Option<SymbolTablePtr>,
-) -> Result<Expression, EssenceParseError> {
+) -> Result<Expression, Box<EssenceParseError>> {
     let parse_subexpr = |expr: Node| parse_expression(expr, source_code, root, symbols_ptr.clone());
 
     let left = parse_subexpr(field!(node, "left"))?;
@@ -314,9 +314,9 @@ pub fn parse_binary_expression(
             Moo::new(left),
             Moo::new(right),
         )),
-        _ => Err(EssenceParseError::syntax_error(
+        _ => Err(Box::new(EssenceParseError::syntax_error(
             format!("Invalid operator: '{op_str}'"),
             Some(op_node.range()),
-        )),
+        ))),
     }
 }

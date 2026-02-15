@@ -4,7 +4,7 @@ use conjure_cp_core::ast::{Atom, Expression, Literal, SymbolTablePtr};
 #[allow(unused)]
 use uniplate::Uniplate;
 
-pub fn parse_literal(src: &str) -> Result<Literal, EssenceParseError> {
+pub fn parse_literal(src: &str) -> Result<Literal, Box<EssenceParseError>> {
     // HACK: Create a dummy symbol table - don't need it for parsing literals
     let symbol_table = SymbolTablePtr::new();
     let expr = parse_expr(src, symbol_table)?;

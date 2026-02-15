@@ -15,7 +15,7 @@ pub fn parse_letting_statement(
     letting_statement: Node,
     source_code: &str,
     existing_symbols_ptr: Option<SymbolTablePtr>,
-) -> Result<SymbolTable, EssenceParseError> {
+) -> Result<SymbolTable, Box<EssenceParseError>> {
     let mut symbol_table = SymbolTable::new();
 
     let mut temp_symbols = BTreeSet::new();
@@ -62,13 +62,13 @@ pub fn parse_letting_statement(
             }
         }
         _ => {
-            return Err(EssenceParseError::syntax_error(
+            return Err(Box::new(EssenceParseError::syntax_error(
                 format!(
                     "Expected letting expression, got '{}'",
                     expr_or_domain.kind()
                 ),
                 Some(expr_or_domain.range()),
-            ));
+            )));
         }
     }
 

@@ -12,7 +12,7 @@ pub fn parse_atom(
     source_code: &str,
     root: &Node,
     symbols_ptr: Option<SymbolTablePtr>,
-) -> Result<Expression, EssenceParseError> {
+) -> Result<Expression, Box<EssenceParseError>> {
     match node.kind() {
         "atom" | "sub_atom_expr" => parse_atom(&named_child!(node), source_code, root, symbols_ptr),
         "metavar" => {
@@ -24,10 +24,10 @@ pub fn parse_atom(
             .map(|var| Expression::Atomic(Metadata::new(), var)),
         "from_solution" => {
             if root.kind() != "dominance_relation" {
-                return Err(EssenceParseError::syntax_error(
+                return Err(Box::new(EssenceParseError::syntax_error(
                     "fromSolution only allowed inside dominance relations".to_string(),
                     Some(node.range()),
-                ));
+                )));
             }
 
             let inner = parse_variable(&field!(node, "variable"), source_code, symbols_ptr)?;
@@ -47,10 +47,10 @@ pub fn parse_atom(
         // TODO: add powerset support under "set_operation"
         "set_operation" => parse_binary_expression(node, source_code, root, symbols_ptr),
         "comprehension" => parse_comprehension(node, source_code, root, symbols_ptr),
-        _ => Err(EssenceParseError::syntax_error(
+        _ => Err(Box::new(EssenceParseError::syntax_error(
             format!("Expected atom, got: {}", node.kind()),
             Some(node.range()),
-        )),
+        ))),
     }
 }
 
@@ -59,7 +59,7 @@ fn parse_flatten(
     source_code: &str,
     root: &Node,
     symbols_ptr: Option<SymbolTablePtr>,
-) -> Result<Expression, EssenceParseError> {
+) -> Result<Expression, Box<EssenceParseError>> {
     let expr_node = field!(node, "expression");
     let expr = parse_atom(&expr_node, source_code, root, symbols_ptr)?;
 
@@ -83,7 +83,7 @@ fn parse_index_or_slice(
     source_code: &str,
     root: &Node,
     symbols_ptr: Option<SymbolTablePtr>,
-) -> Result<Expression, EssenceParseError> {
+) -> Result<Expression, Box<EssenceParseError>> {
     let collection = parse_atom(
         &field!(node, "collection"),
         source_code,
@@ -119,7 +119,7 @@ fn parse_index(
     node: &Node,
     source_code: &str,
     symbols_ptr: Option<SymbolTablePtr>,
-) -> Result<Option<Expression>, EssenceParseError> {
+) -> Result<Option<Expression>, Box<EssenceParseError>> {
     match node.kind() {
         "arithmetic_expr" | "atom" => Ok(Some(parse_expression(
             *node,
@@ -128,10 +128,10 @@ fn parse_index(
             symbols_ptr,
         )?)),
         "null_index" => Ok(None),
-        _ => Err(EssenceParseError::syntax_error(
+        _ => Err(Box::new(EssenceParseError::syntax_error(
             format!("Expected an index, got: '{}'", node.kind()),
             Some(node.range()),
-        )),
+        ))),
     }
 }
 
@@ -139,30 +139,30 @@ fn parse_variable(
     node: &Node,
     source_code: &str,
     symbols_ptr: Option<SymbolTablePtr>,
-) -> Result<Atom, EssenceParseError> {
+) -> Result<Atom, Box<EssenceParseError>> {
     let raw_name = &source_code[node.start_byte()..node.end_byte()];
     let name = Name::user(raw_name.trim());
     if let Some(symbols) = symbols_ptr {
         if let Some(decl) = symbols.read().lookup(&name) {
             Ok(Atom::Reference(conjure_cp_core::ast::Reference::new(decl)))
         } else {
-            Err(EssenceParseError::syntax_error(
+            Err(Box::new(EssenceParseError::syntax_error(
                 format!("Undefined variable: '{}'", raw_name),
                 Some(node.range()),
-            ))
+            )))
         }
     } else {
-        Err(EssenceParseError::syntax_error(
+        Err(Box::new(EssenceParseError::syntax_error(
             format!(
                 "Found variable '{raw_name}'; Did you mean to pass a meta-variable '&{raw_name}'?\n\
             A symbol table is needed to resolve variable names, but none exists in this context."
             ),
             Some(node.range()),
-        ))
+        )))
     }
 }
 
-fn parse_constant(node: &Node, source_code: &str) -> Result<Literal, EssenceParseError> {
+fn parse_constant(node: &Node, source_code: &str) -> Result<Literal, Box<EssenceParseError>> {
     let inner = named_child!(node);
     let raw_value = &source_code[inner.start_byte()..inner.end_byte()];
     match inner.kind() {
@@ -172,18 +172,18 @@ fn parse_constant(node: &Node, source_code: &str) -> Result<Literal, EssencePars
         }
         "TRUE" => Ok(Literal::Bool(true)),
         "FALSE" => Ok(Literal::Bool(false)),
-        _ => Err(EssenceParseError::syntax_error(
+        _ => Err(Box::new(EssenceParseError::syntax_error(
             format!(
                 "'{}' (kind: '{}') is not a valid constant",
                 raw_value,
                 inner.kind()
             ),
             Some(inner.range()),
-        )),
+        ))),
     }
 }
 
-fn parse_int(node: &Node, source_code: &str) -> Result<i32, EssenceParseError> {
+fn parse_int(node: &Node, source_code: &str) -> Result<i32, Box<EssenceParseError>> {
     let raw_value = &source_code[node.start_byte()..node.end_byte()];
     raw_value.parse::<i32>().map_err(|_e| {
         if raw_value.is_empty() {

@@ -13,7 +13,7 @@ pub fn parse_domain(
     domain: Node,
     source_code: &str,
     symbols: Option<SymbolTablePtr>,
-) -> Result<DomainPtr, EssenceParseError> {
+) -> Result<DomainPtr, Box<EssenceParseError>> {
     match domain.kind() {
         "domain" => parse_domain(
             domain.child(0).expect("No domain found"),
@@ -45,7 +45,7 @@ fn get_declaration_ptr_from_identifier(
     identifier: Node,
     source_code: &str,
     symbols_ptr: &Option<SymbolTablePtr>,
-) -> Result<DeclarationPtr, EssenceParseError> {
+) -> Result<DeclarationPtr, Box<EssenceParseError>> {
     let name = Name::user(&source_code[identifier.start_byte()..identifier.end_byte()]);
     let decl = symbols_ptr
         .as_ref()
@@ -205,7 +205,7 @@ fn parse_tuple_domain(
     tuple_domain: Node,
     source_code: &str,
     symbols: Option<SymbolTablePtr>,
-) -> Result<DomainPtr, EssenceParseError> {
+) -> Result<DomainPtr, Box<EssenceParseError>> {
     let mut domains: Vec<DomainPtr> = Vec::new();
     for domain in named_children(&tuple_domain) {
         domains.push(parse_domain(domain, source_code, symbols.clone())?);
@@ -217,7 +217,7 @@ fn parse_matrix_domain(
     matrix_domain: Node,
     source_code: &str,
     symbols: Option<SymbolTablePtr>,
-) -> Result<DomainPtr, EssenceParseError> {
+) -> Result<DomainPtr, Box<EssenceParseError>> {
     let mut domains: Vec<DomainPtr> = Vec::new();
     let index_domain_list = matrix_domain
         .child_by_field_name("index_domain_list")
@@ -242,7 +242,7 @@ fn parse_record_domain(
     record_domain: Node,
     source_code: &str,
     symbols: Option<SymbolTablePtr>,
-) -> Result<DomainPtr, EssenceParseError> {
+) -> Result<DomainPtr, Box<EssenceParseError>> {
     let mut record_entries: Vec<RecordEntry> = Vec::new();
     for record_entry in named_children(&record_domain) {
         let name_node = record_entry
@@ -262,7 +262,7 @@ pub fn parse_set_domain(
     set_domain: Node,
     source_code: &str,
     symbols: Option<SymbolTablePtr>,
-) -> Result<DomainPtr, EssenceParseError> {
+) -> Result<DomainPtr, Box<EssenceParseError>> {
     let mut set_attribute: Option<SetAttr> = None;
     let mut value_domain: Option<DomainPtr> = None;
 
@@ -330,10 +330,10 @@ pub fn parse_set_domain(
                 value_domain = Some(parse_domain(child, source_code, symbols.clone())?);
             }
             _ => {
-                return Err(EssenceParseError::syntax_error(
+                return Err(Box::new(EssenceParseError::syntax_error(
                     format!("Unrecognized set domain child kind: {}", child.kind()),
                     Some(child.range()),
-                ));
+                )));
             }
         }
     }
@@ -341,9 +341,9 @@ pub fn parse_set_domain(
     if let Some(domain) = value_domain {
         Ok(Domain::set(set_attribute.unwrap_or_default(), domain))
     } else {
-        Err(EssenceParseError::syntax_error(
+        Err(Box::new(EssenceParseError::syntax_error(
             "Set domain must have a value domain".to_string(),
             Some(set_domain.range()),
-        ))
+        )))
     }
 }

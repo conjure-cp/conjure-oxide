@@ -16,7 +16,7 @@ pub fn detect_semantic_errors(source: &str) -> Vec<Diagnostic> {
             // no errors, all good
         }
         Err(err) => {
-            diagnostics.push(error_to_diagnostic(&err));
+            diagnostics.push(error_to_diagnostic(&*err));
         }
     }
 

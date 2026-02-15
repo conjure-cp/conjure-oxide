@@ -10,16 +10,16 @@ pub fn parse_abstract(
     node: &Node,
     source_code: &str,
     symbols_ptr: Option<SymbolTablePtr>,
-) -> Result<AbstractLiteral<Expression>, EssenceParseError> {
+) -> Result<AbstractLiteral<Expression>, Box<EssenceParseError>> {
     match node.kind() {
         "record" => parse_record(node, source_code, symbols_ptr),
         "tuple" => parse_tuple(node, source_code, symbols_ptr),
         "matrix" => parse_matrix(node, source_code, symbols_ptr),
         "set_literal" => parse_set_literal(node, source_code, symbols_ptr),
-        _ => Err(EssenceParseError::syntax_error(
+        _ => Err(Box::new(EssenceParseError::syntax_error(
             format!("Expected abstract literal, got: '{}'", node.kind()),
             Some(node.range()),
-        )),
+        ))),
     }
 }
 
@@ -27,7 +27,7 @@ fn parse_record(
     node: &Node,
     source_code: &str,
     symbols_ptr: Option<SymbolTablePtr>,
-) -> Result<AbstractLiteral<Expression>, EssenceParseError> {
+) -> Result<AbstractLiteral<Expression>, Box<EssenceParseError>> {
     let mut values = Vec::new();
     for child in node.children_by_field_name("name_value_pair", &mut node.walk()) {
         let name_node = field!(child, "name");
@@ -49,7 +49,7 @@ fn parse_tuple(
     node: &Node,
     source_code: &str,
     symbols_ptr: Option<SymbolTablePtr>,
-) -> Result<AbstractLiteral<Expression>, EssenceParseError> {
+) -> Result<AbstractLiteral<Expression>, Box<EssenceParseError>> {
     let mut elements = Vec::new();
     for child in named_children(node) {
         elements.push(parse_expression(
@@ -66,7 +66,7 @@ fn parse_matrix(
     node: &Node,
     source_code: &str,
     symbols_ptr: Option<SymbolTablePtr>,
-) -> Result<AbstractLiteral<Expression>, EssenceParseError> {
+) -> Result<AbstractLiteral<Expression>, Box<EssenceParseError>> {
     let mut elements = vec![];
     let mut domain: Option<DomainPtr> = None;
     for child in named_children(node) {
@@ -97,7 +97,7 @@ fn parse_set_literal(
     node: &Node,
     source_code: &str,
     symbols_ptr: Option<SymbolTablePtr>,
-) -> Result<AbstractLiteral<Expression>, EssenceParseError> {
+) -> Result<AbstractLiteral<Expression>, Box<EssenceParseError>> {
     let mut elements = Vec::new();
     for child in named_children(node) {
         elements.push(parse_expression(

@@ -13,7 +13,7 @@ pub fn parse_find_statement(
     find_statement: Node,
     source_code: &str,
     symbols: Option<SymbolTablePtr>,
-) -> Result<BTreeMap<Name, DomainPtr>, EssenceParseError> {
+) -> Result<BTreeMap<Name, DomainPtr>, Box<EssenceParseError>> {
     let mut vars = BTreeMap::new();
 
     let domain = find_statement
