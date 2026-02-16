@@ -3,6 +3,7 @@ use std::fmt::{Debug, Display};
 use std::sync::{Arc, RwLock};
 
 use derivative::Derivative;
+use indexmap::IndexSet;
 use serde::{Deserialize, Serialize};
 use uniplate::{Biplate, Tree, Uniplate};
 
@@ -265,13 +266,11 @@ impl SerdeModel {
     /// IDs are assigned in the order they are encountered during traversal, ensuring
     /// stability across identical model structures.
     pub fn collect_stable_id_mapping(&self) -> HashMap<ObjId, ObjId> {
-        let mut id_list: Vec<ObjId> = Vec::new();
+        let mut id_list: IndexSet<ObjId> = IndexSet::new();
         let mut visited_symbol_tables: HashSet<ObjId> = HashSet::new();
 
         let mut visit = |id: ObjId| {
-            if !id_list.contains(&id) {
-                id_list.push(id);
-            }
+            id_list.insert(id);
         };
 
         let mut visit_symbol_table_chain = |symbol_table: SymbolTablePtr| {
