@@ -154,7 +154,7 @@ fn parse_variable(
     node: &Node,
     source_code: &str,
     symbols_ptr: Option<SymbolTablePtr>,
-    errors: &mut Vec<RecoverableParseError>,
+    _errors: &mut Vec<RecoverableParseError>,
 ) -> Result<Atom, FatalParseError> {
     let raw_name = &source_code[node.start_byte()..node.end_byte()];
     let name = Name::user(raw_name.trim());
