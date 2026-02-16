@@ -8,6 +8,7 @@ use serde_json::Map as JsonMap;
 use serde_json::Value;
 use serde_json::Value as JsonValue;
 
+use crate::ast::Moo;
 use crate::ast::abstract_comprehension::AbstractComprehensionBuilder;
 use crate::ast::ac_operators::ACOperatorKind;
 use crate::ast::comprehension::ComprehensionBuilder;
@@ -16,7 +17,6 @@ use crate::ast::{
     AbstractLiteral, Atom, DeclarationPtr, Domain, Expression, FuncAttr, IntVal, JectivityAttr,
     Literal, Name, PartialityAttr, Range, RecordEntry, SetAttr, SymbolTable, SymbolTablePtr,
 };
-use crate::ast::Moo;
 use crate::ast::{DomainPtr, Metadata};
 use crate::context::Context;
 use crate::error::{Error, Result};

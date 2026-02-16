@@ -4,8 +4,8 @@ use uniplate::Uniplate;
 use super::{
     AbstractLiteral, DeclarationKind, DeclarationPtr, DomainPtr, Expression, Literal, Moo, Name,
     categories::{Category, CategoryOf},
-    eval_constant,
     domains::HasDomain,
+    eval_constant,
     records::RecordValue,
 };
 use derivative::Derivative;

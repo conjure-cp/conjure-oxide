@@ -1,4 +1,6 @@
-use crate::ast::{Atom, DeclarationKind, Domain, Expression, Literal, Moo, Name, Range, eval_constant};
+use crate::ast::{
+    Atom, DeclarationKind, Domain, Expression, Literal, Moo, Name, Range, eval_constant,
+};
 use crate::bug;
 use crate::solver::{SolverError, SolverResult};
 use conjure_cp_core::ast::GroundDomain;

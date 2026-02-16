@@ -237,9 +237,10 @@ fn tuple_to_constant(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
     let rhs_tuple_len = match right.as_ref() {
         Expr::AbstractLiteral(_, AbstractLiteral::Tuple(elems2)) => elems2.len(),
-        Expr::Atomic(_, Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Tuple(elems2)))) => {
-            elems2.len()
-        }
+        Expr::Atomic(
+            _,
+            Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Tuple(elems2))),
+        ) => elems2.len(),
         _ => return Err(RuleNotApplicable),
     };
 
