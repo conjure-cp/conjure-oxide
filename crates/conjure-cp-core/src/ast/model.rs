@@ -266,6 +266,7 @@ impl SerdeModel {
     /// IDs are assigned in the order they are encountered during traversal, ensuring
     /// stability across identical model structures.
     pub fn collect_stable_id_mapping(&self) -> HashMap<ObjId, ObjId> {
+        // Using an IndexSet here, we maintain insertion order without having to check if a value was inserted into the set repeatedly.
         let mut id_list: IndexSet<ObjId> = IndexSet::new();
         let mut visited_symbol_tables: HashSet<ObjId> = HashSet::new();
 
