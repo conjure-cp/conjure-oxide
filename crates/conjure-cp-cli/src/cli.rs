@@ -139,11 +139,11 @@ pub struct GlobalArgs {
     #[arg(long, default_value_t = false, global = true, help_heading = LOGGING_HELP_HEADING)]
     pub log: bool,
 
-    /// Output file for conjure's text logs
+    /// Output file for conjure-oxide's text logs
     #[arg(long, value_name = "LOGFILE", global = true, help_heading = LOGGING_HELP_HEADING)]
     pub logfile: Option<PathBuf>,
 
-    /// Output file for conjure's json logs
+    /// Output file for conjure-oxide's json logs
     #[arg(long, value_name = "JSON LOGFILE", global = true, help_heading = LOGGING_HELP_HEADING)]
     pub logfile_json: Option<PathBuf>,
 }
