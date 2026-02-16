@@ -1,7 +1,4 @@
-use crate::ast::{
-    Atom, DeclarationKind, Domain, Literal, Moo, Name, Range, resolve_reference_atomic,
-    resolve_reference_constant,
-};
+use crate::ast::{Atom, DeclarationKind, Domain, Literal, Moo, Name, Range};
 use crate::bug;
 use crate::solver::{SolverError, SolverResult};
 use conjure_cp_core::ast::GroundDomain;
@@ -189,11 +186,11 @@ pub fn atom_to_ast(
                 return Ok(ast.clone());
             }
 
-            if let Some(lit) = resolve_reference_constant(reference) {
+            if let Some(lit) = reference.resolve_constant() {
                 return literal_to_ast(theory_config, &lit);
             }
 
-            if let Some(inner_atom) = resolve_reference_atomic(reference) {
+            if let Some(inner_atom) = reference.resolve_atomic() {
                 return atom_to_ast(theory_config, store, &inner_atom);
             }
 

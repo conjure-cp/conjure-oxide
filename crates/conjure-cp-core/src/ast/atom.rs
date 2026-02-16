@@ -6,7 +6,6 @@ use super::{
     categories::{Category, CategoryOf},
     domains::HasDomain,
     records::RecordValue,
-    resolve_reference_constant,
 };
 use derivative::Derivative;
 use parking_lot::MappedRwLockReadGuard;
@@ -249,7 +248,8 @@ impl TryFrom<&Atom> for i32 {
         match value {
             Atom::Literal(lit) => lit.try_into(),
             Atom::Reference(reference) => {
-                let lit = resolve_reference_constant(reference)
+                let lit = reference
+                    .resolve_constant()
                     .ok_or("Cannot convert non-constant reference atom to literal")?;
                 lit.try_into()
                     .map_err(|_| "Cannot convert non-int reference atom to i32")
@@ -274,7 +274,8 @@ impl TryFrom<&Atom> for bool {
         match value {
             Atom::Literal(lit) => lit.try_into(),
             Atom::Reference(reference) => {
-                let lit = resolve_reference_constant(reference)
+                let lit = reference
+                    .resolve_constant()
                     .ok_or("Cannot convert non-constant reference atom to literal")?;
                 lit.try_into()
                     .map_err(|_| "Cannot convert non-bool reference atom to bool")

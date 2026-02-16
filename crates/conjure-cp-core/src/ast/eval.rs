@@ -1,33 +1,9 @@
 #![allow(dead_code)]
-use crate::ast::{
-    AbstractLiteral, Atom, DeclarationKind, Expression as Expr, Literal as Lit, Metadata, matrix,
-};
+use crate::ast::{AbstractLiteral, Atom, Expression as Expr, Literal as Lit, Metadata, matrix};
 use crate::into_matrix;
 use itertools::{Itertools as _, izip};
 use std::cmp::Ordering as CmpOrdering;
 use std::collections::HashSet;
-use std::ops::Deref;
-
-/// Returns the expression behind a value-letting reference, if this is one.
-pub fn resolve_reference_expression(reference: &crate::ast::Reference) -> Option<Expr> {
-    match reference.ptr().kind().deref() {
-        DeclarationKind::ValueLetting(expr) => Some(expr.clone()),
-        _ => None,
-    }
-}
-
-/// Evaluates a reference to a literal if it resolves to a constant.
-pub fn resolve_reference_constant(reference: &crate::ast::Reference) -> Option<Lit> {
-    resolve_reference_expression(reference).and_then(|expr| eval_constant(&expr))
-}
-
-/// Resolves a reference to an atomic expression, if possible.
-pub fn resolve_reference_atomic(reference: &crate::ast::Reference) -> Option<Atom> {
-    resolve_reference_expression(reference).and_then(|expr| match expr {
-        Expr::Atomic(_, atom) => Some(atom),
-        _ => None,
-    })
-}
 
 /// Simplify an expression to a constant if possible
 /// Returns:
@@ -152,7 +128,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             domain.contains(lit).ok().map(Into::into)
         }
         Expr::Atomic(_, Atom::Literal(c)) => Some(c.clone()),
-        Expr::Atomic(_, Atom::Reference(reference)) => resolve_reference_constant(reference),
+        Expr::Atomic(_, Atom::Reference(reference)) => reference.resolve_constant(),
         Expr::AbstractLiteral(_, a) => Some(Lit::AbstractLiteral(a.clone().into_literals()?)),
         Expr::Comprehension(_, _) => None,
         Expr::AbstractComprehension(_, _) => None,

@@ -453,11 +453,11 @@ fn parse_atom(atom: conjure_ast::Atom) -> Result<minion_ast::Var, SolverError> {
 }
 
 fn parse_reference_atom(reference: conjure_ast::Reference) -> Result<minion_ast::Var, SolverError> {
-    if let Some(lit) = conjure_ast::resolve_reference_constant(&reference) {
+    if let Some(lit) = reference.resolve_constant() {
         return Ok(minion_ast::Var::ConstantAsVar(parse_literal_as_int(lit)?));
     }
 
-    if let Some(inner_atom) = conjure_ast::resolve_reference_atomic(&reference) {
+    if let Some(inner_atom) = reference.resolve_atomic() {
         return parse_atom(inner_atom);
     }
 
