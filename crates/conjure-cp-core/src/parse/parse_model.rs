@@ -95,10 +95,8 @@ pub fn model_from_json(str: &str, context: Arc<RwLock<Context<'static>>>) -> Res
 
                 let constraints: Vec<Expression> = constraints_arr
                     .iter()
-                    .map(|x| {
-                        parse_expression(x, m.as_submodel_mut().symbols_ptr_unchecked()).unwrap()
-                    })
-                    .collect();
+                    .map(|x| parse_expression(x, m.as_submodel_mut().symbols_ptr_unchecked()))
+                    .collect::<Result<Vec<_>>>()?;
                 m.as_submodel_mut().add_constraints(constraints);
             }
             otherwise => bug!("Unhandled Statement {:#?}", otherwise),
@@ -142,7 +140,7 @@ fn parse_letting(v: &JsonValue, scope: &SymbolTablePtr) -> Result<()> {
         .ok_or(error!("Letting[0].Name is not a string"))?;
     let name = Name::User(Ustr::from(name));
     // value letting
-    if let Some(value) = parse_expression(&arr[1], scope) {
+    if let Ok(value) = parse_expression(&arr[1], scope) {
         let mut symtab = scope.write();
         symtab
             .insert(DeclarationPtr::new_value_letting(name.clone(), value))
@@ -198,7 +196,7 @@ fn parse_domain(
         }
         "DomainSet" => {
             let dom = domain_value.get(2).and_then(|v| v.as_object());
-            let domain_obj = dom.expect("domain object exists");
+            let domain_obj = dom.ok_or(error!("DomainSet is missing domain object"))?;
             let domain = domain_obj
                 .iter()
                 .next()
@@ -311,15 +309,15 @@ fn parse_domain(
             }
 
             // add record fields to symbol table
-            record_entries
+            for decl in record_entries
                 .iter()
                 .cloned()
                 .map(DeclarationPtr::new_record_field)
-                .for_each(|decl| {
-                    symbols
-                        .insert(decl)
-                        .expect("record field to not already be in the symbol table")
-                });
+            {
+                symbols.insert(decl).ok_or(error!(
+                    "record field should not already be in the symbol table"
+                ))?;
+            }
 
             Ok(Domain::record(record_entries))
         }
@@ -363,10 +361,8 @@ fn parse_domain(
                 "PartialityAttr_Total" => Some(PartialityAttr::Total),
                 _ => None,
             };
-            if partiality.is_none() {
-                return Err(Error::Parse("Partiality is an unknown type".to_owned()));
-            }
-            let partiality = partiality.unwrap();
+            let partiality =
+                partiality.ok_or(Error::Parse("Partiality is an unknown type".to_owned()))?;
             let jectivity = attributes
                 .get(2)
                 .and_then(|v| v.as_str())
@@ -378,10 +374,8 @@ fn parse_domain(
                 "JectivityAttr_None" => Some(JectivityAttr::None),
                 _ => None,
             };
-            if jectivity.is_none() {
-                return Err(Error::Parse("Jectivity is an unknown type".to_owned()));
-            }
-            let jectivity = jectivity.unwrap();
+            let jectivity =
+                jectivity.ok_or(Error::Parse("Jectivity is an unknown type".to_owned()))?;
 
             let attr: FuncAttr<IntVal> = FuncAttr {
                 size,
@@ -411,13 +405,11 @@ fn parse_size_attr(
     match attr_obj.0.as_str() {
         "SizeAttr_None" => Ok(Range::Unbounded),
         "SizeAttr_MinSize" => {
-            let size = parse_expression_to_int_val(attr_obj.1, &scope)
-                .ok_or(error!("Could not parse int domain constant"))?;
+            let size = parse_expression_to_int_val(attr_obj.1, &scope)?;
             Ok(Range::UnboundedR(size))
         }
         "SizeAttr_MaxSize" => {
-            let size = parse_expression_to_int_val(attr_obj.1, &scope)
-                .ok_or(error!("Could not parse int domain constant"))?;
+            let size = parse_expression_to_int_val(attr_obj.1, &scope)?;
             Ok(Range::UnboundedL(size))
         }
         "SizeAttr_MinMaxSize" => {
@@ -428,18 +420,15 @@ fn parse_size_attr(
             let min = min_max
                 .first()
                 .ok_or(error!("SizeAttr Min is not present"))?;
-            let min_int = parse_expression_to_int_val(min, &scope)
-                .ok_or(error!("Could not parse int domain constant"))?;
+            let min_int = parse_expression_to_int_val(min, &scope)?;
             let max = min_max
                 .get(1)
                 .ok_or(error!("SizeAttr Max is not present"))?;
-            let max_int = parse_expression_to_int_val(max, &scope)
-                .ok_or(error!("Could not parse int domain constant"))?;
+            let max_int = parse_expression_to_int_val(max, &scope)?;
             Ok(Range::Bounded(min_int, max_int))
         }
         "SizeAttr_Size" => {
-            let size = parse_expression_to_int_val(attr_obj.1, &scope)
-                .ok_or(error!("Could not parse int domain constant"))?;
+            let size = parse_expression_to_int_val(attr_obj.1, &scope)?;
             Ok(Range::Single(size))
         }
         _ => Err(Error::Parse("SizeAttr is an unknown type".to_owned())),
@@ -471,8 +460,7 @@ fn parse_int_domain(v: &JsonValue, symbols: &SymbolTable) -> Result<DomainPtr> {
                     .ok_or(error!("RangeBounded is not an array".to_owned()))?;
                 let mut nums = Vec::new();
                 for item in arr.iter() {
-                    let num = parse_expression_to_int_val(item, &scope)
-                        .ok_or(error!("Could not parse int domain constant"))?;
+                    let num = parse_expression_to_int_val(item, &scope)?;
                     nums.push(num);
                 }
                 let lower = nums
@@ -486,8 +474,7 @@ fn parse_int_domain(v: &JsonValue, symbols: &SymbolTable) -> Result<DomainPtr> {
                 ranges.push(Range::Bounded(lower, upper));
             }
             "RangeSingle" => {
-                let num = parse_expression_to_int_val(range.1, &scope)
-                    .ok_or(error!("Could not parse int domain constant"))?;
+                let num = parse_expression_to_int_val(range.1, &scope)?;
                 ranges.push(Range::Single(num));
             }
             _ => return throw_error!("DomainInt[1] contains an unknown object"),
@@ -496,29 +483,33 @@ fn parse_int_domain(v: &JsonValue, symbols: &SymbolTable) -> Result<DomainPtr> {
     Ok(Domain::int(ranges))
 }
 
-fn parse_expression_to_int_val(obj: &JsonValue, scope: &SymbolTablePtr) -> Option<IntVal> {
+fn parse_expression_to_int_val(obj: &JsonValue, scope: &SymbolTablePtr) -> Result<IntVal> {
     parser_trace!("trying to parse domain value as expression: {}", obj);
     let expr = parse_expression(obj, scope)?;
 
     if let Some(Literal::Int(i)) = expr.clone().into_literal() {
-        return Some(IntVal::Const(i));
+        return Ok(IntVal::Const(i));
     }
 
     if let Expression::Atomic(_, Atom::Reference(reference)) = &expr {
         if let Some(reference_val) = IntVal::new_ref(reference) {
-            return Some(reference_val);
+            return Ok(reference_val);
         }
     }
 
-    IntVal::new_expr(Moo::new(expr))
+    IntVal::new_expr(Moo::new(expr)).ok_or(error!("Could not parse integer expression"))
 }
 
 // this needs an explicit type signature to force the closures to have the same type
 type BinOp = Box<dyn Fn(Metadata, Moo<Expression>, Moo<Expression>) -> Expression>;
 type UnaryOp = Box<dyn Fn(Metadata, Moo<Expression>) -> Expression>;
 
-pub fn parse_expression(obj: &JsonValue, scope: &SymbolTablePtr) -> Option<Expression> {
-    let fail = |_stage: &str| -> Option<Expression> { None };
+pub fn parse_expression(obj: &JsonValue, scope: &SymbolTablePtr) -> Result<Expression> {
+    let fail = |stage: &str| -> Error {
+        Error::Parse(format!(
+            "Could not parse expression at stage `{stage}` for json `{obj}`"
+        ))
+    };
 
     let binary_operators: HashMap<&str, BinOp> = [
         (
@@ -701,7 +692,6 @@ pub fn parse_expression(obj: &JsonValue, scope: &SymbolTablePtr) -> Option<Expre
 
     let mut binary_operator_names = binary_operators.iter().map(|x| x.0);
     let mut unary_operator_names = unary_operators.iter().map(|x| x.0);
-    #[allow(clippy::unwrap_used)]
     match obj {
         Value::Object(op) if op.contains_key("Op") => match &op["Op"] {
             Value::Object(bin_op) if binary_operator_names.any(|key| bin_op.contains_key(*key)) => {
@@ -716,41 +706,39 @@ pub fn parse_expression(obj: &JsonValue, scope: &SymbolTablePtr) -> Option<Expre
             {
                 parse_indexing_slicing_op(op, scope)
             }
-            otherwise => bug!("Unhandled Op {:#?}", otherwise),
+            _ => Err(fail("Op.unknown")),
         },
         Value::Object(comprehension) if comprehension.contains_key("Comprehension") => {
             parse_comprehension(comprehension, scope.clone(), None)
         }
         Value::Object(refe) if refe.contains_key("Reference") => {
-            let Some(ref_arr) = refe["Reference"].as_array() else {
-                return fail("Reference.as_array");
-            };
-            let Some(ref_obj) = ref_arr.first().and_then(|x| x.as_object()) else {
-                return fail("Reference[0].as_object");
-            };
-            let Some(name) = ref_obj.get("Name").and_then(|x| x.as_str()) else {
-                return fail("Reference[0].Name.as_str");
-            };
+            let ref_arr = refe["Reference"]
+                .as_array()
+                .ok_or_else(|| fail("Reference.as_array"))?;
+            let ref_obj = ref_arr
+                .first()
+                .and_then(|x| x.as_object())
+                .ok_or_else(|| fail("Reference[0].as_object"))?;
+            let name = ref_obj
+                .get("Name")
+                .and_then(|x| x.as_str())
+                .ok_or_else(|| fail("Reference[0].Name.as_str"))?;
             let user_name = Name::User(Ustr::from(name));
 
-            let declaration: DeclarationPtr = match scope
+            let declaration: DeclarationPtr = scope
                 .read()
                 .lookup(&user_name)
-                .or_else(|| bug!("Could not find reference {user_name}"))
-            {
-                Some(declaration) => declaration,
-                None => return fail("Reference.lookup"),
-            };
+                .ok_or_else(|| fail("Reference.lookup"))?;
 
-            Some(Expression::Atomic(
+            Ok(Expression::Atomic(
                 Metadata::new(),
                 Atom::Reference(crate::ast::Reference::new(declaration)),
             ))
         }
         Value::Object(abslit) if abslit.contains_key("AbstractLiteral") => {
-            let Some(abstract_literal) = abslit["AbstractLiteral"].as_object() else {
-                return fail("AbstractLiteral.as_object");
-            };
+            let abstract_literal = abslit["AbstractLiteral"]
+                .as_object()
+                .ok_or_else(|| fail("AbstractLiteral.as_object"))?;
 
             if abstract_literal.contains_key("AbsLitSet") {
                 parse_abs_lit(&abslit["AbstractLiteral"]["AbsLitSet"], scope)
@@ -762,7 +750,7 @@ pub fn parse_expression(obj: &JsonValue, scope: &SymbolTablePtr) -> Option<Expre
         }
 
         Value::Object(constant) if constant.contains_key("Constant") => {
-            parse_constant(constant, scope).or_else(|| parse_abstract_matrix_as_expr(obj, scope))
+            parse_constant(constant, scope).or_else(|_| parse_abstract_matrix_as_expr(obj, scope))
         }
 
         Value::Object(constant) if constant.contains_key("ConstantAbstract") => {
@@ -776,46 +764,56 @@ pub fn parse_expression(obj: &JsonValue, scope: &SymbolTablePtr) -> Option<Expre
             parse_constant(constant, scope)
         }
 
-        _ => fail("no_match"),
+        _ => Err(fail("no_match")),
     }
 }
 
-fn parse_abs_lit(abs_set: &Value, scope: &SymbolTablePtr) -> Option<Expression> {
-    let values = abs_set.as_array()?; // Ensure it's an array
+fn parse_abs_lit(abs_set: &Value, scope: &SymbolTablePtr) -> Result<Expression> {
+    let values = abs_set
+        .as_array()
+        .ok_or(error!("AbsLitSet is not an array"))?;
     let expressions = values
         .iter()
         .map(|values| parse_expression(values, scope))
-        .map(|values| values.expect("invalid subexpression")) // Ensure valid expressions
-        .collect::<Vec<Expression>>(); // Collect all expressions
+        .collect::<Result<Vec<_>>>()?;
 
-    Some(Expression::AbstractLiteral(
+    Ok(Expression::AbstractLiteral(
         Metadata::new(),
         AbstractLiteral::Set(expressions),
     ))
 }
 
-fn parse_abs_tuple(abs_tuple: &Value, scope: &SymbolTablePtr) -> Option<Expression> {
-    let values = abs_tuple.as_array()?; // Ensure it's an array
+fn parse_abs_tuple(abs_tuple: &Value, scope: &SymbolTablePtr) -> Result<Expression> {
+    let values = abs_tuple
+        .as_array()
+        .ok_or(error!("AbsLitTuple is not an array"))?;
     let expressions = values
         .iter()
         .map(|values| parse_expression(values, scope))
-        .map(|values| values.expect("invalid subexpression")) // Ensure valid expressions
-        .collect::<Vec<Expression>>(); // Collect all expressions
+        .collect::<Result<Vec<_>>>()?;
 
-    Some(Expression::AbstractLiteral(
+    Ok(Expression::AbstractLiteral(
         Metadata::new(),
         AbstractLiteral::Tuple(expressions),
     ))
 }
 
 //parses an abstract record as an expression
-fn parse_abs_record(abs_record: &Value, scope: &SymbolTablePtr) -> Option<Expression> {
-    let entries = abs_record.as_array()?; // Ensure it's an array
+fn parse_abs_record(abs_record: &Value, scope: &SymbolTablePtr) -> Result<Expression> {
+    let entries = abs_record
+        .as_array()
+        .ok_or(error!("AbsLitRecord is not an array"))?;
     let mut rec = vec![];
 
     for entry in entries {
-        let entry = entry.as_array()?;
-        let name = entry[0].as_object()?["Name"].as_str()?;
+        let entry = entry
+            .as_array()
+            .ok_or(error!("AbsLitRecord entry is not an array"))?;
+        let name = entry[0]
+            .as_object()
+            .ok_or(error!("AbsLitRecord field name is not an object"))?["Name"]
+            .as_str()
+            .ok_or(error!("AbsLitRecord field name is not a string"))?;
 
         let value = parse_expression(&entry[1], scope)?;
 
@@ -827,31 +825,37 @@ fn parse_abs_record(abs_record: &Value, scope: &SymbolTablePtr) -> Option<Expres
         rec.push(rec_entry);
     }
 
-    Some(Expression::AbstractLiteral(
+    Ok(Expression::AbstractLiteral(
         Metadata::new(),
         AbstractLiteral::Record(rec),
     ))
 }
 
 //parses an abstract function as an expression
-fn parse_abs_function(abs_function: &Value, scope: &SymbolTablePtr) -> Option<Expression> {
-    let entries = abs_function.as_array()?;
+fn parse_abs_function(abs_function: &Value, scope: &SymbolTablePtr) -> Result<Expression> {
+    let entries = abs_function
+        .as_array()
+        .ok_or(error!("AbsLitFunction is not an array"))?;
     let mut assignments = vec![];
 
     for entry in entries {
-        //expect("Explicit function assignment is not an array");
-        let entry = entry.as_array()?;
+        let entry = entry
+            .as_array()
+            .ok_or(error!("Explicit function assignment is not an array"))?;
         let expression = entry
             .iter()
             .map(|values| parse_expression(values, scope))
-            .map(|values| values.expect("invalid subexpression")) // Ensure valid expressions
-            .collect::<Vec<Expression>>(); // Collect all expressions
-        let domain_value = expression.first().expect("Invalid function domain");
-        let codomain_value = expression.get(1).expect("Invalid function codomain");
+            .collect::<Result<Vec<_>>>()?;
+        let domain_value = expression
+            .first()
+            .ok_or(error!("Invalid function domain"))?;
+        let codomain_value = expression
+            .get(1)
+            .ok_or(error!("Invalid function codomain"))?;
         let tuple = (domain_value.clone(), codomain_value.clone());
         assignments.push(tuple);
     }
-    Some(Expression::AbstractLiteral(
+    Ok(Expression::AbstractLiteral(
         Metadata::new(),
         AbstractLiteral::Function(assignments),
     ))
@@ -861,57 +865,59 @@ fn parse_comprehension(
     comprehension: &serde_json::Map<String, Value>,
     scope: SymbolTablePtr,
     comprehension_kind: Option<ACOperatorKind>,
-) -> Option<Expression> {
-    let fail = |_stage: &str| -> Option<Expression> { None };
+) -> Result<Expression> {
+    let fail = |stage: &str| -> Error {
+        Error::Parse(format!("Could not parse comprehension at stage `{stage}`"))
+    };
 
     let value = &comprehension["Comprehension"];
     let mut comprehension = ComprehensionBuilder::new(scope.clone());
     let generator_symboltable = comprehension.generator_symboltable();
     let return_expr_symboltable = comprehension.return_expr_symboltable();
 
-    let Some(generators_and_guards_array) = value.pointer("/1").and_then(Value::as_array) else {
-        return fail("Comprehension.pointer(/1).as_array");
-    };
+    let generators_and_guards_array = value
+        .pointer("/1")
+        .and_then(Value::as_array)
+        .ok_or_else(|| fail("Comprehension.pointer(/1).as_array"))?;
     let generators_and_guards = generators_and_guards_array.iter();
 
     for gen_or_guard in generators_and_guards {
-        let Some(gen_or_guard_obj) = gen_or_guard.as_object() else {
-            return fail("generator_or_guard.as_object");
-        };
-        let Some((name, inner)) = gen_or_guard_obj.iter().next() else {
-            return fail("generator_or_guard.iter().next");
-        };
+        let gen_or_guard_obj = gen_or_guard
+            .as_object()
+            .ok_or_else(|| fail("generator_or_guard.as_object"))?;
+        let (name, inner) = gen_or_guard_obj
+            .iter()
+            .next()
+            .ok_or_else(|| fail("generator_or_guard.iter().next"))?;
         comprehension = match name.as_str() {
             "Generator" => {
                 // TODO: more things than GenDomainNoRepr and Single names here?
-                let Some(generator_obj) = inner.as_object() else {
-                    return fail("Generator.inner.as_object");
-                };
-                let Some((name, gen_inner)) = generator_obj.iter().next() else {
-                    return fail("Generator.inner.iter().next");
-                };
+                let generator_obj = inner
+                    .as_object()
+                    .ok_or_else(|| fail("Generator.inner.as_object"))?;
+                let (name, gen_inner) = generator_obj
+                    .iter()
+                    .next()
+                    .ok_or_else(|| fail("Generator.inner.iter().next"))?;
                 match name.as_str() {
                     "GenDomainNoRepr" => {
-                        let Some(name) =
-                            gen_inner.pointer("/0/Single/Name").and_then(Value::as_str)
-                        else {
-                            return fail("GenDomainNoRepr.pointer(/0/Single/Name).as_str");
-                        };
-                        let Some(domain_obj) = gen_inner.pointer("/1").and_then(Value::as_object)
-                        else {
-                            return fail("GenDomainNoRepr.pointer(/1).as_object");
-                        };
-                        let Some((domain_name, domain_value)) = domain_obj.iter().next() else {
-                            return fail("GenDomainNoRepr.domain.iter().next");
-                        };
-                        let domain = match parse_domain(
+                        let name = gen_inner
+                            .pointer("/0/Single/Name")
+                            .and_then(Value::as_str)
+                            .ok_or_else(|| fail("GenDomainNoRepr.pointer(/0/Single/Name).as_str"))?;
+                        let domain_obj = gen_inner
+                            .pointer("/1")
+                            .and_then(Value::as_object)
+                            .ok_or_else(|| fail("GenDomainNoRepr.pointer(/1).as_object"))?;
+                        let (domain_name, domain_value) = domain_obj
+                            .iter()
+                            .next()
+                            .ok_or_else(|| fail("GenDomainNoRepr.domain.iter().next"))?;
+                        let domain = parse_domain(
                             domain_name,
                             domain_value,
                             &mut generator_symboltable.write(),
-                        ) {
-                            Ok(domain) => domain,
-                            Err(_) => return None,
-                        };
+                        )?;
                         comprehension.generator(DeclarationPtr::new_var(name.into(), domain))
                     }
                     // TODO: this is temporary until comprehensions support "in expr" generators
@@ -925,7 +931,7 @@ fn parse_comprehension(
 
             "Condition" => {
                 let expr = parse_expression(inner, &generator_symboltable)
-                    .or_else(|| fail("Condition.parse_expression"))?;
+                    .map_err(|_| fail("Condition.parse_expression"))?;
                 comprehension.guard(expr)
             }
 
@@ -935,13 +941,13 @@ fn parse_comprehension(
         }
     }
 
-    let Some(return_expr_value) = value.pointer("/0") else {
-        return fail("Comprehension.pointer(/0)");
-    };
+    let return_expr_value = value
+        .pointer("/0")
+        .ok_or_else(|| fail("Comprehension.pointer(/0)"))?;
     let expr = parse_expression(return_expr_value, &return_expr_symboltable)
-        .or_else(|| fail("Comprehension.return_expr.parse_expression"))?;
+        .map_err(|_| fail("Comprehension.return_expr.parse_expression"))?;
 
-    Some(Expression::Comprehension(
+    Ok(Expression::Comprehension(
         Metadata::new(),
         Moo::new(comprehension.with_return_value(expr, comprehension_kind)),
     ))
@@ -951,27 +957,32 @@ fn parse_in_expr_comprehension(
     scope: SymbolTablePtr,
     comprehension_value: &Value,
     gen_inner: &Value,
-) -> Option<Expression> {
-    let fail = |_stage: &str| -> Option<Expression> { None };
+) -> Result<Expression> {
+    let fail = |stage: &str| -> Error {
+        Error::Parse(format!(
+            "Could not parse GenInExpr comprehension at stage `{stage}`"
+        ))
+    };
 
-    let Some(name) = gen_inner.pointer("/0/Single/Name").and_then(Value::as_str) else {
-        return fail("GenInExpr.pointer(/0/Single/Name).as_str");
-    };
-    let Some(generator_expr) = gen_inner.pointer("/1") else {
-        return fail("GenInExpr.pointer(/1)");
-    };
-    let expr =
-        parse_expression(generator_expr, &scope).or_else(|| fail("GenInExpr.parse_expression"))?;
+    let name = gen_inner
+        .pointer("/0/Single/Name")
+        .and_then(Value::as_str)
+        .ok_or_else(|| fail("GenInExpr.pointer(/0/Single/Name).as_str"))?;
+    let generator_expr = gen_inner
+        .pointer("/1")
+        .ok_or_else(|| fail("GenInExpr.pointer(/1)"))?;
+    let expr = parse_expression(generator_expr, &scope)
+        .map_err(|_| fail("GenInExpr.parse_expression"))?;
 
     let comprehension =
         AbstractComprehensionBuilder::new(&scope).new_expression_generator(expr, name.into());
-    let Some(return_expr_value) = comprehension_value.pointer("/0") else {
-        return fail("comprehension_value.pointer(/0)");
-    };
+    let return_expr_value = comprehension_value
+        .pointer("/0")
+        .ok_or_else(|| fail("comprehension_value.pointer(/0)"))?;
     let expr = parse_expression(return_expr_value, &comprehension.return_expr_symbols())
-        .or_else(|| fail("GenInExpr.return_expr.parse_expression"))?;
+        .map_err(|_| fail("GenInExpr.return_expr.parse_expression"))?;
 
-    Some(Expression::AbstractComprehension(
+    Ok(Expression::AbstractComprehension(
         Metadata::new(),
         Moo::new(comprehension.with_return_value(expr)),
     ))
@@ -981,30 +992,38 @@ fn parse_bin_op(
     bin_op: &serde_json::Map<String, Value>,
     binary_operators: HashMap<&str, BinOp>,
     scope: &SymbolTablePtr,
-) -> Option<Expression> {
+) -> Result<Expression> {
     // we know there is a single key value pair in this object
     // extract the value, ignore the key
-    let (key, value) = bin_op.into_iter().next()?;
+    let (key, value) = bin_op
+        .into_iter()
+        .next()
+        .ok_or(error!("Binary op object is empty"))?;
 
-    let constructor = binary_operators.get(key.as_str())?;
+    let constructor = binary_operators
+        .get(key.as_str())
+        .ok_or(error!(format!("Unknown binary operator `{}`", key)))?;
 
     match &value {
         Value::Array(bin_op_args) if bin_op_args.len() == 2 => {
             let arg1 = parse_expression(&bin_op_args[0], scope)?;
             let arg2 = parse_expression(&bin_op_args[1], scope)?;
-            Some(constructor(Metadata::new(), Moo::new(arg1), Moo::new(arg2)))
+            Ok(constructor(Metadata::new(), Moo::new(arg1), Moo::new(arg2)))
         }
-        otherwise => bug!("Unhandled parse_bin_op {:#?}", otherwise),
+        _ => Err(error!("Binary operator arguments are not a 2-array")),
     }
 }
 
 fn parse_indexing_slicing_op(
     op: &serde_json::Map<String, Value>,
     scope: &SymbolTablePtr,
-) -> Option<Expression> {
+) -> Result<Expression> {
     // we know there is a single key value pair in this object
     // extract the value, ignore the key
-    let (key, value) = op.into_iter().next()?;
+    let (key, value) = op
+        .into_iter()
+        .next()
+        .ok_or(error!("Indexing/Slicing op object is empty"))?;
 
     // we know that this is meant to be a mkopindexing, so anything that goes wrong from here is a
     // bug!
@@ -1024,12 +1043,10 @@ fn parse_indexing_slicing_op(
         "MkOpIndexing" => {
             match &value {
                 Value::Array(op_args) if op_args.len() == 2 => {
-                    target = parse_expression(&op_args[0], scope).expect("expected an expression");
-                    indices.push(Some(
-                        parse_expression(&op_args[1], scope).expect("expected an expression"),
-                    ));
+                    target = parse_expression(&op_args[0], scope)?;
+                    indices.push(Some(parse_expression(&op_args[1], scope)?));
                 }
-                otherwise => bug!("Unknown object inside MkOpIndexing: {:#?}", otherwise),
+                _ => return Err(error!("Unknown object inside MkOpIndexing")),
             };
         }
 
@@ -1037,16 +1054,14 @@ fn parse_indexing_slicing_op(
             all_known = false;
             match &value {
                 Value::Array(op_args) if op_args.len() == 3 => {
-                    target = parse_expression(&op_args[0], scope).expect("expected an expression");
+                    target = parse_expression(&op_args[0], scope)?;
                     indices.push(None);
                 }
-                otherwise => bug!("Unknown object inside MkOpSlicing: {:#?}", otherwise),
+                _ => return Err(error!("Unknown object inside MkOpSlicing")),
             };
         }
 
-        _ => {
-            return None;
-        }
+        _ => return Err(error!("Unknown indexing/slicing operator")),
     }
 
     loop {
@@ -1072,13 +1087,16 @@ fn parse_indexing_slicing_op(
     indices.reverse();
 
     if all_known {
-        Some(Expression::UnsafeIndex(
+        Ok(Expression::UnsafeIndex(
             Metadata::new(),
             Moo::new(target),
-            indices.into_iter().map(|x| x.unwrap()).collect(),
+            indices
+                .into_iter()
+                .collect::<Option<Vec<_>>>()
+                .ok_or(error!("Missing index in fully-known indexing operation"))?,
         ))
     } else {
-        Some(Expression::UnsafeSlice(
+        Ok(Expression::UnsafeSlice(
             Metadata::new(),
             Moo::new(target),
             indices,
@@ -1089,20 +1107,28 @@ fn parse_indexing_slicing_op(
 fn parse_flatten_op(
     op: &serde_json::Map<String, Value>,
     scope: &SymbolTablePtr,
-) -> Option<Expression> {
-    let args = op.get("MkOpFlatten")?.as_array()?;
+) -> Result<Expression> {
+    let args = op
+        .get("MkOpFlatten")
+        .ok_or(error!("MkOpFlatten missing"))?
+        .as_array()
+        .ok_or(error!("MkOpFlatten is not an array"))?;
 
-    let n = parse_expression(&args[0], scope);
-    let matrix = parse_expression(&args[1], scope)?;
+    let first = args.first().ok_or(error!("MkOpFlatten missing first argument"))?;
+    let second = args
+        .get(1)
+        .ok_or(error!("MkOpFlatten missing second argument"))?;
+    let n = parse_expression(first, scope).ok();
+    let matrix = parse_expression(second, scope)?;
 
     if let Some(n) = n {
-        Some(Expression::Flatten(
+        Ok(Expression::Flatten(
             Metadata::new(),
             Some(Moo::new(n)),
             Moo::new(matrix),
         ))
     } else {
-        Some(Expression::Flatten(Metadata::new(), None, Moo::new(matrix)))
+        Ok(Expression::Flatten(Metadata::new(), None, Moo::new(matrix)))
     }
 }
 
@@ -1110,15 +1136,18 @@ fn parse_unary_op(
     un_op: &serde_json::Map<String, Value>,
     unary_operators: HashMap<&str, UnaryOp>,
     scope: &SymbolTablePtr,
-) -> Option<Expression> {
-    let fail = |_stage: &str| -> Option<Expression> { None };
+) -> Result<Expression> {
+    let fail = |stage: &str| -> Error {
+        Error::Parse(format!("Could not parse unary op at stage `{stage}`"))
+    };
 
-    let Some((key, value)) = un_op.iter().next() else {
-        return fail("un_op.iter().next");
-    };
-    let Some(constructor) = unary_operators.get(key.as_str()) else {
-        return fail("unary_operators.get");
-    };
+    let (key, value) = un_op
+        .iter()
+        .next()
+        .ok_or_else(|| fail("un_op.iter().next"))?;
+    let constructor = unary_operators
+        .get(key.as_str())
+        .ok_or_else(|| fail("unary_operators.get"))?;
 
     // unops are the main things that contain comprehensions
     //
@@ -1133,27 +1162,33 @@ fn parse_unary_op(
                 _ => None,
             };
             parse_comprehension(comprehension, scope.clone(), comprehension_kind)
-                .or_else(|| fail("value.Comprehension.parse_comprehension"))
+                .map_err(|_| fail("value.Comprehension.parse_comprehension"))
         }
-        _ => parse_expression(value, scope).or_else(|| fail("value.parse_expression")),
+        _ => parse_expression(value, scope).map_err(|_| fail("value.parse_expression")),
     }
-    .or_else(|| fail("arg"))?;
+    .map_err(|_| fail("arg"))?;
 
-    Some(constructor(Metadata::new(), Moo::new(arg)))
+    Ok(constructor(Metadata::new(), Moo::new(arg)))
 }
 
 // Takes in { AbstractLiteral: .... }
 fn parse_abstract_matrix_as_expr(
     value: &serde_json::Value,
     scope: &SymbolTablePtr,
-) -> Option<Expression> {
+) -> Result<Expression> {
     parser_trace!("trying to parse an abstract literal matrix");
     let (values, domain_name, domain_value) =
         if let Some(abs_lit_matrix) = value.pointer("/AbstractLiteral/AbsLitMatrix") {
             parser_trace!(".. found JSON pointer /AbstractLiteral/AbstractLitMatrix");
             let (domain_name, domain_value) =
-                abs_lit_matrix.pointer("/0")?.as_object()?.iter().next()?;
-            let values = abs_lit_matrix.pointer("/1")?;
+                abs_lit_matrix
+                    .pointer("/0")
+                    .and_then(Value::as_object)
+                    .and_then(|x| x.iter().next())
+                    .ok_or(error!("AbsLitMatrix missing domain"))?;
+            let values = abs_lit_matrix
+                .pointer("/1")
+                .ok_or(error!("AbsLitMatrix missing values"))?;
 
             Some((values, domain_name, domain_value))
         }
@@ -1163,36 +1198,41 @@ fn parse_abstract_matrix_as_expr(
         {
             parser_trace!(".. found JSON pointer /Constant/ConstantAbstract/AbsLitMatrix");
             let (domain_name, domain_value) = const_abs_lit_matrix
-                .pointer("/0")?
-                .as_object()?
-                .iter()
-                .next()?;
-            let values = const_abs_lit_matrix.pointer("/1")?;
+                .pointer("/0")
+                .and_then(Value::as_object)
+                .and_then(|x| x.iter().next())
+                .ok_or(error!("ConstantAbstract AbsLitMatrix missing domain"))?;
+            let values = const_abs_lit_matrix
+                .pointer("/1")
+                .ok_or(error!("ConstantAbstract AbsLitMatrix missing values"))?;
 
             Some((values, domain_name, domain_value))
         } else if let Some(const_abs_lit_matrix) = value.pointer("/ConstantAbstract/AbsLitMatrix") {
             parser_trace!(".. found JSON pointer /ConstantAbstract/AbsLitMatrix");
             let (domain_name, domain_value) = const_abs_lit_matrix
-                .pointer("/0")?
-                .as_object()?
-                .iter()
-                .next()?;
-            let values = const_abs_lit_matrix.pointer("/1")?;
+                .pointer("/0")
+                .and_then(Value::as_object)
+                .and_then(|x| x.iter().next())
+                .ok_or(error!("ConstantAbstract/AbsLitMatrix missing domain"))?;
+            let values = const_abs_lit_matrix
+                .pointer("/1")
+                .ok_or(error!("ConstantAbstract/AbsLitMatrix missing values"))?;
             Some((values, domain_name, domain_value))
         } else {
             None
-        }?;
+        }
+        .ok_or(error!("Could not parse abstract literal matrix"))?;
 
     parser_trace!(".. found in domain and values in JSON:");
     parser_trace!(".. .. index domain name {domain_name}");
     parser_trace!(".. .. values {value}");
 
-    let args_parsed = values.as_array().map(|x| {
-        x.iter()
-            .map(|x| parse_expression(x, scope))
-            .map(|x| x.expect("invalid subexpression"))
-            .collect::<Vec<Expression>>()
-    })?;
+    let args_parsed = values
+        .as_array()
+        .ok_or(error!("Matrix values are not an array"))?
+        .iter()
+        .map(|x| parse_expression(x, scope))
+        .collect::<Result<Vec<Expression>>>()?;
 
     if !args_parsed.is_empty() {
         parser_trace!(
@@ -1207,11 +1247,11 @@ fn parse_abstract_matrix_as_expr(
     match parse_domain(domain_name, domain_value, &mut symbols) {
         Ok(domain) => {
             parser_trace!("... sucessfully parsed domain as {domain}");
-            Some(into_matrix_expr![args_parsed;domain])
+            Ok(into_matrix_expr![args_parsed;domain])
         }
         Err(_) => {
             parser_trace!("... failed to parse domain, creating a matrix without one.");
-            Some(into_matrix_expr![args_parsed])
+            Ok(into_matrix_expr![args_parsed])
         }
     }
 }
@@ -1219,23 +1259,31 @@ fn parse_abstract_matrix_as_expr(
 fn parse_constant(
     constant: &serde_json::Map<String, Value>,
     scope: &SymbolTablePtr,
-) -> Option<Expression> {
+) -> Result<Expression> {
     match &constant.get("Constant") {
         Some(Value::Object(int)) if int.contains_key("ConstantInt") => {
-            let int_32: i32 = match int["ConstantInt"].as_array()?[1].as_i64()?.try_into() {
+            let int_32: i32 = match int["ConstantInt"]
+                .as_array()
+                .ok_or(error!("ConstantInt is not an array"))?[1]
+                .as_i64()
+                .ok_or(error!("ConstantInt does not contain int"))?
+                .try_into()
+            {
                 Ok(x) => x,
-                Err(_) => return None,
+                Err(_) => return Err(error!("ConstantInt cannot be represented as i32")),
             };
 
-            Some(Expression::Atomic(
+            Ok(Expression::Atomic(
                 Metadata::new(),
                 Atom::Literal(Literal::Int(int_32)),
             ))
         }
 
         Some(Value::Object(b)) if b.contains_key("ConstantBool") => {
-            let b: bool = b["ConstantBool"].as_bool()?;
-            Some(Expression::Atomic(
+            let b: bool = b["ConstantBool"]
+                .as_bool()
+                .ok_or(error!("ConstantBool does not contain bool"))?;
+            Ok(Expression::Atomic(
                 Metadata::new(),
                 Atom::Literal(Literal::Bool(b)),
             ))
@@ -1255,7 +1303,7 @@ fn parse_constant(
                     return parse_abs_function(arr, scope);
                 }
             }
-            None
+            Err(error!("Unhandled ConstantAbstract literal type"))
         }
 
         // sometimes (e.g. constant matrices) we can have a ConstantInt / Constant bool that is
@@ -1268,8 +1316,8 @@ fn parse_constant(
                 .and_then(|x| x.try_into().ok())
                 .map(|x| Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(x))));
 
-            if let e @ Some(_) = int_expr {
-                return e;
+            if let Some(expr) = int_expr {
+                return Ok(expr);
             }
 
             let bool_expr = constant
@@ -1277,12 +1325,12 @@ fn parse_constant(
                 .and_then(|x| x.as_bool())
                 .map(|x| Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(x))));
 
-            if let e @ Some(_) = bool_expr {
-                return e;
+            if let Some(expr) = bool_expr {
+                return Ok(expr);
             }
 
-            bug!("Unhandled parse_constant {:#?}", constant);
+            Err(error!(format!("Unhandled parse_constant {constant:#?}")))
         }
-        otherwise => bug!("Unhandled parse_constant {:#?}", otherwise),
+        otherwise => Err(error!(format!("Unhandled parse_constant {otherwise:#?}"))),
     }
 }
