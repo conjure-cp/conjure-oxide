@@ -5,8 +5,8 @@ use super::{
     AbstractLiteral, DeclarationPtr, DomainPtr, Expression, Literal, Moo, Name,
     categories::{Category, CategoryOf},
     domains::HasDomain,
-    resolve_reference_constant,
     records::RecordValue,
+    resolve_reference_constant,
 };
 use derivative::Derivative;
 use parking_lot::MappedRwLockReadGuard;

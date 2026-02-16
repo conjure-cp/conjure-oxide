@@ -199,12 +199,12 @@ pub fn atom_to_ast(
 
             let decl_kind = reference.ptr().kind();
             match decl_kind.deref() {
-                DeclarationKind::ValueLetting(expr) => Err(SolverError::ModelFeatureNotImplemented(
-                    format!(
+                DeclarationKind::ValueLetting(expr) => {
+                    Err(SolverError::ModelFeatureNotImplemented(format!(
                         "value letting '{}' did not resolve to an atomic expression: {expr}",
                         reference.name()
-                    ),
-                )),
+                    )))
+                }
                 _ => Err(SolverError::ModelInvalid(format!(
                     "variable '{}' does not exist",
                     reference.name()

@@ -45,7 +45,9 @@ fn load_symbol_table(
                 .lookup(name)
                 .ok_or_else(|| ModelInvalid(format!("search variable '{name}' does not exist")))?;
             let var = decl.as_var().ok_or_else(|| {
-                ModelInvalid(format!("search variable '{name}' is not a decision variable"))
+                ModelInvalid(format!(
+                    "search variable '{name}' is not a decision variable"
+                ))
             })?;
 
             load_var(name, &var, true, minion_model)?;
@@ -174,7 +176,9 @@ fn try_add_var(
     let added = if search_var {
         minion_model.named_variables.add_var(name.clone(), domain)
     } else {
-        minion_model.named_variables.add_aux_var(name.clone(), domain)
+        minion_model
+            .named_variables
+            .add_aux_var(name.clone(), domain)
     };
     added.ok_or(ModelInvalid(format!("variable {name:?} is defined twice")))
 }

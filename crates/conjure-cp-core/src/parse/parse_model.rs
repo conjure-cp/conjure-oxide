@@ -568,10 +568,7 @@ pub fn parse_expression(obj: &JsonValue, scope: &SymbolTablePtr) -> Result<Expre
                 .get("Op")
                 .and_then(Value::as_object)
                 .ok_or_else(|| fail("Op.as_object"))?;
-            let (op_name, _) = op_obj
-                .iter()
-                .next()
-                .ok_or_else(|| fail("Op.iter().next"))?;
+            let (op_name, _) = op_obj.iter().next().ok_or_else(|| fail("Op.iter().next"))?;
 
             if op_obj.contains_key("MkOpFlatten") {
                 parse_flatten_op(op_obj, scope)
@@ -781,7 +778,9 @@ fn parse_comprehension(
                         let name = gen_inner
                             .pointer("/0/Single/Name")
                             .and_then(Value::as_str)
-                            .ok_or_else(|| fail("GenDomainNoRepr.pointer(/0/Single/Name).as_str"))?;
+                            .ok_or_else(|| {
+                                fail("GenDomainNoRepr.pointer(/0/Single/Name).as_str")
+                            })?;
                         let domain_obj = gen_inner
                             .pointer("/1")
                             .and_then(Value::as_object)
@@ -848,8 +847,8 @@ fn parse_in_expr_comprehension(
     let generator_expr = gen_inner
         .pointer("/1")
         .ok_or_else(|| fail("GenInExpr.pointer(/1)"))?;
-    let expr = parse_expression(generator_expr, &scope)
-        .map_err(|_| fail("GenInExpr.parse_expression"))?;
+    let expr =
+        parse_expression(generator_expr, &scope).map_err(|_| fail("GenInExpr.parse_expression"))?;
 
     let comprehension =
         AbstractComprehensionBuilder::new(&scope).new_expression_generator(expr, name.into());
@@ -876,8 +875,8 @@ fn parse_bin_op(
         .next()
         .ok_or(error!("Binary op object is empty"))?;
 
-    let constructor =
-        binary_operator(key.as_str()).ok_or(error!(format!("Unknown binary operator `{}`", key)))?;
+    let constructor = binary_operator(key.as_str())
+        .ok_or(error!(format!("Unknown binary operator `{}`", key)))?;
 
     match &value {
         Value::Array(bin_op_args) if bin_op_args.len() == 2 => {
@@ -989,7 +988,9 @@ fn parse_flatten_op(
         .as_array()
         .ok_or(error!("MkOpFlatten is not an array"))?;
 
-    let first = args.first().ok_or(error!("MkOpFlatten missing first argument"))?;
+    let first = args
+        .first()
+        .ok_or(error!("MkOpFlatten missing first argument"))?;
     let second = args
         .get(1)
         .ok_or(error!("MkOpFlatten missing second argument"))?;
@@ -1052,12 +1053,11 @@ fn parse_abstract_matrix_as_expr(
     let (values, domain_name, domain_value) =
         if let Some(abs_lit_matrix) = value.pointer("/AbstractLiteral/AbsLitMatrix") {
             parser_trace!(".. found JSON pointer /AbstractLiteral/AbstractLitMatrix");
-            let (domain_name, domain_value) =
-                abs_lit_matrix
-                    .pointer("/0")
-                    .and_then(Value::as_object)
-                    .and_then(|x| x.iter().next())
-                    .ok_or(error!("AbsLitMatrix missing domain"))?;
+            let (domain_name, domain_value) = abs_lit_matrix
+                .pointer("/0")
+                .and_then(Value::as_object)
+                .and_then(|x| x.iter().next())
+                .ok_or(error!("AbsLitMatrix missing domain"))?;
             let values = abs_lit_matrix
                 .pointer("/1")
                 .ok_or(error!("AbsLitMatrix missing values"))?;

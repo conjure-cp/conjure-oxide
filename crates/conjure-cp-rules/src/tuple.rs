@@ -1,7 +1,7 @@
 use conjure_cp::ast::Expression as Expr;
+use conjure_cp::ast::GroundDomain;
 use conjure_cp::ast::Moo;
 use conjure_cp::ast::SymbolTable;
-use conjure_cp::ast::GroundDomain;
 use conjure_cp::into_matrix_expr;
 use conjure_cp::matrix_expr;
 use conjure_cp::rule_engine::{

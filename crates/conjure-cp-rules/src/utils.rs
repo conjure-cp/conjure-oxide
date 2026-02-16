@@ -50,9 +50,10 @@ pub fn constant_record_names(expr: &Expr) -> Option<Vec<Name>> {
         Expr::AbstractLiteral(_, AbstractLiteral::Record(entries)) => {
             Some(entries.iter().map(|x| x.name.clone()).collect())
         }
-        Expr::Atomic(_, Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Record(entries)))) => {
-            Some(entries.iter().map(|x| x.name.clone()).collect())
-        }
+        Expr::Atomic(
+            _,
+            Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Record(entries))),
+        ) => Some(entries.iter().map(|x| x.name.clone()).collect()),
         _ => None,
     }
 }
