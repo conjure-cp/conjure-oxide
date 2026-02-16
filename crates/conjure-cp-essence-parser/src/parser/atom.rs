@@ -1,8 +1,9 @@
+use crate::errors::{FatalParseError, RecoverableParseError};
 use crate::expression::{parse_binary_expression, parse_expression};
 use crate::parser::abstract_literal::parse_abstract;
 use crate::parser::comprehension::parse_comprehension;
 use crate::util::named_children;
-use crate::{EssenceParseError, field, named_child};
+use crate::{field, named_child};
 use conjure_cp_core::ast::{Atom, Expression, Literal, Metadata, Moo, Name, SymbolTablePtr};
 use tree_sitter::Node;
 use ustr::Ustr;
@@ -12,45 +13,49 @@ pub fn parse_atom(
     source_code: &str,
     root: &Node,
     symbols_ptr: Option<SymbolTablePtr>,
-) -> Result<Expression, Box<EssenceParseError>> {
+    errors: &mut Vec<RecoverableParseError>,
+) -> Result<Expression, FatalParseError> {
     match node.kind() {
-        "atom" | "sub_atom_expr" => parse_atom(&named_child!(node), source_code, root, symbols_ptr),
+        "atom" | "sub_atom_expr" => {
+            parse_atom(&named_child!(node), source_code, root, symbols_ptr, errors)
+        }
         "metavar" => {
             let ident = field!(node, "identifier");
             let name_str = &source_code[ident.start_byte()..ident.end_byte()];
             Ok(Expression::Metavar(Metadata::new(), Ustr::from(name_str)))
         }
-        "identifier" => parse_variable(node, source_code, symbols_ptr)
+        "identifier" => parse_variable(node, source_code, symbols_ptr, errors)
             .map(|var| Expression::Atomic(Metadata::new(), var)),
         "from_solution" => {
             if root.kind() != "dominance_relation" {
-                return Err(Box::new(EssenceParseError::syntax_error(
+                return Err(FatalParseError::syntax_error(
                     "fromSolution only allowed inside dominance relations".to_string(),
                     Some(node.range()),
-                )));
+                ));
             }
 
-            let inner = parse_variable(&field!(node, "variable"), source_code, symbols_ptr)?;
+            let inner =
+                parse_variable(&field!(node, "variable"), source_code, symbols_ptr, errors)?;
             Ok(Expression::FromSolution(Metadata::new(), Moo::new(inner)))
         }
         "constant" => {
-            let lit = parse_constant(node, source_code)?;
+            let lit = parse_constant(node, source_code, errors)?;
             Ok(Expression::Atomic(Metadata::new(), Atom::Literal(lit)))
         }
         "matrix" | "record" | "tuple" | "set_literal" => {
-            parse_abstract(node, source_code, symbols_ptr)
+            parse_abstract(node, source_code, symbols_ptr, errors)
                 .map(|l| Expression::AbstractLiteral(Metadata::new(), l))
         }
-        "flatten" => parse_flatten(node, source_code, root, symbols_ptr),
-        "index_or_slice" => parse_index_or_slice(node, source_code, root, symbols_ptr),
+        "flatten" => parse_flatten(node, source_code, root, symbols_ptr, errors),
+        "index_or_slice" => parse_index_or_slice(node, source_code, root, symbols_ptr, errors),
         // for now, assume is binary since powerset isn't implemented
         // TODO: add powerset support under "set_operation"
-        "set_operation" => parse_binary_expression(node, source_code, root, symbols_ptr),
-        "comprehension" => parse_comprehension(node, source_code, root, symbols_ptr),
-        _ => Err(Box::new(EssenceParseError::syntax_error(
+        "set_operation" => parse_binary_expression(node, source_code, root, symbols_ptr, errors),
+        "comprehension" => parse_comprehension(node, source_code, root, symbols_ptr, errors),
+        _ => Err(FatalParseError::syntax_error(
             format!("Expected atom, got: {}", node.kind()),
             Some(node.range()),
-        ))),
+        )),
     }
 }
 
@@ -59,13 +64,14 @@ fn parse_flatten(
     source_code: &str,
     root: &Node,
     symbols_ptr: Option<SymbolTablePtr>,
-) -> Result<Expression, Box<EssenceParseError>> {
+    errors: &mut Vec<RecoverableParseError>,
+) -> Result<Expression, FatalParseError> {
     let expr_node = field!(node, "expression");
-    let expr = parse_atom(&expr_node, source_code, root, symbols_ptr)?;
+    let expr = parse_atom(&expr_node, source_code, root, symbols_ptr, errors)?;
 
     if node.child_by_field_name("depth").is_some() {
         let depth_node = field!(node, "depth");
-        let depth = parse_int(&depth_node, source_code)?;
+        let depth = parse_int(&depth_node, source_code, errors)?;
         let depth_expression =
             Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(depth)));
         Ok(Expression::Flatten(
@@ -83,16 +89,23 @@ fn parse_index_or_slice(
     source_code: &str,
     root: &Node,
     symbols_ptr: Option<SymbolTablePtr>,
-) -> Result<Expression, Box<EssenceParseError>> {
+    errors: &mut Vec<RecoverableParseError>,
+) -> Result<Expression, FatalParseError> {
     let collection = parse_atom(
         &field!(node, "collection"),
         source_code,
         root,
         symbols_ptr.clone(),
+        errors,
     )?;
     let mut indices = Vec::new();
     for idx_node in named_children(&field!(node, "indices")) {
-        indices.push(parse_index(&idx_node, source_code, symbols_ptr.clone())?);
+        indices.push(parse_index(
+            &idx_node,
+            source_code,
+            symbols_ptr.clone(),
+            errors,
+        )?);
     }
 
     let has_null_idx = indices.iter().any(|idx| idx.is_none());
@@ -119,19 +132,21 @@ fn parse_index(
     node: &Node,
     source_code: &str,
     symbols_ptr: Option<SymbolTablePtr>,
-) -> Result<Option<Expression>, Box<EssenceParseError>> {
+    errors: &mut Vec<RecoverableParseError>,
+) -> Result<Option<Expression>, FatalParseError> {
     match node.kind() {
         "arithmetic_expr" | "atom" => Ok(Some(parse_expression(
             *node,
             source_code,
             node,
             symbols_ptr,
+            errors,
         )?)),
         "null_index" => Ok(None),
-        _ => Err(Box::new(EssenceParseError::syntax_error(
+        _ => Err(FatalParseError::syntax_error(
             format!("Expected an index, got: '{}'", node.kind()),
             Some(node.range()),
-        ))),
+        )),
     }
 }
 
@@ -139,60 +154,69 @@ fn parse_variable(
     node: &Node,
     source_code: &str,
     symbols_ptr: Option<SymbolTablePtr>,
-) -> Result<Atom, Box<EssenceParseError>> {
+    errors: &mut Vec<RecoverableParseError>,
+) -> Result<Atom, FatalParseError> {
     let raw_name = &source_code[node.start_byte()..node.end_byte()];
     let name = Name::user(raw_name.trim());
     if let Some(symbols) = symbols_ptr {
         if let Some(decl) = symbols.read().lookup(&name) {
             Ok(Atom::Reference(conjure_cp_core::ast::Reference::new(decl)))
         } else {
-            Err(Box::new(EssenceParseError::syntax_error(
+            Err(FatalParseError::syntax_error(
                 format!("Undefined variable: '{}'", raw_name),
                 Some(node.range()),
-            )))
+            ))
         }
     } else {
-        Err(Box::new(EssenceParseError::syntax_error(
+        Err(FatalParseError::syntax_error(
             format!(
                 "Found variable '{raw_name}'; Did you mean to pass a meta-variable '&{raw_name}'?\n\
             A symbol table is needed to resolve variable names, but none exists in this context."
             ),
             Some(node.range()),
-        )))
+        ))
     }
 }
 
-fn parse_constant(node: &Node, source_code: &str) -> Result<Literal, Box<EssenceParseError>> {
+fn parse_constant(
+    node: &Node,
+    source_code: &str,
+    errors: &mut Vec<RecoverableParseError>,
+) -> Result<Literal, FatalParseError> {
     let inner = named_child!(node);
     let raw_value = &source_code[inner.start_byte()..inner.end_byte()];
     match inner.kind() {
         "integer" => {
-            let value = parse_int(&inner, source_code)?;
+            let value = parse_int(&inner, source_code, errors)?;
             Ok(Literal::Int(value))
         }
         "TRUE" => Ok(Literal::Bool(true)),
         "FALSE" => Ok(Literal::Bool(false)),
-        _ => Err(Box::new(EssenceParseError::syntax_error(
+        _ => Err(FatalParseError::syntax_error(
             format!(
                 "'{}' (kind: '{}') is not a valid constant",
                 raw_value,
                 inner.kind()
             ),
             Some(inner.range()),
-        ))),
+        )),
     }
 }
 
-fn parse_int(node: &Node, source_code: &str) -> Result<i32, Box<EssenceParseError>> {
+fn parse_int(
+    node: &Node,
+    source_code: &str,
+    _errors: &mut Vec<RecoverableParseError>,
+) -> Result<i32, FatalParseError> {
     let raw_value = &source_code[node.start_byte()..node.end_byte()];
     raw_value.parse::<i32>().map_err(|_e| {
         if raw_value.is_empty() {
-            EssenceParseError::syntax_error(
+            FatalParseError::syntax_error(
                 "Expected an integer here".to_string(),
                 Some(node.range()),
             )
         } else {
-            EssenceParseError::syntax_error(
+            FatalParseError::syntax_error(
                 format!("'{raw_value}' is not a valid integer"),
                 Some(node.range()),
             )

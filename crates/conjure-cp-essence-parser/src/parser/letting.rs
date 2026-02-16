@@ -5,7 +5,7 @@ use tree_sitter::Node;
 
 use super::domain::parse_domain;
 use super::util::named_children;
-use crate::errors::EssenceParseError;
+use crate::errors::{FatalParseError, RecoverableParseError};
 use crate::expression::parse_expression;
 use conjure_cp_core::ast::DeclarationPtr;
 use conjure_cp_core::ast::{Name, SymbolTable, SymbolTablePtr};
@@ -15,7 +15,8 @@ pub fn parse_letting_statement(
     letting_statement: Node,
     source_code: &str,
     existing_symbols_ptr: Option<SymbolTablePtr>,
-) -> Result<SymbolTable, Box<EssenceParseError>> {
+    errors: &mut Vec<RecoverableParseError>,
+) -> Result<SymbolTable, FatalParseError> {
     let mut symbol_table = SymbolTable::new();
 
     let mut temp_symbols = BTreeSet::new();
@@ -41,14 +42,19 @@ pub fn parse_letting_statement(
                         source_code,
                         &letting_statement,
                         existing_symbols_ptr.clone(),
+                        errors,
                     )?,
                 ));
             }
         }
         "domain" => {
             for name in temp_symbols {
-                let domain =
-                    parse_domain(expr_or_domain, source_code, existing_symbols_ptr.clone())?;
+                let domain = parse_domain(
+                    expr_or_domain,
+                    source_code,
+                    existing_symbols_ptr.clone(),
+                    errors,
+                )?;
 
                 // If it's a record domain, add the field names to the symbol table
                 if let Some(entries) = domain.as_record() {
@@ -62,13 +68,13 @@ pub fn parse_letting_statement(
             }
         }
         _ => {
-            return Err(Box::new(EssenceParseError::syntax_error(
+            return Err(FatalParseError::syntax_error(
                 format!(
                     "Expected letting expression, got '{}'",
                     expr_or_domain.kind()
                 ),
                 Some(expr_or_domain.range()),
-            )));
+            ));
         }
     }
 

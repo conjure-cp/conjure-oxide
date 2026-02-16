@@ -5,7 +5,7 @@ use tree_sitter::Node;
 
 use super::domain::parse_domain;
 use super::util::named_children;
-use crate::EssenceParseError;
+use crate::errors::{FatalParseError, RecoverableParseError};
 use conjure_cp_core::ast::{DomainPtr, Name, SymbolTablePtr};
 
 /// Parse a find statement into a map of decision variable names to their domains.
@@ -13,13 +13,14 @@ pub fn parse_find_statement(
     find_statement: Node,
     source_code: &str,
     symbols: Option<SymbolTablePtr>,
-) -> Result<BTreeMap<Name, DomainPtr>, Box<EssenceParseError>> {
+    errors: &mut Vec<RecoverableParseError>,
+) -> Result<BTreeMap<Name, DomainPtr>, FatalParseError> {
     let mut vars = BTreeMap::new();
 
     let domain = find_statement
         .child_by_field_name("domain")
         .expect("No domain found in find statement");
-    let domain = parse_domain(domain, source_code, symbols)?;
+    let domain = parse_domain(domain, source_code, symbols, errors)?;
 
     let variable_list = find_statement
         .child_by_field_name("variables")

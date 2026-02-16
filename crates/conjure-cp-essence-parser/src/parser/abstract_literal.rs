@@ -1,7 +1,8 @@
+use crate::errors::{FatalParseError, RecoverableParseError};
 use crate::expression::parse_expression;
+use crate::field;
 use crate::parser::domain::parse_domain;
 use crate::util::named_children;
-use crate::{EssenceParseError, field};
 use conjure_cp_core::ast::{AbstractLiteral, DomainPtr, Expression, SymbolTablePtr};
 use conjure_cp_core::{domain_int, range};
 use tree_sitter::Node;
@@ -10,16 +11,17 @@ pub fn parse_abstract(
     node: &Node,
     source_code: &str,
     symbols_ptr: Option<SymbolTablePtr>,
-) -> Result<AbstractLiteral<Expression>, Box<EssenceParseError>> {
+    errors: &mut Vec<RecoverableParseError>,
+) -> Result<AbstractLiteral<Expression>, FatalParseError> {
     match node.kind() {
-        "record" => parse_record(node, source_code, symbols_ptr),
-        "tuple" => parse_tuple(node, source_code, symbols_ptr),
-        "matrix" => parse_matrix(node, source_code, symbols_ptr),
-        "set_literal" => parse_set_literal(node, source_code, symbols_ptr),
-        _ => Err(Box::new(EssenceParseError::syntax_error(
-            format!("Expected abstract literal, got: '{}'", node.kind()),
+        "record" => parse_record(node, source_code, symbols_ptr, errors),
+        "tuple" => parse_tuple(node, source_code, symbols_ptr, errors),
+        "matrix" => parse_matrix(node, source_code, symbols_ptr, errors),
+        "set_literal" => parse_set_literal(node, source_code, symbols_ptr, errors),
+        _ => Err(FatalParseError::syntax_error(
+            format!("Expected abstract literal, got: {}", node.kind()),
             Some(node.range()),
-        ))),
+        )),
     }
 }
 
@@ -27,7 +29,8 @@ fn parse_record(
     node: &Node,
     source_code: &str,
     symbols_ptr: Option<SymbolTablePtr>,
-) -> Result<AbstractLiteral<Expression>, Box<EssenceParseError>> {
+    errors: &mut Vec<RecoverableParseError>,
+) -> Result<AbstractLiteral<Expression>, FatalParseError> {
     let mut values = Vec::new();
     for child in node.children_by_field_name("name_value_pair", &mut node.walk()) {
         let name_node = field!(child, "name");
@@ -39,6 +42,7 @@ fn parse_record(
             source_code,
             node,
             symbols_ptr.clone(),
+            errors,
         )?;
         values.push(conjure_cp_core::ast::records::RecordValue { name, value });
     }
@@ -49,7 +53,8 @@ fn parse_tuple(
     node: &Node,
     source_code: &str,
     symbols_ptr: Option<SymbolTablePtr>,
-) -> Result<AbstractLiteral<Expression>, Box<EssenceParseError>> {
+    errors: &mut Vec<RecoverableParseError>,
+) -> Result<AbstractLiteral<Expression>, FatalParseError> {
     let mut elements = Vec::new();
     for child in named_children(node) {
         elements.push(parse_expression(
@@ -57,6 +62,7 @@ fn parse_tuple(
             source_code,
             node,
             symbols_ptr.clone(),
+            errors,
         )?);
     }
     Ok(AbstractLiteral::Tuple(elements))
@@ -66,7 +72,8 @@ fn parse_matrix(
     node: &Node,
     source_code: &str,
     symbols_ptr: Option<SymbolTablePtr>,
-) -> Result<AbstractLiteral<Expression>, Box<EssenceParseError>> {
+    errors: &mut Vec<RecoverableParseError>,
+) -> Result<AbstractLiteral<Expression>, FatalParseError> {
     let mut elements = vec![];
     let mut domain: Option<DomainPtr> = None;
     for child in named_children(node) {
@@ -80,9 +87,15 @@ fn parse_matrix(
                 source_code,
                 node,
                 symbols_ptr.clone(),
+                errors,
             )?);
         } else {
-            domain = Some(parse_domain(child, source_code, symbols_ptr.clone())?);
+            domain = Some(parse_domain(
+                child,
+                source_code,
+                symbols_ptr.clone(),
+                errors,
+            )?);
         }
     }
     if domain.is_none() {
@@ -97,7 +110,8 @@ fn parse_set_literal(
     node: &Node,
     source_code: &str,
     symbols_ptr: Option<SymbolTablePtr>,
-) -> Result<AbstractLiteral<Expression>, Box<EssenceParseError>> {
+    errors: &mut Vec<RecoverableParseError>,
+) -> Result<AbstractLiteral<Expression>, FatalParseError> {
     let mut elements = Vec::new();
     for child in named_children(node) {
         elements.push(parse_expression(
@@ -105,6 +119,7 @@ fn parse_set_literal(
             source_code,
             node,
             symbols_ptr.clone(),
+            errors,
         )?);
     }
     Ok(AbstractLiteral::Set(elements))

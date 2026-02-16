@@ -1,4 +1,4 @@
-use crate::errors::EssenceParseError;
+use crate::errors::{FatalParseError, RecoverableParseError};
 use crate::parser::atom::parse_atom;
 use crate::parser::comprehension::parse_quantifier_or_aggregate_expr;
 use crate::{field, named_child};
@@ -12,24 +12,44 @@ pub fn parse_expression(
     source_code: &str,
     root: &Node,
     symbols_ptr: Option<SymbolTablePtr>,
-) -> Result<Expression, Box<EssenceParseError>> {
+    errors: &mut Vec<RecoverableParseError>,
+) -> Result<Expression, FatalParseError> {
     match node.kind() {
-        "atom" => parse_atom(&node, source_code, root, symbols_ptr),
-        "bool_expr" => parse_boolean_expression(&node, source_code, root, symbols_ptr),
-        "arithmetic_expr" => parse_arithmetic_expression(&node, source_code, root, symbols_ptr),
-        "comparison_expr" => parse_binary_expression(&node, source_code, root, symbols_ptr),
-        "dominance_relation" => parse_dominance_relation(&node, source_code, root, symbols_ptr),
-        "ERROR" => Err(Box::new(EssenceParseError::syntax_error(
-            format!(
-                "'{}' is not a valid expression",
-                &source_code[node.start_byte()..node.end_byte()]
-            ),
-            Some(node.range()),
-        ))),
-        _ => Err(Box::new(EssenceParseError::syntax_error(
-            format!("Unknown expression kind: '{}'", node.kind()),
-            Some(node.range()),
-        ))),
+        "atom" => parse_atom(&node, source_code, root, symbols_ptr, errors),
+        "bool_expr" => parse_boolean_expression(&node, source_code, root, symbols_ptr, errors),
+        "arithmetic_expr" => {
+            parse_arithmetic_expression(&node, source_code, root, symbols_ptr, errors)
+        }
+        "comparison_expr" => parse_binary_expression(&node, source_code, root, symbols_ptr, errors),
+        "dominance_relation" => {
+            parse_dominance_relation(&node, source_code, root, symbols_ptr, errors)
+        }
+        "ERROR" => {
+            errors.push(RecoverableParseError::new(
+                format!(
+                    "'{}' is not a valid expression",
+                    &source_code[node.start_byte()..node.end_byte()]
+                ),
+                Some(node.range()),
+            ));
+            // Return a placeholder - actual error is in the errors vector
+            // TODO: figure out how to return when recoverable error is found
+            Ok(Expression::Atomic(
+                Metadata::new(),
+                conjure_cp_core::ast::Atom::Literal(conjure_cp_core::ast::Literal::Bool(false)),
+            ))
+        }
+        _ => {
+            errors.push(RecoverableParseError::new(
+                format!("Unknown expression kind: '{}'", node.kind()),
+                Some(node.range()),
+            ));
+            // Return a placeholder
+            Ok(Expression::Atomic(
+                Metadata::new(),
+                conjure_cp_core::ast::Atom::Literal(conjure_cp_core::ast::Literal::Bool(false)),
+            ))
+        }
     }
 }
 
@@ -38,18 +58,25 @@ fn parse_dominance_relation(
     source_code: &str,
     root: &Node,
     symbols_ptr: Option<SymbolTablePtr>,
-) -> Result<Expression, Box<EssenceParseError>> {
+    errors: &mut Vec<RecoverableParseError>,
+) -> Result<Expression, FatalParseError> {
     if root.kind() == "dominance_relation" {
-        return Err(Box::new(EssenceParseError::syntax_error(
+        return Err(FatalParseError::syntax_error(
             "Nested dominance relations are not allowed".to_string(),
             Some(node.range()),
-        )));
+        ));
     }
 
     // NB: In all other cases, we keep the root the same;
     // However, here we set the new root to `node` so downstream functions
     // know we are inside a dominance relation
-    let inner = parse_expression(field!(node, "expression"), source_code, node, symbols_ptr)?;
+    let inner = parse_expression(
+        field!(node, "expression"),
+        source_code,
+        node,
+        symbols_ptr,
+        errors,
+    )?;
     Ok(Expression::DominanceRelation(
         Metadata::new(),
         Moo::new(inner),
@@ -61,26 +88,27 @@ fn parse_arithmetic_expression(
     source_code: &str,
     root: &Node,
     symbols_ptr: Option<SymbolTablePtr>,
-) -> Result<Expression, Box<EssenceParseError>> {
+    errors: &mut Vec<RecoverableParseError>,
+) -> Result<Expression, FatalParseError> {
     let inner = named_child!(node);
     match inner.kind() {
-        "atom" => parse_atom(&inner, source_code, root, symbols_ptr),
+        "atom" => parse_atom(&inner, source_code, root, symbols_ptr, errors),
         "negative_expr" | "abs_value" | "sub_arith_expr" | "toInt_expr" => {
-            parse_unary_expression(&inner, source_code, root, symbols_ptr)
+            parse_unary_expression(&inner, source_code, root, symbols_ptr, errors)
         }
         "exponent" | "product_expr" | "sum_expr" => {
-            parse_binary_expression(&inner, source_code, root, symbols_ptr)
+            parse_binary_expression(&inner, source_code, root, symbols_ptr, errors)
         }
         "list_combining_expr_arith" => {
-            parse_list_combining_expression(&inner, source_code, root, symbols_ptr)
+            parse_list_combining_expression(&inner, source_code, root, symbols_ptr, errors)
         }
         "aggregate_expr" => {
-            parse_quantifier_or_aggregate_expr(&inner, source_code, root, symbols_ptr)
+            parse_quantifier_or_aggregate_expr(&inner, source_code, root, symbols_ptr, errors)
         }
-        _ => Err(Box::new(EssenceParseError::syntax_error(
+        _ => Err(FatalParseError::syntax_error(
             format!("Expected arithmetic expression, found: {}", inner.kind()),
             Some(inner.range()),
-        ))),
+        )),
     }
 }
 
@@ -89,26 +117,27 @@ fn parse_boolean_expression(
     source_code: &str,
     root: &Node,
     symbols_ptr: Option<SymbolTablePtr>,
-) -> Result<Expression, Box<EssenceParseError>> {
+    errors: &mut Vec<RecoverableParseError>,
+) -> Result<Expression, FatalParseError> {
     let inner = named_child!(node);
     match inner.kind() {
-        "atom" => parse_atom(&inner, source_code, root, symbols_ptr),
+        "atom" => parse_atom(&inner, source_code, root, symbols_ptr, errors),
         "not_expr" | "sub_bool_expr" => {
-            parse_unary_expression(&inner, source_code, root, symbols_ptr)
+            parse_unary_expression(&inner, source_code, root, symbols_ptr, errors)
         }
         "and_expr" | "or_expr" | "implication" | "iff_expr" | "set_operation_bool" => {
-            parse_binary_expression(&inner, source_code, root, symbols_ptr)
+            parse_binary_expression(&inner, source_code, root, symbols_ptr, errors)
         }
         "list_combining_expr_bool" => {
-            parse_list_combining_expression(&inner, source_code, root, symbols_ptr)
+            parse_list_combining_expression(&inner, source_code, root, symbols_ptr, errors)
         }
         "quantifier_expr" => {
-            parse_quantifier_or_aggregate_expr(&inner, source_code, root, symbols_ptr)
+            parse_quantifier_or_aggregate_expr(&inner, source_code, root, symbols_ptr, errors)
         }
-        _ => Err(Box::new(EssenceParseError::syntax_error(
+        _ => Err(FatalParseError::syntax_error(
             format!("Expected boolean expression, found '{}'", inner.kind()),
             Some(inner.range()),
-        ))),
+        )),
     }
 }
 
@@ -117,11 +146,12 @@ fn parse_list_combining_expression(
     source_code: &str,
     root: &Node,
     symbols_ptr: Option<SymbolTablePtr>,
-) -> Result<Expression, Box<EssenceParseError>> {
+    errors: &mut Vec<RecoverableParseError>,
+) -> Result<Expression, FatalParseError> {
     let operator_node = field!(node, "operator");
     let operator_str = &source_code[operator_node.start_byte()..operator_node.end_byte()];
 
-    let inner = parse_atom(&field!(node, "arg"), source_code, root, symbols_ptr)?;
+    let inner = parse_atom(&field!(node, "arg"), source_code, root, symbols_ptr, errors)?;
 
     match operator_str {
         "and" => Ok(Expression::And(Metadata::new(), Moo::new(inner))),
@@ -131,10 +161,10 @@ fn parse_list_combining_expression(
         "min" => Ok(Expression::Min(Metadata::new(), Moo::new(inner))),
         "max" => Ok(Expression::Max(Metadata::new(), Moo::new(inner))),
         "allDiff" => Ok(Expression::AllDiff(Metadata::new(), Moo::new(inner))),
-        _ => Err(Box::new(EssenceParseError::syntax_error(
+        _ => Err(FatalParseError::syntax_error(
             format!("Invalid operator: '{operator_str}'"),
             Some(operator_node.range()),
-        ))),
+        )),
     }
 }
 
@@ -143,18 +173,25 @@ fn parse_unary_expression(
     source_code: &str,
     root: &Node,
     symbols_ptr: Option<SymbolTablePtr>,
-) -> Result<Expression, Box<EssenceParseError>> {
-    let inner = parse_expression(field!(node, "expression"), source_code, root, symbols_ptr)?;
+    errors: &mut Vec<RecoverableParseError>,
+) -> Result<Expression, FatalParseError> {
+    let inner = parse_expression(
+        field!(node, "expression"),
+        source_code,
+        root,
+        symbols_ptr,
+        errors,
+    )?;
     match node.kind() {
         "negative_expr" => Ok(Expression::Neg(Metadata::new(), Moo::new(inner))),
         "abs_value" => Ok(Expression::Abs(Metadata::new(), Moo::new(inner))),
         "not_expr" => Ok(Expression::Not(Metadata::new(), Moo::new(inner))),
         "toInt_expr" => Ok(Expression::ToInt(Metadata::new(), Moo::new(inner))),
         "sub_bool_expr" | "sub_arith_expr" => Ok(inner),
-        _ => Err(Box::new(EssenceParseError::syntax_error(
+        _ => Err(FatalParseError::syntax_error(
             format!("Unrecognised unary operation: '{}'", node.kind()),
             Some(node.range()),
-        ))),
+        )),
     }
 }
 
@@ -163,8 +200,10 @@ pub fn parse_binary_expression(
     source_code: &str,
     root: &Node,
     symbols_ptr: Option<SymbolTablePtr>,
-) -> Result<Expression, Box<EssenceParseError>> {
-    let parse_subexpr = |expr: Node| parse_expression(expr, source_code, root, symbols_ptr.clone());
+    errors: &mut Vec<RecoverableParseError>,
+) -> Result<Expression, FatalParseError> {
+    let mut parse_subexpr =
+        |expr: Node| parse_expression(expr, source_code, root, symbols_ptr.clone(), errors);
 
     let left = parse_subexpr(field!(node, "left"))?;
     let right = parse_subexpr(field!(node, "right"))?;
@@ -314,9 +353,9 @@ pub fn parse_binary_expression(
             Moo::new(left),
             Moo::new(right),
         )),
-        _ => Err(Box::new(EssenceParseError::syntax_error(
+        _ => Err(FatalParseError::syntax_error(
             format!("Invalid operator: '{op_str}'"),
             Some(op_node.range()),
-        ))),
+        )),
     }
 }

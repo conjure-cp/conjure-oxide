@@ -1,10 +1,10 @@
-use crate::errors::{ConjureParseError, EssenceParseError};
+use crate::errors::{ConjureParseError, FatalParseError};
 use crate::parse_expr;
 use conjure_cp_core::ast::{Atom, Expression, Literal, SymbolTablePtr};
 #[allow(unused)]
 use uniplate::Uniplate;
 
-pub fn parse_literal(src: &str) -> Result<Literal, Box<EssenceParseError>> {
+pub fn parse_literal(src: &str) -> Result<Literal, FatalParseError> {
     // HACK: Create a dummy symbol table - don't need it for parsing literals
     let symbol_table = SymbolTablePtr::new();
     let expr = parse_expr(src, symbol_table)?;
