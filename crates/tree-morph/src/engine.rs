@@ -2,8 +2,6 @@
 //!
 //! See the [`morph`](Engine::morph) for more information.
 
-use std::fmt::Display;
-
 use crate::cache::{CacheResult, RewriteCache};
 use crate::engine_zipper::{EngineZipper, NaiveZipper};
 use crate::events::EventHandlers;
@@ -38,7 +36,7 @@ where
 
 impl<T, M, R, C> Engine<T, M, R, C>
 where
-    T: Uniplate + Display,
+    T: Uniplate,
     R: Rule<T, M>,
     C: RewriteCache<T>,
 {
