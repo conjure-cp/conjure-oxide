@@ -1,6 +1,6 @@
 //! Define Caching behaviour for TreeMorph
 //! This should help out with repetetive and expensive tree operations as well as long chains of
-//! rules on duplicate subtrees 
+//! rules on duplicate subtrees
 
 use std::{
     collections::HashMap,
@@ -8,13 +8,13 @@ use std::{
 };
 
 /// Return type for RewriteCache
-/// Due to the nature of Rewriting, there may be repeated subtrees where no rule can be applied. 
-/// In that case, we can compute it once and store it in cache stating no rules applicable. 
+/// Due to the nature of Rewriting, there may be repeated subtrees where no rule can be applied.
+/// In that case, we can compute it once and store it in cache stating no rules applicable.
 pub enum CacheResult<T> {
     /// The Subtree does not exist in cache.
     Unknown,
 
-    /// The Subtree exists in cache but no rule is applicable. 
+    /// The Subtree exists in cache but no rule is applicable.
     Terminal,
 
     /// The Subtree exists in cache and there is a pre computed value.
@@ -37,6 +37,18 @@ pub trait RewriteCache<T> {
     /// root should NOT be inserted into the cache.
     fn insert(&mut self, from: T, to: Option<T>, level: usize);
 }
+
+
+impl<T> RewriteCache<T> for Box<dyn RewriteCache<T>> {
+    fn get(&self, subtree: &T, level: usize) -> CacheResult<T> {
+        (**self).get(subtree, level)
+    }
+
+    fn insert(&mut self, from: T, to: Option<T>, level: usize) {
+        (**self).insert(from, to, level)
+    }
+}
+
 
 /// Disable Caching.
 ///
@@ -98,7 +110,6 @@ where
         Self::new()
     }
 }
-
 impl<T> RewriteCache<T> for HashMapCache<T>
 where
     T: Hash + Clone + Eq,

@@ -1,10 +1,12 @@
+use std::cell::RefCell;
 use std::collections::BTreeSet;
 use std::fmt::{self, Display, Formatter};
 use std::hash::Hash;
+use std::rc::Rc;
 
 use thiserror::Error;
 
-use crate::ast::{CnfClause, DeclarationPtr, Expression, Name, SubModel, SymbolTable};
+use crate::ast::{CnfClause, DeclarationPtr, Expression, Name, SubModel, SymbolTable, SymbolTablePtr};
 use tree_morph::prelude::Commands;
 use tree_morph::prelude::Rule as MorphRule;
 
@@ -256,6 +258,56 @@ impl MorphRule<Expression, SymbolTable> for &Rule<'_> {
         if !reduction.new_top.is_empty() {
             commands.transform(Box::new(|m| m.extend_root(reduction.new_top)));
         }
+        Some(reduction.new_expression)
+    }
+
+    fn name(&self) -> &str {
+        self.name
+    }
+}
+
+impl MorphRule<Expression, Rc<RefCell<SymbolTable>>> for Rule<'_> {
+    fn apply(
+        &self,
+        commands: &mut Commands<Expression, Rc<RefCell<SymbolTable>>>,
+        subtree: &Expression,
+        meta: &Rc<RefCell<SymbolTable>>,
+    ) -> Option<Expression> {
+        let symbols = meta.borrow();
+        let reduction = self.apply(subtree, &symbols).ok()?;
+        commands.mut_meta(Box::new(|m| {
+            m.borrow_mut().extend(reduction.symbols)
+        }));
+
+        if !reduction.new_top.is_empty() {
+            commands.transform(Box::new(|m| m.extend_root(reduction.new_top)));
+        }
+
+        Some(reduction.new_expression)
+    }
+
+    fn name(&self) -> &str {
+        self.name
+    }
+}
+
+impl MorphRule<Expression, SymbolTablePtr> for &Rule<'_> {
+    fn apply(
+        &self,
+        commands: &mut Commands<Expression, SymbolTablePtr>,
+        subtree: &Expression,
+        meta: &SymbolTablePtr,
+    ) -> Option<Expression> {
+        let symbols = meta.read();
+        let reduction = Rule::apply(self, subtree, &symbols).ok()?;
+        commands.mut_meta(Box::new(|m| {
+            m.write().extend(reduction.symbols)
+        }));
+
+        if !reduction.new_top.is_empty() {
+            commands.transform(Box::new(|m| m.extend_root(reduction.new_top)));
+        }
+
         Some(reduction.new_expression)
     }
 

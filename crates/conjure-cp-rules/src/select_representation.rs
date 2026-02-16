@@ -203,7 +203,10 @@ fn needs_representation(name: &Name, symbols: &SymbolTable) -> bool {
         return false;
     }
     // might be more logic here in the future?
-    domain_needs_representation(&symbols.resolve_domain(name).unwrap())
+    match symbols.resolve_domain(name) {
+        Some(s) => domain_needs_representation(&s),
+        None => false,
+    }
 }
 
 /// Returns whether `domain` needs representing.

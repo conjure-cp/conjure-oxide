@@ -60,6 +60,7 @@ where
     pub(crate) inner: TaggedZipper<T, EngineNodeState, fn(&T) -> EngineNodeState>,
     event_handlers: &'events EventHandlers<T, M, R>,
     pub(crate) meta: M,
+    movement_filter: fn(&T) -> bool,
 }
 
 impl<'events, T, M, R> EngineZipper<'events, T, M, R>
@@ -72,6 +73,7 @@ where
             inner: TaggedZipper::new(tree, EngineNodeState::new),
             event_handlers,
             meta,
+            movement_filter: |_| true,
         }
     }
 
@@ -114,7 +116,20 @@ where
     }
 
     // We never move left in the tree
-    movement_fns! { directions: [up, down, right] }
+    movement_fns! { directions: [up, right] }
+
+    fn go_down(&mut self) -> Option<()> {
+        (self.inner.zipper().has_down() && (self.movement_filter)(self.inner.focus())).then(|| {
+            self.event_handlers
+                .trigger_before_down(self.inner.focus(), &mut self.meta);
+            self.inner
+                .go_down()
+                .expect("zipper movement failed despite check");
+            trace!("Go down");
+            self.event_handlers
+                .trigger_after_down(self.inner.focus(), &mut self.meta);
+        })
+    }
 
     /// Mark the current focus as visited at the given level.
     /// Calling `go_next_dirty` with the same level will no longer yield this node.
@@ -129,6 +144,10 @@ where
         while self.go_up().is_some() {
             self.set_dirty_from(0);
         }
+    }
+
+    pub fn add_movement_filter(&mut self, filter: fn(&T) -> bool) {
+        self.movement_filter = filter;
     }
 }
 

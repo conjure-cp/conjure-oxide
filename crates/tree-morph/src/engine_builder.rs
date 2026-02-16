@@ -25,7 +25,7 @@ where
 
     cache: C,
 
-    use_naive: bool,
+    movement_filter: fn(&T) -> bool,
 }
 
 macro_rules! add_handler_fns {
@@ -60,7 +60,7 @@ where
             rule_groups: Vec::new(),
             selector: select_first,
             cache: NoCache,
-            use_naive: false,
+            movement_filter: |_| true,
         }
     }
 }
@@ -78,6 +78,7 @@ where
             rule_groups: self.rule_groups,
             selector: self.selector,
             cache: self.cache,
+            movement_filter: self.movement_filter
         }
     }
 
@@ -147,17 +148,13 @@ where
             event_handlers: self.event_handlers,
             rule_groups: self.rule_groups,
             selector: self.selector,
-            use_naive: self.use_naive,
             cache: cacher,
+            movement_filter: self.movement_filter
         }
     }
-    
 
-    /// Enable or Disable the Naive Implementation
-    ///
-    /// Should only be used for testing and benchmarking.
-    pub fn use_naive(mut self, enabled: bool) -> Self {
-        self.use_naive = enabled;
+    pub fn add_movement_filter(mut self, filter: fn(&T) -> bool) -> Self {
+        self.movement_filter = filter;
         self
     }
 }

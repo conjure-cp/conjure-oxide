@@ -564,6 +564,47 @@ fn parse_domain_value_int(obj: &JsonValue, symbols: &SymbolTable) -> Option<i32>
         .or_else(|| try_parse_reference(obj, symbols))
 }
 
+fn parse_domain_value_intval(
+    obj: &JsonValue,
+    symbols: &SymbolTablePtr,
+) -> Option<IntVal> {
+    parser_trace!("trying to parse domain value: {}", obj);
+
+    if let Some(val) = parse_domain_value_int(obj, &symbols.read()) {
+        return Some(IntVal::Const(val));
+    }
+
+    let expr = parse_expression(obj, symbols)?;
+    Some(IntVal::Expr(Moo::new(expr)))
+}
+
+fn parse_domain_int_with_expr(
+    obj: &JsonValue,
+    symbols: &SymbolTablePtr,
+) -> Option<DomainPtr> {
+    let mut ranges = Vec::new();
+    let arr = obj.as_array()?[1].as_array()?;
+
+    for range in arr {
+        let range = range.as_object()?.iter().next()?;
+        match range.0.as_str() {
+            "RangeBounded" => {
+                let arr = range.1.as_array()?;
+                let lo = parse_domain_value_intval(&arr[0], symbols)?;
+                let hi = parse_domain_value_intval(&arr[1], symbols)?;
+                ranges.push(Range::Bounded(lo, hi));
+            }
+            "RangeSingle" => {
+                let num = parse_domain_value_intval(range.1, symbols)?;
+                ranges.push(Range::Single(num));
+            }
+            _ => return None,
+        }
+    }
+
+    Some(Domain::int(ranges))
+}
+
 // this needs an explicit type signature to force the closures to have the same type
 type BinOp = Box<dyn Fn(Metadata, Moo<Expression>, Moo<Expression>) -> Expression>;
 type UnaryOp = Box<dyn Fn(Metadata, Moo<Expression>) -> Expression>;
@@ -924,12 +965,21 @@ fn parse_comprehension(
                         let name = gen_inner.pointer("/0/Single/Name")?.as_str()?;
                         let (domain_name, domain_value) =
                             gen_inner.pointer("/1")?.as_object()?.iter().next()?;
-                        let domain = parse_domain(
+
+                        let result = parse_domain(
                             domain_name,
                             domain_value,
                             &mut generator_symboltable.write(),
-                        )
-                        .ok()?;
+                        );
+
+                        let domain = match result {
+                            Ok(dom) => dom,
+                            Err(_) if domain_name == "DomainInt" => {
+                                parse_domain_int_with_expr(domain_value, &generator_symboltable)?
+                            }
+                            Err(_) => return None,
+                        };
+
                         comprehension.generator(DeclarationPtr::new_var(name.into(), domain))
                     }
                     // TODO: this is temporary until comprehensions support "in expr" generators

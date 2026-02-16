@@ -1,7 +1,16 @@
 use itertools::Itertools;
-use tree_morph::{cache::HashMapCache, helpers::select_panic, prelude::*};
+use tree_morph::{
+    cache::{HashMapCache, NoCache, RewriteCache},
+    helpers::select_panic,
+    prelude::*,
+};
 
-use crate::{Model, bug};
+use crate::{
+    Model,
+    ast::{Expression, SymbolTablePtr},
+    bug,
+    rule_engine::Rule,
+};
 
 use super::{RuleSet, get_rules_grouped};
 
@@ -22,7 +31,7 @@ impl MorphConfig {
 impl Default for MorphConfig {
     fn default() -> Self {
         Self {
-            use_cache: false,
+            use_cache: true,
             use_naive: false,
         }
     }
@@ -58,7 +67,26 @@ pub fn rewrite_morph<'a>(
     prop_multiple_equally_applicable: bool,
     morph_config: MorphConfig,
 ) -> Model {
+    let mut model = model.clone();
     let submodel = model.as_submodel_mut();
+    let mut engine = build_engine(rule_sets, prop_multiple_equally_applicable, &morph_config);
+
+    let root = submodel.root().clone();
+    let symbols = submodel.symbols_ptr_unchecked_mut().clone();
+
+    let (expr, symbol_tabel) = engine.morph(root, symbols);
+
+    *submodel.symbols_ptr_unchecked_mut() = symbol_tabel;
+    submodel.replace_root(expr);
+
+    model
+}
+
+fn build_engine<'a>(
+    rule_sets: &Vec<&'a RuleSet<'a>>,
+    prop_multiple_equally_applicable: bool,
+    morph_config: &MorphConfig,
+) -> Engine<Expression, SymbolTablePtr, &'a Rule<'a>, Box<dyn RewriteCache<Expression>>> {
     let rules_grouped = get_rules_grouped(rule_sets)
         .unwrap_or_else(|_| bug!("get_rule_priorities() failed!"))
         .into_iter()
@@ -69,20 +97,13 @@ pub fn rewrite_morph<'a>(
     } else {
         select_first
     };
-
-    let engine = EngineBuilder::new()
+    let cache: Box<dyn RewriteCache<Expression>> = match morph_config.use_cache {
+        true => Box::new(HashMapCache::new()),
+        false => Box::new(NoCache),
+    };
+    EngineBuilder::new()
         .set_selector(selector)
         .append_rule_groups(rules_grouped)
-        .use_naive(morph_config.use_naive);
-
-    let (expr, symbol_table) = match morph_config.use_cache {
-        true => engine.add_cacher(HashMapCache::new()).build().morph(submodel.root().clone(), submodel.symbols().clone()),
-        false => engine.build().morph(submodel.root().clone(), submodel.symbols().clone())
-    };
-
-    // let (expr, symbol_table) = engine.morph(submodel.root().clone(), submodel.symbols().clone());
-
-    *submodel.symbols_mut() = symbol_table;
-    submodel.replace_root(expr);
-    model
+        .add_cacher(cache)
+        .build()
 }

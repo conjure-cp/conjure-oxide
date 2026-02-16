@@ -2,6 +2,9 @@
 //!
 //! See the [`morph`](Engine::morph) for more information.
 
+use std::fmt::Display;
+use std::io::{stdin, stdout};
+
 use crate::cache::{CacheResult, RewriteCache};
 use crate::engine_zipper::{EngineZipper, NaiveZipper};
 use crate::events::EventHandlers;
@@ -30,11 +33,13 @@ where
     pub(crate) selector: SelectorFn<T, M, R>,
 
     pub(crate) cache: C,
+
+    pub(crate) movement_filter: fn(&T) -> bool
 }
 
 impl<T, M, R, C> Engine<T, M, R, C>
 where
-    T: Uniplate,
+    T: Uniplate + Display,
     R: Rule<T, M>,
     C: RewriteCache<T>,
 {
@@ -47,6 +52,7 @@ where
     ) -> Option<(&'a R, Update<T, M>)> {
         trace!("Beginning Rule Checks");
         let applicable = &mut rules.iter().filter_map(|rule| {
+            trace!("Testing Rule '{}'", rule.name());
             self.event_handlers.trigger_before_rule(subtree, meta, rule);
             let update = apply_into_update(rule, subtree, meta);
             self.event_handlers
@@ -189,7 +195,6 @@ where
     /// assert_eq!(result, Expr::Val(4));
     /// assert_eq!(num_applications, 3); // Now the sub-expression (1 * 2) is evaluated first
     /// ```
-    /// TODO: mut self vs &mut self vs RefCell or D.I
     #[instrument(skip(self, tree, meta))]
     pub fn morph(&mut self, tree: T, meta: M) -> (T, M)
     where
@@ -198,6 +203,7 @@ where
     {
         // Owns the tree/meta and is consumed to get them back at the end
         let mut zipper = EngineZipper::new(tree, meta, &self.event_handlers);
+        zipper.add_movement_filter(self.movement_filter);
         info!("Beginning Morph");
 
         'main: loop {
@@ -213,7 +219,7 @@ where
 
                     match self.cache.get(subtree, level) {
                         CacheResult::Terminal => {
-                            debug!("Cache Hit - Nothing Applicable");
+                            // debug!("Cache Hit - Nothing Applicable");
                             zipper.set_dirty_from(level + 1);
                             continue;
                         }
@@ -231,6 +237,7 @@ where
 
                     if let Some((rule, mut update)) = selected {
                         debug!("Applying Rule '{}'", rule.name());
+                        // println!("Before Applying Rule '{}'\nExpr:\n{}", rule.name(), subtree);
 
                         let replacement = update.new_subtree.clone();
                         let original = subtree.clone();
@@ -251,12 +258,16 @@ where
                             // since the `transform` command may redefine the whole tree
                             zipper.inner.replace_focus(new_tree);
                         } else {
-                            debug!("Adding to Cache");
-                            if original == replacement {
-                                panic!("Replacement is the same as Original. Rule is returning the same tree.");
+                            if original != replacement {
+                                self.cache.insert(original, Some(replacement.clone()), level);
+                            } else {
+                                error!("SAME TREE");
+                                // pause();
                             }
-                            self.cache.insert(original, Some(replacement), level);
                         }
+
+                        // println!("After applying Rule:\n{}", replacement);
+                        // println!("=====");
 
                         self.event_handlers.trigger_on_apply(
                             zipper.inner.focus(),
@@ -266,7 +277,7 @@ where
 
                         continue 'main;
                     } else {
-                        debug!("Nothing Applicable");
+                        trace!("Nothing Applicable");
                         self.cache.insert(subtree.clone(), None, level);
                         zipper.set_dirty_from(level + 1);
                     }
