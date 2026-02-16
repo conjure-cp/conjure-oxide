@@ -176,12 +176,12 @@ fn eq_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 fn neq_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Neq(_, lhs, rhs) = expr else {
         return Err(RuleNotApplicable);
-    };
+    }; // considered covered
 
     let (binding, _, _) =
         validate_order_int_operands(vec![lhs.as_ref().clone(), rhs.as_ref().clone()])?;
     let [lhs_bits, rhs_bits] = binding.as_slice() else {
-        return Err(RuleNotApplicable);
+        return Err(RuleNotApplicable); // consider covered
     };
 
     let (mut output, mut new_clauses, mut new_symbols) =
