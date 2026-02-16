@@ -490,10 +490,10 @@ fn parse_expression_to_int_val(obj: &JsonValue, scope: &SymbolTablePtr) -> Resul
         return Ok(IntVal::Const(i));
     }
 
-    if let Expression::Atomic(_, Atom::Reference(reference)) = &expr {
-        if let Some(reference_val) = IntVal::new_ref(reference) {
-            return Ok(reference_val);
-        }
+    if let Expression::Atomic(_, Atom::Reference(reference)) = &expr
+        && let Some(reference_val) = IntVal::new_ref(reference)
+    {
+        return Ok(reference_val);
     }
 
     IntVal::new_expr(Moo::new(expr)).ok_or(error!("Could not parse integer expression"))

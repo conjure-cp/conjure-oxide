@@ -162,8 +162,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             let subject: Lit = eval_constant(subject.as_ref())?;
             let indices: Vec<Lit> = indices
                 .iter()
-                .cloned()
-                .map(|x| eval_constant(&x))
+                .map(eval_constant)
                 .collect::<Option<Vec<Lit>>>()?;
 
             match subject {
