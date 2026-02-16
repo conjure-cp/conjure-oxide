@@ -18,17 +18,15 @@ pub fn resolve_reference_expression(reference: &crate::ast::Reference) -> Option
 
 /// Evaluates a reference to a literal if it resolves to a constant.
 pub fn resolve_reference_constant(reference: &crate::ast::Reference) -> Option<Lit> {
-    let expr = resolve_reference_expression(reference)?;
-    eval_constant(&expr)
+    resolve_reference_expression(reference).and_then(|expr| eval_constant(&expr))
 }
 
 /// Resolves a reference to an atomic expression, if possible.
 pub fn resolve_reference_atomic(reference: &crate::ast::Reference) -> Option<Atom> {
-    let expr = resolve_reference_expression(reference)?;
-    match expr {
+    resolve_reference_expression(reference).and_then(|expr| match expr {
         Expr::Atomic(_, atom) => Some(atom),
         _ => None,
-    }
+    })
 }
 
 /// Simplify an expression to a constant if possible
