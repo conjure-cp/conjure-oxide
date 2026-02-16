@@ -3,11 +3,10 @@ use conjure_cp_essence_parser::diagnostics::error_detection::syntactic_errors::{
 };
 
 #[test]
-#[ignore]
 fn invalid_top_level_statement_expression() {
     let source = " a,a,b: int(1..3)";
     let diags = detect_syntactic_errors(source);
-    assert!(!diags.is_empty(), "Expected at least one diagnostic");
+    assert_eq!(diags.len(), 1, "Expected exactly one diagnostic");
     let diag = &diags[0];
     check_diagnostic(diag, 0, 0, 0, 17, "Malformed line 1: ' a,a,b: int(1..3)'");
 }
@@ -17,6 +16,7 @@ fn malformed_find_2() {
     let source = "find >=lex,b,c: int(1..3)";
     // using >=lex operator instead of identifier
     let diagnostics = detect_syntactic_errors(source);
+    assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
 
     let diag = &diagnostics[0];
     check_diagnostic(
@@ -33,7 +33,7 @@ fn malformed_find_2() {
 fn malformed_find_3() {
     let source = "find +,a,b: int(1..3)";
     let diags = detect_syntactic_errors(source);
-    assert!(!diags.is_empty(), "Expected at least one diagnostic");
+    assert_eq!(diags.len(), 1, "Expected exactly one diagnostic");
     let diag = &diags[0];
     check_diagnostic(
         diag,
@@ -50,8 +50,8 @@ fn unexpected_colon_used_as_identifier() {
     let source = "find :,b,c: int(1..3)";
     let diagnostics = detect_syntactic_errors(source);
 
-    // Should be at least one diagnostic
-    assert!(!diagnostics.is_empty(), "Expected at least one diagnostic");
+    // Should be exactly one diagnostic
+    assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
     let diag = &diagnostics[0];
 
     check_diagnostic(
@@ -86,7 +86,6 @@ fn missing_colon_domain_in_find_statement_2nd_line() {
     assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
 
     let diag = &diagnostics[0];
-
     check_diagnostic(diag, 1, 0, 1, 6, "Malformed line 2: 'find x'");
 }
 
@@ -99,6 +98,5 @@ fn unexpected_print_2nd_line() {
     assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
 
     let diag = &diagnostics[0];
-
     check_diagnostic(diag, 1, 0, 1, 7, "Malformed line 2: 'print a'");
 }

@@ -17,7 +17,11 @@ jobs:
             REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v4
+            - name: Checkout PR
+              uses: actions/checkout@v6
+              with:
+                  repository: ${{ github.event.pull_request.head.repo.full_name }}
+                  ref: ${{ github.event.pull_request.head.sha }}
 
             - uses: errata-ai/vale-action@v2.1.1
               with:

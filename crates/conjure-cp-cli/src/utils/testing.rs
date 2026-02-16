@@ -97,7 +97,6 @@ pub fn assert_eq_any_order<T: Eq + Hash + Debug + Clone>(a: &Vec<Vec<T>>, b: &Ve
         b_rows.push(hash_row);
     }
 
-    println!("{a_rows:?},{b_rows:?}");
     for row in a_rows {
         assert!(b_rows.contains(&row));
     }
@@ -121,10 +120,13 @@ pub fn save_model_json(
     path: &str,
     test_name: &str,
     test_stage: &str,
+    solver: Option<SolverFamily>,
 ) -> Result<(), std::io::Error> {
+    let marker = solver.map_or("agnostic", |s| s.as_str());
     let generated_json_str = serialize_model(model)?;
     let generated_json_str = maybe_truncate_serialised_json(generated_json_str, test_stage);
-    let filename = format!("{path}/{test_name}.generated-{test_stage}.serialised.json");
+    let filename = format!("{path}/{marker}-{test_name}.generated-{test_stage}.serialised.json");
+    println!("saving: {}", filename);
     File::create(&filename)?.write_all(generated_json_str.as_bytes())?;
     Ok(())
 }
@@ -133,15 +135,18 @@ pub fn save_stats_json(
     context: Arc<RwLock<Context<'static>>>,
     path: &str,
     test_name: &str,
+    solver: SolverFamily,
 ) -> Result<(), std::io::Error> {
     #[allow(clippy::unwrap_used)]
-    let stats = context.read().unwrap().stats.clone();
+    let solver_name = solver.as_str();
+
+    let stats = context.read().unwrap().clone();
     let generated_json = sort_json_object(&serde_json::to_value(stats)?, false);
 
     // serialise to string
     let generated_json_str = serde_json::to_string_pretty(&generated_json)?;
 
-    File::create(format!("{path}/{test_name}-stats.json"))?
+    File::create(format!("{path}/{solver_name}-{test_name}-stats.json"))?
         .write_all(generated_json_str.as_bytes())?;
 
     Ok(())
@@ -159,11 +164,13 @@ pub fn read_model_json(
     test_name: &str,
     prefix: &str,
     test_stage: &str,
+    solver: Option<SolverFamily>,
 ) -> Result<ConjureModel, std::io::Error> {
-    let expected_json_str = read_with_path(format!(
-        "{path}/{test_name}.{prefix}-{test_stage}.serialised.json"
-    ))?;
-    println!("{path}/{test_name}.{prefix}-{test_stage}.serialised.json");
+    let marker = solver.map_or("agnostic", |s| s.as_str());
+
+    let filepath = format!("{path}/{marker}-{test_name}.{prefix}-{test_stage}.serialised.json");
+
+    let expected_json_str = std::fs::read_to_string(filepath)?;
     let expected_model: SerdeModel = serde_json::from_str(&expected_json_str)?;
 
     Ok(expected_model.initialise(ctx.clone()).unwrap())
@@ -175,9 +182,12 @@ pub fn read_model_json_prefix(
     test_name: &str,
     prefix: &str,
     test_stage: &str,
+    solver: Option<SolverFamily>,
     max_lines: usize,
 ) -> Result<String, std::io::Error> {
-    let filename = format!("{path}/{test_name}.{prefix}-{test_stage}.serialised.json");
+    let marker = solver.map_or("agnostic", |s| s.as_str());
+    let filename = format!("{path}/{marker}-{test_name}.{prefix}-{test_stage}.serialised.json");
+    println!("reading: {}", filename);
     read_first_n_lines(filename, max_lines)
 }
 
@@ -229,14 +239,9 @@ pub fn save_solutions_json(
     let json_solutions = solutions_to_json(solutions);
     let generated_json_str = serde_json::to_string_pretty(&json_solutions)?;
 
-    let solver_name = match solver {
-        SolverFamily::Sat => "sat",
-        #[cfg(feature = "smt")]
-        SolverFamily::Smt(..) => "smt",
-        SolverFamily::Minion => "minion",
-    };
-
-    let filename = format!("{path}/{test_name}.generated-{solver_name}.solutions.json");
+    let solver_name = solver.as_str();
+    let filename =
+        format!("{path}/{solver_name}-{test_name}.generated-{solver_name}.solutions.json");
     File::create(&filename)?.write_all(generated_json_str.as_bytes())?;
 
     Ok(json_solutions)
@@ -254,9 +259,8 @@ pub fn read_solutions_json(
         SolverFamily::Smt(..) => "smt",
         SolverFamily::Minion => "minion",
     };
-
     let expected_json_str = read_with_path(format!(
-        "{path}/{test_name}.{prefix}-{solver_name}.solutions.json"
+        "{path}/{solver_name}-{test_name}.{prefix}-{solver_name}.solutions.json"
     ))?;
 
     let expected_solutions: JsonValue =
@@ -270,8 +274,10 @@ pub fn read_human_rule_trace(
     path: &str,
     test_name: &str,
     prefix: &str,
+    solver: &SolverFamily,
 ) -> Result<Vec<String>, std::io::Error> {
-    let filename = format!("{path}/{test_name}-{prefix}-rule-trace-human.txt");
+    let solver_name = solver.as_str();
+    let filename = format!("{path}/{solver_name}-{test_name}-{prefix}-rule-trace-human.txt");
     let rules_trace: Vec<String> = read_with_path(filename)?
         .lines()
         .map(String::from)
