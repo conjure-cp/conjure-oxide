@@ -43,8 +43,10 @@ fn load_symbol_table(
                 .as_submodel()
                 .symbols()
                 .lookup(name)
-                .expect("search var should exist");
-            let var = decl.as_var().expect("search var should be a var");
+                .ok_or_else(|| ModelInvalid(format!("search variable '{name}' does not exist")))?;
+            let var = decl.as_var().ok_or_else(|| {
+                ModelInvalid(format!("search variable '{name}' is not a decision variable"))
+            })?;
 
             load_var(name, &var, true, minion_model)?;
         }
@@ -127,7 +129,11 @@ fn load_intdomain_var(
     // and add a w-inset constraint, e.g. w-inset(x, [1, 3, 5, 6, 7, 8])
     if ranges.len() > 1 {
         let values = Range::values(ranges)
-            .expect("ranges should be finite")
+            .ok_or_else(|| {
+                ModelFeatureNotSupported(format!(
+                    "non-finite int domain with multiple ranges for variable {name}"
+                ))
+            })?
             .map(Constant::Integer)
             .collect_vec();
         minion_model
