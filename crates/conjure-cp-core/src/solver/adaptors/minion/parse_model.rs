@@ -442,12 +442,7 @@ fn parse_atomic_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Var, S
 }
 
 fn parse_atoms(exprs: Vec<conjure_ast::Atom>) -> Result<Vec<minion_ast::Var>, SolverError> {
-    let mut minion_vars: Vec<minion_ast::Var> = vec![];
-    for expr in exprs {
-        let minion_var = parse_atom(expr)?;
-        minion_vars.push(minion_var);
-    }
-    Ok(minion_vars)
+    exprs.into_iter().map(parse_atom).collect()
 }
 
 fn parse_atom(atom: conjure_ast::Atom) -> Result<minion_ast::Var, SolverError> {
@@ -482,7 +477,7 @@ fn parse_reference_atom(reference: conjure_ast::Reference) -> Result<minion_ast:
             "domain reference used where atom expected: {}",
             reference.name()
         ))),
-        _ => Ok(parse_name(reference.name().clone()))?,
+        _ => parse_name(reference.name().clone()),
     }
 }
 
@@ -498,12 +493,7 @@ fn parse_literal_as_int(k: conjure_ast::Literal) -> Result<i32, SolverError> {
 fn parse_literals(
     literals: Vec<conjure_ast::Literal>,
 ) -> Result<Vec<minion_ast::Constant>, SolverError> {
-    let mut minion_constants: Vec<minion_ast::Constant> = vec![];
-    for literal in literals {
-        let minion_constant = parse_literal(literal)?;
-        minion_constants.push(minion_constant);
-    }
-    Ok(minion_constants)
+    literals.into_iter().map(parse_literal).collect()
 }
 
 fn parse_literal(k: conjure_ast::Literal) -> Result<minion_ast::Constant, SolverError> {
