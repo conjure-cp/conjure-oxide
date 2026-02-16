@@ -31,9 +31,13 @@ use crate::cli::{GlobalArgs, LOGGING_HELP_HEADING};
 
 #[derive(Clone, Debug, clap::Args)]
 pub struct Args {
-    /// The input Essence file
+    /// The input Essence problem file
     #[arg(value_name = "INPUT_ESSENCE", value_hint = ValueHint::FilePath)]
     pub input_file: PathBuf,
+
+    /// The input Essence parameter file
+    #[arg(value_name = "PARAM_ESSENCE", value_hint = ValueHint::FilePath)]
+    pub param_file: Option<PathBuf>,
 
     /// Save execution info as JSON to the given filepath.
     #[arg(long ,value_hint=ValueHint::FilePath,help_heading=LOGGING_HELP_HEADING)]
@@ -57,13 +61,33 @@ pub struct Args {
 
 pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::Result<()> {
     let input_file = solve_args.input_file.clone();
+    let param_file = solve_args.param_file.clone();
 
     // each step is in its own method so that similar commands
     // (e.g. testsolve) can reuse some of these steps.
 
-    let context = init_context(&global_args, input_file)?;
-    let model = parse(&global_args, Arc::clone(&context))?;
-    let rewritten_model = rewrite(model, &global_args, Arc::clone(&context))?;
+    let context = init_context(&global_args, input_file, param_file)?;
+
+    let ctx_lock = context.read().unwrap();
+    let input_file_name = ctx_lock
+        .input_file_name
+        .as_ref()
+        .expect("context should contain the problem input file");
+    let param_file_name = ctx_lock.param_file_name.as_ref();
+
+    // parse models
+    let problem_model = parse(&global_args, Arc::clone(&context), input_file_name)?;
+
+    let unified_model = match param_file_name {
+        Some(param_file_name) => {
+            let param_model = parse(&global_args, Arc::clone(&context), param_file_name)?;
+            dbg!(&problem_model, &param_model);
+            merge_models(problem_model, param_model)?
+        }
+        None => problem_model,
+    };
+
+    let rewritten_model = rewrite(unified_model, &global_args, Arc::clone(&context))?;
     let solver = init_solver(&global_args);
 
     if solve_args.no_run_solver {
@@ -89,10 +113,15 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
     Ok(())
 }
 
+pub(crate) fn merge_models(problem_model: Model, param_model: Model) -> anyhow::Result<Model> {
+    todo!()
+}
+
 /// Returns a new Context and Solver for solving.
 pub(crate) fn init_context(
     global_args: &GlobalArgs,
     input_file: PathBuf,
+    param_file: Option<PathBuf>,
 ) -> anyhow::Result<Arc<RwLock<Context<'static>>>> {
     let target_family = global_args.solver;
     let mut extra_rule_sets: Vec<&str> = DEFAULT_RULE_SETS.to_vec();
@@ -148,7 +177,10 @@ pub(crate) fn init_context(
         rule_sets.clone(),
     );
 
-    context.write().unwrap().file_name = Some(input_file.to_str().expect("").into());
+    context.write().unwrap().input_file_name = Some(input_file.to_str().expect("").into());
+    if let Some(param_file) = param_file {
+        context.write().unwrap().param_file_name = Some(param_file.to_str().expect("").into());
+    }
 
     Ok(context)
 }
@@ -173,42 +205,45 @@ pub(crate) fn init_solver(global_args: &GlobalArgs) -> Solver {
 pub(crate) fn parse(
     global_args: &GlobalArgs,
     context: Arc<RwLock<Context<'static>>>,
+    file_path: &str,
 ) -> anyhow::Result<Model> {
-    let input_file: String = context
-        .read()
-        .unwrap()
-        .file_name
-        .clone()
-        .expect("context should contain the input file");
+    tracing::info!(target: "file", "Input file: {}", file_path);
 
-    tracing::info!(target: "file", "Input file: {}", input_file);
-    if global_args.use_native_parser {
-        parse_essence_file_native(input_file.as_str(), context.clone()).map_err(|e| e.into())
+    let model = if global_args.use_native_parser {
+        parse_essence_file_native(file_path, context.clone())?
     } else {
-        conjure_executable()
-            .map_err(|e| anyhow!("Could not find correct conjure executable: {e}"))?;
+        parse_with_conjure(file_path, context.clone())?
+    };
 
-        let mut cmd = std::process::Command::new("conjure");
-        let output = cmd
-            .arg("pretty")
-            .arg("--output-format=astjson")
-            .arg(input_file)
-            .output()?;
+    Ok(model)
+}
 
-        let conjure_stderr = String::from_utf8(output.stderr)?;
+pub(crate) fn parse_with_conjure(
+    input_file: &str,
+    context: Arc<RwLock<Context<'static>>>,
+) -> anyhow::Result<Model> {
+    conjure_executable().map_err(|e| anyhow!("Could not find correct conjure executable: {e}"))?;
 
-        ensure!(conjure_stderr.is_empty(), conjure_stderr);
+    let mut cmd = std::process::Command::new("conjure");
+    let output = cmd
+        .arg("pretty")
+        .arg("--output-format=astjson")
+        .arg(input_file)
+        .output()?;
 
-        let astjson = String::from_utf8(output.stdout)?;
+    let conjure_stderr = String::from_utf8(output.stderr)?;
 
-        if cfg!(feature = "extra-rule-checks") {
-            tracing::info!("extra-rule-checks: enabled");
-        } else {
-            tracing::info!("extra-rule-checks: disabled");
-        }
+    ensure!(conjure_stderr.is_empty(), conjure_stderr);
 
-        model_from_json(&astjson, context.clone()).map_err(|e| anyhow!(e))
+    let astjson = String::from_utf8(output.stdout)?;
+
+    if cfg!(feature = "extra-rule-checks") {
+        tracing::info!("extra-rule-checks: enabled");
+    } else {
+        tracing::info!("extra-rule-checks: disabled");
     }
+
+    model_from_json(&astjson, context.clone()).map_err(|e| anyhow!(e))
 }
 
 pub(crate) fn rewrite(

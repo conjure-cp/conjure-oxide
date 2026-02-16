@@ -18,7 +18,8 @@ use crate::stats::Stats;
 pub struct Context<'a> {
     pub target_solver_family: Option<SolverFamily>,
 
-    pub file_name: Option<String>,
+    pub input_file_name: Option<String>,
+    pub param_file_name: Option<String>,
 
     pub extra_rule_set_names: Vec<String>,
 
