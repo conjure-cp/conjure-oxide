@@ -33,7 +33,10 @@ pub use domains::{
     Domain, DomainOpError, DomainPtr, FuncAttr, GroundDomain, HasDomain, IntVal, JectivityAttr,
     PartialityAttr, Range, RecordEntry, RecordEntryGround, SetAttr, UnresolvedDomain,
 };
-pub use eval::eval_constant;
+pub use eval::{
+    eval_constant, resolve_reference_atomic, resolve_reference_constant,
+    resolve_reference_expression,
+};
 pub use expressions::Expression;
 pub use literals::AbstractLiteral;
 pub use literals::Literal;

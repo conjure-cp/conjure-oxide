@@ -1,5 +1,6 @@
 use crate::ast::{
-    Atom, DeclarationKind, Domain, Expression, Literal, Moo, Name, Range, eval_constant,
+    Atom, DeclarationKind, Domain, Literal, Moo, Name, Range, resolve_reference_atomic,
+    resolve_reference_constant,
 };
 use crate::bug;
 use crate::solver::{SolverError, SolverResult};
@@ -188,22 +189,22 @@ pub fn atom_to_ast(
                 return Ok(ast.clone());
             }
 
+            if let Some(lit) = resolve_reference_constant(reference) {
+                return literal_to_ast(theory_config, &lit);
+            }
+
+            if let Some(inner_atom) = resolve_reference_atomic(reference) {
+                return atom_to_ast(theory_config, store, &inner_atom);
+            }
+
             let decl_kind = reference.ptr().kind();
             match decl_kind.deref() {
-                DeclarationKind::ValueLetting(expr) => {
-                    if let Some(lit) = eval_constant(expr) {
-                        return literal_to_ast(theory_config, &lit);
-                    }
-
-                    if let Expression::Atomic(_, inner_atom) = expr {
-                        return atom_to_ast(theory_config, store, inner_atom);
-                    }
-
-                    Err(SolverError::ModelFeatureNotImplemented(format!(
+                DeclarationKind::ValueLetting(expr) => Err(SolverError::ModelFeatureNotImplemented(
+                    format!(
                         "value letting '{}' did not resolve to an atomic expression: {expr}",
                         reference.name()
-                    )))
-                }
+                    ),
+                )),
                 _ => Err(SolverError::ModelInvalid(format!(
                     "variable '{}' does not exist",
                     reference.name()

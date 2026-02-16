@@ -475,23 +475,20 @@ fn parse_atom(atom: conjure_ast::Atom) -> Result<minion_ast::Var, SolverError> {
 }
 
 fn parse_reference_atom(reference: conjure_ast::Reference) -> Result<minion_ast::Var, SolverError> {
+    if let Some(lit) = conjure_ast::resolve_reference_constant(&reference) {
+        return Ok(minion_ast::Var::ConstantAsVar(parse_literal_as_int(lit)?));
+    }
+
+    if let Some(inner_atom) = conjure_ast::resolve_reference_atomic(&reference) {
+        return parse_atom(inner_atom);
+    }
+
     let decl_kind = reference.ptr().kind();
-
     match decl_kind.deref() {
-        conjure_ast::DeclarationKind::ValueLetting(expr) => {
-            if let Some(lit) = conjure_ast::eval_constant(expr) {
-                return Ok(minion_ast::Var::ConstantAsVar(parse_literal_as_int(lit)?));
-            }
-
-            if let conjure_ast::Expression::Atomic(_, inner_atom) = expr {
-                return parse_atom(inner_atom.clone());
-            }
-
-            Err(ModelFeatureNotSupported(format!(
-                "value letting '{}' did not resolve to an atomic expression: {expr}",
-                reference.name()
-            )))
-        }
+        conjure_ast::DeclarationKind::ValueLetting(expr) => Err(ModelFeatureNotSupported(format!(
+            "value letting '{}' did not resolve to an atomic expression: {expr}",
+            reference.name()
+        ))),
         conjure_ast::DeclarationKind::DomainLetting(_) => Err(ModelFeatureNotSupported(format!(
             "domain reference used where atom expected: {}",
             reference.name()
