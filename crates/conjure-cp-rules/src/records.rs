@@ -1,7 +1,7 @@
 use conjure_cp::ast::Expression as Expr;
 use conjure_cp::ast::Moo;
 use conjure_cp::ast::SymbolTable;
-use conjure_cp::ast::{AbstractLiteral, GroundDomain};
+use conjure_cp::ast::GroundDomain;
 use conjure_cp::into_matrix_expr;
 use conjure_cp::matrix_expr;
 use conjure_cp::rule_engine::{
@@ -236,15 +236,8 @@ fn record_to_const(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             return Err(RuleNotApplicable);
         };
 
-        let rhs_record_names: Vec<Name> = match right.as_ref() {
-            Expr::AbstractLiteral(_, AbstractLiteral::Record(entries2)) => {
-                entries2.iter().map(|x| x.name.clone()).collect()
-            }
-            Expr::Atomic(
-                _,
-                Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Record(entries2))),
-            ) => entries2.iter().map(|x| x.name.clone()).collect(),
-            _ => return Err(RuleNotApplicable),
+        let Some(rhs_record_names) = crate::utils::constant_record_names(right.as_ref()) else {
+            return Err(RuleNotApplicable);
         };
 
         if entries.len() != rhs_record_names.len() {

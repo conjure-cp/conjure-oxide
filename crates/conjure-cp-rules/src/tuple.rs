@@ -1,7 +1,7 @@
 use conjure_cp::ast::Expression as Expr;
 use conjure_cp::ast::Moo;
 use conjure_cp::ast::SymbolTable;
-use conjure_cp::ast::{AbstractLiteral, GroundDomain};
+use conjure_cp::ast::GroundDomain;
 use conjure_cp::into_matrix_expr;
 use conjure_cp::matrix_expr;
 use conjure_cp::rule_engine::{
@@ -235,13 +235,8 @@ fn tuple_to_constant(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let rhs_tuple_len = match right.as_ref() {
-        Expr::AbstractLiteral(_, AbstractLiteral::Tuple(elems2)) => elems2.len(),
-        Expr::Atomic(
-            _,
-            Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Tuple(elems2))),
-        ) => elems2.len(),
-        _ => return Err(RuleNotApplicable),
+    let Some(rhs_tuple_len) = crate::utils::constant_tuple_len(right.as_ref()) else {
+        return Err(RuleNotApplicable);
     };
 
     if reprs.first().is_none_or(|x| x.as_str() != "tuple_to_atom") {
