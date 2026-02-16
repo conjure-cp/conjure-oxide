@@ -151,11 +151,7 @@ fn load_intdomain_var(
 
     let domain = minion_ast::VarDomain::Bound(low, high);
 
-    if search_var {
-        _try_add_var(str_name, domain, minion_model)
-    } else {
-        _try_add_aux_var(str_name, domain, minion_model)
-    }
+    try_add_var(str_name, domain, search_var, minion_model)
 }
 
 /// Loads a variable with domain BoolDomain into `minion_model`
@@ -166,33 +162,21 @@ fn load_booldomain_var(
 ) -> Result<(), SolverError> {
     let str_name = name_to_string(name.to_owned());
     let domain = minion_ast::VarDomain::Bool;
-    if search_var {
-        _try_add_var(str_name, domain, minion_model)
+    try_add_var(str_name, domain, search_var, minion_model)
+}
+
+fn try_add_var(
+    name: minion_ast::VarName,
+    domain: minion_ast::VarDomain,
+    search_var: bool,
+    minion_model: &mut MinionModel,
+) -> Result<(), SolverError> {
+    let added = if search_var {
+        minion_model.named_variables.add_var(name.clone(), domain)
     } else {
-        _try_add_aux_var(str_name, domain, minion_model)
-    }
-}
-
-fn _try_add_var(
-    name: minion_ast::VarName,
-    domain: minion_ast::VarDomain,
-    minion_model: &mut MinionModel,
-) -> Result<(), SolverError> {
-    minion_model
-        .named_variables
-        .add_var(name.clone(), domain)
-        .ok_or(ModelInvalid(format!("variable {name:?} is defined twice")))
-}
-
-fn _try_add_aux_var(
-    name: minion_ast::VarName,
-    domain: minion_ast::VarDomain,
-    minion_model: &mut MinionModel,
-) -> Result<(), SolverError> {
-    minion_model
-        .named_variables
-        .add_aux_var(name.clone(), domain)
-        .ok_or(ModelInvalid(format!("variable {name:?} is defined twice")))
+        minion_model.named_variables.add_aux_var(name.clone(), domain)
+    };
+    added.ok_or(ModelInvalid(format!("variable {name:?} is defined twice")))
 }
 
 fn name_to_string(name: conjure_ast::Name) -> String {
