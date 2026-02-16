@@ -72,7 +72,7 @@ The client also requires a number of `package[-lock].json` files. The functional
 
 ### Syntax Highlighting
 
-As addressed above, syntax highlighting is implemented through a TextMate grammar. The basis of this grammar is that outlined by Conjure's VSCode extension[^bignote]
+As addressed above, syntax highlighting is implemented through a TextMate grammar. The basis of this grammar is that outlined by the Conjure VSCode extension[^bignote]
 ‌
 
 ## Server
@@ -113,13 +113,13 @@ Improvements to error underlining currently revolve around performance considera
 
 ### Hover Tooltips
 
-Not yet implemented, though this will be the next functionality added to the server. This will use Conjure's documentation to provide information about Essence keywords when a keyword is being hovered over. It will also use context to provide information about non-keywords, such as the type of variable.
+Not yet implemented, though this will be the next functionality added to the server. This will use Conjure documentation to provide information about Essence keywords when a keyword is being hovered over. It will also use context to provide information about non-keywords, such as the type of variable.
 
 ## Development
 
 ### How to use (for development)
 
-At the current stage of development, the extension is not being released. This means that functionality is being tested using VSCode's extension Development environment. In order to ensure that this works as intended, compile `extension.ts` using `npm run compile` (or ctrl-shift-b and select this). Then launch the extension Development environment, and this will cause the client to run. Due to the structure of the client-server, the server will then run and link to the client, and the LSP can then be tested. Please ensure that `npm install` has been run in advance/all required node modules are installed, otherwise the client will not be able to launch.
+At the current stage of development, the extension is not being released. This means that functionality is being tested using the VSCode extension Development environment. In order to ensure that this works as intended, compile `extension.ts` using `npm run compile` (or ctrl-shift-b and select this). Then launch the extension Development environment, and this will cause the client to run. Due to the structure of the client-server, the server will then run and link to the client, and the LSP can then be tested. Please ensure that `npm install` has been run in advance/all required node modules are installed, otherwise the client will not be able to launch.
 
 It is worth noting that a copy of conjure-oxide **MUST** be installed in order for the client to work. Testing the server requires for an updated install.
 
