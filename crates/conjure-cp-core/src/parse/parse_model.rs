@@ -1,6 +1,5 @@
 #![allow(clippy::unwrap_used)]
 #![allow(clippy::expect_used)]
-use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use ustr::Ustr;
 
@@ -500,9 +499,61 @@ fn parse_expression_to_int_val(obj: &JsonValue, scope: &SymbolTablePtr) -> Resul
     IntVal::new_expr(Moo::new(expr)).ok_or(error!("Could not parse integer expression"))
 }
 
-// this needs an explicit type signature to force the closures to have the same type
-type BinOp = Box<dyn Fn(Metadata, Moo<Expression>, Moo<Expression>) -> Expression>;
-type UnaryOp = Box<dyn Fn(Metadata, Moo<Expression>) -> Expression>;
+type BinOp = fn(Metadata, Moo<Expression>, Moo<Expression>) -> Expression;
+type UnaryOp = fn(Metadata, Moo<Expression>) -> Expression;
+
+fn binary_operator(op_name: &str) -> Option<BinOp> {
+    match op_name {
+        "MkOpIn" => Some(Expression::In),
+        "MkOpUnion" => Some(Expression::Union),
+        "MkOpIntersect" => Some(Expression::Intersect),
+        "MkOpSupset" => Some(Expression::Supset),
+        "MkOpSupsetEq" => Some(Expression::SupsetEq),
+        "MkOpSubset" => Some(Expression::Subset),
+        "MkOpSubsetEq" => Some(Expression::SubsetEq),
+        "MkOpEq" => Some(Expression::Eq),
+        "MkOpNeq" => Some(Expression::Neq),
+        "MkOpGeq" => Some(Expression::Geq),
+        "MkOpLeq" => Some(Expression::Leq),
+        "MkOpGt" => Some(Expression::Gt),
+        "MkOpLt" => Some(Expression::Lt),
+        "MkOpLexLt" => Some(Expression::LexLt),
+        "MkOpLexGt" => Some(Expression::LexGt),
+        "MkOpLexLeq" => Some(Expression::LexLeq),
+        "MkOpLexGeq" => Some(Expression::LexGeq),
+        "MkOpDiv" => Some(Expression::UnsafeDiv),
+        "MkOpMod" => Some(Expression::UnsafeMod),
+        "MkOpMinus" => Some(Expression::Minus),
+        "MkOpImply" => Some(Expression::Imply),
+        "MkOpIff" => Some(Expression::Iff),
+        "MkOpPow" => Some(Expression::UnsafePow),
+        "MkOpImage" => Some(Expression::Image),
+        "MkOpImageSet" => Some(Expression::ImageSet),
+        "MkOpPreImage" => Some(Expression::PreImage),
+        "MkOpInverse" => Some(Expression::Inverse),
+        "MkOpRestrict" => Some(Expression::Restrict),
+        _ => None,
+    }
+}
+
+fn unary_operator(op_name: &str) -> Option<UnaryOp> {
+    match op_name {
+        "MkOpNot" => Some(Expression::Not),
+        "MkOpNegate" => Some(Expression::Neg),
+        "MkOpTwoBars" => Some(Expression::Abs),
+        "MkOpAnd" => Some(Expression::And),
+        "MkOpSum" => Some(Expression::Sum),
+        "MkOpProduct" => Some(Expression::Product),
+        "MkOpOr" => Some(Expression::Or),
+        "MkOpMin" => Some(Expression::Min),
+        "MkOpMax" => Some(Expression::Max),
+        "MkOpAllDiff" => Some(Expression::AllDiff),
+        "MkOpToInt" => Some(Expression::ToInt),
+        "MkOpDefined" => Some(Expression::Defined),
+        "MkOpRange" => Some(Expression::Range),
+        _ => None,
+    }
+}
 
 pub fn parse_expression(obj: &JsonValue, scope: &SymbolTablePtr) -> Result<Expression> {
     let fail = |stage: &str| -> Error {
@@ -511,203 +562,29 @@ pub fn parse_expression(obj: &JsonValue, scope: &SymbolTablePtr) -> Result<Expre
         ))
     };
 
-    let binary_operators: HashMap<&str, BinOp> = [
-        (
-            "MkOpIn",
-            Box::new(Expression::In) as Box<dyn Fn(_, _, _) -> _>,
-        ),
-        (
-            "MkOpUnion",
-            Box::new(Expression::Union) as Box<dyn Fn(_, _, _) -> _>,
-        ),
-        (
-            "MkOpIntersect",
-            Box::new(Expression::Intersect) as Box<dyn Fn(_, _, _) -> _>,
-        ),
-        (
-            "MkOpSupset",
-            Box::new(Expression::Supset) as Box<dyn Fn(_, _, _) -> _>,
-        ),
-        (
-            "MkOpSupsetEq",
-            Box::new(Expression::SupsetEq) as Box<dyn Fn(_, _, _) -> _>,
-        ),
-        (
-            "MkOpSubset",
-            Box::new(Expression::Subset) as Box<dyn Fn(_, _, _) -> _>,
-        ),
-        (
-            "MkOpSubsetEq",
-            Box::new(Expression::SubsetEq) as Box<dyn Fn(_, _, _) -> _>,
-        ),
-        (
-            "MkOpEq",
-            Box::new(Expression::Eq) as Box<dyn Fn(_, _, _) -> _>,
-        ),
-        (
-            "MkOpNeq",
-            Box::new(Expression::Neq) as Box<dyn Fn(_, _, _) -> _>,
-        ),
-        (
-            "MkOpGeq",
-            Box::new(Expression::Geq) as Box<dyn Fn(_, _, _) -> _>,
-        ),
-        (
-            "MkOpLeq",
-            Box::new(Expression::Leq) as Box<dyn Fn(_, _, _) -> _>,
-        ),
-        (
-            "MkOpGt",
-            Box::new(Expression::Gt) as Box<dyn Fn(_, _, _) -> _>,
-        ),
-        (
-            "MkOpLt",
-            Box::new(Expression::Lt) as Box<dyn Fn(_, _, _) -> _>,
-        ),
-        (
-            "MkOpGt",
-            Box::new(Expression::Gt) as Box<dyn Fn(_, _, _) -> _>,
-        ),
-        (
-            "MkOpLt",
-            Box::new(Expression::Lt) as Box<dyn Fn(_, _, _) -> _>,
-        ),
-        (
-            "MkOpLexLt",
-            Box::new(Expression::LexLt) as Box<dyn Fn(_, _, _) -> _>,
-        ),
-        (
-            "MkOpLexGt",
-            Box::new(Expression::LexGt) as Box<dyn Fn(_, _, _) -> _>,
-        ),
-        (
-            "MkOpLexLeq",
-            Box::new(Expression::LexLeq) as Box<dyn Fn(_, _, _) -> _>,
-        ),
-        (
-            "MkOpLexGeq",
-            Box::new(Expression::LexGeq) as Box<dyn Fn(_, _, _) -> _>,
-        ),
-        (
-            "MkOpDiv",
-            Box::new(Expression::UnsafeDiv) as Box<dyn Fn(_, _, _) -> _>,
-        ),
-        (
-            "MkOpMod",
-            Box::new(Expression::UnsafeMod) as Box<dyn Fn(_, _, _) -> _>,
-        ),
-        (
-            "MkOpMinus",
-            Box::new(Expression::Minus) as Box<dyn Fn(_, _, _) -> _>,
-        ),
-        (
-            "MkOpImply",
-            Box::new(Expression::Imply) as Box<dyn Fn(_, _, _) -> _>,
-        ),
-        (
-            "MkOpIff",
-            Box::new(Expression::Iff) as Box<dyn Fn(_, _, _) -> _>,
-        ),
-        (
-            "MkOpPow",
-            Box::new(Expression::UnsafePow) as Box<dyn Fn(_, _, _) -> _>,
-        ),
-        (
-            "MkOpImage",
-            Box::new(Expression::Image) as Box<dyn Fn(_, _, _) -> _>,
-        ),
-        (
-            "MkOpImageSet",
-            Box::new(Expression::ImageSet) as Box<dyn Fn(_, _, _) -> _>,
-        ),
-        (
-            "MkOpPreImage",
-            Box::new(Expression::PreImage) as Box<dyn Fn(_, _, _) -> _>,
-        ),
-        (
-            "MkOpInverse",
-            Box::new(Expression::Inverse) as Box<dyn Fn(_, _, _) -> _>,
-        ),
-        (
-            "MkOpRestrict",
-            Box::new(Expression::Restrict) as Box<dyn Fn(_, _, _) -> _>,
-        ),
-    ]
-    .into_iter()
-    .collect();
-
-    let unary_operators: HashMap<&str, UnaryOp> = [
-        (
-            "MkOpNot",
-            Box::new(Expression::Not) as Box<dyn Fn(_, _) -> _>,
-        ),
-        (
-            "MkOpNegate",
-            Box::new(Expression::Neg) as Box<dyn Fn(_, _) -> _>,
-        ),
-        (
-            "MkOpTwoBars",
-            Box::new(Expression::Abs) as Box<dyn Fn(_, _) -> _>,
-        ),
-        (
-            "MkOpAnd",
-            Box::new(Expression::And) as Box<dyn Fn(_, _) -> _>,
-        ),
-        (
-            "MkOpSum",
-            Box::new(Expression::Sum) as Box<dyn Fn(_, _) -> _>,
-        ),
-        (
-            "MkOpProduct",
-            Box::new(Expression::Product) as Box<dyn Fn(_, _) -> _>,
-        ),
-        ("MkOpOr", Box::new(Expression::Or) as Box<dyn Fn(_, _) -> _>),
-        (
-            "MkOpMin",
-            Box::new(Expression::Min) as Box<dyn Fn(_, _) -> _>,
-        ),
-        (
-            "MkOpMax",
-            Box::new(Expression::Max) as Box<dyn Fn(_, _) -> _>,
-        ),
-        (
-            "MkOpAllDiff",
-            Box::new(Expression::AllDiff) as Box<dyn Fn(_, _) -> _>,
-        ),
-        (
-            "MkOpToInt",
-            Box::new(Expression::ToInt) as Box<dyn Fn(_, _) -> _>,
-        ),
-        (
-            "MkOpDefined",
-            Box::new(Expression::Defined) as Box<dyn Fn(_, _) -> _>,
-        ),
-        (
-            "MkOpRange",
-            Box::new(Expression::Range) as Box<dyn Fn(_, _) -> _>,
-        ),
-    ]
-    .into_iter()
-    .collect();
-
-    let mut binary_operator_names = binary_operators.iter().map(|x| x.0);
-    let mut unary_operator_names = unary_operators.iter().map(|x| x.0);
     match obj {
-        Value::Object(op) if op.contains_key("Op") => match &op["Op"] {
-            Value::Object(bin_op) if binary_operator_names.any(|key| bin_op.contains_key(*key)) => {
-                parse_bin_op(bin_op, binary_operators, scope)
+        Value::Object(op) if op.contains_key("Op") => {
+            let op_obj = op
+                .get("Op")
+                .and_then(Value::as_object)
+                .ok_or_else(|| fail("Op.as_object"))?;
+            let (op_name, _) = op_obj
+                .iter()
+                .next()
+                .ok_or_else(|| fail("Op.iter().next"))?;
+
+            if op_obj.contains_key("MkOpFlatten") {
+                parse_flatten_op(op_obj, scope)
+            } else if op_obj.contains_key("MkOpIndexing") || op_obj.contains_key("MkOpSlicing") {
+                parse_indexing_slicing_op(op_obj, scope)
+            } else if binary_operator(op_name).is_some() {
+                parse_bin_op(op_obj, scope)
+            } else if unary_operator(op_name).is_some() {
+                parse_unary_op(op_obj, scope)
+            } else {
+                Err(fail("Op.unknown"))
             }
-            Value::Object(un_op) if unary_operator_names.any(|key| un_op.contains_key(*key)) => {
-                parse_unary_op(un_op, unary_operators, scope)
-            }
-            Value::Object(op) if op.contains_key("MkOpFlatten") => parse_flatten_op(op, scope),
-            Value::Object(op)
-                if op.contains_key("MkOpIndexing") || op.contains_key("MkOpSlicing") =>
-            {
-                parse_indexing_slicing_op(op, scope)
-            }
-            _ => Err(fail("Op.unknown")),
-        },
+        }
         Value::Object(comprehension) if comprehension.contains_key("Comprehension") => {
             parse_comprehension(comprehension, scope.clone(), None)
         }
@@ -990,7 +867,6 @@ fn parse_in_expr_comprehension(
 
 fn parse_bin_op(
     bin_op: &serde_json::Map<String, Value>,
-    binary_operators: HashMap<&str, BinOp>,
     scope: &SymbolTablePtr,
 ) -> Result<Expression> {
     // we know there is a single key value pair in this object
@@ -1000,9 +876,8 @@ fn parse_bin_op(
         .next()
         .ok_or(error!("Binary op object is empty"))?;
 
-    let constructor = binary_operators
-        .get(key.as_str())
-        .ok_or(error!(format!("Unknown binary operator `{}`", key)))?;
+    let constructor =
+        binary_operator(key.as_str()).ok_or(error!(format!("Unknown binary operator `{}`", key)))?;
 
     match &value {
         Value::Array(bin_op_args) if bin_op_args.len() == 2 => {
@@ -1134,7 +1009,6 @@ fn parse_flatten_op(
 
 fn parse_unary_op(
     un_op: &serde_json::Map<String, Value>,
-    unary_operators: HashMap<&str, UnaryOp>,
     scope: &SymbolTablePtr,
 ) -> Result<Expression> {
     let fail = |stage: &str| -> Error {
@@ -1145,9 +1019,7 @@ fn parse_unary_op(
         .iter()
         .next()
         .ok_or_else(|| fail("un_op.iter().next"))?;
-    let constructor = unary_operators
-        .get(key.as_str())
-        .ok_or_else(|| fail("unary_operators.get"))?;
+    let constructor = unary_operator(key.as_str()).ok_or_else(|| fail("unary_operator"))?;
 
     // unops are the main things that contain comprehensions
     //
