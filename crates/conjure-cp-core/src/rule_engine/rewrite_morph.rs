@@ -67,14 +67,17 @@ pub fn rewrite_morph<'a>(
     prop_multiple_equally_applicable: bool,
     morph_config: MorphConfig,
 ) -> Model {
-    let mut model = model.clone();
     let submodel = model.as_submodel_mut();
     let mut engine = build_engine(rule_sets, prop_multiple_equally_applicable, &morph_config);
 
     let root = submodel.root().clone();
     let symbols = submodel.symbols_ptr_unchecked_mut().clone();
 
-    let (expr, symbol_tabel) = engine.morph(root, symbols);
+    let (expr, symbol_tabel) = if !morph_config.use_naive {
+        engine.morph(root, symbols)
+    } else {
+        engine.morph_naive(root, symbols)
+    };
 
     *submodel.symbols_ptr_unchecked_mut() = symbol_tabel;
     submodel.replace_root(expr);

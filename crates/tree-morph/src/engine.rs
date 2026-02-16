@@ -3,7 +3,6 @@
 //! See the [`morph`](Engine::morph) for more information.
 
 use std::fmt::Display;
-use std::io::{stdin, stdout};
 
 use crate::cache::{CacheResult, RewriteCache};
 use crate::engine_zipper::{EngineZipper, NaiveZipper};
@@ -257,17 +256,11 @@ where
                             // This must unfortunately throw all node states away,
                             // since the `transform` command may redefine the whole tree
                             zipper.inner.replace_focus(new_tree);
+                        } else if original != replacement {
+                            self.cache.insert(original, Some(replacement.clone()), level);
                         } else {
-                            if original != replacement {
-                                self.cache.insert(original, Some(replacement.clone()), level);
-                            } else {
-                                error!("SAME TREE");
-                                // pause();
-                            }
+                            error!("SAME TREE");
                         }
-
-                        // println!("After applying Rule:\n{}", replacement);
-                        // println!("=====");
 
                         self.event_handlers.trigger_on_apply(
                             zipper.inner.focus(),

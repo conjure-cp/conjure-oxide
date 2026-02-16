@@ -153,6 +153,7 @@ where
         }
     }
 
+    /// Add downwards movement filter to tree-morph.
     pub fn add_movement_filter(mut self, filter: fn(&T) -> bool) -> Self {
         self.movement_filter = filter;
         self
