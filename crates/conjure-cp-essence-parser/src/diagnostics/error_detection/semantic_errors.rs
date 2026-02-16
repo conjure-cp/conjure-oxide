@@ -1,6 +1,7 @@
 // Basic syntactic error detection helpers for the LSP API.
 
 use crate::diagnostics::diagnostics_api::{Diagnostic, Position, Range, Severity};
+use crate::errors::RecoverableParseError;
 use crate::parse_essence_with_context;
 use conjure_cp_core::context::Context;
 use std::sync::{Arc, RwLock};
@@ -10,45 +11,30 @@ use std::sync::{Arc, RwLock};
 pub fn detect_semantic_errors(source: &str) -> Vec<Diagnostic> {
     let mut diagnostics = Vec::new();
     let context = Arc::new(RwLock::new(Context::default()));
+    let mut errors = vec![];
 
-    match parse_essence_with_context(source, context) {
+    match parse_essence_with_context(source, context, &mut errors) {
         Ok(_model) => {
-            // no errors, all good
+            // Convert any recoverable errors to diagnostics
+            for error in errors {
+                diagnostics.push(error_to_diagnostic(&error));
+            }
         }
-        Err(err) => {
-            diagnostics.push(error_to_diagnostic(&*err));
+        Err(_fatal) => {
+            // Fatal errors aren't semantic
         }
     }
 
     diagnostics
 }
 
-pub fn error_to_diagnostic(err: &crate::errors::EssenceParseError) -> Diagnostic {
-    match err {
-        crate::EssenceParseError::ParseError { msg, range, .. } => {
-            let (start, end) = range_to_position(range);
-            Diagnostic {
-                range: Range { start, end },
-                severity: Severity::Error,
-                source: "semantic error detection",
-                message: format!("Semantic Error: {}", msg),
-            }
-        }
-        _ => Diagnostic {
-            range: Range {
-                start: Position {
-                    line: 0,
-                    character: 0,
-                },
-                end: Position {
-                    line: 0,
-                    character: 1,
-                },
-            },
-            severity: Severity::Error,
-            source: "semantic error detection",
-            message: format!("{}", err),
-        },
+pub fn error_to_diagnostic(err: &RecoverableParseError) -> Diagnostic {
+    let (start, end) = range_to_position(&err.range);
+    Diagnostic {
+        range: Range { start, end },
+        severity: Severity::Error,
+        source: "semantic error detection",
+        message: format!("Semantic Error: {}", err.msg),
     }
 }
 
