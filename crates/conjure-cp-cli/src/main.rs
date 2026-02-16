@@ -22,7 +22,7 @@ use git_version::git_version;
 use tracing_subscriber::filter::{FilterFn, LevelFilter};
 use tracing_subscriber::layer::SubscriberExt as _;
 use tracing_subscriber::util::SubscriberInitExt as _;
-use tracing_subscriber::{EnvFilter, Layer, fmt};
+use tracing_subscriber::{fmt, EnvFilter, Layer};
 
 use conjure_cp_lsp::server;
 
@@ -102,20 +102,32 @@ fn setup_logging(global_args: &GlobalArgs) -> anyhow::Result<()> {
     });
 
     // only setup logs IF the argument is passed
-    if global_args.logfile {
+    if global_args.log {
+        let mut log_path = global_args
+            .logfile
+            .clone()
+            .unwrap_or_else(|| std::path::PathBuf::from("conjure_oxide.log"));
+        let mut log_json = global_args
+            .logfile_json
+            .clone()
+            .unwrap_or_else(|| std::path::PathBuf::from("conjure_oxide_log.json"));
+
+        log_path.set_extension("log");
+        log_json.set_extension("json");
+
         let json_log_file = File::options()
             .truncate(true)
             .write(true)
             .create(true)
             .append(false)
-            .open("conjure_oxide_log.json")?;
+            .open(log_json)?;
 
         let log_file = File::options()
             .truncate(true)
             .write(true)
             .create(true)
             .append(false)
-            .open("conjure_oxide.log")?;
+            .open(log_path)?;
 
         // get log level from env-var RUST_LOG
         let json_layer = tracing_subscriber::fmt::layer()
