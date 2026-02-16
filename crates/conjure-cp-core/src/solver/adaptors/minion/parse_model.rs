@@ -17,6 +17,7 @@ use minion_sys::error::MinionError;
 use minion_sys::{get_from_table, run_minion};
 use std::cell::Ref;
 use std::cell::RefCell;
+use std::collections::HashSet;
 use std::ops::Deref;
 use std::rc::Rc;
 
@@ -34,6 +35,8 @@ fn load_symbol_table(
     minion_model: &mut MinionModel,
 ) -> Result<(), SolverError> {
     if let Some(ref vars) = conjure_model.search_order {
+        let search_vars: HashSet<_> = vars.iter().cloned().collect();
+
         // add search vars in order first
         for name in vars {
             let decl = conjure_model
@@ -47,61 +50,47 @@ fn load_symbol_table(
         }
 
         // then add the rest as non-search vars
-        for (name, decl) in conjure_model
-            .as_submodel()
-            .symbols()
-            .clone()
-            .into_iter_local()
-        {
-            // search var - already added
-            if vars.contains(&name) {
-                continue;
-            };
-
-            let Some(var) = decl.as_var() else {
-                continue;
-            }; // ignore lettings, etc.
-            //
-
-            // this variable has representations, so ignore it
-            if !conjure_model
-                .as_submodel()
-                .symbols()
-                .representations_for(&name)
-                .is_none_or(|x| x.is_empty())
-            {
-                continue;
-            };
-
-            load_var(&name, &var, false, minion_model)?;
-        }
+        for_each_unrepresented_var(conjure_model, |name, var| {
+            if search_vars.contains(name) {
+                return Ok(());
+            }
+            load_var(name, var, false, minion_model)
+        })?;
     } else {
-        for (name, decl) in conjure_model
+        for_each_unrepresented_var(conjure_model, |name, var| {
+            let is_search_var = !matches!(name, conjure_ast::Name::Machine(_));
+            load_var(name, var, is_search_var, minion_model)
+        })?;
+    }
+    Ok(())
+}
+
+fn for_each_unrepresented_var(
+    conjure_model: &ConjureModel,
+    mut f: impl FnMut(&conjure_ast::Name, &conjure_ast::DecisionVariable) -> Result<(), SolverError>,
+) -> Result<(), SolverError> {
+    for (name, decl) in conjure_model
+        .as_submodel()
+        .symbols()
+        .clone()
+        .into_iter_local()
+    {
+        let Some(var) = decl.as_var() else {
+            continue;
+        };
+
+        if !conjure_model
             .as_submodel()
             .symbols()
-            .clone()
-            .into_iter_local()
+            .representations_for(&name)
+            .is_none_or(|x| x.is_empty())
         {
-            let Some(var) = decl.as_var() else {
-                continue;
-            }; // ignore lettings, etc.
-            //
-
-            // this variable has representations, so ignore it
-            if !conjure_model
-                .as_submodel()
-                .symbols()
-                .representations_for(&name)
-                .is_none_or(|x| x.is_empty())
-            {
-                continue;
-            };
-
-            let is_search_var = !matches!(name, conjure_ast::Name::Machine(_));
-
-            load_var(&name, &var, is_search_var, minion_model)?;
+            continue;
         }
+
+        f(&name, &var)?;
     }
+
     Ok(())
 }
 
