@@ -1,150 +1,76 @@
-<!-- TODO: Edit this -->
+# Crate Structure
 
-> *"Omit needless words"*
->
-> (c) William Strunk
+## Overview
 
-# Key Points 
+We follow a "monorepo" approach; That is, a number of related modules are developed in a single repository.
+This makes it easier to integrate them and test our entire project all at once.
 
-## Resources 
+Our repository can be broken down into four key components:
 
-See:
-- the [Rust doc style conventions](https://github.com/rust-lang/rfcs/blob/master/text/1574-more-api-documentation-conventions.md)
+1. The user-facing `conjure-oxide` command line tool and library, and its integration tests.
+   This is stored in `conjure-oxide/conjure_oxide`.
+2. The AST type definitions, rewrite engine, and related implementation code.
+   These are broken up into separate crates and stored in `conjure-oxide/crates/`.
+3. Rust bindings for solvers; That is, wrapper code and build files that enable us to:
+   - Compile solvers (which are developed outside of this project and written in other languages, such as C++) together with our project
+   - "Hook into" solver methods and call them from inside our Rust code
 
-## Do's
+     These are stored in `conjure-oxide/solvers/` on a per-solver basis.
+4. Various other scripts and tools that we use to build, document and test our project.
+   These are stored in `conjure-oxide/tools/`.
 
-Our documentation is inline with the code. The reader is likely to skim it while scrolling through the file and trying to understand what it does. So, our doc strings should:
+## CLI Tool
 
-- Be as brief and clear as possible
-- Ideally, fit comfortably on a standard monitor without obscuring the code
-- Contain key information about the method / structure, such as:
-  - A single sentence explaining its purpose
-  - A brief overview of arguments / return types
-  - Example snippets for non-trivial methods
-- Explain any details that are **not** obvious from the method signature, such as:
-  - Details of the method's "contract" that can't be easily encoded in the type system
-    > (E.g: *"The input must be a sorted slice of positive integers"*; *"The given expression will be modified in-place"*)
-  - Non-trivial situations where the method may `panic!` or cause unintended behaviour
-    > (E.g: *"Panics if the connection terminates while the stream is being read"*)
-  - Any `unsafe` things a method does
-    > (E.g: *"We type-cast the given pointer with `mem::transmute`. This is safe because..."*)
-  - Special cases
+The command-line `conjure-oxide` tool is the final product we ship to users.
+All logic related to the CLI, parsing user input, and displaying solutions is implemented in `conjure-oxide/conjure_oxide/src`.
 
-## Don'ts
+This module (called a "crate" in Rust) also re-exports some type definitions and functions from `conjure_core` and other crates. 
+This is our public, user-facing API that could eventually be used by other people in their projects. At the moment, our project is under development and there is no stable API specification.
 
-Documentation generally should **not**:
+There are some `examples/` illustrating how various parts of the project are used.
+Finally, for historical reasons, this folder contains some utility code that may be refactored or moved elsewhere in the future.
 
-- Repeat itself
-- Use long, vague, or overly complex sentences
-- Re-state things that are obvious from the types / signature of the method
-- Explain implementation details
-- Explain high-level architectural decisions
-  (Consider making a wiki page or opening an RFC issue instead!)
+## Tests
 
-And finally...
-Please, don't ask ChatGPT to document your code for you!
-I know that writing documentation can be tedious, but you can always:
+Our suite of integration tests runs automatically on every commit to the main repository.
+It tests `conjure-oxide` end-to-end: parsing an example Essence file, running the rewriter, calling the solver, and validating the solution.
 
-- Write a one-sentence doc string for now and come back to it later 
-- Ask others if you don't quite understand what a method does
+The test files are stored in `conjure_oxide/tests/integration/`, sorted into sub-directories.
+Code to run our project on these files is contained in `integration_tests.rs`.
 
-# Types and Tests are Documentation
+## Crates
 
-Documentation is great, but we should also use the type system and other rust features to our advantage!
+Most of our implementation is contained in the `crates/` directory. Here is an overview of what each crate does:
 
-- A lot of things (e.g: error conditions, thread safety, state) can be encoded in the types of arguments / return values.
-This is usually better than just `panic!`-ing and adding a doc string to explain why.
+- `conjure_core` contains:
+  - Our rule engine implementation (`conjure_core/src/rule_engine/`)
+  - The definition of our Abstract Syntax Tree (AST) for Essence; That is, the Rust representation of an Essence program (`conjure_core/src/ast`)
+  - The generic `SolverAdaptor` interface for interacting with solvers (`conjure_core/src/solver`)
+  - Concrete implementations of `SolverAdaptor` for each solver we support, such as Minion or RustSAT (`conjure_core/src/solver/adaptors`)
+  - Other miscellaneous types and utilities
+- `conjure_rules` defines rules and rule sets for our rewrite engine to use.
+  Rules are grouped into files and directories based on their purpose: for example, all rules for normalising boolean expressions are in `conjure_rules/src/normalisers/bool.rs`
+- `conjure_rule_macros` implements the `#[register_rule(...)]` and `#[register_rule_set(...)]` procedural macros. See also: [Wiki - Rules and RuleSets](https://github.com/conjure-cp/conjure-oxide/wiki/Expression-rewriting%2C-Rules-and-RuleSets).
+- `conjure_essence_parser` implements the native Rust parser for Essence.
+  It uses our Tree-sitter grammar, which is defined *separately* in`tree-sitter-essence`
+- `conjure_essence_macros` implements the `essence_expr!` procedural macro.
+- `enum_compatability_macro` is a macro that allows us to indicate whether certain features of Essence are compatible with certain solvers, for documentation purposes.
+- `randicheck` is a somewhat separate project developed by Ty (@TAswan) and others.
+  It aims to use Conjure to automatically validate Haskell code and generate minimal failing tests. (TODO is this accurate?)
+- `tree_morph` is a generic library for tree transformations.
+  In the future, it will replace our current rule engine implementation.
 
-- Tests are also a great way to illustrate the behaviour of your code and any special cases - and they also help with catching bugs!
+Also:
 
-# Example Snippets
-
-For non-trivial methods and user-facing API's, it may be useful to include an example.
-Examples should be minimal but complete snippets of code that illustrate a method's behaviour.
-
-If you wrap your example in a code block:
-
-```markdown
-```rust ... ```
-```
-
-Our CI will even run it and complain if the example does not compile / contains an error!
-
-However, don't feel obliged to include an example for every method!
-For simple methods they may not be necessary.
-
-# Examples 
-
-⚠️ Good but a bit wordy:
-
-```rust
-/// Checks if the OPTIMIZATIONS environment variable is set to "1".
-///
-/// # Returns
-/// - true if the environment variable is set to "1".
-/// - false if the environment variable is not set or set to any other value.
-fn optimizations_enabled() -> bool {
-    match env::var("OPTIMIZATIONS") {
-        Ok(val) => val == "1",
-        Err(_) => false, // Assume optimizations are disabled if the environment variable is not set
-    }
-}
-```
-
-✅ Since everything else is obvious from the signature, we can just say:
-
-```rust
-/// Checks if the OPTIMIZATIONS environment variable is set to "1"
-fn optimizations_enabled() -> bool { ... }
-```
-
-⚠️ Not bad, but sounds a bit robotic
-
-```markdown
-# Side-Effects
-- When the model is rewritten, related data structures such as the symbol table (which tracks variable names and types)
-  or other top-level constraints may also be updated to reflect these changes. These updates are applied to the returned model,
-  ensuring that all related components stay consistent and aligned with the changes made during the rewrite.
-- The function collects statistics about the rewriting process, including the number of rule applications
-  and the total runtime of the rewriter. These statistics are then stored in the model's context for
-  performance monitoring and analysis.
-```
-
-✅ Same idea but shorter
-
-```markdown
-# Side-Effects
-- Rules can apply side-effects to the model (e.g. adding new constraints or variables).
-  The original model is cloned and a modified copy is returned.
-- Rule engine statistics (e.g. number of rule applications, run time) are collected and stored in the new model's context.
-```
+- The `uniplate` crate, which we use to traverse the AST, used to be part of this repository.
+  It is now maintained separately at https://github.com/conjure-cp/uniplate.
 
 
-⚠️ A bit too detailed
 
-```markdown
-# Parameters
-- `expression`: A reference to the [`Expression`] that will be evaluated against the given rules. This is the main
-   target for rule transformations and is expected to remain unchanged during the function execution.
-- `model`: A reference to the [`Model`] that provides context for rule evaluation, such as constraints and symbols.
-  Rules may depend on information in the model to determine if they can be applied.
-- `rules`: A vector of references to [`Rule`]s that define the transformations to be applied to the expression.
-  Each rule is applied independently, and all applicable rules are collected.
-- `stats`: A mutable reference to [`RewriterStats`] used to track statistics about rule application, such as
-  the number of attempts and successful applications.
-```
+## Dependencies
 
-✅ Just describing the meaning of arguments will do
+The dependencies between crates are shown bellow.
 
-(Details of the rewriting process belong on the wiki, and details of underlying types such as `Model` or `Expression` are already documented next to their implementations)
+![graphviz(3)](https://github.com/user-attachments/assets/ffda823b-b5f9-4fa8-b66e-e74d2c08a75b)
 
-```markdown
-- `expression`: A reference to the [`Expression`] to evaluate.
-- `model`: A reference to the [`Model`] for access to the symbol table and context.
-- `rules`: A vector of references to [`Rule`]s to try.
-- `stats`: A mutable reference to [`RewriterStats`] used to track the number of rule applications and other statistics.
-```
-
----
-
-*This section had been taken from the 'Crate Structure' page of the conjure-oxide wiki*
+An arrow `A -> B` means that `A` imports from `B`. The diagram is made using Graphviz, and its source code is located TODO.

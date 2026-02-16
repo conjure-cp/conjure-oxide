@@ -42,7 +42,8 @@ pub fn get_tree(src: &str) -> Option<(Tree, String)> {
 
 /// Get the named children of a node
 pub fn named_children<'a>(node: &'a Node<'a>) -> impl Iterator<Item = Node<'a>> + 'a {
-    (0..node.named_child_count()).filter_map(|i| node.named_child(i))
+    (0..node.named_child_count())
+        .filter_map(|i| u32::try_from(i).ok().and_then(|i| node.named_child(i)))
 }
 
 pub fn node_is_expression(node: &Node) -> bool {
