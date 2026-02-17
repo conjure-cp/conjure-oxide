@@ -174,15 +174,9 @@ impl IntVal {
     pub fn resolve(&self) -> Option<Int> {
         match self {
             IntVal::Const(value) => Some(*value),
-            IntVal::Expr(expr) => match eval_constant(expr)? {
-                Literal::Int(v) => Some(v),
-                _ => bug!("Expected integer expression, got: {expr}"),
-            },
+            IntVal::Expr(expr) => eval_expr_to_int(expr),
             IntVal::Reference(re) => match re.ptr.kind().deref() {
-                DeclarationKind::ValueLetting(expr) => match eval_constant(expr)? {
-                    Literal::Int(v) => Some(v),
-                    _ => bug!("Expected integer expression, got: {expr}"),
-                },
+                DeclarationKind::ValueLetting(expr) => eval_expr_to_int(expr),
                 // If this is an int given we will be able to resolve it eventually, but not yet
                 DeclarationKind::Given(_) | DeclarationKind::GivenQuantified(..) => None,
                 DeclarationKind::DomainLetting(_)
@@ -192,6 +186,13 @@ impl IntVal {
                 ),
             },
         }
+    }
+}
+
+fn eval_expr_to_int(expr: &Expression) -> Option<Int> {
+    match eval_constant(expr)? {
+        Literal::Int(v) => Some(v),
+        _ => bug!("Expected integer expression, got: {expr}"),
     }
 }
 

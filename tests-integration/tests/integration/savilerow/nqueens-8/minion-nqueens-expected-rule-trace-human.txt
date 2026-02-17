@@ -42,30 +42,6 @@ such that
 
 --
 
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
-and([given i: AMOUNT_QUEENS
-
-such that
-
-(q2[i] = (q1[i] - i)),
-(q3[i] = sum([q1[i],i;int(1..)]))
- | i: AMOUNT_QUEENS,]), 
-   ~~> substitute_domain_lettings ([("Base", 5000)]) 
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
-and([given i: AMOUNT_QUEENS
-
-such that
-
-(q2[i] = (q1[i] - i)),
-(q3[i] = sum([q1[i],i;int(1..)]))
- | i: AMOUNT_QUEENS,]) 
-
---
-
 allDiff(q1#matrix_to_atom),
 allDiff(q2#matrix_to_atom),
 allDiff(q3#matrix_to_atom),
@@ -127,12 +103,6 @@ such that
 --
 
 (true != and([__0,__1;int(1..)])), 
-   ~~> substitute_domain_lettings ([("Base", 5000)]) 
-(true != and([__0,__1;int(1..)])) 
-
---
-
-(true != and([__0,__1;int(1..)])), 
    ~~> flatten_generic ([("Minion", 4200)]) 
 (true != __2) 
 new variables:
@@ -149,7 +119,7 @@ Reify(and([__0,__1;int(1..)]), __2)
 
 Final model:
 
-find i: int(0..7)
+find i: AMOUNT_QUEENS
 find __0: bool
 find __1: bool
 find __2: bool
@@ -247,7 +217,7 @@ such that
 
 (q2#matrix_to_atom[i] = (q1#matrix_to_atom[i] - i)),
 (q3#matrix_to_atom[i] = sum([q1#matrix_to_atom[i],i;int(1..)]))
- | i: int(0..7),__0: bool,__1: bool,__2: bool,]), 
+ | i: AMOUNT_QUEENS,__0: bool,__1: bool,__2: bool,]), 
    ~~> expand_comprehension_ac ([("Better_AC_Comprehension_Expansion", 2001)]) 
 and([and([(q2#matrix_to_atom[0] = sum([q1#matrix_to_atom[0],-(0);int(1..)])),(q3#matrix_to_atom[0] = sum([q1#matrix_to_atom[0],0;int(1..)]));int(1..)]),and([(q2#matrix_to_atom[1] = sum([q1#matrix_to_atom[1],-(1);int(1..)])),(q3#matrix_to_atom[1] = sum([q1#matrix_to_atom[1],1;int(1..)]));int(1..)]),and([(q2#matrix_to_atom[2] = sum([q1#matrix_to_atom[2],-(2);int(1..)])),(q3#matrix_to_atom[2] = sum([q1#matrix_to_atom[2],2;int(1..)]));int(1..)]),and([(q2#matrix_to_atom[3] = sum([q1#matrix_to_atom[3],-(3);int(1..)])),(q3#matrix_to_atom[3] = sum([q1#matrix_to_atom[3],3;int(1..)]));int(1..)]),and([(q2#matrix_to_atom[4] = sum([q1#matrix_to_atom[4],-(4);int(1..)])),(q3#matrix_to_atom[4] = sum([q1#matrix_to_atom[4],4;int(1..)]));int(1..)]),and([(q2#matrix_to_atom[5] = sum([q1#matrix_to_atom[5],-(5);int(1..)])),(q3#matrix_to_atom[5] = sum([q1#matrix_to_atom[5],5;int(1..)]));int(1..)]),and([(q2#matrix_to_atom[6] = sum([q1#matrix_to_atom[6],-(6);int(1..)])),(q3#matrix_to_atom[6] = sum([q1#matrix_to_atom[6],6;int(1..)]));int(1..)]),and([(q2#matrix_to_atom[7] = sum([q1#matrix_to_atom[7],-(7);int(1..)])),(q3#matrix_to_atom[7] = sum([q1#matrix_to_atom[7],7;int(1..)]));int(1..)]);int(1..)]) 
 
@@ -1411,9 +1381,9 @@ __flat_alldiff([q3#matrix_to_atom_0, q3#matrix_to_atom_1, q3#matrix_to_atom_2, q
 Final model:
 
 letting AMOUNT_QUEENS be domain int(0..7)
-find q1: matrix indexed by [[int(0..7)]] of int(0..7)
-find q2: matrix indexed by [[int(0..7)]] of int(-7..7)
-find q3: matrix indexed by [[int(0..7)]] of int(0..14)
+find q1: matrix indexed by [[AMOUNT_QUEENS]] of int(0..7)
+find q2: matrix indexed by [[AMOUNT_QUEENS]] of int(-7..7)
+find q3: matrix indexed by [[AMOUNT_QUEENS]] of int(0..14)
 find q1#matrix_to_atom_0: int(0..7)
 find q1#matrix_to_atom_1: int(0..7)
 find q1#matrix_to_atom_2: int(0..7)

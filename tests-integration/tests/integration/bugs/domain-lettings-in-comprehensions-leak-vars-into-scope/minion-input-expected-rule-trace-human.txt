@@ -18,22 +18,6 @@ and([given i: DOM
 
 such that
 
-(a[i] = i)
- | i: DOM,]), 
-   ~~> substitute_domain_lettings ([("Base", 5000)]) 
-and([given i: DOM
-
-such that
-
-(a[i] = i)
- | i: DOM,]) 
-
---
-
-and([given i: DOM
-
-such that
-
 (a#matrix_to_atom[i] = i)
  | i: DOM,]), 
    ~~> select_representation_matrix ([("Representations", 8001)]) 
@@ -60,15 +44,9 @@ such that
 
 --
 
-(true != __0), 
-   ~~> substitute_domain_lettings ([("Base", 5000)]) 
-(true != __0) 
-
---
-
 Final model:
 
-find i: int(1..3)
+find i: DOM
 find __0: bool
 
 such that
@@ -110,7 +88,7 @@ and([given i: DOM
 such that
 
 (a#matrix_to_atom[i] = i)
- | i: int(1..3),__0: bool,]), 
+ | i: DOM,__0: bool,]), 
    ~~> expand_comprehension_ac ([("Better_AC_Comprehension_Expansion", 2001)]) 
 and([(a#matrix_to_atom[1] = 1),(a#matrix_to_atom[2] = 2),(a#matrix_to_atom[3] = 3);int(1..)]) 
 
@@ -137,7 +115,7 @@ and([(a#matrix_to_atom[1] = 1),(a#matrix_to_atom[2] = 2),(a#matrix_to_atom[3] = 
 Final model:
 
 letting DOM be domain int(1..3)
-find a: matrix indexed by [[int(1..3)]] of int(1..3)
+find a: matrix indexed by [[DOM]] of DOM
 find a#matrix_to_atom_1: int(1..3)
 find a#matrix_to_atom_2: int(1..3)
 find a#matrix_to_atom_3: int(1..3)
