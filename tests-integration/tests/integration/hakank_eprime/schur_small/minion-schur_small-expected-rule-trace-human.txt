@@ -23,26 +23,6 @@ given k: int(1..n)
 
 such that
 
-((sum([i,j;int(1..)]) = k)) -> (!(and([(schur[i] = schur[j]),(schur[j] = schur[k]);int(1..)])))
- | i: int(1..n),j: int(1..n),k: int(1..n),]), 
-   ~~> substitute_domain_lettings ([("Base", 5000)]) 
-and([given i: int(1..n)
-given j: int(1..n)
-given k: int(1..n)
-
-such that
-
-((sum([i,j;int(1..)]) = k)) -> (!(and([(schur[i] = schur[j]),(schur[j] = schur[k]);int(1..)])))
- | i: int(1..n),j: int(1..n),k: int(1..n),]) 
-
---
-
-and([given i: int(1..n)
-given j: int(1..n)
-given k: int(1..n)
-
-such that
-
 ((sum([i,j;int(1..)]) = k)) -> (!(and([(schur#matrix_to_atom[i] = schur#matrix_to_atom[j]),(schur#matrix_to_atom[j] = schur#matrix_to_atom[k]);int(1..)])))
  | i: int(1..n),j: int(1..n),k: int(1..n),]), 
    ~~> select_representation_matrix ([("Representations", 8001)]) 
@@ -76,12 +56,6 @@ such that
 !(and([__0,__1;int(1..)])), 
    ~~> distribute_not_over_and ([("Base", 8400)]) 
 or([!(__0),!(__1);int(1..)]) 
-
---
-
-(true != ((sum([i,j;int(1..)]) = k)) -> (or([!(__0),!(__1);int(1..)]))), 
-   ~~> substitute_domain_lettings ([("Base", 5000)]) 
-(true != ((sum([i,j;int(1..)]) = k)) -> (or([!(__0),!(__1);int(1..)]))) 
 
 --
 
@@ -141,9 +115,9 @@ WatchedLiteral(__1,false)
 
 Final model:
 
-find i: int(1..2)
-find j: int(1..2)
-find k: int(1..2)
+find i: int(1..n)
+find j: int(1..n)
+find k: int(1..n)
 find __0: bool
 find __1: bool
 find __2: bool
@@ -256,7 +230,7 @@ given k: int(1..n)
 such that
 
 ((sum([i,j;int(1..)]) = k)) -> (!(and([(schur#matrix_to_atom[i] = schur#matrix_to_atom[j]),(schur#matrix_to_atom[j] = schur#matrix_to_atom[k]);int(1..)])))
- | i: int(1..2),j: int(1..2),k: int(1..2),__0: bool,__1: bool,__2: bool,__3: bool,]), 
+ | i: int(1..n),j: int(1..n),k: int(1..n),__0: bool,__1: bool,__2: bool,__3: bool,]), 
    ~~> expand_comprehension_ac ([("Better_AC_Comprehension_Expansion", 2001)]) 
 and([(and([SumLeq([1, 1], 2),SumGeq([1, 1], 2);int(1..)])) -> (or([(schur#matrix_to_atom[1] != schur#matrix_to_atom[1]),(schur#matrix_to_atom[1] != schur#matrix_to_atom[2]);int(1..)]));int(1..)]) 
 
@@ -278,7 +252,7 @@ Final model:
 
 letting n be 2
 letting num_boxes be 3
-find schur: matrix indexed by [[int(1..2)]] of int(1..3)
+find schur: matrix indexed by [[int(1..n)]] of int(1..num_boxes)
 find schur#matrix_to_atom_1: int(1..3)
 find schur#matrix_to_atom_2: int(1..3)
 

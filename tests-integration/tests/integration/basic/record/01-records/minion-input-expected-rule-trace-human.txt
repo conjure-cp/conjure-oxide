@@ -16,6 +16,18 @@ such that
 
 --
 
+(x[a] = true),
+(x[b] = 3),
+(y = {a: false,b: 4}),
+(y = z), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(x[a] = true),
+(x[b] = 3),
+(y = Record([RecordValue { name: User(u!("a")), value: Bool(false) }, RecordValue { name: User(u!("b")), value: Int(4) }])),
+(y = z) 
+
+--
+
 x, 
    ~~> select_representation ([("Representations", 8000)]) 
 x#record_to_atom 
@@ -32,12 +44,12 @@ x#record_to_atom[a],
 
 ({x#record_to_atom[1] @ and([(1 <= 2),(1 >= 1);int(1..)])} = true),
 (x[b] = 3),
-(y = {a: false,b: 4}),
+(y = Record([RecordValue { name: User(u!("a")), value: Bool(false) }, RecordValue { name: User(u!("b")), value: Int(4) }])),
 (y = z), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
 (x#record_to_atom[1] = true),
 (x[b] = 3),
-(y = {a: false,b: 4}),
+(y = Record([RecordValue { name: User(u!("a")), value: Bool(false) }, RecordValue { name: User(u!("b")), value: Int(4) }])),
 (y = z) 
 
 --
@@ -56,12 +68,12 @@ x#record_to_atom[b],
 
 (x#record_to_atom[1] = true),
 ({x#record_to_atom[2] @ and([(2 <= 2),(2 >= 1);int(1..)])} = 3),
-(y = {a: false,b: 4}),
+(y = Record([RecordValue { name: User(u!("a")), value: Bool(false) }, RecordValue { name: User(u!("b")), value: Int(4) }])),
 (y = z), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
 (x#record_to_atom[1] = true),
 (x#record_to_atom[2] = 3),
-(y = {a: false,b: 4}),
+(y = Record([RecordValue { name: User(u!("a")), value: Bool(false) }, RecordValue { name: User(u!("b")), value: Int(4) }])),
 (y = z) 
 
 --
@@ -88,18 +100,6 @@ new variables:
   find z#record_to_atom_2: int(0..9)
 --
 
-(x#record_to_atom[1] = true),
-(x#record_to_atom[2] = 3),
-(y#record_to_atom = {a: false,b: 4}),
-(y#record_to_atom = z#record_to_atom), 
-   ~~> substitute_domain_lettings ([("Base", 5000)]) 
-(x#record_to_atom[1] = true),
-(x#record_to_atom[2] = 3),
-(y#record_to_atom = {a: false,b: 4}),
-(y#record_to_atom = z#record_to_atom) 
-
---
-
 x#record_to_atom[1], 
    ~~> index_record_to_atom ([("Base", 2000)]) 
 x#record_to_atom_1 
@@ -118,15 +118,15 @@ x#record_to_atom_2
 
 --
 
-(y#record_to_atom = {a: false,b: 4}), 
+(y#record_to_atom = Record([RecordValue { name: User(u!("a")), value: Bool(false) }, RecordValue { name: User(u!("b")), value: Int(4) }])), 
    ~~> record_to_const ([("Base", 2000)]) 
-and([(y#record_to_atom[1] = {a: false,b: 4}[1]),(y#record_to_atom[2] = {a: false,b: 4}[2]);int(1..)]) 
+and([(y#record_to_atom[1] = Record([RecordValue { name: User(u!("a")), value: Bool(false) }, RecordValue { name: User(u!("b")), value: Int(4) }])[1]),(y#record_to_atom[2] = Record([RecordValue { name: User(u!("a")), value: Bool(false) }, RecordValue { name: User(u!("b")), value: Int(4) }])[2]);int(1..)]) 
 
 --
 
 Reify(true, x#record_to_atom_1),
 (x#record_to_atom_2 = 3),
-and([(y#record_to_atom[1] = {a: false,b: 4}[1]),(y#record_to_atom[2] = {a: false,b: 4}[2]);int(1..)]),
+and([(y#record_to_atom[1] = Record([RecordValue { name: User(u!("a")), value: Bool(false) }, RecordValue { name: User(u!("b")), value: Int(4) }])[1]),(y#record_to_atom[2] = Record([RecordValue { name: User(u!("a")), value: Bool(false) }, RecordValue { name: User(u!("b")), value: Int(4) }])[2]);int(1..)]),
 (y#record_to_atom = z#record_to_atom), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
 Reify(true, x#record_to_atom_1),
@@ -211,9 +211,9 @@ Final model:
 letting R be domain record of ([a: bool, b: int(0..9)])
 
 
-find x: record of ([a: bool, b: int(0..9)])
-find y: record of ([a: bool, b: int(0..9)])
-find z: record of ([a: bool, b: int(0..9)])
+find x: R
+find y: R
+find z: R
 find x#record_to_atom_1: bool
 find x#record_to_atom_2: int(0..9)
 find y#record_to_atom_1: bool

@@ -43,37 +43,34 @@ fn select_representation_matrix(expr: &Expr, symbols: &SymbolTable) -> Applicati
     };
 
     // cannot create representations on non-local variables, so use lookup_local.
-    let matrix_vars = symbols
-        .clone()
-        .into_iter_local()
-        .filter_map(|(n, decl)| {
-            let id = decl.id();
-            decl.as_var().map(|x| (n, id, x.clone()))
-        })
-        .filter(|(_, _, var)| {
-            let Some((valdom, indexdoms)) = var.domain.as_matrix_ground() else {
-                return false;
-            };
+    let matrix_vars = symbols.clone().into_iter_local().filter_map(|(n, decl)| {
+        let id = decl.id();
+        let var = decl.as_var()?.clone();
+        let resolved_domain = var.domain.resolve()?;
 
-            // TODO: loosen these requirements once we are able to
-            if !matches!(valdom.as_ref(), GroundDomain::Bool | GroundDomain::Int(_)) {
-                return false;
-            }
+        let GroundDomain::Matrix(valdom, indexdoms) = resolved_domain.as_ref() else {
+            return None;
+        };
 
-            if indexdoms
-                .iter()
-                .any(|x| !matches!(x.as_ref(), GroundDomain::Bool | GroundDomain::Int(_)))
-            {
-                return false;
-            }
+        // TODO: loosen these requirements once we are able to
+        if !matches!(valdom.as_ref(), GroundDomain::Bool | GroundDomain::Int(_)) {
+            return None;
+        }
 
-            true
-        });
+        if indexdoms
+            .iter()
+            .any(|x| !matches!(x.as_ref(), GroundDomain::Bool | GroundDomain::Int(_)))
+        {
+            return None;
+        }
+
+        Some((n, id))
+    });
 
     let mut symbols = symbols.clone();
     let mut expr = expr.clone();
     let has_changed = Arc::new(AtomicBool::new(false));
-    for (name, id, _) in matrix_vars {
+    for (name, id) in matrix_vars {
         // Even if we have no references to this matrix, still give it the matrix_to_atom
         // representation, as we still currently need to give it to minion even if its unused.
         //
