@@ -1,21 +1,16 @@
-#![allow(clippy::arc_with_non_send_sync)] // uniplate needs this
-use std::cell::RefCell;
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::fmt::{Debug, Display};
-use std::rc::Rc;
 use std::sync::{Arc, RwLock};
 
 use derivative::Derivative;
+use indexmap::IndexSet;
 use serde::{Deserialize, Serialize};
 use uniplate::{Biplate, Tree, Uniplate};
 
-use crate::ast::abstract_comprehension::AbstractComprehension;
-use crate::ast::{Expression, Typeable};
 use crate::context::Context;
 
 use super::serde::{HasId, ObjId};
-use super::{DeclarationPtr, Name, SubModel};
-use super::{ReturnType, SymbolTable};
+use super::{DeclarationPtr, Expression, Name, ReturnType, SubModel, SymbolTablePtr, Typeable};
 
 /// An Essence model.
 ///
@@ -191,28 +186,25 @@ impl SerdeModel {
         // See super::serde::RcRefCellToInner, super::serde::RcRefCellToId.
 
         // Store the definitive versions of all symbol tables by id.
-        let mut tables: HashMap<ObjId, Rc<RefCell<SymbolTable>>> = HashMap::new();
+        let mut tables: HashMap<ObjId, SymbolTablePtr> = HashMap::new();
 
         // Find the definitive versions by traversing the sub-models.
         for submodel in self.submodel.universe() {
-            let id = submodel.symbols().id();
+            let table_ptr = submodel.symbols_ptr_unchecked().clone();
+            let id = table_ptr.id();
 
             // ids should be unique!
-            assert_eq!(
-                tables.insert(id, submodel.symbols_ptr_unchecked().clone()),
-                None
-            );
+            assert_eq!(tables.insert(id, table_ptr), None);
         }
 
         // Restore parent pointers using `tables`.
         for table in tables.clone().into_values() {
-            let mut table_mut = table.borrow_mut();
+            let mut table_mut = table.write();
             let parent_mut = table_mut.parent_mut_unchecked();
 
             #[allow(clippy::unwrap_used)]
             if let Some(parent) = parent_mut {
-                let parent_id = parent.borrow().id();
-
+                let parent_id = parent.id();
                 *parent = tables.get(&parent_id).unwrap().clone();
             }
         }
@@ -223,9 +215,9 @@ impl SerdeModel {
         // Store the definitive version of all declarations by id.
         let mut all_declarations: HashMap<ObjId, DeclarationPtr> = HashMap::new();
         for table in tables.values() {
-            for (_, decl) in table.as_ref().borrow().clone().into_iter_local() {
+            for (_, decl) in table.read().iter_local() {
                 let id = decl.id();
-                all_declarations.insert(id, decl);
+                all_declarations.insert(id, decl.clone());
             }
         }
 
@@ -274,74 +266,52 @@ impl SerdeModel {
     /// IDs are assigned in the order they are encountered during traversal, ensuring
     /// stability across identical model structures.
     pub fn collect_stable_id_mapping(&self) -> HashMap<ObjId, ObjId> {
-        let mut id_list: Vec<ObjId> = Vec::new();
+        // Using an IndexSet here, we maintain insertion order without having to check if a value was inserted into the set repeatedly.
+        let mut id_list: IndexSet<ObjId> = IndexSet::new();
+        let mut visited_symbol_tables: HashSet<ObjId> = HashSet::new();
+
+        let mut visit = |id: ObjId| {
+            id_list.insert(id);
+        };
+
+        let mut visit_symbol_table_chain = |symbol_table: SymbolTablePtr| {
+            let mut current = Some(symbol_table);
+
+            while let Some(table) = current {
+                let table_id = table.id();
+                if !visited_symbol_tables.insert(table_id.clone()) {
+                    break;
+                }
+
+                visit(table_id);
+
+                current = {
+                    let table_ref = table.read();
+                    table_ref
+                        .iter_local()
+                        .for_each(|(_, decl)| visit(decl.id()));
+                    table_ref.parent().clone()
+                };
+            }
+        };
 
         // Collect SymbolTable IDs by traversing all SubModels
         for submodel in self.submodel.universe() {
-            let symbol_table_id = submodel.symbols().id();
-            if !id_list.contains(&symbol_table_id) {
-                id_list.push(symbol_table_id);
-            }
-
-            // Assuming that all declarations are defined in a symbol table,
-            // collect Declaration IDs by traversing each SubModel's symbol table.
-
-            for decl in submodel.symbols().clone().into_iter_local() {
-                let decl_id = decl.1.id();
-                if !id_list.contains(&decl_id) {
-                    id_list.push(decl_id);
-                }
-            }
+            visit_symbol_table_chain(submodel.symbols_ptr_unchecked().clone());
         }
-        // Collect IDs by traversing the expression tree
-        //
-        // (Some expressions, e.g. AbstractComprehensions contain SymbolTable's not
+
+        // Collect remaining IDs by traversing the expression tree
+        // (Some expressions, e.g. AbstractComprehensions, contain SymbolTable's not
         // contained in submodels).
-        // let exprs: VecDeque<Expression> = self.submodel.universe_bi();
-        // // for symtab in Biplate::<SymbolTable>::universe_bi(&exprs) {
-        //     let symbol_table_id = symtab.id();
-        //     if !id_list.contains(&symbol_table_id) {
-        //         id_list.push(symbol_table_id);
-        //     }
-        //
-        //     for decl in symtab.clone().into_iter_local() {
-        //         let decl_id = decl.1.id();
-        //         if !id_list.contains(&decl_id) {
-        //             id_list.push(decl_id);
-        //         }
-        //     }
-        // }
-
-        // the above doesnt work, as uniplate clones the symbol tables, which change their ids.
-        //
-        // FIXME: add SymbolTablePtr then redo this using that
-
-        // HACK: special case abstract comprehension
-
-        let comps: VecDeque<AbstractComprehension> = self.submodel.constraints().universe_bi();
-        for comp in comps {
-            let symbol_table_id_1 = comp.generator_symbols.borrow().id();
-            let symbol_table_id_2 = comp.return_expr_symbols.borrow().id();
-            if !id_list.contains(&symbol_table_id_1) {
-                id_list.push(symbol_table_id_1);
-            }
-            if !id_list.contains(&symbol_table_id_2) {
-                id_list.push(symbol_table_id_2);
-            }
-
-            for decl in comp.generator_symbols.borrow().clone().into_iter_local() {
-                let decl_id = decl.1.id();
-                if !id_list.contains(&decl_id) {
-                    id_list.push(decl_id);
-                }
-            }
-
-            for decl in comp.return_expr_symbols.borrow().clone().into_iter_local() {
-                let decl_id = decl.1.id();
-                if !id_list.contains(&decl_id) {
-                    id_list.push(decl_id);
-                }
-            }
+        let mut exprs: VecDeque<Expression> = self.submodel.universe_bi();
+        if let Some(dominance) = &self.dominance {
+            exprs.push_back(dominance.clone());
+        }
+        for symbol_table in Biplate::<SymbolTablePtr>::universe_bi(&exprs) {
+            visit_symbol_table_chain(symbol_table);
+        }
+        for declaration in Biplate::<DeclarationPtr>::universe_bi(&exprs) {
+            visit(declaration.id());
         }
 
         // Create stable mapping: original_id -> stable_id

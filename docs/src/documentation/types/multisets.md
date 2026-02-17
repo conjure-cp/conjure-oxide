@@ -21,7 +21,3 @@ There are four operators which are defined on functions. These are represented a
 - `max(m)` - largest element in ordered multiset `m`
 - `min(m)` - largest element in ordered multiset `m`
 - `freq(m,e)` - counts occurrences of element `e` in multiset `m`
-
-
-## Note on Implementation
-Multisets are **under-development** for the legacy parser. There is also no support as of Dec-2025 for rewriting rules or solving.
