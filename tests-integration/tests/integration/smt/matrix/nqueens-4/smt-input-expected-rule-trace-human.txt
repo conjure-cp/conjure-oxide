@@ -1,6 +1,6 @@
 Model before rewriting:
 
-letting dom be domain int(1..4)
+letting dom be domain int(1..n)
 letting n be 4
 find x: matrix indexed by [[dom]] of dom
 
@@ -58,36 +58,6 @@ such that
 
 --
 
-allDiff(x[..]),
-allDiff([given i: dom
-
-such that
-
-sum([x[i],i;int(1..2)])
- | i: dom,]),
-allDiff([given i: dom
-
-such that
-
-(x[i] - i)
- | i: dom,]), 
-   ~~> substitute_domain_lettings ([("Base", 5000)]) 
-allDiff(x[..]),
-allDiff([given i: dom
-
-such that
-
-sum([x[i],i;int(1..2)])
- | i: dom,]),
-allDiff([given i: dom
-
-such that
-
-(x[i] - i)
- | i: dom,]) 
-
---
-
 Model before rewriting:
 
 find i: dom
@@ -100,15 +70,9 @@ true
 
 --
 
-true, 
-   ~~> substitute_domain_lettings ([("Base", 5000)]) 
-true 
-
---
-
 Final model:
 
-find i: int(1..4)
+find i: dom
 
 such that
 
@@ -155,7 +119,7 @@ sum([x[i],i;int(1..)])
 such that
 
 sum([x[i],i;int(1..2)])
- | i: int(1..4),], 
+ | i: dom,], 
    ~~> expand_comprehension ([("Base", 2000)]) 
 [sum([x[1],1;int(1..)]),sum([x[2],2;int(1..)]),sum([x[3],3;int(1..)]),sum([x[4],4;int(1..)]);int(1..)] 
 
@@ -173,15 +137,9 @@ true
 
 --
 
-true, 
-   ~~> substitute_domain_lettings ([("Base", 5000)]) 
-true 
-
---
-
 Final model:
 
-find i: int(1..4)
+find i: dom
 
 such that
 
@@ -228,7 +186,7 @@ sum([x[i],-(i);int(1..)])
 such that
 
 (x[i] - i)
- | i: int(1..4),], 
+ | i: dom,], 
    ~~> expand_comprehension ([("Base", 2000)]) 
 [sum([x[1],-(1);int(1..)]),sum([x[2],-(2);int(1..)]),sum([x[3],-(3);int(1..)]),sum([x[4],-(4);int(1..)]);int(1..)] 
 
@@ -244,21 +202,15 @@ allDiff([sum([x[1],-1;int(1..)]),sum([x[2],-2;int(1..)]),sum([x[3],-3;int(1..)])
 
 --
 
-x[..], 
-   ~~> flatten_matrix_slice ([("Smt", 1000)]) 
-[x[1],x[2],x[3],x[4];int(1..)] 
-
---
-
 Final model:
 
-letting dom be domain int(1..4)
+letting dom be domain int(1..n)
 letting n be 4
-find x: matrix indexed by [[int(1..4)]] of int(1..4)
+find x: matrix indexed by [[dom]] of dom
 
 such that
 
-allDiff([x[1],x[2],x[3],x[4];int(1..)]),
+allDiff(x[..]),
 allDiff([sum([x[1],1;int(1..)]),sum([x[2],2;int(1..)]),sum([x[3],3;int(1..)]),sum([x[4],4;int(1..)]);int(1..)]),
 allDiff([sum([x[1],-1;int(1..)]),sum([x[2],-2;int(1..)]),sum([x[3],-3;int(1..)]),sum([x[4],-4;int(1..)]);int(1..)])
 
