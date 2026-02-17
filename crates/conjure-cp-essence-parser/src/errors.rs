@@ -20,7 +20,7 @@ pub enum FatalParseError {
         range: Option<tree_sitter::Range>,
     },
     #[error("JSON Error: {0}")]
-    JsonError(JsonError),
+    JsonError(#[from] JsonError),
     #[error("Error: {0} is not yet implemented.")]
     NotImplemented(String),
     #[error("Error: {0}")]
@@ -36,7 +36,7 @@ impl FatalParseError {
 impl From<ConjureParseError> for FatalParseError {
     fn from(value: ConjureParseError) -> Self {
         match value {
-            Error::Parse(msg) => FatalParseError::TreeSitterError(msg),
+            Error::Parse(msg) => FatalParseError::syntax_error(msg, None),
             Error::NotImplemented(msg) => FatalParseError::NotImplemented(msg),
             Error::Json(err) => FatalParseError::JsonError(err),
             Error::Other(err) => FatalParseError::Other(err.into()),
