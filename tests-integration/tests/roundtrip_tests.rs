@@ -99,25 +99,25 @@ fn roundtrip_test_inner(
     let initial_parse = parse(&file_path, context.clone());
     match initial_parse {
         Ok(initial_model) => {
-            save_model_json(&initial_model, path, output_filename, "parse")?;
+            save_model_json(&initial_model, path, output_filename, "parse", None)?;
             save_essence(&initial_model, path, output_filename, "generated")?;
 
             // When ACCEPT = true, copy over generated to expected
             if accept {
                 std::fs::copy(
-                    format!("{path}/{output_filename}.generated-parse.serialised.json"),
-                    format!("{path}/{output_filename}.expected-parse.serialised.json"),
+                    format!("{path}/agnostic-{output_filename}.generated-parse.serialised.json"),
+                    format!("{path}/agnostic-{output_filename}.expected-parse.serialised.json"),
                 )?;
                 std::fs::copy(
-                    format!("{path}/{output_filename}.generated-essence.essence"),
-                    format!("{path}/{output_filename}.expected-essence.essence"),
+                    format!("{path}/agnostic-{output_filename}.generated-essence.essence"),
+                    format!("{path}/agnostic-{output_filename}.expected-essence.essence"),
                 )?;
             }
 
             // Ensures ACCEPT=true has been run at least once
             if !accept
                 && !Path::new(&format!(
-                    "{path}/{output_filename}.expected-parse.serialised.json"
+                    "{path}/agnostic-{output_filename}.expected-parse.serialised.json"
                 ))
                 .exists()
             {
@@ -129,28 +129,29 @@ fn roundtrip_test_inner(
 
             // Compare the expected and generated model
             let expected_model =
-                read_model_json(&context, path, output_filename, "expected", "parse")?;
+                read_model_json(&context, path, output_filename, "expected", "parse", None)?;
+
             let generated_model =
-                read_model_json(&context, path, output_filename, "generated", "parse")?;
+                read_model_json(&context, path, output_filename, "generated", "parse", None)?;
             assert_eq!(generated_model, expected_model);
 
             // Compares essence files
             let expected_essence = fs::read_to_string(&format!(
-                "{path}/{output_filename}.expected-essence.essence"
+                "{path}/agnostic-{output_filename}.expected-essence.essence"
             ))?;
             let generated_essence = fs::read_to_string(&format!(
-                "{path}/{output_filename}.generated-essence.essence"
+                "{path}/agnostic-{output_filename}.generated-essence.essence"
             ))?;
             assert_eq!(expected_essence, generated_essence);
 
             // Compares roundtrip
             let new_model = parse(
-                &format!("{path}/{output_filename}.generated-essence.essence"),
+                &format!("{path}/agnostic-{output_filename}.generated-essence.essence"),
                 context.clone(),
             )?;
             save_essence(&new_model, path, output_filename, "generated2")?;
             let new_generated_essence = fs::read_to_string(&format!(
-                "{path}/{output_filename}.generated2-essence.essence"
+                "{path}/agnostic-{output_filename}.generated-essence.essence"
             ))?;
             assert_eq!(generated_essence, new_generated_essence);
         }
@@ -161,14 +162,17 @@ fn roundtrip_test_inner(
             // When ACCEPT = true, copy over generated to expected
             if accept {
                 std::fs::copy(
-                    format!("{path}/{output_filename}.generated-error.txt"),
-                    format!("{path}/{output_filename}.expected-error.txt"),
+                    format!("{path}/agnostic-{output_filename}.generated-error.txt"),
+                    format!("{path}/agnostic-{output_filename}.expected-error.txt"),
                 )?;
             }
 
             // Ensures ACCEPT=true has been run at least once
             if !accept
-                && !Path::new(&format!("{path}/{output_filename}.expected-error.txt")).exists()
+                && !Path::new(&format!(
+                    "{path}/agnostic-{output_filename}.expected-error.txt"
+                ))
+                .exists()
             {
                 return Err(Box::new(std::io::Error::new(
                     std::io::ErrorKind::NotFound,
@@ -176,10 +180,12 @@ fn roundtrip_test_inner(
                 )));
             }
 
-            let expected_error =
-                fs::read_to_string(&format!("{path}/{output_filename}.expected-error.txt"))?;
-            let generated_error =
-                fs::read_to_string(&format!("{path}/{output_filename}.generated-error.txt"))?;
+            let expected_error = fs::read_to_string(&format!(
+                "{path}/agnostic-{output_filename}.expected-error.txt"
+            ))?;
+            let generated_error = fs::read_to_string(&format!(
+                "{path}/agnostic-{output_filename}.generated-error.txt"
+            ))?;
             assert_eq!(expected_error, generated_error);
         }
     }
@@ -194,7 +200,7 @@ fn save_essence(
     test_name: &str,
     model_type: &str,
 ) -> Result<(), std::io::Error> {
-    let filename = format!("{path}/{test_name}.{model_type}-essence.essence");
+    let filename = format!("{path}/agnostic-{test_name}.{model_type}-essence.essence");
     let mut file = fs::File::create(&filename)?;
     write!(file, "{}", model)?;
     Ok(())
@@ -207,7 +213,7 @@ fn save_parse_error(
     test_name: &str,
     model_type: &str,
 ) -> Result<(), std::io::Error> {
-    let filename = format!("{path}/{test_name}.{model_type}-error.txt");
+    let filename = format!("{path}/agnostic-{test_name}.{model_type}-error.txt");
     let mut file = fs::File::create(&filename)?;
     write!(file, "{}", error)?;
     Ok(())
