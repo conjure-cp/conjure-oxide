@@ -18,7 +18,6 @@ mod representation;
 mod sat;
 mod select_representation;
 mod sets;
-mod subsitute_lettings;
 mod tuple;
 mod utils;
 
