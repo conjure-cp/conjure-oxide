@@ -9,7 +9,12 @@ pub enum FatalParseError {
     TreeSitterError(String),
     #[error("Error running `conjure pretty`: {0}")]
     ConjurePrettyError(String),
-    #[error("Syntax error: {msg}")]
+    #[error("Essence syntax error: {msg}{}",
+        match range {
+            Some(range) => format!(" at {}-{}", range.start_point, range.end_point),
+            None => "".to_string(),
+        }
+    )]
     ParseError {
         msg: String,
         range: Option<tree_sitter::Range>,
