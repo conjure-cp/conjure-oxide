@@ -52,7 +52,7 @@ use super::{DeclarationPtr, Domain, Range, Reference, SubModel, Typeable};
 // boxed ~niklasdewally
 
 // expect size of Expression to be 112 bytes
-static_assertions::assert_eq_size!([u8; 104], Expression);
+static_assertions::assert_eq_size!([u8; 112], Expression);
 
 /// Represents different types of expressions used to define rules and constraints in the model.
 ///
