@@ -471,6 +471,8 @@ fn parse_occur_attr(
     attr_map: &JsonMap<String, JsonValue>,
     symbols: &mut SymbolTable,
 ) -> Result<Range<IntVal>> {
+    let scope = SymbolTablePtr::new();
+    *scope.write() = symbols.clone();
     let attr_obj = attr_map
         .iter()
         .next()
@@ -478,14 +480,12 @@ fn parse_occur_attr(
     match attr_obj.0.as_str() {
         "OccurAttr_None" => Ok(Range::Unbounded),
         "OccurAttr_MinOccur" => {
-            let size_int = parse_domain_value_int(attr_obj.1, symbols)
-                .ok_or(error!("Could not parse int domain constant"))?;
-            Ok(Range::UnboundedR(size_int.into()))
+            let size_int = parse_expression_to_int_val(attr_obj.1, &scope)?;
+            Ok(Range::UnboundedR(size_int))
         }
         "OccurAttr_MaxOccur" => {
-            let size_int = parse_domain_value_int(attr_obj.1, symbols)
-                .ok_or(error!("Could not parse int domain constant"))?;
-            Ok(Range::UnboundedL(size_int.into()))
+            let size_int = parse_expression_to_int_val(attr_obj.1, &scope)?;
+            Ok(Range::UnboundedL(size_int))
         }
         "OccurAttr_MinMaxOccur" => {
             let min_max = attr_obj
@@ -495,19 +495,16 @@ fn parse_occur_attr(
             let min = min_max
                 .first()
                 .ok_or(error!("OccurAttr Min is not present"))?;
-            let min_int = parse_domain_value_int(min, symbols)
-                .ok_or(error!("Could not parse int domain constant"))?;
+            let min_int = parse_expression_to_int_val(min, &scope)?;
             let max = min_max
                 .get(1)
                 .ok_or(error!("OccurAttr Max is not present"))?;
-            let max_int = parse_domain_value_int(max, symbols)
-                .ok_or(error!("Could not parse int domain constant"))?;
-            Ok(Range::Bounded(min_int.into(), max_int.into()))
+            let max_int = parse_expression_to_int_val(max, &scope)?;
+            Ok(Range::Bounded(min_int, max_int))
         }
         "OccurAttr_Size" => {
-            let size_int = parse_domain_value_int(attr_obj.1, symbols)
-                .ok_or(error!("Could not parse int domain constant"))?;
-            Ok(Range::Single(size_int.into()))
+            let size_int = parse_expression_to_int_val(attr_obj.1, &scope)?;
+            Ok(Range::Single(size_int))
         }
         _ => Err(Error::Parse("OccurAttr is an unknown type".to_owned())),
     }
@@ -697,7 +694,7 @@ pub fn parse_expression(obj: &JsonValue, scope: &SymbolTablePtr) -> Result<Expre
                 parse_abs_lit(&abslit["AbstractLiteral"]["AbsLitSet"], scope)
             } else if abstract_literal.contains_key("AbsLitFunction") {
                 parse_abs_function(&abslit["AbstractLiteral"]["AbsLitFunction"], scope)
-            } else if abstract_literal.conains_key("AbsLitMSet") {
+            } else if abstract_literal.contains_key("AbsLitMSet") {
                 parse_abs_mset(&abslit["AbstractLiteral"]["AbsLitMSet"], scope)
             } else {
                 parse_abstract_matrix_as_expr(obj, scope)
@@ -738,9 +735,9 @@ fn parse_abs_lit(abs_set: &Value, scope: &SymbolTablePtr) -> Result<Expression> 
     ))
 }
 
-fn parse_abs_mset(abs_set: &Value, scope: &SymbolTablePtr) -> Result<Expression> {
-    let values = abs_set
-        .as_array()?
+fn parse_abs_mset(abs_mset: &Value, scope: &SymbolTablePtr) -> Result<Expression> {
+    let values = abs_mset
+        .as_array()
         .ok_or(error!("AbsLitMSet is not an array"))?;
     let expressions = values
         .iter()
