@@ -1245,7 +1245,7 @@ impl CategoryOf for Expression {
                 if let Some(max_atom_category) = Biplate::<Atom>::universe_bi(&x).iter().map(|x| x.category_of()).max()
                 // and those atoms have a higher category than we already know about
                 && max_atom_category > max_category{
-                    // update category 
+                    // update category
                     max_category = max_atom_category;
                 }
 
@@ -1253,7 +1253,7 @@ impl CategoryOf for Expression {
                 if let Some(max_declaration_category) = Biplate::<DeclarationPtr>::universe_bi(&x).iter().map(|x| x.category_of()).max()
                 // and those pointers have a higher category than we already know about
                 && max_declaration_category > max_category{
-                    // update category 
+                    // update category
                     max_category = max_declaration_category;
                 }
                 max_category
