@@ -4,8 +4,10 @@
  */
 
 use crate::diagnostics::diagnostics_api::{Position};
+use crate::diagnostics::diagnostics_api::SymbolKind;
 pub type SpanId = u32;
 
+#[derive(Debug)]
 pub struct HoverInfo {
     pub description: String, // keyword description, type info...
     pub kind: Option<SymbolKind>, // var, domain, function...
@@ -14,6 +16,7 @@ pub struct HoverInfo {
 }
 // source span with start and end positions
 // in the essence source code
+#[derive(Debug)]
 pub struct SourceSpan {
     pub start_byte: usize, // byte offset in the source code
     pub end_byte: usize,
