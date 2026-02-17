@@ -44,6 +44,7 @@
 - [CI/CD](./developers_guide/ci_cd/index.md)
   - [Coverage](./developers_guide/ci_cd/coverage.md)
   - [Github Actions: Cookbook](./developers_guide/ci_cd/github_actions.md)
+  - [Test CI Locally](./developers_guide/ci_cd/test_ci_locally.md)
 
 <!-- New additions -->
 - [Reading the docs]()
