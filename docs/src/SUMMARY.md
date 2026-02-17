@@ -20,7 +20,6 @@
 - [Contributor's Guide](./developers_guide/contributors_guide/index.md)
   - [How we work](./developers_guide/contributors_guide/how_we_work.md)
   - [Setting up your development environment](./developers_guide/contributors_guide/set-dev-env.md)
-  - [Creating Documentation](./developers_guide/contributors_guide/creating_documentation.md)
   - [Running and writing integration tests]()
   - [What we didn't do]()
   - [Onboarding](./developers_guide/contributors_guide/onboarding.md)
