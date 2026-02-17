@@ -197,6 +197,17 @@ impl FromStr for SolverFamily {
     }
 }
 
+impl SolverFamily {
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            SolverFamily::Minion => "minion",
+            SolverFamily::Sat => "sat",
+            #[cfg(feature = "smt")]
+            SolverFamily::Smt(_) => "smt",
+        }
+    }
+}
+
 /// The type for user-defined callbacks for use with [Solver].
 ///
 /// Note that this enforces thread safety

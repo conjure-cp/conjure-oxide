@@ -67,7 +67,7 @@ pub struct GlobalArgs {
     pub solver: SolverFamily,
 
     /// Log verbosely
-    #[arg(long, short = 'v', help = "Log verbosely to sterr", global = true, help_heading = LOGGING_HELP_HEADING)]
+    #[arg(long, short = 'v', help = "Log verbosely to stderr", global = true, help_heading = LOGGING_HELP_HEADING)]
     pub verbose: bool,
 
     // --no-x flag disables --x flag : https://jwodder.github.io/kbits/posts/clap-bool-negate/
@@ -130,6 +130,22 @@ pub struct GlobalArgs {
     /// Currently only SMT supports this feature.
     #[arg(long, global = true, help_heading = OPTIMISATIONS_HELP_HEADING)]
     pub solver_timeout: Option<humantime::Duration>,
+
+    /// Encoding to use for SAT
+    #[arg(long, value_name = "SAT_ENCODING", global = true, help_heading = OPTIMISATIONS_HELP_HEADING)]
+    pub sat_encoding: Option<String>,
+
+    /// Generate log files
+    #[arg(long, default_value_t = false, global = true, help_heading = LOGGING_HELP_HEADING)]
+    pub log: bool,
+
+    /// Output file for conjure-oxide's text logs
+    #[arg(long, value_name = "LOGFILE", global = true, help_heading = LOGGING_HELP_HEADING)]
+    pub logfile: Option<PathBuf>,
+
+    /// Output file for conjure-oxide's json logs
+    #[arg(long, value_name = "JSON LOGFILE", global = true, help_heading = LOGGING_HELP_HEADING)]
+    pub logfile_json: Option<PathBuf>,
 }
 
 #[derive(Debug, Clone, Args)]

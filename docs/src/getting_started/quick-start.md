@@ -7,7 +7,7 @@ This guide walks you through running your first Essence model with Conjure Oxide
 Create a file called `my_problem.essence` with the following content:
 
 ```essence
-find x :  int(1..3)
+find x : int(1..3)
 find y : int(2..5)
 
 such that x > y
@@ -19,9 +19,32 @@ If you are curious about more complex models, you can check out the models that 
 
 ### SAT Solver
 
+`--sat-encoding` specifies the encoding strategy used by the SAT solver. This affects performance and solution structure.
+
+Supported options:
+
+- `log` (default)
+- `direct`
+- `order`
+
+Default usage (uses `log`):
+
 ```bash
 cargo run -- solve --solver sat my_problem.essence
 ```
+
+Specify an encoding:
+
+```bash
+cargo run -- solve --solver sat --sat-encoding direct my_problem.essence
+```
+
+> [!WARNING]
+> Currently, running the command above will cause the following error:
+>
+> `model invalid: Only Boolean Decision Variables supported`
+>
+> This because the SAT option for the solver argument only currently enables the base (boolean) rule set and does not specify an integer SAT ruleset to include. This is something we are currently working on, and should be resolved soon.
 
 ### Minion Solver
 
