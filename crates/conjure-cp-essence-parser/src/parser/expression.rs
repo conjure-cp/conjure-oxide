@@ -24,32 +24,10 @@ pub fn parse_expression(
         "dominance_relation" => {
             parse_dominance_relation(&node, source_code, root, symbols_ptr, errors)
         }
-        "ERROR" => {
-            errors.push(RecoverableParseError::new(
-                format!(
-                    "'{}' is not a valid expression",
-                    &source_code[node.start_byte()..node.end_byte()]
-                ),
-                Some(node.range()),
-            ));
-            // Return a placeholder - actual error is in the errors vector
-            // TODO: figure out how to return when recoverable error is found
-            Ok(Expression::Atomic(
-                Metadata::new(),
-                conjure_cp_core::ast::Atom::Literal(conjure_cp_core::ast::Literal::Bool(false)),
-            ))
-        }
-        _ => {
-            errors.push(RecoverableParseError::new(
-                format!("Unknown expression kind: '{}'", node.kind()),
-                Some(node.range()),
-            ));
-            // Return a placeholder
-            Ok(Expression::Atomic(
-                Metadata::new(),
-                conjure_cp_core::ast::Atom::Literal(conjure_cp_core::ast::Literal::Bool(false)),
-            ))
-        }
+        _ => Err(FatalParseError::internal_error(
+            format!("Unexpected expression type: '{}'", node.kind()),
+            Some(node.range()),
+        )),
     }
 }
 
