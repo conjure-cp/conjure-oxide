@@ -266,33 +266,24 @@ impl SerdeModel {
     /// IDs are assigned in the order they are encountered during traversal, ensuring
     /// stability across identical model structures.
     pub fn collect_stable_id_mapping(&self) -> HashMap<ObjId, ObjId> {
+        fn visit_symbol_table(symbol_table: SymbolTablePtr, id_list: &mut IndexSet<ObjId>) {
+            // If we have seen this table before, all its local declarations were already handled.
+            if !id_list.insert(symbol_table.id()) {
+                return;
+            }
+
+            let table_ref = symbol_table.read();
+            table_ref.iter_local().for_each(|(_, decl)| {
+                id_list.insert(decl.id());
+            });
+        }
+
         // Using an IndexSet here, we maintain insertion order while deduplicating IDs.
         let mut id_list: IndexSet<ObjId> = IndexSet::new();
 
-        let mut visit = |id: ObjId| id_list.insert(id);
-
-        let mut visit_symbol_table_chain = |symbol_table: SymbolTablePtr| {
-            let mut current = Some(symbol_table);
-
-            while let Some(table) = current {
-                let table_id = table.id();
-                if !visit(table_id.clone()) {
-                    break;
-                }
-
-                current = {
-                    let table_ref = table.read();
-                    table_ref.iter_local().for_each(|(_, decl)| {
-                        visit(decl.id());
-                    });
-                    table_ref.parent().clone()
-                };
-            }
-        };
-
         // Collect SymbolTable IDs by traversing all SubModels
         for submodel in self.submodel.universe() {
-            visit_symbol_table_chain(submodel.symbols_ptr_unchecked().clone());
+            visit_symbol_table(submodel.symbols_ptr_unchecked().clone(), &mut id_list);
         }
 
         // Collect remaining IDs by traversing the expression tree
@@ -303,10 +294,10 @@ impl SerdeModel {
             exprs.push_back(dominance.clone());
         }
         for symbol_table in Biplate::<SymbolTablePtr>::universe_bi(&exprs) {
-            visit_symbol_table_chain(symbol_table);
+            visit_symbol_table(symbol_table, &mut id_list);
         }
         for declaration in Biplate::<DeclarationPtr>::universe_bi(&exprs) {
-            visit(declaration.id());
+            id_list.insert(declaration.id());
         }
 
         // Create stable mapping: original_id -> stable_id
