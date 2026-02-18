@@ -1,3 +1,4 @@
+use super::atom::parse_int;
 use super::util::named_children;
 use crate::errors::{FatalParseError, RecoverableParseError};
 use conjure_cp_core::ast::{
@@ -5,7 +6,6 @@ use conjure_cp_core::ast::{
     SymbolTablePtr,
 };
 use core::panic;
-use std::str::FromStr;
 use tree_sitter::Node;
 
 /// Parse an Essence variable domain into its Conjure AST representation.
@@ -23,7 +23,7 @@ pub fn parse_domain(
             errors,
         ),
         "bool_domain" => Ok(Domain::bool()),
-        "int_domain" => Ok(parse_int_domain(domain, source_code, &symbols, errors)),
+        "int_domain" => parse_int_domain(domain, source_code, &symbols, errors),
         "identifier" => {
             let decl = get_declaration_ptr_from_identifier(domain, source_code, &symbols, errors)?;
             let dom = Domain::reference(decl).ok_or(FatalParseError::syntax_error(
@@ -71,9 +71,9 @@ fn parse_int_domain(
     source_code: &str,
     symbols_ptr: &Option<SymbolTablePtr>,
     errors: &mut Vec<RecoverableParseError>,
-) -> DomainPtr {
+) -> Result<DomainPtr, FatalParseError> {
     if int_domain.child_count() == 1 {
-        return Domain::int(vec![Range::Bounded(i32::MIN, i32::MAX)]);
+        return Ok(Domain::int(vec![Range::Bounded(i32::MIN, i32::MAX)]));
     }
     let mut ranges: Vec<Range<i32>> = Vec::new();
     let mut ranges_unresolved: Vec<Range<IntVal>> = Vec::new();
@@ -205,10 +205,10 @@ fn parse_int_domain(
                 Range::Unbounded => ranges_unresolved.push(Range::Unbounded),
             }
         }
-        return Domain::int(ranges_unresolved);
+        return Ok(Domain::int(ranges_unresolved));
     }
 
-    Domain::int(ranges)
+    Ok(Domain::int(ranges))
 }
 
 fn parse_tuple_domain(
@@ -291,53 +291,21 @@ pub fn parse_set_domain(
 
                 if let (Some(min_node), Some(max_node)) = (min_value_node, max_value_node) {
                     // MinMax case
-                    let min_str = &source_code[min_node.start_byte()..min_node.end_byte()];
-                    let max_str = &source_code[max_node.start_byte()..max_node.end_byte()];
-
-                    let min_val = i32::from_str(min_str).map_err(|_| {
-                        FatalParseError::syntax_error(
-                            format!("Invalid integer value for minSize: {}", min_str),
-                            Some(min_node.range()),
-                        )
-                    })?;
-
-                    let max_val = i32::from_str(max_str).map_err(|_| {
-                        FatalParseError::syntax_error(
-                            format!("Invalid integer value for maxSize: {}", max_str),
-                            Some(max_node.range()),
-                        )
-                    })?;
+                    let min_val = parse_int(&min_node, source_code, errors)?;
+                    let max_val = parse_int(&max_node, source_code, errors)?;
 
                     set_attribute = Some(SetAttr::new_min_max_size(min_val, max_val));
                 } else if let Some(size_node) = size_value_node {
                     // Size case
-                    let size_str = &source_code[size_node.start_byte()..size_node.end_byte()];
-                    let size_val = i32::from_str(size_str).map_err(|_| {
-                        FatalParseError::syntax_error(
-                            format!("Invalid integer value for size: {}", size_str),
-                            Some(size_node.range()),
-                        )
-                    })?;
+                    let size_val = parse_int(&size_node, source_code, errors)?;
                     set_attribute = Some(SetAttr::new_size(size_val));
                 } else if let Some(min_node) = min_value_node {
                     // MinSize only case
-                    let min_str = &source_code[min_node.start_byte()..min_node.end_byte()];
-                    let min_val = i32::from_str(min_str).map_err(|_| {
-                        FatalParseError::syntax_error(
-                            format!("Invalid integer value for minSize: {}", min_str),
-                            Some(min_node.range()),
-                        )
-                    })?;
+                    let min_val = parse_int(&min_node, source_code, errors)?;
                     set_attribute = Some(SetAttr::new_min_size(min_val));
                 } else if let Some(max_node) = max_value_node {
                     // MaxSize only case
-                    let max_str = &source_code[max_node.start_byte()..max_node.end_byte()];
-                    let max_val = i32::from_str(max_str).map_err(|_| {
-                        FatalParseError::syntax_error(
-                            format!("Invalid integer value for maxSize: {}", max_str),
-                            Some(max_node.range()),
-                        )
-                    })?;
+                    let max_val = parse_int(&max_node, source_code, errors)?;
                     set_attribute = Some(SetAttr::new_max_size(max_val));
                 }
             }

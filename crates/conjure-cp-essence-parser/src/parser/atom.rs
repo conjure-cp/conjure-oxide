@@ -203,7 +203,7 @@ fn parse_constant(
     }
 }
 
-fn parse_int(
+pub(crate) fn parse_int(
     node: &Node,
     source_code: &str,
     _errors: &mut Vec<RecoverableParseError>,
