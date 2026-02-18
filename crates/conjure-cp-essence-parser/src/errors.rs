@@ -19,6 +19,16 @@ pub enum FatalParseError {
         msg: String,
         range: Option<tree_sitter::Range>,
     },
+    #[error("Internal parser error: {msg}{}\nThis indicates a bug in the parser or syntax validator. Please report this issue.",
+        match range {
+            Some(range) => format!(" at {}-{}", range.start_point, range.end_point),
+            None => "".to_string(),
+        }
+    )]
+    InternalError {
+        msg: String,
+        range: Option<tree_sitter::Range>,
+    },
     #[error("JSON Error: {0}")]
     JsonError(#[from] JsonError),
     #[error("Error: {0} is not yet implemented.")]
@@ -30,6 +40,10 @@ pub enum FatalParseError {
 impl FatalParseError {
     pub fn syntax_error(msg: String, range: Option<tree_sitter::Range>) -> Self {
         FatalParseError::ParseError { msg, range }
+    }
+
+    pub fn internal_error(msg: String, range: Option<tree_sitter::Range>) -> Self {
+        FatalParseError::InternalError { msg, range }
     }
 }
 
