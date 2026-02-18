@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap, VecDeque};
 use std::fmt::{Debug, Display};
 use std::sync::{Arc, RwLock};
 
@@ -266,30 +266,25 @@ impl SerdeModel {
     /// IDs are assigned in the order they are encountered during traversal, ensuring
     /// stability across identical model structures.
     pub fn collect_stable_id_mapping(&self) -> HashMap<ObjId, ObjId> {
-        // Using an IndexSet here, we maintain insertion order without having to check if a value was inserted into the set repeatedly.
+        // Using an IndexSet here, we maintain insertion order while deduplicating IDs.
         let mut id_list: IndexSet<ObjId> = IndexSet::new();
-        let mut visited_symbol_tables: HashSet<ObjId> = HashSet::new();
 
-        let mut visit = |id: ObjId| {
-            id_list.insert(id);
-        };
+        let mut visit = |id: ObjId| id_list.insert(id);
 
         let mut visit_symbol_table_chain = |symbol_table: SymbolTablePtr| {
             let mut current = Some(symbol_table);
 
             while let Some(table) = current {
                 let table_id = table.id();
-                if !visited_symbol_tables.insert(table_id.clone()) {
+                if !visit(table_id.clone()) {
                     break;
                 }
 
-                visit(table_id);
-
                 current = {
                     let table_ref = table.read();
-                    table_ref
-                        .iter_local()
-                        .for_each(|(_, decl)| visit(decl.id()));
+                    table_ref.iter_local().for_each(|(_, decl)| {
+                        visit(decl.id());
+                    });
                     table_ref.parent().clone()
                 };
             }
