@@ -210,6 +210,7 @@ fn domain_needs_representation(domain: &GroundDomain) -> bool {
         GroundDomain::Bool | GroundDomain::Int(_) => false,
         GroundDomain::Matrix(_, _) => false, // we special case these elsewhere
         GroundDomain::Set(_, _)
+        | GroundDomain::MSet(_, _)
         | GroundDomain::Tuple(_)
         | GroundDomain::Record(_)
         | GroundDomain::Function(_, _, _) => true,
