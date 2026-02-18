@@ -28,7 +28,7 @@ pub fn parse_atom(
             .map(|var| Expression::Atomic(Metadata::new(), var)),
         "from_solution" => {
             if root.kind() != "dominance_relation" {
-                return Err(FatalParseError::syntax_error(
+                return Err(FatalParseError::internal_error(
                     "fromSolution only allowed inside dominance relations".to_string(),
                     Some(node.range()),
                 ));
@@ -52,7 +52,7 @@ pub fn parse_atom(
         // TODO: add powerset support under "set_operation"
         "set_operation" => parse_binary_expression(node, source_code, root, symbols_ptr, errors),
         "comprehension" => parse_comprehension(node, source_code, root, symbols_ptr, errors),
-        _ => Err(FatalParseError::syntax_error(
+        _ => Err(FatalParseError::internal_error(
             format!("Expected atom, got: {}", node.kind()),
             Some(node.range()),
         )),
@@ -143,7 +143,7 @@ fn parse_index(
             errors,
         )?)),
         "null_index" => Ok(None),
-        _ => Err(FatalParseError::syntax_error(
+        _ => Err(FatalParseError::internal_error(
             format!("Expected an index, got: '{}'", node.kind()),
             Some(node.range()),
         )),
@@ -192,7 +192,7 @@ fn parse_constant(
         }
         "TRUE" => Ok(Literal::Bool(true)),
         "FALSE" => Ok(Literal::Bool(false)),
-        _ => Err(FatalParseError::syntax_error(
+        _ => Err(FatalParseError::internal_error(
             format!(
                 "'{}' (kind: '{}') is not a valid constant",
                 raw_value,
@@ -210,16 +210,9 @@ fn parse_int(
 ) -> Result<i32, FatalParseError> {
     let raw_value = &source_code[node.start_byte()..node.end_byte()];
     raw_value.parse::<i32>().map_err(|_e| {
-        if raw_value.is_empty() {
-            FatalParseError::syntax_error(
-                "Expected an integer here".to_string(),
-                Some(node.range()),
-            )
-        } else {
-            FatalParseError::syntax_error(
-                format!("'{raw_value}' is not a valid integer"),
-                Some(node.range()),
-            )
-        }
+        FatalParseError::internal_error(
+            "Expected an integer here".to_string(),
+            Some(node.range()),
+        )
     })
 }

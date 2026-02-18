@@ -68,7 +68,7 @@ pub fn parse_letting_statement(
             }
         }
         _ => {
-            return Err(FatalParseError::syntax_error(
+            return Err(FatalParseError::internal_error(
                 format!(
                     "Expected letting expression, got '{}'",
                     expr_or_domain.kind()

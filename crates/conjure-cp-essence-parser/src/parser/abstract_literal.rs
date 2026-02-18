@@ -18,7 +18,7 @@ pub fn parse_abstract(
         "tuple" => parse_tuple(node, source_code, symbols_ptr, errors),
         "matrix" => parse_matrix(node, source_code, symbols_ptr, errors),
         "set_literal" => parse_set_literal(node, source_code, symbols_ptr, errors),
-        _ => Err(FatalParseError::syntax_error(
+        _ => Err(FatalParseError::internal_error(
             format!("Expected abstract literal, got: {}", node.kind()),
             Some(node.range()),
         )),

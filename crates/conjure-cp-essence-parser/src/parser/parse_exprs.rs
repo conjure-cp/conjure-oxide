@@ -9,7 +9,7 @@ use uniplate::Uniplate;
 pub fn parse_expr(src: &str, symbols_ptr: SymbolTablePtr) -> Result<Expression, FatalParseError> {
     let exprs = parse_exprs(src, symbols_ptr)?;
     if exprs.len() != 1 {
-        return Err(FatalParseError::syntax_error(
+        return Err(FatalParseError::internal_error(
             "Expected a single expression".to_string(),
             None,
         ));

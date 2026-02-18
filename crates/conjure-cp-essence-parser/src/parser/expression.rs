@@ -61,7 +61,7 @@ fn parse_dominance_relation(
     errors: &mut Vec<RecoverableParseError>,
 ) -> Result<Expression, FatalParseError> {
     if root.kind() == "dominance_relation" {
-        return Err(FatalParseError::syntax_error(
+        return Err(FatalParseError::internal_error(
             "Nested dominance relations are not allowed".to_string(),
             Some(node.range()),
         ));
@@ -105,7 +105,7 @@ fn parse_arithmetic_expression(
         "aggregate_expr" => {
             parse_quantifier_or_aggregate_expr(&inner, source_code, root, symbols_ptr, errors)
         }
-        _ => Err(FatalParseError::syntax_error(
+        _ => Err(FatalParseError::internal_error(
             format!("Expected arithmetic expression, found: {}", inner.kind()),
             Some(inner.range()),
         )),
@@ -134,7 +134,7 @@ fn parse_boolean_expression(
         "quantifier_expr" => {
             parse_quantifier_or_aggregate_expr(&inner, source_code, root, symbols_ptr, errors)
         }
-        _ => Err(FatalParseError::syntax_error(
+        _ => Err(FatalParseError::internal_error(
             format!("Expected boolean expression, found '{}'", inner.kind()),
             Some(inner.range()),
         )),
@@ -161,7 +161,7 @@ fn parse_list_combining_expression(
         "min" => Ok(Expression::Min(Metadata::new(), Moo::new(inner))),
         "max" => Ok(Expression::Max(Metadata::new(), Moo::new(inner))),
         "allDiff" => Ok(Expression::AllDiff(Metadata::new(), Moo::new(inner))),
-        _ => Err(FatalParseError::syntax_error(
+        _ => Err(FatalParseError::internal_error(
             format!("Invalid operator: '{operator_str}'"),
             Some(operator_node.range()),
         )),
@@ -188,7 +188,7 @@ fn parse_unary_expression(
         "not_expr" => Ok(Expression::Not(Metadata::new(), Moo::new(inner))),
         "toInt_expr" => Ok(Expression::ToInt(Metadata::new(), Moo::new(inner))),
         "sub_bool_expr" | "sub_arith_expr" => Ok(inner),
-        _ => Err(FatalParseError::syntax_error(
+        _ => Err(FatalParseError::internal_error(
             format!("Unrecognised unary operation: '{}'", node.kind()),
             Some(node.range()),
         )),
@@ -353,7 +353,7 @@ pub fn parse_binary_expression(
             Moo::new(left),
             Moo::new(right),
         )),
-        _ => Err(FatalParseError::syntax_error(
+        _ => Err(FatalParseError::internal_error(
             format!("Invalid operator: '{op_str}'"),
             Some(op_node.range()),
         )),

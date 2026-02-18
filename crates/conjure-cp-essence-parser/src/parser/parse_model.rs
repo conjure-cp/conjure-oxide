@@ -119,17 +119,9 @@ pub fn parse_essence_with_context(
                 }
                 model.dominance = Some(dominance);
             }
-            "ERROR" => {
-                let raw_expr = &source_code[statement.start_byte()..statement.end_byte()];
-                errors.push(RecoverableParseError::new(
-                    format!("'{raw_expr}' is not a valid expression"),
-                    Some(statement.range()),
-                ));
-            }
             _ => {
-                let kind = statement.kind();
-                errors.push(RecoverableParseError::new(
-                    format!("Unrecognized top level statement kind: {kind}"),
+                return Err(FatalParseError::internal_error(
+                    format!("Unexpected top-level statement: {}", statement.kind()),
                     Some(statement.range()),
                 ));
             }

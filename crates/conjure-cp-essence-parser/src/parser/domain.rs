@@ -52,7 +52,7 @@ fn get_declaration_ptr_from_identifier(
     let name = Name::user(&source_code[identifier.start_byte()..identifier.end_byte()]);
     let decl = symbols_ptr
         .as_ref()
-        .ok_or(FatalParseError::syntax_error(
+        .ok_or(FatalParseError::internal_error(
             "context needed to resolve identifier".to_string(),
             Some(identifier.range()),
         ))?
@@ -240,7 +240,7 @@ fn parse_matrix_domain(
     let value_domain = parse_domain(
         matrix_domain
             .child_by_field_name("value_domain")
-            .ok_or(FatalParseError::syntax_error(
+            .ok_or(FatalParseError::internal_error(
                 "Expected a value domain".to_string(),
                 Some(matrix_domain.range()),
             ))?,
@@ -345,7 +345,7 @@ pub fn parse_set_domain(
                 value_domain = Some(parse_domain(child, source_code, symbols.clone(), errors)?);
             }
             _ => {
-                return Err(FatalParseError::syntax_error(
+                return Err(FatalParseError::internal_error(
                     format!("Unrecognized set domain child kind: {}", child.kind()),
                     Some(child.range()),
                 ));
@@ -356,7 +356,7 @@ pub fn parse_set_domain(
     if let Some(domain) = value_domain {
         Ok(Domain::set(set_attribute.unwrap_or_default(), domain))
     } else {
-        Err(FatalParseError::syntax_error(
+        Err(FatalParseError::internal_error(
             "Set domain must have a value domain".to_string(),
             Some(set_domain.range()),
         ))
