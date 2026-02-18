@@ -24,6 +24,6 @@ Once these tests are identified a Rust `#[test]` is created using the defined te
 
 This template contains the code to call a new function which carries out the test. The values passed to the template determines its test name, through sanitation of the path, and determine the arguments to this test function.
 
-Finally, the test function itself includes the line `include!(concat!(env!("OUT_DIR"), "/gen_tests_<test type>.rs"));`, such that it is accessible during the test through insertion using the include marco.
+Finally, the test function itself includes the line `include!(concat!(env!("OUT_DIR"), "/gen_tests_<test type>.rs"));`, such that it is accessible during the test through insertion using the include macro.
 
 This format improves scalability and allows new tests to be created by just creating the input file.
