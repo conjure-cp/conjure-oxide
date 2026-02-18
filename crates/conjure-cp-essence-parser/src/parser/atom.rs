@@ -14,7 +14,7 @@ pub fn parse_atom(
     root: &Node,
     symbols_ptr: Option<SymbolTablePtr>,
     errors: &mut Vec<RecoverableParseError>,
-) -> Result<Expression, FatalParseError> {
+) -> Result<Option<Expression>, FatalParseError> {
     match node.kind() {
         "atom" | "sub_atom_expr" => {
             parse_atom(&named_child!(node), source_code, root, symbols_ptr, errors)
@@ -22,10 +22,17 @@ pub fn parse_atom(
         "metavar" => {
             let ident = field!(node, "identifier");
             let name_str = &source_code[ident.start_byte()..ident.end_byte()];
-            Ok(Expression::Metavar(Metadata::new(), Ustr::from(name_str)))
+            Ok(Some(Expression::Metavar(
+                Metadata::new(),
+                Ustr::from(name_str),
+            )))
         }
-        "identifier" => parse_variable(node, source_code, symbols_ptr, errors)
-            .map(|var| Expression::Atomic(Metadata::new(), var)),
+        "identifier" => {
+            let Some(var) = parse_variable(node, source_code, symbols_ptr, errors)? else {
+                return Ok(None);
+            };
+            Ok(Some(Expression::Atomic(Metadata::new(), var)))
+        }
         "from_solution" => {
             if root.kind() != "dominance_relation" {
                 return Err(FatalParseError::internal_error(
@@ -34,17 +41,29 @@ pub fn parse_atom(
                 ));
             }
 
-            let inner =
-                parse_variable(&field!(node, "variable"), source_code, symbols_ptr, errors)?;
-            Ok(Expression::FromSolution(Metadata::new(), Moo::new(inner)))
+            let Some(inner) =
+                parse_variable(&field!(node, "variable"), source_code, symbols_ptr, errors)?
+            else {
+                return Ok(None);
+            };
+
+            Ok(Some(Expression::FromSolution(
+                Metadata::new(),
+                Moo::new(inner),
+            )))
         }
         "constant" => {
             let lit = parse_constant(node, source_code, errors)?;
-            Ok(Expression::Atomic(Metadata::new(), Atom::Literal(lit)))
+            Ok(Some(Expression::Atomic(
+                Metadata::new(),
+                Atom::Literal(lit),
+            )))
         }
         "matrix" | "record" | "tuple" | "set_literal" => {
-            parse_abstract(node, source_code, symbols_ptr, errors)
-                .map(|l| Expression::AbstractLiteral(Metadata::new(), l))
+            let Some(abs) = parse_abstract(node, source_code, symbols_ptr, errors)? else {
+                return Ok(None);
+            };
+            Ok(Some(Expression::AbstractLiteral(Metadata::new(), abs)))
         }
         "flatten" => parse_flatten(node, source_code, root, symbols_ptr, errors),
         "index_or_slice" => parse_index_or_slice(node, source_code, root, symbols_ptr, errors),
@@ -65,22 +84,28 @@ fn parse_flatten(
     root: &Node,
     symbols_ptr: Option<SymbolTablePtr>,
     errors: &mut Vec<RecoverableParseError>,
-) -> Result<Expression, FatalParseError> {
+) -> Result<Option<Expression>, FatalParseError> {
     let expr_node = field!(node, "expression");
-    let expr = parse_atom(&expr_node, source_code, root, symbols_ptr, errors)?;
+    let Some(expr) = parse_atom(&expr_node, source_code, root, symbols_ptr, errors)? else {
+        return Ok(None);
+    };
 
     if node.child_by_field_name("depth").is_some() {
         let depth_node = field!(node, "depth");
         let depth = parse_int(&depth_node, source_code, errors)?;
         let depth_expression =
             Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(depth)));
-        Ok(Expression::Flatten(
+        Ok(Some(Expression::Flatten(
             Metadata::new(),
             Some(Moo::new(depth_expression)),
             Moo::new(expr),
-        ))
+        )))
     } else {
-        Ok(Expression::Flatten(Metadata::new(), None, Moo::new(expr)))
+        Ok(Some(Expression::Flatten(
+            Metadata::new(),
+            None,
+            Moo::new(expr),
+        )))
     }
 }
 
@@ -90,14 +115,17 @@ fn parse_index_or_slice(
     root: &Node,
     symbols_ptr: Option<SymbolTablePtr>,
     errors: &mut Vec<RecoverableParseError>,
-) -> Result<Expression, FatalParseError> {
-    let collection = parse_atom(
+) -> Result<Option<Expression>, FatalParseError> {
+    let Some(collection) = parse_atom(
         &field!(node, "collection"),
         source_code,
         root,
         symbols_ptr.clone(),
         errors,
-    )?;
+    )?
+    else {
+        return Ok(None);
+    };
     let mut indices = Vec::new();
     for idx_node in named_children(&field!(node, "indices")) {
         indices.push(parse_index(
@@ -112,19 +140,19 @@ fn parse_index_or_slice(
     // TODO: We could check whether the slice/index is safe here
     if has_null_idx {
         // It's a slice
-        Ok(Expression::UnsafeSlice(
+        Ok(Some(Expression::UnsafeSlice(
             Metadata::new(),
             Moo::new(collection),
             indices,
-        ))
+        )))
     } else {
         // It's an index
         let idx_exprs: Vec<Expression> = indices.into_iter().map(|idx| idx.unwrap()).collect();
-        Ok(Expression::UnsafeIndex(
+        Ok(Some(Expression::UnsafeIndex(
             Metadata::new(),
             Moo::new(collection),
             idx_exprs,
-        ))
+        )))
     }
 }
 
@@ -135,13 +163,13 @@ fn parse_index(
     errors: &mut Vec<RecoverableParseError>,
 ) -> Result<Option<Expression>, FatalParseError> {
     match node.kind() {
-        "arithmetic_expr" | "atom" => Ok(Some(parse_expression(
-            *node,
-            source_code,
-            node,
-            symbols_ptr,
-            errors,
-        )?)),
+        "arithmetic_expr" | "atom" => {
+            let Some(expr) = parse_expression(*node, source_code, node, symbols_ptr, errors)?
+            else {
+                return Ok(None);
+            };
+            Ok(Some(expr))
+        }
         "null_index" => Ok(None),
         _ => Err(FatalParseError::internal_error(
             format!("Expected an index, got: '{}'", node.kind()),
@@ -154,25 +182,25 @@ fn parse_variable(
     node: &Node,
     source_code: &str,
     symbols_ptr: Option<SymbolTablePtr>,
-    _errors: &mut Vec<RecoverableParseError>,
-) -> Result<Atom, FatalParseError> {
+    errors: &mut Vec<RecoverableParseError>,
+) -> Result<Option<Atom>, FatalParseError> {
     let raw_name = &source_code[node.start_byte()..node.end_byte()];
     let name = Name::user(raw_name.trim());
     if let Some(symbols) = symbols_ptr {
         if let Some(decl) = symbols.read().lookup(&name) {
-            Ok(Atom::Reference(conjure_cp_core::ast::Reference::new(decl)))
+            Ok(Some(Atom::Reference(conjure_cp_core::ast::Reference::new(
+                decl,
+            ))))
         } else {
-            Err(FatalParseError::syntax_error(
-                format!("Undefined variable: '{}'", raw_name),
+            errors.push(RecoverableParseError::new(
+                format!("Variable '{}' is not defined in the symbol table", raw_name),
                 Some(node.range()),
-            ))
+            ));
+            Ok(None)
         }
     } else {
-        Err(FatalParseError::syntax_error(
-            format!(
-                "Found variable '{raw_name}'; Did you mean to pass a meta-variable '&{raw_name}'?\n\
-            A symbol table is needed to resolve variable names, but none exists in this context."
-            ),
+        Err(FatalParseError::internal_error(
+            format!("Symbol table missing when parsing variable '{raw_name}'"),
             Some(node.range()),
         ))
     }

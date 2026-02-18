@@ -15,7 +15,7 @@ pub fn parse_comprehension(
     root: &Node,
     symbols_ptr: Option<SymbolTablePtr>,
     errors: &mut Vec<RecoverableParseError>,
-) -> Result<Expression, FatalParseError> {
+) -> Result<Option<Expression>, FatalParseError> {
     // Comprehensions require a symbol table passed in
     let symbols_ptr = symbols_ptr.ok_or_else(|| {
         FatalParseError::internal_error(
@@ -57,13 +57,16 @@ pub fn parse_comprehension(
                 let expr_node = field!(child, "expression");
                 let generator_symboltable = builder.generator_symboltable();
 
-                let guard_expr = parse_expression(
+                let Some(guard_expr) = parse_expression(
                     expr_node,
                     source_code,
                     root,
                     Some(generator_symboltable),
                     errors,
-                )?;
+                )?
+                else {
+                    return Ok(None);
+                };
 
                 // Add the condition as a guard
                 builder = builder.guard(guard_expr);
@@ -83,21 +86,24 @@ pub fn parse_comprehension(
     })?;
 
     // Use the return expression symbol table which already has induction variables (as Given) and parent as parent
-    let return_expr = parse_expression(
+    let Some(return_expr) = parse_expression(
         return_expr_node,
         source_code,
         root,
         Some(builder.return_expr_symboltable()),
         errors,
-    )?;
+    )?
+    else {
+        return Ok(None);
+    };
 
     // Build the comprehension with the return expression and default ACOperatorKind::And
     let comprehension = builder.with_return_value(return_expr, Some(ACOperatorKind::And));
 
-    Ok(Expression::Comprehension(
+    Ok(Some(Expression::Comprehension(
         Metadata::new(),
         Moo::new(comprehension),
-    ))
+    )))
 }
 
 /// Parse comprehension-style expressions
@@ -109,7 +115,7 @@ pub fn parse_quantifier_or_aggregate_expr(
     root: &Node,
     symbols_ptr: Option<SymbolTablePtr>,
     errors: &mut Vec<RecoverableParseError>,
-) -> Result<Expression, FatalParseError> {
+) -> Result<Option<Expression>, FatalParseError> {
     // Quantifier and aggregate expressions require a symbol table
     let symbols_ptr = symbols_ptr.ok_or_else(|| {
         FatalParseError::internal_error(
@@ -197,13 +203,16 @@ pub fn parse_quantifier_or_aggregate_expr(
 
     // Parse the expression (after variables are in the symbol table)
     let expression_node = field!(node, "expression");
-    let expression = parse_expression(
+    let Some(expression) = parse_expression(
         expression_node,
         source_code,
         root,
         Some(builder.return_expr_symboltable()),
         errors,
-    )?;
+    )?
+    else {
+        return Ok(None);
+    };
 
     // Build the comprehension
     let comprehension = builder.with_return_value(expression, Some(ac_operator_kind));
@@ -211,26 +220,26 @@ pub fn parse_quantifier_or_aggregate_expr(
 
     // Wrap in the appropriate expression type
     match wrapper {
-        "And" => Ok(Expression::And(
+        "And" => Ok(Some(Expression::And(
             Metadata::new(),
             Moo::new(wrapped_comprehension),
-        )),
-        "Or" => Ok(Expression::Or(
+        ))),
+        "Or" => Ok(Some(Expression::Or(
             Metadata::new(),
             Moo::new(wrapped_comprehension),
-        )),
-        "Sum" => Ok(Expression::Sum(
+        ))),
+        "Sum" => Ok(Some(Expression::Sum(
             Metadata::new(),
             Moo::new(wrapped_comprehension),
-        )),
-        "Min" => Ok(Expression::Min(
+        ))),
+        "Min" => Ok(Some(Expression::Min(
             Metadata::new(),
             Moo::new(wrapped_comprehension),
-        )),
-        "Max" => Ok(Expression::Max(
+        ))),
+        "Max" => Ok(Some(Expression::Max(
             Metadata::new(),
             Moo::new(wrapped_comprehension),
-        )),
+        ))),
         _ => unreachable!(),
     }
 }

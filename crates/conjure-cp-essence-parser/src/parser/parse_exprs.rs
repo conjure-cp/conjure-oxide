@@ -28,13 +28,17 @@ pub fn parse_exprs(
     let root = tree.root_node();
     let mut ans = Vec::new();
     for expr in query_toplevel(&root, &node_is_expression) {
-        ans.push(parse_expression(
+        let Some(expr) = parse_expression(
             expr,
             &source_code,
             &root,
             Some(symbols_ptr.clone()),
             &mut Vec::new(),
-        )?);
+        )?
+        else {
+            continue;
+        };
+        ans.push(expr);
     }
     Ok(ans)
 }

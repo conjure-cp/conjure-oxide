@@ -81,33 +81,43 @@ pub fn parse_essence_with_context(
                 }
             }
             "bool_expr" | "atom" | "comparison_expr" => {
-                model.as_submodel_mut().add_constraint(parse_expression(
+                let Some(expr) = parse_expression(
                     statement,
                     &source_code,
                     &statement,
                     Some(symbols_ptr.clone()),
                     errors,
-                )?);
+                )?
+                else {
+                    continue;
+                };
+                model.as_submodel_mut().add_constraint(expr);
             }
             "language_label" => {}
             "letting_statement" => {
-                let letting_vars = parse_letting_statement(
+                let Some(letting_vars) = parse_letting_statement(
                     statement,
                     &source_code,
                     Some(symbols_ptr.clone()),
                     errors,
-                )?;
+                )?
+                else {
+                    continue;
+                };
                 model.as_submodel_mut().symbols_mut().extend(letting_vars);
             }
             "dominance_relation" => {
                 let inner = field!(statement, "expression");
-                let expr = parse_expression(
+                let Some(expr) = parse_expression(
                     inner,
                     &source_code,
                     &statement,
                     Some(symbols_ptr.clone()),
                     errors,
-                )?;
+                )?
+                else {
+                    continue;
+                };
                 let dominance = Expression::DominanceRelation(Metadata::new(), Moo::new(expr));
                 if model.dominance.is_some() {
                     errors.push(RecoverableParseError::new(

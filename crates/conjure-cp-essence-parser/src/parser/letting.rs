@@ -17,7 +17,7 @@ pub fn parse_letting_statement(
     source_code: &str,
     existing_symbols_ptr: Option<SymbolTablePtr>,
     errors: &mut Vec<RecoverableParseError>,
-) -> Result<SymbolTable, FatalParseError> {
+) -> Result<Option<SymbolTable>, FatalParseError> {
     let mut symbol_table = SymbolTable::new();
 
     let mut temp_symbols = BTreeSet::new();
@@ -32,16 +32,17 @@ pub fn parse_letting_statement(
     match expr_or_domain.kind() {
         "bool_expr" | "arithmetic_expr" | "atom" => {
             for name in temp_symbols {
-                symbol_table.insert(DeclarationPtr::new_value_letting(
-                    Name::user(name),
-                    parse_expression(
-                        expr_or_domain,
-                        source_code,
-                        &letting_statement,
-                        existing_symbols_ptr.clone(),
-                        errors,
-                    )?,
-                ));
+                let Some(expr) = parse_expression(
+                    expr_or_domain,
+                    source_code,
+                    &letting_statement,
+                    existing_symbols_ptr.clone(),
+                    errors,
+                )?
+                else {
+                    continue;
+                };
+                symbol_table.insert(DeclarationPtr::new_value_letting(Name::user(name), expr));
             }
         }
         "domain" => {
@@ -75,5 +76,5 @@ pub fn parse_letting_statement(
         }
     }
 
-    Ok(symbol_table)
+    Ok(Some(symbol_table))
 }
