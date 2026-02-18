@@ -31,7 +31,7 @@ pub use cnf_clause::CnfClause;
 pub use declaration::{DeclarationKind, DeclarationPtr};
 pub use domains::{
     Domain, DomainOpError, DomainPtr, FuncAttr, GroundDomain, HasDomain, IntVal, JectivityAttr,
-    PartialityAttr, Range, RecordEntry, RecordEntryGround, SetAttr, UnresolvedDomain,
+    MSetAttr, PartialityAttr, Range, RecordEntry, RecordEntryGround, SetAttr, UnresolvedDomain,
 };
 pub use eval::eval_constant;
 pub use expressions::Expression;
