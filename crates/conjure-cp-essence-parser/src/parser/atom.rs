@@ -210,9 +210,6 @@ pub(crate) fn parse_int(
 ) -> Result<i32, FatalParseError> {
     let raw_value = &source_code[node.start_byte()..node.end_byte()];
     raw_value.parse::<i32>().map_err(|_e| {
-        FatalParseError::internal_error(
-            "Expected an integer here".to_string(),
-            Some(node.range()),
-        )
+        FatalParseError::internal_error("Expected an integer here".to_string(), Some(node.range()))
     })
 }

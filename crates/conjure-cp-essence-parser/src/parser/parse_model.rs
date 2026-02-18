@@ -12,6 +12,7 @@ use super::letting::parse_letting_statement;
 use super::util::{get_tree, named_children};
 use crate::errors::{FatalParseError, ParseErrorCollection, RecoverableParseError};
 use crate::expression::parse_expression;
+use crate::field;
 
 /// Parse an Essence file into a Model using the tree-sitter parser.
 pub fn parse_essence_file_native(
@@ -99,9 +100,7 @@ pub fn parse_essence_with_context(
                 model.as_submodel_mut().symbols_mut().extend(letting_vars);
             }
             "dominance_relation" => {
-                let inner = statement
-                    .child_by_field_name("expression")
-                    .expect("Expected a sub-expression inside `dominanceRelation`");
+                let inner = field!(statement, "expression");
                 let expr = parse_expression(
                     inner,
                     &source_code,

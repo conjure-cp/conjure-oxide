@@ -7,6 +7,7 @@ use super::domain::parse_domain;
 use super::util::named_children;
 use crate::errors::{FatalParseError, RecoverableParseError};
 use crate::expression::parse_expression;
+use crate::field;
 use conjure_cp_core::ast::DeclarationPtr;
 use conjure_cp_core::ast::{Name, SymbolTable, SymbolTablePtr};
 
@@ -21,17 +22,13 @@ pub fn parse_letting_statement(
 
     let mut temp_symbols = BTreeSet::new();
 
-    let variable_list = letting_statement
-        .child_by_field_name("variable_list")
-        .expect("No variable list found");
+    let variable_list = field!(letting_statement, "variable_list");
     for variable in named_children(&variable_list) {
         let variable_name = &source_code[variable.start_byte()..variable.end_byte()];
         temp_symbols.insert(variable_name);
     }
 
-    let expr_or_domain = letting_statement
-        .child_by_field_name("expr_or_domain")
-        .expect("No domain or expression found for letting statement");
+    let expr_or_domain = field!(letting_statement, "expr_or_domain");
     match expr_or_domain.kind() {
         "bool_expr" | "arithmetic_expr" | "atom" => {
             for name in temp_symbols {

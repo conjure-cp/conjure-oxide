@@ -8,10 +8,12 @@ macro_rules! named_child {
         named_child!($node, $i, format!("Missing sub-expression #{}", $i + 1))
     };
     ($node:ident, $i:literal, $msg:expr) => {
-        $node.named_child($i).ok_or(FatalParseError::internal_error(
-            format!("{} in expression of kind '{}'", $msg, $node.kind()),
-            Some($node.range()),
-        ))?
+        $node
+            .named_child($i)
+            .ok_or(FatalParseError::internal_error(
+                format!("{} in expression of kind '{}'", $msg, $node.kind()),
+                Some($node.range()),
+            ))?
     };
 }
 

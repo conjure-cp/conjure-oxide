@@ -196,12 +196,7 @@ pub fn parse_quantifier_or_aggregate_expr(
     }
 
     // Parse the expression (after variables are in the symbol table)
-    let expression_node = node.child_by_field_name("expression").ok_or_else(|| {
-        FatalParseError::internal_error(
-            "Quantifier or aggregate expression missing return expression".to_string(),
-            Some(node.range()),
-        )
-    })?;
+    let expression_node = field!(node, "expression");
     let expression = parse_expression(
         expression_node,
         source_code,

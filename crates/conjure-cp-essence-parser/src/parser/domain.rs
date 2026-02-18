@@ -1,6 +1,7 @@
 use super::atom::parse_int;
 use super::util::named_children;
 use crate::errors::{FatalParseError, RecoverableParseError};
+use crate::{child, field};
 use conjure_cp_core::ast::{
     DeclarationPtr, Domain, DomainPtr, IntVal, Name, Range, RecordEntry, Reference, SetAttr,
     SymbolTablePtr,
@@ -16,12 +17,7 @@ pub fn parse_domain(
     errors: &mut Vec<RecoverableParseError>,
 ) -> Result<DomainPtr, FatalParseError> {
     match domain.kind() {
-        "domain" => parse_domain(
-            domain.child(0).expect("No domain found"),
-            source_code,
-            symbols,
-            errors,
-        ),
+        "domain" => parse_domain(child!(domain, 0, "domain"), source_code, symbols, errors),
         "bool_domain" => Ok(Domain::bool()),
         "int_domain" => parse_int_domain(domain, source_code, &symbols, errors),
         "identifier" => {
@@ -77,9 +73,7 @@ fn parse_int_domain(
     }
     let mut ranges: Vec<Range<i32>> = Vec::new();
     let mut ranges_unresolved: Vec<Range<IntVal>> = Vec::new();
-    let range_list = int_domain
-        .child_by_field_name("ranges")
-        .expect("No range list found for int domain");
+    let range_list = field!(int_domain, "ranges");
     for domain_component in named_children(&range_list) {
         match domain_component.kind() {
             "atom" => {
@@ -231,19 +225,12 @@ fn parse_matrix_domain(
     errors: &mut Vec<RecoverableParseError>,
 ) -> Result<DomainPtr, FatalParseError> {
     let mut domains: Vec<DomainPtr> = Vec::new();
-    let index_domain_list = matrix_domain
-        .child_by_field_name("index_domain_list")
-        .expect("No index domains found for matrix domain");
+    let index_domain_list = field!(matrix_domain, "index_domain_list");
     for domain in named_children(&index_domain_list) {
         domains.push(parse_domain(domain, source_code, symbols.clone(), errors)?);
     }
     let value_domain = parse_domain(
-        matrix_domain
-            .child_by_field_name("value_domain")
-            .ok_or(FatalParseError::internal_error(
-                "Expected a value domain".to_string(),
-                Some(matrix_domain.range()),
-            ))?,
+        field!(matrix_domain, "value_domain"),
         source_code,
         symbols,
         errors,
@@ -259,13 +246,9 @@ fn parse_record_domain(
 ) -> Result<DomainPtr, FatalParseError> {
     let mut record_entries: Vec<RecordEntry> = Vec::new();
     for record_entry in named_children(&record_domain) {
-        let name_node = record_entry
-            .child_by_field_name("name")
-            .expect("No name found for record entry");
+        let name_node = field!(record_entry, "name");
         let name = Name::user(&source_code[name_node.start_byte()..name_node.end_byte()]);
-        let domain_node = record_entry
-            .child_by_field_name("domain")
-            .expect("No domain found for record entry");
+        let domain_node = field!(record_entry, "domain");
         let domain = parse_domain(domain_node, source_code, symbols.clone(), errors)?;
         record_entries.push(RecordEntry { name, domain });
     }
