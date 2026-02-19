@@ -1,7 +1,7 @@
 use super::{RewriteError, RuleSet, resolve_rules::RuleData};
 use crate::{
     Model,
-    ast::{Expression as Expr, SubModel, comprehension::Comprehension},
+    ast::{Expression as Expr, SubModel, comprehension::Comprehension, scope::Scope},
     bug,
     rule_engine::{
         get_rules_grouped,
@@ -48,16 +48,16 @@ pub fn rewrite_naive<'a>(
         done_something = false;
 
         // Rewrite each sub-model in the tree, largest first.
-        for (mut submodel, ctx) in <_ as Biplate<SubModel>>::contexts_bi(&model) {
+        for (mut scope, ctx) in <_ as Biplate<Scope>>::contexts_bi(&model) {
             if try_rewrite_model(
-                &mut submodel,
+                &mut scope,
                 &rules_grouped,
                 prop_multiple_equally_applicable,
                 &mut rewriter_stats,
             )
             .is_some()
             {
-                new_model = Some(ctx(submodel));
+                new_model = Some(ctx(scope));
                 done_something = true;
                 break;
             }
@@ -96,7 +96,7 @@ pub fn rewrite_naive<'a>(
 //
 // Returns None if no change was made.
 fn try_rewrite_model(
-    submodel: &mut SubModel,
+    scope: &mut Scope,
     rules_grouped: &Vec<(u16, Vec<RuleData<'_>>)>,
     prop_multiple_equally_applicable: bool,
     stats: &mut RewriterStats,
@@ -108,7 +108,7 @@ fn try_rewrite_model(
     'top: for (priority, rules) in rules_grouped.iter() {
         // Using Biplate, rewrite both the expression tree, and any value lettings in the symbol
         // table.
-        for (expr, ctx) in submodel_ctx(submodel.clone()) {
+        for (expr, ctx) in submodel_ctx(scope.clone()) {
             // Clone expr and ctx so they can be reused
             let expr = expr.clone();
             let ctx = ctx.clone();
@@ -126,7 +126,7 @@ fn try_rewrite_model(
                 #[cfg(debug_assertions)]
                 tracing::trace!(rule_name = rd.rule.name, "Trying rule");
 
-                match (rd.rule.application)(&expr, &submodel.symbols()) {
+                match (rd.rule.application)(&expr, &scope.symbols()) {
                     Ok(red) => {
                         // Count successful rule applications
                         stats.rewriter_rule_applications =
@@ -174,13 +174,13 @@ fn try_rewrite_model(
             }
 
             // Extract the single applicable rule and apply it
-            log_rule_application(result, expr, submodel);
+            log_rule_application(result, expr, scope);
 
             // Replace expr with new_expression
-            *submodel = ctx(result.reduction.new_expression.clone());
+            *scope = ctx(result.reduction.new_expression.clone());
 
             // Apply new symbols and top level
-            result.reduction.clone().apply(submodel);
+            result.reduction.clone().apply(scope);
         }
     }
 

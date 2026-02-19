@@ -22,6 +22,7 @@ mod submodel;
 mod symbol_table;
 mod types;
 mod variables;
+pub mod scope;
 
 mod moo;
 mod partial_eval;

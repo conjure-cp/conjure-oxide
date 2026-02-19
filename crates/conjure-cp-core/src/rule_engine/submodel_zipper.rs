@@ -3,14 +3,14 @@ use std::sync::Arc;
 
 use uniplate::zipper::Zipper;
 
-use crate::ast::{Expression, SubModel};
+use crate::ast::{Expression, SubModel, scope::Scope};
 
 /// Traverses expressions in this sub-model, but not into inner sub-models.
 ///
 /// Same types and usage as `Biplate::contexts_bi`.
 pub(super) fn submodel_ctx(
-    m: SubModel,
-) -> impl Iterator<Item = (Expression, Arc<dyn Fn(Expression) -> SubModel>)> {
+    m: Scope,
+) -> impl Iterator<Item = (Expression, Arc<dyn Fn(Expression) -> Scope>)> {
     SubmodelCtx {
         zipper: SubmodelZipper {
             inner: Zipper::new(m.root().clone()),
