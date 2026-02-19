@@ -204,10 +204,10 @@ fn ineq_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 }
 
 /// Converts a - expression for a SATInt to a new SATInt
-/// 
+///
 /// ```text
 /// -SATInt(a) ~> SATInt(b)
-/// 
+///
 /// ```
 #[register_rule(("SAT_Order", 9100))]
 fn neg_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
@@ -215,8 +215,7 @@ fn neg_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let (binding, old_min, old_max) =
-        validate_order_int_operands(vec![value.as_ref().clone()])?;
+    let (binding, old_min, old_max) = validate_order_int_operands(vec![value.as_ref().clone()])?;
     let [val_bits] = binding.as_slice() else {
         return Err(RuleNotApplicable);
     };
@@ -251,7 +250,6 @@ fn neg_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
             (new_min, new_max),
         ),
         new_clauses,
-        new_symbols
+        new_symbols,
     ))
 }
-
