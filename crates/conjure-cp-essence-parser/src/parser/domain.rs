@@ -21,7 +21,9 @@ pub fn parse_domain(
         "bool_domain" => Ok(Some(Domain::bool())),
         "int_domain" => parse_int_domain(domain, source_code, &symbols, errors),
         "identifier" => {
-            let Some(decl) = get_declaration_ptr_from_identifier(domain, source_code, &symbols, errors)? else {
+            let Some(decl) =
+                get_declaration_ptr_from_identifier(domain, source_code, &symbols, errors)?
+            else {
                 return Ok(None);
             };
             let dom = Domain::reference(decl).ok_or(FatalParseError::syntax_error(
@@ -96,7 +98,8 @@ fn parse_int_domain(
                     source_code,
                     symbols_ptr,
                     errors,
-                )? else {
+                )?
+                else {
                     return Ok(None);
                 };
                 ranges_unresolved.push(Range::Single(IntVal::Reference(Reference::new(decl))));
@@ -115,7 +118,8 @@ fn parse_int_domain(
                                     source_code,
                                     symbols_ptr,
                                     errors,
-                                )? else {
+                                )?
+                                else {
                                     return Ok(None); // return from function if we can't resolve the identifier
                                 };
                                 Some(Err(decl))
@@ -136,7 +140,8 @@ fn parse_int_domain(
                                     source_code,
                                     symbols_ptr,
                                     errors,
-                                )? else {
+                                )?
+                                else {
                                     return Ok(None); // return from function if we can't resolve the identifier
                                 };
                                 Some(Err(decl))
@@ -214,7 +219,8 @@ fn parse_tuple_domain(
 ) -> Result<Option<DomainPtr>, FatalParseError> {
     let mut domains: Vec<DomainPtr> = Vec::new();
     for domain in named_children(&tuple_domain) {
-        let Some(parsed_domain) = parse_domain(domain, source_code, symbols.clone(), errors)? else {
+        let Some(parsed_domain) = parse_domain(domain, source_code, symbols.clone(), errors)?
+        else {
             return Ok(None);
         };
         domains.push(parsed_domain);
@@ -231,7 +237,8 @@ fn parse_matrix_domain(
     let mut domains: Vec<DomainPtr> = Vec::new();
     let index_domain_list = field!(matrix_domain, "index_domain_list");
     for domain in named_children(&index_domain_list) {
-        let Some(parsed_domain) = parse_domain(domain, source_code, symbols.clone(), errors)? else {
+        let Some(parsed_domain) = parse_domain(domain, source_code, symbols.clone(), errors)?
+        else {
             return Ok(None);
         };
         domains.push(parsed_domain);
@@ -241,7 +248,8 @@ fn parse_matrix_domain(
         source_code,
         symbols,
         errors,
-    )? else {
+    )?
+    else {
         return Ok(None);
     };
     Ok(Some(Domain::matrix(value_domain, domains)))
@@ -304,7 +312,9 @@ pub fn parse_set_domain(
                 }
             }
             "domain" => {
-                let Some(parsed_domain) = parse_domain(child, source_code, symbols.clone(), errors)? else {
+                let Some(parsed_domain) =
+                    parse_domain(child, source_code, symbols.clone(), errors)?
+                else {
                     return Ok(None);
                 };
                 value_domain = Some(parsed_domain);

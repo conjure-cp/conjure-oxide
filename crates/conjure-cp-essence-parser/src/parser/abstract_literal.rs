@@ -90,7 +90,9 @@ fn parse_matrix(
             };
             elements.push(expr);
         } else {
-            let Some(parsed_domain) = parse_domain(child, source_code, symbols_ptr.clone(), errors)? else {
+            let Some(parsed_domain) =
+                parse_domain(child, source_code, symbols_ptr.clone(), errors)?
+            else {
                 return Ok(None);
             };
             domain = Some(parsed_domain);

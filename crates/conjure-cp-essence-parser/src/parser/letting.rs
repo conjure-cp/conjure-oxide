@@ -52,7 +52,8 @@ pub fn parse_letting_statement(
                     source_code,
                     existing_symbols_ptr.clone(),
                     errors,
-                )? else {
+                )?
+                else {
                     continue;
                 };
 
