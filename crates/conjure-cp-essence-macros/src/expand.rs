@@ -55,8 +55,18 @@ pub fn expand_expr_vec(tt: &TokenTree) -> Result<TokenStream> {
 
 /// Parse a single expression or make a compile time error
 fn mk_expr(node: Node, src: &str, root: &Node, tt: &TokenTree) -> Result<TokenStream> {
-    match parse_expression(node, src, root, None, &mut Vec::new()) {
-        Ok(expr) => Ok(expr.ctor_tokens()),
+    let mut errors = Vec::new();
+    match parse_expression(node, src, root, None, &mut errors) {
+        Ok(Some(expr)) => Ok(expr.ctor_tokens()),
+        Ok(None) => {
+            // Recoverable error occurred - get the error message from the errors vector
+            let error_message = if let Some(err) = errors.first() {
+                format!("Recoverable parse error: {}", err)
+            } else {
+                "Parse error: Unknown error occurred".to_string()
+            };
+            Err(Error::new(tt.span(), error_message))
+        }
         Err(err) => {
             let error_message = match err {
                 FatalParseError::ParseError {
