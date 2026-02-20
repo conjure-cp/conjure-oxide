@@ -147,7 +147,7 @@ impl DeclarationPtr {
 
     /// Creates a new decision variable with the quantified category.
     ///
-    /// This is useful to represent a quantified / induction variable in a comprehension.
+    /// This is useful to represent a quantified variable in a comprehension.
     pub fn new_var_quantified(name: Name, domain: DomainPtr) -> DeclarationPtr {
         let kind =
             DeclarationKind::DecisionVariable(DecisionVariable::new(domain, Category::Quantified));
