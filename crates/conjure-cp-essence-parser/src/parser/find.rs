@@ -19,7 +19,9 @@ pub fn parse_find_statement(
     let mut vars = BTreeMap::new();
 
     let domain = field!(find_statement, "domain");
-    let domain = parse_domain(domain, source_code, symbols, errors)?;
+    let Some(domain) = parse_domain(domain, source_code, symbols, errors)? else {
+        return Ok(vars);
+    };
 
     let variable_list = field!(find_statement, "variables");
     for variable in named_children(&variable_list) {

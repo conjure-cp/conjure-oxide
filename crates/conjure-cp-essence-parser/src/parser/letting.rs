@@ -47,12 +47,14 @@ pub fn parse_letting_statement(
         }
         "domain" => {
             for name in temp_symbols {
-                let domain = parse_domain(
+                let Some(domain) = parse_domain(
                     expr_or_domain,
                     source_code,
                     existing_symbols_ptr.clone(),
                     errors,
-                )?;
+                )? else {
+                    continue;
+                };
 
                 // If it's a record domain, add the field names to the symbol table
                 if let Some(entries) = domain.as_record() {

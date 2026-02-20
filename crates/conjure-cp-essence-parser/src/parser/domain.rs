@@ -15,13 +15,15 @@ pub fn parse_domain(
     source_code: &str,
     symbols: Option<SymbolTablePtr>,
     errors: &mut Vec<RecoverableParseError>,
-) -> Result<DomainPtr, FatalParseError> {
+) -> Result<Option<DomainPtr>, FatalParseError> {
     match domain.kind() {
         "domain" => parse_domain(child!(domain, 0, "domain"), source_code, symbols, errors),
-        "bool_domain" => Ok(Domain::bool()),
+        "bool_domain" => Ok(Some(Domain::bool())),
         "int_domain" => parse_int_domain(domain, source_code, &symbols, errors),
         "identifier" => {
-            let decl = get_declaration_ptr_from_identifier(domain, source_code, &symbols, errors)?;
+            let Some(decl) = get_declaration_ptr_from_identifier(domain, source_code, &symbols, errors)? else {
+                return Ok(None);
+            };
             let dom = Domain::reference(decl).ok_or(FatalParseError::syntax_error(
                 format!(
                     "'{}' is not a valid domain declaration",
@@ -29,7 +31,7 @@ pub fn parse_domain(
                 ),
                 Some(domain.range()),
             ))?;
-            Ok(dom)
+            Ok(Some(dom))
         }
         "tuple_domain" => parse_tuple_domain(domain, source_code, symbols, errors),
         "matrix_domain" => parse_matrix_domain(domain, source_code, symbols, errors),
@@ -43,8 +45,8 @@ fn get_declaration_ptr_from_identifier(
     identifier: Node,
     source_code: &str,
     symbols_ptr: &Option<SymbolTablePtr>,
-    _errors: &mut Vec<RecoverableParseError>,
-) -> Result<DeclarationPtr, FatalParseError> {
+    errors: &mut Vec<RecoverableParseError>,
+) -> Result<Option<DeclarationPtr>, FatalParseError> {
     let name = Name::user(&source_code[identifier.start_byte()..identifier.end_byte()]);
     let decl = symbols_ptr
         .as_ref()
@@ -53,12 +55,17 @@ fn get_declaration_ptr_from_identifier(
             Some(identifier.range()),
         ))?
         .read()
-        .lookup(&name)
-        .ok_or(FatalParseError::syntax_error(
-            format!("'{name}' is not defined"),
-            Some(identifier.range()),
-        ))?;
-    Ok(decl)
+        .lookup(&name);
+    match decl {
+        Some(decl) => Ok(Some(decl)),
+        None => {
+            errors.push(RecoverableParseError::new(
+                format!("Undefined identifier: '{}'", name),
+                Some(identifier.range()),
+            ));
+            Ok(None)
+        }
+    }
 }
 
 /// Parse an integer domain. Can be a single integer or a range.
@@ -67,9 +74,9 @@ fn parse_int_domain(
     source_code: &str,
     symbols_ptr: &Option<SymbolTablePtr>,
     errors: &mut Vec<RecoverableParseError>,
-) -> Result<DomainPtr, FatalParseError> {
+) -> Result<Option<DomainPtr>, FatalParseError> {
     if int_domain.child_count() == 1 {
-        return Ok(Domain::int(vec![Range::Bounded(i32::MIN, i32::MAX)]));
+        return Ok(Some(Domain::int(vec![Range::Bounded(i32::MIN, i32::MAX)])));
     }
     let mut ranges: Vec<Range<i32>> = Vec::new();
     let mut ranges_unresolved: Vec<Range<IntVal>> = Vec::new();
@@ -84,17 +91,15 @@ fn parse_int_domain(
                     continue;
                 }
                 // Otherwise, treat as a reference
-                let decl = get_declaration_ptr_from_identifier(
+                let Some(decl) = get_declaration_ptr_from_identifier(
                     domain_component,
                     source_code,
                     symbols_ptr,
                     errors,
-                );
-                if let Ok(decl) = decl {
-                    ranges_unresolved.push(Range::Single(IntVal::Reference(Reference::new(decl))));
-                } else {
-                    panic!("'{}' is not a valid integer", text);
-                }
+                )? else {
+                    return Ok(None);
+                };
+                ranges_unresolved.push(Range::Single(IntVal::Reference(Reference::new(decl))));
             }
             "int_range" => {
                 let lower_bound: Option<Result<i32, DeclarationPtr>> =
@@ -105,17 +110,15 @@ fn parse_int_domain(
                             if let Ok(integer) = text.parse::<i32>() {
                                 Some(Ok(integer))
                             } else {
-                                let decl = get_declaration_ptr_from_identifier(
+                                let Some(decl) = get_declaration_ptr_from_identifier(
                                     lower_node,
                                     source_code,
                                     symbols_ptr,
                                     errors,
-                                );
-                                if let Ok(decl) = decl {
-                                    Some(Err(decl))
-                                } else {
-                                    panic!("'{}' is not a valid integer", text);
-                                }
+                                )? else {
+                                    return Ok(None); // return from function if we can't resolve the identifier
+                                };
+                                Some(Err(decl))
                             }
                         }
                         None => None,
@@ -128,17 +131,15 @@ fn parse_int_domain(
                             if let Ok(integer) = text.parse::<i32>() {
                                 Some(Ok(integer))
                             } else {
-                                let decl = get_declaration_ptr_from_identifier(
+                                let Some(decl) = get_declaration_ptr_from_identifier(
                                     upper_node,
                                     source_code,
                                     symbols_ptr,
                                     errors,
-                                );
-                                if let Ok(decl) = decl {
-                                    Some(Err(decl))
-                                } else {
-                                    panic!("'{}' is not a valid integer", text);
-                                }
+                                )? else {
+                                    return Ok(None); // return from function if we can't resolve the identifier
+                                };
+                                Some(Err(decl))
                             }
                         }
                         None => None,
@@ -199,10 +200,10 @@ fn parse_int_domain(
                 Range::Unbounded => ranges_unresolved.push(Range::Unbounded),
             }
         }
-        return Ok(Domain::int(ranges_unresolved));
+        return Ok(Some(Domain::int(ranges_unresolved)));
     }
 
-    Ok(Domain::int(ranges))
+    Ok(Some(Domain::int(ranges)))
 }
 
 fn parse_tuple_domain(
@@ -210,12 +211,15 @@ fn parse_tuple_domain(
     source_code: &str,
     symbols: Option<SymbolTablePtr>,
     errors: &mut Vec<RecoverableParseError>,
-) -> Result<DomainPtr, FatalParseError> {
+) -> Result<Option<DomainPtr>, FatalParseError> {
     let mut domains: Vec<DomainPtr> = Vec::new();
     for domain in named_children(&tuple_domain) {
-        domains.push(parse_domain(domain, source_code, symbols.clone(), errors)?);
+        let Some(parsed_domain) = parse_domain(domain, source_code, symbols.clone(), errors)? else {
+            return Ok(None);
+        };
+        domains.push(parsed_domain);
     }
-    Ok(Domain::tuple(domains))
+    Ok(Some(Domain::tuple(domains)))
 }
 
 fn parse_matrix_domain(
@@ -223,19 +227,24 @@ fn parse_matrix_domain(
     source_code: &str,
     symbols: Option<SymbolTablePtr>,
     errors: &mut Vec<RecoverableParseError>,
-) -> Result<DomainPtr, FatalParseError> {
+) -> Result<Option<DomainPtr>, FatalParseError> {
     let mut domains: Vec<DomainPtr> = Vec::new();
     let index_domain_list = field!(matrix_domain, "index_domain_list");
     for domain in named_children(&index_domain_list) {
-        domains.push(parse_domain(domain, source_code, symbols.clone(), errors)?);
+        let Some(parsed_domain) = parse_domain(domain, source_code, symbols.clone(), errors)? else {
+            return Ok(None);
+        };
+        domains.push(parsed_domain);
     }
-    let value_domain = parse_domain(
+    let Some(value_domain) = parse_domain(
         field!(matrix_domain, "value_domain"),
         source_code,
         symbols,
         errors,
-    )?;
-    Ok(Domain::matrix(value_domain, domains))
+    )? else {
+        return Ok(None);
+    };
+    Ok(Some(Domain::matrix(value_domain, domains)))
 }
 
 fn parse_record_domain(
@@ -243,16 +252,18 @@ fn parse_record_domain(
     source_code: &str,
     symbols: Option<SymbolTablePtr>,
     errors: &mut Vec<RecoverableParseError>,
-) -> Result<DomainPtr, FatalParseError> {
+) -> Result<Option<DomainPtr>, FatalParseError> {
     let mut record_entries: Vec<RecordEntry> = Vec::new();
     for record_entry in named_children(&record_domain) {
         let name_node = field!(record_entry, "name");
         let name = Name::user(&source_code[name_node.start_byte()..name_node.end_byte()]);
         let domain_node = field!(record_entry, "domain");
-        let domain = parse_domain(domain_node, source_code, symbols.clone(), errors)?;
+        let Some(domain) = parse_domain(domain_node, source_code, symbols.clone(), errors)? else {
+            return Ok(None);
+        };
         record_entries.push(RecordEntry { name, domain });
     }
-    Ok(Domain::record(record_entries))
+    Ok(Some(Domain::record(record_entries)))
 }
 
 pub fn parse_set_domain(
@@ -260,7 +271,7 @@ pub fn parse_set_domain(
     source_code: &str,
     symbols: Option<SymbolTablePtr>,
     errors: &mut Vec<RecoverableParseError>,
-) -> Result<DomainPtr, FatalParseError> {
+) -> Result<Option<DomainPtr>, FatalParseError> {
     let mut set_attribute: Option<SetAttr> = None;
     let mut value_domain: Option<DomainPtr> = None;
 
@@ -293,7 +304,10 @@ pub fn parse_set_domain(
                 }
             }
             "domain" => {
-                value_domain = Some(parse_domain(child, source_code, symbols.clone(), errors)?);
+                let Some(parsed_domain) = parse_domain(child, source_code, symbols.clone(), errors)? else {
+                    return Ok(None);
+                };
+                value_domain = Some(parsed_domain);
             }
             _ => {
                 return Err(FatalParseError::internal_error(
@@ -305,7 +319,7 @@ pub fn parse_set_domain(
     }
 
     if let Some(domain) = value_domain {
-        Ok(Domain::set(set_attribute.unwrap_or_default(), domain))
+        Ok(Some(Domain::set(set_attribute.unwrap_or_default(), domain)))
     } else {
         Err(FatalParseError::internal_error(
             "Set domain must have a value domain".to_string(),

@@ -45,12 +45,9 @@ fn parse_record(
             errors,
         )?
         else {
-            continue;
+            return Ok(None);
         };
         values.push(conjure_cp_core::ast::records::RecordValue { name, value });
-    }
-    if values.is_empty() {
-        return Ok(None);
     }
     Ok(Some(AbstractLiteral::Record(values)))
 }
@@ -65,12 +62,9 @@ fn parse_tuple(
     for child in named_children(node) {
         let Some(expr) = parse_expression(child, source_code, node, symbols_ptr.clone(), errors)?
         else {
-            continue;
+            return Ok(None);
         };
         elements.push(expr);
-    }
-    if elements.is_empty() {
-        return Ok(None);
     }
     Ok(Some(AbstractLiteral::Tuple(elements)))
 }
@@ -92,16 +86,14 @@ fn parse_matrix(
             let Some(expr) =
                 parse_expression(child, source_code, node, symbols_ptr.clone(), errors)?
             else {
-                continue;
+                return Ok(None);
             };
             elements.push(expr);
         } else {
-            domain = Some(parse_domain(
-                child,
-                source_code,
-                symbols_ptr.clone(),
-                errors,
-            )?);
+            let Some(parsed_domain) = parse_domain(child, source_code, symbols_ptr.clone(), errors)? else {
+                return Ok(None);
+            };
+            domain = Some(parsed_domain);
         }
     }
     if domain.is_none() {
@@ -122,12 +114,9 @@ fn parse_set_literal(
     for child in named_children(node) {
         let Some(expr) = parse_expression(child, source_code, node, symbols_ptr.clone(), errors)?
         else {
-            continue;
+            return Ok(None);
         };
         elements.push(expr);
-    }
-    if elements.is_empty() {
-        return Ok(None);
     }
     Ok(Some(AbstractLiteral::Set(elements)))
 }

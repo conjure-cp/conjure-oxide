@@ -45,8 +45,10 @@ pub fn parse_comprehension(
 
                 // Parse the domain
                 let domain_node = field!(child, "domain");
-                let var_domain =
-                    parse_domain(domain_node, source_code, Some(symbols_ptr.clone()), errors)?;
+                let Some(var_domain) =
+                    parse_domain(domain_node, source_code, Some(symbols_ptr.clone()), errors)? else {
+                        return Ok(None);
+                    };
 
                 // Add generator using the builder
                 let decl = DeclarationPtr::new_var(var_name, var_domain);
@@ -140,12 +142,11 @@ pub fn parse_quantifier_or_aggregate_expr(
                 variables.push(var_name);
             }
             "domain" => {
-                domain = Some(parse_domain(
-                    child,
-                    source_code,
-                    Some(symbols_ptr.clone()),
-                    errors,
-                )?);
+                let Some(parsed_domain) =
+                    parse_domain(child, source_code, Some(symbols_ptr.clone()), errors)? else {
+                        return Ok(None);
+                    };
+                domain = Some(parsed_domain);
             }
             "set_literal" | "matrix" | "tuple" | "record" => {
                 // Store the collection node to parse later
