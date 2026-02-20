@@ -1,8 +1,8 @@
 use conjure_cp::ast::{Expression as Expr, GroundDomain};
 use conjure_cp::ast::{SATIntEncoding, SymbolTable};
 use conjure_cp::rule_engine::{
-    ApplicationError, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
-    register_rule,
+    register_rule, ApplicationError, ApplicationError::RuleNotApplicable, ApplicationResult,
+    Reduction,
 };
 
 use conjure_cp::ast::Metadata;
@@ -243,9 +243,23 @@ fn integer_decision_representation_order(expr: &Expr, symbols: &SymbolTable) -> 
 #[register_rule(("SAT_Log", 9500))]
 fn integer_decision_representation_log(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     // thing we are representing must be a reference
-    let Expr::Atomic(_, Atom::Reference(name)) = expr else {
+
+    let Expr::Root(_,_) = expr else {
         return Err(RuleNotApplicable);
     };
+
+    symbols
+        .clone()
+        .into_iter_local()
+        .for_each(|(name, decl_ptr)| {
+            eprintln!("({},{})", name, decl_ptr.);
+        });
+
+    panic!("nopwe");
+
+    // let Expr::Atomic(_, Atom::Reference(name)) = expr else {
+    //     return Err(RuleNotApplicable);
+    // };
 
     // thing we are representing must be a variable
     // symbols
@@ -255,55 +269,58 @@ fn integer_decision_representation_log(expr: &Expr, symbols: &SymbolTable) -> Ap
     //     .ok_or(RuleNotApplicable)?;
 
     // thing we are representing must be an integer
-    let dom = name.resolved_domain().ok_or(RuleNotApplicable)?;
-    let GroundDomain::Int(ranges) = dom.as_ref() else {
-        return Err(RuleNotApplicable);
-    };
+    // let dom = name.resolved_domain().ok_or(RuleNotApplicable)?;
+    // let GroundDomain::Int(ranges) = dom.as_ref() else {
+    //     return Err(RuleNotApplicable);
+    // };
 
-    let (min, max) = ranges
-        .iter()
-        .fold((i32::MAX, i32::MIN), |(min_a, max_b), range| {
-            (
-                min_a.min(*range.low().unwrap()),
-                max_b.max(*range.high().unwrap()),
-            )
-        });
+    // let (min, max) = ranges
+    //     .iter()
+    //     .fold((i32::MAX, i32::MIN), |(min_a, max_b), range| {
+    //         (
+    //             min_a.min(*range.low().unwrap()),
+    //             max_b.max(*range.high().unwrap()),
+    //         )
+    //     });
 
-    let mut symbols = symbols.clone();
+    // let mut symbols = symbols.clone();
 
-    let new_name = &name.name().to_owned();
+    // let new_name = &name.name().to_owned();
 
-    let repr_exists = symbols
-        .get_representation(new_name, &["sat_log_int"])
-        .is_some();
+    // let repr_exists = symbols
+    //     .get_representation(new_name, &["sat_log_int"])
+    //     .is_some();
 
-    let representation = symbols
-        .get_or_add_representation(new_name, &["sat_log_int"])
-        .ok_or(RuleNotApplicable)?;
+    // let representation = symbols
+    //     .get_or_add_representation(new_name, &["sat_log_int"])
+    //     .ok_or(RuleNotApplicable)?;
 
-    let bits = representation[0]
-        .clone()
-        .expression_down(&symbols)?
-        .into_values()
-        .collect();
+    // let bits = representation[0]
+    //     .clone()
+    //     .expression_down(&symbols)?
+    //     .into_values()
+    //     .collect();
 
-    let cnf_int = Expr::SATInt(
-        Metadata::new(),
-        SATIntEncoding::Log,
-        Moo::new(into_matrix_expr!(bits)),
-        (min, max),
-    );
+    // let cnf_int = Expr::SATInt(
+    //     Metadata::new(),
+    //     SATIntEncoding::Log,
+    //     Moo::new(into_matrix_expr!(bits)),
+    //     (min, max),
+    // );
 
-    if !repr_exists {
-        // add domain ranges as constraints if this is the first time the representation is added
-        Ok(Reduction::new(
-            cnf_int.clone(),
-            vec![int_domain_to_expr(cnf_int, ranges)], // contains domain rules
-            symbols,
-        ))
-    } else {
-        Ok(Reduction::pure(cnf_int))
-    }
+    // if !repr_exists {
+    //     // add domain ranges as constraints if this is the first time the representation is added
+    //     Ok(Reduction::new(
+    //         cnf_int.clone(),
+    //         vec![int_domain_to_expr(cnf_int, ranges)], // contains domain rules
+    //         symbols,
+    //     ))
+    // } else {
+    //
+    //   Ok(Reduction::pure(cnf_int))
+    // }
+
+    Ok(Reduction::pure(expr.clone()))
 }
 
 /// Converts an integer literal to SATInt form
