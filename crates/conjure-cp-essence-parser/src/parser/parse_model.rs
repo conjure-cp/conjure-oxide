@@ -63,7 +63,7 @@ pub fn parse_essence_with_context(
         // For now, return 'not implemented' for syntactic errors
         // TODO: connect to syntactic error parsing here for recoverable errors
         return Err(FatalParseError::NotImplemented(
-            "Syntactic error detection and reporting".to_string(),
+            "Erroneous tree-sitter CST: Something in this input is not yet supported or there is a syntactic error. Syntactic error detection and reporting".to_string(),
         ));
     }
 
