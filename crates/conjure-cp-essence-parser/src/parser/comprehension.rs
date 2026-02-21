@@ -88,7 +88,7 @@ pub fn parse_comprehension(
         )
     })?;
 
-    // Use the return expression symbol table which already has induction variables (as Given) and parent as parent
+    // Use the return expression symbol table which already has quantified variables (as Given) and parent as parent
     let Some(return_expr) = parse_expression(
         return_expr_node,
         source_code,

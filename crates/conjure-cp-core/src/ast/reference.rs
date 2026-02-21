@@ -5,11 +5,10 @@ use parking_lot::MappedRwLockReadGuard;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use std::fmt::{Display, Formatter};
-use std::ops::Deref;
 use uniplate::Uniplate;
 
 use super::{
-    Atom, DeclarationKind, DomainPtr, Expression, GroundDomain, Literal, Metadata, Moo, Name,
+    Atom, DomainPtr, Expression, GroundDomain, Literal, Metadata, Moo, Name,
     categories::{Category, CategoryOf},
     domains::HasDomain,
 };
@@ -63,10 +62,7 @@ impl Reference {
 
     /// Returns the expression behind a value-letting reference, if this is one.
     pub fn resolve_expression(&self) -> Option<Expression> {
-        match self.ptr().kind().deref() {
-            DeclarationKind::ValueLetting(expr) => Some(expr.clone()),
-            _ => None,
-        }
+        self.ptr().as_value_letting().map(|expr| expr.clone())
     }
 
     /// Evaluates this reference to a literal if it resolves to a constant.

@@ -18,8 +18,8 @@ use uniplate::Biplate as _;
 
 /// Expands the comprehension using Minion, returning the resulting expressions.
 ///
-/// This method performs simple pruning of the induction variables: an expression is returned
-/// for each assignment to the induction variables that satisfy the static guards of the
+/// This method performs simple pruning of the quantified variables: an expression is returned
+/// for each assignment to the quantified variables that satisfy the static guards of the
 /// comprehension. If the comprehension is inside an associative-commutative operation, use
 /// [`expand_ac`] instead, as this performs further pruning of "uninteresting" return values.
 ///
@@ -33,8 +33,8 @@ pub fn expand_simple(
     // FIXME: weave proper context through
     let mut model = Model::new(Arc::new(RwLock::new(Context::default())));
 
-    // only branch on the induction variables.
-    model.search_order = Some(comprehension.induction_vars.clone());
+    // only branch on the quantified variables.
+    model.search_order = Some(comprehension.quantified_vars.clone());
     *model.as_submodel_mut() = comprehension.generator_submodel.clone();
 
     // TODO:  if expand_ac is enabled, add Better_AC_Comprehension_Expansion here.
@@ -87,7 +87,7 @@ pub fn expand_simple(
 
     tracing::debug!(model=%model,comprehension=%comprehension,"Minion solving comprehension (simple mode)");
     minion.solve(Box::new(move |sols| {
-        // TODO: deal with represented names if induction variables are abslits.
+        // TODO: deal with represented names if quantified variables are abslits.
         let values = &mut *values_ptr.lock().unwrap();
         values.push(sols);
         true
@@ -104,23 +104,23 @@ pub fn expand_simple(
         let child_symtab = return_expression_submodel.symbols().clone();
         let return_expression = return_expression_submodel.into_single_expression();
 
-        // we only want to substitute induction variables.
+        // we only want to substitute quantified variables.
         // (definitely not machine names, as they mean something different in this scope!)
         let value: HashMap<_, _> = value
             .into_iter()
-            .filter(|(n, _)| comprehension.induction_vars.contains(n))
+            .filter(|(n, _)| comprehension.quantified_vars.contains(n))
             .collect();
 
         let value_ptr = Arc::new(value);
         let value_ptr_2 = Arc::clone(&value_ptr);
 
-        // substitute in the values for the induction variables
+        // substitute in the values for the quantified variables
         let return_expression = return_expression.transform_bi(&move |x: Atom| {
             let Atom::Reference(ref ptr) = x else {
                 return x;
             };
 
-            // is this referencing an induction var?
+            // is this referencing a quantified var?
             let Some(lit) = value_ptr_2.get(&ptr.name()) else {
                 return x;
             };
@@ -141,7 +141,7 @@ pub fn expand_simple(
 
         // Populate `machine_name_translations`
         for (name, decl) in child_symtab.into_iter_local() {
-            // do not add givens for induction vars to the parent symbol table.
+            // do not add givens for quantified vars to the parent symbol table.
             if value_ptr.get(&name).is_some()
                 && matches!(&decl.kind() as &DeclarationKind, DeclarationKind::Given(_))
             {

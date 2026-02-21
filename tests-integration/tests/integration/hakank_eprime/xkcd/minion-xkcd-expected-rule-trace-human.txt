@@ -7,44 +7,19 @@ find x: matrix indexed by [[int(1..n)]] of int(0..100000)
 
 such that
 
-(total_ = sum([given i: int(1..n)
-
-such that
-
-product([price[i],x[i];int(1..2)])
- | i: int(1..n),]))
+(total_ = sum([ product([price[i],x[i];int(1..2)]) | i : int(1..n) ]))
 
 --
 
-(total_ = sum([given i: int(1..n)
-
-such that
-
-product([price[i],x[i];int(1..2)])
- | i: int(1..n),])), 
+(total_ = sum([ product([price[i],x[i];int(1..2)]) | i : int(1..n) ])), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(1505 = sum([given i: int(1..n)
-
-such that
-
-product([Matrix([Int(215), Int(275), Int(335), Int(355), Int(420), Int(580)], Moo { inner: Int([Bounded(1, 6)]) })[i],x[i];int(1..2)])
- | i: int(1..n),])) 
+(1505 = sum([ product([Matrix([Int(215), Int(275), Int(335), Int(355), Int(420), Int(580)], Moo { inner: Int([Bounded(1, 6)]) })[i],x[i];int(1..2)]) | i : int(1..n) ])) 
 
 --
 
-(1505 = sum([given i: int(1..n)
-
-such that
-
-product([Matrix([Int(215), Int(275), Int(335), Int(355), Int(420), Int(580)], Moo { inner: Int([Bounded(1, 6)]) })[i],x#matrix_to_atom[i];int(1..2)])
- | i: int(1..n),])), 
+(1505 = sum([ product([Matrix([Int(215), Int(275), Int(335), Int(355), Int(420), Int(580)], Moo { inner: Int([Bounded(1, 6)]) })[i],x#matrix_to_atom[i];int(1..2)]) | i : int(1..n) ])), 
    ~~> select_representation_matrix ([("Representations", 8001)]) 
-(1505 = sum([given i: int(1..n)
-
-such that
-
-product([Matrix([Int(215), Int(275), Int(335), Int(355), Int(420), Int(580)], Moo { inner: Int([Bounded(1, 6)]) })[i],x#matrix_to_atom[i];int(1..2)])
- | i: int(1..n),])) 
+(1505 = sum([ product([Matrix([Int(215), Int(275), Int(335), Int(355), Int(420), Int(580)], Moo { inner: Int([Bounded(1, 6)]) })[i],x#matrix_to_atom[i];int(1..2)]) | i : int(1..n) ])) 
 new variables:
   find x#matrix_to_atom_1: int(0..100000)
   find x#matrix_to_atom_2: int(0..100000)
@@ -207,12 +182,7 @@ such that
 
 product([Matrix([Int(215), Int(275), Int(335), Int(355), Int(420), Int(580)], Moo { inner: Int([UnboundedR(1)]) })[i],x#matrix_to_atom[i];int(1..)])
 
-[given i: int(1..n)
-
-such that
-
-product([Matrix([Int(215), Int(275), Int(335), Int(355), Int(420), Int(580)], Moo { inner: Int([Bounded(1, 6)]) })[i],x#matrix_to_atom[i];int(1..2)])
- | i: int(1..n),__0: int(0..100000),__1: int(0..58000000),], 
+[ product([Matrix([Int(215), Int(275), Int(335), Int(355), Int(420), Int(580)], Moo { inner: Int([Bounded(1, 6)]) })[i],x#matrix_to_atom[i];int(1..2)]) | i : int(1..n) ], 
    ~~> expand_comprehension ([("Base", 2000)]) 
 [product([Matrix([Int(215), Int(275), Int(335), Int(355), Int(420), Int(580)], Moo { inner: Int([UnboundedR(1)]) })[1],x#matrix_to_atom[1];int(1..)]),product([Matrix([Int(215), Int(275), Int(335), Int(355), Int(420), Int(580)], Moo { inner: Int([UnboundedR(1)]) })[2],x#matrix_to_atom[2];int(1..)]),product([Matrix([Int(215), Int(275), Int(335), Int(355), Int(420), Int(580)], Moo { inner: Int([UnboundedR(1)]) })[3],x#matrix_to_atom[3];int(1..)]),product([Matrix([Int(215), Int(275), Int(335), Int(355), Int(420), Int(580)], Moo { inner: Int([UnboundedR(1)]) })[4],x#matrix_to_atom[4];int(1..)]),product([Matrix([Int(215), Int(275), Int(335), Int(355), Int(420), Int(580)], Moo { inner: Int([UnboundedR(1)]) })[5],x#matrix_to_atom[5];int(1..)]),product([Matrix([Int(215), Int(275), Int(335), Int(355), Int(420), Int(580)], Moo { inner: Int([UnboundedR(1)]) })[6],x#matrix_to_atom[6];int(1..)]);int(1..)] 
 
