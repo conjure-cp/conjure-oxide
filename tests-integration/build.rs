@@ -211,8 +211,8 @@ fn write_integration_test(
 
         let mut ignore_attr = "";
 
-        if cfg!(not(feature = "smt")) && config.solve_with_smt {
-            ignore_attr = "#[ignore = \"this test uses 'solve_with_smt=true', but the 'smt' feature is disabled!\"]\n"
+        if cfg!(not(feature = "smt")) && config.uses_smt_solver() {
+            ignore_attr = "#[ignore = \"this test requires solver=smt, but the 'smt' feature is disabled!\"]\n"
         }
 
         write!(

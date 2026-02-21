@@ -32,11 +32,12 @@ use std::sync::Mutex;
 use std::sync::RwLock;
 
 use conjure_cp::ast::Atom;
+use conjure_cp::ast::comprehension::set_quantified_expander_for_comprehensions;
 use conjure_cp::ast::{Expression, Literal, Name};
 use conjure_cp::context::Context;
 use conjure_cp::parse::tree_sitter::parse_essence_file;
 use conjure_cp::rule_engine::resolve_rule_sets;
-use conjure_cp::solver::SolverFamily;
+use conjure_cp::settings::{QuantifiedExpander, Rewriter, SatEncoding, SolverFamily};
 use conjure_cp_cli::utils::conjure::solutions_to_json;
 use conjure_cp_cli::utils::conjure::{get_solutions, get_solutions_from_conjure};
 use conjure_cp_cli::utils::testing::save_stats_json;
@@ -91,40 +92,44 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
 
     let config = file_config.merge_env();
 
-    if config.solve_with_minion {
-        solver_specific_integration_test(
-            path,
-            essence_base,
-            extension,
-            &config,
-            SolverFamily::Minion,
-            verbose,
-            accept,
-        )?;
-    }
+    let solvers = config
+        .configured_solvers()
+        .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?;
+    let rewriters = config
+        .configured_rewriters()
+        .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?;
+    let quantified_expanders = config
+        .configured_quantified_expanders()
+        .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?;
+    let sat_encodings = config
+        .configured_sat_encodings()
+        .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?;
 
-    if config.solve_with_sat {
-        solver_specific_integration_test(
-            path,
-            essence_base,
-            extension,
-            &config,
-            SolverFamily::Sat,
-            verbose,
-            accept,
-        )?;
-    }
+    for solver in solvers {
+        let sat_encodings_for_solver: Vec<SatEncoding> = if solver == SolverFamily::Sat {
+            sat_encodings.clone()
+        } else {
+            vec![SatEncoding::Log]
+        };
 
-    if config.solve_with_smt {
-        solver_specific_integration_test(
-            path,
-            essence_base,
-            extension,
-            &config,
-            SolverFamily::Smt(TheoryConfig::default()),
-            verbose,
-            accept,
-        )?;
+        for rewriter in rewriters.clone() {
+            for quantified_expander in quantified_expanders.clone() {
+                for sat_encoding in sat_encodings_for_solver.clone() {
+                    solver_specific_integration_test(
+                        path,
+                        essence_base,
+                        extension,
+                        &config,
+                        solver,
+                        sat_encoding,
+                        rewriter,
+                        quantified_expander,
+                        verbose,
+                        accept,
+                    )?;
+                }
+            }
+        }
     }
 
     Ok(())
@@ -136,12 +141,25 @@ fn solver_specific_integration_test(
     extension: &str,
     config: &TestConfig,
     solver: SolverFamily,
+    sat_encoding: SatEncoding,
+    rewriter: Rewriter,
+    quantified_expander: QuantifiedExpander,
     verbose: bool,
     accept: bool,
 ) -> Result<(), Box<dyn Error>> {
-    let solver_name = solver.as_str();
+    let solver_name = if solver == SolverFamily::Sat {
+        format!(
+            "{}-{}-{}-{}",
+            solver.as_str(),
+            sat_encoding,
+            rewriter,
+            quantified_expander
+        )
+    } else {
+        format!("{}-{}-{}", solver.as_str(), rewriter, quantified_expander)
+    };
 
-    let subscriber = create_scoped_subscriber(path, essence_base, &solver_name);
+    let subscriber = create_scoped_subscriber(path, essence_base, solver_name.as_str());
 
     // run tests in sequence not parallel when verbose logging, to ensure the logs are ordered
     // correctly
@@ -153,12 +171,30 @@ fn solver_specific_integration_test(
 
         // set the subscriber as default
         tracing::subscriber::with_default(subscriber, || {
-            integration_test_inner(path, essence_base, extension, config, solver)
+            integration_test_inner(
+                path,
+                essence_base,
+                extension,
+                config,
+                solver,
+                sat_encoding,
+                rewriter,
+                quantified_expander,
+            )
         })
     } else {
-        let subscriber = create_scoped_subscriber(path, essence_base, &solver_name);
+        let subscriber = create_scoped_subscriber(path, essence_base, solver_name.as_str());
         tracing::subscriber::with_default(subscriber, || {
-            integration_test_inner(path, essence_base, extension, config, solver)
+            integration_test_inner(
+                path,
+                essence_base,
+                extension,
+                config,
+                solver,
+                sat_encoding,
+                rewriter,
+                quantified_expander,
+            )
         })
     }
 }
@@ -202,14 +238,21 @@ fn integration_test_inner(
     extension: &str,
     config: &TestConfig,
     solver_fam: SolverFamily,
+    sat_encoding: SatEncoding,
+    rewriter: Rewriter,
+    quantified_expander: QuantifiedExpander,
 ) -> Result<(), Box<dyn Error>> {
     let context: Arc<RwLock<Context<'static>>> = Default::default();
     let accept = env::var("ACCEPT").unwrap_or("false".to_string()) == "true";
     let verbose = env::var("VERBOSE").unwrap_or("false".to_string()) == "true";
 
     if verbose {
-        println!("Running integration test for {path}/{essence_base}, ACCEPT={accept}");
+        println!(
+            "Running integration test for {path}/{essence_base}, solver={solver_fam}, sat-encoding={sat_encoding}, rewriter={rewriter}, expander={quantified_expander}, ACCEPT={accept}"
+        );
     }
+
+    set_quantified_expander_for_comprehensions(quantified_expander);
 
     // File path
     let file_path = format!("{path}/{essence_base}.{extension}");
@@ -245,12 +288,7 @@ fn integration_test_inner(
 
         // TODO (ss504): figure out why this is only here for sat
         if solver_fam == SolverFamily::Sat {
-            match config.sat_encoding.as_str() {
-                "log" => extra_rules.push("SAT_Log"),
-                "direct" => extra_rules.push("SAT_Direct"),
-                "order" => extra_rules.push("SAT_Order"),
-                _ => panic!("Unknown SAT encoding: {}", config.sat_encoding),
-            }
+            extra_rules.push(sat_encoding.as_rule_set());
         }
 
         let mut rules_to_load = DEFAULT_RULE_SETS.to_vec();
@@ -260,28 +298,27 @@ fn integration_test_inner(
 
         let mut model = parsed_model;
 
-        let rewritten = if config.enable_naive_impl {
-            rewrite_naive(&model, &rule_sets, false, false)?
-        } else if config.enable_morph_impl {
-            let submodel = model.as_submodel_mut();
-            let rules_grouped = get_rules_grouped(&rule_sets)
-                .unwrap_or_else(|_| bug!("get_rule_priorities() failed!"))
-                .into_iter()
-                .map(|(_, rule)| rule.into_iter().map(|f| f.rule).collect_vec())
-                .collect_vec();
+        let rewritten = match rewriter {
+            Rewriter::Naive => rewrite_naive(&model, &rule_sets, false, false)?,
+            Rewriter::Morph => {
+                let submodel = model.as_submodel_mut();
+                let rules_grouped = get_rules_grouped(&rule_sets)
+                    .unwrap_or_else(|_| bug!("get_rule_priorities() failed!"))
+                    .into_iter()
+                    .map(|(_, rule)| rule.into_iter().map(|f| f.rule).collect_vec())
+                    .collect_vec();
 
-            let engine = EngineBuilder::new()
-                .set_selector(select_panic)
-                .append_rule_groups(rules_grouped)
-                .build();
-            let (expr, symbol_table) =
-                engine.morph(submodel.root().clone(), submodel.symbols().clone());
+                let engine = EngineBuilder::new()
+                    .set_selector(select_panic)
+                    .append_rule_groups(rules_grouped)
+                    .build();
+                let (expr, symbol_table) =
+                    engine.morph(submodel.root().clone(), submodel.symbols().clone());
 
-            *submodel.symbols_mut() = symbol_table;
-            submodel.replace_root(expr);
-            model.clone()
-        } else {
-            panic!("No rewriter implementation specified")
+                *submodel.symbols_mut() = symbol_table;
+                submodel.replace_root(expr);
+                model.clone()
+            }
         };
         if verbose {
             println!("Rewritten model: {rewritten:#?}");
@@ -425,21 +462,21 @@ fn integration_test_inner(
     }
 
     // Check Stage 3a (solutions)
-    if config.solve_with_minion {
-        let expected_solutions_json =
-            read_solutions_json(path, essence_base, "expected", SolverFamily::Minion)?;
-        let username_solutions_json = solutions_to_json(&solutions);
-        assert_eq!(username_solutions_json, expected_solutions_json);
-    } else if config.solve_with_sat {
-        let expected_solutions_json =
-            read_solutions_json(path, essence_base, "expected", SolverFamily::Sat)?;
-        let username_solutions_json = solutions_to_json(&solutions);
-        assert_eq!(username_solutions_json, expected_solutions_json);
-    } else if config.solve_with_smt {
-        #[cfg(not(feature = "smt"))]
-        panic!("Test {path} uses 'solve_with_smt=true', but the 'smt' feature is disabled!");
+    match solver_fam {
+        SolverFamily::Minion => {
+            let expected_solutions_json =
+                read_solutions_json(path, essence_base, "expected", SolverFamily::Minion)?;
+            let username_solutions_json = solutions_to_json(&solutions);
+            assert_eq!(username_solutions_json, expected_solutions_json);
+        }
+        SolverFamily::Sat => {
+            let expected_solutions_json =
+                read_solutions_json(path, essence_base, "expected", SolverFamily::Sat)?;
+            let username_solutions_json = solutions_to_json(&solutions);
+            assert_eq!(username_solutions_json, expected_solutions_json);
+        }
         #[cfg(feature = "smt")]
-        {
+        SolverFamily::Smt(_) => {
             let expected_solutions_json = read_solutions_json(
                 path,
                 essence_base,
@@ -452,7 +489,7 @@ fn integration_test_inner(
     }
 
     // // TODO: Implement rule trace validation for morph
-    if config.validate_rule_traces && !config.enable_morph_impl {
+    if config.validate_rule_traces && rewriter != Rewriter::Morph {
         let generated = read_human_rule_trace(path, essence_base, "generated", &solver_fam)?;
         let expected = read_human_rule_trace(path, essence_base, "expected", &solver_fam)?;
 
