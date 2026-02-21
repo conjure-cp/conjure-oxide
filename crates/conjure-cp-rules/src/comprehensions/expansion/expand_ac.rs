@@ -37,22 +37,22 @@ pub fn expand_ac(
     // ADD RETURN EXPRESSION TO GENERATOR MODEL AS CONSTRAINT
     // ======================================================
 
-    // References to induction variables in the return expression point to entries in the
+    // References to quantified variables in the return expression point to entries in the
     // return_expression symbol table.
     //
     // Change these to point to the corresponding entry in the generator symbol table instead.
     //
-    // In the generator symbol-table, induction variables are decision variables (as we are
+    // In the generator symbol-table, quantified variables are decision variables (as we are
     // solving for them), but in the return expression symbol table they are givens.
-    let induction_vars_2 = comprehension.induction_vars.clone();
+    let quantified_vars_2 = comprehension.quantified_vars.clone();
     let generator_symtab_ptr = comprehension.generator_submodel.symbols_ptr_unchecked();
     let return_expression =
         comprehension
             .clone()
             .return_expression()
             .transform_bi(&move |decl: DeclarationPtr| {
-                // if this variable is an induction var...
-                if induction_vars_2.contains(&decl.name()) {
+                // if this variable is a quantified var...
+                if quantified_vars_2.contains(&decl.name()) {
                     // ... use the generator symbol tables version of it
 
                     generator_symtab_ptr
@@ -64,7 +64,7 @@ pub fn expand_ac(
                 }
             });
 
-    // Replace all boolean expressions referencing non-induction variables in the return
+    // Replace all boolean expressions referencing non-quantified variables in the return
     // expression with dummy variables. This allows us to add it as a constraint to the
     // generator model.
     let generator_submodel = add_return_expression_to_generator_model(
@@ -80,8 +80,8 @@ pub fn expand_ac(
 
     *generator_model.as_submodel_mut() = generator_submodel;
 
-    // only branch on the induction variables.
-    generator_model.search_order = Some(comprehension.induction_vars.clone());
+    // only branch on the quantified variables.
+    generator_model.search_order = Some(comprehension.quantified_vars.clone());
 
     let extra_rule_sets = &[
         "Base",
@@ -126,13 +126,13 @@ pub fn expand_ac(
     let values = Arc::new(Mutex::new(Vec::new()));
     let values_ptr = Arc::clone(&values);
 
-    // SOLVE FOR THE INDUCTION VARIABLES, AND SUBSTITUTE INTO THE REWRITTEN RETURN EXPRESSION
+    // SOLVE FOR THE QUANTIFIED VARIABLES, AND SUBSTITUTE INTO THE REWRITTEN RETURN EXPRESSION
     // ======================================================================================
 
     tracing::debug!(model=%generator_model,comprehension=%comprehension,"Minion solving comprehnesion (ac mode)");
 
     minion.solve(Box::new(move |sols| {
-        // TODO: deal with represented names if induction variables are abslits.
+        // TODO: deal with represented names if quantified variables are abslits.
         let values = &mut *values_ptr.lock().unwrap();
         values.push(sols);
         true
@@ -149,23 +149,23 @@ pub fn expand_ac(
         let child_symtab = return_expression_submodel.symbols().clone();
         let return_expression = return_expression_submodel.into_single_expression();
 
-        // we only want to substitute induction variables.
+        // we only want to substitute quantified variables.
         // (definitely not machine names, as they mean something different in this scope!)
         let value: HashMap<_, _> = value
             .into_iter()
-            .filter(|(n, _)| comprehension.induction_vars.contains(n))
+            .filter(|(n, _)| comprehension.quantified_vars.contains(n))
             .collect();
 
         let value_ptr = Arc::new(value);
         let value_ptr_2 = Arc::clone(&value_ptr);
 
-        // substitute in the values for the induction variables
+        // substitute in the values for the quantified variables
         let return_expression = return_expression.transform_bi(&move |x: Atom| {
             let Atom::Reference(ref ptr) = x else {
                 return x;
             };
 
-            // is this referencing an induction var?
+            // is this referencing a quantified var?
             let Some(lit) = value_ptr_2.get(&ptr.name()) else {
                 return x;
             };
@@ -186,7 +186,7 @@ pub fn expand_ac(
 
         // Populate `machine_name_translations`
         for (name, decl) in child_symtab.into_iter_local() {
-            // do not add givens for induction vars to the parent symbol table.
+            // do not add givens for quantified vars to the parent symbol table.
             if value_ptr.get(&name).is_some()
                 && matches!(&decl.kind() as &DeclarationKind, DeclarationKind::Given(_))
             {
@@ -224,18 +224,18 @@ pub fn expand_ac(
     Ok(return_expressions)
 }
 
-/// Eliminate all references to non induction variables by introducing dummy variables to the
+/// Eliminate all references to non-quantified variables by introducing dummy variables to the
 /// return expression. This modified return expression is added to the generator model, which is
 /// returned.
 ///
 /// Dummy variables must be the same type as the AC operators identity value.
 ///
 /// To reduce the number of dummy variables, we turn the largest expression containing only
-/// non induction variables and of the correct type into a dummy variable.
+/// non-quantified variables and of the correct type into a dummy variable.
 ///
 /// If there is no such expression, (e.g. and[(a<i) | i: int(1..10)]) , we use the smallest
-/// expression of the correct type that contains a non induction variable. This ensures that
-/// we lose as few references to induction variables as possible.
+/// expression of the correct type that contains a non-quantified variable. This ensures that
+/// we lose as few references to quantified variables as possible.
 fn add_return_expression_to_generator_model(
     mut generator_submodel: SubModel,
     return_expression: Expression,
@@ -251,21 +251,21 @@ fn add_return_expression_to_generator_model(
     'outer: loop {
         let focus: &mut Expression = zipper.focus_mut();
 
-        let (non_induction_vars, induction_vars) = partition_variables(focus, &symtab);
+        let (non_quantified_vars, quantified_vars) = partition_variables(focus, &symtab);
 
         // an expression or its descendants needs to be turned into a dummy variable if it
-        // contains non-induction variables.
-        let has_non_induction_vars = !non_induction_vars.is_empty();
+        // contains non-quantified variables.
+        let has_non_quantified_vars = !non_quantified_vars.is_empty();
 
-        // does this expression contain induction variables?
-        let has_induction_vars = !induction_vars.is_empty();
+        // does this expression contain quantified variables?
+        let has_quantified_vars = !quantified_vars.is_empty();
 
         // can this expression be turned into a dummy variable?
         let can_be_dummy_var = can_be_dummy_variable(focus, &dummy_var_type);
 
         // The expression and its descendants don't need a dummy variables, so we don't
         // need to descend into its children.
-        if !has_non_induction_vars {
+        if !has_non_quantified_vars {
             // go to next node or quit
             while zipper.go_right().is_none() {
                 let Some(()) = zipper.go_up() else {
@@ -276,14 +276,14 @@ fn add_return_expression_to_generator_model(
             continue;
         }
 
-        // The expression contains non-induction variables:
+        // The expression contains non-quantified variables:
 
         // does this expression have any children that can be turned into dummy variables?
         let has_eligible_child = focus.universe().iter().skip(1).any(|expr| {
             // eligible if it can be turned into a dummy variable, and turning it into a
-            // dummy variable removes a non-induction variable from the model.
+            // dummy variable removes a non-quantified variable from the model.
             can_be_dummy_variable(expr, &dummy_var_type)
-                && contains_non_induction_variables(expr, &symtab)
+                && contains_non_quantified_variables(expr, &symtab)
         });
 
         // This expression has no child that can be turned into a dummy variable, but can
@@ -341,17 +341,17 @@ fn add_return_expression_to_generator_model(
             }
             unreachable!();
         }
-        // If the expression contains induction variables as well as non-induction
-        // variables, try to retain the induction varables by finding a child that can be
-        // made a dummy variable which has only non-induction variables.
-        else if has_eligible_child && has_induction_vars {
+        // If the expression contains quantified variables as well as non-quantified
+        // variables, try to retain the quantified variables by finding a child that can be
+        // made a dummy variable which has only non-quantified variables.
+        else if has_eligible_child && has_quantified_vars {
             zipper
                 .go_down()
                 .expect("we know the focus has a child, so zipper.go_down() should succeed");
         }
-        // This expression contains no induction variables, so no point trying to turn a
+        // This expression contains no quantified variables, so no point trying to turn a
         // child into a dummy variable.
-        else if has_eligible_child && !has_induction_vars {
+        else if has_eligible_child && !has_quantified_vars {
             // introduce dummy var and continue
             let dummy_domain = focus.domain_of().unwrap();
             let dummy_decl = symtab.gensym(&dummy_domain);
@@ -381,7 +381,7 @@ fn add_return_expression_to_generator_model(
         Moo::new(zipper.rebuild_root()),
     );
 
-    // double check that the above transformation didn't miss any stray non induction vars
+    // double check that the above transformation didn't miss any stray non-quantified vars
     assert!(
         Biplate::<DeclarationPtr>::universe_bi(&new_return_expression)
             .iter()
@@ -396,25 +396,25 @@ fn add_return_expression_to_generator_model(
     generator_submodel
 }
 
-/// Returns a tuple of non-induction decision variables and induction variables inside the expression.
+/// Returns a tuple of non-quantified decision variables and quantified variables inside the expression.
 ///
 /// As lettings, givens, etc. will eventually be subsituted for constants, this only returns
-/// non-induction _decision_ variables.
+/// non-quantified _decision_ variables.
 #[inline]
 fn partition_variables(
     expr: &Expression,
     symtab: &SymbolTable,
 ) -> (VecDeque<Name>, VecDeque<Name>) {
-    // doing this as two functions non_induction_variables and induction_variables might've been
+    // doing this as two functions non_quantified_variables and quantified_variables might've been
     // easier to read.
     //
     // However, doing this in one function avoids an extra universe call...
-    let (non_induction_vars, induction_vars): (VecDeque<Name>, VecDeque<Name>) =
+    let (non_quantified_vars, quantified_vars): (VecDeque<Name>, VecDeque<Name>) =
         Biplate::<Name>::universe_bi(expr)
             .into_iter()
             .partition(|x| symtab.lookup_local(x).is_none());
 
-    (non_induction_vars, induction_vars)
+    (non_quantified_vars, quantified_vars)
 }
 
 /// Returns `true` if `expr` can be turned into a dummy variable.
@@ -429,11 +429,11 @@ fn can_be_dummy_variable(expr: &Expression, dummy_variable_type: &ReturnType) ->
     expr.return_type() == *dummy_variable_type
 }
 
-/// Returns `true` if `expr` or its descendants contains non-induction variables.
+/// Returns `true` if `expr` or its descendants contains non-quantified variables.
 #[inline]
-fn contains_non_induction_variables(expr: &Expression, symtab: &SymbolTable) -> bool {
+fn contains_non_quantified_variables(expr: &Expression, symtab: &SymbolTable) -> bool {
     let names_referenced: VecDeque<Name> = expr.universe_bi();
-    // a name is a non-induction variable if its definition is not in the local scope of the
+    // a name is a non-quantified variable if its definition is not in the local scope of the
     // comprehension's generators.
     names_referenced
         .iter()

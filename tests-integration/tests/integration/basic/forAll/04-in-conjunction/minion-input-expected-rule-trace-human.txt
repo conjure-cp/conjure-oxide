@@ -5,45 +5,20 @@ find b: bool
 
 such that
 
-and([a,(b = and([given k: int(1..2)
-
-such that
-
-(k <= 5)
- | k: int(1..2),]));int(1..)])
+and([a,(b = and([ (k <= 5) | k : int(1..2) ]));int(1..)])
 
 --
 
-and([a,(b = and([given k: int(1..2)
-
-such that
-
-(k <= 5)
- | k: int(1..2),]));int(1..)]), 
+and([a,(b = and([ (k <= 5) | k : int(1..2) ]));int(1..)]), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
 a,
-(b = and([given k: int(1..2)
-
-such that
-
-(k <= 5)
- | k: int(1..2),])) 
+(b = and([ (k <= 5) | k : int(1..2) ])) 
 
 --
 
-(b = and([given k: int(1..2)
-
-such that
-
-(k <= 5)
- | k: int(1..2),])), 
+(b = and([ (k <= 5) | k : int(1..2) ])), 
    ~~> bool_eq_to_reify ([("Minion", 4400)]) 
-Reify(and([given k: int(1..2)
-
-such that
-
-(k <= 5)
- | k: int(1..2),]), b) 
+Reify(and([ (k <= 5) | k : int(1..2) ]), b) 
 
 --
 
@@ -112,12 +87,7 @@ such that
 
 Ineq(k, 5, 0)
 
-and([given k: int(1..2)
-
-such that
-
-(k <= 5)
- | k: int(1..2),__0: bool,]), 
+and([ (k <= 5) | k : int(1..2) ]), 
    ~~> expand_comprehension_ac ([("Better_AC_Comprehension_Expansion", 2001)]) 
 and([;int(1..)]) 
 
