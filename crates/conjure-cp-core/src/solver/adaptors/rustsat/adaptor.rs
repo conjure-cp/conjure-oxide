@@ -157,7 +157,8 @@ impl SolverAdaptor for Sat {
                 )
             })?;
 
-            let mut has_sol = false;
+            // let mut has_sol = false;
+            has_sol = false;
             for (name, lit) in &var_map {
                 let inserter = sol.var_value(lit.var());
                 sol.assign_var(lit.var(), inserter);
