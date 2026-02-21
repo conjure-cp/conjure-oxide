@@ -5,7 +5,8 @@ use std::{
 
 use conjure_cp::{
     ast::{
-        Atom, DeclarationKind, DeclarationPtr, Expression, Model, Name, SymbolTable,
+        Atom, DecisionVariable, DeclarationKind, DeclarationPtr, Expression, Model, Name, SubModel,
+        SymbolTable,
         comprehension::{Comprehension, USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS},
         serde::{HasId as _, ObjId},
     },
@@ -16,16 +17,14 @@ use conjure_cp::{
 };
 use uniplate::Biplate as _;
 
-/// Expands the comprehension using Minion, returning the resulting expressions.
+/// Expands the comprehension by solving quantified variables with Minion.
 ///
-/// This method performs simple pruning of the quantified variables: an expression is returned
-/// for each assignment to the quantified variables that satisfy the static guards of the
-/// comprehension. If the comprehension is inside an associative-commutative operation, use
-/// [`expand_ac`] instead, as this performs further pruning of "uninteresting" return values.
+/// This returns one expression per assignment to quantified variables that satisfies the static
+/// guards of the comprehension.
 ///
 /// If successful, this modifies the symbol table given to add aux-variables needed inside the
 /// expanded expressions.
-pub fn expand_simple(
+pub fn expand_via_solver(
     comprehension: Comprehension,
     symtab: &mut SymbolTable,
 ) -> Result<Vec<Expression>, SolverError> {
@@ -37,9 +36,7 @@ pub fn expand_simple(
     model.search_order = Some(comprehension.quantified_vars.clone());
     *model.as_submodel_mut() = comprehension.generator_submodel.clone();
 
-    // TODO:  if expand_ac is enabled, add Better_AC_Comprehension_Expansion here.
-
-    // call rewrite here as well as in expand_ac, just to be consistent
+    // call rewrite here as well as in expand_via_solver_ac, just to be consistent
     let extra_rule_sets = &["Base", "Constant", "Bubble"];
 
     let rule_sets = resolve_rule_sets(SolverFamily::Minion, extra_rule_sets).unwrap();
@@ -80,12 +77,21 @@ pub fn expand_simple(
             rewrite_naive(&return_expression_model, &rule_sets, false, false).unwrap()
         };
 
-    let minion = minion.load_model(model.clone())?;
+    let solver_model = model.clone();
+
+    // Minion expects quantified variables in the temporary generator model as find declarations.
+    // Keep this conversion local to the model passed into Minion.
+    let _temp_finds = temporarily_materialise_quantified_vars_as_finds(
+        solver_model.as_submodel(),
+        &comprehension.quantified_vars,
+    );
+
+    let minion = minion.load_model(solver_model)?;
 
     let values = Arc::new(Mutex::new(Vec::new()));
     let values_ptr = Arc::clone(&values);
 
-    tracing::debug!(model=%model,comprehension=%comprehension,"Minion solving comprehension (simple mode)");
+    tracing::debug!(model=%model,comprehension=%comprehension,"Minion solving comprehension (solver mode)");
     minion.solve(Box::new(move |sols| {
         // TODO: deal with represented names if quantified variables are abslits.
         let values = &mut *values_ptr.lock().unwrap();
@@ -141,9 +147,12 @@ pub fn expand_simple(
 
         // Populate `machine_name_translations`
         for (name, decl) in child_symtab.into_iter_local() {
-            // do not add givens for quantified vars to the parent symbol table.
+            // do not add quantified declarations for quantified vars to the parent symbol table.
             if value_ptr.get(&name).is_some()
-                && matches!(&decl.kind() as &DeclarationKind, DeclarationKind::Given(_))
+                && matches!(
+                    &decl.kind() as &DeclarationKind,
+                    DeclarationKind::Given(_) | DeclarationKind::Quantified(_)
+                )
             {
                 continue;
             }
@@ -177,4 +186,43 @@ pub fn expand_simple(
     }
 
     Ok(return_expressions)
+}
+
+/// Guard that temporarily converts quantified declarations to find declarations.
+struct TempQuantifiedFindGuard {
+    originals: Vec<(DeclarationPtr, DeclarationKind)>,
+}
+
+impl Drop for TempQuantifiedFindGuard {
+    fn drop(&mut self) {
+        for (mut decl, kind) in self.originals.drain(..) {
+            let _ = decl.replace_kind(kind);
+        }
+    }
+}
+
+/// Converts quantified declarations in `submodel` to temporary find declarations.
+fn temporarily_materialise_quantified_vars_as_finds(
+    submodel: &SubModel,
+    quantified_vars: &[Name],
+) -> TempQuantifiedFindGuard {
+    let symbols = submodel.symbols().clone();
+    let mut originals = Vec::new();
+
+    for name in quantified_vars {
+        let Some(mut decl) = symbols.lookup_local(name) else {
+            continue;
+        };
+
+        let old_kind = decl.kind().clone();
+        let Some(domain) = decl.domain() else {
+            continue;
+        };
+
+        let new_kind = DeclarationKind::Find(DecisionVariable::new(domain));
+        let _ = decl.replace_kind(new_kind);
+        originals.push((decl, old_kind));
+    }
+
+    TempQuantifiedFindGuard { originals }
 }

@@ -1,15 +1,22 @@
 //! Comprehension expansion rules
 
-mod expand_ac;
-mod expand_simple;
+mod expand_native;
+mod expand_via_solver;
+mod expand_via_solver_ac;
 
-pub use expand_ac::expand_ac;
-pub use expand_simple::expand_simple;
+pub use expand_native::expand_native;
+pub use expand_via_solver::expand_via_solver;
+pub use expand_via_solver_ac::expand_via_solver_ac;
 
 use std::collections::VecDeque;
 
 use conjure_cp::{
-    ast::{Expression as Expr, SymbolTable, comprehension::Comprehension},
+    ast::{
+        Expression as Expr, SymbolTable,
+        comprehension::{
+            Comprehension, QuantifiedExpander, quantified_expander_for_comprehensions,
+        },
+    },
     into_matrix_expr,
     rule_engine::{
         ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
@@ -24,9 +31,13 @@ use conjure_cp::rule_engine::register_rule_set;
 // optimised comprehension expansion for associative-commutative operators
 register_rule_set!("Better_AC_Comprehension_Expansion", ("Base"));
 
-/// Expand compatible comprehensions using ac optimisations / Comprehension::expand_ac.
+/// Expand compatible comprehensions using AC optimisations via the solver-backed path.
 #[register_rule(("Better_AC_Comprehension_Expansion", 2001))]
 fn expand_comprehension_ac(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    if quantified_expander_for_comprehensions() != QuantifiedExpander::ExpandViaSolverAc {
+        return Err(RuleNotApplicable);
+    }
+
     // Is this an ac expression?
     let ac_operator_kind = expr.to_ac_operator_kind().ok_or(RuleNotApplicable)?;
 
@@ -50,7 +61,7 @@ fn expand_comprehension_ac(expr: &Expr, symbols: &SymbolTable) -> ApplicationRes
 
     // TODO: check what kind of error this throws and maybe panic
     let mut symbols = symbols.clone();
-    let results = expand_ac((**comprehension).clone(), &mut symbols, ac_operator_kind)
+    let results = expand_via_solver_ac((**comprehension).clone(), &mut symbols, ac_operator_kind)
         .or(Err(RuleNotApplicable))?;
 
     let new_expr = ac_operator_kind.as_expression(into_matrix_expr!(results));
@@ -74,8 +85,15 @@ fn expand_comprehension(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
     // TODO: check what kind of error this throws and maybe panic
 
     let mut symbols = symbols.clone();
-    let results =
-        expand_simple(comprehension.as_ref().clone(), &mut symbols).or(Err(RuleNotApplicable))?;
+    let results = match quantified_expander_for_comprehensions() {
+        QuantifiedExpander::ExpandNative => {
+            expand_native(comprehension.as_ref().clone(), &mut symbols)
+        }
+        QuantifiedExpander::ExpandViaSolver | QuantifiedExpander::ExpandViaSolverAc => {
+            expand_via_solver(comprehension.as_ref().clone(), &mut symbols)
+        }
+    }
+    .or(Err(RuleNotApplicable))?;
 
     Ok(Reduction::with_symbols(into_matrix_expr!(results), symbols))
 }

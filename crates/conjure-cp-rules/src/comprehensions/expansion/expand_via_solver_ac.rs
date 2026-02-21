@@ -5,8 +5,8 @@ use std::{
 
 use conjure_cp::{
     ast::{
-        Atom, DeclarationKind, DeclarationPtr, Expression, Metadata, Model, Moo, Name, ReturnType,
-        SubModel, SymbolTable, Typeable as _,
+        Atom, DecisionVariable, DeclarationKind, DeclarationPtr, Expression, Metadata, Model, Moo,
+        Name, ReturnType, SubModel, SymbolTable, Typeable as _,
         ac_operators::ACOperatorKind,
         comprehension::{Comprehension, USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS},
         serde::{HasId as _, ObjId},
@@ -29,7 +29,7 @@ use uniplate::{Biplate, Uniplate as _, zipper::Zipper};
 ///
 /// If successful, this modifies the symbol table given to add aux-variables needed inside the
 /// expanded expressions.
-pub fn expand_ac(
+pub fn expand_via_solver_ac(
     comprehension: Comprehension,
     symtab: &mut SymbolTable,
     ac_operator: ACOperatorKind,
@@ -90,6 +90,13 @@ pub fn expand_ac(
         "Better_AC_Comprehension_Expansion",
     ];
 
+    // Minion unrolling expects quantified variables in the generator model as find declarations.
+    // Keep this conversion local to the temporary model used for solving.
+    let _temp_finds = temporarily_materialise_quantified_vars_as_finds(
+        generator_model.as_submodel(),
+        &comprehension.quantified_vars,
+    );
+
     let rule_sets = resolve_rule_sets(SolverFamily::Minion, extra_rule_sets).unwrap();
 
     let generator_model = if USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS.load(Ordering::Relaxed) {
@@ -103,7 +110,7 @@ pub fn expand_ac(
 
     let minion = match minion {
         Err(e) => {
-            warn!(why=%e,model=%generator_model,"Loading generator model failed, failing expand_ac rule");
+            warn!(why=%e,model=%generator_model,"Loading generator model failed, failing solver-backed AC comprehension expansion rule");
             return Err(e);
         }
         Ok(minion) => minion,
@@ -186,9 +193,12 @@ pub fn expand_ac(
 
         // Populate `machine_name_translations`
         for (name, decl) in child_symtab.into_iter_local() {
-            // do not add givens for quantified vars to the parent symbol table.
+            // do not add quantified declarations for quantified vars to the parent symbol table.
             if value_ptr.get(&name).is_some()
-                && matches!(&decl.kind() as &DeclarationKind, DeclarationKind::Given(_))
+                && matches!(
+                    &decl.kind() as &DeclarationKind,
+                    DeclarationKind::Given(_) | DeclarationKind::Quantified(_)
+                )
             {
                 continue;
             }
@@ -222,6 +232,45 @@ pub fn expand_ac(
     }
 
     Ok(return_expressions)
+}
+
+/// Guard that temporarily converts quantified declarations to find declarations.
+struct TempQuantifiedFindGuard {
+    originals: Vec<(DeclarationPtr, DeclarationKind)>,
+}
+
+impl Drop for TempQuantifiedFindGuard {
+    fn drop(&mut self) {
+        for (mut decl, kind) in self.originals.drain(..) {
+            let _ = decl.replace_kind(kind);
+        }
+    }
+}
+
+/// Converts quantified declarations in `submodel` to temporary find declarations.
+fn temporarily_materialise_quantified_vars_as_finds(
+    submodel: &SubModel,
+    quantified_vars: &[Name],
+) -> TempQuantifiedFindGuard {
+    let symbols = submodel.symbols().clone();
+    let mut originals = Vec::new();
+
+    for name in quantified_vars {
+        let Some(mut decl) = symbols.lookup_local(name) else {
+            continue;
+        };
+
+        let old_kind = decl.kind().clone();
+        let Some(domain) = decl.domain() else {
+            continue;
+        };
+
+        let new_kind = DeclarationKind::Find(DecisionVariable::new(domain));
+        let _ = decl.replace_kind(new_kind);
+        originals.push((decl, old_kind));
+    }
+
+    TempQuantifiedFindGuard { originals }
 }
 
 /// Eliminate all references to non-quantified variables by introducing dummy variables to the
