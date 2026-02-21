@@ -59,6 +59,14 @@ pub fn parse_essence_with_context(
         }
     };
 
+    if tree.root_node().has_error() {
+        // For now, return 'not implemented' for syntactic errors
+        // TODO: connect to syntactic error parsing here for recoverable errors
+        return Err(FatalParseError::NotImplemented(
+            "Syntactic error detection and reporting".to_string(),
+        ));
+    }
+
     let mut model = Model::new(context);
     let root_node = tree.root_node();
     let symbols_ptr = model.as_submodel().symbols_ptr_unchecked().clone();
