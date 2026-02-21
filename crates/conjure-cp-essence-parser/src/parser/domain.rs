@@ -1,7 +1,8 @@
 use super::util::named_children;
 use crate::EssenceParseError;
+use crate::expression::parse_expression;
 use conjure_cp_core::ast::{
-    DeclarationPtr, Domain, DomainPtr, IntVal, Name, Range, RecordEntry, Reference, SetAttr,
+    DeclarationPtr, Domain, DomainPtr, IntVal, Moo, Name, Range, RecordEntry, Reference, SetAttr,
     SymbolTablePtr,
 };
 use core::panic;
@@ -62,6 +63,31 @@ fn get_declaration_ptr_from_identifier(
     Ok(decl)
 }
 
+/// Helper function to parse a node into an IntVal
+/// Handles constants, references, and arbitrary expressions
+fn parse_int_val(
+    node: Node,
+    source_code: &str,
+    root: &Node,
+    symbols_ptr: &Option<SymbolTablePtr>,
+) -> Result<IntVal, EssenceParseError> {
+    // For atoms, try to parse as a constant integer first
+    if node.kind() == "atom" {
+        let text = &source_code[node.start_byte()..node.end_byte()];
+        if let Ok(integer) = text.parse::<i32>() {
+            return Ok(IntVal::Const(integer));
+        }
+        // Otherwise, check if it's an identifier reference
+        if let Ok(decl) = get_declaration_ptr_from_identifier(node, source_code, symbols_ptr) {
+            return Ok(IntVal::Reference(Reference::new(decl)));
+        }
+    }
+
+    // For anything else (arithmetic_expr, sum_expr, etc.), parse as an expression
+    let expr = parse_expression(node, source_code, root, symbols_ptr.clone())?;
+    Ok(IntVal::Expr(Moo::new(expr)))
+}
+
 /// Parse an integer domain. Can be a single integer or a range.
 fn parse_int_domain(
     int_domain: Node,
@@ -69,136 +95,82 @@ fn parse_int_domain(
     symbols_ptr: &Option<SymbolTablePtr>,
 ) -> DomainPtr {
     if int_domain.child_count() == 1 {
+        // for domains of just 'int' with no range
         return Domain::int(vec![Range::Bounded(i32::MIN, i32::MAX)]);
     }
-    let mut ranges: Vec<Range<i32>> = Vec::new();
-    let mut ranges_unresolved: Vec<Range<IntVal>> = Vec::new();
+
     let range_list = int_domain
         .child_by_field_name("ranges")
         .expect("No range list found for int domain");
+
+    let mut ranges_unresolved: Vec<Range<IntVal>> = Vec::new();
+    let mut all_resolved = true;
+
     for domain_component in named_children(&range_list) {
         match domain_component.kind() {
-            "atom" => {
-                let text = &source_code[domain_component.start_byte()..domain_component.end_byte()];
-                // Try parsing as a literal integer first
-                if let Ok(integer) = text.parse::<i32>() {
-                    ranges.push(Range::Single(integer));
-                    continue;
+            "atom" | "arithmetic_expr" => {
+                let int_val =
+                    parse_int_val(domain_component, source_code, &int_domain, symbols_ptr)
+                        .unwrap_or_else(|_| panic!("Failed to parse integer value"));
+
+                if !matches!(int_val, IntVal::Const(_)) {
+                    all_resolved = false;
                 }
-                // Otherwise, treat as a reference
-                let decl =
-                    get_declaration_ptr_from_identifier(domain_component, source_code, symbols_ptr);
-                if let Ok(decl) = decl {
-                    ranges_unresolved.push(Range::Single(IntVal::Reference(Reference::new(decl))));
-                } else {
-                    panic!("'{}' is not a valid integer", text);
-                }
+                ranges_unresolved.push(Range::Single(int_val));
             }
             "int_range" => {
-                let lower_bound: Option<Result<i32, DeclarationPtr>> =
-                    match domain_component.child_by_field_name("lower") {
-                        Some(lower_node) => {
-                            // Try parsing as a literal integer first
-                            let text = &source_code[lower_node.start_byte()..lower_node.end_byte()];
-                            if let Ok(integer) = text.parse::<i32>() {
-                                Some(Ok(integer))
-                            } else {
-                                let decl = get_declaration_ptr_from_identifier(
-                                    lower_node,
-                                    source_code,
-                                    symbols_ptr,
-                                );
-                                if let Ok(decl) = decl {
-                                    Some(Err(decl))
-                                } else {
-                                    panic!("'{}' is not a valid integer", text);
-                                }
-                            }
-                        }
-                        None => None,
-                    };
-                let upper_bound: Option<Result<i32, DeclarationPtr>> =
-                    match domain_component.child_by_field_name("upper") {
-                        Some(upper_node) => {
-                            // Try parsing as a literal integer first
-                            let text = &source_code[upper_node.start_byte()..upper_node.end_byte()];
-                            if let Ok(integer) = text.parse::<i32>() {
-                                Some(Ok(integer))
-                            } else {
-                                let decl = get_declaration_ptr_from_identifier(
-                                    upper_node,
-                                    source_code,
-                                    symbols_ptr,
-                                );
-                                if let Ok(decl) = decl {
-                                    Some(Err(decl))
-                                } else {
-                                    panic!("'{}' is not a valid integer", text);
-                                }
-                            }
-                        }
-                        None => None,
-                    };
+                let lower_bound = domain_component
+                    .child_by_field_name("lower")
+                    .map(|node| parse_int_val(node, source_code, &int_domain, symbols_ptr));
+                let upper_bound = domain_component
+                    .child_by_field_name("upper")
+                    .map(|node| parse_int_val(node, source_code, &int_domain, symbols_ptr));
 
                 match (lower_bound, upper_bound) {
-                    (Some(Ok(lower)), Some(Ok(upper))) => ranges.push(Range::Bounded(lower, upper)),
-                    (Some(Ok(lower)), Some(Err(decl))) => {
-                        ranges_unresolved.push(Range::Bounded(
-                            IntVal::Const(lower),
-                            IntVal::Reference(Reference::new(decl)),
-                        ));
-                    }
-                    (Some(Err(decl)), Some(Ok(upper))) => {
-                        ranges_unresolved.push(Range::Bounded(
-                            IntVal::Reference(Reference::new(decl)),
-                            IntVal::Const(upper),
-                        ));
-                    }
-                    (Some(Err(decl_lower)), Some(Err(decl_upper))) => {
-                        ranges_unresolved.push(Range::Bounded(
-                            IntVal::Reference(Reference::new(decl_lower)),
-                            IntVal::Reference(Reference::new(decl_upper)),
-                        ));
+                    (Some(Ok(lower)), Some(Ok(upper))) => {
+                        if !matches!(lower, IntVal::Const(_)) || !matches!(upper, IntVal::Const(_))
+                        {
+                            all_resolved = false;
+                        }
+                        ranges_unresolved.push(Range::Bounded(lower, upper));
                     }
                     (Some(Ok(lower)), None) => {
-                        ranges.push(Range::UnboundedR(lower));
-                    }
-                    (Some(Err(decl)), None) => {
-                        ranges_unresolved
-                            .push(Range::UnboundedR(IntVal::Reference(Reference::new(decl))));
+                        if !matches!(lower, IntVal::Const(_)) {
+                            all_resolved = false;
+                        }
+                        ranges_unresolved.push(Range::UnboundedR(lower));
                     }
                     (None, Some(Ok(upper))) => {
-                        ranges.push(Range::UnboundedL(upper));
+                        if !matches!(upper, IntVal::Const(_)) {
+                            all_resolved = false;
+                        }
+                        ranges_unresolved.push(Range::UnboundedL(upper));
                     }
-                    (None, Some(Err(decl))) => {
-                        ranges_unresolved
-                            .push(Range::UnboundedL(IntVal::Reference(Reference::new(decl))));
-                    }
-                    (None, None) => {
-                        ranges.push(Range::Unbounded);
-                    }
+                    _ => panic!("Invalid int range"),
                 }
             }
-            _ => panic!("unsupported int range type"),
+            _ => panic!("unsupported domain component: {}", domain_component.kind()),
         }
     }
 
-    if !ranges_unresolved.is_empty() {
-        for range in ranges {
-            match range {
-                Range::Single(i) => ranges_unresolved.push(Range::Single(IntVal::Const(i))),
-                Range::Bounded(l, u) => {
-                    ranges_unresolved.push(Range::Bounded(IntVal::Const(l), IntVal::Const(u)))
-                }
-                Range::UnboundedL(l) => ranges_unresolved.push(Range::UnboundedL(IntVal::Const(l))),
-                Range::UnboundedR(u) => ranges_unresolved.push(Range::UnboundedR(IntVal::Const(u))),
-                Range::Unbounded => ranges_unresolved.push(Range::Unbounded),
-            }
-        }
-        return Domain::int(ranges_unresolved);
+    // If all values are resolved constants, convert IntVals to raw integers
+    if all_resolved {
+        let ranges: Vec<Range<i32>> = ranges_unresolved
+            .into_iter()
+            .map(|r| match r {
+                Range::Single(IntVal::Const(v)) => Range::Single(v),
+                Range::Bounded(IntVal::Const(l), IntVal::Const(u)) => Range::Bounded(l, u),
+                Range::UnboundedR(IntVal::Const(l)) => Range::UnboundedR(l),
+                Range::UnboundedL(IntVal::Const(u)) => Range::UnboundedL(u),
+                Range::Unbounded => Range::Unbounded,
+                _ => unreachable!("all_resolved should be true only if all are Const"),
+            })
+            .collect();
+        Domain::int(ranges)
+    } else {
+        // Otherwise, keep as an expression-based domain
+        Domain::int(ranges_unresolved)
     }
-
-    Domain::int(ranges)
 }
 
 fn parse_tuple_domain(
