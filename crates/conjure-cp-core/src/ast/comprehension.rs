@@ -99,29 +99,34 @@ impl Typeable for Comprehension {
 
 impl Display for Comprehension {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let generators: String = self
-            .generator_submodel
-            .symbols()
+        let return_expression = self
+            .return_expression_submodel
             .clone()
-            .into_iter_local()
-            .map(|(name, decl): (Name, DeclarationPtr)| {
+            .into_single_expression();
+
+        let generator_symbols = self.generator_submodel.symbols().clone();
+        let generators = self
+            .quantified_vars
+            .iter()
+            .map(|name| {
+                let decl: DeclarationPtr = generator_symbols
+                    .lookup_local(name)
+                    .expect("quantified variable should be in the generator symbol table");
                 let domain: DomainPtr = decl.domain().unwrap();
-                (name, domain)
+                format!("{name} : {domain}")
             })
-            .map(|(name, domain)| format!("{name}: {domain}"))
-            .join(",");
+            .collect_vec();
 
         let guards = self
             .generator_submodel
             .constraints()
             .iter()
             .map(|x| format!("{x}"))
-            .join(",");
+            .collect_vec();
 
-        let generators_and_guards = itertools::join([generators, guards], ",");
+        let generators_and_guards = generators.into_iter().chain(guards).join(", ");
 
-        let expression = &self.return_expression_submodel;
-        write!(f, "[{expression} | {generators_and_guards}]")
+        write!(f, "[ {return_expression} | {generators_and_guards} ]")
     }
 }
 
