@@ -166,7 +166,7 @@ impl SolverAdaptor for Minion {
     }
 
     fn get_name(&self) -> &'static str {
-        "Minion"
+        "minion"
     }
 
     fn write_solver_input_file(

@@ -278,7 +278,7 @@ impl SolverAdaptor for Sat {
     }
 
     fn get_name(&self) -> &'static str {
-        "SAT"
+        "sat"
     }
 
     fn write_solver_input_file(

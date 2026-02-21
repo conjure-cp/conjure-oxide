@@ -14,9 +14,12 @@ use clap::ValueHint;
 use conjure_cp::defaults::DEFAULT_RULE_SETS;
 use conjure_cp::{
     Model,
-    ast::comprehension::USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS,
+    ast::comprehension::{
+        USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS, set_quantified_expander_for_comprehensions,
+    },
     context::Context,
     rule_engine::{resolve_rule_sets, rewrite_morph, rewrite_naive},
+    settings::{Rewriter, SolverArgs},
     solver::Solver,
 };
 use conjure_cp::{
@@ -105,13 +108,7 @@ pub(crate) fn init_context(
     }
 
     if target_family == SolverFamily::Sat {
-        let sat_encoding_to_use = global_args.sat_encoding.as_deref().unwrap_or("log");
-        match sat_encoding_to_use {
-            "log" => extra_rule_sets.push("SAT_Log"),
-            "direct" => extra_rule_sets.push("SAT_Direct"),
-            "order" => extra_rule_sets.push("SAT_Order"),
-            _ => panic!("Unknown SAT encoding: {}", sat_encoding_to_use),
-        }
+        extra_rule_sets.push(global_args.sat_encoding.as_rule_set());
     }
 
     let rule_sets = match resolve_rule_sets(target_family, &extra_rule_sets) {
@@ -155,18 +152,18 @@ pub(crate) fn init_context(
 
 pub(crate) fn init_solver(global_args: &GlobalArgs) -> Solver {
     let family = global_args.solver;
-    let solver_timeout = global_args
-        .solver_timeout
-        .map(|dur| Duration::from(dur).as_millis());
+    let solver_args = SolverArgs {
+        timeout_ms: global_args
+            .solver_timeout
+            .map(|dur| Duration::from(dur).as_millis())
+            .map(|timeout_ms| u64::try_from(timeout_ms).expect("Timeout too large")),
+    };
 
     match family {
         SolverFamily::Minion => Solver::new(Minion::default()),
         SolverFamily::Sat => Solver::new(Sat::default()),
         #[cfg(feature = "smt")]
-        SolverFamily::Smt(theory_cfg) => {
-            let timeout_ms = solver_timeout.map(|ms| u64::try_from(ms).expect("Timeout too large"));
-            Solver::new(Smt::new(timeout_ms, theory_cfg))
-        }
+        SolverFamily::Smt(theory_cfg) => Solver::new(Smt::new(solver_args.timeout_ms, theory_cfg)),
     }
 }
 
@@ -218,27 +215,37 @@ pub(crate) fn rewrite(
 ) -> anyhow::Result<Model> {
     tracing::info!("Initial model: \n{}\n", model);
 
+    let quantified_expander = global_args.quantified_expander;
+    set_quantified_expander_for_comprehensions(quantified_expander);
+    tracing::info!("Quantified expander: {}", quantified_expander);
+
     let rule_sets = context.read().unwrap().rule_sets.clone();
 
-    let new_model = if global_args.use_optimised_rewriter {
-        USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS.store(true, std::sync::atomic::Ordering::Relaxed);
-        tracing::info!("Rewriting the model using the optimising rewriter");
-        rewrite_morph(
-            model,
-            &rule_sets,
-            global_args.check_equally_applicable_rules,
-        )
-    } else {
-        tracing::info!("Rewriting the model using the default / naive rewriter");
-        if global_args.exit_after_unrolling {
-            tracing::info!("Exiting after unrolling");
+    let new_model = match global_args.rewriter {
+        Rewriter::Morph => {
+            USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS
+                .store(true, std::sync::atomic::Ordering::Relaxed);
+            tracing::info!("Rewriting the model using the morph rewriter");
+            rewrite_morph(
+                model,
+                &rule_sets,
+                global_args.check_equally_applicable_rules,
+            )
         }
-        rewrite_naive(
-            &model,
-            &rule_sets,
-            global_args.check_equally_applicable_rules,
-            global_args.exit_after_unrolling,
-        )?
+        Rewriter::Naive => {
+            USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS
+                .store(false, std::sync::atomic::Ordering::Relaxed);
+            tracing::info!("Rewriting the model using the default / naive rewriter");
+            if global_args.exit_after_unrolling {
+                tracing::info!("Exiting after unrolling");
+            }
+            rewrite_naive(
+                &model,
+                &rule_sets,
+                global_args.check_equally_applicable_rules,
+                global_args.exit_after_unrolling,
+            )?
+        }
     };
 
     tracing::info!("Rewritten model: \n{}\n", new_model);

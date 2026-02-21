@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use clap::{Args, Parser, Subcommand};
 
 use clap_complete::Shell;
-use conjure_cp::solver::SolverFamily;
+use conjure_cp::settings::{QuantifiedExpander, Rewriter, SatEncoding, SolverFamily};
 
 use crate::{pretty, solve, test_solve};
 
@@ -60,7 +60,8 @@ pub struct GlobalArgs {
     #[arg(
         long,
         value_name = "SOLVER",
-        default_value_t = SolverFamily::Minion,
+        value_parser = parse_solver_family,
+        default_value = "minion",
         short = 's',
         global = true
     )]
@@ -112,9 +113,13 @@ pub struct GlobalArgs {
     #[arg(long,global=true, value_names=["filename"], next_line_help=true, help_heading=LOGGING_HELP_HEADING)]
     pub save_solver_input_file: Option<PathBuf>,
 
-    /// Use the experimental optimized / dirty-clean rewriter, instead of the default rewriter
-    #[arg(long, default_value_t = false, global = true, help_heading = EXPERIMENTAL_HELP_HEADING)]
-    pub use_optimised_rewriter: bool,
+    /// Which rewriter to use.
+    #[arg(long, default_value_t = Rewriter::Naive, value_parser = parse_rewriter, global = true, help_heading = EXPERIMENTAL_HELP_HEADING)]
+    pub rewriter: Rewriter,
+
+    /// Which strategy to use for expanding quantified variables in comprehensions.
+    #[arg(long, default_value_t = QuantifiedExpander::ExpandNative, value_parser = parse_quantified_expander, global = true, help_heading = OPTIMISATIONS_HELP_HEADING)]
+    pub quantified_expander: QuantifiedExpander,
 
     /// Exit after all comprehensions have been unrolled, printing the number of expressions at that point.
     ///
@@ -132,8 +137,8 @@ pub struct GlobalArgs {
     pub solver_timeout: Option<humantime::Duration>,
 
     /// Encoding to use for SAT
-    #[arg(long, value_name = "SAT_ENCODING", global = true, help_heading = OPTIMISATIONS_HELP_HEADING)]
-    pub sat_encoding: Option<String>,
+    #[arg(long, default_value_t = SatEncoding::Log, value_parser = parse_sat_encoding, global = true, help_heading = OPTIMISATIONS_HELP_HEADING)]
+    pub sat_encoding: SatEncoding,
 
     /// Generate log files
     #[arg(long, default_value_t = false, global = true, help_heading = LOGGING_HELP_HEADING)]
@@ -162,4 +167,35 @@ pub enum ShellTypes {
     Fish,
     PowerShell,
     Elvish,
+}
+
+fn parse_quantified_expander(input: &str) -> Result<QuantifiedExpander, String> {
+    ensure_kebab_case("quantified-expander", input)?;
+    input.parse()
+}
+
+fn parse_rewriter(input: &str) -> Result<Rewriter, String> {
+    ensure_kebab_case("rewriter", input)?;
+    input.parse()
+}
+
+fn parse_sat_encoding(input: &str) -> Result<SatEncoding, String> {
+    ensure_kebab_case("sat-encoding", input)?;
+    input.parse()
+}
+
+fn parse_solver_family(input: &str) -> Result<SolverFamily, String> {
+    ensure_kebab_case("solver", input)?;
+    input.parse()
+}
+
+fn ensure_kebab_case(setting: &str, value: &str) -> Result<(), String> {
+    let value = value.trim();
+    if value.is_empty() || !value.chars().all(|c| c.is_ascii_lowercase() || c == '-') {
+        return Err(format!(
+            "value '{value}' for --{setting} must be kebab-case"
+        ));
+    }
+
+    Ok(())
 }
