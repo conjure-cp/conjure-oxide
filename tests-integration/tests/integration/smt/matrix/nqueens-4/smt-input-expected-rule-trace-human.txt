@@ -7,18 +7,8 @@ find x: matrix indexed by [[dom]] of dom
 such that
 
 allDiff(x[..]),
-allDiff([given i: dom
-
-such that
-
-sum([x[i],i;int(1..2)])
- | i: dom,]),
-allDiff([given i: dom
-
-such that
-
-(x[i] - i)
- | i: dom,])
+allDiff([ sum([x[i],i;int(1..2)]) | i : dom ]),
+allDiff([ (x[i] - i) | i : dom ])
 
 --
 
@@ -29,32 +19,12 @@ x[..],
 --
 
 allDiff({x[..] @ and([;int(1..)])}),
-allDiff([given i: dom
-
-such that
-
-sum([x[i],i;int(1..2)])
- | i: dom,]),
-allDiff([given i: dom
-
-such that
-
-(x[i] - i)
- | i: dom,]), 
+allDiff([ sum([x[i],i;int(1..2)]) | i : dom ]),
+allDiff([ (x[i] - i) | i : dom ]), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
 allDiff(x[..]),
-allDiff([given i: dom
-
-such that
-
-sum([x[i],i;int(1..2)])
- | i: dom,]),
-allDiff([given i: dom
-
-such that
-
-(x[i] - i)
- | i: dom,]) 
+allDiff([ sum([x[i],i;int(1..2)]) | i : dom ]),
+allDiff([ (x[i] - i) | i : dom ]) 
 
 --
 
@@ -114,12 +84,7 @@ such that
 
 sum([x[i],i;int(1..)])
 
-[given i: dom
-
-such that
-
-sum([x[i],i;int(1..2)])
- | i: dom,], 
+[ sum([x[i],i;int(1..2)]) | i : dom ], 
    ~~> expand_comprehension ([("Base", 2000)]) 
 [sum([x[1],1;int(1..)]),sum([x[2],2;int(1..)]),sum([x[3],3;int(1..)]),sum([x[4],4;int(1..)]);int(1..)] 
 
@@ -181,12 +146,7 @@ such that
 
 sum([x[i],-(i);int(1..)])
 
-[given i: dom
-
-such that
-
-(x[i] - i)
- | i: dom,], 
+[ (x[i] - i) | i : dom ], 
    ~~> expand_comprehension ([("Base", 2000)]) 
 [sum([x[1],-(1);int(1..)]),sum([x[2],-(2);int(1..)]),sum([x[3],-(3);int(1..)]),sum([x[4],-(4);int(1..)]);int(1..)] 
 

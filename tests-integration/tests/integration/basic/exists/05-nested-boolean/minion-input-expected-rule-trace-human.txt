@@ -4,47 +4,19 @@ find check: bool
 
 such that
 
-(check = or([given p: int(1..5)
-
-such that
-
-and([(p > 2),(p < 4);int(1..)])
- | p: int(1..5),]))
+(check = or([ and([(p > 2),(p < 4);int(1..)]) | p : int(1..5) ]))
 
 --
 
-(check = or([given p: int(1..5)
-
-such that
-
-and([(p > 2),(p < 4);int(1..)])
- | p: int(1..5),])), 
+(check = or([ and([(p > 2),(p < 4);int(1..)]) | p : int(1..5) ])), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(check = or([given p: int(1..5)
-
-such that
-
-(p > 2),
-(p < 4)
- | p: int(1..5),])) 
+(check = or([ and([(p > 2),(p < 4);int(1..)]) | p : int(1..5) ])) 
 
 --
 
-(check = or([given p: int(1..5)
-
-such that
-
-(p > 2),
-(p < 4)
- | p: int(1..5),])), 
+(check = or([ and([(p > 2),(p < 4);int(1..)]) | p : int(1..5) ])), 
    ~~> bool_eq_to_reify ([("Minion", 4400)]) 
-Reify(or([given p: int(1..5)
-
-such that
-
-(p > 2),
-(p < 4)
- | p: int(1..5),]), check) 
+Reify(or([ and([(p > 2),(p < 4);int(1..)]) | p : int(1..5) ]), check) 
 
 --
 
@@ -165,13 +137,7 @@ such that
 Ineq(2, p, -1),
 Ineq(p, 3, 0)
 
-or([given p: int(1..5)
-
-such that
-
-(p > 2),
-(p < 4)
- | p: int(1..5),__0: bool,]), 
+or([ and([(p > 2),(p < 4);int(1..)]) | p : int(1..5) ]), 
    ~~> expand_comprehension_ac ([("Better_AC_Comprehension_Expansion", 2001)]) 
 or([and([Ineq(2, 3, -1),Ineq(3, 3, 0);int(1..)]);int(1..)]) 
 

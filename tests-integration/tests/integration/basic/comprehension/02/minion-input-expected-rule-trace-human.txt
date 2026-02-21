@@ -5,46 +5,16 @@ find n: matrix indexed by [[int(1..5)]] of int(1..5)
 
 such that
 
-and([given i: int(1..5)
-
-such that
-
-(n[i] = (6 - i))
- | i: int(1..5),]),
-and([given i: int(1..5)
-
-such that
-
-((n[i] < 5)) -> ((m[i] = i))
- | i: int(1..5),(i < 4)])
+and([ (n[i] = (6 - i)) | i : int(1..5) ]),
+and([ ((n[i] < 5)) -> ((m[i] = i)) | i : int(1..5), (i < 4) ])
 
 --
 
-and([given i: int(1..5)
-
-such that
-
-(n#matrix_to_atom[i] = (6 - i))
- | i: int(1..5),]),
-and([given i: int(1..5)
-
-such that
-
-((n#matrix_to_atom[i] < 5)) -> ((m#matrix_to_atom[i] = i))
- | i: int(1..5),(i < 4)]), 
+and([ (n#matrix_to_atom[i] = (6 - i)) | i : int(1..5) ]),
+and([ ((n#matrix_to_atom[i] < 5)) -> ((m#matrix_to_atom[i] = i)) | i : int(1..5), (i < 4) ]), 
    ~~> select_representation_matrix ([("Representations", 8001)]) 
-and([given i: int(1..5)
-
-such that
-
-(n#matrix_to_atom[i] = (6 - i))
- | i: int(1..5),]),
-and([given i: int(1..5)
-
-such that
-
-((n#matrix_to_atom[i] < 5)) -> ((m#matrix_to_atom[i] = i))
- | i: int(1..5),(i < 4)]) 
+and([ (n#matrix_to_atom[i] = (6 - i)) | i : int(1..5) ]),
+and([ ((n#matrix_to_atom[i] < 5)) -> ((m#matrix_to_atom[i] = i)) | i : int(1..5), (i < 4) ]) 
 new variables:
   find m#matrix_to_atom_1: int(1..5)
   find m#matrix_to_atom_2: int(1..5)
@@ -114,36 +84,21 @@ such that
 
 (n#matrix_to_atom[i] = sum([6,-(i);int(1..)]))
 
-and([given i: int(1..5)
-
-such that
-
-(n#matrix_to_atom[i] = (6 - i))
- | i: int(1..5),__0: bool,]), 
+and([ (n#matrix_to_atom[i] = (6 - i)) | i : int(1..5) ]), 
    ~~> expand_comprehension_ac ([("Better_AC_Comprehension_Expansion", 2001)]) 
 and([(n#matrix_to_atom[1] = sum([6,-(1);int(1..)])),(n#matrix_to_atom[2] = sum([6,-(2);int(1..)])),(n#matrix_to_atom[3] = sum([6,-(3);int(1..)])),(n#matrix_to_atom[4] = sum([6,-(4);int(1..)])),(n#matrix_to_atom[5] = sum([6,-(5);int(1..)]));int(1..)]) 
 
 --
 
 and([(n#matrix_to_atom[1] = sum([6,-(1);int(1..)])),(n#matrix_to_atom[2] = sum([6,-(2);int(1..)])),(n#matrix_to_atom[3] = sum([6,-(3);int(1..)])),(n#matrix_to_atom[4] = sum([6,-(4);int(1..)])),(n#matrix_to_atom[5] = sum([6,-(5);int(1..)]));int(1..)]),
-and([given i: int(1..5)
-
-such that
-
-((n#matrix_to_atom[i] < 5)) -> ((m#matrix_to_atom[i] = i))
- | i: int(1..5),(i < 4)]), 
+and([ ((n#matrix_to_atom[i] < 5)) -> ((m#matrix_to_atom[i] = i)) | i : int(1..5), (i < 4) ]), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
 (n#matrix_to_atom[1] = 5),
 (n#matrix_to_atom[2] = 4),
 (n#matrix_to_atom[3] = 3),
 (n#matrix_to_atom[4] = 2),
 (n#matrix_to_atom[5] = 1),
-and([given i: int(1..5)
-
-such that
-
-((n#matrix_to_atom[i] < 5)) -> ((m#matrix_to_atom[i] = i))
- | i: int(1..5),(i < 4)]) 
+and([ ((n#matrix_to_atom[i] < 5)) -> ((m#matrix_to_atom[i] = i)) | i : int(1..5), (i < 4) ]) 
 
 --
 
@@ -152,24 +107,14 @@ such that
 (n#matrix_to_atom[3] = 3),
 (n#matrix_to_atom[4] = 2),
 (n#matrix_to_atom[5] = 1),
-and([given i: int(1..5)
-
-such that
-
-((n#matrix_to_atom[i] < 5)) -> ((m#matrix_to_atom[i] = i))
- | i: int(1..5),(i < 4)]), 
+and([ ((n#matrix_to_atom[i] < 5)) -> ((m#matrix_to_atom[i] = i)) | i : int(1..5), (i < 4) ]), 
    ~~> index_matrix_to_atom ([("Base", 5000)]) 
 (n#matrix_to_atom_1 = 5),
 (n#matrix_to_atom_2 = 4),
 (n#matrix_to_atom_3 = 3),
 (n#matrix_to_atom_4 = 2),
 (n#matrix_to_atom_5 = 1),
-and([given i: int(1..5)
-
-such that
-
-((n#matrix_to_atom[i] < 5)) -> ((m#matrix_to_atom[i] = i))
- | i: int(1..5),(i < 4)]) 
+and([ ((n#matrix_to_atom[i] < 5)) -> ((m#matrix_to_atom[i] = i)) | i : int(1..5), (i < 4) ]) 
 
 --
 
@@ -294,12 +239,7 @@ such that
 
 ((n#matrix_to_atom[i] <= 4)) -> ((m#matrix_to_atom[i] = i))
 
-and([given i: int(1..5)
-
-such that
-
-((n#matrix_to_atom[i] < 5)) -> ((m#matrix_to_atom[i] = i))
- | i: int(1..5),__0: bool,__1: bool,__2: bool,(i < 4)]), 
+and([ ((n#matrix_to_atom[i] < 5)) -> ((m#matrix_to_atom[i] = i)) | i : int(1..5), (i < 4) ]), 
    ~~> expand_comprehension_ac ([("Better_AC_Comprehension_Expansion", 2001)]) 
 and([((n#matrix_to_atom[1] <= 4)) -> ((m#matrix_to_atom[1] = 1)),((n#matrix_to_atom[2] <= 4)) -> ((m#matrix_to_atom[2] = 2)),((n#matrix_to_atom[3] <= 4)) -> ((m#matrix_to_atom[3] = 3));int(1..)]) 
 

@@ -5,28 +5,13 @@ find b: bool
 
 such that
 
-or([a,(b = or([given m: int(0..3)
-
-such that
-
-(product([m,m;int(1..)]) = 4)
- | m: int(0..3),]));int(1..)])
+or([a,(b = or([ (product([m,m;int(1..)]) = 4) | m : int(0..3) ]));int(1..)])
 
 --
 
-(b = or([given m: int(0..3)
-
-such that
-
-(product([m,m;int(1..)]) = 4)
- | m: int(0..3),])), 
+(b = or([ (product([m,m;int(1..)]) = 4) | m : int(0..3) ])), 
    ~~> bool_eq_to_reify ([("Minion", 4400)]) 
-Reify(or([given m: int(0..3)
-
-such that
-
-(product([m,m;int(1..)]) = 4)
- | m: int(0..3),]), b) 
+Reify(or([ (product([m,m;int(1..)]) = 4) | m : int(0..3) ]), b) 
 
 --
 
@@ -95,12 +80,7 @@ such that
 
 FlatProductEq(m,m,4)
 
-or([given m: int(0..3)
-
-such that
-
-(product([m,m;int(1..)]) = 4)
- | m: int(0..3),__0: bool,]), 
+or([ (product([m,m;int(1..)]) = 4) | m : int(0..3) ]), 
    ~~> expand_comprehension_ac ([("Better_AC_Comprehension_Expansion", 2001)]) 
 or([FlatProductEq(2,2,4);int(1..)]) 
 
