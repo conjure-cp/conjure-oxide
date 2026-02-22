@@ -219,16 +219,14 @@ fn integration_test_inner(
     // File path
     let file_path = format!("{path}/{essence_base}.{extension}");
 
-    // Stage 1a: Parse the model using the selected parser
-    let parsed_model = if parser == Parser::TreeSitter {
-        {
+    // Stage 1a/1b: Parse the model using the selected parser.
+    let parsed_model = match parser {
+        Parser::TreeSitter => {
             let mut ctx = context.as_ref().write().unwrap();
             ctx.file_name = Some(format!("{path}/{essence_base}.{extension}"));
+            parse_essence_file_native(&file_path, context.clone())?
         }
-        parse_essence_file_native(&file_path, context.clone())?
-    // Stage 1b: Parse the model using the via-conjure parser
-    } else {
-        parse_essence_file(&file_path, context.clone())?
+        Parser::ViaConjure => parse_essence_file(&file_path, context.clone())?,
     };
     // Stage 2a: Rewrite the model using the rule engine
     let mut extra_rules = vec![];
@@ -345,15 +343,18 @@ fn integration_test_inner(
     }
 
     // // TODO: Implement rule trace validation for morph
-    if rewriter != Rewriter::Morph {
-        let generated = read_human_rule_trace(path, case_name, "generated", &solver_fam)?;
-        let expected = read_human_rule_trace(path, case_name, "expected", &solver_fam)?;
+    match rewriter {
+        Rewriter::Morph => {}
+        Rewriter::Naive => {
+            let generated = read_human_rule_trace(path, case_name, "generated", &solver_fam)?;
+            let expected = read_human_rule_trace(path, case_name, "expected", &solver_fam)?;
 
-        assert_eq!(
-            expected, generated,
-            "Generated rule trace does not match the expected trace!"
-        );
-    };
+            assert_eq!(
+                expected, generated,
+                "Generated rule trace does not match the expected trace!"
+            );
+        }
+    }
 
     save_stats_json(context, path, case_name, solver_fam)?;
 

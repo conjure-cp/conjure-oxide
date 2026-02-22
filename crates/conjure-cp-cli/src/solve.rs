@@ -175,32 +175,35 @@ pub(crate) fn parse(
         .expect("context should contain the input file");
 
     tracing::info!(target: "file", "Input file: {}", input_file);
-    if global_args.parser == conjure_cp::settings::Parser::TreeSitter {
-        parse_essence_file_native(input_file.as_str(), context.clone()).map_err(|e| e.into())
-    } else {
-        conjure_executable()
-            .map_err(|e| anyhow!("Could not find correct conjure executable: {e}"))?;
-
-        let mut cmd = std::process::Command::new("conjure");
-        let output = cmd
-            .arg("pretty")
-            .arg("--output-format=astjson")
-            .arg(input_file)
-            .output()?;
-
-        let conjure_stderr = String::from_utf8(output.stderr)?;
-
-        ensure!(conjure_stderr.is_empty(), conjure_stderr);
-
-        let astjson = String::from_utf8(output.stdout)?;
-
-        if cfg!(feature = "extra-rule-checks") {
-            tracing::info!("extra-rule-checks: enabled");
-        } else {
-            tracing::info!("extra-rule-checks: disabled");
+    match global_args.parser {
+        conjure_cp::settings::Parser::TreeSitter => {
+            parse_essence_file_native(input_file.as_str(), context.clone()).map_err(|e| e.into())
         }
+        conjure_cp::settings::Parser::ViaConjure => {
+            conjure_executable()
+                .map_err(|e| anyhow!("Could not find correct conjure executable: {e}"))?;
 
-        model_from_json(&astjson, context.clone()).map_err(|e| anyhow!(e))
+            let mut cmd = std::process::Command::new("conjure");
+            let output = cmd
+                .arg("pretty")
+                .arg("--output-format=astjson")
+                .arg(input_file)
+                .output()?;
+
+            let conjure_stderr = String::from_utf8(output.stderr)?;
+
+            ensure!(conjure_stderr.is_empty(), conjure_stderr);
+
+            let astjson = String::from_utf8(output.stdout)?;
+
+            if cfg!(feature = "extra-rule-checks") {
+                tracing::info!("extra-rule-checks: enabled");
+            } else {
+                tracing::info!("extra-rule-checks: disabled");
+            }
+
+            model_from_json(&astjson, context.clone()).map_err(|e| anyhow!(e))
+        }
     }
 }
 
