@@ -34,12 +34,17 @@
   - [Crate Structure](./developers_guide/coding_resources/crate_structure.md)
   - [Benchmarking Guide](./developers_guide/coding_resources/benchmarking-guide.md)
 
+- [Testing and Debugging](./developers_guide/testing_debugging/index.md)
+  - [Integration Testing](./developers_guide/testing_debugging/integration_testing.md)
+  - [Environment Variables](./developers_guide/testing_debugging/environment_variables.md)
+
 - [Design Documents](./developers_guide/design_documents/index.md)
   - [2023‐11: High Level Plan](./developers_guide/design_documents/2023_11.md)
   - [2024‐03: Implementing Uniplates and Biplates with Structure Preserving Trees](./developers_guide/design_documents/2024_03.md)
   - [Semantics of Rewriting Expressions with Side‐Effects](./developers_guide/design_documents/semantics-of-rewriting-expressions.md)
   - [What we didn't do](./developers_guide/design_documents/what_we_didnt_do.md)
 
+<!-- TODO: do we need this? -->
 - [CI/CD](./developers_guide/ci_cd/index.md)
   - [Coverage](./developers_guide/ci_cd/coverage.md)
   - [Github Actions: Cookbook](./developers_guide/ci_cd/github_actions.md)
