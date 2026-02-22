@@ -29,80 +29,42 @@ fn main() -> io::Result<()> {
     for subdir in WalkDir::new(test_dir) {
         let subdir = subdir?;
         if subdir.file_type().is_dir() {
-            if std::env::var("ALLTEST").is_ok() {
-                let stems: Vec<String> = read_dir(subdir.path())?
-                    .filter_map(Result::ok)
-                    .filter(|entry| {
-                        entry.path().extension().is_some_and(|ext| {
-                            ext == "essence" || ext == "eprime" || ext == "disabled"
-                        })
-                    })
-                    .filter_map(|entry| {
-                        entry
-                            .path()
-                            .file_stem()
-                            .and_then(|stem| stem.to_str())
-                            .map(|s| s.to_owned())
-                    })
-                    .collect();
+            let stems: Vec<String> = read_dir(subdir.path())?
+                .filter_map(Result::ok)
+                .filter(|entry| {
+                    entry
+                        .path()
+                        .extension()
+                        .is_some_and(|ext| ext == "essence" || ext == "eprime")
+                })
+                .filter_map(|entry| {
+                    entry
+                        .path()
+                        .file_stem()
+                        .and_then(|stem| stem.to_str())
+                        .map(|s| s.to_owned())
+                })
+                .collect();
 
-                let exts: Vec<String> = read_dir(subdir.path())?
-                    .filter_map(Result::ok)
-                    .filter(|entry| {
-                        entry.path().extension().is_some_and(|ext| {
-                            ext == "essence" || ext == "eprime" || ext == "disabled"
-                        })
-                    })
-                    .filter_map(|entry| {
-                        entry
-                            .path()
-                            .extension()
-                            .and_then(|ext| ext.to_str())
-                            .map(|s| s.to_owned())
-                    })
-                    .collect();
+            let exts: Vec<String> = read_dir(subdir.path())?
+                .filter_map(Result::ok)
+                .filter(|entry| {
+                    entry
+                        .path()
+                        .extension()
+                        .is_some_and(|ext| ext == "essence" || ext == "eprime")
+                })
+                .filter_map(|entry| {
+                    entry
+                        .path()
+                        .extension()
+                        .and_then(|ext| ext.to_str())
+                        .map(|s| s.to_owned())
+                })
+                .collect();
 
-                let essence_files = std::iter::zip(stems, exts).collect();
-
-                write_integration_test(&mut f, subdir.path().display().to_string(), essence_files)?;
-            } else {
-                let stems: Vec<String> = read_dir(subdir.path())?
-                    .filter_map(Result::ok)
-                    .filter(|entry| {
-                        entry
-                            .path()
-                            .extension()
-                            .is_some_and(|ext| ext == "essence" || ext == "eprime")
-                    })
-                    .filter_map(|entry| {
-                        entry
-                            .path()
-                            .file_stem()
-                            .and_then(|stem| stem.to_str())
-                            .map(|s| s.to_owned())
-                    })
-                    .collect();
-
-                let exts: Vec<String> = read_dir(subdir.path())?
-                    .filter_map(Result::ok)
-                    .filter(|entry| {
-                        entry
-                            .path()
-                            .extension()
-                            .is_some_and(|ext| ext == "essence" || ext == "eprime")
-                    })
-                    .filter_map(|entry| {
-                        entry
-                            .path()
-                            .extension()
-                            .and_then(|ext| ext.to_str())
-                            .map(|s| s.to_owned())
-                    })
-                    .collect();
-
-                let essence_files: Vec<(String, String)> = std::iter::zip(stems, exts).collect();
-                write_integration_test(&mut f, subdir.path().display().to_string(), essence_files)?;
-            }
+            let essence_files: Vec<(String, String)> = std::iter::zip(stems, exts).collect();
+            write_integration_test(&mut f, subdir.path().display().to_string(), essence_files)?;
         }
     }
 

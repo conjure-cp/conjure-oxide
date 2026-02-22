@@ -74,13 +74,11 @@ fn main() {
     }
 }
 
-// run tests in sequence not parallel when verbose logging, to ensure the logs are ordered
-// correctly
+// run tests in sequence when ACCEPT=true, to ensure logs and expected-file updates are ordered
 static GUARD: Mutex<()> = Mutex::new(());
 
 // wrapper to conditionally enforce sequential execution
 fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(), Box<dyn Error>> {
-    let verbose = env::var("VERBOSE").unwrap_or("false".to_string()) == "true";
     let accept = env::var("ACCEPT").unwrap_or("false".to_string()) == "true";
 
     let file_config: TestConfig =
@@ -90,7 +88,7 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
             Default::default()
         };
 
-    let config = file_config.merge_env();
+    let config = file_config;
 
     let solvers = config
         .configured_solvers()
@@ -124,7 +122,6 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
                         sat_encoding,
                         rewriter,
                         quantified_expander,
-                        verbose,
                         accept,
                     )?;
                 }
@@ -144,7 +141,6 @@ fn solver_specific_integration_test(
     sat_encoding: SatEncoding,
     rewriter: Rewriter,
     quantified_expander: QuantifiedExpander,
-    verbose: bool,
     accept: bool,
 ) -> Result<(), Box<dyn Error>> {
     let solver_name = if solver == SolverFamily::Sat {
@@ -161,12 +157,9 @@ fn solver_specific_integration_test(
 
     let subscriber = create_scoped_subscriber(path, essence_base, solver_name.as_str());
 
-    // run tests in sequence not parallel when verbose logging, to ensure the logs are ordered
-    // correctly
-
-    // also with ACCEPT=true, as the conjure checking seems to get confused when ran too much at
-    // once.
-    if verbose || accept {
+    // Run tests in sequence with ACCEPT=true, as the conjure checking can get confused when run
+    // too much at once.
+    if accept {
         let _guard = GUARD.lock().unwrap_or_else(|e| e.into_inner());
 
         // set the subscriber as default
@@ -180,6 +173,7 @@ fn solver_specific_integration_test(
                 sat_encoding,
                 rewriter,
                 quantified_expander,
+                accept,
             )
         })
     } else {
@@ -194,6 +188,7 @@ fn solver_specific_integration_test(
                 sat_encoding,
                 rewriter,
                 quantified_expander,
+                accept,
             )
         })
     }
@@ -241,16 +236,9 @@ fn integration_test_inner(
     sat_encoding: SatEncoding,
     rewriter: Rewriter,
     quantified_expander: QuantifiedExpander,
+    accept: bool,
 ) -> Result<(), Box<dyn Error>> {
     let context: Arc<RwLock<Context<'static>>> = Default::default();
-    let accept = env::var("ACCEPT").unwrap_or("false".to_string()) == "true";
-    let verbose = env::var("VERBOSE").unwrap_or("false".to_string()) == "true";
-
-    if verbose {
-        println!(
-            "Running integration test for {path}/{essence_base}, solver={solver_fam}, sat-encoding={sat_encoding}, rewriter={rewriter}, expander={quantified_expander}, ACCEPT={accept}"
-        );
-    }
 
     set_quantified_expander_for_comprehensions(quantified_expander);
 
@@ -264,18 +252,12 @@ fn integration_test_inner(
             ctx.file_name = Some(format!("{path}/{essence_base}.{extension}"));
         }
         let model = parse_essence_file_native(&file_path, context.clone())?;
-        if verbose {
-            println!("Parsed model (native): {model:#?}");
-        }
         save_model_json(&model, path, essence_base, "parse", None)?;
 
         model
     // Stage 1b: Parse the model using the legacy parser
     } else {
         let model = parse_essence_file(&file_path, context.clone())?;
-        if verbose {
-            println!("Parsed model (legacy): {model:#?}");
-        }
         save_model_json(&model, path, essence_base, "parse", None)?;
         model
     };
@@ -320,10 +302,6 @@ fn integration_test_inner(
                 model.clone()
             }
         };
-        if verbose {
-            println!("Rewritten model: {rewritten:#?}");
-        }
-
         save_model_json(&rewritten, path, essence_base, "rewrite", Some(solver_fam))?;
         Some(rewritten)
     } else {
@@ -345,10 +323,7 @@ fn integration_test_inner(
         }
     }
 
-    let solver_input_file = env::var("OXIDE_TEST_SAVE_INPUT_FILE").ok().map(|_| {
-        let name = format!("{essence_base}.generated-input.txt");
-        Path::new(path).join(Path::new(&name))
-    });
+    let solver_input_file = None;
 
     let solver = match solver_fam {
         SolverFamily::Minion => Solver::new(Minion::default()),
@@ -358,8 +333,6 @@ fn integration_test_inner(
     };
 
     let solutions = {
-        let name = solver.get_name();
-
         let solved = get_solutions(
             solver,
             rewritten_model
@@ -369,10 +342,7 @@ fn integration_test_inner(
             0,
             &solver_input_file,
         )?;
-        let solutions_json = save_solutions_json(&solved, path, essence_base, solver_fam)?;
-        if verbose {
-            println!("{name} solutions: {solutions_json:#?}");
-        }
+        save_solutions_json(&solved, path, essence_base, solver_fam)?;
         solved
     };
 

@@ -2,17 +2,7 @@
 
 use conjure_cp::settings::{QuantifiedExpander, Rewriter, SatEncoding, SolverFamily};
 use serde::Deserialize;
-use std::env;
 use std::str::FromStr;
-
-fn split_csv(value: String) -> Vec<String> {
-    value
-        .split(',')
-        .map(str::trim)
-        .filter(|x| !x.is_empty())
-        .map(str::to_string)
-        .collect()
-}
 
 fn ensure_kebab_case(setting: &str, value: &str) -> Result<(), String> {
     let value = value.trim();
@@ -136,62 +126,7 @@ impl Default for TestConfig {
     }
 }
 
-fn env_var_override_bool(key: &str, default: bool) -> bool {
-    env::var(key).ok().map(|s| s == "true").unwrap_or(default)
-}
-
 impl TestConfig {
-    pub fn merge_env(self) -> Self {
-        Self {
-            solver: env::var("SOLVER")
-                .ok()
-                .map(split_csv)
-                .unwrap_or(self.solver),
-            rewriter: env::var("REWRITER")
-                .ok()
-                .map(split_csv)
-                .unwrap_or(self.rewriter),
-            sat_encoding: env::var("SAT_ENCODING")
-                .ok()
-                .map(split_csv)
-                .unwrap_or(self.sat_encoding),
-            quantified_expander: env::var("QUANTIFIED_EXPANDER")
-                .ok()
-                .map(split_csv)
-                .unwrap_or(self.quantified_expander),
-            enable_morph_impl: env_var_override_bool("ENABLE_MORPH_IMPL", self.enable_morph_impl),
-            enable_naive_impl: env_var_override_bool("ENABLE_NAIVE_IMPL", self.enable_naive_impl),
-            enable_native_parser: env_var_override_bool(
-                "ENABLE_NATIVE_PARSER",
-                self.enable_native_parser,
-            ),
-            apply_rewrite_rules: env_var_override_bool(
-                "APPLY_REWRITE_RULES",
-                self.apply_rewrite_rules,
-            ),
-            enable_extra_validation: env_var_override_bool(
-                "ENABLE_EXTRA_VALIDATION",
-                self.enable_extra_validation,
-            ),
-            solve_with_minion: env_var_override_bool("SOLVE_WITH_MINION", self.solve_with_minion),
-            solve_with_sat: env_var_override_bool("SOLVE_WITH_SAT", self.solve_with_sat),
-            solve_with_smt: env_var_override_bool("SOLVE_WITH_SMT", self.solve_with_smt),
-            compare_solver_solutions: env_var_override_bool(
-                "COMPARE_SOLVER_SOLUTIONS",
-                self.compare_solver_solutions,
-            ),
-            validate_rule_traces: env_var_override_bool(
-                "VALIDATE_RULE_TRACES",
-                self.validate_rule_traces,
-            ),
-            enable_rewriter_impl: env_var_override_bool(
-                "ENABLE_REWRITER_IMPL",
-                self.enable_rewriter_impl,
-            ),
-            extra_rewriter_asserts: self.extra_rewriter_asserts, // Not overridden by env vars
-        }
-    }
-
     pub fn configured_solvers(&self) -> Result<Vec<SolverFamily>, String> {
         if !self.solver.is_empty() {
             return parse_values("solver", &self.solver);
