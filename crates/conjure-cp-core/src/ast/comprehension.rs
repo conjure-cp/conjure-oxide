@@ -27,9 +27,9 @@ pub static USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS: AtomicBool = AtomicBool::n
 
 /// Global setting for which comprehension quantified-variable expander to use.
 ///
-/// Defaults to [`QuantifiedExpander::ExpandNative`].
+/// Defaults to [`QuantifiedExpander::Native`].
 pub static QUANTIFIED_EXPANDER_FOR_COMPREHENSIONS: AtomicU8 =
-    AtomicU8::new(QuantifiedExpander::ExpandNative.as_u8());
+    AtomicU8::new(QuantifiedExpander::Native.as_u8());
 
 pub fn set_quantified_expander_for_comprehensions(expander: QuantifiedExpander) {
     QUANTIFIED_EXPANDER_FOR_COMPREHENSIONS.store(expander.as_u8(), Ordering::Relaxed);

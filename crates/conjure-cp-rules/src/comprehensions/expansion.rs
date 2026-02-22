@@ -28,7 +28,7 @@ use uniplate::Uniplate;
 /// Expand comprehensions inside AC operators using `--quantified-expander via-solver-ac`.
 #[register_rule(("Base", 2002))]
 fn expand_comprehension_via_solver_ac(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
-    if quantified_expander_for_comprehensions() != QuantifiedExpander::ExpandViaSolverAc {
+    if quantified_expander_for_comprehensions() != QuantifiedExpander::ViaSolverAc {
         return Err(RuleNotApplicable);
     }
 
@@ -65,7 +65,7 @@ fn expand_comprehension_via_solver_ac(expr: &Expr, symbols: &SymbolTable) -> App
 /// Expand comprehensions using `--quantified-expander native`.
 #[register_rule(("Base", 2000))]
 fn expand_comprehension_native(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
-    if quantified_expander_for_comprehensions() != QuantifiedExpander::ExpandNative {
+    if quantified_expander_for_comprehensions() != QuantifiedExpander::Native {
         return Err(RuleNotApplicable);
     }
 
@@ -96,7 +96,7 @@ fn expand_comprehension_native(expr: &Expr, symbols: &SymbolTable) -> Applicatio
 fn expand_comprehension_via_solver(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     if !matches!(
         quantified_expander_for_comprehensions(),
-        QuantifiedExpander::ExpandViaSolver | QuantifiedExpander::ExpandViaSolverAc
+        QuantifiedExpander::ViaSolver | QuantifiedExpander::ViaSolverAc
     ) {
         return Err(RuleNotApplicable);
     }

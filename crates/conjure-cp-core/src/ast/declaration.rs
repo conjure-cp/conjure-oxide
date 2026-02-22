@@ -404,7 +404,6 @@ impl DeclarationPtr {
 
     /// Replaces the underlying declaration kind and returns the previous kind.
     /// Note: this affects all cloned `DeclarationPtr`s pointing to the same declaration.
-
     pub fn replace_kind(&mut self, kind: DeclarationKind) -> DeclarationKind {
         let mut decl = self.write();
         std::mem::replace(&mut decl.kind, kind)

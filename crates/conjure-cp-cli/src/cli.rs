@@ -104,7 +104,7 @@ pub struct GlobalArgs {
     /// Which strategy to use for expanding quantified variables in comprehensions.
     ///
     /// Possible values: `native`, `via-solver`, `via-solver-ac`.
-    #[arg(long, default_value_t = QuantifiedExpander::ExpandNative, value_parser = parse_quantified_expander, global = true, help_heading = OPTIMISATIONS_HELP_HEADING)]
+    #[arg(long, default_value_t = QuantifiedExpander::Native, value_parser = parse_quantified_expander, global = true, help_heading = OPTIMISATIONS_HELP_HEADING)]
     pub quantified_expander: QuantifiedExpander,
 
     /// Solver family to use.
