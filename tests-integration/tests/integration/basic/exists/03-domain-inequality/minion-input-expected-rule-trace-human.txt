@@ -4,28 +4,13 @@ find result: bool
 
 such that
 
-(result = or([given k: int(1..10)
-
-such that
-
-(k > 7)
- | k: int(1..10),]))
+(result = or([ (k > 7) | k : int(1..10) ]))
 
 --
 
-(result = or([given k: int(1..10)
-
-such that
-
-(k > 7)
- | k: int(1..10),])), 
+(result = or([ (k > 7) | k : int(1..10) ])), 
    ~~> bool_eq_to_reify ([("Minion", 4400)]) 
-Reify(or([given k: int(1..10)
-
-such that
-
-(k > 7)
- | k: int(1..10),]), result) 
+Reify(or([ (k > 7) | k : int(1..10) ]), result) 
 
 --
 
@@ -106,12 +91,7 @@ such that
 
 Ineq(7, k, -1)
 
-or([given k: int(1..10)
-
-such that
-
-(k > 7)
- | k: int(1..10),__0: bool,]), 
+or([ (k > 7) | k : int(1..10) ]), 
    ~~> expand_comprehension_ac ([("Better_AC_Comprehension_Expansion", 2001)]) 
 or([Ineq(7, 8, -1),Ineq(7, 9, -1),Ineq(7, 10, -1);int(1..)]) 
 

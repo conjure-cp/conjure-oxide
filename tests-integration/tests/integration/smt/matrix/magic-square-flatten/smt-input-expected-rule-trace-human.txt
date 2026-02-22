@@ -9,40 +9,10 @@ find square: matrix indexed by [[Index, Index]] of Value
 such that
 
 allDiff(flatten(square)),
-and([given r: Index
-
-such that
-
-(sum([given c: Index
-
-such that
-
-square[r, c]
- | c: Index,]) = s)
- | r: Index,]),
-and([given c: Index
-
-such that
-
-(sum([given r: Index
-
-such that
-
-square[r, c]
- | r: Index,]) = s)
- | c: Index,]),
-(sum([given d: Index
-
-such that
-
-square[d, d]
- | d: Index,]) = s),
-(sum([given d: Index
-
-such that
-
-square[d, (4 - d)]
- | d: Index,]) = s)
+and([ (sum([ square[r, c] | c : Index ]) = s) | r : Index ]),
+and([ (sum([ square[r, c] | r : Index ]) = s) | c : Index ]),
+(sum([ square[d, d] | d : Index ]) = s),
+(sum([ square[d, (4 - d)] | d : Index ]) = s)
 
 --
 
@@ -96,12 +66,7 @@ such that
 
 square[d, d]
 
-sum([given d: Index
-
-such that
-
-square[d, d]
- | d: Index,__0: Value,]), 
+sum([ square[d, d] | d : Index ]), 
    ~~> expand_comprehension_ac ([("Better_AC_Comprehension_Expansion", 2001)]) 
 sum([square[1, 1],square[2, 2],square[3, 3];int(1..)]) 
 
@@ -169,66 +134,21 @@ such that
 
 {square[d, sum([4,-(d);int(1..)])] @ __inDomain(sum([4,-(d);int(1..)]),int(1..3))}
 
-sum([given d: Index
-
-such that
-
-square[d, (4 - d)]
- | d: Index,__0: Value,]), 
+sum([ square[d, (4 - d)] | d : Index ]), 
    ~~> expand_comprehension_ac ([("Better_AC_Comprehension_Expansion", 2001)]) 
 sum([{square[1, sum([4,-(1);int(1..)])] @ __inDomain(sum([4,-(1);int(1..)]),int(1..3))},{square[2, sum([4,-(2);int(1..)])] @ __inDomain(sum([4,-(2);int(1..)]),int(1..3))},{square[3, sum([4,-(3);int(1..)])] @ __inDomain(sum([4,-(3);int(1..)]),int(1..3))};int(1..)]) 
 
 --
 
 allDiff(flatten(square)),
-and([given r: Index
-
-such that
-
-(sum([given c: Index
-
-such that
-
-square[r, c]
- | c: Index,]) = s)
- | r: Index,]),
-and([given c: Index
-
-such that
-
-(sum([given r: Index
-
-such that
-
-square[r, c]
- | r: Index,]) = s)
- | c: Index,]),
+and([ (sum([ square[r, c] | c : Index ]) = s) | r : Index ]),
+and([ (sum([ square[r, c] | r : Index ]) = s) | c : Index ]),
 (sum([square[1, 1],square[2, 2],square[3, 3];int(1..)]) = s),
 (sum([{square[1, sum([4,-(1);int(1..)])] @ __inDomain(sum([4,-(1);int(1..)]),int(1..3))},{square[2, sum([4,-(2);int(1..)])] @ __inDomain(sum([4,-(2);int(1..)]),int(1..3))},{square[3, sum([4,-(3);int(1..)])] @ __inDomain(sum([4,-(3);int(1..)]),int(1..3))};int(1..)]) = s), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
 allDiff(flatten(square)),
-and([given r: Index
-
-such that
-
-(sum([given c: Index
-
-such that
-
-square[r, c]
- | c: Index,]) = s)
- | r: Index,]),
-and([given c: Index
-
-such that
-
-(sum([given r: Index
-
-such that
-
-square[r, c]
- | r: Index,]) = s)
- | c: Index,]),
+and([ (sum([ square[r, c] | c : Index ]) = s) | r : Index ]),
+and([ (sum([ square[r, c] | r : Index ]) = s) | c : Index ]),
 (sum([square[1, 1],square[2, 2],square[3, 3];int(1..)]) = s),
 (sum([square[1, 3],square[2, 2],square[3, 1];int(1..)]) = s) 
 
@@ -296,12 +216,7 @@ such that
 
 square[r, c]
 
-sum([given c: Index
-
-such that
-
-square[r, c]
- | c: Index,__0: Value,]), 
+sum([ square[r, c] | c : Index ]), 
    ~~> expand_comprehension_ac ([("Better_AC_Comprehension_Expansion", 2001)]) 
 sum([square[r, 1],square[r, 2],square[r, 3];int(1..)]) 
 
@@ -345,12 +260,7 @@ such that
 
 (sum([square[r, 1],square[r, 2],square[r, 3];int(1..)]) = s)
 
-and([given r: Index
-
-such that
-
-(sum([square[r, 1],square[r, 2],square[r, 3];int(1..)]) = s)
- | r: Index,__0: bool,]), 
+and([ (sum([square[r, 1],square[r, 2],square[r, 3];int(1..)]) = s) | r : Index ]), 
    ~~> expand_comprehension_ac ([("Better_AC_Comprehension_Expansion", 2001)]) 
 and([(sum([square[1, 1],square[1, 2],square[1, 3];int(1..)]) = s),(sum([square[2, 1],square[2, 2],square[2, 3];int(1..)]) = s),(sum([square[3, 1],square[3, 2],square[3, 3];int(1..)]) = s);int(1..)]) 
 
@@ -358,17 +268,7 @@ and([(sum([square[1, 1],square[1, 2],square[1, 3];int(1..)]) = s),(sum([square[2
 
 allDiff([square[1, 1],square[1, 2],square[1, 3],square[2, 1],square[2, 2],square[2, 3],square[3, 1],square[3, 2],square[3, 3];int(1..)]),
 and([(sum([square[1, 1],square[1, 2],square[1, 3];int(1..)]) = s),(sum([square[2, 1],square[2, 2],square[2, 3];int(1..)]) = s),(sum([square[3, 1],square[3, 2],square[3, 3];int(1..)]) = s);int(1..)]),
-and([given c: Index
-
-such that
-
-(sum([given r: Index
-
-such that
-
-square[r, c]
- | r: Index,]) = s)
- | c: Index,]),
+and([ (sum([ square[r, c] | r : Index ]) = s) | c : Index ]),
 (sum([square[1, 1],square[2, 2],square[3, 3];int(1..)]) = s),
 (sum([square[1, 3],square[2, 2],square[3, 1];int(1..)]) = s), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
@@ -376,17 +276,7 @@ allDiff([square[1, 1],square[1, 2],square[1, 3],square[2, 1],square[2, 2],square
 (sum([square[1, 1],square[1, 2],square[1, 3];int(1..)]) = s),
 (sum([square[2, 1],square[2, 2],square[2, 3];int(1..)]) = s),
 (sum([square[3, 1],square[3, 2],square[3, 3];int(1..)]) = s),
-and([given c: Index
-
-such that
-
-(sum([given r: Index
-
-such that
-
-square[r, c]
- | r: Index,]) = s)
- | c: Index,]),
+and([ (sum([ square[r, c] | r : Index ]) = s) | c : Index ]),
 (sum([square[1, 1],square[2, 2],square[3, 3];int(1..)]) = s),
 (sum([square[1, 3],square[2, 2],square[3, 1];int(1..)]) = s) 
 
@@ -442,12 +332,7 @@ such that
 
 square[r, c]
 
-sum([given r: Index
-
-such that
-
-square[r, c]
- | r: Index,__0: Value,]), 
+sum([ square[r, c] | r : Index ]), 
    ~~> expand_comprehension_ac ([("Better_AC_Comprehension_Expansion", 2001)]) 
 sum([square[1, c],square[2, c],square[3, c];int(1..)]) 
 
@@ -491,12 +376,7 @@ such that
 
 (sum([square[1, c],square[2, c],square[3, c];int(1..)]) = s)
 
-and([given c: Index
-
-such that
-
-(sum([square[1, c],square[2, c],square[3, c];int(1..)]) = s)
- | c: Index,__0: bool,]), 
+and([ (sum([square[1, c],square[2, c],square[3, c];int(1..)]) = s) | c : Index ]), 
    ~~> expand_comprehension_ac ([("Better_AC_Comprehension_Expansion", 2001)]) 
 and([(sum([square[1, 1],square[2, 1],square[3, 1];int(1..)]) = s),(sum([square[1, 2],square[2, 2],square[3, 2];int(1..)]) = s),(sum([square[1, 3],square[2, 3],square[3, 3];int(1..)]) = s);int(1..)]) 
 
