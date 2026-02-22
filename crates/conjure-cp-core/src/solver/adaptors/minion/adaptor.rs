@@ -10,8 +10,8 @@ use minion_sys::{get_from_table, run_minion};
 
 use crate::Model as ConjureModel;
 use crate::ast::{self as conjure_ast, Name};
+use crate::settings::SolverFamily;
 use crate::solver::SolverCallback;
-use crate::solver::SolverFamily;
 use crate::solver::SolverMutCallback;
 use crate::stats::SolverStats;
 

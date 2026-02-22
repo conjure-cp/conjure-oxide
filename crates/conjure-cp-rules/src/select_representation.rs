@@ -8,7 +8,7 @@ use conjure_cp::{
         ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
         register_rule_set,
     },
-    solver::SolverFamily,
+    settings::SolverFamily,
 };
 use itertools::Itertools;
 use std::sync::Arc;
@@ -30,7 +30,7 @@ register_rule_set!("Representations", ("Base"), |f: &SolverFamily| {
     ) {
         return true;
     }
-    matches!(f, SolverFamily::Sat | SolverFamily::Minion)
+    matches!(f, SolverFamily::Sat(_) | SolverFamily::Minion)
 });
 
 // special case rule to select representations for matrices in one go.

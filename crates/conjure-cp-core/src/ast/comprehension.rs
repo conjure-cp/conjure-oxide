@@ -6,13 +6,13 @@ use std::{
     sync::atomic::{AtomicBool, AtomicU8, Ordering},
 };
 
+use crate::settings::QuantifiedExpander;
 use crate::{ast::Metadata, into_matrix_expr, matrix_expr};
 use conjure_cp_core::ast::ReturnType;
 use itertools::Itertools as _;
 use serde::{Deserialize, Serialize};
 use uniplate::{Biplate, Uniplate};
 
-pub use super::quantified_expander::QuantifiedExpander;
 use super::{
     DeclarationPtr, Domain, DomainPtr, Expression, Moo, Name, Range, SubModel, SymbolTablePtr,
     Typeable, ac_operators::ACOperatorKind,

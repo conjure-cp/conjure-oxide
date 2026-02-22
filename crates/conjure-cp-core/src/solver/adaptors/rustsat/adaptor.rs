@@ -274,7 +274,7 @@ impl SolverAdaptor for Sat {
     fn init_solver(&mut self, _: private::Internal) {}
 
     fn get_family(&self) -> SolverFamily {
-        SolverFamily::Sat
+        SolverFamily::Sat(crate::settings::SatEncoding::Log)
     }
 
     fn get_name(&self) -> &'static str {

@@ -25,7 +25,6 @@ mod variables;
 
 mod moo;
 mod partial_eval;
-mod quantified_expander;
 
 pub use atom::Atom;
 pub use cnf_clause::CnfClause;
@@ -43,7 +42,6 @@ pub use model::*;
 pub use moo::Moo;
 pub use name::Name;
 pub use partial_eval::run_partial_evaluator;
-pub use quantified_expander::QuantifiedExpander;
 pub use reference::Reference;
 pub use sat_encoding::SATIntEncoding;
 pub use submodel::SubModel;
