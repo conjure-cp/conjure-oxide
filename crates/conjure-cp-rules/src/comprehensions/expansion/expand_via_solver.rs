@@ -13,7 +13,8 @@ use conjure_cp::{
     bug,
     context::Context,
     rule_engine::{resolve_rule_sets, rewrite_morph, rewrite_naive},
-    solver::{Solver, SolverError, SolverFamily, adaptors::Minion},
+    settings::SolverFamily,
+    solver::{Solver, SolverError, adaptors::Minion},
 };
 use uniplate::Biplate as _;
 

@@ -13,27 +13,21 @@ use std::collections::VecDeque;
 use conjure_cp::{
     ast::{
         Expression as Expr, SymbolTable,
-        comprehension::{
-            Comprehension, QuantifiedExpander, quantified_expander_for_comprehensions,
-        },
+        comprehension::{Comprehension, quantified_expander_for_comprehensions},
     },
     into_matrix_expr,
     rule_engine::{
         ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
     },
+    settings::QuantifiedExpander,
 };
 use uniplate::Biplate;
 
 use uniplate::Uniplate;
 
-use conjure_cp::rule_engine::register_rule_set;
-
-// optimised comprehension expansion for associative-commutative operators
-register_rule_set!("Better_AC_Comprehension_Expansion", ("Base"));
-
-/// Expand compatible comprehensions using AC optimisations via the solver-backed path.
-#[register_rule(("Better_AC_Comprehension_Expansion", 2001))]
-fn expand_comprehension_ac(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+/// Expand comprehensions inside AC operators using `--quantified-expander via-solver-ac`.
+#[register_rule(("Base", 2002))]
+fn expand_comprehension_via_solver_ac(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     if quantified_expander_for_comprehensions() != QuantifiedExpander::ExpandViaSolverAc {
         return Err(RuleNotApplicable);
     }
@@ -68,8 +62,13 @@ fn expand_comprehension_ac(expr: &Expr, symbols: &SymbolTable) -> ApplicationRes
     Ok(Reduction::with_symbols(new_expr, symbols))
 }
 
+/// Expand comprehensions using `--quantified-expander native`.
 #[register_rule(("Base", 2000))]
-fn expand_comprehension(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+fn expand_comprehension_native(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    if quantified_expander_for_comprehensions() != QuantifiedExpander::ExpandNative {
+        return Err(RuleNotApplicable);
+    }
+
     let Expr::Comprehension(_, comprehension) = expr else {
         return Err(RuleNotApplicable);
     };
@@ -85,15 +84,40 @@ fn expand_comprehension(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
     // TODO: check what kind of error this throws and maybe panic
 
     let mut symbols = symbols.clone();
-    let results = match quantified_expander_for_comprehensions() {
-        QuantifiedExpander::ExpandNative => {
-            expand_native(comprehension.as_ref().clone(), &mut symbols)
-        }
-        QuantifiedExpander::ExpandViaSolver | QuantifiedExpander::ExpandViaSolverAc => {
-            expand_via_solver(comprehension.as_ref().clone(), &mut symbols)
-        }
+    let results =
+        expand_native(comprehension.as_ref().clone(), &mut symbols).or(Err(RuleNotApplicable))?;
+
+    Ok(Reduction::with_symbols(into_matrix_expr!(results), symbols))
+}
+
+/// Expand comprehensions using `--quantified-expander via-solver` (and as fallback for
+/// non-AC comprehensions when `--quantified-expander via-solver-ac`).
+#[register_rule(("Base", 2000))]
+fn expand_comprehension_via_solver(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    if !matches!(
+        quantified_expander_for_comprehensions(),
+        QuantifiedExpander::ExpandViaSolver | QuantifiedExpander::ExpandViaSolverAc
+    ) {
+        return Err(RuleNotApplicable);
     }
-    .or(Err(RuleNotApplicable))?;
+
+    let Expr::Comprehension(_, comprehension) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    // unwrap comprehensions inside out. This reduces calls to minion when rewriting nested
+    // comprehensions.
+    let nested_comprehensions: VecDeque<Comprehension> =
+        (**comprehension).clone().return_expression().universe_bi();
+    if !nested_comprehensions.is_empty() {
+        return Err(RuleNotApplicable);
+    };
+
+    // TODO: check what kind of error this throws and maybe panic
+
+    let mut symbols = symbols.clone();
+    let results = expand_via_solver(comprehension.as_ref().clone(), &mut symbols)
+        .or(Err(RuleNotApplicable))?;
 
     Ok(Reduction::with_symbols(into_matrix_expr!(results), symbols))
 }

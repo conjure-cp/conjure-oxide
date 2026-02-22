@@ -14,7 +14,8 @@ use conjure_cp::{
     bug,
     context::Context,
     rule_engine::{resolve_rule_sets, rewrite_morph, rewrite_naive},
-    solver::{Solver, SolverError, SolverFamily, adaptors::Minion},
+    settings::SolverFamily,
+    solver::{Solver, SolverError, adaptors::Minion},
 };
 use tracing::warn;
 use uniplate::{Biplate, Uniplate as _, zipper::Zipper};
@@ -83,12 +84,7 @@ pub fn expand_via_solver_ac(
     // only branch on the quantified variables.
     generator_model.search_order = Some(comprehension.quantified_vars.clone());
 
-    let extra_rule_sets = &[
-        "Base",
-        "Constant",
-        "Bubble",
-        "Better_AC_Comprehension_Expansion",
-    ];
+    let extra_rule_sets = &["Base", "Constant", "Bubble"];
 
     // Minion unrolling expects quantified variables in the generator model as find declarations.
     // Keep this conversion local to the temporary model used for solving.
