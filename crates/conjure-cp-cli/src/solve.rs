@@ -1,12 +1,13 @@
 //! conjure_oxide solve sub-command
 #![allow(clippy::unwrap_used)]
+#[cfg(feature = "smt")]
+use std::time::Duration;
 use std::{
     fs::File,
     io::Write as _,
     path::PathBuf,
     process::exit,
     sync::{Arc, RwLock},
-    time::Duration,
 };
 
 use anyhow::{anyhow, ensure};
@@ -19,11 +20,11 @@ use conjure_cp::{
     },
     context::Context,
     rule_engine::{resolve_rule_sets, rewrite_morph, rewrite_naive},
-    settings::{Rewriter, SolverArgs},
+    settings::Rewriter,
     solver::Solver,
 };
 use conjure_cp::{
-    parse::conjure_json::model_from_json, rule_engine::get_rules, solver::SolverFamily,
+    parse::conjure_json::model_from_json, rule_engine::get_rules, settings::SolverFamily,
 };
 use conjure_cp::{parse::tree_sitter::parse_essence_file_native, solver::adaptors::*};
 use conjure_cp_cli::find_conjure::conjure_executable;
@@ -103,12 +104,8 @@ pub(crate) fn init_context(
         extra_rule_sets.push(rs.as_str());
     }
 
-    if global_args.no_use_expand_ac {
-        extra_rule_sets.pop_if(|x| x == &"Better_AC_Comprehension_Expansion");
-    }
-
-    if target_family == SolverFamily::Sat {
-        extra_rule_sets.push(global_args.sat_encoding.as_rule_set());
+    if let SolverFamily::Sat(sat_encoding) = target_family {
+        extra_rule_sets.push(sat_encoding.as_rule_set());
     }
 
     let rule_sets = match resolve_rule_sets(target_family, &extra_rule_sets) {
@@ -152,18 +149,17 @@ pub(crate) fn init_context(
 
 pub(crate) fn init_solver(global_args: &GlobalArgs) -> Solver {
     let family = global_args.solver;
-    let solver_args = SolverArgs {
-        timeout_ms: global_args
-            .solver_timeout
-            .map(|dur| Duration::from(dur).as_millis())
-            .map(|timeout_ms| u64::try_from(timeout_ms).expect("Timeout too large")),
-    };
+    #[cfg(feature = "smt")]
+    let timeout_ms = global_args
+        .solver_timeout
+        .map(|dur| Duration::from(dur).as_millis())
+        .map(|timeout_ms| u64::try_from(timeout_ms).expect("Timeout too large"));
 
     match family {
         SolverFamily::Minion => Solver::new(Minion::default()),
-        SolverFamily::Sat => Solver::new(Sat::default()),
+        SolverFamily::Sat(_) => Solver::new(Sat::default()),
         #[cfg(feature = "smt")]
-        SolverFamily::Smt(theory_cfg) => Solver::new(Smt::new(solver_args.timeout_ms, theory_cfg)),
+        SolverFamily::Smt(theory_cfg) => Solver::new(Smt::new(timeout_ms, theory_cfg)),
     }
 }
 
@@ -179,7 +175,7 @@ pub(crate) fn parse(
         .expect("context should contain the input file");
 
     tracing::info!(target: "file", "Input file: {}", input_file);
-    if global_args.use_native_parser {
+    if global_args.parser == conjure_cp::settings::Parser::TreeSitter {
         parse_essence_file_native(input_file.as_str(), context.clone()).map_err(|e| e.into())
     } else {
         conjure_executable()
