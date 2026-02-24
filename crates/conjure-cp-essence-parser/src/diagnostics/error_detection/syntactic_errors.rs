@@ -1,40 +1,9 @@
 use crate::diagnostics::diagnostics_api::{Diagnostic, Position, Range, Severity};
 use crate::parser::traversal::WalkDFS;
 use crate::parser::util::get_tree;
+use capitalize::Capitalize;
+use std::collections::HashSet;
 use tree_sitter::Node;
-
-/// Helper function to see all the error nodes tree-sitter generated.
-/// Prints each error or missing node's.
-pub fn print_all_error_nodes(source: &str) {
-    if let Some((tree, _)) = get_tree(source) {
-        let root_node = tree.root_node();
-        println!("{}", root_node.to_sexp());
-        let mut stack = vec![root_node];
-        while let Some(node) = stack.pop() {
-            if node.is_error() || node.is_missing() || node.has_error() {
-                println!(
-                    "Error: '{}' [{}:{}-{}:{}] (children: {}) parent: {}",
-                    node.kind(),
-                    node.start_position().row,
-                    node.start_position().column,
-                    node.end_position().row,
-                    node.end_position().column,
-                    node.child_count(),
-                    node.parent()
-                        .map_or("None".to_string(), |p| p.kind().to_string())
-                );
-            }
-            for i in (0..node.child_count()).rev() {
-                if let Some(child) = node.child(i) {
-                    stack.push(child);
-                }
-            }
-        }
-    } else {
-        println!("[all errors] Could not parse source.");
-    }
-}
-
 /// Helper function
 pub fn print_diagnostics(diags: &[Diagnostic]) {
     for (i, diag) in diags.iter().enumerate() {
@@ -77,12 +46,14 @@ fn error_node_out_of_range(node: &tree_sitter::Node, source: &str) -> bool {
 /// * `Vec<Diagnostic>` - A vector of diagnostics describing syntactic issues found in the source.
 pub fn detect_syntactic_errors(source: &str) -> Vec<Diagnostic> {
     let mut diagnostics = Vec::new();
+    let mut malformed_lines_reported = HashSet::new();
 
     let (tree, _) = match get_tree(source) {
         Some(tree) => tree,
         None => {
             let last_line = source.lines().count().saturating_sub(1);
             let last_char = source.lines().last().map(|l| l.len()).unwrap_or(0);
+
             diagnostics.push(Diagnostic {
                 range: Range {
                     start: Position {
@@ -103,40 +74,45 @@ pub fn detect_syntactic_errors(source: &str) -> Vec<Diagnostic> {
     };
 
     let root_node = tree.root_node();
-    // Retract (do not descend) if the node is missing, error, or their parent is missing/error
-    let retract = |node: &tree_sitter::Node| {
+    let retract: &dyn Fn(&tree_sitter::Node) -> bool = &|node: &tree_sitter::Node| {
         node.is_missing() || node.is_error() || node.start_position() == node.end_position()
     };
 
     for node in WalkDFS::with_retract(&root_node, &retract) {
-        // Tree-sitter sometimes fails to insert a MISSING node, do a range check to be sure
         if node.start_position() == node.end_position() {
             diagnostics.push(classify_missing_token(node));
             continue;
         }
-        // Only classify error nodes whose parent is not error/missing
-        if (node.is_error())
-            && !node
-                .parent()
-                .is_some_and(|p| p.is_error() || p.is_missing())
-        {
-            diagnostics.push(classify_syntax_error(node, source));
+        if node.is_error() {
+            let line = node.start_position().row;
+            // If this line has already been reported as malformed, skip all error nodes on this line
+            if malformed_lines_reported.contains(&line) {
+                continue;
+            }
+            if is_malformed_line_error(&node, source) {
+                malformed_lines_reported.insert(line);
+
+                let last_char = source.lines().nth(line).map_or(0, |l| l.len());
+                diagnostics.push(generate_a_syntax_err_diagnostic(
+                    line as u32,
+                    0,
+                    line as u32,
+                    last_char as u32,
+                    &format!(
+                        "Malformed line {}: '{}'",
+                        line + 1,
+                        source.lines().nth(line).unwrap_or("")
+                    ),
+                ));
+                continue;
+            } else {
+                diagnostics.push(classify_unexpected_token_error(node, source));
+            }
             continue;
         }
     }
 
     diagnostics
-}
-
-/// Classifies a syntax error node and returns a diagnostic for it.
-fn classify_syntax_error(node: Node, source: &str) -> Diagnostic {
-    if node.is_missing() {
-        classify_missing_token(node)
-    } else if node.is_error() {
-        classify_unexpected_token_error(node, source)
-    } else {
-        classify_general_syntax_error(node)
-    }
 }
 
 /// Classifies a missing token node and generates a diagnostic with a context-aware message.
@@ -146,143 +122,72 @@ fn classify_missing_token(node: Node) -> Diagnostic {
 
     let message = if let Some(parent) = node.parent() {
         match parent.kind() {
-            "letting_statement" => "Missing 'expression or domain'".to_string(),
-            "and_expr" => "Missing right operand in 'and' expression".to_string(),
-            "comparison_expr" => "Missing right operand in 'comparison' expression".to_string(),
-            _ => format!("Missing '{}'", node.kind()),
+            "letting_statement" => "Missing Expression or Domain".to_string(),
+            _ => format!("Missing {}", user_friendly_token_name(node.kind(), false)),
         }
     } else {
-        format!("Missing '{}'", node.kind())
+        format!("Missing {}", user_friendly_token_name(node.kind(), false))
     };
 
-    Diagnostic {
-        range: Range {
-            start: Position {
-                line: start.row as u32,
-                character: start.column as u32,
-            },
-            end: Position {
-                line: end.row as u32,
-                character: end.column as u32,
-            },
-        },
-        severity: Severity::Error,
-        message,
-        source: "syntactic-error-detector",
-    }
+    generate_a_syntax_err_diagnostic(
+        start.row as u32,
+        start.column as u32,
+        end.row as u32,
+        end.column as u32,
+        &message,
+    )
 }
+
+/// Classifies an unexpected token error node and generates a diagnostic.
 fn classify_unexpected_token_error(node: Node, source_code: &str) -> Diagnostic {
-    let (message, whole_line, line_index) = if let Some(parent) = node.parent() {
+    let message = if let Some(parent) = node.parent() {
         let start_byte = node.start_byte().min(source_code.len());
         let end_byte = node.end_byte().min(source_code.len());
         let src_token = &source_code[start_byte..end_byte];
 
-        // Malformed entire lines
-        // Tree-sitter cannot apply any grammar rule to a line
-
+        if parent.kind() == "program"
         // ERROR node is the direct child of the root node
-        if parent.kind() == "program" {
-            let li = node.start_position().row;
-            let line_text = source_code.lines().nth(li).unwrap_or("");
-
-            // happens when the malformed line is the first
-            // Tree-sitter places the error node out of range, needs separate handling
-            if error_node_out_of_range(&node, source_code) || node.start_position().column == 0 {
-                (
-                    format!("Malformed line {}: '{}'", li + 1, line_text),
-                    true,
-                    li,
-                )
-
-            // Unexpected tokens
-
-            // Tree-sitter classified a line but found unexpected token at the end of it
-            } else if let Some(prev_sib) = node.prev_sibling().and_then(|n| n.prev_sibling()) {
-                (
-                    format!(
-                        "Unexpected '{}' at the end of '{}'",
-                        src_token,
-                        prev_sib.kind()
-                    ),
-                    false,
-                    li,
-                )
-            } else {
-                (format!("Unexpected '{}'", src_token), false, li)
-            }
-        // Unexpected tokens inside constructs
+        {
+            // A case where the unexpected token is at the end of a valid statement
+            format!("Unexpected {}", src_token)
+            // }
         } else {
-            (
-                format!("Unexpected '{}' inside '{}'", src_token, parent.kind()),
-                false,
-                0,
+            // Unexpected token inside a construct
+            format!(
+                "Unexpected {} inside {}",
+                src_token,
+                user_friendly_token_name(parent.kind(), true)
             )
         }
     } else {
-        (format!("Unexpected '{}'", source_code), false, 0)
+        // Should never happen since an ERROR node would always have a parent.
+        "Unexpected token".to_string()
     };
 
-    // compute range once based on whole_line flag or node positions
-    let (start, end) = if whole_line {
-        let li = line_index;
-        let line_text = source_code.lines().nth(li).unwrap_or("");
-        (
-            Position {
-                line: li as u32,
-                character: 0,
-            },
-            Position {
-                line: li as u32,
-                character: line_text.len() as u32,
-            },
-        )
-    } else {
-        (
-            Position {
-                line: node.start_position().row as u32,
-                character: node.start_position().column as u32,
-            },
-            Position {
-                line: node.end_position().row as u32,
-                character: node.end_position().column as u32,
-            },
-        )
-    };
-
-    Diagnostic {
-        range: Range { start, end },
-        severity: Severity::Error,
-        message,
-        source: "syntactic-error-detector",
-    }
+    generate_a_syntax_err_diagnostic(
+        node.start_position().row as u32,
+        node.start_position().column as u32,
+        node.end_position().row as u32,
+        node.end_position().column as u32,
+        &message,
+    )
 }
 
-/// Classifies a general syntax error that cannot be classified with other functions.
-fn classify_general_syntax_error(node: Node) -> Diagnostic {
-    let message = if let Some(parent) = node.parent() {
-        format!(
-            "Syntax error in '{}': unexpected or invalid '{}'.",
-            parent.kind(),
-            node.kind()
-        )
-    } else {
-        format!("Syntax error: unexpected or invalid '{}'.", node.kind())
-    };
+/// Determines if an error node represents a malformed line error.
+fn is_malformed_line_error(node: &tree_sitter::Node, source: &str) -> bool {
+    if node.start_position().column == 0 || error_node_out_of_range(node, source) {
+        return true;
+    }
+    let parent = node.parent();
+    let grandparent = parent.and_then(|n| n.parent());
+    let root = grandparent.and_then(|n| n.parent());
 
-    Diagnostic {
-        range: Range {
-            start: Position {
-                line: node.start_position().row as u32,
-                character: node.start_position().column as u32,
-            },
-            end: Position {
-                line: node.end_position().row as u32,
-                character: node.end_position().column as u32,
-            },
-        },
-        severity: Severity::Error,
-        message,
-        source: "syntactic-error-detector",
+    if let (Some(parent), Some(grandparent), Some(root)) = (parent, grandparent, root) {
+        parent.kind() == "set_operation_bool"
+            && grandparent.kind() == "bool_expr"
+            && root.kind() == "program"
+    } else {
+        false
     }
 }
 
@@ -305,6 +210,61 @@ pub fn check_diagnostic(
     assert_eq!(diag.message, msg);
 }
 
+/// Coverts a token name into a more user-friendly format for error messages.
+/// Removes underscores, replaces certain keywords with more natural language, and adds appropriate articles.
+fn user_friendly_token_name(token: &str, article: bool) -> String {
+    let capitalized = if token.contains("atom") {
+        "Expression".to_string()
+    } else if token == "COLON" {
+        ":".to_string()
+    } else {
+        let friendly_name = token
+            .replace("literal", "")
+            .replace("int", "Integer")
+            .replace("expr", "Expression")
+            .replace('_', " ");
+        friendly_name
+            .split_whitespace()
+            .map(|word| word.capitalize())
+            .collect::<Vec<_>>()
+            .join(" ")
+    };
+
+    if !article {
+        return capitalized;
+    }
+    let first_char = capitalized.chars().next().unwrap();
+    let article = match first_char.to_ascii_lowercase() {
+        'a' | 'e' | 'i' | 'o' | 'u' => "an",
+        _ => "a",
+    };
+    format!("{} {}", article, capitalized)
+}
+
+fn generate_a_syntax_err_diagnostic(
+    line_start: u32,
+    char_start: u32,
+    line_end: u32,
+    char_end: u32,
+    msg: &str,
+) -> Diagnostic {
+    Diagnostic {
+        range: Range {
+            start: Position {
+                line: line_start,
+                character: char_start,
+            },
+            end: Position {
+                line: line_end,
+                character: char_end,
+            },
+        },
+        severity: Severity::Error,
+        message: msg.to_string(),
+        source: "syntactic-error-detector",
+    }
+}
+
 #[test]
 fn error_at_start() {
     let source = "; find x: int(1..3)";
@@ -312,4 +272,30 @@ fn error_at_start() {
     assert!(!diagnostics.is_empty(), "Expected at least one diagnostic");
     let diag = &diagnostics[0];
     check_diagnostic(diag, 0, 0, 0, 19, "Failed to read the source code");
+}
+
+#[test]
+fn user_friendly_token_name_article() {
+    assert_eq!(
+        user_friendly_token_name("int_domain", false),
+        "Integer Domain"
+    );
+    assert_eq!(
+        user_friendly_token_name("int_domain", true),
+        "an Integer Domain"
+    );
+    // assert_eq!(user_friendly_token_name("atom", true), "an Expression");
+    assert_eq!(user_friendly_token_name("COLON", false), ":");
+}
+#[test]
+fn malformed_line() {
+    let source = " a,a,b: int(1..3)";
+    let (tree, _) = get_tree(source).expect("Should parse");
+    let root_node = tree.root_node();
+
+    let error_node = WalkDFS::with_retract(&root_node, &|_node| false)
+        .find(|node| node.is_error())
+        .expect("Should find an error node");
+
+    assert!(is_malformed_line_error(&error_node, source));
 }

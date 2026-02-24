@@ -176,7 +176,7 @@ impl Representation for MatrixToAtom {
         let dom: DomainPtr = self.elem_domain.clone().into();
         Ok(self
             .names()
-            .map(|name| DeclarationPtr::new_var(name, dom.clone()))
+            .map(|name| DeclarationPtr::new_find(name, dom.clone()))
             .collect_vec())
     }
 

@@ -4,9 +4,7 @@ use crate::util::named_children;
 use crate::{EssenceParseError, field};
 use conjure_cp_core::ast::ac_operators::ACOperatorKind;
 use conjure_cp_core::ast::comprehension::ComprehensionBuilder;
-use conjure_cp_core::ast::{DeclarationPtr, Expression, Metadata, Moo, Name, SymbolTable};
-use std::cell::RefCell;
-use std::rc::Rc;
+use conjure_cp_core::ast::{DeclarationPtr, Expression, Metadata, Moo, Name, SymbolTablePtr};
 use std::vec;
 use tree_sitter::Node;
 
@@ -14,7 +12,7 @@ pub fn parse_comprehension(
     node: &Node,
     source_code: &str,
     root: &Node,
-    symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
+    symbols_ptr: Option<SymbolTablePtr>,
 ) -> Result<Expression, EssenceParseError> {
     // Comprehensions require a symbol table passed in
     let symbols_ptr = symbols_ptr.ok_or_else(|| {
@@ -33,7 +31,7 @@ pub fn parse_comprehension(
     // set return expression node and parse generators/conditions
     for child in named_children(node) {
         match child.kind() {
-            "arithmetic_expr" | "bool_expr" | "comparison_expr" => {
+            "arithmetic_expr" | "bool_expr" | "comparison_expr" | "atom" => {
                 // Store the return expression node to parse later
                 return_expr_node = Some(child);
             }
@@ -48,7 +46,7 @@ pub fn parse_comprehension(
                 let var_domain = parse_domain(domain_node, source_code, Some(symbols_ptr.clone()))?;
 
                 // Add generator using the builder
-                let decl = DeclarationPtr::new_var(var_name, var_domain);
+                let decl = DeclarationPtr::new_find(var_name, var_domain);
                 builder = builder.generator(decl);
             }
             "condition" => {
@@ -76,7 +74,7 @@ pub fn parse_comprehension(
         )
     })?;
 
-    // Use the return expression symbol table which already has induction variables (as Given) and parent as parent
+    // Use the return expression symbol table which already has quantified variables (as Given) and parent as parent
     let return_expr = parse_expression(
         return_expr_node,
         source_code,
@@ -100,7 +98,7 @@ pub fn parse_quantifier_or_aggregate_expr(
     node: &Node,
     source_code: &str,
     root: &Node,
-    symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
+    symbols_ptr: Option<SymbolTablePtr>,
 ) -> Result<Expression, EssenceParseError> {
     // Quantifier and aggregate expressions require a symbol table
     let symbols_ptr = symbols_ptr.ok_or_else(|| {
@@ -172,7 +170,7 @@ pub fn parse_quantifier_or_aggregate_expr(
     // Add variables as generators
     if let Some(dom) = domain {
         for var_name in variables {
-            let decl = DeclarationPtr::new_var(var_name, dom.clone());
+            let decl = DeclarationPtr::new_find(var_name, dom.clone());
             builder = builder.generator(decl);
         }
     } else if let Some(_coll_node) = collection_node {

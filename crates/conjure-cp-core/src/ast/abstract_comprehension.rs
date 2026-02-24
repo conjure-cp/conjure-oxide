@@ -1,21 +1,24 @@
-use super::SymbolTable;
-use super::declaration::{DeclarationPtr, serde::DeclarationPtrFull};
-use crate::ast::{DomainPtr, Expression, Name, ReturnType, SubModel, Typeable};
+use super::declaration::DeclarationPtr;
+use super::serde::PtrAsInner;
+use super::{DomainPtr, Expression, Name, ReturnType, SubModel, SymbolTablePtr, Typeable};
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
-use uniplate::Uniplate;
 use std::fmt::{Display, Formatter};
-use std::{cell::RefCell, hash::Hash, hash::Hasher, rc::Rc};
+use std::hash::Hash;
+use uniplate::Uniplate;
 
 #[serde_as]
-#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Uniplate)]
+#[derive(Clone, PartialEq, Eq, Hash, Serialize, Deserialize, Debug, Uniplate)]
 #[biplate(to=Expression)]
+#[biplate(to=SubModel)]
 pub struct AbstractComprehension {
-    pub submodel: SubModel,
+    pub return_expr: Expression,
     pub qualifiers: Vec<Qualifier>,
 }
 
-#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Hash)]
+#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Hash, Uniplate)]
+#[biplate(to=Expression)]
+#[biplate(to=SubModel)]
 pub enum Qualifier {
     Generator(Generator),
     Condition(Expression),
@@ -25,7 +28,7 @@ pub enum Qualifier {
 #[serde_as]
 #[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Hash)]
 pub struct ComprehensionLetting {
-    #[serde_as(as = "DeclarationPtrFull")]
+    #[serde_as(as = "PtrAsInner")]
     pub decl: DeclarationPtr,
     pub expression: Expression,
 }
@@ -39,14 +42,14 @@ pub enum Generator {
 #[serde_as]
 #[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Hash)]
 pub struct DomainGenerator {
-    #[serde_as(as = "DeclarationPtrFull")]
+    #[serde_as(as = "PtrAsInner")]
     pub decl: DeclarationPtr,
 }
 
 #[serde_as]
 #[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Hash)]
 pub struct ExpressionGenerator {
-    #[serde_as(as = "DeclarationPtrFull")]
+    #[serde_as(as = "PtrAsInner")]
     pub decl: DeclarationPtr,
     pub expression: Expression,
 }
@@ -73,32 +76,35 @@ impl Typeable for AbstractComprehension {
 
 impl Hash for AbstractComprehension {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        (*self.symbols()).borrow().hash(state);
-        self.return_expr().hash(state);
+        self.return_expr.hash(state);
         self.qualifiers.hash(state);
     }
 }
 
 pub struct AbstractComprehensionBuilder {
     pub qualifiers: Vec<Qualifier>,
-    pub submodel: SubModel,
 }
 
-//this is the method that allows you to build an abstract comprehension
 impl AbstractComprehensionBuilder {
-    // this method creates an abstract comprehension builder with:
-    // a submodel
-    // empty list of qualifiers
-    // and no return exp yet -- that will be added in the with_return_value method
-    pub fn new(symbols: &Rc<RefCell<SymbolTable>>) -> Self {
+    /// Creates an [AbstractComprehensionBuilder] with:
+    /// - An inner scope which inherits from the given symbol table
+    /// - An empty list of qualifiers
+    ///
+    /// Changes to the inner scope do not affect the given symbol table.
+    ///
+    /// The return expression is passed when finalizing the comprehension, in [with_return_value].
+    pub fn new(symbols: &SymbolTablePtr) -> Self {
         Self {
             qualifiers: vec![],
-            submodel: SubModel::new(Rc::clone(symbols)),
         }
     }
 
-    pub fn symbols(&self) -> Rc<RefCell<SymbolTable>> {
-        Rc::new(RefCell::new(self.submodel.symbols().clone()))
+    pub fn return_expr_symbols(&self) -> Rc<RefCell<SymbolTable>> {
+        self.return_expr_symbols.clone()
+    }
+
+    pub fn generator_symbols(&self) -> Rc<RefCell<SymbolTable>> {
+        self.generator_symbols.clone()
     }
 
     pub fn add_domain_generator(mut self, domain: DomainPtr, name: Name) {
@@ -133,8 +139,14 @@ impl AbstractComprehensionBuilder {
             .expect("Expression must have a domain")
             .element_domain()
             .expect("Expression must contain elements with uniform domain");
-        let generator_decl = DeclarationPtr::new_var_quantified(name, domain.clone());
-        self.symbols().borrow_mut().update_insert(generator_decl.clone());
+
+        // The variable is quantified in both scopes.
+        let generator_ptr = DeclarationPtr::new_quantified(name, domain);
+        let return_expr_ptr = DeclarationPtr::new_quantified_from_generator(&generator_ptr)
+            .expect("Return expression declaration must not be None");
+
+        self.return_expr_symbols.write().insert(return_expr_ptr);
+        self.generator_symbols.write().insert(generator_ptr.clone());
 
         self.qualifiers
             .push(Qualifier::Generator(Generator::ExpressionGenerator(
@@ -172,7 +184,7 @@ impl AbstractComprehensionBuilder {
     }
 
     pub fn new_letting(&mut self, expression: Expression) -> DeclarationPtr {
-        let letting_decl = self.symbols().borrow_mut().gensym(
+        let letting_decl = self.return_expr_symbols.write().gensym(
             &expression
                 .domain_of()
                 .expect("Expression must have a domain"),

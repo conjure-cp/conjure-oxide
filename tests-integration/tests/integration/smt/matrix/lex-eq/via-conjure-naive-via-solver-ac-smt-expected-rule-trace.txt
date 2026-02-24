@@ -1,0 +1,110 @@
+Model before rewriting:
+
+find m: matrix indexed by [[int(1..2)]] of int(1..2)
+find m2: matrix indexed by [[int(1..2)]] of int(1..2)
+
+such that
+
+(m <=lex m2),
+(m2 <=lex m)
+
+--
+
+(m <=lex m2), 
+   ~~> expand_lex_lt_leq ([("Smt", 2001)]) 
+or([(m[1] < m2[1]),and([(m[1] = m2[1]),or([(m[2] < m2[2]),and([(m[2] = m2[2]),true;int(1..)]);int(1..)]);int(1..)]);int(1..)]) 
+
+--
+
+or([(m[1] < m2[1]),and([(m[1] = m2[1]),or([(m[2] < m2[2]),and([(m[2] = m2[2]),true;int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+(m2 <=lex m), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+or([(m[1] < m2[1]),and([(m[1] = m2[1]),or([(m[2] < m2[2]),and([(m[2] = m2[2]);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+(m2 <=lex m) 
+
+--
+
+and([(m[2] = m2[2]);int(1..)]), 
+   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+(m[2] = m2[2]) 
+
+--
+
+or([(m[1] < m2[1]),and([(m[1] = m2[1]),or([(m[2] < m2[2]),(m[2] = m2[2]);int(1..)]);int(1..)]);int(1..)]), 
+   ~~> distribute_or_over_and ([("Base", 8400)]) 
+and([or([(m[1] < m2[1]),(m[1] = m2[1]);int(1..)]),or([(m[1] < m2[1]),or([(m[2] < m2[2]),(m[2] = m2[2]);int(1..)]);int(1..)]);int(1..)]) 
+
+--
+
+and([or([(m[1] < m2[1]),(m[1] = m2[1]);int(1..)]),or([(m[1] < m2[1]),or([(m[2] < m2[2]),(m[2] = m2[2]);int(1..)]);int(1..)]);int(1..)]),
+(m2 <=lex m), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+or([(m[1] < m2[1]),(m[1] = m2[1]);int(1..)]),
+or([(m[1] < m2[1]),or([(m[2] < m2[2]),(m[2] = m2[2]);int(1..)]);int(1..)]),
+(m2 <=lex m) 
+
+--
+
+or([(m[1] < m2[1]),or([(m[2] < m2[2]),(m[2] = m2[2]);int(1..)]);int(1..)]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+or([(m[1] < m2[1]),(m[2] < m2[2]),(m[2] = m2[2]);int(1..)]) 
+
+--
+
+(m2 <=lex m), 
+   ~~> expand_lex_lt_leq ([("Smt", 2001)]) 
+or([(m2[1] < m[1]),and([(m2[1] = m[1]),or([(m2[2] < m[2]),and([(m2[2] = m[2]),true;int(1..)]);int(1..)]);int(1..)]);int(1..)]) 
+
+--
+
+or([(m[1] < m2[1]),(m[1] = m2[1]);int(1..)]),
+or([(m[1] < m2[1]),(m[2] < m2[2]),(m[2] = m2[2]);int(1..)]),
+or([(m2[1] < m[1]),and([(m2[1] = m[1]),or([(m2[2] < m[2]),and([(m2[2] = m[2]),true;int(1..)]);int(1..)]);int(1..)]);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+or([(m[1] < m2[1]),(m[1] = m2[1]);int(1..)]),
+or([(m[1] < m2[1]),(m[2] < m2[2]),(m[2] = m2[2]);int(1..)]),
+or([(m2[1] < m[1]),and([(m2[1] = m[1]),or([(m2[2] < m[2]),and([(m2[2] = m[2]);int(1..)]);int(1..)]);int(1..)]);int(1..)]) 
+
+--
+
+and([(m2[2] = m[2]);int(1..)]), 
+   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+(m2[2] = m[2]) 
+
+--
+
+or([(m2[1] < m[1]),and([(m2[1] = m[1]),or([(m2[2] < m[2]),(m2[2] = m[2]);int(1..)]);int(1..)]);int(1..)]), 
+   ~~> distribute_or_over_and ([("Base", 8400)]) 
+and([or([(m2[1] < m[1]),(m2[1] = m[1]);int(1..)]),or([(m2[1] < m[1]),or([(m2[2] < m[2]),(m2[2] = m[2]);int(1..)]);int(1..)]);int(1..)]) 
+
+--
+
+or([(m[1] < m2[1]),(m[1] = m2[1]);int(1..)]),
+or([(m[1] < m2[1]),(m[2] < m2[2]),(m[2] = m2[2]);int(1..)]),
+and([or([(m2[1] < m[1]),(m2[1] = m[1]);int(1..)]),or([(m2[1] < m[1]),or([(m2[2] < m[2]),(m2[2] = m[2]);int(1..)]);int(1..)]);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+or([(m[1] < m2[1]),(m[1] = m2[1]);int(1..)]),
+or([(m[1] < m2[1]),(m[2] < m2[2]),(m[2] = m2[2]);int(1..)]),
+or([(m2[1] < m[1]),(m2[1] = m[1]);int(1..)]),
+or([(m2[1] < m[1]),or([(m2[2] < m[2]),(m2[2] = m[2]);int(1..)]);int(1..)]) 
+
+--
+
+or([(m2[1] < m[1]),or([(m2[2] < m[2]),(m2[2] = m[2]);int(1..)]);int(1..)]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+or([(m2[1] < m[1]),(m2[2] < m[2]),(m2[2] = m[2]);int(1..)]) 
+
+--
+
+Final model:
+
+find m: matrix indexed by [[int(1..2)]] of int(1..2)
+find m2: matrix indexed by [[int(1..2)]] of int(1..2)
+
+such that
+
+or([(m[1] < m2[1]),(m[1] = m2[1]);int(1..)]),
+or([(m[1] < m2[1]),(m[2] < m2[2]),(m[2] = m2[2]);int(1..)]),
+or([(m2[1] < m[1]),(m2[1] = m[1]);int(1..)]),
+or([(m2[1] < m[1]),(m2[2] < m[2]),(m2[2] = m[2]);int(1..)])
+

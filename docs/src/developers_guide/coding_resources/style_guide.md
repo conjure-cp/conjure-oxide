@@ -30,7 +30,7 @@ Our documentation is inline with the code. The reader is likely to skim it while
     > (E.g: *"We type-cast the given pointer with `mem::transmute`. This is safe because..."*)
   - Special cases
 
-## Don'ts
+## Things to Avoid
 
 Documentation generally should **not**:
 
