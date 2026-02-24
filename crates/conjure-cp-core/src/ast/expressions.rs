@@ -920,11 +920,23 @@ impl Expression {
                 .apply_i32(|a, b| Some(a * b), b.domain_of()?.resolve()?.as_ref())
                 .map(DomainPtr::from)
                 .ok(),
-            Expression::Defined(_, function) => get_function_domain(function),
-            Expression::Range(_, function) => get_function_codomain(function),
+            Expression::Defined(_, function) => Some(Domain::set(
+                    SetAttr::<IntVal>::default(),
+                    get_function_domain(function).resolve()?,
+            )),
+            Expression::Range(_, function) => Some(Domain::set(
+                    SetAttr::<IntVal>::default(),
+                    get_function_codomain(function).resolve()?,
+            )),
             Expression::Image(_, function, _) => get_function_codomain(function),
-            Expression::ImageSet(_, function, _) => get_function_codomain(function),
-            Expression::PreImage(_, function, _) => get_function_domain(function),
+            Expression::ImageSet(_, function, _) => Some(Domain::set(
+                    SetAttr::<IntVal>::default(),
+                    get_function_codomain(function).resolve()?,
+            )),
+            Expression::PreImage(_, function, _) => Some(Domain::set(
+                    SetAttr::<IntVal>::default(),
+                    get_function_domain(function).resolve()?,
+            )),
             Expression::Restrict(_, function, new_domain) => {
                 let (attrs, _, codom) = function.domain_of()?.as_function()?;
                 let new_dom = new_domain.domain_of()?;
