@@ -56,13 +56,13 @@ pub struct ExpressionGenerator {
 
 impl AbstractComprehension {
     pub fn domain_of(&self) -> Option<DomainPtr> {
-        self.return_expr().domain_of()
+        self.return_expr.domain_of()
     }
 }
 
 impl Typeable for AbstractComprehension {
     fn return_type(&self) -> ReturnType {
-        self.return_expr().return_type()
+        self.return_expr.return_type()
     }
 }
 
@@ -79,16 +79,16 @@ impl AbstractComprehensionBuilder {
     /// Changes to the inner scope do not affect the given symbol table.
     ///
     /// The return expression is passed when finalizing the comprehension, in [with_return_value].
-    pub fn new(symbols: SymbolTablePtr) -> Self {
+    pub fn new(symbols: &SymbolTablePtr) -> Self {
         AbstractComprehensionBuilder {
             qualifiers: vec![],
-            symbols: SymbolTablePtr::with_parent(symbols),
+            symbols: SymbolTablePtr::with_parent(symbols.clone()),
         }
     }
 
     pub fn add_domain_generator(mut self, domain: DomainPtr, name: Name) {
         let generator_decl = DeclarationPtr::new_var_quantified(name, domain);
-        self.symbols.borrow_mut().update_insert(generator_decl.clone());
+        self.symbols.write().update_insert(generator_decl.clone());
 
         self.qualifiers
             .push(Qualifier::Generator(Generator::DomainGenerator(
