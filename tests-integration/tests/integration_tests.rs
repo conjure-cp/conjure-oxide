@@ -8,23 +8,18 @@ use conjure_cp::rule_engine::rewrite_naive;
 use conjure_cp::solver::Solver;
 use conjure_cp::solver::adaptors::*;
 use conjure_cp_cli::utils::testing::{normalize_solutions_for_comparison, read_human_rule_trace};
-use glob::glob;
 use itertools::Itertools;
 use std::collections::BTreeMap;
 use std::env;
 use std::error::Error;
 use std::fs;
 use std::fs::File;
-use tracing::{Level, span};
-use tracing_subscriber::{
-    Layer, Registry, filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt,
-};
+use tracing_subscriber::{Layer, filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt};
 use tree_morph::{helpers::select_panic, prelude::*};
 
 #[cfg(feature = "smt")]
 use conjure_cp::solver::adaptors::smt::TheoryConfig;
 
-use std::path::Path;
 use std::sync::Arc;
 use std::sync::RwLock;
 
@@ -43,30 +38,6 @@ use conjure_cp_rules;
 use pretty_assertions::assert_eq;
 use tests_integration::TestConfig;
 
-fn main() {
-    let _guard = create_scoped_subscriber("./logs", "test_log", "none_solver");
-
-    // creating a span and log a message
-    let test_span = span!(Level::TRACE, "test_span");
-    let _enter: span::Entered<'_> = test_span.enter();
-
-    for entry in glob("conjure_cp_cli/tests/integration/*").expect("Failed to read glob pattern") {
-        match entry {
-            Ok(path) => println!("File: {path:?}"),
-            Err(e) => println!("Error: {e:?}"),
-        }
-    }
-
-    let file_path = Path::new("conjure_cp_cli/tests/integration/*"); // using relative path
-
-    let base_name = file_path.file_stem().and_then(|stem| stem.to_str());
-
-    match base_name {
-        Some(name) => println!("Base name: {name}"),
-        None => println!("Could not extract the base name"),
-    }
-}
-
 #[derive(Clone, Copy, Debug)]
 struct RunCase<'a> {
     parser: Parser,
@@ -76,7 +47,6 @@ struct RunCase<'a> {
     case_name: &'a str,
 }
 
-// wrapper to conditionally enforce sequential execution
 fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(), Box<dyn Error>> {
     let accept = env::var("ACCEPT").unwrap_or("false".to_string()) == "true";
 
@@ -127,43 +97,38 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
                         solver,
                         case_name: case_name.as_str(),
                     };
-                    solver_specific_integration_test(
-                        path,
-                        essence_base,
-                        extension,
-                        run_case,
-                        conjure_solutions.clone(),
-                        accept,
-                    )?;
+                    let file = File::create(format!(
+                        "{path}/{}-{}-generated-rule-trace.txt",
+                        run_case.case_name,
+                        run_case.solver.as_str()
+                    ))?;
+                    let subscriber = Arc::new(
+                        tracing_subscriber::registry().with(
+                            fmt::layer()
+                                .with_writer(file)
+                                .with_level(false)
+                                .without_time()
+                                .with_target(false)
+                                .with_filter(EnvFilter::new("rule_engine_human=trace"))
+                                .with_filter(FilterFn::new(|meta| meta.target() == "rule_engine_human")),
+                        ),
+                    ) as Arc<dyn tracing::Subscriber + Send + Sync>;
+                    tracing::subscriber::with_default(subscriber, || {
+                        integration_test_inner(
+                            path,
+                            essence_base,
+                            extension,
+                            run_case,
+                            conjure_solutions.clone(),
+                            accept,
+                        )
+                    })?;
                 }
             }
         }
     }
 
     Ok(())
-}
-
-fn solver_specific_integration_test(
-    path: &str,
-    essence_base: &str,
-    extension: &str,
-    run_case: RunCase<'_>,
-    conjure_solutions: Option<Arc<Vec<BTreeMap<Name, Literal>>>>,
-    accept: bool,
-) -> Result<(), Box<dyn Error>> {
-    // Run tests in sequence with ACCEPT=true, as the conjure checking can get confused when run
-    // too much at once.
-    let subscriber = create_scoped_subscriber(path, run_case.case_name, run_case.solver.as_str());
-    tracing::subscriber::with_default(subscriber, || {
-        integration_test_inner(
-            path,
-            essence_base,
-            extension,
-            run_case,
-            conjure_solutions.clone(),
-            accept,
-        )
-    })
 }
 
 /// Runs an integration test for a given Conjure model by:
@@ -423,39 +388,6 @@ fn copy_generated_to_expected(
         format!("{path}/{test_name}-{marker}.expected-{stage}.{extension}"),
     )?;
     Ok(())
-}
-
-pub fn create_scoped_subscriber(
-    path: &str,
-    test_name: &str,
-    solver_name: &str,
-) -> impl tracing::Subscriber + Send + Sync {
-    let layer = create_file_layer_human(path, test_name, solver_name);
-    let subscriber = Arc::new(tracing_subscriber::registry().with(layer))
-        as Arc<dyn tracing::Subscriber + Send + Sync>;
-    // setting this subscriber as the default
-    let _default = tracing::subscriber::set_default(subscriber.clone());
-
-    subscriber
-}
-
-fn create_file_layer_human(
-    path: &str,
-    test_name: &str,
-    solver_name: &str,
-) -> impl Layer<Registry> + Send + Sync {
-    let file = File::create(format!(
-        "{path}/{test_name}-{solver_name}-generated-rule-trace.txt"
-    ))
-    .expect("Unable to create log file");
-
-    fmt::layer()
-        .with_writer(file)
-        .with_level(false)
-        .without_time()
-        .with_target(false)
-        .with_filter(EnvFilter::new("rule_engine_human=trace"))
-        .with_filter(FilterFn::new(|meta| meta.target() == "rule_engine_human"))
 }
 
 #[test]
