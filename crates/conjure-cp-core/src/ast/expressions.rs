@@ -920,23 +920,54 @@ impl Expression {
                 .apply_i32(|a, b| Some(a * b), b.domain_of()?.resolve()?.as_ref())
                 .map(DomainPtr::from)
                 .ok(),
-            Expression::Defined(_, function) => Some(Domain::set(
-                    SetAttr::<IntVal>::default(),
+            Expression::Defined(_, function) => {
+                let (attrs, _, _) = function.domain_of()?.as_function()?;
+                let size = attrs.resolve()?.size;
+                // The elements defined in the domain is the same as the size of the function itself
+                Some(Domain::set(
+                    SetAttr::new(size),
                     get_function_domain(function).resolve()?,
-            )),
-            Expression::Range(_, function) => Some(Domain::set(
-                    SetAttr::<IntVal>::default(),
+                ))
+            },
+            Expression::Range(_, function) => {
+                let (attrs, _, _) = function.domain_of()?.as_function()?;
+                let size = attrs.resolve()?.size;
+                let dom_size = match size {
+                    Range::Unbounded => Range::Unbounded,
+                    // If lower bound we can guarantee one mapping
+                    Range::Single(x) => Range::Bounded(1,x),
+                    // Upper bound guarantees the same upper bound
+                    Range::UnboundedL(x) => Range::UnboundedL(x),
+                    Range::UnboundedR(x) => Range::UnboundedR(1),
+                    Range::Bounded(x,y ) => Range::Bounded(1,y)
+                };
+                Some(Domain::set(
+                    SetAttr::new(dom_size),
                     get_function_codomain(function).resolve()?,
-            )),
+                ))
+            },
             Expression::Image(_, function, _) => get_function_codomain(function),
             Expression::ImageSet(_, function, _) => Some(Domain::set(
-                    SetAttr::<IntVal>::default(),
+                    // An imageSet is the converted to a set, and can be empty
+                    SetAttr::new(Range::Bounded(0,1)),
                     get_function_codomain(function).resolve()?,
             )),
-            Expression::PreImage(_, function, _) => Some(Domain::set(
-                    SetAttr::<IntVal>::default(),
+            Expression::PreImage(_, function, _) => {
+                let (attrs, _, _) = function.domain_of()?.as_function()?;
+                let size = attrs.resolve()?.size;
+                let dom_size = match size {
+                    // Our only guarantee is an upper bound is the same
+                    Range::Unbounded => Range::Unbounded,
+                    Range::Single(x) => Range::UnboundedL(x),
+                    Range::UnboundedL(x) => Range::UnboundedL(x),
+                    Range::UnboundedR(x) => Range::Unbounded,
+                    Range::Bounded(x,y ) => Range::UnboundedL(y)
+                };
+                Some(Domain::set(
+                    SetAttr::new(dom_size),
                     get_function_domain(function).resolve()?,
-            )),
+                ))
+            },
             Expression::Restrict(_, function, new_domain) => {
                 let (attrs, _, codom) = function.domain_of()?.as_function()?;
                 let new_dom = new_domain.domain_of()?;
