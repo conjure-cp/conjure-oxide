@@ -1,0 +1,135 @@
+Model before rewriting:
+
+letting a be [[1,2,3;int(1..3)],[4,5,6;int(1..3)],[7,8,9;int(1..3)];int(1..3)]
+find i: int(1..2)
+
+such that
+
+(a[i, i] = i)
+
+--
+
+(a[i, i] = i), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(Matrix([AbstractLiteral(Matrix([Int(1), Int(2), Int(3)], Moo { inner: Int([Bounded(1, 3)]) })), AbstractLiteral(Matrix([Int(4), Int(5), Int(6)], Moo { inner: Int([Bounded(1, 3)]) })), AbstractLiteral(Matrix([Int(7), Int(8), Int(9)], Moo { inner: Int([Bounded(1, 3)]) }))], Moo { inner: Int([Bounded(1, 3)]) })[i, i] = i) 
+
+--
+
+Matrix([AbstractLiteral(Matrix([Int(1), Int(2), Int(3)], Moo { inner: Int([Bounded(1, 3)]) })), AbstractLiteral(Matrix([Int(4), Int(5), Int(6)], Moo { inner: Int([Bounded(1, 3)]) })), AbstractLiteral(Matrix([Int(7), Int(8), Int(9)], Moo { inner: Int([Bounded(1, 3)]) }))], Moo { inner: Int([Bounded(1, 3)]) })[i, i], 
+   ~~> index_to_bubble ([("Bubble", 6000)]) 
+{Matrix([AbstractLiteral(Matrix([Int(1), Int(2), Int(3)], Moo { inner: Int([Bounded(1, 3)]) })), AbstractLiteral(Matrix([Int(4), Int(5), Int(6)], Moo { inner: Int([Bounded(1, 3)]) })), AbstractLiteral(Matrix([Int(7), Int(8), Int(9)], Moo { inner: Int([Bounded(1, 3)]) }))], Moo { inner: Int([Bounded(1, 3)]) })[i, i] @ and([__inDomain(i,int(1..3)),__inDomain(i,int(1..3));int(1..)])} 
+
+--
+
+({Matrix([AbstractLiteral(Matrix([Int(1), Int(2), Int(3)], Moo { inner: Int([Bounded(1, 3)]) })), AbstractLiteral(Matrix([Int(4), Int(5), Int(6)], Moo { inner: Int([Bounded(1, 3)]) })), AbstractLiteral(Matrix([Int(7), Int(8), Int(9)], Moo { inner: Int([Bounded(1, 3)]) }))], Moo { inner: Int([Bounded(1, 3)]) })[i, i] @ and([__inDomain(i,int(1..3)),__inDomain(i,int(1..3));int(1..)])} = i), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(Matrix([AbstractLiteral(Matrix([Int(1), Int(2), Int(3)], Moo { inner: Int([Bounded(1, 3)]) })), AbstractLiteral(Matrix([Int(4), Int(5), Int(6)], Moo { inner: Int([Bounded(1, 3)]) })), AbstractLiteral(Matrix([Int(7), Int(8), Int(9)], Moo { inner: Int([Bounded(1, 3)]) }))], Moo { inner: Int([Bounded(1, 3)]) })[i, i] = i) 
+
+--
+
+Matrix([AbstractLiteral(Matrix([Int(1), Int(2), Int(3)], Moo { inner: Int([Bounded(1, 3)]) })), AbstractLiteral(Matrix([Int(4), Int(5), Int(6)], Moo { inner: Int([Bounded(1, 3)]) })), AbstractLiteral(Matrix([Int(7), Int(8), Int(9)], Moo { inner: Int([Bounded(1, 3)]) }))], Moo { inner: Int([Bounded(1, 3)]) })[i, i], 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+[Matrix([Int(1), Int(2), Int(3)], Moo { inner: Int([Bounded(1, 3)]) }),Matrix([Int(4), Int(5), Int(6)], Moo { inner: Int([Bounded(1, 3)]) }),Matrix([Int(7), Int(8), Int(9)], Moo { inner: Int([Bounded(1, 3)]) });int(1..)][i, i] 
+
+--
+
+([Matrix([Int(1), Int(2), Int(3)], Moo { inner: Int([Bounded(1, 3)]) }),Matrix([Int(4), Int(5), Int(6)], Moo { inner: Int([Bounded(1, 3)]) }),Matrix([Int(7), Int(8), Int(9)], Moo { inner: Int([Bounded(1, 3)]) });int(1..)][i, i] = i), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(Matrix([AbstractLiteral(Matrix([Int(1), Int(2), Int(3)], Moo { inner: Int([Bounded(1, 3)]) })), AbstractLiteral(Matrix([Int(4), Int(5), Int(6)], Moo { inner: Int([Bounded(1, 3)]) })), AbstractLiteral(Matrix([Int(7), Int(8), Int(9)], Moo { inner: Int([Bounded(1, 3)]) }))], Moo { inner: Int([UnboundedR(1)]) })[i, i] = i) 
+
+--
+
+Matrix([AbstractLiteral(Matrix([Int(1), Int(2), Int(3)], Moo { inner: Int([Bounded(1, 3)]) })), AbstractLiteral(Matrix([Int(4), Int(5), Int(6)], Moo { inner: Int([Bounded(1, 3)]) })), AbstractLiteral(Matrix([Int(7), Int(8), Int(9)], Moo { inner: Int([Bounded(1, 3)]) }))], Moo { inner: Int([UnboundedR(1)]) })[i, i], 
+   ~~> remove_dimension_from_matrix_indexing ([("Base", 2000)]) 
+[Matrix([Int(1), Int(2), Int(3)], Moo { inner: Int([Bounded(1, 3)]) })[i],Matrix([Int(4), Int(5), Int(6)], Moo { inner: Int([Bounded(1, 3)]) })[i],Matrix([Int(7), Int(8), Int(9)], Moo { inner: Int([Bounded(1, 3)]) })[i];int(1..)][i] 
+
+--
+
+Matrix([Int(1), Int(2), Int(3)], Moo { inner: Int([Bounded(1, 3)]) })[i], 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+[1,2,3;int(1..)][i] 
+
+--
+
+([[1,2,3;int(1..)][i],Matrix([Int(4), Int(5), Int(6)], Moo { inner: Int([Bounded(1, 3)]) })[i],Matrix([Int(7), Int(8), Int(9)], Moo { inner: Int([Bounded(1, 3)]) })[i];int(1..)][i] = i), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+([Matrix([Int(1), Int(2), Int(3)], Moo { inner: Int([UnboundedR(1)]) })[i],Matrix([Int(4), Int(5), Int(6)], Moo { inner: Int([Bounded(1, 3)]) })[i],Matrix([Int(7), Int(8), Int(9)], Moo { inner: Int([Bounded(1, 3)]) })[i];int(1..)][i] = i) 
+
+--
+
+Matrix([Int(4), Int(5), Int(6)], Moo { inner: Int([Bounded(1, 3)]) })[i], 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+[4,5,6;int(1..)][i] 
+
+--
+
+([Matrix([Int(1), Int(2), Int(3)], Moo { inner: Int([UnboundedR(1)]) })[i],[4,5,6;int(1..)][i],Matrix([Int(7), Int(8), Int(9)], Moo { inner: Int([Bounded(1, 3)]) })[i];int(1..)][i] = i), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+([Matrix([Int(1), Int(2), Int(3)], Moo { inner: Int([UnboundedR(1)]) })[i],Matrix([Int(4), Int(5), Int(6)], Moo { inner: Int([UnboundedR(1)]) })[i],Matrix([Int(7), Int(8), Int(9)], Moo { inner: Int([Bounded(1, 3)]) })[i];int(1..)][i] = i) 
+
+--
+
+Matrix([Int(7), Int(8), Int(9)], Moo { inner: Int([Bounded(1, 3)]) })[i], 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+[7,8,9;int(1..)][i] 
+
+--
+
+([Matrix([Int(1), Int(2), Int(3)], Moo { inner: Int([UnboundedR(1)]) })[i],Matrix([Int(4), Int(5), Int(6)], Moo { inner: Int([UnboundedR(1)]) })[i],[7,8,9;int(1..)][i];int(1..)][i] = i), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+([Matrix([Int(1), Int(2), Int(3)], Moo { inner: Int([UnboundedR(1)]) })[i],Matrix([Int(4), Int(5), Int(6)], Moo { inner: Int([UnboundedR(1)]) })[i],Matrix([Int(7), Int(8), Int(9)], Moo { inner: Int([UnboundedR(1)]) })[i];int(1..)][i] = i) 
+
+--
+
+[Matrix([Int(1), Int(2), Int(3)], Moo { inner: Int([UnboundedR(1)]) })[i],Matrix([Int(4), Int(5), Int(6)], Moo { inner: Int([UnboundedR(1)]) })[i],Matrix([Int(7), Int(8), Int(9)], Moo { inner: Int([UnboundedR(1)]) })[i];int(1..)][i], 
+   ~~> flatten_matrix_literal ([("Minion", 1000)]) 
+[__0,__1,__2;int(1..)][i] 
+new variables:
+  find __0: int(1..3)
+  find __1: int(4..6)
+  find __2: int(7..9)
+new constraints:
+  __0 =aux Matrix([Int(1), Int(2), Int(3)], Moo { inner: Int([UnboundedR(1)]) })[i]
+  __1 =aux Matrix([Int(4), Int(5), Int(6)], Moo { inner: Int([UnboundedR(1)]) })[i]
+  __2 =aux Matrix([Int(7), Int(8), Int(9)], Moo { inner: Int([UnboundedR(1)]) })[i]
+--
+
+([__0,__1,__2;int(1..)][i] = i), 
+   ~~> introduce_element_from_index ([("Minion", 4400)]) 
+__minion_element_one([__0,__1,__2],i,i) 
+
+--
+
+__0 =aux Matrix([Int(1), Int(2), Int(3)], Moo { inner: Int([UnboundedR(1)]) })[i], 
+   ~~> introduce_element_from_index ([("Minion", 4400)]) 
+__minion_element_one([1,2,3],i,__0) 
+
+--
+
+__1 =aux Matrix([Int(4), Int(5), Int(6)], Moo { inner: Int([UnboundedR(1)]) })[i], 
+   ~~> introduce_element_from_index ([("Minion", 4400)]) 
+__minion_element_one([4,5,6],i,__1) 
+
+--
+
+__2 =aux Matrix([Int(7), Int(8), Int(9)], Moo { inner: Int([UnboundedR(1)]) })[i], 
+   ~~> introduce_element_from_index ([("Minion", 4400)]) 
+__minion_element_one([7,8,9],i,__2) 
+
+--
+
+Final model:
+
+letting a be [[1,2,3;int(1..3)],[4,5,6;int(1..3)],[7,8,9;int(1..3)];int(1..3)]
+find i: int(1..2)
+find __0: int(1..3)
+find __1: int(4..6)
+find __2: int(7..9)
+
+such that
+
+__minion_element_one([__0,__1,__2],i,i),
+__minion_element_one([1,2,3],i,__0),
+__minion_element_one([4,5,6],i,__1),
+__minion_element_one([7,8,9],i,__2)
+

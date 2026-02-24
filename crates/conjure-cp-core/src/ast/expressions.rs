@@ -2,18 +2,6 @@ use std::collections::{HashSet, VecDeque};
 use std::fmt::{Display, Formatter};
 use tracing::trace;
 
-use crate::ast::ReturnType;
-use crate::ast::SetAttr;
-use crate::ast::SymbolTable;
-use crate::ast::literals::AbstractLiteral;
-use crate::ast::literals::Literal;
-use crate::ast::pretty::{pretty_expressions_as_top_level, pretty_vec};
-use crate::ast::sat_encoding::SATIntEncoding;
-use crate::ast::{Atom, DomainPtr};
-use crate::ast::{GroundDomain, Metadata, UnresolvedDomain};
-use crate::ast::{IntVal, Moo};
-use crate::ast::{Name, matrix};
-use crate::bug;
 use conjure_cp_enum_compatibility_macro::document_compatibility;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
@@ -22,13 +10,21 @@ use ustr::Ustr;
 use polyquine::Quine;
 use uniplate::{Biplate, Uniplate};
 
+use crate::bug;
+
 use super::abstract_comprehension::AbstractComprehension;
 use super::ac_operators::ACOperatorKind;
 use super::categories::{Category, CategoryOf};
 use super::comprehension::Comprehension;
 use super::domains::HasDomain as _;
+use super::pretty::{pretty_expressions_as_top_level, pretty_vec};
 use super::records::RecordValue;
-use super::{DeclarationPtr, Domain, Range, Reference, SubModel, Typeable};
+use super::sat_encoding::SATIntEncoding;
+use super::{
+    AbstractLiteral, Atom, DeclarationPtr, Domain, DomainPtr, GroundDomain, IntVal, Literal,
+    Metadata, Moo, Name, Range, Reference, ReturnType, SetAttr, SubModel, SymbolTable,
+    SymbolTablePtr, Typeable, UnresolvedDomain, matrix,
+};
 
 // Ensure that this type doesn't get too big
 //
@@ -76,6 +72,7 @@ static_assertions::assert_eq_size!([u8; 104], Expression);
 #[biplate(to=Reference)]
 #[biplate(to=SubModel)]
 #[biplate(to=SymbolTable)]
+#[biplate(to=SymbolTablePtr)]
 #[biplate(to=Vec<Expression>)]
 #[path_prefix(conjure_cp::ast)]
 pub enum Expression {
@@ -661,8 +658,7 @@ fn range_vec_bounds_i32(ranges: &Vec<Range<i32>>) -> Option<(i32, i32)> {
 impl Expression {
     /// Returns the possible values of the expression, recursing to leaf expressions
     pub fn domain_of(&self) -> Option<DomainPtr> {
-        //println!("domain_of {self}");
-        let ret = match self {
+        match self {
             Expression::Union(_, a, b) => Some(Domain::set(
                 SetAttr::<IntVal>::default(),
                 a.domain_of()?.union(&b.domain_of()?).ok()?,
@@ -776,7 +772,7 @@ impl Expression {
                 if let GroundDomain::Int(ranges) = domain {
                     let mut ranges = ranges;
                     ranges.push(Range::Single(0));
-                    return Some(Domain::int(ranges));
+                    Some(Domain::int(ranges))
                 } else {
                     bug!("Domain of {self} was not integer")
                 }
@@ -803,7 +799,7 @@ impl Expression {
                 if let GroundDomain::Int(ranges) = domain {
                     let mut ranges = ranges;
                     ranges.push(Range::Single(0));
-                    return Some(Domain::int(ranges));
+                    Some(Domain::int(ranges))
                 } else {
                     bug!("Domain of {self} was not integer")
                 }
@@ -941,17 +937,7 @@ impl Expression {
             Expression::LexGeq(..) => Some(Domain::bool()),
             Expression::FlatLexLt(..) => Some(Domain::bool()),
             Expression::FlatLexLeq(..) => Some(Domain::bool()),
-        };
-        if let Some(dom) = &ret
-            && let Some(ranges) = dom.as_int_ground()
-            && ranges.len() > 1
-        {
-            // TODO: (flm8) the Minion bindings currently only support single ranges for domains, so we use the min/max bounds
-            // Once they support a full domain as we define it, we can remove this conversion
-            let (min, max) = range_vec_bounds_i32(ranges)?;
-            return Some(Domain::int(vec![Range::Bounded(min, max)]));
         }
-        ret
     }
 
     pub fn get_meta(&self) -> Metadata {
@@ -1453,7 +1439,7 @@ impl Display for Expression {
             }
             Expression::MinionWInSet(_, atom, values) => {
                 let values = values.iter().join(",");
-                write!(f, "__minion_w_inset({atom},{values})")
+                write!(f, "__minion_w_inset({atom},[{values}])")
             }
             Expression::AuxDeclaration(_, reference, e) => {
                 write!(f, "{} =aux {}", reference, e.clone())
@@ -1729,7 +1715,6 @@ impl Typeable for Expression {
 
 #[cfg(test)]
 mod tests {
-
     use crate::matrix_expr;
 
     use super::*;

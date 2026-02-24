@@ -1,4 +1,5 @@
-<!-- TODO: Edit this -->
+[//]: # (Author: Niklas Dewally)
+[//]: # (Last Updated: 11/02/2024)
 
 ## User Guide
 
@@ -20,7 +21,7 @@ A high level overview is:
 
 **Reading:**
 
-1. [grcov readme - how to generate coverage reports](https://github.com/mozilla/grcov).
+1. [grcov README - how to generate coverage reports](https://github.com/mozilla/grcov).
 2. [rustc book - details on instrumentation based coverage](https://doc.rust-lang.org/rustc/instrument-coverage.html).
 ### Doc Coverage
 **Text:** This prints a doc coverage table for all crates in the repo:

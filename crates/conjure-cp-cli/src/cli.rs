@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use clap::{Args, Parser, Subcommand};
 
 use clap_complete::Shell;
-use conjure_cp::solver::SolverFamily;
+use conjure_cp::settings::{Parser as InputParser, QuantifiedExpander, Rewriter, SolverFamily};
 
 use crate::{pretty, solve, test_solve};
 
@@ -56,18 +56,8 @@ pub struct GlobalArgs {
     #[arg(long, value_name = "EXTRA_RULE_SETS", global = true)]
     pub extra_rule_sets: Vec<String>,
 
-    /// Solver family to use
-    #[arg(
-        long,
-        value_name = "SOLVER",
-        default_value_t = SolverFamily::Minion,
-        short = 's',
-        global = true
-    )]
-    pub solver: SolverFamily,
-
     /// Log verbosely
-    #[arg(long, short = 'v', help = "Log verbosely to sterr", global = true, help_heading = LOGGING_HELP_HEADING)]
+    #[arg(long, short = 'v', help = "Log verbosely to stderr", global = true, help_heading = LOGGING_HELP_HEADING)]
     pub verbose: bool,
 
     // --no-x flag disables --x flag : https://jwodder.github.io/kbits/posts/clap-bool-negate/
@@ -93,13 +83,44 @@ pub struct GlobalArgs {
     #[arg(long, global = true, help_heading = DEBUG_HELP_HEADING)]
     pub _no_check_equally_applicable_rules: bool,
 
-    /// Use the native parser instead of Conjure's.
-    #[arg(long, default_value_t = false, global = true, help_heading = EXPERIMENTAL_HELP_HEADING)]
-    pub use_native_parser: bool,
+    /// Which parser to use.
+    ///
+    /// Possible values: `tree-sitter`, `via-conjure`.
+    #[arg(
+        long,
+        default_value_t = InputParser::TreeSitter,
+        value_parser = parse_parser,
+        global = true,
+        help_heading = EXPERIMENTAL_HELP_HEADING
+    )]
+    pub parser: InputParser,
 
-    /// Do not use better comprehension expanding for ac operators (and,or,sum,product).
-    #[arg(long, default_value_t = false, global=true, help_heading = OPTIMISATIONS_HELP_HEADING)]
-    pub no_use_expand_ac: bool,
+    /// Which rewriter to use.
+    ///
+    /// Possible values: `naive`, `morph`.
+    #[arg(long, default_value_t = Rewriter::Naive, value_parser = parse_rewriter, global = true, help_heading = EXPERIMENTAL_HELP_HEADING)]
+    pub rewriter: Rewriter,
+
+    /// Which strategy to use for expanding quantified variables in comprehensions.
+    ///
+    /// Possible values: `native`, `via-solver`, `via-solver-ac`.
+    #[arg(long, default_value_t = QuantifiedExpander::Native, value_parser = parse_quantified_expander, global = true, help_heading = OPTIMISATIONS_HELP_HEADING)]
+    pub quantified_expander: QuantifiedExpander,
+
+    /// Solver family to use.
+    ///
+    /// Possible values: `minion`, `sat`, `sat-log`, `sat-direct`, `sat-order`;
+    /// with `smt` feature: `smt` and `smt-<ints>-<matrices>[-nodiscrete]`
+    /// where `<ints>` is `lia` or `bv`, and `<matrices>` is `arrays` or `atomic`.
+    #[arg(
+        long,
+        value_name = "SOLVER",
+        value_parser = parse_solver_family,
+        default_value = "minion",
+        short = 's',
+        global = true
+    )]
+    pub solver: SolverFamily,
 
     /// Save a solver input file to <filename>.
     ///
@@ -111,10 +132,6 @@ pub struct GlobalArgs {
     /// this file cannot be used by Conjure Oxide in any way.
     #[arg(long,global=true, value_names=["filename"], next_line_help=true, help_heading=LOGGING_HELP_HEADING)]
     pub save_solver_input_file: Option<PathBuf>,
-
-    /// Use the experimental optimized / dirty-clean rewriter, instead of the default rewriter
-    #[arg(long, default_value_t = false, global = true, help_heading = EXPERIMENTAL_HELP_HEADING)]
-    pub use_optimised_rewriter: bool,
 
     /// Exit after all comprehensions have been unrolled, printing the number of expressions at that point.
     ///
@@ -130,6 +147,18 @@ pub struct GlobalArgs {
     /// Currently only SMT supports this feature.
     #[arg(long, global = true, help_heading = OPTIMISATIONS_HELP_HEADING)]
     pub solver_timeout: Option<humantime::Duration>,
+
+    /// Generate log files
+    #[arg(long, default_value_t = false, global = true, help_heading = LOGGING_HELP_HEADING)]
+    pub log: bool,
+
+    /// Output file for conjure-oxide's text logs
+    #[arg(long, value_name = "LOGFILE", global = true, help_heading = LOGGING_HELP_HEADING)]
+    pub logfile: Option<PathBuf>,
+
+    /// Output file for conjure-oxide's json logs
+    #[arg(long, value_name = "JSON LOGFILE", global = true, help_heading = LOGGING_HELP_HEADING)]
+    pub logfile_json: Option<PathBuf>,
 }
 
 #[derive(Debug, Clone, Args)]
@@ -146,4 +175,20 @@ pub enum ShellTypes {
     Fish,
     PowerShell,
     Elvish,
+}
+
+fn parse_quantified_expander(input: &str) -> Result<QuantifiedExpander, String> {
+    input.parse()
+}
+
+fn parse_rewriter(input: &str) -> Result<Rewriter, String> {
+    input.parse()
+}
+
+fn parse_solver_family(input: &str) -> Result<SolverFamily, String> {
+    input.parse()
+}
+
+fn parse_parser(input: &str) -> Result<InputParser, String> {
+    input.parse()
 }
