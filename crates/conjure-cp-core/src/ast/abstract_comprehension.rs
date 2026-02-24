@@ -99,7 +99,7 @@ impl AbstractComprehensionBuilder {
     }
 
     pub fn new_domain_generator(self, domain: DomainPtr) -> DeclarationPtr {
-        let generator_decl = self.symbols.borrow_mut().gensym(&domain);
+        let generator_decl = self.symbols.write().gensym(&domain);
         let name = generator_decl.name().clone();
 
         self.add_domain_generator(domain, name);
@@ -145,7 +145,7 @@ impl AbstractComprehensionBuilder {
             .element_domain()
             .expect("Expression must contain elements with uniform domain");
 
-        let decl_ptr = self.symbols.borrow_mut().gensym(&domain);
+        let decl_ptr = self.symbols.write().gensym(&domain);
         let name = decl_ptr.name().clone();
 
         self.add_expression_generator(expr, name);
