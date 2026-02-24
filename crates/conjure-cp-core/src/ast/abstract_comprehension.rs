@@ -1,6 +1,8 @@
 use super::declaration::DeclarationPtr;
 use super::serde::PtrAsInner;
-use super::{DomainPtr, Expression, Name, ReturnType, SubModel, SymbolTablePtr, Typeable, Metadata, Moo};
+use super::{
+    DomainPtr, Expression, Metadata, Moo, Name, ReturnType, SubModel, SymbolTablePtr, Typeable,
+};
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use std::fmt::{Display, Formatter};
@@ -87,7 +89,7 @@ impl AbstractComprehensionBuilder {
     }
 
     pub fn add_domain_generator(mut self, domain: DomainPtr, name: Name) {
-        let generator_decl = DeclarationPtr::new_var_quantified(name, domain);
+        let generator_decl = DeclarationPtr::new_quantified(name, domain);
         self.symbols.write().update_insert(generator_decl.clone());
 
         self.qualifiers
@@ -119,18 +121,15 @@ impl AbstractComprehensionBuilder {
             .element_domain()
             .expect("Expression must contain elements with uniform domain");
 
-        // The variable is quantified in both scopes.
+        // The variable is quantified.
         let generator_ptr = DeclarationPtr::new_quantified(name, domain);
-        let return_expr_ptr = DeclarationPtr::new_quantified_from_generator(&generator_ptr)
-            .expect("Return expression declaration must not be None");
 
-        self.return_expr_symbols.write().insert(return_expr_ptr);
-        self.generator_symbols.write().insert(generator_ptr.clone());
+        self.symbols.write().insert(generator_ptr.clone());
 
         self.qualifiers
             .push(Qualifier::Generator(Generator::ExpressionGenerator(
                 ExpressionGenerator {
-                    decl: generator_decl,
+                    decl: generator_ptr,
                     expression: expr,
                 },
             )));
@@ -163,7 +162,7 @@ impl AbstractComprehensionBuilder {
     }
 
     pub fn new_letting(&mut self, expression: Expression) -> DeclarationPtr {
-        let letting_decl = self.return_expr_symbols.write().gensym(
+        let letting_decl = self.symbols.write().gensym(
             &expression
                 .domain_of()
                 .expect("Expression must have a domain"),
@@ -181,10 +180,13 @@ impl AbstractComprehensionBuilder {
     pub fn with_return_value(mut self, expression: Expression) -> Expression {
         Expression::Scope(
             Metadata::new(),
-            Moo::new(AbstractComprehension {
-                return_expr: expression,
-                qualifiers: self.qualifiers,
-            }),
+            Moo::new(Expression::AbstractComprehension(
+                Metadata::new(),
+                Moo::new(AbstractComprehension {
+                    return_expr: expression,
+                    qualifiers: self.qualifiers,
+                }),
+            )),
             self.symbols,
         )
     }

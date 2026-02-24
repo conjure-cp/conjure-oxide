@@ -155,7 +155,7 @@ pub enum Expression {
 
     // todo (gskorokhod): Same reason as for Comprehension
     #[polyquine_skip]
-    Scope(Metadata, Moo<SubModel>),
+    Scope(Metadata, Moo<Expression>, SymbolTablePtr),
 
     /// `|x|` - absolute value of `x`
     #[compatible(JsonInput, SMT)]
@@ -1231,7 +1231,6 @@ impl CategoryOf for Expression {
                 // declarationptrs inside this expression
 
                 // this should generically cover all leaf types we currently have in oxide.
-
                 // if x contains submodels (including comprehensions)
                 if !Biplate::<SubModel>::universe_bi(&x).is_empty() {
                     // assume that the category is decision
