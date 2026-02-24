@@ -1,24 +1,24 @@
 use std::{
-    collections::{HashMap, VecDeque},
-    sync::{Arc, Mutex, RwLock, atomic::Ordering},
+    collections::VecDeque,
+    sync::{Arc, Mutex},
 };
 
 use conjure_cp::{
     ast::{
-        Atom, DecisionVariable, DeclarationKind, DeclarationPtr, Expression, Metadata, Model, Moo,
-        Name, ReturnType, SubModel, SymbolTable, Typeable as _,
-        ac_operators::ACOperatorKind,
-        comprehension::{Comprehension, USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS},
-        serde::{HasId as _, ObjId},
+        Atom, DeclarationPtr, Expression, Metadata, Moo, Name, ReturnType, SubModel, SymbolTable,
+        Typeable as _, ac_operators::ACOperatorKind, comprehension::Comprehension,
     },
-    bug,
-    context::Context,
-    rule_engine::{resolve_rule_sets, rewrite_morph, rewrite_naive},
-    settings::SolverFamily,
+    rule_engine::resolve_rule_sets,
+    settings::{SolverFamily, current_rewriter},
     solver::{Solver, SolverError, adaptors::Minion},
 };
 use tracing::warn;
 use uniplate::{Biplate, Uniplate as _, zipper::Zipper};
+
+use super::via_solver_common::{
+    instantiate_return_expressions_from_values, model_from_submodel,
+    rewrite_model_with_configured_rewriter, temporarily_materialise_quantified_vars_as_finds,
+};
 
 /// Expands the comprehension using Minion, returning the resulting expressions.
 ///
@@ -42,9 +42,6 @@ pub fn expand_via_solver_ac(
     // return_expression symbol table.
     //
     // Change these to point to the corresponding entry in the generator symbol table instead.
-    //
-    // In the generator symbol-table, quantified variables are decision variables (as we are
-    // solving for them), but in the return expression symbol table they are givens.
     let quantified_vars_2 = comprehension.quantified_vars.clone();
     let generator_symtab_ptr = comprehension.generator_submodel.symbols_ptr_unchecked();
     let return_expression =
@@ -77,29 +74,25 @@ pub fn expand_via_solver_ac(
     // REWRITE GENERATOR MODEL AND PASS TO MINION
     // ==========================================
 
-    let mut generator_model = Model::new(Arc::new(RwLock::new(Context::default())));
-
-    *generator_model.as_submodel_mut() = generator_submodel;
-
-    // only branch on the quantified variables.
-    generator_model.search_order = Some(comprehension.quantified_vars.clone());
+    let generator_model = model_from_submodel(
+        generator_submodel,
+        Some(comprehension.quantified_vars.clone()),
+    );
 
     let extra_rule_sets = &["Base", "Constant", "Bubble"];
 
-    // Minion unrolling expects quantified variables in the generator model as find declarations.
-    // Keep this conversion local to the temporary model used for solving.
+    let rule_sets = resolve_rule_sets(SolverFamily::Minion, extra_rule_sets).unwrap();
+    let configured_rewriter = current_rewriter();
+
+    // In AC mode we materialise quantified variables before rewriting, as the rewritten
+    // generator model is used directly as Minion input.
     let _temp_finds = temporarily_materialise_quantified_vars_as_finds(
         generator_model.as_submodel(),
         &comprehension.quantified_vars,
     );
 
-    let rule_sets = resolve_rule_sets(SolverFamily::Minion, extra_rule_sets).unwrap();
-
-    let generator_model = if USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS.load(Ordering::Relaxed) {
-        rewrite_morph(generator_model, &rule_sets, false)
-    } else {
-        rewrite_naive(&generator_model, &rule_sets, false, false).unwrap()
-    };
+    let generator_model =
+        rewrite_model_with_configured_rewriter(generator_model, &rule_sets, configured_rewriter);
 
     let minion = Solver::new(Minion::new());
     let minion = minion.load_model(generator_model.clone());
@@ -115,16 +108,11 @@ pub fn expand_via_solver_ac(
     // REWRITE RETURN EXPRESSION
     // =========================
 
-    let return_expression_submodel = comprehension.return_expression_submodel.clone();
-    let mut return_expression_model = Model::new(Arc::new(RwLock::new(Context::default())));
-    *return_expression_model.as_submodel_mut() = return_expression_submodel;
-
-    let return_expression_model =
-        if USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS.load(Ordering::Relaxed) {
-            rewrite_morph(return_expression_model, &rule_sets, false)
-        } else {
-            rewrite_naive(&return_expression_model, &rule_sets, false, false).unwrap()
-        };
+    let return_expression_model = rewrite_model_with_configured_rewriter(
+        model_from_submodel(comprehension.return_expression_submodel.clone(), None),
+        &rule_sets,
+        configured_rewriter,
+    );
 
     let values = Arc::new(Mutex::new(Vec::new()));
     let values_ptr = Arc::clone(&values);
@@ -142,131 +130,12 @@ pub fn expand_via_solver_ac(
     }))?;
 
     let values = values.lock().unwrap().clone();
-
-    let mut return_expressions = vec![];
-
-    for value in values {
-        // convert back to an expression
-
-        let return_expression_submodel = return_expression_model.as_submodel().clone();
-        let child_symtab = return_expression_submodel.symbols().clone();
-        let return_expression = return_expression_submodel.into_single_expression();
-
-        // we only want to substitute quantified variables.
-        // (definitely not machine names, as they mean something different in this scope!)
-        let value: HashMap<_, _> = value
-            .into_iter()
-            .filter(|(n, _)| comprehension.quantified_vars.contains(n))
-            .collect();
-
-        let value_ptr = Arc::new(value);
-        let value_ptr_2 = Arc::clone(&value_ptr);
-
-        // substitute in the values for the quantified variables
-        let return_expression = return_expression.transform_bi(&move |x: Atom| {
-            let Atom::Reference(ref ptr) = x else {
-                return x;
-            };
-
-            // is this referencing a quantified var?
-            let Some(lit) = value_ptr_2.get(&ptr.name()) else {
-                return x;
-            };
-
-            Atom::Literal(lit.clone())
-        });
-
-        // Copy the return expression's symbols into parent scope.
-
-        // For variables in the return expression with machine names, create new declarations
-        // for them in the parent symbol table, so that the machine names used are unique.
-        //
-        // Store the declaration translations in `machine_name_translations`.
-        // These are stored as a map of (old declaration id) -> (new declaration ptr), as
-        // declaration pointers do not implement hash.
-        //
-        let mut machine_name_translations: HashMap<ObjId, DeclarationPtr> = HashMap::new();
-
-        // Populate `machine_name_translations`
-        for (name, decl) in child_symtab.into_iter_local() {
-            // do not add quantified declarations for quantified vars to the parent symbol table.
-            if value_ptr.get(&name).is_some()
-                && matches!(
-                    &decl.kind() as &DeclarationKind,
-                    DeclarationKind::Given(_) | DeclarationKind::Quantified(_)
-                )
-            {
-                continue;
-            }
-
-            let Name::Machine(_) = &name else {
-                bug!(
-                    "the symbol table of the return expression of a comprehension should only contain machine names"
-                );
-            };
-
-            let id = decl.id();
-            let new_decl = symtab.gensym(&decl.domain().unwrap());
-
-            machine_name_translations.insert(id, new_decl);
-        }
-
-        // Update references to use the new delcarations.
-        #[allow(clippy::arc_with_non_send_sync)]
-        let return_expression = return_expression.transform_bi(&move |atom: Atom| {
-            if let Atom::Reference(ref decl) = atom
-                && let id = decl.id()
-                && let Some(new_decl) = machine_name_translations.get(&id)
-            {
-                Atom::Reference(conjure_cp::ast::Reference::new(new_decl.clone()))
-            } else {
-                atom
-            }
-        });
-
-        return_expressions.push(return_expression);
-    }
-
-    Ok(return_expressions)
-}
-
-/// Guard that temporarily converts quantified declarations to find declarations.
-struct TempQuantifiedFindGuard {
-    originals: Vec<(DeclarationPtr, DeclarationKind)>,
-}
-
-impl Drop for TempQuantifiedFindGuard {
-    fn drop(&mut self) {
-        for (mut decl, kind) in self.originals.drain(..) {
-            let _ = decl.replace_kind(kind);
-        }
-    }
-}
-
-/// Converts quantified declarations in `submodel` to temporary find declarations.
-fn temporarily_materialise_quantified_vars_as_finds(
-    submodel: &SubModel,
-    quantified_vars: &[Name],
-) -> TempQuantifiedFindGuard {
-    let symbols = submodel.symbols().clone();
-    let mut originals = Vec::new();
-
-    for name in quantified_vars {
-        let Some(mut decl) = symbols.lookup_local(name) else {
-            continue;
-        };
-
-        let old_kind = decl.kind().clone();
-        let Some(domain) = decl.domain() else {
-            continue;
-        };
-
-        let new_kind = DeclarationKind::Find(DecisionVariable::new(domain));
-        let _ = decl.replace_kind(new_kind);
-        originals.push((decl, old_kind));
-    }
-
-    TempQuantifiedFindGuard { originals }
+    Ok(instantiate_return_expressions_from_values(
+        values,
+        &return_expression_model,
+        &comprehension.quantified_vars,
+        symtab,
+    ))
 }
 
 /// Eliminate all references to non-quantified variables by introducing dummy variables to the
