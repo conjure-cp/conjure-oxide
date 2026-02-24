@@ -944,16 +944,14 @@ fn parse_in_expr_comprehension(
         parse_expression(generator_expr, &scope).map_err(|_| fail("GenInExpr.parse_expression"))?;
 
     let comprehension =
-        AbstractComprehensionBuilder::new(&Rc::clone(&scope)).add_expression_generator(expr, name.into());
-    let expr = parse_expression(
-        comprehension_value.pointer("/0")?,
-        &Rc::clone(&comprehension.symbols()),
-    )?;
+        AbstractComprehensionBuilder::new(&scope).add_expression_generator(expr, name.into());
+    let return_expr_value = comprehension_value
+        .pointer("/0")
+        .ok_or_else(|| fail("comprehension_value.pointer(/0)"))?;
+    let expr = parse_expression(return_expr_value, &comprehension.symbols)
+        .map_err(|_| fail("GenInExpr.return_expr.parse_expression"))?;
 
-    Ok(Expression::AbstractComprehension(
-        Metadata::new(),
-        Moo::new(comprehension.with_return_value(expr)),
-    ))
+    Ok(comprehension.with_return_value(expr))
 }
 
 fn parse_bin_op(
