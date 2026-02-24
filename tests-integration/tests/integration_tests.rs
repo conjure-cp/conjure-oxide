@@ -176,18 +176,18 @@ fn integration_test_inner(
     conjure_solutions: Option<Arc<Vec<BTreeMap<Name, Literal>>>>,
     accept: bool,
 ) -> Result<(), Box<dyn Error>> {
-    let solver_fam = run_case.solver;
+    let parser = run_case.parser;
     let rewriter = run_case.rewriter;
     let comprehension_expander = run_case.comprehension_expander;
-    let parser = run_case.parser;
+    let solver_fam = run_case.solver;
     let case_name = run_case.case_name;
 
     let context: Arc<RwLock<Context<'static>>> = Default::default();
 
     set_current_parser(parser);
-    set_current_solver_family(solver_fam);
-    set_comprehension_expander(comprehension_expander);
     set_current_rewriter(rewriter);
+    set_comprehension_expander(comprehension_expander);
+    set_current_solver_family(solver_fam);
 
     // File path
     let file_path = format!("{path}/{essence_base}.{extension}");

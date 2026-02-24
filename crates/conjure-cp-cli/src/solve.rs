@@ -99,6 +99,8 @@ pub(crate) fn init_context(
     input_file: PathBuf,
 ) -> anyhow::Result<Arc<RwLock<Context<'static>>>> {
     set_current_parser(global_args.parser);
+    set_current_rewriter(global_args.rewriter);
+    set_comprehension_expander(global_args.comprehension_expander);
     set_current_solver_family(global_args.solver);
 
     let target_family = global_args.solver;
@@ -217,11 +219,11 @@ pub(crate) fn rewrite(
 ) -> anyhow::Result<Model> {
     tracing::info!("Initial model: \n{}\n", model);
 
+    set_current_rewriter(global_args.rewriter);
+
     let comprehension_expander = global_args.comprehension_expander;
     set_comprehension_expander(comprehension_expander);
     tracing::info!("Comprehension expander: {}", comprehension_expander);
-
-    set_current_rewriter(global_args.rewriter);
 
     let rule_sets = context.read().unwrap().rule_sets.clone();
 
