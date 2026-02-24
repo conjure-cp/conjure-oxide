@@ -110,9 +110,12 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
                                 .without_time()
                                 .with_target(false)
                                 .with_filter(EnvFilter::new("rule_engine_human=trace"))
-                                .with_filter(FilterFn::new(|meta| meta.target() == "rule_engine_human")),
+                                .with_filter(FilterFn::new(|meta| {
+                                    meta.target() == "rule_engine_human"
+                                })),
                         ),
-                    ) as Arc<dyn tracing::Subscriber + Send + Sync>;
+                    )
+                        as Arc<dyn tracing::Subscriber + Send + Sync>;
                     tracing::subscriber::with_default(subscriber, || {
                         integration_test_inner(
                             path,
