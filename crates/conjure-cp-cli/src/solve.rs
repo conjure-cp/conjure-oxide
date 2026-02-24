@@ -15,12 +15,9 @@ use clap::ValueHint;
 use conjure_cp::defaults::DEFAULT_RULE_SETS;
 use conjure_cp::{
     Model,
-    ast::comprehension::{
-        USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS, set_quantified_expander_for_comprehensions,
-    },
     context::Context,
     rule_engine::{resolve_rule_sets, rewrite_morph, rewrite_naive},
-    settings::Rewriter,
+    settings::{Rewriter, set_comprehension_expander, set_current_rewriter},
     solver::Solver,
 };
 use conjure_cp::{
@@ -214,16 +211,16 @@ pub(crate) fn rewrite(
 ) -> anyhow::Result<Model> {
     tracing::info!("Initial model: \n{}\n", model);
 
-    let quantified_expander = global_args.quantified_expander;
-    set_quantified_expander_for_comprehensions(quantified_expander);
-    tracing::info!("Quantified expander: {}", quantified_expander);
+    let comprehension_expander = global_args.comprehension_expander;
+    set_comprehension_expander(comprehension_expander);
+    tracing::info!("Comprehension expander: {}", comprehension_expander);
+
+    set_current_rewriter(global_args.rewriter);
 
     let rule_sets = context.read().unwrap().rule_sets.clone();
 
     let new_model = match global_args.rewriter {
         Rewriter::Morph => {
-            USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS
-                .store(true, std::sync::atomic::Ordering::Relaxed);
             tracing::info!("Rewriting the model using the morph rewriter");
             rewrite_morph(
                 model,
@@ -232,8 +229,6 @@ pub(crate) fn rewrite(
             )
         }
         Rewriter::Naive => {
-            USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS
-                .store(false, std::sync::atomic::Ordering::Relaxed);
             tracing::info!("Rewriting the model using the default / naive rewriter");
             if global_args.exit_after_unrolling {
                 tracing::info!("Exiting after unrolling");

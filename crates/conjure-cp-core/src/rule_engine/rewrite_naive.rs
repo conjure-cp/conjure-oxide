@@ -8,6 +8,7 @@ use crate::{
         rewriter_common::{RuleResult, log_rule_application},
         submodel_zipper::submodel_ctx,
     },
+    settings::{Rewriter, set_current_rewriter},
     stats::RewriterStats,
 };
 
@@ -24,6 +25,8 @@ pub fn rewrite_naive<'a>(
     prop_multiple_equally_applicable: bool,
     exit_after_unrolling: bool,
 ) -> Result<Model, RewriteError> {
+    set_current_rewriter(Rewriter::Naive);
+
     let rules_grouped = get_rules_grouped(rule_sets)
         .unwrap_or_else(|_| bug!("get_rule_priorities() failed!"))
         .into_iter()

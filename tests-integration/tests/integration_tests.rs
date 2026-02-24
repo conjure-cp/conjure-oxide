@@ -23,12 +23,14 @@ use conjure_cp::solver::adaptors::smt::TheoryConfig;
 use std::sync::Arc;
 use std::sync::RwLock;
 
-use conjure_cp::ast::comprehension::set_quantified_expander_for_comprehensions;
 use conjure_cp::ast::{Literal, Name};
 use conjure_cp::context::Context;
 use conjure_cp::parse::tree_sitter::parse_essence_file;
 use conjure_cp::rule_engine::resolve_rule_sets;
-use conjure_cp::settings::{Parser, QuantifiedExpander, Rewriter, SolverFamily};
+use conjure_cp::settings::{
+    Parser, QuantifiedExpander, Rewriter, SolverFamily, set_comprehension_expander,
+    set_current_rewriter,
+};
 use conjure_cp_cli::utils::conjure::solutions_to_json;
 use conjure_cp_cli::utils::conjure::{get_solutions, get_solutions_from_conjure};
 use conjure_cp_cli::utils::testing::save_stats_json;
@@ -42,7 +44,7 @@ use tests_integration::TestConfig;
 struct RunCase<'a> {
     parser: Parser,
     rewriter: Rewriter,
-    quantified_expander: QuantifiedExpander,
+    comprehension_expander: QuantifiedExpander,
     solver: SolverFamily,
     case_name: &'a str,
 }
@@ -69,8 +71,8 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
     let rewriters = config
         .configured_rewriters()
         .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?;
-    let quantified_expanders = config
-        .configured_quantified_expanders()
+    let comprehension_expanders = config
+        .configured_comprehension_expanders()
         .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?;
     let solvers = config
         .configured_solvers()
@@ -87,13 +89,13 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
 
     for parser in parsers {
         for rewriter in rewriters.clone() {
-            for quantified_expander in quantified_expanders.clone() {
+            for comprehension_expander in comprehension_expanders.clone() {
                 for solver in solvers.clone() {
-                    let case_name = run_case_name(parser, rewriter, quantified_expander);
+                    let case_name = run_case_name(parser, rewriter, comprehension_expander);
                     let run_case = RunCase {
                         parser,
                         rewriter,
-                        quantified_expander,
+                        comprehension_expander,
                         solver,
                         case_name: case_name.as_str(),
                     };
@@ -176,13 +178,14 @@ fn integration_test_inner(
 ) -> Result<(), Box<dyn Error>> {
     let solver_fam = run_case.solver;
     let rewriter = run_case.rewriter;
-    let quantified_expander = run_case.quantified_expander;
+    let comprehension_expander = run_case.comprehension_expander;
     let parser = run_case.parser;
     let case_name = run_case.case_name;
 
     let context: Arc<RwLock<Context<'static>>> = Default::default();
 
-    set_quantified_expander_for_comprehensions(quantified_expander);
+    set_comprehension_expander(comprehension_expander);
+    set_current_rewriter(rewriter);
 
     // File path
     let file_path = format!("{path}/{essence_base}.{extension}");
@@ -199,7 +202,6 @@ fn integration_test_inner(
     // Stage 2a: Rewrite the model using the rule engine
     let mut extra_rules = vec![];
 
-    // TODO (ss504): figure out why this is only here for sat
     if let SolverFamily::Sat(sat_encoding) = solver_fam {
         extra_rules.push(sat_encoding.as_rule_set());
     }
@@ -310,7 +312,7 @@ fn integration_test_inner(
         }
     }
 
-    // // TODO: Implement rule trace validation for morph
+    // TODO: Implement rule trace validation for morph
     match rewriter {
         Rewriter::Morph => {}
         Rewriter::Naive => {
@@ -332,9 +334,9 @@ fn integration_test_inner(
 fn run_case_name(
     parser: Parser,
     rewriter: Rewriter,
-    quantified_expander: QuantifiedExpander,
+    comprehension_expander: QuantifiedExpander,
 ) -> String {
-    format!("{parser}-{rewriter}-{quantified_expander}")
+    format!("{parser}-{rewriter}-{comprehension_expander}")
 }
 
 fn clean_test_dir_for_accept(

@@ -104,8 +104,14 @@ pub struct GlobalArgs {
     /// Which strategy to use for expanding quantified variables in comprehensions.
     ///
     /// Possible values: `native`, `via-solver`, `via-solver-ac`.
-    #[arg(long, default_value_t = QuantifiedExpander::Native, value_parser = parse_quantified_expander, global = true, help_heading = OPTIMISATIONS_HELP_HEADING)]
-    pub quantified_expander: QuantifiedExpander,
+    #[arg(
+        long,
+        default_value_t = QuantifiedExpander::Native,
+        value_parser = parse_comprehension_expander,
+        global = true,
+        help_heading = OPTIMISATIONS_HELP_HEADING
+    )]
+    pub comprehension_expander: QuantifiedExpander,
 
     /// Solver family to use.
     ///
@@ -177,7 +183,7 @@ pub enum ShellTypes {
     Elvish,
 }
 
-fn parse_quantified_expander(input: &str) -> Result<QuantifiedExpander, String> {
+fn parse_comprehension_expander(input: &str) -> Result<QuantifiedExpander, String> {
     input.parse()
 }
 

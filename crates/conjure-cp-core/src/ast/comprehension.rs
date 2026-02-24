@@ -1,12 +1,7 @@
 #![allow(clippy::arc_with_non_send_sync)]
 
-use std::{
-    collections::BTreeSet,
-    fmt::Display,
-    sync::atomic::{AtomicBool, AtomicU8, Ordering},
-};
+use std::{collections::BTreeSet, fmt::Display};
 
-use crate::settings::QuantifiedExpander;
 use crate::{ast::Metadata, into_matrix_expr, matrix_expr};
 use conjure_cp_core::ast::ReturnType;
 use itertools::Itertools as _;
@@ -17,27 +12,6 @@ use super::{
     DeclarationPtr, Domain, DomainPtr, Expression, Moo, Name, Range, SubModel, SymbolTablePtr,
     Typeable, ac_operators::ACOperatorKind,
 };
-
-// TODO: move this global setting somewhere better?
-
-/// The rewriter to use for rewriting comprehensions.
-///
-/// True for optimised, false for naive
-pub static USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS: AtomicBool = AtomicBool::new(false);
-
-/// Global setting for which comprehension quantified-variable expander to use.
-///
-/// Defaults to [`QuantifiedExpander::Native`].
-pub static QUANTIFIED_EXPANDER_FOR_COMPREHENSIONS: AtomicU8 =
-    AtomicU8::new(QuantifiedExpander::Native.as_u8());
-
-pub fn set_quantified_expander_for_comprehensions(expander: QuantifiedExpander) {
-    QUANTIFIED_EXPANDER_FOR_COMPREHENSIONS.store(expander.as_u8(), Ordering::Relaxed);
-}
-
-pub fn quantified_expander_for_comprehensions() -> QuantifiedExpander {
-    QuantifiedExpander::from_u8(QUANTIFIED_EXPANDER_FOR_COMPREHENSIONS.load(Ordering::Relaxed))
-}
 
 // TODO: do not use Names to compare variables, use DeclarationPtr and ids instead
 // see issue #930
