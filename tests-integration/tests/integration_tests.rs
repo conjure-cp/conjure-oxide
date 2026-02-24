@@ -29,7 +29,7 @@ use conjure_cp::parse::tree_sitter::parse_essence_file;
 use conjure_cp::rule_engine::resolve_rule_sets;
 use conjure_cp::settings::{
     Parser, QuantifiedExpander, Rewriter, SolverFamily, set_comprehension_expander,
-    set_current_rewriter,
+    set_current_parser, set_current_rewriter, set_current_solver_family,
 };
 use conjure_cp_cli::utils::conjure::solutions_to_json;
 use conjure_cp_cli::utils::conjure::{get_solutions, get_solutions_from_conjure};
@@ -184,6 +184,8 @@ fn integration_test_inner(
 
     let context: Arc<RwLock<Context<'static>>> = Default::default();
 
+    set_current_parser(parser);
+    set_current_solver_family(solver_fam);
     set_comprehension_expander(comprehension_expander);
     set_current_rewriter(rewriter);
 

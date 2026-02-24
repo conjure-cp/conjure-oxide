@@ -39,6 +39,26 @@ impl FromStr for Parser {
     }
 }
 
+thread_local! {
+    /// Thread-local setting for which parser is currently active.
+    ///
+    /// Must be explicitly set before use.
+    static CURRENT_PARSER: Cell<Option<Parser>> = const { Cell::new(None) };
+}
+
+pub fn set_current_parser(parser: Parser) {
+    CURRENT_PARSER.with(|current| current.set(Some(parser)));
+}
+
+pub fn current_parser() -> Parser {
+    CURRENT_PARSER.with(|current| {
+        current.get().unwrap_or_else(|| {
+            // loud failure on purpose, so we don't end up using the default
+            bug!("current parser not set for this thread; call set_current_parser first")
+        })
+    })
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Rewriter {
     Naive,
@@ -204,6 +224,28 @@ pub enum SolverFamily {
     Sat(SatEncoding),
     #[cfg(feature = "smt")]
     Smt(TheoryConfig),
+}
+
+thread_local! {
+    /// Thread-local setting for which solver family is currently active.
+    ///
+    /// Must be explicitly set before use.
+    static CURRENT_SOLVER_FAMILY: Cell<Option<SolverFamily>> = const { Cell::new(None) };
+}
+
+pub fn set_current_solver_family(solver_family: SolverFamily) {
+    CURRENT_SOLVER_FAMILY.with(|current| current.set(Some(solver_family)));
+}
+
+pub fn current_solver_family() -> SolverFamily {
+    CURRENT_SOLVER_FAMILY.with(|current| {
+        current.get().unwrap_or_else(|| {
+            // loud failure on purpose, so we don't end up using the default
+            bug!(
+                "current solver family not set for this thread; call set_current_solver_family first"
+            )
+        })
+    })
 }
 
 impl FromStr for SolverFamily {

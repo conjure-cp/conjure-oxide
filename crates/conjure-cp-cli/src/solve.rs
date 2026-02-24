@@ -17,7 +17,10 @@ use conjure_cp::{
     Model,
     context::Context,
     rule_engine::{resolve_rule_sets, rewrite_morph, rewrite_naive},
-    settings::{Rewriter, set_comprehension_expander, set_current_rewriter},
+    settings::{
+        Rewriter, set_comprehension_expander, set_current_parser, set_current_rewriter,
+        set_current_solver_family,
+    },
     solver::Solver,
 };
 use conjure_cp::{
@@ -95,6 +98,9 @@ pub(crate) fn init_context(
     global_args: &GlobalArgs,
     input_file: PathBuf,
 ) -> anyhow::Result<Arc<RwLock<Context<'static>>>> {
+    set_current_parser(global_args.parser);
+    set_current_solver_family(global_args.solver);
+
     let target_family = global_args.solver;
     let mut extra_rule_sets: Vec<&str> = DEFAULT_RULE_SETS.to_vec();
     for rs in &global_args.extra_rule_sets {
