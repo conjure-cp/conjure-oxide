@@ -924,34 +924,41 @@ impl Expression {
                 let (attrs, _, _) = function.domain_of()?.as_function()?;
                 let size = attrs.resolve()?.size;
                 // The elements defined in the domain is the same as the size of the function itself
-                Some(Domain::set(
-                    SetAttr::new(size),
-                    get_function_domain(function).resolve()?,
-                ))
-            },
+                let domain = get_function_domain(function);
+                match domain {
+                    Some(inner_dom) => Some(Domain::set(SetAttr::new(size), inner_dom)),
+                    None => None,
+                }
+            }
             Expression::Range(_, function) => {
                 let (attrs, _, _) = function.domain_of()?.as_function()?;
                 let size = attrs.resolve()?.size;
                 let dom_size = match size {
                     Range::Unbounded => Range::Unbounded,
                     // If lower bound we can guarantee one mapping
-                    Range::Single(x) => Range::Bounded(1,x),
+                    Range::Single(x) => Range::Bounded(1, x),
                     // Upper bound guarantees the same upper bound
                     Range::UnboundedL(x) => Range::UnboundedL(x),
-                    Range::UnboundedR(x) => Range::UnboundedR(1),
-                    Range::Bounded(x,y ) => Range::Bounded(1,y)
+                    Range::UnboundedR(_) => Range::UnboundedR(1),
+                    Range::Bounded(_, y) => Range::Bounded(1, y),
                 };
-                Some(Domain::set(
-                    SetAttr::new(dom_size),
-                    get_function_codomain(function).resolve()?,
-                ))
-            },
+                let codomain = get_function_codomain(function);
+                match codomain {
+                    Some(inner_dom) => Some(Domain::set(SetAttr::new(dom_size), inner_dom)),
+                    None => None,
+                }
+            }
             Expression::Image(_, function, _) => get_function_codomain(function),
-            Expression::ImageSet(_, function, _) => Some(Domain::set(
+            Expression::ImageSet(_, function, _) => {
+                let codomain = get_function_codomain(function);
+                match codomain {
                     // An imageSet is the converted to a set, and can be empty
-                    SetAttr::new(Range::Bounded(0,1)),
-                    get_function_codomain(function).resolve()?,
-            )),
+                    Some(inner_dom) => {
+                        Some(Domain::set(SetAttr::new(Range::Bounded(0, 1)), inner_dom))
+                    }
+                    None => None,
+                }
+            }
             Expression::PreImage(_, function, _) => {
                 let (attrs, _, _) = function.domain_of()?.as_function()?;
                 let size = attrs.resolve()?.size;
@@ -960,14 +967,15 @@ impl Expression {
                     Range::Unbounded => Range::Unbounded,
                     Range::Single(x) => Range::UnboundedL(x),
                     Range::UnboundedL(x) => Range::UnboundedL(x),
-                    Range::UnboundedR(x) => Range::Unbounded,
-                    Range::Bounded(x,y ) => Range::UnboundedL(y)
+                    Range::UnboundedR(_) => Range::Unbounded,
+                    Range::Bounded(_, y) => Range::UnboundedL(y),
                 };
-                Some(Domain::set(
-                    SetAttr::new(dom_size),
-                    get_function_domain(function).resolve()?,
-                ))
-            },
+                let domain = get_function_domain(function);
+                match domain {
+                    Some(inner_dom) => Some(Domain::set(SetAttr::new(dom_size), inner_dom)),
+                    None => None,
+                }
+            }
             Expression::Restrict(_, function, new_domain) => {
                 let (attrs, _, codom) = function.domain_of()?.as_function()?;
                 let new_dom = new_domain.domain_of()?;
