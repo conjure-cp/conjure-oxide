@@ -1,6 +1,6 @@
 use super::declaration::DeclarationPtr;
 use super::serde::PtrAsInner;
-use super::{DomainPtr, Expression, Name, ReturnType, SubModel, SymbolTablePtr, Typeable};
+use super::{DomainPtr, Expression, Name, ReturnType, SubModel, SymbolTablePtr, Typeable, Metadata, Moo};
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use std::fmt::{Display, Formatter};
@@ -55,14 +55,6 @@ pub struct ExpressionGenerator {
 }
 
 impl AbstractComprehension {
-    pub fn symbols(&self) -> Rc<RefCell<SymbolTable>> {
-        Rc::clone(self.submodel.symbols_ptr_unchecked())
-    }
-
-    pub fn return_expr(&self) -> &Expression {
-        self.submodel.constraints().first().unwrap()
-    }
-
     pub fn domain_of(&self) -> Option<DomainPtr> {
         self.return_expr().domain_of()
     }
@@ -74,15 +66,9 @@ impl Typeable for AbstractComprehension {
     }
 }
 
-impl Hash for AbstractComprehension {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.return_expr.hash(state);
-        self.qualifiers.hash(state);
-    }
-}
-
 pub struct AbstractComprehensionBuilder {
     pub qualifiers: Vec<Qualifier>,
+    pub symbols: SymbolTablePtr,
 }
 
 impl AbstractComprehensionBuilder {
@@ -93,23 +79,16 @@ impl AbstractComprehensionBuilder {
     /// Changes to the inner scope do not affect the given symbol table.
     ///
     /// The return expression is passed when finalizing the comprehension, in [with_return_value].
-    pub fn new(symbols: &SymbolTablePtr) -> Self {
-        Self {
+    pub fn new(symbols: SymbolTablePtr) -> Self {
+        AbstractComprehensionBuilder {
             qualifiers: vec![],
+            symbols: SymbolTablePtr::with_parent(symbols),
         }
-    }
-
-    pub fn return_expr_symbols(&self) -> Rc<RefCell<SymbolTable>> {
-        self.return_expr_symbols.clone()
-    }
-
-    pub fn generator_symbols(&self) -> Rc<RefCell<SymbolTable>> {
-        self.generator_symbols.clone()
     }
 
     pub fn add_domain_generator(mut self, domain: DomainPtr, name: Name) {
         let generator_decl = DeclarationPtr::new_var_quantified(name, domain);
-        self.symbols().borrow_mut().update_insert(generator_decl.clone());
+        self.symbols.borrow_mut().update_insert(generator_decl.clone());
 
         self.qualifiers
             .push(Qualifier::Generator(Generator::DomainGenerator(
@@ -120,7 +99,7 @@ impl AbstractComprehensionBuilder {
     }
 
     pub fn new_domain_generator(self, domain: DomainPtr) -> DeclarationPtr {
-        let generator_decl = self.symbols().borrow_mut().gensym(&domain);
+        let generator_decl = self.symbols.borrow_mut().gensym(&domain);
         let name = generator_decl.name().clone();
 
         self.add_domain_generator(domain, name);
@@ -166,7 +145,7 @@ impl AbstractComprehensionBuilder {
             .element_domain()
             .expect("Expression must contain elements with uniform domain");
 
-        let decl_ptr = self.symbols().borrow_mut().gensym(&domain);
+        let decl_ptr = self.symbols.borrow_mut().gensym(&domain);
         let name = decl_ptr.name().clone();
 
         self.add_expression_generator(expr, name);
@@ -199,18 +178,21 @@ impl AbstractComprehensionBuilder {
         letting_decl
     }
 
-    pub fn with_return_value(mut self, expression: Expression) -> AbstractComprehension {
-        self.submodel.add_constraint(expression);
-        AbstractComprehension {
-            submodel: self.submodel,
-            qualifiers: self.qualifiers,
-        }
+    pub fn with_return_value(mut self, expression: Expression) -> Expression {
+        Expression::Scope(
+            Metadata::new(),
+            Moo::new(AbstractComprehension {
+                return_expr: expression,
+                qualifiers: self.qualifiers,
+            }),
+            self.symbols,
+        )
     }
 }
 
 impl Display for AbstractComprehension {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "[ {} | ", self.return_expr())?;
+        write!(f, "[ {} | ", self.return_expr)?;
         let mut first = true;
         for qualifier in &self.qualifiers {
             if !first {
