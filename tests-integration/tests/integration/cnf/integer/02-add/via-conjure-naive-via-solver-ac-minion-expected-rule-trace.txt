@@ -1,0 +1,40 @@
+Model before rewriting:
+
+find a: int(1..20)
+find b: int(1..20)
+
+such that
+
+(sum([a,b;int(1..2)]) = 30)
+
+--
+
+sum([a,b;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+sum([a,b;int(1..)]) 
+
+--
+
+(sum([a,b;int(1..)]) = 30), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+and([SumLeq([a, b], 30),SumGeq([a, b], 30);int(1..)]) 
+
+--
+
+and([SumLeq([a, b], 30),SumGeq([a, b], 30);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+SumLeq([a, b], 30),
+SumGeq([a, b], 30) 
+
+--
+
+Final model:
+
+find a: int(1..20)
+find b: int(1..20)
+
+such that
+
+SumLeq([a, b], 30),
+SumGeq([a, b], 30)
+
