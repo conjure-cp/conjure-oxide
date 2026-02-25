@@ -3,8 +3,8 @@
  * This is used for error reporting and diagnostics.
  */
 
-use crate::diagnostics::diagnostics_api::{Position};
-use crate::diagnostics::diagnostics_api::SymbolKind;
+use crate::diagnostics::diagnostics_api::{Position, SymbolKind};
+use rangemap::RangeMap;
 pub type SpanId = u32;
 
 #[derive(Debug)]
@@ -29,12 +29,16 @@ pub struct SourceSpan {
 #[derive(Debug, Default)]
 pub struct SourceMap {
     pub spans: Vec<SourceSpan>,
-    pub by_byte: Vec<Option<SpanId>>,
+    pub by_byte: RangeMap<usize, SpanId>,
 }
 
 // allocate a new span and return span id
 // put the position of the span in the source map
-pub fn alloc_span(range: tree_sitter::Range, source_map: &mut SourceMap, hover_info: Option<HoverInfo>) -> SpanId {
+pub fn alloc_span(
+    range: tree_sitter::Range,
+    source_map: &mut SourceMap,
+    hover_info: Option<HoverInfo>,
+) -> SpanId {
     let span_id = source_map.spans.len() as SpanId;
     source_map.spans.push(SourceSpan {
         start_byte: range.start_byte,
@@ -49,14 +53,9 @@ pub fn alloc_span(range: tree_sitter::Range, source_map: &mut SourceMap, hover_i
         },
         hover_info,
     });
-    // map byte offsets to span id
-    for i in range.start_byte..range.end_byte {
-        if i < source_map.by_byte.len() {
-            source_map.by_byte[i] = Some(span_id);
-        } else {
-            // extend the by_byte
-            source_map.by_byte.push(Some(span_id));
-        }
-    }
+    // map byte offsets to span id (RangeMap handles lookup)
+    source_map
+        .by_byte
+        .insert(range.start_byte..range.end_byte, span_id);
     span_id
 }
