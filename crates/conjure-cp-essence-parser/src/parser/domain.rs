@@ -73,7 +73,8 @@ fn parse_int_val(
     source_code: &str,
     root: &Node,
     symbols_ptr: &Option<SymbolTablePtr>,
-) -> Result<IntVal, EssenceParseError> {
+    errors: &mut Vec<RecoverableParseError>,
+) -> Result<IntVal, FatalParseError> {
     // For atoms, try to parse as a constant integer first
     if node.kind() == "atom" {
         let text = &source_code[node.start_byte()..node.end_byte()];
@@ -81,13 +82,15 @@ fn parse_int_val(
             return Ok(IntVal::Const(integer));
         }
         // Otherwise, check if it's an identifier reference
-        if let Ok(decl) = get_declaration_ptr_from_identifier(node, source_code, symbols_ptr) {
+        if let Ok(decl) =
+            get_declaration_ptr_from_identifier(node, source_code, symbols_ptr, errors)
+        {
             return Ok(IntVal::Reference(Reference::new(decl)));
         }
     }
 
     // For anything else (arithmetic_expr, sum_expr, etc.), parse as an expression
-    let expr = parse_expression(node, source_code, root, symbols_ptr.clone())?;
+    let expr = parse_expression(node, source_code, root, symbols_ptr.clone(), errors)?;
     Ok(IntVal::Expr(Moo::new(expr)))
 }
 
@@ -112,33 +115,27 @@ fn parse_int_domain(
 
     for domain_component in named_children(&range_list) {
         match domain_component.kind() {
-            "atom" => {
-                let text = &source_code[domain_component.start_byte()..domain_component.end_byte()];
-                // Try parsing as a literal integer first
-                if let Ok(integer) = text.parse::<i32>() {
-                    ranges.push(Range::Single(integer));
-                    continue;
-                }
-                // Otherwise, treat as a reference
-                let decl = get_declaration_ptr_from_identifier(
+            "atom" | "arithmetic_expr" => {
+                let int_val = parse_int_val(
                     domain_component,
                     source_code,
+                    &int_domain,
                     symbols_ptr,
                     errors,
-                );
-                if let Ok(decl) = decl {
-                    ranges_unresolved.push(Range::Single(IntVal::Reference(Reference::new(decl))));
-                } else {
-                    panic!("'{}' is not a valid integer", text);
+                )
+                .unwrap_or_else(|_| panic!("Failed to parse int value"));
+                if !matches!(int_val, IntVal::Const(_)) {
+                    all_resolved = false;
                 }
+                ranges_unresolved.push(Range::Single(int_val));
             }
             "int_range" => {
                 let lower_bound = domain_component
                     .child_by_field_name("lower")
-                    .map(|node| parse_int_val(node, source_code, &int_domain, symbols_ptr));
+                    .map(|node| parse_int_val(node, source_code, &int_domain, symbols_ptr, errors));
                 let upper_bound = domain_component
                     .child_by_field_name("upper")
-                    .map(|node| parse_int_val(node, source_code, &int_domain, symbols_ptr));
+                    .map(|node| parse_int_val(node, source_code, &int_domain, symbols_ptr, errors));
 
                 match (lower_bound, upper_bound) {
                     (Some(Ok(lower)), Some(Ok(upper))) => {
