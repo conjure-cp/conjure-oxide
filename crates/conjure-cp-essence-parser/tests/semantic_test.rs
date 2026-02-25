@@ -21,7 +21,7 @@ fn detects_undefined_variable() {
         14,
         1,
         15,
-        "Semantic Error: Undefined variable: 'y'",
+        "Semantic Error: Variable 'y' is not defined in the symbol table",
     );
 }
 
@@ -58,7 +58,7 @@ fn range_points_to_error_location() {
         14,
         1,
         27,
-        "Semantic Error: Undefined variable: 'undefined_var'",
+        "Semantic Error: Variable 'undefined_var' is not defined in the symbol table",
     );
 }
 
