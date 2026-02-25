@@ -216,7 +216,7 @@ impl SolverAdaptor for Sat {
 
         for find_ref in decisions {
             match find_ref.1.kind().clone() {
-                conjure_ast::DeclarationKind::DecisionVariable(_) => {
+                conjure_ast::DeclarationKind::Find(_) => {
                     let domain = find_ref
                         .1
                         .domain()
@@ -249,7 +249,7 @@ impl SolverAdaptor for Sat {
                 conjure_ast::DeclarationKind::ValueLetting(expression) => {}
                 conjure_ast::DeclarationKind::DomainLetting(moo) => {}
                 conjure_ast::DeclarationKind::Given(moo) => todo!(),
-                conjure_ast::DeclarationKind::GivenQuantified(given_quantified) => todo!(),
+                conjure_ast::DeclarationKind::Quantified(given_quantified) => todo!(),
                 conjure_ast::DeclarationKind::RecordField(moo) => todo!(),
             }
         }
