@@ -2,7 +2,7 @@
 
 use crate::diagnostics::diagnostics_api::{Diagnostic, Position, Range, Severity};
 use crate::errors::RecoverableParseError;
-use crate::{FatalParseError, parse_essence_with_context};
+use crate::parse_essence_with_context;
 use conjure_cp_core::context::Context;
 use std::sync::{Arc, RwLock};
 
