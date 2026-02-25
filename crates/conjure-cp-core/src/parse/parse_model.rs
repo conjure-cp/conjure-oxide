@@ -125,7 +125,7 @@ fn parse_variable(v: &JsonValue, symtab: &mut SymbolTable) -> Result<()> {
     let domain = parse_domain(domain.0, domain.1, symtab)?;
 
     symtab
-        .insert(DeclarationPtr::new_var(name.clone(), domain))
+        .insert(DeclarationPtr::new_find(name.clone(), domain))
         .ok_or(Error::Parse(format!(
             "Could not add {name} to symbol table as it already exists"
         )))
@@ -887,7 +887,7 @@ fn parse_comprehension(
                             domain_value,
                             &mut generator_symboltable.write(),
                         )?;
-                        comprehension.generator(DeclarationPtr::new_var(name.into(), domain))
+                        comprehension.generator(DeclarationPtr::new_find(name.into(), domain))
                     }
                     // TODO: this is temporary until comprehensions support "in expr" generators
                     // currently only supports a single generator of this type

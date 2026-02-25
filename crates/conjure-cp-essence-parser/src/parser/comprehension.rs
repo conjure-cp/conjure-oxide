@@ -1,7 +1,8 @@
+use crate::errors::{FatalParseError, RecoverableParseError};
 use crate::expression::parse_expression;
+use crate::field;
 use crate::parser::domain::parse_domain;
 use crate::util::named_children;
-use crate::{EssenceParseError, field};
 use conjure_cp_core::ast::ac_operators::ACOperatorKind;
 use conjure_cp_core::ast::comprehension::ComprehensionBuilder;
 use conjure_cp_core::ast::{DeclarationPtr, Expression, Metadata, Moo, Name, SymbolTablePtr};
@@ -13,10 +14,11 @@ pub fn parse_comprehension(
     source_code: &str,
     root: &Node,
     symbols_ptr: Option<SymbolTablePtr>,
-) -> Result<Expression, EssenceParseError> {
+    errors: &mut Vec<RecoverableParseError>,
+) -> Result<Expression, FatalParseError> {
     // Comprehensions require a symbol table passed in
     let symbols_ptr = symbols_ptr.ok_or_else(|| {
-        EssenceParseError::syntax_error(
+        FatalParseError::syntax_error(
             "Comprehensions require a symbol table".to_string(),
             Some(node.range()),
         )
@@ -43,10 +45,11 @@ pub fn parse_comprehension(
 
                 // Parse the domain
                 let domain_node = field!(child, "domain");
-                let var_domain = parse_domain(domain_node, source_code, Some(symbols_ptr.clone()))?;
+                let var_domain =
+                    parse_domain(domain_node, source_code, Some(symbols_ptr.clone()), errors)?;
 
                 // Add generator using the builder
-                let decl = DeclarationPtr::new_var(var_name, var_domain);
+                let decl = DeclarationPtr::new_find(var_name, var_domain);
                 builder = builder.generator(decl);
             }
             "condition" => {
@@ -54,8 +57,13 @@ pub fn parse_comprehension(
                 let expr_node = field!(child, "expression");
                 let generator_symboltable = builder.generator_symboltable();
 
-                let guard_expr =
-                    parse_expression(expr_node, source_code, root, Some(generator_symboltable))?;
+                let guard_expr = parse_expression(
+                    expr_node,
+                    source_code,
+                    root,
+                    Some(generator_symboltable),
+                    errors,
+                )?;
 
                 // Add the condition as a guard
                 builder = builder.guard(guard_expr);
@@ -68,7 +76,7 @@ pub fn parse_comprehension(
 
     // parse the return expression
     let return_expr_node = return_expr_node.ok_or_else(|| {
-        EssenceParseError::syntax_error(
+        FatalParseError::syntax_error(
             "Comprehension missing return expression".to_string(),
             Some(node.range()),
         )
@@ -80,6 +88,7 @@ pub fn parse_comprehension(
         source_code,
         root,
         Some(builder.return_expr_symboltable()),
+        errors,
     )?;
 
     // Build the comprehension with the return expression and default ACOperatorKind::And
@@ -99,10 +108,11 @@ pub fn parse_quantifier_or_aggregate_expr(
     source_code: &str,
     root: &Node,
     symbols_ptr: Option<SymbolTablePtr>,
-) -> Result<Expression, EssenceParseError> {
+    errors: &mut Vec<RecoverableParseError>,
+) -> Result<Expression, FatalParseError> {
     // Quantifier and aggregate expressions require a symbol table
     let symbols_ptr = symbols_ptr.ok_or_else(|| {
-        EssenceParseError::syntax_error(
+        FatalParseError::syntax_error(
             "Quantifier and aggregate expressions require a symbol table".to_string(),
             Some(node.range()),
         )
@@ -124,7 +134,12 @@ pub fn parse_quantifier_or_aggregate_expr(
                 variables.push(var_name);
             }
             "domain" => {
-                domain = Some(parse_domain(child, source_code, Some(symbols_ptr.clone()))?);
+                domain = Some(parse_domain(
+                    child,
+                    source_code,
+                    Some(symbols_ptr.clone()),
+                    errors,
+                )?);
             }
             "set_literal" | "matrix" | "tuple" | "record" => {
                 // Store the collection node to parse later
@@ -136,14 +151,14 @@ pub fn parse_quantifier_or_aggregate_expr(
 
     // We need either a domain or a collection
     if domain.is_none() && collection_node.is_none() {
-        return Err(EssenceParseError::syntax_error(
+        return Err(FatalParseError::syntax_error(
             "Quantifier and aggregate expressions require a domain or collection".to_string(),
             Some(node.range()),
         ));
     }
 
     if variables.is_empty() {
-        return Err(EssenceParseError::syntax_error(
+        return Err(FatalParseError::syntax_error(
             "Quantifier and aggregate expressions require variables".to_string(),
             Some(node.range()),
         ));
@@ -160,7 +175,7 @@ pub fn parse_quantifier_or_aggregate_expr(
         "min" => (ACOperatorKind::Sum, "Min"), // AC operator doesn't matter for non-boolean aggregates
         "max" => (ACOperatorKind::Sum, "Max"),
         _ => {
-            return Err(EssenceParseError::syntax_error(
+            return Err(FatalParseError::syntax_error(
                 format!("Unknown operator: {}", operator_str),
                 Some(operator_node.range()),
             ));
@@ -170,12 +185,12 @@ pub fn parse_quantifier_or_aggregate_expr(
     // Add variables as generators
     if let Some(dom) = domain {
         for var_name in variables {
-            let decl = DeclarationPtr::new_var(var_name, dom.clone());
+            let decl = DeclarationPtr::new_find(var_name, dom.clone());
             builder = builder.generator(decl);
         }
     } else if let Some(_coll_node) = collection_node {
         // TODO: support collection domains
-        return Err(EssenceParseError::syntax_error(
+        return Err(FatalParseError::syntax_error(
             "Collection domains in quantifier and aggregate expressions not yet supported"
                 .to_string(),
             Some(node.range()),
@@ -184,7 +199,7 @@ pub fn parse_quantifier_or_aggregate_expr(
 
     // Parse the expression (after variables are in the symbol table)
     let expression_node = node.child_by_field_name("expression").ok_or_else(|| {
-        EssenceParseError::syntax_error(
+        FatalParseError::syntax_error(
             "Quantifier or aggregate expression missing return expression".to_string(),
             Some(node.range()),
         )
@@ -194,6 +209,7 @@ pub fn parse_quantifier_or_aggregate_expr(
         source_code,
         root,
         Some(builder.return_expr_symboltable()),
+        errors,
     )?;
 
     // Build the comprehension

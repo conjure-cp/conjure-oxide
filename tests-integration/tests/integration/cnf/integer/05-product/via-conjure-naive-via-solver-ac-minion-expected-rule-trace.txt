@@ -1,0 +1,32 @@
+Model before rewriting:
+
+find a: int(1..30)
+find b: int(1..30)
+
+such that
+
+(product([a,b;int(1..2)]) = 30)
+
+--
+
+product([a,b;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+product([a,b;int(1..)]) 
+
+--
+
+(product([a,b;int(1..)]) = 30), 
+   ~~> introduce_producteq ([("Minion", 4200)]) 
+FlatProductEq(b,a,30) 
+
+--
+
+Final model:
+
+find a: int(1..30)
+find b: int(1..30)
+
+such that
+
+FlatProductEq(b,a,30)
+

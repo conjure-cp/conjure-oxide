@@ -1,7 +1,12 @@
 #![allow(clippy::arc_with_non_send_sync)]
 
-use std::{collections::BTreeSet, fmt::Display, sync::atomic::AtomicBool};
+use std::{
+    collections::BTreeSet,
+    fmt::Display,
+    sync::atomic::{AtomicBool, AtomicU8, Ordering},
+};
 
+use crate::settings::QuantifiedExpander;
 use crate::{ast::Metadata, into_matrix_expr, matrix_expr};
 use conjure_cp_core::ast::ReturnType;
 use itertools::Itertools as _;
@@ -19,6 +24,20 @@ use super::{
 ///
 /// True for optimised, false for naive
 pub static USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS: AtomicBool = AtomicBool::new(false);
+
+/// Global setting for which comprehension quantified-variable expander to use.
+///
+/// Defaults to [`QuantifiedExpander::Native`].
+pub static QUANTIFIED_EXPANDER_FOR_COMPREHENSIONS: AtomicU8 =
+    AtomicU8::new(QuantifiedExpander::Native.as_u8());
+
+pub fn set_quantified_expander_for_comprehensions(expander: QuantifiedExpander) {
+    QUANTIFIED_EXPANDER_FOR_COMPREHENSIONS.store(expander.as_u8(), Ordering::Relaxed);
+}
+
+pub fn quantified_expander_for_comprehensions() -> QuantifiedExpander {
+    QuantifiedExpander::from_u8(QUANTIFIED_EXPANDER_FOR_COMPREHENSIONS.load(Ordering::Relaxed))
+}
 
 // TODO: do not use Names to compare variables, use DeclarationPtr and ids instead
 // see issue #930
@@ -99,29 +118,34 @@ impl Typeable for Comprehension {
 
 impl Display for Comprehension {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let generators: String = self
-            .generator_submodel
-            .symbols()
+        let return_expression = self
+            .return_expression_submodel
             .clone()
-            .into_iter_local()
-            .map(|(name, decl): (Name, DeclarationPtr)| {
+            .into_single_expression();
+
+        let generator_symbols = self.generator_submodel.symbols().clone();
+        let generators = self
+            .quantified_vars
+            .iter()
+            .map(|name| {
+                let decl: DeclarationPtr = generator_symbols
+                    .lookup_local(name)
+                    .expect("quantified variable should be in the generator symbol table");
                 let domain: DomainPtr = decl.domain().unwrap();
-                (name, domain)
+                format!("{name} : {domain}")
             })
-            .map(|(name, domain)| format!("{name}: {domain}"))
-            .join(",");
+            .collect_vec();
 
         let guards = self
             .generator_submodel
             .constraints()
             .iter()
             .map(|x| format!("{x}"))
-            .join(",");
+            .collect_vec();
 
-        let generators_and_guards = itertools::join([generators, guards], ",");
+        let generators_and_guards = generators.into_iter().chain(guards).join(", ");
 
-        let expression = &self.return_expression_submodel;
-        write!(f, "[{expression} | {generators_and_guards}]")
+        write!(f, "[ {return_expression} | {generators_and_guards} ]")
     }
 }
 
@@ -169,13 +193,17 @@ impl ComprehensionBuilder {
 
         self.quantified_variables.insert(name.clone());
 
-        // insert into generator symbol table as a variable
-        self.generator_symboltable.write().insert(declaration);
-
-        // insert into return expression symbol table as a given
-        self.return_expr_symboltable
+        // insert into generator symbol table as a local quantified variable
+        let quantified_decl = DeclarationPtr::new_quantified(name, domain);
+        self.generator_symboltable
             .write()
-            .insert(DeclarationPtr::new_given(name, domain));
+            .insert(quantified_decl.clone());
+
+        // insert into return expression symbol table as a quantified variable
+        self.return_expr_symboltable.write().insert(
+            DeclarationPtr::new_quantified_from_generator(&quantified_decl)
+                .expect("quantified variables should always have a domain"),
+        );
 
         self
     }
