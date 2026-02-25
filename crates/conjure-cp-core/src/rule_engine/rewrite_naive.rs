@@ -1,7 +1,7 @@
 use super::{RewriteError, RuleSet, resolve_rules::RuleData};
 use crate::{
     Model,
-    ast::{Expression as Expr, SubModel, comprehension::Comprehension},
+    ast::{Expression as Expr, SubModel},
     bug,
     rule_engine::{
         get_rules_grouped,
@@ -13,7 +13,7 @@ use crate::{
 };
 
 use itertools::Itertools;
-use std::{process::exit, sync::Arc, time::Instant};
+use std::{sync::Arc, time::Instant};
 use tracing::{Level, span, trace};
 use uniplate::{Biplate, Uniplate};
 
@@ -23,7 +23,6 @@ pub fn rewrite_naive<'a>(
     model: &Model,
     rule_sets: &Vec<&'a RuleSet<'a>>,
     prop_multiple_equally_applicable: bool,
-    exit_after_unrolling: bool,
 ) -> Result<Model, RewriteError> {
     set_current_rewriter(Rewriter::Naive);
 
@@ -67,13 +66,6 @@ pub fn rewrite_naive<'a>(
         }
         if let Some(new_model) = new_model {
             model = new_model;
-        }
-
-        if Biplate::<Comprehension>::universe_bi(model.as_submodel()).is_empty()
-            && exit_after_unrolling
-        {
-            println!("{}", model.as_submodel().root().universe().len());
-            exit(0);
         }
     }
 

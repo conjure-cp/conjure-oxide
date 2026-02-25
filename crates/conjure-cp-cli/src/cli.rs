@@ -139,15 +139,6 @@ pub struct GlobalArgs {
     #[arg(long,global=true, value_names=["filename"], next_line_help=true, help_heading=LOGGING_HELP_HEADING)]
     pub save_solver_input_file: Option<PathBuf>,
 
-    /// Exit after all comprehensions have been unrolled, printing the number of expressions at that point.
-    ///
-    /// This is only compatible with the default rewriter.
-    ///
-    /// This flag is useful to compare how comprehension optimisations, such as expand-ac, effect
-    /// rewriting.
-    #[arg(long, default_value_t = false, global = true, help_heading = DEBUG_HELP_HEADING)]
-    pub exit_after_unrolling: bool,
-
     /// Stop the solver after the given timeout.
     ///
     /// Currently only SMT supports this feature.

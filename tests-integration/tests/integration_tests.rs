@@ -216,7 +216,7 @@ fn integration_test_inner(
     let mut model = parsed_model;
 
     let rewritten_model = match rewriter {
-        Rewriter::Naive => rewrite_naive(&model, &rule_sets, false, false)?,
+        Rewriter::Naive => rewrite_naive(&model, &rule_sets, false)?,
         Rewriter::Morph => {
             let submodel = model.as_submodel_mut();
             let rules_grouped = get_rules_grouped(&rule_sets)
