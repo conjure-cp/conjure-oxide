@@ -62,43 +62,13 @@ such that
 (false != __0),
 Reify(FlatProductEq(m,m,4), __0)
 
-Model before rewriting:
-
-quantified m: int(0..3)
-
-such that
-
-(product([m,m;int(1..2)]) = 4)
-
---
-
-product([m,m;int(1..2)]), 
-   ~~> matrix_to_list ([("Base", 2000)]) 
-product([m,m;int(1..)]) 
-
---
-
-(product([m,m;int(1..)]) = 4), 
-   ~~> introduce_producteq ([("Minion", 4200)]) 
-FlatProductEq(m,m,4) 
-
---
-
-Final model:
-
-quantified m: int(0..3)
-
-such that
-
-FlatProductEq(m,m,4)
-
 or([ (product([m,m;int(1..2)]) = 4) | m : int(0..3) ]), 
    ~~> expand_comprehension_via_solver_ac ([("Base", 2002)]) 
-or([FlatProductEq(2,2,4);int(1..)]) 
+or([true;int(1..)]) 
 
 --
 
-or([a,Reify(or([FlatProductEq(2,2,4);int(1..)]), b);int(1..2)]), 
+or([a,Reify(or([true;int(1..)]), b);int(1..2)]), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
 or([a,Reify(true, b);int(1..2)]) 
 

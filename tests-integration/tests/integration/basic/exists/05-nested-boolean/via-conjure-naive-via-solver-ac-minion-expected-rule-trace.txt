@@ -85,75 +85,13 @@ such that
 (false != __0),
 Reify(and([Ineq(2, p, -1),Ineq(p, 3, 0);int(1..)]), __0)
 
-Model before rewriting:
-
-quantified p: int(1..5)
-
-such that
-
-and([(p > 2),(p < 4);int(1..2)])
-
---
-
-(p > 2), 
-   ~~> gt_to_geq ([("Minion", 8400)]) 
-(sum([p,-1;int(1..)]) >= 2) 
-
---
-
-(p < 4), 
-   ~~> lt_to_leq ([("Minion", 8400)]) 
-(p <= sum([4,-1;int(1..)])) 
-
---
-
-and([(sum([p,-1;int(1..)]) >= 2),(p <= sum([4,-1;int(1..)]));int(1..2)]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
-and([(sum([p,-1;int(1..)]) >= 2),(p <= 3);int(1..2)]) 
-
---
-
-(sum([p,-1;int(1..)]) >= 2), 
-   ~~> y_plus_k_geq_x_to_ineq ([("Minion", 4800)]) 
-Ineq(2, p, -1) 
-
---
-
-(p <= 3), 
-   ~~> leq_to_ineq ([("Minion", 4100)]) 
-Ineq(p, 3, 0) 
-
---
-
-and([Ineq(2, p, -1),Ineq(p, 3, 0);int(1..2)]), 
-   ~~> matrix_to_list ([("Base", 2000)]) 
-and([Ineq(2, p, -1),Ineq(p, 3, 0);int(1..)]) 
-
---
-
-and([Ineq(2, p, -1),Ineq(p, 3, 0);int(1..)]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
-Ineq(2, p, -1),
-Ineq(p, 3, 0) 
-
---
-
-Final model:
-
-quantified p: int(1..5)
-
-such that
-
-Ineq(2, p, -1),
-Ineq(p, 3, 0)
-
 or([ and([(p > 2),(p < 4);int(1..2)]) | p : int(1..5) ]), 
    ~~> expand_comprehension_via_solver_ac ([("Base", 2002)]) 
-or([and([Ineq(2, 3, -1),Ineq(3, 3, 0);int(1..)]);int(1..)]) 
+or([true;int(1..)]) 
 
 --
 
-Reify(or([and([Ineq(2, 3, -1),Ineq(3, 3, 0);int(1..)]);int(1..)]), check), 
+Reify(or([true;int(1..)]), check), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
 Reify(true, check) 
 

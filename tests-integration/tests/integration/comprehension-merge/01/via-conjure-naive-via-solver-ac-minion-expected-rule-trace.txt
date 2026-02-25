@@ -18,47 +18,23 @@ Model before rewriting:
 
 find i: int(1..2)
 find j: int(1..2)
-find __0: bool
+find __0: int(0..5)
 
 such that
 
-(true != ((i <= j)) -> (__0))
+(true != ((i <= j)) -> ((__0 <= (j - i))))
 
 --
 
-(true != ((i <= j)) -> (__0)), 
-   ~~> flatten_generic ([("Minion", 4200)]) 
-(true != __1) 
-new variables:
-  find __1: bool
-new constraints:
-  __1 =aux ((i <= j)) -> (__0)
---
-
-__1 =aux ((i <= j)) -> (__0), 
-   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
-Reify(((i <= j)) -> (__0), __1) 
+(j - i), 
+   ~~> minus_to_sum ([("Base", 8400)]) 
+sum([j,-(i);int(1..)]) 
 
 --
 
-((i <= j)) -> (__0), 
-   ~~> flatten_imply ([("Minion", 4200)]) 
-(__2) -> (__0) 
-new variables:
-  find __2: bool
-new constraints:
-  __2 =aux (i <= j)
---
-
-(__2) -> (__0), 
-   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
-Ineq(__2, __0, 0) 
-
---
-
-__2 =aux (i <= j), 
-   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
-Reify((i <= j), __2) 
+(__0 <= sum([j,-(i);int(1..)])), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+FlatWeightedSumGeq([-1, 1],[i, j],__0) 
 
 --
 
@@ -72,42 +48,23 @@ Final model:
 
 find i: int(1..2)
 find j: int(1..2)
-find __0: bool
-find __1: bool
-find __2: bool
+find __0: int(0..5)
 
 such that
 
-(true != __1),
-Reify(Ineq(__2, __0, 0), __1),
-Reify(Ineq(i, j, 0), __2)
+(true != (Ineq(i, j, 0)) -> (FlatWeightedSumGeq([-1, 1],[i, j],__0)))
 
 Model before rewriting:
 
 quantified i: int(1..2)
 quantified j: int(1..2)
-
-such that
-
-((i <= j)) -> ((x <= (j - i)))
+find __0: int(0..5)
 
 --
 
-(j - i), 
-   ~~> minus_to_sum ([("Base", 8400)]) 
-sum([j,-(i);int(1..)]) 
-
---
-
-(x <= sum([j,-(i);int(1..)])), 
-   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
-FlatWeightedSumGeq([-1, 1],[i, j],x) 
-
---
-
-(i <= j), 
-   ~~> leq_to_ineq ([("Minion", 4100)]) 
-Ineq(i, j, 0) 
+, 
+   ~~> eval_root ([("Constant", 9001)]) 
+true 
 
 --
 
@@ -115,22 +72,41 @@ Final model:
 
 quantified i: int(1..2)
 quantified j: int(1..2)
+find __0: int(0..5)
 
 such that
 
-(Ineq(i, j, 0)) -> (FlatWeightedSumGeq([-1, 1],[i, j],x))
+true
 
-and([ ((i <= j)) -> ((x <= (j - i))) | i : int(1..2), j : int(1..2) ]), 
-   ~~> expand_comprehension_via_solver_ac ([("Base", 2002)]) 
-and([(Ineq(1, 1, 0)) -> (FlatWeightedSumGeq([-1, 1],[1, 1],x)),(Ineq(1, 2, 0)) -> (FlatWeightedSumGeq([-1, 1],[1, 2],x)),(Ineq(2, 2, 0)) -> (FlatWeightedSumGeq([-1, 1],[2, 2],x));int(1..)]) 
+[ ((i <= j)) -> ((x <= (j - i))) | i : int(1..2), j : int(1..2) ], 
+   ~~> expand_comprehension_via_solver ([("Base", 2000)]) 
+[(x <= 0),(x <= 1),true,(x <= 0);int(1..)] 
 
 --
 
-and([(Ineq(1, 1, 0)) -> (FlatWeightedSumGeq([-1, 1],[1, 1],x)),(Ineq(1, 2, 0)) -> (FlatWeightedSumGeq([-1, 1],[1, 2],x)),(Ineq(2, 2, 0)) -> (FlatWeightedSumGeq([-1, 1],[2, 2],x));int(1..)]), 
+and([(x <= 0),(x <= 1),true,(x <= 0);int(1..)]), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-FlatWeightedSumGeq([-1, 1],[1, 1],x),
-FlatWeightedSumGeq([-1, 1],[1, 2],x),
-FlatWeightedSumGeq([-1, 1],[2, 2],x) 
+(x <= 0),
+(x <= 1),
+(x <= 0) 
+
+--
+
+(x <= 0), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(x, 0, 0) 
+
+--
+
+(x <= 1), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(x, 1, 0) 
+
+--
+
+(x <= 0), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(x, 0, 0) 
 
 --
 
@@ -140,7 +116,7 @@ find x: int(0..5)
 
 such that
 
-FlatWeightedSumGeq([-1, 1],[1, 1],x),
-FlatWeightedSumGeq([-1, 1],[1, 2],x),
-FlatWeightedSumGeq([-1, 1],[2, 2],x)
+Ineq(x, 0, 0),
+Ineq(x, 1, 0),
+Ineq(x, 0, 0)
 

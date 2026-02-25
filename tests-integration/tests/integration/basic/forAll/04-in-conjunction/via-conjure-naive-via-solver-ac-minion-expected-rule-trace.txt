@@ -56,30 +56,6 @@ such that
 (true != __0),
 Reify(Ineq(k, 5, 0), __0)
 
-Model before rewriting:
-
-quantified k: int(1..2)
-
-such that
-
-(k <= 5)
-
---
-
-(k <= 5), 
-   ~~> leq_to_ineq ([("Minion", 4100)]) 
-Ineq(k, 5, 0) 
-
---
-
-Final model:
-
-quantified k: int(1..2)
-
-such that
-
-Ineq(k, 5, 0)
-
 and([ (k <= 5) | k : int(1..2) ]), 
    ~~> expand_comprehension_via_solver_ac ([("Base", 2002)]) 
 and([;int(1..)]) 

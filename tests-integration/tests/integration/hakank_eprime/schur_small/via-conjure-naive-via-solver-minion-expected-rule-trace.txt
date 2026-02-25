@@ -1,0 +1,157 @@
+Model before rewriting:
+
+letting n be 2
+letting num_boxes be 3
+find schur: matrix indexed by [[int(1..n)]] of int(1..num_boxes)
+
+such that
+
+and([ ((sum([i,j;int(1..2)]) = k)) -> (!(and([(schur[i] = schur[j]),(schur[j] = schur[k]);int(1..2)]))) | i : int(1..n), j : int(1..n), k : int(1..n) ])
+
+--
+
+and([ ((sum([i,j;int(1..2)]) = k)) -> (!(and([(schur[i] = schur[j]),(schur[j] = schur[k]);int(1..2)]))) | i : int(1..n), j : int(1..n), k : int(1..n) ]), 
+   ~~> select_representation_matrix ([("Representations", 8001)]) 
+and([ ((sum([i,j;int(1..2)]) = k)) -> (!(and([(schur[i] = schur[j]),(schur[j] = schur[k]);int(1..2)]))) | i : int(1..n), j : int(1..n), k : int(1..n) ]) 
+new variables:
+  find schur#matrix_to_atom_1: int(1..3)
+  find schur#matrix_to_atom_2: int(1..3)
+--
+
+Model before rewriting:
+
+quantified i: int(1..n)
+quantified j: int(1..n)
+quantified k: int(1..n)
+
+--
+
+, 
+   ~~> eval_root ([("Constant", 9001)]) 
+true 
+
+--
+
+Final model:
+
+quantified i: int(1..n)
+quantified j: int(1..n)
+quantified k: int(1..n)
+
+such that
+
+true
+
+[ ((sum([i,j;int(1..2)]) = k)) -> (!(and([(schur[i] = schur[j]),(schur[j] = schur[k]);int(1..2)]))) | i : int(1..n), j : int(1..n), k : int(1..n) ], 
+   ~~> expand_comprehension_via_solver ([("Base", 2000)]) 
+[true,!(and([(schur[1] = schur[1]),(schur[1] = schur[2]);int(1..2)])),true,true,true,true,true,true;int(1..)] 
+
+--
+
+and([true,!(and([(schur[1] = schur[1]),(schur[1] = schur[2]);int(1..2)])),true,true,true,true,true,true;int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+!(and([(schur[1] = schur[1]),(schur[1] = schur[2]);int(1..2)])) 
+
+--
+
+!(and([(schur#matrix_to_atom[1] = schur#matrix_to_atom[1]),(schur#matrix_to_atom[1] = schur#matrix_to_atom[2]);int(1..2)])), 
+   ~~> select_representation_matrix ([("Representations", 8001)]) 
+!(and([(schur#matrix_to_atom[1] = schur#matrix_to_atom[1]),(schur#matrix_to_atom[1] = schur#matrix_to_atom[2]);int(1..2)])) 
+
+--
+
+schur#matrix_to_atom[1], 
+   ~~> index_to_bubble ([("Bubble", 6000)]) 
+{schur#matrix_to_atom[1] @ and([__inDomain(1,int(1..2));int(1..)])} 
+
+--
+
+!(and([({schur#matrix_to_atom[1] @ and([__inDomain(1,int(1..2));int(1..)])} = schur#matrix_to_atom[1]),(schur#matrix_to_atom[1] = schur#matrix_to_atom[2]);int(1..2)])), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+!(and([(schur#matrix_to_atom[1] = schur#matrix_to_atom[1]),(schur#matrix_to_atom[1] = schur#matrix_to_atom[2]);int(1..2)])) 
+
+--
+
+schur#matrix_to_atom[1], 
+   ~~> index_to_bubble ([("Bubble", 6000)]) 
+{schur#matrix_to_atom[1] @ and([__inDomain(1,int(1..2));int(1..)])} 
+
+--
+
+!(and([(schur#matrix_to_atom[1] = {schur#matrix_to_atom[1] @ and([__inDomain(1,int(1..2));int(1..)])}),(schur#matrix_to_atom[1] = schur#matrix_to_atom[2]);int(1..2)])), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+!(and([(schur#matrix_to_atom[1] = schur#matrix_to_atom[1]),(schur#matrix_to_atom[1] = schur#matrix_to_atom[2]);int(1..2)])) 
+
+--
+
+schur#matrix_to_atom[1], 
+   ~~> index_to_bubble ([("Bubble", 6000)]) 
+{schur#matrix_to_atom[1] @ and([__inDomain(1,int(1..2));int(1..)])} 
+
+--
+
+!(and([(schur#matrix_to_atom[1] = schur#matrix_to_atom[1]),({schur#matrix_to_atom[1] @ and([__inDomain(1,int(1..2));int(1..)])} = schur#matrix_to_atom[2]);int(1..2)])), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+!(and([(schur#matrix_to_atom[1] = schur#matrix_to_atom[1]),(schur#matrix_to_atom[1] = schur#matrix_to_atom[2]);int(1..2)])) 
+
+--
+
+schur#matrix_to_atom[2], 
+   ~~> index_to_bubble ([("Bubble", 6000)]) 
+{schur#matrix_to_atom[2] @ and([__inDomain(2,int(1..2));int(1..)])} 
+
+--
+
+!(and([(schur#matrix_to_atom[1] = schur#matrix_to_atom[1]),(schur#matrix_to_atom[1] = {schur#matrix_to_atom[2] @ and([__inDomain(2,int(1..2));int(1..)])});int(1..2)])), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+!(and([(schur#matrix_to_atom[1] = schur#matrix_to_atom[1]),(schur#matrix_to_atom[1] = schur#matrix_to_atom[2]);int(1..2)])) 
+
+--
+
+!(and([(schur#matrix_to_atom[1] = schur#matrix_to_atom[1]),(schur#matrix_to_atom[1] = schur#matrix_to_atom[2]);int(1..2)])), 
+   ~~> index_matrix_to_atom ([("Base", 5000)]) 
+!(and([(schur#matrix_to_atom_1 = schur#matrix_to_atom_1),(schur#matrix_to_atom_1 = schur#matrix_to_atom_2);int(1..2)])) 
+
+--
+
+!(and([(schur#matrix_to_atom_1 = schur#matrix_to_atom_1),(schur#matrix_to_atom_1 = schur#matrix_to_atom_2);int(1..2)])), 
+   ~~> flatten_generic ([("Minion", 4200)]) 
+!(__0) 
+new variables:
+  find __0: bool
+new constraints:
+  __0 =aux and([(schur#matrix_to_atom_1 = schur#matrix_to_atom_1),(schur#matrix_to_atom_1 = schur#matrix_to_atom_2);int(1..2)])
+--
+
+__0 =aux and([(schur#matrix_to_atom_1 = schur#matrix_to_atom_1),(schur#matrix_to_atom_1 = schur#matrix_to_atom_2);int(1..2)]), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify(and([(schur#matrix_to_atom_1 = schur#matrix_to_atom_1),(schur#matrix_to_atom_1 = schur#matrix_to_atom_2);int(1..2)]), __0) 
+
+--
+
+!(__0), 
+   ~~> not_literal_to_wliteral ([("Minion", 4100)]) 
+WatchedLiteral(__0,false) 
+
+--
+
+and([(schur#matrix_to_atom_1 = schur#matrix_to_atom_1),(schur#matrix_to_atom_1 = schur#matrix_to_atom_2);int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+and([(schur#matrix_to_atom_1 = schur#matrix_to_atom_1),(schur#matrix_to_atom_1 = schur#matrix_to_atom_2);int(1..)]) 
+
+--
+
+Final model:
+
+letting n be 2
+letting num_boxes be 3
+find schur: matrix indexed by [[int(1..n)]] of int(1..num_boxes)
+find __0: bool
+find schur#matrix_to_atom_1: int(1..3)
+find schur#matrix_to_atom_2: int(1..3)
+
+such that
+
+WatchedLiteral(__0,false),
+Reify(and([(schur#matrix_to_atom_1 = schur#matrix_to_atom_1),(schur#matrix_to_atom_1 = schur#matrix_to_atom_2);int(1..)]), __0)
+

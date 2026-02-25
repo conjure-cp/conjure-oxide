@@ -78,30 +78,6 @@ such that
 Reify(Ineq(j, __1, 0), __0),
 FlatProductEq(j,j,__1)
 
-Model before rewriting:
-
-quantified j: int(0..3)
-
-such that
-
-(product([j,j;int(1..2)]) >= j)
-
---
-
-product([j,j;int(1..2)]), 
-   ~~> matrix_to_list ([("Base", 2000)]) 
-product([j,j;int(1..)]) 
-
---
-
-Final model:
-
-quantified j: int(0..3)
-
-such that
-
-(product([j,j;int(1..)]) >= j)
-
 and([ (product([j,j;int(1..2)]) >= j) | j : int(0..3) ]), 
    ~~> expand_comprehension_via_solver_ac ([("Base", 2002)]) 
 and([;int(1..)]) 
