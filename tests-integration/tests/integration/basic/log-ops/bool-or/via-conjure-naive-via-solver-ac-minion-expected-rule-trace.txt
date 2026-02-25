@@ -1,0 +1,26 @@
+Model before rewriting:
+
+find x: bool
+find y: bool
+
+such that
+
+or([x,y;int(1..2)])
+
+--
+
+or([x,y;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+or([x,y;int(1..)]) 
+
+--
+
+Final model:
+
+find x: bool
+find y: bool
+
+such that
+
+or([x,y;int(1..)])
+

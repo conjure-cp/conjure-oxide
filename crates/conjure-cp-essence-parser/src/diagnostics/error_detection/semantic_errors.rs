@@ -1,7 +1,8 @@
 // Basic syntactic error detection helpers for the LSP API.
 
 use crate::diagnostics::diagnostics_api::{Diagnostic, Position, Range, Severity};
-use crate::parse_essence_with_context;
+use crate::errors::RecoverableParseError;
+use crate::{FatalParseError, parse_essence_with_context};
 use conjure_cp_core::context::Context;
 use std::sync::{Arc, RwLock};
 
@@ -10,22 +11,38 @@ use std::sync::{Arc, RwLock};
 pub fn detect_semantic_errors(source: &str) -> Vec<Diagnostic> {
     let mut diagnostics = Vec::new();
     let context = Arc::new(RwLock::new(Context::default()));
+    let mut errors = vec![];
 
-    match parse_essence_with_context(source, context) {
+    match parse_essence_with_context(source, context, &mut errors) {
         Ok(_model) => {
-            // no errors, all good
+            // Convert all recoverable errors to diagnostics
+            for error in errors {
+                diagnostics.push(error_to_diagnostic(&error));
+            }
         }
-        Err(err) => {
-            diagnostics.push(error_to_diagnostic(&err));
+        Err(fatal) => {
+            // For now, convert fatal errors to diagnostics too
+            // Since many errors that should be recoverable are still using FatalParseError::ParseError
+            diagnostics.push(fatal_error_to_diagnostic(&fatal));
         }
     }
 
     diagnostics
 }
 
-pub fn error_to_diagnostic(err: &crate::errors::EssenceParseError) -> Diagnostic {
+pub fn error_to_diagnostic(err: &RecoverableParseError) -> Diagnostic {
+    let (start, end) = range_to_position(&err.range);
+    Diagnostic {
+        range: Range { start, end },
+        severity: Severity::Error,
+        source: "semantic error detection",
+        message: format!("Semantic Error: {}", err.msg),
+    }
+}
+
+pub fn fatal_error_to_diagnostic(err: &FatalParseError) -> Diagnostic {
     match err {
-        crate::EssenceParseError::SyntaxError { msg, range } => {
+        crate::FatalParseError::ParseError { msg, range } => {
             let (start, end) = range_to_position(range);
             Diagnostic {
                 range: Range { start, end },
