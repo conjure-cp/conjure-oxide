@@ -206,7 +206,7 @@ impl Display for SubModel {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for (name, decl) in self.symbols().clone().into_iter_local() {
             match &decl.kind() as &DeclarationKind {
-                DeclarationKind::DecisionVariable(_) => {
+                DeclarationKind::Find(_) => {
                     writeln!(
                         f,
                         "{}",
@@ -230,7 +230,7 @@ impl Display for SubModel {
                 DeclarationKind::Given(d) => {
                     writeln!(f, "given {name}: {d}")?;
                 }
-                DeclarationKind::GivenQuantified(inner) => {
+                DeclarationKind::Quantified(inner) => {
                     writeln!(f, "given {name}: {}", inner.domain())?;
                 }
 
