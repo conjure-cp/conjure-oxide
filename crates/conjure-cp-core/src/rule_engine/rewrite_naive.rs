@@ -15,7 +15,7 @@ use crate::{
 use itertools::Itertools;
 use std::{sync::Arc, time::Instant};
 use tracing::{Level, span, trace};
-use uniplate::{Biplate, Uniplate};
+use uniplate::Biplate;
 
 /// A naive, exhaustive rewriter for development purposes. Applies rules in priority order,
 /// favouring expressions found earlier during preorder traversal of the tree.

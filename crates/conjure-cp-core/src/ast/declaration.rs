@@ -267,7 +267,9 @@ impl DeclarationPtr {
     pub fn domain(&self) -> Option<DomainPtr> {
         match &self.kind() as &DeclarationKind {
             DeclarationKind::Find(var) => Some(var.domain_of()),
-            DeclarationKind::ValueLetting(e) => e.domain_of(),
+            DeclarationKind::ValueLetting(e) | DeclarationKind::TemporaryValueLetting(e) => {
+                e.domain_of()
+            }
             DeclarationKind::DomainLetting(domain) => Some(domain.clone()),
             DeclarationKind::Given(domain) => Some(domain.clone()),
             DeclarationKind::Quantified(inner) => Some(inner.domain.clone()),
@@ -362,7 +364,9 @@ impl DeclarationPtr {
     /// This declaration as a value letting, if it is one.
     pub fn as_value_letting(&self) -> Option<MappedRwLockReadGuard<'_, Expression>> {
         RwLockReadGuard::try_map(self.read(), |x| {
-            if let DeclarationKind::ValueLetting(expression) = &x.kind {
+            if let DeclarationKind::ValueLetting(expression)
+            | DeclarationKind::TemporaryValueLetting(expression) = &x.kind
+            {
                 Some(expression)
             } else {
                 None
@@ -374,7 +378,9 @@ impl DeclarationPtr {
     /// This declaration as a mutable value letting, if it is one.
     pub fn as_value_letting_mut(&mut self) -> Option<MappedRwLockWriteGuard<'_, Expression>> {
         RwLockWriteGuard::try_map(self.write(), |x| {
-            if let DeclarationKind::ValueLetting(expression) = &mut x.kind {
+            if let DeclarationKind::ValueLetting(expression)
+            | DeclarationKind::TemporaryValueLetting(expression) = &mut x.kind
+            {
                 Some(expression)
             } else {
                 None
@@ -499,7 +505,8 @@ impl CategoryOf for DeclarationPtr {
     fn category_of(&self) -> Category {
         match &self.kind() as &DeclarationKind {
             DeclarationKind::Find(decision_variable) => decision_variable.category_of(),
-            DeclarationKind::ValueLetting(expression) => expression.category_of(),
+            DeclarationKind::ValueLetting(expression)
+            | DeclarationKind::TemporaryValueLetting(expression) => expression.category_of(),
             DeclarationKind::DomainLetting(_) => Category::Constant,
             DeclarationKind::Given(_) => Category::Parameter,
             DeclarationKind::Quantified(..) => Category::Quantified,
@@ -532,7 +539,8 @@ impl Typeable for DeclarationPtr {
     fn return_type(&self) -> ReturnType {
         match &self.kind() as &DeclarationKind {
             DeclarationKind::Find(var) => var.return_type(),
-            DeclarationKind::ValueLetting(expression) => expression.return_type(),
+            DeclarationKind::ValueLetting(expression)
+            | DeclarationKind::TemporaryValueLetting(expression) => expression.return_type(),
             DeclarationKind::DomainLetting(domain) => domain.return_type(),
             DeclarationKind::Given(domain) => domain.return_type(),
             DeclarationKind::Quantified(inner) => inner.domain.return_type(),
@@ -675,8 +683,14 @@ pub enum DeclarationKind {
     Find(DecisionVariable),
     Given(DomainPtr),
     Quantified(Quantified),
+
     ValueLetting(Expression),
     DomainLetting(DomainPtr),
+
+    /// A short-lived value binding used internally during rewrites (e.g. comprehension unrolling).
+    ///
+    /// Unlike `ValueLetting`, this is not intended to represent a user-visible top-level `letting`.
+    TemporaryValueLetting(Expression),
 
     /// A named field inside a record type.
     /// e.g. A, B in record{A: int(0..1), B: int(0..2)}

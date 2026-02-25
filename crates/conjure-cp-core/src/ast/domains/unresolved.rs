@@ -146,10 +146,12 @@ impl Display for IntVal {
 impl IntVal {
     pub fn new_ref(re: &Reference) -> Option<IntVal> {
         match re.ptr.kind().deref() {
-            DeclarationKind::ValueLetting(expr) => match expr.return_type() {
-                ReturnType::Int => Some(IntVal::Reference(re.clone())),
-                _ => None,
-            },
+            DeclarationKind::ValueLetting(expr) | DeclarationKind::TemporaryValueLetting(expr) => {
+                match expr.return_type() {
+                    ReturnType::Int => Some(IntVal::Reference(re.clone())),
+                    _ => None,
+                }
+            }
             DeclarationKind::Given(dom) => match dom.return_type() {
                 ReturnType::Int => Some(IntVal::Reference(re.clone())),
                 _ => None,
@@ -176,9 +178,19 @@ impl IntVal {
             IntVal::Const(value) => Some(*value),
             IntVal::Expr(expr) => eval_expr_to_int(expr),
             IntVal::Reference(re) => match re.ptr.kind().deref() {
-                DeclarationKind::ValueLetting(expr) => eval_expr_to_int(expr),
+                DeclarationKind::ValueLetting(expr)
+                | DeclarationKind::TemporaryValueLetting(expr) => eval_expr_to_int(expr),
                 // If this is an int given we will be able to resolve it eventually, but not yet
-                DeclarationKind::Given(_) | DeclarationKind::Quantified(..) => None,
+                DeclarationKind::Given(_) => None,
+                DeclarationKind::Quantified(inner) => {
+                    if let Some(generator) = inner.generator()
+                        && let Some(expr) = generator.as_value_letting()
+                    {
+                        eval_expr_to_int(&expr)
+                    } else {
+                        None
+                    }
+                }
                 DeclarationKind::DomainLetting(_)
                 | DeclarationKind::RecordField(_)
                 | DeclarationKind::Find(_) => bug!(
