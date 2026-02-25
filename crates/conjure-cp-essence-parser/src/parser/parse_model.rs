@@ -37,7 +37,6 @@ pub fn parse_essence_with_context(
     };
 
     let mut model = Model::new(context);
-    // let symbols = model.as_submodel().symbols().clone();
     let root_node = tree.root_node();
     let symbols_ptr = model.as_submodel().symbols_ptr_unchecked().clone();
     for statement in named_children(&root_node) {
@@ -51,7 +50,7 @@ pub fn parse_essence_with_context(
                     model
                         .as_submodel_mut()
                         .symbols_mut()
-                        .insert(DeclarationPtr::new_var(name, domain));
+                        .insert(DeclarationPtr::new_find(name, domain));
                 }
             }
             "bool_expr" | "atom" | "comparison_expr" => {
@@ -135,7 +134,7 @@ fn keyword_as_identifier(root: tree_sitter::Node, src: &str) -> Result<(), Essen
 
         // push children onto stack
         for i in 0..node.child_count() {
-            if let Some(child) = node.child(i) {
+            if let Some(child) = u32::try_from(i).ok().and_then(|i| node.child(i)) {
                 stack.push(child);
             }
         }

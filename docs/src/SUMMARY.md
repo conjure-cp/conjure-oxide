@@ -20,26 +20,30 @@
 - [Contributor's Guide](./developers_guide/contributors_guide/index.md)
   - [How we work](./developers_guide/contributors_guide/how_we_work.md)
   - [Setting up your development environment](./developers_guide/contributors_guide/set-dev-env.md)
-  - [Creating Documentation](./developers_guide/contributors_guide/creating_documentation.md)
   - [Running and writing integration tests]()
   - [What we didn't do]()
+  - [Onboarding](./developers_guide/contributors_guide/onboarding.md)
+  - [Git Flow](./developers_guide/contributors_guide/Git-Flow.md)
+  - [Writing Documentation Guides](./developers_guide/contributors_guide/creating_documentation_guides.md)
+  - [Writing Documentation in Code](./developers_guide/contributors_guide/creating_documentation_code.md)
 
 - [Coding Resources and Conventions](./developers_guide/coding_resources/index.md)
+  - [Glossary](./developers_guide/coding_resources/glossary.md)
   - [Functional Rust](./getting_started/functional-rust.md)
   - [Style Guide](./developers_guide/coding_resources/style_guide.md)
   - [Crate Structure](./developers_guide/coding_resources/crate_structure.md)
+  - [Benchmarking Guide](./developers_guide/coding_resources/benchmarking-guide.md)
 
 - [Design Documents](./developers_guide/design_documents/index.md)
   - [2023‐11: High Level Plan](./developers_guide/design_documents/2023_11.md)
   - [2024‐03: Implementing Uniplates and Biplates with Structure Preserving Trees](./developers_guide/design_documents/2024_03.md)
-  - [Expression rewriting, Rules and RuleSets](./developers_guide/design_documents/expression_rewriting.md)
   - [Semantics of Rewriting Expressions with Side‐Effects](./developers_guide/design_documents/semantics-of-rewriting-expressions.md)
-  - [Ideal Scenario of Testing for Conjure-Oxide](./developers_guide/design_documents/ideal-scenario-of-testing.md)
+  - [What we didn't do](./developers_guide/design_documents/what_we_didnt_do.md)
 
-<!-- TODO: do we need this? -->
 - [CI/CD](./developers_guide/ci_cd/index.md)
   - [Coverage](./developers_guide/ci_cd/coverage.md)
   - [Github Actions: Cookbook](./developers_guide/ci_cd/github_actions.md)
+  - [Test CI Locally](./developers_guide/ci_cd/test_ci_locally.md)
 
 <!-- New additions -->
 - [Reading the docs]()
@@ -47,21 +51,36 @@
 
 # Documentation
 
-<!-- TODO: will we keep this? -->
-- [Developer Documentation](./documentation/dev_docs.md)
-
+- [Essence Parser](./documentation/Essence-Parser.md)
+  - [Tree Morph Benchmarking](./documentation/tree_morph_benchmarking.md)
+  - [ProTrace Module](./documentation/ProTrace-module.md)
+- [Sets]()
+  - [Expression Rewriting: Rules and RuleSets](./documentation/sets/expression_rewriting_rules_and_rulesets.md)
+  - [Horizontal Set Rules](./documentation/sets/conjure-horizontal-set-rules.md)
+  - [Vertical Set Rules: Occurrence Representation](./documentation/sets/Conjure-Vertical-Set-Rules-Occurrence-Representation.md)
+- [LSP]()
+  - [Essence Error Catalog for Error Underlining](./documentation/LSP/Essence-Error-Catalog-for-LSP-Error-Underlining-implementation.md)
+- [Testing: The Ideal Scenario](./documentation/testing/ideal-scenario-of-testing.md)
+  - [Creating Custom Tests](./documentation/testing/Custom-Tests.md)
+- [Implementing Uniplates and Biplates with Structure Preserving Trees](./documentation/Implementing-Uniplates-and-Biplates-with-Structure-Preserving-Trees.md)
 - [SAT Encoding Types](./documentation/SAT/sat-encoding-types.md)
 - [Rule Types](./documentation/SAT/rule-types.md)
 
 <!-- TODO: will be moved -- likely the content of these will end off here -->
 - [Useful Links](./documentation/links.md)
+- [Testing](./documentation/testing/testing.md)
+  - [Roundtrip Testing](./documentation/testing/roundtrip/roundtrip_testing.md)
+- [Types]()
+  - [Creating Types Guide](./documentation/types/creating_types_guide.md)
+  - [Functions](./documentation/types/functions.md)
+  - [Multisets](./documentation/types/multisets.md)
 - [Essence Parser](./documentation/essence_parser.md)
-- [Error Detection](./documentation/error_detection)
+<!-- TODO: add the error detection documentations -->
+- [Error Detection](./documentation/error_detection/error_classification.md)
 - [Side Projects]()
   - [Conjure Blocks](./documentation/side_projects/Conjure-Blocks.md)
 
 ---
 
-<!-- TODO: will this still be needed? -->
 [For Interested Students](./footer/interested-students.md)
 [Contributors](./footer/contributors.md)
