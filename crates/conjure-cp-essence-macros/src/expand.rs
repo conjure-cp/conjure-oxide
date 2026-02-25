@@ -1,6 +1,5 @@
 use conjure_cp_essence_parser::util::node_is_expression;
 use conjure_cp_essence_parser::{
-    FatalParseError,
     expression::parse_expression,
     util::{get_tree, query_toplevel},
 };
