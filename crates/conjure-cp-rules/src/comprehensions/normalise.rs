@@ -4,9 +4,9 @@ use std::collections::HashSet;
 
 use conjure_cp::{
     ast::{
-        Expression as Expr, Metadata, Moo, Name, SymbolTable,
+        DeclarationPtr, Expression as Expr, Metadata, Moo, Name, SymbolTable,
         ac_operators::ACOperatorKind,
-        comprehension::{Comprehension, ComprehensionBuilder},
+        comprehension::{Comprehension, ComprehensionBuilder, ComprehensionQualifier},
     },
     rule_engine::{
         ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
@@ -16,7 +16,7 @@ use conjure_cp::{
 /// Merges nested comprehensions inside the same AC operator into a single comprehension.
 ///
 /// ```text
-/// op([ op([ body | qs2 ]) | qs1 ]) ~> op([ body | qs1, qs2 ])
+/// op([ op([ op([ body | qs3 ]) | qs2 ]) | qs1 ]) ~> op([ body | qs1, qs2, qs3 ])
 /// ```
 ///
 /// where `op` is one of `and`, `or`, `sum`, or `product`.
@@ -42,44 +42,43 @@ fn merge_nested_ac_comprehensions_impl(expr: &Expr) -> Option<Expr> {
         _ => return None,
     };
 
-    let outer_return_expr = outer_comprehension.clone().return_expression();
-    let inner_comprehension = extract_inner_comprehension(ac_operator_kind, &outer_return_expr)?;
+    let parent_scope = outer_comprehension.symbols().parent().clone()?;
 
-    // Avoid changing semantics when inner quantifiers shadow outer ones.
-    let outer_names: HashSet<Name> = outer_comprehension
-        .quantified_vars
+    let mut merged_levels = vec![outer_comprehension.clone()];
+    let mut merged_names: HashSet<Name> = outer_comprehension
+        .quantified_vars()
         .iter()
         .cloned()
         .collect();
-    if inner_comprehension
-        .quantified_vars
-        .iter()
-        .any(|name| outer_names.contains(name))
+
+    let mut current_return_expression = outer_comprehension.clone().return_expression();
+    while let Some(inner_comprehension) =
+        extract_inner_comprehension(ac_operator_kind, &current_return_expression)
     {
+        // Avoid changing semantics when inner quantifiers shadow outer ones.
+        if inner_comprehension
+            .quantified_vars()
+            .iter()
+            .any(|name| merged_names.contains(name))
+        {
+            break;
+        }
+
+        merged_names.extend(inner_comprehension.quantified_vars().iter().cloned());
+        current_return_expression = inner_comprehension.clone().return_expression();
+        merged_levels.push(inner_comprehension);
+    }
+
+    if merged_levels.len() < 2 {
         return None;
     }
 
-    let parent_scope = outer_comprehension
-        .generator_submodel
-        .symbols()
-        .parent()
-        .clone()?;
-
     let mut builder = ComprehensionBuilder::new(parent_scope);
-    builder = add_generators(builder, &outer_comprehension)?;
-    builder = add_generators(builder, &inner_comprehension)?;
-
-    for guard in outer_comprehension.generator_submodel.constraints() {
-        builder = builder.guard(guard.clone());
-    }
-    for guard in inner_comprehension.generator_submodel.constraints() {
-        builder = builder.guard(guard.clone());
+    for level in &merged_levels {
+        builder = add_qualifiers(builder, level);
     }
 
-    let merged = builder.with_return_value(
-        inner_comprehension.return_expression(),
-        Some(ac_operator_kind),
-    );
+    let merged = builder.with_return_value(current_return_expression, Some(ac_operator_kind));
 
     let merged_comprehension = Expr::Comprehension(Metadata::new(), Moo::new(merged));
     let wrapped = match ac_operator_kind {
@@ -120,17 +119,21 @@ fn as_single_comprehension(expr: &Expr) -> Option<Comprehension> {
     Some(comprehension.as_ref().clone())
 }
 
-fn add_generators(
+fn add_qualifiers(
     mut builder: ComprehensionBuilder,
     comprehension: &Comprehension,
-) -> Option<ComprehensionBuilder> {
-    let symbols = comprehension.generator_submodel.symbols().clone();
-
-    for quantified_var in &comprehension.quantified_vars {
-        let declaration = symbols.lookup_local(quantified_var)?;
-        declaration.domain()?;
-        builder = builder.generator(declaration);
+) -> ComprehensionBuilder {
+    for qualifier in &comprehension.qualifiers {
+        match qualifier {
+            ComprehensionQualifier::Generator { name, domain } => {
+                let declaration = DeclarationPtr::new_quantified(name.clone(), domain.clone());
+                builder = builder.generator(declaration);
+            }
+            ComprehensionQualifier::Condition(condition) => {
+                builder = builder.guard(condition.clone());
+            }
+        }
     }
 
-    Some(builder)
+    builder
 }
