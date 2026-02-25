@@ -81,17 +81,17 @@ mod test {
     pub fn test_parse_expressions() {
         let src = "x >= 5, y = a / 2";
         let symbols = SymbolTablePtr::new();
-        let x = DeclarationPtr::new_var(
+        let x = DeclarationPtr::new_find(
             Name::User("x".into()),
             Domain::int(vec![conjure_cp_core::ast::Range::Bounded(0, 10)]),
         );
 
-        let y = DeclarationPtr::new_var(
+        let y = DeclarationPtr::new_find(
             Name::User("y".into()),
             Domain::int(vec![conjure_cp_core::ast::Range::Bounded(0, 10)]),
         );
 
-        let a = DeclarationPtr::new_var(
+        let a = DeclarationPtr::new_find(
             Name::User("a".into()),
             Domain::int(vec![conjure_cp_core::ast::Range::Bounded(0, 10)]),
         );

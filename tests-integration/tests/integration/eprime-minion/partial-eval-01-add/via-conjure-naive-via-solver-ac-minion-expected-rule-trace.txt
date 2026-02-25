@@ -1,0 +1,52 @@
+Model before rewriting:
+
+find x: int(1..50)
+find y: int(1..50)
+
+such that
+
+(sum([sum([sum([sum([x,10;int(1..2)]),20;int(1..2)]),y;int(1..2)]),5;int(1..2)]) = 100)
+
+--
+
+sum([sum([sum([sum([x,10;int(1..2)]),20;int(1..2)]),y;int(1..2)]),5;int(1..2)]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+sum([x,10,20,y,5;int(1..2)]) 
+
+--
+
+sum([x,10,20,y,5;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+sum([x,10,20,y,5;int(1..)]) 
+
+--
+
+(sum([x,10,20,y,5;int(1..)]) = 100), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(sum([x,y,35;int(1..)]) = 100) 
+
+--
+
+(sum([x,y,35;int(1..)]) = 100), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+and([SumLeq([35, x, y], 100),SumGeq([35, x, y], 100);int(1..)]) 
+
+--
+
+and([SumLeq([35, x, y], 100),SumGeq([35, x, y], 100);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+SumLeq([35, x, y], 100),
+SumGeq([35, x, y], 100) 
+
+--
+
+Final model:
+
+find x: int(1..50)
+find y: int(1..50)
+
+such that
+
+SumLeq([35, x, y], 100),
+SumGeq([35, x, y], 100)
+

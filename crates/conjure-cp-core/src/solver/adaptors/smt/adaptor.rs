@@ -124,7 +124,7 @@ impl SolverAdaptor for Smt {
     }
 
     fn get_name(&self) -> &'static str {
-        "SMT"
+        "smt"
     }
 
     fn write_solver_input_file(

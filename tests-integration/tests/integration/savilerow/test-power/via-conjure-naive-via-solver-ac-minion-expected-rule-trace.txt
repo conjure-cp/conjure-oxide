@@ -1,0 +1,260 @@
+Model before rewriting:
+
+find x: int(2..2)
+
+such that
+
+(-(UnsafePow(1, 1)) = -(1)),
+(-(UnsafePow(1, 2)) = -(1)),
+(-(UnsafePow(1, 3)) = -(1)),
+(-(UnsafePow(1, 4)) = -(1)),
+(-(UnsafePow(2, 1)) = -(2)),
+(-(UnsafePow(2, 2)) = -(4)),
+(-(UnsafePow(2, 3)) = -(8)),
+(-(UnsafePow(2, 4)) = -(16)),
+(-(UnsafePow(x, 1)) = -(2)),
+(-(UnsafePow(x, 2)) = -(4)),
+(-(UnsafePow(x, 3)) = -(8)),
+(-(UnsafePow(x, 4)) = -(16)),
+(UnsafePow(x, 2) = 4),
+(-(UnsafePow(2, UnsafePow(2, 3))) = -(256)),
+(UnsafePow(2, UnsafePow(2, 3)) = 256),
+true
+
+--
+
+(-(UnsafePow(1, 1)) = -(1)),
+(-(UnsafePow(1, 2)) = -(1)),
+(-(UnsafePow(1, 3)) = -(1)),
+(-(UnsafePow(1, 4)) = -(1)),
+(-(UnsafePow(2, 1)) = -(2)),
+(-(UnsafePow(2, 2)) = -(4)),
+(-(UnsafePow(2, 3)) = -(8)),
+(-(UnsafePow(2, 4)) = -(16)),
+(-(UnsafePow(x, 1)) = -(2)),
+(-(UnsafePow(x, 2)) = -(4)),
+(-(UnsafePow(x, 3)) = -(8)),
+(-(UnsafePow(x, 4)) = -(16)),
+(UnsafePow(x, 2) = 4),
+(-(UnsafePow(2, UnsafePow(2, 3))) = -(256)),
+(UnsafePow(2, UnsafePow(2, 3)) = 256),
+true, 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(-(UnsafePow(x, 1)) = -2),
+(-(UnsafePow(x, 2)) = -4),
+(-(UnsafePow(x, 3)) = -8),
+(-(UnsafePow(x, 4)) = -16),
+(UnsafePow(x, 2) = 4) 
+
+--
+
+UnsafePow(x, 1), 
+   ~~> pow_to_bubble ([("Bubble", 6000)]) 
+{SafePow(x, 1) @ and([or([(x != 0),(1 != 0);int(1..)]),(1 >= 0);int(1..)])} 
+
+--
+
+(-({SafePow(x, 1) @ and([or([(x != 0),(1 != 0);int(1..)]),(1 >= 0);int(1..)])}) = -2),
+(-(UnsafePow(x, 2)) = -4),
+(-(UnsafePow(x, 3)) = -8),
+(-(UnsafePow(x, 4)) = -16),
+(UnsafePow(x, 2) = 4), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(-(SafePow(x, 1)) = -2),
+(-(UnsafePow(x, 2)) = -4),
+(-(UnsafePow(x, 3)) = -8),
+(-(UnsafePow(x, 4)) = -16),
+(UnsafePow(x, 2) = 4) 
+
+--
+
+UnsafePow(x, 2), 
+   ~~> pow_to_bubble ([("Bubble", 6000)]) 
+{SafePow(x, 2) @ and([or([(x != 0),(2 != 0);int(1..)]),(2 >= 0);int(1..)])} 
+
+--
+
+(-(SafePow(x, 1)) = -2),
+(-({SafePow(x, 2) @ and([or([(x != 0),(2 != 0);int(1..)]),(2 >= 0);int(1..)])}) = -4),
+(-(UnsafePow(x, 3)) = -8),
+(-(UnsafePow(x, 4)) = -16),
+(UnsafePow(x, 2) = 4), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(-(SafePow(x, 1)) = -2),
+(-(SafePow(x, 2)) = -4),
+(-(UnsafePow(x, 3)) = -8),
+(-(UnsafePow(x, 4)) = -16),
+(UnsafePow(x, 2) = 4) 
+
+--
+
+UnsafePow(x, 3), 
+   ~~> pow_to_bubble ([("Bubble", 6000)]) 
+{SafePow(x, 3) @ and([or([(x != 0),(3 != 0);int(1..)]),(3 >= 0);int(1..)])} 
+
+--
+
+(-(SafePow(x, 1)) = -2),
+(-(SafePow(x, 2)) = -4),
+(-({SafePow(x, 3) @ and([or([(x != 0),(3 != 0);int(1..)]),(3 >= 0);int(1..)])}) = -8),
+(-(UnsafePow(x, 4)) = -16),
+(UnsafePow(x, 2) = 4), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(-(SafePow(x, 1)) = -2),
+(-(SafePow(x, 2)) = -4),
+(-(SafePow(x, 3)) = -8),
+(-(UnsafePow(x, 4)) = -16),
+(UnsafePow(x, 2) = 4) 
+
+--
+
+UnsafePow(x, 4), 
+   ~~> pow_to_bubble ([("Bubble", 6000)]) 
+{SafePow(x, 4) @ and([or([(x != 0),(4 != 0);int(1..)]),(4 >= 0);int(1..)])} 
+
+--
+
+(-(SafePow(x, 1)) = -2),
+(-(SafePow(x, 2)) = -4),
+(-(SafePow(x, 3)) = -8),
+(-({SafePow(x, 4) @ and([or([(x != 0),(4 != 0);int(1..)]),(4 >= 0);int(1..)])}) = -16),
+(UnsafePow(x, 2) = 4), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(-(SafePow(x, 1)) = -2),
+(-(SafePow(x, 2)) = -4),
+(-(SafePow(x, 3)) = -8),
+(-(SafePow(x, 4)) = -16),
+(UnsafePow(x, 2) = 4) 
+
+--
+
+UnsafePow(x, 2), 
+   ~~> pow_to_bubble ([("Bubble", 6000)]) 
+{SafePow(x, 2) @ and([or([(x != 0),(2 != 0);int(1..)]),(2 >= 0);int(1..)])} 
+
+--
+
+(-(SafePow(x, 1)) = -2),
+(-(SafePow(x, 2)) = -4),
+(-(SafePow(x, 3)) = -8),
+(-(SafePow(x, 4)) = -16),
+({SafePow(x, 2) @ and([or([(x != 0),(2 != 0);int(1..)]),(2 >= 0);int(1..)])} = 4), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(-(SafePow(x, 1)) = -2),
+(-(SafePow(x, 2)) = -4),
+(-(SafePow(x, 3)) = -8),
+(-(SafePow(x, 4)) = -16),
+(SafePow(x, 2) = 4) 
+
+--
+
+-(SafePow(x, 1)), 
+   ~~> flatten_generic ([("Minion", 4200)]) 
+-(__0) 
+new variables:
+  find __0: int(2)
+new constraints:
+  __0 =aux SafePow(x, 1)
+--
+
+(-(__0) = -2), 
+   ~~> introduce_minuseq_from_eq ([("Minion", 4400)]) 
+MinusEq(-2,__0) 
+
+--
+
+-(SafePow(x, 2)), 
+   ~~> flatten_generic ([("Minion", 4200)]) 
+-(__1) 
+new variables:
+  find __1: int(4)
+new constraints:
+  __1 =aux SafePow(x, 2)
+--
+
+(-(__1) = -4), 
+   ~~> introduce_minuseq_from_eq ([("Minion", 4400)]) 
+MinusEq(-4,__1) 
+
+--
+
+-(SafePow(x, 3)), 
+   ~~> flatten_generic ([("Minion", 4200)]) 
+-(__2) 
+new variables:
+  find __2: int(8)
+new constraints:
+  __2 =aux SafePow(x, 3)
+--
+
+(-(__2) = -8), 
+   ~~> introduce_minuseq_from_eq ([("Minion", 4400)]) 
+MinusEq(-8,__2) 
+
+--
+
+-(SafePow(x, 4)), 
+   ~~> flatten_generic ([("Minion", 4200)]) 
+-(__3) 
+new variables:
+  find __3: int(16)
+new constraints:
+  __3 =aux SafePow(x, 4)
+--
+
+(-(__3) = -16), 
+   ~~> introduce_minuseq_from_eq ([("Minion", 4400)]) 
+MinusEq(-16,__3) 
+
+--
+
+(SafePow(x, 2) = 4), 
+   ~~> introduce_poweq ([("Minion", 4200)]) 
+MinionPow(x,2,4) 
+
+--
+
+__0 =aux SafePow(x, 1), 
+   ~~> introduce_poweq ([("Minion", 4200)]) 
+MinionPow(x,1,__0) 
+
+--
+
+__1 =aux SafePow(x, 2), 
+   ~~> introduce_poweq ([("Minion", 4200)]) 
+MinionPow(x,2,__1) 
+
+--
+
+__2 =aux SafePow(x, 3), 
+   ~~> introduce_poweq ([("Minion", 4200)]) 
+MinionPow(x,3,__2) 
+
+--
+
+__3 =aux SafePow(x, 4), 
+   ~~> introduce_poweq ([("Minion", 4200)]) 
+MinionPow(x,4,__3) 
+
+--
+
+Final model:
+
+find x: int(2..2)
+find __0: int(2)
+find __1: int(4)
+find __2: int(8)
+find __3: int(16)
+
+such that
+
+MinusEq(-2,__0),
+MinusEq(-4,__1),
+MinusEq(-8,__2),
+MinusEq(-16,__3),
+MinionPow(x,2,4),
+MinionPow(x,1,__0),
+MinionPow(x,2,__1),
+MinionPow(x,3,__2),
+MinionPow(x,4,__3)
+

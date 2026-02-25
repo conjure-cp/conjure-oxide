@@ -13,7 +13,7 @@ use std::collections::HashMap;
 
 #[allow(clippy::unwrap_used)]
 pub fn main() {
-    use conjure_cp::solver::SolverFamily;
+    use conjure_cp::settings::SolverFamily;
     use conjure_cp::solver::{Solver, adaptors};
     use conjure_cp::{parse::conjure_json::get_example_model, rule_engine::resolve_rule_sets};
     use std::sync::{Arc, Mutex};
