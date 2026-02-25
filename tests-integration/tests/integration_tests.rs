@@ -49,6 +49,18 @@ struct RunCase<'a> {
     case_name: &'a str,
 }
 
+fn run_case_label(
+    path: &str,
+    essence_base: &str,
+    extension: &str,
+    run_case: RunCase<'_>,
+) -> String {
+    format!(
+        "test_dir={path}, model={essence_base}.{extension}, parser={}, rewriter={}, comprehension_expander={}, solver={}",
+        run_case.parser, run_case.rewriter, run_case.comprehension_expander, run_case.solver
+    )
+}
+
 fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(), Box<dyn Error>> {
     let accept = env::var("ACCEPT").unwrap_or("false".to_string()) == "true";
 
@@ -78,11 +90,16 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
         .configured_solvers()
         .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?;
     // Conjure output depends only on the input model, so cache it once per test case.
+    let model_path = format!("{path}/{essence_base}.{extension}");
     let conjure_solutions = if accept {
-        Some(Arc::new(get_solutions_from_conjure(
-            &format!("{path}/{essence_base}.{extension}"),
-            Default::default(),
-        )?))
+        eprintln!("[integration] loading Conjure reference solutions for {model_path}");
+        Some(Arc::new(
+            get_solutions_from_conjure(&model_path, Default::default()).map_err(|err| {
+                std::io::Error::other(format!(
+                    "failed to fetch Conjure reference solutions for {model_path}: {err}"
+                ))
+            })?,
+        ))
     } else {
         None
     };
@@ -118,6 +135,8 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
                         ),
                     )
                         as Arc<dyn tracing::Subscriber + Send + Sync>;
+                    let run_label = run_case_label(path, essence_base, extension, run_case);
+                    eprintln!("[integration] running {run_label}");
                     tracing::subscriber::with_default(subscriber, || {
                         integration_test_inner(
                             path,
@@ -127,7 +146,8 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
                             conjure_solutions.clone(),
                             accept,
                         )
-                    })?;
+                    })
+                    .map_err(|err| std::io::Error::other(format!("{run_label}: {err}")))?;
                 }
             }
         }
