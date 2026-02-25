@@ -26,13 +26,16 @@ pub fn parse_domain(
             else {
                 return Ok(None);
             };
-            let dom = Domain::reference(decl).ok_or(FatalParseError::syntax_error(
-                format!(
-                    "'{}' is not a valid domain declaration",
-                    &source_code[domain.start_byte()..domain.end_byte()]
-                ),
-                Some(domain.range()),
-            ))?;
+            let Some(dom) = Domain::reference(decl) else {
+                errors.push(RecoverableParseError::new(
+                    format!(
+                        "'{}' is not a valid domain declaration",
+                        &source_code[domain.start_byte()..domain.end_byte()]
+                    ),
+                    Some(domain.range()),
+                ));
+                return Ok(None);
+            };
             Ok(Some(dom))
         }
         "tuple_domain" => parse_tuple_domain(domain, source_code, symbols, errors),

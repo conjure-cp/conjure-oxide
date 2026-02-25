@@ -20,10 +20,9 @@ pub fn detect_semantic_errors(source: &str) -> Vec<Diagnostic> {
                 diagnostics.push(error_to_diagnostic(&error));
             }
         }
-        Err(fatal) => {
-            // For now, convert fatal errors to diagnostics too
-            // Since many errors that should be recoverable are still using FatalParseError::ParseError
-            diagnostics.push(fatal_error_to_diagnostic(&fatal));
+        Err(_fatal) => {
+            // Fatal error means something went wrong internally (e.g., tree-sitter parser failure)
+            // We can't provide meaningful diagnostics in this case, so just return empty
         }
     }
 
@@ -37,35 +36,6 @@ pub fn error_to_diagnostic(err: &RecoverableParseError) -> Diagnostic {
         severity: Severity::Error,
         source: "semantic error detection",
         message: format!("Semantic Error: {}", err.msg),
-    }
-}
-
-pub fn fatal_error_to_diagnostic(err: &FatalParseError) -> Diagnostic {
-    match err {
-        crate::FatalParseError::ParseError { msg, range } => {
-            let (start, end) = range_to_position(range);
-            Diagnostic {
-                range: Range { start, end },
-                severity: Severity::Error,
-                source: "semantic error detection",
-                message: format!("Semantic Error: {}", msg),
-            }
-        }
-        _ => Diagnostic {
-            range: Range {
-                start: Position {
-                    line: 0,
-                    character: 0,
-                },
-                end: Position {
-                    line: 0,
-                    character: 1,
-                },
-            },
-            severity: Severity::Error,
-            source: "semantic error detection",
-            message: format!("{}", err),
-        },
     }
 }
 

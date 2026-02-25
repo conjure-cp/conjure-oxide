@@ -67,41 +67,7 @@ fn mk_expr(node: Node, src: &str, root: &Node, tt: &TokenTree) -> Result<TokenSt
             };
             Err(Error::new(tt.span(), error_message))
         }
-        Err(err) => {
-            let error_message = match err {
-                FatalParseError::ParseError {
-                    msg,
-                    range: Some(rng),
-                    ..
-                } => {
-                    let lines: Vec<&str> = src.lines().collect();
-                    let start_line = rng.start_point.row;
-                    let mut start_col = rng.start_point.column;
-
-                    let mut line_content = lines
-                        .get(start_line)
-                        .unwrap_or(&"<line not found>")
-                        .trim()
-                        .to_string();
-                    let pref = "_FRAGMENT_EXPRESSION";
-                    if line_content.starts_with(pref) {
-                        let len = pref.len();
-                        line_content = line_content[len..].trim_start().to_string();
-                        start_col -= len;
-                    }
-
-                    format!(
-                        "Syntax error: {}\n{}\n{}^-- Error here",
-                        msg,
-                        line_content,
-                        " ".repeat(start_col)
-                    )
-                }
-                _ => err.to_string(),
-            };
-
-            Err(Error::new(tt.span(), error_message))
-        }
+        Err(err) => Err(Error::new(tt.span(), err.to_string())),
     }
 }
 
