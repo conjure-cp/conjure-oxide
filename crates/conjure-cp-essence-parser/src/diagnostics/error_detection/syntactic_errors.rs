@@ -4,6 +4,7 @@ use crate::parser::util::get_tree;
 use capitalize::Capitalize;
 use std::collections::HashSet;
 use tree_sitter::Node;
+
 /// Helper function
 pub fn print_diagnostics(diags: &[Diagnostic]) {
     for (i, diag) in diags.iter().enumerate() {

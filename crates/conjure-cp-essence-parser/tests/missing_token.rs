@@ -2,10 +2,12 @@ use conjure_cp_essence_parser::diagnostics::error_detection::syntactic_errors::{
     check_diagnostic, detect_syntactic_errors,
 };
 
+use conjure_cp_essence_parser::diagnostics::error_detection::collect_errors::detect_errors;
+
 #[test]
 fn missing_identifier() {
     let source = "find: bool";
-    let diagnostics = detect_syntactic_errors(source);
+    let diagnostics = detect_errors(source);
     assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
 
     let diag = &diagnostics[0];
@@ -16,7 +18,7 @@ fn missing_identifier() {
 #[test]
 fn missing_colon() {
     let source = "find x bool";
-    let diagnostics = detect_syntactic_errors(source);
+    let diagnostics = detect_errors(source);
 
     // Should be exactly one diagnostic
     assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
@@ -33,7 +35,7 @@ find x: bool
 find y:
     ";
 
-    let diagnostics = detect_syntactic_errors(source);
+    let diagnostics = detect_errors(source);
 
     // Should be exactly one diagnostic
     assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
@@ -49,7 +51,7 @@ fn missing_contraint() {
 find x: bool
 such that
     ";
-    let diagnostics = detect_syntactic_errors(source);
+    let diagnostics = detect_errors(source);
 
     // Should be exactly one diagnostic
     assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
@@ -58,6 +60,7 @@ such that
     check_diagnostic(diag, 1, 9, 1, 9, "Missing Expression");
 }
 
+// TO-DO adapt when returning vector of errors
 #[test]
 fn multiple_missing_tokens() {
     // not indented because have to avoid leading spaces for accurate character counr

@@ -12,6 +12,7 @@ use super::letting::parse_letting_statement;
 use super::util::{get_tree, named_children};
 use crate::errors::EssenceParseError;
 use crate::expression::parse_expression;
+use crate::syntax_errors::detect_syntactic_errors;
 
 /// Parse an Essence file into a Model using the tree-sitter parser.
 pub fn parse_essence_file_native(
@@ -35,6 +36,11 @@ pub fn parse_essence_with_context(
             ));
         }
     };
+
+    let errors = detect_syntactic_errors(src, &tree);
+    if let Some(error) = errors.into_iter().next() {
+        return Err(error);
+    }
 
     let mut model = Model::new(context);
     let root_node = tree.root_node();
