@@ -327,7 +327,7 @@ unsafe fn convert_model_to_raw(
         // 1. get constraint type and create C++ constraint object
         // 2. run through arguments and add them to the constraint
         // 3. add constraint to instance
-        
+
         let constraint_type = get_constraint_type(constraint)?;
         let raw_constraint = Scoped::new(ffi::constraint_new(constraint_type), |x| {
             ffi::constraint_free(x as _)
