@@ -14,7 +14,7 @@ pub enum Category {
     Constant = 1,
     /// This term contains parameters / givens
     Parameter = 2,
-    /// This term contains quantified variables / induction variables
+    /// This term contains quantified variables
     Quantified = 3,
     /// This term contains decision variables
     Decision = 4,

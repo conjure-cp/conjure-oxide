@@ -1,0 +1,152 @@
+Model before rewriting:
+
+find x: int(2..5)
+find y: int(2..5)
+find z: int(2..5)
+
+such that
+
+(sum([sum([sum([sum([product([5,x;int(1..2)]),product([product([product([y,3;int(1..2)]),1;int(1..2)]),3;int(1..2)]);int(1..2)]),-(product([3,x;int(1..2)]));int(1..2)]),product([-(1),y;int(1..2)]);int(1..2)]),product([y,-(5);int(1..2)]);int(1..2)]) < 11)
+
+--
+
+(sum([sum([sum([sum([product([5,x;int(1..2)]),product([product([product([y,3;int(1..2)]),1;int(1..2)]),3;int(1..2)]);int(1..2)]),-(product([3,x;int(1..2)]));int(1..2)]),product([-(1),y;int(1..2)]);int(1..2)]),product([y,-(5);int(1..2)]);int(1..2)]) < 11), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(sum([sum([sum([sum([product([5,x;int(1..2)]),product([product([product([y,3;int(1..2)]),1;int(1..2)]),3;int(1..2)]);int(1..2)]),-(product([3,x;int(1..2)]));int(1..2)]),product([-1,y;int(1..2)]);int(1..2)]),product([y,-5;int(1..2)]);int(1..2)]) < 11) 
+
+--
+
+sum([sum([sum([sum([product([5,x;int(1..2)]),product([product([product([y,3;int(1..2)]),1;int(1..2)]),3;int(1..2)]);int(1..2)]),-(product([3,x;int(1..2)]));int(1..2)]),product([-1,y;int(1..2)]);int(1..2)]),product([y,-5;int(1..2)]);int(1..2)]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+sum([product([5,x;int(1..2)]),product([product([product([y,3;int(1..2)]),1;int(1..2)]),3;int(1..2)]),-(product([3,x;int(1..2)])),product([-1,y;int(1..2)]),product([y,-5;int(1..2)]);int(1..2)]) 
+
+--
+
+product([product([product([y,3;int(1..2)]),1;int(1..2)]),3;int(1..2)]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+product([y,3,1,3;int(1..2)]) 
+
+--
+
+product([y,3,1,3;int(1..2)]), 
+   ~~> reorder_product ([("Base", 8800)]) 
+product([9,y;int(1..2)]) 
+
+--
+
+product([y,-5;int(1..2)]), 
+   ~~> reorder_product ([("Base", 8800)]) 
+product([-5,y;int(1..2)]) 
+
+--
+
+(sum([product([5,x;int(1..2)]),product([9,y;int(1..2)]),-(product([3,x;int(1..2)])),product([-1,y;int(1..2)]),product([-5,y;int(1..2)]);int(1..2)]) < 11), 
+   ~~> lt_to_leq ([("Minion", 8400)]) 
+(sum([product([5,x;int(1..2)]),product([9,y;int(1..2)]),-(product([3,x;int(1..2)])),product([-1,y;int(1..2)]),product([-5,y;int(1..2)]);int(1..2)]) <= sum([11,-1;int(1..)])) 
+
+--
+
+(sum([product([5,x;int(1..2)]),product([9,y;int(1..2)]),-(product([3,x;int(1..2)])),product([-1,y;int(1..2)]),product([-5,y;int(1..2)]);int(1..2)]) <= sum([11,-1;int(1..)])), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(sum([product([5,x;int(1..2)]),product([9,y;int(1..2)]),-(product([3,x;int(1..2)])),product([-1,y;int(1..2)]),product([-5,y;int(1..2)]);int(1..2)]) <= 10) 
+
+--
+
+(sum([product([5,x;int(1..2)]),product([9,y;int(1..2)]),-(product([3,x;int(1..2)])),product([-1,y;int(1..2)]),product([-5,y;int(1..2)]);int(1..2)]) <= 10), 
+   ~~> flatten_generic ([("Minion", 4200)]) 
+(__0 <= 10) 
+new variables:
+  find __0: int(-17..52)
+new constraints:
+  __0 =aux sum([product([5,x;int(1..2)]),product([9,y;int(1..2)]),-(product([3,x;int(1..2)])),product([-1,y;int(1..2)]),product([-5,y;int(1..2)]);int(1..2)])
+--
+
+-(product([3,x;int(1..2)])), 
+   ~~> flatten_generic ([("Minion", 4200)]) 
+-(__1) 
+new variables:
+  find __1: int(6..15)
+new constraints:
+  __1 =aux product([3,x;int(1..2)])
+--
+
+(__0 <= 10), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(__0, 10, 0) 
+
+--
+
+sum([product([5,x;int(1..2)]),product([9,y;int(1..2)]),-(__1),product([-1,y;int(1..2)]),product([-5,y;int(1..2)]);int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+sum([product([5,x;int(1..2)]),product([9,y;int(1..2)]),-(__1),product([-1,y;int(1..2)]),product([-5,y;int(1..2)]);int(1..)]) 
+
+--
+
+product([5,x;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+product([5,x;int(1..)]) 
+
+--
+
+product([9,y;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+product([9,y;int(1..)]) 
+
+--
+
+product([-1,y;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+product([-1,y;int(1..)]) 
+
+--
+
+product([-5,y;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+product([-5,y;int(1..)]) 
+
+--
+
+__0 =aux sum([product([5,x;int(1..)]),product([9,y;int(1..)]),-(__1),product([-1,y;int(1..)]),product([-5,y;int(1..)]);int(1..)]), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+and([FlatWeightedSumLeq([-1, 5, 3],[__1, x, y],__0),FlatWeightedSumGeq([-1, 5, 3],[__1, x, y],__0);int(1..)]) 
+
+--
+
+Ineq(__0, 10, 0),
+and([FlatWeightedSumLeq([-1, 5, 3],[__1, x, y],__0),FlatWeightedSumGeq([-1, 5, 3],[__1, x, y],__0);int(1..)]),
+__1 =aux product([3,x;int(1..2)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+Ineq(__0, 10, 0),
+FlatWeightedSumLeq([-1, 5, 3],[__1, x, y],__0),
+FlatWeightedSumGeq([-1, 5, 3],[__1, x, y],__0),
+__1 =aux product([3,x;int(1..2)]) 
+
+--
+
+product([3,x;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+product([3,x;int(1..)]) 
+
+--
+
+__1 =aux product([3,x;int(1..)]), 
+   ~~> introduce_producteq ([("Minion", 4200)]) 
+FlatProductEq(x,3,__1) 
+
+--
+
+Final model:
+
+find x: int(2..5)
+find y: int(2..5)
+find z: int(2..5)
+find __0: int(-17..52)
+find __1: int(6..15)
+
+such that
+
+Ineq(__0, 10, 0),
+FlatWeightedSumLeq([-1, 5, 3],[__1, x, y],__0),
+FlatWeightedSumGeq([-1, 5, 3],[__1, x, y],__0),
+FlatProductEq(x,3,__1)
+

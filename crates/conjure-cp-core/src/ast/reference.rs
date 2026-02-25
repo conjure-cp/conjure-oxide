@@ -8,7 +8,7 @@ use std::fmt::{Display, Formatter};
 use uniplate::Uniplate;
 
 use super::{
-    DomainPtr, Expression, GroundDomain, Metadata, Moo, Name,
+    Atom, DomainPtr, Expression, GroundDomain, Literal, Metadata, Moo, Name,
     categories::{Category, CategoryOf},
     domains::HasDomain,
 };
@@ -58,6 +58,25 @@ impl Reference {
 
     pub fn resolved_domain(&self) -> Option<Moo<GroundDomain>> {
         self.domain()?.resolve()
+    }
+
+    /// Returns the expression behind a value-letting reference, if this is one.
+    pub fn resolve_expression(&self) -> Option<Expression> {
+        self.ptr().as_value_letting().map(|expr| expr.clone())
+    }
+
+    /// Evaluates this reference to a literal if it resolves to a constant.
+    pub fn resolve_constant(&self) -> Option<Literal> {
+        self.resolve_expression()
+            .and_then(|expr| super::eval::eval_constant(&expr))
+    }
+
+    /// Resolves this reference to an atomic expression, if possible.
+    pub fn resolve_atomic(&self) -> Option<Atom> {
+        self.resolve_expression().and_then(|expr| match expr {
+            Expression::Atomic(_, atom) => Some(atom),
+            _ => None,
+        })
     }
 }
 

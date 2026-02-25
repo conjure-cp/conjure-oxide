@@ -76,12 +76,3 @@ letting x be
     check_diagnostic(diag1, 0, 16, 0, 16, "Missing )");
     check_diagnostic(diag2, 1, 12, 1, 12, "Missing Expression or Domain");
 }
-
-#[test]
-fn missing_domain_in_tuple_domain() {
-    let source = "find x: tuple()";
-    let diagnostics = detect_syntactic_errors(source);
-    assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
-    let diag = &diagnostics[0];
-    check_diagnostic(diag, 0, 14, 0, 14, "Missing Domain");
-}

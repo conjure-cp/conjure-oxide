@@ -9,6 +9,7 @@
 
 use std::collections::HashSet;
 
+use itertools::Itertools;
 use z3::ast::*;
 use z3::{Solver, Sort, Symbol};
 
@@ -232,14 +233,73 @@ where
     A: TryFrom<Dynamic, Error: std::fmt::Display>,
     Out: Into<Dynamic>,
 {
-    let exprs = expr
-        .clone()
-        .unwrap_list()
-        .ok_or(SolverError::ModelFeatureNotImplemented(format!(
-            "inner expression must be a list: {expr}"
-        )))?;
+    let exprs = list_elements(expr)?;
 
     slice_op(theories, store, &exprs, op)
+}
+
+/// Extracts the elements of a list-like expression.
+///
+/// Besides literal lists, this also supports slice expressions such as `x[..]`
+/// by expanding them to explicit indexing expressions.
+/// TODO: Consider moving this out of the smt solver adaptor, it'll be more generally useful.
+fn list_elements(expr: &Expression) -> SolverResult<Vec<Expression>> {
+    if let Some(exprs) = expr.clone().unwrap_list() {
+        return Ok(exprs);
+    }
+
+    let Expression::SafeSlice(_, subject, indices) = expr else {
+        return Err(SolverError::ModelFeatureNotImplemented(format!(
+            "inner expression must be a list: {expr}"
+        )));
+    };
+
+    let subject_domain = subject
+        .domain_of()
+        .and_then(|d| d.resolve())
+        .ok_or_else(|| {
+            SolverError::ModelFeatureNotImplemented(format!(
+                "cannot resolve domain of sliced expression: {expr}"
+            ))
+        })?;
+
+    let GroundDomain::Matrix(_, index_domains) = subject_domain.as_ref() else {
+        return Err(SolverError::ModelFeatureNotImplemented(format!(
+            "slice subject must have matrix domain: {expr}"
+        )));
+    };
+
+    if index_domains.len() != indices.len() {
+        return Err(SolverError::ModelInvalid(format!(
+            "slice has wrong number of indices: {expr}"
+        )));
+    }
+
+    let index_options: SolverResult<Vec<Vec<Expression>>> = indices
+        .iter()
+        .zip(index_domains.iter())
+        .map(|(idx, dom)| match idx {
+            Some(idx_expr) => Ok(vec![idx_expr.clone()]),
+            None => {
+                let vals = dom.values().map_err(|_| {
+                    SolverError::ModelFeatureNotImplemented(format!(
+                        "slice index domain is not finite/enumerable: {dom}"
+                    ))
+                })?;
+                Ok(vals
+                    .map(|lit| Expression::Atomic(Metadata::new(), Atom::Literal(lit)))
+                    .collect_vec())
+            }
+        })
+        .collect();
+
+    let index_options = index_options?;
+
+    Ok(index_options
+        .into_iter()
+        .multi_cartesian_product()
+        .map(|concrete_idxs| Expression::SafeIndex(Metadata::new(), subject.clone(), concrete_idxs))
+        .collect())
 }
 
 /// Transforms a slice of expressions into ASTs and returns the result of the given operation over it.
