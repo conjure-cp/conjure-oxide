@@ -2,7 +2,7 @@ use conjure_cp::ast::{Expression, Metadata, Moo, SymbolTable};
 use conjure_cp::rule_engine::{
     ApplicationError, ApplicationResult, Reduction, register_rule, register_rule_set,
 };
-use conjure_cp::solver::SolverFamily;
+use conjure_cp::settings::SolverFamily;
 use conjure_cp::solver::adaptors::smt::{IntTheory, TheoryConfig};
 
 // Only applicable when the Bitvector theory is being used for integers

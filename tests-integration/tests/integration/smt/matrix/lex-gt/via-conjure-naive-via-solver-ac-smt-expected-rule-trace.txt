@@ -1,0 +1,52 @@
+Model before rewriting:
+
+find m: matrix indexed by [[int(1..2)]] of int(1..2)
+find m2: matrix indexed by [[int(1..2)]] of int(1..2)
+
+such that
+
+(m2 <lex m)
+
+--
+
+(m2 <lex m), 
+   ~~> expand_lex_lt_leq ([("Smt", 2001)]) 
+or([(m2[1] < m[1]),and([(m2[1] = m[1]),or([(m2[2] < m[2]),and([(m2[2] = m[2]),false;int(1..)]);int(1..)]);int(1..)]);int(1..)]) 
+
+--
+
+or([(m2[1] < m[1]),and([(m2[1] = m[1]),or([(m2[2] < m[2]),and([(m2[2] = m[2]),false;int(1..)]);int(1..)]);int(1..)]);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+or([(m2[1] < m[1]),and([(m2[1] = m[1]),or([(m2[2] < m[2]);int(1..)]);int(1..)]);int(1..)]) 
+
+--
+
+or([(m2[2] < m[2]);int(1..)]), 
+   ~~> remove_unit_vector_or ([("Base", 8800)]) 
+(m2[2] < m[2]) 
+
+--
+
+or([(m2[1] < m[1]),and([(m2[1] = m[1]),(m2[2] < m[2]);int(1..)]);int(1..)]), 
+   ~~> distribute_or_over_and ([("Base", 8400)]) 
+and([or([(m2[1] < m[1]),(m2[1] = m[1]);int(1..)]),or([(m2[1] < m[1]),(m2[2] < m[2]);int(1..)]);int(1..)]) 
+
+--
+
+and([or([(m2[1] < m[1]),(m2[1] = m[1]);int(1..)]),or([(m2[1] < m[1]),(m2[2] < m[2]);int(1..)]);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+or([(m2[1] < m[1]),(m2[1] = m[1]);int(1..)]),
+or([(m2[1] < m[1]),(m2[2] < m[2]);int(1..)]) 
+
+--
+
+Final model:
+
+find m: matrix indexed by [[int(1..2)]] of int(1..2)
+find m2: matrix indexed by [[int(1..2)]] of int(1..2)
+
+such that
+
+or([(m2[1] < m[1]),(m2[1] = m[1]);int(1..)]),
+or([(m2[1] < m[1]),(m2[2] < m[2]);int(1..)])
+

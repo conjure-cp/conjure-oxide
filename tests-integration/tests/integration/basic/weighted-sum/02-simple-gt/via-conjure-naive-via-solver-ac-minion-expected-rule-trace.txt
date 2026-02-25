@@ -1,0 +1,77 @@
+Model before rewriting:
+
+find x: int(2..4)
+find y: int(2..4)
+
+such that
+
+(sum([product([2,x;int(1..2)]),product([3,y;int(1..2)]);int(1..2)]) > 12)
+
+--
+
+(sum([product([2,x;int(1..2)]),product([3,y;int(1..2)]);int(1..2)]) > 12), 
+   ~~> gt_to_geq ([("Minion", 8400)]) 
+(sum([sum([product([2,x;int(1..2)]),product([3,y;int(1..2)]);int(1..2)]),-1;int(1..)]) >= 12) 
+
+--
+
+sum([sum([product([2,x;int(1..2)]),product([3,y;int(1..2)]);int(1..2)]),-1;int(1..)]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+sum([product([2,x;int(1..2)]),product([3,y;int(1..2)]),-1;int(1..)]) 
+
+--
+
+(sum([product([2,x;int(1..2)]),product([3,y;int(1..2)]),-1;int(1..)]) >= 12), 
+   ~~> flatten_generic ([("Minion", 4200)]) 
+(__0 >= 12) 
+new variables:
+  find __0: int(9..19)
+new constraints:
+  __0 =aux sum([product([2,x;int(1..2)]),product([3,y;int(1..2)]),-1;int(1..)])
+--
+
+(__0 >= 12), 
+   ~~> geq_to_ineq ([("Minion", 4100)]) 
+Ineq(12, __0, 0) 
+
+--
+
+product([2,x;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+product([2,x;int(1..)]) 
+
+--
+
+product([3,y;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+product([3,y;int(1..)]) 
+
+--
+
+__0 =aux sum([product([2,x;int(1..)]),product([3,y;int(1..)]),-1;int(1..)]), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+and([FlatWeightedSumLeq([1, 2, 3],[-1, x, y],__0),FlatWeightedSumGeq([1, 2, 3],[-1, x, y],__0);int(1..)]) 
+
+--
+
+Ineq(12, __0, 0),
+and([FlatWeightedSumLeq([1, 2, 3],[-1, x, y],__0),FlatWeightedSumGeq([1, 2, 3],[-1, x, y],__0);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+Ineq(12, __0, 0),
+FlatWeightedSumLeq([1, 2, 3],[-1, x, y],__0),
+FlatWeightedSumGeq([1, 2, 3],[-1, x, y],__0) 
+
+--
+
+Final model:
+
+find x: int(2..4)
+find y: int(2..4)
+find __0: int(9..19)
+
+such that
+
+Ineq(12, __0, 0),
+FlatWeightedSumLeq([1, 2, 3],[-1, x, y],__0),
+FlatWeightedSumGeq([1, 2, 3],[-1, x, y],__0)
+

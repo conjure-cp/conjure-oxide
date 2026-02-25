@@ -2,10 +2,10 @@
 
 use crate::Model as ConjureModel;
 use crate::ast::{self as conjure_ast, HasDomain, Moo, Range};
+use crate::settings::SolverFamily;
 use crate::solver::SolverError::{
     ModelFeatureNotImplemented, ModelFeatureNotSupported, ModelInvalid,
 };
-use crate::solver::SolverFamily;
 use crate::solver::SolverMutCallback;
 use crate::solver::{SolverCallback, SolverError};
 use crate::stats::SolverStats;

@@ -154,7 +154,7 @@ impl Representation for SATLogInt {
     fn declaration_down(&self) -> Result<Vec<DeclarationPtr>, ApplicationError> {
         Ok(self
             .names()
-            .map(|name| DeclarationPtr::new_var(name, Domain::bool()))
+            .map(|name| DeclarationPtr::new_find(name, Domain::bool()))
             .collect())
     }
 

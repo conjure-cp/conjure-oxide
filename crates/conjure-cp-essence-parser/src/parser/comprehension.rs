@@ -46,7 +46,7 @@ pub fn parse_comprehension(
                 let var_domain = parse_domain(domain_node, source_code, Some(symbols_ptr.clone()))?;
 
                 // Add generator using the builder
-                let decl = DeclarationPtr::new_var(var_name, var_domain);
+                let decl = DeclarationPtr::new_find(var_name, var_domain);
                 builder = builder.generator(decl);
             }
             "condition" => {
@@ -74,7 +74,7 @@ pub fn parse_comprehension(
         )
     })?;
 
-    // Use the return expression symbol table which already has induction variables (as Given) and parent as parent
+    // Use the return expression symbol table which already has quantified variables (as Given) and parent as parent
     let return_expr = parse_expression(
         return_expr_node,
         source_code,
@@ -170,7 +170,7 @@ pub fn parse_quantifier_or_aggregate_expr(
     // Add variables as generators
     if let Some(dom) = domain {
         for var_name in variables {
-            let decl = DeclarationPtr::new_var(var_name, dom.clone());
+            let decl = DeclarationPtr::new_find(var_name, dom.clone());
             builder = builder.generator(decl);
         }
     } else if let Some(_coll_node) = collection_node {

@@ -8,7 +8,7 @@ use conjure_cp::{
         ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
         register_rule_set,
     },
-    solver::SolverFamily,
+    settings::SolverFamily,
 };
 use itertools::Itertools;
 use std::sync::Arc;
@@ -30,7 +30,7 @@ register_rule_set!("Representations", ("Base"), |f: &SolverFamily| {
     ) {
         return true;
     }
-    matches!(f, SolverFamily::Sat | SolverFamily::Minion)
+    matches!(f, SolverFamily::Sat(_) | SolverFamily::Minion)
 });
 
 // special case rule to select representations for matrices in one go.
@@ -213,6 +213,7 @@ fn domain_needs_representation(domain: &GroundDomain) -> bool {
         GroundDomain::Bool | GroundDomain::Int(_) => false,
         GroundDomain::Matrix(_, _) => false, // we special case these elsewhere
         GroundDomain::Set(_, _)
+        | GroundDomain::MSet(_, _)
         | GroundDomain::Tuple(_)
         | GroundDomain::Record(_)
         | GroundDomain::Function(_, _, _) => true,
