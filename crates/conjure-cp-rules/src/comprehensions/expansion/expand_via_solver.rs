@@ -1,7 +1,7 @@
 use std::sync::{Arc, Mutex};
 
 use conjure_cp::{
-    ast::{Expression, SymbolTable, comprehension::Comprehension},
+    ast::{Expression, comprehension::Comprehension},
     rule_engine::resolve_rule_sets,
     settings::{SolverFamily, current_rewriter},
     solver::{Solver, SolverError, adaptors::Minion},
@@ -9,26 +9,22 @@ use conjure_cp::{
 
 use super::via_solver_common::{
     instantiate_return_expressions_from_values, model_from_submodel,
-    rewrite_model_with_configured_rewriter, temporarily_materialise_quantified_vars_as_finds,
+    retain_quantified_solution_values, rewrite_model_with_configured_rewriter,
+    temporarily_materialise_quantified_vars_as_finds,
 };
 
 /// Expands the comprehension by solving quantified variables with Minion.
 ///
 /// This returns one expression per assignment to quantified variables that satisfies the static
 /// guards of the comprehension.
-///
-/// If successful, this modifies the symbol table given to add aux-variables needed inside the
-/// expanded expressions.
-pub fn expand_via_solver(
-    comprehension: Comprehension,
-    symtab: &mut SymbolTable,
-) -> Result<Vec<Expression>, SolverError> {
+pub fn expand_via_solver(comprehension: Comprehension) -> Result<Vec<Expression>, SolverError> {
     let minion = Solver::new(Minion::new());
+    let quantified_vars = comprehension.quantified_vars();
 
     // only branch on the quantified variables.
     let generator_model = model_from_submodel(
-        comprehension.generator_submodel.clone(),
-        Some(comprehension.quantified_vars.clone()),
+        comprehension.to_generator_submodel(),
+        Some(quantified_vars.clone()),
     );
 
     // call rewrite here as well as in expand_via_solver_ac, just to be consistent
@@ -59,39 +55,44 @@ pub fn expand_via_solver(
     // up to adding the return expr to the generator model, yield, then come back later to
     // actually solve it?
 
-    let return_expression_model = rewrite_model_with_configured_rewriter(
-        model_from_submodel(comprehension.return_expression_submodel.clone(), None),
-        &rule_sets,
-        configured_rewriter,
-    );
+    // Keep return expressions unreduced until quantified assignments are substituted.
+    // Rewriting before substitution can change guard structure in ways that are unsafe for
+    // constant evaluation after instantiation.
+    let return_expression_model =
+        model_from_submodel(comprehension.to_return_expression_submodel(), None);
 
-    let solver_model = generator_model.clone();
+    let values = {
+        let solver_model = generator_model.clone();
 
-    // Minion expects quantified variables in the temporary generator model as find declarations.
-    // Keep this conversion local to the model passed into Minion.
-    let _temp_finds = temporarily_materialise_quantified_vars_as_finds(
-        solver_model.as_submodel(),
-        &comprehension.quantified_vars,
-    );
+        // Minion expects quantified variables in the temporary generator model as find
+        // declarations. Keep this conversion scoped to the Minion call only.
+        let _temp_finds = temporarily_materialise_quantified_vars_as_finds(
+            solver_model.as_submodel(),
+            &quantified_vars,
+        );
 
-    let minion = minion.load_model(solver_model)?;
+        let minion = minion.load_model(solver_model)?;
 
-    let values = Arc::new(Mutex::new(Vec::new()));
-    let values_ptr = Arc::clone(&values);
+        let values = Arc::new(Mutex::new(Vec::new()));
+        let values_ptr = Arc::clone(&values);
+        let quantified_vars_for_solution = quantified_vars.clone();
 
-    tracing::debug!(model=%generator_model,comprehension=%comprehension,"Minion solving comprehension (solver mode)");
-    minion.solve(Box::new(move |sols| {
-        // TODO: deal with represented names if quantified variables are abslits.
-        let values = &mut *values_ptr.lock().unwrap();
-        values.push(sols);
-        true
-    }))?;
+        tracing::debug!(model=%generator_model,comprehension=%comprehension,"Minion solving comprehension (solver mode)");
+        minion.solve(Box::new(move |sols| {
+            // Only keep quantified assignments; discard solver auxiliaries/locals.
+            let values = &mut *values_ptr.lock().unwrap();
+            values.push(retain_quantified_solution_values(
+                sols,
+                &quantified_vars_for_solution,
+            ));
+            true
+        }))?;
 
-    let values = values.lock().unwrap().clone();
+        values.lock().unwrap().clone()
+    };
     Ok(instantiate_return_expressions_from_values(
         values,
         &return_expression_model,
-        &comprehension.quantified_vars,
-        symtab,
+        &quantified_vars,
     ))
 }

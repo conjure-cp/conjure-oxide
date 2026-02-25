@@ -1,12 +1,16 @@
 use std::{
-    collections::VecDeque,
+    cell::RefCell,
+    collections::{HashMap, VecDeque},
     sync::{Arc, Mutex},
 };
 
 use conjure_cp::{
     ast::{
-        Atom, DeclarationPtr, Expression, Metadata, Moo, Name, ReturnType, SubModel, SymbolTable,
-        Typeable as _, ac_operators::ACOperatorKind, comprehension::Comprehension,
+        Atom, DeclarationPtr, Expression, Metadata, Moo, Name, Reference, ReturnType, SubModel,
+        SymbolTable, Typeable as _,
+        ac_operators::ACOperatorKind,
+        comprehension::{Comprehension, ComprehensionQualifier},
+        serde::HasId as _,
     },
     rule_engine::resolve_rule_sets,
     settings::{SolverFamily, current_rewriter},
@@ -17,7 +21,8 @@ use uniplate::{Biplate, Uniplate as _, zipper::Zipper};
 
 use super::via_solver_common::{
     instantiate_return_expressions_from_values, model_from_submodel,
-    rewrite_model_with_configured_rewriter, temporarily_materialise_quantified_vars_as_finds,
+    retain_quantified_solution_values, rewrite_model_with_configured_rewriter,
+    temporarily_materialise_quantified_vars_as_finds,
 };
 
 /// Expands the comprehension using Minion, returning the resulting expressions.
@@ -27,46 +32,21 @@ use super::via_solver_common::{
 ///
 /// This method performs additional pruning of "uninteresting" values, only possible when the
 /// comprehension is inside an AC operator.
-///
-/// If successful, this modifies the symbol table given to add aux-variables needed inside the
-/// expanded expressions.
 pub fn expand_via_solver_ac(
     comprehension: Comprehension,
-    symtab: &mut SymbolTable,
     ac_operator: ACOperatorKind,
 ) -> Result<Vec<Expression>, SolverError> {
+    let quantified_vars = comprehension.quantified_vars();
+
     // ADD RETURN EXPRESSION TO GENERATOR MODEL AS CONSTRAINT
     // ======================================================
-
-    // References to quantified variables in the return expression point to entries in the
-    // return_expression symbol table.
-    //
-    // Change these to point to the corresponding entry in the generator symbol table instead.
-    let quantified_vars_2 = comprehension.quantified_vars.clone();
-    let generator_symtab_ptr = comprehension.generator_submodel.symbols_ptr_unchecked();
-    let return_expression =
-        comprehension
-            .clone()
-            .return_expression()
-            .transform_bi(&move |decl: DeclarationPtr| {
-                // if this variable is a quantified var...
-                if quantified_vars_2.contains(&decl.name()) {
-                    // ... use the generator symbol tables version of it
-
-                    generator_symtab_ptr
-                        .read()
-                        .lookup_local(&decl.name())
-                        .unwrap()
-                } else {
-                    decl
-                }
-            });
+    let return_expression = comprehension.return_expression.clone();
 
     // Replace all boolean expressions referencing non-quantified variables in the return
     // expression with dummy variables. This allows us to add it as a constraint to the
     // generator model.
     let generator_submodel = add_return_expression_to_generator_model(
-        comprehension.generator_submodel.clone(),
+        comprehension.to_generator_submodel(),
         return_expression,
         &ac_operator,
     );
@@ -74,67 +54,72 @@ pub fn expand_via_solver_ac(
     // REWRITE GENERATOR MODEL AND PASS TO MINION
     // ==========================================
 
-    let generator_model = model_from_submodel(
-        generator_submodel,
-        Some(comprehension.quantified_vars.clone()),
-    );
+    let generator_model = model_from_submodel(generator_submodel, Some(quantified_vars.clone()));
 
     let extra_rule_sets = &["Base", "Constant", "Bubble"];
 
     let rule_sets = resolve_rule_sets(SolverFamily::Minion, extra_rule_sets).unwrap();
     let configured_rewriter = current_rewriter();
 
-    // In AC mode we materialise quantified variables before rewriting, as the rewritten
-    // generator model is used directly as Minion input.
-    let _temp_finds = temporarily_materialise_quantified_vars_as_finds(
-        generator_model.as_submodel(),
-        &comprehension.quantified_vars,
-    );
-
-    let generator_model =
-        rewrite_model_with_configured_rewriter(generator_model, &rule_sets, configured_rewriter);
-
-    let minion = Solver::new(Minion::new());
-    let minion = minion.load_model(generator_model.clone());
-
-    let minion = match minion {
-        Err(e) => {
-            warn!(why=%e,model=%generator_model,"Loading generator model failed, failing solver-backed AC comprehension expansion rule");
-            return Err(e);
-        }
-        Ok(minion) => minion,
-    };
-
     // REWRITE RETURN EXPRESSION
     // =========================
 
-    let return_expression_model = rewrite_model_with_configured_rewriter(
-        model_from_submodel(comprehension.return_expression_submodel.clone(), None),
-        &rule_sets,
-        configured_rewriter,
-    );
+    // Keep return expressions unreduced until quantified assignments are substituted.
+    // Rewriting before substitution can introduce index auxiliaries that remain symbolic and may
+    // produce unsupported Minion shapes after expansion.
+    let return_expression_model =
+        model_from_submodel(comprehension.to_return_expression_submodel(), None);
 
-    let values = Arc::new(Mutex::new(Vec::new()));
-    let values_ptr = Arc::clone(&values);
+    let values = {
+        let solver_model = generator_model.clone();
+        // Minion expects quantified variables in the temporary generator model as find
+        // declarations. Keep this conversion scoped to solver-backed expansion.
+        let _temp_finds = temporarily_materialise_quantified_vars_as_finds(
+            solver_model.as_submodel(),
+            &quantified_vars,
+        );
 
-    // SOLVE FOR THE QUANTIFIED VARIABLES, AND SUBSTITUTE INTO THE REWRITTEN RETURN EXPRESSION
-    // ======================================================================================
+        // Rewrite with quantified vars materialised as finds so Minion flattening can
+        // introduce auxiliaries for constraints involving quantified variables.
+        let solver_model =
+            rewrite_model_with_configured_rewriter(solver_model, &rule_sets, configured_rewriter);
 
-    tracing::debug!(model=%generator_model,comprehension=%comprehension,"Minion solving comprehnesion (ac mode)");
+        let minion = Solver::new(Minion::new());
+        let minion = minion.load_model(solver_model);
 
-    minion.solve(Box::new(move |sols| {
-        // TODO: deal with represented names if quantified variables are abslits.
-        let values = &mut *values_ptr.lock().unwrap();
-        values.push(sols);
-        true
-    }))?;
+        let minion = match minion {
+            Err(e) => {
+                warn!(why=%e,model=%generator_model,"Loading generator model failed, failing solver-backed AC comprehension expansion rule");
+                return Err(e);
+            }
+            Ok(minion) => minion,
+        };
 
-    let values = values.lock().unwrap().clone();
+        let values = Arc::new(Mutex::new(Vec::new()));
+        let values_ptr = Arc::clone(&values);
+        let quantified_vars_for_solution = quantified_vars.clone();
+
+        // SOLVE FOR THE QUANTIFIED VARIABLES, AND SUBSTITUTE INTO THE RETURN EXPRESSION
+        // ============================================================================
+
+        tracing::debug!(model=%generator_model,comprehension=%comprehension,"Minion solving comprehnesion (ac mode)");
+
+        minion.solve(Box::new(move |sols| {
+            // Only keep quantified assignments; discard solver auxiliaries/locals.
+            let values = &mut *values_ptr.lock().unwrap();
+            values.push(retain_quantified_solution_values(
+                sols,
+                &quantified_vars_for_solution,
+            ));
+            true
+        }))?;
+
+        values.lock().unwrap().clone()
+    };
     Ok(instantiate_return_expressions_from_values(
         values,
         &return_expression_model,
-        &comprehension.quantified_vars,
-        symtab,
+        &quantified_vars,
     ))
 }
 
@@ -155,8 +140,10 @@ fn add_return_expression_to_generator_model(
     return_expression: Expression,
     ac_operator: &ACOperatorKind,
 ) -> SubModel {
-    let mut zipper = Zipper::new(return_expression);
     let mut symtab = generator_submodel.symbols_mut();
+    let return_expression = localise_non_local_references_deep(return_expression, &mut symtab);
+
+    let mut zipper = Zipper::new(return_expression);
 
     // for sum/product we want to put integer expressions into dummy variables,
     // for and/or we want to put boolean expressions into dummy variables.
@@ -308,6 +295,73 @@ fn add_return_expression_to_generator_model(
     generator_submodel.add_constraint(new_return_expression);
 
     generator_submodel
+}
+
+/// Replaces references to declarations outside `symtab` with local dummy declarations.
+///
+/// This preserves locality by construction for temporary generator models passed to Minion.
+/// All rewrites then operate purely on local references and cannot reintroduce parent-scope vars.
+fn localise_non_local_references_deep(expr: Expression, symtab: &mut SymbolTable) -> Expression {
+    let symtab_cell = RefCell::new(symtab);
+
+    let expr = expr.transform_bi(&|mut comprehension: Comprehension| {
+        {
+            let mut symtab_borrow = symtab_cell.borrow_mut();
+            let symtab_ref: &mut SymbolTable = &mut symtab_borrow;
+
+            comprehension.return_expression = localise_non_local_references_deep(
+                comprehension.return_expression.clone(),
+                symtab_ref,
+            );
+
+            for qualifier in &mut comprehension.qualifiers {
+                if let ComprehensionQualifier::Condition(condition) = qualifier {
+                    *condition = localise_non_local_references_deep(condition.clone(), symtab_ref);
+                }
+            }
+        }
+
+        comprehension
+    });
+
+    let mut symtab_borrow = symtab_cell.borrow_mut();
+    let symtab_ref: &mut SymbolTable = &mut symtab_borrow;
+    localise_non_local_references_shallow(expr, symtab_ref)
+}
+
+fn localise_non_local_references_shallow(expr: Expression, symtab: &mut SymbolTable) -> Expression {
+    let dummy_vars_by_decl_id: RefCell<HashMap<_, DeclarationPtr>> = RefCell::new(HashMap::new());
+    let symtab = RefCell::new(symtab);
+
+    expr.transform_bi(&|reference: Reference| {
+        let reference_name = reference.name().clone();
+
+        // Already local to this temporary generator model.
+        if symtab.borrow().lookup_local(&reference_name).is_some() {
+            return reference;
+        }
+
+        let decl = reference.ptr().clone();
+        let decl_id = decl.id();
+
+        let existing_dummy = dummy_vars_by_decl_id.borrow().get(&decl_id).cloned();
+        let dummy_decl = if let Some(existing_dummy) = existing_dummy {
+            existing_dummy
+        } else {
+            let new_dummy = {
+                let domain = decl.domain().unwrap_or_else(|| {
+                    panic!("non-local reference '{}' has no domain", decl.name())
+                });
+                symtab.borrow_mut().gensym(&domain)
+            };
+            dummy_vars_by_decl_id
+                .borrow_mut()
+                .insert(decl_id, new_dummy.clone());
+            new_dummy
+        };
+
+        Reference::new(dummy_decl)
+    })
 }
 
 /// Returns a tuple of non-quantified decision variables and quantified variables inside the expression.

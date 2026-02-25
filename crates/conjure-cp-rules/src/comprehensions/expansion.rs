@@ -9,19 +9,28 @@ pub use expand_native::expand_native;
 pub use expand_via_solver::expand_via_solver;
 pub use expand_via_solver_ac::expand_via_solver_ac;
 
-use std::collections::VecDeque;
-
 use conjure_cp::{
     ast::{Expression as Expr, SymbolTable, comprehension::Comprehension},
-    into_matrix_expr,
+    bug, into_matrix_expr,
     rule_engine::{
         ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
     },
     settings::{QuantifiedExpander, comprehension_expander},
 };
-use uniplate::Biplate;
-
 use uniplate::Uniplate;
+
+fn as_single_comprehension(expr: &Expr) -> Option<Comprehension> {
+    if let Expr::Comprehension(_, comprehension) = expr {
+        return Some(comprehension.as_ref().clone());
+    }
+
+    let exprs = expr.clone().unwrap_list()?;
+    let [Expr::Comprehension(_, comprehension)] = exprs.as_slice() else {
+        return None;
+    };
+
+    Some(comprehension.as_ref().clone())
+}
 
 /// Expand comprehensions inside AC operators using `--comprehension-expander via-solver-ac`.
 #[register_rule(("Base", 2002))]
@@ -39,25 +48,13 @@ fn expand_comprehension_via_solver_ac(expr: &Expr, symbols: &SymbolTable) -> App
         "AC expressions should have exactly one child."
     );
 
-    let Expr::Comprehension(_, ref comprehension) = expr.children()[0] else {
-        return Err(RuleNotApplicable);
-    };
+    let comprehension = as_single_comprehension(&expr.children()[0]).ok_or(RuleNotApplicable)?;
 
-    // unwrap comprehensions inside out. This reduces calls to minion when rewriting nested
-    // comprehensions.
-    let nested_comprehensions: VecDeque<Comprehension> =
-        (**comprehension).clone().return_expression().universe_bi();
-    if !nested_comprehensions.is_empty() {
-        return Err(RuleNotApplicable);
-    };
-
-    // TODO: check what kind of error this throws and maybe panic
-    let mut symbols = symbols.clone();
-    let results = expand_via_solver_ac((**comprehension).clone(), &mut symbols, ac_operator_kind)
-        .or(Err(RuleNotApplicable))?;
+    let results =
+        expand_via_solver_ac(comprehension, ac_operator_kind).or(Err(RuleNotApplicable))?;
 
     let new_expr = ac_operator_kind.as_expression(into_matrix_expr!(results));
-    Ok(Reduction::with_symbols(new_expr, symbols))
+    Ok(Reduction::with_symbols(new_expr, symbols.clone()))
 }
 
 /// Expand comprehensions using `--comprehension-expander native`.
@@ -67,25 +64,32 @@ fn expand_comprehension_native(expr: &Expr, symbols: &SymbolTable) -> Applicatio
         return Err(RuleNotApplicable);
     }
 
-    let Expr::Comprehension(_, comprehension) = expr else {
-        return Err(RuleNotApplicable);
-    };
+    let (comprehension, ac_operator_kind) = match expr {
+        Expr::Comprehension(_, comprehension) => (comprehension.as_ref().clone(), None),
+        other => {
+            let ac_operator_kind = other.to_ac_operator_kind().ok_or(RuleNotApplicable)?;
 
-    // unwrap comprehensions inside out. This reduces calls to minion when rewriting nested
-    // comprehensions.
-    let nested_comprehensions: VecDeque<Comprehension> =
-        (**comprehension).clone().return_expression().universe_bi();
-    if !nested_comprehensions.is_empty() {
-        return Err(RuleNotApplicable);
-    };
+            debug_assert_eq!(
+                other.children().len(),
+                1,
+                "AC expressions should have exactly one child."
+            );
 
-    // TODO: check what kind of error this throws and maybe panic
+            let comprehension =
+                as_single_comprehension(&other.children()[0]).ok_or(RuleNotApplicable)?;
+
+            (comprehension, Some(ac_operator_kind))
+        }
+    };
 
     let mut symbols = symbols.clone();
-    let results =
-        expand_native(comprehension.as_ref().clone(), &mut symbols).or(Err(RuleNotApplicable))?;
-
-    Ok(Reduction::with_symbols(into_matrix_expr!(results), symbols))
+    let results = expand_native(comprehension, &mut symbols)
+        .unwrap_or_else(|e| bug!("native comprehension expansion failed: {e}"));
+    let new_expr = match ac_operator_kind {
+        Some(kind) => kind.as_expression(into_matrix_expr!(results)),
+        None => into_matrix_expr!(results),
+    };
+    Ok(Reduction::with_symbols(new_expr, symbols))
 }
 
 /// Expand comprehensions using `--comprehension-expander via-solver` (and as fallback for
@@ -103,19 +107,10 @@ fn expand_comprehension_via_solver(expr: &Expr, symbols: &SymbolTable) -> Applic
         return Err(RuleNotApplicable);
     };
 
-    // unwrap comprehensions inside out. This reduces calls to minion when rewriting nested
-    // comprehensions.
-    let nested_comprehensions: VecDeque<Comprehension> =
-        (**comprehension).clone().return_expression().universe_bi();
-    if !nested_comprehensions.is_empty() {
-        return Err(RuleNotApplicable);
-    };
+    let results = expand_via_solver(comprehension.as_ref().clone()).or(Err(RuleNotApplicable))?;
 
-    // TODO: check what kind of error this throws and maybe panic
-
-    let mut symbols = symbols.clone();
-    let results = expand_via_solver(comprehension.as_ref().clone(), &mut symbols)
-        .or(Err(RuleNotApplicable))?;
-
-    Ok(Reduction::with_symbols(into_matrix_expr!(results), symbols))
+    Ok(Reduction::with_symbols(
+        into_matrix_expr!(results),
+        symbols.clone(),
+    ))
 }

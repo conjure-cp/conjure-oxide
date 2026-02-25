@@ -1,119 +1,50 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use conjure_cp::{
     ast::{
-        Atom, DeclarationKind, DeclarationPtr, Expression, Literal, Metadata, Name, SymbolTable,
-        comprehension::Comprehension,
-        eval_constant, run_partial_evaluator,
-        serde::{HasId as _, ObjId},
+        Atom, DeclarationKind, DeclarationPtr, Domain, DomainPtr, Expression, GroundDomain, IntVal,
+        Literal, Metadata, Moo, Name, Range, SymbolTable, UnresolvedDomain,
+        comprehension::{Comprehension, ComprehensionQualifier},
+        eval_constant,
+        serde::HasId as _,
     },
-    bug,
     solver::SolverError,
 };
 use uniplate::Biplate as _;
 
+use super::via_solver_common::{lift_machine_references_into_parent_scope, simplify_expression};
+
 /// Expands the comprehension without calling an external solver.
 ///
 /// Quantified variables are enumerated with native Rust loops over their finite domains. Guards
-/// are evaluated using constant and partial evaluators after substitution.
+/// are evaluated from the currently bound quantified declarations.
 pub fn expand_native(
     comprehension: Comprehension,
     symtab: &mut SymbolTable,
 ) -> Result<Vec<Expression>, SolverError> {
-    let generator_symbols = comprehension.generator_submodel.symbols().clone();
-    let quantified_vars = comprehension.quantified_vars.clone();
-
-    let mut quantified_domains = Vec::with_capacity(quantified_vars.len());
-    for name in &quantified_vars {
-        let decl = generator_symbols.lookup_local(name).ok_or_else(|| {
-            SolverError::ModelInvalid(format!(
-                "quantified variable '{name}' is missing from generator symbol table"
-            ))
-        })?;
-
-        let domain = decl.domain().ok_or_else(|| {
-            SolverError::ModelInvalid(format!("quantified variable '{name}' has no domain"))
-        })?;
-        let resolved = domain.resolve().ok_or_else(|| {
-            SolverError::ModelFeatureNotSupported(format!(
-                "quantified variable '{name}' has unresolved domain: {domain}"
-            ))
-        })?;
-
-        let values: Vec<Literal> = resolved
-            .values()
-            .map_err(|err| {
-                SolverError::ModelFeatureNotSupported(format!(
-                    "quantified variable '{name}' has non-enumerable domain: {err}"
-                ))
-            })?
-            .collect();
-
-        quantified_domains.push(values);
-    }
-
     let mut assignments = HashMap::new();
     let mut expanded = Vec::new();
+    let quantified_names: HashSet<Name> = comprehension
+        .qualifiers
+        .iter()
+        .filter_map(|qualifier| match qualifier {
+            ComprehensionQualifier::Generator { name, .. } => Some(name.clone()),
+            ComprehensionQualifier::Condition(_) => None,
+        })
+        .collect();
+    let binding_targets = collect_quantified_binding_targets(&comprehension, &quantified_names);
 
     enumerate_assignments(
         0,
-        &quantified_vars,
-        &quantified_domains,
+        &comprehension.qualifiers,
+        &binding_targets,
         &mut assignments,
-        &mut |assignment| {
-            for guard in comprehension.generator_submodel.constraints() {
-                match evaluate_guard(guard, assignment) {
-                    Some(true) => {}
-                    Some(false) => return Ok(()),
-                    None => {
-                        return Err(SolverError::ModelInvalid(format!(
-                            "native comprehension expansion could not evaluate guard: {guard}"
-                        )));
-                    }
-                }
-            }
-
-            let return_expression_submodel = comprehension.return_expression_submodel.clone();
-            let child_symtab = return_expression_submodel.symbols().clone();
-            let return_expression = return_expression_submodel.into_single_expression();
-
-            let return_expression = substitute_quantified_literals(return_expression, assignment);
+        &mut |_assignment| {
+            let child_symtab = comprehension.symbols().clone();
+            let return_expression = comprehension.return_expression.clone();
             let return_expression = simplify_expression(return_expression);
-
-            // Copy machine-name declarations from comprehension-local return-expression scope.
-            let mut machine_name_translations: HashMap<ObjId, DeclarationPtr> = HashMap::new();
-            for (name, decl) in child_symtab.into_iter_local() {
-                if assignment.get(&name).is_some()
-                    && matches!(
-                        &decl.kind() as &DeclarationKind,
-                        DeclarationKind::Given(_) | DeclarationKind::Quantified(_)
-                    )
-                {
-                    continue;
-                }
-
-                let Name::Machine(_) = &name else {
-                    bug!(
-                        "the symbol table of the return expression of a comprehension should only contain machine names"
-                    );
-                };
-
-                let id = decl.id();
-                let new_decl = symtab.gensym(&decl.domain().unwrap());
-                machine_name_translations.insert(id, new_decl);
-            }
-
-            #[allow(clippy::arc_with_non_send_sync)]
-            let return_expression = return_expression.transform_bi(&move |atom: Atom| {
-                if let Atom::Reference(ref decl) = atom
-                    && let id = decl.id()
-                    && let Some(new_decl) = machine_name_translations.get(&id)
-                {
-                    Atom::Reference(conjure_cp::ast::Reference::new(new_decl.clone()))
-                } else {
-                    atom
-                }
-            });
+            let return_expression =
+                lift_machine_references_into_parent_scope(return_expression, &child_symtab, symtab);
 
             expanded.push(return_expression);
             Ok(())
@@ -124,74 +55,297 @@ pub fn expand_native(
 }
 
 fn enumerate_assignments(
-    index: usize,
-    quantified_vars: &[Name],
-    quantified_domains: &[Vec<Literal>],
+    qualifier_index: usize,
+    qualifiers: &[ComprehensionQualifier],
+    binding_targets: &HashMap<Name, Vec<DeclarationPtr>>,
     assignment: &mut HashMap<Name, Literal>,
     on_assignment: &mut impl FnMut(&HashMap<Name, Literal>) -> Result<(), SolverError>,
 ) -> Result<(), SolverError> {
-    if index == quantified_vars.len() {
+    if qualifier_index == qualifiers.len() {
         return on_assignment(assignment);
     }
 
-    let name = &quantified_vars[index];
-    for lit in &quantified_domains[index] {
-        assignment.insert(name.clone(), lit.clone());
-        enumerate_assignments(
-            index + 1,
-            quantified_vars,
-            quantified_domains,
-            assignment,
-            on_assignment,
-        )?;
+    match &qualifiers[qualifier_index] {
+        ComprehensionQualifier::Generator { name, domain } => {
+            let resolved =
+                resolve_domain_for_assignment(domain.clone(), assignment).ok_or_else(|| {
+                    SolverError::ModelFeatureNotSupported(format!(
+                        "quantified variable '{name}' has unresolved domain after assigning previous generators: {domain}"
+                    ))
+                })?;
+
+            let values: Vec<Literal> = resolved
+                .values()
+                .map_err(|err| {
+                    SolverError::ModelFeatureNotSupported(format!(
+                        "quantified variable '{name}' has non-enumerable domain: {err}"
+                    ))
+                })?
+                .collect();
+
+            let targets = binding_targets.get(name).cloned().ok_or_else(|| {
+                SolverError::ModelInvalid(format!(
+                    "quantified variable '{name}' has no binding targets in comprehension scope"
+                ))
+            })?;
+
+            for lit in values {
+                assignment.insert(name.clone(), lit.clone());
+                let _binding = QuantifiedBinding::bind_all(&targets, &lit);
+
+                enumerate_assignments(
+                    qualifier_index + 1,
+                    qualifiers,
+                    binding_targets,
+                    assignment,
+                    on_assignment,
+                )?;
+
+                assignment.remove(name);
+            }
+        }
+        ComprehensionQualifier::Condition(condition) => match evaluate_guard(condition) {
+            Some(true) => {
+                enumerate_assignments(
+                    qualifier_index + 1,
+                    qualifiers,
+                    binding_targets,
+                    assignment,
+                    on_assignment,
+                )?;
+            }
+            Some(false) => {}
+            None => {
+                return Err(SolverError::ModelInvalid(format!(
+                    "native comprehension expansion could not evaluate guard: {condition}"
+                )));
+            }
+        },
     }
-    assignment.remove(name);
+
     Ok(())
 }
 
-fn evaluate_guard(guard: &Expression, assignment: &HashMap<Name, Literal>) -> Option<bool> {
-    let substituted = substitute_quantified_literals(guard.clone(), assignment);
-    let simplified = simplify_expression(substituted);
+fn evaluate_guard(guard: &Expression) -> Option<bool> {
+    let simplified = simplify_expression(guard.clone());
     match eval_constant(&simplified)? {
         Literal::Bool(value) => Some(value),
         _ => None,
     }
 }
 
-fn substitute_quantified_literals(
+fn resolve_domain_for_assignment(
+    domain: DomainPtr,
+    assignment: &HashMap<Name, Literal>,
+) -> Option<Moo<GroundDomain>> {
+    if let Some(resolved) = domain.resolve() {
+        return Some(resolved);
+    }
+
+    let Domain::Unresolved(unresolved) = domain.as_ref() else {
+        return None;
+    };
+
+    let UnresolvedDomain::Int(ranges) = unresolved.as_ref() else {
+        return None;
+    };
+
+    let ranges = ranges
+        .iter()
+        .map(|range| resolve_range_from_bound_declarations(range, assignment))
+        .collect::<Option<Vec<_>>>()?;
+
+    Some(Moo::new(GroundDomain::Int(ranges)))
+}
+
+fn resolve_range_from_bound_declarations(
+    range: &Range<IntVal>,
+    assignment: &HashMap<Name, Literal>,
+) -> Option<Range<i32>> {
+    Some(match range {
+        Range::Single(x) => Range::Single(resolve_int_val_from_bound_declarations(x, assignment)?),
+        Range::Bounded(l, r) => Range::Bounded(
+            resolve_int_val_from_bound_declarations(l, assignment)?,
+            resolve_int_val_from_bound_declarations(r, assignment)?,
+        ),
+        Range::UnboundedL(r) => {
+            Range::UnboundedL(resolve_int_val_from_bound_declarations(r, assignment)?)
+        }
+        Range::UnboundedR(l) => {
+            Range::UnboundedR(resolve_int_val_from_bound_declarations(l, assignment)?)
+        }
+        Range::Unbounded => Range::Unbounded,
+    })
+}
+
+fn resolve_int_val_from_bound_declarations(
+    value: &IntVal,
+    assignment: &HashMap<Name, Literal>,
+) -> Option<i32> {
+    match value {
+        IntVal::Const(x) => Some(*x),
+        IntVal::Reference(reference) => {
+            if let Some(Literal::Int(x)) = reference.resolve_constant() {
+                return Some(x);
+            }
+
+            let reference_name = reference.name().clone();
+            let assigned = assignment.get(&reference_name).cloned().or_else(|| {
+                assignment.iter().find_map(|(name, lit)| {
+                    if name.to_string() == reference_name.to_string() {
+                        Some(lit.clone())
+                    } else {
+                        None
+                    }
+                })
+            });
+
+            match assigned {
+                Some(Literal::Int(x)) => Some(x),
+                _ => None,
+            }
+        }
+        IntVal::Expr(expr) => {
+            let expr = substitute_assigned_references(expr.as_ref().clone(), assignment);
+            let simplified = simplify_expression(expr);
+            match eval_constant(&simplified) {
+                Some(Literal::Int(x)) => Some(x),
+                _ => None,
+            }
+        }
+    }
+}
+
+fn substitute_assigned_references(
     expr: Expression,
     assignment: &HashMap<Name, Literal>,
 ) -> Expression {
     expr.transform_bi(&|atom: Atom| {
-        let Atom::Reference(ref decl) = atom else {
+        let Atom::Reference(reference) = atom else {
             return atom;
         };
 
-        let Some(lit) = assignment.get(&decl.name()) else {
-            return atom;
-        };
+        let reference_name = reference.name().clone();
+        let assigned = assignment.get(&reference_name).cloned().or_else(|| {
+            assignment.iter().find_map(|(name, lit)| {
+                if name.to_string() == reference_name.to_string() {
+                    Some(lit.clone())
+                } else {
+                    None
+                }
+            })
+        });
 
-        Atom::Literal(lit.clone())
+        match assigned {
+            Some(lit) => Atom::Literal(lit),
+            None => Atom::Reference(reference),
+        }
     })
 }
 
-fn simplify_expression(mut expr: Expression) -> Expression {
-    // Keep applying evaluators to a fixed point, or until no changes are made.
-    for _ in 0..128 {
-        let next = expr.clone().transform_bi(&|subexpr: Expression| {
-            if let Some(lit) = eval_constant(&subexpr) {
-                return Expression::Atomic(Metadata::new(), Atom::Literal(lit));
-            }
-            if let Ok(reduction) = run_partial_evaluator(&subexpr) {
-                return reduction.new_expression;
-            }
-            subexpr
-        });
+fn collect_quantified_binding_targets(
+    comprehension: &Comprehension,
+    quantified_names: &HashSet<Name>,
+) -> HashMap<Name, Vec<DeclarationPtr>> {
+    let mut result: HashMap<Name, Vec<DeclarationPtr>> = HashMap::new();
 
-        if next == expr {
-            break;
+    let mut add_target = |name: &Name, decl: DeclarationPtr| {
+        let entry = result.entry(name.clone()).or_default();
+        if !entry.iter().any(|existing| existing.id() == decl.id()) {
+            entry.push(decl);
         }
-        expr = next;
+    };
+
+    let symbols = comprehension.symbols().clone();
+    for (name, decl) in symbols.into_iter_local() {
+        if !quantified_names.contains(&name) {
+            continue;
+        }
+
+        let generator = {
+            let kind = decl.kind();
+            if let DeclarationKind::Quantified(inner) = &*kind {
+                inner.generator().cloned()
+            } else {
+                None
+            }
+        };
+
+        let is_quantified = {
+            let kind = decl.kind();
+            matches!(&*kind, DeclarationKind::Quantified(_))
+        };
+
+        if generator.is_some() || is_quantified {
+            add_target(&name, decl.clone());
+        }
+        if let Some(generator) = generator {
+            add_target(&name, generator);
+        }
     }
-    expr
+
+    // Also collect from concrete references in guards and return expression.
+    for guard in comprehension.generator_conditions() {
+        let refs: std::collections::VecDeque<DeclarationPtr> = guard.universe_bi();
+        for decl in refs {
+            let name = decl.name().clone();
+            if !quantified_names.contains(&name) {
+                continue;
+            }
+            add_target(&name, decl.clone());
+            let kind = decl.kind();
+            if let DeclarationKind::Quantified(inner) = &*kind
+                && let Some(generator) = inner.generator()
+            {
+                add_target(&name, generator.clone());
+            }
+        }
+    }
+
+    let refs: std::collections::VecDeque<DeclarationPtr> =
+        comprehension.return_expression.clone().universe_bi();
+    for decl in refs {
+        let name = decl.name().clone();
+        if !quantified_names.contains(&name) {
+            continue;
+        }
+        add_target(&name, decl.clone());
+        let kind = decl.kind();
+        if let DeclarationKind::Quantified(inner) = &*kind
+            && let Some(generator) = inner.generator()
+        {
+            add_target(&name, generator.clone());
+        }
+    }
+
+    result
+}
+
+struct QuantifiedBinding {
+    targets: Vec<(DeclarationPtr, DeclarationKind)>,
+}
+
+impl QuantifiedBinding {
+    fn bind_all(targets: &[DeclarationPtr], lit: &Literal) -> Self {
+        let mut previous = Vec::with_capacity(targets.len());
+        for target in targets {
+            let mut mutable_target = target.clone();
+            let previous_kind =
+                mutable_target.replace_kind(DeclarationKind::TemporaryValueLetting(
+                    Expression::Atomic(Metadata::new(), Atom::Literal(lit.clone())),
+                ));
+            previous.push((target.clone(), previous_kind));
+        }
+
+        QuantifiedBinding { targets: previous }
+    }
+}
+
+impl Drop for QuantifiedBinding {
+    fn drop(&mut self) {
+        for (target, previous_kind) in &self.targets {
+            let mut mutable_target = target.clone();
+            let _ = mutable_target.replace_kind(previous_kind.clone());
+        }
+    }
 }
