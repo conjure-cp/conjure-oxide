@@ -144,10 +144,10 @@ pub fn parse_essence_with_context(
             }
         }
     }
-    
+
     // check for errors (keyword as identifier)
     keyword_as_identifier(root_node, &source_code, errors);
-    
+
     Ok(model)
 }
 
