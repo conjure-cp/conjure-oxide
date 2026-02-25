@@ -152,10 +152,9 @@ impl AbstractComprehensionBuilder {
             .element_domain()
             .expect("Expression must contain elements with uniform domain");
 
-        // The variable is given (a constant) in the return expression, and a decision var
-        // in the generator expression
-        let generator_ptr = DeclarationPtr::new_var(name, domain);
-        let return_expr_ptr = DeclarationPtr::new_given_quantified(&generator_ptr)
+        // The variable is quantified in both scopes.
+        let generator_ptr = DeclarationPtr::new_quantified(name, domain);
+        let return_expr_ptr = DeclarationPtr::new_quantified_from_generator(&generator_ptr)
             .expect("Return expression declaration must not be None");
 
         self.return_expr_symbols.write().insert(return_expr_ptr);

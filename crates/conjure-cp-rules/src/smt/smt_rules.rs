@@ -5,7 +5,7 @@ use conjure_cp::rule_engine::{
     ApplicationError::{DomainError, RuleNotApplicable},
     ApplicationResult, Reduction, register_rule, register_rule_set,
 };
-use conjure_cp::solver::SolverFamily;
+use conjure_cp::settings::SolverFamily;
 use conjure_cp::{bug, essence_expr};
 use uniplate::Uniplate;
 
@@ -78,7 +78,9 @@ fn flatten_indomain(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// Matrix a = b iff every index in the union of their indices has the same value.
 /// E.g. a: matrix indexed by [int(1..2)] of int(1..2), b: matrix indexed by [int(2..3)] of int(1..2)
 /// a = b ~> a[1] = b[1] /\ a[2] = b[2] /\ a[3] = b[3]
-#[register_rule(("Smt", 1000))]
+// Must run before `matrix_ref_to_atom` ("Base", 2000), otherwise matrix equality can be
+// rewritten into `int(1..)` indexed literals, losing finite index bounds for this rule.
+#[register_rule(("Smt", 3000))]
 fn flatten_matrix_eq_neq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (a, b) = match expr {
         Expr::Eq(_, a, b) | Expr::Neq(_, a, b) => (a, b),
