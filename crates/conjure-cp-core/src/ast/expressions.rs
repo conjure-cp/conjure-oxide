@@ -589,7 +589,10 @@ fn bounded_i32_domain_for_matrix_literal_monotonic(
 
     let expr = exprs.pop()?;
     let dom = expr.domain_of()?;
-    let Some(GroundDomain::Int(ranges)) = dom.as_ground() else {
+    let Some(resolved) = dom.resolve() else {
+        return None;
+    };
+    let GroundDomain::Int(ranges) = resolved.as_ref() else {
         return None;
     };
 
@@ -597,7 +600,10 @@ fn bounded_i32_domain_for_matrix_literal_monotonic(
 
     for expr in exprs {
         let dom = expr.domain_of()?;
-        let Some(GroundDomain::Int(ranges)) = dom.as_ground() else {
+        let Some(resolved) = dom.resolve() else {
+            return None;
+        };
+        let GroundDomain::Int(ranges) = resolved.as_ref() else {
             return None;
         };
 
