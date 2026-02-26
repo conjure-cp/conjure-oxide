@@ -64,36 +64,18 @@ fn expand_comprehension_native(expr: &Expr, symbols: &SymbolTable) -> Applicatio
         return Err(RuleNotApplicable);
     }
 
-    let (comprehension, ac_operator_kind) = match expr {
-        Expr::Comprehension(_, comprehension) => (comprehension.as_ref().clone(), None),
-        other => {
-            let ac_operator_kind = other.to_ac_operator_kind().ok_or(RuleNotApplicable)?;
-
-            debug_assert_eq!(
-                other.children().len(),
-                1,
-                "AC expressions should have exactly one child."
-            );
-
-            let comprehension =
-                as_single_comprehension(&other.children()[0]).ok_or(RuleNotApplicable)?;
-
-            (comprehension, Some(ac_operator_kind))
-        }
+    let Expr::Comprehension(_, comprehension) = expr else {
+        return Err(RuleNotApplicable);
     };
 
+    let comprehension = comprehension.as_ref().clone();
     let mut symbols = symbols.clone();
     let results = expand_native(comprehension, &mut symbols)
         .unwrap_or_else(|e| bug!("native comprehension expansion failed: {e}"));
-    let new_expr = match ac_operator_kind {
-        Some(kind) => kind.as_expression(into_matrix_expr!(results)),
-        None => into_matrix_expr!(results),
-    };
-    Ok(Reduction::with_symbols(new_expr, symbols))
+    Ok(Reduction::with_symbols(into_matrix_expr!(results), symbols))
 }
 
-/// Expand comprehensions using `--comprehension-expander via-solver` (and as fallback for
-/// non-AC comprehensions when `--comprehension-expander via-solver-ac`).
+/// Expand comprehensions using `--comprehension-expander via-solver`.
 #[register_rule(("Base", 2000))]
 fn expand_comprehension_via_solver(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     if !matches!(
@@ -107,8 +89,8 @@ fn expand_comprehension_via_solver(expr: &Expr, symbols: &SymbolTable) -> Applic
         return Err(RuleNotApplicable);
     };
 
-    let results = expand_via_solver(comprehension.as_ref().clone()).or(Err(RuleNotApplicable))?;
-
+    let comprehension = comprehension.as_ref().clone();
+    let results = expand_via_solver(comprehension).or(Err(RuleNotApplicable))?;
     Ok(Reduction::with_symbols(
         into_matrix_expr!(results),
         symbols.clone(),
