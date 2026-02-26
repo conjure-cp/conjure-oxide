@@ -1,12 +1,12 @@
 use super::atom::parse_int;
 use super::util::named_children;
 use crate::errors::{FatalParseError, RecoverableParseError};
+use crate::expression::parse_expression;
 use crate::{child, field};
 use conjure_cp_core::ast::{
     DeclarationPtr, Domain, DomainPtr, IntVal, Moo, Name, Range, RecordEntry, Reference, SetAttr,
     SymbolTablePtr,
 };
-use crate::expression::parse_expression;
 use tree_sitter::Node;
 
 /// Parse an Essence variable domain into its Conjure AST representation.
@@ -42,10 +42,12 @@ pub fn parse_domain(
         "matrix_domain" => parse_matrix_domain(domain, source_code, symbols, errors),
         "record_domain" => parse_record_domain(domain, source_code, symbols, errors),
         "set_domain" => parse_set_domain(domain, source_code, symbols, errors),
-        _ => return Err(FatalParseError::internal_error(
-            format!("Unexpected domain type: {}", domain.kind()),
-            Some(domain.range()),
-        )),
+        _ => {
+            return Err(FatalParseError::internal_error(
+                format!("Unexpected domain type: {}", domain.kind()),
+                Some(domain.range()),
+            ));
+        }
     }
 }
 
@@ -95,7 +97,9 @@ fn parse_int_domain(
     for domain_component in named_children(&range_list) {
         match domain_component.kind() {
             "atom" | "arithmetic_expr" => {
-                let Some(int_val) = parse_int_val(domain_component, source_code, symbols_ptr, errors)? else {
+                let Some(int_val) =
+                    parse_int_val(domain_component, source_code, symbols_ptr, errors)?
+                else {
                     return Ok(None);
                 };
 
@@ -140,19 +144,24 @@ fn parse_int_domain(
                         }
                         ranges_unresolved.push(Range::UnboundedL(upper));
                     }
-                    _ => return Err(FatalParseError::internal_error(
-                        "Invalid int range: must have at least a lower or upper bound".to_string(),
-                        Some(domain_component.range()),
-                    )),
+                    _ => {
+                        return Err(FatalParseError::internal_error(
+                            "Invalid int range: must have at least a lower or upper bound"
+                                .to_string(),
+                            Some(domain_component.range()),
+                        ));
+                    }
                 }
             }
-            _ => return Err(FatalParseError::internal_error(
-                format!(
-                    "Unexpected int domain component: {}",
-                    domain_component.kind()
-                ),
-                Some(domain_component.range()),
-            )),
+            _ => {
+                return Err(FatalParseError::internal_error(
+                    format!(
+                        "Unexpected int domain component: {}",
+                        domain_component.kind()
+                    ),
+                    Some(domain_component.range()),
+                ));
+            }
         }
     }
 
@@ -191,7 +200,9 @@ fn parse_int_val(
             return Ok(Some(IntVal::Const(integer)));
         }
         // Otherwise, check if it's an identifier reference
-        let Some(decl) = get_declaration_ptr_from_identifier(node, source_code, symbols_ptr, errors)? else {
+        let Some(decl) =
+            get_declaration_ptr_from_identifier(node, source_code, symbols_ptr, errors)?
+        else {
             // If identifier isn't defined, its a semantic error
             return Ok(None);
         };
@@ -199,12 +210,12 @@ fn parse_int_val(
     }
 
     // For anything else, parse as an expression
-    let Some(expr) = parse_expression(node, source_code, &node, symbols_ptr.clone(), errors)? else {
+    let Some(expr) = parse_expression(node, source_code, &node, symbols_ptr.clone(), errors)?
+    else {
         return Ok(None);
     };
     Ok(Some(IntVal::Expr(Moo::new(expr))))
 }
-
 
 fn parse_tuple_domain(
     tuple_domain: Node,
