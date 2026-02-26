@@ -1,14 +1,7 @@
-use conjure_cp_essence_parser::diagnostics::{
-    self,
-    error_detection::collect_errors::{check_diagnostic, detect_errors, print_diagnostics},
+use conjure_cp_essence_parser::diagnostics::error_detection::collect_errors::{
+    check_diagnostic, detect_errors,
 };
 
-#[test]
-fn help() {
-    let source = "fid x : int(1..3)";
-    let diagnostics = detect_errors(source);
-    print_diagnostics(&diagnostics);
-}
 #[test]
 fn unexpected_closing_paren() {
     let source = "find x: int(1..3))";
