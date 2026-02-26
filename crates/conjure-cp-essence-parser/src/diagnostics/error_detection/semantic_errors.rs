@@ -23,6 +23,7 @@ pub fn detect_semantic_errors(source: &str) -> Vec<Diagnostic> {
         Err(_fatal) => {
             // Fatal error means something went wrong internally (e.g., tree-sitter parser failure)
             // We can't provide meaningful diagnostics in this case, so just return empty
+            // TODO: Figure out how LSP should handle fatal errors from the parser.
         }
     }
 
