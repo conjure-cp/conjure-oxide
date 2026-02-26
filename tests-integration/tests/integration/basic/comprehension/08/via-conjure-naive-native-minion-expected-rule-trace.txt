@@ -1,0 +1,150 @@
+Model before rewriting:
+
+letting m be 6
+find x: int(0..6)
+
+such that
+
+and([ ((j - i) <= x) | i : int(1..((m - 1))), j : int(((i - 1))..(sum([i,1;int(1..2)]))) ])
+
+--
+
+[ ((j - i) <= x) | i : int(1..((m - 1))), j : int(((i - 1))..(sum([i,1;int(1..2)]))) ], 
+   ~~> expand_comprehension_native ([("Base", 2000)]) 
+[(-1 <= x),(0 <= x),(1 <= x),(-1 <= x),(0 <= x),(1 <= x),(-1 <= x),(0 <= x),(1 <= x),(-1 <= x),(0 <= x),(1 <= x),(-1 <= x),(0 <= x),(1 <= x);int(1..)] 
+
+--
+
+and([(-1 <= x),(0 <= x),(1 <= x),(-1 <= x),(0 <= x),(1 <= x),(-1 <= x),(0 <= x),(1 <= x),(-1 <= x),(0 <= x),(1 <= x),(-1 <= x),(0 <= x),(1 <= x);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(-1 <= x),
+(0 <= x),
+(1 <= x),
+(-1 <= x),
+(0 <= x),
+(1 <= x),
+(-1 <= x),
+(0 <= x),
+(1 <= x),
+(-1 <= x),
+(0 <= x),
+(1 <= x),
+(-1 <= x),
+(0 <= x),
+(1 <= x) 
+
+--
+
+(-1 <= x), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(-1, x, 0) 
+
+--
+
+(0 <= x), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(0, x, 0) 
+
+--
+
+(1 <= x), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(1, x, 0) 
+
+--
+
+(-1 <= x), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(-1, x, 0) 
+
+--
+
+(0 <= x), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(0, x, 0) 
+
+--
+
+(1 <= x), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(1, x, 0) 
+
+--
+
+(-1 <= x), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(-1, x, 0) 
+
+--
+
+(0 <= x), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(0, x, 0) 
+
+--
+
+(1 <= x), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(1, x, 0) 
+
+--
+
+(-1 <= x), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(-1, x, 0) 
+
+--
+
+(0 <= x), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(0, x, 0) 
+
+--
+
+(1 <= x), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(1, x, 0) 
+
+--
+
+(-1 <= x), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(-1, x, 0) 
+
+--
+
+(0 <= x), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(0, x, 0) 
+
+--
+
+(1 <= x), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(1, x, 0) 
+
+--
+
+Final model:
+
+letting m be 6
+find x: int(0..6)
+
+such that
+
+Ineq(-1, x, 0),
+Ineq(0, x, 0),
+Ineq(1, x, 0),
+Ineq(-1, x, 0),
+Ineq(0, x, 0),
+Ineq(1, x, 0),
+Ineq(-1, x, 0),
+Ineq(0, x, 0),
+Ineq(1, x, 0),
+Ineq(-1, x, 0),
+Ineq(0, x, 0),
+Ineq(1, x, 0),
+Ineq(-1, x, 0),
+Ineq(0, x, 0),
+Ineq(1, x, 0)
+

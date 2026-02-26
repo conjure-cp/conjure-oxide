@@ -1,0 +1,156 @@
+Model before rewriting:
+
+letting m be 6
+find x: int(0..6)
+
+such that
+
+and([ and([ (j <= x) | j : int(((i - 1))..(sum([i,1;int(1..2)]))) ]) | i : int(1..((m - 1))) ])
+
+--
+
+and([ and([ (j <= x) | j : int(((i - 1))..(sum([i,1;int(1..2)]))) ]) | i : int(1..((m - 1))) ]), 
+   ~~> merge_nested_ac_comprehensions ([("Base", 8900)]) 
+and([ (j <= x) | i : int(1..((m - 1))), j : int(((i - 1))..(sum([i,1;int(1..2)]))) ]) 
+
+--
+
+[ (j <= x) | i : int(1..((m - 1))), j : int(((i - 1))..(sum([i,1;int(1..2)]))) ], 
+   ~~> expand_comprehension_native ([("Base", 2000)]) 
+[(0 <= x),(1 <= x),(2 <= x),(1 <= x),(2 <= x),(3 <= x),(2 <= x),(3 <= x),(4 <= x),(3 <= x),(4 <= x),(5 <= x),(4 <= x),(5 <= x),(6 <= x);int(1..)] 
+
+--
+
+and([(0 <= x),(1 <= x),(2 <= x),(1 <= x),(2 <= x),(3 <= x),(2 <= x),(3 <= x),(4 <= x),(3 <= x),(4 <= x),(5 <= x),(4 <= x),(5 <= x),(6 <= x);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(0 <= x),
+(1 <= x),
+(2 <= x),
+(1 <= x),
+(2 <= x),
+(3 <= x),
+(2 <= x),
+(3 <= x),
+(4 <= x),
+(3 <= x),
+(4 <= x),
+(5 <= x),
+(4 <= x),
+(5 <= x),
+(6 <= x) 
+
+--
+
+(0 <= x), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(0, x, 0) 
+
+--
+
+(1 <= x), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(1, x, 0) 
+
+--
+
+(2 <= x), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(2, x, 0) 
+
+--
+
+(1 <= x), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(1, x, 0) 
+
+--
+
+(2 <= x), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(2, x, 0) 
+
+--
+
+(3 <= x), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(3, x, 0) 
+
+--
+
+(2 <= x), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(2, x, 0) 
+
+--
+
+(3 <= x), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(3, x, 0) 
+
+--
+
+(4 <= x), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(4, x, 0) 
+
+--
+
+(3 <= x), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(3, x, 0) 
+
+--
+
+(4 <= x), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(4, x, 0) 
+
+--
+
+(5 <= x), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(5, x, 0) 
+
+--
+
+(4 <= x), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(4, x, 0) 
+
+--
+
+(5 <= x), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(5, x, 0) 
+
+--
+
+(6 <= x), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(6, x, 0) 
+
+--
+
+Final model:
+
+letting m be 6
+find x: int(0..6)
+
+such that
+
+Ineq(0, x, 0),
+Ineq(1, x, 0),
+Ineq(2, x, 0),
+Ineq(1, x, 0),
+Ineq(2, x, 0),
+Ineq(3, x, 0),
+Ineq(2, x, 0),
+Ineq(3, x, 0),
+Ineq(4, x, 0),
+Ineq(3, x, 0),
+Ineq(4, x, 0),
+Ineq(5, x, 0),
+Ineq(4, x, 0),
+Ineq(5, x, 0),
+Ineq(6, x, 0)
+
