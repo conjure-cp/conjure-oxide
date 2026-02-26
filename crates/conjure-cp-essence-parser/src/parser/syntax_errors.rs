@@ -4,39 +4,6 @@ use capitalize::Capitalize;
 use std::collections::HashSet;
 use tree_sitter::Node;
 
-pub fn classify_error_node(node: Node, source: &str) -> RecoverableParseError {
-    let line = node.start_position().row;
-    // If this line has already been reported as malformed, skip all error nodes on this line
-
-    if is_malformed_line_error(&node, source) {
-        let start_byte = node.start_byte();
-        let end_byte = node.end_byte();
-
-        let last_char = source.lines().nth(line).map_or(0, |l| l.len());
-        RecoverableParseError::new(
-            format!(
-                "Malformed line {}: '{}'",
-                line + 1,
-                source.lines().nth(line).unwrap_or("")
-            ),
-            Some(tree_sitter::Range {
-                start_byte,
-                end_byte,
-                start_point: tree_sitter::Point {
-                    row: line,
-                    column: 0,
-                },
-                end_point: tree_sitter::Point {
-                    row: line,
-                    column: last_char,
-                },
-            }),
-        )
-    } else {
-        classify_unexpected_token_error(node, source)
-    }
-}
-
 pub fn detect_syntactic_errors(
     source: &str,
     tree: &tree_sitter::Tree,

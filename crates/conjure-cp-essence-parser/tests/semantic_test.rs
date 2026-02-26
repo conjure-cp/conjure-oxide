@@ -1,12 +1,11 @@
-use conjure_cp_essence_parser::diagnostics::error_detection::collect_errors::{
-    check_diagnostic, detect_errors,
-};
+use conjure_cp_essence_parser::diagnostics::diagnostics_api::get_diagnostics;
+use conjure_cp_essence_parser::diagnostics::error_detection::collect_errors::check_diagnostic;
 
 #[test]
 fn detects_undefined_variable() {
     let source = "find x: int(1..10)\nsuch that x = y";
     // y is undefined
-    let diagnostics = detect_errors(source);
+    let diagnostics = get_diagnostics(source);
 
     assert_eq!(
         diagnostics.len(),
@@ -22,7 +21,7 @@ fn detects_undefined_variable() {
 #[test]
 fn no_errors_for_valid_code() {
     let source = "find x, y: int(1..10)\nsuch that x + y = 10";
-    let diagnostics = detect_errors(source);
+    let diagnostics = get_diagnostics(source);
 
     // should have no diagnostics
     assert_eq!(
@@ -36,7 +35,7 @@ fn no_errors_for_valid_code() {
 #[test]
 fn range_points_to_error_location() {
     let source = "find x: int(1..10)\nsuch that x = undefined_var";
-    let diagnostics = detect_errors(source);
+    let diagnostics = get_diagnostics(source);
 
     assert_eq!(
         diagnostics.len(),
@@ -54,7 +53,7 @@ fn range_points_to_error_location() {
 #[test]
 fn domain_start_greater_than_end() {
     let source = "find x: int(10..1)";
-    let diagnostics = detect_errors(source);
+    let diagnostics = get_diagnostics(source);
 
     assert_eq!(
         diagnostics.len(),
@@ -81,7 +80,7 @@ fn incorrect_type_for_equation() {
     letting y be false\n
     find x: int(5..10)\n
     such that 5 + y = 6";
-    let diagnostics = detect_errors(source);
+    let diagnostics = get_diagnostics(source);
 
     assert_eq!(
         diagnostics.len(),
@@ -105,7 +104,7 @@ fn incorrect_type_for_equation() {
 #[test]
 fn dividing_over_zero() {
     let source = "find x: int(5..10)\nsuch that x/0 = 3";
-    let diagnostics = detect_errors(source);
+    let diagnostics = get_diagnostics(source);
 
     assert_eq!(
         diagnostics.len(),
@@ -124,7 +123,7 @@ fn invalid_index() {
     let source = "letting s be (0,1,1,0)
                 \nletting t be (0,0,0,1)
                 \nfind a : bool such that a = (s[5] = t[1])";
-    let diagnostics = detect_errors(source);
+    let diagnostics = get_diagnostics(source);
 
     assert_eq!(
         diagnostics.len(),
@@ -141,7 +140,7 @@ fn invalid_index() {
 #[test]
 fn duplicate_declaration_of_variable() {
     let source = "find x: int(1..10)\nfind x: int(2..3)";
-    let diagnostics = detect_errors(source);
+    let diagnostics = get_diagnostics(source);
 
     assert_eq!(
         diagnostics.len(),
@@ -165,7 +164,7 @@ fn duplicate_declaration_of_variable() {
 #[test]
 fn extra_comma_in_variable_list() {
     let source = "find x,: int(1..10)";
-    let diagnostics = detect_errors(source);
+    let diagnostics = get_diagnostics(source);
 
     assert_eq!(
         diagnostics.len(),

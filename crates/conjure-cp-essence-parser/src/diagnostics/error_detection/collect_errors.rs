@@ -92,23 +92,6 @@ fn range_to_position(range: &Option<tree_sitter::Range>) -> (Position, Position)
     }
 }
 
-/// Helper function
-pub fn print_diagnostics(diags: &[Diagnostic]) {
-    for (i, diag) in diags.iter().enumerate() {
-        println!(
-            "Diagnostic {}:\n  Range: ({}:{}) - ({}:{})\n  Severity: {:?}\n  Message: {}\n  Source: {}\n",
-            i + 1,
-            diag.range.start.line,
-            diag.range.start.character,
-            diag.range.end.line,
-            diag.range.end.character,
-            diag.severity,
-            diag.message,
-            diag.source
-        );
-    }
-}
-
 /// Helper function for tests to compare the actual diagnostic with the expected one.
 pub fn check_diagnostic(
     diag: &Diagnostic,

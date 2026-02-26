@@ -70,8 +70,6 @@ pub fn get_diagnostics(source: &str) -> Vec<Diagnostic> {
 
     diagnostics.extend(detect_errors(source));
 
-    // diagnostics.extend(detect_errors(source));
-
     diagnostics
 }
 
