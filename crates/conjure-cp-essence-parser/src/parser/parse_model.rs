@@ -50,7 +50,7 @@ pub fn parse_essence_with_context(
                     model
                         .as_submodel_mut()
                         .symbols_mut()
-                        .insert(DeclarationPtr::new_var(name, domain));
+                        .insert(DeclarationPtr::new_find(name, domain));
                 }
             }
             "bool_expr" | "atom" | "comparison_expr" => {

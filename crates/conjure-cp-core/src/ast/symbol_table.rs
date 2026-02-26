@@ -386,7 +386,7 @@ impl SymbolTable {
     pub fn gensym(&mut self, domain: &DomainPtr) -> DeclarationPtr {
         let num = self.next_machine_name;
         self.next_machine_name += 1;
-        let decl = DeclarationPtr::new_var(Name::Machine(num), domain.clone());
+        let decl = DeclarationPtr::new_find(Name::Machine(num), domain.clone());
         self.insert(decl.clone());
         decl
     }

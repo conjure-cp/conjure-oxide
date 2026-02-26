@@ -154,13 +154,13 @@ impl IntVal {
                 ReturnType::Int => Some(IntVal::Reference(re.clone())),
                 _ => None,
             },
-            DeclarationKind::GivenQuantified(inner) => match inner.domain().return_type() {
+            DeclarationKind::Quantified(inner) => match inner.domain().return_type() {
                 ReturnType::Int => Some(IntVal::Reference(re.clone())),
                 _ => None,
             },
             DeclarationKind::DomainLetting(_)
             | DeclarationKind::RecordField(_)
-            | DeclarationKind::DecisionVariable(_) => None,
+            | DeclarationKind::Find(_) => None,
         }
     }
 
@@ -178,10 +178,10 @@ impl IntVal {
             IntVal::Reference(re) => match re.ptr.kind().deref() {
                 DeclarationKind::ValueLetting(expr) => eval_expr_to_int(expr),
                 // If this is an int given we will be able to resolve it eventually, but not yet
-                DeclarationKind::Given(_) | DeclarationKind::GivenQuantified(..) => None,
+                DeclarationKind::Given(_) | DeclarationKind::Quantified(..) => None,
                 DeclarationKind::DomainLetting(_)
                 | DeclarationKind::RecordField(_)
-                | DeclarationKind::DecisionVariable(_) => bug!(
+                | DeclarationKind::Find(_) => bug!(
                     "Expected integer expression, given, or letting inside int domain; Got: {re}"
                 ),
             },

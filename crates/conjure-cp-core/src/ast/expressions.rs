@@ -1439,7 +1439,7 @@ impl Display for Expression {
             }
             Expression::MinionWInSet(_, atom, values) => {
                 let values = values.iter().join(",");
-                write!(f, "__minion_w_inset({atom},{values})")
+                write!(f, "__minion_w_inset({atom},[{values}])")
             }
             Expression::AuxDeclaration(_, reference, e) => {
                 write!(f, "{} =aux {}", reference, e.clone())
