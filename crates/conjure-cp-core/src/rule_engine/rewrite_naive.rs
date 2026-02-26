@@ -1,7 +1,7 @@
 use super::{RewriteError, RuleSet, resolve_rules::RuleData};
 use crate::{
     Model,
-    ast::{Expression as Expr, SubModel},
+    ast::Expression as Expr,
     bug,
     rule_engine::{
         get_rules_grouped,
@@ -52,7 +52,7 @@ pub fn rewrite_naive<'a>(
     // Rewrite until there are no more rules left to apply.
     while done_something {
         done_something = try_rewrite_model(
-            model.as_submodel_mut(),
+            &mut model,
             &rules_grouped,
             prop_multiple_equally_applicable,
             &mut rewriter_stats,
@@ -82,7 +82,7 @@ pub fn rewrite_naive<'a>(
 //
 // Returns None if no change was made.
 fn try_rewrite_model(
-    submodel: &mut SubModel,
+    submodel: &mut Model,
     rules_grouped: &Vec<(u16, Vec<RuleData<'_>>)>,
     prop_multiple_equally_applicable: bool,
     stats: &mut RewriterStats,

@@ -22,8 +22,8 @@ use super::records::RecordValue;
 use super::sat_encoding::SATIntEncoding;
 use super::{
     AbstractLiteral, Atom, DeclarationPtr, Domain, DomainPtr, GroundDomain, IntVal, Literal,
-    Metadata, Moo, Name, Range, Reference, ReturnType, SetAttr, SubModel, SymbolTable,
-    SymbolTablePtr, Typeable, UnresolvedDomain, matrix,
+    Metadata, Model, Moo, Name, Range, Reference, ReturnType, SetAttr, SymbolTable, SymbolTablePtr,
+    Typeable, UnresolvedDomain, matrix,
 };
 
 // Ensure that this type doesn't get too big
@@ -70,7 +70,7 @@ static_assertions::assert_eq_size!([u8; 104], Expression);
 #[biplate(to=RecordValue<Expression>)]
 #[biplate(to=RecordValue<Literal>)]
 #[biplate(to=Reference)]
-#[biplate(to=SubModel)]
+#[biplate(to=Model)]
 #[biplate(to=SymbolTable)]
 #[biplate(to=SymbolTablePtr)]
 #[biplate(to=Vec<Expression>)]
@@ -87,7 +87,7 @@ pub enum Expression {
     /// A comprehension.
     ///
     /// The inside of the comprehension opens a new scope.
-    // todo (gskorokhod): Comprehension contains a SubModel which contains a bunch of Rc pointers.
+    // todo (gskorokhod): Comprehension contains a symbol table which contains a bunch of pointers.
     // This makes implementing Quine tricky (it doesnt support Rc, by design). Skip it for now.
     #[polyquine_skip]
     Comprehension(Metadata, Moo<Comprehension>),
@@ -1230,7 +1230,7 @@ impl CategoryOf for Expression {
                 // this should generically cover all leaf types we currently have in oxide.
 
                 // if x contains submodels (including comprehensions)
-                if !Biplate::<SubModel>::universe_bi(&x).is_empty() {
+                if !Biplate::<Model>::universe_bi(&x).is_empty() {
                     // assume that the category is decision
                     return Category::Decision;
                 }
