@@ -557,7 +557,7 @@ fn parse_domain_value_int(obj: &JsonValue, symbols: &SymbolTable) -> Option<i32>
         );
         let name = Name::User(Ustr::from(inner_name));
         let decl = symbols.lookup(&name)?;
-        let DeclarationKind::ValueLetting(d) = &decl.kind() as &DeclarationKind else {
+        let DeclarationKind::ValueLetting(d, _) = &decl.kind() as &DeclarationKind else {
             parser_trace!(".. name exists but is not a value letting!");
             return None;
         };

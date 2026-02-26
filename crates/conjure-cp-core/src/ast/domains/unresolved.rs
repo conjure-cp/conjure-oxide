@@ -126,7 +126,7 @@ impl Display for IntVal {
 impl IntVal {
     pub fn new_ref(re: &Reference) -> Option<IntVal> {
         match re.ptr.kind().deref() {
-            DeclarationKind::ValueLetting(expr) => match expr.return_type() {
+            DeclarationKind::ValueLetting(expr, _) => match expr.return_type() {
                 ReturnType::Int => Some(IntVal::Reference(re.clone())),
                 _ => None,
             },
@@ -159,7 +159,7 @@ impl IntVal {
                 _ => bug!("Expected integer expression, got: {expr}"),
             },
             IntVal::Reference(re) => match re.ptr.kind().deref() {
-                DeclarationKind::ValueLetting(expr) => match eval_constant(expr)? {
+                DeclarationKind::ValueLetting(expr, _) => match eval_constant(expr)? {
                     Literal::Int(v) => Some(v),
                     _ => bug!("Expected integer expression, got: {expr}"),
                 },

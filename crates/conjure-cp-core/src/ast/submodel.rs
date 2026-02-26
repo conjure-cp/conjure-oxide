@@ -213,7 +213,7 @@ impl Display for SubModel {
                         pretty_variable_declaration(&self.symbols(), &name).unwrap()
                     )?;
                 }
-                DeclarationKind::ValueLetting(_) => {
+                DeclarationKind::ValueLetting(_, _) => {
                     writeln!(
                         f,
                         "{}",

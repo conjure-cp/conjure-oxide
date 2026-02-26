@@ -266,7 +266,7 @@ impl DeclarationPtr {
     pub fn domain(&self) -> Option<DomainPtr> {
         match &self.kind() as &DeclarationKind {
             DeclarationKind::DecisionVariable(var) => Some(var.domain_of()),
-            DeclarationKind::ValueLetting(e) => e.domain_of(),
+            DeclarationKind::ValueLetting(e, _) => e.domain_of(),
             DeclarationKind::DomainLetting(domain) => Some(domain.clone()),
             DeclarationKind::Given(domain) => Some(domain.clone()),
             DeclarationKind::GivenQuantified(inner) => Some(inner.domain.clone()),
@@ -361,7 +361,7 @@ impl DeclarationPtr {
     /// This declaration as a value letting, if it is one.
     pub fn as_value_letting(&self) -> Option<MappedRwLockReadGuard<'_, Expression>> {
         RwLockReadGuard::try_map(self.read(), |x| {
-            if let DeclarationKind::ValueLetting(expression) = &x.kind {
+            if let DeclarationKind::ValueLetting(expression, _) = &x.kind {
                 Some(expression)
             } else {
                 None
@@ -373,7 +373,7 @@ impl DeclarationPtr {
     /// This declaration as a mutable value letting, if it is one.
     pub fn as_value_letting_mut(&mut self) -> Option<MappedRwLockWriteGuard<'_, Expression>> {
         RwLockWriteGuard::try_map(self.write(), |x| {
-            if let DeclarationKind::ValueLetting(expression) = &mut x.kind {
+            if let DeclarationKind::ValueLetting(expression, _) = &mut x.kind {
                 Some(expression)
             } else {
                 None
@@ -491,7 +491,7 @@ impl CategoryOf for DeclarationPtr {
     fn category_of(&self) -> Category {
         match &self.kind() as &DeclarationKind {
             DeclarationKind::DecisionVariable(decision_variable) => decision_variable.category_of(),
-            DeclarationKind::ValueLetting(expression) => expression.category_of(),
+            DeclarationKind::ValueLetting(expression, _) => expression.category_of(),
             DeclarationKind::DomainLetting(_) => Category::Constant,
             DeclarationKind::Given(_) => Category::Parameter,
             DeclarationKind::GivenQuantified(..) => Category::Parameter,
@@ -512,7 +512,7 @@ impl DefaultWithId for DeclarationPtr {
             inner: DeclarationPtrInner::new_with_id_unchecked(
                 RwLock::new(Declaration {
                     name: Name::User("_UNKNOWN".into()),
-                    kind: DeclarationKind::ValueLetting(false.into()),
+                    kind: DeclarationKind::ValueLetting(false.into(), None),
                 }),
                 id,
             ),
@@ -524,7 +524,7 @@ impl Typeable for DeclarationPtr {
     fn return_type(&self) -> ReturnType {
         match &self.kind() as &DeclarationKind {
             DeclarationKind::DecisionVariable(var) => var.return_type(),
-            DeclarationKind::ValueLetting(expression) => expression.return_type(),
+            DeclarationKind::ValueLetting(expression, _) => expression.return_type(),
             DeclarationKind::DomainLetting(domain) => domain.return_type(),
             DeclarationKind::Given(domain) => domain.return_type(),
             DeclarationKind::GivenQuantified(inner) => inner.domain.return_type(),
@@ -665,7 +665,7 @@ impl Declaration {
 #[biplate(to=Declaration)]
 pub enum DeclarationKind {
     DecisionVariable(DecisionVariable),
-    ValueLetting(Expression),
+    ValueLetting(Expression, Option<DomainPtr>),
     DomainLetting(DomainPtr),
     Given(DomainPtr),
 
