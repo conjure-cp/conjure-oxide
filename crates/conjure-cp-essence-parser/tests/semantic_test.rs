@@ -15,14 +15,7 @@ fn detects_undefined_variable() {
 
     let diag = &diagnostics[0];
 
-    check_diagnostic(
-        diag,
-        1,
-        14,
-        1,
-        15,
-        "The identifier 'y' is not defined",
-    );
+    check_diagnostic(diag, 1, 14, 1, 15, "The identifier 'y' is not defined");
 }
 
 #[test]
