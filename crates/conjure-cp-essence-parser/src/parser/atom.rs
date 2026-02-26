@@ -193,7 +193,7 @@ fn parse_variable(
             ))))
         } else {
             errors.push(RecoverableParseError::new(
-                format!("Variable '{}' is not defined in the symbol table", raw_name),
+                format!("The identifier '{}' is not defined", raw_name),
                 Some(node.range()),
             ));
             Ok(None)

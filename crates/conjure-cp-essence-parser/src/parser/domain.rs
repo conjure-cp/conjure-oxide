@@ -29,7 +29,7 @@ pub fn parse_domain(
             let Some(dom) = Domain::reference(decl) else {
                 errors.push(RecoverableParseError::new(
                     format!(
-                        "'{}' is not a valid domain declaration",
+                        "The identifier '{}' is not a valid domain",
                         &source_code[domain.start_byte()..domain.end_byte()]
                     ),
                     Some(domain.range()),
@@ -65,7 +65,7 @@ fn get_declaration_ptr_from_identifier(
         Some(decl) => Ok(Some(decl)),
         None => {
             errors.push(RecoverableParseError::new(
-                format!("Undefined identifier: '{}'", name),
+                format!("The identifier '{}' is not defined", name),
                 Some(identifier.range()),
             ));
             Ok(None)
