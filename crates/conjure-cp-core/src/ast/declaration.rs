@@ -606,8 +606,11 @@ where
     }
 }
 
+type ReferenceTree = Tree<Reference>;
+type ReferenceReconstructor<T> = Box<dyn Fn(ReferenceTree) -> T>;
+
 impl Biplate<Reference> for DeclarationPtr {
-    fn biplate(&self) -> (Tree<Reference>, Box<dyn Fn(Tree<Reference>) -> Self>) {
+    fn biplate(&self) -> (ReferenceTree, ReferenceReconstructor<Self>) {
         let (tree, recons_kind) = biplate_declaration_kind_references(self.kind().clone());
 
         let self2 = self.clone();
@@ -624,7 +627,7 @@ impl Biplate<Reference> for DeclarationPtr {
 
 fn biplate_domain_ptr_references(
     domain: DomainPtr,
-) -> (Tree<Reference>, Box<dyn Fn(Tree<Reference>) -> DomainPtr>) {
+) -> (ReferenceTree, ReferenceReconstructor<DomainPtr>) {
     let domain_inner = domain.as_ref().clone();
     let (tree, recons_domain) = Biplate::<Reference>::biplate(&domain_inner);
     (tree, Box::new(move |x| Moo::new(recons_domain(x))))
@@ -632,10 +635,7 @@ fn biplate_domain_ptr_references(
 
 fn biplate_declaration_kind_references(
     kind: DeclarationKind,
-) -> (
-    Tree<Reference>,
-    Box<dyn Fn(Tree<Reference>) -> DeclarationKind>,
-) {
+) -> (ReferenceTree, ReferenceReconstructor<DeclarationKind>) {
     match kind {
         DeclarationKind::Find(var) => {
             let (tree, recons_domain) = biplate_domain_ptr_references(var.domain.clone());
@@ -694,12 +694,12 @@ fn biplate_declaration_kind_references(
                 (
                     tree,
                     Box::new(move |x| Some(recons_declaration(x)))
-                        as Box<dyn Fn(Tree<Reference>) -> Option<DeclarationPtr>>,
+                        as ReferenceReconstructor<Option<DeclarationPtr>>,
                 )
             } else {
                 (
                     Tree::Zero,
-                    Box::new(|_| None) as Box<dyn Fn(Tree<Reference>) -> Option<DeclarationPtr>>,
+                    Box::new(|_| None) as ReferenceReconstructor<Option<DeclarationPtr>>,
                 )
             };
 

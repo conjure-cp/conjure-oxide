@@ -20,6 +20,9 @@ use std::{sync::Arc, time::Instant};
 use tracing::{Level, span, trace};
 use uniplate::Biplate;
 
+type VariableSnapshots = Option<(VariableDeclarationSnapshot, VariableDeclarationSnapshot)>;
+type ApplicableRule<'a, CtxFnType> = (RuleResult<'a>, u16, Expr, CtxFnType, VariableSnapshots);
+
 /// A naive, exhaustive rewriter for development purposes. Applies rules in priority order,
 /// favouring expressions found earlier during preorder traversal of the tree.
 pub fn rewrite_naive<'a>(
@@ -100,8 +103,7 @@ fn try_rewrite_model(
     stats: &mut RewriterStats,
 ) -> Option<()> {
     type CtxFn = Arc<dyn Fn(Expr) -> SubModel>;
-    type VariableSnapshots = Option<(VariableDeclarationSnapshot, VariableDeclarationSnapshot)>;
-    let mut results: Vec<(RuleResult<'_>, u16, Expr, CtxFn, VariableSnapshots)> = vec![];
+    let mut results: Vec<ApplicableRule<'_, CtxFn>> = vec![];
 
     // Iterate over rules by priority in descending order.
     'top: for (priority, rules) in rules_grouped.iter() {
@@ -205,13 +207,7 @@ fn try_rewrite_model(
 
 // Exits with a bug if there are multiple equally applicable rules for an expression.
 fn assert_no_multiple_equally_applicable_rules<CtxFnType>(
-    results: &Vec<(
-        RuleResult<'_>,
-        u16,
-        Expr,
-        CtxFnType,
-        Option<(VariableDeclarationSnapshot, VariableDeclarationSnapshot)>,
-    )>,
+    results: &Vec<ApplicableRule<'_, CtxFnType>>,
     rules_grouped: &Vec<(u16, Vec<RuleData<'_>>)>,
 ) {
     if results.len() <= 1 {
