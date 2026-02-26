@@ -292,7 +292,6 @@ fn neg_sat_direct(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     )))
 }
 
-
 /// Converts a / expression between two direct SATInts to a new direct SATInt
 /// using the "lookup table" method.
 ///
@@ -306,21 +305,24 @@ fn safediv_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let Expr::SATInt(_, SATIntEncoding::Direct, numer_inner, (numer_min, numer_max)) = numer_expr.as_ref() else {
+    let Expr::SATInt(_, SATIntEncoding::Direct, numer_inner, (numer_min, numer_max)) =
+        numer_expr.as_ref()
+    else {
         return Err(RuleNotApplicable);
     };
     let Some(numer_bits) = numer_inner.as_ref().clone().unwrap_list() else {
         return Err(RuleNotApplicable);
     };
 
-    let Expr::SATInt(_, SATIntEncoding::Direct, denom_inner, (denom_min, denom_max)) = denom_expr.as_ref() else {
+    let Expr::SATInt(_, SATIntEncoding::Direct, denom_inner, (denom_min, denom_max)) =
+        denom_expr.as_ref()
+    else {
         return Err(RuleNotApplicable);
     };
     let Some(denom_bits) = denom_inner.as_ref().clone().unwrap_list() else {
         return Err(RuleNotApplicable);
     };
 
-    
     let mut quot_min = i32::MAX;
     let mut quot_max = i32::MIN;
 
@@ -332,14 +334,16 @@ fn safediv_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         }
     }
 
-
     let mut new_symbols = symbols.clone();
     let mut quot_bits = Vec::new();
 
     // generate boolean variables for all possible quotients
     for _ in quot_min..=quot_max {
         let decl = new_symbols.gensym(&conjure_cp::ast::Domain::bool());
-        quot_bits.push(Expr::Atomic(Metadata::new(), Atom::Reference(conjure_cp::ast::Reference::new(decl))));
+        quot_bits.push(Expr::Atomic(
+            Metadata::new(),
+            Atom::Reference(conjure_cp::ast::Reference::new(decl)),
+        ));
     }
 
     let mut new_clauses = vec![];
@@ -351,9 +355,9 @@ fn safediv_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         let numer_bit = &numer_bits[(i - numer_min) as usize];
         for j in *denom_min..=*denom_max {
             let denom_bit = &denom_bits[(j - denom_min) as usize];
-            
+
             let k = if j == 0 { 0 } else { i / j };
-            
+
             let quot_bit = &quot_bits[(k - quot_min) as usize];
 
             new_clauses.push(CnfClause::new(vec![
@@ -367,7 +371,7 @@ fn safediv_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     // Since the input integers are one-hot, the output will also be one-hot.
     // Exactly one (n_i, d_j) combination will be true, firing exactly one implication
     // and forcing exactly one q_k to be true. No extra constraints for one-hotness are needed.
-    
+
     let quot_int = Expr::SATInt(
         Metadata::new(),
         SATIntEncoding::Direct,
