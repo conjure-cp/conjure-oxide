@@ -1,11 +1,11 @@
-use conjure_cp_essence_parser::diagnostics::error_detection::syntactic_errors::{
-    check_diagnostic, detect_syntactic_errors,
+use conjure_cp_essence_parser::diagnostics::error_detection::collect_errors::{
+    check_diagnostic, detect_errors,
 };
 
 #[test]
 fn invalid_top_level_statement_expression() {
     let source = " a,a,b: int(1..3)";
-    let diags = detect_syntactic_errors(source);
+    let diags = detect_errors(source);
     assert_eq!(diags.len(), 1, "Expected exactly one diagnostic");
     let diag = &diags[0];
     check_diagnostic(diag, 0, 0, 0, 17, "Malformed line 1: ' a,a,b: int(1..3)'");
@@ -15,7 +15,7 @@ fn invalid_top_level_statement_expression() {
 fn malformed_find_2() {
     let source = "find >=lex,b,c: int(1..3)";
     // using >=lex operator instead of identifier
-    let diagnostics = detect_syntactic_errors(source);
+    let diagnostics = detect_errors(source);
     assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
 
     let diag = &diagnostics[0];
@@ -32,7 +32,7 @@ fn malformed_find_2() {
 #[test]
 fn malformed_find_3() {
     let source = "find +,a,b: int(1..3)";
-    let diags = detect_syntactic_errors(source);
+    let diags = detect_errors(source);
     assert_eq!(diags.len(), 1, "Expected exactly one diagnostic");
     let diag = &diags[0];
     check_diagnostic(
@@ -48,7 +48,7 @@ fn malformed_find_3() {
 #[test]
 fn unexpected_colon_used_as_identifier() {
     let source = "find :,b,c: int(1..3)";
-    let diagnostics = detect_syntactic_errors(source);
+    let diagnostics = detect_errors(source);
 
     // Should be exactly one diagnostic
     assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
@@ -67,7 +67,7 @@ fn unexpected_colon_used_as_identifier() {
 #[test]
 fn missing_colon_domain_in_find_statement_1st_line() {
     let source = "find x";
-    let diagnostics = detect_syntactic_errors(source);
+    let diagnostics = detect_errors(source);
 
     // Should be exactly one diagnostic
     assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
@@ -80,7 +80,7 @@ fn missing_colon_domain_in_find_statement_1st_line() {
 #[test]
 fn missing_colon_domain_in_find_statement_2nd_line() {
     let source = "find x: int(1..3)\nfind x";
-    let diagnostics = detect_syntactic_errors(source);
+    let diagnostics = detect_errors(source);
 
     // Should be exactly one diagnostic
     assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
@@ -92,7 +92,7 @@ fn missing_colon_domain_in_find_statement_2nd_line() {
 #[test]
 fn unexpected_print_2nd_line() {
     let source = "find a,b,c: int(1..3)\nprint a";
-    let diagnostics = detect_syntactic_errors(source);
+    let diagnostics = detect_errors(source);
 
     // Should be exactly one diagnostic
     assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");

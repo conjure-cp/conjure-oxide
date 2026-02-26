@@ -59,9 +59,10 @@ pub fn parse_essence_with_context(
         }
     };
 
-    let errors = detect_syntactic_errors(src, &tree);
-    if let Some(error) = errors.into_iter().next() {
-        return Err(error);
+    let syntax_errors = detect_syntactic_errors(src, &tree);
+    if !syntax_errors.is_empty() {
+        errors.extend(syntax_errors);
+        return Ok(Model::new(context));
     }
 
     let mut model = Model::new(context);
@@ -125,13 +126,7 @@ pub fn parse_essence_with_context(
                 }
                 model.dominance = Some(dominance);
             }
-            "ERROR" => {
-                let raw_expr = &source_code[statement.start_byte()..statement.end_byte()];
-                errors.push(RecoverableParseError::new(
-                    format!("'{raw_expr}' is not a valid expression"),
-                    Some(statement.range()),
-                ));
-            }
+            // "ERROR" => errors.push(classify_error_node(statement, src)),
             _ => {
                 let kind = statement.kind();
                 errors.push(RecoverableParseError::new(

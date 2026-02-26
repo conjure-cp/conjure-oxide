@@ -1,8 +1,6 @@
-use conjure_cp_essence_parser::diagnostics::error_detection::syntactic_errors::{
-    check_diagnostic, detect_syntactic_errors,
+use conjure_cp_essence_parser::diagnostics::error_detection::collect_errors::{
+    check_diagnostic, detect_errors,
 };
-
-use conjure_cp_essence_parser::diagnostics::error_detection::collect_errors::detect_errors;
 
 #[test]
 fn missing_identifier() {
@@ -68,7 +66,7 @@ fn multiple_missing_tokens() {
 find x: int(1..3
 letting x be
     ";
-    let diagnostics = detect_syntactic_errors(source);
+    let diagnostics = detect_errors(source);
 
     // Should be exactly one diagnostic
     assert_eq!(diagnostics.len(), 2, "Expected two diagnostics");

@@ -1,9 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::diagnostics::error_detection::collect_errors;
 use crate::diagnostics::error_detection::collect_errors::detect_errors;
-use crate::diagnostics::error_detection::semantic_errors::detect_semantic_errors;
-use crate::diagnostics::error_detection::syntactic_errors::detect_syntactic_errors;
 
 // structs for lsp stuff
 
@@ -71,9 +68,9 @@ pub struct DocumentSymbol {
 pub fn get_diagnostics(source: &str) -> Vec<Diagnostic> {
     let mut diagnostics = Vec::new();
 
-    diagnostics.extend(detect_semantic_errors(source));
-
     diagnostics.extend(detect_errors(source));
+
+    // diagnostics.extend(detect_errors(source));
 
     diagnostics
 }

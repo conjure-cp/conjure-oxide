@@ -1,12 +1,47 @@
-use super::util::get_tree;
-use crate::EssenceParseError;
+use crate::errors::RecoverableParseError;
 use crate::parser::traversal::WalkDFS;
 use capitalize::Capitalize;
 use std::collections::HashSet;
 use tree_sitter::Node;
 
-pub fn detect_syntactic_errors(source: &str, tree: &tree_sitter::Tree) -> Vec<EssenceParseError> {
-    let mut errors: Vec<EssenceParseError> = Vec::new();
+pub fn classify_error_node(node: Node, source: &str) -> RecoverableParseError {
+    let line = node.start_position().row;
+    // If this line has already been reported as malformed, skip all error nodes on this line
+
+    if is_malformed_line_error(&node, source) {
+        let start_byte = node.start_byte();
+        let end_byte = node.end_byte();
+
+        let last_char = source.lines().nth(line).map_or(0, |l| l.len());
+        RecoverableParseError::new(
+            format!(
+                "Malformed line {}: '{}'",
+                line + 1,
+                source.lines().nth(line).unwrap_or("")
+            ),
+            Some(tree_sitter::Range {
+                start_byte,
+                end_byte,
+                start_point: tree_sitter::Point {
+                    row: line as usize,
+                    column: 0,
+                },
+                end_point: tree_sitter::Point {
+                    row: line as usize,
+                    column: last_char,
+                },
+            }),
+        )
+    } else {
+        classify_unexpected_token_error(node, source)
+    }
+}
+
+pub fn detect_syntactic_errors(
+    source: &str,
+    tree: &tree_sitter::Tree,
+) -> Vec<RecoverableParseError> {
+    let mut errors: Vec<RecoverableParseError> = Vec::new();
     let mut malformed_lines_reported = HashSet::new();
 
     let root_node = tree.root_node();
@@ -31,13 +66,13 @@ pub fn detect_syntactic_errors(source: &str, tree: &tree_sitter::Tree) -> Vec<Es
                 let end_byte = node.end_byte();
 
                 let last_char = source.lines().nth(line).map_or(0, |l| l.len());
-                errors.push(EssenceParseError::SyntaxError {
-                    msg: format!(
+                errors.push(RecoverableParseError::new(
+                    format!(
                         "Malformed line {}: '{}'",
                         line + 1,
                         source.lines().nth(line).unwrap_or("")
                     ),
-                    range: Some(tree_sitter::Range {
+                    Some(tree_sitter::Range {
                         start_byte,
                         end_byte,
                         start_point: tree_sitter::Point {
@@ -49,7 +84,7 @@ pub fn detect_syntactic_errors(source: &str, tree: &tree_sitter::Tree) -> Vec<Es
                             column: last_char,
                         },
                     }),
-                });
+                ));
                 continue;
             } else {
                 errors.push(classify_unexpected_token_error(node, source));
@@ -62,7 +97,7 @@ pub fn detect_syntactic_errors(source: &str, tree: &tree_sitter::Tree) -> Vec<Es
 }
 
 /// Classifies a missing token node and generates a diagnostic with a context-aware message.
-fn classify_missing_token(node: Node) -> EssenceParseError {
+fn classify_missing_token(node: Node) -> RecoverableParseError {
     let start = node.start_position();
     let end = node.end_position();
 
@@ -75,27 +110,19 @@ fn classify_missing_token(node: Node) -> EssenceParseError {
         format!("Missing {}", user_friendly_token_name(node.kind(), false))
     };
 
-    EssenceParseError::SyntaxError {
-        msg: message,
-        range: Some(tree_sitter::Range {
+    RecoverableParseError::new(
+        message,
+        Some(tree_sitter::Range {
             start_byte: node.start_byte(),
             end_byte: node.end_byte(),
             start_point: start,
             end_point: end,
         }),
-    }
-
-    // generate_a_syntax_err_diagnostic(
-    //     start.row as u32,
-    //     start.column as u32,
-    //     end.row as u32,
-    //     end.column as u32,
-    //     &message,
-    // )
+    )
 }
 
 /// Classifies an unexpected token error node and generates a diagnostic.
-fn classify_unexpected_token_error(node: Node, source_code: &str) -> EssenceParseError {
+fn classify_unexpected_token_error(node: Node, source_code: &str) -> RecoverableParseError {
     let message = if let Some(parent) = node.parent() {
         let start_byte = node.start_byte().min(source_code.len());
         let end_byte = node.end_byte().min(source_code.len());
@@ -120,15 +147,15 @@ fn classify_unexpected_token_error(node: Node, source_code: &str) -> EssencePars
         "Unexpected token".to_string()
     };
 
-    EssenceParseError::SyntaxError {
-        msg: message,
-        range: Some(tree_sitter::Range {
+    RecoverableParseError::new(
+        message,
+        Some(tree_sitter::Range {
             start_byte: node.start_byte(),
             end_byte: node.end_byte(),
             start_point: node.start_position(),
             end_point: node.end_position(),
         }),
-    }
+    )
 }
 
 /// Determines if an error node represents a malformed line error.
@@ -192,73 +219,66 @@ fn error_node_out_of_range(node: &tree_sitter::Node, source: &str) -> bool {
     (start.column > start_line_len) || (end.column > end_line_len)
 }
 
-/// Helper function for tests to compare the actual diagnostic with the expected one.
-fn assert_essence_parse_error_eq(a: &EssenceParseError, b: &EssenceParseError) {
-    match (a, b) {
-        (
-            EssenceParseError::SyntaxError {
-                msg: msg_a,
-                range: range_a,
-            },
-            EssenceParseError::SyntaxError {
-                msg: msg_b,
-                range: range_b,
-            },
-        ) => {
-            assert_eq!(msg_a, msg_b);
-            assert_eq!(range_a, range_b);
-        }
-        // Add other variants as needed
-        _ => panic!("EssenceParseError variants do not match"),
+#[cfg(test)]
+mod test {
+
+    use super::{detect_syntactic_errors, is_malformed_line_error, user_friendly_token_name};
+    use crate::errors::RecoverableParseError;
+    use crate::{parser::traversal::WalkDFS, util::get_tree};
+
+    /// Helper function for tests to compare the actual error with the expected one.
+    fn assert_essence_parse_error_eq(a: &RecoverableParseError, b: &RecoverableParseError) {
+        assert_eq!(a.msg, b.msg, "error messages differ");
+        assert_eq!(a.range, b.range, "error ranges differ");
     }
-}
 
-#[test]
-fn malformed_line() {
-    let source = " a,a,b: int(1..3)";
-    let (tree, _) = get_tree(source).expect("Should parse");
-    let root_node = tree.root_node();
+    #[test]
+    fn malformed_line() {
+        let source = " a,a,b: int(1..3)";
+        let (tree, _) = get_tree(source).expect("Should parse");
+        let root_node = tree.root_node();
 
-    let error_node = WalkDFS::with_retract(&root_node, &|_node| false)
-        .find(|node| node.is_error())
-        .expect("Should find an error node");
+        let error_node = WalkDFS::with_retract(&root_node, &|_node| false)
+            .find(|node| node.is_error())
+            .expect("Should find an error node");
 
-    assert!(is_malformed_line_error(&error_node, source));
-}
+        assert!(is_malformed_line_error(&error_node, source));
+    }
 
-#[test]
-fn user_friendly_token_name_article() {
-    assert_eq!(
-        user_friendly_token_name("int_domain", false),
-        "Integer Domain"
-    );
-    assert_eq!(
-        user_friendly_token_name("int_domain", true),
-        "an Integer Domain"
-    );
-    // assert_eq!(user_friendly_token_name("atom", true), "an Expression");
-    assert_eq!(user_friendly_token_name("COLON", false), ":");
-}
+    #[test]
+    fn user_friendly_token_name_article() {
+        assert_eq!(
+            user_friendly_token_name("int_domain", false),
+            "Integer Domain"
+        );
+        assert_eq!(
+            user_friendly_token_name("int_domain", true),
+            "an Integer Domain"
+        );
+        // assert_eq!(user_friendly_token_name("atom", true), "an Expression");
+        assert_eq!(user_friendly_token_name("COLON", false), ":");
+    }
 
-#[test]
-fn missing_domain() {
-    let source = "find x:";
-    let (tree, _) = get_tree(source).expect("Should parse");
-    let errors = detect_syntactic_errors(source, &tree);
-    assert_eq!(errors.len(), 1, "Expected exactly one diagnostic");
+    #[test]
+    fn missing_domain() {
+        let source = "find x:";
+        let (tree, _) = get_tree(source).expect("Should parse");
+        let errors = detect_syntactic_errors(source, &tree);
+        assert_eq!(errors.len(), 1, "Expected exactly one diagnostic");
 
-    let error = &errors[0];
+        let error = &errors[0];
 
-    assert_essence_parse_error_eq(
-        error,
-        &EssenceParseError::syntax_error(
-            "Missing Domain".to_string(),
-            Some(tree_sitter::Range {
-                start_byte: 7,
-                end_byte: 7,
-                start_point: tree_sitter::Point { row: 0, column: 7 },
-                end_point: tree_sitter::Point { row: 0, column: 7 },
-            }),
-        ),
-    );
+        assert_essence_parse_error_eq(
+            error,
+            &RecoverableParseError::new(
+                "Missing Domain".to_string(),
+                Some(tree_sitter::Range {
+                    start_byte: 7,
+                    end_byte: 7,
+                    start_point: tree_sitter::Point { row: 0, column: 7 },
+                    end_point: tree_sitter::Point { row: 0, column: 7 },
+                }),
+            ),
+        );
+    }
 }
