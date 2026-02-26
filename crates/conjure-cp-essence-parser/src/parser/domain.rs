@@ -1,5 +1,5 @@
 use super::util::named_children;
-use crate::EssenceParseError;
+use crate::errors::{FatalParseError, RecoverableParseError};
 use conjure_cp_core::ast::{
     DeclarationPtr, Domain, DomainPtr, IntVal, Name, Range, RecordEntry, Reference, SetAttr,
     SymbolTablePtr,
@@ -13,18 +13,20 @@ pub fn parse_domain(
     domain: Node,
     source_code: &str,
     symbols: Option<SymbolTablePtr>,
-) -> Result<DomainPtr, EssenceParseError> {
+    errors: &mut Vec<RecoverableParseError>,
+) -> Result<DomainPtr, FatalParseError> {
     match domain.kind() {
         "domain" => parse_domain(
             domain.child(0).expect("No domain found"),
             source_code,
             symbols,
+            errors,
         ),
         "bool_domain" => Ok(Domain::bool()),
-        "int_domain" => Ok(parse_int_domain(domain, source_code, &symbols)),
+        "int_domain" => Ok(parse_int_domain(domain, source_code, &symbols, errors)),
         "identifier" => {
-            let decl = get_declaration_ptr_from_identifier(domain, source_code, &symbols)?;
-            let dom = Domain::reference(decl).ok_or(EssenceParseError::syntax_error(
+            let decl = get_declaration_ptr_from_identifier(domain, source_code, &symbols, errors)?;
+            let dom = Domain::reference(decl).ok_or(FatalParseError::syntax_error(
                 format!(
                     "'{}' is not a valid domain declaration",
                     &source_code[domain.start_byte()..domain.end_byte()]
@@ -33,10 +35,10 @@ pub fn parse_domain(
             ))?;
             Ok(dom)
         }
-        "tuple_domain" => parse_tuple_domain(domain, source_code, symbols),
-        "matrix_domain" => parse_matrix_domain(domain, source_code, symbols),
-        "record_domain" => parse_record_domain(domain, source_code, symbols),
-        "set_domain" => parse_set_domain(domain, source_code, symbols),
+        "tuple_domain" => parse_tuple_domain(domain, source_code, symbols, errors),
+        "matrix_domain" => parse_matrix_domain(domain, source_code, symbols, errors),
+        "record_domain" => parse_record_domain(domain, source_code, symbols, errors),
+        "set_domain" => parse_set_domain(domain, source_code, symbols, errors),
         _ => panic!("{} is not a supported domain type", domain.kind()),
     }
 }
@@ -45,17 +47,18 @@ fn get_declaration_ptr_from_identifier(
     identifier: Node,
     source_code: &str,
     symbols_ptr: &Option<SymbolTablePtr>,
-) -> Result<DeclarationPtr, EssenceParseError> {
+    _errors: &mut Vec<RecoverableParseError>,
+) -> Result<DeclarationPtr, FatalParseError> {
     let name = Name::user(&source_code[identifier.start_byte()..identifier.end_byte()]);
     let decl = symbols_ptr
         .as_ref()
-        .ok_or(EssenceParseError::syntax_error(
+        .ok_or(FatalParseError::syntax_error(
             "context needed to resolve identifier".to_string(),
             Some(identifier.range()),
         ))?
         .read()
         .lookup(&name)
-        .ok_or(EssenceParseError::syntax_error(
+        .ok_or(FatalParseError::syntax_error(
             format!("'{name}' is not defined"),
             Some(identifier.range()),
         ))?;
@@ -67,6 +70,7 @@ fn parse_int_domain(
     int_domain: Node,
     source_code: &str,
     symbols_ptr: &Option<SymbolTablePtr>,
+    errors: &mut Vec<RecoverableParseError>,
 ) -> DomainPtr {
     if int_domain.child_count() == 1 {
         return Domain::int(vec![Range::Bounded(i32::MIN, i32::MAX)]);
@@ -86,8 +90,12 @@ fn parse_int_domain(
                     continue;
                 }
                 // Otherwise, treat as a reference
-                let decl =
-                    get_declaration_ptr_from_identifier(domain_component, source_code, symbols_ptr);
+                let decl = get_declaration_ptr_from_identifier(
+                    domain_component,
+                    source_code,
+                    symbols_ptr,
+                    errors,
+                );
                 if let Ok(decl) = decl {
                     ranges_unresolved.push(Range::Single(IntVal::Reference(Reference::new(decl))));
                 } else {
@@ -107,6 +115,7 @@ fn parse_int_domain(
                                     lower_node,
                                     source_code,
                                     symbols_ptr,
+                                    errors,
                                 );
                                 if let Ok(decl) = decl {
                                     Some(Err(decl))
@@ -129,6 +138,7 @@ fn parse_int_domain(
                                     upper_node,
                                     source_code,
                                     symbols_ptr,
+                                    errors,
                                 );
                                 if let Ok(decl) = decl {
                                     Some(Err(decl))
@@ -205,10 +215,11 @@ fn parse_tuple_domain(
     tuple_domain: Node,
     source_code: &str,
     symbols: Option<SymbolTablePtr>,
-) -> Result<DomainPtr, EssenceParseError> {
+    errors: &mut Vec<RecoverableParseError>,
+) -> Result<DomainPtr, FatalParseError> {
     let mut domains: Vec<DomainPtr> = Vec::new();
     for domain in named_children(&tuple_domain) {
-        domains.push(parse_domain(domain, source_code, symbols.clone())?);
+        domains.push(parse_domain(domain, source_code, symbols.clone(), errors)?);
     }
     Ok(Domain::tuple(domains))
 }
@@ -217,23 +228,25 @@ fn parse_matrix_domain(
     matrix_domain: Node,
     source_code: &str,
     symbols: Option<SymbolTablePtr>,
-) -> Result<DomainPtr, EssenceParseError> {
+    errors: &mut Vec<RecoverableParseError>,
+) -> Result<DomainPtr, FatalParseError> {
     let mut domains: Vec<DomainPtr> = Vec::new();
     let index_domain_list = matrix_domain
         .child_by_field_name("index_domain_list")
         .expect("No index domains found for matrix domain");
     for domain in named_children(&index_domain_list) {
-        domains.push(parse_domain(domain, source_code, symbols.clone())?);
+        domains.push(parse_domain(domain, source_code, symbols.clone(), errors)?);
     }
     let value_domain = parse_domain(
-        matrix_domain.child_by_field_name("value_domain").ok_or(
-            EssenceParseError::syntax_error(
+        matrix_domain
+            .child_by_field_name("value_domain")
+            .ok_or(FatalParseError::syntax_error(
                 "Expected a value domain".to_string(),
                 Some(matrix_domain.range()),
-            ),
-        )?,
+            ))?,
         source_code,
         symbols,
+        errors,
     )?;
     Ok(Domain::matrix(value_domain, domains))
 }
@@ -242,7 +255,8 @@ fn parse_record_domain(
     record_domain: Node,
     source_code: &str,
     symbols: Option<SymbolTablePtr>,
-) -> Result<DomainPtr, EssenceParseError> {
+    errors: &mut Vec<RecoverableParseError>,
+) -> Result<DomainPtr, FatalParseError> {
     let mut record_entries: Vec<RecordEntry> = Vec::new();
     for record_entry in named_children(&record_domain) {
         let name_node = record_entry
@@ -252,7 +266,7 @@ fn parse_record_domain(
         let domain_node = record_entry
             .child_by_field_name("domain")
             .expect("No domain found for record entry");
-        let domain = parse_domain(domain_node, source_code, symbols.clone())?;
+        let domain = parse_domain(domain_node, source_code, symbols.clone(), errors)?;
         record_entries.push(RecordEntry { name, domain });
     }
     Ok(Domain::record(record_entries))
@@ -262,7 +276,8 @@ pub fn parse_set_domain(
     set_domain: Node,
     source_code: &str,
     symbols: Option<SymbolTablePtr>,
-) -> Result<DomainPtr, EssenceParseError> {
+    errors: &mut Vec<RecoverableParseError>,
+) -> Result<DomainPtr, FatalParseError> {
     let mut set_attribute: Option<SetAttr> = None;
     let mut value_domain: Option<DomainPtr> = None;
 
@@ -280,14 +295,14 @@ pub fn parse_set_domain(
                     let max_str = &source_code[max_node.start_byte()..max_node.end_byte()];
 
                     let min_val = i32::from_str(min_str).map_err(|_| {
-                        EssenceParseError::syntax_error(
+                        FatalParseError::syntax_error(
                             format!("Invalid integer value for minSize: {}", min_str),
                             Some(min_node.range()),
                         )
                     })?;
 
                     let max_val = i32::from_str(max_str).map_err(|_| {
-                        EssenceParseError::syntax_error(
+                        FatalParseError::syntax_error(
                             format!("Invalid integer value for maxSize: {}", max_str),
                             Some(max_node.range()),
                         )
@@ -298,7 +313,7 @@ pub fn parse_set_domain(
                     // Size case
                     let size_str = &source_code[size_node.start_byte()..size_node.end_byte()];
                     let size_val = i32::from_str(size_str).map_err(|_| {
-                        EssenceParseError::syntax_error(
+                        FatalParseError::syntax_error(
                             format!("Invalid integer value for size: {}", size_str),
                             Some(size_node.range()),
                         )
@@ -308,7 +323,7 @@ pub fn parse_set_domain(
                     // MinSize only case
                     let min_str = &source_code[min_node.start_byte()..min_node.end_byte()];
                     let min_val = i32::from_str(min_str).map_err(|_| {
-                        EssenceParseError::syntax_error(
+                        FatalParseError::syntax_error(
                             format!("Invalid integer value for minSize: {}", min_str),
                             Some(min_node.range()),
                         )
@@ -318,7 +333,7 @@ pub fn parse_set_domain(
                     // MaxSize only case
                     let max_str = &source_code[max_node.start_byte()..max_node.end_byte()];
                     let max_val = i32::from_str(max_str).map_err(|_| {
-                        EssenceParseError::syntax_error(
+                        FatalParseError::syntax_error(
                             format!("Invalid integer value for maxSize: {}", max_str),
                             Some(max_node.range()),
                         )
@@ -327,10 +342,10 @@ pub fn parse_set_domain(
                 }
             }
             "domain" => {
-                value_domain = Some(parse_domain(child, source_code, symbols.clone())?);
+                value_domain = Some(parse_domain(child, source_code, symbols.clone(), errors)?);
             }
             _ => {
-                return Err(EssenceParseError::syntax_error(
+                return Err(FatalParseError::syntax_error(
                     format!("Unrecognized set domain child kind: {}", child.kind()),
                     Some(child.range()),
                 ));
@@ -341,7 +356,7 @@ pub fn parse_set_domain(
     if let Some(domain) = value_domain {
         Ok(Domain::set(set_attribute.unwrap_or_default(), domain))
     } else {
-        Err(EssenceParseError::syntax_error(
+        Err(FatalParseError::syntax_error(
             "Set domain must have a value domain".to_string(),
             Some(set_domain.range()),
         ))
