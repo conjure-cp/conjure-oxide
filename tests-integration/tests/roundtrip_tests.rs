@@ -1,6 +1,6 @@
 use conjure_cp::Model;
 use conjure_cp::context::Context;
-use conjure_cp::parse::tree_sitter::EssenceParseError;
+use conjure_cp::parse::tree_sitter::errors::ParseErrorCollection;
 use conjure_cp::parse::tree_sitter::{parse_essence_file, parse_essence_file_native};
 use conjure_cp_cli::utils::testing::{read_model_json, save_model_json};
 
@@ -71,7 +71,7 @@ fn roundtrip_test_inner(
     input_filename: &str,
     output_filename: &str,
     extension: &str,
-    parse: fn(&str, Arc<RwLock<Context<'static>>>) -> Result<Model, EssenceParseError>,
+    parse: fn(&str, Arc<RwLock<Context<'static>>>) -> Result<Model, Box<ParseErrorCollection>>,
 ) -> Result<(), Box<dyn Error>> {
     /*
     Parses Essence file
@@ -208,7 +208,7 @@ fn save_essence(
 
 /* Saves a error message as a text file */
 fn save_parse_error(
-    error: &EssenceParseError,
+    error: &ParseErrorCollection,
     path: &str,
     test_name: &str,
     model_type: &str,

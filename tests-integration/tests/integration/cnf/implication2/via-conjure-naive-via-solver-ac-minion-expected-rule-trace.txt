@@ -1,0 +1,51 @@
+Model before rewriting:
+
+find a: bool
+find b: bool
+find c: bool
+
+such that
+
+(a) -> ((b) -> (c))
+
+--
+
+(a) -> ((b) -> (c)), 
+   ~~> normalise_implies_uncurry ([("Base", 8400)]) 
+(and([a,b;int(1..)])) -> (c) 
+
+--
+
+(and([a,b;int(1..)])) -> (c), 
+   ~~> flatten_imply ([("Minion", 4200)]) 
+(__0) -> (c) 
+new variables:
+  find __0: bool
+new constraints:
+  __0 =aux and([a,b;int(1..)])
+--
+
+(__0) -> (c), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
+Ineq(__0, c, 0) 
+
+--
+
+__0 =aux and([a,b;int(1..)]), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify(and([a,b;int(1..)]), __0) 
+
+--
+
+Final model:
+
+find a: bool
+find b: bool
+find c: bool
+find __0: bool
+
+such that
+
+Ineq(__0, c, 0),
+Reify(and([a,b;int(1..)]), __0)
+
