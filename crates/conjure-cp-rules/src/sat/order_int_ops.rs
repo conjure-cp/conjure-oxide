@@ -217,7 +217,7 @@ fn neg_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
     let (binding, old_min, old_max) = validate_order_int_operands(vec![value.as_ref().clone()])?;
     let [val_bits] = binding.as_slice() else {
-        return Err(RuleNotApplicable);
+        return Err(RuleNotApplicable); // consider covered
     };
 
     let new_min = -old_max;
