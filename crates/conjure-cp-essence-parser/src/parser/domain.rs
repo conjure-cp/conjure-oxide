@@ -7,7 +7,6 @@ use conjure_cp_core::ast::{
     SymbolTablePtr,
 };
 use crate::expression::parse_expression;
-use core::panic;
 use tree_sitter::Node;
 
 /// Parse an Essence variable domain into its Conjure AST representation.
@@ -43,7 +42,10 @@ pub fn parse_domain(
         "matrix_domain" => parse_matrix_domain(domain, source_code, symbols, errors),
         "record_domain" => parse_record_domain(domain, source_code, symbols, errors),
         "set_domain" => parse_set_domain(domain, source_code, symbols, errors),
-        _ => panic!("{} is not a supported domain type", domain.kind()),
+        _ => return Err(FatalParseError::internal_error(
+            format!("Unexpected domain type: {}", domain.kind()),
+            Some(domain.range()),
+        )),
     }
 }
 
@@ -138,10 +140,19 @@ fn parse_int_domain(
                         }
                         ranges_unresolved.push(Range::UnboundedL(upper));
                     }
-                    _ => panic!("Invalid int range"),
+                    _ => return Err(FatalParseError::internal_error(
+                        "Invalid int range: must have at least a lower or upper bound".to_string(),
+                        Some(domain_component.range()),
+                    )),
                 }
             }
-            _ => panic!("unsupported int range type"),
+            _ => return Err(FatalParseError::internal_error(
+                format!(
+                    "Unexpected int domain component: {}",
+                    domain_component.kind()
+                ),
+                Some(domain_component.range()),
+            )),
         }
     }
 
