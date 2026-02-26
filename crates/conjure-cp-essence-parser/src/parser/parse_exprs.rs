@@ -1,15 +1,15 @@
 use super::util::{get_tree, query_toplevel};
-use crate::errors::EssenceParseError;
+use crate::errors::FatalParseError;
 use crate::expression::parse_expression;
 use crate::util::node_is_expression;
 use conjure_cp_core::ast::{Expression, SymbolTablePtr};
 #[allow(unused)]
 use uniplate::Uniplate;
 
-pub fn parse_expr(src: &str, symbols_ptr: SymbolTablePtr) -> Result<Expression, EssenceParseError> {
+pub fn parse_expr(src: &str, symbols_ptr: SymbolTablePtr) -> Result<Expression, FatalParseError> {
     let exprs = parse_exprs(src, symbols_ptr)?;
     if exprs.len() != 1 {
-        return Err(EssenceParseError::syntax_error(
+        return Err(FatalParseError::syntax_error(
             "Expected a single expression".to_string(),
             None,
         ));
@@ -20,8 +20,8 @@ pub fn parse_expr(src: &str, symbols_ptr: SymbolTablePtr) -> Result<Expression, 
 pub fn parse_exprs(
     src: &str,
     symbols_ptr: SymbolTablePtr,
-) -> Result<Vec<Expression>, EssenceParseError> {
-    let (tree, source_code) = get_tree(src).ok_or(EssenceParseError::TreeSitterError(
+) -> Result<Vec<Expression>, FatalParseError> {
+    let (tree, source_code) = get_tree(src).ok_or(FatalParseError::TreeSitterError(
         "Failed to parse Essence source code".to_string(),
     ))?;
 
@@ -33,6 +33,7 @@ pub fn parse_exprs(
             &source_code,
             &root,
             Some(symbols_ptr.clone()),
+            &mut Vec::new(),
         )?);
     }
     Ok(ans)
