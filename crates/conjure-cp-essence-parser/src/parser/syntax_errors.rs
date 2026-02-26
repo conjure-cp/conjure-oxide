@@ -40,8 +40,8 @@ pub fn classify_error_node(node: Node, source: &str) -> RecoverableParseError {
 pub fn detect_syntactic_errors(
     source: &str,
     tree: &tree_sitter::Tree,
-) -> Vec<RecoverableParseError> {
-    let mut errors: Vec<RecoverableParseError> = Vec::new();
+    errors: &mut Vec<RecoverableParseError>,
+) {
     let mut malformed_lines_reported = HashSet::new();
 
     let root_node = tree.root_node();
@@ -92,8 +92,6 @@ pub fn detect_syntactic_errors(
             continue;
         }
     }
-
-    errors
 }
 
 /// Classifies a missing token node and generates a diagnostic with a context-aware message.
@@ -263,7 +261,8 @@ mod test {
     fn missing_domain() {
         let source = "find x:";
         let (tree, _) = get_tree(source).expect("Should parse");
-        let errors = detect_syntactic_errors(source, &tree);
+        let mut errors = vec![];
+        detect_syntactic_errors(source, &tree, &mut errors);
         assert_eq!(errors.len(), 1, "Expected exactly one diagnostic");
 
         let error = &errors[0];

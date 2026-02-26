@@ -60,12 +60,9 @@ pub fn parse_essence_with_context(
     };
 
     if tree.root_node().has_error() {
-        let syntax_errors = detect_syntactic_errors(src, &tree);
-        errors.extend(syntax_errors);
+        detect_syntactic_errors(src, &tree, errors);
         return Ok(Model::new(context));
     }
-
-    // if !syntax_errors.is_empty() {}
 
     let mut model = Model::new(context);
     let root_node = tree.root_node();
