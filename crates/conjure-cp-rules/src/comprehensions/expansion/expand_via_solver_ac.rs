@@ -333,12 +333,16 @@ fn localise_non_local_references_shallow(expr: Expression, symtab: &mut SymbolTa
     let dummy_vars_by_decl_id: RefCell<HashMap<_, DeclarationPtr>> = RefCell::new(HashMap::new());
     let symtab = RefCell::new(symtab);
 
-    expr.transform_bi(&|reference: Reference| {
+    expr.transform_bi(&|atom: Atom| {
+        let Atom::Reference(reference) = atom else {
+            return atom;
+        };
+
         let reference_name = reference.name().clone();
 
         // Already local to this temporary generator model.
         if symtab.borrow().lookup_local(&reference_name).is_some() {
-            return reference;
+            return Atom::Reference(reference);
         }
 
         let decl = reference.ptr().clone();
@@ -360,7 +364,7 @@ fn localise_non_local_references_shallow(expr: Expression, symtab: &mut SymbolTa
             new_dummy
         };
 
-        Reference::new(dummy_decl)
+        Atom::Reference(Reference::new(dummy_decl))
     })
 }
 
