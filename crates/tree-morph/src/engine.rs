@@ -2,35 +2,70 @@
 //!
 //! See the [`morph`](Engine::morph) for more information.
 
+use crate::cache::{CacheResult, RewriteCache};
+use crate::engine_zipper::{EngineZipper, NaiveZipper};
 use crate::events::EventHandlers;
 use crate::helpers::{SelectorFn, one_or_select};
 use crate::prelude::Rule;
 use crate::rule::apply_into_update;
+use crate::update::Update;
 
-use paste::paste;
-use uniplate::{Uniplate, tagged_zipper::TaggedZipper};
+use tracing::{debug, error, info, instrument, trace};
+use uniplate::Uniplate;
 
 /// An engine for exhaustively transforming trees with user-defined rules.
 ///
 /// See the [`morph`](Engine::morph) method for more information.
-pub struct Engine<T, M, R>
+pub struct Engine<T, M, R, C>
 where
     T: Uniplate,
     R: Rule<T, M>,
+    C: RewriteCache<T>,
 {
-    pub(crate) event_handlers: EventHandlers<T, M>,
+    pub(crate) event_handlers: EventHandlers<T, M, R>,
 
     /// A collection of groups of equally-prioritised rules.
     pub(crate) rule_groups: Vec<Vec<R>>,
 
     pub(crate) selector: SelectorFn<T, M, R>,
+
+    pub(crate) cache: C,
+
+    pub(crate) movement_filter: fn(&T) -> bool
 }
 
-impl<T, M, R> Engine<T, M, R>
+impl<T, M, R, C> Engine<T, M, R, C>
 where
     T: Uniplate,
     R: Rule<T, M>,
+    C: RewriteCache<T>,
 {
+    #[instrument(skip(self, subtree, meta, rules))]
+    fn select_rule<'a>(
+        &self,
+        subtree: &T,
+        meta: &mut M,
+        rules: &'a [R],
+    ) -> Option<(&'a R, Update<T, M>)> {
+        trace!("Beginning Rule Checks");
+        let applicable = &mut rules.iter().filter_map(|rule| {
+            trace!("Testing Rule '{}'", rule.name());
+            self.event_handlers.trigger_before_rule(subtree, meta, rule);
+            let update = apply_into_update(rule, subtree, meta);
+            self.event_handlers
+                .trigger_after_rule(subtree, meta, rule, update.is_some());
+
+            match update {
+                Some(_) => trace!("Rule '{}' Passed", rule.name()),
+                None => trace!("Rule '{}' Failed", rule.name()),
+            };
+
+            Some((rule, update?))
+        });
+        trace!("Finished Rule Checks");
+        one_or_select(self.selector, subtree, applicable)
+    }
+
     /// Exhaustively rewrites a tree using user-defined rule groups.
     ///
     /// Rewriting is complete when all rules have been attempted with no change. Rules may be organised
@@ -157,33 +192,53 @@ where
     /// assert_eq!(result, Expr::Val(4));
     /// assert_eq!(num_applications, 3); // Now the sub-expression (1 * 2) is evaluated first
     /// ```
-    pub fn morph(&self, tree: T, meta: M) -> (T, M)
+    #[instrument(skip(self, tree, meta))]
+    pub fn morph(&mut self, tree: T, meta: M) -> (T, M)
     where
         T: Uniplate,
         R: Rule<T, M>,
     {
         // Owns the tree/meta and is consumed to get them back at the end
         let mut zipper = EngineZipper::new(tree, meta, &self.event_handlers);
+        zipper.add_movement_filter(self.movement_filter);
+        info!("Beginning Morph");
 
         'main: loop {
             // Return here after every successful rule application
 
             for (level, rules) in self.rule_groups.iter().enumerate() {
+                debug!("Checking Level {} with {} Rules", level, rules.len());
                 // Try each rule group in the whole tree
 
                 while zipper.go_next_dirty(level).is_some() {
+                    trace!("Got Dirty, Level {}", level);
                     let subtree = zipper.inner.focus();
 
-                    // Choose one transformation from all applicable rules at this level
-                    let selected = {
-                        let applicable = &mut rules.iter().filter_map(|rule| {
-                            let update = apply_into_update(rule, subtree, &zipper.meta)?;
-                            Some((rule, update))
-                        });
-                        one_or_select(self.selector, subtree, applicable)
+                    match self.cache.get(subtree, level) {
+                        CacheResult::Terminal => {
+                            // debug!("Cache Hit - Nothing Applicable");
+                            zipper.set_dirty_from(level + 1);
+                            continue;
+                        }
+                        CacheResult::Rewrite(cached) => {
+                            debug!("Cache Hit");
+                            zipper.inner.replace_focus(cached);
+                            zipper.mark_dirty_to_root();
+                            continue 'main;
+                        }
+                        _ => (),
                     };
 
-                    if let Some(mut update) = selected {
+                    // Choose one transformation from all applicable rules at this level
+                    let selected = self.select_rule(subtree, &mut zipper.meta, rules);
+
+                    if let Some((rule, mut update)) = selected {
+                        debug!("Applying Rule '{}'", rule.name());
+                        // println!("Before Applying Rule '{}'\nExpr:\n{}", rule.name(), subtree);
+
+                        let replacement = update.new_subtree.clone();
+                        let original = subtree.clone();
+
                         // Replace the current subtree, invalidating subtree node states
                         zipper.inner.replace_focus(update.new_subtree);
 
@@ -195,13 +250,26 @@ where
                             .apply(zipper.inner.focus().clone(), &mut zipper.meta);
 
                         if root_transformed {
+                            debug!("Root transformed, clearing state.");
                             // This must unfortunately throw all node states away,
                             // since the `transform` command may redefine the whole tree
                             zipper.inner.replace_focus(new_tree);
+                        } else if original != replacement {
+                            self.cache.insert(original, Some(replacement.clone()), level);
+                        } else {
+                            error!("SAME TREE");
                         }
+
+                        self.event_handlers.trigger_on_apply(
+                            zipper.inner.focus(),
+                            &mut zipper.meta,
+                            rule,
+                        );
 
                         continue 'main;
                     } else {
+                        trace!("Nothing Applicable");
+                        self.cache.insert(subtree.clone(), None, level);
                         zipper.set_dirty_from(level + 1);
                     }
                 }
@@ -210,129 +278,65 @@ where
             // All rules have been tried with no more changes
             break;
         }
-
+        info!("Finished Morph");
         zipper.into()
     }
-}
 
-#[derive(Debug, Clone)]
-struct EngineNodeState {
-    /// Rule groups with lower indices have already been applied without change.
-    /// For a level `n`, a state is 'dirty' if and only if `n >= dirty_from`.
-    dirty_from: usize,
-}
+    /// Exhaustively rewrites a tree using user-defined rule groups.
+    ///
+    /// This function is naive. There are no performance optimisations built in. Every time a rule
+    /// is applied, it will go back up to the root of the tree and retry from the very top.
+    ///
+    /// It is not recommended to use this function besides testing and for correctness.
+    pub fn morph_naive(&self, tree: T, meta: M) -> (T, M)
+    where
+        T: Uniplate,
+        R: Rule<T, M>,
+    {
+        let mut zipper = NaiveZipper::new(tree, meta, &self.event_handlers);
+        info!("Beginning Naive Morph");
 
-impl EngineNodeState {
-    /// Marks the state as dirty for anything >= `level`.
-    fn set_dirty_from(&mut self, level: usize) {
-        self.dirty_from = level;
-    }
+        'main: loop {
+            for rules in self.rule_groups.iter() {
+                while zipper.get_next().is_some() {
+                    let subtree = zipper.inner.focus();
+                    // Choose one transformation from all applicable rules at this level
+                    let selected = self.select_rule(subtree, &mut zipper.meta, rules);
 
-    /// For a level `n`, a state is "dirty" if and only if `n >= dirty_from`.
-    /// That is, all rules groups before `n` have been applied without change.
-    fn is_dirty(&self, level: usize) -> bool {
-        level >= self.dirty_from
-    }
-}
+                    if let Some((rule, mut update)) = selected {
+                        zipper.inner.replace_focus(update.new_subtree);
+                        zipper.go_to_root();
 
-impl EngineNodeState {
-    fn new<T: Uniplate>(_: &T) -> Self {
-        Self { dirty_from: 0 }
-    }
-}
+                        let (new_tree, root_transformed) = update
+                            .commands
+                            .apply(zipper.inner.focus().clone(), &mut zipper.meta);
 
-macro_rules! movement_fns {
-    (
-        directions: [$($dir:ident),*]
-    ) => {
-        paste! {
-            $(fn [<go_ $dir>](&mut self) -> Option<()> {
-                self.inner.zipper().[<has_ $dir>]().then(|| {
-                    self.event_handlers
-                        .[<trigger_before_ $dir>](self.inner.focus(), &mut self.meta);
-                    self.inner.[<go_ $dir>]().expect("zipper movement failed despite check");
-                    self.event_handlers
-                        .[<trigger_after_ $dir>](self.inner.focus(), &mut self.meta);
-                })
-            })*
-        }
-    };
-}
-
-/// A Zipper with optimisations for tree transformation.
-struct EngineZipper<'events, T: Uniplate, M> {
-    inner: TaggedZipper<T, EngineNodeState, fn(&T) -> EngineNodeState>,
-    event_handlers: &'events EventHandlers<T, M>,
-    meta: M,
-}
-
-impl<'events, T: Uniplate, M> EngineZipper<'events, T, M> {
-    pub fn new(tree: T, meta: M, event_handlers: &'events EventHandlers<T, M>) -> Self {
-        EngineZipper {
-            inner: TaggedZipper::new(tree, EngineNodeState::new),
-            event_handlers,
-            meta,
-        }
-    }
-
-    /// Go to the next node in the tree which is dirty for the given level.
-    /// That node may be the current one if it is dirty.
-    /// If no such node exists, go to the root and return `None`.
-    pub fn go_next_dirty(&mut self, level: usize) -> Option<()> {
-        if self.inner.tag().is_dirty(level) {
-            return Some(());
-        }
-
-        self.go_down()
-            .and_then(|_| {
-                // go right until we find a dirty child, if it exists.
-                loop {
-                    if self.inner.tag().is_dirty(level) {
-                        return Some(());
-                    } else if self.go_right().is_none() {
-                        // all children are clean
-                        self.go_up();
-                        return None;
-                    }
-                }
-            })
-            .or_else(|| {
-                // Neither this node, nor any of its children are dirty
-                // Go right then up until we find a dirty node or reach the root
-                loop {
-                    if self.go_right().is_some() {
-                        if self.inner.tag().is_dirty(level) {
-                            return Some(());
+                        if root_transformed {
+                            trace!("Root transformed.");
+                            zipper.inner.replace_focus(new_tree);
                         }
-                    } else if self.go_up().is_none() {
-                        // Reached the root without finding a dirty node
-                        return None;
+
+                        self.event_handlers.trigger_on_apply(
+                            zipper.inner.focus(),
+                            &mut zipper.meta,
+                            rule,
+                        );
+
+                        continue 'main;
+                    } else {
+                        debug!("Nothing Applicable");
                     }
                 }
-            })
-    }
+            }
 
-    // We never move left in the tree
-    movement_fns! { directions: [up, down, right] }
-
-    /// Mark the current focus as visited at the given level.
-    /// Calling `go_next_dirty` with the same level will no longer yield this node.
-    pub fn set_dirty_from(&mut self, level: usize) {
-        self.inner.tag_mut().set_dirty_from(level);
-    }
-
-    /// Mark ancestors as dirty for all levels, and return to the root
-    pub fn mark_dirty_to_root(&mut self) {
-        while self.go_up().is_some() {
-            self.set_dirty_from(0);
+            break;
         }
-    }
-}
 
-impl<T: Uniplate, M> From<EngineZipper<'_, T, M>> for (T, M) {
-    fn from(val: EngineZipper<'_, T, M>) -> Self {
-        let meta = val.meta;
-        let tree = val.inner.rebuild_root();
+        info!("Finished Naive Morph");
+
+        let meta = zipper.meta;
+        let tree = zipper.inner.rebuild_root();
+
         (tree, meta)
     }
 }

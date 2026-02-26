@@ -37,7 +37,7 @@ fn circ_tri() {
     // O(/\)
     let expr = Shape::Circle(Box::new(Shape::Triangle));
 
-    let engine = EngineBuilder::new()
+    let mut engine = EngineBuilder::new()
         .add_rule(circ_tri_to_tri as RuleFn<_, _>)
         .add_rule(circ_circ_tri_to_sqr as RuleFn<_, _>)
         .build();
@@ -52,7 +52,7 @@ fn circ_circ_tri() {
     let expr = Shape::Circle(Box::new(Shape::Circle(Box::new(Shape::Triangle))));
 
     // Same priority group - 2nd rule applies first as it applies higher in the tree
-    let engine = EngineBuilder::new()
+    let mut engine = EngineBuilder::new()
         .add_rule_group(rule_fns![circ_tri_to_tri, circ_circ_tri_to_sqr])
         .build();
     let (result, _) = engine.morph(expr, ());
@@ -66,7 +66,7 @@ fn shape_higher_priority() {
     let expr = Shape::Circle(Box::new(Shape::Circle(Box::new(Shape::Triangle))));
 
     // Higher priority group - 1st rule applies first even though it applies lower in the tree
-    let engine = EngineBuilder::new()
+    let mut engine = EngineBuilder::new()
         .add_rule(circ_tri_to_tri as RuleFn<_, _>)
         .add_rule(circ_circ_tri_to_sqr as RuleFn<_, _>)
         .build();
@@ -83,7 +83,7 @@ fn shape_multiple_rules_panic() {
     let expr = Shape::Circle(Box::new(Shape::Circle(Box::new(Shape::Triangle))));
 
     // Same rule twice, applicable at the same time
-    let engine = EngineBuilder::new()
+    let mut engine = EngineBuilder::new()
         .set_selector(select_panic)
         .add_rule_group(rule_fns![circ_tri_to_tri, circ_tri_to_tri])
         .build();

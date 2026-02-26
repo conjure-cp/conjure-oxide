@@ -21,7 +21,7 @@ fn rule_b_to_c(_: &mut Commands<Expr, ()>, expr: &Expr, _: &()) -> Option<Expr> 
 fn closure_rules() {
     let expr = Expr::A;
 
-    let engine = EngineBuilder::new()
+    let mut engine = EngineBuilder::new()
         .add_rule(
             // Same as macro expansion
             (|_, t, _| match t {

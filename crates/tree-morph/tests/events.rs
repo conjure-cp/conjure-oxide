@@ -33,7 +33,7 @@ fn do_nothing(_: &mut Commands<Expr, Meta>, _: &Expr, _: &Meta) -> Option<Expr> 
 fn explore_once_events_called_correct_amount() {
     let expr = Expr::Add(Box::new(Expr::Lit(1)), Box::new(Expr::Lit(1)));
 
-    let engine = EngineBuilder::new()
+    let mut engine = EngineBuilder::new()
         .add_rule(do_nothing)
         .add_before_up(|_, meta| meta.before_ups += 1)
         .add_after_up(|_, meta| meta.after_ups += 1)
@@ -62,7 +62,7 @@ fn explore_nested_events_called_correct_amount() {
         Expr::Lit(1),
     ))))));
 
-    let engine = EngineBuilder::new()
+    let mut engine = EngineBuilder::new()
         .add_rule(do_nothing)
         .add_before_up(|_, meta| meta.before_ups += 1)
         .add_after_up(|_, meta| meta.after_ups += 1)
@@ -89,7 +89,7 @@ fn correct_order_pushed_to_stack() {
         Box::new(Expr::Lit(0)),
     );
 
-    let engine = EngineBuilder::new()
+    let mut engine = EngineBuilder::new()
         .add_rule(|_: &mut Commands<_, _>, expr: &Expr, meta: &Meta| {
             if let Expr::Lit(42) = expr {
                 // We are at the first leaf, the path from the root should be in the stack

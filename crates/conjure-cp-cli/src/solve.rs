@@ -12,7 +12,7 @@ use std::{
 
 use anyhow::{anyhow, ensure};
 use clap::ValueHint;
-use conjure_cp::defaults::DEFAULT_RULE_SETS;
+use conjure_cp::{defaults::DEFAULT_RULE_SETS, rule_engine::MorphConfig};
 use conjure_cp::{
     Model,
     ast::comprehension::{
@@ -229,6 +229,7 @@ pub(crate) fn rewrite(
                 model,
                 &rule_sets,
                 global_args.check_equally_applicable_rules,
+                MorphConfig::new(global_args.use_cache, global_args.use_naive)
             )
         }
         Rewriter::Naive => {

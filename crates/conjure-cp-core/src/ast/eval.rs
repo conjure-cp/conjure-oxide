@@ -1,9 +1,10 @@
 #![allow(dead_code)]
-use crate::ast::{AbstractLiteral, Atom, Expression as Expr, Literal as Lit, Metadata, matrix};
-use crate::into_matrix;
+use crate::ast::{AbstractLiteral, Atom, DeclarationKind, Expression as Expr, Literal as Lit, Metadata, matrix};
+use crate::{into_matrix};
 use itertools::{Itertools as _, izip};
 use std::cmp::Ordering as CmpOrdering;
 use std::collections::HashSet;
+use std::ops::Deref;
 
 /// Simplify an expression to a constant if possible
 /// Returns:
@@ -484,15 +485,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             let a: i32 = a.try_into().ok()?;
             Some(Lit::Int(-a))
         }
-        Expr::Minus(_, a, b) => {
-            let a: &Atom = a.try_into().ok()?;
-            let a: i32 = a.try_into().ok()?;
-
-            let b: &Atom = b.try_into().ok()?;
-            let b: i32 = b.try_into().ok()?;
-
-            Some(Lit::Int(a - b))
-        }
+        Expr::Minus(_, a, b) => bin_op::<i32, i32>(|a, b| a - b, a, b).map(Lit::Int),
         Expr::FlatMinusEq(_, a, b) => {
             let a: i32 = a.try_into().ok()?;
             let b: i32 = b.try_into().ok()?;

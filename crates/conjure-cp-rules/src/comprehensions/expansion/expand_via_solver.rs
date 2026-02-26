@@ -12,7 +12,7 @@ use conjure_cp::{
     },
     bug,
     context::Context,
-    rule_engine::{resolve_rule_sets, rewrite_morph, rewrite_naive},
+    rule_engine::{resolve_rule_sets, rewrite_morph, rewrite_naive, MorphConfig},
     settings::SolverFamily,
     solver::{Solver, SolverError, adaptors::Minion},
 };
@@ -43,7 +43,7 @@ pub fn expand_via_solver(
     let rule_sets = resolve_rule_sets(SolverFamily::Minion, extra_rule_sets).unwrap();
 
     let model = if USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS.load(Ordering::Relaxed) {
-        rewrite_morph(model, &rule_sets, false)
+        rewrite_morph(model, &rule_sets, false, MorphConfig::default())
     } else {
         rewrite_naive(&model, &rule_sets, false, false).unwrap()
     };
@@ -73,7 +73,7 @@ pub fn expand_via_solver(
 
     let return_expression_model =
         if USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS.load(Ordering::Relaxed) {
-            rewrite_morph(return_expression_model, &rule_sets, false)
+            rewrite_morph(return_expression_model, &rule_sets, false, MorphConfig::default())
         } else {
             rewrite_naive(&return_expression_model, &rule_sets, false, false).unwrap()
         };

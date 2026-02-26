@@ -221,7 +221,7 @@ fn integration_test_inner(
                 .map(|(_, rule)| rule.into_iter().map(|f| f.rule).collect_vec())
                 .collect_vec();
 
-            let engine = EngineBuilder::new()
+            let mut engine = EngineBuilder::new()
                 .set_selector(select_panic)
                 .append_rule_groups(rules_grouped)
                 .build();

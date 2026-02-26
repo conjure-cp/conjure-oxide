@@ -133,6 +133,18 @@ pub struct GlobalArgs {
     #[arg(long,global=true, value_names=["filename"], next_line_help=true, help_heading=LOGGING_HELP_HEADING)]
     pub save_solver_input_file: Option<PathBuf>,
 
+    /// Use the experimental optimized / dirty-clean rewriter, instead of the default rewriter
+    #[arg(long, default_value_t = false, global = true, help_heading = EXPERIMENTAL_HELP_HEADING)]
+    pub use_optimised_rewriter: bool,
+
+    /// Use the experimental rewrite cache for the dirty-clean rewriter
+    #[arg(long, default_value_t = false, global = true, help_heading = EXPERIMENTAL_HELP_HEADING)]
+    pub use_cache: bool,
+
+    /// Use treemorph on naive mode. TODO
+    #[arg(long, default_value_t = false, global = true, help_heading = EXPERIMENTAL_HELP_HEADING)]
+    pub use_naive: bool,
+
     /// Exit after all comprehensions have been unrolled, printing the number of expressions at that point.
     ///
     /// This is only compatible with the default rewriter.
