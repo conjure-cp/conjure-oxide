@@ -13,6 +13,7 @@ use super::util::{get_tree, named_children};
 use crate::errors::{FatalParseError, ParseErrorCollection, RecoverableParseError};
 use crate::expression::parse_expression;
 use crate::field;
+use crate::syntax_errors::detect_syntactic_errors;
 
 /// Parse an Essence file into a Model using the tree-sitter parser.
 pub fn parse_essence_file_native(
@@ -57,11 +58,8 @@ pub fn parse_essence_with_context(
     };
 
     if tree.root_node().has_error() {
-        // For now, return 'not implemented' for syntactic errors
-        // TODO: connect to syntactic error parsing here for recoverable errors
-        return Err(FatalParseError::NotImplemented(
-            "Erroneous tree-sitter CST: Something in this input is not yet supported or there is a syntactic error. Syntactic error detection and reporting".to_string(),
-        ));
+        detect_syntactic_errors(src, &tree, errors);
+        return Ok(None);
     }
 
     let mut model = Model::new(context);
