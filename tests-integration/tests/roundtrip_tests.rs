@@ -189,18 +189,18 @@ fn roundtrip_test_inner(
 }
 
 /// Returns the roundtrip model JSON path for a parser case and model type.
-fn roundtrip_model_json_path(path: &str, case_name: &str, model_type: &str) -> String {
-    format!("{path}/{case_name}.{model_type}.serialised.json")
+fn roundtrip_model_json_path(path: &str, case_name: &str, file_type: &str) -> String {
+    format!("{path}/{case_name}.{file_type}.serialised.json")
 }
 
 /// Returns the roundtrip Essence path for a parser case and model type.
-fn roundtrip_essence_path(path: &str, case_name: &str, model_type: &str) -> String {
-    format!("{path}/{case_name}.{model_type}.essence")
+fn roundtrip_essence_path(path: &str, case_name: &str, file_type: &str) -> String {
+    format!("{path}/{case_name}.{file_type}.essence")
 }
 
 /// Returns the roundtrip parser-error path for a parser case and model type.
-fn roundtrip_error_path(path: &str, case_name: &str, model_type: &str) -> String {
-    format!("{path}/{case_name}.{model_type}-error.txt")
+fn roundtrip_error_path(path: &str, case_name: &str, file_type: &str) -> String {
+    format!("{path}/{case_name}.{file_type}-error.txt")
 }
 
 /// Serialises and writes a generated model snapshot for roundtrip comparison.
@@ -208,11 +208,11 @@ fn save_roundtrip_model_json(
     model: &Model,
     path: &str,
     case_name: &str,
-    model_type: &str,
+    file_type: &str,
 ) -> Result<(), std::io::Error> {
     let serialised = serialize_model(model).map_err(std::io::Error::other)?;
     fs::write(
-        roundtrip_model_json_path(path, case_name, model_type),
+        roundtrip_model_json_path(path, case_name, file_type),
         serialised,
     )?;
     Ok(())
@@ -223,9 +223,9 @@ fn read_roundtrip_model_json(
     context: &Arc<RwLock<Context<'static>>>,
     path: &str,
     case_name: &str,
-    model_type: &str,
+    file_type: &str,
 ) -> Result<Model, std::io::Error> {
-    let serialised = fs::read_to_string(roundtrip_model_json_path(path, case_name, model_type))?;
+    let serialised = fs::read_to_string(roundtrip_model_json_path(path, case_name, file_type))?;
     let serde_model: SerdeModel =
         serde_json::from_str(&serialised).map_err(std::io::Error::other)?;
     serde_model
@@ -238,9 +238,9 @@ fn save_essence(
     model: &Model,
     path: &str,
     test_name: &str,
-    model_type: &str,
+    file_type: &str,
 ) -> Result<(), std::io::Error> {
-    let filename = roundtrip_essence_path(path, test_name, model_type);
+    let filename = roundtrip_essence_path(path, test_name, file_type);
     let mut file = fs::File::create(&filename)?;
     write!(file, "{}", model)?;
     Ok(())
@@ -251,9 +251,9 @@ fn save_parse_error(
     error: &ParseErrorCollection,
     path: &str,
     test_name: &str,
-    model_type: &str,
+    file_type: &str,
 ) -> Result<(), std::io::Error> {
-    let filename = roundtrip_error_path(path, test_name, model_type);
+    let filename = roundtrip_error_path(path, test_name, file_type);
     let mut file = fs::File::create(&filename)?;
     write!(file, "{}", error)?;
     Ok(())
