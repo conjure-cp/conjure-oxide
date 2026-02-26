@@ -5,7 +5,10 @@ use crate::{
     bug,
     rule_engine::{
         get_rules_grouped,
-        rewriter_common::{RuleResult, log_rule_application},
+        rewriter_common::{
+            RuleResult, VariableDeclarationSnapshot, log_rule_application,
+            snapshot_variable_declarations,
+        },
         submodel_zipper::submodel_ctx,
     },
     settings::{Rewriter, set_current_rewriter},
@@ -97,7 +100,8 @@ fn try_rewrite_model(
     stats: &mut RewriterStats,
 ) -> Option<()> {
     type CtxFn = Arc<dyn Fn(Expr) -> SubModel>;
-    let mut results: Vec<(RuleResult<'_>, u16, Expr, CtxFn)> = vec![];
+    type VariableSnapshots = Option<(VariableDeclarationSnapshot, VariableDeclarationSnapshot)>;
+    let mut results: Vec<(RuleResult<'_>, u16, Expr, CtxFn, VariableSnapshots)> = vec![];
 
     // Iterate over rules by priority in descending order.
     'top: for (priority, rules) in rules_grouped.iter() {
@@ -121,11 +125,20 @@ fn try_rewrite_model(
                 #[cfg(debug_assertions)]
                 tracing::trace!(rule_name = rd.rule.name, "Trying rule");
 
+                let before_variable_snapshot = matches!(expr, Expr::Root(_, _))
+                    .then(|| snapshot_variable_declarations(&submodel.symbols()));
+
                 match (rd.rule.application)(&expr, &submodel.symbols()) {
                     Ok(red) => {
                         // Count successful rule applications
                         stats.rewriter_rule_applications =
                             Some(stats.rewriter_rule_applications.unwrap_or(0) + 1);
+
+                        let after_variable_snapshot = before_variable_snapshot
+                            .as_ref()
+                            .map(|_| snapshot_variable_declarations(&red.symbols));
+                        let variable_snapshots =
+                            before_variable_snapshot.zip(after_variable_snapshot);
 
                         // Collect applicable rules
                         results.push((
@@ -136,6 +149,7 @@ fn try_rewrite_model(
                             *priority,
                             expr.clone(),
                             ctx.clone(),
+                            variable_snapshots,
                         ));
                     }
                     Err(_) => {
@@ -163,13 +177,20 @@ fn try_rewrite_model(
         [] => {
             return None;
         } // no rules are applicable.
-        [(result, _priority, expr, ctx), ..] => {
+        [(result, _priority, expr, ctx, variable_snapshots), ..] => {
             if prop_multiple_equally_applicable {
                 assert_no_multiple_equally_applicable_rules(&results, rules_grouped);
             }
 
             // Extract the single applicable rule and apply it
-            log_rule_application(result, expr, submodel);
+            log_rule_application(
+                result,
+                expr,
+                submodel,
+                variable_snapshots
+                    .as_ref()
+                    .map(|(before, after)| (before, after)),
+            );
 
             // Replace expr with new_expression
             *submodel = ctx(result.reduction.new_expression.clone());
@@ -184,7 +205,13 @@ fn try_rewrite_model(
 
 // Exits with a bug if there are multiple equally applicable rules for an expression.
 fn assert_no_multiple_equally_applicable_rules<CtxFnType>(
-    results: &Vec<(RuleResult<'_>, u16, Expr, CtxFnType)>,
+    results: &Vec<(
+        RuleResult<'_>,
+        u16,
+        Expr,
+        CtxFnType,
+        Option<(VariableDeclarationSnapshot, VariableDeclarationSnapshot)>,
+    )>,
     rules_grouped: &Vec<(u16, Vec<RuleData<'_>>)>,
 ) {
     if results.len() <= 1 {
@@ -193,7 +220,7 @@ fn assert_no_multiple_equally_applicable_rules<CtxFnType>(
 
     let names: Vec<_> = results
         .iter()
-        .map(|(result, _, _, _)| result.rule_data.rule.name)
+        .map(|(result, _, _, _, _)| result.rule_data.rule.name)
         .collect();
 
     // Extract the expression from the first result
