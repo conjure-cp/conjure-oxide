@@ -659,14 +659,28 @@ impl Expression {
     /// Returns the possible values of the expression, recursing to leaf expressions
     pub fn domain_of(&self) -> Option<DomainPtr> {
         match self {
-            Expression::Union(_, a, b) => Some(Domain::set(
-                SetAttr::<IntVal>::default(),
+            Expression::Union(_, a, b) => {
+                // Ascertain range
+                let (a_attr, _) = a.domain_of()?.as_set()?;
+                let (b_attr, _) = b.domain_of()?.as_set()?;
+                let a_range= a_attr.resolve()?.size;
+                let b_range = b_attr.resolve()?.size;
+                let new_range = Range::spanning(&[a_range, b_range]);
+
+                // Create
+                Some(Domain::set(
+                SetAttr::new(new_range),
                 a.domain_of()?.union(&b.domain_of()?).ok()?,
-            )),
-            Expression::Intersect(_, a, b) => Some(Domain::set(
+                ))
+            }
+            Expression::Intersect(_, a, b) => {
+                // thinking about Range::overlaps?
+                
+                Some(Domain::set(
                 SetAttr::<IntVal>::default(),
                 a.domain_of()?.intersect(&b.domain_of()?).ok()?,
-            )),
+            ))
+            }
             Expression::In(_, _, _) => Some(Domain::bool()),
             Expression::Supset(_, _, _) => Some(Domain::bool()),
             Expression::SupsetEq(_, _, _) => Some(Domain::bool()),
