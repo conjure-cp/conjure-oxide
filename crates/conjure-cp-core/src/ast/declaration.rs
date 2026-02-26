@@ -314,7 +314,7 @@ impl DeclarationPtr {
     }
 
     /// This declaration as a decision variable, if it is one.
-    pub fn as_var(&self) -> Option<MappedRwLockReadGuard<'_, DecisionVariable>> {
+    pub fn as_find(&self) -> Option<MappedRwLockReadGuard<'_, DecisionVariable>> {
         RwLockReadGuard::try_map(self.read(), |x| {
             if let DeclarationKind::Find(var) = &x.kind {
                 Some(var)
@@ -326,7 +326,7 @@ impl DeclarationPtr {
     }
 
     /// This declaration as a mutable decision variable, if it is one.
-    pub fn as_var_mut(&mut self) -> Option<MappedRwLockWriteGuard<'_, DecisionVariable>> {
+    pub fn as_find_mut(&mut self) -> Option<MappedRwLockWriteGuard<'_, DecisionVariable>> {
         RwLockWriteGuard::try_map(self.write(), |x| {
             if let DeclarationKind::Find(var) = &mut x.kind {
                 Some(var)
