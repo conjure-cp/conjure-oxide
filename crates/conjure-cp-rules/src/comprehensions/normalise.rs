@@ -4,9 +4,8 @@ use std::collections::HashSet;
 
 use conjure_cp::{
     ast::{
-        DeclarationPtr, Expression as Expr, Metadata, Moo, Name, SymbolTable,
-        ac_operators::ACOperatorKind,
-        comprehension::{Comprehension, ComprehensionBuilder, ComprehensionQualifier},
+        Expression as Expr, Metadata, Moo, Name, SymbolTable, SymbolTablePtr,
+        ac_operators::ACOperatorKind, comprehension::Comprehension,
     },
     rule_engine::{
         ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
@@ -51,7 +50,7 @@ fn merge_nested_ac_comprehensions_impl(expr: &Expr) -> Option<Expr> {
         .cloned()
         .collect();
 
-    let mut current_return_expression = outer_comprehension.clone().return_expression();
+    let mut current_return_expression = outer_comprehension.return_expression();
     while let Some(inner_comprehension) =
         extract_inner_comprehension(ac_operator_kind, &current_return_expression)
     {
@@ -73,12 +72,15 @@ fn merge_nested_ac_comprehensions_impl(expr: &Expr) -> Option<Expr> {
         return None;
     }
 
-    let mut builder = ComprehensionBuilder::new(parent_scope);
-    for level in &merged_levels {
-        builder = add_qualifiers(builder, level);
-    }
-
-    let merged = builder.with_return_value(current_return_expression, Some(ac_operator_kind));
+    let merged_symbols = merge_symbols(parent_scope, &merged_levels);
+    let merged_qualifiers = merged_levels
+        .iter()
+        .flat_map(|level| level.qualifiers.clone())
+        .collect();
+    let mut merged = merged_levels.first()?.clone();
+    merged.return_expression = current_return_expression;
+    merged.qualifiers = merged_qualifiers;
+    merged.symbols = merged_symbols;
 
     let merged_comprehension = Expr::Comprehension(Metadata::new(), Moo::new(merged));
     let wrapped = match ac_operator_kind {
@@ -119,21 +121,12 @@ fn as_single_comprehension(expr: &Expr) -> Option<Comprehension> {
     Some(comprehension.as_ref().clone())
 }
 
-fn add_qualifiers(
-    mut builder: ComprehensionBuilder,
-    comprehension: &Comprehension,
-) -> ComprehensionBuilder {
-    for qualifier in &comprehension.qualifiers {
-        match qualifier {
-            ComprehensionQualifier::Generator { name, domain } => {
-                let declaration = DeclarationPtr::new_quantified(name.clone(), domain.clone());
-                builder = builder.generator(declaration);
-            }
-            ComprehensionQualifier::Condition(condition) => {
-                builder = builder.guard(condition.clone());
-            }
+fn merge_symbols(parent_scope: SymbolTablePtr, levels: &[Comprehension]) -> SymbolTablePtr {
+    let symbols = SymbolTablePtr::with_parent(parent_scope);
+    for level in levels {
+        for (_, decl) in level.symbols().clone().into_iter_local() {
+            symbols.write().update_insert(decl);
         }
     }
-
-    builder
+    symbols
 }
