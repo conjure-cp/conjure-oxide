@@ -1,1 +1,1 @@
-conjure-oxide --solver minion solve model.eprime
+conjure-oxide --solver minion --parser=tree-sitter solve model.eprime

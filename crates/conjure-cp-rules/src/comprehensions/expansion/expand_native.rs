@@ -1,197 +1,146 @@
-use std::collections::HashMap;
-
 use conjure_cp::{
     ast::{
-        Atom, DeclarationKind, DeclarationPtr, Expression, Literal, Metadata, Name, SymbolTable,
-        comprehension::Comprehension,
-        eval_constant, run_partial_evaluator,
-        serde::{HasId as _, ObjId},
+        Atom, DeclarationKind, DeclarationPtr, DomainPtr, Expression, Literal, Metadata, Name,
+        SymbolTable,
+        comprehension::{Comprehension, ComprehensionQualifier},
+        eval_constant,
     },
-    bug,
     solver::SolverError,
 };
 use uniplate::Biplate as _;
 
+use super::via_solver_common::{lift_machine_references_into_parent_scope, simplify_expression};
+
 /// Expands the comprehension without calling an external solver.
 ///
-/// Quantified variables are enumerated with native Rust loops over their finite domains. Guards
-/// are evaluated using constant and partial evaluators after substitution.
+/// Algorithm:
+/// 1. Recurse qualifiers left-to-right.
+/// 2. For each generator value, temporarily bind the quantified declaration to a
+///    `TemporaryValueLetting` and recurse.
+/// 3. For each condition, evaluate and recurse only if true.
+/// 4. At the leaf, evaluate the return expression under the active bindings.
 pub fn expand_native(
     comprehension: Comprehension,
-    symtab: &mut SymbolTable,
+    parent_symbols: &mut SymbolTable,
 ) -> Result<Vec<Expression>, SolverError> {
-    let generator_symbols = comprehension.generator_submodel.symbols().clone();
-    let quantified_vars = comprehension.quantified_vars.clone();
-
-    let mut quantified_domains = Vec::with_capacity(quantified_vars.len());
-    for name in &quantified_vars {
-        let decl = generator_symbols.lookup_local(name).ok_or_else(|| {
-            SolverError::ModelInvalid(format!(
-                "quantified variable '{name}' is missing from generator symbol table"
-            ))
-        })?;
-
-        let domain = decl.domain().ok_or_else(|| {
-            SolverError::ModelInvalid(format!("quantified variable '{name}' has no domain"))
-        })?;
-        let resolved = domain.resolve().ok_or_else(|| {
-            SolverError::ModelFeatureNotSupported(format!(
-                "quantified variable '{name}' has unresolved domain: {domain}"
-            ))
-        })?;
-
-        let values: Vec<Literal> = resolved
-            .values()
-            .map_err(|err| {
-                SolverError::ModelFeatureNotSupported(format!(
-                    "quantified variable '{name}' has non-enumerable domain: {err}"
-                ))
-            })?
-            .collect();
-
-        quantified_domains.push(values);
-    }
-
-    let mut assignments = HashMap::new();
     let mut expanded = Vec::new();
-
-    enumerate_assignments(
-        0,
-        &quantified_vars,
-        &quantified_domains,
-        &mut assignments,
-        &mut |assignment| {
-            for guard in comprehension.generator_submodel.constraints() {
-                match evaluate_guard(guard, assignment) {
-                    Some(true) => {}
-                    Some(false) => return Ok(()),
-                    None => {
-                        return Err(SolverError::ModelInvalid(format!(
-                            "native comprehension expansion could not evaluate guard: {guard}"
-                        )));
-                    }
-                }
-            }
-
-            let return_expression_submodel = comprehension.return_expression_submodel.clone();
-            let child_symtab = return_expression_submodel.symbols().clone();
-            let return_expression = return_expression_submodel.into_single_expression();
-
-            let return_expression = substitute_quantified_literals(return_expression, assignment);
-            let return_expression = simplify_expression(return_expression);
-
-            // Copy machine-name declarations from comprehension-local return-expression scope.
-            let mut machine_name_translations: HashMap<ObjId, DeclarationPtr> = HashMap::new();
-            for (name, decl) in child_symtab.into_iter_local() {
-                if assignment.get(&name).is_some()
-                    && matches!(
-                        &decl.kind() as &DeclarationKind,
-                        DeclarationKind::Given(_) | DeclarationKind::Quantified(_)
-                    )
-                {
-                    continue;
-                }
-
-                let Name::Machine(_) = &name else {
-                    bug!(
-                        "the symbol table of the return expression of a comprehension should only contain machine names"
-                    );
-                };
-
-                let id = decl.id();
-                let new_decl = symtab.gensym(&decl.domain().unwrap());
-                machine_name_translations.insert(id, new_decl);
-            }
-
-            #[allow(clippy::arc_with_non_send_sync)]
-            let return_expression = return_expression.transform_bi(&move |atom: Atom| {
-                if let Atom::Reference(ref decl) = atom
-                    && let id = decl.id()
-                    && let Some(new_decl) = machine_name_translations.get(&id)
-                {
-                    Atom::Reference(conjure_cp::ast::Reference::new(new_decl.clone()))
-                } else {
-                    atom
-                }
-            });
-
-            expanded.push(return_expression);
-            Ok(())
-        },
-    )?;
-
+    expand_qualifiers(&comprehension, 0, &mut expanded, parent_symbols)?;
     Ok(expanded)
 }
 
-fn enumerate_assignments(
-    index: usize,
-    quantified_vars: &[Name],
-    quantified_domains: &[Vec<Literal>],
-    assignment: &mut HashMap<Name, Literal>,
-    on_assignment: &mut impl FnMut(&HashMap<Name, Literal>) -> Result<(), SolverError>,
+fn expand_qualifiers(
+    comprehension: &Comprehension,
+    qualifier_index: usize,
+    expanded: &mut Vec<Expression>,
+    parent_symbols: &mut SymbolTable,
 ) -> Result<(), SolverError> {
-    if index == quantified_vars.len() {
-        return on_assignment(assignment);
+    if qualifier_index == comprehension.qualifiers.len() {
+        let child_symbols = comprehension.symbols().clone();
+        let return_expression =
+            concretise_resolved_reference_atoms(comprehension.return_expression.clone());
+        let return_expression = simplify_expression(return_expression);
+        let return_expression = lift_machine_references_into_parent_scope(
+            return_expression,
+            &child_symbols,
+            parent_symbols,
+        );
+        expanded.push(return_expression);
+        return Ok(());
     }
 
-    let name = &quantified_vars[index];
-    for lit in &quantified_domains[index] {
-        assignment.insert(name.clone(), lit.clone());
-        enumerate_assignments(
-            index + 1,
-            quantified_vars,
-            quantified_domains,
-            assignment,
-            on_assignment,
-        )?;
+    match &comprehension.qualifiers[qualifier_index] {
+        ComprehensionQualifier::Generator { name, domain } => {
+            let values = resolve_generator_values(name, domain)?;
+            let quantified_declaration = lookup_quantified_declaration(comprehension, name)?;
+
+            for literal in values {
+                with_temporary_quantified_binding(&quantified_declaration, &literal, || {
+                    expand_qualifiers(comprehension, qualifier_index + 1, expanded, parent_symbols)
+                })?;
+            }
+        }
+        ComprehensionQualifier::Condition(condition) => {
+            if evaluate_guard(condition)? {
+                expand_qualifiers(comprehension, qualifier_index + 1, expanded, parent_symbols)?;
+            }
+        }
     }
-    assignment.remove(name);
+
     Ok(())
 }
 
-fn evaluate_guard(guard: &Expression, assignment: &HashMap<Name, Literal>) -> Option<bool> {
-    let substituted = substitute_quantified_literals(guard.clone(), assignment);
-    let simplified = simplify_expression(substituted);
-    match eval_constant(&simplified)? {
-        Literal::Bool(value) => Some(value),
-        _ => None,
-    }
-}
+fn resolve_generator_values(name: &Name, domain: &DomainPtr) -> Result<Vec<Literal>, SolverError> {
+    let resolved = domain.resolve().ok_or_else(|| {
+        SolverError::ModelFeatureNotSupported(format!(
+            "quantified variable '{name}' has unresolved domain after assigning previous generators: {domain}"
+        ))
+    })?;
 
-fn substitute_quantified_literals(
-    expr: Expression,
-    assignment: &HashMap<Name, Literal>,
-) -> Expression {
-    expr.transform_bi(&|atom: Atom| {
-        let Atom::Reference(ref decl) = atom else {
-            return atom;
-        };
-
-        let Some(lit) = assignment.get(&decl.name()) else {
-            return atom;
-        };
-
-        Atom::Literal(lit.clone())
+    resolved.values().map(|iter| iter.collect()).map_err(|err| {
+        SolverError::ModelFeatureNotSupported(format!(
+            "quantified variable '{name}' has non-enumerable domain: {err}"
+        ))
     })
 }
 
-fn simplify_expression(mut expr: Expression) -> Expression {
-    // Keep applying evaluators to a fixed point, or until no changes are made.
-    for _ in 0..128 {
-        let next = expr.clone().transform_bi(&|subexpr: Expression| {
-            if let Some(lit) = eval_constant(&subexpr) {
-                return Expression::Atomic(Metadata::new(), Atom::Literal(lit));
-            }
-            if let Ok(reduction) = run_partial_evaluator(&subexpr) {
-                return reduction.new_expression;
-            }
-            subexpr
-        });
+fn lookup_quantified_declaration(
+    comprehension: &Comprehension,
+    name: &Name,
+) -> Result<DeclarationPtr, SolverError> {
+    comprehension.symbols().lookup_local(name).ok_or_else(|| {
+        SolverError::ModelInvalid(format!(
+            "quantified variable '{name}' is missing from local comprehension symbol table"
+        ))
+    })
+}
 
-        if next == expr {
-            break;
-        }
-        expr = next;
+fn with_temporary_quantified_binding<T>(
+    quantified: &DeclarationPtr,
+    value: &Literal,
+    f: impl FnOnce() -> Result<T, SolverError>,
+) -> Result<T, SolverError> {
+    let mut targets = vec![quantified.clone()];
+    if let DeclarationKind::Quantified(inner) = &*quantified.kind()
+        && let Some(generator) = inner.generator()
+    {
+        targets.push(generator.clone());
     }
-    expr
+
+    let mut originals = Vec::with_capacity(targets.len());
+    for mut target in targets {
+        let old_kind = target.replace_kind(DeclarationKind::TemporaryValueLetting(
+            Expression::Atomic(Metadata::new(), Atom::Literal(value.clone())),
+        ));
+        originals.push((target, old_kind));
+    }
+
+    let result = f();
+
+    for (mut target, old_kind) in originals.into_iter().rev() {
+        let _ = target.replace_kind(old_kind);
+    }
+
+    result
+}
+
+fn evaluate_guard(guard: &Expression) -> Result<bool, SolverError> {
+    let simplified = simplify_expression(guard.clone());
+    match eval_constant(&simplified) {
+        Some(Literal::Bool(value)) => Ok(value),
+        Some(other) => Err(SolverError::ModelInvalid(format!(
+            "native comprehension guard must evaluate to Bool, got {other}: {guard}"
+        ))),
+        None => Err(SolverError::ModelInvalid(format!(
+            "native comprehension expansion could not evaluate guard: {guard}"
+        ))),
+    }
+}
+
+fn concretise_resolved_reference_atoms(expr: Expression) -> Expression {
+    expr.transform_bi(&|atom: Atom| match atom {
+        Atom::Reference(reference) => reference
+            .resolve_constant()
+            .map_or_else(|| Atom::Reference(reference), Atom::Literal),
+        other => other,
+    })
 }

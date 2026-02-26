@@ -6,12 +6,10 @@ use crate::parse_essence_with_context;
 use conjure_cp_core::context::Context;
 use std::sync::{Arc, RwLock};
 
-/// Detects very simple semantic issues in source and returns a vector
-/// of Diagnostics.
-pub fn detect_semantic_errors(source: &str) -> Vec<Diagnostic> {
+pub fn detect_errors(source: &str) -> Vec<Diagnostic> {
     let mut diagnostics = Vec::new();
-    let context = Arc::new(RwLock::new(Context::default()));
     let mut errors = vec![];
+    let context = Arc::new(RwLock::new(Context::default()));
 
     match parse_essence_with_context(source, context, &mut errors) {
         Ok(_model) => {
@@ -36,7 +34,7 @@ pub fn error_to_diagnostic(err: &RecoverableParseError) -> Diagnostic {
         range: Range { start, end },
         severity: Severity::Error,
         source: "semantic error detection",
-        message: format!("Semantic Error: {}", err.msg),
+        message: err.msg.clone(),
     }
 }
 
@@ -63,4 +61,23 @@ fn range_to_position(range: &Option<tree_sitter::Range>) -> (Position, Position)
             },
         ),
     }
+}
+
+/// Helper function for tests to compare the actual diagnostic with the expected one.
+pub fn check_diagnostic(
+    diag: &Diagnostic,
+    line_start: u32,
+    char_start: u32,
+    line_end: u32,
+    char_end: u32,
+    msg: &str,
+) {
+    // Checking range
+    assert_eq!(diag.range.start.line, line_start);
+    assert_eq!(diag.range.start.character, char_start);
+    assert_eq!(diag.range.end.line, line_end);
+    assert_eq!(diag.range.end.character, char_end);
+
+    // Check the message
+    assert_eq!(diag.message, msg);
 }

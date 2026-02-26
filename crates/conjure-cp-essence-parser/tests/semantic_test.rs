@@ -1,11 +1,11 @@
-use conjure_cp_essence_parser::diagnostics::error_detection::semantic_errors::detect_semantic_errors;
-use conjure_cp_essence_parser::diagnostics::error_detection::syntactic_errors::check_diagnostic;
+use conjure_cp_essence_parser::diagnostics::diagnostics_api::get_diagnostics;
+use conjure_cp_essence_parser::diagnostics::error_detection::collect_errors::check_diagnostic;
 
 #[test]
 fn detects_undefined_variable() {
     let source = "find x: int(1..10)\nsuch that x = y";
     // y is undefined
-    let diagnostics = detect_semantic_errors(source);
+    let diagnostics = get_diagnostics(source);
 
     assert_eq!(
         diagnostics.len(),
@@ -21,14 +21,14 @@ fn detects_undefined_variable() {
         14,
         1,
         15,
-        "Semantic Error: Variable 'y' is not defined in the symbol table",
+        "The identifier 'y' is not defined",
     );
 }
 
 #[test]
 fn no_errors_for_valid_code() {
     let source = "find x, y: int(1..10)\nsuch that x + y = 10";
-    let diagnostics = detect_semantic_errors(source);
+    let diagnostics = get_diagnostics(source);
 
     // should have no diagnostics
     assert_eq!(
@@ -42,7 +42,7 @@ fn no_errors_for_valid_code() {
 #[test]
 fn range_points_to_error_location() {
     let source = "find x: int(1..10)\nsuch that x = undefined_var";
-    let diagnostics = detect_semantic_errors(source);
+    let diagnostics = get_diagnostics(source);
 
     assert_eq!(
         diagnostics.len(),
@@ -58,7 +58,7 @@ fn range_points_to_error_location() {
         14,
         1,
         27,
-        "Semantic Error: Variable 'undefined_var' is not defined in the symbol table",
+        "The identifier 'undefined_var' is not defined",
     );
 }
 
@@ -67,7 +67,7 @@ fn range_points_to_error_location() {
 #[test]
 fn domain_start_greater_than_end() {
     let source = "find x: int(10..1)";
-    let diagnostics = detect_semantic_errors(source);
+    let diagnostics = get_diagnostics(source);
 
     assert_eq!(
         diagnostics.len(),
@@ -83,7 +83,7 @@ fn domain_start_greater_than_end() {
         12,
         0,
         17,
-        "Semantic Error: Start value greater than end value in 'domain'",
+        "Start value greater than end value in 'domain'",
     );
 }
 
@@ -94,7 +94,7 @@ fn incorrect_type_for_equation() {
     letting y be false\n
     find x: int(5..10)\n
     such that 5 + y = 6";
-    let diagnostics = detect_semantic_errors(source);
+    let diagnostics = get_diagnostics(source);
 
     assert_eq!(
         diagnostics.len(),
@@ -110,7 +110,7 @@ fn incorrect_type_for_equation() {
         14,
         2,
         15,
-        "Semantic Error: Incorrect type 'bool' for variable 'y', expected 'int'",
+        "Incorrect type 'bool' for variable 'y', expected 'int'",
     );
 }
 
@@ -118,7 +118,7 @@ fn incorrect_type_for_equation() {
 #[test]
 fn dividing_over_zero() {
     let source = "find x: int(5..10)\nsuch that x/0 = 3";
-    let diagnostics = detect_semantic_errors(source);
+    let diagnostics = get_diagnostics(source);
 
     assert_eq!(
         diagnostics.len(),
@@ -128,14 +128,7 @@ fn dividing_over_zero() {
 
     let diag = &diagnostics[0];
 
-    check_diagnostic(
-        diag,
-        1,
-        10,
-        1,
-        13,
-        "Semantic Error: Unsafe division attempted",
-    );
+    check_diagnostic(diag, 1, 10, 1, 13, "Unsafe division attempted");
 }
 
 #[ignore]
@@ -144,7 +137,7 @@ fn invalid_index() {
     let source = "letting s be (0,1,1,0)
                 \nletting t be (0,0,0,1)
                 \nfind a : bool such that a = (s[5] = t[1])";
-    let diagnostics = detect_semantic_errors(source);
+    let diagnostics = get_diagnostics(source);
 
     assert_eq!(
         diagnostics.len(),
@@ -154,14 +147,14 @@ fn invalid_index() {
 
     let diag = &diagnostics[0];
 
-    check_diagnostic(diag, 2, 31, 2, 32, "Semantic Error: Index out of bounds");
+    check_diagnostic(diag, 2, 31, 2, 32, "Index out of bounds");
 }
 
 #[ignore]
 #[test]
 fn duplicate_declaration_of_variable() {
     let source = "find x: int(1..10)\nfind x: int(2..3)";
-    let diagnostics = detect_semantic_errors(source);
+    let diagnostics = get_diagnostics(source);
 
     assert_eq!(
         diagnostics.len(),
@@ -177,7 +170,7 @@ fn duplicate_declaration_of_variable() {
         5,
         1,
         6,
-        "Semantic Error: Redeclaration of variable 'x' which was previously defined",
+        "Redeclaration of variable 'x' which was previously defined",
     );
 }
 
@@ -185,7 +178,7 @@ fn duplicate_declaration_of_variable() {
 #[test]
 fn extra_comma_in_variable_list() {
     let source = "find x,: int(1..10)";
-    let diagnostics = detect_semantic_errors(source);
+    let diagnostics = get_diagnostics(source);
 
     assert_eq!(
         diagnostics.len(),
