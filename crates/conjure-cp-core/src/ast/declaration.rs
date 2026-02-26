@@ -191,7 +191,34 @@ impl DeclarationPtr {
     ///
     /// ```
     pub fn new_value_letting(name: Name, expression: Expression) -> DeclarationPtr {
-        let kind = DeclarationKind::ValueLetting(expression);
+        let kind = DeclarationKind::ValueLetting(expression, None);
+        DeclarationPtr::new(name, kind)
+    }
+
+    /// Creates a new value letting declaration with domain.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use conjure_cp_core::ast::{DeclarationPtr,Name,DeclarationKind,Domain,Range, Expression,
+    /// Literal,Atom,Moo};
+    /// use conjure_cp_core::{matrix_expr,ast::Metadata};
+    ///
+    /// // letting n be 10 + 10
+    /// let ten = Expression::Atomic(Metadata::new(),Atom::Literal(Literal::Int(10)));
+    /// let expression = Expression::Sum(Metadata::new(),Moo::new(matrix_expr![ten.clone(),ten]));
+    /// let declaration = DeclarationPtr::new_value_letting(
+    ///     Name::User("n".into()),
+    ///     expression);
+    /// TODO: Finish docs here
+    ///
+    /// ```
+    pub fn new_value_letting_with_domain(
+        name: Name,
+        expression: Expression,
+        domain: DomainPtr,
+    ) -> DeclarationPtr {
+        let kind = DeclarationKind::ValueLetting(expression, Some(domain));
         DeclarationPtr::new(name, kind)
     }
 
@@ -484,6 +511,21 @@ impl DeclarationPtr {
         let ans = mem::replace(&mut *guard, declaration);
         drop(guard);
         ans
+    }
+
+    /// Replaces the declaration with the value of another DeclarationPtr.
+    pub fn update(&mut self, declaration: DeclarationPtr) {
+        let mut guard = self.write();
+        // TODO: This is disgusting, but I just want it to work.
+        // This just replaces the inner declaration so I can extract the existing one.
+        let decl = declaration.detach().replace(Declaration::new(
+            "hi".into(),
+            DeclarationKind::RecordField(Moo::new(super::Domain::Ground(Moo::new(
+                GroundDomain::Bool,
+            )))),
+        ));
+        let _ = mem::replace(&mut *guard, decl);
+        drop(guard);
     }
 }
 

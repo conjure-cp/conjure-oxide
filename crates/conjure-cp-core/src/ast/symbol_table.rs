@@ -361,6 +361,11 @@ impl SymbolTable {
         self.table.iter()
     }
 
+    /// Iterates over entries in the LOCAL symbol table, by reference.
+    pub fn iter_local_mut(&mut self) -> impl Iterator<Item = (&Name, &mut DeclarationPtr)> {
+        self.table.iter_mut()
+    }
+
     /// Extends the symbol table with the given symbol table, updating the gensym counter if
     /// necessary.
     pub fn extend(&mut self, other: SymbolTable) {
