@@ -319,6 +319,7 @@ fn safediv_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     else {
         return Err(RuleNotApplicable);
     };
+    
     let Some(denom_bits) = denom_inner.as_ref().clone().unwrap_list() else {
         return Err(RuleNotApplicable);
     };
@@ -368,9 +369,15 @@ fn safediv_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         }
     }
 
-    // Since the input integers are one-hot, the output will also be one-hot.
-    // Exactly one (n_i, d_j) combination will be true, firing exactly one implication
-    // and forcing exactly one q_k to be true. No extra constraints for one-hotness are needed.
+    // the quotient cannot take more than one value simultaneously.
+    for a in 0..quot_bits.len() {
+        for b in (a + 1)..quot_bits.len() {
+            new_clauses.push(CnfClause::new(vec![
+                Expr::Not(Metadata::new(), Moo::new(quot_bits[a].clone())),
+                Expr::Not(Metadata::new(), Moo::new(quot_bits[b].clone())),
+            ]));
+        }
+    }
 
     let quot_int = Expr::SATInt(
         Metadata::new(),
