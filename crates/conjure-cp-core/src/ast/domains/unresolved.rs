@@ -160,9 +160,11 @@ impl IntVal {
                 ReturnType::Int => Some(IntVal::Reference(re.clone())),
                 _ => None,
             },
-            DeclarationKind::DomainLetting(_)
-            | DeclarationKind::RecordField(_)
-            | DeclarationKind::Find(_) => None,
+            DeclarationKind::Find(var) => match var.return_type() {
+                ReturnType::Int => Some(IntVal::Reference(re.clone())),
+                _ => None,
+            },
+            DeclarationKind::DomainLetting(_) | DeclarationKind::RecordField(_) => None,
         }
     }
 
@@ -191,9 +193,9 @@ impl IntVal {
                         None
                     }
                 }
-                DeclarationKind::DomainLetting(_)
-                | DeclarationKind::RecordField(_)
-                | DeclarationKind::Find(_) => bug!(
+                // Decision variables inside domains are unresolved until solving.
+                DeclarationKind::Find(_) => None,
+                DeclarationKind::DomainLetting(_) | DeclarationKind::RecordField(_) => bug!(
                     "Expected integer expression, given, or letting inside int domain; Got: {re}"
                 ),
             },
@@ -512,7 +514,7 @@ impl Display for UnresolvedDomain {
             UnresolvedDomain::Matrix(value_domain, index_domains) => {
                 write!(
                     f,
-                    "matrix indexed by [{}] of {value_domain}",
+                    "matrix indexed by {} of {value_domain}",
                     pretty_vec(&index_domains.iter().collect_vec())
                 )
             }
