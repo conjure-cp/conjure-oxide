@@ -19,44 +19,6 @@ use conjure_cp::{
 };
 use uniplate::Uniplate;
 
-fn as_single_comprehension(expr: &Expr) -> Option<Comprehension> {
-    if let Expr::Comprehension(_, comprehension) = expr {
-        return Some(comprehension.as_ref().clone());
-    }
-
-    let exprs = expr.clone().unwrap_list()?;
-    let [Expr::Comprehension(_, comprehension)] = exprs.as_slice() else {
-        return None;
-    };
-
-    Some(comprehension.as_ref().clone())
-}
-
-/// Expand comprehensions inside AC operators using `--comprehension-expander via-solver-ac`.
-#[register_rule(("Base", 2002))]
-fn expand_comprehension_via_solver_ac(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
-    if comprehension_expander() != QuantifiedExpander::ViaSolverAc {
-        return Err(RuleNotApplicable);
-    }
-
-    // Is this an ac expression?
-    let ac_operator_kind = expr.to_ac_operator_kind().ok_or(RuleNotApplicable)?;
-
-    debug_assert_eq!(
-        expr.children().len(),
-        1,
-        "AC expressions should have exactly one child."
-    );
-
-    let comprehension = as_single_comprehension(&expr.children()[0]).ok_or(RuleNotApplicable)?;
-
-    let results =
-        expand_via_solver_ac(comprehension, ac_operator_kind).or(Err(RuleNotApplicable))?;
-
-    let new_expr = ac_operator_kind.as_expression(into_matrix_expr!(results));
-    Ok(Reduction::with_symbols(new_expr, symbols.clone()))
-}
-
 /// Expand comprehensions using `--comprehension-expander native`.
 #[register_rule(("Base", 2000))]
 fn expand_comprehension_native(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
@@ -90,9 +52,48 @@ fn expand_comprehension_via_solver(expr: &Expr, symbols: &SymbolTable) -> Applic
     };
 
     let comprehension = comprehension.as_ref().clone();
-    let results = expand_via_solver(comprehension).or(Err(RuleNotApplicable))?;
+    let results = expand_via_solver(comprehension)
+        .unwrap_or_else(|e| bug!("via-solver comprehension expansion failed: {e}"));
     Ok(Reduction::with_symbols(
         into_matrix_expr!(results),
         symbols.clone(),
     ))
+}
+
+/// Expand comprehensions inside AC operators using `--comprehension-expander via-solver-ac`.
+#[register_rule(("Base", 2002))]
+fn expand_comprehension_via_solver_ac(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    if comprehension_expander() != QuantifiedExpander::ViaSolverAc {
+        return Err(RuleNotApplicable);
+    }
+
+    // Is this an ac expression?
+    let ac_operator_kind = expr.to_ac_operator_kind().ok_or(RuleNotApplicable)?;
+
+    debug_assert_eq!(
+        expr.children().len(),
+        1,
+        "AC expressions should have exactly one child."
+    );
+
+    let comprehension = as_single_comprehension(&expr.children()[0]).ok_or(RuleNotApplicable)?;
+
+    let results =
+        expand_via_solver_ac(comprehension, ac_operator_kind).or(Err(RuleNotApplicable))?;
+
+    let new_expr = ac_operator_kind.as_expression(into_matrix_expr!(results));
+    Ok(Reduction::with_symbols(new_expr, symbols.clone()))
+}
+
+fn as_single_comprehension(expr: &Expr) -> Option<Comprehension> {
+    if let Expr::Comprehension(_, comprehension) = expr {
+        return Some(comprehension.as_ref().clone());
+    }
+
+    let exprs = expr.clone().unwrap_list()?;
+    let [Expr::Comprehension(_, comprehension)] = exprs.as_slice() else {
+        return None;
+    };
+
+    Some(comprehension.as_ref().clone())
 }
