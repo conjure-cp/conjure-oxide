@@ -126,8 +126,18 @@ fn parse_int_domain(
 
                 match (lower_bound, upper_bound) {
                     (Some(lower), Some(upper)) => {
-                        if !matches!(lower, IntVal::Const(_)) || !matches!(upper, IntVal::Const(_))
-                        {
+                        // Check if both bounds are constants and validate lower <= upper
+                        if let (IntVal::Const(l), IntVal::Const(u)) = (&lower, &upper) {
+                            if l > u {
+                                errors.push(RecoverableParseError::new(
+                                    format!(
+                                        "Invalid integer range: lower bound {} is greater than upper bound {}",
+                                        l, u
+                                    ),
+                                    Some(domain_component.range()),
+                                ));
+                            }
+                        } else {
                             all_resolved = false;
                         }
                         ranges_unresolved.push(Range::Bounded(lower, upper));
