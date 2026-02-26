@@ -1,7 +1,5 @@
 use conjure_cp::{
-    ast::{
-        Atom, Expression as Expr, GroundDomain, Metadata, Name, SubModel, SymbolTable, serde::HasId,
-    },
+    ast::{Atom, Expression as Expr, GroundDomain, Metadata, Name, SymbolTable, serde::HasId},
     bug,
     representation::Representation,
     rule_engine::{
@@ -70,7 +68,7 @@ fn select_representation_matrix(expr: &Expr, symbols: &SymbolTable) -> Applicati
     let mut symbols = symbols.clone();
     let mut expr = expr.clone();
     let has_changed = Arc::new(AtomicBool::new(false));
-    for (name, id) in matrix_vars {
+    for (name, _id) in matrix_vars {
         // Even if we have no references to this matrix, still give it the matrix_to_atom
         // representation, as we still currently need to give it to minion even if its unused.
         //
@@ -103,29 +101,6 @@ fn select_representation_matrix(expr: &Expr, symbols: &SymbolTable) -> Applicati
             } else {
                 n
             }
-        });
-
-        let has_changed_ptr = Arc::clone(&has_changed);
-        let old_name = old_name.clone();
-        let new_name = new_name.clone();
-        expr = expr.transform_bi(&move |mut x: SubModel| {
-            let old_name = old_name.clone();
-            let new_name = new_name.clone();
-            let has_changed_ptr = Arc::clone(&has_changed_ptr);
-
-            // only do things if this inscope and not shadowed..
-            if x.symbols().lookup(&old_name).is_none_or(|x| x.id() == id) {
-                let root = x.root_mut_unchecked();
-                *root = root.transform_bi(&move |n: Name| {
-                    if n == old_name {
-                        has_changed_ptr.store(true, Ordering::SeqCst);
-                        new_name.clone()
-                    } else {
-                        n
-                    }
-                });
-            }
-            x
         });
     }
 

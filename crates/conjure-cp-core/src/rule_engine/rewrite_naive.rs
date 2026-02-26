@@ -9,7 +9,7 @@ use crate::{
             RuleResult, VariableDeclarationSnapshot, log_rule_application,
             snapshot_variable_declarations,
         },
-        submodel_zipper::submodel_ctx,
+        submodel_zipper::expression_ctx,
     },
     settings::{Rewriter, set_current_rewriter},
     stats::RewriterStats,
@@ -18,7 +18,6 @@ use crate::{
 use itertools::Itertools;
 use std::{sync::Arc, time::Instant};
 use tracing::{Level, span, trace};
-use uniplate::Biplate;
 
 type VariableSnapshots = Option<(VariableDeclarationSnapshot, VariableDeclarationSnapshot)>;
 type ApplicableRule<'a, CtxFnType> = (RuleResult<'a>, u16, Expr, CtxFnType, VariableSnapshots);
@@ -52,27 +51,13 @@ pub fn rewrite_naive<'a>(
 
     // Rewrite until there are no more rules left to apply.
     while done_something {
-        let mut new_model = None;
-        done_something = false;
-
-        // Rewrite each sub-model in the tree, largest first.
-        for (mut submodel, ctx) in <_ as Biplate<SubModel>>::contexts_bi(&model) {
-            if try_rewrite_model(
-                &mut submodel,
-                &rules_grouped,
-                prop_multiple_equally_applicable,
-                &mut rewriter_stats,
-            )
-            .is_some()
-            {
-                new_model = Some(ctx(submodel));
-                done_something = true;
-                break;
-            }
-        }
-        if let Some(new_model) = new_model {
-            model = new_model;
-        }
+        done_something = try_rewrite_model(
+            model.as_submodel_mut(),
+            &rules_grouped,
+            prop_multiple_equally_applicable,
+            &mut rewriter_stats,
+        )
+        .is_some();
     }
 
     let run_end = Instant::now();
@@ -102,14 +87,13 @@ fn try_rewrite_model(
     prop_multiple_equally_applicable: bool,
     stats: &mut RewriterStats,
 ) -> Option<()> {
-    type CtxFn = Arc<dyn Fn(Expr) -> SubModel>;
+    type CtxFn = Arc<dyn Fn(Expr) -> Expr>;
     let mut results: Vec<ApplicableRule<'_, CtxFn>> = vec![];
 
     // Iterate over rules by priority in descending order.
     'top: for (priority, rules) in rules_grouped.iter() {
-        // Using Biplate, rewrite both the expression tree, and any value lettings in the symbol
-        // table.
-        for (expr, ctx) in submodel_ctx(submodel.clone()) {
+        // Rewrite within the current root expression tree.
+        for (expr, ctx) in expression_ctx(submodel.root().clone()) {
             // Clone expr and ctx so they can be reused
             let expr = expr.clone();
             let ctx = ctx.clone();
@@ -188,14 +172,15 @@ fn try_rewrite_model(
             log_rule_application(
                 result,
                 expr,
-                submodel,
+                &submodel.symbols(),
                 variable_snapshots
                     .as_ref()
                     .map(|(before, after)| (before, after)),
             );
 
             // Replace expr with new_expression
-            *submodel = ctx(result.reduction.new_expression.clone());
+            let new_root = ctx(result.reduction.new_expression.clone());
+            submodel.replace_root(new_root);
 
             // Apply new symbols and top level
             result.reduction.clone().apply(submodel);
