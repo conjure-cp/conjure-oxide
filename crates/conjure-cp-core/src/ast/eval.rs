@@ -553,7 +553,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                 None
             }
         }
-        Expr::Scope(_, _) => None,
+        Expr::Scope(_, _, _) => None,
         Expr::Metavar(_, _) => None,
         Expr::MinionElementOne(_, _, _, _) => None,
         Expr::ToInt(_, expression) => {

@@ -157,7 +157,7 @@ pub enum Expression {
     #[polyquine_skip]
     Scope(Metadata, Moo<Expression>, SymbolTablePtr),
 
-    /// `|x|` - absolute value of `x`
+    /// `|x|` - absolute value of `x`Deserialize
     #[compatible(JsonInput, SMT)]
     Abs(Metadata, Moo<Expression>),
 
@@ -721,7 +721,7 @@ impl Expression {
             }
             Expression::InDomain(_, _, _) => Some(Domain::bool()),
             Expression::Atomic(_, atom) => Some(atom.domain_of()),
-            Expression::Scope(_, _) => Some(Domain::bool()),
+            Expression::Scope(_, _, _) => Some(Domain::bool()),
             Expression::Sum(_, e) => {
                 bounded_i32_domain_for_matrix_literal_monotonic(e, |x, y| Some(x + y))
             }
@@ -1320,7 +1320,7 @@ impl Display for Expression {
             Expression::FromSolution(_, expr) => write!(f, "FromSolution({expr})"),
             Expression::Metavar(_, name) => write!(f, "&{name}"),
             Expression::Atomic(_, atom) => atom.fmt(f),
-            Expression::Scope(_, submodel) => write!(f, "{{\n{submodel}\n}}"),
+            Expression::Scope(_, submodel, _) => write!(f, "{{\n{submodel}\n}}"),
             Expression::Abs(_, a) => write!(f, "|{a}|"),
             Expression::Sum(_, e) => {
                 write!(f, "sum({e})")
@@ -1579,7 +1579,7 @@ impl Typeable for Expression {
             Expression::FromSolution(_, expr) => expr.return_type(),
             Expression::Metavar(_, _) => ReturnType::Unknown,
             Expression::Atomic(_, atom) => atom.return_type(),
-            Expression::Scope(_, scope) => scope.return_type(),
+            Expression::Scope(_, scope, _) => scope.return_type(),
             Expression::Abs(_, _) => ReturnType::Int,
             Expression::Sum(_, _) => ReturnType::Int,
             Expression::Product(_, _) => ReturnType::Int,
