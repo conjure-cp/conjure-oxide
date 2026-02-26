@@ -2,8 +2,8 @@ use super::categories::{Category, CategoryOf};
 use super::name::Name;
 use super::serde::{DefaultWithId, HasId, IdPtr, ObjId, PtrAsInner};
 use super::{
-    DecisionVariable, DomainPtr, Expression, GroundDomain, HasDomain, Moo, RecordEntry, ReturnType,
-    Typeable,
+    DecisionVariable, DomainPtr, Expression, GroundDomain, HasDomain, Moo, RecordEntry, Reference,
+    ReturnType, Typeable,
 };
 use parking_lot::{
     MappedRwLockReadGuard, MappedRwLockWriteGuard, RwLock, RwLockReadGuard, RwLockWriteGuard,
@@ -11,6 +11,7 @@ use parking_lot::{
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use std::any::TypeId;
+use std::collections::VecDeque;
 use std::fmt::{Debug, Display};
 use std::mem;
 use std::sync::Arc;
@@ -599,6 +600,123 @@ where
                     let inner = recons(x);
                     *(&mut self3.write() as &mut Declaration) = inner;
                     self3
+                }),
+            )
+        }
+    }
+}
+
+impl Biplate<Reference> for DeclarationPtr {
+    fn biplate(&self) -> (Tree<Reference>, Box<dyn Fn(Tree<Reference>) -> Self>) {
+        let (tree, recons_kind) = biplate_declaration_kind_references(self.kind().clone());
+
+        let self2 = self.clone();
+        (
+            tree,
+            Box::new(move |x| {
+                let mut self3 = self2.clone();
+                let _ = self3.replace_kind(recons_kind(x));
+                self3
+            }),
+        )
+    }
+}
+
+fn biplate_domain_ptr_references(
+    domain: DomainPtr,
+) -> (Tree<Reference>, Box<dyn Fn(Tree<Reference>) -> DomainPtr>) {
+    let domain_inner = domain.as_ref().clone();
+    let (tree, recons_domain) = Biplate::<Reference>::biplate(&domain_inner);
+    (tree, Box::new(move |x| Moo::new(recons_domain(x))))
+}
+
+fn biplate_declaration_kind_references(
+    kind: DeclarationKind,
+) -> (
+    Tree<Reference>,
+    Box<dyn Fn(Tree<Reference>) -> DeclarationKind>,
+) {
+    match kind {
+        DeclarationKind::Find(var) => {
+            let (tree, recons_domain) = biplate_domain_ptr_references(var.domain.clone());
+            (
+                tree,
+                Box::new(move |x| {
+                    let mut var2 = var.clone();
+                    var2.domain = recons_domain(x);
+                    DeclarationKind::Find(var2)
+                }),
+            )
+        }
+        DeclarationKind::Given(domain) => {
+            let (tree, recons_domain) = biplate_domain_ptr_references(domain);
+            (
+                tree,
+                Box::new(move |x| DeclarationKind::Given(recons_domain(x))),
+            )
+        }
+        DeclarationKind::DomainLetting(domain) => {
+            let (tree, recons_domain) = biplate_domain_ptr_references(domain);
+            (
+                tree,
+                Box::new(move |x| DeclarationKind::DomainLetting(recons_domain(x))),
+            )
+        }
+        DeclarationKind::RecordField(domain) => {
+            let (tree, recons_domain) = biplate_domain_ptr_references(domain);
+            (
+                tree,
+                Box::new(move |x| DeclarationKind::RecordField(recons_domain(x))),
+            )
+        }
+        DeclarationKind::ValueLetting(expression) => {
+            let (tree, recons_expr) = Biplate::<Reference>::biplate(&expression);
+            (
+                tree,
+                Box::new(move |x| DeclarationKind::ValueLetting(recons_expr(x))),
+            )
+        }
+        DeclarationKind::TemporaryValueLetting(expression) => {
+            let (tree, recons_expr) = Biplate::<Reference>::biplate(&expression);
+            (
+                tree,
+                Box::new(move |x| DeclarationKind::TemporaryValueLetting(recons_expr(x))),
+            )
+        }
+        DeclarationKind::Quantified(quantified) => {
+            let (domain_tree, recons_domain) =
+                biplate_domain_ptr_references(quantified.domain.clone());
+
+            let (generator_tree, recons_generator) = if let Some(generator) = quantified.generator()
+            {
+                let generator = generator.clone();
+                let (tree, recons_declaration) = Biplate::<Reference>::biplate(&generator);
+                (
+                    tree,
+                    Box::new(move |x| Some(recons_declaration(x)))
+                        as Box<dyn Fn(Tree<Reference>) -> Option<DeclarationPtr>>,
+                )
+            } else {
+                (
+                    Tree::Zero,
+                    Box::new(|_| None) as Box<dyn Fn(Tree<Reference>) -> Option<DeclarationPtr>>,
+                )
+            };
+
+            (
+                Tree::Many(VecDeque::from([domain_tree, generator_tree])),
+                Box::new(move |x| {
+                    let Tree::Many(mut children) = x else {
+                        panic!("unexpected biplate tree shape for quantified declaration")
+                    };
+
+                    let domain = children.pop_front().unwrap_or(Tree::Zero);
+                    let generator = children.pop_front().unwrap_or(Tree::Zero);
+
+                    let mut quantified2 = quantified.clone();
+                    quantified2.domain = recons_domain(domain);
+                    quantified2.generator = recons_generator(generator);
+                    DeclarationKind::Quantified(quantified2)
                 }),
             )
         }
