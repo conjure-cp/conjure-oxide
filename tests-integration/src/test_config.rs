@@ -28,6 +28,10 @@ where
     })
 }
 
+fn default_true() -> bool {
+    true
+}
+
 #[derive(Deserialize, Debug)]
 #[serde(default)]
 #[serde(deny_unknown_fields)]
@@ -35,7 +39,6 @@ pub struct TestConfig {
     #[serde(
         default,
         rename = "parser",
-        alias = "parsers",
         deserialize_with = "deserialize_string_or_vec"
     )]
     pub parser: Vec<String>, // Stage 1a: list of parsers (tree-sitter or via-conjure)
@@ -49,17 +52,18 @@ pub struct TestConfig {
     #[serde(
         default,
         rename = "comprehension-expander",
-        alias = "comprehension_expander",
         deserialize_with = "deserialize_string_or_vec"
     )]
     pub comprehension_expander: Vec<String>,
     #[serde(
         default,
         rename = "solver",
-        alias = "solvers",
         deserialize_with = "deserialize_string_or_vec"
     )]
     pub solver: Vec<String>,
+
+    #[serde(default = "default_true", rename = "validate-with-conjure")]
+    pub validate_with_conjure: bool,
 }
 
 impl Default for TestConfig {
@@ -94,6 +98,7 @@ impl Default for TestConfig {
                 }
                 solvers
             },
+            validate_with_conjure: true,
         }
     }
 }

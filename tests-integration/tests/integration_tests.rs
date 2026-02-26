@@ -77,6 +77,8 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
 
     let config = file_config;
 
+    let validate_with_conjure = config.validate_with_conjure;
+
     let parsers = config
         .configured_parsers()
         .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?;
@@ -91,7 +93,7 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
         .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?;
     // Conjure output depends only on the input model, so cache it once per test case.
     let model_path = format!("{path}/{essence_base}.{extension}");
-    let conjure_solutions = if accept {
+    let conjure_solutions = if accept && validate_with_conjure {
         eprintln!("[integration] loading Conjure reference solutions for {model_path}");
         Some(Arc::new(
             get_solutions_from_conjure(&model_path, Default::default()).map_err(|err| {
@@ -101,6 +103,9 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
             })?,
         ))
     } else {
+        if accept && !validate_with_conjure {
+            eprintln!("[integration] skipping Conjure validation for {model_path}");
+        }
         None
     };
 
@@ -272,11 +277,11 @@ fn integration_test_inner(
         solved
     };
 
-    // Stage 3b: Check solutions against Conjure when ACCEPT=true
-    if accept {
+    // Stage 3b: Check solutions against Conjure when ACCEPT=true and validation is enabled.
+    if accept && conjure_solutions.is_some() {
         let conjure_solutions = conjure_solutions
             .as_deref()
-            .expect("conjure solutions should be cached when ACCEPT=true");
+            .expect("conjure solutions should be present when Conjure validation is enabled");
 
         let username_solutions = normalize_solutions_for_comparison(&solutions);
         let conjure_solutions = normalize_solutions_for_comparison(conjure_solutions);
