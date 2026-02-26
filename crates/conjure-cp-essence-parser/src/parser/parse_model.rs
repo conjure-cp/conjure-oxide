@@ -26,17 +26,14 @@ pub fn parse_essence_file_native(
     let model = parse_essence_with_context(&source_code, context, &mut errors);
 
     match model {
-        Ok(m) => {
-            // Check if there were any recoverable errors
-            if !errors.is_empty() {
-                return Err(Box::new(ParseErrorCollection::multiple(
-                    errors,
-                    Some(source_code),
-                    Some(path.to_string()),
-                )));
-            }
-            // Return model if no errors
-            Ok(m)
+        Ok(Some(m)) => Ok(m),
+        Ok(None) => {
+            // Recoverable errors were found, return them as a ParseErrorCollection
+            Err(Box::new(ParseErrorCollection::multiple(
+                errors,
+                Some(source_code),
+                Some(path.to_string()),
+            )))
         }
         Err(fatal) => {
             // Fatal error - wrap in ParseErrorCollection::Fatal
@@ -49,7 +46,7 @@ pub fn parse_essence_with_context(
     src: &str,
     context: Arc<RwLock<Context<'static>>>,
     errors: &mut Vec<RecoverableParseError>,
-) -> Result<Model, FatalParseError> {
+) -> Result<Option<Model>, FatalParseError> {
     let (tree, source_code) = match get_tree(src) {
         Some(tree) => tree,
         None => {
@@ -148,7 +145,12 @@ pub fn parse_essence_with_context(
     // check for errors (keyword as identifier)
     keyword_as_identifier(root_node, &source_code, errors);
 
-    Ok(model)
+    // Check if there were any recoverable errors
+    if !errors.is_empty() {
+        return Ok(None);
+    }
+    // otherwise return the model
+    Ok(Some(model))
 }
 
 const KEYWORDS: [&str; 21] = [
@@ -195,16 +197,14 @@ pub fn parse_essence(src: &str) -> Result<Model, Box<ParseErrorCollection>> {
     let context = Arc::new(RwLock::new(Context::default()));
     let mut errors = vec![];
     match parse_essence_with_context(src, context, &mut errors) {
-        Ok(model) => {
-            if !errors.is_empty() {
-                Err(Box::new(ParseErrorCollection::multiple(
-                    errors,
-                    Some(src.to_string()),
-                    None,
-                )))
-            } else {
-                Ok(model)
-            }
+        Ok(Some(model)) => Ok(model),
+        Ok(None) => {
+            // Recoverable errors were found, return them as a ParseErrorCollection
+            Err(Box::new(ParseErrorCollection::multiple(
+                errors,
+                Some(src.to_string()),
+                None,
+            )))
         }
         Err(fatal) => Err(Box::new(ParseErrorCollection::fatal(fatal))),
     }
