@@ -9,14 +9,24 @@ such that
 --
 
 (x = allDiff([ x | x : int(1..10), (x % 2 = 0) ])), 
-   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
-Reify(allDiff([ x | x : int(1..10), (x % 2 = 0) ]), x) 
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(allDiff([ x | x : int(1..10), (x % 2 = 0) ]), x)
+
+--
+
+Via-solver generator model before rewriting:
+
+find x: int(1..10)
+
+such that
+
+(x % 2 = 0)
 
 --
 
 Model before rewriting:
 
-quantified x: int(1..10)
+find x: int(1..10)
 
 such that
 
@@ -25,40 +35,40 @@ such that
 --
 
 x % 2, 
-   ~~> mod_to_bubble ([("Bubble", 6000)]) 
-{SafeMod(x,2) @ (2 != 0)} 
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(x,2) @ (2 != 0)}
 
 --
 
 ({SafeMod(x,2) @ (2 != 0)} = 0), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
-(SafeMod(x,2) = 0) 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(SafeMod(x,2) = 0)
 
 --
 
 (SafeMod(x,2) = 0), 
-   ~~> introduce_modeq ([("Minion", 4200)]) 
-ModEq(x, 2, 0) 
+   ~~> introduce_modeq ([("Minion", 4200)])
+ModEq(x, 2, 0)
 
 --
 
 Final model:
 
-quantified x: int(1..10)
+find x: int(1..10)
 
 such that
 
 ModEq(x, 2, 0)
 
 [ x | x : int(1..10), (x % 2 = 0) ], 
-   ~~> expand_comprehension_via_solver ([("Base", 2000)]) 
-[2,4,6,8,10;int(1..)] 
+   ~~> expand_comprehension_via_solver ([("Base", 2000)])
+[2,4,6,8,10;int(1..)]
 
 --
 
 Reify(allDiff([2,4,6,8,10;int(1..)]), x), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
-Reify(true, x) 
+   ~~> constant_evaluator ([("Constant", 9001)])
+Reify(true, x)
 
 --
 

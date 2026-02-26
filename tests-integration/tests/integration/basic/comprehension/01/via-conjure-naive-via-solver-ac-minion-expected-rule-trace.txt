@@ -1,6 +1,6 @@
 Model before rewriting:
 
-find m: matrix indexed by [[int(1..5)]] of int(1..5)
+find m: matrix indexed by [int(1..5)] of int(1..5)
 
 such that
 
@@ -9,20 +9,21 @@ and([ (m[i] = i) | i : int(1..5) ])
 --
 
 and([ (m[i] = i) | i : int(1..5) ]), 
-   ~~> select_representation_matrix ([("Representations", 8001)]) 
-and([ (m[i] = i) | i : int(1..5) ]) 
+   ~~> select_representation_matrix ([("Representations", 8001)])
+and([ (m[i] = i) | i : int(1..5) ])
 new variables:
   find m#matrix_to_atom_1: int(1..5)
   find m#matrix_to_atom_2: int(1..5)
   find m#matrix_to_atom_3: int(1..5)
   find m#matrix_to_atom_4: int(1..5)
   find m#matrix_to_atom_5: int(1..5)
+
 --
 
 Model before rewriting:
 
 find i: int(1..5)
-find __0: matrix indexed by [[int(1..5)]] of int(1..5)
+find __0: matrix indexed by [int(1..5)] of int(1..5)
 
 such that
 
@@ -31,97 +32,100 @@ such that
 --
 
 (true != (__0#matrix_to_atom[i] = i)), 
-   ~~> select_representation_matrix ([("Representations", 8001)]) 
-(true != (__0#matrix_to_atom[i] = i)) 
+   ~~> select_representation_matrix ([("Representations", 8001)])
+(true != (__0#matrix_to_atom[i] = i))
 new variables:
   find __0#matrix_to_atom_1: int(1..5)
   find __0#matrix_to_atom_2: int(1..5)
   find __0#matrix_to_atom_3: int(1..5)
   find __0#matrix_to_atom_4: int(1..5)
   find __0#matrix_to_atom_5: int(1..5)
+
 --
 
 __0#matrix_to_atom[i], 
-   ~~> index_to_bubble ([("Bubble", 6000)]) 
-{__0#matrix_to_atom[i] @ and([__inDomain(i,int(1..5));int(1..)])} 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{__0#matrix_to_atom[i] @ and([__inDomain(i,int(1..5));int(1..)])}
 
 --
 
 (true != ({__0#matrix_to_atom[i] @ and([__inDomain(i,int(1..5));int(1..)])} = i)), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
-(true != (__0#matrix_to_atom[i] = i)) 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(true != (__0#matrix_to_atom[i] = i))
 
 --
 
 (true != (__0#matrix_to_atom[i] = i)), 
-   ~~> index_matrix_to_atom ([("Base", 5000)]) 
-(true != ([__0#matrix_to_atom_1,__0#matrix_to_atom_2,__0#matrix_to_atom_3,__0#matrix_to_atom_4,__0#matrix_to_atom_5;int(1..)][(i - 0)] = i)) 
+   ~~> index_matrix_to_atom ([("Base", 5000)])
+(true != ([__0#matrix_to_atom_1,__0#matrix_to_atom_2,__0#matrix_to_atom_3,__0#matrix_to_atom_4,__0#matrix_to_atom_5;int(1..)][(i - 0)] = i))
 
 --
 
 (i - 0), 
-   ~~> minus_to_sum ([("Base", 8400)]) 
-sum([i,-(0);int(1..)]) 
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([i,-(0);int(1..)])
 
 --
 
 (true != ([__0#matrix_to_atom_1,__0#matrix_to_atom_2,__0#matrix_to_atom_3,__0#matrix_to_atom_4,__0#matrix_to_atom_5;int(1..)][sum([i,-(0);int(1..)])] = i)), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
-(true != ([__0#matrix_to_atom_1,__0#matrix_to_atom_2,__0#matrix_to_atom_3,__0#matrix_to_atom_4,__0#matrix_to_atom_5;int(1..)][sum([i,0;int(1..)])] = i)) 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(true != ([__0#matrix_to_atom_1,__0#matrix_to_atom_2,__0#matrix_to_atom_3,__0#matrix_to_atom_4,__0#matrix_to_atom_5;int(1..)][sum([i,0;int(1..)])] = i))
 
 --
 
 (true != ([__0#matrix_to_atom_1,__0#matrix_to_atom_2,__0#matrix_to_atom_3,__0#matrix_to_atom_4,__0#matrix_to_atom_5;int(1..)][sum([i,0;int(1..)])] = i)), 
-   ~~> flatten_generic ([("Minion", 4200)]) 
-(true != __1) 
+   ~~> flatten_generic ([("Minion", 4200)])
+(true != __1)
 new variables:
   find __1: bool
 new constraints:
   __1 =aux ([__0#matrix_to_atom_1,__0#matrix_to_atom_2,__0#matrix_to_atom_3,__0#matrix_to_atom_4,__0#matrix_to_atom_5;int(1..)][sum([i,0;int(1..)])] = i)
+
 --
 
 __1 =aux ([__0#matrix_to_atom_1,__0#matrix_to_atom_2,__0#matrix_to_atom_3,__0#matrix_to_atom_4,__0#matrix_to_atom_5;int(1..)][sum([i,0;int(1..)])] = i), 
-   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
-Reify(([__0#matrix_to_atom_1,__0#matrix_to_atom_2,__0#matrix_to_atom_3,__0#matrix_to_atom_4,__0#matrix_to_atom_5;int(1..)][sum([i,0;int(1..)])] = i), __1) 
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(([__0#matrix_to_atom_1,__0#matrix_to_atom_2,__0#matrix_to_atom_3,__0#matrix_to_atom_4,__0#matrix_to_atom_5;int(1..)][sum([i,0;int(1..)])] = i), __1)
 
 --
 
 [__0#matrix_to_atom_1,__0#matrix_to_atom_2,__0#matrix_to_atom_3,__0#matrix_to_atom_4,__0#matrix_to_atom_5;int(1..)][sum([i,0;int(1..)])], 
-   ~~> flatten_generic ([("Minion", 4200)]) 
-[__0#matrix_to_atom_1,__0#matrix_to_atom_2,__0#matrix_to_atom_3,__0#matrix_to_atom_4,__0#matrix_to_atom_5;int(1..)][__2] 
+   ~~> flatten_generic ([("Minion", 4200)])
+[__0#matrix_to_atom_1,__0#matrix_to_atom_2,__0#matrix_to_atom_3,__0#matrix_to_atom_4,__0#matrix_to_atom_5;int(1..)][__2]
 new variables:
   find __2: int(1..5)
 new constraints:
   __2 =aux sum([i,0;int(1..)])
+
 --
 
 __2 =aux sum([i,0;int(1..)]), 
-   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
-and([SumLeq([0, i], __2),SumGeq([0, i], __2);int(1..)]) 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([0, i], __2),SumGeq([0, i], __2);int(1..)])
 
 --
 
 (true != __1),
 Reify(([__0#matrix_to_atom_1,__0#matrix_to_atom_2,__0#matrix_to_atom_3,__0#matrix_to_atom_4,__0#matrix_to_atom_5;int(1..)][__2] = i), __1),
 and([SumLeq([0, i], __2),SumGeq([0, i], __2);int(1..)]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
+   ~~> constant_evaluator ([("Constant", 9001)])
 (true != __1),
 Reify(([__0#matrix_to_atom_1,__0#matrix_to_atom_2,__0#matrix_to_atom_3,__0#matrix_to_atom_4,__0#matrix_to_atom_5;int(1..)][__2] = i), __1),
 SumLeq([0, i], __2),
-SumGeq([0, i], __2) 
+SumGeq([0, i], __2)
 
 --
 
 ([__0#matrix_to_atom_1,__0#matrix_to_atom_2,__0#matrix_to_atom_3,__0#matrix_to_atom_4,__0#matrix_to_atom_5;int(1..)][__2] = i), 
-   ~~> introduce_element_from_index ([("Minion", 4400)]) 
-__minion_element_one([__0#matrix_to_atom_1,__0#matrix_to_atom_2,__0#matrix_to_atom_3,__0#matrix_to_atom_4,__0#matrix_to_atom_5],__2,i) 
+   ~~> introduce_element_from_index ([("Minion", 4400)])
+__minion_element_one([__0#matrix_to_atom_1,__0#matrix_to_atom_2,__0#matrix_to_atom_3,__0#matrix_to_atom_4,__0#matrix_to_atom_5],__2,i)
 
 --
 
 Final model:
 
 find i: int(1..5)
-find __0: matrix indexed by [[int(1..5)]] of int(1..5)
+find __0: matrix indexed by [int(1..5)] of int(1..5)
 find __1: bool
 find __2: int(1..5)
 find __0#matrix_to_atom_1: int(1..5)
@@ -138,18 +142,18 @@ SumLeq([0, i], __2),
 SumGeq([0, i], __2)
 
 and([ (m[i] = i) | i : int(1..5) ]), 
-   ~~> expand_comprehension_via_solver_ac ([("Base", 2002)]) 
-and([(m[1] = 1),(m[2] = 2),(m[3] = 3),(m[4] = 4),(m[5] = 5);int(1..)]) 
+   ~~> expand_comprehension_via_solver_ac ([("Base", 2002)])
+and([(m[1] = 1),(m[2] = 2),(m[3] = 3),(m[4] = 4),(m[5] = 5);int(1..)])
 
 --
 
 and([(m[1] = 1),(m[2] = 2),(m[3] = 3),(m[4] = 4),(m[5] = 5);int(1..)]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
+   ~~> constant_evaluator ([("Constant", 9001)])
 (m[1] = 1),
 (m[2] = 2),
 (m[3] = 3),
 (m[4] = 4),
-(m[5] = 5) 
+(m[5] = 5)
 
 --
 
@@ -158,18 +162,18 @@ and([(m[1] = 1),(m[2] = 2),(m[3] = 3),(m[4] = 4),(m[5] = 5);int(1..)]),
 (m#matrix_to_atom[3] = 3),
 (m#matrix_to_atom[4] = 4),
 (m#matrix_to_atom[5] = 5), 
-   ~~> select_representation_matrix ([("Representations", 8001)]) 
+   ~~> select_representation_matrix ([("Representations", 8001)])
 (m#matrix_to_atom[1] = 1),
 (m#matrix_to_atom[2] = 2),
 (m#matrix_to_atom[3] = 3),
 (m#matrix_to_atom[4] = 4),
-(m#matrix_to_atom[5] = 5) 
+(m#matrix_to_atom[5] = 5)
 
 --
 
 m#matrix_to_atom[1], 
-   ~~> index_to_bubble ([("Bubble", 6000)]) 
-{m#matrix_to_atom[1] @ and([__inDomain(1,int(1..5));int(1..)])} 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{m#matrix_to_atom[1] @ and([__inDomain(1,int(1..5));int(1..)])}
 
 --
 
@@ -178,18 +182,18 @@ m#matrix_to_atom[1],
 (m#matrix_to_atom[3] = 3),
 (m#matrix_to_atom[4] = 4),
 (m#matrix_to_atom[5] = 5), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
+   ~~> constant_evaluator ([("Constant", 9001)])
 (m#matrix_to_atom[1] = 1),
 (m#matrix_to_atom[2] = 2),
 (m#matrix_to_atom[3] = 3),
 (m#matrix_to_atom[4] = 4),
-(m#matrix_to_atom[5] = 5) 
+(m#matrix_to_atom[5] = 5)
 
 --
 
 m#matrix_to_atom[2], 
-   ~~> index_to_bubble ([("Bubble", 6000)]) 
-{m#matrix_to_atom[2] @ and([__inDomain(2,int(1..5));int(1..)])} 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{m#matrix_to_atom[2] @ and([__inDomain(2,int(1..5));int(1..)])}
 
 --
 
@@ -198,18 +202,18 @@ m#matrix_to_atom[2],
 (m#matrix_to_atom[3] = 3),
 (m#matrix_to_atom[4] = 4),
 (m#matrix_to_atom[5] = 5), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
+   ~~> constant_evaluator ([("Constant", 9001)])
 (m#matrix_to_atom[1] = 1),
 (m#matrix_to_atom[2] = 2),
 (m#matrix_to_atom[3] = 3),
 (m#matrix_to_atom[4] = 4),
-(m#matrix_to_atom[5] = 5) 
+(m#matrix_to_atom[5] = 5)
 
 --
 
 m#matrix_to_atom[3], 
-   ~~> index_to_bubble ([("Bubble", 6000)]) 
-{m#matrix_to_atom[3] @ and([__inDomain(3,int(1..5));int(1..)])} 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{m#matrix_to_atom[3] @ and([__inDomain(3,int(1..5));int(1..)])}
 
 --
 
@@ -218,18 +222,18 @@ m#matrix_to_atom[3],
 ({m#matrix_to_atom[3] @ and([__inDomain(3,int(1..5));int(1..)])} = 3),
 (m#matrix_to_atom[4] = 4),
 (m#matrix_to_atom[5] = 5), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
+   ~~> constant_evaluator ([("Constant", 9001)])
 (m#matrix_to_atom[1] = 1),
 (m#matrix_to_atom[2] = 2),
 (m#matrix_to_atom[3] = 3),
 (m#matrix_to_atom[4] = 4),
-(m#matrix_to_atom[5] = 5) 
+(m#matrix_to_atom[5] = 5)
 
 --
 
 m#matrix_to_atom[4], 
-   ~~> index_to_bubble ([("Bubble", 6000)]) 
-{m#matrix_to_atom[4] @ and([__inDomain(4,int(1..5));int(1..)])} 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{m#matrix_to_atom[4] @ and([__inDomain(4,int(1..5));int(1..)])}
 
 --
 
@@ -238,18 +242,18 @@ m#matrix_to_atom[4],
 (m#matrix_to_atom[3] = 3),
 ({m#matrix_to_atom[4] @ and([__inDomain(4,int(1..5));int(1..)])} = 4),
 (m#matrix_to_atom[5] = 5), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
+   ~~> constant_evaluator ([("Constant", 9001)])
 (m#matrix_to_atom[1] = 1),
 (m#matrix_to_atom[2] = 2),
 (m#matrix_to_atom[3] = 3),
 (m#matrix_to_atom[4] = 4),
-(m#matrix_to_atom[5] = 5) 
+(m#matrix_to_atom[5] = 5)
 
 --
 
 m#matrix_to_atom[5], 
-   ~~> index_to_bubble ([("Bubble", 6000)]) 
-{m#matrix_to_atom[5] @ and([__inDomain(5,int(1..5));int(1..)])} 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{m#matrix_to_atom[5] @ and([__inDomain(5,int(1..5));int(1..)])}
 
 --
 
@@ -258,12 +262,12 @@ m#matrix_to_atom[5],
 (m#matrix_to_atom[3] = 3),
 (m#matrix_to_atom[4] = 4),
 ({m#matrix_to_atom[5] @ and([__inDomain(5,int(1..5));int(1..)])} = 5), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
+   ~~> constant_evaluator ([("Constant", 9001)])
 (m#matrix_to_atom[1] = 1),
 (m#matrix_to_atom[2] = 2),
 (m#matrix_to_atom[3] = 3),
 (m#matrix_to_atom[4] = 4),
-(m#matrix_to_atom[5] = 5) 
+(m#matrix_to_atom[5] = 5)
 
 --
 
@@ -272,18 +276,18 @@ m#matrix_to_atom[5],
 (m#matrix_to_atom[3] = 3),
 (m#matrix_to_atom[4] = 4),
 (m#matrix_to_atom[5] = 5), 
-   ~~> index_matrix_to_atom ([("Base", 5000)]) 
+   ~~> index_matrix_to_atom ([("Base", 5000)])
 (m#matrix_to_atom_1 = 1),
 (m#matrix_to_atom_2 = 2),
 (m#matrix_to_atom_3 = 3),
 (m#matrix_to_atom_4 = 4),
-(m#matrix_to_atom_5 = 5) 
+(m#matrix_to_atom_5 = 5)
 
 --
 
 Final model:
 
-find m: matrix indexed by [[int(1..5)]] of int(1..5)
+find m: matrix indexed by [int(1..5)] of int(1..5)
 find m#matrix_to_atom_1: int(1..5)
 find m#matrix_to_atom_2: int(1..5)
 find m#matrix_to_atom_3: int(1..5)

@@ -9,40 +9,40 @@ and([ and([ ((i <= j)) -> ((x <= (j - i))) | j : int(1..2) ]) | i : int(1..2) ])
 --
 
 and([ and([ ((i <= j)) -> ((x <= (j - i))) | j : int(1..2) ]) | i : int(1..2) ]), 
-   ~~> merge_nested_ac_comprehensions ([("Base", 8900)]) 
-and([ ((i <= j)) -> ((x <= (j - i))) | i : int(1..2), j : int(1..2) ]) 
+   ~~> merge_nested_ac_comprehensions ([("Base", 8900)])
+and([ ((i <= j)) -> ((x <= (j - i))) | i : int(1..2), j : int(1..2) ])
 
 --
 
 [ ((i <= j)) -> ((x <= (j - i))) | i : int(1..2), j : int(1..2) ], 
-   ~~> expand_comprehension_native ([("Base", 2000)]) 
-[(x <= 0),(x <= 1),true,(x <= 0);int(1..)] 
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[(x <= 0),(x <= 1),true,(x <= 0);int(1..)]
 
 --
 
 and([(x <= 0),(x <= 1),true,(x <= 0);int(1..)]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
+   ~~> constant_evaluator ([("Constant", 9001)])
 (x <= 0),
 (x <= 1),
-(x <= 0) 
+(x <= 0)
 
 --
 
 (x <= 0), 
-   ~~> leq_to_ineq ([("Minion", 4100)]) 
-Ineq(x, 0, 0) 
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(x, 0, 0)
 
 --
 
 (x <= 1), 
-   ~~> leq_to_ineq ([("Minion", 4100)]) 
-Ineq(x, 1, 0) 
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(x, 1, 0)
 
 --
 
 (x <= 0), 
-   ~~> leq_to_ineq ([("Minion", 4100)]) 
-Ineq(x, 0, 0) 
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(x, 0, 0)
 
 --
 

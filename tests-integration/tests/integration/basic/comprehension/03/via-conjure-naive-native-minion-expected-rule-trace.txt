@@ -1,6 +1,6 @@
 Model before rewriting:
 
-find m: matrix indexed by [[int(1..5)]] of int(1..5)
+find m: matrix indexed by [int(1..5)] of int(1..5)
 find x: int(1..2)
 find y: int(1..2)
 
@@ -13,36 +13,37 @@ and([ ((y < 5)) -> ((m[x] = x)) | x : int(1..5), (x < 4) ])
 
 (x = 1),
 and([ ((y < 5)) -> ((m[x] = x)) | x : int(1..5), (x < 4) ]), 
-   ~~> select_representation_matrix ([("Representations", 8001)]) 
+   ~~> select_representation_matrix ([("Representations", 8001)])
 (x = 1),
-and([ ((y < 5)) -> ((m[x] = x)) | x : int(1..5), (x < 4) ]) 
+and([ ((y < 5)) -> ((m[x] = x)) | x : int(1..5), (x < 4) ])
 new variables:
   find m#matrix_to_atom_1: int(1..5)
   find m#matrix_to_atom_2: int(1..5)
   find m#matrix_to_atom_3: int(1..5)
   find m#matrix_to_atom_4: int(1..5)
   find m#matrix_to_atom_5: int(1..5)
+
 --
 
 [ ((y < 5)) -> ((m[x] = x)) | x : int(1..5), (x < 4) ], 
-   ~~> expand_comprehension_native ([("Base", 2000)]) 
-[((y < 5)) -> ((m[1] = 1)),((y < 5)) -> ((m[2] = 2)),((y < 5)) -> ((m[3] = 3));int(1..)] 
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[((y < 5)) -> ((m[1] = 1)),((y < 5)) -> ((m[2] = 2)),((y < 5)) -> ((m[3] = 3));int(1..)]
 
 --
 
 (x = 1),
 and([((y < 5)) -> ((m[1] = 1)),((y < 5)) -> ((m[2] = 2)),((y < 5)) -> ((m[3] = 3));int(1..)]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
+   ~~> constant_evaluator ([("Constant", 9001)])
 (x = 1),
 ((y < 5)) -> ((m[1] = 1)),
 ((y < 5)) -> ((m[2] = 2)),
-((y < 5)) -> ((m[3] = 3)) 
+((y < 5)) -> ((m[3] = 3))
 
 --
 
 (y < 5), 
-   ~~> lt_to_leq ([("Minion", 8400)]) 
-(y <= sum([5,-1;int(1..)])) 
+   ~~> lt_to_leq ([("Minion", 8400)])
+(y <= sum([5,-1;int(1..)]))
 
 --
 
@@ -50,17 +51,17 @@ and([((y < 5)) -> ((m[1] = 1)),((y < 5)) -> ((m[2] = 2)),((y < 5)) -> ((m[3] = 3
 ((y <= sum([5,-1;int(1..)]))) -> ((m[1] = 1)),
 ((y < 5)) -> ((m[2] = 2)),
 ((y < 5)) -> ((m[3] = 3)), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
+   ~~> constant_evaluator ([("Constant", 9001)])
 (x = 1),
 ((y <= 4)) -> ((m[1] = 1)),
 ((y < 5)) -> ((m[2] = 2)),
-((y < 5)) -> ((m[3] = 3)) 
+((y < 5)) -> ((m[3] = 3))
 
 --
 
 (y < 5), 
-   ~~> lt_to_leq ([("Minion", 8400)]) 
-(y <= sum([5,-1;int(1..)])) 
+   ~~> lt_to_leq ([("Minion", 8400)])
+(y <= sum([5,-1;int(1..)]))
 
 --
 
@@ -68,17 +69,17 @@ and([((y < 5)) -> ((m[1] = 1)),((y < 5)) -> ((m[2] = 2)),((y < 5)) -> ((m[3] = 3
 ((y <= 4)) -> ((m[1] = 1)),
 ((y <= sum([5,-1;int(1..)]))) -> ((m[2] = 2)),
 ((y < 5)) -> ((m[3] = 3)), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
+   ~~> constant_evaluator ([("Constant", 9001)])
 (x = 1),
 ((y <= 4)) -> ((m[1] = 1)),
 ((y <= 4)) -> ((m[2] = 2)),
-((y < 5)) -> ((m[3] = 3)) 
+((y < 5)) -> ((m[3] = 3))
 
 --
 
 (y < 5), 
-   ~~> lt_to_leq ([("Minion", 8400)]) 
-(y <= sum([5,-1;int(1..)])) 
+   ~~> lt_to_leq ([("Minion", 8400)])
+(y <= sum([5,-1;int(1..)]))
 
 --
 
@@ -86,11 +87,11 @@ and([((y < 5)) -> ((m[1] = 1)),((y < 5)) -> ((m[2] = 2)),((y < 5)) -> ((m[3] = 3
 ((y <= 4)) -> ((m[1] = 1)),
 ((y <= 4)) -> ((m[2] = 2)),
 ((y <= sum([5,-1;int(1..)]))) -> ((m[3] = 3)), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
+   ~~> constant_evaluator ([("Constant", 9001)])
 (x = 1),
 ((y <= 4)) -> ((m[1] = 1)),
 ((y <= 4)) -> ((m[2] = 2)),
-((y <= 4)) -> ((m[3] = 3)) 
+((y <= 4)) -> ((m[3] = 3))
 
 --
 
@@ -98,17 +99,17 @@ and([((y < 5)) -> ((m[1] = 1)),((y < 5)) -> ((m[2] = 2)),((y < 5)) -> ((m[3] = 3
 ((y <= 4)) -> ((m#matrix_to_atom[1] = 1)),
 ((y <= 4)) -> ((m#matrix_to_atom[2] = 2)),
 ((y <= 4)) -> ((m#matrix_to_atom[3] = 3)), 
-   ~~> select_representation_matrix ([("Representations", 8001)]) 
+   ~~> select_representation_matrix ([("Representations", 8001)])
 (x = 1),
 ((y <= 4)) -> ((m#matrix_to_atom[1] = 1)),
 ((y <= 4)) -> ((m#matrix_to_atom[2] = 2)),
-((y <= 4)) -> ((m#matrix_to_atom[3] = 3)) 
+((y <= 4)) -> ((m#matrix_to_atom[3] = 3))
 
 --
 
 m#matrix_to_atom[1], 
-   ~~> index_to_bubble ([("Bubble", 6000)]) 
-{m#matrix_to_atom[1] @ and([__inDomain(1,int(1..5));int(1..)])} 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{m#matrix_to_atom[1] @ and([__inDomain(1,int(1..5));int(1..)])}
 
 --
 
@@ -116,17 +117,17 @@ m#matrix_to_atom[1],
 ((y <= 4)) -> (({m#matrix_to_atom[1] @ and([__inDomain(1,int(1..5));int(1..)])} = 1)),
 ((y <= 4)) -> ((m#matrix_to_atom[2] = 2)),
 ((y <= 4)) -> ((m#matrix_to_atom[3] = 3)), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
+   ~~> constant_evaluator ([("Constant", 9001)])
 (x = 1),
 ((y <= 4)) -> ((m#matrix_to_atom[1] = 1)),
 ((y <= 4)) -> ((m#matrix_to_atom[2] = 2)),
-((y <= 4)) -> ((m#matrix_to_atom[3] = 3)) 
+((y <= 4)) -> ((m#matrix_to_atom[3] = 3))
 
 --
 
 m#matrix_to_atom[2], 
-   ~~> index_to_bubble ([("Bubble", 6000)]) 
-{m#matrix_to_atom[2] @ and([__inDomain(2,int(1..5));int(1..)])} 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{m#matrix_to_atom[2] @ and([__inDomain(2,int(1..5));int(1..)])}
 
 --
 
@@ -134,17 +135,17 @@ m#matrix_to_atom[2],
 ((y <= 4)) -> ((m#matrix_to_atom[1] = 1)),
 ((y <= 4)) -> (({m#matrix_to_atom[2] @ and([__inDomain(2,int(1..5));int(1..)])} = 2)),
 ((y <= 4)) -> ((m#matrix_to_atom[3] = 3)), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
+   ~~> constant_evaluator ([("Constant", 9001)])
 (x = 1),
 ((y <= 4)) -> ((m#matrix_to_atom[1] = 1)),
 ((y <= 4)) -> ((m#matrix_to_atom[2] = 2)),
-((y <= 4)) -> ((m#matrix_to_atom[3] = 3)) 
+((y <= 4)) -> ((m#matrix_to_atom[3] = 3))
 
 --
 
 m#matrix_to_atom[3], 
-   ~~> index_to_bubble ([("Bubble", 6000)]) 
-{m#matrix_to_atom[3] @ and([__inDomain(3,int(1..5));int(1..)])} 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{m#matrix_to_atom[3] @ and([__inDomain(3,int(1..5));int(1..)])}
 
 --
 
@@ -152,11 +153,11 @@ m#matrix_to_atom[3],
 ((y <= 4)) -> ((m#matrix_to_atom[1] = 1)),
 ((y <= 4)) -> ((m#matrix_to_atom[2] = 2)),
 ((y <= 4)) -> (({m#matrix_to_atom[3] @ and([__inDomain(3,int(1..5));int(1..)])} = 3)), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
+   ~~> constant_evaluator ([("Constant", 9001)])
 (x = 1),
 ((y <= 4)) -> ((m#matrix_to_atom[1] = 1)),
 ((y <= 4)) -> ((m#matrix_to_atom[2] = 2)),
-((y <= 4)) -> ((m#matrix_to_atom[3] = 3)) 
+((y <= 4)) -> ((m#matrix_to_atom[3] = 3))
 
 --
 
@@ -164,98 +165,101 @@ m#matrix_to_atom[3],
 ((y <= 4)) -> ((m#matrix_to_atom[1] = 1)),
 ((y <= 4)) -> ((m#matrix_to_atom[2] = 2)),
 ((y <= 4)) -> ((m#matrix_to_atom[3] = 3)), 
-   ~~> index_matrix_to_atom ([("Base", 5000)]) 
+   ~~> index_matrix_to_atom ([("Base", 5000)])
 (x = 1),
 ((y <= 4)) -> ((m#matrix_to_atom_1 = 1)),
 ((y <= 4)) -> ((m#matrix_to_atom_2 = 2)),
-((y <= 4)) -> ((m#matrix_to_atom_3 = 3)) 
+((y <= 4)) -> ((m#matrix_to_atom_3 = 3))
 
 --
 
 ((y <= 4)) -> ((m#matrix_to_atom_1 = 1)), 
-   ~~> flatten_imply ([("Minion", 4200)]) 
-(__0) -> ((m#matrix_to_atom_1 = 1)) 
+   ~~> flatten_imply ([("Minion", 4200)])
+(__0) -> ((m#matrix_to_atom_1 = 1))
 new variables:
   find __0: bool
 new constraints:
   __0 =aux (y <= 4)
+
 --
 
 (__0) -> ((m#matrix_to_atom_1 = 1)), 
-   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
-ReifyImply((m#matrix_to_atom_1 = 1), __0) 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply((m#matrix_to_atom_1 = 1), __0)
 
 --
 
 __0 =aux (y <= 4), 
-   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
-Reify((y <= 4), __0) 
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify((y <= 4), __0)
 
 --
 
 ((y <= 4)) -> ((m#matrix_to_atom_2 = 2)), 
-   ~~> flatten_imply ([("Minion", 4200)]) 
-(__1) -> ((m#matrix_to_atom_2 = 2)) 
+   ~~> flatten_imply ([("Minion", 4200)])
+(__1) -> ((m#matrix_to_atom_2 = 2))
 new variables:
   find __1: bool
 new constraints:
   __1 =aux (y <= 4)
+
 --
 
 (__1) -> ((m#matrix_to_atom_2 = 2)), 
-   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
-ReifyImply((m#matrix_to_atom_2 = 2), __1) 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply((m#matrix_to_atom_2 = 2), __1)
 
 --
 
 __1 =aux (y <= 4), 
-   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
-Reify((y <= 4), __1) 
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify((y <= 4), __1)
 
 --
 
 ((y <= 4)) -> ((m#matrix_to_atom_3 = 3)), 
-   ~~> flatten_imply ([("Minion", 4200)]) 
-(__2) -> ((m#matrix_to_atom_3 = 3)) 
+   ~~> flatten_imply ([("Minion", 4200)])
+(__2) -> ((m#matrix_to_atom_3 = 3))
 new variables:
   find __2: bool
 new constraints:
   __2 =aux (y <= 4)
+
 --
 
 (__2) -> ((m#matrix_to_atom_3 = 3)), 
-   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
-ReifyImply((m#matrix_to_atom_3 = 3), __2) 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply((m#matrix_to_atom_3 = 3), __2)
 
 --
 
 __2 =aux (y <= 4), 
-   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
-Reify((y <= 4), __2) 
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify((y <= 4), __2)
 
 --
 
 (y <= 4), 
-   ~~> leq_to_ineq ([("Minion", 4100)]) 
-Ineq(y, 4, 0) 
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(y, 4, 0)
 
 --
 
 (y <= 4), 
-   ~~> leq_to_ineq ([("Minion", 4100)]) 
-Ineq(y, 4, 0) 
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(y, 4, 0)
 
 --
 
 (y <= 4), 
-   ~~> leq_to_ineq ([("Minion", 4100)]) 
-Ineq(y, 4, 0) 
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(y, 4, 0)
 
 --
 
 Final model:
 
-find m: matrix indexed by [[int(1..5)]] of int(1..5)
+find m: matrix indexed by [int(1..5)] of int(1..5)
 find x: int(1..2)
 find y: int(1..2)
 find __0: bool

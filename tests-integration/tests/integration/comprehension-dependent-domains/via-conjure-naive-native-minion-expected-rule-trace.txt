@@ -9,20 +9,20 @@ such that
 --
 
 sum([ sum([ sum([ k | k : int(i..j) ]) | j : int(((i - 1))..(sum([i,1;int(1..2)]))) ]) | i : int(1..10) ]), 
-   ~~> merge_nested_ac_comprehensions ([("Base", 8900)]) 
-sum([ k | i : int(1..10), j : int(((i - 1))..(sum([i,1;int(1..2)]))), k : int(i..j) ]) 
+   ~~> merge_nested_ac_comprehensions ([("Base", 8900)])
+sum([ k | i : int(1..10), j : int(((i - 1))..(sum([i,1;int(1..2)]))), k : int(i..j) ])
 
 --
 
 [ k | i : int(1..10), j : int(((i - 1))..(sum([i,1;int(1..2)]))), k : int(i..j) ], 
-   ~~> expand_comprehension_native ([("Base", 2000)]) 
-[1,1,2,2,2,3,3,3,4,4,4,5,5,5,6,6,6,7,7,7,8,8,8,9,9,9,10,10,10,11;int(1..)] 
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[1,1,2,2,2,3,3,3,4,4,4,5,5,5,6,6,6,7,7,7,8,8,8,9,9,9,10,10,10,11;int(1..)]
 
 --
 
 (x = sum([1,1,2,2,2,3,3,3,4,4,4,5,5,5,6,6,6,7,7,7,8,8,8,9,9,9,10,10,10,11;int(1..)])), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
-(x = 175) 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(x = 175)
 
 --
 

@@ -9,8 +9,8 @@ such that
 --
 
 (y = and([ (product([j,j;int(1..2)]) >= j) | j : int(0..3) ])), 
-   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
-Reify(and([ (product([j,j;int(1..2)]) >= j) | j : int(0..3) ]), y) 
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([ (product([j,j;int(1..2)]) >= j) | j : int(0..3) ]), y)
 
 --
 
@@ -25,44 +25,46 @@ such that
 --
 
 (true != (product([j,j;int(1..2)]) >= j)), 
-   ~~> flatten_generic ([("Minion", 4200)]) 
-(true != __0) 
+   ~~> flatten_generic ([("Minion", 4200)])
+(true != __0)
 new variables:
   find __0: bool
 new constraints:
   __0 =aux (product([j,j;int(1..2)]) >= j)
+
 --
 
 __0 =aux (product([j,j;int(1..2)]) >= j), 
-   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
-Reify((product([j,j;int(1..2)]) >= j), __0) 
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify((product([j,j;int(1..2)]) >= j), __0)
 
 --
 
 (product([j,j;int(1..2)]) >= j), 
-   ~~> flatten_generic ([("Minion", 4200)]) 
-(__1 >= j) 
+   ~~> flatten_generic ([("Minion", 4200)])
+(__1 >= j)
 new variables:
   find __1: int(0..9)
 new constraints:
   __1 =aux product([j,j;int(1..2)])
+
 --
 
 (__1 >= j), 
-   ~~> geq_to_ineq ([("Minion", 4100)]) 
-Ineq(j, __1, 0) 
+   ~~> geq_to_ineq ([("Minion", 4100)])
+Ineq(j, __1, 0)
 
 --
 
 product([j,j;int(1..2)]), 
-   ~~> matrix_to_list ([("Base", 2000)]) 
-product([j,j;int(1..)]) 
+   ~~> matrix_to_list ([("Base", 2000)])
+product([j,j;int(1..)])
 
 --
 
 __1 =aux product([j,j;int(1..)]), 
-   ~~> introduce_producteq ([("Minion", 4200)]) 
-FlatProductEq(j,j,__1) 
+   ~~> introduce_producteq ([("Minion", 4200)])
+FlatProductEq(j,j,__1)
 
 --
 
@@ -79,14 +81,14 @@ Reify(Ineq(j, __1, 0), __0),
 FlatProductEq(j,j,__1)
 
 and([ (product([j,j;int(1..2)]) >= j) | j : int(0..3) ]), 
-   ~~> expand_comprehension_via_solver_ac ([("Base", 2002)]) 
-and([;int(1..)]) 
+   ~~> expand_comprehension_via_solver_ac ([("Base", 2002)])
+and([;int(1..)])
 
 --
 
 Reify(and([;int(1..)]), y), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
-Reify(true, y) 
+   ~~> constant_evaluator ([("Constant", 9001)])
+Reify(true, y)
 
 --
 
