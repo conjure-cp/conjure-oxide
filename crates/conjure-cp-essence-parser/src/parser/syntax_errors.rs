@@ -23,11 +23,11 @@ pub fn classify_error_node(node: Node, source: &str) -> RecoverableParseError {
                 start_byte,
                 end_byte,
                 start_point: tree_sitter::Point {
-                    row: line as usize,
+                    row: line,
                     column: 0,
                 },
                 end_point: tree_sitter::Point {
-                    row: line as usize,
+                    row: line,
                     column: last_char,
                 },
             }),
@@ -76,11 +76,11 @@ pub fn detect_syntactic_errors(
                         start_byte,
                         end_byte,
                         start_point: tree_sitter::Point {
-                            row: line as usize,
+                            row: line,
                             column: 0,
                         },
                         end_point: tree_sitter::Point {
-                            row: line as usize,
+                            row: line,
                             column: last_char,
                         },
                     }),

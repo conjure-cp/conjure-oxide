@@ -34,7 +34,7 @@ pub fn error_to_diagnostic(err: &RecoverableParseError) -> Diagnostic {
         range: Range { start, end },
         severity: Severity::Error,
         source: "semantic error detection",
-        message: format!("{}", err.msg),
+        message: err.msg.clone(),
     }
 }
 
@@ -46,7 +46,7 @@ pub fn fatal_error_to_diagnostic(err: &FatalParseError) -> Diagnostic {
                 range: Range { start, end },
                 severity: Severity::Error,
                 source: "semantic error detection",
-                message: format!("{}", msg),
+                message: msg.clone(),
             }
         }
         _ => Diagnostic {
