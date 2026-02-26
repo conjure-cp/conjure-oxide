@@ -59,3 +59,11 @@ pub fn alloc_span(
         .insert(range.start_byte..range.end_byte, span_id);
     span_id
 }
+
+
+impl SourceMap {
+    // helper to get hover info for a given byte offset (e.g. cursor position)
+    pub fn span_at_byte(&self, byte:usize) -> Option<&SourceSpan> {
+        self.by_byte.get(&byte).and_then(|span_id| self.spans.get(*span_id as usize))
+    }
+}
