@@ -1,8 +1,10 @@
-use std::{fmt::Display, str::FromStr};
+use std::{cell::Cell, fmt::Display, str::FromStr};
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use strum_macros::{Display as StrumDisplay, EnumIter};
+
+use crate::bug;
 
 #[cfg(feature = "smt")]
 use crate::solver::adaptors::smt::{IntTheory, MatrixTheory, TheoryConfig};
@@ -37,10 +39,37 @@ impl FromStr for Parser {
     }
 }
 
+thread_local! {
+    /// Thread-local setting for which parser is currently active.
+    ///
+    /// Must be explicitly set before use.
+    static CURRENT_PARSER: Cell<Option<Parser>> = const { Cell::new(None) };
+}
+
+pub fn set_current_parser(parser: Parser) {
+    CURRENT_PARSER.with(|current| current.set(Some(parser)));
+}
+
+pub fn current_parser() -> Parser {
+    CURRENT_PARSER.with(|current| {
+        current.get().unwrap_or_else(|| {
+            // loud failure on purpose, so we don't end up using the default
+            bug!("current parser not set for this thread; call set_current_parser first")
+        })
+    })
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Rewriter {
     Naive,
     Morph,
+}
+
+thread_local! {
+    /// Thread-local setting for which rewriter is currently active.
+    ///
+    /// Must be explicitly set before use.
+    static CURRENT_REWRITER: Cell<Option<Rewriter>> = const { Cell::new(None) };
 }
 
 impl Display for Rewriter {
@@ -64,6 +93,19 @@ impl FromStr for Rewriter {
             )),
         }
     }
+}
+
+pub fn set_current_rewriter(rewriter: Rewriter) {
+    CURRENT_REWRITER.with(|current| current.set(Some(rewriter)));
+}
+
+pub fn current_rewriter() -> Rewriter {
+    CURRENT_REWRITER.with(|current| {
+        current.get().unwrap_or_else(|| {
+            // loud failure on purpose, so we don't end up using the default
+            bug!("current rewriter not set for this thread; call set_current_rewriter first")
+        })
+    })
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -92,30 +134,33 @@ impl FromStr for QuantifiedExpander {
             "via-solver" => Ok(QuantifiedExpander::ViaSolver),
             "via-solver-ac" => Ok(QuantifiedExpander::ViaSolverAc),
             _ => Err(format!(
-                "unknown quantified expander: {s}; expected one of: \
+                "unknown comprehension expander: {s}; expected one of: \
                  native, via-solver, via-solver-ac"
             )),
         }
     }
 }
 
-impl QuantifiedExpander {
-    pub(crate) const fn as_u8(self) -> u8 {
-        match self {
-            QuantifiedExpander::Native => 0,
-            QuantifiedExpander::ViaSolver => 1,
-            QuantifiedExpander::ViaSolverAc => 2,
-        }
-    }
+thread_local! {
+    /// Thread-local setting for which comprehension expansion strategy is currently active.
+    ///
+    /// Must be explicitly set before use.
+    static COMPREHENSION_EXPANDER: Cell<Option<QuantifiedExpander>> = const { Cell::new(None) };
+}
 
-    pub(crate) const fn from_u8(value: u8) -> Self {
-        match value {
-            0 => QuantifiedExpander::Native,
-            1 => QuantifiedExpander::ViaSolver,
-            2 => QuantifiedExpander::ViaSolverAc,
-            _ => QuantifiedExpander::Native,
-        }
-    }
+pub fn set_comprehension_expander(expander: QuantifiedExpander) {
+    COMPREHENSION_EXPANDER.with(|current| current.set(Some(expander)));
+}
+
+pub fn comprehension_expander() -> QuantifiedExpander {
+    COMPREHENSION_EXPANDER.with(|current| {
+        current.get().unwrap_or_else(|| {
+            // loud failure on purpose, so we don't end up using the default
+            bug!(
+                "comprehension expander not set for this thread; call set_comprehension_expander first"
+            )
+        })
+    })
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default, Serialize, Deserialize, JsonSchema)]
@@ -179,6 +224,28 @@ pub enum SolverFamily {
     Sat(SatEncoding),
     #[cfg(feature = "smt")]
     Smt(TheoryConfig),
+}
+
+thread_local! {
+    /// Thread-local setting for which solver family is currently active.
+    ///
+    /// Must be explicitly set before use.
+    static CURRENT_SOLVER_FAMILY: Cell<Option<SolverFamily>> = const { Cell::new(None) };
+}
+
+pub fn set_current_solver_family(solver_family: SolverFamily) {
+    CURRENT_SOLVER_FAMILY.with(|current| current.set(Some(solver_family)));
+}
+
+pub fn current_solver_family() -> SolverFamily {
+    CURRENT_SOLVER_FAMILY.with(|current| {
+        current.get().unwrap_or_else(|| {
+            // loud failure on purpose, so we don't end up using the default
+            bug!(
+                "current solver family not set for this thread; call set_current_solver_family first"
+            )
+        })
+    })
 }
 
 impl FromStr for SolverFamily {

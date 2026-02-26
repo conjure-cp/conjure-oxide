@@ -100,7 +100,7 @@ fn integer_decision_representation_direct(expr: &Expr, symbols: &SymbolTable) ->
     // symbols
     //     .lookup(name)
     //     .ok_or(RuleNotApplicable)?
-    //     .as_var()
+    //     .as_find()
     //     .ok_or(RuleNotApplicable)?;
 
     // thing we are representing must be an integer
@@ -251,7 +251,7 @@ fn integer_decision_representation_log(expr: &Expr, symbols: &SymbolTable) -> Ap
     // symbols
     //     .lookup(name)
     //     .ok_or(RuleNotApplicable)?
-    //     .as_var()
+    //     .as_find()
     //     .ok_or(RuleNotApplicable)?;
 
     // thing we are representing must be an integer
