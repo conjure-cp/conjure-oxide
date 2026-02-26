@@ -15,14 +15,7 @@ fn detects_undefined_variable() {
 
     let diag = &diagnostics[0];
 
-    check_diagnostic(
-        diag,
-        1,
-        14,
-        1,
-        15,
-        "Semantic Error: Variable 'y' is not defined in the symbol table",
-    );
+    check_diagnostic(diag, 1, 14, 1, 15, "The identifier 'y' is not defined");
 }
 
 #[test]
@@ -58,7 +51,7 @@ fn range_points_to_error_location() {
         14,
         1,
         27,
-        "Semantic Error: Variable 'undefined_var' is not defined in the symbol table",
+        "The identifier 'undefined_var' is not defined",
     );
 }
 
