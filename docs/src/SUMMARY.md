@@ -2,9 +2,7 @@
 
 # Getting Started
 
-- [Installation](./getting_started/installation/index.md)
-  - [Downloading a Nightly Release]()
-  - [Building from Source]()
+- [Installation](./getting_started/installation.md)
 - [Quick Start](./getting_started/quick-start.md)
 - [Command Line Guide]()
   - [Logging](./getting_started/command-line/logging.md)
