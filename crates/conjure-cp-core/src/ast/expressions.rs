@@ -23,7 +23,7 @@ use super::sat_encoding::SATIntEncoding;
 use super::{
     AbstractLiteral, Atom, DeclarationPtr, Domain, DomainPtr, GroundDomain, IntVal, Literal,
     Metadata, Moo, Name, Range, Reference, ReturnType, SetAttr, SubModel, SymbolTable,
-    SymbolTablePtr, Typeable, UnresolvedDomain, matrix,
+    SymbolTablePtr, Typeable, UnresolvedDomain, matrix, PartialityAttr, JectivityAttr
 };
 
 // Ensure that this type doesn't get too big
@@ -921,9 +921,47 @@ impl Expression {
                 .map(DomainPtr::from)
                 .ok(),
             Expression::Defined(_, function) => {
-                let (attrs, _, _) = function.domain_of()?.as_function()?;
-                let size = attrs.resolve()?.size;
+                let (attrs, domain, _) = function.domain_of()?.as_function()?;
+
+                // Gets the size imposed by the size attribute
                 // The elements defined in the domain is the same as the size of the function itself
+                let size_size = attrs.resolve()?.size;
+
+                // Gets the size imposed by the partiality and jectivity attributes
+                let partiality = attrs.resolve()?.partiality;
+                let jectivity = attrs.resolve()?.jectivity;
+                let domain_length = function.domain_of()?.length();
+                // We can only infer if the domain is ground and the length is known
+                let attr_size = match domain_length {
+                    Ok(len) => match partiality {
+                        PartialityAttr::Total => Some(Range::Single(len)),
+                        PartialityAttr::Partial => {
+                            // When partial we also need the codomain to be ground and known
+                            let codomain_length = function.domain_of()?.length();
+                            match codomain_length {
+                                Ok(co_len) => match jectivity {
+                                    JectivityAttr::Bijective | JectivityAttr::Surjective => Some(Range::Bounded(co_len,len)),
+                                    JectivityAttr::Injective => Some(Range::Bounded(0,Ord::max(len,co_len))),
+                                    JectivityAttr::None => Some(Range::Bounded(0,len))
+                                },
+                                Err(_) => None
+                            }
+                        }
+                    },
+                    Err(_) => None
+                };
+
+                let size = match attr_size {
+                    Some(attr_size) => {
+                        let unsafe_range = Range::minimal(&[size_size, attr_size]);
+                        match unsafe_range {
+                            Ok(range) => range,
+                            // What should happen if this the functions attributes mean its unsolvable?
+                            Err(_) => return Some(Domain::empty(ReturnType::Set(Box::new(domain.return_type()))))
+                        }
+                    },
+                    None => size_size
+                };
                 let domain = get_function_domain(function);
                 match domain {
                     Some(inner_dom) => Some(Domain::set(SetAttr::new(size), inner_dom)),

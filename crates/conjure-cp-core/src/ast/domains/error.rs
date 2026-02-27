@@ -23,6 +23,9 @@ pub enum DomainOpError {
 
     #[error("Could not enumerate the domain as it is too large")]
     TooLarge,
+
+    #[error("The attributes provided are conflicting and impossible")]
+    ConflictingAttrs
 }
 
 impl From<CombinatoricsError> for DomainOpError {

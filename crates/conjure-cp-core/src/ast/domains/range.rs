@@ -1,4 +1,4 @@
-use crate::ast::domains::Int;
+use crate::ast::{DomainOpError, domains::Int};
 use num_traits::Num;
 use polyquine::Quine;
 use serde::{Deserialize, Serialize};
@@ -113,6 +113,28 @@ impl<A: Ord + Clone> Range<A> {
             };
         }
         Range::new(lo.cloned(), hi.cloned())
+    }
+
+    pub fn minimal(rngs: &[Range<A>]) -> Result<Range<A>, DomainOpError> {
+        if rngs.is_empty() {
+            return Ok(Range::Unbounded);
+        }
+        let mut lo = rngs[0].low();
+        let mut hi = rngs[0].high();
+        for rng in rngs {
+            lo = match (lo, rng.low()) {
+                (Some(curr), Some(new)) => Some(curr.max(new)),
+                _ => None,
+            };
+            hi = match (hi, rng.high()) {
+                (Some(curr), Some(new)) => Some(curr.min(new)),
+                _ => None,
+            };
+            if (lo > hi) {
+                return Err(DomainOpError::ConflictingAttrs);
+            }
+        }
+        Ok(Range::new(lo.cloned(), hi.cloned()))
     }
 }
 
