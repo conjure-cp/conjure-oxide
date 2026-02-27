@@ -6,7 +6,7 @@ use std::{
 use conjure_cp::{
     ast::{
         Atom, DecisionVariable, DeclarationKind, DeclarationPtr, Expression, Literal, Metadata,
-        Model, Name, Reference, SubModel, SymbolTable, eval_constant, run_partial_evaluator,
+        Model, Name, Reference, SymbolTable, eval_constant, run_partial_evaluator,
         serde::{HasId as _, ObjId},
     },
     context::Context,
@@ -15,10 +15,10 @@ use conjure_cp::{
 };
 use uniplate::Biplate as _;
 
-/// Creates a temporary model wrapping the given submodel.
-pub(super) fn model_from_submodel(submodel: SubModel, search_order: Option<Vec<Name>>) -> Model {
-    let mut model = Model::new(Arc::new(RwLock::new(Context::default())));
-    *model.as_submodel_mut() = submodel;
+/// Configures a temporary model for solver-based comprehension expansion.
+pub(super) fn with_temporary_model(model: Model, search_order: Option<Vec<Name>>) -> Model {
+    let mut model = model;
+    model.context = Arc::new(RwLock::new(Context::default()));
     model.search_order = search_order;
     model
 }
@@ -46,9 +46,9 @@ pub(super) fn instantiate_return_expressions_from_values(
     let mut return_expressions = vec![];
 
     for value in values {
-        let return_expression_submodel = return_expression_model.as_submodel().clone();
-        let child_symtab = return_expression_submodel.symbols().clone();
-        let mut return_expression = return_expression_submodel.into_single_expression();
+        let return_expression_model = return_expression_model.clone();
+        let child_symtab = return_expression_model.symbols().clone();
+        let mut return_expression = return_expression_model.into_single_expression();
 
         // We only bind quantified variables.
         let value: HashMap<_, _> = value
@@ -236,12 +236,12 @@ impl Drop for TempQuantifiedFindGuard {
     }
 }
 
-/// Converts quantified declarations in `submodel` to temporary find declarations.
+/// Converts quantified declarations in `model` to temporary find declarations.
 pub(super) fn temporarily_materialise_quantified_vars_as_finds(
-    submodel: &SubModel,
+    model: &Model,
     quantified_vars: &[Name],
 ) -> TempQuantifiedFindGuard {
-    let symbols = submodel.symbols().clone();
+    let symbols = model.symbols().clone();
     let mut originals = Vec::new();
 
     for name in quantified_vars {
