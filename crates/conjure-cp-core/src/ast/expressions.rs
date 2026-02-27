@@ -153,7 +153,7 @@ pub enum Expression {
     #[compatible(SMT)]
     ToInt(Metadata, Moo<Expression>),
 
-    /// `|x|` - absolute value of `x`Deserialize
+    /// `|x|` - absolute value of `x`
     #[compatible(JsonInput, SMT)]
     Abs(Metadata, Moo<Expression>),
 

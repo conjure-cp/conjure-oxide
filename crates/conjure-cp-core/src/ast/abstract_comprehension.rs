@@ -1,8 +1,6 @@
 use super::declaration::DeclarationPtr;
 use super::serde::PtrAsInner;
-use super::{
-    DomainPtr, Expression, Model, Name, ReturnType, SymbolTablePtr, Typeable,
-};
+use super::{DomainPtr, Expression, Model, Name, ReturnType, SymbolTablePtr, Typeable};
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use std::fmt::{Display, Formatter};
