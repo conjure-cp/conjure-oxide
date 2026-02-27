@@ -208,7 +208,7 @@ impl SolverAdaptor for Sat {
     }
 
     fn load_model(&mut self, model: ConjureModel, _: private::Internal) -> Result<(), SolverError> {
-        let sym_tab = model.as_submodel().symbols().deref().clone();
+        let sym_tab = model.symbols().deref().clone();
         let decisions = sym_tab.clone().into_iter();
 
         let mut finds: Vec<Name> = Vec::new();
@@ -250,7 +250,7 @@ impl SolverAdaptor for Sat {
 
         // all constraints should be encoded as clauses
         // the remaining constraint (if it exists) should just be a true/false expression
-        let constraints = m_clone.as_submodel().constraints();
+        let constraints = m_clone.constraints();
         assert!(
             constraints.is_empty()
                 || (constraints.len() == 1
@@ -259,7 +259,7 @@ impl SolverAdaptor for Sat {
             pretty_vec(constraints)
         );
 
-        let clauses = m_clone.as_submodel().clauses();
+        let clauses = m_clone.clauses();
 
         let inst: SatInstance = handle_cnf(clauses, &mut var_map, finds.clone());
 

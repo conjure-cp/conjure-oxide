@@ -117,7 +117,6 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
             }
         }
         Expr::Atomic(_, _) => Err(RuleNotApplicable),
-        Expr::Scope(_, _) => Err(RuleNotApplicable),
         Expr::ToInt(_, expression) => {
             if expression.return_type() == ReturnType::Int {
                 Ok(Reduction::pure(Moo::unwrap_or_clone(expression.clone())))

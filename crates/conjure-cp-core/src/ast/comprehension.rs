@@ -11,7 +11,7 @@ use serde_with::serde_as;
 use uniplate::{Biplate, Uniplate};
 
 use super::{
-    DeclarationPtr, Domain, DomainPtr, Expression, Moo, Name, Range, SubModel, SymbolTable,
+    DeclarationPtr, Domain, DomainPtr, Expression, Model, Moo, Name, Range, SymbolTable,
     SymbolTablePtr, Typeable, ac_operators::ACOperatorKind, serde::PtrAsInner,
 };
 
@@ -81,29 +81,29 @@ impl Comprehension {
             .collect()
     }
 
-    /// Builds a temporary submodel containing generator qualifiers and guards.
-    pub fn to_generator_submodel(&self) -> SubModel {
-        let mut submodel = self.empty_submodel_with_symbols();
-        submodel.add_constraints(self.generator_conditions());
-        submodel
+    /// Builds a temporary model containing generator qualifiers and guards.
+    pub fn to_generator_model(&self) -> Model {
+        let mut model = self.empty_model_with_symbols();
+        model.add_constraints(self.generator_conditions());
+        model
     }
 
-    /// Builds a temporary submodel containing the return expression only.
-    pub fn to_return_expression_submodel(&self) -> SubModel {
-        let mut submodel = self.empty_submodel_with_symbols();
-        submodel.add_constraint(self.return_expression.clone());
-        submodel
+    /// Builds a temporary model containing the return expression only.
+    pub fn to_return_expression_model(&self) -> Model {
+        let mut model = self.empty_model_with_symbols();
+        model.add_constraint(self.return_expression.clone());
+        model
     }
 
-    fn empty_submodel_with_symbols(&self) -> SubModel {
+    fn empty_model_with_symbols(&self) -> Model {
         let parent = self.symbols.read().parent().clone();
-        let mut submodel = if let Some(parent) = parent {
-            SubModel::new(parent)
+        let mut model = if let Some(parent) = parent {
+            Model::new_in_parent_scope(parent)
         } else {
-            SubModel::new_top_level()
+            Model::default()
         };
-        *submodel.symbols_ptr_unchecked_mut() = self.symbols.clone();
-        submodel
+        *model.symbols_ptr_unchecked_mut() = self.symbols.clone();
+        model
     }
 
     /// Adds a guard to the comprehension. Returns false if the guard does not only reference quantified variables.
