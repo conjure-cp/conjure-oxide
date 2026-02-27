@@ -32,7 +32,6 @@ use uniplate::{Biplate, Tree, Uniplate};
 static SYMBOL_TABLE_ID_COUNTER: AtomicU32 = const { AtomicU32::new(0) };
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-// #[derive(serde::Deserialize)]
 pub struct SymbolTablePtr
 where
     Self: Send + Sync,

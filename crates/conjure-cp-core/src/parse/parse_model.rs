@@ -951,7 +951,10 @@ fn parse_in_expr_comprehension(
     let expr = parse_expression(return_expr_value, &comprehension.symbols)
         .map_err(|_| fail("GenInExpr.return_expr.parse_expression"))?;
 
-    Ok(Expression::AbstractComprehension(Metadata::new(), Moo::new(comprehension.with_return_value(expr))))
+    Ok(Expression::AbstractComprehension(
+        Metadata::new(),
+        Moo::new(comprehension.with_return_value(expr)),
+    ))
 }
 
 fn parse_bin_op(
