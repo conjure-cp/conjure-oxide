@@ -9,8 +9,8 @@ such that
 --
 
 (result = or([ (k > 7) | k : int(1..10) ])), 
-   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
-Reify(or([ (k > 7) | k : int(1..10) ]), result) 
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(or([ (k > 7) | k : int(1..10) ]), result)
 
 --
 
@@ -25,29 +25,30 @@ such that
 --
 
 (k > 7), 
-   ~~> gt_to_geq ([("Minion", 8400)]) 
-(sum([k,-1;int(1..)]) >= 7) 
+   ~~> gt_to_geq ([("Minion", 8400)])
+(sum([k,-1;int(1..)]) >= 7)
 
 --
 
 (sum([k,-1;int(1..)]) >= 7), 
-   ~~> y_plus_k_geq_x_to_ineq ([("Minion", 4800)]) 
-Ineq(7, k, -1) 
+   ~~> y_plus_k_geq_x_to_ineq ([("Minion", 4800)])
+Ineq(7, k, -1)
 
 --
 
 (false != Ineq(7, k, -1)), 
-   ~~> flatten_generic ([("Minion", 4200)]) 
-(false != __0) 
+   ~~> flatten_generic ([("Minion", 4200)])
+(false != __0)
 new variables:
   find __0: bool
 new constraints:
   __0 =aux Ineq(7, k, -1)
+
 --
 
 __0 =aux Ineq(7, k, -1), 
-   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
-Reify(Ineq(7, k, -1), __0) 
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(Ineq(7, k, -1), __0)
 
 --
 
@@ -61,45 +62,15 @@ such that
 (false != __0),
 Reify(Ineq(7, k, -1), __0)
 
-Model before rewriting:
-
-given k: int(1..10)
-
-such that
-
-(k > 7)
-
---
-
-(k > 7), 
-   ~~> gt_to_geq ([("Minion", 8400)]) 
-(sum([k,-1;int(1..)]) >= 7) 
-
---
-
-(sum([k,-1;int(1..)]) >= 7), 
-   ~~> y_plus_k_geq_x_to_ineq ([("Minion", 4800)]) 
-Ineq(7, k, -1) 
-
---
-
-Final model:
-
-given k: int(1..10)
-
-such that
-
-Ineq(7, k, -1)
-
 or([ (k > 7) | k : int(1..10) ]), 
-   ~~> expand_comprehension_via_solver_ac ([("Base", 2002)]) 
-or([Ineq(7, 8, -1),Ineq(7, 9, -1),Ineq(7, 10, -1);int(1..)]) 
+   ~~> expand_comprehension_via_solver_ac ([("Base", 2002)])
+or([true,true,true;int(1..)])
 
 --
 
-Reify(or([Ineq(7, 8, -1),Ineq(7, 9, -1),Ineq(7, 10, -1);int(1..)]), result), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
-Reify(true, result) 
+Reify(or([true,true,true;int(1..)]), result), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+Reify(true, result)
 
 --
 

@@ -427,7 +427,7 @@ impl SymbolTable {
         // table..
 
         let decl = self.lookup(name)?;
-        let var = &decl.as_var()?;
+        let var = &decl.as_find()?;
 
         var.representations
             .iter()
@@ -442,7 +442,7 @@ impl SymbolTable {
     /// + `None` if `name` does not exist, or is not a decision variable.
     pub fn representations_for(&self, name: &Name) -> Option<Vec<Vec<Box<dyn Representation>>>> {
         let decl = self.lookup(name)?;
-        decl.as_var().map(|x| x.representations.clone())
+        decl.as_find().map(|x| x.representations.clone())
     }
 
     /// Gets the representation `representation` for `name`, creating it if it does not exist.
@@ -469,7 +469,7 @@ impl SymbolTable {
         // Lookup the declaration reference
         let mut decl = self.lookup(name)?;
 
-        if let Some(var) = decl.as_var()
+        if let Some(var) = decl.as_find()
             && let Some(existing_reprs) = var
                 .representations
                 .iter()
@@ -490,7 +490,7 @@ impl SymbolTable {
         let reprs = vec![repr_init_fn(name, self)?];
 
         // Get mutable access to the variable part
-        let mut var = decl.as_var_mut()?;
+        let mut var = decl.as_find_mut()?;
 
         for repr_instance in &reprs {
             repr_instance
