@@ -1,6 +1,6 @@
 use super::declaration::DeclarationPtr;
 use super::serde::PtrAsInner;
-use super::{DomainPtr, Expression, Model, Name, ReturnType, SymbolTablePtr, Typeable};
+use super::{DomainPtr, Expression, Model, Name, ReturnType, SymbolTablePtr, Typeable, Moo, Metadata};
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use std::fmt::{Display, Formatter};
@@ -19,7 +19,6 @@ pub struct AbstractComprehension {
 
 #[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Hash, Uniplate)]
 #[biplate(to=Expression)]
-#[biplate(to=SubModel)]
 pub enum Qualifier {
     Generator(Generator),
     Condition(Expression),
@@ -185,16 +184,12 @@ impl AbstractComprehensionBuilder {
     }
 
     pub fn with_return_value(mut self, expression: Expression) -> Expression {
-        Expression::Scope(
+        Expression::AbstractComprehension(
             Metadata::new(),
-            Moo::new(Expression::AbstractComprehension(
-                Metadata::new(),
-                Moo::new(AbstractComprehension {
-                    return_expr: expression,
-                    qualifiers: self.qualifiers,
-                }),
-            )),
-            self.symbols,
+            Moo::new(AbstractComprehension {
+                return_expr: expression,
+                qualifiers: self.qualifiers,
+            }),
         )
     }
 }
