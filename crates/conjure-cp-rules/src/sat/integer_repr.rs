@@ -100,7 +100,7 @@ fn integer_decision_representation_direct(expr: &Expr, symbols: &SymbolTable) ->
     // symbols
     //     .lookup(name)
     //     .ok_or(RuleNotApplicable)?
-    //     .as_var()
+    //     .as_find()
     //     .ok_or(RuleNotApplicable)?;
 
     // thing we are representing must be an integer
@@ -251,7 +251,7 @@ fn integer_decision_representation_log(expr: &Expr, symbols: &SymbolTable) -> Ap
     // symbols
     //     .lookup(name)
     //     .ok_or(RuleNotApplicable)?
-    //     .as_var()
+    //     .as_find()
     //     .ok_or(RuleNotApplicable)?;
 
     // thing we are representing must be an integer
@@ -323,8 +323,6 @@ fn literal_cnf_int_log(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             return Err(RuleNotApplicable);
         }
     };
-
-    //TODO: add support for negatives
     //TODO: Adding constant optimization to all int operations should hopefully make this rule redundant
 
     let mut binary_encoding = vec![];

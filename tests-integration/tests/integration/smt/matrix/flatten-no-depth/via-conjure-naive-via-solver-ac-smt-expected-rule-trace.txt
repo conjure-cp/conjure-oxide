@@ -1,7 +1,7 @@
 Model before rewriting:
 
-find a: matrix indexed by [[int(1..2), int(1..2)]] of int(1..4)
-find b: matrix indexed by [[int(1..4)]] of int(1..4)
+find a: matrix indexed by [int(1..2), int(1..2)] of int(1..4)
+find b: matrix indexed by [int(1..4)] of int(1..4)
 
 such that
 
@@ -14,32 +14,32 @@ allDiff(flatten(a)),
 --
 
 flatten(a)[1], 
-   ~~> indexed_flatten_matrix ([("Base", 8001)]) 
-a[1, 1] 
+   ~~> indexed_flatten_matrix ([("Base", 8001)])
+a[1, 1]
 
 --
 
 flatten(a)[2], 
-   ~~> indexed_flatten_matrix ([("Base", 8001)]) 
-a[1, 2] 
+   ~~> indexed_flatten_matrix ([("Base", 8001)])
+a[1, 2]
 
 --
 
 flatten(a)[3], 
-   ~~> indexed_flatten_matrix ([("Base", 8001)]) 
-a[2, 1] 
+   ~~> indexed_flatten_matrix ([("Base", 8001)])
+a[2, 1]
 
 --
 
 flatten(a)[4], 
-   ~~> indexed_flatten_matrix ([("Base", 8001)]) 
-a[2, 2] 
+   ~~> indexed_flatten_matrix ([("Base", 8001)])
+a[2, 2]
 
 --
 
 a[1, 1], 
-   ~~> index_to_bubble ([("Bubble", 6000)]) 
-{a[1, 1] @ and([__inDomain(1,int(1..2)),__inDomain(1,int(1..2));int(1..)])} 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{a[1, 1] @ and([__inDomain(1,int(1..2)),__inDomain(1,int(1..2));int(1..)])}
 
 --
 
@@ -48,18 +48,18 @@ allDiff(flatten(a)),
 (a[1, 2] = b[2]),
 (a[2, 1] = b[3]),
 (a[2, 2] = b[4]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
+   ~~> constant_evaluator ([("Constant", 9001)])
 allDiff(flatten(a)),
 (a[1, 1] = b[1]),
 (a[1, 2] = b[2]),
 (a[2, 1] = b[3]),
-(a[2, 2] = b[4]) 
+(a[2, 2] = b[4])
 
 --
 
 b[1], 
-   ~~> index_to_bubble ([("Bubble", 6000)]) 
-{b[1] @ and([__inDomain(1,int(1..4));int(1..)])} 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{b[1] @ and([__inDomain(1,int(1..4));int(1..)])}
 
 --
 
@@ -68,18 +68,18 @@ allDiff(flatten(a)),
 (a[1, 2] = b[2]),
 (a[2, 1] = b[3]),
 (a[2, 2] = b[4]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
+   ~~> constant_evaluator ([("Constant", 9001)])
 allDiff(flatten(a)),
 (a[1, 1] = b[1]),
 (a[1, 2] = b[2]),
 (a[2, 1] = b[3]),
-(a[2, 2] = b[4]) 
+(a[2, 2] = b[4])
 
 --
 
 a[1, 2], 
-   ~~> index_to_bubble ([("Bubble", 6000)]) 
-{a[1, 2] @ and([__inDomain(1,int(1..2)),__inDomain(2,int(1..2));int(1..)])} 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{a[1, 2] @ and([__inDomain(1,int(1..2)),__inDomain(2,int(1..2));int(1..)])}
 
 --
 
@@ -88,18 +88,18 @@ allDiff(flatten(a)),
 ({a[1, 2] @ and([__inDomain(1,int(1..2)),__inDomain(2,int(1..2));int(1..)])} = b[2]),
 (a[2, 1] = b[3]),
 (a[2, 2] = b[4]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
+   ~~> constant_evaluator ([("Constant", 9001)])
 allDiff(flatten(a)),
 (a[1, 1] = b[1]),
 (a[1, 2] = b[2]),
 (a[2, 1] = b[3]),
-(a[2, 2] = b[4]) 
+(a[2, 2] = b[4])
 
 --
 
 b[2], 
-   ~~> index_to_bubble ([("Bubble", 6000)]) 
-{b[2] @ and([__inDomain(2,int(1..4));int(1..)])} 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{b[2] @ and([__inDomain(2,int(1..4));int(1..)])}
 
 --
 
@@ -108,18 +108,18 @@ allDiff(flatten(a)),
 (a[1, 2] = {b[2] @ and([__inDomain(2,int(1..4));int(1..)])}),
 (a[2, 1] = b[3]),
 (a[2, 2] = b[4]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
+   ~~> constant_evaluator ([("Constant", 9001)])
 allDiff(flatten(a)),
 (a[1, 1] = b[1]),
 (a[1, 2] = b[2]),
 (a[2, 1] = b[3]),
-(a[2, 2] = b[4]) 
+(a[2, 2] = b[4])
 
 --
 
 a[2, 1], 
-   ~~> index_to_bubble ([("Bubble", 6000)]) 
-{a[2, 1] @ and([__inDomain(2,int(1..2)),__inDomain(1,int(1..2));int(1..)])} 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{a[2, 1] @ and([__inDomain(2,int(1..2)),__inDomain(1,int(1..2));int(1..)])}
 
 --
 
@@ -128,18 +128,18 @@ allDiff(flatten(a)),
 (a[1, 2] = b[2]),
 ({a[2, 1] @ and([__inDomain(2,int(1..2)),__inDomain(1,int(1..2));int(1..)])} = b[3]),
 (a[2, 2] = b[4]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
+   ~~> constant_evaluator ([("Constant", 9001)])
 allDiff(flatten(a)),
 (a[1, 1] = b[1]),
 (a[1, 2] = b[2]),
 (a[2, 1] = b[3]),
-(a[2, 2] = b[4]) 
+(a[2, 2] = b[4])
 
 --
 
 b[3], 
-   ~~> index_to_bubble ([("Bubble", 6000)]) 
-{b[3] @ and([__inDomain(3,int(1..4));int(1..)])} 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{b[3] @ and([__inDomain(3,int(1..4));int(1..)])}
 
 --
 
@@ -148,18 +148,18 @@ allDiff(flatten(a)),
 (a[1, 2] = b[2]),
 (a[2, 1] = {b[3] @ and([__inDomain(3,int(1..4));int(1..)])}),
 (a[2, 2] = b[4]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
+   ~~> constant_evaluator ([("Constant", 9001)])
 allDiff(flatten(a)),
 (a[1, 1] = b[1]),
 (a[1, 2] = b[2]),
 (a[2, 1] = b[3]),
-(a[2, 2] = b[4]) 
+(a[2, 2] = b[4])
 
 --
 
 a[2, 2], 
-   ~~> index_to_bubble ([("Bubble", 6000)]) 
-{a[2, 2] @ and([__inDomain(2,int(1..2)),__inDomain(2,int(1..2));int(1..)])} 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{a[2, 2] @ and([__inDomain(2,int(1..2)),__inDomain(2,int(1..2));int(1..)])}
 
 --
 
@@ -168,18 +168,18 @@ allDiff(flatten(a)),
 (a[1, 2] = b[2]),
 (a[2, 1] = b[3]),
 ({a[2, 2] @ and([__inDomain(2,int(1..2)),__inDomain(2,int(1..2));int(1..)])} = b[4]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
+   ~~> constant_evaluator ([("Constant", 9001)])
 allDiff(flatten(a)),
 (a[1, 1] = b[1]),
 (a[1, 2] = b[2]),
 (a[2, 1] = b[3]),
-(a[2, 2] = b[4]) 
+(a[2, 2] = b[4])
 
 --
 
 b[4], 
-   ~~> index_to_bubble ([("Bubble", 6000)]) 
-{b[4] @ and([__inDomain(4,int(1..4));int(1..)])} 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{b[4] @ and([__inDomain(4,int(1..4));int(1..)])}
 
 --
 
@@ -188,31 +188,31 @@ allDiff(flatten(a)),
 (a[1, 2] = b[2]),
 (a[2, 1] = b[3]),
 (a[2, 2] = {b[4] @ and([__inDomain(4,int(1..4));int(1..)])}), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
+   ~~> constant_evaluator ([("Constant", 9001)])
 allDiff(flatten(a)),
 (a[1, 1] = b[1]),
 (a[1, 2] = b[2]),
 (a[2, 1] = b[3]),
-(a[2, 2] = b[4]) 
+(a[2, 2] = b[4])
 
 --
 
 flatten(a), 
-   ~~> unwrap_flatten_matrix_nonatomic ([("Smt", 999)]) 
-[a[1, 1],a[1, 2],a[2, 1],a[2, 2];int(1..4)] 
+   ~~> unwrap_flatten_matrix_nonatomic ([("Smt", 999)])
+[a[1, 1],a[1, 2],a[2, 1],a[2, 2];int(1..4)]
 
 --
 
 allDiff([a[1, 1],a[1, 2],a[2, 1],a[2, 2];int(1..4)]), 
-   ~~> matrix_to_list ([("Base", 2000)]) 
-allDiff([a[1, 1],a[1, 2],a[2, 1],a[2, 2];int(1..)]) 
+   ~~> matrix_to_list ([("Base", 2000)])
+allDiff([a[1, 1],a[1, 2],a[2, 1],a[2, 2];int(1..)])
 
 --
 
 Final model:
 
-find a: matrix indexed by [[int(1..2), int(1..2)]] of int(1..4)
-find b: matrix indexed by [[int(1..4)]] of int(1..4)
+find a: matrix indexed by [int(1..2), int(1..2)] of int(1..4)
+find b: matrix indexed by [int(1..4)] of int(1..4)
 
 such that
 

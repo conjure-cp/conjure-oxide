@@ -11,54 +11,55 @@ such that
 --
 
 UnsafeDiv(y, z), 
-   ~~> div_to_bubble ([("Bubble", 6000)]) 
-{SafeDiv(y, z) @ (z != 0)} 
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(y, z) @ (z != 0)}
 
 --
 
 -({SafeDiv(y, z) @ (z != 0)}), 
-   ~~> bubble_up ([("Bubble", 8800)]) 
-{-(SafeDiv(y, z)) @ (z != 0)} 
+   ~~> bubble_up ([("Bubble", 8800)])
+{-(SafeDiv(y, z)) @ (z != 0)}
 
 --
 
 (x = {-(SafeDiv(y, z)) @ (z != 0)}), 
-   ~~> bubble_up ([("Bubble", 8800)]) 
-{(x = -(SafeDiv(y, z))) @ (z != 0)} 
+   ~~> bubble_up ([("Bubble", 8800)])
+{(x = -(SafeDiv(y, z))) @ (z != 0)}
 
 --
 
 {(x = -(SafeDiv(y, z))) @ (z != 0)}, 
-   ~~> expand_bubble ([("Bubble", 8900)]) 
-and([(x = -(SafeDiv(y, z))),(z != 0);int(1..)]) 
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([(x = -(SafeDiv(y, z))),(z != 0);int(1..)])
 
 --
 
 and([(x = -(SafeDiv(y, z))),(z != 0);int(1..)]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
+   ~~> constant_evaluator ([("Constant", 9001)])
 (x = -(SafeDiv(y, z))),
-(z != 0) 
+(z != 0)
 
 --
 
 -(SafeDiv(y, z)), 
-   ~~> flatten_generic ([("Minion", 4200)]) 
--(__0) 
+   ~~> flatten_generic ([("Minion", 4200)])
+-(__0)
 new variables:
   find __0: int(-1..1)
 new constraints:
   __0 =aux SafeDiv(y, z)
+
 --
 
 (x = -(__0)), 
-   ~~> introduce_minuseq_from_eq ([("Minion", 4400)]) 
-MinusEq(x,__0) 
+   ~~> introduce_minuseq_from_eq ([("Minion", 4400)])
+MinusEq(x,__0)
 
 --
 
 __0 =aux SafeDiv(y, z), 
-   ~~> introduce_diveq ([("Minion", 4200)]) 
-DivEq(y, z, __0) 
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(y, z, __0)
 
 --
 
