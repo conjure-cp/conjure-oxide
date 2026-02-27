@@ -15,6 +15,8 @@ use uniplate::Uniplate;
 pub struct AbstractComprehension {
     pub return_expr: Expression,
     pub qualifiers: Vec<Qualifier>,
+    #[serde_as(as = "PtrAsInner")]
+    pub symbols: SymbolTablePtr,
 }
 
 #[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Hash, Uniplate)]
@@ -187,6 +189,7 @@ impl AbstractComprehensionBuilder {
         AbstractComprehension {
             return_expr: expression,
             qualifiers: self.qualifiers,
+            symbols: self.symbols,
         }
     }
 }
