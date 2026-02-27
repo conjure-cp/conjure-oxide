@@ -1,6 +1,6 @@
 use super::declaration::DeclarationPtr;
 use super::serde::PtrAsInner;
-use super::{DomainPtr, Expression, Name, ReturnType, SubModel, SymbolTablePtr, Typeable};
+use super::{DomainPtr, Expression, Model, Name, ReturnType, SymbolTablePtr, Typeable};
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use std::fmt::{Display, Formatter};
@@ -10,7 +10,7 @@ use uniplate::Uniplate;
 #[serde_as]
 #[derive(Clone, PartialEq, Eq, Hash, Serialize, Deserialize, Debug, Uniplate)]
 #[biplate(to=Expression)]
-#[biplate(to=SubModel)]
+#[biplate(to=Model)]
 #[biplate(to=SymbolTablePtr)]
 pub struct AbstractComprehension {
     pub return_expr: Expression,
@@ -41,7 +41,7 @@ pub enum Qualifier {
 #[serde_as]
 #[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Hash, Uniplate)]
 #[biplate(to=Expression)]
-#[biplate(to=SubModel)]
+#[biplate(to=Model)]
 pub struct ComprehensionLetting {
     #[serde_as(as = "PtrAsInner")]
     pub decl: DeclarationPtr,
@@ -50,7 +50,7 @@ pub struct ComprehensionLetting {
 
 #[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Hash, Uniplate)]
 #[biplate(to=Expression)]
-#[biplate(to=SubModel)]
+#[biplate(to=Model)]
 pub enum Generator {
     DomainGenerator(DomainGenerator),
     ExpressionGenerator(ExpressionGenerator),
@@ -59,7 +59,7 @@ pub enum Generator {
 #[serde_as]
 #[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Hash, Uniplate)]
 #[biplate(to=Expression)]
-#[biplate(to=SubModel)]
+#[biplate(to=Model)]
 pub struct DomainGenerator {
     #[serde_as(as = "PtrAsInner")]
     pub decl: DeclarationPtr,
@@ -68,7 +68,7 @@ pub struct DomainGenerator {
 #[serde_as]
 #[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Hash, Uniplate)]
 #[biplate(to=Expression)]
-#[biplate(to=SubModel)]
+#[biplate(to=Model)]
 pub struct ExpressionGenerator {
     #[serde_as(as = "PtrAsInner")]
     pub decl: DeclarationPtr,
