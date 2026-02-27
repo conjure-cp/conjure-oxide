@@ -15,65 +15,66 @@ such that
 --
 
 sum([sum([sum([sum([20,x;int(1..2)]),5;int(1..2)]),y;int(1..2)]),min([sum([z,y;int(1..2)]),sum([y,x;int(1..2)]),sum([sum([z,x;int(1..2)]),5;int(1..2)]),50;int(1..4)]);int(1..2)]), 
-   ~~> normalise_associative_commutative ([("Base", 8900)]) 
-sum([20,x,5,y,min([sum([z,y;int(1..2)]),sum([y,x;int(1..2)]),sum([sum([z,x;int(1..2)]),5;int(1..2)]),50;int(1..4)]);int(1..2)]) 
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([20,x,5,y,min([sum([z,y;int(1..2)]),sum([y,x;int(1..2)]),sum([sum([z,x;int(1..2)]),5;int(1..2)]),50;int(1..4)]);int(1..2)])
 
 --
 
 sum([sum([z,x;int(1..2)]),5;int(1..2)]), 
-   ~~> normalise_associative_commutative ([("Base", 8900)]) 
-sum([z,x,5;int(1..2)]) 
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([z,x,5;int(1..2)])
 
 --
 
 (a = allDiff([x,y,z;int(1..3)])), 
-   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
-Reify(allDiff([x,y,z;int(1..3)]), a) 
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(allDiff([x,y,z;int(1..3)]), a)
 
 --
 
 (sum([20,x,5,y,min([sum([z,y;int(1..2)]),sum([y,x;int(1..2)]),sum([z,x,5;int(1..2)]),50;int(1..4)]);int(1..2)]) <= 40), 
-   ~~> flatten_generic ([("Minion", 4200)]) 
-(__0 <= 40) 
+   ~~> flatten_generic ([("Minion", 4200)])
+(__0 <= 40)
 new variables:
   find __0: int(29..45)
 new constraints:
   __0 =aux sum([20,x,5,y,min([sum([z,y;int(1..2)]),sum([y,x;int(1..2)]),sum([z,x,5;int(1..2)]),50;int(1..4)]);int(1..2)])
+
 --
 
 (__0 <= 40), 
-   ~~> leq_to_ineq ([("Minion", 4100)]) 
-Ineq(__0, 40, 0) 
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(__0, 40, 0)
 
 --
 
 (y <= z), 
-   ~~> leq_to_ineq ([("Minion", 4100)]) 
-Ineq(y, z, 0) 
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(y, z, 0)
 
 --
 
 (x <= y), 
-   ~~> leq_to_ineq ([("Minion", 4100)]) 
-Ineq(x, y, 0) 
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(x, y, 0)
 
 --
 
 allDiff([x,y,z;int(1..3)]), 
-   ~~> matrix_to_list ([("Base", 2000)]) 
-allDiff([x,y,z;int(1..)]) 
+   ~~> matrix_to_list ([("Base", 2000)])
+allDiff([x,y,z;int(1..)])
 
 --
 
 allDiff([x,y,z;int(1..)]), 
-   ~~> introduce_flat_alldiff ([("Minion", 4200)]) 
-__flat_alldiff([x, y, z]) 
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([x, y, z])
 
 --
 
 sum([20,x,5,y,min([sum([z,y;int(1..2)]),sum([y,x;int(1..2)]),sum([z,x,5;int(1..2)]),50;int(1..4)]);int(1..2)]), 
-   ~~> matrix_to_list ([("Base", 2000)]) 
-sum([20,x,5,y,min([sum([z,y;int(1..2)]),sum([y,x;int(1..2)]),sum([z,x,5;int(1..2)]),50;int(1..4)]);int(1..)]) 
+   ~~> matrix_to_list ([("Base", 2000)])
+sum([20,x,5,y,min([sum([z,y;int(1..2)]),sum([y,x;int(1..2)]),sum([z,x,5;int(1..2)]),50;int(1..4)]);int(1..)])
 
 --
 
@@ -82,22 +83,23 @@ Reify(__flat_alldiff([x, y, z]), a),
 Ineq(y, z, 0),
 Ineq(x, y, 0),
 __0 =aux sum([20,x,5,y,min([sum([z,y;int(1..2)]),sum([y,x;int(1..2)]),sum([z,x,5;int(1..2)]),50;int(1..4)]);int(1..)]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
+   ~~> constant_evaluator ([("Constant", 9001)])
 Ineq(__0, 40, 0),
 Reify(__flat_alldiff([x, y, z]), a),
 Ineq(y, z, 0),
 Ineq(x, y, 0),
-__0 =aux sum([x,y,min([sum([z,y;int(1..2)]),sum([y,x;int(1..2)]),sum([z,x,5;int(1..2)]),50;int(1..4)]),25;int(1..)]) 
+__0 =aux sum([x,y,min([sum([z,y;int(1..2)]),sum([y,x;int(1..2)]),sum([z,x,5;int(1..2)]),50;int(1..4)]),25;int(1..)])
 
 --
 
 __0 =aux sum([x,y,min([sum([z,y;int(1..2)]),sum([y,x;int(1..2)]),sum([z,x,5;int(1..2)]),50;int(1..4)]),25;int(1..)]), 
-   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
-and([SumLeq([25, __1, x, y], __0),SumGeq([25, __1, x, y], __0);int(1..)]) 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([25, __1, x, y], __0),SumGeq([25, __1, x, y], __0);int(1..)])
 new variables:
   find __1: int(2..10)
 new constraints:
   __1 =aux min([sum([z,y;int(1..2)]),sum([y,x;int(1..2)]),sum([z,x,5;int(1..2)]),50;int(1..4)])
+
 --
 
 Ineq(__0, 40, 0),
@@ -106,26 +108,26 @@ Ineq(y, z, 0),
 Ineq(x, y, 0),
 and([SumLeq([25, __1, x, y], __0),SumGeq([25, __1, x, y], __0);int(1..)]),
 __1 =aux min([sum([z,y;int(1..2)]),sum([y,x;int(1..2)]),sum([z,x,5;int(1..2)]),50;int(1..4)]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
+   ~~> constant_evaluator ([("Constant", 9001)])
 Ineq(__0, 40, 0),
 Reify(__flat_alldiff([x, y, z]), a),
 Ineq(y, z, 0),
 Ineq(x, y, 0),
 SumLeq([25, __1, x, y], __0),
 SumGeq([25, __1, x, y], __0),
-__1 =aux min([sum([z,y;int(1..2)]),sum([y,x;int(1..2)]),sum([z,x,5;int(1..2)]),50;int(1..4)]) 
+__1 =aux min([sum([z,y;int(1..2)]),sum([y,x;int(1..2)]),sum([z,x,5;int(1..2)]),50;int(1..4)])
 
 --
 
 min([sum([z,y;int(1..2)]),sum([y,x;int(1..2)]),sum([z,x,5;int(1..2)]),50;int(1..4)]), 
-   ~~> matrix_to_list ([("Base", 2000)]) 
-min([sum([z,y;int(1..2)]),sum([y,x;int(1..2)]),sum([z,x,5;int(1..2)]),50;int(1..)]) 
+   ~~> matrix_to_list ([("Base", 2000)])
+min([sum([z,y;int(1..2)]),sum([y,x;int(1..2)]),sum([z,x,5;int(1..2)]),50;int(1..)])
 
 --
 
 min([sum([z,y;int(1..2)]),sum([y,x;int(1..2)]),sum([z,x,5;int(1..2)]),50;int(1..)]), 
-   ~~> min_to_var ([("Base", 6000)]) 
-__2 
+   ~~> min_to_var ([("Base", 6000)])
+__2
 new variables:
   find __2: int(2..10)
 new constraints:
@@ -134,74 +136,78 @@ new constraints:
   (__2 <= sum([z,x,5;int(1..2)]))
   (__2 <= 50)
   or([(__2 = sum([z,y;int(1..2)])),(__2 = sum([y,x;int(1..2)])),(__2 = sum([z,x,5;int(1..2)])),(__2 = 50);int(1..)])
+
 --
 
 (__2 <= sum([z,y;int(1..2)])), 
-   ~~> flatten_generic ([("Minion", 4200)]) 
-(__2 <= __3) 
+   ~~> flatten_generic ([("Minion", 4200)])
+(__2 <= __3)
 new variables:
   find __3: int(2..10)
 new constraints:
   __3 =aux sum([z,y;int(1..2)])
+
 --
 
 (__2 <= sum([y,x;int(1..2)])), 
-   ~~> flatten_generic ([("Minion", 4200)]) 
-(__2 <= __4) 
+   ~~> flatten_generic ([("Minion", 4200)])
+(__2 <= __4)
 new variables:
   find __4: int(2..10)
 new constraints:
   __4 =aux sum([y,x;int(1..2)])
+
 --
 
 (__2 <= sum([z,x,5;int(1..2)])), 
-   ~~> flatten_generic ([("Minion", 4200)]) 
-(__2 <= __5) 
+   ~~> flatten_generic ([("Minion", 4200)])
+(__2 <= __5)
 new variables:
   find __5: int(7..15)
 new constraints:
   __5 =aux sum([z,x,5;int(1..2)])
+
 --
 
 (__2 <= __3), 
-   ~~> leq_to_ineq ([("Minion", 4100)]) 
-Ineq(__2, __3, 0) 
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(__2, __3, 0)
 
 --
 
 (__2 <= __4), 
-   ~~> leq_to_ineq ([("Minion", 4100)]) 
-Ineq(__2, __4, 0) 
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(__2, __4, 0)
 
 --
 
 (__2 <= __5), 
-   ~~> leq_to_ineq ([("Minion", 4100)]) 
-Ineq(__2, __5, 0) 
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(__2, __5, 0)
 
 --
 
 (__2 <= 50), 
-   ~~> leq_to_ineq ([("Minion", 4100)]) 
-Ineq(__2, 50, 0) 
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(__2, 50, 0)
 
 --
 
 sum([z,y;int(1..2)]), 
-   ~~> matrix_to_list ([("Base", 2000)]) 
-sum([z,y;int(1..)]) 
+   ~~> matrix_to_list ([("Base", 2000)])
+sum([z,y;int(1..)])
 
 --
 
 (__2 = sum([z,y;int(1..)])), 
-   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
-and([SumLeq([y, z], __2),SumGeq([y, z], __2);int(1..)]) 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([y, z], __2),SumGeq([y, z], __2);int(1..)])
 
 --
 
 or([and([SumLeq([y, z], __2),SumGeq([y, z], __2);int(1..)]),(__2 = sum([y,x;int(1..2)])),(__2 = sum([z,x,5;int(1..2)])),(__2 = 50);int(1..)]), 
-   ~~> distribute_or_over_and ([("Base", 8400)]) 
-and([or([(__2 = sum([y,x;int(1..2)])),(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumLeq([y, z], __2);int(1..)]),or([(__2 = sum([y,x;int(1..2)])),(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumGeq([y, z], __2);int(1..)]);int(1..)]) 
+   ~~> distribute_or_over_and ([("Base", 8400)])
+and([or([(__2 = sum([y,x;int(1..2)])),(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumLeq([y, z], __2);int(1..)]),or([(__2 = sum([y,x;int(1..2)])),(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumGeq([y, z], __2);int(1..)]);int(1..)])
 
 --
 
@@ -220,7 +226,7 @@ and([or([(__2 = sum([y,x;int(1..2)])),(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),
 __3 =aux sum([z,y;int(1..2)]),
 __4 =aux sum([y,x;int(1..2)]),
 __5 =aux sum([z,x,5;int(1..2)]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
+   ~~> constant_evaluator ([("Constant", 9001)])
 Ineq(__0, 40, 0),
 Reify(__flat_alldiff([x, y, z]), a),
 Ineq(y, z, 0),
@@ -236,25 +242,25 @@ or([(__2 = sum([y,x;int(1..2)])),(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumLe
 or([(__2 = sum([y,x;int(1..2)])),(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumGeq([y, z], __2);int(1..)]),
 __3 =aux sum([z,y;int(1..2)]),
 __4 =aux sum([y,x;int(1..2)]),
-__5 =aux sum([z,x,5;int(1..2)]) 
+__5 =aux sum([z,x,5;int(1..2)])
 
 --
 
 sum([y,x;int(1..2)]), 
-   ~~> matrix_to_list ([("Base", 2000)]) 
-sum([y,x;int(1..)]) 
+   ~~> matrix_to_list ([("Base", 2000)])
+sum([y,x;int(1..)])
 
 --
 
 (__2 = sum([y,x;int(1..)])), 
-   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
-and([SumLeq([x, y], __2),SumGeq([x, y], __2);int(1..)]) 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([x, y], __2),SumGeq([x, y], __2);int(1..)])
 
 --
 
 or([and([SumLeq([x, y], __2),SumGeq([x, y], __2);int(1..)]),(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumLeq([y, z], __2);int(1..)]), 
-   ~~> distribute_or_over_and ([("Base", 8400)]) 
-and([or([(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumLeq([y, z], __2),SumLeq([x, y], __2);int(1..)]),or([(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumLeq([y, z], __2),SumGeq([x, y], __2);int(1..)]);int(1..)]) 
+   ~~> distribute_or_over_and ([("Base", 8400)])
+and([or([(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumLeq([y, z], __2),SumLeq([x, y], __2);int(1..)]),or([(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumLeq([y, z], __2),SumGeq([x, y], __2);int(1..)]);int(1..)])
 
 --
 
@@ -274,7 +280,7 @@ or([(__2 = sum([y,x;int(1..2)])),(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumGe
 __3 =aux sum([z,y;int(1..2)]),
 __4 =aux sum([y,x;int(1..2)]),
 __5 =aux sum([z,x,5;int(1..2)]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
+   ~~> constant_evaluator ([("Constant", 9001)])
 Ineq(__0, 40, 0),
 Reify(__flat_alldiff([x, y, z]), a),
 Ineq(y, z, 0),
@@ -291,25 +297,25 @@ or([(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumLeq([y, z], __2),SumGeq([x, y],
 or([(__2 = sum([y,x;int(1..2)])),(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumGeq([y, z], __2);int(1..)]),
 __3 =aux sum([z,y;int(1..2)]),
 __4 =aux sum([y,x;int(1..2)]),
-__5 =aux sum([z,x,5;int(1..2)]) 
+__5 =aux sum([z,x,5;int(1..2)])
 
 --
 
 sum([z,x,5;int(1..2)]), 
-   ~~> matrix_to_list ([("Base", 2000)]) 
-sum([z,x,5;int(1..)]) 
+   ~~> matrix_to_list ([("Base", 2000)])
+sum([z,x,5;int(1..)])
 
 --
 
 (__2 = sum([z,x,5;int(1..)])), 
-   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
-and([SumLeq([5, x, z], __2),SumGeq([5, x, z], __2);int(1..)]) 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([5, x, z], __2),SumGeq([5, x, z], __2);int(1..)])
 
 --
 
 or([and([SumLeq([5, x, z], __2),SumGeq([5, x, z], __2);int(1..)]),(__2 = 50),SumLeq([y, z], __2),SumLeq([x, y], __2);int(1..)]), 
-   ~~> distribute_or_over_and ([("Base", 8400)]) 
-and([or([(__2 = 50),SumLeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),or([(__2 = 50),SumLeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]);int(1..)]) 
+   ~~> distribute_or_over_and ([("Base", 8400)])
+and([or([(__2 = 50),SumLeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),or([(__2 = 50),SumLeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]);int(1..)])
 
 --
 
@@ -330,7 +336,7 @@ or([(__2 = sum([y,x;int(1..2)])),(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumGe
 __3 =aux sum([z,y;int(1..2)]),
 __4 =aux sum([y,x;int(1..2)]),
 __5 =aux sum([z,x,5;int(1..2)]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
+   ~~> constant_evaluator ([("Constant", 9001)])
 Ineq(__0, 40, 0),
 Reify(__flat_alldiff([x, y, z]), a),
 Ineq(y, z, 0),
@@ -348,25 +354,25 @@ or([(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumLeq([y, z], __2),SumGeq([x, y],
 or([(__2 = sum([y,x;int(1..2)])),(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumGeq([y, z], __2);int(1..)]),
 __3 =aux sum([z,y;int(1..2)]),
 __4 =aux sum([y,x;int(1..2)]),
-__5 =aux sum([z,x,5;int(1..2)]) 
+__5 =aux sum([z,x,5;int(1..2)])
 
 --
 
 sum([z,x,5;int(1..2)]), 
-   ~~> matrix_to_list ([("Base", 2000)]) 
-sum([z,x,5;int(1..)]) 
+   ~~> matrix_to_list ([("Base", 2000)])
+sum([z,x,5;int(1..)])
 
 --
 
 (__2 = sum([z,x,5;int(1..)])), 
-   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
-and([SumLeq([5, x, z], __2),SumGeq([5, x, z], __2);int(1..)]) 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([5, x, z], __2),SumGeq([5, x, z], __2);int(1..)])
 
 --
 
 or([and([SumLeq([5, x, z], __2),SumGeq([5, x, z], __2);int(1..)]),(__2 = 50),SumLeq([y, z], __2),SumGeq([x, y], __2);int(1..)]), 
-   ~~> distribute_or_over_and ([("Base", 8400)]) 
-and([or([(__2 = 50),SumLeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),or([(__2 = 50),SumLeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]);int(1..)]) 
+   ~~> distribute_or_over_and ([("Base", 8400)])
+and([or([(__2 = 50),SumLeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),or([(__2 = 50),SumLeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]);int(1..)])
 
 --
 
@@ -388,7 +394,7 @@ or([(__2 = sum([y,x;int(1..2)])),(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumGe
 __3 =aux sum([z,y;int(1..2)]),
 __4 =aux sum([y,x;int(1..2)]),
 __5 =aux sum([z,x,5;int(1..2)]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
+   ~~> constant_evaluator ([("Constant", 9001)])
 Ineq(__0, 40, 0),
 Reify(__flat_alldiff([x, y, z]), a),
 Ineq(y, z, 0),
@@ -407,25 +413,25 @@ or([(__2 = 50),SumLeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);in
 or([(__2 = sum([y,x;int(1..2)])),(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumGeq([y, z], __2);int(1..)]),
 __3 =aux sum([z,y;int(1..2)]),
 __4 =aux sum([y,x;int(1..2)]),
-__5 =aux sum([z,x,5;int(1..2)]) 
+__5 =aux sum([z,x,5;int(1..2)])
 
 --
 
 sum([y,x;int(1..2)]), 
-   ~~> matrix_to_list ([("Base", 2000)]) 
-sum([y,x;int(1..)]) 
+   ~~> matrix_to_list ([("Base", 2000)])
+sum([y,x;int(1..)])
 
 --
 
 (__2 = sum([y,x;int(1..)])), 
-   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
-and([SumLeq([x, y], __2),SumGeq([x, y], __2);int(1..)]) 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([x, y], __2),SumGeq([x, y], __2);int(1..)])
 
 --
 
 or([and([SumLeq([x, y], __2),SumGeq([x, y], __2);int(1..)]),(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumGeq([y, z], __2);int(1..)]), 
-   ~~> distribute_or_over_and ([("Base", 8400)]) 
-and([or([(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumGeq([y, z], __2),SumLeq([x, y], __2);int(1..)]),or([(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumGeq([y, z], __2),SumGeq([x, y], __2);int(1..)]);int(1..)]) 
+   ~~> distribute_or_over_and ([("Base", 8400)])
+and([or([(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumGeq([y, z], __2),SumLeq([x, y], __2);int(1..)]),or([(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumGeq([y, z], __2),SumGeq([x, y], __2);int(1..)]);int(1..)])
 
 --
 
@@ -448,7 +454,7 @@ and([or([(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumGeq([y, z], __2),SumLeq([x
 __3 =aux sum([z,y;int(1..2)]),
 __4 =aux sum([y,x;int(1..2)]),
 __5 =aux sum([z,x,5;int(1..2)]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
+   ~~> constant_evaluator ([("Constant", 9001)])
 Ineq(__0, 40, 0),
 Reify(__flat_alldiff([x, y, z]), a),
 Ineq(y, z, 0),
@@ -468,25 +474,25 @@ or([(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumGeq([y, z], __2),SumLeq([x, y],
 or([(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumGeq([y, z], __2),SumGeq([x, y], __2);int(1..)]),
 __3 =aux sum([z,y;int(1..2)]),
 __4 =aux sum([y,x;int(1..2)]),
-__5 =aux sum([z,x,5;int(1..2)]) 
+__5 =aux sum([z,x,5;int(1..2)])
 
 --
 
 sum([z,x,5;int(1..2)]), 
-   ~~> matrix_to_list ([("Base", 2000)]) 
-sum([z,x,5;int(1..)]) 
+   ~~> matrix_to_list ([("Base", 2000)])
+sum([z,x,5;int(1..)])
 
 --
 
 (__2 = sum([z,x,5;int(1..)])), 
-   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
-and([SumLeq([5, x, z], __2),SumGeq([5, x, z], __2);int(1..)]) 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([5, x, z], __2),SumGeq([5, x, z], __2);int(1..)])
 
 --
 
 or([and([SumLeq([5, x, z], __2),SumGeq([5, x, z], __2);int(1..)]),(__2 = 50),SumGeq([y, z], __2),SumLeq([x, y], __2);int(1..)]), 
-   ~~> distribute_or_over_and ([("Base", 8400)]) 
-and([or([(__2 = 50),SumGeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),or([(__2 = 50),SumGeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]);int(1..)]) 
+   ~~> distribute_or_over_and ([("Base", 8400)])
+and([or([(__2 = 50),SumGeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),or([(__2 = 50),SumGeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]);int(1..)])
 
 --
 
@@ -510,7 +516,7 @@ or([(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumGeq([y, z], __2),SumGeq([x, y],
 __3 =aux sum([z,y;int(1..2)]),
 __4 =aux sum([y,x;int(1..2)]),
 __5 =aux sum([z,x,5;int(1..2)]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
+   ~~> constant_evaluator ([("Constant", 9001)])
 Ineq(__0, 40, 0),
 Reify(__flat_alldiff([x, y, z]), a),
 Ineq(y, z, 0),
@@ -531,25 +537,25 @@ or([(__2 = 50),SumGeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);in
 or([(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumGeq([y, z], __2),SumGeq([x, y], __2);int(1..)]),
 __3 =aux sum([z,y;int(1..2)]),
 __4 =aux sum([y,x;int(1..2)]),
-__5 =aux sum([z,x,5;int(1..2)]) 
+__5 =aux sum([z,x,5;int(1..2)])
 
 --
 
 sum([z,x,5;int(1..2)]), 
-   ~~> matrix_to_list ([("Base", 2000)]) 
-sum([z,x,5;int(1..)]) 
+   ~~> matrix_to_list ([("Base", 2000)])
+sum([z,x,5;int(1..)])
 
 --
 
 (__2 = sum([z,x,5;int(1..)])), 
-   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
-and([SumLeq([5, x, z], __2),SumGeq([5, x, z], __2);int(1..)]) 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([5, x, z], __2),SumGeq([5, x, z], __2);int(1..)])
 
 --
 
 or([and([SumLeq([5, x, z], __2),SumGeq([5, x, z], __2);int(1..)]),(__2 = 50),SumGeq([y, z], __2),SumGeq([x, y], __2);int(1..)]), 
-   ~~> distribute_or_over_and ([("Base", 8400)]) 
-and([or([(__2 = 50),SumGeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),or([(__2 = 50),SumGeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]);int(1..)]) 
+   ~~> distribute_or_over_and ([("Base", 8400)])
+and([or([(__2 = 50),SumGeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),or([(__2 = 50),SumGeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]);int(1..)])
 
 --
 
@@ -574,7 +580,7 @@ and([or([(__2 = 50),SumGeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __
 __3 =aux sum([z,y;int(1..2)]),
 __4 =aux sum([y,x;int(1..2)]),
 __5 =aux sum([z,x,5;int(1..2)]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
+   ~~> constant_evaluator ([("Constant", 9001)])
 Ineq(__0, 40, 0),
 Reify(__flat_alldiff([x, y, z]), a),
 Ineq(y, z, 0),
@@ -596,19 +602,19 @@ or([(__2 = 50),SumGeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);in
 or([(__2 = 50),SumGeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
 __3 =aux sum([z,y;int(1..2)]),
 __4 =aux sum([y,x;int(1..2)]),
-__5 =aux sum([z,x,5;int(1..2)]) 
+__5 =aux sum([z,x,5;int(1..2)])
 
 --
 
 sum([z,y;int(1..2)]), 
-   ~~> matrix_to_list ([("Base", 2000)]) 
-sum([z,y;int(1..)]) 
+   ~~> matrix_to_list ([("Base", 2000)])
+sum([z,y;int(1..)])
 
 --
 
 __3 =aux sum([z,y;int(1..)]), 
-   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
-and([SumLeq([y, z], __3),SumGeq([y, z], __3);int(1..)]) 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([y, z], __3),SumGeq([y, z], __3);int(1..)])
 
 --
 
@@ -634,7 +640,7 @@ or([(__2 = 50),SumGeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);in
 and([SumLeq([y, z], __3),SumGeq([y, z], __3);int(1..)]),
 __4 =aux sum([y,x;int(1..2)]),
 __5 =aux sum([z,x,5;int(1..2)]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
+   ~~> constant_evaluator ([("Constant", 9001)])
 Ineq(__0, 40, 0),
 Reify(__flat_alldiff([x, y, z]), a),
 Ineq(y, z, 0),
@@ -657,19 +663,19 @@ or([(__2 = 50),SumGeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);in
 SumLeq([y, z], __3),
 SumGeq([y, z], __3),
 __4 =aux sum([y,x;int(1..2)]),
-__5 =aux sum([z,x,5;int(1..2)]) 
+__5 =aux sum([z,x,5;int(1..2)])
 
 --
 
 sum([y,x;int(1..2)]), 
-   ~~> matrix_to_list ([("Base", 2000)]) 
-sum([y,x;int(1..)]) 
+   ~~> matrix_to_list ([("Base", 2000)])
+sum([y,x;int(1..)])
 
 --
 
 __4 =aux sum([y,x;int(1..)]), 
-   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
-and([SumLeq([x, y], __4),SumGeq([x, y], __4);int(1..)]) 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([x, y], __4),SumGeq([x, y], __4);int(1..)])
 
 --
 
@@ -696,7 +702,7 @@ SumLeq([y, z], __3),
 SumGeq([y, z], __3),
 and([SumLeq([x, y], __4),SumGeq([x, y], __4);int(1..)]),
 __5 =aux sum([z,x,5;int(1..2)]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
+   ~~> constant_evaluator ([("Constant", 9001)])
 Ineq(__0, 40, 0),
 Reify(__flat_alldiff([x, y, z]), a),
 Ineq(y, z, 0),
@@ -720,19 +726,19 @@ SumLeq([y, z], __3),
 SumGeq([y, z], __3),
 SumLeq([x, y], __4),
 SumGeq([x, y], __4),
-__5 =aux sum([z,x,5;int(1..2)]) 
+__5 =aux sum([z,x,5;int(1..2)])
 
 --
 
 sum([z,x,5;int(1..2)]), 
-   ~~> matrix_to_list ([("Base", 2000)]) 
-sum([z,x,5;int(1..)]) 
+   ~~> matrix_to_list ([("Base", 2000)])
+sum([z,x,5;int(1..)])
 
 --
 
 __5 =aux sum([z,x,5;int(1..)]), 
-   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
-and([SumLeq([5, x, z], __5),SumGeq([5, x, z], __5);int(1..)]) 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([5, x, z], __5),SumGeq([5, x, z], __5);int(1..)])
 
 --
 
@@ -760,7 +766,7 @@ SumGeq([y, z], __3),
 SumLeq([x, y], __4),
 SumGeq([x, y], __4),
 and([SumLeq([5, x, z], __5),SumGeq([5, x, z], __5);int(1..)]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
+   ~~> constant_evaluator ([("Constant", 9001)])
 Ineq(__0, 40, 0),
 Reify(__flat_alldiff([x, y, z]), a),
 Ineq(y, z, 0),
@@ -785,7 +791,7 @@ SumGeq([y, z], __3),
 SumLeq([x, y], __4),
 SumGeq([x, y], __4),
 SumLeq([5, x, z], __5),
-SumGeq([5, x, z], __5) 
+SumGeq([5, x, z], __5)
 
 --
 

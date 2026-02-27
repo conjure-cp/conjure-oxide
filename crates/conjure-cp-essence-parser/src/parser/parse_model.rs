@@ -12,6 +12,7 @@ use super::letting::parse_letting_statement;
 use super::util::{get_tree, named_children};
 use crate::errors::{FatalParseError, ParseErrorCollection, RecoverableParseError};
 use crate::expression::parse_expression;
+use crate::syntax_errors::detect_syntactic_errors;
 
 /// Parse an Essence file into a Model using the tree-sitter parser.
 pub fn parse_essence_file_native(
@@ -57,6 +58,11 @@ pub fn parse_essence_with_context(
             ));
         }
     };
+
+    if tree.root_node().has_error() {
+        detect_syntactic_errors(src, &tree, errors);
+        return Ok(Model::new(context));
+    }
 
     let mut model = Model::new(context);
     let root_node = tree.root_node();
@@ -119,6 +125,7 @@ pub fn parse_essence_with_context(
                 }
                 model.dominance = Some(dominance);
             }
+            // these should be detected at an earlier stage
             "ERROR" => {
                 let raw_expr = &source_code[statement.start_byte()..statement.end_byte()];
                 errors.push(RecoverableParseError::new(
