@@ -34,7 +34,7 @@ pub fn load_model_impl(
     model: &[Expression],
 ) -> SolverResult<()> {
     for (name, decl) in symbols.clone().into_iter_local() {
-        let Some(var) = decl.as_var() else {
+        let Some(var) = decl.as_find() else {
             /// Ignore lettings, etc
             continue;
         };

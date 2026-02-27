@@ -20,6 +20,7 @@ mod select_representation;
 mod sets;
 mod tuple;
 mod utils;
+mod variables_in_domains;
 
 #[cfg(feature = "smt")]
 mod smt;

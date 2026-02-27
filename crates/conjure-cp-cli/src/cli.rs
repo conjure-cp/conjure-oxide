@@ -9,7 +9,7 @@ use crate::{pretty, solve, test_solve};
 
 pub(crate) const DEBUG_HELP_HEADING: Option<&str> = Some("Debug");
 pub(crate) const LOGGING_HELP_HEADING: Option<&str> = Some("Logging & Output");
-pub(crate) const EXPERIMENTAL_HELP_HEADING: Option<&str> = Some("Experimental");
+pub(crate) const CONFIGURATION_HELP_HEADING: Option<&str> = Some("Configuration");
 pub(crate) const OPTIMISATIONS_HELP_HEADING: Option<&str> = Some("Optimisations");
 
 /// All subcommands of conjure-oxide
@@ -75,7 +75,7 @@ pub struct GlobalArgs {
 
     /// Output file for the human readable rule trace.
     #[arg(long, global = true, help_heading=LOGGING_HELP_HEADING)]
-    pub human_rule_trace: Option<PathBuf>,
+    pub rule_trace: Option<PathBuf>,
 
     /// Do not check for multiple equally applicable rules [default].
     ///
@@ -88,24 +88,30 @@ pub struct GlobalArgs {
     /// Possible values: `tree-sitter`, `via-conjure`.
     #[arg(
         long,
-        default_value_t = InputParser::TreeSitter,
+        default_value_t = InputParser::ViaConjure,
         value_parser = parse_parser,
         global = true,
-        help_heading = EXPERIMENTAL_HELP_HEADING
+        help_heading = CONFIGURATION_HELP_HEADING
     )]
     pub parser: InputParser,
 
     /// Which rewriter to use.
     ///
     /// Possible values: `naive`, `morph`.
-    #[arg(long, default_value_t = Rewriter::Naive, value_parser = parse_rewriter, global = true, help_heading = EXPERIMENTAL_HELP_HEADING)]
+    #[arg(long, default_value_t = Rewriter::Naive, value_parser = parse_rewriter, global = true, help_heading = CONFIGURATION_HELP_HEADING)]
     pub rewriter: Rewriter,
 
     /// Which strategy to use for expanding quantified variables in comprehensions.
     ///
     /// Possible values: `native`, `via-solver`, `via-solver-ac`.
-    #[arg(long, default_value_t = QuantifiedExpander::Native, value_parser = parse_quantified_expander, global = true, help_heading = OPTIMISATIONS_HELP_HEADING)]
-    pub quantified_expander: QuantifiedExpander,
+    #[arg(
+        long,
+        default_value_t = QuantifiedExpander::Native,
+        value_parser = parse_comprehension_expander,
+        global = true,
+        help_heading = CONFIGURATION_HELP_HEADING
+    )]
+    pub comprehension_expander: QuantifiedExpander,
 
     /// Solver family to use.
     ///
@@ -118,7 +124,8 @@ pub struct GlobalArgs {
         value_parser = parse_solver_family,
         default_value = "minion",
         short = 's',
-        global = true
+        global = true,
+        help_heading = CONFIGURATION_HELP_HEADING
     )]
     pub solver: SolverFamily,
 
@@ -132,15 +139,6 @@ pub struct GlobalArgs {
     /// this file cannot be used by Conjure Oxide in any way.
     #[arg(long,global=true, value_names=["filename"], next_line_help=true, help_heading=LOGGING_HELP_HEADING)]
     pub save_solver_input_file: Option<PathBuf>,
-
-    /// Exit after all comprehensions have been unrolled, printing the number of expressions at that point.
-    ///
-    /// This is only compatible with the default rewriter.
-    ///
-    /// This flag is useful to compare how comprehension optimisations, such as expand-ac, effect
-    /// rewriting.
-    #[arg(long, default_value_t = false, global = true, help_heading = DEBUG_HELP_HEADING)]
-    pub exit_after_unrolling: bool,
 
     /// Stop the solver after the given timeout.
     ///
@@ -177,7 +175,7 @@ pub enum ShellTypes {
     Elvish,
 }
 
-fn parse_quantified_expander(input: &str) -> Result<QuantifiedExpander, String> {
+fn parse_comprehension_expander(input: &str) -> Result<QuantifiedExpander, String> {
     input.parse()
 }
 

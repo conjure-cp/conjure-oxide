@@ -11,48 +11,48 @@ such that
 --
 
 UnsafePow(x, y), 
-   ~~> pow_to_bubble ([("Bubble", 6000)]) 
-{SafePow(x, y) @ and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)])} 
+   ~~> pow_to_bubble ([("Bubble", 6000)])
+{SafePow(x, y) @ and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)])}
 
 --
 
 ({SafePow(x, y) @ and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)])} = z), 
-   ~~> bubble_up ([("Bubble", 8800)]) 
-{(SafePow(x, y) = z) @ and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)])} 
+   ~~> bubble_up ([("Bubble", 8800)])
+{(SafePow(x, y) = z) @ and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)])}
 
 --
 
 {(SafePow(x, y) = z) @ and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)])}, 
-   ~~> expand_bubble ([("Bubble", 8900)]) 
-and([(SafePow(x, y) = z),and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)]);int(1..)]) 
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([(SafePow(x, y) = z),and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)]);int(1..)])
 
 --
 
 and([(SafePow(x, y) = z),and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)]);int(1..)]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
+   ~~> constant_evaluator ([("Constant", 9001)])
 (SafePow(x, y) = z),
-and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)]) 
+and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)])
 
 --
 
 (SafePow(x, y) = z),
 and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
+   ~~> constant_evaluator ([("Constant", 9001)])
 (SafePow(x, y) = z),
 or([(x != 0),(y != 0);int(1..)]),
-(y >= 0) 
+(y >= 0)
 
 --
 
 (SafePow(x, y) = z), 
-   ~~> introduce_poweq ([("Minion", 4200)]) 
-MinionPow(x,y,z) 
+   ~~> introduce_poweq ([("Minion", 4200)])
+MinionPow(x,y,z)
 
 --
 
 (y >= 0), 
-   ~~> geq_to_ineq ([("Minion", 4100)]) 
-Ineq(0, y, 0) 
+   ~~> geq_to_ineq ([("Minion", 4100)])
+Ineq(0, y, 0)
 
 --
 

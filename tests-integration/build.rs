@@ -31,12 +31,7 @@ fn main() -> io::Result<()> {
         if subdir.file_type().is_dir() {
             let stems: Vec<String> = read_dir(subdir.path())?
                 .filter_map(Result::ok)
-                .filter(|entry| {
-                    entry
-                        .path()
-                        .extension()
-                        .is_some_and(|ext| ext == "essence" || ext == "eprime")
-                })
+                .filter(|entry| entry.path().extension().is_some_and(|ext| ext == "essence"))
                 .filter_map(|entry| {
                     entry
                         .path()
@@ -48,12 +43,7 @@ fn main() -> io::Result<()> {
 
             let exts: Vec<String> = read_dir(subdir.path())?
                 .filter_map(Result::ok)
-                .filter(|entry| {
-                    entry
-                        .path()
-                        .extension()
-                        .is_some_and(|ext| ext == "essence" || ext == "eprime")
-                })
+                .filter(|entry| entry.path().extension().is_some_and(|ext| ext == "essence"))
                 .filter_map(|entry| {
                     entry
                         .path()
@@ -94,14 +84,11 @@ fn main() -> io::Result<()> {
         let subdir = subdir?;
         // Checks every subdirectory
         if subdir.file_type().is_dir() {
-            // Finds essence / eprime filenames
+            // Finds Essence filenames
             let names: Vec<String> = read_dir(subdir.path())?
                 .filter_map(Result::ok)
                 .map(|entry| entry.path())
-                .filter(|path| {
-                    path.extension()
-                        .is_some_and(|ext| ext == "essence" || ext == "eprime")
-                })
+                .filter(|path| path.extension().is_some_and(|ext| ext == "essence"))
                 // Ensures not to include test result files
                 .filter(|path| {
                     path.file_stem()
@@ -117,14 +104,11 @@ fn main() -> io::Result<()> {
                         .map(|s| s.to_owned())
                 })
                 .collect();
-            // Finds essence / eprime file extensions
+            // Finds Essence file extensions
             let exts: Vec<String> = read_dir(subdir.path())?
                 .filter_map(Result::ok)
                 .map(|entry| entry.path())
-                .filter(|path| {
-                    path.extension()
-                        .is_some_and(|ext| ext == "essence" || ext == "eprime")
-                })
+                .filter(|path| path.extension().is_some_and(|ext| ext == "essence"))
                 // Ensures not to include test result files
                 .filter(|path| {
                     path.file_stem()
