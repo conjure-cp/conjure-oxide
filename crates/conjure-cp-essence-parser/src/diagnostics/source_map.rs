@@ -67,3 +67,9 @@ impl SourceMap {
         self.by_byte.get(&byte).copied()
     }
 }
+
+// helper to allocate a span with hover info directly from a tree-sitter node
+// source is not used yet but could be for more complex hover info (e.g. showing the actual code snippet)
+pub fn span_with_hover(node: &tree_sitter::Node, _source: &str, map: &mut SourceMap, info: HoverInfo) -> SpanId {
+    alloc_span(node.range(), map, Some(info))
+}
