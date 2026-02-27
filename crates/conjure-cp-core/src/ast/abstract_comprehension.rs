@@ -1,8 +1,6 @@
 use super::declaration::DeclarationPtr;
 use super::serde::PtrAsInner;
-use super::{
-    DomainPtr, Expression, Metadata, Moo, Name, ReturnType, SubModel, SymbolTablePtr, Typeable,
-};
+use super::{DomainPtr, Expression, Model, Name, ReturnType, SymbolTablePtr, Typeable};
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use std::fmt::{Display, Formatter};
@@ -12,7 +10,8 @@ use uniplate::Uniplate;
 #[serde_as]
 #[derive(Clone, PartialEq, Eq, Hash, Serialize, Deserialize, Debug, Uniplate)]
 #[biplate(to=Expression)]
-#[biplate(to=SubModel)]
+#[biplate(to=Model)]
+#[biplate(to=SymbolTablePtr)]
 pub struct AbstractComprehension {
     pub return_expr: Expression,
     pub qualifiers: Vec<Qualifier>,
@@ -28,28 +27,36 @@ pub enum Qualifier {
 }
 
 #[serde_as]
-#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Hash)]
+#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Hash, Uniplate)]
+#[biplate(to=Expression)]
+#[biplate(to=Model)]
 pub struct ComprehensionLetting {
     #[serde_as(as = "PtrAsInner")]
     pub decl: DeclarationPtr,
     pub expression: Expression,
 }
 
-#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Hash)]
+#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Hash, Uniplate)]
+#[biplate(to=Expression)]
+#[biplate(to=Model)]
 pub enum Generator {
     DomainGenerator(DomainGenerator),
     ExpressionGenerator(ExpressionGenerator),
 }
 
 #[serde_as]
-#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Hash)]
+#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Hash, Uniplate)]
+#[biplate(to=Expression)]
+#[biplate(to=Model)]
 pub struct DomainGenerator {
     #[serde_as(as = "PtrAsInner")]
     pub decl: DeclarationPtr,
 }
 
 #[serde_as]
-#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Hash)]
+#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Hash, Uniplate)]
+#[biplate(to=Expression)]
+#[biplate(to=Model)]
 pub struct ExpressionGenerator {
     #[serde_as(as = "PtrAsInner")]
     pub decl: DeclarationPtr,

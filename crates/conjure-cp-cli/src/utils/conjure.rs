@@ -32,7 +32,7 @@ pub fn get_solutions(
     eprintln!("Building {adaptor_name} model...");
 
     // Create for later since we consume the model when loading it
-    let symbols_ptr = model.as_submodel().symbols_ptr_unchecked().clone();
+    let symbols_ptr = model.symbols_ptr_unchecked().clone();
 
     let solver = solver.load_model(model)?;
 
@@ -169,7 +169,7 @@ pub fn get_solutions_from_conjure(
                 .expect("conjure solutions files to be parsable");
 
             let mut solutions = BTreeMap::new();
-            for (name, decl) in model.as_submodel().symbols().clone().into_iter() {
+            for (name, decl) in model.symbols().clone().into_iter() {
                 match &decl.kind() as &DeclarationKind {
                     conjure_cp::ast::DeclarationKind::ValueLetting(expression) => {
                         let literal = expression
