@@ -90,7 +90,7 @@ fn setup_logging(global_args: &GlobalArgs) -> anyhow::Result<()> {
         )
     };
 
-    let human_rule_trace_layer = global_args.human_rule_trace.clone().map(|x| {
+    let rule_trace_layer = global_args.rule_trace.clone().map(|x| {
         let file = File::create(x).expect("Unable to create rule trace file");
         fmt::layer()
             .with_writer(file)
@@ -146,7 +146,7 @@ fn setup_logging(global_args: &GlobalArgs) -> anyhow::Result<()> {
             .with(json_layer)
             .with(stderr_layer)
             .with(file_layer)
-            .with(human_rule_trace_layer)
+            .with(rule_trace_layer)
             .init();
     }
 

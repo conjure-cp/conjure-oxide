@@ -40,11 +40,10 @@ fn load_symbol_table(
         // add search vars in order first
         for name in vars {
             let decl = conjure_model
-                .as_submodel()
                 .symbols()
                 .lookup(name)
                 .ok_or_else(|| ModelInvalid(format!("search variable '{name}' does not exist")))?;
-            let var = decl.as_var().ok_or_else(|| {
+            let var = decl.as_find().ok_or_else(|| {
                 ModelInvalid(format!(
                     "search variable '{name}' is not a decision variable"
                 ))
@@ -73,18 +72,12 @@ fn for_each_unrepresented_var(
     conjure_model: &ConjureModel,
     mut f: impl FnMut(&conjure_ast::Name, &conjure_ast::DecisionVariable) -> Result<(), SolverError>,
 ) -> Result<(), SolverError> {
-    for (name, decl) in conjure_model
-        .as_submodel()
-        .symbols()
-        .clone()
-        .into_iter_local()
-    {
-        let Some(var) = decl.as_var() else {
+    for (name, decl) in conjure_model.symbols().clone().into_iter_local() {
+        let Some(var) = decl.as_find() else {
             continue;
         };
 
         if !conjure_model
-            .as_submodel()
             .symbols()
             .representations_for(&name)
             .is_none_or(|x| x.is_empty())
@@ -201,7 +194,7 @@ fn load_constraints(
     conjure_model: &ConjureModel,
     minion_model: &mut MinionModel,
 ) -> Result<(), SolverError> {
-    for expr in conjure_model.as_submodel().constraints().iter() {
+    for expr in conjure_model.constraints().iter() {
         // TODO: top level false / trues should not go to the solver to begin with
         // ... but changing this at this stage would require rewriting the tester
         use crate::ast::Metadata;

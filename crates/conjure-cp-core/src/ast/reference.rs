@@ -8,7 +8,7 @@ use std::fmt::{Display, Formatter};
 use uniplate::Uniplate;
 
 use super::{
-    Atom, DomainPtr, Expression, GroundDomain, Literal, Metadata, Moo, Name,
+    Atom, DeclarationKind, DomainPtr, Expression, GroundDomain, Literal, Metadata, Moo, Name,
     categories::{Category, CategoryOf},
     domains::HasDomain,
 };
@@ -62,7 +62,26 @@ impl Reference {
 
     /// Returns the expression behind a value-letting reference, if this is one.
     pub fn resolve_expression(&self) -> Option<Expression> {
-        self.ptr().as_value_letting().map(|expr| expr.clone())
+        if let Some(expr) = self.ptr().as_value_letting() {
+            return Some(expr.clone());
+        }
+
+        let generator = {
+            let kind = self.ptr.kind();
+            if let DeclarationKind::Quantified(inner) = &*kind {
+                inner.generator().cloned()
+            } else {
+                None
+            }
+        };
+
+        if let Some(generator) = generator
+            && let Some(expr) = generator.as_value_letting()
+        {
+            return Some(expr.clone());
+        }
+
+        None
     }
 
     /// Evaluates this reference to a literal if it resolves to a constant.

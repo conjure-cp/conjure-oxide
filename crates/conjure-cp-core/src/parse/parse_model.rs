@@ -65,12 +65,12 @@ pub fn model_from_json(str: &str, context: Arc<RwLock<Context<'static>>>) -> Res
                 // e.g. FindOrGiven,
 
                 let mut valid_decl: bool = false;
-                let scope = m.as_submodel().symbols_ptr_unchecked().clone();
-                let submodel = m.as_submodel_mut();
+                let scope = m.symbols_ptr_unchecked().clone();
+                let model = &mut m;
                 for (kind, value) in decl {
                     match kind.as_str() {
                         "FindOrGiven" => {
-                            parse_variable(value, &mut submodel.symbols_mut())?;
+                            parse_variable(value, &mut model.symbols_mut())?;
                             valid_decl = true;
                             break;
                         }
@@ -95,9 +95,9 @@ pub fn model_from_json(str: &str, context: Arc<RwLock<Context<'static>>>) -> Res
 
                 let constraints: Vec<Expression> = constraints_arr
                     .iter()
-                    .map(|x| parse_expression(x, m.as_submodel_mut().symbols_ptr_unchecked()))
+                    .map(|x| parse_expression(x, m.symbols_ptr_unchecked()))
                     .collect::<Result<Vec<_>>>()?;
-                m.as_submodel_mut().add_constraints(constraints);
+                m.add_constraints(constraints);
             }
             otherwise => bug!("Unhandled Statement {:#?}", otherwise),
         }

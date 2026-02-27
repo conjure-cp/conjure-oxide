@@ -7,7 +7,7 @@ use conjure_cp::ast::*;
 fn modify_domain() {
     let mut m = Model::new(Default::default());
 
-    let mut symbols = m.as_submodel_mut().symbols_mut();
+    let mut symbols = m.symbols_mut();
 
     let name_a = Name::user("a");
 
@@ -20,7 +20,7 @@ fn modify_domain() {
 
     assert_eq!(&decl_a.domain().unwrap(), &d1);
 
-    decl_a.as_var_mut().unwrap().domain = d2.clone();
+    decl_a.as_find_mut().unwrap().domain = d2.clone();
 
     assert_eq!(&decl_a.domain().unwrap(), &d2);
 }
