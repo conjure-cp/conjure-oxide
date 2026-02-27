@@ -1,4 +1,5 @@
 use super::util::{get_tree, query_toplevel};
+use crate::diagnostics::source_map::{self, SourceMap};
 use crate::errors::EssenceParseError;
 use crate::expression::parse_expression;
 use crate::util::node_is_expression;
@@ -9,7 +10,8 @@ use std::rc::Rc;
 use uniplate::Uniplate;
 
 pub fn parse_expr(src: &str, symbol_table: &SymbolTable) -> Result<Expression, EssenceParseError> {
-    let exprs = parse_exprs(src, symbol_table)?;
+    let mut source_map = SourceMap::default();
+    let exprs = parse_exprs(src, symbol_table, &mut source_map)?;
     if exprs.len() != 1 {
         return Err(EssenceParseError::syntax_error(
             "Expected a single expression".to_string(),
@@ -22,6 +24,7 @@ pub fn parse_expr(src: &str, symbol_table: &SymbolTable) -> Result<Expression, E
 pub fn parse_exprs(
     src: &str,
     symbol_table: &SymbolTable,
+    source_map: &mut SourceMap,
 ) -> Result<Vec<Expression>, EssenceParseError> {
     let (tree, source_code) = get_tree(src).ok_or(EssenceParseError::TreeSitterError(
         "Failed to parse Essence source code".to_string(),
@@ -36,12 +39,15 @@ pub fn parse_exprs(
             &source_code,
             &root,
             Some(symbols_ptr.clone()),
+            source_map,
         )?);
     }
     Ok(ans)
 }
 
 mod test {
+    use crate::diagnostics::source_map::SourceMap;
+
     #[allow(unused)]
     use super::{parse_expr, parse_exprs};
     #[allow(unused)]
@@ -107,7 +113,8 @@ mod test {
             .insert(a.clone())
             .expect("a should not exist in the symbol-table yet, so we should be able to add it");
 
-        let exprs = parse_exprs(src, &symbols).unwrap();
+        let mut source_map = SourceMap::default();
+        let exprs = parse_exprs(src, &symbols, &mut source_map).unwrap();
         assert_eq!(exprs.len(), 2);
 
         assert_eq!(

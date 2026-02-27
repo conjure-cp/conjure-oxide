@@ -1,3 +1,4 @@
+use crate::diagnostics::source_map::{SourceMap};
 use crate::expression::parse_expression;
 use crate::parser::domain::parse_domain;
 use crate::util::named_children;
@@ -15,6 +16,7 @@ pub fn parse_comprehension(
     source_code: &str,
     root: &Node,
     symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
+    source_map: &mut SourceMap,
 ) -> Result<Expression, EssenceParseError> {
     // Comprehensions require a symbol table passed in
     let symbols_ptr = symbols_ptr.ok_or_else(|| {
@@ -57,7 +59,7 @@ pub fn parse_comprehension(
                 let generator_symboltable = builder.generator_symboltable();
 
                 let guard_expr =
-                    parse_expression(expr_node, source_code, root, Some(generator_symboltable))?;
+                    parse_expression(expr_node, source_code, root, Some(generator_symboltable), source_map)?;
 
                 // Add the condition as a guard
                 builder = builder.guard(guard_expr);
@@ -82,6 +84,7 @@ pub fn parse_comprehension(
         source_code,
         root,
         Some(builder.return_expr_symboltable()),
+        source_map,
     )?;
 
     // Build the comprehension with the return expression and default ACOperatorKind::And
@@ -101,6 +104,7 @@ pub fn parse_quantifier_or_aggregate_expr(
     source_code: &str,
     root: &Node,
     symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
+    source_map: &mut SourceMap,
 ) -> Result<Expression, EssenceParseError> {
     // Quantifier and aggregate expressions require a symbol table
     let symbols_ptr = symbols_ptr.ok_or_else(|| {
@@ -196,6 +200,7 @@ pub fn parse_quantifier_or_aggregate_expr(
         source_code,
         root,
         Some(builder.return_expr_symboltable()),
+            source_map,
     )?;
 
     // Build the comprehension

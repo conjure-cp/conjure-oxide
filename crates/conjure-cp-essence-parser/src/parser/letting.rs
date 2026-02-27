@@ -7,6 +7,7 @@ use tree_sitter::Node;
 
 use super::domain::parse_domain;
 use super::util::named_children;
+use crate::diagnostics::source_map::{SourceMap};
 use crate::errors::EssenceParseError;
 use crate::expression::parse_expression;
 use conjure_cp_core::ast::DeclarationPtr;
@@ -17,6 +18,7 @@ pub fn parse_letting_statement(
     letting_statement: Node,
     source_code: &str,
     existing_symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
+    source_map: &mut SourceMap,
 ) -> Result<SymbolTable, EssenceParseError> {
     let mut symbol_table = SymbolTable::new();
 
@@ -43,6 +45,7 @@ pub fn parse_letting_statement(
                         source_code,
                         &letting_statement,
                         existing_symbols_ptr.clone(),
+                        source_map,
                     )?,
                 ));
             }

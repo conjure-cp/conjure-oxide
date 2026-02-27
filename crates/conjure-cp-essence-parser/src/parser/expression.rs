@@ -1,3 +1,4 @@
+use crate::diagnostics::source_map::SourceMap;
 use crate::errors::EssenceParseError;
 use crate::parser::atom::parse_atom;
 use crate::parser::comprehension::parse_quantifier_or_aggregate_expr;
@@ -14,13 +15,14 @@ pub fn parse_expression(
     source_code: &str,
     root: &Node,
     symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
+    source_map: &mut SourceMap,
 ) -> Result<Expression, EssenceParseError> {
     match node.kind() {
-        "atom" => parse_atom(&node, source_code, root, symbols_ptr),
-        "bool_expr" => parse_boolean_expression(&node, source_code, root, symbols_ptr),
-        "arithmetic_expr" => parse_arithmetic_expression(&node, source_code, root, symbols_ptr),
-        "comparison_expr" => parse_binary_expression(&node, source_code, root, symbols_ptr),
-        "dominance_relation" => parse_dominance_relation(&node, source_code, root, symbols_ptr),
+        "atom" => parse_atom(&node, source_code, root, symbols_ptr, source_map),
+        "bool_expr" => parse_boolean_expression(&node, source_code, root, symbols_ptr, source_map),
+        "arithmetic_expr" => parse_arithmetic_expression(&node, source_code, root, symbols_ptr, source_map),
+        "comparison_expr" => parse_binary_expression(&node, source_code, root, symbols_ptr, source_map),
+        "dominance_relation" => parse_dominance_relation(&node, source_code, root, symbols_ptr, source_map),
         "ERROR" => Err(EssenceParseError::syntax_error(
             format!(
                 "'{}' is not a valid expression",
@@ -40,6 +42,7 @@ fn parse_dominance_relation(
     source_code: &str,
     root: &Node,
     symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
+    source_map: &mut SourceMap,
 ) -> Result<Expression, EssenceParseError> {
     if root.kind() == "dominance_relation" {
         return Err(EssenceParseError::syntax_error(
@@ -51,7 +54,7 @@ fn parse_dominance_relation(
     // NB: In all other cases, we keep the root the same;
     // However, here we set the new root to `node` so downstream functions
     // know we are inside a dominance relation
-    let inner = parse_expression(field!(node, "expression"), source_code, node, symbols_ptr)?;
+    let inner = parse_expression(field!(node, "expression"), source_code, node, symbols_ptr, source_map)?;
     Ok(Expression::DominanceRelation(
         Metadata::new(),
         Moo::new(inner),
@@ -63,21 +66,22 @@ fn parse_arithmetic_expression(
     source_code: &str,
     root: &Node,
     symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
+    source_map: &mut SourceMap,
 ) -> Result<Expression, EssenceParseError> {
     let inner = named_child!(node);
     match inner.kind() {
-        "atom" => parse_atom(&inner, source_code, root, symbols_ptr),
+        "atom" => parse_atom(&inner, source_code, root, symbols_ptr, source_map),
         "negative_expr" | "abs_value" | "sub_arith_expr" | "toInt_expr" => {
-            parse_unary_expression(&inner, source_code, root, symbols_ptr)
+            parse_unary_expression(&inner, source_code, root, symbols_ptr, source_map)
         }
         "exponent" | "product_expr" | "sum_expr" => {
-            parse_binary_expression(&inner, source_code, root, symbols_ptr)
+            parse_binary_expression(&inner, source_code, root, symbols_ptr, source_map)
         }
         "list_combining_expr_arith" => {
-            parse_list_combining_expression(&inner, source_code, root, symbols_ptr)
+            parse_list_combining_expression(&inner, source_code, root, symbols_ptr, source_map)
         }
         "aggregate_expr" => {
-            parse_quantifier_or_aggregate_expr(&inner, source_code, root, symbols_ptr)
+            parse_quantifier_or_aggregate_expr(&inner, source_code, root, symbols_ptr, source_map)
         }
         _ => Err(EssenceParseError::syntax_error(
             format!("Expected arithmetic expression, found: {}", inner.kind()),
@@ -91,21 +95,22 @@ fn parse_boolean_expression(
     source_code: &str,
     root: &Node,
     symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
+    source_map: &mut SourceMap,
 ) -> Result<Expression, EssenceParseError> {
     let inner = named_child!(node);
     match inner.kind() {
-        "atom" => parse_atom(&inner, source_code, root, symbols_ptr),
+        "atom" => parse_atom(&inner, source_code, root, symbols_ptr, source_map),
         "not_expr" | "sub_bool_expr" => {
-            parse_unary_expression(&inner, source_code, root, symbols_ptr)
+            parse_unary_expression(&inner, source_code, root, symbols_ptr, source_map)
         }
         "and_expr" | "or_expr" | "implication" | "iff_expr" | "set_operation_bool" => {
-            parse_binary_expression(&inner, source_code, root, symbols_ptr)
+            parse_binary_expression(&inner, source_code, root, symbols_ptr, source_map)
         }
         "list_combining_expr_bool" => {
-            parse_list_combining_expression(&inner, source_code, root, symbols_ptr)
+            parse_list_combining_expression(&inner, source_code, root, symbols_ptr, source_map)
         }
         "quantifier_expr" => {
-            parse_quantifier_or_aggregate_expr(&inner, source_code, root, symbols_ptr)
+            parse_quantifier_or_aggregate_expr(&inner, source_code, root, symbols_ptr, source_map)
         }
         _ => Err(EssenceParseError::syntax_error(
             format!("Expected boolean expression, found '{}'", inner.kind()),
@@ -119,11 +124,12 @@ fn parse_list_combining_expression(
     source_code: &str,
     root: &Node,
     symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
+    source_map: &mut SourceMap,
 ) -> Result<Expression, EssenceParseError> {
     let operator_node = field!(node, "operator");
     let operator_str = &source_code[operator_node.start_byte()..operator_node.end_byte()];
 
-    let inner = parse_atom(&field!(node, "arg"), source_code, root, symbols_ptr)?;
+    let inner = parse_atom(&field!(node, "arg"), source_code, root, symbols_ptr, source_map)?;
 
     match operator_str {
         "and" => Ok(Expression::And(Metadata::new(), Moo::new(inner))),
@@ -145,8 +151,9 @@ fn parse_unary_expression(
     source_code: &str,
     root: &Node,
     symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
+    source_map: &mut SourceMap,
 ) -> Result<Expression, EssenceParseError> {
-    let inner = parse_expression(field!(node, "expression"), source_code, root, symbols_ptr)?;
+    let inner = parse_expression(field!(node, "expression"), source_code, root, symbols_ptr, source_map)?;
     match node.kind() {
         "negative_expr" => Ok(Expression::Neg(Metadata::new(), Moo::new(inner))),
         "abs_value" => Ok(Expression::Abs(Metadata::new(), Moo::new(inner))),
@@ -165,8 +172,9 @@ pub fn parse_binary_expression(
     source_code: &str,
     root: &Node,
     symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
+    source_map: &mut SourceMap,
 ) -> Result<Expression, EssenceParseError> {
-    let parse_subexpr = |expr: Node| parse_expression(expr, source_code, root, symbols_ptr.clone());
+    let mut parse_subexpr = |expr: Node| parse_expression(expr, source_code, root, symbols_ptr.clone(), source_map);
 
     let left = parse_subexpr(field!(node, "left"))?;
     let right = parse_subexpr(field!(node, "right"))?;

@@ -55,7 +55,7 @@ pub fn expand_expr_vec(tt: &TokenTree) -> Result<TokenStream> {
 
 /// Parse a single expression or make a compile time error
 fn mk_expr(node: Node, src: &str, root: &Node, tt: &TokenTree) -> Result<TokenStream> {
-    match parse_expression(node, src, root, None) {
+    match parse_expression(node, src, root, None, &mut Default::default()) {
         Ok(expr) => Ok(expr.ctor_tokens()),
         Err(err) => {
             let error_message = match err {

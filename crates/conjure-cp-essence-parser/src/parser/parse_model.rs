@@ -10,6 +10,7 @@ use uniplate::Uniplate;
 use super::find::parse_find_statement;
 use super::letting::parse_letting_statement;
 use super::util::{get_tree, named_children};
+use crate::diagnostics::source_map::SourceMap;
 use crate::errors::EssenceParseError;
 use crate::expression::parse_expression;
 
@@ -17,7 +18,7 @@ use crate::expression::parse_expression;
 pub fn parse_essence_file_native(
     path: &str,
     context: Arc<RwLock<Context<'static>>>,
-) -> Result<Model, EssenceParseError> {
+) -> Result<(Model, SourceMap), EssenceParseError> {
     let source_code = fs::read_to_string(path)
         .unwrap_or_else(|_| panic!("Failed to read the source code file {path}"));
     parse_essence_with_context(&source_code, context)
@@ -26,7 +27,7 @@ pub fn parse_essence_file_native(
 pub fn parse_essence_with_context(
     src: &str,
     context: Arc<RwLock<Context<'static>>>,
-) -> Result<Model, EssenceParseError> {
+) -> Result<(Model, SourceMap), EssenceParseError> {
     let (tree, source_code) = match get_tree(src) {
         Some(tree) => tree,
         None => {
@@ -35,6 +36,8 @@ pub fn parse_essence_with_context(
             ));
         }
     };
+
+    let mut source_map = SourceMap::default();
 
     let mut model = Model::new(context);
     // let symbols = model.as_submodel().symbols().clone();
@@ -46,7 +49,7 @@ pub fn parse_essence_with_context(
             "language_declaration" => {}
             "find_statement" => {
                 let var_hashmap =
-                    parse_find_statement(statement, &source_code, Some(symbols_ptr.clone()))?;
+                    parse_find_statement(statement, &source_code, Some(symbols_ptr.clone()), &mut source_map)?;
                 for (name, domain) in var_hashmap {
                     model
                         .as_submodel_mut()
@@ -60,12 +63,13 @@ pub fn parse_essence_with_context(
                     &source_code,
                     &statement,
                     Some(symbols_ptr.clone()),
+                    &mut source_map,
                 )?);
             }
             "language_label" => {}
             "letting_statement" => {
                 let letting_vars =
-                    parse_letting_statement(statement, &source_code, Some(symbols_ptr.clone()))?;
+                    parse_letting_statement(statement, &source_code, Some(symbols_ptr.clone()), &mut source_map)?;
                 model.as_submodel_mut().symbols_mut().extend(letting_vars);
             }
             "dominance_relation" => {
@@ -73,7 +77,7 @@ pub fn parse_essence_with_context(
                     .child_by_field_name("expression")
                     .expect("Expected a sub-expression inside `dominanceRelation`");
                 let expr =
-                    parse_expression(inner, &source_code, &statement, Some(symbols_ptr.clone()))?;
+                    parse_expression(inner, &source_code, &statement, Some(symbols_ptr.clone()), &mut source_map)?;
                 let dominance = Expression::DominanceRelation(Metadata::new(), Moo::new(expr));
                 if model.dominance.is_some() {
                     return Err(EssenceParseError::syntax_error(
@@ -103,7 +107,7 @@ pub fn parse_essence_with_context(
         let result = keyword_as_identifier(root_node, &source_code);
         result?
     }
-    Ok(model)
+    Ok((model, source_map))
 }
 
 const KEYWORDS: [&str; 21] = [
@@ -143,7 +147,7 @@ fn keyword_as_identifier(root: tree_sitter::Node, src: &str) -> Result<(), Essen
     Ok(())
 }
 
-pub fn parse_essence(src: &str) -> Result<Model, EssenceParseError> {
+pub fn parse_essence(src: &str) -> Result<(Model, SourceMap), EssenceParseError> {
     let context = Arc::new(RwLock::new(Context::default()));
     parse_essence_with_context(src, context)
 }
@@ -166,7 +170,8 @@ mod test {
         such that x >= y
         ";
 
-        let model = parse_essence(src).unwrap();
+
+        let (model, _source_map) = parse_essence(src).unwrap();
 
         let st = model.as_submodel().symbols();
         let x = st.lookup(&Name::user("x")).unwrap();
@@ -218,7 +223,7 @@ mod test {
         allDiff(a[-2,..])
         ";
 
-        let model = parse_essence(src).unwrap();
+        let (model, _source_map) = parse_essence(src).unwrap();
         let st = model.as_submodel().symbols();
         let a_decl = st.lookup(&Name::user("a")).unwrap();
         let a = a_decl.as_value_letting().unwrap().deref().clone();

@@ -7,7 +7,7 @@ use tree_sitter::Node;
 
 use super::domain::parse_domain;
 use super::util::named_children;
-use crate::EssenceParseError;
+use crate::{EssenceParseError, diagnostics::source_map::SourceMap};
 use conjure_cp_core::ast::{DomainPtr, Name, SymbolTable};
 
 /// Parse a find statement into a map of decision variable names to their domains.
@@ -15,6 +15,7 @@ pub fn parse_find_statement(
     find_statement: Node,
     source_code: &str,
     symbols: Option<Rc<RefCell<SymbolTable>>>,
+    source_map: &mut SourceMap,
 ) -> Result<BTreeMap<Name, DomainPtr>, EssenceParseError> {
     let mut vars = BTreeMap::new();
 

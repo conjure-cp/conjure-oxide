@@ -169,7 +169,7 @@ fn integration_test_inner(
 
     // Stage 1a: Parse the model using the selected parser
     let parsed_model = if config.enable_native_parser {
-        let model = parse_essence_file_native(&file_path, context.clone())?;
+        let (model, _source_map) = parse_essence_file_native(&file_path, context.clone())?;
         if verbose {
             println!("Parsed model (native): {model:#?}");
         }

@@ -1,3 +1,5 @@
+use crate::diagnostics::diagnostics_api::SymbolKind;
+use crate::diagnostics::source_map::{HoverInfo, SourceMap, span_with_hover};
 use crate::expression::{parse_binary_expression, parse_expression};
 use crate::parser::abstract_literal::parse_abstract;
 use crate::parser::comprehension::parse_comprehension;
@@ -14,15 +16,16 @@ pub fn parse_atom(
     source_code: &str,
     root: &Node,
     symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
+    source_map: &mut SourceMap,
 ) -> Result<Expression, EssenceParseError> {
     match node.kind() {
-        "atom" => parse_atom(&named_child!(node), source_code, root, symbols_ptr),
+        "atom" => parse_atom(&named_child!(node), source_code, root, symbols_ptr, source_map),
         "metavar" => {
             let ident = field!(node, "identifier");
             let name_str = &source_code[ident.start_byte()..ident.end_byte()];
             Ok(Expression::Metavar(Metadata::new(), Ustr::from(name_str)))
         }
-        "identifier" => parse_variable(node, source_code, symbols_ptr)
+        "identifier" => parse_variable(node, source_code, symbols_ptr, source_map)
             .map(|var| Expression::Atomic(Metadata::new(), var)),
         "from_solution" => {
             if root.kind() != "dominance_relation" {
@@ -32,23 +35,23 @@ pub fn parse_atom(
                 ));
             }
 
-            let inner = parse_variable(&field!(node, "variable"), source_code, symbols_ptr)?;
+            let inner = parse_variable(&field!(node, "variable"), source_code, symbols_ptr, source_map)?;
             Ok(Expression::FromSolution(Metadata::new(), Moo::new(inner)))
         }
         "constant" => {
-            let lit = parse_constant(node, source_code)?;
+            let lit = parse_constant(node, source_code, source_map)?;
             Ok(Expression::Atomic(Metadata::new(), Atom::Literal(lit)))
         }
         "matrix" | "record" | "tuple" | "set_literal" => {
-            parse_abstract(node, source_code, symbols_ptr)
+            parse_abstract(node, source_code, symbols_ptr, source_map)
                 .map(|l| Expression::AbstractLiteral(Metadata::new(), l))
         }
-        "flatten" => parse_flatten(node, source_code, root, symbols_ptr),
-        "index_or_slice" => parse_index_or_slice(node, source_code, root, symbols_ptr),
+        "flatten" => parse_flatten(node, source_code, root, symbols_ptr, source_map),
+        "index_or_slice" => parse_index_or_slice(node, source_code, root, symbols_ptr, source_map),
         // for now, assume is binary since powerset isn't implemented
         // TODO: add powerset support under "set_operation"
-        "set_operation" => parse_binary_expression(node, source_code, root, symbols_ptr),
-        "comprehension" => parse_comprehension(node, source_code, root, symbols_ptr),
+        "set_operation" => parse_binary_expression(node, source_code, root, symbols_ptr, source_map),
+        "comprehension" => parse_comprehension(node, source_code, root, symbols_ptr, source_map),
         _ => Err(EssenceParseError::syntax_error(
             format!("Expected atom, got: {}", node.kind()),
             Some(node.range()),
@@ -61,9 +64,10 @@ fn parse_flatten(
     source_code: &str,
     root: &Node,
     symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
+    source_map: &mut SourceMap,
 ) -> Result<Expression, EssenceParseError> {
     let expr_node = field!(node, "expression");
-    let expr = parse_atom(&expr_node, source_code, root, symbols_ptr)?;
+    let expr = parse_atom(&expr_node, source_code, root, symbols_ptr, source_map)?;
 
     if node.child_by_field_name("depth").is_some() {
         let depth_node = field!(node, "depth");
@@ -85,16 +89,18 @@ fn parse_index_or_slice(
     source_code: &str,
     root: &Node,
     symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
+    source_map: &mut SourceMap,
 ) -> Result<Expression, EssenceParseError> {
     let collection = parse_atom(
         &field!(node, "collection"),
         source_code,
         root,
         symbols_ptr.clone(),
+        source_map,
     )?;
     let mut indices = Vec::new();
     for idx_node in named_children(&field!(node, "indices")) {
-        indices.push(parse_index(&idx_node, source_code, symbols_ptr.clone())?);
+        indices.push(parse_index(&idx_node, source_code, symbols_ptr.clone(), source_map)?);
     }
 
     let has_null_idx = indices.iter().any(|idx| idx.is_none());
@@ -121,6 +127,7 @@ fn parse_index(
     node: &Node,
     source_code: &str,
     symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
+    source_map: &mut SourceMap,
 ) -> Result<Option<Expression>, EssenceParseError> {
     match node.kind() {
         "arithmetic_expr" => Ok(Some(parse_expression(
@@ -128,6 +135,7 @@ fn parse_index(
             source_code,
             node,
             symbols_ptr,
+            source_map,
         )?)),
         "null_index" => Ok(None),
         _ => Err(EssenceParseError::syntax_error(
@@ -141,11 +149,21 @@ fn parse_variable(
     node: &Node,
     source_code: &str,
     symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
+    source_map: &mut SourceMap,
 ) -> Result<Atom, EssenceParseError> {
     let raw_name = &source_code[node.start_byte()..node.end_byte()];
     let name = Name::user(raw_name.trim());
     if let Some(symbols) = symbols_ptr {
         if let Some(decl) = symbols.borrow().lookup(&name) {
+            // Add hover info for the variable reference
+            // populate the SourceMap
+            let hover = HoverInfo {
+                description: format!("Variable: {name}"),
+                kind: Some(SymbolKind::Decimal), // no special symbol kind for variables, idk what to use
+                ty: decl.domain().map(|d| d.to_string()),
+                decl_span: None,
+            };
+            span_with_hover(&node, source_code, source_map, hover);
             Ok(Atom::Reference(conjure_cp_core::ast::Reference::new(decl)))
         } else {
             Err(EssenceParseError::syntax_error(
@@ -164,7 +182,7 @@ fn parse_variable(
     }
 }
 
-fn parse_constant(node: &Node, source_code: &str) -> Result<Literal, EssenceParseError> {
+fn parse_constant(node: &Node, source_code: &str, source_map: &mut SourceMap) -> Result<Literal, EssenceParseError> {
     let inner = named_child!(node);
     let raw_value = &source_code[inner.start_byte()..inner.end_byte()];
     match inner.kind() {
