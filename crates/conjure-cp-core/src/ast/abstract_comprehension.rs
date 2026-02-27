@@ -1,6 +1,6 @@
 use super::declaration::DeclarationPtr;
 use super::serde::PtrAsInner;
-use super::{DomainPtr, Expression, Name, ReturnType, SubModel, SymbolTablePtr, Typeable};
+use super::{DomainPtr, Expression, Model, Name, ReturnType, SymbolTablePtr, Typeable};
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use std::fmt::{Display, Formatter};
@@ -10,7 +10,7 @@ use uniplate::Uniplate;
 #[serde_as]
 #[derive(Clone, PartialEq, Eq, Hash, Serialize, Deserialize, Debug, Uniplate)]
 #[biplate(to=Expression)]
-#[biplate(to=SubModel)]
+#[biplate(to=Model)]
 #[biplate(to=SymbolTablePtr)]
 pub struct AbstractComprehension {
     pub return_expr: Expression,
@@ -41,7 +41,7 @@ pub enum Qualifier {
 #[serde_as]
 #[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Hash, Uniplate)]
 #[biplate(to=Expression)]
-#[biplate(to=SubModel)]
+#[biplate(to=Model)]
 pub struct ComprehensionLetting {
     #[serde_as(as = "PtrAsInner")]
     pub decl: DeclarationPtr,
@@ -50,7 +50,7 @@ pub struct ComprehensionLetting {
 
 #[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Hash, Uniplate)]
 #[biplate(to=Expression)]
-#[biplate(to=SubModel)]
+#[biplate(to=Model)]
 pub enum Generator {
     DomainGenerator(DomainGenerator),
     ExpressionGenerator(ExpressionGenerator),
@@ -59,7 +59,7 @@ pub enum Generator {
 #[serde_as]
 #[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Hash, Uniplate)]
 #[biplate(to=Expression)]
-#[biplate(to=SubModel)]
+#[biplate(to=Model)]
 pub struct DomainGenerator {
     #[serde_as(as = "PtrAsInner")]
     pub decl: DeclarationPtr,
@@ -68,7 +68,7 @@ pub struct DomainGenerator {
 #[serde_as]
 #[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Hash, Uniplate)]
 #[biplate(to=Expression)]
-#[biplate(to=SubModel)]
+#[biplate(to=Model)]
 pub struct ExpressionGenerator {
     #[serde_as(as = "PtrAsInner")]
     pub decl: DeclarationPtr,
@@ -152,10 +152,9 @@ impl AbstractComprehensionBuilder {
             .element_domain()
             .expect("Expression must contain elements with uniform domain");
 
-        // The variable is given (a constant) in the return expression, and a decision var
-        // in the generator expression
-        let generator_ptr = DeclarationPtr::new_var(name, domain);
-        let return_expr_ptr = DeclarationPtr::new_given_quantified(&generator_ptr)
+        // The variable is quantified in both scopes.
+        let generator_ptr = DeclarationPtr::new_quantified(name, domain);
+        let return_expr_ptr = DeclarationPtr::new_quantified_from_generator(&generator_ptr)
             .expect("Return expression declaration must not be None");
 
         self.return_expr_symbols.write().insert(return_expr_ptr);

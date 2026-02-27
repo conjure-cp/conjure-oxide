@@ -16,7 +16,7 @@ use std::sync::atomic::{AtomicU32, Ordering};
 use super::comprehension::Comprehension;
 use super::serde::{AsId, DefaultWithId, HasId, IdPtr, ObjId, PtrAsInner};
 use super::{
-    DeclarationPtr, DomainPtr, Expression, GroundDomain, Moo, Name, ReturnType, SubModel, Typeable,
+    DeclarationPtr, DomainPtr, Expression, GroundDomain, Model, Moo, Name, ReturnType, Typeable,
 };
 use itertools::{Itertools as _, izip};
 use parking_lot::{RwLock, RwLockReadGuard, RwLockWriteGuard};
@@ -386,7 +386,7 @@ impl SymbolTable {
     pub fn gensym(&mut self, domain: &DomainPtr) -> DeclarationPtr {
         let num = self.next_machine_name;
         self.next_machine_name += 1;
-        let decl = DeclarationPtr::new_var(Name::Machine(num), domain.clone());
+        let decl = DeclarationPtr::new_find(Name::Machine(num), domain.clone());
         self.insert(decl.clone());
         decl
     }
@@ -425,7 +425,7 @@ impl SymbolTable {
         // table..
 
         let decl = self.lookup(name)?;
-        let var = &decl.as_var()?;
+        let var = &decl.as_find()?;
 
         var.representations
             .iter()
@@ -440,7 +440,7 @@ impl SymbolTable {
     /// + `None` if `name` does not exist, or is not a decision variable.
     pub fn representations_for(&self, name: &Name) -> Option<Vec<Vec<Box<dyn Representation>>>> {
         let decl = self.lookup(name)?;
-        decl.as_var().map(|x| x.representations.clone())
+        decl.as_find().map(|x| x.representations.clone())
     }
 
     /// Gets the representation `representation` for `name`, creating it if it does not exist.
@@ -467,7 +467,7 @@ impl SymbolTable {
         // Lookup the declaration reference
         let mut decl = self.lookup(name)?;
 
-        if let Some(var) = decl.as_var()
+        if let Some(var) = decl.as_find()
             && let Some(existing_reprs) = var
                 .representations
                 .iter()
@@ -488,7 +488,7 @@ impl SymbolTable {
         let reprs = vec![repr_init_fn(name, self)?];
 
         // Get mutable access to the variable part
-        let mut var = decl.as_var_mut()?;
+        let mut var = decl.as_find_mut()?;
 
         for repr_instance in &reprs {
             repr_instance
@@ -638,15 +638,15 @@ impl Biplate<Comprehension> for SymbolTable {
     }
 }
 
-impl Biplate<SubModel> for SymbolTable {
+impl Biplate<Model> for SymbolTable {
     // walk into expressions
-    fn biplate(&self) -> (Tree<SubModel>, Box<dyn Fn(Tree<SubModel>) -> Self>) {
+    fn biplate(&self) -> (Tree<Model>, Box<dyn Fn(Tree<Model>) -> Self>) {
         let (expr_tree, expr_ctx) = <SymbolTable as Biplate<Expression>>::biplate(self);
 
         let (exprs, recons_expr_tree) = expr_tree.list();
 
         let (submodel_tree, submodel_ctx) =
-            <VecDeque<Expression> as Biplate<SubModel>>::biplate(&exprs);
+            <VecDeque<Expression> as Biplate<Model>>::biplate(&exprs);
 
         let ctx = Box::new(move |x| {
             // 1. turn submodel tree into a list of expressions

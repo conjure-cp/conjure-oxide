@@ -1,0 +1,167 @@
+Model before rewriting:
+
+find a: matrix indexed by [int(1..2), int(1..2)] of int(1..5)
+letting b be [1,2,3,4;int(1..4)]
+
+such that
+
+(flatten(a)[1] = b[1]),
+(flatten(a)[2] = b[2]),
+(flatten(a)[3] = b[3]),
+(flatten(a)[4] = b[4])
+
+--
+
+(flatten(a)[1] = b[1]),
+(flatten(a)[2] = b[2]),
+(flatten(a)[3] = b[3]),
+(flatten(a)[4] = b[4]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(flatten(a)[1] = 1),
+(flatten(a)[2] = 2),
+(flatten(a)[3] = 3),
+(flatten(a)[4] = 4)
+
+--
+
+(flatten(a#matrix_to_atom)[1] = 1),
+(flatten(a#matrix_to_atom)[2] = 2),
+(flatten(a#matrix_to_atom)[3] = 3),
+(flatten(a#matrix_to_atom)[4] = 4), 
+   ~~> select_representation_matrix ([("Representations", 8001)])
+(flatten(a#matrix_to_atom)[1] = 1),
+(flatten(a#matrix_to_atom)[2] = 2),
+(flatten(a#matrix_to_atom)[3] = 3),
+(flatten(a#matrix_to_atom)[4] = 4)
+new variables:
+  find a#matrix_to_atom_1_1: int(1..5)
+  find a#matrix_to_atom_1_2: int(1..5)
+  find a#matrix_to_atom_2_1: int(1..5)
+  find a#matrix_to_atom_2_2: int(1..5)
+
+--
+
+flatten(a#matrix_to_atom)[1], 
+   ~~> indexed_flatten_matrix ([("Base", 8001)])
+a#matrix_to_atom[1, 1]
+
+--
+
+flatten(a#matrix_to_atom)[2], 
+   ~~> indexed_flatten_matrix ([("Base", 8001)])
+a#matrix_to_atom[1, 2]
+
+--
+
+flatten(a#matrix_to_atom)[3], 
+   ~~> indexed_flatten_matrix ([("Base", 8001)])
+a#matrix_to_atom[2, 1]
+
+--
+
+flatten(a#matrix_to_atom)[4], 
+   ~~> indexed_flatten_matrix ([("Base", 8001)])
+a#matrix_to_atom[2, 2]
+
+--
+
+a#matrix_to_atom[1, 1], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{a#matrix_to_atom[1, 1] @ and([__inDomain(1,int(1..2)),__inDomain(1,int(1..2));int(1..)])}
+
+--
+
+({a#matrix_to_atom[1, 1] @ and([__inDomain(1,int(1..2)),__inDomain(1,int(1..2));int(1..)])} = 1),
+(a#matrix_to_atom[1, 2] = 2),
+(a#matrix_to_atom[2, 1] = 3),
+(a#matrix_to_atom[2, 2] = 4), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(a#matrix_to_atom[1, 1] = 1),
+(a#matrix_to_atom[1, 2] = 2),
+(a#matrix_to_atom[2, 1] = 3),
+(a#matrix_to_atom[2, 2] = 4)
+
+--
+
+a#matrix_to_atom[1, 2], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{a#matrix_to_atom[1, 2] @ and([__inDomain(1,int(1..2)),__inDomain(2,int(1..2));int(1..)])}
+
+--
+
+(a#matrix_to_atom[1, 1] = 1),
+({a#matrix_to_atom[1, 2] @ and([__inDomain(1,int(1..2)),__inDomain(2,int(1..2));int(1..)])} = 2),
+(a#matrix_to_atom[2, 1] = 3),
+(a#matrix_to_atom[2, 2] = 4), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(a#matrix_to_atom[1, 1] = 1),
+(a#matrix_to_atom[1, 2] = 2),
+(a#matrix_to_atom[2, 1] = 3),
+(a#matrix_to_atom[2, 2] = 4)
+
+--
+
+a#matrix_to_atom[2, 1], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{a#matrix_to_atom[2, 1] @ and([__inDomain(2,int(1..2)),__inDomain(1,int(1..2));int(1..)])}
+
+--
+
+(a#matrix_to_atom[1, 1] = 1),
+(a#matrix_to_atom[1, 2] = 2),
+({a#matrix_to_atom[2, 1] @ and([__inDomain(2,int(1..2)),__inDomain(1,int(1..2));int(1..)])} = 3),
+(a#matrix_to_atom[2, 2] = 4), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(a#matrix_to_atom[1, 1] = 1),
+(a#matrix_to_atom[1, 2] = 2),
+(a#matrix_to_atom[2, 1] = 3),
+(a#matrix_to_atom[2, 2] = 4)
+
+--
+
+a#matrix_to_atom[2, 2], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{a#matrix_to_atom[2, 2] @ and([__inDomain(2,int(1..2)),__inDomain(2,int(1..2));int(1..)])}
+
+--
+
+(a#matrix_to_atom[1, 1] = 1),
+(a#matrix_to_atom[1, 2] = 2),
+(a#matrix_to_atom[2, 1] = 3),
+({a#matrix_to_atom[2, 2] @ and([__inDomain(2,int(1..2)),__inDomain(2,int(1..2));int(1..)])} = 4), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(a#matrix_to_atom[1, 1] = 1),
+(a#matrix_to_atom[1, 2] = 2),
+(a#matrix_to_atom[2, 1] = 3),
+(a#matrix_to_atom[2, 2] = 4)
+
+--
+
+(a#matrix_to_atom[1, 1] = 1),
+(a#matrix_to_atom[1, 2] = 2),
+(a#matrix_to_atom[2, 1] = 3),
+(a#matrix_to_atom[2, 2] = 4), 
+   ~~> index_matrix_to_atom ([("Base", 5000)])
+(a#matrix_to_atom_1_1 = 1),
+(a#matrix_to_atom_1_2 = 2),
+(a#matrix_to_atom_2_1 = 3),
+(a#matrix_to_atom_2_2 = 4)
+
+--
+
+Final model:
+
+find a: matrix indexed by [int(1..2), int(1..2)] of int(1..5)
+letting b be [1,2,3,4;int(1..4)]
+find a#matrix_to_atom_1_1: int(1..5)
+find a#matrix_to_atom_1_2: int(1..5)
+find a#matrix_to_atom_2_1: int(1..5)
+find a#matrix_to_atom_2_2: int(1..5)
+
+such that
+
+(a#matrix_to_atom_1_1 = 1),
+(a#matrix_to_atom_1_2 = 2),
+(a#matrix_to_atom_2_1 = 3),
+(a#matrix_to_atom_2_2 = 4)
+

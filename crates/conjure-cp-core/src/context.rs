@@ -7,7 +7,7 @@ use serde::Serialize;
 use serde_with::skip_serializing_none;
 
 use crate::rule_engine::{RuleData, RuleSet};
-use crate::solver::SolverFamily;
+use crate::settings::SolverFamily;
 use crate::stats::Stats;
 
 #[skip_serializing_none]

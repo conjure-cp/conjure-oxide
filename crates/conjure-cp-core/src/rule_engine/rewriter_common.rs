@@ -4,12 +4,13 @@ use super::{
     resolve_rules::{ResolveRulesError, RuleData},
 };
 use crate::ast::{
-    Expression, SubModel,
+    Expression, Name, SymbolTable,
     pretty::{pretty_variable_declaration, pretty_vec},
 };
 
 use itertools::Itertools;
 use serde_json::json;
+use std::collections::BTreeMap;
 use std::fmt::Debug;
 use thiserror::Error;
 use tracing::{info, trace};
@@ -20,12 +21,28 @@ pub struct RuleResult<'a> {
     pub reduction: Reduction,
 }
 
+pub type VariableDeclarationSnapshot = BTreeMap<Name, String>;
+
+pub fn snapshot_variable_declarations(symbols: &SymbolTable) -> VariableDeclarationSnapshot {
+    symbols
+        .clone()
+        .into_iter_local()
+        .filter_map(|(name, _)| {
+            pretty_variable_declaration(symbols, &name).map(|declaration| (name, declaration))
+        })
+        .collect()
+}
+
 /// Logs, to the main log, and the human readable traces used by the integration tester, that the
 /// rule has been applied to the expression
 pub fn log_rule_application(
     result: &RuleResult,
     initial_expression: &Expression,
-    initial_model: &SubModel,
+    initial_symbols: &SymbolTable,
+    variable_declaration_snapshots: Option<(
+        &VariableDeclarationSnapshot,
+        &VariableDeclarationSnapshot,
+    )>,
 ) {
     let red = &result.reduction;
     let rule = result.rule_data.rule;
@@ -48,58 +65,81 @@ pub fn log_rule_application(
     );
 
     // empty if no top level constraints
-    let top_level_str = if !red.new_top.is_empty() {
+    let new_constraints_str = if !red.new_top.is_empty() {
         let mut exprs: Vec<String> = vec![];
-
         for expr in &red.new_top {
             exprs.push(format!("  {expr}"));
         }
-
         let exprs = exprs.iter().join("\n");
-
         format!("new constraints:\n{exprs}\n")
     } else if !red.new_clauses.is_empty() {
         let mut exprs: Vec<String> = vec![];
-
         for clause in &red.new_clauses {
             exprs.push(format!("  {clause}"));
         }
-
         let exprs = exprs.iter().join("\n");
-
         format!("new clauses:\n{exprs}\n")
     } else {
         String::new()
     };
 
-    // empty if no new variables
-    // TODO: consider printing modified and removed declarations too, though removing a declaration in a rule is less likely.
-    let new_variables_str = {
-        let mut vars: Vec<String> = vec![];
+    let (new_variables_str, updated_variables_str) =
+        if let Some((before, after)) = variable_declaration_snapshots {
+            let mut new_variables = Vec::new();
+            let mut updated_variables = Vec::new();
 
-        for var_name in red.added_symbols(&initial_model.symbols()) {
-            #[allow(clippy::unwrap_used)]
-            vars.push(format!(
-                "  {}",
-                pretty_variable_declaration(&red.symbols, &var_name).unwrap()
-            ));
-        }
-        if vars.is_empty() {
-            String::new()
+            for (name, declaration_after) in after {
+                match before.get(name) {
+                    None => new_variables.push(format!("  {declaration_after}")),
+                    Some(declaration_before) if declaration_before != declaration_after => {
+                        updated_variables
+                            .push(format!("  {declaration_before} ~~> {declaration_after}"));
+                    }
+                    _ => {}
+                }
+            }
+
+            let new_variables_str = if new_variables.is_empty() {
+                String::new()
+            } else {
+                format!("new variables:\n{}\n", new_variables.join("\n"))
+            };
+
+            let updated_variables_str = if updated_variables.is_empty() {
+                String::new()
+            } else {
+                format!("\nupdated variables:\n{}\n", updated_variables.join("\n"))
+            };
+
+            (new_variables_str, updated_variables_str)
         } else {
-            format!("new variables:\n{}", vars.join("\n"))
-        }
-    };
+            // empty if no new variables
+            let mut vars: Vec<String> = vec![];
+            for var_name in red.added_symbols(initial_symbols) {
+                #[allow(clippy::unwrap_used)]
+                vars.push(format!(
+                    "  {}",
+                    pretty_variable_declaration(&red.symbols, &var_name).unwrap()
+                ));
+            }
+            let new_variables_str = if vars.is_empty() {
+                String::new()
+            } else {
+                format!("new variables:\n{}\n", vars.join("\n"))
+            };
+            (new_variables_str, String::new())
+        };
 
     trace!(
         target: "rule_engine_human",
-        "{}, \n   ~~> {} ({:?}) \n{} \n{}\n{}--\n",
+        "{}, \n   ~~> {} ({:?})\n{}\n{}{}{}\n--\n",
         initial_expression,
         rule.name,
         rule.rule_sets,
         red.new_expression,
         new_variables_str,
-        top_level_str
+        updated_variables_str,
+        new_constraints_str
     );
 
     trace!(

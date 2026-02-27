@@ -1,0 +1,138 @@
+Model before rewriting:
+
+find x: int(2..3, 5..8)
+find y: int(1..2, 4..6)
+find z: int(x..3, y..10)
+
+--
+
+, 
+   ~~> eval_root ([("Constant", 9001)])
+true
+
+--
+
+true, 
+   ~~> handle_variables_in_domains ([("Base", 8990)])
+true
+
+updated variables:
+  find z: int(x..3, y..10) ~~> find z: int(1..10)
+new constraints:
+  or([and([(z >= x),(z <= 3);int(1..)]),and([(z >= y),(z <= 10);int(1..)]);int(1..)])
+
+--
+
+true,
+or([and([(z >= x),(z <= 3);int(1..)]),and([(z >= y),(z <= 10);int(1..)]);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+or([and([(z >= x),(z <= 3);int(1..)]),and([(z >= y),(z <= 10);int(1..)]);int(1..)])
+
+--
+
+or([and([(z >= x),(z <= 3);int(1..)]),and([(z >= y),(z <= 10);int(1..)]);int(1..)]), 
+   ~~> distribute_or_over_and ([("Base", 8400)])
+and([or([and([(z >= y),(z <= 10);int(1..)]),(z >= x);int(1..)]),or([and([(z >= y),(z <= 10);int(1..)]),(z <= 3);int(1..)]);int(1..)])
+
+--
+
+and([or([and([(z >= y),(z <= 10);int(1..)]),(z >= x);int(1..)]),or([and([(z >= y),(z <= 10);int(1..)]),(z <= 3);int(1..)]);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+or([and([(z >= y),(z <= 10);int(1..)]),(z >= x);int(1..)]),
+or([and([(z >= y),(z <= 10);int(1..)]),(z <= 3);int(1..)])
+
+--
+
+or([and([(z >= y),(z <= 10);int(1..)]),(z >= x);int(1..)]), 
+   ~~> distribute_or_over_and ([("Base", 8400)])
+and([or([(z >= x),(z >= y);int(1..)]),or([(z >= x),(z <= 10);int(1..)]);int(1..)])
+
+--
+
+and([or([(z >= x),(z >= y);int(1..)]),or([(z >= x),(z <= 10);int(1..)]);int(1..)]),
+or([and([(z >= y),(z <= 10);int(1..)]),(z <= 3);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+or([(z >= x),(z >= y);int(1..)]),
+or([(z >= x),(z <= 10);int(1..)]),
+or([and([(z >= y),(z <= 10);int(1..)]),(z <= 3);int(1..)])
+
+--
+
+or([and([(z >= y),(z <= 10);int(1..)]),(z <= 3);int(1..)]), 
+   ~~> distribute_or_over_and ([("Base", 8400)])
+and([or([(z <= 3),(z >= y);int(1..)]),or([(z <= 3),(z <= 10);int(1..)]);int(1..)])
+
+--
+
+or([(z >= x),(z >= y);int(1..)]),
+or([(z >= x),(z <= 10);int(1..)]),
+and([or([(z <= 3),(z >= y);int(1..)]),or([(z <= 3),(z <= 10);int(1..)]);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+or([(z >= x),(z >= y);int(1..)]),
+or([(z >= x),(z <= 10);int(1..)]),
+or([(z <= 3),(z >= y);int(1..)]),
+or([(z <= 3),(z <= 10);int(1..)])
+
+--
+
+(z >= x), 
+   ~~> geq_to_ineq ([("Minion", 4100)])
+Ineq(x, z, 0)
+
+--
+
+(z >= y), 
+   ~~> geq_to_ineq ([("Minion", 4100)])
+Ineq(y, z, 0)
+
+--
+
+(z >= x), 
+   ~~> geq_to_ineq ([("Minion", 4100)])
+Ineq(x, z, 0)
+
+--
+
+(z <= 10), 
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(z, 10, 0)
+
+--
+
+(z <= 3), 
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(z, 3, 0)
+
+--
+
+(z >= y), 
+   ~~> geq_to_ineq ([("Minion", 4100)])
+Ineq(y, z, 0)
+
+--
+
+(z <= 3), 
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(z, 3, 0)
+
+--
+
+(z <= 10), 
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(z, 10, 0)
+
+--
+
+Final model:
+
+find x: int(2..3, 5..8)
+find y: int(1..2, 4..6)
+find z: int(1..10)
+
+such that
+
+or([Ineq(x, z, 0),Ineq(y, z, 0);int(1..)]),
+or([Ineq(x, z, 0),Ineq(z, 10, 0);int(1..)]),
+or([Ineq(z, 3, 0),Ineq(y, z, 0);int(1..)]),
+or([Ineq(z, 3, 0),Ineq(z, 10, 0);int(1..)])
+

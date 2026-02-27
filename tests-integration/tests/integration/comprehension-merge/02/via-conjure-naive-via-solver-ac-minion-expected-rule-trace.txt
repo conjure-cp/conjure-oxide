@@ -1,0 +1,360 @@
+Model before rewriting:
+
+find x: int(0..5)
+
+such that
+
+and([ or([ ((i = j)) -> ((x = 0)) | j : int(1..2) ]) | i : int(1..2) ])
+
+--
+
+Model before rewriting:
+
+find i: int(1..2)
+find __0: int(1..2)
+find __1: int(0..5)
+
+such that
+
+(true != or([ ((i = __0)) -> ((__1 = 0)) | j : int(1..2) ]))
+
+--
+
+(true != or([ ((i = __0)) -> ((__1 = 0)) | j : int(1..2) ])), 
+   ~~> flatten_generic ([("Minion", 4200)])
+(true != __2)
+new variables:
+  find __2: bool
+new constraints:
+  __2 =aux or([ ((i = __0)) -> ((__1 = 0)) | j : int(1..2) ])
+
+--
+
+__2 =aux or([ ((i = __0)) -> ((__1 = 0)) | j : int(1..2) ]), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(or([ ((i = __0)) -> ((__1 = 0)) | j : int(1..2) ]), __2)
+
+--
+
+Model before rewriting:
+
+find j: int(1..2)
+find __0: int(1..2)
+find __1: int(0..5)
+
+such that
+
+(false != ((__0 = __0)) -> ((__1 = 0)))
+
+--
+
+(false != ((__0 = __0)) -> ((__1 = 0))), 
+   ~~> flatten_generic ([("Minion", 4200)])
+(false != __2)
+new variables:
+  find __2: bool
+new constraints:
+  __2 =aux ((__0 = __0)) -> ((__1 = 0))
+
+--
+
+__2 =aux ((__0 = __0)) -> ((__1 = 0)), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(((__0 = __0)) -> ((__1 = 0)), __2)
+
+--
+
+((__0 = __0)) -> ((__1 = 0)), 
+   ~~> flatten_imply ([("Minion", 4200)])
+(__3) -> ((__1 = 0))
+new variables:
+  find __3: bool
+new constraints:
+  __3 =aux (__0 = __0)
+
+--
+
+(__3) -> ((__1 = 0)), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply((__1 = 0), __3)
+
+--
+
+__3 =aux (__0 = __0), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify((__0 = __0), __3)
+
+--
+
+Final model:
+
+find j: int(1..2)
+find __0: int(1..2)
+find __1: int(0..5)
+find __2: bool
+find __3: bool
+
+such that
+
+(false != __2),
+Reify(ReifyImply((__1 = 0), __3), __2),
+Reify((__0 = __0), __3)
+
+or([ ((i = __0)) -> ((__1 = 0)) | j : int(1..2) ]), 
+   ~~> expand_comprehension_via_solver_ac ([("Base", 2002)])
+or([((i = __0)) -> ((__1 = 0)),((i = __0)) -> ((__1 = 0));int(1..)])
+
+--
+
+((i = __0)) -> ((__1 = 0)), 
+   ~~> flatten_imply ([("Minion", 4200)])
+(__3) -> ((__1 = 0))
+new variables:
+  find __3: bool
+new constraints:
+  __3 =aux (i = __0)
+
+--
+
+(__3) -> ((__1 = 0)), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply((__1 = 0), __3)
+
+--
+
+__3 =aux (i = __0), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify((i = __0), __3)
+
+--
+
+((i = __0)) -> ((__1 = 0)), 
+   ~~> flatten_imply ([("Minion", 4200)])
+(__4) -> ((__1 = 0))
+new variables:
+  find __4: bool
+new constraints:
+  __4 =aux (i = __0)
+
+--
+
+(__4) -> ((__1 = 0)), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply((__1 = 0), __4)
+
+--
+
+__4 =aux (i = __0), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify((i = __0), __4)
+
+--
+
+Final model:
+
+find i: int(1..2)
+find __0: int(1..2)
+find __1: int(0..5)
+find __2: bool
+find __3: bool
+find __4: bool
+
+such that
+
+(true != __2),
+Reify(or([ReifyImply((__1 = 0), __3),ReifyImply((__1 = 0), __4);int(1..)]), __2),
+Reify((i = __0), __3),
+Reify((i = __0), __4)
+
+and([ or([ ((i = j)) -> ((x = 0)) | j : int(1..2) ]) | i : int(1..2) ]), 
+   ~~> expand_comprehension_via_solver_ac ([("Base", 2002)])
+and([or([ ((1 = j)) -> ((x = 0)) | j : int(1..2) ]),or([ ((2 = j)) -> ((x = 0)) | j : int(1..2) ]);int(1..)])
+
+--
+
+and([or([ ((1 = j)) -> ((x = 0)) | j : int(1..2) ]),or([ ((2 = j)) -> ((x = 0)) | j : int(1..2) ]);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+or([ ((1 = j)) -> ((x = 0)) | j : int(1..2) ]),
+or([ ((2 = j)) -> ((x = 0)) | j : int(1..2) ])
+
+--
+
+Model before rewriting:
+
+find j: int(1..2)
+find __0: int(1..2)
+find __1: int(0..5)
+find __2: bool
+find __3: bool
+find __4: int(0..5)
+
+such that
+
+(false != ((1 = j)) -> ((__4 = 0)))
+
+--
+
+(false != ((1 = j)) -> ((__4 = 0))), 
+   ~~> flatten_generic ([("Minion", 4200)])
+(false != __5)
+new variables:
+  find __5: bool
+new constraints:
+  __5 =aux ((1 = j)) -> ((__4 = 0))
+
+--
+
+__5 =aux ((1 = j)) -> ((__4 = 0)), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(((1 = j)) -> ((__4 = 0)), __5)
+
+--
+
+((1 = j)) -> ((__4 = 0)), 
+   ~~> flatten_imply ([("Minion", 4200)])
+(__6) -> ((__4 = 0))
+new variables:
+  find __6: bool
+new constraints:
+  __6 =aux (1 = j)
+
+--
+
+(__6) -> ((__4 = 0)), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply((__4 = 0), __6)
+
+--
+
+__6 =aux (1 = j), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify((1 = j), __6)
+
+--
+
+Final model:
+
+find j: int(1..2)
+find __0: int(1..2)
+find __1: int(0..5)
+find __2: bool
+find __3: bool
+find __4: int(0..5)
+find __5: bool
+find __6: bool
+
+such that
+
+(false != __5),
+Reify(ReifyImply((__4 = 0), __6), __5),
+Reify((1 = j), __6)
+
+or([ ((1 = j)) -> ((x = 0)) | j : int(1..2) ]), 
+   ~~> expand_comprehension_via_solver_ac ([("Base", 2002)])
+or([(x = 0),true;int(1..)])
+
+--
+
+or([(x = 0),true;int(1..)]),
+or([ ((2 = j)) -> ((x = 0)) | j : int(1..2) ]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+or([ ((2 = j)) -> ((x = 0)) | j : int(1..2) ])
+
+--
+
+Model before rewriting:
+
+find j: int(1..2)
+find __0: int(1..2)
+find __1: int(0..5)
+find __2: bool
+find __3: bool
+find __4: int(0..5)
+find __5: bool
+find __6: bool
+find __7: int(0..5)
+
+such that
+
+(false != ((2 = j)) -> ((__7 = 0)))
+
+--
+
+(false != ((2 = j)) -> ((__7 = 0))), 
+   ~~> flatten_generic ([("Minion", 4200)])
+(false != __8)
+new variables:
+  find __8: bool
+new constraints:
+  __8 =aux ((2 = j)) -> ((__7 = 0))
+
+--
+
+__8 =aux ((2 = j)) -> ((__7 = 0)), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(((2 = j)) -> ((__7 = 0)), __8)
+
+--
+
+((2 = j)) -> ((__7 = 0)), 
+   ~~> flatten_imply ([("Minion", 4200)])
+(__9) -> ((__7 = 0))
+new variables:
+  find __9: bool
+new constraints:
+  __9 =aux (2 = j)
+
+--
+
+(__9) -> ((__7 = 0)), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply((__7 = 0), __9)
+
+--
+
+__9 =aux (2 = j), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify((2 = j), __9)
+
+--
+
+Final model:
+
+find j: int(1..2)
+find __0: int(1..2)
+find __1: int(0..5)
+find __2: bool
+find __3: bool
+find __4: int(0..5)
+find __5: bool
+find __6: bool
+find __7: int(0..5)
+find __8: bool
+find __9: bool
+
+such that
+
+(false != __8),
+Reify(ReifyImply((__7 = 0), __9), __8),
+Reify((2 = j), __9)
+
+or([ ((2 = j)) -> ((x = 0)) | j : int(1..2) ]), 
+   ~~> expand_comprehension_via_solver_ac ([("Base", 2002)])
+or([true,(x = 0);int(1..)])
+
+--
+
+or([true,(x = 0);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+true
+
+--
+
+Final model:
+
+find x: int(0..5)
+
+such that
+
+true
+

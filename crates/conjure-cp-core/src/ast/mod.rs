@@ -18,7 +18,6 @@ pub mod records;
 mod reference;
 mod sat_encoding;
 pub mod serde;
-mod submodel;
 mod symbol_table;
 mod types;
 mod variables;
@@ -31,7 +30,7 @@ pub use cnf_clause::CnfClause;
 pub use declaration::{DeclarationKind, DeclarationPtr};
 pub use domains::{
     Domain, DomainOpError, DomainPtr, FuncAttr, GroundDomain, HasDomain, IntVal, JectivityAttr,
-    PartialityAttr, Range, RecordEntry, RecordEntryGround, SetAttr, UnresolvedDomain,
+    MSetAttr, PartialityAttr, Range, RecordEntry, RecordEntryGround, SetAttr, UnresolvedDomain,
 };
 pub use eval::eval_constant;
 pub use expressions::Expression;
@@ -44,7 +43,6 @@ pub use name::Name;
 pub use partial_eval::run_partial_evaluator;
 pub use reference::Reference;
 pub use sat_encoding::SATIntEncoding;
-pub use submodel::SubModel;
 pub use symbol_table::{SymbolTable, SymbolTablePtr};
 pub use types::*;
 pub use variables::DecisionVariable;

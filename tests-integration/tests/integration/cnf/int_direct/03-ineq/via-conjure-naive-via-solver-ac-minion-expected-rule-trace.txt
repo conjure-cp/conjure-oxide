@@ -1,0 +1,76 @@
+Model before rewriting:
+
+find a: int(-5..5)
+find b: int(-5..5)
+find c: int(-5..5)
+
+such that
+
+(-(2) < a),
+(b > a),
+(b <= c),
+(4 >= c)
+
+--
+
+(-(2) < a),
+(b > a),
+(b <= c),
+(4 >= c), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(-2 < a),
+(b > a),
+(b <= c),
+(4 >= c)
+
+--
+
+(-2 < a), 
+   ~~> lt_to_leq ([("Minion", 8400)])
+(-2 <= sum([a,-1;int(1..)]))
+
+--
+
+(b > a), 
+   ~~> gt_to_geq ([("Minion", 8400)])
+(sum([b,-1;int(1..)]) >= a)
+
+--
+
+(sum([b,-1;int(1..)]) >= a), 
+   ~~> y_plus_k_geq_x_to_ineq ([("Minion", 4800)])
+Ineq(a, b, -1)
+
+--
+
+(-2 <= sum([a,-1;int(1..)])), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([-1, a], -2)
+
+--
+
+(b <= c), 
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(b, c, 0)
+
+--
+
+(4 >= c), 
+   ~~> geq_to_ineq ([("Minion", 4100)])
+Ineq(c, 4, 0)
+
+--
+
+Final model:
+
+find a: int(-5..5)
+find b: int(-5..5)
+find c: int(-5..5)
+
+such that
+
+SumGeq([-1, a], -2),
+Ineq(a, b, -1),
+Ineq(b, c, 0),
+Ineq(c, 4, 0)
+

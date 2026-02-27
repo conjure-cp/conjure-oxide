@@ -6,7 +6,8 @@ use conjure_cp::{
     },
     into_matrix_expr, matrix_expr,
     rule_engine::{Rule, get_all_rules, get_rule_by_name, resolve_rule_sets, rewrite_naive},
-    solver::{Solver, SolverFamily, adaptors},
+    settings::{QuantifiedExpander, SolverFamily, set_comprehension_expander},
+    solver::{Solver, adaptors},
 };
 #[allow(unused_imports)]
 #[allow(clippy::single_component_path_imports)] // ensure this is linked so we can lookup rules
@@ -38,7 +39,7 @@ fn sum_of_constants() {
             Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(1))),
             Expression::Atomic(
                 Metadata::new(),
-                Atom::Reference(Reference::new(DeclarationPtr::new_var(
+                Atom::Reference(Reference::new(DeclarationPtr::new_find(
                     Name::user("a"),
                     Domain::bool()
                 ))),
@@ -72,7 +73,7 @@ fn evaluate_sum_of_constants(expr: &Expression) -> Option<i32> {
 
 #[test]
 fn recursive_sum_of_constants() {
-    let a = Atom::Reference(Reference::new(DeclarationPtr::new_var(
+    let a = Atom::Reference(Reference::new(DeclarationPtr::new_find(
         Name::user("a"),
         Domain::int(vec![Range::Bounded(1, 5)]),
     )));
@@ -256,15 +257,15 @@ fn reduce_solve_xyz() {
         Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(4)))
     );
 
-    let a = Atom::Reference(Reference::new(DeclarationPtr::new_var(
+    let a = Atom::Reference(Reference::new(DeclarationPtr::new_find(
         Name::user("a"),
         Domain::int(vec![Range::Bounded(1, 5)]),
     )));
-    let b = Atom::Reference(Reference::new(DeclarationPtr::new_var(
+    let b = Atom::Reference(Reference::new(DeclarationPtr::new_find(
         Name::user("b"),
         Domain::int(vec![Range::Bounded(1, 5)]),
     )));
-    let c = Atom::Reference(Reference::new(DeclarationPtr::new_var(
+    let c = Atom::Reference(Reference::new(DeclarationPtr::new_find(
         Name::user("c"),
         Domain::int(vec![Range::Bounded(1, 5)]),
     )));
@@ -321,28 +322,25 @@ fn reduce_solve_xyz() {
     );
 
     let mut model = Model::new(Default::default());
-    *model.as_submodel_mut().constraints_mut() = vec![expr1, expr2];
+    *model.constraints_mut() = vec![expr1, expr2];
 
     model
-        .as_submodel_mut()
         .symbols_mut()
-        .insert(DeclarationPtr::new_var(
+        .insert(DeclarationPtr::new_find(
             Name::user("a"),
             Domain::int(vec![Range::Bounded(1, 3)]),
         ))
         .unwrap();
     model
-        .as_submodel_mut()
         .symbols_mut()
-        .insert(DeclarationPtr::new_var(
+        .insert(DeclarationPtr::new_find(
             Name::user("b"),
             Domain::int(vec![Range::Bounded(1, 3)]),
         ))
         .unwrap();
     model
-        .as_submodel_mut()
         .symbols_mut()
-        .insert(DeclarationPtr::new_var(
+        .insert(DeclarationPtr::new_find(
             Name::user("c"),
             Domain::int(vec![Range::Bounded(1, 3)]),
         ))
@@ -422,12 +420,12 @@ fn remove_trivial_and_or() {
 fn rule_distribute_not_over_and() {
     let distribute_not_over_and = get_rule_by_name("distribute_not_over_and").unwrap();
 
-    let a = Atom::Reference(Reference::new(DeclarationPtr::new_var(
+    let a = Atom::Reference(Reference::new(DeclarationPtr::new_find(
         Name::user("a"),
         Domain::bool(),
     )));
 
-    let b = Atom::Reference(Reference::new(DeclarationPtr::new_var(
+    let b = Atom::Reference(Reference::new(DeclarationPtr::new_find(
         Name::user("b"),
         Domain::bool(),
     )));
@@ -470,12 +468,12 @@ fn rule_distribute_not_over_and() {
 fn rule_distribute_not_over_or() {
     let distribute_not_over_or = get_rule_by_name("distribute_not_over_or").unwrap();
 
-    let a = Atom::Reference(Reference::new(DeclarationPtr::new_var(
+    let a = Atom::Reference(Reference::new(DeclarationPtr::new_find(
         Name::user("a"),
         Domain::bool(),
     )));
 
-    let b = Atom::Reference(Reference::new(DeclarationPtr::new_var(
+    let b = Atom::Reference(Reference::new(DeclarationPtr::new_find(
         Name::user("b"),
         Domain::bool(),
     )));
@@ -522,7 +520,7 @@ fn rule_distribute_not_over_and_not_changed() {
         Metadata::new(),
         Moo::new(Expression::Atomic(
             Metadata::new(),
-            Atom::Reference(Reference::new(DeclarationPtr::new_var(
+            Atom::Reference(Reference::new(DeclarationPtr::new_find(
                 Name::user("a"),
                 Domain::int(vec![Range::Bounded(1, 5)]),
             ))),
@@ -542,7 +540,7 @@ fn rule_distribute_not_over_or_not_changed() {
         Metadata::new(),
         Moo::new(Expression::Atomic(
             Metadata::new(),
-            Atom::Reference(Reference::new(DeclarationPtr::new_var(
+            Atom::Reference(Reference::new(DeclarationPtr::new_find(
                 Name::user("a"),
                 Domain::int(vec![Range::Bounded(1, 5)]),
             ))),
@@ -558,12 +556,12 @@ fn rule_distribute_not_over_or_not_changed() {
 fn rule_distribute_or_over_and() {
     let distribute_or_over_and = get_rule_by_name("distribute_or_over_and").unwrap();
 
-    let d1 = Atom::Reference(Reference::new(DeclarationPtr::new_var(
+    let d1 = Atom::Reference(Reference::new(DeclarationPtr::new_find(
         Name::Machine(1),
         Domain::bool(),
     )));
 
-    let d2 = Atom::Reference(Reference::new(DeclarationPtr::new_var(
+    let d2 = Atom::Reference(Reference::new(DeclarationPtr::new_find(
         Name::Machine(2),
         Domain::bool(),
     )));
@@ -623,6 +621,7 @@ fn rule_distribute_or_over_and() {
 #[test]
 fn rewrite_solve_xyz() {
     println!("Rules: {:?}", get_all_rules());
+    set_comprehension_expander(QuantifiedExpander::Native);
 
     let rule_sets = match resolve_rule_sets(SolverFamily::Minion, &["Constant"]) {
         Ok(rs) => rs,
@@ -634,11 +633,11 @@ fn rewrite_solve_xyz() {
     println!("Rule sets: {rule_sets:?}");
 
     // Create variables and domains
-    let decl_a = DeclarationPtr::new_var(Name::user("a"), Domain::int(vec![Range::Bounded(1, 5)]));
+    let decl_a = DeclarationPtr::new_find(Name::user("a"), Domain::int(vec![Range::Bounded(1, 5)]));
 
-    let decl_b = DeclarationPtr::new_var(Name::user("b"), Domain::int(vec![Range::Bounded(1, 5)]));
+    let decl_b = DeclarationPtr::new_find(Name::user("b"), Domain::int(vec![Range::Bounded(1, 5)]));
 
-    let decl_c = DeclarationPtr::new_var(Name::user("c"), Domain::int(vec![Range::Bounded(1, 5)]));
+    let decl_c = DeclarationPtr::new_find(Name::user("c"), Domain::int(vec![Range::Bounded(1, 5)]));
 
     let a = Atom::Reference(Reference::new(decl_a.clone()));
     let b = Atom::Reference(Reference::new(decl_b.clone()));
@@ -683,26 +682,14 @@ fn rewrite_solve_xyz() {
     let mut model = Model::new(Default::default());
 
     // Insert variables and domains
-    model
-        .as_submodel_mut()
-        .symbols_mut()
-        .insert(decl_a)
-        .unwrap();
-    model
-        .as_submodel_mut()
-        .symbols_mut()
-        .insert(decl_b)
-        .unwrap();
-    model
-        .as_submodel_mut()
-        .symbols_mut()
-        .insert(decl_c)
-        .unwrap();
+    model.symbols_mut().insert(decl_a).unwrap();
+    model.symbols_mut().insert(decl_b).unwrap();
+    model.symbols_mut().insert(decl_c).unwrap();
 
-    *model.as_submodel_mut().constraints_mut() = vec![nested_expr];
+    *model.constraints_mut() = vec![nested_expr];
 
-    model = rewrite_naive(&model, &rule_sets, true, false).unwrap();
-    let rewritten_expr = model.as_submodel().constraints();
+    model = rewrite_naive(&model, &rule_sets, true).unwrap();
+    let rewritten_expr = model.constraints();
 
     // Check if the expression is in its simplest form
 
@@ -818,7 +805,7 @@ fn eval_const_and() {
 fn eval_const_ref() {
     let expr = Expression::Atomic(
         Metadata::new(),
-        Atom::Reference(Reference::new(DeclarationPtr::new_var(
+        Atom::Reference(Reference::new(DeclarationPtr::new_find(
             Name::user("a"),
             Domain::int(vec![Range::Bounded(1, 5)]),
         ))),
@@ -839,7 +826,7 @@ fn eval_const_nested_ref() {
                     Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(true))),
                     Expression::Atomic(
                         Metadata::new(),
-                        Atom::Reference(Reference::new(DeclarationPtr::new_var(
+                        Atom::Reference(Reference::new(DeclarationPtr::new_find(
                             Name::user("a"),
                             Domain::int(vec![Range::Bounded(1, 5)])
                         )))
@@ -928,21 +915,21 @@ fn eval_const_sum_xyz() {
                     Moo::new(matrix_expr![
                         Expression::Atomic(
                             Metadata::new(),
-                            Atom::Reference(Reference::new(DeclarationPtr::new_var(
+                            Atom::Reference(Reference::new(DeclarationPtr::new_find(
                                 Name::user("x"),
                                 Domain::int(vec![Range::Bounded(1, 5)])
                             )))
                         ),
                         Expression::Atomic(
                             Metadata::new(),
-                            Atom::Reference(Reference::new(DeclarationPtr::new_var(
+                            Atom::Reference(Reference::new(DeclarationPtr::new_find(
                                 Name::user("y"),
                                 Domain::int(vec![Range::Bounded(1, 5)])
                             )))
                         ),
                         Expression::Atomic(
                             Metadata::new(),
-                            Atom::Reference(Reference::new(DeclarationPtr::new_var(
+                            Atom::Reference(Reference::new(DeclarationPtr::new_find(
                                 Name::user("z"),
                                 Domain::int(vec![Range::Bounded(1, 5)])
                             )))
@@ -958,14 +945,14 @@ fn eval_const_sum_xyz() {
                 Metadata::new(),
                 Moo::new(Expression::Atomic(
                     Metadata::new(),
-                    Atom::Reference(Reference::new(DeclarationPtr::new_var(
+                    Atom::Reference(Reference::new(DeclarationPtr::new_find(
                         Name::user("x"),
                         Domain::int(vec![Range::Bounded(1, 5)])
                     )))
                 )),
                 Moo::new(Expression::Atomic(
                     Metadata::new(),
-                    Atom::Reference(Reference::new(DeclarationPtr::new_var(
+                    Atom::Reference(Reference::new(DeclarationPtr::new_find(
                         Name::user("y"),
                         Domain::int(vec![Range::Bounded(1, 5)])
                     )))

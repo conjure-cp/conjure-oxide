@@ -1,7 +1,10 @@
 use itertools::Itertools;
 use tree_morph::{helpers::select_panic, prelude::*};
 
-use crate::{Model, bug};
+use crate::{
+    Model, bug,
+    settings::{Rewriter, set_current_rewriter},
+};
 
 use super::{RuleSet, get_rules_grouped};
 
@@ -34,7 +37,9 @@ pub fn rewrite_morph<'a>(
     rule_sets: &Vec<&'a RuleSet<'a>>,
     prop_multiple_equally_applicable: bool,
 ) -> Model {
-    let submodel = model.as_submodel_mut();
+    set_current_rewriter(Rewriter::Morph);
+
+    let model_ref = &mut model;
     let rules_grouped = get_rules_grouped(rule_sets)
         .unwrap_or_else(|_| bug!("get_rule_priorities() failed!"))
         .into_iter()
@@ -50,9 +55,9 @@ pub fn rewrite_morph<'a>(
         .set_selector(selector)
         .append_rule_groups(rules_grouped)
         .build();
-    let (expr, symbol_table) = engine.morph(submodel.root().clone(), submodel.symbols().clone());
+    let (expr, symbol_table) = engine.morph(model_ref.root().clone(), model_ref.symbols().clone());
 
-    *submodel.symbols_mut() = symbol_table;
-    submodel.replace_root(expr);
+    *model_ref.symbols_mut() = symbol_table;
+    model_ref.replace_root(expr);
     model
 }

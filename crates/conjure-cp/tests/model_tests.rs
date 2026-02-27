@@ -7,20 +7,20 @@ use conjure_cp::ast::*;
 fn modify_domain() {
     let mut m = Model::new(Default::default());
 
-    let mut symbols = m.as_submodel_mut().symbols_mut();
+    let mut symbols = m.symbols_mut();
 
     let name_a = Name::user("a");
 
     let d1 = Domain::int(vec![Range::Bounded(1, 3)]);
     let d2 = Domain::int(vec![Range::Bounded(1, 2)]);
 
-    let mut decl_a = DeclarationPtr::new_var(name_a, d1.clone());
+    let mut decl_a = DeclarationPtr::new_find(name_a, d1.clone());
 
     symbols.insert(decl_a.clone()).unwrap();
 
     assert_eq!(&decl_a.domain().unwrap(), &d1);
 
-    decl_a.as_var_mut().unwrap().domain = d2.clone();
+    decl_a.as_find_mut().unwrap().domain = d2.clone();
 
     assert_eq!(&decl_a.domain().unwrap(), &d2);
 }
