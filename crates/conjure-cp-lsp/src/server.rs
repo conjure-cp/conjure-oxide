@@ -1,5 +1,5 @@
-use conjure_cp_core::ast::Model;
-use tree_sitter::Tree;
+// use conjure_cp_core::ast::Model;
+// use tree_sitter::Tree;
 
 use tower_lsp::{
     Client,
@@ -10,31 +10,24 @@ use tower_lsp::{
     lsp_types::*,
 };
 
-use std::collections::HashMap;
-use std::sync::Arc;
-use tokio::sync::RwLock;
+use crate::handlers::cache::{CacheCont, create_cache};
 
+// use std::clone;
+// use std::collections::HashMap;
 
-#[derive(Debug)]
-pub struct cacheCont {
-    //ast
-    //cst
-    //sourcemap
-    pub ast: Model,
-    pub cst: Tree,
-    pub contents: String
-}
+// use std::sync::Arc;
+// use tokio::sync::RwLock;
+use moka::future::Cache;
 
 #[derive(Debug)]
 pub struct Backend {
     pub client: Client,
-    pub documents: Arc<RwLock<HashMap<String, String>>>, //caching document
-    pub cache: HashMap<Url,cacheCont>,
+    pub lsp_cache: Cache<Url, CacheCont>,
 }
 
 impl Backend {
-    pub fn new(client: Client, documents: Arc<RwLock<HashMap<String, String>>>) -> Self {
-        Backend { client, documents } //add cache here
+    pub fn new(client: Client, lsp_cache: Cache<Url, CacheCont>) -> Self {
+        Backend { client, lsp_cache } //add cache here
     }
 }
 
@@ -54,7 +47,8 @@ impl LanguageServer for Backend {
                 text_document_sync: Some(TextDocumentSyncCapability::Options(
                     TextDocumentSyncOptions {
                         open_close: Some(true),
-                        change: Some(TextDocumentSyncKind::FULL),
+                        // change: Some(TextDocumentSyncKind::FULL),
+                        change: Some(TextDocumentSyncKind::INCREMENTAL),
                         save: Some(TextDocumentSyncSaveOptions::SaveOptions(SaveOptions {
                             include_text: Some(true),
                         })),
@@ -71,6 +65,9 @@ impl LanguageServer for Backend {
         self.client
             .log_message(MessageType::INFO, "server initialised!") //client logs message of initialised
             .await;
+
+        //set up cache here NVM SET UP IN MAIN
+        // let cache = create_cache().await;
     }
     async fn shutdown(&self) -> Result<()> {
         Ok(())
@@ -91,10 +88,14 @@ impl LanguageServer for Backend {
 pub async fn main() {
     let stdin = tokio::io::stdin();
     let stdout = tokio::io::stdout();
-    let documents = Arc::new(RwLock::new(HashMap::new()));
+    // let documents = Arc::new(RwLock::new(HashMap::new()));
+    // let cache = Cache<Url, CacheCont>::new();
+
+    let lsp_cache = create_cache().await;
 
     let (service, socket) =
-        LspService::build(|client| Backend::new(client, Arc::clone(&documents))).finish();
+        // LspService::build(|client| Backend::new(client, Arc::clone(&documents))).finish();
+        LspService::build(|client| Backend::new(client, lsp_cache)).finish();
 
     Server::new(stdin, stdout, socket).serve(service).await;
 }
