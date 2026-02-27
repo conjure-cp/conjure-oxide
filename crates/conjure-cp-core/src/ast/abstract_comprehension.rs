@@ -1,6 +1,8 @@
 use super::declaration::DeclarationPtr;
 use super::serde::PtrAsInner;
-use super::{DomainPtr, Expression, Model, Name, ReturnType, SymbolTablePtr, Typeable, Moo, Metadata};
+use super::{
+    DomainPtr, Expression, Model, Name, ReturnType, SymbolTablePtr, Typeable,
+};
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use std::fmt::{Display, Formatter};
@@ -183,14 +185,11 @@ impl AbstractComprehensionBuilder {
         letting_decl
     }
 
-    pub fn with_return_value(mut self, expression: Expression) -> Expression {
-        Expression::AbstractComprehension(
-            Metadata::new(),
-            Moo::new(AbstractComprehension {
-                return_expr: expression,
-                qualifiers: self.qualifiers,
-            }),
-        )
+    pub fn with_return_value(self, expression: Expression) -> AbstractComprehension {
+        AbstractComprehension {
+            return_expr: expression,
+            qualifiers: self.qualifiers,
+        }
     }
 }
 
