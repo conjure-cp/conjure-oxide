@@ -19,7 +19,13 @@ pub fn parse_atom(
     source_map: &mut SourceMap,
 ) -> Result<Expression, EssenceParseError> {
     match node.kind() {
-        "atom" => parse_atom(&named_child!(node), source_code, root, symbols_ptr, source_map),
+        "atom" => parse_atom(
+            &named_child!(node),
+            source_code,
+            root,
+            symbols_ptr,
+            source_map,
+        ),
         "metavar" => {
             let ident = field!(node, "identifier");
             let name_str = &source_code[ident.start_byte()..ident.end_byte()];
@@ -35,7 +41,12 @@ pub fn parse_atom(
                 ));
             }
 
-            let inner = parse_variable(&field!(node, "variable"), source_code, symbols_ptr, source_map)?;
+            let inner = parse_variable(
+                &field!(node, "variable"),
+                source_code,
+                symbols_ptr,
+                source_map,
+            )?;
             Ok(Expression::FromSolution(Metadata::new(), Moo::new(inner)))
         }
         "constant" => {
@@ -50,7 +61,9 @@ pub fn parse_atom(
         "index_or_slice" => parse_index_or_slice(node, source_code, root, symbols_ptr, source_map),
         // for now, assume is binary since powerset isn't implemented
         // TODO: add powerset support under "set_operation"
-        "set_operation" => parse_binary_expression(node, source_code, root, symbols_ptr, source_map),
+        "set_operation" => {
+            parse_binary_expression(node, source_code, root, symbols_ptr, source_map)
+        }
         "comprehension" => parse_comprehension(node, source_code, root, symbols_ptr, source_map),
         _ => Err(EssenceParseError::syntax_error(
             format!("Expected atom, got: {}", node.kind()),
@@ -100,7 +113,12 @@ fn parse_index_or_slice(
     )?;
     let mut indices = Vec::new();
     for idx_node in named_children(&field!(node, "indices")) {
-        indices.push(parse_index(&idx_node, source_code, symbols_ptr.clone(), source_map)?);
+        indices.push(parse_index(
+            &idx_node,
+            source_code,
+            symbols_ptr.clone(),
+            source_map,
+        )?);
     }
 
     let has_null_idx = indices.iter().any(|idx| idx.is_none());
@@ -182,16 +200,46 @@ fn parse_variable(
     }
 }
 
-fn parse_constant(node: &Node, source_code: &str, source_map: &mut SourceMap) -> Result<Literal, EssenceParseError> {
+fn parse_constant(
+    node: &Node,
+    source_code: &str,
+    source_map: &mut SourceMap,
+) -> Result<Literal, EssenceParseError> {
     let inner = named_child!(node);
     let raw_value = &source_code[inner.start_byte()..inner.end_byte()];
+
     match inner.kind() {
         "integer" => {
             let value = parse_int(&inner, source_code)?;
+            let hover = HoverInfo {
+                description: format!("Integer constant: {raw_value}"),
+                kind: None, // no special symbol kind for constants, using Keyword for lack of a better option
+                ty: None,
+                decl_span: None,
+            };
+            span_with_hover(&inner, source_code, source_map, hover);
             Ok(Literal::Int(value))
         }
-        "TRUE" => Ok(Literal::Bool(true)),
-        "FALSE" => Ok(Literal::Bool(false)),
+        "TRUE" => {
+            let hover = HoverInfo {
+                description: format!("Boolean constant: {raw_value}"),
+                kind: None,
+                ty: None,
+                decl_span: None,
+            };
+            span_with_hover(&inner, source_code, source_map, hover);
+            Ok(Literal::Bool(true))
+        }
+        "FALSE" => {
+            let hover = HoverInfo {
+                description: format!("Boolean constant: {raw_value}"),
+                kind: None,
+                ty: None,
+                decl_span: None,
+            };
+            span_with_hover(&inner, source_code, source_map, hover);
+            Ok(Literal::Bool(false))
+        }
         _ => Err(EssenceParseError::syntax_error(
             format!(
                 "'{}' (kind: '{}') is not a valid constant",
