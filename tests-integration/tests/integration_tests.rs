@@ -243,7 +243,7 @@ fn integration_test_inner(
     let rewritten_model = match rewriter {
         Rewriter::Naive => rewrite_naive(&model, &rule_sets, false)?,
         Rewriter::Morph => {
-            let submodel = model.as_submodel_mut();
+            let submodel = &mut model;
             let rules_grouped = get_rules_grouped(&rule_sets)
                 .unwrap_or_else(|_| bug!("get_rule_priorities() failed!"))
                 .into_iter()
