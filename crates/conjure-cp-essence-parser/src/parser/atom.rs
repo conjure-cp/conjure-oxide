@@ -1,5 +1,5 @@
 use crate::errors::{FatalParseError, RecoverableParseError};
-use crate::expression::{parse_binary_expression, parse_expression};
+use crate::expression::{parse_binary_expression, parse_expression_with_context};
 use crate::parser::abstract_literal::parse_abstract;
 use crate::parser::comprehension::parse_comprehension;
 use crate::util::named_children;
@@ -182,7 +182,7 @@ fn parse_index(
 ) -> Result<Option<Expression>, FatalParseError> {
     match node.kind() {
         "arithmetic_expr" | "atom" => {
-            let Some(expr) = parse_expression(*node, source_code, node, symbols_ptr, errors)?
+            let Some(expr) = parse_expression_with_context(*node, source_code, node, symbols_ptr, errors, ExpressionContext::Arithmetic)?
             else {
                 return Ok(None);
             };
