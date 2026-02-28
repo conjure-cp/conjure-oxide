@@ -1,6 +1,7 @@
 use conjure_cp::Model;
 use conjure_cp::context::Context;
 use conjure_cp::parse::tree_sitter::EssenceParseError;
+use conjure_cp::parse::tree_sitter::diagnostics::source_map::SourceMap;
 use conjure_cp::parse::tree_sitter::{parse_essence_file, parse_essence_file_native};
 use conjure_cp_cli::utils::testing::{read_model_json, save_model_json};
 
@@ -48,7 +49,8 @@ fn roundtrip_test(path: &str, filename: &str, extension: &str) -> Result<(), Box
             &filename,
             &new_filename,
             extension,
-            parse_essence_file_native,
+            None,
+            Some(parse_essence_file_native),
         )?;
     }
     // Runs legacy Conjure parser
@@ -59,7 +61,8 @@ fn roundtrip_test(path: &str, filename: &str, extension: &str) -> Result<(), Box
             &filename,
             &new_filename,
             extension,
-            parse_essence_file,
+            Some(parse_essence_file),
+            None,
         )?;
     }
     Ok(())
@@ -71,8 +74,25 @@ fn roundtrip_test_inner(
     input_filename: &str,
     output_filename: &str,
     extension: &str,
-    parse: fn(&str, Arc<RwLock<Context<'static>>>) -> Result<Model, EssenceParseError>,
+    parse_old: Option<fn(&str, Arc<RwLock<Context<'static>>>) -> Result<Model, EssenceParseError>>,
+    parse_new: Option<
+        fn(&str, Arc<RwLock<Context<'static>>>) -> Result<(Model, SourceMap), EssenceParseError>,
+    >,
 ) -> Result<(), Box<dyn Error>> {
+    let parse = |file: &str,
+                 ctx: Arc<RwLock<Context<'static>>>|
+     -> Result<(Model, SourceMap), EssenceParseError> {
+        if let Some(parse_new_fn) = parse_new {
+            return parse_new_fn(file, ctx);
+        }
+        if let Some(parse_old_fn) = parse_old {
+            // legacy parser does not produce a SourceMap, so we're just creating an empty one
+            // it is not used in the roundtrip test, and should not affect the results
+            return parse_old_fn(file, ctx).map(|model| (model, SourceMap::default()));
+        }
+        panic!("At least one parser must be provided");
+    };
+
     /*
     Parses Essence file
      | If valid
@@ -98,7 +118,7 @@ fn roundtrip_test_inner(
 
     let initial_parse = parse(&file_path, context.clone());
     match initial_parse {
-        Ok(initial_model) => {
+        Ok((initial_model, _)) => {
             save_model_json(&initial_model, path, output_filename, "parse")?;
             save_essence(&initial_model, path, output_filename, "generated")?;
 
@@ -144,7 +164,7 @@ fn roundtrip_test_inner(
             assert_eq!(expected_essence, generated_essence);
 
             // Compares roundtrip
-            let new_model = parse(
+            let (new_model, _) = parse(
                 &format!("{path}/{output_filename}.generated-essence.essence"),
                 context.clone(),
             )?;
