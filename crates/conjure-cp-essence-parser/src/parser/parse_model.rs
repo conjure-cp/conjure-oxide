@@ -11,9 +11,10 @@ use super::find::parse_find_statement;
 use super::letting::parse_letting_statement;
 use super::util::{get_tree, named_children};
 use crate::errors::{FatalParseError, ParseErrorCollection, RecoverableParseError};
-use crate::expression::parse_expression;
+use crate::expression::{parse_expression_with_context, parse_expression};
 use crate::field;
 use crate::syntax_errors::detect_syntactic_errors;
+use crate::parser::atom::ExpressionContext;
 
 /// Parse an Essence file into a Model using the tree-sitter parser.
 pub fn parse_essence_file_native(
@@ -84,14 +85,14 @@ pub fn parse_essence_with_context(
                 }
             }
             "bool_expr" | "atom" | "comparison_expr" => {
-                let Some(expr) = parse_expression(
+                let Some(expr) = parse_expression_with_context(
                     statement,
                     &source_code,
                     &statement,
                     Some(symbols_ptr.clone()),
                     errors,
-                )?
-                else {
+                    ExpressionContext::Boolean
+                )? else {
                     continue;
                 };
                 model.as_submodel_mut().add_constraint(expr);

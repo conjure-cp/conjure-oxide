@@ -1,21 +1,32 @@
 use crate::errors::{FatalParseError, RecoverableParseError};
-use crate::parser::atom::parse_atom;
+use crate::parser::atom::{parse_atom, ExpressionContext};
 use crate::parser::comprehension::parse_quantifier_or_aggregate_expr;
 use crate::{field, named_child};
 use conjure_cp_core::ast::{Expression, Metadata, Moo, SymbolTablePtr};
 use conjure_cp_core::{domain_int, matrix_expr, range};
 use tree_sitter::Node;
 
-/// Parse an Essence expression into its Conjure AST representation.
 pub fn parse_expression(
     node: Node,
     source_code: &str,
     root: &Node,
     symbols_ptr: Option<SymbolTablePtr>,
+    errors: &mut Vec<RecoverableParseError>
+) -> Result<Option<Expression>, FatalParseError> {
+    return parse_expression_with_context(node, source_code, root, symbols_ptr, errors, ExpressionContext::Unknown)
+}
+
+/// Parse an Essence expression into its Conjure AST representation.
+pub fn parse_expression_with_context(
+    node: Node,
+    source_code: &str,
+    root: &Node,
+    symbols_ptr: Option<SymbolTablePtr>,
     errors: &mut Vec<RecoverableParseError>,
+    context: ExpressionContext
 ) -> Result<Option<Expression>, FatalParseError> {
     match node.kind() {
-        "atom" => parse_atom(&node, source_code, root, symbols_ptr, errors),
+        "atom" => parse_atom(&node, source_code, root, symbols_ptr, errors, context),
         "bool_expr" => parse_boolean_expression(&node, source_code, root, symbols_ptr, errors),
         "arithmetic_expr" => {
             parse_arithmetic_expression(&node, source_code, root, symbols_ptr, errors)
@@ -74,7 +85,7 @@ fn parse_arithmetic_expression(
 ) -> Result<Option<Expression>, FatalParseError> {
     let inner = named_child!(node);
     match inner.kind() {
-        "atom" => parse_atom(&inner, source_code, root, symbols_ptr, errors),
+        "atom" => parse_atom(&inner, source_code, root, symbols_ptr, errors, ExpressionContext::Arithmetic),
         "negative_expr" | "abs_value" | "sub_arith_expr" | "toInt_expr" => {
             parse_unary_expression(&inner, source_code, root, symbols_ptr, errors)
         }
@@ -82,7 +93,7 @@ fn parse_arithmetic_expression(
             parse_binary_expression(&inner, source_code, root, symbols_ptr, errors)
         }
         "list_combining_expr_arith" => {
-            parse_list_combining_expression(&inner, source_code, root, symbols_ptr, errors)
+            parse_list_combining_expression(&inner, source_code, root, symbols_ptr, errors, ExpressionContext::Arithmetic)
         }
         "aggregate_expr" => {
             parse_quantifier_or_aggregate_expr(&inner, source_code, root, symbols_ptr, errors)
@@ -103,7 +114,7 @@ fn parse_boolean_expression(
 ) -> Result<Option<Expression>, FatalParseError> {
     let inner = named_child!(node);
     match inner.kind() {
-        "atom" => parse_atom(&inner, source_code, root, symbols_ptr, errors),
+        "atom" => parse_atom(&inner, source_code, root, symbols_ptr, errors, ExpressionContext::Boolean),
         "not_expr" | "sub_bool_expr" => {
             parse_unary_expression(&inner, source_code, root, symbols_ptr, errors)
         }
@@ -111,7 +122,7 @@ fn parse_boolean_expression(
             parse_binary_expression(&inner, source_code, root, symbols_ptr, errors)
         }
         "list_combining_expr_bool" => {
-            parse_list_combining_expression(&inner, source_code, root, symbols_ptr, errors)
+            parse_list_combining_expression(&inner, source_code, root, symbols_ptr, errors, ExpressionContext::Boolean)
         }
         "quantifier_expr" => {
             parse_quantifier_or_aggregate_expr(&inner, source_code, root, symbols_ptr, errors)
@@ -129,11 +140,12 @@ fn parse_list_combining_expression(
     root: &Node,
     symbols_ptr: Option<SymbolTablePtr>,
     errors: &mut Vec<RecoverableParseError>,
+    context: ExpressionContext
 ) -> Result<Option<Expression>, FatalParseError> {
     let operator_node = field!(node, "operator");
     let operator_str = &source_code[operator_node.start_byte()..operator_node.end_byte()];
 
-    let Some(inner) = parse_atom(&field!(node, "arg"), source_code, root, symbols_ptr, errors)?
+    let Some(inner) = parse_atom(&field!(node, "arg"), source_code, root, symbols_ptr, errors, context)?
     else {
         return Ok(None);
     };
