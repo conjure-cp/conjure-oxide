@@ -75,7 +75,7 @@ pub fn parse_atom(
             )))
         }
         "matrix" | "record" | "tuple" | "set_literal" => {
-            let Some(abs) = parse_abstract(node, source_code, symbols_ptr, errors)? else {
+            let Some(abs) = parse_abstract(node, source_code, symbols_ptr, errors, context)? else {
                 return Ok(None);
             };
             Ok(Some(Expression::AbstractLiteral(Metadata::new(), abs)))

@@ -1,7 +1,8 @@
 use crate::errors::{FatalParseError, RecoverableParseError};
-use crate::expression::parse_expression;
+use crate::expression::{parse_expression_with_context};
 use crate::field;
 use crate::parser::domain::parse_domain;
+use crate::parser::atom::ExpressionContext;
 use crate::util::named_children;
 use conjure_cp_core::ast::{AbstractLiteral, DomainPtr, Expression, SymbolTablePtr};
 use conjure_cp_core::{domain_int, range};
@@ -12,12 +13,13 @@ pub fn parse_abstract(
     source_code: &str,
     symbols_ptr: Option<SymbolTablePtr>,
     errors: &mut Vec<RecoverableParseError>,
+    context: ExpressionContext,
 ) -> Result<Option<AbstractLiteral<Expression>>, FatalParseError> {
     match node.kind() {
-        "record" => parse_record(node, source_code, symbols_ptr, errors),
-        "tuple" => parse_tuple(node, source_code, symbols_ptr, errors),
-        "matrix" => parse_matrix(node, source_code, symbols_ptr, errors),
-        "set_literal" => parse_set_literal(node, source_code, symbols_ptr, errors),
+        "record" => parse_record(node, source_code, symbols_ptr, errors, context),
+        "tuple" => parse_tuple(node, source_code, symbols_ptr, errors, context),
+        "matrix" => parse_matrix(node, source_code, symbols_ptr, errors, context),
+        "set_literal" => parse_set_literal(node, source_code, symbols_ptr, errors, context),
         _ => Err(FatalParseError::internal_error(
             format!("Expected abstract literal, got: {}", node.kind()),
             Some(node.range()),
@@ -30,6 +32,7 @@ fn parse_record(
     source_code: &str,
     symbols_ptr: Option<SymbolTablePtr>,
     errors: &mut Vec<RecoverableParseError>,
+    context: ExpressionContext,
 ) -> Result<Option<AbstractLiteral<Expression>>, FatalParseError> {
     let mut values = Vec::new();
     for child in node.children_by_field_name("name_value_pair", &mut node.walk()) {
@@ -37,12 +40,13 @@ fn parse_record(
         let name_str = &source_code[name_node.start_byte()..name_node.end_byte()];
         let name = conjure_cp_core::ast::Name::user(name_str);
 
-        let Some(value) = parse_expression(
+        let Some(value) = parse_expression_with_context(
             field!(child, "value"),
             source_code,
             node,
             symbols_ptr.clone(),
             errors,
+            context,
         )?
         else {
             return Ok(None);
@@ -57,10 +61,11 @@ fn parse_tuple(
     source_code: &str,
     symbols_ptr: Option<SymbolTablePtr>,
     errors: &mut Vec<RecoverableParseError>,
+    context: ExpressionContext
 ) -> Result<Option<AbstractLiteral<Expression>>, FatalParseError> {
     let mut elements = Vec::new();
     for child in named_children(node) {
-        let Some(expr) = parse_expression(child, source_code, node, symbols_ptr.clone(), errors)?
+        let Some(expr) = parse_expression_with_context(child, source_code, node, symbols_ptr.clone(), errors, context)?
         else {
             return Ok(None);
         };
@@ -74,6 +79,7 @@ fn parse_matrix(
     source_code: &str,
     symbols_ptr: Option<SymbolTablePtr>,
     errors: &mut Vec<RecoverableParseError>,
+    context: ExpressionContext,
 ) -> Result<Option<AbstractLiteral<Expression>>, FatalParseError> {
     let mut elements = vec![];
     let mut domain: Option<DomainPtr> = None;
@@ -83,8 +89,7 @@ fn parse_matrix(
             || child.kind() == "comparison_expr"
             || child.kind() == "atom"
         {
-            let Some(expr) =
-                parse_expression(child, source_code, node, symbols_ptr.clone(), errors)?
+            let Some(expr) = parse_expression_with_context(child, source_code, node, symbols_ptr.clone(), errors, context)?
             else {
                 return Ok(None);
             };
@@ -111,10 +116,11 @@ fn parse_set_literal(
     source_code: &str,
     symbols_ptr: Option<SymbolTablePtr>,
     errors: &mut Vec<RecoverableParseError>,
+    context: ExpressionContext,
 ) -> Result<Option<AbstractLiteral<Expression>>, FatalParseError> {
     let mut elements = Vec::new();
     for child in named_children(node) {
-        let Some(expr) = parse_expression(child, source_code, node, symbols_ptr.clone(), errors)?
+        let Some(expr) = parse_expression_with_context(child, source_code, node, symbols_ptr.clone(), errors, context)?
         else {
             return Ok(None);
         };
