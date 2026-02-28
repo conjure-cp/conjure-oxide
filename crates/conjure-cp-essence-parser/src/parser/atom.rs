@@ -8,16 +8,26 @@ use conjure_cp_core::ast::{Atom, Expression, Literal, Metadata, Moo, Name, Symbo
 use tree_sitter::Node;
 use ustr::Ustr;
 
+// Used to detect type mismatches during parsing.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ExpressionContext {
+    Boolean,
+    Arithmetic,
+    /// Context is unknown or flexible
+    Unknown,
+}
+
 pub fn parse_atom(
     node: &Node,
     source_code: &str,
     root: &Node,
     symbols_ptr: Option<SymbolTablePtr>,
     errors: &mut Vec<RecoverableParseError>,
+    context: ExpressionContext,
 ) -> Result<Option<Expression>, FatalParseError> {
     match node.kind() {
         "atom" | "sub_atom_expr" => {
-            parse_atom(&named_child!(node), source_code, root, symbols_ptr, errors)
+            parse_atom(&named_child!(node), source_code, root, symbols_ptr, errors, context)
         }
         "metavar" => {
             let ident = field!(node, "identifier");
@@ -28,7 +38,7 @@ pub fn parse_atom(
             )))
         }
         "identifier" => {
-            let Some(var) = parse_variable(node, source_code, symbols_ptr, errors)? else {
+            let Some(var) = parse_variable(node, source_code, symbols_ptr, errors, context)? else {
                 return Ok(None);
             };
             Ok(Some(Expression::Atomic(Metadata::new(), var)))
@@ -42,7 +52,7 @@ pub fn parse_atom(
             }
 
             let Some(inner) =
-                parse_variable(&field!(node, "variable"), source_code, symbols_ptr, errors)?
+                parse_variable(&field!(node, "variable"), source_code, symbols_ptr, errors, context)?
             else {
                 return Ok(None);
             };
@@ -53,7 +63,10 @@ pub fn parse_atom(
             )))
         }
         "constant" => {
-            let lit = parse_constant(node, source_code, errors)?;
+            let Some(lit) = parse_constant(node, source_code, errors, context)? else {
+                return Ok(None);
+            };
+            
             Ok(Some(Expression::Atomic(
                 Metadata::new(),
                 Atom::Literal(lit),
@@ -65,8 +78,8 @@ pub fn parse_atom(
             };
             Ok(Some(Expression::AbstractLiteral(Metadata::new(), abs)))
         }
-        "flatten" => parse_flatten(node, source_code, root, symbols_ptr, errors),
-        "index_or_slice" => parse_index_or_slice(node, source_code, root, symbols_ptr, errors),
+        "flatten" => parse_flatten(node, source_code, root, symbols_ptr, errors, context),
+        "index_or_slice" => parse_index_or_slice(node, source_code, root, symbols_ptr, errors, context),
         // for now, assume is binary since powerset isn't implemented
         // TODO: add powerset support under "set_operation"
         "set_operation" => parse_binary_expression(node, source_code, root, symbols_ptr, errors),
@@ -84,9 +97,10 @@ fn parse_flatten(
     root: &Node,
     symbols_ptr: Option<SymbolTablePtr>,
     errors: &mut Vec<RecoverableParseError>,
+    context: ExpressionContext,
 ) -> Result<Option<Expression>, FatalParseError> {
     let expr_node = field!(node, "expression");
-    let Some(expr) = parse_atom(&expr_node, source_code, root, symbols_ptr, errors)? else {
+    let Some(expr) = parse_atom(&expr_node, source_code, root, symbols_ptr, errors, context)? else {
         return Ok(None);
     };
 
@@ -115,6 +129,7 @@ fn parse_index_or_slice(
     root: &Node,
     symbols_ptr: Option<SymbolTablePtr>,
     errors: &mut Vec<RecoverableParseError>,
+    context: ExpressionContext,
 ) -> Result<Option<Expression>, FatalParseError> {
     let Some(collection) = parse_atom(
         &field!(node, "collection"),
@@ -122,6 +137,7 @@ fn parse_index_or_slice(
         root,
         symbols_ptr.clone(),
         errors,
+        context,
     )?
     else {
         return Ok(None);
@@ -183,11 +199,13 @@ fn parse_variable(
     source_code: &str,
     symbols_ptr: Option<SymbolTablePtr>,
     errors: &mut Vec<RecoverableParseError>,
+    _context: ExpressionContext,
 ) -> Result<Option<Atom>, FatalParseError> {
     let raw_name = &source_code[node.start_byte()..node.end_byte()];
     let name = Name::user(raw_name.trim());
     if let Some(symbols) = symbols_ptr {
         if let Some(decl) = symbols.read().lookup(&name) {
+            // TODO: type check
             Ok(Some(Atom::Reference(conjure_cp_core::ast::Reference::new(
                 decl,
             ))))
@@ -210,17 +228,18 @@ fn parse_constant(
     node: &Node,
     source_code: &str,
     errors: &mut Vec<RecoverableParseError>,
-) -> Result<Literal, FatalParseError> {
+    context: ExpressionContext
+) -> Result<Option<Literal>, FatalParseError> {
     let inner = named_child!(node);
     let raw_value = &source_code[inner.start_byte()..inner.end_byte()];
-    match inner.kind() {
+    let lit = match inner.kind() {
         "integer" => {
             let value = parse_int(&inner, source_code, errors)?;
-            Ok(Literal::Int(value))
+            Literal::Int(value)
         }
-        "TRUE" => Ok(Literal::Bool(true)),
-        "FALSE" => Ok(Literal::Bool(false)),
-        _ => Err(FatalParseError::internal_error(
+        "TRUE" => Literal::Bool(true),
+        "FALSE" => Literal::Bool(false),
+        _ => return Err(FatalParseError::internal_error(
             format!(
                 "'{}' (kind: '{}') is not a valid constant",
                 raw_value,
@@ -228,7 +247,27 @@ fn parse_constant(
             ),
             Some(inner.range()),
         )),
+    };
+    // Type check the constant against the expected context
+    // lit with either be a boolean or an integer
+    match (&lit, context) {
+        (Literal::Bool(_), ExpressionContext::Arithmetic) => {
+            errors.push(RecoverableParseError::new(
+                "Boolean value used in arithmetic context".to_string(),
+                Some(node.range()),
+            ));
+            return Ok(None);
+        }
+        (Literal::Int(_), ExpressionContext::Boolean) => {
+            errors.push(RecoverableParseError::new(
+                "Integer value used in boolean context".to_string(),
+                Some(node.range()),
+            ));
+            return Ok(None);
+        }
+        _ => {}
     }
+    Ok(Some(lit))
 }
 
 pub(crate) fn parse_int(
