@@ -82,7 +82,7 @@ pub fn parse_atom(
         "index_or_slice" => parse_index_or_slice(node, source_code, root, symbols_ptr, errors, context),
         // for now, assume is binary since powerset isn't implemented
         // TODO: add powerset support under "set_operation"
-        "set_operation" => parse_binary_expression(node, source_code, root, symbols_ptr, errors),
+        "set_operation" => parse_binary_expression(node, source_code, root, symbols_ptr, errors, context),
         "comprehension" => parse_comprehension(node, source_code, root, symbols_ptr, errors),
         _ => Err(FatalParseError::internal_error(
             format!("Expected atom, got: {}", node.kind()),

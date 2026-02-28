@@ -264,6 +264,7 @@ module.exports = grammar ({
       ")"
     ),
 
+    //TODO: split into arithmetic_comparison_expr, equality_comparison, and set_comparison_expr for typechecking purposes
     comparison_expr: $ => prec(5, prec.left(seq(
       field("left", choice($.bool_expr, $.arithmetic_expr, $.atom)), 
       field("operator", choice("=", "!=", "<lex", "<=lex", ">lex", ">=lex", "<=", ">=", "<", ">")),

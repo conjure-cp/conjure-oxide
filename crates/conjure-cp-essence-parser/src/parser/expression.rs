@@ -31,7 +31,7 @@ pub fn parse_expression_with_context(
         "arithmetic_expr" => {
             parse_arithmetic_expression(&node, source_code, root, symbols_ptr, errors)
         }
-        "comparison_expr" => parse_binary_expression(&node, source_code, root, symbols_ptr, errors),
+        "comparison_expr" => parse_binary_expression(&node, source_code, root, symbols_ptr, errors, ExpressionContext::Unknown),
         "dominance_relation" => {
             parse_dominance_relation(&node, source_code, root, symbols_ptr, errors)
         }
@@ -90,7 +90,7 @@ fn parse_arithmetic_expression(
             parse_unary_expression(&inner, source_code, root, symbols_ptr, errors)
         }
         "exponent" | "product_expr" | "sum_expr" => {
-            parse_binary_expression(&inner, source_code, root, symbols_ptr, errors)
+            parse_binary_expression(&inner, source_code, root, symbols_ptr, errors, ExpressionContext::Arithmetic)
         }
         "list_combining_expr_arith" => {
             parse_list_combining_expression(&inner, source_code, root, symbols_ptr, errors, ExpressionContext::Arithmetic)
@@ -119,7 +119,7 @@ fn parse_boolean_expression(
             parse_unary_expression(&inner, source_code, root, symbols_ptr, errors)
         }
         "and_expr" | "or_expr" | "implication" | "iff_expr" | "set_operation_bool" => {
-            parse_binary_expression(&inner, source_code, root, symbols_ptr, errors)
+            parse_binary_expression(&inner, source_code, root, symbols_ptr, errors, ExpressionContext::Boolean)
         }
         "list_combining_expr_bool" => {
             parse_list_combining_expression(&inner, source_code, root, symbols_ptr, errors, ExpressionContext::Boolean)
@@ -201,10 +201,10 @@ pub fn parse_binary_expression(
     root: &Node,
     symbols_ptr: Option<SymbolTablePtr>,
     errors: &mut Vec<RecoverableParseError>,
+    context: ExpressionContext
 ) -> Result<Option<Expression>, FatalParseError> {
     let mut parse_subexpr =
-        |expr: Node| parse_expression(expr, source_code, root, symbols_ptr.clone(), errors);
-
+        |expr: Node| parse_expression_with_context(expr, source_code, root, symbols_ptr.clone(), errors, context);
     let Some(left) = parse_subexpr(field!(node, "left"))? else {
         return Ok(None);
     };
