@@ -4,7 +4,9 @@ use crate::parser::abstract_literal::parse_abstract;
 use crate::parser::comprehension::parse_comprehension;
 use crate::util::named_children;
 use crate::{field, named_child};
-use conjure_cp_core::ast::{Atom, Expression, Literal, Metadata, Moo, Name, SymbolTablePtr};
+use conjure_cp_core::ast::{
+    Atom, DeclarationPtr, Expression, GroundDomain, Literal, Metadata, Moo, Name, SymbolTablePtr,
+};
 use tree_sitter::Node;
 use ustr::Ustr;
 
@@ -194,18 +196,74 @@ fn parse_index(
     }
 }
 
+/// Type check a variable declaration against the expected expression context.
+/// Returns an error message if the variable type doesn't match the context.
+fn typecheck_variable(
+    decl: &DeclarationPtr,
+    var_name: &str,
+    context: ExpressionContext,
+) -> Option<String> {
+    // Only type check when context is known
+    if context == ExpressionContext::Unknown {
+        return None;
+    }
+
+    // Get the variable's domain and resolve it
+    let domain = decl.domain()?;
+    let ground_domain = domain.resolve()?;
+
+    match (ground_domain.as_ref(), context) {
+        (GroundDomain::Int(_), ExpressionContext::Boolean) => Some(format!(
+            "Integer variable '{}' used in boolean context",
+            var_name
+        )),
+        (GroundDomain::Bool, ExpressionContext::Arithmetic) => Some(format!(
+            "Boolean variable '{}' used in arithmetic context",
+            var_name
+        )),
+        (GroundDomain::Matrix(_, _), ExpressionContext::Boolean)
+        | (GroundDomain::Matrix(_, _), ExpressionContext::Arithmetic) => Some(format!(
+            "Matrix variable '{}' cannot be used directly in this context",
+            var_name
+        )),
+        (GroundDomain::Set(_, _), ExpressionContext::Boolean)
+        | (GroundDomain::Set(_, _), ExpressionContext::Arithmetic) => Some(format!(
+            "Set variable '{}' cannot be used directly in this context",
+            var_name
+        )),
+        (GroundDomain::Tuple(_), ExpressionContext::Boolean)
+        | (GroundDomain::Tuple(_), ExpressionContext::Arithmetic) => Some(format!(
+            "Tuple variable '{}' cannot be used directly in this context",
+            var_name
+        )),
+        (GroundDomain::Record(_), ExpressionContext::Boolean)
+        | (GroundDomain::Record(_), ExpressionContext::Arithmetic) => Some(format!(
+            "Record variable '{}' cannot be used directly in this context",
+            var_name
+        )),
+        // Everything else is OK
+        _ => None,
+    }
+}
+
 fn parse_variable(
     node: &Node,
     source_code: &str,
     symbols_ptr: Option<SymbolTablePtr>,
     errors: &mut Vec<RecoverableParseError>,
-    _context: ExpressionContext,
+    context: ExpressionContext,
 ) -> Result<Option<Atom>, FatalParseError> {
     let raw_name = &source_code[node.start_byte()..node.end_byte()];
     let name = Name::user(raw_name.trim());
+    
     if let Some(symbols) = symbols_ptr {
         if let Some(decl) = symbols.read().lookup(&name) {
-            // TODO: type check
+            // Type check the variable against the expected context
+            if let Some(error_msg) = typecheck_variable(&decl, raw_name, context) {
+                errors.push(RecoverableParseError::new(error_msg, Some(node.range())));
+                return Ok(None);
+            }
+            
             Ok(Some(Atom::Reference(conjure_cp_core::ast::Reference::new(
                 decl,
             ))))
