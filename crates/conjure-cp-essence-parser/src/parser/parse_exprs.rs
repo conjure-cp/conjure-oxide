@@ -1,5 +1,5 @@
 use super::util::{get_tree, query_toplevel};
-use crate::diagnostics::source_map::{self, SourceMap};
+use crate::diagnostics::source_map::SourceMap;
 use crate::errors::EssenceParseError;
 use crate::expression::parse_expression;
 use crate::util::node_is_expression;
@@ -46,8 +46,6 @@ pub fn parse_exprs(
 }
 
 mod test {
-    use crate::diagnostics::source_map::SourceMap;
-
     #[allow(unused)]
     use super::{parse_expr, parse_exprs};
     #[allow(unused)]
@@ -113,7 +111,7 @@ mod test {
             .insert(a.clone())
             .expect("a should not exist in the symbol-table yet, so we should be able to add it");
 
-        let mut source_map = SourceMap::default();
+        let mut source_map = crate::diagnostics::source_map::SourceMap::default();
         let exprs = parse_exprs(src, &symbols, &mut source_map).unwrap();
         assert_eq!(exprs.len(), 2);
 

@@ -15,7 +15,7 @@ pub fn parse_find_statement(
     find_statement: Node,
     source_code: &str,
     symbols: Option<Rc<RefCell<SymbolTable>>>,
-    source_map: &mut SourceMap,
+    _source_map: &mut SourceMap,
 ) -> Result<BTreeMap<Name, DomainPtr>, EssenceParseError> {
     let mut vars = BTreeMap::new();
 
