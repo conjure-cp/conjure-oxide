@@ -12,6 +12,7 @@ use super::letting::parse_letting_statement;
 use super::util::{get_tree, named_children};
 use crate::errors::{FatalParseError, ParseErrorCollection, RecoverableParseError};
 use crate::expression::parse_expression;
+use crate::field;
 use crate::syntax_errors::detect_syntactic_errors;
 
 /// Parse an Essence file into a Model using the tree-sitter parser.
@@ -26,17 +27,14 @@ pub fn parse_essence_file_native(
     let model = parse_essence_with_context(&source_code, context, &mut errors);
 
     match model {
-        Ok(m) => {
-            // Check if there were any recoverable errors
-            if !errors.is_empty() {
-                return Err(Box::new(ParseErrorCollection::multiple(
-                    errors,
-                    Some(source_code),
-                    Some(path.to_string()),
-                )));
-            }
-            // Return model if no errors
-            Ok(m)
+        Ok(Some(m)) => Ok(m),
+        Ok(None) => {
+            // Recoverable errors were found, return them as a ParseErrorCollection
+            Err(Box::new(ParseErrorCollection::multiple(
+                errors,
+                Some(source_code),
+                Some(path.to_string()),
+            )))
         }
         Err(fatal) => {
             // Fatal error - wrap in ParseErrorCollection::Fatal
@@ -49,7 +47,7 @@ pub fn parse_essence_with_context(
     src: &str,
     context: Arc<RwLock<Context<'static>>>,
     errors: &mut Vec<RecoverableParseError>,
-) -> Result<Model, FatalParseError> {
+) -> Result<Option<Model>, FatalParseError> {
     let (tree, source_code) = match get_tree(src) {
         Some(tree) => tree,
         None => {
@@ -61,7 +59,7 @@ pub fn parse_essence_with_context(
 
     if tree.root_node().has_error() {
         detect_syntactic_errors(src, &tree, errors);
-        return Ok(Model::new(context));
+        return Ok(None);
     }
 
     let mut model = Model::new(context);
@@ -85,35 +83,43 @@ pub fn parse_essence_with_context(
                 }
             }
             "bool_expr" | "atom" | "comparison_expr" => {
-                model.add_constraint(parse_expression(
+                let Some(expr) = parse_expression(
                     statement,
                     &source_code,
                     &statement,
                     Some(symbols_ptr.clone()),
                     errors,
-                )?);
+                )?
+                else {
+                    continue;
+                };
+                model.add_constraint(expr);
             }
             "language_label" => {}
             "letting_statement" => {
-                let letting_vars = parse_letting_statement(
+                let Some(letting_vars) = parse_letting_statement(
                     statement,
                     &source_code,
                     Some(symbols_ptr.clone()),
                     errors,
-                )?;
+                )?
+                else {
+                    continue;
+                };
                 model.symbols_mut().extend(letting_vars);
             }
             "dominance_relation" => {
-                let inner = statement
-                    .child_by_field_name("expression")
-                    .expect("Expected a sub-expression inside `dominanceRelation`");
-                let expr = parse_expression(
+                let inner = field!(statement, "expression");
+                let Some(expr) = parse_expression(
                     inner,
                     &source_code,
                     &statement,
                     Some(symbols_ptr.clone()),
                     errors,
-                )?;
+                )?
+                else {
+                    continue;
+                };
                 let dominance = Expression::DominanceRelation(Metadata::new(), Moo::new(expr));
                 if model.dominance.is_some() {
                     errors.push(RecoverableParseError::new(
@@ -124,27 +130,24 @@ pub fn parse_essence_with_context(
                 }
                 model.dominance = Some(dominance);
             }
-            // these should be detected at an earlier stage
-            "ERROR" => {
-                let raw_expr = &source_code[statement.start_byte()..statement.end_byte()];
-                errors.push(RecoverableParseError::new(
-                    format!("'{raw_expr}' is not a valid expression"),
-                    Some(statement.range()),
-                ));
-            }
             _ => {
-                let kind = statement.kind();
-                errors.push(RecoverableParseError::new(
-                    format!("Unrecognized top level statement kind: {kind}"),
+                return Err(FatalParseError::internal_error(
+                    format!("Unexpected top-level statement: {}", statement.kind()),
                     Some(statement.range()),
                 ));
             }
         }
-
-        // check for errors (keyword as identifier)
-        keyword_as_identifier(root_node, &source_code, errors);
     }
-    Ok(model)
+
+    // check for errors (keyword as identifier)
+    keyword_as_identifier(root_node, &source_code, errors);
+
+    // Check if there were any recoverable errors
+    if !errors.is_empty() {
+        return Ok(None);
+    }
+    // otherwise return the model
+    Ok(Some(model))
 }
 
 const KEYWORDS: [&str; 21] = [
@@ -191,16 +194,14 @@ pub fn parse_essence(src: &str) -> Result<Model, Box<ParseErrorCollection>> {
     let context = Arc::new(RwLock::new(Context::default()));
     let mut errors = vec![];
     match parse_essence_with_context(src, context, &mut errors) {
-        Ok(model) => {
-            if !errors.is_empty() {
-                Err(Box::new(ParseErrorCollection::multiple(
-                    errors,
-                    Some(src.to_string()),
-                    None,
-                )))
-            } else {
-                Ok(model)
-            }
+        Ok(Some(model)) => Ok(model),
+        Ok(None) => {
+            // Recoverable errors were found, return them as a ParseErrorCollection
+            Err(Box::new(ParseErrorCollection::multiple(
+                errors,
+                Some(src.to_string()),
+                None,
+            )))
         }
         Err(fatal) => Err(Box::new(ParseErrorCollection::fatal(fatal))),
     }

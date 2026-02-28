@@ -8,10 +8,12 @@ macro_rules! named_child {
         named_child!($node, $i, format!("Missing sub-expression #{}", $i + 1))
     };
     ($node:ident, $i:literal, $msg:expr) => {
-        $node.named_child($i).ok_or(FatalParseError::syntax_error(
-            format!("{} in expression of kind '{}'", $msg, $node.kind()),
-            Some($node.range()),
-        ))?
+        $node
+            .named_child($i)
+            .ok_or(FatalParseError::internal_error(
+                format!("{} in expression of kind '{}'", $msg, $node.kind()),
+                Some($node.range()),
+            ))?
     };
 }
 
@@ -25,7 +27,7 @@ macro_rules! child {
         child!($node, $i, format!("Missing sub-expression #{}", $i + 1))
     };
     ($node:ident, $i:literal, $msg:expr) => {
-        $node.child($i).ok_or(FatalParseError::syntax_error(
+        $node.child($i).ok_or(FatalParseError::internal_error(
             format!("{} in expression of kind '{}'", $msg, $node.kind()),
             Some($node.range()),
         ))?
@@ -38,7 +40,7 @@ macro_rules! field {
     ($node:ident, $name:expr) => {
         $node
             .child_by_field_name($name)
-            .ok_or(FatalParseError::syntax_error(
+            .ok_or(FatalParseError::internal_error(
                 format!(
                     "Missing field '{}' in expression of kind '{}'",
                     $name,

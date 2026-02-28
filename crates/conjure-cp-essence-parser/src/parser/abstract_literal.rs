@@ -12,13 +12,13 @@ pub fn parse_abstract(
     source_code: &str,
     symbols_ptr: Option<SymbolTablePtr>,
     errors: &mut Vec<RecoverableParseError>,
-) -> Result<AbstractLiteral<Expression>, FatalParseError> {
+) -> Result<Option<AbstractLiteral<Expression>>, FatalParseError> {
     match node.kind() {
         "record" => parse_record(node, source_code, symbols_ptr, errors),
         "tuple" => parse_tuple(node, source_code, symbols_ptr, errors),
         "matrix" => parse_matrix(node, source_code, symbols_ptr, errors),
         "set_literal" => parse_set_literal(node, source_code, symbols_ptr, errors),
-        _ => Err(FatalParseError::syntax_error(
+        _ => Err(FatalParseError::internal_error(
             format!("Expected abstract literal, got: {}", node.kind()),
             Some(node.range()),
         )),
@@ -30,23 +30,26 @@ fn parse_record(
     source_code: &str,
     symbols_ptr: Option<SymbolTablePtr>,
     errors: &mut Vec<RecoverableParseError>,
-) -> Result<AbstractLiteral<Expression>, FatalParseError> {
+) -> Result<Option<AbstractLiteral<Expression>>, FatalParseError> {
     let mut values = Vec::new();
     for child in node.children_by_field_name("name_value_pair", &mut node.walk()) {
         let name_node = field!(child, "name");
         let name_str = &source_code[name_node.start_byte()..name_node.end_byte()];
         let name = conjure_cp_core::ast::Name::user(name_str);
 
-        let value: Expression = parse_expression(
+        let Some(value) = parse_expression(
             field!(child, "value"),
             source_code,
             node,
             symbols_ptr.clone(),
             errors,
-        )?;
+        )?
+        else {
+            return Ok(None);
+        };
         values.push(conjure_cp_core::ast::records::RecordValue { name, value });
     }
-    Ok(AbstractLiteral::Record(values))
+    Ok(Some(AbstractLiteral::Record(values)))
 }
 
 fn parse_tuple(
@@ -54,18 +57,16 @@ fn parse_tuple(
     source_code: &str,
     symbols_ptr: Option<SymbolTablePtr>,
     errors: &mut Vec<RecoverableParseError>,
-) -> Result<AbstractLiteral<Expression>, FatalParseError> {
+) -> Result<Option<AbstractLiteral<Expression>>, FatalParseError> {
     let mut elements = Vec::new();
     for child in named_children(node) {
-        elements.push(parse_expression(
-            child,
-            source_code,
-            node,
-            symbols_ptr.clone(),
-            errors,
-        )?);
+        let Some(expr) = parse_expression(child, source_code, node, symbols_ptr.clone(), errors)?
+        else {
+            return Ok(None);
+        };
+        elements.push(expr);
     }
-    Ok(AbstractLiteral::Tuple(elements))
+    Ok(Some(AbstractLiteral::Tuple(elements)))
 }
 
 fn parse_matrix(
@@ -73,7 +74,7 @@ fn parse_matrix(
     source_code: &str,
     symbols_ptr: Option<SymbolTablePtr>,
     errors: &mut Vec<RecoverableParseError>,
-) -> Result<AbstractLiteral<Expression>, FatalParseError> {
+) -> Result<Option<AbstractLiteral<Expression>>, FatalParseError> {
     let mut elements = vec![];
     let mut domain: Option<DomainPtr> = None;
     for child in named_children(node) {
@@ -82,20 +83,19 @@ fn parse_matrix(
             || child.kind() == "comparison_expr"
             || child.kind() == "atom"
         {
-            elements.push(parse_expression(
-                child,
-                source_code,
-                node,
-                symbols_ptr.clone(),
-                errors,
-            )?);
+            let Some(expr) =
+                parse_expression(child, source_code, node, symbols_ptr.clone(), errors)?
+            else {
+                return Ok(None);
+            };
+            elements.push(expr);
         } else {
-            domain = Some(parse_domain(
-                child,
-                source_code,
-                symbols_ptr.clone(),
-                errors,
-            )?);
+            let Some(parsed_domain) =
+                parse_domain(child, source_code, symbols_ptr.clone(), errors)?
+            else {
+                return Ok(None);
+            };
+            domain = Some(parsed_domain);
         }
     }
     if domain.is_none() {
@@ -103,7 +103,7 @@ fn parse_matrix(
         domain = Some(domain_int!(1..count));
     }
 
-    Ok(AbstractLiteral::Matrix(elements, domain.unwrap()))
+    Ok(Some(AbstractLiteral::Matrix(elements, domain.unwrap())))
 }
 
 fn parse_set_literal(
@@ -111,16 +111,14 @@ fn parse_set_literal(
     source_code: &str,
     symbols_ptr: Option<SymbolTablePtr>,
     errors: &mut Vec<RecoverableParseError>,
-) -> Result<AbstractLiteral<Expression>, FatalParseError> {
+) -> Result<Option<AbstractLiteral<Expression>>, FatalParseError> {
     let mut elements = Vec::new();
     for child in named_children(node) {
-        elements.push(parse_expression(
-            child,
-            source_code,
-            node,
-            symbols_ptr.clone(),
-            errors,
-        )?);
+        let Some(expr) = parse_expression(child, source_code, node, symbols_ptr.clone(), errors)?
+        else {
+            return Ok(None);
+        };
+        elements.push(expr);
     }
-    Ok(AbstractLiteral::Set(elements))
+    Ok(Some(AbstractLiteral::Set(elements)))
 }

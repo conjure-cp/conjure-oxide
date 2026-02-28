@@ -15,7 +15,7 @@ fn detects_undefined_variable() {
 
     let diag = &diagnostics[0];
 
-    check_diagnostic(diag, 1, 14, 1, 15, "Undefined variable: 'y'");
+    check_diagnostic(diag, 1, 14, 1, 15, "The identifier 'y' is not defined");
 }
 
 #[test]
@@ -45,7 +45,14 @@ fn range_points_to_error_location() {
 
     let diag = &diagnostics[0];
 
-    check_diagnostic(diag, 1, 14, 1, 27, "Undefined variable: 'undefined_var'");
+    check_diagnostic(
+        diag,
+        1,
+        14,
+        1,
+        27,
+        "The identifier 'undefined_var' is not defined",
+    );
 }
 
 // not enforced in conjure
