@@ -47,8 +47,13 @@ pub fn parse_comprehension(
 
                 // Parse the domain
                 let domain_node = field!(child, "domain");
-                let Some(var_domain) =
-                    parse_domain(domain_node, source_code, Some(symbols_ptr.clone()), errors, source_map)?
+                let Some(var_domain) = parse_domain(
+                    domain_node,
+                    source_code,
+                    Some(symbols_ptr.clone()),
+                    errors,
+                    source_map,
+                )?
                 else {
                     return Ok(None);
                 };
@@ -148,8 +153,13 @@ pub fn parse_quantifier_or_aggregate_expr(
                 variables.push(var_name);
             }
             "domain" => {
-                let Some(parsed_domain) =
-                    parse_domain(child, source_code, Some(symbols_ptr.clone()), errors, source_map)?
+                let Some(parsed_domain) = parse_domain(
+                    child,
+                    source_code,
+                    Some(symbols_ptr.clone()),
+                    errors,
+                    source_map,
+                )?
                 else {
                     return Ok(None);
                 };
