@@ -41,7 +41,7 @@ pub struct Diagnostic {
 }
 
 // document symbol struct is used to denote a single token / node
-// this will be used for syntax highlighting
+// this will be used for syntax highlighting and hovering
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum SymbolKind {
@@ -50,6 +50,9 @@ pub enum SymbolKind {
     Function = 2,
     Letting = 3,
     Find = 4,
+    Variable = 5,
+    Constant = 6,
+    Domain = 7,
 } // to be extended
 
 // each type of token / symbol in the essence grammar will be
