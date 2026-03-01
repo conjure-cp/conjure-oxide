@@ -19,9 +19,14 @@ pub fn parse_atom(
     source_map: &mut SourceMap,
 ) -> Result<Option<Expression>, FatalParseError> {
     match node.kind() {
-        "atom" | "sub_atom_expr" => {
-            parse_atom(&named_child!(node), source_code, root, symbols_ptr, errors, source_map)
-        }
+        "atom" | "sub_atom_expr" => parse_atom(
+            &named_child!(node),
+            source_code,
+            root,
+            symbols_ptr,
+            errors,
+            source_map,
+        ),
         "metavar" => {
             let ident = field!(node, "identifier");
             let name_str = &source_code[ident.start_byte()..ident.end_byte()];
@@ -45,14 +50,13 @@ pub fn parse_atom(
                 ));
             }
 
-            let Some(inner) =
-                parse_variable(
-                    &field!(node, "variable"),
-                    source_code,
-                    symbols_ptr,
-                    errors,
-                    source_map,
-                )?
+            let Some(inner) = parse_variable(
+                &field!(node, "variable"),
+                source_code,
+                symbols_ptr,
+                errors,
+                source_map,
+            )?
             else {
                 return Ok(None);
             };
@@ -77,13 +81,17 @@ pub fn parse_atom(
             Ok(Some(Expression::AbstractLiteral(Metadata::new(), abs)))
         }
         "flatten" => parse_flatten(node, source_code, root, symbols_ptr, errors, source_map),
-        "index_or_slice" => parse_index_or_slice(node, source_code, root, symbols_ptr, errors, source_map),
+        "index_or_slice" => {
+            parse_index_or_slice(node, source_code, root, symbols_ptr, errors, source_map)
+        }
         // for now, assume is binary since powerset isn't implemented
         // TODO: add powerset support under "set_operation"
         "set_operation" => {
             parse_binary_expression(node, source_code, root, symbols_ptr, errors, source_map)
         }
-        "comprehension" => parse_comprehension(node, source_code, root, symbols_ptr, errors, source_map),
+        "comprehension" => {
+            parse_comprehension(node, source_code, root, symbols_ptr, errors, source_map)
+        }
         _ => Err(FatalParseError::internal_error(
             format!("Expected atom, got: {}", node.kind()),
             Some(node.range()),
@@ -100,8 +108,14 @@ fn parse_flatten(
     source_map: &mut SourceMap,
 ) -> Result<Option<Expression>, FatalParseError> {
     let expr_node = field!(node, "expression");
-    let Some(expr) =
-        parse_atom(&expr_node, source_code, root, symbols_ptr, errors, source_map)?
+    let Some(expr) = parse_atom(
+        &expr_node,
+        source_code,
+        root,
+        symbols_ptr,
+        errors,
+        source_map,
+    )?
     else {
         return Ok(None);
     };
@@ -216,7 +230,7 @@ fn parse_variable(
                 ty: decl.domain().map(|d| d.to_string()),
                 decl_span: None,
             };
-            span_with_hover(&node, source_code, source_map, hover);
+            span_with_hover(node, source_code, source_map, hover);
             Ok(Some(Atom::Reference(conjure_cp_core::ast::Reference::new(
                 decl,
             ))))
