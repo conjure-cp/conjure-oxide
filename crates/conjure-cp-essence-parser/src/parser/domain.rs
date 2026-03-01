@@ -1,6 +1,6 @@
 use super::util::named_children;
 use crate::EssenceParseError;
-use crate::diagnostics::source_map::SourceMap;
+use crate::diagnostics::source_map::{HoverInfo, SourceMap, span_with_hover};
 use conjure_cp_core::ast::{
     DeclarationPtr, Domain, DomainPtr, IntVal, Name, Range, RecordEntry, Reference, SetAttr,
     SymbolTable,
@@ -25,8 +25,26 @@ pub fn parse_domain(
             symbols,
             source_map,
         ),
-        "bool_domain" => Ok(Domain::bool()),
-        "int_domain" => Ok(parse_int_domain(domain, source_code, &symbols)),
+        "bool_domain" => {
+            let hover = HoverInfo {
+                description: "Boolean domain".to_string(),
+                kind: None,
+                ty: Some("bool".to_string()),
+                decl_span: None,
+            };
+            span_with_hover(&domain, source_code, source_map, hover);
+            Ok(Domain::bool())
+        }
+        "int_domain" => {
+            let hover = HoverInfo {
+                description: "Integer domain".to_string(),
+                kind: None,
+                ty: Some("int".to_string()),
+                decl_span: None,
+            };
+            span_with_hover(&domain, source_code, source_map, hover);
+            Ok(parse_int_domain(domain, source_code, &symbols))
+        }
         "identifier" => {
             let decl = get_declaration_ptr_from_identifier(domain, source_code, &symbols)?;
             let dom = Domain::reference(decl).ok_or(EssenceParseError::syntax_error(
@@ -36,6 +54,14 @@ pub fn parse_domain(
                 ),
                 Some(domain.range()),
             ))?;
+            let name = &source_code[domain.start_byte()..domain.end_byte()];
+            let hover = HoverInfo {
+                description: format!("Domain reference: {name}"),
+                kind: None,
+                ty: None,
+                decl_span: None,
+            };
+            span_with_hover(&domain, source_code, source_map, hover);
             Ok(dom)
         }
         "tuple_domain" => parse_tuple_domain(domain, source_code, symbols, source_map),
