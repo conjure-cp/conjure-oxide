@@ -140,7 +140,7 @@ fn main() -> io::Result<()> {
                         subdir.path().display().to_string(),
                         essence_files[0].clone(),
                     )?;
-                } 
+                }
             } else {
                 // Finds Essence filenames
                 let names: Vec<String> = read_dir(subdir.path())?
@@ -183,8 +183,7 @@ fn main() -> io::Result<()> {
                     })
                     .collect();
 
-                let essence_files: Vec<(String, String)> =
-                    std::iter::zip(names, exts).collect();
+                let essence_files: Vec<(String, String)> = std::iter::zip(names, exts).collect();
                 // There should only be one test file per directory
                 if essence_files.len() == 1 {
                     write_roundtrip_test(
