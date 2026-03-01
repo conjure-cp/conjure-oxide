@@ -9,8 +9,9 @@ use uniplate::Uniplate;
 
 use super::find::parse_find_statement;
 use super::letting::parse_letting_statement;
-use super::util::{get_tree, named_children};
-use crate::diagnostics::source_map::SourceMap;
+use super::util::get_tree;
+use crate::diagnostics::diagnostics_api::SymbolKind;
+use crate::diagnostics::source_map::{HoverInfo, SourceMap, span_with_hover};
 use crate::errors::EssenceParseError;
 use crate::expression::parse_expression;
 
@@ -40,16 +41,54 @@ pub fn parse_essence_with_context(
     let mut source_map = SourceMap::default();
 
     let mut model = Model::new(context);
-    // let symbols = model.as_submodel().symbols().clone();
     let root_node = tree.root_node();
-    let symbols_ptr = model.as_submodel().symbols_ptr_unchecked().clone();
-    for statement in named_children(&root_node) {
-        match statement.kind() {
+    let symbols_ptr: std::rc::Rc<std::cell::RefCell<conjure_cp_core::ast::SymbolTable>> =
+        model.as_submodel().symbols_ptr_unchecked().clone();
+    let mut cursor = root_node.walk();
+    for child in root_node.children(&mut cursor) {
+        // since find and letting are unnamed children
+        // hover info is added here.
+        // other unnamed children will be skipped.
+        if child.kind() == "find" {
+            span_with_hover(
+                &child,
+                &source_code,
+                &mut source_map,
+                HoverInfo {
+                    description: "Find keyword".to_string(),
+                    kind: Some(SymbolKind::Find),
+                    ty: None,
+                    decl_span: None,
+                },
+            );
+        } else if child.kind() == "letting" {
+            span_with_hover(
+                &child,
+                &source_code,
+                &mut source_map,
+                HoverInfo {
+                    description: "Letting keyword".to_string(),
+                    kind: Some(SymbolKind::Letting),
+                    ty: None,
+                    decl_span: None,
+                },
+            );
+        }
+
+        if !child.is_named() {
+            continue;
+        }
+
+        match child.kind() {
             "single_line_comment" => {}
             "language_declaration" => {}
-            "find_statement" => {
-                let var_hashmap =
-                    parse_find_statement(statement, &source_code, Some(symbols_ptr.clone()), &mut source_map)?;
+            "find_child" => {
+                let var_hashmap = parse_find_statement(
+                    child,
+                    &source_code,
+                    Some(symbols_ptr.clone()),
+                    &mut source_map,
+                )?;
                 for (name, domain) in var_hashmap {
                     model
                         .as_submodel_mut()
@@ -59,25 +98,33 @@ pub fn parse_essence_with_context(
             }
             "bool_expr" | "atom" | "comparison_expr" => {
                 model.as_submodel_mut().add_constraint(parse_expression(
-                    statement,
+                    child,
                     &source_code,
-                    &statement,
+                    &child,
                     Some(symbols_ptr.clone()),
                     &mut source_map,
                 )?);
             }
-            "language_label" => {}
-            "letting_statement" => {
-                let letting_vars =
-                    parse_letting_statement(statement, &source_code, Some(symbols_ptr.clone()), &mut source_map)?;
+            "language_label" => {
+                let letting_vars = parse_letting_statement(
+                    child,
+                    &source_code,
+                    Some(symbols_ptr.clone()),
+                    &mut source_map,
+                )?;
                 model.as_submodel_mut().symbols_mut().extend(letting_vars);
             }
             "dominance_relation" => {
-                let inner = statement
+                let inner = child
                     .child_by_field_name("expression")
                     .expect("Expected a sub-expression inside `dominanceRelation`");
-                let expr =
-                    parse_expression(inner, &source_code, &statement, Some(symbols_ptr.clone()), &mut source_map)?;
+                let expr = parse_expression(
+                    inner,
+                    &source_code,
+                    &child,
+                    Some(symbols_ptr.clone()),
+                    &mut source_map,
+                )?;
                 let dominance = Expression::DominanceRelation(Metadata::new(), Moo::new(expr));
                 if model.dominance.is_some() {
                     return Err(EssenceParseError::syntax_error(
@@ -88,17 +135,17 @@ pub fn parse_essence_with_context(
                 model.dominance = Some(dominance);
             }
             "ERROR" => {
-                let raw_expr = &source_code[statement.start_byte()..statement.end_byte()];
+                let raw_expr = &source_code[child.start_byte()..child.end_byte()];
                 return Err(EssenceParseError::syntax_error(
                     format!("'{raw_expr}' is not a valid expression"),
-                    Some(statement.range()),
+                    Some(child.range()),
                 ));
             }
             _ => {
-                let kind = statement.kind();
+                let kind = child.kind();
                 return Err(EssenceParseError::syntax_error(
-                    format!("Unrecognized top level statement kind: {kind}"),
-                    Some(statement.range()),
+                    format!("Unrecognized top level child kind: {kind}"),
+                    Some(child.range()),
                 ));
             }
         }
@@ -169,7 +216,6 @@ mod test {
         such that x + y + z = 4
         such that x >= y
         ";
-
 
         let (model, _source_map) = parse_essence(src).unwrap();
 
