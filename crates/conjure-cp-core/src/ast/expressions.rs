@@ -1228,7 +1228,6 @@ impl CategoryOf for Expression {
                 // declarationptrs inside this expression
 
                 // this should generically cover all leaf types we currently have in oxide.
-
                 // if x contains submodels (including comprehensions)
                 if !Biplate::<Model>::universe_bi(&x).is_empty() {
                     // assume that the category is decision

@@ -15,23 +15,12 @@ use uniplate::Uniplate;
 pub struct AbstractComprehension {
     pub return_expr: Expression,
     pub qualifiers: Vec<Qualifier>,
-
-    /// The symbol table used in the return expression.
-    ///
-    /// Variables from generator expressions are "given" in the context of the return expression.
-    /// That is, they are constants which are different for each expansion of the comprehension.
     #[serde_as(as = "PtrAsInner")]
-    pub return_expr_symbols: SymbolTablePtr,
-
-    /// The scope for variables in generator expressions.
-    ///
-    /// Variables declared in generator expressions are decision variables, since they do not
-    /// have a constant value.
-    #[serde_as(as = "PtrAsInner")]
-    pub generator_symbols: SymbolTablePtr,
+    pub symbols: SymbolTablePtr,
 }
 
-#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Hash)]
+#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Hash, Uniplate)]
+#[biplate(to=Expression)]
 pub enum Qualifier {
     Generator(Generator),
     Condition(Expression),
@@ -89,18 +78,7 @@ impl Typeable for AbstractComprehension {
 
 pub struct AbstractComprehensionBuilder {
     pub qualifiers: Vec<Qualifier>,
-
-    /// The symbol table used in the return expression.
-    ///
-    /// Variables from generator expressions are "given" in the context of the return expression.
-    /// That is, they are constants which are different for each expansion of the comprehension.
-    pub return_expr_symbols: SymbolTablePtr,
-
-    /// The scope for variables in generator expressions.
-    ///
-    /// Variables declared in generator expressions are decision variables in their original
-    /// context, since they do not have a constant value.
-    pub generator_symbols: SymbolTablePtr,
+    pub symbols: SymbolTablePtr,
 }
 
 impl AbstractComprehensionBuilder {
@@ -112,23 +90,15 @@ impl AbstractComprehensionBuilder {
     ///
     /// The return expression is passed when finalizing the comprehension, in [with_return_value].
     pub fn new(symbols: &SymbolTablePtr) -> Self {
-        Self {
+        AbstractComprehensionBuilder {
             qualifiers: vec![],
-            return_expr_symbols: SymbolTablePtr::with_parent(symbols.clone()),
-            generator_symbols: SymbolTablePtr::with_parent(symbols.clone()),
+            symbols: SymbolTablePtr::with_parent(symbols.clone()),
         }
     }
 
-    pub fn return_expr_symbols(&self) -> SymbolTablePtr {
-        self.return_expr_symbols.clone()
-    }
-
-    pub fn generator_symbols(&self) -> SymbolTablePtr {
-        self.generator_symbols.clone()
-    }
-
-    pub fn new_domain_generator(&mut self, domain: DomainPtr) -> DeclarationPtr {
-        let generator_decl = self.return_expr_symbols.write().gensym(&domain);
+    pub fn add_domain_generator(mut self, domain: DomainPtr, name: Name) {
+        let generator_decl = DeclarationPtr::new_quantified(name, domain);
+        self.symbols.write().update_insert(generator_decl.clone());
 
         self.qualifiers
             .push(Qualifier::Generator(Generator::DomainGenerator(
@@ -136,6 +106,13 @@ impl AbstractComprehensionBuilder {
                     decl: generator_decl.clone(),
                 },
             )));
+    }
+
+    pub fn new_domain_generator(self, domain: DomainPtr) -> DeclarationPtr {
+        let generator_decl = self.symbols.write().gensym(&domain);
+        let name = generator_decl.name().clone();
+
+        self.add_domain_generator(domain, name);
 
         generator_decl
     }
@@ -145,20 +122,17 @@ impl AbstractComprehensionBuilder {
     /// The variable "takes from" the expression, that is, it can be any element in the expression.
     ///
     /// E.g. in `[ x | x <- some_set ]`, `x` can be any element of `some_set`.
-    pub fn new_expression_generator(mut self, expr: Expression, name: Name) -> Self {
+    pub fn add_expression_generator(mut self, expr: Expression, name: Name) -> Self {
         let domain = expr
             .domain_of()
             .expect("Expression must have a domain")
             .element_domain()
             .expect("Expression must contain elements with uniform domain");
 
-        // The variable is quantified in both scopes.
+        // The variable is quantified.
         let generator_ptr = DeclarationPtr::new_quantified(name, domain);
-        let return_expr_ptr = DeclarationPtr::new_quantified_from_generator(&generator_ptr)
-            .expect("Return expression declaration must not be None");
 
-        self.return_expr_symbols.write().insert(return_expr_ptr);
-        self.generator_symbols.write().insert(generator_ptr.clone());
+        self.symbols.write().insert(generator_ptr.clone());
 
         self.qualifiers
             .push(Qualifier::Generator(Generator::ExpressionGenerator(
@@ -171,7 +145,22 @@ impl AbstractComprehensionBuilder {
         self
     }
 
-    /// See [crate::ast::comprehension::ComprehensionBuilder::guard]
+    pub fn new_expression_generator(self, expr: Expression) -> DeclarationPtr {
+        let domain = expr
+            .domain_of()
+            .expect("Expression must have a domain")
+            .element_domain()
+            .expect("Expression must contain elements with uniform domain");
+
+        let decl_ptr = self.symbols.write().gensym(&domain);
+        let name = decl_ptr.name().clone();
+
+        self.add_expression_generator(expr, name);
+
+        decl_ptr
+    }
+
+    //this is the same as the add guard method
     pub fn add_condition(&mut self, condition: Expression) {
         if condition.return_type() != ReturnType::Bool {
             panic!("Condition expression must have boolean return type");
@@ -181,7 +170,7 @@ impl AbstractComprehensionBuilder {
     }
 
     pub fn new_letting(&mut self, expression: Expression) -> DeclarationPtr {
-        let letting_decl = self.return_expr_symbols.write().gensym(
+        let letting_decl = self.symbols.write().gensym(
             &expression
                 .domain_of()
                 .expect("Expression must have a domain"),
@@ -196,16 +185,11 @@ impl AbstractComprehensionBuilder {
         letting_decl
     }
 
-    // The lack of the generator_symboltable and return_expr_symboltable
-    // are explained bc 1. we dont have separate symboltables for each part
-    // 2. it is unclear why there would be a need to access each one uniquely
-
     pub fn with_return_value(self, expression: Expression) -> AbstractComprehension {
         AbstractComprehension {
             return_expr: expression,
             qualifiers: self.qualifiers,
-            return_expr_symbols: self.return_expr_symbols,
-            generator_symbols: self.generator_symbols,
+            symbols: self.symbols,
         }
     }
 }
