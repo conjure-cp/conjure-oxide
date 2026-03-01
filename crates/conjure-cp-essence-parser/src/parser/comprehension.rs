@@ -1,3 +1,4 @@
+use crate::diagnostics::source_map::SourceMap;
 use crate::errors::{FatalParseError, RecoverableParseError};
 use crate::expression::parse_expression;
 use crate::field;
@@ -15,6 +16,7 @@ pub fn parse_comprehension(
     root: &Node,
     symbols_ptr: Option<SymbolTablePtr>,
     errors: &mut Vec<RecoverableParseError>,
+    source_map: &mut SourceMap,
 ) -> Result<Option<Expression>, FatalParseError> {
     // Comprehensions require a symbol table passed in
     let symbols_ptr = symbols_ptr.ok_or_else(|| {
@@ -45,8 +47,13 @@ pub fn parse_comprehension(
 
                 // Parse the domain
                 let domain_node = field!(child, "domain");
-                let Some(var_domain) =
-                    parse_domain(domain_node, source_code, Some(symbols_ptr.clone()), errors)?
+                let Some(var_domain) = parse_domain(
+                    domain_node,
+                    source_code,
+                    Some(symbols_ptr.clone()),
+                    errors,
+                    source_map,
+                )?
                 else {
                     return Ok(None);
                 };
@@ -66,6 +73,7 @@ pub fn parse_comprehension(
                     root,
                     Some(generator_symboltable),
                     errors,
+                    source_map,
                 )?
                 else {
                     return Ok(None);
@@ -95,6 +103,7 @@ pub fn parse_comprehension(
         root,
         Some(builder.return_expr_symboltable()),
         errors,
+        source_map,
     )?
     else {
         return Ok(None);
@@ -118,6 +127,7 @@ pub fn parse_quantifier_or_aggregate_expr(
     root: &Node,
     symbols_ptr: Option<SymbolTablePtr>,
     errors: &mut Vec<RecoverableParseError>,
+    source_map: &mut SourceMap,
 ) -> Result<Option<Expression>, FatalParseError> {
     // Quantifier and aggregate expressions require a symbol table
     let symbols_ptr = symbols_ptr.ok_or_else(|| {
@@ -143,8 +153,13 @@ pub fn parse_quantifier_or_aggregate_expr(
                 variables.push(var_name);
             }
             "domain" => {
-                let Some(parsed_domain) =
-                    parse_domain(child, source_code, Some(symbols_ptr.clone()), errors)?
+                let Some(parsed_domain) = parse_domain(
+                    child,
+                    source_code,
+                    Some(symbols_ptr.clone()),
+                    errors,
+                    source_map,
+                )?
                 else {
                     return Ok(None);
                 };
@@ -212,6 +227,7 @@ pub fn parse_quantifier_or_aggregate_expr(
         root,
         Some(builder.return_expr_symboltable()),
         errors,
+        source_map,
     )?
     else {
         return Ok(None);
