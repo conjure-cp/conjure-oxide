@@ -322,10 +322,9 @@ fn reduce_solve_xyz() {
     );
 
     let mut model = Model::new(Default::default());
-    *model.as_submodel_mut().constraints_mut() = vec![expr1, expr2];
+    *model.constraints_mut() = vec![expr1, expr2];
 
     model
-        .as_submodel_mut()
         .symbols_mut()
         .insert(DeclarationPtr::new_find(
             Name::user("a"),
@@ -333,7 +332,6 @@ fn reduce_solve_xyz() {
         ))
         .unwrap();
     model
-        .as_submodel_mut()
         .symbols_mut()
         .insert(DeclarationPtr::new_find(
             Name::user("b"),
@@ -341,7 +339,6 @@ fn reduce_solve_xyz() {
         ))
         .unwrap();
     model
-        .as_submodel_mut()
         .symbols_mut()
         .insert(DeclarationPtr::new_find(
             Name::user("c"),
@@ -685,26 +682,14 @@ fn rewrite_solve_xyz() {
     let mut model = Model::new(Default::default());
 
     // Insert variables and domains
-    model
-        .as_submodel_mut()
-        .symbols_mut()
-        .insert(decl_a)
-        .unwrap();
-    model
-        .as_submodel_mut()
-        .symbols_mut()
-        .insert(decl_b)
-        .unwrap();
-    model
-        .as_submodel_mut()
-        .symbols_mut()
-        .insert(decl_c)
-        .unwrap();
+    model.symbols_mut().insert(decl_a).unwrap();
+    model.symbols_mut().insert(decl_b).unwrap();
+    model.symbols_mut().insert(decl_c).unwrap();
 
-    *model.as_submodel_mut().constraints_mut() = vec![nested_expr];
+    *model.constraints_mut() = vec![nested_expr];
 
     model = rewrite_naive(&model, &rule_sets, true).unwrap();
-    let rewritten_expr = model.as_submodel().constraints();
+    let rewritten_expr = model.constraints();
 
     // Check if the expression is in its simplest form
 
