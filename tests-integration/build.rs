@@ -140,58 +140,58 @@ fn main() -> io::Result<()> {
                         subdir.path().display().to_string(),
                         essence_files[0].clone(),
                     )?;
-                } else {
-                    // Finds Essence filenames
-                    let names: Vec<String> = read_dir(subdir.path())?
-                        .filter_map(Result::ok)
-                        .map(|entry| entry.path())
-                        .filter(|path| path.extension().is_some_and(|ext| ext == "essence"))
-                        // Ensures not to include test result files
-                        .filter(|path| {
-                            path.file_stem()
-                                .and_then(|name| name.to_str())
-                                .is_some_and(|name| {
-                                    !name.contains(".generated") && !name.contains(".expected")
-                                })
-                        })
-                        // Stores the filename in the collected vector
-                        .filter_map(|path| {
-                            path.file_stem()
-                                .and_then(|stem| stem.to_str())
-                                .map(|s| s.to_owned())
-                        })
-                        .collect();
-                    // Finds Essence file extensions
-                    let exts: Vec<String> = read_dir(subdir.path())?
-                        .filter_map(Result::ok)
-                        .map(|entry| entry.path())
-                        .filter(|path| path.extension().is_some_and(|ext| ext == "essence"))
-                        // Ensures not to include test result files
-                        .filter(|path| {
-                            path.file_stem()
-                                .and_then(|name| name.to_str())
-                                .is_some_and(|name| {
-                                    !name.contains(".generated") && !name.contains(".expected")
-                                })
-                        })
-                        // Stores the extension in the collected vector
-                        .filter_map(|path| {
-                            path.extension()
-                                .and_then(|ext| ext.to_str())
-                                .map(|s| s.to_owned())
-                        })
-                        .collect();
+                } 
+            } else {
+                // Finds Essence filenames
+                let names: Vec<String> = read_dir(subdir.path())?
+                    .filter_map(Result::ok)
+                    .map(|entry| entry.path())
+                    .filter(|path| path.extension().is_some_and(|ext| ext == "essence"))
+                    // Ensures not to include test result files
+                    .filter(|path| {
+                        path.file_stem()
+                            .and_then(|name| name.to_str())
+                            .is_some_and(|name| {
+                                !name.contains(".generated") && !name.contains(".expected")
+                            })
+                    })
+                    // Stores the filename in the collected vector
+                    .filter_map(|path| {
+                        path.file_stem()
+                            .and_then(|stem| stem.to_str())
+                            .map(|s| s.to_owned())
+                    })
+                    .collect();
+                // Finds Essence file extensions
+                let exts: Vec<String> = read_dir(subdir.path())?
+                    .filter_map(Result::ok)
+                    .map(|entry| entry.path())
+                    .filter(|path| path.extension().is_some_and(|ext| ext == "essence"))
+                    // Ensures not to include test result files
+                    .filter(|path| {
+                        path.file_stem()
+                            .and_then(|name| name.to_str())
+                            .is_some_and(|name| {
+                                !name.contains(".generated") && !name.contains(".expected")
+                            })
+                    })
+                    // Stores the extension in the collected vector
+                    .filter_map(|path| {
+                        path.extension()
+                            .and_then(|ext| ext.to_str())
+                            .map(|s| s.to_owned())
+                    })
+                    .collect();
 
-                    let essence_files: Vec<(String, String)> =
-                        std::iter::zip(names, exts).collect();
-                    // There should only be one test file per directory
-                    if essence_files.len() == 1 {
-                        write_roundtrip_test(
-                            &mut f,
-                            subdir.path().display().to_string(),
-                            essence_files[0].clone(),
-                        )?;
-                    }
+                let essence_files: Vec<(String, String)> =
+                    std::iter::zip(names, exts).collect();
+                // There should only be one test file per directory
+                if essence_files.len() == 1 {
+                    write_roundtrip_test(
+                        &mut f,
+                        subdir.path().display().to_string(),
+                        essence_files[0].clone(),
+                    )?;
                 }
             }
         }
