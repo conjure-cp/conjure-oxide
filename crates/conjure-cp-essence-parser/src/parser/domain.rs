@@ -1,5 +1,6 @@
 use super::atom::parse_int;
 use super::util::named_children;
+use crate::diagnostics::source_map::{HoverInfo, SourceMap, span_with_hover};
 use crate::errors::{FatalParseError, RecoverableParseError};
 use crate::{child, field};
 use conjure_cp_core::ast::{
@@ -15,11 +16,36 @@ pub fn parse_domain(
     source_code: &str,
     symbols: Option<SymbolTablePtr>,
     errors: &mut Vec<RecoverableParseError>,
+    source_map: &mut SourceMap,
 ) -> Result<Option<DomainPtr>, FatalParseError> {
     match domain.kind() {
-        "domain" => parse_domain(child!(domain, 0, "domain"), source_code, symbols, errors),
-        "bool_domain" => Ok(Some(Domain::bool())),
-        "int_domain" => parse_int_domain(domain, source_code, &symbols, errors),
+        "domain" => parse_domain(
+            child!(domain, 0, "domain"),
+            source_code,
+            symbols,
+            errors,
+            source_map,
+        ),
+        "bool_domain" => {
+            let hover = HoverInfo {
+                description: "Boolean domain".to_string(),
+                kind: None,
+                ty: Some("bool".to_string()),
+                decl_span: None,
+            };
+            span_with_hover(&domain, source_code, source_map, hover);
+            Ok(Some(Domain::bool()))
+        }
+        "int_domain" => {
+            let hover = HoverInfo {
+                description: "Integer domain".to_string(),
+                kind: None,
+                ty: Some("int".to_string()),
+                decl_span: None,
+            };
+            span_with_hover(&domain, source_code, source_map, hover);
+            parse_int_domain(domain, source_code, &symbols, errors)
+        }
         "identifier" => {
             let Some(decl) =
                 get_declaration_ptr_from_identifier(domain, source_code, &symbols, errors)?
@@ -36,12 +62,20 @@ pub fn parse_domain(
                 ));
                 return Ok(None);
             };
+            let name = &source_code[domain.start_byte()..domain.end_byte()];
+            let hover = HoverInfo {
+                description: format!("Domain reference: {name}"),
+                kind: None,
+                ty: None,
+                decl_span: None,
+            };
+            span_with_hover(&domain, source_code, source_map, hover);
             Ok(Some(dom))
         }
-        "tuple_domain" => parse_tuple_domain(domain, source_code, symbols, errors),
-        "matrix_domain" => parse_matrix_domain(domain, source_code, symbols, errors),
-        "record_domain" => parse_record_domain(domain, source_code, symbols, errors),
-        "set_domain" => parse_set_domain(domain, source_code, symbols, errors),
+        "tuple_domain" => parse_tuple_domain(domain, source_code, symbols, errors, source_map),
+        "matrix_domain" => parse_matrix_domain(domain, source_code, symbols, errors, source_map),
+        "record_domain" => parse_record_domain(domain, source_code, symbols, errors, source_map),
+        "set_domain" => parse_set_domain(domain, source_code, symbols, errors, source_map),
         _ => panic!("{} is not a supported domain type", domain.kind()),
     }
 }
@@ -219,10 +253,12 @@ fn parse_tuple_domain(
     source_code: &str,
     symbols: Option<SymbolTablePtr>,
     errors: &mut Vec<RecoverableParseError>,
+    source_map: &mut SourceMap,
 ) -> Result<Option<DomainPtr>, FatalParseError> {
     let mut domains: Vec<DomainPtr> = Vec::new();
     for domain in named_children(&tuple_domain) {
-        let Some(parsed_domain) = parse_domain(domain, source_code, symbols.clone(), errors)?
+        let Some(parsed_domain) =
+            parse_domain(domain, source_code, symbols.clone(), errors, source_map)?
         else {
             return Ok(None);
         };
@@ -236,11 +272,13 @@ fn parse_matrix_domain(
     source_code: &str,
     symbols: Option<SymbolTablePtr>,
     errors: &mut Vec<RecoverableParseError>,
+    source_map: &mut SourceMap,
 ) -> Result<Option<DomainPtr>, FatalParseError> {
     let mut domains: Vec<DomainPtr> = Vec::new();
     let index_domain_list = field!(matrix_domain, "index_domain_list");
     for domain in named_children(&index_domain_list) {
-        let Some(parsed_domain) = parse_domain(domain, source_code, symbols.clone(), errors)?
+        let Some(parsed_domain) =
+            parse_domain(domain, source_code, symbols.clone(), errors, source_map)?
         else {
             return Ok(None);
         };
@@ -251,6 +289,7 @@ fn parse_matrix_domain(
         source_code,
         symbols,
         errors,
+        source_map,
     )?
     else {
         return Ok(None);
@@ -263,13 +302,21 @@ fn parse_record_domain(
     source_code: &str,
     symbols: Option<SymbolTablePtr>,
     errors: &mut Vec<RecoverableParseError>,
+    source_map: &mut SourceMap,
 ) -> Result<Option<DomainPtr>, FatalParseError> {
     let mut record_entries: Vec<RecordEntry> = Vec::new();
     for record_entry in named_children(&record_domain) {
         let name_node = field!(record_entry, "name");
         let name = Name::user(&source_code[name_node.start_byte()..name_node.end_byte()]);
         let domain_node = field!(record_entry, "domain");
-        let Some(domain) = parse_domain(domain_node, source_code, symbols.clone(), errors)? else {
+        let Some(domain) = parse_domain(
+            domain_node,
+            source_code,
+            symbols.clone(),
+            errors,
+            source_map,
+        )?
+        else {
             return Ok(None);
         };
         record_entries.push(RecordEntry { name, domain });
@@ -282,6 +329,7 @@ pub fn parse_set_domain(
     source_code: &str,
     symbols: Option<SymbolTablePtr>,
     errors: &mut Vec<RecoverableParseError>,
+    source_map: &mut SourceMap,
 ) -> Result<Option<DomainPtr>, FatalParseError> {
     let mut set_attribute: Option<SetAttr> = None;
     let mut value_domain: Option<DomainPtr> = None;
@@ -316,7 +364,7 @@ pub fn parse_set_domain(
             }
             "domain" => {
                 let Some(parsed_domain) =
-                    parse_domain(child, source_code, symbols.clone(), errors)?
+                    parse_domain(child, source_code, symbols.clone(), errors, source_map)?
                 else {
                     return Ok(None);
                 };

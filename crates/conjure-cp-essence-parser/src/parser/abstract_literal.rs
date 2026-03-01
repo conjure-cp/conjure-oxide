@@ -1,3 +1,4 @@
+use crate::diagnostics::source_map::SourceMap;
 use crate::errors::{FatalParseError, RecoverableParseError};
 use crate::expression::parse_expression;
 use crate::field;
@@ -12,12 +13,13 @@ pub fn parse_abstract(
     source_code: &str,
     symbols_ptr: Option<SymbolTablePtr>,
     errors: &mut Vec<RecoverableParseError>,
+    source_map: &mut SourceMap,
 ) -> Result<Option<AbstractLiteral<Expression>>, FatalParseError> {
     match node.kind() {
-        "record" => parse_record(node, source_code, symbols_ptr, errors),
-        "tuple" => parse_tuple(node, source_code, symbols_ptr, errors),
-        "matrix" => parse_matrix(node, source_code, symbols_ptr, errors),
-        "set_literal" => parse_set_literal(node, source_code, symbols_ptr, errors),
+        "record" => parse_record(node, source_code, symbols_ptr, errors, source_map),
+        "tuple" => parse_tuple(node, source_code, symbols_ptr, errors, source_map),
+        "matrix" => parse_matrix(node, source_code, symbols_ptr, errors, source_map),
+        "set_literal" => parse_set_literal(node, source_code, symbols_ptr, errors, source_map),
         _ => Err(FatalParseError::internal_error(
             format!("Expected abstract literal, got: {}", node.kind()),
             Some(node.range()),
@@ -30,6 +32,7 @@ fn parse_record(
     source_code: &str,
     symbols_ptr: Option<SymbolTablePtr>,
     errors: &mut Vec<RecoverableParseError>,
+    source_map: &mut SourceMap,
 ) -> Result<Option<AbstractLiteral<Expression>>, FatalParseError> {
     let mut values = Vec::new();
     for child in node.children_by_field_name("name_value_pair", &mut node.walk()) {
@@ -43,6 +46,7 @@ fn parse_record(
             node,
             symbols_ptr.clone(),
             errors,
+            source_map,
         )?
         else {
             return Ok(None);
@@ -57,10 +61,12 @@ fn parse_tuple(
     source_code: &str,
     symbols_ptr: Option<SymbolTablePtr>,
     errors: &mut Vec<RecoverableParseError>,
+    source_map: &mut SourceMap,
 ) -> Result<Option<AbstractLiteral<Expression>>, FatalParseError> {
     let mut elements = Vec::new();
     for child in named_children(node) {
-        let Some(expr) = parse_expression(child, source_code, node, symbols_ptr.clone(), errors)?
+        let Some(expr) =
+            parse_expression(child, source_code, node, symbols_ptr.clone(), errors, source_map)?
         else {
             return Ok(None);
         };
@@ -74,6 +80,7 @@ fn parse_matrix(
     source_code: &str,
     symbols_ptr: Option<SymbolTablePtr>,
     errors: &mut Vec<RecoverableParseError>,
+    source_map: &mut SourceMap,
 ) -> Result<Option<AbstractLiteral<Expression>>, FatalParseError> {
     let mut elements = vec![];
     let mut domain: Option<DomainPtr> = None;
@@ -83,15 +90,21 @@ fn parse_matrix(
             || child.kind() == "comparison_expr"
             || child.kind() == "atom"
         {
-            let Some(expr) =
-                parse_expression(child, source_code, node, symbols_ptr.clone(), errors)?
+            let Some(expr) = parse_expression(
+                child,
+                source_code,
+                node,
+                symbols_ptr.clone(),
+                errors,
+                source_map,
+            )?
             else {
                 return Ok(None);
             };
             elements.push(expr);
         } else {
             let Some(parsed_domain) =
-                parse_domain(child, source_code, symbols_ptr.clone(), errors)?
+                parse_domain(child, source_code, symbols_ptr.clone(), errors, source_map)?
             else {
                 return Ok(None);
             };
@@ -111,10 +124,12 @@ fn parse_set_literal(
     source_code: &str,
     symbols_ptr: Option<SymbolTablePtr>,
     errors: &mut Vec<RecoverableParseError>,
+    source_map: &mut SourceMap,
 ) -> Result<Option<AbstractLiteral<Expression>>, FatalParseError> {
     let mut elements = Vec::new();
     for child in named_children(node) {
-        let Some(expr) = parse_expression(child, source_code, node, symbols_ptr.clone(), errors)?
+        let Some(expr) =
+            parse_expression(child, source_code, node, symbols_ptr.clone(), errors, source_map)?
         else {
             return Ok(None);
         };

@@ -5,6 +5,8 @@ use tree_sitter::Node;
 
 use super::domain::parse_domain;
 use super::util::named_children;
+use crate::diagnostics::diagnostics_api::SymbolKind;
+use crate::diagnostics::source_map::{HoverInfo, SourceMap, span_with_hover};
 use crate::errors::{FatalParseError, RecoverableParseError};
 use crate::field;
 use conjure_cp_core::ast::{DomainPtr, Name, SymbolTablePtr};
@@ -15,11 +17,12 @@ pub fn parse_find_statement(
     source_code: &str,
     symbols: Option<SymbolTablePtr>,
     errors: &mut Vec<RecoverableParseError>,
+    source_map: &mut SourceMap,
 ) -> Result<BTreeMap<Name, DomainPtr>, FatalParseError> {
     let mut vars = BTreeMap::new();
 
     let domain = field!(find_statement, "domain");
-    let Some(domain) = parse_domain(domain, source_code, symbols, errors)? else {
+    let Some(domain) = parse_domain(domain, source_code, symbols, errors, source_map)? else {
         return Ok(vars);
     };
 
