@@ -1,6 +1,5 @@
 use conjure_cp_essence_parser::util::node_is_expression;
 use conjure_cp_essence_parser::{
-    EssenceParseError,
     expression::parse_expression,
     util::{get_tree, query_toplevel},
 };
@@ -55,42 +54,19 @@ pub fn expand_expr_vec(tt: &TokenTree) -> Result<TokenStream> {
 
 /// Parse a single expression or make a compile time error
 fn mk_expr(node: Node, src: &str, root: &Node, tt: &TokenTree) -> Result<TokenStream> {
-    match parse_expression(node, src, root, None, &mut Default::default()) {
-        Ok(expr) => Ok(expr.ctor_tokens()),
-        Err(err) => {
-            let error_message = match err {
-                EssenceParseError::SyntaxError {
-                    msg,
-                    range: Some(rng),
-                } => {
-                    let lines: Vec<&str> = src.lines().collect();
-                    let start_line = rng.start_point.row;
-                    let mut start_col = rng.start_point.column;
-
-                    let mut line_content = lines
-                        .get(start_line)
-                        .unwrap_or(&"<line not found>")
-                        .trim()
-                        .to_string();
-                    let pref = "_FRAGMENT_EXPRESSION";
-                    if line_content.starts_with(pref) {
-                        let len = pref.len();
-                        line_content = line_content[len..].trim_start().to_string();
-                        start_col -= len;
-                    }
-
-                    format!(
-                        "Syntax error: {}\n{}\n{}^-- Error here",
-                        msg,
-                        line_content,
-                        " ".repeat(start_col)
-                    )
-                }
-                _ => err.to_string(),
+    let mut errors = Vec::new();
+    match parse_expression(node, src, root, None, &mut errors) {
+        Ok(Some(expr)) => Ok(expr.ctor_tokens()),
+        Ok(None) => {
+            // Recoverable error occurred - get the error message from the errors vector
+            let error_message = if let Some(err) = errors.first() {
+                format!("Recoverable parse error: {}", err)
+            } else {
+                "Parse error: Unknown error occurred".to_string()
             };
-
             Err(Error::new(tt.span(), error_message))
         }
+        Err(err) => Err(Error::new(tt.span(), err.to_string())),
     }
 }
 

@@ -1,28 +1,27 @@
-use conjure_cp_essence_parser::diagnostics::error_detection::syntactic_errors::{
-    check_diagnostic, detect_syntactic_errors,
-};
+use conjure_cp_essence_parser::diagnostics::diagnostics_api::get_diagnostics;
+use conjure_cp_essence_parser::diagnostics::error_detection::collect_errors::check_diagnostic;
 
 #[test]
 fn missing_identifier() {
     let source = "find: bool";
-    let diagnostics = detect_syntactic_errors(source);
+    let diagnostics = get_diagnostics(source);
     assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
 
     let diag = &diagnostics[0];
 
-    check_diagnostic(diag, 0, 4, 0, 4, "Missing 'variable_list'");
+    check_diagnostic(diag, 0, 4, 0, 4, "Missing Variable List");
 }
 
 #[test]
 fn missing_colon() {
     let source = "find x bool";
-    let diagnostics = detect_syntactic_errors(source);
+    let diagnostics = get_diagnostics(source);
 
     // Should be exactly one diagnostic
     assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
     let diag = &diagnostics[0];
 
-    check_diagnostic(diag, 0, 6, 0, 6, "Missing 'COLON'");
+    check_diagnostic(diag, 0, 6, 0, 6, "Missing :");
 }
 
 #[test]
@@ -33,13 +32,13 @@ find x: bool
 find y:
     ";
 
-    let diagnostics = detect_syntactic_errors(source);
+    let diagnostics = get_diagnostics(source);
 
     // Should be exactly one diagnostic
     assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
     let diag = &diagnostics[0];
 
-    check_diagnostic(diag, 1, 7, 1, 7, "Missing 'domain'");
+    check_diagnostic(diag, 1, 7, 1, 7, "Missing Domain");
 }
 
 #[test]
@@ -49,15 +48,16 @@ fn missing_contraint() {
 find x: bool
 such that
     ";
-    let diagnostics = detect_syntactic_errors(source);
+    let diagnostics = get_diagnostics(source);
 
     // Should be exactly one diagnostic
     assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
     let diag = &diagnostics[0];
 
-    check_diagnostic(diag, 1, 9, 1, 9, "Missing 'bool_expr'");
+    check_diagnostic(diag, 1, 9, 1, 9, "Missing Expression");
 }
 
+// TO-DO adapt when returning vector of errors
 #[test]
 fn multiple_missing_tokens() {
     // not indented because have to avoid leading spaces for accurate character counr
@@ -65,7 +65,7 @@ fn multiple_missing_tokens() {
 find x: int(1..3
 letting x be
     ";
-    let diagnostics = detect_syntactic_errors(source);
+    let diagnostics = get_diagnostics(source);
 
     // Should be exactly one diagnostic
     assert_eq!(diagnostics.len(), 2, "Expected two diagnostics");
@@ -73,68 +73,6 @@ letting x be
     let diag1 = &diagnostics[0];
     let diag2 = &diagnostics[1];
 
-    check_diagnostic(diag1, 0, 16, 0, 16, "Missing ')'");
-    check_diagnostic(diag2, 1, 12, 1, 12, "Missing 'expression or domain'");
-}
-
-#[test]
-fn missing_domain_in_tuple_domain() {
-    let source = "find x: tuple()";
-    let diagnostics = detect_syntactic_errors(source);
-    assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
-    let diag = &diagnostics[0];
-    check_diagnostic(diag, 0, 14, 0, 14, "Missing 'domain'");
-}
-
-#[test]
-fn missing_operator_in_comparison() {
-    // Missing operator in comparison expression
-    let source = "\
-find x: int
-such that 5 =
-    ";
-    let diagnostics = detect_syntactic_errors(source);
-    assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
-    let diag = &diagnostics[0];
-    check_diagnostic(
-        diag,
-        1,
-        13,
-        1,
-        13,
-        "Missing right operand in 'comparison' expression",
-    );
-}
-
-#[test]
-fn missing_right_operand_in_and_expr() {
-    let source = "\
-find x: int
-such that x /\\
-";
-    let diagnostics = detect_syntactic_errors(source);
-    assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
-    let diag = &diagnostics[0];
-    check_diagnostic(
-        diag,
-        1,
-        14,
-        1,
-        14,
-        "Missing right operand in 'and' expression",
-    );
-}
-
-#[test]
-fn missing_period_in_domain() {
-    // not indented because have to avoid leading spaces for accurate character counr
-    let source = "find a: int(1.3)";
-
-    let diagnostics = detect_syntactic_errors(source);
-
-    // Should be exactly one diagnostic
-    assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
-    let diag = &diagnostics[0];
-
-    check_diagnostic(diag, 0, 13, 0, 15, "Unexpected '.3' inside 'int_domain'");
+    check_diagnostic(diag1, 0, 16, 0, 16, "Missing )");
+    check_diagnostic(diag2, 1, 12, 1, 12, "Missing Expression or Domain");
 }

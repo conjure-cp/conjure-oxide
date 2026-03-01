@@ -2,18 +2,6 @@ use std::collections::{HashSet, VecDeque};
 use std::fmt::{Display, Formatter};
 use tracing::trace;
 
-use crate::ast::ReturnType;
-use crate::ast::SetAttr;
-use crate::ast::SymbolTable;
-use crate::ast::literals::AbstractLiteral;
-use crate::ast::literals::Literal;
-use crate::ast::pretty::{pretty_expressions_as_top_level, pretty_vec};
-use crate::ast::sat_encoding::SATIntEncoding;
-use crate::ast::{Atom, DomainPtr};
-use crate::ast::{GroundDomain, Metadata, UnresolvedDomain};
-use crate::ast::{IntVal, Moo};
-use crate::ast::{Name, matrix};
-use crate::bug;
 use conjure_cp_enum_compatibility_macro::document_compatibility;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
@@ -22,13 +10,21 @@ use ustr::Ustr;
 use polyquine::Quine;
 use uniplate::{Biplate, Uniplate};
 
+use crate::bug;
+
 use super::abstract_comprehension::AbstractComprehension;
 use super::ac_operators::ACOperatorKind;
 use super::categories::{Category, CategoryOf};
 use super::comprehension::Comprehension;
 use super::domains::HasDomain as _;
+use super::pretty::{pretty_expressions_as_top_level, pretty_vec};
 use super::records::RecordValue;
-use super::{DeclarationPtr, Domain, Range, Reference, SubModel, Typeable};
+use super::sat_encoding::SATIntEncoding;
+use super::{
+    AbstractLiteral, Atom, DeclarationPtr, Domain, DomainPtr, GroundDomain, IntVal, Literal,
+    Metadata, Model, Moo, Name, Range, Reference, ReturnType, SetAttr, SymbolTable, SymbolTablePtr,
+    Typeable, UnresolvedDomain, matrix,
+};
 
 // Ensure that this type doesn't get too big
 //
@@ -74,8 +70,9 @@ static_assertions::assert_eq_size!([u8; 112], Expression);
 #[biplate(to=RecordValue<Expression>)]
 #[biplate(to=RecordValue<Literal>)]
 #[biplate(to=Reference)]
-#[biplate(to=SubModel)]
+#[biplate(to=Model)]
 #[biplate(to=SymbolTable)]
+#[biplate(to=SymbolTablePtr)]
 #[biplate(to=Vec<Expression>)]
 #[path_prefix(conjure_cp::ast)]
 pub enum Expression {
@@ -90,7 +87,7 @@ pub enum Expression {
     /// A comprehension.
     ///
     /// The inside of the comprehension opens a new scope.
-    // todo (gskorokhod): Comprehension contains a SubModel which contains a bunch of Rc pointers.
+    // todo (gskorokhod): Comprehension contains a symbol table which contains a bunch of pointers.
     // This makes implementing Quine tricky (it doesnt support Rc, by design). Skip it for now.
     #[polyquine_skip]
     Comprehension(Metadata, Moo<Comprehension>),
@@ -155,10 +152,6 @@ pub enum Expression {
     /// - If b is true, then `toInt(b) == 1`
     #[compatible(SMT)]
     ToInt(Metadata, Moo<Expression>),
-
-    // todo (gskorokhod): Same reason as for Comprehension
-    #[polyquine_skip]
-    Scope(Metadata, Moo<SubModel>),
 
     /// `|x|` - absolute value of `x`
     #[compatible(JsonInput, SMT)]
@@ -592,7 +585,8 @@ fn bounded_i32_domain_for_matrix_literal_monotonic(
 
     let expr = exprs.pop()?;
     let dom = expr.domain_of()?;
-    let Some(GroundDomain::Int(ranges)) = dom.as_ground() else {
+    let resolved = dom.resolve()?;
+    let GroundDomain::Int(ranges) = resolved.as_ref() else {
         return None;
     };
 
@@ -600,7 +594,8 @@ fn bounded_i32_domain_for_matrix_literal_monotonic(
 
     for expr in exprs {
         let dom = expr.domain_of()?;
-        let Some(GroundDomain::Int(ranges)) = dom.as_ground() else {
+        let resolved = dom.resolve()?;
+        let GroundDomain::Int(ranges) = resolved.as_ref() else {
             return None;
         };
 
@@ -724,7 +719,6 @@ impl Expression {
             }
             Expression::InDomain(_, _, _) => Some(Domain::bool()),
             Expression::Atomic(_, atom) => Some(atom.domain_of()),
-            Expression::Scope(_, _) => Some(Domain::bool()),
             Expression::Sum(_, e) => {
                 bounded_i32_domain_for_matrix_literal_monotonic(e, |x, y| Some(x + y))
             }
@@ -1236,7 +1230,7 @@ impl CategoryOf for Expression {
                 // this should generically cover all leaf types we currently have in oxide.
 
                 // if x contains submodels (including comprehensions)
-                if !Biplate::<SubModel>::universe_bi(&x).is_empty() {
+                if !Biplate::<Model>::universe_bi(&x).is_empty() {
                     // assume that the category is decision
                     return Category::Decision;
                 }
@@ -1324,7 +1318,6 @@ impl Display for Expression {
             Expression::FromSolution(_, expr) => write!(f, "FromSolution({expr})"),
             Expression::Metavar(_, name) => write!(f, "&{name}"),
             Expression::Atomic(_, atom) => atom.fmt(f),
-            Expression::Scope(_, submodel) => write!(f, "{{\n{submodel}\n}}"),
             Expression::Abs(_, a) => write!(f, "|{a}|"),
             Expression::Sum(_, e) => {
                 write!(f, "sum({e})")
@@ -1442,7 +1435,7 @@ impl Display for Expression {
             }
             Expression::MinionWInSet(_, atom, values) => {
                 let values = values.iter().join(",");
-                write!(f, "__minion_w_inset({atom},{values})")
+                write!(f, "__minion_w_inset({atom},[{values}])")
             }
             Expression::AuxDeclaration(_, reference, e) => {
                 write!(f, "{} =aux {}", reference, e.clone())
@@ -1583,7 +1576,6 @@ impl Typeable for Expression {
             Expression::FromSolution(_, expr) => expr.return_type(),
             Expression::Metavar(_, _) => ReturnType::Unknown,
             Expression::Atomic(_, atom) => atom.return_type(),
-            Expression::Scope(_, scope) => scope.return_type(),
             Expression::Abs(_, _) => ReturnType::Int,
             Expression::Sum(_, _) => ReturnType::Int,
             Expression::Product(_, _) => ReturnType::Int,
@@ -1718,7 +1710,6 @@ impl Typeable for Expression {
 
 #[cfg(test)]
 mod tests {
-
     use crate::matrix_expr;
 
     use super::*;

@@ -7,7 +7,7 @@ use conjure_cp::rule_engine::{
     ApplicationError::{DomainError, RuleNotApplicable},
     ApplicationResult, Reduction, register_rule, register_rule_set,
 };
-use conjure_cp::solver::SolverFamily;
+use conjure_cp::settings::SolverFamily;
 use conjure_cp::solver::adaptors::smt::TheoryConfig;
 
 // Only applicable when unwrap_alldiff is enabled in the SMT adaptor

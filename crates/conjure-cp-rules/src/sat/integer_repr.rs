@@ -100,7 +100,7 @@ fn integer_decision_representation_direct(expr: &Expr, symbols: &SymbolTable) ->
     // symbols
     //     .lookup(name)
     //     .ok_or(RuleNotApplicable)?
-    //     .as_var()
+    //     .as_find()
     //     .ok_or(RuleNotApplicable)?;
 
     // thing we are representing must be an integer
@@ -166,6 +166,79 @@ fn integer_decision_representation_direct(expr: &Expr, symbols: &SymbolTable) ->
     }
 }
 
+#[register_rule(("SAT_Order", 9500))]
+fn integer_decision_representation_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    // thing we are representing must be a reference
+    let Expr::Atomic(_, Atom::Reference(name)) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    // thing we are representing must be an integer
+    let dom = name.resolved_domain().ok_or(RuleNotApplicable)?;
+    let GroundDomain::Int(ranges) = dom.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let (min, max) = ranges
+        .iter()
+        .fold((i32::MAX, i32::MIN), |(min_a, max_b), range| {
+            (
+                min_a.min(*range.low().unwrap()),
+                max_b.max(*range.high().unwrap()),
+            )
+        });
+
+    let mut symbols = symbols.clone();
+
+    let new_name = &name.name().to_owned();
+
+    let repr_exists = symbols
+        .get_representation(new_name, &["sat_order_int"])
+        .is_some();
+
+    let representation = symbols
+        .get_or_add_representation(new_name, &["sat_order_int"])
+        .ok_or(RuleNotApplicable)?;
+
+    let bits: Vec<Expr> = representation[0]
+        .clone()
+        .expression_down(&symbols)?
+        .into_values()
+        .collect();
+
+    let cnf_int = Expr::SATInt(
+        Metadata::new(),
+        SATIntEncoding::Order,
+        Moo::new(into_matrix_expr!(bits.clone())),
+        (min, max),
+    );
+
+    if !repr_exists {
+        // Domain constraint: the integer must take one of its valid values
+        let constraints = vec![int_domain_to_expr(cnf_int.clone(), ranges)];
+
+        // Ordering constraints: b_i -> b_{i-1} which is !b_i or b_{i-1}
+        let mut clauses = vec![];
+        for i in 1..bits.len() {
+            clauses.push(conjure_cp::ast::CnfClause::new(vec![
+                Expr::Not(Metadata::new(), Moo::new(bits[i].clone())),
+                bits[i - 1].clone(),
+            ]));
+        }
+
+        if !bits.is_empty() {
+            // Domain constraint: a >= min, which is b_min.
+            clauses.push(conjure_cp::ast::CnfClause::new(vec![bits[0].clone()]));
+        }
+
+        let mut reduction = Reduction::cnf(cnf_int, clauses, symbols);
+        reduction.new_top = constraints;
+        Ok(reduction)
+    } else {
+        Ok(Reduction::pure(cnf_int))
+    }
+}
+
 /// Converts an integer decision variable to SATInt form (Log encoding)
 #[register_rule(("SAT_Log", 9500))]
 fn integer_decision_representation_log(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
@@ -178,7 +251,7 @@ fn integer_decision_representation_log(expr: &Expr, symbols: &SymbolTable) -> Ap
     // symbols
     //     .lookup(name)
     //     .ok_or(RuleNotApplicable)?
-    //     .as_var()
+    //     .as_find()
     //     .ok_or(RuleNotApplicable)?;
 
     // thing we are representing must be an integer
@@ -250,8 +323,6 @@ fn literal_cnf_int(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             return Err(RuleNotApplicable);
         }
     };
-
-    //TODO: add support for negatives
     //TODO: Adding constant optimization to all int operations should hopefully make this rule redundant
 
     let mut binary_encoding = vec![];

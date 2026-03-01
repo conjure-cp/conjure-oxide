@@ -13,7 +13,7 @@ use std::collections::HashMap;
 
 #[allow(clippy::unwrap_used)]
 pub fn main() {
-    use conjure_cp::solver::SolverFamily;
+    use conjure_cp::settings::SolverFamily;
     use conjure_cp::solver::{Solver, adaptors};
     use conjure_cp::{parse::conjure_json::get_example_model, rule_engine::resolve_rule_sets};
     use std::sync::{Arc, Mutex};
@@ -25,7 +25,7 @@ pub fn main() {
     // TODO: We will have a nicer way to do this in the future
     let rule_sets = resolve_rule_sets(SolverFamily::Minion, DEFAULT_RULE_SETS).unwrap();
 
-    let model = rewrite_naive(&model, &rule_sets, true, false).unwrap();
+    let model = rewrite_naive(&model, &rule_sets, true).unwrap();
     println!("Rewritten model: \n {model} \n",);
 
     // To tell the `Solver` type what solver to use, you pass it a `SolverAdaptor`.

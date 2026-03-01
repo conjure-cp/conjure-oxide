@@ -66,6 +66,11 @@ install-cargo-extensions: .installed-cargo-extensions.checkpoint
 	cargo install cargo-shear
 	touch .installed-cargo-extensions.checkpoint
 
+test-clean:
+	cd tests-integration/tests/integration/; find -type f -path '**generated**' -delete
+	cd tests-integration/tests/integration/; find -type f -path '**expected**' -delete
+	cd tests-integration/tests/integration/; find -type f -path '**stats**' -delete
+
 .PHONY: help
 ## Shows this help text
 help: show-help

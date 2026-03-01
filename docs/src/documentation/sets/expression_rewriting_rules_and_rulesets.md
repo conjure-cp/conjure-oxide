@@ -30,7 +30,7 @@ The high-level process is as follows:
 We want the rewrite process to:
 - be **flexible** - instead of hard coding the rules, we want an easy way to extend the list of rules and to decide which rules to use, both for ourselves and for any users who may wish to use conjure-oxide in their projects
 - be **deterministic** (in a loose sense of the term) - for a given input, set of rules, and a given set of answers to all rule selection questions (see above), the rewriter must always produce the same output
-- happen in a single step, instead of doing multiple passes over the model (like it is done in Saville Row currently)
+- happen in a single step, instead of doing multiple passes over the model (like it is done in Savile Row currently)
 
 # Rules 
 
@@ -232,7 +232,7 @@ To achieve this, we use the following algorithm:
 
 ## Concrete Example:  SAT Backend Pipeline
 
-To see how rules and rulesets work in practice, let's walk through the SAT backend's transformation of a simple Essence model. 
+To see how rules and rulesets work in practice, let's walk through the SAT backend transformation of a simple Essence model. 
 
 > **Note:** The actual RuleSet names and groupings in the codebase may differ from this simplified explanation, but the general priority ordering and transformation pipeline described here is accurate.
 
@@ -276,7 +276,7 @@ fn cnf_int_ineq(expr: &Expression) -> Result<Expression, RuleApplicationError> {
 }
 ```
 
-#### 3. Tseitin Transformation Rules (Lowest Priority)
+#### 3. Tseytin Transformation Rules (Lowest Priority)
 
 **RuleSet**: `boolean`
 
