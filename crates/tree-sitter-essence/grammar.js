@@ -90,12 +90,12 @@ module.exports = grammar ({
       ))
     ),
 
-    range_list: $ => prec(2, commaSep1(choice($.int_range, $.atom))),
+    range_list: $ => prec(2, commaSep1(choice($.int_range, $.atom, $.arithmetic_expr))),
 
     int_range: $ => seq(
-      optional(field("lower", $.atom)), 
+      optional(field("lower", choice($.atom, $.arithmetic_expr))), 
       "..", 
-      optional(field("upper", $.atom))
+      optional(field("upper", choice($.atom, $.arithmetic_expr)))
     ),
 
     tuple_domain: $ => choice(
