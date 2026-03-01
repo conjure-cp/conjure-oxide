@@ -7,7 +7,8 @@ use tree_sitter::Node;
 
 use super::domain::parse_domain;
 use super::util::named_children;
-use crate::diagnostics::source_map::SourceMap;
+use crate::diagnostics::diagnostics_api::SymbolKind;
+use crate::diagnostics::source_map::{HoverInfo, SourceMap, span_with_hover};
 use crate::errors::EssenceParseError;
 use crate::expression::parse_expression;
 use conjure_cp_core::ast::DeclarationPtr;
@@ -31,6 +32,18 @@ pub fn parse_letting_statement(
         let variable_name = &source_code[variable.start_byte()..variable.end_byte()];
         temp_symbols.insert(variable_name);
     }
+
+    let hover = HoverInfo {
+        description: format!(
+            "Letting variable(s): {}",
+            temp_symbols.iter().cloned().collect::<Vec<_>>().join(", ")
+        ),
+        kind: Some(SymbolKind::Letting),
+        ty: None,
+        decl_span: None,
+    };
+
+    span_with_hover(&letting_statement, source_code, source_map, hover);
 
     let expr_or_domain = letting_statement
         .child_by_field_name("expr_or_domain")
