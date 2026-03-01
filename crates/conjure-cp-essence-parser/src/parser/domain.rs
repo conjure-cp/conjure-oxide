@@ -42,12 +42,10 @@ pub fn parse_domain(
         "matrix_domain" => parse_matrix_domain(domain, source_code, symbols, errors),
         "record_domain" => parse_record_domain(domain, source_code, symbols, errors),
         "set_domain" => parse_set_domain(domain, source_code, symbols, errors),
-        _ => {
-            return Err(FatalParseError::internal_error(
-                format!("Unexpected domain type: {}", domain.kind()),
-                Some(domain.range()),
-            ));
-        }
+        _ => Err(FatalParseError::internal_error(
+            format!("Unexpected domain type: {}", domain.kind()),
+            Some(domain.range()),
+        )),
     }
 }
 
