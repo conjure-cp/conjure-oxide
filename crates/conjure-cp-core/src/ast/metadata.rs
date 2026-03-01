@@ -12,6 +12,7 @@ derive_unplateable!(Metadata);
 pub struct Metadata {
     pub clean: bool,
     pub etype: Option<ReturnType>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub span_id: Option<u32>,
 }
 
