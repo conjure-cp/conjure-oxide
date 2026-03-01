@@ -64,7 +64,7 @@ pub fn parse_essence_with_context(
 
     let mut model = Model::new(context);
     let root_node = tree.root_node();
-    let symbols_ptr = model.as_submodel().symbols_ptr_unchecked().clone();
+    let symbols_ptr = model.symbols_ptr_unchecked().clone();
     for statement in named_children(&root_node) {
         match statement.kind() {
             "single_line_comment" => {}
@@ -78,7 +78,6 @@ pub fn parse_essence_with_context(
                 )?;
                 for (name, domain) in var_hashmap {
                     model
-                        .as_submodel_mut()
                         .symbols_mut()
                         .insert(DeclarationPtr::new_find(name, domain));
                 }
@@ -94,7 +93,7 @@ pub fn parse_essence_with_context(
                 else {
                     continue;
                 };
-                model.as_submodel_mut().add_constraint(expr);
+                model.add_constraint(expr);
             }
             "language_label" => {}
             "letting_statement" => {
@@ -107,7 +106,7 @@ pub fn parse_essence_with_context(
                 else {
                     continue;
                 };
-                model.as_submodel_mut().symbols_mut().extend(letting_vars);
+                model.symbols_mut().extend(letting_vars);
             }
             "dominance_relation" => {
                 let inner = field!(statement, "expression");
@@ -228,7 +227,7 @@ mod test {
 
         let model = parse_essence(src).unwrap();
 
-        let st = model.as_submodel().symbols();
+        let st = model.symbols();
         let x = st.lookup(&Name::user("x")).unwrap();
         let y = st.lookup(&Name::user("y")).unwrap();
         let z = st.lookup(&Name::user("z")).unwrap();
@@ -236,7 +235,7 @@ mod test {
         assert_eq!(y.domain(), Some(domain_int!(1..4)));
         assert_eq!(z.domain(), Some(domain_int!(1..4)));
 
-        let constraints = model.as_submodel().constraints();
+        let constraints = model.constraints();
         assert_eq!(constraints.len(), 2);
 
         let c1 = constraints[0].clone();
@@ -279,7 +278,7 @@ mod test {
         ";
 
         let model = parse_essence(src).unwrap();
-        let st = model.as_submodel().symbols();
+        let st = model.symbols();
         let a_decl = st.lookup(&Name::user("a")).unwrap();
         let a = a_decl.as_value_letting().unwrap().deref().clone();
         assert_eq!(
