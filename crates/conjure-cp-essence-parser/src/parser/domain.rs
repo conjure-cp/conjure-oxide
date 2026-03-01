@@ -1,5 +1,6 @@
 use super::util::named_children;
 use crate::EssenceParseError;
+use crate::diagnostics::source_map::SourceMap;
 use conjure_cp_core::ast::{
     DeclarationPtr, Domain, DomainPtr, IntVal, Name, Range, RecordEntry, Reference, SetAttr,
     SymbolTable,
@@ -15,12 +16,14 @@ pub fn parse_domain(
     domain: Node,
     source_code: &str,
     symbols: Option<Rc<RefCell<SymbolTable>>>,
+    source_map: &mut SourceMap,
 ) -> Result<DomainPtr, EssenceParseError> {
     match domain.kind() {
         "domain" => parse_domain(
             domain.child(0).expect("No domain found"),
             source_code,
             symbols,
+            source_map,
         ),
         "bool_domain" => Ok(Domain::bool()),
         "int_domain" => Ok(parse_int_domain(domain, source_code, &symbols)),
@@ -35,10 +38,10 @@ pub fn parse_domain(
             ))?;
             Ok(dom)
         }
-        "tuple_domain" => parse_tuple_domain(domain, source_code, symbols),
-        "matrix_domain" => parse_matrix_domain(domain, source_code, symbols),
-        "record_domain" => parse_record_domain(domain, source_code, symbols),
-        "set_domain" => parse_set_domain(domain, source_code, symbols),
+        "tuple_domain" => parse_tuple_domain(domain, source_code, symbols, source_map),
+        "matrix_domain" => parse_matrix_domain(domain, source_code, symbols, source_map),
+        "record_domain" => parse_record_domain(domain, source_code, symbols, source_map),
+        "set_domain" => parse_set_domain(domain, source_code, symbols, source_map),
         _ => panic!("{} is not a supported domain type", domain.kind()),
     }
 }
@@ -207,10 +210,16 @@ fn parse_tuple_domain(
     tuple_domain: Node,
     source_code: &str,
     symbols: Option<Rc<RefCell<SymbolTable>>>,
+    source_map: &mut SourceMap,
 ) -> Result<DomainPtr, EssenceParseError> {
     let mut domains: Vec<DomainPtr> = Vec::new();
     for domain in named_children(&tuple_domain) {
-        domains.push(parse_domain(domain, source_code, symbols.clone())?);
+        domains.push(parse_domain(
+            domain,
+            source_code,
+            symbols.clone(),
+            source_map,
+        )?);
     }
     Ok(Domain::tuple(domains))
 }
@@ -219,13 +228,19 @@ fn parse_matrix_domain(
     matrix_domain: Node,
     source_code: &str,
     symbols: Option<Rc<RefCell<SymbolTable>>>,
+    source_map: &mut SourceMap,
 ) -> Result<DomainPtr, EssenceParseError> {
     let mut domains: Vec<DomainPtr> = Vec::new();
     let index_domain_list = matrix_domain
         .child_by_field_name("index_domain_list")
         .expect("No index domains found for matrix domain");
     for domain in named_children(&index_domain_list) {
-        domains.push(parse_domain(domain, source_code, symbols.clone())?);
+        domains.push(parse_domain(
+            domain,
+            source_code,
+            symbols.clone(),
+            source_map,
+        )?);
     }
     let value_domain = parse_domain(
         matrix_domain.child_by_field_name("value_domain").ok_or(
@@ -236,6 +251,7 @@ fn parse_matrix_domain(
         )?,
         source_code,
         symbols,
+        source_map,
     )?;
     Ok(Domain::matrix(value_domain, domains))
 }
@@ -244,6 +260,7 @@ fn parse_record_domain(
     record_domain: Node,
     source_code: &str,
     symbols: Option<Rc<RefCell<SymbolTable>>>,
+    source_map: &mut SourceMap,
 ) -> Result<DomainPtr, EssenceParseError> {
     let mut record_entries: Vec<RecordEntry> = Vec::new();
     for record_entry in named_children(&record_domain) {
@@ -254,7 +271,7 @@ fn parse_record_domain(
         let domain_node = record_entry
             .child_by_field_name("domain")
             .expect("No domain found for record entry");
-        let domain = parse_domain(domain_node, source_code, symbols.clone())?;
+        let domain = parse_domain(domain_node, source_code, symbols.clone(), source_map)?;
         record_entries.push(RecordEntry { name, domain });
     }
     Ok(Domain::record(record_entries))
@@ -264,6 +281,7 @@ pub fn parse_set_domain(
     set_domain: Node,
     source_code: &str,
     symbols: Option<Rc<RefCell<SymbolTable>>>,
+    source_map: &mut SourceMap,
 ) -> Result<DomainPtr, EssenceParseError> {
     let mut set_attribute: Option<SetAttr> = None;
     let mut value_domain: Option<DomainPtr> = None;
@@ -329,7 +347,12 @@ pub fn parse_set_domain(
                 }
             }
             "domain" => {
-                value_domain = Some(parse_domain(child, source_code, symbols.clone())?);
+                value_domain = Some(parse_domain(
+                    child,
+                    source_code,
+                    symbols.clone(),
+                    source_map,
+                )?);
             }
             _ => {
                 return Err(EssenceParseError::syntax_error(

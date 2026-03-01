@@ -7,7 +7,7 @@ use tree_sitter::Node;
 
 use super::domain::parse_domain;
 use super::util::named_children;
-use crate::diagnostics::source_map::{SourceMap};
+use crate::diagnostics::source_map::SourceMap;
 use crate::errors::EssenceParseError;
 use crate::expression::parse_expression;
 use conjure_cp_core::ast::DeclarationPtr;
@@ -52,8 +52,12 @@ pub fn parse_letting_statement(
         }
         "domain" => {
             for name in temp_symbols {
-                let domain =
-                    parse_domain(expr_or_domain, source_code, existing_symbols_ptr.clone())?;
+                let domain = parse_domain(
+                    expr_or_domain,
+                    source_code,
+                    existing_symbols_ptr.clone(),
+                    source_map,
+                )?;
 
                 // If it's a record domain, add the field names to the symbol table
                 if let Some(entries) = domain.as_record() {

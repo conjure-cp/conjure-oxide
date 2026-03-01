@@ -1,4 +1,4 @@
-use crate::diagnostics::source_map::{SourceMap};
+use crate::diagnostics::source_map::SourceMap;
 use crate::expression::parse_expression;
 use crate::parser::domain::parse_domain;
 use crate::util::named_children;
@@ -47,7 +47,12 @@ pub fn parse_comprehension(
 
                 // Parse the domain
                 let domain_node = field!(child, "domain");
-                let var_domain = parse_domain(domain_node, source_code, Some(symbols_ptr.clone()))?;
+                let var_domain = parse_domain(
+                    domain_node,
+                    source_code,
+                    Some(symbols_ptr.clone()),
+                    source_map,
+                )?;
 
                 // Add generator using the builder
                 let decl = DeclarationPtr::new_var(var_name, var_domain);
@@ -58,8 +63,13 @@ pub fn parse_comprehension(
                 let expr_node = field!(child, "expression");
                 let generator_symboltable = builder.generator_symboltable();
 
-                let guard_expr =
-                    parse_expression(expr_node, source_code, root, Some(generator_symboltable), source_map)?;
+                let guard_expr = parse_expression(
+                    expr_node,
+                    source_code,
+                    root,
+                    Some(generator_symboltable),
+                    source_map,
+                )?;
 
                 // Add the condition as a guard
                 builder = builder.guard(guard_expr);
@@ -130,7 +140,12 @@ pub fn parse_quantifier_or_aggregate_expr(
                 variables.push(var_name);
             }
             "domain" => {
-                domain = Some(parse_domain(child, source_code, Some(symbols_ptr.clone()))?);
+                domain = Some(parse_domain(
+                    child,
+                    source_code,
+                    Some(symbols_ptr.clone()),
+                    source_map,
+                )?);
             }
             "set_literal" | "matrix" | "tuple" | "record" => {
                 // Store the collection node to parse later
@@ -200,7 +215,7 @@ pub fn parse_quantifier_or_aggregate_expr(
         source_code,
         root,
         Some(builder.return_expr_symboltable()),
-            source_map,
+        source_map,
     )?;
 
     // Build the comprehension

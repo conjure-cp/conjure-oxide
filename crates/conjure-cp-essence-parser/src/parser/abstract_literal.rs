@@ -91,7 +91,12 @@ fn parse_matrix(
                 source_map,
             )?);
         } else {
-            domain = Some(parse_domain(child, source_code, symbols_ptr.clone())?);
+            domain = Some(parse_domain(
+                child,
+                source_code,
+                symbols_ptr.clone(),
+                source_map,
+            )?);
         }
     }
     if domain.is_none() {

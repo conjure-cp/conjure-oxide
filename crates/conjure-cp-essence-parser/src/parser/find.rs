@@ -22,7 +22,7 @@ pub fn parse_find_statement(
     let domain = find_statement
         .child_by_field_name("domain")
         .expect("No domain found in find statement");
-    let domain = parse_domain(domain, source_code, symbols)?;
+    let domain = parse_domain(domain, source_code, symbols, _source_map)?;
 
     let variable_list = find_statement
         .child_by_field_name("variables")
