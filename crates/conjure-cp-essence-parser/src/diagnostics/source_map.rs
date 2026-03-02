@@ -64,6 +64,13 @@ impl SourceMap {
     pub fn span_id_at_byte(&self, byte: usize) -> Option<SpanId> {
         self.by_byte.get(&byte).copied()
     }
+
+    // helper to get hover info for a given byte offset (e.g. cursor position)
+    pub fn hover_info_at_byte(&self, byte: usize) -> Option<&HoverInfo> {
+        self.span_id_at_byte(byte)
+            .and_then(|span_id| self.spans.get(span_id as usize))
+            .and_then(|span| span.hover_info.as_ref())
+    }
 }
 
 // helper to allocate a span with hover info directly from a tree-sitter node
