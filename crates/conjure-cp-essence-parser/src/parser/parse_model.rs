@@ -81,6 +81,11 @@ pub fn parse_essence_with_context_and_map(
     let symbols_ptr = model.symbols_ptr_unchecked().clone();
     let mut cursor = root_node.walk();
     for statement in root_node.children(&mut cursor) {
+        /*
+           since find and letting are unnamed children
+           hover info is added here.
+           other unnamed children will be skipped.
+        */
         if statement.kind() == "find" {
             span_with_hover(
                 &statement,
