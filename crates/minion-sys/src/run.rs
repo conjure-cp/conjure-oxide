@@ -119,6 +119,7 @@ static CALLBACK: Mutex<Option<Callback>> = Mutex::new(None);
 static PRINT_VARS: Mutex<Option<Vec<VarName>>> = Mutex::new(None);
 
 static LOCK: (Mutex<bool>, Condvar) = (Mutex::new(false), Condvar::new());
+static RUNNING_INSTANCE: Mutex<Option<usize>> = Mutex::new(None);
 
 #[unsafe(no_mangle)]
 unsafe extern "C" fn run_callback() -> bool {
@@ -182,12 +183,16 @@ pub fn run_minion(model: Model, callback: Callback) -> Result<(), MinionError> {
 
         convert_model_to_raw(search_instance, &model)?;
 
+        *RUNNING_INSTANCE.lock().unwrap() = Some(search_instance as usize);
+
         let res = ffi::runMinion(
             search_opts,
             search_method,
             search_instance,
             Some(run_callback),
         );
+
+        *RUNNING_INSTANCE.lock().unwrap() = None;
 
         ffi::searchMethod_free(search_method);
         ffi::searchOptions_free(search_opts);
@@ -202,6 +207,33 @@ pub fn run_minion(model: Model, callback: Callback) -> Result<(), MinionError> {
             0 => Ok(()),
             x => Err(MinionError::from(RuntimeError::from(x))),
         }
+    }
+}
+
+/// Add a constraint to the currently running Minion search.
+///
+/// Returns:
+/// - `Ok(true)` if the constraint was posted without immediate failure.
+/// - `Ok(false)` if posting the constraint caused immediate failure.
+///
+/// This can only be called while [`run_minion`] is actively executing.
+#[allow(clippy::unwrap_used)]
+pub fn add_constraint_midsearch(constraint: &Constraint) -> Result<bool, MinionError> {
+    unsafe {
+        let instance = (*RUNNING_INSTANCE.lock().unwrap())
+            .ok_or_else(|| anyhow!("Minion is not currently running"))?
+            as *mut ffi::ProbSpec_CSPInstance;
+
+        let constraint_type = get_constraint_type(constraint)?;
+        let raw_constraint = Scoped::new(ffi::constraint_new(constraint_type), |x| {
+            ffi::constraint_free(x as _)
+        });
+
+        constraint_add_args(instance, raw_constraint.ptr, constraint)?;
+        Ok(ffi::instance_addConstraintMidsearch(
+            instance,
+            raw_constraint.ptr,
+        ))
     }
 }
 
@@ -753,7 +785,7 @@ unsafe fn read_constant_list(
     raw_constraint: *mut ffi::ProbSpec_ConstraintBlob,
     constants: &[Constant],
 ) -> Result<(), MinionError> {
-    let raw_consts = Scoped::new(ffi::vec_int_new(), |x| ffi::vec_var_free(x as _));
+    let raw_consts = Scoped::new(ffi::vec_int_new(), |x| ffi::vec_int_free(x as _));
 
     for constant in constants.iter() {
         let val = match constant {
