@@ -27,17 +27,20 @@ impl Backend {
         let lsp_cache = self.lsp_cache;
         //basically look to see if in cache and if not in cache, fetch from source
         //the closure? only runs on a cache miss
-        let cache_content = lsp_cache.get_with(uri, async {
-            self.client
-                .log_message(MessageType::INFO, "Cache miss! Loading into cache now")
-                .await;
-            CacheCont {
-                ast: None, //need to generate these
-                cst: None, //idk how to though? need to make a call to diagnostic api
-                contents: text,
-                version: 0,
-            }
-        }).await;
+        let cache_content = lsp_cache
+            .get_with(uri, async {
+                self.client
+                    .log_message(MessageType::INFO, "Cache miss! Loading into cache now")
+                    .await;
+                CacheCont {
+                    sourcemap: None, //need to get this using parse_essence_with_context_and_map
+                    ast: None,       //need to get this using parse_essence_with_context_and_map
+                    cst: None,       //idk how to though? need to make a call to diagnostic api
+                    contents: text,
+                    version: 0,
+                }
+            })
+            .await;
 
         self.client
             .log_message(MessageType::INFO, "Did open document")
@@ -45,40 +48,35 @@ impl Backend {
 
         //diagnostic stuff here
         self.handle_diagnostics(&uri.clone(), cache_content).await;
-
     }
     pub async fn handle_did_save(&self, params: DidSaveTextDocumentParams) {
         //if save, do not update existing entry,simply access from cache
         let uri = params.text_document.uri;
-        
+
         let lsp_cache = &self.lsp_cache;
 
         if let Some(lsp_cont) = lsp_cache.get(&uri).await {
-            //CANNOT USE PRINTLNs AS THIS WILL BREAK CONNECTION WITH SERVER 
+            //CANNOT USE PRINTLNs AS THIS WILL BREAK CONNECTION WITH SERVER
             // println!("Found document version: {}", lsp_cont.version) //just for proof of concept
             self.client
                 .log_message(MessageType::INFO, "Did save document")
                 .await;
             self.handle_diagnostics(&uri, lsp_cont);
         }
-
     }
     pub async fn handle_did_change(&self, params: DidChangeTextDocumentParams) {
         //on change, take change and range of change
         //modify existing document given uri and cache content to update the document version in cache
         //check whether changes are purely whitespace
-        //if changes are purely whitespace, check whether they 
+        //if changes are purely whitespace, check whether they
 
         let uri = params.text_document.uri;
         let lsp_cache = &self.lsp_cache;
 
-        if let Some(cache_conts) = lsp_cache.get(&uri).await {
-            
-        }
+        if let Some(cache_conts) = lsp_cache.get(&uri).await {}
 
         //need to check versions against each other, update version in
         //cache, check what the changes were
-        
 
         // if let Some(change) = params.content_changes.first() {
         //     let text = change.text.clone();
@@ -102,7 +100,7 @@ impl Backend {
         //needs to be modified to use cst and ast from cache
         //using lsp_cache.get(&uri) assumedly and then feeding
         //these values back to the diagnostic thingy to get my diags
-        
+
         //ideal situation is feed diagnostics struct and then let it use struct to return diagnostics
         // e.g.:
         //let diagnostics = get_diagnostics(&cache_conts);

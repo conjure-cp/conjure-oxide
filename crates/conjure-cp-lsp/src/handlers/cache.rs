@@ -1,13 +1,13 @@
+use conjure_cp_core::ast::Model;
+use conjure_cp_essence_parser::diagnostics::source_map::SourceMap;
 use moka::future::Cache;
 use std::time::Duration;
-use conjure_cp_core::ast::Model;
-use tree_sitter::Tree;
 use tower_lsp::lsp_types::*;
+use tree_sitter::Tree;
 
-
-#[derive(Clone,Debug)]
+#[derive(Clone, Debug)]
 pub struct CacheCont {
-    //sourcemap
+    pub sourcemap: Option<SourceMap>,
     pub ast: Model,
     pub cst: Tree,
     pub contents: String,

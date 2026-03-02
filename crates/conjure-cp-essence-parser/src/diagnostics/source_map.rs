@@ -6,7 +6,7 @@ use crate::diagnostics::diagnostics_api::{Position, SymbolKind};
 use rangemap::RangeMap;
 pub type SpanId = u32;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct HoverInfo {
     pub description: String,       // keyword description, type info...
     pub kind: Option<SymbolKind>,  // var, domain, function...
@@ -15,7 +15,7 @@ pub struct HoverInfo {
 }
 // source span with start and end positions
 // in the essence source code
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SourceSpan {
     pub start_byte: usize, // byte offset in the source code
     pub end_byte: usize,
@@ -25,7 +25,7 @@ pub struct SourceSpan {
 }
 
 // can add more metadata for hovering and stuff
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct SourceMap {
     pub spans: Vec<SourceSpan>,
     pub by_byte: RangeMap<usize, SpanId>,
