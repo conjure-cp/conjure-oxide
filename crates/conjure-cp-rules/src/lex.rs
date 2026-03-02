@@ -11,12 +11,12 @@ use itertools::Itertools as _;
 fn normalise_lex_gt_geq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
         Expr::LexGt(metadata, a, b) => Ok(Reduction::pure(Expr::LexLt(
-            metadata.clone_dirty(),
+            metadata.clone(),
             b.clone(),
             a.clone(),
         ))),
         Expr::LexGeq(metadata, a, b) => Ok(Reduction::pure(Expr::LexLeq(
-            metadata.clone_dirty(),
+            metadata.clone(),
             b.clone(),
             a.clone(),
         ))),

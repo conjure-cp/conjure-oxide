@@ -558,7 +558,7 @@ fn introduce_diveq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let b: &Atom = (&children[1]).try_into().or(Err(RuleNotApplicable))?;
 
     Ok(Reduction::pure(Expr::MinionDivEqUndefZero(
-        meta.clone_dirty(),
+        meta.clone(),
         Moo::new(a.clone()),
         Moo::new(b.clone()),
         Moo::new(val),
@@ -609,7 +609,7 @@ fn introduce_modeq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let b: &Atom = (&children[1]).try_into().or(Err(RuleNotApplicable))?;
 
     Ok(Reduction::pure(Expr::MinionModuloEqUndefZero(
-        meta.clone_dirty(),
+        meta.clone(),
         Moo::new(a.clone()),
         Moo::new(b.clone()),
         Moo::new(val),
@@ -1216,7 +1216,7 @@ fn geq_to_ineq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     };
 
     Ok(Reduction::pure(Expr::FlatIneq(
-        meta.clone_dirty(),
+        meta.clone(),
         Moo::new(y),
         Moo::new(x),
         Box::new(Lit::Int(0)),
@@ -1243,7 +1243,7 @@ fn leq_to_ineq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     };
 
     Ok(Reduction::pure(Expr::FlatIneq(
-        meta.clone_dirty(),
+        meta.clone(),
         Moo::new(x),
         Moo::new(y),
         Box::new(Lit::Int(0)),
@@ -1282,7 +1282,7 @@ fn x_leq_y_plus_k_to_ineq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     };
 
     Ok(Reduction::pure(Expr::FlatIneq(
-        meta.clone_dirty(),
+        meta.clone(),
         Moo::new(x),
         Moo::new(y.clone()),
         Box::new(k.clone()),
@@ -1319,7 +1319,7 @@ fn y_plus_k_geq_x_to_ineq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     };
 
     Ok(Reduction::pure(Expr::FlatIneq(
-        meta.clone_dirty(),
+        meta.clone(),
         Moo::new(x),
         Moo::new(y.clone()),
         Box::new(k.clone()),
@@ -1350,7 +1350,7 @@ fn not_literal_to_wliteral(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                 && reference.ptr().domain().is_some_and(|d| d.is_bool())
             {
                 return Ok(Reduction::pure(Expr::FlatWatchedLiteral(
-                    m.clone_dirty(),
+                    m.clone(),
                     reference,
                     Lit::Bool(false),
                 )));

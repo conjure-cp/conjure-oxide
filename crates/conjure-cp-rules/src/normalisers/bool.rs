@@ -66,13 +66,13 @@ fn distribute_or_over_and(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                                 let mut new_or_contents = rest.clone();
                                 new_or_contents.push(e.clone());
                                 new_and_contents.push(Expr::Or(
-                                    metadata.clone_dirty(),
+                                    metadata.clone(),
                                     Moo::new(into_matrix_expr![new_or_contents]),
                                 ))
                             }
 
                             Ok(Reduction::pure(Expr::And(
-                                metadata.clone_dirty(),
+                                metadata,
                                 Moo::new(into_matrix_expr![new_and_contents]),
                             )))
                         }
