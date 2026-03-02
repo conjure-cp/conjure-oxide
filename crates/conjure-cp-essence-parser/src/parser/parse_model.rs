@@ -57,6 +57,13 @@ pub fn parse_essence_with_context(
     }
 }
 
+/*
+    this function is used by both the file-based parser and the LSP parser (which needs the source map)
+    the LSP parser can also optionally pass in a pre-parsed tree to avoid parsing twice (which is how caching is implemented)
+    if the tree is not passed in, we will parse it from scratch (this is what the file-based parser does)
+    when cache is dirty, LSP has to call parse_essence_with_context_and_map with None for the tree,
+    which will cause it to re-parse the source code and update the cache (Model = ast, SorceMap = map)
+*/
 pub fn parse_essence_with_context_and_map(
     src: &str,
     context: Arc<RwLock<Context<'static>>>,
