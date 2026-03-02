@@ -1,3 +1,4 @@
+use conjure_cp_core::ast::Model;
 use tower_lsp::{lsp_types::Diagnostic as LspDiagnostic, lsp_types::*};
 
 use conjure_cp_essence_parser::diagnostics::diagnostics_api::Diagnostic as ParserDiagnostic;
@@ -24,18 +25,18 @@ impl Backend {
         let uri = params.text_document.uri;
         let text = params.text_document.text.clone();
 
-        let lsp_cache = self.lsp_cache;
+        let lsp_cache = &self.lsp_cache;
         //basically look to see if in cache and if not in cache, fetch from source
         //the closure? only runs on a cache miss
         let cache_content = lsp_cache
-            .get_with(uri, async {
+            .get_with(uri.clone(), async {
                 self.client
                     .log_message(MessageType::INFO, "Cache miss! Loading into cache now")
                     .await;
                 CacheCont {
-                    sourcemap: None, //need to get this using parse_essence_with_context_and_map
-                    ast: None,       //need to get this using parse_essence_with_context_and_map
-                    cst: None,       //idk how to though? need to make a call to diagnostic api
+                    sourcemap: None,       // need to get this using parse_essence_with_context_and_map
+                    ast: Model::default(), // need to get this using parse_essence_with_context_and_map
+                    cst: tree_sitter::Parser::new().parse(&text, None).unwrap(), // get this onOpen using tree-sitter directly, then send it to parse_essence_with_context_and_map to get sourcemap and ast
                     contents: text,
                     version: 0,
                 }
