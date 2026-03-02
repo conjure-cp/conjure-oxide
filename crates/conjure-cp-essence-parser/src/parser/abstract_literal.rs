@@ -65,8 +65,14 @@ fn parse_tuple(
 ) -> Result<Option<AbstractLiteral<Expression>>, FatalParseError> {
     let mut elements = Vec::new();
     for child in named_children(node) {
-        let Some(expr) =
-            parse_expression(child, source_code, node, symbols_ptr.clone(), errors, source_map)?
+        let Some(expr) = parse_expression(
+            child,
+            source_code,
+            node,
+            symbols_ptr.clone(),
+            errors,
+            source_map,
+        )?
         else {
             return Ok(None);
         };
@@ -128,8 +134,14 @@ fn parse_set_literal(
 ) -> Result<Option<AbstractLiteral<Expression>>, FatalParseError> {
     let mut elements = Vec::new();
     for child in named_children(node) {
-        let Some(expr) =
-            parse_expression(child, source_code, node, symbols_ptr.clone(), errors, source_map)?
+        let Some(expr) = parse_expression(
+            child,
+            source_code,
+            node,
+            symbols_ptr.clone(),
+            errors,
+            source_map,
+        )?
         else {
             return Ok(None);
         };
