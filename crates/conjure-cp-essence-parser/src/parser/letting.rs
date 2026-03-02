@@ -5,6 +5,8 @@ use tree_sitter::Node;
 
 use super::domain::parse_domain;
 use super::util::named_children;
+use crate::diagnostics::diagnostics_api::SymbolKind;
+use crate::diagnostics::source_map::{HoverInfo, SourceMap, span_with_hover};
 use crate::errors::{FatalParseError, RecoverableParseError};
 use crate::expression::parse_expression;
 use crate::field;
@@ -17,6 +19,7 @@ pub fn parse_letting_statement(
     source_code: &str,
     existing_symbols_ptr: Option<SymbolTablePtr>,
     errors: &mut Vec<RecoverableParseError>,
+    source_map: &mut SourceMap,
 ) -> Result<Option<SymbolTable>, FatalParseError> {
     let mut symbol_table = SymbolTable::new();
 
@@ -26,6 +29,13 @@ pub fn parse_letting_statement(
     for variable in named_children(&variable_list) {
         let variable_name = &source_code[variable.start_byte()..variable.end_byte()];
         temp_symbols.insert(variable_name);
+        let hover = HoverInfo {
+            description: format!("Letting variable: {variable_name}"),
+            kind: Some(SymbolKind::Letting),
+            ty: None,
+            decl_span: None,
+        };
+        span_with_hover(&variable, source_code, source_map, hover);
     }
 
     let expr_or_domain = field!(letting_statement, "expr_or_domain");
@@ -38,6 +48,7 @@ pub fn parse_letting_statement(
                     &letting_statement,
                     existing_symbols_ptr.clone(),
                     errors,
+                    source_map,
                 )?
                 else {
                     continue;
@@ -52,6 +63,7 @@ pub fn parse_letting_statement(
                     source_code,
                     existing_symbols_ptr.clone(),
                     errors,
+                    source_map,
                 )?
                 else {
                     continue;
