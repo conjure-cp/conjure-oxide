@@ -1,5 +1,6 @@
 use conjure_cp_essence_parser::util::node_is_expression;
 use conjure_cp_essence_parser::{
+    diagnostics::source_map::SourceMap,
     expression::parse_expression,
     util::{get_tree, query_toplevel},
 };
@@ -55,7 +56,8 @@ pub fn expand_expr_vec(tt: &TokenTree) -> Result<TokenStream> {
 /// Parse a single expression or make a compile time error
 fn mk_expr(node: Node, src: &str, root: &Node, tt: &TokenTree) -> Result<TokenStream> {
     let mut errors = Vec::new();
-    match parse_expression(node, src, root, None, &mut errors) {
+    let mut source_map = SourceMap::default();
+    match parse_expression(node, src, root, None, &mut errors, &mut source_map) {
         Ok(Some(expr)) => Ok(expr.ctor_tokens()),
         Ok(None) => {
             // Recoverable error occurred - get the error message from the errors vector
