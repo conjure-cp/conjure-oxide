@@ -1,0 +1,56 @@
+Model before rewriting:
+
+find x: int(0..5)
+
+such that
+
+and([ or([ ((i = j)) -> ((x = 0)) | j : int(1..2) ]) | i : int(1..2) ])
+
+--
+
+[ or([ ((i = j)) -> ((x = 0)) | j : int(1..2) ]) | i : int(1..2) ], 
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[or([ ((1 = j)) -> ((x = 0)) | j : int(1..2) ]),or([ ((2 = j)) -> ((x = 0)) | j : int(1..2) ]);int(1..)]
+
+--
+
+and([or([ ((1 = j)) -> ((x = 0)) | j : int(1..2) ]),or([ ((2 = j)) -> ((x = 0)) | j : int(1..2) ]);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+or([ ((1 = j)) -> ((x = 0)) | j : int(1..2) ]),
+or([ ((2 = j)) -> ((x = 0)) | j : int(1..2) ])
+
+--
+
+[ ((1 = j)) -> ((x = 0)) | j : int(1..2) ], 
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[(x = 0),true;int(1..)]
+
+--
+
+or([(x = 0),true;int(1..)]),
+or([ ((2 = j)) -> ((x = 0)) | j : int(1..2) ]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+or([ ((2 = j)) -> ((x = 0)) | j : int(1..2) ])
+
+--
+
+[ ((2 = j)) -> ((x = 0)) | j : int(1..2) ], 
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[true,(x = 0);int(1..)]
+
+--
+
+or([true,(x = 0);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+true
+
+--
+
+Final model:
+
+find x: int(0..5)
+
+such that
+
+true
+
