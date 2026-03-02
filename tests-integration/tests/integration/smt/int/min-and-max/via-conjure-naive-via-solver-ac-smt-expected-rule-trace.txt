@@ -1,0 +1,106 @@
+Model before rewriting:
+
+find x: int(1..2)
+find y: int(1..2)
+find z: int(1..2)
+
+such that
+
+(max([x,y,z;int(1..3)]) = 2),
+(min([x,y,z;int(1..3)]) = 1),
+and([(x <= y),(y <= z);int(1..2)])
+
+--
+
+max([x,y,z;int(1..3)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+max([x,y,z;int(1..)]) 
+
+--
+
+max([x,y,z;int(1..)]), 
+   ~~> max_to_var ([("Base", 6000)]) 
+__0 
+new variables:
+  find __0: int(1..2)
+new constraints:
+  (__0 >= x)
+  (__0 >= y)
+  (__0 >= z)
+  or([(__0 = x),(__0 = y),(__0 = z);int(1..)])
+--
+
+min([x,y,z;int(1..3)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+min([x,y,z;int(1..)]) 
+
+--
+
+min([x,y,z;int(1..)]), 
+   ~~> min_to_var ([("Base", 6000)]) 
+__1 
+new variables:
+  find __1: int(1..2)
+new constraints:
+  (__1 <= x)
+  (__1 <= y)
+  (__1 <= z)
+  or([(__1 = x),(__1 = y),(__1 = z);int(1..)])
+--
+
+and([(x <= y),(y <= z);int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+and([(x <= y),(y <= z);int(1..)]) 
+
+--
+
+(__0 = 2),
+(__1 = 1),
+and([(x <= y),(y <= z);int(1..)]),
+(__0 >= x),
+(__0 >= y),
+(__0 >= z),
+or([(__0 = x),(__0 = y),(__0 = z);int(1..)]),
+(__1 <= x),
+(__1 <= y),
+(__1 <= z),
+or([(__1 = x),(__1 = y),(__1 = z);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(__0 = 2),
+(__1 = 1),
+(x <= y),
+(y <= z),
+(__0 >= x),
+(__0 >= y),
+(__0 >= z),
+or([(__0 = x),(__0 = y),(__0 = z);int(1..)]),
+(__1 <= x),
+(__1 <= y),
+(__1 <= z),
+or([(__1 = x),(__1 = y),(__1 = z);int(1..)]) 
+
+--
+
+Final model:
+
+find x: int(1..2)
+find y: int(1..2)
+find z: int(1..2)
+find __0: int(1..2)
+find __1: int(1..2)
+
+such that
+
+(__0 = 2),
+(__1 = 1),
+(x <= y),
+(y <= z),
+(__0 >= x),
+(__0 >= y),
+(__0 >= z),
+or([(__0 = x),(__0 = y),(__0 = z);int(1..)]),
+(__1 <= x),
+(__1 <= y),
+(__1 <= z),
+or([(__1 = x),(__1 = y),(__1 = z);int(1..)])
+
