@@ -11,7 +11,7 @@ pub struct ParseContext<'a> {
     pub source_code: &'a str,
     pub root: &'a Node<'a>,
     pub symbols: Option<SymbolTablePtr>,
-    pub errors: Vec<RecoverableParseError>,
+    pub errors: &'a mut Vec<RecoverableParseError>,
     pub source_map: &'a mut SourceMap,
 }
 
@@ -20,13 +20,14 @@ impl<'a> ParseContext<'a> {
         source_code: &'a str,
         root: &'a Node<'a>,
         symbols: Option<SymbolTablePtr>,
+        errors: &'a mut Vec<RecoverableParseError>,
         source_map: &'a mut SourceMap,
     ) -> Self {
         Self {
             source_code,
             root,
             symbols,
-            errors: Vec::new(),
+            errors,
             source_map,
         }
     }
@@ -35,14 +36,13 @@ impl<'a> ParseContext<'a> {
         self.errors.push(error);
     }
 
-    /// Create a new ParseContext with different symbols but sharing source_code, root, and source_map.
-    /// need to merge errors back after parsing
+    /// Create a new ParseContext with different symbols but sharing source_code, root, errors, and source_map.
     pub fn with_new_symbols(&mut self, symbols: Option<SymbolTablePtr>) -> ParseContext<'_> {
         ParseContext {
             source_code: self.source_code,
             root: self.root,
             symbols,
-            errors: Vec::new(),
+            errors: self.errors,
             source_map: self.source_map,
         }
     }

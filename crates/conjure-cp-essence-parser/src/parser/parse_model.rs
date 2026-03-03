@@ -85,6 +85,7 @@ pub fn parse_essence_with_context_and_map(
         &source_code,
         &root_node,
         Some(model.symbols_ptr_unchecked().clone()),
+        errors,
         &mut source_map,
     );
 
@@ -175,9 +176,6 @@ pub fn parse_essence_with_context_and_map(
 
     // check for errors (keyword as identifier)
     keyword_as_identifier(&mut ctx);
-
-    // Collect errors from context
-    errors.extend(ctx.errors);
 
     // Check if there were any recoverable errors
     if !errors.is_empty() {

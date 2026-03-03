@@ -45,14 +45,11 @@ fn parse_dominance_relation(
         source_code: ctx.source_code,
         root: node,
         symbols: ctx.symbols.clone(),
-        errors: Vec::new(),
+        errors: ctx.errors,
         source_map: &mut *ctx.source_map,
     };
 
-    let result = parse_expression(&mut inner_ctx, field!(node, "expression"));
-    ctx.errors.extend(inner_ctx.errors);
-
-    let Some(inner) = result? else {
+    let Some(inner) = parse_expression(&mut inner_ctx, field!(node, "expression"))? else {
         return Ok(None);
     };
 
