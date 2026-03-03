@@ -2,6 +2,7 @@ use std::sync::{Arc, RwLock};
 use std::{fs, vec};
 
 use conjure_cp_core::Model;
+use conjure_cp_core::ast::assertions::debug_assert_model_well_formed;
 use conjure_cp_core::ast::{DeclarationPtr, Expression, Metadata, Moo};
 use conjure_cp_core::context::Context;
 #[allow(unused)]
@@ -35,6 +36,7 @@ pub fn parse_essence_file_native(
                     Some(path.to_string()),
                 )));
             }
+            debug_assert_model_well_formed(&m, "tree-sitter");
             // Return model if no errors
             Ok(m)
         }
@@ -199,6 +201,7 @@ pub fn parse_essence(src: &str) -> Result<Model, Box<ParseErrorCollection>> {
                     None,
                 )))
             } else {
+                debug_assert_model_well_formed(&model, "tree-sitter");
                 Ok(model)
             }
         }
