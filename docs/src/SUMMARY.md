@@ -50,15 +50,15 @@
 - [Useful Resources]()
 
 # Documentation
-- [Essence Parser](./documentation/essence_parser.md)
+
+- [Essence Parser](./documentation/Essence-Parser.md)
   - [Tree Morph Benchmarking](./documentation/tree_morph_benchmarking.md)
   - [ProTrace Module](./documentation/ProTrace-module.md)
 - [Sets]()
   - [Expression Rewriting: Rules and RuleSets](./documentation/sets/expression_rewriting_rules_and_rulesets.md)
   - [Horizontal Set Rules](./documentation/sets/conjure-horizontal-set-rules.md)
   - [Vertical Set Rules: Occurrence Representation](./documentation/sets/Conjure-Vertical-Set-Rules-Occurrence-Representation.md)
-- [LSP](./documentation/LSP/lsp-server-client.md)
-  - [Diagnostics API](./documentation/LSP/diagnostics_api.md)
+- [LSP]()
   - [Essence Error Catalog for Error Underlining](./documentation/LSP/Essence-Error-Catalog-for-LSP-Error-Underlining-implementation.md)
   - [LSP Error Testing](./documentation/LSP/lsp_tests.md)
 - [Testing: The Ideal Scenario](./documentation/testing/ideal-scenario-of-testing.md)
