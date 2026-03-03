@@ -7,7 +7,6 @@ use crate::parser::ParseContext;
 use crate::{child, field};
 use conjure_cp_core::ast::{
     DeclarationPtr, Domain, DomainPtr, IntVal, Moo, Name, Range, RecordEntry, Reference, SetAttr,
-    SymbolTablePtr,
 };
 use tree_sitter::Node;
 
