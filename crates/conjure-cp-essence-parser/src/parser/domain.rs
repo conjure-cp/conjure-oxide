@@ -226,11 +226,7 @@ fn parse_int_val(ctx: &mut ParseContext, node: Node) -> Result<Option<IntVal>, F
         }
         // Otherwise, check if it's an identifier reference
         let Some(decl) = get_declaration_ptr_from_identifier(ctx, node)? else {
-            // If it's not a valid identifier, record an error and return None
-            ctx.record_error(crate::errors::RecoverableParseError::new(
-                format!("'{}' is not a valid integer constant or identifier", text),
-                Some(node.range()),
-            ));
+            // If identifier isn't defined, its a semantic error
             return Ok(None);
         };
         return Ok(Some(IntVal::Reference(Reference::new(decl))));
