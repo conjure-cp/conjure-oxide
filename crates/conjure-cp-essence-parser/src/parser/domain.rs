@@ -2,8 +2,8 @@ use super::atom::parse_int;
 use super::util::named_children;
 use crate::diagnostics::source_map::{HoverInfo, span_with_hover};
 use crate::errors::FatalParseError;
-use crate::parser::ParseContext;
 use crate::expression::parse_expression;
+use crate::parser::ParseContext;
 use crate::{child, field};
 use conjure_cp_core::ast::{
     DeclarationPtr, Domain, DomainPtr, IntVal, Moo, Name, Range, RecordEntry, Reference, SetAttr,
@@ -36,7 +36,7 @@ pub fn parse_domain(
                 decl_span: None,
             };
             span_with_hover(&domain, ctx.source_code, ctx.source_map, hover);
-            parse_int_domain(ctx, domain, domain)
+            parse_int_domain(ctx, domain)
         }
         "identifier" => {
             let Some(decl) = get_declaration_ptr_from_identifier(ctx, domain)? else {
@@ -116,10 +116,7 @@ fn parse_int_domain(
     for domain_component in named_children(&range_list) {
         match domain_component.kind() {
             "atom" | "arithmetic_expr" => {
-                let Some(int_val) = parse_int_val(
-                    &ctx, domain_component,
-                )?
-                else {
+                let Some(int_val) = parse_int_val(ctx, domain_component)? else {
                     return Ok(None);
                 };
 
@@ -131,7 +128,7 @@ fn parse_int_domain(
             "int_range" => {
                 let lower_bound = match domain_component.child_by_field_name("lower") {
                     Some(node) => {
-                        match parse_int_val(node, source_code, symbols_ptr, errors, source_map)? {
+                        match parse_int_val(ctx, node)? {
                             Some(val) => Some(val),
                             None => return Ok(None), // semantic error occurred
                         }
@@ -140,7 +137,7 @@ fn parse_int_domain(
                 };
                 let upper_bound = match domain_component.child_by_field_name("upper") {
                     Some(node) => {
-                        match parse_int_val(node, source_code, symbols_ptr, errors, source_map)? {
+                        match parse_int_val(ctx, node)? {
                             Some(val) => Some(val),
                             None => return Ok(None), // semantic error occurred
                         }
@@ -153,7 +150,7 @@ fn parse_int_domain(
                         // Check if both bounds are constants and validate lower <= upper
                         if let (IntVal::Const(l), IntVal::Const(u)) = (&lower, &upper) {
                             if l > u {
-                                errors.push(RecoverableParseError::new(
+                                ctx.record_error(crate::errors::RecoverableParseError::new(
                                     format!(
                                         "Invalid integer range: lower bound {} is greater than upper bound {}",
                                         l, u
@@ -221,39 +218,27 @@ fn parse_int_domain(
 
 // Helper function to parse a node into an IntVal
 // Handles constants, references, and arbitrary expressions
-fn parse_int_val(
-    node: Node,
-    source_code: &str,
-    symbols_ptr: &Option<SymbolTablePtr>,
-    errors: &mut Vec<RecoverableParseError>,
-    source_map: &mut SourceMap,
-) -> Result<Option<IntVal>, FatalParseError> {
+fn parse_int_val(ctx: &mut ParseContext, node: Node) -> Result<Option<IntVal>, FatalParseError> {
     // For atoms, try to parse as a constant integer first
     if node.kind() == "atom" {
-        let text = &source_code[node.start_byte()..node.end_byte()];
+        let text = &ctx.source_code[node.start_byte()..node.end_byte()];
         if let Ok(integer) = text.parse::<i32>() {
             return Ok(Some(IntVal::Const(integer)));
         }
         // Otherwise, check if it's an identifier reference
-        let Some(decl) =
-            get_declaration_ptr_from_identifier(node, source_code, symbols_ptr, errors)?
-        else {
-            // If identifier isn't defined, its a semantic error
+        let Some(decl) = get_declaration_ptr_from_identifier(ctx, node)? else {
+            // If it's not a valid identifier, record an error and return None
+            ctx.record_error(crate::errors::RecoverableParseError::new(
+                format!("'{}' is not a valid integer constant or identifier", text),
+                Some(node.range()),
+            ));
             return Ok(None);
         };
         return Ok(Some(IntVal::Reference(Reference::new(decl))));
     }
 
     // For anything else, parse as an expression
-    let Some(expr) = parse_expression(
-        node,
-        source_code,
-        &node,
-        symbols_ptr.clone(),
-        errors,
-        source_map,
-    )?
-    else {
+    let Some(expr) = parse_expression(ctx, node)? else {
         return Ok(None);
     };
     Ok(Some(IntVal::Expr(Moo::new(expr))))
