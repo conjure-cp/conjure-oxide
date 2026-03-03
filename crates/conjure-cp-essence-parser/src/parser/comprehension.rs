@@ -22,7 +22,7 @@ pub fn parse_comprehension(
         )
     })?;
 
-    let mut builder = ComprehensionBuilder::new(symbols_ptr.clone());
+    let mut builder = ComprehensionBuilder::new(symbols_ptr);
 
     // We need to track the return expression node separately since it appears first in syntax
     // but we need to parse generators first (to get variables in scope)
@@ -113,7 +113,7 @@ pub fn parse_quantifier_or_aggregate_expr(
     })?;
 
     // Create the comprehension builder
-    let mut builder = ComprehensionBuilder::new(symbols_ptr.clone());
+    let mut builder = ComprehensionBuilder::new(symbols_ptr);
 
     // First pass: collect domain/collection, variables
     let mut domain = None;
