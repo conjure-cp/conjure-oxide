@@ -2,6 +2,42 @@ use tree_sitter::{Node, Parser, Tree};
 use tree_sitter_essence::LANGUAGE;
 
 use super::traversal::WalkDFS;
+use crate::errors::RecoverableParseError;
+use conjure_cp_core::ast::SymbolTablePtr;
+
+/// Context for parsing, containing shared state passed through parser functions.
+pub struct ParseContext<'a> {
+    pub source_code: &'a str,
+    pub root: &'a Node<'a>,
+    pub symbols: Option<SymbolTablePtr>,
+    pub errors: Vec<RecoverableParseError>,
+}
+
+impl<'a> ParseContext<'a> {
+    pub fn new(source_code: &'a str, root: &'a Node<'a>, symbols: Option<SymbolTablePtr>) -> Self {
+        Self {
+            source_code,
+            root,
+            symbols,
+            errors: Vec::new(),
+        }
+    }
+
+    pub fn record_error(&mut self, error: RecoverableParseError) {
+        self.errors.push(error);
+    }
+
+    /// Create a new ParseContext with different symbols but sharing source_code and root.
+    /// need to merge errors back after parsing
+    pub fn with_new_symbols(&self, symbols: Option<SymbolTablePtr>) -> ParseContext<'_> {
+        ParseContext {
+            source_code: self.source_code,
+            root: self.root,
+            symbols,
+            errors: Vec::new(),
+        }
+    }
+}
 
 /// Parse the given source code into a syntax tree using tree-sitter.
 ///
