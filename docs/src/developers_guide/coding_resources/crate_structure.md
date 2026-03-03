@@ -52,7 +52,7 @@ Most of our implementation is contained in the `crates/` directory. Here is an o
   Rules are grouped into files and directories based on their purpose: for example, all rules for normalising boolean expressions are in `conjure_rules/src/normalisers/bool.rs`
 - `conjure_rule_macros` implements the `#[register_rule(...)]` and `#[register_rule_set(...)]` procedural macros. See also: [Wiki - Rules and RuleSets](https://github.com/conjure-cp/conjure-oxide/wiki/Expression-rewriting%2C-Rules-and-RuleSets).
 - `conjure_essence_parser` implements the native Rust parser for Essence.
-  It uses our Treesitter grammar, which is defined *separately* in`tree-sitter-essence`
+  It uses our Tree-sitter grammar, which is defined *separately* in`tree-sitter-essence`
 - `conjure_essence_macros` implements the `essence_expr!` procedural macro.
 - `enum_compatability_macro` is a macro that allows us to indicate whether certain features of Essence are compatible with certain solvers, for documentation purposes.
 - `randicheck` is a somewhat separate project developed by Ty (@TAswan) and others.

@@ -4,7 +4,7 @@
 /// an optimiser can shine.
 use criterion::{Criterion, criterion_group, criterion_main};
 use rand::rngs::StdRng;
-use rand::{Rng, SeedableRng};
+use rand::{RngExt, SeedableRng};
 use tree_morph::prelude::*;
 use uniplate::Uniplate;
 

@@ -12,7 +12,7 @@ Windows users should install [WSL](https://learn.microsoft.com/en-us/windows/wsl
 <details><summary><b>Linux (Debian/Ubuntu)</b></summary>
 
 **The following software is required:**
-- The latest version of stable Rust, installed using [Rustup](https://www.rust-lang.org/tools/install).
+- The latest version of stable Rust, installed using [rustup](https://www.rust-lang.org/tools/install).
 - A C/C++ compilation toolchain and libraries:
   - Debian, Ubuntu and derivatives: `sudo apt install build-essential libclang-dev`
   - Fedora: `sudo dnf group install c-development` and `sudo dnf install clang-devel`
@@ -24,7 +24,7 @@ Windows users should install [WSL](https://learn.microsoft.com/en-us/windows/wsl
 <details><summary><b>MacOS</b></summary>
 
 **The following software is required:**
-* the latest version of stable Rust, installed using [Rustup](https://www.rust-lang.org/tools/install).
+* the latest version of stable Rust, installed using [rustup](https://www.rust-lang.org/tools/install).
 * an XCode Command Line Tools installation (installable using `xcode-select --install`)
 * CMake: `brew install cmake` (for SAT solving)
 * [Conjure](https://github.com/conjure-cp/conjure).

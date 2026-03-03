@@ -12,7 +12,7 @@ Our development process is as follows:
      Having an active PR makes your work visible, allows others to help you and give feedback. Request reviews from people who have worked on similar parts of the project.
    - Keep the PR in draft status until you think it's ready to be merged.
 4. Assign PR to reviewer(s) when it's ready to be merged.
-   - Only Oz (@ozgurakgun) can merge PR's, so add him as a reviewer when you want your PR to be merged.
+   - Only Oz (@ozgurakgun) can merge PRs, so add him as a reviewer when you want your PR to be merged.
    - During reviewing, avoid force-pushing to the pull request, as this makes reviewing more difficult. 
      Details on how to update a PR are given below.
 5. Once Oz has approved the PR:

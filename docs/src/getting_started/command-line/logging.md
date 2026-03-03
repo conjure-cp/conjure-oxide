@@ -52,7 +52,7 @@ RUST_LOG=TRACE cargo run -- solve --solver sat my_problem.essence --verbose
 This will show: 
 - Integer-to-boolean conversions
 - Operation transformations 
-- Tseitin transformations
+- Tseytin transformations
 - All rules that were tried and applied
 
 For more detailed testing output (including JSON traces and rewritten models), run specific tests:

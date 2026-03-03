@@ -1,6 +1,9 @@
 use conjure_cp::{
     ast::Metadata,
-    ast::{Atom, DeclarationPtr, Expression as Expr, Moo, SymbolTable, categories::Category},
+    ast::{
+        AbstractLiteral, Atom, DeclarationPtr, Expression as Expr, Literal, Moo, Name, SymbolTable,
+        categories::Category,
+    },
 };
 
 use tracing::{instrument, trace};
@@ -28,6 +31,31 @@ pub fn is_flat(expr: &Expr) -> bool {
         }
     }
     true
+}
+
+/// Returns the arity of a tuple constant expression, if this expression is one.
+pub fn constant_tuple_len(expr: &Expr) -> Option<usize> {
+    match expr {
+        Expr::AbstractLiteral(_, AbstractLiteral::Tuple(elems)) => Some(elems.len()),
+        Expr::Atomic(_, Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Tuple(elems)))) => {
+            Some(elems.len())
+        }
+        _ => None,
+    }
+}
+
+/// Returns record field names of a record constant expression, if this expression is one.
+pub fn constant_record_names(expr: &Expr) -> Option<Vec<Name>> {
+    match expr {
+        Expr::AbstractLiteral(_, AbstractLiteral::Record(entries)) => {
+            Some(entries.iter().map(|x| x.name.clone()).collect())
+        }
+        Expr::Atomic(
+            _,
+            Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Record(entries))),
+        ) => Some(entries.iter().map(|x| x.name.clone()).collect()),
+        _ => None,
+    }
 }
 
 /// True if the entire AST is constants.

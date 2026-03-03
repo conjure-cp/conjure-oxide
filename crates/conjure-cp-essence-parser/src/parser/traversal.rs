@@ -101,13 +101,11 @@ mod test {
         let root = tree.root_node();
         let mut iter = WalkBFS::new(&root).filter(|n| n.is_named());
         assert_eq!(iter.next().unwrap().kind(), "program"); // depth = 0
-        assert_eq!(iter.next().unwrap().kind(), "bool_expr"); // depth = 1
-        assert_eq!(iter.next().unwrap().kind(), "bool_expr"); // depth = 1
+        assert_eq!(iter.next().unwrap().kind(), "atom"); // depth = 1
         assert_eq!(iter.next().unwrap().kind(), "atom"); // depth = 2
-        assert_eq!(iter.next().unwrap().kind(), "atom"); // depth = 2
-        assert_eq!(iter.next().unwrap().kind(), "identifier"); // depth = 3
-        assert_eq!(iter.next().unwrap().kind(), "constant"); // depth = 3
-        assert_eq!(iter.next().unwrap().kind(), "TRUE"); // depth = 4
+        assert_eq!(iter.next().unwrap().kind(), "identifier"); // depth = 2
+        assert_eq!(iter.next().unwrap().kind(), "constant"); // depth = 2
+        assert_eq!(iter.next().unwrap().kind(), "TRUE"); // depth = 3
     }
 
     #[test]
@@ -116,11 +114,9 @@ mod test {
         let root = tree.root_node();
         let mut iter = WalkDFS::new(&root).filter(|n| n.is_named());
         assert_eq!(iter.next().unwrap().kind(), "program"); // top level
-        assert_eq!(iter.next().unwrap().kind(), "bool_expr"); // first branch ("x")
-        assert_eq!(iter.next().unwrap().kind(), "atom");
+        assert_eq!(iter.next().unwrap().kind(), "atom"); // first branch ("x")
         assert_eq!(iter.next().unwrap().kind(), "identifier");
-        assert_eq!(iter.next().unwrap().kind(), "bool_expr"); // second branch ("true")
-        assert_eq!(iter.next().unwrap().kind(), "atom");
+        assert_eq!(iter.next().unwrap().kind(), "atom"); // second branch ("true")
         assert_eq!(iter.next().unwrap().kind(), "constant");
         assert_eq!(iter.next().unwrap().kind(), "TRUE");
     }

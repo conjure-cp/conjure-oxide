@@ -25,7 +25,7 @@ use crate::utils::misc::to_set;
 use conjure_cp::Model as ConjureModel;
 use conjure_cp::ast::Name::User;
 use conjure_cp::ast::{Literal, Name};
-use conjure_cp::solver::SolverFamily;
+use conjure_cp::settings::SolverFamily;
 
 /// Limit how many lines of the rewrite serialisation we persist/compare in integration tests.
 pub const REWRITE_SERIALISED_JSON_MAX_LINES: usize = 1000;
@@ -97,7 +97,6 @@ pub fn assert_eq_any_order<T: Eq + Hash + Debug + Clone>(a: &Vec<Vec<T>>, b: &Ve
         b_rows.push(hash_row);
     }
 
-    println!("{a_rows:?},{b_rows:?}");
     for row in a_rows {
         assert!(b_rows.contains(&row));
     }
@@ -121,10 +120,13 @@ pub fn save_model_json(
     path: &str,
     test_name: &str,
     test_stage: &str,
+    solver: Option<SolverFamily>,
 ) -> Result<(), std::io::Error> {
+    let marker = solver.map_or("agnostic", |s| s.as_str());
     let generated_json_str = serialize_model(model)?;
     let generated_json_str = maybe_truncate_serialised_json(generated_json_str, test_stage);
-    let filename = format!("{path}/{test_name}.generated-{test_stage}.serialised.json");
+    let filename = format!("{path}/{test_name}-{marker}.generated-{test_stage}.serialised.json");
+    println!("saving: {}", filename);
     File::create(&filename)?.write_all(generated_json_str.as_bytes())?;
     Ok(())
 }
@@ -133,15 +135,18 @@ pub fn save_stats_json(
     context: Arc<RwLock<Context<'static>>>,
     path: &str,
     test_name: &str,
+    solver: SolverFamily,
 ) -> Result<(), std::io::Error> {
     #[allow(clippy::unwrap_used)]
-    let stats = context.read().unwrap().stats.clone();
+    let solver_name = solver.as_str();
+
+    let stats = context.read().unwrap().clone();
     let generated_json = sort_json_object(&serde_json::to_value(stats)?, false);
 
     // serialise to string
     let generated_json_str = serde_json::to_string_pretty(&generated_json)?;
 
-    File::create(format!("{path}/{test_name}-stats.json"))?
+    File::create(format!("{path}/{test_name}-{solver_name}-stats.json"))?
         .write_all(generated_json_str.as_bytes())?;
 
     Ok(())
@@ -159,11 +164,17 @@ pub fn read_model_json(
     test_name: &str,
     prefix: &str,
     test_stage: &str,
+    solver: Option<SolverFamily>,
 ) -> Result<ConjureModel, std::io::Error> {
-    let expected_json_str = read_with_path(format!(
-        "{path}/{test_name}.{prefix}-{test_stage}.serialised.json"
-    ))?;
-    println!("{path}/{test_name}.{prefix}-{test_stage}.serialised.json");
+    let marker = solver.map_or("agnostic", |s| s.as_str());
+    let new_filepath = format!("{path}/{test_name}-{marker}.{prefix}-{test_stage}.serialised.json");
+    let old_filepath = format!("{path}/{marker}-{test_name}.{prefix}-{test_stage}.serialised.json");
+    let filepath = if Path::new(&new_filepath).exists() {
+        new_filepath
+    } else {
+        old_filepath
+    };
+    let expected_json_str = std::fs::read_to_string(filepath)?;
     let expected_model: SerdeModel = serde_json::from_str(&expected_json_str)?;
 
     Ok(expected_model.initialise(ctx.clone()).unwrap())
@@ -175,9 +186,18 @@ pub fn read_model_json_prefix(
     test_name: &str,
     prefix: &str,
     test_stage: &str,
+    solver: Option<SolverFamily>,
     max_lines: usize,
 ) -> Result<String, std::io::Error> {
-    let filename = format!("{path}/{test_name}.{prefix}-{test_stage}.serialised.json");
+    let marker = solver.map_or("agnostic", |s| s.as_str());
+    let new_filename = format!("{path}/{test_name}-{marker}.{prefix}-{test_stage}.serialised.json");
+    let old_filename = format!("{path}/{marker}-{test_name}.{prefix}-{test_stage}.serialised.json");
+    let filename = if Path::new(&new_filename).exists() {
+        new_filename
+    } else {
+        old_filename
+    };
+    println!("reading: {}", filename);
     read_first_n_lines(filename, max_lines)
 }
 
@@ -229,14 +249,8 @@ pub fn save_solutions_json(
     let json_solutions = solutions_to_json(solutions);
     let generated_json_str = serde_json::to_string_pretty(&json_solutions)?;
 
-    let solver_name = match solver {
-        SolverFamily::Sat => "sat",
-        #[cfg(feature = "smt")]
-        SolverFamily::Smt(..) => "smt",
-        SolverFamily::Minion => "minion",
-    };
-
-    let filename = format!("{path}/{test_name}.generated-{solver_name}.solutions.json");
+    let solver_name = solver.as_str();
+    let filename = format!("{path}/{test_name}-{solver_name}.generated-solutions.json");
     File::create(&filename)?.write_all(generated_json_str.as_bytes())?;
 
     Ok(json_solutions)
@@ -249,15 +263,18 @@ pub fn read_solutions_json(
     solver: SolverFamily,
 ) -> Result<JsonValue, anyhow::Error> {
     let solver_name = match solver {
-        SolverFamily::Sat => "sat",
+        SolverFamily::Sat(_) => "sat",
         #[cfg(feature = "smt")]
         SolverFamily::Smt(..) => "smt",
         SolverFamily::Minion => "minion",
     };
-
-    let expected_json_str = read_with_path(format!(
-        "{path}/{test_name}.{prefix}-{solver_name}.solutions.json"
-    ))?;
+    let new_filename = format!("{path}/{test_name}-{solver_name}.{prefix}-solutions.json");
+    let old_filename = format!("{path}/{solver_name}-{test_name}.{prefix}-solutions.json");
+    let expected_json_str = if Path::new(&new_filename).exists() {
+        read_with_path(new_filename)?
+    } else {
+        read_with_path(old_filename)?
+    };
 
     let expected_solutions: JsonValue =
         sort_json_object(&serde_json::from_str(&expected_json_str)?, true);
@@ -270,8 +287,16 @@ pub fn read_human_rule_trace(
     path: &str,
     test_name: &str,
     prefix: &str,
+    solver: &SolverFamily,
 ) -> Result<Vec<String>, std::io::Error> {
-    let filename = format!("{path}/{test_name}-{prefix}-rule-trace-human.txt");
+    let solver_name = solver.as_str();
+    let new_filename = format!("{path}/{test_name}-{solver_name}-{prefix}-rule-trace.txt");
+    let old_filename = format!("{path}/{solver_name}-{test_name}-{prefix}-rule-trace.txt");
+    let filename = if Path::new(&new_filename).exists() {
+        new_filename
+    } else {
+        old_filename
+    };
     let rules_trace: Vec<String> = read_with_path(filename)?
         .lines()
         .map(String::from)

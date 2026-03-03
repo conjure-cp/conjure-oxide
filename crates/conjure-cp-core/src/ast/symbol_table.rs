@@ -4,41 +4,213 @@
 
 use crate::bug;
 use crate::representation::{Representation, get_repr_rule};
+use std::any::TypeId;
 
-use super::comprehension::Comprehension;
-use super::serde::RcRefCellAsId;
-use std::cell::RefCell;
 use std::collections::BTreeSet;
 use std::collections::btree_map::Entry;
 use std::collections::{BTreeMap, VecDeque};
 use std::hash::{Hash, Hasher};
-use std::rc::Rc;
+use std::sync::Arc;
 use std::sync::atomic::{AtomicU32, Ordering};
 
-use super::declaration::{DeclarationPtr, serde::DeclarationPtrFull};
-use super::serde::{DefaultWithId, HasId, ObjId};
+use super::comprehension::Comprehension;
+use super::serde::{AsId, DefaultWithId, HasId, IdPtr, ObjId, PtrAsInner};
+use super::{
+    DeclarationPtr, DomainPtr, Expression, GroundDomain, Model, Moo, Name, ReturnType, Typeable,
+};
 use itertools::{Itertools as _, izip};
+use parking_lot::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use tracing::trace;
-use uniplate::Tree;
-use uniplate::{Biplate, Uniplate};
+use uniplate::{Biplate, Tree, Uniplate};
 
-use super::name::Name;
-use super::{DomainPtr, Expression, GroundDomain, Moo, ReturnType, SubModel, Typeable};
-use derivative::Derivative;
+/// Global counter of symbol tables.
+/// Note that the counter is shared between all threads
+/// Thus, when running multiple models in parallel, IDs may
+/// be different with every run depending on scheduling order
+static SYMBOL_TABLE_ID_COUNTER: AtomicU32 = const { AtomicU32::new(0) };
 
-// Count symbol tables per thread / model.
-//
-// We run tests in parallel and having the id's be per thread keeps them more deterministic in the
-// JSON output. If this were not thread local, ids would be given to symbol tables differently in
-// each test run (depending on how the threads were scheduled). These id changes would result in
-// all the generated tests "changing" each time `ACCEPT=true cargo test` is ran.
-//
-// SAFETY: Symbol tables use Rc<RefCell<<>>, so a model is not thread-safe anyways.
-thread_local! {
-static ID_COUNTER: AtomicU32 = const { AtomicU32::new(0) };
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct SymbolTablePtr
+where
+    Self: Send + Sync,
+{
+    inner: Arc<SymbolTablePtrInner>,
 }
+
+impl SymbolTablePtr {
+    /// Create an empty new [SymbolTable] and return a shared pointer to it
+    pub fn new() -> Self {
+        Self::new_with_data(SymbolTable::new())
+    }
+
+    /// Create an empty new [SymbolTable] with the given parent and return a shared pointer to it
+    pub fn with_parent(symbols: SymbolTablePtr) -> Self {
+        Self::new_with_data(SymbolTable::with_parent(symbols))
+    }
+
+    fn new_with_data(data: SymbolTable) -> Self {
+        let object_id = SYMBOL_TABLE_ID_COUNTER.fetch_add(1, Ordering::Relaxed);
+        let id = ObjId {
+            object_id,
+            type_name: SymbolTablePtr::TYPE_NAME.into(),
+        };
+        Self::new_with_id_and_data(id, data)
+    }
+
+    fn new_with_id_and_data(id: ObjId, data: SymbolTable) -> Self {
+        Self {
+            inner: Arc::new(SymbolTablePtrInner {
+                id,
+                value: RwLock::new(data),
+            }),
+        }
+    }
+
+    /// Read the underlying symbol table.
+    /// This will block the current thread until a read lock can be acquired.
+    ///
+    /// # WARNING
+    ///
+    /// - If the current thread already holds a lock over this table, this may deadlock.
+    pub fn read(&self) -> RwLockReadGuard<'_, SymbolTable> {
+        self.inner.value.read()
+    }
+
+    /// Mutate the underlying symbol table.
+    /// This will block the current thread until an exclusive write lock can be acquired.
+    ///
+    /// # WARNING
+    ///
+    /// - If the current thread already holds a lock over this table, this may deadlock.
+    /// - Trying to acquire any other lock until the write lock is released will cause a deadlock.
+    /// - This will mutate the underlying data, which may be shared between other `SymbolTablePtr`s.
+    ///   Make sure that this is what you want.
+    ///
+    /// To create a separate copy of the table, see [SymbolTablePtr::detach].
+    ///
+    pub fn write(&self) -> RwLockWriteGuard<'_, SymbolTable> {
+        self.inner.value.write()
+    }
+
+    /// Create a new symbol table with the same contents as this one, but a new ID,
+    /// and return a pointer to it.
+    pub fn detach(&self) -> Self {
+        Self::new_with_data(self.read().clone())
+    }
+}
+
+impl Default for SymbolTablePtr {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl HasId for SymbolTablePtr {
+    const TYPE_NAME: &'static str = "SymbolTable";
+
+    fn id(&self) -> ObjId {
+        self.inner.id.clone()
+    }
+}
+
+impl DefaultWithId for SymbolTablePtr {
+    fn default_with_id(id: ObjId) -> Self {
+        Self::new_with_id_and_data(id, SymbolTable::default())
+    }
+}
+
+impl IdPtr for SymbolTablePtr {
+    type Data = SymbolTable;
+
+    fn get_data(&self) -> Self::Data {
+        self.read().clone()
+    }
+
+    fn with_id_and_data(id: ObjId, data: Self::Data) -> Self {
+        Self::new_with_id_and_data(id, data)
+    }
+}
+
+// TODO: this code is almost exactly copied from [DeclarationPtr].
+//       It should be possible to eliminate the duplication...
+//       Perhaps by merging SymbolTablePtr and DeclarationPtr together?
+//       (Alternatively, a macro?)
+
+impl Uniplate for SymbolTablePtr {
+    fn uniplate(&self) -> (Tree<Self>, Box<dyn Fn(Tree<Self>) -> Self>) {
+        let symtab = self.read();
+        let (tree, recons) = Biplate::<SymbolTablePtr>::biplate(&symtab as &SymbolTable);
+
+        let self2 = self.clone();
+        (
+            tree,
+            Box::new(move |x| {
+                let self3 = self2.clone();
+                *(self3.write()) = recons(x);
+                self3
+            }),
+        )
+    }
+}
+
+impl<To> Biplate<To> for SymbolTablePtr
+where
+    SymbolTable: Biplate<To>,
+    To: Uniplate,
+{
+    fn biplate(&self) -> (Tree<To>, Box<dyn Fn(Tree<To>) -> Self>) {
+        if TypeId::of::<To>() == TypeId::of::<Self>() {
+            unsafe {
+                let self_as_to = std::mem::transmute::<&Self, &To>(self).clone();
+                (
+                    Tree::One(self_as_to),
+                    Box::new(move |x| {
+                        let Tree::One(x) = x else { panic!() };
+
+                        let x_as_self = std::mem::transmute::<&To, &Self>(&x);
+                        x_as_self.clone()
+                    }),
+                )
+            }
+        } else {
+            // call biplate on the enclosed declaration
+            let decl = self.read();
+            let (tree, recons) = Biplate::<To>::biplate(&decl as &SymbolTable);
+
+            let self2 = self.clone();
+            (
+                tree,
+                Box::new(move |x| {
+                    let self3 = self2.clone();
+                    *(self3.write()) = recons(x);
+                    self3
+                }),
+            )
+        }
+    }
+}
+
+#[derive(Debug)]
+struct SymbolTablePtrInner {
+    id: ObjId,
+    value: RwLock<SymbolTable>,
+}
+
+impl Hash for SymbolTablePtrInner {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.id.hash(state);
+    }
+}
+
+impl PartialEq for SymbolTablePtrInner {
+    fn eq(&self, other: &Self) -> bool {
+        self.value.read().eq(&other.value.read())
+    }
+}
+
+impl Eq for SymbolTablePtrInner {}
 
 /// The global symbol table, mapping names to their definitions.
 ///
@@ -74,29 +246,16 @@ static ID_COUNTER: AtomicU32 = const { AtomicU32::new(0) };
 ///
 /// Unless otherwise stated, these follow the semantics specified in section 2.2.2 of the Savile
 /// Row manual (version 1.9.1 at time of writing).
-#[derive(Derivative)]
-#[derivative(PartialEq)]
-#[derive(Debug, Eq)]
 #[serde_as]
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
 pub struct SymbolTable {
-    #[serde_as(as = "Vec<(_,DeclarationPtrFull)>")]
+    #[serde_as(as = "Vec<(_,PtrAsInner)>")]
     table: BTreeMap<Name, DeclarationPtr>,
 
-    /// A unique id for this symbol table, for serialisation and debugging.
-    #[derivative(PartialEq = "ignore")] // eq by value not id.
-    id: ObjId,
+    #[serde_as(as = "Option<AsId>")]
+    parent: Option<SymbolTablePtr>,
 
-    #[serde_as(as = "Option<RcRefCellAsId>")]
-    parent: Option<Rc<RefCell<SymbolTable>>>,
-
-    next_machine_name: RefCell<i32>,
-}
-
-impl Hash for SymbolTable {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.id.hash(state);
-    }
+    next_machine_name: i32,
 }
 
 impl SymbolTable {
@@ -106,26 +265,22 @@ impl SymbolTable {
     }
 
     /// Creates an empty symbol table with the given parent.
-    pub fn with_parent(parent: Rc<RefCell<SymbolTable>>) -> SymbolTable {
+    pub fn with_parent(parent: SymbolTablePtr) -> SymbolTable {
         SymbolTable::new_inner(Some(parent))
     }
 
-    fn new_inner(parent: Option<Rc<RefCell<SymbolTable>>>) -> SymbolTable {
-        let id = ID_COUNTER.with(|x| x.fetch_add(1, Ordering::Relaxed));
+    fn new_inner(parent: Option<SymbolTablePtr>) -> SymbolTable {
+        let id = SYMBOL_TABLE_ID_COUNTER.fetch_add(1, Ordering::Relaxed);
         trace!(
             "new symbol table: id = {id}  parent_id = {}",
             parent
                 .as_ref()
-                .map(|x| x.borrow().id().to_string())
+                .map(|x| x.id().to_string())
                 .unwrap_or(String::from("none"))
         );
         SymbolTable {
-            id: ObjId {
-                type_name: SymbolTable::TYPE_NAME.into(),
-                object_id: id,
-            },
             table: BTreeMap::new(),
-            next_machine_name: RefCell::new(0),
+            next_machine_name: 0,
             parent,
         }
     }
@@ -144,7 +299,7 @@ impl SymbolTable {
         self.lookup_local(name).or_else(|| {
             self.parent
                 .as_ref()
-                .and_then(|parent| (*parent).borrow().lookup(name))
+                .and_then(|parent| parent.read().lookup(name))
         })
     }
 
@@ -196,11 +351,14 @@ impl SymbolTable {
         self.domain(name)?.resolve()
     }
 
-    /// Iterates over entries in the local symbol table only.
-    pub fn into_iter_local(self) -> LocalIntoIter {
-        LocalIntoIter {
-            inner: self.table.into_iter(),
-        }
+    /// Iterates over entries in the LOCAL symbol table.
+    pub fn into_iter_local(self) -> impl Iterator<Item = (Name, DeclarationPtr)> {
+        self.table.into_iter()
+    }
+
+    /// Iterates over entries in the LOCAL symbol table, by reference.
+    pub fn iter_local(&self) -> impl Iterator<Item = (&Name, &DeclarationPtr)> {
+        self.table.iter()
     }
 
     /// Extends the symbol table with the given symbol table, updating the gensym counter if
@@ -211,7 +369,7 @@ impl SymbolTable {
             let old_vars = self.table.keys().collect::<BTreeSet<_>>();
 
             for added_var in new_vars.difference(&old_vars) {
-                let mut next_var = self.next_machine_name.borrow_mut();
+                let next_var = &mut self.next_machine_name;
                 if let Name::Machine(m) = *added_var
                     && *m >= *next_var
                 {
@@ -226,9 +384,9 @@ impl SymbolTable {
     /// Creates a new variable in this symbol table with a unique name, and returns its
     /// declaration.
     pub fn gensym(&mut self, domain: &DomainPtr) -> DeclarationPtr {
-        let num = *self.next_machine_name.borrow();
-        *(self.next_machine_name.borrow_mut()) += 1;
-        let decl = DeclarationPtr::new_var(Name::Machine(num), domain.clone());
+        let num = self.next_machine_name;
+        self.next_machine_name += 1;
+        let decl = DeclarationPtr::new_find(Name::Machine(num), domain.clone());
         self.insert(decl.clone());
         decl
     }
@@ -236,8 +394,13 @@ impl SymbolTable {
     /// Gets the parent of this symbol table as a mutable reference.
     ///
     /// This function provides no sanity checks.
-    pub fn parent_mut_unchecked(&mut self) -> &mut Option<Rc<RefCell<SymbolTable>>> {
+    pub fn parent_mut_unchecked(&mut self) -> &mut Option<SymbolTablePtr> {
         &mut self.parent
+    }
+
+    /// Gets the parent of this symbol table.
+    pub fn parent(&self) -> &Option<SymbolTablePtr> {
+        &self.parent
     }
 
     /// Gets the representation `representation` for `name`.
@@ -262,7 +425,7 @@ impl SymbolTable {
         // table..
 
         let decl = self.lookup(name)?;
-        let var = &decl.as_var()?;
+        let var = &decl.as_find()?;
 
         var.representations
             .iter()
@@ -277,7 +440,7 @@ impl SymbolTable {
     /// + `None` if `name` does not exist, or is not a decision variable.
     pub fn representations_for(&self, name: &Name) -> Option<Vec<Vec<Box<dyn Representation>>>> {
         let decl = self.lookup(name)?;
-        decl.as_var().map(|x| x.representations.clone())
+        decl.as_find().map(|x| x.representations.clone())
     }
 
     /// Gets the representation `representation` for `name`, creating it if it does not exist.
@@ -304,7 +467,7 @@ impl SymbolTable {
         // Lookup the declaration reference
         let mut decl = self.lookup(name)?;
 
-        if let Some(var) = decl.as_var()
+        if let Some(var) = decl.as_find()
             && let Some(existing_reprs) = var
                 .representations
                 .iter()
@@ -325,7 +488,7 @@ impl SymbolTable {
         let reprs = vec![repr_init_fn(name, self)?];
 
         // Get mutable access to the variable part
-        let mut var = decl.as_var_mut()?;
+        let mut var = decl.as_find_mut()?;
 
         for repr_instance in &reprs {
             repr_instance
@@ -344,41 +507,27 @@ impl SymbolTable {
 impl IntoIterator for SymbolTable {
     type Item = (Name, DeclarationPtr);
 
-    type IntoIter = IntoIter;
+    type IntoIter = SymbolTableIter;
 
     /// Iterates over symbol table entries in scope.
     fn into_iter(self) -> Self::IntoIter {
-        IntoIter {
+        SymbolTableIter {
             inner: self.table.into_iter(),
             parent: self.parent,
         }
     }
 }
 
-/// Iterator over symbol table entries in the current scope only.
-pub struct LocalIntoIter {
-    // iterator over the btreemap
-    inner: std::collections::btree_map::IntoIter<Name, DeclarationPtr>,
-}
-
-impl Iterator for LocalIntoIter {
-    type Item = (Name, DeclarationPtr);
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.inner.next()
-    }
-}
-
 /// Iterator over all symbol table entries in scope.
-pub struct IntoIter {
+pub struct SymbolTableIter {
     // iterator over the current scopes' btreemap
     inner: std::collections::btree_map::IntoIter<Name, DeclarationPtr>,
 
     // the parent scope
-    parent: Option<Rc<RefCell<SymbolTable>>>,
+    parent: Option<SymbolTablePtr>,
 }
 
-impl Iterator for IntoIter {
+impl Iterator for SymbolTableIter {
     type Item = (Name, DeclarationPtr);
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -389,46 +538,15 @@ impl Iterator for IntoIter {
         // Note that the parent symbol table may be empty - this is why this is a loop!
         while val.is_none() {
             let parent = self.parent.clone()?;
-            let parent_ref = (*parent).borrow();
-            self.parent.clone_from(&parent_ref.parent);
-            self.inner = parent_ref.table.clone().into_iter();
+
+            let guard = parent.read();
+            self.inner = guard.table.clone().into_iter();
+            self.parent.clone_from(&guard.parent);
 
             val = self.inner.next();
         }
 
         val
-    }
-}
-
-impl HasId for SymbolTable {
-    const TYPE_NAME: &'static str = "SymbolTable";
-    fn id(&self) -> ObjId {
-        self.id.clone()
-    }
-}
-
-impl DefaultWithId for SymbolTable {
-    fn default_with_id(id: ObjId) -> Self {
-        Self {
-            table: BTreeMap::new(),
-            id,
-            parent: None,
-            next_machine_name: RefCell::new(0),
-        }
-    }
-}
-
-impl Clone for SymbolTable {
-    fn clone(&self) -> Self {
-        Self {
-            table: self.table.clone(),
-            id: ObjId {
-                type_name: SymbolTable::TYPE_NAME.into(),
-                object_id: ID_COUNTER.with(|x| x.fetch_add(1, Ordering::Relaxed)),
-            },
-            parent: self.parent.clone(),
-            next_machine_name: self.next_machine_name.clone(),
-        }
     }
 }
 
@@ -438,29 +556,25 @@ impl Default for SymbolTable {
     }
 }
 
-impl SymbolTable {
-    #[doc(hidden)]
-    // FIXME: remove me once we get SymbolTablePtr
-    /// Mainly for uniplate usage
-    pub fn clone_with_same_id(&self) -> Self {
-        // Biplate<Symboltable> instances need to ensure that symbol tables keep their ids.
-        //
-        // this is because we use uniplate to gather symbol table ids in
-        // SerdeModel::collect_stable_id_mappings(),
-        Self {
-            table: self.table.clone(),
-            id: self.id.clone(),
-            parent: self.parent.clone(),
-            next_machine_name: self.next_machine_name.clone(),
-        }
-    }
-}
-
+// TODO: if we could override `Uniplate` impl but still derive `Biplate` instances,
+//       we could remove some of this manual code
 impl Uniplate for SymbolTable {
     fn uniplate(&self) -> (Tree<Self>, Box<dyn Fn(Tree<Self>) -> Self>) {
         // do not recurse up parents, that would be weird?
-        let self2 = self.clone_with_same_id();
-        (Tree::Zero, Box::new(move |_| self2.clone_with_same_id()))
+        let self2 = self.clone();
+        (Tree::Zero, Box::new(move |_| self2.clone()))
+    }
+}
+
+impl Biplate<SymbolTablePtr> for SymbolTable {
+    fn biplate(
+        &self,
+    ) -> (
+        Tree<SymbolTablePtr>,
+        Box<dyn Fn(Tree<SymbolTablePtr>) -> Self>,
+    ) {
+        let self2 = self.clone();
+        (Tree::Zero, Box::new(move |_| self2.clone()))
     }
 }
 
@@ -524,15 +638,15 @@ impl Biplate<Comprehension> for SymbolTable {
     }
 }
 
-impl Biplate<SubModel> for SymbolTable {
+impl Biplate<Model> for SymbolTable {
     // walk into expressions
-    fn biplate(&self) -> (Tree<SubModel>, Box<dyn Fn(Tree<SubModel>) -> Self>) {
+    fn biplate(&self) -> (Tree<Model>, Box<dyn Fn(Tree<Model>) -> Self>) {
         let (expr_tree, expr_ctx) = <SymbolTable as Biplate<Expression>>::biplate(self);
 
         let (exprs, recons_expr_tree) = expr_tree.list();
 
         let (submodel_tree, submodel_ctx) =
-            <VecDeque<Expression> as Biplate<SubModel>>::biplate(&exprs);
+            <VecDeque<Expression> as Biplate<Model>>::biplate(&exprs);
 
         let ctx = Box::new(move |x| {
             // 1. turn submodel tree into a list of expressions

@@ -79,6 +79,7 @@ GRCOV_EXCLUDE_LINES=(
   '#\[derive'
   '#\[register_rule'
   'register_rule_set!'
+  '^[[:space:]]*//'
 )
 
 # construct an or regex
@@ -110,6 +111,14 @@ grcov "${TARGET_DIR}/coverage" -s . --binary-path ./target/debug -t html\
   -o ./target/debug/coverage || { echo_err "fatal: html coverage generation failed" ; exit 1; }
 
 echo_err "info: html coverage report generated to target/debug/coverage/index.html"
+
+# Some grcov versions/layouts emit HTML under target/debug/coverage/html/.
+# Normalise to a single root to avoid stale or duplicated report trees.
+if [ -d ./target/debug/coverage/html ]; then
+  echo_err "info: normalising grcov html output layout"
+  rsync -a --delete ./target/debug/coverage/html/ ./target/debug/coverage/
+  rm -rf ./target/debug/coverage/html
+fi
 
 grcov "${TARGET_DIR}/coverage" -s . --binary-path ./target/debug -t lcov\
   "${GRCOV_IGNORE_FLAGS[@]}" ${GRCOV_EXCLUDE_FLAG}\
