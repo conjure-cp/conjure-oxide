@@ -1,11 +1,11 @@
 <!--
 author: Yi Xin Chong
-last updated: 20-12-2025 1:08am
+last updated: 3-3-2026
 -->
 
 # LSP Error Testing
 ## Introduction
-Conjure Oxide includes a server that uses a Language Server Protocol (LSP) to check Essence files for errors before the file is parsed. The LSP server communicates with the Diagnostics API to check for errors, and it will return the error message along with the range of the error. The server will then use the diagnosis to perform error underlining, and syntax and semantic highlighting (more details in [LSP Documentation](./lsp-server-client.md) and [Diagnostics API documentation](./diagnostics_api.md)). 
+Conjure Oxide includes a server that uses a Language Server Protocol (LSP) to check Essence files for errors before the file is parsed. The LSP server communicates with the Diagnostics API to check for errors, and it will return the error message along with the range of where the error occured in the given Essence file. The server will then use the diagnosis to perform error underlining, and syntax and semantic highlighting (more details in [LSP Documentation](./lsp-server-client.md) and [Diagnostics API documentation](./diagnostics_api.md)). 
 
 There are two types of error when trying to diagnose a given Essence file, which are **syntactic** and **semantic errors**:
 
@@ -17,7 +17,7 @@ To be able to accurately diagnose the Essense files for errors, tests cases have
 ## Testing
 ### Parser
 <!-- TODO: Roundtrip testing does not exist -- waiting on an update from LSP team -->
-Test cases that test the coverage of the Native parser use [Roundtrip testing](https://github.com/conjure-cp/conjure-oxide/tree/main/docs/src/documentation/testing/roundtrip/roundtrip_testing.md), and they are separated into the `syntax-error` and `semantic-error` directories in the `roundtrip\native-errors` directory of the `tests-integration` crate, and in the `config.toml` of all the test cases, only the Native parser is set to be used when testing. 
+Test cases that test the coverage of the Native parser use [Roundtrip testing](../testing/roundtrip/roundtrip_testing.md). The `syntax-error` and `semantic-error` test directories exist in the `test-integration` crate as child directories of `roundtrip\native-errors`. Furthermore, `config.toml` sets only the Native parser to be used when testing test cases.
 
 These test cases will run alongside all the integration tests in the `tests-integration` crate, which can be done by using:
 ```bash
@@ -60,6 +60,8 @@ The sections below will categorise all test cases into one of the categories bas
 | keyword-as-identifiers-02 | Semantic error: Keyword as identifier | find letting,b,c: int(1..3)                                                                   | To make sure that the keyword 'letting' cannot be used as an identifier                            |
 | type-mismatch             | Semantic error: Type Mismatch      | letting y be false<br>find x: int(5..10)<br>such that 5 + y = 6                               | To make sure that if the type of a variable is incorrect for an expression, it will raise an error |
 | unsafe-division           | Semantic error: Unsafe division       | find x: int(5..10)<br>such that x/0 = 3                                                       | To make sure that expressions with division over zero will raise an error                          |
+
+*Note: tests that have not been implemented will have an input file with a .disabled extension, these will be removed once the features are implemented.*
 
 ### Diagnostics API error tests
 | Test name                                       | Error category                                 | Input essence                                                                                 | Purpose                                                                                            |
