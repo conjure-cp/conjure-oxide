@@ -39,9 +39,7 @@ pub fn parse_atom(
                 ));
             }
 
-            let Some(inner) =
-                parse_variable(ctx, &field!(node, "variable"))?
-            else {
+            let Some(inner) = parse_variable(ctx, &field!(node, "variable"))? else {
                 return Ok(None);
             };
 
@@ -108,8 +106,7 @@ fn parse_index_or_slice(
     ctx: &mut ParseContext,
     node: &Node,
 ) -> Result<Option<Expression>, FatalParseError> {
-    let Some(collection) = parse_atom(ctx, &field!(node, "collection"))?
-    else {
+    let Some(collection) = parse_atom(ctx, &field!(node, "collection"))? else {
         return Ok(None);
     };
     let mut indices = Vec::new();
@@ -137,14 +134,10 @@ fn parse_index_or_slice(
     }
 }
 
-fn parse_index(
-    ctx: &mut ParseContext,
-    node: &Node,
-) -> Result<Option<Expression>, FatalParseError> {
+fn parse_index(ctx: &mut ParseContext, node: &Node) -> Result<Option<Expression>, FatalParseError> {
     match node.kind() {
         "arithmetic_expr" | "atom" => {
-            let Some(expr) = parse_expression(ctx, *node)?
-            else {
+            let Some(expr) = parse_expression(ctx, *node)? else {
                 return Ok(None);
             };
             Ok(Some(expr))
@@ -157,10 +150,7 @@ fn parse_index(
     }
 }
 
-fn parse_variable(
-    ctx: &mut ParseContext,
-    node: &Node,
-) -> Result<Option<Atom>, FatalParseError> {
+fn parse_variable(ctx: &mut ParseContext, node: &Node) -> Result<Option<Atom>, FatalParseError> {
     let raw_name = &ctx.source_code[node.start_byte()..node.end_byte()];
     let name = Name::user(raw_name.trim());
     if let Some(symbols) = &ctx.symbols {
@@ -190,10 +180,7 @@ fn parse_variable(
     }
 }
 
-fn parse_constant(
-    ctx: &mut ParseContext,
-    node: &Node,
-) -> Result<Literal, FatalParseError> {
+fn parse_constant(ctx: &mut ParseContext, node: &Node) -> Result<Literal, FatalParseError> {
     let inner = named_child!(node);
     let raw_value = &ctx.source_code[inner.start_byte()..inner.end_byte()];
     match inner.kind() {

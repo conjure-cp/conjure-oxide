@@ -48,7 +48,7 @@ pub fn parse_comprehension(
                 let mut domain_ctx = ctx.with_new_symbols(Some(builder.generator_symboltable()));
                 let domain_result = parse_domain(&mut domain_ctx, domain_node)?;
                 let domain_errors = domain_ctx.errors;
-                
+
                 let Some(var_domain) = domain_result else {
                     ctx.errors.extend(domain_errors);
                     return Ok(None);
@@ -67,7 +67,7 @@ pub fn parse_comprehension(
                 let mut guard_ctx = ctx.with_new_symbols(Some(generator_symboltable));
                 let guard_result = parse_expression(&mut guard_ctx, expr_node)?;
                 let guard_errors = guard_ctx.errors;
-                
+
                 let Some(guard_expr) = guard_result else {
                     ctx.errors.extend(guard_errors);
                     return Ok(None);
@@ -94,7 +94,7 @@ pub fn parse_comprehension(
     let mut return_ctx = ctx.with_new_symbols(Some(builder.return_expr_symboltable()));
     let return_result = parse_expression(&mut return_ctx, return_expr_node)?;
     let return_errors = return_ctx.errors;
-    
+
     let Some(return_expr) = return_result else {
         ctx.errors.extend(return_errors);
         return Ok(None);
@@ -207,7 +207,7 @@ pub fn parse_quantifier_or_aggregate_expr(
     let mut expr_ctx = ctx.with_new_symbols(Some(builder.return_expr_symboltable()));
     let expr_result = parse_expression(&mut expr_ctx, expression_node)?;
     let expr_errors = expr_ctx.errors;
-    
+
     let Some(expression) = expr_result else {
         ctx.errors.extend(expr_errors);
         return Ok(None);
