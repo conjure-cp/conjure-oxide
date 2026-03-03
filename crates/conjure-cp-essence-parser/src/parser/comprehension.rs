@@ -1,3 +1,4 @@
+use crate::diagnostics::source_map::SourceMap;
 use crate::errors::FatalParseError;
 use crate::expression::parse_expression;
 use crate::field;

@@ -10,7 +10,9 @@ use uniplate::Uniplate;
 use super::ParseContext;
 use super::find::parse_find_statement;
 use super::letting::parse_letting_statement;
-use super::util::{get_tree, named_children};
+use super::util::get_tree;
+use crate::diagnostics::diagnostics_api::SymbolKind;
+use crate::diagnostics::source_map::{HoverInfo, SourceMap, span_with_hover};
 use crate::errors::{FatalParseError, ParseErrorCollection, RecoverableParseError};
 use crate::expression::parse_expression;
 use crate::field;
@@ -49,6 +51,17 @@ pub fn parse_essence_with_context(
     context: Arc<RwLock<Context<'static>>>,
     errors: &mut Vec<RecoverableParseError>,
 ) -> Result<Option<Model>, FatalParseError> {
+    match parse_essence_with_context_and_map(src, context, errors)? {
+        Some((model, _source_map)) => Ok(Some(model)),
+        None => Ok(None),
+    }
+}
+
+pub fn parse_essence_with_context_and_map(
+    src: &str,
+    context: Arc<RwLock<Context<'static>>>,
+    errors: &mut Vec<RecoverableParseError>,
+) -> Result<Option<(Model, SourceMap)>, FatalParseError> {
     let (tree, source_code) = match get_tree(src) {
         Some(tree) => tree,
         None => {
@@ -64,6 +77,7 @@ pub fn parse_essence_with_context(
     }
 
     let mut model = Model::new(context);
+    let mut source_map = SourceMap::default();
     let root_node = tree.root_node();
 
     // Create a ParseContext
@@ -73,12 +87,48 @@ pub fn parse_essence_with_context(
         Some(model.symbols_ptr_unchecked().clone()),
     );
 
-    for statement in named_children(&root_node) {
+    let mut cursor = root_node.walk();
+    for statement in root_node.children(&mut cursor) {
+        /*
+           since find and letting are unnamed children
+           hover info is added here.
+           other unnamed children will be skipped.
+        */
+        if statement.kind() == "find" {
+            span_with_hover(
+                &statement,
+                &source_code,
+                &mut source_map,
+                HoverInfo {
+                    description: "Find keyword".to_string(),
+                    kind: Some(SymbolKind::Find),
+                    ty: None,
+                    decl_span: None,
+                },
+            );
+        } else if statement.kind() == "letting" {
+            span_with_hover(
+                &statement,
+                &source_code,
+                &mut source_map,
+                HoverInfo {
+                    description: "Letting keyword".to_string(),
+                    kind: Some(SymbolKind::Letting),
+                    ty: None,
+                    decl_span: None,
+                },
+            );
+        }
+
+        if !statement.is_named() {
+            continue;
+        }
+
         match statement.kind() {
             "single_line_comment" => {}
             "language_declaration" => {}
             "find_statement" => {
-                let var_hashmap = parse_find_statement(&mut ctx, statement)?;
+                let var_hashmap = parse_find_statement(&mut ctx, statement, &mut source_map)?;
                 for (name, domain) in var_hashmap {
                     model
                         .symbols_mut()
@@ -86,21 +136,21 @@ pub fn parse_essence_with_context(
                 }
             }
             "bool_expr" | "atom" | "comparison_expr" => {
-                let Some(expr) = parse_expression(&mut ctx, statement)? else {
+                let Some(expr) = parse_expression(&mut ctx, statement, &mut source_map)? else {
                     continue;
                 };
                 model.add_constraint(expr);
             }
             "language_label" => {}
             "letting_statement" => {
-                let Some(letting_vars) = parse_letting_statement(&mut ctx, statement)? else {
+                let Some(letting_vars) = parse_letting_statement(&mut ctx, statement, &mut source_map)? else {
                     continue;
                 };
                 model.symbols_mut().extend(letting_vars);
             }
             "dominance_relation" => {
                 let inner = field!(statement, "expression");
-                let Some(expr) = parse_expression(&mut ctx, inner)? else {
+                let Some(expr) = parse_expression(&mut ctx, inner, &mut source_map)? else {
                     continue;
                 };
                 let dominance = Expression::DominanceRelation(Metadata::new(), Moo::new(expr));
@@ -133,7 +183,7 @@ pub fn parse_essence_with_context(
         return Ok(None);
     }
     // otherwise return the model
-    Ok(Some(model))
+    Ok(Some((model, source_map)))
 }
 
 const KEYWORDS: [&str; 21] = [
@@ -172,11 +222,11 @@ fn keyword_as_identifier(ctx: &mut ParseContext) {
     }
 }
 
-pub fn parse_essence(src: &str) -> Result<Model, Box<ParseErrorCollection>> {
+pub fn parse_essence(src: &str) -> Result<(Model, SourceMap), Box<ParseErrorCollection>> {
     let context = Arc::new(RwLock::new(Context::default()));
     let mut errors = vec![];
-    match parse_essence_with_context(src, context, &mut errors) {
-        Ok(Some(model)) => Ok(model),
+    match parse_essence_with_context_and_map(src, context, &mut errors) {
+        Ok(Some((model, source_map))) => Ok((model, source_map)),
         Ok(None) => {
             // Recoverable errors were found, return them as a ParseErrorCollection
             Err(Box::new(ParseErrorCollection::multiple(
@@ -207,7 +257,7 @@ mod test {
         such that x >= y
         ";
 
-        let model = parse_essence(src).unwrap();
+        let (model, _source_map) = parse_essence(src).unwrap();
 
         let st = model.symbols();
         let x = st.lookup(&Name::user("x")).unwrap();
@@ -259,7 +309,7 @@ mod test {
         allDiff(a[-2,..])
         ";
 
-        let model = parse_essence(src).unwrap();
+        let (model, _source_map) = parse_essence(src).unwrap();
         let st = model.symbols();
         let a_decl = st.lookup(&Name::user("a")).unwrap();
         let a = a_decl.as_value_letting().unwrap().deref().clone();

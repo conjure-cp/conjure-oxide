@@ -1,3 +1,5 @@
+use crate::diagnostics::diagnostics_api::SymbolKind;
+use crate::diagnostics::source_map::{HoverInfo, SourceMap, span_with_hover};
 use crate::errors::FatalParseError;
 use crate::expression::{parse_binary_expression, parse_expression};
 use crate::parser::ParseContext;
@@ -24,7 +26,7 @@ pub fn parse_atom(
             )))
         }
         "identifier" => {
-            let Some(var) = parse_variable(ctx, node)? else {
+            let Some(var) = parse_variable(node, source_code, symbols_ptr, errors)? else {
                 return Ok(None);
             };
             Ok(Some(Expression::Atomic(Metadata::new(), var)))
@@ -37,7 +39,9 @@ pub fn parse_atom(
                 ));
             }
 
-            let Some(inner) = parse_variable(ctx, &field!(node, "variable"))? else {
+            let Some(inner) =
+                parse_variable(&field!(node, "variable"), source_code, symbols_ptr, errors)?
+            else {
                 return Ok(None);
             };
 
@@ -47,24 +51,24 @@ pub fn parse_atom(
             )))
         }
         "constant" => {
-            let lit = parse_constant(ctx, node)?;
+            let lit = parse_constant(node, source_code, errors)?;
             Ok(Some(Expression::Atomic(
                 Metadata::new(),
                 Atom::Literal(lit),
             )))
         }
         "matrix" | "record" | "tuple" | "set_literal" => {
-            let Some(abs) = parse_abstract(ctx, node)? else {
+            let Some(abs) = parse_abstract(node, source_code, symbols_ptr, errors)? else {
                 return Ok(None);
             };
             Ok(Some(Expression::AbstractLiteral(Metadata::new(), abs)))
         }
-        "flatten" => parse_flatten(ctx, node),
-        "index_or_slice" => parse_index_or_slice(ctx, node),
+        "flatten" => parse_flatten(node, source_code, root, symbols_ptr, errors),
+        "index_or_slice" => parse_index_or_slice(node, source_code, root, symbols_ptr, errors),
         // for now, assume is binary since powerset isn't implemented
         // TODO: add powerset support under "set_operation"
-        "set_operation" => parse_binary_expression(ctx, node),
-        "comprehension" => parse_comprehension(ctx, node),
+        "set_operation" => parse_binary_expression(node, source_code, root, symbols_ptr, errors),
+        "comprehension" => parse_comprehension(node, source_code, root, symbols_ptr, errors),
         _ => Err(FatalParseError::internal_error(
             format!("Expected atom, got: {}", node.kind()),
             Some(node.range()),
@@ -75,9 +79,13 @@ pub fn parse_atom(
 fn parse_flatten(
     ctx: &mut ParseContext,
     node: &Node,
+    source_code: &str,
+    root: &Node,
+    symbols_ptr: Option<SymbolTablePtr>,
+    errors: &mut Vec<RecoverableParseError>,
 ) -> Result<Option<Expression>, FatalParseError> {
     let expr_node = field!(node, "expression");
-    let Some(expr) = parse_atom(ctx, &expr_node)? else {
+    let Some(expr) = parse_atom(&expr_node, source_code, root, symbols_ptr, errors)? else {
         return Ok(None);
     };
 
@@ -103,13 +111,29 @@ fn parse_flatten(
 fn parse_index_or_slice(
     ctx: &mut ParseContext,
     node: &Node,
+    source_code: &str,
+    root: &Node,
+    symbols_ptr: Option<SymbolTablePtr>,
+    errors: &mut Vec<RecoverableParseError>,
 ) -> Result<Option<Expression>, FatalParseError> {
-    let Some(collection) = parse_atom(ctx, &field!(node, "collection"))? else {
+    let Some(collection) = parse_atom(
+        &field!(node, "collection"),
+        source_code,
+        root,
+        symbols_ptr.clone(),
+        errors,
+    )?
+    else {
         return Ok(None);
     };
     let mut indices = Vec::new();
     for idx_node in named_children(&field!(node, "indices")) {
-        indices.push(parse_index(ctx, &idx_node)?);
+        indices.push(parse_index(
+            &idx_node,
+            source_code,
+            symbols_ptr.clone(),
+            errors,
+        )?);
     }
 
     let has_null_idx = indices.iter().any(|idx| idx.is_none());
@@ -132,10 +156,16 @@ fn parse_index_or_slice(
     }
 }
 
-fn parse_index(ctx: &mut ParseContext, node: &Node) -> Result<Option<Expression>, FatalParseError> {
+fn parse_index(
+    node: &Node,
+    source_code: &str,
+    symbols_ptr: Option<SymbolTablePtr>,
+    errors: &mut Vec<RecoverableParseError>,
+) -> Result<Option<Expression>, FatalParseError> {
     match node.kind() {
         "arithmetic_expr" | "atom" => {
-            let Some(expr) = parse_expression(ctx, *node)? else {
+            let Some(expr) = parse_expression(*node, source_code, node, symbols_ptr, errors)?
+            else {
                 return Ok(None);
             };
             Ok(Some(expr))
@@ -148,11 +178,23 @@ fn parse_index(ctx: &mut ParseContext, node: &Node) -> Result<Option<Expression>
     }
 }
 
-fn parse_variable(ctx: &mut ParseContext, node: &Node) -> Result<Option<Atom>, FatalParseError> {
-    let raw_name = &ctx.source_code[node.start_byte()..node.end_byte()];
+fn parse_variable(
+    node: &Node,
+    source_code: &str,
+    symbols_ptr: Option<SymbolTablePtr>,
+    errors: &mut Vec<RecoverableParseError>,
+) -> Result<Option<Atom>, FatalParseError> {
+    let raw_name = &source_code[node.start_byte()..node.end_byte()];
     let name = Name::user(raw_name.trim());
     if let Some(symbols) = &ctx.symbols {
         if let Some(decl) = symbols.read().lookup(&name) {
+            let hover = HoverInfo {
+                description: format!("Variable: {name}"),
+                kind: Some(SymbolKind::Decimal),
+                ty: decl.domain().map(|d| d.to_string()),
+                decl_span: None,
+            };
+            span_with_hover(node, source_code, source_map, hover);
             Ok(Some(Atom::Reference(conjure_cp_core::ast::Reference::new(
                 decl,
             ))))
@@ -171,16 +213,38 @@ fn parse_variable(ctx: &mut ParseContext, node: &Node) -> Result<Option<Atom>, F
     }
 }
 
-fn parse_constant(ctx: &mut ParseContext, node: &Node) -> Result<Literal, FatalParseError> {
+fn parse_constant(
+    node: &Node,
+    source_code: &str,
+    errors: &mut Vec<RecoverableParseError>,
+) -> Result<Literal, FatalParseError> {
     let inner = named_child!(node);
-    let raw_value = &ctx.source_code[inner.start_byte()..inner.end_byte()];
+    let raw_value = &source_code[inner.start_byte()..inner.end_byte()];
     match inner.kind() {
         "integer" => {
-            let value = parse_int(ctx, &inner)?;
+            let value = parse_int(&inner, source_code, errors)?;
             Ok(Literal::Int(value))
         }
-        "TRUE" => Ok(Literal::Bool(true)),
-        "FALSE" => Ok(Literal::Bool(false)),
+        "TRUE" => {
+            let hover = HoverInfo {
+                description: format!("Boolean constant: {raw_value}"),
+                kind: None,
+                ty: None,
+                decl_span: None,
+            };
+            span_with_hover(&inner, source_code, source_map, hover);
+            Ok(Literal::Bool(true))
+        }
+        "FALSE" => {
+            let hover = HoverInfo {
+                description: format!("Boolean constant: {raw_value}"),
+                kind: None,
+                ty: None,
+                decl_span: None,
+            };
+            span_with_hover(&inner, source_code, source_map, hover);
+            Ok(Literal::Bool(false))
+        }
         _ => Err(FatalParseError::internal_error(
             format!(
                 "'{}' (kind: '{}') is not a valid constant",

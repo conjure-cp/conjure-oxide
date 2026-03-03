@@ -6,6 +6,8 @@ use tree_sitter::Node;
 use super::ParseContext;
 use super::domain::parse_domain;
 use super::util::named_children;
+use crate::diagnostics::diagnostics_api::SymbolKind;
+use crate::diagnostics::source_map::{HoverInfo, SourceMap, span_with_hover};
 use crate::errors::FatalParseError;
 use crate::expression::parse_expression;
 use crate::field;
@@ -16,6 +18,7 @@ use conjure_cp_core::ast::{Name, SymbolTable};
 pub fn parse_letting_statement(
     ctx: &mut ParseContext,
     letting_statement: Node,
+    source_map: &mut SourceMap,
 ) -> Result<Option<SymbolTable>, FatalParseError> {
     let mut symbol_table = SymbolTable::new();
 
@@ -25,6 +28,13 @@ pub fn parse_letting_statement(
     for variable in named_children(&variable_list) {
         let variable_name = &ctx.source_code[variable.start_byte()..variable.end_byte()];
         temp_symbols.insert(variable_name);
+        let hover = HoverInfo {
+            description: format!("Letting variable: {variable_name}"),
+            kind: Some(SymbolKind::Letting),
+            ty: None,
+            decl_span: None,
+        };
+        span_with_hover(&variable, source_code, source_map, hover);
     }
 
     let expr_or_domain = field!(letting_statement, "expr_or_domain");

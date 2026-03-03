@@ -1,3 +1,5 @@
+use crate::diagnostics::diagnostics_api::SymbolKind;
+use crate::diagnostics::source_map::{HoverInfo, SourceMap, span_with_hover};
 use crate::errors::FatalParseError;
 use crate::parser::ParseContext;
 use crate::parser::atom::parse_atom;
@@ -161,7 +163,8 @@ pub fn parse_binary_expression(
     let op_node = field!(node, "operator");
     let op_str = &ctx.source_code[op_node.start_byte()..op_node.end_byte()];
 
-    match op_str {
+    let mut description = format!("Operator '{op_str}'");
+    let expr = match op_str {
         // NB: We are deliberately setting the index domain to 1.., not 1..2.
         // Semantically, this means "a list that can grow/shrink arbitrarily".
         // This is expected by rules which will modify the terms of the sum expression
@@ -293,19 +296,38 @@ pub fn parse_binary_expression(
             Moo::new(left),
             Moo::new(right),
         ))),
-        "union" => Ok(Some(Expression::Union(
-            Metadata::new(),
-            Moo::new(left),
-            Moo::new(right),
-        ))),
-        "intersect" => Ok(Some(Expression::Intersect(
-            Metadata::new(),
-            Moo::new(left),
-            Moo::new(right),
-        ))),
+        "union" => {
+            description = "set union: combines the elements from both operands".to_string();
+            Ok(Some(Expression::Union(
+                Metadata::new(),
+                Moo::new(left),
+                Moo::new(right),
+            )))
+        }
+        "intersect" => {
+            description =
+                "set intersection: keeps only elements common to both operands".to_string();
+            Ok(Some(Expression::Intersect(
+                Metadata::new(),
+                Moo::new(left),
+                Moo::new(right),
+            )))
+        }
         _ => Err(FatalParseError::internal_error(
             format!("Invalid operator: '{op_str}'"),
             Some(op_node.range()),
         )),
+    };
+
+    if expr.is_ok() {
+        let hover = HoverInfo {
+            description,
+            kind: Some(SymbolKind::Function),
+            ty: None,
+            decl_span: None,
+        };
+        span_with_hover(&op_node, source_code, source_map, hover);
     }
+
+    expr
 }

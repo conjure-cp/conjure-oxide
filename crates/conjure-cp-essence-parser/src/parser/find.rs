@@ -6,6 +6,8 @@ use tree_sitter::Node;
 use super::ParseContext;
 use super::domain::parse_domain;
 use super::util::named_children;
+use crate::diagnostics::diagnostics_api::SymbolKind;
+use crate::diagnostics::source_map::{HoverInfo, SourceMap, span_with_hover};
 use crate::errors::FatalParseError;
 use crate::field;
 use conjure_cp_core::ast::{DomainPtr, Name};
@@ -26,6 +28,13 @@ pub fn parse_find_statement(
     for variable in named_children(&variable_list) {
         let variable_name = &ctx.source_code[variable.start_byte()..variable.end_byte()];
         vars.insert(Name::user(variable_name), domain.clone());
+        let hover = HoverInfo {
+            description: format!("Find variable: {variable_name}"),
+            kind: Some(SymbolKind::Find),
+            ty: Some(domain.to_string()),
+            decl_span: None,
+        };
+        span_with_hover(&variable, source_code, source_map, hover);
     }
 
     Ok(vars)
