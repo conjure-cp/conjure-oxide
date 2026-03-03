@@ -47,8 +47,11 @@ pub fn parse_comprehension(
 
                 // Parse with a new context using the generator symbol table
                 let mut domain_ctx = ctx.with_new_symbols(Some(builder.generator_symboltable()));
-                let Some(var_domain) = parse_domain(&mut domain_ctx, domain_node)? else {
-                    ctx.errors.extend(domain_ctx.errors);
+                let domain_result = parse_domain(&mut domain_ctx, domain_node)?;
+                let domain_errors = domain_ctx.errors;
+                
+                let Some(var_domain) = domain_result else {
+                    ctx.errors.extend(domain_errors);
                     return Ok(None);
                 };
 
@@ -63,8 +66,11 @@ pub fn parse_comprehension(
 
                 // Parse with a new context using the generator symbol table
                 let mut guard_ctx = ctx.with_new_symbols(Some(generator_symboltable));
-                let Some(guard_expr) = parse_expression(&mut guard_ctx, expr_node)? else {
-                    ctx.errors.extend(guard_ctx.errors);
+                let guard_result = parse_expression(&mut guard_ctx, expr_node)?;
+                let guard_errors = guard_ctx.errors;
+                
+                let Some(guard_expr) = guard_result else {
+                    ctx.errors.extend(guard_errors);
                     return Ok(None);
                 };
 
@@ -87,8 +93,11 @@ pub fn parse_comprehension(
 
     // Use the return expression symbol table which already has quantified variables (as Given) and parent as parent
     let mut return_ctx = ctx.with_new_symbols(Some(builder.return_expr_symboltable()));
-    let Some(return_expr) = parse_expression(&mut return_ctx, return_expr_node)? else {
-        ctx.errors.extend(return_ctx.errors);
+    let return_result = parse_expression(&mut return_ctx, return_expr_node)?;
+    let return_errors = return_ctx.errors;
+    
+    let Some(return_expr) = return_result else {
+        ctx.errors.extend(return_errors);
         return Ok(None);
     };
 
@@ -197,8 +206,11 @@ pub fn parse_quantifier_or_aggregate_expr(
 
     // Parse with a new context using the return expression symbol table
     let mut expr_ctx = ctx.with_new_symbols(Some(builder.return_expr_symboltable()));
-    let Some(expression) = parse_expression(&mut expr_ctx, expression_node)? else {
-        ctx.errors.extend(expr_ctx.errors);
+    let expr_result = parse_expression(&mut expr_ctx, expression_node)?;
+    let expr_errors = expr_ctx.errors;
+    
+    let Some(expression) = expr_result else {
+        ctx.errors.extend(expr_errors);
         return Ok(None);
     };
 

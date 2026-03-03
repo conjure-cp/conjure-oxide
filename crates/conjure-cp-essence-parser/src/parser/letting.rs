@@ -18,7 +18,6 @@ use conjure_cp_core::ast::{Name, SymbolTable};
 pub fn parse_letting_statement(
     ctx: &mut ParseContext,
     letting_statement: Node,
-    source_map: &mut SourceMap,
 ) -> Result<Option<SymbolTable>, FatalParseError> {
     let mut symbol_table = SymbolTable::new();
 
@@ -34,7 +33,7 @@ pub fn parse_letting_statement(
             ty: None,
             decl_span: None,
         };
-        span_with_hover(&variable, source_code, source_map, hover);
+        span_with_hover(&variable, ctx.source_code, ctx.source_map, hover);
     }
 
     let expr_or_domain = field!(letting_statement, "expr_or_domain");

@@ -85,6 +85,7 @@ pub fn parse_essence_with_context_and_map(
         &source_code,
         &root_node,
         Some(model.symbols_ptr_unchecked().clone()),
+        &mut source_map,
     );
 
     let mut cursor = root_node.walk();
@@ -97,8 +98,8 @@ pub fn parse_essence_with_context_and_map(
         if statement.kind() == "find" {
             span_with_hover(
                 &statement,
-                &source_code,
-                &mut source_map,
+                ctx.source_code,
+                ctx.source_map,
                 HoverInfo {
                     description: "Find keyword".to_string(),
                     kind: Some(SymbolKind::Find),
@@ -109,8 +110,8 @@ pub fn parse_essence_with_context_and_map(
         } else if statement.kind() == "letting" {
             span_with_hover(
                 &statement,
-                &source_code,
-                &mut source_map,
+                ctx.source_code,
+                ctx.source_map,
                 HoverInfo {
                     description: "Letting keyword".to_string(),
                     kind: Some(SymbolKind::Letting),
@@ -128,7 +129,7 @@ pub fn parse_essence_with_context_and_map(
             "single_line_comment" => {}
             "language_declaration" => {}
             "find_statement" => {
-                let var_hashmap = parse_find_statement(&mut ctx, statement, &mut source_map)?;
+                let var_hashmap = parse_find_statement(&mut ctx, statement)?;
                 for (name, domain) in var_hashmap {
                     model
                         .symbols_mut()
@@ -136,21 +137,21 @@ pub fn parse_essence_with_context_and_map(
                 }
             }
             "bool_expr" | "atom" | "comparison_expr" => {
-                let Some(expr) = parse_expression(&mut ctx, statement, &mut source_map)? else {
+                let Some(expr) = parse_expression(&mut ctx, statement)? else {
                     continue;
                 };
                 model.add_constraint(expr);
             }
             "language_label" => {}
             "letting_statement" => {
-                let Some(letting_vars) = parse_letting_statement(&mut ctx, statement, &mut source_map)? else {
+                let Some(letting_vars) = parse_letting_statement(&mut ctx, statement)? else {
                     continue;
                 };
                 model.symbols_mut().extend(letting_vars);
             }
             "dominance_relation" => {
                 let inner = field!(statement, "expression");
-                let Some(expr) = parse_expression(&mut ctx, inner, &mut source_map)? else {
+                let Some(expr) = parse_expression(&mut ctx, inner)? else {
                     continue;
                 };
                 let dominance = Expression::DominanceRelation(Metadata::new(), Moo::new(expr));

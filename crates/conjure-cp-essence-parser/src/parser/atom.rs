@@ -26,7 +26,7 @@ pub fn parse_atom(
             )))
         }
         "identifier" => {
-            let Some(var) = parse_variable(node, source_code, symbols_ptr, errors)? else {
+            let Some(var) = parse_variable(ctx, node)? else {
                 return Ok(None);
             };
             Ok(Some(Expression::Atomic(Metadata::new(), var)))
@@ -40,7 +40,7 @@ pub fn parse_atom(
             }
 
             let Some(inner) =
-                parse_variable(&field!(node, "variable"), source_code, symbols_ptr, errors)?
+                parse_variable(ctx, &field!(node, "variable"))?
             else {
                 return Ok(None);
             };
@@ -51,24 +51,24 @@ pub fn parse_atom(
             )))
         }
         "constant" => {
-            let lit = parse_constant(node, source_code, errors)?;
+            let lit = parse_constant(ctx, node)?;
             Ok(Some(Expression::Atomic(
                 Metadata::new(),
                 Atom::Literal(lit),
             )))
         }
         "matrix" | "record" | "tuple" | "set_literal" => {
-            let Some(abs) = parse_abstract(node, source_code, symbols_ptr, errors)? else {
+            let Some(abs) = parse_abstract(ctx, node)? else {
                 return Ok(None);
             };
             Ok(Some(Expression::AbstractLiteral(Metadata::new(), abs)))
         }
-        "flatten" => parse_flatten(node, source_code, root, symbols_ptr, errors),
-        "index_or_slice" => parse_index_or_slice(node, source_code, root, symbols_ptr, errors),
+        "flatten" => parse_flatten(ctx, node),
+        "index_or_slice" => parse_index_or_slice(ctx, node),
         // for now, assume is binary since powerset isn't implemented
         // TODO: add powerset support under "set_operation"
-        "set_operation" => parse_binary_expression(node, source_code, root, symbols_ptr, errors),
-        "comprehension" => parse_comprehension(node, source_code, root, symbols_ptr, errors),
+        "set_operation" => parse_binary_expression(ctx, node),
+        "comprehension" => parse_comprehension(ctx, node),
         _ => Err(FatalParseError::internal_error(
             format!("Expected atom, got: {}", node.kind()),
             Some(node.range()),
@@ -79,13 +79,9 @@ pub fn parse_atom(
 fn parse_flatten(
     ctx: &mut ParseContext,
     node: &Node,
-    source_code: &str,
-    root: &Node,
-    symbols_ptr: Option<SymbolTablePtr>,
-    errors: &mut Vec<RecoverableParseError>,
 ) -> Result<Option<Expression>, FatalParseError> {
     let expr_node = field!(node, "expression");
-    let Some(expr) = parse_atom(&expr_node, source_code, root, symbols_ptr, errors)? else {
+    let Some(expr) = parse_atom(ctx, &expr_node)? else {
         return Ok(None);
     };
 
@@ -111,29 +107,14 @@ fn parse_flatten(
 fn parse_index_or_slice(
     ctx: &mut ParseContext,
     node: &Node,
-    source_code: &str,
-    root: &Node,
-    symbols_ptr: Option<SymbolTablePtr>,
-    errors: &mut Vec<RecoverableParseError>,
 ) -> Result<Option<Expression>, FatalParseError> {
-    let Some(collection) = parse_atom(
-        &field!(node, "collection"),
-        source_code,
-        root,
-        symbols_ptr.clone(),
-        errors,
-    )?
+    let Some(collection) = parse_atom(ctx, &field!(node, "collection"))?
     else {
         return Ok(None);
     };
     let mut indices = Vec::new();
     for idx_node in named_children(&field!(node, "indices")) {
-        indices.push(parse_index(
-            &idx_node,
-            source_code,
-            symbols_ptr.clone(),
-            errors,
-        )?);
+        indices.push(parse_index(ctx, &idx_node)?);
     }
 
     let has_null_idx = indices.iter().any(|idx| idx.is_none());
@@ -157,14 +138,12 @@ fn parse_index_or_slice(
 }
 
 fn parse_index(
+    ctx: &mut ParseContext,
     node: &Node,
-    source_code: &str,
-    symbols_ptr: Option<SymbolTablePtr>,
-    errors: &mut Vec<RecoverableParseError>,
 ) -> Result<Option<Expression>, FatalParseError> {
     match node.kind() {
         "arithmetic_expr" | "atom" => {
-            let Some(expr) = parse_expression(*node, source_code, node, symbols_ptr, errors)?
+            let Some(expr) = parse_expression(ctx, *node)?
             else {
                 return Ok(None);
             };
@@ -179,12 +158,10 @@ fn parse_index(
 }
 
 fn parse_variable(
+    ctx: &mut ParseContext,
     node: &Node,
-    source_code: &str,
-    symbols_ptr: Option<SymbolTablePtr>,
-    errors: &mut Vec<RecoverableParseError>,
 ) -> Result<Option<Atom>, FatalParseError> {
-    let raw_name = &source_code[node.start_byte()..node.end_byte()];
+    let raw_name = &ctx.source_code[node.start_byte()..node.end_byte()];
     let name = Name::user(raw_name.trim());
     if let Some(symbols) = &ctx.symbols {
         if let Some(decl) = symbols.read().lookup(&name) {
@@ -194,7 +171,7 @@ fn parse_variable(
                 ty: decl.domain().map(|d| d.to_string()),
                 decl_span: None,
             };
-            span_with_hover(node, source_code, source_map, hover);
+            span_with_hover(node, ctx.source_code, ctx.source_map, hover);
             Ok(Some(Atom::Reference(conjure_cp_core::ast::Reference::new(
                 decl,
             ))))
@@ -214,15 +191,14 @@ fn parse_variable(
 }
 
 fn parse_constant(
+    ctx: &mut ParseContext,
     node: &Node,
-    source_code: &str,
-    errors: &mut Vec<RecoverableParseError>,
 ) -> Result<Literal, FatalParseError> {
     let inner = named_child!(node);
-    let raw_value = &source_code[inner.start_byte()..inner.end_byte()];
+    let raw_value = &ctx.source_code[inner.start_byte()..inner.end_byte()];
     match inner.kind() {
         "integer" => {
-            let value = parse_int(&inner, source_code, errors)?;
+            let value = parse_int(ctx, &inner)?;
             Ok(Literal::Int(value))
         }
         "TRUE" => {
@@ -232,7 +208,7 @@ fn parse_constant(
                 ty: None,
                 decl_span: None,
             };
-            span_with_hover(&inner, source_code, source_map, hover);
+            span_with_hover(&inner, ctx.source_code, ctx.source_map, hover);
             Ok(Literal::Bool(true))
         }
         "FALSE" => {
@@ -242,7 +218,7 @@ fn parse_constant(
                 ty: None,
                 decl_span: None,
             };
-            span_with_hover(&inner, source_code, source_map, hover);
+            span_with_hover(&inner, ctx.source_code, ctx.source_map, hover);
             Ok(Literal::Bool(false))
         }
         _ => Err(FatalParseError::internal_error(

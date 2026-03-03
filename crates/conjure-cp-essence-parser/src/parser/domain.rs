@@ -32,14 +32,14 @@ pub fn parse_domain(
                 ));
                 return Ok(None);
             };
-            let name = &source_code[domain.start_byte()..domain.end_byte()];
+            let name = &ctx.source_code[domain.start_byte()..domain.end_byte()];
             let hover = HoverInfo {
                 description: format!("Domain reference: {name}"),
                 kind: None,
                 ty: None,
                 decl_span: None,
             };
-            span_with_hover(&domain, source_code, source_map, hover);
+            span_with_hover(&domain, ctx.source_code, ctx.source_map, hover);
             Ok(Some(dom))
         }
         "tuple_domain" => parse_tuple_domain(ctx, domain),

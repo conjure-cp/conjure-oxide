@@ -46,6 +46,7 @@ fn parse_dominance_relation(
         root: node,
         symbols: ctx.symbols.clone(),
         errors: Vec::new(),
+        source_map: &mut *ctx.source_map,
     };
 
     let result = parse_expression(&mut inner_ctx, field!(node, "expression"));
@@ -326,7 +327,7 @@ pub fn parse_binary_expression(
             ty: None,
             decl_span: None,
         };
-        span_with_hover(&op_node, source_code, source_map, hover);
+        span_with_hover(&op_node, ctx.source_code, ctx.source_map, hover);
     }
 
     expr

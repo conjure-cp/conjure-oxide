@@ -34,7 +34,7 @@ pub fn parse_find_statement(
             ty: Some(domain.to_string()),
             decl_span: None,
         };
-        span_with_hover(&variable, source_code, source_map, hover);
+        span_with_hover(&variable, ctx.source_code, ctx.source_map, hover);
     }
 
     Ok(vars)

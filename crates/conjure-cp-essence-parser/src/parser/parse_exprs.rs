@@ -28,11 +28,11 @@ pub fn parse_exprs(
     ))?;
 
     let root = tree.root_node();
-    let mut ctx = ParseContext::new(&source_code, &root, Some(symbols_ptr));
-    let mut ans = Vec::new();
     let mut source_map = SourceMap::default();
+    let mut ctx = ParseContext::new(&source_code, &root, Some(symbols_ptr), &mut source_map);
+    let mut ans = Vec::new();
     for expr in query_toplevel(&root, &node_is_expression) {
-        let Some(expr) = parse_expression(&mut ctx, expr, &mut source_map)? else {
+        let Some(expr) = parse_expression(&mut ctx, expr)? else {
             continue;
         };
         ans.push(expr);
