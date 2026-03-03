@@ -7,7 +7,7 @@ use super::ParseContext;
 use super::domain::parse_domain;
 use super::util::named_children;
 use crate::diagnostics::diagnostics_api::SymbolKind;
-use crate::diagnostics::source_map::{HoverInfo, SourceMap, span_with_hover};
+use crate::diagnostics::source_map::{HoverInfo, span_with_hover};
 use crate::errors::FatalParseError;
 use crate::field;
 use conjure_cp_core::ast::{DomainPtr, Name};

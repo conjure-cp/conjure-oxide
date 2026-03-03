@@ -1,5 +1,5 @@
 use crate::diagnostics::diagnostics_api::SymbolKind;
-use crate::diagnostics::source_map::{HoverInfo, SourceMap, span_with_hover};
+use crate::diagnostics::source_map::{HoverInfo, span_with_hover};
 use crate::errors::FatalParseError;
 use crate::expression::{parse_binary_expression, parse_expression};
 use crate::parser::ParseContext;

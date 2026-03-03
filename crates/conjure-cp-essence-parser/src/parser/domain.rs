@@ -1,6 +1,6 @@
 use super::atom::parse_int;
 use super::util::named_children;
-use crate::diagnostics::source_map::{HoverInfo, SourceMap, span_with_hover};
+use crate::diagnostics::source_map::{HoverInfo, span_with_hover};
 use crate::errors::FatalParseError;
 use crate::parser::ParseContext;
 use crate::{child, field};
