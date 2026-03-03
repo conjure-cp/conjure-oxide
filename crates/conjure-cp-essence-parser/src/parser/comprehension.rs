@@ -1,23 +1,21 @@
-use crate::errors::{FatalParseError, RecoverableParseError};
+use crate::errors::FatalParseError;
 use crate::expression::parse_expression;
 use crate::field;
+use crate::parser::ParseContext;
 use crate::parser::domain::parse_domain;
 use crate::util::named_children;
 use conjure_cp_core::ast::ac_operators::ACOperatorKind;
 use conjure_cp_core::ast::comprehension::ComprehensionBuilder;
-use conjure_cp_core::ast::{DeclarationPtr, Expression, Metadata, Moo, Name, SymbolTablePtr};
+use conjure_cp_core::ast::{DeclarationPtr, Expression, Metadata, Moo, Name};
 use std::vec;
 use tree_sitter::Node;
 
 pub fn parse_comprehension(
+    ctx: &mut ParseContext,
     node: &Node,
-    source_code: &str,
-    root: &Node,
-    symbols_ptr: Option<SymbolTablePtr>,
-    errors: &mut Vec<RecoverableParseError>,
 ) -> Result<Option<Expression>, FatalParseError> {
     // Comprehensions require a symbol table passed in
-    let symbols_ptr = symbols_ptr.ok_or_else(|| {
+    let symbols_ptr = ctx.symbols.clone().ok_or_else(|| {
         FatalParseError::internal_error(
             "Comprehensions require a symbol table".to_string(),
             Some(node.range()),
@@ -40,14 +38,16 @@ pub fn parse_comprehension(
             "generator" => {
                 // Parse the generator variable
                 let var_node = field!(child, "variable");
-                let var_name_str = &source_code[var_node.start_byte()..var_node.end_byte()];
+                let var_name_str = &ctx.source_code[var_node.start_byte()..var_node.end_byte()];
                 let var_name = Name::user(var_name_str);
 
                 // Parse the domain
                 let domain_node = field!(child, "domain");
-                let Some(var_domain) =
-                    parse_domain(domain_node, source_code, Some(symbols_ptr.clone()), errors)?
-                else {
+
+                // Parse with a new context using the generator symbol table
+                let mut domain_ctx = ctx.with_new_symbols(Some(builder.generator_symboltable()));
+                let Some(var_domain) = parse_domain(&mut domain_ctx, domain_node)? else {
+                    ctx.errors.extend(domain_ctx.errors);
                     return Ok(None);
                 };
 
@@ -60,14 +60,10 @@ pub fn parse_comprehension(
                 let expr_node = field!(child, "expression");
                 let generator_symboltable = builder.generator_symboltable();
 
-                let Some(guard_expr) = parse_expression(
-                    expr_node,
-                    source_code,
-                    root,
-                    Some(generator_symboltable),
-                    errors,
-                )?
-                else {
+                // Parse with a new context using the generator symbol table
+                let mut guard_ctx = ctx.with_new_symbols(Some(generator_symboltable));
+                let Some(guard_expr) = parse_expression(&mut guard_ctx, expr_node)? else {
+                    ctx.errors.extend(guard_ctx.errors);
                     return Ok(None);
                 };
 
@@ -89,14 +85,9 @@ pub fn parse_comprehension(
     })?;
 
     // Use the return expression symbol table which already has quantified variables (as Given) and parent as parent
-    let Some(return_expr) = parse_expression(
-        return_expr_node,
-        source_code,
-        root,
-        Some(builder.return_expr_symboltable()),
-        errors,
-    )?
-    else {
+    let mut return_ctx = ctx.with_new_symbols(Some(builder.return_expr_symboltable()));
+    let Some(return_expr) = parse_expression(&mut return_ctx, return_expr_node)? else {
+        ctx.errors.extend(return_ctx.errors);
         return Ok(None);
     };
 
@@ -113,14 +104,11 @@ pub fn parse_comprehension(
 /// - `forAll vars : domain . expr` → `And(Comprehension(...))`
 /// - `sum vars : domain . expr` → `Sum(Comprehension(...))`
 pub fn parse_quantifier_or_aggregate_expr(
+    ctx: &mut ParseContext,
     node: &Node,
-    source_code: &str,
-    root: &Node,
-    symbols_ptr: Option<SymbolTablePtr>,
-    errors: &mut Vec<RecoverableParseError>,
 ) -> Result<Option<Expression>, FatalParseError> {
     // Quantifier and aggregate expressions require a symbol table
-    let symbols_ptr = symbols_ptr.ok_or_else(|| {
+    let symbols_ptr = ctx.symbols.clone().ok_or_else(|| {
         FatalParseError::internal_error(
             "Quantifier and aggregate expressions require a symbol table".to_string(),
             Some(node.range()),
@@ -138,14 +126,13 @@ pub fn parse_quantifier_or_aggregate_expr(
     for child in named_children(node) {
         match child.kind() {
             "identifier" => {
-                let var_name_str = &source_code[child.start_byte()..child.end_byte()];
+                let var_name_str = &ctx.source_code[child.start_byte()..child.end_byte()];
                 let var_name = Name::user(var_name_str);
                 variables.push(var_name);
             }
             "domain" => {
-                let Some(parsed_domain) =
-                    parse_domain(child, source_code, Some(symbols_ptr.clone()), errors)?
-                else {
+                // Parse with the current symbol table (no need for a new context)
+                let Some(parsed_domain) = parse_domain(ctx, child)? else {
                     return Ok(None);
                 };
                 domain = Some(parsed_domain);
@@ -175,7 +162,7 @@ pub fn parse_quantifier_or_aggregate_expr(
 
     // Get the operator type
     let operator_node = field!(node, "operator");
-    let operator_str = &source_code[operator_node.start_byte()..operator_node.end_byte()];
+    let operator_str = &ctx.source_code[operator_node.start_byte()..operator_node.end_byte()];
 
     let (ac_operator_kind, wrapper) = match operator_str {
         "forAll" => (ACOperatorKind::And, "And"),
@@ -206,14 +193,11 @@ pub fn parse_quantifier_or_aggregate_expr(
 
     // Parse the expression (after variables are in the symbol table)
     let expression_node = field!(node, "expression");
-    let Some(expression) = parse_expression(
-        expression_node,
-        source_code,
-        root,
-        Some(builder.return_expr_symboltable()),
-        errors,
-    )?
-    else {
+
+    // Parse with a new context using the return expression symbol table
+    let mut expr_ctx = ctx.with_new_symbols(Some(builder.return_expr_symboltable()));
+    let Some(expression) = parse_expression(&mut expr_ctx, expression_node)? else {
+        ctx.errors.extend(expr_ctx.errors);
         return Ok(None);
     };
 
