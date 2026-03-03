@@ -123,7 +123,8 @@ pub fn parse_essence_with_context(
     }
 
     // check for errors (keyword as identifier)
-    keyword_as_identifier(root_node, &source_code, errors);
+    keyword_as_identifier(&mut ctx);
+
     // Collect errors from context
     errors.extend(ctx.errors);
 
@@ -140,21 +141,17 @@ const KEYWORDS: [&str; 21] = [
     "where", "and", "or", "not", "if", "then", "else", "in", "sum", "product", "bool",
 ];
 
-fn keyword_as_identifier(
-    root: tree_sitter::Node,
-    src: &str,
-    errors: &mut Vec<RecoverableParseError>,
-) {
-    let mut stack = vec![root];
+fn keyword_as_identifier(ctx: &mut ParseContext) {
+    let mut stack = vec![*ctx.root];
     while let Some(node) = stack.pop() {
         if (node.kind() == "variable" || node.kind() == "identifier" || node.kind() == "parameter")
-            && let Ok(text) = node.utf8_text(src.as_bytes())
+            && let Ok(text) = node.utf8_text(ctx.source_code.as_bytes())
         {
             let ident = text.trim();
             if KEYWORDS.contains(&ident) {
                 let start_point = node.start_position();
                 let end_point = node.end_position();
-                errors.push(RecoverableParseError::new(
+                ctx.errors.push(RecoverableParseError::new(
                     format!("Keyword '{ident}' used as identifier"),
                     Some(tree_sitter::Range {
                         start_byte: node.start_byte(),
