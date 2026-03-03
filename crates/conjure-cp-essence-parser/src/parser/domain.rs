@@ -44,7 +44,7 @@ pub fn parse_domain(
                 decl_span: None,
             };
             span_with_hover(&domain, source_code, source_map, hover);
-            parse_int_domain(domain, source_code, &symbols, errors)
+            parse_int_domain(domain, source_code, &symbols, errors, source_map)
         }
         "identifier" => {
             let Some(decl) =
@@ -113,6 +113,7 @@ fn parse_int_domain(
     source_code: &str,
     symbols_ptr: &Option<SymbolTablePtr>,
     errors: &mut Vec<RecoverableParseError>,
+    source_map: &mut SourceMap,
 ) -> Result<Option<DomainPtr>, FatalParseError> {
     if int_domain.child_count() == 1 {
         // for domains of just 'int' with no range
@@ -126,8 +127,13 @@ fn parse_int_domain(
     for domain_component in named_children(&range_list) {
         match domain_component.kind() {
             "atom" | "arithmetic_expr" => {
-                let Some(int_val) =
-                    parse_int_val(domain_component, source_code, symbols_ptr, errors)?
+                let Some(int_val) = parse_int_val(
+                    domain_component,
+                    source_code,
+                    symbols_ptr,
+                    errors,
+                    source_map,
+                )?
                 else {
                     return Ok(None);
                 };
@@ -139,17 +145,21 @@ fn parse_int_domain(
             }
             "int_range" => {
                 let lower_bound = match domain_component.child_by_field_name("lower") {
-                    Some(node) => match parse_int_val(node, source_code, symbols_ptr, errors)? {
-                        Some(val) => Some(val),
-                        None => return Ok(None), // semantic error occurred
-                    },
+                    Some(node) => {
+                        match parse_int_val(node, source_code, symbols_ptr, errors, source_map)? {
+                            Some(val) => Some(val),
+                            None => return Ok(None), // semantic error occurred
+                        }
+                    }
                     None => None,
                 };
                 let upper_bound = match domain_component.child_by_field_name("upper") {
-                    Some(node) => match parse_int_val(node, source_code, symbols_ptr, errors)? {
-                        Some(val) => Some(val),
-                        None => return Ok(None), // semantic error occurred
-                    },
+                    Some(node) => {
+                        match parse_int_val(node, source_code, symbols_ptr, errors, source_map)? {
+                            Some(val) => Some(val),
+                            None => return Ok(None), // semantic error occurred
+                        }
+                    }
                     None => None,
                 };
 
@@ -231,6 +241,7 @@ fn parse_int_val(
     source_code: &str,
     symbols_ptr: &Option<SymbolTablePtr>,
     errors: &mut Vec<RecoverableParseError>,
+    source_map: &mut SourceMap,
 ) -> Result<Option<IntVal>, FatalParseError> {
     // For atoms, try to parse as a constant integer first
     if node.kind() == "atom" {
@@ -249,7 +260,14 @@ fn parse_int_val(
     }
 
     // For anything else, parse as an expression
-    let Some(expr) = parse_expression(node, source_code, &node, symbols_ptr.clone(), errors)?
+    let Some(expr) = parse_expression(
+        node,
+        source_code,
+        &node,
+        symbols_ptr.clone(),
+        errors,
+        source_map,
+    )?
     else {
         return Ok(None);
     };
