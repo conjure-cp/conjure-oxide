@@ -1,4 +1,5 @@
 use super::util::{get_tree, query_toplevel};
+use crate::diagnostics::source_map::SourceMap;
 use crate::errors::FatalParseError;
 use crate::expression::parse_expression;
 use crate::util::node_is_expression;
@@ -9,7 +10,7 @@ use uniplate::Uniplate;
 pub fn parse_expr(src: &str, symbols_ptr: SymbolTablePtr) -> Result<Expression, FatalParseError> {
     let exprs = parse_exprs(src, symbols_ptr)?;
     if exprs.len() != 1 {
-        return Err(FatalParseError::syntax_error(
+        return Err(FatalParseError::internal_error(
             "Expected a single expression".to_string(),
             None,
         ));
@@ -27,14 +28,20 @@ pub fn parse_exprs(
 
     let root = tree.root_node();
     let mut ans = Vec::new();
+    let mut source_map = SourceMap::default();
     for expr in query_toplevel(&root, &node_is_expression) {
-        ans.push(parse_expression(
+        let Some(expr) = parse_expression(
             expr,
             &source_code,
             &root,
             Some(symbols_ptr.clone()),
             &mut Vec::new(),
-        )?);
+            &mut source_map,
+        )?
+        else {
+            continue;
+        };
+        ans.push(expr);
     }
     Ok(ans)
 }
