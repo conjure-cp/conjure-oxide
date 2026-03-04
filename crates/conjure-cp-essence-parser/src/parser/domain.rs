@@ -1,93 +1,84 @@
 use super::atom::parse_int;
 use super::util::named_children;
-use crate::diagnostics::source_map::{HoverInfo, SourceMap, span_with_hover};
-use crate::errors::{FatalParseError, RecoverableParseError};
+use crate::diagnostics::source_map::{HoverInfo, span_with_hover};
+use crate::errors::FatalParseError;
 use crate::expression::parse_expression;
+use crate::parser::ParseContext;
 use crate::{child, field};
 use conjure_cp_core::ast::{
     DeclarationPtr, Domain, DomainPtr, IntVal, Moo, Name, Range, RecordEntry, Reference, SetAttr,
-    SymbolTablePtr,
 };
 use tree_sitter::Node;
 
 /// Parse an Essence variable domain into its Conjure AST representation.
 pub fn parse_domain(
+    ctx: &mut ParseContext,
     domain: Node,
-    source_code: &str,
-    symbols: Option<SymbolTablePtr>,
-    errors: &mut Vec<RecoverableParseError>,
-    source_map: &mut SourceMap,
 ) -> Result<Option<DomainPtr>, FatalParseError> {
     match domain.kind() {
-        "domain" => parse_domain(
-            child!(domain, 0, "domain"),
-            source_code,
-            symbols,
-            errors,
-            source_map,
-        ),
+        "domain" => parse_domain(ctx, child!(domain, 0, "domain")),
         "bool_domain" => {
             let hover = HoverInfo {
                 description: "Boolean domain".to_string(),
-                kind: None,
-                ty: Some("bool".to_string()),
+                kind: Some(crate::diagnostics::diagnostics_api::SymbolKind::Domain),
+                ty: None,
                 decl_span: None,
             };
-            span_with_hover(&domain, source_code, source_map, hover);
+            span_with_hover(&domain, ctx.source_code, ctx.source_map, hover);
             Ok(Some(Domain::bool()))
         }
         "int_domain" => {
             let hover = HoverInfo {
                 description: "Integer domain".to_string(),
-                kind: None,
-                ty: Some("int".to_string()),
+                kind: Some(crate::diagnostics::diagnostics_api::SymbolKind::Domain),
+                ty: None,
                 decl_span: None,
             };
-            span_with_hover(&domain, source_code, source_map, hover);
-            parse_int_domain(domain, source_code, &symbols, errors, source_map)
+            span_with_hover(&domain, ctx.source_code, ctx.source_map, hover);
+            parse_int_domain(ctx, domain)
         }
         "identifier" => {
-            let Some(decl) =
-                get_declaration_ptr_from_identifier(domain, source_code, &symbols, errors)?
-            else {
+            let Some(decl) = get_declaration_ptr_from_identifier(ctx, domain)? else {
                 return Ok(None);
             };
             let Some(dom) = Domain::reference(decl) else {
-                errors.push(RecoverableParseError::new(
+                ctx.record_error(crate::errors::RecoverableParseError::new(
                     format!(
                         "The identifier '{}' is not a valid domain",
-                        &source_code[domain.start_byte()..domain.end_byte()]
+                        &ctx.source_code[domain.start_byte()..domain.end_byte()]
                     ),
                     Some(domain.range()),
                 ));
                 return Ok(None);
             };
-            let name = &source_code[domain.start_byte()..domain.end_byte()];
+            let name = &ctx.source_code[domain.start_byte()..domain.end_byte()];
             let hover = HoverInfo {
                 description: format!("Domain reference: {name}"),
                 kind: None,
                 ty: None,
                 decl_span: None,
             };
-            span_with_hover(&domain, source_code, source_map, hover);
+            span_with_hover(&domain, ctx.source_code, ctx.source_map, hover);
             Ok(Some(dom))
         }
-        "tuple_domain" => parse_tuple_domain(domain, source_code, symbols, errors, source_map),
-        "matrix_domain" => parse_matrix_domain(domain, source_code, symbols, errors, source_map),
-        "record_domain" => parse_record_domain(domain, source_code, symbols, errors, source_map),
-        "set_domain" => parse_set_domain(domain, source_code, symbols, errors, source_map),
-        _ => panic!("{} is not a supported domain type", domain.kind()),
+        "tuple_domain" => parse_tuple_domain(ctx, domain),
+        "matrix_domain" => parse_matrix_domain(ctx, domain),
+        "record_domain" => parse_record_domain(ctx, domain),
+        "set_domain" => parse_set_domain(ctx, domain),
+        _ => Err(FatalParseError::internal_error(
+            format!("{} is not a supported domain type", domain.kind()),
+            Some(domain.range()),
+        )),
     }
 }
 
 fn get_declaration_ptr_from_identifier(
+    ctx: &mut ParseContext,
     identifier: Node,
-    source_code: &str,
-    symbols_ptr: &Option<SymbolTablePtr>,
-    errors: &mut Vec<RecoverableParseError>,
 ) -> Result<Option<DeclarationPtr>, FatalParseError> {
-    let name = Name::user(&source_code[identifier.start_byte()..identifier.end_byte()]);
-    let decl = symbols_ptr
+    let name = Name::user(&ctx.source_code[identifier.start_byte()..identifier.end_byte()]);
+    let decl = ctx
+        .symbols
         .as_ref()
         .ok_or(FatalParseError::internal_error(
             "context needed to resolve identifier".to_string(),
@@ -98,7 +89,7 @@ fn get_declaration_ptr_from_identifier(
     match decl {
         Some(decl) => Ok(Some(decl)),
         None => {
-            errors.push(RecoverableParseError::new(
+            ctx.record_error(crate::errors::RecoverableParseError::new(
                 format!("The identifier '{}' is not defined", name),
                 Some(identifier.range()),
             ));
@@ -109,11 +100,8 @@ fn get_declaration_ptr_from_identifier(
 
 /// Parse an integer domain. Can be a single integer or a range.
 fn parse_int_domain(
+    ctx: &mut ParseContext,
     int_domain: Node,
-    source_code: &str,
-    symbols_ptr: &Option<SymbolTablePtr>,
-    errors: &mut Vec<RecoverableParseError>,
-    source_map: &mut SourceMap,
 ) -> Result<Option<DomainPtr>, FatalParseError> {
     if int_domain.child_count() == 1 {
         // for domains of just 'int' with no range
@@ -127,14 +115,7 @@ fn parse_int_domain(
     for domain_component in named_children(&range_list) {
         match domain_component.kind() {
             "atom" | "arithmetic_expr" => {
-                let Some(int_val) = parse_int_val(
-                    domain_component,
-                    source_code,
-                    symbols_ptr,
-                    errors,
-                    source_map,
-                )?
-                else {
+                let Some(int_val) = parse_int_val(ctx, domain_component)? else {
                     return Ok(None);
                 };
 
@@ -146,7 +127,7 @@ fn parse_int_domain(
             "int_range" => {
                 let lower_bound = match domain_component.child_by_field_name("lower") {
                     Some(node) => {
-                        match parse_int_val(node, source_code, symbols_ptr, errors, source_map)? {
+                        match parse_int_val(ctx, node)? {
                             Some(val) => Some(val),
                             None => return Ok(None), // semantic error occurred
                         }
@@ -155,7 +136,7 @@ fn parse_int_domain(
                 };
                 let upper_bound = match domain_component.child_by_field_name("upper") {
                     Some(node) => {
-                        match parse_int_val(node, source_code, symbols_ptr, errors, source_map)? {
+                        match parse_int_val(ctx, node)? {
                             Some(val) => Some(val),
                             None => return Ok(None), // semantic error occurred
                         }
@@ -168,7 +149,7 @@ fn parse_int_domain(
                         // Check if both bounds are constants and validate lower <= upper
                         if let (IntVal::Const(l), IntVal::Const(u)) = (&lower, &upper) {
                             if l > u {
-                                errors.push(RecoverableParseError::new(
+                                ctx.record_error(crate::errors::RecoverableParseError::new(
                                     format!(
                                         "Invalid integer range: lower bound {} is greater than upper bound {}",
                                         l, u
@@ -236,23 +217,15 @@ fn parse_int_domain(
 
 // Helper function to parse a node into an IntVal
 // Handles constants, references, and arbitrary expressions
-fn parse_int_val(
-    node: Node,
-    source_code: &str,
-    symbols_ptr: &Option<SymbolTablePtr>,
-    errors: &mut Vec<RecoverableParseError>,
-    source_map: &mut SourceMap,
-) -> Result<Option<IntVal>, FatalParseError> {
+fn parse_int_val(ctx: &mut ParseContext, node: Node) -> Result<Option<IntVal>, FatalParseError> {
     // For atoms, try to parse as a constant integer first
     if node.kind() == "atom" {
-        let text = &source_code[node.start_byte()..node.end_byte()];
+        let text = &ctx.source_code[node.start_byte()..node.end_byte()];
         if let Ok(integer) = text.parse::<i32>() {
             return Ok(Some(IntVal::Const(integer)));
         }
         // Otherwise, check if it's an identifier reference
-        let Some(decl) =
-            get_declaration_ptr_from_identifier(node, source_code, symbols_ptr, errors)?
-        else {
+        let Some(decl) = get_declaration_ptr_from_identifier(ctx, node)? else {
             // If identifier isn't defined, its a semantic error
             return Ok(None);
         };
@@ -260,32 +233,19 @@ fn parse_int_val(
     }
 
     // For anything else, parse as an expression
-    let Some(expr) = parse_expression(
-        node,
-        source_code,
-        &node,
-        symbols_ptr.clone(),
-        errors,
-        source_map,
-    )?
-    else {
+    let Some(expr) = parse_expression(ctx, node)? else {
         return Ok(None);
     };
     Ok(Some(IntVal::Expr(Moo::new(expr))))
 }
 
 fn parse_tuple_domain(
+    ctx: &mut ParseContext,
     tuple_domain: Node,
-    source_code: &str,
-    symbols: Option<SymbolTablePtr>,
-    errors: &mut Vec<RecoverableParseError>,
-    source_map: &mut SourceMap,
 ) -> Result<Option<DomainPtr>, FatalParseError> {
     let mut domains: Vec<DomainPtr> = Vec::new();
     for domain in named_children(&tuple_domain) {
-        let Some(parsed_domain) =
-            parse_domain(domain, source_code, symbols.clone(), errors, source_map)?
-        else {
+        let Some(parsed_domain) = parse_domain(ctx, domain)? else {
             return Ok(None);
         };
         domains.push(parsed_domain);
@@ -294,55 +254,33 @@ fn parse_tuple_domain(
 }
 
 fn parse_matrix_domain(
+    ctx: &mut ParseContext,
     matrix_domain: Node,
-    source_code: &str,
-    symbols: Option<SymbolTablePtr>,
-    errors: &mut Vec<RecoverableParseError>,
-    source_map: &mut SourceMap,
 ) -> Result<Option<DomainPtr>, FatalParseError> {
     let mut domains: Vec<DomainPtr> = Vec::new();
     let index_domain_list = field!(matrix_domain, "index_domain_list");
     for domain in named_children(&index_domain_list) {
-        let Some(parsed_domain) =
-            parse_domain(domain, source_code, symbols.clone(), errors, source_map)?
-        else {
+        let Some(parsed_domain) = parse_domain(ctx, domain)? else {
             return Ok(None);
         };
         domains.push(parsed_domain);
     }
-    let Some(value_domain) = parse_domain(
-        field!(matrix_domain, "value_domain"),
-        source_code,
-        symbols,
-        errors,
-        source_map,
-    )?
-    else {
+    let Some(value_domain) = parse_domain(ctx, field!(matrix_domain, "value_domain"))? else {
         return Ok(None);
     };
     Ok(Some(Domain::matrix(value_domain, domains)))
 }
 
 fn parse_record_domain(
+    ctx: &mut ParseContext,
     record_domain: Node,
-    source_code: &str,
-    symbols: Option<SymbolTablePtr>,
-    errors: &mut Vec<RecoverableParseError>,
-    source_map: &mut SourceMap,
 ) -> Result<Option<DomainPtr>, FatalParseError> {
     let mut record_entries: Vec<RecordEntry> = Vec::new();
     for record_entry in named_children(&record_domain) {
         let name_node = field!(record_entry, "name");
-        let name = Name::user(&source_code[name_node.start_byte()..name_node.end_byte()]);
+        let name = Name::user(&ctx.source_code[name_node.start_byte()..name_node.end_byte()]);
         let domain_node = field!(record_entry, "domain");
-        let Some(domain) = parse_domain(
-            domain_node,
-            source_code,
-            symbols.clone(),
-            errors,
-            source_map,
-        )?
-        else {
+        let Some(domain) = parse_domain(ctx, domain_node)? else {
             return Ok(None);
         };
         record_entries.push(RecordEntry { name, domain });
@@ -351,11 +289,8 @@ fn parse_record_domain(
 }
 
 pub fn parse_set_domain(
+    ctx: &mut ParseContext,
     set_domain: Node,
-    source_code: &str,
-    symbols: Option<SymbolTablePtr>,
-    errors: &mut Vec<RecoverableParseError>,
-    source_map: &mut SourceMap,
 ) -> Result<Option<DomainPtr>, FatalParseError> {
     let mut set_attribute: Option<SetAttr> = None;
     let mut value_domain: Option<DomainPtr> = None;
@@ -370,28 +305,26 @@ pub fn parse_set_domain(
 
                 if let (Some(min_node), Some(max_node)) = (min_value_node, max_value_node) {
                     // MinMax case
-                    let min_val = parse_int(&min_node, source_code, errors)?;
-                    let max_val = parse_int(&max_node, source_code, errors)?;
+                    let min_val = parse_int(ctx, &min_node)?;
+                    let max_val = parse_int(ctx, &max_node)?;
 
                     set_attribute = Some(SetAttr::new_min_max_size(min_val, max_val));
                 } else if let Some(size_node) = size_value_node {
                     // Size case
-                    let size_val = parse_int(&size_node, source_code, errors)?;
+                    let size_val = parse_int(ctx, &size_node)?;
                     set_attribute = Some(SetAttr::new_size(size_val));
                 } else if let Some(min_node) = min_value_node {
                     // MinSize only case
-                    let min_val = parse_int(&min_node, source_code, errors)?;
+                    let min_val = parse_int(ctx, &min_node)?;
                     set_attribute = Some(SetAttr::new_min_size(min_val));
                 } else if let Some(max_node) = max_value_node {
                     // MaxSize only case
-                    let max_val = parse_int(&max_node, source_code, errors)?;
+                    let max_val = parse_int(ctx, &max_node)?;
                     set_attribute = Some(SetAttr::new_max_size(max_val));
                 }
             }
             "domain" => {
-                let Some(parsed_domain) =
-                    parse_domain(child, source_code, symbols.clone(), errors, source_map)?
-                else {
+                let Some(parsed_domain) = parse_domain(ctx, child)? else {
                     return Ok(None);
                 };
                 value_domain = Some(parsed_domain);

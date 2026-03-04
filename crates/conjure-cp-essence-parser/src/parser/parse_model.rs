@@ -7,6 +7,7 @@ use conjure_cp_core::context::Context;
 #[allow(unused)]
 use uniplate::Uniplate;
 
+use super::ParseContext;
 use super::find::parse_find_statement;
 use super::letting::parse_letting_statement;
 use super::util::get_tree;
@@ -78,7 +79,16 @@ pub fn parse_essence_with_context_and_map(
     let mut model = Model::new(context);
     let mut source_map = SourceMap::default();
     let root_node = tree.root_node();
-    let symbols_ptr = model.symbols_ptr_unchecked().clone();
+
+    // Create a ParseContext
+    let mut ctx = ParseContext::new(
+        &source_code,
+        &root_node,
+        Some(model.symbols_ptr_unchecked().clone()),
+        errors,
+        &mut source_map,
+    );
+
     let mut cursor = root_node.walk();
     for statement in root_node.children(&mut cursor) {
         /*
@@ -89,8 +99,8 @@ pub fn parse_essence_with_context_and_map(
         if statement.kind() == "find" {
             span_with_hover(
                 &statement,
-                &source_code,
-                &mut source_map,
+                ctx.source_code,
+                ctx.source_map,
                 HoverInfo {
                     description: "Find keyword".to_string(),
                     kind: Some(SymbolKind::Find),
@@ -101,8 +111,8 @@ pub fn parse_essence_with_context_and_map(
         } else if statement.kind() == "letting" {
             span_with_hover(
                 &statement,
-                &source_code,
-                &mut source_map,
+                ctx.source_code,
+                ctx.source_map,
                 HoverInfo {
                     description: "Letting keyword".to_string(),
                     kind: Some(SymbolKind::Letting),
@@ -120,13 +130,7 @@ pub fn parse_essence_with_context_and_map(
             "single_line_comment" => {}
             "language_declaration" => {}
             "find_statement" => {
-                let var_hashmap = parse_find_statement(
-                    statement,
-                    &source_code,
-                    Some(symbols_ptr.clone()),
-                    errors,
-                    &mut source_map,
-                )?;
+                let var_hashmap = parse_find_statement(&mut ctx, statement)?;
                 for (name, domain) in var_hashmap {
                     model
                         .symbols_mut()
@@ -134,49 +138,26 @@ pub fn parse_essence_with_context_and_map(
                 }
             }
             "bool_expr" | "atom" | "comparison_expr" => {
-                let Some(expr) = parse_expression(
-                    statement,
-                    &source_code,
-                    &statement,
-                    Some(symbols_ptr.clone()),
-                    errors,
-                    &mut source_map,
-                )?
-                else {
+                let Some(expr) = parse_expression(&mut ctx, statement)? else {
                     continue;
                 };
                 model.add_constraint(expr);
             }
             "language_label" => {}
             "letting_statement" => {
-                let Some(letting_vars) = parse_letting_statement(
-                    statement,
-                    &source_code,
-                    Some(symbols_ptr.clone()),
-                    errors,
-                    &mut source_map,
-                )?
-                else {
+                let Some(letting_vars) = parse_letting_statement(&mut ctx, statement)? else {
                     continue;
                 };
                 model.symbols_mut().extend(letting_vars);
             }
             "dominance_relation" => {
                 let inner = field!(statement, "expression");
-                let Some(expr) = parse_expression(
-                    inner,
-                    &source_code,
-                    &statement,
-                    Some(symbols_ptr.clone()),
-                    errors,
-                    &mut source_map,
-                )?
-                else {
+                let Some(expr) = parse_expression(&mut ctx, inner)? else {
                     continue;
                 };
                 let dominance = Expression::DominanceRelation(Metadata::new(), Moo::new(expr));
                 if model.dominance.is_some() {
-                    errors.push(RecoverableParseError::new(
+                    ctx.record_error(RecoverableParseError::new(
                         "Duplicate dominance relation".to_string(),
                         None,
                     ));
@@ -194,7 +175,7 @@ pub fn parse_essence_with_context_and_map(
     }
 
     // check for errors (keyword as identifier)
-    keyword_as_identifier(root_node, &source_code, errors);
+    keyword_as_identifier(&mut ctx);
 
     // Check if there were any recoverable errors
     if !errors.is_empty() {
@@ -209,21 +190,17 @@ const KEYWORDS: [&str; 21] = [
     "where", "and", "or", "not", "if", "then", "else", "in", "sum", "product", "bool",
 ];
 
-fn keyword_as_identifier(
-    root: tree_sitter::Node,
-    src: &str,
-    errors: &mut Vec<RecoverableParseError>,
-) {
-    let mut stack = vec![root];
+fn keyword_as_identifier(ctx: &mut ParseContext) {
+    let mut stack = vec![*ctx.root];
     while let Some(node) = stack.pop() {
         if (node.kind() == "variable" || node.kind() == "identifier" || node.kind() == "parameter")
-            && let Ok(text) = node.utf8_text(src.as_bytes())
+            && let Ok(text) = node.utf8_text(ctx.source_code.as_bytes())
         {
             let ident = text.trim();
             if KEYWORDS.contains(&ident) {
                 let start_point = node.start_position();
                 let end_point = node.end_position();
-                errors.push(RecoverableParseError::new(
+                ctx.errors.push(RecoverableParseError::new(
                     format!("Keyword '{ident}' used as identifier"),
                     Some(tree_sitter::Range {
                         start_byte: node.start_byte(),
