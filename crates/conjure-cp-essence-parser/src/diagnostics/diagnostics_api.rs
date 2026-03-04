@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::diagnostics::error_detection::semantic_errors::detect_semantic_errors;
-use crate::diagnostics::error_detection::syntactic_errors::detect_syntactic_errors;
+use crate::diagnostics::error_detection::collect_errors::detect_errors;
 
 // structs for lsp stuff
 
@@ -41,7 +40,7 @@ pub struct Diagnostic {
 }
 
 // document symbol struct is used to denote a single token / node
-// this will be used for syntax highlighting
+// this will be used for syntax highlighting and hovering
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum SymbolKind {
@@ -50,6 +49,9 @@ pub enum SymbolKind {
     Function = 2,
     Letting = 3,
     Find = 4,
+    Variable = 5,
+    Constant = 6,
+    Domain = 7,
 } // to be extended
 
 // each type of token / symbol in the essence grammar will be
@@ -69,11 +71,7 @@ pub struct DocumentSymbol {
 pub fn get_diagnostics(source: &str) -> Vec<Diagnostic> {
     let mut diagnostics = Vec::new();
 
-    // semantic error detection from error-detection/semantic-errors.rs
-    diagnostics.extend(detect_semantic_errors(source)); // not implemented yet
-
-    // syntactic error detection from error-detection/syntactic-errors.rs
-    diagnostics.extend(detect_syntactic_errors(source)); // not implemented yet
+    diagnostics.extend(detect_errors(source));
 
     diagnostics
 }

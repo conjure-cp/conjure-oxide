@@ -1,5 +1,7 @@
 //! conjure_oxide solve sub-command
 #![allow(clippy::unwrap_used)]
+#[cfg(feature = "smt")]
+use std::time::Duration;
 use std::{
     fs::File,
     io::Write as _,
@@ -10,16 +12,19 @@ use std::{
 
 use anyhow::{anyhow, ensure};
 use clap::ValueHint;
+use conjure_cp::defaults::DEFAULT_RULE_SETS;
 use conjure_cp::{
     Model,
-    ast::comprehension::USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS,
     context::Context,
     rule_engine::{resolve_rule_sets, rewrite_morph, rewrite_naive},
+    settings::{
+        Rewriter, set_comprehension_expander, set_current_parser, set_current_rewriter,
+        set_current_solver_family,
+    },
     solver::Solver,
 };
-use conjure_cp::{defaults::DEFAULT_RULE_SETS, solver::adaptors::smt::TheoryConfig};
 use conjure_cp::{
-    parse::conjure_json::model_from_json, rule_engine::get_rules, solver::SolverFamily,
+    parse::conjure_json::model_from_json, rule_engine::get_rules, settings::SolverFamily,
 };
 use conjure_cp::{parse::tree_sitter::parse_essence_file_native, solver::adaptors::*};
 use conjure_cp_cli::find_conjure::conjure_executable;
@@ -63,7 +68,7 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
     let context = init_context(&global_args, input_file)?;
     let model = parse(&global_args, Arc::clone(&context))?;
     let rewritten_model = rewrite(model, &global_args, Arc::clone(&context))?;
-    let solver = init_solver(global_args.solver);
+    let solver = init_solver(&global_args);
 
     if solve_args.no_run_solver {
         println!("{}", &rewritten_model);
@@ -93,14 +98,19 @@ pub(crate) fn init_context(
     global_args: &GlobalArgs,
     input_file: PathBuf,
 ) -> anyhow::Result<Arc<RwLock<Context<'static>>>> {
+    set_current_parser(global_args.parser);
+    set_current_rewriter(global_args.rewriter);
+    set_comprehension_expander(global_args.comprehension_expander);
+    set_current_solver_family(global_args.solver);
+
     let target_family = global_args.solver;
     let mut extra_rule_sets: Vec<&str> = DEFAULT_RULE_SETS.to_vec();
     for rs in &global_args.extra_rule_sets {
         extra_rule_sets.push(rs.as_str());
     }
 
-    if global_args.no_use_expand_ac {
-        extra_rule_sets.pop_if(|x| x == &"Better_AC_Comprehension_Expansion");
+    if let SolverFamily::Sat(sat_encoding) = target_family {
+        extra_rule_sets.push(sat_encoding.as_rule_set());
     }
 
     let rule_sets = match resolve_rule_sets(target_family, &extra_rule_sets) {
@@ -142,11 +152,19 @@ pub(crate) fn init_context(
     Ok(context)
 }
 
-pub(crate) fn init_solver(family: SolverFamily) -> Solver {
+pub(crate) fn init_solver(global_args: &GlobalArgs) -> Solver {
+    let family = global_args.solver;
+    #[cfg(feature = "smt")]
+    let timeout_ms = global_args
+        .solver_timeout
+        .map(|dur| Duration::from(dur).as_millis())
+        .map(|timeout_ms| u64::try_from(timeout_ms).expect("Timeout too large"));
+
     match family {
         SolverFamily::Minion => Solver::new(Minion::default()),
-        SolverFamily::Sat => Solver::new(Sat::default()),
-        SolverFamily::Smt(TheoryConfig { ints, matrices }) => Solver::new(Smt::new(ints, matrices)),
+        SolverFamily::Sat(_) => Solver::new(Sat::default()),
+        #[cfg(feature = "smt")]
+        SolverFamily::Smt(theory_cfg) => Solver::new(Smt::new(timeout_ms, theory_cfg)),
     }
 }
 
@@ -162,32 +180,35 @@ pub(crate) fn parse(
         .expect("context should contain the input file");
 
     tracing::info!(target: "file", "Input file: {}", input_file);
-    if global_args.use_native_parser {
-        parse_essence_file_native(input_file.as_str(), context.clone()).map_err(|e| e.into())
-    } else {
-        conjure_executable()
-            .map_err(|e| anyhow!("Could not find correct conjure executable: {e}"))?;
-
-        let mut cmd = std::process::Command::new("conjure");
-        let output = cmd
-            .arg("pretty")
-            .arg("--output-format=astjson")
-            .arg(input_file)
-            .output()?;
-
-        let conjure_stderr = String::from_utf8(output.stderr)?;
-
-        ensure!(conjure_stderr.is_empty(), conjure_stderr);
-
-        let astjson = String::from_utf8(output.stdout)?;
-
-        if cfg!(feature = "extra-rule-checks") {
-            tracing::info!("extra-rule-checks: enabled");
-        } else {
-            tracing::info!("extra-rule-checks: disabled");
+    match global_args.parser {
+        conjure_cp::settings::Parser::TreeSitter => {
+            parse_essence_file_native(input_file.as_str(), context.clone()).map_err(|e| e.into())
         }
+        conjure_cp::settings::Parser::ViaConjure => {
+            conjure_executable()
+                .map_err(|e| anyhow!("Could not find correct conjure executable: {e}"))?;
 
-        model_from_json(&astjson, context.clone()).map_err(|e| anyhow!(e))
+            let mut cmd = std::process::Command::new("conjure");
+            let output = cmd
+                .arg("pretty")
+                .arg("--output-format=astjson")
+                .arg(input_file)
+                .output()?;
+
+            let conjure_stderr = String::from_utf8(output.stderr)?;
+
+            ensure!(conjure_stderr.is_empty(), conjure_stderr);
+
+            let astjson = String::from_utf8(output.stdout)?;
+
+            if cfg!(feature = "extra-rule-checks") {
+                tracing::info!("extra-rule-checks: enabled");
+            } else {
+                tracing::info!("extra-rule-checks: disabled");
+            }
+
+            model_from_json(&astjson, context.clone()).map_err(|e| anyhow!(e))
+        }
     }
 }
 
@@ -198,27 +219,31 @@ pub(crate) fn rewrite(
 ) -> anyhow::Result<Model> {
     tracing::info!("Initial model: \n{}\n", model);
 
+    set_current_rewriter(global_args.rewriter);
+
+    let comprehension_expander = global_args.comprehension_expander;
+    set_comprehension_expander(comprehension_expander);
+    tracing::info!("Comprehension expander: {}", comprehension_expander);
+
     let rule_sets = context.read().unwrap().rule_sets.clone();
 
-    let new_model = if global_args.use_optimised_rewriter {
-        USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS.store(true, std::sync::atomic::Ordering::Relaxed);
-        tracing::info!("Rewriting the model using the optimising rewriter");
-        rewrite_morph(
-            model,
-            &rule_sets,
-            global_args.check_equally_applicable_rules,
-        )
-    } else {
-        tracing::info!("Rewriting the model using the default / naive rewriter");
-        if global_args.exit_after_unrolling {
-            tracing::info!("Exiting after unrolling");
+    let new_model = match global_args.rewriter {
+        Rewriter::Morph => {
+            tracing::info!("Rewriting the model using the morph rewriter");
+            rewrite_morph(
+                model,
+                &rule_sets,
+                global_args.check_equally_applicable_rules,
+            )
         }
-        rewrite_naive(
-            &model,
-            &rule_sets,
-            global_args.check_equally_applicable_rules,
-            global_args.exit_after_unrolling,
-        )?
+        Rewriter::Naive => {
+            tracing::info!("Rewriting the model using the default / naive rewriter");
+            rewrite_naive(
+                &model,
+                &rule_sets,
+                global_args.check_equally_applicable_rules,
+            )?
+        }
     };
 
     tracing::info!("Rewritten model: \n{}\n", new_model);

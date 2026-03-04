@@ -1,0 +1,33 @@
+language ESSENCE' 1.0
+
+letting v be 3
+letting k be 2
+letting l be 1
+letting b be (l*v*(v-1))/(k*(k-1))
+letting r be (l*(v-1))/(k-1)
+
+find  bibd: matrix indexed by [int(1..3), int(1..3)] of int(0..1)
+
+
+such that
+  $ each block contains k different objects 
+  forAll block : int(1..3) .
+    (sum object : int(1..3).  bibd[object, block]) =  k,
+
+  $ each object occurs in r blocks
+  forAll object : int(1..3) .
+    (sum block : int(1..3). bibd[object, block]) = r ,
+
+  $ two different objects occurr in a block exactly l times
+  forAll object1 : int(1..3) .
+    forAll object2 : int(1..3) .
+      (object1 < object2) ->  
+      ((sum block : int(1..3). 
+        bibd[object1,block] * bibd[object2, block]) = l),
+
+  $ Some symmetry breaking constraints
+  forAll row: int(1..2) .
+    bibd[row,..] <=lex bibd[row+1,..],
+
+  forAll col: int(1..2) .
+    bibd[..,col] <=lex bibd[..,col+1]

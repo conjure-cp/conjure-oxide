@@ -9,6 +9,7 @@
 
 use std::collections::HashSet;
 
+use itertools::Itertools;
 use z3::ast::*;
 use z3::{Solver, Sort, Symbol};
 
@@ -16,9 +17,9 @@ use super::helpers::*;
 use super::store::SymbolStore;
 use super::{IntTheory, TheoryConfig};
 
-use crate::Model;
 use crate::ast::*;
 use crate::solver::{SolverError, SolverResult};
+use crate::{Model, bug};
 
 /// Converts the given variables and constraints to assertions by mutating the given model.
 ///
@@ -33,7 +34,7 @@ pub fn load_model_impl(
     model: &[Expression],
 ) -> SolverResult<()> {
     for (name, decl) in symbols.clone().into_iter_local() {
-        let Some(var) = decl.as_var() else {
+        let Some(var) = decl.as_find() else {
             /// Ignore lettings, etc
             continue;
         };
@@ -45,7 +46,7 @@ pub fn load_model_impl(
             continue;
         }
         let (sym, ast, restriction) = var_to_ast(&name, &var, theory_config)?;
-        store.insert(name, (decl.domain().unwrap(), ast, sym));
+        store.insert(name, (decl.resolved_domain().unwrap(), ast, sym));
         solver.assert(restriction);
     }
     for expr in model.iter() {
@@ -63,7 +64,11 @@ fn var_to_ast(
     theories: &TheoryConfig,
 ) -> SolverResult<(Symbol, Dynamic, Bool)> {
     let sym = name_to_symbol(name)?;
-    let (sort, restrict_fn) = domain_to_sort(&var.domain, theories)?;
+    let dom = var
+        .domain_of()
+        .resolve()
+        .unwrap_or_else(|| bug!("could not resolve domain for {}", name));
+    let (sort, restrict_fn) = domain_to_sort(dom.as_ref(), theories)?;
     let new_const = Dynamic::new_const(sym.clone(), &sort);
 
     let restriction = (restrict_fn)(&new_const);
@@ -84,10 +89,12 @@ where
         (_, Expression::Atomic(_, atom)) => atom_to_ast(thr, store, atom),
 
         // Equality is part of the SMT core theory (anything can be compared)
+        // Some types (matrices, sets) must be compared element-wise, since the SMT solver can
+        //  always extend them to make them technically eq/neq in "SMT land", but not in "Oxide land"
+        // This is done during rewriting by rules which unwrap Eq/Neqs over these types
         (_, Expression::Eq(_, a, b)) => {
             binary_op(thr, store, a, b, |a: Dynamic, b: Dynamic| a.eq(b))
         }
-
         (_, Expression::Neq(_, a, b)) => {
             binary_op(thr, store, a, b, |a: Dynamic, b: Dynamic| a.ne(b))
         }
@@ -141,8 +148,7 @@ where
         (Bv, Expression::SafeMod(_, a, b)) => {
             binary_op(thr, store, a, b, |a: BV, b: BV| a.bvsrem(b))
         }
-        (Bv, Expression::SafePow(_, a, b)) => todo!(),
-
+        // (Bv, Expression::SafePow(_, a, b)) => todo!(),
         (Bv, Expression::PairwiseSum(_, a, b)) => {
             binary_op(thr, store, a, b, |a: BV, b: BV| a.bvadd(b))
         }
@@ -164,6 +170,11 @@ where
         }
         (_, Expression::AllDiff(_, a)) => {
             list_op(thr, store, a, |asts: &[Dynamic]| Dynamic::distinct(asts))
+        }
+
+        // === Expressions involving sets
+        (_, Expression::In(_, x, s)) => {
+            binary_op(thr, store, x, s, |x: Dynamic, s: Set| s.member(&x))
         }
 
         _ => Err(SolverError::ModelFeatureNotImplemented(format!(
@@ -222,14 +233,73 @@ where
     A: TryFrom<Dynamic, Error: std::fmt::Display>,
     Out: Into<Dynamic>,
 {
-    let exprs = expr
-        .clone()
-        .unwrap_list()
-        .ok_or(SolverError::ModelFeatureNotImplemented(format!(
-            "inner expression must be a list: {expr}"
-        )))?;
+    let exprs = list_elements(expr)?;
 
     slice_op(theories, store, &exprs, op)
+}
+
+/// Extracts the elements of a list-like expression.
+///
+/// Besides literal lists, this also supports slice expressions such as `x[..]`
+/// by expanding them to explicit indexing expressions.
+/// TODO: Consider moving this out of the smt solver adaptor, it'll be more generally useful.
+fn list_elements(expr: &Expression) -> SolverResult<Vec<Expression>> {
+    if let Some(exprs) = expr.clone().unwrap_list() {
+        return Ok(exprs);
+    }
+
+    let Expression::SafeSlice(_, subject, indices) = expr else {
+        return Err(SolverError::ModelFeatureNotImplemented(format!(
+            "inner expression must be a list: {expr}"
+        )));
+    };
+
+    let subject_domain = subject
+        .domain_of()
+        .and_then(|d| d.resolve())
+        .ok_or_else(|| {
+            SolverError::ModelFeatureNotImplemented(format!(
+                "cannot resolve domain of sliced expression: {expr}"
+            ))
+        })?;
+
+    let GroundDomain::Matrix(_, index_domains) = subject_domain.as_ref() else {
+        return Err(SolverError::ModelFeatureNotImplemented(format!(
+            "slice subject must have matrix domain: {expr}"
+        )));
+    };
+
+    if index_domains.len() != indices.len() {
+        return Err(SolverError::ModelInvalid(format!(
+            "slice has wrong number of indices: {expr}"
+        )));
+    }
+
+    let index_options: SolverResult<Vec<Vec<Expression>>> = indices
+        .iter()
+        .zip(index_domains.iter())
+        .map(|(idx, dom)| match idx {
+            Some(idx_expr) => Ok(vec![idx_expr.clone()]),
+            None => {
+                let vals = dom.values().map_err(|_| {
+                    SolverError::ModelFeatureNotImplemented(format!(
+                        "slice index domain is not finite/enumerable: {dom}"
+                    ))
+                })?;
+                Ok(vals
+                    .map(|lit| Expression::Atomic(Metadata::new(), Atom::Literal(lit)))
+                    .collect_vec())
+            }
+        })
+        .collect();
+
+    let index_options = index_options?;
+
+    Ok(index_options
+        .into_iter()
+        .multi_cartesian_product()
+        .map(|concrete_idxs| Expression::SafeIndex(Metadata::new(), subject.clone(), concrete_idxs))
+        .collect())
 }
 
 /// Transforms a slice of expressions into ASTs and returns the result of the given operation over it.

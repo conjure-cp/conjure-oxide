@@ -8,7 +8,6 @@ import {
 	ServerOptions,
 	TransportKind
 } from 'vscode-languageclient/node';
-import { vscode } from 'vscx'
 
 export function activate(context: ExtensionContext) {
 	tryStartLanguageServer(context);
@@ -18,9 +17,11 @@ function tryStartLanguageServer(context: ExtensionContext) {
 	//for future, possibly may want version checking
 
 	console.log("Before setup");
-	let serveroptions: ServerOptions = {
-		command: "conjure-oxide", args: ["server-lsp"]
-	}
+	const serverPath = path.join(__dirname, '../../../target/release/conjure-oxide');
+    
+    let serveroptions: ServerOptions = {
+        command: serverPath, args: ["server-lsp"]
+    }
 
 	let clientoptions: LanguageClientOptions = {
 		documentSelector: [{ scheme: 'file', language: 'essence' }]

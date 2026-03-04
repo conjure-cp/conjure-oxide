@@ -1,13 +1,14 @@
-use std::{borrow::Borrow, cell::Ref};
+use std::borrow::Borrow;
 use uniplate::Uniplate;
 
 use super::{
-    AbstractLiteral, DeclarationPtr, Domain, Expression, Literal, Moo, Name,
+    AbstractLiteral, DeclarationPtr, DomainPtr, Expression, Literal, Moo, Name,
     categories::{Category, CategoryOf},
     domains::HasDomain,
     records::RecordValue,
 };
 use derivative::Derivative;
+use parking_lot::MappedRwLockReadGuard;
 use polyquine::Quine;
 use serde::{Deserialize, Serialize};
 
@@ -52,7 +53,7 @@ impl CategoryOf for Atom {
 }
 
 impl HasDomain for Atom {
-    fn domain_of(&self) -> Domain {
+    fn domain_of(&self) -> DomainPtr {
         match self {
             Atom::Literal(literal) => literal.domain_of(),
             Atom::Reference(reference) => reference.domain_of(),
@@ -187,7 +188,7 @@ impl TryFrom<Atom> for Name {
     }
 }
 
-impl<'a> TryFrom<&'a Atom> for Ref<'a, Name> {
+impl<'a> TryFrom<&'a Atom> for MappedRwLockReadGuard<'a, Name> {
     type Error = &'static str;
 
     fn try_from(value: &'a Atom) -> Result<Self, Self::Error> {
@@ -244,8 +245,16 @@ impl TryFrom<&Atom> for i32 {
     type Error = &'static str;
 
     fn try_from(value: &Atom) -> Result<Self, Self::Error> {
-        let lit: &Literal = value.try_into()?;
-        lit.try_into()
+        match value {
+            Atom::Literal(lit) => lit.try_into(),
+            Atom::Reference(reference) => {
+                let lit = reference
+                    .resolve_constant()
+                    .ok_or("Cannot convert non-constant reference atom to literal")?;
+                lit.try_into()
+                    .map_err(|_| "Cannot convert non-int reference atom to i32")
+            }
+        }
     }
 }
 
@@ -262,7 +271,15 @@ impl TryFrom<&Atom> for bool {
     type Error = &'static str;
 
     fn try_from(value: &Atom) -> Result<Self, Self::Error> {
-        let lit: &Literal = value.try_into()?;
-        lit.try_into()
+        match value {
+            Atom::Literal(lit) => lit.try_into(),
+            Atom::Reference(reference) => {
+                let lit = reference
+                    .resolve_constant()
+                    .ok_or("Cannot convert non-constant reference atom to literal")?;
+                lit.try_into()
+                    .map_err(|_| "Cannot convert non-bool reference atom to bool")
+            }
+        }
     }
 }

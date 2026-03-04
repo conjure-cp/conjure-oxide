@@ -1,6 +1,6 @@
 use std::collections::VecDeque;
 
-use conjure_cp::ast::{Domain, Expression as Expr, Range, SymbolTable};
+use conjure_cp::ast::{Domain, Expression as Expr, IntVal, Range, SymbolTable};
 use conjure_cp::into_matrix_expr;
 use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
@@ -63,19 +63,20 @@ fn matrix_to_list(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             continue;
         };
 
-        let Domain::Int(ranges) = &domain else {
+        let Some(ranges) = domain.as_int() else {
             new_children.push_back(child);
             continue;
         };
 
         // must be domain int(1..n)
-        let [Range::Bounded(1, _)] = ranges[..] else {
+        let [Range::Bounded(IntVal::Const(1), _)] = ranges[..] else {
             new_children.push_back(child);
             continue;
         };
 
         any_changes = true;
-        new_children.push_back(into_matrix_expr![elems;Domain::Int(vec![Range::UnboundedR(1)])]);
+        new_children
+            .push_back(into_matrix_expr![elems;Domain::int_ground(vec![Range::UnboundedR(1)])]);
     }
 
     let new_expr = expr.with_children(new_children);

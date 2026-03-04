@@ -1,17 +1,19 @@
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fmt::Debug;
-use std::{io, vec};
+use std::path::Path;
+use std::{io, mem, vec};
 
 use conjure_cp::ast::records::RecordValue;
+use conjure_cp::ast::serde::ObjId;
 use conjure_cp::bug;
 use itertools::Itertools as _;
 use std::fs::File;
 use std::hash::Hash;
-use std::io::Write;
+use std::io::{BufRead, BufReader, Write};
 use std::sync::{Arc, RwLock};
 use uniplate::Uniplate;
 
-use conjure_cp::ast::{AbstractLiteral, Domain, SerdeModel};
+use conjure_cp::ast::{AbstractLiteral, GroundDomain, Moo, SerdeModel};
 use conjure_cp::context::Context;
 use serde_json::{Error as JsonError, Value as JsonValue};
 
@@ -23,21 +25,18 @@ use crate::utils::misc::to_set;
 use conjure_cp::Model as ConjureModel;
 use conjure_cp::ast::Name::User;
 use conjure_cp::ast::{Literal, Name};
-use conjure_cp::solver::SolverFamily;
+use conjure_cp::settings::SolverFamily;
+
+/// Limit how many lines of the rewrite serialisation we persist/compare in integration tests.
+pub const REWRITE_SERIALISED_JSON_MAX_LINES: usize = 1000;
 
 /// Converts a SerdeModel to JSON with stable IDs.
 ///
 /// This ensures that the same model structure always produces the same IDs,
 /// regardless of the order in which objects were created in memory.
-fn model_tojson_with_stable_ids(model: &SerdeModel) -> Result<JsonValue, JsonError> {
+fn model_to_json_with_stable_ids(model: &SerdeModel) -> Result<JsonValue, JsonError> {
     // Collect stable ID mapping using uniplate traversal on the SerdeModel
-    let id_map_u32 = model.collect_stable_id_mapping();
-
-    // Convert to u64 for JSON processing (serde_json::Number only has as_u64())
-    let id_map: HashMap<u64, u64> = id_map_u32
-        .into_iter()
-        .map(|(k, v)| (k as u64, v as u64))
-        .collect();
+    let id_map = model.collect_stable_id_mapping();
 
     // Serialize the model to JSON
     let mut json = serde_json::to_value(model)?;
@@ -52,7 +51,7 @@ fn model_tojson_with_stable_ids(model: &SerdeModel) -> Result<JsonValue, JsonErr
 ///
 /// This is applied to all fields that are called "id" or "ptr" - be mindful
 /// of potential naming clashes in the future!
-fn replace_ids(value: &mut JsonValue, id_map: &HashMap<u64, u64>) {
+fn replace_ids(value: &mut JsonValue, id_map: &HashMap<ObjId, ObjId>) {
     match value {
         JsonValue::Object(map) => {
             // Replace IDs in three places:
@@ -61,11 +60,11 @@ fn replace_ids(value: &mut JsonValue, id_map: &HashMap<u64, u64>) {
             // - "ptr" fields (DeclarationPtr IDs)
             for (k, v) in map.iter_mut() {
                 if (k == "id" || k == "ptr" || k == "parent")
-                    && let JsonValue::Number(n) = v
-                    && let Some(id) = n.as_u64()
-                    && let Some(&stable_id) = id_map.get(&id)
+                    && let Ok(old_id) = serde_json::from_value::<ObjId>(mem::take(v))
                 {
-                    *v = JsonValue::Number(stable_id.into());
+                    let new_id = id_map.get(&old_id).expect("all ids to be in the id map");
+                    *v = serde_json::to_value(new_id)
+                        .expect("serialization of an ObjId to always succeed");
                 }
             }
 
@@ -98,7 +97,6 @@ pub fn assert_eq_any_order<T: Eq + Hash + Debug + Clone>(a: &Vec<Vec<T>>, b: &Ve
         b_rows.push(hash_row);
     }
 
-    println!("{a_rows:?},{b_rows:?}");
     for row in a_rows {
         assert!(b_rows.contains(&row));
     }
@@ -108,7 +106,7 @@ pub fn serialize_model(model: &ConjureModel) -> Result<String, JsonError> {
     let serde_model: SerdeModel = model.clone().into();
 
     // Convert to JSON with stable IDs
-    let json_with_stable_ids = model_tojson_with_stable_ids(&serde_model)?;
+    let json_with_stable_ids = model_to_json_with_stable_ids(&serde_model)?;
 
     // Sort JSON object keys for consistent output
     let sorted_json = sort_json_object(&json_with_stable_ids, false);
@@ -122,9 +120,13 @@ pub fn save_model_json(
     path: &str,
     test_name: &str,
     test_stage: &str,
+    solver: Option<SolverFamily>,
 ) -> Result<(), std::io::Error> {
+    let marker = solver.map_or("agnostic", |s| s.as_str());
     let generated_json_str = serialize_model(model)?;
-    let filename = format!("{path}/{test_name}.generated-{test_stage}.serialised.json");
+    let generated_json_str = maybe_truncate_serialised_json(generated_json_str, test_stage);
+    let filename = format!("{path}/{test_name}-{marker}.generated-{test_stage}.serialised.json");
+    println!("saving: {}", filename);
     File::create(&filename)?.write_all(generated_json_str.as_bytes())?;
     Ok(())
 }
@@ -133,15 +135,18 @@ pub fn save_stats_json(
     context: Arc<RwLock<Context<'static>>>,
     path: &str,
     test_name: &str,
+    solver: SolverFamily,
 ) -> Result<(), std::io::Error> {
     #[allow(clippy::unwrap_used)]
-    let stats = context.read().unwrap().stats.clone();
+    let solver_name = solver.as_str();
+
+    let stats = context.read().unwrap().clone();
     let generated_json = sort_json_object(&serde_json::to_value(stats)?, false);
 
     // serialise to string
     let generated_json_str = serde_json::to_string_pretty(&generated_json)?;
 
-    File::create(format!("{path}/{test_name}-stats.json"))?
+    File::create(format!("{path}/{test_name}-{solver_name}-stats.json"))?
         .write_all(generated_json_str.as_bytes())?;
 
     Ok(())
@@ -159,14 +164,41 @@ pub fn read_model_json(
     test_name: &str,
     prefix: &str,
     test_stage: &str,
+    solver: Option<SolverFamily>,
 ) -> Result<ConjureModel, std::io::Error> {
-    let expected_json_str = read_with_path(format!(
-        "{path}/{test_name}.{prefix}-{test_stage}.serialised.json"
-    ))?;
-    println!("{path}/{test_name}.{prefix}-{test_stage}.serialised.json");
+    let marker = solver.map_or("agnostic", |s| s.as_str());
+    let new_filepath = format!("{path}/{test_name}-{marker}.{prefix}-{test_stage}.serialised.json");
+    let old_filepath = format!("{path}/{marker}-{test_name}.{prefix}-{test_stage}.serialised.json");
+    let filepath = if Path::new(&new_filepath).exists() {
+        new_filepath
+    } else {
+        old_filepath
+    };
+    let expected_json_str = std::fs::read_to_string(filepath)?;
     let expected_model: SerdeModel = serde_json::from_str(&expected_json_str)?;
 
     Ok(expected_model.initialise(ctx.clone()).unwrap())
+}
+
+/// Reads only the first `max_lines` from a serialised model JSON file.
+pub fn read_model_json_prefix(
+    path: &str,
+    test_name: &str,
+    prefix: &str,
+    test_stage: &str,
+    solver: Option<SolverFamily>,
+    max_lines: usize,
+) -> Result<String, std::io::Error> {
+    let marker = solver.map_or("agnostic", |s| s.as_str());
+    let new_filename = format!("{path}/{test_name}-{marker}.{prefix}-{test_stage}.serialised.json");
+    let old_filename = format!("{path}/{marker}-{test_name}.{prefix}-{test_stage}.serialised.json");
+    let filename = if Path::new(&new_filename).exists() {
+        new_filename
+    } else {
+        old_filename
+    };
+    println!("reading: {}", filename);
+    read_first_n_lines(filename, max_lines)
 }
 
 pub fn minion_solutions_from_json(
@@ -217,13 +249,8 @@ pub fn save_solutions_json(
     let json_solutions = solutions_to_json(solutions);
     let generated_json_str = serde_json::to_string_pretty(&json_solutions)?;
 
-    let solver_name = match solver {
-        SolverFamily::Sat => "sat",
-        SolverFamily::Smt(..) => "smt",
-        SolverFamily::Minion => "minion",
-    };
-
-    let filename = format!("{path}/{test_name}.generated-{solver_name}.solutions.json");
+    let solver_name = solver.as_str();
+    let filename = format!("{path}/{test_name}-{solver_name}.generated-solutions.json");
     File::create(&filename)?.write_all(generated_json_str.as_bytes())?;
 
     Ok(json_solutions)
@@ -236,14 +263,18 @@ pub fn read_solutions_json(
     solver: SolverFamily,
 ) -> Result<JsonValue, anyhow::Error> {
     let solver_name = match solver {
-        SolverFamily::Sat => "sat",
+        SolverFamily::Sat(_) => "sat",
+        #[cfg(feature = "smt")]
         SolverFamily::Smt(..) => "smt",
         SolverFamily::Minion => "minion",
     };
-
-    let expected_json_str = read_with_path(format!(
-        "{path}/{test_name}.{prefix}-{solver_name}.solutions.json"
-    ))?;
+    let new_filename = format!("{path}/{test_name}-{solver_name}.{prefix}-solutions.json");
+    let old_filename = format!("{path}/{solver_name}-{test_name}.{prefix}-solutions.json");
+    let expected_json_str = if Path::new(&new_filename).exists() {
+        read_with_path(new_filename)?
+    } else {
+        read_with_path(old_filename)?
+    };
 
     let expected_solutions: JsonValue =
         sort_json_object(&serde_json::from_str(&expected_json_str)?, true);
@@ -256,8 +287,16 @@ pub fn read_human_rule_trace(
     path: &str,
     test_name: &str,
     prefix: &str,
+    solver: &SolverFamily,
 ) -> Result<Vec<String>, std::io::Error> {
-    let filename = format!("{path}/{test_name}-{prefix}-rule-trace-human.txt");
+    let solver_name = solver.as_str();
+    let new_filename = format!("{path}/{test_name}-{solver_name}-{prefix}-rule-trace.txt");
+    let old_filename = format!("{path}/{solver_name}-{test_name}-{prefix}-rule-trace.txt");
+    let filename = if Path::new(&new_filename).exists() {
+        new_filename
+    } else {
+        old_filename
+    };
     let rules_trace: Vec<String> = read_with_path(filename)?
         .lines()
         .map(String::from)
@@ -295,7 +334,7 @@ pub fn normalize_solutions_for_comparison(
                         // actually matter)
 
                         let mut matrix =
-                            AbstractLiteral::Matrix(elems, Box::new(Domain::Int(vec![])));
+                            AbstractLiteral::Matrix(elems, Moo::new(GroundDomain::Int(vec![])));
                         matrix = matrix.transform(&move |x: AbstractLiteral<Literal>| match x {
                             AbstractLiteral::Matrix(items, _) => {
                                 let items = items
@@ -307,7 +346,7 @@ pub fn normalize_solutions_for_comparison(
                                     })
                                     .collect_vec();
 
-                                AbstractLiteral::Matrix(items, Box::new(Domain::Int(vec![])))
+                                AbstractLiteral::Matrix(items, Moo::new(GroundDomain::Int(vec![])))
                             }
                             x => x,
                         });
@@ -363,6 +402,24 @@ pub fn normalize_solutions_for_comparison(
                         });
                         updates.push((k, Literal::AbstractLiteral(record)));
                     }
+                    Literal::AbstractLiteral(AbstractLiteral::Set(members)) => {
+                        let set = AbstractLiteral::Set(members).transform(&move |x| match x {
+                            AbstractLiteral::Set(members) => {
+                                let members = members
+                                    .into_iter()
+                                    .map(|x| match x {
+                                        Literal::Bool(false) => Literal::Int(0),
+                                        Literal::Bool(true) => Literal::Int(1),
+                                        x => x,
+                                    })
+                                    .collect_vec();
+
+                                AbstractLiteral::Set(members)
+                            }
+                            x => x,
+                        });
+                        updates.push((k, Literal::AbstractLiteral(set)));
+                    }
                     e => bug!("unexpected literal type: {e:?}"),
                 }
             }
@@ -376,4 +433,28 @@ pub fn normalize_solutions_for_comparison(
     // Remove duplicates
     normalized = normalized.into_iter().unique().collect();
     normalized
+}
+
+fn maybe_truncate_serialised_json(serialised: String, test_stage: &str) -> String {
+    if test_stage == "rewrite" {
+        truncate_to_first_lines(&serialised, REWRITE_SERIALISED_JSON_MAX_LINES)
+    } else {
+        serialised
+    }
+}
+
+fn truncate_to_first_lines(content: &str, max_lines: usize) -> String {
+    content.lines().take(max_lines).join("\n")
+}
+
+fn read_first_n_lines<P: AsRef<Path>>(filename: P, n: usize) -> io::Result<String> {
+    let reader = BufReader::new(File::open(&filename)?);
+    let lines = reader
+        .lines()
+        .chunks(n)
+        .into_iter()
+        .next()
+        .unwrap()
+        .collect::<Result<Vec<_>, _>>()?;
+    Ok(lines.join("\n"))
 }

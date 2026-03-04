@@ -1,15 +1,11 @@
 use std::fmt::Display;
 
+use super::categories::{Category, CategoryOf};
+use crate::representation::Representation;
+use conjure_cp_core::ast::DomainPtr;
+use conjure_cp_core::ast::domains::HasDomain;
 use derivative::Derivative;
 use serde::{Deserialize, Serialize};
-
-use crate::{ast::domains::Domain, representation::Representation};
-
-use super::{
-    ReturnType,
-    categories::{Category, CategoryOf},
-    types::Typeable,
-};
 
 /// Represents a decision variable within a computational model.
 ///
@@ -36,41 +32,33 @@ use super::{
 #[derive(Clone, Debug, Serialize, Deserialize, Derivative)]
 #[derivative(Hash, PartialEq, Eq)]
 pub struct DecisionVariable {
-    pub domain: Domain,
+    pub domain: DomainPtr,
 
     // use this through [`Declaration`] - in the future, this probably will be stored in
     // declaration / domain, not here.
     #[serde(skip)]
     #[derivative(Hash = "ignore", PartialEq = "ignore")]
     pub(super) representations: Vec<Vec<Box<dyn Representation>>>,
-
-    /// Category - should be quantified or decision variable
-    pub(super) category: Category,
 }
 
 impl DecisionVariable {
-    pub fn new(domain: Domain, category: Category) -> DecisionVariable {
-        assert!(
-            category >= Category::Quantified,
-            "category of a DecisionVariable should be quantified or decision"
-        );
+    pub fn new(domain: DomainPtr) -> DecisionVariable {
         DecisionVariable {
             domain,
             representations: vec![],
-            category,
         }
     }
 }
 
 impl CategoryOf for DecisionVariable {
     fn category_of(&self) -> Category {
-        self.category
+        Category::Decision
     }
 }
 
-impl Typeable for DecisionVariable {
-    fn return_type(&self) -> Option<ReturnType> {
-        todo!()
+impl HasDomain for DecisionVariable {
+    fn domain_of(&self) -> DomainPtr {
+        self.domain.clone()
     }
 }
 
