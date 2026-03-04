@@ -2,6 +2,7 @@ use std::sync::{Arc, RwLock};
 use std::{fs, vec};
 
 use conjure_cp_core::Model;
+use conjure_cp_core::ast::assertions::debug_assert_model_well_formed;
 use conjure_cp_core::ast::{DeclarationPtr, Expression, Metadata, Moo};
 use conjure_cp_core::context::Context;
 #[allow(unused)]
@@ -30,7 +31,10 @@ pub fn parse_essence_file_native(
     let model = parse_essence_with_context(&source_code, context, &mut errors);
 
     match model {
-        Ok(Some(m)) => Ok(m),
+        Ok(Some(m)) => {
+            debug_assert_model_well_formed(&m, "tree-sitter");
+            Ok(m)
+        }
         Ok(None) => {
             // Recoverable errors were found, return them as a ParseErrorCollection
             Err(Box::new(ParseErrorCollection::multiple(
@@ -225,7 +229,10 @@ pub fn parse_essence(src: &str) -> Result<(Model, SourceMap), Box<ParseErrorColl
     let context = Arc::new(RwLock::new(Context::default()));
     let mut errors = vec![];
     match parse_essence_with_context_and_map(src, context, &mut errors) {
-        Ok(Some((model, source_map))) => Ok((model, source_map)),
+        Ok(Some((model, source_map))) => {
+            debug_assert_model_well_formed(&model, "tree-sitter");
+            Ok((model, source_map))
+        }
         Ok(None) => {
             // Recoverable errors were found, return them as a ParseErrorCollection
             Err(Box::new(ParseErrorCollection::multiple(
