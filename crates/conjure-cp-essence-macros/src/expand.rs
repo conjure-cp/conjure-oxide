@@ -1,3 +1,4 @@
+use conjure_cp_essence_parser::parser::ParseContext;
 use conjure_cp_essence_parser::util::node_is_expression;
 use conjure_cp_essence_parser::{
     diagnostics::source_map::SourceMap,
@@ -57,11 +58,12 @@ pub fn expand_expr_vec(tt: &TokenTree) -> Result<TokenStream> {
 fn mk_expr(node: Node, src: &str, root: &Node, tt: &TokenTree) -> Result<TokenStream> {
     let mut errors = Vec::new();
     let mut source_map = SourceMap::default();
-    match parse_expression(node, src, root, None, &mut errors, &mut source_map) {
+    let mut ctx = ParseContext::new(src, root, None, &mut errors, &mut source_map);
+    match parse_expression(&mut ctx, node) {
         Ok(Some(expr)) => Ok(expr.ctor_tokens()),
         Ok(None) => {
             // Recoverable error occurred - get the error message from the errors vector
-            let error_message = if let Some(err) = errors.first() {
+            let error_message = if let Some(err) = ctx.errors.first() {
                 format!("Recoverable parse error: {}", err)
             } else {
                 "Parse error: Unknown error occurred".to_string()
