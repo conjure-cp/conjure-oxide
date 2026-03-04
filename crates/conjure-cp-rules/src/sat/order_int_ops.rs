@@ -202,3 +202,54 @@ fn ineq_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
     Ok(Reduction::cnf(output, new_clauses, new_symbols))
 }
+
+/// Converts a - expression for a SATInt to a new SATInt
+///
+/// ```text
+/// -SATInt(a) ~> SATInt(b)
+///
+/// ```
+#[register_rule(("SAT_Order", 9100))]
+fn neg_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    let Expr::Neg(_, value) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let (binding, old_min, old_max) = validate_order_int_operands(vec![value.as_ref().clone()])?;
+    let [val_bits] = binding.as_slice() else {
+        return Err(RuleNotApplicable); // consider covered
+    };
+
+    let new_min = -old_max;
+    let new_max = -old_min;
+
+    let n = val_bits.len();
+    let mut out: Vec<Expr> = Vec::with_capacity(n);
+
+    let mut new_symbols = symbols.clone();
+    let mut new_clauses = vec![];
+
+    let ff = Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false)));
+    for i in 0..n {
+        let idx = n - i;
+        let src = if idx == n {
+            ff.clone()
+        } else {
+            val_bits[idx].clone()
+        };
+
+        let neg_bit = tseytin_not(src, &mut new_clauses, &mut new_symbols);
+        out.push(neg_bit);
+    }
+
+    Ok(Reduction::cnf(
+        Expr::SATInt(
+            Metadata::new(),
+            SATIntEncoding::Order,
+            Moo::new(into_matrix_expr!(out)),
+            (new_min, new_max),
+        ),
+        new_clauses,
+        new_symbols,
+    ))
+}
