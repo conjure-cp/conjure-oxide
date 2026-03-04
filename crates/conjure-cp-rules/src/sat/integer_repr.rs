@@ -89,7 +89,7 @@ pub fn validate_log_int_operands(
 ///  ...
 ///
 /// ```
-#[register_rule(("SAT_Direct", 9500))]
+#[register_rule(("SAT_Direct", 4800))]
 fn integer_decision_representation_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     // thing we are representing must be a reference
     let Expr::Atomic(_, Atom::Reference(name)) = expr else {
@@ -166,7 +166,7 @@ fn integer_decision_representation_direct(expr: &Expr, symbols: &SymbolTable) ->
     }
 }
 
-#[register_rule(("SAT_Order", 9500))]
+#[register_rule(("SAT_Order", 4800))]
 fn integer_decision_representation_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     // thing we are representing must be a reference
     let Expr::Atomic(_, Atom::Reference(name)) = expr else {
@@ -240,7 +240,7 @@ fn integer_decision_representation_order(expr: &Expr, symbols: &SymbolTable) -> 
 }
 
 /// Converts an integer decision variable to SATInt form (Log encoding)
-#[register_rule(("SAT_Log", 9500))]
+#[register_rule(("SAT_Log", 4800))]
 fn integer_decision_representation_log(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     // thing we are representing must be a reference
     let Expr::Atomic(_, Atom::Reference(name)) = expr else {
@@ -314,8 +314,8 @@ fn integer_decision_representation_log(expr: &Expr, symbols: &SymbolTable) -> Ap
 ///  SATInt([true,true,false,false,false,false,false,false;int(1..)])
 ///
 /// ```
-#[register_rule(("SAT_Log", 9500))]
-fn literal_cnf_int(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+#[register_rule(("SAT_Log", 4500))]
+fn literal_cnf_int_log(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let value = {
         if let Expr::Atomic(_, Atom::Literal(Literal::Int(v))) = expr {
             *v
