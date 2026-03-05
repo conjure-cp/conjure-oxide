@@ -264,7 +264,6 @@ pub fn read_solutions_json(
 ) -> Result<JsonValue, anyhow::Error> {
     let solver_name = match solver {
         SolverFamily::Sat(_) => "sat",
-        #[cfg(feature = "smt")]
         SolverFamily::Smt(..) => "smt",
         SolverFamily::Minion => "minion",
     };

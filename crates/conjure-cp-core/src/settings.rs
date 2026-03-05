@@ -6,7 +6,6 @@ use strum_macros::{Display as StrumDisplay, EnumIter};
 
 use crate::bug;
 
-#[cfg(feature = "smt")]
 use crate::solver::adaptors::smt::{IntTheory, MatrixTheory, TheoryConfig};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
@@ -222,7 +221,6 @@ impl FromStr for SatEncoding {
 pub enum SolverFamily {
     Minion,
     Sat(SatEncoding),
-    #[cfg(feature = "smt")]
     Smt(TheoryConfig),
 }
 
@@ -259,11 +257,9 @@ impl FromStr for SolverFamily {
             "sat" | "sat-log" => Ok(SolverFamily::Sat(SatEncoding::Log)),
             "sat-direct" => Ok(SolverFamily::Sat(SatEncoding::Direct)),
             "sat-order" => Ok(SolverFamily::Sat(SatEncoding::Order)),
-            #[cfg(feature = "smt")]
             "smt" => Ok(SolverFamily::Smt(TheoryConfig::default())),
             other => {
                 // allow forms like `smt-bv-atomic` or `smt-lia-arrays`
-                #[cfg(feature = "smt")]
                 if other.starts_with("smt-") {
                     let parts = other.split('-').skip(1);
                     let mut ints = IntTheory::default();
@@ -305,7 +301,6 @@ impl SolverFamily {
         match self {
             SolverFamily::Minion => "minion",
             SolverFamily::Sat(_) => "sat",
-            #[cfg(feature = "smt")]
             SolverFamily::Smt(_) => "smt",
         }
     }
