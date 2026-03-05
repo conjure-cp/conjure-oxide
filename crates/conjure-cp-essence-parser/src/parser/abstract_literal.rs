@@ -3,7 +3,7 @@ use crate::expression::parse_expression;
 use crate::field;
 use crate::parser::ParseContext;
 use crate::parser::domain::parse_domain;
-use crate::util::named_children;
+use crate::util::{named_children, TypecheckingContext};
 use conjure_cp_core::ast::{AbstractLiteral, DomainPtr, Expression};
 use conjure_cp_core::{domain_int, range};
 use tree_sitter::Node;
@@ -93,6 +93,7 @@ fn parse_set_literal(
 ) -> Result<Option<AbstractLiteral<Expression>>, FatalParseError> {
     let mut elements = Vec::new();
     for child in named_children(node) {
+        ctx.typechecking_context = TypecheckingContext::Unknown;
         let Some(expr) = parse_expression(ctx, child)? else {
             return Ok(None);
         };
