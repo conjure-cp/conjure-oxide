@@ -1,5 +1,5 @@
 use crate::errors::{FatalParseError, RecoverableParseError};
-use crate::parser::atom::{parse_atom, ExpressionContext};
+use crate::parser::atom::{ExpressionContext, parse_atom};
 use crate::parser::comprehension::parse_quantifier_or_aggregate_expr;
 use crate::{field, named_child};
 use conjure_cp_core::ast::{Expression, Metadata, Moo, SymbolTablePtr};
@@ -11,9 +11,16 @@ pub fn parse_expression(
     source_code: &str,
     root: &Node,
     symbols_ptr: Option<SymbolTablePtr>,
-    errors: &mut Vec<RecoverableParseError>
+    errors: &mut Vec<RecoverableParseError>,
 ) -> Result<Option<Expression>, FatalParseError> {
-    return parse_expression_with_context(node, source_code, root, symbols_ptr, errors, ExpressionContext::Unknown)
+    return parse_expression_with_context(
+        node,
+        source_code,
+        root,
+        symbols_ptr,
+        errors,
+        ExpressionContext::Unknown,
+    );
 }
 
 /// Parse an Essence expression into its Conjure AST representation.
@@ -23,7 +30,7 @@ pub fn parse_expression_with_context(
     root: &Node,
     symbols_ptr: Option<SymbolTablePtr>,
     errors: &mut Vec<RecoverableParseError>,
-    context: ExpressionContext
+    context: ExpressionContext,
 ) -> Result<Option<Expression>, FatalParseError> {
     match node.kind() {
         "atom" => parse_atom(&node, source_code, root, symbols_ptr, errors, context),
@@ -31,7 +38,14 @@ pub fn parse_expression_with_context(
         "arithmetic_expr" => {
             parse_arithmetic_expression(&node, source_code, root, symbols_ptr, errors)
         }
-        "comparison_expr" => parse_binary_expression(&node, source_code, root, symbols_ptr, errors, ExpressionContext::Unknown),
+        "comparison_expr" => parse_binary_expression(
+            &node,
+            source_code,
+            root,
+            symbols_ptr,
+            errors,
+            ExpressionContext::Unknown,
+        ),
         "dominance_relation" => {
             parse_dominance_relation(&node, source_code, root, symbols_ptr, errors)
         }
@@ -85,16 +99,33 @@ fn parse_arithmetic_expression(
 ) -> Result<Option<Expression>, FatalParseError> {
     let inner = named_child!(node);
     match inner.kind() {
-        "atom" => parse_atom(&inner, source_code, root, symbols_ptr, errors, ExpressionContext::Arithmetic),
+        "atom" => parse_atom(
+            &inner,
+            source_code,
+            root,
+            symbols_ptr,
+            errors,
+            ExpressionContext::Arithmetic,
+        ),
         "negative_expr" | "abs_value" | "sub_arith_expr" | "toInt_expr" => {
             parse_unary_expression(&inner, source_code, root, symbols_ptr, errors)
         }
-        "exponent" | "product_expr" | "sum_expr" => {
-            parse_binary_expression(&inner, source_code, root, symbols_ptr, errors, ExpressionContext::Arithmetic)
-        }
-        "list_combining_expr_arith" => {
-            parse_list_combining_expression(&inner, source_code, root, symbols_ptr, errors, ExpressionContext::Arithmetic)
-        }
+        "exponent" | "product_expr" | "sum_expr" => parse_binary_expression(
+            &inner,
+            source_code,
+            root,
+            symbols_ptr,
+            errors,
+            ExpressionContext::Arithmetic,
+        ),
+        "list_combining_expr_arith" => parse_list_combining_expression(
+            &inner,
+            source_code,
+            root,
+            symbols_ptr,
+            errors,
+            ExpressionContext::Arithmetic,
+        ),
         "aggregate_expr" => {
             parse_quantifier_or_aggregate_expr(&inner, source_code, root, symbols_ptr, errors)
         }
@@ -114,16 +145,35 @@ fn parse_boolean_expression(
 ) -> Result<Option<Expression>, FatalParseError> {
     let inner = named_child!(node);
     match inner.kind() {
-        "atom" => parse_atom(&inner, source_code, root, symbols_ptr, errors, ExpressionContext::Boolean),
+        "atom" => parse_atom(
+            &inner,
+            source_code,
+            root,
+            symbols_ptr,
+            errors,
+            ExpressionContext::Boolean,
+        ),
         "not_expr" | "sub_bool_expr" => {
             parse_unary_expression(&inner, source_code, root, symbols_ptr, errors)
         }
         "and_expr" | "or_expr" | "implication" | "iff_expr" | "set_operation_bool" => {
-            parse_binary_expression(&inner, source_code, root, symbols_ptr, errors, ExpressionContext::Boolean)
+            parse_binary_expression(
+                &inner,
+                source_code,
+                root,
+                symbols_ptr,
+                errors,
+                ExpressionContext::Boolean,
+            )
         }
-        "list_combining_expr_bool" => {
-            parse_list_combining_expression(&inner, source_code, root, symbols_ptr, errors, ExpressionContext::Boolean)
-        }
+        "list_combining_expr_bool" => parse_list_combining_expression(
+            &inner,
+            source_code,
+            root,
+            symbols_ptr,
+            errors,
+            ExpressionContext::Boolean,
+        ),
         "quantifier_expr" => {
             parse_quantifier_or_aggregate_expr(&inner, source_code, root, symbols_ptr, errors)
         }
@@ -140,12 +190,19 @@ fn parse_list_combining_expression(
     root: &Node,
     symbols_ptr: Option<SymbolTablePtr>,
     errors: &mut Vec<RecoverableParseError>,
-    context: ExpressionContext
+    context: ExpressionContext,
 ) -> Result<Option<Expression>, FatalParseError> {
     let operator_node = field!(node, "operator");
     let operator_str = &source_code[operator_node.start_byte()..operator_node.end_byte()];
 
-    let Some(inner) = parse_atom(&field!(node, "arg"), source_code, root, symbols_ptr, errors, context)?
+    let Some(inner) = parse_atom(
+        &field!(node, "arg"),
+        source_code,
+        root,
+        symbols_ptr,
+        errors,
+        context,
+    )?
     else {
         return Ok(None);
     };
@@ -201,10 +258,18 @@ pub fn parse_binary_expression(
     root: &Node,
     symbols_ptr: Option<SymbolTablePtr>,
     errors: &mut Vec<RecoverableParseError>,
-    context: ExpressionContext
+    context: ExpressionContext,
 ) -> Result<Option<Expression>, FatalParseError> {
-    let mut parse_subexpr =
-        |expr: Node| parse_expression_with_context(expr, source_code, root, symbols_ptr.clone(), errors, context);
+    let mut parse_subexpr = |expr: Node| {
+        parse_expression_with_context(
+            expr,
+            source_code,
+            root,
+            symbols_ptr.clone(),
+            errors,
+            context,
+        )
+    };
     let Some(left) = parse_subexpr(field!(node, "left"))? else {
         return Ok(None);
     };

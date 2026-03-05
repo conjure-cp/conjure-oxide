@@ -1,8 +1,8 @@
 use crate::errors::{FatalParseError, RecoverableParseError};
-use crate::expression::{parse_expression_with_context};
+use crate::expression::parse_expression_with_context;
 use crate::field;
-use crate::parser::domain::parse_domain;
 use crate::parser::atom::ExpressionContext;
+use crate::parser::domain::parse_domain;
 use crate::util::named_children;
 use conjure_cp_core::ast::{AbstractLiteral, DomainPtr, Expression, SymbolTablePtr};
 use conjure_cp_core::{domain_int, range};
@@ -61,11 +61,18 @@ fn parse_tuple(
     source_code: &str,
     symbols_ptr: Option<SymbolTablePtr>,
     errors: &mut Vec<RecoverableParseError>,
-    context: ExpressionContext
+    context: ExpressionContext,
 ) -> Result<Option<AbstractLiteral<Expression>>, FatalParseError> {
     let mut elements = Vec::new();
     for child in named_children(node) {
-        let Some(expr) = parse_expression_with_context(child, source_code, node, symbols_ptr.clone(), errors, context)?
+        let Some(expr) = parse_expression_with_context(
+            child,
+            source_code,
+            node,
+            symbols_ptr.clone(),
+            errors,
+            context,
+        )?
         else {
             return Ok(None);
         };
@@ -89,7 +96,14 @@ fn parse_matrix(
             || child.kind() == "comparison_expr"
             || child.kind() == "atom"
         {
-            let Some(expr) = parse_expression_with_context(child, source_code, node, symbols_ptr.clone(), errors, context)?
+            let Some(expr) = parse_expression_with_context(
+                child,
+                source_code,
+                node,
+                symbols_ptr.clone(),
+                errors,
+                context,
+            )?
             else {
                 return Ok(None);
             };
@@ -120,7 +134,14 @@ fn parse_set_literal(
 ) -> Result<Option<AbstractLiteral<Expression>>, FatalParseError> {
     let mut elements = Vec::new();
     for child in named_children(node) {
-        let Some(expr) = parse_expression_with_context(child, source_code, node, symbols_ptr.clone(), errors, context)?
+        let Some(expr) = parse_expression_with_context(
+            child,
+            source_code,
+            node,
+            symbols_ptr.clone(),
+            errors,
+            context,
+        )?
         else {
             return Ok(None);
         };
