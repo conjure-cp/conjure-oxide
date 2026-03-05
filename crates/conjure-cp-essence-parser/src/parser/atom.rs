@@ -7,7 +7,9 @@ use crate::parser::abstract_literal::parse_abstract;
 use crate::parser::comprehension::parse_comprehension;
 use crate::util::{TypecheckingContext, named_children};
 use crate::{field, named_child};
-use conjure_cp_core::ast::{Atom, Expression, Literal, Metadata, Moo, Name};
+use conjure_cp_core::ast::{
+    Atom, DeclarationPtr, Expression, GroundDomain, Literal, Metadata, Moo, Name,
+};
 use tree_sitter::Node;
 use ustr::Ustr;
 
@@ -161,7 +163,12 @@ fn parse_variable(ctx: &mut ParseContext, node: &Node) -> Result<Option<Atom>, F
     let raw_name = &ctx.source_code[node.start_byte()..node.end_byte()];
     let name = Name::user(raw_name.trim());
     if let Some(symbols) = &ctx.symbols {
-        if let Some(decl) = symbols.read().lookup(&name) {
+        let lookup_result = {
+            let symbols_read = symbols.read();
+            symbols_read.lookup(&name).clone()
+        };
+
+        if let Some(decl) = lookup_result {
             let hover = HoverInfo {
                 description: format!("Variable: {name}"),
                 kind: Some(SymbolKind::Decimal),
@@ -169,6 +176,13 @@ fn parse_variable(ctx: &mut ParseContext, node: &Node) -> Result<Option<Atom>, F
                 decl_span: None,
             };
             span_with_hover(node, ctx.source_code, ctx.source_map, hover);
+
+            // Type check the variable against the expected context
+            if let Some(error_msg) = typecheck_variable(&decl, raw_name, ctx.typechecking_context) {
+                ctx.record_error(RecoverableParseError::new(error_msg, Some(node.range())));
+                return Ok(None);
+            }
+
             Ok(Some(Atom::Reference(conjure_cp_core::ast::Reference::new(
                 decl,
             ))))
@@ -184,6 +198,56 @@ fn parse_variable(ctx: &mut ParseContext, node: &Node) -> Result<Option<Atom>, F
             format!("Symbol table missing when parsing variable '{raw_name}'"),
             Some(node.range()),
         ))
+    }
+}
+
+/// Type check a variable declaration against the expected expression context.
+/// Returns an error message if the variable type doesn't match the context.
+fn typecheck_variable(
+    decl: &DeclarationPtr,
+    var_name: &str,
+    context: TypecheckingContext,
+) -> Option<String> {
+    // Only type check when context is known
+    if context == TypecheckingContext::Unknown {
+        return None;
+    }
+
+    // Get the variable's domain and resolve it
+    let domain = decl.domain()?;
+    let ground_domain = domain.resolve()?;
+
+    match (ground_domain.as_ref(), context) {
+        (GroundDomain::Int(_), TypecheckingContext::Boolean) => Some(format!(
+            "Integer variable '{}' used in boolean context",
+            var_name
+        )),
+        (GroundDomain::Bool, TypecheckingContext::Arithmetic) => Some(format!(
+            "Boolean variable '{}' used in arithmetic context",
+            var_name
+        )),
+        (GroundDomain::Matrix(_, _), TypecheckingContext::Boolean)
+        | (GroundDomain::Matrix(_, _), TypecheckingContext::Arithmetic) => Some(format!(
+            "Matrix variable '{}' cannot be used directly in this context",
+            var_name
+        )),
+        (GroundDomain::Set(_, _), TypecheckingContext::Boolean)
+        | (GroundDomain::Set(_, _), TypecheckingContext::Arithmetic) => Some(format!(
+            "Set variable '{}' cannot be used directly in this context",
+            var_name
+        )),
+        (GroundDomain::Tuple(_), TypecheckingContext::Boolean)
+        | (GroundDomain::Tuple(_), TypecheckingContext::Arithmetic) => Some(format!(
+            "Tuple variable '{}' cannot be used directly in this context",
+            var_name
+        )),
+        (GroundDomain::Record(_), TypecheckingContext::Boolean)
+        | (GroundDomain::Record(_), TypecheckingContext::Arithmetic) => Some(format!(
+            "Record variable '{}' cannot be used directly in this context",
+            var_name
+        )),
+        // Everything else is OK
+        _ => None,
     }
 }
 
