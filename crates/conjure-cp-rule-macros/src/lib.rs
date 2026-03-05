@@ -162,7 +162,7 @@ pub fn register_rule_set(args: TokenStream) -> TokenStream {
 
     let applies_to_family = match applies_fn {
         // Does not apply by default, e.g. only used as a dependency
-        None => quote! { |_: &::conjure_cp::solver::SolverFamily| false },
+        None => quote! { |_: &::conjure_cp::settings::SolverFamily| false },
         Some(func) => quote! { #func },
     };
 

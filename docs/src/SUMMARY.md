@@ -20,6 +20,9 @@
 - [Contributor's Guide](./developers_guide/contributors_guide/index.md)
   - [How we work](./developers_guide/contributors_guide/how_we_work.md)
   - [Setting up your development environment](./developers_guide/contributors_guide/set-dev-env.md)
+  - [Running and writing integration tests]()
+  - [What we didn't do]()
+  - [Onboarding](./developers_guide/contributors_guide/onboarding.md)
   - [Git Flow](./developers_guide/contributors_guide/Git-Flow.md)
   - [Writing Documentation Guides](./developers_guide/contributors_guide/creating_documentation_guides.md)
   - [Writing Documentation in Code](./developers_guide/contributors_guide/creating_documentation_code.md)
@@ -65,6 +68,12 @@
 
 <!-- TODO: will be moved -- likely the content of these will end off here -->
 - [Useful Links](./documentation/links.md)
+- [Testing](./documentation/testing/testing.md)
+  - [Roundtrip Testing](./documentation/testing/roundtrip/roundtrip_testing.md)
+- [Types]()
+  - [Creating Types Guide](./documentation/types/creating_types_guide.md)
+  - [Functions](./documentation/types/functions.md)
+  - [Multisets](./documentation/types/multisets.md)
 - [Essence Parser](./documentation/essence_parser.md)
 <!-- TODO: add the error detection documentations -->
 - [Error Detection](./documentation/error_detection/error_classification.md)

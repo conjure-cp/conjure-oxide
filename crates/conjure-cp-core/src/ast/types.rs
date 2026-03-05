@@ -32,21 +32,21 @@ pub trait Typeable {
 impl Display for ReturnType {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            ReturnType::Bool => write!(f, "Bool"),
-            ReturnType::Int => write!(f, "Int"),
-            ReturnType::Matrix(inner) => write!(f, "Matrix of {inner}"),
-            ReturnType::Set(inner) => write!(f, "Set of {inner}"),
-            ReturnType::MSet(inner) => write!(f, "Multiset of {inner}"),
+            ReturnType::Bool => write!(f, "bool"),
+            ReturnType::Int => write!(f, "int"),
+            ReturnType::Matrix(inner) => write!(f, "matrix of {inner}"),
+            ReturnType::Set(inner) => write!(f, "set of {inner}"),
+            ReturnType::MSet(inner) => write!(f, "mset of {inner}"),
             ReturnType::Tuple(types) => {
                 let inners = types.iter().map(|t| format!("{}", t)).join(", ");
-                write!(f, "({inners})")
+                write!(f, "tuple of ({inners})")
             }
             ReturnType::Record(types) => {
                 let inners = types.iter().map(|t| format!("{}", t)).join(", ");
-                write!(f, "Record {{ {inners} }}")
+                write!(f, "record of ({inners})")
             }
             ReturnType::Function(ty1, ty2) => {
-                write!(f, "Function ({ty1} -> {ty2})")
+                write!(f, "function ({ty1} --> {ty2})")
             }
             ReturnType::Unknown => write!(f, "?"),
         }

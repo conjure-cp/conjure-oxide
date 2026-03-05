@@ -8,79 +8,65 @@ use conjure_cp::rule_engine::rewrite_naive;
 use conjure_cp::solver::Solver;
 use conjure_cp::solver::adaptors::*;
 use conjure_cp_cli::utils::testing::{normalize_solutions_for_comparison, read_human_rule_trace};
-use glob::glob;
 use itertools::Itertools;
 use std::collections::BTreeMap;
 use std::env;
 use std::error::Error;
 use std::fs;
 use std::fs::File;
-use tracing::{Level, span};
-use tracing_subscriber::{
-    Layer, Registry, filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt,
-};
+use tracing_subscriber::{Layer, filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt};
 use tree_morph::{helpers::select_panic, prelude::*};
 
 #[cfg(feature = "smt")]
 use conjure_cp::solver::adaptors::smt::TheoryConfig;
 
-use uniplate::Biplate;
-
-use std::path::Path;
 use std::sync::Arc;
-use std::sync::Mutex;
 use std::sync::RwLock;
 
-use conjure_cp::ast::Atom;
-use conjure_cp::ast::{Expression, Literal, Name};
+use conjure_cp::ast::{Literal, Name};
 use conjure_cp::context::Context;
 use conjure_cp::parse::tree_sitter::parse_essence_file;
 use conjure_cp::rule_engine::resolve_rule_sets;
-use conjure_cp::solver::SolverFamily;
+use conjure_cp::settings::{
+    Parser, QuantifiedExpander, Rewriter, SolverFamily, set_comprehension_expander,
+    set_current_parser, set_current_rewriter, set_current_solver_family,
+};
 use conjure_cp_cli::utils::conjure::solutions_to_json;
 use conjure_cp_cli::utils::conjure::{get_solutions, get_solutions_from_conjure};
 use conjure_cp_cli::utils::testing::save_stats_json;
-use conjure_cp_cli::utils::testing::{
-    REWRITE_SERIALISED_JSON_MAX_LINES, read_model_json, read_model_json_prefix,
-    read_solutions_json, save_model_json, save_solutions_json,
-};
+use conjure_cp_cli::utils::testing::{read_solutions_json, save_solutions_json};
 #[allow(clippy::single_component_path_imports, unused_imports)]
 use conjure_cp_rules;
 use pretty_assertions::assert_eq;
 use tests_integration::TestConfig;
 
-fn main() {
-    let _guard = create_scoped_subscriber("./logs", "test_log", "none_solver");
-
-    // creating a span and log a message
-    let test_span = span!(Level::TRACE, "test_span");
-    let _enter: span::Entered<'_> = test_span.enter();
-
-    for entry in glob("conjure_cp_cli/tests/integration/*").expect("Failed to read glob pattern") {
-        match entry {
-            Ok(path) => println!("File: {path:?}"),
-            Err(e) => println!("Error: {e:?}"),
-        }
-    }
-
-    let file_path = Path::new("conjure_cp_cli/tests/integration/*"); // using relative path
-
-    let base_name = file_path.file_stem().and_then(|stem| stem.to_str());
-
-    match base_name {
-        Some(name) => println!("Base name: {name}"),
-        None => println!("Could not extract the base name"),
-    }
+#[derive(Clone, Copy, Debug)]
+struct RunCase<'a> {
+    parser: Parser,
+    rewriter: Rewriter,
+    comprehension_expander: QuantifiedExpander,
+    solver: SolverFamily,
+    case_name: &'a str,
 }
 
-// run tests in sequence not parallel when verbose logging, to ensure the logs are ordered
-// correctly
-static GUARD: Mutex<()> = Mutex::new(());
+fn run_case_label(
+    path: &str,
+    essence_base: &str,
+    extension: &str,
+    run_case: RunCase<'_>,
+) -> String {
+    format!(
+        "test_dir={path}, model={essence_base}.{extension}, parser={}, rewriter={}, comprehension_expander={}, solver={}",
+        run_case.parser, run_case.rewriter, run_case.comprehension_expander, run_case.solver
+    )
+}
 
-// wrapper to conditionally enforce sequential execution
 fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(), Box<dyn Error>> {
-    let verbose = env::var("VERBOSE").unwrap_or("false".to_string()) == "true";
     let accept = env::var("ACCEPT").unwrap_or("false".to_string()) == "true";
+
+    if accept {
+        clean_test_dir_for_accept(path, essence_base, extension)?;
+    }
 
     let file_config: TestConfig =
         if let Ok(config_contents) = fs::read_to_string(format!("{path}/config.toml")) {
@@ -89,78 +75,90 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
             Default::default()
         };
 
-    let config = file_config.merge_env();
+    let config = file_config;
 
-    if config.solve_with_minion {
-        solver_specific_integration_test(
-            path,
-            essence_base,
-            extension,
-            &config,
-            SolverFamily::Minion,
-            verbose,
-            accept,
-        )?;
-    }
+    let validate_with_conjure = config.validate_with_conjure;
 
-    if config.solve_with_sat {
-        solver_specific_integration_test(
-            path,
-            essence_base,
-            extension,
-            &config,
-            SolverFamily::Sat,
-            verbose,
-            accept,
-        )?;
-    }
+    let parsers = config
+        .configured_parsers()
+        .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?;
+    let rewriters = config
+        .configured_rewriters()
+        .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?;
+    let comprehension_expanders = config
+        .configured_comprehension_expanders()
+        .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?;
+    let solvers = config
+        .configured_solvers()
+        .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?;
+    // Conjure output depends only on the input model, so cache it once per test case.
+    let model_path = format!("{path}/{essence_base}.{extension}");
+    let conjure_solutions = if accept && validate_with_conjure {
+        eprintln!("[integration] loading Conjure reference solutions for {model_path}");
+        Some(Arc::new(
+            get_solutions_from_conjure(&model_path, Default::default()).map_err(|err| {
+                std::io::Error::other(format!(
+                    "failed to fetch Conjure reference solutions for {model_path}: {err}"
+                ))
+            })?,
+        ))
+    } else {
+        if accept && !validate_with_conjure {
+            eprintln!("[integration] skipping Conjure validation for {model_path}");
+        }
+        None
+    };
 
-    if config.solve_with_smt {
-        solver_specific_integration_test(
-            path,
-            essence_base,
-            extension,
-            &config,
-            SolverFamily::Smt(TheoryConfig::default()),
-            verbose,
-            accept,
-        )?;
+    for parser in parsers {
+        for rewriter in rewriters.clone() {
+            for comprehension_expander in comprehension_expanders.clone() {
+                for solver in solvers.clone() {
+                    let case_name = run_case_name(parser, rewriter, comprehension_expander);
+                    let run_case = RunCase {
+                        parser,
+                        rewriter,
+                        comprehension_expander,
+                        solver,
+                        case_name: case_name.as_str(),
+                    };
+                    let file = File::create(format!(
+                        "{path}/{}-{}-generated-rule-trace.txt",
+                        run_case.case_name,
+                        run_case.solver.as_str()
+                    ))?;
+                    let subscriber = Arc::new(
+                        tracing_subscriber::registry().with(
+                            fmt::layer()
+                                .with_writer(file)
+                                .with_level(false)
+                                .without_time()
+                                .with_target(false)
+                                .with_filter(EnvFilter::new("rule_engine_human=trace"))
+                                .with_filter(FilterFn::new(|meta| {
+                                    meta.target() == "rule_engine_human"
+                                })),
+                        ),
+                    )
+                        as Arc<dyn tracing::Subscriber + Send + Sync>;
+                    let run_label = run_case_label(path, essence_base, extension, run_case);
+                    eprintln!("[integration] running {run_label}");
+                    tracing::subscriber::with_default(subscriber, || {
+                        integration_test_inner(
+                            path,
+                            essence_base,
+                            extension,
+                            run_case,
+                            conjure_solutions.clone(),
+                            accept,
+                        )
+                    })
+                    .map_err(|err| std::io::Error::other(format!("{run_label}: {err}")))?;
+                }
+            }
+        }
     }
 
     Ok(())
-}
-
-fn solver_specific_integration_test(
-    path: &str,
-    essence_base: &str,
-    extension: &str,
-    config: &TestConfig,
-    solver: SolverFamily,
-    verbose: bool,
-    accept: bool,
-) -> Result<(), Box<dyn Error>> {
-    let solver_name = solver.as_str();
-
-    let subscriber = create_scoped_subscriber(path, essence_base, &solver_name);
-
-    // run tests in sequence not parallel when verbose logging, to ensure the logs are ordered
-    // correctly
-
-    // also with ACCEPT=true, as the conjure checking seems to get confused when ran too much at
-    // once.
-    if verbose || accept {
-        let _guard = GUARD.lock().unwrap_or_else(|e| e.into_inner());
-
-        // set the subscriber as default
-        tracing::subscriber::with_default(subscriber, || {
-            integration_test_inner(path, essence_base, extension, config, solver)
-        })
-    } else {
-        let subscriber = create_scoped_subscriber(path, essence_base, &solver_name);
-        tracing::subscriber::with_default(subscriber, || {
-            integration_test_inner(path, essence_base, extension, config, solver)
-        })
-    }
 }
 
 /// Runs an integration test for a given Conjure model by:
@@ -172,16 +170,15 @@ fn solver_specific_integration_test(
 /// This function operates in multiple stages:
 ///
 /// - **Parsing Stage**
-///   - **Stage 1a (Default)**: Reads the Essence model file and verifies that it parses correctly using the native parser.
-///   - **Stage 1b (Optional)**: Reads the Essence model file and verifies that it parses correctly using the legacy parser.
+///   - **Stage 1a (Default)**: Reads the Essence model file and verifies that it parses correctly using `parser = "tree-sitter"`.
+///   - **Stage 1b (Optional)**: Reads the Essence model file and verifies that it parses correctly using `parser = "via-conjure"`.
 ///
 /// - **Rewrite Stage**
-///   - **Stage 2a (Default)**: Applies a set of rules to the parsed model and validates the result.
-///   - **Stage 2b (Optional)**: Runs additional validation checks on the rewritten model if enabled.
+///   - **Stage 2a**: Applies a set of rules to the parsed model and validates the result.
 ///
 /// - **Solution Stage**
 ///   - **Stage 3a (Default)**: Uses Minion to solve the model and save the solutions.
-///   - **Stage 3b (Optional)**: Compares the Minion solutions against Conjure-generated solutions if enabled.
+///   - **Stage 3b (ACCEPT only)**: Compares solutions against Conjure-generated solutions.
 ///
 /// - **Rule Trace Validation Stage**
 ///   - **Stage 4a (Default)**: Checks that the generated rules match expected traces.
@@ -200,70 +197,53 @@ fn integration_test_inner(
     path: &str,
     essence_base: &str,
     extension: &str,
-    config: &TestConfig,
-    solver_fam: SolverFamily,
+    run_case: RunCase<'_>,
+    conjure_solutions: Option<Arc<Vec<BTreeMap<Name, Literal>>>>,
+    accept: bool,
 ) -> Result<(), Box<dyn Error>> {
-    let context: Arc<RwLock<Context<'static>>> = Default::default();
-    let accept = env::var("ACCEPT").unwrap_or("false".to_string()) == "true";
-    let verbose = env::var("VERBOSE").unwrap_or("false".to_string()) == "true";
+    let parser = run_case.parser;
+    let rewriter = run_case.rewriter;
+    let comprehension_expander = run_case.comprehension_expander;
+    let solver_fam = run_case.solver;
+    let case_name = run_case.case_name;
 
-    if verbose {
-        println!("Running integration test for {path}/{essence_base}, ACCEPT={accept}");
-    }
+    let context: Arc<RwLock<Context<'static>>> = Default::default();
+
+    set_current_parser(parser);
+    set_current_rewriter(rewriter);
+    set_comprehension_expander(comprehension_expander);
+    set_current_solver_family(solver_fam);
 
     // File path
     let file_path = format!("{path}/{essence_base}.{extension}");
 
-    // Stage 1a: Parse the model using the selected parser
-    let parsed_model = if config.enable_native_parser {
-        {
+    // Stage 1a/1b: Parse the model using the selected parser.
+    let parsed_model = match parser {
+        Parser::TreeSitter => {
             let mut ctx = context.as_ref().write().unwrap();
             ctx.file_name = Some(format!("{path}/{essence_base}.{extension}"));
+            parse_essence_file_native(&file_path, context.clone())?
         }
-        let model = parse_essence_file_native(&file_path, context.clone())?;
-        if verbose {
-            println!("Parsed model (native): {model:#?}");
-        }
-        save_model_json(&model, path, essence_base, "parse", None)?;
-
-        model
-    // Stage 1b: Parse the model using the legacy parser
-    } else {
-        let model = parse_essence_file(&file_path, context.clone())?;
-        if verbose {
-            println!("Parsed model (legacy): {model:#?}");
-        }
-        save_model_json(&model, path, essence_base, "parse", None)?;
-        model
+        Parser::ViaConjure => parse_essence_file(&file_path, context.clone())?,
     };
-    // // Stage 2a: Rewrite the model using the rule engine (run unless explicitly disabled)
+    // Stage 2a: Rewrite the model using the rule engine
+    let mut extra_rules = vec![];
 
-    let rewritten_model = if config.apply_rewrite_rules {
-        // rule set selection based on solver
+    if let SolverFamily::Sat(sat_encoding) = solver_fam {
+        extra_rules.push(sat_encoding.as_rule_set());
+    }
 
-        let mut extra_rules = vec![];
+    let mut rules_to_load = DEFAULT_RULE_SETS.to_vec();
+    rules_to_load.extend(extra_rules);
 
-        // TODO (ss504): figure out why this is only here for sat
-        if solver_fam == SolverFamily::Sat {
-            match config.sat_encoding.as_str() {
-                "log" => extra_rules.push("SAT_Log"),
-                "direct" => extra_rules.push("SAT_Direct"),
-                "order" => extra_rules.push("SAT_Order"),
-                _ => panic!("Unknown SAT encoding: {}", config.sat_encoding),
-            }
-        }
+    let rule_sets = resolve_rule_sets(solver_fam, &rules_to_load)?;
 
-        let mut rules_to_load = DEFAULT_RULE_SETS.to_vec();
-        rules_to_load.extend(extra_rules);
+    let mut model = parsed_model;
 
-        let rule_sets = resolve_rule_sets(solver_fam, &rules_to_load)?;
-
-        let mut model = parsed_model;
-
-        let rewritten = if config.enable_naive_impl {
-            rewrite_naive(&model, &rule_sets, false, false)?
-        } else if config.enable_morph_impl {
-            let submodel = model.as_submodel_mut();
+    let rewritten_model = match rewriter {
+        Rewriter::Naive => rewrite_naive(&model, &rule_sets, false)?,
+        Rewriter::Morph => {
+            let submodel = &mut model;
             let rules_grouped = get_rules_grouped(&rule_sets)
                 .unwrap_or_else(|_| bug!("get_rule_priorities() failed!"))
                 .into_iter()
@@ -280,74 +260,31 @@ fn integration_test_inner(
             *submodel.symbols_mut() = symbol_table;
             submodel.replace_root(expr);
             model.clone()
-        } else {
-            panic!("No rewriter implementation specified")
-        };
-        if verbose {
-            println!("Rewritten model: {rewritten:#?}");
         }
-
-        save_model_json(&rewritten, path, essence_base, "rewrite", Some(solver_fam))?;
-        Some(rewritten)
-    } else {
-        None
     };
-
-    // Stage 2b: Check model properties (extra_asserts) (Verify additional model properties)
-    // (e.g., ensure vector operators are evaluated). (only if explicitly enabled)
-    if config.enable_extra_validation {
-        for extra_assert in config.extra_rewriter_asserts.clone() {
-            match extra_assert.as_str() {
-                "vector_operators_have_partially_evaluated" => {
-                    assert_vector_operators_have_partially_evaluated(
-                        rewritten_model.as_ref().expect("Rewritten model required"),
-                    );
-                }
-                x => println!("Unrecognised extra assert: {x}"),
-            };
-        }
-    }
-
-    let solver_input_file = env::var("OXIDE_TEST_SAVE_INPUT_FILE").ok().map(|_| {
-        let name = format!("{essence_base}.generated-input.txt");
-        Path::new(path).join(Path::new(&name))
-    });
+    let solver_input_file = None;
 
     let solver = match solver_fam {
         SolverFamily::Minion => Solver::new(Minion::default()),
-        SolverFamily::Sat => Solver::new(Sat::default()),
+        SolverFamily::Sat(_) => Solver::new(Sat::default()),
         #[cfg(feature = "smt")]
         SolverFamily::Smt(_) => Solver::new(Smt::default()),
     };
 
     let solutions = {
-        let name = solver.get_name();
-
-        let solved = get_solutions(
-            solver,
-            rewritten_model
-                .as_ref()
-                .expect("Rewritten model must be present in 2a")
-                .clone(),
-            0,
-            &solver_input_file,
-        )?;
-        let solutions_json = save_solutions_json(&solved, path, essence_base, solver_fam)?;
-        if verbose {
-            println!("{name} solutions: {solutions_json:#?}");
-        }
+        let solved = get_solutions(solver, rewritten_model, 0, &solver_input_file)?;
+        save_solutions_json(&solved, path, case_name, solver_fam)?;
         solved
     };
 
-    // Stage 3b: Check solutions against Conjure (only if explicitly enabled)
-    if config.compare_solver_solutions && config.num_solvers_enabled() > 0 {
-        let conjure_solutions: Vec<BTreeMap<Name, Literal>> = get_solutions_from_conjure(
-            &format!("{path}/{essence_base}.{extension}"),
-            Arc::clone(&context),
-        )?;
+    // Stage 3b: Check solutions against Conjure when ACCEPT=true and validation is enabled.
+    if accept && conjure_solutions.is_some() {
+        let conjure_solutions = conjure_solutions
+            .as_deref()
+            .expect("conjure solutions should be present when Conjure validation is enabled");
 
         let username_solutions = normalize_solutions_for_comparison(&solutions);
-        let conjure_solutions = normalize_solutions_for_comparison(&conjure_solutions);
+        let conjure_solutions = normalize_solutions_for_comparison(conjure_solutions);
 
         let mut conjure_solutions_json = solutions_to_json(&conjure_solutions);
         let mut username_solutions_json = solutions_to_json(&username_solutions);
@@ -363,86 +300,37 @@ fn integration_test_inner(
 
     // When ACCEPT=true, copy all generated files to expected
     if accept {
-        copy_generated_to_expected(path, essence_base, "parse", "serialised.json", None)?;
-
-        if config.apply_rewrite_rules {
-            copy_generated_to_expected(
-                path,
-                essence_base,
-                "rewrite",
-                "serialised.json",
-                Some(solver_fam),
-            )?;
-        }
-
         // Always overwrite these ones. Unlike the rest, we don't need to selectively do these
         // based on the test results, so they don't get done later.
 
-        let solver_name = match solver_fam {
-            SolverFamily::Minion => "minion",
-            SolverFamily::Sat => "sat",
-            SolverFamily::Smt(_) => "smt",
-        };
+        copy_generated_to_expected(path, case_name, "solutions", "json", Some(solver_fam))?;
 
-        copy_generated_to_expected(
-            path,
-            essence_base,
-            solver_name,
-            "solutions.json",
-            Some(solver_fam),
-        )?;
-
-        if config.validate_rule_traces {
-            copy_human_trace_generated_to_expected(path, essence_base, solver_fam)?;
-        }
-    }
-
-    // Check Stage 1: Compare parsed model with expected
-    let expected_model = read_model_json(&context, path, essence_base, "expected", "parse", None)?;
-    let model_from_file =
-        read_model_json(&context, path, essence_base, "generated", "parse", None)?;
-    assert_eq!(model_from_file, expected_model);
-
-    // Check Stage 2a (rewritten model)
-    if config.apply_rewrite_rules {
-        let expected_rewrite = read_model_json_prefix(
-            path,
-            essence_base,
-            "expected",
-            "rewrite",
-            Some(solver_fam),
-            REWRITE_SERIALISED_JSON_MAX_LINES,
-        )?;
-        let generated_rewrite = read_model_json_prefix(
-            path,
-            essence_base,
-            "generated",
-            "rewrite",
-            Some(solver_fam),
-            REWRITE_SERIALISED_JSON_MAX_LINES,
-        )?;
-        assert_eq!(generated_rewrite, expected_rewrite);
+        copy_human_trace_generated_to_expected(path, case_name, solver_fam)?;
     }
 
     // Check Stage 3a (solutions)
-    if config.solve_with_minion {
-        let expected_solutions_json =
-            read_solutions_json(path, essence_base, "expected", SolverFamily::Minion)?;
-        let username_solutions_json = solutions_to_json(&solutions);
-        assert_eq!(username_solutions_json, expected_solutions_json);
-    } else if config.solve_with_sat {
-        let expected_solutions_json =
-            read_solutions_json(path, essence_base, "expected", SolverFamily::Sat)?;
-        let username_solutions_json = solutions_to_json(&solutions);
-        assert_eq!(username_solutions_json, expected_solutions_json);
-    } else if config.solve_with_smt {
-        #[cfg(not(feature = "smt"))]
-        panic!("Test {path} uses 'solve_with_smt=true', but the 'smt' feature is disabled!");
-        #[cfg(feature = "smt")]
-        {
+    match solver_fam {
+        SolverFamily::Minion => {
+            let expected_solutions_json =
+                read_solutions_json(path, case_name, "expected", SolverFamily::Minion)?;
+            let username_solutions_json = solutions_to_json(&solutions);
+            assert_eq!(username_solutions_json, expected_solutions_json);
+        }
+        SolverFamily::Sat(_) => {
             let expected_solutions_json = read_solutions_json(
                 path,
-                essence_base,
+                case_name,
+                "expected",
+                SolverFamily::Sat(Default::default()),
+            )?;
+            let username_solutions_json = solutions_to_json(&solutions);
+            assert_eq!(username_solutions_json, expected_solutions_json);
+        }
+        #[cfg(feature = "smt")]
+        SolverFamily::Smt(_) => {
+            let expected_solutions_json = read_solutions_json(
+                path,
+                case_name,
                 "expected",
                 SolverFamily::Smt(TheoryConfig::default()),
             )?;
@@ -451,18 +339,56 @@ fn integration_test_inner(
         }
     }
 
-    // // TODO: Implement rule trace validation for morph
-    if config.validate_rule_traces && !config.enable_morph_impl {
-        let generated = read_human_rule_trace(path, essence_base, "generated", &solver_fam)?;
-        let expected = read_human_rule_trace(path, essence_base, "expected", &solver_fam)?;
+    // TODO: Implement rule trace validation for morph
+    match rewriter {
+        Rewriter::Morph => {}
+        Rewriter::Naive => {
+            let generated = read_human_rule_trace(path, case_name, "generated", &solver_fam)?;
+            let expected = read_human_rule_trace(path, case_name, "expected", &solver_fam)?;
 
-        assert_eq!(
-            expected, generated,
-            "Generated rule trace does not match the expected trace!"
-        );
-    };
+            assert_eq!(
+                expected, generated,
+                "Generated rule trace does not match the expected trace!"
+            );
+        }
+    }
 
-    save_stats_json(context, path, essence_base, solver_fam)?;
+    save_stats_json(context, path, case_name, solver_fam)?;
+
+    Ok(())
+}
+
+fn run_case_name(
+    parser: Parser,
+    rewriter: Rewriter,
+    comprehension_expander: QuantifiedExpander,
+) -> String {
+    format!("{parser}-{rewriter}-{comprehension_expander}")
+}
+
+fn clean_test_dir_for_accept(
+    path: &str,
+    essence_base: &str,
+    extension: &str,
+) -> Result<(), std::io::Error> {
+    let input_filename = format!("{essence_base}.{extension}");
+
+    for entry in std::fs::read_dir(path)? {
+        let entry = entry?;
+        let file_name = entry.file_name();
+        let file_name = file_name.to_string_lossy();
+        let entry_path = entry.path();
+
+        if file_name == input_filename || file_name == "config.toml" {
+            continue;
+        }
+
+        if entry_path.is_dir() {
+            std::fs::remove_dir_all(entry_path)?;
+        } else {
+            std::fs::remove_file(entry_path)?;
+        }
+    }
 
     Ok(())
 }
@@ -474,8 +400,8 @@ fn copy_human_trace_generated_to_expected(
 ) -> Result<(), std::io::Error> {
     let solver_name = solver.as_str();
     std::fs::copy(
-        format!("{path}/{solver_name}-{test_name}-generated-rule-trace-human.txt"),
-        format!("{path}/{solver_name}-{test_name}-expected-rule-trace-human.txt"),
+        format!("{path}/{test_name}-{solver_name}-generated-rule-trace.txt"),
+        format!("{path}/{test_name}-{solver_name}-expected-rule-trace.txt"),
     )?;
     Ok(())
 }
@@ -487,78 +413,13 @@ fn copy_generated_to_expected(
     extension: &str,
     solver: Option<SolverFamily>,
 ) -> Result<(), std::io::Error> {
-    let marker = solver.map_or("agnostic".into(), |s| s.as_str());
+    let marker = solver.map_or("agnostic", |s| s.as_str());
 
     std::fs::copy(
-        format!("{path}/{marker}-{test_name}.generated-{stage}.{extension}"),
-        format!("{path}/{marker}-{test_name}.expected-{stage}.{extension}"),
+        format!("{path}/{test_name}-{marker}.generated-{stage}.{extension}"),
+        format!("{path}/{test_name}-{marker}.expected-{stage}.{extension}"),
     )?;
     Ok(())
-}
-
-fn assert_vector_operators_have_partially_evaluated(model: &conjure_cp::Model) {
-    for node in model.universe_bi() {
-        use conjure_cp::ast::Expression::*;
-        match node {
-            Sum(_, ref vec) => assert_constants_leq_one_vec_lit(&node, vec),
-            Min(_, ref vec) => assert_constants_leq_one_vec_lit(&node, vec),
-            Max(_, ref vec) => assert_constants_leq_one_vec_lit(&node, vec),
-            Or(_, ref vec) => assert_constants_leq_one_vec_lit(&node, vec),
-            And(_, ref vec) => assert_constants_leq_one_vec_lit(&node, vec),
-            _ => (),
-        };
-    }
-}
-
-fn assert_constants_leq_one_vec_lit(parent_expr: &Expression, expr: &Expression) {
-    if let Some(exprs) = expr.clone().unwrap_list() {
-        assert_constants_leq_one(parent_expr, &exprs);
-    };
-}
-
-fn assert_constants_leq_one(parent_expr: &Expression, exprs: &[Expression]) {
-    let count = exprs.iter().fold(0, |i, x| match x {
-        Expression::Atomic(_, Atom::Literal(_)) => i + 1,
-        _ => i,
-    });
-
-    assert!(
-        count <= 1,
-        "assert_vector_operators_have_partially_evaluated: expression {parent_expr} is not partially evaluated"
-    );
-}
-
-pub fn create_scoped_subscriber(
-    path: &str,
-    test_name: &str,
-    solver_name: &str,
-) -> impl tracing::Subscriber + Send + Sync {
-    let layer = create_file_layer_human(path, test_name, solver_name);
-    let subscriber = Arc::new(tracing_subscriber::registry().with(layer))
-        as Arc<dyn tracing::Subscriber + Send + Sync>;
-    // setting this subscriber as the default
-    let _default = tracing::subscriber::set_default(subscriber.clone());
-
-    subscriber
-}
-
-fn create_file_layer_human(
-    path: &str,
-    test_name: &str,
-    solver_name: &str,
-) -> impl Layer<Registry> + Send + Sync {
-    let file = File::create(format!(
-        "{path}/{solver_name}-{test_name}-generated-rule-trace-human.txt"
-    ))
-    .expect("Unable to create log file");
-
-    fmt::layer()
-        .with_writer(file)
-        .with_level(false)
-        .without_time()
-        .with_target(false)
-        .with_filter(EnvFilter::new("rule_engine_human=trace"))
-        .with_filter(FilterFn::new(|meta| meta.target() == "rule_engine_human"))
 }
 
 #[test]
