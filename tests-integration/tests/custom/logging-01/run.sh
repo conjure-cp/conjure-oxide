@@ -1,4 +1,4 @@
-conjure-oxide --log solve model.eprime
+conjure-oxide --log solve --parser=tree-sitter model.eprime
 
 [ -f "./conjure_oxide.log" ] && echo "./conjure_oxide.log found" || echo "./conjure_oxide.log is missing"
 [ -f "./conjure_oxide_log.json" ] && echo "./conjure_oxide_log.json found" || echo "./conjure_oxide_log.json is missing"
