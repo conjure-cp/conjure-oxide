@@ -188,6 +188,7 @@ module.exports = grammar ({
     ),
 
     // Constraints 
+    // boolean expressions require the operands to be boolean and return a boolean
     bool_expr: $ => prec(2, choice(
       field("not_expression", $.not_expr),
       field("and_expression", $.and_expr),
@@ -196,7 +197,6 @@ module.exports = grammar ({
       field("iff_expr", $.iff_expr),
       field("list_combining_expression_bool", $.list_combining_expr_bool),
       field("sub_bool_expression", $.sub_bool_expr),
-      field("set_operation_bool", $.set_operation_bool),
       field("quantifier_expression", $.quantifier_expr),
     )),
 
@@ -264,20 +264,35 @@ module.exports = grammar ({
       ")"
     ),
 
-    //TODO: split into arithmetic_comparison_expr, equality_comparison, and set_comparison_expr for typechecking purposes
-    comparison_expr: $ => prec(5, prec.left(seq(
-      field("left", choice($.bool_expr, $.arithmetic_expr, $.atom)), 
-      field("operator", choice("=", "!=", "<lex", "<=lex", ">lex", ">=lex", "<=", ">=", "<", ">")),
+    // comparison expressions - split by operand types for type checking
+    comparison_expr: $ => prec(5, choice(
+      $.arithmetic_comparison,
+      $.equality_comparison,
+      $.set_comparison
+    )),
+
+    // Arithmetic comparisons: require arithmetic operands, return boolean
+    arithmetic_comparison: $ => prec.left(seq(
+      field("left", choice($.arithmetic_expr, $.atom)),
+      field("operator", choice("<lex", "<=lex", ">lex", ">=lex", "<=", ">=", "<", ">")),
+      field("right", choice($.arithmetic_expr, $.atom))
+    )),
+
+    // Equality comparisons: work on any type, return boolean
+    equality_comparison: $ => prec.left(seq(
+      field("left", choice($.bool_expr, $.arithmetic_expr, $.atom)),
+      field("operator", choice("=", "!=")),
       field("right", choice($.bool_expr, $.arithmetic_expr, $.atom))
-    ))),
+    )),
 
-    sub_bool_expr: $ => seq("(", field("expression", choice($.bool_expr, $.comparison_expr)), ")"),
-
-    set_operation_bool: $ => seq(
+    // Set comparisons: require set operands, return boolean
+    set_comparison: $ => seq(
       field("left", $.atom),
       field("operator", choice("in", "subset", "subsetEq", "supset", "supsetEq")),
       field("right", $.atom)
     ),
+
+    sub_bool_expr: $ => seq("(", field("expression", choice($.bool_expr, $.comparison_expr)), ")"),
     
     arithmetic_expr: $ => prec(3, choice(
       field("toInt_expr", $.toInt_expr),
