@@ -165,7 +165,7 @@ fn parse_variable(ctx: &mut ParseContext, node: &Node) -> Result<Option<Atom>, F
     if let Some(symbols) = &ctx.symbols {
         let lookup_result = {
             let symbols_read = symbols.read();
-            symbols_read.lookup(&name).clone()
+            symbols_read.lookup(&name)
         };
 
         if let Some(decl) = lookup_result {
