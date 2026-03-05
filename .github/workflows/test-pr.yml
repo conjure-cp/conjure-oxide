@@ -26,6 +26,7 @@ jobs:
   # test-pr and test-main are identical, except for:
   # - rust cache, and
   # - its smaller scope (see commented out options in the matrix)
+  # - pr installs z3 as a system library, main builds from source ("bundled")
 
   test_pr:
     name: "Test (PR)"
@@ -92,26 +93,27 @@ jobs:
           os_arch: ${{ matrix.release_suffix }}
           version: ${{ matrix.conjure_version }}
 
+      # This step is unique to PR tests
       - name: Install Z3
         uses: pavpanchekha/setup-z3@v0.3.0
         with:
           version: 4.16.0
           distribution: glibc-2.39
 
-      - run: which z3
-
       - name: Build conjure-oxide (debug)
-        run: cargo build --bin conjure-oxide --features z3-bundled
+        run: cargo build --bin conjure-oxide
         if: ${{ matrix.compiler_profile == 'debug' }}
       - name: Run tests (debug)
-        run: cargo test --workspace --features z3-bundled
+        run: cargo test --workspace
         if: ${{ matrix.compiler_profile == 'debug' }}
 
+      # NOTE: this step should NOT depend on Z3 being installed (i.e. z3.h being present)
+      # Instead, it builds from source to create a bundled executable
       - name: Build conjure-oxide (release)
-        run: cargo build --bin conjure-oxide --release
+        run: cargo build --bin conjure-oxide --release --features z3-bundled
         if: ${{ matrix.compiler_profile == 'release' }}
       - name: Run tests (release)
-        run: cargo test --workspace --release
+        run: cargo test --workspace --release --features z3-bundled
         if: ${{ matrix.compiler_profile == 'release' }}
 
       - name: cargo-audit
