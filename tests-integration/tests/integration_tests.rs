@@ -17,7 +17,6 @@ use std::fs::File;
 use tracing_subscriber::{Layer, filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt};
 use tree_morph::{helpers::select_panic, prelude::*};
 
-#[cfg(feature = "smt")]
 use conjure_cp::solver::adaptors::smt::TheoryConfig;
 
 use std::sync::Arc;
@@ -267,7 +266,7 @@ fn integration_test_inner(
     let solver = match solver_fam {
         SolverFamily::Minion => Solver::new(Minion::default()),
         SolverFamily::Sat(_) => Solver::new(Sat::default()),
-        #[cfg(feature = "smt")]
+
         SolverFamily::Smt(_) => Solver::new(Smt::default()),
     };
 
@@ -326,7 +325,7 @@ fn integration_test_inner(
             let username_solutions_json = solutions_to_json(&solutions);
             assert_eq!(username_solutions_json, expected_solutions_json);
         }
-        #[cfg(feature = "smt")]
+
         SolverFamily::Smt(_) => {
             let expected_solutions_json = read_solutions_json(
                 path,

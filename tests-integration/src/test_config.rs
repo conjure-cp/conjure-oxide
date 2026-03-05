@@ -83,7 +83,7 @@ impl Default for TestConfig {
                     "sat-direct".to_string(),
                     "sat-order".to_string(),
                 ];
-                #[cfg(feature = "smt")]
+
                 {
                     solvers.extend([
                         "smt".to_string(),
