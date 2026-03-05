@@ -1,7 +1,6 @@
-use crate::errors::{FatalParseError, RecoverableParseError};
-use crate::expression::parse_expression_with_context;
+use crate::errors::FatalParseError;
+use crate::expression::parse_expression;
 use crate::field;
-use crate::parser::atom::ExpressionContext;
 use crate::parser::ParseContext;
 use crate::parser::domain::parse_domain;
 use crate::util::named_children;
@@ -12,13 +11,12 @@ use tree_sitter::Node;
 pub fn parse_abstract(
     ctx: &mut ParseContext,
     node: &Node,
-    context: ExpressionContext,
 ) -> Result<Option<AbstractLiteral<Expression>>, FatalParseError> {
     match node.kind() {
-        "record" => parse_record(ctx, node, context),
-        "tuple" => parse_tuple(ctx, node, context),
-        "matrix" => parse_matrix(ctx, node, context),
-        "set_literal" => parse_set_literal(ctx, node, context),
+        "record" => parse_record(ctx, node),
+        "tuple" => parse_tuple(ctx, node),
+        "matrix" => parse_matrix(ctx, node),
+        "set_literal" => parse_set_literal(ctx, node),
         _ => Err(FatalParseError::internal_error(
             format!("Expected abstract literal, got: {}", node.kind()),
             Some(node.range()),
@@ -29,7 +27,6 @@ pub fn parse_abstract(
 fn parse_record(
     ctx: &mut ParseContext,
     node: &Node,
-    context: ExpressionContext,
 ) -> Result<Option<AbstractLiteral<Expression>>, FatalParseError> {
     let mut values = Vec::new();
     for child in node.children_by_field_name("name_value_pair", &mut node.walk()) {
@@ -37,7 +34,7 @@ fn parse_record(
         let name_str = &ctx.source_code[name_node.start_byte()..name_node.end_byte()];
         let name = conjure_cp_core::ast::Name::user(name_str);
 
-        let Some(value) = parse_expression_with_context(ctx, field!(child, "value"), context)? else {
+        let Some(value) = parse_expression(ctx, field!(child, "value"))? else {
             return Ok(None);
         };
         values.push(conjure_cp_core::ast::records::RecordValue { name, value });
@@ -48,11 +45,10 @@ fn parse_record(
 fn parse_tuple(
     ctx: &mut ParseContext,
     node: &Node,
-    context: ExpressionContext,
 ) -> Result<Option<AbstractLiteral<Expression>>, FatalParseError> {
     let mut elements = Vec::new();
     for child in named_children(node) {
-        let Some(expr) = parse_expression_with_context(ctx, child, context)? else {
+        let Some(expr) = parse_expression(ctx, child)? else {
             return Ok(None);
         };
         elements.push(expr);
@@ -63,7 +59,6 @@ fn parse_tuple(
 fn parse_matrix(
     ctx: &mut ParseContext,
     node: &Node,
-    context: ExpressionContext,
 ) -> Result<Option<AbstractLiteral<Expression>>, FatalParseError> {
     let mut elements = vec![];
     let mut domain: Option<DomainPtr> = None;
@@ -73,7 +68,7 @@ fn parse_matrix(
             || child.kind() == "comparison_expr"
             || child.kind() == "atom"
         {
-            let Some(expr) = parse_expression_with_context(ctx, child, context)? else {
+            let Some(expr) = parse_expression(ctx, child)? else {
                 return Ok(None);
             };
             elements.push(expr);
@@ -95,11 +90,10 @@ fn parse_matrix(
 fn parse_set_literal(
     ctx: &mut ParseContext,
     node: &Node,
-    context: ExpressionContext,
 ) -> Result<Option<AbstractLiteral<Expression>>, FatalParseError> {
     let mut elements = Vec::new();
     for child in named_children(node) {
-        let Some(expr) = parse_expression_with_context(ctx, child, context)? else {
+        let Some(expr) = parse_expression(ctx, child)? else {
             return Ok(None);
         };
         elements.push(expr);

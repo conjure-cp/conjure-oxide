@@ -11,13 +11,12 @@ use uniplate::Uniplate;
 use super::ParseContext;
 use super::find::parse_find_statement;
 use super::letting::parse_letting_statement;
-use super::util::get_tree;
+use super::util::{get_tree, TypecheckingContext};
 use crate::diagnostics::diagnostics_api::SymbolKind;
 use crate::diagnostics::source_map::{HoverInfo, SourceMap, span_with_hover};
 use crate::errors::{FatalParseError, ParseErrorCollection, RecoverableParseError};
-use crate::expression::{parse_expression, parse_expression_with_context};
+use crate::expression::parse_expression;
 use crate::field;
-use crate::parser::atom::ExpressionContext;
 use crate::syntax_errors::detect_syntactic_errors;
 
 /// Parse an Essence file into a Model using the tree-sitter parser.
@@ -143,10 +142,10 @@ pub fn parse_essence_with_context_and_map(
                 }
             }
             "bool_expr" | "atom" | "comparison_expr" => {
-                let Some(expr) = parse_expression_with_context(
+                ctx.typechecking_context = TypecheckingContext::Boolean;
+                let Some(expr) = parse_expression(
                     &mut ctx,
                     statement,
-                    ExpressionContext::Boolean,
                 )? else {
                     continue;
                 };

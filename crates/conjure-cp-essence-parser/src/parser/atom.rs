@@ -1,35 +1,26 @@
 use crate::diagnostics::diagnostics_api::SymbolKind;
 use crate::diagnostics::source_map::{HoverInfo, span_with_hover};
-use crate::errors::FatalParseError;
-use crate::expression::{parse_binary_expression, parse_expression_with_context};
+use crate::errors::{FatalParseError, RecoverableParseError};
+use crate::expression::{parse_binary_expression, parse_expression};
 use crate::parser::ParseContext;
 use crate::parser::abstract_literal::parse_abstract;
 use crate::parser::comprehension::parse_comprehension;
-use crate::util::named_children;
+use crate::util::{TypecheckingContext, named_children};
 use crate::{field, named_child};
 use conjure_cp_core::ast::{
-    Atom, DeclarationPtr, Expression, GroundDomain, Literal, Metadata, Moo, Name, SymbolTablePtr,
+    Atom, Expression, Literal, Metadata, Moo, Name,
 };
-use conjure_cp_core::context;
 use tree_sitter::Node;
 use ustr::Ustr;
 
-// Used to detect type mismatches during parsing.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ExpressionContext {
-    Boolean,
-    Arithmetic,
-    /// Context is unknown or flexible
-    Unknown,
-}
+
 
 pub fn parse_atom(
     ctx: &mut ParseContext,
     node: &Node,
-    context: ExpressionContext,
 ) -> Result<Option<Expression>, FatalParseError> {
     match node.kind() {
-        "atom" | "sub_atom_expr" => parse_atom(ctx, &named_child!(node), context),
+        "atom" | "sub_atom_expr" => parse_atom(ctx, &named_child!(node)),
         "metavar" => {
             let ident = field!(node, "identifier");
             let name_str = &ctx.source_code[ident.start_byte()..ident.end_byte()];
@@ -39,7 +30,7 @@ pub fn parse_atom(
             )))
         }
         "identifier" => {
-            let Some(var) = parse_variable(ctx, node, context)? else {
+            let Some(var) = parse_variable(ctx, node)? else {
                 return Ok(None);
             };
             Ok(Some(Expression::Atomic(Metadata::new(), var)))
@@ -52,7 +43,7 @@ pub fn parse_atom(
                 ));
             }
 
-            let Some(inner) = parse_variable(ctx, &field!(node, "variable"), context)? else {
+            let Some(inner) = parse_variable(ctx, &field!(node, "variable"))? else {
                 return Ok(None);
             };
 
@@ -71,18 +62,18 @@ pub fn parse_atom(
             )))
         }
         "matrix" | "record" | "tuple" | "set_literal" => {
-            let Some(abs) = parse_abstract(ctx, node, context)? else {
+            let Some(abs) = parse_abstract(ctx, node)? else {
                 return Ok(None);
             };
             Ok(Some(Expression::AbstractLiteral(Metadata::new(), abs)))
         }
-        "flatten" => parse_flatten(ctx, node, context),
-        "index_or_slice" => parse_index_or_slice(ctx, node, context),
+        "flatten" => parse_flatten(ctx, node),
+        "index_or_slice" => parse_index_or_slice(ctx, node),
         // for now, assume is binary since powerset isn't implemented
         // TODO: add powerset support under "set_operation"
-        "set_operation" => parse_binary_expression(ctx, node, context),
+        "set_operation" => parse_binary_expression(ctx, node),
         "comprehension" => parse_comprehension(ctx, node),
-        _ => Err(FatalParseError::syntax_error(
+        _ => Err(FatalParseError::internal_error(
             format!("Expected atom, got: {}", node.kind()),
             Some(node.range()),
         )),
@@ -92,10 +83,9 @@ pub fn parse_atom(
 fn parse_flatten(
     ctx: &mut ParseContext,
     node: &Node,
-    context: ExpressionContext,
 ) -> Result<Option<Expression>, FatalParseError> {
     let expr_node = field!(node, "expression");
-    let Some(expr) = parse_atom(ctx, &expr_node, context)? else {
+    let Some(expr) = parse_atom(ctx, &expr_node)? else {
         return Ok(None);
     };
 
@@ -122,9 +112,13 @@ fn parse_index_or_slice(
     ctx: &mut ParseContext,
     node: &Node,
 ) -> Result<Option<Expression>, FatalParseError> {
-    let Some(collection) = parse_atom(ctx, &field!(node, "collection"), ExpressionContext::Unknown)? else {
+    // Save current context and temporarily set to Unknown for the collection
+    let saved_context = ctx.typechecking_context;
+    ctx.typechecking_context = TypecheckingContext::Unknown;
+    let Some(collection) = parse_atom(ctx, &field!(node, "collection"))? else {
         return Ok(None);
     };
+    ctx.typechecking_context = saved_context;
     let mut indices = Vec::new();
     for idx_node in named_children(&field!(node, "indices")) {
         indices.push(parse_index(ctx, &idx_node)?);
@@ -153,7 +147,8 @@ fn parse_index_or_slice(
 fn parse_index(ctx: &mut ParseContext, node: &Node) -> Result<Option<Expression>, FatalParseError> {
     match node.kind() {
         "arithmetic_expr" | "atom" => {
-            let Some(expr) = parse_expression_with_context(ctx, *node, ExpressionContext::Arithmetic)? else {
+            ctx.typechecking_context = TypecheckingContext::Arithmetic;
+            let Some(expr) = parse_expression(ctx, *node)? else {
                 return Ok(None);
             };
             Ok(Some(expr))
@@ -166,7 +161,7 @@ fn parse_index(ctx: &mut ParseContext, node: &Node) -> Result<Option<Expression>
     }
 }
 
-fn parse_variable(ctx: &mut ParseContext, node: &Node, context: ExpressionContext) -> Result<Option<Atom>, FatalParseError> {
+fn parse_variable(ctx: &mut ParseContext, node: &Node) -> Result<Option<Atom>, FatalParseError> {
     let raw_name = &ctx.source_code[node.start_byte()..node.end_byte()];
     let name = Name::user(raw_name.trim());
     if let Some(symbols) = &ctx.symbols {
@@ -179,11 +174,11 @@ fn parse_variable(ctx: &mut ParseContext, node: &Node, context: ExpressionContex
                 decl_span: None,
             };
             span_with_hover(node, ctx.source_code, ctx.source_map, hover);
-            Ok(Some(Some(Atom::Reference(conjure_cp_core::ast::Reference::new(
+            Ok(Some(Atom::Reference(conjure_cp_core::ast::Reference::new(
                 decl,
-            )))))
+            ))))
         } else {
-            ctx.record_error(crate::errors::RecoverableParseError::new(
+            ctx.record_error(RecoverableParseError::new(
                 format!("The identifier '{}' is not defined", raw_name),
                 Some(node.range()),
             ));
@@ -197,7 +192,7 @@ fn parse_variable(ctx: &mut ParseContext, node: &Node, context: ExpressionContex
     }
 }
 
-fn parse_constant(ctx: &mut ParseContext, node: &Node, context: ExpressionContext) -> Result<Literal, FatalParseError> {
+fn parse_constant(ctx: &mut ParseContext, node: &Node) -> Result<Option<Literal>, FatalParseError> {
     let inner = named_child!(node);
     let raw_value = &ctx.source_code[inner.start_byte()..inner.end_byte()];
     let lit = match inner.kind() {
@@ -225,7 +220,7 @@ fn parse_constant(ctx: &mut ParseContext, node: &Node, context: ExpressionContex
             span_with_hover(&inner, ctx.source_code, ctx.source_map, hover);
             Literal::Bool(false)
         }
-        _ => Err(FatalParseError::internal_error(
+        _ => return Err(FatalParseError::internal_error(
             format!(
                 "'{}' (kind: '{}') is not a valid constant",
                 raw_value,
@@ -233,13 +228,12 @@ fn parse_constant(ctx: &mut ParseContext, node: &Node, context: ExpressionContex
             ),
             Some(inner.range()),
         )),
-    }
+    };
 
     // Type check the constant against the expected context
-    // lit with either be a boolean or an integer
-    match (&lit, context) {
-        (Literal::Bool(_), ExpressionContext::Arithmetic) => {
-            errors.push(RecoverableParseError::new(
+    match (&lit, ctx.typechecking_context) {
+        (Literal::Bool(_), TypecheckingContext::Arithmetic) => {
+            ctx.record_error(RecoverableParseError::new(
                 format!(
                     "Type error: Boolean value '{}' used in arithmetic context",
                     raw_value
@@ -248,8 +242,8 @@ fn parse_constant(ctx: &mut ParseContext, node: &Node, context: ExpressionContex
             ));
             return Ok(None);
         }
-        (Literal::Int(_), ExpressionContext::Boolean) => {
-            errors.push(RecoverableParseError::new(
+        (Literal::Int(_), TypecheckingContext::Boolean) => {
+            ctx.record_error(RecoverableParseError::new(
                 format!(
                     "Type error: Integer value '{}' used in boolean context",
                     raw_value
@@ -261,7 +255,6 @@ fn parse_constant(ctx: &mut ParseContext, node: &Node, context: ExpressionContex
         _ => {}
     }
     Ok(Some(lit))
-    
 }
 
 pub(crate) fn parse_int(ctx: &ParseContext, node: &Node) -> Result<i32, FatalParseError> {
