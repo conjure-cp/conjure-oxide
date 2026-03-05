@@ -219,31 +219,31 @@ fn typecheck_variable(
 
     match (ground_domain.as_ref(), context) {
         (GroundDomain::Int(_), TypecheckingContext::Boolean) => Some(format!(
-            "Integer variable '{}' used in boolean context",
+            "Type Error: Integer variable '{}' used in boolean context",
             var_name
         )),
         (GroundDomain::Bool, TypecheckingContext::Arithmetic) => Some(format!(
-            "Boolean variable '{}' used in arithmetic context",
+            "Type Error: Boolean variable '{}' used in arithmetic context",
             var_name
         )),
         (GroundDomain::Matrix(_, _), TypecheckingContext::Boolean)
         | (GroundDomain::Matrix(_, _), TypecheckingContext::Arithmetic) => Some(format!(
-            "Matrix variable '{}' cannot be used directly in this context",
+            "Type Error: Matrix variable '{}' cannot be used directly in this context",
             var_name
         )),
         (GroundDomain::Set(_, _), TypecheckingContext::Boolean)
         | (GroundDomain::Set(_, _), TypecheckingContext::Arithmetic) => Some(format!(
-            "Set variable '{}' cannot be used directly in this context",
+            "Type Error: Set variable '{}' cannot be used directly in this context",
             var_name
         )),
         (GroundDomain::Tuple(_), TypecheckingContext::Boolean)
         | (GroundDomain::Tuple(_), TypecheckingContext::Arithmetic) => Some(format!(
-            "Tuple variable '{}' cannot be used directly in this context",
+            "Type Error: Tuple variable '{}' cannot be used directly in this context",
             var_name
         )),
         (GroundDomain::Record(_), TypecheckingContext::Boolean)
         | (GroundDomain::Record(_), TypecheckingContext::Arithmetic) => Some(format!(
-            "Record variable '{}' cannot be used directly in this context",
+            "Type Error: Record variable '{}' cannot be used directly in this context",
             var_name
         )),
         // Everything else is OK
