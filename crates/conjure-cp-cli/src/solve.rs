@@ -14,7 +14,8 @@ use clap::ValueHint;
 use conjure_cp::{
     Model,
     ast::{
-        DeclarationPtr, comprehension::USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS, eval_constant,
+        DeclarationPtr, comprehension::USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS,
+        declaration::Declaration, eval_constant,
     },
     context::Context,
     rule_engine::{resolve_rule_sets, rewrite_morph, rewrite_naive},
@@ -70,36 +71,27 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
 
     let context = init_context(&global_args, input_file, param_file)?;
 
-    let unified_model = {
-        let ctx_lock = context.read().unwrap();
-        let input_file_name = ctx_lock
-            .input_file_name
-            .as_ref()
-            .expect("context should contain the problem input file");
-        let param_file_name = ctx_lock.param_file_name.as_ref();
+    let ctx_lock = context.read().unwrap();
+    let input_file_name = ctx_lock
+        .input_file_name
+        .as_ref()
+        .expect("context should contain the problem input file");
+    let param_file_name = ctx_lock.param_file_name.as_ref();
 
-        // parse models
-        let problem_model = parse(&global_args, Arc::clone(&context), input_file_name)?;
+    // parse models
+    let problem_model = parse(&global_args, Arc::clone(&context), input_file_name)?;
 
-        match param_file_name {
-            Some(param_file_name) => {
-                let param_model = parse(&global_args, Arc::clone(&context), param_file_name)?;
-                dbg!(&problem_model, &param_model);
-                merge_models(problem_model, param_model)?
-            }
-            None => problem_model,
+    // unify models
+    let unified_model = match param_file_name {
+        Some(param_file_name) => {
+            let param_model = parse(&global_args, Arc::clone(&context), param_file_name)?;
+            merge_models(problem_model, param_model)?
         }
+        None => problem_model,
     };
-
-    println!("Merged model.");
-
-    dbg!(&unified_model);
+    drop(ctx_lock);
 
     let rewritten_model = rewrite(unified_model, &global_args, Arc::clone(&context))?;
-
-    println!("Rewrote model.");
-
-    // dbg!(&rewritten_model);
 
     let solver = init_solver(&global_args);
 
@@ -127,49 +119,55 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
 }
 
 pub(crate) fn merge_models(mut problem_model: Model, param_model: Model) -> anyhow::Result<Model> {
-    {
-        let problem_submodel = problem_model.as_submodel_mut();
-        let mut symbol_table = problem_submodel.symbols_ptr_unchecked().write();
-        let mut constraints = problem_submodel.constraints();
+    let mut symbol_table = problem_model
+        .as_submodel_mut()
+        .symbols_ptr_unchecked()
+        .write();
 
-        let param_table = param_model.as_submodel().symbols_ptr_unchecked().write();
+    let param_table = param_model.as_submodel().symbols_ptr_unchecked().write();
 
-        for (name, decl) in symbol_table.iter_local_mut() {
-            // dbg!(name, decl.kind());
+    for (name, decl) in symbol_table.iter_local_mut() {
+        let Some(domain) = decl.as_given() else {
+            continue;
+        };
 
-            let new_decl = {
-                let DeclarationKind::Given(ref domain) = *decl.kind() else {
-                    continue;
-                };
+        // Find corresponding letting in param file
+        let param_decl = param_table.lookup(name);
+        let expr = param_decl
+                .as_ref()
+                .and_then(DeclarationPtr::as_value_letting)
+                .ok_or_else(|| anyhow!(
+                    "Given declaration `{name}` does not have corresponding letting in parameter file"
+                ))?;
 
-                // TODO: fix error message
-                let param_value = param_table
-                    .lookup(name)
-                    .ok_or_else(|| anyhow!("given without letting"))?;
+        // Evaluate the letting expresison to a literal
+        let expr_value = eval_constant(&expr)
+            .ok_or_else(|| anyhow!("Letting expression `{expr}` cannot be evaluated"))?;
 
-                let DeclarationKind::ValueLetting(ref expr, None) = *param_value.kind() else {
-                    return Err(anyhow!("not the right kind"));
-                };
+        // Resolve the given's domain
+        let ground_domain = domain
+            .resolve()
+            .ok_or_else(|| anyhow!("Domain of given statement `{name}` cannot be resolved"))?;
 
-                let expr_value = eval_constant(expr)
-                    .ok_or_else(|| anyhow!("letting expression cannot be evaluated"))?;
-
-                if !domain.contains(&expr_value).expect("lol 1") {
-                    return Err(anyhow!("lol 2"));
-                }
-
-                println!("Replacing {name} given with letting.");
-                DeclarationPtr::new_value_letting_with_domain(
-                    name.clone(),
-                    expr.clone(),
-                    domain.clone(),
-                )
-            };
-
-            decl.update(new_decl);
+        // Ensure the letting value is contained within the given expression's domain
+        if !ground_domain.contains(&expr_value).unwrap() {
+            return Err(anyhow!(
+                "Domain of given statement `{name}` does not contain letting value"
+            ));
         }
+
+        // Replace the given statement in the model with the statement
+        let new_decl = Declaration::new(
+            name.clone(),
+            DeclarationKind::ValueLetting(expr.clone(), Some(domain.clone())),
+        );
+        drop(domain);
+        decl.replace(new_decl);
+
+        tracing::info!("Replaced {name} given with letting.");
     }
 
+    drop(symbol_table);
     Ok(problem_model)
 }
 

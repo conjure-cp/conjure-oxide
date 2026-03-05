@@ -409,6 +409,30 @@ impl DeclarationPtr {
         .ok()
     }
 
+    /// This declaration as a given statement, if it is one.
+    pub fn as_given(&self) -> Option<MappedRwLockReadGuard<'_, DomainPtr>> {
+        RwLockReadGuard::try_map(self.read(), |x| {
+            if let DeclarationKind::Given(domain) = &x.kind {
+                Some(domain)
+            } else {
+                None
+            }
+        })
+        .ok()
+    }
+
+    /// This declaration as a mutable given statement, if it is one.
+    pub fn as_given_mut(&mut self) -> Option<MappedRwLockWriteGuard<'_, DomainPtr>> {
+        RwLockWriteGuard::try_map(self.write(), |x| {
+            if let DeclarationKind::Given(domain) = &mut x.kind {
+                Some(domain)
+            } else {
+                None
+            }
+        })
+        .ok()
+    }
+
     /// Changes the name in this declaration, returning the old one.
     ///
     /// # Examples
@@ -506,26 +530,11 @@ impl DeclarationPtr {
 
     /// Replaces the declaration with a new one, returning the old value, without deinitialising
     /// either one.
-    fn replace(&mut self, declaration: Declaration) -> Declaration {
+    pub fn replace(&mut self, declaration: Declaration) -> Declaration {
         let mut guard = self.write();
         let ans = mem::replace(&mut *guard, declaration);
         drop(guard);
         ans
-    }
-
-    /// Replaces the declaration with the value of another DeclarationPtr.
-    pub fn update(&mut self, declaration: DeclarationPtr) {
-        let mut guard = self.write();
-        // TODO: This is disgusting, but I just want it to work.
-        // This just replaces the inner declaration so I can extract the existing one.
-        let decl = declaration.detach().replace(Declaration::new(
-            "hi".into(),
-            DeclarationKind::RecordField(Moo::new(super::Domain::Ground(Moo::new(
-                GroundDomain::Bool,
-            )))),
-        ));
-        let _ = mem::replace(&mut *guard, decl);
-        drop(guard);
     }
 }
 
@@ -684,7 +693,7 @@ impl Display for DeclarationPtr {
 #[biplate(to=DeclarationPtr)]
 #[biplate(to=Name)]
 /// The contents of a declaration
-pub(super) struct Declaration {
+pub struct Declaration {
     /// The name of the declared symbol.
     name: Name,
 
@@ -694,7 +703,7 @@ pub(super) struct Declaration {
 
 impl Declaration {
     /// Creates a new declaration.
-    fn new(name: Name, kind: DeclarationKind) -> Declaration {
+    pub fn new(name: Name, kind: DeclarationKind) -> Declaration {
         Declaration { name, kind }
     }
 }
