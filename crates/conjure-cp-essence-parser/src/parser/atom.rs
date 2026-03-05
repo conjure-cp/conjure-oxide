@@ -7,13 +7,9 @@ use crate::parser::abstract_literal::parse_abstract;
 use crate::parser::comprehension::parse_comprehension;
 use crate::util::{TypecheckingContext, named_children};
 use crate::{field, named_child};
-use conjure_cp_core::ast::{
-    Atom, Expression, Literal, Metadata, Moo, Name,
-};
+use conjure_cp_core::ast::{Atom, Expression, Literal, Metadata, Moo, Name};
 use tree_sitter::Node;
 use ustr::Ustr;
-
-
 
 pub fn parse_atom(
     ctx: &mut ParseContext,
@@ -166,7 +162,6 @@ fn parse_variable(ctx: &mut ParseContext, node: &Node) -> Result<Option<Atom>, F
     let name = Name::user(raw_name.trim());
     if let Some(symbols) = &ctx.symbols {
         if let Some(decl) = symbols.read().lookup(&name) {
-
             let hover = HoverInfo {
                 description: format!("Variable: {name}"),
                 kind: Some(SymbolKind::Decimal),
@@ -220,14 +215,16 @@ fn parse_constant(ctx: &mut ParseContext, node: &Node) -> Result<Option<Literal>
             span_with_hover(&inner, ctx.source_code, ctx.source_map, hover);
             Literal::Bool(false)
         }
-        _ => return Err(FatalParseError::internal_error(
-            format!(
-                "'{}' (kind: '{}') is not a valid constant",
-                raw_value,
-                inner.kind()
-            ),
-            Some(inner.range()),
-        )),
+        _ => {
+            return Err(FatalParseError::internal_error(
+                format!(
+                    "'{}' (kind: '{}') is not a valid constant",
+                    raw_value,
+                    inner.kind()
+                ),
+                Some(inner.range()),
+            ));
+        }
     };
 
     // Type check the constant against the expected context

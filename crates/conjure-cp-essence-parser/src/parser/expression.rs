@@ -21,7 +21,7 @@ pub fn parse_expression(
         "comparison_expr" => {
             ctx.typechecking_context = TypecheckingContext::Unknown;
             parse_binary_expression(ctx, &node)
-        },
+        }
         "dominance_relation" => parse_dominance_relation(ctx, &node),
         _ => Err(FatalParseError::internal_error(
             format!("Unexpected expression type: '{}'", node.kind()),
@@ -74,15 +74,9 @@ fn parse_arithmetic_expression(
         "negative_expr" | "abs_value" | "sub_arith_expr" | "toInt_expr" => {
             parse_unary_expression(ctx, &inner)
         }
-        "exponent" | "product_expr" | "sum_expr" => {
-            parse_binary_expression(ctx, &inner)
-        }
-        "list_combining_expr_arith" => {
-            parse_list_combining_expression(ctx, &inner)
-        }
-        "aggregate_expr" => {
-            parse_quantifier_or_aggregate_expr(ctx, &inner)
-        }
+        "exponent" | "product_expr" | "sum_expr" => parse_binary_expression(ctx, &inner),
+        "list_combining_expr_arith" => parse_list_combining_expression(ctx, &inner),
+        "aggregate_expr" => parse_quantifier_or_aggregate_expr(ctx, &inner),
         _ => Err(FatalParseError::internal_error(
             format!("Expected arithmetic expression, found: {}", inner.kind()),
             Some(inner.range()),
