@@ -1,4 +1,6 @@
+use super::ParseContext;
 use super::util::{get_tree, query_toplevel};
+use crate::diagnostics::source_map::SourceMap;
 use crate::errors::FatalParseError;
 use crate::expression::parse_expression;
 use crate::util::node_is_expression;
@@ -26,16 +28,18 @@ pub fn parse_exprs(
     ))?;
 
     let root = tree.root_node();
+    let mut source_map = SourceMap::default();
+    let mut errors = Vec::new();
+    let mut ctx = ParseContext::new(
+        &source_code,
+        &root,
+        Some(symbols_ptr),
+        &mut errors,
+        &mut source_map,
+    );
     let mut ans = Vec::new();
     for expr in query_toplevel(&root, &node_is_expression) {
-        let Some(expr) = parse_expression(
-            expr,
-            &source_code,
-            &root,
-            Some(symbols_ptr.clone()),
-            &mut Vec::new(),
-        )?
-        else {
+        let Some(expr) = parse_expression(&mut ctx, expr)? else {
             continue;
         };
         ans.push(expr);
