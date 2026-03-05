@@ -3,7 +3,7 @@ use crate::expression::parse_expression;
 use crate::field;
 use crate::parser::ParseContext;
 use crate::parser::domain::parse_domain;
-use crate::util::{named_children, TypecheckingContext};
+use crate::util::{TypecheckingContext, named_children};
 use conjure_cp_core::ast::{AbstractLiteral, DomainPtr, Expression};
 use conjure_cp_core::{domain_int, range};
 use tree_sitter::Node;
