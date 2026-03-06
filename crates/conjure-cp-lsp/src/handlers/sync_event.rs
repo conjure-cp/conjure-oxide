@@ -16,6 +16,7 @@ use tower_lsp::lsp_types::Position as LspPosition;
 use tower_lsp::lsp_types::Range as LspRange;
 
 use moka::future::Cache;
+use tree_sitter::InputEdit;
 use tree_sitter::Point;
 use tree_sitter::Tree;
 
@@ -29,11 +30,6 @@ impl Backend {
     pub async fn handle_did_open(&self, params: DidOpenTextDocumentParams) {
         //on open, check whether cache has existing entry, if not, add to cache
 
-        // here's how i'd define the default values for arse_essence_with_context_and_map
-        // probably needs to be moved somewhere else tho
-        let context = Arc::new(RwLock::new(Context::default()));
-        let mut errors: Vec<RecoverableParseError> = Vec::new();
-
         let uri = params.text_document.uri;
         let text = params.text_document.text.clone();
 
@@ -45,10 +41,13 @@ impl Backend {
                 self.client
                     .log_message(MessageType::INFO, "Cache miss! Loading into cache now")
                     .await;
+
                 let cst_tree = tree_sitter::Parser::new().parse(&text, None).unwrap();
-                //not sure what errors and context are, have asked anastasia for clarification
-                //LMAO WHY DONT EITHER OF US KNOWWW
-                let parsed = parse_essence_with_context_and_map(&text, , errors, Some(&cst_tree));
+
+                let context = Arc::new(RwLock::new(Context::default()));
+                let mut errors: Vec<RecoverableParseError> = Vec::new();
+
+                let parsed = parse_essence_with_context_and_map(&text, context, &mut errors, Some(&cst_tree));
                 let (ast_model, source_map) = parsed.unwrap().unwrap();
                 CacheCont {
                     sourcemap: Some(source_map),       // need to get this using parse_essence_with_context_and_map
@@ -87,7 +86,7 @@ impl Backend {
             self.client
                 .log_message(MessageType::INFO, "Did save document")
                 .await;
-            self.handle_diagnostics(&uri, lsp_cont);
+            self.handle_diagnostics(&uri, lsp_cont).await;
         }
     }
     pub async fn handle_did_change(&self, params: DidChangeTextDocumentParams) {
@@ -99,7 +98,7 @@ impl Backend {
         let uri = params.text_document.uri;
         let lsp_cache = &self.lsp_cache;
 
-        let range = params.content_changes.first().unwrap().range.unwrap();
+        // let range = params.content_changes.first().unwrap().range.unwrap();
 
         if let Some(change) = params.content_changes.first() {
             if let Some(cache_conts) = lsp_cache.get(&uri).await {
@@ -110,15 +109,41 @@ impl Backend {
                 let mut new_text = cache_conts.contents.clone();
                 if let Some(lsp_range) = change.range {
                     //convert range for string conversion here
-                    new_text.replace_range(range, replace_with);
+                    // new_text.replace_range(range, replace_with);
+
+                    let start_byte = position_to_byte(&cache_conts.contents, lsp_range.start);
+                    let end_byte = position_to_byte(&cache_conts.contents, lsp_range.end);
+                    new_text.replace_range(start_byte..end_byte, &change.text);
+                } else {
+                    new_text = change.text.clone();
                 }
 
+                let new_tree: Tree = if let Some(lsp_range) = change.range {
+                    let start_byte = position_to_byte(&cache_conts.contents, lsp_range.start);
+                    let old_end_byte =  position_to_byte(&cache_conts.contents, lsp_range.end);
+                    let new_end_byte = old_end_byte + change.text.len();
+                    let start_position = position_to_treesitter_point(lsp_range.start);
+                    let old_end_position = get_end_position(&cache_conts.contents.clone());
+                    let new_end_position = position_to_treesitter_point(lsp_range.end);
+                    // let edit_range = tree_sitter::InputEdit::
+                    let mut old_cst = cache_conts.cst.clone();
+                    old_cst.edit(&tree_sitter::InputEdit{
+                        start_byte,
+                        old_end_byte,
+                        new_end_byte,
+                        start_position,
+                        old_end_position,
+                        new_end_position,
+                    });
+                    tree_sitter::Parser::new().parse(&new_text, Some(&old_cst)).unwrap()
+                } else {
+                    tree_sitter::Parser::new().parse(&new_text, Some(&cache_conts.cst)).unwrap()
+                };
 
-                // cache_conts.contents.replace_range(range, replace_with);
-                // cache_conts.version = params.text_document.version;
-                let (ast_model, source_map) = parse_essence_with_context_and_map(&text, context, errors, Some(&cst_tree)).unwrap().unwrap();
-                // cache_conts.ast = ast_model;
-                // cache_conts.sourcemap = Some(source_map);
+                let context = Arc::new(RwLock::new(Context::default()));
+                let mut errors: Vec<RecoverableParseError> = Vec::new();
+
+                let (ast_model, source_map) = parse_essence_with_context_and_map(&new_text, context, &mut errors, Some(&new_tree)).unwrap().unwrap();
 
                 let new_cache_conts = CacheCont {
                     sourcemap: Some(source_map),
@@ -136,37 +161,15 @@ impl Backend {
             }
         }
         
+        if let Some(new_cache_conts) = lsp_cache.get(&uri).await {
 
-        self.handle_diagnostics(&uri, new_cache_content);
-
-        //need to check versions against each other, update version in
-        //cache, check what the changes were
-
-        // if let Some(change) = params.content_changes.first() {
-        //     let text = change.text.clone();
-
-        //     self.client
-        //         .log_message(MessageType::INFO, format!("New text: {}", text))
-        //         .await;
-
-        //     self.documents
-        //         .write()
-        //         .await
-        //         .insert(uri.to_string().clone(), text.clone());
-
-        //     //diagnostic stuff here
-        //     self.handle_diagnostics(&uri.clone(), text.clone()).await;
-        // }
-
-
-        //incremental parsing and treesitter.edit
-        //pass in full tree (current) and edit(?) and range(?) of(?) edit(?)
-
-        // parse_essence_with_context_and_map
-            //returns a sourcemap and a model, the ast and the sourcemap
-            //have option to provide the tree, which we will do here on edit
-            //(if you have the tree you provide it)
+            self.client
+                .log_message(MessageType::INFO, "Did save document")
+                .await;
+            self.handle_diagnostics(&uri, new_cache_conts).await;
+        }
     }
+
 
     // pub async fn handle_diagnostics(&self, uri: &Url, code: String) {
     pub async fn handle_diagnostics(&self, uri: &Url, cache_conts: CacheCont) {
@@ -231,7 +234,7 @@ pub fn parser_to_lsp_position(position: ParserPosition) -> LspPosition {
 }
 
 //need to convert from character and line to byte value in a file
-fn position_to_byte(&self, text: &str, position: Position) -> usize {
+fn position_to_byte(text: &str, position: Position) -> usize {
     //as_bytes converts a string into bytes which I could do with text but the issue is finding
     //the position from that point???
     let mut byte_offset = 0;
@@ -250,6 +253,20 @@ fn position_to_byte(&self, text: &str, position: Position) -> usize {
 
 //need to convert from character and line to row and line
 //this allows for incremental editing of treesitter
-fn position_to_treesitter_point(&self, text: &str, position: Position) -> Point {
-    return Point::new(position.lin as usize, position.character as usize);
+fn position_to_treesitter_point(position: Position) -> Point {
+    return Point::new(position.line as usize, position.character as usize);
+}
+
+fn get_end_position(text: &str) -> Point {
+    let mut row = 0 as usize;
+    let mut column = 0 as usize;
+    for char in text.chars() {
+        if char == '\n' {
+            row += 1;
+            column = 0;
+        } else {
+            column += 1;
+        }
+    }
+    return Point::new(row, column);
 }
