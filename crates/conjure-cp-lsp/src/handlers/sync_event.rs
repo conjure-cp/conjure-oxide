@@ -1,4 +1,9 @@
+use std::sync::Arc;
+use std::sync::RwLock;
+
 use conjure_cp_core::ast::Model;
+use conjure_cp_core::context::Context;
+use conjure_cp_essence_parser::RecoverableParseError;
 use tower_lsp::{lsp_types::Diagnostic as LspDiagnostic, lsp_types::*};
 
 use conjure_cp_essence_parser::diagnostics::diagnostics_api::Diagnostic as ParserDiagnostic;
@@ -21,6 +26,11 @@ use crate::server::Backend;
 impl Backend {
     pub async fn handle_did_open(&self, params: DidOpenTextDocumentParams) {
         //on open, check whether cache has existing entry, if not, add to cache
+
+        // here's how i'd define the default values for arse_essence_with_context_and_map
+        // probably needs to be moved somewhere else tho
+        let context = Arc::new(RwLock::new(Context::default()));
+        let mut errors: Vec<RecoverableParseError> = Vec::new();
 
         let uri = params.text_document.uri;
         let text = params.text_document.text.clone();
