@@ -1,4 +1,8 @@
+use std::vec;
+
 use conjure_cp_core::ast::Model;
+use conjure_cp_core::settings::SolverFamilyIter;
+use conjure_cp_essence_parser::parse_essence_with_context_and_map;
 use tower_lsp::{lsp_types::Diagnostic as LspDiagnostic, lsp_types::*};
 
 use conjure_cp_essence_parser::diagnostics::diagnostics_api::Diagnostic as ParserDiagnostic;
@@ -10,6 +14,7 @@ use tower_lsp::lsp_types::Position as LspPosition;
 use tower_lsp::lsp_types::Range as LspRange;
 
 use moka::future::Cache;
+use tree_sitter::Point;
 use tree_sitter::Tree;
 
 use crate::handlers::cache;
@@ -33,15 +38,26 @@ impl Backend {
                 self.client
                     .log_message(MessageType::INFO, "Cache miss! Loading into cache now")
                     .await;
+                let cst_tree = tree_sitter::Parser::new().parse(&text, None).unwrap();
+                //not sure what errors and context are, have asked anastasia for clarification
+                //LMAO WHY DONT EITHER OF US KNOWWW
+                let parsed = parse_essence_with_context_and_map(&text, , errors, Some(&cst_tree));
+                let (ast_model, source_map) = parsed.unwrap().unwrap();
                 CacheCont {
-                    sourcemap: None,       // need to get this using parse_essence_with_context_and_map
-                    ast: Model::default(), // need to get this using parse_essence_with_context_and_map
-                    cst: tree_sitter::Parser::new().parse(&text, None).unwrap(), // get this onOpen using tree-sitter directly, then send it to parse_essence_with_context_and_map to get sourcemap and ast
-                    contents: text,
+                    sourcemap: Some(source_map),       // need to get this using parse_essence_with_context_and_map
+                    ast: ast_model, // need to get this using parse_essence_with_context_and_map
+                    cst: cst_tree, // get this onOpen using tree-sitter directly, then send it to parse_essence_with_context_and_map to get sourcemap and ast
+                    contents: text.clone(),
                     version: 0,
                 }
             })
             .await;
+        // parse_essence_with_context_and_map(src, context, errors, tree)
+
+        //NOT SURE THAT THIS NEEDS TO EXIST BUT PUTTING HERE IN CASE IT DOES
+        // let cached = cache.get_with(uri.clone(), async {
+        //     panic!("This should never run");
+        // }).await; 
 
         self.client
             .log_message(MessageType::INFO, "Did open document")
@@ -53,12 +69,14 @@ impl Backend {
     pub async fn handle_did_save(&self, params: DidSaveTextDocumentParams) {
         //if save, do not update existing entry,simply access from cache
         let uri = params.text_document.uri;
-
         let lsp_cache = &self.lsp_cache;
 
         if let Some(lsp_cont) = lsp_cache.get(&uri).await {
             //CANNOT USE PRINTLNs AS THIS WILL BREAK CONNECTION WITH SERVER
             // println!("Found document version: {}", lsp_cont.version) //just for proof of concept
+
+            //check versioning? might modify for dirty clean later cos i dont fw current situ
+
             self.client
                 .log_message(MessageType::INFO, "Did save document")
                 .await;
@@ -74,7 +92,45 @@ impl Backend {
         let uri = params.text_document.uri;
         let lsp_cache = &self.lsp_cache;
 
-        if let Some(cache_conts) = lsp_cache.get(&uri).await {}
+        let range = params.content_changes.first().unwrap().range.unwrap();
+
+        if let Some(change) = params.content_changes.first() {
+            if let Some(cache_conts) = lsp_cache.get(&uri).await {
+                //this should replace the whole of the range of the changes?
+                //cannot see how this wouldn't work sooooooo it better lwk
+                //might be worth printing before and after on client
+                //just to see if working?
+                let mut new_text = cache_conts.contents.clone();
+                if let Some(lsp_range) = change.range {
+                    //convert range for string conversion here
+                    new_text.replace_range(range, replace_with);
+                }
+
+
+                // cache_conts.contents.replace_range(range, replace_with);
+                // cache_conts.version = params.text_document.version;
+                let (ast_model, source_map) = parse_essence_with_context_and_map(&text, context, errors, Some(&cst_tree)).unwrap().unwrap();
+                // cache_conts.ast = ast_model;
+                // cache_conts.sourcemap = Some(source_map);
+
+                let new_cache_conts = CacheCont {
+                    sourcemap: Some(source_map),
+                    ast: ast_model,
+                    cst: new_tree,
+                    contents: new_text.clone(),
+                    version: params.text_document.version,
+                };
+                
+                lsp_cache.insert(uri.clone(), new_cache_conts.clone()).await;
+
+                self.client
+                    .log_message(MessageType::INFO, "Did change document")
+                    .await;
+            }
+        }
+        
+
+        self.handle_diagnostics(&uri, new_cache_content);
 
         //need to check versions against each other, update version in
         //cache, check what the changes were
@@ -94,6 +150,15 @@ impl Backend {
         //     //diagnostic stuff here
         //     self.handle_diagnostics(&uri.clone(), text.clone()).await;
         // }
+
+
+        //incremental parsing and treesitter.edit
+        //pass in full tree (current) and edit(?) and range(?) of(?) edit(?)
+
+        // parse_essence_with_context_and_map
+            //returns a sourcemap and a model, the ast and the sourcemap
+            //have option to provide the tree, which we will do here on edit
+            //(if you have the tree you provide it)
     }
 
     // pub async fn handle_diagnostics(&self, uri: &Url, code: String) {
@@ -156,4 +221,28 @@ pub fn parser_to_lsp_position(position: ParserPosition) -> LspPosition {
         line: position.line,
         character: position.character,
     }
+}
+
+//need to convert from character and line to byte value in a file
+fn position_to_byte(&self, text: &str, position: Position) -> usize {
+    //as_bytes converts a string into bytes which I could do with text but the issue is finding
+    //the position from that point???
+    let mut byte_offset = 0;
+    //go through every line 
+    for (line_idx, line) in text.lines().enumerate() {
+        if line_idx < position.line as usize {
+            byte_offset += line.len() + 1; // +1 for newline
+        } else {
+            //can directly convert character as it's a byte offset alr
+            byte_offset += position.character as usize;
+            break;
+        }
+    }
+    return byte_offset;
+}
+
+//need to convert from character and line to row and line
+//this allows for incremental editing of treesitter
+fn position_to_treesitter_point(&self, text: &str, position: Position) -> Point {
+    return Point::new(position.lin as usize, position.character as usize);
 }
