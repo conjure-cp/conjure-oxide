@@ -99,7 +99,12 @@ mod tests {
 
     #[test]
     fn div_by_zero() {
-        let expr = essence_expr!(1 / 0);
+        // Create UnsafeDiv directly since the parser now rejects division by zero
+        let expr = Expression::UnsafeDiv(
+            Default::default(),
+            Moo::new(essence_expr!(1)),
+            Moo::new(essence_expr!(0)),
+        );
         assert_eq!(eval_constant(&expr), None);
     }
 

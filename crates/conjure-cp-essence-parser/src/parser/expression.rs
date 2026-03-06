@@ -1,11 +1,11 @@
 use crate::diagnostics::diagnostics_api::SymbolKind;
 use crate::diagnostics::source_map::{HoverInfo, span_with_hover};
-use crate::errors::FatalParseError;
+use crate::errors::{FatalParseError, RecoverableParseError};
 use crate::parser::ParseContext;
 use crate::parser::atom::parse_atom;
 use crate::parser::comprehension::parse_quantifier_or_aggregate_expr;
 use crate::{field, named_child};
-use conjure_cp_core::ast::{Expression, Metadata, Moo};
+use conjure_cp_core::ast::{Atom, Expression, Literal, Metadata, Moo};
 use conjure_cp_core::{domain_int, matrix_expr, range};
 use tree_sitter::Node;
 
@@ -194,7 +194,14 @@ pub fn parse_binary_expression(
             Moo::new(right),
         ))),
         "/" => {
-            //TODO: add checks for if division is safe or not
+            // Check for division by zero (constant or identifier set to 0)
+            if is_zero(&right) {
+                ctx.errors.push(RecoverableParseError::new(
+                    "Division by zero".into(),
+                    Some(field!(node, "right").range()),
+                ));
+                return Ok(None);
+            }
             Ok(Some(Expression::UnsafeDiv(
                 Metadata::new(),
                 Moo::new(left),
@@ -202,7 +209,14 @@ pub fn parse_binary_expression(
             )))
         }
         "%" => {
-            //TODO: add checks for if mod is safe or not
+            // Check for modulo by zero (constant or identifier set to 0)
+            if is_zero(&right) {
+                ctx.errors.push(RecoverableParseError::new(
+                    "Modulo by zero".into(),
+                    Some(field!(node, "right").range()),
+                ));
+                return Ok(None);
+            }
             Ok(Some(Expression::UnsafeMod(
                 Metadata::new(),
                 Moo::new(left),
@@ -328,4 +342,17 @@ pub fn parse_binary_expression(
     }
 
     expr
+}
+
+/// Check if an expression is zero (either literal 0 or an identifier set to 0)
+fn is_zero(expr: &Expression) -> bool {
+    match expr {
+        // Check for literal 0
+        Expression::Atomic(_, Atom::Literal(Literal::Int(0))) => true,
+        // Check for identifier that resolves to 0
+        Expression::Atomic(_, Atom::Reference(reference)) => {
+            matches!(reference.resolve_constant(), Some(Literal::Int(0)))
+        }
+        _ => false,
+    }
 }
