@@ -43,18 +43,18 @@ pub fn parse_find_statement(
         }
 
         // Check for duplicate declaration across statements
-        if let Some(symbols) = &ctx.symbols {
-            if symbols.read().lookup(&name).is_some() {
-                ctx.errors.push(RecoverableParseError::new(
-                    format!(
-                        "Variable '{}' is already declared in a previous statement",
-                        variable_name
-                    ),
-                    Some(variable.range()),
-                ));
-                // don't return here, as we can still add the other variables to the symbol table
-                continue;
-            }
+        if let Some(symbols) = &ctx.symbols
+            && symbols.read().lookup(&name).is_some()
+        {
+            ctx.errors.push(RecoverableParseError::new(
+                format!(
+                    "Variable '{}' is already declared in a previous statement",
+                    variable_name
+                ),
+                Some(variable.range()),
+            ));
+            // don't return here, as we can still add the other variables to the symbol table
+            continue;
         }
 
         vars.insert(name, domain.clone());

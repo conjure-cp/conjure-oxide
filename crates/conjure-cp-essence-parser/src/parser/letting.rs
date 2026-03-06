@@ -41,18 +41,18 @@ pub fn parse_letting_statement(
         }
 
         // Check for duplicate declaration across statements
-        if let Some(symbols) = &ctx.symbols {
-            if symbols.read().lookup(&Name::user(variable_name)).is_some() {
-                ctx.errors.push(RecoverableParseError::new(
-                    format!(
-                        "Variable '{}' is already declared in a previous statement",
-                        variable_name
-                    ),
-                    Some(variable.range()),
-                ));
-                // don't return here, as we can still add the other variables to the symbol table
-                continue;
-            }
+        if let Some(symbols) = &ctx.symbols
+            && symbols.read().lookup(&Name::user(variable_name)).is_some()
+        {
+            ctx.errors.push(RecoverableParseError::new(
+                format!(
+                    "Variable '{}' is already declared in a previous statement",
+                    variable_name
+                ),
+                Some(variable.range()),
+            ));
+            // don't return here, as we can still add the other variables to the symbol table
+            continue;
         }
 
         temp_symbols.insert(variable_name);
