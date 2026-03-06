@@ -6,3 +6,4 @@ pub mod parser_legacy;
 pub use errors::{FatalParseError, RecoverableParseError};
 pub use parser::*;
 pub use parser_legacy::parse_essence_file;
+pub use diagnostics::error_detection::collect_errors::detect_errors;
