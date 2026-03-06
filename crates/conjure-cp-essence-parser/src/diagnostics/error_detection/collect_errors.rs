@@ -2,7 +2,7 @@
 
 use crate::diagnostics::diagnostics_api::{Diagnostic, Position, Range, Severity};
 use crate::errors::RecoverableParseError;
-use crate::{FatalParseError, parse_essence_with_context};
+use crate::parse_essence_with_context;
 use conjure_cp_core::context::Context;
 use std::sync::{Arc, RwLock};
 
@@ -18,10 +18,10 @@ pub fn detect_errors(source: &str) -> Vec<Diagnostic> {
                 diagnostics.push(error_to_diagnostic(&error));
             }
         }
-        Err(fatal) => {
-            // For now, convert fatal errors to diagnostics too
-            // Since many errors that should be recoverable are still using FatalParseError::ParseError
-            diagnostics.push(fatal_error_to_diagnostic(&fatal));
+        Err(_fatal) => {
+            // Fatal error means something went wrong internally (e.g., tree-sitter parser failure)
+            // We can't provide meaningful diagnostics in this case, so just return empty
+            // TODO: Figure out how LSP should handle fatal errors from the parser.
         }
     }
 
@@ -35,35 +35,6 @@ pub fn error_to_diagnostic(err: &RecoverableParseError) -> Diagnostic {
         severity: Severity::Error,
         source: "semantic error detection",
         message: err.msg.clone(),
-    }
-}
-
-pub fn fatal_error_to_diagnostic(err: &FatalParseError) -> Diagnostic {
-    match err {
-        crate::FatalParseError::ParseError { msg, range } => {
-            let (start, end) = range_to_position(range);
-            Diagnostic {
-                range: Range { start, end },
-                severity: Severity::Error,
-                source: "semantic error detection",
-                message: msg.clone(),
-            }
-        }
-        _ => Diagnostic {
-            range: Range {
-                start: Position {
-                    line: 0,
-                    character: 0,
-                },
-                end: Position {
-                    line: 0,
-                    character: 1,
-                },
-            },
-            severity: Severity::Error,
-            source: "semantic error detection",
-            message: format!("{}", err),
-        },
     }
 }
 

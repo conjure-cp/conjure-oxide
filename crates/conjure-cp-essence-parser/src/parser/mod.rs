@@ -16,3 +16,4 @@ pub mod util;
 pub use parse_exprs::*;
 pub use parse_literal::*;
 pub use parse_model::*;
+pub use util::ParseContext;
