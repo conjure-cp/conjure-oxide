@@ -842,11 +842,10 @@ unsafe fn read_tuple_list(
         ffi::vec_vec_int_push_back(raw_tuples.ptr, *raw_tuple.ptr);
     }
 
-    let raw_tuple_list = Scoped::new(ffi::tupleList_new(raw_tuples.ptr), |x| {
-        ffi::tupleList_free(x as _)
-    });
-
-    ffi::constraint_setTuples(raw_constraint, raw_tuple_list.ptr);
+    // `constraint_setTuples` transfers ownership of `TupleList` into Minion via shared_ptr.
+    // Do not wrap this pointer in `Scoped` or it will be freed too early.
+    let raw_tuple_list = ffi::tupleList_new(raw_tuples.ptr);
+    ffi::constraint_setTuples(raw_constraint, raw_tuple_list);
 
     Ok(())
 }
