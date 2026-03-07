@@ -839,7 +839,7 @@ unsafe fn read_tuple_list(
             ffi::vec_int_push_back(raw_tuple.ptr, val);
         }
 
-        ffi::vec_vec_int_push_back(raw_tuples.ptr, *raw_tuple.ptr);
+        ffi::vec_vec_int_push_back_ptr(raw_tuples.ptr, raw_tuple.ptr);
     }
 
     // `constraint_setTuples` transfers ownership of `TupleList` into Minion via shared_ptr.
