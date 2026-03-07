@@ -20,11 +20,13 @@ use std::cell::RefCell;
 use std::collections::HashSet;
 use std::ops::Deref;
 use std::rc::Rc;
+use uniplate::{Biplate, Uniplate};
 
 /// Converts a conjure-oxide model to a `minion_sys` model.
 pub fn model_to_minion(model: ConjureModel) -> Result<MinionModel, SolverError> {
     let mut minion_model = MinionModel::new();
-    load_symbol_table(&model, &mut minion_model)?;
+    let table_vars = collect_table_variables(&model);
+    load_symbol_table(&model, &table_vars, &mut minion_model)?;
     load_constraints(&model, &mut minion_model)?;
     Ok(minion_model)
 }
@@ -32,6 +34,7 @@ pub fn model_to_minion(model: ConjureModel) -> Result<MinionModel, SolverError> 
 /// Loads the symbol table into `minion_model`.
 fn load_symbol_table(
     conjure_model: &ConjureModel,
+    table_vars: &HashSet<conjure_ast::Name>,
     minion_model: &mut MinionModel,
 ) -> Result<(), SolverError> {
     if let Some(ref vars) = conjure_model.search_order {
@@ -49,7 +52,7 @@ fn load_symbol_table(
                 ))
             })?;
 
-            load_var(name, &var, true, minion_model)?;
+            load_var(name, &var, true, table_vars, minion_model)?;
         }
 
         // then add the rest as non-search vars
@@ -57,15 +60,31 @@ fn load_symbol_table(
             if search_vars.contains(name) {
                 return Ok(());
             }
-            load_var(name, var, false, minion_model)
+            load_var(name, var, false, table_vars, minion_model)
         })?;
     } else {
         for_each_unrepresented_var(conjure_model, |name, var| {
             let is_search_var = !matches!(name, conjure_ast::Name::Machine(_));
-            load_var(name, var, is_search_var, minion_model)
+            load_var(name, var, is_search_var, table_vars, minion_model)
         })?;
     }
     Ok(())
+}
+
+fn collect_table_variables(conjure_model: &ConjureModel) -> HashSet<conjure_ast::Name> {
+    conjure_model
+        .constraints()
+        .iter()
+        .flat_map(|expr| expr.universe())
+        .filter_map(|expr| match expr {
+            conjure_ast::Expression::Table(_, tuple_expr, _) => {
+                Some(Moo::unwrap_or_clone(tuple_expr))
+            }
+            _ => None,
+        })
+        .flat_map(|tuple_expr| Biplate::<conjure_ast::Reference>::universe_bi(&tuple_expr))
+        .map(|reference| reference.name().clone())
+        .collect()
 }
 
 fn for_each_unrepresented_var(
@@ -96,16 +115,16 @@ fn load_var(
     name: &conjure_ast::Name,
     var: &conjure_ast::DecisionVariable,
     search_var: bool,
+    table_vars: &HashSet<conjure_ast::Name>,
     minion_model: &mut MinionModel,
 ) -> Result<(), SolverError> {
     let resolved_domain = var.domain_of().resolve();
+    let force_discrete = table_vars.contains(name);
     match resolved_domain.as_deref() {
         Some(conjure_ast::GroundDomain::Int(ranges)) => {
-            load_intdomain_var(name, ranges, search_var, minion_model)
+            load_intdomain_var(name, ranges, search_var, force_discrete, minion_model)
         }
-        Some(conjure_ast::GroundDomain::Bool) => {
-            load_booldomain_var(name, search_var, minion_model)
-        }
+        Some(conjure_ast::GroundDomain::Bool) => load_booldomain_var(name, search_var, minion_model),
         x => Err(ModelFeatureNotSupported(format!("{x:?}"))),
     }
 }
@@ -115,6 +134,7 @@ fn load_intdomain_var(
     name: &conjure_ast::Name,
     ranges: &[conjure_ast::Range<i32>],
     search_var: bool,
+    force_discrete: bool,
     minion_model: &mut MinionModel,
 ) -> Result<(), SolverError> {
     let str_name = name_to_string(name.to_owned());
@@ -144,7 +164,11 @@ fn load_intdomain_var(
         x => Err(ModelFeatureNotSupported(format!("{x:?}"))),
     }?;
 
-    let domain = minion_ast::VarDomain::Bound(low, high);
+    let domain = if force_discrete {
+        minion_ast::VarDomain::Discrete(low, high)
+    } else {
+        minion_ast::VarDomain::Bound(low, high)
+    };
 
     try_add_var(str_name, domain, search_var, minion_model)
 }
@@ -260,6 +284,12 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
             parse_atomic_expr(Moo::unwrap_or_clone(a))?,
             parse_atomic_expr(Moo::unwrap_or_clone(b))?,
         )),
+        conjure_ast::Expression::Table(_metadata, tuple_expr, allowed_rows_expr) => {
+            parse_table_constraint(
+                Moo::unwrap_or_clone(tuple_expr),
+                Moo::unwrap_or_clone(allowed_rows_expr),
+            )
+        }
         conjure_ast::Expression::MinionDivEqUndefZero(_metadata, a, b, c) => {
             Ok(minion_ast::Constraint::DivUndefZero(
                 (
@@ -407,6 +437,51 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
         ),
         x => Err(ModelFeatureNotSupported(format!("{x:?}"))),
     }
+}
+
+fn parse_table_constraint(
+    tuple_expr: conjure_ast::Expression,
+    rows_expr: conjure_ast::Expression,
+) -> Result<minion_ast::Constraint, SolverError> {
+    let (tuple_elems, _) = tuple_expr
+        .unwrap_matrix_unchecked()
+        .ok_or_else(|| ModelInvalid("table first argument is not a matrix".to_owned()))?;
+    let (rows, _) = rows_expr
+        .unwrap_matrix_unchecked()
+        .ok_or_else(|| ModelInvalid("table second argument is not a matrix".to_owned()))?;
+
+    let vars = tuple_elems
+        .into_iter()
+        .map(parse_atomic_expr)
+        .collect::<Result<Vec<_>, SolverError>>()?;
+
+    let mut tuples = Vec::with_capacity(rows.len());
+    for row_expr in rows {
+        let (row_elems, _) = row_expr
+            .unwrap_matrix_unchecked()
+            .ok_or_else(|| ModelInvalid("table row is not a matrix".to_owned()))?;
+
+        if row_elems.len() != vars.len() {
+            return Err(ModelInvalid(
+                "table row width does not match tuple width".to_owned(),
+            ));
+        }
+
+        let tuple = row_elems
+            .into_iter()
+            .map(|row_val_expr| {
+                conjure_ast::eval_constant(&row_val_expr)
+                    .ok_or_else(|| {
+                        ModelInvalid("table row contains a non-constant expression".to_owned())
+                    })
+                    .and_then(parse_literal)
+            })
+            .collect::<Result<Vec<_>, SolverError>>()?;
+
+        tuples.push(tuple);
+    }
+
+    Ok(minion_ast::Constraint::Table(vars, tuples))
 }
 
 fn parse_atomic_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Var, SolverError> {
