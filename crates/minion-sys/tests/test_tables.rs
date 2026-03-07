@@ -15,13 +15,13 @@ fn test_table_constraint() -> Result<(), MinionError> {
     // Declares variables (x, y, z), explicitly setting the integers to be between 1 and 3
     model
         .named_variables
-        .add_var(String::from("x"), VarDomain::Bound(1, 3));
+        .add_var(String::from("x"), VarDomain::Discrete(1, 3));
     model
         .named_variables
-        .add_var(String::from("y"), VarDomain::Bound(1, 3));
+        .add_var(String::from("y"), VarDomain::Discrete(1, 3));
     model
         .named_variables
-        .add_var(String::from("z"), VarDomain::Bound(1, 3));
+        .add_var(String::from("z"), VarDomain::Discrete(1, 3));
 
     // Defines the table data (a list of tuples)
     let table_data = vec![
