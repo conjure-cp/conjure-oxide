@@ -2,7 +2,7 @@
 
 use crate::Model as ConjureModel;
 use crate::ast::{self as conjure_ast, HasDomain, Moo, Range};
-use crate::settings::SolverFamily;
+use crate::settings::{SolverFamily, minion_discrete_threshold};
 use crate::solver::SolverError::{
     ModelFeatureNotImplemented, ModelFeatureNotSupported, ModelInvalid,
 };
@@ -164,7 +164,11 @@ fn load_intdomain_var(
         x => Err(ModelFeatureNotSupported(format!("{x:?}"))),
     }?;
 
-    let domain = if force_discrete {
+    let size = i64::from(high) - i64::from(low) + 1;
+    let threshold = minion_discrete_threshold() as i64;
+    let use_discrete = force_discrete || size <= threshold;
+
+    let domain = if use_discrete {
         minion_ast::VarDomain::Discrete(low, high)
     } else {
         minion_ast::VarDomain::Bound(low, high)

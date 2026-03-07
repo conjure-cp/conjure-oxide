@@ -233,6 +233,17 @@ thread_local! {
     static CURRENT_SOLVER_FAMILY: Cell<Option<SolverFamily>> = const { Cell::new(None) };
 }
 
+pub const DEFAULT_MINION_DISCRETE_THRESHOLD: usize = 10;
+
+thread_local! {
+    /// Thread-local setting controlling when Minion int domains are emitted as `DISCRETE`.
+    ///
+    /// If an int domain size is <= this threshold, the Minion adaptor uses `DISCRETE`; otherwise
+    /// it uses `BOUND`, unless another constraint requires `DISCRETE`.
+    static MINION_DISCRETE_THRESHOLD: Cell<usize> =
+        const { Cell::new(DEFAULT_MINION_DISCRETE_THRESHOLD) };
+}
+
 pub fn set_current_solver_family(solver_family: SolverFamily) {
     CURRENT_SOLVER_FAMILY.with(|current| current.set(Some(solver_family)));
 }
@@ -246,6 +257,14 @@ pub fn current_solver_family() -> SolverFamily {
             )
         })
     })
+}
+
+pub fn set_minion_discrete_threshold(threshold: usize) {
+    MINION_DISCRETE_THRESHOLD.with(|current| current.set(threshold));
+}
+
+pub fn minion_discrete_threshold() -> usize {
+    MINION_DISCRETE_THRESHOLD.with(|current| current.get())
 }
 
 impl FromStr for SolverFamily {
