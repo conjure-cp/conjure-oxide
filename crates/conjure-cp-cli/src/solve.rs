@@ -19,8 +19,7 @@ use conjure_cp::{
     rule_engine::{resolve_rule_sets, rewrite_morph, rewrite_naive},
     settings::{
         Rewriter, set_comprehension_expander, set_current_parser, set_current_rewriter,
-        set_current_solver_family,
-        set_minion_discrete_threshold,
+        set_current_solver_family, set_minion_discrete_threshold,
     },
     solver::Solver,
 };

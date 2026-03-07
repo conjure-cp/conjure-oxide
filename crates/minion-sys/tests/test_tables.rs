@@ -25,20 +25,30 @@ fn test_table_constraint() -> Result<(), MinionError> {
 
     // Defines the table data (a list of tuples)
     let table_data = vec![
-        vec![Constant::Integer(1), Constant::Integer(1), Constant::Integer(2)],
-        vec![Constant::Integer(1), Constant::Integer(2), Constant::Integer(3)],
-        vec![Constant::Integer(2), Constant::Integer(1), Constant::Integer(3)],
+        vec![
+            Constant::Integer(1),
+            Constant::Integer(1),
+            Constant::Integer(2),
+        ],
+        vec![
+            Constant::Integer(1),
+            Constant::Integer(2),
+            Constant::Integer(3),
+        ],
+        vec![
+            Constant::Integer(2),
+            Constant::Integer(1),
+            Constant::Integer(3),
+        ],
     ];
-    // Builds the Table constraint 
+    // Builds the Table constraint
     let vars = vec![
         Var::NameRef(String::from("x")),
         Var::NameRef(String::from("y")),
         Var::NameRef(String::from("z")),
     ];
-    
-    model
-        .constraints
-        .push(Constraint::Table(vars, table_data));
+
+    model.constraints.push(Constraint::Table(vars, table_data));
 
     // Runs the solver via the Minion interface
     minion_sys::run_minion(model, callback)?;

@@ -124,7 +124,9 @@ fn load_var(
         Some(conjure_ast::GroundDomain::Int(ranges)) => {
             load_intdomain_var(name, ranges, search_var, force_discrete, minion_model)
         }
-        Some(conjure_ast::GroundDomain::Bool) => load_booldomain_var(name, search_var, minion_model),
+        Some(conjure_ast::GroundDomain::Bool) => {
+            load_booldomain_var(name, search_var, minion_model)
+        }
         x => Err(ModelFeatureNotSupported(format!("{x:?}"))),
     }
 }
