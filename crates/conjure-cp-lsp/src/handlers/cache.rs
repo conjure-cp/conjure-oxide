@@ -8,9 +8,9 @@ use tree_sitter::Tree;
 #[derive(Clone, Debug)]
 pub struct CacheCont {
     pub sourcemap: Option<SourceMap>,
-    pub ast: Model,
+    pub ast: Option<Model>,
     pub errors: Vec<RecoverableParseError>,
-    pub cst: Tree,
+    pub cst: Option<Tree>,
     pub contents: String,
     //from DidChangeTextDocumentParams -> Versioned thingy -> version
     pub version: i32, //therefore can do dirty clean with version checking? which allows direct comparison

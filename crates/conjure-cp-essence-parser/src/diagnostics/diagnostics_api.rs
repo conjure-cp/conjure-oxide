@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
 
 use crate::diagnostics::error_detection::collect_errors::detect_errors;
-use conjure_cp_core::ast::Model;
 use tree_sitter::Tree;
 // structs for lsp stuff
 

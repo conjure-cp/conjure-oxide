@@ -55,15 +55,36 @@ impl Backend {
                     &mut errors,
                     Some(&cst_tree),
                 );
-                let (ast_model, source_map) = parsed.unwrap().unwrap();
-                CacheCont {
-                    sourcemap: Some(source_map), // need to get this using parse_essence_with_context_and_map
-                    ast: ast_model, // need to get this using parse_essence_with_context_and_map
-                    errors: errors, // need to get this using parse_essence_with_context_and_map
-                    cst: cst_tree, // get this onOpen using tree-sitter directly, then send it to parse_essence_with_context_and_map to get sourcemap and ast
+
+                let mut cache = CacheCont {
+                    sourcemap: None,
+                    ast: None,
+                    errors: vec![],
+                    cst: Some(cst_tree),
                     contents: text.clone(),
-                    version: 0,
+                    version: 0, //initial version is 0, will be updated on change
+                };
+
+                match parsed {
+                    Ok(Some((model, source_map))) => {
+                        cache.ast = Some(model);
+                        cache.sourcemap = Some(source_map);
+                        cache.errors = errors;
+                    }
+                    Ok(None) => {
+                        // recoverable errors
+                        cache.errors = errors;
+                        cache.ast = None;
+                        cache.sourcemap = None;
+                    }
+                    Err(fatal) => {
+                        cache.ast = None;
+                        cache.sourcemap = None;
+                        cache.errors = vec![RecoverableParseError::new(fatal.to_string(), None)];
+                    }
                 }
+
+                cache
             })
             .await;
         // parse_essence_with_context_and_map(src, context, errors, tree)
@@ -135,21 +156,24 @@ impl Backend {
                     let new_end_position = position_to_treesitter_point(lsp_range.end);
                     // let edit_range = tree_sitter::InputEdit::
                     let mut old_cst = cache_conts.cst.clone();
-                    old_cst.edit(&tree_sitter::InputEdit {
-                        start_byte,
-                        old_end_byte,
-                        new_end_byte,
-                        start_position,
-                        old_end_position,
-                        new_end_position,
-                    });
-                    tree_sitter::Parser::new()
-                        .parse(&new_text, Some(&old_cst))
-                        .unwrap()
+                    if let Some(ref mut old_cst) = old_cst {
+                        old_cst.edit(&tree_sitter::InputEdit {
+                            start_byte,
+                            old_end_byte,
+                            new_end_byte,
+                            start_position,
+                            old_end_position,
+                            new_end_position,
+                        });
+                        old_cst.clone()
+                    } else {
+                        // if cst was None due to a failure to parse,
+                        // we should re-parse the entire new text instead of trying to edit a non-existent tree
+                        // there could be a better way to handle this, but for now this is a safe fallback
+                        get_tree(&new_text).unwrap().0
+                    }
                 } else {
-                    tree_sitter::Parser::new()
-                        .parse(&new_text, Some(&cache_conts.cst))
-                        .unwrap()
+                    get_tree(&new_text).unwrap().0
                 };
 
                 let context = Arc::new(RwLock::new(Context::default()));
@@ -166,9 +190,9 @@ impl Backend {
 
                 let new_cache_conts = CacheCont {
                     sourcemap: Some(source_map),
-                    ast: ast_model,
+                    ast: Some(ast_model),
                     errors: errors,
-                    cst: new_tree,
+                    cst: Some(new_tree),
                     contents: new_text.clone(),
                     version: params.text_document.version,
                 };
@@ -198,7 +222,8 @@ impl Backend {
         //ideal situation is feed diagnostics struct and then let it use struct to return diagnostics
         // e.g.:
         //let diagnostics = get_diagnostics(&cache_conts);
-        let syntactic_diagnostics = get_diagnostics(&cache_conts.contents, &cache_conts.cst);
+        let syntactic_diagnostics =
+            get_diagnostics(&cache_conts.contents, &(cache_conts.cst.as_ref().unwrap()));
         let semantic_diagnostics: Vec<Diagnostic> = cache_conts
             .errors
             .into_iter()
