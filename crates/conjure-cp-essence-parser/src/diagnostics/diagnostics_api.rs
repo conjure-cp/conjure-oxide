@@ -1,7 +1,8 @@
 use serde::{Deserialize, Serialize};
 
 use crate::diagnostics::error_detection::collect_errors::detect_errors;
-
+use conjure_cp_core::ast::Model;
+use tree_sitter::Tree;
 // structs for lsp stuff
 
 // position / range
@@ -68,10 +69,10 @@ pub struct DocumentSymbol {
 }
 
 // getting the actual diagnostic
-pub fn get_diagnostics(source: &str) -> Vec<Diagnostic> {
+pub fn get_diagnostics(source: &str, cst: &Tree) -> Vec<Diagnostic> {
     let mut diagnostics = Vec::new();
 
-    diagnostics.extend(detect_errors(source));
+    diagnostics.extend(detect_errors(source, cst));
 
     diagnostics
 }
