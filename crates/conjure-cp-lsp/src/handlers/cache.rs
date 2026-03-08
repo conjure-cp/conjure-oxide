@@ -1,5 +1,5 @@
 use conjure_cp_core::ast::Model;
-use conjure_cp_essence_parser::diagnostics::source_map::SourceMap;
+use conjure_cp_essence_parser::{RecoverableParseError, diagnostics::source_map::SourceMap};
 use moka::future::Cache;
 use std::time::Duration;
 use tower_lsp::lsp_types::*;
@@ -9,6 +9,7 @@ use tree_sitter::Tree;
 pub struct CacheCont {
     pub sourcemap: Option<SourceMap>,
     pub ast: Model,
+    pub errors: Vec<RecoverableParseError>,
     pub cst: Tree,
     pub contents: String,
     //from DidChangeTextDocumentParams -> Versioned thingy -> version

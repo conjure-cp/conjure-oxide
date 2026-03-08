@@ -1,11 +1,11 @@
 use conjure_cp_essence_parser::diagnostics::diagnostics_api::get_diagnostics;
 use conjure_cp_essence_parser::diagnostics::error_detection::collect_errors::check_diagnostic;
-use tree_sitter::Tree;
+use conjure_cp_essence_parser::util::get_tree;
 
 #[test]
 fn missing_identifier() {
     let source = "find: bool";
-    let cst: Tree = tree_sitter::Parser::new().parse(&source, None).unwrap();
+    let (cst, _) = get_tree(&source).unwrap();
 
     let diagnostics = get_diagnostics(&source, &cst);
     assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
@@ -18,7 +18,7 @@ fn missing_identifier() {
 #[test]
 fn missing_colon() {
     let source = "find x bool";
-    let cst: Tree = tree_sitter::Parser::new().parse(&source, None).unwrap();
+    let (cst, _) = get_tree(&source).unwrap();
 
     let diagnostics = get_diagnostics(&source, &cst);
 
@@ -36,7 +36,7 @@ fn missing_domain() {
 find x: bool
 find y:
     ";
-    let cst: Tree = tree_sitter::Parser::new().parse(&source, None).unwrap();
+    let (cst, _) = get_tree(&source).unwrap();
 
     let diagnostics = get_diagnostics(&source, &cst);
 
@@ -54,7 +54,7 @@ fn missing_contraint() {
 find x: bool
 such that
     ";
-    let cst: Tree = tree_sitter::Parser::new().parse(&source, None).unwrap();
+    let (cst, _) = get_tree(&source).unwrap();
 
     let diagnostics = get_diagnostics(&source, &cst);
 
@@ -73,7 +73,7 @@ fn multiple_missing_tokens() {
 find x: int(1..3
 letting x be
     ";
-    let cst: Tree = tree_sitter::Parser::new().parse(&source, None).unwrap();
+    let (cst, _) = get_tree(&source).unwrap();
 
     let diagnostics = get_diagnostics(&source, &cst);
 

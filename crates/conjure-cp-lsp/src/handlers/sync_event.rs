@@ -1,10 +1,12 @@
 use std::sync::Arc;
 use std::sync::RwLock;
 
-use conjure_cp_core::ast::Model;
 use conjure_cp_core::context::Context;
 use conjure_cp_essence_parser::RecoverableParseError;
+use conjure_cp_essence_parser::diagnostics::diagnostics_api::Diagnostic;
+use conjure_cp_essence_parser::diagnostics::error_detection::collect_errors::error_to_diagnostic;
 use conjure_cp_essence_parser::parse_essence_with_context_and_map;
+use conjure_cp_essence_parser::util::get_tree;
 use tower_lsp::{lsp_types::Diagnostic as LspDiagnostic, lsp_types::*};
 
 use conjure_cp_essence_parser::diagnostics::diagnostics_api::Diagnostic as ParserDiagnostic;
@@ -42,7 +44,7 @@ impl Backend {
                     .log_message(MessageType::INFO, "Cache miss! Loading into cache now")
                     .await;
 
-                let cst_tree = tree_sitter::Parser::new().parse(&text, None).unwrap();
+                let (cst_tree, _) = get_tree(&text).unwrap();
 
                 let context = Arc::new(RwLock::new(Context::default()));
                 let mut errors: Vec<RecoverableParseError> = Vec::new();
@@ -57,6 +59,7 @@ impl Backend {
                 CacheCont {
                     sourcemap: Some(source_map), // need to get this using parse_essence_with_context_and_map
                     ast: ast_model, // need to get this using parse_essence_with_context_and_map
+                    errors: errors, // need to get this using parse_essence_with_context_and_map
                     cst: cst_tree, // get this onOpen using tree-sitter directly, then send it to parse_essence_with_context_and_map to get sourcemap and ast
                     contents: text.clone(),
                     version: 0,
@@ -164,6 +167,7 @@ impl Backend {
                 let new_cache_conts = CacheCont {
                     sourcemap: Some(source_map),
                     ast: ast_model,
+                    errors: errors,
                     cst: new_tree,
                     contents: new_text.clone(),
                     version: params.text_document.version,
@@ -194,7 +198,15 @@ impl Backend {
         //ideal situation is feed diagnostics struct and then let it use struct to return diagnostics
         // e.g.:
         //let diagnostics = get_diagnostics(&cache_conts);
-        let diagnostics = get_diagnostics(&cache_conts.contents, &cache_conts.cst); //temp
+        let syntactic_diagnostics = get_diagnostics(&cache_conts.contents, &cache_conts.cst);
+        let semantic_diagnostics: Vec<Diagnostic> = cache_conts
+            .errors
+            .into_iter()
+            .filter_map(|err: RecoverableParseError| Some(error_to_diagnostic(&err)))
+            .collect();
+        let mut diagnostics = syntactic_diagnostics;
+        diagnostics.extend(semantic_diagnostics);
+
         let lsp_diagnostics = convert_diagnostics(diagnostics);
 
         // Publish diagnostics back to the client

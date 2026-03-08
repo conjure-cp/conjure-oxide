@@ -1,11 +1,11 @@
 use conjure_cp_essence_parser::diagnostics::diagnostics_api::get_diagnostics;
 use conjure_cp_essence_parser::diagnostics::error_detection::collect_errors::check_diagnostic;
-use tree_sitter::Tree;
+use conjure_cp_essence_parser::util::get_tree;
 
 #[test]
 fn unexpected_closing_paren() {
     let source = "find x: int(1..3))";
-    let cst: Tree = tree_sitter::Parser::new().parse(&source, None).unwrap();
+    let (cst, _) = get_tree(&source).unwrap();
 
     let diagnostics = get_diagnostics(&source, &cst);
     assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
@@ -16,7 +16,7 @@ fn unexpected_closing_paren() {
 #[test]
 fn unexpected_identifier_in_range() {
     let source = "find x: int(1..3x)";
-    let cst: Tree = tree_sitter::Parser::new().parse(&source, None).unwrap();
+    let (cst, _) = get_tree(&source).unwrap();
 
     let diagnostics = get_diagnostics(&source, &cst);
     assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
@@ -30,7 +30,7 @@ fn unexpected_semicolon() {
 find x: int(1..3)
 such that x = 6;
         ";
-    let cst: Tree = tree_sitter::Parser::new().parse(&source, None).unwrap();
+    let (cst, _) = get_tree(&source).unwrap();
 
     let diagnostics = get_diagnostics(&source, &cst);
     assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
@@ -41,7 +41,7 @@ such that x = 6;
 #[test]
 fn unexpected_extra_comma_in_find() {
     let source = "find x,, y: int(1..3)";
-    let cst: Tree = tree_sitter::Parser::new().parse(&source, None).unwrap();
+    let (cst, _) = get_tree(&source).unwrap();
 
     let diagnostics = get_diagnostics(&source, &cst);
     assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
@@ -55,7 +55,7 @@ fn unexpected_token_in_implication() {
 find x: int(1..3)
 such that x -> %9
 ";
-    let cst: Tree = tree_sitter::Parser::new().parse(&source, None).unwrap();
+    let (cst, _) = get_tree(&source).unwrap();
 
     let diagnostics = get_diagnostics(&source, &cst);
     assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
@@ -66,7 +66,7 @@ such that x -> %9
 #[test]
 fn unexpected_token_in_matrix_domain() {
     let source = "find x: matrix indexed by [int, &] of int";
-    let cst: Tree = tree_sitter::Parser::new().parse(&source, None).unwrap();
+    let (cst, _) = get_tree(&source).unwrap();
 
     let diagnostics = get_diagnostics(&source, &cst);
     assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
@@ -77,7 +77,7 @@ fn unexpected_token_in_matrix_domain() {
 #[test]
 fn unexpected_token_in_set_literal() {
     let source = "find x: set of int\nsuch that x = {1, 2, @}";
-    let cst: Tree = tree_sitter::Parser::new().parse(&source, None).unwrap();
+    let (cst, _) = get_tree(&source).unwrap();
 
     let diagnostics = get_diagnostics(&source, &cst);
     assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
@@ -92,7 +92,7 @@ fn multiple_unexpected_tokens() {
     let source = "\
 find x: set of int;
 such that x = {1, 2, @}";
-    let cst: Tree = tree_sitter::Parser::new().parse(&source, None).unwrap();
+    let (cst, _) = get_tree(&source).unwrap();
 
     let diagnostics = get_diagnostics(&source, &cst);
     assert_eq!(diagnostics.len(), 2, "Expected exactly two diagnostics");
@@ -111,7 +111,7 @@ fn unexpected_x_in_all_diff() {
     let source = "\
 find a : bool
 such that a = allDiff([1,2,4,1]x)";
-    let cst: Tree = tree_sitter::Parser::new().parse(&source, None).unwrap();
+    let (cst, _) = get_tree(&source).unwrap();
 
     let diagnostics = get_diagnostics(&source, &cst);
     assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
@@ -132,7 +132,7 @@ fn unexpected_int_at_the_end() {
     let source = "\
 find a : bool
 such that a = allDiff([1,2,4,1])8";
-    let cst: Tree = tree_sitter::Parser::new().parse(&source, None).unwrap();
+    let (cst, _) = get_tree(&source).unwrap();
 
     let diagnostics = get_diagnostics(&source, &cst);
     assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
@@ -145,7 +145,7 @@ fn unexpected_operand_at_end() {
     let source = "\
 find x, a, b: int(1..3)+
 ";
-    let cst: Tree = tree_sitter::Parser::new().parse(&source, None).unwrap();
+    let (cst, _) = get_tree(&source).unwrap();
 
     let diagnostics = get_diagnostics(&source, &cst);
     assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
@@ -158,7 +158,7 @@ fn unexpected_operand_middle_no_comma() {
     let source = "\
 find x-, b: int(1..3)
 ";
-    let cst: Tree = tree_sitter::Parser::new().parse(&source, None).unwrap();
+    let (cst, _) = get_tree(&source).unwrap();
 
     let diagnostics = get_diagnostics(&source, &cst);
     assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
@@ -171,7 +171,7 @@ fn unexpected_operand_middle_comma() {
     let source = "\
 find x,-, b: int(1..3)
 ";
-    let cst: Tree = tree_sitter::Parser::new().parse(&source, None).unwrap();
+    let (cst, _) = get_tree(&source).unwrap();
 
     let diagnostics = get_diagnostics(&source, &cst);
     assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
@@ -182,7 +182,7 @@ find x,-, b: int(1..3)
 #[test]
 fn unexpected_token_in_identifier() {
     let source = "find v@lue: int(1..3)";
-    let cst: Tree = tree_sitter::Parser::new().parse(&source, None).unwrap();
+    let (cst, _) = get_tree(&source).unwrap();
 
     let diagnostics = get_diagnostics(&source, &cst);
     assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
@@ -197,7 +197,7 @@ fn missing_right_operand_in_and_expr() {
 find x: int
 such that x /\\
 ";
-    let cst: Tree = tree_sitter::Parser::new().parse(&source, None).unwrap();
+    let (cst, _) = get_tree(&source).unwrap();
 
     let diagnostics = get_diagnostics(&source, &cst);
     assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
@@ -212,7 +212,7 @@ fn unexpected_token_in_comparison() {
 find x: int
 such that 5 =
     ";
-    let cst: Tree = tree_sitter::Parser::new().parse(&source, None).unwrap();
+    let (cst, _) = get_tree(&source).unwrap();
 
     let diagnostics = get_diagnostics(&source, &cst);
     assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
@@ -225,7 +225,7 @@ fn unexpected_token_in_domain() {
     // not indented because have to avoid leading spaces for accurate character count
     let source = "find a: int(1.3)";
 
-    let cst: Tree = tree_sitter::Parser::new().parse(&source, None).unwrap();
+    let (cst, _) = get_tree(&source).unwrap();
 
     let diagnostics = get_diagnostics(&source, &cst);
 

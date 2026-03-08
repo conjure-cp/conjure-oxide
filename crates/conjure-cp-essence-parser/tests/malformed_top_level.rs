@@ -1,11 +1,11 @@
 use conjure_cp_essence_parser::diagnostics::diagnostics_api::get_diagnostics;
 use conjure_cp_essence_parser::diagnostics::error_detection::collect_errors::check_diagnostic;
-use tree_sitter::Tree;
+use conjure_cp_essence_parser::util::get_tree;
 
 #[test]
 fn invalid_top_level_statement_expression() {
     let source = " a,a,b: int(1..3)";
-    let cst: Tree = tree_sitter::Parser::new().parse(&source, None).unwrap();
+    let (cst, _) = get_tree(&source).unwrap();
 
     let diags = get_diagnostics(&source, &cst);
     assert_eq!(diags.len(), 1, "Expected exactly one diagnostic");
@@ -16,7 +16,7 @@ fn invalid_top_level_statement_expression() {
 #[test]
 fn malformed_find_2() {
     let source = "find >=lex,b,c: int(1..3)";
-    let cst: Tree = tree_sitter::Parser::new().parse(&source, None).unwrap();
+    let (cst, _) = get_tree(&source).unwrap();
 
     // using >=lex operator instead of identifier
     let diagnostics = get_diagnostics(&source, &cst);
@@ -36,7 +36,7 @@ fn malformed_find_2() {
 #[test]
 fn malformed_find_3() {
     let source = "find +,a,b: int(1..3)";
-    let cst: Tree = tree_sitter::Parser::new().parse(&source, None).unwrap();
+    let (cst, _) = get_tree(&source).unwrap();
 
     let diags = get_diagnostics(&source, &cst);
     assert_eq!(diags.len(), 1, "Expected exactly one diagnostic");
@@ -54,7 +54,7 @@ fn malformed_find_3() {
 #[test]
 fn unexpected_colon_used_as_identifier() {
     let source = "find :,b,c: int(1..3)";
-    let cst: Tree = tree_sitter::Parser::new().parse(&source, None).unwrap();
+    let (cst, _) = get_tree(&source).unwrap();
 
     let diagnostics = get_diagnostics(&source, &cst);
 
@@ -75,7 +75,7 @@ fn unexpected_colon_used_as_identifier() {
 #[test]
 fn missing_colon_domain_in_find_statement_1st_line() {
     let source = "find x";
-    let cst: Tree = tree_sitter::Parser::new().parse(&source, None).unwrap();
+    let (cst, _) = get_tree(&source).unwrap();
 
     let diagnostics = get_diagnostics(&source, &cst);
 
@@ -90,7 +90,7 @@ fn missing_colon_domain_in_find_statement_1st_line() {
 #[test]
 fn missing_colon_domain_in_find_statement_2nd_line() {
     let source = "find x: int(1..3)\nfind x";
-    let cst: Tree = tree_sitter::Parser::new().parse(&source, None).unwrap();
+    let (cst, _) = get_tree(&source).unwrap();
 
     let diagnostics = get_diagnostics(&source, &cst);
 
@@ -104,7 +104,7 @@ fn missing_colon_domain_in_find_statement_2nd_line() {
 #[test]
 fn unexpected_print_2nd_line() {
     let source = "find a,b,c: int(1..3)\nprint a";
-    let cst: Tree = tree_sitter::Parser::new().parse(&source, None).unwrap();
+    let (cst, _) = get_tree(&source).unwrap();
 
     let diagnostics = get_diagnostics(&source, &cst);
 

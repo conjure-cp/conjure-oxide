@@ -1,11 +1,11 @@
 use conjure_cp_essence_parser::diagnostics::diagnostics_api::get_diagnostics;
 use conjure_cp_essence_parser::diagnostics::error_detection::collect_errors::check_diagnostic;
-use tree_sitter::Tree;
+use conjure_cp_essence_parser::util::get_tree;
 
 #[test]
 fn detects_keyword_as_identifier_find() {
     let source = "find find,b,c: int(1..3)";
-    let cst: Tree = tree_sitter::Parser::new().parse(&source, None).unwrap();
+    let (cst, _) = get_tree(&source).unwrap();
     // using find keyword instead of identifier
     let diagnostics = get_diagnostics(&source, &cst);
 
@@ -20,7 +20,7 @@ fn detects_keyword_as_identifier_find() {
 #[test]
 fn detects_keyword_as_identifier_letting() {
     let source = "find letting,b,c: int(1..3)";
-    let cst: Tree = tree_sitter::Parser::new().parse(&source, None).unwrap();
+    let (cst, _) = get_tree(&source).unwrap();
 
     // using find keyword instead of identifier
     let diagnostics = get_diagnostics(&source, &cst);
@@ -36,7 +36,7 @@ fn detects_keyword_as_identifier_letting() {
 #[test]
 fn detects_keyword_as_identifier_bool() {
     let source = "find bool: bool";
-    let cst: Tree = tree_sitter::Parser::new().parse(&source, None).unwrap();
+    let (cst, _) = get_tree(&source).unwrap();
 
     // using find keyword instead of identifier
     let diagnostics = get_diagnostics(&source, &cst);
