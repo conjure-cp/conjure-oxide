@@ -634,7 +634,7 @@ impl Domain {
     }
 
     /// If the domain is ground, return its size bound
-    pub fn length(&self) -> Result<u64, DomainOpError> {
+    pub fn length(&self) -> Result<Int, DomainOpError> {
         if let Some(gd) = self.as_ground() {
             return gd.length();
         }

@@ -223,7 +223,7 @@ impl GroundDomain {
     /// # Errors
     ///
     /// - [`DomainOpError::Unbounded`] if the input domain is of infinite size.
-    pub fn length(&self) -> Result<u64, DomainOpError> {
+    pub fn length(&self) -> Result<Int, DomainOpError> {
         match self {
             GroundDomain::Empty(_) => Ok(0),
             GroundDomain::Bool => Ok(2),
@@ -232,10 +232,10 @@ impl GroundDomain {
                     return Err(DomainOpError::Unbounded);
                 }
 
-                let mut length = 0u64;
+                let mut length = 0i32;
                 for range in ranges {
                     if let Some(range_length) = range.length() {
-                        length += range_length as u64;
+                        length += range_length;
                     } else {
                         return Err(DomainOpError::Unbounded);
                     }
@@ -246,12 +246,12 @@ impl GroundDomain {
                 let inner_len = inner_domain.length()?;
                 let (min_sz, max_sz) = match set_attr.size {
                     Range::Unbounded => (0, inner_len),
-                    Range::Single(n) => (n as u64, n as u64),
-                    Range::UnboundedR(n) => (n as u64, inner_len),
-                    Range::UnboundedL(n) => (0, n as u64),
-                    Range::Bounded(min, max) => (min as u64, max as u64),
+                    Range::Single(n) => (n, n),
+                    Range::UnboundedR(n) => (n, inner_len),
+                    Range::UnboundedL(n) => (0, n),
+                    Range::Bounded(min, max) => (min, max),
                 };
-                let mut ans = 0u64;
+                let mut ans = 0i32;
                 for sz in min_sz..=max_sz {
                     let c = count_combinations(inner_len, sz)?;
                     ans = ans.checked_add(c).ok_or(DomainOpError::TooLarge)?;
@@ -262,12 +262,12 @@ impl GroundDomain {
                 let inner_len = inner_domain.length()?;
                 let (min_sz, max_sz) = match mset_attr.size {
                     Range::Unbounded => (0, inner_len),
-                    Range::Single(n) => (n as u64, n as u64),
-                    Range::UnboundedR(n) => (n as u64, inner_len),
-                    Range::UnboundedL(n) => (0, n as u64),
-                    Range::Bounded(min, max) => (min as u64, max as u64),
+                    Range::Single(n) => (n, n),
+                    Range::UnboundedR(n) => (n, inner_len),
+                    Range::UnboundedL(n) => (0, n),
+                    Range::Bounded(min, max) => (min, max),
                 };
-                let mut ans = 0u64;
+                let mut ans = 0i32;
                 for sz in min_sz..=max_sz {
                     // need  "multichoose", ((n  k)) == (n+k-1  k)
                     // Where n=inner_len and k=sz
@@ -277,7 +277,7 @@ impl GroundDomain {
                 Ok(ans)
             }
             GroundDomain::Tuple(domains) => {
-                let mut ans = 1u64;
+                let mut ans = 1i32;
                 for domain in domains {
                     ans = ans
                         .checked_mul(domain.length()?)
@@ -287,7 +287,7 @@ impl GroundDomain {
             }
             GroundDomain::Record(entries) => {
                 // A record is just a named tuple
-                let mut ans = 1u64;
+                let mut ans = 1i32;
                 for entry in entries {
                     let sz = entry.domain.length()?;
                     ans = ans.checked_mul(sz).ok_or(DomainOpError::TooLarge)?;
