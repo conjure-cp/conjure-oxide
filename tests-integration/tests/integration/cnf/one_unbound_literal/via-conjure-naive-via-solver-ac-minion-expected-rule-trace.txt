@@ -11,39 +11,39 @@ and([or([a,a;int(1..2)]),or([!(b),!(b);int(1..2)]);int(1..2)])
 --
 
 !(b), 
-   ~~> not_literal_to_wliteral ([("Minion", 4100)]) 
-WatchedLiteral(b,false) 
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(b,false)
 
 --
 
 !(b), 
-   ~~> not_literal_to_wliteral ([("Minion", 4100)]) 
-WatchedLiteral(b,false) 
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(b,false)
 
 --
 
 and([or([a,a;int(1..2)]),or([WatchedLiteral(b,false),WatchedLiteral(b,false);int(1..2)]);int(1..2)]), 
-   ~~> matrix_to_list ([("Base", 2000)]) 
-and([or([a,a;int(1..2)]),or([WatchedLiteral(b,false),WatchedLiteral(b,false);int(1..2)]);int(1..)]) 
+   ~~> matrix_to_list ([("Base", 2000)])
+and([or([a,a;int(1..2)]),or([WatchedLiteral(b,false),WatchedLiteral(b,false);int(1..2)]);int(1..)])
 
 --
 
 and([or([a,a;int(1..2)]),or([WatchedLiteral(b,false),WatchedLiteral(b,false);int(1..2)]);int(1..)]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
+   ~~> constant_evaluator ([("Constant", 9001)])
 or([a,a;int(1..2)]),
-or([WatchedLiteral(b,false),WatchedLiteral(b,false);int(1..2)]) 
+or([WatchedLiteral(b,false),WatchedLiteral(b,false);int(1..2)])
 
 --
 
 or([a,a;int(1..2)]), 
-   ~~> matrix_to_list ([("Base", 2000)]) 
-or([a,a;int(1..)]) 
+   ~~> matrix_to_list ([("Base", 2000)])
+or([a,a;int(1..)])
 
 --
 
 or([WatchedLiteral(b,false),WatchedLiteral(b,false);int(1..2)]), 
-   ~~> matrix_to_list ([("Base", 2000)]) 
-or([WatchedLiteral(b,false),WatchedLiteral(b,false);int(1..)]) 
+   ~~> matrix_to_list ([("Base", 2000)])
+or([WatchedLiteral(b,false),WatchedLiteral(b,false);int(1..)])
 
 --
 

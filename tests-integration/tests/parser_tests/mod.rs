@@ -25,7 +25,7 @@ fn test_parse_dominance() {
 
     let model = res.unwrap();
 
-    let symbols = model.as_submodel().symbols().clone();
+    let symbols = model.symbols().clone();
     let cost_decl = symbols
         .lookup(&Name::User("cost".into()))
         .expect("Declaration for 'cost' not found in parsed model");
@@ -147,7 +147,7 @@ fn test_no_dominance() {
     let mod_nodom = res_nodom.unwrap();
     let mod_dom = res_dom.unwrap();
 
-    assert_eq!(mod_nodom.as_submodel(), mod_dom.as_submodel());
+    assert_eq!(mod_nodom, mod_dom);
     assert!(mod_nodom.dominance.is_none());
     assert!(mod_dom.dominance.is_some());
 }

@@ -319,7 +319,7 @@ fn safediv_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     else {
         return Err(RuleNotApplicable);
     };
-    
+
     let Some(denom_bits) = denom_inner.as_ref().clone().unwrap_list() else {
         return Err(RuleNotApplicable);
     };

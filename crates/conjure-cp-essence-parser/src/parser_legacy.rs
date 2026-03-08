@@ -1,4 +1,5 @@
 use crate::errors::{FatalParseError, ParseErrorCollection};
+use conjure_cp_core::ast::assertions::debug_assert_model_well_formed;
 use conjure_cp_core::parse::model_from_json;
 use conjure_cp_core::{Model, context::Context};
 use std::sync::{Arc, RwLock};
@@ -43,5 +44,6 @@ pub fn parse_essence_file(
 
     let parsed_model = model_from_json(&astjson, context)
         .map_err(|e| Box::new(ParseErrorCollection::fatal(e.into())))?;
+    debug_assert_model_well_formed(&parsed_model, "via-conjure");
     Ok(parsed_model)
 }

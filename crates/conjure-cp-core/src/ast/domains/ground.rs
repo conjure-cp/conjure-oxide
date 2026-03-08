@@ -981,7 +981,7 @@ impl Display for GroundDomain {
             GroundDomain::Matrix(value_domain, index_domains) => {
                 write!(
                     f,
-                    "matrix indexed by [{}] of {value_domain}",
+                    "matrix indexed by {} of {value_domain}",
                     pretty_vec(&index_domains.iter().collect_vec())
                 )
             }
