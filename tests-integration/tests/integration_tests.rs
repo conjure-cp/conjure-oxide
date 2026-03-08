@@ -30,6 +30,7 @@ use conjure_cp::rule_engine::resolve_rule_sets;
 use conjure_cp::settings::{
     Parser, QuantifiedExpander, Rewriter, SolverFamily, set_comprehension_expander,
     set_current_parser, set_current_rewriter, set_current_solver_family,
+    set_minion_discrete_threshold,
 };
 use conjure_cp_cli::utils::conjure::solutions_to_json;
 use conjure_cp_cli::utils::conjure::{get_solutions, get_solutions_from_conjure};
@@ -78,6 +79,7 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
     let config = file_config;
 
     let validate_with_conjure = config.validate_with_conjure;
+    let minion_discrete_threshold = config.minion_discrete_threshold;
 
     let parsers = config
         .configured_parsers()
@@ -148,6 +150,7 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
                             essence_base,
                             extension,
                             run_case,
+                            minion_discrete_threshold,
                             conjure_solutions.clone(),
                             accept,
                         )
@@ -198,6 +201,7 @@ fn integration_test_inner(
     essence_base: &str,
     extension: &str,
     run_case: RunCase<'_>,
+    minion_discrete_threshold: usize,
     conjure_solutions: Option<Arc<Vec<BTreeMap<Name, Literal>>>>,
     accept: bool,
 ) -> Result<(), Box<dyn Error>> {
@@ -213,6 +217,7 @@ fn integration_test_inner(
     set_current_rewriter(rewriter);
     set_comprehension_expander(comprehension_expander);
     set_current_solver_family(solver_fam);
+    set_minion_discrete_threshold(minion_discrete_threshold);
 
     // File path
     let file_path = format!("{path}/{essence_base}.{extension}");

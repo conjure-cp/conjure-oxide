@@ -19,7 +19,7 @@ use conjure_cp::{
     rule_engine::{resolve_rule_sets, rewrite_morph, rewrite_naive},
     settings::{
         Rewriter, set_comprehension_expander, set_current_parser, set_current_rewriter,
-        set_current_solver_family,
+        set_current_solver_family, set_minion_discrete_threshold,
     },
     solver::Solver,
 };
@@ -102,6 +102,7 @@ pub(crate) fn init_context(
     set_current_rewriter(global_args.rewriter);
     set_comprehension_expander(global_args.comprehension_expander);
     set_current_solver_family(global_args.solver);
+    set_minion_discrete_threshold(global_args.minion_discrete_threshold);
 
     let target_family = global_args.solver;
     let mut extra_rule_sets: Vec<&str> = DEFAULT_RULE_SETS.to_vec();
