@@ -1,3 +1,4 @@
+use crate::handlers::cache;
 use crate::handlers::{cache::CacheCont, sync_event::position_to_byte};
 use crate::server::Backend;
 use tower_lsp::{lsp_types::*, jsonrpc::Error};
@@ -13,23 +14,41 @@ impl Backend {
         
         let lsp_cache = &self.lsp_cache;
 
-        if let Some(cache_conts) = lsp_cache.get(&uri).await {
-            let source_map = cache_conts.sourcemap.unwrap();
-            //check this 
-            let hover_byte = position_to_byte(&cache_conts.contents, position);
+        let cache_conts = match lsp_cache.get(&uri).await {
+            Some(conts) => conts,
+            None => {
+                self.client
+                    .log_message(MessageType::WARNING, "Document not found in cache")
+                    .await;
+                return Ok(None);
+            }
+        };
 
-            let info = source_map.hover_info_at_byte(hover_byte).unwrap().clone();
+        let source_map = match &cache_conts.sourcemap {
+            Some(map) => map,
+            None => {
+                self.client
+                    .log_message(MessageType::WARNING, "No source map found in cache")
+                    .await;
+                return Ok(None);
+            }
+        };
 
-            return Ok(Some(Hover {
-                // contents: HoverContents::Array(vec![
-                //     MarkedString::String(info.description),
-                //     MarkedString::String(info.ty.unwrap())
-                // ]),
-                contents: HoverContents::Scalar((MarkedString::String(("some hovering shit".to_string())))),
-                range: None
-            }));
-        }
+        let hover_byte = position_to_byte(&cache_conts.contents, position);
 
-        Ok(None)
+        let info = match source_map.hover_info_at_byte(hover_byte) {
+            Some(info) => info,
+            None => {
+                return Ok(None);
+            }
+        };
+
+        Ok(Some(Hover {
+            contents: HoverContents::Array(vec![
+                    MarkedString::String(info.description),
+                    MarkedString::String(info.ty.unwrap())
+                ]),
+            range: None,
+        }))
     }
 }
