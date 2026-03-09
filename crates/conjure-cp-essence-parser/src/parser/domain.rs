@@ -1,4 +1,4 @@
-use super::atom::parse_int;
+use super::atom::{parse_int,parse_uint};
 use super::util::named_children;
 use crate::diagnostics::source_map::{HoverInfo, span_with_hover};
 use crate::errors::FatalParseError;
@@ -305,21 +305,21 @@ pub fn parse_set_domain(
 
                 if let (Some(min_node), Some(max_node)) = (min_value_node, max_value_node) {
                     // MinMax case
-                    let min_val = parse_int(ctx, &min_node)?;
-                    let max_val = parse_int(ctx, &max_node)?;
+                    let min_val = parse_uint(ctx, &min_node)?;
+                    let max_val = parse_uint(ctx, &max_node)?;
 
                     set_attribute = Some(SetAttr::new_min_max_size(min_val, max_val));
                 } else if let Some(size_node) = size_value_node {
                     // Size case
-                    let size_val = parse_int(ctx, &size_node)?;
+                    let size_val = parse_uint(ctx, &size_node)?;
                     set_attribute = Some(SetAttr::new_size(size_val));
                 } else if let Some(min_node) = min_value_node {
                     // MinSize only case
-                    let min_val = parse_int(ctx, &min_node)?;
+                    let min_val = parse_uint(ctx, &min_node)?;
                     set_attribute = Some(SetAttr::new_min_size(min_val));
                 } else if let Some(max_node) = max_value_node {
                     // MaxSize only case
-                    let max_val = parse_int(ctx, &max_node)?;
+                    let max_val = parse_uint(ctx, &max_node)?;
                     set_attribute = Some(SetAttr::new_max_size(max_val));
                 }
             }
