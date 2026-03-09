@@ -1,22 +1,14 @@
-// use conjure_cp_core::ast::Model;
-// use tree_sitter::Tree;
-
 use tower_lsp::{
     Client,
     LanguageServer,
     LspService,
     Server,
-    jsonrpc::Result, //add Error if needed later, currently unused
+    jsonrpc::Result, //add error in future if needed
     lsp_types::*,
 };
 
 use crate::handlers::cache::{CacheCont, create_cache};
 
-// use std::clone;
-// use std::collections::HashMap;
-
-// use std::sync::Arc;
-// use tokio::sync::RwLock;
 use moka::future::Cache;
 
 #[derive(Debug)]
@@ -55,7 +47,7 @@ impl LanguageServer for Backend {
                         ..Default::default()
                     },
                 )),
-                // hover_provider: Some(HoverProviderCapability::Simple(true)),
+                hover_provider: Some(HoverProviderCapability::Simple(true)),
                 ..ServerCapabilities::default()
             },
         })
@@ -74,13 +66,24 @@ impl LanguageServer for Backend {
     }
     // underline errors on file open
     async fn did_open(&self, params: DidOpenTextDocumentParams) {
+                self.client.log_message(MessageType::INFO, "opened").await;
         self.handle_did_open(params).await;
     }
     async fn did_save(&self, params: DidSaveTextDocumentParams) {
+                self.client.log_message(MessageType::INFO, "saved").await;
+
         self.handle_did_save(params).await;
     }
     async fn did_change(&self, params: DidChangeTextDocumentParams) {
+                self.client.log_message(MessageType::INFO, "changed").await;
+
         self.handle_did_change(params).await;
+    }
+
+    // async fn hover(&self, params: HoverParams) -> Result<Option<Hover>> {
+    async fn hover(&self, params: HoverParams) -> Result<Option<Hover>> {
+        self.client.log_message(MessageType::INFO, "hovering").await;
+        self.handle_hovering(params).await
     }
 }
 

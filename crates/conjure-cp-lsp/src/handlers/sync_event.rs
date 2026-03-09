@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use std::sync::RwLock;
 
-use conjure_cp_core::ast::Model;
+// use conjure_cp_core::ast::Model;
 use conjure_cp_core::context::Context;
 use conjure_cp_essence_parser::RecoverableParseError;
 use conjure_cp_essence_parser::parse_essence_with_context_and_map;
@@ -15,12 +15,12 @@ use conjure_cp_essence_parser::diagnostics::diagnostics_api::get_diagnostics;
 use tower_lsp::lsp_types::Position as LspPosition;
 use tower_lsp::lsp_types::Range as LspRange;
 
-use moka::future::Cache;
-use tree_sitter::InputEdit;
+// use moka::future::Cache;
+// use tree_sitter::InputEdit;
 use tree_sitter::Point;
 use tree_sitter::Tree;
 
-use crate::handlers::cache;
+// use crate::handlers::cache;
 use crate::handlers::cache::CacheCont;
 use crate::server::Backend;
 
@@ -164,7 +164,10 @@ impl Backend {
         if let Some(new_cache_conts) = lsp_cache.get(&uri).await {
 
             self.client
-                .log_message(MessageType::INFO, "Did save document")
+                .log_message(MessageType::INFO, "Did change document")
+                .await;
+            self.client
+                .log_message(MessageType::INFO, &new_cache_conts.contents)
                 .await;
             self.handle_diagnostics(&uri, new_cache_conts).await;
         }
@@ -234,7 +237,7 @@ pub fn parser_to_lsp_position(position: ParserPosition) -> LspPosition {
 }
 
 //need to convert from character and line to byte value in a file
-fn position_to_byte(text: &str, position: Position) -> usize {
+pub fn position_to_byte(text: &str, position: Position) -> usize {
     //as_bytes converts a string into bytes which I could do with text but the issue is finding
     //the position from that point???
     let mut byte_offset = 0;
