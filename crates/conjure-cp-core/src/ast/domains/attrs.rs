@@ -1,4 +1,4 @@
-use crate::ast::domains::Int;
+use crate::ast::domains::UInt;
 use crate::ast::domains::range::Range;
 use itertools::Itertools;
 use polyquine::Quine;
@@ -7,7 +7,7 @@ use std::fmt::{Display, Formatter};
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
 #[path_prefix(conjure_cp::ast)]
-pub struct SetAttr<A = Int> {
+pub struct SetAttr<A = UInt> {
     pub size: Range<A>,
 }
 
@@ -55,7 +55,7 @@ impl<A: Display> Display for SetAttr<A> {
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
 #[path_prefix(conjure_cp::ast)]
-pub struct MSetAttr<A = Int> {
+pub struct MSetAttr<A = UInt> {
     pub size: Range<A>,
     pub occurrence: Range<A>,
 }
@@ -124,7 +124,7 @@ impl<A> Default for MSetAttr<A> {
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
 #[path_prefix(conjure_cp::ast)]
-pub struct FuncAttr<A = Int> {
+pub struct FuncAttr<A = UInt> {
     pub size: Range<A>,
     pub partiality: PartialityAttr,
     pub jectivity: JectivityAttr,

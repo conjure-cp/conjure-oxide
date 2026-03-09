@@ -294,14 +294,14 @@ pub fn parse_set_domain(
                     let min_str = &source_code[min_node.start_byte()..min_node.end_byte()];
                     let max_str = &source_code[max_node.start_byte()..max_node.end_byte()];
 
-                    let min_val = i32::from_str(min_str).map_err(|_| {
+                    let min_val = u32::from_str(min_str).map_err(|_| {
                         FatalParseError::syntax_error(
                             format!("Invalid integer value for minSize: {}", min_str),
                             Some(min_node.range()),
                         )
                     })?;
 
-                    let max_val = i32::from_str(max_str).map_err(|_| {
+                    let max_val = u32::from_str(max_str).map_err(|_| {
                         FatalParseError::syntax_error(
                             format!("Invalid integer value for maxSize: {}", max_str),
                             Some(max_node.range()),
@@ -312,7 +312,7 @@ pub fn parse_set_domain(
                 } else if let Some(size_node) = size_value_node {
                     // Size case
                     let size_str = &source_code[size_node.start_byte()..size_node.end_byte()];
-                    let size_val = i32::from_str(size_str).map_err(|_| {
+                    let size_val = u32::from_str(size_str).map_err(|_| {
                         FatalParseError::syntax_error(
                             format!("Invalid integer value for size: {}", size_str),
                             Some(size_node.range()),
@@ -322,7 +322,7 @@ pub fn parse_set_domain(
                 } else if let Some(min_node) = min_value_node {
                     // MinSize only case
                     let min_str = &source_code[min_node.start_byte()..min_node.end_byte()];
-                    let min_val = i32::from_str(min_str).map_err(|_| {
+                    let min_val = u32::from_str(min_str).map_err(|_| {
                         FatalParseError::syntax_error(
                             format!("Invalid integer value for minSize: {}", min_str),
                             Some(min_node.range()),
@@ -332,7 +332,7 @@ pub fn parse_set_domain(
                 } else if let Some(max_node) = max_value_node {
                     // MaxSize only case
                     let max_str = &source_code[max_node.start_byte()..max_node.end_byte()];
-                    let max_val = i32::from_str(max_str).map_err(|_| {
+                    let max_val = u32::from_str(max_str).map_err(|_| {
                         FatalParseError::syntax_error(
                             format!("Invalid integer value for maxSize: {}", max_str),
                             Some(max_node.range()),

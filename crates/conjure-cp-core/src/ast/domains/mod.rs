@@ -6,7 +6,7 @@ mod range;
 mod unresolved;
 
 pub use attrs::{FuncAttr, JectivityAttr, MSetAttr, PartialityAttr, SetAttr};
-pub use domain::{Domain, DomainPtr, HasDomain, Int};
+pub use domain::{Domain, DomainPtr, HasDomain, Int, UInt};
 pub use error::DomainOpError;
 pub use ground::{GroundDomain, RecordEntryGround};
 pub use range::Range;
