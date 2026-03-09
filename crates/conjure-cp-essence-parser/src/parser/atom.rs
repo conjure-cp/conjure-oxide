@@ -178,7 +178,7 @@ fn parse_variable(ctx: &mut ParseContext, node: &Node) -> Result<Option<Atom>, F
             span_with_hover(node, ctx.source_code, ctx.source_map, hover);
 
             // Type check the variable against the expected context
-            if let Some(error_msg) = typecheck_variable(&decl, raw_name, ctx.typechecking_context) {
+            if let Some(error_msg) = typecheck_variable(&decl, ctx.typechecking_context) {
                 ctx.record_error(RecoverableParseError::new(error_msg, Some(node.range())));
                 return Ok(None);
             }
@@ -203,11 +203,7 @@ fn parse_variable(ctx: &mut ParseContext, node: &Node) -> Result<Option<Atom>, F
 
 /// Type check a variable declaration against the expected expression context.
 /// Returns an error message if the variable type doesn't match the context.
-fn typecheck_variable(
-    decl: &DeclarationPtr,
-    var_name: &str,
-    context: TypecheckingContext,
-) -> Option<String> {
+fn typecheck_variable(decl: &DeclarationPtr, context: TypecheckingContext) -> Option<String> {
     // Only type check when context is known
     if context == TypecheckingContext::Unknown {
         return None;
@@ -217,38 +213,36 @@ fn typecheck_variable(
     let domain = decl.domain()?;
     let ground_domain = domain.resolve()?;
 
-    match (ground_domain.as_ref(), context) {
-        (GroundDomain::Int(_), TypecheckingContext::Boolean) => Some(format!(
-            "Type Error: Integer variable '{}' used in boolean context",
-            var_name
-        )),
-        (GroundDomain::Bool, TypecheckingContext::Arithmetic) => Some(format!(
-            "Type Error: Boolean variable '{}' used in arithmetic context",
-            var_name
-        )),
-        (GroundDomain::Matrix(_, _), TypecheckingContext::Boolean)
-        | (GroundDomain::Matrix(_, _), TypecheckingContext::Arithmetic) => Some(format!(
-            "Type Error: Matrix variable '{}' cannot be used directly in this context",
-            var_name
-        )),
-        (GroundDomain::Set(_, _), TypecheckingContext::Boolean)
-        | (GroundDomain::Set(_, _), TypecheckingContext::Arithmetic) => Some(format!(
-            "Type Error: Set variable '{}' cannot be used directly in this context",
-            var_name
-        )),
-        (GroundDomain::Tuple(_), TypecheckingContext::Boolean)
-        | (GroundDomain::Tuple(_), TypecheckingContext::Arithmetic) => Some(format!(
-            "Type Error: Tuple variable '{}' cannot be used directly in this context",
-            var_name
-        )),
-        (GroundDomain::Record(_), TypecheckingContext::Boolean)
-        | (GroundDomain::Record(_), TypecheckingContext::Arithmetic) => Some(format!(
-            "Type Error: Record variable '{}' cannot be used directly in this context",
-            var_name
-        )),
-        // Everything else is OK
-        _ => None,
+    // Determine what type is expected
+    let expected = match context {
+        TypecheckingContext::Boolean => "bool",
+        TypecheckingContext::Arithmetic => "int",
+        TypecheckingContext::Unknown => return None, // shouldn't reach here
+    };
+
+    // Determine what type we actually have
+    let actual = match ground_domain.as_ref() {
+        GroundDomain::Bool => "bool",
+        GroundDomain::Int(_) => "int",
+        GroundDomain::Matrix(_, _) => "matrix",
+        GroundDomain::Set(_, _) => "set",
+        GroundDomain::MSet(_, _) => "mset",
+        GroundDomain::Tuple(_) => "tuple",
+        GroundDomain::Record(_) => "record",
+        GroundDomain::Function(_, _, _) => "function",
+        GroundDomain::Empty(_) => "empty",
+    };
+
+    // If types match, no error
+    if expected == actual {
+        return None;
     }
+
+    // Otherwise, report the type mismatch
+    Some(format!(
+        "Type error:\n\tExpected: {}\n\tGot: {}",
+        expected, actual
+    ))
 }
 
 fn parse_constant(ctx: &mut ParseContext, node: &Node) -> Result<Option<Literal>, FatalParseError> {
@@ -292,28 +286,26 @@ fn parse_constant(ctx: &mut ParseContext, node: &Node) -> Result<Option<Literal>
     };
 
     // Type check the constant against the expected context
-    match (&lit, ctx.typechecking_context) {
-        (Literal::Bool(_), TypecheckingContext::Arithmetic) => {
+    if ctx.typechecking_context != TypecheckingContext::Unknown {
+        let expected = match ctx.typechecking_context {
+            TypecheckingContext::Boolean => "bool",
+            TypecheckingContext::Arithmetic => "int",
+            TypecheckingContext::Unknown => "",
+        };
+
+        let actual = match &lit {
+            Literal::Bool(_) => "bool",
+            Literal::Int(_) => "int",
+            Literal::AbstractLiteral(_) => return Ok(None), // Abstract literals aren't type-checked here
+        };
+
+        if expected != actual {
             ctx.record_error(RecoverableParseError::new(
-                format!(
-                    "Type error: Boolean value '{}' used in arithmetic context",
-                    raw_value
-                ),
+                format!("Type error:\n\tExpected: {}\n\tGot: {}", expected, actual),
                 Some(node.range()),
             ));
             return Ok(None);
         }
-        (Literal::Int(_), TypecheckingContext::Boolean) => {
-            ctx.record_error(RecoverableParseError::new(
-                format!(
-                    "Type error: Integer value '{}' used in boolean context",
-                    raw_value
-                ),
-                Some(node.range()),
-            ));
-            return Ok(None);
-        }
-        _ => {}
     }
     Ok(Some(lit))
 }
