@@ -62,7 +62,7 @@ pub fn parse_atom(
             Ok(Some(Expression::AbstractLiteral(Metadata::new(), abs)))
         }
         "flatten" => parse_flatten(ctx, node),
-        "table" => parse_table(ctx, node),
+        "table" | "negative_table" => parse_table(ctx, node),
         "index_or_slice" => parse_index_or_slice(ctx, node),
         // for now, assume is binary since powerset isn't implemented
         // TODO: add powerset support under "set_operation"
@@ -114,11 +114,25 @@ fn parse_table(ctx: &mut ParseContext, node: &Node) -> Result<Option<Expression>
         return Ok(None);
     };
 
-    Ok(Some(Expression::Table(
-        Metadata::new(),
-        Moo::new(variables),
-        Moo::new(rows),
-    )))
+    match node.kind() {
+        "table" => Ok(Some(Expression::Table(
+            Metadata::new(),
+            Moo::new(variables),
+            Moo::new(rows),
+        ))),
+        "negative_table" => Ok(Some(Expression::NegativeTable(
+            Metadata::new(),
+            Moo::new(variables),
+            Moo::new(rows),
+        ))),
+        _ => Err(FatalParseError::internal_error(
+            format!(
+                "Expected 'table' or 'negative_table', got: '{}'",
+                node.kind()
+            ),
+            Some(node.range()),
+        )),
+    }
 }
 
 fn parse_index_or_slice(
