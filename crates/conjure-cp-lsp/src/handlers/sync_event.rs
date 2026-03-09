@@ -42,9 +42,9 @@ impl Backend {
         //the closure? only runs on a cache miss
         let cache_content = lsp_cache
             .get_with(uri.clone(), async {
-                self.client
-                    .log_message(MessageType::INFO, "Cache miss! Loading into cache now")
-                    .await;
+                // self.client
+                //     .log_message(MessageType::INFO, "Cache miss! Loading into cache now")
+                //     .await;
 
                 let (cst_tree, _) = get_tree(&text).unwrap();
 
@@ -58,7 +58,7 @@ impl Backend {
                     Some(&cst_tree),
                 );
 
-                let mut cache = match parsed {
+                let cache = match parsed {
                     Ok(Some((ast_model, source_map))) => {
                         CacheCont {
                             sourcemap: Some(source_map),
@@ -70,6 +70,9 @@ impl Backend {
                         }
                     }
                     Ok(None) => {
+                        // self.client
+                        //     .log_message(MessageType::INFO, "In none for parse_essence_with_context_and_map")
+                        //     .await;
                         CacheCont { 
                             sourcemap: None,
                             ast: None, 
@@ -91,7 +94,7 @@ impl Backend {
                     }
                 };
 
-                cache
+                cache //this inserts the cache created above into the cache
             })
             .await;
 
@@ -127,9 +130,20 @@ impl Backend {
         let uri = params.text_document.uri;
         let lsp_cache = &self.lsp_cache;
 
+        self.client
+            .log_message(MessageType::INFO, "in document change")
+            .await;
+
         if let Some(change) = params.content_changes.first() {
+            // self.client
+            //         .log_message(MessageType::INFO, "in first if for chnage")
+            //         .await;
             if let Some(cache_conts) = lsp_cache.get(&uri).await {
-                
+                //
+                // self.client
+                //     .log_message(MessageType::INFO, "in secnond if")
+                //     .await;
+
                 let mut new_text = cache_conts.contents.clone();
                 if let Some(lsp_range) = change.range {
                     //convert range for string conversion here
@@ -144,12 +158,15 @@ impl Backend {
                 let new_tree: Tree = if let Some(lsp_range) = change.range {
                     let start_byte = position_to_byte(&cache_conts.contents, lsp_range.start);
                     let old_end_byte = position_to_byte(&cache_conts.contents, lsp_range.end);
-                    let new_end_byte = old_end_byte + change.text.len();
+                    let new_end_byte = start_byte + change.text.len();
 
                     let start_position = position_to_treesitter_point(lsp_range.start);
-                    let old_end_position = get_end_position(&cache_conts.contents.clone());
-                    let new_end_position = position_to_treesitter_point(lsp_range.end);
+                    let old_end_position = position_to_treesitter_point(lsp_range.end);
+                    let new_end_position = calculate_new_end_position(&change.text, lsp_range.start);
 
+                    self.client
+                    .log_message(MessageType::INFO, "before edit")
+                    .await;
                     if let Some(ref mut old_cst) = cache_conts.cst.clone() {
                         old_cst.edit(&tree_sitter::InputEdit {
                             start_byte,
@@ -159,6 +176,9 @@ impl Backend {
                             old_end_position,
                             new_end_position,
                         });
+                        self.client
+                            .log_message(MessageType::INFO, "after edit")
+                            .await;
                         old_cst.clone()
                     } else {
                         // if cst was None due to a failure to parse,
@@ -173,6 +193,8 @@ impl Backend {
                 let context = Arc::new(RwLock::new(Context::default()));
                 let mut errors: Vec<RecoverableParseError> = Vec::new();
 
+                self.client.log_message(MessageType::INFO, new_text.clone()).await;
+
                 let parsed = parse_essence_with_context_and_map(
                     &new_text,
                     context,
@@ -182,6 +204,7 @@ impl Backend {
                 
                 let new_cache_conts = match parsed {
                     Ok(Some((ast_model, source_map))) => {
+                        self.client.log_message(MessageType::LOG,"THIS ONE INSTEAD").await;
                         CacheCont {
                             sourcemap: Some(source_map),
                             ast: Some(ast_model),
@@ -192,6 +215,7 @@ impl Backend {
                         }
                     }
                     Ok(None) => {
+                        self.client.log_message(MessageType::LOG,"jshdhshshshhs").await;
                         CacheCont { 
                             sourcemap: None,
                             ast: None, 
@@ -215,9 +239,9 @@ impl Backend {
 
                 lsp_cache.insert(uri.clone(), new_cache_conts.clone()).await;
 
-                self.client
-                    .log_message(MessageType::INFO, "Document changed, cache updated")
-                    .await;
+                // self.client
+                //     .log_message(MessageType::INFO, "Document changed, cache updated")
+                //     .await;
 
                 
                 self.handle_diagnostics(&uri, new_cache_conts).await;
@@ -229,32 +253,33 @@ impl Backend {
     }
 
     pub async fn handle_diagnostics(&self, uri: &Url, cache_conts: CacheCont) {
-        //needs to be modified to use cst and ast from cache
-        //using lsp_cache.get(&uri) assumedly and then feeding
-        //these values back to the diagnostic thingy to get my diags
+        // Get syntactic diagnostics from CST
+        let syntactic_diagnostics = if let Some(ref cst) = cache_conts.cst {
+            get_diagnostics(&cache_conts.contents, cst)
+        } else {
+            Vec::new()
+        };
 
-        //ideal situation is feed diagnostics struct and then let it use struct to return diagnostics
-        // e.g.:
-        //let diagnostics = get_diagnostics(&cache_conts);
-        let syntactic_diagnostics =
-            get_diagnostics(&cache_conts.contents, &(cache_conts.cst.as_ref().unwrap()));
+        // Get semantic diagnostics from errors
         let semantic_diagnostics: Vec<Diagnostic> = cache_conts
             .errors
             .into_iter()
-            .filter_map(|err: RecoverableParseError| Some(error_to_diagnostic(&err)))
+            .map(|err| error_to_diagnostic(&err))
             .collect();
+
+        // Combine all diagnostics
         let mut diagnostics = syntactic_diagnostics;
         diagnostics.extend(semantic_diagnostics);
 
+        // Convert to LSP format
         let lsp_diagnostics = convert_diagnostics(diagnostics);
 
-        // Publish diagnostics back to the client
+        // Publish diagnostics - this should be the ONLY call
         self.client
             .publish_diagnostics(uri.clone(), lsp_diagnostics, None)
             .await;
     }
 }
-
 // convert diagnostics from cp-essence-parser to LSP diagnostics
 pub fn convert_diagnostics(diagnostics: Vec<ParserDiagnostic>) -> Vec<LspDiagnostic> {
     // map each ParserDiagnostic to LspDiagnostic
@@ -322,16 +347,17 @@ fn position_to_treesitter_point(position: Position) -> Point {
     return Point::new(position.line as usize, position.character as usize);
 }
 
-fn get_end_position(text: &str) -> Point {
-    let mut row = 0 as usize;
-    let mut column = 0 as usize;
-    for char in text.chars() {
-        if char == '\n' {
+fn calculate_new_end_position(text: &str, start: Position) -> Point {
+    let mut row = start.line as usize;
+    let mut column = start.character as usize;
+    for ch in text.chars() {
+        if ch == '\n' {
             row += 1;
             column = 0;
         } else {
             column += 1;
         }
     }
-    return Point::new(row, column);
+    
+    Point::new(row, column)
 }

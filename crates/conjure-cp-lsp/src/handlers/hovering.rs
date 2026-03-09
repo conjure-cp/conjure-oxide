@@ -42,11 +42,11 @@ impl Backend {
                 return Ok(None);
             }
         };
-
+        self.client.log_message(MessageType::INFO, info.description.clone()).await;
         Ok(Some(Hover {
             contents: HoverContents::Array(vec![
                     MarkedString::String(info.description),
-                    MarkedString::String(info.ty.unwrap())
+                    MarkedString::String(info.ty.unwrap_or_default())
                 ]),
             range: None,
         }))

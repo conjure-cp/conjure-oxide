@@ -21,8 +21,5 @@ pub async fn create_cache() -> Cache<Url, CacheCont> {
         .max_capacity(10_000)
         .time_to_live(Duration::from_secs(30 * 60))
         .time_to_idle(Duration::from_secs(5 * 60))
-        .eviction_listener(|key, _value, cause| {
-            println!("Evicted document {} - cause {:?}", key, cause);
-        })
         .build()
 }
