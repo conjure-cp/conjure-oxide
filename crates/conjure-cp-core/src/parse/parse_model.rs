@@ -648,6 +648,8 @@ pub fn parse_expression(obj: &JsonValue, scope: &SymbolTablePtr) -> Result<Expre
 
             if op_obj.contains_key("MkOpFlatten") {
                 parse_flatten_op(op_obj, scope)
+            } else if op_obj.contains_key("MkOpTable") {
+                parse_table_op(op_obj, scope)
             } else if op_obj.contains_key("MkOpIndexing") || op_obj.contains_key("MkOpSlicing") {
                 parse_indexing_slicing_op(op_obj, scope)
             } else if binary_operator(op_name).is_some() {
@@ -979,6 +981,49 @@ fn parse_bin_op(
         }
         _ => Err(error!("Binary operator arguments are not a 2-array")),
     }
+}
+
+fn parse_table_op(
+    op: &serde_json::Map<String, Value>,
+    scope: &SymbolTablePtr,
+) -> Result<Expression> {
+    let args = op
+        .get("MkOpTable")
+        .ok_or(error!("MkOpTable missing"))?
+        .as_array()
+        .ok_or(error!("MkOpTable is not an array"))?;
+
+    if args.len() != 2 {
+        return Err(error!("MkOpTable arguments are not a 2-array"));
+    }
+
+    let tuple_expr = parse_expression(&args[0], scope)?;
+    let allowed_rows_expr = parse_expression(&args[1], scope)?;
+
+    let (tuple_elems, _) = tuple_expr
+        .clone()
+        .unwrap_matrix_unchecked()
+        .ok_or(error!("MkOpTable first argument is not a matrix"))?;
+    let (allowed_rows, _) = allowed_rows_expr
+        .clone()
+        .unwrap_matrix_unchecked()
+        .ok_or(error!("MkOpTable second argument is not a matrix"))?;
+
+    for row_expr in allowed_rows {
+        let (row_elems, _) = row_expr
+            .unwrap_matrix_unchecked()
+            .ok_or(error!("MkOpTable row is not a matrix"))?;
+
+        if row_elems.len() != tuple_elems.len() {
+            return Err(error!("MkOpTable row width does not match tuple width"));
+        }
+    }
+
+    Ok(Expression::Table(
+        Metadata::new(),
+        Moo::new(tuple_expr),
+        Moo::new(allowed_rows_expr),
+    ))
 }
 
 fn parse_indexing_slicing_op(
