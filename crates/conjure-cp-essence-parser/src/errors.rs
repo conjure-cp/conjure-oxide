@@ -44,7 +44,7 @@ impl From<ConjureParseError> for FatalParseError {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct RecoverableParseError {
     pub msg: String,
     pub range: Option<tree_sitter::Range>,

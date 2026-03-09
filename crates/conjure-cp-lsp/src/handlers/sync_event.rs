@@ -1,10 +1,12 @@
 use std::sync::Arc;
 use std::sync::RwLock;
 
-// use conjure_cp_core::ast::Model;
 use conjure_cp_core::context::Context;
 use conjure_cp_essence_parser::RecoverableParseError;
+use conjure_cp_essence_parser::diagnostics::diagnostics_api::Diagnostic;
+use conjure_cp_essence_parser::diagnostics::error_detection::collect_errors::error_to_diagnostic;
 use conjure_cp_essence_parser::parse_essence_with_context_and_map;
+use conjure_cp_essence_parser::util::get_tree;
 use tower_lsp::{lsp_types::Diagnostic as LspDiagnostic, lsp_types::*};
 
 use conjure_cp_essence_parser::diagnostics::diagnostics_api::Diagnostic as ParserDiagnostic;
@@ -42,20 +44,47 @@ impl Backend {
                     .log_message(MessageType::INFO, "Cache miss! Loading into cache now")
                     .await;
 
-                let cst_tree = tree_sitter::Parser::new().parse(&text, None).unwrap();
+                let (cst_tree, _) = get_tree(&text).unwrap();
 
                 let context = Arc::new(RwLock::new(Context::default()));
                 let mut errors: Vec<RecoverableParseError> = Vec::new();
 
-                let parsed = parse_essence_with_context_and_map(&text, context, &mut errors, Some(&cst_tree));
-                let (ast_model, source_map) = parsed.unwrap().unwrap();
-                CacheCont {
-                    sourcemap: Some(source_map),       // need to get this using parse_essence_with_context_and_map
-                    ast: ast_model, // need to get this using parse_essence_with_context_and_map
-                    cst: cst_tree, // get this onOpen using tree-sitter directly, then send it to parse_essence_with_context_and_map to get sourcemap and ast
+                let parsed = parse_essence_with_context_and_map(
+                    &text,
+                    context,
+                    &mut errors,
+                    Some(&cst_tree),
+                );
+
+                let mut cache = CacheCont {
+                    sourcemap: None,
+                    ast: None,
+                    errors: vec![],
+                    cst: Some(cst_tree),
                     contents: text.clone(),
-                    version: 0,
+                    version: 0, //initial version is 0, will be updated on change
+                };
+
+                match parsed {
+                    Ok(Some((model, source_map))) => {
+                        cache.ast = Some(model);
+                        cache.sourcemap = Some(source_map);
+                        cache.errors = errors;
+                    }
+                    Ok(None) => {
+                        // recoverable errors
+                        cache.errors = errors;
+                        cache.ast = None;
+                        cache.sourcemap = None;
+                    }
+                    Err(fatal) => {
+                        cache.ast = None;
+                        cache.sourcemap = None;
+                        cache.errors = vec![RecoverableParseError::new(fatal.to_string(), None)];
+                    }
                 }
+
+                cache
             })
             .await;
         // parse_essence_with_context_and_map(src, context, errors, tree)
@@ -63,7 +92,7 @@ impl Backend {
         //NOT SURE THAT THIS NEEDS TO EXIST BUT PUTTING HERE IN CASE IT DOES
         // let cached = cache.get_with(uri.clone(), async {
         //     panic!("This should never run");
-        // }).await; 
+        // }).await;
 
         self.client
             .log_message(MessageType::INFO, "Did open document")
@@ -120,39 +149,54 @@ impl Backend {
 
                 let new_tree: Tree = if let Some(lsp_range) = change.range {
                     let start_byte = position_to_byte(&cache_conts.contents, lsp_range.start);
-                    let old_end_byte =  position_to_byte(&cache_conts.contents, lsp_range.end);
+                    let old_end_byte = position_to_byte(&cache_conts.contents, lsp_range.end);
                     let new_end_byte = old_end_byte + change.text.len();
                     let start_position = position_to_treesitter_point(lsp_range.start);
                     let old_end_position = get_end_position(&cache_conts.contents.clone());
                     let new_end_position = position_to_treesitter_point(lsp_range.end);
                     // let edit_range = tree_sitter::InputEdit::
                     let mut old_cst = cache_conts.cst.clone();
-                    old_cst.edit(&tree_sitter::InputEdit{
-                        start_byte,
-                        old_end_byte,
-                        new_end_byte,
-                        start_position,
-                        old_end_position,
-                        new_end_position,
-                    });
-                    tree_sitter::Parser::new().parse(&new_text, Some(&old_cst)).unwrap()
+                    if let Some(ref mut old_cst) = old_cst {
+                        old_cst.edit(&tree_sitter::InputEdit {
+                            start_byte,
+                            old_end_byte,
+                            new_end_byte,
+                            start_position,
+                            old_end_position,
+                            new_end_position,
+                        });
+                        old_cst.clone()
+                    } else {
+                        // if cst was None due to a failure to parse,
+                        // we should re-parse the entire new text instead of trying to edit a non-existent tree
+                        // there could be a better way to handle this, but for now this is a safe fallback
+                        get_tree(&new_text).unwrap().0
+                    }
                 } else {
-                    tree_sitter::Parser::new().parse(&new_text, Some(&cache_conts.cst)).unwrap()
+                    get_tree(&new_text).unwrap().0
                 };
 
                 let context = Arc::new(RwLock::new(Context::default()));
                 let mut errors: Vec<RecoverableParseError> = Vec::new();
 
-                let (ast_model, source_map) = parse_essence_with_context_and_map(&new_text, context, &mut errors, Some(&new_tree)).unwrap().unwrap();
+                let (ast_model, source_map) = parse_essence_with_context_and_map(
+                    &new_text,
+                    context,
+                    &mut errors,
+                    Some(&new_tree),
+                )
+                .unwrap()
+                .unwrap();
 
                 let new_cache_conts = CacheCont {
                     sourcemap: Some(source_map),
-                    ast: ast_model,
-                    cst: new_tree,
+                    ast: Some(ast_model),
+                    errors: errors,
+                    cst: Some(new_tree),
                     contents: new_text.clone(),
                     version: params.text_document.version,
                 };
-                
+
                 lsp_cache.insert(uri.clone(), new_cache_conts.clone()).await;
 
                 self.client
@@ -160,9 +204,8 @@ impl Backend {
                     .await;
             }
         }
-        
-        if let Some(new_cache_conts) = lsp_cache.get(&uri).await {
 
+        if let Some(new_cache_conts) = lsp_cache.get(&uri).await {
             self.client
                 .log_message(MessageType::INFO, "Did change document")
                 .await;
@@ -173,7 +216,6 @@ impl Backend {
         }
     }
 
-
     // pub async fn handle_diagnostics(&self, uri: &Url, code: String) {
     pub async fn handle_diagnostics(&self, uri: &Url, cache_conts: CacheCont) {
         //needs to be modified to use cst and ast from cache
@@ -183,7 +225,16 @@ impl Backend {
         //ideal situation is feed diagnostics struct and then let it use struct to return diagnostics
         // e.g.:
         //let diagnostics = get_diagnostics(&cache_conts);
-        let diagnostics = get_diagnostics(&cache_conts.contents); //temp
+        let syntactic_diagnostics =
+            get_diagnostics(&cache_conts.contents, &(cache_conts.cst.as_ref().unwrap()));
+        let semantic_diagnostics: Vec<Diagnostic> = cache_conts
+            .errors
+            .into_iter()
+            .filter_map(|err: RecoverableParseError| Some(error_to_diagnostic(&err)))
+            .collect();
+        let mut diagnostics = syntactic_diagnostics;
+        diagnostics.extend(semantic_diagnostics);
+
         let lsp_diagnostics = convert_diagnostics(diagnostics);
 
         // Publish diagnostics back to the client
@@ -241,7 +292,7 @@ pub fn position_to_byte(text: &str, position: Position) -> usize {
     //as_bytes converts a string into bytes which I could do with text but the issue is finding
     //the position from that point???
     let mut byte_offset = 0;
-    //go through every line 
+    //go through every line
     for (line_idx, line) in text.lines().enumerate() {
         if line_idx < position.line as usize {
             byte_offset += line.len() + 1; // +1 for newline
