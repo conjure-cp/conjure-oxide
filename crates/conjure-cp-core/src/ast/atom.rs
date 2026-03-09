@@ -245,8 +245,16 @@ impl TryFrom<&Atom> for i32 {
     type Error = &'static str;
 
     fn try_from(value: &Atom) -> Result<Self, Self::Error> {
-        let lit: &Literal = value.try_into()?;
-        lit.try_into()
+        match value {
+            Atom::Literal(lit) => lit.try_into(),
+            Atom::Reference(reference) => {
+                let lit = reference
+                    .resolve_constant()
+                    .ok_or("Cannot convert non-constant reference atom to literal")?;
+                lit.try_into()
+                    .map_err(|_| "Cannot convert non-int reference atom to i32")
+            }
+        }
     }
 }
 
@@ -263,7 +271,15 @@ impl TryFrom<&Atom> for bool {
     type Error = &'static str;
 
     fn try_from(value: &Atom) -> Result<Self, Self::Error> {
-        let lit: &Literal = value.try_into()?;
-        lit.try_into()
+        match value {
+            Atom::Literal(lit) => lit.try_into(),
+            Atom::Reference(reference) => {
+                let lit = reference
+                    .resolve_constant()
+                    .ok_or("Cannot convert non-constant reference atom to literal")?;
+                lit.try_into()
+                    .map_err(|_| "Cannot convert non-bool reference atom to bool")
+            }
+        }
     }
 }

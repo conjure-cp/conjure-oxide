@@ -3,7 +3,7 @@ use schemars::JsonSchema;
 use serde::Serialize;
 use serde_with::skip_serializing_none;
 
-use crate::solver::SolverFamily;
+use crate::settings::SolverFamily;
 
 #[skip_serializing_none]
 #[derive(Serialize, Clone, JsonSchema, Debug, Educe)]
