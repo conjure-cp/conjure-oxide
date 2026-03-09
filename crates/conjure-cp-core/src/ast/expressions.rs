@@ -22,8 +22,8 @@ use super::records::RecordValue;
 use super::sat_encoding::SATIntEncoding;
 use super::{
     AbstractLiteral, Atom, DeclarationPtr, Domain, DomainPtr, GroundDomain, IntVal, Literal,
-    Metadata, Moo, Name, Range, Reference, ReturnType, SetAttr, SubModel, SymbolTable,
-    SymbolTablePtr, Typeable, UnresolvedDomain, matrix,
+    Metadata, Model, Moo, Name, Range, Reference, ReturnType, SetAttr, SymbolTable, SymbolTablePtr,
+    Typeable, UnresolvedDomain, matrix,
 };
 
 // Ensure that this type doesn't get too big
@@ -48,7 +48,7 @@ use super::{
 // boxed ~niklasdewally
 
 // expect size of Expression to be 112 bytes
-static_assertions::assert_eq_size!([u8; 104], Expression);
+static_assertions::assert_eq_size!([u8; 112], Expression);
 
 /// Represents different types of expressions used to define rules and constraints in the model.
 ///
@@ -70,7 +70,7 @@ static_assertions::assert_eq_size!([u8; 104], Expression);
 #[biplate(to=RecordValue<Expression>)]
 #[biplate(to=RecordValue<Literal>)]
 #[biplate(to=Reference)]
-#[biplate(to=SubModel)]
+#[biplate(to=Model)]
 #[biplate(to=SymbolTable)]
 #[biplate(to=SymbolTablePtr)]
 #[biplate(to=Vec<Expression>)]
@@ -87,7 +87,7 @@ pub enum Expression {
     /// A comprehension.
     ///
     /// The inside of the comprehension opens a new scope.
-    // todo (gskorokhod): Comprehension contains a SubModel which contains a bunch of Rc pointers.
+    // todo (gskorokhod): Comprehension contains a symbol table which contains a bunch of pointers.
     // This makes implementing Quine tricky (it doesnt support Rc, by design). Skip it for now.
     #[polyquine_skip]
     Comprehension(Metadata, Moo<Comprehension>),
@@ -152,10 +152,6 @@ pub enum Expression {
     /// - If b is true, then `toInt(b) == 1`
     #[compatible(SMT)]
     ToInt(Metadata, Moo<Expression>),
-
-    // todo (gskorokhod): Same reason as for Comprehension
-    #[polyquine_skip]
-    Scope(Metadata, Moo<SubModel>),
 
     /// `|x|` - absolute value of `x`
     #[compatible(JsonInput, SMT)]
@@ -282,6 +278,12 @@ pub enum Expression {
     #[compatible(JsonInput)]
     AllDiff(Metadata, Moo<Expression>),
 
+    /// `table([x1, x2, ...], [[r11, r12, ...], [r21, r22, ...], ...])`
+    ///
+    /// Represents a positive table constraint: the tuple `[x1, x2, ...]` must match one of the
+    /// allowed rows.
+    #[compatible(JsonInput)]
+    Table(Metadata, Moo<Expression>, Moo<Expression>),
     /// Binary subtraction operator
     ///
     /// This is a parser-level construct, and is immediately normalised to `Sum([a,-b])`.
@@ -589,7 +591,8 @@ fn bounded_i32_domain_for_matrix_literal_monotonic(
 
     let expr = exprs.pop()?;
     let dom = expr.domain_of()?;
-    let Some(GroundDomain::Int(ranges)) = dom.as_ground() else {
+    let resolved = dom.resolve()?;
+    let GroundDomain::Int(ranges) = resolved.as_ref() else {
         return None;
     };
 
@@ -597,7 +600,8 @@ fn bounded_i32_domain_for_matrix_literal_monotonic(
 
     for expr in exprs {
         let dom = expr.domain_of()?;
-        let Some(GroundDomain::Int(ranges)) = dom.as_ground() else {
+        let resolved = dom.resolve()?;
+        let GroundDomain::Int(ranges) = resolved.as_ref() else {
             return None;
         };
 
@@ -721,7 +725,6 @@ impl Expression {
             }
             Expression::InDomain(_, _, _) => Some(Domain::bool()),
             Expression::Atomic(_, atom) => Some(atom.domain_of()),
-            Expression::Scope(_, _) => Some(Domain::bool()),
             Expression::Sum(_, e) => {
                 bounded_i32_domain_for_matrix_literal_monotonic(e, |x, y| Some(x + y))
             }
@@ -863,6 +866,7 @@ impl Expression {
                 None
             }
             Expression::AllDiff(_, _) => Some(Domain::bool()),
+            Expression::Table(_, _, _) => Some(Domain::bool()),
             Expression::FlatWatchedLiteral(_, _, _) => Some(Domain::bool()),
             Expression::MinionReify(_, _, _) => Some(Domain::bool()),
             Expression::MinionReifyImply(_, _, _) => Some(Domain::bool()),
@@ -1233,7 +1237,7 @@ impl CategoryOf for Expression {
                 // this should generically cover all leaf types we currently have in oxide.
 
                 // if x contains submodels (including comprehensions)
-                if !Biplate::<SubModel>::universe_bi(&x).is_empty() {
+                if !Biplate::<Model>::universe_bi(&x).is_empty() {
                     // assume that the category is decision
                     return Category::Decision;
                 }
@@ -1242,7 +1246,7 @@ impl CategoryOf for Expression {
                 if let Some(max_atom_category) = Biplate::<Atom>::universe_bi(&x).iter().map(|x| x.category_of()).max()
                 // and those atoms have a higher category than we already know about
                 && max_atom_category > max_category{
-                    // update category 
+                    // update category
                     max_category = max_atom_category;
                 }
 
@@ -1250,7 +1254,7 @@ impl CategoryOf for Expression {
                 if let Some(max_declaration_category) = Biplate::<DeclarationPtr>::universe_bi(&x).iter().map(|x| x.category_of()).max()
                 // and those pointers have a higher category than we already know about
                 && max_declaration_category > max_category{
-                    // update category 
+                    // update category
                     max_category = max_declaration_category;
                 }
                 max_category
@@ -1321,7 +1325,6 @@ impl Display for Expression {
             Expression::FromSolution(_, expr) => write!(f, "FromSolution({expr})"),
             Expression::Metavar(_, name) => write!(f, "&{name}"),
             Expression::Atomic(_, atom) => atom.fmt(f),
-            Expression::Scope(_, submodel) => write!(f, "{{\n{submodel}\n}}"),
             Expression::Abs(_, a) => write!(f, "|{a}|"),
             Expression::Sum(_, e) => {
                 write!(f, "sum({e})")
@@ -1390,6 +1393,9 @@ impl Display for Expression {
             }
             Expression::AllDiff(_, e) => {
                 write!(f, "allDiff({e})")
+            }
+            Expression::Table(_, tuple_expr, rows_expr) => {
+                write!(f, "table({tuple_expr}, {rows_expr})")
             }
             Expression::Bubble(_, box1, box2) => {
                 write!(f, "{{{} @ {}}}", box1.clone(), box2.clone())
@@ -1580,7 +1586,6 @@ impl Typeable for Expression {
             Expression::FromSolution(_, expr) => expr.return_type(),
             Expression::Metavar(_, _) => ReturnType::Unknown,
             Expression::Atomic(_, atom) => atom.return_type(),
-            Expression::Scope(_, scope) => scope.return_type(),
             Expression::Abs(_, _) => ReturnType::Int,
             Expression::Sum(_, _) => ReturnType::Int,
             Expression::Product(_, _) => ReturnType::Int,
@@ -1621,6 +1626,7 @@ impl Typeable for Expression {
                 }
             }
             Expression::AllDiff(_, _) => ReturnType::Bool,
+            Expression::Table(_, _, _) => ReturnType::Bool,
             Expression::Bubble(_, inner, _) => inner.return_type(),
             Expression::FlatWatchedLiteral(_, _, _) => ReturnType::Bool,
             Expression::MinionReify(_, _, _) => ReturnType::Bool,

@@ -6,10 +6,8 @@ use tree_morph::{
 };
 
 use crate::{
-    Model,
-    ast::{Expression, SymbolTablePtr},
-    bug,
-    rule_engine::Rule,
+    Model, bug,
+    settings::{Rewriter, set_current_rewriter},
 };
 
 use super::{RuleSet, get_rules_grouped};
