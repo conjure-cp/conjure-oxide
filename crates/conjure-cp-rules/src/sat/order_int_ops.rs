@@ -159,17 +159,6 @@ fn eq_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     Ok(Reduction::cnf(output, new_clauses, new_symbols))
 }
 
-#[register_rule(("SAT_Order", 9100))]
-fn min_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
-    let Expr::Min(_, _) = expr else {
-        return Err(RuleNotApplicable);
-    };
-
-    // eprintln!("min_sat_order not fail, applying");
-    panic!("min_sat_order not fail, applying on {:#?}", expr);
-    // Ok(Reduction::cnf(output, new_clauses, new_symbols))
-}
-
 /// Converts a </>/<=/>= expression between two order SATInts to a boolean expression in cnf
 ///
 /// ```text
