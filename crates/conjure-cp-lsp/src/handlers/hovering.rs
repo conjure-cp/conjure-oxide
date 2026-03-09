@@ -37,7 +37,7 @@ impl Backend {
         let hover_byte = position_to_byte(&cache_conts.contents, position);
 
         let info = match source_map.hover_info_at_byte(hover_byte) {
-            Some(info) => info,
+            Some(info) => info.clone(),
             None => {
                 return Ok(None);
             }

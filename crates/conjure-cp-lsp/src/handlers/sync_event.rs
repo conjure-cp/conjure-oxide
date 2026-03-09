@@ -64,8 +64,8 @@ impl Backend {
                             sourcemap: Some(source_map),
                             ast: Some(ast_model),
                             errors,
-                            cst: Some(new_tree),
-                            contents: new_text.clone(),
+                            cst: Some(cst_tree),
+                            contents: text.clone(),
                             version: params.text_document.version,
                         }
                     }
@@ -74,8 +74,8 @@ impl Backend {
                             sourcemap: None,
                             ast: None, 
                             errors, 
-                            cst: Some(new_tree), 
-                            contents: new_text.clone(), 
+                            cst: Some(cst_tree), 
+                            contents: text.clone(), 
                             version: params.text_document.version, 
                         }
                     }
@@ -84,8 +84,8 @@ impl Backend {
                             sourcemap: None,
                             ast: None,
                             errors: vec![RecoverableParseError::new(fatal.to_string(), None)],
-                            cst: Some(new_tree),
-                            contents: new_text.clone(),
+                            cst: Some(cst_tree),
+                            contents: text.clone(),
                             version: params.text_document.version,
                         }
                     }
@@ -100,7 +100,7 @@ impl Backend {
             .await;
 
         //diagnostic stuff here
-        self.handle_diagnostics(&uri.clone(), new_cache).await;
+        self.handle_diagnostics(&uri.clone(), cache_content).await;
     }
     pub async fn handle_did_save(&self, params: DidSaveTextDocumentParams) {
         //if save, do not update existing entry,simply access from cache
@@ -218,10 +218,14 @@ impl Backend {
                 self.client
                     .log_message(MessageType::INFO, "Document changed, cache updated")
                     .await;
+
+                
+                self.handle_diagnostics(&uri, new_cache_conts).await;
             }
+            
         }
 
-        self.handle_diagnostics(&uri, new_cache_conts).await;
+        // self.handle_diagnostics(&uri, new_cache_conts).await;
     }
 
     pub async fn handle_diagnostics(&self, uri: &Url, cache_conts: CacheCont) {
