@@ -62,6 +62,7 @@ pub fn parse_atom(
             Ok(Some(Expression::AbstractLiteral(Metadata::new(), abs)))
         }
         "flatten" => parse_flatten(ctx, node),
+        "table" => parse_table(ctx, node),
         "index_or_slice" => parse_index_or_slice(ctx, node),
         // for now, assume is binary since powerset isn't implemented
         // TODO: add powerset support under "set_operation"
@@ -100,6 +101,24 @@ fn parse_flatten(
             Moo::new(expr),
         )))
     }
+}
+
+fn parse_table(ctx: &mut ParseContext, node: &Node) -> Result<Option<Expression>, FatalParseError> {
+    let variables_node = field!(node, "variables");
+    let Some(variables) = parse_atom(ctx, &variables_node)? else {
+        return Ok(None);
+    };
+
+    let rows_node = field!(node, "rows");
+    let Some(rows) = parse_atom(ctx, &rows_node)? else {
+        return Ok(None);
+    };
+
+    Ok(Some(Expression::Table(
+        Metadata::new(),
+        Moo::new(variables),
+        Moo::new(rows),
+    )))
 }
 
 fn parse_index_or_slice(
