@@ -206,13 +206,15 @@ impl Backend {
         }
 
         if let Some(new_cache_conts) = lsp_cache.get(&uri).await {
+
             self.client
                 .log_message(MessageType::INFO, "Did change document")
                 .await;
             self.client
                 .log_message(MessageType::INFO, &new_cache_conts.contents)
                 .await;
-            self.handle_diagnostics(&uri, new_cache_conts).await;
+            self.client
+                .log_message(MessageType::INFO, &new_cache_conts.contents)
         }
     }
 
