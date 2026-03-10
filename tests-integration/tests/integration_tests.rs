@@ -6,8 +6,8 @@ use git_version as _;
 use conjure_cp::defaults::DEFAULT_RULE_SETS;
 use conjure_cp::parse::tree_sitter::parse_essence_file_native;
 use conjure_cp::rule_engine::rewrite_naive;
-use conjure_cp::solver::Solver;
 use conjure_cp::solver::adaptors::*;
+use conjure_cp::solver::Solver;
 use conjure_cp_cli::utils::testing::{normalize_solutions_for_comparison, read_human_rule_trace};
 use itertools::Itertools;
 use std::collections::BTreeMap;
@@ -15,9 +15,8 @@ use std::env;
 use std::error::Error;
 use std::fs;
 use std::fs::File;
-use tracing_subscriber::{Layer, filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt};
+use tracing_subscriber::{filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt, Layer};
 use tree_morph::{helpers::select_panic, prelude::*};
-
 
 use std::sync::Arc;
 use std::sync::RwLock;
@@ -27,9 +26,9 @@ use conjure_cp::context::Context;
 use conjure_cp::parse::tree_sitter::parse_essence_file;
 use conjure_cp::rule_engine::resolve_rule_sets;
 use conjure_cp::settings::{
-    Parser, QuantifiedExpander, Rewriter, SolverFamily, set_comprehension_expander,
-    set_current_parser, set_current_rewriter, set_current_solver_family,
-    set_minion_discrete_threshold,
+    set_comprehension_expander, set_current_parser, set_current_rewriter,
+    set_current_solver_family, set_minion_discrete_threshold, Parser, QuantifiedExpander, Rewriter,
+    SolverFamily,
 };
 use conjure_cp_cli::utils::conjure::solutions_to_json;
 use conjure_cp_cli::utils::conjure::{get_solutions, get_solutions_from_conjure};
@@ -316,27 +315,10 @@ fn integration_test_inner(
     }
 
     // Check Stage 3a (solutions)
-    match solver_fam {
-        SolverFamily::Minion => {
-            let expected_solutions_json =
-                read_solutions_json(path, case_name, "expected", SolverFamily::Minion)?;
-            let username_solutions_json = solutions_to_json(&solutions);
-            assert_eq!(username_solutions_json, expected_solutions_json);
-        }
-        SolverFamily::Sat(encoding) => {
-            let expected_solutions_json =
-                read_solutions_json(path, case_name, "expected", SolverFamily::Sat(encoding))?;
-            let username_solutions_json = solutions_to_json(&solutions);
-            assert_eq!(username_solutions_json, expected_solutions_json);
-        }
-        #[cfg(feature = "smt")]
-        SolverFamily::Smt(config) => {
-            let expected_solutions_json =
-                read_solutions_json(path, case_name, "expected", SolverFamily::Smt(config))?;
-            let username_solutions_json = solutions_to_json(&solutions);
-            assert_eq!(username_solutions_json, expected_solutions_json);
-        }
-    }
+
+    let expected_solutions_json = read_solutions_json(path, case_name, "expected", solver_fam)?;
+    let username_solutions_json = solutions_to_json(&solutions);
+    assert_eq!(username_solutions_json, expected_solutions_json);
 
     // TODO: Implement rule trace validation for morph
     match rewriter {
