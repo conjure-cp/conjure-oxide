@@ -325,12 +325,8 @@ fn integration_test_inner(
             assert_eq!(username_solutions_json, expected_solutions_json);
         }
         SolverFamily::Sat(encoding) => {
-            let expected_solutions_json = read_solutions_json(
-                path,
-                case_name,
-                "expected",
-                SolverFamily::Sat(encoding),
-            )?;
+            let expected_solutions_json =
+                read_solutions_json(path, case_name, "expected", SolverFamily::Sat(encoding))?;
             let username_solutions_json = solutions_to_json(&solutions);
             assert_eq!(username_solutions_json, expected_solutions_json);
         }
