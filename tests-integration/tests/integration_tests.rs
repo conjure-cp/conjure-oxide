@@ -17,8 +17,6 @@ use std::fs::File;
 use tracing_subscriber::{Layer, filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt};
 use tree_morph::{helpers::select_panic, prelude::*};
 
-#[cfg(feature = "smt")]
-use conjure_cp::solver::adaptors::smt::TheoryConfig;
 
 use std::sync::Arc;
 use std::sync::RwLock;
@@ -331,13 +329,9 @@ fn integration_test_inner(
             assert_eq!(username_solutions_json, expected_solutions_json);
         }
         #[cfg(feature = "smt")]
-        SolverFamily::Smt(_) => {
-            let expected_solutions_json = read_solutions_json(
-                path,
-                case_name,
-                "expected",
-                SolverFamily::Smt(TheoryConfig::default()),
-            )?;
+        SolverFamily::Smt(config) => {
+            let expected_solutions_json =
+                read_solutions_json(path, case_name, "expected", SolverFamily::Smt(config))?;
             let username_solutions_json = solutions_to_json(&solutions);
             assert_eq!(username_solutions_json, expected_solutions_json);
         }
