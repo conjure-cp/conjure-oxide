@@ -1,54 +1,46 @@
 #![allow(clippy::arc_with_non_send_sync)]
 
-use std::{collections::BTreeSet, fmt::Display, sync::atomic::AtomicBool};
+use std::{collections::BTreeSet, fmt::Display};
 
 use crate::{ast::Metadata, into_matrix_expr, matrix_expr};
 use conjure_cp_core::ast::ReturnType;
 use itertools::Itertools as _;
+use parking_lot::RwLockReadGuard;
 use serde::{Deserialize, Serialize};
+use serde_with::serde_as;
 use uniplate::{Biplate, Uniplate};
 
 use super::{
-    DeclarationPtr, Domain, DomainPtr, Expression, Moo, Name, Range, SubModel, SymbolTablePtr,
-    Typeable, ac_operators::ACOperatorKind,
+    DeclarationPtr, Domain, DomainPtr, Expression, Model, Moo, Name, Range, SymbolTable,
+    SymbolTablePtr, Typeable, ac_operators::ACOperatorKind, serde::PtrAsInner,
 };
 
-// TODO: move this global setting somewhere better?
-
-/// The rewriter to use for rewriting comprehensions.
-///
-/// True for optimised, false for naive
-pub static USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS: AtomicBool = AtomicBool::new(false);
-
-// TODO: do not use Names to compare variables, use DeclarationPtr and ids instead
-// see issue #930
-//
-// this will simplify *a lot* of the knarly stuff here, but can only be done once everything else
-// uses DeclarationPtr.
-//
-// ~ nikdewally, 10/06/25
+#[derive(Clone, PartialEq, Eq, Hash, Serialize, Deserialize, Debug, Uniplate)]
+#[biplate(to=Expression)]
+#[biplate(to=Name)]
+pub enum ComprehensionQualifier {
+    Generator { name: Name, domain: DomainPtr },
+    Condition(Expression),
+}
 
 /// A comprehension.
+#[serde_as]
 #[derive(Clone, PartialEq, Eq, Hash, Uniplate, Serialize, Deserialize, Debug)]
-#[biplate(to=SubModel)]
 #[biplate(to=Expression)]
+#[biplate(to=SymbolTable)]
+#[biplate(to=SymbolTablePtr)]
 #[non_exhaustive]
 pub struct Comprehension {
+    pub return_expression: Expression,
+    pub qualifiers: Vec<ComprehensionQualifier>,
     #[doc(hidden)]
-    pub return_expression_submodel: SubModel,
-    #[doc(hidden)]
-    pub generator_submodel: SubModel,
-    #[doc(hidden)]
-    pub induction_vars: Vec<Name>,
+    #[serde_as(as = "PtrAsInner")]
+    pub symbols: SymbolTablePtr,
 }
 
 impl Comprehension {
     pub fn domain_of(&self) -> Option<DomainPtr> {
-        let return_expr_domain = self
-            .return_expression_submodel
-            .clone()
-            .into_single_expression()
-            .domain_of()?;
+        let return_expr_domain = self.return_expression.domain_of()?;
 
         // return a list (matrix with index domain int(1..)) of return_expr elements
         Some(Domain::matrix(
@@ -58,124 +50,154 @@ impl Comprehension {
     }
 
     pub fn return_expression(self) -> Expression {
-        self.return_expression_submodel.into_single_expression()
+        self.return_expression
     }
 
     pub fn replace_return_expression(&mut self, new_expr: Expression) {
-        let new_expr = match new_expr {
-            Expression::And(_, exprs) if (*exprs).clone().unwrap_list().is_some() => {
-                Expression::Root(Metadata::new(), (*exprs).clone().unwrap_list().unwrap())
-            }
-            expr => Expression::Root(Metadata::new(), vec![expr]),
-        };
-
-        *self.return_expression_submodel.root_mut_unchecked() = new_expr;
+        self.return_expression = new_expr;
     }
 
-    /// Adds a guard to the comprehension. Returns false if the guard does not only reference induction variables.
-    pub fn add_induction_guard(&mut self, guard: Expression) -> bool {
-        if self.is_induction_guard(&guard) {
-            self.generator_submodel.add_constraint(guard);
+    pub fn symbols(&self) -> RwLockReadGuard<'_, SymbolTable> {
+        self.symbols.read()
+    }
+
+    pub fn quantified_vars(&self) -> Vec<Name> {
+        self.qualifiers
+            .iter()
+            .filter_map(|q| match q {
+                ComprehensionQualifier::Generator { name, .. } => Some(name.clone()),
+                ComprehensionQualifier::Condition(_) => None,
+            })
+            .collect()
+    }
+
+    pub fn generator_conditions(&self) -> Vec<Expression> {
+        self.qualifiers
+            .iter()
+            .filter_map(|q| match q {
+                ComprehensionQualifier::Condition(c) => Some(c.clone()),
+                ComprehensionQualifier::Generator { .. } => None,
+            })
+            .collect()
+    }
+
+    /// Builds a temporary model containing generator qualifiers and guards.
+    pub fn to_generator_model(&self) -> Model {
+        let mut model = self.empty_model_with_symbols();
+        model.add_constraints(self.generator_conditions());
+        model
+    }
+
+    /// Builds a temporary model containing the return expression only.
+    pub fn to_return_expression_model(&self) -> Model {
+        let mut model = self.empty_model_with_symbols();
+        model.add_constraint(self.return_expression.clone());
+        model
+    }
+
+    fn empty_model_with_symbols(&self) -> Model {
+        let parent = self.symbols.read().parent().clone();
+        let mut model = if let Some(parent) = parent {
+            Model::new_in_parent_scope(parent)
+        } else {
+            Model::default()
+        };
+        *model.symbols_ptr_unchecked_mut() = self.symbols.clone();
+        model
+    }
+
+    /// Adds a guard to the comprehension. Returns false if the guard does not only reference quantified variables.
+    pub fn add_quantified_guard(&mut self, guard: Expression) -> bool {
+        if self.is_quantified_guard(&guard) {
+            self.qualifiers
+                .push(ComprehensionQualifier::Condition(guard));
             true
         } else {
             false
         }
     }
 
-    /// True iff expr only references induction variables.
-    pub fn is_induction_guard(&self, expr: &Expression) -> bool {
-        is_induction_guard(&(self.induction_vars.clone().into_iter().collect()), expr)
+    /// True iff expr only references quantified variables.
+    pub fn is_quantified_guard(&self, expr: &Expression) -> bool {
+        let quantified: BTreeSet<Name> = self.quantified_vars().into_iter().collect();
+        is_quantified_guard(&quantified, expr)
     }
 }
 
 impl Typeable for Comprehension {
     fn return_type(&self) -> ReturnType {
-        self.return_expression_submodel
-            .clone()
-            .into_single_expression()
-            .return_type()
+        self.return_expression.return_type()
     }
 }
 
 impl Display for Comprehension {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let generators: String = self
-            .generator_submodel
-            .symbols()
-            .clone()
-            .into_iter_local()
-            .map(|(name, decl): (Name, DeclarationPtr)| {
-                let domain: DomainPtr = decl.domain().unwrap();
-                (name, domain)
-            })
-            .map(|(name, domain)| format!("{name}: {domain}"))
-            .join(",");
-
-        let guards = self
-            .generator_submodel
-            .constraints()
+        let generators_and_guards = self
+            .qualifiers
             .iter()
-            .map(|x| format!("{x}"))
-            .join(",");
+            .map(|qualifier| match qualifier {
+                ComprehensionQualifier::Generator { name, domain } => {
+                    format!("{name} : {domain}")
+                }
+                ComprehensionQualifier::Condition(expr) => format!("{expr}"),
+            })
+            .join(", ");
 
-        let generators_and_guards = itertools::join([generators, guards], ",");
-
-        let expression = &self.return_expression_submodel;
-        write!(f, "[{expression} | {generators_and_guards}]")
+        write!(
+            f,
+            "[ {} | {generators_and_guards} ]",
+            self.return_expression
+        )
     }
 }
 
 /// A builder for a comprehension.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ComprehensionBuilder {
-    guards: Vec<Expression>,
-    // symbol table containing all the generators
-    // for now, this is just used during parsing - a new symbol table is created using this when we initialise the comprehension
-    // this is not ideal, but i am chucking all this code very soon anyways...
-    generator_symboltable: SymbolTablePtr,
-    return_expr_symboltable: SymbolTablePtr,
-    induction_variables: BTreeSet<Name>,
+    qualifiers: Vec<ComprehensionQualifier>,
+    // A single scope for generators and return expression.
+    symbols: SymbolTablePtr,
+    quantified_variables: BTreeSet<Name>,
 }
 
 impl ComprehensionBuilder {
     pub fn new(symbol_table_ptr: SymbolTablePtr) -> Self {
         ComprehensionBuilder {
-            guards: vec![],
-            generator_symboltable: SymbolTablePtr::with_parent(symbol_table_ptr.clone()),
-            return_expr_symboltable: SymbolTablePtr::with_parent(symbol_table_ptr),
-            induction_variables: BTreeSet::new(),
+            qualifiers: vec![],
+            symbols: SymbolTablePtr::with_parent(symbol_table_ptr),
+            quantified_variables: BTreeSet::new(),
         }
     }
 
-    /// The symbol table for the comprehension generators
+    /// Backwards-compatible parser API: same table for generators and return expression.
     pub fn generator_symboltable(&mut self) -> SymbolTablePtr {
-        self.generator_symboltable.clone()
+        self.symbols.clone()
     }
 
-    /// The symbol table for the comprehension return expression
+    /// Backwards-compatible parser API: same table for generators and return expression.
     pub fn return_expr_symboltable(&mut self) -> SymbolTablePtr {
-        self.return_expr_symboltable.clone()
+        self.symbols.clone()
     }
 
     pub fn guard(mut self, guard: Expression) -> Self {
-        self.guards.push(guard);
+        self.qualifiers
+            .push(ComprehensionQualifier::Condition(guard));
         self
     }
 
     pub fn generator(mut self, declaration: DeclarationPtr) -> Self {
         let name = declaration.name().clone();
         let domain = declaration.domain().unwrap();
-        assert!(!self.induction_variables.contains(&name));
+        assert!(!self.quantified_variables.contains(&name));
 
-        self.induction_variables.insert(name.clone());
+        self.quantified_variables.insert(name.clone());
 
-        // insert into generator symbol table as a variable
-        self.generator_symboltable.write().insert(declaration);
+        // insert into comprehension scope as a local quantified variable
+        let quantified_decl = DeclarationPtr::new_quantified(name.clone(), domain.clone());
+        self.symbols.write().insert(quantified_decl);
 
-        // insert into return expression symbol table as a given
-        self.return_expr_symboltable
-            .write()
-            .insert(DeclarationPtr::new_given(name, domain));
+        self.qualifiers
+            .push(ComprehensionQualifier::Generator { name, domain });
 
         self
     }
@@ -192,61 +214,25 @@ impl ComprehensionBuilder {
         mut expression: Expression,
         comprehension_kind: Option<ACOperatorKind>,
     ) -> Comprehension {
-        let parent_symboltable = self.generator_symboltable.read().parent().clone().unwrap();
+        let quantified_variables = self.quantified_variables;
 
-        let mut generator_submodel = SubModel::new(parent_symboltable.clone());
-        let mut return_expression_submodel = SubModel::new(parent_symboltable);
+        let mut qualifiers = Vec::new();
+        let mut other_guards = Vec::new();
 
-        *generator_submodel.symbols_ptr_unchecked_mut() = self.generator_symboltable;
-        *return_expression_submodel.symbols_ptr_unchecked_mut() = self.return_expr_symboltable;
-
-        // TODO:also allow guards that reference lettings and givens.
-
-        let induction_variables = self.induction_variables;
-
-        // only guards referencing induction variables can go inside the comprehension
-        let (mut induction_guards, mut other_guards): (Vec<_>, Vec<_>) = self
-            .guards
-            .into_iter()
-            .partition(|x| is_induction_guard(&induction_variables, x));
-
-        let induction_variables_2 = induction_variables.clone();
-        let generator_symboltable_ptr = generator_submodel.symbols_ptr_unchecked().clone();
-
-        // fix induction guard pointers so that they all point to variables in the generator model
-        induction_guards =
-            Biplate::<DeclarationPtr>::transform_bi(&induction_guards, &move |decl| {
-                if induction_variables_2.contains(&decl.name()) {
-                    generator_symboltable_ptr
-                        .read()
-                        .lookup_local(&decl.name())
-                        .unwrap()
-                } else {
-                    decl
+        for qualifier in self.qualifiers {
+            match qualifier {
+                ComprehensionQualifier::Generator { .. } => qualifiers.push(qualifier),
+                ComprehensionQualifier::Condition(condition) => {
+                    if is_quantified_guard(&quantified_variables, &condition) {
+                        qualifiers.push(ComprehensionQualifier::Condition(condition));
+                    } else {
+                        other_guards.push(condition);
+                    }
                 }
-            })
-            .into_iter()
-            .collect_vec();
-
-        let induction_variables_2 = induction_variables.clone();
-        let return_expr_symboltable_ptr =
-            return_expression_submodel.symbols_ptr_unchecked().clone();
-
-        // fix other guard pointers so that they all point to variables in the return expr model
-        other_guards = Biplate::<DeclarationPtr>::transform_bi(&other_guards, &move |decl| {
-            if induction_variables_2.contains(&decl.name()) {
-                return_expr_symboltable_ptr
-                    .read()
-                    .lookup_local(&decl.name())
-                    .unwrap()
-            } else {
-                decl
             }
-        })
-        .into_iter()
-        .collect_vec();
+        }
 
-        // handle guards that reference non-induction variables
+        // handle guards that reference non-quantified variables
         if !other_guards.is_empty() {
             let comprehension_kind = comprehension_kind.expect(
                 "if any guards reference decision variables, a comprehension kind should be given",
@@ -263,10 +249,7 @@ impl ComprehensionBuilder {
                 }
                 ACOperatorKind::Or => Expression::And(
                     Metadata::new(),
-                    Moo::new(Expression::And(
-                        Metadata::new(),
-                        Moo::new(matrix_expr![guard_expr, expression]),
-                    )),
+                    Moo::new(matrix_expr![guard_expr, expression]),
                 ),
 
                 ACOperatorKind::Sum => {
@@ -281,22 +264,18 @@ impl ComprehensionBuilder {
             }
         }
 
-        generator_submodel.add_constraints(induction_guards);
-
-        return_expression_submodel.add_constraint(expression);
-
         Comprehension {
-            return_expression_submodel,
-            generator_submodel,
-            induction_vars: induction_variables.into_iter().collect_vec(),
+            return_expression: expression,
+            qualifiers,
+            symbols: self.symbols,
         }
     }
 }
 
-/// True iff the guard only references induction variables.
-fn is_induction_guard(induction_variables: &BTreeSet<Name>, guard: &Expression) -> bool {
+/// True iff the guard only references quantified variables.
+fn is_quantified_guard(quantified_variables: &BTreeSet<Name>, guard: &Expression) -> bool {
     guard
         .universe_bi()
         .iter()
-        .all(|x| induction_variables.contains(x))
+        .all(|x| quantified_variables.contains(x))
 }

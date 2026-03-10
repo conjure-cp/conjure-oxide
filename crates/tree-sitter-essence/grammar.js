@@ -90,19 +90,30 @@ module.exports = grammar ({
       ))
     ),
 
-    range_list: $ => prec(2, commaSep1(choice($.int_range, $.atom))),
+    range_list: $ => prec(2, commaSep1(choice($.int_range, $.atom, $.arithmetic_expr))),
 
     int_range: $ => seq(
-      optional(field("lower", $.atom)), 
+      optional(field("lower", choice($.atom, $.arithmetic_expr))), 
       "..", 
-      optional(field("upper", $.atom))
+      optional(field("upper", choice($.atom, $.arithmetic_expr)))
     ),
 
-    tuple_domain: $ => seq(
-      optional("tuple"),
-      "(",
-      commaSep1($.domain),
-      ")"
+    tuple_domain: $ => choice(
+      // explicit 'tuple' form: allows empty, singleton, or multi-arity
+      seq(
+        "tuple",
+        "(",
+        optional(commaSep1($.domain)),
+        ")"
+      ),
+      // parenthesized form without 'tuple' is allowed only for arity >= 2
+      seq(
+        "(",
+        $.domain,
+        ",",
+        commaSep1($.domain),
+        ")"
+      )
     ),
 
     matrix_domain: $ => seq(
@@ -297,13 +308,23 @@ module.exports = grammar ({
 
     sub_atom_expr: $ => seq("(", field("expression", $.atom), ")"),
 
-    tuple: $ => prec(-5, seq(
-      "(",
-      field("element", choice($.arithmetic_expr, $.atom)),
-      ",",
-      field("element", commaSep1(choice($.arithmetic_expr, $.atom))),
-      ")"
-    )),
+    tuple: $ => prec(-5,choice(
+      // explicit tuple value using the 'tuple' keyword (allows empty, singleton, multi-arity)
+      seq(
+        "tuple",
+        "(",
+        optional(commaSep1(choice($.arithmetic_expr, $.atom))),
+        ")"
+      ),
+      // parenthesized tuple value without keyword (arity >= 2)
+      seq(
+        "(",
+        field("element", choice($.arithmetic_expr, $.atom)),
+        ",",
+        field("element", commaSep1(choice($.arithmetic_expr, $.atom))),
+        ")"
+      ))
+    ),
 
     matrix: $ => seq(
       "[",

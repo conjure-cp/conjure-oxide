@@ -21,7 +21,7 @@ use conjure_cp::{
     rule_engine::{
         ApplicationError, ApplicationResult, Reduction, register_rule, register_rule_set,
     },
-    solver::SolverFamily,
+    settings::SolverFamily,
 };
 
 use itertools::Itertools;

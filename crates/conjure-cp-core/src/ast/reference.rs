@@ -5,7 +5,6 @@ use parking_lot::MappedRwLockReadGuard;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use std::fmt::{Display, Formatter};
-use std::ops::Deref;
 use uniplate::Uniplate;
 
 use super::{
@@ -63,10 +62,26 @@ impl Reference {
 
     /// Returns the expression behind a value-letting reference, if this is one.
     pub fn resolve_expression(&self) -> Option<Expression> {
-        match self.ptr().kind().deref() {
-            DeclarationKind::ValueLetting(expr) => Some(expr.clone()),
-            _ => None,
+        if let Some(expr) = self.ptr().as_value_letting() {
+            return Some(expr.clone());
         }
+
+        let generator = {
+            let kind = self.ptr.kind();
+            if let DeclarationKind::Quantified(inner) = &*kind {
+                inner.generator().cloned()
+            } else {
+                None
+            }
+        };
+
+        if let Some(generator) = generator
+            && let Some(expr) = generator.as_value_letting()
+        {
+            return Some(expr.clone());
+        }
+
+        None
     }
 
     /// Evaluates this reference to a literal if it resolves to a constant.

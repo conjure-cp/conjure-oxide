@@ -28,6 +28,7 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
         Expr::Metavar(_, _) => Err(RuleNotApplicable),
         Expr::UnsafeIndex(_, _, _) => Err(RuleNotApplicable),
         Expr::UnsafeSlice(_, _, _) => Err(RuleNotApplicable),
+        Expr::Table(_, _, _) => Err(RuleNotApplicable),
         Expr::SafeIndex(_, subject, indices) => {
             // partially evaluate matrix literals indexed by a constant.
 
@@ -117,7 +118,6 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
             }
         }
         Expr::Atomic(_, _) => Err(RuleNotApplicable),
-        Expr::Scope(_, _) => Err(RuleNotApplicable),
         Expr::ToInt(_, expression) => {
             if expression.return_type() == ReturnType::Int {
                 Ok(Reduction::pure(Moo::unwrap_or_clone(expression.clone())))

@@ -14,7 +14,8 @@ use crate::ast::comprehension::ComprehensionBuilder;
 use crate::ast::records::RecordValue;
 use crate::ast::{
     AbstractLiteral, Atom, DeclarationPtr, Domain, Expression, FuncAttr, IntVal, JectivityAttr,
-    Literal, Name, PartialityAttr, Range, RecordEntry, SetAttr, SymbolTable, SymbolTablePtr,
+    Literal, MSetAttr, Name, PartialityAttr, Range, RecordEntry, SetAttr, SymbolTable,
+    SymbolTablePtr,
 };
 use crate::ast::{DomainPtr, Metadata};
 use crate::context::Context;
@@ -64,12 +65,12 @@ pub fn model_from_json(str: &str, context: Arc<RwLock<Context<'static>>>) -> Res
                 // e.g. FindOrGiven,
 
                 let mut valid_decl: bool = false;
-                let scope = m.as_submodel().symbols_ptr_unchecked().clone();
-                let submodel = m.as_submodel_mut();
+                let scope = m.symbols_ptr_unchecked().clone();
+                let model = &mut m;
                 for (kind, value) in decl {
                     match kind.as_str() {
                         "FindOrGiven" => {
-                            parse_variable(value, &mut submodel.symbols_mut())?;
+                            parse_variable(value, &mut model.symbols_mut())?;
                             valid_decl = true;
                             break;
                         }
@@ -94,9 +95,9 @@ pub fn model_from_json(str: &str, context: Arc<RwLock<Context<'static>>>) -> Res
 
                 let constraints: Vec<Expression> = constraints_arr
                     .iter()
-                    .map(|x| parse_expression(x, m.as_submodel_mut().symbols_ptr_unchecked()))
+                    .map(|x| parse_expression(x, m.symbols_ptr_unchecked()))
                     .collect::<Result<Vec<_>>>()?;
-                m.as_submodel_mut().add_constraints(constraints);
+                m.add_constraints(constraints);
             }
             otherwise => bug!("Unhandled Statement {:#?}", otherwise),
         }
@@ -124,7 +125,7 @@ fn parse_variable(v: &JsonValue, symtab: &mut SymbolTable) -> Result<()> {
     let domain = parse_domain(domain.0, domain.1, symtab)?;
 
     symtab
-        .insert(DeclarationPtr::new_var(name.clone(), domain))
+        .insert(DeclarationPtr::new_find(name.clone(), domain))
         .ok_or(Error::Parse(format!(
             "Could not add {name} to symbol table as it already exists"
         )))
@@ -208,6 +209,38 @@ fn parse_domain(
             let size = parse_size_attr(size, symbols)?;
             let attr: SetAttr<IntVal> = SetAttr { size };
             Ok(Domain::set(attr, domain))
+        }
+        "DomainMSet" => {
+            let dom = domain_value
+                .get(2)
+                .and_then(|v| v.as_object())
+                .expect("domain object exists");
+            let domain = dom
+                .iter()
+                .next()
+                .ok_or(Error::Parse("DomainMSet is an empty object".to_owned()))?;
+            let domain = parse_domain(domain.0.as_str(), domain.1, symbols)?;
+
+            // Parse Attributes
+            let attributes = domain_value
+                .get(1)
+                .and_then(|v| v.as_array())
+                .ok_or(error!("MSet attributes is not a json array"))?;
+
+            let size = attributes
+                .first()
+                .and_then(|v| v.as_object())
+                .ok_or(error!("MSet size attributes is not an object"))?;
+            let size = parse_size_attr(size, symbols)?;
+
+            let occurrence = attributes
+                .get(1)
+                .and_then(|v| v.as_object())
+                .ok_or(error!("MSet occurrence attributes is not an object"))?;
+            let occurrence = parse_occur_attr(occurrence, symbols)?;
+
+            let attr: MSetAttr<IntVal> = MSetAttr { size, occurrence };
+            Ok(Domain::mset(attr, domain))
         }
 
         "DomainMatrix" => {
@@ -434,6 +467,49 @@ fn parse_size_attr(
     }
 }
 
+fn parse_occur_attr(
+    attr_map: &JsonMap<String, JsonValue>,
+    symbols: &mut SymbolTable,
+) -> Result<Range<IntVal>> {
+    let scope = SymbolTablePtr::new();
+    *scope.write() = symbols.clone();
+    let attr_obj = attr_map
+        .iter()
+        .next()
+        .ok_or(Error::Parse("OccurAttr is an empty object".to_owned()))?;
+    match attr_obj.0.as_str() {
+        "OccurAttr_None" => Ok(Range::Unbounded),
+        "OccurAttr_MinOccur" => {
+            let size_int = parse_expression_to_int_val(attr_obj.1, &scope)?;
+            Ok(Range::UnboundedR(size_int))
+        }
+        "OccurAttr_MaxOccur" => {
+            let size_int = parse_expression_to_int_val(attr_obj.1, &scope)?;
+            Ok(Range::UnboundedL(size_int))
+        }
+        "OccurAttr_MinMaxOccur" => {
+            let min_max = attr_obj
+                .1
+                .as_array()
+                .ok_or(error!("OccurAttr MinMaxOccur is not a json array"))?;
+            let min = min_max
+                .first()
+                .ok_or(error!("OccurAttr Min is not present"))?;
+            let min_int = parse_expression_to_int_val(min, &scope)?;
+            let max = min_max
+                .get(1)
+                .ok_or(error!("OccurAttr Max is not present"))?;
+            let max_int = parse_expression_to_int_val(max, &scope)?;
+            Ok(Range::Bounded(min_int, max_int))
+        }
+        "OccurAttr_Size" => {
+            let size_int = parse_expression_to_int_val(attr_obj.1, &scope)?;
+            Ok(Range::Single(size_int))
+        }
+        _ => Err(Error::Parse("OccurAttr is an unknown type".to_owned())),
+    }
+}
+
 fn parse_int_domain(v: &JsonValue, symbols: &SymbolTable) -> Result<DomainPtr> {
     let scope = SymbolTablePtr::new();
     *scope.write() = symbols.clone();
@@ -572,6 +648,8 @@ pub fn parse_expression(obj: &JsonValue, scope: &SymbolTablePtr) -> Result<Expre
 
             if op_obj.contains_key("MkOpFlatten") {
                 parse_flatten_op(op_obj, scope)
+            } else if op_obj.contains_key("MkOpTable") {
+                parse_table_op(op_obj, scope)
             } else if op_obj.contains_key("MkOpIndexing") || op_obj.contains_key("MkOpSlicing") {
                 parse_indexing_slicing_op(op_obj, scope)
             } else if binary_operator(op_name).is_some() {
@@ -618,6 +696,8 @@ pub fn parse_expression(obj: &JsonValue, scope: &SymbolTablePtr) -> Result<Expre
                 parse_abs_lit(&abslit["AbstractLiteral"]["AbsLitSet"], scope)
             } else if abstract_literal.contains_key("AbsLitFunction") {
                 parse_abs_function(&abslit["AbstractLiteral"]["AbsLitFunction"], scope)
+            } else if abstract_literal.contains_key("AbsLitMSet") {
+                parse_abs_mset(&abslit["AbstractLiteral"]["AbsLitMSet"], scope)
             } else {
                 parse_abstract_matrix_as_expr(obj, scope)
             }
@@ -654,6 +734,21 @@ fn parse_abs_lit(abs_set: &Value, scope: &SymbolTablePtr) -> Result<Expression> 
     Ok(Expression::AbstractLiteral(
         Metadata::new(),
         AbstractLiteral::Set(expressions),
+    ))
+}
+
+fn parse_abs_mset(abs_mset: &Value, scope: &SymbolTablePtr) -> Result<Expression> {
+    let values = abs_mset
+        .as_array()
+        .ok_or(error!("AbsLitMSet is not an array"))?;
+    let expressions = values
+        .iter()
+        .map(|values| parse_expression(values, scope))
+        .collect::<Result<Vec<_>>>()?;
+
+    Ok(Expression::AbstractLiteral(
+        Metadata::new(),
+        AbstractLiteral::MSet(expressions),
     ))
 }
 
@@ -794,7 +889,7 @@ fn parse_comprehension(
                             domain_value,
                             &mut generator_symboltable.write(),
                         )?;
-                        comprehension.generator(DeclarationPtr::new_var(name.into(), domain))
+                        comprehension.generator(DeclarationPtr::new_find(name.into(), domain))
                     }
                     // TODO: this is temporary until comprehensions support "in expr" generators
                     // currently only supports a single generator of this type
@@ -886,6 +981,49 @@ fn parse_bin_op(
         }
         _ => Err(error!("Binary operator arguments are not a 2-array")),
     }
+}
+
+fn parse_table_op(
+    op: &serde_json::Map<String, Value>,
+    scope: &SymbolTablePtr,
+) -> Result<Expression> {
+    let args = op
+        .get("MkOpTable")
+        .ok_or(error!("MkOpTable missing"))?
+        .as_array()
+        .ok_or(error!("MkOpTable is not an array"))?;
+
+    if args.len() != 2 {
+        return Err(error!("MkOpTable arguments are not a 2-array"));
+    }
+
+    let tuple_expr = parse_expression(&args[0], scope)?;
+    let allowed_rows_expr = parse_expression(&args[1], scope)?;
+
+    let (tuple_elems, _) = tuple_expr
+        .clone()
+        .unwrap_matrix_unchecked()
+        .ok_or(error!("MkOpTable first argument is not a matrix"))?;
+    let (allowed_rows, _) = allowed_rows_expr
+        .clone()
+        .unwrap_matrix_unchecked()
+        .ok_or(error!("MkOpTable second argument is not a matrix"))?;
+
+    for row_expr in allowed_rows {
+        let (row_elems, _) = row_expr
+            .unwrap_matrix_unchecked()
+            .ok_or(error!("MkOpTable row is not a matrix"))?;
+
+        if row_elems.len() != tuple_elems.len() {
+            return Err(error!("MkOpTable row width does not match tuple width"));
+        }
+    }
+
+    Ok(Expression::Table(
+        Metadata::new(),
+        Moo::new(tuple_expr),
+        Moo::new(allowed_rows_expr),
+    ))
 }
 
 fn parse_indexing_slicing_op(
@@ -1165,6 +1303,8 @@ fn parse_constant(
             if let Some(Value::Object(obj)) = int.get("ConstantAbstract") {
                 if let Some(arr) = obj.get("AbsLitSet") {
                     return parse_abs_lit(arr, scope);
+                } else if let Some(arr) = obj.get("AbsLitMSet") {
+                    return parse_abs_mset(arr, scope);
                 } else if let Some(arr) = obj.get("AbsLitMatrix") {
                     return parse_abstract_matrix_as_expr(arr, scope);
                 } else if let Some(arr) = obj.get("AbsLitTuple") {

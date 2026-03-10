@@ -3,24 +3,23 @@ use std::sync::Arc;
 
 use uniplate::zipper::Zipper;
 
-use crate::ast::{Expression, SubModel};
+use crate::ast::Expression;
 
-/// Traverses expressions in this sub-model, but not into inner sub-models.
+/// Traverses expressions in a root expression tree, but not into nested scopes.
 ///
 /// Same types and usage as `Biplate::contexts_bi`.
-pub(super) fn submodel_ctx(
-    m: SubModel,
-) -> impl Iterator<Item = (Expression, Arc<dyn Fn(Expression) -> SubModel>)> {
-    SubmodelCtx {
+pub(super) fn expression_ctx(
+    root_expression: Expression,
+) -> impl Iterator<Item = (Expression, Arc<dyn Fn(Expression) -> Expression>)> {
+    ExpressionCtx {
         zipper: SubmodelZipper {
-            inner: Zipper::new(m.root().clone()),
+            inner: Zipper::new(root_expression),
         },
-        submodel: m.clone(),
         done: false,
     }
 }
 
-/// A zipper that traverses over the current submodel only, and does not traverse into nested
+/// A zipper that traverses over the current expression tree and does not traverse into nested
 /// scopes.
 #[derive(Clone)]
 #[doc(hidden)]
@@ -51,11 +50,8 @@ impl SubmodelZipper {
 
     #[doc(hidden)]
     pub fn go_down(&mut self) -> Option<()> {
-        // do not enter things that create new submodels
-        if matches!(
-            self.inner.focus(),
-            Expression::Scope(_, _) | Expression::Comprehension(_, _)
-        ) {
+        // Do not enter comprehensions, which have their own local symbol table.
+        if matches!(self.inner.focus(), Expression::Comprehension(_, _)) {
             None
         } else {
             self.inner.go_down()
@@ -85,31 +81,26 @@ impl SubmodelZipper {
     }
 }
 
-pub struct SubmodelCtx {
+pub struct ExpressionCtx {
     zipper: SubmodelZipper,
-    submodel: SubModel,
     done: bool,
 }
 
-impl Iterator for SubmodelCtx {
-    type Item = (Expression, Arc<dyn Fn(Expression) -> SubModel>);
+impl Iterator for ExpressionCtx {
+    type Item = (Expression, Arc<dyn Fn(Expression) -> Expression>);
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.done {
             return None;
         }
         let node = self.zipper.focus().clone();
-        let submodel = self.submodel.clone();
         let zipper = self.zipper.clone();
 
         #[allow(clippy::arc_with_non_send_sync)]
         let ctx = Arc::new(move |x| {
             let mut zipper2 = zipper.clone();
             *zipper2.focus_mut() = x;
-            let root = zipper2.rebuild_root();
-            let mut submodel2 = submodel.clone();
-            submodel2.replace_root(root);
-            submodel2
+            zipper2.rebuild_root()
         });
 
         // prepare iterator for next element.
