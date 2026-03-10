@@ -239,8 +239,6 @@ pub fn save_solutions_json(
 
     let solver_name = solver.as_str();
     let filename = format!("{path}/{test_name}-{solver_name}.generated-solutions.json");
-    eprintln!("MEOW: {}", filename);
-    // NOTE: Fine Here
     File::create(&filename)?.write_all(generated_json_str.as_bytes())?;
 
     Ok(json_solutions)
