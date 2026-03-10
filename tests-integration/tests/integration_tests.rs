@@ -1,6 +1,7 @@
 #![allow(clippy::expect_used)]
 use conjure_cp::bug;
 use conjure_cp::rule_engine::get_rules_grouped;
+use git_version as _;
 
 use conjure_cp::defaults::DEFAULT_RULE_SETS;
 use conjure_cp::parse::tree_sitter::parse_essence_file_native;
