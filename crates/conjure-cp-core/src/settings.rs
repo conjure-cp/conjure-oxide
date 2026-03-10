@@ -323,7 +323,11 @@ impl SolverFamily {
     pub const fn as_str(&self) -> &'static str {
         match self {
             SolverFamily::Minion => "minion",
-            SolverFamily::Sat(_) => "sat",
+            SolverFamily::Sat(a) => match a {
+                SatEncoding::Direct => "sat-direct",
+                SatEncoding::Log => "sat-log",
+                SatEncoding::Order => "sat-order",
+            },
             #[cfg(feature = "smt")]
             SolverFamily::Smt(_) => "smt",
         }
