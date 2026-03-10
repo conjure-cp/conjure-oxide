@@ -269,15 +269,13 @@ fn integration_test_inner(
     };
     let solver_input_file = None;
 
-    // TODO: What the hey dude?
+    // TODO: Review?
     let solver = match solver_fam {
         SolverFamily::Minion => Solver::new(Minion::default()),
         SolverFamily::Sat(_) => Solver::new(Sat::default()),
         #[cfg(feature = "smt")]
         SolverFamily::Smt(_) => Solver::new(Smt::default()),
     };
-
-    eprintln!("hioasdfiohasdfiohdsf");
 
     let solutions = {
         let solved = get_solutions(solver, rewritten_model, 0, &solver_input_file)?;
@@ -310,11 +308,7 @@ fn integration_test_inner(
     if accept {
         // Always overwrite these ones. Unlike the rest, we don't need to selectively do these
         // based on the test results, so they don't get done later.
-
-        eprintln!("meow1");
-
         copy_generated_to_expected(path, case_name, "solutions", "json", Some(solver_fam))?;
-
         copy_human_trace_generated_to_expected(path, case_name, solver_fam)?;
     }
 
