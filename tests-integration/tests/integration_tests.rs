@@ -1,6 +1,7 @@
 #![allow(clippy::expect_used)]
 use conjure_cp::bug;
 use conjure_cp::rule_engine::get_rules_grouped;
+use git_version as _;
 
 use conjure_cp::defaults::DEFAULT_RULE_SETS;
 use conjure_cp::parse::tree_sitter::parse_essence_file_native;
@@ -58,7 +59,10 @@ fn run_case_label(
 ) -> String {
     format!(
         "test_dir={path}, model={essence_base}.{extension}, parser={}, rewriter={}, comprehension_expander={}, solver={}",
-        run_case.parser, run_case.rewriter, run_case.comprehension_expander, run_case.solver
+        run_case.parser,
+        run_case.rewriter,
+        run_case.comprehension_expander,
+        run_case.solver.as_str()
     )
 }
 
@@ -311,10 +315,10 @@ fn integration_test_inner(
         // Always overwrite these ones. Unlike the rest, we don't need to selectively do these
         // based on the test results, so they don't get done later.
 
-        eprintln!("meow1");
+        copy_generated_to_expected(path, case_name, "solutions", "json", solver_fam)?;
 
-        copy_generated_to_expected(path, case_name, "solutions", "json", Some(solver_fam))?;
-
+        copy_generated_to_expected(path, case_name, "solutions", "json", solver_fam)?;
+:qa
         copy_human_trace_generated_to_expected(path, case_name, solver_fam)?;
     }
 
@@ -414,9 +418,9 @@ fn copy_generated_to_expected(
     test_name: &str,
     stage: &str,
     extension: &str,
-    solver: Option<SolverFamily>,
+    solver: SolverFamily,
 ) -> Result<(), std::io::Error> {
-    let marker = solver.map_or("agnostic", |s| s.as_str());
+    let marker = solver.as_str();
 
     std::fs::copy(
         format!("{path}/{test_name}-{marker}.generated-{stage}.{extension}"),
