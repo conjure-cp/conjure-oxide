@@ -130,7 +130,7 @@ impl<A: Ord + Clone> Range<A> {
                 (Some(curr), Some(new)) => Some(curr.min(new)),
                 _ => None,
             };
-            if (lo > hi) {
+            if lo > hi {
                 return Err(DomainOpError::ConflictingAttrs);
             }
         }

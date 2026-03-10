@@ -21,9 +21,9 @@ use super::pretty::{pretty_expressions_as_top_level, pretty_vec};
 use super::records::RecordValue;
 use super::sat_encoding::SATIntEncoding;
 use super::{
-    AbstractLiteral, Atom, DeclarationPtr, Domain, DomainPtr, GroundDomain, IntVal, Literal,
-    Metadata, Moo, Name, Range, Reference, ReturnType, SetAttr, SubModel, SymbolTable,
-    SymbolTablePtr, Typeable, UnresolvedDomain, matrix, PartialityAttr, JectivityAttr
+    AbstractLiteral, Atom, DeclarationPtr, Domain, DomainPtr, GroundDomain, IntVal, JectivityAttr,
+    Literal, Metadata, Moo, Name, PartialityAttr, Range, Reference, ReturnType, SetAttr, SubModel,
+    SymbolTable, SymbolTablePtr, Typeable, UnresolvedDomain, matrix,
 };
 
 // Ensure that this type doesn't get too big
@@ -940,15 +940,19 @@ impl Expression {
                             let codomain_length = function.domain_of()?.length();
                             match codomain_length {
                                 Ok(co_len) => match jectivity {
-                                    JectivityAttr::Bijective | JectivityAttr::Surjective => Some(Range::Bounded(co_len,len)),
-                                    JectivityAttr::Injective => Some(Range::Bounded(0,Ord::max(len,co_len))),
-                                    JectivityAttr::None => Some(Range::Bounded(0,len))
+                                    JectivityAttr::Bijective | JectivityAttr::Surjective => {
+                                        Some(Range::Bounded(co_len, len))
+                                    }
+                                    JectivityAttr::Injective => {
+                                        Some(Range::Bounded(0, Ord::max(len, co_len)))
+                                    }
+                                    JectivityAttr::None => Some(Range::Bounded(0, len)),
                                 },
-                                Err(_) => None
+                                Err(_) => None,
                             }
                         }
                     },
-                    Err(_) => None
+                    Err(_) => None,
                 };
 
                 let size = match attr_size {
@@ -957,16 +961,17 @@ impl Expression {
                         match unsafe_range {
                             Ok(range) => range,
                             // What should happen if this the functions attributes mean its unsolvable?
-                            Err(_) => return Some(Domain::empty(ReturnType::Set(Box::new(domain.return_type()))))
+                            Err(_) => {
+                                return Some(Domain::empty(ReturnType::Set(Box::new(
+                                    domain.return_type(),
+                                ))));
+                            }
                         }
-                    },
-                    None => size_size
+                    }
+                    None => size_size,
                 };
                 let domain = get_function_domain(function);
-                match domain {
-                    Some(inner_dom) => Some(Domain::set(SetAttr::new(size), inner_dom)),
-                    None => None,
-                }
+                domain.map(|inner_dom| Domain::set(SetAttr::new(size), inner_dom))
             }
             Expression::Range(_, function) => {
                 let (attrs, _, _) = function.domain_of()?.as_function()?;
@@ -981,21 +986,13 @@ impl Expression {
                     Range::Bounded(_, y) => Range::Bounded(1, y),
                 };
                 let codomain = get_function_codomain(function);
-                match codomain {
-                    Some(inner_dom) => Some(Domain::set(SetAttr::new(dom_size), inner_dom)),
-                    None => None,
-                }
+                codomain.map(|inner_dom| Domain::set(SetAttr::new(dom_size), inner_dom))
             }
             Expression::Image(_, function, _) => get_function_codomain(function),
             Expression::ImageSet(_, function, _) => {
                 let codomain = get_function_codomain(function);
-                match codomain {
-                    // An imageSet is the converted to a set, and can be empty
-                    Some(inner_dom) => {
-                        Some(Domain::set(SetAttr::new(Range::Bounded(0, 1)), inner_dom))
-                    }
-                    None => None,
-                }
+                // An imageSet is the converted to a set, and can be empty
+                codomain.map(|inner_dom| Domain::set(SetAttr::new(Range::Bounded(0, 1)), inner_dom))
             }
             Expression::PreImage(_, function, _) => {
                 let (attrs, _, _) = function.domain_of()?.as_function()?;
@@ -1009,10 +1006,7 @@ impl Expression {
                     Range::Bounded(_, y) => Range::UnboundedL(y),
                 };
                 let domain = get_function_domain(function);
-                match domain {
-                    Some(inner_dom) => Some(Domain::set(SetAttr::new(dom_size), inner_dom)),
-                    None => None,
-                }
+                domain.map(|inner_dom| Domain::set(SetAttr::new(dom_size), inner_dom))
             }
             Expression::Restrict(_, function, new_domain) => {
                 let (attrs, _, codom) = function.domain_of()?.as_function()?;
