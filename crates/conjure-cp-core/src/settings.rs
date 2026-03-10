@@ -172,6 +172,14 @@ pub enum SatEncoding {
 }
 
 impl SatEncoding {
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            SatEncoding::Log => "log",
+            SatEncoding::Direct => "direct",
+            SatEncoding::Order => "order",
+        }
+    }
+
     pub const fn as_rule_set(self) -> &'static str {
         match self {
             SatEncoding::Log => "SAT_Log",
@@ -320,12 +328,12 @@ impl FromStr for SolverFamily {
 }
 
 impl SolverFamily {
-    pub const fn as_str(&self) -> &'static str {
+    pub fn as_str(&self) -> String {
         match self {
-            SolverFamily::Minion => "minion",
-            SolverFamily::Sat(_) => "sat",
+            SolverFamily::Minion => "minion".to_owned(),
+            SolverFamily::Sat(encoding) => format!("sat-{}", encoding.as_str()),
             #[cfg(feature = "smt")]
-            SolverFamily::Smt(_) => "smt",
+            SolverFamily::Smt(theory_config) => format!("smt-{}", theory_config.as_str()),
         }
     }
 }
