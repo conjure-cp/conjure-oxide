@@ -1,7 +1,7 @@
 use super::{RewriteError, RuleSet, resolve_rules::RuleData};
 use crate::{
     Model,
-    ast::Expression as Expr,
+    ast::{Expression as Expr, assertions::debug_assert_model_well_formed},
     bug,
     rule_engine::{
         get_rules_grouped,
@@ -184,6 +184,15 @@ fn try_rewrite_model(
 
             // Apply new symbols and top level
             result.reduction.clone().apply(submodel);
+
+            #[cfg(debug_assertions)]
+            {
+                let assertion_context = format!(
+                    "naive rewriter after applying rule '{}'",
+                    result.rule_data.rule.name
+                );
+                debug_assert_model_well_formed(submodel, &assertion_context);
+            }
         }
     }
 
