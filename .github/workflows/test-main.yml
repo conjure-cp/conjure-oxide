@@ -111,12 +111,6 @@ jobs:
         run: cargo test --workspace --release
         if: ${{ matrix.compiler_profile == 'release' }}
 
-      - name: cargo-audit
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.compiler_profile == 'debug' }}
-        run: |
-          which cargo-audit || cargo install cargo-audit
-          cargo audit
-
       - name: Save cache
         if: ${{ always() && matrix.os == 'ubuntu-latest' && matrix.compiler_profile == 'debug' && steps.restore_cache.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@v5

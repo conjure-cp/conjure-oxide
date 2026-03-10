@@ -1,4 +1,4 @@
-name: Shear
+name: Shear and Audit
 
 on:
   schedule:
@@ -6,7 +6,7 @@ on:
     - cron: "0 10 * * 1"
   pull_request:
     paths:
-      - .github/workflows/shear.yml
+      - .github/workflows/shear-and-audit.yml
   workflow_dispatch:
 
 env:
@@ -68,6 +68,11 @@ jobs:
         with:
           os_arch: ${{ env.release_suffix }}
           version: ${{ env.conjure_version }}
+
+      - name: run cargo-audit
+        run: |
+          which cargo-audit ||cargo install cargo-audit
+          cargo audit
 
       - name: install cargo-shear
         run: which cargo-shear || cargo +nightly install cargo-shear
