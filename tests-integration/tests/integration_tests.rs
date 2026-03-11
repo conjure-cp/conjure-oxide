@@ -6,8 +6,8 @@ use git_version as _;
 use conjure_cp::defaults::DEFAULT_RULE_SETS;
 use conjure_cp::parse::tree_sitter::parse_essence_file_native;
 use conjure_cp::rule_engine::rewrite_naive;
-use conjure_cp::solver::adaptors::*;
 use conjure_cp::solver::Solver;
+use conjure_cp::solver::adaptors::*;
 use conjure_cp_cli::utils::testing::{normalize_solutions_for_comparison, read_human_rule_trace};
 use itertools::Itertools;
 use std::collections::BTreeMap;
@@ -15,7 +15,7 @@ use std::env;
 use std::error::Error;
 use std::fs;
 use std::fs::File;
-use tracing_subscriber::{filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt, Layer};
+use tracing_subscriber::{Layer, filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt};
 use tree_morph::{helpers::select_panic, prelude::*};
 
 use std::sync::Arc;
@@ -26,9 +26,9 @@ use conjure_cp::context::Context;
 use conjure_cp::parse::tree_sitter::parse_essence_file;
 use conjure_cp::rule_engine::resolve_rule_sets;
 use conjure_cp::settings::{
-    set_comprehension_expander, set_current_parser, set_current_rewriter,
-    set_current_solver_family, set_minion_discrete_threshold, Parser, QuantifiedExpander, Rewriter,
-    SolverFamily,
+    Parser, QuantifiedExpander, Rewriter, SolverFamily, set_comprehension_expander,
+    set_current_parser, set_current_rewriter, set_current_solver_family,
+    set_minion_discrete_threshold,
 };
 use conjure_cp_cli::utils::conjure::solutions_to_json;
 use conjure_cp_cli::utils::conjure::{get_solutions, get_solutions_from_conjure};

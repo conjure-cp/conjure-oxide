@@ -2,7 +2,7 @@ use conjure_cp::ast::{Atom, Expression as Expr, Literal};
 use conjure_cp::ast::{SATIntEncoding, SymbolTable};
 use conjure_cp::rule_engine::ApplicationError;
 use conjure_cp::rule_engine::{
-    register_rule, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
+    ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
 };
 
 use crate::sat::boolean::{tseytin_and, tseytin_iff, tseytin_not, tseytin_or};
