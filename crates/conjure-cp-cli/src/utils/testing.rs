@@ -116,7 +116,7 @@ pub fn serialize_model(model: &ConjureModel) -> Result<String, JsonError> {
     serde_json::to_string_pretty(&sorted_json)
 }
 
-// #[derive(Debug)]
+#[derive(Debug)]
 struct ExprInfo {
     pretty: String,
     domain: Option<Moo<Domain>>,
@@ -134,8 +134,8 @@ fn create_expr_info(expr: &Expression) -> ExprInfo {
 pub fn serialize_domains(model: &ConjureModel) -> Result<String, JsonError> {
 
     let exprs: Vec<ExprInfo> = model.constraints().iter().map(|x| create_expr_info(x)).collect();
-    serde_json::to_string(&exprs)
-    // Ok(format!("{:?}", exprs))
+    // serde_json::to_string(&exprs)
+    Ok(format!("{:?}", exprs))
 }
 
 
