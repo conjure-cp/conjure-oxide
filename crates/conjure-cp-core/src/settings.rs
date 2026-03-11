@@ -330,12 +330,8 @@ impl FromStr for SolverFamily {
 impl SolverFamily {
     pub fn as_str(&self) -> String {
         match self {
-            SolverFamily::Minion => "minion",
-            SolverFamily::Sat(a) => match a {
-                SatEncoding::Direct => "sat-direct",
-                SatEncoding::Log => "sat-log",
-                SatEncoding::Order => "sat-order",
-            },
+            SolverFamily::Minion => "minion".to_string(),
+            SolverFamily::Sat(a) => format!("sat-{}", s.as_str()),
             #[cfg(feature = "smt")]
             SolverFamily::Smt(theory_config) => format!("smt-{}", theory_config.as_str()),
         }
