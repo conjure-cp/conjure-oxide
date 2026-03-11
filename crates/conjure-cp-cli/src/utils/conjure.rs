@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use std::string::ToString;
 use std::sync::{Arc, Mutex, RwLock};
 
-use conjure_cp::ast::{DeclarationKind, Literal, Name};
+use conjure_cp::ast::{Atom, DeclarationKind, Expression, GroundDomain, Literal, Metadata, Name};
 use conjure_cp::bug;
 use conjure_cp::context::Context;
 
@@ -13,13 +13,102 @@ use itertools::Itertools as _;
 use tempfile::tempdir;
 
 use crate::utils::json::sort_json_object;
-use conjure_cp::Model;
 use conjure_cp::parse::tree_sitter::parse_essence_file;
 use conjure_cp::solver::Solver;
+use conjure_cp::Model;
 
 use glob::glob;
 
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
+use uniplate::Uniplate;
+
+fn literal_for_reference_domain(
+    reference_domain: Option<GroundDomain>,
+    value: &Literal,
+) -> Option<Literal> {
+    if matches!(reference_domain, Some(GroundDomain::Bool)) {
+        return match value {
+            Literal::Bool(x) => Some(Literal::Bool(*x)),
+            Literal::Int(1) => Some(Literal::Bool(true)),
+            Literal::Int(0) => Some(Literal::Bool(false)),
+            _ => None,
+        };
+    }
+
+    Some(value.clone())
+}
+
+fn substitute_from_solution(
+    expr: &Expression,
+    previous_solution: &BTreeMap<Name, Literal>,
+) -> Option<Expression> {
+    match expr {
+        Expression::FromSolution(_, atom_expr) => {
+            let Atom::Reference(reference) = atom_expr.as_ref() else {
+                return Some(expr.clone());
+            };
+
+            let name = reference.name();
+            let value = previous_solution.get(&name)?;
+            let reference_domain = reference.resolved_domain().map(|x| x.as_ref().clone());
+            let value = literal_for_reference_domain(reference_domain, value)?;
+            Some(Expression::Atomic(Metadata::new(), Atom::Literal(value)))
+        }
+        _ => Some(expr.clone()),
+    }
+}
+
+fn substitute_current_solution_refs(
+    expr: &Expression,
+    candidate_solution: &BTreeMap<Name, Literal>,
+) -> Option<Expression> {
+    match expr {
+        Expression::Atomic(_, Atom::Reference(reference)) => {
+            let name = reference.name();
+            let value = candidate_solution.get(&name)?;
+            let reference_domain = reference.resolved_domain().map(|x| x.as_ref().clone());
+            let value = literal_for_reference_domain(reference_domain, value)?;
+            Some(Expression::Atomic(Metadata::new(), Atom::Literal(value)))
+        }
+        _ => Some(expr.clone()),
+    }
+}
+
+fn does_solution_dominate(
+    dominance_expression: &Expression,
+    candidate_solution: &BTreeMap<Name, Literal>,
+    previous_solution: &BTreeMap<Name, Literal>,
+) -> bool {
+    let expr = dominance_expression
+        .rewrite(&|e| substitute_from_solution(&e, previous_solution))
+        .rewrite(&|e| substitute_current_solution_refs(&e, candidate_solution));
+
+    matches!(
+        conjure_cp::ast::eval::eval_constant(&expr),
+        Some(Literal::Bool(true))
+    )
+}
+
+fn retroactively_prune_dominated(
+    solutions: Vec<BTreeMap<Name, Literal>>,
+    dominance_expression: &Expression,
+) -> Vec<BTreeMap<Name, Literal>> {
+    solutions
+        .iter()
+        .enumerate()
+        .filter_map(|(i, solution)| {
+            let dominated = solutions.iter().enumerate().any(|(j, candidate)| {
+                i != j && does_solution_dominate(dominance_expression, candidate, solution)
+            });
+
+            if dominated {
+                None
+            } else {
+                Some(solution.clone())
+            }
+        })
+        .collect()
+}
 
 pub fn get_solutions(
     solver: Solver,
@@ -27,6 +116,11 @@ pub fn get_solutions(
     num_sols: i32,
     solver_input_file: &Option<PathBuf>,
 ) -> Result<Vec<BTreeMap<Name, Literal>>, anyhow::Error> {
+    let dominance_expression = model.dominance.as_ref().map(|expr| match expr {
+        Expression::DominanceRelation(_, inner) => inner.as_ref().clone(),
+        _ => expr.clone(),
+    });
+
     let adaptor_name = solver.get_name();
 
     eprintln!("Building {adaptor_name} model...");
@@ -129,6 +223,10 @@ pub fn get_solutions(
     }
 
     sols.retain(|x| !x.is_empty());
+    if let Some(dominance_expression) = dominance_expression.as_ref() {
+        *sols = retroactively_prune_dominated(sols.clone(), dominance_expression);
+    }
+
     Ok(sols.clone())
 }
 
@@ -205,4 +303,43 @@ pub fn solutions_to_json(solutions: &Vec<BTreeMap<Name, Literal>>) -> JsonValue 
     }
     let ans = JsonValue::Array(json_solutions);
     sort_json_object(&ans, true)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use conjure_cp::ast::{DeclarationPtr, Domain, Moo, Reference};
+
+    #[test]
+    fn retroactive_pruning_removes_dominated_prior_solution() {
+        let x = Name::User("x".into());
+        let x_ref = Expression::Atomic(
+            Metadata::new(),
+            Atom::Reference(Reference::new(DeclarationPtr::new_find(
+                x.clone(),
+                Domain::bool(),
+            ))),
+        );
+        let dominance_expression = Expression::Imply(
+            Metadata::new(),
+            Moo::new(x_ref.clone()),
+            Moo::new(Expression::FromSolution(
+                Metadata::new(),
+                Moo::new(Atom::Reference(Reference::new(DeclarationPtr::new_find(
+                    x.clone(),
+                    Domain::bool(),
+                )))),
+            )),
+        );
+
+        let mut sol_true = BTreeMap::new();
+        sol_true.insert(x.clone(), Literal::Int(1));
+        let mut sol_false = BTreeMap::new();
+        sol_false.insert(x.clone(), Literal::Int(0));
+
+        let pruned =
+            retroactively_prune_dominated(vec![sol_true, sol_false.clone()], &dominance_expression);
+
+        assert_eq!(pruned, vec![sol_false]);
+    }
 }

@@ -13,14 +13,23 @@ use rustsat::{
 };
 
 use rustsat_minisat::core::Minisat;
+use thiserror::Error;
 
 use anyhow::{Result, anyhow};
 
 use crate::{
-    ast::{CnfClause, Expression, Moo, Name},
+    ast::{Atom, CnfClause, Expression, Literal, Moo, Name},
     bug,
-    solver::Error,
+    solver::SolverError,
 };
+
+fn var_map_debug_summary(var_map: &HashMap<Name, Lit>) -> String {
+    let mut names = var_map.keys().map(ToString::to_string).collect::<Vec<_>>();
+    names.sort();
+    let total = names.len();
+    let preview = names.into_iter().take(25).collect::<Vec<_>>().join(", ");
+    format!("known_vars_total={total}; known_vars_preview=[{preview}]")
+}
 
 pub fn handle_lit(
     l1: &Expression,
@@ -125,6 +134,77 @@ pub fn handle_cnf(
     inst
 }
 
+pub fn cnf_literal_to_sat_lit(
+    literal: &Expression,
+    var_map: &HashMap<Name, Lit>,
+) -> Result<Option<Lit>, SolverError> {
+    match literal {
+        Expression::Atomic(_, Atom::Reference(reference)) => {
+            let name = reference.name();
+            let lit = var_map.get(&name).ok_or_else(|| {
+                SolverError::Runtime(format!(
+                    "CNF clause references unknown variable '{name}'. literal={literal:?}. {}",
+                    var_map_debug_summary(var_map)
+                ))
+            })?;
+            Ok(Some(*lit))
+        }
+        Expression::Not(_, inner) => {
+            let Expression::Atomic(_, Atom::Reference(reference)) = inner.as_ref() else {
+                return Err(SolverError::Runtime(
+                    "CNF clause contains unsupported negated literal".to_string(),
+                ));
+            };
+            let name = reference.name();
+            let lit = var_map.get(&name).ok_or_else(|| {
+                SolverError::Runtime(format!(
+                    "CNF clause references unknown variable '{name}'. literal={literal:?}. {}",
+                    var_map_debug_summary(var_map)
+                ))
+            })?;
+            Ok(Some(!*lit))
+        }
+        Expression::Atomic(_, Atom::Literal(Literal::Bool(true))) => Ok(None),
+        Expression::Atomic(_, Atom::Literal(Literal::Bool(false))) => Ok(None),
+        _ => Err(SolverError::Runtime(format!(
+            "CNF clause contains non-literal expression: {literal:?}"
+        ))),
+    }
+}
+
+pub fn cnf_clause_to_sat_clause(
+    clause: &CnfClause,
+    var_map: &HashMap<Name, Lit>,
+) -> Result<Option<Clause>, SolverError> {
+    let mut sat_clause = Clause::new();
+    let mut has_false_only = false;
+
+    for literal in clause.iter() {
+        match literal {
+            Expression::Atomic(_, Atom::Literal(Literal::Bool(true))) => {
+                // Clause is tautologically true.
+                return Ok(None);
+            }
+            Expression::Atomic(_, Atom::Literal(Literal::Bool(false))) => {
+                has_false_only = true;
+            }
+            _ => {
+                if let Some(lit) = cnf_literal_to_sat_lit(literal, var_map)? {
+                    sat_clause.add(lit);
+                    has_false_only = false;
+                }
+            }
+        }
+    }
+
+    if sat_clause.iter().next().is_none() && !has_false_only {
+        // Empty after simplification and no explicit false literal => tautology.
+        return Ok(None);
+    }
+
+    Ok(Some(sat_clause))
+}
+
 // Error reserved for future use
 // TODO: Integrate or remove
 #[derive(Error, Debug)]
@@ -149,4 +229,64 @@ pub enum CNFError {
 
     #[error("Unexpected Expression `{0}` found!")]
     UnexpectedExpression(Expression),
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::ast::{DeclarationPtr, Metadata, Reference};
+
+    fn mk_ref_expr(name: Name) -> Expression {
+        let decl = DeclarationPtr::new_value_letting(
+            name,
+            Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(0))),
+        );
+        Expression::Atomic(Metadata::new(), Atom::Reference(Reference::new(decl)))
+    }
+
+    #[test]
+    fn cnf_clause_to_sat_clause_maps_reference_literals() {
+        let x = Name::User(ustr::Ustr::from("x"));
+        let mut inst: SatInstance = SatInstance::new();
+        let x_lit = inst.new_lit();
+        let mut var_map = HashMap::new();
+        var_map.insert(x.clone(), x_lit);
+
+        let clause = CnfClause::new(vec![mk_ref_expr(x)]);
+        let sat_clause = cnf_clause_to_sat_clause(&clause, &var_map)
+            .expect("reference-only clause should convert")
+            .expect("clause should not be dropped");
+
+        let lits: Vec<Lit> = sat_clause.iter().copied().collect();
+        assert_eq!(lits, vec![x_lit]);
+    }
+
+    #[test]
+    fn cnf_clause_to_sat_clause_drops_true_tautology() {
+        let var_map = HashMap::new();
+        let clause = CnfClause::new(vec![Expression::Atomic(
+            Metadata::new(),
+            Atom::Literal(Literal::Bool(true)),
+        )]);
+
+        let sat_clause = cnf_clause_to_sat_clause(&clause, &var_map)
+            .expect("true-only clause should be handled");
+
+        assert!(sat_clause.is_none());
+    }
+
+    #[test]
+    fn cnf_clause_to_sat_clause_keeps_false_only_clause_as_empty_clause() {
+        let var_map = HashMap::new();
+        let clause = CnfClause::new(vec![Expression::Atomic(
+            Metadata::new(),
+            Atom::Literal(Literal::Bool(false)),
+        )]);
+
+        let sat_clause = cnf_clause_to_sat_clause(&clause, &var_map)
+            .expect("false-only clause should be handled")
+            .expect("false-only clause should become an empty SAT clause");
+
+        assert!(sat_clause.iter().next().is_none());
+    }
 }
