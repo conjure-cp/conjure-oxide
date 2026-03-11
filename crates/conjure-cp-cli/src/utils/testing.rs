@@ -121,10 +121,9 @@ pub fn serialize_domains(model: &ConjureModel) -> Result<String, JsonError> {
     let exprs: Vec<ExprInfo> = model
         .constraints()
         .iter()
-        .map(|x| ExprInfo::create(x))
+        .map(ExprInfo::create)
         .collect();
     serde_json::to_string_pretty(&exprs)
-    // Ok(format!("{:?}", exprs))
 }
 
 pub fn save_model_json(
