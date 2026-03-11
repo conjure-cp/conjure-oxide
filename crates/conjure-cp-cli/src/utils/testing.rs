@@ -7,14 +7,13 @@ use conjure_cp::ast::records::RecordValue;
 use conjure_cp::ast::serde::ObjId;
 use conjure_cp::bug;
 use itertools::Itertools as _;
-use rayon::iter::ExponentialBlocks;
 use std::fs::File;
 use std::hash::Hash;
 use std::io::{BufRead, BufReader, Write};
 use std::sync::{Arc, RwLock};
 use uniplate::Uniplate;
 
-use conjure_cp::ast::{AbstractLiteral, Domain, Expression, GroundDomain, Moo, SerdeModel};
+use conjure_cp::ast::{AbstractLiteral, Domain, Expression, GroundDomain, Moo, SerdeModel, ExprInfo};
 use conjure_cp::context::Context;
 use serde_json::{Error as JsonError, Value as JsonValue};
 
@@ -116,12 +115,12 @@ pub fn serialize_model(model: &ConjureModel) -> Result<String, JsonError> {
     serde_json::to_string_pretty(&sorted_json)
 }
 
-#[derive(Debug)]
-struct ExprInfo {
-    pretty: String,
-    domain: Option<Moo<Domain>>,
-    children: Vec<ExprInfo>,
-}
+// struct ExprInfo {
+//     /// # use serde_json::json;
+//     pretty: String,
+//     domain: Option<Moo<Domain>>,
+//     children: Vec<ExprInfo>,
+// }
 
 fn create_expr_info(expr: &Expression) -> ExprInfo {
     let pretty = expr.to_string();
@@ -134,8 +133,8 @@ fn create_expr_info(expr: &Expression) -> ExprInfo {
 pub fn serialize_domains(model: &ConjureModel) -> Result<String, JsonError> {
 
     let exprs: Vec<ExprInfo> = model.constraints().iter().map(|x| create_expr_info(x)).collect();
-    // serde_json::to_string(&exprs)
-    Ok(format!("{:?}", exprs))
+    serde_json::to_string_pretty(&exprs)
+    // Ok(format!("{:?}", exprs))
 }
 
 

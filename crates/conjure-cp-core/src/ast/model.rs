@@ -3,6 +3,7 @@ use std::fmt::{Debug, Display};
 use std::hash::Hash;
 use std::sync::{Arc, RwLock};
 
+use crate::ast::Domain;
 use crate::context::Context;
 use crate::{bug, into_matrix_expr};
 use derivative::Derivative;
@@ -548,4 +549,13 @@ impl SerdeModel {
         };
         model.collect_stable_id_mapping()
     }
+}
+
+/// A struct for the information about expressions
+#[serde_as]
+#[derive(Serialize)]
+pub struct ExprInfo {
+    pub pretty: String,
+    pub domain: Option<Moo<Domain>>,
+    pub children: Vec<ExprInfo>,
 }
