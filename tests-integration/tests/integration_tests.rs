@@ -269,14 +269,12 @@ fn integration_test_inner(
         }
     };
     let solver_input_file = None;
-
-    // TODO: Review?
-    // let solver = match solver_fam {
-    //     SolverFamily::Minion => Solver::new(Minion::default()),
-    //     SolverFamily::Sat(_) => Solver::new(Sat::default()),
-    //     #[cfg(feature = "smt")]
-    //     SolverFamily::Smt(_) => Solver::new(Smt::default()),
-    // };
+    let solver = match solver_fam {
+        SolverFamily::Minion => Solver::new(Minion::default()),
+        SolverFamily::Sat(_) => Solver::new(Sat::default()),
+        #[cfg(feature = "smt")]
+        SolverFamily::Smt(_) => Solver::new(Smt::default()),
+    };
 
     let solutions = {
         let solved = get_solutions(solver, rewritten_model, 0, &solver_input_file)?;
