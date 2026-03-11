@@ -555,7 +555,21 @@ impl SerdeModel {
 #[serde_as]
 #[derive(Serialize)]
 pub struct ExprInfo {
-    pub pretty: String,
-    pub domain: Option<Moo<Domain>>,
-    pub children: Vec<ExprInfo>,
+    pretty: String,
+    domain: Option<Moo<Domain>>,
+    children: Vec<ExprInfo>,
+}
+
+impl ExprInfo {
+    pub fn create(expr: &Expression) -> ExprInfo {
+        let pretty = expr.to_string();
+        let domain = expr.domain_of();
+        let children = expr.children().iter().map(|x| Self::create(x)).collect();
+
+        ExprInfo {
+            pretty,
+            domain,
+            children,
+        }
+    }
 }

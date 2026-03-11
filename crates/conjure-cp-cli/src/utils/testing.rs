@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fmt::Debug;
 use std::path::Path;
 use std::{io, mem, vec};
@@ -13,7 +13,9 @@ use std::io::{BufRead, BufReader, Write};
 use std::sync::{Arc, RwLock};
 use uniplate::Uniplate;
 
-use conjure_cp::ast::{AbstractLiteral, Domain, Expression, GroundDomain, Moo, SerdeModel, ExprInfo};
+use conjure_cp::ast::{
+    AbstractLiteral, ExprInfo, GroundDomain, Moo, SerdeModel,
+};
 use conjure_cp::context::Context;
 use serde_json::{Error as JsonError, Value as JsonValue};
 
@@ -115,29 +117,15 @@ pub fn serialize_model(model: &ConjureModel) -> Result<String, JsonError> {
     serde_json::to_string_pretty(&sorted_json)
 }
 
-// struct ExprInfo {
-//     /// # use serde_json::json;
-//     pretty: String,
-//     domain: Option<Moo<Domain>>,
-//     children: Vec<ExprInfo>,
-// }
-
-fn create_expr_info(expr: &Expression) -> ExprInfo {
-    let pretty = expr.to_string();
-    let domain = expr.domain_of();
-    let children = expr.children().iter().map(|x| create_expr_info(x)).collect();
-
-    ExprInfo { pretty, domain, children }
-}
-
 pub fn serialize_domains(model: &ConjureModel) -> Result<String, JsonError> {
-
-    let exprs: Vec<ExprInfo> = model.constraints().iter().map(|x| create_expr_info(x)).collect();
+    let exprs: Vec<ExprInfo> = model
+        .constraints()
+        .iter()
+        .map(|x| ExprInfo::create(x))
+        .collect();
     serde_json::to_string_pretty(&exprs)
     // Ok(format!("{:?}", exprs))
 }
-
-
 
 pub fn save_model_json(
     model: &ConjureModel,
