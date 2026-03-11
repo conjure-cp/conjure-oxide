@@ -331,7 +331,7 @@ impl SolverFamily {
     pub fn as_str(&self) -> String {
         match self {
             SolverFamily::Minion => "minion".to_owned(),
-            SolverFamily::Sat(a) => format!("sat-{}", a.as_str()),
+            SolverFamily::Sat(encoding) => format!("sat-{}", encoding.as_str()),
             #[cfg(feature = "smt")]
             SolverFamily::Smt(theory_config) => format!("smt-{}", theory_config.as_str()),
         }
