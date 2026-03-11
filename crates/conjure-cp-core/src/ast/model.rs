@@ -564,7 +564,7 @@ impl ExprInfo {
     pub fn create(expr: &Expression) -> ExprInfo {
         let pretty = expr.to_string();
         let domain = expr.domain_of();
-        let children = expr.children().iter().map(|x| Self::create(x)).collect();
+        let children = expr.children().iter().map(Self::create).collect();
 
         ExprInfo {
             pretty,
