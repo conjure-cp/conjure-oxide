@@ -104,41 +104,6 @@ pub fn validate_direct_int_operands(
     Ok((out, global_min, global_max))
 }
 
-#[register_rule(("SAT_Direct", 9100))]
-// TODO: Check what priorities make this work for everything
-fn min_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
-    // TODO: this could be optimized by just going over the sections of both vectors where the ranges intersect
-    // this does require enforcing structure separately
-    //
-    // Not applicable on ANYTHING that is not Expr::Min
-    let Expr::Max(_, a) = expr else {
-        return Err(RuleNotApplicable);
-    };
-
-    eprintln!("applying min_sat_direct");
-
-    // Expr::Min has a moo instance inside it
-    let foo = a.as_ref();
-
-    // the structure will look like this:
-    // Expr::Min(md,
-    //              Expr::AbstractLiteral(md,
-    //                                          AbstractLiteral::Matrix(vect, _) <not in expr!>
-    //                                   )
-    //          )
-
-    let Expr::AbstractLiteral(_, AbstractLiteral::Matrix(v, _)) = foo else {
-        panic!("{}", foo);
-    };
-
-    for i in v {
-        eprintln!("{i}");
-    }
-
-    panic!("Applying to min");
-    // Ok(Reduction::cnf())
-}
-
 /// Converts a = expression between two direct SATInts to a boolean expression in cnf
 ///
 /// ```text
