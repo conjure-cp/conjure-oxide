@@ -292,6 +292,16 @@ fn neg_sat_direct(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     )))
 }
 
+
+fn floor_div(a: i32, b: i32) -> i32 {
+    let (q, r) = (a / b, a % b);
+    if (r > 0 && b < 0) || (r < 0 && b > 0) {
+        q - 1
+    } else {
+        q
+    }
+}
+
 /// Converts a / expression between two direct SATInts to a new direct SATInt
 /// using the "lookup table" method.
 ///
@@ -350,14 +360,12 @@ fn safediv_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let mut new_clauses = vec![];
 
     // generate the lookup table clauses: (n_i AND d_j) => q_k
-    /*
-     */
     for i in *numer_min..=*numer_max {
         let numer_bit = &numer_bits[(i - numer_min) as usize];
         for j in *denom_min..=*denom_max {
             let denom_bit = &denom_bits[(j - denom_min) as usize];
 
-            let k = if j == 0 { 0 } else { i / j };
+            let k = if j == 0 { 0 } else { floor_div(i, j) };
 
             let quot_bit = &quot_bits[(k - quot_min) as usize];
 
