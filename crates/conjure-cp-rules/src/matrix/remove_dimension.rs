@@ -11,7 +11,7 @@ use conjure_cp::rule_engine::{
 /// ```plain
 /// [[1,2,3],[4,5,6],[7,8,9]][j,i] ~~> [[1,2,3][i],[4,5,6][i],[7,8,9][i]][j]
 /// ```
-#[register_rule(("Base", 2000))]
+#[register_rule(("Base", 2000), applicable_to(Expr::SafeIndex(..)))]
 fn remove_dimension_from_matrix_indexing(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::SafeIndex(_, subject, mut indices) = expr.clone() else {
         return Err(RuleNotApplicable);

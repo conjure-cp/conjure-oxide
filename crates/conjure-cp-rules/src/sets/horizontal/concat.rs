@@ -9,7 +9,7 @@ use conjure_cp::rule_engine::{
 };
 
 // A subsetEq (B intersect C) -> A subsetEq B /\ A subsetEq C
-#[register_rule(("Base", 8700))]
+#[register_rule(("Base", 8700), applicable_to(Expr::SubsetEq(..)))]
 fn subseteq_intersect(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
         Expr::SubsetEq(_, a, rhs) if matches!(a.as_ref().return_type(), ReturnType::Set(_)) => {
@@ -33,7 +33,7 @@ fn subseteq_intersect(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 }
 
 // (A union B) subsetEq C -> A subsetEq C /\ B subsetEq C
-#[register_rule(("Base", 8700))]
+#[register_rule(("Base", 8700), applicable_to(Expr::SubsetEq(..)))]
 fn union_subseteq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
         Expr::SubsetEq(_, lhs, c) if matches!(c.as_ref().return_type(), ReturnType::Set(_)) => {

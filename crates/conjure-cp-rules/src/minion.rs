@@ -33,7 +33,7 @@ register_rule_set!("Minion", ("Base"), |f: &SolverFamily| {
     matches!(f, SolverFamily::Minion)
 });
 
-#[register_rule(("Minion", 4200))]
+#[register_rule(("Minion", 4200), applicable_to(Expr::Eq(..) | Expr::AuxDeclaration(..)))]
 fn introduce_producteq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     // product = val
     let val: Atom;
@@ -195,7 +195,7 @@ fn introduce_producteq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
 ///
 /// Cases 6 and 7 could potentially be a normalising rule `-e ~> -1*e`. However, I think that we
 /// should only turn negations into a product when they are inside a sum, not all the time.
-#[register_rule(("Minion", 4600))]
+#[register_rule(("Minion", 4600), applicable_to(Expr::Leq(..) | Expr::Geq(..) | Expr::Eq(..) | Expr::AuxDeclaration(..)))]
 fn introduce_weighted_sumleq_sumgeq(expr: &Expr, symtab: &SymbolTable) -> ApplicationResult {
     // Keep track of which type of (in)equality was in the input, and use this to decide what
     // constraints to make at the end
@@ -513,7 +513,7 @@ fn flatten_expression_to_atom(
     Ok(aux_var_info.as_atom())
 }
 
-#[register_rule(("Minion", 4200))]
+#[register_rule(("Minion", 4200), applicable_to(Expr::Eq(..) | Expr::AuxDeclaration(..)))]
 fn introduce_diveq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // div = val
     let val: Atom;
@@ -565,7 +565,7 @@ fn introduce_diveq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     )))
 }
 
-#[register_rule(("Minion", 4200))]
+#[register_rule(("Minion", 4200), applicable_to(Expr::Eq(..) | Expr::AuxDeclaration(..)))]
 fn introduce_modeq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // div = val
     let val: Atom;
@@ -616,7 +616,7 @@ fn introduce_modeq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     )))
 }
 
-#[register_rule(("Minion", 4400))]
+#[register_rule(("Minion", 4400), applicable_to(Expr::Eq(..) | Expr::AuxDeclaration(..)))]
 fn introduce_abseq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (x, abs_y): (Atom, Expr) = match expr.clone() {
         Expr::Eq(_, a, b) => {
@@ -658,7 +658,7 @@ fn introduce_abseq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 }
 
 /// Introduces a `MinionPowEq` constraint from a `SafePow`
-#[register_rule(("Minion", 4200))]
+#[register_rule(("Minion", 4200), applicable_to(Expr::Eq(..) | Expr::AuxDeclaration(..)))]
 fn introduce_poweq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (a, b, total) = match expr.clone() {
         Expr::Eq(_, e1, e2) => match (Moo::unwrap_or_clone(e1), Moo::unwrap_or_clone(e2)) {
@@ -693,7 +693,7 @@ fn introduce_poweq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 }
 
 /// Introduces a `FlatAlldiff` constraint from an `AllDiff`
-#[register_rule(("Minion", 4200))]
+#[register_rule(("Minion", 4200), applicable_to(Expr::AllDiff(..)))]
 fn introduce_flat_alldiff(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::AllDiff(_, es) = expr else {
         return Err(RuleNotApplicable);
@@ -719,7 +719,7 @@ fn introduce_flat_alldiff(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 ///
 ///   where x,y are atoms
 /// ```
-#[register_rule(("Minion", 4400))]
+#[register_rule(("Minion", 4400), applicable_to(Expr::Eq(..)))]
 fn introduce_minuseq_from_eq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::Eq(_, a, b) = expr else {
         return Err(RuleNotApplicable);
@@ -755,7 +755,7 @@ fn introduce_minuseq_from_eq(expr: &Expr, _: &SymbolTable) -> ApplicationResult 
 ///
 ///   where x,y are atoms
 /// ```
-#[register_rule(("Minion", 4400))]
+#[register_rule(("Minion", 4400), applicable_to(Expr::AuxDeclaration(..)))]
 fn introduce_minuseq_from_aux_decl(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // a =aux -b
     //
@@ -789,7 +789,7 @@ fn introduce_minuseq_from_aux_decl(expr: &Expr, _: &SymbolTable) -> ApplicationR
 /// x -> y ~> reifyimply(y,x)
 /// where x is atomic, y is non-atomic
 /// ```
-#[register_rule(("Minion", 4400))]
+#[register_rule(("Minion", 4400), applicable_to(Expr::Imply(..)))]
 fn introduce_reifyimply_ineq_from_imply(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::Imply(_, x, y) = expr else {
         return Err(RuleNotApplicable);
@@ -819,7 +819,7 @@ fn introduce_reifyimply_ineq_from_imply(expr: &Expr, _: &SymbolTable) -> Applica
 /// Converts `__inDomain(a,domain) to w-inintervalset.
 ///
 /// This applies if domain is integer and finite.
-#[register_rule(("Minion", 4400))]
+#[register_rule(("Minion", 4400), applicable_to(Expr::InDomain(..)))]
 fn introduce_wininterval_set_from_indomain(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::InDomain(_, e, domain) = expr else {
         return Err(RuleNotApplicable);
@@ -862,7 +862,7 @@ fn introduce_wininterval_set_from_indomain(expr: &Expr, _: &SymbolTable) -> Appl
 ///
 /// 1. the subject is a list literal
 /// 2. the subject is one dimensional
-#[register_rule(("Minion", 4400))]
+#[register_rule(("Minion", 4400), applicable_to(Expr::Eq(..) | Expr::AuxDeclaration(..)))]
 fn introduce_element_from_index(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (equalto, subject, indices) = match expr.clone() {
         Expr::Eq(_, e1, e2) => match (Moo::unwrap_or_clone(e1), Moo::unwrap_or_clone(e2)) {
@@ -935,7 +935,7 @@ fn introduce_element_from_index(expr: &Expr, _: &SymbolTable) -> ApplicationResu
 /// ```
 ///
 /// See [`introduce_reifyimply_ineq_from_imply`].
-#[register_rule(("Minion", 4200))]
+#[register_rule(("Minion", 4200), applicable_to(Expr::Imply(..)))]
 fn flatten_imply(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Imply(meta, x, y) = expr else {
         return Err(RuleNotApplicable);
@@ -954,7 +954,7 @@ fn flatten_imply(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     ))
 }
 
-#[register_rule(("Minion", 4200))]
+#[register_rule(("Minion", 4200), applicable_to(Expr::SafeDiv(..) | Expr::Neq(..) | Expr::SafeMod(..) | Expr::SafePow(..) | Expr::Leq(..) | Expr::Geq(..) | Expr::Abs(..) | Expr::Neg(..) | Expr::Not(..) | Expr::SafeIndex(..) | Expr::InDomain(..) | Expr::ToInt(..)))]
 fn flatten_generic(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     if !matches!(
         expr,
@@ -998,7 +998,7 @@ fn flatten_generic(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     Ok(Reduction::new(expr, new_tops, symbols))
 }
 
-#[register_rule(("Minion", 4200))]
+#[register_rule(("Minion", 4200), applicable_to(Expr::Eq(..)))]
 fn flatten_eq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     if !matches!(expr, Expr::Eq(_, _, _)) {
         return Err(RuleNotApplicable);
@@ -1038,7 +1038,7 @@ fn flatten_eq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 /// ```plain
 /// product([|x|,y,z]) ~~> product([aux1,y,z]), aux1=|x|
 /// ```
-#[register_rule(("Minion", 4200))]
+#[register_rule(("Minion", 4200), applicable_to(Expr::Product(..)))]
 fn flatten_product(expr: &Expr, symtab: &SymbolTable) -> ApplicationResult {
     // product cannot use flatten_generic as we don't want to put the immediate child in an aux
     // var, as that is the matrix literal. Instead we want to put the children of the matrix
@@ -1201,7 +1201,7 @@ fn flatten_matrix_literal(expr: &Expr, symtab: &SymbolTable) -> ApplicationResul
 /// ```text
 /// x >= y ~> y <= x + 0 ~> ineq(y,x,0)
 /// ```
-#[register_rule(("Minion", 4100))]
+#[register_rule(("Minion", 4100), applicable_to(Expr::Geq(..)))]
 fn geq_to_ineq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::Geq(meta, e1, e2) = expr.clone() else {
         return Err(RuleNotApplicable);
@@ -1228,7 +1228,7 @@ fn geq_to_ineq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// ```text
 /// x <= y ~> x <= y + 0 ~> ineq(x,y,0)
 /// ```
-#[register_rule(("Minion", 4100))]
+#[register_rule(("Minion", 4100), applicable_to(Expr::Leq(..)))]
 fn leq_to_ineq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::Leq(meta, e1, e2) = expr.clone() else {
         return Err(RuleNotApplicable);
@@ -1255,7 +1255,7 @@ fn leq_to_ineq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// ```text
 /// x <= y + k ~> ineq(x,y,k)
 /// ```
-#[register_rule(("Minion",4500))]
+#[register_rule(("Minion",4500), applicable_to(Expr::Leq(..)))]
 fn x_leq_y_plus_k_to_ineq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::Leq(meta, e1, e2) = expr.clone() else {
         return Err(RuleNotApplicable);
@@ -1292,7 +1292,7 @@ fn x_leq_y_plus_k_to_ineq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// ```text
 /// y + k >= x ~> ineq(x,y,k)
 /// ```
-#[register_rule(("Minion",4800))]
+#[register_rule(("Minion",4800), applicable_to(Expr::Geq(..)))]
 fn y_plus_k_geq_x_to_ineq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // impl same as x_leq_y_plus_k but with lhs and rhs flipped
     let Expr::Geq(meta, e2, e1) = expr.clone() else {
@@ -1342,7 +1342,7 @@ fn y_plus_k_geq_x_to_ineq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// The regular bool_lit case is dealt with directly by the Minion solver interface (as it is a
 /// trivial match).
 
-#[register_rule(("Minion", 4100))]
+#[register_rule(("Minion", 4100), applicable_to(Expr::Not(..)))]
 fn not_literal_to_wliteral(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
         Expr::Not(m, expr) => {
@@ -1370,7 +1370,7 @@ fn not_literal_to_wliteral(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// This rule has lower priority than boolean_literal_to_wliteral so that we can assume that the
 /// nested expressions are constraints not variables.
 
-#[register_rule(("Minion", 4090))]
+#[register_rule(("Minion", 4090), applicable_to(Expr::Not(..)))]
 fn not_constraint_to_reify(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     if !matches!(expr, Expr::Not(_,c) if !matches!(**c, Expr::Atomic(_,_))) {
         return Err(RuleNotApplicable);
@@ -1401,7 +1401,7 @@ fn not_constraint_to_reify(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 ///
 /// where c is a boolean constraint
 /// ```
-#[register_rule(("Minion", 4400))]
+#[register_rule(("Minion", 4400), applicable_to(Expr::AuxDeclaration(..) | Expr::Eq(..)))]
 fn bool_eq_to_reify(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (atom, e): (Atom, Moo<Expr>) = match expr {
         Expr::AuxDeclaration(_, reference, e) => Ok((Atom::from(reference.clone()), e.clone())),
@@ -1429,7 +1429,7 @@ fn bool_eq_to_reify(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// Iff(a,b) ~> Eq(a,b)
 ///
 /// ```
-#[register_rule(("Minion", 4400))]
+#[register_rule(("Minion", 4400), applicable_to(Expr::Iff(..)))]
 fn iff_to_eq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::Iff(_, x, y) = expr else {
         return Err(RuleNotApplicable);

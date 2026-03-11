@@ -22,7 +22,7 @@ register_rule_set!("Bubble", ("Base"));
 
     e.g. (a / b = c) @ (b != 0) => (a / b = c) & (b != 0)
 */
-#[register_rule(("Bubble", 8900))]
+#[register_rule(("Bubble", 8900), applicable_to(Expression::Bubble(..)))]
 fn expand_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
     match expr {
         Expression::Bubble(_, a, b) if a.return_type() == ReturnType::Bool => {
@@ -110,7 +110,7 @@ fn bubble_up(expr: &Expression, syms: &SymbolTable) -> ApplicationResult {
 /// This condition is brought up the tree and expanded into a conjunction with the first
 /// boolean-type expression it is paired with.
 
-#[register_rule(("Bubble", 6000))]
+#[register_rule(("Bubble", 6000), applicable_to(Expression::UnsafeDiv(..)))]
 fn div_to_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
     if is_all_constant(expr) {
         return Err(RuleNotApplicable);
@@ -144,7 +144,7 @@ fn div_to_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
 /// This condition is brought up the tree and expanded into a conjunction with the first
 /// boolean-type expression it is paired with.
 ///
-#[register_rule(("Bubble", 6000))]
+#[register_rule(("Bubble", 6000), applicable_to(Expression::UnsafeMod(..)))]
 fn mod_to_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
     if is_all_constant(expr) {
         return Err(RuleNotApplicable);
@@ -178,7 +178,7 @@ fn mod_to_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
 /// This condition is brought up the tree and expanded into a conjunction with the first
 /// boolean-type expression it is paired with.
 ///
-#[register_rule(("Bubble", 6000))]
+#[register_rule(("Bubble", 6000), applicable_to(Expression::UnsafePow(..)))]
 fn pow_to_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
     if is_all_constant(expr) {
         return Err(RuleNotApplicable);

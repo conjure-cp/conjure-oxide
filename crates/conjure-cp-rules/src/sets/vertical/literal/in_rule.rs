@@ -14,7 +14,7 @@ use conjure_cp::rule_engine::{
 // turns an in expression into a w-inset expression where x is an integer decision variable
 // and the set is a set of integers like:
 // x in {1,2,3} => w-inset(x, [1,2,3])
-#[register_rule(("Minion", 1))]
+#[register_rule(("Minion", 1), applicable_to(Expr::In(..)))]
 fn in_set(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
         Expr::In(_, a, b) => {
