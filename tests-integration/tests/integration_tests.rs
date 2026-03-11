@@ -1,6 +1,7 @@
 #![allow(clippy::expect_used)]
 use conjure_cp::bug;
 use conjure_cp::rule_engine::get_rules_grouped;
+use git_version as _;
 
 use conjure_cp::defaults::DEFAULT_RULE_SETS;
 use conjure_cp::parse::tree_sitter::parse_essence_file_native;
@@ -16,9 +17,6 @@ use std::fs;
 use std::fs::File;
 use tracing_subscriber::{Layer, filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt};
 use tree_morph::{helpers::select_panic, prelude::*};
-
-#[cfg(feature = "smt")]
-use conjure_cp::solver::adaptors::smt::TheoryConfig;
 
 use std::sync::Arc;
 use std::sync::RwLock;
@@ -317,35 +315,10 @@ fn integration_test_inner(
     }
 
     // Check Stage 3a (solutions)
-    match solver_fam {
-        SolverFamily::Minion => {
-            let expected_solutions_json =
-                read_solutions_json(path, case_name, "expected", SolverFamily::Minion)?;
-            let username_solutions_json = solutions_to_json(&solutions);
-            assert_eq!(username_solutions_json, expected_solutions_json);
-        }
-        SolverFamily::Sat(_) => {
-            let expected_solutions_json = read_solutions_json(
-                path,
-                case_name,
-                "expected",
-                SolverFamily::Sat(Default::default()),
-            )?;
-            let username_solutions_json = solutions_to_json(&solutions);
-            assert_eq!(username_solutions_json, expected_solutions_json);
-        }
-        #[cfg(feature = "smt")]
-        SolverFamily::Smt(_) => {
-            let expected_solutions_json = read_solutions_json(
-                path,
-                case_name,
-                "expected",
-                SolverFamily::Smt(TheoryConfig::default()),
-            )?;
-            let username_solutions_json = solutions_to_json(&solutions);
-            assert_eq!(username_solutions_json, expected_solutions_json);
-        }
-    }
+
+    let expected_solutions_json = read_solutions_json(path, case_name, "expected", solver_fam)?;
+    let username_solutions_json = solutions_to_json(&solutions);
+    assert_eq!(username_solutions_json, expected_solutions_json);
 
     // TODO: Implement rule trace validation for morph
     match rewriter {
