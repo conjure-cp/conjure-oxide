@@ -25,7 +25,7 @@ use crate::utils::misc::to_set;
 use conjure_cp::Model as ConjureModel;
 use conjure_cp::ast::Name::User;
 use conjure_cp::ast::{Literal, Name};
-use conjure_cp::solver::SolverFamily;
+use conjure_cp::settings::SolverFamily;
 
 /// Limit how many lines of the rewrite serialisation we persist/compare in integration tests.
 pub const REWRITE_SERIALISED_JSON_MAX_LINES: usize = 1000;
@@ -120,12 +120,12 @@ pub fn save_model_json(
     path: &str,
     test_name: &str,
     test_stage: &str,
-    solver: Option<SolverFamily>,
+    solver: SolverFamily,
 ) -> Result<(), std::io::Error> {
-    let marker = solver.map_or("agnostic", |s| s.as_str());
+    let marker = solver.as_str();
     let generated_json_str = serialize_model(model)?;
     let generated_json_str = maybe_truncate_serialised_json(generated_json_str, test_stage);
-    let filename = format!("{path}/{marker}-{test_name}.generated-{test_stage}.serialised.json");
+    let filename = format!("{path}/{test_name}-{marker}.generated-{test_stage}.serialised.json");
     println!("saving: {}", filename);
     File::create(&filename)?.write_all(generated_json_str.as_bytes())?;
     Ok(())
@@ -146,7 +146,7 @@ pub fn save_stats_json(
     // serialise to string
     let generated_json_str = serde_json::to_string_pretty(&generated_json)?;
 
-    File::create(format!("{path}/{solver_name}-{test_name}-stats.json"))?
+    File::create(format!("{path}/{test_name}-{solver_name}-stats.json"))?
         .write_all(generated_json_str.as_bytes())?;
 
     Ok(())
@@ -164,12 +164,10 @@ pub fn read_model_json(
     test_name: &str,
     prefix: &str,
     test_stage: &str,
-    solver: Option<SolverFamily>,
+    solver: SolverFamily,
 ) -> Result<ConjureModel, std::io::Error> {
-    let marker = solver.map_or("agnostic", |s| s.as_str());
-
-    let filepath = format!("{path}/{marker}-{test_name}.{prefix}-{test_stage}.serialised.json");
-
+    let marker = solver.as_str();
+    let filepath = format!("{path}/{test_name}-{marker}.{prefix}-{test_stage}.serialised.json");
     let expected_json_str = std::fs::read_to_string(filepath)?;
     let expected_model: SerdeModel = serde_json::from_str(&expected_json_str)?;
 
@@ -182,11 +180,11 @@ pub fn read_model_json_prefix(
     test_name: &str,
     prefix: &str,
     test_stage: &str,
-    solver: Option<SolverFamily>,
+    solver: SolverFamily,
     max_lines: usize,
 ) -> Result<String, std::io::Error> {
-    let marker = solver.map_or("agnostic", |s| s.as_str());
-    let filename = format!("{path}/{marker}-{test_name}.{prefix}-{test_stage}.serialised.json");
+    let marker = solver.as_str();
+    let filename = format!("{path}/{test_name}-{marker}.{prefix}-{test_stage}.serialised.json");
     println!("reading: {}", filename);
     read_first_n_lines(filename, max_lines)
 }
@@ -240,8 +238,7 @@ pub fn save_solutions_json(
     let generated_json_str = serde_json::to_string_pretty(&json_solutions)?;
 
     let solver_name = solver.as_str();
-    let filename =
-        format!("{path}/{solver_name}-{test_name}.generated-{solver_name}.solutions.json");
+    let filename = format!("{path}/{test_name}-{solver_name}.generated-solutions.json");
     File::create(&filename)?.write_all(generated_json_str.as_bytes())?;
 
     Ok(json_solutions)
@@ -253,15 +250,9 @@ pub fn read_solutions_json(
     prefix: &str,
     solver: SolverFamily,
 ) -> Result<JsonValue, anyhow::Error> {
-    let solver_name = match solver {
-        SolverFamily::Sat => "sat",
-        #[cfg(feature = "smt")]
-        SolverFamily::Smt(..) => "smt",
-        SolverFamily::Minion => "minion",
-    };
-    let expected_json_str = read_with_path(format!(
-        "{path}/{solver_name}-{test_name}.{prefix}-{solver_name}.solutions.json"
-    ))?;
+    let solver_name = solver.as_str();
+    let filename = format!("{path}/{test_name}-{solver_name}.{prefix}-solutions.json");
+    let expected_json_str = read_with_path(filename)?;
 
     let expected_solutions: JsonValue =
         sort_json_object(&serde_json::from_str(&expected_json_str)?, true);
@@ -277,7 +268,7 @@ pub fn read_human_rule_trace(
     solver: &SolverFamily,
 ) -> Result<Vec<String>, std::io::Error> {
     let solver_name = solver.as_str();
-    let filename = format!("{path}/{solver_name}-{test_name}-{prefix}-rule-trace-human.txt");
+    let filename = format!("{path}/{test_name}-{solver_name}-{prefix}-rule-trace.txt");
     let rules_trace: Vec<String> = read_with_path(filename)?
         .lines()
         .map(String::from)

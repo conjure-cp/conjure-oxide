@@ -146,21 +146,25 @@ impl Display for IntVal {
 impl IntVal {
     pub fn new_ref(re: &Reference) -> Option<IntVal> {
         match re.ptr.kind().deref() {
-            DeclarationKind::ValueLetting(expr) => match expr.return_type() {
-                ReturnType::Int => Some(IntVal::Reference(re.clone())),
-                _ => None,
-            },
+            DeclarationKind::ValueLetting(expr) | DeclarationKind::TemporaryValueLetting(expr) => {
+                match expr.return_type() {
+                    ReturnType::Int => Some(IntVal::Reference(re.clone())),
+                    _ => None,
+                }
+            }
             DeclarationKind::Given(dom) => match dom.return_type() {
                 ReturnType::Int => Some(IntVal::Reference(re.clone())),
                 _ => None,
             },
-            DeclarationKind::GivenQuantified(inner) => match inner.domain().return_type() {
+            DeclarationKind::Quantified(inner) => match inner.domain().return_type() {
                 ReturnType::Int => Some(IntVal::Reference(re.clone())),
                 _ => None,
             },
-            DeclarationKind::DomainLetting(_)
-            | DeclarationKind::RecordField(_)
-            | DeclarationKind::DecisionVariable(_) => None,
+            DeclarationKind::Find(var) => match var.return_type() {
+                ReturnType::Int => Some(IntVal::Reference(re.clone())),
+                _ => None,
+            },
+            DeclarationKind::DomainLetting(_) | DeclarationKind::RecordField(_) => None,
         }
     }
 
@@ -176,12 +180,22 @@ impl IntVal {
             IntVal::Const(value) => Some(*value),
             IntVal::Expr(expr) => eval_expr_to_int(expr),
             IntVal::Reference(re) => match re.ptr.kind().deref() {
-                DeclarationKind::ValueLetting(expr) => eval_expr_to_int(expr),
+                DeclarationKind::ValueLetting(expr)
+                | DeclarationKind::TemporaryValueLetting(expr) => eval_expr_to_int(expr),
                 // If this is an int given we will be able to resolve it eventually, but not yet
-                DeclarationKind::Given(_) | DeclarationKind::GivenQuantified(..) => None,
-                DeclarationKind::DomainLetting(_)
-                | DeclarationKind::RecordField(_)
-                | DeclarationKind::DecisionVariable(_) => bug!(
+                DeclarationKind::Given(_) => None,
+                DeclarationKind::Quantified(inner) => {
+                    if let Some(generator) = inner.generator()
+                        && let Some(expr) = generator.as_value_letting()
+                    {
+                        eval_expr_to_int(&expr)
+                    } else {
+                        None
+                    }
+                }
+                // Decision variables inside domains are unresolved until solving.
+                DeclarationKind::Find(_) => None,
+                DeclarationKind::DomainLetting(_) | DeclarationKind::RecordField(_) => bug!(
                     "Expected integer expression, given, or letting inside int domain; Got: {re}"
                 ),
             },
@@ -500,7 +514,7 @@ impl Display for UnresolvedDomain {
             UnresolvedDomain::Matrix(value_domain, index_domains) => {
                 write!(
                     f,
-                    "matrix indexed by [{}] of {value_domain}",
+                    "matrix indexed by {} of {value_domain}",
                     pretty_vec(&index_domains.iter().collect_vec())
                 )
             }
