@@ -28,11 +28,11 @@ pub fn run_pretty_command(global_args: GlobalArgs, pretty_args: Args) -> anyhow:
     // Running the correct method to acquire pretty string
     let output = match pretty_args.output_format.as_str() {
         "ast-json" => serialize_model(&model),
-        "domains" => serialize_domains(&model),
+        "expr_domains" => serialize_domains(&model),
         // "add_new_flag" => method(),
         _ => {
             return Err(anyhow!(
-                "Unknown output format {}; supports [ast-json]",
+                "Unknown output format {}; supports [ast-json, expr_domains]",
                 &pretty_args.output_format
             ));
         }
