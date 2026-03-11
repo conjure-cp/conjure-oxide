@@ -60,7 +60,6 @@ where
     pub(crate) inner: TaggedZipper<T, EngineNodeState, fn(&T) -> EngineNodeState>,
     event_handlers: &'events EventHandlers<T, M, R>,
     pub(crate) meta: M,
-    movement_filter: fn(&T) -> bool,
 }
 
 impl<'events, T, M, R> EngineZipper<'events, T, M, R>
@@ -73,7 +72,6 @@ where
             inner: TaggedZipper::new(tree, EngineNodeState::new),
             event_handlers,
             meta,
-            movement_filter: |_| true,
         }
     }
 
@@ -119,7 +117,7 @@ where
     movement_fns! { directions: [up, right] }
 
     fn go_down(&mut self) -> Option<()> {
-        (self.inner.zipper().has_down() && (self.movement_filter)(self.inner.focus())).then(|| {
+        (self.inner.zipper().has_down()).then(|| {
             self.event_handlers
                 .trigger_before_down(self.inner.focus(), &mut self.meta);
             self.inner
@@ -148,10 +146,6 @@ where
             self.set_dirty_from(0);
             cache.invalidate_node(self.inner.focus());
         }
-    }
-
-    pub fn add_movement_filter(&mut self, filter: fn(&T) -> bool) {
-        self.movement_filter = filter;
     }
 }
 

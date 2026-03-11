@@ -306,7 +306,7 @@ where
 
         'main: loop {
             for rules in self.rule_groups.iter() {
-                while zipper.get_next().is_some() {
+                loop {
                     let subtree = zipper.inner.focus();
                     // Choose one transformation from all applicable rules at this level
                     let selected = self.select_rule(subtree, &mut zipper.meta, rules);
@@ -333,6 +333,10 @@ where
                         continue 'main;
                     } else {
                         debug!("Nothing Applicable");
+                    }
+
+                    if zipper.get_next().is_none() {
+                        break;
                     }
                 }
             }
