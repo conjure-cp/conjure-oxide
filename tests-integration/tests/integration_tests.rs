@@ -270,7 +270,6 @@ fn integration_test_inner(
         }
     };
     let solver_input_file = None;
-
     let solver = match solver_fam {
         SolverFamily::Minion => Solver::new(Minion::default()),
         SolverFamily::Sat(_) => Solver::new(Sat::default()),
@@ -309,14 +308,11 @@ fn integration_test_inner(
     if accept {
         // Always overwrite these ones. Unlike the rest, we don't need to selectively do these
         // based on the test results, so they don't get done later.
-
         copy_generated_to_expected(path, case_name, "solutions", "json", solver_fam)?;
-
         copy_human_trace_generated_to_expected(path, case_name, solver_fam)?;
     }
 
     // Check Stage 3a (solutions)
-
     let expected_solutions_json = read_solutions_json(path, case_name, "expected", solver_fam)?;
     let username_solutions_json = solutions_to_json(&solutions);
     assert_eq!(username_solutions_json, expected_solutions_json);
@@ -381,6 +377,7 @@ fn copy_human_trace_generated_to_expected(
     solver: SolverFamily,
 ) -> Result<(), std::io::Error> {
     let solver_name = solver.as_str();
+
     std::fs::copy(
         format!("{path}/{test_name}-{solver_name}-generated-rule-trace.txt"),
         format!("{path}/{test_name}-{solver_name}-expected-rule-trace.txt"),
