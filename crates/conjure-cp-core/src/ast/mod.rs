@@ -1,5 +1,6 @@
 pub mod abstract_comprehension;
 pub mod ac_operators;
+pub mod assertions;
 mod atom;
 pub mod categories;
 mod cnf_clause;
