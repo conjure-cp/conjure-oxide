@@ -31,7 +31,7 @@ where
 
     pub(crate) cache: C,
 
-    pub(crate) movement_filter: fn(&T) -> bool
+    pub(crate) use_prefilter: bool,
 }
 
 impl<T, M, R, C> Engine<T, M, R, C>
@@ -49,6 +49,10 @@ where
     ) -> Option<(&'a R, Update<T, M>)> {
         trace!("Beginning Rule Checks");
         let applicable = &mut rules.iter().filter_map(|rule| {
+            if self.use_prefilter && !rule.can_apply(subtree) {
+                trace!("Rule '{}' skipped (can_apply)", rule.name());
+                return None;
+            }
             trace!("Testing Rule '{}'", rule.name());
             self.event_handlers.trigger_before_rule(subtree, meta, rule);
             let update = apply_into_update(rule, subtree, meta);
@@ -200,7 +204,6 @@ where
     {
         // Owns the tree/meta and is consumed to get them back at the end
         let mut zipper = EngineZipper::new(tree, meta, &self.event_handlers);
-        zipper.add_movement_filter(self.movement_filter);
         info!("Beginning Morph");
 
         'main: loop {

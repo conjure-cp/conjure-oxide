@@ -1,5 +1,5 @@
 use itertools::Itertools;
-use crate::ast::SymbolTable;
+use crate::{ast::SymbolTable, settings::{MorphCachingStrategy, MorphConfig}};
 use tree_morph::{
     cache::{CachedHashMapCache, HashMapCache, NoCache, RewriteCache},
     helpers::select_panic,
@@ -7,7 +7,7 @@ use tree_morph::{
 };
 
 use crate::{
-    Model, ast::{Expression, print_hash_stats}, bug, settings::{MorphVariant, Rewriter, set_current_rewriter}
+    Model, ast::Expression, bug, settings::{Rewriter, set_current_rewriter}
 };
 
 use super::{RuleSet, get_rules_grouped, rule::Rule as ConjureRule};
@@ -26,6 +26,7 @@ use super::{RuleSet, get_rules_grouped, rule::Rule as ConjureRule};
 /// - `prop_multiple_equally_applicable`: A boolean flag to control behavior when multiple rules of the same priority can be applied to the same expression.
 ///   - If `true`, the rewriter will use a selection strategy (`select_panic`) that panics.
 ///   - If `false`, the rewriter will use a selection strategy (`select_first`) that simply picks the first applicable rule it encounters.
+///   TODO: CHANGE
 /// - `variant`: The `MorphVariant` selecting cache and traversal behaviour:
 ///   - `NoCache` → no cache, standard traversal
 ///   - `Cache` → `HashMapCache`, standard traversal
@@ -45,31 +46,28 @@ pub fn rewrite_morph<'a>(
     mut model: Model,
     rule_sets: &Vec<&'a RuleSet<'a>>,
     prop_multiple_equally_applicable: bool,
-    variant: MorphVariant,
+    config: MorphConfig
 ) -> Model {
-    set_current_rewriter(Rewriter::Morph(variant));
-
-    let use_naive = variant == MorphVariant::Naive;
+    set_current_rewriter(Rewriter::Morph(config));
 
     let model_ref = &mut model;
-    let mut engine = build_engine(rule_sets, prop_multiple_equally_applicable, variant);
+    let mut engine = build_engine(rule_sets, prop_multiple_equally_applicable, config);
 
-    let (expr, symbol_table) = if !use_naive {
-        engine.morph(model_ref.root().clone(), model_ref.symbols().clone())
-    } else {
+    let (expr, symbol_table) = if config.naive {
         engine.morph_naive(model_ref.root().clone(), model_ref.symbols().clone())
+    } else {
+        engine.morph(model_ref.root().clone(), model_ref.symbols().clone())
     };
 
     *model_ref.symbols_mut() = symbol_table;
     model_ref.replace_root(expr);
-    // print_hash_stats();
     model
 }
 
 fn build_engine<'a>(
     rule_sets: &Vec<&'a RuleSet<'a>>,
     prop_multiple_equally_applicable: bool,
-    variant: MorphVariant,
+    config: MorphConfig,
 ) -> Engine<Expression, SymbolTable, &'a ConjureRule<'a>, Box<dyn RewriteCache<Expression>>> {
     let rules_grouped = get_rules_grouped(rule_sets)
         .unwrap_or_else(|_| bug!("get_rule_priorities() failed!"))
@@ -81,14 +79,17 @@ fn build_engine<'a>(
     } else {
         select_first
     };
-    let cache: Box<dyn RewriteCache<Expression>> = match variant {
-        MorphVariant::Cache => Box::new(HashMapCache::new()),
-        MorphVariant::Hashcache => Box::new(CachedHashMapCache::new()),
-        MorphVariant::NoCache | MorphVariant::Naive => Box::new(NoCache),
+
+    let cache: Box<dyn RewriteCache<Expression>> = match config.cache {
+        MorphCachingStrategy::NoCache => Box::new(NoCache),
+        MorphCachingStrategy::Cache => Box::new(HashMapCache::new()),
+        MorphCachingStrategy::IncrementalCache => Box::new(CachedHashMapCache::new())
     };
+
     EngineBuilder::new()
         .set_selector(selector)
         .append_rule_groups(rules_grouped)
         .add_cacher(cache)
+        .enable_prefilter(config.prefilter)
         .build()
 }

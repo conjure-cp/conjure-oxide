@@ -25,7 +25,7 @@ where
 
     cache: C,
 
-    movement_filter: fn(&T) -> bool,
+    use_prefilter: bool,
 }
 
 macro_rules! add_handler_fns {
@@ -60,7 +60,7 @@ where
             rule_groups: Vec::new(),
             selector: select_first,
             cache: NoCache,
-            movement_filter: |_| true,
+            use_prefilter: true,
         }
     }
 }
@@ -78,7 +78,7 @@ where
             rule_groups: self.rule_groups,
             selector: self.selector,
             cache: self.cache,
-            movement_filter: self.movement_filter
+            use_prefilter: self.use_prefilter,
         }
     }
 
@@ -149,13 +149,17 @@ where
             rule_groups: self.rule_groups,
             selector: self.selector,
             cache: cacher,
-            movement_filter: self.movement_filter
+            use_prefilter: self.use_prefilter,
         }
     }
 
-    /// Add downwards movement filter to tree-morph.
-    pub fn add_movement_filter(mut self, filter: fn(&T) -> bool) -> Self {
-        self.movement_filter = filter;
+    /// Enable or disable the `can_apply` pre-filter on rules.
+    ///
+    /// When enabled (the default), the engine will call [`Rule::can_apply`] before attempting
+    /// each rule, skipping rules that declare themselves inapplicable to the current subtree.
+    /// Disabling this causes the engine to attempt every rule unconditionally.
+    pub fn enable_prefilter(mut self, enabled: bool) -> Self {
+        self.use_prefilter = enabled;
         self
     }
 }

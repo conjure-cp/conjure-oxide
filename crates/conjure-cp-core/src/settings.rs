@@ -60,20 +60,77 @@ pub fn current_parser() -> Parser {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub enum MorphVariant {
-    NoCache,
-    Cache,
-    Hashcache,
-    Naive,
+pub struct MorphConfig {
+    pub cache: MorphCachingStrategy,
+    pub prefilter: bool,
+    pub naive: bool,
+    pub parallel: bool,
 }
 
-impl Display for MorphVariant {
+impl Default for MorphConfig {
+    fn default() -> Self {
+        Self {
+            cache: Default::default(),
+            prefilter: true,
+            naive: false,
+            parallel: false,
+        }
+    }
+}
+
+impl Display for MorphConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if self.naive {
+            return write!(f, "morph-naive");
+        }
+
+        write!(f, "morph ( {} ", self.cache)?;
+        if self.prefilter {
+            write!(f, "prefilter ")?;
+        }
+
+        if self.parallel {
+            write!(f, "parallel ")?;
+        }
+
+        write!(f, ")")
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum MorphCachingStrategy {
+    NoCache,
+    Cache,
+    IncrementalCache,
+}
+
+impl Default for MorphCachingStrategy {
+    fn default() -> Self {
+        Self::IncrementalCache
+    }
+}
+
+impl FromStr for MorphCachingStrategy {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.trim().to_ascii_lowercase().as_str() {
+            "no-cache" => Ok(Self::NoCache),
+            "cache" => Ok(Self::Cache),
+            "inc-cache" => Ok(Self::IncrementalCache),
+            other => Err(format!(
+                "unknown cache strategy: {other}; expected one of: no-cache, cahce, inc-cache"
+            )),
+        }
+    }
+}
+
+impl Display for MorphCachingStrategy {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            MorphVariant::NoCache => write!(f, "morph"),
-            MorphVariant::Cache => write!(f, "morph-cache"),
-            MorphVariant::Hashcache => write!(f, "morph-hashcache"),
-            MorphVariant::Naive => write!(f, "morph-naive"),
+            MorphCachingStrategy::NoCache => write!(f, "no-cache"),
+            MorphCachingStrategy::Cache => write!(f, "cache"),
+            MorphCachingStrategy::IncrementalCache => write!(f, "inc-cache"),
         }
     }
 }
@@ -81,7 +138,7 @@ impl Display for MorphVariant {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Rewriter {
     Naive,
-    Morph(MorphVariant),
+    Morph(MorphConfig),
 }
 
 thread_local! {
@@ -95,7 +152,7 @@ impl Display for Rewriter {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Rewriter::Naive => write!(f, "naive"),
-            Rewriter::Morph(variant) => write!(f, "{variant}"),
+            Rewriter::Morph(config) => write!(f, "{config}"),
         }
     }
 }
@@ -106,12 +163,9 @@ impl FromStr for Rewriter {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.trim().to_ascii_lowercase().as_str() {
             "naive" => Ok(Rewriter::Naive),
-            "morph" => Ok(Rewriter::Morph(MorphVariant::NoCache)),
-            "morph-cache" => Ok(Rewriter::Morph(MorphVariant::Cache)),
-            "morph-hashcache" => Ok(Rewriter::Morph(MorphVariant::Hashcache)),
-            "morph-naive" => Ok(Rewriter::Morph(MorphVariant::Naive)),
+            "morph" => Ok(Rewriter::Morph(MorphConfig::default())),
             other => Err(format!(
-                "unknown rewriter: {other}; expected one of: naive, morph, morph-cache, morph-hashcache, morph-naive"
+                "unknown rewriter: {other}; expected one of: naive, morph"
             )),
         }
     }

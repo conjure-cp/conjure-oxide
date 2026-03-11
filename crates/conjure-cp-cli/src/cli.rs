@@ -4,8 +4,8 @@ use clap::{Args, Parser, Subcommand};
 
 use clap_complete::Shell;
 use conjure_cp::settings::{
-    DEFAULT_MINION_DISCRETE_THRESHOLD, Parser as InputParser, QuantifiedExpander, Rewriter,
-    SolverFamily,
+    DEFAULT_MINION_DISCRETE_THRESHOLD, MorphCachingStrategy, Parser as InputParser,
+    QuantifiedExpander, Rewriter, SolverFamily,
 };
 
 use crate::{pretty, solve, test_solve};
@@ -100,9 +100,21 @@ pub struct GlobalArgs {
 
     /// Which rewriter to use.
     ///
-    /// Possible values: `naive`, `morph`, `morph-cache`, `morph-hashcache`, `morph-naive`.
+    /// Possible values: `naive`, `morph`
     #[arg(long, default_value_t = Rewriter::Naive, value_parser = parse_rewriter, global = true, help_heading = CONFIGURATION_HELP_HEADING)]
     pub rewriter: Rewriter,
+
+    #[arg(long, default_value_t = MorphCachingStrategy::IncrementalCache, value_parser = parse_cache_strategy, global = true, help_heading = CONFIGURATION_HELP_HEADING)]
+    pub cache_strategy: MorphCachingStrategy,
+
+    #[arg(long, default_value_t = false, global = true, help_heading = CONFIGURATION_HELP_HEADING)]
+    pub morph_naive: bool,
+
+    #[arg(long, default_value_t = false, global = true, help_heading = CONFIGURATION_HELP_HEADING)]
+    pub morph_parallel: bool,
+
+    #[arg(long, default_value_t = false, global = true, help_heading = CONFIGURATION_HELP_HEADING)]
+    pub morph_prefilter: bool,
 
     /// Which strategy to use for expanding quantified variables in comprehensions.
     ///
@@ -153,7 +165,7 @@ pub struct GlobalArgs {
     /// this file cannot be used by Conjure Oxide in any way.
     #[arg(long,global=true, value_names=["filename"], next_line_help=true, help_heading=LOGGING_HELP_HEADING)]
     pub save_solver_input_file: Option<PathBuf>,
-    
+
     /// Exit after all comprehensions have been unrolled, printing the number of expressions at that point.
     ///
     /// This is only compatible with the default rewriter.
@@ -203,7 +215,7 @@ fn parse_comprehension_expander(input: &str) -> Result<QuantifiedExpander, Strin
 }
 
 fn parse_rewriter(input: &str) -> Result<Rewriter, String> {
-    input.parse()
+    input.parse::<Rewriter>()
 }
 
 fn parse_solver_family(input: &str) -> Result<SolverFamily, String> {
@@ -211,5 +223,9 @@ fn parse_solver_family(input: &str) -> Result<SolverFamily, String> {
 }
 
 fn parse_parser(input: &str) -> Result<InputParser, String> {
+    input.parse()
+}
+
+fn parse_cache_strategy(input: &str) -> Result<MorphCachingStrategy, String> {
     input.parse()
 }

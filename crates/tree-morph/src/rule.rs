@@ -99,6 +99,14 @@ pub trait Rule<T: Uniplate, M> {
     fn name(&self) -> &str {
         "Anonymous Rule"
     }
+
+    /// Returns whether this rule could potentially apply to the given subtree.
+    ///
+    /// Used as a fast pre-filter to skip rules without calling [`Rule::apply`].
+    /// Returns `true` by default (no filtering).
+    fn can_apply(&self, _subtree: &T) -> bool {
+        true
+    }
 }
 
 // Allows the user to pass closures and function pointers directly as rules
