@@ -3,7 +3,10 @@ use std::path::PathBuf;
 use clap::{Args, Parser, Subcommand};
 
 use clap_complete::Shell;
-use conjure_cp::settings::{Parser as InputParser, QuantifiedExpander, Rewriter, SolverFamily};
+use conjure_cp::settings::{
+    DEFAULT_MINION_DISCRETE_THRESHOLD, Parser as InputParser, QuantifiedExpander, Rewriter,
+    SolverFamily,
+};
 
 use crate::{pretty, solve, test_solve};
 
@@ -128,6 +131,17 @@ pub struct GlobalArgs {
         help_heading = CONFIGURATION_HELP_HEADING
     )]
     pub solver: SolverFamily,
+
+    /// Int-domain size threshold for using Minion `DISCRETE` variables.
+    ///
+    /// If an int domain has size <= this value, Conjure Oxide emits `DISCRETE`; otherwise `BOUND`.
+    #[arg(
+        long,
+        default_value_t = DEFAULT_MINION_DISCRETE_THRESHOLD,
+        global = true,
+        help_heading = CONFIGURATION_HELP_HEADING
+    )]
+    pub minion_discrete_threshold: usize,
 
     /// Save a solver input file to <filename>.
     ///
