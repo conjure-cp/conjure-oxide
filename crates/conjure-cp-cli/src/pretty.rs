@@ -3,7 +3,7 @@ use std::{path::PathBuf, sync::Arc};
 use anyhow::anyhow;
 use clap::ValueHint;
 
-use conjure_cp_cli::utils::testing::serialize_model;
+use conjure_cp_cli::utils::testing::{serialize_domains, serialize_model};
 
 use crate::cli::{GlobalArgs, LOGGING_HELP_HEADING};
 use crate::solve::{init_context, parse};
@@ -28,6 +28,7 @@ pub fn run_pretty_command(global_args: GlobalArgs, pretty_args: Args) -> anyhow:
     // Running the correct method to acquire pretty string
     let output = match pretty_args.output_format.as_str() {
         "ast-json" => serialize_model(&model),
+        "domains" => serialize_domains(&model),
         // "add_new_flag" => method(),
         _ => {
             return Err(anyhow!(
