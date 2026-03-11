@@ -12,7 +12,6 @@ use conjure_cp::into_matrix_expr;
 use super::boolean::{tseytin_and, tseytin_iff, tseytin_not, tseytin_or, tseytin_xor};
 
 use conjure_cp::ast::CnfClause;
-
 /// Converts an integer literal to SATInt form
 ///
 /// ```text
