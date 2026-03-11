@@ -4,8 +4,8 @@ use clap::{Args, Parser, Subcommand};
 
 use clap_complete::Shell;
 use conjure_cp::settings::{
-    DEFAULT_MINION_DISCRETE_THRESHOLD, Parser as InputParser, QuantifiedExpander, Rewriter,
-    SolverFamily,
+    Parser as InputParser, QuantifiedExpander, Rewriter, SolverFamily,
+    DEFAULT_MINION_DISCRETE_THRESHOLD,
 };
 
 use crate::{pretty, solve, test_solve};
@@ -79,6 +79,12 @@ pub struct GlobalArgs {
     /// Output file for the human readable rule trace.
     #[arg(long, global = true, help_heading=LOGGING_HELP_HEADING)]
     pub rule_trace: Option<PathBuf>,
+
+    /// Output file for verbose rule-attempt trace in CSV format.
+    ///
+    /// Each row includes: elapsed_s, rule_level, rule_name, rule_set, status, expression.
+    #[arg(long, global = true, help_heading=LOGGING_HELP_HEADING)]
+    pub rule_trace_verbose: Option<PathBuf>,
 
     /// Do not check for multiple equally applicable rules [default].
     ///
