@@ -233,7 +233,6 @@ fn integration_test_inner(
         Parser::ViaConjure => parse_essence_file(&file_path, context.clone())?,
     };
 
-    // eprintln!("parsed model: {:#?}", parsed_model);
     // Stage 2a: Rewrite the model using the rule engine
     let mut extra_rules = vec![];
 
