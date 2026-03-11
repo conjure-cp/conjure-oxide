@@ -223,7 +223,7 @@ where
                         CacheResult::Rewrite(cached) => {
                             debug!("Cache Hit");
                             zipper.inner.replace_focus(cached);
-                            zipper.mark_dirty_to_root();
+                            zipper.mark_dirty_to_root(&self.cache);
                             continue 'main;
                         }
                         _ => (),
@@ -234,16 +234,16 @@ where
 
                     if let Some((rule, mut update)) = selected {
                         debug!("Applying Rule '{}'", rule.name());
-                        // println!("Before Applying Rule '{}'\nExpr:\n{}", rule.name(), subtree);
 
-                        let replacement = update.new_subtree.clone();
-                        let original = subtree.clone();
+                        let cache_active = self.cache.is_active();
+                        let original = cache_active.then(|| subtree.clone());
+                        let replacement = cache_active.then(|| update.new_subtree.clone());
 
                         // Replace the current subtree, invalidating subtree node states
                         zipper.inner.replace_focus(update.new_subtree);
 
                         // Mark all ancestors as dirty and move back to the root
-                        zipper.mark_dirty_to_root();
+                        zipper.mark_dirty_to_root(&self.cache);
 
                         let (new_tree, root_transformed) = update
                             .commands
@@ -254,10 +254,12 @@ where
                             // This must unfortunately throw all node states away,
                             // since the `transform` command may redefine the whole tree
                             zipper.inner.replace_focus(new_tree);
-                        } else if original != replacement {
-                            self.cache.insert(original, Some(replacement.clone()), level);
-                        } else {
-                            error!("SAME TREE");
+                        } else if let (Some(orig), Some(repl)) = (original, replacement) {
+                            if orig != repl {
+                                self.cache.insert(orig, Some(repl), level);
+                            } else {
+                                error!("SAME TREE");
+                            }
                         }
 
                         self.event_handlers.trigger_on_apply(
@@ -269,7 +271,9 @@ where
                         continue 'main;
                     } else {
                         trace!("Nothing Applicable");
-                        self.cache.insert(subtree.clone(), None, level);
+                        if self.cache.is_active() {
+                            self.cache.insert(subtree.clone(), None, level);
+                        }
                         zipper.set_dirty_from(level + 1);
                     }
                 }
@@ -278,6 +282,7 @@ where
             // All rules have been tried with no more changes
             break;
         }
+        
         info!("Finished Morph");
         zipper.into()
     }

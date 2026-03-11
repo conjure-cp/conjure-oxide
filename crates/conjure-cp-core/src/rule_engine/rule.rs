@@ -6,7 +6,8 @@ use std::rc::Rc;
 
 use thiserror::Error;
 
-use crate::ast::{CnfClause, DeclarationPtr, Expression, Name, SubModel, SymbolTable, SymbolTablePtr};
+use crate::Model;
+use crate::ast::{CnfClause, DeclarationPtr, Expression, Name, SymbolTable, SymbolTablePtr};
 use tree_morph::prelude::Commands;
 use tree_morph::prelude::Rule as MorphRule;
 

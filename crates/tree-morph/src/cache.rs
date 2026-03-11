@@ -36,8 +36,18 @@ pub trait RewriteCache<T> {
     /// Note: Any powerful side effects such as changing other parts of the tree or replacing the
     /// root should NOT be inserted into the cache.
     fn insert(&mut self, from: T, to: Option<T>, level: usize);
-}
 
+    /// Invalidate any internally cached hash for the given node.
+    /// This is called on ancestors when a subtree is replaced.
+    /// The default implementation is a no-op for caches that don't use node-level hash caching.
+    fn invalidate_node(&self, _node: &T) {}
+
+    /// Returns `false` if this cache never stores anything (e.g. [`NoCache`]).
+    /// The engine uses this to skip clones that would only feed into a no-op insert.
+    fn is_active(&self) -> bool {
+        true
+    }
+}
 
 impl<T> RewriteCache<T> for Box<dyn RewriteCache<T>> {
     fn get(&self, subtree: &T, level: usize) -> CacheResult<T> {
@@ -47,8 +57,15 @@ impl<T> RewriteCache<T> for Box<dyn RewriteCache<T>> {
     fn insert(&mut self, from: T, to: Option<T>, level: usize) {
         (**self).insert(from, to, level)
     }
-}
 
+    fn invalidate_node(&self, node: &T) {
+        (**self).invalidate_node(node)
+    }
+
+    fn is_active(&self) -> bool {
+        (**self).is_active()
+    }
+}
 
 /// Disable Caching.
 ///
@@ -60,6 +77,10 @@ impl<T> RewriteCache<T> for NoCache {
     }
 
     fn insert(&mut self, _: T, _: Option<T>, _: usize) {}
+
+    fn is_active(&self) -> bool {
+        false
+    }
 }
 
 /// RewriteCache implemented with a HashMap
@@ -117,13 +138,119 @@ where
     fn get(&self, subtree: &T, level: usize) -> CacheResult<T> {
         let hashed = self.hash(subtree, level);
 
-        if !self.map.contains_key(&hashed) {
-            return CacheResult::Unknown;
+        match self.map.get(&hashed) {
+            None => CacheResult::Unknown,
+            Some(entry) => match entry {
+                Some(res) => CacheResult::Rewrite(res.clone()),
+                None => CacheResult::Terminal,
+            },
+        }
+    }
+
+    fn insert(&mut self, from: T, to: Option<T>, level: usize) {
+        let from_hash = self.hash(&from, level);
+
+        if to.is_none() {
+            self.map.insert(from_hash, None);
+            return;
         }
 
-        match self.map.get(&hashed).unwrap() {
-            Some(res) => CacheResult::Rewrite(res.clone()),
-            None => CacheResult::Terminal,
+        let to_hash = self.hash(to.as_ref().unwrap(), level);
+
+        if from_hash == to_hash {
+            panic!("From and To have the same Hash - Cycle Detected!");
+        }
+
+        if self.map.contains_key(&from_hash) {
+            // TODO: Change mapping from hash -> Vec<T> -- Leave it as single for now
+            panic!("Overriding an existing mapping loses transitive closure.");
+        }
+
+        self.map.insert(from_hash, to.clone());
+
+        if let Some(mut dependencies) = self.dependencies.remove(&from_hash) {
+            for &dependant in &dependencies {
+                self.map.insert(dependant, to.clone());
+            }
+
+            self.dependencies
+                .entry(to_hash)
+                .or_default()
+                .append(&mut dependencies);
+        }
+
+        self.dependencies
+            .entry(to_hash)
+            .or_default()
+            .push(from_hash);
+    }
+}
+
+#[allow(missing_docs)]
+pub trait CacheHashable {
+    fn invalidate_cache(&self);
+
+    fn get_cached_hash(&self) -> u64;
+
+    fn calculate_hash(&self) -> u64;
+}
+
+/// Like [`HashMapCache`], but uses [`CacheHashable::get_cached_hash`] instead of [`Hash`],
+/// allowing types with internally cached hashes to avoid rehashing entire subtrees.
+pub struct CachedHashMapCache<T>
+where
+    T: CacheHashable + Clone,
+{
+    map: HashMap<u64, Option<T>>,
+    dependencies: HashMap<u64, Vec<u64>>,
+}
+
+impl<T> CachedHashMapCache<T>
+where
+    T: CacheHashable + Clone,
+{
+    /// Creates a new CachedHashMapCache
+    pub fn new() -> Self {
+        Self {
+            map: HashMap::new(),
+            dependencies: HashMap::new(),
+        }
+    }
+
+    fn hash(&self, term: &T, level: usize) -> u64 {
+        let mut hasher = DefaultHasher::new();
+        term.get_cached_hash().hash(&mut hasher);
+        level.hash(&mut hasher);
+        hasher.finish()
+    }
+}
+
+impl<T> Default for CachedHashMapCache<T>
+where
+    T: CacheHashable + Clone,
+{
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl<T> RewriteCache<T> for CachedHashMapCache<T>
+where
+    T: CacheHashable + Clone,
+{
+    fn invalidate_node(&self, node: &T) {
+        node.invalidate_cache();
+    }
+
+    fn get(&self, subtree: &T, level: usize) -> CacheResult<T> {
+        let hashed = self.hash(subtree, level);
+
+        match self.map.get(&hashed) {
+            None => CacheResult::Unknown,
+            Some(entry) => match entry {
+                Some(res) => CacheResult::Rewrite(res.clone()),
+                None => CacheResult::Terminal,
+            },
         }
     }
 
@@ -138,7 +265,6 @@ where
         let to_hash = self.hash(to.as_ref().unwrap(), level);
 
         if self.map.contains_key(&from_hash) {
-            // TODO: Change mapping from hash -> Vec<T> -- Leave it as single for now
             panic!("Overriding an existing mapping loses transitive closure.");
         }
 

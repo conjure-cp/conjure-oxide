@@ -4,7 +4,7 @@ use paste::paste;
 use tracing::{instrument, trace};
 use uniplate::{Uniplate, tagged_zipper::TaggedZipper, zipper::Zipper};
 
-use crate::{events::EventHandlers, rule::Rule};
+use crate::{cache::RewriteCache, events::EventHandlers, rule::Rule};
 
 #[derive(Debug, Clone)]
 pub(crate) struct EngineNodeState {
@@ -138,11 +138,15 @@ where
         self.inner.tag_mut().set_dirty_from(level);
     }
 
-    /// Mark ancestors as dirty for all levels, and return to the root
-    pub fn mark_dirty_to_root(&mut self) {
+    /// Mark ancestors as dirty for all levels, and return to the root.
+    /// If the cache implements node-level invalidation, it will be called on each ancestor.
+    pub fn mark_dirty_to_root(&mut self, cache: &impl RewriteCache<T>) {
         trace!("Marking Dirty to Root");
+        self.set_dirty_from(0);
+        cache.invalidate_node(self.inner.focus());
         while self.go_up().is_some() {
             self.set_dirty_from(0);
+            cache.invalidate_node(self.inner.focus());
         }
     }
 

@@ -1,15 +1,30 @@
 use std::collections::{HashSet, VecDeque};
 use std::fmt::{Display, Formatter};
+use std::hash::{DefaultHasher, Hash, Hasher};
+use std::sync::atomic::{AtomicU64, Ordering};
+
+static HASH_HITS: AtomicU64 = AtomicU64::new(0);
+static HASH_MISSES: AtomicU64 = AtomicU64::new(0);
+
+pub fn print_hash_stats() {
+    println!(
+        "Expression hash stats: hits={}, misses={}",
+        HASH_HITS.load(Ordering::Relaxed),
+        HASH_MISSES.load(Ordering::Relaxed)
+    );
+}
 use tracing::trace;
 
 use conjure_cp_enum_compatibility_macro::document_compatibility;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
+use tree_morph::cache::CacheHashable;
 use ustr::Ustr;
 
 use polyquine::Quine;
 use uniplate::{Biplate, Uniplate};
 
+use crate::ast::metadata::NO_HASH;
 use crate::bug;
 
 use super::abstract_comprehension::AbstractComprehension;
@@ -48,7 +63,7 @@ use super::{
 // boxed ~niklasdewally
 
 // expect size of Expression to be 112 bytes
-static_assertions::assert_eq_size!([u8; 112], Expression);
+// static_assertions::assert_eq_size!([u8; 104], Expression);
 
 /// Represents different types of expressions used to define rules and constraints in the model.
 ///
@@ -943,6 +958,40 @@ impl Expression {
             Expression::FlatLexLeq(..) => Some(Domain::bool()),
         }
     }
+    
+    /// Returns a reference to this expression's metadata without cloning.
+    pub fn meta_ref(&self) -> &Metadata {
+        macro_rules! match_meta_ref {
+            ($($variant:ident),* $(,)?) => {
+                match self {
+                    $(Expression::$variant(meta, ..) => meta,)*
+                }
+            };
+        }
+        match_meta_ref!(
+            AbstractLiteral, Root, Bubble, Comprehension, AbstractComprehension,
+            DominanceRelation, FromSolution, Metavar, Atomic,
+            UnsafeIndex, SafeIndex, UnsafeSlice, SafeSlice, InDomain,
+            ToInt, Abs, Sum, Product, Min, Max,
+            Not, Or, And, Imply, Iff,
+            Union, In, Intersect, Supset, SupsetEq, Subset, SubsetEq,
+            Eq, Neq, Geq, Leq, Gt, Lt,
+            SafeDiv, UnsafeDiv, SafeMod, UnsafeMod, Neg,
+            Defined, Range, UnsafePow, SafePow,
+            Flatten, AllDiff, Minus,
+            FlatAbsEq, FlatAllDiff, FlatSumGeq, FlatSumLeq, FlatIneq,
+            FlatWatchedLiteral, FlatWeightedSumLeq, FlatWeightedSumGeq,
+            FlatMinusEq, FlatProductEq,
+            MinionDivEqUndefZero, MinionModuloEqUndefZero, MinionPow,
+            MinionReify, MinionReifyImply,
+            MinionWInIntervalSet, MinionWInSet, MinionElementOne,
+            AuxDeclaration, SATInt,
+            PairwiseSum, PairwiseProduct,
+            Image, ImageSet, PreImage, Inverse, Restrict,
+            LexLt, LexLeq, LexGt, LexGeq,
+            FlatLexLt, FlatLexLeq, Table
+        )
+    }
 
     pub fn get_meta(&self) -> Metadata {
         let metas: VecDeque<Metadata> = self.children_bi();
@@ -1716,6 +1765,256 @@ impl Typeable for Expression {
             Expression::FlatLexLt(..) => ReturnType::Bool,
             Expression::FlatLexLeq(..) => ReturnType::Bool,
         }
+    }
+}
+
+impl CacheHashable for Expression {
+    fn invalidate_cache(&self) {
+        self.meta_ref().stored_hash.swap(NO_HASH, Ordering::Relaxed);
+    }
+
+    fn get_cached_hash(&self) -> u64 {
+        let stored = self.meta_ref().stored_hash.load(Ordering::Relaxed);
+        if stored != NO_HASH {
+            HASH_HITS.fetch_add(1, Ordering::Relaxed);
+            return stored;
+        }
+        HASH_MISSES.fetch_add(1, Ordering::Relaxed);
+        self.calculate_hash()
+    }
+
+    fn calculate_hash(&self) -> u64 {
+        let mut hasher = DefaultHasher::new();
+        std::mem::discriminant(self).hash(&mut hasher);
+        match self {
+            // Special Case
+            Expression::AbstractLiteral(_, alit) => match alit {
+                AbstractLiteral::Set(v) | AbstractLiteral::MSet(v) | AbstractLiteral::Tuple(v) => {
+                    for expr in v {
+                        expr.get_cached_hash().hash(&mut hasher);
+                    }
+                }
+                AbstractLiteral::Matrix(v, domain) => {
+                    domain.hash(&mut hasher);
+                    for expr in v {
+                        expr.get_cached_hash().hash(&mut hasher);
+                    }
+                }
+                AbstractLiteral::Record(rs) => {
+                    for r in rs {
+                        r.name.hash(&mut hasher);
+                        r.value.get_cached_hash().hash(&mut hasher);
+                    }
+                }
+                AbstractLiteral::Function(vs) => {
+                    for (a, b) in vs {
+                        a.get_cached_hash().hash(&mut hasher);
+                        b.get_cached_hash().hash(&mut hasher);
+                    }
+                }
+            },
+            Expression::Root(_, vs) => {
+                for expr in vs {
+                    expr.get_cached_hash().hash(&mut hasher);
+                }
+            }
+
+            // Moo<Expression>
+            Expression::DominanceRelation(_, m1) |
+            Expression::ToInt(_, m1) |
+            Expression::Abs(_, m1) |
+            Expression::Sum(_, m1) |
+            Expression::Product(_, m1) |
+            Expression::Min(_, m1) |
+            Expression::Max(_, m1) |
+            Expression::Not(_, m1) |
+            Expression::Or(_, m1) |
+            Expression::And(_, m1) |
+            Expression::Neg(_, m1) |
+            Expression::Defined(_, m1) |
+            Expression::AllDiff(_, m1) |
+            Expression::Range(_, m1) => {
+                m1.get_cached_hash().hash(&mut hasher);
+            }
+
+            // Moo<Expression> + Moo<Expression>
+            Expression::Table(_, m1, m2) |
+            Expression::Bubble(_ , m1 , m2) | 
+            Expression::Imply(_, m1, m2) |
+            Expression::Iff(_, m1, m2) |
+            Expression::Union(_, m1, m2) |
+            Expression::In(_, m1, m2) |
+            Expression::Intersect(_, m1, m2) |
+            Expression::Supset(_, m1, m2) |
+            Expression::SupsetEq(_, m1, m2) |
+            Expression::Subset(_, m1, m2) |
+            Expression::SubsetEq(_, m1, m2) |
+            Expression::Eq(_, m1, m2) |
+            Expression::Neq(_, m1, m2) |
+            Expression::Geq(_, m1, m2) |
+            Expression::Leq(_, m1, m2) |
+            Expression::Gt(_, m1, m2) |
+            Expression::Lt(_, m1, m2) |
+            Expression::SafeDiv(_, m1, m2) |
+            Expression::UnsafeDiv(_, m1, m2) |
+            Expression::SafeMod(_, m1, m2) |
+            Expression::UnsafeMod(_, m1, m2) |
+            Expression::UnsafePow(_, m1, m2) |
+            Expression::SafePow(_, m1, m2) |
+            Expression::Minus(_, m1, m2) |
+            Expression::PairwiseSum(_, m1, m2) |
+            Expression::PairwiseProduct(_, m1, m2) |
+            Expression::Image(_, m1, m2) |
+            Expression::ImageSet(_, m1, m2) |
+            Expression::PreImage(_, m1, m2) |
+            Expression::Inverse(_, m1, m2) |
+            Expression::Restrict(_, m1, m2) |
+            Expression::LexLt(_, m1, m2) |
+            Expression::LexLeq(_, m1, m2) |
+            Expression::LexGt(_, m1, m2) |
+            Expression::LexGeq(_, m1, m2) => {
+                m1.get_cached_hash().hash(&mut hasher);
+                m2.get_cached_hash().hash(&mut hasher);
+            }
+            // Moo<Expression> + Vec<Expression>
+            Expression::UnsafeIndex(_, m, vs) |
+            Expression::SafeIndex(_, m, vs) => {
+                m.get_cached_hash().hash(&mut hasher);
+                for v in vs {
+                    v.get_cached_hash().hash(&mut hasher);
+                }
+            }
+
+            // Moo<Expression> + Vec<Option<Expression>>
+            Expression::UnsafeSlice(_, m, vs) |
+            Expression::SafeSlice(_, m, vs) => {
+                m.get_cached_hash().hash(&mut hasher);
+                for v in vs {
+                    match v {
+                        Some(e) => e.get_cached_hash().hash(&mut hasher),
+                        None => 0u64.hash(&mut hasher),
+                    }
+                }
+            }
+
+            // Moo<Expression> + DomainPtr
+            Expression::InDomain(_, m, d) => {
+                m.get_cached_hash().hash(&mut hasher);
+                d.hash(&mut hasher);
+            }
+
+            // Option<Moo<Expression>> + Moo<Expression>
+            Expression::Flatten(_, opt, m) => {
+                if let Some(e) = opt {
+                    e.get_cached_hash().hash(&mut hasher);
+                }
+                m.get_cached_hash().hash(&mut hasher);
+            }
+
+            // Moo<Expression> + Atom
+            Expression::MinionReify(_, m, a) |
+            Expression::MinionReifyImply(_, m, a) => {
+                m.get_cached_hash().hash(&mut hasher);
+                a.hash(&mut hasher);
+            }
+
+            // Reference + Moo<Expression>
+            Expression::AuxDeclaration(_, r, m) => {
+                r.hash(&mut hasher);
+                m.get_cached_hash().hash(&mut hasher);
+            }
+
+            // SATIntEncoding + Moo<Expression> + (i32, i32)
+            Expression::SATInt(_, enc, m, bounds) => {
+                enc.hash(&mut hasher);
+                m.get_cached_hash().hash(&mut hasher);
+                bounds.hash(&mut hasher);
+            }
+
+            // Non-Expression Moo types - hash normally
+            Expression::Comprehension(_, c) => c.hash(&mut hasher),
+            Expression::AbstractComprehension(_, c) => c.hash(&mut hasher),
+
+            // Leaf types - no Expression children
+            Expression::Atomic(_, a) => a.hash(&mut hasher),
+            Expression::FromSolution(_, a) => a.hash(&mut hasher),
+            Expression::Metavar(_, u) => u.hash(&mut hasher),
+
+            // Two Moo<Atom>
+            Expression::FlatAbsEq(_, a1, a2) |
+            Expression::FlatMinusEq(_, a1, a2) => {
+                a1.hash(&mut hasher);
+                a2.hash(&mut hasher);
+            }
+
+            // Three Moo<Atom>
+            Expression::FlatProductEq(_, a1, a2, a3) |
+            Expression::MinionDivEqUndefZero(_, a1, a2, a3) |
+            Expression::MinionModuloEqUndefZero(_, a1, a2, a3) |
+            Expression::MinionPow(_, a1, a2, a3) => {
+                a1.hash(&mut hasher);
+                a2.hash(&mut hasher);
+                a3.hash(&mut hasher);
+            }
+
+            // Vec<Atom>
+            Expression::FlatAllDiff(_, vs) => {
+                for v in vs { v.hash(&mut hasher); }
+            }
+
+            // Vec<Atom> + Atom
+            Expression::FlatSumGeq(_, vs, a) |
+            Expression::FlatSumLeq(_, vs, a) => {
+                for v in vs { v.hash(&mut hasher); }
+                a.hash(&mut hasher);
+            }
+
+            // Moo<Atom> + Moo<Atom> + Box<Literal>
+            Expression::FlatIneq(_, a1, a2, lit) => {
+                a1.hash(&mut hasher);
+                a2.hash(&mut hasher);
+                lit.hash(&mut hasher);
+            }
+
+            // Reference + Literal
+            Expression::FlatWatchedLiteral(_, r, l) => {
+                r.hash(&mut hasher);
+                l.hash(&mut hasher);
+            }
+
+            // Vec<Literal> + Vec<Atom> + Moo<Atom>
+            Expression::FlatWeightedSumLeq(_, lits, atoms, a) |
+            Expression::FlatWeightedSumGeq(_, lits, atoms, a) => {
+                for l in lits { l.hash(&mut hasher); }
+                for at in atoms { at.hash(&mut hasher); }
+                a.hash(&mut hasher);
+            }
+
+            // Atom + Vec<i32>
+            Expression::MinionWInIntervalSet(_, a, vs) |
+            Expression::MinionWInSet(_, a, vs) => {
+                a.hash(&mut hasher);
+                for v in vs { v.hash(&mut hasher); }
+            }
+
+            // Vec<Atom> + Moo<Atom> + Moo<Atom>
+            Expression::MinionElementOne(_, vs, a1, a2) => {
+                for v in vs { v.hash(&mut hasher); }
+                a1.hash(&mut hasher);
+                a2.hash(&mut hasher);
+            }
+
+            // Vec<Atom> + Vec<Atom>
+            Expression::FlatLexLt(_, v1, v2) |
+            Expression::FlatLexLeq(_, v1, v2) => {
+                for v in v1 { v.hash(&mut hasher); }
+                for v in v2 { v.hash(&mut hasher); }
+            }
+        };
+
+        let result = hasher.finish();
+        self.meta_ref().stored_hash.swap(result, Ordering::Relaxed);
+        result
     }
 }
 

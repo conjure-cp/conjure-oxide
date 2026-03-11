@@ -2,7 +2,7 @@ pub use linkme::distributed_slice;
 
 mod rewrite_morph;
 pub use rewrite_morph::rewrite_morph;
-pub use rewrite_morph::MorphConfig;
+pub use crate::settings::MorphVariant;
 
 /// This procedural macro registers a decorated function with `conjure_cp_rules`' global registry, and
 /// adds the rule to one or more `RuleSet`'s.

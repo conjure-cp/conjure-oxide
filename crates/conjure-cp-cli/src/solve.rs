@@ -12,10 +12,10 @@ use std::{
 
 use anyhow::{anyhow, ensure};
 use clap::ValueHint;
-use conjure_cp::{defaults::DEFAULT_RULE_SETS, rule_engine::MorphConfig};
 use conjure_cp::{
     Model,
     context::Context,
+    defaults::DEFAULT_RULE_SETS,
     rule_engine::{resolve_rule_sets, rewrite_morph, rewrite_naive},
     settings::{
         Rewriter, set_comprehension_expander, set_current_parser, set_current_rewriter,
@@ -229,13 +229,13 @@ pub(crate) fn rewrite(
     let rule_sets = context.read().unwrap().rule_sets.clone();
 
     let new_model = match global_args.rewriter {
-        Rewriter::Morph => {
-            tracing::info!("Rewriting the model using the morph rewriter");
+        Rewriter::Morph(variant) => {
+            tracing::info!("Rewriting the model using the morph rewriter ({})", global_args.rewriter);
             rewrite_morph(
                 model,
                 &rule_sets,
                 global_args.check_equally_applicable_rules,
-                MorphConfig::new(global_args.use_cache, global_args.use_naive)
+                variant,
             )
         }
         Rewriter::Naive => {

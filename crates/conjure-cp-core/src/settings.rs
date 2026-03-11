@@ -60,9 +60,28 @@ pub fn current_parser() -> Parser {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum MorphVariant {
+    NoCache,
+    Cache,
+    Hashcache,
+    Naive,
+}
+
+impl Display for MorphVariant {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            MorphVariant::NoCache => write!(f, "morph"),
+            MorphVariant::Cache => write!(f, "morph-cache"),
+            MorphVariant::Hashcache => write!(f, "morph-hashcache"),
+            MorphVariant::Naive => write!(f, "morph-naive"),
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Rewriter {
     Naive,
-    Morph,
+    Morph(MorphVariant),
 }
 
 thread_local! {
@@ -76,7 +95,7 @@ impl Display for Rewriter {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Rewriter::Naive => write!(f, "naive"),
-            Rewriter::Morph => write!(f, "morph"),
+            Rewriter::Morph(variant) => write!(f, "{variant}"),
         }
     }
 }
@@ -87,9 +106,12 @@ impl FromStr for Rewriter {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.trim().to_ascii_lowercase().as_str() {
             "naive" => Ok(Rewriter::Naive),
-            "morph" => Ok(Rewriter::Morph),
+            "morph" => Ok(Rewriter::Morph(MorphVariant::NoCache)),
+            "morph-cache" => Ok(Rewriter::Morph(MorphVariant::Cache)),
+            "morph-hashcache" => Ok(Rewriter::Morph(MorphVariant::Hashcache)),
+            "morph-naive" => Ok(Rewriter::Morph(MorphVariant::Naive)),
             other => Err(format!(
-                "unknown rewriter: {other}; expected one of: naive, morph"
+                "unknown rewriter: {other}; expected one of: naive, morph, morph-cache, morph-hashcache, morph-naive"
             )),
         }
     }
