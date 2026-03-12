@@ -1,5 +1,5 @@
 use super::ParseContext;
-use super::util::{get_tree, query_toplevel};
+use super::util::{get_tree_fragment, query_toplevel};
 use crate::diagnostics::source_map::SourceMap;
 use crate::errors::FatalParseError;
 use crate::expression::parse_expression;
@@ -23,7 +23,7 @@ pub fn parse_exprs(
     src: &str,
     symbols_ptr: SymbolTablePtr,
 ) -> Result<Vec<Expression>, FatalParseError> {
-    let (tree, source_code) = get_tree(src).ok_or(FatalParseError::TreeSitterError(
+    let (tree, source_code) = get_tree_fragment(src).ok_or(FatalParseError::TreeSitterError(
         "Failed to parse Essence source code".to_string(),
     ))?;
 
