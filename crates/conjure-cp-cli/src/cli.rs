@@ -80,6 +80,12 @@ pub struct GlobalArgs {
     #[arg(long, global = true, help_heading=LOGGING_HELP_HEADING)]
     pub rule_trace: Option<PathBuf>,
 
+    /// Output file for verbose rule-attempt trace in CSV format.
+    ///
+    /// Each row includes: elapsed_s, rule_level, rule_name, rule_set, status, expression.
+    #[arg(long, global = true, help_heading=LOGGING_HELP_HEADING)]
+    pub rule_trace_verbose: Option<PathBuf>,
+
     /// Do not check for multiple equally applicable rules [default].
     ///
     /// Only compatible with the default rewriter.
