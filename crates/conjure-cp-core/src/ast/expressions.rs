@@ -1760,11 +1760,4 @@ mod tests {
         let sum = Expression::Sum(Metadata::new(), Moo::new(matrix_expr![]));
         assert_eq!(sum.domain_of(), None);
     }
-
-    #[test]
-    fn test_domain_of_union() {
-        let a_attr = SetAttr::new_min_max_size(3, 7);
-        let a_internal_dom = Moo::new(GroundDomain::Int(vec![Range::new(Some(0), Some(1000000))]));
-        let a_set_dom = Moo::new(Domain::Ground(GroundDomain::Set(a_attr, a_internal_dom)));
-    }
 }
