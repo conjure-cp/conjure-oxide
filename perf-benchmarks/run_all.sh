@@ -62,7 +62,7 @@ echo "======= COMPILING CONJURE_OXIDE (baseline) =======" >/dev/stderr
 pushd "$baseline_dir" >/dev/null
 
 # build binary for baseline
-cargo build -q --release
+cargo build -q --release --features z3-bundled
 baseline_bin=$(realpath target/release/conjure-oxide)
 popd >/dev/null
 
@@ -70,7 +70,7 @@ echo "======= COMPILING CONJURE_OXIDE (CURRENT) =======" >/dev/stderr
 
 # build binary on current branch
 pushd "$conjure_oxide_dir" >/dev/null
-cargo build -q --release
+cargo build -q --release --features z3-bundled
 after_bin=$(realpath target/release/conjure-oxide)
 popd >/dev/null
 
