@@ -39,28 +39,20 @@ pub struct DecisionVariable {
     #[serde(skip)]
     #[derivative(Hash = "ignore", PartialEq = "ignore")]
     pub(super) representations: Vec<Vec<Box<dyn Representation>>>,
-
-    /// Category - should be quantified or decision variable
-    pub(super) category: Category,
 }
 
 impl DecisionVariable {
-    pub fn new(domain: DomainPtr, category: Category) -> DecisionVariable {
-        assert!(
-            category >= Category::Quantified,
-            "category of a DecisionVariable should be quantified or decision"
-        );
+    pub fn new(domain: DomainPtr) -> DecisionVariable {
         DecisionVariable {
             domain,
             representations: vec![],
-            category,
         }
     }
 }
 
 impl CategoryOf for DecisionVariable {
     fn category_of(&self) -> Category {
-        self.category
+        Category::Decision
     }
 }
 

@@ -137,7 +137,7 @@ impl Representation for SatDirectInt {
     fn declaration_down(&self) -> Result<Vec<DeclarationPtr>, ApplicationError> {
         let temp_a = self
             .names()
-            .map(|name| DeclarationPtr::new_var(name, Domain::bool()))
+            .map(|name| DeclarationPtr::new_find(name, Domain::bool()))
             .collect();
 
         Ok(temp_a)

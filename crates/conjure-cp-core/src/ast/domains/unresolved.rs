@@ -1,3 +1,4 @@
+use crate::ast::domains::attrs::MSetAttr;
 use crate::ast::domains::attrs::SetAttr;
 use crate::ast::{
     DeclarationKind, DomainOpError, Expression, FuncAttr, Literal, Metadata, Moo,
@@ -90,6 +91,25 @@ impl TryInto<SetAttr<Int>> for SetAttr<IntVal> {
     }
 }
 
+impl From<MSetAttr<Int>> for MSetAttr<IntVal> {
+    fn from(value: MSetAttr<Int>) -> Self {
+        MSetAttr {
+            size: value.size.into(),
+            occurrence: value.occurrence.into(),
+        }
+    }
+}
+
+impl TryInto<MSetAttr<Int>> for MSetAttr<IntVal> {
+    type Error = DomainOpError;
+
+    fn try_into(self) -> Result<MSetAttr<Int>, Self::Error> {
+        let size: Range<Int> = self.size.try_into()?;
+        let occurrence: Range<Int> = self.occurrence.try_into()?;
+        Ok(MSetAttr { size, occurrence })
+    }
+}
+
 impl From<FuncAttr<Int>> for FuncAttr<IntVal> {
     fn from(value: FuncAttr<Int>) -> Self {
         FuncAttr {
@@ -126,21 +146,25 @@ impl Display for IntVal {
 impl IntVal {
     pub fn new_ref(re: &Reference) -> Option<IntVal> {
         match re.ptr.kind().deref() {
-            DeclarationKind::ValueLetting(expr) => match expr.return_type() {
-                ReturnType::Int => Some(IntVal::Reference(re.clone())),
-                _ => None,
-            },
+            DeclarationKind::ValueLetting(expr) | DeclarationKind::TemporaryValueLetting(expr) => {
+                match expr.return_type() {
+                    ReturnType::Int => Some(IntVal::Reference(re.clone())),
+                    _ => None,
+                }
+            }
             DeclarationKind::Given(dom) => match dom.return_type() {
                 ReturnType::Int => Some(IntVal::Reference(re.clone())),
                 _ => None,
             },
-            DeclarationKind::GivenQuantified(inner) => match inner.domain().return_type() {
+            DeclarationKind::Quantified(inner) => match inner.domain().return_type() {
                 ReturnType::Int => Some(IntVal::Reference(re.clone())),
                 _ => None,
             },
-            DeclarationKind::DomainLetting(_)
-            | DeclarationKind::RecordField(_)
-            | DeclarationKind::DecisionVariable(_) => None,
+            DeclarationKind::Find(var) => match var.return_type() {
+                ReturnType::Int => Some(IntVal::Reference(re.clone())),
+                _ => None,
+            },
+            DeclarationKind::DomainLetting(_) | DeclarationKind::RecordField(_) => None,
         }
     }
 
@@ -154,24 +178,35 @@ impl IntVal {
     pub fn resolve(&self) -> Option<Int> {
         match self {
             IntVal::Const(value) => Some(*value),
-            IntVal::Expr(expr) => match eval_constant(expr)? {
-                Literal::Int(v) => Some(v),
-                _ => bug!("Expected integer expression, got: {expr}"),
-            },
+            IntVal::Expr(expr) => eval_expr_to_int(expr),
             IntVal::Reference(re) => match re.ptr.kind().deref() {
-                DeclarationKind::ValueLetting(expr) => match eval_constant(expr)? {
-                    Literal::Int(v) => Some(v),
-                    _ => bug!("Expected integer expression, got: {expr}"),
-                },
+                DeclarationKind::ValueLetting(expr)
+                | DeclarationKind::TemporaryValueLetting(expr) => eval_expr_to_int(expr),
                 // If this is an int given we will be able to resolve it eventually, but not yet
-                DeclarationKind::Given(_) | DeclarationKind::GivenQuantified(..) => None,
-                DeclarationKind::DomainLetting(_)
-                | DeclarationKind::RecordField(_)
-                | DeclarationKind::DecisionVariable(_) => bug!(
+                DeclarationKind::Given(_) => None,
+                DeclarationKind::Quantified(inner) => {
+                    if let Some(generator) = inner.generator()
+                        && let Some(expr) = generator.as_value_letting()
+                    {
+                        eval_expr_to_int(&expr)
+                    } else {
+                        None
+                    }
+                }
+                // Decision variables inside domains are unresolved until solving.
+                DeclarationKind::Find(_) => None,
+                DeclarationKind::DomainLetting(_) | DeclarationKind::RecordField(_) => bug!(
                     "Expected integer expression, given, or letting inside int domain; Got: {re}"
                 ),
             },
         }
+    }
+}
+
+fn eval_expr_to_int(expr: &Expression) -> Option<Int> {
+    match eval_constant(expr)? {
+        Literal::Int(v) => Some(v),
+        _ => bug!("Expected integer expression, got: {expr}"),
     }
 }
 
@@ -242,6 +277,15 @@ impl SetAttr<IntVal> {
     }
 }
 
+impl MSetAttr<IntVal> {
+    pub fn resolve(&self) -> Option<MSetAttr<Int>> {
+        Some(MSetAttr {
+            size: self.size.resolve()?,
+            occurrence: self.occurrence.resolve()?,
+        })
+    }
+}
+
 impl FuncAttr<IntVal> {
     pub fn resolve(&self) -> Option<FuncAttr<Int>> {
         Some(FuncAttr {
@@ -279,6 +323,7 @@ pub enum UnresolvedDomain {
     Int(Vec<Range<IntVal>>),
     /// A set of elements drawn from the inner domain
     Set(SetAttr<IntVal>, DomainPtr),
+    MSet(MSetAttr<IntVal>, DomainPtr),
     /// A n-dimensional matrix with a value domain and n-index domains
     Matrix(DomainPtr, Vec<DomainPtr>),
     /// A tuple of N elements, each with its own domain
@@ -302,6 +347,9 @@ impl UnresolvedDomain {
                 .map(GroundDomain::Int),
             UnresolvedDomain::Set(attr, inner) => {
                 Some(GroundDomain::Set(attr.resolve()?, inner.resolve()?))
+            }
+            UnresolvedDomain::MSet(attr, inner) => {
+                Some(GroundDomain::MSet(attr.resolve()?, inner.resolve()?))
             }
             UnresolvedDomain::Matrix(inner, idx_doms) => {
                 let inner_gd = inner.resolve()?;
@@ -364,6 +412,12 @@ impl UnresolvedDomain {
             (UnresolvedDomain::Set(_, _), _) | (_, UnresolvedDomain::Set(_, _)) => {
                 Err(DomainOpError::WrongType)
             }
+            (UnresolvedDomain::MSet(_, in1), UnresolvedDomain::MSet(_, in2)) => {
+                Ok(UnresolvedDomain::MSet(MSetAttr::default(), in1.union(in2)?))
+            }
+            (UnresolvedDomain::MSet(_, _), _) | (_, UnresolvedDomain::MSet(_, _)) => {
+                Err(DomainOpError::WrongType)
+            }
             (UnresolvedDomain::Matrix(in1, idx1), UnresolvedDomain::Matrix(in2, idx2))
                 if idx1 == idx2 =>
             {
@@ -418,6 +472,7 @@ impl Typeable for UnresolvedDomain {
             UnresolvedDomain::Reference(re) => re.return_type(),
             UnresolvedDomain::Int(_) => ReturnType::Int,
             UnresolvedDomain::Set(_attr, inner) => ReturnType::Set(Box::new(inner.return_type())),
+            UnresolvedDomain::MSet(_attr, inner) => ReturnType::MSet(Box::new(inner.return_type())),
             UnresolvedDomain::Matrix(inner, _idx) => {
                 ReturnType::Matrix(Box::new(inner.return_type()))
             }
@@ -455,10 +510,11 @@ impl Display for UnresolvedDomain {
                 }
             }
             UnresolvedDomain::Set(attrs, inner_dom) => write!(f, "set {attrs} of {inner_dom}"),
+            UnresolvedDomain::MSet(attrs, inner_dom) => write!(f, "mset {attrs} of {inner_dom}"),
             UnresolvedDomain::Matrix(value_domain, index_domains) => {
                 write!(
                     f,
-                    "matrix indexed by [{}] of {value_domain}",
+                    "matrix indexed by {} of {value_domain}",
                     pretty_vec(&index_domains.iter().collect_vec())
                 )
             }
