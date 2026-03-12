@@ -38,7 +38,6 @@ pub fn parse_exprs(
         &mut source_map,
     );
     let mut ans = Vec::new();
-    let mut source_map = SourceMap::default();
     for expr in query_toplevel(&root, &node_is_expression) {
         let Some(expr) = parse_expression(&mut ctx, expr)? else {
             continue;

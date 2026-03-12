@@ -10,7 +10,6 @@ use uniplate::Uniplate;
 
 use super::ParseContext;
 use super::find::parse_find_statement;
-use super::keyword_checks::keyword_as_identifier;
 use super::letting::parse_letting_statement;
 use super::util::get_tree;
 use crate::diagnostics::diagnostics_api::SymbolKind;
