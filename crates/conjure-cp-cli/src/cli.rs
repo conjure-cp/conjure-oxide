@@ -4,8 +4,8 @@ use clap::{Args, Parser, Subcommand};
 
 use clap_complete::Shell;
 use conjure_cp::settings::{
-    Parser as InputParser, QuantifiedExpander, Rewriter, SolverFamily,
-    DEFAULT_MINION_DISCRETE_THRESHOLD,
+    DEFAULT_MINION_DISCRETE_THRESHOLD, Parser as InputParser, QuantifiedExpander, Rewriter,
+    SolverFamily,
 };
 
 use crate::{pretty, solve, test_solve};

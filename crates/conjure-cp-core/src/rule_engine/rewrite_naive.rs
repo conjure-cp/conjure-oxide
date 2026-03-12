@@ -1,23 +1,23 @@
-use super::{resolve_rules::RuleData, RewriteError, RuleSet};
+use super::{RewriteError, RuleSet, resolve_rules::RuleData};
 use crate::{
-    ast::{assertions::debug_assert_model_well_formed, Expression as Expr},
+    Model,
+    ast::{Expression as Expr, assertions::debug_assert_model_well_formed},
     bug,
     rule_engine::{
         get_rules_grouped,
         rewriter_common::{
-            log_rule_application, snapshot_variable_declarations, RuleResult,
-            VariableDeclarationSnapshot,
+            RuleResult, VariableDeclarationSnapshot, log_rule_application,
+            snapshot_variable_declarations,
         },
         submodel_zipper::expression_ctx,
     },
-    settings::{set_current_rewriter, Rewriter},
+    settings::{Rewriter, set_current_rewriter},
     stats::RewriterStats,
-    Model,
 };
 
 use itertools::Itertools;
 use std::{sync::Arc, time::Instant};
-use tracing::{span, trace, Level};
+use tracing::{Level, span, trace};
 
 type VariableSnapshots = Option<(VariableDeclarationSnapshot, VariableDeclarationSnapshot)>;
 type ApplicableRule<'a, CtxFnType> = (RuleResult<'a>, u16, Expr, CtxFnType, VariableSnapshots);
