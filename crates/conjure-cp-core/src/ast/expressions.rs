@@ -1735,7 +1735,7 @@ impl Typeable for Expression {
 
 #[cfg(test)]
 mod tests {
-    use crate::{matrix_expr};
+    use crate::matrix_expr;
 
     use super::*;
 
