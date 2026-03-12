@@ -1,5 +1,14 @@
-use conjure_cp::ast::ExprInfo;
+use std::{fs, sync::{Arc, RwLock}};
 
+use conjure_cp::{Model, ast::ExprInfo, context::Context, parse::tree_sitter::errors::ParseErrorCollection};
+
+/// Parser function used by expression domain tests.
+type ParseFn = fn(&str, Arc<RwLock<Context<'static>>>) -> Result<Model, Box<ParseErrorCollection>>;
+
+/// Runs a single test
+fn expression_domain_test() {
+    unimplemented!()
+}
 
 /// Returns the saved expression JSON path
 fn expression_domains_json_path(path: &str, case_name: &str, file_type: &str) -> String {
