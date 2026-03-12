@@ -1,4 +1,5 @@
 use itertools::Itertools;
+use tracing::trace;
 use crate::{ast::SymbolTable, settings::{MorphCachingStrategy, MorphConfig}};
 use tree_morph::{
     cache::{CachedHashMapCache, HashMapCache, NoCache, RewriteCache},
@@ -10,7 +11,7 @@ use crate::{
     Model, ast::Expression, bug, settings::{Rewriter, set_current_rewriter}
 };
 
-use super::{RuleSet, get_rules_grouped, rule::Rule as ConjureRule};
+use super::{RuleData, RuleSet, get_rules_grouped};
 
 /// Rewrites a `Model` by applying rule sets using an optimized, tree-morphing rewriter.
 ///
@@ -50,6 +51,12 @@ pub fn rewrite_morph<'a>(
 ) -> Model {
     set_current_rewriter(Rewriter::Morph(config));
 
+    trace!(
+        target: "rule_engine_human",
+        "Model before rewriting:\n\n{}\n--\n",
+        model
+    );
+
     let model_ref = &mut model;
     let mut engine = build_engine(rule_sets, prop_multiple_equally_applicable, config);
 
@@ -61,6 +68,13 @@ pub fn rewrite_morph<'a>(
 
     *model_ref.symbols_mut() = symbol_table;
     model_ref.replace_root(expr);
+
+    trace!(
+        target: "rule_engine_human",
+        "Final model:\n\n{}",
+        model
+    );
+
     model
 }
 
@@ -68,11 +82,11 @@ fn build_engine<'a>(
     rule_sets: &Vec<&'a RuleSet<'a>>,
     prop_multiple_equally_applicable: bool,
     config: MorphConfig,
-) -> Engine<Expression, SymbolTable, &'a ConjureRule<'a>, Box<dyn RewriteCache<Expression>>> {
+) -> Engine<Expression, SymbolTable, RuleData<'a>, Box<dyn RewriteCache<Expression>>> {
     let rules_grouped = get_rules_grouped(rule_sets)
         .unwrap_or_else(|_| bug!("get_rule_priorities() failed!"))
         .into_iter()
-        .map(|(_, rule)| rule.into_iter().map(|f| f.rule).collect_vec())
+        .map(|(_, rules)| rules)
         .collect_vec();
     let selector = if prop_multiple_equally_applicable {
         select_panic

@@ -7,7 +7,9 @@ use std::rc::Rc;
 use thiserror::Error;
 
 use crate::Model;
-use crate::ast::{CnfClause, DeclarationPtr, Expression, Name, SymbolTable, SymbolTablePtr};
+use crate::ast::{CnfClause, DeclarationPtr, Expression, Name, SymbolTable};
+use crate::rule_engine::RuleData;
+use crate::rule_engine::rewriter_common::{RuleResult, log_rule_application};
 use tree_morph::prelude::Commands;
 use tree_morph::prelude::Rule as MorphRule;
 
@@ -249,7 +251,7 @@ impl MorphRule<Expression, SymbolTable> for Rule<'_> {
     }
 
     fn can_apply(&self, subtree: &Expression) -> bool {
-        self.can_apply.map_or(true, |f| f(subtree))
+        self.can_apply.is_none_or(|f| f(subtree))
     }
 }
 
@@ -273,7 +275,7 @@ impl MorphRule<Expression, SymbolTable> for &Rule<'_> {
     }
 
     fn can_apply(&self, subtree: &Expression) -> bool {
-        self.can_apply.map_or(true, |f| f(subtree))
+        self.can_apply.is_none_or(|f| f(subtree))
     }
 }
 
@@ -286,9 +288,7 @@ impl MorphRule<Expression, Rc<RefCell<SymbolTable>>> for Rule<'_> {
     ) -> Option<Expression> {
         let symbols = meta.borrow();
         let reduction = self.apply(subtree, &symbols).ok()?;
-        commands.mut_meta(Box::new(|m| {
-            m.borrow_mut().extend(reduction.symbols)
-        }));
+        commands.mut_meta(Box::new(|m| m.borrow_mut().extend(reduction.symbols)));
 
         if !reduction.new_top.is_empty() {
             commands.transform(Box::new(|m| m.extend_root(reduction.new_top)));
@@ -302,35 +302,38 @@ impl MorphRule<Expression, Rc<RefCell<SymbolTable>>> for Rule<'_> {
     }
 
     fn can_apply(&self, subtree: &Expression) -> bool {
-        self.can_apply.map_or(true, |f| f(subtree))
+        self.can_apply.is_none_or(|f| f(subtree))
     }
 }
 
-impl MorphRule<Expression, SymbolTablePtr> for &Rule<'_> {
+impl MorphRule<Expression, SymbolTable> for RuleData<'_> {
     fn apply(
         &self,
-        commands: &mut Commands<Expression, SymbolTablePtr>,
+        commands: &mut Commands<Expression, SymbolTable>,
         subtree: &Expression,
-        meta: &SymbolTablePtr,
+        meta: &SymbolTable,
     ) -> Option<Expression> {
-        let symbols = meta.read();
-        let reduction = Rule::apply(self, subtree, &symbols).ok()?;
-        commands.mut_meta(Box::new(|m| {
-            m.write().extend(reduction.symbols)
-        }));
+        let reduction = self.rule.apply(subtree, meta).ok()?;
+        let result = RuleResult {
+            rule_data: self.clone(),
+            reduction: reduction.clone(),
+        };
+
+        log_rule_application(&result, subtree, meta, None);
+
+        commands.mut_meta(Box::new(|m: &mut SymbolTable| m.extend(reduction.symbols)));
 
         if !reduction.new_top.is_empty() {
             commands.transform(Box::new(|m| m.extend_root(reduction.new_top)));
         }
-
         Some(reduction.new_expression)
     }
 
     fn name(&self) -> &str {
-        self.name
+        self.rule.name
     }
 
     fn can_apply(&self, subtree: &Expression) -> bool {
-        self.can_apply.map_or(true, |f| f(subtree))
+        self.rule.can_apply.is_none_or(|f| f(subtree))
     }
 }
