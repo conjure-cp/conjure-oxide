@@ -1,0 +1,174 @@
+Model before rewriting:
+
+letting m be 5
+find x: int(1..10)
+
+such that
+
+and([ and([ (sum([sum([x,j;int(1..2)]),i;int(1..2)]) = 10) | j : int((sum([i,1;int(1..2)]))..(sum([m,1;int(1..2)]))) ]) | i : int(((m - 1))..10) ])
+
+--
+
+and([ and([ (sum([sum([x,j;int(1..2)]),i;int(1..2)]) = 10) | j : int((sum([i,1;int(1..2)]))..(sum([m,1;int(1..2)]))) ]) | i : int(((m - 1))..10) ]), 
+   ~~> merge_nested_ac_comprehensions ([("Base", 8900)])
+and([ (sum([sum([x,j;int(1..2)]),i;int(1..2)]) = 10) | i : int(((m - 1))..10), j : int((sum([i,1;int(1..2)]))..(sum([m,1;int(1..2)]))) ])
+
+--
+
+[ (sum([sum([x,j;int(1..2)]),i;int(1..2)]) = 10) | i : int(((m - 1))..10), j : int((sum([i,1;int(1..2)]))..(sum([m,1;int(1..2)]))) ], 
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[(sum([sum([x,5;int(1..2)]),4;int(1..2)]) = 10),(sum([sum([x,6;int(1..2)]),4;int(1..2)]) = 10),(sum([sum([x,6;int(1..2)]),5;int(1..2)]) = 10);int(1..)]
+
+--
+
+and([(sum([sum([x,5;int(1..2)]),4;int(1..2)]) = 10),(sum([sum([x,6;int(1..2)]),4;int(1..2)]) = 10),(sum([sum([x,6;int(1..2)]),5;int(1..2)]) = 10);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(sum([sum([x,5;int(1..2)]),4;int(1..2)]) = 10),
+(sum([sum([x,6;int(1..2)]),4;int(1..2)]) = 10),
+(sum([sum([x,6;int(1..2)]),5;int(1..2)]) = 10)
+
+--
+
+sum([sum([x,5;int(1..2)]),4;int(1..2)]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([x,5,4;int(1..2)])
+
+--
+
+sum([sum([x,6;int(1..2)]),4;int(1..2)]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([x,6,4;int(1..2)])
+
+--
+
+sum([sum([x,6;int(1..2)]),5;int(1..2)]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([x,6,5;int(1..2)])
+
+--
+
+sum([x,5,4;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)])
+sum([x,5,4;int(1..)])
+
+--
+
+(sum([x,5,4;int(1..)]) = 10),
+(sum([x,6,4;int(1..2)]) = 10),
+(sum([x,6,5;int(1..2)]) = 10), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(sum([x,9;int(1..)]) = 10),
+(sum([x,6,4;int(1..2)]) = 10),
+(sum([x,6,5;int(1..2)]) = 10)
+
+--
+
+(sum([x,9;int(1..)]) = 10), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([9, x], 10),SumGeq([9, x], 10);int(1..)])
+
+--
+
+and([SumLeq([9, x], 10),SumGeq([9, x], 10);int(1..)]),
+(sum([x,6,4;int(1..2)]) = 10),
+(sum([x,6,5;int(1..2)]) = 10), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+SumLeq([9, x], 10),
+SumGeq([9, x], 10),
+(sum([x,6,4;int(1..2)]) = 10),
+(sum([x,6,5;int(1..2)]) = 10)
+
+--
+
+sum([x,6,4;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)])
+sum([x,6,4;int(1..)])
+
+--
+
+SumLeq([9, x], 10),
+SumGeq([9, x], 10),
+(sum([x,6,4;int(1..)]) = 10),
+(sum([x,6,5;int(1..2)]) = 10), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+SumLeq([9, x], 10),
+SumGeq([9, x], 10),
+(sum([x,10;int(1..)]) = 10),
+(sum([x,6,5;int(1..2)]) = 10)
+
+--
+
+(sum([x,10;int(1..)]) = 10), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([10, x], 10),SumGeq([10, x], 10);int(1..)])
+
+--
+
+SumLeq([9, x], 10),
+SumGeq([9, x], 10),
+and([SumLeq([10, x], 10),SumGeq([10, x], 10);int(1..)]),
+(sum([x,6,5;int(1..2)]) = 10), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+SumLeq([9, x], 10),
+SumGeq([9, x], 10),
+SumLeq([10, x], 10),
+SumGeq([10, x], 10),
+(sum([x,6,5;int(1..2)]) = 10)
+
+--
+
+sum([x,6,5;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)])
+sum([x,6,5;int(1..)])
+
+--
+
+SumLeq([9, x], 10),
+SumGeq([9, x], 10),
+SumLeq([10, x], 10),
+SumGeq([10, x], 10),
+(sum([x,6,5;int(1..)]) = 10), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+SumLeq([9, x], 10),
+SumGeq([9, x], 10),
+SumLeq([10, x], 10),
+SumGeq([10, x], 10),
+(sum([x,11;int(1..)]) = 10)
+
+--
+
+(sum([x,11;int(1..)]) = 10), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([11, x], 10),SumGeq([11, x], 10);int(1..)])
+
+--
+
+SumLeq([9, x], 10),
+SumGeq([9, x], 10),
+SumLeq([10, x], 10),
+SumGeq([10, x], 10),
+and([SumLeq([11, x], 10),SumGeq([11, x], 10);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+SumLeq([9, x], 10),
+SumGeq([9, x], 10),
+SumLeq([10, x], 10),
+SumGeq([10, x], 10),
+SumLeq([11, x], 10),
+SumGeq([11, x], 10)
+
+--
+
+Final model:
+
+letting m be 5
+find x: int(1..10)
+
+such that
+
+SumLeq([9, x], 10),
+SumGeq([9, x], 10),
+SumLeq([10, x], 10),
+SumGeq([10, x], 10),
+SumLeq([11, x], 10),
+SumGeq([11, x], 10)
+

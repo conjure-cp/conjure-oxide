@@ -1,15 +1,17 @@
+use super::ParseContext;
 use super::util::{get_tree, query_toplevel};
-use crate::errors::EssenceParseError;
+use crate::diagnostics::source_map::SourceMap;
+use crate::errors::FatalParseError;
 use crate::expression::parse_expression;
 use crate::util::node_is_expression;
 use conjure_cp_core::ast::{Expression, SymbolTablePtr};
 #[allow(unused)]
 use uniplate::Uniplate;
 
-pub fn parse_expr(src: &str, symbols_ptr: SymbolTablePtr) -> Result<Expression, EssenceParseError> {
+pub fn parse_expr(src: &str, symbols_ptr: SymbolTablePtr) -> Result<Expression, FatalParseError> {
     let exprs = parse_exprs(src, symbols_ptr)?;
     if exprs.len() != 1 {
-        return Err(EssenceParseError::syntax_error(
+        return Err(FatalParseError::internal_error(
             "Expected a single expression".to_string(),
             None,
         ));
@@ -20,20 +22,27 @@ pub fn parse_expr(src: &str, symbols_ptr: SymbolTablePtr) -> Result<Expression, 
 pub fn parse_exprs(
     src: &str,
     symbols_ptr: SymbolTablePtr,
-) -> Result<Vec<Expression>, EssenceParseError> {
-    let (tree, source_code) = get_tree(src).ok_or(EssenceParseError::TreeSitterError(
+) -> Result<Vec<Expression>, FatalParseError> {
+    let (tree, source_code) = get_tree(src).ok_or(FatalParseError::TreeSitterError(
         "Failed to parse Essence source code".to_string(),
     ))?;
 
     let root = tree.root_node();
+    let mut source_map = SourceMap::default();
+    let mut errors = Vec::new();
+    let mut ctx = ParseContext::new(
+        &source_code,
+        &root,
+        Some(symbols_ptr),
+        &mut errors,
+        &mut source_map,
+    );
     let mut ans = Vec::new();
     for expr in query_toplevel(&root, &node_is_expression) {
-        ans.push(parse_expression(
-            expr,
-            &source_code,
-            &root,
-            Some(symbols_ptr.clone()),
-        )?);
+        let Some(expr) = parse_expression(&mut ctx, expr)? else {
+            continue;
+        };
+        ans.push(expr);
     }
     Ok(ans)
 }
@@ -76,17 +85,17 @@ mod test {
     pub fn test_parse_expressions() {
         let src = "x >= 5, y = a / 2";
         let symbols = SymbolTablePtr::new();
-        let x = DeclarationPtr::new_var(
+        let x = DeclarationPtr::new_find(
             Name::User("x".into()),
             Domain::int(vec![conjure_cp_core::ast::Range::Bounded(0, 10)]),
         );
 
-        let y = DeclarationPtr::new_var(
+        let y = DeclarationPtr::new_find(
             Name::User("y".into()),
             Domain::int(vec![conjure_cp_core::ast::Range::Bounded(0, 10)]),
         );
 
-        let a = DeclarationPtr::new_var(
+        let a = DeclarationPtr::new_find(
             Name::User("a".into()),
             Domain::int(vec![conjure_cp_core::ast::Range::Bounded(0, 10)]),
         );
