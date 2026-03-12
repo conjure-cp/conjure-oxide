@@ -14,7 +14,7 @@ use uniplate::Uniplate;
 use crate::bottom_up_adaptor::as_bottom_up;
 
 /// Using the `matrix_to_atom`  representation rule, rewrite matrix indexing.
-#[register_rule(("Base", 5000), applicable_to(Expr::SafeIndex(..)))]
+#[register_rule(("Base", 5000), applicable_to(Expr::Root(..)))]
 fn index_matrix_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     (as_bottom_up(index_matrix_to_atom_impl))(expr, symbols)
 }
