@@ -207,11 +207,12 @@ impl DeclarationPtr {
     /// // letting n be 10 + 10
     /// let ten = Expression::Atomic(Metadata::new(),Atom::Literal(Literal::Int(10)));
     /// let expression = Expression::Sum(Metadata::new(),Moo::new(matrix_expr![ten.clone(),ten]));
-    /// let declaration = DeclarationPtr::new_value_letting(
+    /// let domain = DomainPtr::new(Domain::bool());
+    /// let declaration = DeclarationPtr::new_value_letting_with_domain(
     ///     Name::User("n".into()),
-    ///     expression);
-    /// TODO: Finish docs here
-    ///
+    ///     expression,
+    ///     domain,
+    /// );
     /// ```
     pub fn new_value_letting_with_domain(
         name: Name,

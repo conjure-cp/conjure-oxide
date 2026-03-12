@@ -343,6 +343,7 @@ fn integration_test_inner(
     if config.compare_solver_solutions && config.num_solvers_enabled() > 0 {
         let conjure_solutions: Vec<BTreeMap<Name, Literal>> = get_solutions_from_conjure(
             &format!("{path}/{essence_base}.{extension}"),
+            None,
             Arc::clone(&context),
         )?;
 
