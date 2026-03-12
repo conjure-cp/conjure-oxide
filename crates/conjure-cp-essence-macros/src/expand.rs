@@ -8,9 +8,9 @@ use conjure_cp_essence_parser::{
 use polyquine::Quine;
 use proc_macro2::{TokenStream, TokenTree};
 use quote::{ToTokens, quote};
+use std::collections::BTreeMap;
 use syn::{Error, LitStr, Result};
 use tree_sitter::Node;
-use std::collections::BTreeMap;
 
 pub fn expand_expr(essence: &TokenTree) -> Result<TokenStream> {
     let src = to_src(essence);
@@ -60,7 +60,14 @@ fn mk_expr(node: Node, src: &str, root: &Node, tt: &TokenTree) -> Result<TokenSt
     let mut errors = Vec::new();
     let mut source_map = SourceMap::default();
     let mut decl_spans = BTreeMap::new();
-    let mut ctx = ParseContext::new(src, root, None, &mut errors, &mut source_map, &mut decl_spans);
+    let mut ctx = ParseContext::new(
+        src,
+        root,
+        None,
+        &mut errors,
+        &mut source_map,
+        &mut decl_spans,
+    );
     match parse_expression(&mut ctx, node) {
         Ok(Some(expr)) => Ok(expr.ctor_tokens()),
         Ok(None) => {
