@@ -14,10 +14,7 @@ use anyhow::{anyhow, ensure};
 use clap::ValueHint;
 use conjure_cp::{
     Model,
-    ast::{
-        DeclarationPtr, comprehension::USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS,
-        declaration::Declaration, eval_constant,
-    },
+    ast::{DeclarationPtr, declaration::Declaration, eval_constant},
     context::Context,
     rule_engine::{resolve_rule_sets, rewrite_morph, rewrite_naive},
     settings::{
@@ -123,13 +120,9 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
     Ok(())
 }
 
-pub(crate) fn merge_models(mut problem_model: Model, param_model: Model) -> anyhow::Result<Model> {
-    let mut symbol_table = problem_model
-        .as_submodel_mut()
-        .symbols_ptr_unchecked()
-        .write();
-
-    let param_table = param_model.as_submodel().symbols_ptr_unchecked().write();
+pub(crate) fn merge_models(problem_model: Model, param_model: Model) -> anyhow::Result<Model> {
+    let mut symbol_table = problem_model.symbols_ptr_unchecked().write();
+    let param_table = param_model.symbols_ptr_unchecked().write();
 
     for (name, decl) in symbol_table.iter_local_mut() {
         let Some(domain) = decl.as_given() else {
@@ -265,11 +258,9 @@ pub(crate) fn parse(
 
     match global_args.parser {
         conjure_cp::settings::Parser::TreeSitter => {
-            parse_essence_file_native(input_file.as_str(), context.clone()).map_err(|e| e.into())
+            parse_essence_file_native(file_path, context.clone()).map_err(|e| e.into())
         }
-        conjure_cp::settings::Parser::ViaConjure => {
-            parse_with_conjure(input_file.as_str(), context.clone().map_err(|e| e.into()))
-        }
+        conjure_cp::settings::Parser::ViaConjure => parse_with_conjure(file_path, context.clone()),
     }
 }
 

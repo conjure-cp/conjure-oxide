@@ -721,11 +721,11 @@ fn biplate_declaration_kind_references(
                 Box::new(move |x| DeclarationKind::RecordField(recons_domain(x))),
             )
         }
-        DeclarationKind::ValueLetting(expression) => {
+        DeclarationKind::ValueLetting(expression, domain) => {
             let (tree, recons_expr) = Biplate::<Reference>::biplate(&expression);
             (
                 tree,
-                Box::new(move |x| DeclarationKind::ValueLetting(recons_expr(x))),
+                Box::new(move |x| DeclarationKind::ValueLetting(recons_expr(x), domain.clone())),
             )
         }
         DeclarationKind::TemporaryValueLetting(expression) => {
