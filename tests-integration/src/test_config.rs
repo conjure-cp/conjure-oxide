@@ -32,6 +32,10 @@ fn default_true() -> bool {
     true
 }
 
+fn default_minion_discrete_threshold() -> usize {
+    conjure_cp::settings::DEFAULT_MINION_DISCRETE_THRESHOLD
+}
+
 #[derive(Deserialize, Debug)]
 #[serde(default)]
 #[serde(deny_unknown_fields)]
@@ -61,6 +65,12 @@ pub struct TestConfig {
         deserialize_with = "deserialize_string_or_vec"
     )]
     pub solver: Vec<String>,
+
+    #[serde(
+        default = "default_minion_discrete_threshold",
+        rename = "minion-discrete-threshold"
+    )]
+    pub minion_discrete_threshold: usize,
 
     #[serde(default = "default_true", rename = "validate-with-conjure")]
     pub validate_with_conjure: bool,
@@ -98,6 +108,7 @@ impl Default for TestConfig {
                 }
                 solvers
             },
+            minion_discrete_threshold: default_minion_discrete_threshold(),
             validate_with_conjure: true,
         }
     }
