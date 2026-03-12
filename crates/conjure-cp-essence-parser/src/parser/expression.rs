@@ -68,7 +68,12 @@ fn parse_arithmetic_expression(
     let inner = named_child!(node);
     match inner.kind() {
         "atom" => parse_atom(ctx, &inner),
-        "negative_expr" | "abs_value" | "sub_arith_expr" | "toInt_expr" => {
+        "negative_expr" | "abs_value" | "sub_arith_expr" => {
+            parse_unary_expression(ctx, &inner)
+        }
+        "toInt_expr" => {
+            // add special handling for toInt, as it is arithmetic but takes a non-arithmetic operand
+            ctx.typechecking_context = TypecheckingContext::Unknown;
             parse_unary_expression(ctx, &inner)
         }
         "exponent" | "product_expr" | "sum_expr" => parse_binary_expression(ctx, &inner),
