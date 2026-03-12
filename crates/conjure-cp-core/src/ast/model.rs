@@ -553,7 +553,7 @@ impl SerdeModel {
 
 /// A struct for the information about expressions
 #[serde_as]
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct ExprInfo {
     pretty: String,
     domain: Option<Moo<Domain>>,
