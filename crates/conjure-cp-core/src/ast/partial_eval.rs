@@ -496,6 +496,7 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
             Err(RuleNotApplicable)
         }
         Expr::Neg(_, _) => Err(RuleNotApplicable),
+        Expr::Factorial(_, _) => Err(RuleNotApplicable),
         Expr::AuxDeclaration(_, _, _) => Err(RuleNotApplicable),
         Expr::UnsafeMod(_, _, _) => Err(RuleNotApplicable),
         Expr::SafeMod(_, _, _) => Err(RuleNotApplicable),
