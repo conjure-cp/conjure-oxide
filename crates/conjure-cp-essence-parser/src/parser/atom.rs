@@ -145,10 +145,19 @@ fn parse_index_or_slice(
 fn parse_index(ctx: &mut ParseContext, node: &Node) -> Result<Option<Expression>, FatalParseError> {
     match node.kind() {
         "arithmetic_expr" | "atom" => {
-            ctx.typechecking_context = TypecheckingContext::Arithmetic;
+            let saved_context = ctx.typechecking_context;
+            ctx.typechecking_context = TypecheckingContext::Unknown;
+
+            // TODO: add collection-aware index typechecking.
+            // For tuple/matrix/set-like indexing, indices should be arithmetic.
+            // For record field access, index atoms should resolve to valid field names.
+            // This requires checking index expression together with the indexed collection type.
+
             let Some(expr) = parse_expression(ctx, *node)? else {
                 return Ok(None);
             };
+
+            ctx.typechecking_context = saved_context;
             Ok(Some(expr))
         }
         "null_index" => Ok(None),
