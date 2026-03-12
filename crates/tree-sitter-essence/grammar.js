@@ -282,6 +282,7 @@ module.exports = grammar ({
       field("toInt_expr", $.toInt_expr),
       field("negative_expression", $.negative_expr),
       field("absolute_value", $.abs_value),
+      field("factorial_expression", $.factorial_expr),
       field("exponentiation", $.exponent),
       field("product_expression", $.product_expr),
       field("sum_expression", $.sum_expr),
@@ -420,6 +421,11 @@ module.exports = grammar ({
     negative_expr: $ => prec(15, prec.left(seq("-", field("expression", choice($.arithmetic_expr, $.atom))))),
     
     abs_value: $ => prec(20, seq("|", field("expression", choice($.arithmetic_expr, $.atom)), "|")),
+
+    factorial_expr: $ => prec(19, choice(
+      seq(field("expression", choice($.arithmetic_expr, $.atom)), "!"),
+      seq("factorial", "(", field("expression", choice($.arithmetic_expr, $.atom)), ")")
+    )),
     
     exponent: $ => prec(18, prec.right(seq(
       field("left", choice($.arithmetic_expr, $.atom)), 
