@@ -68,9 +68,7 @@ fn parse_arithmetic_expression(
     let inner = named_child!(node);
     match inner.kind() {
         "atom" => parse_atom(ctx, &inner),
-        "negative_expr" | "abs_value" | "sub_arith_expr" => {
-            parse_unary_expression(ctx, &inner)
-        }
+        "negative_expr" | "abs_value" | "sub_arith_expr" => parse_unary_expression(ctx, &inner),
         "toInt_expr" => {
             // add special handling for toInt, as it is arithmetic but takes a non-arithmetic operand
             ctx.typechecking_context = TypecheckingContext::Unknown;
@@ -151,7 +149,7 @@ fn parse_list_combining_expression(
 ) -> Result<Option<Expression>, FatalParseError> {
     let operator_node = field!(node, "operator");
     let operator_str = &ctx.source_code[operator_node.start_byte()..operator_node.end_byte()];
-    
+
     let Some(inner) = parse_atom(ctx, &field!(node, "arg"))? else {
         return Ok(None);
     };
