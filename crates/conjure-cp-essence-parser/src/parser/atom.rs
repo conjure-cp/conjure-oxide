@@ -108,6 +108,10 @@ fn parse_flatten(
 }
 
 fn parse_table(ctx: &mut ParseContext, node: &Node) -> Result<Option<Expression>, FatalParseError> {
+    // the variables and rows can contain arbitrary expressions, so we temporarily set the context to Unknown to avoid typechecking errors
+    let saved_context = ctx.typechecking_context;
+    ctx.typechecking_context = TypecheckingContext::Unknown;
+
     let variables_node = field!(node, "variables");
     let Some(variables) = parse_atom(ctx, &variables_node)? else {
         return Ok(None);
@@ -117,6 +121,8 @@ fn parse_table(ctx: &mut ParseContext, node: &Node) -> Result<Option<Expression>
     let Some(rows) = parse_atom(ctx, &rows_node)? else {
         return Ok(None);
     };
+
+    ctx.typechecking_context = saved_context;
 
     match node.kind() {
         "table" => Ok(Some(Expression::Table(
