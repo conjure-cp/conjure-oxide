@@ -1,3 +1,4 @@
+use std::collections::BTreeMap;
 use std::sync::{Arc, RwLock};
 use std::{fs, vec};
 
@@ -82,6 +83,7 @@ pub fn parse_essence_with_context_and_map(
 
     let mut model = Model::new(context);
     let mut source_map = SourceMap::default();
+    let mut declaration_spans = BTreeMap::new();
     let root_node = tree.root_node();
 
     // Create a ParseContext
@@ -91,6 +93,7 @@ pub fn parse_essence_with_context_and_map(
         Some(model.symbols_ptr_unchecked().clone()),
         errors,
         &mut source_map,
+        &mut declaration_spans,
     );
 
     let mut cursor = root_node.walk();
