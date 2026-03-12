@@ -1917,10 +1917,6 @@
                 {
                   "type": "STRING",
                   "value": "or"
-                },
-                {
-                  "type": "STRING",
-                  "value": "allDiff"
                 }
               ]
             }
@@ -2305,11 +2301,19 @@
           },
           {
             "type": "SYMBOL",
+            "name": "lex_comparison"
+          },
+          {
+            "type": "SYMBOL",
             "name": "equality_comparison"
           },
           {
             "type": "SYMBOL",
             "name": "set_comparison"
+          },
+          {
+            "type": "SYMBOL",
+            "name": "all_diff_comparison"
           }
         ]
       }
@@ -2345,22 +2349,6 @@
               "members": [
                 {
                   "type": "STRING",
-                  "value": "<lex"
-                },
-                {
-                  "type": "STRING",
-                  "value": "<=lex"
-                },
-                {
-                  "type": "STRING",
-                  "value": ">lex"
-                },
-                {
-                  "type": "STRING",
-                  "value": ">=lex"
-                },
-                {
-                  "type": "STRING",
                   "value": "<="
                 },
                 {
@@ -2393,6 +2381,56 @@
                   "name": "atom"
                 }
               ]
+            }
+          }
+        ]
+      }
+    },
+    "lex_comparison": {
+      "type": "PREC_LEFT",
+      "value": 0,
+      "content": {
+        "type": "SEQ",
+        "members": [
+          {
+            "type": "FIELD",
+            "name": "left",
+            "content": {
+              "type": "SYMBOL",
+              "name": "atom"
+            }
+          },
+          {
+            "type": "FIELD",
+            "name": "operator",
+            "content": {
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "STRING",
+                  "value": "<lex"
+                },
+                {
+                  "type": "STRING",
+                  "value": "<=lex"
+                },
+                {
+                  "type": "STRING",
+                  "value": ">lex"
+                },
+                {
+                  "type": "STRING",
+                  "value": ">=lex"
+                }
+              ]
+            }
+          },
+          {
+            "type": "FIELD",
+            "name": "right",
+            "content": {
+              "type": "SYMBOL",
+              "name": "atom"
             }
           }
         ]
@@ -2515,6 +2553,39 @@
           }
         }
       ]
+    },
+    "all_diff_comparison": {
+      "type": "PREC",
+      "value": -10,
+      "content": {
+        "type": "SEQ",
+        "members": [
+          {
+            "type": "FIELD",
+            "name": "operator",
+            "content": {
+              "type": "STRING",
+              "value": "allDiff"
+            }
+          },
+          {
+            "type": "STRING",
+            "value": "("
+          },
+          {
+            "type": "FIELD",
+            "name": "arg",
+            "content": {
+              "type": "SYMBOL",
+              "name": "atom"
+            }
+          },
+          {
+            "type": "STRING",
+            "value": ")"
+          }
+        ]
+      }
     },
     "sub_bool_expr": {
       "type": "SEQ",

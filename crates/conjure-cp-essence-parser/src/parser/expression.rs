@@ -92,6 +92,11 @@ fn parse_comparison_expression(
             ctx.typechecking_context = TypecheckingContext::Arithmetic;
             parse_binary_expression(ctx, &inner)
         }
+        "lex_comparison" => {
+            // TODO: check that both operands are comparable collections.
+            ctx.typechecking_context = TypecheckingContext::Unknown;
+            parse_binary_expression(ctx, &inner)
+        }
         "equality_comparison" => {
             // Equality works on any type
             // TODO: add type checking to ensure both sides have the same type
@@ -103,6 +108,11 @@ fn parse_comparison_expression(
             // TODO: add typechecking for sets
             ctx.typechecking_context = TypecheckingContext::Unknown;
             parse_binary_expression(ctx, &inner)
+        }
+        "all_diff_comparison" => {
+            // TODO: check that operand is a collection with compatible element type.
+            ctx.typechecking_context = TypecheckingContext::Unknown;
+            parse_list_combining_expression(ctx, &inner)
         }
         _ => Err(FatalParseError::internal_error(
             format!("Expected comparison expression, found '{}'", inner.kind()),
@@ -136,7 +146,7 @@ fn parse_list_combining_expression(
 ) -> Result<Option<Expression>, FatalParseError> {
     let operator_node = field!(node, "operator");
     let operator_str = &ctx.source_code[operator_node.start_byte()..operator_node.end_byte()];
-
+    
     let Some(inner) = parse_atom(ctx, &field!(node, "arg"))? else {
         return Ok(None);
     };
