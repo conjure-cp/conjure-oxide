@@ -1,5 +1,5 @@
 [//]: # (Author: Hayden Brown)
-[//]: # (Last Updated: 25/02/2026)
+[//]: # (Last Updated: 12/03/2026)
 
 # Installation
 Currently, Conjure Oxide is installed either by [building from source](#building-from-source) or by downloading a [nightly release](#downloading-a-nightly-release).
@@ -22,7 +22,7 @@ The following dependencies are required to build and use Conjure Oxide:
     ```
 2. Run the install command to install `conjure-oxide` (this may take some time):
     ```
-    cargo install --release --path crates/conjure-cp-cli
+    cargo install --path crates/conjure-cp-cli
     ```
 3. Verify `conjure-oxide` is installed and working by running a command:
     ```
