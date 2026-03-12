@@ -2,6 +2,7 @@
 
 use crate::diagnostics::diagnostics_api::{Diagnostic, Position, Range, Severity};
 use crate::errors::RecoverableParseError;
+use crate::parser::keyword_checks::keyword_as_identifier;
 use crate::syntax_errors::detect_syntactic_errors;
 use tree_sitter::Tree;
 
@@ -10,6 +11,7 @@ pub fn detect_errors(source: &str, cst: &Tree) -> Vec<Diagnostic> {
     let mut syntax_errors: Vec<RecoverableParseError> = vec![];
 
     detect_syntactic_errors(source, cst, &mut syntax_errors);
+    keyword_as_identifier(cst.root_node(), source, &mut syntax_errors);
     diagnostics.extend(syntax_errors.into_iter().map(|e| error_to_diagnostic(&e)));
 
     diagnostics
