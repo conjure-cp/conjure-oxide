@@ -4,13 +4,13 @@ use conjure_cp_essence_parser::util::get_tree;
 
 #[test]
 fn invalid_top_level_statement_expression() {
-    let source = " a,a,b: int(1..3)";
+    let source = "a,a,b: int(1..3)";
     let (cst, _) = get_tree(&source).unwrap();
 
     let diags = get_diagnostics(&source, &cst);
     assert_eq!(diags.len(), 1, "Expected exactly one diagnostic");
     let diag = &diags[0];
-    check_diagnostic(diag, 0, 0, 0, 17, "Malformed line 1: ' a,a,b: int(1..3)'");
+    check_diagnostic(diag, 0, 0, 0, 16, "Malformed line 1: 'a,a,b: int(1..3)'");
 }
 
 #[test]
