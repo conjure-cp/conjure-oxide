@@ -304,7 +304,7 @@ module.exports = grammar ({
     all_diff_comparison: $ => prec(-10, seq(
       field("operator", "allDiff"),
       "(",
-      field("arg", $.atom),
+      field("arg", choice($.bool_expr, $.arithmetic_expr, $.atom)),
       ")"
     )),
 

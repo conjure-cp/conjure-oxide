@@ -112,7 +112,7 @@ fn parse_comparison_expression(
         "all_diff_comparison" => {
             // TODO: check that operand is a collection with compatible element type.
             ctx.typechecking_context = TypecheckingContext::Unknown;
-            parse_list_combining_expression(ctx, &inner)
+            parse_all_diff_comparison(ctx, &inner)
         }
         _ => Err(FatalParseError::internal_error(
             format!("Expected comparison expression, found '{}'", inner.kind()),
@@ -158,12 +158,22 @@ fn parse_list_combining_expression(
         "product" => Ok(Some(Expression::Product(Metadata::new(), Moo::new(inner)))),
         "min" => Ok(Some(Expression::Min(Metadata::new(), Moo::new(inner)))),
         "max" => Ok(Some(Expression::Max(Metadata::new(), Moo::new(inner)))),
-        "allDiff" => Ok(Some(Expression::AllDiff(Metadata::new(), Moo::new(inner)))),
         _ => Err(FatalParseError::internal_error(
             format!("Invalid operator: '{operator_str}'"),
             Some(operator_node.range()),
         )),
     }
+}
+
+fn parse_all_diff_comparison(
+    ctx: &mut ParseContext,
+    node: &Node,
+) -> Result<Option<Expression>, FatalParseError> {
+    let Some(inner) = parse_expression(ctx, field!(node, "arg"))? else {
+        return Ok(None);
+    };
+
+    Ok(Some(Expression::AllDiff(Metadata::new(), Moo::new(inner))))
 }
 
 fn parse_unary_expression(
