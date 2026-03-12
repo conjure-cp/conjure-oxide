@@ -13,6 +13,7 @@ pub struct ParseContext<'a> {
     pub symbols: Option<SymbolTablePtr>,
     pub errors: &'a mut Vec<RecoverableParseError>,
     pub source_map: &'a mut SourceMap,
+    pub typechecking_context: TypecheckingContext,
 }
 
 impl<'a> ParseContext<'a> {
@@ -29,6 +30,7 @@ impl<'a> ParseContext<'a> {
             symbols,
             errors,
             source_map,
+            typechecking_context: TypecheckingContext::Unknown,
         }
     }
 
@@ -44,8 +46,18 @@ impl<'a> ParseContext<'a> {
             symbols,
             errors: self.errors,
             source_map: self.source_map,
+            typechecking_context: self.typechecking_context,
         }
     }
+}
+
+// Used to detect type mismatches during parsing.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TypecheckingContext {
+    Boolean,
+    Arithmetic,
+    /// Context is unknown or flexible
+    Unknown,
 }
 
 /// Parse the given source code into a syntax tree using tree-sitter.
