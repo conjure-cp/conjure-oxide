@@ -11,7 +11,7 @@ use uniplate::Uniplate;
 use super::ParseContext;
 use super::find::parse_find_statement;
 use super::letting::parse_letting_statement;
-use super::util::get_tree;
+use super::util::{TypecheckingContext, get_tree};
 use crate::diagnostics::diagnostics_api::SymbolKind;
 use crate::diagnostics::source_map::{HoverInfo, SourceMap, span_with_hover};
 use crate::errors::{FatalParseError, ParseErrorCollection, RecoverableParseError};
@@ -155,6 +155,7 @@ pub fn parse_essence_with_context_and_map(
                 }
             }
             "bool_expr" | "atom" | "comparison_expr" => {
+                ctx.typechecking_context = TypecheckingContext::Boolean;
                 let Some(expr) = parse_expression(&mut ctx, statement)? else {
                     continue;
                 };
