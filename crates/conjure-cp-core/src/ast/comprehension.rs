@@ -20,6 +20,7 @@ use super::{
 #[biplate(to=Name)]
 pub enum ComprehensionQualifier {
     Generator { name: Name, domain: DomainPtr },
+    ExpressionGenerator { name: Name, expr: Expression},
     Condition(Expression),
 }
 
@@ -66,6 +67,7 @@ impl Comprehension {
             .iter()
             .filter_map(|q| match q {
                 ComprehensionQualifier::Generator { name, .. } => Some(name.clone()),
+                ComprehensionQualifier::ExpressionGenerator { name, .. } => Some(name.clone()),
                 ComprehensionQualifier::Condition(_) => None,
             })
             .collect()
@@ -77,6 +79,7 @@ impl Comprehension {
             .filter_map(|q| match q {
                 ComprehensionQualifier::Condition(c) => Some(c.clone()),
                 ComprehensionQualifier::Generator { .. } => None,
+                ComprehensionQualifier::ExpressionGenerator { .. } => None,
             })
             .collect()
     }
@@ -138,6 +141,9 @@ impl Display for Comprehension {
             .map(|qualifier| match qualifier {
                 ComprehensionQualifier::Generator { name, domain } => {
                     format!("{name} : {domain}")
+                }
+                ComprehensionQualifier::ExpressionGenerator {name, expr } => {
+                    format!("{name} <- {expr}")
                 }
                 ComprehensionQualifier::Condition(expr) => format!("{expr}"),
             })
@@ -202,6 +208,21 @@ impl ComprehensionBuilder {
         self
     }
 
+    pub fn expression_generator(mut self, name: Name, expr: Expression) -> Self {
+        assert!(!self.quantified_variables.contains(&name));
+
+        self.quantified_variables.insert(name.clone());
+
+        // insert into comprehension scope as a local quantified variable
+        let quantified_decl = DeclarationPtr::new_quantified(name.clone(), expr.domain_of().unwrap());
+        self.symbols.write().insert(quantified_decl);
+
+        self.qualifiers
+            .push(ComprehensionQualifier::ExpressionGenerator { name, expr });
+
+        self
+    }
+
     /// Creates a comprehension with the given return expression.
     ///
     /// If this comprehension is inside an AC-operator, the kind of this operator should be passed
@@ -222,6 +243,7 @@ impl ComprehensionBuilder {
         for qualifier in self.qualifiers {
             match qualifier {
                 ComprehensionQualifier::Generator { .. } => qualifiers.push(qualifier),
+                ComprehensionQualifier::ExpressionGenerator { .. } => qualifiers.push(qualifier),
                 ComprehensionQualifier::Condition(condition) => {
                     if is_quantified_guard(&quantified_variables, &condition) {
                         qualifiers.push(ComprehensionQualifier::Condition(condition));
