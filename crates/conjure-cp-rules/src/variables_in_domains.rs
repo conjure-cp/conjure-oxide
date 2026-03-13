@@ -19,7 +19,7 @@ type VisitingStack = Vec<Name>;
 /// Rewrites variables in domains.
 ///
 /// Solvers require variable declarations to have ground domains. For integer domains that contain variables in them, we widen to a finite ground superset-domain and add constraints that enforce membership in the original (possibly variable-dependent) domain.
-#[register_rule(("Base", 8990), applicable_to(Expr::Root(..)))]
+#[register_rule(("Base", 8990))]
 fn handle_variables_in_domains(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Root(_, _) = expr else {
         return Err(RuleNotApplicable);

@@ -13,7 +13,7 @@ use conjure_cp::essence_expr;
 /// ```text
 /// not(neq(x)) ~> eq(x)
 /// ```
-#[register_rule(("Base", 8800), applicable_to(Expr::Not(..)))]
+#[register_rule(("Base", 8800))]
 fn negated_neq_to_eq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
         Expr::Not(_, a) => match a.as_ref() {
@@ -35,7 +35,7 @@ fn negated_neq_to_eq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 ///
 /// Also can't apply to matrices, since undefinedness between two matrices with different domains
 /// causes a != b to actually have a different meaning than !(a = b)
-#[register_rule(("Base", 8800), applicable_to(Expr::Not(..)))]
+#[register_rule(("Base", 8800))]
 fn negated_eq_to_neq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
         Expr::Not(_, a) => match a.as_ref() {

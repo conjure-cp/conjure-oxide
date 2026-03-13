@@ -24,7 +24,7 @@ register_rule_set!("Base", ());
 /// or([])  ~> false
 /// X([]) ~> Nothing
 /// ```
-#[register_rule(("Base", 8800), applicable_to(Expr::Or(..) | Expr::And(..)))]
+#[register_rule(("Base", 8800))]
 fn remove_empty_expression(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // excluded expressions
     if matches!(
@@ -79,7 +79,7 @@ fn remove_empty_expression(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
  * min([a, b]) ~> c ; c <= a & c <= b & (c = a | c = b)
  * ```
  */
-#[register_rule(("Base", 6000), applicable_to(Expr::Min(..)))]
+#[register_rule(("Base", 6000))]
 fn min_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Min(_, inside_min_expr) = expr else {
         return Err(RuleNotApplicable);
@@ -122,7 +122,7 @@ fn min_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
  * max([a, b]) ~> c ; c >= a & c >= b & (c = a | c = b)
  * ```
  */
-#[register_rule(("Base", 6000), applicable_to(Expr::Max(..)))]
+#[register_rule(("Base", 6000))]
 fn max_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Max(_, inside_max_expr) = expr else {
         return Err(RuleNotApplicable);

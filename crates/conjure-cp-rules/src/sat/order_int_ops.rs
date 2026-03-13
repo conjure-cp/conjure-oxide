@@ -97,7 +97,7 @@ fn sat_order_lt(
 ///  SATInt([true;int(1..), (3, 3)])
 ///
 /// ```
-#[register_rule(("SAT_Order", 9500), applicable_to(Expr::Atomic(..)))]
+#[register_rule(("SAT_Order", 9500))]
 fn literal_sat_order_int(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let value = {
         if let Expr::Atomic(_, Atom::Literal(Literal::Int(value))) = expr {
@@ -123,7 +123,7 @@ fn literal_sat_order_int(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// ```text
 /// SATInt(a) = SATInt(b) ~> Bool
 /// ```
-#[register_rule(("SAT_Order", 9100), applicable_to(Expr::Eq(..)))]
+#[register_rule(("SAT_Order", 9100))]
 fn eq_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Eq(_, lhs, rhs) = expr else {
         return Err(RuleNotApplicable);
@@ -166,7 +166,7 @@ fn eq_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 ///
 /// ```
 /// Note: < and <= are rewritten by swapping operands to reuse lt logic.
-#[register_rule(("SAT_Order", 9100), applicable_to(Expr::Lt(..) | Expr::Gt(..) | Expr::Leq(..) | Expr::Geq(..)))]
+#[register_rule(("SAT_Order", 9100))]
 fn ineq_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let (lhs, rhs, negate) = match expr {
         // A < B -> sat_order_lt(A, B)

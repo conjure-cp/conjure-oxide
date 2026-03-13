@@ -14,7 +14,7 @@ register_rule_set!("Smt", ("Base"), |f: &SolverFamily| {
     matches!(f, SolverFamily::Smt(..))
 });
 
-#[register_rule(("Smt", 1000), applicable_to(Expr::InDomain(..)))]
+#[register_rule(("Smt", 1000))]
 fn flatten_indomain(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::InDomain(_, inner, domain) = expr else {
         return Err(RuleNotApplicable);
@@ -80,7 +80,7 @@ fn flatten_indomain(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// a = b ~> a[1] = b[1] /\ a[2] = b[2] /\ a[3] = b[3]
 // Must run before `matrix_ref_to_atom` ("Base", 2000), otherwise matrix equality can be
 // rewritten into `int(1..)` indexed literals, losing finite index bounds for this rule.
-#[register_rule(("Smt", 3000), applicable_to(Expr::Eq(..) | Expr::Neq(..)))]
+#[register_rule(("Smt", 3000))]
 fn flatten_matrix_eq_neq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (a, b) = match expr {
         Expr::Eq(_, a, b) | Expr::Neq(_, a, b) => (a, b),
@@ -138,7 +138,7 @@ fn flatten_matrix_eq_neq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
 /// Turn a matrix slice into a 1-d matrix of the slice elements
 /// E.g. m[1,..] ~> [m[1,1], m[1,2], m[1,3]]
-#[register_rule(("Smt", 1000), applicable_to(Expr::SafeSlice(..)))]
+#[register_rule(("Smt", 1000))]
 fn flatten_matrix_slice(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::SafeSlice(_, m, slice_idxs) = expr else {
         return Err(RuleNotApplicable);
@@ -220,7 +220,7 @@ fn matrix_ref_to_slice(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// This rule is applicable in SMT when atomic representation is not used for matrices.
 ///
 /// Namely, it unwraps flatten(m) into [m[1, 1], m[1, 2], ...]
-#[register_rule(("Smt", 999), applicable_to(Expr::Flatten(..)))]
+#[register_rule(("Smt", 999))]
 fn unwrap_flatten_matrix_nonatomic(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // TODO: depth not supported yet
     let Expr::Flatten(_, None, m) = expr else {
@@ -258,7 +258,7 @@ fn unwrap_flatten_matrix_nonatomic(expr: &Expr, _: &SymbolTable) -> ApplicationR
 ///
 /// TODO: We currently only support one "in set" generator.
 /// This rule can be made much more general and nicer.
-#[register_rule(("Smt", 999), applicable_to(Expr::Sum(..)))]
+#[register_rule(("Smt", 999))]
 fn unwrap_abstract_comprehension_sum(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::Sum(_, inner) = expr else {
         return Err(RuleNotApplicable);
@@ -293,7 +293,7 @@ fn unwrap_abstract_comprehension_sum(expr: &Expr, _: &SymbolTable) -> Applicatio
 /// Unwraps a subsetEq expression into checking membership equality.
 ///
 /// Any elements not in the domain of one set must not be in the other set.
-#[register_rule(("Smt", 999), applicable_to(Expr::SubsetEq(..)))]
+#[register_rule(("Smt", 999))]
 fn unwrap_subseteq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::SubsetEq(_, a, b) = expr else {
         return Err(RuleNotApplicable);
@@ -335,7 +335,7 @@ fn unwrap_subseteq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 ///
 /// This is an optimisation over unwrap_subseteq to avoid unnecessary additional -> exprs
 /// where a single <-> is enough. This must apply before eq_to_subset_eq.
-#[register_rule(("Smt", 8801), applicable_to(Expr::Eq(..)))]
+#[register_rule(("Smt", 8801))]
 fn unwrap_set_eq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::Eq(_, a, b) = expr else {
         return Err(RuleNotApplicable);

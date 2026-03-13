@@ -43,7 +43,7 @@ use uniplate::{Biplate, Uniplate as _};
 /// ```text
 /// --x ~> x
 /// ```
-#[register_rule(("Base", 8400), applicable_to(Expr::Neg(..)))]
+#[register_rule(("Base", 8400))]
 fn elmininate_double_negation(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
         Expr::Neg(_, a) if matches!(**a, Expr::Neg(_, _)) => {
@@ -59,7 +59,7 @@ fn elmininate_double_negation(expr: &Expr, _: &SymbolTable) -> ApplicationResult
 /// ```text
 /// -(x + y) ~> -x + -y
 /// ```
-#[register_rule(("Base", 8400), applicable_to(Expr::Neg(..)))]
+#[register_rule(("Base", 8400))]
 fn distribute_negation_over_sum(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let inner_expr = match expr {
         Expr::Neg(_, e) if matches!(**e, Expr::Sum(_, _)) => Ok(e),
@@ -86,7 +86,7 @@ fn distribute_negation_over_sum(expr: &Expr, _: &SymbolTable) -> ApplicationResu
 /// ```text
 /// -(x * y) ~> -1 * x * y
 /// ```
-#[register_rule(("Base", 8400), applicable_to(Expr::Neg(..)))]
+#[register_rule(("Base", 8400))]
 fn simplify_negation_of_product(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::Neg(_, expr1) = expr.clone() else {
         return Err(RuleNotApplicable);
@@ -116,7 +116,7 @@ fn simplify_negation_of_product(expr: &Expr, _: &SymbolTable) -> ApplicationResu
 /// does not apply to sets.
 /// TODO: need rule to define set difference as a special case of minus, comprehensions needed
 /// return type and domain of minus need to be altered too, see expressions.rs
-#[register_rule(("Base", 8400), applicable_to(Expr::Minus(..)))]
+#[register_rule(("Base", 8400))]
 fn minus_to_sum(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (lhs, rhs) = match expr {
         Expr::Minus(_, lhs, rhs) => {

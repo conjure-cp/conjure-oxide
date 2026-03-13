@@ -28,7 +28,7 @@ use uniplate::{Biplate, Uniplate};
 /// Rewrite top-level `exists` comprehensions into constraints over fresh machine `find`s.
 ///
 /// `exists` is represented as `or([comprehension])`.
-#[register_rule(("Base", 2003), applicable_to(Expr::Root(..)))]
+#[register_rule(("Base", 2003))]
 fn exists_quantified_to_finds(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Root(metadata, constraints) = expr else {
         return Err(RuleNotApplicable);
@@ -66,7 +66,7 @@ fn exists_quantified_to_finds(expr: &Expr, symbols: &SymbolTable) -> Application
 }
 
 /// Expand comprehensions using `--comprehension-expander native`.
-#[register_rule(("Base", 2000), applicable_to(Expr::Comprehension(..)))]
+#[register_rule(("Base", 2000))]
 fn expand_comprehension_native(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     if comprehension_expander() != QuantifiedExpander::Native {
         return Err(RuleNotApplicable);
@@ -96,7 +96,7 @@ fn expand_comprehension_native(expr: &Expr, symbols: &SymbolTable) -> Applicatio
 ///    each solution.
 /// 7. Instantiate the original return expression under each quantified assignment.
 /// 8. Replace the comprehension by a matrix literal containing all instantiated return values.
-#[register_rule(("Base", 2000), applicable_to(Expr::Comprehension(..)))]
+#[register_rule(("Base", 2000))]
 fn expand_comprehension_via_solver(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     if !matches!(
         comprehension_expander(),

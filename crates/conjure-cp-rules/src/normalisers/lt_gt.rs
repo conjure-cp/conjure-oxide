@@ -18,7 +18,7 @@ use conjure_cp::{
 /// Minion supports Leq directly in some constraints, such as SumLeq, WeightedSumLeq, ...
 /// This transformation makes Lt work with these constraints too without needing special
 /// cases in the Minion conversion rules.
-#[register_rule(("Minion", 8400), applicable_to(Expr::Lt(..)))]
+#[register_rule(("Minion", 8400))]
 fn lt_to_leq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::Lt(_, lhs, rhs) = expr.clone() else {
         return Err(RuleNotApplicable);
@@ -38,7 +38,7 @@ fn lt_to_leq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// Minion supports Geq directly in some constraints, such as SumGeq, WeightedSumGeq, ...
 /// This transformation makes Gt work with these constraints too without needing special
 /// cases in the Minion conversion rules.
-#[register_rule(("Minion", 8400), applicable_to(Expr::Gt(..)))]
+#[register_rule(("Minion", 8400))]
 fn gt_to_geq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::Gt(_, lhs, rhs) = expr.clone() else {
         return Err(RuleNotApplicable);

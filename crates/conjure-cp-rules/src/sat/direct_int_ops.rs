@@ -20,7 +20,7 @@ use conjure_cp::ast::CnfClause;
 ///  SATInt([true;int(1..), (3, 3)])
 ///
 /// ```
-#[register_rule(("SAT_Direct", 9500), applicable_to(Expr::Atomic(..)))]
+#[register_rule(("SAT_Direct", 9500))]
 fn literal_sat_direct_int(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let value = {
         if let Expr::Atomic(_, Atom::Literal(Literal::Int(value))) = expr {
@@ -109,7 +109,7 @@ pub fn validate_direct_int_operands(
 /// SATInt(a) = SATInt(b) ~> Bool
 /// ```
 /// NOTE: This rule reduces to AND_i (a[i] ≡ b[i]) and does not enforce one-hotness.
-#[register_rule(("SAT_Direct", 9100), applicable_to(Expr::Eq(..)))]
+#[register_rule(("SAT_Direct", 9100))]
 fn eq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     // TODO: this could be optimized by just going over the sections of both vectors where the ranges intersect
     // this does require enforcing structure separately
@@ -155,7 +155,7 @@ fn eq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 /// ```
 ///
 /// True iff at least one value position differs.
-#[register_rule(("SAT_Direct", 9100), applicable_to(Expr::Neq(..)))]
+#[register_rule(("SAT_Direct", 9100))]
 fn neq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Neq(_, lhs, rhs) = expr else {
         return Err(RuleNotApplicable);
@@ -198,7 +198,7 @@ fn neq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 ///
 /// ```
 /// Note: < and <= are rewritten by swapping operands to reuse lt logic.
-#[register_rule(("SAT", 9100), applicable_to(Expr::Lt(..) | Expr::Gt(..) | Expr::Leq(..) | Expr::Geq(..)))]
+#[register_rule(("SAT", 9100))]
 fn ineq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let (lhs, rhs, negate) = match expr {
         // A < B -> sat_direct_lt(A, B)
@@ -266,7 +266,7 @@ fn sat_direct_lt(
 /// -SATInt(a) ~> SATInt(b)
 ///
 /// ```
-#[register_rule(("SAT_Direct", 9100), applicable_to(Expr::Neg(..)))]
+#[register_rule(("SAT_Direct", 9100))]
 fn neg_sat_direct(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::Neg(_, value) = expr else {
         return Err(RuleNotApplicable);

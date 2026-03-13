@@ -11,7 +11,7 @@ use conjure_cp::{
 /// ```text
 /// sum([a]) ~> a
 /// ```
-#[register_rule(("Base", 8800), applicable_to(Expr::Sum(..)))]
+#[register_rule(("Base", 8800))]
 fn remove_unit_vector_sum(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::Sum(_, e) = expr else {
         return Err(RuleNotApplicable);

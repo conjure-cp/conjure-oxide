@@ -17,7 +17,7 @@ use conjure_cp::rule_engine::ApplicationError;
 use itertools::izip;
 
 //takes a safe index expression and converts it to an atom via the representation rules
-#[register_rule(("Base", 2000), applicable_to(Expr::SafeIndex(..)))]
+#[register_rule(("Base", 2000))]
 fn index_record_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     // annoyingly, let chaining only works in if-lets, not let-elses,otherwise I could avoid the
     // indentation here!
@@ -71,7 +71,7 @@ fn index_record_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
     }
 }
 
-#[register_rule(("Bubble", 8000), applicable_to(Expr::UnsafeIndex(..)))]
+#[register_rule(("Bubble", 8000))]
 fn record_index_to_bubble(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // annoyingly, let chaining only works in if-lets, not let-elses,otherwise I could avoid the
     // indentation here!
@@ -154,7 +154,7 @@ fn record_index_to_bubble(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 }
 
 // dealing with equality over 2 record variables
-#[register_rule(("Base", 2000), applicable_to(Expr::Eq(..)))]
+#[register_rule(("Base", 2000))]
 fn record_equality(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // annoyingly, let chaining only works in if-lets, not let-elses, otherwise I could avoid the
     // indentation here!
@@ -221,7 +221,7 @@ fn record_equality(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 }
 
 // dealing with equality where the left is a record variable, and the right is a constant record
-#[register_rule(("Base", 2000), applicable_to(Expr::Eq(..)))]
+#[register_rule(("Base", 2000))]
 fn record_to_const(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     if let Expr::Eq(_, left, right) = expr
         && let Expr::Atomic(_, Atom::Reference(decl)) = &**left

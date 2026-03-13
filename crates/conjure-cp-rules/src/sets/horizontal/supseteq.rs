@@ -6,7 +6,7 @@ use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, register_rule,
 };
 
-#[register_rule(("Base", 8700), applicable_to(Expr::SupsetEq(..)))]
+#[register_rule(("Base", 8700))]
 fn supset_eq_to_subset_eq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
         Expr::SupsetEq(_, a, b)

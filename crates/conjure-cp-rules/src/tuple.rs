@@ -16,7 +16,7 @@ use conjure_cp::ast::Name;
 use conjure_cp::rule_engine::ApplicationError;
 
 //TODO: largely copied from the matrix rules, This should be possible to simplify
-#[register_rule(("Base", 2000), applicable_to(Expr::SafeIndex(..)))]
+#[register_rule(("Base", 2000))]
 fn index_tuple_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     // i assume the MkOpIndexing is the same as matrix indexing
     let Expr::SafeIndex(_, subject, indices) = expr else {
@@ -71,7 +71,7 @@ fn index_tuple_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
     Ok(Reduction::pure(subject))
 }
 
-#[register_rule(("Bubble", 8000), applicable_to(Expr::UnsafeIndex(..)))]
+#[register_rule(("Bubble", 8000))]
 fn tuple_index_to_bubble(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::UnsafeIndex(_, subject, indices) = expr else {
         return Err(RuleNotApplicable);
@@ -134,7 +134,7 @@ fn tuple_index_to_bubble(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 }
 
 // convert equality to tuple equality
-#[register_rule(("Base", 2000), applicable_to(Expr::Eq(..)))]
+#[register_rule(("Base", 2000))]
 fn tuple_equality(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::Eq(_, left, right) = expr else {
         return Err(RuleNotApplicable);
@@ -221,7 +221,7 @@ fn tuple_equality(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 }
 
 //tuple equality where the left is a variable and the right is a tuple literal
-#[register_rule(("Base", 2000), applicable_to(Expr::Eq(..)))]
+#[register_rule(("Base", 2000))]
 fn tuple_to_constant(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Eq(_, left, right) = expr else {
         return Err(RuleNotApplicable);
@@ -292,7 +292,7 @@ fn tuple_to_constant(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 }
 
 // convert equality to tuple inequality
-#[register_rule(("Base", 2000), applicable_to(Expr::Neq(..)))]
+#[register_rule(("Base", 2000))]
 fn tuple_inequality(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::Neq(_, left, right) = expr else {
         return Err(RuleNotApplicable);
