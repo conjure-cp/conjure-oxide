@@ -199,7 +199,7 @@ mod test {
 
     #[test]
     fn malformed_line() {
-        let source = " a,a,b: int(1..3)";
+        let source = "a,a,b: int(1..3)";
         let (tree, _) = get_tree(source).expect("Should parse");
         let root_node = tree.root_node();
 

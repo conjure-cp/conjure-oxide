@@ -64,36 +64,27 @@ pub enum TypecheckingContext {
 ///
 /// If successful, returns a tuple containing the syntax tree and the raw source code.
 /// If the source code is not valid Essence, returns None.
-///
-/// NOTE: The new source code may be different from the original source code.
-///       See implementation for details.
 pub fn get_tree(src: &str) -> Option<(Tree, String)> {
+    parse_tree(src)
+}
+
+/// Parse an isolated expression by prefixing it with `_FRAGMENT_EXPRESSION`.
+///
+/// NOTE: The returned source code includes the injected prefix so that node ranges remain valid.
+pub fn get_tree_fragment(src: &str) -> Option<(Tree, String)> {
+    let prefixed = format!("_FRAGMENT_EXPRESSION {src}");
+    parse_tree(&prefixed)
+}
+
+fn parse_tree(src: &str) -> Option<(Tree, String)> {
     let mut parser = Parser::new();
     parser.set_language(&LANGUAGE.into()).unwrap();
 
     parser.parse(src, None).and_then(|tree| {
-        let root = tree.root_node();
-        if root.is_error() {
+        if tree.root_node().is_error() {
             return None;
         }
-
-        let children: Vec<_> = named_children(&root).collect();
-        let first_child = children.first()?;
-
-        // HACK: Tree-sitter can only parse a complete program from top to bottom, not an individual bit of syntax.
-        // See: https://github.com/tree-sitter/tree-sitter/issues/711 and linked issues.
-        // However, we can use a dummy _FRAGMENT_EXPRESSION prefix (which we insert as necessary)
-        // to trick the parser into accepting an isolated expression.
-        // This way we can parse an isolated expression and it is only slightly cursed :)
-        if first_child.is_error() {
-            if src.starts_with("_FRAGMENT_EXPRESSION") {
-                None
-            } else {
-                get_tree(&format!("_FRAGMENT_EXPRESSION {src}"))
-            }
-        } else {
-            Some((tree, src.to_string()))
-        }
+        Some((tree, src.to_string()))
     })
 }
 

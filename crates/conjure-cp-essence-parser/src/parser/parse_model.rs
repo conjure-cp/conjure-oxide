@@ -18,6 +18,7 @@ use crate::errors::{FatalParseError, ParseErrorCollection, RecoverableParseError
 use crate::expression::parse_expression;
 use crate::field;
 use crate::syntax_errors::detect_syntactic_errors;
+use tree_sitter::Tree;
 
 /// Parse an Essence file into a Model using the tree-sitter parser.
 pub fn parse_essence_file_native(
@@ -55,23 +56,35 @@ pub fn parse_essence_with_context(
     context: Arc<RwLock<Context<'static>>>,
     errors: &mut Vec<RecoverableParseError>,
 ) -> Result<Option<Model>, FatalParseError> {
-    match parse_essence_with_context_and_map(src, context, errors)? {
+    match parse_essence_with_context_and_map(src, context, errors, None)? {
         Some((model, _source_map)) => Ok(Some(model)),
         None => Ok(None),
     }
 }
 
+/*
+    this function is used by both the file-based parser and the LSP parser (which needs the source map)
+    the LSP parser can also optionally pass in a pre-parsed tree to avoid parsing twice (which is how caching is implemented)
+    if the tree is not passed in, we will parse it from scratch (this is what the file-based parser does)
+    when cache is dirty, LSP has to call parse_essence_with_context_and_map with None for the tree,
+    which will cause it to re-parse the source code and update the cache (Model = ast, SorceMap = map)
+*/
 pub fn parse_essence_with_context_and_map(
     src: &str,
     context: Arc<RwLock<Context<'static>>>,
     errors: &mut Vec<RecoverableParseError>,
+    tree: Option<&Tree>,
 ) -> Result<Option<(Model, SourceMap)>, FatalParseError> {
-    let (tree, source_code) = match get_tree(src) {
-        Some(tree) => tree,
-        None => {
-            return Err(FatalParseError::TreeSitterError(
-                "Failed to parse source code".to_string(),
-            ));
+    let (tree, source_code) = if let Some(tree) = tree {
+        (tree.clone(), src.to_string())
+    } else {
+        match get_tree(src) {
+            Some(tree) => tree,
+            None => {
+                return Err(FatalParseError::TreeSitterError(
+                    "Failed to parse source code".to_string(),
+                ));
+            }
         }
     };
 
@@ -179,9 +192,6 @@ pub fn parse_essence_with_context_and_map(
         }
     }
 
-    // check for errors (keyword as identifier)
-    keyword_as_identifier(&mut ctx);
-
     // Check if there were any recoverable errors
     if !errors.is_empty() {
         return Ok(None);
@@ -190,46 +200,10 @@ pub fn parse_essence_with_context_and_map(
     Ok(Some((model, source_map)))
 }
 
-const KEYWORDS: [&str; 21] = [
-    "forall", "exists", "such", "that", "letting", "find", "minimise", "maximise", "subject", "to",
-    "where", "and", "or", "not", "if", "then", "else", "in", "sum", "product", "bool",
-];
-
-fn keyword_as_identifier(ctx: &mut ParseContext) {
-    let mut stack = vec![*ctx.root];
-    while let Some(node) = stack.pop() {
-        if (node.kind() == "variable" || node.kind() == "identifier" || node.kind() == "parameter")
-            && let Ok(text) = node.utf8_text(ctx.source_code.as_bytes())
-        {
-            let ident = text.trim();
-            if KEYWORDS.contains(&ident) {
-                let start_point = node.start_position();
-                let end_point = node.end_position();
-                ctx.errors.push(RecoverableParseError::new(
-                    format!("Keyword '{ident}' used as identifier"),
-                    Some(tree_sitter::Range {
-                        start_byte: node.start_byte(),
-                        end_byte: node.end_byte(),
-                        start_point,
-                        end_point,
-                    }),
-                ));
-            }
-        }
-
-        // push children onto stack
-        for i in 0..node.child_count() {
-            if let Some(child) = u32::try_from(i).ok().and_then(|i| node.child(i)) {
-                stack.push(child);
-            }
-        }
-    }
-}
-
 pub fn parse_essence(src: &str) -> Result<(Model, SourceMap), Box<ParseErrorCollection>> {
     let context = Arc::new(RwLock::new(Context::default()));
     let mut errors = vec![];
-    match parse_essence_with_context_and_map(src, context, &mut errors) {
+    match parse_essence_with_context_and_map(src, context, &mut errors, None) {
         Ok(Some((model, source_map))) => {
             debug_assert_model_well_formed(&model, "tree-sitter");
             Ok((model, source_map))
