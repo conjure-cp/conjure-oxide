@@ -76,10 +76,10 @@ All unassigned child issues are available for anyone to work on!
 
 At a high level, Vale works by:
 
-1. Reading a configuration file (`.vale.ini`)
-2. Loading one or more styles/rules
-3. Scanning matching files (Markdown in our case)
-4. Emitting alerts (`suggestion`, `warning`, `error`)
+1. Reading a configuration file (`.vale.ini`).
+2. Loading one or more styles/rules.
+3. Scanning matching files (Markdown in our case).
+4. Emitting alerts (`suggestion`, `warning`, `error`).
 
 In this repository, Vale is primarily used for documentation quality checks under `docs/`.
 
@@ -138,15 +138,15 @@ The vocabulary should represent **intentional project terminology**, not bypass 
 
 Good candidates:
 
-- Domain terms (`SATInt`, `Uniplate`, `Savile`)
-- Tool names (`rustc`, `Valgrind`)
-- Project-specific identifiers (`conjure_essence_parser`)
+- Domain terms (`SATInt`, `Uniplate`, `Savile`).
+- Tool names (`rustc`, `Valgrind`).
+- Project-specific identifiers (`conjure_essence_parser`).
 - Variable names from the code that you might need to refer to.
 
 Bad candidates:
 
-- Accidental misspellings
-- One-off casing mistakes that should be corrected in source text
+- Accidental misspellings.
+- One-off casing mistakes that should be corrected in source text.
 
 ## Still unsure?
 
