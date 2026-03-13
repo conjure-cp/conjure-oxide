@@ -1,6 +1,5 @@
 //! conjure_oxide solve sub-command
 #![allow(clippy::unwrap_used)]
-#[cfg(feature = "smt")]
 use std::time::Duration;
 use std::{
     fs::File,
@@ -33,6 +32,37 @@ use serde_json::to_string_pretty;
 
 use crate::cli::{GlobalArgs, LOGGING_HELP_HEADING};
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum NumberOfSolutions {
+    All,
+    Limit(i32),
+}
+
+impl NumberOfSolutions {
+    fn as_solver_limit(self) -> i32 {
+        match self {
+            NumberOfSolutions::All => 0,
+            NumberOfSolutions::Limit(limit) => limit,
+        }
+    }
+}
+
+fn parse_number_of_solutions(input: &str) -> Result<NumberOfSolutions, String> {
+    if input.eq_ignore_ascii_case("all") {
+        return Ok(NumberOfSolutions::All);
+    }
+
+    let limit = input
+        .parse::<i32>()
+        .map_err(|_| "expected a positive integer or 'all'".to_string())?;
+
+    if limit <= 0 {
+        return Err("expected a positive integer or 'all'".to_string());
+    }
+
+    Ok(NumberOfSolutions::Limit(limit))
+}
+
 #[derive(Clone, Debug, clap::Args)]
 pub struct Args {
     /// The input Essence file
@@ -50,9 +80,15 @@ pub struct Args {
     #[arg(long, default_value_t = false)]
     pub no_run_solver: bool,
 
-    /// Number of solutions to return. 0 returns all solutions
-    #[arg(long, default_value_t = 0, short = 'n')]
-    pub number_of_solutions: i32,
+    /// Number of solutions to return. Use a positive integer, or `all`.
+    #[arg(
+        long,
+        short = 'n',
+        default_value = "1",
+        value_name = "N|all",
+        value_parser = parse_number_of_solutions
+    )]
+    pub number_of_solutions: NumberOfSolutions,
 
     /// Save solutions to the given JSON file
     #[arg(long, short = 'o', value_hint = ValueHint::FilePath,help_heading=LOGGING_HELP_HEADING)]
@@ -155,7 +191,6 @@ pub(crate) fn init_context(
 
 pub(crate) fn init_solver(global_args: &GlobalArgs) -> Solver {
     let family = global_args.solver;
-    #[cfg(feature = "smt")]
     let timeout_ms = global_args
         .solver_timeout
         .map(|dur| Duration::from(dur).as_millis())
@@ -164,7 +199,6 @@ pub(crate) fn init_solver(global_args: &GlobalArgs) -> Solver {
     match family {
         SolverFamily::Minion => Solver::new(Minion::default()),
         SolverFamily::Sat(_) => Solver::new(Sat::default()),
-        #[cfg(feature = "smt")]
         SolverFamily::Smt(theory_cfg) => Solver::new(Smt::new(timeout_ms, theory_cfg)),
     }
 }
@@ -271,7 +305,7 @@ fn run_solver(
     let solutions = get_solutions(
         solver,
         model,
-        cmd_args.number_of_solutions,
+        cmd_args.number_of_solutions.as_solver_limit(),
         &global_args.save_solver_input_file,
     )?;
     tracing::info!(target: "file", "Solutions: {}", solutions_to_json(&solutions));
