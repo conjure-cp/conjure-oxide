@@ -97,6 +97,12 @@ jobs:
           os_arch: ${{ matrix.release_suffix }}
           version: ${{ matrix.conjure_version }}
 
+      - name: Install Z3
+        uses: pavpanchekha/setup-z3@v0.3.0
+        with:
+          version: 4.16.0
+          distribution: glibc-2.39
+
       - name: Build conjure-oxide (debug)
         run: cargo build --bin conjure-oxide
         if: ${{ matrix.compiler_profile == 'debug' }}
