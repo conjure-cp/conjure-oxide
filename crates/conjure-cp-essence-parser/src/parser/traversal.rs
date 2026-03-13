@@ -129,6 +129,7 @@ mod test {
             .filter(|n| n.is_named());
         assert_eq!(iter.next().unwrap().kind(), "program");
         assert_eq!(iter.next().unwrap().kind(), "comparison_expr");
+        assert_eq!(iter.next().unwrap().kind(), "arithmetic_comparison"); // intermediate node for > comparison
         assert_eq!(iter.next().unwrap().kind(), "arithmetic_expr"); // first branch ("x / 42"). Don't descend into subexpressions.
         assert_eq!(iter.next().unwrap().kind(), "arithmetic_expr"); // second branch ("5 + y"). Don't descend into subexpressions.
     }

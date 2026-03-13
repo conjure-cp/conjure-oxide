@@ -1,6 +1,7 @@
 #![allow(clippy::expect_used)]
 use conjure_cp::bug;
 use conjure_cp::rule_engine::get_rules_grouped;
+use git_version as _;
 
 use conjure_cp::defaults::DEFAULT_RULE_SETS;
 use conjure_cp::parse::tree_sitter::parse_essence_file_native;
@@ -16,9 +17,6 @@ use std::fs;
 use std::fs::File;
 use tracing_subscriber::{Layer, filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt};
 use tree_morph::{helpers::select_panic, prelude::*};
-
-#[cfg(feature = "smt")]
-use conjure_cp::solver::adaptors::smt::TheoryConfig;
 
 use std::sync::Arc;
 use std::sync::RwLock;
@@ -234,6 +232,7 @@ fn integration_test_inner(
         }
         Parser::ViaConjure => parse_essence_file(&file_path, context.clone())?,
     };
+
     // Stage 2a: Rewrite the model using the rule engine
     let mut extra_rules = vec![];
 
@@ -271,7 +270,6 @@ fn integration_test_inner(
         }
     };
     let solver_input_file = None;
-
     let solver = match solver_fam {
         SolverFamily::Minion => Solver::new(Minion::default()),
         SolverFamily::Sat(_) => Solver::new(Sat::default()),
@@ -310,42 +308,14 @@ fn integration_test_inner(
     if accept {
         // Always overwrite these ones. Unlike the rest, we don't need to selectively do these
         // based on the test results, so they don't get done later.
-
         copy_generated_to_expected(path, case_name, "solutions", "json", solver_fam)?;
-
         copy_human_trace_generated_to_expected(path, case_name, solver_fam)?;
     }
 
     // Check Stage 3a (solutions)
-    match solver_fam {
-        SolverFamily::Minion => {
-            let expected_solutions_json =
-                read_solutions_json(path, case_name, "expected", SolverFamily::Minion)?;
-            let username_solutions_json = solutions_to_json(&solutions);
-            assert_eq!(username_solutions_json, expected_solutions_json);
-        }
-        SolverFamily::Sat(_) => {
-            let expected_solutions_json = read_solutions_json(
-                path,
-                case_name,
-                "expected",
-                SolverFamily::Sat(Default::default()),
-            )?;
-            let username_solutions_json = solutions_to_json(&solutions);
-            assert_eq!(username_solutions_json, expected_solutions_json);
-        }
-        #[cfg(feature = "smt")]
-        SolverFamily::Smt(_) => {
-            let expected_solutions_json = read_solutions_json(
-                path,
-                case_name,
-                "expected",
-                SolverFamily::Smt(TheoryConfig::default()),
-            )?;
-            let username_solutions_json = solutions_to_json(&solutions);
-            assert_eq!(username_solutions_json, expected_solutions_json);
-        }
-    }
+    let expected_solutions_json = read_solutions_json(path, case_name, "expected", solver_fam)?;
+    let username_solutions_json = solutions_to_json(&solutions);
+    assert_eq!(username_solutions_json, expected_solutions_json);
 
     // TODO: Implement rule trace validation for morph
     match rewriter {
@@ -407,6 +377,7 @@ fn copy_human_trace_generated_to_expected(
     solver: SolverFamily,
 ) -> Result<(), std::io::Error> {
     let solver_name = solver.as_str();
+
     std::fs::copy(
         format!("{path}/{test_name}-{solver_name}-generated-rule-trace.txt"),
         format!("{path}/{test_name}-{solver_name}-expected-rule-trace.txt"),
