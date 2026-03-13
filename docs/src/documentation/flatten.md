@@ -9,7 +9,7 @@ With one argument, `flatten(M)` returns a one-dimensional matrix containing all 
 
 With two arguments, `flatten(n,M)` the first n+1 dimensions are flattened into one dimension. 
 
-> [WARNING!]
+> [!WARNING]
 > `flatten(n,M)` has not yet been implemented.
 
 ## Expression variant
