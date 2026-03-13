@@ -110,10 +110,10 @@ jobs:
       # NOTE: this step should NOT depend on Z3 being installed (i.e. z3.h being present)
       # Instead, it builds from source to create a bundled executable
       - name: Build conjure-oxide (release)
-        run: cargo build --bin conjure-oxide --release --features z3-bundled
+        run: cargo build --bin conjure-oxide --release
         if: ${{ matrix.compiler_profile == 'release' }}
       - name: Run tests (release)
-        run: cargo test --workspace --release --features z3-bundled
+        run: cargo test --workspace --release
         if: ${{ matrix.compiler_profile == 'release' }}
 
       - name: cargo-audit
