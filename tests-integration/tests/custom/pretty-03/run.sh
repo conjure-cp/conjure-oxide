@@ -1,1 +1,0 @@
-conjure-oxide pretty model.essence --output-format=expression-domains-json
