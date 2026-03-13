@@ -157,12 +157,44 @@ SumGeq([0, i], __2)
 
 --
 
+product([Matrix([Int(215), Int(275), Int(335), Int(355), Int(420), Int(580)], Moo { inner: Int([UnboundedR(1)]) })[i],[__0#matrix_to_atom_1,__0#matrix_to_atom_2,__0#matrix_to_atom_3,__0#matrix_to_atom_4,__0#matrix_to_atom_5,__0#matrix_to_atom_6;int(1..)][__2];int(1..)]), 
+   ~~> flatten_product ([("Minion", 4200)])
+product([__3,__4;int(1..)])
+new variables:
+  find __3: int(215, 275, 335, 355, 420, 580)
+  find __4: int(0..100000)
+new constraints:
+  __3 =aux Matrix([Int(215), Int(275), Int(335), Int(355), Int(420), Int(580)], Moo { inner: Int([UnboundedR(1)]) })[i]
+  __4 =aux [__0#matrix_to_atom_1,__0#matrix_to_atom_2,__0#matrix_to_atom_3,__0#matrix_to_atom_4,__0#matrix_to_atom_5,__0#matrix_to_atom_6;int(1..)][__2]
+
+--
+
+__3 =aux Matrix([Int(215), Int(275), Int(335), Int(355), Int(420), Int(580)], Moo { inner: Int([UnboundedR(1)]) })[i], 
+   ~~> introduce_element_from_index ([("Minion", 4400)])
+__minion_element_one([215,275,335,355,420,580],i,__3)
+
+--
+
+__4 =aux [__0#matrix_to_atom_1,__0#matrix_to_atom_2,__0#matrix_to_atom_3,__0#matrix_to_atom_4,__0#matrix_to_atom_5,__0#matrix_to_atom_6;int(1..)][__2], 
+   ~~> introduce_element_from_index ([("Minion", 4400)])
+__minion_element_one([__0#matrix_to_atom_1,__0#matrix_to_atom_2,__0#matrix_to_atom_3,__0#matrix_to_atom_4,__0#matrix_to_atom_5,__0#matrix_to_atom_6],__2,__4)
+
+--
+
+__1 =aux product([__3,__4;int(1..)]), 
+   ~~> introduce_producteq ([("Minion", 4200)])
+FlatProductEq(__4,__3,__1)
+
+--
+
 Final model:
 
 find i: int(1..n)
 find __0: matrix indexed by [int(1..n)] of int(0..100000)
 find __1: int(0..58000000)
 find __2: int(1..6)
+find __3: int(215, 275, 335, 355, 420, 580)
+find __4: int(0..100000)
 find __0#matrix_to_atom_1: int(0..100000)
 find __0#matrix_to_atom_2: int(0..100000)
 find __0#matrix_to_atom_3: int(0..100000)
@@ -173,66 +205,15 @@ find __0#matrix_to_atom_6: int(0..100000)
 such that
 
 (0 != __1),
-__1 =aux product([Matrix([Int(215), Int(275), Int(335), Int(355), Int(420), Int(580)], Moo { inner: Int([UnboundedR(1)]) })[i],[__0#matrix_to_atom_1,__0#matrix_to_atom_2,__0#matrix_to_atom_3,__0#matrix_to_atom_4,__0#matrix_to_atom_5,__0#matrix_to_atom_6;int(1..)][__2];int(1..)]),
+FlatProductEq(__4,__3,__1),
 SumLeq([0, i], __2),
-SumGeq([0, i], __2)
+SumGeq([0, i], __2),
+__minion_element_one([215,275,335,355,420,580],i,__3),
+__minion_element_one([__0#matrix_to_atom_1,__0#matrix_to_atom_2,__0#matrix_to_atom_3,__0#matrix_to_atom_4,__0#matrix_to_atom_5,__0#matrix_to_atom_6],__2,__4)
 
-Via-solver generator model before rewriting:
-
-find i: int(1..n)
-find __0: matrix indexed by [int(1..n)] of int(0..100000)
-find __1: int(0..58000000)
-find __2: int(1..6)
-find __0#matrix_to_atom_1: int(0..100000)
-find __0#matrix_to_atom_2: int(0..100000)
-find __0#matrix_to_atom_3: int(0..100000)
-find __0#matrix_to_atom_4: int(0..100000)
-find __0#matrix_to_atom_5: int(0..100000)
-find __0#matrix_to_atom_6: int(0..100000)
-
---
-
-Model before rewriting:
-
-find i: int(1..n)
-find __0: matrix indexed by [int(1..n)] of int(0..100000)
-find __1: int(0..58000000)
-find __2: int(1..6)
-find __0#matrix_to_atom_1: int(0..100000)
-find __0#matrix_to_atom_2: int(0..100000)
-find __0#matrix_to_atom_3: int(0..100000)
-find __0#matrix_to_atom_4: int(0..100000)
-find __0#matrix_to_atom_5: int(0..100000)
-find __0#matrix_to_atom_6: int(0..100000)
-
---
-
-, 
-   ~~> eval_root ([("Constant", 9001)])
-true
-
---
-
-Final model:
-
-find i: int(1..n)
-find __0: matrix indexed by [int(1..n)] of int(0..100000)
-find __1: int(0..58000000)
-find __2: int(1..6)
-find __0#matrix_to_atom_1: int(0..100000)
-find __0#matrix_to_atom_2: int(0..100000)
-find __0#matrix_to_atom_3: int(0..100000)
-find __0#matrix_to_atom_4: int(0..100000)
-find __0#matrix_to_atom_5: int(0..100000)
-find __0#matrix_to_atom_6: int(0..100000)
-
-such that
-
-true
-
-[ product([Matrix([Int(215), Int(275), Int(335), Int(355), Int(420), Int(580)], Moo { inner: Int([Bounded(1, 6)]) })[i],x[i];int(1..2)]) | i : int(1..n) ], 
-   ~~> expand_comprehension_via_solver ([("Base", 2000)])
-[product([215,x[1];int(1..2)]),product([275,x[2];int(1..2)]),product([335,x[3];int(1..2)]),product([355,x[4];int(1..2)]),product([420,x[5];int(1..2)]),product([580,x[6];int(1..2)]);int(1..)]
+sum([ product([Matrix([Int(215), Int(275), Int(335), Int(355), Int(420), Int(580)], Moo { inner: Int([Bounded(1, 6)]) })[i],x[i];int(1..2)]) | i : int(1..n) ]), 
+   ~~> expand_comprehension_via_solver_ac ([("Base", 2002)])
+sum([product([215,x[1];int(1..2)]),product([275,x[2];int(1..2)]),product([335,x[3];int(1..2)]),product([355,x[4];int(1..2)]),product([420,x[5];int(1..2)]),product([580,x[6];int(1..2)]);int(1..)])
 
 --
 

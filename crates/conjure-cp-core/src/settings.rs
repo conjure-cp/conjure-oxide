@@ -6,7 +6,6 @@ use strum_macros::{Display as StrumDisplay, EnumIter};
 
 use crate::bug;
 
-#[cfg(feature = "smt")]
 use crate::solver::adaptors::smt::{IntTheory, MatrixTheory, TheoryConfig};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
@@ -172,6 +171,14 @@ pub enum SatEncoding {
 }
 
 impl SatEncoding {
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            SatEncoding::Log => "log",
+            SatEncoding::Direct => "direct",
+            SatEncoding::Order => "order",
+        }
+    }
+
     pub const fn as_rule_set(self) -> &'static str {
         match self {
             SatEncoding::Log => "SAT_Log",
@@ -222,7 +229,6 @@ impl FromStr for SatEncoding {
 pub enum SolverFamily {
     Minion,
     Sat(SatEncoding),
-    #[cfg(feature = "smt")]
     Smt(TheoryConfig),
 }
 
@@ -231,6 +237,17 @@ thread_local! {
     ///
     /// Must be explicitly set before use.
     static CURRENT_SOLVER_FAMILY: Cell<Option<SolverFamily>> = const { Cell::new(None) };
+}
+
+pub const DEFAULT_MINION_DISCRETE_THRESHOLD: usize = 10;
+
+thread_local! {
+    /// Thread-local setting controlling when Minion int domains are emitted as `DISCRETE`.
+    ///
+    /// If an int domain size is <= this threshold, the Minion adaptor uses `DISCRETE`; otherwise
+    /// it uses `BOUND`, unless another constraint requires `DISCRETE`.
+    static MINION_DISCRETE_THRESHOLD: Cell<usize> =
+        const { Cell::new(DEFAULT_MINION_DISCRETE_THRESHOLD) };
 }
 
 pub fn set_current_solver_family(solver_family: SolverFamily) {
@@ -248,6 +265,14 @@ pub fn current_solver_family() -> SolverFamily {
     })
 }
 
+pub fn set_minion_discrete_threshold(threshold: usize) {
+    MINION_DISCRETE_THRESHOLD.with(|current| current.set(threshold));
+}
+
+pub fn minion_discrete_threshold() -> usize {
+    MINION_DISCRETE_THRESHOLD.with(|current| current.get())
+}
+
 impl FromStr for SolverFamily {
     type Err = String;
 
@@ -259,11 +284,9 @@ impl FromStr for SolverFamily {
             "sat" | "sat-log" => Ok(SolverFamily::Sat(SatEncoding::Log)),
             "sat-direct" => Ok(SolverFamily::Sat(SatEncoding::Direct)),
             "sat-order" => Ok(SolverFamily::Sat(SatEncoding::Order)),
-            #[cfg(feature = "smt")]
             "smt" => Ok(SolverFamily::Smt(TheoryConfig::default())),
             other => {
                 // allow forms like `smt-bv-atomic` or `smt-lia-arrays`
-                #[cfg(feature = "smt")]
                 if other.starts_with("smt-") {
                     let parts = other.split('-').skip(1);
                     let mut ints = IntTheory::default();
@@ -301,12 +324,11 @@ impl FromStr for SolverFamily {
 }
 
 impl SolverFamily {
-    pub const fn as_str(&self) -> &'static str {
+    pub fn as_str(&self) -> String {
         match self {
-            SolverFamily::Minion => "minion",
-            SolverFamily::Sat(_) => "sat",
-            #[cfg(feature = "smt")]
-            SolverFamily::Smt(_) => "smt",
+            SolverFamily::Minion => "minion".to_owned(),
+            SolverFamily::Sat(encoding) => format!("sat-{}", encoding.as_str()),
+            SolverFamily::Smt(theory_config) => format!("smt-{}", theory_config.as_str()),
         }
     }
 }

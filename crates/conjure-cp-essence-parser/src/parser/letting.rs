@@ -3,23 +3,21 @@ use std::collections::BTreeSet;
 
 use tree_sitter::Node;
 
+use super::ParseContext;
 use super::domain::parse_domain;
 use super::util::named_children;
 use crate::diagnostics::diagnostics_api::SymbolKind;
-use crate::diagnostics::source_map::{HoverInfo, SourceMap, span_with_hover};
+use crate::diagnostics::source_map::{HoverInfo, span_with_hover};
 use crate::errors::{FatalParseError, RecoverableParseError};
 use crate::expression::parse_expression;
 use crate::field;
 use conjure_cp_core::ast::DeclarationPtr;
-use conjure_cp_core::ast::{Name, SymbolTable, SymbolTablePtr};
+use conjure_cp_core::ast::{Name, SymbolTable};
 
 /// Parse a letting statement into a SymbolTable containing the declared symbols
 pub fn parse_letting_statement(
+    ctx: &mut ParseContext,
     letting_statement: Node,
-    source_code: &str,
-    existing_symbols_ptr: Option<SymbolTablePtr>,
-    errors: &mut Vec<RecoverableParseError>,
-    source_map: &mut SourceMap,
 ) -> Result<Option<SymbolTable>, FatalParseError> {
     let mut symbol_table = SymbolTable::new();
 
@@ -27,7 +25,36 @@ pub fn parse_letting_statement(
 
     let variable_list = field!(letting_statement, "variable_list");
     for variable in named_children(&variable_list) {
-        let variable_name = &source_code[variable.start_byte()..variable.end_byte()];
+        let variable_name = &ctx.source_code[variable.start_byte()..variable.end_byte()];
+
+        // Check for duplicate within the same statement
+        if temp_symbols.contains(variable_name) {
+            ctx.errors.push(RecoverableParseError::new(
+                format!(
+                    "Variable '{}' is already declared in this letting statement",
+                    variable_name
+                ),
+                Some(variable.range()),
+            ));
+            // don't return here, as we can still add the other variables to the symbol table
+            continue;
+        }
+
+        // Check for duplicate declaration across statements
+        if let Some(symbols) = &ctx.symbols
+            && symbols.read().lookup(&Name::user(variable_name)).is_some()
+        {
+            ctx.errors.push(RecoverableParseError::new(
+                format!(
+                    "Variable '{}' is already declared in a previous statement",
+                    variable_name
+                ),
+                Some(variable.range()),
+            ));
+            // don't return here, as we can still add the other variables to the symbol table
+            continue;
+        }
+
         temp_symbols.insert(variable_name);
         let hover = HoverInfo {
             description: format!("Letting variable: {variable_name}"),
@@ -35,22 +62,14 @@ pub fn parse_letting_statement(
             ty: None,
             decl_span: None,
         };
-        span_with_hover(&variable, source_code, source_map, hover);
+        span_with_hover(&variable, ctx.source_code, ctx.source_map, hover);
     }
 
     let expr_or_domain = field!(letting_statement, "expr_or_domain");
     match expr_or_domain.kind() {
         "bool_expr" | "arithmetic_expr" | "atom" => {
             for name in temp_symbols {
-                let Some(expr) = parse_expression(
-                    expr_or_domain,
-                    source_code,
-                    &letting_statement,
-                    existing_symbols_ptr.clone(),
-                    errors,
-                    source_map,
-                )?
-                else {
+                let Some(expr) = parse_expression(ctx, expr_or_domain)? else {
                     continue;
                 };
                 symbol_table.insert(DeclarationPtr::new_value_letting(Name::user(name), expr));
@@ -58,14 +77,7 @@ pub fn parse_letting_statement(
         }
         "domain" => {
             for name in temp_symbols {
-                let Some(domain) = parse_domain(
-                    expr_or_domain,
-                    source_code,
-                    existing_symbols_ptr.clone(),
-                    errors,
-                    source_map,
-                )?
-                else {
+                let Some(domain) = parse_domain(ctx, expr_or_domain)? else {
                     continue;
                 };
 

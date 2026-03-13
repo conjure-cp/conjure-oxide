@@ -237,13 +237,16 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
+        with:
+          submodules: recursive
+          fetch-depth: 0
 
       - name: Install rust
         run: rustup update stable && rustup default stable
 
       - name: Build release
         run: |
-          cargo build --release -p conjure-cp-cli 
+          cargo build --release -p conjure-cp-cli --features z3-bundled
           mkdir -p bin # place to store all the different stuff we want to add to the release
           cp target/release/conjure-oxide bin
 
@@ -292,10 +295,13 @@ jobs:
         run: chown root:root .
 
       - uses: actions/checkout@v6
+        with:
+          submodules: recursive
+          fetch-depth: 0
 
       - name: Build release
         run: |
-          cargo build --release -p conjure-cp-cli
+          cargo build --release -p conjure-cp-cli --features z3-bundled
           mkdir -p bin # place to store all the different stuff we want to add to the release
           cp target/release/conjure-oxide bin
 

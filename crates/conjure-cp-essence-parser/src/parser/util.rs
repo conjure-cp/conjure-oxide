@@ -2,6 +2,63 @@ use tree_sitter::{Node, Parser, Tree};
 use tree_sitter_essence::LANGUAGE;
 
 use super::traversal::WalkDFS;
+use crate::diagnostics::source_map::SourceMap;
+use crate::errors::RecoverableParseError;
+use conjure_cp_core::ast::SymbolTablePtr;
+
+/// Context for parsing, containing shared state passed through parser functions.
+pub struct ParseContext<'a> {
+    pub source_code: &'a str,
+    pub root: &'a Node<'a>,
+    pub symbols: Option<SymbolTablePtr>,
+    pub errors: &'a mut Vec<RecoverableParseError>,
+    pub source_map: &'a mut SourceMap,
+    pub typechecking_context: TypecheckingContext,
+}
+
+impl<'a> ParseContext<'a> {
+    pub fn new(
+        source_code: &'a str,
+        root: &'a Node<'a>,
+        symbols: Option<SymbolTablePtr>,
+        errors: &'a mut Vec<RecoverableParseError>,
+        source_map: &'a mut SourceMap,
+    ) -> Self {
+        Self {
+            source_code,
+            root,
+            symbols,
+            errors,
+            source_map,
+            typechecking_context: TypecheckingContext::Unknown,
+        }
+    }
+
+    pub fn record_error(&mut self, error: RecoverableParseError) {
+        self.errors.push(error);
+    }
+
+    /// Create a new ParseContext with different symbols but sharing source_code, root, errors, and source_map.
+    pub fn with_new_symbols(&mut self, symbols: Option<SymbolTablePtr>) -> ParseContext<'_> {
+        ParseContext {
+            source_code: self.source_code,
+            root: self.root,
+            symbols,
+            errors: self.errors,
+            source_map: self.source_map,
+            typechecking_context: self.typechecking_context,
+        }
+    }
+}
+
+// Used to detect type mismatches during parsing.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TypecheckingContext {
+    Boolean,
+    Arithmetic,
+    /// Context is unknown or flexible
+    Unknown,
+}
 
 /// Parse the given source code into a syntax tree using tree-sitter.
 ///

@@ -133,8 +133,8 @@ fn is_malformed_line_error(node: &tree_sitter::Node, source: &str) -> bool {
     let root = grandparent.and_then(|n| n.parent());
 
     if let (Some(parent), Some(grandparent), Some(root)) = (parent, grandparent, root) {
-        parent.kind() == "set_operation_bool"
-            && grandparent.kind() == "bool_expr"
+        parent.kind() == "set_comparison"
+            && grandparent.kind() == "comparison_expr"
             && root.kind() == "program"
     } else {
         false
