@@ -1,1 +1,1 @@
-conjure-oxide pretty model.essence --output-format="expression-domains"
+conjure-oxide pretty model.essence --output-format=expression-domains

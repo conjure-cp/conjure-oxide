@@ -13,7 +13,7 @@ use std::io::{BufRead, BufReader, Write};
 use std::sync::{Arc, RwLock};
 use uniplate::Uniplate;
 
-use conjure_cp::ast::{AbstractLiteral, ExprInfo, GroundDomain, Moo, SerdeModel};
+use conjure_cp::ast::{AbstractLiteral, ExprInfo, Expression, GroundDomain, Moo, SerdeModel};
 use conjure_cp::context::Context;
 use serde_json::{Error as JsonError, Value as JsonValue};
 
@@ -116,6 +116,27 @@ pub fn serialize_model(model: &ConjureModel) -> Result<String, JsonError> {
 }
 
 pub fn serialize_domains(model: &ConjureModel) -> Result<String, JsonError> {
+    let mut output = String::new();
+    for constraint in model.constraints() {
+        serialize_domains_expr(constraint, 0, &mut output);
+    }
+    Ok(output)
+}
+
+fn serialize_domains_expr(expr: &Expression, depth: usize, output: &mut String) {
+    let domain = expr
+        .domain_of()
+        .map(|domain| domain.to_string())
+        .unwrap_or_else(|| "<unknown>".to_owned());
+    output.push_str(&" ".repeat(depth));
+    output.push_str(&format!("{expr} :: {domain}\n"));
+
+    for child in expr.children() {
+        serialize_domains_expr(&child, depth + 1, output);
+    }
+}
+
+pub fn serialize_domains_json(model: &ConjureModel) -> Result<String, JsonError> {
     let exprs: Vec<ExprInfo> = model.constraints().iter().map(ExprInfo::create).collect();
     serde_json::to_string_pretty(&exprs)
 }
