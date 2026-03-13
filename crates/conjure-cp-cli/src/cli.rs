@@ -124,8 +124,8 @@ pub struct GlobalArgs {
 
     /// Solver family to use.
     ///
-    /// Possible values: `minion`, `sat`, `sat-log`, `sat-direct`, `sat-order`;
-    /// with `smt` feature: `smt` and `smt-<ints>-<matrices>[-nodiscrete]`
+    /// Possible values: `minion`, `sat`, `sat-log`, `sat-direct`, `sat-order`,
+    /// `smt[-<ints>][-<matrices>][-nodiscrete]`
     /// where `<ints>` is `lia` or `bv`, and `<matrices>` is `arrays` or `atomic`.
     #[arg(
         long,
