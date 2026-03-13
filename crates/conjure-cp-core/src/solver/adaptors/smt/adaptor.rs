@@ -12,7 +12,7 @@ use super::theories::*;
 
 use crate::{Model, solver::*};
 
-const MINIMUM_Z3_VERSION: &str = "4.15.3";
+const MINIMUM_Z3_VERSION: &str = "4.8.12";
 
 /// A [SolverAdaptor] for interacting with SMT solvers, specifically Z3.
 pub struct Smt {
