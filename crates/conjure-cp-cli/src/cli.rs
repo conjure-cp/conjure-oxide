@@ -80,6 +80,12 @@ pub struct GlobalArgs {
     #[arg(long, global = true, help_heading=LOGGING_HELP_HEADING)]
     pub rule_trace: Option<PathBuf>,
 
+    /// Output file for verbose rule-attempt trace in CSV format.
+    ///
+    /// Each row includes: elapsed_s, rule_level, rule_name, rule_set, status, expression.
+    #[arg(long, global = true, help_heading=LOGGING_HELP_HEADING)]
+    pub rule_trace_verbose: Option<PathBuf>,
+
     /// Do not check for multiple equally applicable rules [default].
     ///
     /// Only compatible with the default rewriter.
@@ -130,8 +136,8 @@ pub struct GlobalArgs {
 
     /// Solver family to use.
     ///
-    /// Possible values: `minion`, `sat`, `sat-log`, `sat-direct`, `sat-order`;
-    /// with `smt` feature: `smt` and `smt-<ints>-<matrices>[-nodiscrete]`
+    /// Possible values: `minion`, `sat`, `sat-log`, `sat-direct`, `sat-order`,
+    /// `smt[-<ints>][-<matrices>][-nodiscrete]`
     /// where `<ints>` is `lia` or `bv`, and `<matrices>` is `arrays` or `atomic`.
     #[arg(
         long,

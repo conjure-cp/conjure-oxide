@@ -14,11 +14,9 @@ use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 use uniplate::Biplate;
 
-#[cfg(feature = "smt")]
 use conjure_cp::solver::adaptors::smt::{MatrixTheory, TheoryConfig};
 
 register_rule_set!("Representations", ("Base"), |f: &SolverFamily| {
-    #[cfg(feature = "smt")]
     if matches!(
         f,
         SolverFamily::Smt(TheoryConfig {
