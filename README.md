@@ -20,7 +20,10 @@ The following dependencies are required:
 **Ensure that Conjure is placed early in your PATH to avoid conflicts with
 ImageMagick's conjure command!**
 
-Run `cargo install --path crates/conjure-cp-cli` to install `conjure-oxide`.
+Run `make install` to build and install `conjure-oxide` to `~/.local/bin`,
+and ensure `~/.local/bin` is in your `PATH`. `make test` prepends
+`~/.local/bin` automatically. If you prefer Cargo directly, use `cargo install
+--path crates/conjure-cp-cli --root ~/.local`.
 
 ## Repository Structure
 
@@ -79,4 +82,3 @@ Andrews, and is licenced under the [Mozilla Public Licence 2.0](./LICENSE).
 
 <!-- vim: cc=80
 -->
-

@@ -24,12 +24,16 @@ check-unused-deps: .installed-cargo-extensions.checkpoint
 build:
 	cargo build $(CARGO_LOCKED) --bin conjure-oxide --release
 
+.PHONY: install
+## Installs conjure-oxide to ~/.local/bin
+install: build
+	mkdir -p $$HOME/.local/bin
+	install -m 755 target/release/conjure-oxide $$HOME/.local/bin/conjure-oxide
+
 .PHONY: test
 ## Runs all tests
-test:
-	# we need to build first, so the conjure-oxide executable is available during testing as it is needed by the custom tests.
-	cargo build $(CARGO_LOCKED) --bin conjure-oxide --release 
-	cargo test $(CARGO_LOCKED) --workspace
+test: install
+	PATH="$$HOME/.local/bin:$$PATH" cargo test $(CARGO_LOCKED) --workspace
 
 .PHONY: test-coverage
 ## Runs all tests and produces a coverage report
@@ -38,10 +42,9 @@ test-coverage:
 
 .PHONY: test-accept
 ## Runs all tests in accept mode, then one more time in normal mode
-test-accept:
-	cargo build $(CARGO_LOCKED) --bin conjure-oxide --release
-	ACCEPT=true cargo test $(CARGO_LOCKED) --workspace
-	cargo test $(CARGO_LOCKED) --workspace
+test-accept: install
+	PATH="$$HOME/.local/bin:$$PATH" ACCEPT=true cargo test $(CARGO_LOCKED) --workspace
+	PATH="$$HOME/.local/bin:$$PATH" cargo test $(CARGO_LOCKED) --workspace
 
 .PHONY: fix
 ## Tries to auto-fix hygiene issues reported by `make check`. 
