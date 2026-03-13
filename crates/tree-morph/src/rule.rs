@@ -2,6 +2,12 @@
 //!
 //! See the [`Rule`] trait for more information.
 
+use std::{
+    collections::{HashMap, hash_map::Entry},
+    marker::PhantomData,
+    mem::{Discriminant, discriminant},
+};
+
 use crate::prelude::{Commands, Update};
 use uniplate::Uniplate;
 
@@ -100,12 +106,10 @@ pub trait Rule<T: Uniplate, M> {
         "Anonymous Rule"
     }
 
-    /// Returns whether this rule could potentially apply to the given subtree.
-    ///
-    /// Used as a fast pre-filter to skip rules without calling [`Rule::apply`].
-    /// Returns `true` by default (no filtering).
-    fn can_apply(&self, _subtree: &T) -> bool {
-        true
+    /// None -> Rule applies to all nodes
+    /// List of Discriminants -> Rule only applies to these ones
+    fn applicable_to(&self) -> Option<Vec<Discriminant<T>>> {
+        None
     }
 }
 
@@ -177,8 +181,8 @@ macro_rules! rule_fns {
     };
 }
 
-/// For debugging and tracing, it is helpful to see rules by a meaningful name.
 /// We can create a rule using this struct and pass it into our list of rules directly,
+/// For debugging and tracing, it is helpful to see rules by a meaningful name.
 /// or we can make use of the `named_rule` macro (see [`tree-morph-macros`]).
 ///
 /// This struct and macro is for the short form way of defining named rules. You can change the name
@@ -231,5 +235,90 @@ where
 
     fn name(&self) -> &str {
         self.name
+    }
+}
+
+/// TODO
+pub struct RuleGroups<T, M, R>
+where
+    T: Uniplate,
+    R: Rule<T, M> + Clone,
+{
+    /// Priority -> Rules
+    universal_rules: Vec<Vec<R>>,
+
+    /// Priority -> Discriminant -> Rules
+    filtered_rules: Option<Vec<HashMap<Discriminant<T>, Vec<R>>>>,
+
+    _phantom: PhantomData<(T, M)>,
+}
+
+impl<T, M, R> RuleGroups<T, M, R>
+where
+    T: Uniplate,
+    R: Rule<T, M> + Clone,
+{
+    /// TODO
+    pub fn new(rule_group: Vec<Vec<R>>, prefilter: bool) -> Self {
+        if !prefilter {
+            return Self {
+                filtered_rules: None,
+                universal_rules: rule_group,
+                _phantom: PhantomData,
+            };
+        }
+
+        let mut filtered_rules = Vec::with_capacity(rule_group.len());
+        let mut universal_rules = Vec::with_capacity(rule_group.len());
+
+        for rules in rule_group {
+            let mut filtered: HashMap<Discriminant<T>, Vec<R>> = HashMap::new();
+            let mut universal = Vec::new();
+
+            for rule in rules {
+                match rule.applicable_to() {
+                    None => universal.push(rule),
+                    Some(ds) => {
+                        for d in ds {
+                            filtered.entry(d).or_default().push(rule.clone());
+                        }
+                    }
+                };
+            }
+
+            filtered_rules.push(filtered);
+            universal_rules.push(universal);
+        }
+        Self {
+            universal_rules,
+            filtered_rules: Some(filtered_rules),
+            _phantom: PhantomData,
+        }
+    }
+    
+    /// TODO
+    pub fn levels(&self) -> usize {
+        self.universal_rules.len()
+    }
+
+    /// TODO
+    pub fn get_rules(
+        &self,
+        level: usize,
+        discriminant: Discriminant<T>,
+    ) -> impl Iterator<Item = &R> {
+        let d = discriminant;
+        let filtered = self
+            .filtered_rules
+            .as_ref()
+            .and_then(|filter_map| filter_map[level].get(&d))
+            .map(|f| f.as_slice())
+            .unwrap_or(&[]);
+        let universal = &self.universal_rules[level];
+        universal.iter().chain(filtered.iter())
+    }
+
+    pub fn get_all_rules(&self) -> &[Vec<R>] {
+        self.universal_rules.as_slice()
     }
 }

@@ -5,6 +5,7 @@ use crate::engine::Engine;
 use crate::events::EventHandlers;
 use crate::helpers::{SelectorFn, select_first};
 use crate::prelude::Rule;
+use crate::rule::RuleGroups;
 
 use paste::paste;
 use uniplate::Uniplate;
@@ -13,7 +14,7 @@ use uniplate::Uniplate;
 pub struct EngineBuilder<T, M, R, C>
 where
     T: Uniplate,
-    R: Rule<T, M>,
+    R: Rule<T, M> + Clone,
     C: RewriteCache<T>,
 {
     event_handlers: EventHandlers<T, M, R>,
@@ -51,7 +52,7 @@ macro_rules! add_handler_fns {
 impl<T, M, R> EngineBuilder<T, M, R, NoCache>
 where
     T: Uniplate,
-    R: Rule<T, M>,
+    R: Rule<T, M> + Clone,
 {
     /// Creates a new builder instance with the default [`select_first`] selector.
     pub fn new() -> Self {
@@ -68,14 +69,14 @@ where
 impl<T, M, R, C> EngineBuilder<T, M, R, C>
 where
     T: Uniplate,
-    R: Rule<T, M>,
+    R: Rule<T, M> + Clone,
     C: RewriteCache<T>,
 {
     /// Consumes the builder and returns the constructed [`Engine`] instance.
     pub fn build(self) -> Engine<T, M, R, C> {
         Engine {
             event_handlers: self.event_handlers,
-            rule_groups: self.rule_groups,
+            rule_groups: RuleGroups::new(self.rule_groups, self.use_prefilter),
             selector: self.selector,
             cache: self.cache,
             use_prefilter: self.use_prefilter,
@@ -152,12 +153,8 @@ where
             use_prefilter: self.use_prefilter,
         }
     }
-
-    /// Enable or disable the `can_apply` pre-filter on rules.
-    ///
-    /// When enabled (the default), the engine will call [`Rule::can_apply`] before attempting
-    /// each rule, skipping rules that declare themselves inapplicable to the current subtree.
-    /// Disabling this causes the engine to attempt every rule unconditionally.
+    
+    /// TODO
     pub fn enable_prefilter(mut self, enabled: bool) -> Self {
         self.use_prefilter = enabled;
         self
@@ -167,7 +164,7 @@ where
 impl<T, M, R> Default for EngineBuilder<T, M, R, NoCache>
 where
     T: Uniplate,
-    R: Rule<T, M>,
+    R: Rule<T, M> + Clone,
 {
     fn default() -> Self {
         Self::new()
@@ -177,7 +174,7 @@ where
 impl<T, M, R, C> From<EngineBuilder<T, M, R, C>> for Engine<T, M, R, C>
 where
     T: Uniplate,
-    R: Rule<T, M>,
+    R: Rule<T, M> + Clone,
     C: RewriteCache<T>,
 {
     fn from(val: EngineBuilder<T, M, R, C>) -> Self {

@@ -2,12 +2,14 @@
 //!
 //! See the [`morph`](Engine::morph) for more information.
 
+use std::mem::discriminant;
+
 use crate::cache::{CacheResult, RewriteCache};
 use crate::engine_zipper::{EngineZipper, NaiveZipper};
 use crate::events::EventHandlers;
 use crate::helpers::{SelectorFn, one_or_select};
 use crate::prelude::Rule;
-use crate::rule::apply_into_update;
+use crate::rule::{RuleGroups, apply_into_update};
 use crate::update::Update;
 
 use tracing::{debug, error, info, instrument, trace};
@@ -19,13 +21,13 @@ use uniplate::Uniplate;
 pub struct Engine<T, M, R, C>
 where
     T: Uniplate,
-    R: Rule<T, M>,
+    R: Rule<T, M> + Clone,
     C: RewriteCache<T>,
 {
     pub(crate) event_handlers: EventHandlers<T, M, R>,
 
     /// A collection of groups of equally-prioritised rules.
-    pub(crate) rule_groups: Vec<Vec<R>>,
+    pub(crate) rule_groups: RuleGroups<T, M, R>,
 
     pub(crate) selector: SelectorFn<T, M, R>,
 
@@ -37,7 +39,7 @@ where
 impl<T, M, R, C> Engine<T, M, R, C>
 where
     T: Uniplate,
-    R: Rule<T, M>,
+    R: Rule<T, M> + Clone,
     C: RewriteCache<T>,
 {
     #[instrument(skip(self, subtree, meta, rules))]
@@ -45,14 +47,10 @@ where
         &self,
         subtree: &T,
         meta: &mut M,
-        rules: &'a [R],
+        rules: impl Iterator<Item = &'a R>,
     ) -> Option<(&'a R, Update<T, M>)> {
         trace!("Beginning Rule Checks");
-        let applicable = &mut rules.iter().filter_map(|rule| {
-            if self.use_prefilter && !rule.can_apply(subtree) {
-                trace!("Rule '{}' skipped (can_apply)", rule.name());
-                return None;
-            }
+        let applicable = &mut rules.filter_map(|rule| {
             trace!("Testing Rule '{}'", rule.name());
             self.event_handlers.trigger_before_rule(subtree, meta, rule);
             let update = apply_into_update(rule, subtree, meta);
@@ -208,18 +206,22 @@ where
 
         'main: loop {
             // Return here after every successful rule application
-
-            for (level, rules) in self.rule_groups.iter().enumerate() {
-                debug!("Checking Level {} with {} Rules", level, rules.len());
+            for level in 0..self.rule_groups.levels() {
+            // for (level, rules) in self.rule_groups.get_rules(zipper) {
                 // Try each rule group in the whole tree
 
                 while zipper.go_next_dirty(level).is_some() {
                     trace!("Got Dirty, Level {}", level);
-                    let subtree = zipper.inner.focus();
 
+                    let subtree = zipper.inner.focus();
+                    let d = discriminant(subtree);
+
+                    let rules = self.rule_groups.get_rules(level, d);
+
+                    debug!("Checking Level {} with ? Rules", level);
                     match self.cache.get(subtree, level) {
                         CacheResult::Terminal => {
-                            // debug!("Cache Hit - Nothing Applicable");
+                            debug!("Cache Hit - Nothing Applicable");
                             zipper.set_dirty_from(level + 1);
                             continue;
                         }
@@ -305,11 +307,11 @@ where
         info!("Beginning Naive Morph");
 
         'main: loop {
-            for rules in self.rule_groups.iter() {
+            for rules in self.rule_groups.get_all_rules() {
                 loop {
                     let subtree = zipper.inner.focus();
                     // Choose one transformation from all applicable rules at this level
-                    let selected = self.select_rule(subtree, &mut zipper.meta, rules);
+                    let selected = self.select_rule(subtree, &mut zipper.meta, rules.into_iter());
 
                     if let Some((rule, mut update)) = selected {
                         zipper.inner.replace_focus(update.new_subtree);

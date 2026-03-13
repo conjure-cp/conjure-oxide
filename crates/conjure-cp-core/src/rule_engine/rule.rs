@@ -2,6 +2,7 @@ use std::cell::RefCell;
 use std::collections::BTreeSet;
 use std::fmt::{self, Display, Formatter};
 use std::hash::Hash;
+use std::mem::Discriminant;
 use std::rc::Rc;
 
 use thiserror::Error;
@@ -189,7 +190,6 @@ pub struct Rule<'a> {
     pub name: &'a str,
     pub application: RuleFn,
     pub rule_sets: &'a [(&'a str, u16)], // (name, priority). At runtime, we add the rule to rulesets
-    pub can_apply: Option<fn(&Expression) -> bool>,
 }
 
 impl<'a> Rule<'a> {
@@ -202,7 +202,6 @@ impl<'a> Rule<'a> {
             name,
             application,
             rule_sets,
-            can_apply: None,
         }
     }
 
@@ -249,10 +248,6 @@ impl MorphRule<Expression, SymbolTable> for Rule<'_> {
     fn name(&self) -> &str {
         self.name
     }
-
-    fn can_apply(&self, subtree: &Expression) -> bool {
-        self.can_apply.is_none_or(|f| f(subtree))
-    }
 }
 
 impl MorphRule<Expression, SymbolTable> for &Rule<'_> {
@@ -274,9 +269,7 @@ impl MorphRule<Expression, SymbolTable> for &Rule<'_> {
         self.name
     }
 
-    fn can_apply(&self, subtree: &Expression) -> bool {
-        self.can_apply.is_none_or(|f| f(subtree))
-    }
+    
 }
 
 impl MorphRule<Expression, Rc<RefCell<SymbolTable>>> for Rule<'_> {
@@ -299,10 +292,6 @@ impl MorphRule<Expression, Rc<RefCell<SymbolTable>>> for Rule<'_> {
 
     fn name(&self) -> &str {
         self.name
-    }
-
-    fn can_apply(&self, subtree: &Expression) -> bool {
-        self.can_apply.is_none_or(|f| f(subtree))
     }
 }
 
@@ -331,9 +320,5 @@ impl MorphRule<Expression, SymbolTable> for RuleData<'_> {
 
     fn name(&self) -> &str {
         self.rule.name
-    }
-
-    fn can_apply(&self, subtree: &Expression) -> bool {
-        self.rule.can_apply.is_none_or(|f| f(subtree))
     }
 }
