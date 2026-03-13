@@ -106,5 +106,5 @@ Now, having all of this knowledge in the back of your head, you will understand 
 [^2]: Rust’s original implementation language was OCaml, which is functional  
 [^3]: Similar to calling functions in dynamically typed languages like Python, but with enforced types
 [^4]: This is because, at their core, all functions are essentially of the type (..) -> ReturnType. Making the return type standard allows for all functions to be of similar types.
-[^5]: Which immediately propogates the error up through the call stack in rust.
+[^5]: Which immediately propagates the error up through the call stack in rust.
 [^6]: This is what caused the infamous cloudflare outage.

@@ -2,9 +2,7 @@
 
 # Getting Started
 
-- [Installation](./getting_started/installation/index.md)
-  - [Downloading a Nightly Release]()
-  - [Building from Source]()
+- [Installation](./getting_started/installation.md)
 - [Quick Start](./getting_started/quick-start.md)
 - [Command Line Guide]()
   - [Logging](./getting_started/command-line/logging.md)
@@ -20,6 +18,9 @@
 - [Contributor's Guide](./developers_guide/contributors_guide/index.md)
   - [How we work](./developers_guide/contributors_guide/how_we_work.md)
   - [Setting up your development environment](./developers_guide/contributors_guide/set-dev-env.md)
+  - [Running and writing integration tests]()
+  - [What we didn't do]()
+  - [Onboarding](./developers_guide/contributors_guide/onboarding.md)
   - [Git Flow](./developers_guide/contributors_guide/Git-Flow.md)
   - [Writing Documentation Guides](./developers_guide/contributors_guide/creating_documentation_guides.md)
   - [Writing Documentation in Code](./developers_guide/contributors_guide/creating_documentation_code.md)
@@ -40,22 +41,28 @@
 - [CI/CD](./developers_guide/ci_cd/index.md)
   - [Coverage](./developers_guide/ci_cd/coverage.md)
   - [Github Actions: Cookbook](./developers_guide/ci_cd/github_actions.md)
+  - [Test CI Locally](./developers_guide/ci_cd/test_ci_locally.md)
 
 <!-- New additions -->
 - [Reading the docs]()
 - [Useful Resources]()
 
 # Documentation
-- [Essence Parser](./documentation/essence_parser.md)
+
+- [Essence Parser](./documentation/Essence-Parser.md)
   - [Tree Morph Benchmarking](./documentation/tree_morph_benchmarking.md)
   - [ProTrace Module](./documentation/ProTrace-module.md)
 - [Sets]()
   - [Expression Rewriting: Rules and RuleSets](./documentation/sets/expression_rewriting_rules_and_rulesets.md)
   - [Horizontal Set Rules](./documentation/sets/conjure-horizontal-set-rules.md)
   - [Vertical Set Rules: Occurrence Representation](./documentation/sets/Conjure-Vertical-Set-Rules-Occurrence-Representation.md)
+<<<<<<< HEAD
 - [LSP](./documentation/LSP/lsp_general_structure.md)
   - [LSP Server-Client](./documentation/LSP/lsp-server-client.md)
   - [Diagnostics API](./documentation/LSP/diagnostics_api.md)
+=======
+- [LSP]()
+>>>>>>> f9c9e1d54f00ddfe4ffdd8f50055f20b775626cd
   - [Essence Error Catalog for Error Underlining](./documentation/LSP/Essence-Error-Catalog-for-LSP-Error-Underlining-implementation.md)
   - [LSP Error Testing](./documentation/LSP/lsp_tests.md)
 - [Testing: The Ideal Scenario](./documentation/testing/ideal-scenario-of-testing.md)
@@ -66,6 +73,13 @@
 
 <!-- TODO: will be moved -- likely the content of these will end off here -->
 - [Useful Links](./documentation/links.md)
+- [Testing](./documentation/testing/testing.md)
+  - [Roundtrip Testing](./documentation/testing/roundtrip/roundtrip_testing.md)
+- [Types]()
+  - [Creating Types Guide](./documentation/types/creating_types_guide.md)
+  - [Functions](./documentation/types/functions.md)
+  - [Multisets](./documentation/types/multisets.md)
+- [Essence Parser](./documentation/essence_parser.md)
 <!-- TODO: add the error detection documentations -->
 - [Error Detection](./documentation/error_detection/error_classification.md)
 - [Side Projects]()

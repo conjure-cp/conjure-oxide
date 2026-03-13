@@ -15,6 +15,7 @@ pub mod error;
 pub mod parse;
 pub mod representation;
 pub mod rule_engine;
+pub mod settings;
 pub mod solver;
 pub mod stats;
 

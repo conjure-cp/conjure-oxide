@@ -9,10 +9,10 @@
 
 - RFC: Request for Comments. It is a design proposal, often written before or alongside major changes.
 
-- Essence: A high level constraint modelling language. Essence is _delcarative_, i.e. it states the problem rather than how to solve it. It also lets us model things at the class level.
+- Essence: A high level constraint modelling language. Essence is _declarative_, i.e. it states the problem rather than how to solve it. It also lets us model things at the class level.
 
   - A class-level model (i.e. description of a problem) may have some parameters. To get from a class-level model to an instance model, we provide concrete values for all the parameters.
- 
+
     The following describes a problem class:
   
     ```
@@ -20,14 +20,15 @@
     find x
     such that x < N
     ```
-    
+
     The following are instances of that class:
-    
+
     ```
     letting N be 3
     find x
     such that x < N
     ```
+
     ```
     letting N be 42
     find x
@@ -43,4 +44,4 @@
 - Minion: Constraint solver. It takes low level constraint models (like Savile Row output) and searches for solutions. Specifically, it has its own input language that is [extensively documented.](https://math.chapman.edu/~jipsen/talks/Milan2010/MinionManual09.pdf)
 
 For an in-depth glossary of GitHub terms, see the [GitHub Docs Glossary](https://docs.github.com/en/get-started/learning-about-github/github-glossary).
-This [Git Cheat Sheet](https://git-scm.com/cheat-sheet) also contains resources about git commands. 
+This [Git Cheat Sheet](https://git-scm.com/cheat-sheet) also contains resources about git commands.

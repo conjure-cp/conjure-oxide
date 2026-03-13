@@ -87,7 +87,7 @@ pub fn pretty_vec<T: Display>(elems: &[T]) -> String {
 /// Returns None if the symbol is not in the symbol table, or if it is not a variable.
 pub fn pretty_variable_declaration(symbol_table: &SymbolTable, var_name: &Name) -> Option<String> {
     let decl = symbol_table.lookup(var_name)?;
-    let var = decl.as_var()?;
+    let var = decl.as_find()?;
     let domain = &var.domain_of();
     Some(format!("find {var_name}: {domain}"))
 }

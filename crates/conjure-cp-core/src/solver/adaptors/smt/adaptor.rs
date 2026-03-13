@@ -1,6 +1,7 @@
 use std::iter::FusedIterator;
 use std::sync::Mutex;
 
+use versions::Versioning;
 use z3::{
     Config, PrepareSynchronized, SatResult, Solvable, Solver, Statistics, Translate, with_z3_config,
 };
@@ -10,6 +11,8 @@ use super::store::*;
 use super::theories::*;
 
 use crate::{Model, solver::*};
+
+const MINIMUM_Z3_VERSION: &str = "4.8.12";
 
 /// A [SolverAdaptor] for interacting with SMT solvers, specifically Z3.
 pub struct Smt {
@@ -54,6 +57,41 @@ impl Smt {
             ..Default::default()
         }
     }
+}
+
+fn extract_z3_version(full_version: &str) -> Result<&str, SolverError> {
+    match full_version.strip_prefix("Z3 ") {
+        Some(v) => v.split_whitespace().next().ok_or_else(|| {
+            SolverError::Runtime(format!(
+                "could not read Z3 runtime version from '{full_version}'"
+            ))
+        }),
+        None => full_version.split_whitespace().next().ok_or_else(|| {
+            SolverError::Runtime(format!(
+                "could not read Z3 runtime version from '{full_version}'"
+            ))
+        }),
+    }
+}
+
+fn ensure_supported_z3_runtime() -> Result<(), SolverError> {
+    let full_version = z3::full_version();
+    let runtime_version = extract_z3_version(full_version)?;
+    let runtime_version = Versioning::new(runtime_version).ok_or_else(|| {
+        SolverError::Runtime(format!(
+            "could not parse Z3 runtime version from '{full_version}'"
+        ))
+    })?;
+    let minimum_version =
+        Versioning::new(MINIMUM_Z3_VERSION).expect("minimum Z3 version should be valid");
+
+    if runtime_version < minimum_version {
+        return Err(SolverError::Runtime(format!(
+            "unsupported Z3 runtime version '{full_version}' (parsed as {runtime_version}); conjure-oxide requires Z3 >= {MINIMUM_Z3_VERSION}. This usually means an older system or precompiled Z3 was picked up at build time."
+        )));
+    }
+
+    Ok(())
 }
 
 impl SolverAdaptor for Smt {
@@ -108,13 +146,14 @@ impl SolverAdaptor for Smt {
     }
 
     fn load_model(&mut self, model: Model, _: private::Internal) -> Result<(), SolverError> {
-        let submodel = model.as_submodel();
+        // Fail fast if an older system or precompiled Z3 was linked in.
+        ensure_supported_z3_runtime()?;
         load_model_impl(
             &mut self.store,
             &mut self.solver_inst,
             &self.theory_config,
-            &submodel.symbols(),
-            submodel.constraints().as_slice(),
+            &model.symbols(),
+            model.constraints().as_slice(),
         )?;
         Ok(())
     }
@@ -124,7 +163,7 @@ impl SolverAdaptor for Smt {
     }
 
     fn get_name(&self) -> &'static str {
-        "SMT"
+        "smt"
     }
 
     fn write_solver_input_file(
