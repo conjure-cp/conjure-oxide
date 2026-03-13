@@ -17,7 +17,7 @@ Comprehension rule for Occurrence. Uses the "<-" expression projection (see [Hor
 2. matches the generator to an expression of the form "iPat <- s", iPat, later called "i" is a quantified variable
 3. checks that s is a set, and that it has Occurrence representation
 4. retrieves matrix m representing this set, and its domain
-5. returns Comprehension with same body, original generator is replaced by a generator specifying the domain of the quantified variable, followed by a condition that the ith entry of the Occurrence matrix is true. 
+5. returns Comprehension with same body, original generator is replaced by a generator specifying the domain of the quantified variable, followed by a condition that the i-th entry of the Occurrence matrix is true. 
 * i.e. it loops over the given domain and checks that element "i" is present in the set. 
 ### Code:
 ```Haskell
@@ -58,7 +58,7 @@ Picking the first option: Question 1: [q3 in B | q3 <- A]
 
 ## Set-in{Occurrence}
 
-Set-in rule for Occurrence representation. In Occurrence representation, an element "i" is in a set if and only if the "ith" entry of the Occurrence matrix is true. 
+Set-in rule for Occurrence representation. In Occurrence representation, an element "i" is in a set if and only if the "i-th" entry of the Occurrence matrix is true. 
 * This rule is not necessary, "in" can be implemented using the comprehension rule above. 
 
 1. identifies a pattern "x in s"

@@ -90,19 +90,30 @@ module.exports = grammar ({
       ))
     ),
 
-    range_list: $ => prec(2, commaSep1(choice($.int_range, $.atom))),
+    range_list: $ => prec(2, commaSep1(choice($.int_range, $.atom, $.arithmetic_expr))),
 
     int_range: $ => seq(
-      optional(field("lower", $.atom)), 
+      optional(field("lower", choice($.atom, $.arithmetic_expr))), 
       "..", 
-      optional(field("upper", $.atom))
+      optional(field("upper", choice($.atom, $.arithmetic_expr)))
     ),
 
-    tuple_domain: $ => seq(
-      optional("tuple"),
-      "(",
-      commaSep1($.domain),
-      ")"
+    tuple_domain: $ => choice(
+      // explicit 'tuple' form: allows empty, singleton, or multi-arity
+      seq(
+        "tuple",
+        "(",
+        optional(commaSep1($.domain)),
+        ")"
+      ),
+      // parenthesized form without 'tuple' is allowed only for arity >= 2
+      seq(
+        "(",
+        $.domain,
+        ",",
+        commaSep1($.domain),
+        ")"
+      )
     ),
 
     matrix_domain: $ => seq(
@@ -177,6 +188,7 @@ module.exports = grammar ({
     ),
 
     // Constraints 
+    // boolean expressions require the operands to be boolean and return a boolean
     bool_expr: $ => prec(2, choice(
       field("not_expression", $.not_expr),
       field("and_expression", $.and_expr),
@@ -185,7 +197,6 @@ module.exports = grammar ({
       field("iff_expr", $.iff_expr),
       field("list_combining_expression_bool", $.list_combining_expr_bool),
       field("sub_bool_expression", $.sub_bool_expr),
-      field("set_operation_bool", $.set_operation_bool),
       field("quantifier_expression", $.quantifier_expr),
     )),
 
@@ -253,19 +264,35 @@ module.exports = grammar ({
       ")"
     ),
 
-    comparison_expr: $ => prec(5, prec.left(seq(
-      field("left", choice($.bool_expr, $.arithmetic_expr, $.atom)), 
-      field("operator", choice("=", "!=", "<lex", "<=lex", ">lex", ">=lex", "<=", ">=", "<", ">")),
+    // comparison expressions - split by operand types for type checking
+    comparison_expr: $ => prec(5, choice(
+      $.arithmetic_comparison,
+      $.equality_comparison,
+      $.set_comparison
+    )),
+
+    // Arithmetic comparisons: require arithmetic operands, return boolean
+    arithmetic_comparison: $ => prec.left(seq(
+      field("left", choice($.arithmetic_expr, $.atom)),
+      field("operator", choice("<lex", "<=lex", ">lex", ">=lex", "<=", ">=", "<", ">")),
+      field("right", choice($.arithmetic_expr, $.atom))
+    )),
+
+    // Equality comparisons: work on any type, return boolean
+    equality_comparison: $ => prec.left(seq(
+      field("left", choice($.bool_expr, $.arithmetic_expr, $.atom)),
+      field("operator", choice("=", "!=")),
       field("right", choice($.bool_expr, $.arithmetic_expr, $.atom))
-    ))),
+    )),
 
-    sub_bool_expr: $ => seq("(", field("expression", choice($.bool_expr, $.comparison_expr)), ")"),
-
-    set_operation_bool: $ => seq(
+    // Set comparisons: require set operands, return boolean
+    set_comparison: $ => seq(
       field("left", $.atom),
       field("operator", choice("in", "subset", "subsetEq", "supset", "supsetEq")),
       field("right", $.atom)
     ),
+
+    sub_bool_expr: $ => seq("(", field("expression", choice($.bool_expr, $.comparison_expr)), ")"),
     
     arithmetic_expr: $ => prec(3, choice(
       field("toInt_expr", $.toInt_expr),
@@ -292,18 +319,30 @@ module.exports = grammar ({
       field("index_or_slice", $.index_or_slice),
       field("set_literal", $.set_literal),
       field("set_operation", $.set_operation),
-      field("flatten", $.flatten)
+      field("flatten", $.flatten),
+      field("table", $.table),
+      field("negative_table", $.negative_table)
     )),
 
     sub_atom_expr: $ => seq("(", field("expression", $.atom), ")"),
 
-    tuple: $ => prec(-5, seq(
-      "(",
-      field("element", choice($.arithmetic_expr, $.atom)),
-      ",",
-      field("element", commaSep1(choice($.arithmetic_expr, $.atom))),
-      ")"
-    )),
+    tuple: $ => prec(-5,choice(
+      // explicit tuple value using the 'tuple' keyword (allows empty, singleton, multi-arity)
+      seq(
+        "tuple",
+        "(",
+        optional(commaSep1(choice($.arithmetic_expr, $.atom))),
+        ")"
+      ),
+      // parenthesized tuple value without keyword (arity >= 2)
+      seq(
+        "(",
+        field("element", choice($.arithmetic_expr, $.atom)),
+        ",",
+        field("element", commaSep1(choice($.arithmetic_expr, $.atom))),
+        ")"
+      ))
+    ),
 
     matrix: $ => seq(
       "[",
@@ -387,6 +426,24 @@ module.exports = grammar ({
       "(",
       optional(field("depth", seq($.integer, ","))),
       field("expression", $.atom),
+      ")"
+    ),
+
+    table: $ => seq(
+      "table",
+      "(",
+      field("variables", $.matrix),
+      ",",
+      field("rows", $.matrix),
+      ")"
+    ),
+
+    negative_table: $ => seq(
+      "negativeTable",
+      "(",
+      field("variables", $.matrix),
+      ",",
+      field("rows", $.matrix),
       ")"
     ),
 

@@ -1,20 +1,26 @@
 use super::{RewriteError, RuleSet, resolve_rules::RuleData};
 use crate::{
     Model,
-    ast::{Expression as Expr, SubModel, comprehension::Comprehension},
+    ast::{Expression as Expr, assertions::debug_assert_model_well_formed},
     bug,
     rule_engine::{
         get_rules_grouped,
-        rewriter_common::{RuleResult, log_rule_application},
-        submodel_zipper::submodel_ctx,
+        rewriter_common::{
+            RuleResult, VariableDeclarationSnapshot, log_rule_application,
+            snapshot_variable_declarations,
+        },
+        submodel_zipper::expression_ctx,
     },
+    settings::{Rewriter, set_current_rewriter},
     stats::RewriterStats,
 };
 
 use itertools::Itertools;
-use std::{process::exit, sync::Arc, time::Instant};
+use std::{sync::Arc, time::Instant};
 use tracing::{Level, span, trace};
-use uniplate::{Biplate, Uniplate};
+
+type VariableSnapshots = Option<(VariableDeclarationSnapshot, VariableDeclarationSnapshot)>;
+type ApplicableRule<'a, CtxFnType> = (RuleResult<'a>, u16, Expr, CtxFnType, VariableSnapshots);
 
 /// A naive, exhaustive rewriter for development purposes. Applies rules in priority order,
 /// favouring expressions found earlier during preorder traversal of the tree.
@@ -22,8 +28,9 @@ pub fn rewrite_naive<'a>(
     model: &Model,
     rule_sets: &Vec<&'a RuleSet<'a>>,
     prop_multiple_equally_applicable: bool,
-    exit_after_unrolling: bool,
 ) -> Result<Model, RewriteError> {
+    set_current_rewriter(Rewriter::Naive);
+
     let rules_grouped = get_rules_grouped(rule_sets)
         .unwrap_or_else(|_| bug!("get_rule_priorities() failed!"))
         .into_iter()
@@ -41,37 +48,21 @@ pub fn rewrite_naive<'a>(
         "Model before rewriting:\n\n{}\n--\n",
         model
     );
+    trace!(
+        target: "rule_engine_human_verbose",
+        "elapsed_s,rule_level,rule_name,rule_set,status,expression"
+    );
 
     // Rewrite until there are no more rules left to apply.
     while done_something {
-        let mut new_model = None;
-        done_something = false;
-
-        // Rewrite each sub-model in the tree, largest first.
-        for (mut submodel, ctx) in <_ as Biplate<SubModel>>::contexts_bi(&model) {
-            if try_rewrite_model(
-                &mut submodel,
-                &rules_grouped,
-                prop_multiple_equally_applicable,
-                &mut rewriter_stats,
-            )
-            .is_some()
-            {
-                new_model = Some(ctx(submodel));
-                done_something = true;
-                break;
-            }
-        }
-        if let Some(new_model) = new_model {
-            model = new_model;
-        }
-
-        if Biplate::<Comprehension>::universe_bi(model.as_submodel()).is_empty()
-            && exit_after_unrolling
-        {
-            println!("{}", model.as_submodel().root().universe().len());
-            exit(0);
-        }
+        done_something = try_rewrite_model(
+            &mut model,
+            &rules_grouped,
+            prop_multiple_equally_applicable,
+            &mut rewriter_stats,
+            &run_start,
+        )
+        .is_some();
     }
 
     let run_end = Instant::now();
@@ -96,19 +87,19 @@ pub fn rewrite_naive<'a>(
 //
 // Returns None if no change was made.
 fn try_rewrite_model(
-    submodel: &mut SubModel,
+    submodel: &mut Model,
     rules_grouped: &Vec<(u16, Vec<RuleData<'_>>)>,
     prop_multiple_equally_applicable: bool,
     stats: &mut RewriterStats,
+    run_start: &Instant,
 ) -> Option<()> {
-    type CtxFn = Arc<dyn Fn(Expr) -> SubModel>;
-    let mut results: Vec<(RuleResult<'_>, u16, Expr, CtxFn)> = vec![];
+    type CtxFn = Arc<dyn Fn(Expr) -> Expr>;
+    let mut results: Vec<ApplicableRule<'_, CtxFn>> = vec![];
 
     // Iterate over rules by priority in descending order.
     'top: for (priority, rules) in rules_grouped.iter() {
-        // Using Biplate, rewrite both the expression tree, and any value lettings in the symbol
-        // table.
-        for (expr, ctx) in submodel_ctx(submodel.clone()) {
+        // Rewrite within the current root expression tree.
+        for (expr, ctx) in expression_ctx(submodel.root().clone()) {
             // Clone expr and ctx so they can be reused
             let expr = expr.clone();
             let ctx = ctx.clone();
@@ -126,11 +117,29 @@ fn try_rewrite_model(
                 #[cfg(debug_assertions)]
                 tracing::trace!(rule_name = rd.rule.name, "Trying rule");
 
+                let before_variable_snapshot = matches!(expr, Expr::Root(_, _))
+                    .then(|| snapshot_variable_declarations(&submodel.symbols()));
+
                 match (rd.rule.application)(&expr, &submodel.symbols()) {
                     Ok(red) => {
+                        log_verbose_rule_attempt(
+                            run_start,
+                            priority,
+                            rd.rule.name,
+                            rd.rule_set.name,
+                            "success",
+                            &expr,
+                        );
+
                         // Count successful rule applications
                         stats.rewriter_rule_applications =
                             Some(stats.rewriter_rule_applications.unwrap_or(0) + 1);
+
+                        let after_variable_snapshot = before_variable_snapshot
+                            .as_ref()
+                            .map(|_| snapshot_variable_declarations(&red.symbols));
+                        let variable_snapshots =
+                            before_variable_snapshot.zip(after_variable_snapshot);
 
                         // Collect applicable rules
                         results.push((
@@ -141,9 +150,19 @@ fn try_rewrite_model(
                             *priority,
                             expr.clone(),
                             ctx.clone(),
+                            variable_snapshots,
                         ));
                     }
                     Err(_) => {
+                        log_verbose_rule_attempt(
+                            run_start,
+                            priority,
+                            rd.rule.name,
+                            rd.rule_set.name,
+                            "fail",
+                            &expr,
+                        );
+
                         // when called a lot, this becomes very expensive!
                         #[cfg(debug_assertions)]
                         tracing::trace!(
@@ -168,28 +187,75 @@ fn try_rewrite_model(
         [] => {
             return None;
         } // no rules are applicable.
-        [(result, _priority, expr, ctx), ..] => {
+        [(result, _priority, expr, ctx, variable_snapshots), ..] => {
             if prop_multiple_equally_applicable {
                 assert_no_multiple_equally_applicable_rules(&results, rules_grouped);
             }
 
             // Extract the single applicable rule and apply it
-            log_rule_application(result, expr, submodel);
+            log_rule_application(
+                result,
+                expr,
+                &submodel.symbols(),
+                variable_snapshots
+                    .as_ref()
+                    .map(|(before, after)| (before, after)),
+            );
 
             // Replace expr with new_expression
-            *submodel = ctx(result.reduction.new_expression.clone());
+            let new_root = ctx(result.reduction.new_expression.clone());
+            submodel.replace_root(new_root);
 
             // Apply new symbols and top level
             result.reduction.clone().apply(submodel);
+
+            #[cfg(debug_assertions)]
+            {
+                let assertion_context = format!(
+                    "naive rewriter after applying rule '{}'",
+                    result.rule_data.rule.name
+                );
+                debug_assert_model_well_formed(submodel, &assertion_context);
+            }
         }
     }
 
     Some(())
 }
 
+fn csv_escape(field: &str) -> String {
+    if field.contains([',', '"', '\n', '\r']) {
+        format!("\"{}\"", field.replace('"', "\"\""))
+    } else {
+        field.to_string()
+    }
+}
+
+fn log_verbose_rule_attempt(
+    run_start: &Instant,
+    priority: &u16,
+    rule_name: &str,
+    rule_set_name: &str,
+    status: &str,
+    expr: &Expr,
+) {
+    let elapsed_seconds = run_start.elapsed().as_secs_f64();
+    let expr_str = expr.to_string();
+    trace!(
+        target: "rule_engine_human_verbose",
+        "{:.3},{},{},{},{},{}",
+        elapsed_seconds,
+        priority,
+        csv_escape(rule_name),
+        csv_escape(rule_set_name),
+        status,
+        csv_escape(&expr_str)
+    );
+}
+
 // Exits with a bug if there are multiple equally applicable rules for an expression.
 fn assert_no_multiple_equally_applicable_rules<CtxFnType>(
-    results: &Vec<(RuleResult<'_>, u16, Expr, CtxFnType)>,
+    results: &Vec<ApplicableRule<'_, CtxFnType>>,
     rules_grouped: &Vec<(u16, Vec<RuleData<'_>>)>,
 ) {
     if results.len() <= 1 {
@@ -198,7 +264,7 @@ fn assert_no_multiple_equally_applicable_rules<CtxFnType>(
 
     let names: Vec<_> = results
         .iter()
-        .map(|(result, _, _, _)| result.rule_data.rule.name)
+        .map(|(result, _, _, _, _)| result.rule_data.rule.name)
         .collect();
 
     // Extract the expression from the first result

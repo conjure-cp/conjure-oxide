@@ -2,8 +2,8 @@ use super::categories::{Category, CategoryOf};
 use super::name::Name;
 use super::serde::{DefaultWithId, HasId, IdPtr, ObjId, PtrAsInner};
 use super::{
-    DecisionVariable, DomainPtr, Expression, GroundDomain, HasDomain, Moo, RecordEntry, ReturnType,
-    Typeable,
+    DecisionVariable, DomainPtr, Expression, GroundDomain, HasDomain, Moo, RecordEntry, Reference,
+    ReturnType, Typeable,
 };
 use parking_lot::{
     MappedRwLockReadGuard, MappedRwLockWriteGuard, RwLock, RwLockReadGuard, RwLockWriteGuard,
@@ -11,6 +11,7 @@ use parking_lot::{
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use std::any::TypeId;
+use std::collections::VecDeque;
 use std::fmt::{Debug, Display};
 use std::mem;
 use std::sync::Arc;
@@ -126,7 +127,7 @@ impl DeclarationPtr {
         DeclarationPtr::from_declaration(Declaration::new(name, kind))
     }
 
-    /// Creates a new decision variable declaration with the decision category.
+    /// Creates a new find declaration.
     ///
     /// # Examples
     ///
@@ -134,43 +135,56 @@ impl DeclarationPtr {
     /// use conjure_cp_core::ast::{DeclarationPtr,Name,DeclarationKind,Domain,Range};
     ///
     /// // find x: int(1..5)
-    /// let declaration = DeclarationPtr::new_var(
+    /// let declaration = DeclarationPtr::new_find(
     ///     Name::User("x".into()),
     ///     Domain::int(vec![Range::Bounded(1,5)]));
     ///
     /// ```
-    pub fn new_var(name: Name, domain: DomainPtr) -> DeclarationPtr {
-        let kind =
-            DeclarationKind::DecisionVariable(DecisionVariable::new(domain, Category::Decision));
+    pub fn new_find(name: Name, domain: DomainPtr) -> DeclarationPtr {
+        let kind = DeclarationKind::Find(DecisionVariable::new(domain));
         DeclarationPtr::new(name, kind)
     }
 
-    /// Creates a new decision variable with the quantified category.
-    ///
-    /// This is useful to represent a quantified / induction variable in a comprehension.
-    pub fn new_var_quantified(name: Name, domain: DomainPtr) -> DeclarationPtr {
-        let kind =
-            DeclarationKind::DecisionVariable(DecisionVariable::new(domain, Category::Quantified));
-
-        DeclarationPtr::new(name, kind)
-    }
-
-    /// Creates a new domain letting declaration.
+    /// Creates a new given declaration.
     ///
     /// # Examples
     ///
     /// ```
     /// use conjure_cp_core::ast::{DeclarationPtr,Name,DeclarationKind,Domain,Range};
     ///
-    /// // letting MyDomain be int(1..5)
-    /// let declaration = DeclarationPtr::new_domain_letting(
-    ///     Name::User("MyDomain".into()),
+    /// // given n: int(1..5)
+    /// let declaration = DeclarationPtr::new_given(
+    ///     Name::User("n".into()),
     ///     Domain::int(vec![Range::Bounded(1,5)]));
     ///
     /// ```
-    pub fn new_domain_letting(name: Name, domain: DomainPtr) -> DeclarationPtr {
-        let kind = DeclarationKind::DomainLetting(domain);
+    pub fn new_given(name: Name, domain: DomainPtr) -> DeclarationPtr {
+        let kind = DeclarationKind::Given(domain);
         DeclarationPtr::new(name, kind)
+    }
+
+    /// Creates a new quantified declaration for local comprehension scopes.
+    ///
+    /// Used when creating the quantified variable in a generator.
+    pub fn new_quantified(name: Name, domain: DomainPtr) -> DeclarationPtr {
+        DeclarationPtr::new(
+            name,
+            DeclarationKind::Quantified(Quantified {
+                domain,
+                generator: None,
+            }),
+        )
+    }
+
+    /// Creates a quantified declaration backed by a generator declaration.
+    ///
+    /// This is used in comprehensions to refer to a quantified variable that is already defined using a generator.
+    pub fn new_quantified_from_generator(decl: &DeclarationPtr) -> Option<DeclarationPtr> {
+        let kind = DeclarationKind::Quantified(Quantified {
+            domain: decl.domain()?,
+            generator: Some(decl.clone()),
+        });
+        Some(DeclarationPtr::new(decl.name().clone(), kind))
     }
 
     /// Creates a new value letting declaration.
@@ -195,34 +209,22 @@ impl DeclarationPtr {
         DeclarationPtr::new(name, kind)
     }
 
-    /// Creates a new given declaration.
+    /// Creates a new domain letting declaration.
     ///
     /// # Examples
     ///
     /// ```
     /// use conjure_cp_core::ast::{DeclarationPtr,Name,DeclarationKind,Domain,Range};
     ///
-    /// // given n: int(1..5)
-    /// let declaration = DeclarationPtr::new_given(
-    ///     Name::User("n".into()),
+    /// // letting MyDomain be int(1..5)
+    /// let declaration = DeclarationPtr::new_domain_letting(
+    ///     Name::User("MyDomain".into()),
     ///     Domain::int(vec![Range::Bounded(1,5)]));
     ///
     /// ```
-    pub fn new_given(name: Name, domain: DomainPtr) -> DeclarationPtr {
-        let kind = DeclarationKind::Given(domain);
+    pub fn new_domain_letting(name: Name, domain: DomainPtr) -> DeclarationPtr {
+        let kind = DeclarationKind::DomainLetting(domain);
         DeclarationPtr::new(name, kind)
-    }
-
-    /// Creates a new given declaration backed by a quantified declaration.
-    ///
-    /// This is used in abstract comprehensions, where a variable in the return expression
-    /// is "given", but also references its counterpart in the generator.
-    pub fn new_given_quantified(decl: &DeclarationPtr) -> Option<DeclarationPtr> {
-        let kind = DeclarationKind::GivenQuantified(GivenQuantified {
-            domain: decl.domain()?,
-            generator: decl.clone(),
-        });
-        Some(DeclarationPtr::new(decl.name().clone(), kind))
     }
 
     /// Creates a new record field declaration.
@@ -258,18 +260,20 @@ impl DeclarationPtr {
     /// use conjure_cp_core::ast::{DeclarationPtr, Name, Domain, Range, GroundDomain};
     ///
     /// // find a: int(1..5)
-    /// let declaration = DeclarationPtr::new_var(Name::User("a".into()),Domain::int(vec![Range::Bounded(1,5)]));
+    /// let declaration = DeclarationPtr::new_find(Name::User("a".into()),Domain::int(vec![Range::Bounded(1,5)]));
     ///
     /// assert!(declaration.domain().is_some_and(|x| x.as_ground().unwrap() == &GroundDomain::Int(vec![Range::Bounded(1,5)])))
     ///
     /// ```
     pub fn domain(&self) -> Option<DomainPtr> {
         match &self.kind() as &DeclarationKind {
-            DeclarationKind::DecisionVariable(var) => Some(var.domain_of()),
-            DeclarationKind::ValueLetting(e) => e.domain_of(),
+            DeclarationKind::Find(var) => Some(var.domain_of()),
+            DeclarationKind::ValueLetting(e) | DeclarationKind::TemporaryValueLetting(e) => {
+                e.domain_of()
+            }
             DeclarationKind::DomainLetting(domain) => Some(domain.clone()),
             DeclarationKind::Given(domain) => Some(domain.clone()),
-            DeclarationKind::GivenQuantified(inner) => Some(inner.domain.clone()),
+            DeclarationKind::Quantified(inner) => Some(inner.domain.clone()),
             DeclarationKind::RecordField(domain) => Some(domain.clone()),
         }
     }
@@ -287,8 +291,8 @@ impl DeclarationPtr {
     /// use conjure_cp_core::ast::{DeclarationPtr,DeclarationKind,Name,Domain,Range};
     ///
     /// // find a: int(1..5)
-    /// let declaration = DeclarationPtr::new_var(Name::User("a".into()),Domain::int(vec![Range::Bounded(1,5)]));
-    /// assert!(matches!(&declaration.kind() as &DeclarationKind, DeclarationKind::DecisionVariable(_)))
+    /// let declaration = DeclarationPtr::new_find(Name::User("a".into()),Domain::int(vec![Range::Bounded(1,5)]));
+    /// assert!(matches!(&declaration.kind() as &DeclarationKind, DeclarationKind::Find(_)))
     /// ```
     pub fn kind(&self) -> MappedRwLockReadGuard<'_, DeclarationKind> {
         self.map(|x| &x.kind)
@@ -302,7 +306,7 @@ impl DeclarationPtr {
     /// use conjure_cp_core::ast::{DeclarationPtr,Name,Domain,Range};
     ///
     /// // find a: int(1..5)
-    /// let declaration = DeclarationPtr::new_var(Name::User("a".into()),Domain::int(vec![Range::Bounded(1,5)]));
+    /// let declaration = DeclarationPtr::new_find(Name::User("a".into()),Domain::int(vec![Range::Bounded(1,5)]));
     ///
     /// assert_eq!(&declaration.name() as &Name, &Name::User("a".into()))
     /// ```
@@ -311,9 +315,9 @@ impl DeclarationPtr {
     }
 
     /// This declaration as a decision variable, if it is one.
-    pub fn as_var(&self) -> Option<MappedRwLockReadGuard<'_, DecisionVariable>> {
+    pub fn as_find(&self) -> Option<MappedRwLockReadGuard<'_, DecisionVariable>> {
         RwLockReadGuard::try_map(self.read(), |x| {
-            if let DeclarationKind::DecisionVariable(var) = &x.kind {
+            if let DeclarationKind::Find(var) = &x.kind {
                 Some(var)
             } else {
                 None
@@ -323,9 +327,9 @@ impl DeclarationPtr {
     }
 
     /// This declaration as a mutable decision variable, if it is one.
-    pub fn as_var_mut(&mut self) -> Option<MappedRwLockWriteGuard<'_, DecisionVariable>> {
+    pub fn as_find_mut(&mut self) -> Option<MappedRwLockWriteGuard<'_, DecisionVariable>> {
         RwLockWriteGuard::try_map(self.write(), |x| {
-            if let DeclarationKind::DecisionVariable(var) = &mut x.kind {
+            if let DeclarationKind::Find(var) = &mut x.kind {
                 Some(var)
             } else {
                 None
@@ -361,7 +365,9 @@ impl DeclarationPtr {
     /// This declaration as a value letting, if it is one.
     pub fn as_value_letting(&self) -> Option<MappedRwLockReadGuard<'_, Expression>> {
         RwLockReadGuard::try_map(self.read(), |x| {
-            if let DeclarationKind::ValueLetting(expression) = &x.kind {
+            if let DeclarationKind::ValueLetting(expression)
+            | DeclarationKind::TemporaryValueLetting(expression) = &x.kind
+            {
                 Some(expression)
             } else {
                 None
@@ -373,7 +379,9 @@ impl DeclarationPtr {
     /// This declaration as a mutable value letting, if it is one.
     pub fn as_value_letting_mut(&mut self) -> Option<MappedRwLockWriteGuard<'_, Expression>> {
         RwLockWriteGuard::try_map(self.write(), |x| {
-            if let DeclarationKind::ValueLetting(expression) = &mut x.kind {
+            if let DeclarationKind::ValueLetting(expression)
+            | DeclarationKind::TemporaryValueLetting(expression) = &mut x.kind
+            {
                 Some(expression)
             } else {
                 None
@@ -390,7 +398,7 @@ impl DeclarationPtr {
     /// use conjure_cp_core::ast::{DeclarationPtr, Domain, Range, Name};
     ///
     /// // find a: int(1..5)
-    /// let mut declaration = DeclarationPtr::new_var(Name::User("a".into()),Domain::int(vec![Range::Bounded(1,5)]));
+    /// let mut declaration = DeclarationPtr::new_find(Name::User("a".into()),Domain::int(vec![Range::Bounded(1,5)]));
     ///
     /// let old_name = declaration.replace_name(Name::User("b".into()));
     /// assert_eq!(old_name,Name::User("a".into()));
@@ -399,6 +407,13 @@ impl DeclarationPtr {
     pub fn replace_name(&mut self, name: Name) -> Name {
         let mut decl = self.write();
         std::mem::replace(&mut decl.name, name)
+    }
+
+    /// Replaces the underlying declaration kind and returns the previous kind.
+    /// Note: this affects all cloned `DeclarationPtr`s pointing to the same declaration.
+    pub fn replace_kind(&mut self, kind: DeclarationKind) -> DeclarationKind {
+        let mut decl = self.write();
+        std::mem::replace(&mut decl.kind, kind)
     }
 
     /*****************************************/
@@ -437,7 +452,7 @@ impl DeclarationPtr {
     /// use conjure_cp_core::ast::{DeclarationPtr,Name,Domain,Range};
     ///
     /// // find a: int(1..5)
-    /// let declaration = DeclarationPtr::new_var(Name::User("a".into()),Domain::int(vec![Range::Bounded(1,5)]));
+    /// let declaration = DeclarationPtr::new_find(Name::User("a".into()),Domain::int(vec![Range::Bounded(1,5)]));
     ///
     /// let mut declaration2 = declaration.clone();
     ///
@@ -490,11 +505,12 @@ impl DeclarationPtr {
 impl CategoryOf for DeclarationPtr {
     fn category_of(&self) -> Category {
         match &self.kind() as &DeclarationKind {
-            DeclarationKind::DecisionVariable(decision_variable) => decision_variable.category_of(),
-            DeclarationKind::ValueLetting(expression) => expression.category_of(),
+            DeclarationKind::Find(decision_variable) => decision_variable.category_of(),
+            DeclarationKind::ValueLetting(expression)
+            | DeclarationKind::TemporaryValueLetting(expression) => expression.category_of(),
             DeclarationKind::DomainLetting(_) => Category::Constant,
             DeclarationKind::Given(_) => Category::Parameter,
-            DeclarationKind::GivenQuantified(..) => Category::Parameter,
+            DeclarationKind::Quantified(..) => Category::Quantified,
             DeclarationKind::RecordField(_) => Category::Bottom,
         }
     }
@@ -523,11 +539,12 @@ impl DefaultWithId for DeclarationPtr {
 impl Typeable for DeclarationPtr {
     fn return_type(&self) -> ReturnType {
         match &self.kind() as &DeclarationKind {
-            DeclarationKind::DecisionVariable(var) => var.return_type(),
-            DeclarationKind::ValueLetting(expression) => expression.return_type(),
+            DeclarationKind::Find(var) => var.return_type(),
+            DeclarationKind::ValueLetting(expression)
+            | DeclarationKind::TemporaryValueLetting(expression) => expression.return_type(),
             DeclarationKind::DomainLetting(domain) => domain.return_type(),
             DeclarationKind::Given(domain) => domain.return_type(),
-            DeclarationKind::GivenQuantified(inner) => inner.domain.return_type(),
+            DeclarationKind::Quantified(inner) => inner.domain.return_type(),
             DeclarationKind::RecordField(domain) => domain.return_type(),
         }
     }
@@ -583,6 +600,123 @@ where
                     let inner = recons(x);
                     *(&mut self3.write() as &mut Declaration) = inner;
                     self3
+                }),
+            )
+        }
+    }
+}
+
+type ReferenceTree = Tree<Reference>;
+type ReferenceReconstructor<T> = Box<dyn Fn(ReferenceTree) -> T>;
+
+impl Biplate<Reference> for DeclarationPtr {
+    fn biplate(&self) -> (ReferenceTree, ReferenceReconstructor<Self>) {
+        let (tree, recons_kind) = biplate_declaration_kind_references(self.kind().clone());
+
+        let self2 = self.clone();
+        (
+            tree,
+            Box::new(move |x| {
+                let mut self3 = self2.clone();
+                let _ = self3.replace_kind(recons_kind(x));
+                self3
+            }),
+        )
+    }
+}
+
+fn biplate_domain_ptr_references(
+    domain: DomainPtr,
+) -> (ReferenceTree, ReferenceReconstructor<DomainPtr>) {
+    let domain_inner = domain.as_ref().clone();
+    let (tree, recons_domain) = Biplate::<Reference>::biplate(&domain_inner);
+    (tree, Box::new(move |x| Moo::new(recons_domain(x))))
+}
+
+fn biplate_declaration_kind_references(
+    kind: DeclarationKind,
+) -> (ReferenceTree, ReferenceReconstructor<DeclarationKind>) {
+    match kind {
+        DeclarationKind::Find(var) => {
+            let (tree, recons_domain) = biplate_domain_ptr_references(var.domain.clone());
+            (
+                tree,
+                Box::new(move |x| {
+                    let mut var2 = var.clone();
+                    var2.domain = recons_domain(x);
+                    DeclarationKind::Find(var2)
+                }),
+            )
+        }
+        DeclarationKind::Given(domain) => {
+            let (tree, recons_domain) = biplate_domain_ptr_references(domain);
+            (
+                tree,
+                Box::new(move |x| DeclarationKind::Given(recons_domain(x))),
+            )
+        }
+        DeclarationKind::DomainLetting(domain) => {
+            let (tree, recons_domain) = biplate_domain_ptr_references(domain);
+            (
+                tree,
+                Box::new(move |x| DeclarationKind::DomainLetting(recons_domain(x))),
+            )
+        }
+        DeclarationKind::RecordField(domain) => {
+            let (tree, recons_domain) = biplate_domain_ptr_references(domain);
+            (
+                tree,
+                Box::new(move |x| DeclarationKind::RecordField(recons_domain(x))),
+            )
+        }
+        DeclarationKind::ValueLetting(expression) => {
+            let (tree, recons_expr) = Biplate::<Reference>::biplate(&expression);
+            (
+                tree,
+                Box::new(move |x| DeclarationKind::ValueLetting(recons_expr(x))),
+            )
+        }
+        DeclarationKind::TemporaryValueLetting(expression) => {
+            let (tree, recons_expr) = Biplate::<Reference>::biplate(&expression);
+            (
+                tree,
+                Box::new(move |x| DeclarationKind::TemporaryValueLetting(recons_expr(x))),
+            )
+        }
+        DeclarationKind::Quantified(quantified) => {
+            let (domain_tree, recons_domain) =
+                biplate_domain_ptr_references(quantified.domain.clone());
+
+            let (generator_tree, recons_generator) = if let Some(generator) = quantified.generator()
+            {
+                let generator = generator.clone();
+                let (tree, recons_declaration) = Biplate::<Reference>::biplate(&generator);
+                (
+                    tree,
+                    Box::new(move |x| Some(recons_declaration(x)))
+                        as ReferenceReconstructor<Option<DeclarationPtr>>,
+                )
+            } else {
+                (
+                    Tree::Zero,
+                    Box::new(|_| None) as ReferenceReconstructor<Option<DeclarationPtr>>,
+                )
+            };
+
+            (
+                Tree::Many(VecDeque::from([domain_tree, generator_tree])),
+                Box::new(move |x| {
+                    let Tree::Many(mut children) = x else {
+                        panic!("unexpected biplate tree shape for quantified declaration")
+                    };
+
+                    let domain = children.pop_front().unwrap_or(Tree::Zero);
+                    let generator = children.pop_front().unwrap_or(Tree::Zero);
+
+                    let mut quantified2 = quantified.clone();
+                    quantified2.domain = recons_domain(domain);
+                    quantified2.generator = recons_generator(generator);
+                    DeclarationKind::Quantified(quantified2)
                 }),
             )
         }
@@ -664,12 +798,17 @@ impl Declaration {
 #[biplate(to=DeclarationPtr)]
 #[biplate(to=Declaration)]
 pub enum DeclarationKind {
-    DecisionVariable(DecisionVariable),
+    Find(DecisionVariable),
+    Given(DomainPtr),
+    Quantified(Quantified),
+
     ValueLetting(Expression),
     DomainLetting(DomainPtr),
-    Given(DomainPtr),
 
-    GivenQuantified(GivenQuantified),
+    /// A short-lived value binding used internally during rewrites (e.g. comprehension unrolling).
+    ///
+    /// Unlike `ValueLetting`, this is not intended to represent a user-visible top-level `letting`.
+    TemporaryValueLetting(Expression),
 
     /// A named field inside a record type.
     /// e.g. A, B in record{A: int(0..1), B: int(0..2)}
@@ -678,19 +817,19 @@ pub enum DeclarationKind {
 
 #[serde_as]
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate)]
-pub struct GivenQuantified {
+pub struct Quantified {
     domain: DomainPtr,
 
-    #[serde_as(as = "PtrAsInner")]
-    generator: DeclarationPtr,
+    #[serde_as(as = "Option<PtrAsInner>")]
+    generator: Option<DeclarationPtr>,
 }
 
-impl GivenQuantified {
+impl Quantified {
     pub fn domain(&self) -> &DomainPtr {
         &self.domain
     }
 
-    pub fn generator(&self) -> &DeclarationPtr {
-        &self.generator
+    pub fn generator(&self) -> Option<&DeclarationPtr> {
+        self.generator.as_ref()
     }
 }

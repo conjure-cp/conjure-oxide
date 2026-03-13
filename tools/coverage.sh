@@ -79,6 +79,7 @@ GRCOV_EXCLUDE_LINES=(
   '#\[derive'
   '#\[register_rule'
   'register_rule_set!'
+  '^[[:space:]]*//'
 )
 
 # construct an or regex
