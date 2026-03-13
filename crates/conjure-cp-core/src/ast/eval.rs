@@ -485,6 +485,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             let a: i32 = a.try_into().ok()?;
             Some(Lit::Int(-a))
         }
+        Expr::Factorial(_, _) => None,
         Expr::Minus(_, a, b) => {
             let a: &Atom = a.try_into().ok()?;
             let a: i32 = a.try_into().ok()?;
