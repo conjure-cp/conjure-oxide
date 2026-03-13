@@ -15,6 +15,9 @@ on:
       - rust-toolchain.toml
       - .github/workflows/test-pr.yml
       - .github/workflows/test-main.yml
+  pull_request:
+    paths:
+      - .github/workflows/test-main.yml
   workflow_dispatch:
 
 env:
@@ -97,11 +100,16 @@ jobs:
           os_arch: ${{ matrix.release_suffix }}
           version: ${{ matrix.conjure_version }}
 
-      - name: Install Z3
+      - name: Install Z3 (Ubuntu)
+        if: ${{ matrix.os == 'ubuntu-latest' }}
         uses: pavpanchekha/setup-z3@v0.3.0
         with:
           version: 4.16.0
           distribution: glibc-2.39
+
+      - name: Install Z3 (macOS)
+        if: ${{ matrix.os == 'macos-latest' }}
+        run: brew install z3
 
       - name: Build conjure-oxide (debug)
         run: cargo build --bin conjure-oxide
