@@ -25,15 +25,15 @@ build:
 	cargo build $(CARGO_LOCKED) --bin conjure-oxide --release
 
 .PHONY: install
-## Installs conjure-oxide to ~/.local/bin
+## Installs conjure-oxide to ~/.cargo/bin
 install: build
-	mkdir -p $$HOME/.local/bin
-	install -m 755 target/release/conjure-oxide $$HOME/.local/bin/conjure-oxide
+	mkdir -p $$HOME/.cargo/bin
+	install -m 755 target/release/conjure-oxide $$HOME/.cargo/bin/conjure-oxide
 
 .PHONY: test
 ## Runs all tests
 test: install
-	PATH="$$HOME/.local/bin:$$PATH" cargo test $(CARGO_LOCKED) --workspace
+	PATH="$$HOME/.cargo/bin:$$PATH" cargo test $(CARGO_LOCKED) --workspace
 
 .PHONY: test-coverage
 ## Runs all tests and produces a coverage report
@@ -43,8 +43,8 @@ test-coverage:
 .PHONY: test-accept
 ## Runs all tests in accept mode, then one more time in normal mode
 test-accept: install
-	PATH="$$HOME/.local/bin:$$PATH" ACCEPT=true cargo test $(CARGO_LOCKED) --workspace
-	PATH="$$HOME/.local/bin:$$PATH" cargo test $(CARGO_LOCKED) --workspace
+	PATH="$$HOME/.cargo/bin:$$PATH" ACCEPT=true cargo test $(CARGO_LOCKED) --workspace
+	PATH="$$HOME/.cargo/bin:$$PATH" cargo test $(CARGO_LOCKED) --workspace
 
 .PHONY: fix
 ## Tries to auto-fix hygiene issues reported by `make check`. 

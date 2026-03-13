@@ -20,10 +20,10 @@ The following dependencies are required:
 **Ensure that Conjure is placed early in your PATH to avoid conflicts with
 ImageMagick's conjure command!**
 
-Run `make install` to build and install `conjure-oxide` to `~/.local/bin`,
-and ensure `~/.local/bin` is in your `PATH`. `make test` prepends
-`~/.local/bin` automatically. If you prefer Cargo directly, use `cargo install
---path crates/conjure-cp-cli --root ~/.local`.
+Run `make install` to build and install `conjure-oxide` to `~/.cargo/bin`, and
+ensure `~/.cargo/bin` is in your `PATH`. `make test` prepends `~/.cargo/bin`
+automatically. If you prefer Cargo directly, use `cargo install --path
+crates/conjure-cp-cli`.
 
 ## Repository Structure
 

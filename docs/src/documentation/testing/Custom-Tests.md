@@ -7,7 +7,7 @@ Custom tests were created as a solution to the problem that integration tests do
 # How to add a test case
 Adding a test case is simple. First add a folder with the test case name to the `tests/custom` directory. Tests can be organized within folders in the directory--only folders with a `run.sh` file will be treated as a test case. Within the test folder, add these components:
 
-1. `run.sh` file: This will typically be in the format `conjure-oxide <options> <command>` with the command being `solve model.eprime` (assuming the input file is named `model.eprime`). Custom tests simply use whichever `conjure-oxide` is available on `PATH`. The usual workflow is `make install` or `make test`, which refreshes `~/.local/bin/conjure-oxide`, and `make test` prepends `~/.local/bin` to `PATH` before running `cargo test`.
+1. `run.sh` file: This will typically be in the format `conjure-oxide <options> <command>` with the command being `solve model.eprime` (assuming the input file is named `model.eprime`). Custom tests simply use whichever `conjure-oxide` is available on `PATH`. The usual workflow is `make install` or `make test`, which refreshes `~/.cargo/bin/conjure-oxide`, and `make test` prepends `~/.cargo/bin` to `PATH` before running `cargo test`.
    
       ex) `conjure-oxide --solver Minion --enable-native-parser solve model.eprime`
 
