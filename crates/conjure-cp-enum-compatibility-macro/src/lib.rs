@@ -26,7 +26,7 @@ use std::collections::HashMap;
 use itertools::Itertools;
 use quote::quote;
 use syn::{
-    Attribute, ItemEnum, Meta, Token, Variant, parse_macro_input, parse_quote,
+    Attribute, Fields, ItemEnum, Meta, Token, Variant, parse_macro_input, parse_quote,
     punctuated::Punctuated, visit_mut::VisitMut,
 };
 
@@ -191,6 +191,69 @@ pub fn document_compatibility(_attr: TokenStream, input: TokenStream) -> TokenSt
     input.attrs.push(parse_quote!(#[doc = #doc_msg]));
     let expanded = quote! {
         #input
+    };
+
+    TokenStream::from(expanded)
+}
+
+/// Generate a `discriminant_from_name!` macro and `discriminant_from_value` function for an enum.
+///
+/// The generated discriminants are `1..=variant_count`, in source definition order.
+///
+/// # Caveat
+///
+/// This emits items with fixed names into the surrounding module, so using it for multiple enums
+/// in the same module will cause name collisions.
+#[proc_macro_attribute]
+pub fn generate_discriminants(attr: TokenStream, input: TokenStream) -> TokenStream {
+    let _ = parse_macro_input!(attr as syn::parse::Nothing);
+
+    let input = parse_macro_input!(input as ItemEnum);
+    let enum_ident = input.ident.clone();
+    let fn_generics = input.generics.clone();
+    let (_, ty_generics, where_clause) = input.generics.split_for_impl();
+    let fn_vis = input.vis.clone();
+
+    let name_arms = input.variants.iter().enumerate().map(|(index, variant)| {
+        let discriminant = index + 1;
+        let variant_ident = &variant.ident;
+        quote! {
+            (#variant_ident) => { #discriminant };
+        }
+    });
+
+    let value_arms = input.variants.iter().enumerate().map(|(index, variant)| {
+        let discriminant = index + 1;
+        let variant_ident = &variant.ident;
+        let pattern = match &variant.fields {
+            Fields::Unit => quote!(#enum_ident::#variant_ident),
+            Fields::Unnamed(_) => quote!(#enum_ident::#variant_ident(..)),
+            Fields::Named(_) => quote!(#enum_ident::#variant_ident { .. }),
+        };
+
+        quote! {
+            #pattern => #discriminant,
+        }
+    });
+
+    let expanded = quote! {
+        #input
+
+        #[allow(unused_macros)]
+        macro_rules! discriminant_from_name {
+            #(#name_arms)*
+        }
+
+        #[allow(dead_code)]
+        #fn_vis fn discriminant_from_value #fn_generics (
+            value: &#enum_ident #ty_generics
+        ) -> usize
+        #where_clause
+        {
+            match value {
+                #(#value_arms)*
+            }
+        }
     };
 
     TokenStream::from(expanded)
