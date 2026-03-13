@@ -248,6 +248,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             vec_lit_op::<bool, bool>(|e| e.iter().all(|&e| e), e.as_ref()).map(Lit::Bool)
         }
         Expr::Table(_, _, _) => None,
+        Expr::NegativeTable(_, _, _) => None,
         Expr::Root(_, _) => None,
         Expr::Or(_, es) => {
             // possibly cheating; definitely should be in partial eval instead

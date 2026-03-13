@@ -1,25 +1,45 @@
 #!/usr/bin/env bash
 #
-# Calculates documentation coverage, pretty printing the resulting tables as Github
+# Calculates RustDoc coverage, pretty printing the resulting tables as Github
 # Flavoured Markdown for consumption by Github Actions.
 #
 # Author: niklasdewally
 # Date: 2024/12/04
 
-CRATES="conjure-cp minion-sys tree-morph"
-JQ_SCRIPT=$(cat <<- 'EOF'
-# convert object {"file":{total:...,with_docs:....}}, to array [{file:...,total:...,}]
-# add percentages and check / cross emojis to each file
+set -euo pipefail
 
-[keys[] as $k
-  | .[$k]
-  | .file = $k
-  | .percentage = ((.with_docs / .total)*100 | round)
-  | .percentage_examples = ((.with_examples / .total)*100 | round)
-  | .emoji = (if .percentage < 90 then "❌" else "✅" end) 
-  | .emoji_examples = (if .percentage_examples < 90 then "❌" else "✅" end) 
- ]
-| sort_by(.percentage)
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+JQ_SCRIPT=$(cat <<- 'EOF'
+def merge_reports:
+  reduce .[] as $report ({};
+    reduce ($report | to_entries[]) as $entry (.;
+      .[$entry.key] = if has($entry.key) then
+        {
+          total: (.[$entry.key].total + $entry.value.total),
+          with_docs: (.[$entry.key].with_docs + $entry.value.with_docs),
+          with_examples: (.[$entry.key].with_examples + $entry.value.with_examples)
+        }
+      else
+        $entry.value
+      end
+    )
+  );
+
+merge_reports
+| to_entries
+| map(
+    {
+      file: .key,
+      with_docs: .value.with_docs,
+      with_examples: .value.with_examples,
+      total: .value.total,
+      percentage: (if .value.total > 0 then ((100 * .value.with_docs / .value.total) | round) else 0 end),
+      percentage_examples: (if .value.total > 0 then ((100 * .value.with_examples / .value.total) | round) else 0 end)
+    }
+    | .emoji = (if .percentage < 90 then "❌" else "✅" end)
+    | .emoji_examples = (if .percentage_examples < 90 then "❌" else "✅" end)
+  )
+| sort_by(.percentage, .file)
 | . as $coverage_info
 
 # pretty print each row as csv
@@ -38,15 +58,24 @@ JQ_SCRIPT=$(cat <<- 'EOF'
 
 EOF)
 
-for crate in ${CRATES}; do
-  echo "## Documentation coverage for \`${crate}\`"
+while IFS=$'\t' read -r crate flag1 flag2; do
+  flags=()
+  if [[ -n "${flag1:-}" ]]; then
+    flags+=("${flag1}")
+  fi
+  if [[ -n "${flag2:-}" ]]; then
+    flags+=("${flag2}")
+  fi
+
+  echo "## RustDoc coverage for \`${crate}\`"
   echo ""
-  RUSTDOCFLAGS='-Z unstable-options --show-coverage --output-format=json' cargo +nightly doc -p ${crate} --no-deps |\
-    jq -r "${JQ_SCRIPT}" |\
+  RUSTDOCFLAGS='-Z unstable-options --show-coverage --output-format=json' \
+    cargo +nightly doc -p "${crate}" "${flags[@]}" --no-deps |\
+    jq -s -r "${JQ_SCRIPT}" |\
     pandoc -f csv -t gfm |\
     # pandoc escapes ` in generated markdown, but we want to use it as formatting
     sed 's/\\`/`/g' |\
     sed 's/\\\*/\*/g' 
 
   echo ""
-done
+done < <(bash "${SCRIPT_DIR}/list-doc-coverage-targets.bash")
