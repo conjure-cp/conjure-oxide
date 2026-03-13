@@ -77,7 +77,8 @@ fn collect_table_variables(conjure_model: &ConjureModel) -> HashSet<conjure_ast:
         .iter()
         .flat_map(|expr| expr.universe())
         .filter_map(|expr| match expr {
-            conjure_ast::Expression::Table(_, tuple_expr, _) => {
+            conjure_ast::Expression::Table(_, tuple_expr, _)
+            | conjure_ast::Expression::NegativeTable(_, tuple_expr, _) => {
                 Some(Moo::unwrap_or_clone(tuple_expr))
             }
             _ => None,
@@ -292,8 +293,16 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
         )),
         conjure_ast::Expression::Table(_metadata, tuple_expr, allowed_rows_expr) => {
             parse_table_constraint(
+                TableConstraintKind::Table,
                 Moo::unwrap_or_clone(tuple_expr),
                 Moo::unwrap_or_clone(allowed_rows_expr),
+            )
+        }
+        conjure_ast::Expression::NegativeTable(_metadata, tuple_expr, forbidden_rows_expr) => {
+            parse_table_constraint(
+                TableConstraintKind::NegativeTable,
+                Moo::unwrap_or_clone(tuple_expr),
+                Moo::unwrap_or_clone(forbidden_rows_expr),
             )
         }
         conjure_ast::Expression::MinionDivEqUndefZero(_metadata, a, b, c) => {
@@ -445,16 +454,43 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
     }
 }
 
+#[derive(Clone, Copy)]
+enum TableConstraintKind {
+    Table,
+    NegativeTable,
+}
+
+impl TableConstraintKind {
+    fn name(self) -> &'static str {
+        match self {
+            Self::Table => "table",
+            Self::NegativeTable => "negativeTable",
+        }
+    }
+
+    fn into_constraint(
+        self,
+        vars: Vec<minion_ast::Var>,
+        tuples: Vec<Vec<minion_ast::Constant>>,
+    ) -> minion_ast::Constraint {
+        match self {
+            Self::Table => minion_ast::Constraint::Table(vars, tuples),
+            Self::NegativeTable => minion_ast::Constraint::NegativeTable(vars, tuples),
+        }
+    }
+}
+
 fn parse_table_constraint(
+    kind: TableConstraintKind,
     tuple_expr: conjure_ast::Expression,
     rows_expr: conjure_ast::Expression,
 ) -> Result<minion_ast::Constraint, SolverError> {
     let (tuple_elems, _) = tuple_expr
         .unwrap_matrix_unchecked()
-        .ok_or_else(|| ModelInvalid("table first argument is not a matrix".to_owned()))?;
+        .ok_or_else(|| ModelInvalid(format!("{} first argument is not a matrix", kind.name())))?;
     let (rows, _) = rows_expr
         .unwrap_matrix_unchecked()
-        .ok_or_else(|| ModelInvalid("table second argument is not a matrix".to_owned()))?;
+        .ok_or_else(|| ModelInvalid(format!("{} second argument is not a matrix", kind.name())))?;
 
     let vars = tuple_elems
         .into_iter()
@@ -465,12 +501,13 @@ fn parse_table_constraint(
     for row_expr in rows {
         let (row_elems, _) = row_expr
             .unwrap_matrix_unchecked()
-            .ok_or_else(|| ModelInvalid("table row is not a matrix".to_owned()))?;
+            .ok_or_else(|| ModelInvalid(format!("{} row is not a matrix", kind.name())))?;
 
         if row_elems.len() != vars.len() {
-            return Err(ModelInvalid(
-                "table row width does not match tuple width".to_owned(),
-            ));
+            return Err(ModelInvalid(format!(
+                "{} row width does not match tuple width",
+                kind.name()
+            )));
         }
 
         let tuple = row_elems
@@ -478,7 +515,10 @@ fn parse_table_constraint(
             .map(|row_val_expr| {
                 conjure_ast::eval_constant(&row_val_expr)
                     .ok_or_else(|| {
-                        ModelInvalid("table row contains a non-constant expression".to_owned())
+                        ModelInvalid(format!(
+                            "{} row contains a non-constant expression",
+                            kind.name()
+                        ))
                     })
                     .and_then(parse_literal)
             })
@@ -487,7 +527,7 @@ fn parse_table_constraint(
         tuples.push(tuple);
     }
 
-    Ok(minion_ast::Constraint::Table(vars, tuples))
+    Ok(kind.into_constraint(vars, tuples))
 }
 
 fn parse_atomic_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Var, SolverError> {
