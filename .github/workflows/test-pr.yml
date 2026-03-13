@@ -103,12 +103,12 @@ jobs:
         run: cargo build --bin conjure-oxide
         if: ${{ matrix.compiler_profile == 'debug' }}
       - name: Run tests (debug)
-        run: cargo test --workspace
+        run: PATH="$PWD/target/debug:$PATH" cargo test --workspace
         if: ${{ matrix.compiler_profile == 'debug' }}
 
       - name: Build conjure-oxide (release)
         run: cargo build --bin conjure-oxide --release
         if: ${{ matrix.compiler_profile == 'release' }}
       - name: Run tests (release)
-        run: cargo test --workspace --release
+        run: PATH="$PWD/target/release:$PATH" cargo test --workspace --release
         if: ${{ matrix.compiler_profile == 'release' }}
