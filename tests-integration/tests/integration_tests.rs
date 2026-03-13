@@ -227,7 +227,7 @@ fn integration_test_inner(
     let parsed_model = match parser {
         Parser::TreeSitter => {
             let mut ctx = context.as_ref().write().unwrap();
-            ctx.file_name = Some(format!("{path}/{essence_base}.{extension}"));
+            ctx.input_file_name = Some(format!("{path}/{essence_base}.{extension}"));
             parse_essence_file_native(&file_path, context.clone())?
         }
         Parser::ViaConjure => parse_essence_file(&file_path, context.clone())?,
@@ -283,11 +283,28 @@ fn integration_test_inner(
         solved
     };
 
+<<<<<<< HEAD
+    // Stage 3b: Check solutions against Conjure (only if explicitly enabled)
+    if config.compare_solver_solutions && config.num_solvers_enabled() > 0 {
+        let conjure_solutions: Vec<BTreeMap<Name, Literal>> = get_solutions_from_conjure(
+            &format!("{path}/{essence_base}.{extension}"),
+            None,
+            Arc::clone(&context),
+        )?;
+||||||| 18182145b
+    // Stage 3b: Check solutions against Conjure (only if explicitly enabled)
+    if config.compare_solver_solutions && config.num_solvers_enabled() > 0 {
+        let conjure_solutions: Vec<BTreeMap<Name, Literal>> = get_solutions_from_conjure(
+            &format!("{path}/{essence_base}.{extension}"),
+            Arc::clone(&context),
+        )?;
+=======
     // Stage 3b: Check solutions against Conjure when ACCEPT=true and validation is enabled.
     if accept && conjure_solutions.is_some() {
         let conjure_solutions = conjure_solutions
             .as_deref()
             .expect("conjure solutions should be present when Conjure validation is enabled");
+>>>>>>> main
 
         let username_solutions = normalize_solutions_for_comparison(&solutions);
         let conjure_solutions = normalize_solutions_for_comparison(conjure_solutions);

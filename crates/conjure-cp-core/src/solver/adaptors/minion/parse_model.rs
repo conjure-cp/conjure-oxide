@@ -537,10 +537,12 @@ fn parse_reference_atom(reference: conjure_ast::Reference) -> Result<minion_ast:
 
     let decl_kind = reference.ptr().kind();
     match decl_kind.deref() {
-        conjure_ast::DeclarationKind::ValueLetting(expr) => Err(ModelFeatureNotSupported(format!(
-            "value letting '{}' did not resolve to an atomic expression: {expr}",
-            reference.name()
-        ))),
+        conjure_ast::DeclarationKind::ValueLetting(expr, _) => {
+            Err(ModelFeatureNotSupported(format!(
+                "value letting '{}' did not resolve to an atomic expression: {expr}",
+                reference.name()
+            )))
+        }
         conjure_ast::DeclarationKind::DomainLetting(_) => Err(ModelFeatureNotSupported(format!(
             "domain reference used where atom expected: {}",
             reference.name()
