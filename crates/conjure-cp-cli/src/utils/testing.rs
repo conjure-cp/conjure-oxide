@@ -13,7 +13,7 @@ use std::io::{BufRead, BufReader, Write};
 use std::sync::{Arc, RwLock};
 use uniplate::Uniplate;
 
-use conjure_cp::ast::{AbstractLiteral, GroundDomain, Moo, SerdeModel};
+use conjure_cp::ast::{AbstractLiteral, ExprInfo, GroundDomain, Moo, SerdeModel};
 use conjure_cp::context::Context;
 use serde_json::{Error as JsonError, Value as JsonValue};
 
@@ -113,6 +113,11 @@ pub fn serialize_model(model: &ConjureModel) -> Result<String, JsonError> {
 
     // Serialize to pretty-printed string
     serde_json::to_string_pretty(&sorted_json)
+}
+
+pub fn serialize_domains(model: &ConjureModel) -> Result<String, JsonError> {
+    let exprs: Vec<ExprInfo> = model.constraints().iter().map(ExprInfo::create).collect();
+    serde_json::to_string_pretty(&exprs)
 }
 
 pub fn save_model_json(
