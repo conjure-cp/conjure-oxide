@@ -3,9 +3,7 @@ use std::{path::PathBuf, sync::Arc};
 use anyhow::anyhow;
 use clap::ValueHint;
 
-use conjure_cp_cli::utils::testing::{
-    serialize_domains, serialize_domains_json, serialize_model,
-};
+use conjure_cp_cli::utils::testing::{serialize_domains, serialize_domains_json, serialize_model};
 
 use crate::cli::{GlobalArgs, LOGGING_HELP_HEADING};
 use crate::solve::{init_context, parse};
