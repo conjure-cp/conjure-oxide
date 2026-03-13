@@ -22,12 +22,13 @@ check-unused-deps: .installed-cargo-extensions.checkpoint
 .PHONY: build
 ## Builds the conjure-oxide executable
 build:
-	cargo build $(CARGO_LOCKED) --bin conjure-oxide
+	cargo build $(CARGO_LOCKED) --bin conjure-oxide --release
 
 .PHONY: test
 ## Runs all tests
 test:
-	cargo build $(CARGO_LOCKED) --bin conjure-oxide # we need to build first, so the conjure-oxide executable is available during testing as it is needed by the custom tests.
+	# we need to build first, so the conjure-oxide executable is available during testing as it is needed by the custom tests.
+	cargo build $(CARGO_LOCKED) --bin conjure-oxide --release 
 	cargo test $(CARGO_LOCKED) --workspace
 
 .PHONY: test-coverage
@@ -38,7 +39,7 @@ test-coverage:
 .PHONY: test-accept
 ## Runs all tests in accept mode, then one more time in normal mode
 test-accept:
-	cargo build $(CARGO_LOCKED) --bin conjure-oxide
+	cargo build $(CARGO_LOCKED) --bin conjure-oxide --release
 	ACCEPT=true cargo test $(CARGO_LOCKED) --workspace
 	cargo test $(CARGO_LOCKED) --workspace
 

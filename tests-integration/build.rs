@@ -9,7 +9,6 @@ use walkdir::WalkDir;
 // (build.rs cannot depend on the crate it's building)
 #[path = "src/test_config.rs"]
 mod test_config;
-use test_config::TestConfig;
 
 fn main() -> io::Result<()> {
     println!("cargo:rerun-if-changed=tests/integration");
@@ -147,20 +146,6 @@ fn write_integration_test(
 ) -> io::Result<()> {
     // TODO: Consider supporting multiple Essence files?
     if essence_files.len() == 1 {
-        // skip tests which use smt if the feature is disabled
-        let config_path = format!("{}/config.toml", path);
-        let config: TestConfig = if let Ok(contents) = std::fs::read_to_string(&config_path) {
-            toml::from_str(&contents).unwrap_or_default()
-        } else {
-            TestConfig::default()
-        };
-
-        let mut ignore_attr = "";
-
-        if cfg!(not(feature = "smt")) && config.uses_smt_solver() {
-            ignore_attr = "#[ignore = \"this test requires solver=smt, but the 'smt' feature is disabled!\"]\n"
-        }
-
         write!(
             file,
             include_str!("./tests/integration_test_template"),
@@ -169,7 +154,6 @@ fn write_integration_test(
             test_dir = path,
             essence_file = essence_files[0].0,
             ext = essence_files[0].1,
-            ignore_attr = ignore_attr
         )
     } else {
         Ok(())
