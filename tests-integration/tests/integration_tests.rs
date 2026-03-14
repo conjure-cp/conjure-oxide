@@ -249,7 +249,7 @@ fn integration_test_inner(
 
     let rewritten_model = match rewriter {
         Rewriter::Naive => rewrite_naive(&model, &rule_sets, false)?,
-        Rewriter::Morph => {
+        Rewriter::Morph(_) => {
             let submodel = &mut model;
             let rules_grouped = get_rules_grouped(&rule_sets)
                 .unwrap_or_else(|_| bug!("get_rule_priorities() failed!"))
@@ -257,7 +257,7 @@ fn integration_test_inner(
                 .map(|(_, rule)| rule.into_iter().map(|f| f.rule).collect_vec())
                 .collect_vec();
 
-            let engine = EngineBuilder::new()
+            let mut engine = EngineBuilder::new()
                 .set_selector(select_panic)
                 .append_rule_groups(rules_grouped)
                 .build();
@@ -319,7 +319,7 @@ fn integration_test_inner(
 
     // TODO: Implement rule trace validation for morph
     match rewriter {
-        Rewriter::Morph => {}
+        Rewriter::Morph(_) => {}
         Rewriter::Naive => {
             let generated = read_human_rule_trace(path, case_name, "generated", &solver_fam)?;
             let expected = read_human_rule_trace(path, case_name, "expected", &solver_fam)?;

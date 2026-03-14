@@ -7,20 +7,26 @@ macro_rules! event_handlers {
     ) => {
 
         paste! {
-        pub(crate) struct EventHandlers<T, M> {
+        pub(crate) struct EventHandlers<T, M, R> {
             $(
                 [<before_ $dir>]: Vec<fn(&T, &mut M)>,
                 [<after_ $dir>]: Vec<fn(&T, &mut M)>,
             )*
+            before_rule: Vec<fn(&T, &mut M, &R)>,
+            after_rule: Vec<fn(&T, &mut M, &R, bool)>,
+            after_apply: Vec<fn(&T, &mut M, &R)>,
         }
 
-        impl<T: Uniplate, M> EventHandlers<T, M> {
+        impl<T: Uniplate, M, R> EventHandlers<T, M, R> {
             pub(crate) fn new() -> Self {
                 Self {
                     $(
                         [<before_ $dir>]: vec![],
                         [<after_ $dir>]: vec![],
                     )*
+                    before_rule: vec![],
+                    after_rule: vec![],
+                    after_apply: vec![],
                 }
             }
 
@@ -42,6 +48,36 @@ macro_rules! event_handlers {
                     self.[<after_ $dir>].push(handler);
                 }
             )*
+
+            pub(crate) fn trigger_before_rule(&self, node: &T, meta: &mut M, rule: &R) {
+                for f in &self.before_rule {
+                    f(node, meta, rule)
+                }
+            }
+
+            pub(crate) fn trigger_after_rule(&self, node: &T, meta: &mut M, rule: &R, applicable: bool) {
+                for f in &self.after_rule {
+                    f(node, meta, rule, applicable)
+                }
+            }
+
+            pub(crate) fn trigger_on_apply(&self, node: &T, meta: &mut M, rule: &R) {
+                for f in &self.after_apply {
+                    f(node, meta, rule)
+                }
+            }
+
+            pub(crate) fn add_before_rule(&mut self, handler: fn(&T, &mut M, &R)) {
+                self.before_rule.push(handler);
+            }
+
+            pub(crate) fn add_after_rule(&mut self, handler: fn(&T, &mut M, &R, bool)) {
+                self.after_rule.push(handler);
+            }
+
+            pub(crate) fn add_after_apply(&mut self, handler: fn(&T, &mut M, &R)) {
+                self.after_apply.push(handler);
+            }
         }
     }};
 }

@@ -53,6 +53,8 @@ pub fn run() -> anyhow::Result<()> {
 }
 
 fn setup_logging(global_args: &GlobalArgs) -> anyhow::Result<()> {
+    // It consists of composable layers, each of which logs to a different place in a different
+    // format.
     let default_stderr_level = if global_args.verbose {
         LevelFilter::DEBUG
     } else {

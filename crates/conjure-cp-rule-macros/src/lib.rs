@@ -9,10 +9,12 @@ use syn::{
     parse::ParseStream, parse_macro_input,
 };
 
-#[derive(Debug)]
 struct RuleSetAndPriority {
     rule_set: LitStr,
     priority: LitInt,
+    /// Expression variant names this rule applies to (e.g. `Add`, `Sub`).
+    /// Empty means applicable to all variants (universal rule).
+    applicable_variants: Vec<Ident>,
 }
 
 impl Parse for RuleSetAndPriority {
@@ -22,11 +24,23 @@ impl Parse for RuleSetAndPriority {
         let rule_set: LitStr = content.parse()?;
         let _: Comma = content.parse()?;
         let priority: LitInt = content.parse()?;
-        Ok(RuleSetAndPriority { rule_set, priority })
+
+        // Parse optional trailing variant names: ("Minion", 4200, Add, Sub)
+        let mut applicable_variants = Vec::new();
+        while content.peek(Comma) {
+            let _: Comma = content.parse()?;
+            let variant: Ident = content.parse()?;
+            applicable_variants.push(variant);
+        }
+
+        Ok(RuleSetAndPriority {
+            rule_set,
+            priority,
+            applicable_variants,
+        })
     }
 }
 
-#[derive(Debug)]
 struct RegisterRuleArgs {
     pub rule_sets: Vec<RuleSetAndPriority>,
 }
@@ -40,9 +54,7 @@ impl Parse for RegisterRuleArgs {
     }
 }
 
-/**
- * Register a rule with the given rule sets and priorities.
- */
+/// Register a rule with the given rule sets and priorities.
 #[proc_macro_attribute]
 pub fn register_rule(arg_tokens: TokenStream, item: TokenStream) -> TokenStream {
     let func = parse_macro_input!(item as ItemFn);
@@ -63,6 +75,22 @@ pub fn register_rule(arg_tokens: TokenStream, item: TokenStream) -> TokenStream 
         })
         .collect::<Vec<_>>();
 
+    // Collect all variant names across all rule sets (union).
+    // If none are specified anywhere, the rule is universal (applicable_to: None).
+    let all_variants: Vec<&Ident> = args
+        .rule_sets
+        .iter()
+        .flat_map(|rs| &rs.applicable_variants)
+        .collect();
+
+    let applicable_to = if all_variants.is_empty() {
+        quote! { None }
+    } else {
+        quote! {
+            Some(&[#(::conjure_cp::discriminant_from_name!(#all_variants)),*])
+        }
+    };
+
     let expanded = quote! {
         #func
 
@@ -73,6 +101,7 @@ pub fn register_rule(arg_tokens: TokenStream, item: TokenStream) -> TokenStream 
             name: stringify!(#rule_ident),
             application: #rule_ident,
             rule_sets: &[#(#rule_sets),*],
+            applicable_to: #applicable_to,
         };
     };
 

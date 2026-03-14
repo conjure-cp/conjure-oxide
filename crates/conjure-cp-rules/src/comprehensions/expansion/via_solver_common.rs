@@ -30,7 +30,7 @@ pub(super) fn rewrite_model_with_configured_rewriter<'a>(
     configured_rewriter: Rewriter,
 ) -> Model {
     match configured_rewriter {
-        Rewriter::Morph => rewrite_morph(model, rule_sets, false),
+        Rewriter::Morph(variant) => rewrite_morph(model, rule_sets, false, variant),
         Rewriter::Naive => rewrite_naive(&model, rule_sets, false).unwrap(),
     }
 }

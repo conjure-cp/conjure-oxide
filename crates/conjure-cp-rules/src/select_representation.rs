@@ -32,7 +32,7 @@ register_rule_set!("Representations", ("Base"), |f: &SolverFamily| {
 // special case rule to select representations for matrices in one go.
 //
 // we know that they only have one possible representation, so this rule adds a representation for all matrices in the model.
-#[register_rule(("Representations", 8001))]
+#[register_rule(("Representations", 8001, Root))]
 fn select_representation_matrix(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Root(_, _) = expr else {
         return Err(RuleNotApplicable);
@@ -109,7 +109,7 @@ fn select_representation_matrix(expr: &Expr, symbols: &SymbolTable) -> Applicati
     }
 }
 
-#[register_rule(("Representations", 8000))]
+#[register_rule(("Representations", 8000, Atomic))]
 fn select_representation(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     // thing we are representing must be a reference
     let Expr::Atomic(_, Atom::Reference(decl)) = expr else {
@@ -173,7 +173,10 @@ fn needs_representation(name: &Name, symbols: &SymbolTable) -> bool {
         return false;
     }
     // might be more logic here in the future?
-    domain_needs_representation(&symbols.resolve_domain(name).unwrap())
+    match symbols.resolve_domain(name) {
+        Some(s) => domain_needs_representation(&s),
+        None => false,
+    }
 }
 
 /// Returns whether `domain` needs representing.

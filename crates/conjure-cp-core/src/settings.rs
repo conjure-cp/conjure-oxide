@@ -59,9 +59,85 @@ pub fn current_parser() -> Parser {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub struct MorphConfig {
+    pub cache: MorphCachingStrategy,
+    pub prefilter: bool,
+    pub naive: bool,
+    pub parallel: bool,
+}
+
+impl Default for MorphConfig {
+    fn default() -> Self {
+        Self {
+            cache: Default::default(),
+            prefilter: true,
+            naive: false,
+            parallel: false,
+        }
+    }
+}
+
+impl Display for MorphConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if self.naive {
+            return write!(f, "morph-naive");
+        }
+
+        write!(f, "morph ( {} ", self.cache)?;
+        if self.prefilter {
+            write!(f, "prefilter ")?;
+        }
+
+        if self.parallel {
+            write!(f, "parallel ")?;
+        }
+
+        write!(f, ")")
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum MorphCachingStrategy {
+    NoCache,
+    Cache,
+    IncrementalCache,
+}
+
+impl Default for MorphCachingStrategy {
+    fn default() -> Self {
+        Self::IncrementalCache
+    }
+}
+
+impl FromStr for MorphCachingStrategy {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.trim().to_ascii_lowercase().as_str() {
+            "no-cache" => Ok(Self::NoCache),
+            "cache" => Ok(Self::Cache),
+            "inc-cache" => Ok(Self::IncrementalCache),
+            other => Err(format!(
+                "unknown cache strategy: {other}; expected one of: no-cache, cahce, inc-cache"
+            )),
+        }
+    }
+}
+
+impl Display for MorphCachingStrategy {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            MorphCachingStrategy::NoCache => write!(f, "no-cache"),
+            MorphCachingStrategy::Cache => write!(f, "cache"),
+            MorphCachingStrategy::IncrementalCache => write!(f, "inc-cache"),
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Rewriter {
     Naive,
-    Morph,
+    Morph(MorphConfig),
 }
 
 thread_local! {
@@ -75,7 +151,7 @@ impl Display for Rewriter {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Rewriter::Naive => write!(f, "naive"),
-            Rewriter::Morph => write!(f, "morph"),
+            Rewriter::Morph(config) => write!(f, "{config}"),
         }
     }
 }
@@ -86,7 +162,7 @@ impl FromStr for Rewriter {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.trim().to_ascii_lowercase().as_str() {
             "naive" => Ok(Rewriter::Naive),
-            "morph" => Ok(Rewriter::Morph),
+            "morph" => Ok(Rewriter::Morph(MorphConfig::default())),
             other => Err(format!(
                 "unknown rewriter: {other}; expected one of: naive, morph"
             )),

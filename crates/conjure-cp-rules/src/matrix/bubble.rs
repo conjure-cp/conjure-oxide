@@ -8,7 +8,7 @@ use conjure_cp::{bug, into_matrix_expr};
 use itertools::{Itertools as _, izip};
 
 /// Converts an unsafe index to a safe index using a bubble expression.
-#[register_rule(("Bubble", 6000))]
+#[register_rule(("Bubble", 6000, UnsafeIndex))]
 fn index_to_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
     let Expression::UnsafeIndex(_, subject, indices) = expr else {
         return Err(RuleNotApplicable);
@@ -68,7 +68,7 @@ fn index_to_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
 }
 
 /// Converts an unsafe slice to a safe slice using a bubble expression.
-#[register_rule(("Bubble", 6000))]
+#[register_rule(("Bubble", 6000, UnsafeSlice))]
 fn slice_to_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
     let Expression::UnsafeSlice(_, subject, indices) = expr else {
         return Err(RuleNotApplicable);

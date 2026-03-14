@@ -11,14 +11,14 @@ use std::{
 
 use anyhow::{anyhow, ensure};
 use clap::ValueHint;
-use conjure_cp::defaults::DEFAULT_RULE_SETS;
 use conjure_cp::{
     Model,
     context::Context,
+    defaults::DEFAULT_RULE_SETS,
     rule_engine::{resolve_rule_sets, rewrite_morph, rewrite_naive},
     settings::{
-        Rewriter, set_comprehension_expander, set_current_parser, set_current_rewriter,
-        set_current_solver_family, set_minion_discrete_threshold,
+        MorphConfig, Rewriter, set_comprehension_expander, set_current_parser,
+        set_current_rewriter, set_current_solver_family, set_minion_discrete_threshold,
     },
     solver::Solver,
 };
@@ -135,7 +135,7 @@ pub(crate) fn init_context(
     input_file: PathBuf,
 ) -> anyhow::Result<Arc<RwLock<Context<'static>>>> {
     set_current_parser(global_args.parser);
-    set_current_rewriter(global_args.rewriter);
+    set_current_rewriter(build_rewriter(global_args));
     set_comprehension_expander(global_args.comprehension_expander);
     set_current_solver_family(global_args.solver);
     set_minion_discrete_threshold(global_args.minion_discrete_threshold);
@@ -187,6 +187,18 @@ pub(crate) fn init_context(
     context.write().unwrap().file_name = Some(input_file.to_str().expect("").into());
 
     Ok(context)
+}
+
+fn build_rewriter(global_args: &GlobalArgs) -> Rewriter {
+    match global_args.rewriter {
+        Rewriter::Naive => Rewriter::Naive,
+        Rewriter::Morph(_) => Rewriter::Morph(MorphConfig {
+            naive: global_args.morph_naive,
+            cache: global_args.cache_strategy,
+            parallel: global_args.morph_parallel,
+            prefilter: global_args.morph_prefilter,
+        }),
+    }
 }
 
 pub(crate) fn init_solver(global_args: &GlobalArgs) -> Solver {
@@ -254,7 +266,8 @@ pub(crate) fn rewrite(
 ) -> anyhow::Result<Model> {
     tracing::info!("Initial model: \n{}\n", model);
 
-    set_current_rewriter(global_args.rewriter);
+    let rewriter = build_rewriter(global_args);
+    set_current_rewriter(rewriter);
 
     let comprehension_expander = global_args.comprehension_expander;
     set_comprehension_expander(comprehension_expander);
@@ -262,13 +275,14 @@ pub(crate) fn rewrite(
 
     let rule_sets = context.read().unwrap().rule_sets.clone();
 
-    let new_model = match global_args.rewriter {
-        Rewriter::Morph => {
-            tracing::info!("Rewriting the model using the morph rewriter");
+    let new_model = match rewriter {
+        Rewriter::Morph(config) => {
+            tracing::info!("Rewriting the model using the morph rewriter ({})", config);
             rewrite_morph(
                 model,
                 &rule_sets,
                 global_args.check_equally_applicable_rules,
+                config,
             )
         }
         Rewriter::Naive => {

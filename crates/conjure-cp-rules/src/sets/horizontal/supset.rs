@@ -6,7 +6,7 @@ use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, register_rule,
 };
 
-#[register_rule(("Base", 8700))]
+#[register_rule(("Base", 8700, Supset))]
 fn supset_to_subset(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
         Expr::Supset(_, a, b)

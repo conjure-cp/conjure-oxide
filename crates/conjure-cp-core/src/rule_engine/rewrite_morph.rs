@@ -1,12 +1,56 @@
-use itertools::Itertools;
-use tree_morph::{helpers::select_panic, prelude::*};
+use std::collections::HashMap;
+use std::sync::{LazyLock, Mutex};
 
 use crate::{
-    Model, bug,
+    ast::SymbolTable,
+    settings::{MorphCachingStrategy, MorphConfig},
+};
+use itertools::Itertools;
+use tracing::trace;
+use tree_morph::{
+    cache::{CachedHashMapCache, HashMapCache, NoCache, RewriteCache},
+    helpers::select_panic,
+    prelude::*,
+};
+
+use crate::{
+    Model,
+    ast::{Expression, discriminant_from_value},
+    bug,
     settings::{Rewriter, set_current_rewriter},
 };
 
-use super::{RuleSet, get_rules_grouped};
+use super::{RuleData, RuleSet, get_rules_grouped};
+
+/// Counts how many times each rule has been checked (attempted) during rewriting.
+static RULE_CHECK_COUNTS: LazyLock<Mutex<HashMap<String, usize>>> =
+    LazyLock::new(|| Mutex::new(HashMap::new()));
+
+/// Returns a snapshot of how many times each rule has been checked.
+pub fn get_rule_check_counts() -> HashMap<String, usize> {
+    RULE_CHECK_COUNTS.lock().unwrap().clone()
+}
+
+/// Resets the rule check counts to zero.
+pub fn reset_rule_check_counts() {
+    RULE_CHECK_COUNTS.lock().unwrap().clear();
+}
+
+fn count_rule_check(_: &Expression, _: &mut SymbolTable, rule: &RuleData<'_>) {
+    if let Ok(mut counts) = RULE_CHECK_COUNTS.lock() {
+        *counts.entry(rule.name().to_string()).or_insert(0) += 1;
+    }
+}
+
+fn print_rule_check_counts() {
+    let counts = RULE_CHECK_COUNTS.lock().unwrap();
+    let mut entries: Vec<(&String, &usize)> = counts.iter().collect();
+    entries.sort_by_key(|(name, _)| *name);
+    println!("Rule check counts:");
+    for (name, count) in entries {
+        println!("  {name}: {count}");
+    }
+}
 
 /// Rewrites a `Model` by applying rule sets using an optimized, tree-morphing rewriter.
 ///
@@ -22,6 +66,12 @@ use super::{RuleSet, get_rules_grouped};
 /// - `prop_multiple_equally_applicable`: A boolean flag to control behavior when multiple rules of the same priority can be applied to the same expression.
 ///   - If `true`, the rewriter will use a selection strategy (`select_panic`) that panics.
 ///   - If `false`, the rewriter will use a selection strategy (`select_first`) that simply picks the first applicable rule it encounters.
+///   TODO: CHANGE
+/// - `variant`: The `MorphVariant` selecting cache and traversal behaviour:
+///   - `NoCache` → no cache, standard traversal
+///   - `Cache` → `HashMapCache`, standard traversal
+///   - `Hashcache` → `CachedHashMapCache`, standard traversal
+///   - `Naive` → no cache, naive traversal
 ///
 /// # Returns
 ///
@@ -36,14 +86,48 @@ pub fn rewrite_morph<'a>(
     mut model: Model,
     rule_sets: &Vec<&'a RuleSet<'a>>,
     prop_multiple_equally_applicable: bool,
+    config: MorphConfig,
 ) -> Model {
-    set_current_rewriter(Rewriter::Morph);
+    set_current_rewriter(Rewriter::Morph(config));
+
+    trace!(
+        target: "rule_engine_human",
+        "Model before rewriting:\n\n{}\n--\n",
+        model
+    );
 
     let model_ref = &mut model;
+    let mut engine = build_engine(rule_sets, prop_multiple_equally_applicable, config);
+
+    let (expr, symbol_table) = if config.naive {
+        engine.morph_naive(model_ref.root().clone(), model_ref.symbols().clone())
+    } else {
+        engine.morph(model_ref.root().clone(), model_ref.symbols().clone())
+    };
+
+    *model_ref.symbols_mut() = symbol_table;
+    model_ref.replace_root(expr);
+
+    print_rule_check_counts();
+
+    trace!(
+        target: "rule_engine_human",
+        "Final model:\n\n{}",
+        model
+    );
+
+    model
+}
+
+fn build_engine<'a>(
+    rule_sets: &Vec<&'a RuleSet<'a>>,
+    prop_multiple_equally_applicable: bool,
+    config: MorphConfig,
+) -> Engine<Expression, SymbolTable, RuleData<'a>, Box<dyn RewriteCache<Expression>>> {
     let rules_grouped = get_rules_grouped(rule_sets)
         .unwrap_or_else(|_| bug!("get_rule_priorities() failed!"))
         .into_iter()
-        .map(|(_, rule)| rule.into_iter().map(|f| f.rule).collect_vec())
+        .map(|(_, rules)| rules)
         .collect_vec();
     let selector = if prop_multiple_equally_applicable {
         select_panic
@@ -51,13 +135,21 @@ pub fn rewrite_morph<'a>(
         select_first
     };
 
-    let engine = EngineBuilder::new()
+    let cache: Box<dyn RewriteCache<Expression>> = match config.cache {
+        MorphCachingStrategy::NoCache => Box::new(NoCache),
+        MorphCachingStrategy::Cache => Box::new(HashMapCache::new()),
+        MorphCachingStrategy::IncrementalCache => Box::new(CachedHashMapCache::new()),
+    };
+
+    EngineBuilder::new()
         .set_selector(selector)
         .append_rule_groups(rules_grouped)
-        .build();
-    let (expr, symbol_table) = engine.morph(model_ref.root().clone(), model_ref.symbols().clone());
-
-    *model_ref.symbols_mut() = symbol_table;
-    model_ref.replace_root(expr);
-    model
+        .add_cacher(cache)
+        .set_discriminant_fn(if config.prefilter {
+            Some(discriminant_from_value)
+        } else {
+            None
+        })
+        .add_before_rule(count_rule_check)
+        .build()
 }

@@ -14,7 +14,7 @@ register_rule_set!("SmtBvInts", ("Base"), |f: &SolverFamily| matches!(
     })
 ));
 
-#[register_rule(("SmtBvInts", 1000))]
+#[register_rule(("SmtBvInts", 1000, Sum, Product))]
 fn fold_list_exprs_pairwise(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
     match expr {
         Expression::Sum(_, vec_expr) => fold_list_pairwise(vec_expr, Expression::PairwiseSum),
