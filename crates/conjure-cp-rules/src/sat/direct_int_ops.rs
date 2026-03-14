@@ -5,6 +5,8 @@ use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
 };
 
+use conjure_cp::ast::AbstractLiteral::Matrix;
+use super::log_int_ops::product_of_ranges;
 use conjure_cp::ast::Metadata;
 use conjure_cp::ast::Moo;
 use conjure_cp::into_matrix_expr;
@@ -393,4 +395,111 @@ fn safediv_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     );
 
     Ok(Reduction::cnf(quot_int, new_clauses, new_symbols))
+}
+
+#[register_rule(("SAT_Direct", 9100))]
+fn product_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    let Expr::Product(_, exprs) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Expr::AbstractLiteral(_, Matrix(exprs_list, _)) = exprs.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
+
+
+    let ranges: Result<Vec<_>, _> = exprs_list
+    .iter()
+    .map(|e| match e {
+        Expr::SATInt(_, _, _, x) => Ok(x),
+        _ => Err(RuleNotApplicable),
+    })
+    .collect();
+
+    let ranges = ranges?;
+
+    let (min, max) = product_of_ranges(ranges.clone());
+
+
+    // 1. Extract the boolean bits for each operand
+    let bits_list: Result<Vec<_>, _> = exprs_list
+        .iter()
+        .map(|e| match e {
+            Expr::SATInt(_, SATIntEncoding::Direct, inner, _) => {
+                inner.as_ref().clone().unwrap_list().ok_or(RuleNotApplicable)
+            }
+            _ => Err(RuleNotApplicable),
+        })
+        .collect();
+
+    let bits_list = bits_list?;
+
+    let mut new_symbols = symbols.clone();
+    let mut new_clauses = vec![];
+
+    // 2. Zip the bits and ranges together to prep for the fold
+    let operands = bits_list.into_iter().zip(ranges.into_iter().copied());
+
+    // 3. Pairwise reduction to build the lookup tables
+    let (result_bits, _) = operands
+        .reduce(|(lhs_bits, (lhs_min, lhs_max)), (rhs_bits, (rhs_min, rhs_max))| {
+            let mut prod_min = i32::MAX;
+            let mut prod_max = i32::MIN;
+
+            for i in lhs_min..=lhs_max {
+                for j in rhs_min..=rhs_max {
+                    let k = i * j;
+                    prod_min = prod_min.min(k);
+                    prod_max = prod_max.max(k);
+                }
+            }
+
+            let mut prod_bits = Vec::new();
+            for _ in prod_min..=prod_max {
+                let decl = new_symbols.gensym(&conjure_cp::ast::Domain::bool());
+                prod_bits.push(Expr::Atomic(
+                    Metadata::new(),
+                    Atom::Reference(conjure_cp::ast::Reference::new(decl)),
+                ));
+            }
+
+            for i in lhs_min..=lhs_max {
+                let lhs_bit = &lhs_bits[(i - lhs_min) as usize];
+                for j in rhs_min..=rhs_max {
+                    let rhs_bit = &rhs_bits[(j - rhs_min) as usize];
+                    let k = i * j;
+                    let prod_bit = &prod_bits[(k - prod_min) as usize];
+
+                    new_clauses.push(CnfClause::new(vec![
+                        Expr::Not(Metadata::new(), Moo::new(lhs_bit.clone())),
+                        Expr::Not(Metadata::new(), Moo::new(rhs_bit.clone())),
+                        prod_bit.clone(),
+                    ]));
+                }
+            }
+
+            for a in 0..prod_bits.len() {
+                for b in (a + 1)..prod_bits.len() {
+                    new_clauses.push(CnfClause::new(vec![
+                        Expr::Not(Metadata::new(), Moo::new(prod_bits[a].clone())),
+                        Expr::Not(Metadata::new(), Moo::new(prod_bits[b].clone())),
+                    ]));
+                }
+            }
+
+            (prod_bits, (prod_min, prod_max))
+        })
+        .ok_or(RuleNotApplicable)?; // Fails safely if the product list was empty
+
+    // 4. Wrap the final result
+    Ok(Reduction::cnf(
+        Expr::SATInt(
+            Metadata::new(),
+            SATIntEncoding::Direct,
+            Moo::new(into_matrix_expr!(result_bits)),
+            (min, max), // Using the global bounds you calculated earlier!
+        ),
+        new_clauses,
+        new_symbols,
+    ))
 }
