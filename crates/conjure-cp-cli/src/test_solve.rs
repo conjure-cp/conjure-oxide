@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 use std::process::exit;
 use std::sync::Arc;
+use std::time::Duration;
 
 use clap::ValueHint;
 use conjure_cp_cli::utils::conjure::{

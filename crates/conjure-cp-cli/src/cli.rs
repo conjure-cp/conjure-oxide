@@ -5,7 +5,7 @@ use clap::{Args, Parser, Subcommand};
 use clap_complete::Shell;
 use conjure_cp::settings::{
     DEFAULT_MINION_DISCRETE_THRESHOLD, Parser as InputParser, QuantifiedExpander, Rewriter,
-    SolverFamily,
+    SatEncoding, SolverFamily,
 };
 
 use crate::{pretty, solve, test_solve};
@@ -138,6 +138,18 @@ pub struct GlobalArgs {
     )]
     pub solver: SolverFamily,
 
+    /// Encoding strategy to use for the SAT solver.
+    ///
+    /// Possible values: `log`, `direct`, `order`.
+    #[arg(
+        long,
+        value_name = "ENCODING",
+        value_parser = parse_sat_encoding,
+        global = true,
+        help_heading = CONFIGURATION_HELP_HEADING
+    )]
+    pub sat_encoding: Option<SatEncoding>,
+
     /// Int-domain size threshold for using Minion `DISCRETE` variables.
     ///
     /// If an int domain has size <= this value, Conjure Oxide emits `DISCRETE`; otherwise `BOUND`.
@@ -204,6 +216,10 @@ fn parse_rewriter(input: &str) -> Result<Rewriter, String> {
 }
 
 fn parse_solver_family(input: &str) -> Result<SolverFamily, String> {
+    input.parse()
+}
+
+fn parse_sat_encoding(input: &str) -> Result<SatEncoding, String> {
     input.parse()
 }
 

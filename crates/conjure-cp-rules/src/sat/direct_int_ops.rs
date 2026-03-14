@@ -421,7 +421,6 @@ fn product_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let (min, max) = product_of_ranges(ranges.clone());
 
 
-    // 1. Extract the boolean bits for each operand
     let bits_list: Result<Vec<_>, _> = exprs_list
         .iter()
         .map(|e| match e {
@@ -437,10 +436,8 @@ fn product_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let mut new_symbols = symbols.clone();
     let mut new_clauses = vec![];
 
-    // 2. Zip the bits and ranges together to prep for the fold
     let operands = bits_list.into_iter().zip(ranges.into_iter().copied());
 
-    // 3. Pairwise reduction to build the lookup tables
     let (result_bits, _) = operands
         .reduce(|(lhs_bits, (lhs_min, lhs_max)), (rhs_bits, (rhs_min, rhs_max))| {
             let mut prod_min = i32::MAX;
@@ -489,15 +486,14 @@ fn product_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
             (prod_bits, (prod_min, prod_max))
         })
-        .ok_or(RuleNotApplicable)?; // Fails safely if the product list was empty
+        .ok_or(RuleNotApplicable)?;
 
-    // 4. Wrap the final result
     Ok(Reduction::cnf(
         Expr::SATInt(
             Metadata::new(),
             SATIntEncoding::Direct,
             Moo::new(into_matrix_expr!(result_bits)),
-            (min, max), // Using the global bounds you calculated earlier!
+            (min, max),
         ),
         new_clauses,
         new_symbols,

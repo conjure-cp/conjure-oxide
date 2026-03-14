@@ -17,8 +17,8 @@ use conjure_cp::{
     context::Context,
     rule_engine::{resolve_rule_sets, rewrite_morph, rewrite_naive},
     settings::{
-        Rewriter, set_comprehension_expander, set_current_parser, set_current_rewriter,
-        set_current_solver_family, set_minion_discrete_threshold,
+        Rewriter, SatEncoding, set_comprehension_expander, set_current_parser,
+        set_current_rewriter, set_current_solver_family, set_minion_discrete_threshold,
     },
     solver::Solver,
 };
@@ -104,7 +104,12 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
     let context = init_context(&global_args, input_file)?;
     let model = parse(&global_args, Arc::clone(&context))?;
     let rewritten_model = rewrite(model, &global_args, Arc::clone(&context))?;
-    let solver = init_solver(&global_args);
+
+    let timeout_ms = global_args
+        .solver_timeout
+        .map(|dur| Duration::from(dur).as_millis())
+        .map(|timeout_ms| u64::try_from(timeout_ms).expect("Timeout too large"));
+    let solver = init_solver(context.read().unwrap().solver_family, timeout_ms);
 
     if solve_args.no_run_solver {
         println!("{}", &rewritten_model);
@@ -137,10 +142,21 @@ pub(crate) fn init_context(
     set_current_parser(global_args.parser);
     set_current_rewriter(global_args.rewriter);
     set_comprehension_expander(global_args.comprehension_expander);
-    set_current_solver_family(global_args.solver);
+
+    let mut target_family = global_args.solver;
+    if let Some(encoding) = global_args.sat_encoding {
+        if let SolverFamily::Sat(_) = target_family {
+            target_family = SolverFamily::Sat(encoding);
+        } else {
+            tracing::warn!(
+                "SAT encoding specified, but solver is not SAT. Ignoring SAT encoding."
+            );
+        }
+    }
+
+    set_current_solver_family(target_family);
     set_minion_discrete_threshold(global_args.minion_discrete_threshold);
 
-    let target_family = global_args.solver;
     let mut extra_rule_sets: Vec<&str> = DEFAULT_RULE_SETS.to_vec();
     for rs in &global_args.extra_rule_sets {
         extra_rule_sets.push(rs.as_str());
@@ -189,13 +205,7 @@ pub(crate) fn init_context(
     Ok(context)
 }
 
-pub(crate) fn init_solver(global_args: &GlobalArgs) -> Solver {
-    let family = global_args.solver;
-    let timeout_ms = global_args
-        .solver_timeout
-        .map(|dur| Duration::from(dur).as_millis())
-        .map(|timeout_ms| u64::try_from(timeout_ms).expect("Timeout too large"));
-
+pub(crate) fn init_solver(family: SolverFamily, timeout_ms: Option<u64>) -> Solver {
     match family {
         SolverFamily::Minion => Solver::new(Minion::default()),
         SolverFamily::Sat(_) => Solver::new(Sat::default()),
