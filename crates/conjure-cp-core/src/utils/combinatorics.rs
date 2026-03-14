@@ -1,5 +1,6 @@
 use thiserror::Error;
 use ustr::Ustr;
+use crate::ast::domains::UInt;
 
 #[derive(Clone, Debug, PartialEq, Eq, Error)]
 pub enum CombinatoricsError {
@@ -22,7 +23,7 @@ impl CombinatoricsError {
 /// C(n, r) = n! / (r! * (n-r)!)
 ///
 /// Not defined for r > n.
-pub fn count_combinations(n_total: u64, n_choose: u64) -> Result<u64, CombinatoricsError> {
+pub fn count_combinations(n_total: UInt, n_choose: UInt) -> Result<UInt, CombinatoricsError> {
     if n_choose > n_total {
         return Err(CombinatoricsError::not_defined(
             "n_choose must be <= n_total",
@@ -34,11 +35,11 @@ pub fn count_combinations(n_total: u64, n_choose: u64) -> Result<u64, Combinator
 
     // Repeatedly multiply / divide as factors get big fast;
     // return None if we overflow anyway
-    (1u64..=k).try_fold(1u64, |acc, val| {
+    (1 as UInt..=k).try_fold(1 as UInt, |acc, val| {
         n_total
             .checked_sub(val)
             .ok_or(CombinatoricsError::Overflow)? // n_total - val
-            .checked_add(1u64)
+            .checked_add(1 as UInt)
             .ok_or(CombinatoricsError::Overflow)? // + 1
             .checked_mul(acc)
             .ok_or(CombinatoricsError::Overflow)? // * acc
@@ -55,7 +56,7 @@ pub fn count_combinations(n_total: u64, n_choose: u64) -> Result<u64, Combinator
 ///
 /// Not defined for r > n.
 #[allow(dead_code)]
-pub fn count_permutations(n_total: u64, n_choose: u64) -> Result<u64, CombinatoricsError> {
+pub fn count_permutations(n_total: UInt, n_choose: UInt) -> Result<UInt, CombinatoricsError> {
     if n_choose > n_total {
         return Err(CombinatoricsError::not_defined(
             "n_choose must be <= n_total",
@@ -65,9 +66,9 @@ pub fn count_permutations(n_total: u64, n_choose: u64) -> Result<u64, Combinator
     let start = n_total
         .checked_sub(n_choose)
         .ok_or(CombinatoricsError::Overflow)?
-        .checked_add(1u64)
+        .checked_add(1 as UInt)
         .ok_or(CombinatoricsError::Overflow)?;
-    (start..=n_total).try_fold(1u64, |acc, val| {
+    (start..=n_total).try_fold(1 as UInt, |acc, val| {
         acc.checked_mul(val).ok_or(CombinatoricsError::Overflow)
     })
 }

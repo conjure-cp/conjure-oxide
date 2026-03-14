@@ -5,7 +5,7 @@ use crate::ast::{
     RecordEntryGround, Reference, Typeable,
     domains::{
         GroundDomain,
-        domain::{DomainPtr, Int},
+        domain::{DomainPtr, Int, UInt},
         range::Range,
     },
 };
@@ -48,6 +48,29 @@ impl TryInto<Int> for IntVal {
     }
 }
 
+impl From<UInt> for IntVal {
+    fn from(value: UInt) -> Self {
+        Self::Const(value as Int)
+    }
+}
+
+impl TryInto<UInt> for IntVal {
+    type Error = DomainOpError;
+
+    fn try_into(self) -> Result<UInt, Self::Error> {
+        match self {
+            IntVal::Const(val) => {
+                if val >= 0{
+                    Ok(val as UInt)
+                } else {
+                   Err(DomainOpError::WrongSign) 
+                }
+            },
+            _ => Err(DomainOpError::NotGround),
+        }
+    }
+}
+
 impl From<Range<Int>> for Range<IntVal> {
     fn from(value: Range<Int>) -> Self {
         match value {
@@ -74,25 +97,51 @@ impl TryInto<Range<Int>> for Range<IntVal> {
     }
 }
 
-impl From<SetAttr<Int>> for SetAttr<IntVal> {
-    fn from(value: SetAttr<Int>) -> Self {
+impl From<Range<UInt>> for Range<IntVal> {
+    fn from(value: Range<UInt>) -> Self {
+        match value {
+            Range::Single(x) => Range::Single(x.into()),
+            Range::Bounded(l, r) => Range::Bounded(l.into(), r.into()),
+            Range::UnboundedL(r) => Range::UnboundedL(r.into()),
+            Range::UnboundedR(l) => Range::UnboundedR(l.into()),
+            Range::Unbounded => Range::Unbounded,
+        }
+    }
+}
+
+impl TryInto<Range<UInt>> for Range<IntVal> {
+    type Error = DomainOpError;
+
+    fn try_into(self) -> Result<Range<UInt>, Self::Error> {
+        match self {
+            Range::Single(x) => Ok(Range::Single(x.try_into()?)),
+            Range::Bounded(l, r) => Ok(Range::Bounded(l.try_into()?, r.try_into()?)),
+            Range::UnboundedL(r) => Ok(Range::UnboundedL(r.try_into()?)),
+            Range::UnboundedR(l) => Ok(Range::UnboundedR(l.try_into()?)),
+            Range::Unbounded => Ok(Range::Unbounded),
+        }
+    }
+}
+
+impl From<SetAttr<UInt>> for SetAttr<IntVal> {
+    fn from(value: SetAttr<UInt>) -> Self {
         SetAttr {
             size: value.size.into(),
         }
     }
 }
 
-impl TryInto<SetAttr<Int>> for SetAttr<IntVal> {
+impl TryInto<SetAttr<UInt>> for SetAttr<IntVal> {
     type Error = DomainOpError;
 
-    fn try_into(self) -> Result<SetAttr<Int>, Self::Error> {
-        let size: Range<Int> = self.size.try_into()?;
+    fn try_into(self) -> Result<SetAttr<UInt>, Self::Error> {
+        let size: Range<UInt> = self.size.try_into()?;
         Ok(SetAttr { size })
     }
 }
 
-impl From<MSetAttr<Int>> for MSetAttr<IntVal> {
-    fn from(value: MSetAttr<Int>) -> Self {
+impl From<MSetAttr<UInt>> for MSetAttr<IntVal> {
+    fn from(value: MSetAttr<UInt>) -> Self {
         MSetAttr {
             size: value.size.into(),
             occurrence: value.occurrence.into(),
@@ -100,18 +149,18 @@ impl From<MSetAttr<Int>> for MSetAttr<IntVal> {
     }
 }
 
-impl TryInto<MSetAttr<Int>> for MSetAttr<IntVal> {
+impl TryInto<MSetAttr<UInt>> for MSetAttr<IntVal> {
     type Error = DomainOpError;
 
-    fn try_into(self) -> Result<MSetAttr<Int>, Self::Error> {
-        let size: Range<Int> = self.size.try_into()?;
-        let occurrence: Range<Int> = self.occurrence.try_into()?;
+    fn try_into(self) -> Result<MSetAttr<UInt>, Self::Error> {
+        let size: Range<UInt> = self.size.try_into()?;
+        let occurrence: Range<UInt> = self.occurrence.try_into()?;
         Ok(MSetAttr { size, occurrence })
     }
 }
 
-impl From<FuncAttr<Int>> for FuncAttr<IntVal> {
-    fn from(value: FuncAttr<Int>) -> Self {
+impl From<FuncAttr<UInt>> for FuncAttr<IntVal> {
+    fn from(value: FuncAttr<UInt>) -> Self {
         FuncAttr {
             size: value.size.into(),
             partiality: value.partiality,
@@ -120,11 +169,11 @@ impl From<FuncAttr<Int>> for FuncAttr<IntVal> {
     }
 }
 
-impl TryInto<FuncAttr<Int>> for FuncAttr<IntVal> {
+impl TryInto<FuncAttr<UInt>> for FuncAttr<IntVal> {
     type Error = DomainOpError;
 
-    fn try_into(self) -> Result<FuncAttr<Int>, Self::Error> {
-        let size: Range<Int> = self.size.try_into()?;
+    fn try_into(self) -> Result<FuncAttr<UInt>, Self::Error> {
+        let size: Range<UInt> = self.size.try_into()?;
         Ok(FuncAttr {
             size,
             jectivity: self.jectivity,
@@ -201,11 +250,58 @@ impl IntVal {
             },
         }
     }
+
+    pub fn resolve_unsigned(&self) -> Option<UInt> {
+        match self {
+            IntVal::Const(value) => {
+                let value = *value;
+                if value >= 0{
+                    Some(value as UInt)
+                } else {
+                    bug!("Expected unsigned integer expression, got: {value}")
+                }
+            },
+            IntVal::Expr(expr) => eval_expr_to_uint(expr),
+            IntVal::Reference(re) => match re.ptr.kind().deref() {
+                DeclarationKind::ValueLetting(expr)
+                | DeclarationKind::TemporaryValueLetting(expr) => eval_expr_to_uint(expr),
+                // If this is an int given we will be able to resolve it eventually, but not yet
+                DeclarationKind::Given(_) => None,
+                DeclarationKind::Quantified(inner) => {
+                    if let Some(generator) = inner.generator()
+                        && let Some(expr) = generator.as_value_letting()
+                    {
+                        eval_expr_to_uint(&expr)
+                    } else {
+                        None
+                    }
+                }
+                // Decision variables inside domains are unresolved until solving.
+                DeclarationKind::Find(_) => None,
+                DeclarationKind::DomainLetting(_) | DeclarationKind::RecordField(_) => bug!(
+                    "Expected integer expression, given, or letting inside int domain; Got: {re}"
+                ),
+            },
+        }
+    }
 }
 
 fn eval_expr_to_int(expr: &Expression) -> Option<Int> {
     match eval_constant(expr)? {
         Literal::Int(v) => Some(v),
+        _ => bug!("Expected integer expression, got: {expr}"),
+    }
+}
+
+fn eval_expr_to_uint(expr: &Expression) -> Option<UInt> {
+    match eval_constant(expr)? {
+        Literal::Int(v) => {
+            if v >= 0{
+                Some(v as UInt)
+            } else {
+                bug!("Expected unsigned integer expression, got: {expr}")
+            }
+        },
         _ => bug!("Expected integer expression, got: {expr}"),
     }
 }
@@ -269,27 +365,39 @@ impl Range<IntVal> {
     }
 }
 
+impl Range<IntVal> {
+    pub fn resolve_unsigned(&self) -> Option<Range<UInt>> {
+        match self {
+            Range::Single(x) => Some(Range::Single(x.resolve_unsigned()?)),
+            Range::Bounded(l, r) => Some(Range::Bounded(l.resolve_unsigned()?, r.resolve_unsigned()?)),
+            Range::UnboundedL(r) => Some(Range::UnboundedL(r.resolve_unsigned()?)),
+            Range::UnboundedR(l) => Some(Range::UnboundedR(l.resolve_unsigned()?)),
+            Range::Unbounded => Some(Range::Unbounded),
+        }
+    }
+}
+
 impl SetAttr<IntVal> {
-    pub fn resolve(&self) -> Option<SetAttr<Int>> {
+    pub fn resolve(&self) -> Option<SetAttr<UInt>> {
         Some(SetAttr {
-            size: self.size.resolve()?,
+            size: self.size.resolve_unsigned()?,
         })
     }
 }
 
 impl MSetAttr<IntVal> {
-    pub fn resolve(&self) -> Option<MSetAttr<Int>> {
+    pub fn resolve(&self) -> Option<MSetAttr<UInt>> {
         Some(MSetAttr {
-            size: self.size.resolve()?,
-            occurrence: self.occurrence.resolve()?,
+            size: self.size.resolve_unsigned()?,
+            occurrence: self.occurrence.resolve_unsigned()?,
         })
     }
 }
 
 impl FuncAttr<IntVal> {
-    pub fn resolve(&self) -> Option<FuncAttr<Int>> {
+    pub fn resolve(&self) -> Option<FuncAttr<UInt>> {
         Some(FuncAttr {
-            size: self.size.resolve()?,
+            size: self.size.resolve_unsigned()?,
             partiality: self.partiality.clone(),
             jectivity: self.jectivity.clone(),
         })

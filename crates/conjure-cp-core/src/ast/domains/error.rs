@@ -23,6 +23,9 @@ pub enum DomainOpError {
 
     #[error("Could not enumerate the domain as it is too large")]
     TooLarge,
+
+    #[error("The given number was negative but needed to be unsigned")]
+    WrongSign,
 }
 
 impl From<CombinatoricsError> for DomainOpError {

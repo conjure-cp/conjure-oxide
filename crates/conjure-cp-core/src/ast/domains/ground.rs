@@ -3,7 +3,7 @@ use crate::ast::pretty::pretty_vec;
 use crate::ast::{
     AbstractLiteral, Domain, DomainOpError, FuncAttr, HasDomain, Literal, Moo, RecordEntry,
     SetAttr, Typeable,
-    domains::{domain::Int, range::Range},
+    domains::{domain::Int, domain::UInt, range::Range},
 };
 use crate::range;
 use crate::utils::count_combinations;
@@ -57,9 +57,9 @@ pub enum GroundDomain {
     /// An integer value in the given ranges (e.g. int(1, 3..5))
     Int(Vec<Range<Int>>),
     /// A set of elements drawn from the inner domain
-    Set(SetAttr<Int>, Moo<GroundDomain>),
+    Set(SetAttr<UInt>, Moo<GroundDomain>),
     /// A multiset of elements drawn from the inner domain
-    MSet(MSetAttr<Int>, Moo<GroundDomain>),
+    MSet(MSetAttr<UInt>, Moo<GroundDomain>),
     /// An N-dimensional matrix of elements drawn from the inner domain,
     /// and indices from the n index domains
     Matrix(Moo<GroundDomain>, Vec<Moo<GroundDomain>>),
@@ -223,7 +223,7 @@ impl GroundDomain {
     /// # Errors
     ///
     /// - [`DomainOpError::Unbounded`] if the input domain is of infinite size.
-    pub fn length(&self) -> Result<u64, DomainOpError> {
+    pub fn length(&self) -> Result<UInt, DomainOpError> {
         match self {
             GroundDomain::Empty(_) => Ok(0),
             GroundDomain::Bool => Ok(2),
@@ -232,10 +232,10 @@ impl GroundDomain {
                     return Err(DomainOpError::Unbounded);
                 }
 
-                let mut length = 0u64;
+                let mut length = 0;
                 for range in ranges {
                     if let Some(range_length) = range.length() {
-                        length += range_length as u64;
+                        length += range_length as UInt;
                     } else {
                         return Err(DomainOpError::Unbounded);
                     }
@@ -246,12 +246,12 @@ impl GroundDomain {
                 let inner_len = inner_domain.length()?;
                 let (min_sz, max_sz) = match set_attr.size {
                     Range::Unbounded => (0, inner_len),
-                    Range::Single(n) => (n as u64, n as u64),
-                    Range::UnboundedR(n) => (n as u64, inner_len),
-                    Range::UnboundedL(n) => (0, n as u64),
-                    Range::Bounded(min, max) => (min as u64, max as u64),
+                    Range::Single(n) => (n as UInt, n as UInt),
+                    Range::UnboundedR(n) => (n as UInt, inner_len),
+                    Range::UnboundedL(n) => (0, n as UInt),
+                    Range::Bounded(min, max) => (min as UInt, max as UInt),
                 };
-                let mut ans = 0u64;
+                let mut ans = 0  as UInt; 
                 for sz in min_sz..=max_sz {
                     let c = count_combinations(inner_len, sz)?;
                     ans = ans.checked_add(c).ok_or(DomainOpError::TooLarge)?;
@@ -262,12 +262,12 @@ impl GroundDomain {
                 let inner_len = inner_domain.length()?;
                 let (min_sz, max_sz) = match mset_attr.size {
                     Range::Unbounded => (0, inner_len),
-                    Range::Single(n) => (n as u64, n as u64),
-                    Range::UnboundedR(n) => (n as u64, inner_len),
-                    Range::UnboundedL(n) => (0, n as u64),
-                    Range::Bounded(min, max) => (min as u64, max as u64),
+                    Range::Single(n) => (n as UInt, n as UInt),
+                    Range::UnboundedR(n) => (n as UInt, inner_len),
+                    Range::UnboundedL(n) => (0, n as UInt),
+                    Range::Bounded(min, max) => (min as UInt, max as UInt),
                 };
-                let mut ans = 0u64;
+                let mut ans = 0  as UInt;
                 for sz in min_sz..=max_sz {
                     // need  "multichoose", ((n  k)) == (n+k-1  k)
                     // Where n=inner_len and k=sz
@@ -277,7 +277,7 @@ impl GroundDomain {
                 Ok(ans)
             }
             GroundDomain::Tuple(domains) => {
-                let mut ans = 1u64;
+                let mut ans = 1  as UInt;
                 for domain in domains {
                     ans = ans
                         .checked_mul(domain.length()?)
@@ -287,7 +287,7 @@ impl GroundDomain {
             }
             GroundDomain::Record(entries) => {
                 // A record is just a named tuple
-                let mut ans = 1u64;
+                let mut ans = 1  as UInt;
                 for entry in entries {
                     let sz = entry.domain.length()?;
                     ans = ans.checked_mul(sz).ok_or(DomainOpError::TooLarge)?;
@@ -297,7 +297,7 @@ impl GroundDomain {
             GroundDomain::Matrix(inner_domain, idx_domains) => {
                 let inner_sz = inner_domain.length()?;
                 let exp = idx_domains.iter().try_fold(1u32, |acc, val| {
-                    let len = val.length()? as u32;
+                    let len = val.length()? as UInt;
                     acc.checked_mul(len).ok_or(DomainOpError::TooLarge)
                 })?;
                 inner_sz.checked_pow(exp).ok_or(DomainOpError::TooLarge)
@@ -332,7 +332,7 @@ impl GroundDomain {
             GroundDomain::Set(set_attr, inner_domain) => match lit {
                 Literal::AbstractLiteral(AbstractLiteral::Set(lit_elems)) => {
                     // check if the literal's size is allowed by the set attribute
-                    let sz = lit_elems.len().to_i32().ok_or(DomainOpError::TooLarge)?;
+                    let sz = lit_elems.len().to_u32().ok_or(DomainOpError::TooLarge)?;
                     if !set_attr.size.contains(&sz) {
                         return Ok(false);
                     }
@@ -349,7 +349,7 @@ impl GroundDomain {
             GroundDomain::MSet(mset_attr, inner_domain) => match lit {
                 Literal::AbstractLiteral(AbstractLiteral::MSet(lit_elems)) => {
                     // check if the literal's size is allowed by the mset attribute
-                    let sz = lit_elems.len().to_i32().ok_or(DomainOpError::TooLarge)?;
+                    let sz = lit_elems.len().to_u32().ok_or(DomainOpError::TooLarge)?;
                     if !mset_attr.size.contains(&sz) {
                         return Ok(false);
                     }
@@ -436,7 +436,7 @@ impl GroundDomain {
             },
             GroundDomain::Function(func_attr, domain, codomain) => match lit {
                 Literal::AbstractLiteral(AbstractLiteral::Function(lit_elems)) => {
-                    let sz = Int::try_from(lit_elems.len()).expect("Should convert");
+                    let sz = UInt::try_from(lit_elems.len()).expect("Should convert");
                     if !func_attr.size.contains(&sz) {
                         return Ok(false);
                     }

@@ -353,5 +353,12 @@ pub(crate) fn parse_int(ctx: &ParseContext, node: &Node) -> Result<i32, FatalPar
     let raw_value = &ctx.source_code[node.start_byte()..node.end_byte()];
     raw_value.parse::<i32>().map_err(|_e| {
         FatalParseError::internal_error("Expected an integer here".to_string(), Some(node.range()))
+    })   
+}
+
+pub(crate) fn parse_uint(ctx: &ParseContext, node: &Node) -> Result<u32, FatalParseError> {
+    let raw_value = &ctx.source_code[node.start_byte()..node.end_byte()];
+    raw_value.parse::<u32>().map_err(|_e| {
+        FatalParseError::internal_error("Expected an integer here".to_string(), Some(node.range()))
     })
 }
