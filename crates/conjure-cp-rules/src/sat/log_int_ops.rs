@@ -393,7 +393,7 @@ fn cnf_shift_add_multiply(
 /// E.g.
 /// a : [2, 5], b : [-1, 2], c : [-10, -6], d : [0, 3]
 /// a * b * c *d : [-300, 150]
-fn product_of_ranges(ranges: Vec<&(i32, i32)>) -> (i32, i32) {
+pub fn product_of_ranges(ranges: Vec<&(i32, i32)>) -> (i32, i32) {
     if ranges.is_empty() {
         return (1, 1); // product of zero numbers = 1
     }
