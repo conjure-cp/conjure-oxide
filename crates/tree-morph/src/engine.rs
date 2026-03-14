@@ -2,7 +2,6 @@
 //!
 //! See the [`morph`](Engine::morph) for more information.
 
-use std::mem::discriminant;
 
 use crate::cache::{CacheResult, RewriteCache};
 use crate::engine_zipper::{EngineZipper, NaiveZipper};
@@ -32,9 +31,6 @@ where
     pub(crate) selector: SelectorFn<T, M, R>,
 
     pub(crate) cache: C,
-
-    /// Whether rule-group prefiltering was enabled when this engine was built.
-    pub(crate) use_prefilter: bool,
 }
 
 impl<T, M, R, C> Engine<T, M, R, C>
@@ -71,7 +67,7 @@ where
 
     /// Returns whether rule-group prefiltering is enabled for this engine.
     pub fn uses_prefilter(&self) -> bool {
-        self.use_prefilter
+        self.rule_groups.discriminant_fn.is_some()
     }
 
     /// Exhaustively rewrites a tree using user-defined rule groups.
@@ -220,9 +216,9 @@ where
                     trace!("Got Dirty, Level {}", level);
 
                     let subtree = zipper.inner.focus();
-                    let d = discriminant(subtree);
+                    let id = self.rule_groups.discriminant_fn.map(|f| f(subtree));
 
-                    let rules = self.rule_groups.get_rules(level, d);
+                    let rules = self.rule_groups.get_rules(level, id);
 
                     debug!("Checking Level {} with ? Rules", level);
                     match self.cache.get(subtree, level) {

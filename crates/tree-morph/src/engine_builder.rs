@@ -26,7 +26,7 @@ where
 
     cache: C,
 
-    use_prefilter: bool,
+    discriminant_fn: Option<fn(&T) -> usize>,
 }
 
 macro_rules! add_handler_fns {
@@ -61,7 +61,7 @@ where
             rule_groups: Vec::new(),
             selector: select_first,
             cache: NoCache,
-            use_prefilter: true,
+            discriminant_fn: None,
         }
     }
 }
@@ -76,10 +76,9 @@ where
     pub fn build(self) -> Engine<T, M, R, C> {
         Engine {
             event_handlers: self.event_handlers,
-            rule_groups: RuleGroups::new(self.rule_groups, self.use_prefilter),
+            rule_groups: RuleGroups::new(self.rule_groups, self.discriminant_fn),
             selector: self.selector,
             cache: self.cache,
-            use_prefilter: self.use_prefilter,
         }
     }
 
@@ -150,13 +149,17 @@ where
             rule_groups: self.rule_groups,
             selector: self.selector,
             cache: cacher,
-            use_prefilter: self.use_prefilter,
+            discriminant_fn: self.discriminant_fn,
         }
     }
 
-    /// TODO
-    pub fn enable_prefilter(mut self, enabled: bool) -> Self {
-        self.use_prefilter = enabled;
+    /// Sets the discriminant function used for rule prefiltering.
+    ///
+    /// When `Some(f)` is provided, `f` is called on each node to compute a unique `usize` id,
+    /// which is used to skip rules that do not apply to that node type.
+    /// When `None`, prefiltering is disabled and all rules are tried on every node.
+    pub fn set_discriminant_fn(mut self, discriminant_fn: Option<fn(&T) -> usize>) -> Self {
+        self.discriminant_fn = discriminant_fn;
         self
     }
 }

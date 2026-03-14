@@ -2,7 +2,7 @@
 //!
 //! See the [`Rule`] trait for more information.
 
-use std::{collections::HashMap, marker::PhantomData, mem::Discriminant};
+use std::{collections::HashMap, marker::PhantomData};
 
 use crate::prelude::{Commands, Update};
 use uniplate::Uniplate;
@@ -103,8 +103,8 @@ pub trait Rule<T: Uniplate, M> {
     }
 
     /// None -> Rule applies to all nodes
-    /// List of Discriminants -> Rule only applies to these ones
-    fn applicable_to(&self) -> Option<Vec<Discriminant<T>>> {
+    /// Some(ids) -> Rule only applies to nodes with these discriminant ids
+    fn applicable_to(&self) -> Option<Vec<usize>> {
         None
     }
 }
@@ -208,12 +208,13 @@ macro_rules! rule_fns {
 /// use. We can add this to our list of rules with `vec![my_rule]`.
 ///
 /// If a name is not specified, the functions name will be it's identifier.
-pub struct NamedRule<F> {
+#[derive(Clone)]
+pub struct NamedRule<F: Clone> {
     name: &'static str,
     function: F,
 }
 
-impl<F> NamedRule<F> {
+impl<F: Clone> NamedRule<F> {
     /// Create a Rule with a specified name.
     pub const fn new(name: &'static str, function: F) -> Self {
         Self { name, function }
@@ -223,7 +224,7 @@ impl<F> NamedRule<F> {
 impl<T, M, F> Rule<T, M> for NamedRule<F>
 where
     T: Uniplate,
-    F: Fn(&mut Commands<T, M>, &T, &M) -> Option<T>,
+    F: Fn(&mut Commands<T, M>, &T, &M) -> Option<T> + Clone,
 {
     fn apply(&self, commands: &mut Commands<T, M>, subtree: &T, meta: &M) -> Option<T> {
         (self.function)(commands, subtree, meta)
@@ -243,8 +244,12 @@ where
     /// Priority -> Rules
     universal_rules: Vec<Vec<R>>,
 
-    /// Priority -> Discriminant -> Rules
-    filtered_rules: Option<Vec<HashMap<Discriminant<T>, Vec<R>>>>,
+    /// Priority -> discriminant id -> Rules
+    filtered_rules: Option<Vec<HashMap<usize, Vec<R>>>>,
+
+    /// Function to compute a unique usize id for a node, used for prefiltering.
+    /// None means prefiltering is disabled.
+    pub discriminant_fn: Option<fn(&T) -> usize>,
 
     _phantom: PhantomData<(T, M)>,
 }
@@ -255,28 +260,29 @@ where
     R: Rule<T, M> + Clone,
 {
     /// TODO
-    pub fn new(rule_group: Vec<Vec<R>>, prefilter: bool) -> Self {
-        if !prefilter {
+    pub fn new(rule_group: Vec<Vec<R>>, discriminant_fn: Option<fn(&T) -> usize>) -> Self {
+        let Some(discriminant_fn) = discriminant_fn else {
             return Self {
                 filtered_rules: None,
                 universal_rules: rule_group,
+                discriminant_fn: None,
                 _phantom: PhantomData,
             };
-        }
+        };
 
         let mut filtered_rules = Vec::with_capacity(rule_group.len());
         let mut universal_rules = Vec::with_capacity(rule_group.len());
 
         for rules in rule_group {
-            let mut filtered: HashMap<Discriminant<T>, Vec<R>> = HashMap::new();
+            let mut filtered: HashMap<usize, Vec<R>> = HashMap::new();
             let mut universal = Vec::new();
 
             for rule in rules {
                 match rule.applicable_to() {
                     None => universal.push(rule),
-                    Some(ds) => {
-                        for d in ds {
-                            filtered.entry(d).or_default().push(rule.clone());
+                    Some(ids) => {
+                        for id in ids {
+                            filtered.entry(id).or_default().push(rule.clone());
                         }
                     }
                 };
@@ -288,6 +294,7 @@ where
         Self {
             universal_rules,
             filtered_rules: Some(filtered_rules),
+            discriminant_fn: Some(discriminant_fn),
             _phantom: PhantomData,
         }
     }
@@ -298,16 +305,13 @@ where
     }
 
     /// TODO
-    pub fn get_rules(
-        &self,
-        level: usize,
-        discriminant: Discriminant<T>,
-    ) -> impl Iterator<Item = &R> {
-        let d = discriminant;
-        let filtered = self
-            .filtered_rules
-            .as_ref()
-            .and_then(|filter_map| filter_map[level].get(&d))
+    pub fn get_rules(&self, level: usize, id: Option<usize>) -> impl Iterator<Item = &R> {
+        let filtered = id
+            .and_then(|id| {
+                self.filtered_rules
+                    .as_ref()
+                    .and_then(|filter_map| filter_map[level].get(&id))
+            })
             .map(|f| f.as_slice())
             .unwrap_or(&[]);
         let universal = &self.universal_rules[level];

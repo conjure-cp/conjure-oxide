@@ -31,6 +31,7 @@ fn rule_eval_mul(_: &mut Commands<Expr, Meta>, expr: &Expr, _: &Meta) -> Option<
     }
 }
 
+#[derive(Clone)]
 enum MyRule {
     EvalAdd,
     EvalMul,
