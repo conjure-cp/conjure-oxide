@@ -33,6 +33,7 @@ where
 
     pub(crate) cache: C,
 
+    /// Whether rule-group prefiltering was enabled when this engine was built.
     pub(crate) use_prefilter: bool,
 }
 
@@ -66,6 +67,11 @@ where
         });
         trace!("Finished Rule Checks");
         one_or_select(self.selector, subtree, applicable)
+    }
+
+    /// Returns whether rule-group prefiltering is enabled for this engine.
+    pub fn uses_prefilter(&self) -> bool {
+        self.use_prefilter
     }
 
     /// Exhaustively rewrites a tree using user-defined rule groups.
@@ -207,7 +213,7 @@ where
         'main: loop {
             // Return here after every successful rule application
             for level in 0..self.rule_groups.levels() {
-            // for (level, rules) in self.rule_groups.get_rules(zipper) {
+                // for (level, rules) in self.rule_groups.get_rules(zipper) {
                 // Try each rule group in the whole tree
 
                 while zipper.go_next_dirty(level).is_some() {
@@ -287,7 +293,7 @@ where
             // All rules have been tried with no more changes
             break;
         }
-        
+
         info!("Finished Morph");
         zipper.into()
     }

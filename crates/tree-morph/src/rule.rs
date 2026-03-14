@@ -2,11 +2,7 @@
 //!
 //! See the [`Rule`] trait for more information.
 
-use std::{
-    collections::{HashMap, hash_map::Entry},
-    marker::PhantomData,
-    mem::{Discriminant, discriminant},
-};
+use std::{collections::HashMap, marker::PhantomData, mem::Discriminant};
 
 use crate::prelude::{Commands, Update};
 use uniplate::Uniplate;
@@ -295,7 +291,7 @@ where
             _phantom: PhantomData,
         }
     }
-    
+
     /// TODO
     pub fn levels(&self) -> usize {
         self.universal_rules.len()
@@ -318,6 +314,7 @@ where
         universal.iter().chain(filtered.iter())
     }
 
+    /// Returns the universal rule groups in priority order.
     pub fn get_all_rules(&self) -> &[Vec<R>] {
         self.universal_rules.as_slice()
     }

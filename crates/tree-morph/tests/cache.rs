@@ -1,6 +1,9 @@
 use std::{collections::HashMap, ops::DerefMut};
 
-use tree_morph::{cache::{HashMapCache, NoCache}, prelude::*};
+use tree_morph::{
+    cache::{HashMapCache, NoCache},
+    prelude::*,
+};
 use tree_morph_macros::named_rule;
 use uniplate::Uniplate;
 
@@ -142,7 +145,6 @@ fn no_cache() {
             Box::new(Expr::D),
         )
     );
-    
 
     assert_eq!(meta.attempts.keys().len(), 1);
 
@@ -183,22 +185,14 @@ fn basic_caching() {
 
 #[test]
 fn transitive_no_caching() {
-    let expr = Expr::Triple(
-        Box::new(Expr::A), 
-        Box::new(Expr::B),
-        Box::new(Expr::C),
-    );
+    let expr = Expr::Triple(Box::new(Expr::A), Box::new(Expr::B), Box::new(Expr::C));
 
     let (meta, mut engine) = setup_nocache();
     let (expr, meta) = engine.morph(expr, meta);
 
     assert_eq!(
         expr,
-        Expr::Triple(
-            Box::new(Expr::D),
-            Box::new(Expr::D),
-            Box::new(Expr::D),
-        )
+        Expr::Triple(Box::new(Expr::D), Box::new(Expr::D), Box::new(Expr::D),)
     );
 
     assert_eq!(meta.applied.get("a->b"), Some(1).as_ref());
@@ -208,22 +202,14 @@ fn transitive_no_caching() {
 
 #[test]
 fn transitive_caching() {
-    let expr = Expr::Triple(
-        Box::new(Expr::A), 
-        Box::new(Expr::B),
-        Box::new(Expr::C),
-    );
+    let expr = Expr::Triple(Box::new(Expr::A), Box::new(Expr::B), Box::new(Expr::C));
 
     let (meta, mut engine) = setup();
     let (expr, meta) = engine.morph(expr, meta);
 
     assert_eq!(
         expr,
-        Expr::Triple(
-            Box::new(Expr::D),
-            Box::new(Expr::D),
-            Box::new(Expr::D),
-        )
+        Expr::Triple(Box::new(Expr::D), Box::new(Expr::D), Box::new(Expr::D),)
     );
 
     assert_eq!(meta.applied.get("a->b"), Some(1).as_ref());

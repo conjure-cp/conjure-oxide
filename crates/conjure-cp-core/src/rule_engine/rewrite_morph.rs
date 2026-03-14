@@ -1,6 +1,9 @@
+use crate::{
+    ast::SymbolTable,
+    settings::{MorphCachingStrategy, MorphConfig},
+};
 use itertools::Itertools;
 use tracing::trace;
-use crate::{ast::SymbolTable, settings::{MorphCachingStrategy, MorphConfig}};
 use tree_morph::{
     cache::{CachedHashMapCache, HashMapCache, NoCache, RewriteCache},
     helpers::select_panic,
@@ -8,7 +11,10 @@ use tree_morph::{
 };
 
 use crate::{
-    Model, ast::Expression, bug, settings::{Rewriter, set_current_rewriter}
+    Model,
+    ast::Expression,
+    bug,
+    settings::{Rewriter, set_current_rewriter},
 };
 
 use super::{RuleData, RuleSet, get_rules_grouped};
@@ -47,7 +53,7 @@ pub fn rewrite_morph<'a>(
     mut model: Model,
     rule_sets: &Vec<&'a RuleSet<'a>>,
     prop_multiple_equally_applicable: bool,
-    config: MorphConfig
+    config: MorphConfig,
 ) -> Model {
     set_current_rewriter(Rewriter::Morph(config));
 
@@ -97,7 +103,7 @@ fn build_engine<'a>(
     let cache: Box<dyn RewriteCache<Expression>> = match config.cache {
         MorphCachingStrategy::NoCache => Box::new(NoCache),
         MorphCachingStrategy::Cache => Box::new(HashMapCache::new()),
-        MorphCachingStrategy::IncrementalCache => Box::new(CachedHashMapCache::new())
+        MorphCachingStrategy::IncrementalCache => Box::new(CachedHashMapCache::new()),
     };
 
     EngineBuilder::new()

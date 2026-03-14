@@ -153,7 +153,7 @@ where
             use_prefilter: self.use_prefilter,
         }
     }
-    
+
     /// TODO
     pub fn enable_prefilter(mut self, enabled: bool) -> Self {
         self.use_prefilter = enabled;

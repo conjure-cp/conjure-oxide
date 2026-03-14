@@ -19,7 +19,7 @@ pub struct Metadata {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub span_id: Option<u32>,
     #[serde(skip_serializing)]
-    pub stored_hash: AtomicU64
+    pub stored_hash: AtomicU64,
 }
 
 impl Metadata {
@@ -28,7 +28,7 @@ impl Metadata {
             clean: false,
             etype: None,
             span_id: None,
-            stored_hash: AtomicU64::new(NO_HASH)
+            stored_hash: AtomicU64::new(NO_HASH),
         }
     }
 
@@ -37,7 +37,7 @@ impl Metadata {
             clean: false,
             etype: None,
             span_id: Some(span_id),
-            stored_hash: AtomicU64::new(NO_HASH)
+            stored_hash: AtomicU64::new(NO_HASH),
         }
     }
 

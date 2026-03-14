@@ -1,6 +1,7 @@
 #![doc = include_str!("docs/lib.md")]
 #![warn(missing_docs)]
 
+pub mod cache;
 pub mod commands;
 pub mod engine;
 pub mod engine_builder;
@@ -9,7 +10,6 @@ mod events;
 pub mod helpers;
 pub mod rule;
 mod update;
-pub mod cache;
 
 /// Re-exported functions and types for convenience.
 pub mod prelude {

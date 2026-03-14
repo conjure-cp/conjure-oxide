@@ -2,7 +2,6 @@ use std::cell::RefCell;
 use std::collections::BTreeSet;
 use std::fmt::{self, Display, Formatter};
 use std::hash::Hash;
-use std::mem::Discriminant;
 use std::rc::Rc;
 
 use thiserror::Error;
@@ -268,8 +267,6 @@ impl MorphRule<Expression, SymbolTable> for &Rule<'_> {
     fn name(&self) -> &str {
         self.name
     }
-
-    
 }
 
 impl MorphRule<Expression, Rc<RefCell<SymbolTable>>> for Rule<'_> {

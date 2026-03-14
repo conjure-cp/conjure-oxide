@@ -1,10 +1,9 @@
 #![allow(dead_code)]
-use crate::ast::{AbstractLiteral, Atom, DeclarationKind, Expression as Expr, Literal as Lit, Metadata, matrix};
-use crate::{into_matrix};
+use crate::ast::{AbstractLiteral, Atom, Expression as Expr, Literal as Lit, Metadata, matrix};
+use crate::into_matrix;
 use itertools::{Itertools as _, izip};
 use std::cmp::Ordering as CmpOrdering;
 use std::collections::HashSet;
-use std::ops::Deref;
 
 /// Simplify an expression to a constant if possible
 /// Returns:
