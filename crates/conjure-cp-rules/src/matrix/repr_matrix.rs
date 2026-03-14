@@ -247,7 +247,7 @@ fn index_matrix_to_atom_impl(expr: &Expr, symbols: &SymbolTable) -> ApplicationR
 }
 
 /// Using the `matrix_to_atom` representation rule, rewrite matrix slicing.
-#[register_rule(("Base", 2000))]
+#[register_rule(("Base", 2000, SafeSlice))]
 fn slice_matrix_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::SafeSlice(_, subject, indices) = expr else {
         return Err(RuleNotApplicable);

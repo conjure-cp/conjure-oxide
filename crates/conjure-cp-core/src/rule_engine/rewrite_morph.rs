@@ -1,3 +1,6 @@
+use std::collections::HashMap;
+use std::sync::{LazyLock, Mutex};
+
 use crate::{
     ast::SymbolTable,
     settings::{MorphCachingStrategy, MorphConfig},
@@ -12,12 +15,42 @@ use tree_morph::{
 
 use crate::{
     Model,
-    ast::Expression,
+    ast::{Expression, discriminant_from_value},
     bug,
     settings::{Rewriter, set_current_rewriter},
 };
 
 use super::{RuleData, RuleSet, get_rules_grouped};
+
+/// Counts how many times each rule has been checked (attempted) during rewriting.
+static RULE_CHECK_COUNTS: LazyLock<Mutex<HashMap<String, usize>>> =
+    LazyLock::new(|| Mutex::new(HashMap::new()));
+
+/// Returns a snapshot of how many times each rule has been checked.
+pub fn get_rule_check_counts() -> HashMap<String, usize> {
+    RULE_CHECK_COUNTS.lock().unwrap().clone()
+}
+
+/// Resets the rule check counts to zero.
+pub fn reset_rule_check_counts() {
+    RULE_CHECK_COUNTS.lock().unwrap().clear();
+}
+
+fn count_rule_check(_: &Expression, _: &mut SymbolTable, rule: &RuleData<'_>) {
+    if let Ok(mut counts) = RULE_CHECK_COUNTS.lock() {
+        *counts.entry(rule.name().to_string()).or_insert(0) += 1;
+    }
+}
+
+fn print_rule_check_counts() {
+    let counts = RULE_CHECK_COUNTS.lock().unwrap();
+    let mut entries: Vec<(&String, &usize)> = counts.iter().collect();
+    entries.sort_by_key(|(name, _)| *name);
+    println!("Rule check counts:");
+    for (name, count) in entries {
+        println!("  {name}: {count}");
+    }
+}
 
 /// Rewrites a `Model` by applying rule sets using an optimized, tree-morphing rewriter.
 ///
@@ -75,6 +108,8 @@ pub fn rewrite_morph<'a>(
     *model_ref.symbols_mut() = symbol_table;
     model_ref.replace_root(expr);
 
+    print_rule_check_counts();
+
     trace!(
         target: "rule_engine_human",
         "Final model:\n\n{}",
@@ -110,6 +145,11 @@ fn build_engine<'a>(
         .set_selector(selector)
         .append_rule_groups(rules_grouped)
         .add_cacher(cache)
-        .enable_prefilter(config.prefilter)
+        .set_discriminant_fn(if config.prefilter {
+            Some(discriminant_from_value)
+        } else {
+            None
+        })
+        .add_before_rule(count_rule_check)
         .build()
 }

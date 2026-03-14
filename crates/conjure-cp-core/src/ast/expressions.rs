@@ -15,7 +15,7 @@ pub fn print_hash_stats() {
 }
 use tracing::trace;
 
-use conjure_cp_enum_compatibility_macro::document_compatibility;
+use conjure_cp_enum_compatibility_macro::{document_compatibility, generate_discriminants};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use tree_morph::cache::CacheHashable;
@@ -69,6 +69,7 @@ use super::{
 ///
 /// The `Expression` enum includes operations, constants, and variable references
 /// used to build rules and conditions for the model.
+#[generate_discriminants]
 #[document_compatibility]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, Serialize, Deserialize, Uniplate, Quine)]
 #[biplate(to=AbstractComprehension)]

@@ -22,7 +22,7 @@ use conjure_cp::{
 /// ```plain
 /// (c1 * v)  + .. + (c2 * v) + ... ~> ((c1 + c2) * v) + ...
 /// ```
-#[register_rule(("Base", 8400))]
+#[register_rule(("Base", 8400, Sum))]
 fn collect_like_terms(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::Sum(meta, exprs) = expr else {
         return Err(RuleNotApplicable);

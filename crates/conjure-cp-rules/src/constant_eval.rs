@@ -18,7 +18,7 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     run_partial_evaluator(expr)
 }
 
-#[register_rule(("Constant", 9001))]
+#[register_rule(("Constant", 9001, Root))]
 fn constant_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // I break the rules a bit here: this is a global rule!
     //
@@ -65,7 +65,7 @@ fn constant_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// Evaluate the root expression.
 ///
 /// This returns either Expr::Root([true]) or Expr::Root([false]).
-#[register_rule(("Constant", 9001))]
+#[register_rule(("Constant", 9001, Root))]
 fn eval_root(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // this is its own rule not part of apply_eval_constant, because root should return a new root
     // with a literal inside it, not just a literal

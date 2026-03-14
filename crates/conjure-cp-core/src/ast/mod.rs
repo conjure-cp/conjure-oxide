@@ -34,7 +34,7 @@ pub use domains::{
     MSetAttr, PartialityAttr, Range, RecordEntry, RecordEntryGround, SetAttr, UnresolvedDomain,
 };
 pub use eval::eval_constant;
-pub use expressions::{Expression, print_hash_stats};
+pub use expressions::{Expression, discriminant_from_value, print_hash_stats};
 pub use literals::AbstractLiteral;
 pub use literals::Literal;
 pub use metadata::Metadata;

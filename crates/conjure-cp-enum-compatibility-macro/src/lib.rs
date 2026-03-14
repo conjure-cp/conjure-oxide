@@ -239,7 +239,7 @@ pub fn generate_discriminants(attr: TokenStream, input: TokenStream) -> TokenStr
     let expanded = quote! {
         #input
 
-        #[allow(unused_macros)]
+        #[macro_export]
         macro_rules! discriminant_from_name {
             #(#name_arms)*
         }

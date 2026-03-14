@@ -189,6 +189,8 @@ pub struct Rule<'a> {
     pub name: &'a str,
     pub application: RuleFn,
     pub rule_sets: &'a [(&'a str, u16)], // (name, priority). At runtime, we add the rule to rulesets
+    /// Discriminant ids of Expression variants this rule applies to, or None for universal rules.
+    pub applicable_to: Option<&'static [usize]>,
 }
 
 impl<'a> Rule<'a> {
@@ -201,6 +203,7 @@ impl<'a> Rule<'a> {
             name,
             application,
             rule_sets,
+            applicable_to: None,
         }
     }
 
@@ -246,6 +249,10 @@ impl MorphRule<Expression, SymbolTable> for Rule<'_> {
 
     fn name(&self) -> &str {
         self.name
+    }
+
+    fn applicable_to(&self) -> Option<Vec<usize>> {
+        self.applicable_to.map(|s| s.to_vec())
     }
 }
 
@@ -317,5 +324,9 @@ impl MorphRule<Expression, SymbolTable> for RuleData<'_> {
 
     fn name(&self) -> &str {
         self.rule.name
+    }
+
+    fn applicable_to(&self) -> Option<Vec<usize>> {
+        self.rule.applicable_to.map(|s| s.to_vec())
     }
 }
