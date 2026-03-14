@@ -59,6 +59,9 @@ fn expand_qualifiers(
                 })?;
             }
         }
+        ComprehensionQualifier::ExpressionGenerator { .. } => {
+            expand_qualifiers(comprehension, qualifier_index + 1, expanded, parent_symbols)?;
+        }
         ComprehensionQualifier::Condition(condition) => {
             if evaluate_guard(condition)? {
                 expand_qualifiers(comprehension, qualifier_index + 1, expanded, parent_symbols)?;
