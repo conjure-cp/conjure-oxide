@@ -215,32 +215,42 @@ impl SolverAdaptor for Sat {
         let mut var_map: HashMap<Name, Lit> = HashMap::new();
 
         for find_ref in decisions {
-            let domain = find_ref
-                .1
-                .domain()
-                .expect("Decision variable should have a domain");
-            let domain = domain.as_ground().expect("Domain should be ground");
+            match find_ref.1.kind().clone() {
+                conjure_ast::DeclarationKind::DecisionVariable(_) => {
+                    let domain = find_ref
+                        .1
+                        .domain()
+                        .expect("Decision variable should have a domain");
+                    let domain = domain.as_ground().expect("Domain should be ground");
 
-            // only decision variables with boolean domains or representations using booleans are supported at this time
-            if (domain != &GroundDomain::Bool
-                && sym_tab
-                    .get_representation(&find_ref.0, &["sat_log_int"])
-                    .is_none()
-                && sym_tab
-                    .get_representation(&find_ref.0, &["sat_direct_int"])
-                    .is_none()
-                && sym_tab
-                    .get_representation(&find_ref.0, &["sat_order_int"])
-                    .is_none())
-            {
-                Err(SolverError::ModelInvalid(
-                    "Only Boolean Decision Variables supported".to_string(),
-                ))?;
-            }
-            // only boolean variables should be passed to the solver
-            if (domain == &GroundDomain::Bool) {
-                let name = find_ref.0;
-                finds.push(name);
+                    // only decision variables with boolean domains or representations using booleans are supported at this time
+                    if (domain != &GroundDomain::Bool
+                        && sym_tab
+                            .get_representation(&find_ref.0, &["sat_log_int"])
+                            .is_none()
+                        && sym_tab
+                            .get_representation(&find_ref.0, &["sat_direct_int"])
+                            .is_none()
+                        && sym_tab
+                            .get_representation(&find_ref.0, &["sat_order_int"])
+                            .is_none())
+                    {
+                        Err(SolverError::ModelInvalid(
+                            "Only Boolean Decision Variables supported".to_string(),
+                        ))?;
+                    }
+                    // only boolean variables should be passed to the solver
+                    if (domain == &GroundDomain::Bool) {
+                        let name = find_ref.0;
+                        finds.push(name);
+                    }
+                }
+
+                conjure_ast::DeclarationKind::ValueLetting(expression) => {}
+                conjure_ast::DeclarationKind::DomainLetting(moo) => {}
+                conjure_ast::DeclarationKind::Given(moo) => todo!(),
+                conjure_ast::DeclarationKind::GivenQuantified(given_quantified) => todo!(),
+                conjure_ast::DeclarationKind::RecordField(moo) => todo!(),
             }
         }
 

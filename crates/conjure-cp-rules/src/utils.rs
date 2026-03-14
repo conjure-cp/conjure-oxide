@@ -18,7 +18,7 @@ pub fn is_atom(expr: &Expr) -> bool {
 pub fn is_literal(expr: &Expr) -> bool {
     match expr {
         Expr::Atomic(_, _) => true,
-        Expr::Not(_, inner) => matches!(**inner, Expr::Atomic(_, _)),
+        //Expr::Not(_, inner) => matches!(**inner, Expr::Atomic(_, _)),
         _ => false,
     }
 }
