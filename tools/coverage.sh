@@ -71,6 +71,9 @@ export RUSTDOCFLAGS="$RUSTDOCFLAGS -C instrument-coverage -Zunstable-options --p
 # This was done to avoid the presence of 80+ files in the project's root directory.
 export LLVM_PROFILE_FILE="${TARGET_DIR}/coverage/conjure-oxide-%p-%m.profraw"
 mkdir -p "${TARGET_DIR}/coverage"
+# Custom tests resolve conjure-oxide from PATH; during coverage we want them to
+# use the freshly built instrumented debug binary.
+export PATH="${TARGET_DIR}/debug:${PATH}"
 
 # regex patterns to ignore
 GRCOV_EXCLUDE_LINES=(
