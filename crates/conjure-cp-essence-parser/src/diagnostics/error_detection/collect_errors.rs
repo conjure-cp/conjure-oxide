@@ -2,17 +2,24 @@
 
 use crate::diagnostics::diagnostics_api::{Diagnostic, Position, Range, Severity};
 use crate::errors::RecoverableParseError;
+use crate::parse_essence_with_context_and_map;
 use crate::parser::keyword_checks::keyword_as_identifier;
-use crate::syntax_errors::detect_syntactic_errors;
+use conjure_cp_core::context::Context;
+use std::sync::{Arc, RwLock};
 use tree_sitter::Tree;
 
 pub fn detect_errors(source: &str, cst: &Tree) -> Vec<Diagnostic> {
     let mut diagnostics: Vec<Diagnostic> = Vec::new();
-    let mut syntax_errors: Vec<RecoverableParseError> = vec![];
+    let mut errors: Vec<RecoverableParseError> = vec![];
+    let context = Arc::new(RwLock::new(Context::default()));
 
-    detect_syntactic_errors(source, cst, &mut syntax_errors);
-    keyword_as_identifier(cst.root_node(), source, &mut syntax_errors);
-    diagnostics.extend(syntax_errors.into_iter().map(|e| error_to_diagnostic(&e)));
+    keyword_as_identifier(cst.root_node(), source, &mut errors);
+    match parse_essence_with_context_and_map(source, context, &mut errors, Some(cst)) {
+        Ok(_) => {
+            diagnostics.extend(errors.into_iter().map(|e| error_to_diagnostic(&e)));
+        }
+        Err(_) => {}
+    }
 
     diagnostics
 }
