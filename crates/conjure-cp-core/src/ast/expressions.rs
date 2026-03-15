@@ -977,11 +977,11 @@ impl Expression {
 
                 let size_size = attrs.resolve()?.size;
                 let size_size = match size_size {
-                    Range::Unbounded => Range::Unbounded,
+                    Range::Unbounded => Range::UnboundedR(0),
                     // If lower bound we can guarantee one mapping (unless size = 0)
                     Range::Single(x) => Range::Bounded(Ord::min(1,x), x),
                     // Upper bound guarantees the same upper bound
-                    Range::UnboundedL(x) => Range::UnboundedL(x),
+                    Range::UnboundedL(x) => Range::Bounded(0,x),
                     // If not bounded by 0 can guarantee min 1
                     Range::UnboundedR(x) => Range::UnboundedR(Ord::min(1,x)),
                     Range::Bounded(x, y) => Range::Bounded(Ord::min(1,x), y),
@@ -990,34 +990,34 @@ impl Expression {
                 // Gets the size imposed by the partiality and jectivity attributes
                 let partiality = attrs.resolve()?.partiality;
                 let jectivity = attrs.resolve()?.jectivity;
-                let codomain_length = codomain.length();
-                let attr_size = match codomain_length {
-                    Ok(co_len) => match jectivity {
-                        // Bijective and surjective functions must have every element in the codomain mapped to
-                        JectivityAttr::Bijective | JectivityAttr::Surjective => {
-                            Some(Range::Single(co_len))
+                let attr_size = match jectivity {
+                    // Bijective and surjective functions must have every element in the codomain mapped to
+                    JectivityAttr::Bijective | JectivityAttr::Surjective => {
+                        let codomain_length = codomain.length();
+                        match codomain_length {
+                            Ok(co_len) => Some(Range::Single(co_len)),
+                            Err(_) => None
                         }
-                        JectivityAttr::Injective => {
-                            let domain_length = domain.length();
-                            match domain_length {
-                                Ok(len) => match partiality {
-                                    // When its injective we can guarantee 1 to 1, so the domain length is a single bound
-                                    PartialityAttr::Total => Some(Range::Single(len)),
-                                    PartialityAttr::Partial => Some(Range::Bounded(0,len))
-                                },
-                                Err(_) => None,
-                            }
+                    }
+                    JectivityAttr::Injective => {
+                        let domain_length = domain.length();
+                        match domain_length {
+                            Ok(len) => match partiality {
+                                // When its injective we can guarantee 1 to 1, so the domain length is a single bound
+                                PartialityAttr::Total => Some(Range::Single(len)),
+                                PartialityAttr::Partial => Some(Range::Bounded(0,len))
+                            },
+                            Err(_) => None,
                         }
-                        JectivityAttr::None => {
-                            let domain_length = domain.length();
-                            match domain_length {
-                                // This is the general case, where we know there cannot be more codomain elements mapped to that domain elements
-                                Ok(len) => Some(Range::Bounded(0,len)),
-                                Err(_) => None,
-                            }
+                    }
+                    JectivityAttr::None => {
+                        let domain_length = domain.length();
+                        match domain_length {
+                            // This is the general case, where we know there cannot be more codomain elements mapped to that domain elements
+                            Ok(len) => Some(Range::Bounded(0,len)),
+                            Err(_) => None,
                         }
-                    },
-                    Err(_) => None,
+                    }
                 };
 
                 let size = match attr_size {
@@ -1044,16 +1044,45 @@ impl Expression {
             }
             Expression::PreImage(_, function, _) => {
                 let (attrs, domain, _) = function.domain_of()?.as_function()?;
-                let size = attrs.resolve()?.size;
-                let dom_size = match size {
+
+                let size_size = attrs.resolve()?.size;
+                let size_size = match size_size {
                     // Our only guarantee is an upper bound is the same
-                    Range::Unbounded => Range::Unbounded,
-                    Range::Single(x) => Range::UnboundedL(x),
-                    Range::UnboundedL(x) => Range::UnboundedL(x),
-                    Range::UnboundedR(_) => Range::Unbounded,
-                    Range::Bounded(_, y) => Range::UnboundedL(y),
+                    Range::Unbounded => Range::UnboundedR(0),
+                    Range::Single(x) => Range::Bounded(0,x),
+                    Range::UnboundedL(x) => Range::Bounded(0,x),
+                    Range::UnboundedR(_) => Range::UnboundedR(0),
+                    Range::Bounded(_, y) => Range::Bounded(0,y),
                 };
-                Some(Domain::set(SetAttr::new(dom_size), domain))
+
+                let jectivity = attrs.resolve()?.jectivity;
+                
+                let attr_size = match jectivity {
+                    // When there is 1-to-1 mapping we can guarantee no more than 1 occurrence
+                    JectivityAttr::Bijective => Some(Range::Single(1)),
+                    JectivityAttr::Injective => Some(Range::Bounded(0, 1)),
+                    JectivityAttr::Surjective => {
+                        let domain_length = domain.length();
+                        match domain_length {
+                            // We know the element is mapped but not how many times
+                            Ok(len) => Some(Range::Bounded(1,len)),
+                            Err(_) => Some(Range::UnboundedR(1)),
+                        }
+                    },
+                    JectivityAttr::None => Some(Range::UnboundedR(0)),
+                };
+
+                let unsafe_range = Range::minimal(&[size_size, attr_size]);
+                let size = match unsafe_range {
+                    Ok(range) => range,
+                    Err(_) => {
+                        return Some(Domain::empty(ReturnType::Set(Box::new(
+                            domain.return_type(),
+                        ))));
+                    }
+                };
+
+                Some(Domain::set(SetAttr::new(size), domain))
             }
             Expression::Restrict(_, function, new_domain) => {
                 let (attrs, _, codom) = function.domain_of()?.as_function()?;
