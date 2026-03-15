@@ -4,8 +4,8 @@ use clap::{Args, Parser, Subcommand};
 
 use clap_complete::Shell;
 use conjure_cp::settings::{
-    DEFAULT_MINION_DISCRETE_THRESHOLD, MorphCachingStrategy, Parser as InputParser,
-    QuantifiedExpander, Rewriter, SolverFamily,
+    DEFAULT_MINION_DISCRETE_THRESHOLD, Parser as InputParser, QuantifiedExpander, Rewriter,
+    SolverFamily,
 };
 
 use crate::{pretty, solve, test_solve};
@@ -220,6 +220,4 @@ fn parse_parser(input: &str) -> Result<InputParser, String> {
     input.parse()
 }
 
-fn parse_cache_strategy(input: &str) -> Result<MorphCachingStrategy, String> {
-    input.parse()
-}
+
