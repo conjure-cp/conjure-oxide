@@ -1,5 +1,10 @@
 #![no_main]
 
+/// fuzz tester for detects_error() in the parser crate, using libFuzzer
+///
+/// fuzzer takes existing code from /corpus, modifies and removes the bytes to make new essence tests
+/// the fuzzer makes sure that the given function can take in all input without panicking or crashing
+
 use conjure_cp_essence_parser::detect_errors;
 use libfuzzer_sys::fuzz_target;
 
