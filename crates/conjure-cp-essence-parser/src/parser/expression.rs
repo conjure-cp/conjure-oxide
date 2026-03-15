@@ -4,12 +4,12 @@ use crate::errors::FatalParseError;
 use crate::parser::ParseContext;
 use crate::parser::atom::parse_atom;
 use crate::parser::comprehension::parse_quantifier_or_aggregate_expr;
+use crate::util::TypecheckingContext;
 use crate::{field, named_child};
 use conjure_cp_core::ast::{Expression, Metadata, Moo};
 use conjure_cp_core::{domain_int, matrix_expr, range};
 use tree_sitter::Node;
 
-/// Parse an Essence expression into its Conjure AST representation.
 pub fn parse_expression(
     ctx: &mut ParseContext,
     node: Node,
@@ -18,7 +18,7 @@ pub fn parse_expression(
         "atom" => parse_atom(ctx, &node),
         "bool_expr" => parse_boolean_expression(ctx, &node),
         "arithmetic_expr" => parse_arithmetic_expression(ctx, &node),
-        "comparison_expr" => parse_binary_expression(ctx, &node),
+        "comparison_expr" => parse_comparison_expression(ctx, &node),
         "dominance_relation" => parse_dominance_relation(ctx, &node),
         _ => Err(FatalParseError::internal_error(
             format!("Unexpected expression type: '{}'", node.kind()),
@@ -47,6 +47,7 @@ fn parse_dominance_relation(
         symbols: ctx.symbols.clone(),
         errors: ctx.errors,
         source_map: &mut *ctx.source_map,
+        typechecking_context: ctx.typechecking_context,
     };
 
     let Some(inner) = parse_expression(&mut inner_ctx, field!(node, "expression"))? else {
@@ -63,6 +64,7 @@ fn parse_arithmetic_expression(
     ctx: &mut ParseContext,
     node: &Node,
 ) -> Result<Option<Expression>, FatalParseError> {
+    ctx.typechecking_context = TypecheckingContext::Arithmetic;
     let inner = named_child!(node);
     match inner.kind() {
         "atom" => parse_atom(ctx, &inner),
@@ -79,17 +81,46 @@ fn parse_arithmetic_expression(
     }
 }
 
-fn parse_boolean_expression(
+fn parse_comparison_expression(
     ctx: &mut ParseContext,
     node: &Node,
 ) -> Result<Option<Expression>, FatalParseError> {
     let inner = named_child!(node);
     match inner.kind() {
-        "atom" => parse_atom(ctx, &inner),
-        "not_expr" | "sub_bool_expr" => parse_unary_expression(ctx, &inner),
-        "and_expr" | "or_expr" | "implication" | "iff_expr" | "set_operation_bool" => {
+        "arithmetic_comparison" => {
+            // Arithmetic comparisons require arithmetic operands
+            ctx.typechecking_context = TypecheckingContext::Arithmetic;
             parse_binary_expression(ctx, &inner)
         }
+        "equality_comparison" => {
+            // Equality works on any type
+            // TODO: add type checking to ensure both sides have the same type
+            ctx.typechecking_context = TypecheckingContext::Unknown;
+            parse_binary_expression(ctx, &inner)
+        }
+        "set_comparison" => {
+            // Set comparisons require set operands (no specific type checking for now)
+            // TODO: add typechecking for sets
+            ctx.typechecking_context = TypecheckingContext::Unknown;
+            parse_binary_expression(ctx, &inner)
+        }
+        _ => Err(FatalParseError::internal_error(
+            format!("Expected comparison expression, found '{}'", inner.kind()),
+            Some(inner.range()),
+        )),
+    }
+}
+
+fn parse_boolean_expression(
+    ctx: &mut ParseContext,
+    node: &Node,
+) -> Result<Option<Expression>, FatalParseError> {
+    ctx.typechecking_context = TypecheckingContext::Boolean;
+    let inner = named_child!(node);
+    match inner.kind() {
+        "atom" => parse_atom(ctx, &inner),
+        "not_expr" | "sub_bool_expr" => parse_unary_expression(ctx, &inner),
+        "and_expr" | "or_expr" | "implication" | "iff_expr" => parse_binary_expression(ctx, &inner),
         "list_combining_expr_bool" => parse_list_combining_expression(ctx, &inner),
         "quantifier_expr" => parse_quantifier_or_aggregate_expr(ctx, &inner),
         _ => Err(FatalParseError::internal_error(

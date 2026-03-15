@@ -11,6 +11,16 @@ pub struct TheoryConfig {
     pub unwrap_alldiff: bool,
 }
 
+impl TheoryConfig {
+    pub fn as_str(self) -> String {
+        let mut label = format!("{}-{}", self.ints.as_str(), self.matrices.as_str());
+        if self.unwrap_alldiff {
+            label.push_str("-nodiscrete");
+        }
+        label
+    }
+}
+
 /// The theory to use when encoding CO integers through the SMT solver adaptor.
 #[derive(
     Debug,
@@ -37,6 +47,15 @@ pub enum IntTheory {
     Bv,
 }
 
+impl IntTheory {
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            IntTheory::Lia => "lia",
+            IntTheory::Bv => "bv",
+        }
+    }
+}
+
 /// The theory to use when encoding CO integers through the SMT solver adaptor.
 #[derive(
     Debug,
@@ -61,4 +80,13 @@ pub enum MatrixTheory {
 
     /// Decompose arrays into auxiliary variables using the matrix_to_atom representation
     Atomic,
+}
+
+impl MatrixTheory {
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            MatrixTheory::Arrays => "arrays",
+            MatrixTheory::Atomic => "atomic",
+        }
+    }
 }
