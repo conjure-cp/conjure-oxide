@@ -110,18 +110,6 @@ pub struct GlobalArgs {
     #[arg(long, default_value_t = Rewriter::Naive, value_parser = parse_rewriter, global = true, help_heading = CONFIGURATION_HELP_HEADING)]
     pub rewriter: Rewriter,
 
-    #[arg(long, default_value_t = MorphCachingStrategy::IncrementalCache, value_parser = parse_cache_strategy, global = true, help_heading = CONFIGURATION_HELP_HEADING)]
-    pub cache_strategy: MorphCachingStrategy,
-
-    #[arg(long, default_value_t = false, global = true, help_heading = CONFIGURATION_HELP_HEADING)]
-    pub morph_naive: bool,
-
-    #[arg(long, default_value_t = false, global = true, help_heading = CONFIGURATION_HELP_HEADING)]
-    pub morph_parallel: bool,
-
-    #[arg(long, default_value_t = false, global = true, help_heading = CONFIGURATION_HELP_HEADING)]
-    pub morph_prefilter: bool,
-
     /// Which strategy to use for expanding quantified variables in comprehensions.
     ///
     /// Possible values: `native`, `via-solver`, `via-solver-ac`.

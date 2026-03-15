@@ -66,6 +66,17 @@ pub struct MorphConfig {
     pub parallel: bool,
 }
 
+impl MorphConfig {
+    pub fn naive() -> Self {
+        Self {
+            cache: MorphCachingStrategy::NoCache,
+            naive: true,
+            parallel: false,
+            prefilter: false,
+        }
+    }
+}
+
 impl Default for MorphConfig {
     fn default() -> Self {
         Self {
@@ -163,9 +174,47 @@ impl FromStr for Rewriter {
         match s.trim().to_ascii_lowercase().as_str() {
             "naive" => Ok(Rewriter::Naive),
             "morph" => Ok(Rewriter::Morph(MorphConfig::default())),
-            other => Err(format!(
-                "unknown rewriter: {other}; expected one of: naive, morph"
-            )),
+            "morph-naive" => Ok(Rewriter::Morph(MorphConfig::naive())),
+            other => {
+                if !other.starts_with("morph-") {
+                    return Err(format!(
+                        "unknown rewriter: {other}; expected one of: naive, morph, morph-naive, morph-[prefilter|parallel|nocache|cache|inc]"
+                    ));
+                }
+
+                let parts = other.split('-').skip(1);
+                let mut config = MorphConfig::default();
+                let mut cache_set = false;
+
+                for token in parts {
+                    match token {
+                        "" => (),
+                        "prefilter" => config.prefilter = true,
+                        "parallel" => config.parallel = true,
+                        "nocache" | "cache" | "inc" => {
+                            // Double match is bad but I wanted to avoid code duplication
+                            if cache_set {
+                                return Err("conflicting cache options: only one of nocache|cache|inc is allowed".to_string());
+                            }
+
+                            match token {
+                                "nocache" => config.cache = MorphCachingStrategy::NoCache,
+                                "cache" => config.cache = MorphCachingStrategy::Cache,
+                                "inc" => config.cache = MorphCachingStrategy::IncrementalCache,
+                                _ => (),
+                            };
+                            cache_set = true;
+                        }
+                        other_token => {
+                            return Err(format!(
+                                "unknown morph option '{other_token}', must be one of prefilter|parallel|nocache|cache|inc"
+                            ));
+                        }
+                    }
+                }
+
+                Ok(Rewriter::Morph(config))
+            }
         }
     }
 }
