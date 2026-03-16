@@ -6,6 +6,7 @@ EXTRA_CARGO_CHECK_FLAGS ?= -q
 # Use Cargo.lock to ensure local builds match CI dependency versions.
 # Override with `CARGO_LOCKED=` if you explicitly want to update the lockfile.
 CARGO_LOCKED ?= --locked
+CARGO_TARGET_DIR ?= target
 
 .PHONY: check
 ## Runs all hygiene checks. These are the same checks that occur in CI for PRs.
@@ -28,7 +29,7 @@ build:
 ## Installs conjure-oxide to ~/.cargo/bin
 install: build
 	mkdir -p $$HOME/.cargo/bin
-	install -m 755 target/release/conjure-oxide $$HOME/.cargo/bin/conjure-oxide
+	install -m 755 $(CARGO_TARGET_DIR)/release/conjure-oxide $$HOME/.cargo/bin/conjure-oxide
 
 .PHONY: test
 ## Runs all tests
