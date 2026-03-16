@@ -2,6 +2,7 @@ use super::attrs::SetAttr;
 use super::ground::GroundDomain;
 use super::range::Range;
 use super::unresolved::{IntVal, UnresolvedDomain};
+use crate::ast::domains::attrs::MSetAttr;
 use crate::ast::{
     DeclarationPtr, DomainOpError, Expression, FuncAttr, Literal, Moo, RecordEntry,
     RecordEntryGround, Reference, ReturnType, Typeable,
@@ -156,6 +157,25 @@ impl Domain {
         ))))
     }
 
+    /// Create a new multiset domain with the given element domain and attributes
+    pub fn mset<T>(attr: T, inner_dom: DomainPtr) -> DomainPtr
+    where
+        T: Into<MSetAttr<IntVal>> + TryInto<MSetAttr<Int>> + Clone,
+    {
+        if let Domain::Ground(gd) = inner_dom.as_ref()
+            && let Ok(int_attr) = attr.clone().try_into()
+        {
+            return Moo::new(Domain::Ground(Moo::new(GroundDomain::MSet(
+                int_attr,
+                gd.clone(),
+            ))));
+        }
+        Moo::new(Domain::Unresolved(Moo::new(UnresolvedDomain::MSet(
+            attr.into(),
+            inner_dom,
+        ))))
+    }
+
     /// Create a new matrix domain with the given element domain and index domains.
     /// If the given domains are all ground, the variant will be [GroundDomain::Matrix].
     /// Otherwise, it will be [UnresolvedDomain::Matrix].
@@ -199,7 +219,7 @@ impl Domain {
 
     /// Create a new [UnresolvedDomain::Reference] domain from a domain letting
     pub fn reference(ptr: DeclarationPtr) -> Option<DomainPtr> {
-        ptr.as_domain_letting()?;
+        let _ = ptr.as_domain_letting()?;
         Some(Moo::new(Domain::Unresolved(Moo::new(
             UnresolvedDomain::Reference(Reference::new(ptr)),
         ))))

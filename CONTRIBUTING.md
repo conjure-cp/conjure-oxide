@@ -21,7 +21,7 @@ Pull requests are the best way to propose changes to the codebase (we use [Githu
 3. Create a pull request as soon as you want others to be able to see your progress, comment, and/or help. Err on the side of creating the pull request too early instead of too late. Having an active PR makes your work visible, allows others to help you and give feedback. Request reviews from people who have worked on similar parts of the project.
 4. Keep the PR in draft status until you think it's ready to be merged.
 5. Assign PR to reviewer(s) when it's ready to be merged.
-    - Only Oz (@ozgurakgun) can merge PR's, so add him as a reviewer when you
+    - Only Oz (@ozgurakgun) can merge PRs, so add him as a reviewer when you
       want your PR to be merged.
     - During reviewing, avoid force-pushing to the pull request, as this makes
       reviewing more difficult. Details on how to update a PR are given below.

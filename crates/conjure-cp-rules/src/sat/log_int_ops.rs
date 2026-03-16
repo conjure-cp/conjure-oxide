@@ -338,7 +338,7 @@ fn tseytin_add_two_power(
     result
 }
 
-/// This function multiplies to binary values using the shif-add multiplication algorithm.
+/// This function multiplies two binary values using the shift-add multiplication algorithm.
 fn cnf_shift_add_multiply(
     x: &Vec<Expr>,
     y: &Vec<Expr>,
