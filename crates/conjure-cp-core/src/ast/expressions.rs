@@ -4,6 +4,7 @@ use tracing::trace;
 
 use crate::ast::ReturnType;
 use crate::ast::SetAttr;
+use crate::ast::SymbolTable;
 use crate::ast::literals::AbstractLiteral;
 use crate::ast::literals::Literal;
 use crate::ast::pretty::{pretty_expressions_as_top_level, pretty_vec};
@@ -59,21 +60,23 @@ static_assertions::assert_eq_size!([u8; 104], Expression);
 /// used to build rules and conditions for the model.
 #[document_compatibility]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, Serialize, Deserialize, Uniplate, Quine)]
-#[biplate(to=Metadata)]
-#[biplate(to=Atom)]
-#[biplate(to=DeclarationPtr)]
-#[biplate(to=Name)]
-#[biplate(to=Reference)]
-#[biplate(to=Vec<Expression>)]
-#[biplate(to=Option<Expression>)]
-#[biplate(to=SubModel)]
-#[biplate(to=Comprehension)]
+#[biplate(to=AbstractComprehension)]
 #[biplate(to=AbstractLiteral<Expression>)]
 #[biplate(to=AbstractLiteral<Literal>)]
+#[biplate(to=Atom)]
+#[biplate(to=Comprehension)]
+#[biplate(to=DeclarationPtr)]
+#[biplate(to=DomainPtr)]
+#[biplate(to=Literal)]
+#[biplate(to=Metadata)]
+#[biplate(to=Name)]
+#[biplate(to=Option<Expression>)]
 #[biplate(to=RecordValue<Expression>)]
 #[biplate(to=RecordValue<Literal>)]
-#[biplate(to=Literal)]
-#[biplate(to=DomainPtr)]
+#[biplate(to=Reference)]
+#[biplate(to=SubModel)]
+#[biplate(to=SymbolTable)]
+#[biplate(to=Vec<Expression>)]
 #[path_prefix(conjure_cp::ast)]
 pub enum Expression {
     AbstractLiteral(Metadata, AbstractLiteral<Expression>),
