@@ -307,7 +307,7 @@ fn floor_div(a: i32, b: i32) -> i32 {
 /// SafeDiv(SATInt(a), SATInt(b)) ~> SATInt(c)
 ///
 /// ```
-#[register_rule(("SAT_Direct", 9100))]
+#[register_rule(("SAT_Direct", 4700))]
 fn safediv_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::SafeDiv(_, numer_expr, denom_expr) = expr else {
         return Err(RuleNotApplicable);

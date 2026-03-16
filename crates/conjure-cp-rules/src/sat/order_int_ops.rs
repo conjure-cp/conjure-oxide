@@ -172,7 +172,7 @@ fn eq_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 }
 
 /// Converts a != expression between two order SATInts to a boolean expression in cnf
-#[register_rule(("SAT_Order", 9100))]
+#[register_rule(("SAT_Order", 4700))]
 fn neq_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Neq(_, lhs, rhs) = expr else {
         return Err(RuleNotApplicable);
