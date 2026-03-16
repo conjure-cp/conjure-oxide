@@ -1,10 +1,18 @@
-use z3::Solver;
+use std::iter::FusedIterator;
+use std::sync::Mutex;
+
+use versions::Versioning;
+use z3::{
+    Config, PrepareSynchronized, SatResult, Solvable, Solver, Statistics, Translate, with_z3_config,
+};
 
 use super::convert_model::*;
 use super::store::*;
 use super::theories::*;
 
 use crate::{Model, solver::*};
+
+const MINIMUM_Z3_VERSION: &str = "4.8.12";
 
 /// A [SolverAdaptor] for interacting with SMT solvers, specifically Z3.
 pub struct Smt {
@@ -17,6 +25,8 @@ pub struct Smt {
     /// Assertions are added to this solver instance when loading the model.
     solver_inst: Solver,
 
+    solver_cfg: Config,
+
     theory_config: TheoryConfig,
 }
 
@@ -28,6 +38,7 @@ impl Default for Smt {
             __non_constructable: private::Internal,
             store: SymbolStore::new(TheoryConfig::default()),
             solver_inst: Solver::new(),
+            solver_cfg: Config::new(),
             theory_config: TheoryConfig::default(),
         }
     }
@@ -35,17 +46,52 @@ impl Default for Smt {
 
 impl Smt {
     /// Constructs a new adaptor using the given theories for representing the relevant constructs.
-    pub fn new(int_theory: IntTheory, matrix_theory: MatrixTheory) -> Self {
-        let theory_config = TheoryConfig {
-            ints: int_theory,
-            matrices: matrix_theory,
-        };
+    pub fn new(timeout_msec: Option<u64>, theory_config: TheoryConfig) -> Self {
+        let mut solver_cfg = Config::new();
+        timeout_msec.inspect(|ms| solver_cfg.set_timeout_msec(*ms));
+
         Smt {
             theory_config,
+            solver_cfg,
             store: SymbolStore::new(theory_config),
             ..Default::default()
         }
     }
+}
+
+fn extract_z3_version(full_version: &str) -> Result<&str, SolverError> {
+    match full_version.strip_prefix("Z3 ") {
+        Some(v) => v.split_whitespace().next().ok_or_else(|| {
+            SolverError::Runtime(format!(
+                "could not read Z3 runtime version from '{full_version}'"
+            ))
+        }),
+        None => full_version.split_whitespace().next().ok_or_else(|| {
+            SolverError::Runtime(format!(
+                "could not read Z3 runtime version from '{full_version}'"
+            ))
+        }),
+    }
+}
+
+fn ensure_supported_z3_runtime() -> Result<(), SolverError> {
+    let full_version = z3::full_version();
+    let runtime_version = extract_z3_version(full_version)?;
+    let runtime_version = Versioning::new(runtime_version).ok_or_else(|| {
+        SolverError::Runtime(format!(
+            "could not parse Z3 runtime version from '{full_version}'"
+        ))
+    })?;
+    let minimum_version =
+        Versioning::new(MINIMUM_Z3_VERSION).expect("minimum Z3 version should be valid");
+
+    if runtime_version < minimum_version {
+        return Err(SolverError::Runtime(format!(
+            "unsupported Z3 runtime version '{full_version}' (parsed as {runtime_version}); conjure-oxide requires Z3 >= {MINIMUM_Z3_VERSION}. This usually means an older system or precompiled Z3 was picked up at build time."
+        )));
+    }
+
+    Ok(())
 }
 
 impl SolverAdaptor for Smt {
@@ -54,20 +100,39 @@ impl SolverAdaptor for Smt {
         callback: SolverCallback,
         _: private::Internal,
     ) -> Result<SolveSuccess, SolverError> {
-        let solutions = self
-            .solver_inst
-            .solutions(&self.store, true)
-            .take_while(|store| (callback)(store.as_literals_map().unwrap()));
+        let solver_send = self.solver_inst.synchronized();
+        let store_send = self.store.synchronized();
+        let mut stats: SolverStats = Default::default();
 
-        // Consume iterator and get whether there are solutions
-        let search_complete = match solutions.count() {
-            0 => SearchComplete::NoSolutions,
-            _ => SearchComplete::HasSolutions,
-        };
+        // Apply config when getting solutions
+        let (search_complete, final_z3_time) = with_z3_config(&self.solver_cfg, move || {
+            let solver = solver_send.recover();
+            let mut final_z3_time: Option<f64> = None;
+
+            let solutions = solver
+                .into_solutions_with_statistics(store_send.recover(), true)
+                .take_while(|(store, z3_stats)| {
+                    let time = z3_stats.value("time");
+                    if let Some(z3::StatisticsValue::Double(time)) = time {
+                        final_z3_time = Some(time);
+                    }
+                    (callback)(store.as_literals_map().unwrap())
+                });
+
+            // Consume iterator and get whether there are solutions
+            let search_complete = match solutions.count() {
+                0 => SearchComplete::NoSolutions,
+                _ => SearchComplete::HasSolutions,
+            };
+            (search_complete, final_z3_time)
+        });
+
+        if let Some(time) = final_z3_time {
+            stats.solver_time_s = time;
+        }
 
         Ok(SolveSuccess {
-            // TODO: get solver stats
-            stats: Default::default(),
+            stats,
             status: SearchStatus::Complete(search_complete),
         })
     }
@@ -81,13 +146,14 @@ impl SolverAdaptor for Smt {
     }
 
     fn load_model(&mut self, model: Model, _: private::Internal) -> Result<(), SolverError> {
-        let submodel = model.as_submodel();
+        // Fail fast if an older system or precompiled Z3 was linked in.
+        ensure_supported_z3_runtime()?;
         load_model_impl(
             &mut self.store,
             &mut self.solver_inst,
             &self.theory_config,
-            &submodel.symbols(),
-            submodel.constraints().as_slice(),
+            &model.symbols(),
+            model.constraints().as_slice(),
         )?;
         Ok(())
     }
@@ -97,7 +163,7 @@ impl SolverAdaptor for Smt {
     }
 
     fn get_name(&self) -> &'static str {
-        "SMT"
+        "smt"
     }
 
     fn write_solver_input_file(
@@ -106,5 +172,55 @@ impl SolverAdaptor for Smt {
     ) -> Result<(), std::io::Error> {
         let smt2 = self.solver_inst.to_smt2();
         writer.write(smt2.as_bytes()).map(|_| ())
+    }
+}
+
+trait IntoSolutionsWithStatistics {
+    fn into_solutions_with_statistics<T: Solvable>(
+        self,
+        t: T,
+        model_completion: bool,
+    ) -> impl FusedIterator<Item = (T::ModelInstance, Statistics)>;
+}
+
+impl IntoSolutionsWithStatistics for z3::Solver {
+    fn into_solutions_with_statistics<T: Solvable>(
+        self,
+        t: T,
+        model_completion: bool,
+    ) -> impl FusedIterator<Item = (T::ModelInstance, Statistics)> {
+        SolverStatsIterator {
+            solver: self,
+            ast: t,
+            model_completion,
+        }
+        .fuse()
+    }
+}
+
+struct SolverStatsIterator<T> {
+    solver: Solver,
+    ast: T,
+    model_completion: bool,
+}
+
+// copy-pasted from upstream except this runs get_statistics
+impl<T: Solvable> Iterator for SolverStatsIterator<T> {
+    type Item = (T::ModelInstance, Statistics);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.solver.check() {
+            SatResult::Sat => {
+                // right after we solve, before we generate the model grab statistics
+                let stats = self.solver.get_statistics();
+                let model = self.solver.get_model()?;
+                let instance = self.ast.read_from_model(&model, self.model_completion)?;
+                let counterexample = self.ast.generate_constraint(&instance);
+                self.solver.assert(counterexample);
+                // and return them through the iterator
+                Some((instance, stats))
+            }
+            _ => None,
+        }
     }
 }

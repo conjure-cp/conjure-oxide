@@ -1,10 +1,11 @@
+use conjure_cp::ast::abstract_comprehension::{Generator, Qualifier};
 use conjure_cp::ast::{Expression as Expr, *};
 use conjure_cp::rule_engine::ApplicationError;
 use conjure_cp::rule_engine::{
     ApplicationError::{DomainError, RuleNotApplicable},
     ApplicationResult, Reduction, register_rule, register_rule_set,
 };
-use conjure_cp::solver::SolverFamily;
+use conjure_cp::settings::SolverFamily;
 use conjure_cp::{bug, essence_expr};
 use uniplate::Uniplate;
 
@@ -77,7 +78,9 @@ fn flatten_indomain(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// Matrix a = b iff every index in the union of their indices has the same value.
 /// E.g. a: matrix indexed by [int(1..2)] of int(1..2), b: matrix indexed by [int(2..3)] of int(1..2)
 /// a = b ~> a[1] = b[1] /\ a[2] = b[2] /\ a[3] = b[3]
-#[register_rule(("Smt", 1000))]
+// Must run before `matrix_ref_to_atom` ("Base", 2000), otherwise matrix equality can be
+// rewritten into `int(1..)` indexed literals, losing finite index bounds for this rule.
+#[register_rule(("Smt", 3000))]
 fn flatten_matrix_eq_neq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (a, b) = match expr {
         Expr::Eq(_, a, b) | Expr::Neq(_, a, b) => (a, b),
@@ -248,5 +251,130 @@ fn unwrap_flatten_matrix_nonatomic(expr: &Expr, _: &SymbolTable) -> ApplicationR
         Metadata::new(),
         AbstractLiteral::Matrix(elems, new_dom.into()),
     );
+    Ok(Reduction::pure(new_expr))
+}
+
+/// Expands a sum over an "in set" comprehension to a list.
+///
+/// TODO: We currently only support one "in set" generator.
+/// This rule can be made much more general and nicer.
+#[register_rule(("Smt", 999))]
+fn unwrap_abstract_comprehension_sum(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    let Expr::Sum(_, inner) = expr else {
+        return Err(RuleNotApplicable);
+    };
+    let Expr::AbstractComprehension(_, comp) = inner.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let [Qualifier::Generator(Generator::ExpressionGenerator(generator))] = &comp.qualifiers[..]
+    else {
+        return Err(RuleNotApplicable);
+    };
+
+    let set = &generator.expression;
+    let elem_domain = generator.decl.domain().ok_or(DomainError)?;
+    let list: Vec<_> = elem_domain
+        .values()
+        .map_err(|_| DomainError)?
+        .map(|lit| essence_expr!("&lit * toInt(&lit in &set)"))
+        .collect();
+
+    let new_expr = Expr::Sum(
+        Metadata::new(),
+        Moo::new(Expr::AbstractLiteral(
+            Metadata::new(),
+            AbstractLiteral::matrix_implied_indices(list),
+        )),
+    );
+    Ok(Reduction::pure(new_expr))
+}
+
+/// Unwraps a subsetEq expression into checking membership equality.
+///
+/// Any elements not in the domain of one set must not be in the other set.
+#[register_rule(("Smt", 999))]
+fn unwrap_subseteq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    let Expr::SubsetEq(_, a, b) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let dom_a = a.domain_of().and_then(|d| d.resolve()).ok_or(DomainError)?;
+    let dom_b = b.domain_of().and_then(|d| d.resolve()).ok_or(DomainError)?;
+
+    let GroundDomain::Set(_, elem_dom_a) = dom_a.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
+    let GroundDomain::Set(_, elem_dom_b) = dom_b.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let domain_a_iter = elem_dom_a.values().map_err(|_| DomainError)?;
+    let memberships = domain_a_iter
+        .map(|lit| {
+            let b_contains = elem_dom_b.contains(&lit).map_err(|_| DomainError)?;
+            match b_contains {
+                true => Ok(essence_expr!("(&lit in &a) -> (&lit in &b)")),
+                false => Ok(essence_expr!("!(&lit in &a)")),
+            }
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+
+    let new_expr = Expr::And(
+        Metadata::new(),
+        Moo::new(Expr::AbstractLiteral(
+            Metadata::new(),
+            AbstractLiteral::matrix_implied_indices(memberships),
+        )),
+    );
+
+    Ok(Reduction::pure(new_expr))
+}
+
+/// Unwraps equality between sets into checking membership equality.
+///
+/// This is an optimisation over unwrap_subseteq to avoid unnecessary additional -> exprs
+/// where a single <-> is enough. This must apply before eq_to_subset_eq.
+#[register_rule(("Smt", 8801))]
+fn unwrap_set_eq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    let Expr::Eq(_, a, b) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let dom_a = a.domain_of().and_then(|d| d.resolve()).ok_or(DomainError)?;
+    let dom_b = b.domain_of().and_then(|d| d.resolve()).ok_or(DomainError)?;
+
+    let GroundDomain::Set(_, elem_dom_a) = dom_a.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
+    let GroundDomain::Set(_, elem_dom_b) = dom_b.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let union_val_iter = elem_dom_a
+        .union(elem_dom_b)
+        .and_then(|d| d.values())
+        .map_err(|_| DomainError)?;
+    let memberships = union_val_iter
+        .map(|lit| {
+            let a_contains = elem_dom_a.contains(&lit).map_err(|_| DomainError)?;
+            let b_contains = elem_dom_b.contains(&lit).map_err(|_| DomainError)?;
+            match (a_contains, b_contains) {
+                (true, true) => Ok(essence_expr!("(&lit in &a) <-> (&lit in &b)")),
+                (true, false) => Ok(essence_expr!("!(&lit in &a)")),
+                (false, true) => Ok(essence_expr!("!(&lit in &b)")),
+                (false, false) => unreachable!(),
+            }
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+
+    let new_expr = Expr::And(
+        Metadata::new(),
+        Moo::new(Expr::AbstractLiteral(
+            Metadata::new(),
+            AbstractLiteral::matrix_implied_indices(memberships),
+        )),
+    );
+
     Ok(Reduction::pure(new_expr))
 }

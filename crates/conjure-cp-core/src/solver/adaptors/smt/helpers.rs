@@ -1,7 +1,8 @@
-use crate::ast::{Atom, Domain, Literal, Moo, Name, Range};
+use crate::ast::{Atom, DeclarationKind, Domain, Literal, Moo, Name, Range};
 use crate::bug;
 use crate::solver::{SolverError, SolverResult};
 use conjure_cp_core::ast::GroundDomain;
+use std::ops::Deref;
 use z3::{Sort, Symbol, ast::*};
 
 use super::store::SymbolStore;
@@ -68,9 +69,12 @@ pub fn domain_to_sort(
                     "empty matrix index domain".into(),
                 )),
             }?;
+
+            // No need to constrain the indices themselves, that's done through SafeIndex/InDomain
             let idx_domain = &idx_domains[0];
             let (domain_sort, _) = domain_to_sort(idx_domain.as_ref(), theories)?;
 
+            // Use the lower dimension's restricting fn to restrict all indexes in this dimension
             let idx_asts = domain_to_ast_vec(theories, idx_domain.as_ref())?;
             let restrict_fn = move |ast: &Dynamic| {
                 let arr = ast.as_array().unwrap();
@@ -84,6 +88,33 @@ pub fn domain_to_sort(
                 Sort::array(&domain_sort, &range_sort),
                 Box::new(restrict_fn),
             ))
+        }
+
+        (_, GroundDomain::Set(attr, elem_domain)) => {
+            let (val_sort, _) = domain_to_sort(elem_domain, theories)?;
+
+            // Restrict the size of the set
+            let member_asts = domain_to_ast_vec(theories, elem_domain)?;
+            let attr_size = attr.size.clone();
+            let restrict_fn = move |ast: &Dynamic| {
+                let set = ast.as_set().unwrap();
+                let is_member: Vec<_> = member_asts
+                    .iter()
+                    .map(|val| set.member(val).ite(&Int::from(1), &Int::from(0)))
+                    .collect();
+                let size = Int::add(&is_member);
+                match attr_size {
+                    Range::Single(n) => size.eq(Int::from(n)),
+                    Range::UnboundedL(r) => size.le(Int::from(r)),
+                    Range::UnboundedR(l) => size.ge(Int::from(l)),
+                    Range::Bounded(l, r) => {
+                        Bool::and(&[size.ge(Int::from(l)), size.le(Int::from(r))])
+                    }
+                    Range::Unbounded => Bool::from_bool(true),
+                }
+            };
+
+            Ok((Sort::set(&val_sort), Box::new(restrict_fn)))
         }
 
         _ => Err(SolverError::ModelFeatureNotImplemented(format!(
@@ -150,14 +181,33 @@ pub fn atom_to_ast(
     atom: &Atom,
 ) -> SolverResult<Dynamic> {
     match atom {
-        Atom::Reference(decl) => store
-            .get(&decl.name())
-            .ok_or(SolverError::ModelInvalid(format!(
-                "variable '{}' does not exist",
-                decl.name()
-            )))
-            .map(|(_, ast, _)| ast)
-            .cloned(),
+        Atom::Reference(reference) => {
+            if let Some((_, ast, _)) = store.get(&reference.name()) {
+                return Ok(ast.clone());
+            }
+
+            if let Some(lit) = reference.resolve_constant() {
+                return literal_to_ast(theory_config, &lit);
+            }
+
+            if let Some(inner_atom) = reference.resolve_atomic() {
+                return atom_to_ast(theory_config, store, &inner_atom);
+            }
+
+            let decl_kind = reference.ptr().kind();
+            match decl_kind.deref() {
+                DeclarationKind::ValueLetting(expr) => {
+                    Err(SolverError::ModelFeatureNotImplemented(format!(
+                        "value letting '{}' did not resolve to an atomic expression: {expr}",
+                        reference.name()
+                    )))
+                }
+                _ => Err(SolverError::ModelInvalid(format!(
+                    "variable '{}' does not exist",
+                    reference.name()
+                ))),
+            }
+        }
         Atom::Literal(lit) => literal_to_ast(theory_config, lit),
         _ => Err(SolverError::ModelFeatureNotImplemented(format!(
             "atom sort not implemented: {atom}"

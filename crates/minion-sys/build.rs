@@ -109,6 +109,7 @@ fn bind() {
         .allowlist_function("vec_constraints_free")
         .allowlist_function("vec_vec_int_new")
         .allowlist_function("vec_vec_int_push_back")
+        .allowlist_function("vec_vec_int_push_back_ptr")
         .allowlist_function("vec_vec_int_free")
         .allowlist_function("TableOut_get")
         .clang_arg(format!("-I{out_dir}/build/src/")) // generated from configure.py

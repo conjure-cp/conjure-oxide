@@ -1,33 +1,26 @@
-use serde::{Deserialize, Serialize};
-use serde_json::Value;
-
 use tower_lsp::{
-    Client, LanguageServer, LspService, Server,
-    jsonrpc::{Error, Result},
-    lsp_types::{
-        ExecuteCommandOptions, ExecuteCommandParams, InitializeParams, InitializeResult,
-        InitializedParams, MessageType, ServerCapabilities, notification::Notification,
-    },
+    Client,
+    LanguageServer,
+    LspService,
+    Server,
+    jsonrpc::Result, //add Error if needed later, currently unused
+    lsp_types::*,
 };
 
-#[derive(Debug, Serialize, Deserialize)]
-struct NotifactionParams {
-    title: String,
-    message: String,
-    description: String,
-}
-
-enum CustomNotifciation {}
-
-impl Notification for CustomNotifciation {
-    type Params = NotifactionParams;
-
-    const METHOD: &'static str = "custom/notification";
-}
+use std::collections::HashMap;
+use std::sync::Arc;
+use tokio::sync::RwLock;
 
 #[derive(Debug)]
-struct Backend {
-    client: Client,
+pub struct Backend {
+    pub client: Client,
+    pub documents: Arc<RwLock<HashMap<String, String>>>, //caching document
+}
+
+impl Backend {
+    pub fn new(client: Client, documents: Arc<RwLock<HashMap<String, String>>>) -> Self {
+        Backend { client, documents }
+    }
 }
 
 #[tower_lsp::async_trait]
@@ -43,6 +36,17 @@ impl LanguageServer for Backend {
                     commands: vec![String::from("custom.notification")],
                     work_done_progress_options: Default::default(),
                 }),
+                text_document_sync: Some(TextDocumentSyncCapability::Options(
+                    TextDocumentSyncOptions {
+                        open_close: Some(true),
+                        change: Some(TextDocumentSyncKind::FULL),
+                        save: Some(TextDocumentSyncSaveOptions::SaveOptions(SaveOptions {
+                            include_text: Some(true),
+                        })),
+                        ..Default::default()
+                    },
+                )),
+                // hover_provider: Some(HoverProviderCapability::Simple(true)),
                 ..ServerCapabilities::default()
             },
         })
@@ -56,30 +60,15 @@ impl LanguageServer for Backend {
     async fn shutdown(&self) -> Result<()> {
         Ok(())
     }
-    async fn execute_command(&self, params: ExecuteCommandParams) -> Result<Option<Value>> {
-        if params.command == "custom.notification" {
-            //one of the commands that we support (see line 34)
-            self.client
-                .send_notification::<CustomNotifciation>(NotifactionParams {
-                    //send_notification is defined by the client
-                    title: String::from("Hello Notification"),
-                    message: String::from("This is a test message"),
-                    description: String::from("This is a description"),
-                })
-                .await;
-
-            self.client
-                .log_message(
-                    MessageType::INFO,
-                    format!("Command executed successfully with params: {params:?}"),
-                )
-                .await;
-            Ok(None)
-        }
-        //can add additional commands here in an if-else block
-        else {
-            Err(Error::invalid_request())
-        }
+    // underline errors on file open
+    async fn did_open(&self, params: DidOpenTextDocumentParams) {
+        self.handle_did_open(params).await;
+    }
+    async fn did_save(&self, params: DidSaveTextDocumentParams) {
+        self.handle_did_save(params).await;
+    }
+    async fn did_change(&self, params: DidChangeTextDocumentParams) {
+        self.handle_did_change(params).await;
     }
 }
 
@@ -87,8 +76,10 @@ impl LanguageServer for Backend {
 pub async fn main() {
     let stdin = tokio::io::stdin();
     let stdout = tokio::io::stdout();
+    let documents = Arc::new(RwLock::new(HashMap::new()));
 
-    let (service, socket) = LspService::build(|client| Backend { client }).finish();
+    let (service, socket) =
+        LspService::build(|client| Backend::new(client, Arc::clone(&documents))).finish();
 
     Server::new(stdin, stdout, socket).serve(service).await;
 }
