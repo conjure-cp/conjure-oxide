@@ -5,9 +5,9 @@ use conjure_cp_essence_parser::util::get_tree;
 #[test]
 fn invalid_top_level_statement_expression() {
     let source = " a,a,b: int(1..3)";
-    let (cst, parsed_source) = get_tree(&source).unwrap();
+    let (cst, _) = get_tree(&source).unwrap();
 
-    let diags = get_diagnostics(&parsed_source, &cst);
+    let diags = get_diagnostics(&source, &cst);
     assert_eq!(diags.len(), 1, "Expected exactly one diagnostic");
     let diag = &diags[0];
     check_diagnostic(diag, 0, 0, 0, 17, "Malformed line 1: ' a,a,b: int(1..3)'");
@@ -16,10 +16,10 @@ fn invalid_top_level_statement_expression() {
 #[test]
 fn malformed_find_2() {
     let source = "find >=lex,b,c: int(1..3)";
-    let (cst, parsed_source) = get_tree(&source).unwrap();
+    let (cst, _) = get_tree(&source).unwrap();
 
     // using >=lex operator instead of identifier
-    let diagnostics = get_diagnostics(&parsed_source, &cst);
+    let diagnostics = get_diagnostics(&source, &cst);
     assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
 
     let diag = &diagnostics[0];
@@ -36,13 +36,15 @@ fn malformed_find_2() {
 #[test]
 fn malformed_find_3() {
     let source = "find +,a,b: int(1..3)";
-    let (cst, parsed_source) = get_tree(&source).unwrap();
+    let (cst, _) = get_tree(&source).unwrap();
 
-    let diags = get_diagnostics(&parsed_source, &cst);
+    // println!("{}", cst.root_node().to_sexp());
+
+    let diags = get_diagnostics(&source, &cst);
     // debug print the diagnostics for easier debugging
-    for diag in &diags {
-        println!("Diagnostic: {:?}", diag);
-    }
+    // for diag in &diags {
+    //     println!("Diagnostic: {:?}", diag);
+    // }
     assert_eq!(diags.len(), 1, "Expected exactly one diagnostic");
     let diag = &diags[0];
     check_diagnostic(
@@ -58,9 +60,9 @@ fn malformed_find_3() {
 #[test]
 fn unexpected_colon_used_as_identifier() {
     let source = "find :,b,c: int(1..3)";
-    let (cst, parsed_source) = get_tree(&source).unwrap();
+    let (cst, _) = get_tree(&source).unwrap();
 
-    let diagnostics = get_diagnostics(&parsed_source, &cst);
+    let diagnostics = get_diagnostics(&source, &cst);
 
     // Should be exactly one diagnostic
     assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");

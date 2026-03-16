@@ -13,13 +13,27 @@ pub fn detect_errors(source: &str, cst: &Tree) -> Vec<Diagnostic> {
     let mut errors: Vec<RecoverableParseError> = vec![];
     let context = Arc::new(RwLock::new(Context::default()));
 
-    keyword_as_identifier(cst.root_node(), source, &mut errors);
+    let mut check_keywords = 1;
+
     match parse_essence_with_context_and_map(source, context, &mut errors, Some(cst)) {
         Ok(_) => {
-            diagnostics.extend(errors.into_iter().map(|e| error_to_diagnostic(&e)));
+            // if any dianostic is a malformed line, set check_keywords to 0 to avoid reporting keyword errors on malformed lines
+            if errors.iter().any(|e| {
+                if let Some(range) = &e.range {
+                    let line = range.start_point.row;
+                    return e.msg.contains(&format!("Malformed line {}", line + 1));
+                }
+                false
+            }) {
+                check_keywords = 0;
+            }
         }
         Err(_) => {}
     }
+    if check_keywords == 1 {
+        keyword_as_identifier(cst.root_node(), source, &mut errors);
+    }
+    diagnostics.extend(errors.into_iter().map(|e| error_to_diagnostic(&e)));
 
     diagnostics
 }
