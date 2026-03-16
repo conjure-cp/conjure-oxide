@@ -11,42 +11,43 @@ such that
 --
 
 UnsafeDiv(b, c), 
-   ~~> div_to_bubble ([("Bubble", 6000)]) 
-{SafeDiv(b, c) @ (c != 0)} 
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(b, c) @ (c != 0)}
 
 --
 
 (a != {SafeDiv(b, c) @ (c != 0)}), 
-   ~~> bubble_up ([("Bubble", 8800)]) 
-{(a != SafeDiv(b, c)) @ (c != 0)} 
+   ~~> bubble_up ([("Bubble", 8800)])
+{(a != SafeDiv(b, c)) @ (c != 0)}
 
 --
 
 {(a != SafeDiv(b, c)) @ (c != 0)}, 
-   ~~> expand_bubble ([("Bubble", 8900)]) 
-and([(a != SafeDiv(b, c)),(c != 0);int(1..)]) 
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([(a != SafeDiv(b, c)),(c != 0);int(1..)])
 
 --
 
 and([(a != SafeDiv(b, c)),(c != 0);int(1..)]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
+   ~~> constant_evaluator ([("Constant", 9001)])
 (a != SafeDiv(b, c)),
-(c != 0) 
+(c != 0)
 
 --
 
 (a != SafeDiv(b, c)), 
-   ~~> flatten_generic ([("Minion", 4200)]) 
-(a != __0) 
+   ~~> flatten_generic ([("Minion", 4200)])
+(a != __0)
 new variables:
   find __0: int(0..3)
 new constraints:
   __0 =aux SafeDiv(b, c)
+
 --
 
 __0 =aux SafeDiv(b, c), 
-   ~~> introduce_diveq ([("Minion", 4200)]) 
-DivEq(b, c, __0) 
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(b, c, __0)
 
 --
 

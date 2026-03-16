@@ -20,7 +20,7 @@ fn modify_domain() {
 
     assert_eq!(&decl_a.domain().unwrap(), &d1);
 
-    decl_a.as_var_mut().unwrap().domain = d2.clone();
+    decl_a.as_find_mut().unwrap().domain = d2.clone();
 
     assert_eq!(&decl_a.domain().unwrap(), &d2);
 }

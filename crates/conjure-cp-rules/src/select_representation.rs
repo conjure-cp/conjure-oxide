@@ -45,7 +45,7 @@ fn select_representation_matrix(expr: &Expr, symbols: &SymbolTable) -> Applicati
     // cannot create representations on non-local variables, so use lookup_local.
     let matrix_vars = symbols.clone().into_iter_local().filter_map(|(n, decl)| {
         let id = decl.id();
-        let var = decl.as_var()?.clone();
+        let var = decl.as_find()?.clone();
         let resolved_domain = var.domain.resolve()?;
 
         let GroundDomain::Matrix(valdom, indexdoms) = resolved_domain.as_ref() else {
@@ -147,7 +147,7 @@ fn select_representation(expr: &Expr, symbols: &SymbolTable) -> ApplicationResul
 
     // thing we are representing must be a variable
     {
-        let guard = decl.ptr().as_var().ok_or(RuleNotApplicable)?;
+        let guard = decl.ptr().as_find().ok_or(RuleNotApplicable)?;
         drop(guard);
     }
 

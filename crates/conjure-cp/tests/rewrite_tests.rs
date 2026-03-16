@@ -6,7 +6,7 @@ use conjure_cp::{
     },
     into_matrix_expr, matrix_expr,
     rule_engine::{Rule, get_all_rules, get_rule_by_name, resolve_rule_sets, rewrite_naive},
-    settings::SolverFamily,
+    settings::{QuantifiedExpander, SolverFamily, set_comprehension_expander},
     solver::{Solver, adaptors},
 };
 #[allow(unused_imports)]
@@ -624,6 +624,7 @@ fn rule_distribute_or_over_and() {
 #[test]
 fn rewrite_solve_xyz() {
     println!("Rules: {:?}", get_all_rules());
+    set_comprehension_expander(QuantifiedExpander::Native);
 
     let rule_sets = match resolve_rule_sets(SolverFamily::Minion, &["Constant"]) {
         Ok(rs) => rs,
@@ -702,7 +703,7 @@ fn rewrite_solve_xyz() {
 
     *model.as_submodel_mut().constraints_mut() = vec![nested_expr];
 
-    model = rewrite_naive(&model, &rule_sets, true, false).unwrap();
+    model = rewrite_naive(&model, &rule_sets, true).unwrap();
     let rewritten_expr = model.as_submodel().constraints();
 
     // Check if the expression is in its simplest form

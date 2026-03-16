@@ -1,5 +1,6 @@
 use regex::Regex;
 use std::collections::HashMap;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{LazyLock, Mutex, OnceLock};
 use ustr::Ustr;
 
@@ -37,8 +38,8 @@ pub struct Minion {
 
 static MINION_LOCK: Mutex<()> = Mutex::new(());
 static USER_CALLBACK: OnceLock<Mutex<SolverCallback>> = OnceLock::new();
-static ANY_SOLUTIONS: Mutex<bool> = Mutex::new(false);
-static USER_TERMINATED: Mutex<bool> = Mutex::new(false);
+static ANY_SOLUTIONS: AtomicBool = AtomicBool::new(false);
+static USER_TERMINATED: AtomicBool = AtomicBool::new(false);
 
 fn parse_name(minion_name: &str) -> Name {
     static MACHINE_NAME_RE: LazyLock<Regex> =
@@ -61,7 +62,7 @@ fn parse_name(minion_name: &str) -> Name {
 
 #[allow(clippy::unwrap_used)]
 fn minion_sys_callback(solutions: HashMap<minion_ast::VarName, minion_ast::Constant>) -> bool {
-    *(ANY_SOLUTIONS.lock().unwrap()) = true;
+    ANY_SOLUTIONS.store(true, Ordering::SeqCst);
     let callback = USER_CALLBACK
         .get_or_init(|| Mutex::new(Box::new(|x| true)))
         .lock()
@@ -81,7 +82,7 @@ fn minion_sys_callback(solutions: HashMap<minion_ast::VarName, minion_ast::Const
 
     let continue_search = (**callback)(conjure_solutions);
     if !continue_search {
-        *(USER_TERMINATED.lock().unwrap()) = true;
+        USER_TERMINATED.store(true, Ordering::SeqCst);
     }
 
     continue_search
@@ -125,6 +126,9 @@ impl SolverAdaptor for Minion {
         drop(user_callback); // release mutex. REQUIRED so that run_minion can use the
         // user callback and not deadlock.
 
+        USER_TERMINATED.store(false, Ordering::SeqCst);
+        ANY_SOLUTIONS.store(false, Ordering::SeqCst);
+
         run_minion(
             self.model.clone().expect("STATE MACHINE ERR"),
             minion_sys_callback,
@@ -136,12 +140,13 @@ impl SolverAdaptor for Minion {
             x => Runtime(format!("unknown minion_sys error: {x:#?}")),
         })?;
 
-        let mut status = Complete(HasSolutions);
-        if *(USER_TERMINATED.lock()).unwrap() {
-            status = Incomplete(UserTerminated);
-        } else if *(ANY_SOLUTIONS.lock()).unwrap() {
-            status = Complete(NoSolutions);
-        }
+        let status = if USER_TERMINATED.load(Ordering::SeqCst) {
+            Incomplete(UserTerminated)
+        } else if ANY_SOLUTIONS.load(Ordering::SeqCst) {
+            Complete(HasSolutions)
+        } else {
+            Complete(NoSolutions)
+        };
         Ok(SolveSuccess {
             stats: get_solver_stats(),
             status,

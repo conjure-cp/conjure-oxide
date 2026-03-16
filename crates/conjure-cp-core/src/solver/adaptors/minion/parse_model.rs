@@ -44,7 +44,7 @@ fn load_symbol_table(
                 .symbols()
                 .lookup(name)
                 .ok_or_else(|| ModelInvalid(format!("search variable '{name}' does not exist")))?;
-            let var = decl.as_var().ok_or_else(|| {
+            let var = decl.as_find().ok_or_else(|| {
                 ModelInvalid(format!(
                     "search variable '{name}' is not a decision variable"
                 ))
@@ -79,7 +79,7 @@ fn for_each_unrepresented_var(
         .clone()
         .into_iter_local()
     {
-        let Some(var) = decl.as_var() else {
+        let Some(var) = decl.as_find() else {
             continue;
         };
 

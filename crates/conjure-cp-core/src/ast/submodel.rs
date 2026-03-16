@@ -213,7 +213,7 @@ impl Display for SubModel {
                         pretty_variable_declaration(&self.symbols(), &name).unwrap()
                     )?;
                 }
-                DeclarationKind::ValueLetting(_) => {
+                DeclarationKind::ValueLetting(_) | DeclarationKind::TemporaryValueLetting(_) => {
                     writeln!(
                         f,
                         "{}",
@@ -231,7 +231,7 @@ impl Display for SubModel {
                     writeln!(f, "given {name}: {d}")?;
                 }
                 DeclarationKind::Quantified(inner) => {
-                    writeln!(f, "given {name}: {}", inner.domain())?;
+                    writeln!(f, "quantified {name}: {}", inner.domain())?;
                 }
 
                 DeclarationKind::RecordField(_) => {
