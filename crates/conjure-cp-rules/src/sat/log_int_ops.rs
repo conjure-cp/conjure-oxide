@@ -218,8 +218,7 @@ fn cnf_int_sum(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         .clone()
         .into_iter()
         .reduce(|lhs, rhs| log_add(&lhs, &rhs, &mut new_clauses, &mut new_symbols))
-        .unwrap()
-        .clone();
+        .unwrap();
 
     Ok(Reduction::cnf(result, new_clauses, new_symbols))
 }
@@ -312,7 +311,7 @@ pub fn log_left_shift(x: &Expr, shift: usize) -> Expr {
     let bits = bit_magnitude(min).max(bit_magnitude(max));
 
     let mut result = moo_x_bits.as_ref().clone().unwrap_list().unwrap();
-    result.splice(0..0, std::iter::repeat(false.into()).take(shift));
+    result.splice(0..0, std::iter::repeat_n(false.into(), shift));
 
     result.truncate(bits);
 
@@ -343,19 +342,19 @@ pub fn log_negate(x: &Expr, clauses: &mut Vec<CnfClause>, symbols: &mut SymbolTa
 
     // add one
     let mut product = inv_x[0].clone();
-    for i in 1..inv_x.len() {
+    for item in inv_x.iter().skip(1)  {
         result.push(tseytin_xor(
             product.clone(),
-            inv_x[i].clone(),
+            item.clone(),
             clauses,
             symbols,
         ));
-        product = tseytin_and(&vec![product, inv_x[i].clone()], clauses, symbols);
+        product = tseytin_and(&vec![product, item.clone()], clauses, symbols);
     }
     result.push(tseytin_and(
         &vec![
             inv_x.last().unwrap().clone(),
-            tseytin_not(product.clone(), clauses, symbols),
+            tseytin_not(product, clauses, symbols),
         ],
         clauses,
         symbols,
@@ -427,7 +426,7 @@ pub fn log_multiply(
         shifted_y = log_left_shift(&shifted_y, 1);
         result = log_add(
             &result,
-            &log_select(&x_bit, &int_to_log(0), &shifted_y, clauses, symbols),
+            &log_select(x_bit, &int_to_log(0), &shifted_y, clauses, symbols),
             clauses,
             symbols,
         );
@@ -603,8 +602,7 @@ fn cnf_int_product(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         .clone()
         .into_iter()
         .reduce(|lhs, rhs| log_multiply(&lhs, &rhs, &mut new_clauses, &mut new_symbols))
-        .unwrap()
-        .clone();
+        .unwrap();
 
     Ok(Reduction::cnf(result, new_clauses, new_symbols))
 }
