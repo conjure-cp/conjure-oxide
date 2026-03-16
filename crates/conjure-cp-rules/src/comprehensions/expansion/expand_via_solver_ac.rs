@@ -6,7 +6,7 @@ use std::{
 
 use conjure_cp::{
     ast::{
-        Atom, DeclarationPtr, Expression, Metadata, Moo, Name, Reference, ReturnType, SubModel,
+        Atom, DeclarationPtr, Expression, Metadata, Model, Moo, Name, Reference, ReturnType,
         SymbolTable, Typeable as _,
         ac_operators::ACOperatorKind,
         comprehension::{Comprehension, ComprehensionQualifier},
@@ -20,9 +20,9 @@ use tracing::warn;
 use uniplate::{Biplate, Uniplate as _, zipper::Zipper};
 
 use super::via_solver_common::{
-    instantiate_return_expressions_from_values, model_from_submodel,
-    retain_quantified_solution_values, rewrite_model_with_configured_rewriter,
-    temporarily_materialise_quantified_vars_as_finds,
+    instantiate_return_expressions_from_values, retain_quantified_solution_values,
+    rewrite_model_with_configured_rewriter, temporarily_materialise_quantified_vars_as_finds,
+    with_temporary_model,
 };
 
 /// Expands the comprehension using Minion, returning the resulting expressions.
@@ -45,8 +45,8 @@ pub fn expand_via_solver_ac(
     // Replace all boolean expressions referencing non-quantified variables in the return
     // expression with dummy variables. This allows us to add it as a constraint to the
     // generator model.
-    let generator_submodel = add_return_expression_to_generator_model(
-        comprehension.to_generator_submodel(),
+    let generator_model = add_return_expression_to_generator_model(
+        comprehension.to_generator_model(),
         return_expression,
         &ac_operator,
     );
@@ -54,7 +54,7 @@ pub fn expand_via_solver_ac(
     // REWRITE GENERATOR MODEL AND PASS TO MINION
     // ==========================================
 
-    let generator_model = model_from_submodel(generator_submodel, Some(quantified_vars.clone()));
+    let generator_model = with_temporary_model(generator_model, Some(quantified_vars.clone()));
 
     let extra_rule_sets = &["Base", "Constant", "Bubble"];
 
@@ -68,16 +68,14 @@ pub fn expand_via_solver_ac(
     // Rewriting before substitution can introduce index auxiliaries that remain symbolic and may
     // produce unsupported Minion shapes after expansion.
     let return_expression_model =
-        model_from_submodel(comprehension.to_return_expression_submodel(), None);
+        with_temporary_model(comprehension.to_return_expression_model(), None);
 
     let values = {
         let solver_model = generator_model.clone();
         // Minion expects quantified variables in the temporary generator model as find
         // declarations. Keep this conversion scoped to solver-backed expansion.
-        let _temp_finds = temporarily_materialise_quantified_vars_as_finds(
-            solver_model.as_submodel(),
-            &quantified_vars,
-        );
+        let _temp_finds =
+            temporarily_materialise_quantified_vars_as_finds(&solver_model, &quantified_vars);
 
         // Rewrite with quantified vars materialised as finds so Minion flattening can
         // introduce auxiliaries for constraints involving quantified variables.
@@ -136,11 +134,11 @@ pub fn expand_via_solver_ac(
 /// expression of the correct type that contains a non-quantified variable. This ensures that
 /// we lose as few references to quantified variables as possible.
 fn add_return_expression_to_generator_model(
-    mut generator_submodel: SubModel,
+    mut generator_model: Model,
     return_expression: Expression,
     ac_operator: &ACOperatorKind,
-) -> SubModel {
-    let mut symtab = generator_submodel.symbols_mut();
+) -> Model {
+    let mut symtab = generator_model.symbols_mut();
     let return_expression = localise_non_local_references_deep(return_expression, &mut symtab);
 
     let mut zipper = Zipper::new(return_expression);
@@ -292,9 +290,9 @@ fn add_return_expression_to_generator_model(
 
     std::mem::drop(symtab);
 
-    generator_submodel.add_constraint(new_return_expression);
+    generator_model.add_constraint(new_return_expression);
 
-    generator_submodel
+    generator_model
 }
 
 /// Replaces references to declarations outside `symtab` with local dummy declarations.
