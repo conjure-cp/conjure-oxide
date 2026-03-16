@@ -1,0 +1,20 @@
+letting cost be [9, 4, 7, 6, 3, 8, 5, 2, 10, 1]
+letting carbon_footprint be [1, 7, 2, 6, 8, 3, 5, 9, 4, 10]
+
+find selected : matrix indexed by [int(1..10)] of bool
+
+such that sum([ toInt(selected[i]) | i : int(1..10) ]) = 2
+
+find total_cost : int(0..1000)
+such that total_cost = sum([ cost[i] | i : int(1..10), selected[i] ])
+
+find total_carbon : int(0..1000)
+such that total_carbon = sum([ carbon_footprint[i] | i : int(1..10), selected[i] ])
+
+dominanceRelation
+    (total_cost <= fromSolution(total_cost)) /\
+    (total_carbon <= fromSolution(total_carbon)) /\
+    (
+        (total_cost < fromSolution(total_cost)) \/
+        (total_carbon < fromSolution(total_carbon))
+    )

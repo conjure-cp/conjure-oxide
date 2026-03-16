@@ -1,0 +1,40 @@
+find s1 : bool
+find s2 : bool
+find s3 : bool
+find s4 : bool
+find s5 : bool
+find s6 : bool
+
+such that
+    s1 \/ s2
+such that
+    s2 \/ s3
+such that
+    s3 \/ s4
+such that
+    s4 \/ s5
+such that
+    s5 \/ s6
+such that
+    !(s1 /\ s4)
+such that
+    !(s2 /\ s5)
+such that
+    !(s3 /\ s6)
+
+dominanceRelation (
+    (s1 -> fromSolution(s1)) /\
+    (s2 -> fromSolution(s2)) /\
+    (s3 -> fromSolution(s3)) /\
+    (s4 -> fromSolution(s4)) /\
+    (s5 -> fromSolution(s5)) /\
+    (s6 -> fromSolution(s6)) /\
+    (
+        ((!s1) /\ fromSolution(s1)) \/
+        ((!s2) /\ fromSolution(s2)) \/
+        ((!s3) /\ fromSolution(s3)) \/
+        ((!s4) /\ fromSolution(s4)) \/
+        ((!s5) /\ fromSolution(s5)) \/
+        ((!s6) /\ fromSolution(s6))
+    )
+)

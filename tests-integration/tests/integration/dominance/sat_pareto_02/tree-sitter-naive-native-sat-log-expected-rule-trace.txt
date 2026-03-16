@@ -1,0 +1,226 @@
+Model before rewriting:
+
+find x: bool
+find y: bool
+find z: bool
+
+such that
+
+or([or([x,y;int(1..)]),z;int(1..)])
+
+--
+
+or([or([x,y;int(1..)]),z;int(1..)]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+or([x,y,z;int(1..)])
+
+--
+
+or([x,y,z;int(1..)]), 
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__0
+new variables:
+  find __0: bool
+new clauses:
+  (¬x \/ __0)
+  (¬y \/ __0)
+  (¬z \/ __0)
+  (¬__0 \/ x \/ y \/ z)
+
+--
+
+__0, 
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new clauses:
+  (__0)
+
+--
+
+Final model:
+
+find x: bool
+find y: bool
+find z: bool
+find __0: bool
+
+such that
+
+true
+
+clauses:
+
+(¬x \/ __0),
+(¬y \/ __0),
+(¬z \/ __0),
+(¬__0 \/ x \/ y \/ z),
+(__0)
+
+Model before rewriting:
+
+find x: bool
+find y: bool
+find z: bool
+find __0: bool
+
+such that
+
+and([and([and([(x) -> (false),(y) -> (true);int(1..)]),(z) -> (false);int(1..)]),or([or([and([!(x),false;int(1..)]),and([!(y),true;int(1..)]);int(1..)]),and([!(z),false;int(1..)]);int(1..)]);int(1..)])
+
+--
+
+Final model:
+
+find x: bool
+find y: bool
+find z: bool
+find __0: bool
+
+such that
+
+and([and([and([(x) -> (false),(y) -> (true);int(1..)]),(z) -> (false);int(1..)]),or([or([and([!(x),false;int(1..)]),and([!(y),true;int(1..)]);int(1..)]),and([!(z),false;int(1..)]);int(1..)]);int(1..)])
+
+Model before rewriting:
+
+find x: bool
+find y: bool
+find z: bool
+find __0: bool
+
+such that
+
+and([and([and([(x) -> (false),(y) -> (true);int(1..)]),(z) -> (true);int(1..)]),or([or([and([!(x),false;int(1..)]),and([!(y),true;int(1..)]);int(1..)]),and([!(z),true;int(1..)]);int(1..)]);int(1..)])
+
+--
+
+Final model:
+
+find x: bool
+find y: bool
+find z: bool
+find __0: bool
+
+such that
+
+and([and([and([(x) -> (false),(y) -> (true);int(1..)]),(z) -> (true);int(1..)]),or([or([and([!(x),false;int(1..)]),and([!(y),true;int(1..)]);int(1..)]),and([!(z),true;int(1..)]);int(1..)]);int(1..)])
+
+Model before rewriting:
+
+find x: bool
+find y: bool
+find z: bool
+find __0: bool
+
+such that
+
+and([and([and([(x) -> (true),(y) -> (true);int(1..)]),(z) -> (true);int(1..)]),or([or([and([!(x),true;int(1..)]),and([!(y),true;int(1..)]);int(1..)]),and([!(z),true;int(1..)]);int(1..)]);int(1..)])
+
+--
+
+Final model:
+
+find x: bool
+find y: bool
+find z: bool
+find __0: bool
+
+such that
+
+and([and([and([(x) -> (true),(y) -> (true);int(1..)]),(z) -> (true);int(1..)]),or([or([and([!(x),true;int(1..)]),and([!(y),true;int(1..)]);int(1..)]),and([!(z),true;int(1..)]);int(1..)]);int(1..)])
+
+Model before rewriting:
+
+find x: bool
+find y: bool
+find z: bool
+find __0: bool
+
+such that
+
+and([and([and([(x) -> (true),(y) -> (false);int(1..)]),(z) -> (true);int(1..)]),or([or([and([!(x),true;int(1..)]),and([!(y),false;int(1..)]);int(1..)]),and([!(z),true;int(1..)]);int(1..)]);int(1..)])
+
+--
+
+Final model:
+
+find x: bool
+find y: bool
+find z: bool
+find __0: bool
+
+such that
+
+and([and([and([(x) -> (true),(y) -> (false);int(1..)]),(z) -> (true);int(1..)]),or([or([and([!(x),true;int(1..)]),and([!(y),false;int(1..)]);int(1..)]),and([!(z),true;int(1..)]);int(1..)]);int(1..)])
+
+Model before rewriting:
+
+find x: bool
+find y: bool
+find z: bool
+find __0: bool
+
+such that
+
+and([and([and([(x) -> (true),(y) -> (false);int(1..)]),(z) -> (false);int(1..)]),or([or([and([!(x),true;int(1..)]),and([!(y),false;int(1..)]);int(1..)]),and([!(z),false;int(1..)]);int(1..)]);int(1..)])
+
+--
+
+Final model:
+
+find x: bool
+find y: bool
+find z: bool
+find __0: bool
+
+such that
+
+and([and([and([(x) -> (true),(y) -> (false);int(1..)]),(z) -> (false);int(1..)]),or([or([and([!(x),true;int(1..)]),and([!(y),false;int(1..)]);int(1..)]),and([!(z),false;int(1..)]);int(1..)]);int(1..)])
+
+Model before rewriting:
+
+find x: bool
+find y: bool
+find z: bool
+find __0: bool
+
+such that
+
+and([and([and([(x) -> (true),(y) -> (true);int(1..)]),(z) -> (false);int(1..)]),or([or([and([!(x),true;int(1..)]),and([!(y),true;int(1..)]);int(1..)]),and([!(z),false;int(1..)]);int(1..)]);int(1..)])
+
+--
+
+Final model:
+
+find x: bool
+find y: bool
+find z: bool
+find __0: bool
+
+such that
+
+and([and([and([(x) -> (true),(y) -> (true);int(1..)]),(z) -> (false);int(1..)]),or([or([and([!(x),true;int(1..)]),and([!(y),true;int(1..)]);int(1..)]),and([!(z),false;int(1..)]);int(1..)]);int(1..)])
+
+Model before rewriting:
+
+find x: bool
+find y: bool
+find z: bool
+find __0: bool
+
+such that
+
+and([and([and([(x) -> (false),(y) -> (false);int(1..)]),(z) -> (true);int(1..)]),or([or([and([!(x),false;int(1..)]),and([!(y),false;int(1..)]);int(1..)]),and([!(z),true;int(1..)]);int(1..)]);int(1..)])
+
+--
+
+Final model:
+
+find x: bool
+find y: bool
+find z: bool
+find __0: bool
+
+such that
+
+and([and([and([(x) -> (false),(y) -> (false);int(1..)]),(z) -> (true);int(1..)]),or([or([and([!(x),false;int(1..)]),and([!(y),false;int(1..)]);int(1..)]),and([!(z),true;int(1..)]);int(1..)]);int(1..)])
+

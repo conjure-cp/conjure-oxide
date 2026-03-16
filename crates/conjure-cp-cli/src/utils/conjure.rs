@@ -224,7 +224,15 @@ pub fn get_solutions(
 
     sols.retain(|x| !x.is_empty());
     if let Some(dominance_expression) = dominance_expression.as_ref() {
-        *sols = retroactively_prune_dominated(sols.clone(), dominance_expression);
+        let pre_prune_len = sols.len();
+        let pruned = retroactively_prune_dominated(sols.clone(), dominance_expression);
+        let post_prune_len = pruned.len();
+
+        eprintln!(
+            "Dominance pruning retained {post_prune_len} of {pre_prune_len} solutions."
+        );
+
+        *sols = pruned;
     }
 
     Ok(sols.clone())
