@@ -4,7 +4,7 @@ use super::{
     resolve_rules::{ResolveRulesError, RuleData},
 };
 use crate::ast::{
-    Expression, Name, SubModel, SymbolTable,
+    Expression, Name, SymbolTable,
     pretty::{pretty_variable_declaration, pretty_vec},
 };
 
@@ -38,7 +38,7 @@ pub fn snapshot_variable_declarations(symbols: &SymbolTable) -> VariableDeclarat
 pub fn log_rule_application(
     result: &RuleResult,
     initial_expression: &Expression,
-    initial_model: &SubModel,
+    initial_symbols: &SymbolTable,
     variable_declaration_snapshots: Option<(
         &VariableDeclarationSnapshot,
         &VariableDeclarationSnapshot,
@@ -115,7 +115,7 @@ pub fn log_rule_application(
         } else {
             // empty if no new variables
             let mut vars: Vec<String> = vec![];
-            for var_name in red.added_symbols(&initial_model.symbols()) {
+            for var_name in red.added_symbols(initial_symbols) {
                 #[allow(clippy::unwrap_used)]
                 vars.push(format!(
                     "  {}",

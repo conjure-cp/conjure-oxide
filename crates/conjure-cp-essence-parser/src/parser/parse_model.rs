@@ -2,16 +2,21 @@ use std::sync::{Arc, RwLock};
 use std::{fs, vec};
 
 use conjure_cp_core::Model;
+use conjure_cp_core::ast::assertions::debug_assert_model_well_formed;
 use conjure_cp_core::ast::{DeclarationPtr, Expression, Metadata, Moo};
 use conjure_cp_core::context::Context;
 #[allow(unused)]
 use uniplate::Uniplate;
 
+use super::ParseContext;
 use super::find::parse_find_statement;
 use super::letting::parse_letting_statement;
-use super::util::{get_tree, named_children};
+use super::util::{TypecheckingContext, get_tree};
+use crate::diagnostics::diagnostics_api::SymbolKind;
+use crate::diagnostics::source_map::{HoverInfo, SourceMap, span_with_hover};
 use crate::errors::{FatalParseError, ParseErrorCollection, RecoverableParseError};
 use crate::expression::parse_expression;
+use crate::field;
 use crate::syntax_errors::detect_syntactic_errors;
 
 /// Parse an Essence file into a Model using the tree-sitter parser.
@@ -26,17 +31,17 @@ pub fn parse_essence_file_native(
     let model = parse_essence_with_context(&source_code, context, &mut errors);
 
     match model {
-        Ok(m) => {
-            // Check if there were any recoverable errors
-            if !errors.is_empty() {
-                return Err(Box::new(ParseErrorCollection::multiple(
-                    errors,
-                    Some(source_code),
-                    Some(path.to_string()),
-                )));
-            }
-            // Return model if no errors
+        Ok(Some(m)) => {
+            debug_assert_model_well_formed(&m, "tree-sitter");
             Ok(m)
+        }
+        Ok(None) => {
+            // Recoverable errors were found, return them as a ParseErrorCollection
+            Err(Box::new(ParseErrorCollection::multiple(
+                errors,
+                Some(source_code),
+                Some(path.to_string()),
+            )))
         }
         Err(fatal) => {
             // Fatal error - wrap in ParseErrorCollection::Fatal
@@ -49,7 +54,18 @@ pub fn parse_essence_with_context(
     src: &str,
     context: Arc<RwLock<Context<'static>>>,
     errors: &mut Vec<RecoverableParseError>,
-) -> Result<Model, FatalParseError> {
+) -> Result<Option<Model>, FatalParseError> {
+    match parse_essence_with_context_and_map(src, context, errors)? {
+        Some((model, _source_map)) => Ok(Some(model)),
+        None => Ok(None),
+    }
+}
+
+pub fn parse_essence_with_context_and_map(
+    src: &str,
+    context: Arc<RwLock<Context<'static>>>,
+    errors: &mut Vec<RecoverableParseError>,
+) -> Result<Option<(Model, SourceMap)>, FatalParseError> {
     let (tree, source_code) = match get_tree(src) {
         Some(tree) => tree,
         None => {
@@ -61,63 +77,92 @@ pub fn parse_essence_with_context(
 
     if tree.root_node().has_error() {
         detect_syntactic_errors(src, &tree, errors);
-        return Ok(Model::new(context));
+        return Ok(None);
     }
 
     let mut model = Model::new(context);
+    let mut source_map = SourceMap::default();
     let root_node = tree.root_node();
-    let symbols_ptr = model.as_submodel().symbols_ptr_unchecked().clone();
-    for statement in named_children(&root_node) {
+
+    // Create a ParseContext
+    let mut ctx = ParseContext::new(
+        &source_code,
+        &root_node,
+        Some(model.symbols_ptr_unchecked().clone()),
+        errors,
+        &mut source_map,
+    );
+
+    let mut cursor = root_node.walk();
+    for statement in root_node.children(&mut cursor) {
+        /*
+           since find and letting are unnamed children
+           hover info is added here.
+           other unnamed children will be skipped.
+        */
+        if statement.kind() == "find" {
+            span_with_hover(
+                &statement,
+                ctx.source_code,
+                ctx.source_map,
+                HoverInfo {
+                    description: "Find keyword".to_string(),
+                    kind: Some(SymbolKind::Find),
+                    ty: None,
+                    decl_span: None,
+                },
+            );
+        } else if statement.kind() == "letting" {
+            span_with_hover(
+                &statement,
+                ctx.source_code,
+                ctx.source_map,
+                HoverInfo {
+                    description: "Letting keyword".to_string(),
+                    kind: Some(SymbolKind::Letting),
+                    ty: None,
+                    decl_span: None,
+                },
+            );
+        }
+
+        if !statement.is_named() {
+            continue;
+        }
+
         match statement.kind() {
             "single_line_comment" => {}
             "language_declaration" => {}
             "find_statement" => {
-                let var_hashmap = parse_find_statement(
-                    statement,
-                    &source_code,
-                    Some(symbols_ptr.clone()),
-                    errors,
-                )?;
+                let var_hashmap = parse_find_statement(&mut ctx, statement)?;
                 for (name, domain) in var_hashmap {
                     model
-                        .as_submodel_mut()
                         .symbols_mut()
                         .insert(DeclarationPtr::new_find(name, domain));
                 }
             }
             "bool_expr" | "atom" | "comparison_expr" => {
-                model.as_submodel_mut().add_constraint(parse_expression(
-                    statement,
-                    &source_code,
-                    &statement,
-                    Some(symbols_ptr.clone()),
-                    errors,
-                )?);
+                ctx.typechecking_context = TypecheckingContext::Boolean;
+                let Some(expr) = parse_expression(&mut ctx, statement)? else {
+                    continue;
+                };
+                model.add_constraint(expr);
             }
             "language_label" => {}
             "letting_statement" => {
-                let letting_vars = parse_letting_statement(
-                    statement,
-                    &source_code,
-                    Some(symbols_ptr.clone()),
-                    errors,
-                )?;
-                model.as_submodel_mut().symbols_mut().extend(letting_vars);
+                let Some(letting_vars) = parse_letting_statement(&mut ctx, statement)? else {
+                    continue;
+                };
+                model.symbols_mut().extend(letting_vars);
             }
             "dominance_relation" => {
-                let inner = statement
-                    .child_by_field_name("expression")
-                    .expect("Expected a sub-expression inside `dominanceRelation`");
-                let expr = parse_expression(
-                    inner,
-                    &source_code,
-                    &statement,
-                    Some(symbols_ptr.clone()),
-                    errors,
-                )?;
+                let inner = field!(statement, "expression");
+                let Some(expr) = parse_expression(&mut ctx, inner)? else {
+                    continue;
+                };
                 let dominance = Expression::DominanceRelation(Metadata::new(), Moo::new(expr));
                 if model.dominance.is_some() {
-                    errors.push(RecoverableParseError::new(
+                    ctx.record_error(RecoverableParseError::new(
                         "Duplicate dominance relation".to_string(),
                         None,
                     ));
@@ -125,27 +170,24 @@ pub fn parse_essence_with_context(
                 }
                 model.dominance = Some(dominance);
             }
-            // these should be detected at an earlier stage
-            "ERROR" => {
-                let raw_expr = &source_code[statement.start_byte()..statement.end_byte()];
-                errors.push(RecoverableParseError::new(
-                    format!("'{raw_expr}' is not a valid expression"),
-                    Some(statement.range()),
-                ));
-            }
             _ => {
-                let kind = statement.kind();
-                errors.push(RecoverableParseError::new(
-                    format!("Unrecognized top level statement kind: {kind}"),
+                return Err(FatalParseError::internal_error(
+                    format!("Unexpected top-level statement: {}", statement.kind()),
                     Some(statement.range()),
                 ));
             }
         }
-
-        // check for errors (keyword as identifier)
-        keyword_as_identifier(root_node, &source_code, errors);
     }
-    Ok(model)
+
+    // check for errors (keyword as identifier)
+    keyword_as_identifier(&mut ctx);
+
+    // Check if there were any recoverable errors
+    if !errors.is_empty() {
+        return Ok(None);
+    }
+    // otherwise return the model
+    Ok(Some((model, source_map)))
 }
 
 const KEYWORDS: [&str; 21] = [
@@ -153,21 +195,17 @@ const KEYWORDS: [&str; 21] = [
     "where", "and", "or", "not", "if", "then", "else", "in", "sum", "product", "bool",
 ];
 
-fn keyword_as_identifier(
-    root: tree_sitter::Node,
-    src: &str,
-    errors: &mut Vec<RecoverableParseError>,
-) {
-    let mut stack = vec![root];
+fn keyword_as_identifier(ctx: &mut ParseContext) {
+    let mut stack = vec![*ctx.root];
     while let Some(node) = stack.pop() {
         if (node.kind() == "variable" || node.kind() == "identifier" || node.kind() == "parameter")
-            && let Ok(text) = node.utf8_text(src.as_bytes())
+            && let Ok(text) = node.utf8_text(ctx.source_code.as_bytes())
         {
             let ident = text.trim();
             if KEYWORDS.contains(&ident) {
                 let start_point = node.start_position();
                 let end_point = node.end_position();
-                errors.push(RecoverableParseError::new(
+                ctx.errors.push(RecoverableParseError::new(
                     format!("Keyword '{ident}' used as identifier"),
                     Some(tree_sitter::Range {
                         start_byte: node.start_byte(),
@@ -188,20 +226,21 @@ fn keyword_as_identifier(
     }
 }
 
-pub fn parse_essence(src: &str) -> Result<Model, Box<ParseErrorCollection>> {
+pub fn parse_essence(src: &str) -> Result<(Model, SourceMap), Box<ParseErrorCollection>> {
     let context = Arc::new(RwLock::new(Context::default()));
     let mut errors = vec![];
-    match parse_essence_with_context(src, context, &mut errors) {
-        Ok(model) => {
-            if !errors.is_empty() {
-                Err(Box::new(ParseErrorCollection::multiple(
-                    errors,
-                    Some(src.to_string()),
-                    None,
-                )))
-            } else {
-                Ok(model)
-            }
+    match parse_essence_with_context_and_map(src, context, &mut errors) {
+        Ok(Some((model, source_map))) => {
+            debug_assert_model_well_formed(&model, "tree-sitter");
+            Ok((model, source_map))
+        }
+        Ok(None) => {
+            // Recoverable errors were found, return them as a ParseErrorCollection
+            Err(Box::new(ParseErrorCollection::multiple(
+                errors,
+                Some(src.to_string()),
+                None,
+            )))
         }
         Err(fatal) => Err(Box::new(ParseErrorCollection::fatal(fatal))),
     }
@@ -225,9 +264,9 @@ mod test {
         such that x >= y
         ";
 
-        let model = parse_essence(src).unwrap();
+        let (model, _source_map) = parse_essence(src).unwrap();
 
-        let st = model.as_submodel().symbols();
+        let st = model.symbols();
         let x = st.lookup(&Name::user("x")).unwrap();
         let y = st.lookup(&Name::user("y")).unwrap();
         let z = st.lookup(&Name::user("z")).unwrap();
@@ -235,7 +274,7 @@ mod test {
         assert_eq!(y.domain(), Some(domain_int!(1..4)));
         assert_eq!(z.domain(), Some(domain_int!(1..4)));
 
-        let constraints = model.as_submodel().constraints();
+        let constraints = model.constraints();
         assert_eq!(constraints.len(), 2);
 
         let c1 = constraints[0].clone();
@@ -277,8 +316,8 @@ mod test {
         allDiff(a[-2,..])
         ";
 
-        let model = parse_essence(src).unwrap();
-        let st = model.as_submodel().symbols();
+        let (model, _source_map) = parse_essence(src).unwrap();
+        let st = model.symbols();
         let a_decl = st.lookup(&Name::user("a")).unwrap();
         let a = a_decl.as_value_letting().unwrap().deref().clone();
         assert_eq!(

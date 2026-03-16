@@ -9,13 +9,13 @@ pub enum FatalParseError {
     TreeSitterError(String),
     #[error("Error running `conjure pretty`: {0}")]
     ConjurePrettyError(String),
-    #[error("Essence syntax error: {msg}{}",
+    #[error("Internal parser error: {msg}{}\nThis indicates a bug in the parser or syntax validator. Please report this issue.",
         match range {
             Some(range) => format!(" at {}-{}", range.start_point, range.end_point),
             None => "".to_string(),
         }
     )]
-    ParseError {
+    InternalError {
         msg: String,
         range: Option<tree_sitter::Range>,
     },
@@ -28,15 +28,15 @@ pub enum FatalParseError {
 }
 
 impl FatalParseError {
-    pub fn syntax_error(msg: String, range: Option<tree_sitter::Range>) -> Self {
-        FatalParseError::ParseError { msg, range }
+    pub fn internal_error(msg: String, range: Option<tree_sitter::Range>) -> Self {
+        FatalParseError::InternalError { msg, range }
     }
 }
 
 impl From<ConjureParseError> for FatalParseError {
     fn from(value: ConjureParseError) -> Self {
         match value {
-            Error::Parse(msg) => FatalParseError::syntax_error(msg, None),
+            Error::Parse(msg) => FatalParseError::internal_error(msg, None),
             Error::NotImplemented(msg) => FatalParseError::NotImplemented(msg),
             Error::Json(err) => FatalParseError::JsonError(err),
             Error::Other(err) => FatalParseError::Other(err.into()),

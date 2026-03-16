@@ -2,7 +2,7 @@ use std::sync::{Arc, Mutex};
 
 use conjure_cp::{
     ast::{
-        DecisionVariable, DeclarationKind, Expression, Name, SubModel, comprehension::Comprehension,
+        DecisionVariable, DeclarationKind, Expression, Model, Name, comprehension::Comprehension,
     },
     rule_engine::resolve_rule_sets,
     settings::{SolverFamily, current_rewriter},
@@ -10,8 +10,8 @@ use conjure_cp::{
 };
 
 use super::via_solver_common::{
-    instantiate_return_expressions_from_values, model_from_submodel,
-    retain_quantified_solution_values, rewrite_model_with_configured_rewriter,
+    instantiate_return_expressions_from_values, retain_quantified_solution_values,
+    rewrite_model_with_configured_rewriter, with_temporary_model,
 };
 
 /// Expands the comprehension by solving quantified variables with Minion.
@@ -22,11 +22,11 @@ pub fn expand_via_solver(comprehension: Comprehension) -> Result<Vec<Expression>
     let minion = Solver::new(Minion::new());
     let quantified_vars = comprehension.quantified_vars();
 
-    let mut generator_submodel = comprehension.to_generator_submodel();
-    materialise_quantified_finds(&mut generator_submodel, &quantified_vars);
+    let mut generator_model = comprehension.to_generator_model();
+    materialise_quantified_finds(&mut generator_model, &quantified_vars);
 
     // only branch on the quantified variables.
-    let generator_model = model_from_submodel(generator_submodel, Some(quantified_vars.clone()));
+    let generator_model = with_temporary_model(generator_model, Some(quantified_vars.clone()));
     tracing::trace!(
         target: "rule_engine_human",
         "Via-solver generator model before rewriting:\n\n{}\n--\n",
@@ -65,7 +65,7 @@ pub fn expand_via_solver(comprehension: Comprehension) -> Result<Vec<Expression>
     // Rewriting before substitution can change guard structure in ways that are unsafe for
     // constant evaluation after instantiation.
     let return_expression_model =
-        model_from_submodel(comprehension.to_return_expression_submodel(), None);
+        with_temporary_model(comprehension.to_return_expression_model(), None);
 
     let values = {
         let solver_model = generator_model.clone();
@@ -96,8 +96,8 @@ pub fn expand_via_solver(comprehension: Comprehension) -> Result<Vec<Expression>
     ))
 }
 
-fn materialise_quantified_finds(submodel: &mut SubModel, quantified_vars: &[Name]) {
-    let symbols = submodel.symbols().clone();
+fn materialise_quantified_finds(model: &mut Model, quantified_vars: &[Name]) {
+    let symbols = model.symbols().clone();
 
     for name in quantified_vars {
         let Some(mut decl) = symbols.lookup_local(name) else {

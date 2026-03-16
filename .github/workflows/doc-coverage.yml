@@ -1,4 +1,4 @@
-name: Documentation Coverage
+name: RustDoc Coverage
 
 # WARNING: This workflow runs on `pull_request_target` and checks out PR code.
 # It therefore executes untrusted code with access to repository secrets, including
@@ -12,6 +12,7 @@ on:
       - tests-integration/**
       - tools/ci/generate-doc-coverage-summary-md.bash
       - tools/ci/generate-doc-coverage-report-md.bash
+      - tools/ci/list-doc-coverage-targets.bash
   push:
     branches:
       - main
@@ -20,6 +21,7 @@ on:
       - tests-integration/**
       - tools/ci/generate-doc-coverage-summary-md.bash
       - tools/ci/generate-doc-coverage-report-md.bash
+      - tools/ci/list-doc-coverage-targets.bash
       - .github/workflows/doc-coverage.yml
       - .github/workflows/code-coverage.yml
       - .github/workflows/rustdoc.yml
@@ -64,7 +66,7 @@ jobs:
 
       - name: Restore cache
         id: restore_cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: |
             ~/.cargo/bin/
@@ -82,11 +84,11 @@ jobs:
       - name: Install pandoc
         uses: pandoc/actions/setup@v1
 
-      - name: Build documentation coverage report
+      - name: Build RustDoc coverage report
         run: |
           mkdir -p deploy
           {
-            echo "# Documentation Coverage Report"
+            echo "# RustDoc Coverage Report"
             echo ""
             ./tools/ci/generate-doc-coverage-summary-md.bash
             echo ""
@@ -137,7 +139,7 @@ jobs:
           target-folder: ${{ steps.deploy.outputs.folder }}
           commit-message: "Actions: Doc coverage for ${{ steps.deploy.outputs.label }}"
 
-      - name: Compute documentation coverage stats for PR
+      - name: Compute RustDoc coverage stats for PR
         if: ${{ github.event_name == 'pull_request_target' }}
         id: stats
         env:
@@ -220,7 +222,7 @@ jobs:
           app-id: ${{ secrets.CONJURE_BOT_ID }}
           private-key: ${{ secrets.CONJURE_BOT_PRIVATE_KEY }}
 
-      - name: Comment documentation coverage on PR
+      - name: Comment RustDoc coverage on PR
         if: ${{ github.event_name == 'pull_request_target' }}
         continue-on-error: true
         uses: actions/github-script@v8
@@ -249,11 +251,11 @@ jobs:
               const marker = "<!-- coverage-docs-report -->";
               const mainLine = process.env.MAIN_AVAILABLE === "true"
                 ? `Main: ${process.env.MAIN_DOCS_PCT}% documented, ${process.env.MAIN_EXAMPLES_PCT}% with examples (${process.env.MAIN_EXAMPLES}/${process.env.MAIN_DOCS}/${process.env.MAIN_TOTAL})\nDelta: docs ${process.env.DELTA_DOCS_PP} pp, examples ${process.env.DELTA_EXAMPLES_PP} pp`
-                : "Main baseline: unavailable (run main documentation coverage first)";
+                : "Main baseline: unavailable (run main RustDoc coverage first)";
 
               const body = [
                 marker,
-                "## Documentation Coverage",
+                "## RustDoc Coverage",
                 "",
                 `Report: ${process.env.REPORT_URL}`,
                 "",
@@ -315,7 +317,7 @@ jobs:
 
       - name: Save cache
         if: ${{ always() && steps.restore_cache.outputs.cache-hit != 'true' }}
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: |
             ~/.cargo/bin/
