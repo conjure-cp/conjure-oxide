@@ -12,7 +12,6 @@ use rustsat::{
     types::{Clause, Lit, TernaryVal},
 };
 
-use rustsat_minisat::core::Minisat;
 use thiserror::Error;
 
 use anyhow::{Result, anyhow};

@@ -16,7 +16,7 @@ use std::result::Result::Ok;
 use tracing_subscriber::filter::DynFilterFn;
 use ustr::Ustr;
 
-use rustsat_minisat::core::Minisat;
+use rustsat_kissat::Kissat;
 
 use crate::ast::pretty::pretty_vec;
 use crate::ast::{Atom, Expression, GroundDomain, Literal, Metadata, Name};
@@ -41,7 +41,7 @@ pub struct Sat {
     __non_constructable: private::Internal,
     model_inst: Option<SatInstance>,
     var_map: Option<HashMap<Name, Lit>>,
-    solver_inst: Minisat,
+    solver_inst: Kissat<'static>,
     decision_refs: Option<Vec<Name>>,
     dominance_expression: Option<Expression>,
     dominance_model_template: Option<ConjureModel>,
@@ -53,7 +53,7 @@ impl Default for Sat {
     fn default() -> Self {
         Sat {
             __non_constructable: private::Internal,
-            solver_inst: Minisat::default(),
+            solver_inst: Kissat::default(),
             var_map: None,
             model_inst: None,
             decision_refs: None,
@@ -166,7 +166,7 @@ impl Sat {
     fn add_dominance_constraints_for_solution(
         dominance_expression: Option<&Expression>,
         dominance_model_template: Option<&ConjureModel>,
-        solver: &mut Minisat,
+        solver: &mut Kissat<'static>,
         solution: &HashMap<Name, Literal>,
         var_map: &mut HashMap<Name, Lit>,
     ) -> Result<(), SolverError> {
@@ -255,7 +255,11 @@ impl Sat {
                     "Failed converting dominance CNF clause to SAT clause. clause={clause:?}; error={e}"
                 ))
             })? {
-                solver.add_clause(sat_clause);
+                solver.add_clause(sat_clause).map_err(|e| {
+                    SolverError::Runtime(format!(
+                        "Failed adding dominance clause to SAT solver: {e}"
+                    ))
+                })?;
             }
         }
 
@@ -282,7 +286,11 @@ impl SolverAdaptor for Sat {
             .ok_or_else(|| SolverError::Runtime("Model instance is missing".to_string()))?
             .into_cnf();
 
-        (*(solver)).add_cnf(cnf.0);
+        solver.add_cnf(cnf.0).map_err(|e| {
+            SolverError::Runtime(format!(
+                "Failed adding CNF to SAT solver before solve: {e}"
+            ))
+        })?;
 
         let mut has_sol = false;
         loop {
@@ -390,7 +398,11 @@ impl SolverAdaptor for Sat {
             for lit_i in blocking_vec {
                 blocking_cl.add(lit_i);
             }
-            solver.add_clause(blocking_cl);
+            solver.add_clause(blocking_cl).map_err(|e| {
+                SolverError::Runtime(format!(
+                    "Failed adding blocking clause to SAT solver: {e}"
+                ))
+            })?;
         }
     }
 
