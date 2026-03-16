@@ -422,12 +422,7 @@ pub fn log_multiply(
         moo_y_bits.as_ref().clone().unwrap_list().unwrap(),
     );
 
-    let mut result = cnf_shift_add_multiply(
-        &x_bits,
-        &y_bits,
-        clauses,
-        symbols,
-    );
+    let mut result = cnf_shift_add_multiply(&x_bits, &y_bits, clauses, symbols);
 
     result.truncate(bits);
 

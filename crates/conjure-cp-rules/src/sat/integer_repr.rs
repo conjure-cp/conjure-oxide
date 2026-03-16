@@ -351,7 +351,6 @@ pub fn int_to_log(value: i32) -> Expr {
     )
 }
 
-
 /// Minimizes the length of a log integer by removing redundant bits
 pub fn minimize_bits(value: &[Expr]) -> Vec<Expr> {
     let mut result = value.to_owned();
