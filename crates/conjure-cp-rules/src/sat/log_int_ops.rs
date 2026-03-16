@@ -1,6 +1,5 @@
 use conjure_cp::ast::Expression as Expr;
 use conjure_cp::ast::{SATIntEncoding, SymbolTable};
-use conjure_cp::rule_engine::ApplicationError;
 use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
 };
@@ -12,7 +11,7 @@ use conjure_cp::into_matrix_expr;
 
 use itertools::Itertools;
 
-use crate::sat::integer_repr::{int_to_log, minimize_bits};
+use crate::sat::integer_repr::int_to_log;
 
 use super::boolean::{
     tseytin_and, tseytin_iff, tseytin_imply, tseytin_mux, tseytin_not, tseytin_or, tseytin_xor,

@@ -351,17 +351,6 @@ pub fn int_to_log(value: i32) -> Expr {
     )
 }
 
-/// Minimizes the length of a log integer by removing redundant bits
-pub fn minimize_bits(value: &[Expr]) -> Vec<Expr> {
-    let mut result = value.to_owned();
-
-    while result.len() >= 2 && result[result.len() - 1] == result[result.len() - 2] {
-        result.pop();
-    }
-
-    result
-}
-
 /// Determine the number of bits required to encode an i32 in 2s complement
 pub fn bit_magnitude(x: i32) -> usize {
     if x >= 0 {
