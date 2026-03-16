@@ -351,6 +351,8 @@ pub fn int_to_log(value: i32) -> Expr {
     )
 }
 
+
+/// Minimizes the length of a log integer by removing redundant bits
 pub fn minimize_bits(value: &[Expr]) -> Vec<Expr> {
     let mut result = value.to_owned();
 
@@ -376,6 +378,7 @@ pub fn bit_magnitude(x: i32) -> usize {
 pub fn match_bits_length(a: Vec<Expr>, b: Vec<Expr>) -> (Vec<Expr>, Vec<Expr>) {
     let len_a = a.len();
     let len_b = b.len();
+    println!("a:{}, b:{}", len_a, len_b);
 
     if len_a < len_b {
         let last_a = a.last().cloned().unwrap();
@@ -388,6 +391,7 @@ pub fn match_bits_length(a: Vec<Expr>, b: Vec<Expr>) -> (Vec<Expr>, Vec<Expr>) {
         b_extended.resize(len_a, last_b);
         (a, b_extended)
     } else {
+        println!("all good");
         (a, b)
     }
 }

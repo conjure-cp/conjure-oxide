@@ -338,7 +338,7 @@ fn tseytin_add_two_power(
     result
 }
 
-/// This function multiplies two binary values using the shift-add multiplication algorithm.
+/// This function multiplies two binary values using the shift-add multiplication algorithm. It expects `x` and `y` to have the same length.
 fn cnf_shift_add_multiply(
     x: &Vec<Expr>,
     y: &Vec<Expr>,
@@ -347,29 +347,30 @@ fn cnf_shift_add_multiply(
 ) -> Vec<Expr> {
     let mut x = x.to_owned();
     let mut y = y.to_owned();
-    let bits = y.len();
+    assert_eq!(
+        x.len(),
+        y.len(),
+        "Input vectors 'x' and 'y' must have the same length"
+    );
 
     //TODO Optimizing for constants
     //TODO Optimize addition for i left shifted values - skip first i bits
 
-    // extend sign bits of operands to 2*`bits`
-    y.extend(std::iter::repeat_n(y[bits - 1].clone(), bits));
+    // Account for the negation of x having more bits than x
+    let neg_x = tseytin_negate(&x, x.len(), clauses, symbols);
+    let bits: usize = neg_x.len();
+    x.resize(bits, x.last().unwrap().clone());
+
+    let mut neg_y = tseytin_negate(&y, bits, clauses, symbols);
+
+    // extend sign bits of y to 2*`bits`
+    y.resize(2 * bits, y.last().unwrap().clone());
+    neg_y.resize(2 * bits, neg_y.last().unwrap().clone());
 
     let x_sign = x[x.len() - 1].clone();
-    x = tseytin_select_array(
-        x_sign.clone(),
-        &x,
-        &tseytin_negate(&x, x.len(), clauses, symbols),
-        clauses,
-        symbols,
-    ); // x is always +
-    y = tseytin_select_array(
-        x_sign,
-        &y,
-        &tseytin_negate(&y, y.len(), clauses, symbols),
-        clauses,
-        symbols,
-    );
+
+    x = tseytin_select_array(x_sign.clone(), &x, &neg_x, clauses, symbols); // x is always +
+    y = tseytin_select_array(x_sign, &y, &neg_y, clauses, symbols);
 
     let mut s: Vec<Expr> = vec![];
 
@@ -388,6 +389,7 @@ fn cnf_shift_add_multiply(
         y[0] = false.into();
 
         sum = cnf_add(&s, &y, clauses, symbols);
+        (s, sum) = match_bits_length(s, sum);
 
         s = tseytin_select_array(item.clone(), &s, &sum, clauses, symbols);
     }
@@ -402,11 +404,11 @@ pub fn log_multiply(
     symbols: &mut SymbolTable,
 ) -> Expr {
     eprintln!("{} {}", x, y);
-    let Expr::SATInt(_, SATIntEncoding::Log, x_bits, (xmin, xmax)) = x else {
+    let Expr::SATInt(_, SATIntEncoding::Log, moo_x_bits, (xmin, xmax)) = x else {
         panic!("Log int should always be used here");
     };
 
-    let Expr::SATInt(_, SATIntEncoding::Log, y_bits, (ymin, ymax)) = y else {
+    let Expr::SATInt(_, SATIntEncoding::Log, moo_y_bits, (ymin, ymax)) = y else {
         panic!("Log int should always be used here");
     };
     let binding = [xmin * ymin, xmin * ymax, xmax * ymin, xmax * ymax];
@@ -415,9 +417,14 @@ pub fn log_multiply(
     let max = *candidates.max().unwrap();
     let bits = bit_magnitude(min).max(bit_magnitude(max));
 
+    let (x_bits, y_bits) = match_bits_length(
+        moo_x_bits.as_ref().clone().unwrap_list().unwrap(),
+        moo_y_bits.as_ref().clone().unwrap_list().unwrap(),
+    );
+
     let mut result = cnf_shift_add_multiply(
-        &x_bits.as_ref().clone().unwrap_list().unwrap(),
-        &y_bits.as_ref().clone().unwrap_list().unwrap(),
+        &x_bits,
+        &y_bits,
         clauses,
         symbols,
     );
@@ -547,9 +554,8 @@ pub fn cnf_add(
     minimize_bits(&output)
 }
 
-
 /// This function calculates the range of the product of multiple integers.
-/// E.g. 
+/// E.g.
 /// a : [2, 5], b : [-1, 2], c : [-10, -6], d : [0, 3]
 /// a * b * c *d : [-300, 150]
 fn product_of_ranges(ranges: Vec<&(i32, i32)>) -> (i32, i32) {
@@ -608,7 +614,7 @@ fn cnf_int_product(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         .reduce(|lhs, rhs| {
             // Make both bit vectors the same length
             let (lhs_bits, rhs_bits) = match_bits_length(lhs.0.clone(), rhs.0.clone());
-
+            println!("lsh:{}, rhs:{}", lhs_bits.len(), rhs_bits.len());
             // Multiply operands
             let mut values =
                 cnf_shift_add_multiply(&lhs_bits, &rhs_bits, &mut new_clauses, &mut new_symbols);
@@ -764,7 +770,6 @@ fn cnf_int_min(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         new_symbols,
     ))
 }
-
 
 /// General function for getting the min or max of two log integers.
 fn tseytin_binary_min_max(
@@ -1068,13 +1073,7 @@ fn tseytin_divmod(
 
     let sign_bit = tseytin_xor(numer_sign.clone(), denom_sign.clone(), clauses, symbols);
 
-    let abs_numer = tseytin_select_array(
-        numer_sign,
-        numer_bits,
-        &minus_numer,
-        clauses,
-        symbols,
-    );
+    let abs_numer = tseytin_select_array(numer_sign, numer_bits, &minus_numer, clauses, symbols);
     let abs_denom = tseytin_select_array(
         denom_sign.clone(),
         denom_bits,
