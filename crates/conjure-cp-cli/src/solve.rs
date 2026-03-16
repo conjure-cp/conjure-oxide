@@ -1,6 +1,5 @@
 //! conjure_oxide solve sub-command
 #![allow(clippy::unwrap_used)]
-#[cfg(feature = "smt")]
 use std::time::Duration;
 use std::{
     fs::File,
@@ -192,7 +191,6 @@ pub(crate) fn init_context(
 
 pub(crate) fn init_solver(global_args: &GlobalArgs) -> Solver {
     let family = global_args.solver;
-    #[cfg(feature = "smt")]
     let timeout_ms = global_args
         .solver_timeout
         .map(|dur| Duration::from(dur).as_millis())
@@ -201,7 +199,6 @@ pub(crate) fn init_solver(global_args: &GlobalArgs) -> Solver {
     match family {
         SolverFamily::Minion => Solver::new(Minion::default()),
         SolverFamily::Sat(_) => Solver::new(Sat::default()),
-        #[cfg(feature = "smt")]
         SolverFamily::Smt(theory_cfg) => Solver::new(Smt::new(timeout_ms, theory_cfg)),
     }
 }
