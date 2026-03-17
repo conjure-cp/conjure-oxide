@@ -1,0 +1,160 @@
+Model before rewriting:
+
+find a: bool
+find b: bool
+find c: bool
+
+such that
+
+or([or([a,b;int(1..2)]),false;int(1..2)]),
+or([allDiff([1,2,3;int(1..3)]),true;int(1..2)]),
+and([c,true;int(1..2)])
+
+--
+
+1, 
+   ~~> literal_cnf_int ([("SAT_Log", 9500)])
+SATInt(Log, [true,false;int(1..)] [1, 1])
+
+--
+
+2, 
+   ~~> literal_cnf_int ([("SAT_Log", 9500)])
+SATInt(Log, [false,true,false;int(1..)] [2, 2])
+
+--
+
+3, 
+   ~~> literal_cnf_int ([("SAT_Log", 9500)])
+SATInt(Log, [true,true,false;int(1..)] [3, 3])
+
+--
+
+or([or([a,b;int(1..2)]),false;int(1..2)]),
+or([allDiff([SATInt(Log, [true,false;int(1..)] [1, 1]),SATInt(Log, [false,true,false;int(1..)] [2, 2]),SATInt(Log, [true,true,false;int(1..)] [3, 3]);int(1..3)]),true;int(1..2)]),
+and([c,true;int(1..2)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+or([or([a,b;int(1..2)]),false;int(1..2)]),
+or([allDiff([SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1]),SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2]),SATInt(Log, Matrix([Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3]);int(1..3)]),true;int(1..2)]),
+and([c,true;int(1..2)])
+
+--
+
+or([or([a,b;int(1..2)]),false;int(1..2)]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+or([a,b,false;int(1..2)])
+
+--
+
+or([a,b,false;int(1..2)]), 
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__0
+new variables:
+  find __0: bool
+new clauses:
+  (¬a \/ __0)
+  (¬b \/ __0)
+  (¬__0 \/ a \/ b)
+
+--
+
+and([c,true;int(1..2)]), 
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__1
+new variables:
+  find __1: bool
+new clauses:
+  (¬__1 \/ c)
+  (__1 \/ ¬c)
+
+--
+
+__0,
+or([allDiff([SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1]),SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2]),SATInt(Log, Matrix([Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3]);int(1..3)]),true;int(1..2)]),
+__1, 
+   ~~> remove_single_atom ([("SAT", 8400)])
+or([allDiff([SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1]),SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2]),SATInt(Log, Matrix([Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3]);int(1..3)]),true;int(1..2)]),
+__1
+new clauses:
+  (__0)
+
+--
+
+or([allDiff([SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1]),SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2]),SATInt(Log, Matrix([Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3]);int(1..3)]),true;int(1..2)]),
+__1, 
+   ~~> remove_single_atom ([("SAT", 8400)])
+or([allDiff([SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1]),SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2]),SATInt(Log, Matrix([Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3]);int(1..3)]),true;int(1..2)])
+new clauses:
+  (__1)
+
+--
+
+allDiff([SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1]),SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2]),SATInt(Log, Matrix([Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3]);int(1..3)]), 
+   ~~> sat_log_alldiff ([("SAT", 4600)])
+__4
+new variables:
+  find __2: bool
+  find __3: bool
+  find __4: bool
+new clauses:
+  (__2)
+  (¬__3 \/ __2)
+  (__3 \/ ¬__2)
+  (¬__4 \/ __3)
+  (__4 \/ ¬__3)
+
+--
+
+or([__4,true;int(1..2)]), 
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__5
+new variables:
+  find __5: bool
+new clauses:
+  (¬__4 \/ __5)
+  (__5)
+
+--
+
+__5, 
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new clauses:
+  (__5)
+
+--
+
+Final model:
+
+find a: bool
+find b: bool
+find c: bool
+find __0: bool
+find __1: bool
+find __2: bool
+find __3: bool
+find __4: bool
+find __5: bool
+
+such that
+
+true
+
+clauses:
+
+(¬a \/ __0),
+(¬b \/ __0),
+(¬__0 \/ a \/ b),
+(¬__1 \/ c),
+(__1 \/ ¬c),
+(__0),
+(__1),
+(__2),
+(¬__3 \/ __2),
+(__3 \/ ¬__2),
+(¬__4 \/ __3),
+(__4 \/ ¬__3),
+(¬__4 \/ __5),
+(__5),
+(__5)
+
