@@ -10,6 +10,7 @@ use ustr::Ustr;
 use polyquine::Quine;
 use uniplate::{Biplate, Uniplate};
 
+use crate::ast::FuncAttr;
 use crate::bug;
 
 use super::abstract_comprehension::AbstractComprehension;
@@ -930,14 +931,14 @@ impl Expression {
                 // Gets the size imposed by the partiality and jectivity attributes
                 let partiality = attrs.resolve()?.partiality;
                 let jectivity = attrs.resolve()?.jectivity;
-                let domain_length = domain.length();
+                let domain_length = domain.length_signed();
                 // We can only infer if the domain is ground and the length is known
                 let attr_size = match domain_length {
                     Ok(len) => match partiality {
                         PartialityAttr::Total => Some(Range::Single(len)),
                         PartialityAttr::Partial => {
                             // When partial we also need the codomain to be ground and known
-                            let codomain_length = codomain.length();
+                            let codomain_length = codomain.length_signed();
                             match codomain_length {
                                 Ok(co_len) => match jectivity {
                                     JectivityAttr::Bijective | JectivityAttr::Surjective => {
@@ -993,14 +994,14 @@ impl Expression {
                 let attr_size = match jectivity {
                     // Bijective and surjective functions must have every element in the codomain mapped to
                     JectivityAttr::Bijective | JectivityAttr::Surjective => {
-                        let codomain_length = codomain.length();
+                        let codomain_length = codomain.length_signed();
                         match codomain_length {
                             Ok(co_len) => Some(Range::Single(co_len)),
                             Err(_) => None,
                         }
                     }
                     JectivityAttr::Injective => {
-                        let domain_length = domain.length();
+                        let domain_length = domain.length_signed();
                         match domain_length {
                             Ok(len) => match partiality {
                                 // When its injective we can guarantee 1 to 1, so the domain length is a single bound
@@ -1011,7 +1012,7 @@ impl Expression {
                         }
                     }
                     JectivityAttr::None => {
-                        let domain_length = domain.length();
+                        let domain_length = domain.length_signed();
                         match domain_length {
                             // This is the general case, where we know there cannot be more codomain elements mapped to that domain elements
                             Ok(len) => Some(Range::Bounded(0, len)),
@@ -1034,7 +1035,7 @@ impl Expression {
                     }
                     None => size_size,
                 };
-                Some(Domain::set(SetAttr::new(size_size), codomain))
+                Some(Domain::set(SetAttr::new(size), codomain))
             }
             Expression::Image(_, function, _) => get_function_codomain(function),
             Expression::ImageSet(_, function, _) => {
@@ -1062,7 +1063,7 @@ impl Expression {
                     JectivityAttr::Bijective => Some(Range::Single(1)),
                     JectivityAttr::Injective => Some(Range::Bounded(0, 1)),
                     JectivityAttr::Surjective => {
-                        let domain_length = domain.length();
+                        let domain_length = domain.length_signed();
                         match domain_length {
                             // We know the element is mapped but not how many times
                             Ok(len) => Some(Range::Bounded(1, len)),
@@ -1072,24 +1073,29 @@ impl Expression {
                     JectivityAttr::None => Some(Range::UnboundedR(0)),
                 };
 
-                let unsafe_range = Range::minimal(&[size_size, attr_size]);
-                let size = match unsafe_range {
-                    Ok(range) => range,
-                    Err(_) => {
-                        return Some(Domain::empty(ReturnType::Set(Box::new(
-                            domain.return_type(),
-                        ))));
+                let size = match attr_size {
+                    Some(attr_size) => {
+                        let unsafe_range = Range::minimal(&[size_size, attr_size]);
+                        match unsafe_range {
+                            Ok(range) => range,
+                            Err(_) => {
+                                return Some(Domain::empty(ReturnType::Set(Box::new(
+                                    domain.return_type(),
+                                ))));
+                            }
+                        }
                     }
+                    None => size_size,
                 };
-
                 Some(Domain::set(SetAttr::new(size), domain))
             }
             Expression::Restrict(_, function, new_domain) => {
                 let (attrs, _, codom) = function.domain_of()?.as_function()?;
                 let new_dom = new_domain.domain_of()?;
-                new_size = match new_dom.length() {
+                let attr_size = attrs.resolve()?.size;
+                let new_size = match new_dom.length_signed() {
                     // Combines current size attributes with length of new domain
-                    Ok(len) => match Range::minimal(&[attrs.size, Range::Bounded(0, len)]) {
+                    Ok(len) => match Range::minimal(&[attr_size, Range::Bounded(0, len)]) {
                         Ok(size) => size,
                         Err(_) => {
                             // Means the restriction is impossible
@@ -1099,10 +1105,16 @@ impl Expression {
                             )));
                         }
                     },
-                    Err(_) => attrs.size,
+                    Err(_) => attr_size,
                 };
-                attrs.size = new_size;
-                Some(Domain::function(attrs, new_dom, codom))
+                let jectivity = attrs.jectivity.clone();
+                let partiality = attrs.partiality;
+                let new_attrs = FuncAttr {
+                    size: new_size,
+                    jectivity,
+                    partiality,
+                };
+                Some(Domain::function(new_attrs, new_dom, codom))
             }
             Expression::Inverse(..) => Some(Domain::bool()),
             Expression::LexLt(..) => Some(Domain::bool()),
