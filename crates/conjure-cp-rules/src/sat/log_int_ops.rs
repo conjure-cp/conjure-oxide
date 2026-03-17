@@ -117,7 +117,12 @@ fn cnf_int_neq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let mut new_symbols = symbols.clone();
     let mut new_clauses = vec![];
 
-    let result = log_neq(lhs.as_ref(), rhs.as_ref(), &mut new_clauses, &mut new_symbols);
+    let result = log_neq(
+        lhs.as_ref(),
+        rhs.as_ref(),
+        &mut new_clauses,
+        &mut new_symbols,
+    );
 
     Ok(Reduction::cnf(result, new_clauses, new_symbols))
 }
@@ -1221,7 +1226,12 @@ fn sat_log_alldiff(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::AllDiff(_, moo_operands) = expr else {
         return Err(RuleNotApplicable);
     };
-    let operands = moo_operands.as_ref().clone().unwrap_matrix_unchecked().unwrap().0;
+    let operands = moo_operands
+        .as_ref()
+        .clone()
+        .unwrap_matrix_unchecked()
+        .unwrap()
+        .0;
 
     validate_log_int_operands(operands.clone(), None)?;
 
@@ -1243,7 +1253,6 @@ fn sat_log_alldiff(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
     Ok(Reduction::cnf(cumul, new_clauses, new_symbols))
 }
-
 
 /// Compare the equality of two log SATInts
 pub fn log_neq(
