@@ -1313,3 +1313,24 @@ pub fn log_neq(
 
     cumul
 }
+
+/// Converts toint of a boolean to a log SATInt
+///
+/// ```text
+/// toInt(bool) ~> SATInt
+///
+/// ```
+#[register_rule(("SAT", 4600))]
+fn sat_log_toint(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+let Expr::ToInt(_, moo_bool) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let mut new_symbols = symbols.clone();
+    let mut new_clauses = vec![];
+
+    let result = log_select(&moo_bool.as_ref(), &int_to_log(0), &int_to_log(1), &mut new_clauses, &mut new_symbols);
+
+
+    Ok(Reduction::cnf(result, new_clauses, new_symbols))
+}
