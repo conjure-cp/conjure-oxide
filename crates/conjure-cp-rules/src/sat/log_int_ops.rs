@@ -114,34 +114,10 @@ fn cnf_int_neq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
     validate_log_int_operands(vec![lhs.as_ref().clone(), rhs.as_ref().clone()], None)?;
 
-    // let binding =
-    //     validate_log_int_operands(vec![lhs.as_ref().clone(), rhs.as_ref().clone()], None)?;
-    // let [lhs_bits, rhs_bits] = binding.as_slice() else {
-    //     return Err(RuleNotApplicable);
-    // };
-
-    // let bit_count = lhs_bits.len();
-
-    // let mut output = false.into();
     let mut new_symbols = symbols.clone();
     let mut new_clauses = vec![];
 
     let result = log_neq(lhs.as_ref(), rhs.as_ref(), &mut new_clauses, &mut new_symbols);
-    // let mut comparison;
-
-    // for i in 0..bit_count {
-    //     comparison = tseytin_xor(
-    //         lhs_bits[i].clone(),
-    //         rhs_bits[i].clone(),
-    //         &mut new_clauses,
-    //         &mut new_symbols,
-    //     );
-    //     output = tseytin_or(
-    //         &vec![comparison, output],
-    //         &mut new_clauses,
-    //         &mut new_symbols,
-    //     );
-    // }
 
     Ok(Reduction::cnf(result, new_clauses, new_symbols))
 }
