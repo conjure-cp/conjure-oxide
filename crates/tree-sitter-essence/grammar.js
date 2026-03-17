@@ -335,7 +335,9 @@ module.exports = grammar ({
       field("index_or_slice", $.index_or_slice),
       field("set_literal", $.set_literal),
       field("set_operation", $.set_operation),
-      field("flatten", $.flatten)
+      field("flatten", $.flatten),
+      field("table", $.table),
+      field("negative_table", $.negative_table)
     )),
 
     sub_atom_expr: $ => seq("(", field("expression", $.atom), ")"),
@@ -440,6 +442,24 @@ module.exports = grammar ({
       "(",
       optional(field("depth", seq($.integer, ","))),
       field("expression", $.atom),
+      ")"
+    ),
+
+    table: $ => seq(
+      "table",
+      "(",
+      field("variables", $.matrix),
+      ",",
+      field("rows", $.matrix),
+      ")"
+    ),
+
+    negative_table: $ => seq(
+      "negativeTable",
+      "(",
+      field("variables", $.matrix),
+      ",",
+      field("rows", $.matrix),
       ")"
     ),
 

@@ -6,6 +6,7 @@ EXTRA_CARGO_CHECK_FLAGS ?= -q
 # Use Cargo.lock to ensure local builds match CI dependency versions.
 # Override with `CARGO_LOCKED=` if you explicitly want to update the lockfile.
 CARGO_LOCKED ?= --locked
+CARGO_TARGET_DIR ?= target
 
 .PHONY: check
 ## Runs all hygiene checks. These are the same checks that occur in CI for PRs.
@@ -24,12 +25,16 @@ check-unused-deps: .installed-cargo-extensions.checkpoint
 build:
 	cargo build $(CARGO_LOCKED) --bin conjure-oxide --release
 
+.PHONY: install
+## Installs conjure-oxide to ~/.cargo/bin
+install: build
+	mkdir -p $$HOME/.cargo/bin
+	install -m 755 $(CARGO_TARGET_DIR)/release/conjure-oxide $$HOME/.cargo/bin/conjure-oxide
+
 .PHONY: test
 ## Runs all tests
-test:
-	# we need to build first, so the conjure-oxide executable is available during testing as it is needed by the custom tests.
-	cargo build $(CARGO_LOCKED) --bin conjure-oxide --release 
-	cargo test $(CARGO_LOCKED) --workspace
+test: install
+	PATH="$$HOME/.cargo/bin:$$PATH" cargo test $(CARGO_LOCKED) --workspace
 
 .PHONY: test-coverage
 ## Runs all tests and produces a coverage report
@@ -38,10 +43,9 @@ test-coverage:
 
 .PHONY: test-accept
 ## Runs all tests in accept mode, then one more time in normal mode
-test-accept:
-	cargo build $(CARGO_LOCKED) --bin conjure-oxide --release
-	ACCEPT=true cargo test $(CARGO_LOCKED) --workspace
-	cargo test $(CARGO_LOCKED) --workspace
+test-accept: install
+	PATH="$$HOME/.cargo/bin:$$PATH" ACCEPT=true cargo test $(CARGO_LOCKED) --workspace
+	PATH="$$HOME/.cargo/bin:$$PATH" cargo test $(CARGO_LOCKED) --workspace
 
 .PHONY: fix
 ## Tries to auto-fix hygiene issues reported by `make check`. 

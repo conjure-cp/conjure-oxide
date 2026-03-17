@@ -1,6 +1,6 @@
 # Pull Requests
 
-> [!TIP] 
+> [!TIP]
 > We Use [Github Flow](https://guides.github.com/introduction/flow/index.html), so All Code Changes Happen Through Pull Requests
 
 Our development process is as follows:
@@ -8,12 +8,12 @@ Our development process is as follows:
 1. Make a fork.
 2. Create a branch on your fork, do not develop on main.
 3. Create a pull request as soon as you want others to be able to see your progress, comment, and/or help:
-   - Err on the side of creating the pull request too early instead of too late. 
+   - Err on the side of creating the pull request too early instead of too late.
      Having an active PR makes your work visible, allows others to help you and give feedback. Request reviews from people who have worked on similar parts of the project.
    - Keep the PR in draft status until you think it's ready to be merged.
 4. Assign PR to reviewer(s) when it's ready to be merged.
    - Only Oz (@ozgurakgun) can merge PRs, so add him as a reviewer when you want your PR to be merged.
-   - During reviewing, avoid force-pushing to the pull request, as this makes reviewing more difficult. 
+   - During reviewing, avoid force-pushing to the pull request, as this makes reviewing more difficult.
      Details on how to update a PR are given below.
 5. Once Oz has approved the PR:
    - Update your PR to main by rebase or merge. This can be done through the Github UI or locally.
@@ -26,14 +26,14 @@ Our development process is as follows:
 
 See: [[Documentation Style]] and [[Rust Coding Style]] (TODO)
 
-# Commit and PR Titles 
+# Commit and PR Titles
 
 We use [Semantic PR / Commit messages](https://gist.github.com/joshbuchea/6f47e86d2510bce28f8e7f42ae84c716).
 
 Format: `<type>(<scope>): <subject>`
 (`<scope>` is optional)
 
-## Example 
+## Example
 
 ```
 feat(parser): add letting statements
@@ -46,7 +46,7 @@ feat(parser): add letting statements
 +-------> Type: chore, docs, feat, fix, refactor, style, or test.
 ```
 
-## Types 
+## Types
 
 - `feat`: new features for the end user
 - `chore`: changes to build scripts, CI, dependency updates; does not affect production code
@@ -59,6 +59,7 @@ feat(parser): add letting statements
 # PR Messages
 
 Your pull request should contain a brief description explaining:
+
 - What changes you are making
 - Why they are necessary
 - Any significant changes that may break other people's work
@@ -89,8 +90,9 @@ git push --force
 We have CI checks to block accidental merging of `fixup!` commits.
 
 See:
-- https://rietta.com/blog/git-rebase-autosquash-code-reviews/
--  https://git-scm.com/docs/git-commit#Documentation/git-commit.txt---fixupamendrewordltcommitgt
+
+- <https://rietta.com/blog/git-rebase-autosquash-code-reviews/>
+- <https://git-scm.com/docs/git-commit#Documentation/git-commit.txt---fixupamendrewordltcommitgt>
 
 # Before your PR is merged
 
@@ -101,6 +103,7 @@ To do this:
 1. Make sure that your `main` branch is synced to the main repo
 2. Switch to the branch you're making the PR from
 3. Do:
+
    ```sh
    git rebase main
    git push --force
