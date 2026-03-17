@@ -1228,20 +1228,20 @@ fn sat_log_alldiff(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let mut new_symbols = symbols.clone();
     let mut new_clauses = vec![];
 
-    let mut cum = true.into();
+    let mut cumul = true.into();
 
     // go through every possible pairwise combination and check for inequality
     for (i, a) in operands.iter().enumerate() {
         for b in operands.iter().skip(i + 1) {
-            cum = tseytin_and(
-                &vec![cum, log_neq(a, b, &mut new_clauses, &mut new_symbols)],
+            cumul = tseytin_and(
+                &vec![cumul, log_neq(a, b, &mut new_clauses, &mut new_symbols)],
                 &mut new_clauses,
                 &mut new_symbols,
             );
         }
     }
 
-    Ok(Reduction::cnf(cum, new_clauses, new_symbols))
+    Ok(Reduction::cnf(cumul, new_clauses, new_symbols))
 }
 
 
@@ -1270,11 +1270,11 @@ pub fn log_neq(
 
     let min_len = x_bits.len().min(y_bits.len());
 
-    let mut cum = tseytin_xor(x_bits[0].clone(), y_bits[0].clone(), clauses, symbols);
+    let mut cumul = tseytin_xor(x_bits[0].clone(), y_bits[0].clone(), clauses, symbols);
     for i in 1..min_len {
-        cum = tseytin_or(
+        cumul = tseytin_or(
             &vec![
-                cum,
+                cumul,
                 tseytin_xor(x_bits[i].clone(), y_bits[i].clone(), clauses, symbols),
             ],
             clauses,
@@ -1285,8 +1285,8 @@ pub fn log_neq(
     if x_bits.len() < y_bits.len() {
         let sign = x_bits.last().unwrap();
         for bit in y_bits.into_iter().skip(min_len) {
-            cum = tseytin_or(
-                &vec![cum, tseytin_xor(sign.clone(), bit, clauses, symbols)],
+            cumul = tseytin_or(
+                &vec![cumul, tseytin_xor(sign.clone(), bit, clauses, symbols)],
                 clauses,
                 symbols,
             );
@@ -1294,13 +1294,13 @@ pub fn log_neq(
     } else if x_bits.len() > y_bits.len() {
         let sign = y_bits.last().unwrap();
         for bit in x_bits.into_iter().skip(min_len) {
-            cum = tseytin_or(
-                &vec![cum, tseytin_xor(sign.clone(), bit, clauses, symbols)],
+            cumul = tseytin_or(
+                &vec![cumul, tseytin_xor(sign.clone(), bit, clauses, symbols)],
                 clauses,
                 symbols,
             );
         }
     }
 
-    return cum;
+    cumul
 }
