@@ -20,7 +20,7 @@ use super::{
 #[biplate(to=Name)]
 pub enum ComprehensionQualifier {
     Generator { name: Name, domain: DomainPtr },
-    ExpressionGenerator { name: Name, expr: Expression},
+    ExpressionGenerator { decl: DeclarationPtr, expr: Moo<Expression>},
     Condition(Expression),
 }
 
