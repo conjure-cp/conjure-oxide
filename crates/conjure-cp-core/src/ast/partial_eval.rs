@@ -29,6 +29,7 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
         Expr::UnsafeIndex(_, _, _) => Err(RuleNotApplicable),
         Expr::UnsafeSlice(_, _, _) => Err(RuleNotApplicable),
         Expr::Table(_, _, _) => Err(RuleNotApplicable),
+        Expr::NegativeTable(_, _, _) => Err(RuleNotApplicable),
         Expr::SafeIndex(_, subject, indices) => {
             // partially evaluate matrix literals indexed by a constant.
 
