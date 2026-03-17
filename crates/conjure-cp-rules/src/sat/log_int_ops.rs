@@ -1,7 +1,7 @@
 use conjure_cp::ast::Expression as Expr;
 use conjure_cp::ast::{SATIntEncoding, SymbolTable};
 use conjure_cp::rule_engine::{
-    ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
+    register_rule, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
 };
 
 use conjure_cp::ast::AbstractLiteral::Matrix;
@@ -342,13 +342,8 @@ pub fn log_negate(x: &Expr, clauses: &mut Vec<CnfClause>, symbols: &mut SymbolTa
 
     // add one
     let mut product = inv_x[0].clone();
-    for item in inv_x.iter().skip(1)  {
-        result.push(tseytin_xor(
-            product.clone(),
-            item.clone(),
-            clauses,
-            symbols,
-        ));
+    for item in inv_x.iter().skip(1) {
+        result.push(tseytin_xor(product.clone(), item.clone(), clauses, symbols));
         product = tseytin_and(&vec![product, item.clone()], clauses, symbols);
     }
     result.push(tseytin_and(
