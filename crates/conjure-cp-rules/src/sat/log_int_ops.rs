@@ -1,7 +1,7 @@
 use conjure_cp::ast::Expression as Expr;
 use conjure_cp::ast::{SATIntEncoding, SymbolTable};
 use conjure_cp::rule_engine::{
-    register_rule, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
+    ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
 };
 
 use conjure_cp::ast::AbstractLiteral::Matrix;
@@ -112,34 +112,38 @@ fn cnf_int_neq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let binding =
-        validate_log_int_operands(vec![lhs.as_ref().clone(), rhs.as_ref().clone()], None)?;
-    let [lhs_bits, rhs_bits] = binding.as_slice() else {
-        return Err(RuleNotApplicable);
-    };
+    validate_log_int_operands(vec![lhs.as_ref().clone(), rhs.as_ref().clone()], None)?;
 
-    let bit_count = lhs_bits.len();
+    // let binding =
+    //     validate_log_int_operands(vec![lhs.as_ref().clone(), rhs.as_ref().clone()], None)?;
+    // let [lhs_bits, rhs_bits] = binding.as_slice() else {
+    //     return Err(RuleNotApplicable);
+    // };
 
-    let mut output = false.into();
+    // let bit_count = lhs_bits.len();
+
+    // let mut output = false.into();
     let mut new_symbols = symbols.clone();
     let mut new_clauses = vec![];
-    let mut comparison;
 
-    for i in 0..bit_count {
-        comparison = tseytin_xor(
-            lhs_bits[i].clone(),
-            rhs_bits[i].clone(),
-            &mut new_clauses,
-            &mut new_symbols,
-        );
-        output = tseytin_or(
-            &vec![comparison, output],
-            &mut new_clauses,
-            &mut new_symbols,
-        );
-    }
+    let result = log_neq(lhs.as_ref(), rhs.as_ref(), &mut new_clauses, &mut new_symbols);
+    // let mut comparison;
 
-    Ok(Reduction::cnf(output, new_clauses, new_symbols))
+    // for i in 0..bit_count {
+    //     comparison = tseytin_xor(
+    //         lhs_bits[i].clone(),
+    //         rhs_bits[i].clone(),
+    //         &mut new_clauses,
+    //         &mut new_symbols,
+    //     );
+    //     output = tseytin_or(
+    //         &vec![comparison, output],
+    //         &mut new_clauses,
+    //         &mut new_symbols,
+    //     );
+    // }
+
+    Ok(Reduction::cnf(result, new_clauses, new_symbols))
 }
 
 // Creates a boolean expression for > or >=
@@ -1228,4 +1232,99 @@ fn cnf_int_safepow(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     result = log_minimize_bits(result);
 
     Ok(Reduction::cnf(result, new_clauses, new_symbols))
+}
+
+/// Converts allDiff of SATInts to a boolean
+///
+/// ```text
+/// allDiff(SATInt(a), SATInt(b), ...) ~> bool
+///
+/// ```
+#[register_rule(("SAT", 4600))]
+fn sat_log_alldiff(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    let Expr::AllDiff(_, moo_operands) = expr else {
+        return Err(RuleNotApplicable);
+    };
+    let operands = moo_operands.as_ref().clone().unwrap_matrix_unchecked().unwrap().0;
+
+    validate_log_int_operands(operands.clone(), None)?;
+
+    let mut new_symbols = symbols.clone();
+    let mut new_clauses = vec![];
+
+    let mut cum = true.into();
+
+    // go through every possible pairwise combination and check for inequality
+    for (i, a) in operands.iter().enumerate() {
+        for b in operands.iter().skip(i + 1) {
+            cum = tseytin_and(
+                &vec![cum, log_neq(a, b, &mut new_clauses, &mut new_symbols)],
+                &mut new_clauses,
+                &mut new_symbols,
+            );
+        }
+    }
+
+    Ok(Reduction::cnf(cum, new_clauses, new_symbols))
+}
+
+
+/// Compare the equality of two log SATInts
+pub fn log_neq(
+    x: &Expr,
+    y: &Expr,
+    clauses: &mut Vec<CnfClause>,
+    symbols: &mut SymbolTable,
+) -> Expr {
+    let Expr::SATInt(_, SATIntEncoding::Log, moo_x_bits, (xmin, xmax)) = x else {
+        panic!("Log int should always be used here");
+    };
+
+    let Expr::SATInt(_, SATIntEncoding::Log, moo_y_bits, (ymin, ymax)) = y else {
+        panic!("Log int should always be used here");
+    };
+
+    // if domains do not intersect then two integers cannot be equal
+    if xmax < ymin || ymax < xmin {
+        return true.into();
+    }
+
+    let x_bits = moo_x_bits.as_ref().clone().unwrap_list().unwrap();
+    let y_bits = moo_y_bits.as_ref().clone().unwrap_list().unwrap();
+
+    let min_len = x_bits.len().min(y_bits.len());
+
+    let mut cum = tseytin_xor(x_bits[0].clone(), y_bits[0].clone(), clauses, symbols);
+    for i in 1..min_len {
+        cum = tseytin_or(
+            &vec![
+                cum,
+                tseytin_xor(x_bits[i].clone(), y_bits[i].clone(), clauses, symbols),
+            ],
+            clauses,
+            symbols,
+        );
+    }
+
+    if x_bits.len() < y_bits.len() {
+        let sign = x_bits.last().unwrap();
+        for bit in y_bits.into_iter().skip(min_len) {
+            cum = tseytin_or(
+                &vec![cum, tseytin_xor(sign.clone(), bit, clauses, symbols)],
+                clauses,
+                symbols,
+            );
+        }
+    } else if x_bits.len() > y_bits.len() {
+        let sign = y_bits.last().unwrap();
+        for bit in x_bits.into_iter().skip(min_len) {
+            cum = tseytin_or(
+                &vec![cum, tseytin_xor(sign.clone(), bit, clauses, symbols)],
+                clauses,
+                symbols,
+            );
+        }
+    }
+
+    return cum;
 }

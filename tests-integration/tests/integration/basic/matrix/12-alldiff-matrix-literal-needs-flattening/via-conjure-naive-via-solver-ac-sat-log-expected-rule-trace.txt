@@ -1,0 +1,3562 @@
+Model before rewriting:
+
+find i: int(1..2)
+find j: int(1..3)
+
+such that
+
+allDiff([(product([j,2;int(1..2)]) - 1),2,3,UnsafeDiv(i, 2),6;int(1..5)])
+
+--
+
+j, 
+   ~~> integer_decision_representation_log ([("SAT_Log", 9500)])
+SATInt(Log, [j#sat_log_int_00,j#sat_log_int_01,j#sat_log_int_02;int(1..)] [1, 3])
+new variables:
+  find j#sat_log_int_00: bool
+  find j#sat_log_int_01: bool
+  find j#sat_log_int_02: bool
+new constraints:
+  or([and([(SATInt(Log, [j#sat_log_int_00,j#sat_log_int_01,j#sat_log_int_02;int(1..)] [1, 3]) >= 1),(SATInt(Log, [j#sat_log_int_00,j#sat_log_int_01,j#sat_log_int_02;int(1..)] [1, 3]) <= 3);int(1..)]);int(1..)])
+
+--
+
+2, 
+   ~~> literal_cnf_int ([("SAT_Log", 9500)])
+SATInt(Log, [false,true,false;int(1..)] [2, 2])
+
+--
+
+1, 
+   ~~> literal_cnf_int ([("SAT_Log", 9500)])
+SATInt(Log, [true,false;int(1..)] [1, 1])
+
+--
+
+2, 
+   ~~> literal_cnf_int ([("SAT_Log", 9500)])
+SATInt(Log, [false,true,false;int(1..)] [2, 2])
+
+--
+
+3, 
+   ~~> literal_cnf_int ([("SAT_Log", 9500)])
+SATInt(Log, [true,true,false;int(1..)] [3, 3])
+
+--
+
+i, 
+   ~~> integer_decision_representation_log ([("SAT_Log", 9500)])
+SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2])
+new variables:
+  find i#sat_log_int_00: bool
+  find i#sat_log_int_01: bool
+  find i#sat_log_int_02: bool
+new constraints:
+  or([and([(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]) >= 1),(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]) <= 2);int(1..)]);int(1..)])
+
+--
+
+2, 
+   ~~> literal_cnf_int ([("SAT_Log", 9500)])
+SATInt(Log, [false,true,false;int(1..)] [2, 2])
+
+--
+
+6, 
+   ~~> literal_cnf_int ([("SAT_Log", 9500)])
+SATInt(Log, [false,true,true,false;int(1..)] [6, 6])
+
+--
+
+1, 
+   ~~> literal_cnf_int ([("SAT_Log", 9500)])
+SATInt(Log, [true,false;int(1..)] [1, 1])
+
+--
+
+3, 
+   ~~> literal_cnf_int ([("SAT_Log", 9500)])
+SATInt(Log, [true,true,false;int(1..)] [3, 3])
+
+--
+
+1, 
+   ~~> literal_cnf_int ([("SAT_Log", 9500)])
+SATInt(Log, [true,false;int(1..)] [1, 1])
+
+--
+
+2, 
+   ~~> literal_cnf_int ([("SAT_Log", 9500)])
+SATInt(Log, [false,true,false;int(1..)] [2, 2])
+
+--
+
+allDiff([(product([SATInt(Log, [j#sat_log_int_00,j#sat_log_int_01,j#sat_log_int_02;int(1..)] [1, 3]),SATInt(Log, [false,true,false;int(1..)] [2, 2]);int(1..2)]) - SATInt(Log, [true,false;int(1..)] [1, 1])),SATInt(Log, [false,true,false;int(1..)] [2, 2]),SATInt(Log, [true,true,false;int(1..)] [3, 3]),UnsafeDiv(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]), SATInt(Log, [false,true,false;int(1..)] [2, 2])),SATInt(Log, [false,true,true,false;int(1..)] [6, 6]);int(1..5)]),
+or([and([(SATInt(Log, [j#sat_log_int_00,j#sat_log_int_01,j#sat_log_int_02;int(1..)] [1, 3]) >= SATInt(Log, [true,false;int(1..)] [1, 1])),(SATInt(Log, [j#sat_log_int_00,j#sat_log_int_01,j#sat_log_int_02;int(1..)] [1, 3]) <= SATInt(Log, [true,true,false;int(1..)] [3, 3]));int(1..)]);int(1..)]),
+or([and([(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]) >= SATInt(Log, [true,false;int(1..)] [1, 1])),(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]) <= SATInt(Log, [false,true,false;int(1..)] [2, 2]));int(1..)]);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+allDiff([(product([SATInt(Log, [j#sat_log_int_00,j#sat_log_int_01,j#sat_log_int_02;int(1..)] [1, 3]),SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2]);int(1..2)]) - SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2]),SATInt(Log, Matrix([Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3]),UnsafeDiv(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]), SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2])),SATInt(Log, Matrix([Bool(false), Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [6, 6]);int(1..5)]),
+or([and([(SATInt(Log, [j#sat_log_int_00,j#sat_log_int_01,j#sat_log_int_02;int(1..)] [1, 3]) >= SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),(SATInt(Log, [j#sat_log_int_00,j#sat_log_int_01,j#sat_log_int_02;int(1..)] [1, 3]) <= SATInt(Log, Matrix([Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3]));int(1..)]);int(1..)]),
+or([and([(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]) >= SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]) <= SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2]));int(1..)]);int(1..)])
+
+--
+
+product([SATInt(Log, [j#sat_log_int_00,j#sat_log_int_01,j#sat_log_int_02;int(1..)] [1, 3]),SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2]);int(1..2)]), 
+   ~~> cnf_int_product ([("SAT_Log", 9000)])
+SATInt(Log, [__91,__92,__93,__94,__95;int(1..)] [2, 6])
+new variables:
+  find __0: bool
+  find __1: bool
+  find __2: bool
+  find __3: bool
+  find __4: bool
+  find __5: bool
+  find __6: bool
+  find __7: bool
+  find __8: bool
+  find __9: bool
+  find __10: bool
+  find __11: bool
+  find __12: bool
+  find __13: bool
+  find __14: bool
+  find __15: bool
+  find __16: bool
+  find __17: bool
+  find __18: bool
+  find __19: bool
+  find __20: bool
+  find __21: bool
+  find __22: bool
+  find __23: bool
+  find __24: bool
+  find __25: bool
+  find __26: bool
+  find __27: bool
+  find __28: bool
+  find __29: bool
+  find __30: bool
+  find __31: bool
+  find __32: bool
+  find __33: bool
+  find __34: bool
+  find __35: bool
+  find __36: bool
+  find __37: bool
+  find __38: bool
+  find __39: bool
+  find __40: bool
+  find __41: bool
+  find __42: bool
+  find __43: bool
+  find __44: bool
+  find __45: bool
+  find __46: bool
+  find __47: bool
+  find __48: bool
+  find __49: bool
+  find __50: bool
+  find __51: bool
+  find __52: bool
+  find __53: bool
+  find __54: bool
+  find __55: bool
+  find __56: bool
+  find __57: bool
+  find __58: bool
+  find __59: bool
+  find __60: bool
+  find __61: bool
+  find __62: bool
+  find __63: bool
+  find __64: bool
+  find __65: bool
+  find __66: bool
+  find __67: bool
+  find __68: bool
+  find __69: bool
+  find __70: bool
+  find __71: bool
+  find __72: bool
+  find __73: bool
+  find __74: bool
+  find __75: bool
+  find __76: bool
+  find __77: bool
+  find __78: bool
+  find __79: bool
+  find __80: bool
+  find __81: bool
+  find __82: bool
+  find __83: bool
+  find __84: bool
+  find __85: bool
+  find __86: bool
+  find __87: bool
+  find __88: bool
+  find __89: bool
+  find __90: bool
+  find __91: bool
+  find __92: bool
+  find __93: bool
+  find __94: bool
+  find __95: bool
+  find __96: bool
+new clauses:
+  (¬j#sat_log_int_00 \/ ¬__0)
+  (j#sat_log_int_00 \/ __0)
+  (¬j#sat_log_int_01 \/ ¬__1)
+  (j#sat_log_int_01 \/ __1)
+  (¬j#sat_log_int_02 \/ ¬__2)
+  (j#sat_log_int_02 \/ __2)
+  (¬__0 \/ ¬__3)
+  (__0 \/ __3)
+  (¬__0 \/ ¬__1 \/ ¬__4)
+  (__0 \/ __1 \/ ¬__4)
+  (__0 \/ ¬__1 \/ __4)
+  (¬__0 \/ __1 \/ __4)
+  (¬__5 \/ __0)
+  (¬__5 \/ __1)
+  (__5 \/ ¬__0 \/ ¬__1)
+  (¬__5 \/ ¬__2 \/ ¬__6)
+  (__5 \/ __2 \/ ¬__6)
+  (__5 \/ ¬__2 \/ __6)
+  (¬__5 \/ __2 \/ __6)
+  (¬__7 \/ __5)
+  (¬__7 \/ __2)
+  (__7 \/ ¬__5 \/ ¬__2)
+  (¬__7 \/ ¬__8)
+  (__7 \/ __8)
+  (¬__9 \/ __2)
+  (¬__9 \/ __8)
+  (__9 \/ ¬__2 \/ ¬__8)
+  (¬__10 \/ j#sat_log_int_02 \/ j#sat_log_int_00)
+  (¬__10 \/ ¬j#sat_log_int_02 \/ __3)
+  (¬__10 \/ j#sat_log_int_00 \/ __3)
+  (__10 \/ j#sat_log_int_02 \/ ¬j#sat_log_int_00)
+  (__10 \/ ¬j#sat_log_int_02 \/ ¬__3)
+  (__10 \/ ¬j#sat_log_int_00 \/ ¬__3)
+  (¬__11 \/ j#sat_log_int_02 \/ j#sat_log_int_01)
+  (¬__11 \/ ¬j#sat_log_int_02 \/ __4)
+  (¬__11 \/ j#sat_log_int_01 \/ __4)
+  (__11 \/ j#sat_log_int_02 \/ ¬j#sat_log_int_01)
+  (__11 \/ ¬j#sat_log_int_02 \/ ¬__4)
+  (__11 \/ ¬j#sat_log_int_01 \/ ¬__4)
+  (¬__12 \/ j#sat_log_int_02 \/ j#sat_log_int_02)
+  (¬__12 \/ ¬j#sat_log_int_02 \/ __6)
+  (¬__12 \/ j#sat_log_int_02 \/ __6)
+  (__12 \/ j#sat_log_int_02 \/ ¬j#sat_log_int_02)
+  (__12 \/ ¬j#sat_log_int_02 \/ ¬__6)
+  (__12 \/ ¬j#sat_log_int_02 \/ ¬__6)
+  (¬__13 \/ j#sat_log_int_02 \/ j#sat_log_int_02)
+  (¬__13 \/ ¬j#sat_log_int_02 \/ __9)
+  (¬__13 \/ j#sat_log_int_02 \/ __9)
+  (__13 \/ j#sat_log_int_02 \/ ¬j#sat_log_int_02)
+  (__13 \/ ¬j#sat_log_int_02 \/ ¬__9)
+  (__13 \/ ¬j#sat_log_int_02 \/ ¬__9)
+  (¬__14 \/ __10)
+  (¬__14 \/ ¬__10)
+  (¬__14)
+  (¬__15 \/ __10)
+  (__15 \/ ¬__10)
+  (¬__16 \/ __10)
+  (¬__16 \/ ¬__10)
+  (¬__16)
+  (¬__17 \/ __11)
+  (¬__17 \/ ¬__11)
+  (¬__17)
+  (¬__18 \/ __11)
+  (¬__18 \/ ¬__11)
+  (¬__18)
+  (¬__19 \/ __11)
+  (__19 \/ ¬__11)
+  (¬__20 \/ __11)
+  (¬__20 \/ ¬__11)
+  (¬__20)
+  (¬__14 \/ ¬__17 \/ ¬__21)
+  (__14 \/ __17 \/ ¬__21)
+  (__14 \/ ¬__17 \/ __21)
+  (¬__14 \/ __17 \/ __21)
+  (¬__22 \/ __14)
+  (¬__22 \/ __17)
+  (__22 \/ ¬__14 \/ ¬__17)
+  (¬__15 \/ ¬__18 \/ ¬__23)
+  (__15 \/ __18 \/ ¬__23)
+  (__15 \/ ¬__18 \/ __23)
+  (¬__15 \/ __18 \/ __23)
+  (¬__23 \/ ¬__22 \/ ¬__24)
+  (__23 \/ __22 \/ ¬__24)
+  (__23 \/ ¬__22 \/ __24)
+  (¬__23 \/ __22 \/ __24)
+  (¬__25 \/ __15)
+  (¬__25 \/ __18)
+  (__25 \/ ¬__15 \/ ¬__18)
+  (¬__26 \/ __22)
+  (¬__26 \/ __23)
+  (__26 \/ ¬__22 \/ ¬__23)
+  (¬__25 \/ __27)
+  (¬__26 \/ __27)
+  (¬__27 \/ __25 \/ __26)
+  (¬__16 \/ ¬__19 \/ ¬__28)
+  (__16 \/ __19 \/ ¬__28)
+  (__16 \/ ¬__19 \/ __28)
+  (¬__16 \/ __19 \/ __28)
+  (¬__28 \/ ¬__27 \/ ¬__29)
+  (__28 \/ __27 \/ ¬__29)
+  (__28 \/ ¬__27 \/ __29)
+  (¬__28 \/ __27 \/ __29)
+  (¬__30 \/ __16)
+  (¬__30 \/ __19)
+  (__30 \/ ¬__16 \/ ¬__19)
+  (¬__31 \/ __27)
+  (¬__31 \/ __28)
+  (__31 \/ ¬__27 \/ ¬__28)
+  (¬__30 \/ __32)
+  (¬__31 \/ __32)
+  (¬__32 \/ __30 \/ __31)
+  (¬__16 \/ ¬__20 \/ ¬__33)
+  (__16 \/ __20 \/ ¬__33)
+  (__16 \/ ¬__20 \/ __33)
+  (¬__16 \/ __20 \/ __33)
+  (¬__33 \/ ¬__32 \/ ¬__34)
+  (__33 \/ __32 \/ ¬__34)
+  (__33 \/ ¬__32 \/ __34)
+  (¬__33 \/ __32 \/ __34)
+  (¬__35 \/ __16)
+  (¬__35 \/ __20)
+  (__35 \/ ¬__16 \/ ¬__20)
+  (¬__36 \/ __32)
+  (¬__36 \/ __33)
+  (__36 \/ ¬__32 \/ ¬__33)
+  (¬__35 \/ __37)
+  (¬__36 \/ __37)
+  (¬__37 \/ __35 \/ __36)
+  (¬__16 \/ ¬__20 \/ ¬__38)
+  (__16 \/ __20 \/ ¬__38)
+  (__16 \/ ¬__20 \/ __38)
+  (¬__16 \/ __20 \/ __38)
+  (¬__38 \/ ¬__37 \/ ¬__39)
+  (__38 \/ __37 \/ ¬__39)
+  (__38 \/ ¬__37 \/ __39)
+  (¬__38 \/ __37 \/ __39)
+  (¬__40 \/ __16)
+  (¬__40 \/ __20)
+  (__40 \/ ¬__16 \/ ¬__20)
+  (¬__41 \/ __37)
+  (¬__41 \/ __38)
+  (__41 \/ ¬__37 \/ ¬__38)
+  (¬__40 \/ __42)
+  (¬__41 \/ __42)
+  (¬__42 \/ __40 \/ __41)
+  (¬__43 \/ __12)
+  (¬__43 \/ ¬__12)
+  (¬__43)
+  (¬__44 \/ __12)
+  (¬__44 \/ ¬__12)
+  (¬__44)
+  (¬__45 \/ __12)
+  (¬__45 \/ ¬__12)
+  (¬__45)
+  (¬__46 \/ __12)
+  (__46 \/ ¬__12)
+  (¬__47 \/ __12)
+  (¬__47 \/ ¬__12)
+  (¬__47)
+  (¬__21 \/ ¬__43 \/ ¬__48)
+  (__21 \/ __43 \/ ¬__48)
+  (__21 \/ ¬__43 \/ __48)
+  (¬__21 \/ __43 \/ __48)
+  (¬__49 \/ __21)
+  (¬__49 \/ __43)
+  (__49 \/ ¬__21 \/ ¬__43)
+  (¬__24 \/ ¬__44 \/ ¬__50)
+  (__24 \/ __44 \/ ¬__50)
+  (__24 \/ ¬__44 \/ __50)
+  (¬__24 \/ __44 \/ __50)
+  (¬__50 \/ ¬__49 \/ ¬__51)
+  (__50 \/ __49 \/ ¬__51)
+  (__50 \/ ¬__49 \/ __51)
+  (¬__50 \/ __49 \/ __51)
+  (¬__52 \/ __24)
+  (¬__52 \/ __44)
+  (__52 \/ ¬__24 \/ ¬__44)
+  (¬__53 \/ __49)
+  (¬__53 \/ __50)
+  (__53 \/ ¬__49 \/ ¬__50)
+  (¬__52 \/ __54)
+  (¬__53 \/ __54)
+  (¬__54 \/ __52 \/ __53)
+  (¬__29 \/ ¬__45 \/ ¬__55)
+  (__29 \/ __45 \/ ¬__55)
+  (__29 \/ ¬__45 \/ __55)
+  (¬__29 \/ __45 \/ __55)
+  (¬__55 \/ ¬__54 \/ ¬__56)
+  (__55 \/ __54 \/ ¬__56)
+  (__55 \/ ¬__54 \/ __56)
+  (¬__55 \/ __54 \/ __56)
+  (¬__57 \/ __29)
+  (¬__57 \/ __45)
+  (__57 \/ ¬__29 \/ ¬__45)
+  (¬__58 \/ __54)
+  (¬__58 \/ __55)
+  (__58 \/ ¬__54 \/ ¬__55)
+  (¬__57 \/ __59)
+  (¬__58 \/ __59)
+  (¬__59 \/ __57 \/ __58)
+  (¬__34 \/ ¬__46 \/ ¬__60)
+  (__34 \/ __46 \/ ¬__60)
+  (__34 \/ ¬__46 \/ __60)
+  (¬__34 \/ __46 \/ __60)
+  (¬__60 \/ ¬__59 \/ ¬__61)
+  (__60 \/ __59 \/ ¬__61)
+  (__60 \/ ¬__59 \/ __61)
+  (¬__60 \/ __59 \/ __61)
+  (¬__62 \/ __34)
+  (¬__62 \/ __46)
+  (__62 \/ ¬__34 \/ ¬__46)
+  (¬__63 \/ __59)
+  (¬__63 \/ __60)
+  (__63 \/ ¬__59 \/ ¬__60)
+  (¬__62 \/ __64)
+  (¬__63 \/ __64)
+  (¬__64 \/ __62 \/ __63)
+  (¬__34 \/ ¬__47 \/ ¬__65)
+  (__34 \/ __47 \/ ¬__65)
+  (__34 \/ ¬__47 \/ __65)
+  (¬__34 \/ __47 \/ __65)
+  (¬__65 \/ ¬__64 \/ ¬__66)
+  (__65 \/ __64 \/ ¬__66)
+  (__65 \/ ¬__64 \/ __66)
+  (¬__65 \/ __64 \/ __66)
+  (¬__67 \/ __34)
+  (¬__67 \/ __47)
+  (__67 \/ ¬__34 \/ ¬__47)
+  (¬__68 \/ __64)
+  (¬__68 \/ __65)
+  (__68 \/ ¬__64 \/ ¬__65)
+  (¬__67 \/ __69)
+  (¬__68 \/ __69)
+  (¬__69 \/ __67 \/ __68)
+  (¬__34 \/ ¬__47 \/ ¬__70)
+  (__34 \/ __47 \/ ¬__70)
+  (__34 \/ ¬__47 \/ __70)
+  (¬__34 \/ __47 \/ __70)
+  (¬__70 \/ ¬__69 \/ ¬__71)
+  (__70 \/ __69 \/ ¬__71)
+  (__70 \/ ¬__69 \/ __71)
+  (¬__70 \/ __69 \/ __71)
+  (¬__72 \/ __34)
+  (¬__72 \/ __47)
+  (__72 \/ ¬__34 \/ ¬__47)
+  (¬__73 \/ __69)
+  (¬__73 \/ __70)
+  (__73 \/ ¬__69 \/ ¬__70)
+  (¬__72 \/ __74)
+  (¬__73 \/ __74)
+  (¬__74 \/ __72 \/ __73)
+  (¬__48 \/ ¬__75)
+  (__48 \/ __75)
+  (¬__51 \/ ¬__76)
+  (__51 \/ __76)
+  (¬__56 \/ ¬__77)
+  (__56 \/ __77)
+  (¬__61 \/ ¬__78)
+  (__61 \/ __78)
+  (¬__66 \/ ¬__79)
+  (__66 \/ __79)
+  (¬__75 \/ ¬__80)
+  (__75 \/ __80)
+  (¬__75 \/ ¬__76 \/ ¬__81)
+  (__75 \/ __76 \/ ¬__81)
+  (__75 \/ ¬__76 \/ __81)
+  (¬__75 \/ __76 \/ __81)
+  (¬__82 \/ __75)
+  (¬__82 \/ __76)
+  (__82 \/ ¬__75 \/ ¬__76)
+  (¬__82 \/ ¬__77 \/ ¬__83)
+  (__82 \/ __77 \/ ¬__83)
+  (__82 \/ ¬__77 \/ __83)
+  (¬__82 \/ __77 \/ __83)
+  (¬__84 \/ __82)
+  (¬__84 \/ __77)
+  (__84 \/ ¬__82 \/ ¬__77)
+  (¬__84 \/ ¬__78 \/ ¬__85)
+  (__84 \/ __78 \/ ¬__85)
+  (__84 \/ ¬__78 \/ __85)
+  (¬__84 \/ __78 \/ __85)
+  (¬__86 \/ __84)
+  (¬__86 \/ __78)
+  (__86 \/ ¬__84 \/ ¬__78)
+  (¬__86 \/ ¬__79 \/ ¬__87)
+  (__86 \/ __79 \/ ¬__87)
+  (__86 \/ ¬__79 \/ __87)
+  (¬__86 \/ __79 \/ __87)
+  (¬__88 \/ __86)
+  (¬__88 \/ __79)
+  (__88 \/ ¬__86 \/ ¬__79)
+  (¬__88 \/ ¬__89)
+  (__88 \/ __89)
+  (¬__90 \/ __79)
+  (¬__90 \/ __89)
+  (__90 \/ ¬__79 \/ ¬__89)
+  (¬__91 \/ j#sat_log_int_02 \/ __48)
+  (¬__91 \/ ¬j#sat_log_int_02 \/ __80)
+  (¬__91 \/ __48 \/ __80)
+  (__91 \/ j#sat_log_int_02 \/ ¬__48)
+  (__91 \/ ¬j#sat_log_int_02 \/ ¬__80)
+  (__91 \/ ¬__48 \/ ¬__80)
+  (¬__92 \/ j#sat_log_int_02 \/ __51)
+  (¬__92 \/ ¬j#sat_log_int_02 \/ __81)
+  (¬__92 \/ __51 \/ __81)
+  (__92 \/ j#sat_log_int_02 \/ ¬__51)
+  (__92 \/ ¬j#sat_log_int_02 \/ ¬__81)
+  (__92 \/ ¬__51 \/ ¬__81)
+  (¬__93 \/ j#sat_log_int_02 \/ __56)
+  (¬__93 \/ ¬j#sat_log_int_02 \/ __83)
+  (¬__93 \/ __56 \/ __83)
+  (__93 \/ j#sat_log_int_02 \/ ¬__56)
+  (__93 \/ ¬j#sat_log_int_02 \/ ¬__83)
+  (__93 \/ ¬__56 \/ ¬__83)
+  (¬__94 \/ j#sat_log_int_02 \/ __61)
+  (¬__94 \/ ¬j#sat_log_int_02 \/ __85)
+  (¬__94 \/ __61 \/ __85)
+  (__94 \/ j#sat_log_int_02 \/ ¬__61)
+  (__94 \/ ¬j#sat_log_int_02 \/ ¬__85)
+  (__94 \/ ¬__61 \/ ¬__85)
+  (¬__95 \/ j#sat_log_int_02 \/ __66)
+  (¬__95 \/ ¬j#sat_log_int_02 \/ __87)
+  (¬__95 \/ __66 \/ __87)
+  (__95 \/ j#sat_log_int_02 \/ ¬__66)
+  (__95 \/ ¬j#sat_log_int_02 \/ ¬__87)
+  (__95 \/ ¬__66 \/ ¬__87)
+  (¬__96 \/ j#sat_log_int_02 \/ __66)
+  (¬__96 \/ ¬j#sat_log_int_02 \/ __90)
+  (¬__96 \/ __66 \/ __90)
+  (__96 \/ j#sat_log_int_02 \/ ¬__66)
+  (__96 \/ ¬j#sat_log_int_02 \/ ¬__90)
+  (__96 \/ ¬__66 \/ ¬__90)
+
+--
+
+or([and([(SATInt(Log, [j#sat_log_int_00,j#sat_log_int_01,j#sat_log_int_02;int(1..)] [1, 3]) >= SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),(SATInt(Log, [j#sat_log_int_00,j#sat_log_int_01,j#sat_log_int_02;int(1..)] [1, 3]) <= SATInt(Log, Matrix([Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3]));int(1..)]);int(1..)]), 
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([(SATInt(Log, [j#sat_log_int_00,j#sat_log_int_01,j#sat_log_int_02;int(1..)] [1, 3]) >= SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),(SATInt(Log, [j#sat_log_int_00,j#sat_log_int_01,j#sat_log_int_02;int(1..)] [1, 3]) <= SATInt(Log, Matrix([Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3]));int(1..)])
+
+--
+
+allDiff([(SATInt(Log, [__91,__92,__93,__94,__95;int(1..)] [2, 6]) - SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2]),SATInt(Log, Matrix([Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3]),UnsafeDiv(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]), SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2])),SATInt(Log, Matrix([Bool(false), Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [6, 6]);int(1..5)]),
+and([(SATInt(Log, [j#sat_log_int_00,j#sat_log_int_01,j#sat_log_int_02;int(1..)] [1, 3]) >= SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),(SATInt(Log, [j#sat_log_int_00,j#sat_log_int_01,j#sat_log_int_02;int(1..)] [1, 3]) <= SATInt(Log, Matrix([Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3]));int(1..)]),
+or([and([(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]) >= SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]) <= SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2]));int(1..)]);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+allDiff([(SATInt(Log, [__91,__92,__93,__94,__95;int(1..)] [2, 6]) - SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2]),SATInt(Log, Matrix([Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3]),UnsafeDiv(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]), SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2])),SATInt(Log, Matrix([Bool(false), Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [6, 6]);int(1..5)]),
+(SATInt(Log, [j#sat_log_int_00,j#sat_log_int_01,j#sat_log_int_02;int(1..)] [1, 3]) >= SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),
+(SATInt(Log, [j#sat_log_int_00,j#sat_log_int_01,j#sat_log_int_02;int(1..)] [1, 3]) <= SATInt(Log, Matrix([Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3])),
+or([and([(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]) >= SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]) <= SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2]));int(1..)]);int(1..)])
+
+--
+
+or([and([(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]) >= SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]) <= SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2]));int(1..)]);int(1..)]), 
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]) >= SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]) <= SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2]));int(1..)])
+
+--
+
+allDiff([(SATInt(Log, [__91,__92,__93,__94,__95;int(1..)] [2, 6]) - SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2]),SATInt(Log, Matrix([Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3]),UnsafeDiv(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]), SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2])),SATInt(Log, Matrix([Bool(false), Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [6, 6]);int(1..5)]),
+(SATInt(Log, [j#sat_log_int_00,j#sat_log_int_01,j#sat_log_int_02;int(1..)] [1, 3]) >= SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),
+(SATInt(Log, [j#sat_log_int_00,j#sat_log_int_01,j#sat_log_int_02;int(1..)] [1, 3]) <= SATInt(Log, Matrix([Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3])),
+and([(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]) >= SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]) <= SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2]));int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+allDiff([(SATInt(Log, [__91,__92,__93,__94,__95;int(1..)] [2, 6]) - SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2]),SATInt(Log, Matrix([Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3]),UnsafeDiv(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]), SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2])),SATInt(Log, Matrix([Bool(false), Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [6, 6]);int(1..5)]),
+(SATInt(Log, [j#sat_log_int_00,j#sat_log_int_01,j#sat_log_int_02;int(1..)] [1, 3]) >= SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),
+(SATInt(Log, [j#sat_log_int_00,j#sat_log_int_01,j#sat_log_int_02;int(1..)] [1, 3]) <= SATInt(Log, Matrix([Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3])),
+(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]) >= SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),
+(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]) <= SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2]))
+
+--
+
+(SATInt(Log, [__91,__92,__93,__94,__95;int(1..)] [2, 6]) - SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])), 
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([SATInt(Log, [__91,__92,__93,__94,__95;int(1..)] [2, 6]),-(SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1]));int(1..)])
+
+--
+
+UnsafeDiv(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]), SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2])), 
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]), SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2])) @ (SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2]) != 0)}
+
+--
+
+0, 
+   ~~> literal_cnf_int ([("SAT_Log", 9500)])
+SATInt(Log, [false;int(1..)] [0, 0])
+
+--
+
+allDiff([sum([SATInt(Log, [__91,__92,__93,__94,__95;int(1..)] [2, 6]),-(SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1]));int(1..)]),SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2]),SATInt(Log, Matrix([Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3]),{SafeDiv(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]), SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2])) @ (SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2]) != SATInt(Log, [false;int(1..)] [0, 0]))},SATInt(Log, Matrix([Bool(false), Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [6, 6]);int(1..5)]),
+(SATInt(Log, [j#sat_log_int_00,j#sat_log_int_01,j#sat_log_int_02;int(1..)] [1, 3]) >= SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),
+(SATInt(Log, [j#sat_log_int_00,j#sat_log_int_01,j#sat_log_int_02;int(1..)] [1, 3]) <= SATInt(Log, Matrix([Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3])),
+(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]) >= SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),
+(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]) <= SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2])), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+allDiff([sum([SATInt(Log, [__91,__92,__93,__94,__95;int(1..)] [2, 6]),-(SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1]));int(1..)]),SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2]),SATInt(Log, Matrix([Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3]),{SafeDiv(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]), SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2])) @ (SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2]) != SATInt(Log, Matrix([Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [0, 0]))},SATInt(Log, Matrix([Bool(false), Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [6, 6]);int(1..5)]),
+(SATInt(Log, [j#sat_log_int_00,j#sat_log_int_01,j#sat_log_int_02;int(1..)] [1, 3]) >= SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),
+(SATInt(Log, [j#sat_log_int_00,j#sat_log_int_01,j#sat_log_int_02;int(1..)] [1, 3]) <= SATInt(Log, Matrix([Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3])),
+(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]) >= SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),
+(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]) <= SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2]))
+
+--
+
+[sum([SATInt(Log, [__91,__92,__93,__94,__95;int(1..)] [2, 6]),-(SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1]));int(1..)]),SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2]),SATInt(Log, Matrix([Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3]),{SafeDiv(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]), SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2])) @ (SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2]) != SATInt(Log, Matrix([Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [0, 0]))},SATInt(Log, Matrix([Bool(false), Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [6, 6]);int(1..5)], 
+   ~~> bubble_up ([("Bubble", 8800)])
+{[sum([SATInt(Log, [__91,__92,__93,__94,__95;int(1..)] [2, 6]),-(SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1]));int(1..)]),SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2]),SATInt(Log, Matrix([Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3]),SafeDiv(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]), SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2])),SATInt(Log, Matrix([Bool(false), Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [6, 6]);int(1..5)] @ (SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2]) != SATInt(Log, Matrix([Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [0, 0]))}
+
+--
+
+allDiff({[sum([SATInt(Log, [__91,__92,__93,__94,__95;int(1..)] [2, 6]),-(SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1]));int(1..)]),SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2]),SATInt(Log, Matrix([Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3]),SafeDiv(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]), SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2])),SATInt(Log, Matrix([Bool(false), Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [6, 6]);int(1..5)] @ (SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2]) != SATInt(Log, Matrix([Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [0, 0]))}), 
+   ~~> bubble_up ([("Bubble", 8800)])
+{allDiff([sum([SATInt(Log, [__91,__92,__93,__94,__95;int(1..)] [2, 6]),-(SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1]));int(1..)]),SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2]),SATInt(Log, Matrix([Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3]),SafeDiv(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]), SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2])),SATInt(Log, Matrix([Bool(false), Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [6, 6]);int(1..5)]) @ (SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2]) != SATInt(Log, Matrix([Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [0, 0]))}
+
+--
+
+{allDiff([sum([SATInt(Log, [__91,__92,__93,__94,__95;int(1..)] [2, 6]),-(SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1]));int(1..)]),SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2]),SATInt(Log, Matrix([Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3]),SafeDiv(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]), SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2])),SATInt(Log, Matrix([Bool(false), Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [6, 6]);int(1..5)]) @ (SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2]) != SATInt(Log, Matrix([Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [0, 0]))}, 
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([allDiff([sum([SATInt(Log, [__91,__92,__93,__94,__95;int(1..)] [2, 6]),-(SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1]));int(1..)]),SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2]),SATInt(Log, Matrix([Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3]),SafeDiv(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]), SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2])),SATInt(Log, Matrix([Bool(false), Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [6, 6]);int(1..5)]),(SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2]) != SATInt(Log, Matrix([Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [0, 0]));int(1..)])
+
+--
+
+and([allDiff([sum([SATInt(Log, [__91,__92,__93,__94,__95;int(1..)] [2, 6]),-(SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1]));int(1..)]),SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2]),SATInt(Log, Matrix([Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3]),SafeDiv(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]), SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2])),SATInt(Log, Matrix([Bool(false), Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [6, 6]);int(1..5)]),(SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2]) != SATInt(Log, Matrix([Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [0, 0]));int(1..)]),
+(SATInt(Log, [j#sat_log_int_00,j#sat_log_int_01,j#sat_log_int_02;int(1..)] [1, 3]) >= SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),
+(SATInt(Log, [j#sat_log_int_00,j#sat_log_int_01,j#sat_log_int_02;int(1..)] [1, 3]) <= SATInt(Log, Matrix([Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3])),
+(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]) >= SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),
+(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]) <= SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2])), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+allDiff([sum([SATInt(Log, [__91,__92,__93,__94,__95;int(1..)] [2, 6]),-(SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1]));int(1..)]),SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2]),SATInt(Log, Matrix([Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3]),SafeDiv(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]), SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2])),SATInt(Log, Matrix([Bool(false), Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [6, 6]);int(1..5)]),
+(SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2]) != SATInt(Log, Matrix([Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [0, 0])),
+(SATInt(Log, [j#sat_log_int_00,j#sat_log_int_01,j#sat_log_int_02;int(1..)] [1, 3]) >= SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),
+(SATInt(Log, [j#sat_log_int_00,j#sat_log_int_01,j#sat_log_int_02;int(1..)] [1, 3]) <= SATInt(Log, Matrix([Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3])),
+(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]) >= SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),
+(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]) <= SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2]))
+
+--
+
+SafeDiv(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]), SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2])), 
+   ~~> cnf_int_safediv ([("SAT_Log", 4700)])
+SATInt(Log, [__264,__265;int(1..)] [0, 1])
+new variables:
+  find __97: bool
+  find __98: bool
+  find __99: bool
+  find __100: bool
+  find __101: bool
+  find __102: bool
+  find __103: bool
+  find __104: bool
+  find __105: bool
+  find __106: bool
+  find __107: bool
+  find __108: bool
+  find __109: bool
+  find __110: bool
+  find __111: bool
+  find __112: bool
+  find __113: bool
+  find __114: bool
+  find __115: bool
+  find __116: bool
+  find __117: bool
+  find __118: bool
+  find __119: bool
+  find __120: bool
+  find __121: bool
+  find __122: bool
+  find __123: bool
+  find __124: bool
+  find __125: bool
+  find __126: bool
+  find __127: bool
+  find __128: bool
+  find __129: bool
+  find __130: bool
+  find __131: bool
+  find __132: bool
+  find __133: bool
+  find __134: bool
+  find __135: bool
+  find __136: bool
+  find __137: bool
+  find __138: bool
+  find __139: bool
+  find __140: bool
+  find __141: bool
+  find __142: bool
+  find __143: bool
+  find __144: bool
+  find __145: bool
+  find __146: bool
+  find __147: bool
+  find __148: bool
+  find __149: bool
+  find __150: bool
+  find __151: bool
+  find __152: bool
+  find __153: bool
+  find __154: bool
+  find __155: bool
+  find __156: bool
+  find __157: bool
+  find __158: bool
+  find __159: bool
+  find __160: bool
+  find __161: bool
+  find __162: bool
+  find __163: bool
+  find __164: bool
+  find __165: bool
+  find __166: bool
+  find __167: bool
+  find __168: bool
+  find __169: bool
+  find __170: bool
+  find __171: bool
+  find __172: bool
+  find __173: bool
+  find __174: bool
+  find __175: bool
+  find __176: bool
+  find __177: bool
+  find __178: bool
+  find __179: bool
+  find __180: bool
+  find __181: bool
+  find __182: bool
+  find __183: bool
+  find __184: bool
+  find __185: bool
+  find __186: bool
+  find __187: bool
+  find __188: bool
+  find __189: bool
+  find __190: bool
+  find __191: bool
+  find __192: bool
+  find __193: bool
+  find __194: bool
+  find __195: bool
+  find __196: bool
+  find __197: bool
+  find __198: bool
+  find __199: bool
+  find __200: bool
+  find __201: bool
+  find __202: bool
+  find __203: bool
+  find __204: bool
+  find __205: bool
+  find __206: bool
+  find __207: bool
+  find __208: bool
+  find __209: bool
+  find __210: bool
+  find __211: bool
+  find __212: bool
+  find __213: bool
+  find __214: bool
+  find __215: bool
+  find __216: bool
+  find __217: bool
+  find __218: bool
+  find __219: bool
+  find __220: bool
+  find __221: bool
+  find __222: bool
+  find __223: bool
+  find __224: bool
+  find __225: bool
+  find __226: bool
+  find __227: bool
+  find __228: bool
+  find __229: bool
+  find __230: bool
+  find __231: bool
+  find __232: bool
+  find __233: bool
+  find __234: bool
+  find __235: bool
+  find __236: bool
+  find __237: bool
+  find __238: bool
+  find __239: bool
+  find __240: bool
+  find __241: bool
+  find __242: bool
+  find __243: bool
+  find __244: bool
+  find __245: bool
+  find __246: bool
+  find __247: bool
+  find __248: bool
+  find __249: bool
+  find __250: bool
+  find __251: bool
+  find __252: bool
+  find __253: bool
+  find __254: bool
+  find __255: bool
+  find __256: bool
+  find __257: bool
+  find __258: bool
+  find __259: bool
+  find __260: bool
+  find __261: bool
+  find __262: bool
+  find __263: bool
+  find __264: bool
+  find __265: bool
+  find __266: bool
+new clauses:
+  (¬i#sat_log_int_00 \/ ¬__97)
+  (i#sat_log_int_00 \/ __97)
+  (¬i#sat_log_int_01 \/ ¬__98)
+  (i#sat_log_int_01 \/ __98)
+  (¬i#sat_log_int_02 \/ ¬__99)
+  (i#sat_log_int_02 \/ __99)
+  (¬__97 \/ ¬__100)
+  (__97 \/ __100)
+  (¬__97 \/ ¬__98 \/ ¬__101)
+  (__97 \/ __98 \/ ¬__101)
+  (__97 \/ ¬__98 \/ __101)
+  (¬__97 \/ __98 \/ __101)
+  (¬__102 \/ __97)
+  (¬__102 \/ __98)
+  (__102 \/ ¬__97 \/ ¬__98)
+  (¬__102 \/ ¬__99 \/ ¬__103)
+  (__102 \/ __99 \/ ¬__103)
+  (__102 \/ ¬__99 \/ __103)
+  (¬__102 \/ __99 \/ __103)
+  (¬__104 \/ __102)
+  (¬__104 \/ __99)
+  (__104 \/ ¬__102 \/ ¬__99)
+  (__105)
+  (¬__106)
+  (__107)
+  (¬__105 \/ ¬__108)
+  (__105 \/ __108)
+  (¬__105 \/ ¬__106 \/ ¬__109)
+  (__105 \/ __106 \/ ¬__109)
+  (__105 \/ ¬__106 \/ __109)
+  (¬__105 \/ __106 \/ __109)
+  (¬__110 \/ __105)
+  (¬__110 \/ __106)
+  (__110 \/ ¬__105 \/ ¬__106)
+  (¬__110 \/ ¬__107 \/ ¬__111)
+  (__110 \/ __107 \/ ¬__111)
+  (__110 \/ ¬__107 \/ __111)
+  (¬__110 \/ __107 \/ __111)
+  (¬__112 \/ __110)
+  (¬__112 \/ __107)
+  (__112 \/ ¬__110 \/ ¬__107)
+  (i#sat_log_int_02 \/ ¬__113)
+  (¬i#sat_log_int_02 \/ __113)
+  (¬__114 \/ i#sat_log_int_02 \/ i#sat_log_int_00)
+  (¬__114 \/ ¬i#sat_log_int_02 \/ __100)
+  (¬__114 \/ i#sat_log_int_00 \/ __100)
+  (__114 \/ i#sat_log_int_02 \/ ¬i#sat_log_int_00)
+  (__114 \/ ¬i#sat_log_int_02 \/ ¬__100)
+  (__114 \/ ¬i#sat_log_int_00 \/ ¬__100)
+  (¬__115 \/ i#sat_log_int_02 \/ i#sat_log_int_01)
+  (¬__115 \/ ¬i#sat_log_int_02 \/ __101)
+  (¬__115 \/ i#sat_log_int_01 \/ __101)
+  (__115 \/ i#sat_log_int_02 \/ ¬i#sat_log_int_01)
+  (__115 \/ ¬i#sat_log_int_02 \/ ¬__101)
+  (__115 \/ ¬i#sat_log_int_01 \/ ¬__101)
+  (¬__116 \/ i#sat_log_int_02 \/ i#sat_log_int_02)
+  (¬__116 \/ ¬i#sat_log_int_02 \/ __103)
+  (¬__116 \/ i#sat_log_int_02 \/ __103)
+  (__116 \/ i#sat_log_int_02 \/ ¬i#sat_log_int_02)
+  (__116 \/ ¬i#sat_log_int_02 \/ ¬__103)
+  (__116 \/ ¬i#sat_log_int_02 \/ ¬__103)
+  (¬__117)
+  (¬__117 \/ __108)
+  (__118)
+  (__118 \/ ¬__109)
+  (¬__119)
+  (¬__119 \/ __111)
+  (__120)
+  (__121)
+  (__122)
+  (¬__117 \/ ¬__123)
+  (__117 \/ __123)
+  (¬__118 \/ ¬__124)
+  (__118 \/ __124)
+  (¬__119 \/ ¬__125)
+  (__119 \/ __125)
+  (¬__120 \/ ¬__126)
+  (__120 \/ __126)
+  (¬__120 \/ ¬__121 \/ ¬__127)
+  (__120 \/ __121 \/ ¬__127)
+  (__120 \/ ¬__121 \/ __127)
+  (¬__120 \/ __121 \/ __127)
+  (¬__128 \/ __120)
+  (¬__128 \/ __121)
+  (__128 \/ ¬__120 \/ ¬__121)
+  (¬__128 \/ ¬__122 \/ ¬__129)
+  (__128 \/ __122 \/ ¬__129)
+  (__128 \/ ¬__122 \/ __129)
+  (¬__128 \/ __122 \/ __129)
+  (¬__130 \/ __128)
+  (¬__130 \/ __122)
+  (__130 \/ ¬__128 \/ ¬__122)
+  (¬__130 \/ ¬__123 \/ ¬__131)
+  (__130 \/ __123 \/ ¬__131)
+  (__130 \/ ¬__123 \/ __131)
+  (¬__130 \/ __123 \/ __131)
+  (¬__132 \/ __130)
+  (¬__132 \/ __123)
+  (__132 \/ ¬__130 \/ ¬__123)
+  (¬__132 \/ ¬__124 \/ ¬__133)
+  (__132 \/ __124 \/ ¬__133)
+  (__132 \/ ¬__124 \/ __133)
+  (¬__132 \/ __124 \/ __133)
+  (¬__134 \/ __132)
+  (¬__134 \/ __124)
+  (__134 \/ ¬__132 \/ ¬__124)
+  (¬__134 \/ ¬__125 \/ ¬__135)
+  (__134 \/ __125 \/ ¬__135)
+  (__134 \/ ¬__125 \/ __135)
+  (¬__134 \/ __125 \/ __135)
+  (¬__136 \/ __134)
+  (¬__136 \/ __125)
+  (__136 \/ ¬__134 \/ ¬__125)
+  (__126 \/ ¬__137)
+  (¬__126 \/ __137)
+  (¬__138)
+  (¬__138 \/ __126)
+  (¬__114 \/ ¬__127 \/ ¬__139)
+  (__114 \/ __127 \/ ¬__139)
+  (__114 \/ ¬__127 \/ __139)
+  (¬__114 \/ __127 \/ __139)
+  (¬__139 \/ ¬__138 \/ ¬__140)
+  (__139 \/ __138 \/ ¬__140)
+  (__139 \/ ¬__138 \/ __140)
+  (¬__139 \/ __138 \/ __140)
+  (¬__141 \/ __114)
+  (¬__141 \/ __127)
+  (__141 \/ ¬__114 \/ ¬__127)
+  (¬__142 \/ __138)
+  (¬__142 \/ __139)
+  (__142 \/ ¬__138 \/ ¬__139)
+  (¬__141 \/ __143)
+  (¬__142 \/ __143)
+  (¬__143 \/ __141 \/ __142)
+  (¬__115 \/ ¬__129 \/ ¬__144)
+  (__115 \/ __129 \/ ¬__144)
+  (__115 \/ ¬__129 \/ __144)
+  (¬__115 \/ __129 \/ __144)
+  (¬__144 \/ ¬__143 \/ ¬__145)
+  (__144 \/ __143 \/ ¬__145)
+  (__144 \/ ¬__143 \/ __145)
+  (¬__144 \/ __143 \/ __145)
+  (¬__146 \/ __115)
+  (¬__146 \/ __129)
+  (__146 \/ ¬__115 \/ ¬__129)
+  (¬__147 \/ __143)
+  (¬__147 \/ __144)
+  (__147 \/ ¬__143 \/ ¬__144)
+  (¬__146 \/ __148)
+  (¬__147 \/ __148)
+  (¬__148 \/ __146 \/ __147)
+  (¬__116 \/ ¬__131 \/ ¬__149)
+  (__116 \/ __131 \/ ¬__149)
+  (__116 \/ ¬__131 \/ __149)
+  (¬__116 \/ __131 \/ __149)
+  (¬__149 \/ ¬__148 \/ ¬__150)
+  (__149 \/ __148 \/ ¬__150)
+  (__149 \/ ¬__148 \/ __150)
+  (¬__149 \/ __148 \/ __150)
+  (¬__151 \/ __116)
+  (¬__151 \/ __131)
+  (__151 \/ ¬__116 \/ ¬__131)
+  (¬__152 \/ __148)
+  (¬__152 \/ __149)
+  (__152 \/ ¬__148 \/ ¬__149)
+  (¬__151 \/ __153)
+  (¬__152 \/ __153)
+  (¬__153 \/ __151 \/ __152)
+  (¬__116 \/ ¬__133 \/ ¬__154)
+  (__116 \/ __133 \/ ¬__154)
+  (__116 \/ ¬__133 \/ __154)
+  (¬__116 \/ __133 \/ __154)
+  (¬__154 \/ ¬__153 \/ ¬__155)
+  (__154 \/ __153 \/ ¬__155)
+  (__154 \/ ¬__153 \/ __155)
+  (¬__154 \/ __153 \/ __155)
+  (¬__156 \/ __116)
+  (¬__156 \/ __133)
+  (__156 \/ ¬__116 \/ ¬__133)
+  (¬__157 \/ __153)
+  (¬__157 \/ __154)
+  (__157 \/ ¬__153 \/ ¬__154)
+  (¬__156 \/ __158)
+  (¬__157 \/ __158)
+  (¬__158 \/ __156 \/ __157)
+  (¬__116 \/ ¬__135 \/ ¬__159)
+  (__116 \/ __135 \/ ¬__159)
+  (__116 \/ ¬__135 \/ __159)
+  (¬__116 \/ __135 \/ __159)
+  (¬__159 \/ ¬__158 \/ ¬__160)
+  (__159 \/ __158 \/ ¬__160)
+  (__159 \/ ¬__158 \/ __160)
+  (¬__159 \/ __158 \/ __160)
+  (¬__161 \/ __116)
+  (¬__161 \/ __135)
+  (__161 \/ ¬__116 \/ ¬__135)
+  (¬__162 \/ __158)
+  (¬__162 \/ __159)
+  (__162 \/ ¬__158 \/ ¬__159)
+  (¬__161 \/ __163)
+  (¬__162 \/ __163)
+  (¬__163 \/ __161 \/ __162)
+  (¬__160 \/ ¬__164)
+  (__160 \/ __164)
+  (¬__165 \/ __164)
+  (¬__165 \/ ¬__164 \/ __137)
+  (¬__165 \/ __137)
+  (__165 \/ ¬__164 \/ ¬__137)
+  (¬__166 \/ __164 \/ __114)
+  (¬__166 \/ ¬__164 \/ __140)
+  (¬__166 \/ __114 \/ __140)
+  (__166 \/ __164 \/ ¬__114)
+  (__166 \/ ¬__164 \/ ¬__140)
+  (__166 \/ ¬__114 \/ ¬__140)
+  (¬__167 \/ __164 \/ __115)
+  (¬__167 \/ ¬__164 \/ __145)
+  (¬__167 \/ __115 \/ __145)
+  (__167 \/ __164 \/ ¬__115)
+  (__167 \/ ¬__164 \/ ¬__145)
+  (__167 \/ ¬__115 \/ ¬__145)
+  (¬__168 \/ __164 \/ __116)
+  (¬__168 \/ ¬__164 \/ __150)
+  (¬__168 \/ __116 \/ __150)
+  (__168 \/ __164 \/ ¬__116)
+  (__168 \/ ¬__164 \/ ¬__150)
+  (__168 \/ ¬__116 \/ ¬__150)
+  (¬__169 \/ __164 \/ __116)
+  (¬__169 \/ ¬__164 \/ __155)
+  (¬__169 \/ __116 \/ __155)
+  (__169 \/ __164 \/ ¬__116)
+  (__169 \/ ¬__164 \/ ¬__155)
+  (__169 \/ ¬__116 \/ ¬__155)
+  (¬__170 \/ __164 \/ __116)
+  (¬__170 \/ ¬__164 \/ __160)
+  (¬__170 \/ __116 \/ __160)
+  (__170 \/ __164 \/ ¬__116)
+  (__170 \/ ¬__164 \/ ¬__160)
+  (__170 \/ ¬__116 \/ ¬__160)
+  (__126 \/ ¬__171)
+  (¬__126 \/ __171)
+  (¬__172)
+  (¬__172 \/ __126)
+  (¬__165 \/ ¬__127 \/ ¬__173)
+  (__165 \/ __127 \/ ¬__173)
+  (__165 \/ ¬__127 \/ __173)
+  (¬__165 \/ __127 \/ __173)
+  (¬__173 \/ ¬__172 \/ ¬__174)
+  (__173 \/ __172 \/ ¬__174)
+  (__173 \/ ¬__172 \/ __174)
+  (¬__173 \/ __172 \/ __174)
+  (¬__175 \/ __165)
+  (¬__175 \/ __127)
+  (__175 \/ ¬__165 \/ ¬__127)
+  (¬__176 \/ __172)
+  (¬__176 \/ __173)
+  (__176 \/ ¬__172 \/ ¬__173)
+  (¬__175 \/ __177)
+  (¬__176 \/ __177)
+  (¬__177 \/ __175 \/ __176)
+  (¬__166 \/ ¬__129 \/ ¬__178)
+  (__166 \/ __129 \/ ¬__178)
+  (__166 \/ ¬__129 \/ __178)
+  (¬__166 \/ __129 \/ __178)
+  (¬__178 \/ ¬__177 \/ ¬__179)
+  (__178 \/ __177 \/ ¬__179)
+  (__178 \/ ¬__177 \/ __179)
+  (¬__178 \/ __177 \/ __179)
+  (¬__180 \/ __166)
+  (¬__180 \/ __129)
+  (__180 \/ ¬__166 \/ ¬__129)
+  (¬__181 \/ __177)
+  (¬__181 \/ __178)
+  (__181 \/ ¬__177 \/ ¬__178)
+  (¬__180 \/ __182)
+  (¬__181 \/ __182)
+  (¬__182 \/ __180 \/ __181)
+  (¬__167 \/ ¬__131 \/ ¬__183)
+  (__167 \/ __131 \/ ¬__183)
+  (__167 \/ ¬__131 \/ __183)
+  (¬__167 \/ __131 \/ __183)
+  (¬__183 \/ ¬__182 \/ ¬__184)
+  (__183 \/ __182 \/ ¬__184)
+  (__183 \/ ¬__182 \/ __184)
+  (¬__183 \/ __182 \/ __184)
+  (¬__185 \/ __167)
+  (¬__185 \/ __131)
+  (__185 \/ ¬__167 \/ ¬__131)
+  (¬__186 \/ __182)
+  (¬__186 \/ __183)
+  (__186 \/ ¬__182 \/ ¬__183)
+  (¬__185 \/ __187)
+  (¬__186 \/ __187)
+  (¬__187 \/ __185 \/ __186)
+  (¬__168 \/ ¬__133 \/ ¬__188)
+  (__168 \/ __133 \/ ¬__188)
+  (__168 \/ ¬__133 \/ __188)
+  (¬__168 \/ __133 \/ __188)
+  (¬__188 \/ ¬__187 \/ ¬__189)
+  (__188 \/ __187 \/ ¬__189)
+  (__188 \/ ¬__187 \/ __189)
+  (¬__188 \/ __187 \/ __189)
+  (¬__190 \/ __168)
+  (¬__190 \/ __133)
+  (__190 \/ ¬__168 \/ ¬__133)
+  (¬__191 \/ __187)
+  (¬__191 \/ __188)
+  (__191 \/ ¬__187 \/ ¬__188)
+  (¬__190 \/ __192)
+  (¬__191 \/ __192)
+  (¬__192 \/ __190 \/ __191)
+  (¬__169 \/ ¬__135 \/ ¬__193)
+  (__169 \/ __135 \/ ¬__193)
+  (__169 \/ ¬__135 \/ __193)
+  (¬__169 \/ __135 \/ __193)
+  (¬__193 \/ ¬__192 \/ ¬__194)
+  (__193 \/ __192 \/ ¬__194)
+  (__193 \/ ¬__192 \/ __194)
+  (¬__193 \/ __192 \/ __194)
+  (¬__195 \/ __169)
+  (¬__195 \/ __135)
+  (__195 \/ ¬__169 \/ ¬__135)
+  (¬__196 \/ __192)
+  (¬__196 \/ __193)
+  (__196 \/ ¬__192 \/ ¬__193)
+  (¬__195 \/ __197)
+  (¬__196 \/ __197)
+  (¬__197 \/ __195 \/ __196)
+  (¬__194 \/ ¬__198)
+  (__194 \/ __198)
+  (¬__199 \/ __198)
+  (¬__199 \/ ¬__198 \/ __171)
+  (¬__199 \/ __171)
+  (__199 \/ ¬__198 \/ ¬__171)
+  (¬__200 \/ __198 \/ __165)
+  (¬__200 \/ ¬__198 \/ __174)
+  (¬__200 \/ __165 \/ __174)
+  (__200 \/ __198 \/ ¬__165)
+  (__200 \/ ¬__198 \/ ¬__174)
+  (__200 \/ ¬__165 \/ ¬__174)
+  (¬__201 \/ __198 \/ __166)
+  (¬__201 \/ ¬__198 \/ __179)
+  (¬__201 \/ __166 \/ __179)
+  (__201 \/ __198 \/ ¬__166)
+  (__201 \/ ¬__198 \/ ¬__179)
+  (__201 \/ ¬__166 \/ ¬__179)
+  (¬__202 \/ __198 \/ __167)
+  (¬__202 \/ ¬__198 \/ __184)
+  (¬__202 \/ __167 \/ __184)
+  (__202 \/ __198 \/ ¬__167)
+  (__202 \/ ¬__198 \/ ¬__184)
+  (__202 \/ ¬__167 \/ ¬__184)
+  (¬__203 \/ __198 \/ __168)
+  (¬__203 \/ ¬__198 \/ __189)
+  (¬__203 \/ __168 \/ __189)
+  (__203 \/ __198 \/ ¬__168)
+  (__203 \/ ¬__198 \/ ¬__189)
+  (__203 \/ ¬__168 \/ ¬__189)
+  (¬__204 \/ __198 \/ __169)
+  (¬__204 \/ ¬__198 \/ __194)
+  (¬__204 \/ __169 \/ __194)
+  (__204 \/ __198 \/ ¬__169)
+  (__204 \/ ¬__198 \/ ¬__194)
+  (__204 \/ ¬__169 \/ ¬__194)
+  (__126 \/ ¬__205)
+  (¬__126 \/ __205)
+  (¬__206)
+  (¬__206 \/ __126)
+  (¬__199 \/ ¬__127 \/ ¬__207)
+  (__199 \/ __127 \/ ¬__207)
+  (__199 \/ ¬__127 \/ __207)
+  (¬__199 \/ __127 \/ __207)
+  (¬__207 \/ ¬__206 \/ ¬__208)
+  (__207 \/ __206 \/ ¬__208)
+  (__207 \/ ¬__206 \/ __208)
+  (¬__207 \/ __206 \/ __208)
+  (¬__209 \/ __199)
+  (¬__209 \/ __127)
+  (__209 \/ ¬__199 \/ ¬__127)
+  (¬__210 \/ __206)
+  (¬__210 \/ __207)
+  (__210 \/ ¬__206 \/ ¬__207)
+  (¬__209 \/ __211)
+  (¬__210 \/ __211)
+  (¬__211 \/ __209 \/ __210)
+  (¬__200 \/ ¬__129 \/ ¬__212)
+  (__200 \/ __129 \/ ¬__212)
+  (__200 \/ ¬__129 \/ __212)
+  (¬__200 \/ __129 \/ __212)
+  (¬__212 \/ ¬__211 \/ ¬__213)
+  (__212 \/ __211 \/ ¬__213)
+  (__212 \/ ¬__211 \/ __213)
+  (¬__212 \/ __211 \/ __213)
+  (¬__214 \/ __200)
+  (¬__214 \/ __129)
+  (__214 \/ ¬__200 \/ ¬__129)
+  (¬__215 \/ __211)
+  (¬__215 \/ __212)
+  (__215 \/ ¬__211 \/ ¬__212)
+  (¬__214 \/ __216)
+  (¬__215 \/ __216)
+  (¬__216 \/ __214 \/ __215)
+  (¬__201 \/ ¬__131 \/ ¬__217)
+  (__201 \/ __131 \/ ¬__217)
+  (__201 \/ ¬__131 \/ __217)
+  (¬__201 \/ __131 \/ __217)
+  (¬__217 \/ ¬__216 \/ ¬__218)
+  (__217 \/ __216 \/ ¬__218)
+  (__217 \/ ¬__216 \/ __218)
+  (¬__217 \/ __216 \/ __218)
+  (¬__219 \/ __201)
+  (¬__219 \/ __131)
+  (__219 \/ ¬__201 \/ ¬__131)
+  (¬__220 \/ __216)
+  (¬__220 \/ __217)
+  (__220 \/ ¬__216 \/ ¬__217)
+  (¬__219 \/ __221)
+  (¬__220 \/ __221)
+  (¬__221 \/ __219 \/ __220)
+  (¬__202 \/ ¬__133 \/ ¬__222)
+  (__202 \/ __133 \/ ¬__222)
+  (__202 \/ ¬__133 \/ __222)
+  (¬__202 \/ __133 \/ __222)
+  (¬__222 \/ ¬__221 \/ ¬__223)
+  (__222 \/ __221 \/ ¬__223)
+  (__222 \/ ¬__221 \/ __223)
+  (¬__222 \/ __221 \/ __223)
+  (¬__224 \/ __202)
+  (¬__224 \/ __133)
+  (__224 \/ ¬__202 \/ ¬__133)
+  (¬__225 \/ __221)
+  (¬__225 \/ __222)
+  (__225 \/ ¬__221 \/ ¬__222)
+  (¬__224 \/ __226)
+  (¬__225 \/ __226)
+  (¬__226 \/ __224 \/ __225)
+  (¬__203 \/ ¬__135 \/ ¬__227)
+  (__203 \/ __135 \/ ¬__227)
+  (__203 \/ ¬__135 \/ __227)
+  (¬__203 \/ __135 \/ __227)
+  (¬__227 \/ ¬__226 \/ ¬__228)
+  (__227 \/ __226 \/ ¬__228)
+  (__227 \/ ¬__226 \/ __228)
+  (¬__227 \/ __226 \/ __228)
+  (¬__229 \/ __203)
+  (¬__229 \/ __135)
+  (__229 \/ ¬__203 \/ ¬__135)
+  (¬__230 \/ __226)
+  (¬__230 \/ __227)
+  (__230 \/ ¬__226 \/ ¬__227)
+  (¬__229 \/ __231)
+  (¬__230 \/ __231)
+  (¬__231 \/ __229 \/ __230)
+  (¬__228 \/ ¬__232)
+  (__228 \/ __232)
+  (¬__233 \/ __232)
+  (¬__233 \/ ¬__232 \/ __205)
+  (¬__233 \/ __205)
+  (__233 \/ ¬__232 \/ ¬__205)
+  (¬__234 \/ __232 \/ __199)
+  (¬__234 \/ ¬__232 \/ __208)
+  (¬__234 \/ __199 \/ __208)
+  (__234 \/ __232 \/ ¬__199)
+  (__234 \/ ¬__232 \/ ¬__208)
+  (__234 \/ ¬__199 \/ ¬__208)
+  (¬__235 \/ __232 \/ __200)
+  (¬__235 \/ ¬__232 \/ __213)
+  (¬__235 \/ __200 \/ __213)
+  (__235 \/ __232 \/ ¬__200)
+  (__235 \/ ¬__232 \/ ¬__213)
+  (__235 \/ ¬__200 \/ ¬__213)
+  (¬__236 \/ __232 \/ __201)
+  (¬__236 \/ ¬__232 \/ __218)
+  (¬__236 \/ __201 \/ __218)
+  (__236 \/ __232 \/ ¬__201)
+  (__236 \/ ¬__232 \/ ¬__218)
+  (__236 \/ ¬__201 \/ ¬__218)
+  (¬__237 \/ __232 \/ __202)
+  (¬__237 \/ ¬__232 \/ __223)
+  (¬__237 \/ __202 \/ __223)
+  (__237 \/ __232 \/ ¬__202)
+  (__237 \/ ¬__232 \/ ¬__223)
+  (__237 \/ ¬__202 \/ ¬__223)
+  (¬__238 \/ __232 \/ __203)
+  (¬__238 \/ ¬__232 \/ __228)
+  (¬__238 \/ __203 \/ __228)
+  (__238 \/ __232 \/ ¬__203)
+  (__238 \/ ¬__232 \/ ¬__228)
+  (__238 \/ ¬__203 \/ ¬__228)
+  (¬__232 \/ ¬__239)
+  (__232 \/ __239)
+  (¬__198 \/ ¬__240)
+  (__198 \/ __240)
+  (¬__164 \/ ¬__241)
+  (__164 \/ __241)
+  (¬__239 \/ ¬__242)
+  (__239 \/ __242)
+  (¬__239 \/ ¬__240 \/ ¬__243)
+  (__239 \/ __240 \/ ¬__243)
+  (__239 \/ ¬__240 \/ __243)
+  (¬__239 \/ __240 \/ __243)
+  (¬__244 \/ __239)
+  (¬__244 \/ __240)
+  (__244 \/ ¬__239 \/ ¬__240)
+  (¬__244 \/ ¬__241 \/ ¬__245)
+  (__244 \/ __241 \/ ¬__245)
+  (__244 \/ ¬__241 \/ __245)
+  (¬__244 \/ __241 \/ __245)
+  (¬__246 \/ __244)
+  (¬__246 \/ __241)
+  (__246 \/ ¬__244 \/ ¬__241)
+  (¬__232 \/ ¬__247)
+  (__232 \/ __247)
+  (¬__232 \/ ¬__198 \/ ¬__248)
+  (__232 \/ __198 \/ ¬__248)
+  (__232 \/ ¬__198 \/ __248)
+  (¬__232 \/ __198 \/ __248)
+  (¬__249 \/ __232)
+  (¬__249 \/ __198)
+  (__249 \/ ¬__232 \/ ¬__198)
+  (¬__249 \/ ¬__164 \/ ¬__250)
+  (__249 \/ __164 \/ ¬__250)
+  (__249 \/ ¬__164 \/ __250)
+  (¬__249 \/ __164 \/ __250)
+  (¬__251 \/ __249)
+  (¬__251 \/ __164)
+  (__251 \/ ¬__249 \/ ¬__164)
+  (¬__247 \/ ¬__252)
+  (__247 \/ __252)
+  (¬__248 \/ ¬__253)
+  (__248 \/ __253)
+  (¬__250 \/ ¬__254)
+  (__250 \/ __254)
+  (¬__252 \/ ¬__255)
+  (__252 \/ __255)
+  (¬__252 \/ ¬__253 \/ ¬__256)
+  (__252 \/ __253 \/ ¬__256)
+  (__252 \/ ¬__253 \/ __256)
+  (¬__252 \/ __253 \/ __256)
+  (¬__257 \/ __252)
+  (¬__257 \/ __253)
+  (__257 \/ ¬__252 \/ ¬__253)
+  (¬__257 \/ ¬__254 \/ ¬__258)
+  (__257 \/ __254 \/ ¬__258)
+  (__257 \/ ¬__254 \/ __258)
+  (¬__257 \/ __254 \/ __258)
+  (¬__259 \/ __257)
+  (¬__259 \/ __254)
+  (__259 \/ ¬__257 \/ ¬__254)
+  (¬__233 \/ __260)
+  (¬__234 \/ __260)
+  (¬__235 \/ __260)
+  (¬__236 \/ __260)
+  (¬__237 \/ __260)
+  (¬__238 \/ __260)
+  (¬__260 \/ __233 \/ __234 \/ __235 \/ __236 \/ __237 \/ __238)
+  (¬__261 \/ __260 \/ __242)
+  (¬__261 \/ ¬__260 \/ __255)
+  (¬__261 \/ __242 \/ __255)
+  (__261 \/ __260 \/ ¬__242)
+  (__261 \/ ¬__260 \/ ¬__255)
+  (__261 \/ ¬__242 \/ ¬__255)
+  (¬__262 \/ __260 \/ __243)
+  (¬__262 \/ ¬__260 \/ __256)
+  (¬__262 \/ __243 \/ __256)
+  (__262 \/ __260 \/ ¬__243)
+  (__262 \/ ¬__260 \/ ¬__256)
+  (__262 \/ ¬__243 \/ ¬__256)
+  (¬__263 \/ __260 \/ __245)
+  (¬__263 \/ ¬__260 \/ __258)
+  (¬__263 \/ __245 \/ __258)
+  (__263 \/ __260 \/ ¬__245)
+  (__263 \/ ¬__260 \/ ¬__258)
+  (__263 \/ ¬__245 \/ ¬__258)
+  (¬__264 \/ __113 \/ __232)
+  (¬__264 \/ ¬__113 \/ __261)
+  (¬__264 \/ __232 \/ __261)
+  (__264 \/ __113 \/ ¬__232)
+  (__264 \/ ¬__113 \/ ¬__261)
+  (__264 \/ ¬__232 \/ ¬__261)
+  (¬__265 \/ __113 \/ __198)
+  (¬__265 \/ ¬__113 \/ __262)
+  (¬__265 \/ __198 \/ __262)
+  (__265 \/ __113 \/ ¬__198)
+  (__265 \/ ¬__113 \/ ¬__262)
+  (__265 \/ ¬__198 \/ ¬__262)
+  (¬__266 \/ __113 \/ __164)
+  (¬__266 \/ ¬__113 \/ __263)
+  (¬__266 \/ __164 \/ __263)
+  (__266 \/ __113 \/ ¬__164)
+  (__266 \/ ¬__113 \/ ¬__263)
+  (__266 \/ ¬__164 \/ ¬__263)
+
+--
+
+-(SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])), 
+   ~~> cnf_int_neg ([("SAT_Log", 4100)])
+SATInt(Log, [__269,__270,__273;int(1..)] [-1, -1])
+new variables:
+  find __267: bool
+  find __268: bool
+  find __269: bool
+  find __270: bool
+  find __271: bool
+  find __272: bool
+  find __273: bool
+new clauses:
+  (¬__267)
+  (__268)
+  (¬__267 \/ ¬__269)
+  (__267 \/ __269)
+  (¬__267 \/ ¬__268 \/ ¬__270)
+  (__267 \/ __268 \/ ¬__270)
+  (__267 \/ ¬__268 \/ __270)
+  (¬__267 \/ __268 \/ __270)
+  (¬__271 \/ __267)
+  (¬__271 \/ __268)
+  (__271 \/ ¬__267 \/ ¬__268)
+  (¬__271 \/ ¬__272)
+  (__271 \/ __272)
+  (¬__273 \/ __268)
+  (¬__273 \/ __272)
+  (__273 \/ ¬__268 \/ ¬__272)
+
+--
+
+sum([SATInt(Log, [__91,__92,__93,__94,__95;int(1..)] [2, 6]),SATInt(Log, [__269,__270,__273;int(1..)] [-1, -1]);int(1..)]), 
+   ~~> cnf_int_sum ([("SAT_Log", 4100)])
+SATInt(Log, [__274,__277,__282,__287;int(1..)] [1, 5])
+new variables:
+  find __274: bool
+  find __275: bool
+  find __276: bool
+  find __277: bool
+  find __278: bool
+  find __279: bool
+  find __280: bool
+  find __281: bool
+  find __282: bool
+  find __283: bool
+  find __284: bool
+  find __285: bool
+  find __286: bool
+  find __287: bool
+  find __288: bool
+  find __289: bool
+  find __290: bool
+  find __291: bool
+  find __292: bool
+  find __293: bool
+  find __294: bool
+  find __295: bool
+  find __296: bool
+  find __297: bool
+  find __298: bool
+  find __299: bool
+  find __300: bool
+new clauses:
+  (¬__91 \/ ¬__269 \/ ¬__274)
+  (__91 \/ __269 \/ ¬__274)
+  (__91 \/ ¬__269 \/ __274)
+  (¬__91 \/ __269 \/ __274)
+  (¬__275 \/ __91)
+  (¬__275 \/ __269)
+  (__275 \/ ¬__91 \/ ¬__269)
+  (¬__92 \/ ¬__270 \/ ¬__276)
+  (__92 \/ __270 \/ ¬__276)
+  (__92 \/ ¬__270 \/ __276)
+  (¬__92 \/ __270 \/ __276)
+  (¬__276 \/ ¬__275 \/ ¬__277)
+  (__276 \/ __275 \/ ¬__277)
+  (__276 \/ ¬__275 \/ __277)
+  (¬__276 \/ __275 \/ __277)
+  (¬__278 \/ __92)
+  (¬__278 \/ __270)
+  (__278 \/ ¬__92 \/ ¬__270)
+  (¬__279 \/ __275)
+  (¬__279 \/ __276)
+  (__279 \/ ¬__275 \/ ¬__276)
+  (¬__278 \/ __280)
+  (¬__279 \/ __280)
+  (¬__280 \/ __278 \/ __279)
+  (¬__93 \/ ¬__273 \/ ¬__281)
+  (__93 \/ __273 \/ ¬__281)
+  (__93 \/ ¬__273 \/ __281)
+  (¬__93 \/ __273 \/ __281)
+  (¬__281 \/ ¬__280 \/ ¬__282)
+  (__281 \/ __280 \/ ¬__282)
+  (__281 \/ ¬__280 \/ __282)
+  (¬__281 \/ __280 \/ __282)
+  (¬__283 \/ __93)
+  (¬__283 \/ __273)
+  (__283 \/ ¬__93 \/ ¬__273)
+  (¬__284 \/ __280)
+  (¬__284 \/ __281)
+  (__284 \/ ¬__280 \/ ¬__281)
+  (¬__283 \/ __285)
+  (¬__284 \/ __285)
+  (¬__285 \/ __283 \/ __284)
+  (¬__94 \/ ¬__273 \/ ¬__286)
+  (__94 \/ __273 \/ ¬__286)
+  (__94 \/ ¬__273 \/ __286)
+  (¬__94 \/ __273 \/ __286)
+  (¬__286 \/ ¬__285 \/ ¬__287)
+  (__286 \/ __285 \/ ¬__287)
+  (__286 \/ ¬__285 \/ __287)
+  (¬__286 \/ __285 \/ __287)
+  (¬__288 \/ __94)
+  (¬__288 \/ __273)
+  (__288 \/ ¬__94 \/ ¬__273)
+  (¬__289 \/ __285)
+  (¬__289 \/ __286)
+  (__289 \/ ¬__285 \/ ¬__286)
+  (¬__288 \/ __290)
+  (¬__289 \/ __290)
+  (¬__290 \/ __288 \/ __289)
+  (¬__95 \/ ¬__273 \/ ¬__291)
+  (__95 \/ __273 \/ ¬__291)
+  (__95 \/ ¬__273 \/ __291)
+  (¬__95 \/ __273 \/ __291)
+  (¬__291 \/ ¬__290 \/ ¬__292)
+  (__291 \/ __290 \/ ¬__292)
+  (__291 \/ ¬__290 \/ __292)
+  (¬__291 \/ __290 \/ __292)
+  (¬__293 \/ __95)
+  (¬__293 \/ __273)
+  (__293 \/ ¬__95 \/ ¬__273)
+  (¬__294 \/ __290)
+  (¬__294 \/ __291)
+  (__294 \/ ¬__290 \/ ¬__291)
+  (¬__293 \/ __295)
+  (¬__294 \/ __295)
+  (¬__295 \/ __293 \/ __294)
+  (¬__95 \/ ¬__273 \/ ¬__296)
+  (__95 \/ __273 \/ ¬__296)
+  (__95 \/ ¬__273 \/ __296)
+  (¬__95 \/ __273 \/ __296)
+  (¬__296 \/ ¬__295 \/ ¬__297)
+  (__296 \/ __295 \/ ¬__297)
+  (__296 \/ ¬__295 \/ __297)
+  (¬__296 \/ __295 \/ __297)
+  (¬__298 \/ __95)
+  (¬__298 \/ __273)
+  (__298 \/ ¬__95 \/ ¬__273)
+  (¬__299 \/ __295)
+  (¬__299 \/ __296)
+  (__299 \/ ¬__295 \/ ¬__296)
+  (¬__298 \/ __300)
+  (¬__299 \/ __300)
+  (¬__300 \/ __298 \/ __299)
+
+--
+
+allDiff([SATInt(Log, [__274,__277,__282,__287;int(1..)] [1, 5]),SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2]),SATInt(Log, Matrix([Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3]),SATInt(Log, [__264,__265;int(1..)] [0, 1]),SATInt(Log, Matrix([Bool(false), Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [6, 6]);int(1..5)]), 
+   ~~> sat_log_alldiff ([("SAT", 4700)])
+__331
+new variables:
+  find __301: bool
+  find __302: bool
+  find __303: bool
+  find __304: bool
+  find __305: bool
+  find __306: bool
+  find __307: bool
+  find __308: bool
+  find __309: bool
+  find __310: bool
+  find __311: bool
+  find __312: bool
+  find __313: bool
+  find __314: bool
+  find __315: bool
+  find __316: bool
+  find __317: bool
+  find __318: bool
+  find __319: bool
+  find __320: bool
+  find __321: bool
+  find __322: bool
+  find __323: bool
+  find __324: bool
+  find __325: bool
+  find __326: bool
+  find __327: bool
+  find __328: bool
+  find __329: bool
+  find __330: bool
+  find __331: bool
+new clauses:
+  (__274 \/ ¬__301)
+  (¬__274 \/ __301)
+  (¬__277 \/ ¬__302)
+  (__277 \/ __302)
+  (¬__301 \/ __303)
+  (¬__302 \/ __303)
+  (¬__303 \/ __301 \/ __302)
+  (__282 \/ ¬__304)
+  (¬__282 \/ __304)
+  (¬__303 \/ __305)
+  (¬__304 \/ __305)
+  (¬__305 \/ __303 \/ __304)
+  (__287 \/ ¬__306)
+  (¬__287 \/ __306)
+  (¬__305 \/ __307)
+  (¬__306 \/ __307)
+  (¬__307 \/ __305 \/ __306)
+  (¬__308 \/ __307)
+  (__308 \/ ¬__307)
+  (¬__274 \/ ¬__309)
+  (__274 \/ __309)
+  (¬__277 \/ ¬__310)
+  (__277 \/ __310)
+  (¬__309 \/ __311)
+  (¬__310 \/ __311)
+  (¬__311 \/ __309 \/ __310)
+  (__282 \/ ¬__312)
+  (¬__282 \/ __312)
+  (¬__311 \/ __313)
+  (¬__312 \/ __313)
+  (¬__313 \/ __311 \/ __312)
+  (__287 \/ ¬__314)
+  (¬__287 \/ __314)
+  (¬__313 \/ __315)
+  (¬__314 \/ __315)
+  (¬__315 \/ __313 \/ __314)
+  (¬__316 \/ __308)
+  (¬__316 \/ __315)
+  (__316 \/ ¬__308 \/ ¬__315)
+  (¬__274 \/ ¬__264 \/ ¬__317)
+  (__274 \/ __264 \/ ¬__317)
+  (__274 \/ ¬__264 \/ __317)
+  (¬__274 \/ __264 \/ __317)
+  (¬__277 \/ ¬__265 \/ ¬__318)
+  (__277 \/ __265 \/ ¬__318)
+  (__277 \/ ¬__265 \/ __318)
+  (¬__277 \/ __265 \/ __318)
+  (¬__317 \/ __319)
+  (¬__318 \/ __319)
+  (¬__319 \/ __317 \/ __318)
+  (¬__265 \/ ¬__282 \/ ¬__320)
+  (__265 \/ __282 \/ ¬__320)
+  (__265 \/ ¬__282 \/ __320)
+  (¬__265 \/ __282 \/ __320)
+  (¬__319 \/ __321)
+  (¬__320 \/ __321)
+  (¬__321 \/ __319 \/ __320)
+  (¬__265 \/ ¬__287 \/ ¬__322)
+  (__265 \/ __287 \/ ¬__322)
+  (__265 \/ ¬__287 \/ __322)
+  (¬__265 \/ __287 \/ __322)
+  (¬__321 \/ __323)
+  (¬__322 \/ __323)
+  (¬__323 \/ __321 \/ __322)
+  (¬__324 \/ __316)
+  (¬__324 \/ __323)
+  (__324 \/ ¬__316 \/ ¬__323)
+  (¬__325 \/ __324)
+  (__325 \/ ¬__324)
+  (¬__326 \/ __325)
+  (__326 \/ ¬__325)
+  (¬__327 \/ __326)
+  (__327 \/ ¬__326)
+  (¬__328 \/ __327)
+  (__328 \/ ¬__327)
+  (¬__329 \/ __328)
+  (__329 \/ ¬__328)
+  (¬__330 \/ __329)
+  (__330 \/ ¬__329)
+  (¬__331 \/ __330)
+  (__331 \/ ¬__330)
+
+--
+
+__331,
+(SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2]) != SATInt(Log, Matrix([Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [0, 0])),
+(SATInt(Log, [j#sat_log_int_00,j#sat_log_int_01,j#sat_log_int_02;int(1..)] [1, 3]) >= SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),
+(SATInt(Log, [j#sat_log_int_00,j#sat_log_int_01,j#sat_log_int_02;int(1..)] [1, 3]) <= SATInt(Log, Matrix([Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3])),
+(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]) >= SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),
+(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]) <= SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2])), 
+   ~~> remove_single_atom ([("SAT", 8400)])
+(SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2]) != SATInt(Log, Matrix([Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [0, 0])),
+(SATInt(Log, [j#sat_log_int_00,j#sat_log_int_01,j#sat_log_int_02;int(1..)] [1, 3]) >= SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),
+(SATInt(Log, [j#sat_log_int_00,j#sat_log_int_01,j#sat_log_int_02;int(1..)] [1, 3]) <= SATInt(Log, Matrix([Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3])),
+(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]) >= SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),
+(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]) <= SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2]))
+new clauses:
+  (__331)
+
+--
+
+(SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2]) != SATInt(Log, Matrix([Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [0, 0])), 
+   ~~> cnf_int_neq ([("SAT_Log", 4100)])
+true
+
+--
+
+true,
+(SATInt(Log, [j#sat_log_int_00,j#sat_log_int_01,j#sat_log_int_02;int(1..)] [1, 3]) >= SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),
+(SATInt(Log, [j#sat_log_int_00,j#sat_log_int_01,j#sat_log_int_02;int(1..)] [1, 3]) <= SATInt(Log, Matrix([Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3])),
+(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]) >= SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),
+(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]) <= SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2])), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(SATInt(Log, [j#sat_log_int_00,j#sat_log_int_01,j#sat_log_int_02;int(1..)] [1, 3]) >= SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),
+(SATInt(Log, [j#sat_log_int_00,j#sat_log_int_01,j#sat_log_int_02;int(1..)] [1, 3]) <= SATInt(Log, Matrix([Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3])),
+(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]) >= SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),
+(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]) <= SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2]))
+
+--
+
+(SATInt(Log, [j#sat_log_int_00,j#sat_log_int_01,j#sat_log_int_02;int(1..)] [1, 3]) >= SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])), 
+   ~~> cnf_int_ineq ([("SAT_Log", 4100)])
+__342
+new variables:
+  find __332: bool
+  find __333: bool
+  find __334: bool
+  find __335: bool
+  find __336: bool
+  find __337: bool
+  find __338: bool
+  find __339: bool
+  find __340: bool
+  find __341: bool
+  find __342: bool
+new clauses:
+  (¬__332 \/ j#sat_log_int_00)
+  (__332 \/ ¬j#sat_log_int_00)
+  (__333)
+  (¬__334 \/ j#sat_log_int_01)
+  (¬__334 \/ __333)
+  (__334 \/ ¬j#sat_log_int_01 \/ ¬__333)
+  (j#sat_log_int_01 \/ __335)
+  (¬j#sat_log_int_01 \/ ¬__335)
+  (¬__336 \/ __335)
+  (¬__336 \/ __332)
+  (__336 \/ ¬__335 \/ ¬__332)
+  (¬__334 \/ __337)
+  (¬__336 \/ __337)
+  (¬__337 \/ __334 \/ __336)
+  (¬j#sat_log_int_02 \/ ¬__338)
+  (j#sat_log_int_02 \/ __338)
+  (¬__339 \/ __338)
+  (¬__339)
+  (j#sat_log_int_02 \/ __340)
+  (¬j#sat_log_int_02 \/ ¬__340)
+  (¬__341 \/ __340)
+  (¬__341 \/ __337)
+  (__341 \/ ¬__340 \/ ¬__337)
+  (¬__339 \/ __342)
+  (¬__341 \/ __342)
+  (¬__342 \/ __339 \/ __341)
+
+--
+
+__342,
+(SATInt(Log, [j#sat_log_int_00,j#sat_log_int_01,j#sat_log_int_02;int(1..)] [1, 3]) <= SATInt(Log, Matrix([Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3])),
+(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]) >= SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),
+(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]) <= SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2])), 
+   ~~> remove_single_atom ([("SAT", 8400)])
+(SATInt(Log, [j#sat_log_int_00,j#sat_log_int_01,j#sat_log_int_02;int(1..)] [1, 3]) <= SATInt(Log, Matrix([Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3])),
+(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]) >= SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),
+(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]) <= SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2]))
+new clauses:
+  (__342)
+
+--
+
+(SATInt(Log, [j#sat_log_int_00,j#sat_log_int_01,j#sat_log_int_02;int(1..)] [1, 3]) <= SATInt(Log, Matrix([Bool(true), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3])), 
+   ~~> cnf_int_ineq ([("SAT_Log", 4100)])
+__353
+new variables:
+  find __343: bool
+  find __344: bool
+  find __345: bool
+  find __346: bool
+  find __347: bool
+  find __348: bool
+  find __349: bool
+  find __350: bool
+  find __351: bool
+  find __352: bool
+  find __353: bool
+new clauses:
+  (__343 \/ j#sat_log_int_00)
+  (__343)
+  (¬j#sat_log_int_01 \/ ¬__344)
+  (j#sat_log_int_01 \/ __344)
+  (¬__345 \/ __344)
+  (__345 \/ ¬__344)
+  (¬j#sat_log_int_01 \/ __346)
+  (j#sat_log_int_01 \/ ¬__346)
+  (¬__347 \/ __346)
+  (¬__347 \/ __343)
+  (__347 \/ ¬__346 \/ ¬__343)
+  (¬__345 \/ __348)
+  (¬__347 \/ __348)
+  (¬__348 \/ __345 \/ __347)
+  (__349)
+  (¬__350 \/ __349)
+  (¬__350 \/ j#sat_log_int_02)
+  (__350 \/ ¬__349 \/ ¬j#sat_log_int_02)
+  (j#sat_log_int_02 \/ __351)
+  (¬j#sat_log_int_02 \/ ¬__351)
+  (¬__352 \/ __351)
+  (¬__352 \/ __348)
+  (__352 \/ ¬__351 \/ ¬__348)
+  (¬__350 \/ __353)
+  (¬__352 \/ __353)
+  (¬__353 \/ __350 \/ __352)
+
+--
+
+__353,
+(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]) >= SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),
+(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]) <= SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2])), 
+   ~~> remove_single_atom ([("SAT", 8400)])
+(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]) >= SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),
+(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]) <= SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2]))
+new clauses:
+  (__353)
+
+--
+
+(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]) >= SATInt(Log, Matrix([Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])), 
+   ~~> cnf_int_ineq ([("SAT_Log", 4100)])
+__364
+new variables:
+  find __354: bool
+  find __355: bool
+  find __356: bool
+  find __357: bool
+  find __358: bool
+  find __359: bool
+  find __360: bool
+  find __361: bool
+  find __362: bool
+  find __363: bool
+  find __364: bool
+new clauses:
+  (¬__354 \/ i#sat_log_int_00)
+  (__354 \/ ¬i#sat_log_int_00)
+  (__355)
+  (¬__356 \/ i#sat_log_int_01)
+  (¬__356 \/ __355)
+  (__356 \/ ¬i#sat_log_int_01 \/ ¬__355)
+  (i#sat_log_int_01 \/ __357)
+  (¬i#sat_log_int_01 \/ ¬__357)
+  (¬__358 \/ __357)
+  (¬__358 \/ __354)
+  (__358 \/ ¬__357 \/ ¬__354)
+  (¬__356 \/ __359)
+  (¬__358 \/ __359)
+  (¬__359 \/ __356 \/ __358)
+  (¬i#sat_log_int_02 \/ ¬__360)
+  (i#sat_log_int_02 \/ __360)
+  (¬__361 \/ __360)
+  (¬__361)
+  (i#sat_log_int_02 \/ __362)
+  (¬i#sat_log_int_02 \/ ¬__362)
+  (¬__363 \/ __362)
+  (¬__363 \/ __359)
+  (__363 \/ ¬__362 \/ ¬__359)
+  (¬__361 \/ __364)
+  (¬__363 \/ __364)
+  (¬__364 \/ __361 \/ __363)
+
+--
+
+__364,
+(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]) <= SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2])), 
+   ~~> remove_single_atom ([("SAT", 8400)])
+(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]) <= SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2]))
+new clauses:
+  (__364)
+
+--
+
+(SATInt(Log, [i#sat_log_int_00,i#sat_log_int_01,i#sat_log_int_02;int(1..)] [1, 2]) <= SATInt(Log, Matrix([Bool(false), Bool(true), Bool(false)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2])), 
+   ~~> cnf_int_ineq ([("SAT_Log", 4100)])
+__375
+new variables:
+  find __365: bool
+  find __366: bool
+  find __367: bool
+  find __368: bool
+  find __369: bool
+  find __370: bool
+  find __371: bool
+  find __372: bool
+  find __373: bool
+  find __374: bool
+  find __375: bool
+new clauses:
+  (¬__365 \/ ¬i#sat_log_int_00)
+  (__365 \/ i#sat_log_int_00)
+  (¬i#sat_log_int_01 \/ ¬__366)
+  (i#sat_log_int_01 \/ __366)
+  (¬__367 \/ __366)
+  (__367 \/ ¬__366)
+  (¬i#sat_log_int_01 \/ __368)
+  (i#sat_log_int_01 \/ ¬__368)
+  (¬__369 \/ __368)
+  (¬__369 \/ __365)
+  (__369 \/ ¬__368 \/ ¬__365)
+  (¬__367 \/ __370)
+  (¬__369 \/ __370)
+  (¬__370 \/ __367 \/ __369)
+  (__371)
+  (¬__372 \/ __371)
+  (¬__372 \/ i#sat_log_int_02)
+  (__372 \/ ¬__371 \/ ¬i#sat_log_int_02)
+  (i#sat_log_int_02 \/ __373)
+  (¬i#sat_log_int_02 \/ ¬__373)
+  (¬__374 \/ __373)
+  (¬__374 \/ __370)
+  (__374 \/ ¬__373 \/ ¬__370)
+  (¬__372 \/ __375)
+  (¬__374 \/ __375)
+  (¬__375 \/ __372 \/ __374)
+
+--
+
+__375, 
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new clauses:
+  (__375)
+
+--
+
+Final model:
+
+find i: int(1..2)
+find j: int(1..3)
+find __0: bool
+find __1: bool
+find __2: bool
+find __3: bool
+find __4: bool
+find __5: bool
+find __6: bool
+find __7: bool
+find __8: bool
+find __9: bool
+find __10: bool
+find __11: bool
+find __12: bool
+find __13: bool
+find __14: bool
+find __15: bool
+find __16: bool
+find __17: bool
+find __18: bool
+find __19: bool
+find __20: bool
+find __21: bool
+find __22: bool
+find __23: bool
+find __24: bool
+find __25: bool
+find __26: bool
+find __27: bool
+find __28: bool
+find __29: bool
+find __30: bool
+find __31: bool
+find __32: bool
+find __33: bool
+find __34: bool
+find __35: bool
+find __36: bool
+find __37: bool
+find __38: bool
+find __39: bool
+find __40: bool
+find __41: bool
+find __42: bool
+find __43: bool
+find __44: bool
+find __45: bool
+find __46: bool
+find __47: bool
+find __48: bool
+find __49: bool
+find __50: bool
+find __51: bool
+find __52: bool
+find __53: bool
+find __54: bool
+find __55: bool
+find __56: bool
+find __57: bool
+find __58: bool
+find __59: bool
+find __60: bool
+find __61: bool
+find __62: bool
+find __63: bool
+find __64: bool
+find __65: bool
+find __66: bool
+find __67: bool
+find __68: bool
+find __69: bool
+find __70: bool
+find __71: bool
+find __72: bool
+find __73: bool
+find __74: bool
+find __75: bool
+find __76: bool
+find __77: bool
+find __78: bool
+find __79: bool
+find __80: bool
+find __81: bool
+find __82: bool
+find __83: bool
+find __84: bool
+find __85: bool
+find __86: bool
+find __87: bool
+find __88: bool
+find __89: bool
+find __90: bool
+find __91: bool
+find __92: bool
+find __93: bool
+find __94: bool
+find __95: bool
+find __96: bool
+find __97: bool
+find __98: bool
+find __99: bool
+find __100: bool
+find __101: bool
+find __102: bool
+find __103: bool
+find __104: bool
+find __105: bool
+find __106: bool
+find __107: bool
+find __108: bool
+find __109: bool
+find __110: bool
+find __111: bool
+find __112: bool
+find __113: bool
+find __114: bool
+find __115: bool
+find __116: bool
+find __117: bool
+find __118: bool
+find __119: bool
+find __120: bool
+find __121: bool
+find __122: bool
+find __123: bool
+find __124: bool
+find __125: bool
+find __126: bool
+find __127: bool
+find __128: bool
+find __129: bool
+find __130: bool
+find __131: bool
+find __132: bool
+find __133: bool
+find __134: bool
+find __135: bool
+find __136: bool
+find __137: bool
+find __138: bool
+find __139: bool
+find __140: bool
+find __141: bool
+find __142: bool
+find __143: bool
+find __144: bool
+find __145: bool
+find __146: bool
+find __147: bool
+find __148: bool
+find __149: bool
+find __150: bool
+find __151: bool
+find __152: bool
+find __153: bool
+find __154: bool
+find __155: bool
+find __156: bool
+find __157: bool
+find __158: bool
+find __159: bool
+find __160: bool
+find __161: bool
+find __162: bool
+find __163: bool
+find __164: bool
+find __165: bool
+find __166: bool
+find __167: bool
+find __168: bool
+find __169: bool
+find __170: bool
+find __171: bool
+find __172: bool
+find __173: bool
+find __174: bool
+find __175: bool
+find __176: bool
+find __177: bool
+find __178: bool
+find __179: bool
+find __180: bool
+find __181: bool
+find __182: bool
+find __183: bool
+find __184: bool
+find __185: bool
+find __186: bool
+find __187: bool
+find __188: bool
+find __189: bool
+find __190: bool
+find __191: bool
+find __192: bool
+find __193: bool
+find __194: bool
+find __195: bool
+find __196: bool
+find __197: bool
+find __198: bool
+find __199: bool
+find __200: bool
+find __201: bool
+find __202: bool
+find __203: bool
+find __204: bool
+find __205: bool
+find __206: bool
+find __207: bool
+find __208: bool
+find __209: bool
+find __210: bool
+find __211: bool
+find __212: bool
+find __213: bool
+find __214: bool
+find __215: bool
+find __216: bool
+find __217: bool
+find __218: bool
+find __219: bool
+find __220: bool
+find __221: bool
+find __222: bool
+find __223: bool
+find __224: bool
+find __225: bool
+find __226: bool
+find __227: bool
+find __228: bool
+find __229: bool
+find __230: bool
+find __231: bool
+find __232: bool
+find __233: bool
+find __234: bool
+find __235: bool
+find __236: bool
+find __237: bool
+find __238: bool
+find __239: bool
+find __240: bool
+find __241: bool
+find __242: bool
+find __243: bool
+find __244: bool
+find __245: bool
+find __246: bool
+find __247: bool
+find __248: bool
+find __249: bool
+find __250: bool
+find __251: bool
+find __252: bool
+find __253: bool
+find __254: bool
+find __255: bool
+find __256: bool
+find __257: bool
+find __258: bool
+find __259: bool
+find __260: bool
+find __261: bool
+find __262: bool
+find __263: bool
+find __264: bool
+find __265: bool
+find __266: bool
+find __267: bool
+find __268: bool
+find __269: bool
+find __270: bool
+find __271: bool
+find __272: bool
+find __273: bool
+find __274: bool
+find __275: bool
+find __276: bool
+find __277: bool
+find __278: bool
+find __279: bool
+find __280: bool
+find __281: bool
+find __282: bool
+find __283: bool
+find __284: bool
+find __285: bool
+find __286: bool
+find __287: bool
+find __288: bool
+find __289: bool
+find __290: bool
+find __291: bool
+find __292: bool
+find __293: bool
+find __294: bool
+find __295: bool
+find __296: bool
+find __297: bool
+find __298: bool
+find __299: bool
+find __300: bool
+find __301: bool
+find __302: bool
+find __303: bool
+find __304: bool
+find __305: bool
+find __306: bool
+find __307: bool
+find __308: bool
+find __309: bool
+find __310: bool
+find __311: bool
+find __312: bool
+find __313: bool
+find __314: bool
+find __315: bool
+find __316: bool
+find __317: bool
+find __318: bool
+find __319: bool
+find __320: bool
+find __321: bool
+find __322: bool
+find __323: bool
+find __324: bool
+find __325: bool
+find __326: bool
+find __327: bool
+find __328: bool
+find __329: bool
+find __330: bool
+find __331: bool
+find __332: bool
+find __333: bool
+find __334: bool
+find __335: bool
+find __336: bool
+find __337: bool
+find __338: bool
+find __339: bool
+find __340: bool
+find __341: bool
+find __342: bool
+find __343: bool
+find __344: bool
+find __345: bool
+find __346: bool
+find __347: bool
+find __348: bool
+find __349: bool
+find __350: bool
+find __351: bool
+find __352: bool
+find __353: bool
+find __354: bool
+find __355: bool
+find __356: bool
+find __357: bool
+find __358: bool
+find __359: bool
+find __360: bool
+find __361: bool
+find __362: bool
+find __363: bool
+find __364: bool
+find __365: bool
+find __366: bool
+find __367: bool
+find __368: bool
+find __369: bool
+find __370: bool
+find __371: bool
+find __372: bool
+find __373: bool
+find __374: bool
+find __375: bool
+find i#sat_log_int_00: bool
+find i#sat_log_int_01: bool
+find i#sat_log_int_02: bool
+find j#sat_log_int_00: bool
+find j#sat_log_int_01: bool
+find j#sat_log_int_02: bool
+
+such that
+
+true
+
+clauses:
+
+(¬j#sat_log_int_00 \/ ¬__0),
+(j#sat_log_int_00 \/ __0),
+(¬j#sat_log_int_01 \/ ¬__1),
+(j#sat_log_int_01 \/ __1),
+(¬j#sat_log_int_02 \/ ¬__2),
+(j#sat_log_int_02 \/ __2),
+(¬__0 \/ ¬__3),
+(__0 \/ __3),
+(¬__0 \/ ¬__1 \/ ¬__4),
+(__0 \/ __1 \/ ¬__4),
+(__0 \/ ¬__1 \/ __4),
+(¬__0 \/ __1 \/ __4),
+(¬__5 \/ __0),
+(¬__5 \/ __1),
+(__5 \/ ¬__0 \/ ¬__1),
+(¬__5 \/ ¬__2 \/ ¬__6),
+(__5 \/ __2 \/ ¬__6),
+(__5 \/ ¬__2 \/ __6),
+(¬__5 \/ __2 \/ __6),
+(¬__7 \/ __5),
+(¬__7 \/ __2),
+(__7 \/ ¬__5 \/ ¬__2),
+(¬__7 \/ ¬__8),
+(__7 \/ __8),
+(¬__9 \/ __2),
+(¬__9 \/ __8),
+(__9 \/ ¬__2 \/ ¬__8),
+(¬__10 \/ j#sat_log_int_02 \/ j#sat_log_int_00),
+(¬__10 \/ ¬j#sat_log_int_02 \/ __3),
+(¬__10 \/ j#sat_log_int_00 \/ __3),
+(__10 \/ j#sat_log_int_02 \/ ¬j#sat_log_int_00),
+(__10 \/ ¬j#sat_log_int_02 \/ ¬__3),
+(__10 \/ ¬j#sat_log_int_00 \/ ¬__3),
+(¬__11 \/ j#sat_log_int_02 \/ j#sat_log_int_01),
+(¬__11 \/ ¬j#sat_log_int_02 \/ __4),
+(¬__11 \/ j#sat_log_int_01 \/ __4),
+(__11 \/ j#sat_log_int_02 \/ ¬j#sat_log_int_01),
+(__11 \/ ¬j#sat_log_int_02 \/ ¬__4),
+(__11 \/ ¬j#sat_log_int_01 \/ ¬__4),
+(¬__12 \/ j#sat_log_int_02 \/ j#sat_log_int_02),
+(¬__12 \/ ¬j#sat_log_int_02 \/ __6),
+(¬__12 \/ j#sat_log_int_02 \/ __6),
+(__12 \/ j#sat_log_int_02 \/ ¬j#sat_log_int_02),
+(__12 \/ ¬j#sat_log_int_02 \/ ¬__6),
+(__12 \/ ¬j#sat_log_int_02 \/ ¬__6),
+(¬__13 \/ j#sat_log_int_02 \/ j#sat_log_int_02),
+(¬__13 \/ ¬j#sat_log_int_02 \/ __9),
+(¬__13 \/ j#sat_log_int_02 \/ __9),
+(__13 \/ j#sat_log_int_02 \/ ¬j#sat_log_int_02),
+(__13 \/ ¬j#sat_log_int_02 \/ ¬__9),
+(__13 \/ ¬j#sat_log_int_02 \/ ¬__9),
+(¬__14 \/ __10),
+(¬__14 \/ ¬__10),
+(¬__14),
+(¬__15 \/ __10),
+(__15 \/ ¬__10),
+(¬__16 \/ __10),
+(¬__16 \/ ¬__10),
+(¬__16),
+(¬__17 \/ __11),
+(¬__17 \/ ¬__11),
+(¬__17),
+(¬__18 \/ __11),
+(¬__18 \/ ¬__11),
+(¬__18),
+(¬__19 \/ __11),
+(__19 \/ ¬__11),
+(¬__20 \/ __11),
+(¬__20 \/ ¬__11),
+(¬__20),
+(¬__14 \/ ¬__17 \/ ¬__21),
+(__14 \/ __17 \/ ¬__21),
+(__14 \/ ¬__17 \/ __21),
+(¬__14 \/ __17 \/ __21),
+(¬__22 \/ __14),
+(¬__22 \/ __17),
+(__22 \/ ¬__14 \/ ¬__17),
+(¬__15 \/ ¬__18 \/ ¬__23),
+(__15 \/ __18 \/ ¬__23),
+(__15 \/ ¬__18 \/ __23),
+(¬__15 \/ __18 \/ __23),
+(¬__23 \/ ¬__22 \/ ¬__24),
+(__23 \/ __22 \/ ¬__24),
+(__23 \/ ¬__22 \/ __24),
+(¬__23 \/ __22 \/ __24),
+(¬__25 \/ __15),
+(¬__25 \/ __18),
+(__25 \/ ¬__15 \/ ¬__18),
+(¬__26 \/ __22),
+(¬__26 \/ __23),
+(__26 \/ ¬__22 \/ ¬__23),
+(¬__25 \/ __27),
+(¬__26 \/ __27),
+(¬__27 \/ __25 \/ __26),
+(¬__16 \/ ¬__19 \/ ¬__28),
+(__16 \/ __19 \/ ¬__28),
+(__16 \/ ¬__19 \/ __28),
+(¬__16 \/ __19 \/ __28),
+(¬__28 \/ ¬__27 \/ ¬__29),
+(__28 \/ __27 \/ ¬__29),
+(__28 \/ ¬__27 \/ __29),
+(¬__28 \/ __27 \/ __29),
+(¬__30 \/ __16),
+(¬__30 \/ __19),
+(__30 \/ ¬__16 \/ ¬__19),
+(¬__31 \/ __27),
+(¬__31 \/ __28),
+(__31 \/ ¬__27 \/ ¬__28),
+(¬__30 \/ __32),
+(¬__31 \/ __32),
+(¬__32 \/ __30 \/ __31),
+(¬__16 \/ ¬__20 \/ ¬__33),
+(__16 \/ __20 \/ ¬__33),
+(__16 \/ ¬__20 \/ __33),
+(¬__16 \/ __20 \/ __33),
+(¬__33 \/ ¬__32 \/ ¬__34),
+(__33 \/ __32 \/ ¬__34),
+(__33 \/ ¬__32 \/ __34),
+(¬__33 \/ __32 \/ __34),
+(¬__35 \/ __16),
+(¬__35 \/ __20),
+(__35 \/ ¬__16 \/ ¬__20),
+(¬__36 \/ __32),
+(¬__36 \/ __33),
+(__36 \/ ¬__32 \/ ¬__33),
+(¬__35 \/ __37),
+(¬__36 \/ __37),
+(¬__37 \/ __35 \/ __36),
+(¬__16 \/ ¬__20 \/ ¬__38),
+(__16 \/ __20 \/ ¬__38),
+(__16 \/ ¬__20 \/ __38),
+(¬__16 \/ __20 \/ __38),
+(¬__38 \/ ¬__37 \/ ¬__39),
+(__38 \/ __37 \/ ¬__39),
+(__38 \/ ¬__37 \/ __39),
+(¬__38 \/ __37 \/ __39),
+(¬__40 \/ __16),
+(¬__40 \/ __20),
+(__40 \/ ¬__16 \/ ¬__20),
+(¬__41 \/ __37),
+(¬__41 \/ __38),
+(__41 \/ ¬__37 \/ ¬__38),
+(¬__40 \/ __42),
+(¬__41 \/ __42),
+(¬__42 \/ __40 \/ __41),
+(¬__43 \/ __12),
+(¬__43 \/ ¬__12),
+(¬__43),
+(¬__44 \/ __12),
+(¬__44 \/ ¬__12),
+(¬__44),
+(¬__45 \/ __12),
+(¬__45 \/ ¬__12),
+(¬__45),
+(¬__46 \/ __12),
+(__46 \/ ¬__12),
+(¬__47 \/ __12),
+(¬__47 \/ ¬__12),
+(¬__47),
+(¬__21 \/ ¬__43 \/ ¬__48),
+(__21 \/ __43 \/ ¬__48),
+(__21 \/ ¬__43 \/ __48),
+(¬__21 \/ __43 \/ __48),
+(¬__49 \/ __21),
+(¬__49 \/ __43),
+(__49 \/ ¬__21 \/ ¬__43),
+(¬__24 \/ ¬__44 \/ ¬__50),
+(__24 \/ __44 \/ ¬__50),
+(__24 \/ ¬__44 \/ __50),
+(¬__24 \/ __44 \/ __50),
+(¬__50 \/ ¬__49 \/ ¬__51),
+(__50 \/ __49 \/ ¬__51),
+(__50 \/ ¬__49 \/ __51),
+(¬__50 \/ __49 \/ __51),
+(¬__52 \/ __24),
+(¬__52 \/ __44),
+(__52 \/ ¬__24 \/ ¬__44),
+(¬__53 \/ __49),
+(¬__53 \/ __50),
+(__53 \/ ¬__49 \/ ¬__50),
+(¬__52 \/ __54),
+(¬__53 \/ __54),
+(¬__54 \/ __52 \/ __53),
+(¬__29 \/ ¬__45 \/ ¬__55),
+(__29 \/ __45 \/ ¬__55),
+(__29 \/ ¬__45 \/ __55),
+(¬__29 \/ __45 \/ __55),
+(¬__55 \/ ¬__54 \/ ¬__56),
+(__55 \/ __54 \/ ¬__56),
+(__55 \/ ¬__54 \/ __56),
+(¬__55 \/ __54 \/ __56),
+(¬__57 \/ __29),
+(¬__57 \/ __45),
+(__57 \/ ¬__29 \/ ¬__45),
+(¬__58 \/ __54),
+(¬__58 \/ __55),
+(__58 \/ ¬__54 \/ ¬__55),
+(¬__57 \/ __59),
+(¬__58 \/ __59),
+(¬__59 \/ __57 \/ __58),
+(¬__34 \/ ¬__46 \/ ¬__60),
+(__34 \/ __46 \/ ¬__60),
+(__34 \/ ¬__46 \/ __60),
+(¬__34 \/ __46 \/ __60),
+(¬__60 \/ ¬__59 \/ ¬__61),
+(__60 \/ __59 \/ ¬__61),
+(__60 \/ ¬__59 \/ __61),
+(¬__60 \/ __59 \/ __61),
+(¬__62 \/ __34),
+(¬__62 \/ __46),
+(__62 \/ ¬__34 \/ ¬__46),
+(¬__63 \/ __59),
+(¬__63 \/ __60),
+(__63 \/ ¬__59 \/ ¬__60),
+(¬__62 \/ __64),
+(¬__63 \/ __64),
+(¬__64 \/ __62 \/ __63),
+(¬__34 \/ ¬__47 \/ ¬__65),
+(__34 \/ __47 \/ ¬__65),
+(__34 \/ ¬__47 \/ __65),
+(¬__34 \/ __47 \/ __65),
+(¬__65 \/ ¬__64 \/ ¬__66),
+(__65 \/ __64 \/ ¬__66),
+(__65 \/ ¬__64 \/ __66),
+(¬__65 \/ __64 \/ __66),
+(¬__67 \/ __34),
+(¬__67 \/ __47),
+(__67 \/ ¬__34 \/ ¬__47),
+(¬__68 \/ __64),
+(¬__68 \/ __65),
+(__68 \/ ¬__64 \/ ¬__65),
+(¬__67 \/ __69),
+(¬__68 \/ __69),
+(¬__69 \/ __67 \/ __68),
+(¬__34 \/ ¬__47 \/ ¬__70),
+(__34 \/ __47 \/ ¬__70),
+(__34 \/ ¬__47 \/ __70),
+(¬__34 \/ __47 \/ __70),
+(¬__70 \/ ¬__69 \/ ¬__71),
+(__70 \/ __69 \/ ¬__71),
+(__70 \/ ¬__69 \/ __71),
+(¬__70 \/ __69 \/ __71),
+(¬__72 \/ __34),
+(¬__72 \/ __47),
+(__72 \/ ¬__34 \/ ¬__47),
+(¬__73 \/ __69),
+(¬__73 \/ __70),
+(__73 \/ ¬__69 \/ ¬__70),
+(¬__72 \/ __74),
+(¬__73 \/ __74),
+(¬__74 \/ __72 \/ __73),
+(¬__48 \/ ¬__75),
+(__48 \/ __75),
+(¬__51 \/ ¬__76),
+(__51 \/ __76),
+(¬__56 \/ ¬__77),
+(__56 \/ __77),
+(¬__61 \/ ¬__78),
+(__61 \/ __78),
+(¬__66 \/ ¬__79),
+(__66 \/ __79),
+(¬__75 \/ ¬__80),
+(__75 \/ __80),
+(¬__75 \/ ¬__76 \/ ¬__81),
+(__75 \/ __76 \/ ¬__81),
+(__75 \/ ¬__76 \/ __81),
+(¬__75 \/ __76 \/ __81),
+(¬__82 \/ __75),
+(¬__82 \/ __76),
+(__82 \/ ¬__75 \/ ¬__76),
+(¬__82 \/ ¬__77 \/ ¬__83),
+(__82 \/ __77 \/ ¬__83),
+(__82 \/ ¬__77 \/ __83),
+(¬__82 \/ __77 \/ __83),
+(¬__84 \/ __82),
+(¬__84 \/ __77),
+(__84 \/ ¬__82 \/ ¬__77),
+(¬__84 \/ ¬__78 \/ ¬__85),
+(__84 \/ __78 \/ ¬__85),
+(__84 \/ ¬__78 \/ __85),
+(¬__84 \/ __78 \/ __85),
+(¬__86 \/ __84),
+(¬__86 \/ __78),
+(__86 \/ ¬__84 \/ ¬__78),
+(¬__86 \/ ¬__79 \/ ¬__87),
+(__86 \/ __79 \/ ¬__87),
+(__86 \/ ¬__79 \/ __87),
+(¬__86 \/ __79 \/ __87),
+(¬__88 \/ __86),
+(¬__88 \/ __79),
+(__88 \/ ¬__86 \/ ¬__79),
+(¬__88 \/ ¬__89),
+(__88 \/ __89),
+(¬__90 \/ __79),
+(¬__90 \/ __89),
+(__90 \/ ¬__79 \/ ¬__89),
+(¬__91 \/ j#sat_log_int_02 \/ __48),
+(¬__91 \/ ¬j#sat_log_int_02 \/ __80),
+(¬__91 \/ __48 \/ __80),
+(__91 \/ j#sat_log_int_02 \/ ¬__48),
+(__91 \/ ¬j#sat_log_int_02 \/ ¬__80),
+(__91 \/ ¬__48 \/ ¬__80),
+(¬__92 \/ j#sat_log_int_02 \/ __51),
+(¬__92 \/ ¬j#sat_log_int_02 \/ __81),
+(¬__92 \/ __51 \/ __81),
+(__92 \/ j#sat_log_int_02 \/ ¬__51),
+(__92 \/ ¬j#sat_log_int_02 \/ ¬__81),
+(__92 \/ ¬__51 \/ ¬__81),
+(¬__93 \/ j#sat_log_int_02 \/ __56),
+(¬__93 \/ ¬j#sat_log_int_02 \/ __83),
+(¬__93 \/ __56 \/ __83),
+(__93 \/ j#sat_log_int_02 \/ ¬__56),
+(__93 \/ ¬j#sat_log_int_02 \/ ¬__83),
+(__93 \/ ¬__56 \/ ¬__83),
+(¬__94 \/ j#sat_log_int_02 \/ __61),
+(¬__94 \/ ¬j#sat_log_int_02 \/ __85),
+(¬__94 \/ __61 \/ __85),
+(__94 \/ j#sat_log_int_02 \/ ¬__61),
+(__94 \/ ¬j#sat_log_int_02 \/ ¬__85),
+(__94 \/ ¬__61 \/ ¬__85),
+(¬__95 \/ j#sat_log_int_02 \/ __66),
+(¬__95 \/ ¬j#sat_log_int_02 \/ __87),
+(¬__95 \/ __66 \/ __87),
+(__95 \/ j#sat_log_int_02 \/ ¬__66),
+(__95 \/ ¬j#sat_log_int_02 \/ ¬__87),
+(__95 \/ ¬__66 \/ ¬__87),
+(¬__96 \/ j#sat_log_int_02 \/ __66),
+(¬__96 \/ ¬j#sat_log_int_02 \/ __90),
+(¬__96 \/ __66 \/ __90),
+(__96 \/ j#sat_log_int_02 \/ ¬__66),
+(__96 \/ ¬j#sat_log_int_02 \/ ¬__90),
+(__96 \/ ¬__66 \/ ¬__90),
+(¬i#sat_log_int_00 \/ ¬__97),
+(i#sat_log_int_00 \/ __97),
+(¬i#sat_log_int_01 \/ ¬__98),
+(i#sat_log_int_01 \/ __98),
+(¬i#sat_log_int_02 \/ ¬__99),
+(i#sat_log_int_02 \/ __99),
+(¬__97 \/ ¬__100),
+(__97 \/ __100),
+(¬__97 \/ ¬__98 \/ ¬__101),
+(__97 \/ __98 \/ ¬__101),
+(__97 \/ ¬__98 \/ __101),
+(¬__97 \/ __98 \/ __101),
+(¬__102 \/ __97),
+(¬__102 \/ __98),
+(__102 \/ ¬__97 \/ ¬__98),
+(¬__102 \/ ¬__99 \/ ¬__103),
+(__102 \/ __99 \/ ¬__103),
+(__102 \/ ¬__99 \/ __103),
+(¬__102 \/ __99 \/ __103),
+(¬__104 \/ __102),
+(¬__104 \/ __99),
+(__104 \/ ¬__102 \/ ¬__99),
+(__105),
+(¬__106),
+(__107),
+(¬__105 \/ ¬__108),
+(__105 \/ __108),
+(¬__105 \/ ¬__106 \/ ¬__109),
+(__105 \/ __106 \/ ¬__109),
+(__105 \/ ¬__106 \/ __109),
+(¬__105 \/ __106 \/ __109),
+(¬__110 \/ __105),
+(¬__110 \/ __106),
+(__110 \/ ¬__105 \/ ¬__106),
+(¬__110 \/ ¬__107 \/ ¬__111),
+(__110 \/ __107 \/ ¬__111),
+(__110 \/ ¬__107 \/ __111),
+(¬__110 \/ __107 \/ __111),
+(¬__112 \/ __110),
+(¬__112 \/ __107),
+(__112 \/ ¬__110 \/ ¬__107),
+(i#sat_log_int_02 \/ ¬__113),
+(¬i#sat_log_int_02 \/ __113),
+(¬__114 \/ i#sat_log_int_02 \/ i#sat_log_int_00),
+(¬__114 \/ ¬i#sat_log_int_02 \/ __100),
+(¬__114 \/ i#sat_log_int_00 \/ __100),
+(__114 \/ i#sat_log_int_02 \/ ¬i#sat_log_int_00),
+(__114 \/ ¬i#sat_log_int_02 \/ ¬__100),
+(__114 \/ ¬i#sat_log_int_00 \/ ¬__100),
+(¬__115 \/ i#sat_log_int_02 \/ i#sat_log_int_01),
+(¬__115 \/ ¬i#sat_log_int_02 \/ __101),
+(¬__115 \/ i#sat_log_int_01 \/ __101),
+(__115 \/ i#sat_log_int_02 \/ ¬i#sat_log_int_01),
+(__115 \/ ¬i#sat_log_int_02 \/ ¬__101),
+(__115 \/ ¬i#sat_log_int_01 \/ ¬__101),
+(¬__116 \/ i#sat_log_int_02 \/ i#sat_log_int_02),
+(¬__116 \/ ¬i#sat_log_int_02 \/ __103),
+(¬__116 \/ i#sat_log_int_02 \/ __103),
+(__116 \/ i#sat_log_int_02 \/ ¬i#sat_log_int_02),
+(__116 \/ ¬i#sat_log_int_02 \/ ¬__103),
+(__116 \/ ¬i#sat_log_int_02 \/ ¬__103),
+(¬__117),
+(¬__117 \/ __108),
+(__118),
+(__118 \/ ¬__109),
+(¬__119),
+(¬__119 \/ __111),
+(__120),
+(__121),
+(__122),
+(¬__117 \/ ¬__123),
+(__117 \/ __123),
+(¬__118 \/ ¬__124),
+(__118 \/ __124),
+(¬__119 \/ ¬__125),
+(__119 \/ __125),
+(¬__120 \/ ¬__126),
+(__120 \/ __126),
+(¬__120 \/ ¬__121 \/ ¬__127),
+(__120 \/ __121 \/ ¬__127),
+(__120 \/ ¬__121 \/ __127),
+(¬__120 \/ __121 \/ __127),
+(¬__128 \/ __120),
+(¬__128 \/ __121),
+(__128 \/ ¬__120 \/ ¬__121),
+(¬__128 \/ ¬__122 \/ ¬__129),
+(__128 \/ __122 \/ ¬__129),
+(__128 \/ ¬__122 \/ __129),
+(¬__128 \/ __122 \/ __129),
+(¬__130 \/ __128),
+(¬__130 \/ __122),
+(__130 \/ ¬__128 \/ ¬__122),
+(¬__130 \/ ¬__123 \/ ¬__131),
+(__130 \/ __123 \/ ¬__131),
+(__130 \/ ¬__123 \/ __131),
+(¬__130 \/ __123 \/ __131),
+(¬__132 \/ __130),
+(¬__132 \/ __123),
+(__132 \/ ¬__130 \/ ¬__123),
+(¬__132 \/ ¬__124 \/ ¬__133),
+(__132 \/ __124 \/ ¬__133),
+(__132 \/ ¬__124 \/ __133),
+(¬__132 \/ __124 \/ __133),
+(¬__134 \/ __132),
+(¬__134 \/ __124),
+(__134 \/ ¬__132 \/ ¬__124),
+(¬__134 \/ ¬__125 \/ ¬__135),
+(__134 \/ __125 \/ ¬__135),
+(__134 \/ ¬__125 \/ __135),
+(¬__134 \/ __125 \/ __135),
+(¬__136 \/ __134),
+(¬__136 \/ __125),
+(__136 \/ ¬__134 \/ ¬__125),
+(__126 \/ ¬__137),
+(¬__126 \/ __137),
+(¬__138),
+(¬__138 \/ __126),
+(¬__114 \/ ¬__127 \/ ¬__139),
+(__114 \/ __127 \/ ¬__139),
+(__114 \/ ¬__127 \/ __139),
+(¬__114 \/ __127 \/ __139),
+(¬__139 \/ ¬__138 \/ ¬__140),
+(__139 \/ __138 \/ ¬__140),
+(__139 \/ ¬__138 \/ __140),
+(¬__139 \/ __138 \/ __140),
+(¬__141 \/ __114),
+(¬__141 \/ __127),
+(__141 \/ ¬__114 \/ ¬__127),
+(¬__142 \/ __138),
+(¬__142 \/ __139),
+(__142 \/ ¬__138 \/ ¬__139),
+(¬__141 \/ __143),
+(¬__142 \/ __143),
+(¬__143 \/ __141 \/ __142),
+(¬__115 \/ ¬__129 \/ ¬__144),
+(__115 \/ __129 \/ ¬__144),
+(__115 \/ ¬__129 \/ __144),
+(¬__115 \/ __129 \/ __144),
+(¬__144 \/ ¬__143 \/ ¬__145),
+(__144 \/ __143 \/ ¬__145),
+(__144 \/ ¬__143 \/ __145),
+(¬__144 \/ __143 \/ __145),
+(¬__146 \/ __115),
+(¬__146 \/ __129),
+(__146 \/ ¬__115 \/ ¬__129),
+(¬__147 \/ __143),
+(¬__147 \/ __144),
+(__147 \/ ¬__143 \/ ¬__144),
+(¬__146 \/ __148),
+(¬__147 \/ __148),
+(¬__148 \/ __146 \/ __147),
+(¬__116 \/ ¬__131 \/ ¬__149),
+(__116 \/ __131 \/ ¬__149),
+(__116 \/ ¬__131 \/ __149),
+(¬__116 \/ __131 \/ __149),
+(¬__149 \/ ¬__148 \/ ¬__150),
+(__149 \/ __148 \/ ¬__150),
+(__149 \/ ¬__148 \/ __150),
+(¬__149 \/ __148 \/ __150),
+(¬__151 \/ __116),
+(¬__151 \/ __131),
+(__151 \/ ¬__116 \/ ¬__131),
+(¬__152 \/ __148),
+(¬__152 \/ __149),
+(__152 \/ ¬__148 \/ ¬__149),
+(¬__151 \/ __153),
+(¬__152 \/ __153),
+(¬__153 \/ __151 \/ __152),
+(¬__116 \/ ¬__133 \/ ¬__154),
+(__116 \/ __133 \/ ¬__154),
+(__116 \/ ¬__133 \/ __154),
+(¬__116 \/ __133 \/ __154),
+(¬__154 \/ ¬__153 \/ ¬__155),
+(__154 \/ __153 \/ ¬__155),
+(__154 \/ ¬__153 \/ __155),
+(¬__154 \/ __153 \/ __155),
+(¬__156 \/ __116),
+(¬__156 \/ __133),
+(__156 \/ ¬__116 \/ ¬__133),
+(¬__157 \/ __153),
+(¬__157 \/ __154),
+(__157 \/ ¬__153 \/ ¬__154),
+(¬__156 \/ __158),
+(¬__157 \/ __158),
+(¬__158 \/ __156 \/ __157),
+(¬__116 \/ ¬__135 \/ ¬__159),
+(__116 \/ __135 \/ ¬__159),
+(__116 \/ ¬__135 \/ __159),
+(¬__116 \/ __135 \/ __159),
+(¬__159 \/ ¬__158 \/ ¬__160),
+(__159 \/ __158 \/ ¬__160),
+(__159 \/ ¬__158 \/ __160),
+(¬__159 \/ __158 \/ __160),
+(¬__161 \/ __116),
+(¬__161 \/ __135),
+(__161 \/ ¬__116 \/ ¬__135),
+(¬__162 \/ __158),
+(¬__162 \/ __159),
+(__162 \/ ¬__158 \/ ¬__159),
+(¬__161 \/ __163),
+(¬__162 \/ __163),
+(¬__163 \/ __161 \/ __162),
+(¬__160 \/ ¬__164),
+(__160 \/ __164),
+(¬__165 \/ __164),
+(¬__165 \/ ¬__164 \/ __137),
+(¬__165 \/ __137),
+(__165 \/ ¬__164 \/ ¬__137),
+(¬__166 \/ __164 \/ __114),
+(¬__166 \/ ¬__164 \/ __140),
+(¬__166 \/ __114 \/ __140),
+(__166 \/ __164 \/ ¬__114),
+(__166 \/ ¬__164 \/ ¬__140),
+(__166 \/ ¬__114 \/ ¬__140),
+(¬__167 \/ __164 \/ __115),
+(¬__167 \/ ¬__164 \/ __145),
+(¬__167 \/ __115 \/ __145),
+(__167 \/ __164 \/ ¬__115),
+(__167 \/ ¬__164 \/ ¬__145),
+(__167 \/ ¬__115 \/ ¬__145),
+(¬__168 \/ __164 \/ __116),
+(¬__168 \/ ¬__164 \/ __150),
+(¬__168 \/ __116 \/ __150),
+(__168 \/ __164 \/ ¬__116),
+(__168 \/ ¬__164 \/ ¬__150),
+(__168 \/ ¬__116 \/ ¬__150),
+(¬__169 \/ __164 \/ __116),
+(¬__169 \/ ¬__164 \/ __155),
+(¬__169 \/ __116 \/ __155),
+(__169 \/ __164 \/ ¬__116),
+(__169 \/ ¬__164 \/ ¬__155),
+(__169 \/ ¬__116 \/ ¬__155),
+(¬__170 \/ __164 \/ __116),
+(¬__170 \/ ¬__164 \/ __160),
+(¬__170 \/ __116 \/ __160),
+(__170 \/ __164 \/ ¬__116),
+(__170 \/ ¬__164 \/ ¬__160),
+(__170 \/ ¬__116 \/ ¬__160),
+(__126 \/ ¬__171),
+(¬__126 \/ __171),
+(¬__172),
+(¬__172 \/ __126),
+(¬__165 \/ ¬__127 \/ ¬__173),
+(__165 \/ __127 \/ ¬__173),
+(__165 \/ ¬__127 \/ __173),
+(¬__165 \/ __127 \/ __173),
+(¬__173 \/ ¬__172 \/ ¬__174),
+(__173 \/ __172 \/ ¬__174),
+(__173 \/ ¬__172 \/ __174),
+(¬__173 \/ __172 \/ __174),
+(¬__175 \/ __165),
+(¬__175 \/ __127),
+(__175 \/ ¬__165 \/ ¬__127),
+(¬__176 \/ __172),
+(¬__176 \/ __173),
+(__176 \/ ¬__172 \/ ¬__173),
+(¬__175 \/ __177),
+(¬__176 \/ __177),
+(¬__177 \/ __175 \/ __176),
+(¬__166 \/ ¬__129 \/ ¬__178),
+(__166 \/ __129 \/ ¬__178),
+(__166 \/ ¬__129 \/ __178),
+(¬__166 \/ __129 \/ __178),
+(¬__178 \/ ¬__177 \/ ¬__179),
+(__178 \/ __177 \/ ¬__179),
+(__178 \/ ¬__177 \/ __179),
+(¬__178 \/ __177 \/ __179),
+(¬__180 \/ __166),
+(¬__180 \/ __129),
+(__180 \/ ¬__166 \/ ¬__129),
+(¬__181 \/ __177),
+(¬__181 \/ __178),
+(__181 \/ ¬__177 \/ ¬__178),
+(¬__180 \/ __182),
+(¬__181 \/ __182),
+(¬__182 \/ __180 \/ __181),
+(¬__167 \/ ¬__131 \/ ¬__183),
+(__167 \/ __131 \/ ¬__183),
+(__167 \/ ¬__131 \/ __183),
+(¬__167 \/ __131 \/ __183),
+(¬__183 \/ ¬__182 \/ ¬__184),
+(__183 \/ __182 \/ ¬__184),
+(__183 \/ ¬__182 \/ __184),
+(¬__183 \/ __182 \/ __184),
+(¬__185 \/ __167),
+(¬__185 \/ __131),
+(__185 \/ ¬__167 \/ ¬__131),
+(¬__186 \/ __182),
+(¬__186 \/ __183),
+(__186 \/ ¬__182 \/ ¬__183),
+(¬__185 \/ __187),
+(¬__186 \/ __187),
+(¬__187 \/ __185 \/ __186),
+(¬__168 \/ ¬__133 \/ ¬__188),
+(__168 \/ __133 \/ ¬__188),
+(__168 \/ ¬__133 \/ __188),
+(¬__168 \/ __133 \/ __188),
+(¬__188 \/ ¬__187 \/ ¬__189),
+(__188 \/ __187 \/ ¬__189),
+(__188 \/ ¬__187 \/ __189),
+(¬__188 \/ __187 \/ __189),
+(¬__190 \/ __168),
+(¬__190 \/ __133),
+(__190 \/ ¬__168 \/ ¬__133),
+(¬__191 \/ __187),
+(¬__191 \/ __188),
+(__191 \/ ¬__187 \/ ¬__188),
+(¬__190 \/ __192),
+(¬__191 \/ __192),
+(¬__192 \/ __190 \/ __191),
+(¬__169 \/ ¬__135 \/ ¬__193),
+(__169 \/ __135 \/ ¬__193),
+(__169 \/ ¬__135 \/ __193),
+(¬__169 \/ __135 \/ __193),
+(¬__193 \/ ¬__192 \/ ¬__194),
+(__193 \/ __192 \/ ¬__194),
+(__193 \/ ¬__192 \/ __194),
+(¬__193 \/ __192 \/ __194),
+(¬__195 \/ __169),
+(¬__195 \/ __135),
+(__195 \/ ¬__169 \/ ¬__135),
+(¬__196 \/ __192),
+(¬__196 \/ __193),
+(__196 \/ ¬__192 \/ ¬__193),
+(¬__195 \/ __197),
+(¬__196 \/ __197),
+(¬__197 \/ __195 \/ __196),
+(¬__194 \/ ¬__198),
+(__194 \/ __198),
+(¬__199 \/ __198),
+(¬__199 \/ ¬__198 \/ __171),
+(¬__199 \/ __171),
+(__199 \/ ¬__198 \/ ¬__171),
+(¬__200 \/ __198 \/ __165),
+(¬__200 \/ ¬__198 \/ __174),
+(¬__200 \/ __165 \/ __174),
+(__200 \/ __198 \/ ¬__165),
+(__200 \/ ¬__198 \/ ¬__174),
+(__200 \/ ¬__165 \/ ¬__174),
+(¬__201 \/ __198 \/ __166),
+(¬__201 \/ ¬__198 \/ __179),
+(¬__201 \/ __166 \/ __179),
+(__201 \/ __198 \/ ¬__166),
+(__201 \/ ¬__198 \/ ¬__179),
+(__201 \/ ¬__166 \/ ¬__179),
+(¬__202 \/ __198 \/ __167),
+(¬__202 \/ ¬__198 \/ __184),
+(¬__202 \/ __167 \/ __184),
+(__202 \/ __198 \/ ¬__167),
+(__202 \/ ¬__198 \/ ¬__184),
+(__202 \/ ¬__167 \/ ¬__184),
+(¬__203 \/ __198 \/ __168),
+(¬__203 \/ ¬__198 \/ __189),
+(¬__203 \/ __168 \/ __189),
+(__203 \/ __198 \/ ¬__168),
+(__203 \/ ¬__198 \/ ¬__189),
+(__203 \/ ¬__168 \/ ¬__189),
+(¬__204 \/ __198 \/ __169),
+(¬__204 \/ ¬__198 \/ __194),
+(¬__204 \/ __169 \/ __194),
+(__204 \/ __198 \/ ¬__169),
+(__204 \/ ¬__198 \/ ¬__194),
+(__204 \/ ¬__169 \/ ¬__194),
+(__126 \/ ¬__205),
+(¬__126 \/ __205),
+(¬__206),
+(¬__206 \/ __126),
+(¬__199 \/ ¬__127 \/ ¬__207),
+(__199 \/ __127 \/ ¬__207),
+(__199 \/ ¬__127 \/ __207),
+(¬__199 \/ __127 \/ __207),
+(¬__207 \/ ¬__206 \/ ¬__208),
+(__207 \/ __206 \/ ¬__208),
+(__207 \/ ¬__206 \/ __208),
+(¬__207 \/ __206 \/ __208),
+(¬__209 \/ __199),
+(¬__209 \/ __127),
+(__209 \/ ¬__199 \/ ¬__127),
+(¬__210 \/ __206),
+(¬__210 \/ __207),
+(__210 \/ ¬__206 \/ ¬__207),
+(¬__209 \/ __211),
+(¬__210 \/ __211),
+(¬__211 \/ __209 \/ __210),
+(¬__200 \/ ¬__129 \/ ¬__212),
+(__200 \/ __129 \/ ¬__212),
+(__200 \/ ¬__129 \/ __212),
+(¬__200 \/ __129 \/ __212),
+(¬__212 \/ ¬__211 \/ ¬__213),
+(__212 \/ __211 \/ ¬__213),
+(__212 \/ ¬__211 \/ __213),
+(¬__212 \/ __211 \/ __213),
+(¬__214 \/ __200),
+(¬__214 \/ __129),
+(__214 \/ ¬__200 \/ ¬__129),
+(¬__215 \/ __211),
+(¬__215 \/ __212),
+(__215 \/ ¬__211 \/ ¬__212),
+(¬__214 \/ __216),
+(¬__215 \/ __216),
+(¬__216 \/ __214 \/ __215),
+(¬__201 \/ ¬__131 \/ ¬__217),
+(__201 \/ __131 \/ ¬__217),
+(__201 \/ ¬__131 \/ __217),
+(¬__201 \/ __131 \/ __217),
+(¬__217 \/ ¬__216 \/ ¬__218),
+(__217 \/ __216 \/ ¬__218),
+(__217 \/ ¬__216 \/ __218),
+(¬__217 \/ __216 \/ __218),
+(¬__219 \/ __201),
+(¬__219 \/ __131),
+(__219 \/ ¬__201 \/ ¬__131),
+(¬__220 \/ __216),
+(¬__220 \/ __217),
+(__220 \/ ¬__216 \/ ¬__217),
+(¬__219 \/ __221),
+(¬__220 \/ __221),
+(¬__221 \/ __219 \/ __220),
+(¬__202 \/ ¬__133 \/ ¬__222),
+(__202 \/ __133 \/ ¬__222),
+(__202 \/ ¬__133 \/ __222),
+(¬__202 \/ __133 \/ __222),
+(¬__222 \/ ¬__221 \/ ¬__223),
+(__222 \/ __221 \/ ¬__223),
+(__222 \/ ¬__221 \/ __223),
+(¬__222 \/ __221 \/ __223),
+(¬__224 \/ __202),
+(¬__224 \/ __133),
+(__224 \/ ¬__202 \/ ¬__133),
+(¬__225 \/ __221),
+(¬__225 \/ __222),
+(__225 \/ ¬__221 \/ ¬__222),
+(¬__224 \/ __226),
+(¬__225 \/ __226),
+(¬__226 \/ __224 \/ __225),
+(¬__203 \/ ¬__135 \/ ¬__227),
+(__203 \/ __135 \/ ¬__227),
+(__203 \/ ¬__135 \/ __227),
+(¬__203 \/ __135 \/ __227),
+(¬__227 \/ ¬__226 \/ ¬__228),
+(__227 \/ __226 \/ ¬__228),
+(__227 \/ ¬__226 \/ __228),
+(¬__227 \/ __226 \/ __228),
+(¬__229 \/ __203),
+(¬__229 \/ __135),
+(__229 \/ ¬__203 \/ ¬__135),
+(¬__230 \/ __226),
+(¬__230 \/ __227),
+(__230 \/ ¬__226 \/ ¬__227),
+(¬__229 \/ __231),
+(¬__230 \/ __231),
+(¬__231 \/ __229 \/ __230),
+(¬__228 \/ ¬__232),
+(__228 \/ __232),
+(¬__233 \/ __232),
+(¬__233 \/ ¬__232 \/ __205),
+(¬__233 \/ __205),
+(__233 \/ ¬__232 \/ ¬__205),
+(¬__234 \/ __232 \/ __199),
+(¬__234 \/ ¬__232 \/ __208),
+(¬__234 \/ __199 \/ __208),
+(__234 \/ __232 \/ ¬__199),
+(__234 \/ ¬__232 \/ ¬__208),
+(__234 \/ ¬__199 \/ ¬__208),
+(¬__235 \/ __232 \/ __200),
+(¬__235 \/ ¬__232 \/ __213),
+(¬__235 \/ __200 \/ __213),
+(__235 \/ __232 \/ ¬__200),
+(__235 \/ ¬__232 \/ ¬__213),
+(__235 \/ ¬__200 \/ ¬__213),
+(¬__236 \/ __232 \/ __201),
+(¬__236 \/ ¬__232 \/ __218),
+(¬__236 \/ __201 \/ __218),
+(__236 \/ __232 \/ ¬__201),
+(__236 \/ ¬__232 \/ ¬__218),
+(__236 \/ ¬__201 \/ ¬__218),
+(¬__237 \/ __232 \/ __202),
+(¬__237 \/ ¬__232 \/ __223),
+(¬__237 \/ __202 \/ __223),
+(__237 \/ __232 \/ ¬__202),
+(__237 \/ ¬__232 \/ ¬__223),
+(__237 \/ ¬__202 \/ ¬__223),
+(¬__238 \/ __232 \/ __203),
+(¬__238 \/ ¬__232 \/ __228),
+(¬__238 \/ __203 \/ __228),
+(__238 \/ __232 \/ ¬__203),
+(__238 \/ ¬__232 \/ ¬__228),
+(__238 \/ ¬__203 \/ ¬__228),
+(¬__232 \/ ¬__239),
+(__232 \/ __239),
+(¬__198 \/ ¬__240),
+(__198 \/ __240),
+(¬__164 \/ ¬__241),
+(__164 \/ __241),
+(¬__239 \/ ¬__242),
+(__239 \/ __242),
+(¬__239 \/ ¬__240 \/ ¬__243),
+(__239 \/ __240 \/ ¬__243),
+(__239 \/ ¬__240 \/ __243),
+(¬__239 \/ __240 \/ __243),
+(¬__244 \/ __239),
+(¬__244 \/ __240),
+(__244 \/ ¬__239 \/ ¬__240),
+(¬__244 \/ ¬__241 \/ ¬__245),
+(__244 \/ __241 \/ ¬__245),
+(__244 \/ ¬__241 \/ __245),
+(¬__244 \/ __241 \/ __245),
+(¬__246 \/ __244),
+(¬__246 \/ __241),
+(__246 \/ ¬__244 \/ ¬__241),
+(¬__232 \/ ¬__247),
+(__232 \/ __247),
+(¬__232 \/ ¬__198 \/ ¬__248),
+(__232 \/ __198 \/ ¬__248),
+(__232 \/ ¬__198 \/ __248),
+(¬__232 \/ __198 \/ __248),
+(¬__249 \/ __232),
+(¬__249 \/ __198),
+(__249 \/ ¬__232 \/ ¬__198),
+(¬__249 \/ ¬__164 \/ ¬__250),
+(__249 \/ __164 \/ ¬__250),
+(__249 \/ ¬__164 \/ __250),
+(¬__249 \/ __164 \/ __250),
+(¬__251 \/ __249),
+(¬__251 \/ __164),
+(__251 \/ ¬__249 \/ ¬__164),
+(¬__247 \/ ¬__252),
+(__247 \/ __252),
+(¬__248 \/ ¬__253),
+(__248 \/ __253),
+(¬__250 \/ ¬__254),
+(__250 \/ __254),
+(¬__252 \/ ¬__255),
+(__252 \/ __255),
+(¬__252 \/ ¬__253 \/ ¬__256),
+(__252 \/ __253 \/ ¬__256),
+(__252 \/ ¬__253 \/ __256),
+(¬__252 \/ __253 \/ __256),
+(¬__257 \/ __252),
+(¬__257 \/ __253),
+(__257 \/ ¬__252 \/ ¬__253),
+(¬__257 \/ ¬__254 \/ ¬__258),
+(__257 \/ __254 \/ ¬__258),
+(__257 \/ ¬__254 \/ __258),
+(¬__257 \/ __254 \/ __258),
+(¬__259 \/ __257),
+(¬__259 \/ __254),
+(__259 \/ ¬__257 \/ ¬__254),
+(¬__233 \/ __260),
+(¬__234 \/ __260),
+(¬__235 \/ __260),
+(¬__236 \/ __260),
+(¬__237 \/ __260),
+(¬__238 \/ __260),
+(¬__260 \/ __233 \/ __234 \/ __235 \/ __236 \/ __237 \/ __238),
+(¬__261 \/ __260 \/ __242),
+(¬__261 \/ ¬__260 \/ __255),
+(¬__261 \/ __242 \/ __255),
+(__261 \/ __260 \/ ¬__242),
+(__261 \/ ¬__260 \/ ¬__255),
+(__261 \/ ¬__242 \/ ¬__255),
+(¬__262 \/ __260 \/ __243),
+(¬__262 \/ ¬__260 \/ __256),
+(¬__262 \/ __243 \/ __256),
+(__262 \/ __260 \/ ¬__243),
+(__262 \/ ¬__260 \/ ¬__256),
+(__262 \/ ¬__243 \/ ¬__256),
+(¬__263 \/ __260 \/ __245),
+(¬__263 \/ ¬__260 \/ __258),
+(¬__263 \/ __245 \/ __258),
+(__263 \/ __260 \/ ¬__245),
+(__263 \/ ¬__260 \/ ¬__258),
+(__263 \/ ¬__245 \/ ¬__258),
+(¬__264 \/ __113 \/ __232),
+(¬__264 \/ ¬__113 \/ __261),
+(¬__264 \/ __232 \/ __261),
+(__264 \/ __113 \/ ¬__232),
+(__264 \/ ¬__113 \/ ¬__261),
+(__264 \/ ¬__232 \/ ¬__261),
+(¬__265 \/ __113 \/ __198),
+(¬__265 \/ ¬__113 \/ __262),
+(¬__265 \/ __198 \/ __262),
+(__265 \/ __113 \/ ¬__198),
+(__265 \/ ¬__113 \/ ¬__262),
+(__265 \/ ¬__198 \/ ¬__262),
+(¬__266 \/ __113 \/ __164),
+(¬__266 \/ ¬__113 \/ __263),
+(¬__266 \/ __164 \/ __263),
+(__266 \/ __113 \/ ¬__164),
+(__266 \/ ¬__113 \/ ¬__263),
+(__266 \/ ¬__164 \/ ¬__263),
+(¬__267),
+(__268),
+(¬__267 \/ ¬__269),
+(__267 \/ __269),
+(¬__267 \/ ¬__268 \/ ¬__270),
+(__267 \/ __268 \/ ¬__270),
+(__267 \/ ¬__268 \/ __270),
+(¬__267 \/ __268 \/ __270),
+(¬__271 \/ __267),
+(¬__271 \/ __268),
+(__271 \/ ¬__267 \/ ¬__268),
+(¬__271 \/ ¬__272),
+(__271 \/ __272),
+(¬__273 \/ __268),
+(¬__273 \/ __272),
+(__273 \/ ¬__268 \/ ¬__272),
+(¬__91 \/ ¬__269 \/ ¬__274),
+(__91 \/ __269 \/ ¬__274),
+(__91 \/ ¬__269 \/ __274),
+(¬__91 \/ __269 \/ __274),
+(¬__275 \/ __91),
+(¬__275 \/ __269),
+(__275 \/ ¬__91 \/ ¬__269),
+(¬__92 \/ ¬__270 \/ ¬__276),
+(__92 \/ __270 \/ ¬__276),
+(__92 \/ ¬__270 \/ __276),
+(¬__92 \/ __270 \/ __276),
+(¬__276 \/ ¬__275 \/ ¬__277),
+(__276 \/ __275 \/ ¬__277),
+(__276 \/ ¬__275 \/ __277),
+(¬__276 \/ __275 \/ __277),
+(¬__278 \/ __92),
+(¬__278 \/ __270),
+(__278 \/ ¬__92 \/ ¬__270),
+(¬__279 \/ __275),
+(¬__279 \/ __276),
+(__279 \/ ¬__275 \/ ¬__276),
+(¬__278 \/ __280),
+(¬__279 \/ __280),
+(¬__280 \/ __278 \/ __279),
+(¬__93 \/ ¬__273 \/ ¬__281),
+(__93 \/ __273 \/ ¬__281),
+(__93 \/ ¬__273 \/ __281),
+(¬__93 \/ __273 \/ __281),
+(¬__281 \/ ¬__280 \/ ¬__282),
+(__281 \/ __280 \/ ¬__282),
+(__281 \/ ¬__280 \/ __282),
+(¬__281 \/ __280 \/ __282),
+(¬__283 \/ __93),
+(¬__283 \/ __273),
+(__283 \/ ¬__93 \/ ¬__273),
+(¬__284 \/ __280),
+(¬__284 \/ __281),
+(__284 \/ ¬__280 \/ ¬__281),
+(¬__283 \/ __285),
+(¬__284 \/ __285),
+(¬__285 \/ __283 \/ __284),
+(¬__94 \/ ¬__273 \/ ¬__286),
+(__94 \/ __273 \/ ¬__286),
+(__94 \/ ¬__273 \/ __286),
+(¬__94 \/ __273 \/ __286),
+(¬__286 \/ ¬__285 \/ ¬__287),
+(__286 \/ __285 \/ ¬__287),
+(__286 \/ ¬__285 \/ __287),
+(¬__286 \/ __285 \/ __287),
+(¬__288 \/ __94),
+(¬__288 \/ __273),
+(__288 \/ ¬__94 \/ ¬__273),
+(¬__289 \/ __285),
+(¬__289 \/ __286),
+(__289 \/ ¬__285 \/ ¬__286),
+(¬__288 \/ __290),
+(¬__289 \/ __290),
+(¬__290 \/ __288 \/ __289),
+(¬__95 \/ ¬__273 \/ ¬__291),
+(__95 \/ __273 \/ ¬__291),
+(__95 \/ ¬__273 \/ __291),
+(¬__95 \/ __273 \/ __291),
+(¬__291 \/ ¬__290 \/ ¬__292),
+(__291 \/ __290 \/ ¬__292),
+(__291 \/ ¬__290 \/ __292),
+(¬__291 \/ __290 \/ __292),
+(¬__293 \/ __95),
+(¬__293 \/ __273),
+(__293 \/ ¬__95 \/ ¬__273),
+(¬__294 \/ __290),
+(¬__294 \/ __291),
+(__294 \/ ¬__290 \/ ¬__291),
+(¬__293 \/ __295),
+(¬__294 \/ __295),
+(¬__295 \/ __293 \/ __294),
+(¬__95 \/ ¬__273 \/ ¬__296),
+(__95 \/ __273 \/ ¬__296),
+(__95 \/ ¬__273 \/ __296),
+(¬__95 \/ __273 \/ __296),
+(¬__296 \/ ¬__295 \/ ¬__297),
+(__296 \/ __295 \/ ¬__297),
+(__296 \/ ¬__295 \/ __297),
+(¬__296 \/ __295 \/ __297),
+(¬__298 \/ __95),
+(¬__298 \/ __273),
+(__298 \/ ¬__95 \/ ¬__273),
+(¬__299 \/ __295),
+(¬__299 \/ __296),
+(__299 \/ ¬__295 \/ ¬__296),
+(¬__298 \/ __300),
+(¬__299 \/ __300),
+(¬__300 \/ __298 \/ __299),
+(__274 \/ ¬__301),
+(¬__274 \/ __301),
+(¬__277 \/ ¬__302),
+(__277 \/ __302),
+(¬__301 \/ __303),
+(¬__302 \/ __303),
+(¬__303 \/ __301 \/ __302),
+(__282 \/ ¬__304),
+(¬__282 \/ __304),
+(¬__303 \/ __305),
+(¬__304 \/ __305),
+(¬__305 \/ __303 \/ __304),
+(__287 \/ ¬__306),
+(¬__287 \/ __306),
+(¬__305 \/ __307),
+(¬__306 \/ __307),
+(¬__307 \/ __305 \/ __306),
+(¬__308 \/ __307),
+(__308 \/ ¬__307),
+(¬__274 \/ ¬__309),
+(__274 \/ __309),
+(¬__277 \/ ¬__310),
+(__277 \/ __310),
+(¬__309 \/ __311),
+(¬__310 \/ __311),
+(¬__311 \/ __309 \/ __310),
+(__282 \/ ¬__312),
+(¬__282 \/ __312),
+(¬__311 \/ __313),
+(¬__312 \/ __313),
+(¬__313 \/ __311 \/ __312),
+(__287 \/ ¬__314),
+(¬__287 \/ __314),
+(¬__313 \/ __315),
+(¬__314 \/ __315),
+(¬__315 \/ __313 \/ __314),
+(¬__316 \/ __308),
+(¬__316 \/ __315),
+(__316 \/ ¬__308 \/ ¬__315),
+(¬__274 \/ ¬__264 \/ ¬__317),
+(__274 \/ __264 \/ ¬__317),
+(__274 \/ ¬__264 \/ __317),
+(¬__274 \/ __264 \/ __317),
+(¬__277 \/ ¬__265 \/ ¬__318),
+(__277 \/ __265 \/ ¬__318),
+(__277 \/ ¬__265 \/ __318),
+(¬__277 \/ __265 \/ __318),
+(¬__317 \/ __319),
+(¬__318 \/ __319),
+(¬__319 \/ __317 \/ __318),
+(¬__265 \/ ¬__282 \/ ¬__320),
+(__265 \/ __282 \/ ¬__320),
+(__265 \/ ¬__282 \/ __320),
+(¬__265 \/ __282 \/ __320),
+(¬__319 \/ __321),
+(¬__320 \/ __321),
+(¬__321 \/ __319 \/ __320),
+(¬__265 \/ ¬__287 \/ ¬__322),
+(__265 \/ __287 \/ ¬__322),
+(__265 \/ ¬__287 \/ __322),
+(¬__265 \/ __287 \/ __322),
+(¬__321 \/ __323),
+(¬__322 \/ __323),
+(¬__323 \/ __321 \/ __322),
+(¬__324 \/ __316),
+(¬__324 \/ __323),
+(__324 \/ ¬__316 \/ ¬__323),
+(¬__325 \/ __324),
+(__325 \/ ¬__324),
+(¬__326 \/ __325),
+(__326 \/ ¬__325),
+(¬__327 \/ __326),
+(__327 \/ ¬__326),
+(¬__328 \/ __327),
+(__328 \/ ¬__327),
+(¬__329 \/ __328),
+(__329 \/ ¬__328),
+(¬__330 \/ __329),
+(__330 \/ ¬__329),
+(¬__331 \/ __330),
+(__331 \/ ¬__330),
+(__331),
+(¬__332 \/ j#sat_log_int_00),
+(__332 \/ ¬j#sat_log_int_00),
+(__333),
+(¬__334 \/ j#sat_log_int_01),
+(¬__334 \/ __333),
+(__334 \/ ¬j#sat_log_int_01 \/ ¬__333),
+(j#sat_log_int_01 \/ __335),
+(¬j#sat_log_int_01 \/ ¬__335),
+(¬__336 \/ __335),
+(¬__336 \/ __332),
+(__336 \/ ¬__335 \/ ¬__332),
+(¬__334 \/ __337),
+(¬__336 \/ __337),
+(¬__337 \/ __334 \/ __336),
+(¬j#sat_log_int_02 \/ ¬__338),
+(j#sat_log_int_02 \/ __338),
+(¬__339 \/ __338),
+(¬__339),
+(j#sat_log_int_02 \/ __340),
+(¬j#sat_log_int_02 \/ ¬__340),
+(¬__341 \/ __340),
+(¬__341 \/ __337),
+(__341 \/ ¬__340 \/ ¬__337),
+(¬__339 \/ __342),
+(¬__341 \/ __342),
+(¬__342 \/ __339 \/ __341),
+(__342),
+(__343 \/ j#sat_log_int_00),
+(__343),
+(¬j#sat_log_int_01 \/ ¬__344),
+(j#sat_log_int_01 \/ __344),
+(¬__345 \/ __344),
+(__345 \/ ¬__344),
+(¬j#sat_log_int_01 \/ __346),
+(j#sat_log_int_01 \/ ¬__346),
+(¬__347 \/ __346),
+(¬__347 \/ __343),
+(__347 \/ ¬__346 \/ ¬__343),
+(¬__345 \/ __348),
+(¬__347 \/ __348),
+(¬__348 \/ __345 \/ __347),
+(__349),
+(¬__350 \/ __349),
+(¬__350 \/ j#sat_log_int_02),
+(__350 \/ ¬__349 \/ ¬j#sat_log_int_02),
+(j#sat_log_int_02 \/ __351),
+(¬j#sat_log_int_02 \/ ¬__351),
+(¬__352 \/ __351),
+(¬__352 \/ __348),
+(__352 \/ ¬__351 \/ ¬__348),
+(¬__350 \/ __353),
+(¬__352 \/ __353),
+(¬__353 \/ __350 \/ __352),
+(__353),
+(¬__354 \/ i#sat_log_int_00),
+(__354 \/ ¬i#sat_log_int_00),
+(__355),
+(¬__356 \/ i#sat_log_int_01),
+(¬__356 \/ __355),
+(__356 \/ ¬i#sat_log_int_01 \/ ¬__355),
+(i#sat_log_int_01 \/ __357),
+(¬i#sat_log_int_01 \/ ¬__357),
+(¬__358 \/ __357),
+(¬__358 \/ __354),
+(__358 \/ ¬__357 \/ ¬__354),
+(¬__356 \/ __359),
+(¬__358 \/ __359),
+(¬__359 \/ __356 \/ __358),
+(¬i#sat_log_int_02 \/ ¬__360),
+(i#sat_log_int_02 \/ __360),
+(¬__361 \/ __360),
+(¬__361),
+(i#sat_log_int_02 \/ __362),
+(¬i#sat_log_int_02 \/ ¬__362),
+(¬__363 \/ __362),
+(¬__363 \/ __359),
+(__363 \/ ¬__362 \/ ¬__359),
+(¬__361 \/ __364),
+(¬__363 \/ __364),
+(¬__364 \/ __361 \/ __363),
+(__364),
+(¬__365 \/ ¬i#sat_log_int_00),
+(__365 \/ i#sat_log_int_00),
+(¬i#sat_log_int_01 \/ ¬__366),
+(i#sat_log_int_01 \/ __366),
+(¬__367 \/ __366),
+(__367 \/ ¬__366),
+(¬i#sat_log_int_01 \/ __368),
+(i#sat_log_int_01 \/ ¬__368),
+(¬__369 \/ __368),
+(¬__369 \/ __365),
+(__369 \/ ¬__368 \/ ¬__365),
+(¬__367 \/ __370),
+(¬__369 \/ __370),
+(¬__370 \/ __367 \/ __369),
+(__371),
+(¬__372 \/ __371),
+(¬__372 \/ i#sat_log_int_02),
+(__372 \/ ¬__371 \/ ¬i#sat_log_int_02),
+(i#sat_log_int_02 \/ __373),
+(¬i#sat_log_int_02 \/ ¬__373),
+(¬__374 \/ __373),
+(¬__374 \/ __370),
+(__374 \/ ¬__373 \/ ¬__370),
+(¬__372 \/ __375),
+(¬__374 \/ __375),
+(¬__375 \/ __372 \/ __374),
+(__375)
+
