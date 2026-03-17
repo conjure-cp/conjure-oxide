@@ -2,6 +2,7 @@ use std::sync::Arc;
 use std::sync::RwLock;
 
 use conjure_cp_core::context::Context;
+use conjure_cp_core::parse;
 use conjure_cp_essence_parser::RecoverableParseError;
 use conjure_cp_essence_parser::diagnostics::diagnostics_api::Diagnostic;
 use conjure_cp_essence_parser::diagnostics::error_detection::collect_errors::error_to_diagnostic;
@@ -59,39 +60,35 @@ impl Backend {
                 );
 
                 let cache = match parsed {
-                    Ok(Some((ast_model, source_map))) => {
+                    Ok(Some((ast_model, source_map))) => CacheCont {
+                        sourcemap: Some(source_map),
+                        ast: Some(ast_model),
+                        errors,
+                        cst: Some(cst_tree),
+                        contents: text.clone(),
+                        version: params.text_document.version,
+                    },
+                    Ok(None) => {
+                        // self.client
+                        //     .log_message(MessageType::INFO, "In none for parse_essence_with_context_and_map")
+                        //     .await;
                         CacheCont {
-                            sourcemap: Some(source_map),
-                            ast: Some(ast_model),
+                            sourcemap: None,
+                            ast: None,
                             errors,
                             cst: Some(cst_tree),
                             contents: text.clone(),
                             version: params.text_document.version,
                         }
                     }
-                    Ok(None) => {
-                        // self.client
-                        //     .log_message(MessageType::INFO, "In none for parse_essence_with_context_and_map")
-                        //     .await;
-                        CacheCont { 
-                            sourcemap: None,
-                            ast: None, 
-                            errors, 
-                            cst: Some(cst_tree), 
-                            contents: text.clone(), 
-                            version: params.text_document.version, 
-                        }
-                    }
-                    Err(fatal) => {
-                        CacheCont {
-                            sourcemap: None,
-                            ast: None,
-                            errors: vec![RecoverableParseError::new(fatal.to_string(), None)],
-                            cst: Some(cst_tree),
-                            contents: text.clone(),
-                            version: params.text_document.version,
-                        }
-                    }
+                    Err(fatal) => CacheCont {
+                        sourcemap: None,
+                        ast: None,
+                        errors: vec![RecoverableParseError::new(fatal.to_string(), None)],
+                        cst: Some(cst_tree),
+                        contents: text.clone(),
+                        version: params.text_document.version,
+                    },
                 };
 
                 cache //this inserts the cache created above into the cache
@@ -162,11 +159,12 @@ impl Backend {
 
                     let start_position = position_to_treesitter_point(lsp_range.start);
                     let old_end_position = position_to_treesitter_point(lsp_range.end);
-                    let new_end_position = calculate_new_end_position(&change.text, lsp_range.start);
+                    let new_end_position =
+                        calculate_new_end_position(&change.text, lsp_range.start);
 
                     self.client
-                    .log_message(MessageType::INFO, "before edit")
-                    .await;
+                        .log_message(MessageType::INFO, "before edit")
+                        .await;
                     if let Some(ref mut old_cst) = cache_conts.cst.clone() {
                         old_cst.edit(&tree_sitter::InputEdit {
                             start_byte,
@@ -176,10 +174,18 @@ impl Backend {
                             old_end_position,
                             new_end_position,
                         });
-                        self.client
-                            .log_message(MessageType::INFO, "after edit")
-                            .await;
-                        old_cst.clone()
+
+                        // parse the new text with the edited tree as a starting point for incremental parsing
+                        // TODO: handle _FRAGMENT_EXPRESSION like get_tree does
+                        // maybe make separate helper for that or something
+                        let mut parser = tree_sitter::Parser::new();
+                        parser
+                            .set_language(&tree_sitter_essence::LANGUAGE.into())
+                            .unwrap();
+                        let tree =
+                            tree_sitter::Parser::parse(&mut parser, &new_text, Some(&old_cst))
+                                .unwrap();
+                        tree
                     } else {
                         // if cst was None due to a failure to parse,
                         // we should re-parse the entire new text instead of trying to edit a non-existent tree
@@ -193,7 +199,9 @@ impl Backend {
                 let context = Arc::new(RwLock::new(Context::default()));
                 let mut errors: Vec<RecoverableParseError> = Vec::new();
 
-                self.client.log_message(MessageType::INFO, new_text.clone()).await;
+                self.client
+                    .log_message(MessageType::INFO, new_text.clone())
+                    .await;
 
                 let parsed = parse_essence_with_context_and_map(
                     &new_text,
@@ -201,10 +209,12 @@ impl Backend {
                     &mut errors,
                     Some(&new_tree),
                 );
-                
+
                 let new_cache_conts = match parsed {
                     Ok(Some((ast_model, source_map))) => {
-                        self.client.log_message(MessageType::LOG,"THIS ONE INSTEAD").await;
+                        self.client
+                            .log_message(MessageType::LOG, "THIS ONE INSTEAD")
+                            .await;
                         CacheCont {
                             sourcemap: Some(source_map),
                             ast: Some(ast_model),
@@ -215,26 +225,26 @@ impl Backend {
                         }
                     }
                     Ok(None) => {
-                        self.client.log_message(MessageType::LOG,"jshdhshshshhs").await;
-                        CacheCont { 
-                            sourcemap: None,
-                            ast: None, 
-                            errors, 
-                            cst: Some(new_tree), 
-                            contents: new_text.clone(), 
-                            version: params.text_document.version, 
-                        }
-                    }
-                    Err(fatal) => {
+                        self.client
+                            .log_message(MessageType::LOG, "jshdhshshshhs")
+                            .await;
                         CacheCont {
                             sourcemap: None,
                             ast: None,
-                            errors: vec![RecoverableParseError::new(fatal.to_string(), None)],
+                            errors,
                             cst: Some(new_tree),
                             contents: new_text.clone(),
                             version: params.text_document.version,
                         }
                     }
+                    Err(fatal) => CacheCont {
+                        sourcemap: None,
+                        ast: None,
+                        errors: vec![RecoverableParseError::new(fatal.to_string(), None)],
+                        cst: Some(new_tree),
+                        contents: new_text.clone(),
+                        version: params.text_document.version,
+                    },
                 };
 
                 lsp_cache.insert(uri.clone(), new_cache_conts.clone()).await;
@@ -243,10 +253,8 @@ impl Backend {
                 //     .log_message(MessageType::INFO, "Document changed, cache updated")
                 //     .await;
 
-                
                 self.handle_diagnostics(&uri, new_cache_conts).await;
             }
-            
         }
 
         // self.handle_diagnostics(&uri, new_cache_conts).await;
@@ -358,6 +366,6 @@ fn calculate_new_end_position(text: &str, start: Position) -> Point {
             column += 1;
         }
     }
-    
+
     Point::new(row, column)
 }
