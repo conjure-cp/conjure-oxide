@@ -16,19 +16,19 @@ use std::result::Result::Ok;
 use tracing_subscriber::filter::DynFilterFn;
 use ustr::Ustr;
 
-use rustsat_kissat::Kissat;
+use rustsat_cadical::CaDiCaL;
 
 use crate::ast::pretty::pretty_vec;
 use crate::ast::{Atom, Expression, GroundDomain, Literal, Metadata, Name};
 use crate::rule_engine::rewrite_naive;
-use crate::solver::adaptors::rustsat::convs::{cnf_clause_to_sat_clause, handle_cnf};
 use crate::solver::SearchComplete::NoSolutions;
+use crate::solver::adaptors::rustsat::convs::{cnf_clause_to_sat_clause, handle_cnf};
 use crate::solver::{
-    self, private, SearchStatus, SolveSuccess, SolverAdaptor, SolverCallback, SolverError,
-    SolverFamily, SolverMutCallback,
+    self, SearchStatus, SolveSuccess, SolverAdaptor, SolverCallback, SolverError, SolverFamily,
+    SolverMutCallback, private,
 };
 use crate::stats::SolverStats;
-use crate::{ast as conjure_ast, bug, Model as ConjureModel};
+use crate::{Model as ConjureModel, ast as conjure_ast, bug};
 use crate::{into_matrix_expr, matrix_expr};
 
 use rustsat::instances::{BasicVarManager, Cnf, ManageVars, SatInstance};
@@ -41,7 +41,7 @@ pub struct Sat {
     __non_constructable: private::Internal,
     model_inst: Option<SatInstance>,
     var_map: Option<HashMap<Name, Lit>>,
-    solver_inst: Kissat<'static>,
+    solver_inst: CaDiCaL<'static, 'static>,
     decision_refs: Option<Vec<Name>>,
     dominance_expression: Option<Expression>,
     dominance_model_template: Option<ConjureModel>,
@@ -53,7 +53,7 @@ impl Default for Sat {
     fn default() -> Self {
         Sat {
             __non_constructable: private::Internal,
-            solver_inst: Kissat::default(),
+            solver_inst: CaDiCaL::default(),
             var_map: None,
             model_inst: None,
             decision_refs: None,
@@ -166,7 +166,7 @@ impl Sat {
     fn add_dominance_constraints_for_solution(
         dominance_expression: Option<&Expression>,
         dominance_model_template: Option<&ConjureModel>,
-        solver: &mut Kissat<'static>,
+        solver: &mut CaDiCaL<'static, 'static>,
         solution: &HashMap<Name, Literal>,
         var_map: &mut HashMap<Name, Lit>,
     ) -> Result<(), SolverError> {
