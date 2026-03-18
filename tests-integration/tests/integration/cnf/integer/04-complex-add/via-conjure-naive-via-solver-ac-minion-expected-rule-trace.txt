@@ -14,47 +14,47 @@ such that
 --
 
 sum([sum([c,d;int(1..2)]),e;int(1..2)]), 
-   ~~> normalise_associative_commutative ([("Base", 8900)]) 
-sum([c,d,e;int(1..2)]) 
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([c,d,e;int(1..2)])
 
 --
 
 (sum([c,d,e;int(1..2)]) > 16), 
-   ~~> gt_to_geq ([("Minion", 8400)]) 
-(sum([sum([c,d,e;int(1..2)]),-1;int(1..)]) >= 16) 
+   ~~> gt_to_geq ([("Minion", 8400)])
+(sum([sum([c,d,e;int(1..2)]),-1;int(1..)]) >= 16)
 
 --
 
 sum([sum([c,d,e;int(1..2)]),-1;int(1..)]), 
-   ~~> normalise_associative_commutative ([("Base", 8900)]) 
-sum([c,d,e,-1;int(1..)]) 
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([c,d,e,-1;int(1..)])
 
 --
 
 (sum([c,d,e,-1;int(1..)]) >= 16), 
-   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
-SumGeq([-1, c, d, e], 16) 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumGeq([-1, c, d, e], 16)
 
 --
 
 sum([a,b;int(1..2)]), 
-   ~~> matrix_to_list ([("Base", 2000)]) 
-sum([a,b;int(1..)]) 
+   ~~> matrix_to_list ([("Base", 2000)])
+sum([a,b;int(1..)])
 
 --
 
 (sum([a,b;int(1..)]) = c), 
-   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
-and([SumLeq([a, b], c),SumGeq([a, b], c);int(1..)]) 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([a, b], c),SumGeq([a, b], c);int(1..)])
 
 --
 
 and([SumLeq([a, b], c),SumGeq([a, b], c);int(1..)]),
 SumGeq([-1, c, d, e], 16), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
+   ~~> constant_evaluator ([("Constant", 9001)])
 SumLeq([a, b], c),
 SumGeq([a, b], c),
-SumGeq([-1, c, d, e], 16) 
+SumGeq([-1, c, d, e], 16)
 
 --
 

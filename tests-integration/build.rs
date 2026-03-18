@@ -9,7 +9,6 @@ use walkdir::WalkDir;
 // (build.rs cannot depend on the crate it's building)
 #[path = "src/test_config.rs"]
 mod test_config;
-use test_config::TestConfig;
 
 fn main() -> io::Result<()> {
     println!("cargo:rerun-if-changed=tests/integration");
@@ -31,12 +30,7 @@ fn main() -> io::Result<()> {
         if subdir.file_type().is_dir() {
             let stems: Vec<String> = read_dir(subdir.path())?
                 .filter_map(Result::ok)
-                .filter(|entry| {
-                    entry
-                        .path()
-                        .extension()
-                        .is_some_and(|ext| ext == "essence" || ext == "eprime")
-                })
+                .filter(|entry| entry.path().extension().is_some_and(|ext| ext == "essence"))
                 .filter_map(|entry| {
                     entry
                         .path()
@@ -48,12 +42,7 @@ fn main() -> io::Result<()> {
 
             let exts: Vec<String> = read_dir(subdir.path())?
                 .filter_map(Result::ok)
-                .filter(|entry| {
-                    entry
-                        .path()
-                        .extension()
-                        .is_some_and(|ext| ext == "essence" || ext == "eprime")
-                })
+                .filter(|entry| entry.path().extension().is_some_and(|ext| ext == "essence"))
                 .filter_map(|entry| {
                     entry
                         .path()
@@ -94,61 +83,114 @@ fn main() -> io::Result<()> {
         let subdir = subdir?;
         // Checks every subdirectory
         if subdir.file_type().is_dir() {
-            // Finds essence / eprime filenames
-            let names: Vec<String> = read_dir(subdir.path())?
-                .filter_map(Result::ok)
-                .map(|entry| entry.path())
-                .filter(|path| {
-                    path.extension()
-                        .is_some_and(|ext| ext == "essence" || ext == "eprime")
-                })
-                // Ensures not to include test result files
-                .filter(|path| {
-                    path.file_stem()
-                        .and_then(|name| name.to_str())
-                        .is_some_and(|name| {
-                            !name.contains(".generated") && !name.contains(".expected")
-                        })
-                })
-                // Stores the filename in the collected vector
-                .filter_map(|path| {
-                    path.file_stem()
-                        .and_then(|stem| stem.to_str())
-                        .map(|s| s.to_owned())
-                })
-                .collect();
-            // Finds essence / eprime file extensions
-            let exts: Vec<String> = read_dir(subdir.path())?
-                .filter_map(Result::ok)
-                .map(|entry| entry.path())
-                .filter(|path| {
-                    path.extension()
-                        .is_some_and(|ext| ext == "essence" || ext == "eprime")
-                })
-                // Ensures not to include test result files
-                .filter(|path| {
-                    path.file_stem()
-                        .and_then(|name| name.to_str())
-                        .is_some_and(|name| {
-                            !name.contains(".generated") && !name.contains(".expected")
-                        })
-                })
-                // Stores the extension in the collected vector
-                .filter_map(|path| {
-                    path.extension()
-                        .and_then(|ext| ext.to_str())
-                        .map(|s| s.to_owned())
-                })
-                .collect();
+            if std::env::var("ALLTEST").is_ok() {
+                // Finds Essence and disabled Essence filenames
+                let names: Vec<String> = read_dir(subdir.path())?
+                    .filter_map(Result::ok)
+                    .map(|entry| entry.path())
+                    .filter(|path| {
+                        path.extension()
+                            .is_some_and(|ext| ext == "essence" || ext == "disabled")
+                    })
+                    // Ensures not to include test result files
+                    .filter(|path| {
+                        path.file_stem()
+                            .and_then(|name| name.to_str())
+                            .is_some_and(|name| {
+                                !name.contains(".generated") && !name.contains(".expected")
+                            })
+                    })
+                    // Stores the filename in the collected vector
+                    .filter_map(|path| {
+                        path.file_stem()
+                            .and_then(|stem| stem.to_str())
+                            .map(|s| s.to_owned())
+                    })
+                    .collect();
+                // Finds Essence and disabled file extensions
+                let exts: Vec<String> = read_dir(subdir.path())?
+                    .filter_map(Result::ok)
+                    .map(|entry| entry.path())
+                    .filter(|path| {
+                        path.extension()
+                            .is_some_and(|ext| ext == "essence" || ext == "disabled")
+                    })
+                    // Ensures not to include test result files
+                    .filter(|path| {
+                        path.file_stem()
+                            .and_then(|name| name.to_str())
+                            .is_some_and(|name| {
+                                !name.contains(".generated") && !name.contains(".expected")
+                            })
+                    })
+                    // Stores the extension in the collected vector
+                    .filter_map(|path| {
+                        path.extension()
+                            .and_then(|ext| ext.to_str())
+                            .map(|s| s.to_owned())
+                    })
+                    .collect();
 
-            let essence_files: Vec<(String, String)> = std::iter::zip(names, exts).collect();
-            // There should only be one test file per directory
-            if essence_files.len() == 1 {
-                write_roundtrip_test(
-                    &mut f,
-                    subdir.path().display().to_string(),
-                    essence_files[0].clone(),
-                )?;
+                let essence_files: Vec<(String, String)> = std::iter::zip(names, exts).collect();
+                // There should only be one test file per directory
+                if essence_files.len() == 1 {
+                    write_roundtrip_test(
+                        &mut f,
+                        subdir.path().display().to_string(),
+                        essence_files[0].clone(),
+                    )?;
+                }
+            } else {
+                // Finds Essence filenames
+                let names: Vec<String> = read_dir(subdir.path())?
+                    .filter_map(Result::ok)
+                    .map(|entry| entry.path())
+                    .filter(|path| path.extension().is_some_and(|ext| ext == "essence"))
+                    // Ensures not to include test result files
+                    .filter(|path| {
+                        path.file_stem()
+                            .and_then(|name| name.to_str())
+                            .is_some_and(|name| {
+                                !name.contains(".generated") && !name.contains(".expected")
+                            })
+                    })
+                    // Stores the filename in the collected vector
+                    .filter_map(|path| {
+                        path.file_stem()
+                            .and_then(|stem| stem.to_str())
+                            .map(|s| s.to_owned())
+                    })
+                    .collect();
+                // Finds Essence file extensions
+                let exts: Vec<String> = read_dir(subdir.path())?
+                    .filter_map(Result::ok)
+                    .map(|entry| entry.path())
+                    .filter(|path| path.extension().is_some_and(|ext| ext == "essence"))
+                    // Ensures not to include test result files
+                    .filter(|path| {
+                        path.file_stem()
+                            .and_then(|name| name.to_str())
+                            .is_some_and(|name| {
+                                !name.contains(".generated") && !name.contains(".expected")
+                            })
+                    })
+                    // Stores the extension in the collected vector
+                    .filter_map(|path| {
+                        path.extension()
+                            .and_then(|ext| ext.to_str())
+                            .map(|s| s.to_owned())
+                    })
+                    .collect();
+
+                let essence_files: Vec<(String, String)> = std::iter::zip(names, exts).collect();
+                // There should only be one test file per directory
+                if essence_files.len() == 1 {
+                    write_roundtrip_test(
+                        &mut f,
+                        subdir.path().display().to_string(),
+                        essence_files[0].clone(),
+                    )?;
+                }
             }
         }
     }
@@ -163,20 +205,6 @@ fn write_integration_test(
 ) -> io::Result<()> {
     // TODO: Consider supporting multiple Essence files?
     if essence_files.len() == 1 {
-        // skip tests which use smt if the feature is disabled
-        let config_path = format!("{}/config.toml", path);
-        let config: TestConfig = if let Ok(contents) = std::fs::read_to_string(&config_path) {
-            toml::from_str(&contents).unwrap_or_default()
-        } else {
-            TestConfig::default()
-        };
-
-        let mut ignore_attr = "";
-
-        if cfg!(not(feature = "smt")) && config.uses_smt_solver() {
-            ignore_attr = "#[ignore = \"this test requires solver=smt, but the 'smt' feature is disabled!\"]\n"
-        }
-
         write!(
             file,
             include_str!("./tests/integration_test_template"),
@@ -185,7 +213,6 @@ fn write_integration_test(
             test_dir = path,
             essence_file = essence_files[0].0,
             ext = essence_files[0].1,
-            ignore_attr = ignore_attr
         )
     } else {
         Ok(())

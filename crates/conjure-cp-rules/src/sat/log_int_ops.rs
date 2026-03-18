@@ -281,7 +281,7 @@ fn tseytin_int_adder(
     output
 }
 
-// Returns: result, carry, new symbol table, new clauses
+/// This function adds two booleans and a carry boolean using the full-adder logic circuit, it is intended for use in a binary adder.
 fn tseytin_full_adder(
     a: Expr,
     b: Expr,
@@ -298,6 +298,7 @@ fn tseytin_full_adder(
     (result, carryout)
 }
 
+/// This function adds two booleans using the half-adder logic circuit, it is intended for use in a binary adder.
 fn tseytin_half_adder(
     a: Expr,
     b: Expr,
@@ -310,7 +311,7 @@ fn tseytin_half_adder(
     (result, carry)
 }
 
-/// this function is for specifically adding a power of two constant to a cnf int
+/// this function is for specifically adding a power of two constant to a cnf int.
 fn tseytin_add_two_power(
     expr: &[Expr],
     exponent: usize,
@@ -335,7 +336,7 @@ fn tseytin_add_two_power(
     result
 }
 
-// Returns result, new symbol table, new clauses
+/// This function multiplies two binary values using the shift-add multiplication algorithm.
 fn cnf_shift_add_multiply(
     x: &[Expr],
     y: &[Expr],
@@ -388,6 +389,10 @@ fn cnf_shift_add_multiply(
     s
 }
 
+/// This function calculates the range of the product of multiple integers.
+/// E.g.
+/// a : [2, 5], b : [-1, 2], c : [-10, -6], d : [0, 3]
+/// a * b * c *d : [-300, 150]
 fn product_of_ranges(ranges: Vec<&(i32, i32)>) -> (i32, i32) {
     if ranges.is_empty() {
         return (1, 1); // product of zero numbers = 1
@@ -606,6 +611,7 @@ fn cnf_int_min(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     ))
 }
 
+/// General function for getting the min or max of two log integers.
 fn tseytin_binary_min_max(
     x: &[Expr],
     y: &[Expr],
@@ -613,16 +619,6 @@ fn tseytin_binary_min_max(
     clauses: &mut Vec<CnfClause>,
     symbols: &mut SymbolTable,
 ) -> Vec<Expr> {
-    let mut out = vec![];
-
-    let bit_count = x.len();
-
-    for i in 0..bit_count {
-        out.push(tseytin_xor(x[i].clone(), y[i].clone(), clauses, symbols))
-    }
-
-    // TODO: compare generated expression to using MUX
-
     let mask = if min {
         // mask is 1 if x > y
         inequality_boolean(x.to_owned(), y.to_owned(), true, clauses, symbols)
@@ -631,12 +627,39 @@ fn tseytin_binary_min_max(
         inequality_boolean(y.to_owned(), x.to_owned(), true, clauses, symbols)
     };
 
-    for item in out.iter_mut().take(bit_count) {
-        *item = tseytin_and(&vec![item.clone(), mask.clone()], clauses, symbols);
-    }
+    tseytin_select_array(mask, x, y, clauses, symbols)
+}
+
+// Selects between two boolean vectors depending on a condition (both vectors must be the same length)
+/// cond ? b : a
+///
+/// cond = 1 => b
+/// cond = 0 => a
+fn tseytin_select_array(
+    cond: Expr,
+    a: &[Expr],
+    b: &[Expr],
+    clauses: &mut Vec<CnfClause>,
+    symbols: &mut SymbolTable,
+) -> Vec<Expr> {
+    assert_eq!(
+        a.len(),
+        b.len(),
+        "Input vectors 'a' and 'b' must have the same length"
+    );
+
+    let mut out = vec![];
+
+    let bit_count = a.len();
 
     for i in 0..bit_count {
-        out[i] = tseytin_xor(x[i].clone(), out[i].clone(), clauses, symbols);
+        out.push(tseytin_mux(
+            cond.clone(),
+            a[i].clone(),
+            b[i].clone(),
+            clauses,
+            symbols,
+        ));
     }
 
     out
@@ -814,16 +837,50 @@ fn cnf_int_safediv(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let bit_count = numer_bits.len();
 
     // TODO: Separate into division/mod function
-    // TODO: Support negatives
 
     let mut new_symbols = symbols.clone();
     let mut new_clauses = vec![];
     let mut quotient = vec![false.into(); bit_count];
 
-    let mut r = numer_bits.clone();
+    let minus_numer = tseytin_negate(
+        &numer_bits.clone(),
+        bit_count,
+        &mut new_clauses,
+        &mut new_symbols,
+    );
+    let minus_denom = tseytin_negate(
+        &denom_bits.clone(),
+        bit_count,
+        &mut new_clauses,
+        &mut new_symbols,
+    );
+
+    let sign_bit = tseytin_xor(
+        numer_bits[bit_count - 1].clone(),
+        denom_bits[bit_count - 1].clone(),
+        &mut new_clauses,
+        &mut new_symbols,
+    );
+
+    let numer_bits = tseytin_select_array(
+        numer_bits[bit_count - 1].clone(),
+        &numer_bits.clone(),
+        &minus_numer,
+        &mut new_clauses,
+        &mut new_symbols,
+    );
+    let denom_bits = tseytin_select_array(
+        denom_bits[bit_count - 1].clone(),
+        &denom_bits.clone(),
+        &minus_denom,
+        &mut new_clauses,
+        &mut new_symbols,
+    );
+
+    let mut r = numer_bits;
     r.extend(std::iter::repeat_n(r[bit_count - 1].clone(), bit_count));
     let mut d = std::iter::repeat_n(false.into(), bit_count).collect_vec();
-    d.extend(denom_bits.clone());
+    d.extend(denom_bits);
 
     let minus_d = tseytin_negate(
         &d.clone(),
@@ -868,11 +925,26 @@ fn cnf_int_safediv(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         }
     }
 
+    let minus_quotient = tseytin_negate(
+        &quotient.clone(),
+        bit_count,
+        &mut new_clauses,
+        &mut new_symbols,
+    );
+
+    let out = tseytin_select_array(
+        sign_bit,
+        &quotient,
+        &minus_quotient,
+        &mut new_clauses,
+        &mut new_symbols,
+    );
+
     Ok(Reduction::cnf(
         Expr::SATInt(
             Metadata::new(),
             SATIntEncoding::Log,
-            Moo::new(into_matrix_expr!(quotient)),
+            Moo::new(into_matrix_expr!(out)),
             (min, max),
         ),
         new_clauses,

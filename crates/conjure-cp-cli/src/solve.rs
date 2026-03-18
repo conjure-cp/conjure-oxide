@@ -1,6 +1,5 @@
 //! conjure_oxide solve sub-command
 #![allow(clippy::unwrap_used)]
-#[cfg(feature = "smt")]
 use std::time::Duration;
 use std::{
     fs::File,
@@ -15,12 +14,12 @@ use clap::ValueHint;
 use conjure_cp::defaults::DEFAULT_RULE_SETS;
 use conjure_cp::{
     Model,
-    ast::comprehension::{
-        USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS, set_quantified_expander_for_comprehensions,
-    },
     context::Context,
     rule_engine::{resolve_rule_sets, rewrite_morph, rewrite_naive},
-    settings::Rewriter,
+    settings::{
+        Rewriter, set_comprehension_expander, set_current_parser, set_current_rewriter,
+        set_current_solver_family, set_minion_discrete_threshold,
+    },
     solver::Solver,
 };
 use conjure_cp::{
@@ -32,6 +31,37 @@ use conjure_cp_cli::utils::conjure::{get_solutions, solutions_to_json};
 use serde_json::to_string_pretty;
 
 use crate::cli::{GlobalArgs, LOGGING_HELP_HEADING};
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum NumberOfSolutions {
+    All,
+    Limit(i32),
+}
+
+impl NumberOfSolutions {
+    fn as_solver_limit(self) -> i32 {
+        match self {
+            NumberOfSolutions::All => 0,
+            NumberOfSolutions::Limit(limit) => limit,
+        }
+    }
+}
+
+fn parse_number_of_solutions(input: &str) -> Result<NumberOfSolutions, String> {
+    if input.eq_ignore_ascii_case("all") {
+        return Ok(NumberOfSolutions::All);
+    }
+
+    let limit = input
+        .parse::<i32>()
+        .map_err(|_| "expected a positive integer or 'all'".to_string())?;
+
+    if limit <= 0 {
+        return Err("expected a positive integer or 'all'".to_string());
+    }
+
+    Ok(NumberOfSolutions::Limit(limit))
+}
 
 #[derive(Clone, Debug, clap::Args)]
 pub struct Args {
@@ -50,9 +80,15 @@ pub struct Args {
     #[arg(long, default_value_t = false)]
     pub no_run_solver: bool,
 
-    /// Number of solutions to return. 0 returns all solutions
-    #[arg(long, default_value_t = 0, short = 'n')]
-    pub number_of_solutions: i32,
+    /// Number of solutions to return. Use a positive integer, or `all`.
+    #[arg(
+        long,
+        short = 'n',
+        default_value = "1",
+        value_name = "N|all",
+        value_parser = parse_number_of_solutions
+    )]
+    pub number_of_solutions: NumberOfSolutions,
 
     /// Save solutions to the given JSON file
     #[arg(long, short = 'o', value_hint = ValueHint::FilePath,help_heading=LOGGING_HELP_HEADING)]
@@ -98,6 +134,12 @@ pub(crate) fn init_context(
     global_args: &GlobalArgs,
     input_file: PathBuf,
 ) -> anyhow::Result<Arc<RwLock<Context<'static>>>> {
+    set_current_parser(global_args.parser);
+    set_current_rewriter(global_args.rewriter);
+    set_comprehension_expander(global_args.comprehension_expander);
+    set_current_solver_family(global_args.solver);
+    set_minion_discrete_threshold(global_args.minion_discrete_threshold);
+
     let target_family = global_args.solver;
     let mut extra_rule_sets: Vec<&str> = DEFAULT_RULE_SETS.to_vec();
     for rs in &global_args.extra_rule_sets {
@@ -149,7 +191,6 @@ pub(crate) fn init_context(
 
 pub(crate) fn init_solver(global_args: &GlobalArgs) -> Solver {
     let family = global_args.solver;
-    #[cfg(feature = "smt")]
     let timeout_ms = global_args
         .solver_timeout
         .map(|dur| Duration::from(dur).as_millis())
@@ -158,7 +199,6 @@ pub(crate) fn init_solver(global_args: &GlobalArgs) -> Solver {
     match family {
         SolverFamily::Minion => Solver::new(Minion::default()),
         SolverFamily::Sat(_) => Solver::new(Sat::default()),
-        #[cfg(feature = "smt")]
         SolverFamily::Smt(theory_cfg) => Solver::new(Smt::new(timeout_ms, theory_cfg)),
     }
 }
@@ -214,16 +254,16 @@ pub(crate) fn rewrite(
 ) -> anyhow::Result<Model> {
     tracing::info!("Initial model: \n{}\n", model);
 
-    let quantified_expander = global_args.quantified_expander;
-    set_quantified_expander_for_comprehensions(quantified_expander);
-    tracing::info!("Quantified expander: {}", quantified_expander);
+    set_current_rewriter(global_args.rewriter);
+
+    let comprehension_expander = global_args.comprehension_expander;
+    set_comprehension_expander(comprehension_expander);
+    tracing::info!("Comprehension expander: {}", comprehension_expander);
 
     let rule_sets = context.read().unwrap().rule_sets.clone();
 
     let new_model = match global_args.rewriter {
         Rewriter::Morph => {
-            USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS
-                .store(true, std::sync::atomic::Ordering::Relaxed);
             tracing::info!("Rewriting the model using the morph rewriter");
             rewrite_morph(
                 model,
@@ -232,17 +272,11 @@ pub(crate) fn rewrite(
             )
         }
         Rewriter::Naive => {
-            USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS
-                .store(false, std::sync::atomic::Ordering::Relaxed);
             tracing::info!("Rewriting the model using the default / naive rewriter");
-            if global_args.exit_after_unrolling {
-                tracing::info!("Exiting after unrolling");
-            }
             rewrite_naive(
                 &model,
                 &rule_sets,
                 global_args.check_equally_applicable_rules,
-                global_args.exit_after_unrolling,
             )?
         }
     };
@@ -271,7 +305,7 @@ fn run_solver(
     let solutions = get_solutions(
         solver,
         model,
-        cmd_args.number_of_solutions,
+        cmd_args.number_of_solutions.as_solver_limit(),
         &global_args.save_solver_input_file,
     )?;
     tracing::info!(target: "file", "Solutions: {}", solutions_to_json(&solutions));

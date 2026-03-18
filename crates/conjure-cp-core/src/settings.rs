@@ -1,10 +1,11 @@
-use std::{fmt::Display, str::FromStr};
+use std::{cell::Cell, fmt::Display, str::FromStr};
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use strum_macros::{Display as StrumDisplay, EnumIter};
 
-#[cfg(feature = "smt")]
+use crate::bug;
+
 use crate::solver::adaptors::smt::{IntTheory, MatrixTheory, TheoryConfig};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
@@ -37,10 +38,37 @@ impl FromStr for Parser {
     }
 }
 
+thread_local! {
+    /// Thread-local setting for which parser is currently active.
+    ///
+    /// Must be explicitly set before use.
+    static CURRENT_PARSER: Cell<Option<Parser>> = const { Cell::new(None) };
+}
+
+pub fn set_current_parser(parser: Parser) {
+    CURRENT_PARSER.with(|current| current.set(Some(parser)));
+}
+
+pub fn current_parser() -> Parser {
+    CURRENT_PARSER.with(|current| {
+        current.get().unwrap_or_else(|| {
+            // loud failure on purpose, so we don't end up using the default
+            bug!("current parser not set for this thread; call set_current_parser first")
+        })
+    })
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Rewriter {
     Naive,
     Morph,
+}
+
+thread_local! {
+    /// Thread-local setting for which rewriter is currently active.
+    ///
+    /// Must be explicitly set before use.
+    static CURRENT_REWRITER: Cell<Option<Rewriter>> = const { Cell::new(None) };
 }
 
 impl Display for Rewriter {
@@ -64,6 +92,19 @@ impl FromStr for Rewriter {
             )),
         }
     }
+}
+
+pub fn set_current_rewriter(rewriter: Rewriter) {
+    CURRENT_REWRITER.with(|current| current.set(Some(rewriter)));
+}
+
+pub fn current_rewriter() -> Rewriter {
+    CURRENT_REWRITER.with(|current| {
+        current.get().unwrap_or_else(|| {
+            // loud failure on purpose, so we don't end up using the default
+            bug!("current rewriter not set for this thread; call set_current_rewriter first")
+        })
+    })
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -92,30 +133,33 @@ impl FromStr for QuantifiedExpander {
             "via-solver" => Ok(QuantifiedExpander::ViaSolver),
             "via-solver-ac" => Ok(QuantifiedExpander::ViaSolverAc),
             _ => Err(format!(
-                "unknown quantified expander: {s}; expected one of: \
+                "unknown comprehension expander: {s}; expected one of: \
                  native, via-solver, via-solver-ac"
             )),
         }
     }
 }
 
-impl QuantifiedExpander {
-    pub(crate) const fn as_u8(self) -> u8 {
-        match self {
-            QuantifiedExpander::Native => 0,
-            QuantifiedExpander::ViaSolver => 1,
-            QuantifiedExpander::ViaSolverAc => 2,
-        }
-    }
+thread_local! {
+    /// Thread-local setting for which comprehension expansion strategy is currently active.
+    ///
+    /// Must be explicitly set before use.
+    static COMPREHENSION_EXPANDER: Cell<Option<QuantifiedExpander>> = const { Cell::new(None) };
+}
 
-    pub(crate) const fn from_u8(value: u8) -> Self {
-        match value {
-            0 => QuantifiedExpander::Native,
-            1 => QuantifiedExpander::ViaSolver,
-            2 => QuantifiedExpander::ViaSolverAc,
-            _ => QuantifiedExpander::Native,
-        }
-    }
+pub fn set_comprehension_expander(expander: QuantifiedExpander) {
+    COMPREHENSION_EXPANDER.with(|current| current.set(Some(expander)));
+}
+
+pub fn comprehension_expander() -> QuantifiedExpander {
+    COMPREHENSION_EXPANDER.with(|current| {
+        current.get().unwrap_or_else(|| {
+            // loud failure on purpose, so we don't end up using the default
+            bug!(
+                "comprehension expander not set for this thread; call set_comprehension_expander first"
+            )
+        })
+    })
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default, Serialize, Deserialize, JsonSchema)]
@@ -127,6 +171,14 @@ pub enum SatEncoding {
 }
 
 impl SatEncoding {
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            SatEncoding::Log => "log",
+            SatEncoding::Direct => "direct",
+            SatEncoding::Order => "order",
+        }
+    }
+
     pub const fn as_rule_set(self) -> &'static str {
         match self {
             SatEncoding::Log => "SAT_Log",
@@ -177,8 +229,48 @@ impl FromStr for SatEncoding {
 pub enum SolverFamily {
     Minion,
     Sat(SatEncoding),
-    #[cfg(feature = "smt")]
     Smt(TheoryConfig),
+}
+
+thread_local! {
+    /// Thread-local setting for which solver family is currently active.
+    ///
+    /// Must be explicitly set before use.
+    static CURRENT_SOLVER_FAMILY: Cell<Option<SolverFamily>> = const { Cell::new(None) };
+}
+
+pub const DEFAULT_MINION_DISCRETE_THRESHOLD: usize = 10;
+
+thread_local! {
+    /// Thread-local setting controlling when Minion int domains are emitted as `DISCRETE`.
+    ///
+    /// If an int domain size is <= this threshold, the Minion adaptor uses `DISCRETE`; otherwise
+    /// it uses `BOUND`, unless another constraint requires `DISCRETE`.
+    static MINION_DISCRETE_THRESHOLD: Cell<usize> =
+        const { Cell::new(DEFAULT_MINION_DISCRETE_THRESHOLD) };
+}
+
+pub fn set_current_solver_family(solver_family: SolverFamily) {
+    CURRENT_SOLVER_FAMILY.with(|current| current.set(Some(solver_family)));
+}
+
+pub fn current_solver_family() -> SolverFamily {
+    CURRENT_SOLVER_FAMILY.with(|current| {
+        current.get().unwrap_or_else(|| {
+            // loud failure on purpose, so we don't end up using the default
+            bug!(
+                "current solver family not set for this thread; call set_current_solver_family first"
+            )
+        })
+    })
+}
+
+pub fn set_minion_discrete_threshold(threshold: usize) {
+    MINION_DISCRETE_THRESHOLD.with(|current| current.set(threshold));
+}
+
+pub fn minion_discrete_threshold() -> usize {
+    MINION_DISCRETE_THRESHOLD.with(|current| current.get())
 }
 
 impl FromStr for SolverFamily {
@@ -192,11 +284,9 @@ impl FromStr for SolverFamily {
             "sat" | "sat-log" => Ok(SolverFamily::Sat(SatEncoding::Log)),
             "sat-direct" => Ok(SolverFamily::Sat(SatEncoding::Direct)),
             "sat-order" => Ok(SolverFamily::Sat(SatEncoding::Order)),
-            #[cfg(feature = "smt")]
             "smt" => Ok(SolverFamily::Smt(TheoryConfig::default())),
             other => {
                 // allow forms like `smt-bv-atomic` or `smt-lia-arrays`
-                #[cfg(feature = "smt")]
                 if other.starts_with("smt-") {
                     let parts = other.split('-').skip(1);
                     let mut ints = IntTheory::default();
@@ -234,12 +324,11 @@ impl FromStr for SolverFamily {
 }
 
 impl SolverFamily {
-    pub const fn as_str(&self) -> &'static str {
+    pub fn as_str(&self) -> String {
         match self {
-            SolverFamily::Minion => "minion",
-            SolverFamily::Sat(_) => "sat",
-            #[cfg(feature = "smt")]
-            SolverFamily::Smt(_) => "smt",
+            SolverFamily::Minion => "minion".to_owned(),
+            SolverFamily::Sat(encoding) => format!("sat-{}", encoding.as_str()),
+            SolverFamily::Smt(theory_config) => format!("smt-{}", theory_config.as_str()),
         }
     }
 }

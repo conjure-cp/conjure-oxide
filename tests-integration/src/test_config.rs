@@ -28,6 +28,14 @@ where
     })
 }
 
+fn default_true() -> bool {
+    true
+}
+
+fn default_minion_discrete_threshold() -> usize {
+    conjure_cp::settings::DEFAULT_MINION_DISCRETE_THRESHOLD
+}
+
 #[derive(Deserialize, Debug)]
 #[serde(default)]
 #[serde(deny_unknown_fields)]
@@ -35,7 +43,6 @@ pub struct TestConfig {
     #[serde(
         default,
         rename = "parser",
-        alias = "parsers",
         deserialize_with = "deserialize_string_or_vec"
     )]
     pub parser: Vec<String>, // Stage 1a: list of parsers (tree-sitter or via-conjure)
@@ -48,18 +55,25 @@ pub struct TestConfig {
     pub rewriter: Vec<String>,
     #[serde(
         default,
-        rename = "quantified-expander",
-        alias = "quantified_expander",
+        rename = "comprehension-expander",
         deserialize_with = "deserialize_string_or_vec"
     )]
-    pub quantified_expander: Vec<String>,
+    pub comprehension_expander: Vec<String>,
     #[serde(
         default,
         rename = "solver",
-        alias = "solvers",
         deserialize_with = "deserialize_string_or_vec"
     )]
     pub solver: Vec<String>,
+
+    #[serde(
+        default = "default_minion_discrete_threshold",
+        rename = "minion-discrete-threshold"
+    )]
+    pub minion_discrete_threshold: usize,
+
+    #[serde(default = "default_true", rename = "validate-with-conjure")]
+    pub validate_with_conjure: bool,
 }
 
 impl Default for TestConfig {
@@ -67,7 +81,7 @@ impl Default for TestConfig {
         Self {
             parser: vec!["tree-sitter".to_string(), "via-conjure".to_string()],
             rewriter: vec!["naive".to_string()],
-            quantified_expander: vec![
+            comprehension_expander: vec![
                 "native".to_string(),
                 "via-solver".to_string(),
                 "via-solver-ac".to_string(),
@@ -79,7 +93,7 @@ impl Default for TestConfig {
                     "sat-direct".to_string(),
                     "sat-order".to_string(),
                 ];
-                #[cfg(feature = "smt")]
+
                 {
                     solvers.extend([
                         "smt".to_string(),
@@ -94,6 +108,8 @@ impl Default for TestConfig {
                 }
                 solvers
             },
+            minion_discrete_threshold: default_minion_discrete_threshold(),
+            validate_with_conjure: true,
         }
     }
 }
@@ -111,11 +127,11 @@ impl TestConfig {
         parse_values(&self.rewriter)
     }
 
-    pub fn configured_quantified_expanders(&self) -> Result<Vec<QuantifiedExpander>, String> {
-        let values = if self.quantified_expander.is_empty() {
+    pub fn configured_comprehension_expanders(&self) -> Result<Vec<QuantifiedExpander>, String> {
+        let values = if self.comprehension_expander.is_empty() {
             vec!["native".to_string()]
         } else {
-            self.quantified_expander.clone()
+            self.comprehension_expander.clone()
         };
 
         parse_values(&values)

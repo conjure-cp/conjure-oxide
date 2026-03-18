@@ -704,6 +704,10 @@
               {
                 "type": "SYMBOL",
                 "name": "atom"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "arithmetic_expr"
               }
             ]
           },
@@ -729,6 +733,10 @@
                         {
                           "type": "SYMBOL",
                           "name": "atom"
+                        },
+                        {
+                          "type": "SYMBOL",
+                          "name": "arithmetic_expr"
                         }
                       ]
                     }
@@ -765,8 +773,17 @@
               "type": "FIELD",
               "name": "lower",
               "content": {
-                "type": "SYMBOL",
-                "name": "atom"
+                "type": "CHOICE",
+                "members": [
+                  {
+                    "type": "SYMBOL",
+                    "name": "atom"
+                  },
+                  {
+                    "type": "SYMBOL",
+                    "name": "arithmetic_expr"
+                  }
+                ]
               }
             },
             {
@@ -785,8 +802,17 @@
               "type": "FIELD",
               "name": "upper",
               "content": {
-                "type": "SYMBOL",
-                "name": "atom"
+                "type": "CHOICE",
+                "members": [
+                  {
+                    "type": "SYMBOL",
+                    "name": "atom"
+                  },
+                  {
+                    "type": "SYMBOL",
+                    "name": "arithmetic_expr"
+                  }
+                ]
               }
             },
             {
@@ -1539,14 +1565,6 @@
           },
           {
             "type": "FIELD",
-            "name": "set_operation_bool",
-            "content": {
-              "type": "SYMBOL",
-              "name": "set_operation_bool"
-            }
-          },
-          {
-            "type": "FIELD",
             "name": "quantifier_expression",
             "content": {
               "type": "SYMBOL",
@@ -2279,137 +2297,176 @@
       "type": "PREC",
       "value": 5,
       "content": {
-        "type": "PREC_LEFT",
-        "value": 0,
-        "content": {
-          "type": "SEQ",
-          "members": [
-            {
-              "type": "FIELD",
-              "name": "left",
-              "content": {
-                "type": "CHOICE",
-                "members": [
-                  {
-                    "type": "SYMBOL",
-                    "name": "bool_expr"
-                  },
-                  {
-                    "type": "SYMBOL",
-                    "name": "arithmetic_expr"
-                  },
-                  {
-                    "type": "SYMBOL",
-                    "name": "atom"
-                  }
-                ]
-              }
-            },
-            {
-              "type": "FIELD",
-              "name": "operator",
-              "content": {
-                "type": "CHOICE",
-                "members": [
-                  {
-                    "type": "STRING",
-                    "value": "="
-                  },
-                  {
-                    "type": "STRING",
-                    "value": "!="
-                  },
-                  {
-                    "type": "STRING",
-                    "value": "<lex"
-                  },
-                  {
-                    "type": "STRING",
-                    "value": "<=lex"
-                  },
-                  {
-                    "type": "STRING",
-                    "value": ">lex"
-                  },
-                  {
-                    "type": "STRING",
-                    "value": ">=lex"
-                  },
-                  {
-                    "type": "STRING",
-                    "value": "<="
-                  },
-                  {
-                    "type": "STRING",
-                    "value": ">="
-                  },
-                  {
-                    "type": "STRING",
-                    "value": "<"
-                  },
-                  {
-                    "type": "STRING",
-                    "value": ">"
-                  }
-                ]
-              }
-            },
-            {
-              "type": "FIELD",
-              "name": "right",
-              "content": {
-                "type": "CHOICE",
-                "members": [
-                  {
-                    "type": "SYMBOL",
-                    "name": "bool_expr"
-                  },
-                  {
-                    "type": "SYMBOL",
-                    "name": "arithmetic_expr"
-                  },
-                  {
-                    "type": "SYMBOL",
-                    "name": "atom"
-                  }
-                ]
-              }
-            }
-          ]
-        }
+        "type": "CHOICE",
+        "members": [
+          {
+            "type": "SYMBOL",
+            "name": "arithmetic_comparison"
+          },
+          {
+            "type": "SYMBOL",
+            "name": "equality_comparison"
+          },
+          {
+            "type": "SYMBOL",
+            "name": "set_comparison"
+          }
+        ]
       }
     },
-    "sub_bool_expr": {
-      "type": "SEQ",
-      "members": [
-        {
-          "type": "STRING",
-          "value": "("
-        },
-        {
-          "type": "FIELD",
-          "name": "expression",
-          "content": {
-            "type": "CHOICE",
-            "members": [
-              {
-                "type": "SYMBOL",
-                "name": "bool_expr"
-              },
-              {
-                "type": "SYMBOL",
-                "name": "comparison_expr"
-              }
-            ]
+    "arithmetic_comparison": {
+      "type": "PREC_LEFT",
+      "value": 0,
+      "content": {
+        "type": "SEQ",
+        "members": [
+          {
+            "type": "FIELD",
+            "name": "left",
+            "content": {
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "SYMBOL",
+                  "name": "arithmetic_expr"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "atom"
+                }
+              ]
+            }
+          },
+          {
+            "type": "FIELD",
+            "name": "operator",
+            "content": {
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "STRING",
+                  "value": "<lex"
+                },
+                {
+                  "type": "STRING",
+                  "value": "<=lex"
+                },
+                {
+                  "type": "STRING",
+                  "value": ">lex"
+                },
+                {
+                  "type": "STRING",
+                  "value": ">=lex"
+                },
+                {
+                  "type": "STRING",
+                  "value": "<="
+                },
+                {
+                  "type": "STRING",
+                  "value": ">="
+                },
+                {
+                  "type": "STRING",
+                  "value": "<"
+                },
+                {
+                  "type": "STRING",
+                  "value": ">"
+                }
+              ]
+            }
+          },
+          {
+            "type": "FIELD",
+            "name": "right",
+            "content": {
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "SYMBOL",
+                  "name": "arithmetic_expr"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "atom"
+                }
+              ]
+            }
           }
-        },
-        {
-          "type": "STRING",
-          "value": ")"
-        }
-      ]
+        ]
+      }
     },
-    "set_operation_bool": {
+    "equality_comparison": {
+      "type": "PREC_LEFT",
+      "value": 0,
+      "content": {
+        "type": "SEQ",
+        "members": [
+          {
+            "type": "FIELD",
+            "name": "left",
+            "content": {
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "SYMBOL",
+                  "name": "bool_expr"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "arithmetic_expr"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "atom"
+                }
+              ]
+            }
+          },
+          {
+            "type": "FIELD",
+            "name": "operator",
+            "content": {
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "STRING",
+                  "value": "="
+                },
+                {
+                  "type": "STRING",
+                  "value": "!="
+                }
+              ]
+            }
+          },
+          {
+            "type": "FIELD",
+            "name": "right",
+            "content": {
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "SYMBOL",
+                  "name": "bool_expr"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "arithmetic_expr"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "atom"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "set_comparison": {
       "type": "SEQ",
       "members": [
         {
@@ -2456,6 +2513,36 @@
             "type": "SYMBOL",
             "name": "atom"
           }
+        }
+      ]
+    },
+    "sub_bool_expr": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "("
+        },
+        {
+          "type": "FIELD",
+          "name": "expression",
+          "content": {
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "bool_expr"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "comparison_expr"
+              }
+            ]
+          }
+        },
+        {
+          "type": "STRING",
+          "value": ")"
         }
       ]
     },
@@ -2648,6 +2735,22 @@
             "content": {
               "type": "SYMBOL",
               "name": "flatten"
+            }
+          },
+          {
+            "type": "FIELD",
+            "name": "table",
+            "content": {
+              "type": "SYMBOL",
+              "name": "table"
+            }
+          },
+          {
+            "type": "FIELD",
+            "name": "negative_table",
+            "content": {
+              "type": "SYMBOL",
+              "name": "negative_table"
             }
           }
         ]
@@ -3476,6 +3579,80 @@
           "content": {
             "type": "SYMBOL",
             "name": "atom"
+          }
+        },
+        {
+          "type": "STRING",
+          "value": ")"
+        }
+      ]
+    },
+    "table": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "table"
+        },
+        {
+          "type": "STRING",
+          "value": "("
+        },
+        {
+          "type": "FIELD",
+          "name": "variables",
+          "content": {
+            "type": "SYMBOL",
+            "name": "matrix"
+          }
+        },
+        {
+          "type": "STRING",
+          "value": ","
+        },
+        {
+          "type": "FIELD",
+          "name": "rows",
+          "content": {
+            "type": "SYMBOL",
+            "name": "matrix"
+          }
+        },
+        {
+          "type": "STRING",
+          "value": ")"
+        }
+      ]
+    },
+    "negative_table": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "negativeTable"
+        },
+        {
+          "type": "STRING",
+          "value": "("
+        },
+        {
+          "type": "FIELD",
+          "name": "variables",
+          "content": {
+            "type": "SYMBOL",
+            "name": "matrix"
+          }
+        },
+        {
+          "type": "STRING",
+          "value": ","
+        },
+        {
+          "type": "FIELD",
+          "name": "rows",
+          "content": {
+            "type": "SYMBOL",
+            "name": "matrix"
           }
         },
         {
