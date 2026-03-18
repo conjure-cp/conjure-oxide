@@ -1,5 +1,5 @@
 //! Solver adaptor for Savile Row, called as an external process.
-//Test commit comment 1
+
 use std::io::Write;
 
 use crate::Model;
