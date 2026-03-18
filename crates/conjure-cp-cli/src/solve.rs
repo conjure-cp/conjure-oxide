@@ -10,7 +10,7 @@ use std::{
     sync::{Arc, RwLock},
 };
 
-use anyhow::{anyhow, ensure};
+use anyhow::anyhow;
 use clap::ValueHint;
 use conjure_cp::{
     Model,
