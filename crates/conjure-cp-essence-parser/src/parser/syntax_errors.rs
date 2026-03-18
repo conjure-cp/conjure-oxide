@@ -258,6 +258,16 @@ mod test {
     }
 
     #[test]
+    fn malformed_objective_message() {
+        let source = "maximising %x";
+        let message = super::generate_malformed_line_message(0, source);
+        assert_eq!(
+            message,
+            "Expected an objective statement, but got 'maximising %x'"
+        );
+    }
+
+    #[test]
     fn malformed_letting_message() {
         let source = "letting % A be 3";
         let message = super::generate_malformed_line_message(0, source);
