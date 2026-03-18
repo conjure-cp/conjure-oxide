@@ -277,9 +277,9 @@ pub(crate) fn parse_with_conjure(
         .arg(input_file)
         .output()?;
 
-    let conjure_stderr = String::from_utf8(output.stderr)?;
-
-    ensure!(conjure_stderr.is_empty(), conjure_stderr);
+    if !output.status.success() {
+        println!("Parsing error: {}", String::from_utf8(output.stderr)?);
+    }
 
     let astjson = String::from_utf8(output.stdout)?;
 
