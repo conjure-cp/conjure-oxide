@@ -1,4 +1,3 @@
-use conjure_cp_essence_parser::diagnostics;
 use conjure_cp_essence_parser::diagnostics::diagnostics_api::get_diagnostics;
 use conjure_cp_essence_parser::diagnostics::error_detection::collect_errors::check_diagnostic;
 
