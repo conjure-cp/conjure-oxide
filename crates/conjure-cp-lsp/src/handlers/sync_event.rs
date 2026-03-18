@@ -19,17 +19,13 @@ use conjure_cp_essence_parser::diagnostics::diagnostics_api::get_diagnostics;
 use tower_lsp::lsp_types::Position as LspPosition;
 use tower_lsp::lsp_types::Range as LspRange;
 
-// use moka::future::Cache;
-// use tree_sitter::InputEdit;
 use tree_sitter::Point;
 use tree_sitter::Tree;
 
 use crate::handlers::cache;
-// use crate::handlers::cache;
 use crate::handlers::cache::CacheCont;
 use crate::server::Backend;
 
-// use tokio::fs;
 
 impl Backend {
     pub async fn handle_did_open(&self, params: DidOpenTextDocumentParams) {
@@ -43,10 +39,6 @@ impl Backend {
         //the closure? only runs on a cache miss
         let cache_content = lsp_cache
             .get_with(uri.clone(), async {
-                // self.client
-                //     .log_message(MessageType::INFO, "Cache miss! Loading into cache now")
-                //     .await;
-
                 let (cst_tree, _) = get_tree(&text).unwrap();
 
                 let context = Arc::new(RwLock::new(Context::default()));
@@ -69,9 +61,6 @@ impl Backend {
                         version: params.text_document.version,
                     },
                     Ok(None) => {
-                        // self.client
-                        //     .log_message(MessageType::INFO, "In none for parse_essence_with_context_and_map")
-                        //     .await;
                         CacheCont {
                             sourcemap: None,
                             ast: None,
@@ -132,14 +121,8 @@ impl Backend {
             .await;
 
         if let Some(change) = params.content_changes.first() {
-            // self.client
-            //         .log_message(MessageType::INFO, "in first if for chnage")
-            //         .await;
+
             if let Some(cache_conts) = lsp_cache.get(&uri).await {
-                //
-                // self.client
-                //     .log_message(MessageType::INFO, "in secnond if")
-                //     .await;
 
                 let mut new_text = cache_conts.contents.clone();
                 if let Some(lsp_range) = change.range {
@@ -249,15 +232,9 @@ impl Backend {
 
                 lsp_cache.insert(uri.clone(), new_cache_conts.clone()).await;
 
-                // self.client
-                //     .log_message(MessageType::INFO, "Document changed, cache updated")
-                //     .await;
-
                 self.handle_diagnostics(&uri, new_cache_conts).await;
             }
         }
-
-        // self.handle_diagnostics(&uri, new_cache_conts).await;
     }
 
     pub async fn handle_diagnostics(&self, uri: &Url, cache_conts: CacheCont) {
