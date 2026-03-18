@@ -19,7 +19,7 @@ Run `cargo install conjure-cp-cli` to install `conjure-oxide`, and ensure
 
 ### Documentation
 
-<https://conjure-cp.github.io/conjure-oxide/>
+<https://conjure-cp.github.io/conjure-oxide-reports/>
 
 ### Licence
 
