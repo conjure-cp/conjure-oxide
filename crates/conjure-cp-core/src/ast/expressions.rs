@@ -22,9 +22,9 @@ use super::pretty::{pretty_expressions_as_top_level, pretty_vec};
 use super::records::RecordValue;
 use super::sat_encoding::SATIntEncoding;
 use super::{
-    AbstractLiteral, Atom, DeclarationPtr, Domain, DomainPtr, GroundDomain, IntVal, JectivityAttr, Literal,
-    Metadata, Model, Moo, Name, PartialityAttr, Range, Reference, ReturnType, SetAttr, SymbolTable, SymbolTablePtr,
-    Typeable, UnresolvedDomain, matrix,
+    AbstractLiteral, Atom, DeclarationPtr, Domain, DomainPtr, GroundDomain, IntVal, JectivityAttr,
+    Literal, Metadata, Model, Moo, Name, PartialityAttr, Range, Reference, ReturnType, SetAttr,
+    SymbolTable, SymbolTablePtr, Typeable, UnresolvedDomain, matrix,
 };
 
 // Ensure that this type doesn't get too big
