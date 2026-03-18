@@ -99,7 +99,7 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
     let conjure_solutions = if accept && validate_with_conjure {
         eprintln!("[integration] loading Conjure reference solutions for {model_path}");
         Some(Arc::new(
-            get_solutions_from_conjure(&model_path, Default::default()).map_err(|err| {
+            get_solutions_from_conjure(&model_path, None, Default::default()).map_err(|err| {
                 std::io::Error::other(format!(
                     "failed to fetch Conjure reference solutions for {model_path}: {err}"
                 ))
@@ -283,28 +283,11 @@ fn integration_test_inner(
         solved
     };
 
-<<<<<<< HEAD
-    // Stage 3b: Check solutions against Conjure (only if explicitly enabled)
-    if config.compare_solver_solutions && config.num_solvers_enabled() > 0 {
-        let conjure_solutions: Vec<BTreeMap<Name, Literal>> = get_solutions_from_conjure(
-            &format!("{path}/{essence_base}.{extension}"),
-            None,
-            Arc::clone(&context),
-        )?;
-||||||| 18182145b
-    // Stage 3b: Check solutions against Conjure (only if explicitly enabled)
-    if config.compare_solver_solutions && config.num_solvers_enabled() > 0 {
-        let conjure_solutions: Vec<BTreeMap<Name, Literal>> = get_solutions_from_conjure(
-            &format!("{path}/{essence_base}.{extension}"),
-            Arc::clone(&context),
-        )?;
-=======
     // Stage 3b: Check solutions against Conjure when ACCEPT=true and validation is enabled.
     if accept && conjure_solutions.is_some() {
         let conjure_solutions = conjure_solutions
             .as_deref()
             .expect("conjure solutions should be present when Conjure validation is enabled");
->>>>>>> main
 
         let username_solutions = normalize_solutions_for_comparison(&solutions);
         let conjure_solutions = normalize_solutions_for_comparison(conjure_solutions);
