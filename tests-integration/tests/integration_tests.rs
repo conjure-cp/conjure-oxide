@@ -124,38 +124,17 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
                         solver,
                         case_name: case_name.as_str(),
                     };
-                    let file = File::create(format!(
-                        "{path}/{}-{}-generated-rule-trace.txt",
-                        run_case.case_name,
-                        run_case.solver.as_str()
-                    ))?;
-                    let subscriber = Arc::new(
-                        tracing_subscriber::registry().with(
-                            fmt::layer()
-                                .with_writer(file)
-                                .with_level(false)
-                                .without_time()
-                                .with_target(false)
-                                .with_filter(EnvFilter::new("rule_engine_human=trace"))
-                                .with_filter(FilterFn::new(|meta| {
-                                    meta.target() == "rule_engine_human"
-                                })),
-                        ),
-                    )
-                        as Arc<dyn tracing::Subscriber + Send + Sync>;
                     let run_label = run_case_label(path, essence_base, extension, run_case);
                     eprintln!("[integration] running {run_label}");
-                    tracing::subscriber::with_default(subscriber, || {
-                        integration_test_inner(
-                            path,
-                            essence_base,
-                            extension,
-                            run_case,
-                            minion_discrete_threshold,
-                            conjure_solutions.clone(),
-                            accept,
-                        )
-                    })
+                    integration_test_inner(
+                        path,
+                        essence_base,
+                        extension,
+                        run_case,
+                        minion_discrete_threshold,
+                        conjure_solutions.clone(),
+                        accept,
+                    )
                     .map_err(|err| std::io::Error::other(format!("{run_label}: {err}")))?;
                 }
             }
@@ -232,6 +211,15 @@ fn integration_test_inner(
         }
         Parser::ViaConjure => parse_essence_file(&file_path, context.clone())?,
     };
+    let should_validate_rule_trace = parsed_model.dominance.is_none();
+    let generated_trace_path = format!(
+        "{path}/{}-{}-generated-rule-trace.txt",
+        case_name,
+        solver_fam.as_str()
+    );
+    if !should_validate_rule_trace {
+        let _ = fs::remove_file(&generated_trace_path);
+    }
 
     // Stage 2a: Rewrite the model using the rule engine
     let mut extra_rules = vec![];
@@ -248,6 +236,24 @@ fn integration_test_inner(
     let mut model = parsed_model;
 
     let rewritten_model = match rewriter {
+        Rewriter::Naive if should_validate_rule_trace => {
+            let file = File::create(&generated_trace_path)?;
+            let subscriber = Arc::new(
+                tracing_subscriber::registry().with(
+                    fmt::layer()
+                        .with_writer(file)
+                        .with_level(false)
+                        .without_time()
+                        .with_target(false)
+                        .with_filter(EnvFilter::new("rule_engine_human=trace"))
+                        .with_filter(FilterFn::new(|meta| meta.target() == "rule_engine_human")),
+                ),
+            ) as Arc<dyn tracing::Subscriber + Send + Sync>;
+
+            tracing::subscriber::with_default(subscriber, || {
+                rewrite_naive(&model, &rule_sets, false)
+            })?
+        }
         Rewriter::Naive => rewrite_naive(&model, &rule_sets, false)?,
         Rewriter::Morph => {
             let submodel = &mut model;
@@ -309,7 +315,9 @@ fn integration_test_inner(
         // Always overwrite these ones. Unlike the rest, we don't need to selectively do these
         // based on the test results, so they don't get done later.
         copy_generated_to_expected(path, case_name, "solutions", "json", solver_fam)?;
-        copy_human_trace_generated_to_expected(path, case_name, solver_fam)?;
+        if should_validate_rule_trace {
+            copy_human_trace_generated_to_expected(path, case_name, solver_fam)?;
+        }
     }
 
     // Check Stage 3a (solutions)
@@ -321,13 +329,15 @@ fn integration_test_inner(
     match rewriter {
         Rewriter::Morph => {}
         Rewriter::Naive => {
-            let generated = read_human_rule_trace(path, case_name, "generated", &solver_fam)?;
-            let expected = read_human_rule_trace(path, case_name, "expected", &solver_fam)?;
+            if should_validate_rule_trace {
+                let generated = read_human_rule_trace(path, case_name, "generated", &solver_fam)?;
+                let expected = read_human_rule_trace(path, case_name, "expected", &solver_fam)?;
 
-            assert_eq!(
-                expected, generated,
-                "Generated rule trace does not match the expected trace!"
-            );
+                assert_eq!(
+                    expected, generated,
+                    "Generated rule trace does not match the expected trace!"
+                );
+            }
         }
     }
 

@@ -276,7 +276,7 @@ static const char * const ts_symbol_names[] = {
   [anon_sym_SLASH] = "/",
   [anon_sym_PERCENT] = "%",
   [anon_sym_PLUS] = "+",
-  [anon_sym_dominanceRelation] = "dominanceRelation",
+  [anon_sym_dominanceRelation] = "dominance relation",
   [sym_program] = "program",
   [sym_COLON] = "COLON",
   [sym_constant] = "constant",
@@ -3198,7 +3198,7 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
       if (lookahead == 'R') ADVANCE(28);
       END_STATE();
     case 42:
-      if (lookahead == 'R') ADVANCE(107);
+      if (lookahead == ' ') ADVANCE(515);
       END_STATE();
     case 43:
       if (lookahead == 'S') ADVANCE(31);
@@ -4241,7 +4241,7 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
       END_STATE();
     case 276:
       ACCEPT_TOKEN(sym_identifier);
-      if (lookahead == 'R') ADVANCE(326);
+      if (lookahead == ' ') ADVANCE(515);
       if (('0' <= lookahead && lookahead <= '9') ||
           ('A' <= lookahead && lookahead <= 'Z') ||
           lookahead == '_' ||
@@ -5785,6 +5785,12 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
           ('A' <= lookahead && lookahead <= 'Z') ||
           lookahead == '_' ||
           ('a' <= lookahead && lookahead <= 'z')) ADVANCE(414);
+      END_STATE();
+    case 515:
+      if (lookahead == 'r') ADVANCE(516);
+      END_STATE();
+    case 516:
+      if (lookahead == 'e') ADVANCE(355);
       END_STATE();
     default:
       return false;
