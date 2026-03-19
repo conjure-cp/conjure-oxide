@@ -13,9 +13,9 @@ use itertools::Itertools as _;
 use tempfile::tempdir;
 
 use crate::utils::json::sort_json_object;
+use conjure_cp::Model;
 use conjure_cp::parse::tree_sitter::parse_essence_file;
 use conjure_cp::solver::Solver;
-use conjure_cp::Model;
 
 use glob::glob;
 
@@ -228,9 +228,7 @@ pub fn get_solutions(
         let pruned = retroactively_prune_dominated(sols.clone(), dominance_expression);
         let post_prune_len = pruned.len();
 
-        eprintln!(
-            "Dominance pruning retained {post_prune_len} of {pre_prune_len} solutions."
-        );
+        eprintln!("Dominance pruning retained {post_prune_len} of {pre_prune_len} solutions.");
 
         *sols = pruned;
     }

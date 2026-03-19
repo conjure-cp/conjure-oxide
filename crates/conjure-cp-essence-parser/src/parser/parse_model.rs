@@ -2,8 +2,8 @@ use std::sync::{Arc, RwLock};
 use std::{fs, vec};
 
 use conjure_cp_core::Model;
-use conjure_cp_core::ast::assertions::debug_assert_model_well_formed;
 use conjure_cp_core::ast::DeclarationPtr;
+use conjure_cp_core::ast::assertions::debug_assert_model_well_formed;
 use conjure_cp_core::context::Context;
 #[allow(unused)]
 use uniplate::Uniplate;
