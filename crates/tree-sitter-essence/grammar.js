@@ -289,9 +289,9 @@ module.exports = grammar ({
 
     // Equality comparisons: work on any type, return boolean
     equality_comparison: $ => prec.left(seq(
-      field("left", choice($.bool_expr, $.arithmetic_expr, $.atom)),
+      field("left", choice($.bool_expr, $.arithmetic_expr, $.all_diff_comparison, $.atom)),
       field("operator", choice("=", "!=")),
-      field("right", choice($.bool_expr, $.arithmetic_expr, $.atom))
+      field("right", choice($.bool_expr, $.arithmetic_expr, $.all_diff_comparison, $.atom))
     )),
 
     // Set comparisons: require set operands, return boolean
