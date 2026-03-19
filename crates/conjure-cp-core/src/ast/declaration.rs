@@ -215,13 +215,13 @@ impl DeclarationPtr {
     ///
     /// ```
     /// use conjure_cp_core::ast::{DeclarationPtr,Name,DeclarationKind,Domain,Range, Expression,
-    /// Literal,Atom,Moo};
-    /// use conjure_cp_core::{matrix_expr,ast::Metadata};
+    /// Literal,Atom,Moo,DomainPtr,Metadata};
+    /// use conjure_cp_core::{matrix_expr};
     ///
     /// // letting n be 10 + 10
     /// let ten = Expression::Atomic(Metadata::new(),Atom::Literal(Literal::Int(10)));
     /// let expression = Expression::Sum(Metadata::new(),Moo::new(matrix_expr![ten.clone(),ten]));
-    /// let domain = DomainPtr::new(Domain::bool());
+    /// let domain = Domain::bool();
     /// let declaration = DeclarationPtr::new_value_letting_with_domain(
     ///     Name::User("n".into()),
     ///     expression,
@@ -854,6 +854,7 @@ pub enum DeclarationKind {
     Given(DomainPtr),
     Quantified(Quantified),
 
+    /// Carries an optional domain so instantiated `given`s can retain their declared domain.
     ValueLetting(Expression, Option<DomainPtr>),
     DomainLetting(DomainPtr),
 
