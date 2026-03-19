@@ -68,7 +68,7 @@ fn parse_number_of_solutions(input: &str) -> Result<NumberOfSolutions, String> {
 pub struct Args {
     /// The input Essence problem file
     #[arg(value_name = "INPUT_ESSENCE", value_hint = ValueHint::FilePath)]
-    pub input_file: PathBuf,
+    pub essence_file: PathBuf,
 
     /// The input Essence parameter file
     #[arg(value_name = "PARAM_ESSENCE", value_hint = ValueHint::FilePath)]
@@ -101,29 +101,29 @@ pub struct Args {
 }
 
 pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::Result<()> {
-    let input_file = solve_args.input_file.clone();
+    let essence_file = solve_args.essence_file.clone();
     let param_file = solve_args.param_file.clone();
 
     // each step is in its own method so that similar commands
     // (e.g. testsolve) can reuse some of these steps.
 
-    let context = init_context(&global_args, input_file, param_file)?;
+    let context = init_context(&global_args, essence_file, param_file)?;
 
     let ctx_lock = context.read().unwrap();
-    let input_file_name = ctx_lock
-        .input_file_name
+    let essence_file_name = ctx_lock
+        .essence_file_name
         .as_ref()
         .expect("context should contain the problem input file");
     let param_file_name = ctx_lock.param_file_name.as_ref();
 
     // parse models
-    let problem_model = parse(&global_args, Arc::clone(&context), input_file_name)?;
+    let problem_model = parse(&global_args, Arc::clone(&context), essence_file_name)?;
 
     // unify models
     let unified_model = match param_file_name {
         Some(param_file_name) => {
             let param_model = parse(&global_args, Arc::clone(&context), param_file_name)?;
-            merge_models(problem_model, param_model)?
+            instantiate_model(problem_model, param_model)?
         }
         None => problem_model,
     };
@@ -156,7 +156,7 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
     Ok(())
 }
 
-pub(crate) fn merge_models(problem_model: Model, param_model: Model) -> anyhow::Result<Model> {
+pub(crate) fn instantiate_model(problem_model: Model, param_model: Model) -> anyhow::Result<Model> {
     let mut symbol_table = problem_model.symbols_ptr_unchecked().write();
     let param_table = param_model.symbols_ptr_unchecked().write();
 
@@ -208,7 +208,7 @@ pub(crate) fn merge_models(problem_model: Model, param_model: Model) -> anyhow::
 /// Returns a new Context and Solver for solving.
 pub(crate) fn init_context(
     global_args: &GlobalArgs,
-    input_file: PathBuf,
+    essence_file: PathBuf,
     param_file: Option<PathBuf>,
 ) -> anyhow::Result<Arc<RwLock<Context<'static>>>> {
     set_current_parser(global_args.parser);
@@ -261,7 +261,7 @@ pub(crate) fn init_context(
         rule_sets.clone(),
     );
 
-    context.write().unwrap().input_file_name = Some(input_file.to_str().expect("").into());
+    context.write().unwrap().essence_file_name = Some(essence_file.to_str().expect("").into());
     if let Some(param_file) = param_file {
         context.write().unwrap().param_file_name = Some(param_file.to_str().expect("").into());
     }

@@ -34,19 +34,19 @@ pub fn run_test_solve_command(global_args: GlobalArgs, local_args: Args) -> anyh
 
     // get input and param file name from context
     let ctx_lock = context.read().unwrap();
-    let input_file_name = ctx_lock
-        .input_file_name
+    let essence_file_name = ctx_lock
+        .essence_file_name
         .as_ref()
         .expect("context should contain the problem input file");
     let param_file_name = ctx_lock.param_file_name.as_ref();
 
     // parse models
-    let problem_model = solve::parse(&global_args, Arc::clone(&context), input_file_name)?;
+    let problem_model = solve::parse(&global_args, Arc::clone(&context), essence_file_name)?;
 
     let unified_model = match param_file_name {
         Some(param_file_name) => {
             let param_model = solve::parse(&global_args, Arc::clone(&context), param_file_name)?;
-            solve::merge_models(problem_model, param_model)?
+            solve::instantiate_model(problem_model, param_model)?
         }
         None => problem_model,
     };

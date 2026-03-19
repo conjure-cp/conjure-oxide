@@ -26,7 +26,7 @@ pub fn run_pretty_command(global_args: GlobalArgs, pretty_args: Args) -> anyhow:
 
     // Get the file path back from the context
     let ctx_lock = context.read().unwrap();
-    let file = ctx_lock.input_file_name.as_ref().unwrap();
+    let file = ctx_lock.essence_file_name.as_ref().unwrap();
 
     let model = parse(&global_args, Arc::clone(&context), file)?;
 

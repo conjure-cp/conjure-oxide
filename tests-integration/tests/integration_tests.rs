@@ -227,7 +227,7 @@ fn integration_test_inner(
     let parsed_model = match parser {
         Parser::TreeSitter => {
             let mut ctx = context.as_ref().write().unwrap();
-            ctx.input_file_name = Some(format!("{path}/{essence_base}.{extension}"));
+            ctx.essence_file_name = Some(format!("{path}/{essence_base}.{extension}"));
             parse_essence_file_native(&file_path, context.clone())?
         }
         Parser::ViaConjure => parse_essence_file(&file_path, context.clone())?,
