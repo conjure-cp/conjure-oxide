@@ -20,7 +20,8 @@ use rustsat_cadical::CaDiCaL;
 
 use crate::ast::pretty::pretty_vec;
 use crate::ast::{Atom, Expression, GroundDomain, Literal, Metadata, Name};
-use crate::rule_engine::rewrite_naive;
+use crate::rule_engine::rewrite_model_with_configured_rewriter;
+use crate::settings::current_rewriter;
 use crate::solver::SearchComplete::NoSolutions;
 use crate::solver::adaptors::rustsat::convs::{cnf_clause_to_sat_clause, handle_cnf};
 use crate::solver::{
@@ -190,11 +191,13 @@ impl Sat {
         dominance_model.add_constraint(rewritten_dominance);
 
         let rule_sets = dominance_model.context.read().unwrap().rule_sets.clone();
-        let rewritten = rewrite_naive(&dominance_model, &rule_sets, false).map_err(|e| {
-            SolverError::Runtime(format!(
-                "Failed to rewrite dominance constraint into CNF clauses: {e}"
-            ))
-        })?;
+        let rewritten =
+            rewrite_model_with_configured_rewriter(dominance_model, &rule_sets, current_rewriter())
+                .map_err(|e| {
+                    SolverError::Runtime(format!(
+                        "Failed to rewrite dominance constraint into CNF clauses: {e}"
+                    ))
+                })?;
 
         for clause in rewritten.clauses() {
             let mut missing_refs: Vec<Name> = Vec::new();
@@ -287,9 +290,7 @@ impl SolverAdaptor for Sat {
             .into_cnf();
 
         solver.add_cnf(cnf.0).map_err(|e| {
-            SolverError::Runtime(format!(
-                "Failed adding CNF to SAT solver before solve: {e}"
-            ))
+            SolverError::Runtime(format!("Failed adding CNF to SAT solver before solve: {e}"))
         })?;
 
         let mut has_sol = false;
@@ -399,9 +400,7 @@ impl SolverAdaptor for Sat {
                 blocking_cl.add(lit_i);
             }
             solver.add_clause(blocking_cl).map_err(|e| {
-                SolverError::Runtime(format!(
-                    "Failed adding blocking clause to SAT solver: {e}"
-                ))
+                SolverError::Runtime(format!("Failed adding blocking clause to SAT solver: {e}"))
             })?;
         }
     }

@@ -13,7 +13,8 @@ use super::store::*;
 use super::theories::*;
 
 use crate::ast::{Atom, Expression, GroundDomain, Literal, Metadata, Moo, Name};
-use crate::rule_engine::rewrite_naive;
+use crate::rule_engine::rewrite_model_with_configured_rewriter;
+use crate::settings::{Rewriter, current_rewriter, set_current_rewriter};
 use crate::{Model, solver::*};
 
 const MINIMUM_Z3_VERSION: &str = "4.8.12";
@@ -247,11 +248,13 @@ impl Smt {
         dominance_model.add_constraint(rewritten_dominance);
 
         let rule_sets = dominance_model.context.read().unwrap().rule_sets.clone();
-        let rewritten = rewrite_naive(&dominance_model, &rule_sets, false).map_err(|e| {
-            SolverError::Runtime(format!(
-                "Failed to rewrite dominance constraint for SMT solving: {e}"
-            ))
-        })?;
+        let rewritten =
+            rewrite_model_with_configured_rewriter(dominance_model, &rule_sets, current_rewriter())
+                .map_err(|e| {
+                    SolverError::Runtime(format!(
+                        "Failed to rewrite dominance constraint for SMT solving: {e}"
+                    ))
+                })?;
 
         load_model_impl(
             store,
@@ -551,6 +554,7 @@ mod tests {
     fn adding_dominance_constraint_rules_out_solution_dominated_by_prior_solution() {
         let theory_config = TheoryConfig::default();
         let context = Context::new_ptr_empty(SolverFamily::Smt(theory_config));
+        set_current_rewriter(Rewriter::Naive);
 
         let x = Name::User("x".into());
         let y = Name::User("y".into());
