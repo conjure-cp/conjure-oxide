@@ -54,4 +54,3 @@ pub fn instantiate_model(problem_model: Model, param_model: Model) -> anyhow::Re
     drop(symbol_table);
     Ok(problem_model)
 }
-
