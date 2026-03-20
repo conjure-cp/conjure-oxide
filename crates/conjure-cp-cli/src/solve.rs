@@ -28,7 +28,10 @@ use conjure_cp::{
 };
 use conjure_cp::{parse::tree_sitter::parse_essence_file_native, solver::adaptors::*};
 use conjure_cp_cli::find_conjure::conjure_executable;
+use conjure_cp_cli::instantiate_model;
 use conjure_cp_cli::utils::conjure::{get_solutions, solutions_to_json};
+// use crate::find_conjure::conjure_executable;
+// use crate::utils::conjure::{get_solutions, solutions_to_json};
 use serde_json::to_string_pretty;
 
 use crate::cli::{GlobalArgs, LOGGING_HELP_HEADING};
@@ -156,54 +159,54 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
     Ok(())
 }
 
-pub(crate) fn instantiate_model(problem_model: Model, param_model: Model) -> anyhow::Result<Model> {
-    let mut symbol_table = problem_model.symbols_ptr_unchecked().write();
-    let param_table = param_model.symbols_ptr_unchecked().write();
+// pub(crate) fn instantiate_model(problem_model: Model, param_model: Model) -> anyhow::Result<Model> {
+//     let mut symbol_table = problem_model.symbols_ptr_unchecked().write();
+//     let param_table = param_model.symbols_ptr_unchecked().write();
 
-    for (name, decl) in symbol_table.iter_local_mut() {
-        let Some(domain) = decl.as_given() else {
-            continue;
-        };
+//     for (name, decl) in symbol_table.iter_local_mut() {
+//         let Some(domain) = decl.as_given() else {
+//             continue;
+//         };
 
-        // Find corresponding letting in param file
-        let param_decl = param_table.lookup(name);
-        let expr = param_decl
-                .as_ref()
-                .and_then(DeclarationPtr::as_value_letting)
-                .ok_or_else(|| anyhow!(
-                    "Given declaration `{name}` does not have corresponding letting in parameter file"
-                ))?;
+//         // Find corresponding letting in param file
+//         let param_decl = param_table.lookup(name);
+//         let expr = param_decl
+//                 .as_ref()
+//                 .and_then(DeclarationPtr::as_value_letting)
+//                 .ok_or_else(|| anyhow!(
+//                     "Given declaration `{name}` does not have corresponding letting in parameter file"
+//                 ))?;
 
-        // Evaluate the letting expresison to a literal
-        let expr_value = eval_constant(&expr)
-            .ok_or_else(|| anyhow!("Letting expression `{expr}` cannot be evaluated"))?;
+//         // Evaluate the letting expresison to a literal
+//         let expr_value = eval_constant(&expr)
+//             .ok_or_else(|| anyhow!("Letting expression `{expr}` cannot be evaluated"))?;
 
-        // Resolve the given's domain
-        let ground_domain = domain
-            .resolve()
-            .ok_or_else(|| anyhow!("Domain of given statement `{name}` cannot be resolved"))?;
+//         // Resolve the given's domain
+//         let ground_domain = domain
+//             .resolve()
+//             .ok_or_else(|| anyhow!("Domain of given statement `{name}` cannot be resolved"))?;
 
-        // Ensure the letting value is contained within the given expression's domain
-        if !ground_domain.contains(&expr_value).unwrap() {
-            return Err(anyhow!(
-                "Domain of given statement `{name}` does not contain letting value"
-            ));
-        }
+//         // Ensure the letting value is contained within the given expression's domain
+//         if !ground_domain.contains(&expr_value).unwrap() {
+//             return Err(anyhow!(
+//                 "Domain of given statement `{name}` does not contain letting value"
+//             ));
+//         }
 
-        // Replace the given statement in the model with the statement
-        let new_decl = Declaration::new(
-            name.clone(),
-            DeclarationKind::ValueLetting(expr.clone(), Some(domain.clone())),
-        );
-        drop(domain);
-        decl.replace(new_decl);
+//         // Replace the given statement in the model with the statement
+//         let new_decl = Declaration::new(
+//             name.clone(),
+//             DeclarationKind::ValueLetting(expr.clone(), Some(domain.clone())),
+//         );
+//         drop(domain);
+//         decl.replace(new_decl);
 
-        tracing::info!("Replaced {name} given with letting.");
-    }
+//         tracing::info!("Replaced {name} given with letting.");
+//     }
 
-    drop(symbol_table);
-    Ok(problem_model)
-}
+//     drop(symbol_table);
+//     Ok(problem_model)
+// }
 
 /// Returns a new Context and Solver for solving.
 pub(crate) fn init_context(
