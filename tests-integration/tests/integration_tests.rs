@@ -65,7 +65,7 @@ fn run_case_label(
 
 fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(), Box<dyn Error>> {
     let accept = env::var("ACCEPT").unwrap_or("false".to_string()) == "true";
-    let default_test_config = env::var("DEFCONFIG").unwrap_or("false".to_string()) == "true";
+    let default_test_config = env::var("ALL_TESTS").unwrap_or("false".to_string()) == "true";
 
     if accept {
         clean_test_dir_for_accept(path, essence_base, extension)?;

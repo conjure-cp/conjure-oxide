@@ -1,0 +1,62 @@
+Model before rewriting:
+
+find x: bool
+
+such that
+
+(x = and([ (i > 0) | i : int(1..5) ]))
+
+--
+
+(x = and([ (i > 0) | i : int(1..5) ])), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([ (i > 0) | i : int(1..5) ]), x)
+
+--
+
+Via-solver generator model before rewriting:
+
+find i: int(1..5)
+
+--
+
+Model before rewriting:
+
+find i: int(1..5)
+
+--
+
+, 
+   ~~> eval_root ([("Constant", 9001)])
+true
+
+--
+
+Final model:
+
+find i: int(1..5)
+
+such that
+
+true
+
+[ (i > 0) | i : int(1..5) ], 
+   ~~> expand_comprehension_via_solver ([("Base", 2000)])
+[true,true,true,true,true;int(1..)]
+
+--
+
+Reify(and([true,true,true,true,true;int(1..)]), x), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+Reify(true, x)
+
+--
+
+Final model:
+
+find x: bool
+
+such that
+
+Reify(true, x)
+

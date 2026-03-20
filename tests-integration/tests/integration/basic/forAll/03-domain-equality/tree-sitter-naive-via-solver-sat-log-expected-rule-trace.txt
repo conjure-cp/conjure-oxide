@@ -1,0 +1,82 @@
+Model before rewriting:
+
+find y: bool
+
+such that
+
+(y = and([ (product([j,j;int(1..)]) >= j) | j : int(0..3) ]))
+
+--
+
+Via-solver generator model before rewriting:
+
+find j: int(0..3)
+
+--
+
+Model before rewriting:
+
+find j: int(0..3)
+
+--
+
+, 
+   ~~> eval_root ([("Constant", 9001)])
+true
+
+--
+
+Final model:
+
+find j: int(0..3)
+
+such that
+
+true
+
+[ (product([j,j;int(1..)]) >= j) | j : int(0..3) ], 
+   ~~> expand_comprehension_via_solver ([("Base", 2000)])
+[true,true,true,true;int(1..)]
+
+--
+
+(y = and([true,true,true,true;int(1..)])), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(y = true)
+
+--
+
+(y = true), 
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__0
+new variables:
+  find __0: bool
+new clauses:
+  (¬y \/ __0)
+  (y \/ ¬__0)
+
+--
+
+__0, 
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new clauses:
+  (__0)
+
+--
+
+Final model:
+
+find y: bool
+find __0: bool
+
+such that
+
+true
+
+clauses:
+
+(¬y \/ __0),
+(y \/ ¬__0),
+(__0)
+

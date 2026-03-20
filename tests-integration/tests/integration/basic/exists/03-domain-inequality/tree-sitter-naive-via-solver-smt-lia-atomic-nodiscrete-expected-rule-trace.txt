@@ -1,0 +1,56 @@
+Model before rewriting:
+
+find result: bool
+
+such that
+
+(result = or([ (k > 7) | k : int(1..10) ]))
+
+--
+
+Via-solver generator model before rewriting:
+
+find k: int(1..10)
+
+--
+
+Model before rewriting:
+
+find k: int(1..10)
+
+--
+
+, 
+   ~~> eval_root ([("Constant", 9001)])
+true
+
+--
+
+Final model:
+
+find k: int(1..10)
+
+such that
+
+true
+
+[ (k > 7) | k : int(1..10) ], 
+   ~~> expand_comprehension_via_solver ([("Base", 2000)])
+[false,false,false,false,false,false,false,true,true,true;int(1..)]
+
+--
+
+(result = or([false,false,false,false,false,false,false,true,true,true;int(1..)])), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(result = true)
+
+--
+
+Final model:
+
+find result: bool
+
+such that
+
+(result = true)
+

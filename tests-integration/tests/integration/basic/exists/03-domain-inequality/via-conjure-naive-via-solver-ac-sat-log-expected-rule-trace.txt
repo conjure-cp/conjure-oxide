@@ -1,0 +1,104 @@
+Model before rewriting:
+
+find result: bool
+
+such that
+
+(result = or([ (k > 7) | k : int(1..10) ]))
+
+--
+
+Model before rewriting:
+
+find k: int(1..10)
+
+such that
+
+(false != (k > 7))
+
+--
+
+(k > 7), 
+   ~~> gt_to_geq ([("Minion", 8400)])
+(sum([k,-1;int(1..)]) >= 7)
+
+--
+
+(sum([k,-1;int(1..)]) >= 7), 
+   ~~> y_plus_k_geq_x_to_ineq ([("Minion", 4800)])
+Ineq(7, k, -1)
+
+--
+
+(false != Ineq(7, k, -1)), 
+   ~~> flatten_generic ([("Minion", 4200)])
+(false != __0)
+new variables:
+  find __0: bool
+new constraints:
+  __0 =aux Ineq(7, k, -1)
+
+--
+
+__0 =aux Ineq(7, k, -1), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(Ineq(7, k, -1), __0)
+
+--
+
+Final model:
+
+find k: int(1..10)
+find __0: bool
+
+such that
+
+(false != __0),
+Reify(Ineq(7, k, -1), __0)
+
+or([ (k > 7) | k : int(1..10) ]), 
+   ~~> expand_comprehension_via_solver_ac ([("Base", 2002)])
+or([true,true,true;int(1..)])
+
+--
+
+(result = or([true,true,true;int(1..)])), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(result = true)
+
+--
+
+(result = true), 
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__0
+new variables:
+  find __0: bool
+new clauses:
+  (¬result \/ __0)
+  (result \/ ¬__0)
+
+--
+
+__0, 
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new clauses:
+  (__0)
+
+--
+
+Final model:
+
+find result: bool
+find __0: bool
+
+such that
+
+true
+
+clauses:
+
+(¬result \/ __0),
+(result \/ ¬__0),
+(__0)
+

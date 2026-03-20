@@ -1,0 +1,56 @@
+Model before rewriting:
+
+find result: bool
+
+such that
+
+(result = and([ and([(n > 0),(n < 10);int(1..)]) | n : int(1..3) ]))
+
+--
+
+[ and([(n > 0),(n < 10);int(1..)]) | n : int(1..3) ], 
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[true,true,true;int(1..)]
+
+--
+
+(result = and([true,true,true;int(1..)])), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(result = true)
+
+--
+
+(result = true), 
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__0
+new variables:
+  find __0: bool
+new clauses:
+  (¬result \/ __0)
+  (result \/ ¬__0)
+
+--
+
+__0, 
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new clauses:
+  (__0)
+
+--
+
+Final model:
+
+find result: bool
+find __0: bool
+
+such that
+
+true
+
+clauses:
+
+(¬result \/ __0),
+(result \/ ¬__0),
+(__0)
+

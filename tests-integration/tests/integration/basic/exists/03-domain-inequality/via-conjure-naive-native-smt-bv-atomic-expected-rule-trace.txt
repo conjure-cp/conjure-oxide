@@ -1,0 +1,30 @@
+Model before rewriting:
+
+find result: bool
+
+such that
+
+(result = or([ (k > 7) | k : int(1..10) ]))
+
+--
+
+[ (k > 7) | k : int(1..10) ], 
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[false,false,false,false,false,false,false,true,true,true;int(1..)]
+
+--
+
+(result = or([false,false,false,false,false,false,false,true,true,true;int(1..)])), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(result = true)
+
+--
+
+Final model:
+
+find result: bool
+
+such that
+
+(result = true)
+

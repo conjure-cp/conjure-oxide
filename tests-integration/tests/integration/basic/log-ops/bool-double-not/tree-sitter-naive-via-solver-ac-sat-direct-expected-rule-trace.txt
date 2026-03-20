@@ -1,0 +1,58 @@
+Model before rewriting:
+
+find a: bool
+
+such that
+
+!(!(a))
+
+--
+
+!(a), 
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__0
+new variables:
+  find __0: bool
+new clauses:
+  (¬a \/ ¬__0)
+  (a \/ __0)
+
+--
+
+!(__0), 
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__1
+new variables:
+  find __1: bool
+new clauses:
+  (¬__0 \/ ¬__1)
+  (__0 \/ __1)
+
+--
+
+__1, 
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new clauses:
+  (__1)
+
+--
+
+Final model:
+
+find a: bool
+find __0: bool
+find __1: bool
+
+such that
+
+true
+
+clauses:
+
+(¬a \/ ¬__0),
+(a \/ __0),
+(¬__0 \/ ¬__1),
+(__0 \/ __1),
+(__1)
+

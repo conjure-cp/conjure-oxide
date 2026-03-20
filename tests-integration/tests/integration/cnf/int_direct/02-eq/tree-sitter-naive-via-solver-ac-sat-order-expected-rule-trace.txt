@@ -1,0 +1,295 @@
+Model before rewriting:
+
+find a: int(0..2)
+
+such that
+
+(a = 1)
+
+--
+
+a, 
+   ~~> integer_decision_representation_order ([("SAT_Order", 9500)])
+SATInt(Order, [a#sat_order_int_00,a#sat_order_int_01,a#sat_order_int_02;int(1..)] [0, 2])
+new variables:
+  find a#sat_order_int_00: bool
+  find a#sat_order_int_01: bool
+  find a#sat_order_int_02: bool
+new constraints:
+  or([and([(SATInt(Order, [a#sat_order_int_00,a#sat_order_int_01,a#sat_order_int_02;int(1..)] [0, 2]) >= 0),(SATInt(Order, [a#sat_order_int_00,a#sat_order_int_01,a#sat_order_int_02;int(1..)] [0, 2]) <= 2);int(1..)]);int(1..)])
+
+--
+
+1, 
+   ~~> literal_sat_order_int ([("SAT_Order", 9500)])
+SATInt(Order, [true;int(1..)] [1, 1])
+
+--
+
+0, 
+   ~~> literal_sat_order_int ([("SAT_Order", 9500)])
+SATInt(Order, [true;int(1..)] [0, 0])
+
+--
+
+2, 
+   ~~> literal_sat_order_int ([("SAT_Order", 9500)])
+SATInt(Order, [true;int(1..)] [2, 2])
+
+--
+
+(SATInt(Order, [a#sat_order_int_00,a#sat_order_int_01,a#sat_order_int_02;int(1..)] [0, 2]) = SATInt(Order, [true;int(1..)] [1, 1])), 
+   ~~> eq_sat_order ([("SAT_Order", 9100)])
+__5
+new variables:
+  find __0: bool
+  find __1: bool
+  find __2: bool
+  find __3: bool
+  find __4: bool
+  find __5: bool
+new clauses:
+  (¬a#sat_order_int_00 \/ __0)
+  (a#sat_order_int_00 \/ ¬__0)
+  (¬__1 \/ __0)
+  (__1 \/ ¬__0)
+  (¬a#sat_order_int_01 \/ __2)
+  (a#sat_order_int_01 \/ ¬__2)
+  (¬__3 \/ __2)
+  (¬__3 \/ __1)
+  (__3 \/ ¬__2 \/ ¬__1)
+  (a#sat_order_int_02 \/ __4)
+  (¬a#sat_order_int_02 \/ ¬__4)
+  (¬__5 \/ __4)
+  (¬__5 \/ __3)
+  (__5 \/ ¬__4 \/ ¬__3)
+
+--
+
+(SATInt(Order, [a#sat_order_int_00,a#sat_order_int_01,a#sat_order_int_02;int(1..)] [0, 2]) >= SATInt(Order, [true;int(1..)] [0, 0])), 
+   ~~> ineq_sat_order ([("SAT_Order", 9100)])
+__15
+new variables:
+  find __6: bool
+  find __7: bool
+  find __8: bool
+  find __9: bool
+  find __10: bool
+  find __11: bool
+  find __12: bool
+  find __13: bool
+  find __14: bool
+  find __15: bool
+new clauses:
+  (¬a#sat_order_int_00 \/ ¬__6)
+  (a#sat_order_int_00 \/ __6)
+  (¬__7 \/ __6)
+  (__7 \/ ¬__6)
+  (¬__7 \/ __8)
+  (¬__8 \/ __7)
+  (¬a#sat_order_int_01 \/ ¬__9)
+  (a#sat_order_int_01 \/ __9)
+  (¬__10 \/ __9)
+  (¬__10)
+  (¬__8 \/ __11)
+  (¬__10 \/ __11)
+  (¬__11 \/ __8 \/ __10)
+  (¬a#sat_order_int_02 \/ ¬__12)
+  (a#sat_order_int_02 \/ __12)
+  (¬__13 \/ __12)
+  (¬__13)
+  (¬__11 \/ __14)
+  (¬__13 \/ __14)
+  (¬__14 \/ __11 \/ __13)
+  (¬__14 \/ ¬__15)
+  (__14 \/ __15)
+
+--
+
+(SATInt(Order, [a#sat_order_int_00,a#sat_order_int_01,a#sat_order_int_02;int(1..)] [0, 2]) <= SATInt(Order, [true;int(1..)] [2, 2])), 
+   ~~> ineq_sat_order ([("SAT_Order", 9100)])
+__25
+new variables:
+  find __16: bool
+  find __17: bool
+  find __18: bool
+  find __19: bool
+  find __20: bool
+  find __21: bool
+  find __22: bool
+  find __23: bool
+  find __24: bool
+  find __25: bool
+new clauses:
+  (¬__16)
+  (¬__17 \/ __16)
+  (¬__17 \/ a#sat_order_int_00)
+  (__17 \/ ¬__16 \/ ¬a#sat_order_int_00)
+  (¬__17 \/ __18)
+  (¬__18 \/ __17)
+  (¬__19)
+  (¬__20 \/ __19)
+  (¬__20 \/ a#sat_order_int_01)
+  (__20 \/ ¬__19 \/ ¬a#sat_order_int_01)
+  (¬__18 \/ __21)
+  (¬__20 \/ __21)
+  (¬__21 \/ __18 \/ __20)
+  (¬__22)
+  (¬__23 \/ __22)
+  (¬__23 \/ a#sat_order_int_02)
+  (__23 \/ ¬__22 \/ ¬a#sat_order_int_02)
+  (¬__21 \/ __24)
+  (¬__23 \/ __24)
+  (¬__24 \/ __21 \/ __23)
+  (¬__24 \/ ¬__25)
+  (__24 \/ __25)
+
+--
+
+or([and([__15,__25;int(1..)]);int(1..)]), 
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__15,__25;int(1..)])
+
+--
+
+__5,
+and([__15,__25;int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+__5,
+__15,
+__25
+
+--
+
+__5,
+__15,
+__25, 
+   ~~> remove_single_atom ([("SAT", 8400)])
+__15,
+__25
+new clauses:
+  (__5)
+
+--
+
+__15,
+__25, 
+   ~~> remove_single_atom ([("SAT", 8400)])
+__25
+new clauses:
+  (__15)
+
+--
+
+__25, 
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new clauses:
+  (__25)
+
+--
+
+Final model:
+
+find a: int(0..2)
+find __0: bool
+find __1: bool
+find __2: bool
+find __3: bool
+find __4: bool
+find __5: bool
+find __6: bool
+find __7: bool
+find __8: bool
+find __9: bool
+find __10: bool
+find __11: bool
+find __12: bool
+find __13: bool
+find __14: bool
+find __15: bool
+find __16: bool
+find __17: bool
+find __18: bool
+find __19: bool
+find __20: bool
+find __21: bool
+find __22: bool
+find __23: bool
+find __24: bool
+find __25: bool
+find a#sat_order_int_00: bool
+find a#sat_order_int_01: bool
+find a#sat_order_int_02: bool
+
+such that
+
+true
+
+clauses:
+
+(¬a#sat_order_int_01 \/ a#sat_order_int_00),
+(¬a#sat_order_int_02 \/ a#sat_order_int_01),
+(a#sat_order_int_00),
+(¬a#sat_order_int_00 \/ __0),
+(a#sat_order_int_00 \/ ¬__0),
+(¬__1 \/ __0),
+(__1 \/ ¬__0),
+(¬a#sat_order_int_01 \/ __2),
+(a#sat_order_int_01 \/ ¬__2),
+(¬__3 \/ __2),
+(¬__3 \/ __1),
+(__3 \/ ¬__2 \/ ¬__1),
+(a#sat_order_int_02 \/ __4),
+(¬a#sat_order_int_02 \/ ¬__4),
+(¬__5 \/ __4),
+(¬__5 \/ __3),
+(__5 \/ ¬__4 \/ ¬__3),
+(¬a#sat_order_int_00 \/ ¬__6),
+(a#sat_order_int_00 \/ __6),
+(¬__7 \/ __6),
+(__7 \/ ¬__6),
+(¬__7 \/ __8),
+(¬__8 \/ __7),
+(¬a#sat_order_int_01 \/ ¬__9),
+(a#sat_order_int_01 \/ __9),
+(¬__10 \/ __9),
+(¬__10),
+(¬__8 \/ __11),
+(¬__10 \/ __11),
+(¬__11 \/ __8 \/ __10),
+(¬a#sat_order_int_02 \/ ¬__12),
+(a#sat_order_int_02 \/ __12),
+(¬__13 \/ __12),
+(¬__13),
+(¬__11 \/ __14),
+(¬__13 \/ __14),
+(¬__14 \/ __11 \/ __13),
+(¬__14 \/ ¬__15),
+(__14 \/ __15),
+(¬__16),
+(¬__17 \/ __16),
+(¬__17 \/ a#sat_order_int_00),
+(__17 \/ ¬__16 \/ ¬a#sat_order_int_00),
+(¬__17 \/ __18),
+(¬__18 \/ __17),
+(¬__19),
+(¬__20 \/ __19),
+(¬__20 \/ a#sat_order_int_01),
+(__20 \/ ¬__19 \/ ¬a#sat_order_int_01),
+(¬__18 \/ __21),
+(¬__20 \/ __21),
+(¬__21 \/ __18 \/ __20),
+(¬__22),
+(¬__23 \/ __22),
+(¬__23 \/ a#sat_order_int_02),
+(__23 \/ ¬__22 \/ ¬a#sat_order_int_02),
+(¬__21 \/ __24),
+(¬__23 \/ __24),
+(¬__24 \/ __21 \/ __23),
+(¬__24 \/ ¬__25),
+(__24 \/ __25),
+(__5),
+(__15),
+(__25)
+

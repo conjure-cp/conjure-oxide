@@ -1,0 +1,75 @@
+Model before rewriting:
+
+find a: bool
+find b: bool
+
+such that
+
+and([a,(b = and([ (k <= 5) | k : int(1..2) ]));int(1..)])
+
+--
+
+and([a,(b = and([ (k <= 5) | k : int(1..2) ]));int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+a,
+(b = and([ (k <= 5) | k : int(1..2) ]))
+
+--
+
+a,
+(b = and([ (k <= 5) | k : int(1..2) ])), 
+   ~~> remove_single_atom ([("SAT", 8400)])
+(b = and([ (k <= 5) | k : int(1..2) ]))
+new clauses:
+  (a)
+
+--
+
+[ (k <= 5) | k : int(1..2) ], 
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[true,true;int(1..)]
+
+--
+
+(b = and([true,true;int(1..)])), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(b = true)
+
+--
+
+(b = true), 
+   ~~> apply_tseytin_iff_eq ([("SAT", 8500)])
+__0
+new variables:
+  find __0: bool
+new clauses:
+  (¬b \/ __0)
+  (b \/ ¬__0)
+
+--
+
+__0, 
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new clauses:
+  (__0)
+
+--
+
+Final model:
+
+find a: bool
+find b: bool
+find __0: bool
+
+such that
+
+true
+
+clauses:
+
+(a),
+(¬b \/ __0),
+(b \/ ¬__0),
+(__0)
+

@@ -1,0 +1,62 @@
+Model before rewriting:
+
+find result: bool
+
+such that
+
+(result = or([ (k > 7) | k : int(1..10) ]))
+
+--
+
+(result = or([ (k > 7) | k : int(1..10) ])), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(or([ (k > 7) | k : int(1..10) ]), result)
+
+--
+
+Via-solver generator model before rewriting:
+
+find k: int(1..10)
+
+--
+
+Model before rewriting:
+
+find k: int(1..10)
+
+--
+
+, 
+   ~~> eval_root ([("Constant", 9001)])
+true
+
+--
+
+Final model:
+
+find k: int(1..10)
+
+such that
+
+true
+
+[ (k > 7) | k : int(1..10) ], 
+   ~~> expand_comprehension_via_solver ([("Base", 2000)])
+[false,false,false,false,false,false,false,true,true,true;int(1..)]
+
+--
+
+Reify(or([false,false,false,false,false,false,false,true,true,true;int(1..)]), result), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+Reify(true, result)
+
+--
+
+Final model:
+
+find result: bool
+
+such that
+
+Reify(true, result)
+

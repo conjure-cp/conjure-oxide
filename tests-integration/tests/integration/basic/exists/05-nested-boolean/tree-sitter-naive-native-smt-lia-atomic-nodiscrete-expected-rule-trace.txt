@@ -1,0 +1,30 @@
+Model before rewriting:
+
+find check: bool
+
+such that
+
+(check = or([ and([(p > 2),(p < 4);int(1..)]) | p : int(1..5) ]))
+
+--
+
+[ and([(p > 2),(p < 4);int(1..)]) | p : int(1..5) ], 
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[false,false,true,false,false;int(1..)]
+
+--
+
+(check = or([false,false,true,false,false;int(1..)])), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(check = true)
+
+--
+
+Final model:
+
+find check: bool
+
+such that
+
+(check = true)
+

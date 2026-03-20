@@ -1,0 +1,171 @@
+Model before rewriting:
+
+find a: bool
+find b: bool
+find c: bool
+find x: bool
+find y: bool
+find z: bool
+
+such that
+
+(x) -> (x),
+or([(a) -> (z),(z) -> (a);int(1..2)]),
+or([(b) -> (c),(b) -> (!(c));int(1..2)])
+
+--
+
+!(c), 
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__0
+new variables:
+  find __0: bool
+new clauses:
+  (¬c \/ ¬__0)
+  (c \/ __0)
+
+--
+
+(x) -> (x),
+or([(a) -> (z),(z) -> (a);int(1..2)]),
+or([(b) -> (c),(b) -> (__0);int(1..2)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+or([(a) -> (z),(z) -> (a);int(1..2)]),
+or([(b) -> (c),(b) -> (__0);int(1..2)])
+
+--
+
+(a) -> (z), 
+   ~~> apply_tseytin_imply ([("SAT", 8500)])
+__1
+new variables:
+  find __1: bool
+new clauses:
+  (¬__1 \/ ¬a \/ z)
+  (__1 \/ a)
+  (__1 \/ ¬z)
+
+--
+
+(z) -> (a), 
+   ~~> apply_tseytin_imply ([("SAT", 8500)])
+__2
+new variables:
+  find __2: bool
+new clauses:
+  (¬__2 \/ ¬z \/ a)
+  (__2 \/ z)
+  (__2 \/ ¬a)
+
+--
+
+or([__1,__2;int(1..2)]), 
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__3
+new variables:
+  find __3: bool
+new clauses:
+  (¬__1 \/ __3)
+  (¬__2 \/ __3)
+  (¬__3 \/ __1 \/ __2)
+
+--
+
+(b) -> (c), 
+   ~~> apply_tseytin_imply ([("SAT", 8500)])
+__4
+new variables:
+  find __4: bool
+new clauses:
+  (¬__4 \/ ¬b \/ c)
+  (__4 \/ b)
+  (__4 \/ ¬c)
+
+--
+
+(b) -> (__0), 
+   ~~> apply_tseytin_imply ([("SAT", 8500)])
+__5
+new variables:
+  find __5: bool
+new clauses:
+  (¬__5 \/ ¬b \/ __0)
+  (__5 \/ b)
+  (__5 \/ ¬__0)
+
+--
+
+or([__4,__5;int(1..2)]), 
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__6
+new variables:
+  find __6: bool
+new clauses:
+  (¬__4 \/ __6)
+  (¬__5 \/ __6)
+  (¬__6 \/ __4 \/ __5)
+
+--
+
+__3,
+__6, 
+   ~~> remove_single_atom ([("SAT", 8400)])
+__6
+new clauses:
+  (__3)
+
+--
+
+__6, 
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new clauses:
+  (__6)
+
+--
+
+Final model:
+
+find a: bool
+find b: bool
+find c: bool
+find x: bool
+find y: bool
+find z: bool
+find __0: bool
+find __1: bool
+find __2: bool
+find __3: bool
+find __4: bool
+find __5: bool
+find __6: bool
+
+such that
+
+true
+
+clauses:
+
+(¬c \/ ¬__0),
+(c \/ __0),
+(¬__1 \/ ¬a \/ z),
+(__1 \/ a),
+(__1 \/ ¬z),
+(¬__2 \/ ¬z \/ a),
+(__2 \/ z),
+(__2 \/ ¬a),
+(¬__1 \/ __3),
+(¬__2 \/ __3),
+(¬__3 \/ __1 \/ __2),
+(¬__4 \/ ¬b \/ c),
+(__4 \/ b),
+(__4 \/ ¬c),
+(¬__5 \/ ¬b \/ __0),
+(__5 \/ b),
+(__5 \/ ¬__0),
+(¬__4 \/ __6),
+(¬__5 \/ __6),
+(¬__6 \/ __4 \/ __5),
+(__3),
+(__6)
+
