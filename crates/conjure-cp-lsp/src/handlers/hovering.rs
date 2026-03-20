@@ -1,17 +1,18 @@
-use crate::handlers::cache;
-use crate::handlers::{cache::CacheCont, sync_event::position_to_byte};
+use crate::handlers::{sync_event::position_to_byte};
 use crate::server::Backend;
-use tower_lsp::{lsp_types::*, jsonrpc::Error};
-
+use tower_lsp::{jsonrpc::Error, lsp_types::*};
 
 impl Backend {
     pub async fn handle_hovering(&self, params: HoverParams) -> Result<Option<Hover>, Error> {
-        
         self.client.log_message(MessageType::INFO, "hovering").await;
 
-        let uri = params.text_document_position_params.text_document.uri.clone();
+        let uri = params
+            .text_document_position_params
+            .text_document
+            .uri
+            .clone();
         let position = params.text_document_position_params.position.clone();
-        
+
         let lsp_cache = &self.lsp_cache;
 
         let cache_conts = match lsp_cache.get(&uri).await {
@@ -42,12 +43,14 @@ impl Backend {
                 return Ok(None);
             }
         };
-        self.client.log_message(MessageType::INFO, info.description.clone()).await;
+        self.client
+            .log_message(MessageType::INFO, info.description.clone())
+            .await;
         Ok(Some(Hover {
             contents: HoverContents::Array(vec![
-                    MarkedString::String(info.description),
-                    MarkedString::String(info.ty.unwrap_or_default())
-                ]),
+                MarkedString::String(info.description),
+                MarkedString::String(info.ty.unwrap_or_default()),
+            ]),
             range: None,
         }))
     }

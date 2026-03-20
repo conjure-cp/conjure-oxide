@@ -5,7 +5,6 @@ use std::time::Duration;
 use tower_lsp::lsp_types::*;
 use tree_sitter::Tree;
 
-
 #[derive(Clone, Debug)]
 pub struct CacheCont {
     pub sourcemap: Option<SourceMap>,

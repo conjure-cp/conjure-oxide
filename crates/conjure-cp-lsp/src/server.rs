@@ -63,18 +63,18 @@ impl LanguageServer for Backend {
     async fn shutdown(&self) -> Result<()> {
         Ok(())
     }
-    //set up synchronising handlers 
+    //set up synchronising handlers
     async fn did_open(&self, params: DidOpenTextDocumentParams) {
         self.client.log_message(MessageType::INFO, "opened").await;
         self.handle_did_open(params).await;
     }
     async fn did_save(&self, params: DidSaveTextDocumentParams) {
-                self.client.log_message(MessageType::INFO, "saved").await;
+        self.client.log_message(MessageType::INFO, "saved").await;
 
         self.handle_did_save(params).await;
     }
     async fn did_change(&self, params: DidChangeTextDocumentParams) {
-                self.client.log_message(MessageType::INFO, "changed").await;
+        self.client.log_message(MessageType::INFO, "changed").await;
 
         self.handle_did_change(params).await;
     }
@@ -90,12 +90,11 @@ pub async fn main() {
     let stdin = tokio::io::stdin();
     let stdout = tokio::io::stdout();
 
-    //make a new cache 
+    //make a new cache
     let lsp_cache = create_cache().await;
 
     //set cache into service when built
-    let (service, socket) =
-        LspService::build(|client| Backend::new(client, lsp_cache)).finish();
+    let (service, socket) = LspService::build(|client| Backend::new(client, lsp_cache)).finish();
 
     Server::new(stdin, stdout, socket).serve(service).await;
 }

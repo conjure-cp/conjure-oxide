@@ -2,11 +2,9 @@ use std::sync::Arc;
 use std::sync::RwLock;
 
 use conjure_cp_core::context::Context;
-use conjure_cp_core::parse;
 use conjure_cp_essence_parser::RecoverableParseError;
 use conjure_cp_essence_parser::diagnostics::diagnostics_api::Diagnostic;
 use conjure_cp_essence_parser::diagnostics::error_detection::collect_errors::error_to_diagnostic;
-use conjure_cp_essence_parser::diagnostics::source_map;
 use conjure_cp_essence_parser::parse_essence_with_context_and_map;
 use conjure_cp_essence_parser::util::get_tree;
 use tower_lsp::{lsp_types::Diagnostic as LspDiagnostic, lsp_types::*};
@@ -22,10 +20,8 @@ use tower_lsp::lsp_types::Range as LspRange;
 use tree_sitter::Point;
 use tree_sitter::Tree;
 
-use crate::handlers::cache;
 use crate::handlers::cache::CacheCont;
 use crate::server::Backend;
-
 
 impl Backend {
     pub async fn handle_did_open(&self, params: DidOpenTextDocumentParams) {
@@ -60,16 +56,14 @@ impl Backend {
                         contents: text.clone(),
                         version: params.text_document.version,
                     },
-                    Ok(None) => {
-                        CacheCont {
-                            sourcemap: None,
-                            ast: None,
-                            errors,
-                            cst: Some(cst_tree),
-                            contents: text.clone(),
-                            version: params.text_document.version,
-                        }
-                    }
+                    Ok(None) => CacheCont {
+                        sourcemap: None,
+                        ast: None,
+                        errors,
+                        cst: Some(cst_tree),
+                        contents: text.clone(),
+                        version: params.text_document.version,
+                    },
                     Err(fatal) => CacheCont {
                         sourcemap: None,
                         ast: None,
@@ -121,9 +115,7 @@ impl Backend {
             .await;
 
         if let Some(change) = params.content_changes.first() {
-
             if let Some(cache_conts) = lsp_cache.get(&uri).await {
-
                 let mut new_text = cache_conts.contents.clone();
                 if let Some(lsp_range) = change.range {
                     //convert range for string conversion here
