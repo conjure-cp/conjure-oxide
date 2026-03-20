@@ -1,11 +1,11 @@
 use conjure_cp::Model;
 use conjure_cp::ast::SerdeModel;
 use conjure_cp::context::Context;
+use conjure_cp::instantiate::instantiate_model;
 use conjure_cp::parse::tree_sitter::errors::InstantiateModelError;
 use conjure_cp::parse::tree_sitter::errors::ParseErrorCollection;
 use conjure_cp::parse::tree_sitter::{parse_essence_file, parse_essence_file_native};
 use conjure_cp::settings::Parser;
-use conjure_cp_cli::instantiate_model;
 use conjure_cp_cli::utils::testing::serialize_model;
 use std::env;
 use std::error::Error;

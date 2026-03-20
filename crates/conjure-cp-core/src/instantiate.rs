@@ -1,8 +1,8 @@
-use anyhow::anyhow;
-use conjure_cp::{
+use crate::{
     Model,
     ast::{DeclarationKind, DeclarationPtr, declaration::Declaration, eval_constant},
 };
+use anyhow::anyhow;
 
 /// Instantiate a problem model with values from a parameter model.
 ///

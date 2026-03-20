@@ -5,7 +5,7 @@ use std::sync::Arc;
 use crate::cli::GlobalArgs;
 use crate::solve::{self, init_solver};
 use clap::ValueHint;
-use conjure_cp_cli::instantiate_model;
+use conjure_cp::instantiate::instantiate_model;
 use conjure_cp_cli::utils::conjure::{
     get_solutions, get_solutions_from_conjure, solutions_to_json,
 };

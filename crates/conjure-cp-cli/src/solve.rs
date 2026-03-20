@@ -12,6 +12,7 @@ use std::{
 use anyhow::anyhow;
 use clap::ValueHint;
 use conjure_cp::defaults::DEFAULT_RULE_SETS;
+use conjure_cp::instantiate::instantiate_model;
 use conjure_cp::{
     Model,
     context::Context,
@@ -27,10 +28,7 @@ use conjure_cp::{
 };
 use conjure_cp::{parse::tree_sitter::parse_essence_file_native, solver::adaptors::*};
 use conjure_cp_cli::find_conjure::conjure_executable;
-use conjure_cp_cli::instantiate_model;
 use conjure_cp_cli::utils::conjure::{get_solutions, solutions_to_json};
-// use crate::find_conjure::conjure_executable;
-// use crate::utils::conjure::{get_solutions, solutions_to_json};
 use serde_json::to_string_pretty;
 
 use crate::cli::{GlobalArgs, LOGGING_HELP_HEADING};
