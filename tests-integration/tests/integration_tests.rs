@@ -65,17 +65,19 @@ fn run_case_label(
 
 fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(), Box<dyn Error>> {
     let accept = env::var("ACCEPT").unwrap_or("false".to_string()) == "true";
+    let default_test_config = env::var("DEFCONFIG").unwrap_or("false".to_string()) == "true";
 
     if accept {
         clean_test_dir_for_accept(path, essence_base, extension)?;
     }
 
-    let file_config: TestConfig =
-        if let Ok(config_contents) = fs::read_to_string(format!("{path}/config.toml")) {
-            toml::from_str(&config_contents).unwrap()
-        } else {
-            Default::default()
-        };
+    let file_config: TestConfig = if default_test_config {
+        TestConfig::default()
+    } else if let Ok(config_contents) = fs::read_to_string(format!("{path}/config.toml")) {
+        toml::from_str(&config_contents).unwrap()
+    } else {
+        TestConfig::default()
+    };
 
     let config = file_config;
 
