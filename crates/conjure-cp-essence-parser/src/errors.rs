@@ -201,3 +201,37 @@ impl std::fmt::Display for ParseErrorCollection {
 }
 
 impl std::error::Error for ParseErrorCollection {}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn instantiate_model_error_display_and_error_trait() {
+        let err = InstantiateModelError {
+            msg: "hello".to_string(),
+        };
+
+        assert_eq!(err.to_string(), "hello");
+        let _as_error: &dyn std::error::Error = &err;
+    }
+
+    #[test]
+    fn parse_error_collection_instantiate_model_variant_is_displayed() {
+        let err = ParseErrorCollection::InstantiateModel(InstantiateModelError {
+            msg: "missing param".to_string(),
+        });
+        assert_eq!(err.to_string(), "missing param");
+    }
+
+    #[test]
+    fn parse_error_collection_multiple_constructor_works() {
+        let err = ParseErrorCollection::multiple(
+            vec![RecoverableParseError::new("bad token".to_string(), None)],
+            None,
+            None,
+        );
+        let formatted = err.to_string();
+        assert!(formatted.contains("bad token"));
+    }
+}
