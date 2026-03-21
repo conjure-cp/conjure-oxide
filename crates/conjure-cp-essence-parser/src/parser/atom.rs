@@ -66,6 +66,7 @@ pub fn parse_atom(
             Ok(Some(Expression::AbstractLiteral(Metadata::new(), abs)))
         }
         "flatten" => parse_flatten(ctx, node),
+        "table" | "negative_table" => parse_table(ctx, node),
         "index_or_slice" => parse_index_or_slice(ctx, node),
         // for now, assume is binary since powerset isn't implemented
         // TODO: add powerset support under "set_operation"
@@ -103,6 +104,44 @@ fn parse_flatten(
             None,
             Moo::new(expr),
         )))
+    }
+}
+
+fn parse_table(ctx: &mut ParseContext, node: &Node) -> Result<Option<Expression>, FatalParseError> {
+    // the variables and rows can contain arbitrary expressions, so we temporarily set the context to Unknown to avoid typechecking errors
+    let saved_context = ctx.typechecking_context;
+    ctx.typechecking_context = TypecheckingContext::Unknown;
+
+    let variables_node = field!(node, "variables");
+    let Some(variables) = parse_atom(ctx, &variables_node)? else {
+        return Ok(None);
+    };
+
+    let rows_node = field!(node, "rows");
+    let Some(rows) = parse_atom(ctx, &rows_node)? else {
+        return Ok(None);
+    };
+
+    ctx.typechecking_context = saved_context;
+
+    match node.kind() {
+        "table" => Ok(Some(Expression::Table(
+            Metadata::new(),
+            Moo::new(variables),
+            Moo::new(rows),
+        ))),
+        "negative_table" => Ok(Some(Expression::NegativeTable(
+            Metadata::new(),
+            Moo::new(variables),
+            Moo::new(rows),
+        ))),
+        _ => Err(FatalParseError::internal_error(
+            format!(
+                "Expected 'table' or 'negative_table', got: '{}'",
+                node.kind()
+            ),
+            Some(node.range()),
+        )),
     }
 }
 
