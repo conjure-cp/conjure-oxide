@@ -1,7 +1,7 @@
 use super::{RewriteError, RuleSet, resolve_rules::RuleData};
 use crate::{
     Model,
-    ast::{Expression as Expr, assertions::debug_assert_model_well_formed},
+    ast::Expression as Expr,
     bug,
     rule_engine::{
         get_rules_grouped,
@@ -17,7 +17,14 @@ use crate::{
 
 use itertools::Itertools;
 use std::{sync::Arc, time::Instant};
-use tracing::{Level, span, trace};
+use tracing::trace;
+
+// debug imports
+#[cfg(debug_assertions)]
+use {
+    crate::ast::assertions::debug_assert_model_well_formed,
+    tracing::{Level, span},
+};
 
 type VariableSnapshots = Option<(VariableDeclarationSnapshot, VariableDeclarationSnapshot)>;
 type ApplicableRule<'a, CtxFnType> = (RuleResult<'a>, u16, Expr, CtxFnType, VariableSnapshots);

@@ -146,12 +146,11 @@ impl Display for IntVal {
 impl IntVal {
     pub fn new_ref(re: &Reference) -> Option<IntVal> {
         match re.ptr.kind().deref() {
-            DeclarationKind::ValueLetting(expr) | DeclarationKind::TemporaryValueLetting(expr) => {
-                match expr.return_type() {
-                    ReturnType::Int => Some(IntVal::Reference(re.clone())),
-                    _ => None,
-                }
-            }
+            DeclarationKind::ValueLetting(expr, _)
+            | DeclarationKind::TemporaryValueLetting(expr) => match expr.return_type() {
+                ReturnType::Int => Some(IntVal::Reference(re.clone())),
+                _ => None,
+            },
             DeclarationKind::Given(dom) => match dom.return_type() {
                 ReturnType::Int => Some(IntVal::Reference(re.clone())),
                 _ => None,
@@ -180,7 +179,7 @@ impl IntVal {
             IntVal::Const(value) => Some(*value),
             IntVal::Expr(expr) => eval_expr_to_int(expr),
             IntVal::Reference(re) => match re.ptr.kind().deref() {
-                DeclarationKind::ValueLetting(expr)
+                DeclarationKind::ValueLetting(expr, _)
                 | DeclarationKind::TemporaryValueLetting(expr) => eval_expr_to_int(expr),
                 // If this is an int given we will be able to resolve it eventually, but not yet
                 DeclarationKind::Given(_) => None,
