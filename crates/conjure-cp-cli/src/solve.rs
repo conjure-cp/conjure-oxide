@@ -9,11 +9,11 @@ use std::{
     sync::{Arc, RwLock},
 };
 
-use anyhow::{anyhow, ensure};
+use anyhow::anyhow;
 use clap::ValueHint;
-use conjure_cp::defaults::DEFAULT_RULE_SETS;
 use conjure_cp::{
     Model,
+    ast::{DeclarationPtr, declaration::Declaration, eval_constant},
     context::Context,
     rule_engine::{resolve_rule_sets, rewrite_morph, rewrite_naive},
     settings::{
@@ -22,6 +22,7 @@ use conjure_cp::{
     },
     solver::Solver,
 };
+use conjure_cp::{ast::DeclarationKind, defaults::DEFAULT_RULE_SETS};
 use conjure_cp::{
     parse::conjure_json::model_from_json, rule_engine::get_rules, settings::SolverFamily,
 };
@@ -65,9 +66,13 @@ fn parse_number_of_solutions(input: &str) -> Result<NumberOfSolutions, String> {
 
 #[derive(Clone, Debug, clap::Args)]
 pub struct Args {
-    /// The input Essence file
+    /// The input Essence problem file
     #[arg(value_name = "INPUT_ESSENCE", value_hint = ValueHint::FilePath)]
-    pub input_file: PathBuf,
+    pub essence_file: PathBuf,
+
+    /// The input Essence parameter file
+    #[arg(value_name = "PARAM_ESSENCE", value_hint = ValueHint::FilePath)]
+    pub param_file: Option<PathBuf>,
 
     /// Save execution info as JSON to the given filepath.
     #[arg(long ,value_hint=ValueHint::FilePath,help_heading=LOGGING_HELP_HEADING)]
@@ -96,14 +101,36 @@ pub struct Args {
 }
 
 pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::Result<()> {
-    let input_file = solve_args.input_file.clone();
+    let essence_file = solve_args.essence_file.clone();
+    let param_file = solve_args.param_file.clone();
 
     // each step is in its own method so that similar commands
     // (e.g. testsolve) can reuse some of these steps.
 
-    let context = init_context(&global_args, input_file)?;
-    let model = parse(&global_args, Arc::clone(&context))?;
-    let rewritten_model = rewrite(model, &global_args, Arc::clone(&context))?;
+    let context = init_context(&global_args, essence_file, param_file)?;
+
+    let ctx_lock = context.read().unwrap();
+    let essence_file_name = ctx_lock
+        .essence_file_name
+        .as_ref()
+        .expect("context should contain the problem input file");
+    let param_file_name = ctx_lock.param_file_name.as_ref();
+
+    // parse models
+    let problem_model = parse(&global_args, Arc::clone(&context), essence_file_name)?;
+
+    // unify models
+    let unified_model = match param_file_name {
+        Some(param_file_name) => {
+            let param_model = parse(&global_args, Arc::clone(&context), param_file_name)?;
+            instantiate_model(problem_model, param_model)?
+        }
+        None => problem_model,
+    };
+    drop(ctx_lock);
+
+    let rewritten_model = rewrite(unified_model, &global_args, Arc::clone(&context))?;
+
     let solver = init_solver(&global_args);
 
     if solve_args.no_run_solver {
@@ -129,10 +156,60 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
     Ok(())
 }
 
+pub(crate) fn instantiate_model(problem_model: Model, param_model: Model) -> anyhow::Result<Model> {
+    let mut symbol_table = problem_model.symbols_ptr_unchecked().write();
+    let param_table = param_model.symbols_ptr_unchecked().write();
+
+    for (name, decl) in symbol_table.iter_local_mut() {
+        let Some(domain) = decl.as_given() else {
+            continue;
+        };
+
+        // Find corresponding letting in param file
+        let param_decl = param_table.lookup(name);
+        let expr = param_decl
+                .as_ref()
+                .and_then(DeclarationPtr::as_value_letting)
+                .ok_or_else(|| anyhow!(
+                    "Given declaration `{name}` does not have corresponding letting in parameter file"
+                ))?;
+
+        // Evaluate the letting expresison to a literal
+        let expr_value = eval_constant(&expr)
+            .ok_or_else(|| anyhow!("Letting expression `{expr}` cannot be evaluated"))?;
+
+        // Resolve the given's domain
+        let ground_domain = domain
+            .resolve()
+            .ok_or_else(|| anyhow!("Domain of given statement `{name}` cannot be resolved"))?;
+
+        // Ensure the letting value is contained within the given expression's domain
+        if !ground_domain.contains(&expr_value).unwrap() {
+            return Err(anyhow!(
+                "Domain of given statement `{name}` does not contain letting value"
+            ));
+        }
+
+        // Replace the given statement in the model with the statement
+        let new_decl = Declaration::new(
+            name.clone(),
+            DeclarationKind::ValueLetting(expr.clone(), Some(domain.clone())),
+        );
+        drop(domain);
+        decl.replace(new_decl);
+
+        tracing::info!("Replaced {name} given with letting.");
+    }
+
+    drop(symbol_table);
+    Ok(problem_model)
+}
+
 /// Returns a new Context and Solver for solving.
 pub(crate) fn init_context(
     global_args: &GlobalArgs,
-    input_file: PathBuf,
+    essence_file: PathBuf,
+    param_file: Option<PathBuf>,
 ) -> anyhow::Result<Arc<RwLock<Context<'static>>>> {
     set_current_parser(global_args.parser);
     set_current_rewriter(global_args.rewriter);
@@ -184,7 +261,10 @@ pub(crate) fn init_context(
         rule_sets.clone(),
     );
 
-    context.write().unwrap().file_name = Some(input_file.to_str().expect("").into());
+    context.write().unwrap().essence_file_name = Some(essence_file.to_str().expect("").into());
+    if let Some(param_file) = param_file {
+        context.write().unwrap().param_file_name = Some(param_file.to_str().expect("").into());
+    }
 
     Ok(context)
 }
@@ -206,45 +286,44 @@ pub(crate) fn init_solver(global_args: &GlobalArgs) -> Solver {
 pub(crate) fn parse(
     global_args: &GlobalArgs,
     context: Arc<RwLock<Context<'static>>>,
+    file_path: &str,
 ) -> anyhow::Result<Model> {
-    let input_file: String = context
-        .read()
-        .unwrap()
-        .file_name
-        .clone()
-        .expect("context should contain the input file");
+    tracing::info!(target: "file", "Input file: {}", file_path);
 
-    tracing::info!(target: "file", "Input file: {}", input_file);
     match global_args.parser {
         conjure_cp::settings::Parser::TreeSitter => {
-            parse_essence_file_native(input_file.as_str(), context.clone()).map_err(|e| e.into())
+            parse_essence_file_native(file_path, context.clone()).map_err(|e| e.into())
         }
-        conjure_cp::settings::Parser::ViaConjure => {
-            conjure_executable()
-                .map_err(|e| anyhow!("Could not find correct conjure executable: {e}"))?;
-
-            let mut cmd = std::process::Command::new("conjure");
-            let output = cmd
-                .arg("pretty")
-                .arg("--output-format=astjson")
-                .arg(input_file)
-                .output()?;
-
-            let conjure_stderr = String::from_utf8(output.stderr)?;
-
-            ensure!(conjure_stderr.is_empty(), conjure_stderr);
-
-            let astjson = String::from_utf8(output.stdout)?;
-
-            if cfg!(feature = "extra-rule-checks") {
-                tracing::info!("extra-rule-checks: enabled");
-            } else {
-                tracing::info!("extra-rule-checks: disabled");
-            }
-
-            model_from_json(&astjson, context.clone()).map_err(|e| anyhow!(e))
-        }
+        conjure_cp::settings::Parser::ViaConjure => parse_with_conjure(file_path, context.clone()),
     }
+}
+
+pub(crate) fn parse_with_conjure(
+    input_file: &str,
+    context: Arc<RwLock<Context<'static>>>,
+) -> anyhow::Result<Model> {
+    conjure_executable().map_err(|e| anyhow!("Could not find correct conjure executable: {e}"))?;
+
+    let mut cmd = std::process::Command::new("conjure");
+    let output = cmd
+        .arg("pretty")
+        .arg("--output-format=astjson")
+        .arg(input_file)
+        .output()?;
+
+    if !output.status.success() {
+        println!("Parsing error: {}", String::from_utf8(output.stderr)?);
+    }
+
+    let astjson = String::from_utf8(output.stdout)?;
+
+    if cfg!(feature = "extra-rule-checks") {
+        tracing::info!("extra-rule-checks: enabled");
+    } else {
+        tracing::info!("extra-rule-checks: disabled");
+    }
+
+    model_from_json(&astjson, context.clone()).map_err(|e| anyhow!(e))
 }
 
 pub(crate) fn rewrite(
