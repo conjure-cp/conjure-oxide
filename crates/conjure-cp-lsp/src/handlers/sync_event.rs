@@ -47,7 +47,7 @@ impl Backend {
                     Some(&cst_tree),
                 );
 
-                let cache = match parsed {
+                match parsed {
                     Ok(Some((ast_model, source_map))) => CacheCont {
                         sourcemap: Some(source_map),
                         ast: Some(ast_model),
@@ -72,9 +72,7 @@ impl Backend {
                         contents: text.clone(),
                         version: params.text_document.version,
                     },
-                };
-
-                cache //this inserts the cache created above into the cache
+                } //this inserts the cache created above into the cache
             })
             .await;
 
@@ -114,118 +112,114 @@ impl Backend {
             .log_message(MessageType::INFO, "in document change")
             .await;
 
-        if let Some(change) = params.content_changes.first() {
-            if let Some(cache_conts) = lsp_cache.get(&uri).await {
-                let mut new_text = cache_conts.contents.clone();
-                if let Some(lsp_range) = change.range {
-                    //convert range for string conversion here
+        if let Some(change) = params.content_changes.first()
+            && let Some(cache_conts) = lsp_cache.get(&uri).await
+        {
+            let mut new_text = cache_conts.contents.clone();
+            if let Some(lsp_range) = change.range {
+                //convert range for string conversion here
 
-                    let start_byte = position_to_byte(&cache_conts.contents, lsp_range.start);
-                    let end_byte = position_to_byte(&cache_conts.contents, lsp_range.end);
-                    new_text.replace_range(start_byte..end_byte, &change.text);
-                } else {
-                    new_text = change.text.clone();
-                }
+                let start_byte = position_to_byte(&cache_conts.contents, lsp_range.start);
+                let end_byte = position_to_byte(&cache_conts.contents, lsp_range.end);
+                new_text.replace_range(start_byte..end_byte, &change.text);
+            } else {
+                new_text = change.text.clone();
+            }
 
-                let new_tree: Tree = if let Some(lsp_range) = change.range {
-                    let start_byte = position_to_byte(&cache_conts.contents, lsp_range.start);
-                    let old_end_byte = position_to_byte(&cache_conts.contents, lsp_range.end);
-                    let new_end_byte = start_byte + change.text.len();
+            let new_tree: Tree = if let Some(lsp_range) = change.range {
+                let start_byte = position_to_byte(&cache_conts.contents, lsp_range.start);
+                let old_end_byte = position_to_byte(&cache_conts.contents, lsp_range.end);
+                let new_end_byte = start_byte + change.text.len();
 
-                    let start_position = position_to_treesitter_point(lsp_range.start);
-                    let old_end_position = position_to_treesitter_point(lsp_range.end);
-                    let new_end_position =
-                        calculate_new_end_position(&change.text, lsp_range.start);
-
-                    self.client
-                        .log_message(MessageType::INFO, "before edit")
-                        .await;
-                    if let Some(ref mut old_cst) = cache_conts.cst.clone() {
-                        old_cst.edit(&tree_sitter::InputEdit {
-                            start_byte,
-                            old_end_byte,
-                            new_end_byte,
-                            start_position,
-                            old_end_position,
-                            new_end_position,
-                        });
-
-                        // parse the new text with the edited tree as a starting point for incremental parsing
-                        // TODO: handle _FRAGMENT_EXPRESSION like get_tree does
-                        // maybe make separate helper for that or something
-                        let mut parser = tree_sitter::Parser::new();
-                        parser
-                            .set_language(&tree_sitter_essence::LANGUAGE.into())
-                            .unwrap();
-                        let tree =
-                            tree_sitter::Parser::parse(&mut parser, &new_text, Some(&old_cst))
-                                .unwrap();
-                        tree
-                    } else {
-                        // if cst was None due to a failure to parse,
-                        // we should re-parse the entire new text instead of trying to edit a non-existent tree
-                        // there could be a better way to handle this, but for now this is a safe fallback
-                        get_tree(&new_text).unwrap().0
-                    }
-                } else {
-                    get_tree(&new_text).unwrap().0
-                };
-
-                let context = Arc::new(RwLock::new(Context::default()));
-                let mut errors: Vec<RecoverableParseError> = Vec::new();
+                let start_position = position_to_treesitter_point(lsp_range.start);
+                let old_end_position = position_to_treesitter_point(lsp_range.end);
+                let new_end_position = calculate_new_end_position(&change.text, lsp_range.start);
 
                 self.client
-                    .log_message(MessageType::INFO, new_text.clone())
+                    .log_message(MessageType::INFO, "before edit")
                     .await;
+                if let Some(ref mut old_cst) = cache_conts.cst.clone() {
+                    old_cst.edit(&tree_sitter::InputEdit {
+                        start_byte,
+                        old_end_byte,
+                        new_end_byte,
+                        start_position,
+                        old_end_position,
+                        new_end_position,
+                    });
 
-                let parsed = parse_essence_with_context_and_map(
-                    &new_text,
-                    context,
-                    &mut errors,
-                    Some(&new_tree),
-                );
+                    // parse the new text with the edited tree as a starting point for incremental parsing
+                    // TODO: handle _FRAGMENT_EXPRESSION like get_tree does
+                    // maybe make separate helper for that or something
+                    let mut parser = tree_sitter::Parser::new();
+                    parser
+                        .set_language(&tree_sitter_essence::LANGUAGE.into())
+                        .unwrap();
+                    tree_sitter::Parser::parse(&mut parser, &new_text, Some(old_cst)).unwrap()
+                } else {
+                    // if cst was None due to a failure to parse,
+                    // we should re-parse the entire new text instead of trying to edit a non-existent tree
+                    // there could be a better way to handle this, but for now this is a safe fallback
+                    get_tree(&new_text).unwrap().0
+                }
+            } else {
+                get_tree(&new_text).unwrap().0
+            };
 
-                let new_cache_conts = match parsed {
-                    Ok(Some((ast_model, source_map))) => {
-                        self.client
-                            .log_message(MessageType::LOG, "THIS ONE INSTEAD")
-                            .await;
-                        CacheCont {
-                            sourcemap: Some(source_map),
-                            ast: Some(ast_model),
-                            errors,
-                            cst: Some(new_tree),
-                            contents: new_text.clone(),
-                            version: params.text_document.version,
-                        }
-                    }
-                    Ok(None) => {
-                        self.client
-                            .log_message(MessageType::LOG, "jshdhshshshhs")
-                            .await;
-                        CacheCont {
-                            sourcemap: None,
-                            ast: None,
-                            errors,
-                            cst: Some(new_tree),
-                            contents: new_text.clone(),
-                            version: params.text_document.version,
-                        }
-                    }
-                    Err(fatal) => CacheCont {
-                        sourcemap: None,
-                        ast: None,
-                        errors: vec![RecoverableParseError::new(fatal.to_string(), None)],
+            let context = Arc::new(RwLock::new(Context::default()));
+            let mut errors: Vec<RecoverableParseError> = Vec::new();
+
+            self.client
+                .log_message(MessageType::INFO, new_text.clone())
+                .await;
+
+            let parsed = parse_essence_with_context_and_map(
+                &new_text,
+                context,
+                &mut errors,
+                Some(&new_tree),
+            );
+
+            let new_cache_conts = match parsed {
+                Ok(Some((ast_model, source_map))) => {
+                    self.client
+                        .log_message(MessageType::LOG, "THIS ONE INSTEAD")
+                        .await;
+                    CacheCont {
+                        sourcemap: Some(source_map),
+                        ast: Some(ast_model),
+                        errors,
                         cst: Some(new_tree),
                         contents: new_text.clone(),
                         version: params.text_document.version,
-                    },
-                };
+                    }
+                }
+                Ok(None) => {
+                    self.client
+                        .log_message(MessageType::LOG, "jshdhshshshhs")
+                        .await;
+                    CacheCont {
+                        sourcemap: None,
+                        ast: None,
+                        errors,
+                        cst: Some(new_tree),
+                        contents: new_text.clone(),
+                        version: params.text_document.version,
+                    }
+                }
+                Err(fatal) => CacheCont {
+                    sourcemap: None,
+                    ast: None,
+                    errors: vec![RecoverableParseError::new(fatal.to_string(), None)],
+                    cst: Some(new_tree),
+                    contents: new_text.clone(),
+                    version: params.text_document.version,
+                },
+            };
 
-                lsp_cache.insert(uri.clone(), new_cache_conts.clone()).await;
+            lsp_cache.insert(uri.clone(), new_cache_conts.clone()).await;
 
-                self.handle_diagnostics(&uri, new_cache_conts).await;
-            }
+            self.handle_diagnostics(&uri, new_cache_conts).await;
         }
     }
 
@@ -315,13 +309,13 @@ pub fn position_to_byte(text: &str, position: Position) -> usize {
             break;
         }
     }
-    return byte_offset;
+    byte_offset
 }
 
 //need to convert from character and line to row and line
 //this allows for incremental editing of treesitter
 fn position_to_treesitter_point(position: Position) -> Point {
-    return Point::new(position.line as usize, position.character as usize);
+    Point::new(position.line as usize, position.character as usize)
 }
 
 fn calculate_new_end_position(text: &str, start: Position) -> Point {

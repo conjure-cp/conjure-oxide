@@ -1,4 +1,4 @@
-use crate::handlers::{sync_event::position_to_byte};
+use crate::handlers::sync_event::position_to_byte;
 use crate::server::Backend;
 use tower_lsp::{jsonrpc::Error, lsp_types::*};
 
@@ -11,7 +11,7 @@ impl Backend {
             .text_document
             .uri
             .clone();
-        let position = params.text_document_position_params.position.clone();
+        let position = params.text_document_position_params.position;
 
         let lsp_cache = &self.lsp_cache;
 
