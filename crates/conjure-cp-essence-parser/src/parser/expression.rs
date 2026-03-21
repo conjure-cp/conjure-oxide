@@ -20,6 +20,7 @@ pub fn parse_expression(
         "arithmetic_expr" => parse_arithmetic_expression(ctx, &node),
         "comparison_expr" => parse_comparison_expression(ctx, &node),
         "dominance_relation" => parse_dominance_relation(ctx, &node),
+        "all_diff_comparison" => parse_all_diff_comparison(ctx, &node),
         _ => Err(FatalParseError::internal_error(
             format!("Unexpected expression type: '{}'", node.kind()),
             Some(node.range()),
