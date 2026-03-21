@@ -73,6 +73,8 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
 
     let file_config: TestConfig = if default_test_config {
         TestConfig::default()
+    } else if let Ok(config_contents) = fs::read_to_string(format!("./testconfig.toml")) {
+        toml::from_str(&config_contents).unwrap()
     } else if let Ok(config_contents) = fs::read_to_string(format!("{path}/config.toml")) {
         toml::from_str(&config_contents).unwrap()
     } else {
