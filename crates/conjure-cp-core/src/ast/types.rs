@@ -3,6 +3,8 @@ use polyquine::Quine;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 
+use crate::ast::enumerated::EnumeratedType;
+
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, Hash, Quine)]
 pub enum ReturnType {
     Int,
@@ -13,6 +15,8 @@ pub enum ReturnType {
     Tuple(Vec<ReturnType>),
     Record(Vec<ReturnType>),
     Function(Box<ReturnType>, Box<ReturnType>),
+    EnumeratedType(EnumeratedType),
+    UnnamedType(u32),
 
     /// An unknown type
     ///

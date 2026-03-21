@@ -1,4 +1,5 @@
 use crate::ast::domains::MSetAttr;
+use crate::ast::enumerated::EnumeratedType;
 use crate::ast::pretty::pretty_vec;
 use crate::ast::{
     AbstractLiteral, Domain, DomainOpError, FuncAttr, HasDomain, Literal, Moo, RecordEntry,
@@ -69,33 +70,30 @@ pub enum GroundDomain {
     Record(Vec<RecordEntryGround>),
     /// A function with a domain and range
     Function(FuncAttr, Moo<GroundDomain>, Moo<GroundDomain>),
+    /// An enumerated type
+    EnumeratedType(EnumeratedType, Vec<Range<u32>>),
+    /// An enumerated type
+    UnnamedType(u32),
 }
 
 impl GroundDomain {
     pub fn union(&self, other: &GroundDomain) -> Result<GroundDomain, DomainOpError> {
         match (self, other) {
-            (GroundDomain::Empty(ty), dom) | (dom, GroundDomain::Empty(ty)) => {
-                if *ty == dom.return_type() {
-                    Ok(dom.clone())
-                } else {
-                    Err(DomainOpError::WrongType)
-                }
+            (GroundDomain::Empty(ty), dom) | (dom, GroundDomain::Empty(ty))
+                if *ty == dom.return_type() =>
+            {
+                Ok(dom.clone())
             }
             (GroundDomain::Bool, GroundDomain::Bool) => Ok(GroundDomain::Bool),
-            (GroundDomain::Bool, _) | (_, GroundDomain::Bool) => Err(DomainOpError::WrongType),
             (GroundDomain::Int(r1), GroundDomain::Int(r2)) => {
                 let mut rngs = r1.clone();
                 rngs.extend(r2.clone());
                 Ok(GroundDomain::Int(Range::squeeze(&rngs)))
             }
-            (GroundDomain::Int(_), _) | (_, GroundDomain::Int(_)) => Err(DomainOpError::WrongType),
             (GroundDomain::Set(_, in1), GroundDomain::Set(_, in2)) => Ok(GroundDomain::Set(
                 SetAttr::default(),
                 Moo::new(in1.union(in2)?),
             )),
-            (GroundDomain::Set(_, _), _) | (_, GroundDomain::Set(_, _)) => {
-                Err(DomainOpError::WrongType)
-            }
             (GroundDomain::MSet(_, in1), GroundDomain::MSet(_, in2)) => Ok(GroundDomain::MSet(
                 MSetAttr::default(),
                 Moo::new(in1.union(in2)?),
@@ -106,9 +104,6 @@ impl GroundDomain {
                     idx1.clone(),
                 ))
             }
-            (GroundDomain::Matrix(_, _), _) | (_, GroundDomain::Matrix(_, _)) => {
-                Err(DomainOpError::WrongType)
-            }
             (GroundDomain::Tuple(in1s), GroundDomain::Tuple(in2s)) if in1s.len() == in2s.len() => {
                 let mut inners = Vec::new();
                 for (in1, in2) in zip(in1s, in2s) {
@@ -116,20 +111,8 @@ impl GroundDomain {
                 }
                 Ok(GroundDomain::Tuple(inners))
             }
-            (GroundDomain::Tuple(_), _) | (_, GroundDomain::Tuple(_)) => {
-                Err(DomainOpError::WrongType)
-            }
             // TODO: Eventually we may define semantics for joining record domains. This day is not today.
-            #[allow(unreachable_patterns)]
-            // Technically redundant but logically clearer to have both
-            (GroundDomain::Record(_), _) | (_, GroundDomain::Record(_)) => {
-                Err(DomainOpError::WrongType)
-            }
-            #[allow(unreachable_patterns)]
-            // Technically redundant but logically clearer to have both
-            (GroundDomain::Function(_, _, _), _) | (_, GroundDomain::Function(_, _, _)) => {
-                Err(DomainOpError::WrongType)
-            }
+            _ => Err(DomainOpError::WrongType),
         }
     }
 
@@ -305,6 +288,30 @@ impl GroundDomain {
             GroundDomain::Function(_, _, _) => {
                 todo!("Length bound of functions is not yet supported")
             }
+            GroundDomain::EnumeratedType(e, ranges) => {
+                if ranges.is_empty() || ranges[0].is_unbounded() {
+                    return Ok(e.variants.len() as u64);
+                }
+
+                let mut length = 0;
+
+                let low = ranges[0].low().unwrap_or(&0);
+                length += (ranges[0].high().unwrap() - low) as u64;
+
+                for range in ranges {
+                    if let Some(range_length) = range.length() {
+                        length += range_length as u64;
+                    } else {
+                        length += e.variants.len() as u64 - *range.low().unwrap() as u64;
+                    }
+                }
+
+                Ok(length)
+            }
+            GroundDomain::UnnamedType(range) => match range.length() {
+                Some(len) => Ok(len as u64),
+                None => Err(DomainOpError::Unbounded),
+            },
         }
     }
 
@@ -454,6 +461,8 @@ impl GroundDomain {
                 }
                 _ => Ok(false),
             },
+            GroundDomain::EnumeratedType(_, _) => todo!(),
+            GroundDomain::UnnamedType(_) => todo!(),
         }
     }
 
@@ -959,6 +968,9 @@ impl Typeable for GroundDomain {
             GroundDomain::Function(_, dom, cdom) => {
                 ReturnType::Function(Box::new(dom.return_type()), Box::new(cdom.return_type()))
             }
+            GroundDomain::EnumeratedType(e, _) => ReturnType::EnumeratedType(*e),
+            // TODO: Ensure bounded range on type level
+            GroundDomain::UnnamedType(range) => ReturnType::UnnamedType(range.length().unwrap()),
         }
     }
 }
