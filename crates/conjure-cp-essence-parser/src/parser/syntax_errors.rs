@@ -34,11 +34,7 @@ pub fn detect_syntactic_errors(
 
                 let last_char = source.lines().nth(line).map_or(0, |l| l.len());
                 errors.push(RecoverableParseError::new(
-                    format!(
-                        "Malformed line {}: '{}'",
-                        line + 1,
-                        source.lines().nth(line).unwrap_or("")
-                    ),
+                    generate_malformed_line_message(line, source),
                     Some(tree_sitter::Range {
                         start_byte,
                         end_byte,
@@ -172,6 +168,37 @@ fn user_friendly_token_name(token: &str, article: bool) -> String {
     format!("{} {}", article, capitalized)
 }
 
+// Generates an informative error message for malformed lines
+fn generate_malformed_line_message(line: usize, source: &str) -> String {
+    let got = source.lines().nth(line).unwrap_or("").trim();
+    let got = got.replace('"', "\\\"");
+    let mut words = got.split_whitespace();
+    let first = words.next().unwrap_or("").to_ascii_lowercase();
+    let second = words.next().unwrap_or("").to_ascii_lowercase();
+
+    let expected = match first.as_str() {
+        "find" => "a find declaration statement",
+        "letting" => "a letting declaration statement",
+        "given" => "a given declaration statement",
+        "where" => "an instantiation condition",
+        "minimising" | "maximising" => "an objective statement",
+        "such" => {
+            // Check for invalid constraint statement
+            if second == "that" {
+                "a constraint statement"
+            } else {
+                "a valid top-level statement"
+            }
+        }
+
+        _ => {
+            // Default case for unrecognized starting tokens
+            "a valid top-level statement"
+        }
+    };
+    format!("Expected {}, but got '{}'", expected, got)
+}
+
 /// Returns true if the node's start or end column is out of range for its line in the source.
 fn error_node_out_of_range(node: &tree_sitter::Node, source: &str) -> bool {
     let lines: Vec<&str> = source.lines().collect();
@@ -208,6 +235,86 @@ mod test {
             .expect("Should find an error node");
 
         assert!(is_malformed_line_error(&error_node, source));
+    }
+
+    #[test]
+    fn malformed_find_message() {
+        let source = "find >=lex,b,c: int(1..3)";
+        let message = super::generate_malformed_line_message(0, source);
+        assert_eq!(
+            message,
+            "Expected a find declaration statement, but got 'find >=lex,b,c: int(1..3)'"
+        );
+    }
+
+    #[test]
+    fn malformed_top_level_message() {
+        let source = "a >=lex,b,c: int(1..3)";
+        let message = super::generate_malformed_line_message(0, source);
+        assert_eq!(
+            message,
+            "Expected a valid top-level statement, but got 'a >=lex,b,c: int(1..3)'"
+        );
+    }
+
+    #[test]
+    fn malformed_objective_message() {
+        let source = "maximising %x";
+        let message = super::generate_malformed_line_message(0, source);
+        assert_eq!(
+            message,
+            "Expected an objective statement, but got 'maximising %x'"
+        );
+    }
+
+    #[test]
+    fn malformed_letting_message() {
+        let source = "letting % A be 3";
+        let message = super::generate_malformed_line_message(0, source);
+        assert_eq!(
+            message,
+            "Expected a letting declaration statement, but got 'letting % A be 3'"
+        );
+    }
+
+    #[test]
+    fn malformed_constraint_message() {
+        let source = "such that % A > 3";
+        let message = super::generate_malformed_line_message(0, source);
+        assert_eq!(
+            message,
+            "Expected a constraint statement, but got 'such that % A > 3'"
+        );
+    }
+
+    #[test]
+    fn malformed_top_level_message_2() {
+        let source = "such % A > 3";
+        let message = super::generate_malformed_line_message(0, source);
+        assert_eq!(
+            message,
+            "Expected a valid top-level statement, but got 'such % A > 3'"
+        );
+    }
+
+    #[test]
+    fn malformed_given_message() {
+        let source = "given 1..3)";
+        let message = super::generate_malformed_line_message(0, source);
+        assert_eq!(
+            message,
+            "Expected a given declaration statement, but got 'given 1..3)'"
+        );
+    }
+
+    #[test]
+    fn malformed_where_message() {
+        let source = "where x>6";
+        let message = super::generate_malformed_line_message(0, source);
+        assert_eq!(
+            message,
+            "Expected an instantiation condition, but got 'where x>6'"
+        );
     }
 
     #[test]
