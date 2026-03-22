@@ -1,3 +1,4 @@
+pub mod default_impls;
 pub mod registry;
 mod serde;
 mod store;
@@ -11,13 +12,14 @@ pub use types::ReprRule;
 /// Re-exports for use by the `define_repr!` proc macro. Not part of the public API.
 #[doc(hidden)]
 pub mod _dependencies {
+    pub use super::default_impls;
     pub use super::registry::{REPR_RULES_DISTRIBUTED_SLICE, ReprRegistryEntry};
     pub use super::serde::ReprStateSerde;
     pub use super::types::{
         LookupFn, ReprAssignment, ReprDeclLevel, ReprDomainLevel, ReprError, ReprInitResult,
         ReprRule,
     };
-    pub use super::util::{ReprStateStored, instantiate_default_impl, try_up_via};
+    pub use super::util::{ReprStateStored, try_up_via};
     pub use crate::ast::eval_constant;
     pub use crate::rule_engine::_dependencies::*;
     pub use funcmap;

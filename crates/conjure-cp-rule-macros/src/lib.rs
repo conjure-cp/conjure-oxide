@@ -381,7 +381,7 @@ pub fn register_representation(input: TokenStream) -> TokenStream {
             }
 
             fn instantiate(self, decl: DeclarationPtr) -> (Self::DeclLevel, SymbolTable, Vec<Expression>) {
-                instantiate_default_impl(self, decl, #repr_name_str, #prefixed_structural)
+                default_impls::instantiate_default_impl(self, decl, #repr_name_str, #prefixed_structural)
             }
         }
 
@@ -390,17 +390,14 @@ pub fn register_representation(input: TokenStream) -> TokenStream {
             type DomainLevel = #state_ident<DomainPtr>;
 
             fn to_domain_level(self) -> Self::DomainLevel {
-                let field_dom = |decl: DeclarationPtr| {
-                    decl.domain().expect("variable must have a domain")
-                };
-                self.func_map(field_dom)
+                default_impls::to_domain_level_default_impl(self)
             }
 
             fn lookup_via(
                 &self,
                 lookup: &LookupFn<'_>,
             ) -> ::core::result::Result<Self::Assignment, ReprError> {
-                self.clone().try_func_map(|decl: DeclarationPtr| try_up_via(decl, lookup))
+                default_impls::lookup_via_default_impl(self, lookup)
             }
         }
 
