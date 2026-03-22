@@ -202,7 +202,7 @@ impl GroundDomain {
         match self {
             GroundDomain::Empty(_) => Ok(Box::new(vec![].into_iter())),
             GroundDomain::Bool => Ok(Box::new(
-                vec![Literal::from(true), Literal::from(false)].into_iter(),
+                vec![Literal::from(false), Literal::from(true)].into_iter(),
             )),
             GroundDomain::Int(rngs) => {
                 let rng_iters = rngs
@@ -306,6 +306,11 @@ impl GroundDomain {
                 todo!("Length bound of functions is not yet supported")
             }
         }
+    }
+
+    pub fn len_usize(&self) -> Result<usize, DomainOpError> {
+        self.length()
+            .and_then(|len| len.try_into().map_err(|_| DomainOpError::TooLarge))
     }
 
     pub fn contains(&self, lit: &Literal) -> Result<bool, DomainOpError> {

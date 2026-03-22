@@ -13,15 +13,15 @@ and([ ((y < 5)) -> ((m[x] = x)) | x : int(1..5), (x < 4) ])
 
 (x = 1),
 and([ ((y < 5)) -> ((m[x] = x)) | x : int(1..5), (x < 4) ]), 
-   ~~> select_representation_matrix ([("Representations", 8001)])
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8001)])
 (x = 1),
 and([ ((y < 5)) -> ((m[x] = x)) | x : int(1..5), (x < 4) ])
 new variables:
-  find m#matrix_to_atom_1: int(1..5)
-  find m#matrix_to_atom_2: int(1..5)
-  find m#matrix_to_atom_3: int(1..5)
-  find m#matrix_to_atom_4: int(1..5)
-  find m#matrix_to_atom_5: int(1..5)
+  find m#MatrixToAtom_1: int(1..5)
+  find m#MatrixToAtom_2: int(1..5)
+  find m#MatrixToAtom_3: int(1..5)
+  find m#MatrixToAtom_4: int(1..5)
+  find m#MatrixToAtom_5: int(1..5)
 
 --
 
@@ -96,86 +96,86 @@ and([((y < 5)) -> ((m[1] = 1)),((y < 5)) -> ((m[2] = 2)),((y < 5)) -> ((m[3] = 3
 --
 
 (x = 1),
-((y <= 4)) -> ((m#matrix_to_atom[1] = 1)),
-((y <= 4)) -> ((m#matrix_to_atom[2] = 2)),
-((y <= 4)) -> ((m#matrix_to_atom[3] = 3)), 
-   ~~> select_representation_matrix ([("Representations", 8001)])
+((y <= 4)) -> ((m[1] = 1)),
+((y <= 4)) -> ((m[2] = 2)),
+((y <= 4)) -> ((m[3] = 3)), 
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8001)])
 (x = 1),
-((y <= 4)) -> ((m#matrix_to_atom[1] = 1)),
-((y <= 4)) -> ((m#matrix_to_atom[2] = 2)),
-((y <= 4)) -> ((m#matrix_to_atom[3] = 3))
+((y <= 4)) -> ((m[1] = 1)),
+((y <= 4)) -> ((m[2] = 2)),
+((y <= 4)) -> ((m[3] = 3))
 
 --
 
-m#matrix_to_atom[1], 
+m[1], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-{m#matrix_to_atom[1] @ and([__inDomain(1,int(1..5));int(1..)])}
+{m[1] @ and([__inDomain(1,int(1..5));int(1..)])}
 
 --
 
 (x = 1),
-((y <= 4)) -> (({m#matrix_to_atom[1] @ and([__inDomain(1,int(1..5));int(1..)])} = 1)),
-((y <= 4)) -> ((m#matrix_to_atom[2] = 2)),
-((y <= 4)) -> ((m#matrix_to_atom[3] = 3)), 
+((y <= 4)) -> (({m[1] @ and([__inDomain(1,int(1..5));int(1..)])} = 1)),
+((y <= 4)) -> ((m[2] = 2)),
+((y <= 4)) -> ((m[3] = 3)), 
    ~~> constant_evaluator ([("Constant", 9001)])
 (x = 1),
-((y <= 4)) -> ((m#matrix_to_atom[1] = 1)),
-((y <= 4)) -> ((m#matrix_to_atom[2] = 2)),
-((y <= 4)) -> ((m#matrix_to_atom[3] = 3))
+((y <= 4)) -> ((m[1] = 1)),
+((y <= 4)) -> ((m[2] = 2)),
+((y <= 4)) -> ((m[3] = 3))
 
 --
 
-m#matrix_to_atom[2], 
+m[2], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-{m#matrix_to_atom[2] @ and([__inDomain(2,int(1..5));int(1..)])}
+{m[2] @ and([__inDomain(2,int(1..5));int(1..)])}
 
 --
 
 (x = 1),
-((y <= 4)) -> ((m#matrix_to_atom[1] = 1)),
-((y <= 4)) -> (({m#matrix_to_atom[2] @ and([__inDomain(2,int(1..5));int(1..)])} = 2)),
-((y <= 4)) -> ((m#matrix_to_atom[3] = 3)), 
+((y <= 4)) -> ((m[1] = 1)),
+((y <= 4)) -> (({m[2] @ and([__inDomain(2,int(1..5));int(1..)])} = 2)),
+((y <= 4)) -> ((m[3] = 3)), 
    ~~> constant_evaluator ([("Constant", 9001)])
 (x = 1),
-((y <= 4)) -> ((m#matrix_to_atom[1] = 1)),
-((y <= 4)) -> ((m#matrix_to_atom[2] = 2)),
-((y <= 4)) -> ((m#matrix_to_atom[3] = 3))
+((y <= 4)) -> ((m[1] = 1)),
+((y <= 4)) -> ((m[2] = 2)),
+((y <= 4)) -> ((m[3] = 3))
 
 --
 
-m#matrix_to_atom[3], 
+m[3], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-{m#matrix_to_atom[3] @ and([__inDomain(3,int(1..5));int(1..)])}
+{m[3] @ and([__inDomain(3,int(1..5));int(1..)])}
 
 --
 
 (x = 1),
-((y <= 4)) -> ((m#matrix_to_atom[1] = 1)),
-((y <= 4)) -> ((m#matrix_to_atom[2] = 2)),
-((y <= 4)) -> (({m#matrix_to_atom[3] @ and([__inDomain(3,int(1..5));int(1..)])} = 3)), 
+((y <= 4)) -> ((m[1] = 1)),
+((y <= 4)) -> ((m[2] = 2)),
+((y <= 4)) -> (({m[3] @ and([__inDomain(3,int(1..5));int(1..)])} = 3)), 
    ~~> constant_evaluator ([("Constant", 9001)])
 (x = 1),
-((y <= 4)) -> ((m#matrix_to_atom[1] = 1)),
-((y <= 4)) -> ((m#matrix_to_atom[2] = 2)),
-((y <= 4)) -> ((m#matrix_to_atom[3] = 3))
+((y <= 4)) -> ((m[1] = 1)),
+((y <= 4)) -> ((m[2] = 2)),
+((y <= 4)) -> ((m[3] = 3))
 
 --
 
 (x = 1),
-((y <= 4)) -> ((m#matrix_to_atom[1] = 1)),
-((y <= 4)) -> ((m#matrix_to_atom[2] = 2)),
-((y <= 4)) -> ((m#matrix_to_atom[3] = 3)), 
-   ~~> index_matrix_to_atom ([("Base", 5000)])
+((y <= 4)) -> ((m[1] = 1)),
+((y <= 4)) -> ((m[2] = 2)),
+((y <= 4)) -> ((m[3] = 3)), 
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
 (x = 1),
-((y <= 4)) -> ((m#matrix_to_atom_1 = 1)),
-((y <= 4)) -> ((m#matrix_to_atom_2 = 2)),
-((y <= 4)) -> ((m#matrix_to_atom_3 = 3))
+((y <= 4)) -> ((m#MatrixToAtom_1 = 1)),
+((y <= 4)) -> ((m#MatrixToAtom_2 = 2)),
+((y <= 4)) -> ((m#MatrixToAtom_3 = 3))
 
 --
 
-((y <= 4)) -> ((m#matrix_to_atom_1 = 1)), 
+((y <= 4)) -> ((m#MatrixToAtom_1 = 1)), 
    ~~> flatten_imply ([("Minion", 4200)])
-(__0) -> ((m#matrix_to_atom_1 = 1))
+(__0) -> ((m#MatrixToAtom_1 = 1))
 new variables:
   find __0: bool
 new constraints:
@@ -183,9 +183,9 @@ new constraints:
 
 --
 
-(__0) -> ((m#matrix_to_atom_1 = 1)), 
+(__0) -> ((m#MatrixToAtom_1 = 1)), 
    ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
-ReifyImply((m#matrix_to_atom_1 = 1), __0)
+ReifyImply((m#MatrixToAtom_1 = 1), __0)
 
 --
 
@@ -195,9 +195,9 @@ Reify((y <= 4), __0)
 
 --
 
-((y <= 4)) -> ((m#matrix_to_atom_2 = 2)), 
+((y <= 4)) -> ((m#MatrixToAtom_2 = 2)), 
    ~~> flatten_imply ([("Minion", 4200)])
-(__1) -> ((m#matrix_to_atom_2 = 2))
+(__1) -> ((m#MatrixToAtom_2 = 2))
 new variables:
   find __1: bool
 new constraints:
@@ -205,9 +205,9 @@ new constraints:
 
 --
 
-(__1) -> ((m#matrix_to_atom_2 = 2)), 
+(__1) -> ((m#MatrixToAtom_2 = 2)), 
    ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
-ReifyImply((m#matrix_to_atom_2 = 2), __1)
+ReifyImply((m#MatrixToAtom_2 = 2), __1)
 
 --
 
@@ -217,9 +217,9 @@ Reify((y <= 4), __1)
 
 --
 
-((y <= 4)) -> ((m#matrix_to_atom_3 = 3)), 
+((y <= 4)) -> ((m#MatrixToAtom_3 = 3)), 
    ~~> flatten_imply ([("Minion", 4200)])
-(__2) -> ((m#matrix_to_atom_3 = 3))
+(__2) -> ((m#MatrixToAtom_3 = 3))
 new variables:
   find __2: bool
 new constraints:
@@ -227,9 +227,9 @@ new constraints:
 
 --
 
-(__2) -> ((m#matrix_to_atom_3 = 3)), 
+(__2) -> ((m#MatrixToAtom_3 = 3)), 
    ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
-ReifyImply((m#matrix_to_atom_3 = 3), __2)
+ReifyImply((m#MatrixToAtom_3 = 3), __2)
 
 --
 
@@ -265,18 +265,18 @@ find y: int(1..2)
 find __0: bool
 find __1: bool
 find __2: bool
-find m#matrix_to_atom_1: int(1..5)
-find m#matrix_to_atom_2: int(1..5)
-find m#matrix_to_atom_3: int(1..5)
-find m#matrix_to_atom_4: int(1..5)
-find m#matrix_to_atom_5: int(1..5)
+find m#MatrixToAtom_1: int(1..5)
+find m#MatrixToAtom_2: int(1..5)
+find m#MatrixToAtom_3: int(1..5)
+find m#MatrixToAtom_4: int(1..5)
+find m#MatrixToAtom_5: int(1..5)
 
 such that
 
 (x = 1),
-ReifyImply((m#matrix_to_atom_1 = 1), __0),
-ReifyImply((m#matrix_to_atom_2 = 2), __1),
-ReifyImply((m#matrix_to_atom_3 = 3), __2),
+ReifyImply((m#MatrixToAtom_1 = 1), __0),
+ReifyImply((m#MatrixToAtom_2 = 2), __1),
+ReifyImply((m#MatrixToAtom_3 = 3), __2),
 Reify(Ineq(y, 4, 0), __0),
 Reify(Ineq(y, 4, 0), __1),
 Reify(Ineq(y, 4, 0), __2)

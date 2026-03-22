@@ -14,14 +14,14 @@ pub mod context;
 pub mod error;
 pub mod instantiate;
 pub mod parse;
-pub mod representation;
 pub mod rule_engine;
 pub mod settings;
 pub mod solver;
 pub mod stats;
 
 // Various internal helper functions
-mod utils;
+pub mod representation;
+pub mod utils;
 
 /// Creates a [`Domain::Int`](ast::Domain::Int).
 ///
@@ -81,7 +81,7 @@ macro_rules! range {
     // initial tokens
     (.. $($a:tt)+) => {$crate::ast::Range::UnboundedL($crate::as_expr!($($a)+))};
 
-    ($a:tt $($tail:tt)*) => {range!(@hasLowerBound [$a] -> $($tail)*)};
+    ($a:tt $($tail:tt)*) => {$crate::range!(@hasLowerBound [$a] -> $($tail)*)};
 
 }
 

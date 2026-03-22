@@ -97,11 +97,7 @@ fn for_each_unrepresented_var(
             continue;
         };
 
-        if !conjure_model
-            .symbols()
-            .representations_for(&name)
-            .is_none_or(|x| x.is_empty())
-        {
+        if !decl.reprs().is_empty() {
             continue;
         }
 
@@ -211,7 +207,7 @@ fn name_to_string(name: conjure_ast::Name) -> String {
     match name {
         // print machine names in a custom, easier to regex, way.
         conjure_ast::Name::Machine(x) => format!("__conjure_machine_name_{x}"),
-        conjure_ast::Name::Represented(fields) => {
+        conjure_ast::Name::Repr(fields) => {
             let (name, rule, suffix) = *fields;
             let name = name_to_string(name);
             format!("__conjure_represented_name__{name}__{rule}___{suffix}")

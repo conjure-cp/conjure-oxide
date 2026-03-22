@@ -1,17 +1,22 @@
-use crate::ast::serde::{AsId, HasId};
-use crate::{ast::DeclarationPtr, bug};
+use super::{
+    Atom, DeclarationKind, DeclarationPtr, DomainPtr, Expression, GroundDomain, Literal, Metadata,
+    Moo, Name,
+    categories::{Category, CategoryOf},
+    domains::HasDomain,
+    serde::{AsId, HasId},
+};
+use crate::bug;
+use crate::representation::{
+    ReprRule,
+    registry::{ReprRegistryEntry, get_repr_by_name},
+    types::ReprInitResult,
+};
 use derivative::Derivative;
 use parking_lot::MappedRwLockReadGuard;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use std::fmt::{Display, Formatter};
 use uniplate::Uniplate;
-
-use super::{
-    Atom, DeclarationKind, DomainPtr, Expression, GroundDomain, Literal, Metadata, Moo, Name,
-    categories::{Category, CategoryOf},
-    domains::HasDomain,
-};
 
 /// A reference to a declaration (variable, parameter, etc.)
 ///
@@ -29,11 +34,12 @@ use super::{
 pub struct Reference {
     #[serde_as(as = "AsId")]
     pub ptr: DeclarationPtr,
+    pub repr: Option<&'static ReprRegistryEntry>,
 }
 
 impl Reference {
     pub fn new(ptr: DeclarationPtr) -> Self {
-        Reference { ptr }
+        Reference { ptr, repr: None }
     }
 
     pub fn ptr(&self) -> &DeclarationPtr {
@@ -56,8 +62,18 @@ impl Reference {
         self.ptr.domain()
     }
 
-    pub fn resolved_domain(&self) -> Option<Moo<GroundDomain>> {
-        self.domain()?.resolve()
+    pub fn resolve_domain(&mut self) -> Option<Moo<GroundDomain>> {
+        self.ptr.resolve_domain()
+    }
+
+    pub fn init_repr<T: ReprRule>(&mut self) -> ReprInitResult {
+        let res = T::init_for(&mut self.ptr);
+        if res.is_ok() {
+            // TODO: This part needs more thinking, we shouldn't do the lookup every time...
+            let ent = get_repr_by_name(T::NAME).expect("repr to exist");
+            self.repr = Some(ent);
+        }
+        res
     }
 
     /// Returns the expression behind a value-letting reference, if this is one.

@@ -44,13 +44,13 @@ static USER_TERMINATED: AtomicBool = AtomicBool::new(false);
 fn parse_name(minion_name: &str) -> Name {
     static MACHINE_NAME_RE: LazyLock<Regex> =
         LazyLock::new(|| Regex::new(r"__conjure_machine_name_([0-9]+)").unwrap());
-    static REPRESENTED_NAME_RE: LazyLock<Regex> =
+    static REPR_NAME_RE: LazyLock<Regex> =
         LazyLock::new(|| Regex::new(r"__conjure_represented_name__(.*)__(.*)___(.*)").unwrap());
 
     if let Some(caps) = MACHINE_NAME_RE.captures(minion_name) {
         conjure_ast::Name::Machine(caps[1].parse::<i32>().unwrap())
-    } else if let Some(caps) = REPRESENTED_NAME_RE.captures(minion_name) {
-        conjure_ast::Name::Represented(Box::new((
+    } else if let Some(caps) = REPR_NAME_RE.captures(minion_name) {
+        conjure_ast::Name::Repr(Box::new((
             parse_name(&caps[1]),
             Ustr::from(&caps[2]),
             Ustr::from(&caps[3]),

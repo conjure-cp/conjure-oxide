@@ -1,3 +1,4 @@
+use funcmap::TryFuncMap;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
@@ -672,7 +673,7 @@ impl Display for Literal {
         match &self {
             Literal::Int(i) => write!(f, "{i}"),
             Literal::Bool(b) => write!(f, "{b}"),
-            Literal::AbstractLiteral(l) => write!(f, "{l:?}"),
+            Literal::AbstractLiteral(l) => write!(f, "{l}"),
         }
     }
 }
@@ -681,7 +682,8 @@ impl Display for Literal {
 mod tests {
 
     use super::*;
-    use crate::{into_matrix, matrix};
+    use crate::ast::matrix::flatten;
+    use crate::{domain_int, domain_int_ground, into_matrix, matrix, matrix_lit};
     use uniplate::Uniplate;
 
     #[test]
@@ -705,5 +707,51 @@ mod tests {
             });
 
         assert_eq!(actual_index_domains, expected_index_domains);
+    }
+
+    #[test]
+    fn matrix_flatten() {
+        let tensor = matrix_lit![
+            [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]],
+            [[13, 14, 15, 16], [17, 18, 19, 20], [21, 22, 23, 24]]
+        ];
+
+        let Literal::AbstractLiteral(abslit) = tensor else {
+            panic!("expected abstract literal")
+        };
+        let actual_elems: Vec<Literal> = flatten(abslit).collect();
+
+        let expected_elems = (1..25).into_iter().map(Literal::from).collect::<Vec<_>>();
+        assert_eq!(actual_elems, expected_elems);
+    }
+
+    #[test]
+    fn matrix_domain_1d() {
+        let matrix = matrix_lit![10, 11, 12, 13; domain_int_ground!(1..4)];
+        let dom = matrix.domain_of();
+
+        let (inner_dom, idx_doms) = dom.as_matrix_ground().expect("must be ground matrix");
+        assert_eq!(inner_dom, &domain_int_ground!(10..13));
+        assert_eq!(idx_doms.len(), 1);
+        assert_eq!(&idx_doms[0], &domain_int_ground!(1..4));
+    }
+
+    #[test]
+    fn matrix_domain_2d() {
+        let matrix = matrix_lit![
+            [1, 2, 3, 4],
+            [5, 6, 7, 8];
+            [
+                domain_int_ground!(1..2),
+                domain_int_ground!(1..4)
+            ]
+        ];
+        let dom = matrix.domain_of();
+
+        let (inner_dom, idx_doms) = dom.as_matrix_ground().expect("must be ground matrix");
+        assert_eq!(inner_dom, &domain_int_ground!(1..8));
+        assert_eq!(idx_doms.len(), 2);
+        assert_eq!(&idx_doms[0], &domain_int_ground!(1..2));
+        assert_eq!(&idx_doms[1], &domain_int_ground!(1..4));
     }
 }

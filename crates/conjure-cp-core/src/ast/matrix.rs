@@ -4,10 +4,10 @@
 
 use std::collections::VecDeque;
 
+use crate::ast::{Domain, DomainOpError, Expression as Expr, GroundDomain, Metadata, Moo, Range};
+use conjure_cp_core::ast::DomainPtr;
 use itertools::{Itertools, izip};
 use uniplate::Uniplate as _;
-
-use crate::ast::{DomainOpError, Expression as Expr, GroundDomain, Metadata, Moo, Range};
 
 use super::{AbstractLiteral, Literal};
 
@@ -246,4 +246,54 @@ pub fn safe_index_optimised(m: Expr, idx: Literal) -> Option<Expr> {
             vec![idx.into()],
         )),
     }
+}
+
+/// Unflatten a slice of literals into a matrix with the given dimensions and strides
+pub fn unflatten_matrix(
+    elems: &[Literal],
+    index_domains: &[Moo<GroundDomain>],
+    strides: &[usize],
+) -> Literal {
+    let dom = index_domains.first().expect("no index domains").clone();
+    let stride = *strides.first().expect("no strides");
+
+    if index_domains.len() == 1 {
+        return Literal::AbstractLiteral(AbstractLiteral::Matrix(Vec::from(elems), dom));
+    }
+
+    let mut inners = Vec::<Literal>::with_capacity(stride);
+    let mut i_start: usize = 0;
+    while i_start < elems.len() {
+        let next = i_start + stride;
+        let elem = unflatten_matrix(&elems[i_start..next], &index_domains[1..], &strides[1..]);
+        inners.push(elem);
+        i_start = next;
+    }
+    Literal::AbstractLiteral(AbstractLiteral::Matrix(inners, dom))
+}
+
+pub fn unflatten_matrix_expr(
+    elems: &[Expr],
+    index_domains: &[DomainPtr],
+    strides: &[usize],
+) -> Expr {
+    let dom = index_domains.first().expect("no index domains").clone();
+    let stride = *strides.first().expect("no strides");
+
+    if index_domains.len() == 1 {
+        return Expr::AbstractLiteral(
+            Metadata::new(),
+            AbstractLiteral::Matrix(Vec::from(elems), dom),
+        );
+    }
+
+    let mut inners = Vec::<Expr>::with_capacity(stride);
+    let mut i_start: usize = 0;
+    while i_start < elems.len() {
+        let next = i_start + stride;
+        let elem = unflatten_matrix_expr(&elems[i_start..next], &index_domains[1..], &strides[1..]);
+        inners.push(elem);
+        i_start = next;
+    }
+    Expr::AbstractLiteral(Metadata::new(), AbstractLiteral::Matrix(inners, dom))
 }

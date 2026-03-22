@@ -56,15 +56,8 @@ impl Ord for RuleData<'_> {
 /// Error type for rule resolution.
 #[derive(Debug, Error)]
 pub enum ResolveRulesError {
-    RuleSetNotFound,
-}
-
-impl Display for ResolveRulesError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ResolveRulesError::RuleSetNotFound => write!(f, "Rule set not found."),
-        }
-    }
+    #[error("Rule set '{0}' not found")]
+    RuleSetNotFound(String),
 }
 
 /// Helper function to get a rule set by name, or return an error if it doesn't exist.
@@ -77,7 +70,9 @@ impl Display for ResolveRulesError {
 fn get_rule_set(rule_set_name: &str) -> Result<&'static RuleSet<'static>, ResolveRulesError> {
     match get_rule_set_by_name(rule_set_name) {
         Some(rule_set) => Ok(rule_set),
-        None => Err(ResolveRulesError::RuleSetNotFound),
+        None => Err(ResolveRulesError::RuleSetNotFound(
+            rule_set_name.to_string(),
+        )),
     }
 }
 

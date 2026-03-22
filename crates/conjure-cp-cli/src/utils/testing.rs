@@ -1,16 +1,16 @@
-use std::collections::{BTreeMap, HashMap, HashSet};
-use std::fmt::Debug;
-use std::path::Path;
-use std::{io, mem, vec};
-
 use conjure_cp::ast::records::RecordValue;
 use conjure_cp::ast::serde::ObjId;
 use conjure_cp::bug;
 use itertools::Itertools as _;
+use std::cmp::Ordering;
+use std::collections::{BTreeMap, HashMap, HashSet};
+use std::fmt::Debug;
 use std::fs::File;
 use std::hash::Hash;
 use std::io::{BufRead, BufReader, Write};
+use std::path::Path;
 use std::sync::{Arc, RwLock};
+use std::{io, mem, vec};
 use uniplate::Uniplate;
 
 use conjure_cp::ast::{AbstractLiteral, Expression, GroundDomain, Moo, SerdeModel};
@@ -52,23 +52,16 @@ fn model_to_json_with_stable_ids(model: &SerdeModel) -> Result<JsonValue, JsonEr
 /// This is applied to all fields that are called "id" or "ptr" - be mindful
 /// of potential naming clashes in the future!
 fn replace_ids(value: &mut JsonValue, id_map: &HashMap<ObjId, ObjId>) {
+    // Replace IDs in all objects that look like ObjId
+    if let Ok(old_id) = serde_json::from_value::<ObjId>(value.clone()) {
+        let new_id = id_map.get(&old_id).expect("all ids to be in the id map");
+        *value = serde_json::to_value(new_id).expect("serialization of an ObjId to succeed");
+        return;
+    }
+
+    // Recursively process all values
     match value {
         JsonValue::Object(map) => {
-            // Replace IDs in three places:
-            // - "id" fields (SymbolTable IDs)
-            // - "parent" fields (SymbolTable nesting)
-            // - "ptr" fields (DeclarationPtr IDs)
-            for (k, v) in map.iter_mut() {
-                if (k == "id" || k == "ptr" || k == "parent")
-                    && let Ok(old_id) = serde_json::from_value::<ObjId>(mem::take(v))
-                {
-                    let new_id = id_map.get(&old_id).expect("all ids to be in the id map");
-                    *v = serde_json::to_value(new_id)
-                        .expect("serialization of an ObjId to always succeed");
-                }
-            }
-
-            // Recursively process all values
             for val in map.values_mut() {
                 replace_ids(val, id_map);
             }

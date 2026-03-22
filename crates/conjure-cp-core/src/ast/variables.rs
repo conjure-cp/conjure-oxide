@@ -1,11 +1,11 @@
 use std::fmt::Display;
 
 use super::categories::{Category, CategoryOf};
-use crate::representation::Representation;
 use conjure_cp_core::ast::DomainPtr;
 use conjure_cp_core::ast::domains::HasDomain;
 use derivative::Derivative;
 use serde::{Deserialize, Serialize};
+use uniplate::Uniplate;
 
 /// Represents a decision variable within a computational model.
 ///
@@ -29,24 +29,16 @@ use serde::{Deserialize, Serialize};
 /// println!("Boolean Variable: {}", bool_var);
 /// println!("Integer Variable: {}", int_var);
 
-#[derive(Clone, Debug, Serialize, Deserialize, Derivative)]
+#[derive(Clone, Debug, Serialize, Deserialize, Derivative, Uniplate)]
 #[derivative(Hash, PartialEq, Eq)]
+#[biplate(to=DomainPtr)]
 pub struct DecisionVariable {
     pub domain: DomainPtr,
-
-    // use this through [`Declaration`] - in the future, this probably will be stored in
-    // declaration / domain, not here.
-    #[serde(skip)]
-    #[derivative(Hash = "ignore", PartialEq = "ignore")]
-    pub(super) representations: Vec<Vec<Box<dyn Representation>>>,
 }
 
 impl DecisionVariable {
     pub fn new(domain: DomainPtr) -> DecisionVariable {
-        DecisionVariable {
-            domain,
-            representations: vec![],
-        }
+        DecisionVariable { domain }
     }
 }
 

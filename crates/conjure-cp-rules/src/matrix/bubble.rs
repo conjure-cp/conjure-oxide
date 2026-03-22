@@ -1,4 +1,5 @@
-use conjure_cp::ast::{DomainPtr, GroundDomain, Metadata};
+use crate::utils::to_aux_var;
+use conjure_cp::ast::{DomainPtr, GroundDomain, Metadata, Reference, eval_constant};
 use conjure_cp::ast::{Expression, Moo, SymbolTable};
 use conjure_cp::rule_engine::{
     ApplicationError, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
@@ -9,7 +10,7 @@ use itertools::{Itertools as _, izip};
 
 /// Converts an unsafe index to a safe index using a bubble expression.
 #[register_rule(("Bubble", 6000))]
-fn index_to_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
+fn index_to_bubble(expr: &Expression, symtab: &SymbolTable) -> ApplicationResult {
     let Expression::UnsafeIndex(_, subject, indices) = expr else {
         return Err(RuleNotApplicable);
     };
@@ -42,29 +43,42 @@ fn index_to_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
         "in an index expression, there should be the same number of indices as the subject has index domains"
     );
 
-    let bubble_constraints = Moo::new(into_matrix_expr![
-        izip!(index_domains, indices)
-            .map(|(domain, index)| {
-                Expression::InDomain(
-                    Metadata::new(),
-                    Moo::new(index.clone()),
-                    DomainPtr::from(domain.clone()),
-                )
-            })
-            .collect_vec()
-    ]);
+    // There are a lot of rules that mess with matrix indices, so it's a good idea to simplify them
+    // at the same time as we check bounds
+    let mut new_indices = Vec::with_capacity(indices.len());
+    let mut bubble_constraints = Vec::with_capacity(indices.len());
+    let mut idx_auxvar_constraints = Vec::with_capacity(indices.len());
+    let mut idx_auxvars = symtab.clone();
+    for (idx, idx_dom) in izip!(indices, index_domains) {
+        let new_idx: Expression = if let Some(lit) = eval_constant(idx) {
+            // If the index is a constant expr, evaluate it
+            lit.into()
+        } else if let Some(res) = to_aux_var(idx, &idx_auxvars) {
+            // If the index is a complex expr, extract it to an auxvar
+            idx_auxvar_constraints.push(res.top_level_expr());
+            idx_auxvars = res.symbols();
+            res.as_expr()
+        } else {
+            // Otherwise keep it as is
+            idx.clone()
+        };
 
-    let new_expr = Moo::new(Expression::SafeIndex(
-        Metadata::new(),
-        subject.clone(),
-        indices.clone(),
-    ));
+        bubble_constraints.push(Expression::InDomain(
+            Metadata::new(),
+            Moo::new(new_idx.clone()),
+            DomainPtr::from(idx_dom.clone()),
+        ));
+        new_indices.push(new_idx);
+    }
 
-    Ok(Reduction::pure(Expression::Bubble(
+    let new_expr = Expression::SafeIndex(Metadata::new(), subject.clone(), new_indices);
+    let cond = Expression::And(
         Metadata::new(),
-        new_expr,
-        Moo::new(Expression::And(Metadata::new(), bubble_constraints)),
-    )))
+        Moo::new(into_matrix_expr!(bubble_constraints)),
+    );
+    let bubble = Expression::Bubble(Metadata::new(), Moo::new(new_expr), Moo::new(cond));
+
+    Ok(Reduction::new(bubble, idx_auxvar_constraints, idx_auxvars))
 }
 
 /// Converts an unsafe slice to a safe slice using a bubble expression.

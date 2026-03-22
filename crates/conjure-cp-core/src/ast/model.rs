@@ -20,10 +20,7 @@ use super::{
     SymbolTable, SymbolTablePtr, Typeable,
     comprehension::Comprehension,
     declaration::DeclarationKind,
-    pretty::{
-        pretty_clauses, pretty_domain_letting_declaration, pretty_expressions_as_top_level,
-        pretty_value_letting_declaration, pretty_variable_declaration,
-    },
+    pretty::{pretty_clauses, pretty_expressions_as_top_level},
 };
 
 /// An Essence model.
@@ -387,39 +384,8 @@ impl Biplate<Comprehension> for Model {
 impl Display for Model {
     #[allow(clippy::unwrap_used)]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for (name, decl) in self.symbols().clone().into_iter_local() {
-            match &decl.kind() as &DeclarationKind {
-                DeclarationKind::Find(_) => {
-                    writeln!(
-                        f,
-                        "{}",
-                        pretty_variable_declaration(&self.symbols(), &name).unwrap()
-                    )?;
-                }
-                DeclarationKind::ValueLetting(_, _) | DeclarationKind::TemporaryValueLetting(_) => {
-                    writeln!(
-                        f,
-                        "{}",
-                        pretty_value_letting_declaration(&self.symbols(), &name).unwrap()
-                    )?;
-                }
-                DeclarationKind::DomainLetting(_) => {
-                    writeln!(
-                        f,
-                        "{}",
-                        pretty_domain_letting_declaration(&self.symbols(), &name).unwrap()
-                    )?;
-                }
-                DeclarationKind::Given(d) => {
-                    writeln!(f, "given {name}: {d}")?;
-                }
-                DeclarationKind::Quantified(inner) => {
-                    writeln!(f, "quantified {name}: {}", inner.domain())?;
-                }
-                DeclarationKind::RecordField(_) => {
-                    writeln!(f)?;
-                }
-            }
+        for (_, decl) in self.symbols().iter_local() {
+            writeln!(f, "{}", decl)?;
         }
 
         if !self.constraints().is_empty() {

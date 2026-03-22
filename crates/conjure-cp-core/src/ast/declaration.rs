@@ -1,10 +1,12 @@
 use super::categories::{Category, CategoryOf};
 use super::name::Name;
-use super::serde::{DefaultWithId, HasId, IdPtr, ObjId, PtrAsInner};
+use super::serde::{AsId, DefaultWithId, HasId, IdPtr, ObjId, PtrAsInner};
 use super::{
-    DecisionVariable, DomainPtr, Expression, GroundDomain, HasDomain, Moo, RecordEntry, Reference,
-    ReturnType, Typeable,
+    DecisionVariable, Domain, DomainPtr, Expression, GroundDomain, HasDomain, Moo, RecordEntry,
+    Reference, ReturnType, Typeable,
 };
+use crate::representation::{ReprRule, ReprStore};
+use derivative::Derivative;
 use parking_lot::{
     MappedRwLockReadGuard, MappedRwLockWriteGuard, RwLock, RwLockReadGuard, RwLockWriteGuard,
 };
@@ -16,7 +18,7 @@ use std::fmt::{Debug, Display};
 use std::mem;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU32, Ordering};
-use uniplate::{Biplate, Tree, Uniplate};
+use uniplate::{Biplate, Tree, Uniplate, try_biplate_to};
 
 /// Global counter of declarations.
 /// Note that the counter is shared between all threads
@@ -108,6 +110,16 @@ impl DeclarationPtr {
         DeclarationPtr {
             inner: DeclarationPtrInner::new(RwLock::new(declaration)),
         }
+    }
+
+    /// Get the source of this variable
+    pub fn source(&self) -> MappedRwLockReadGuard<'_, Option<DeclarationPtr>> {
+        self.map(|x| &x.source)
+    }
+
+    /// Get a mutable reference to the source of this variable
+    pub fn source_mut(&mut self) -> MappedRwLockWriteGuard<'_, Option<DeclarationPtr>> {
+        self.map_mut(|x| &mut x.source)
     }
 
     /// Creates a new declaration.
@@ -306,9 +318,22 @@ impl DeclarationPtr {
         }
     }
 
-    /// Gets the domain of the declaration and fully resolve it
-    pub fn resolved_domain(&self) -> Option<Moo<GroundDomain>> {
-        self.domain()?.resolve()
+    /// Fully resolve the domain of this declaration and update it to store resolved values
+    pub fn resolve_domain(&mut self) -> Option<Moo<GroundDomain>> {
+        // If we already have a ground domain, return it
+        let dom = self.domain()?;
+        if let Domain::Ground(gd) = dom.as_ref() {
+            return Some(gd.clone());
+        }
+
+        {
+            // Resolve the domains and save result
+            let mut guard = self.write();
+            guard.kind = guard
+                .kind
+                .transform_bi(&|dom: DomainPtr| dom.resolve().map(DomainPtr::from).unwrap_or(dom));
+        }
+        dom.resolve()
     }
 
     /// Gets the kind of the declaration.
@@ -340,6 +365,24 @@ impl DeclarationPtr {
     /// ```
     pub fn name(&self) -> MappedRwLockReadGuard<'_, Name> {
         self.map(|x| &x.name)
+    }
+
+    /// Get the representations of this declaration
+    /// TODO: better documentation :)
+    pub fn reprs(&self) -> MappedRwLockReadGuard<'_, ReprStore> {
+        self.map(|x| &x.representations)
+    }
+
+    /// Mutate the representations of this declaration
+    /// TODO: better documentation :)
+    pub fn reprs_mut(&mut self) -> MappedRwLockWriteGuard<'_, ReprStore> {
+        self.map_mut(|x| &mut x.representations)
+    }
+
+    pub fn get_repr<R: ReprRule + ?Sized>(
+        &self,
+    ) -> Option<MappedRwLockReadGuard<'_, R::DeclLevel>> {
+        self.maybe_map(|x| x.representations.get::<R>())
     }
 
     /// This declaration as a decision variable, if it is one.
@@ -536,6 +579,16 @@ impl DeclarationPtr {
         RwLockReadGuard::map(self.read(), f)
     }
 
+    /// Applies `f` to the declaration.
+    /// If `f` returns `None`, the result is `None` and the lock is released.
+    /// Otherwise, returns the result as a reference.
+    fn maybe_map<U>(
+        &self,
+        f: impl FnOnce(&Declaration) -> Option<&U>,
+    ) -> Option<MappedRwLockReadGuard<'_, U>> {
+        RwLockReadGuard::try_map(self.read(), f).ok()
+    }
+
     /// Applies mutable function `f` to the declaration, returning the result as a mutable reference.
     fn map_mut<U>(
         &mut self,
@@ -581,6 +634,8 @@ impl DefaultWithId for DeclarationPtr {
                 RwLock::new(Declaration {
                     name: Name::User("_UNKNOWN".into()),
                     kind: DeclarationKind::ValueLetting(false.into(), None),
+                    representations: ReprStore::new(),
+                    source: None,
                 }),
                 id,
             ),
@@ -819,18 +874,28 @@ impl std::hash::Hash for DeclarationPtr {
 impl Display for DeclarationPtr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let value: &Declaration = &self.read();
-        value.fmt(f)
+        Display::fmt(&value, f)
     }
 }
 
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize, Eq, Uniplate)]
-#[biplate(to=Expression)]
-#[biplate(to=DeclarationPtr)]
-#[biplate(to=Name)]
+#[serde_as]
+#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Derivative)]
+#[derivative(Debug)]
+// #[biplate(to=Expression)]     // TODO: use the derive macro again once #113 lands
+// #[biplate(to=DeclarationPtr)]
+// #[biplate(to=Name)]
 /// The contents of a declaration
 pub struct Declaration {
     /// The name of the declared symbol.
     name: Name,
+
+    /// Representations that exist for this declaration
+    representations: ReprStore,
+
+    /// If this declaration was created from another one, this points to the original decl
+    #[derivative(Debug = "ignore")]
+    #[serde_as(as = "Option<AsId>")]
+    source: Option<DeclarationPtr>,
 
     /// The kind of the declaration.
     kind: DeclarationKind,
@@ -839,7 +904,241 @@ pub struct Declaration {
 impl Declaration {
     /// Creates a new declaration.
     pub fn new(name: Name, kind: DeclarationKind) -> Declaration {
-        Declaration { name, kind }
+        Declaration {
+            name,
+            kind,
+            source: None,
+            representations: ReprStore::new(),
+        }
+    }
+}
+
+impl Display for Declaration {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match &self.kind {
+            DeclarationKind::Find(var) => {
+                write!(f, "find {}: {}", self.name, var.domain)
+            }
+            DeclarationKind::ValueLetting(expr, _)
+            | DeclarationKind::TemporaryValueLetting(expr) => {
+                write!(f, "letting {} be {}", self.name, expr)
+            }
+            DeclarationKind::DomainLetting(dom) => {
+                write!(f, "letting {} be domain {}", self.name, dom)
+            }
+            DeclarationKind::Given(dom) => write!(f, "given {}: {}", self.name, dom),
+            DeclarationKind::Quantified(gq) => write!(f, "given {}: {}", self.name, gq.domain),
+            DeclarationKind::RecordField(rf) => write!(f, "{} in {}", self.name, rf),
+        }
+    }
+}
+
+// copy of the expansion made by the uniplate macro, modified to skip some fields
+// TODO: use the derive macro again once #113 lands
+impl Uniplate for Declaration {
+    fn uniplate(
+        &self,
+    ) -> (
+        Tree<Declaration>,
+        Box<dyn Fn(Tree<Declaration>) -> Declaration>,
+    ) {
+        // Skipped fields
+        let (representations_children, representations_ctx) =
+            untraversable_biplate_impl::<ReprStore, Declaration>(&self.representations);
+        let (source_children, source_ctx) =
+            untraversable_biplate_impl::<Option<DeclarationPtr>, Declaration>(&self.source);
+
+        // Traversed fields
+        let (name_children, name_ctx) = try_biplate_to!(self.name.clone(), Declaration);
+        let (kind_children, kind_ctx) = try_biplate_to!(self.kind.clone(), Declaration);
+
+        let children = Tree::Many(::std::collections::VecDeque::from([
+            representations_children,
+            source_children,
+            name_children,
+            kind_children,
+        ]));
+
+        let ctx = Box::new(move |x: Tree<Declaration>| {
+            let Tree::Many(x) = x else { panic!() };
+            Declaration {
+                representations: representations_ctx(x[0].clone()),
+                source: source_ctx(x[1].clone()),
+                name: name_ctx(x[2].clone()),
+                kind: kind_ctx(x[3].clone()),
+            }
+        });
+        (children, ctx)
+    }
+}
+
+// copy of the expansion made by the uniplate macro, modified to skip some fields
+// TODO: use the derive macro again once #113 lands
+impl Biplate<Name> for Declaration {
+    fn biplate(&self) -> (Tree<Name>, Box<dyn Fn(Tree<Name>) -> Declaration>) {
+        // Skipped fields
+        let (representations_children, representations_ctx) =
+            untraversable_biplate_impl::<ReprStore, Name>(&self.representations);
+        let (source_children, source_ctx) =
+            untraversable_biplate_impl::<Option<DeclarationPtr>, Name>(&self.source);
+
+        // Traversed fields
+        let (name_children, name_ctx) = try_biplate_to!(self.name.clone(), Name);
+        let (kind_children, kind_ctx) = try_biplate_to!(self.kind.clone(), Name);
+
+        let children = Tree::Many(::std::collections::VecDeque::from([
+            representations_children,
+            source_children,
+            name_children,
+            kind_children,
+        ]));
+
+        let ctx = Box::new(move |x: Tree<Name>| {
+            let Tree::Many(x) = x else { panic!() };
+            Declaration {
+                representations: representations_ctx(x[0].clone()),
+                source: source_ctx(x[1].clone()),
+                name: name_ctx(x[2].clone()),
+                kind: kind_ctx(x[3].clone()),
+            }
+        });
+        (children, ctx)
+    }
+}
+
+// copy of the expansion made by the uniplate macro, modified to skip some fields
+// TODO: use the derive macro again once #113 lands
+impl Biplate<DeclarationPtr> for Declaration {
+    fn biplate(
+        &self,
+    ) -> (
+        Tree<DeclarationPtr>,
+        Box<dyn Fn(Tree<DeclarationPtr>) -> Declaration>,
+    ) {
+        // Skipped fields
+        let (representations_children, representations_ctx) =
+            untraversable_biplate_impl::<ReprStore, DeclarationPtr>(&self.representations);
+        let (source_children, source_ctx) =
+            untraversable_biplate_impl::<Option<DeclarationPtr>, DeclarationPtr>(&self.source);
+
+        // Traversed fields
+        let (name_children, name_ctx) = try_biplate_to!(self.name.clone(), DeclarationPtr);
+        let (kind_children, kind_ctx) = try_biplate_to!(self.kind.clone(), DeclarationPtr);
+
+        let children = Tree::Many(::std::collections::VecDeque::from([
+            representations_children,
+            source_children,
+            name_children,
+            kind_children,
+        ]));
+
+        let ctx = Box::new(move |x: Tree<DeclarationPtr>| {
+            let Tree::Many(x) = x else { panic!() };
+            Declaration {
+                representations: representations_ctx(x[0].clone()),
+                source: source_ctx(x[1].clone()),
+                name: name_ctx(x[2].clone()),
+                kind: kind_ctx(x[3].clone()),
+            }
+        });
+        (children, ctx)
+    }
+}
+
+// copy of the expansion made by the uniplate macro, modified to skip some fields
+// TODO: use the derive macro again once #113 lands
+impl Biplate<Expression> for Declaration {
+    fn biplate(
+        &self,
+    ) -> (
+        Tree<Expression>,
+        Box<dyn Fn(Tree<Expression>) -> Declaration>,
+    ) {
+        // Skipped fields
+        let (representations_children, representations_ctx) =
+            untraversable_biplate_impl::<ReprStore, Expression>(&self.representations);
+        let (source_children, source_ctx) =
+            untraversable_biplate_impl::<Option<DeclarationPtr>, Expression>(&self.source);
+
+        // Traversed fields
+        let (name_children, name_ctx) = try_biplate_to!(self.name.clone(), Expression);
+        let (kind_children, kind_ctx) = try_biplate_to!(self.kind.clone(), Expression);
+
+        let children = Tree::Many(::std::collections::VecDeque::from([
+            representations_children,
+            source_children,
+            name_children,
+            kind_children,
+        ]));
+
+        let ctx = Box::new(move |x: Tree<Expression>| {
+            let Tree::Many(x) = x else { panic!() };
+            Declaration {
+                representations: representations_ctx(x[0].clone()),
+                source: source_ctx(x[1].clone()),
+                name: name_ctx(x[2].clone()),
+                kind: kind_ctx(x[3].clone()),
+            }
+        });
+        (children, ctx)
+    }
+}
+
+// copy of the expansion made by the uniplate macro
+// TODO: use the derive macro again once #113 lands
+impl Biplate<Declaration> for Declaration {
+    fn biplate(
+        &self,
+    ) -> (
+        Tree<Declaration>,
+        Box<dyn Fn(Tree<Declaration>) -> Declaration>,
+    ) {
+        let val = self.clone();
+        (
+            Tree::One(val),
+            Box::new(move |x| {
+                let Tree::One(x) = x else { todo!() };
+                x
+            }),
+        )
+    }
+}
+
+/// A uniplate instance for an untraversable type.
+// by Nik, will be upstream in uniplate soon (tm)
+fn untraversable_biplate_impl<
+    From: Clone + PartialEq + Eq + 'static,
+    To: Clone + PartialEq + Eq + 'static,
+>(
+    value: &From,
+) -> (Tree<To>, Box<dyn Fn(Tree<To>) -> From>) {
+    if let Some(value_as_to) = uniplate::impl_helpers::transmute_if_same_type::<From, To>(value) {
+        // To == From -> identity biplate case
+        let tree = Tree::One(value_as_to.clone());
+        let ctx = Box::new(move |new_tree| {
+            let Tree::One(new_value_as_to) = new_tree else {
+                panic!()
+            };
+
+            let value_as_from: &From =
+                uniplate::impl_helpers::transmute_if_same_type::<To, From>(&new_value_as_to)
+                    .expect("previously asserted that To == From");
+            value_as_from.clone()
+        });
+
+        (tree, ctx)
+    } else {
+        // To != From -> do not traverse into this type
+        let tree = Tree::Zero;
+
+        // as we arnt traversing into this type, context function always returns value
+        let value = value.clone();
+        let ctx = Box::new(move |new_tree| {
+            assert!(matches!(&new_tree, Tree::Zero));
+            value.clone() // clone here as this is a Fn not a FnOnce
+        });
+
+        (tree, ctx)
     }
 }
 
@@ -849,6 +1148,7 @@ impl Declaration {
 #[biplate(to=Expression)]
 #[biplate(to=DeclarationPtr)]
 #[biplate(to=Declaration)]
+#[biplate(to=DomainPtr)]
 pub enum DeclarationKind {
     Find(DecisionVariable),
     Given(DomainPtr),
@@ -870,6 +1170,7 @@ pub enum DeclarationKind {
 
 #[serde_as]
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate)]
+#[biplate(to=DomainPtr)]
 pub struct Quantified {
     domain: DomainPtr,
 

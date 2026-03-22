@@ -39,6 +39,19 @@ impl<A> Range<A> {
             Range::Unbounded | Range::UnboundedL(_) | Range::UnboundedR(_) => false,
         }
     }
+
+    pub fn map<B, F>(&self, mut f: F) -> Range<B>
+    where
+        F: FnMut(&A) -> B,
+    {
+        match self {
+            Range::Single(a) => Range::Single(f(a)),
+            Range::Bounded(a, b) => Range::Bounded(f(a), f(b)),
+            Range::UnboundedL(a) => Range::UnboundedL(f(a)),
+            Range::UnboundedR(a) => Range::UnboundedR(f(a)),
+            Range::Unbounded => Range::Unbounded,
+        }
+    }
 }
 
 impl<A: Ord> Range<A> {
@@ -229,6 +242,29 @@ impl<A: Num + Ord + Clone> Range<A> {
         }
 
         ans
+    }
+
+    /// True if the list of ranges is contiguous
+    pub fn is_contiguous(rngs: &[Range<A>]) -> bool {
+        Self::squeeze(rngs).len() <= 1
+    }
+
+    /// Lowest value from a sequence of ranges
+    pub fn low_of(rngs: &[Range<A>]) -> Option<&A> {
+        let mut low = rngs.first()?.low()?;
+        for rng in rngs {
+            low = Ord::min(low, rng.low()?);
+        }
+        Some(low)
+    }
+
+    /// Lowest value from a sequence of ranges
+    pub fn high_of(rngs: &[Range<A>]) -> Option<&A> {
+        let mut hi = rngs.first()?.high()?;
+        for rng in rngs {
+            hi = Ord::min(hi, rng.low()?);
+        }
+        Some(hi)
     }
 
     /// If this range is bounded, returns a lazy iterator over all values within the range.

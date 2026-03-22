@@ -33,20 +33,18 @@ pub fn load_model_impl(
     symbols: &SymbolTable,
     model: &[Expression],
 ) -> SolverResult<()> {
-    for (name, decl) in symbols.clone().into_iter_local() {
+    for (name, mut decl) in symbols.clone().into_iter_local() {
         let Some(var) = decl.as_find() else {
             /// Ignore lettings, etc
             continue;
         };
-        if !symbols
-            .representations_for(&name)
-            .is_none_or(|reps| reps.is_empty())
-        {
+        let dom = var.domain.resolve().unwrap();
+        if !decl.reprs().is_empty() {
             /// This variable has representations; ignore it
             continue;
         }
         let (sym, ast, restriction) = var_to_ast(&name, &var, theory_config)?;
-        store.insert(name, (decl.resolved_domain().unwrap(), ast, sym));
+        store.insert(name, (dom, ast, sym));
         solver.assert(restriction);
     }
     for expr in model.iter() {

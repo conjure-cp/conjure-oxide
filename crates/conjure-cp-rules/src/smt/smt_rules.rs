@@ -195,12 +195,12 @@ fn matrix_ref_to_slice(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    for (child, ctx) in expr.holes() {
-        let Expr::Atomic(_, Atom::Reference(decl)) = &child else {
+    for (mut child, ctx) in expr.holes() {
+        let Expr::Atomic(_, Atom::Reference(decl)) = &mut child else {
             continue;
         };
 
-        let dom = decl.resolved_domain().ok_or(RuleNotApplicable)?;
+        let dom = decl.resolve_domain().ok_or(RuleNotApplicable)?;
         let GroundDomain::Matrix(_, index_domains) = dom.as_ref() else {
             continue;
         };
@@ -210,7 +210,7 @@ fn matrix_ref_to_slice(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             continue;
         }
 
-        let new_child = Expr::SafeSlice(Metadata::new(), Moo::new(child.clone()), vec![None]);
+        let new_child = Expr::SafeSlice(Metadata::new(), Moo::new(child), vec![None]);
         return Ok(Reduction::pure(ctx(new_child)));
     }
 

@@ -39,22 +39,18 @@ pub fn debug_assert_all_names_resolved(model: &Model, origin: &str) {
             declared_names.insert(name.clone());
 
             if let Some(expr) = decl.as_value_letting() {
-                referenced_names.extend(Biplate::<Reference>::universe_bi(&*expr).into_iter().map(
-                    |reference| {
-                        let name = reference.name();
-                        canonical_resolution_name(&name).clone()
-                    },
-                ));
+                referenced_names.extend(
+                    Biplate::<Reference>::universe_bi(&*expr)
+                        .into_iter()
+                        .map(|reference| reference.name().clone()),
+                );
             }
 
             if let Some(domain) = decl.domain() {
                 referenced_names.extend(
                     Biplate::<Reference>::universe_bi(domain.as_ref())
                         .into_iter()
-                        .map(|reference| {
-                            let name = reference.name();
-                            canonical_resolution_name(&name).clone()
-                        }),
+                        .map(|reference| reference.name().clone()),
                 );
             }
         }
@@ -63,31 +59,24 @@ pub fn debug_assert_all_names_resolved(model: &Model, origin: &str) {
     referenced_names.extend(
         Biplate::<Reference>::universe_bi(model.root())
             .into_iter()
-            .map(|reference| {
-                let name = reference.name();
-                canonical_resolution_name(&name).clone()
-            }),
+            .map(|reference| reference.name().clone()),
     );
 
     if let Some(dominance) = &model.dominance {
         referenced_names.extend(
             Biplate::<Reference>::universe_bi(dominance)
                 .into_iter()
-                .map(|reference| {
-                    let name = reference.name();
-                    canonical_resolution_name(&name).clone()
-                }),
+                .map(|reference| reference.name().clone()),
         );
     }
 
     for clause in model.clauses() {
         for literal in clause.iter() {
-            referenced_names.extend(Biplate::<Reference>::universe_bi(literal).into_iter().map(
-                |reference| {
-                    let name = reference.name();
-                    canonical_resolution_name(&name).clone()
-                },
-            ));
+            referenced_names.extend(
+                Biplate::<Reference>::universe_bi(literal)
+                    .into_iter()
+                    .map(|reference| reference.name().clone()),
+            );
         }
     }
 
@@ -105,15 +94,6 @@ pub fn debug_assert_all_names_resolved(model: &Model, origin: &str) {
 /// Debug-assert that all names referenced by expressions/domains resolve to declared symbols.
 #[cfg(not(debug_assertions))]
 pub fn debug_assert_all_names_resolved(_model: &Model, _origin: &str) {}
-
-#[cfg(debug_assertions)]
-fn canonical_resolution_name(name: &Name) -> &Name {
-    match name {
-        // Names wrapped in a selected representation still resolve through the source declaration.
-        Name::WithRepresentation(inner, _) => canonical_resolution_name(inner),
-        _ => name,
-    }
-}
 
 /// Debug-assert that there is exactly one `Root` expression, and it is the model's top-level root.
 #[cfg(debug_assertions)]

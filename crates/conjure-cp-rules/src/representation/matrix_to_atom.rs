@@ -1,190 +1,174 @@
-use conjure_cp::ast::{DeclarationPtr, DomainPtr, GroundDomain, Moo};
-use conjure_cp::parse::tree_sitter::parse_literal;
-use itertools::{Itertools, izip};
-use std::collections::BTreeMap;
-
 use super::prelude::*;
+use crate::representation::prelude::matrix::{flatten, unflatten_matrix};
+use bimap::BiMap;
+use conjure_cp::ast::{GroundDomain, Moo, Range};
+use conjure_cp::utils::View;
+use itertools::Itertools;
+use std::collections::VecDeque;
 
-register_representation!(MatrixToAtom, "matrix_to_atom");
-
-#[derive(Clone, Debug)]
-pub struct MatrixToAtom {
-    src_var: Name,
-
-    // all the possible indices in this matrix, in order.
-    indices: Vec<Vec<Literal>>,
-
-    // the element domain for the matrix.
-    elem_domain: Moo<GroundDomain>,
-
-    // the index domains for the matrix.
-    index_domains: Vec<Moo<GroundDomain>>,
-}
-
-impl MatrixToAtom {
-    /// Returns the names of the representation variables, in the same order as the indices.
-    fn names(&self) -> impl Iterator<Item = Name> + '_ {
-        self.indices.iter().map(|x| self.indices_to_name(x))
+register_representation!(
+    MatrixToAtom
+    struct State<T> {
+        // Size of each dimension
+        pub dimensions: Vec<usize>,
+        // Offsets into the flat vector to get to next element along this dimension
+        pub strides: Vec<usize>,
+        // Index domains of the original matrix
+        pub index_domains: Vec<Moo<GroundDomain>>,
+        // Map all possible indices to integers
+        // TODO: this is only really used at decl level.
+        //       we should rethink how the macros work so the user isn't forced to clone this
+        //       every time for assignments etc
+        pub indices: Vec<BiMap<usize, Literal>>,
+        // Flat vec of matrix elements
+        pub elements: Vec<T>,
     }
+    impl<T> State<T>
+    {
+        /// Number of elements in this matrix representation
+        pub fn len(&self) -> usize {
+            self.elements.len()
+        }
+        /// True if the representation of this matrix has size 0
+        pub fn is_empty(&self) -> bool {
+            self.elements.is_empty()
+        }
+        /// Convert a matrix index to flat integer index into `elements`
+        pub fn indices_lits_to_flat(&self, idx: &[Literal]) -> Option<usize> {
+            let mut ans: usize = 0;
+            for (i, lit) in idx.iter().enumerate() {
+                let flat = self.indices[i].get_by_right(lit)?;
+                ans += flat * self.strides[i];
+            }
+            Some(ans)
+        }
+        /// Convert a flat index into the original matrix index
+        pub fn indices_flat_to_lits(&self, mut idx: usize) -> Vec<Literal> {
+            let mut ans: Vec<Literal> = Vec::new();
+            for (i, s) in self.strides.iter().copied().enumerate() {
+                let dim_idx = idx / s;
+                let dim_idx_lit = self.index_flat_to_lit(i, dim_idx);
+                ans.push(dim_idx_lit.clone());
+                idx %= s;
+            }
+            ans
+        }
+        /// Convert a flat index along the given dimension to a Literal
+        pub fn index_flat_to_lit(&self, dim: usize, idx: usize) -> &Literal {
+            self.indices[dim].get_by_left(&idx).expect("invalid index")
+        }
+        /// Convert a literal index along the given dimension to a flat index
+        pub fn index_lit_to_flat(&self, dim: usize, lit: &Literal) -> usize {
+            *self.indices[dim].get_by_right(lit).expect("invalid index")
+        }
+        /// Subset of `elements` corresponding to a matrix with the given dimensions and strides
+        pub fn view<'a>(&'a self, view: &View) -> Vec<&'a T> {
+            view.apply(&self.elements)
+        }
+        /// Copy of the subset of `elements` corresponding to a matrix with the given dimensions and strides
+        pub fn view_cloned(&self, view: &View) -> Vec<T>
+        where T: Clone
+        {
+            self.view(view).into_iter().cloned().collect()
+        }
+        /// Slice into the elements matrix via flat indices along each dimension
+        pub fn slice_flat(&self, dim_slices: &[Range<usize>]) -> View {
+            let mut offset = 0;
+            let mut new_dims = Vec::new();
+            let mut new_strides = Vec::new();
+            for (dim, rng) in dim_slices.iter().enumerate() {
+                let lo = rng.low().copied().unwrap_or(0);
+                let hi = rng.high().copied().unwrap_or(self.dimensions[dim] - 1);
+                // ranges are inclusive
+                let dim_sz = hi - lo + 1;
 
-    /// Gets the representation variable name for a specific set of indices.
-    fn indices_to_name(&self, indices: &[Literal]) -> Name {
-        Name::Represented(Box::new((
-            self.src_var.clone(),
-            self.repr_name().into(),
-            indices.iter().join("_").into(),
-        )))
+                offset += self.strides[dim] * lo;
+                if dim_sz > 1 {
+                    new_dims.push(dim_sz);
+                    new_strides.push(self.strides[dim]);
+                }
+            }
+            View::new(offset, new_dims, new_strides)
+        }
+        /// Slice into the elements matrix via literal indices
+        pub fn slice_lit(&self, dim_slices: &[Range<Literal>]) -> View {
+            let dim_slices_flat = dim_slices.iter()
+                .enumerate()
+                .map(|(i, rng)|
+                    rng.map(|l|
+                        self.index_lit_to_flat(i, &l)))
+                .collect::<Vec<_>>();
+            self.slice_flat(&dim_slices_flat)
+        }
     }
-
-    /// Panics if name is invalid.
-    #[allow(dead_code)]
-    fn name_to_indices(&self, name: &Name) -> Vec<Literal> {
-        let Name::Represented(fields) = name else {
-            bug!("representation name should be Name::RepresentationOf");
+    fn init(dom: DomainPtr) -> Result<State<DomainPtr>, ReprError> {
+        let Some((inner_gd, index_gds)) = dom.as_matrix_ground() else {
+            return Err("Expected ground matrix".into());
         };
 
-        let (src_var, rule_string, suffix) = fields.as_ref();
+        let len = index_gds.len();
+        let mut index_domains = VecDeque::with_capacity(len);
+        let mut strides = VecDeque::with_capacity(len);
+        let mut indices = VecDeque::with_capacity(len);
+        let mut dimensions = VecDeque::with_capacity(len);
 
-        assert_eq!(
-            src_var,
-            self.variable_name(),
-            "name should have the same source var as self"
-        );
-        assert_eq!(
-            rule_string,
-            self.repr_name(),
-            "name should have the same repr_name as self"
-        );
+        let mut size: usize = 1;
+        for gd in index_gds.iter().rev() {
+            let gd_sz = gd.len_usize().ok().ok_or("overflow")?;
+            let gd_vals = gd.values().map_err(|_| "Expected indices to be enumerable")?;
+            let gd_idx = BiMap::from_iter(gd_vals.enumerate());
 
-        // FIXME: call the parser here to parse the literals properly; support more literal kinds
-        // ~niklasdewally
-        let indices = suffix.split("_").collect_vec();
-        assert_eq!(
-            indices.len(),
-            self.indices[0].len(),
-            "name should have same number of indices as self"
-        );
+            index_domains.push_front(gd.clone());
+            strides.push_front(size);
+            indices.push_front(gd_idx);
+            dimensions.push_front(gd_sz);
 
-        let parsed_indices = indices
-            .into_iter()
-            .map(|x| match parse_literal(x) {
-                Ok(literal) => literal,
-                Err(_) => bug!("{x} should be a string that can parse into a valid Literal"),
-            })
-            .collect_vec();
-
-        assert!(
-            self.indices.contains(&parsed_indices),
-            "indices parsed from the representation name should be valid indices for this variable"
-        );
-
-        parsed_indices
-    }
-}
-
-impl Representation for MatrixToAtom {
-    fn init(name: &Name, symtab: &SymbolTable) -> Option<Self> {
-        let domain = symtab.resolve_domain(name)?;
-
-        if !domain.is_finite() {
-            return None;
+            size = size.checked_mul(gd_sz).ok_or("overflow")?;
         }
 
-        let GroundDomain::Matrix(elem_domain, index_domains) = domain.as_ref() else {
-            return None;
-        };
+        let mut elements = Vec::new();
+        for _ in 0..size {
+            elements.push(inner_gd.clone().into());
+        }
 
-        let indices = matrix::enumerate_indices(index_domains.clone()).collect_vec();
-
-        Some(MatrixToAtom {
-            src_var: name.clone(),
-            indices,
-            elem_domain: elem_domain.clone(),
-            index_domains: index_domains.clone(),
+        Ok(State {
+            elements,
+            indices: indices.into(),
+            index_domains: index_domains.into(),
+            strides: strides.into(),
+            dimensions: dimensions.into(),
         })
     }
-
-    fn variable_name(&self) -> &Name {
-        &self.src_var
+    fn structural(_state: &State<DeclarationPtr>) -> Vec<Expression> {
+        vec![]
     }
-
-    fn value_down(&self, value: Literal) -> Result<BTreeMap<Name, Literal>, ApplicationError> {
-        let Literal::AbstractLiteral(matrix) = value else {
-            return Err(RuleNotApplicable);
+    fn down(state: &State<DomainPtr>, value: Literal) -> Result<State<Literal>, ReprError> {
+        let Literal::AbstractLiteral(abslit) = value else {
+            return Err(format!("expected matrix, got {:?}", value));
         };
 
-        let AbstractLiteral::Matrix(_, ref index_domain) = matrix else {
-            return Err(RuleNotApplicable);
-        };
-
-        if index_domain != &self.index_domains[0] {
-            return Err(RuleNotApplicable);
+        if !matches!(abslit, AbstractLiteral::Matrix(..)) {
+            return Err(format!("expected matrix, got {:?}", abslit));
         }
 
-        Ok(izip!(self.names(), matrix::flatten(matrix)).collect())
-    }
-
-    fn value_up(&self, values: &BTreeMap<Name, Literal>) -> Result<Literal, ApplicationError> {
-        // TODO: this has no error checking or failures that don't panic...
-
-        let n_dims = self.index_domains.len();
-        fn inner(
-            current_index: Vec<Literal>,
-            current_dim: usize,
-            self1: &MatrixToAtom,
-            values: &BTreeMap<Name, Literal>,
-            n_dims: usize,
-        ) -> Literal {
-            if current_dim < n_dims {
-                Literal::AbstractLiteral(into_matrix![
-                    self1.index_domains[current_dim]
-                        .values()
-                        .unwrap()
-                        .map(|i| {
-                            let mut current_index_1 = current_index.clone();
-                            current_index_1.push(i);
-                            inner(current_index_1, current_dim + 1, self1, values, n_dims)
-                        })
-                        .collect_vec()
-                ])
-            } else {
-                values
-                    .get(&self1.indices_to_name(&current_index))
-                    .unwrap()
-                    .clone()
-            }
+        let elements: Vec<Literal> = flatten(abslit).collect();
+        if elements.len() != state.elements.len() {
+            return Err(format!(
+                "expected {} elements, got {}",
+                state.elements.len(),
+                elements.len()
+            ));
         }
 
-        Ok(inner(vec![], 0, self, values, n_dims))
+        Ok(State {
+            index_domains: state.index_domains.clone(),
+            strides: state.strides.clone(),
+            indices: state.indices.clone(),
+            dimensions: state.dimensions.clone(),
+            elements,
+        })
     }
-
-    fn expression_down(
-        &self,
-        symtab: &SymbolTable,
-    ) -> Result<BTreeMap<Name, Expression>, ApplicationError> {
-        Ok(self
-            .names()
-            .map(|name| {
-                let declaration = symtab.lookup(&name).expect("declarations of the representation variables should exist in the symbol table before expression_down is called");
-                (name, declaration)
-            })
-            .map(|(name, decl)| (name, Expression::Atomic(Metadata::new(), Atom::Reference(conjure_cp::ast::Reference::new(decl)))))
-            .collect())
+    fn up(state: State<Literal>) -> Literal {
+        unflatten_matrix(&state.elements, &state.index_domains, &state.strides)
     }
-
-    fn declaration_down(&self) -> Result<Vec<DeclarationPtr>, ApplicationError> {
-        let dom: DomainPtr = self.elem_domain.clone().into();
-        Ok(self
-            .names()
-            .map(|name| DeclarationPtr::new_find(name, dom.clone()))
-            .collect_vec())
-    }
-
-    fn repr_name(&self) -> &str {
-        "matrix_to_atom"
-    }
-
-    fn box_clone(&self) -> Box<dyn Representation> {
-        Box::new(self.clone()) as _
-    }
-}
+);

@@ -1,9 +1,9 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 use std::path::PathBuf;
 use std::string::ToString;
 use std::sync::{Arc, Mutex, RwLock};
 
-use conjure_cp::ast::{DeclarationKind, Literal, Name};
+use conjure_cp::ast::{DeclarationKind, DeclarationPtr, Literal, Name};
 use conjure_cp::bug;
 use conjure_cp::context::Context;
 
@@ -19,6 +19,8 @@ use conjure_cp::solver::Solver;
 
 use glob::glob;
 
+use conjure_cp::ast::categories::{Category, CategoryOf};
+use conjure_cp::representation::util::try_up;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
 pub fn get_solutions(
@@ -48,7 +50,7 @@ pub fn get_solutions(
     eprintln!("Running {adaptor_name}...");
 
     // Create two arcs, one to pass into the solver callback, one to get solutions out later
-    let all_solutions_ref = Arc::new(Mutex::<Vec<BTreeMap<Name, Literal>>>::new(vec![]));
+    let all_solutions_ref = Arc::new(Mutex::<Vec<HashMap<Name, Literal>>>::new(vec![]));
     let all_solutions_ref_2 = all_solutions_ref.clone();
 
     let solver = if num_sols > 0 {
@@ -82,54 +84,47 @@ pub fn get_solutions(
 
     // Get the collections of solutions and model symbols
     #[allow(clippy::unwrap_used)]
-    let mut sols_guard = (*all_solutions_ref).lock().unwrap();
-    let sols = &mut *sols_guard;
+    let sols_guard = (*all_solutions_ref).lock().unwrap();
     let symbols = symbols_ptr.read();
 
-    // Get the representations for each variable by name, since some variables are
-    // divided into multiple auxiliary variables(see crate::representation::Representation)
-    let names = symbols.clone().into_iter().map(|x| x.0).collect_vec();
-    let representations = names
-        .into_iter()
-        .filter_map(|x| symbols.representations_for(&x).map(|repr| (x, repr)))
-        .filter_map(|(name, reprs)| {
-            if reprs.is_empty() {
-                return None;
+    // for (_, sym) in symbols.iter_local() {
+    //     println!("{sym:#?}");
+    //     for (repr_name, repr_state) in sym.reprs().iter() {
+    //         println!("Representation '{repr_name}':");
+    //         println!("{repr_state:#?}");
+    //         println!();
+    //     }
+    //     println!();
+    //     println!();
+    // }
+
+    // TODO: do we need to collect quantified vars too?
+    let decision_vars: Vec<DeclarationPtr> = symbols
+        .iter_local()
+        .filter(|(n, d)| matches!(n, Name::User(..)) && d.category_of() >= Category::Decision)
+        .map(|(_, d)| d)
+        .cloned()
+        .collect();
+
+    let ans = sols_guard
+        .iter()
+        .filter_map(|sol| {
+            // println!("Solution:");
+            // println!("{:#?}", sol);
+            // println!();
+            let mut ans = BTreeMap::<Name, Literal>::new();
+
+            for decl in decision_vars.iter() {
+                // Look up the variable or go up via its representation
+                // TODO: we should check that all reprs give the same value...
+                let res = try_up(decl.clone(), sol).unwrap();
+                ans.insert(decl.name().clone(), res);
             }
-            assert!(
-                reprs.len() <= 1,
-                "multiple representations for a variable is not yet implemented"
-            );
 
-            assert_eq!(
-                reprs[0].len(),
-                1,
-                "nested representations are not yet implemented"
-            );
-            Some((name, reprs[0][0].clone()))
+            if ans.is_empty() { None } else { Some(ans) }
         })
-        .collect_vec();
-
-    for sol in sols.iter_mut() {
-        // Get the value of complex variables using their auxiliary variables
-        for (name, representation) in representations.iter() {
-            let value = representation.value_up(sol).unwrap();
-            sol.insert(name.clone(), value);
-        }
-
-        // Remove auxiliary variables since we've found the value of the
-        // variable they represent
-        *sol = sol
-            .clone()
-            .into_iter()
-            .filter(|(name, _)| {
-                !matches!(name, Name::Represented(_)) && !matches!(name, Name::Machine(_))
-            })
-            .collect();
-    }
-
-    sols.retain(|x| !x.is_empty());
-    Ok(sols.clone())
+        .collect();
+    Ok(ans)
 }
 
 #[allow(clippy::unwrap_used)]
@@ -211,4 +206,16 @@ pub fn solutions_to_json(solutions: &Vec<BTreeMap<Name, Literal>>) -> JsonValue 
     }
     let ans = JsonValue::Array(json_solutions);
     sort_json_object(&ans, true)
+}
+
+pub fn solutions_to_essence(solutions: &Vec<BTreeMap<Name, Literal>>) -> Vec<String> {
+    let mut ans = Vec::new();
+    for solution in solutions {
+        let mut sol = Vec::new();
+        for (name, value) in solution {
+            sol.push(format!("letting {name} be {value}"));
+        }
+        ans.push(sol.join("\n"));
+    }
+    ans
 }

@@ -127,17 +127,17 @@ impl Reduction {
     }
 
     /// Gets symbols added by this reduction
-    pub fn added_symbols(&self, initial_symbols: &SymbolTable) -> BTreeSet<Name> {
-        let initial_symbols_set: BTreeSet<Name> = initial_symbols
+    pub fn added_symbols(&self, initial_symbols: &SymbolTable) -> BTreeSet<DeclarationPtr> {
+        let initial_symbols_set: BTreeSet<DeclarationPtr> = initial_symbols
             .clone()
             .into_iter_local()
-            .map(|x| x.0)
+            .map(|x| x.1)
             .collect();
-        let new_symbols_set: BTreeSet<Name> = self
+        let new_symbols_set: BTreeSet<DeclarationPtr> = self
             .symbols
             .clone()
             .into_iter_local()
-            .map(|x| x.0)
+            .map(|x| x.1)
             .collect();
 
         new_symbols_set

@@ -1202,6 +1202,12 @@ impl From<i32> for Expression {
     }
 }
 
+impl From<usize> for Expression {
+    fn from(i: usize) -> Self {
+        Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(i as i32)))
+    }
+}
+
 impl From<bool> for Expression {
     fn from(b: bool) -> Self {
         Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(b)))

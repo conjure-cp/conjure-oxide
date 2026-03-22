@@ -3,15 +3,12 @@ use super::{
     Reduction,
     resolve_rules::{ResolveRulesError, RuleData},
 };
-use crate::ast::{
-    Expression, Name, SymbolTable,
-    pretty::{pretty_variable_declaration, pretty_vec},
-};
+use crate::ast::{Expression, Name, SymbolTable, pretty::pretty_vec};
 
 use itertools::Itertools;
 use serde_json::json;
 use std::collections::BTreeMap;
-use std::fmt::Debug;
+use std::fmt::{Debug, Display};
 use thiserror::Error;
 use tracing::{info, trace};
 
@@ -27,9 +24,7 @@ pub fn snapshot_variable_declarations(symbols: &SymbolTable) -> VariableDeclarat
     symbols
         .clone()
         .into_iter_local()
-        .filter_map(|(name, _)| {
-            pretty_variable_declaration(symbols, &name).map(|declaration| (name, declaration))
-        })
+        .map(|(name, decl)| (name, format!("{decl}")))
         .collect()
 }
 
@@ -115,12 +110,9 @@ pub fn log_rule_application(
         } else {
             // empty if no new variables
             let mut vars: Vec<String> = vec![];
-            for var_name in red.added_symbols(initial_symbols) {
+            for var in red.added_symbols(initial_symbols) {
                 #[allow(clippy::unwrap_used)]
-                vars.push(format!(
-                    "  {}",
-                    pretty_variable_declaration(&red.symbols, &var_name).unwrap()
-                ));
+                vars.push(format!("  {var}"));
             }
             let new_variables_str = if vars.is_empty() {
                 String::new()

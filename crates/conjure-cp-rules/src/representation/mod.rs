@@ -9,15 +9,17 @@ mod prelude {
             AbstractLiteral, Atom, DeclarationPtr, Expression, Literal, Name, RecordEntry,
             SymbolTable, matrix,
         },
-        bug, into_matrix, register_representation,
-        representation::{Representation, get_repr_rule},
+        bug, into_matrix,
+        representation::register_representation,
         rule_engine::{ApplicationError, ApplicationError::RuleNotApplicable, ApplicationResult},
     };
 }
 
 mod matrix_to_atom;
-mod record_to_atom;
-mod sat_direct_int;
-mod sat_log_int;
-mod sat_order_int;
-mod tuple_to_atom;
+// mod record_to_atom;
+// mod sat_direct_int;
+// mod sat_log_int;
+// mod sat_order_int;
+// mod tuple_to_atom;
+
+pub use matrix_to_atom::MatrixToAtom;
