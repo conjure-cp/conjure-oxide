@@ -71,8 +71,8 @@ export RUSTDOCFLAGS="$RUSTDOCFLAGS -C instrument-coverage -Zunstable-options --p
 # This was done to avoid the presence of 80+ files in the project's root directory.
 export LLVM_PROFILE_FILE="${TARGET_DIR}/coverage/conjure-oxide-%p-%m.profraw"
 mkdir -p "${TARGET_DIR}/coverage"
-# Custom tests resolve conjure-oxide from PATH; during coverage we want them to
-# use the freshly built instrumented debug binary.
+# Custom tests resolve conjure-oxide binaries from PATH; during coverage we want
+# them to use the freshly built instrumented debug binary for both names.
 export PATH="${TARGET_DIR}/debug:${PATH}"
 
 # regex patterns to ignore
@@ -104,6 +104,10 @@ GRCOV_IGNORE_FLAGS=(
 
 echo_err "info: building"
 cargo +nightly build --workspace
+
+# Some custom tests explicitly invoke conjure-oxide-debug. During coverage we
+# only build the instrumented debug binary, so expose it under both names.
+ln -sf conjure-oxide "${TARGET_DIR}/debug/conjure-oxide-debug"
 
 echo_err "info: running tests"
 cargo +nightly test --workspace
