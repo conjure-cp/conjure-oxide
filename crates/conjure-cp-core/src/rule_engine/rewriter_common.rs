@@ -8,7 +8,7 @@ use crate::ast::{Expression, Name, SymbolTable, pretty::pretty_vec};
 use itertools::Itertools;
 use serde_json::json;
 use std::collections::BTreeMap;
-use std::fmt::{Debug, Display};
+use std::fmt::Debug;
 use thiserror::Error;
 use tracing::{info, trace};
 

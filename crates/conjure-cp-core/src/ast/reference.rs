@@ -6,11 +6,7 @@ use super::{
     serde::{AsId, HasId},
 };
 use crate::bug;
-use crate::representation::{
-    ReprRule,
-    registry::{ReprRegistryEntry, get_repr_by_name},
-    types::ReprInitResult,
-};
+use crate::representation::{ReprError, ReprResult, ReprRulePtr, ReprSelectError, ReprStateStored};
 use derivative::Derivative;
 use parking_lot::MappedRwLockReadGuard;
 use serde::{Deserialize, Serialize};
@@ -34,7 +30,7 @@ use uniplate::Uniplate;
 pub struct Reference {
     #[serde_as(as = "AsId")]
     pub ptr: DeclarationPtr,
-    pub repr: Option<&'static ReprRegistryEntry>,
+    pub repr: Option<ReprRulePtr>,
 }
 
 impl Reference {
@@ -66,14 +62,42 @@ impl Reference {
         self.ptr.resolve_domain()
     }
 
-    pub fn init_repr<T: ReprRule>(&mut self) -> ReprInitResult {
-        let res = T::init_for(&mut self.ptr);
+    /// Select the given representation for this reference, if it is initialised for
+    /// the underlying declaration
+    pub fn select_repr(&mut self, rule: ReprRulePtr) -> Result<ReprRulePtr, ReprSelectError> {
+        if let Some(repr) = self.repr {
+            return Err(ReprSelectError::AlreadySelected(repr));
+        }
+        if !self.ptr.reprs().has_repr(rule) {
+            return Err(ReprSelectError::DoesNotExist(self.ptr.clone(), rule.name()));
+        }
+        self.repr = Some(rule);
+        Ok(rule)
+    }
+
+    /// Select the given representation for this reference, initialising it if necessary
+    pub fn select_or_init_repr(&mut self, rule: ReprRulePtr) -> ReprResult {
+        let res = rule.init_if_not_exists(&mut self.ptr);
         if res.is_ok() {
-            // TODO: This part needs more thinking, we shouldn't do the lookup every time...
-            let ent = get_repr_by_name(T::NAME).expect("repr to exist");
-            self.repr = Some(ent);
+            self.repr = Some(rule);
         }
         res
+    }
+
+    /// If this reference has a representation selected, return its state
+    pub fn repr_state(&self) -> Option<MappedRwLockReadGuard<'_, dyn ReprStateStored>> {
+        let rule = self.repr?;
+        let res = self
+            .ptr
+            .maybe_map(|d| d.representations().get_by_rule(rule))
+            .unwrap_or_else(|| {
+                bug!(
+                    "Representation '{}' was selected for '{}' but its state was not stored!",
+                    rule.name(),
+                    self.name()
+                )
+            });
+        Some(res)
     }
 
     /// Returns the expression behind a value-letting reference, if this is one.

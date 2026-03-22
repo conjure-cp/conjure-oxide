@@ -7,7 +7,7 @@ use crate::parser::comprehension::parse_quantifier_or_aggregate_expr;
 use crate::util::TypecheckingContext;
 use crate::{field, named_child};
 use conjure_cp_core::ast::{Expression, Metadata, Moo};
-use conjure_cp_core::{domain_int, matrix_expr, range};
+use conjure_cp_core::{domain_int, matrix_expr};
 use tree_sitter::Node;
 
 pub fn parse_expression(

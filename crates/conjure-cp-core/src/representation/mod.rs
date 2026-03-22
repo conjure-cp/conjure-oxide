@@ -1,23 +1,32 @@
+pub mod default_impls;
+pub mod errors;
 pub mod registry;
 mod serde;
 mod store;
+pub mod stored;
 pub mod types;
 pub mod util;
 
 pub use conjure_cp_rule_macros::register_representation;
+pub use errors::*;
+pub use registry::ReprRulePtr;
 pub use store::ReprStore;
-pub use types::ReprRule;
+pub use stored::{ReprRuleStored, ReprStateStored};
+pub use types::{ReprAssignment, ReprDeclLevel, ReprDomainLevel, ReprResult, ReprRule};
 
 /// Re-exports for use by the `define_repr!` proc macro. Not part of the public API.
 #[doc(hidden)]
 pub mod _dependencies {
-    pub use super::registry::{REPR_RULES_DISTRIBUTED_SLICE, ReprRegistryEntry};
+    pub use super::default_impls;
+    pub use super::errors::*;
+    pub use super::registry::REPR_RULES_DISTRIBUTED_SLICE;
     pub use super::serde::ReprStateSerde;
+    pub use super::stored::{ReprRuleStored, ReprStateStored};
     pub use super::types::{
-        LookupFn, ReprAssignment, ReprDeclLevel, ReprDomainLevel, ReprError, ReprInitResult,
-        ReprRule,
+        LookupFn, ReprAssignment, ReprDeclLevel, ReprDomainLevel, ReprInstantiateResult,
+        ReprResult, ReprRule,
     };
-    pub use super::util::{ReprStateStored, try_up_via};
+    pub use super::util::try_up_via;
     pub use crate::ast::eval_constant;
     pub use crate::rule_engine::_dependencies::*;
     pub use funcmap;
@@ -27,4 +36,5 @@ pub mod _dependencies {
     pub use serde_json;
     pub use serde_with;
     pub use serde_with::{DeserializeAs, SerializeAs, serde_as};
+    pub use uniplate;
 }

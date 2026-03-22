@@ -10,19 +10,22 @@ and([ (a[i] = i) | i : DOM ])
 --
 
 and([ (a[i] = i) | i : DOM ]), 
-   ~~> select_representation_matrix ([("Representations", 8001)])
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8001)])
 and([ (a[i] = i) | i : DOM ])
 new variables:
-  find a#matrix_to_atom_1: int(1..3)
-  find a#matrix_to_atom_2: int(1..3)
-  find a#matrix_to_atom_3: int(1..3)
+  find a#MatrixToAtom_1: int(1..3)
+  find a#MatrixToAtom_2: int(1..3)
+  find a#MatrixToAtom_3: int(1..3)
+
+updated variables:
+  find a: matrix indexed by [DOM] of DOM ~~> find a: matrix indexed by [int(1..3)] of int(1..3)
 
 --
 
 Model before rewriting:
 
 find i: DOM
-find __0: matrix indexed by [DOM] of DOM
+find __0: matrix indexed by [int(1..3)] of int(1..3)
 
 such that
 
@@ -30,111 +33,114 @@ such that
 
 --
 
-(true != (__0#matrix_to_atom[i] = i)), 
-   ~~> select_representation_matrix ([("Representations", 8001)])
-(true != (__0#matrix_to_atom[i] = i))
+(true != (__0[i] = i)), 
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8001)])
+(true != (__0[i] = i))
 new variables:
-  find __0#matrix_to_atom_1: int(1..3)
-  find __0#matrix_to_atom_2: int(1..3)
-  find __0#matrix_to_atom_3: int(1..3)
+  find __0#MatrixToAtom_1: int(1..3)
+  find __0#MatrixToAtom_2: int(1..3)
+  find __0#MatrixToAtom_3: int(1..3)
+
+updated variables:
+  find i: DOM ~~> find i: int(1..3)
 
 --
 
-__0#matrix_to_atom[i], 
+__0[i], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-{__0#matrix_to_atom[i] @ and([__inDomain(i,int(1..3));int(1..)])}
+{__0[i] @ and([__inDomain(i,int(1..3));int(1..)])}
 
 --
 
-(true != ({__0#matrix_to_atom[i] @ and([__inDomain(i,int(1..3));int(1..)])} = i)), 
+(true != ({__0[i] @ and([__inDomain(i,int(1..3));int(1..)])} = i)), 
    ~~> constant_evaluator ([("Constant", 9001)])
-(true != (__0#matrix_to_atom[i] = i))
+(true != (__0[i] = i))
 
 --
 
-(true != (__0#matrix_to_atom[i] = i)), 
-   ~~> index_matrix_to_atom ([("Base", 5000)])
-(true != ([__0#matrix_to_atom_1,__0#matrix_to_atom_2,__0#matrix_to_atom_3;int(1..)][(i - 0)] = i))
+(true != (__0[i] = i)), 
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+(true != ([__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3;int(1..)][sum([product([1,(i - 1);int(1..)]),1;int(1..)])] = i))
 
 --
 
-(i - 0), 
+product([1,(i - 1);int(1..)]), 
+   ~~> reorder_product ([("Base", 8800)])
+product([(i - 1);int(1..)])
+
+--
+
+product([(i - 1);int(1..)]), 
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+(i - 1)
+
+--
+
+(i - 1), 
    ~~> minus_to_sum ([("Base", 8400)])
-sum([i,-(0);int(1..)])
+sum([i,-(1);int(1..)])
 
 --
 
-(true != ([__0#matrix_to_atom_1,__0#matrix_to_atom_2,__0#matrix_to_atom_3;int(1..)][sum([i,-(0);int(1..)])] = i)), 
+(true != ([__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3;int(1..)][sum([sum([i,-(1);int(1..)]),1;int(1..)])] = i)), 
    ~~> constant_evaluator ([("Constant", 9001)])
-(true != ([__0#matrix_to_atom_1,__0#matrix_to_atom_2,__0#matrix_to_atom_3;int(1..)][sum([i,0;int(1..)])] = i))
+(true != ([__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3;int(1..)][sum([sum([i,-1;int(1..)]),1;int(1..)])] = i))
 
 --
 
-(true != ([__0#matrix_to_atom_1,__0#matrix_to_atom_2,__0#matrix_to_atom_3;int(1..)][sum([i,0;int(1..)])] = i)), 
+sum([sum([i,-1;int(1..)]),1;int(1..)]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([i,-1,1;int(1..)])
+
+--
+
+(true != ([__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3;int(1..)][sum([i,-1,1;int(1..)])] = i)), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(true != ([__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3;int(1..)][sum([i;int(1..)])] = i))
+
+--
+
+sum([i;int(1..)]), 
+   ~~> remove_unit_vector_sum ([("Base", 8800)])
+i
+
+--
+
+([__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3;int(1..)][i] = i), 
+   ~~> introduce_element_from_index ([("Minion", 4400)])
+__minion_element_one([__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3],i,i)
+
+--
+
+(true != __minion_element_one([__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3],i,i)), 
    ~~> flatten_generic ([("Minion", 4200)])
 (true != __1)
 new variables:
   find __1: bool
 new constraints:
-  __1 =aux ([__0#matrix_to_atom_1,__0#matrix_to_atom_2,__0#matrix_to_atom_3;int(1..)][sum([i,0;int(1..)])] = i)
+  __1 =aux __minion_element_one([__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3],i,i)
 
 --
 
-__1 =aux ([__0#matrix_to_atom_1,__0#matrix_to_atom_2,__0#matrix_to_atom_3;int(1..)][sum([i,0;int(1..)])] = i), 
+__1 =aux __minion_element_one([__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3],i,i), 
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(([__0#matrix_to_atom_1,__0#matrix_to_atom_2,__0#matrix_to_atom_3;int(1..)][sum([i,0;int(1..)])] = i), __1)
-
---
-
-[__0#matrix_to_atom_1,__0#matrix_to_atom_2,__0#matrix_to_atom_3;int(1..)][sum([i,0;int(1..)])], 
-   ~~> flatten_generic ([("Minion", 4200)])
-[__0#matrix_to_atom_1,__0#matrix_to_atom_2,__0#matrix_to_atom_3;int(1..)][__2]
-new variables:
-  find __2: int(1..3)
-new constraints:
-  __2 =aux sum([i,0;int(1..)])
-
---
-
-__2 =aux sum([i,0;int(1..)]), 
-   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-and([SumLeq([0, i], __2),SumGeq([0, i], __2);int(1..)])
-
---
-
-(true != __1),
-Reify(([__0#matrix_to_atom_1,__0#matrix_to_atom_2,__0#matrix_to_atom_3;int(1..)][__2] = i), __1),
-and([SumLeq([0, i], __2),SumGeq([0, i], __2);int(1..)]), 
-   ~~> constant_evaluator ([("Constant", 9001)])
-(true != __1),
-Reify(([__0#matrix_to_atom_1,__0#matrix_to_atom_2,__0#matrix_to_atom_3;int(1..)][__2] = i), __1),
-SumLeq([0, i], __2),
-SumGeq([0, i], __2)
-
---
-
-([__0#matrix_to_atom_1,__0#matrix_to_atom_2,__0#matrix_to_atom_3;int(1..)][__2] = i), 
-   ~~> introduce_element_from_index ([("Minion", 4400)])
-__minion_element_one([__0#matrix_to_atom_1,__0#matrix_to_atom_2,__0#matrix_to_atom_3],__2,i)
+Reify(__minion_element_one([__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3],i,i), __1)
 
 --
 
 Final model:
 
-find i: DOM
-find __0: matrix indexed by [DOM] of DOM
+find i: int(1..3)
+find __0: matrix indexed by [int(1..3)] of int(1..3)
 find __1: bool
-find __2: int(1..3)
-find __0#matrix_to_atom_1: int(1..3)
-find __0#matrix_to_atom_2: int(1..3)
-find __0#matrix_to_atom_3: int(1..3)
+find __0#MatrixToAtom_1: int(1..3)
+find __0#MatrixToAtom_2: int(1..3)
+find __0#MatrixToAtom_3: int(1..3)
 
 such that
 
 (true != __1),
-Reify(__minion_element_one([__0#matrix_to_atom_1,__0#matrix_to_atom_2,__0#matrix_to_atom_3],__2,i), __1),
-SumLeq([0, i], __2),
-SumGeq([0, i], __2)
+Reify(__minion_element_one([__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3],i,i), __1)
 
 and([ (a[i] = i) | i : DOM ]), 
    ~~> expand_comprehension_via_solver_ac ([("Base", 2002)])
@@ -150,85 +156,85 @@ and([(a[1] = 1),(a[2] = 2),(a[3] = 3);int(1..)]),
 
 --
 
-(a#matrix_to_atom[1] = 1),
-(a#matrix_to_atom[2] = 2),
-(a#matrix_to_atom[3] = 3), 
-   ~~> select_representation_matrix ([("Representations", 8001)])
-(a#matrix_to_atom[1] = 1),
-(a#matrix_to_atom[2] = 2),
-(a#matrix_to_atom[3] = 3)
+(a[1] = 1),
+(a[2] = 2),
+(a[3] = 3), 
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8001)])
+(a[1] = 1),
+(a[2] = 2),
+(a[3] = 3)
 
 --
 
-a#matrix_to_atom[1], 
+a[1], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-{a#matrix_to_atom[1] @ and([__inDomain(1,int(1..3));int(1..)])}
+{a[1] @ and([__inDomain(1,int(1..3));int(1..)])}
 
 --
 
-({a#matrix_to_atom[1] @ and([__inDomain(1,int(1..3));int(1..)])} = 1),
-(a#matrix_to_atom[2] = 2),
-(a#matrix_to_atom[3] = 3), 
+({a[1] @ and([__inDomain(1,int(1..3));int(1..)])} = 1),
+(a[2] = 2),
+(a[3] = 3), 
    ~~> constant_evaluator ([("Constant", 9001)])
-(a#matrix_to_atom[1] = 1),
-(a#matrix_to_atom[2] = 2),
-(a#matrix_to_atom[3] = 3)
+(a[1] = 1),
+(a[2] = 2),
+(a[3] = 3)
 
 --
 
-a#matrix_to_atom[2], 
+a[2], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-{a#matrix_to_atom[2] @ and([__inDomain(2,int(1..3));int(1..)])}
+{a[2] @ and([__inDomain(2,int(1..3));int(1..)])}
 
 --
 
-(a#matrix_to_atom[1] = 1),
-({a#matrix_to_atom[2] @ and([__inDomain(2,int(1..3));int(1..)])} = 2),
-(a#matrix_to_atom[3] = 3), 
+(a[1] = 1),
+({a[2] @ and([__inDomain(2,int(1..3));int(1..)])} = 2),
+(a[3] = 3), 
    ~~> constant_evaluator ([("Constant", 9001)])
-(a#matrix_to_atom[1] = 1),
-(a#matrix_to_atom[2] = 2),
-(a#matrix_to_atom[3] = 3)
+(a[1] = 1),
+(a[2] = 2),
+(a[3] = 3)
 
 --
 
-a#matrix_to_atom[3], 
+a[3], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-{a#matrix_to_atom[3] @ and([__inDomain(3,int(1..3));int(1..)])}
+{a[3] @ and([__inDomain(3,int(1..3));int(1..)])}
 
 --
 
-(a#matrix_to_atom[1] = 1),
-(a#matrix_to_atom[2] = 2),
-({a#matrix_to_atom[3] @ and([__inDomain(3,int(1..3));int(1..)])} = 3), 
+(a[1] = 1),
+(a[2] = 2),
+({a[3] @ and([__inDomain(3,int(1..3));int(1..)])} = 3), 
    ~~> constant_evaluator ([("Constant", 9001)])
-(a#matrix_to_atom[1] = 1),
-(a#matrix_to_atom[2] = 2),
-(a#matrix_to_atom[3] = 3)
+(a[1] = 1),
+(a[2] = 2),
+(a[3] = 3)
 
 --
 
-(a#matrix_to_atom[1] = 1),
-(a#matrix_to_atom[2] = 2),
-(a#matrix_to_atom[3] = 3), 
-   ~~> index_matrix_to_atom ([("Base", 5000)])
-(a#matrix_to_atom_1 = 1),
-(a#matrix_to_atom_2 = 2),
-(a#matrix_to_atom_3 = 3)
+(a[1] = 1),
+(a[2] = 2),
+(a[3] = 3), 
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+(a#MatrixToAtom_1 = 1),
+(a#MatrixToAtom_2 = 2),
+(a#MatrixToAtom_3 = 3)
 
 --
 
 Final model:
 
 letting DOM be domain int(1..3)
-find a: matrix indexed by [DOM] of DOM
-find a#matrix_to_atom_1: int(1..3)
-find a#matrix_to_atom_2: int(1..3)
-find a#matrix_to_atom_3: int(1..3)
+find a: matrix indexed by [int(1..3)] of int(1..3)
+find a#MatrixToAtom_1: int(1..3)
+find a#MatrixToAtom_2: int(1..3)
+find a#MatrixToAtom_3: int(1..3)
 
 such that
 
-(a#matrix_to_atom_1 = 1),
-(a#matrix_to_atom_2 = 2),
-(a#matrix_to_atom_3 = 3)
+(a#MatrixToAtom_1 = 1),
+(a#MatrixToAtom_2 = 2),
+(a#MatrixToAtom_3 = 3)
 

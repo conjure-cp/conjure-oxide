@@ -2,9 +2,7 @@
 //!
 //! See the item documentation for [`SymbolTable`] for more details.
 
-use crate::bug;
 use std::any::TypeId;
-
 use std::collections::BTreeSet;
 use std::collections::btree_map::Entry;
 use std::collections::{BTreeMap, VecDeque};
@@ -17,7 +15,7 @@ use super::serde::{AsId, DefaultWithId, HasId, IdPtr, ObjId, PtrAsInner};
 use super::{
     DeclarationPtr, DomainPtr, Expression, GroundDomain, Model, Moo, Name, ReturnType, Typeable,
 };
-use itertools::{Itertools as _, izip};
+use itertools::izip;
 use parking_lot::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;

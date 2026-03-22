@@ -9,33 +9,27 @@ such that
 
 --
 
-(x#matrix_to_atom <lex y#matrix_to_atom), 
-   ~~> select_representation_matrix ([("Representations", 8001)])
-(x#matrix_to_atom <lex y#matrix_to_atom)
+(x <lex y), 
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8001)])
+(x <lex y)
 new variables:
-  find x#matrix_to_atom_1: int(1..2)
-  find x#matrix_to_atom_2: int(1..2)
-  find y#matrix_to_atom_1: int(1..2)
-  find y#matrix_to_atom_2: int(1..2)
-  find y#matrix_to_atom_3: int(1..2)
+  find x#MatrixToAtom_1: int(1..2)
+  find x#MatrixToAtom_2: int(1..2)
+  find y#MatrixToAtom_1: int(1..2)
+  find y#MatrixToAtom_2: int(1..2)
+  find y#MatrixToAtom_3: int(1..2)
 
 --
 
-(x#matrix_to_atom <lex y#matrix_to_atom), 
-   ~~> matrix_ref_to_atom ([("Base", 2000)])
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <lex y#matrix_to_atom)
+(x <lex y), 
+   ~~> matrix_ref_to_atom ([("ReprMatrixToAtom", 2000)])
+([x#MatrixToAtom_1,x#MatrixToAtom_2;int(1..)] <lex [y#MatrixToAtom_1,y#MatrixToAtom_2,y#MatrixToAtom_3;int(1..)])
 
 --
 
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <lex y#matrix_to_atom), 
-   ~~> matrix_ref_to_atom ([("Base", 2000)])
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <lex [y#matrix_to_atom_1,y#matrix_to_atom_2,y#matrix_to_atom_3;int(1..)])
-
---
-
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <lex [y#matrix_to_atom_1,y#matrix_to_atom_2,y#matrix_to_atom_3;int(1..)]), 
+([x#MatrixToAtom_1,x#MatrixToAtom_2;int(1..)] <lex [y#MatrixToAtom_1,y#MatrixToAtom_2,y#MatrixToAtom_3;int(1..)]), 
    ~~> flatten_lex_lt_leq ([("Minion", 2000)])
-FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [y#matrix_to_atom_1, y#matrix_to_atom_2])
+FlatLexLeq([x#MatrixToAtom_1, x#MatrixToAtom_2], [y#MatrixToAtom_1, y#MatrixToAtom_2])
 
 --
 
@@ -43,13 +37,13 @@ Final model:
 
 find x: matrix indexed by [int(1..2)] of int(1..2)
 find y: matrix indexed by [int(1..3)] of int(1..2)
-find x#matrix_to_atom_1: int(1..2)
-find x#matrix_to_atom_2: int(1..2)
-find y#matrix_to_atom_1: int(1..2)
-find y#matrix_to_atom_2: int(1..2)
-find y#matrix_to_atom_3: int(1..2)
+find x#MatrixToAtom_1: int(1..2)
+find x#MatrixToAtom_2: int(1..2)
+find y#MatrixToAtom_1: int(1..2)
+find y#MatrixToAtom_2: int(1..2)
+find y#MatrixToAtom_3: int(1..2)
 
 such that
 
-FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [y#matrix_to_atom_1, y#matrix_to_atom_2])
+FlatLexLeq([x#MatrixToAtom_1, x#MatrixToAtom_2], [y#MatrixToAtom_1, y#MatrixToAtom_2])
 

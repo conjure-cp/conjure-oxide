@@ -8,7 +8,6 @@ use conjure_cp::ast::{
 };
 use conjure_cp::into_matrix_expr;
 use conjure_cp::representation::ReprRule;
-use conjure_cp::representation::registry::get_repr_by_name;
 use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
     register_rule_set,
@@ -70,12 +69,8 @@ fn select_repr_mta(expr: &Expression, symtab: &SymbolTable) -> ApplicationResult
     }
 
     // Select MatrixToAtom for every matrix variable in the model
-    // TODO: repr selection should not have to do a lookup
-    let mta = get_repr_by_name(MatrixToAtom::NAME).expect("repr to exist");
     let new_expr = expr.transform_bi(&|mut re: Reference| {
-        if re.ptr.reprs().get::<MatrixToAtom>().is_some() {
-            re.repr = Some(mta);
-        }
+        let _ = re.select_repr(&MatrixToAtom);
         re
     });
 

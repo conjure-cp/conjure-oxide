@@ -1,4 +1,3 @@
-use funcmap::TryFuncMap;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
@@ -40,6 +39,12 @@ impl HasDomain for Literal {
             Literal::Bool(_) => Domain::bool(),
             Literal::AbstractLiteral(abstract_literal) => abstract_literal.domain_of(),
         }
+    }
+}
+
+impl From<AbstractLiteral<Literal>> for Literal {
+    fn from(literal: AbstractLiteral<Literal>) -> Self {
+        Literal::AbstractLiteral(literal)
     }
 }
 
@@ -719,9 +724,9 @@ mod tests {
         let Literal::AbstractLiteral(abslit) = tensor else {
             panic!("expected abstract literal")
         };
-        let actual_elems: Vec<Literal> = flatten(abslit).collect();
+        let actual_elems: Vec<Literal> = flatten(&abslit).cloned().collect();
 
-        let expected_elems = (1..25).into_iter().map(Literal::from).collect::<Vec<_>>();
+        let expected_elems = (1..25).map(Literal::from).collect::<Vec<_>>();
         assert_eq!(actual_elems, expected_elems);
     }
 

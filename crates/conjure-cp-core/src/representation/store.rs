@@ -1,6 +1,6 @@
+use super::registry::get_repr_by_name;
+use super::stored::{ReprRuleStored, ReprStateStored};
 use super::types::ReprRule;
-use super::util::ReprStateStored;
-use crate::representation::registry::get_repr_by_name;
 use serde::de::{MapAccess, Visitor};
 use serde::ser::SerializeMap;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -48,14 +48,28 @@ impl ReprStore {
         }
     }
 
+    pub fn has<T: ReprRule + ?Sized>(&self) -> bool {
+        self.get::<T>().is_some()
+    }
+
     pub fn get<T: ReprRule + ?Sized>(&self) -> Option<&T::DeclLevel> {
         self.inner
             .get(T::NAME)
             .and_then(|x| x.as_any().downcast_ref())
     }
 
-    pub fn get_by_name(&self, name: &'static str) -> Option<&dyn ReprStateStored> {
-        self.inner.get(name).map(AsRef::as_ref)
+    pub fn get_mut<T: ReprRule + ?Sized>(&mut self) -> Option<&mut T::DeclLevel> {
+        self.inner
+            .get_mut(T::NAME)
+            .and_then(|x| x.as_any_mut().downcast_mut())
+    }
+
+    pub fn get_by_rule(&self, rule: &dyn ReprRuleStored) -> Option<&dyn ReprStateStored> {
+        self.inner.get(rule.name()).map(AsRef::as_ref)
+    }
+
+    pub fn has_repr(&self, rule: &dyn ReprRuleStored) -> bool {
+        self.get_by_rule(rule).is_some()
     }
 
     pub fn put<T: ReprRule + ?Sized>(&mut self, value: T::DeclLevel) {
@@ -116,10 +130,10 @@ impl<'de> Deserialize<'de> for ReprStore {
                             key
                         ))
                     })?;
-                    let deser_fn = repr.deserialize_state;
-                    let state = deser_fn(value);
-
-                    inner.insert(repr.name, state);
+                    let state = repr
+                        .deserialize_state(value)
+                        .map_err(serde::de::Error::custom)?;
+                    inner.insert(repr.name(), state);
                 }
 
                 Ok(ReprStore { inner })

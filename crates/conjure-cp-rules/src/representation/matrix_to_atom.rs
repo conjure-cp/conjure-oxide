@@ -2,8 +2,8 @@ use super::prelude::*;
 use crate::representation::prelude::matrix::{flatten, unflatten_matrix};
 use bimap::BiMap;
 use conjure_cp::ast::{GroundDomain, Moo, Range};
+use conjure_cp::representation::ReprInitError;
 use conjure_cp::utils::View;
-use itertools::Itertools;
 use std::collections::VecDeque;
 
 register_representation!(
@@ -16,9 +16,6 @@ register_representation!(
         // Index domains of the original matrix
         pub index_domains: Vec<Moo<GroundDomain>>,
         // Map all possible indices to integers
-        // TODO: this is only really used at decl level.
-        //       we should rethink how the macros work so the user isn't forced to clone this
-        //       every time for assignments etc
         pub indices: Vec<BiMap<usize, Literal>>,
         // Flat vec of matrix elements
         pub elements: Vec<T>,
@@ -101,9 +98,11 @@ register_representation!(
             self.slice_flat(&dim_slices_flat)
         }
     }
-    fn init(dom: DomainPtr) -> Result<State<DomainPtr>, ReprError> {
+    fn init(dom: DomainPtr) -> Result<State<DomainPtr>, ReprInitError> {
+        let domain_err = |msg: &str| ReprInitError::UnsupportedDomain(dom.clone(), MatrixToAtom::NAME, String::from(msg));
+
         let Some((inner_gd, index_gds)) = dom.as_matrix_ground() else {
-            return Err("Expected ground matrix".into());
+            return Err(domain_err("expected ground matrix"));
         };
 
         let len = index_gds.len();
@@ -114,8 +113,8 @@ register_representation!(
 
         let mut size: usize = 1;
         for gd in index_gds.iter().rev() {
-            let gd_sz = gd.len_usize().ok().ok_or("overflow")?;
-            let gd_vals = gd.values().map_err(|_| "Expected indices to be enumerable")?;
+            let gd_sz = gd.len_usize().ok().ok_or(domain_err("domain too large"))?;
+            let gd_vals = gd.values().ok().ok_or(domain_err("domain not enumerable"))?;
             let gd_idx = BiMap::from_iter(gd_vals.enumerate());
 
             index_domains.push_front(gd.clone());
@@ -123,7 +122,7 @@ register_representation!(
             indices.push_front(gd_idx);
             dimensions.push_front(gd_sz);
 
-            size = size.checked_mul(gd_sz).ok_or("overflow")?;
+            size = size.checked_mul(gd_sz).ok_or(domain_err("total size of the matrix is too large"))?;
         }
 
         let mut elements = Vec::new();
@@ -142,22 +141,19 @@ register_representation!(
     fn structural(_state: &State<DeclarationPtr>) -> Vec<Expression> {
         vec![]
     }
-    fn down(state: &State<DomainPtr>, value: Literal) -> Result<State<Literal>, ReprError> {
-        let Literal::AbstractLiteral(abslit) = value else {
-            return Err(format!("expected matrix, got {:?}", value));
+    fn down(state: &State<DomainPtr>, value: Literal) -> Result<State<Literal>, ReprDownError> {
+        let Literal::AbstractLiteral(abslit @ AbstractLiteral::Matrix(..)) = &value else {
+            return Err(ReprDownError::BadValue(value, String::from("expected a matrix literal")));
         };
 
-        if !matches!(abslit, AbstractLiteral::Matrix(..)) {
-            return Err(format!("expected matrix, got {:?}", abslit));
-        }
-
-        let elements: Vec<Literal> = flatten(abslit).collect();
+        let elements: Vec<Literal> = flatten(abslit).cloned().collect();
         if elements.len() != state.elements.len() {
-            return Err(format!(
+            let msg = format!(
                 "expected {} elements, got {}",
                 state.elements.len(),
                 elements.len()
-            ));
+            );
+            return Err(ReprDownError::BadValue(value, msg));
         }
 
         Ok(State {

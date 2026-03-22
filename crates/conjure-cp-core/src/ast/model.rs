@@ -19,7 +19,6 @@ use super::{
     Atom, CnfClause, DeclarationPtr, Expression, Literal, Metadata, Moo, Name, ReturnType,
     SymbolTable, SymbolTablePtr, Typeable,
     comprehension::Comprehension,
-    declaration::DeclarationKind,
     pretty::{pretty_clauses, pretty_expressions_as_top_level},
 };
 

@@ -4,7 +4,7 @@
 
 use std::collections::VecDeque;
 
-use crate::ast::{Domain, DomainOpError, Expression as Expr, GroundDomain, Metadata, Moo, Range};
+use crate::ast::{DomainOpError, Expression as Expr, GroundDomain, Metadata, Moo, Range};
 use conjure_cp_core::ast::DomainPtr;
 use itertools::{Itertools, izip};
 use uniplate::Uniplate as _;
@@ -64,15 +64,15 @@ pub fn num_elements(index_domains: &[Moo<GroundDomain>]) -> Result<u64, DomainOp
 }
 
 /// Flattens a multi-dimensional matrix literal into a one-dimensional slice of its elements.
-///
 /// The elements of the matrix are returned in row-major ordering (see [`enumerate_indices`]).
+/// The elements are borrowed; To consume the matrix and return owned values, see [flatten_clone].
 ///
 /// # Panics
 ///
 /// + If the number or type of elements in each dimension is inconsistent.
 ///
 /// + If `matrix` is not a matrix.
-pub fn flatten(matrix: AbstractLiteral<Literal>) -> impl Iterator<Item = Literal> {
+pub fn flatten(matrix: &AbstractLiteral<Literal>) -> impl Iterator<Item = &Literal> {
     let AbstractLiteral::Matrix(elems, _) = matrix else {
         panic!("matrix should be a matrix");
     };
@@ -80,15 +80,43 @@ pub fn flatten(matrix: AbstractLiteral<Literal>) -> impl Iterator<Item = Literal
     flatten_1(elems)
 }
 
-fn flatten_1(elems: Vec<Literal>) -> impl Iterator<Item = Literal> {
+fn flatten_1<'a>(elems: &'a [Literal]) -> impl Iterator<Item = &'a Literal> {
+    elems.iter().flat_map(|elem| {
+        if let Literal::AbstractLiteral(m @ AbstractLiteral::Matrix(_, _)) = elem {
+            Box::new(flatten(m)) as Box<dyn Iterator<Item = &'a Literal>>
+        } else {
+            Box::new(std::iter::once(elem)) as Box<dyn Iterator<Item = &'a Literal>>
+        }
+    })
+}
+
+/// Flattens a multi-dimensional matrix literal into a one-dimensional slice of its elements.
+/// The elements of the matrix are returned in row-major ordering (see [`enumerate_indices`]).
+/// For the borrowing version, see [flatten].
+///
+/// # Panics
+///
+/// + If the number or type of elements in each dimension is inconsistent.
+///
+/// + If `matrix` is not a matrix.
+pub fn flatten_clone(matrix: AbstractLiteral<Literal>) -> impl Iterator<Item = Literal> {
+    let AbstractLiteral::Matrix(elems, _) = matrix else {
+        panic!("matrix should be a matrix");
+    };
+
+    flatten_clone_1(elems)
+}
+
+fn flatten_clone_1(elems: Vec<Literal>) -> impl Iterator<Item = Literal> {
     elems.into_iter().flat_map(|elem| {
         if let Literal::AbstractLiteral(m @ AbstractLiteral::Matrix(_, _)) = elem {
-            Box::new(flatten(m)) as Box<dyn Iterator<Item = Literal>>
+            Box::new(flatten_clone(m)) as Box<dyn Iterator<Item = Literal>>
         } else {
             Box::new(std::iter::once(elem)) as Box<dyn Iterator<Item = Literal>>
         }
     })
 }
+
 /// Flattens a multi-dimensional matrix literal into an iterator over (indices,element).
 ///
 /// # Panics
@@ -102,11 +130,11 @@ fn flatten_1(elems: Vec<Literal>) -> impl Iterator<Item = Literal> {
 pub fn flatten_enumerate(
     matrix: AbstractLiteral<Literal>,
 ) -> impl Iterator<Item = (Vec<Literal>, Literal)> {
-    let AbstractLiteral::Matrix(elems, _) = matrix.clone() else {
+    let AbstractLiteral::Matrix(elems, _) = &matrix else {
         panic!("matrix should be a matrix");
     };
 
-    let index_domains = index_domains(matrix)
+    let index_domains = index_domains(&matrix)
         .into_iter()
         .map(|mut x| match Moo::make_mut(&mut x) {
             // give unboundedr index domains an end
@@ -120,7 +148,10 @@ pub fn flatten_enumerate(
         })
         .collect_vec();
 
-    izip!(enumerate_indices(index_domains), flatten_1(elems))
+    izip!(
+        enumerate_indices(index_domains),
+        flatten_clone_1(elems.clone())
+    )
 }
 
 /// Gets the index domains for a matrix literal.
@@ -130,7 +161,7 @@ pub fn flatten_enumerate(
 /// + If `matrix` is not a matrix.
 ///
 /// + If the number or type of elements in each dimension is inconsistent.
-pub fn index_domains(matrix: AbstractLiteral<Literal>) -> Vec<Moo<GroundDomain>> {
+pub fn index_domains(matrix: &AbstractLiteral<Literal>) -> Vec<Moo<GroundDomain>> {
     let AbstractLiteral::Matrix(_, _) = matrix else {
         panic!("matrix should be a matrix");
     };

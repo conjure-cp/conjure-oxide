@@ -5,8 +5,7 @@
 
 use std::fmt::Display;
 
-use super::{CnfClause, Expression, Name, SymbolTable};
-use crate::ast::domains::HasDomain;
+use super::{CnfClause, Expression};
 use itertools::Itertools;
 
 /// Pretty prints a `Vec<Expression>` as if it were a top level constraint list in a `such that`.
