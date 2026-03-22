@@ -27,16 +27,26 @@ check: submodules
 check-unused-deps: .installed-cargo-extensions.checkpoint
 	cargo +nightly shear --expand
 
-.PHONY: build
-## Builds the conjure-oxide executable
-build: submodules
+.PHONY: build-release
+## Builds the release conjure-oxide executable
+build-release: submodules
 	cargo build $(CARGO_LOCKED) --bin conjure-oxide --release
 
+.PHONY: build-debug
+## Builds the debug conjure-oxide executable
+build-debug: submodules
+	cargo build $(CARGO_LOCKED) --bin conjure-oxide
+
+.PHONY: build
+## Builds both release and debug conjure-oxide executables
+build: build-release build-debug
+
 .PHONY: install
-## Installs conjure-oxide to ~/.cargo/bin
+## Installs release conjure-oxide and debug conjure-oxide-debug to ~/.cargo/bin
 install: build
-	mkdir -p $$HOME/.cargo/bin
-	install -m 755 $(CARGO_TARGET_DIR)/release/conjure-oxide $$HOME/.cargo/bin/conjure-oxide
+	@mkdir -p $$HOME/.cargo/bin
+	@install -m 755 $(CARGO_TARGET_DIR)/release/conjure-oxide $$HOME/.cargo/bin/conjure-oxide
+	@install -m 755 $(CARGO_TARGET_DIR)/debug/conjure-oxide $$HOME/.cargo/bin/conjure-oxide-debug
 
 .PHONY: test
 ## Runs all tests
