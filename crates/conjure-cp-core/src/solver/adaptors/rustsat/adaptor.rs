@@ -69,60 +69,6 @@ macro_rules! with_solver {
     };
 }
 
-// impl Extend<Clause> for SatSolver {
-//     fn extend<T: IntoIterator<Item = Clause>>(&mut self, iter: T) {
-//         match self {
-//             SatSolver::Minisat(mini) => mini.extend(iter),
-//             SatSolver::CaDiCaL(ca) => ca.extend(iter),
-//         }
-//     }
-// }
-//
-// impl<'a, C> Extend<&'a C> for SatSolver
-// where
-//     C: AsRef<rustsat::types::constraints::Cl> + ?Sized,
-// {
-//     fn extend<T: IntoIterator<Item = &'a C>>(&mut self, iter: T) {
-//         match self {
-//             SatSolver::Minisat(mini) => mini.extend(iter),
-//             SatSolver::CaDiCaL(ca) => ca.extend(iter),
-//         }
-//     }
-// }
-
-// impl Solve for SatSolver {
-//     fn solve(&mut self) -> anyhow::Result<SolverResult> {
-//         match self {
-//             SatSolver::Minisat(mini) => mini.solve(),
-//             SatSolver::CaDiCaL(ca) => ca.solve(),
-//         }
-//     }
-//
-//     fn signature(&self) -> &'static str {
-//         match self {
-//             SatSolver::Minisat(mini) => mini.signature(),
-//             SatSolver::CaDiCaL(ca) => ca.signature(),
-//         }
-//     }
-//
-//     fn lit_val(&self, l: Lit) -> anyhow::Result<TernaryVal> {
-//         match self {
-//             SatSolver::Minisat(mini) => mini.lit_val(l),
-//             SatSolver::CaDiCaL(ca) => ca.lit_val(l),
-//         }
-//     }
-//
-//     fn add_clause_ref<C>(&mut self, a: &C) -> anyhow::Result<()>
-//     where
-//         C: AsRef<rustsat::types::constraints::Cl> + ?core::marker::Sized,
-//     {
-//         match self {
-//             SatSolver::Minisat(mini) => mini.add_clause_ref(a),
-//             SatSolver::CaDiCaL(ca) => ca.add_clause_ref(a),
-//         }
-//     }
-// }
-
 /// A [SolverAdaptor] for interacting with the SatSolver generic and the types thereof.
 pub struct Sat {
     __non_constructable: private::Internal,
