@@ -17,7 +17,7 @@ pub mod _dependencies {
         LookupFn, ReprAssignment, ReprDeclLevel, ReprDomainLevel, ReprError, ReprInitResult,
         ReprRule,
     };
-    pub use super::util::{ReprStateStored, try_up_via};
+    pub use super::util::{ReprStateStored, instantiate_default_impl, try_up_via};
     pub use crate::ast::eval_constant;
     pub use crate::rule_engine::_dependencies::*;
     pub use funcmap;

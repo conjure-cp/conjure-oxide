@@ -381,44 +381,7 @@ pub fn register_representation(input: TokenStream) -> TokenStream {
             }
 
             fn instantiate(self, decl: DeclarationPtr) -> (Self::DeclLevel, SymbolTable, Vec<Expression>) {
-                if let Some(_) = decl.as_find() {
-                    let src_name = decl.name();
-                    let mut symtab = SymbolTable::new();
-                    let mut counter = 1;
-                    let declare_field = |dom: DomainPtr| {
-                        let name = Name::repr(src_name.clone(), #repr_name_str, &counter.to_string());
-                        let mut field_decl = DeclarationPtr::new_find(name, dom);
-                        *(field_decl.source_mut()) = Some(decl.clone());
-                        symtab.insert(field_decl.clone()).expect("declaration already exists");
-                        counter += 1;
-                        field_decl
-                    };
-                    let decl_level = self.func_map(declare_field);
-                    let constraints = #prefixed_structural(&decl_level);
-                    return (decl_level, symtab, constraints);
-                } else if let Some(expr) = decl.as_value_letting() {
-                    let val = eval_constant(&expr).expect("expression to be constant");
-                    let val_down = self.down(val).unwrap();
-                    let src_name = decl.name();
-                    let mut symtab = SymbolTable::new();
-                    let mut counter = 1;
-                    let declare_field = |lit: Literal| {
-                        let name = Name::repr(src_name.clone(), #repr_name_str, &counter.to_string());
-                        let mut field_decl = DeclarationPtr::new_value_letting(name, lit.into());
-                        *(field_decl.source_mut()) = Some(decl.clone());
-                        symtab.insert(field_decl.clone()).expect("declaration already exists");
-                        counter += 1;
-                        field_decl
-                    };
-                    let decl_level = val_down.func_map(declare_field);
-                    // no constraints for value letting reprs
-                    let constraints = vec![];
-                    return (decl_level, symtab, constraints);
-                } else if let Some(dom) = decl.as_domain_letting() {
-                    todo!("support domain lettings in reprs");
-                } else {
-                    panic!("unsupported declaration: {}", decl);
-                }
+                instantiate_default_impl(self, decl, #repr_name_str, #prefixed_structural)
             }
         }
 
