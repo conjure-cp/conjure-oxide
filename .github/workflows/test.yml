@@ -1,44 +1,44 @@
-name: Test PR
-
-# We run this action for PRs for two configurations only (ubuntu/debug/stable and ubuntu/debug/nightly) with caching enabled
-# On main, we run all configurations, without caching (to save space on GitHub)
+name: Test
 
 on:
+  push:
+    branches:
+      - main # run for pushes to the main branch. other branches need to create a PR if they want testing.
+    paths:
+      - crates/**
+      - tests-integration/**
+      - Cargo.*
+      - rust-toolchain.toml
+      - .github/workflows/test.yml
   pull_request:
     paths:
       - crates/**
       - tests-integration/**
       - Cargo.*
       - rust-toolchain.toml
-      - .github/workflows/test-pr.yml
+      - .github/workflows/test.yml
   workflow_dispatch:
 
 env:
-  # we define the following 3 values as the defaults here, matrix jobs may overwrite their values.
+  # we define the following 2 values as the defaults here, matrix jobs may overwrite their values.
   os: ubuntu-latest
   rust_release: stable
-  compiler_profile: debug
-  CARGO_INCREMENTAL: 0 # for smaller cache size
 
+  # for smaller cache size
+  CARGO_INCREMENTAL: 0
+
+  # to avoid github rate limits (for z3-bundled, for example)
   READ_ONLY_GITHUB_TOKEN: ${{ secrets.PUBLIC_REPO_TOKEN }}
 
 jobs:
-  # test-pr and test-main are identical, except for:
-  # - rust cache, and
-  # - its smaller scope (see commented out options in the matrix)
-
-  test_pr:
-    name: "Test (PR)"
-    if: ${{ github.event_name == 'pull_request' }}
+  test:
+    name: Test
 
     timeout-minutes: 120
     strategy:
       # run all combinations of the matrix even if one combination fails.
       fail-fast: false
       matrix:
-        compiler_profile:
-          # - release
-          - debug
         rust_release:
           - stable
           - nightly
@@ -46,12 +46,12 @@ jobs:
           - 2.5.1
         os:
           - ubuntu-latest
-          # - macos-latest
+          - macos-latest
         include:
           - os: ubuntu-latest
             release_suffix: linux
-          # - os: macos-latest
-          #   release_suffix: macos-arm
+          - os: macos-latest
+            release_suffix: macos-arm
 
     runs-on: ${{ matrix.os }}
 
@@ -66,6 +66,7 @@ jobs:
 
       - name: Restore cache
         id: restore_cache
+        if: ${{ matrix.os == 'ubuntu-latest' }}
         uses: actions/cache/restore@v5
         with:
           path: |
@@ -75,8 +76,8 @@ jobs:
             ~/.cargo/git/db/
             target/
             ~/conjure
-          key: test--${{ matrix.os }}--${{ matrix.rust_release }}--${{ matrix.compiler_profile }}--${{ github.event.repository.updated_at }}
-          restore-keys: test--${{ matrix.os }}--${{ matrix.rust_release }}--${{ matrix.compiler_profile }}
+          key: test--${{ matrix.os }}--${{ matrix.rust_release }}--${{ github.event.repository.updated_at }}
+          restore-keys: test--${{ matrix.os }}--${{ matrix.rust_release }}
 
       # Override RUSTUP_TOOLCHAIN to nightly when we are testing with nightly
       # This value is read from the rust-toolchain.toml file otherwise
@@ -92,23 +93,29 @@ jobs:
           os_arch: ${{ matrix.release_suffix }}
           version: ${{ matrix.conjure_version }}
 
-      # This step is unique to PR tests
-      - name: Install Z3
+      - name: Install Z3 (Ubuntu)
+        if: ${{ matrix.os == 'ubuntu-latest' }}
         uses: pavpanchekha/setup-z3@v0.3.0
         with:
           version: 4.16.0
           distribution: glibc-2.39
 
-      - name: Build conjure-oxide (debug)
-        run: cargo build --bin conjure-oxide
-        if: ${{ matrix.compiler_profile == 'debug' }}
-      - name: Run tests (debug)
-        run: PATH="$PWD/target/debug:$PATH" cargo test --workspace
-        if: ${{ matrix.compiler_profile == 'debug' }}
+      - name: Install Z3 (macOS)
+        if: ${{ matrix.os == 'macos-latest' }}
+        run: brew install z3
 
-      - name: Build conjure-oxide (release)
-        run: cargo build --bin conjure-oxide --release
-        if: ${{ matrix.compiler_profile == 'release' }}
-      - name: Run tests (release)
-        run: PATH="$PWD/target/release:$PATH" cargo test --workspace --release
-        if: ${{ matrix.compiler_profile == 'release' }}
+      - name: Run tests
+        run: make test
+
+      - name: Save cache
+        if: ${{ always() && github.event_name == 'push' && matrix.os == 'ubuntu-latest' && steps.restore_cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v5
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+            ~/conjure
+          key: test--${{ matrix.os }}--${{ matrix.rust_release }}--${{ github.event.repository.updated_at }}
