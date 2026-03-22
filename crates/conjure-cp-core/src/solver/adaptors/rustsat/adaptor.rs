@@ -43,12 +43,11 @@ use itertools::Itertools;
 #[allow(non_camel_case_types)] // type names follow solver name conventions
 enum SatSolver {
     Minisat,
-    // Minisat(Minisat),
-    // CaDiCaL(CaDiCaL<'static, 'static>),
     CaDiCaL,
-    // kissat,
+    // Kissat,
     // Batsat,
-    // Glucose,
+    Glucose,
+    GlucoseSimp,
     // IPASIR,
 }
 macro_rules! with_solver {
@@ -61,10 +60,15 @@ macro_rules! with_solver {
             SatSolver::Minisat => {
                 let mut $solver: rustsat_minisat::core::Minisat = Minisat::default();
                 $body
-            } // SatSolver::Kissat => {
-              //     let mut solver = Kissat::default();
-              //     $body
-              // }
+            }
+            SatSolver::Glucose => {
+                let mut $solver = rustsat_glucose::core::Glucose::default();
+                $body
+            }
+            SatSolver::GlucoseSimp => {
+                let mut $solver = rustsat_glucose::simp::Glucose::default();
+                $body
+            }
         }
     };
 }
@@ -316,14 +320,13 @@ impl SolverAdaptor for Sat {
         // NOTE: Wildcards not allowed
         // Should always match the conventional name of the solver, not rust syntax
         match self.solver {
-            // SatSolver::kissat => "kissat",
+            // SatSolver::Kissat => "kissat",
             // SatSolver::Batsat => "BatSat",
             SatSolver::Minisat => "Minisat",
             SatSolver::CaDiCaL => "CaDiCaL",
-            // SatSolver::Minisat(_) => "Minisat",
-            // SatSolver::CaDiCaL(_) => "CaDiCaL",
             // SatSolver::IPASIR => "IPASIR",
-            // SatSolver::Glucose => "Glucose",
+            SatSolver::Glucose => "Glucose",
+            SatSolver::GlucoseSimp => "Glucose_With_Preprocessing",
         }
     }
 
