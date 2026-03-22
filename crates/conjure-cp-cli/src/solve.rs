@@ -342,11 +342,12 @@ fn run_solver(
 
     let solutions_json = solutions_to_json(&solutions);
     let solutions_str = to_string_pretty(&solutions_json)?;
-    let solutions_essence = solutions_to_essence(&solutions).join("\n----\n");
+    // TODO: do we want to print essence solutions instead?
+    // let solutions_essence = solutions_to_essence(&solutions).join("\n----\n");
     match out_file {
         None => {
             println!("Solutions:");
-            println!("{solutions_essence}");
+            println!("{solutions_str}");
         }
         Some(mut outf) => {
             outf.write_all(solutions_str.as_bytes())?;
