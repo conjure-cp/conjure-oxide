@@ -16,7 +16,8 @@
 
 set -euo pipefail
 
-ROOT="tests-integration/tests/integration"
+ROOT="tests-integration/tests"
+ALLOWED_PATHS_DESC="tests-integration/tests/{integration,roundtrip}"
 
 usage() {
   cat <<'EOF'
@@ -29,7 +30,7 @@ Input:
     - globbed test names, e.g. tests_integration_cnf*
     - paths (absolute or relative to repo root), e.g.
       ./tests-integration/tests/integration/basic/comprehension-01-1
-  Paths outside <repo root>/tests-integration/tests/integration are ignored.
+  Paths outside <repo root>/tests-integration/tests/{integration,roundtrip} are ignored.
   If no input is given, your default editor will be opened so you can type in the paths;
   This behaviour is disabled when the script is not ran interactively (e.g input is piped from another command)
 
@@ -265,11 +266,39 @@ update_array_block() {
   fi
 }
 
+is_allowed_config_path() {
+  local candidate
+  candidate="$(realpath -m "$1")"
+  case "$candidate" in
+    "${REPO_ROOT}/${ROOT}/integration/config.toml" | \
+    "${REPO_ROOT}/${ROOT}/integration/"*/config.toml | \
+    "${REPO_ROOT}/${ROOT}/roundtrip/config.toml" | \
+    "${REPO_ROOT}/${ROOT}/roundtrip/"*/config.toml)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
 name_to_config_path() {
   local test_name="$1"
+  local suite rel
 
-  [[ "$test_name" == tests_integration_* ]] || return 1
-  local rel="${test_name#tests_integration_}"
+  case "$test_name" in
+    tests_integration_*)
+      suite="integration"
+      rel="${test_name#tests_integration_}"
+      ;;
+    tests_roundtrip_*)
+      suite="roundtrip"
+      rel="${test_name#tests_roundtrip_}"
+      ;;
+    *)
+      return 1
+      ;;
+  esac
 
   # Try all combinations of separators between parts:
   #   /   (new path segment)
@@ -282,7 +311,7 @@ name_to_config_path() {
   local n="${#parts[@]}"
   (( n >= 1 )) || return 1
 
-  local candidates=("${REPO_ROOT}/${ROOT}/${parts[0]}")
+  local candidates=("${REPO_ROOT}/${ROOT}/${suite}/${parts[0]}")
   local i base
   for ((i=1; i<n; i++)); do
     local next=()
@@ -321,9 +350,18 @@ config_path_to_glob_key() {
   local rel="${config_path#${REPO_ROOT}/${ROOT}/}"
   [[ "$rel" != "$config_path" ]] || rel="${config_path#${ROOT}/}"
   rel="${rel%/config.toml}"
+
+  local suite="${rel%%/*}"
+  rel="${rel#*/}"
+
+  case "$suite" in
+    integration|roundtrip) ;;
+    *) return 1 ;;
+  esac
+
   rel="${rel//\//_}"
   rel="${rel//-/_}"
-  printf 'tests_integration_%s\n' "$rel"
+  printf 'tests_%s_%s\n' "$suite" "$rel"
 }
 
 resolve_path_input_to_config() {
@@ -356,23 +394,22 @@ resolve_path_input_to_config() {
 
   candidate="$(realpath -m "$candidate")"
 
-  case "$candidate" in
-    "${REPO_ROOT}/${ROOT}"/*) printf '%s\n' "$candidate" ;;
-    *) return 1 ;;
-  esac
+  if is_allowed_config_path "$candidate"; then
+    printf '%s\n' "$candidate"
+  else
+    return 1
+  fi
 }
 
 resolve_test_input_paths() {
   local input="$1"
 
   if is_glob_pattern "$input"; then
-    [[ "$input" == tests_integration_* ]] || return 1
+    [[ "$input" == tests_integration_* || "$input" == tests_roundtrip_* ]] || return 1
     local p key
     for p in "${ALL_CONFIGS[@]}"; do
-      key="$(config_path_to_glob_key "$p")"
-      if [[ "$key" == $input ]]; then
-        printf '%s\n' "$p"
-      fi
+      key="$(config_path_to_glob_key "$p" || true)"
+      [[ -n "$key" && "$key" == $input ]] && printf '%s\n' "$p"
     done
     return 0
   fi
@@ -475,7 +512,12 @@ fi
 
 cd "$REPO_ROOT"
 
-mapfile -t ALL_CONFIGS < <(find "${REPO_ROOT}/${ROOT}" -type f -name config.toml | sort)
+mapfile -t ALL_CONFIGS < <(
+  {
+    find "${REPO_ROOT}/${ROOT}/integration" -type f -name config.toml 2>/dev/null
+    find "${REPO_ROOT}/${ROOT}/roundtrip" -type f -name config.toml 2>/dev/null
+  } | sort
+)
 
 cleanup_tmp=""
 test_names=()
@@ -506,9 +548,9 @@ for t in "${test_names[@]}"; do
     if is_glob_pattern "$t"; then
       echo "WARN: No matches for glob: $t" >&2
     elif is_path_input "$t"; then
-      echo "WARN: Ignoring path outside ${ROOT}: $t" >&2
+      echo "WARN: Ignoring path outside ${ALLOWED_PATHS_DESC}: $t" >&2
     else
-      echo "WARN: Invalid test selector (expected tests_integration_... or /path/to/test...): $t" >&2
+      echo "WARN: Invalid test selector (expected tests_integration_... / tests_roundtrip_... or /path/to/test...): $t" >&2
     fi
     ((skipped+=1))
     continue
