@@ -1,18 +1,19 @@
 use conjure_cp::Model;
 use conjure_cp::ast::SerdeModel;
 use conjure_cp::context::Context;
+use conjure_cp::instantiate::instantiate_model;
+use conjure_cp::parse::tree_sitter::errors::InstantiateModelError;
 use conjure_cp::parse::tree_sitter::errors::ParseErrorCollection;
 use conjure_cp::parse::tree_sitter::{parse_essence_file, parse_essence_file_native};
 use conjure_cp::settings::Parser;
 use conjure_cp_cli::utils::testing::serialize_model;
-use tests_integration::TestConfig;
-
 use std::env;
 use std::error::Error;
 use std::fs;
 use std::path::Path;
 use std::sync::Arc;
 use std::sync::RwLock;
+use tests_integration::TestConfig;
 
 use std::io::Write;
 
@@ -30,6 +31,13 @@ fn roundtrip_test(path: &str, filename: &str, extension: &str) -> Result<(), Box
             Default::default()
         };
 
+    let param_file = std::fs::read_dir(path).ok().and_then(|entries| {
+        entries
+            .filter_map(|entry| entry.ok())
+            .find(|entry| entry.path().extension().map_or(false, |ext| ext == "param"))
+            .map(|entry| entry.file_name().to_string_lossy().to_string())
+    });
+
     if accept {
         clean_test_dir_for_accept(path)?;
     }
@@ -44,14 +52,21 @@ fn roundtrip_test(path: &str, filename: &str, extension: &str) -> Result<(), Box
             Parser::TreeSitter => parse_essence_file_native,
             Parser::ViaConjure => parse_essence_file,
         };
-        roundtrip_test_inner(path, filename, &case_name, extension, parse)?;
+        roundtrip_test_inner(
+            path,
+            filename,
+            &case_name,
+            extension,
+            parse,
+            param_file.as_deref(),
+        )?;
     }
     Ok(())
 }
 
 /// Removes generated and expected artefacts for a roundtrip test directory when `ACCEPT=true`.
 ///
-/// Keeps source model files (`.essence`) and `config.toml`. Nested directories are not removed,
+/// Keeps source model files (`.essence`, `.param`) and `config.toml`. Nested directories are not removed,
 /// because each nested test directory performs its own cleanup when executed.
 fn clean_test_dir_for_accept(path: &str) -> Result<(), std::io::Error> {
     for entry in std::fs::read_dir(path)? {
@@ -70,7 +85,7 @@ fn clean_test_dir_for_accept(path: &str) -> Result<(), std::io::Error> {
             let is_model_file = entry_path
                 .extension()
                 .and_then(|ext| ext.to_str())
-                .is_some_and(|ext| ext == "essence");
+                .is_some_and(|ext| ext == "essence" || ext == "param");
             let is_generated_or_expected =
                 file_name.contains(".generated") || file_name.contains(".expected");
             is_model_file && !is_generated_or_expected
@@ -106,13 +121,36 @@ fn roundtrip_test_inner(
     case_name: &str,
     extension: &str,
     parse: ParseFn,
+    param_file: Option<&str>,
 ) -> Result<(), Box<dyn Error>> {
     let accept = env::var("ACCEPT").unwrap_or("false".to_string()) == "true";
 
     let file_path = format!("{path}/{input_filename}.{extension}");
     let context: Arc<RwLock<Context<'static>>> = Default::default();
 
-    let initial_parse = parse(&file_path, context.clone());
+    // let problem_model = parse(&global_args, Arc::clone(&context), essence_file_name)?;
+    let problem_model = parse(&file_path, context.clone());
+
+    let initial_parse = match problem_model {
+        Ok(problem_model) => match param_file {
+            Some(param_file_name) => {
+                let param_file_path = format!("{path}/{}", param_file_name);
+                let param_model = parse(&param_file_path, context.clone());
+                match param_model {
+                    Ok(param_model) => instantiate_model(problem_model, param_model).map_err(|e| {
+                        Box::new(ParseErrorCollection::InstantiateModel(
+                            InstantiateModelError {
+                                msg: format!("{e}"),
+                            },
+                        ))
+                    }),
+                    Err(e) => Err(e),
+                }
+            }
+            None => Ok(problem_model),
+        },
+        Err(e) => Err(e),
+    };
     match initial_parse {
         Ok(initial_model) => {
             save_roundtrip_model_json(&initial_model, path, case_name, "generated")?;

@@ -123,7 +123,7 @@ such that a = allDiff([1,2,4,1]x)";
         31,
         1,
         32,
-        "Unexpected x inside a List Combining Expression Bool",
+        "Unexpected x inside an All Diff Comparison",
     );
 }
 
