@@ -129,6 +129,8 @@ fn try_rewrite_model(
 
                 match (rd.rule.application)(&expr, &submodel.symbols()) {
                     Ok(red) => {
+                        // when called a lot, this becomes very expensive!
+                        #[cfg(debug_assertions)]
                         log_verbose_rule_attempt(
                             run_start,
                             priority,
@@ -161,6 +163,8 @@ fn try_rewrite_model(
                         ));
                     }
                     Err(_) => {
+                        // when called a lot, this becomes very expensive!
+                        #[cfg(debug_assertions)]
                         log_verbose_rule_attempt(
                             run_start,
                             priority,
@@ -168,16 +172,6 @@ fn try_rewrite_model(
                             rd.rule_set.name,
                             "fail",
                             &expr,
-                        );
-
-                        // when called a lot, this becomes very expensive!
-                        #[cfg(debug_assertions)]
-                        tracing::trace!(
-                            "Rule attempted but not applied: {} (priority {}, rule set {}), to expression: {}",
-                            rd.rule.name,
-                            priority,
-                            rd.rule_set.name,
-                            expr
                         );
                     }
                 }
