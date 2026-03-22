@@ -98,7 +98,8 @@ fn try_rewrite_model(
     rules_grouped: &Vec<(u16, Vec<RuleData<'_>>)>,
     prop_multiple_equally_applicable: bool,
     stats: &mut RewriterStats,
-    run_start: &Instant,
+    #[cfg(debug_assertions)] run_start: &Instant,
+    #[cfg(not(debug_assertions))] _: &Instant,
 ) -> Option<()> {
     type CtxFn = Arc<dyn Fn(Expr) -> Expr>;
     let mut results: Vec<ApplicableRule<'_, CtxFn>> = vec![];
@@ -224,6 +225,7 @@ fn try_rewrite_model(
     Some(())
 }
 
+#[cfg(debug_assertions)]
 fn csv_escape(field: &str) -> String {
     if field.contains([',', '"', '\n', '\r']) {
         format!("\"{}\"", field.replace('"', "\"\""))
@@ -232,6 +234,7 @@ fn csv_escape(field: &str) -> String {
     }
 }
 
+#[cfg(debug_assertions)]
 fn log_verbose_rule_attempt(
     run_start: &Instant,
     priority: &u16,
