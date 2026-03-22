@@ -45,6 +45,11 @@ Options:
       For regex, prefix with re:, e.g.
       "re:^# TODO\(repr\):"
 
+  --skip true|false
+      true    - ensure "skip = true" exists
+      false   - remove any "skip = ..." line
+      omitted - do not touch skip
+
   --parser tree-sitter|via-conjure
       If set, enable only this parser in [parser]
 
@@ -107,22 +112,33 @@ prepend_comment() {
   mv "$tmp" "$file"
 }
 
-glob_to_ere() {
-  local glob="$1"
-  local out=""
-  local i c
-  for ((i=0; i<${#glob}; i++)); do
-    c="${glob:i:1}"
-    case "$c" in
-      '*') out+='.*' ;;
-      '?') out+='.' ;;
-      '.'|'\'|'+'|'('|')'|'['|']'|'{'|'}'|'^'|'$'|'|')
-        out+="\\$c"
-        ;;
-      *) out+="$c" ;;
-    esac
-  done
-  printf '%s' "$out"
+set_skip_true() {
+  local file="$1"
+  local tmp
+  tmp="$(mktemp)"
+  awk '
+    BEGIN { done=0 }
+    /^[[:space:]]*skip[[:space:]]*=/ {
+      if (!done) {
+        print "skip = true"
+        done=1
+      }
+      next
+    }
+    { print }
+    END {
+      if (!done) print "skip = true"
+    }
+  ' "$file" > "$tmp"
+  mv "$tmp" "$file"
+}
+
+set_skip_false() {
+  local file="$1"
+  local tmp
+  tmp="$(mktemp)"
+  awk '!/^[[:space:]]*skip[[:space:]]*=/' "$file" > "$tmp"
+  mv "$tmp" "$file"
 }
 
 remove_lines_matching() {
@@ -323,6 +339,7 @@ comment_text=""
 remove_pattern=""
 remove_pattern_mode=""
 remove_pattern_value=""
+skip_opt=""
 parser_opt=""
 rewriter_opt=""
 ce_opt=""
@@ -348,6 +365,12 @@ while [[ $# -gt 0 ]]; do
     --remove-lines-matching)
       [[ $# -ge 2 ]] || err "--remove-lines-matching requires a pattern"
       remove_pattern="$2"
+      shift 2
+      ;;
+    --skip)
+      [[ $# -ge 2 ]] || err "--skip requires true or false"
+      skip_opt="$(printf '%s' "$2" | tr '[:upper:]' '[:lower:]')"
+      [[ "$skip_opt" == "true" || "$skip_opt" == "false" ]] || err "--skip must be true or false"
       shift 2
       ;;
     --parser)
@@ -460,6 +483,13 @@ for t in "${test_names[@]}"; do
       remove_lines_matching "$work_file" "$remove_pattern_mode" "$remove_pattern_value"
     fi
 
+    if [[ -n "$skip_opt" ]]; then
+      if [[ "$skip_opt" == "true" ]]; then
+        set_skip_true "$work_file"
+      else
+        set_skip_false "$work_file"
+      fi
+    fi
 
     if [[ -n "$solvers_csv" ]]; then
       update_array_block "$work_file" "solver" "$solvers_csv"
