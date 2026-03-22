@@ -17,20 +17,23 @@
 set -euo pipefail
 
 ROOT="tests-integration/tests/integration"
-ORIG_CWD="$PWD"
 
 usage() {
   cat <<'EOF'
 Usage:
   update-test-configs.sh [options]
 
-Options:
-  --tests FILE
-      File containing test names, one per line, e.g.
-      tests_integration_basic_div_04
-      Supports basic globbing, e.g.
-      tests_integration_cnf*
+Input:
+  Test selectors are read from stdin, one per line, as either:
+    - test names, e.g. tests_integration_basic_div_04
+    - globbed test names, e.g. tests_integration_cnf*
+    - paths (absolute or relative to repo root), e.g.
+      ./tests-integration/tests/integration/basic/comprehension-01-1
+  Paths outside <repo root>/tests-integration/tests/integration are ignored.
+  If no input is given, your default editor will be opened so you can type in the paths;
+  This behaviour is disabled when the script is not ran interactively (e.g input is piped from another command)
 
+Options:
   --solvers LIST
       Comma-separated enabled solvers, e.g. minion,sat-direct
       (If set, non-listed solver entries are commented out in [solver])
@@ -45,10 +48,13 @@ Options:
       For regex, prefix with re:, e.g.
       "re:^# TODO\(repr\):"
 
-  --skip true|false
-      true    - ensure "skip = true" exists
+  --skip [true|false]
+      true    - ensure "skip = true" exists  (default)
       false   - remove any "skip = ..." line
       omitted - do not touch skip
+
+  --create-if-empty
+      If the test name/path matches but the test has no config.toml, create an empty one
 
   --parser tree-sitter|via-conjure
       If set, enable only this parser in [parser]
@@ -276,7 +282,7 @@ name_to_config_path() {
   local n="${#parts[@]}"
   (( n >= 1 )) || return 1
 
-  local candidates=("${ROOT}/${parts[0]}")
+  local candidates=("${REPO_ROOT}/${ROOT}/${parts[0]}")
   local i base
   for ((i=1; i<n; i++)); do
     local next=()
@@ -297,7 +303,6 @@ name_to_config_path() {
     fi
   done
 
-  # None of the options worked.
   printf '%s\n' "$fallback"
 }
 
@@ -306,13 +311,55 @@ is_glob_pattern() {
   [[ "$s" == *[\*\?\[]* ]]
 }
 
+is_path_input() {
+  local s="$1"
+  [[ "$s" == /* || "$s" == ./* || "$s" == ../* || "$s" == */* ]]
+}
+
 config_path_to_glob_key() {
   local config_path="$1"
-  local rel="${config_path#${ROOT}/}"
+  local rel="${config_path#${REPO_ROOT}/${ROOT}/}"
+  [[ "$rel" != "$config_path" ]] || rel="${config_path#${ROOT}/}"
   rel="${rel%/config.toml}"
   rel="${rel//\//_}"
   rel="${rel//-/_}"
   printf 'tests_integration_%s\n' "$rel"
+}
+
+resolve_path_input_to_config() {
+  local input="$1"
+  local abs_input candidate base
+  local has_trailing_slash=0
+  [[ "$input" == */ ]] && has_trailing_slash=1
+
+  # Handle absolute or relative path
+  if [[ "$input" == /* ]]; then
+    abs_input="$(realpath -m "$input")"
+  else
+    abs_input="$(realpath -m "${REPO_ROOT}/${input}")"
+  fi
+
+  candidate="$abs_input"
+  base="${candidate##*/}"
+
+  # If path ends in a file, replace it with config.toml
+  # (useful so you can pipe in paths from find / ripgrep)
+  if [[ -d "$candidate" || "$has_trailing_slash" -eq 1 ]]; then
+    candidate="${candidate%/}/config.toml"
+  elif [[ "$base" == "config.toml" ]]; then
+    :
+  elif [[ -f "$candidate" || "$base" == *.* ]]; then
+    candidate="${candidate%/*}/config.toml"
+  else
+    candidate="${candidate%/}/config.toml"
+  fi
+
+  candidate="$(realpath -m "$candidate")"
+
+  case "$candidate" in
+    "${REPO_ROOT}/${ROOT}"/*) printf '%s\n' "$candidate" ;;
+    *) return 1 ;;
+  esac
 }
 
 resolve_test_input_paths() {
@@ -330,10 +377,14 @@ resolve_test_input_paths() {
     return 0
   fi
 
+  if is_path_input "$input"; then
+    resolve_path_input_to_config "$input"
+    return $?
+  fi
+
   name_to_config_path "$input"
 }
 
-tests_file=""
 solvers_csv=""
 comment_text=""
 remove_pattern=""
@@ -344,14 +395,10 @@ parser_opt=""
 rewriter_opt=""
 ce_opt=""
 dry_run="false"
+create_if_empty="false"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --tests)
-      [[ $# -ge 2 ]] || err "--tests requires a file path"
-      tests_file="$2"
-      shift 2
-      ;;
     --solvers)
       [[ $# -ge 2 ]] || err "--solvers requires a value"
       solvers_csv="$(normalize_csv "$2")"
@@ -368,10 +415,19 @@ while [[ $# -gt 0 ]]; do
       shift 2
       ;;
     --skip)
-      [[ $# -ge 2 ]] || err "--skip requires true or false"
-      skip_opt="$(printf '%s' "$2" | tr '[:upper:]' '[:lower:]')"
-      [[ "$skip_opt" == "true" || "$skip_opt" == "false" ]] || err "--skip must be true or false"
-      shift 2
+      # Optional value: --skip => true, --skip false => false
+      if [[ $# -ge 2 && "$2" != --* ]]; then
+        skip_opt="$(printf '%s' "$2" | tr '[:upper:]' '[:lower:]')"
+        [[ "$skip_opt" == "true" || "$skip_opt" == "false" ]] || err "--skip must be true or false"
+        shift 2
+      else
+        skip_opt="true"
+        shift
+      fi
+      ;;
+    --create-if-empty)
+      create_if_empty="true"
+      shift
       ;;
     --parser)
       [[ $# -ge 2 ]] || err "--parser requires a value"
@@ -417,31 +473,27 @@ if [[ -n "$remove_pattern" ]]; then
   fi
 fi
 
-cleanup_tmp=""
-if [[ -z "$tests_file" ]]; then
-  cleanup_tmp="$(mktemp)"
-  "${EDITOR:-vi}" "$cleanup_tmp"
-  tests_file="$cleanup_tmp"
-fi
-
-if [[ "$tests_file" != /* ]]; then
-  tests_file="$ORIG_CWD/$tests_file"
-fi
-
-if [[ ! -f "$tests_file" ]]; then
-  err "Tests file not found: $tests_file"
-fi
-
-if [[ -n "$cleanup_tmp" ]]; then
-  trap 'rm -f "$cleanup_tmp"' EXIT
-fi
-
 cd "$REPO_ROOT"
 
-mapfile -t ALL_CONFIGS < <(find "$ROOT" -type f -name config.toml | sort)
+mapfile -t ALL_CONFIGS < <(find "${REPO_ROOT}/${ROOT}" -type f -name config.toml | sort)
 
-mapfile -t test_names < <(sed '/^[[:space:]]*$/d' "$tests_file")
-[[ "${#test_names[@]}" -gt 0 ]] || err "No test names found in: $tests_file"
+cleanup_tmp=""
+test_names=()
+
+if [[ -t 0 ]]; then
+  cleanup_tmp="$(mktemp)"
+  trap 'rm -f "$cleanup_tmp"' EXIT
+  "${EDITOR:-vi}" "$cleanup_tmp"
+  mapfile -t test_names < <(sed '/^[[:space:]]*$/d' "$cleanup_tmp")
+else
+  mapfile -t test_names < <(sed '/^[[:space:]]*$/d')
+fi
+
+if [[ "${#test_names[@]}" -eq 0 ]]; then
+  # Non-interactive empty input: no-op
+  [[ -t 0 ]] && err "No test names provided"
+  exit 0
+fi
 
 updated=0
 skipped=0
@@ -453,8 +505,10 @@ for t in "${test_names[@]}"; do
   if [[ "${#resolved_paths[@]}" -eq 0 ]]; then
     if is_glob_pattern "$t"; then
       echo "WARN: No matches for glob: $t" >&2
+    elif is_path_input "$t"; then
+      echo "WARN: Ignoring path outside ${ROOT}: $t" >&2
     else
-      echo "WARN: Invalid test name format (expected tests_integration_...): $t" >&2
+      echo "WARN: Invalid test selector (expected tests_integration_... or /path/to/test...): $t" >&2
     fi
     ((skipped+=1))
     continue
@@ -466,14 +520,31 @@ for t in "${test_names[@]}"; do
     fi
     seen_paths["$config_path"]=1
 
+    created_missing_config=0
+    baseline_tmp=""
+
     if [[ ! -f "$config_path" ]]; then
-      echo "WARN: Missing config: $config_path (from $t)" >&2
-      ((skipped+=1))
-      continue
+      if [[ "$create_if_empty" == "true" && -d "$(dirname "$config_path")" ]]; then
+        created_missing_config=1
+        if [[ "$dry_run" == "true" ]]; then
+          baseline_tmp="$(mktemp)"
+          : > "$baseline_tmp"
+        else
+          : > "$config_path"
+        fi
+      else
+        echo "WARN: Missing config: $config_path (from $t)" >&2
+        ((skipped+=1))
+        continue
+      fi
     fi
 
     work_file="$(mktemp)"
-    cp "$config_path" "$work_file"
+    if [[ -f "$config_path" ]]; then
+      cp "$config_path" "$work_file"
+    else
+      : > "$work_file"
+    fi
 
     if [[ -n "$comment_text" ]]; then
       prepend_comment "$work_file" "$comment_text"
@@ -507,19 +578,41 @@ for t in "${test_names[@]}"; do
       update_array_block "$work_file" "comprehension-expander" "$ce_opt"
     fi
 
-    if cmp -s "$config_path" "$work_file"; then
+    compare_from="$config_path"
+    [[ -n "$baseline_tmp" ]] && compare_from="$baseline_tmp"
+
+    if cmp -s "$compare_from" "$work_file"; then
+      if [[ "$created_missing_config" -eq 1 ]]; then
+        if [[ "$dry_run" == "true" ]]; then
+          echo "Would create: $config_path"
+        else
+          echo "Created: $config_path"
+        fi
+        ((updated+=1))
+      fi
       rm -f "$work_file"
+      [[ -n "$baseline_tmp" ]] && rm -f "$baseline_tmp"
       continue
     fi
 
     if [[ "$dry_run" == "true" ]]; then
-      echo "Would update: $config_path"
-      diff --color -u --label "$config_path" --label "$config_path (updated)" "$config_path" "$work_file" || true
+      if [[ "$created_missing_config" -eq 1 ]]; then
+        echo "Would create: $config_path"
+      else
+        echo "Would update: $config_path"
+      fi
+      diff --color -u --label "$config_path" --label "$config_path (updated)" "$compare_from" "$work_file" || true
       echo
       rm -f "$work_file"
+      [[ -n "$baseline_tmp" ]] && rm -f "$baseline_tmp"
     else
       mv "$work_file" "$config_path"
-      echo "Updated: $config_path"
+      if [[ "$created_missing_config" -eq 1 ]]; then
+        echo "Created: $config_path"
+      else
+        echo "Updated: $config_path"
+      fi
+      [[ -n "$baseline_tmp" ]] && rm -f "$baseline_tmp"
     fi
 
     ((updated+=1))
