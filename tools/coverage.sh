@@ -69,6 +69,10 @@ export RUSTDOCFLAGS="$RUSTDOCFLAGS -C instrument-coverage -Zunstable-options --p
 # If give a path to the LLVM_PROFILE_FILE envvar, you can ensure that the passed directory
 # is created automatically to place all profiling files there. 
 # This was done to avoid the presence of 80+ files in the project's root directory.
+# Clear stale profraw data first. Restored caches can contain incompatible raw
+# profiles from previous runs, which makes the LLVM runtime print merge errors to
+# stderr and breaks custom tests that assert exact stderr.
+rm -rf "${TARGET_DIR}/coverage"
 export LLVM_PROFILE_FILE="${TARGET_DIR}/coverage/conjure-oxide-%p-%m.profraw"
 mkdir -p "${TARGET_DIR}/coverage"
 # Custom tests resolve conjure-oxide binaries from PATH; during coverage we want
