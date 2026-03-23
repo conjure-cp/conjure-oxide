@@ -74,11 +74,15 @@ pub struct TestConfig {
 
     #[serde(default = "default_true", rename = "validate-with-conjure")]
     pub validate_with_conjure: bool,
+
+    // Generate this test but do not run it
+    pub skip: bool,
 }
 
 impl Default for TestConfig {
     fn default() -> Self {
         Self {
+            skip: false,
             parser: vec!["tree-sitter".to_string(), "via-conjure".to_string()],
             rewriter: vec!["naive".to_string()],
             comprehension_expander: vec![
@@ -93,7 +97,7 @@ impl Default for TestConfig {
                     "sat-direct".to_string(),
                     "sat-order".to_string(),
                 ];
-                #[cfg(feature = "smt")]
+
                 {
                     solvers.extend([
                         "smt".to_string(),

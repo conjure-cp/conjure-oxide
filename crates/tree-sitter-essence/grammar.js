@@ -229,7 +229,7 @@ module.exports = grammar ({
     toInt_expr: $ => seq("toInt","(", field("expression", choice($.bool_expr, $.comparison_expr, $.atom)), ")"),
 
     list_combining_expr_bool: $ => prec(-10, seq(
-      field("operator", choice("and", "or", "allDiff")),
+      field("operator", choice("and", "or")),
       "(",
       field("arg", $.atom),
       ")"
@@ -267,22 +267,31 @@ module.exports = grammar ({
     // comparison expressions - split by operand types for type checking
     comparison_expr: $ => prec(5, choice(
       $.arithmetic_comparison,
+      $.lex_comparison,
       $.equality_comparison,
-      $.set_comparison
+      $.set_comparison,
+      $.all_diff_comparison
     )),
 
     // Arithmetic comparisons: require arithmetic operands, return boolean
     arithmetic_comparison: $ => prec.left(seq(
       field("left", choice($.arithmetic_expr, $.atom)),
-      field("operator", choice("<lex", "<=lex", ">lex", ">=lex", "<=", ">=", "<", ">")),
+      field("operator", choice("<=", ">=", "<", ">")),
       field("right", choice($.arithmetic_expr, $.atom))
+    )),
+
+    // Lexicographic comparisons: require collection operands, return boolean.
+    lex_comparison: $ => prec.left(seq(
+      field("left", $.atom),
+      field("operator", choice("<lex", "<=lex", ">lex", ">=lex")),
+      field("right", $.atom)
     )),
 
     // Equality comparisons: work on any type, return boolean
     equality_comparison: $ => prec.left(seq(
-      field("left", choice($.bool_expr, $.arithmetic_expr, $.atom)),
+      field("left", choice($.bool_expr, $.arithmetic_expr, $.all_diff_comparison, $.atom)),
       field("operator", choice("=", "!=")),
-      field("right", choice($.bool_expr, $.arithmetic_expr, $.atom))
+      field("right", choice($.bool_expr, $.arithmetic_expr, $.all_diff_comparison, $.atom))
     )),
 
     // Set comparisons: require set operands, return boolean
@@ -291,6 +300,13 @@ module.exports = grammar ({
       field("operator", choice("in", "subset", "subsetEq", "supset", "supsetEq")),
       field("right", $.atom)
     ),
+
+    all_diff_comparison: $ => prec(-10, seq(
+      field("operator", "allDiff"),
+      "(",
+      field("arg", choice($.bool_expr, $.arithmetic_expr, $.atom)),
+      ")"
+    )),
 
     sub_bool_expr: $ => seq("(", field("expression", choice($.bool_expr, $.comparison_expr)), ")"),
     
@@ -319,7 +335,9 @@ module.exports = grammar ({
       field("index_or_slice", $.index_or_slice),
       field("set_literal", $.set_literal),
       field("set_operation", $.set_operation),
-      field("flatten", $.flatten)
+      field("flatten", $.flatten),
+      field("table", $.table),
+      field("negative_table", $.negative_table)
     )),
 
     sub_atom_expr: $ => seq("(", field("expression", $.atom), ")"),
@@ -424,6 +442,24 @@ module.exports = grammar ({
       "(",
       optional(field("depth", seq($.integer, ","))),
       field("expression", $.atom),
+      ")"
+    ),
+
+    table: $ => seq(
+      "table",
+      "(",
+      field("variables", $.matrix),
+      ",",
+      field("rows", $.matrix),
+      ")"
+    ),
+
+    negative_table: $ => seq(
+      "negativeTable",
+      "(",
+      field("variables", $.matrix),
+      ",",
+      field("rows", $.matrix),
       ")"
     ),
 

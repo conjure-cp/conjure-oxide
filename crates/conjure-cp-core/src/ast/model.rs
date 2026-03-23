@@ -3,6 +3,7 @@ use std::fmt::{Debug, Display};
 use std::hash::Hash;
 use std::sync::{Arc, RwLock};
 
+use crate::ast::Domain;
 use crate::context::Context;
 use crate::{bug, into_matrix_expr};
 use derivative::Derivative;
@@ -395,7 +396,7 @@ impl Display for Model {
                         pretty_variable_declaration(&self.symbols(), &name).unwrap()
                     )?;
                 }
-                DeclarationKind::ValueLetting(_) | DeclarationKind::TemporaryValueLetting(_) => {
+                DeclarationKind::ValueLetting(_, _) | DeclarationKind::TemporaryValueLetting(_) => {
                     writeln!(
                         f,
                         "{}",
@@ -547,5 +548,28 @@ impl SerdeModel {
             context: default_context(),
         };
         model.collect_stable_id_mapping()
+    }
+}
+
+/// A struct for the information about expressions
+#[serde_as]
+#[derive(Serialize)]
+pub struct ExprInfo {
+    pretty: String,
+    domain: Option<Moo<Domain>>,
+    children: Vec<ExprInfo>,
+}
+
+impl ExprInfo {
+    pub fn create(expr: &Expression) -> ExprInfo {
+        let pretty = expr.to_string();
+        let domain = expr.domain_of();
+        let children = expr.children().iter().map(Self::create).collect();
+
+        ExprInfo {
+            pretty,
+            domain,
+            children,
+        }
     }
 }

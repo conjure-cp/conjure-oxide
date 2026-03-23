@@ -284,6 +284,13 @@ pub enum Expression {
     /// allowed rows.
     #[compatible(JsonInput)]
     Table(Metadata, Moo<Expression>, Moo<Expression>),
+
+    /// `negativeTable([x1, x2, ...], [[r11, r12, ...], [r21, r22, ...], ...])`
+    ///
+    /// Represents a negative table constraint: the tuple `[x1, x2, ...]` must NOT match any of the
+    /// forbidden rows.
+    #[compatible(JsonInput)]
+    NegativeTable(Metadata, Moo<Expression>, Moo<Expression>),
     /// Binary subtraction operator
     ///
     /// This is a parser-level construct, and is immediately normalised to `Sum([a,-b])`.
@@ -881,6 +888,7 @@ impl Expression {
             }
             Expression::AllDiff(_, _) => Some(Domain::bool()),
             Expression::Table(_, _, _) => Some(Domain::bool()),
+            Expression::NegativeTable(_, _, _) => Some(Domain::bool()),
             Expression::FlatWatchedLiteral(_, _, _) => Some(Domain::bool()),
             Expression::MinionReify(_, _, _) => Some(Domain::bool()),
             Expression::MinionReifyImply(_, _, _) => Some(Domain::bool()),
@@ -1411,6 +1419,9 @@ impl Display for Expression {
             Expression::Table(_, tuple_expr, rows_expr) => {
                 write!(f, "table({tuple_expr}, {rows_expr})")
             }
+            Expression::NegativeTable(_, tuple_expr, rows_expr) => {
+                write!(f, "negativeTable({tuple_expr}, {rows_expr})")
+            }
             Expression::Bubble(_, box1, box2) => {
                 write!(f, "{{{} @ {}}}", box1.clone(), box2.clone())
             }
@@ -1641,6 +1652,7 @@ impl Typeable for Expression {
             }
             Expression::AllDiff(_, _) => ReturnType::Bool,
             Expression::Table(_, _, _) => ReturnType::Bool,
+            Expression::NegativeTable(_, _, _) => ReturnType::Bool,
             Expression::Bubble(_, inner, _) => inner.return_type(),
             Expression::FlatWatchedLiteral(_, _, _) => ReturnType::Bool,
             Expression::MinionReify(_, _, _) => ReturnType::Bool,

@@ -99,7 +99,7 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
     let conjure_solutions = if accept && validate_with_conjure {
         eprintln!("[integration] loading Conjure reference solutions for {model_path}");
         Some(Arc::new(
-            get_solutions_from_conjure(&model_path, Default::default()).map_err(|err| {
+            get_solutions_from_conjure(&model_path, None, Default::default()).map_err(|err| {
                 std::io::Error::other(format!(
                     "failed to fetch Conjure reference solutions for {model_path}: {err}"
                 ))
@@ -227,7 +227,7 @@ fn integration_test_inner(
     let parsed_model = match parser {
         Parser::TreeSitter => {
             let mut ctx = context.as_ref().write().unwrap();
-            ctx.file_name = Some(format!("{path}/{essence_base}.{extension}"));
+            ctx.essence_file_name = Some(format!("{path}/{essence_base}.{extension}"));
             parse_essence_file_native(&file_path, context.clone())?
         }
         Parser::ViaConjure => parse_essence_file(&file_path, context.clone())?,
@@ -273,7 +273,7 @@ fn integration_test_inner(
     let solver = match solver_fam {
         SolverFamily::Minion => Solver::new(Minion::default()),
         SolverFamily::Sat(_) => Solver::new(Sat::default()),
-        #[cfg(feature = "smt")]
+
         SolverFamily::Smt(_) => Solver::new(Smt::default()),
     };
 

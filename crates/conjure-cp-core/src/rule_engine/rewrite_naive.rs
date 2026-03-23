@@ -1,7 +1,7 @@
 use super::{RewriteError, RuleSet, resolve_rules::RuleData};
 use crate::{
     Model,
-    ast::{Expression as Expr, assertions::debug_assert_model_well_formed},
+    ast::Expression as Expr,
     bug,
     rule_engine::{
         get_rules_grouped,
@@ -17,7 +17,14 @@ use crate::{
 
 use itertools::Itertools;
 use std::{sync::Arc, time::Instant};
-use tracing::{Level, span, trace};
+use tracing::trace;
+
+// debug imports
+#[cfg(debug_assertions)]
+use {
+    crate::ast::assertions::debug_assert_model_well_formed,
+    tracing::{Level, span},
+};
 
 type VariableSnapshots = Option<(VariableDeclarationSnapshot, VariableDeclarationSnapshot)>;
 type ApplicableRule<'a, CtxFnType> = (RuleResult<'a>, u16, Expr, CtxFnType, VariableSnapshots);
@@ -48,6 +55,10 @@ pub fn rewrite_naive<'a>(
         "Model before rewriting:\n\n{}\n--\n",
         model
     );
+    trace!(
+        target: "rule_engine_human_verbose",
+        "elapsed_s,rule_level,rule_name,rule_set,status,expression"
+    );
 
     // Rewrite until there are no more rules left to apply.
     while done_something {
@@ -56,6 +67,7 @@ pub fn rewrite_naive<'a>(
             &rules_grouped,
             prop_multiple_equally_applicable,
             &mut rewriter_stats,
+            &run_start,
         )
         .is_some();
     }
@@ -86,6 +98,8 @@ fn try_rewrite_model(
     rules_grouped: &Vec<(u16, Vec<RuleData<'_>>)>,
     prop_multiple_equally_applicable: bool,
     stats: &mut RewriterStats,
+    #[cfg(debug_assertions)] run_start: &Instant,
+    #[cfg(not(debug_assertions))] _: &Instant,
 ) -> Option<()> {
     type CtxFn = Arc<dyn Fn(Expr) -> Expr>;
     let mut results: Vec<ApplicableRule<'_, CtxFn>> = vec![];
@@ -116,6 +130,17 @@ fn try_rewrite_model(
 
                 match (rd.rule.application)(&expr, &submodel.symbols()) {
                     Ok(red) => {
+                        // when called a lot, this becomes very expensive!
+                        #[cfg(debug_assertions)]
+                        log_verbose_rule_attempt(
+                            run_start,
+                            priority,
+                            rd.rule.name,
+                            rd.rule_set.name,
+                            "success",
+                            &expr,
+                        );
+
                         // Count successful rule applications
                         stats.rewriter_rule_applications =
                             Some(stats.rewriter_rule_applications.unwrap_or(0) + 1);
@@ -141,12 +166,13 @@ fn try_rewrite_model(
                     Err(_) => {
                         // when called a lot, this becomes very expensive!
                         #[cfg(debug_assertions)]
-                        tracing::trace!(
-                            "Rule attempted but not applied: {} (priority {}, rule set {}), to expression: {}",
-                            rd.rule.name,
+                        log_verbose_rule_attempt(
+                            run_start,
                             priority,
+                            rd.rule.name,
                             rd.rule_set.name,
-                            expr
+                            "fail",
+                            &expr,
                         );
                     }
                 }
@@ -197,6 +223,38 @@ fn try_rewrite_model(
     }
 
     Some(())
+}
+
+#[cfg(debug_assertions)]
+fn csv_escape(field: &str) -> String {
+    if field.contains([',', '"', '\n', '\r']) {
+        format!("\"{}\"", field.replace('"', "\"\""))
+    } else {
+        field.to_string()
+    }
+}
+
+#[cfg(debug_assertions)]
+fn log_verbose_rule_attempt(
+    run_start: &Instant,
+    priority: &u16,
+    rule_name: &str,
+    rule_set_name: &str,
+    status: &str,
+    expr: &Expr,
+) {
+    let elapsed_seconds = run_start.elapsed().as_secs_f64();
+    let expr_str = expr.to_string();
+    trace!(
+        target: "rule_engine_human_verbose",
+        "{:.3},{},{},{},{},{}",
+        elapsed_seconds,
+        priority,
+        csv_escape(rule_name),
+        csv_escape(rule_set_name),
+        status,
+        csv_escape(&expr_str)
+    );
 }
 
 // Exits with a bug if there are multiple equally applicable rules for an expression.

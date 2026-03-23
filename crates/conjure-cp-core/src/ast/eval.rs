@@ -248,6 +248,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             vec_lit_op::<bool, bool>(|e| e.iter().all(|&e| e), e.as_ref()).map(Lit::Bool)
         }
         Expr::Table(_, _, _) => None,
+        Expr::NegativeTable(_, _, _) => None,
         Expr::Root(_, _) => None,
         Expr::Or(_, es) => {
             // possibly cheating; definitely should be in partial eval instead
@@ -565,7 +566,16 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                 _ => None,
             }
         }
-        Expr::SATInt(..) => None,
+        Expr::SATInt(_, _, _, _) => {
+            // TODO: If this SATInt is composed of literals, we should evaluate it back to an
+            // integer literal.
+            //
+            // This is important because `is_all_constant` currently returns true for SATInts
+            // containing no references. If we don't evaluate them here, bubble rules will skip
+            // them (thinking they'll be constant-folded later), but they'll actually reach
+            // the solver adaptors as un-encoded unsafe operations, causing panics.
+            None
+        }
         Expr::PairwiseSum(_, a, b) => {
             match (eval_constant(a.as_ref())?, eval_constant(b.as_ref())?) {
                 (Lit::Int(a_int), Lit::Int(b_int)) => Some(Lit::Int(a_int + b_int)),
