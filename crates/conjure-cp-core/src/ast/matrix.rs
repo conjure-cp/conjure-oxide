@@ -4,7 +4,7 @@
 
 use std::collections::VecDeque;
 
-use crate::ast::{Domain, DomainOpError, Expression as Expr, GroundDomain, Metadata, Moo, Range};
+use crate::ast::{DomainOpError, Expression as Expr, GroundDomain, Metadata, Moo, Range};
 use conjure_cp_core::ast::DomainPtr;
 use itertools::{Itertools, izip};
 use uniplate::Uniplate as _;

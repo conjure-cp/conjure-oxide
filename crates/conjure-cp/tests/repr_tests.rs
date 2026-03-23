@@ -8,6 +8,7 @@ use conjure_cp_core::ast::Range;
 use conjure_cp_core::ast::{Domain, Literal};
 use conjure_cp_core::representation::{ReprAssignment, ReprDeclLevel, ReprDomainLevel, ReprRule};
 use conjure_cp_rules::representation::MatrixToAtom;
+use std::collections::HashSet;
 
 fn as_lits<I, T>(itr: I) -> Vec<Literal>
 where
@@ -45,19 +46,21 @@ fn test_matrix_int_3d_macro() {
     // Initialise the representation
     let (symbols, constraints) =
         MatrixToAtom::init_for(&mut var).expect("rule to apply successfully");
-
     assert_eq!(constraints, vec![]);
-    let mut n_symbols = 0;
+
+    #[allow(clippy::mutable_key_type)]
+    let mut repr_vars = HashSet::new();
     for (name, decl) in symbols.iter_local() {
         let aux = decl.as_find().unwrap();
         assert_eq!(aux.domain, domain_int!(1..24));
         assert!(matches!(name, Name::Repr(_)));
-        n_symbols += 1;
+        repr_vars.insert(decl.clone());
     }
-    assert_eq!(n_symbols, 24);
+    assert_eq!(repr_vars.len(), 24);
 
     // Get the representation
     let repr = var.get_repr::<MatrixToAtom>().expect("State to be stored");
+    assert_eq!(repr_vars, repr.repr_vars().into_iter().collect());
 
     // Check that all the bookkeeping vars were initialised correctly
     assert_eq!(repr.dimensions, vec![2, 3, 4]);

@@ -5,7 +5,7 @@ use crate::ast::{
 };
 use parking_lot::MappedRwLockReadGuard;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use std::fmt::Debug;
 
 pub type ReprInstantiateResult<D> = Result<(D, SymbolTable, Vec<Expression>), ReprInstantiateError>;
@@ -45,15 +45,17 @@ pub trait ReprDeclLevel:
     /// Convert an instance of this representation back to domain level
     fn to_domain_level(self) -> Self::DomainLevel;
 
+    /// Look up the values of representation variables
+    fn lookup_via(&self, lu: &LookupFn<'_>) -> Result<Self::Assignment, ReprUpError>;
+
+    /// Get the list of representation variables, in an arbitrary order
+    fn repr_vars(&self) -> VecDeque<DeclarationPtr>;
+
     /// Given an instance of this representation for some variable, and a value of the variable,
     /// construct the corresponding assignment of representation variables.
     fn down(&self, value: Literal) -> Result<Self::Assignment, ReprDownError> {
         self.clone().to_domain_level().down(value)
     }
-
-    /// Look up the values of representation variables
-    /// (TODO: This method impl should be auto-generated!)
-    fn lookup_via(&self, lu: &LookupFn<'_>) -> Result<Self::Assignment, ReprUpError>;
 
     fn lookup(
         &self,

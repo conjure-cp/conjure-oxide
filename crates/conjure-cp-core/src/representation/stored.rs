@@ -1,11 +1,12 @@
 use super::errors::ReprUpError;
 use super::types::{LookupFn, ReprAssignment, ReprDeclLevel, ReprResult};
-use crate::ast::{DeclarationPtr, Literal};
+use crate::ast::{DeclarationPtr, Literal, Name};
 use crate::representation::ReprRule;
 use parking_lot::MappedRwLockReadGuard;
 use serde::Deserialize;
 use serde_json;
 use std::any::Any;
+use std::collections::{HashMap, VecDeque};
 use std::fmt::Debug;
 use std::hash::{Hash, Hasher};
 
@@ -13,6 +14,14 @@ pub trait ReprStateStored: Any + Send + Sync + Debug {
     fn rule(&self) -> &'static dyn ReprRuleStored;
 
     fn up_via(&self, lu: &LookupFn<'_>) -> Result<Literal, ReprUpError>;
+
+    fn up(&self, raw_assignment: &HashMap<Name, Literal>) -> Result<Literal, ReprUpError> {
+        let lu: LookupFn<'_> =
+            Box::new(|decl: &DeclarationPtr| raw_assignment.get(&decl.name()).cloned());
+        self.up_via(&lu)
+    }
+
+    fn repr_vars(&self) -> VecDeque<DeclarationPtr>;
 
     fn as_any(&self) -> &dyn Any;
 
@@ -31,6 +40,10 @@ impl<D: ReprDeclLevel> ReprStateStored for D {
     fn up_via(&self, lu: &LookupFn<'_>) -> Result<Literal, ReprUpError> {
         let res = self.lookup_via(lu)?;
         Ok(res.up())
+    }
+
+    fn repr_vars(&self) -> VecDeque<DeclarationPtr> {
+        D::repr_vars(self)
     }
 
     fn as_any(&self) -> &dyn Any {

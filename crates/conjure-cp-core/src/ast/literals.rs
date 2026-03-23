@@ -1,4 +1,3 @@
-use funcmap::TryFuncMap;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};

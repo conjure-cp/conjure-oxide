@@ -1,6 +1,5 @@
 use std::fmt::Display;
 
-use itertools::Itertools as _;
 use polyquine::Quine;
 use serde::{Deserialize, Serialize};
 use ustr::Ustr;

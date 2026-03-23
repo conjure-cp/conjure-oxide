@@ -16,9 +16,6 @@ register_representation!(
         // Index domains of the original matrix
         pub index_domains: Vec<Moo<GroundDomain>>,
         // Map all possible indices to integers
-        // TODO: this is only really used at decl level.
-        //       we should rethink how the macros work so the user isn't forced to clone this
-        //       every time for assignments etc
         pub indices: Vec<BiMap<usize, Literal>>,
         // Flat vec of matrix elements
         pub elements: Vec<T>,

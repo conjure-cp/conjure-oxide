@@ -5,7 +5,7 @@ use crate::parser::ParseContext;
 use crate::parser::domain::parse_domain;
 use crate::util::{TypecheckingContext, named_children};
 use conjure_cp_core::ast::{AbstractLiteral, DomainPtr, Expression};
-use conjure_cp_core::{domain_int, range};
+use conjure_cp_core::domain_int;
 use tree_sitter::Node;
 
 pub fn parse_abstract(

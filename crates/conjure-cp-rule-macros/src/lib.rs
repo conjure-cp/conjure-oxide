@@ -1,5 +1,6 @@
 mod util;
 
+use itertools::Itertools;
 use proc_macro::TokenStream;
 use proc_macro2::Span;
 use quote::{ToTokens, quote};
@@ -179,6 +180,8 @@ pub fn register_rule_set(args: TokenStream) -> TokenStream {
     TokenStream::from(expanded)
 }
 
+// this is only constructed once at comptime so this doesn't matter
+#[allow(clippy::large_enum_variant)]
 enum ReprStateType {
     Struct(ItemStruct, Option<ItemImpl>),
     Path(TypePath),
@@ -207,42 +210,62 @@ struct ReprDefArgs {
     ident: Ident,
     /// Representation state type
     state_ty: ReprStateType,
-    /// Initialisation at domain level: `init: (DomainPtr) -> Result<State<DomainPtr>, ReprError>`
+    /// Initialisation at domain level: `init: (DomainPtr) -> Result<State<DomainPtr>, ReprInitError>`
     init_fn: ItemFn,
     /// Generating structural constraints: `structural: (&State<DeclarationPtr>) -> Vec<Expression>`
     structural_fn: ItemFn,
-    /// Going down: `down: (&State<DeclarationPtr>, Literal) -> Result<State<Literal>, ReprError>`
+    /// Going down: `down: (&State<DeclarationPtr>, Literal) -> Result<State<Literal>, ReprDownError>`
     down_fn: ItemFn,
     /// Going up: `up: State<Literal> -> Literal`
     up_fn: ItemFn,
+    /// Getting representation variables: `repr_vars: &State<DeclarationPtr> -> VecDeque<DeclarationPtr>`
+    /// If not provided, we attempt to codegen one using uniplate
+    repr_vars_fn: Option<ItemFn>,
 }
 
 impl Parse for ReprDefArgs {
     fn parse(input: ParseStream) -> Result<Self> {
         let ident = input.parse::<Ident>()?;
-        // input.parse::<Comma>()?;
         let state_ty = input.parse::<ReprStateType>()?;
 
         // TODO: Exact syntax subject to change
 
         let mut funcs = HashMap::<String, ItemFn>::new();
-        for _ in 0..4 {
-            // input.parse::<Comma>()?;
-            let func = input.parse::<ItemFn>()?;
-            let ident = func.sig.ident.to_string();
-            funcs.insert(ident, func);
+        let mut errors: Vec<syn::Error> = Vec::new();
+        for _ in 0..5 {
+            match input.parse::<ItemFn>() {
+                Ok(func) => {
+                    let ident = func.sig.ident.to_string();
+                    funcs.insert(ident, func);
+                }
+                Err(e) => errors.push(e),
+            }
         }
 
+        let fmt_errors = format!(
+            "\nErrors:\n{}",
+            errors.iter().map(syn::Error::to_string).join("\n")
+        );
+
         let init_fn = funcs.remove("init").ok_or_else(|| {
-            input.error("Expected `fn init(DomainPtr) -> Result<State<DomainPtr>, ReprError>`")
+            input.error(format!("Expected `fn init(DomainPtr) -> Result<State<DomainPtr>, ReprInitError>`{fmt_errors}"))
         })?;
         let structural_fn = funcs.remove("structural").ok_or_else(|| {
-            input.error("Expected `fn structural(&State<DeclarationPtr>) -> Vec<Expression>`")
+            input.error(format!(
+                "Expected `fn structural(&State<DeclarationPtr>) -> Vec<Expression>`{fmt_errors}"
+            ))
         })?;
-        let down_fn = funcs.remove("down").ok_or_else(|| input.error("Expected `fn down(&State<DomainPtr>, Literal) -> Result<State<Literal>, ReprError>`"))?;
-        let up_fn = funcs
-            .remove("up")
-            .ok_or_else(|| input.error("Expected `fn up(State<Literal>) -> Literal`"))?;
+        let down_fn = funcs.remove("down").ok_or_else(|| input.error(format!("Expected `fn down(&State<DomainPtr>, Literal) -> Result<State<Literal>, ReprDownError>`{fmt_errors}")))?;
+        let up_fn = funcs.remove("up").ok_or_else(|| {
+            input.error(format!(
+                "Expected `fn up(State<Literal>) -> Literal`{fmt_errors}"
+            ))
+        })?;
+        let repr_vars_fn = funcs.remove("repr_vars");
+
+        if repr_vars_fn.is_none() && matches!(state_ty, ReprStateType::Path(..)) {
+            return Err(input.error("A repr_vars implementation is required for external types"));
+        }
 
         Ok(Self {
             ident,
@@ -251,6 +274,7 @@ impl Parse for ReprDefArgs {
             structural_fn,
             down_fn,
             up_fn,
+            repr_vars_fn,
         })
     }
 }
@@ -310,17 +334,25 @@ pub fn register_representation(input: TokenStream) -> TokenStream {
     );
     let prefixed_down = Ident::new(&format!("{}down", prefix), args.down_fn.sig.ident.span());
     let prefixed_up = Ident::new(&format!("{}up", prefix), args.up_fn.sig.ident.span());
+    let prefixed_repr_vars = args
+        .repr_vars_fn
+        .as_ref()
+        .map(|f| Ident::new(&format!("{}repr_vars", prefix), f.sig.ident.span()));
 
     let mut init_fn = rename_fn(args.init_fn, &prefixed_init);
     let mut structural_fn = rename_fn(args.structural_fn, &prefixed_structural);
     let mut down_fn = rename_fn(args.down_fn, &prefixed_down);
     let mut up_fn = rename_fn(args.up_fn, &prefixed_up);
+    let mut repr_vars_fn = args
+        .repr_vars_fn
+        .map(|f| rename_fn(f, prefixed_repr_vars.as_ref().unwrap()));
 
     if matches!(&args.state_ty, ReprStateType::Struct(..)) {
         init_fn = rename_ident_in_fn(init_fn, &user_state_ident, &state_ident);
         structural_fn = rename_ident_in_fn(structural_fn, &user_state_ident, &state_ident);
         down_fn = rename_ident_in_fn(down_fn, &user_state_ident, &state_ident);
         up_fn = rename_ident_in_fn(up_fn, &user_state_ident, &state_ident);
+        repr_vars_fn = repr_vars_fn.map(|f| rename_ident_in_fn(f, &user_state_ident, &state_ident));
     }
 
     // Rename idents in the user-provided impl
@@ -333,6 +365,18 @@ pub fn register_representation(input: TokenStream) -> TokenStream {
     } else {
         None
     };
+
+    let repr_vars_impl = if repr_vars_fn.is_some() {
+        quote! {#prefixed_repr_vars(self)}
+    } else {
+        quote! {self.__collect_t_children()}
+    };
+    let repr_vars_fn_toks = repr_vars_fn.map(|f| {
+        quote! {
+            #[allow(non_snake_case)]
+            #f
+        }
+    });
 
     // Static name for distributed_slice entry
     let static_name = format!("CONJURE_GEN_REPR_{}", repr_name_str).to_uppercase();
@@ -360,6 +404,7 @@ pub fn register_representation(input: TokenStream) -> TokenStream {
         #down_fn
         #[allow(non_snake_case)]
         #up_fn
+        #repr_vars_fn_toks
 
         // -- Trait implementations
         impl ReprDomainLevel for #state_ident<DomainPtr> {
@@ -400,6 +445,10 @@ pub fn register_representation(input: TokenStream) -> TokenStream {
                 lookup: &LookupFn<'_>,
             ) -> ::core::result::Result<Self::Assignment, ReprUpError> {
                 default_impls::lookup_via_default_impl(self, lookup)
+            }
+
+            fn repr_vars(&self) -> ::std::collections::VecDeque<DeclarationPtr> {
+                #repr_vars_impl
             }
         }
 
@@ -455,6 +504,11 @@ fn generate_struct_def(
         generic_param_ident
     );
 
+    let mut collect_children_exprs: Vec<proc_macro2::TokenStream> = Vec::new();
+    let mut biplate_bounds: Vec<proc_macro2::TokenStream> = vec![quote! {
+        #generic_param_ident: ::conjure_cp::representation::_dependencies::uniplate::Uniplate
+    }];
+
     let fields = match &item_struct.fields {
         syn::Fields::Named(named) => {
             let field_tokens: Vec<_> = named
@@ -463,10 +517,22 @@ fn generate_struct_def(
                 .map(|f| {
                     let field_attrs = &f.attrs;
                     let field_vis = &f.vis;
-                    let field_ident = &f.ident;
+                    let field_ident = f
+                        .ident
+                        .as_ref()
+                        .expect("named field must have an identifier");
                     let field_ty = &f.ty;
 
                     if type_contains_ident(&f.ty, &generic_param_ident) {
+                        collect_children_exprs.push(quote! {
+                            children.extend(
+                                ::conjure_cp::representation::_dependencies::uniplate::Biplate::<#generic_param_ident>::children_bi(&self.#field_ident)
+                            );
+                        });
+                        biplate_bounds.push(quote! {
+                            #field_ty: ::conjure_cp::representation::_dependencies::uniplate::Biplate<#generic_param_ident>
+                        });
+
                         let serde_as_ty = replace_ident_in_type(
                             f.ty.clone(),
                             &generic_param_ident,
@@ -493,12 +559,23 @@ fn generate_struct_def(
             let field_tokens: Vec<_> = unnamed
                 .unnamed
                 .iter()
-                .map(|f| {
+                .enumerate()
+                .map(|(idx, f)| {
                     let field_attrs = &f.attrs;
                     let field_vis = &f.vis;
                     let field_ty = &f.ty;
 
                     if type_contains_ident(&f.ty, &generic_param_ident) {
+                        let index = syn::Index::from(idx);
+                        collect_children_exprs.push(quote! {
+                            children.extend(
+                                ::conjure_cp::representation::_dependencies::uniplate::Biplate::<#generic_param_ident>::children_bi(&self.#index)
+                            );
+                        });
+                        biplate_bounds.push(quote! {
+                            #field_ty: ::conjure_cp::representation::_dependencies::uniplate::Biplate<#generic_param_ident>
+                        });
+
                         let serde_as_ty = replace_ident_in_type(
                             f.ty.clone(),
                             &generic_param_ident,
@@ -524,6 +601,13 @@ fn generate_struct_def(
         syn::Fields::Unit => quote! { ; },
     };
 
+    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
+    let method_where_clause = if biplate_bounds.is_empty() {
+        quote! {}
+    } else {
+        quote! { where #(#biplate_bounds),* }
+    };
+
     quote! {
         #[allow(non_camel_case_types)]
         #[::conjure_cp::representation::_dependencies::serde_with::serde_as(
@@ -545,5 +629,15 @@ fn generate_struct_def(
         )]
         #[funcmap(crate = "::conjure_cp::representation::_dependencies::funcmap")]
         pub struct #prefixed_ident #generics #fields
+
+        impl #impl_generics #prefixed_ident #ty_generics #where_clause {
+            fn __collect_t_children(&self) -> ::std::collections::VecDeque<#generic_param_ident>
+            #method_where_clause
+            {
+                let mut children = ::std::collections::VecDeque::new();
+                #(#collect_children_exprs)*
+                children
+            }
+        }
     }
 }

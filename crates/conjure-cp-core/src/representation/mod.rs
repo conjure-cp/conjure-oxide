@@ -36,4 +36,5 @@ pub mod _dependencies {
     pub use serde_json;
     pub use serde_with;
     pub use serde_with::{DeserializeAs, SerializeAs, serde_as};
+    pub use uniplate;
 }
