@@ -6,10 +6,7 @@ use super::{
     serde::{AsId, HasId},
 };
 use crate::bug;
-use crate::representation::{
-    stored::{ReprRuleStored, ReprStateStored},
-    types::ReprInitResult,
-};
+use crate::representation::{ReprError, ReprResult, ReprRulePtr, ReprSelectError, ReprStateStored};
 use derivative::Derivative;
 use parking_lot::MappedRwLockReadGuard;
 use serde::{Deserialize, Serialize};
@@ -33,7 +30,7 @@ use uniplate::Uniplate;
 pub struct Reference {
     #[serde_as(as = "AsId")]
     pub ptr: DeclarationPtr,
-    pub repr: Option<&'static dyn ReprRuleStored>,
+    pub repr: Option<ReprRulePtr>,
 }
 
 impl Reference {
@@ -65,20 +62,22 @@ impl Reference {
         self.ptr.resolve_domain()
     }
 
-    // TODO: make this a Result after repr errors are implemented properly
     /// Select the given representation for this reference, if it is initialised for
     /// the underlying declaration
-    pub fn select_repr(&mut self, rule: &'static dyn ReprRuleStored) -> Option<()> {
+    pub fn select_repr(&mut self, rule: ReprRulePtr) -> Result<ReprRulePtr, ReprSelectError> {
+        if let Some(repr) = self.repr {
+            return Err(ReprSelectError::AlreadySelected(repr));
+        }
         if !self.ptr.reprs().has_repr(rule) {
-            return None; // TODO: error here instead
+            return Err(ReprSelectError::DoesNotExist(self.ptr.clone(), rule.name()));
         }
         self.repr = Some(rule);
-        Some(())
+        Ok(rule)
     }
 
-    /// Initialise and select the given representation for this reference
-    pub fn init_repr(&mut self, rule: &'static dyn ReprRuleStored) -> ReprInitResult {
-        let res = rule.init_for(&mut self.ptr);
+    /// Select the given representation for this reference, initialising it if necessary
+    pub fn select_or_init_repr(&mut self, rule: ReprRulePtr) -> ReprResult {
+        let res = rule.init_if_not_exists(&mut self.ptr);
         if res.is_ok() {
             self.repr = Some(rule);
         }

@@ -199,7 +199,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                 .position(|x| x.is_none())
                 .expect("slice expression should have a hole dimension");
 
-            let missing_domain = matrix::index_domains(subject.clone())[hole_dim].clone();
+            let missing_domain = matrix::index_domains(&subject)[hole_dim].clone();
 
             let indices: Vec<Option<Lit>> = indices
                 .iter()

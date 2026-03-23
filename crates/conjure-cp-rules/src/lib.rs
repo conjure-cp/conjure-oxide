@@ -19,7 +19,7 @@ mod utils;
 mod variables_in_domains;
 
 // TODO (repr): general representation rules
-mod representation;
+pub mod representation;
 // mod select_representation;
 
 // TODO (repr): record representation rules

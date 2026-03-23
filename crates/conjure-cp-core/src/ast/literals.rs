@@ -43,6 +43,12 @@ impl HasDomain for Literal {
     }
 }
 
+impl From<AbstractLiteral<Literal>> for Literal {
+    fn from(literal: AbstractLiteral<Literal>) -> Self {
+        Literal::AbstractLiteral(literal)
+    }
+}
+
 // make possible values of an AbstractLiteral a closed world to make the trait bounds more sane (particularly in Uniplate instances!!)
 pub trait AbstractLiteralValue:
     Clone + Eq + PartialEq + Display + Uniplate + Biplate<RecordValue<Self>> + 'static
@@ -719,9 +725,9 @@ mod tests {
         let Literal::AbstractLiteral(abslit) = tensor else {
             panic!("expected abstract literal")
         };
-        let actual_elems: Vec<Literal> = flatten(abslit).collect();
+        let actual_elems: Vec<Literal> = flatten(&abslit).cloned().collect();
 
-        let expected_elems = (1..25).into_iter().map(Literal::from).collect::<Vec<_>>();
+        let expected_elems = (1..25).map(Literal::from).collect::<Vec<_>>();
         assert_eq!(actual_elems, expected_elems);
     }
 

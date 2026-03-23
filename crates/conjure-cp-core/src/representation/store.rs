@@ -48,6 +48,10 @@ impl ReprStore {
         }
     }
 
+    pub fn has<T: ReprRule + ?Sized>(&self) -> bool {
+        self.get::<T>().is_some()
+    }
+
     pub fn get<T: ReprRule + ?Sized>(&self) -> Option<&T::DeclLevel> {
         self.inner
             .get(T::NAME)

@@ -1,3 +1,4 @@
+use super::errors::{ReprDownError, ReprError, ReprInitError, ReprInstantiateError, ReprUpError};
 use super::stored::ReprRuleStored;
 use crate::ast::{
     DeclarationPtr, DomainPtr, Expression, Literal, Metadata, Moo, Name, Reference, SymbolTable,
@@ -7,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::Debug;
 
-pub type ReprError = String;
+pub type ReprInstantiateResult<D> = Result<(D, SymbolTable, Vec<Expression>), ReprInstantiateError>;
 
 pub trait ReprDomainLevel {
     type Assignment: ReprAssignment;
@@ -16,7 +17,7 @@ pub trait ReprDomainLevel {
 
     /// Initialise this representation at the domain level.
     /// Returns `Err` if it is not applicable to the given domain.
-    fn init(dom: DomainPtr) -> Result<Self, ReprError>
+    fn init(dom: DomainPtr) -> Result<Self, ReprInitError>
     where
         Self: Sized;
 
@@ -25,11 +26,11 @@ pub trait ReprDomainLevel {
     /// - The declaration-level representation
     /// - Representation variables to add to the symbol table
     /// - List of structural constraints
-    fn instantiate(self, decl: DeclarationPtr) -> (Self::DeclLevel, SymbolTable, Vec<Expression>);
+    fn instantiate(self, decl: DeclarationPtr) -> ReprInstantiateResult<Self::DeclLevel>;
 
     /// Given an instance of this representation for some domain, and a value in that domain,
     /// construct the corresponding assignment of representation variables.
-    fn down(&self, value: Literal) -> Result<Self::Assignment, ReprError>;
+    fn down(&self, value: Literal) -> Result<Self::Assignment, ReprDownError>;
 }
 
 pub type LookupFn<'a> = Box<dyn Fn(&DeclarationPtr) -> Option<Literal> + 'a>;
@@ -46,18 +47,18 @@ pub trait ReprDeclLevel:
 
     /// Given an instance of this representation for some variable, and a value of the variable,
     /// construct the corresponding assignment of representation variables.
-    fn down(&self, value: Literal) -> Result<Self::Assignment, ReprError> {
+    fn down(&self, value: Literal) -> Result<Self::Assignment, ReprDownError> {
         self.clone().to_domain_level().down(value)
     }
 
     /// Look up the values of representation variables
     /// (TODO: This method impl should be auto-generated!)
-    fn lookup_via(&self, lu: &LookupFn<'_>) -> Result<Self::Assignment, ReprError>;
+    fn lookup_via(&self, lu: &LookupFn<'_>) -> Result<Self::Assignment, ReprUpError>;
 
     fn lookup(
         &self,
         raw_assignment: &HashMap<Name, Literal>,
-    ) -> Result<Self::Assignment, ReprError> {
+    ) -> Result<Self::Assignment, ReprUpError> {
         let lu: LookupFn<'_> =
             Box::new(|decl: &DeclarationPtr| raw_assignment.get(&decl.name()).cloned());
         self.lookup_via(&lu)
@@ -70,7 +71,7 @@ pub trait ReprAssignment {
     fn up(self) -> Literal;
 }
 
-pub type ReprInitResult = Result<(SymbolTable, Vec<Expression>), ReprError>;
+pub type ReprResult = Result<(SymbolTable, Vec<Expression>), ReprError>;
 
 pub trait ReprRule: Send + Sync {
     const NAME: &'static str;
@@ -83,22 +84,16 @@ pub trait ReprRule: Send + Sync {
         decl.get_repr::<Self>()
     }
 
-    fn init_for(decl: &mut DeclarationPtr) -> ReprInitResult {
-        let decl2 = decl.clone();
-
-        if decl.reprs().get::<Self>().is_some() {
-            return Err(format!(
-                "This representation already exists for {}",
-                decl.name()
-            ));
-        }
+    fn init_for(decl: &mut DeclarationPtr) -> ReprResult {
         let dom = decl
             .domain()
-            .ok_or(format!("Variable {} must have a domain", decl.name()))?;
+            .ok_or(ReprInstantiateError::NoDomain(decl.clone()))?;
 
         let dom_level = Self::DomainLevel::init(dom)?;
-        let (state, symbols, mut constraints) = dom_level.instantiate(decl2.clone());
+        let (state, symbols, mut constraints) = dom_level.instantiate(decl.clone())?;
 
+        // save a copy `decl` so we can acquire a lock on the original
+        let decl2 = decl.clone();
         for (_, decl) in decl.reprs().iter() {
             let us = Reference {
                 ptr: decl2.clone(),
@@ -115,5 +110,12 @@ pub trait ReprRule: Send + Sync {
         // we acquire a write lock here so nothing else beyond this point should touch `decl`
         decl.reprs_mut().put::<Self>(state);
         Ok((symbols, constraints))
+    }
+
+    fn init_if_not_exists(decl: &mut DeclarationPtr) -> ReprResult {
+        if decl.reprs().has::<Self>() {
+            return Ok((SymbolTable::default(), Vec::new()));
+        }
+        Self::init_for(decl)
     }
 }

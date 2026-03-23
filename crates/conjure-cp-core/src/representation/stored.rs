@@ -1,4 +1,5 @@
-use super::types::{LookupFn, ReprAssignment, ReprDeclLevel, ReprInitResult};
+use super::errors::ReprUpError;
+use super::types::{LookupFn, ReprAssignment, ReprDeclLevel, ReprResult};
 use crate::ast::{DeclarationPtr, Literal};
 use crate::representation::ReprRule;
 use parking_lot::MappedRwLockReadGuard;
@@ -11,7 +12,7 @@ use std::hash::{Hash, Hasher};
 pub trait ReprStateStored: Any + Send + Sync + Debug {
     fn rule(&self) -> &'static dyn ReprRuleStored;
 
-    fn up_via(&self, lu: &LookupFn<'_>) -> Result<Literal, String>;
+    fn up_via(&self, lu: &LookupFn<'_>) -> Result<Literal, ReprUpError>;
 
     fn as_any(&self) -> &dyn Any;
 
@@ -27,7 +28,7 @@ impl<D: ReprDeclLevel> ReprStateStored for D {
         D::RULE
     }
 
-    fn up_via(&self, lu: &LookupFn<'_>) -> Result<Literal, String> {
+    fn up_via(&self, lu: &LookupFn<'_>) -> Result<Literal, ReprUpError> {
         let res = self.lookup_via(lu)?;
         Ok(res.up())
     }
@@ -52,7 +53,9 @@ impl<D: ReprDeclLevel> ReprStateStored for D {
 pub trait ReprRuleStored: Send + Sync {
     fn name(&self) -> &'static str;
 
-    fn init_for(&self, decl: &mut DeclarationPtr) -> ReprInitResult;
+    fn init_for(&self, decl: &mut DeclarationPtr) -> ReprResult;
+
+    fn init_if_not_exists(&self, decl: &mut DeclarationPtr) -> ReprResult;
 
     fn get_for<'a>(
         &self,
@@ -70,8 +73,12 @@ impl<R: ReprRule> ReprRuleStored for R {
         R::NAME
     }
 
-    fn init_for(&self, decl: &mut DeclarationPtr) -> ReprInitResult {
+    fn init_for(&self, decl: &mut DeclarationPtr) -> ReprResult {
         R::init_for(decl)
+    }
+
+    fn init_if_not_exists(&self, decl: &mut DeclarationPtr) -> ReprResult {
+        R::init_if_not_exists(decl)
     }
 
     fn get_for<'a>(
@@ -108,7 +115,7 @@ impl Eq for dyn ReprRuleStored {}
 
 impl PartialOrd for dyn ReprRuleStored {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        self.name().partial_cmp(other.name())
+        Some(self.cmp(other))
     }
 }
 

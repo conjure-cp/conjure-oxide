@@ -1,19 +1,22 @@
 //! Default implementations of some Repr trait methods using functors;
 //! These methods are used by the register_repr! macro
 
-use super::types::{LookupFn, ReprDomainLevel, ReprError};
+use super::errors::ReprUpError;
+use super::types::{LookupFn, ReprDomainLevel, ReprInstantiateResult};
 use super::util::try_up_via;
 use crate::ast::{
     DeclarationKind, DeclarationPtr, DomainPtr, Expression, Literal, Name, SymbolTable,
     eval_constant,
 };
+use crate::representation::ReprInstantiateError;
+use anyhow::anyhow;
 use funcmap::{FuncMap, TryFuncMap};
 
 /// Implement [ReprDeclLevel::lookup_via] as a functor `S<DeclarationPtr> -> S<Literal>`.
 pub fn lookup_via_default_impl<DeclL, A>(
     decl_level: &DeclL,
     lookup: &LookupFn<'_>,
-) -> Result<A, ReprError>
+) -> Result<A, ReprUpError>
 where
     DeclL: Clone + TryFuncMap<DeclarationPtr, Literal, Output = A>,
 {
@@ -38,7 +41,7 @@ pub fn instantiate_default_impl<DomL, DecL, A, SF>(
     dom_level: DomL,
     decl: DeclarationPtr,
     structural: SF,
-) -> (DecL, SymbolTable, Vec<Expression>)
+) -> ReprInstantiateResult<DecL>
 where
     DomL: ReprDomainLevel<Assignment = A, DeclLevel = DecL>
         + FuncMap<DomainPtr, DeclarationPtr, Output = DecL>,
@@ -65,7 +68,7 @@ where
 
             let decl_level = dom_level.func_map(declare_field_var);
             let constraints = structural(&decl_level);
-            (decl_level, symtab, constraints)
+            Ok((decl_level, symtab, constraints))
         }
         DeclarationKind::ValueLetting(expr, _) | DeclarationKind::TemporaryValueLetting(expr) => {
             let declare_field_value_letting = |lit: Literal| {
@@ -79,13 +82,18 @@ where
                 field_decl
             };
 
-            let val = eval_constant(expr).expect("expression to be constant");
+            let val = eval_constant(expr).ok_or(ReprInstantiateError::Other(anyhow!(
+                "expression {expr} is not constant"
+            )))?;
             let val_down = dom_level.down(val).unwrap();
             let decl_level = val_down.func_map(declare_field_value_letting);
             // no constraints for value letting reprs
             let constraints = vec![];
-            (decl_level, symtab, constraints)
+            Ok((decl_level, symtab, constraints))
         }
-        _ => todo!(),
+        _ => Err(ReprInstantiateError::BadKind(
+            decl.clone(),
+            String::from("expected a variable or value letting"),
+        )),
     }
 }

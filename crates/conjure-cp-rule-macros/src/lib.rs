@@ -367,7 +367,7 @@ pub fn register_representation(input: TokenStream) -> TokenStream {
             type Assignment = #state_ident<Literal>;
             type DeclLevel = #state_ident<DeclarationPtr>;
 
-            fn init(dom: DomainPtr) -> ::core::result::Result<Self, ReprError>
+            fn init(dom: DomainPtr) -> ::core::result::Result<Self, ReprInitError>
             where
                 Self: Sized,
             {
@@ -377,11 +377,11 @@ pub fn register_representation(input: TokenStream) -> TokenStream {
             fn down(
                 &self,
                 value: Literal,
-            ) -> ::core::result::Result<Self::Assignment, ReprError> {
+            ) -> ::core::result::Result<Self::Assignment, ReprDownError> {
                 #prefixed_down(self, value)
             }
 
-            fn instantiate(self, decl: DeclarationPtr) -> (Self::DeclLevel, SymbolTable, Vec<Expression>) {
+            fn instantiate(self, decl: DeclarationPtr) -> ReprInstantiateResult<Self::DeclLevel> {
                 default_impls::instantiate_default_impl(self, decl, #prefixed_structural)
             }
         }
@@ -398,7 +398,7 @@ pub fn register_representation(input: TokenStream) -> TokenStream {
             fn lookup_via(
                 &self,
                 lookup: &LookupFn<'_>,
-            ) -> ::core::result::Result<Self::Assignment, ReprError> {
+            ) -> ::core::result::Result<Self::Assignment, ReprUpError> {
                 default_impls::lookup_via_default_impl(self, lookup)
             }
         }
