@@ -11,10 +11,7 @@ pub use expand_via_solver_ac::expand_via_solver_ac;
 
 use conjure_cp::{
     ast::{
-        DeclarationPtr, Domain, DomainPtr, Expression as Expr, IntVal, Moo, Name, Range, Reference,
-        SymbolTable, UnresolvedDomain,
-        comprehension::{Comprehension, ComprehensionQualifier},
-        serde::{HasId, ObjId},
+        DeclarationPtr, Domain, DomainPtr, Expression as Expr, IntVal, Moo, Name, Range, Reference, SymbolTable, UnresolvedDomain, comprehension::{Comprehension, ComprehensionQualifier}, serde::{HasId, ObjId}
     },
     bug, into_matrix_expr,
     rule_engine::{
@@ -77,6 +74,13 @@ fn expand_comprehension_native(expr: &Expr, symbols: &SymbolTable) -> Applicatio
     };
 
     let comprehension = comprehension.as_ref().clone();
+
+    for qual in &comprehension.qualifiers {
+        if let ComprehensionQualifier::ExpressionGenerator { .. } = qual {
+            return Err(RuleNotApplicable);
+        }
+    }
+
     let mut symbols = symbols.clone();
     let results = expand_native(comprehension, &mut symbols)
         .unwrap_or_else(|e| bug!("native comprehension expansion failed: {e}"));
@@ -110,6 +114,13 @@ fn expand_comprehension_via_solver(expr: &Expr, symbols: &SymbolTable) -> Applic
     };
 
     let comprehension = comprehension.as_ref().clone();
+
+    for qual in &comprehension.qualifiers {
+        if let ComprehensionQualifier::ExpressionGenerator { .. } = qual {
+            return Err(RuleNotApplicable);
+        }
+    }    
+
     let results = expand_via_solver(comprehension)
         .unwrap_or_else(|e| bug!("via-solver comprehension expansion failed: {e}"));
     Ok(Reduction::with_symbols(
@@ -146,6 +157,12 @@ fn expand_comprehension_via_solver_ac(expr: &Expr, symbols: &SymbolTable) -> App
     );
 
     let comprehension = as_single_comprehension(&expr.children()[0]).ok_or(RuleNotApplicable)?;
+
+    for qual in &comprehension.qualifiers {
+        if let ComprehensionQualifier::ExpressionGenerator { .. } = qual {
+            return Err(RuleNotApplicable);
+        }
+    }
 
     let results =
         expand_via_solver_ac(comprehension, ac_operator_kind).or(Err(RuleNotApplicable))?;
