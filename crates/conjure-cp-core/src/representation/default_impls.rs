@@ -33,12 +33,10 @@ where
 
 /// Implement [ReprDomainLevel::instantiate] as a functor `S<DomainPtr> -> S<DeclarationPtr>`.
 /// Needs the following additional arguments:
-/// - `repr_name` - name of the representation rule, to generate names correctly
 /// - `structural` - function which takes `&S<DeclarationPtr>` and generates its structural constraints
 pub fn instantiate_default_impl<DomL, DecL, A, SF>(
     dom_level: DomL,
     decl: DeclarationPtr,
-    repr_name: &str,
     structural: SF,
 ) -> (DecL, SymbolTable, Vec<Expression>)
 where
@@ -48,6 +46,7 @@ where
     SF: Fn(&DecL) -> Vec<Expression>,
 {
     let src_name = decl.name();
+    let repr_name = <DomL as ReprDomainLevel>::RULE.name();
     let mut symtab = SymbolTable::new();
     let mut counter = 1;
 

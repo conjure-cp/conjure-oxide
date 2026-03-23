@@ -1,7 +1,8 @@
+use super::stored::ReprRuleStored;
 use crate::ast::{
     DeclarationPtr, DomainPtr, Expression, Literal, Metadata, Moo, Name, Reference, SymbolTable,
 };
-use crate::representation::registry::get_repr_by_name;
+use parking_lot::MappedRwLockReadGuard;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::Debug;
@@ -11,6 +12,7 @@ pub type ReprError = String;
 pub trait ReprDomainLevel {
     type Assignment: ReprAssignment;
     type DeclLevel: ReprDeclLevel<DomainLevel = Self, Assignment = Self::Assignment>;
+    const RULE: &'static dyn ReprRuleStored;
 
     /// Initialise this representation at the domain level.
     /// Returns `Err` if it is not applicable to the given domain.
@@ -37,6 +39,7 @@ pub trait ReprDeclLevel:
 {
     type Assignment: ReprAssignment;
     type DomainLevel: ReprDomainLevel<DeclLevel = Self, Assignment = Self::Assignment>;
+    const RULE: &'static dyn ReprRuleStored;
 
     /// Convert an instance of this representation back to domain level
     fn to_domain_level(self) -> Self::DomainLevel;
@@ -69,16 +72,21 @@ pub trait ReprAssignment {
 
 pub type ReprInitResult = Result<(SymbolTable, Vec<Expression>), ReprError>;
 
-pub trait ReprRule {
+pub trait ReprRule: Send + Sync {
     const NAME: &'static str;
+    const STORED: &'static dyn ReprRuleStored;
     type Assignment: ReprAssignment;
     type DeclLevel: ReprDeclLevel<Assignment = Self::Assignment>;
     type DomainLevel: ReprDomainLevel<DeclLevel = Self::DeclLevel>;
 
+    fn get_for(decl: &DeclarationPtr) -> Option<MappedRwLockReadGuard<'_, Self::DeclLevel>> {
+        decl.get_repr::<Self>()
+    }
+
     fn init_for(decl: &mut DeclarationPtr) -> ReprInitResult {
         let decl2 = decl.clone();
 
-        if decl.get_repr::<Self>().is_some() {
+        if decl.reprs().get::<Self>().is_some() {
             return Err(format!(
                 "This representation already exists for {}",
                 decl.name()
@@ -91,16 +99,14 @@ pub trait ReprRule {
         let dom_level = Self::DomainLevel::init(dom)?;
         let (state, symbols, mut constraints) = dom_level.instantiate(decl2.clone());
 
-        let our_rule = get_repr_by_name(Self::NAME).expect("repr rule to exist");
-        for (other_name, _) in decl.reprs().iter() {
-            let their_rule = get_repr_by_name(other_name).expect("repr rule to exist");
+        for (_, decl) in decl.reprs().iter() {
             let us = Reference {
                 ptr: decl2.clone(),
-                repr: Some(our_rule),
+                repr: Some(Self::STORED),
             };
             let them = Reference {
                 ptr: decl2.clone(),
-                repr: Some(their_rule),
+                repr: Some(decl.rule()),
             };
             let eq = Expression::Eq(Metadata::new(), Moo::new(us.into()), Moo::new(them.into()));
             constraints.push(eq);

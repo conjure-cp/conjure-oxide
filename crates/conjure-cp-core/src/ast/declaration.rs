@@ -379,10 +379,11 @@ impl DeclarationPtr {
         self.map_mut(|x| &mut x.representations)
     }
 
-    pub fn get_repr<R: ReprRule + ?Sized>(
+    /// Get the state of a particular representation for this declaration, if it exists
+    pub fn get_repr<T: ReprRule + ?Sized>(
         &self,
-    ) -> Option<MappedRwLockReadGuard<'_, R::DeclLevel>> {
-        self.maybe_map(|x| x.representations.get::<R>())
+    ) -> Option<MappedRwLockReadGuard<'_, T::DeclLevel>> {
+        self.maybe_map(|d| d.representations.get::<T>())
     }
 
     /// This declaration as a decision variable, if it is one.
@@ -575,14 +576,17 @@ impl DeclarationPtr {
     }
 
     /// Applies `f` to the declaration, returning the result as a reference.
-    fn map<U>(&self, f: impl FnOnce(&Declaration) -> &U) -> MappedRwLockReadGuard<'_, U> {
+    pub fn map<U: ?Sized>(
+        &self,
+        f: impl FnOnce(&Declaration) -> &U,
+    ) -> MappedRwLockReadGuard<'_, U> {
         RwLockReadGuard::map(self.read(), f)
     }
 
     /// Applies `f` to the declaration.
     /// If `f` returns `None`, the result is `None` and the lock is released.
     /// Otherwise, returns the result as a reference.
-    fn maybe_map<U>(
+    pub fn maybe_map<U: ?Sized>(
         &self,
         f: impl FnOnce(&Declaration) -> Option<&U>,
     ) -> Option<MappedRwLockReadGuard<'_, U>> {
@@ -590,7 +594,7 @@ impl DeclarationPtr {
     }
 
     /// Applies mutable function `f` to the declaration, returning the result as a mutable reference.
-    fn map_mut<U>(
+    pub fn map_mut<U: ?Sized>(
         &mut self,
         f: impl FnOnce(&mut Declaration) -> &mut U,
     ) -> MappedRwLockWriteGuard<'_, U> {
@@ -910,6 +914,14 @@ impl Declaration {
             source: None,
             representations: ReprStore::new(),
         }
+    }
+
+    pub fn representations(&self) -> &ReprStore {
+        &self.representations
+    }
+
+    pub fn source(&self) -> Option<&DeclarationPtr> {
+        self.source.as_ref()
     }
 }
 

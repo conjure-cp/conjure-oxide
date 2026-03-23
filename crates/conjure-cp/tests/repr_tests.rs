@@ -217,8 +217,9 @@ mod test {
         let mut var = symtab.gensym(&dom);
 
         // Initialise the representation
-        let (symbols, constraints) =
-            MatrixToAtomMacro::init_for(&mut var).expect("rule to apply successfully");
+        let (symbols, constraints) = MatrixToAtomMacro
+            .init_for(&mut var)
+            .expect("rule to apply successfully");
 
         assert_eq!(constraints, vec![]);
         let mut n_symbols = 0;
@@ -313,7 +314,9 @@ mod test {
         let dom = tensor.domain_of();
         let mut symtab = SymbolTable::new();
         let mut var = symtab.gensym(&dom);
-        let _ = MatrixToAtomMacro::init_for(&mut var).expect("rule to apply successfully");
+        let _ = MatrixToAtomMacro
+            .init_for(&mut var)
+            .expect("rule to apply successfully");
         let repr = var
             .get_repr::<MatrixToAtomMacro>()
             .expect("State to be stored");
@@ -355,7 +358,9 @@ mod test {
         let dom = tensor.domain_of();
         let mut symtab = SymbolTable::new();
         let mut var = symtab.gensym(&dom);
-        let _ = MatrixToAtomMacro::init_for(&mut var).expect("rule to apply successfully");
+        let _ = MatrixToAtomMacro
+            .init_for(&mut var)
+            .expect("rule to apply successfully");
         let repr = var
             .get_repr::<MatrixToAtomMacro>()
             .expect("State to be stored");

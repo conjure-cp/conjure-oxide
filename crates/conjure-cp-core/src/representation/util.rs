@@ -8,34 +8,6 @@ use std::any::Any;
 use std::collections::HashMap;
 use std::fmt::Debug;
 
-pub trait ReprStateStored: Any + Send + Sync + Debug {
-    fn up(&self, lu: &LookupFn<'_>) -> Result<Literal, String>;
-
-    fn as_any(&self) -> &dyn Any;
-
-    fn clone_box(&self) -> Box<dyn ReprStateStored>;
-
-    fn serialise(&self) -> Result<serde_json::Value, serde_json::Error>;
-}
-
-impl<D: ReprDeclLevel> ReprStateStored for D {
-    fn up(&self, lu: &LookupFn<'_>) -> Result<Literal, String> {
-        Ok(self.lookup_via(lu)?.up())
-    }
-
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn clone_box(&self) -> Box<dyn ReprStateStored> {
-        Box::new(self.clone())
-    }
-
-    fn serialise(&self) -> Result<serde_json::Value, serde_json::Error> {
-        serde_json::to_value(self)
-    }
-}
-
 pub fn try_up_via(decl: DeclarationPtr, lu: &LookupFn<'_>) -> Result<Literal, String> {
     // Look up the variable directly
     if let Some(res) = lu(&decl) {
@@ -44,7 +16,7 @@ pub fn try_up_via(decl: DeclarationPtr, lu: &LookupFn<'_>) -> Result<Literal, St
 
     // No value for this variable, try to go up via representations
     for (repr_name, repr) in decl.reprs().iter() {
-        if let Ok(res) = repr.up(lu) {
+        if let Ok(res) = repr.up_via(lu) {
             return Ok(res);
         }
     }

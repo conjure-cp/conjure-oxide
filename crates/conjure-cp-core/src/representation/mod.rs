@@ -2,6 +2,7 @@ pub mod default_impls;
 pub mod registry;
 mod serde;
 mod store;
+pub mod stored;
 pub mod types;
 pub mod util;
 
@@ -13,13 +14,14 @@ pub use types::ReprRule;
 #[doc(hidden)]
 pub mod _dependencies {
     pub use super::default_impls;
-    pub use super::registry::{REPR_RULES_DISTRIBUTED_SLICE, ReprRegistryEntry};
+    pub use super::registry::REPR_RULES_DISTRIBUTED_SLICE;
     pub use super::serde::ReprStateSerde;
+    pub use super::stored::{ReprRuleStored, ReprStateStored};
     pub use super::types::{
         LookupFn, ReprAssignment, ReprDeclLevel, ReprDomainLevel, ReprError, ReprInitResult,
         ReprRule,
     };
-    pub use super::util::{ReprStateStored, try_up_via};
+    pub use super::util::try_up_via;
     pub use crate::ast::eval_constant;
     pub use crate::rule_engine::_dependencies::*;
     pub use funcmap;

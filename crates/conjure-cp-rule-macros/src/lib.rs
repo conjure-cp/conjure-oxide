@@ -363,6 +363,7 @@ pub fn register_representation(input: TokenStream) -> TokenStream {
 
         // -- Trait implementations
         impl ReprDomainLevel for #state_ident<DomainPtr> {
+            const RULE: &'static dyn ReprRuleStored = &#repr_ident;
             type Assignment = #state_ident<Literal>;
             type DeclLevel = #state_ident<DeclarationPtr>;
 
@@ -381,11 +382,12 @@ pub fn register_representation(input: TokenStream) -> TokenStream {
             }
 
             fn instantiate(self, decl: DeclarationPtr) -> (Self::DeclLevel, SymbolTable, Vec<Expression>) {
-                default_impls::instantiate_default_impl(self, decl, #repr_name_str, #prefixed_structural)
+                default_impls::instantiate_default_impl(self, decl, #prefixed_structural)
             }
         }
 
         impl ReprDeclLevel for #state_ident<DeclarationPtr> {
+            const RULE: &'static dyn ReprRuleStored = &#repr_ident;
             type Assignment = #state_ident<Literal>;
             type DomainLevel = #state_ident<DomainPtr>;
 
@@ -411,6 +413,7 @@ pub fn register_representation(input: TokenStream) -> TokenStream {
         pub struct #repr_ident;
 
         impl ReprRule for #repr_ident {
+            const STORED: &'static dyn ReprRuleStored = &#repr_ident;
             const NAME: &'static str = #repr_name_str;
             type Assignment = #state_ident<Literal>;
             type DeclLevel = #state_ident<DeclarationPtr>;
@@ -419,7 +422,7 @@ pub fn register_representation(input: TokenStream) -> TokenStream {
 
         // -- Registry entry
         #[::conjure_cp::representation::_dependencies::distributed_slice(::conjure_cp::representation::_dependencies::REPR_RULES_DISTRIBUTED_SLICE)]
-        pub static #static_ident: ::conjure_cp::representation::_dependencies::ReprRegistryEntry = ::conjure_cp::representation::_dependencies::ReprRegistryEntry::from_rule::<#repr_ident>();
+        pub static #static_ident: &'static dyn ReprRuleStored = &#repr_ident;
     };
 
     TokenStream::from(expanded)
