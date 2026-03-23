@@ -4,27 +4,27 @@ use std::io::{self, Write};
 use std::path::Path;
 use std::sync::Arc;
 
+use conjure_cp_cli::utils::conjure::solutions_to_json;
+use conjure_cp_cli::utils::conjure::{get_solutions, get_solutions_from_conjure};
+use conjure_cp_cli::utils::testing::save_stats_json;
+use conjure_cp_cli::utils::testing::{read_solutions_json, save_solutions_json};
+
+use tracing_subscriber::{Layer, filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt};
+
 use walkdir::WalkDir;
 
 mod test_config;
 use test_config::TestConfig;
 
-mod runcase;
-use runcase::*;
+mod runners;
+use runners::runcase;
 
 fn main() -> io::Result<()> {
-    // let out_dir = var("OUT_DIR").map_err(io::Error::other)?; // wrapping in a std::io::Error to match main's error type
-
-    // Integration Tests
-    // let dest = Path::new(&out_dir).join("gen_tests.rs");
-    // let mut f = File::create(dest)?;
     let test_dir = "tests/integration";
-    let substring = "cnf";
 
-    // let dirs = WalkDir::new(test_dir)
-    //     .into_iter()
-    //     .filter_map(|e| e.is_ok())
-    //     .filter(|p| p.to_str().map_or(contains(substr)));
+    // TODO: Fetch from env vars/cli
+    let accept = true;
+    let substring = "cnf";
 
     let matching_dirs: Vec<_> = WalkDir::new(".")
         .into_iter()
@@ -92,22 +92,24 @@ fn main() -> io::Result<()> {
                         std::io::Error::new(std::io::ErrorKind::InvalidInput, err)
                     })?;
                     // Conjure output depends only on the input model, so cache it once per test case.
-                    // let model_path = format!("{path}/{essence_base}.{extension}");
-                    // let conjure_solutions = if accept && validate_with_conjure {
-                    //     eprintln!("[integration] loading Conjure reference solutions for {model_path}");
-                    //     Some(Arc::new(
-                    //         get_solutions_from_conjure(&model_path, None, Default::default()).map_err(|err| {
-                    //             std::io::Error::other(format!(
-                    //                "failed to fetch Conjure reference solutions for {model_path}: {err}"
-                    //             ))
-                    //         })?,
-                    //     ))
-                    // } else {
-                    //     if accept && !validate_with_conjure {
-                    //         eprintln!("[integration] skipping Conjure validation for {model_path}");
-                    //     }
-                    //     None
-                    // };
+                    let model_path = format!("{path}/{essence_base}.{extension}");
+                    let conjure_solutions = if accept && validate_with_conjure {
+                        eprintln!(
+                            "[integration] loading Conjure reference solutions for {model_path}"
+                        );
+                        Some(Arc::new(
+                            get_solutions_from_conjure(&model_path, None, Default::default()).map_err(|err| {
+                                std::io::Error::other(format!(
+                                   "failed to fetch Conjure reference solutions for {model_path}: {err}"
+                                ))
+                            })?,
+                        ))
+                    } else {
+                        if accept && !validate_with_conjure {
+                            eprintln!("[integration] skipping Conjure validation for {model_path}");
+                        }
+                        None
+                    };
 
                     for parser in parsers {
                         for rewriter in rewriters.clone() {
@@ -118,7 +120,7 @@ fn main() -> io::Result<()> {
                                         rewriter,
                                         comprehension_expander,
                                     );
-                                    let run_case = RunCase {
+                                    let run_case = runcase::IntegrationRunCase {
                                         parser,
                                         rewriter,
                                         comprehension_expander,
@@ -130,54 +132,49 @@ fn main() -> io::Result<()> {
                                         run_case.case_name,
                                         run_case.solver.as_str()
                                     ))?;
-                                    // let subscriber = Arc::new(
-                                    //     tracing_subscriber::registry().with(
-                                    //         fmt::layer()
-                                    //             .with_writer(file)
-                                    //             .with_level(false)
-                                    //             .without_time()
-                                    //             .with_target(false)
-                                    //             .with_filter(EnvFilter::new("rule_engine_human=trace"))
-                                    //             .with_filter(FilterFn::new(|meta| {
-                                    //                 meta.target() == "rule_engine_human"
-                                    //             })),
-                                    //     ),
-                                    // )
-                                    //     as Arc<dyn tracing::Subscriber + Send + Sync>;
-                                    let run_label = run_case_label(
+                                    let subscriber = Arc::new(
+                                        tracing_subscriber::registry().with(
+                                            fmt::layer()
+                                                .with_writer(file)
+                                                .with_level(false)
+                                                .without_time()
+                                                .with_target(false)
+                                                .with_filter(EnvFilter::new(
+                                                    "rule_engine_human=trace",
+                                                ))
+                                                .with_filter(FilterFn::new(|meta| {
+                                                    meta.target() == "rule_engine_human"
+                                                })),
+                                        ),
+                                    )
+                                        as Arc<dyn tracing::Subscriber + Send + Sync>;
+                                    let run_label = runcase::run_case_label(
                                         &path.to_string(),
                                         &essence_base,
                                         &extension,
                                         run_case,
                                     );
                                     eprintln!("[integration] running {run_label}");
-                                    // tracing::subscriber::with_default(subscriber, || {
-                                    //     integration_test_inner(
-                                    //         path,
-                                    //         essence_base,
-                                    //         extension,
-                                    //         run_case,
-                                    //         minion_discrete_threshold,
-                                    //         conjure_solutions.clone(),
-                                    //         accept,
-                                    //     )
-                                    // })
-                                    // .map_err(|err| {
-                                    //     std::io::Error::other(format!("{run_label}: {err}"))
-                                    // })?;
+                                    tracing::subscriber::with_default(subscriber, || {
+                                        runners::integration_tests::integration_test_inner(
+                                            &path.to_string(),
+                                            essence_base,
+                                            extension,
+                                            run_case,
+                                            minion_discrete_threshold,
+                                            conjure_solutions.clone(),
+                                            accept,
+                                        )
+                                    })
+                                    .map_err(|err| {
+                                        std::io::Error::other(format!("{run_label}: {err}"))
+                                    })?;
                                 }
                             }
                         }
                     }
                 }
-
-                // println!(
-                //     "Int Test: {}, esscs: {:?}",
-                //     subdir.path().display(),
-                //     essence_files
-                // );
             }
-            // write_integration_test(&mut f, subdir.path().display().to_string(), essence_files)?;
         }
     }
 

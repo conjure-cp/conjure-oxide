@@ -5,7 +5,7 @@ use conjure_cp::settings::{
 };
 
 #[derive(Clone, Copy, Debug)]
-pub struct RunCase<'a> {
+pub struct IntegrationRunCase<'a> {
     pub parser: Parser,
     pub rewriter: Rewriter,
     pub comprehension_expander: QuantifiedExpander,
@@ -25,7 +25,7 @@ pub fn run_case_label(
     path: &str,
     essence_base: &str,
     extension: &str,
-    run_case: RunCase<'_>,
+    run_case: IntegrationRunCase<'_>,
 ) -> String {
     format!(
         "test_dir={path}, model={essence_base}.{extension}, parser={}, rewriter={}, comprehension_expander={}, solver={}",
