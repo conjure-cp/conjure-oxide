@@ -18,6 +18,8 @@ use std::fs::File;
 use tracing_subscriber::{Layer, filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt};
 use tree_morph::{helpers::select_panic, prelude::*};
 
+use super::runcase;
+
 use std::sync::Arc;
 use std::sync::RwLock;
 
@@ -37,133 +39,6 @@ use conjure_cp_cli::utils::testing::{read_solutions_json, save_solutions_json};
 #[allow(clippy::single_component_path_imports, unused_imports)]
 use conjure_cp_rules;
 use pretty_assertions::assert_eq;
-use tests_integration::TestConfig;
-
-#[derive(Clone, Copy, Debug)]
-struct RunCase<'a> {
-    parser: Parser,
-    rewriter: Rewriter,
-    comprehension_expander: QuantifiedExpander,
-    solver: SolverFamily,
-    case_name: &'a str,
-}
-
-fn run_case_label(
-    path: &str,
-    essence_base: &str,
-    extension: &str,
-    run_case: RunCase<'_>,
-) -> String {
-    format!(
-        "test_dir={path}, model={essence_base}.{extension}, parser={}, rewriter={}, comprehension_expander={}, solver={}",
-        run_case.parser,
-        run_case.rewriter,
-        run_case.comprehension_expander,
-        run_case.solver.as_str()
-    )
-}
-
-fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(), Box<dyn Error>> {
-    let accept = env::var("ACCEPT").unwrap_or("false".to_string()) == "true";
-
-    if accept {
-        clean_test_dir_for_accept(path, essence_base, extension)?;
-    }
-
-    let file_config: TestConfig =
-        if let Ok(config_contents) = fs::read_to_string(format!("{path}/config.toml")) {
-            toml::from_str(&config_contents).unwrap()
-        } else {
-            Default::default()
-        };
-
-    let config = file_config;
-
-    let validate_with_conjure = config.validate_with_conjure;
-    let minion_discrete_threshold = config.minion_discrete_threshold;
-
-    let parsers = config
-        .configured_parsers()
-        .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?;
-    let rewriters = config
-        .configured_rewriters()
-        .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?;
-    let comprehension_expanders = config
-        .configured_comprehension_expanders()
-        .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?;
-    let solvers = config
-        .configured_solvers()
-        .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?;
-    // Conjure output depends only on the input model, so cache it once per test case.
-    let model_path = format!("{path}/{essence_base}.{extension}");
-    let conjure_solutions = if accept && validate_with_conjure {
-        eprintln!("[integration] loading Conjure reference solutions for {model_path}");
-        Some(Arc::new(
-            get_solutions_from_conjure(&model_path, None, Default::default()).map_err(|err| {
-                std::io::Error::other(format!(
-                    "failed to fetch Conjure reference solutions for {model_path}: {err}"
-                ))
-            })?,
-        ))
-    } else {
-        if accept && !validate_with_conjure {
-            eprintln!("[integration] skipping Conjure validation for {model_path}");
-        }
-        None
-    };
-
-    for parser in parsers {
-        for rewriter in rewriters.clone() {
-            for comprehension_expander in comprehension_expanders.clone() {
-                for solver in solvers.clone() {
-                    let case_name = run_case_name(parser, rewriter, comprehension_expander);
-                    let run_case = RunCase {
-                        parser,
-                        rewriter,
-                        comprehension_expander,
-                        solver,
-                        case_name: case_name.as_str(),
-                    };
-                    let file = File::create(format!(
-                        "{path}/{}-{}-generated-rule-trace.txt",
-                        run_case.case_name,
-                        run_case.solver.as_str()
-                    ))?;
-                    let subscriber = Arc::new(
-                        tracing_subscriber::registry().with(
-                            fmt::layer()
-                                .with_writer(file)
-                                .with_level(false)
-                                .without_time()
-                                .with_target(false)
-                                .with_filter(EnvFilter::new("rule_engine_human=trace"))
-                                .with_filter(FilterFn::new(|meta| {
-                                    meta.target() == "rule_engine_human"
-                                })),
-                        ),
-                    )
-                        as Arc<dyn tracing::Subscriber + Send + Sync>;
-                    let run_label = run_case_label(path, essence_base, extension, run_case);
-                    eprintln!("[integration] running {run_label}");
-                    tracing::subscriber::with_default(subscriber, || {
-                        integration_test_inner(
-                            path,
-                            essence_base,
-                            extension,
-                            run_case,
-                            minion_discrete_threshold,
-                            conjure_solutions.clone(),
-                            accept,
-                        )
-                    })
-                    .map_err(|err| std::io::Error::other(format!("{run_label}: {err}")))?;
-                }
-            }
-        }
-    }
-
-    Ok(())
-}
 
 /// Runs an integration test for a given Conjure model by:
 /// 1. Parsing the model from an Essence file.
@@ -197,11 +72,11 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
 ///
 /// Returns an error if any stage fails due to a mismatch with expected results or file I/O issues.
 #[allow(clippy::unwrap_used)]
-fn integration_test_inner(
+pub fn integration_test_inner(
     path: &str,
     essence_base: &str,
     extension: &str,
-    run_case: RunCase<'_>,
+    run_case: runcase::IntegrationRunCase<'_>,
     minion_discrete_threshold: usize,
     conjure_solutions: Option<Arc<Vec<BTreeMap<Name, Literal>>>>,
     accept: bool,
@@ -336,14 +211,6 @@ fn integration_test_inner(
     Ok(())
 }
 
-fn run_case_name(
-    parser: Parser,
-    rewriter: Rewriter,
-    comprehension_expander: QuantifiedExpander,
-) -> String {
-    format!("{parser}-{rewriter}-{comprehension_expander}")
-}
-
 fn clean_test_dir_for_accept(
     path: &str,
     essence_base: &str,
@@ -406,4 +273,4 @@ fn assert_conjure_present() {
     conjure_cp_cli::find_conjure::conjure_executable().unwrap();
 }
 
-include!(concat!(env!("OUT_DIR"), "/gen_tests.rs"));
+// include!(concat!(env!("OUT_DIR"), "/gen_tests.rs"));
