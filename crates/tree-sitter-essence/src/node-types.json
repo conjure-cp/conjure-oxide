@@ -1,5 +1,10 @@
 [
   {
+    "type": "COLON",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "FALSE",
     "named": true,
     "fields": {}
@@ -959,16 +964,6 @@
     "type": "find_statement",
     "named": true,
     "fields": {
-      "domain": {
-        "multiple": true,
-        "required": true,
-        "types": [
-          {
-            "type": "domain",
-            "named": true
-          }
-        ]
-      },
       "find_keyword": {
         "multiple": false,
         "required": true,
@@ -979,12 +974,16 @@
           }
         ]
       },
-      "variables": {
+      "variable_declaration": {
         "multiple": true,
         "required": true,
         "types": [
           {
-            "type": "variable_list",
+            "type": ",",
+            "named": false
+          },
+          {
+            "type": "variable_declaration",
             "named": true
           }
         ]
@@ -1089,16 +1088,6 @@
     "type": "given_statement",
     "named": true,
     "fields": {
-      "domain": {
-        "multiple": true,
-        "required": true,
-        "types": [
-          {
-            "type": "domain",
-            "named": true
-          }
-        ]
-      },
       "given_keyword": {
         "multiple": false,
         "required": true,
@@ -1109,12 +1098,16 @@
           }
         ]
       },
-      "variables": {
+      "variable_declaration": {
         "multiple": true,
         "required": true,
         "types": [
           {
-            "type": "variable_list",
+            "type": ",",
+            "named": false
+          },
+          {
+            "type": "variable_declaration",
             "named": true
           }
         ]
@@ -2519,6 +2512,42 @@
     }
   },
   {
+    "type": "variable_declaration",
+    "named": true,
+    "fields": {
+      "colon": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "COLON",
+            "named": true
+          }
+        ]
+      },
+      "domain": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "domain",
+            "named": true
+          }
+        ]
+      },
+      "variables": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "variable_list",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
     "type": "variable_list",
     "named": true,
     "fields": {},
@@ -2751,8 +2780,7 @@
   },
   {
     "type": "language_declaration",
-    "named": true,
-    "extra": true
+    "named": true
   },
   {
     "type": "letting",
@@ -2800,8 +2828,7 @@
   },
   {
     "type": "single_line_comment",
-    "named": true,
-    "extra": true
+    "named": true
   },
   {
     "type": "size",

@@ -28,8 +28,13 @@ pub fn parse_find_statement(
             decl_span: None,
         },
     );
-
-    parse_declaration_statement(ctx, find_statement, SymbolKind::Find)
+    let mut var_hashmap = BTreeMap::new();
+    for var_decl in named_children(&find_statement) {
+        if let Ok(mut decls) = parse_declaration_statement(ctx, var_decl, SymbolKind::Find) {
+            var_hashmap.append(&mut decls);
+        }
+    }
+    Ok(var_hashmap)
 }
 
 pub fn parse_given_statement(
@@ -49,7 +54,13 @@ pub fn parse_given_statement(
         },
     );
 
-    parse_declaration_statement(ctx, given_statement, SymbolKind::Given)
+    let mut var_hashmap = BTreeMap::new();
+    for var_decl in named_children(&given_statement) {
+        if let Ok(mut decls) = parse_declaration_statement(ctx, var_decl, SymbolKind::Given) {
+            var_hashmap.append(&mut decls);
+        }
+    }
+    Ok(var_hashmap)
 }
 
 pub fn parse_declaration_statement(

@@ -57,21 +57,21 @@ module.exports = grammar ({
     //find statements
     find_statement: $ => seq(
       field("find_keyword", "find"),
-      commaSep1(seq(
-        field("variables", $.variable_list),
-        ":",
-        field("domain", $.domain),
-      )),
+      field("variable_declaration", commaSep1($.variable_declaration))
     ),
 
     //given statements
     given_statement: $ => seq(
       field("given_keyword", "given"),
-      commaSep1(seq(
-        field("variables", $.variable_list),
-        ":",
-        field("domain", $.domain),
-      )),
+      field("variable_declaration", commaSep1($.variable_declaration))
+    ),
+
+    COLON: $ => ":",
+    
+    variable_declaration: $ => seq(
+      field("variables", $.variable_list), 
+      field("colon", $.COLON), 
+      field("domain", $.domain)
     ),
 
     variable_list: $ => commaSep1($.identifier),
