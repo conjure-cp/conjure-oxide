@@ -6,7 +6,7 @@ pub mod categories;
 mod cnf_clause;
 pub mod comprehension;
 pub mod declaration;
-mod domains;
+pub mod domains;
 pub mod eval;
 mod expressions;
 mod literals;

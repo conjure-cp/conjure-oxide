@@ -1,9 +1,8 @@
 use super::prelude::*;
 use crate::representation::prelude::matrix::{flatten, unflatten_matrix};
-use bimap::BiMap;
 use conjure_cp::ast::{GroundDomain, Moo, Range};
 use conjure_cp::representation::ReprInitError;
-use conjure_cp::utils::View;
+use conjure_cp::utils::{BiMap, View};
 use std::collections::VecDeque;
 
 register_representation!(
