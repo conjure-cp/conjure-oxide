@@ -19,6 +19,19 @@ pub fn parse_letting_statement(
     ctx: &mut ParseContext,
     letting_statement: Node,
 ) -> Result<Option<SymbolTable>, FatalParseError> {
+    let keyword = field!(letting_statement, "letting_keyword");
+    span_with_hover(
+        &keyword,
+        ctx.source_code,
+        ctx.source_map,
+        HoverInfo {
+            description: "Letting keyword".to_string(),
+            kind: Some(SymbolKind::Letting),
+            ty: None,
+            decl_span: None,
+        },
+    );
+
     let mut symbol_table = SymbolTable::new();
 
     let mut temp_symbols = BTreeSet::new();

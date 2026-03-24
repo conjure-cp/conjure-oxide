@@ -12,19 +12,59 @@ use crate::errors::{FatalParseError, RecoverableParseError};
 use crate::field;
 use conjure_cp_core::ast::{DomainPtr, Name};
 
-/// Parse a find statement into a map of decision variable names to their domains.
 pub fn parse_find_statement(
     ctx: &mut ParseContext,
     find_statement: Node,
 ) -> Result<BTreeMap<Name, DomainPtr>, FatalParseError> {
+    let keyword = field!(find_statement, "find_keyword");
+    span_with_hover(
+        &keyword,
+        ctx.source_code,
+        ctx.source_map,
+        HoverInfo {
+            description: "Find keyword".to_string(),
+            kind: Some(SymbolKind::Find),
+            ty: None,
+            decl_span: None,
+        },
+    );
+
+    parse_declaration_statement(ctx, find_statement, SymbolKind::Find)
+}
+
+pub fn parse_given_statement(
+    ctx: &mut ParseContext,
+    given_statement: Node,
+) -> Result<BTreeMap<Name, DomainPtr>, FatalParseError> {
+    let keyword = field!(given_statement, "given_keyword");
+    span_with_hover(
+        &keyword,
+        ctx.source_code,
+        ctx.source_map,
+        HoverInfo {
+            description: "Given keyword".to_string(),
+            kind: Some(SymbolKind::Given),
+            ty: None,
+            decl_span: None,
+        },
+    );
+
+    parse_declaration_statement(ctx, given_statement, SymbolKind::Given)
+}
+
+pub fn parse_declaration_statement(
+    ctx: &mut ParseContext,
+    statement_node: Node,
+    symbol_kind: SymbolKind,
+) -> Result<BTreeMap<Name, DomainPtr>, FatalParseError> {
     let mut vars = BTreeMap::new();
 
-    let domain = field!(find_statement, "domain");
+    let domain = field!(statement_node, "domain");
     let Some(domain) = parse_domain(ctx, domain)? else {
         return Ok(vars);
     };
 
-    let variable_list = field!(find_statement, "variables");
+    let variable_list = field!(statement_node, "variables");
     for variable in named_children(&variable_list) {
         let variable_name = &ctx.source_code[variable.start_byte()..variable.end_byte()];
         let name = Name::user(variable_name);
@@ -33,8 +73,13 @@ pub fn parse_find_statement(
         if vars.contains_key(&name) {
             ctx.errors.push(RecoverableParseError::new(
                 format!(
-                    "Variable '{}' is already declared in this find statement",
-                    variable_name
+                    "Variable '{}' is already declared in this {} statement",
+                    variable_name,
+                    match symbol_kind {
+                        SymbolKind::Find => "find",
+                        SymbolKind::Given => "given",
+                        _ => "declaration",
+                    }
                 ),
                 Some(variable.range()),
             ));
@@ -59,8 +104,15 @@ pub fn parse_find_statement(
 
         vars.insert(name, domain.clone());
         let hover = HoverInfo {
-            description: format!("Find variable: {variable_name}"),
-            kind: Some(SymbolKind::Find),
+            description: format!(
+                "{} variable: {variable_name}",
+                match symbol_kind {
+                    SymbolKind::Find => "Find",
+                    SymbolKind::Given => "Given",
+                    _ => "Declaration",
+                }
+            ),
+            kind: Some(symbol_kind),
             ty: Some(domain.to_string()),
             decl_span: None,
         };
