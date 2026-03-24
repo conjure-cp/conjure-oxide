@@ -11,9 +11,10 @@ use std::{
 
 use anyhow::anyhow;
 use clap::ValueHint;
+use conjure_cp::defaults::DEFAULT_RULE_SETS;
+use conjure_cp::instantiate::instantiate_model;
 use conjure_cp::{
     Model,
-    ast::{DeclarationPtr, declaration::Declaration, eval_constant},
     context::Context,
     rule_engine::{resolve_rule_sets, rewrite_morph, rewrite_naive},
     settings::{
@@ -22,7 +23,6 @@ use conjure_cp::{
     },
     solver::Solver,
 };
-use conjure_cp::{ast::DeclarationKind, defaults::DEFAULT_RULE_SETS};
 use conjure_cp::{
     parse::conjure_json::model_from_json, rule_engine::get_rules, settings::SolverFamily,
 };
@@ -154,55 +154,6 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
         File::create(path)?.write_all(pretty_json.as_bytes())?;
     }
     Ok(())
-}
-
-pub(crate) fn instantiate_model(problem_model: Model, param_model: Model) -> anyhow::Result<Model> {
-    let mut symbol_table = problem_model.symbols_ptr_unchecked().write();
-    let param_table = param_model.symbols_ptr_unchecked().write();
-
-    for (name, decl) in symbol_table.iter_local_mut() {
-        let Some(domain) = decl.as_given() else {
-            continue;
-        };
-
-        // Find corresponding letting in param file
-        let param_decl = param_table.lookup(name);
-        let expr = param_decl
-                .as_ref()
-                .and_then(DeclarationPtr::as_value_letting)
-                .ok_or_else(|| anyhow!(
-                    "Given declaration `{name}` does not have corresponding letting in parameter file"
-                ))?;
-
-        // Evaluate the letting expresison to a literal
-        let expr_value = eval_constant(&expr)
-            .ok_or_else(|| anyhow!("Letting expression `{expr}` cannot be evaluated"))?;
-
-        // Resolve the given's domain
-        let ground_domain = domain
-            .resolve()
-            .ok_or_else(|| anyhow!("Domain of given statement `{name}` cannot be resolved"))?;
-
-        // Ensure the letting value is contained within the given expression's domain
-        if !ground_domain.contains(&expr_value).unwrap() {
-            return Err(anyhow!(
-                "Domain of given statement `{name}` does not contain letting value"
-            ));
-        }
-
-        // Replace the given statement in the model with the statement
-        let new_decl = Declaration::new(
-            name.clone(),
-            DeclarationKind::ValueLetting(expr.clone(), Some(domain.clone())),
-        );
-        drop(domain);
-        decl.replace(new_decl);
-
-        tracing::info!("Replaced {name} given with letting.");
-    }
-
-    drop(symbol_table);
-    Ok(problem_model)
 }
 
 /// Returns a new Context and Solver for solving.

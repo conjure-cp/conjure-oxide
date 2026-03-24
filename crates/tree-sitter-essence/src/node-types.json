@@ -132,6 +132,40 @@
     }
   },
   {
+    "type": "all_diff_comparison",
+    "named": true,
+    "fields": {
+      "arg": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "arithmetic_expr",
+            "named": true
+          },
+          {
+            "type": "atom",
+            "named": true
+          },
+          {
+            "type": "bool_expr",
+            "named": true
+          }
+        ]
+      },
+      "operator": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "allDiff",
+            "named": false
+          }
+        ]
+      }
+    }
+  },
+  {
     "type": "and_expr",
     "named": true,
     "fields": {
@@ -214,27 +248,11 @@
             "named": false
           },
           {
-            "type": "<=lex",
-            "named": false
-          },
-          {
-            "type": "<lex",
-            "named": false
-          },
-          {
             "type": ">",
             "named": false
           },
           {
             "type": ">=",
-            "named": false
-          },
-          {
-            "type": ">=lex",
-            "named": false
-          },
-          {
-            "type": ">lex",
             "named": false
           }
         ]
@@ -612,11 +630,19 @@
       "required": true,
       "types": [
         {
+          "type": "all_diff_comparison",
+          "named": true
+        },
+        {
           "type": "arithmetic_comparison",
           "named": true
         },
         {
           "type": "equality_comparison",
+          "named": true
+        },
+        {
+          "type": "lex_comparison",
           "named": true
         },
         {
@@ -845,6 +871,10 @@
         "required": true,
         "types": [
           {
+            "type": "all_diff_comparison",
+            "named": true
+          },
+          {
             "type": "arithmetic_expr",
             "named": true
           },
@@ -876,6 +906,10 @@
         "multiple": false,
         "required": true,
         "types": [
+          {
+            "type": "all_diff_comparison",
+            "named": true
+          },
           {
             "type": "arithmetic_expr",
             "named": true
@@ -1391,6 +1425,54 @@
     }
   },
   {
+    "type": "lex_comparison",
+    "named": true,
+    "fields": {
+      "left": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "atom",
+            "named": true
+          }
+        ]
+      },
+      "operator": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "<=lex",
+            "named": false
+          },
+          {
+            "type": "<lex",
+            "named": false
+          },
+          {
+            "type": ">=lex",
+            "named": false
+          },
+          {
+            "type": ">lex",
+            "named": false
+          }
+        ]
+      },
+      "right": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "atom",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
     "type": "list_combining_expr_arith",
     "named": true,
     "fields": {
@@ -1442,10 +1524,6 @@
         "multiple": false,
         "required": true,
         "types": [
-          {
-            "type": "allDiff",
-            "named": false
-          },
           {
             "type": "and",
             "named": false

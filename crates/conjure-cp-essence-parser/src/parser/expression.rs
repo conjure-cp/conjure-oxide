@@ -20,6 +20,7 @@ pub fn parse_expression(
         "arithmetic_expr" => parse_arithmetic_expression(ctx, &node),
         "comparison_expr" => parse_comparison_expression(ctx, &node),
         "dominance_relation" => parse_dominance_relation(ctx, &node),
+        "all_diff_comparison" => parse_all_diff_comparison(ctx, &node),
         _ => Err(FatalParseError::internal_error(
             format!("Unexpected expression type: '{}'", node.kind()),
             Some(node.range()),
@@ -68,7 +69,10 @@ fn parse_arithmetic_expression(
     let inner = named_child!(node);
     match inner.kind() {
         "atom" => parse_atom(ctx, &inner),
-        "negative_expr" | "abs_value" | "sub_arith_expr" | "toInt_expr" | "factorial_expr" => {
+        "negative_expr" | "abs_value" | "sub_arith_expr" | "factorial_expr" => parse_unary_expression(ctx, &inner),
+        "toInt_expr" => {
+            // add special handling for toInt, as it is arithmetic but takes a non-arithmetic operand
+            ctx.typechecking_context = TypecheckingContext::Unknown;
             parse_unary_expression(ctx, &inner)
         }
         "exponent" | "product_expr" | "sum_expr" => parse_binary_expression(ctx, &inner),
@@ -92,6 +96,11 @@ fn parse_comparison_expression(
             ctx.typechecking_context = TypecheckingContext::Arithmetic;
             parse_binary_expression(ctx, &inner)
         }
+        "lex_comparison" => {
+            // TODO: check that both operands are comparable collections.
+            ctx.typechecking_context = TypecheckingContext::Unknown;
+            parse_binary_expression(ctx, &inner)
+        }
         "equality_comparison" => {
             // Equality works on any type
             // TODO: add type checking to ensure both sides have the same type
@@ -103,6 +112,11 @@ fn parse_comparison_expression(
             // TODO: add typechecking for sets
             ctx.typechecking_context = TypecheckingContext::Unknown;
             parse_binary_expression(ctx, &inner)
+        }
+        "all_diff_comparison" => {
+            // TODO: check that operand is a collection with compatible element type.
+            ctx.typechecking_context = TypecheckingContext::Unknown;
+            parse_all_diff_comparison(ctx, &inner)
         }
         _ => Err(FatalParseError::internal_error(
             format!("Expected comparison expression, found '{}'", inner.kind()),
@@ -148,12 +162,22 @@ fn parse_list_combining_expression(
         "product" => Ok(Some(Expression::Product(Metadata::new(), Moo::new(inner)))),
         "min" => Ok(Some(Expression::Min(Metadata::new(), Moo::new(inner)))),
         "max" => Ok(Some(Expression::Max(Metadata::new(), Moo::new(inner)))),
-        "allDiff" => Ok(Some(Expression::AllDiff(Metadata::new(), Moo::new(inner)))),
         _ => Err(FatalParseError::internal_error(
             format!("Invalid operator: '{operator_str}'"),
             Some(operator_node.range()),
         )),
     }
+}
+
+fn parse_all_diff_comparison(
+    ctx: &mut ParseContext,
+    node: &Node,
+) -> Result<Option<Expression>, FatalParseError> {
+    let Some(inner) = parse_expression(ctx, field!(node, "arg"))? else {
+        return Ok(None);
+    };
+
+    Ok(Some(Expression::AllDiff(Metadata::new(), Moo::new(inner))))
 }
 
 fn parse_unary_expression(
