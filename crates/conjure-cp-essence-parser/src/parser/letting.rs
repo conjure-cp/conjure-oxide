@@ -54,39 +54,39 @@ pub fn parse_letting_statement(
                 continue;
             }
 
-        // Check for duplicate declaration across statements
-        let name = Name::user(variable_name);
-        if let Some(symbols) = &ctx.symbols
-            && symbols.read().lookup(&name).is_some()
-        {
-            let previous_line = ctx.lookup_decl_line(&name);
-            ctx.errors.push(RecoverableParseError::new(
-                match previous_line {
-                    Some(line) => format!(
-                        "Variable '{}' is already declared in a previous statement on line {}",
-                        variable_name, line
-                    ),
-                    None => format!(
-                        "Variable '{}' is already declared in a previous statement",
-                        variable_name
-                    ),
-                },
-                Some(variable.range()),
-            ));
-            // don't return here, as we can still add the other variables to the symbol table
-            continue;
-        }
+            // Check for duplicate declaration across statements
+            let name = Name::user(variable_name);
+            if let Some(symbols) = &ctx.symbols
+                && symbols.read().lookup(&name).is_some()
+            {
+                let previous_line = ctx.lookup_decl_line(&name);
+                ctx.errors.push(RecoverableParseError::new(
+                    match previous_line {
+                        Some(line) => format!(
+                            "Variable '{}' is already declared in a previous statement on line {}",
+                            variable_name, line
+                        ),
+                        None => format!(
+                            "Variable '{}' is already declared in a previous statement",
+                            variable_name
+                        ),
+                    },
+                    Some(variable.range()),
+                ));
+                // don't return here, as we can still add the other variables to the symbol table
+                continue;
+            }
 
-        temp_symbols.insert(variable_name);
-        let hover = HoverInfo {
-            description: format!("Letting variable: {variable_name}"),
-            kind: Some(SymbolKind::Letting),
-            ty: None,
-            decl_span: None,
-        };
-        let span_id = span_with_hover(&variable, ctx.source_code, ctx.source_map, hover);
-        ctx.save_decl_span(name, span_id);
-    }
+            temp_symbols.insert(variable_name);
+            let hover = HoverInfo {
+                description: format!("Letting variable: {variable_name}"),
+                kind: Some(SymbolKind::Letting),
+                ty: None,
+                decl_span: None,
+            };
+            let span_id = span_with_hover(&variable, ctx.source_code, ctx.source_map, hover);
+            ctx.save_decl_span(name, span_id);
+        }
 
         let expr_or_domain = field!(variable_decl, "expr_or_domain");
         match expr_or_domain.kind() {
