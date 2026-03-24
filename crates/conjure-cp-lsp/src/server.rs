@@ -46,6 +46,28 @@ impl LanguageServer for Backend {
                         ..Default::default()
                     },
                 )),
+                semantic_tokens_provider: Some(
+                    SemanticTokenServerCapabilities::SemanticTokensOptions(
+                        SemanticTokensOptions {
+                            legend: SemanticTokensLegend {
+                                token_types: vec![
+                                    SemanticTokenType::INTEGER,
+                                    SemanticTokenType::DECIMAL,
+                                    SemanticTokenType::FUNCTION,
+                                    SemanticTokenType::LETTING,
+                                    SemanticTokenType::FIND,
+                                    SemanticTokenType::VARIABLE,
+                                    SemanticTokenType::CONSTANT,
+                                    SemanticTokenType::DOMAIN,
+                                ],
+                                token_modifiers:vec![],
+                            },
+                            full: Some(SemanticTokensFullOptions::Bool(true)),
+                            range: None,
+                            work_done_progress_options: Default::default(),
+                        },
+                    )
+                ),
                 // hover_provider: Some(HoverProviderCapability::Simple(true)),
                 ..ServerCapabilities::default()
             },
