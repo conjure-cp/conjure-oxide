@@ -1,4 +1,3 @@
-use conjure_cp::ast::abstract_comprehension::ExpressionGenerator;
 use conjure_cp::ast::comprehension::ComprehensionQualifier;
 use conjure_cp::ast::{Atom, Metadata};
 use conjure_cp::ast::{Expression as Expr, Moo, SymbolTable};
@@ -15,14 +14,14 @@ fn union_set(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         Expr::Comprehension(_, comp) => {
             // find if any of the generators are generating from expressions
             for (i, qualifier) in comp.qualifiers.iter().enumerate() {
-                if let ComprehensionQualifier::ExpressionGenerator { decl, expr } = qualifier {
+                if let ComprehensionQualifier::ExpressionGenerator { ptr } = qualifier {
                     // match on expression being of form A union B
                     if let Expr::Union(_, a, b) = expr.into() {
                         // [ return_expr | i <- A, guards...] part
                         let mut comprehension1 = comp.clone();
                         // modify the generator expression in place to be A
                         match comprehension1.qualifiers.get_mut(i) {
-                            Some(ComprehensionQualifier::ExpressionGenerator { decl, expr }) => {
+                            Some(ComprehensionQualifier::ExpressionGenerator { ptr }) => {
                                 *expr = a;
                             }
                             _ => panic!(),
