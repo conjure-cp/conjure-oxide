@@ -65,6 +65,7 @@ pub struct MorphConfig {
     /// Use naive (no-levels) traversal (`morph_naive`). Enabled with `levelsoff`, disabled with `levelson`.
     pub naive: bool,
     pub parallel: bool,
+    pub faster: bool,
 }
 
 impl Default for MorphConfig {
@@ -74,6 +75,7 @@ impl Default for MorphConfig {
             prefilter: false,
             naive: false,
             parallel: false,
+            faster: false,
         }
     }
 }
@@ -85,6 +87,9 @@ impl Display for MorphConfig {
         write!(f, "-{}", self.cache)?;
         write!(f, "-{}", if self.prefilter { "prefilteron" } else { "prefilteroff" })?;
         write!(f, "-{}", if self.parallel { "parallel" } else { "sequential" })?;
+        if self.faster {
+            write!(f, "-faster")?;
+        }
         Ok(())
     }
 }
@@ -159,7 +164,7 @@ impl FromStr for Rewriter {
             other => {
                 if !other.starts_with("morph-") {
                     return Err(format!(
-                        "unknown rewriter: {other}; expected one of: naive, morph, morph-[levelson|levelsoff]-[nocache|cache|inccache]-[prefilteron|prefilteroff]-[sequential|parallel]"
+                        "unknown rewriter: {other}; expected one of: naive, morph, morph-[levelson|levelsoff]-[nocache|cache|inccache]-[prefilteron|prefilteroff]-[sequential|parallel]-[faster]"
                     ));
                 }
 
@@ -227,9 +232,12 @@ impl FromStr for Rewriter {
                             config.parallel = true;
                             parallel_set = true;
                         }
+                        "faster" => {
+                            config.faster = true;
+                        }
                         other_token => {
                             return Err(format!(
-                                "unknown morph option '{other_token}', must be one of levelson|levelsoff|nocache|cache|inccache|prefilteron|prefilteroff|sequential|parallel"
+                                "unknown morph option '{other_token}', must be one of levelson|levelsoff|nocache|cache|inccache|prefilteron|prefilteroff|sequential|parallel|faster"
                             ));
                         }
                     }

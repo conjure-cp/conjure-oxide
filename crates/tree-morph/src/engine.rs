@@ -34,6 +34,8 @@ where
 
     /// Whether to use parallel (Rayon) iteration when checking rules.
     pub(crate) parallel: bool,
+
+    pub(crate) faster: bool,
 }
 
 impl<T, M, R, C> Engine<T, M, R, C>
@@ -109,6 +111,95 @@ where
 
         let (focus, meta) = zipper.focus_and_meta();
         event_handlers.trigger_on_apply(focus, meta, rule);
+    }
+
+    fn apply_rule_faster(
+        zipper: &mut EngineZipper<T, M, R, C>,
+        event_handlers: &EventHandlers<T, M, R>,
+        rule_groups: &RuleGroups<T, M, R>,
+        selector: SelectorFn<T, M, R>,
+        parallel: bool,
+        application: (&R, Update<T, M>),
+        level: usize,
+    ) {
+        // Apply the initial rule
+        let (rule, mut update) = application;
+        debug!("Applying Rule '{}' in Fast Mode", rule.name());
+
+        if update.has_transform() {
+            Self::apply_rule(zipper, event_handlers, (rule, update), level);
+            return;
+        }
+
+        // No transform — apply locally
+        let cache_active = zipper.cache.is_active();
+        let original = cache_active.then(|| zipper.focus().clone());
+        let replacement = cache_active.then(|| update.new_subtree.clone());
+        zipper.replace_focus(update.new_subtree);
+
+        {
+            let (focus, meta) = zipper.focus_and_meta();
+            update.commands.apply(focus.clone(), meta);
+        }
+
+        if let (Some(orig), Some(repl)) = (original, replacement) {
+            if orig != repl {
+                zipper.cache.insert(&orig, Some(repl), level);
+            } else {
+                error!("SAME TREE");
+            }
+        }
+
+        let (focus, meta) = zipper.focus_and_meta();
+        event_handlers.trigger_on_apply(focus, meta, rule);
+
+        let mut try_level = 0;
+        while try_level <= level {
+            let subtree = zipper.focus();
+            let id = rule_groups.discriminant_fn.map(|f| f(subtree));
+            let rules = rule_groups.get_rules(try_level, id);
+
+            let (subtree, meta) = zipper.focus_and_meta();
+            match Self::select_rule(selector, parallel, subtree, meta, rules) {
+                Some((rule, mut update)) => {
+                    if update.has_transform() {
+                        Self::apply_rule(zipper, event_handlers, (rule, update), level);
+                        return;
+                    }
+
+                    debug!("Applying Rule '{}' in Fast Mode (local)", rule.name());
+                    let cache_active = zipper.cache.is_active();
+                    let original = cache_active.then(|| zipper.focus().clone());
+                    let replacement = cache_active.then(|| update.new_subtree.clone());
+                    zipper.replace_focus(update.new_subtree);
+
+                    {
+                        let (focus, meta) = zipper.focus_and_meta();
+                        update.commands.apply(focus.clone(), meta);
+                    }
+
+                    if let (Some(orig), Some(repl)) = (original, replacement) {
+                        if orig != repl {
+                            zipper.cache.insert(&orig, Some(repl), level);
+                        } else {
+                            error!("SAME TREE");
+                        }
+                    }
+
+                    let (focus, meta) = zipper.focus_and_meta();
+                    event_handlers.trigger_on_apply(focus, meta, rule);
+
+                    try_level = 0;
+                }
+                None => {
+                    try_level += 1;
+                }
+            }
+        }
+
+        // Node stabilized — mark pass-through and go to root
+        zipper.set_pass_through(level);
+        zipper.mark_dirty_to_root(level);
     }
 
     fn apply_rule_naive(
@@ -316,15 +407,28 @@ where
                     // Choose one transformation from all applicable rules at this level
                     let (subtree, meta) = zipper.focus_and_meta();
                     let id = self.rule_groups.discriminant_fn.map(|f| f(subtree));
+
                     let rules = self.rule_groups.get_rules(level, id);
                     match Self::select_rule(self.selector, self.parallel, subtree, meta, rules) {
                         Some(selected) => {
-                            Self::apply_rule(
-                                &mut zipper,
-                                &self.event_handlers,
-                                selected,
-                                level,
-                            );
+                            if self.faster {
+                                Self::apply_rule_faster(
+                                    &mut zipper,
+                                    &self.event_handlers,
+                                    &self.rule_groups,
+                                    self.selector,
+                                    self.parallel,
+                                    selected,
+                                    level,
+                                );
+                            } else {
+                                Self::apply_rule(
+                                    &mut zipper,
+                                    &self.event_handlers,
+                                    selected,
+                                    level,
+                                );
+                            }
                             continue 'main;
                         }
                         None => {
@@ -390,15 +494,11 @@ where
                     let id = self.rule_groups.discriminant_fn.map(|f| f(subtree));
                     let rules = self.rule_groups.get_rules(level, id);
                     // Choose one transformation from all applicable rules at this level
-                    let selected = Self::select_rule(self.selector, self.parallel, subtree, meta, rules);
+                    let selected =
+                        Self::select_rule(self.selector, self.parallel, subtree, meta, rules);
 
                     if let Some(selected) = selected {
-                        Self::apply_rule_naive(
-                            &mut zipper,
-                            &self.event_handlers,
-                            selected,
-                            level,
-                        );
+                        Self::apply_rule_naive(&mut zipper, &self.event_handlers, selected, level);
                         continue 'main;
                     } else {
                         debug!("Nothing Applicable");

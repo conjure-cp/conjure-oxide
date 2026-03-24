@@ -71,12 +71,14 @@ enum Command<T: Uniplate, M> {
 /// ```
 pub struct Commands<T: Uniplate, M> {
     commands: VecDeque<Command<T, M>>,
+    has_transform: bool,
 }
 
 impl<T: Uniplate, M> Commands<T, M> {
     pub(crate) fn new() -> Self {
         Self {
             commands: VecDeque::new(),
+            has_transform: false,
         }
     }
 
@@ -88,6 +90,7 @@ impl<T: Uniplate, M> Commands<T, M> {
     ///
     /// Side-effects are applied in order of registration after the rule is applied.
     pub fn transform(&mut self, f: Box<dyn FnOnce(T) -> T + Send>) {
+        self.has_transform = true;
         self.commands.push_back(Command::Transform(f));
     }
 
@@ -116,5 +119,9 @@ impl<T: Uniplate, M> Commands<T, M> {
             }
         }
         (tree, transformed)
+    }
+
+    pub(crate) fn has_transform(&self) -> bool {
+        self.has_transform
     }
 }

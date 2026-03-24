@@ -10,7 +10,7 @@ pub(crate) struct EngineNodeState {
     /// Rule groups with lower indices have already been applied without change.
     /// For a level `n`, a state is 'dirty' if and only if `n >= dirty_from`.
     dirty_from: usize,
-    descend_anyway: bool,
+    pass_through_until: Option<usize>,
 }
 
 impl EngineNodeState {
@@ -30,7 +30,7 @@ impl EngineNodeState {
     fn new<T: Uniplate>(_: &T) -> Self {
         Self {
             dirty_from: 0,
-            descend_anyway: false,
+            pass_through_until: None,
         }
     }
 }
@@ -90,7 +90,18 @@ where
     #[instrument(skip(self))]
     pub fn go_next_dirty(&mut self, level: usize) -> Option<()> {
         if self.inner.tag().is_dirty(level) {
-            return Some(());
+            let pass_through = self.inner.tag().pass_through_until;
+            match pass_through {
+                Some(n) if level <= n => {
+                    if level == n {
+                        self.inner.tag_mut().pass_through_until = None;
+                    }
+                    // Fall through to descend past this node
+                }
+                _ => {
+                    return Some(());
+                }
+            }
         }
 
         self.go_down()
@@ -178,6 +189,11 @@ where
     pub fn set_dirty_from(&mut self, level: usize) {
         trace!("Setting level = {}", level);
         self.inner.tag_mut().set_dirty_from(level);
+    }
+
+    /// Mark this node as pass-through
+    pub fn set_pass_through(&mut self, level: usize) {
+        self.inner.tag_mut().pass_through_until = Some(level);
     }
 
     /// Mark ancestors as dirty for all levels, and return to the root.

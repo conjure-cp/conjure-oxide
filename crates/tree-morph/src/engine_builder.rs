@@ -29,6 +29,8 @@ where
     discriminant_fn: Option<fn(&T) -> usize>,
 
     parallel: bool,
+
+    faster: bool,
 }
 
 macro_rules! add_handler_fns {
@@ -65,6 +67,7 @@ where
             cache: NoCache,
             discriminant_fn: None,
             parallel: false,
+            faster: false,
         }
     }
 }
@@ -83,6 +86,7 @@ where
             selector: self.selector,
             cache: self.cache,
             parallel: self.parallel,
+            faster: self.faster,
         }
     }
 
@@ -167,6 +171,7 @@ where
             cache: cacher,
             discriminant_fn: self.discriminant_fn,
             parallel: self.parallel,
+            faster: self.faster,
         }
     }
 
@@ -186,6 +191,13 @@ where
     /// When `None`, prefiltering is disabled and all rules are tried on every node.
     pub fn set_discriminant_fn(mut self, discriminant_fn: Option<fn(&T) -> usize>) -> Self {
         self.discriminant_fn = discriminant_fn;
+        self
+    }
+
+    /// FASTER!!!
+    /// At the cost of correctness
+    pub fn set_faster(mut self, faster: bool) -> Self {
+        self.faster = faster;
         self
     }
 }

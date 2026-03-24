@@ -201,5 +201,6 @@ fn build_engine<'a>(
         .add_on_cache_hit(count_cache_hit)
         .add_on_cache_miss(count_cache_miss)
         .set_parallel(config.parallel)
+        .set_faster(config.faster)
         .build()
 }
