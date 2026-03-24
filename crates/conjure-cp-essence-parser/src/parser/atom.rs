@@ -184,10 +184,19 @@ fn parse_index_or_slice(
 fn parse_index(ctx: &mut ParseContext, node: &Node) -> Result<Option<Expression>, FatalParseError> {
     match node.kind() {
         "arithmetic_expr" | "atom" => {
-            ctx.typechecking_context = TypecheckingContext::Arithmetic;
+            let saved_context = ctx.typechecking_context;
+            ctx.typechecking_context = TypecheckingContext::Unknown;
+
+            // TODO: add collection-aware index typechecking.
+            // For tuple/matrix/set-like indexing, indices should be arithmetic.
+            // For record field access, index atoms should resolve to valid field names.
+            // This requires checking index expression together with the indexed collection type.
+
             let Some(expr) = parse_expression(ctx, *node)? else {
                 return Ok(None);
             };
+
+            ctx.typechecking_context = saved_context;
             Ok(Some(expr))
         }
         "null_index" => Ok(None),
@@ -217,7 +226,7 @@ fn parse_variable(ctx: &mut ParseContext, node: &Node) -> Result<Option<Atom>, F
             span_with_hover(node, ctx.source_code, ctx.source_map, hover);
 
             // Type check the variable against the expected context
-            if let Some(error_msg) = typecheck_variable(&decl, ctx.typechecking_context) {
+            if let Some(error_msg) = typecheck_variable(&decl, ctx.typechecking_context, raw_name) {
                 ctx.record_error(RecoverableParseError::new(error_msg, Some(node.range())));
                 return Ok(None);
             }
@@ -242,7 +251,11 @@ fn parse_variable(ctx: &mut ParseContext, node: &Node) -> Result<Option<Atom>, F
 
 /// Type check a variable declaration against the expected expression context.
 /// Returns an error message if the variable type doesn't match the context.
-fn typecheck_variable(decl: &DeclarationPtr, context: TypecheckingContext) -> Option<String> {
+fn typecheck_variable(
+    decl: &DeclarationPtr,
+    context: TypecheckingContext,
+    raw_name: &str,
+) -> Option<String> {
     // Only type check when context is known
     if context == TypecheckingContext::Unknown {
         return None;
@@ -279,8 +292,8 @@ fn typecheck_variable(decl: &DeclarationPtr, context: TypecheckingContext) -> Op
 
     // Otherwise, report the type mismatch
     Some(format!(
-        "Type error:\n\tExpected: {}\n\tGot: {}",
-        expected, actual
+        "Type error: {}\n\tExpected: {}\n\tGot: {}",
+        raw_name, expected, actual
     ))
 }
 
@@ -340,7 +353,10 @@ fn parse_constant(ctx: &mut ParseContext, node: &Node) -> Result<Option<Literal>
 
         if expected != actual {
             ctx.record_error(RecoverableParseError::new(
-                format!("Type error:\n\tExpected: {}\n\tGot: {}", expected, actual),
+                format!(
+                    "Type error: {}\n\tExpected: {}\n\tGot: {}",
+                    raw_value, expected, actual
+                ),
                 Some(node.range()),
             ));
             return Ok(None);

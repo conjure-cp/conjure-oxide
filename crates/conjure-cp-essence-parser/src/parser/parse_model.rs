@@ -11,6 +11,7 @@ use uniplate::Uniplate;
 
 use super::ParseContext;
 use super::find::parse_find_statement;
+use super::keyword_checks::keyword_as_identifier;
 use super::letting::parse_letting_statement;
 use super::util::{TypecheckingContext, get_tree};
 use crate::diagnostics::diagnostics_api::SymbolKind;
@@ -181,9 +182,8 @@ pub fn parse_essence_with_context_and_map(
             }
         }
     }
-
     // check for errors (keyword as identifier)
-    keyword_as_identifier(&mut ctx);
+    keyword_as_identifier(*ctx.root, ctx.source_code, ctx.errors);
 
     // Check if there were any recoverable errors
     if !errors.is_empty() {
@@ -191,42 +191,6 @@ pub fn parse_essence_with_context_and_map(
     }
     // otherwise return the model
     Ok(Some((model, source_map)))
-}
-
-const KEYWORDS: [&str; 21] = [
-    "forall", "exists", "such", "that", "letting", "find", "minimise", "maximise", "subject", "to",
-    "where", "and", "or", "not", "if", "then", "else", "in", "sum", "product", "bool",
-];
-
-fn keyword_as_identifier(ctx: &mut ParseContext) {
-    let mut stack = vec![*ctx.root];
-    while let Some(node) = stack.pop() {
-        if (node.kind() == "variable" || node.kind() == "identifier" || node.kind() == "parameter")
-            && let Ok(text) = node.utf8_text(ctx.source_code.as_bytes())
-        {
-            let ident = text.trim();
-            if KEYWORDS.contains(&ident) {
-                let start_point = node.start_position();
-                let end_point = node.end_position();
-                ctx.errors.push(RecoverableParseError::new(
-                    format!("Keyword '{ident}' used as identifier"),
-                    Some(tree_sitter::Range {
-                        start_byte: node.start_byte(),
-                        end_byte: node.end_byte(),
-                        start_point,
-                        end_point,
-                    }),
-                ));
-            }
-        }
-
-        // push children onto stack
-        for i in 0..node.child_count() {
-            if let Some(child) = u32::try_from(i).ok().and_then(|i| node.child(i)) {
-                stack.push(child);
-            }
-        }
-    }
 }
 
 pub fn parse_essence(src: &str) -> Result<(Model, SourceMap), Box<ParseErrorCollection>> {
