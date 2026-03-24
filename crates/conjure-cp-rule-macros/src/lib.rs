@@ -13,7 +13,7 @@ use syn::{
 };
 
 use crate::util::rename_ident_in_impl;
-use util::{rename_fn, rename_ident_in_fn, replace_ident_in_type, type_contains_ident};
+use util::{build_serde_as_type, rename_fn, rename_ident_in_fn, type_contains_ident};
 
 struct RuleSetAndPriority {
     rule_set: LitStr,
@@ -533,11 +533,8 @@ fn generate_struct_def(
                             #field_ty: ::conjure_cp::representation::_dependencies::uniplate::Biplate<#generic_param_ident>
                         });
 
-                        let serde_as_ty = replace_ident_in_type(
-                            f.ty.clone(),
-                            &generic_param_ident,
-                            "ReprStateSerde",
-                        );
+                        let serde_as_ty =
+                            build_serde_as_type(field_ty, &generic_param_ident, "ReprStateSerde");
                         let serde_as_str = serde_as_ty.to_token_stream().to_string();
                         quote! {
                             #(#field_attrs)*
@@ -576,11 +573,8 @@ fn generate_struct_def(
                             #field_ty: ::conjure_cp::representation::_dependencies::uniplate::Biplate<#generic_param_ident>
                         });
 
-                        let serde_as_ty = replace_ident_in_type(
-                            f.ty.clone(),
-                            &generic_param_ident,
-                            "ReprStateSerde",
-                        );
+                        let serde_as_ty =
+                            build_serde_as_type(field_ty, &generic_param_ident, "ReprStateSerde");
                         let serde_as_str = serde_as_ty.to_token_stream().to_string();
                         quote! {
                             #(#field_attrs)*

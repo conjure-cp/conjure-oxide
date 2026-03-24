@@ -158,7 +158,7 @@ where
     R: Eq + Hash,
 {
     fn from(v: [(L, R); N]) -> Self {
-        Self::from_iter(v.into_iter())
+        Self::from_iter(v)
     }
 }
 

@@ -1,12 +1,10 @@
 use super::prelude::*;
-use conjure_cp::utils::BiMap;
-use std::collections::VecDeque;
-use std::hash::Hash;
+use std::collections::{HashMap, VecDeque};
 
 register_representation!(
     RecordToAtom
-    struct State<T: Eq + Hash> {
-        pub elems: BiMap<Name, T>
+    struct State<T> {
+        pub elems: HashMap<Name, T>
     }
     fn init(dom: DomainPtr) -> Result<State<DomainPtr>, ReprInitError> {
         todo!()

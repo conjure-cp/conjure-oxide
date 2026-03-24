@@ -1,5 +1,7 @@
 use syn::visit_mut::VisitMut;
-use syn::{Ident, Type};
+use syn::{
+    GenericArgument, Ident, PathArguments, ReturnType, Type, parse_quote, punctuated::Punctuated,
+};
 
 /// Check whether a type AST contains a reference to a specific ident (the generic param).
 pub fn type_contains_ident(ty: &Type, ident: &Ident) -> bool {
@@ -44,14 +46,146 @@ pub fn type_contains_ident(ty: &Type, ident: &Ident) -> bool {
     }
 }
 
-/// Replace all occurrences of `ident` with `replacement` in a type, returning the modified Type.
-pub fn replace_ident_in_type(mut ty: Type, ident: &Ident, replacement: &str) -> Type {
-    let mut replacer = IdentReplacer {
-        target: ident.to_string(),
-        replacement: Ident::new(replacement, ident.span()),
-    };
-    replacer.visit_type_mut(&mut ty);
-    ty
+/// Build a `serde_as` adapter type for `ty`, replacing occurrences of `ident` with
+/// `replacement` and using `_` in adapter argument positions for non-target types.
+pub fn build_serde_as_type(ty: &Type, ident: &Ident, replacement: &str) -> Type {
+    let replacement_ident = Ident::new(replacement, ident.span());
+    build_serde_as_type_inner(ty, ident, &replacement_ident, false)
+}
+
+fn build_serde_as_type_inner(
+    ty: &Type,
+    ident: &Ident,
+    replacement: &Ident,
+    in_adapter_position: bool,
+) -> Type {
+    if !type_contains_ident(ty, ident) {
+        return if in_adapter_position {
+            parse_quote!(_)
+        } else {
+            ty.clone()
+        };
+    }
+
+    match ty {
+        Type::Path(tp)
+            if tp.qself.is_none()
+                && tp.path.segments.len() == 1
+                && tp.path.segments[0].ident == *ident
+                && tp.path.segments[0].arguments.is_empty() =>
+        {
+            parse_quote!(#replacement)
+        }
+        Type::Path(tp) => {
+            let mut out = tp.clone();
+            for seg in &mut out.path.segments {
+                match &seg.arguments {
+                    PathArguments::AngleBracketed(args) => {
+                        let rewritten: Punctuated<GenericArgument, syn::token::Comma> = args
+                            .args
+                            .iter()
+                            .map(|arg| rewrite_generic_arg(arg, ident, replacement))
+                            .collect();
+                        let mut new_args = args.clone();
+                        new_args.args = rewritten;
+                        seg.arguments = PathArguments::AngleBracketed(new_args);
+                    }
+                    PathArguments::Parenthesized(args) => {
+                        let mut new_args = args.clone();
+                        new_args.inputs = args
+                            .inputs
+                            .iter()
+                            .map(|input| build_serde_as_type_inner(input, ident, replacement, true))
+                            .collect();
+                        new_args.output = match &args.output {
+                            ReturnType::Default => ReturnType::Default,
+                            ReturnType::Type(arrow, ty) => ReturnType::Type(
+                                *arrow,
+                                Box::new(build_serde_as_type_inner(ty, ident, replacement, true)),
+                            ),
+                        };
+                        seg.arguments = PathArguments::Parenthesized(new_args);
+                    }
+                    PathArguments::None => {}
+                }
+            }
+            Type::Path(out)
+        }
+        Type::Tuple(tuple) => {
+            let mut out = tuple.clone();
+            out.elems = tuple
+                .elems
+                .iter()
+                .map(|elem| build_serde_as_type_inner(elem, ident, replacement, true))
+                .collect();
+            Type::Tuple(out)
+        }
+        Type::Array(array) => {
+            let mut out = array.clone();
+            out.elem = Box::new(build_serde_as_type_inner(
+                &array.elem,
+                ident,
+                replacement,
+                true,
+            ));
+            Type::Array(out)
+        }
+        Type::Slice(slice) => {
+            let mut out = slice.clone();
+            out.elem = Box::new(build_serde_as_type_inner(
+                &slice.elem,
+                ident,
+                replacement,
+                true,
+            ));
+            Type::Slice(out)
+        }
+        Type::Reference(reference) => {
+            let mut out = reference.clone();
+            out.elem = Box::new(build_serde_as_type_inner(
+                &reference.elem,
+                ident,
+                replacement,
+                in_adapter_position,
+            ));
+            Type::Reference(out)
+        }
+        Type::Paren(paren) => {
+            let mut out = paren.clone();
+            out.elem = Box::new(build_serde_as_type_inner(
+                &paren.elem,
+                ident,
+                replacement,
+                in_adapter_position,
+            ));
+            Type::Paren(out)
+        }
+        _ => {
+            if in_adapter_position {
+                parse_quote!(_)
+            } else {
+                ty.clone()
+            }
+        }
+    }
+}
+
+fn rewrite_generic_arg(
+    arg: &GenericArgument,
+    ident: &Ident,
+    replacement: &Ident,
+) -> GenericArgument {
+    match arg {
+        GenericArgument::Type(ty) => {
+            GenericArgument::Type(build_serde_as_type_inner(ty, ident, replacement, true))
+        }
+        GenericArgument::AssocType(assoc_ty) => {
+            let mut out = assoc_ty.clone();
+            out.ty = build_serde_as_type_inner(&assoc_ty.ty, ident, replacement, true);
+            GenericArgument::AssocType(out)
+        }
+        _ => arg.clone(),
+    }
 }
 
 /// Rename an `ItemFn`'s identifier, returning the modified function.
@@ -91,5 +225,46 @@ impl VisitMut for IdentReplacer {
         if *i == self.target {
             *i = self.replacement.clone();
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::build_serde_as_type;
+    use quote::ToTokens;
+    use syn::{Ident, Type, parse_quote};
+
+    fn assert_adapter_type(input: Type, expected: Type) {
+        let generic = Ident::new("T", proc_macro2::Span::call_site());
+        let actual = build_serde_as_type(&input, &generic, "ReprStateSerde");
+
+        assert_eq!(
+            actual.to_token_stream().to_string(),
+            expected.to_token_stream().to_string()
+        );
+    }
+
+    #[test]
+    fn map_value_uses_repr_state_and_passthrough_key() {
+        assert_adapter_type(
+            parse_quote!(HashMap<Name, T>),
+            parse_quote!(HashMap<_, ReprStateSerde>),
+        );
+    }
+
+    #[test]
+    fn nested_collections_are_rewritten_recursively() {
+        assert_adapter_type(
+            parse_quote!(Vec<HashMap<Name, Vec<T>>>),
+            parse_quote!(Vec<HashMap<_, Vec<ReprStateSerde>>>),
+        );
+    }
+
+    #[test]
+    fn tuple_positions_use_passthrough_for_non_generic_elements() {
+        assert_adapter_type(
+            parse_quote!((Name, Option<T>)),
+            parse_quote!((_, Option<ReprStateSerde>)),
+        );
     }
 }
