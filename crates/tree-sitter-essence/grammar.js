@@ -22,6 +22,7 @@ module.exports = grammar ({
         ))
       ),
       seq("find", commaSep1(field("find_statement", $.find_statement))),
+      seq("given", commaSep1(field("given_statement", $.given_statement))),
       seq(
         "such that", 
         commaSep1(choice(field("bool_expr", $.bool_expr), field("atom", $.atom), field("comparison_expr", $.comparison_expr))), 
@@ -67,6 +68,14 @@ module.exports = grammar ({
       field("colon", $.COLON),
       field("domain", $.domain),
     ),
+
+    //given statements
+    given_statement: $ => seq(
+      field("variables", $.variable_list),
+      field("colon", $.COLON),
+      field("domain", $.domain),
+    ),
+
     variable_list: $ => commaSep1($.identifier),
 
     domain: $ => choice(
