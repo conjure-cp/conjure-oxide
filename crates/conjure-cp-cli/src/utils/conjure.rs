@@ -239,19 +239,25 @@ pub fn get_solutions(
 #[allow(clippy::unwrap_used)]
 pub fn get_solutions_from_conjure(
     essence_file: &str,
+    param_file: Option<&str>,
     context: Arc<RwLock<Context<'static>>>,
 ) -> Result<Vec<BTreeMap<Name, Literal>>, anyhow::Error> {
     let tmp_dir = tempdir()?;
 
     let mut cmd = std::process::Command::new("conjure");
-    let output = cmd
-        .arg("solve")
+
+    cmd.arg("solve")
         .arg("--number-of-solutions=all")
         .arg("--copy-solutions=no")
         .arg("-o")
         .arg(tmp_dir.path())
-        .arg(essence_file)
-        .output()?;
+        .arg(essence_file);
+
+    if let Some(file) = param_file {
+        cmd.arg(file);
+    }
+
+    let output = cmd.output()?;
 
     if !output.status.success() {
         let stderr =
@@ -275,7 +281,7 @@ pub fn get_solutions_from_conjure(
             let mut solutions = BTreeMap::new();
             for (name, decl) in model.symbols().clone().into_iter() {
                 match &decl.kind() as &DeclarationKind {
-                    conjure_cp::ast::DeclarationKind::ValueLetting(expression) => {
+                    conjure_cp::ast::DeclarationKind::ValueLetting(expression, _) => {
                         let literal = expression
                             .clone()
                             .into_literal()

@@ -1,39 +1,20 @@
-find s1 : bool
-find s2 : bool
-find s3 : bool
-find s4 : bool
-find s5 : bool
-find s6 : bool
+given cost : matrix indexed by [int(1..10)] of int
+given carbon_footprint : matrix indexed by [int(1..10)] of int
 
-such that
-    s1 \/ s2
-such that
-    s2 \/ s3
-such that
-    s3 \/ s4
-such that
-    s4 \/ s5
-such that
-    s5 \/ s6
-such that
-    !(s1 /\ s4)
-such that
-    !(s2 /\ s5)
-such that
-    !(s3 /\ s6)
+find selected : matrix indexed by [int(1..10)] of bool
 
-dominance relation
-    (s1 -> fromSolution(s1)) /\
-    (s2 -> fromSolution(s2)) /\
-    (s3 -> fromSolution(s3)) /\
-    (s4 -> fromSolution(s4)) /\
-    (s5 -> fromSolution(s5)) /\
-    (s6 -> fromSolution(s6)) /\
-    (
-        ((!s1) /\ fromSolution(s1)) \/
-        ((!s2) /\ fromSolution(s2)) \/
-        ((!s3) /\ fromSolution(s3)) \/
-        ((!s4) /\ fromSolution(s4)) \/
-        ((!s5) /\ fromSolution(s5)) \/
-        ((!s6) /\ fromSolution(s6))
-    )
+such that sum([ toInt(selected[i]) | i : int(1..10) ]) >= 2
+
+find total_cost : int(0..1000)
+such that total_cost = sum([ cost[i] | i : int(1..10), selected[i] ])
+
+find total_carbon : int(0..1000)
+such that total_carbon = sum([ carbon_footprint[i] | i : int(1..10), selected[i] ])
+
+dominanceRelation
+	(total_cost <= fromSolution(total_cost)) /\
+	(total_carbon <= fromSolution(total_carbon)) /\
+	(
+		(total_cost < fromSolution(total_cost)) \/
+		(total_carbon < fromSolution(total_carbon))
+	)

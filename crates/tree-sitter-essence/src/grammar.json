@@ -1917,10 +1917,6 @@
                 {
                   "type": "STRING",
                   "value": "or"
-                },
-                {
-                  "type": "STRING",
-                  "value": "allDiff"
                 }
               ]
             }
@@ -2305,11 +2301,19 @@
           },
           {
             "type": "SYMBOL",
+            "name": "lex_comparison"
+          },
+          {
+            "type": "SYMBOL",
             "name": "equality_comparison"
           },
           {
             "type": "SYMBOL",
             "name": "set_comparison"
+          },
+          {
+            "type": "SYMBOL",
+            "name": "all_diff_comparison"
           }
         ]
       }
@@ -2343,22 +2347,6 @@
             "content": {
               "type": "CHOICE",
               "members": [
-                {
-                  "type": "STRING",
-                  "value": "<lex"
-                },
-                {
-                  "type": "STRING",
-                  "value": "<=lex"
-                },
-                {
-                  "type": "STRING",
-                  "value": ">lex"
-                },
-                {
-                  "type": "STRING",
-                  "value": ">=lex"
-                },
                 {
                   "type": "STRING",
                   "value": "<="
@@ -2398,6 +2386,56 @@
         ]
       }
     },
+    "lex_comparison": {
+      "type": "PREC_LEFT",
+      "value": 0,
+      "content": {
+        "type": "SEQ",
+        "members": [
+          {
+            "type": "FIELD",
+            "name": "left",
+            "content": {
+              "type": "SYMBOL",
+              "name": "atom"
+            }
+          },
+          {
+            "type": "FIELD",
+            "name": "operator",
+            "content": {
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "STRING",
+                  "value": "<lex"
+                },
+                {
+                  "type": "STRING",
+                  "value": "<=lex"
+                },
+                {
+                  "type": "STRING",
+                  "value": ">lex"
+                },
+                {
+                  "type": "STRING",
+                  "value": ">=lex"
+                }
+              ]
+            }
+          },
+          {
+            "type": "FIELD",
+            "name": "right",
+            "content": {
+              "type": "SYMBOL",
+              "name": "atom"
+            }
+          }
+        ]
+      }
+    },
     "equality_comparison": {
       "type": "PREC_LEFT",
       "value": 0,
@@ -2417,6 +2455,10 @@
                 {
                   "type": "SYMBOL",
                   "name": "arithmetic_expr"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "all_diff_comparison"
                 },
                 {
                   "type": "SYMBOL",
@@ -2455,6 +2497,10 @@
                 {
                   "type": "SYMBOL",
                   "name": "arithmetic_expr"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "all_diff_comparison"
                 },
                 {
                   "type": "SYMBOL",
@@ -2515,6 +2561,52 @@
           }
         }
       ]
+    },
+    "all_diff_comparison": {
+      "type": "PREC",
+      "value": -10,
+      "content": {
+        "type": "SEQ",
+        "members": [
+          {
+            "type": "FIELD",
+            "name": "operator",
+            "content": {
+              "type": "STRING",
+              "value": "allDiff"
+            }
+          },
+          {
+            "type": "STRING",
+            "value": "("
+          },
+          {
+            "type": "FIELD",
+            "name": "arg",
+            "content": {
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "SYMBOL",
+                  "name": "bool_expr"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "arithmetic_expr"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "atom"
+                }
+              ]
+            }
+          },
+          {
+            "type": "STRING",
+            "value": ")"
+          }
+        ]
+      }
     },
     "sub_bool_expr": {
       "type": "SEQ",
@@ -4145,5 +4237,6 @@
   "precedences": [],
   "externals": [],
   "inline": [],
-  "supertypes": []
+  "supertypes": [],
+  "reserved": {}
 }

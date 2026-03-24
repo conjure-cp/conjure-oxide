@@ -396,7 +396,7 @@ impl Display for Model {
                         pretty_variable_declaration(&self.symbols(), &name).unwrap()
                     )?;
                 }
-                DeclarationKind::ValueLetting(_) | DeclarationKind::TemporaryValueLetting(_) => {
+                DeclarationKind::ValueLetting(_, _) | DeclarationKind::TemporaryValueLetting(_) => {
                     writeln!(
                         f,
                         "{}",
