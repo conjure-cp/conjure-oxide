@@ -102,18 +102,25 @@ pub fn parse_declaration_statement(
         if let Some(symbols) = &ctx.symbols
             && symbols.read().lookup(&name).is_some()
         {
+            let previous_line = ctx.lookup_decl_line(&name);
             ctx.errors.push(RecoverableParseError::new(
-                format!(
-                    "Variable '{}' is already declared in a previous statement",
-                    variable_name
-                ),
+                match previous_line {
+                    Some(line) => format!(
+                        "Variable '{}' is already declared in a previous statement on line {}",
+                        variable_name, line
+                    ),
+                    None => format!(
+                        "Variable '{}' is already declared in a previous statement",
+                        variable_name
+                    ),
+                },
                 Some(variable.range()),
             ));
             // don't return here, as we can still add the other variables to the symbol table
             continue;
         }
 
-        vars.insert(name, domain.clone());
+        vars.insert(name.clone(), domain.clone());
         let hover = HoverInfo {
             description: format!(
                 "{} variable: {variable_name}",
@@ -127,7 +134,8 @@ pub fn parse_declaration_statement(
             ty: Some(domain.to_string()),
             decl_span: None,
         };
-        span_with_hover(&variable, ctx.source_code, ctx.source_map, hover);
+        let span_id = span_with_hover(&variable, ctx.source_code, ctx.source_map, hover);
+        ctx.save_decl_span(name, span_id);
     }
 
     Ok(vars)
