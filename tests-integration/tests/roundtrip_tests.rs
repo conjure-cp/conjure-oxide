@@ -79,7 +79,7 @@ fn clean_test_dir_for_accept(path: &str) -> Result<(), std::io::Error> {
             continue;
         }
 
-        let keep = if file_name == "config.toml" {
+        let keep = if file_name == "config.toml" || file_name == "notes.txt" {
             true
         } else {
             let is_model_file = entry_path
