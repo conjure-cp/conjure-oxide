@@ -9,7 +9,7 @@ use crate::ast::{
         range::Range,
     },
 };
-use crate::{bug, domain_int, matrix_expr, range};
+use crate::{bug, domain_int, into_matrix_expr, matrix_expr, range};
 use conjure_cp_core::ast::pretty::pretty_vec;
 use conjure_cp_core::ast::{Name, ReturnType, eval_constant};
 use itertools::Itertools;
@@ -266,6 +266,29 @@ impl Range<IntVal> {
             Range::Unbounded => Some(Range::Unbounded),
         }
     }
+
+    /// Generates the expression to compute the size of this range
+    pub fn len_expr(self) -> Option<Expression> {
+        match self {
+            Range::Single(a) => Some(a.into()),
+            Range::Bounded(a, b) => {
+                let neg_b = Expression::Neg(Metadata::new(), Moo::new(b.into()));
+                let sum_matr = into_matrix_expr!(vec![a.into(), neg_b]);
+                Some(Expression::Sum(Metadata::new(), sum_matr.into()))
+            }
+            _ => None,
+        }
+    }
+
+    /// Generates the expression to compute the size of a list of ranges
+    pub fn len_expr_of(rngs: &[Range<IntVal>]) -> Option<Expression> {
+        let mut rng_sizes = Vec::with_capacity(rngs.len());
+        for rng in rngs {
+            rng_sizes.push(rng.clone().len_expr()?);
+        }
+        let rng_sizes = into_matrix_expr!(rng_sizes);
+        Some(Expression::Sum(Metadata::new(), rng_sizes.into()))
+    }
 }
 
 impl SetAttr<IntVal> {
@@ -337,6 +360,13 @@ pub enum UnresolvedDomain {
 }
 
 impl UnresolvedDomain {
+    pub fn len_expr(&self) -> Option<Expression> {
+        match self {
+            UnresolvedDomain::Int(rngs) => Range::<IntVal>::len_expr_of(rngs),
+            _ => todo!(),
+        }
+    }
+
     pub fn resolve(&self) -> Option<GroundDomain> {
         match self {
             UnresolvedDomain::Int(rngs) => rngs
