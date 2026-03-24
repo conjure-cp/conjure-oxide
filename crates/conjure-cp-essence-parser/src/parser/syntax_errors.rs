@@ -64,7 +64,7 @@ fn classify_missing_token(node: Node) -> RecoverableParseError {
 
     let message = if let Some(parent) = node.parent() {
         match parent.kind() {
-            "letting_statement" => "Missing Expression or Domain".to_string(),
+            "letting_variable_declaration" => "Missing Expression or Domain".to_string(),
             _ => format!("Missing {}", user_friendly_token_name(node.kind(), false)),
         }
     } else {
