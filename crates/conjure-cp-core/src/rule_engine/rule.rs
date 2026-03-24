@@ -238,6 +238,10 @@ impl MorphRule<Expression, SymbolTable> for Rule<'_> {
         }
         Some(reduction.new_expression)
     }
+
+    fn name(&self) -> &str {
+        self.name
+    }
 }
 
 impl MorphRule<Expression, SymbolTable> for &Rule<'_> {
@@ -253,5 +257,9 @@ impl MorphRule<Expression, SymbolTable> for &Rule<'_> {
             commands.transform(Box::new(|m| m.extend_root(reduction.new_top)));
         }
         Some(reduction.new_expression)
+    }
+
+    fn name(&self) -> &str {
+        self.name
     }
 }
