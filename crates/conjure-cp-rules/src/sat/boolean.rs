@@ -1,6 +1,4 @@
 use conjure_cp::essence_expr;
-use conjure_cp::rule_engine::register_rule_set;
-use conjure_cp::solver::SolverFamily;
 
 use conjure_cp::ast::Metadata;
 use conjure_cp::ast::{Atom, CnfClause, Expression as Expr, Literal, Moo};
@@ -247,13 +245,6 @@ pub fn tseytin_xor(
     new_expr
 }
 
-// BOOLEAN SAT ENCODING RULES:
-
-register_rule_set!("SAT", ("Base"), |f: &SolverFamily| matches!(
-    f,
-    SolverFamily::Sat
-));
-
 /// Converts a single boolean atom to a clause
 ///
 /// ```text
@@ -397,10 +388,11 @@ fn apply_tseytin_not(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     Ok(Reduction::cnf(new_expr, new_clauses, new_symbols))
 }
 
-/// Converts an iff expression to an aux variable, using the tseytin transformation
+/// Converts an iff/boolean equality expression to an aux variable, using the tseytin transformation
 ///
 /// ```text
-///  a <-> b
+/// find a, b : bool
+///  a <-> b OR a = b
 ///  ~~>
 ///  __0
 ///
@@ -414,9 +406,11 @@ fn apply_tseytin_not(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 ///  clause(not(a), b, not(__0))
 /// ```
 #[register_rule(("SAT", 8500))]
-fn apply_tseytin_iff(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
-    let Expr::Iff(_, x, y) = expr else {
-        return Err(RuleNotApplicable);
+fn apply_tseytin_iff_eq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    // Check for iff or eq
+    let (x, y) = match expr {
+        Expr::Iff(_, x, y) | Expr::Eq(_, x, y) => (x, y),
+        _ => return Err(RuleNotApplicable),
     };
 
     if !is_literal(x.as_ref()) || !is_literal(y.as_ref()) {
@@ -466,6 +460,46 @@ fn apply_tseytin_imply(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
     let mut new_symbols = symbols.clone();
 
     new_expr = tseytin_imply(
+        x.as_ref().clone(),
+        y.as_ref().clone(),
+        &mut new_clauses,
+        &mut new_symbols,
+    );
+
+    Ok(Reduction::cnf(new_expr, new_clauses, new_symbols))
+}
+
+/// Converts a boolean != expression to an aux variable, using the tseytin transformation
+///
+/// ```text
+///  find a, b : bool
+///  a != b
+///  ~~>
+///  __0
+///
+///  new clauses:
+///  find __0: bool
+///
+///  new clauses:
+///  clause(not(a), not(b), not(__0))
+///  clause(a, b, not(__0))
+///  clause(a, not(b), __0)
+///  clause(not(a), b, __0)
+/// ```
+#[register_rule(("SAT", 8500))]
+fn apply_tseytin_xor_neq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    let Expr::Neq(_, x, y) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    if !is_literal(x.as_ref()) || !is_literal(y.as_ref()) {
+        return Err(RuleNotApplicable);
+    };
+
+    let mut new_clauses = vec![];
+    let mut new_symbols = symbols.clone();
+
+    let new_expr = tseytin_xor(
         x.as_ref().clone(),
         y.as_ref().clone(),
         &mut new_clauses,

@@ -30,7 +30,8 @@ fn indexed_flatten_matrix(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     };
 
     // resolve index domains so that we can enumerate them later
-    let dom = dbg!(matrix.domain_of())
+    let dom = matrix
+        .domain_of()
         .and_then(|dom| dom.resolve())
         .ok_or(RuleNotApplicable)?;
 

@@ -2,10 +2,10 @@
 
 use crate::Model as ConjureModel;
 use crate::ast::{self as conjure_ast, HasDomain, Moo, Range};
+use crate::settings::{SolverFamily, minion_discrete_threshold};
 use crate::solver::SolverError::{
     ModelFeatureNotImplemented, ModelFeatureNotSupported, ModelInvalid,
 };
-use crate::solver::SolverFamily;
 use crate::solver::SolverMutCallback;
 use crate::solver::{SolverCallback, SolverError};
 use crate::stats::SolverStats;
@@ -17,12 +17,16 @@ use minion_sys::error::MinionError;
 use minion_sys::{get_from_table, run_minion};
 use std::cell::Ref;
 use std::cell::RefCell;
+use std::collections::HashSet;
+use std::ops::Deref;
 use std::rc::Rc;
+use uniplate::{Biplate, Uniplate};
 
 /// Converts a conjure-oxide model to a `minion_sys` model.
 pub fn model_to_minion(model: ConjureModel) -> Result<MinionModel, SolverError> {
     let mut minion_model = MinionModel::new();
-    load_symbol_table(&model, &mut minion_model)?;
+    let table_vars = collect_table_variables(&model);
+    load_symbol_table(&model, &table_vars, &mut minion_model)?;
     load_constraints(&model, &mut minion_model)?;
     Ok(minion_model)
 }
@@ -30,77 +34,80 @@ pub fn model_to_minion(model: ConjureModel) -> Result<MinionModel, SolverError> 
 /// Loads the symbol table into `minion_model`.
 fn load_symbol_table(
     conjure_model: &ConjureModel,
+    table_vars: &HashSet<conjure_ast::Name>,
     minion_model: &mut MinionModel,
 ) -> Result<(), SolverError> {
     if let Some(ref vars) = conjure_model.search_order {
+        let search_vars: HashSet<_> = vars.iter().cloned().collect();
+
         // add search vars in order first
         for name in vars {
             let decl = conjure_model
-                .as_submodel()
                 .symbols()
                 .lookup(name)
-                .expect("search var should exist");
-            let var = decl.as_var().expect("search var should be a var");
+                .ok_or_else(|| ModelInvalid(format!("search variable '{name}' does not exist")))?;
+            let var = decl.as_find().ok_or_else(|| {
+                ModelInvalid(format!(
+                    "search variable '{name}' is not a decision variable"
+                ))
+            })?;
 
-            load_var(name, &var, true, minion_model)?;
+            load_var(name, &var, true, table_vars, minion_model)?;
         }
 
         // then add the rest as non-search vars
-        for (name, decl) in conjure_model
-            .as_submodel()
-            .symbols()
-            .clone()
-            .into_iter_local()
-        {
-            // search var - already added
-            if vars.contains(&name) {
-                continue;
-            };
-
-            let Some(var) = decl.as_var() else {
-                continue;
-            }; // ignore lettings, etc.
-            //
-
-            // this variable has representations, so ignore it
-            if !conjure_model
-                .as_submodel()
-                .symbols()
-                .representations_for(&name)
-                .is_none_or(|x| x.is_empty())
-            {
-                continue;
-            };
-
-            load_var(&name, &var, false, minion_model)?;
-        }
+        for_each_unrepresented_var(conjure_model, |name, var| {
+            if search_vars.contains(name) {
+                return Ok(());
+            }
+            load_var(name, var, false, table_vars, minion_model)
+        })?;
     } else {
-        for (name, decl) in conjure_model
-            .as_submodel()
-            .symbols()
-            .clone()
-            .into_iter_local()
-        {
-            let Some(var) = decl.as_var() else {
-                continue;
-            }; // ignore lettings, etc.
-            //
-
-            // this variable has representations, so ignore it
-            if !conjure_model
-                .as_submodel()
-                .symbols()
-                .representations_for(&name)
-                .is_none_or(|x| x.is_empty())
-            {
-                continue;
-            };
-
+        for_each_unrepresented_var(conjure_model, |name, var| {
             let is_search_var = !matches!(name, conjure_ast::Name::Machine(_));
-
-            load_var(&name, &var, is_search_var, minion_model)?;
-        }
+            load_var(name, var, is_search_var, table_vars, minion_model)
+        })?;
     }
+    Ok(())
+}
+
+fn collect_table_variables(conjure_model: &ConjureModel) -> HashSet<conjure_ast::Name> {
+    conjure_model
+        .constraints()
+        .iter()
+        .flat_map(|expr| expr.universe())
+        .filter_map(|expr| match expr {
+            conjure_ast::Expression::Table(_, tuple_expr, _)
+            | conjure_ast::Expression::NegativeTable(_, tuple_expr, _) => {
+                Some(Moo::unwrap_or_clone(tuple_expr))
+            }
+            _ => None,
+        })
+        .flat_map(|tuple_expr| Biplate::<conjure_ast::Reference>::universe_bi(&tuple_expr))
+        .map(|reference| reference.name().clone())
+        .collect()
+}
+
+fn for_each_unrepresented_var(
+    conjure_model: &ConjureModel,
+    mut f: impl FnMut(&conjure_ast::Name, &conjure_ast::DecisionVariable) -> Result<(), SolverError>,
+) -> Result<(), SolverError> {
+    for (name, decl) in conjure_model.symbols().clone().into_iter_local() {
+        let Some(var) = decl.as_find() else {
+            continue;
+        };
+
+        if !conjure_model
+            .symbols()
+            .representations_for(&name)
+            .is_none_or(|x| x.is_empty())
+        {
+            continue;
+        }
+
+        f(&name, &var)?;
+    }
+
     Ok(())
 }
 
@@ -109,11 +116,14 @@ fn load_var(
     name: &conjure_ast::Name,
     var: &conjure_ast::DecisionVariable,
     search_var: bool,
+    table_vars: &HashSet<conjure_ast::Name>,
     minion_model: &mut MinionModel,
 ) -> Result<(), SolverError> {
-    match &var.domain_of().as_ground() {
+    let resolved_domain = var.domain_of().resolve();
+    let force_discrete = table_vars.contains(name);
+    match resolved_domain.as_deref() {
         Some(conjure_ast::GroundDomain::Int(ranges)) => {
-            load_intdomain_var(name, ranges, search_var, minion_model)
+            load_intdomain_var(name, ranges, search_var, force_discrete, minion_model)
         }
         Some(conjure_ast::GroundDomain::Bool) => {
             load_booldomain_var(name, search_var, minion_model)
@@ -127,6 +137,7 @@ fn load_intdomain_var(
     name: &conjure_ast::Name,
     ranges: &[conjure_ast::Range<i32>],
     search_var: bool,
+    force_discrete: bool,
     minion_model: &mut MinionModel,
 ) -> Result<(), SolverError> {
     let str_name = name_to_string(name.to_owned());
@@ -136,7 +147,11 @@ fn load_intdomain_var(
     // and add a w-inset constraint, e.g. w-inset(x, [1, 3, 5, 6, 7, 8])
     if ranges.len() > 1 {
         let values = Range::values(ranges)
-            .expect("ranges should be finite")
+            .ok_or_else(|| {
+                ModelFeatureNotSupported(format!(
+                    "non-finite int domain with multiple ranges for variable {name}"
+                ))
+            })?
             .map(Constant::Integer)
             .collect_vec();
         minion_model
@@ -152,13 +167,17 @@ fn load_intdomain_var(
         x => Err(ModelFeatureNotSupported(format!("{x:?}"))),
     }?;
 
-    let domain = minion_ast::VarDomain::Bound(low, high);
+    let size = i64::from(high) - i64::from(low) + 1;
+    let threshold = minion_discrete_threshold() as i64;
+    let use_discrete = force_discrete || size <= threshold;
 
-    if search_var {
-        _try_add_var(str_name, domain, minion_model)
+    let domain = if use_discrete {
+        minion_ast::VarDomain::Discrete(low, high)
     } else {
-        _try_add_aux_var(str_name, domain, minion_model)
-    }
+        minion_ast::VarDomain::Bound(low, high)
+    };
+
+    try_add_var(str_name, domain, search_var, minion_model)
 }
 
 /// Loads a variable with domain BoolDomain into `minion_model`
@@ -169,33 +188,23 @@ fn load_booldomain_var(
 ) -> Result<(), SolverError> {
     let str_name = name_to_string(name.to_owned());
     let domain = minion_ast::VarDomain::Bool;
-    if search_var {
-        _try_add_var(str_name, domain, minion_model)
+    try_add_var(str_name, domain, search_var, minion_model)
+}
+
+fn try_add_var(
+    name: minion_ast::VarName,
+    domain: minion_ast::VarDomain,
+    search_var: bool,
+    minion_model: &mut MinionModel,
+) -> Result<(), SolverError> {
+    let added = if search_var {
+        minion_model.named_variables.add_var(name.clone(), domain)
     } else {
-        _try_add_aux_var(str_name, domain, minion_model)
-    }
-}
-
-fn _try_add_var(
-    name: minion_ast::VarName,
-    domain: minion_ast::VarDomain,
-    minion_model: &mut MinionModel,
-) -> Result<(), SolverError> {
-    minion_model
-        .named_variables
-        .add_var(name.clone(), domain)
-        .ok_or(ModelInvalid(format!("variable {name:?} is defined twice")))
-}
-
-fn _try_add_aux_var(
-    name: minion_ast::VarName,
-    domain: minion_ast::VarDomain,
-    minion_model: &mut MinionModel,
-) -> Result<(), SolverError> {
-    minion_model
-        .named_variables
-        .add_aux_var(name.clone(), domain)
-        .ok_or(ModelInvalid(format!("variable {name:?} is defined twice")))
+        minion_model
+            .named_variables
+            .add_aux_var(name.clone(), domain)
+    };
+    added.ok_or(ModelInvalid(format!("variable {name:?} is defined twice")))
 }
 
 fn name_to_string(name: conjure_ast::Name) -> String {
@@ -216,7 +225,7 @@ fn load_constraints(
     conjure_model: &ConjureModel,
     minion_model: &mut MinionModel,
 ) -> Result<(), SolverError> {
-    for expr in conjure_model.as_submodel().constraints().iter() {
+    for expr in conjure_model.constraints().iter() {
         // TODO: top level false / trues should not go to the solver to begin with
         // ... but changing this at this stage would require rewriting the tester
         use crate::ast::Metadata;
@@ -282,6 +291,20 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
             parse_atomic_expr(Moo::unwrap_or_clone(a))?,
             parse_atomic_expr(Moo::unwrap_or_clone(b))?,
         )),
+        conjure_ast::Expression::Table(_metadata, tuple_expr, allowed_rows_expr) => {
+            parse_table_constraint(
+                TableConstraintKind::Table,
+                Moo::unwrap_or_clone(tuple_expr),
+                Moo::unwrap_or_clone(allowed_rows_expr),
+            )
+        }
+        conjure_ast::Expression::NegativeTable(_metadata, tuple_expr, forbidden_rows_expr) => {
+            parse_table_constraint(
+                TableConstraintKind::NegativeTable,
+                Moo::unwrap_or_clone(tuple_expr),
+                Moo::unwrap_or_clone(forbidden_rows_expr),
+            )
+        }
         conjure_ast::Expression::MinionDivEqUndefZero(_metadata, a, b, c) => {
             Ok(minion_ast::Constraint::DivUndefZero(
                 (
@@ -431,6 +454,82 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
     }
 }
 
+#[derive(Clone, Copy)]
+enum TableConstraintKind {
+    Table,
+    NegativeTable,
+}
+
+impl TableConstraintKind {
+    fn name(self) -> &'static str {
+        match self {
+            Self::Table => "table",
+            Self::NegativeTable => "negativeTable",
+        }
+    }
+
+    fn into_constraint(
+        self,
+        vars: Vec<minion_ast::Var>,
+        tuples: Vec<Vec<minion_ast::Constant>>,
+    ) -> minion_ast::Constraint {
+        match self {
+            Self::Table => minion_ast::Constraint::Table(vars, tuples),
+            Self::NegativeTable => minion_ast::Constraint::NegativeTable(vars, tuples),
+        }
+    }
+}
+
+fn parse_table_constraint(
+    kind: TableConstraintKind,
+    tuple_expr: conjure_ast::Expression,
+    rows_expr: conjure_ast::Expression,
+) -> Result<minion_ast::Constraint, SolverError> {
+    let (tuple_elems, _) = tuple_expr
+        .unwrap_matrix_unchecked()
+        .ok_or_else(|| ModelInvalid(format!("{} first argument is not a matrix", kind.name())))?;
+    let (rows, _) = rows_expr
+        .unwrap_matrix_unchecked()
+        .ok_or_else(|| ModelInvalid(format!("{} second argument is not a matrix", kind.name())))?;
+
+    let vars = tuple_elems
+        .into_iter()
+        .map(parse_atomic_expr)
+        .collect::<Result<Vec<_>, SolverError>>()?;
+
+    let mut tuples = Vec::with_capacity(rows.len());
+    for row_expr in rows {
+        let (row_elems, _) = row_expr
+            .unwrap_matrix_unchecked()
+            .ok_or_else(|| ModelInvalid(format!("{} row is not a matrix", kind.name())))?;
+
+        if row_elems.len() != vars.len() {
+            return Err(ModelInvalid(format!(
+                "{} row width does not match tuple width",
+                kind.name()
+            )));
+        }
+
+        let tuple = row_elems
+            .into_iter()
+            .map(|row_val_expr| {
+                conjure_ast::eval_constant(&row_val_expr)
+                    .ok_or_else(|| {
+                        ModelInvalid(format!(
+                            "{} row contains a non-constant expression",
+                            kind.name()
+                        ))
+                    })
+                    .and_then(parse_literal)
+            })
+            .collect::<Result<Vec<_>, SolverError>>()?;
+
+        tuples.push(tuple);
+    }
+
+    Ok(kind.into_constraint(vars, tuples))
+}
+
 fn parse_atomic_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Var, SolverError> {
     match expr {
         // Minion treats bools as ints anyways, so this is a no-op at this stage
@@ -438,19 +537,20 @@ fn parse_atomic_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Var, S
             parse_atomic_expr(Moo::unwrap_or_clone(inner_expr))
         }
         conjure_ast::Expression::Atomic(_, atom) => parse_atom(atom),
-        _ => Err(ModelInvalid(format!(
-            "expected atomic expression, got {expr:?}"
-        ))),
+        expr => {
+            if let Some(lit) = conjure_ast::eval_constant(&expr) {
+                return Ok(minion_ast::Var::ConstantAsVar(parse_literal_as_int(lit)?));
+            }
+
+            Err(ModelInvalid(format!(
+                "expected atomic expression, got {expr:?}"
+            )))
+        }
     }
 }
 
 fn parse_atoms(exprs: Vec<conjure_ast::Atom>) -> Result<Vec<minion_ast::Var>, SolverError> {
-    let mut minion_vars: Vec<minion_ast::Var> = vec![];
-    for expr in exprs {
-        let minion_var = parse_atom(expr)?;
-        minion_vars.push(minion_var);
-    }
-    Ok(minion_vars)
+    exprs.into_iter().map(parse_atom).collect()
 }
 
 fn parse_atom(atom: conjure_ast::Atom) -> Result<minion_ast::Var, SolverError> {
@@ -458,11 +558,36 @@ fn parse_atom(atom: conjure_ast::Atom) -> Result<minion_ast::Var, SolverError> {
         conjure_ast::Atom::Literal(l) => {
             Ok(minion_ast::Var::ConstantAsVar(parse_literal_as_int(l)?))
         }
-        conjure_ast::Atom::Reference(reference) => Ok(parse_name(reference.name().clone()))?,
+        conjure_ast::Atom::Reference(reference) => parse_reference_atom(reference),
 
         x => Err(ModelFeatureNotSupported(format!(
             "expected a literal or a reference but got `{x}`"
         ))),
+    }
+}
+
+fn parse_reference_atom(reference: conjure_ast::Reference) -> Result<minion_ast::Var, SolverError> {
+    if let Some(lit) = reference.resolve_constant() {
+        return Ok(minion_ast::Var::ConstantAsVar(parse_literal_as_int(lit)?));
+    }
+
+    if let Some(inner_atom) = reference.resolve_atomic() {
+        return parse_atom(inner_atom);
+    }
+
+    let decl_kind = reference.ptr().kind();
+    match decl_kind.deref() {
+        conjure_ast::DeclarationKind::ValueLetting(expr, _) => {
+            Err(ModelFeatureNotSupported(format!(
+                "value letting '{}' did not resolve to an atomic expression: {expr}",
+                reference.name()
+            )))
+        }
+        conjure_ast::DeclarationKind::DomainLetting(_) => Err(ModelFeatureNotSupported(format!(
+            "domain reference used where atom expected: {}",
+            reference.name()
+        ))),
+        _ => parse_name(reference.name().clone()),
     }
 }
 
@@ -478,12 +603,7 @@ fn parse_literal_as_int(k: conjure_ast::Literal) -> Result<i32, SolverError> {
 fn parse_literals(
     literals: Vec<conjure_ast::Literal>,
 ) -> Result<Vec<minion_ast::Constant>, SolverError> {
-    let mut minion_constants: Vec<minion_ast::Constant> = vec![];
-    for literal in literals {
-        let minion_constant = parse_literal(literal)?;
-        minion_constants.push(minion_constant);
-    }
-    Ok(minion_constants)
+    literals.into_iter().map(parse_literal).collect()
 }
 
 fn parse_literal(k: conjure_ast::Literal) -> Result<minion_ast::Constant, SolverError> {

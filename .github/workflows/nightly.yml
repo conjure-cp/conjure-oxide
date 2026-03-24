@@ -103,7 +103,7 @@ jobs:
       # defined here.
       #
       - name: Log in to the Container registry
-        uses: docker/login-action@v3.6.0
+        uses: docker/login-action@v3.7.0
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -135,7 +135,7 @@ jobs:
       # parameters to tag and label the image with the output from the "meta" step.
       - name: Build and push Docker image
         id: push
-        uses: docker/build-push-action@v6.18.0
+        uses: docker/build-push-action@v6.19.2
         with:
           context: .
           push: true
@@ -170,7 +170,7 @@ jobs:
       # defined here.
       #
       - name: Log in to the Container registry
-        uses: docker/login-action@v3.6.0
+        uses: docker/login-action@v3.7.0
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -204,7 +204,7 @@ jobs:
       # parameters to tag and label the image with the output from the "meta" step.
       - name: Build and push Docker image
         id: push
-        uses: docker/build-push-action@v6.18.0
+        uses: docker/build-push-action@v6.19.2
         with:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -237,13 +237,16 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
+        with:
+          submodules: recursive
+          fetch-depth: 0
 
       - name: Install rust
         run: rustup update stable && rustup default stable
 
       - name: Build release
         run: |
-          cargo build --release -p conjure-cp-cli 
+          cargo build --release -p conjure-cp-cli --features z3-bundled
           mkdir -p bin # place to store all the different stuff we want to add to the release
           cp target/release/conjure-oxide bin
 
@@ -269,7 +272,7 @@ jobs:
           cd ..
 
       - name: Save builds
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: artifact-${{ env.release_prefix }}
           path: dist/*.zip
@@ -292,10 +295,13 @@ jobs:
         run: chown root:root .
 
       - uses: actions/checkout@v6
+        with:
+          submodules: recursive
+          fetch-depth: 0
 
       - name: Build release
         run: |
-          cargo build --release -p conjure-cp-cli
+          cargo build --release -p conjure-cp-cli --features z3-bundled
           mkdir -p bin # place to store all the different stuff we want to add to the release
           cp target/release/conjure-oxide bin
 
@@ -320,7 +326,7 @@ jobs:
           cd ..
 
       - name: Save builds
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: artifact-${{ env.release_prefix }}
           path: dist/*.zip
@@ -336,7 +342,7 @@ jobs:
       - run: mkdir dist
 
       # download all artifacts made in this workflow (i.e. all the different builds)
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@v8
         with:
           merge-multiple: true # put all releases in the same folder
           path: dist/

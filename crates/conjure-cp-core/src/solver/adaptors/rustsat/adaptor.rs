@@ -18,6 +18,7 @@ use ustr::Ustr;
 
 use rustsat_minisat::core::Minisat;
 
+use crate::ast::pretty::pretty_vec;
 use crate::ast::{Atom, Expression, Literal, Name};
 use crate::ast::{GroundDomain, Metadata};
 use crate::solver::SearchComplete::NoSolutions;
@@ -123,10 +124,7 @@ impl SolverAdaptor for Sat {
                             conjure_solver_wall_time_s: -1.0,
                             solver_family: Some(self.get_family()),
                             solver_adaptor: Some("SAT".to_string()),
-                            nodes: None,
-                            satisfiable: None,
-                            sat_vars: None,
-                            sat_clauses: None,
+                            ..Default::default()
                         },
                         status: if has_sol {
                             SearchStatus::Complete(solver::SearchComplete::HasSolutions)
@@ -184,10 +182,7 @@ impl SolverAdaptor for Sat {
                             conjure_solver_wall_time_s: -1.0,
                             solver_family: Some(self.get_family()),
                             solver_adaptor: Some("SAT".to_string()),
-                            nodes: None,
-                            satisfiable: None,
-                            sat_vars: None,
-                            sat_clauses: None,
+                            ..Default::default()
                         },
                         status: SearchStatus::Incomplete(solver::SearchIncomplete::UserTerminated),
                     });
@@ -213,7 +208,7 @@ impl SolverAdaptor for Sat {
     }
 
     fn load_model(&mut self, model: ConjureModel, _: private::Internal) -> Result<(), SolverError> {
-        let sym_tab = model.as_submodel().symbols().deref().clone();
+        let sym_tab = model.symbols().deref().clone();
         let decisions = sym_tab.clone().into_iter();
 
         let mut finds: Vec<Name> = Vec::new();
@@ -228,9 +223,15 @@ impl SolverAdaptor for Sat {
 
             // only decision variables with boolean domains or representations using booleans are supported at this time
             if (domain != &GroundDomain::Bool
-                && (sym_tab
+                && sym_tab
                     .get_representation(&find_ref.0, &["sat_log_int"])
-                    .is_none()))
+                    .is_none()
+                && sym_tab
+                    .get_representation(&find_ref.0, &["sat_direct_int"])
+                    .is_none()
+                && sym_tab
+                    .get_representation(&find_ref.0, &["sat_order_int"])
+                    .is_none())
             {
                 Err(SolverError::ModelInvalid(
                     "Only Boolean Decision Variables supported".to_string(),
@@ -247,9 +248,20 @@ impl SolverAdaptor for Sat {
 
         let m_clone = model;
 
-        let vec_constr = m_clone.as_submodel().clauses();
+        // all constraints should be encoded as clauses
+        // the remaining constraint (if it exists) should just be a true/false expression
+        let constraints = m_clone.constraints();
+        assert!(
+            constraints.is_empty()
+                || (constraints.len() == 1
+                    && (constraints[0] == true.into() || constraints[0] == false.into())),
+            "Un-encoded constraints in the model: {}",
+            pretty_vec(constraints)
+        );
 
-        let inst: SatInstance = handle_cnf(vec_constr, &mut var_map, finds.clone());
+        let clauses = m_clone.clauses();
+
+        let inst: SatInstance = handle_cnf(clauses, &mut var_map, finds.clone());
 
         self.var_map = Some(var_map);
         let cnf: (Cnf, BasicVarManager) = inst.clone().into_cnf();
@@ -262,11 +274,11 @@ impl SolverAdaptor for Sat {
     fn init_solver(&mut self, _: private::Internal) {}
 
     fn get_family(&self) -> SolverFamily {
-        SolverFamily::Sat
+        SolverFamily::Sat(crate::settings::SatEncoding::Log)
     }
 
     fn get_name(&self) -> &'static str {
-        "SAT"
+        "sat"
     }
 
     fn write_solver_input_file(

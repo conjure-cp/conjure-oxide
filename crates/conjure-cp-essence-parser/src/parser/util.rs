@@ -1,7 +1,84 @@
+use std::collections::BTreeMap;
+
 use tree_sitter::{Node, Parser, Tree};
 use tree_sitter_essence::LANGUAGE;
 
 use super::traversal::WalkDFS;
+use crate::diagnostics::source_map::{SourceMap, SpanId};
+use crate::errors::RecoverableParseError;
+use conjure_cp_core::ast::{Name, SymbolTablePtr};
+
+/// Context for parsing, containing shared state passed through parser functions.
+pub struct ParseContext<'a> {
+    pub source_code: &'a str,
+    pub root: &'a Node<'a>,
+    pub symbols: Option<SymbolTablePtr>,
+    pub errors: &'a mut Vec<RecoverableParseError>,
+    pub source_map: &'a mut SourceMap,
+    pub decl_spans: &'a mut BTreeMap<Name, SpanId>,
+    pub typechecking_context: TypecheckingContext,
+}
+
+impl<'a> ParseContext<'a> {
+    pub fn new(
+        source_code: &'a str,
+        root: &'a Node<'a>,
+        symbols: Option<SymbolTablePtr>,
+        errors: &'a mut Vec<RecoverableParseError>,
+        source_map: &'a mut SourceMap,
+        decl_spans: &'a mut BTreeMap<Name, SpanId>,
+    ) -> Self {
+        Self {
+            source_code,
+            root,
+            symbols,
+            errors,
+            source_map,
+            decl_spans,
+            typechecking_context: TypecheckingContext::Unknown,
+        }
+    }
+
+    pub fn record_error(&mut self, error: RecoverableParseError) {
+        self.errors.push(error);
+    }
+
+    /// Create a new ParseContext with different symbols but sharing source_code, root, errors, and source_map.
+    pub fn with_new_symbols(&mut self, symbols: Option<SymbolTablePtr>) -> ParseContext<'_> {
+        ParseContext {
+            source_code: self.source_code,
+            root: self.root,
+            symbols,
+            errors: self.errors,
+            source_map: self.source_map,
+            decl_spans: self.decl_spans,
+            typechecking_context: self.typechecking_context,
+        }
+    }
+
+    pub fn save_decl_span(&mut self, name: Name, span_id: SpanId) {
+        self.decl_spans.insert(name, span_id);
+    }
+
+    pub fn lookup_decl_span(&self, name: &Name) -> Option<SpanId> {
+        self.decl_spans.get(name).copied()
+    }
+
+    pub fn lookup_decl_line(&self, name: &Name) -> Option<u32> {
+        let span_id = self.lookup_decl_span(name)?;
+        let span = self.source_map.spans.get(span_id as usize)?;
+        Some(span.start_point.line + 1)
+    }
+}
+
+// Used to detect type mismatches during parsing.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TypecheckingContext {
+    Boolean,
+    Arithmetic,
+    /// Context is unknown or flexible
+    Unknown,
+}
 
 /// Parse the given source code into a syntax tree using tree-sitter.
 ///
@@ -42,7 +119,8 @@ pub fn get_tree(src: &str) -> Option<(Tree, String)> {
 
 /// Get the named children of a node
 pub fn named_children<'a>(node: &'a Node<'a>) -> impl Iterator<Item = Node<'a>> + 'a {
-    (0..node.named_child_count()).filter_map(|i| node.named_child(i))
+    (0..node.named_child_count())
+        .filter_map(|i| u32::try_from(i).ok().and_then(|i| node.named_child(i)))
 }
 
 pub fn node_is_expression(node: &Node) -> bool {

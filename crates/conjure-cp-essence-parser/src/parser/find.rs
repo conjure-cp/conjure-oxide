@@ -1,34 +1,78 @@
 #![allow(clippy::legacy_numeric_constants)]
 
-use std::cell::RefCell;
 use std::collections::BTreeMap;
-use std::rc::Rc;
 use tree_sitter::Node;
 
+use super::ParseContext;
 use super::domain::parse_domain;
 use super::util::named_children;
-use crate::EssenceParseError;
-use conjure_cp_core::ast::{DomainPtr, Name, SymbolTable};
+use crate::diagnostics::diagnostics_api::SymbolKind;
+use crate::diagnostics::source_map::{HoverInfo, span_with_hover};
+use crate::errors::{FatalParseError, RecoverableParseError};
+use crate::field;
+use conjure_cp_core::ast::{DomainPtr, Name};
 
 /// Parse a find statement into a map of decision variable names to their domains.
 pub fn parse_find_statement(
+    ctx: &mut ParseContext,
     find_statement: Node,
-    source_code: &str,
-    symbols: Option<Rc<RefCell<SymbolTable>>>,
-) -> Result<BTreeMap<Name, DomainPtr>, EssenceParseError> {
+) -> Result<BTreeMap<Name, DomainPtr>, FatalParseError> {
     let mut vars = BTreeMap::new();
 
-    let domain = find_statement
-        .child_by_field_name("domain")
-        .expect("No domain found in find statement");
-    let domain = parse_domain(domain, source_code, symbols)?;
+    let domain = field!(find_statement, "domain");
+    let Some(domain) = parse_domain(ctx, domain)? else {
+        return Ok(vars);
+    };
 
-    let variable_list = find_statement
-        .child_by_field_name("variables")
-        .expect("No variable list found");
+    let variable_list = field!(find_statement, "variables");
     for variable in named_children(&variable_list) {
-        let variable_name = &source_code[variable.start_byte()..variable.end_byte()];
-        vars.insert(Name::user(variable_name), domain.clone());
+        let variable_name = &ctx.source_code[variable.start_byte()..variable.end_byte()];
+        let name = Name::user(variable_name);
+
+        // Check for duplicate within the same statement
+        if vars.contains_key(&name) {
+            ctx.errors.push(RecoverableParseError::new(
+                format!(
+                    "Variable '{}' is already declared in this find statement",
+                    variable_name
+                ),
+                Some(variable.range()),
+            ));
+            // don't return here, as we can still add the other variables to the symbol table
+            continue;
+        }
+
+        // Check for duplicate declaration across statements
+        if let Some(symbols) = &ctx.symbols
+            && symbols.read().lookup(&name).is_some()
+        {
+            let previous_line = ctx.lookup_decl_line(&name);
+            ctx.errors.push(RecoverableParseError::new(
+                match previous_line {
+                    Some(line) => format!(
+                        "Variable '{}' is already declared in a previous statement on line {}",
+                        variable_name, line
+                    ),
+                    None => format!(
+                        "Variable '{}' is already declared in a previous statement",
+                        variable_name
+                    ),
+                },
+                Some(variable.range()),
+            ));
+            // don't return here, as we can still add the other variables to the symbol table
+            continue;
+        }
+
+        vars.insert(name.clone(), domain.clone());
+        let hover = HoverInfo {
+            description: format!("Find variable: {variable_name}"),
+            kind: Some(SymbolKind::Find),
+            ty: Some(domain.to_string()),
+            decl_span: None,
+        };
+        let span_id = span_with_hover(&variable, ctx.source_code, ctx.source_map, hover);
+        ctx.save_decl_span(name, span_id);
     }
 
     Ok(vars)

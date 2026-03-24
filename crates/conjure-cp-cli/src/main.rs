@@ -53,37 +53,6 @@ pub fn run() -> anyhow::Result<()> {
 }
 
 fn setup_logging(global_args: &GlobalArgs) -> anyhow::Result<()> {
-    // Logging:
-    //
-    // Using `tracing` framework, but this automatically reads stuff from `log`.
-    //
-    // A Subscriber is responsible for logging.
-    //
-    // It consists of composable layers, each of which logs to a different place in a different
-    // format.
-    let json_log_file = File::options()
-        .create(true)
-        .append(true)
-        .open("conjure_oxide_log.json")?;
-
-    let log_file = File::options()
-        .create(true)
-        .append(true)
-        .open("conjure_oxide.log")?;
-
-    // get log level from env-var RUST_LOG
-
-    let json_layer = tracing_subscriber::fmt::layer()
-        .json()
-        .with_writer(Arc::new(json_log_file))
-        .with_filter(LevelFilter::TRACE);
-
-    let file_layer = tracing_subscriber::fmt::layer()
-        .compact()
-        .with_ansi(false)
-        .with_writer(Arc::new(log_file))
-        .with_filter(LevelFilter::TRACE);
-
     let default_stderr_level = if global_args.verbose {
         LevelFilter::DEBUG
     } else {
@@ -112,7 +81,7 @@ fn setup_logging(global_args: &GlobalArgs) -> anyhow::Result<()> {
         )
     };
 
-    let human_rule_trace_layer = global_args.human_rule_trace.clone().map(|x| {
+    let rule_trace_layer = global_args.rule_trace.clone().map(|x| {
         let file = File::create(x).expect("Unable to create rule trace file");
         fmt::layer()
             .with_writer(file)
@@ -122,12 +91,71 @@ fn setup_logging(global_args: &GlobalArgs) -> anyhow::Result<()> {
             .with_filter(EnvFilter::new("rule_engine_human=trace"))
             .with_filter(FilterFn::new(|meta| meta.target() == "rule_engine_human"))
     });
-    // load the loggers
+
+    let rule_trace_verbose_layer = global_args.rule_trace_verbose.clone().map(|x| {
+        let file = File::create(x).expect("Unable to create verbose rule trace file");
+        fmt::layer()
+            .with_writer(file)
+            .with_level(false)
+            .without_time()
+            .with_target(false)
+            .compact()
+            .with_ansi(false)
+            .with_filter(EnvFilter::new("rule_engine_human_verbose=trace"))
+            .with_filter(FilterFn::new(|meta| {
+                meta.target() == "rule_engine_human_verbose"
+            }))
+    });
+
+    let (json_layer, file_layer) = if global_args.log {
+        let mut log_path = global_args
+            .logfile
+            .clone()
+            .unwrap_or_else(|| std::path::PathBuf::from("conjure_oxide.log"));
+        let mut log_json = global_args
+            .logfile_json
+            .clone()
+            .unwrap_or_else(|| std::path::PathBuf::from("conjure_oxide_log.json"));
+
+        log_path.set_extension("log");
+        log_json.set_extension("json");
+
+        let json_log_file = File::options()
+            .truncate(true)
+            .write(true)
+            .create(true)
+            .append(false)
+            .open(log_json)?;
+
+        let log_file = File::options()
+            .truncate(true)
+            .write(true)
+            .create(true)
+            .append(false)
+            .open(log_path)?;
+
+        let json_layer = tracing_subscriber::fmt::layer()
+            .json()
+            .with_writer(Arc::new(json_log_file))
+            .with_filter(LevelFilter::TRACE);
+
+        let file_layer = tracing_subscriber::fmt::layer()
+            .compact()
+            .with_ansi(false)
+            .with_writer(Arc::new(log_file))
+            .with_filter(LevelFilter::TRACE);
+
+        (Some(json_layer), Some(file_layer))
+    } else {
+        (None, None)
+    };
+
     tracing_subscriber::registry()
-        .with(json_layer)
         .with(stderr_layer)
+        .with(rule_trace_layer)
+        .with(rule_trace_verbose_layer)
+        .with(json_layer)
         .with(file_layer)
-        .with(human_rule_trace_layer)
         .init();
 
     Ok(())

@@ -2,17 +2,6 @@ use std::collections::{HashSet, VecDeque};
 use std::fmt::{Display, Formatter};
 use tracing::trace;
 
-use crate::ast::ReturnType;
-use crate::ast::SetAttr;
-use crate::ast::literals::AbstractLiteral;
-use crate::ast::literals::Literal;
-use crate::ast::pretty::{pretty_expressions_as_top_level, pretty_vec};
-use crate::ast::sat_encoding::SATIntEncoding;
-use crate::ast::{Atom, DomainPtr};
-use crate::ast::{GroundDomain, Metadata, UnresolvedDomain};
-use crate::ast::{IntVal, Moo};
-use crate::ast::{Name, matrix};
-use crate::bug;
 use conjure_cp_enum_compatibility_macro::document_compatibility;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
@@ -21,13 +10,21 @@ use ustr::Ustr;
 use polyquine::Quine;
 use uniplate::{Biplate, Uniplate};
 
+use crate::bug;
+
 use super::abstract_comprehension::AbstractComprehension;
 use super::ac_operators::ACOperatorKind;
 use super::categories::{Category, CategoryOf};
 use super::comprehension::Comprehension;
 use super::domains::HasDomain as _;
+use super::pretty::{pretty_expressions_as_top_level, pretty_vec};
 use super::records::RecordValue;
-use super::{DeclarationPtr, Domain, Range, Reference, SubModel, Typeable};
+use super::sat_encoding::SATIntEncoding;
+use super::{
+    AbstractLiteral, Atom, DeclarationPtr, Domain, DomainPtr, GroundDomain, IntVal, Literal,
+    Metadata, Model, Moo, Name, Range, Reference, ReturnType, SetAttr, SymbolTable, SymbolTablePtr,
+    Typeable, UnresolvedDomain, matrix,
+};
 
 // Ensure that this type doesn't get too big
 //
@@ -51,7 +48,7 @@ use super::{DeclarationPtr, Domain, Range, Reference, SubModel, Typeable};
 // boxed ~niklasdewally
 
 // expect size of Expression to be 112 bytes
-static_assertions::assert_eq_size!([u8; 104], Expression);
+static_assertions::assert_eq_size!([u8; 112], Expression);
 
 /// Represents different types of expressions used to define rules and constraints in the model.
 ///
@@ -59,21 +56,24 @@ static_assertions::assert_eq_size!([u8; 104], Expression);
 /// used to build rules and conditions for the model.
 #[document_compatibility]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, Serialize, Deserialize, Uniplate, Quine)]
-#[biplate(to=Metadata)]
-#[biplate(to=Atom)]
-#[biplate(to=DeclarationPtr)]
-#[biplate(to=Name)]
-#[biplate(to=Reference)]
-#[biplate(to=Vec<Expression>)]
-#[biplate(to=Option<Expression>)]
-#[biplate(to=SubModel)]
-#[biplate(to=Comprehension)]
+#[biplate(to=AbstractComprehension)]
 #[biplate(to=AbstractLiteral<Expression>)]
 #[biplate(to=AbstractLiteral<Literal>)]
+#[biplate(to=Atom)]
+#[biplate(to=Comprehension)]
+#[biplate(to=DeclarationPtr)]
+#[biplate(to=DomainPtr)]
+#[biplate(to=Literal)]
+#[biplate(to=Metadata)]
+#[biplate(to=Name)]
+#[biplate(to=Option<Expression>)]
 #[biplate(to=RecordValue<Expression>)]
 #[biplate(to=RecordValue<Literal>)]
-#[biplate(to=Literal)]
-#[biplate(to=DomainPtr)]
+#[biplate(to=Reference)]
+#[biplate(to=Model)]
+#[biplate(to=SymbolTable)]
+#[biplate(to=SymbolTablePtr)]
+#[biplate(to=Vec<Expression>)]
 #[path_prefix(conjure_cp::ast)]
 pub enum Expression {
     AbstractLiteral(Metadata, AbstractLiteral<Expression>),
@@ -87,7 +87,7 @@ pub enum Expression {
     /// A comprehension.
     ///
     /// The inside of the comprehension opens a new scope.
-    // todo (gskorokhod): Comprehension contains a SubModel which contains a bunch of Rc pointers.
+    // todo (gskorokhod): Comprehension contains a symbol table which contains a bunch of pointers.
     // This makes implementing Quine tricky (it doesnt support Rc, by design). Skip it for now.
     #[polyquine_skip]
     Comprehension(Metadata, Moo<Comprehension>),
@@ -152,10 +152,6 @@ pub enum Expression {
     /// - If b is true, then `toInt(b) == 1`
     #[compatible(SMT)]
     ToInt(Metadata, Moo<Expression>),
-
-    // todo (gskorokhod): Same reason as for Comprehension
-    #[polyquine_skip]
-    Scope(Metadata, Moo<SubModel>),
 
     /// `|x|` - absolute value of `x`
     #[compatible(JsonInput, SMT)]
@@ -282,6 +278,19 @@ pub enum Expression {
     #[compatible(JsonInput)]
     AllDiff(Metadata, Moo<Expression>),
 
+    /// `table([x1, x2, ...], [[r11, r12, ...], [r21, r22, ...], ...])`
+    ///
+    /// Represents a positive table constraint: the tuple `[x1, x2, ...]` must match one of the
+    /// allowed rows.
+    #[compatible(JsonInput)]
+    Table(Metadata, Moo<Expression>, Moo<Expression>),
+
+    /// `negativeTable([x1, x2, ...], [[r11, r12, ...], [r21, r22, ...], ...])`
+    ///
+    /// Represents a negative table constraint: the tuple `[x1, x2, ...]` must NOT match any of the
+    /// forbidden rows.
+    #[compatible(JsonInput)]
+    NegativeTable(Metadata, Moo<Expression>, Moo<Expression>),
     /// Binary subtraction operator
     ///
     /// This is a parser-level construct, and is immediately normalised to `Sum([a,-b])`.
@@ -589,7 +598,8 @@ fn bounded_i32_domain_for_matrix_literal_monotonic(
 
     let expr = exprs.pop()?;
     let dom = expr.domain_of()?;
-    let Some(GroundDomain::Int(ranges)) = dom.as_ground() else {
+    let resolved = dom.resolve()?;
+    let GroundDomain::Int(ranges) = resolved.as_ref() else {
         return None;
     };
 
@@ -597,7 +607,8 @@ fn bounded_i32_domain_for_matrix_literal_monotonic(
 
     for expr in exprs {
         let dom = expr.domain_of()?;
-        let Some(GroundDomain::Int(ranges)) = dom.as_ground() else {
+        let resolved = dom.resolve()?;
+        let GroundDomain::Int(ranges) = resolved.as_ref() else {
             return None;
         };
 
@@ -658,8 +669,7 @@ fn range_vec_bounds_i32(ranges: &Vec<Range<i32>>) -> Option<(i32, i32)> {
 impl Expression {
     /// Returns the possible values of the expression, recursing to leaf expressions
     pub fn domain_of(&self) -> Option<DomainPtr> {
-        //println!("domain_of {self}");
-        let ret = match self {
+        match self {
             Expression::Union(_, a, b) => Some(Domain::set(
                 SetAttr::<IntVal>::default(),
                 a.domain_of()?.union(&b.domain_of()?).ok()?,
@@ -722,7 +732,6 @@ impl Expression {
             }
             Expression::InDomain(_, _, _) => Some(Domain::bool()),
             Expression::Atomic(_, atom) => Some(atom.domain_of()),
-            Expression::Scope(_, _) => Some(Domain::bool()),
             Expression::Sum(_, e) => {
                 bounded_i32_domain_for_matrix_literal_monotonic(e, |x, y| Some(x + y))
             }
@@ -773,7 +782,7 @@ impl Expression {
                 if let GroundDomain::Int(ranges) = domain {
                     let mut ranges = ranges;
                     ranges.push(Range::Single(0));
-                    return Some(Domain::int(ranges));
+                    Some(Domain::int(ranges))
                 } else {
                     bug!("Domain of {self} was not integer")
                 }
@@ -800,7 +809,7 @@ impl Expression {
                 if let GroundDomain::Int(ranges) = domain {
                     let mut ranges = ranges;
                     ranges.push(Range::Single(0));
-                    return Some(Domain::int(ranges));
+                    Some(Domain::int(ranges))
                 } else {
                     bug!("Domain of {self} was not integer")
                 }
@@ -864,6 +873,8 @@ impl Expression {
                 None
             }
             Expression::AllDiff(_, _) => Some(Domain::bool()),
+            Expression::Table(_, _, _) => Some(Domain::bool()),
+            Expression::NegativeTable(_, _, _) => Some(Domain::bool()),
             Expression::FlatWatchedLiteral(_, _, _) => Some(Domain::bool()),
             Expression::MinionReify(_, _, _) => Some(Domain::bool()),
             Expression::MinionReifyImply(_, _, _) => Some(Domain::bool()),
@@ -927,33 +938,9 @@ impl Expression {
             Expression::ImageSet(_, function, _) => get_function_codomain(function),
             Expression::PreImage(_, function, _) => get_function_domain(function),
             Expression::Restrict(_, function, new_domain) => {
-                let function_domain = function.domain_of()?;
-                match function_domain.resolve().as_ref() {
-                    Some(d) => {
-                        match d.as_ref() {
-                            GroundDomain::Function(attrs, _, codomain) => Some(Domain::function(
-                                attrs.clone(),
-                                new_domain.domain_of()?,
-                                codomain.clone().into(),
-                            )),
-                            // Not defined for anything other than a function
-                            _ => None,
-                        }
-                    }
-                    None => {
-                        match function_domain.as_unresolved()? {
-                            UnresolvedDomain::Function(attrs, _, codomain) => {
-                                Some(Domain::function(
-                                    attrs.clone(),
-                                    new_domain.domain_of()?,
-                                    codomain.clone(),
-                                ))
-                            }
-                            // Not defined for anything other than a function
-                            _ => None,
-                        }
-                    }
-                }
+                let (attrs, _, codom) = function.domain_of()?.as_function()?;
+                let new_dom = new_domain.domain_of()?;
+                Some(Domain::function(attrs, new_dom, codom))
             }
             Expression::Inverse(..) => Some(Domain::bool()),
             Expression::LexLt(..) => Some(Domain::bool()),
@@ -962,17 +949,7 @@ impl Expression {
             Expression::LexGeq(..) => Some(Domain::bool()),
             Expression::FlatLexLt(..) => Some(Domain::bool()),
             Expression::FlatLexLeq(..) => Some(Domain::bool()),
-        };
-        if let Some(dom) = &ret
-            && let Some(ranges) = dom.as_int_ground()
-            && ranges.len() > 1
-        {
-            // TODO: (flm8) the Minion bindings currently only support single ranges for domains, so we use the min/max bounds
-            // Once they support a full domain as we define it, we can remove this conversion
-            let (min, max) = range_vec_bounds_i32(ranges)?;
-            return Some(Domain::int(vec![Range::Bounded(min, max)]));
         }
-        ret
     }
 
     pub fn get_meta(&self) -> Metadata {
@@ -1055,11 +1032,11 @@ impl Expression {
         }
     }
 
-    /// If the expression is a list, returns the inner expressions.
+    /// If the expression is a list, returns a *copied* vector of the inner expressions.
     ///
     /// A list is any a matrix with the domain `int(1..)`. This includes matrix literals without
     /// any explicitly specified domain.
-    pub fn unwrap_list(self) -> Option<Vec<Expression>> {
+    pub fn unwrap_list(&self) -> Option<Vec<Expression>> {
         match self {
             Expression::AbstractLiteral(_, matrix @ AbstractLiteral::Matrix(_, _)) => {
                 matrix.unwrap_list().cloned()
@@ -1268,7 +1245,7 @@ impl CategoryOf for Expression {
                 // this should generically cover all leaf types we currently have in oxide.
 
                 // if x contains submodels (including comprehensions)
-                if !Biplate::<SubModel>::universe_bi(&x).is_empty() {
+                if !Biplate::<Model>::universe_bi(&x).is_empty() {
                     // assume that the category is decision
                     return Category::Decision;
                 }
@@ -1277,7 +1254,7 @@ impl CategoryOf for Expression {
                 if let Some(max_atom_category) = Biplate::<Atom>::universe_bi(&x).iter().map(|x| x.category_of()).max()
                 // and those atoms have a higher category than we already know about
                 && max_atom_category > max_category{
-                    // update category 
+                    // update category
                     max_category = max_atom_category;
                 }
 
@@ -1285,7 +1262,7 @@ impl CategoryOf for Expression {
                 if let Some(max_declaration_category) = Biplate::<DeclarationPtr>::universe_bi(&x).iter().map(|x| x.category_of()).max()
                 // and those pointers have a higher category than we already know about
                 && max_declaration_category > max_category{
-                    // update category 
+                    // update category
                     max_category = max_declaration_category;
                 }
                 max_category
@@ -1356,7 +1333,6 @@ impl Display for Expression {
             Expression::FromSolution(_, expr) => write!(f, "FromSolution({expr})"),
             Expression::Metavar(_, name) => write!(f, "&{name}"),
             Expression::Atomic(_, atom) => atom.fmt(f),
-            Expression::Scope(_, submodel) => write!(f, "{{\n{submodel}\n}}"),
             Expression::Abs(_, a) => write!(f, "|{a}|"),
             Expression::Sum(_, e) => {
                 write!(f, "sum({e})")
@@ -1426,6 +1402,12 @@ impl Display for Expression {
             Expression::AllDiff(_, e) => {
                 write!(f, "allDiff({e})")
             }
+            Expression::Table(_, tuple_expr, rows_expr) => {
+                write!(f, "table({tuple_expr}, {rows_expr})")
+            }
+            Expression::NegativeTable(_, tuple_expr, rows_expr) => {
+                write!(f, "negativeTable({tuple_expr}, {rows_expr})")
+            }
             Expression::Bubble(_, box1, box2) => {
                 write!(f, "{{{} @ {}}}", box1.clone(), box2.clone())
             }
@@ -1474,7 +1456,7 @@ impl Display for Expression {
             }
             Expression::MinionWInSet(_, atom, values) => {
                 let values = values.iter().join(",");
-                write!(f, "__minion_w_inset({atom},{values})")
+                write!(f, "__minion_w_inset({atom},[{values}])")
             }
             Expression::AuxDeclaration(_, reference, e) => {
                 write!(f, "{} =aux {}", reference, e.clone())
@@ -1615,7 +1597,6 @@ impl Typeable for Expression {
             Expression::FromSolution(_, expr) => expr.return_type(),
             Expression::Metavar(_, _) => ReturnType::Unknown,
             Expression::Atomic(_, atom) => atom.return_type(),
-            Expression::Scope(_, scope) => scope.return_type(),
             Expression::Abs(_, _) => ReturnType::Int,
             Expression::Sum(_, _) => ReturnType::Int,
             Expression::Product(_, _) => ReturnType::Int,
@@ -1656,6 +1637,8 @@ impl Typeable for Expression {
                 }
             }
             Expression::AllDiff(_, _) => ReturnType::Bool,
+            Expression::Table(_, _, _) => ReturnType::Bool,
+            Expression::NegativeTable(_, _, _) => ReturnType::Bool,
             Expression::Bubble(_, inner, _) => inner.return_type(),
             Expression::FlatWatchedLiteral(_, _, _) => ReturnType::Bool,
             Expression::MinionReify(_, _, _) => ReturnType::Bool,
@@ -1750,7 +1733,6 @@ impl Typeable for Expression {
 
 #[cfg(test)]
 mod tests {
-
     use crate::matrix_expr;
 
     use super::*;

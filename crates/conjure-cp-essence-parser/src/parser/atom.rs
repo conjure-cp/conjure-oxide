@@ -1,55 +1,78 @@
+use crate::diagnostics::diagnostics_api::SymbolKind;
+use crate::diagnostics::source_map::{HoverInfo, span_with_hover};
+use crate::errors::{FatalParseError, RecoverableParseError};
 use crate::expression::{parse_binary_expression, parse_expression};
+use crate::parser::ParseContext;
 use crate::parser::abstract_literal::parse_abstract;
 use crate::parser::comprehension::parse_comprehension;
-use crate::util::named_children;
-use crate::{EssenceParseError, field, named_child};
-use conjure_cp_core::ast::{Atom, Expression, Literal, Metadata, Moo, Name, SymbolTable};
-use std::cell::RefCell;
-use std::rc::Rc;
+use crate::util::{TypecheckingContext, named_children};
+use crate::{field, named_child};
+use conjure_cp_core::ast::{
+    Atom, DeclarationPtr, Expression, GroundDomain, Literal, Metadata, Moo, Name,
+};
 use tree_sitter::Node;
 use ustr::Ustr;
 
 pub fn parse_atom(
+    ctx: &mut ParseContext,
     node: &Node,
-    source_code: &str,
-    root: &Node,
-    symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
-) -> Result<Expression, EssenceParseError> {
+) -> Result<Option<Expression>, FatalParseError> {
     match node.kind() {
-        "atom" => parse_atom(&named_child!(node), source_code, root, symbols_ptr),
+        "atom" | "sub_atom_expr" => parse_atom(ctx, &named_child!(node)),
         "metavar" => {
             let ident = field!(node, "identifier");
-            let name_str = &source_code[ident.start_byte()..ident.end_byte()];
-            Ok(Expression::Metavar(Metadata::new(), Ustr::from(name_str)))
+            let name_str = &ctx.source_code[ident.start_byte()..ident.end_byte()];
+            Ok(Some(Expression::Metavar(
+                Metadata::new(),
+                Ustr::from(name_str),
+            )))
         }
-        "identifier" => parse_variable(node, source_code, symbols_ptr)
-            .map(|var| Expression::Atomic(Metadata::new(), var)),
+        "identifier" => {
+            let Some(var) = parse_variable(ctx, node)? else {
+                return Ok(None);
+            };
+            Ok(Some(Expression::Atomic(Metadata::new(), var)))
+        }
         "from_solution" => {
-            if root.kind() != "dominance_relation" {
-                return Err(EssenceParseError::syntax_error(
+            if ctx.root.kind() != "dominance_relation" {
+                return Err(FatalParseError::internal_error(
                     "fromSolution only allowed inside dominance relations".to_string(),
                     Some(node.range()),
                 ));
             }
 
-            let inner = parse_variable(&field!(node, "variable"), source_code, symbols_ptr)?;
-            Ok(Expression::FromSolution(Metadata::new(), Moo::new(inner)))
+            let Some(inner) = parse_variable(ctx, &field!(node, "variable"))? else {
+                return Ok(None);
+            };
+
+            Ok(Some(Expression::FromSolution(
+                Metadata::new(),
+                Moo::new(inner),
+            )))
         }
         "constant" => {
-            let lit = parse_constant(node, source_code)?;
-            Ok(Expression::Atomic(Metadata::new(), Atom::Literal(lit)))
+            let Some(lit) = parse_constant(ctx, node)? else {
+                return Ok(None);
+            };
+            Ok(Some(Expression::Atomic(
+                Metadata::new(),
+                Atom::Literal(lit),
+            )))
         }
         "matrix" | "record" | "tuple" | "set_literal" => {
-            parse_abstract(node, source_code, symbols_ptr)
-                .map(|l| Expression::AbstractLiteral(Metadata::new(), l))
+            let Some(abs) = parse_abstract(ctx, node)? else {
+                return Ok(None);
+            };
+            Ok(Some(Expression::AbstractLiteral(Metadata::new(), abs)))
         }
-        "flatten" => parse_flatten(node, source_code, root, symbols_ptr),
-        "index_or_slice" => parse_index_or_slice(node, source_code, root, symbols_ptr),
+        "flatten" => parse_flatten(ctx, node),
+        "table" | "negative_table" => parse_table(ctx, node),
+        "index_or_slice" => parse_index_or_slice(ctx, node),
         // for now, assume is binary since powerset isn't implemented
         // TODO: add powerset support under "set_operation"
-        "set_operation" => parse_binary_expression(node, source_code, root, symbols_ptr),
-        "comprehension" => parse_comprehension(node, source_code, root, symbols_ptr),
-        _ => Err(EssenceParseError::syntax_error(
+        "set_operation" => parse_binary_expression(ctx, node),
+        "comprehension" => parse_comprehension(ctx, node),
+        _ => Err(FatalParseError::internal_error(
             format!("Expected atom, got: {}", node.kind()),
             Some(node.range()),
         )),
@@ -57,147 +80,294 @@ pub fn parse_atom(
 }
 
 fn parse_flatten(
+    ctx: &mut ParseContext,
     node: &Node,
-    source_code: &str,
-    root: &Node,
-    symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
-) -> Result<Expression, EssenceParseError> {
+) -> Result<Option<Expression>, FatalParseError> {
     let expr_node = field!(node, "expression");
-    let expr = parse_atom(&expr_node, source_code, root, symbols_ptr)?;
+    let Some(expr) = parse_atom(ctx, &expr_node)? else {
+        return Ok(None);
+    };
 
     if node.child_by_field_name("depth").is_some() {
         let depth_node = field!(node, "depth");
-        let depth = parse_int(&depth_node, source_code)?;
+        let depth = parse_int(ctx, &depth_node)?;
         let depth_expression =
             Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(depth)));
-        Ok(Expression::Flatten(
+        Ok(Some(Expression::Flatten(
             Metadata::new(),
             Some(Moo::new(depth_expression)),
             Moo::new(expr),
-        ))
+        )))
     } else {
-        Ok(Expression::Flatten(Metadata::new(), None, Moo::new(expr)))
+        Ok(Some(Expression::Flatten(
+            Metadata::new(),
+            None,
+            Moo::new(expr),
+        )))
+    }
+}
+
+fn parse_table(ctx: &mut ParseContext, node: &Node) -> Result<Option<Expression>, FatalParseError> {
+    // the variables and rows can contain arbitrary expressions, so we temporarily set the context to Unknown to avoid typechecking errors
+    let saved_context = ctx.typechecking_context;
+    ctx.typechecking_context = TypecheckingContext::Unknown;
+
+    let variables_node = field!(node, "variables");
+    let Some(variables) = parse_atom(ctx, &variables_node)? else {
+        return Ok(None);
+    };
+
+    let rows_node = field!(node, "rows");
+    let Some(rows) = parse_atom(ctx, &rows_node)? else {
+        return Ok(None);
+    };
+
+    ctx.typechecking_context = saved_context;
+
+    match node.kind() {
+        "table" => Ok(Some(Expression::Table(
+            Metadata::new(),
+            Moo::new(variables),
+            Moo::new(rows),
+        ))),
+        "negative_table" => Ok(Some(Expression::NegativeTable(
+            Metadata::new(),
+            Moo::new(variables),
+            Moo::new(rows),
+        ))),
+        _ => Err(FatalParseError::internal_error(
+            format!(
+                "Expected 'table' or 'negative_table', got: '{}'",
+                node.kind()
+            ),
+            Some(node.range()),
+        )),
     }
 }
 
 fn parse_index_or_slice(
+    ctx: &mut ParseContext,
     node: &Node,
-    source_code: &str,
-    root: &Node,
-    symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
-) -> Result<Expression, EssenceParseError> {
-    let collection = parse_atom(
-        &field!(node, "collection"),
-        source_code,
-        root,
-        symbols_ptr.clone(),
-    )?;
+) -> Result<Option<Expression>, FatalParseError> {
+    // Save current context and temporarily set to Unknown for the collection
+    let saved_context = ctx.typechecking_context;
+    ctx.typechecking_context = TypecheckingContext::Unknown;
+    let Some(collection) = parse_atom(ctx, &field!(node, "collection"))? else {
+        return Ok(None);
+    };
+    ctx.typechecking_context = saved_context;
     let mut indices = Vec::new();
     for idx_node in named_children(&field!(node, "indices")) {
-        indices.push(parse_index(&idx_node, source_code, symbols_ptr.clone())?);
+        indices.push(parse_index(ctx, &idx_node)?);
     }
 
     let has_null_idx = indices.iter().any(|idx| idx.is_none());
     // TODO: We could check whether the slice/index is safe here
     if has_null_idx {
         // It's a slice
-        Ok(Expression::UnsafeSlice(
+        Ok(Some(Expression::UnsafeSlice(
             Metadata::new(),
             Moo::new(collection),
             indices,
-        ))
+        )))
     } else {
         // It's an index
         let idx_exprs: Vec<Expression> = indices.into_iter().map(|idx| idx.unwrap()).collect();
-        Ok(Expression::UnsafeIndex(
+        Ok(Some(Expression::UnsafeIndex(
             Metadata::new(),
             Moo::new(collection),
             idx_exprs,
-        ))
+        )))
     }
 }
 
-fn parse_index(
-    node: &Node,
-    source_code: &str,
-    symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
-) -> Result<Option<Expression>, EssenceParseError> {
+fn parse_index(ctx: &mut ParseContext, node: &Node) -> Result<Option<Expression>, FatalParseError> {
     match node.kind() {
-        "arithmetic_expr" => Ok(Some(parse_expression(
-            *node,
-            source_code,
-            node,
-            symbols_ptr,
-        )?)),
+        "arithmetic_expr" | "atom" => {
+            let saved_context = ctx.typechecking_context;
+            ctx.typechecking_context = TypecheckingContext::Unknown;
+
+            // TODO: add collection-aware index typechecking.
+            // For tuple/matrix/set-like indexing, indices should be arithmetic.
+            // For record field access, index atoms should resolve to valid field names.
+            // This requires checking index expression together with the indexed collection type.
+
+            let Some(expr) = parse_expression(ctx, *node)? else {
+                return Ok(None);
+            };
+
+            ctx.typechecking_context = saved_context;
+            Ok(Some(expr))
+        }
         "null_index" => Ok(None),
-        _ => Err(EssenceParseError::syntax_error(
+        _ => Err(FatalParseError::internal_error(
             format!("Expected an index, got: '{}'", node.kind()),
             Some(node.range()),
         )),
     }
 }
 
-fn parse_variable(
-    node: &Node,
-    source_code: &str,
-    symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
-) -> Result<Atom, EssenceParseError> {
-    let raw_name = &source_code[node.start_byte()..node.end_byte()];
+fn parse_variable(ctx: &mut ParseContext, node: &Node) -> Result<Option<Atom>, FatalParseError> {
+    let raw_name = &ctx.source_code[node.start_byte()..node.end_byte()];
     let name = Name::user(raw_name.trim());
-    if let Some(symbols) = symbols_ptr {
-        if let Some(decl) = symbols.borrow().lookup(&name) {
-            Ok(Atom::Reference(conjure_cp_core::ast::Reference::new(decl)))
+    if let Some(symbols) = &ctx.symbols {
+        let lookup_result = {
+            let symbols_read = symbols.read();
+            symbols_read.lookup(&name)
+        };
+
+        if let Some(decl) = lookup_result {
+            let hover = HoverInfo {
+                description: format!("Variable: {name}"),
+                kind: Some(SymbolKind::Decimal),
+                ty: decl.domain().map(|d| d.to_string()),
+                decl_span: ctx.lookup_decl_span(&name),
+            };
+            span_with_hover(node, ctx.source_code, ctx.source_map, hover);
+
+            // Type check the variable against the expected context
+            if let Some(error_msg) = typecheck_variable(&decl, ctx.typechecking_context, raw_name) {
+                ctx.record_error(RecoverableParseError::new(error_msg, Some(node.range())));
+                return Ok(None);
+            }
+
+            Ok(Some(Atom::Reference(conjure_cp_core::ast::Reference::new(
+                decl,
+            ))))
         } else {
-            Err(EssenceParseError::syntax_error(
-                format!("Undefined variable: '{}'", raw_name),
+            ctx.record_error(RecoverableParseError::new(
+                format!("The identifier '{}' is not defined", raw_name),
                 Some(node.range()),
-            ))
+            ));
+            Ok(None)
         }
     } else {
-        Err(EssenceParseError::syntax_error(
-            format!(
-                "Found variable '{raw_name}'; Did you mean to pass a meta-variable '&{raw_name}'?\n\
-            A symbol table is needed to resolve variable names, but none exists in this context."
-            ),
+        Err(FatalParseError::internal_error(
+            format!("Symbol table missing when parsing variable '{raw_name}'"),
             Some(node.range()),
         ))
     }
 }
 
-fn parse_constant(node: &Node, source_code: &str) -> Result<Literal, EssenceParseError> {
-    let inner = named_child!(node);
-    let raw_value = &source_code[inner.start_byte()..inner.end_byte()];
-    match inner.kind() {
-        "integer" => {
-            let value = parse_int(&inner, source_code)?;
-            Ok(Literal::Int(value))
-        }
-        "TRUE" => Ok(Literal::Bool(true)),
-        "FALSE" => Ok(Literal::Bool(false)),
-        _ => Err(EssenceParseError::syntax_error(
-            format!(
-                "'{}' (kind: '{}') is not a valid constant",
-                raw_value,
-                inner.kind()
-            ),
-            Some(inner.range()),
-        )),
+/// Type check a variable declaration against the expected expression context.
+/// Returns an error message if the variable type doesn't match the context.
+fn typecheck_variable(
+    decl: &DeclarationPtr,
+    context: TypecheckingContext,
+    raw_name: &str,
+) -> Option<String> {
+    // Only type check when context is known
+    if context == TypecheckingContext::Unknown {
+        return None;
     }
+
+    // Get the variable's domain and resolve it
+    let domain = decl.domain()?;
+    let ground_domain = domain.resolve()?;
+
+    // Determine what type is expected
+    let expected = match context {
+        TypecheckingContext::Boolean => "bool",
+        TypecheckingContext::Arithmetic => "int",
+        TypecheckingContext::Unknown => return None, // shouldn't reach here
+    };
+
+    // Determine what type we actually have
+    let actual = match ground_domain.as_ref() {
+        GroundDomain::Bool => "bool",
+        GroundDomain::Int(_) => "int",
+        GroundDomain::Matrix(_, _) => "matrix",
+        GroundDomain::Set(_, _) => "set",
+        GroundDomain::MSet(_, _) => "mset",
+        GroundDomain::Tuple(_) => "tuple",
+        GroundDomain::Record(_) => "record",
+        GroundDomain::Function(_, _, _) => "function",
+        GroundDomain::Empty(_) => "empty",
+    };
+
+    // If types match, no error
+    if expected == actual {
+        return None;
+    }
+
+    // Otherwise, report the type mismatch
+    Some(format!(
+        "Type error: {}\n\tExpected: {}\n\tGot: {}",
+        raw_name, expected, actual
+    ))
 }
 
-fn parse_int(node: &Node, source_code: &str) -> Result<i32, EssenceParseError> {
-    let raw_value = &source_code[node.start_byte()..node.end_byte()];
-    raw_value.parse::<i32>().map_err(|_e| {
-        if raw_value.is_empty() {
-            EssenceParseError::syntax_error(
-                "Expected an integer here".to_string(),
-                Some(node.range()),
-            )
-        } else {
-            EssenceParseError::syntax_error(
-                format!("'{raw_value}' is not a valid integer"),
-                Some(node.range()),
-            )
+fn parse_constant(ctx: &mut ParseContext, node: &Node) -> Result<Option<Literal>, FatalParseError> {
+    let inner = named_child!(node);
+    let raw_value = &ctx.source_code[inner.start_byte()..inner.end_byte()];
+    let lit = match inner.kind() {
+        "integer" => {
+            let value = parse_int(ctx, &inner)?;
+            Literal::Int(value)
         }
+        "TRUE" => {
+            let hover = HoverInfo {
+                description: format!("Boolean constant: {raw_value}"),
+                kind: None,
+                ty: None,
+                decl_span: None,
+            };
+            span_with_hover(&inner, ctx.source_code, ctx.source_map, hover);
+            Literal::Bool(true)
+        }
+        "FALSE" => {
+            let hover = HoverInfo {
+                description: format!("Boolean constant: {raw_value}"),
+                kind: None,
+                ty: None,
+                decl_span: None,
+            };
+            span_with_hover(&inner, ctx.source_code, ctx.source_map, hover);
+            Literal::Bool(false)
+        }
+        _ => {
+            return Err(FatalParseError::internal_error(
+                format!(
+                    "'{}' (kind: '{}') is not a valid constant",
+                    raw_value,
+                    inner.kind()
+                ),
+                Some(inner.range()),
+            ));
+        }
+    };
+
+    // Type check the constant against the expected context
+    if ctx.typechecking_context != TypecheckingContext::Unknown {
+        let expected = match ctx.typechecking_context {
+            TypecheckingContext::Boolean => "bool",
+            TypecheckingContext::Arithmetic => "int",
+            TypecheckingContext::Unknown => "",
+        };
+
+        let actual = match &lit {
+            Literal::Bool(_) => "bool",
+            Literal::Int(_) => "int",
+            Literal::AbstractLiteral(_) => return Ok(None), // Abstract literals aren't type-checked here
+        };
+
+        if expected != actual {
+            ctx.record_error(RecoverableParseError::new(
+                format!(
+                    "Type error: {}\n\tExpected: {}\n\tGot: {}",
+                    raw_value, expected, actual
+                ),
+                Some(node.range()),
+            ));
+            return Ok(None);
+        }
+    }
+    Ok(Some(lit))
+}
+
+pub(crate) fn parse_int(ctx: &ParseContext, node: &Node) -> Result<i32, FatalParseError> {
+    let raw_value = &ctx.source_code[node.start_byte()..node.end_byte()];
+    raw_value.parse::<i32>().map_err(|_e| {
+        FatalParseError::internal_error("Expected an integer here".to_string(), Some(node.range()))
     })
 }
