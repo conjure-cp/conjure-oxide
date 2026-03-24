@@ -1,4 +1,3 @@
-mod bimap;
 pub mod combinatorics;
 mod view;
 
