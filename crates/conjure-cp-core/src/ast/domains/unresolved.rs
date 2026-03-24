@@ -360,13 +360,6 @@ pub enum UnresolvedDomain {
 }
 
 impl UnresolvedDomain {
-    pub fn len_expr(&self) -> Option<Expression> {
-        match self {
-            UnresolvedDomain::Int(rngs) => Range::<IntVal>::len_expr_of(rngs),
-            _ => todo!(),
-        }
-    }
-
     pub fn resolve(&self) -> Option<GroundDomain> {
         match self {
             UnresolvedDomain::Int(rngs) => rngs
