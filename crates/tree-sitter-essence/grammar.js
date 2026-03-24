@@ -189,12 +189,14 @@ module.exports = grammar ({
     //letting statements
     letting_statement: $ => seq(
       field("letting_keyword", "letting"),
-      commaSep1(seq(
-        field("variable_list", $.variable_list), 
-        field("be", "be"), 
-        optional(field ("domain", "domain")),
-        field("expr_or_domain", choice($.bool_expr, $.arithmetic_expr, $.domain, $.atom))
-      ))
+      field("letting_variable_declaration", commaSep1($.letting_variable_declaration))
+    ),
+
+    letting_variable_declaration: $ => seq(
+      field("variable_list", $.variable_list), 
+      field("be", "be"), 
+      optional(field ("domain", "domain")),
+      field("expr_or_domain", choice($.bool_expr, $.arithmetic_expr, $.domain, $.atom))
     ),
 
     // Constraints 
