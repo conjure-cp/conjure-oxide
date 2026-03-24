@@ -15,6 +15,8 @@ macro_rules! event_handlers {
             before_rule: Vec<fn(&T, &mut M, &R)>,
             after_rule: Vec<fn(&T, &mut M, &R, bool)>,
             after_apply: Vec<fn(&T, &mut M, &R)>,
+            on_cache_hit: Vec<fn(&T, &mut M)>,
+            on_cache_miss: Vec<fn(&T, &mut M)>,
         }
 
         impl<T: Uniplate, M, R> EventHandlers<T, M, R> {
@@ -27,6 +29,8 @@ macro_rules! event_handlers {
                     before_rule: vec![],
                     after_rule: vec![],
                     after_apply: vec![],
+                    on_cache_hit: vec![],
+                    on_cache_miss: vec![],
                 }
             }
 
@@ -77,6 +81,26 @@ macro_rules! event_handlers {
 
             pub(crate) fn add_after_apply(&mut self, handler: fn(&T, &mut M, &R)) {
                 self.after_apply.push(handler);
+            }
+
+            pub(crate) fn trigger_on_cache_hit(&self, node: &T, meta: &mut M) {
+                for f in &self.on_cache_hit {
+                    f(node, meta)
+                }
+            }
+
+            pub(crate) fn trigger_on_cache_miss(&self, node: &T, meta: &mut M) {
+                for f in &self.on_cache_miss {
+                    f(node, meta)
+                }
+            }
+
+            pub(crate) fn add_on_cache_hit(&mut self, handler: fn(&T, &mut M)) {
+                self.on_cache_hit.push(handler);
+            }
+
+            pub(crate) fn add_on_cache_miss(&mut self, handler: fn(&T, &mut M)) {
+                self.on_cache_miss.push(handler);
             }
         }
     }};

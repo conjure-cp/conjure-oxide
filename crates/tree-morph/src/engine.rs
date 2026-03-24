@@ -2,15 +2,15 @@
 //!
 //! See the [`morph`](Engine::morph) for more information.
 
-
 use crate::cache::{CacheResult, RewriteCache};
 use crate::engine_zipper::{EngineZipper, NaiveZipper};
 use crate::events::EventHandlers;
 use crate::helpers::{SelectorFn, one_or_select};
 use crate::prelude::Rule;
-use crate::rule::{RuleGroups, apply_into_update};
+use crate::rule::{RuleGroups, RuleSet, apply_into_update};
 use crate::update::Update;
 
+use rayon::prelude::*;
 use tracing::{debug, error, info, instrument, trace};
 use uniplate::Uniplate;
 
@@ -19,7 +19,7 @@ use uniplate::Uniplate;
 /// See the [`morph`](Engine::morph) method for more information.
 pub struct Engine<T, M, R, C>
 where
-    T: Uniplate,
+    T: Uniplate + Send + Sync,
     R: Rule<T, M> + Clone,
     C: RewriteCache<T>,
 {
@@ -31,43 +31,118 @@ where
     pub(crate) selector: SelectorFn<T, M, R>,
 
     pub(crate) cache: C,
+
+    /// Whether to use parallel (Rayon) iteration when checking rules.
+    pub(crate) parallel: bool,
 }
 
 impl<T, M, R, C> Engine<T, M, R, C>
 where
-    T: Uniplate,
-    R: Rule<T, M> + Clone,
+    T: Uniplate + Send + Sync,
+    R: Rule<T, M> + Clone + Sync,
+    M: Sync,
     C: RewriteCache<T>,
 {
-    #[instrument(skip(self, subtree, meta, rules))]
+    #[instrument(skip(selector, parallel, subtree, meta, rules))]
     fn select_rule<'a>(
-        &self,
+        selector: SelectorFn<T, M, R>,
+        parallel: bool,
         subtree: &T,
         meta: &mut M,
-        rules: impl Iterator<Item = &'a R>,
+        rules: RuleSet<'a, R>,
     ) -> Option<(&'a R, Update<T, M>)> {
         trace!("Beginning Rule Checks");
-        let applicable = &mut rules.filter_map(|rule| {
-            trace!("Testing Rule '{}'", rule.name());
-            self.event_handlers.trigger_before_rule(subtree, meta, rule);
-            let update = apply_into_update(rule, subtree, meta);
-            self.event_handlers
-                .trigger_after_rule(subtree, meta, rule, update.is_some());
-
-            match update {
-                Some(_) => trace!("Rule '{}' Passed", rule.name()),
-                None => trace!("Rule '{}' Failed", rule.name()),
-            };
-
-            Some((rule, update?))
-        });
-        trace!("Finished Rule Checks");
-        one_or_select(self.selector, subtree, applicable)
+        if parallel {
+            let applicable: Vec<(&'a R, Update<T, M>)> = rules
+                .par_iter()
+                .filter_map(|rule| {
+                    let update = apply_into_update(rule, subtree, meta)?;
+                    Some((rule, update))
+                })
+                .collect();
+            trace!("Finished Rule Checks");
+            one_or_select(selector, subtree, &mut applicable.into_iter())
+        } else {
+            let applicable = &mut rules.into_iter().filter_map(|rule| {
+                let update = apply_into_update(rule, subtree, meta)?;
+                Some((rule, update))
+            });
+            trace!("Finished Rule Checks");
+            one_or_select(selector, subtree, applicable)
+        }
     }
 
-    /// Returns whether rule-group prefiltering is enabled for this engine.
-    pub fn uses_prefilter(&self) -> bool {
-        self.rule_groups.discriminant_fn.is_some()
+    fn apply_rule(
+        zipper: &mut EngineZipper<T, M, R, C>,
+        event_handlers: &EventHandlers<T, M, R>,
+        application: (&R, Update<T, M>),
+        level: usize,
+    ) {
+        let (rule, mut update) = application;
+        debug!("Applying Rule '{}'", rule.name());
+
+        let cache_active = zipper.cache.is_active();
+        let original = cache_active.then(|| zipper.focus().clone());
+        let replacement = cache_active.then(|| update.new_subtree.clone());
+
+        // Replace the current subtree, invalidating subtree node states
+        zipper.replace_focus(update.new_subtree);
+
+        // Mark all ancestors as dirty, insert ancestor mappings, and move back to the root
+        zipper.mark_dirty_to_root(level);
+
+        let (focus, meta) = zipper.focus_and_meta();
+        let (new_tree, root_transformed) = update.commands.apply(focus.clone(), meta);
+
+        if root_transformed {
+            debug!("Root transformed, clearing state.");
+            // This must unfortunately throw all node states away,
+            // since the `transform` command may redefine the whole tree
+            zipper.replace_focus(new_tree);
+        } else if let (Some(orig), Some(repl)) = (original, replacement) {
+            if orig != repl {
+                zipper.cache.insert(&orig, Some(repl), level);
+            } else {
+                error!("SAME TREE");
+            }
+        }
+
+        let (focus, meta) = zipper.focus_and_meta();
+        event_handlers.trigger_on_apply(focus, meta, rule);
+    }
+
+    fn apply_rule_naive(
+        zipper: &mut NaiveZipper<T, M, R, C>,
+        event_handlers: &EventHandlers<T, M, R>,
+        application: (&R, Update<T, M>),
+        level: usize,
+    ) {
+        let (rule, mut update) = application;
+        debug!("Applying Rule '{}'", rule.name());
+
+        let cache_active = zipper.cache.is_active();
+        let original = cache_active.then(|| zipper.focus().clone());
+        let replacement = cache_active.then(|| update.new_subtree.clone());
+
+        zipper.replace_focus(update.new_subtree);
+        zipper.map_ancestors_to_root(level);
+
+        let (focus, meta) = zipper.focus_and_meta();
+        let (new_tree, root_transformed) = update.commands.apply(focus.clone(), meta);
+
+        if root_transformed {
+            trace!("Root transformed.");
+            zipper.replace_focus(new_tree);
+        } else if let (Some(orig), Some(repl)) = (original, replacement) {
+            if orig != repl {
+                zipper.cache.insert(&orig, Some(repl), level);
+            } else {
+                error!("SAME TREE");
+            }
+        }
+
+        let (focus, meta) = zipper.focus_and_meta();
+        event_handlers.trigger_on_apply(focus, meta, rule);
     }
 
     /// Exhaustively rewrites a tree using user-defined rule groups.
@@ -199,89 +274,67 @@ where
     #[instrument(skip(self, tree, meta))]
     pub fn morph(&mut self, tree: T, meta: M) -> (T, M)
     where
-        T: Uniplate,
+        T: Uniplate + Send + Sync,
         R: Rule<T, M>,
     {
         // Owns the tree/meta and is consumed to get them back at the end
-        let mut zipper = EngineZipper::new(tree, meta, &self.event_handlers);
+        let mut zipper = EngineZipper::new(tree, meta, &self.event_handlers, &mut self.cache);
         info!("Beginning Morph");
 
         'main: loop {
             // Return here after every successful rule application
             for level in 0..self.rule_groups.levels() {
-                // for (level, rules) in self.rule_groups.get_rules(zipper) {
-                // Try each rule group in the whole tree
-
                 while zipper.go_next_dirty(level).is_some() {
                     trace!("Got Dirty, Level {}", level);
 
-                    let subtree = zipper.inner.focus();
-                    let id = self.rule_groups.discriminant_fn.map(|f| f(subtree));
+                    {
+                        let subtree = zipper.focus();
+                        let id = self.rule_groups.discriminant_fn.map(|f| f(subtree));
+                        let rules = self.rule_groups.get_rules(level, id);
 
-                    let rules = self.rule_groups.get_rules(level, id);
-
-                    debug!("Checking Level {} with ? Rules", level);
-                    match self.cache.get(subtree, level) {
-                        CacheResult::Terminal => {
-                            debug!("Cache Hit - Nothing Applicable");
-                            zipper.set_dirty_from(level + 1);
-                            continue;
-                        }
-                        CacheResult::Rewrite(cached) => {
-                            debug!("Cache Hit");
-                            zipper.inner.replace_focus(cached);
-                            zipper.mark_dirty_to_root(&self.cache);
-                            continue 'main;
-                        }
-                        _ => (),
-                    };
+                        debug!("Checking Level {} with {} Rules", level, rules.len());
+                        match zipper.cache.get(subtree, level) {
+                            CacheResult::Terminal => {
+                                debug!("Cache Hit - Nothing Applicable");
+                                zipper.trigger_cache_hit();
+                                zipper.set_dirty_from(level + 1);
+                                continue;
+                            }
+                            CacheResult::Rewrite(cached) => {
+                                debug!("Cache Hit");
+                                zipper.trigger_cache_hit();
+                                zipper.replace_focus(cached);
+                                zipper.mark_dirty_to_root(level);
+                                continue 'main;
+                            }
+                            _ => {
+                                zipper.trigger_cache_miss();
+                            }
+                        };
+                    }
 
                     // Choose one transformation from all applicable rules at this level
-                    let selected = self.select_rule(subtree, &mut zipper.meta, rules);
-
-                    if let Some((rule, mut update)) = selected {
-                        debug!("Applying Rule '{}'", rule.name());
-
-                        let cache_active = self.cache.is_active();
-                        let original = cache_active.then(|| subtree.clone());
-                        let replacement = cache_active.then(|| update.new_subtree.clone());
-
-                        // Replace the current subtree, invalidating subtree node states
-                        zipper.inner.replace_focus(update.new_subtree);
-
-                        // Mark all ancestors as dirty and move back to the root
-                        zipper.mark_dirty_to_root(&self.cache);
-
-                        let (new_tree, root_transformed) = update
-                            .commands
-                            .apply(zipper.inner.focus().clone(), &mut zipper.meta);
-
-                        if root_transformed {
-                            debug!("Root transformed, clearing state.");
-                            // This must unfortunately throw all node states away,
-                            // since the `transform` command may redefine the whole tree
-                            zipper.inner.replace_focus(new_tree);
-                        } else if let (Some(orig), Some(repl)) = (original, replacement) {
-                            if orig != repl {
-                                self.cache.insert(orig, Some(repl), level);
-                            } else {
-                                error!("SAME TREE");
+                    let (subtree, meta) = zipper.focus_and_meta();
+                    let id = self.rule_groups.discriminant_fn.map(|f| f(subtree));
+                    let rules = self.rule_groups.get_rules(level, id);
+                    match Self::select_rule(self.selector, self.parallel, subtree, meta, rules) {
+                        Some(selected) => {
+                            Self::apply_rule(
+                                &mut zipper,
+                                &self.event_handlers,
+                                selected,
+                                level,
+                            );
+                            continue 'main;
+                        }
+                        None => {
+                            trace!("Nothing Applicable");
+                            if zipper.cache.is_active() {
+                                let subtree = zipper.focus().clone();
+                                zipper.cache.insert(&subtree, None, level);
                             }
+                            zipper.set_dirty_from(level + 1);
                         }
-
-                        self.event_handlers.trigger_on_apply(
-                            zipper.inner.focus(),
-                            &mut zipper.meta,
-                            rule,
-                        );
-
-                        continue 'main;
-                    } else {
-                        trace!("Nothing Applicable");
-                        if self.cache.is_active() {
-                            self.cache.insert(subtree.clone(), None, level);
-                        }
-                        zipper.set_dirty_from(level + 1);
                     }
                 }
             }
@@ -296,47 +349,63 @@ where
 
     /// Exhaustively rewrites a tree using user-defined rule groups.
     ///
-    /// This function is naive. There are no performance optimisations built in. Every time a rule
-    /// is applied, it will go back up to the root of the tree and retry from the very top.
-    ///
     /// It is not recommended to use this function besides testing and for correctness.
-    pub fn morph_naive(&self, tree: T, meta: M) -> (T, M)
+    pub fn morph_naive(&mut self, tree: T, meta: M) -> (T, M)
     where
         T: Uniplate,
         R: Rule<T, M>,
     {
-        let mut zipper = NaiveZipper::new(tree, meta, &self.event_handlers);
+        let mut zipper = NaiveZipper::new(tree, meta, &self.event_handlers, &mut self.cache);
         info!("Beginning Naive Morph");
 
         'main: loop {
-            for rules in self.rule_groups.get_all_rules() {
+            for level in 0..self.rule_groups.levels() {
                 loop {
-                    let subtree = zipper.inner.focus();
+                    {
+                        let subtree = zipper.focus();
+                        debug!("Checking Level {} with ? Rules", level);
+                        match zipper.cache.get(subtree, level) {
+                            CacheResult::Terminal => {
+                                debug!("Cache Hit - Nothing Applicable");
+                                zipper.trigger_cache_hit();
+                                if zipper.get_next().is_none() {
+                                    break;
+                                }
+                                continue;
+                            }
+                            CacheResult::Rewrite(cached) => {
+                                debug!("Cache Hit");
+                                zipper.trigger_cache_hit();
+                                zipper.replace_focus(cached);
+                                zipper.map_ancestors_to_root(level);
+                                continue 'main;
+                            }
+                            _ => {
+                                zipper.trigger_cache_miss();
+                            }
+                        };
+                    }
+
+                    let (subtree, meta) = zipper.focus_and_meta();
+                    let id = self.rule_groups.discriminant_fn.map(|f| f(subtree));
+                    let rules = self.rule_groups.get_rules(level, id);
                     // Choose one transformation from all applicable rules at this level
-                    let selected = self.select_rule(subtree, &mut zipper.meta, rules.into_iter());
+                    let selected = Self::select_rule(self.selector, self.parallel, subtree, meta, rules);
 
-                    if let Some((rule, mut update)) = selected {
-                        zipper.inner.replace_focus(update.new_subtree);
-                        zipper.go_to_root();
-
-                        let (new_tree, root_transformed) = update
-                            .commands
-                            .apply(zipper.inner.focus().clone(), &mut zipper.meta);
-
-                        if root_transformed {
-                            trace!("Root transformed.");
-                            zipper.inner.replace_focus(new_tree);
-                        }
-
-                        self.event_handlers.trigger_on_apply(
-                            zipper.inner.focus(),
-                            &mut zipper.meta,
-                            rule,
+                    if let Some(selected) = selected {
+                        Self::apply_rule_naive(
+                            &mut zipper,
+                            &self.event_handlers,
+                            selected,
+                            level,
                         );
-
                         continue 'main;
                     } else {
                         debug!("Nothing Applicable");
+                        if zipper.cache.is_active() {
+                            let subtree = zipper.focus().clone();
+                            zipper.cache.insert(&subtree, None, level);
+                        }
                     }
 
                     if zipper.get_next().is_none() {
@@ -349,10 +418,6 @@ where
         }
 
         info!("Finished Naive Morph");
-
-        let meta = zipper.meta;
-        let tree = zipper.inner.rebuild_root();
-
-        (tree, meta)
+        zipper.into_parts()
     }
 }

@@ -11,8 +11,8 @@ use std::collections::VecDeque;
 use uniplate::Uniplate;
 
 enum Command<T: Uniplate, M> {
-    Transform(Box<dyn FnOnce(T) -> T>),
-    MutMeta(Box<dyn FnOnce(&mut M)>),
+    Transform(Box<dyn FnOnce(T) -> T + Send>),
+    MutMeta(Box<dyn FnOnce(&mut M) + Send>),
 }
 
 /// A queue of commands (side-effects) to be applied after a successful rule application.
@@ -87,14 +87,14 @@ impl<T: Uniplate, M> Commands<T, M> {
     /// tree.
     ///
     /// Side-effects are applied in order of registration after the rule is applied.
-    pub fn transform(&mut self, f: Box<dyn FnOnce(T) -> T>) {
+    pub fn transform(&mut self, f: Box<dyn FnOnce(T) -> T + Send>) {
         self.commands.push_back(Command::Transform(f));
     }
 
     /// Updates the global metadata in-place via a mutable reference.
     ///
     /// Side-effects are applied in order of registration after the rule is applied.
-    pub fn mut_meta(&mut self, f: Box<dyn FnOnce(&mut M)>) {
+    pub fn mut_meta(&mut self, f: Box<dyn FnOnce(&mut M) + Send>) {
         self.commands.push_back(Command::MutMeta(f));
     }
 

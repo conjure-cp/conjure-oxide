@@ -3,9 +3,10 @@
 //! rules on duplicate subtrees
 
 use std::{
-    collections::HashMap,
-    hash::{DefaultHasher, Hash, Hasher},
+    hash::{DefaultHasher, Hash, Hasher}, marker::PhantomData,
 };
+
+use fxhash::FxHashMap;
 
 /// Return type for RewriteCache
 /// Due to the nature of Rewriting, there may be repeated subtrees where no rule can be applied.
@@ -35,7 +36,7 @@ pub trait RewriteCache<T> {
     /// Insert the results into the cache.
     /// Note: Any powerful side effects such as changing other parts of the tree or replacing the
     /// root should NOT be inserted into the cache.
-    fn insert(&mut self, from: T, to: Option<T>, level: usize);
+    fn insert(&mut self, from: &T, to: Option<T>, level: usize);
 
     /// Invalidate any internally cached hash for the given node.
     /// This is called on ancestors when a subtree is replaced.
@@ -47,6 +48,19 @@ pub trait RewriteCache<T> {
     fn is_active(&self) -> bool {
         true
     }
+
+    /// Record the hash of an ancestor node before descending into a child.
+    /// Called by the zipper on every successful `go_down`.
+    fn push_ancestor(&mut self, _node: &T) {}
+
+    /// Discard the top ancestor hash after ascending back to a parent.
+    /// Called by the zipper on every `go_up` during normal traversal.
+    fn pop_ancestor(&mut self) {}
+
+    /// Pop the top ancestor hash and insert a mapping from the old ancestor
+    /// to the new (rebuilt) ancestor at the given level.
+    /// Called by `mark_dirty_to_root` as it walks up after a replacement.
+    fn pop_and_map_ancestor(&mut self, _new_ancestor: &T, _level: usize) {}
 }
 
 impl<T> RewriteCache<T> for Box<dyn RewriteCache<T>> {
@@ -54,7 +68,7 @@ impl<T> RewriteCache<T> for Box<dyn RewriteCache<T>> {
         (**self).get(subtree, level)
     }
 
-    fn insert(&mut self, from: T, to: Option<T>, level: usize) {
+    fn insert(&mut self, from: &T, to: Option<T>, level: usize) {
         (**self).insert(from, to, level)
     }
 
@@ -64,6 +78,18 @@ impl<T> RewriteCache<T> for Box<dyn RewriteCache<T>> {
 
     fn is_active(&self) -> bool {
         (**self).is_active()
+    }
+
+    fn push_ancestor(&mut self, node: &T) {
+        (**self).push_ancestor(node)
+    }
+
+    fn pop_ancestor(&mut self) {
+        (**self).pop_ancestor()
+    }
+
+    fn pop_and_map_ancestor(&mut self, new_ancestor: &T, level: usize) {
+        (**self).pop_and_map_ancestor(new_ancestor, level)
     }
 }
 
@@ -76,113 +102,46 @@ impl<T> RewriteCache<T> for NoCache {
         CacheResult::Unknown
     }
 
-    fn insert(&mut self, _: T, _: Option<T>, _: usize) {}
+    fn insert(&mut self, _: &T, _: Option<T>, _: usize) {}
 
     fn is_active(&self) -> bool {
         false
     }
 }
 
-/// RewriteCache implemented with a HashMap
-pub struct HashMapCache<T>
-where
-    T: Hash + Clone + Eq,
-{
-    map: HashMap<u64, Option<T>>,
+/// Abstracts how a cache computes hash keys and invalidates nodes.
+///
+/// Implement this trait to plug different hashing strategies into [`HashMapCache`].
+pub trait CacheKey<T> {
+    /// Compute a level-independent hash for `term`.
+    fn node_hash(term: &T) -> u64;
 
-    // Adjacency list to enable transitive updates across.
-    // If we see A -> B and B -> C, we use this field to store B's dependants
-    // Then update A -> C accordingly. If it is a longer chain, there can be
-    // more than one dependants.
-    dependencies: HashMap<u64, Vec<u64>>,
-    // To avoid repeated cloning and save some memory,
-    // we can store the actual subtree once.
-    // This is better if the cost of hashing twice is less than the cost of cloning.
-    // NOT IMPLEMENTED: Maybe unneeded? Would just be pushing the cloning logic elsewhere
-    // subtree_map: HashMap<u64, T>,
-}
-
-impl<T> HashMapCache<T>
-where
-    T: Hash + Clone + Eq,
-{
-    /// Creates a new HashMapCache that can be used as a RewriteCache
-    pub fn new() -> Self {
-        Self {
-            map: HashMap::new(),
-            dependencies: HashMap::new(),
-            // subtree_map: HashMap::new(),
-        }
-    }
-
-    fn hash(&self, term: &T, level: usize) -> u64 {
+    /// Combine a node hash with a rule-group level to produce a cache key.
+    fn combine(node_hash: u64, level: usize) -> u64 {
         let mut hasher = DefaultHasher::new();
-        term.hash(&mut hasher);
+        node_hash.hash(&mut hasher);
         level.hash(&mut hasher);
         hasher.finish()
     }
-}
 
-impl<T> Default for HashMapCache<T>
-where
-    T: Hash + Clone + Eq,
-{
-    fn default() -> Self {
-        Self::new()
-    }
-}
-impl<T> RewriteCache<T> for HashMapCache<T>
-where
-    T: Hash + Clone + Eq,
-{
-    fn get(&self, subtree: &T, level: usize) -> CacheResult<T> {
-        let hashed = self.hash(subtree, level);
-
-        match self.map.get(&hashed) {
-            None => CacheResult::Unknown,
-            Some(entry) => match entry {
-                Some(res) => CacheResult::Rewrite(res.clone()),
-                None => CacheResult::Terminal,
-            },
-        }
+    /// Compute a cache key for `term` at the given rule application `level`.
+    fn hash(term: &T, level: usize) -> u64 {
+        Self::combine(Self::node_hash(term), level)
     }
 
-    fn insert(&mut self, from: T, to: Option<T>, level: usize) {
-        let from_hash = self.hash(&from, level);
+    /// Invalidate any internally cached hash for the given node.
+    /// The default is a no-op (used by [`StdHashKey`]).
+    fn invalidate(_node: &T) {}
+}
 
-        if to.is_none() {
-            self.map.insert(from_hash, None);
-            return;
-        }
+/// Hashing strategy that delegates to the standard [`Hash`] trait.
+pub struct StdHashKey;
 
-        let to_hash = self.hash(to.as_ref().unwrap(), level);
-
-        if from_hash == to_hash {
-            panic!("From and To have the same Hash - Cycle Detected!");
-        }
-
-        if self.map.contains_key(&from_hash) {
-            // TODO: Change mapping from hash -> Vec<T> -- Leave it as single for now
-            panic!("Overriding an existing mapping loses transitive closure.");
-        }
-
-        self.map.insert(from_hash, to.clone());
-
-        if let Some(mut dependencies) = self.dependencies.remove(&from_hash) {
-            for &dependant in &dependencies {
-                self.map.insert(dependant, to.clone());
-            }
-
-            self.dependencies
-                .entry(to_hash)
-                .or_default()
-                .append(&mut dependencies);
-        }
-
-        self.dependencies
-            .entry(to_hash)
-            .or_default()
-            .push(from_hash);
+impl<T: Hash> CacheKey<T> for StdHashKey {
+    fn node_hash(term: &T) -> u64 {
+        let mut hasher = DefaultHasher::new();
+        term.hash(&mut hasher);
+        hasher.finish()
     }
 }
 
@@ -195,55 +154,76 @@ pub trait CacheHashable {
     fn calculate_hash(&self) -> u64;
 }
 
-/// Like [`HashMapCache`], but uses [`CacheHashable::get_cached_hash`] instead of [`Hash`],
+/// Hashing strategy that delegates to [`CacheHashable::get_cached_hash`],
 /// allowing types with internally cached hashes to avoid rehashing entire subtrees.
-pub struct CachedHashMapCache<T>
-where
-    T: CacheHashable + Clone,
-{
-    map: HashMap<u64, Option<T>>,
-    dependencies: HashMap<u64, Vec<u64>>,
+pub struct CachedHashKey;
+
+impl<T: CacheHashable> CacheKey<T> for CachedHashKey {
+    fn node_hash(term: &T) -> u64 {
+        term.get_cached_hash()
+    }
+
+    fn invalidate(node: &T) {
+        node.invalidate_cache();
+    }
 }
 
-impl<T> CachedHashMapCache<T>
+/// RewriteCache implemented with a HashMap, generic over a [`CacheKey`] hashing strategy.
+///
+/// Use `HashMapCache<T>` (defaults to [`StdHashKey`]) for standard `Hash` types,
+/// or `HashMapCache<T, CachedHashKey>` for types implementing [`CacheHashable`].
+pub struct HashMapCache<T, K = StdHashKey>
 where
-    T: CacheHashable + Clone,
+    K: CacheKey<T>,
+    T: Clone,
 {
-    /// Creates a new CachedHashMapCache
+    map: FxHashMap<u64, Option<T>>,
+    predecessors: FxHashMap<u64, Vec<u64>>,
+    ancestor_stack: Vec<u64>,
+    _key: PhantomData<K>,
+}
+
+/// Convenience alias for a [`HashMapCache`] using [`CachedHashKey`].
+pub type CachedHashMapCache<T> = HashMapCache<T, CachedHashKey>;
+
+impl<T, K> HashMapCache<T, K>
+where
+    K: CacheKey<T>,
+    T: Clone,
+{
+    /// Creates a new HashMapCache that can be used as a RewriteCache
     pub fn new() -> Self {
         Self {
-            map: HashMap::new(),
-            dependencies: HashMap::new(),
+            map: FxHashMap::default(),
+            predecessors: FxHashMap::default(),
+            ancestor_stack: Vec::new(),
+            _key: PhantomData,
         }
     }
 
-    fn hash(&self, term: &T, level: usize) -> u64 {
-        let mut hasher = DefaultHasher::new();
-        term.get_cached_hash().hash(&mut hasher);
-        level.hash(&mut hasher);
-        hasher.finish()
-    }
 }
 
-impl<T> Default for CachedHashMapCache<T>
+impl<T, K> Default for HashMapCache<T, K>
 where
-    T: CacheHashable + Clone,
+    K: CacheKey<T>,
+    T: Clone,
 {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<T> RewriteCache<T> for CachedHashMapCache<T>
+impl<T, K> RewriteCache<T> for HashMapCache<T, K>
 where
-    T: CacheHashable + Clone,
+    K: CacheKey<T>,
+    T: Clone,
 {
     fn invalidate_node(&self, node: &T) {
-        node.invalidate_cache();
+        K::invalidate(node);
     }
 
     fn get(&self, subtree: &T, level: usize) -> CacheResult<T> {
-        let hashed = self.hash(subtree, level);
+        let hashed = K::hash(subtree, level);
 
         match self.map.get(&hashed) {
             None => CacheResult::Unknown,
@@ -254,36 +234,117 @@ where
         }
     }
 
-    fn insert(&mut self, from: T, to: Option<T>, level: usize) {
-        let from_hash = self.hash(&from, level);
+    fn insert(&mut self, from: &T, to: Option<T>, level: usize) {
+        let from_hash = K::hash(from, level);
 
         if to.is_none() {
             self.map.insert(from_hash, None);
             return;
         }
 
-        let to_hash = self.hash(to.as_ref().unwrap(), level);
+        let to_hash = K::hash(to.as_ref().unwrap(), level);
+
+        if from_hash == to_hash {
+            panic!("From and To have the same Hash - Cycle Detected!");
+        }
 
         if self.map.contains_key(&from_hash) {
             panic!("Overriding an existing mapping loses transitive closure.");
         }
 
+        // Forward Resolution
+        let to = match self.map.get(&to_hash) {
+            Some(stored) => stored.clone(),
+            None => to.clone(),
+        };
+
+        let to_hash = match &to {
+            Some(resolved) => K::hash(resolved, level),
+            None => {
+                self.map.insert(from_hash, None);
+                return;
+            }
+        };
+
         self.map.insert(from_hash, to.clone());
 
-        if let Some(mut dependencies) = self.dependencies.remove(&from_hash) {
-            for &dependant in &dependencies {
+        if let Some(mut predecessors) = self.predecessors.remove(&from_hash) {
+            for &dependant in &predecessors {
                 self.map.insert(dependant, to.clone());
             }
 
-            self.dependencies
+            self.predecessors
                 .entry(to_hash)
                 .or_default()
-                .append(&mut dependencies);
+                .append(&mut predecessors);
         }
 
-        self.dependencies
+        self.predecessors
             .entry(to_hash)
             .or_default()
             .push(from_hash);
+    }
+
+    fn push_ancestor(&mut self, node: &T) {
+        self.ancestor_stack.push(K::node_hash(node));
+    }
+
+    fn pop_ancestor(&mut self) {
+        self.ancestor_stack.pop();
+    }
+
+    fn pop_and_map_ancestor(&mut self, new_ancestor: &T, level: usize) {
+        if let Some(old_node_hash) = self.ancestor_stack.pop() {
+            let old_key = K::combine(old_node_hash, level);
+            let new_key = K::hash(new_ancestor, level);
+
+            // No change at this ancestor level
+            if old_key == new_key {
+                return;
+            }
+
+            // If old_key has a rewrite mapping, don't override (preserves transitive closure).
+            // But DO override terminal (None) entries — a terminal entry means no rule applied
+            // directly, but ancestor caching shows the subtree changed via a child rewrite.
+            if let Some(existing) = self.map.get(&old_key) {
+                if existing.is_some() {
+                    return;
+                }
+                // Remove the stale terminal entry so we can insert the ancestor mapping
+                self.map.remove(&old_key);
+            }
+
+            // Forward resolution: if new_ancestor already maps to something, follow the chain
+            let to = match self.map.get(&new_key) {
+                Some(stored) => stored.clone(),
+                None => Some(new_ancestor.clone()),
+            };
+
+            let to_key = match &to {
+                Some(resolved) => K::hash(resolved, level),
+                None => {
+                    self.map.insert(old_key, None);
+                    return;
+                }
+            };
+
+            self.map.insert(old_key, to.clone());
+
+            // Predecessor tracking: update any predecessors of old_key
+            if let Some(mut preds) = self.predecessors.remove(&old_key) {
+                for &dep in &preds {
+                    self.map.insert(dep, to.clone());
+                }
+                self.predecessors
+                    .entry(to_key)
+                    .or_default()
+                    .append(&mut preds);
+            }
+
+            self.predecessors
+                .entry(to_key)
+                .or_default()
+                .push(old_key);
+        }
     }
 }

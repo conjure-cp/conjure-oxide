@@ -62,26 +62,16 @@ pub fn current_parser() -> Parser {
 pub struct MorphConfig {
     pub cache: MorphCachingStrategy,
     pub prefilter: bool,
+    /// Use naive (no-levels) traversal (`morph_naive`). Enabled with `levelsoff`, disabled with `levelson`.
     pub naive: bool,
     pub parallel: bool,
-}
-
-impl MorphConfig {
-    pub fn naive() -> Self {
-        Self {
-            cache: MorphCachingStrategy::NoCache,
-            naive: true,
-            parallel: false,
-            prefilter: false,
-        }
-    }
 }
 
 impl Default for MorphConfig {
     fn default() -> Self {
         Self {
             cache: Default::default(),
-            prefilter: true,
+            prefilter: false,
             naive: false,
             parallel: false,
         }
@@ -90,20 +80,12 @@ impl Default for MorphConfig {
 
 impl Display for MorphConfig {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if self.naive {
-            return write!(f, "morph-naive");
-        }
-
-        write!(f, "morph ( {} ", self.cache)?;
-        if self.prefilter {
-            write!(f, "prefilter ")?;
-        }
-
-        if self.parallel {
-            write!(f, "parallel ")?;
-        }
-
-        write!(f, ")")
+        write!(f, "morph")?;
+        write!(f, "-{}", if self.naive { "levelsoff" } else { "levelson" })?;
+        write!(f, "-{}", self.cache)?;
+        write!(f, "-{}", if self.prefilter { "prefilteron" } else { "prefilteroff" })?;
+        write!(f, "-{}", if self.parallel { "parallel" } else { "sequential" })?;
+        Ok(())
     }
 }
 
@@ -138,9 +120,9 @@ impl FromStr for MorphCachingStrategy {
 impl Display for MorphCachingStrategy {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            MorphCachingStrategy::NoCache => write!(f, "no-cache"),
+            MorphCachingStrategy::NoCache => write!(f, "nocache"),
             MorphCachingStrategy::Cache => write!(f, "cache"),
-            MorphCachingStrategy::IncrementalCache => write!(f, "inc-cache"),
+            MorphCachingStrategy::IncrementalCache => write!(f, "inccache"),
         }
     }
 }
@@ -174,40 +156,80 @@ impl FromStr for Rewriter {
         match s.trim().to_ascii_lowercase().as_str() {
             "naive" => Ok(Rewriter::Naive),
             "morph" => Ok(Rewriter::Morph(MorphConfig::default())),
-            "morph-naive" => Ok(Rewriter::Morph(MorphConfig::naive())),
             other => {
                 if !other.starts_with("morph-") {
                     return Err(format!(
-                        "unknown rewriter: {other}; expected one of: naive, morph, morph-naive, morph-[prefilter|parallel|nocache|cache|inc]"
+                        "unknown rewriter: {other}; expected one of: naive, morph, morph-[levelson|levelsoff]-[nocache|cache|inccache]-[prefilteron|prefilteroff]-[sequential|parallel]"
                     ));
                 }
 
                 let parts = other.split('-').skip(1);
                 let mut config = MorphConfig::default();
                 let mut cache_set = false;
+                let mut levels_set = false;
+                let mut prefilter_set = false;
+                let mut parallel_set = false;
 
                 for token in parts {
                     match token {
                         "" => (),
-                        "prefilter" => config.prefilter = true,
-                        "parallel" => config.parallel = true,
-                        "nocache" | "cache" | "inc" => {
-                            // Double match is bad but I wanted to avoid code duplication
-                            if cache_set {
-                                return Err("conflicting cache options: only one of nocache|cache|inc is allowed".to_string());
+                        "levelson" => {
+                            if levels_set {
+                                return Err("conflicting levels options: only one of levelson|levelsoff is allowed".to_string());
                             }
-
-                            match token {
-                                "nocache" => config.cache = MorphCachingStrategy::NoCache,
-                                "cache" => config.cache = MorphCachingStrategy::Cache,
-                                "inc" => config.cache = MorphCachingStrategy::IncrementalCache,
-                                _ => (),
+                            config.naive = false;
+                            levels_set = true;
+                        }
+                        "levelsoff" => {
+                            if levels_set {
+                                return Err("conflicting levels options: only one of levelson|levelsoff is allowed".to_string());
+                            }
+                            config.naive = true;
+                            levels_set = true;
+                        }
+                        "nocache" | "cache" | "inccache" => {
+                            if cache_set {
+                                return Err("conflicting cache options: only one of nocache|cache|inccache is allowed".to_string());
+                            }
+                            config.cache = match token {
+                                "nocache" => MorphCachingStrategy::NoCache,
+                                "cache" => MorphCachingStrategy::Cache,
+                                "inccache" => MorphCachingStrategy::IncrementalCache,
+                                _ => unreachable!(),
                             };
                             cache_set = true;
                         }
+                        "prefilteron" => {
+                            if prefilter_set {
+                                return Err("conflicting prefilter options: only one of prefilteron|prefilteroff is allowed".to_string());
+                            }
+                            config.prefilter = true;
+                            prefilter_set = true;
+                        }
+                        "prefilteroff" => {
+                            if prefilter_set {
+                                return Err("conflicting prefilter options: only one of prefilteron|prefilteroff is allowed".to_string());
+                            }
+                            config.prefilter = false;
+                            prefilter_set = true;
+                        }
+                        "sequential" => {
+                            if parallel_set {
+                                return Err("conflicting parallelism options: only one of sequential|parallel is allowed".to_string());
+                            }
+                            config.parallel = false;
+                            parallel_set = true;
+                        }
+                        "parallel" => {
+                            if parallel_set {
+                                return Err("conflicting parallelism options: only one of sequential|parallel is allowed".to_string());
+                            }
+                            config.parallel = true;
+                            parallel_set = true;
+                        }
                         other_token => {
                             return Err(format!(
-                                "unknown morph option '{other_token}', must be one of prefilter|parallel|nocache|cache|inc"
+                                "unknown morph option '{other_token}', must be one of levelson|levelsoff|nocache|cache|inccache|prefilteron|prefilteroff|sequential|parallel"
                             ));
                         }
                     }

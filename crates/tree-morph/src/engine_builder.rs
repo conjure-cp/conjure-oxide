@@ -13,7 +13,7 @@ use uniplate::Uniplate;
 /// A builder type for constructing and configuring [`Engine`] instances.
 pub struct EngineBuilder<T, M, R, C>
 where
-    T: Uniplate,
+    T: Uniplate + Send + Sync,
     R: Rule<T, M> + Clone,
     C: RewriteCache<T>,
 {
@@ -27,6 +27,8 @@ where
     cache: C,
 
     discriminant_fn: Option<fn(&T) -> usize>,
+
+    parallel: bool,
 }
 
 macro_rules! add_handler_fns {
@@ -51,7 +53,7 @@ macro_rules! add_handler_fns {
 
 impl<T, M, R> EngineBuilder<T, M, R, NoCache>
 where
-    T: Uniplate,
+    T: Uniplate + Send + Sync,
     R: Rule<T, M> + Clone,
 {
     /// Creates a new builder instance with the default [`select_first`] selector.
@@ -62,13 +64,14 @@ where
             selector: select_first,
             cache: NoCache,
             discriminant_fn: None,
+            parallel: false,
         }
     }
 }
 
 impl<T, M, R, C> EngineBuilder<T, M, R, C>
 where
-    T: Uniplate,
+    T: Uniplate + Send + Sync,
     R: Rule<T, M> + Clone,
     C: RewriteCache<T>,
 {
@@ -79,6 +82,7 @@ where
             rule_groups: RuleGroups::new(self.rule_groups, self.discriminant_fn),
             selector: self.selector,
             cache: self.cache,
+            parallel: self.parallel,
         }
     }
 
@@ -128,6 +132,18 @@ where
         self
     }
 
+    /// Register an event handler to be called on a cache hit
+    pub fn add_on_cache_hit(mut self, handler: fn(&T, &mut M)) -> Self {
+        self.event_handlers.add_on_cache_hit(handler);
+        self
+    }
+
+    /// Register an event handler to be called on a cache miss
+    pub fn add_on_cache_miss(mut self, handler: fn(&T, &mut M)) -> Self {
+        self.event_handlers.add_on_cache_miss(handler);
+        self
+    }
+
     /// Sets the selector function to be used when multiple rules are applicable to the same node.
     ///
     /// See the [`morph`](Engine::morph) method of the Engine type for more information.
@@ -150,7 +166,17 @@ where
             selector: self.selector,
             cache: cacher,
             discriminant_fn: self.discriminant_fn,
+            parallel: self.parallel,
         }
+    }
+
+    /// Enables or disables parallel rule checking via Rayon.
+    ///
+    /// When enabled, all rules are tested in parallel using `par_iter`.
+    /// Defaults to `false`.
+    pub fn set_parallel(mut self, parallel: bool) -> Self {
+        self.parallel = parallel;
+        self
     }
 
     /// Sets the discriminant function used for rule prefiltering.
@@ -166,7 +192,7 @@ where
 
 impl<T, M, R> Default for EngineBuilder<T, M, R, NoCache>
 where
-    T: Uniplate,
+    T: Uniplate + Send + Sync,
     R: Rule<T, M> + Clone,
 {
     fn default() -> Self {
@@ -176,7 +202,7 @@ where
 
 impl<T, M, R, C> From<EngineBuilder<T, M, R, C>> for Engine<T, M, R, C>
 where
-    T: Uniplate,
+    T: Uniplate + Send + Sync,
     R: Rule<T, M> + Clone,
     C: RewriteCache<T>,
 {

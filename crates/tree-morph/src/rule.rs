@@ -305,7 +305,7 @@ where
     }
 
     /// TODO
-    pub fn get_rules(&self, level: usize, id: Option<usize>) -> impl Iterator<Item = &R> {
+    pub fn get_rules(&self, level: usize, id: Option<usize>) -> RuleSet<'_, R> {
         let filtered = id
             .and_then(|id| {
                 self.filtered_rules
@@ -315,11 +315,53 @@ where
             .map(|f| f.as_slice())
             .unwrap_or(&[]);
         let universal = &self.universal_rules[level];
-        universal.iter().chain(filtered.iter())
+        RuleSet { universal, filtered }
     }
 
     /// Returns the universal rule groups in priority order.
     pub fn get_all_rules(&self) -> &[Vec<R>] {
         self.universal_rules.as_slice()
+    }
+}
+
+/// A view into the rules applicable to a specific node, split into two slices.
+///
+/// `universal` contains rules that apply to all nodes; `filtered` contains rules that were
+/// prefiltered to this node's discriminant id. Both slices are empty-or-valid references into
+/// the engine's rule storage — no allocation is required to produce this type.
+pub struct RuleSet<'a, R> {
+    pub(crate) universal: &'a [R],
+    pub(crate) filtered: &'a [R],
+}
+
+impl<'a, R> RuleSet<'a, R> {
+    /// Total number of rules in this set.
+    pub fn len(&self) -> usize {
+        self.universal.len() + self.filtered.len()
+    }
+
+    /// Returns true if there are no rules in this set.
+    pub fn is_empty(&self) -> bool {
+        self.universal.is_empty() && self.filtered.is_empty()
+    }
+
+    /// Returns a Rayon parallel iterator over the rules in this set.
+    ///
+    /// Chains the universal and filtered slices without any intermediate allocation.
+    pub fn par_iter(&self) -> impl rayon::iter::ParallelIterator<Item = &'a R>
+    where
+        R: Sync,
+    {
+        use rayon::prelude::*;
+        self.universal.par_iter().chain(self.filtered.par_iter())
+    }
+}
+
+impl<'a, R> IntoIterator for RuleSet<'a, R> {
+    type Item = &'a R;
+    type IntoIter = std::iter::Chain<std::slice::Iter<'a, R>, std::slice::Iter<'a, R>>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.universal.iter().chain(self.filtered.iter())
     }
 }
