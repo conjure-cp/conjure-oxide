@@ -12,15 +12,26 @@ use uniplate::{Biplate, Uniplate};
 
 use super::{
     DeclarationPtr, Domain, DomainPtr, Expression, Model, Moo, Name, Range, SymbolTable,
-    SymbolTablePtr, Typeable, ac_operators::ACOperatorKind, serde::PtrAsInner,
+    SymbolTablePtr, Typeable,
+    ac_operators::ACOperatorKind,
+    serde::{AsId, PtrAsInner},
 };
 
+#[serde_as]
 #[derive(Clone, PartialEq, Eq, Hash, Serialize, Deserialize, Debug, Uniplate)]
 #[biplate(to=Expression)]
 #[biplate(to=Name)]
+#[biplate(to=DeclarationPtr)]
 pub enum ComprehensionQualifier {
-    Generator { name: Name, domain: DomainPtr },
-    ExpressionGenerator { name: Name, expr: Expression},
+    ExpressionGenerator { 
+        #[serde_as(as = "AsId")]
+        ptr: DeclarationPtr,
+        expr: Moo<Expression>,
+    },
+    Generator {
+        #[serde_as(as = "AsId")]
+        ptr: DeclarationPtr,
+    },
     Condition(Expression),
 }
 
@@ -66,8 +77,9 @@ impl Comprehension {
         self.qualifiers
             .iter()
             .filter_map(|q| match q {
-                ComprehensionQualifier::Generator { name, .. } => Some(name.clone()),
-                ComprehensionQualifier::ExpressionGenerator { name, .. } => Some(name.clone()),
+
+                ComprehensionQualifier::ExpressionGenerator { ptr, .. } => Some(ptr.name().clone()),
+                ComprehensionQualifier::Generator { ptr } => Some(ptr.name().clone()),
                 ComprehensionQualifier::Condition(_) => None,
             })
             .collect()
@@ -139,10 +151,12 @@ impl Display for Comprehension {
             .qualifiers
             .iter()
             .map(|qualifier| match qualifier {
-                ComprehensionQualifier::Generator { name, domain } => {
-                    format!("{name} : {domain}")
+                ComprehensionQualifier::Generator { ptr , ..} => {
+                    let domain = ptr.domain().expect("generator declaration has domain");
+                    format!("{} : {domain}", ptr.name())
                 }
-                ComprehensionQualifier::ExpressionGenerator {name, expr } => {
+                ComprehensionQualifier::ExpressionGenerator {ptr, expr } => {
+                    let name = ptr.name();
                     format!("{name} <- {expr}")
                 }
                 ComprehensionQualifier::Condition(expr) => format!("{expr}"),
@@ -193,17 +207,17 @@ impl ComprehensionBuilder {
 
     pub fn generator(mut self, declaration: DeclarationPtr) -> Self {
         let name = declaration.name().clone();
-        let domain = declaration.domain().unwrap();
         assert!(!self.quantified_variables.contains(&name));
 
         self.quantified_variables.insert(name.clone());
 
         // insert into comprehension scope as a local quantified variable
-        let quantified_decl = DeclarationPtr::new_quantified(name.clone(), domain.clone());
-        self.symbols.write().insert(quantified_decl);
+        let quantified_decl = DeclarationPtr::new_quantified(name, declaration.domain().unwrap());
+        self.symbols.write().insert(quantified_decl.clone());
 
-        self.qualifiers
-            .push(ComprehensionQualifier::Generator { name, domain });
+        self.qualifiers.push(ComprehensionQualifier::Generator {
+            ptr: quantified_decl,
+        });
 
         self
     }
@@ -215,10 +229,10 @@ impl ComprehensionBuilder {
 
         // insert into comprehension scope as a local quantified variable
         let quantified_decl = DeclarationPtr::new_quantified(name.clone(), expr.domain_of().unwrap());
-        self.symbols.write().insert(quantified_decl);
+        self.symbols.write().insert(quantified_decl.clone());
 
         self.qualifiers
-            .push(ComprehensionQualifier::ExpressionGenerator { name, expr });
+            .push(ComprehensionQualifier::ExpressionGenerator { ptr: quantified_decl, expr: expr.into() });
 
         self
     }

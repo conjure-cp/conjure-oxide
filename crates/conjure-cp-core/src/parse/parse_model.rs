@@ -8,7 +8,6 @@ use serde_json::Value;
 use serde_json::Value as JsonValue;
 
 use crate::ast::Moo;
-use crate::ast::abstract_comprehension::AbstractComprehensionBuilder;
 use crate::ast::ac_operators::ACOperatorKind;
 use crate::ast::comprehension::ComprehensionBuilder;
 use crate::ast::records::RecordValue;
@@ -107,6 +106,11 @@ pub fn model_from_json(str: &str, context: Arc<RwLock<Context<'static>>>) -> Res
 
 fn parse_variable(v: &JsonValue, symtab: &mut SymbolTable) -> Result<()> {
     let arr = v.as_array().ok_or(error!("FindOrGiven is not an array"))?;
+
+    let variable_type = arr[0]
+        .as_str()
+        .ok_or(error!("FindOrGiven[0] is not a string"))?;
+
     let name = arr[1]
         .as_object()
         .ok_or(error!("FindOrGiven[1] is not an object"))?["Name"]
@@ -124,11 +128,17 @@ fn parse_variable(v: &JsonValue, symtab: &mut SymbolTable) -> Result<()> {
 
     let domain = parse_domain(domain.0, domain.1, symtab)?;
 
-    symtab
-        .insert(DeclarationPtr::new_find(name.clone(), domain))
-        .ok_or(Error::Parse(format!(
-            "Could not add {name} to symbol table as it already exists"
-        )))
+    let decl = match variable_type {
+        "Find" => DeclarationPtr::new_find(name.clone(), domain),
+        "Given" => DeclarationPtr::new_given(name.clone(), domain),
+        _ => {
+            return Err(error!("FindOrGiven[0] is not 'Find' or 'Given'"));
+        }
+    };
+
+    symtab.insert(decl).ok_or(Error::Parse(format!(
+        "Could not add {name} to symbol table as it already exists"
+    )))
 }
 
 fn parse_letting(v: &JsonValue, scope: &SymbolTablePtr) -> Result<()> {
