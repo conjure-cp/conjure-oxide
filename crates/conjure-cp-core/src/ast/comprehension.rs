@@ -26,7 +26,6 @@ pub enum ComprehensionQualifier {
     ExpressionGenerator { 
         #[serde_as(as = "AsId")]
         ptr: DeclarationPtr,
-        expr: Moo<Expression>,
     },
     Generator {
         #[serde_as(as = "AsId")]
@@ -155,9 +154,13 @@ impl Display for Comprehension {
                     let domain = ptr.domain().expect("generator declaration has domain");
                     format!("{} : {domain}", ptr.name())
                 }
-                ComprehensionQualifier::ExpressionGenerator {ptr, expr } => {
+                ComprehensionQualifier::ExpressionGenerator {ptr } => {
                     let name = ptr.name();
-                    format!("{name} <- {expr}")
+                    if let Some(expr) = ptr.as_quantified_expr() {
+                        format!("{name} <- {expr}")
+                    } else {
+                        panic!("Oh nein! Dat is nicht gut!")
+                    }
                 }
                 ComprehensionQualifier::Condition(expr) => format!("{expr}"),
             })
@@ -228,11 +231,11 @@ impl ComprehensionBuilder {
         self.quantified_variables.insert(name.clone());
 
         // insert into comprehension scope as a local quantified variable
-        let quantified_decl = DeclarationPtr::new_quantified(name.clone(), expr.domain_of().unwrap());
+        let quantified_decl = DeclarationPtr::new_quantified_expr(name.clone(), expr);
         self.symbols.write().insert(quantified_decl.clone());
 
         self.qualifiers
-            .push(ComprehensionQualifier::ExpressionGenerator { ptr: quantified_decl, expr: expr.into() });
+            .push(ComprehensionQualifier::ExpressionGenerator { ptr: quantified_decl });
 
         self
     }
