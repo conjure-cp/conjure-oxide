@@ -1,6 +1,8 @@
 use super::prelude::*;
-use conjure_cp::ast::{Domain, Range, domains::Int};
+use conjure_cp::ast::{Domain, Range, Reference, domains::Int};
 use conjure_cp::utils::BiMap;
+use conjure_cp::{essence_expr, into_matrix_expr};
+use itertools::{Itertools, chain};
 use std::collections::VecDeque;
 use std::hash::Hash;
 
@@ -8,13 +10,7 @@ register_representation!(
     SatIntDirect
     struct State<T: Eq + Hash> {
         // Mapping of each possible value i of the original integer x to a boolean b_i <-> (x = i)
-        vals: BiMap<Int, T>
-    }
-    impl<T: Eq + Hash> State<T> {
-        // Iterate all entries except the one corresponding to `key`
-        fn others(&self, key: Int) -> impl Iterator<Item = &T> {
-            self.vals.iter().filter_map(move |(k, v)| if *k == key { None } else { Some(v) })
-        }
+        pub vals: BiMap<Int, T>
     }
     fn init(dom: DomainPtr) -> Result<State<DomainPtr>, ReprInitError> {
         let Some(rngs) = dom.as_int_ground() else {
@@ -26,16 +22,54 @@ register_representation!(
         let vals: BiMap<Int, DomainPtr> = itr.map(|v| (v, Domain::bool())).collect();
         Ok(State { vals })
     }
-    fn structural(_state: &State<DeclarationPtr>) -> Vec<Expression> {
-        vec![]
+    fn structural(state: &State<DeclarationPtr>) -> Vec<Expression> {
+        let elems: Vec<&DeclarationPtr> = state.vals.right_values().collect();
+        let n = elems.len();
+        let mut res = Vec::<Expression>::with_capacity(n);
+        for i in 0..n {
+            // the i-th bool variable
+            let this = Reference::from(elems[i].clone());
+
+            // all other bool variables from this representation
+            let others: Vec<Expression> = chain!(&elems[0..i], &elems[i + 1..n])
+                .map(|d| Reference::from((*d).clone()).into()).collect();
+            let others_mat = into_matrix_expr!(others);
+
+            // if b_i is true, all others must be false
+            res.push(essence_expr!(&this <-> !or(&others_mat)));
+        }
+        res
     }
     fn down(state: &State<DomainPtr>, value: Literal) -> Result<State<Literal>, ReprDownError> {
-        todo!()
+        let Literal::Int(x) = value else {
+            return Err(ReprDownError::BadValue(value, String::from("expected an int literal")))
+        };
+        let mut vals: BiMap<Int, Literal> = state.vals.left_values().map(|k| (*k, false.into())).collect();
+        vals.insert(x, true.into());
+        Ok(State { vals })
     }
     fn up(state: State<Literal>) -> Literal {
-        todo!()
+        let mut ans = None;
+        for (k, v) in state.vals.into_iter() {
+            if lit_to_bool(&v) {
+                if ans.is_some() {
+                    bug!("more than one value was true");
+                }
+                ans = Some(Literal::from(k));
+            }
+        }
+        ans.unwrap_or_else(|| bug!("none of the given values were true"))
     }
     fn repr_vars(state: &State<DeclarationPtr>) -> VecDeque<DeclarationPtr> {
-        todo!()
+        state.vals.right_values().cloned().collect()
     }
 );
+
+fn lit_to_bool(x: &Literal) -> bool {
+    match x {
+        Literal::Bool(b) => *b,
+        Literal::Int(0) => false,
+        Literal::Int(1) => true,
+        _ => bug!("expected a boolean or int(0..1) literal, got {}", x),
+    }
+}
