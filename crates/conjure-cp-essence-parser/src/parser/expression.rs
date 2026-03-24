@@ -48,6 +48,7 @@ fn parse_dominance_relation(
         symbols: ctx.symbols.clone(),
         errors: ctx.errors,
         source_map: &mut *ctx.source_map,
+        decl_spans: ctx.decl_spans,
         typechecking_context: ctx.typechecking_context,
     };
 
