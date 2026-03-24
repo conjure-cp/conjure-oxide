@@ -235,7 +235,7 @@ fn interpret(
 
             Ok(Literal::AbstractLiteral(AbstractLiteral::Matrix(
                 elements,
-                domain.clone(),
+                idx_domains[0].clone(),
             )))
         }
         (_, GroundDomain::Set(_, val_domain)) => {

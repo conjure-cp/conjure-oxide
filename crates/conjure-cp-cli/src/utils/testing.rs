@@ -11,9 +11,9 @@ use std::io::{BufRead, BufReader, Write};
 use std::path::Path;
 use std::sync::{Arc, RwLock};
 use std::{io, mem, vec};
-use uniplate::Uniplate;
+use uniplate::{Biplate, Uniplate};
 
-use conjure_cp::ast::{AbstractLiteral, Expression, GroundDomain, Moo, SerdeModel};
+use conjure_cp::ast::{AbstractLiteral, Expression, GroundDomain, Moo, Range, SerdeModel};
 use conjure_cp::context::Context;
 use serde_json::{Error as JsonError, Value as JsonValue};
 
@@ -24,6 +24,7 @@ use crate::utils::json::sort_json_object;
 use crate::utils::misc::to_set;
 use conjure_cp::Model as ConjureModel;
 use conjure_cp::ast::Name::User;
+use conjure_cp::ast::matrix;
 use conjure_cp::ast::{Literal, Name};
 use conjure_cp::settings::SolverFamily;
 
@@ -315,98 +316,16 @@ pub fn normalize_solutions_for_comparison(
                     Literal::Bool(true) => updates.push((k, Literal::Int(1))),
                     Literal::Bool(false) => updates.push((k, Literal::Int(0))),
                     Literal::Int(_) => {}
-                    Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, _)) => {
-                        // make all domains the same (this is just in the tester so the types dont
-                        // actually matter)
-
-                        let mut matrix =
-                            AbstractLiteral::Matrix(elems, Moo::new(GroundDomain::Int(vec![])));
-                        matrix = matrix.transform(&move |x: AbstractLiteral<Literal>| match x {
-                            AbstractLiteral::Matrix(items, _) => {
-                                let items = items
-                                    .into_iter()
-                                    .map(|x| match x {
-                                        Literal::Bool(false) => Literal::Int(0),
-                                        Literal::Bool(true) => Literal::Int(1),
-                                        x => x,
-                                    })
-                                    .collect_vec();
-
-                                AbstractLiteral::Matrix(items, Moo::new(GroundDomain::Int(vec![])))
-                            }
+                    Literal::AbstractLiteral(abslit) => {
+                        let new_abslit = abslit.transform_bi(&|x| match x {
+                            Literal::Bool(true) => Literal::Int(1),
+                            Literal::Bool(false) => Literal::Int(0),
                             x => x,
                         });
-                        updates.push((k, Literal::AbstractLiteral(matrix)));
+                        if new_abslit != abslit {
+                            updates.push((k, Literal::AbstractLiteral(new_abslit)));
+                        }
                     }
-                    Literal::AbstractLiteral(AbstractLiteral::Tuple(elems)) => {
-                        // just the same as matrix but with tuples instead
-                        // only conversion needed is to convert bools to ints
-                        let mut tuple = AbstractLiteral::Tuple(elems);
-                        tuple = tuple.transform(
-                            &(move |x: AbstractLiteral<Literal>| match x {
-                                AbstractLiteral::Tuple(items) => {
-                                    let items = items
-                                        .into_iter()
-                                        .map(|x| match x {
-                                            Literal::Bool(false) => Literal::Int(0),
-                                            Literal::Bool(true) => Literal::Int(1),
-                                            x => x,
-                                        })
-                                        .collect_vec();
-
-                                    AbstractLiteral::Tuple(items)
-                                }
-                                x => x,
-                            }),
-                        );
-                        updates.push((k, Literal::AbstractLiteral(tuple)));
-                    }
-                    Literal::AbstractLiteral(AbstractLiteral::Record(entries)) => {
-                        // just the same as matrix but with tuples instead
-                        // only conversion needed is to convert bools to ints
-                        let mut record = AbstractLiteral::Record(entries);
-                        record = record.transform(&move |x: AbstractLiteral<Literal>| match x {
-                            AbstractLiteral::Record(entries) => {
-                                let entries = entries
-                                    .into_iter()
-                                    .map(|x| {
-                                        let RecordValue { name, value } = x;
-                                        {
-                                            let value = match value {
-                                                Literal::Bool(false) => Literal::Int(0),
-                                                Literal::Bool(true) => Literal::Int(1),
-                                                x => x,
-                                            };
-                                            RecordValue { name, value }
-                                        }
-                                    })
-                                    .collect_vec();
-
-                                AbstractLiteral::Record(entries)
-                            }
-                            x => x,
-                        });
-                        updates.push((k, Literal::AbstractLiteral(record)));
-                    }
-                    Literal::AbstractLiteral(AbstractLiteral::Set(members)) => {
-                        let set = AbstractLiteral::Set(members).transform(&move |x| match x {
-                            AbstractLiteral::Set(members) => {
-                                let members = members
-                                    .into_iter()
-                                    .map(|x| match x {
-                                        Literal::Bool(false) => Literal::Int(0),
-                                        Literal::Bool(true) => Literal::Int(1),
-                                        x => x,
-                                    })
-                                    .collect_vec();
-
-                                AbstractLiteral::Set(members)
-                            }
-                            x => x,
-                        });
-                        updates.push((k, Literal::AbstractLiteral(set)));
-                    }
-                    e => bug!("unexpected literal type: {e:?}"),
                 }
             }
         }
@@ -443,4 +362,35 @@ fn read_first_n_lines<P: AsRef<Path>>(filename: P, n: usize) -> io::Result<Strin
         .unwrap()
         .collect::<Result<Vec<_>, _>>()?;
     Ok(lines.join("\n"))
+}
+
+/// Flatten all matrix literals in the given solutions for comparison.
+///
+/// This handles models with matrix-indexed-by-matrix, where our representation uses flat elements
+/// with a `GroundDomain::Matrix` index domain, but Conjure represents the same data as nested
+/// sub-matrices with simple integer index domains. Flattening both to a canonical form
+/// (`Matrix(flat_elements, int(1..n))`) makes them comparable.
+pub fn flatten_matrices_for_comparison(solutions: &mut [BTreeMap<Name, Literal>]) {
+    for solset in solutions.iter_mut() {
+        let updates: Vec<_> = solset
+            .iter()
+            .filter_map(|(k, v)| {
+                if let Literal::AbstractLiteral(abslit @ AbstractLiteral::Matrix(..)) = v {
+                    let flat_elems: Vec<Literal> = matrix::flatten(abslit).cloned().collect();
+                    let n = flat_elems.len() as i32;
+                    let canonical = AbstractLiteral::Matrix(
+                        flat_elems,
+                        Moo::new(GroundDomain::Int(vec![Range::Bounded(1, n)])),
+                    );
+                    Some((k.clone(), Literal::AbstractLiteral(canonical)))
+                } else {
+                    None
+                }
+            })
+            .collect();
+
+        for (k, v) in updates {
+            solset.insert(k, v);
+        }
+    }
 }

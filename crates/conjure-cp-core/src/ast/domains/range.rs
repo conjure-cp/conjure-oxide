@@ -1,10 +1,11 @@
 use crate::ast::domains::Int;
+use funcmap::{FuncMap, TryFuncMap};
 use num_traits::Num;
 use polyquine::Quine;
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, FuncMap, TryFuncMap, Quine)]
 #[path_prefix(conjure_cp::ast)]
 pub enum Range<A = Int> {
     Single(A),
@@ -51,6 +52,19 @@ impl<A> Range<A> {
             Range::UnboundedR(a) => Range::UnboundedR(f(a)),
             Range::Unbounded => Range::Unbounded,
         }
+    }
+
+    pub fn try_map<B, F, E>(&self, mut f: F) -> Result<Range<B>, E>
+    where
+        F: FnMut(&A) -> Result<B, E>,
+    {
+        Ok(match self {
+            Range::Single(a) => Range::Single(f(a)?),
+            Range::Bounded(a, b) => Range::Bounded(f(a)?, f(b)?),
+            Range::UnboundedL(a) => Range::UnboundedL(f(a)?),
+            Range::UnboundedR(a) => Range::UnboundedR(f(a)?),
+            Range::Unbounded => Range::Unbounded,
+        })
     }
 }
 

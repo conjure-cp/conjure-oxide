@@ -1,7 +1,9 @@
+use funcmap::FuncMap;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 use std::hash::Hash;
+use std::num::TryFromIntError;
 use ustr::Ustr;
 
 use super::{
@@ -232,7 +234,7 @@ impl Typeable for AbstractLiteral<Expression> {
             AbstractLiteral::Record(items) => {
                 let mut item_types = vec![];
                 for item in items {
-                    item_types.push(item.value.return_type());
+                    item_types.push(item.clone().func_map(|x| x.return_type()));
                 }
                 ReturnType::Record(item_types)
             }
@@ -570,6 +572,22 @@ impl From<i32> for Literal {
     }
 }
 
+impl TryFrom<u32> for Literal {
+    type Error = TryFromIntError;
+
+    fn try_from(value: u32) -> Result<Self, Self::Error> {
+        Ok(Literal::Int(value.try_into()?))
+    }
+}
+
+impl TryFrom<usize> for Literal {
+    type Error = TryFromIntError;
+
+    fn try_from(value: usize) -> Result<Self, Self::Error> {
+        Ok(Literal::Int(value.try_into()?))
+    }
+}
+
 impl From<bool> for Literal {
     fn from(b: bool) -> Self {
         Literal::Bool(b)
@@ -627,7 +645,7 @@ impl AbstractLiteral<Expression> {
                     literals.push(literal);
                 }
 
-                Some(AbstractLiteral::Matrix(literals, domain.resolve()?))
+                Some(AbstractLiteral::Matrix(literals, domain.resolve().ok()?))
             }
             AbstractLiteral::Tuple(items) => {
                 let mut literals = vec![];
@@ -685,10 +703,11 @@ impl Display for Literal {
 
 #[cfg(test)]
 mod tests {
-
     use super::*;
     use crate::ast::matrix::flatten;
-    use crate::{domain_int, domain_int_ground, into_matrix, matrix, matrix_lit};
+    use crate::ast::matrix::partial_flatten;
+    use crate::{domain_int_ground, into_matrix, matrix, matrix_lit};
+    use conjure_cp_core::ast::matrix::shape_of;
     use uniplate::Uniplate;
 
     #[test]
@@ -716,16 +735,22 @@ mod tests {
 
     #[test]
     fn matrix_flatten() {
-        let tensor = matrix_lit![
-            [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]],
-            [[13, 14, 15, 16], [17, 18, 19, 20], [21, 22, 23, 24]]
+        let tensor: AbstractLiteral<Literal> = matrix![
+            [
+                // batch 1
+                [1, 2, 3, 4],
+                [5, 6, 7, 8],
+                [9, 10, 11, 12]
+            ],
+            [
+                // batch 2
+                [13, 14, 15, 16],
+                [17, 18, 19, 20],
+                [21, 22, 23, 24]
+            ]
         ];
 
-        let Literal::AbstractLiteral(abslit) = tensor else {
-            panic!("expected abstract literal")
-        };
-        let actual_elems: Vec<Literal> = flatten(&abslit).cloned().collect();
-
+        let actual_elems: Vec<Literal> = flatten(&tensor).cloned().collect();
         let expected_elems = (1..25).map(Literal::from).collect::<Vec<_>>();
         assert_eq!(actual_elems, expected_elems);
     }
@@ -758,5 +783,72 @@ mod tests {
         assert_eq!(idx_doms.len(), 2);
         assert_eq!(&idx_doms[0], &domain_int_ground!(1..2));
         assert_eq!(&idx_doms[1], &domain_int_ground!(1..4));
+    }
+
+    #[test]
+    fn matrix_shape_3d() {
+        let tensor: AbstractLiteral<Literal> = matrix![
+            [
+                [1, 2, 3, 4],
+                [5, 6, 7, 8],
+                [9, 10, 11, 12]
+            ],
+            [
+                [13, 14, 15, 16],
+                [17, 18, 19, 20],
+                [21, 22, 23, 24]
+            ];
+            [
+                domain_int_ground!(1..2),
+                domain_int_ground!(1..3),
+                domain_int_ground!(1..4)
+            ]
+        ];
+        let shape = shape_of(&tensor);
+
+        assert_eq!(shape.size, 24);
+        assert_eq!(shape.dims, vec![2, 3, 4]);
+        assert_eq!(shape.strides, vec![12, 4, 1]);
+        assert_eq!(
+            shape.idx_doms,
+            vec![
+                domain_int_ground!(1..2),
+                domain_int_ground!(1..3),
+                domain_int_ground!(1..4)
+            ]
+        );
+    }
+
+    #[test]
+    fn matrix_partial_flatten() {
+        let tensor: AbstractLiteral<Literal> = matrix![
+            [
+                // batch 1
+                [1, 2, 3, 4],
+                [5, 6, 7, 8],
+                [9, 10, 11, 12]
+            ],
+            [
+                // batch 2
+                [13, 14, 15, 16],
+                [17, 18, 19, 20],
+                [21, 22, 23, 24]
+            ]
+        ];
+        assert_eq!(partial_flatten(0, tensor.clone()), tensor);
+
+        let expected_flatten_1: AbstractLiteral<Literal> = matrix![
+            [1, 2, 3, 4],
+            [5, 6, 7, 8],
+            [9, 10, 11, 12],
+            [13, 14, 15, 16],
+            [17, 18, 19, 20],
+            [21, 22, 23, 24]
+        ];
+        assert_eq!(partial_flatten(1, tensor.clone()), expected_flatten_1);
+
+        let expected_flatten_2 =
+            AbstractLiteral::matrix_implied_indices((1..25).map(Literal::from).collect());
+        assert_eq!(partial_flatten(2, tensor), expected_flatten_2);
     }
 }

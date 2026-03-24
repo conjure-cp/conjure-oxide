@@ -1,7 +1,8 @@
 use super::errors::ReprUpError;
-use super::types::{LookupFn, ReprAssignment, ReprDeclLevel, ReprResult};
+use super::types::{LookupFn, ReprAssignment, ReprDeclLevel, ReprGetOrInitResult, ReprResult};
 use crate::ast::{DeclarationPtr, Literal, Name};
 use crate::representation::ReprRule;
+use conjure_cp_core::representation::ReprError;
 use parking_lot::MappedRwLockReadGuard;
 use serde::Deserialize;
 use serde_json;
@@ -68,7 +69,12 @@ pub trait ReprRuleStored: Send + Sync {
 
     fn init_for(&self, decl: &mut DeclarationPtr) -> ReprResult;
 
-    fn init_if_not_exists(&self, decl: &mut DeclarationPtr) -> ReprResult;
+    fn init_for_if_not_exists(&self, decl: &mut DeclarationPtr) -> ReprResult;
+
+    fn get_or_init_for<'a>(
+        &self,
+        decl: &'a mut DeclarationPtr,
+    ) -> ReprGetOrInitResult<'a, dyn ReprStateStored, ReprError>;
 
     fn get_for<'a>(
         &self,
@@ -90,18 +96,25 @@ impl<R: ReprRule> ReprRuleStored for R {
         R::init_for(decl)
     }
 
-    fn init_if_not_exists(&self, decl: &mut DeclarationPtr) -> ReprResult {
-        R::init_if_not_exists(decl)
+    fn init_for_if_not_exists(&self, decl: &mut DeclarationPtr) -> ReprResult {
+        R::init_for_if_not_exists(decl)
+    }
+
+    fn get_or_init_for<'a>(
+        &self,
+        decl: &'a mut DeclarationPtr,
+    ) -> ReprGetOrInitResult<'a, dyn ReprStateStored, ReprError> {
+        let (state, symbols, constraints) = R::get_or_init_for(decl)?;
+        let state_dyn = repr_state_as_dyn(state);
+        Ok((state_dyn, symbols, constraints))
     }
 
     fn get_for<'a>(
         &self,
         decl: &'a DeclarationPtr,
     ) -> Option<MappedRwLockReadGuard<'a, dyn ReprStateStored>> {
-        MappedRwLockReadGuard::try_map(decl.reprs(), |store| {
-            store.get::<R>().map(|d| d as &dyn ReprStateStored)
-        })
-        .ok()
+        let state = R::get_for(decl)?;
+        Some(repr_state_as_dyn(state))
     }
 
     fn deserialize_state(
@@ -142,4 +155,13 @@ impl Hash for dyn ReprRuleStored {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.name().hash(state)
     }
+}
+
+fn repr_state_as_dyn<'a, D>(
+    guard: MappedRwLockReadGuard<'a, D>,
+) -> MappedRwLockReadGuard<'a, dyn ReprStateStored>
+where
+    D: ReprStateStored,
+{
+    MappedRwLockReadGuard::map(guard, |state| state as &dyn ReprStateStored)
 }

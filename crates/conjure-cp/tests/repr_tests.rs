@@ -93,28 +93,28 @@ fn test_idx() {
     assert_eq!(repr.strides, vec![4, 1]);
 
     let idx_lit = vec![Literal::from(false), Literal::from(1)];
-    assert_eq!(repr.indices_lits_to_flat(&idx_lit), Some(0));
-    assert_eq!(repr.indices_flat_to_lits(0), idx_lit);
+    assert_eq!(repr.indices_lits_to_flat(&idx_lit).unwrap(), 0);
+    assert_eq!(repr.indices_flat_to_lits(0).unwrap(), idx_lit);
 
     let idx_lit = vec![Literal::from(false), Literal::from(5)];
-    assert_eq!(repr.indices_lits_to_flat(&idx_lit), Some(2));
-    assert_eq!(repr.indices_flat_to_lits(2), idx_lit);
+    assert_eq!(repr.indices_lits_to_flat(&idx_lit).unwrap(), 2);
+    assert_eq!(repr.indices_flat_to_lits(2).unwrap(), idx_lit);
 
     let idx_lit = vec![Literal::from(false), Literal::from(7)];
-    assert_eq!(repr.indices_lits_to_flat(&idx_lit), Some(3));
-    assert_eq!(repr.indices_flat_to_lits(3), idx_lit);
+    assert_eq!(repr.indices_lits_to_flat(&idx_lit).unwrap(), 3);
+    assert_eq!(repr.indices_flat_to_lits(3).unwrap(), idx_lit);
 
     let idx_lit = vec![Literal::from(true), Literal::from(1)];
-    assert_eq!(repr.indices_lits_to_flat(&idx_lit), Some(4));
-    assert_eq!(repr.indices_flat_to_lits(4), idx_lit);
+    assert_eq!(repr.indices_lits_to_flat(&idx_lit).unwrap(), 4);
+    assert_eq!(repr.indices_flat_to_lits(4).unwrap(), idx_lit);
 
     let idx_lit = vec![Literal::from(true), Literal::from(5)];
-    assert_eq!(repr.indices_lits_to_flat(&idx_lit), Some(6));
-    assert_eq!(repr.indices_flat_to_lits(6), idx_lit);
+    assert_eq!(repr.indices_lits_to_flat(&idx_lit).unwrap(), 6);
+    assert_eq!(repr.indices_flat_to_lits(6).unwrap(), idx_lit);
 
     let idx_lit = vec![Literal::from(true), Literal::from(7)];
-    assert_eq!(repr.indices_lits_to_flat(&idx_lit), Some(7));
-    assert_eq!(repr.indices_flat_to_lits(7), idx_lit);
+    assert_eq!(repr.indices_lits_to_flat(&idx_lit).unwrap(), 7);
+    assert_eq!(repr.indices_flat_to_lits(7).unwrap(), idx_lit);
 }
 
 #[test]
@@ -202,7 +202,7 @@ fn test_slice() {
         Range::Bounded(Literal::from(2), Literal::from(3)),
     ];
     let expected = as_lits(vec![2, 3, 6, 7]);
-    let view = down.slice_lit(&lit_slices);
+    let view = down.slice_lit(&lit_slices).unwrap();
     let actual = down.view_cloned(&view);
     assert_eq!(expected, actual);
 }

@@ -4,12 +4,14 @@
 
 use std::collections::VecDeque;
 
+use super::{AbstractLiteral, DomainPtr, Literal};
+use crate::ast::literals::AbstractLiteralValue;
 use crate::ast::{DomainOpError, Expression as Expr, GroundDomain, Metadata, Moo, Range};
-use conjure_cp_core::ast::DomainPtr;
+use crate::bug::UnwrapOrBug;
+use crate::utils::MatrixShape;
+use crate::{bug_assert, domain_int, domain_int_ground};
 use itertools::{Itertools, izip};
-use uniplate::Uniplate as _;
-
-use super::{AbstractLiteral, Literal};
+use uniplate::{Biplate, Uniplate as _};
 
 /// For some index domains, returns a list containing each of the possible indices.
 ///
@@ -63,60 +65,6 @@ pub fn num_elements(index_domains: &[Moo<GroundDomain>]) -> Result<u64, DomainOp
     Ok(idx_dom_lengths.iter().product())
 }
 
-/// Flattens a multi-dimensional matrix literal into a one-dimensional slice of its elements.
-/// The elements of the matrix are returned in row-major ordering (see [`enumerate_indices`]).
-/// The elements are borrowed; To consume the matrix and return owned values, see [flatten_clone].
-///
-/// # Panics
-///
-/// + If the number or type of elements in each dimension is inconsistent.
-///
-/// + If `matrix` is not a matrix.
-pub fn flatten(matrix: &AbstractLiteral<Literal>) -> impl Iterator<Item = &Literal> {
-    let AbstractLiteral::Matrix(elems, _) = matrix else {
-        panic!("matrix should be a matrix");
-    };
-
-    flatten_1(elems)
-}
-
-fn flatten_1<'a>(elems: &'a [Literal]) -> impl Iterator<Item = &'a Literal> {
-    elems.iter().flat_map(|elem| {
-        if let Literal::AbstractLiteral(m @ AbstractLiteral::Matrix(_, _)) = elem {
-            Box::new(flatten(m)) as Box<dyn Iterator<Item = &'a Literal>>
-        } else {
-            Box::new(std::iter::once(elem)) as Box<dyn Iterator<Item = &'a Literal>>
-        }
-    })
-}
-
-/// Flattens a multi-dimensional matrix literal into a one-dimensional slice of its elements.
-/// The elements of the matrix are returned in row-major ordering (see [`enumerate_indices`]).
-/// For the borrowing version, see [flatten].
-///
-/// # Panics
-///
-/// + If the number or type of elements in each dimension is inconsistent.
-///
-/// + If `matrix` is not a matrix.
-pub fn flatten_clone(matrix: AbstractLiteral<Literal>) -> impl Iterator<Item = Literal> {
-    let AbstractLiteral::Matrix(elems, _) = matrix else {
-        panic!("matrix should be a matrix");
-    };
-
-    flatten_clone_1(elems)
-}
-
-fn flatten_clone_1(elems: Vec<Literal>) -> impl Iterator<Item = Literal> {
-    elems.into_iter().flat_map(|elem| {
-        if let Literal::AbstractLiteral(m @ AbstractLiteral::Matrix(_, _)) = elem {
-            Box::new(flatten_clone(m)) as Box<dyn Iterator<Item = Literal>>
-        } else {
-            Box::new(std::iter::once(elem)) as Box<dyn Iterator<Item = Literal>>
-        }
-    })
-}
-
 /// Flattens a multi-dimensional matrix literal into an iterator over (indices,element).
 ///
 /// # Panics
@@ -150,48 +98,8 @@ pub fn flatten_enumerate(
 
     izip!(
         enumerate_indices(index_domains),
-        flatten_clone_1(elems.clone())
+        flatten_owned_inner(elems.clone())
     )
-}
-
-/// Gets the index domains for a matrix literal.
-///
-/// # Panics
-///
-/// + If `matrix` is not a matrix.
-///
-/// + If the number or type of elements in each dimension is inconsistent.
-pub fn index_domains(matrix: &AbstractLiteral<Literal>) -> Vec<Moo<GroundDomain>> {
-    let AbstractLiteral::Matrix(_, _) = matrix else {
-        panic!("matrix should be a matrix");
-    };
-
-    matrix.cata(&move |element: AbstractLiteral<Literal>,
-                       child_index_domains: VecDeque<Vec<Moo<GroundDomain>>>| {
-        assert!(
-            child_index_domains.iter().all_equal(),
-            "each child of a matrix should have the same index domain"
-        );
-
-        let child_index_domains = child_index_domains
-            .front()
-            .unwrap_or(&vec![])
-            .iter()
-            .cloned()
-            .collect_vec();
-        match element {
-            AbstractLiteral::Set(_) => vec![],
-            AbstractLiteral::MSet(_) => vec![],
-            AbstractLiteral::Matrix(_, domain) => {
-                let mut index_domains = vec![domain];
-                index_domains.extend(child_index_domains);
-                index_domains
-            }
-            AbstractLiteral::Tuple(_) => vec![],
-            AbstractLiteral::Record(_) => vec![],
-            AbstractLiteral::Function(_) => vec![],
-        }
-    })
 }
 
 /// See [`enumerate_indices`]. This function zips the two given lists of index domains, performs a
@@ -262,7 +170,7 @@ pub fn safe_index_optimised(m: Expr, idx: Literal) -> Option<Expr> {
                 return None;
             };
 
-            let dom = inner.domain_of().and_then(|dom| dom.resolve())?;
+            let dom = inner.domain_of().and_then(|dom| dom.resolve().ok())?;
             let GroundDomain::Matrix(_, index_domains) = dom.as_ref() else {
                 return None;
             };
@@ -279,20 +187,224 @@ pub fn safe_index_optimised(m: Expr, idx: Literal) -> Option<Expr> {
     }
 }
 
-/// Unflatten a slice of literals into a matrix with the given dimensions and strides
-pub fn unflatten_matrix(
-    elems: &[Literal],
-    index_domains: &[Moo<GroundDomain>],
+pub trait MatrixValue:
+    AbstractLiteralValue + Sized + From<AbstractLiteral<Self>> + Biplate<AbstractLiteral<Self>>
+{
+    /// If this element is a nested matrix, return a reference to it
+    fn as_nested_matrix(&self) -> Option<&AbstractLiteral<Self>>;
+    /// If this element is a nested matrix, consume it and return the matrix
+    fn into_nested_matrix(self) -> Result<AbstractLiteral<Self>, Self>;
+}
+
+impl MatrixValue for Literal {
+    fn as_nested_matrix(&self) -> Option<&AbstractLiteral<Literal>> {
+        match self {
+            Literal::AbstractLiteral(m @ AbstractLiteral::Matrix(..)) => Some(m),
+            _ => None,
+        }
+    }
+
+    fn into_nested_matrix(self) -> Result<AbstractLiteral<Literal>, Self> {
+        match self {
+            Literal::AbstractLiteral(m @ AbstractLiteral::Matrix(..)) => Ok(m),
+            other => Err(other),
+        }
+    }
+}
+
+impl MatrixValue for Expr {
+    fn as_nested_matrix(&self) -> Option<&AbstractLiteral<Expr>> {
+        match self {
+            Expr::AbstractLiteral(_, m @ AbstractLiteral::Matrix(..)) => Some(m),
+            _ => None,
+        }
+    }
+
+    fn into_nested_matrix(self) -> Result<AbstractLiteral<Expr>, Self> {
+        match self {
+            Expr::AbstractLiteral(_, m @ AbstractLiteral::Matrix(..)) => Ok(m),
+            other => Err(other),
+        }
+    }
+}
+
+/// Given a nested matrix, flatten its first `n+1` dimensions into one.
+/// The resulting matrix will be a list because otherwise index domains would get weird, fast...
+/// (unless we want to only support integer indices?)
+pub fn partial_flatten<T: MatrixValue>(n: usize, matrix: AbstractLiteral<T>) -> AbstractLiteral<T> {
+    if n == 0 {
+        return matrix;
+    }
+
+    let shape = shape_of(&matrix);
+    bug_assert!(
+        n > 0 && n < shape.dims.len(),
+        "Invalid number of dimensions to flatten"
+    );
+    let new_strides = Vec::from(&shape.strides[n..]);
+
+    let flattened = flatten_owned(matrix).collect_vec();
+    let res = unflatten_list(&flattened, &new_strides);
+
+    res.into_nested_matrix().unwrap_or_bug()
+}
+
+type ShapeAcc<T> = VecDeque<(VecDeque<usize>, VecDeque<usize>, VecDeque<T>)>;
+
+/// Get the shape of this matrix: sizes, strides, and index domains along each dimension.
+pub fn shape_of<T: MatrixValue>(matrix: &AbstractLiteral<T>) -> MatrixShape<T::Dom> {
+    let AbstractLiteral::Matrix(..) = matrix else {
+        panic!("expected a matrix");
+    };
+
+    // TODO(perf): uniplate clones every node it passes, which is wasteful.. could rewrite this to an imperative style
+    let (dims, strides, idx_doms) = matrix.cata(&|elem, mut acc: ShapeAcc<T::Dom>| {
+        assert!(
+            acc.iter().all_equal(),
+            "each child of a matrix should have the same shape"
+        );
+
+        let (mut dims, mut strides, mut idx_doms) = acc.pop_front().unwrap_or_default();
+
+        match elem {
+            AbstractLiteral::Matrix(elems, domain) => {
+                let dim = elems.len();
+                let stride: usize = dims.iter().product();
+
+                dims.push_front(dim);
+                strides.push_front(stride);
+                idx_doms.push_front(domain);
+
+                (dims, strides, idx_doms)
+            }
+            _ => Default::default(),
+        }
+    });
+
+    let dims: Vec<usize> = dims.into();
+    let size: usize = dims.iter().product();
+
+    MatrixShape {
+        size,
+        dims,
+        strides: strides.into(),
+        idx_doms: idx_doms.into(),
+    }
+}
+
+/// Same as [shape_of] but for a ground matrix domain
+pub fn shape_of_dom(
+    matrix_dom_gd: &GroundDomain,
+) -> Result<MatrixShape<Moo<GroundDomain>>, DomainOpError> {
+    let GroundDomain::Matrix(_, idx_doms) = matrix_dom_gd else {
+        return Err(DomainOpError::WrongType);
+    };
+
+    let len = idx_doms.len();
+    let mut index_domains = VecDeque::with_capacity(len);
+    let mut strides = VecDeque::with_capacity(len);
+    let mut dimensions = VecDeque::with_capacity(len);
+
+    let mut size: usize = 1;
+    for gd in idx_doms.iter().rev() {
+        let gd_sz = gd.len_usize()?;
+
+        index_domains.push_front(gd.clone());
+        strides.push_front(size);
+        dimensions.push_front(gd_sz);
+
+        size = size.checked_mul(gd_sz).ok_or(DomainOpError::TooLarge)?;
+    }
+
+    Ok(MatrixShape {
+        size,
+        dims: dimensions.into(),
+        strides: strides.into(),
+        idx_doms: idx_doms.clone(),
+    })
+}
+
+/// Gets the index domains for a matrix literal.
+///
+/// # Panics
+///
+/// + If `matrix` is not a matrix.
+///
+/// + If the number or type of elements in each dimension is inconsistent.
+pub fn index_domains<T: MatrixValue>(matrix: &AbstractLiteral<T>) -> Vec<T::Dom> {
+    shape_of(matrix).idx_doms
+}
+
+/// Gets the index domains for a matrix expression and resolves them
+pub fn resolved_index_domains(
+    matrix: &AbstractLiteral<Expr>,
+) -> Result<Vec<Moo<GroundDomain>>, DomainOpError> {
+    index_domains(matrix)
+        .into_iter()
+        .map(|d| d.resolve())
+        .try_collect()
+}
+
+/// Flattens a multi-dimensional matrix into a one-dimensional slice of its elements.
+/// The elements are returned in row-major ordering (see [`enumerate_indices`]).
+/// The elements are borrowed; To consume the matrix and return owned values, see [flatten_owned].
+///
+/// # Panics
+/// + If the number or type of elements in each dimension is inconsistent.
+/// + If `matrix` is not a matrix.
+pub fn flatten<T: MatrixValue>(matrix: &AbstractLiteral<T>) -> impl Iterator<Item = &T> {
+    let AbstractLiteral::Matrix(elems, _) = matrix else {
+        panic!("expected a matrix");
+    };
+    flatten_inner(elems)
+}
+
+fn flatten_inner<'a, T: MatrixValue>(elems: &'a [T]) -> impl Iterator<Item = &'a T> {
+    elems.iter().flat_map(|elem| {
+        if let Some(m) = elem.as_nested_matrix() {
+            Box::new(flatten(m)) as Box<dyn Iterator<Item = &'a T>>
+        } else {
+            Box::new(std::iter::once(elem)) as Box<dyn Iterator<Item = &'a T>>
+        }
+    })
+}
+
+/// Consumes a multi-dimensional matrix and returns a one-dimensional slice of its elements.
+/// The elements are returned in row-major ordering (see [`enumerate_indices`]).
+///
+/// # Panics
+/// + If the number or type of elements in each dimension is inconsistent.
+/// + If `matrix` is not a matrix.
+pub fn flatten_owned<T: MatrixValue>(matrix: AbstractLiteral<T>) -> impl Iterator<Item = T> {
+    let AbstractLiteral::Matrix(elems, _) = matrix else {
+        panic!("expected a matrix");
+    };
+    flatten_owned_inner(elems)
+}
+
+fn flatten_owned_inner<T: MatrixValue>(elems: Vec<T>) -> impl Iterator<Item = T> {
+    elems
+        .into_iter()
+        .flat_map(|elem| match elem.into_nested_matrix() {
+            Ok(m) => Box::new(flatten_owned(m)) as Box<dyn Iterator<Item = T>>,
+            Err(leaf) => Box::new(std::iter::once(leaf)) as Box<dyn Iterator<Item = T>>,
+        })
+}
+
+/// "Un-flatten" a slice of elements into a Matrix with the given index domains
+pub fn unflatten_matrix<T: MatrixValue>(
+    elems: &[T],
+    index_domains: &[T::Dom],
     strides: &[usize],
-) -> Literal {
+) -> T {
     let dom = index_domains.first().expect("no index domains").clone();
     let stride = *strides.first().expect("no strides");
 
     if index_domains.len() == 1 {
-        return Literal::AbstractLiteral(AbstractLiteral::Matrix(Vec::from(elems), dom));
+        return T::from(AbstractLiteral::Matrix(Vec::from(elems), dom));
     }
 
-    let mut inners = Vec::<Literal>::with_capacity(stride);
+    let mut inners = Vec::<T>::with_capacity(stride);
     let mut i_start: usize = 0;
     while i_start < elems.len() {
         let next = i_start + stride;
@@ -300,31 +412,23 @@ pub fn unflatten_matrix(
         inners.push(elem);
         i_start = next;
     }
-    Literal::AbstractLiteral(AbstractLiteral::Matrix(inners, dom))
+    T::from(AbstractLiteral::Matrix(inners, dom))
 }
 
-pub fn unflatten_matrix_expr(
-    elems: &[Expr],
-    index_domains: &[DomainPtr],
-    strides: &[usize],
-) -> Expr {
-    let dom = index_domains.first().expect("no index domains").clone();
+/// Same transformation as [unflatten_matrix], but all index domains become `int(1..)`
+pub fn unflatten_list<T: MatrixValue>(elems: &[T], strides: &[usize]) -> T {
     let stride = *strides.first().expect("no strides");
-
-    if index_domains.len() == 1 {
-        return Expr::AbstractLiteral(
-            Metadata::new(),
-            AbstractLiteral::Matrix(Vec::from(elems), dom),
-        );
+    if strides.len() == 1 {
+        return AbstractLiteral::matrix_implied_indices(Vec::from(elems)).into();
     }
 
-    let mut inners = Vec::<Expr>::with_capacity(stride);
+    let mut inners = Vec::<T>::with_capacity(stride);
     let mut i_start: usize = 0;
     while i_start < elems.len() {
         let next = i_start + stride;
-        let elem = unflatten_matrix_expr(&elems[i_start..next], &index_domains[1..], &strides[1..]);
+        let elem = unflatten_list(&elems[i_start..next], &strides[1..]);
         inners.push(elem);
         i_start = next;
     }
-    Expr::AbstractLiteral(Metadata::new(), AbstractLiteral::Matrix(inners, dom))
+    AbstractLiteral::matrix_implied_indices(Vec::from(inners)).into()
 }

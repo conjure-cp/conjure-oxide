@@ -2,8 +2,8 @@ use super::categories::{Category, CategoryOf};
 use super::name::Name;
 use super::serde::{AsId, DefaultWithId, HasId, IdPtr, ObjId, PtrAsInner};
 use super::{
-    DecisionVariable, Domain, DomainPtr, Expression, GroundDomain, HasDomain, Moo, RecordEntry,
-    Reference, ReturnType, Typeable,
+    DecisionVariable, Domain, DomainPtr, Expression, GroundDomain, HasDomain, Moo, Reference,
+    ReturnType, Typeable,
 };
 use crate::representation::{ReprRule, ReprStore};
 use derivative::Derivative;
@@ -267,27 +267,6 @@ impl DeclarationPtr {
         DeclarationPtr::new(name, kind)
     }
 
-    /// Creates a new record field declaration.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use conjure_cp_core::ast::{DeclarationPtr,Name,RecordEntry,Domain,Range};
-    ///
-    /// // create declaration for field A in `find rec: record {A: int(0..1), B: int(0..2)}`
-    ///
-    /// let field = RecordEntry {
-    ///     name: Name::User("n".into()),
-    ///     domain: Domain::int(vec![Range::Bounded(1,5)])
-    /// };
-    ///
-    /// let declaration = DeclarationPtr::new_record_field(field);
-    /// ```
-    pub fn new_record_field(entry: RecordEntry) -> DeclarationPtr {
-        let kind = DeclarationKind::RecordField(entry.domain);
-        DeclarationPtr::new(entry.name, kind)
-    }
-
     /**********************************************/
     /*        Declaration accessor methods        */
     /**********************************************/
@@ -314,7 +293,6 @@ impl DeclarationPtr {
             DeclarationKind::DomainLetting(domain) => Some(domain.clone()),
             DeclarationKind::Given(domain) => Some(domain.clone()),
             DeclarationKind::Quantified(inner) => Some(inner.domain.clone()),
-            DeclarationKind::RecordField(domain) => Some(domain.clone()),
         }
     }
 
@@ -333,7 +311,7 @@ impl DeclarationPtr {
                 .kind
                 .transform_bi(&|dom: DomainPtr| dom.resolve().map(DomainPtr::from).unwrap_or(dom));
         }
-        dom.resolve()
+        dom.resolve().ok()
     }
 
     /// Gets the kind of the declaration.
@@ -620,7 +598,6 @@ impl CategoryOf for DeclarationPtr {
             DeclarationKind::DomainLetting(_) => Category::Constant,
             DeclarationKind::Given(_) => Category::Parameter,
             DeclarationKind::Quantified(..) => Category::Quantified,
-            DeclarationKind::RecordField(_) => Category::Bottom,
         }
     }
 }
@@ -656,7 +633,6 @@ impl Typeable for DeclarationPtr {
             DeclarationKind::DomainLetting(domain) => domain.return_type(),
             DeclarationKind::Given(domain) => domain.return_type(),
             DeclarationKind::Quantified(inner) => inner.domain.return_type(),
-            DeclarationKind::RecordField(domain) => domain.return_type(),
         }
     }
 }
@@ -771,13 +747,6 @@ fn biplate_declaration_kind_references(
             (
                 tree,
                 Box::new(move |x| DeclarationKind::DomainLetting(recons_domain(x))),
-            )
-        }
-        DeclarationKind::RecordField(domain) => {
-            let (tree, recons_domain) = biplate_domain_ptr_references(domain);
-            (
-                tree,
-                Box::new(move |x| DeclarationKind::RecordField(recons_domain(x))),
             )
         }
         DeclarationKind::ValueLetting(expression, domain) => {
@@ -940,7 +909,6 @@ impl Display for Declaration {
             }
             DeclarationKind::Given(dom) => write!(f, "given {}: {}", self.name, dom),
             DeclarationKind::Quantified(gq) => write!(f, "given {}: {}", self.name, gq.domain),
-            DeclarationKind::RecordField(rf) => write!(f, "{} in {}", self.name, rf),
         }
     }
 }
@@ -1174,10 +1142,6 @@ pub enum DeclarationKind {
     ///
     /// Unlike `ValueLetting`, this is not intended to represent a user-visible top-level `letting`.
     TemporaryValueLetting(Expression),
-
-    /// A named field inside a record type.
-    /// e.g. A, B in record{A: int(0..1), B: int(0..2)}
-    RecordField(DomainPtr),
 }
 
 #[serde_as]

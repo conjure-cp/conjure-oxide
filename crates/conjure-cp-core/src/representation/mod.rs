@@ -9,7 +9,7 @@ pub mod util;
 
 pub use conjure_cp_rule_macros::register_representation;
 pub use errors::*;
-pub use registry::ReprRulePtr;
+pub use registry::{ReprRulePtr, get_repr_rules};
 pub use store::ReprStore;
 pub use stored::{ReprRuleStored, ReprStateStored};
 pub use types::{ReprAssignment, ReprDeclLevel, ReprDomainLevel, ReprResult, ReprRule};

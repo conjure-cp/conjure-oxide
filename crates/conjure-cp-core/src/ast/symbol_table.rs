@@ -341,7 +341,8 @@ impl SymbolTable {
     ///
     /// See [`SymbolTable::domain`].
     pub fn resolve_domain(&self, name: &Name) -> Option<Moo<GroundDomain>> {
-        self.domain(name)?.resolve()
+        let mut decl = self.lookup(name)?;
+        decl.resolve_domain()
     }
 
     /// Iterates over entries in the LOCAL symbol table.

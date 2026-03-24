@@ -1,0 +1,114 @@
+Model before rewriting:
+
+letting M be domain matrix indexed by [int(1..2)] of int(0..1)
+find x: matrix indexed by [M] of int(1..3)
+
+such that
+
+(x[[0,0;int(1..2)]] = 1),
+(x[[0,1;int(1..2)]] = 2),
+(x[[1,0;int(1..2)]] = 3)
+
+--
+
+(x[[0,0;int(1..2)]] = 1),
+(x[[0,1;int(1..2)]] = 2),
+(x[[1,0;int(1..2)]] = 3), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(x[[0,0;int(1..2)]] = 1),
+(x[[0,1;int(1..2)]] = 2),
+(x[[1,0;int(1..2)]] = 3)
+
+--
+
+(x[[0,0;int(1..2)]] = 1),
+(x[[0,1;int(1..2)]] = 2),
+(x[[1,0;int(1..2)]] = 3), 
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8001)])
+(x[[0,0;int(1..2)]] = 1),
+(x[[0,1;int(1..2)]] = 2),
+(x[[1,0;int(1..2)]] = 3)
+new variables:
+  find x#MatrixToAtom_1: int(1..3)
+  find x#MatrixToAtom_2: int(1..3)
+  find x#MatrixToAtom_3: int(1..3)
+  find x#MatrixToAtom_4: int(1..3)
+
+updated variables:
+  find x: matrix indexed by [M] of int(1..3) ~~> find x: matrix indexed by [matrix indexed by [int(1..2)] of int(0..1)] of int(1..3)
+
+--
+
+x[[0,0;int(1..2)]], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{x[[0,0;int(1..2)]] @ and([__inDomain([0,0;int(1..2)],matrix indexed by [int(1..2)] of int(0..1));int(1..)])}
+
+--
+
+({x[[0,0;int(1..2)]] @ and([__inDomain([0,0;int(1..2)],matrix indexed by [int(1..2)] of int(0..1));int(1..)])} = 1),
+(x[[0,1;int(1..2)]] = 2),
+(x[[1,0;int(1..2)]] = 3), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(x[[0,0;int(1..2)]] = 1),
+(x[[0,1;int(1..2)]] = 2),
+(x[[1,0;int(1..2)]] = 3)
+
+--
+
+x[[0,1;int(1..2)]], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{x[[0,1;int(1..2)]] @ and([__inDomain([0,1;int(1..2)],matrix indexed by [int(1..2)] of int(0..1));int(1..)])}
+
+--
+
+(x[[0,0;int(1..2)]] = 1),
+({x[[0,1;int(1..2)]] @ and([__inDomain([0,1;int(1..2)],matrix indexed by [int(1..2)] of int(0..1));int(1..)])} = 2),
+(x[[1,0;int(1..2)]] = 3), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(x[[0,0;int(1..2)]] = 1),
+(x[[0,1;int(1..2)]] = 2),
+(x[[1,0;int(1..2)]] = 3)
+
+--
+
+x[[1,0;int(1..2)]], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{x[[1,0;int(1..2)]] @ and([__inDomain([1,0;int(1..2)],matrix indexed by [int(1..2)] of int(0..1));int(1..)])}
+
+--
+
+(x[[0,0;int(1..2)]] = 1),
+(x[[0,1;int(1..2)]] = 2),
+({x[[1,0;int(1..2)]] @ and([__inDomain([1,0;int(1..2)],matrix indexed by [int(1..2)] of int(0..1));int(1..)])} = 3), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(x[[0,0;int(1..2)]] = 1),
+(x[[0,1;int(1..2)]] = 2),
+(x[[1,0;int(1..2)]] = 3)
+
+--
+
+(x[[0,0;int(1..2)]] = 1),
+(x[[0,1;int(1..2)]] = 2),
+(x[[1,0;int(1..2)]] = 3), 
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+(x#MatrixToAtom_1 = 1),
+(x#MatrixToAtom_2 = 2),
+(x#MatrixToAtom_3 = 3)
+
+--
+
+Final model:
+
+letting M be domain matrix indexed by [int(1..2)] of int(0..1)
+find x: matrix indexed by [matrix indexed by [int(1..2)] of int(0..1)] of int(1..3)
+find x#MatrixToAtom_1: int(1..3)
+find x#MatrixToAtom_2: int(1..3)
+find x#MatrixToAtom_3: int(1..3)
+find x#MatrixToAtom_4: int(1..3)
+
+such that
+
+(x#MatrixToAtom_1 = 1),
+(x#MatrixToAtom_2 = 2),
+(x#MatrixToAtom_3 = 3)
+

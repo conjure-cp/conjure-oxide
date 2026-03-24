@@ -1,10 +1,20 @@
 use super::prelude::*;
 use crate::representation::prelude::matrix::{flatten, unflatten_matrix};
-use bimap::BiMap;
-use conjure_cp::ast::{GroundDomain, Moo, Range};
+use conjure_cp::ast::matrix::shape_of_dom;
+use conjure_cp::ast::{GroundDomain, Moo, Range, Reference};
 use conjure_cp::representation::ReprInitError;
-use conjure_cp::utils::View;
+use conjure_cp::utils::{BiMap, MatrixShape, View};
+use itertools::Itertools;
 use std::collections::VecDeque;
+use thiserror::Error;
+
+#[derive(Debug, Clone, Error)]
+pub enum IdxError {
+    #[error("{1} is not a valid index for dimension {0}")]
+    Lit(usize, Literal),
+    #[error("{1} is not a valid index for dimension {0}")]
+    Int(usize, usize),
+}
 
 register_representation!(
     MatrixToAtom
@@ -15,10 +25,11 @@ register_representation!(
         pub strides: Vec<usize>,
         // Index domains of the original matrix
         pub index_domains: Vec<Moo<GroundDomain>>,
+        // -- Larger fields are wrapped in Moo to avoid cloning them --
         // Map all possible indices to integers
-        pub indices: Vec<BiMap<usize, Literal>>,
+        pub indices: Moo<Vec<BiMap<usize, Literal>>>,
         // Flat vec of matrix elements
-        pub elements: Vec<T>,
+        pub elements: Moo<Vec<T>>,
     }
     impl<T> State<T>
     {
@@ -31,32 +42,32 @@ register_representation!(
             self.elements.is_empty()
         }
         /// Convert a matrix index to flat integer index into `elements`
-        pub fn indices_lits_to_flat(&self, idx: &[Literal]) -> Option<usize> {
+        pub fn indices_lits_to_flat(&self, idx: &[Literal]) -> Result<usize, IdxError> {
             let mut ans: usize = 0;
             for (i, lit) in idx.iter().enumerate() {
-                let flat = self.indices[i].get_by_right(lit)?;
+                let flat = self.index_lit_to_flat(i, lit)?;
                 ans += flat * self.strides[i];
             }
-            Some(ans)
+            Ok(ans)
         }
         /// Convert a flat index into the original matrix index
-        pub fn indices_flat_to_lits(&self, mut idx: usize) -> Vec<Literal> {
+        pub fn indices_flat_to_lits(&self, mut idx: usize) -> Result<Vec<Literal>, IdxError> {
             let mut ans: Vec<Literal> = Vec::new();
             for (i, s) in self.strides.iter().copied().enumerate() {
                 let dim_idx = idx / s;
-                let dim_idx_lit = self.index_flat_to_lit(i, dim_idx);
+                let dim_idx_lit = self.index_flat_to_lit(i, dim_idx)?;
                 ans.push(dim_idx_lit.clone());
                 idx %= s;
             }
-            ans
+            Ok(ans)
         }
         /// Convert a flat index along the given dimension to a Literal
-        pub fn index_flat_to_lit(&self, dim: usize, idx: usize) -> &Literal {
-            self.indices[dim].get_by_left(&idx).expect("invalid index")
+        pub fn index_flat_to_lit(&self, dim: usize, idx: usize) -> Result<&Literal, IdxError> {
+            self.indices[dim].get_by_left(&idx).ok_or(IdxError::Int(dim, idx))
         }
         /// Convert a literal index along the given dimension to a flat index
-        pub fn index_lit_to_flat(&self, dim: usize, lit: &Literal) -> usize {
-            *self.indices[dim].get_by_right(lit).expect("invalid index")
+        pub fn index_lit_to_flat(&self, dim: usize, lit: &Literal) -> Result<usize, IdxError> {
+            self.indices[dim].get_by_right(lit).copied().ok_or(IdxError::Lit(dim, lit.clone()))
         }
         /// Subset of `elements` corresponding to a matrix with the given dimensions and strides
         pub fn view<'a>(&'a self, view: &View) -> Vec<&'a T> {
@@ -67,6 +78,16 @@ register_representation!(
         where T: Clone
         {
             self.view(view).into_iter().cloned().collect()
+        }
+        /// Flatten the first n dimensions (inclusive)
+        pub fn flatten(&self, n: usize) -> View {
+            let new_strides = Vec::from(&self.strides[n..]);
+
+            let mut new_dims = Vec::<usize>::with_capacity(self.dimensions.len() - n);
+            new_dims.push(self.dimensions[0..n + 1].iter().copied().product());
+            new_dims.extend(&self.dimensions[n + 1..]);
+
+            View::new(0, new_dims, new_strides)
         }
         /// Slice into the elements matrix via flat indices along each dimension
         pub fn slice_flat(&self, dim_slices: &[Range<usize>]) -> View {
@@ -88,54 +109,44 @@ register_representation!(
             View::new(offset, new_dims, new_strides)
         }
         /// Slice into the elements matrix via literal indices
-        pub fn slice_lit(&self, dim_slices: &[Range<Literal>]) -> View {
-            let dim_slices_flat = dim_slices.iter()
+        pub fn slice_lit(&self, dim_slices: &[Range<Literal>]) -> Result<View, IdxError> {
+            let dim_slices_flat: Vec<Range<usize>> = dim_slices.iter()
                 .enumerate()
                 .map(|(i, rng)|
-                    rng.map(|l|
+                    rng.try_map(|l|
                         self.index_lit_to_flat(i, &l)))
-                .collect::<Vec<_>>();
-            self.slice_flat(&dim_slices_flat)
+                .try_collect()?;
+            Ok(self.slice_flat(&dim_slices_flat))
+        }
+    }
+    impl State<DeclarationPtr> {
+        pub fn flat_elem_refs(&self) -> impl Iterator<Item=Reference> + '_ {
+            self.elements.iter().cloned().map(Reference::new)
         }
     }
     fn init(dom: DomainPtr) -> Result<State<DomainPtr>, ReprInitError> {
         let domain_err = |msg: &str| ReprInitError::UnsupportedDomain(dom.clone(), MatrixToAtom::NAME, String::from(msg));
 
-        let Some((inner_gd, index_gds)) = dom.as_matrix_ground() else {
-            return Err(domain_err("expected ground matrix"));
+        let dom_gd = dom.resolve().ok().ok_or(domain_err("expected a ground domain"))?;
+        let GroundDomain::Matrix(elem_dom, _) = dom_gd.as_ref() else {
+            return Err(domain_err("expected a matrix domain"));
         };
+        let MatrixShape { size, dims, strides, idx_doms } = shape_of_dom(dom_gd.as_ref()).ok().ok_or(domain_err("expected a matrix domain"))?;
 
-        let len = index_gds.len();
-        let mut index_domains = VecDeque::with_capacity(len);
-        let mut strides = VecDeque::with_capacity(len);
-        let mut indices = VecDeque::with_capacity(len);
-        let mut dimensions = VecDeque::with_capacity(len);
-
-        let mut size: usize = 1;
-        for gd in index_gds.iter().rev() {
-            let gd_sz = gd.len_usize().ok().ok_or(domain_err("domain too large"))?;
-            let gd_vals = gd.values().ok().ok_or(domain_err("domain not enumerable"))?;
-            let gd_idx = BiMap::from_iter(gd_vals.enumerate());
-
-            index_domains.push_front(gd.clone());
-            strides.push_front(size);
-            indices.push_front(gd_idx);
-            dimensions.push_front(gd_sz);
-
-            size = size.checked_mul(gd_sz).ok_or(domain_err("total size of the matrix is too large"))?;
+        let mut indices = Vec::with_capacity(dims.len());
+        for dom in idx_doms.iter() {
+            let vals = dom.values().map_err(|e| domain_err(&format!("could not enumerate index domain: {e}")))?;
+            indices.push(BiMap::from_iter(vals.enumerate()))
         }
 
-        let mut elements = Vec::new();
-        for _ in 0..size {
-            elements.push(inner_gd.clone().into());
-        }
+        let elements = vec![DomainPtr::from(elem_dom.clone()); size];
 
         Ok(State {
-            elements,
-            indices: indices.into(),
-            index_domains: index_domains.into(),
-            strides: strides.into(),
-            dimensions: dimensions.into(),
+            elements: Moo::new(elements),
+            indices: Moo::new(indices),
+            index_domains: idx_doms,
+            dimensions: dims,
+            strides
         })
     }
     fn structural(_state: &State<DeclarationPtr>) -> Vec<Expression> {
@@ -161,7 +172,7 @@ register_representation!(
             strides: state.strides.clone(),
             indices: state.indices.clone(),
             dimensions: state.dimensions.clone(),
-            elements,
+            elements: Moo::new(elements)
         })
     }
     fn up(state: State<Literal>) -> Literal {

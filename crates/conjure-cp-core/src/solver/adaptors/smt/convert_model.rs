@@ -65,7 +65,7 @@ fn var_to_ast(
     let dom = var
         .domain_of()
         .resolve()
-        .unwrap_or_else(|| bug!("could not resolve domain for {}", name));
+        .unwrap_or_else(|e| bug!("could not resolve domain for {name}: {e}"));
     let (sort, restrict_fn) = domain_to_sort(dom.as_ref(), theories)?;
     let new_const = Dynamic::new_const(sym.clone(), &sort);
 
@@ -254,7 +254,7 @@ fn list_elements(expr: &Expression) -> SolverResult<Vec<Expression>> {
 
     let subject_domain = subject
         .domain_of()
-        .and_then(|d| d.resolve())
+        .and_then(|d| d.resolve().ok())
         .ok_or_else(|| {
             SolverError::ModelFeatureNotImplemented(format!(
                 "cannot resolve domain of sliced expression: {expr}"

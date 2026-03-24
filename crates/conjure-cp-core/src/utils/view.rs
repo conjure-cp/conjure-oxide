@@ -1,4 +1,26 @@
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct MatrixShape<T> {
+    // Total count of elements
+    pub size: usize,
+    // Sizes along each dimension
+    pub dims: Vec<usize>,
+    // Strides for each dimension
+    pub strides: Vec<usize>,
+    // Index domains for each dimension
+    pub idx_doms: Vec<T>,
+}
+
+impl<T> From<MatrixShape<T>> for View {
+    fn from(value: MatrixShape<T>) -> Self {
+        Self {
+            offset: 0,
+            dims: value.dims,
+            strides: value.strides,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 /// A view into a 1D slice that we can manipulate
 pub struct View {
     // Number of elements to skip at the beginning

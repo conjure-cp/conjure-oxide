@@ -29,6 +29,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "afl"
+version = "0.15.24"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "927cd71710d1a232519e2393470e8f74a178ae59367efe58fa122884bba35ca4"
+dependencies = [
+ "home",
+ "libc",
+ "rustc_version",
+ "xdg",
+]
+
+[[package]]
 name = "ahash"
 version = "0.8.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -498,6 +510,7 @@ name = "conjure-cp-core"
 version = "0.0.1"
 dependencies = [
  "anyhow",
+ "bimap",
  "clap",
  "conjure-cp",
  "conjure-cp-enum-compatibility-macro",
@@ -581,6 +594,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "conjure-cp-fuzz"
+version = "0.0.1"
+dependencies = [
+ "afl",
+ "conjure-cp",
+ "conjure-cp-rules",
+]
+
+[[package]]
 name = "conjure-cp-lsp"
 version = "0.1.0"
 dependencies = [
@@ -609,7 +631,9 @@ dependencies = [
  "git-version",
  "itertools 0.14.0",
  "linkme",
+ "parking_lot",
  "paste",
+ "thiserror",
  "tracing",
  "uniplate",
 ]
@@ -1214,6 +1238,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6c49c37c09c17a53d937dfbb742eb3a961d65a994e6bcdcf37e7399d0cc8ab5e"
 dependencies = [
  "digest",
+]
+
+[[package]]
+name = "home"
+version = "0.5.12"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cc627f471c528ff0c4a49e1d5e60450c8f6461dd6d10ba9dcd3a61d3dff7728d"
+dependencies = [
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -2363,6 +2396,15 @@ name = "rustc-hash"
 version = "2.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "357703d41365b4b27c590e3ed91eabb1b663f07c4c084095e60cbed4362dff0d"
+
+[[package]]
+name = "rustc_version"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cfcb3a22ef46e85b45de6ee7e79d063319ebb6594faafcf1c225ea92ab6e9b92"
+dependencies = [
+ "semver",
+]
 
 [[package]]
 name = "rustix"
@@ -3839,6 +3881,12 @@ name = "writeable"
 version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9edde0db4769d2dc68579893f2306b26c6ecfbe0ef499b013d731b7b9247e0b9"
+
+[[package]]
+name = "xdg"
+version = "3.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2fb433233f2df9344722454bc7e96465c9d03bff9d77c248f9e7523fe79585b5"
 
 [[package]]
 name = "yansi"

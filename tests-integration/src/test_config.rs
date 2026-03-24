@@ -75,6 +75,14 @@ pub struct TestConfig {
     #[serde(default = "default_true", rename = "validate-with-conjure")]
     pub validate_with_conjure: bool,
 
+    /// When true, flatten all matrix literals before comparing solutions with Conjure.
+    ///
+    /// This is needed for models with matrix-indexed-by-matrix, where our representation
+    /// (flat elements with a matrix index domain) differs from Conjure's (nested sub-matrices
+    /// with integer index domains).
+    #[serde(default, rename = "flatten-matrices")]
+    pub flatten_matrices: bool,
+
     // Generate this test but do not run it
     pub skip: bool,
 }
@@ -114,6 +122,7 @@ impl Default for TestConfig {
             },
             minion_discrete_threshold: default_minion_discrete_threshold(),
             validate_with_conjure: true,
+            flatten_matrices: false,
         }
     }
 }

@@ -12,8 +12,8 @@ use syn::{
     TypePath, parenthesized, parse::Parse, parse::ParseStream, parse_macro_input,
 };
 
-use crate::util::rename_ident_in_impl;
-use util::{rename_fn, rename_ident_in_fn, replace_ident_in_type, type_contains_ident};
+use crate::util::{rename_ident_in_impl, type_is_ident};
+use util::{build_serde_as_type, rename_fn, rename_ident_in_fn, type_contains_ident};
 
 struct RuleSetAndPriority {
     rule_set: LitStr,
@@ -183,15 +183,18 @@ pub fn register_rule_set(args: TokenStream) -> TokenStream {
 // this is only constructed once at comptime so this doesn't matter
 #[allow(clippy::large_enum_variant)]
 enum ReprStateType {
-    Struct(ItemStruct, Option<ItemImpl>),
+    Struct(ItemStruct, Vec<ItemImpl>),
     Path(TypePath),
 }
 
 impl Parse for ReprStateType {
     fn parse(input: ParseStream) -> Result<Self> {
         if let Ok(strct) = input.parse::<ItemStruct>() {
-            let imp = input.parse::<ItemImpl>().ok();
-            return Ok(ReprStateType::Struct(strct, imp));
+            let mut imps = Vec::new();
+            while let Ok(imp) = input.parse::<ItemImpl>() {
+                imps.push(imp);
+            }
+            return Ok(ReprStateType::Struct(strct, imps));
         }
         if let Ok(path) = input.parse::<TypePath>() {
             return Ok(ReprStateType::Path(path));
@@ -292,8 +295,10 @@ pub fn register_representation(input: TokenStream) -> TokenStream {
         ReprStateType::Struct(item_struct, _) => {
             // get ident and body of the struct
             let ident = item_struct.ident.clone();
-            let prefixed_ident =
-                Ident::new(&format!("{}{}", prefix, ident), item_struct.ident.span());
+            let prefixed_ident = Ident::new(
+                &format!("{}{}", repr_name_str, ident),
+                item_struct.ident.span(),
+            );
             let tokens = generate_struct_def(item_struct, &prefixed_ident);
             (ident, tokens)
         }
@@ -315,7 +320,7 @@ pub fn register_representation(input: TokenStream) -> TokenStream {
         ReprStateType::Struct(..) => {
             // prefix user-defined struct's ident so it doesn't clash with anything
             Ident::new(
-                &format!("{}{}", prefix, user_state_ident),
+                &format!("{}{}", repr_name_str, user_state_ident),
                 user_state_ident.span(),
             )
         }
@@ -356,14 +361,13 @@ pub fn register_representation(input: TokenStream) -> TokenStream {
     }
 
     // Rename idents in the user-provided impl
-    let renamed_impl = if let ReprStateType::Struct(_, Some(item_impl)) = args.state_ty {
-        Some(rename_ident_in_impl(
-            item_impl,
-            &user_state_ident,
-            &state_ident,
-        ))
+    let renamed_impls = if let ReprStateType::Struct(_, impls) = args.state_ty {
+        impls
+            .into_iter()
+            .map(|imp| rename_ident_in_impl(imp, &user_state_ident, &state_ident))
+            .collect()
     } else {
-        None
+        Vec::new()
     };
 
     let repr_vars_impl = if repr_vars_fn.is_some() {
@@ -393,7 +397,7 @@ pub fn register_representation(input: TokenStream) -> TokenStream {
         #struct_def_tokens
 
         // -- User-provided struct impl
-        #renamed_impl
+        #(#renamed_impls)*
 
         // -- User-provided functions
         #[allow(non_snake_case)]
@@ -524,20 +528,23 @@ fn generate_struct_def(
                     let field_ty = &f.ty;
 
                     if type_contains_ident(&f.ty, &generic_param_ident) {
-                        collect_children_exprs.push(quote! {
-                            children.extend(
-                                ::conjure_cp::representation::_dependencies::uniplate::Biplate::<#generic_param_ident>::children_bi(&self.#field_ident)
-                            );
-                        });
-                        biplate_bounds.push(quote! {
-                            #field_ty: ::conjure_cp::representation::_dependencies::uniplate::Biplate<#generic_param_ident>
-                        });
+                        if type_is_ident(&f.ty, &generic_param_ident) {
+                            collect_children_exprs.push(quote! {
+                                children.push_back(self.#field_ident.clone());
+                            });
+                        } else {
+                            collect_children_exprs.push(quote! {
+                                children.extend(
+                                    ::conjure_cp::representation::_dependencies::uniplate::Biplate::<#generic_param_ident>::children_bi(&self.#field_ident)
+                                );
+                            });
+                            biplate_bounds.push(quote! {
+                                #field_ty: ::conjure_cp::representation::_dependencies::uniplate::Biplate<#generic_param_ident>
+                            });
+                        }
 
-                        let serde_as_ty = replace_ident_in_type(
-                            f.ty.clone(),
-                            &generic_param_ident,
-                            "ReprStateSerde",
-                        );
+                        let serde_as_ty =
+                            build_serde_as_type(field_ty, &generic_param_ident, "ReprStateSerde");
                         let serde_as_str = serde_as_ty.to_token_stream().to_string();
                         quote! {
                             #(#field_attrs)*
@@ -567,20 +574,23 @@ fn generate_struct_def(
 
                     if type_contains_ident(&f.ty, &generic_param_ident) {
                         let index = syn::Index::from(idx);
-                        collect_children_exprs.push(quote! {
-                            children.extend(
-                                ::conjure_cp::representation::_dependencies::uniplate::Biplate::<#generic_param_ident>::children_bi(&self.#index)
-                            );
-                        });
-                        biplate_bounds.push(quote! {
-                            #field_ty: ::conjure_cp::representation::_dependencies::uniplate::Biplate<#generic_param_ident>
-                        });
+                        if type_is_ident(&f.ty, &generic_param_ident) {
+                            collect_children_exprs.push(quote! {
+                                children.push_back(self.#index.clone());
+                            });
+                        } else {
+                            collect_children_exprs.push(quote! {
+                                children.extend(
+                                    ::conjure_cp::representation::_dependencies::uniplate::Biplate::<#generic_param_ident>::children_bi(&self.#index)
+                                );
+                            });
+                            biplate_bounds.push(quote! {
+                                #field_ty: ::conjure_cp::representation::_dependencies::uniplate::Biplate<#generic_param_ident>
+                            });
+                        }
 
-                        let serde_as_ty = replace_ident_in_type(
-                            f.ty.clone(),
-                            &generic_param_ident,
-                            "ReprStateSerde",
-                        );
+                        let serde_as_ty =
+                            build_serde_as_type(field_ty, &generic_param_ident, "ReprStateSerde");
                         let serde_as_str = serde_as_ty.to_token_stream().to_string();
                         quote! {
                             #(#field_attrs)*

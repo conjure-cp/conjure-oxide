@@ -23,9 +23,7 @@ pub fn parse_exprs(
     src: &str,
     symbols_ptr: SymbolTablePtr,
 ) -> Result<Vec<Expression>, FatalParseError> {
-    let (tree, source_code) = get_tree(src).ok_or(FatalParseError::TreeSitterError(
-        "Failed to parse Essence source code".to_string(),
-    ))?;
+    let (tree, source_code) = get_tree(src)?;
 
     let root = tree.root_node();
     let mut source_map = SourceMap::default();

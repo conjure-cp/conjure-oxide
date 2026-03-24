@@ -23,7 +23,7 @@ use super::sat_encoding::SATIntEncoding;
 use super::{
     AbstractLiteral, Atom, DeclarationPtr, Domain, DomainPtr, GroundDomain, IntVal, Literal,
     Metadata, Model, Moo, Name, Range, Reference, ReturnType, SetAttr, SymbolTable, SymbolTablePtr,
-    Typeable, UnresolvedDomain, matrix,
+    Typeable, matrix,
 };
 
 // Ensure that this type doesn't get too big
@@ -74,6 +74,7 @@ static_assertions::assert_eq_size!([u8; 112], Expression);
 #[biplate(to=SymbolTable)]
 #[biplate(to=SymbolTablePtr)]
 #[biplate(to=Vec<Expression>)]
+#[biplate(to=Moo<Expression>)]
 #[path_prefix(conjure_cp::ast)]
 pub enum Expression {
     AbstractLiteral(Metadata, AbstractLiteral<Expression>),
@@ -108,6 +109,9 @@ pub enum Expression {
     Metavar(Metadata, Ustr),
 
     Atomic(Metadata, Atom),
+
+    /// A record index
+    RecordField(Metadata, Moo<Expression>, Name),
 
     /// A matrix index.
     ///
@@ -598,7 +602,7 @@ fn bounded_i32_domain_for_matrix_literal_monotonic(
 
     let expr = exprs.pop()?;
     let dom = expr.domain_of()?;
-    let resolved = dom.resolve()?;
+    let resolved = dom.resolve().ok()?;
     let GroundDomain::Int(ranges) = resolved.as_ref() else {
         return None;
     };
@@ -607,7 +611,7 @@ fn bounded_i32_domain_for_matrix_literal_monotonic(
 
     for expr in exprs {
         let dom = expr.domain_of()?;
-        let resolved = dom.resolve()?;
+        let resolved = dom.resolve().ok()?;
         let GroundDomain::Int(ranges) = resolved.as_ref() else {
             return None;
         };
@@ -689,6 +693,15 @@ impl Expression {
             Expression::Metavar(_, _) => None,
             Expression::Comprehension(_, comprehension) => comprehension.domain_of(),
             Expression::AbstractComprehension(_, comprehension) => comprehension.domain_of(),
+            Expression::RecordField(_, rec, field_name) => {
+                let rec_ents = rec.domain_of()?.as_record()?;
+                for ent in rec_ents {
+                    if ent.name.eq(field_name) {
+                        return Some(ent.value);
+                    }
+                }
+                None
+            }
             Expression::UnsafeIndex(_, matrix, _) | Expression::SafeIndex(_, matrix, _) => {
                 let dom = matrix.domain_of()?;
                 if let Some((elem_domain, _)) = dom.as_matrix() {
@@ -717,7 +730,9 @@ impl Expression {
 
                 let dom = matrix.domain_of()?;
                 let Some((elem_domain, index_domains)) = dom.as_matrix() else {
-                    bug!("subject of an index operation should be a matrix");
+                    bug!(
+                        "subject of an index operation should be a matrix, but got {matrix}: {dom}"
+                    );
                 };
 
                 match sliced_dimension {
@@ -746,7 +761,8 @@ impl Expression {
             }),
             Expression::UnsafeDiv(_, a, b) => a
                 .domain_of()?
-                .resolve()?
+                .resolve()
+                .ok()?
                 .apply_i32(
                     // rust integer division is truncating; however, we want to always round down,
                     // including for negative numbers.
@@ -757,7 +773,7 @@ impl Expression {
                             None
                         }
                     },
-                    b.domain_of()?.resolve()?.as_ref(),
+                    b.domain_of()?.resolve().ok()?.as_ref(),
                 )
                 .map(DomainPtr::from)
                 .ok(),
@@ -766,7 +782,8 @@ impl Expression {
                 // including for negative numbers.
                 let domain = a
                     .domain_of()?
-                    .resolve()?
+                    .resolve()
+                    .ok()?
                     .apply_i32(
                         |x, y| {
                             if y != 0 {
@@ -775,7 +792,7 @@ impl Expression {
                                 None
                             }
                         },
-                        b.domain_of()?.resolve()?.as_ref(),
+                        b.domain_of()?.resolve().ok()?.as_ref(),
                     )
                     .unwrap_or_else(|err| bug!("Got {err} when computing domain of {self}"));
 
@@ -789,20 +806,22 @@ impl Expression {
             }
             Expression::UnsafeMod(_, a, b) => a
                 .domain_of()?
-                .resolve()?
+                .resolve()
+                .ok()?
                 .apply_i32(
                     |x, y| if y != 0 { Some(x % y) } else { None },
-                    b.domain_of()?.resolve()?.as_ref(),
+                    b.domain_of()?.resolve().ok()?.as_ref(),
                 )
                 .map(DomainPtr::from)
                 .ok(),
             Expression::SafeMod(_, a, b) => {
                 let domain = a
                     .domain_of()?
-                    .resolve()?
+                    .resolve()
+                    .ok()?
                     .apply_i32(
                         |x, y| if y != 0 { Some(x % y) } else { None },
-                        b.domain_of()?.resolve()?.as_ref(),
+                        b.domain_of()?.resolve().ok()?.as_ref(),
                     )
                     .unwrap_or_else(|err| bug!("Got {err} when computing domain of {self}"));
 
@@ -816,7 +835,8 @@ impl Expression {
             }
             Expression::SafePow(_, a, b) | Expression::UnsafePow(_, a, b) => a
                 .domain_of()?
-                .resolve()?
+                .resolve()
+                .ok()?
                 .apply_i32(
                     |x, y| {
                         if (x != 0 || y != 0) && y >= 0 {
@@ -825,7 +845,7 @@ impl Expression {
                             None
                         }
                     },
-                    b.domain_of()?.resolve()?.as_ref(),
+                    b.domain_of()?.resolve().ok()?.as_ref(),
                 )
                 .map(DomainPtr::from)
                 .ok(),
@@ -857,7 +877,7 @@ impl Expression {
                     }
                 } else {
                     // TODO: currently only works for matrices
-                    let dom = m.domain_of()?.resolve()?;
+                    let dom = m.domain_of()?.resolve().ok()?;
                     let (val_dom, idx_doms) = match dom.as_ref() {
                         GroundDomain::Matrix(val, idx) => (val, idx),
                         _ => return None,
@@ -900,8 +920,9 @@ impl Expression {
             }
             Expression::Minus(_, a, b) => a
                 .domain_of()?
-                .resolve()?
-                .apply_i32(|x, y| Some(x - y), b.domain_of()?.resolve()?.as_ref())
+                .resolve()
+                .ok()?
+                .apply_i32(|x, y| Some(x - y), b.domain_of()?.resolve().ok()?.as_ref())
                 .map(DomainPtr::from)
                 .ok(),
             Expression::FlatAllDiff(_, _) => Some(Domain::bool()),
@@ -911,8 +932,12 @@ impl Expression {
             Expression::FlatWeightedSumGeq(_, _, _, _) => Some(Domain::bool()),
             Expression::Abs(_, a) => a
                 .domain_of()?
-                .resolve()?
-                .apply_i32(|a, _| Some(a.abs()), a.domain_of()?.resolve()?.as_ref())
+                .resolve()
+                .ok()?
+                .apply_i32(
+                    |a, _| Some(a.abs()),
+                    a.domain_of()?.resolve().ok()?.as_ref(),
+                )
                 .map(DomainPtr::from)
                 .ok(),
             Expression::MinionPow(_, _, _, _) => Some(Domain::bool()),
@@ -922,14 +947,16 @@ impl Expression {
             }
             Expression::PairwiseSum(_, a, b) => a
                 .domain_of()?
-                .resolve()?
-                .apply_i32(|a, b| Some(a + b), b.domain_of()?.resolve()?.as_ref())
+                .resolve()
+                .ok()?
+                .apply_i32(|a, b| Some(a + b), b.domain_of()?.resolve().ok()?.as_ref())
                 .map(DomainPtr::from)
                 .ok(),
             Expression::PairwiseProduct(_, a, b) => a
                 .domain_of()?
-                .resolve()?
-                .apply_i32(|a, b| Some(a * b), b.domain_of()?.resolve()?.as_ref())
+                .resolve()
+                .ok()?
+                .apply_i32(|a, b| Some(a * b), b.domain_of()?.resolve().ok()?.as_ref())
                 .map(DomainPtr::from)
                 .ok(),
             Expression::Defined(_, function) => get_function_domain(function),
@@ -1131,42 +1158,12 @@ impl Expression {
 
 pub fn get_function_domain(function: &Moo<Expression>) -> Option<DomainPtr> {
     let function_domain = function.domain_of()?;
-    match function_domain.resolve().as_ref() {
-        Some(d) => {
-            match d.as_ref() {
-                GroundDomain::Function(_, domain, _) => Some(domain.clone().into()),
-                // Not defined for anything other than a function
-                _ => None,
-            }
-        }
-        None => {
-            match function_domain.as_unresolved()? {
-                UnresolvedDomain::Function(_, domain, _) => Some(domain.clone()),
-                // Not defined for anything other than a function
-                _ => None,
-            }
-        }
-    }
+    function_domain.as_function().map(|(_, dom, _codom)| dom)
 }
 
 pub fn get_function_codomain(function: &Moo<Expression>) -> Option<DomainPtr> {
     let function_domain = function.domain_of()?;
-    match function_domain.resolve().as_ref() {
-        Some(d) => {
-            match d.as_ref() {
-                GroundDomain::Function(_, _, codomain) => Some(codomain.clone().into()),
-                // Not defined for anything other than a function
-                _ => None,
-            }
-        }
-        None => {
-            match function_domain.as_unresolved()? {
-                UnresolvedDomain::Function(_, _, codomain) => Some(codomain.clone()),
-                // Not defined for anything other than a function
-                _ => None,
-            }
-        }
-    }
+    function_domain.as_function().map(|(_, _dom, codom)| codom)
 }
 
 impl TryFrom<&Expression> for i32 {
@@ -1223,6 +1220,12 @@ impl From<Atom> for Expression {
 impl From<Literal> for Expression {
     fn from(value: Literal) -> Self {
         Expression::Atomic(Metadata::new(), value.into())
+    }
+}
+
+impl From<AbstractLiteral<Expression>> for Expression {
+    fn from(value: AbstractLiteral<Expression>) -> Self {
+        Expression::AbstractLiteral(Metadata::new(), value)
     }
 }
 
@@ -1315,6 +1318,9 @@ impl Display for Expression {
             Expression::AbstractLiteral(_, l) => l.fmt(f),
             Expression::Comprehension(_, c) => c.fmt(f),
             Expression::AbstractComprehension(_, c) => c.fmt(f),
+            Expression::RecordField(_, r, fld) => {
+                write!(f, "{r}[{fld}]")
+            }
             Expression::UnsafeIndex(_, e1, e2) | Expression::SafeIndex(_, e1, e2) => {
                 write!(f, "{e1}{}", pretty_vec(e2))
             }
@@ -1569,6 +1575,16 @@ impl Typeable for Expression {
             Expression::Subset(_, _, _) => ReturnType::Bool,
             Expression::SubsetEq(_, _, _) => ReturnType::Bool,
             Expression::AbstractLiteral(_, lit) => lit.return_type(),
+            Expression::RecordField(_, rec, field_name) => {
+                if let ReturnType::Record(ents) = rec.return_type() {
+                    for RecordValue { name, value } in ents {
+                        if name.eq(field_name) {
+                            return value;
+                        }
+                    }
+                }
+                ReturnType::Unknown
+            }
             Expression::UnsafeIndex(_, subject, idx) | Expression::SafeIndex(_, subject, idx) => {
                 let subject_ty = subject.return_type();
                 match subject_ty {

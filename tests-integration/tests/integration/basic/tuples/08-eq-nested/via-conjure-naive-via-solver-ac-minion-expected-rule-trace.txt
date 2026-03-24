@@ -1,0 +1,221 @@
+Model before rewriting:
+
+letting idx be domain int(8..9, 11)
+letting m2 be domain matrix indexed by [int(3, 5..6)] of bool
+letting t1 be domain tuple of (int(1..3), int(4, 6, 8))
+find x: tuple of (t1, m2)
+
+such that
+
+(x[1] = (2,6)),
+!(x[2, 3]),
+or(x[2])
+
+--
+
+(x[1] = (2,6)),
+!(x[2, 3]),
+or(x[2]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(x[1] = (2,6)),
+!(x[2, 3]),
+or(x[2])
+
+--
+
+x[1], 
+   ~~> tuple_index_to_bubble ([("Bubble", 8000)])
+{x[1] @ and([(1 >= 1),(1 <= 2);int(1..)])}
+
+--
+
+({x[1] @ and([(1 >= 1),(1 <= 2);int(1..)])} = (2,6)),
+!(x[2, 3]),
+or(x[2]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(x[1] = (2,6)),
+!(x[2, 3]),
+or(x[2])
+
+--
+
+x, 
+   ~~> select_representation ([("ReprGeneral", 8000)])
+x
+new variables:
+  find x#TupleToAtom_1: tuple of (int(1..3), int(4, 6, 8))
+  find x#TupleToAtom_2: matrix indexed by [int(3, 5..6)] of bool
+
+--
+
+(x[1] = (2,6)),
+!(x[2, 3]),
+or(x[2]), 
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8001)])
+(x[1] = (2,6)),
+!(x[2, 3]),
+or(x[2])
+new variables:
+  find x#TupleToAtom_2#MatrixToAtom_1: bool
+  find x#TupleToAtom_2#MatrixToAtom_2: bool
+  find x#TupleToAtom_2#MatrixToAtom_3: bool
+
+--
+
+x[2, 3], 
+   ~~> tuple_index_to_bubble ([("Bubble", 8000)])
+{x[2, 3] @ and([(2 >= 1),(2 <= 2);int(1..)])}
+
+--
+
+(x[1] = (2,6)),
+!({x[2, 3] @ and([(2 >= 1),(2 <= 2);int(1..)])}),
+or(x[2]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(x[1] = (2,6)),
+!(x[2, 3]),
+or(x[2])
+
+--
+
+x, 
+   ~~> select_representation ([("ReprGeneral", 8000)])
+x
+
+--
+
+x[2], 
+   ~~> tuple_index_to_bubble ([("Bubble", 8000)])
+{x[2] @ and([(2 >= 1),(2 <= 2);int(1..)])}
+
+--
+
+(x[1] = (2,6)),
+!(x[2, 3]),
+or({x[2] @ and([(2 >= 1),(2 <= 2);int(1..)])}), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(x[1] = (2,6)),
+!(x[2, 3]),
+or(x[2])
+
+--
+
+x, 
+   ~~> select_representation ([("ReprGeneral", 8000)])
+x
+
+--
+
+!(x[2, 3]), 
+   ~~> not_constraint_to_reify ([("Minion", 4090)])
+Reify(x[2, 3], false)
+
+--
+
+x[1], 
+   ~~> tuple_to_atom_index_lit ([("ReprGeneral", 2000)])
+x#TupleToAtom_1
+
+--
+
+x#TupleToAtom_1, 
+   ~~> select_representation ([("ReprGeneral", 8000)])
+x#TupleToAtom_1
+new variables:
+  find x#TupleToAtom_1#TupleToAtom_1: int(1..3)
+  find x#TupleToAtom_1#TupleToAtom_2: int(4, 6, 8)
+
+--
+
+(x#TupleToAtom_1 = (2,6)), 
+   ~~> tuple_var_eq_lit ([("ReprGeneral", 2000)])
+and([(x#TupleToAtom_1#TupleToAtom_1 = 2),(x#TupleToAtom_1#TupleToAtom_2 = 6);int(1..)])
+
+--
+
+and([(x#TupleToAtom_1#TupleToAtom_1 = 2),(x#TupleToAtom_1#TupleToAtom_2 = 6);int(1..)]),
+Reify(x[2, 3], false),
+or(x[2]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(x#TupleToAtom_1#TupleToAtom_1 = 2),
+(x#TupleToAtom_1#TupleToAtom_2 = 6),
+Reify(x[2, 3], false),
+or(x[2])
+
+--
+
+x[2, 3], 
+   ~~> tuple_to_atom_index_lit ([("ReprGeneral", 2000)])
+x#TupleToAtom_2[3]
+
+--
+
+(x#TupleToAtom_1#TupleToAtom_1 = 2),
+(x#TupleToAtom_1#TupleToAtom_2 = 6),
+Reify(x#TupleToAtom_2[3], false),
+or(x[2]), 
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8001)])
+(x#TupleToAtom_1#TupleToAtom_1 = 2),
+(x#TupleToAtom_1#TupleToAtom_2 = 6),
+Reify(x#TupleToAtom_2[3], false),
+or(x[2])
+
+--
+
+(x#TupleToAtom_1#TupleToAtom_1 = 2),
+(x#TupleToAtom_1#TupleToAtom_2 = 6),
+Reify(x#TupleToAtom_2[3], false),
+or(x[2]), 
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+(x#TupleToAtom_1#TupleToAtom_1 = 2),
+(x#TupleToAtom_1#TupleToAtom_2 = 6),
+Reify(x#TupleToAtom_2#MatrixToAtom_1, false),
+or(x[2])
+
+--
+
+x[2], 
+   ~~> tuple_to_atom_index_lit ([("ReprGeneral", 2000)])
+x#TupleToAtom_2
+
+--
+
+(x#TupleToAtom_1#TupleToAtom_1 = 2),
+(x#TupleToAtom_1#TupleToAtom_2 = 6),
+Reify(x#TupleToAtom_2#MatrixToAtom_1, false),
+or(x#TupleToAtom_2), 
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8001)])
+(x#TupleToAtom_1#TupleToAtom_1 = 2),
+(x#TupleToAtom_1#TupleToAtom_2 = 6),
+Reify(x#TupleToAtom_2#MatrixToAtom_1, false),
+or(x#TupleToAtom_2)
+
+--
+
+or(x#TupleToAtom_2), 
+   ~~> matrix_ref_to_atom ([("ReprMatrixToAtom", 2000)])
+or([x#TupleToAtom_2#MatrixToAtom_1,x#TupleToAtom_2#MatrixToAtom_2,x#TupleToAtom_2#MatrixToAtom_3;int(1..)])
+
+--
+
+Final model:
+
+letting idx be domain int(8..9, 11)
+letting m2 be domain matrix indexed by [int(3, 5..6)] of bool
+letting t1 be domain tuple of (int(1..3), int(4, 6, 8))
+find x: tuple of (tuple of (int(1..3), int(4, 6, 8)), matrix indexed by [int(3, 5..6)] of bool)
+find x#TupleToAtom_1: tuple of (int(1..3), int(4, 6, 8))
+find x#TupleToAtom_2: matrix indexed by [int(3, 5..6)] of bool
+find x#TupleToAtom_1#TupleToAtom_1: int(1..3)
+find x#TupleToAtom_1#TupleToAtom_2: int(4, 6, 8)
+find x#TupleToAtom_2#MatrixToAtom_1: bool
+find x#TupleToAtom_2#MatrixToAtom_2: bool
+find x#TupleToAtom_2#MatrixToAtom_3: bool
+
+such that
+
+(x#TupleToAtom_1#TupleToAtom_1 = 2),
+(x#TupleToAtom_1#TupleToAtom_2 = 6),
+Reify(x#TupleToAtom_2#MatrixToAtom_1, false),
+or([x#TupleToAtom_2#MatrixToAtom_1,x#TupleToAtom_2#MatrixToAtom_2,x#TupleToAtom_2#MatrixToAtom_3;int(1..)])
+

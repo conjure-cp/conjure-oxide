@@ -1,12 +1,9 @@
-use super::attrs::SetAttr;
-use super::ground::GroundDomain;
-use super::range::Range;
-use super::unresolved::{IntVal, UnresolvedDomain};
-use crate::ast::domains::attrs::MSetAttr;
+use crate::ast::records::RecordValue;
 use crate::ast::{
-    DeclarationPtr, DomainOpError, Expression, FuncAttr, Literal, Moo, RecordEntry,
-    RecordEntryGround, Reference, ReturnType, Typeable,
+    DeclarationPtr, DomainOpError, Expression, FuncAttr, GroundDomain, IntVal, Literal, MSetAttr,
+    Moo, Range, Reference, ReturnType, SetAttr, Typeable, UnresolvedDomain,
 };
+use funcmap::{FuncMap, TryFuncMap};
 use itertools::Itertools;
 use polyquine::Quine;
 use serde::{Deserialize, Serialize};
@@ -16,11 +13,12 @@ use uniplate::Uniplate;
 
 /// The integer type used in all domain code (int ranges, set sizes, etc)
 pub type Int = i32;
+pub type UInt = u32;
 
 pub type DomainPtr = Moo<Domain>;
 
 impl DomainPtr {
-    pub fn resolve(&self) -> Option<Moo<GroundDomain>> {
+    pub fn resolve(&self) -> Result<Moo<GroundDomain>, DomainOpError> {
         self.as_ref().resolve()
     }
 
@@ -37,37 +35,12 @@ impl DomainPtr {
     }
 }
 
-impl From<Moo<GroundDomain>> for DomainPtr {
-    fn from(value: Moo<GroundDomain>) -> Self {
-        Moo::new(Domain::Ground(value))
-    }
-}
-
-impl From<Moo<UnresolvedDomain>> for DomainPtr {
-    fn from(value: Moo<UnresolvedDomain>) -> Self {
-        Moo::new(Domain::Unresolved(value))
-    }
-}
-
-impl From<GroundDomain> for DomainPtr {
-    fn from(value: GroundDomain) -> Self {
-        Moo::new(Domain::Ground(Moo::new(value)))
-    }
-}
-
-impl From<UnresolvedDomain> for DomainPtr {
-    fn from(value: UnresolvedDomain) -> Self {
-        Moo::new(Domain::Unresolved(Moo::new(value)))
-    }
-}
-
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine, Uniplate)]
 #[biplate(to=DomainPtr)]
 #[biplate(to=GroundDomain)]
 #[biplate(to=UnresolvedDomain)]
 #[biplate(to=Expression)]
 #[biplate(to=Reference)]
-#[biplate(to=RecordEntry)]
 #[biplate(to=IntVal)]
 #[path_prefix(conjure_cp::ast)]
 pub enum Domain {
@@ -141,7 +114,7 @@ impl Domain {
     /// will be [GroundDomain::Set]. Otherwise, it will be [UnresolvedDomain::Set].
     pub fn set<T>(attr: T, inner_dom: DomainPtr) -> DomainPtr
     where
-        T: Into<SetAttr<IntVal>> + TryInto<SetAttr<Int>> + Clone,
+        T: Into<SetAttr<IntVal>> + TryInto<SetAttr<UInt>> + Clone,
     {
         if let Domain::Ground(gd) = inner_dom.as_ref()
             && let Ok(int_attr) = attr.clone().try_into()
@@ -160,7 +133,7 @@ impl Domain {
     /// Create a new multiset domain with the given element domain and attributes
     pub fn mset<T>(attr: T, inner_dom: DomainPtr) -> DomainPtr
     where
-        T: Into<MSetAttr<IntVal>> + TryInto<MSetAttr<Int>> + Clone,
+        T: Into<MSetAttr<IntVal>> + TryInto<MSetAttr<UInt>> + Clone,
     {
         if let Domain::Ground(gd) = inner_dom.as_ref()
             && let Ok(int_attr) = attr.clone().try_into()
@@ -208,12 +181,16 @@ impl Domain {
     /// Create a new tuple domain with the given entries.
     /// If the entries are all ground, the variant will be [GroundDomain::Record].
     /// Otherwise, it will be [UnresolvedDomain::Record].
-    pub fn record(entries: Vec<RecordEntry>) -> DomainPtr {
+    pub fn record<T>(entries: Vec<RecordValue<T>>) -> DomainPtr
+    where
+        RecordValue<T>:
+            Into<RecordValue<DomainPtr>> + TryInto<RecordValue<Moo<GroundDomain>>> + Clone,
+    {
         if let Ok(entries_gds) = entries.iter().cloned().map(TryInto::try_into).try_collect() {
             return Moo::new(Domain::Ground(Moo::new(GroundDomain::Record(entries_gds))));
         }
         Moo::new(Domain::Unresolved(Moo::new(UnresolvedDomain::Record(
-            entries,
+            entries.into_iter().map(Into::into).collect(),
         ))))
     }
 
@@ -228,7 +205,7 @@ impl Domain {
     /// Create a new function domain
     pub fn function<T>(attrs: T, dom: DomainPtr, cdom: DomainPtr) -> DomainPtr
     where
-        T: Into<FuncAttr<IntVal>> + TryInto<FuncAttr<Int>> + Clone,
+        T: Into<FuncAttr<IntVal>> + TryInto<FuncAttr<UInt>> + Clone,
     {
         if let Ok(attrs_gd) = attrs.clone().try_into()
             && let Some(dom_gd) = dom.as_ground()
@@ -252,9 +229,9 @@ impl Domain {
     /// Otherwise, try to resolve it; Return None if this is not yet possible.
     /// Domains which contain references to givens cannot be resolved until these
     /// givens are substituted for their concrete values.
-    pub fn resolve(&self) -> Option<Moo<GroundDomain>> {
+    pub fn resolve(&self) -> Result<Moo<GroundDomain>, DomainOpError> {
         match self {
-            Domain::Ground(gd) => Some(gd.clone()),
+            Domain::Ground(gd) => Ok(gd.clone()),
             Domain::Unresolved(ud) => ud.resolve().map(Moo::new),
         }
     }
@@ -444,7 +421,7 @@ impl Domain {
     }
 
     /// If this is a [GroundDomain::Set], get immutable references to its attributes and inner domain
-    pub fn as_set_ground(&self) -> Option<(&SetAttr<Int>, &Moo<GroundDomain>)> {
+    pub fn as_set_ground(&self) -> Option<(&SetAttr<UInt>, &Moo<GroundDomain>)> {
         if let Some(GroundDomain::Set(attr, inner_dom)) = self.as_ground() {
             return Some((attr, inner_dom));
         }
@@ -452,7 +429,7 @@ impl Domain {
     }
 
     /// If this is a [GroundDomain::Set], get mutable references to its attributes and inner domain
-    pub fn as_set_ground_mut(&mut self) -> Option<(&mut SetAttr<Int>, &mut Moo<GroundDomain>)> {
+    pub fn as_set_ground_mut(&mut self) -> Option<(&mut SetAttr<UInt>, &mut Moo<GroundDomain>)> {
         if let Some(GroundDomain::Set(attr, inner_dom)) = self.as_ground_mut() {
             return Some((attr, inner_dom));
         }
@@ -502,7 +479,7 @@ impl Domain {
     }
 
     /// If this is a record domain, clone and return its entries.
-    pub fn as_record(&self) -> Option<Vec<RecordEntry>> {
+    pub fn as_record(&self) -> Option<Vec<RecordValue<DomainPtr>>> {
         if let Some(GroundDomain::Record(record_entries)) = self.as_ground() {
             return Some(record_entries.iter().cloned().map(|r| r.into()).collect());
         }
@@ -513,7 +490,7 @@ impl Domain {
     }
 
     /// If this is a [GroundDomain::Record], get a mutable reference to its entries
-    pub fn as_record_ground(&self) -> Option<&Vec<RecordEntryGround>> {
+    pub fn as_record_ground(&self) -> Option<&Vec<RecordValue<Moo<GroundDomain>>>> {
         if let Some(GroundDomain::Record(entries)) = self.as_ground() {
             return Some(entries);
         }
@@ -522,9 +499,10 @@ impl Domain {
 
     /// If this is a record domain, get a mutable reference to its list of entries.
     /// The domain always becomes [UnresolvedDomain::Record] after this operation.
-    pub fn as_record_mut(&mut self) -> Option<&mut Vec<RecordEntry>> {
+    pub fn as_record_mut(&mut self) -> Option<&mut Vec<RecordValue<DomainPtr>>> {
         if let Some(GroundDomain::Record(entries_gds)) = self.as_ground() {
-            let entries: Vec<RecordEntry> = entries_gds.iter().cloned().map(|r| r.into()).collect();
+            let entries: Vec<RecordValue<DomainPtr>> =
+                entries_gds.iter().cloned().map(|r| r.into()).collect();
             *self = Domain::Unresolved(Moo::new(UnresolvedDomain::Record(entries)));
         }
 
@@ -535,7 +513,7 @@ impl Domain {
     }
 
     /// If this is a [GroundDomain::Record], get a mutable reference to its entries
-    pub fn as_record_ground_mut(&mut self) -> Option<&mut Vec<RecordEntryGround>> {
+    pub fn as_record_ground_mut(&mut self) -> Option<&mut Vec<RecordValue<Moo<GroundDomain>>>> {
         if let Some(GroundDomain::Record(entries)) = self.as_ground_mut() {
             return Some(entries);
         }
@@ -543,7 +521,7 @@ impl Domain {
     }
 
     /// If this is a function domain, get its (attributes, domain, co-domain)
-    pub fn as_function(&self) -> Option<(FuncAttr<IntVal>, Moo<Domain>, Moo<Domain>)> {
+    pub fn as_function(&self) -> Option<(FuncAttr<IntVal>, DomainPtr, DomainPtr)> {
         if let Some(GroundDomain::Function(attrs, dom, codom)) = self.as_ground() {
             return Some((
                 attrs.clone().into(),
@@ -562,7 +540,7 @@ impl Domain {
     /// The domain always becomes [UnresolvedDomain::Function] after this operation.
     pub fn as_function_mut(
         &mut self,
-    ) -> Option<(&mut FuncAttr<IntVal>, &mut Moo<Domain>, &mut Moo<Domain>)> {
+    ) -> Option<(&mut FuncAttr<IntVal>, &mut DomainPtr, &mut DomainPtr)> {
         if let Some(GroundDomain::Function(attrs, dom, codom)) = self.as_ground() {
             *self = Domain::Unresolved(Moo::new(UnresolvedDomain::Function(
                 attrs.clone().into(),
@@ -659,6 +637,19 @@ impl Domain {
             Domain::Ground(gd) => gd.element_domain().map(DomainPtr::from),
             Domain::Unresolved(ud) => ud.element_domain(),
         }
+    }
+}
+
+impl From<RecordValue<Moo<GroundDomain>>> for RecordValue<DomainPtr> {
+    fn from(value: RecordValue<Moo<GroundDomain>>) -> Self {
+        value.func_map(DomainPtr::from)
+    }
+}
+
+impl TryFrom<RecordValue<DomainPtr>> for RecordValue<Moo<GroundDomain>> {
+    type Error = DomainOpError;
+    fn try_from(value: RecordValue<DomainPtr>) -> Result<Self, Self::Error> {
+        value.try_func_map(DomainPtr::try_into)
     }
 }
 
@@ -805,13 +796,13 @@ mod tests {
     fn test_length_record() {
         // 3 ways to pick rec.a, 2 ways to pick rec.b
         let t = Domain::record(vec![
-            RecordEntry {
+            RecordValue {
                 name: Name::user("a"),
-                domain: domain_int!(1..3),
+                value: domain_int!(1..3),
             },
-            RecordEntry {
+            RecordValue {
                 name: Name::user("b"),
-                domain: Domain::bool(),
+                value: Domain::bool(),
             },
         ]);
         assert_eq!(t.length(), Ok(6));

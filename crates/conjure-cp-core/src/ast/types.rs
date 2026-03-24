@@ -1,3 +1,4 @@
+use crate::ast::records::RecordValue;
 use itertools::Itertools;
 use polyquine::Quine;
 use serde::{Deserialize, Serialize};
@@ -11,7 +12,7 @@ pub enum ReturnType {
     Set(Box<ReturnType>),
     MSet(Box<ReturnType>),
     Tuple(Vec<ReturnType>),
-    Record(Vec<ReturnType>),
+    Record(Vec<RecordValue<ReturnType>>),
     Function(Box<ReturnType>, Box<ReturnType>),
 
     /// An unknown type
@@ -42,8 +43,11 @@ impl Display for ReturnType {
                 write!(f, "tuple of ({inners})")
             }
             ReturnType::Record(types) => {
-                let inners = types.iter().map(|t| format!("{}", t)).join(", ");
-                write!(f, "record of ({inners})")
+                let inners = types
+                    .iter()
+                    .map(|t| format!("{}: {}", t.name, t.value))
+                    .join(", ");
+                write!(f, "record of {{{inners}}}")
             }
             ReturnType::Function(ty1, ty2) => {
                 write!(f, "function ({ty1} --> {ty2})")

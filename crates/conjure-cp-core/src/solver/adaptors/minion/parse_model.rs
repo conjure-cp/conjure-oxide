@@ -115,15 +115,16 @@ fn load_var(
     table_vars: &HashSet<conjure_ast::Name>,
     minion_model: &mut MinionModel,
 ) -> Result<(), SolverError> {
-    let resolved_domain = var.domain_of().resolve();
+    let resolved_domain = var
+        .domain_of()
+        .resolve()
+        .map_err(|e| ModelInvalid(format!("could not resolve domain of {name}: {e}")))?;
     let force_discrete = table_vars.contains(name);
-    match resolved_domain.as_deref() {
-        Some(conjure_ast::GroundDomain::Int(ranges)) => {
+    match resolved_domain.as_ref() {
+        conjure_ast::GroundDomain::Int(ranges) => {
             load_intdomain_var(name, ranges, search_var, force_discrete, minion_model)
         }
-        Some(conjure_ast::GroundDomain::Bool) => {
-            load_booldomain_var(name, search_var, minion_model)
-        }
+        conjure_ast::GroundDomain::Bool => load_booldomain_var(name, search_var, minion_model),
         x => Err(ModelFeatureNotSupported(format!("{x:?}"))),
     }
 }

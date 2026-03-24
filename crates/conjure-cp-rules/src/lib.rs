@@ -13,19 +13,15 @@ mod lex;
 mod matrix;
 mod minion;
 mod normalisers;
+mod records;
 mod sat;
 mod sets;
+mod tuple;
 mod utils;
 mod variables_in_domains;
 
-// TODO (repr): general representation rules
 pub mod representation;
-// mod select_representation;
-
-// TODO (repr): record representation rules
-// mod records;
-// TODO (repr): tuple representation rules
-// mod tuple;
+mod select_representation;
 
 /// Denotes a block of code as extra, optional checks for a rule. Primarily, these are checks that
 /// are too expensive to do normally, or are implicit in the rule priorities and application order.

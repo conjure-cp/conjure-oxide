@@ -1,100 +1,13 @@
-use conjure_cp::{
-    ast::Metadata,
-    ast::{
-        AbstractLiteral, Atom, DeclarationPtr, Expression as Expr, Literal, Moo, Name, SymbolTable,
-        categories::Category,
-    },
-};
-
+use crate::utils::is_atom;
+use conjure_cp::ast::categories::Category;
+use conjure_cp::ast::{Atom, DeclarationPtr, Expression, Metadata, Moo, SymbolTable};
 use tracing::{instrument, trace};
-use uniplate::{Biplate, Uniplate};
-
-/// True iff `expr` is an `Atom`.
-pub fn is_atom(expr: &Expr) -> bool {
-    matches!(expr, Expr::Atomic(_, _))
-}
-
-/// True iff `expr` is an `Atom` or `Not(Atom)`.
-pub fn is_literal(expr: &Expr) -> bool {
-    match expr {
-        Expr::Atomic(_, _) => true,
-        Expr::Not(_, inner) => matches!(**inner, Expr::Atomic(_, _)),
-        _ => false,
-    }
-}
-
-/// True if `expr` is flat; i.e. it only contains atoms.
-pub fn is_flat(expr: &Expr) -> bool {
-    for e in expr.children() {
-        if !is_atom(&e) {
-            return false;
-        }
-    }
-    true
-}
-
-/// Returns the arity of a tuple constant expression, if this expression is one.
-pub fn constant_tuple_len(expr: &Expr) -> Option<usize> {
-    match expr {
-        Expr::AbstractLiteral(_, AbstractLiteral::Tuple(elems)) => Some(elems.len()),
-        Expr::Atomic(_, Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Tuple(elems)))) => {
-            Some(elems.len())
-        }
-        _ => None,
-    }
-}
-
-/// Returns record field names of a record constant expression, if this expression is one.
-pub fn constant_record_names(expr: &Expr) -> Option<Vec<Name>> {
-    match expr {
-        Expr::AbstractLiteral(_, AbstractLiteral::Record(entries)) => {
-            Some(entries.iter().map(|x| x.name.clone()).collect())
-        }
-        Expr::Atomic(
-            _,
-            Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Record(entries))),
-        ) => Some(entries.iter().map(|x| x.name.clone()).collect()),
-        _ => None,
-    }
-}
-
-/// True if the entire AST is constants.
-pub fn is_all_constant(expression: &Expr) -> bool {
-    for atom in expression.universe_bi() {
-        match atom {
-            Atom::Literal(_) => {}
-            _ => {
-                return false;
-            }
-        }
-    }
-
-    true
-}
-
-/// Converts a vector of expressions to a vector of atoms.
-///
-/// # Returns
-///
-/// `Some(Vec<Atom>)` if the vectors direct children expressions are all atomic, otherwise `None`.
-#[allow(dead_code)]
-pub fn expressions_to_atoms(exprs: &Vec<Expr>) -> Option<Vec<Atom>> {
-    let mut atoms: Vec<Atom> = vec![];
-    for expr in exprs {
-        let Expr::Atomic(_, atom) = expr else {
-            return None;
-        };
-        atoms.push(atom.clone());
-    }
-
-    Some(atoms)
-}
 
 /// Creates a new auxiliary variable using the given expression.
 ///
 /// # Returns
 ///
-/// * `None` if `Expr` is a `Atom`, or `Expr` does not have a domain (for example, if it is a `Bubble`).
+/// * `None` if `Expression` is a `Atom`, or `Expression` does not have a domain (for example, if it is a `Bubble`).
 ///
 /// * `Some(ToAuxVarOutput)` if successful, containing:
 ///
@@ -103,7 +16,7 @@ pub fn expressions_to_atoms(exprs: &Vec<Expr>) -> Option<Vec<Atom>> {
 ///     + A reference to the auxiliary variable to replace the existing expression with.
 ///
 #[instrument(skip_all, fields(expr = %expr))]
-pub fn to_aux_var(expr: &Expr, symbols: &SymbolTable) -> Option<ToAuxVarOutput> {
+pub fn to_aux_var(expr: &Expression, symbols: &SymbolTable) -> Option<ToAuxVarOutput> {
     let mut symbols = symbols.clone();
 
     // No need to put an atom in an aux_var
@@ -130,7 +43,7 @@ pub fn to_aux_var(expr: &Expr, symbols: &SymbolTable) -> Option<ToAuxVarOutput> 
     // turned into an atom, or an abstract literal containing only literals - e.g. through an index
     // or slice operation.
     //
-    if let Expr::AbstractLiteral(_, _) = expr {
+    if let Expression::AbstractLiteral(_, _) = expr {
         if cfg!(debug_assertions) {
             trace!(
                 why = "expression is an abstract literal",
@@ -165,9 +78,11 @@ pub fn to_aux_var(expr: &Expr, symbols: &SymbolTable) -> Option<ToAuxVarOutput> 
     // Avoid introducing auxvars for generic matrix indexing (can create many redundant auxvars
     // before comprehension expansion). However, keep list indexing eligible so Minion lowering
     // can introduce `element` constraints in non-equality contexts.
-    if let Expr::SafeIndex(_, subject, indices) = expr {
+    if let Expression::SafeIndex(_, subject, indices) = expr {
         let can_lower_via_element = subject.clone().unwrap_list().is_some()
-            && indices.iter().all(|i| matches!(i, Expr::Atomic(_, _)));
+            && indices
+                .iter()
+                .all(|i| matches!(i, Expression::Atomic(_, _)));
 
         if !can_lower_via_element {
             if cfg!(debug_assertions) {
@@ -192,7 +107,7 @@ pub fn to_aux_var(expr: &Expr, symbols: &SymbolTable) -> Option<ToAuxVarOutput> 
 
     Some(ToAuxVarOutput {
         aux_declaration: decl.clone(),
-        aux_expression: Expr::AuxDeclaration(
+        aux_expression: Expression::AuxDeclaration(
             Metadata::new(),
             conjure_cp::ast::Reference::new(decl),
             Moo::new(expr.clone()),
@@ -205,7 +120,7 @@ pub fn to_aux_var(expr: &Expr, symbols: &SymbolTable) -> Option<ToAuxVarOutput> 
 /// Output data of `to_aux_var`.
 pub struct ToAuxVarOutput {
     aux_declaration: DeclarationPtr,
-    aux_expression: Expr,
+    aux_expression: Expression,
     symbols: SymbolTable,
     _unconstructable: (),
 }
@@ -218,15 +133,15 @@ impl ToAuxVarOutput {
         ))
     }
 
-    /// Returns the new auxiliary variable as an `Expression`.
+    /// Returns the new auxiliary variable as an `Expressionession`.
     ///
     /// This expression will have default `Metadata`.
-    pub fn as_expr(&self) -> Expr {
-        Expr::Atomic(Metadata::new(), self.as_atom())
+    pub fn as_expr(&self) -> Expression {
+        Expression::Atomic(Metadata::new(), self.as_atom())
     }
 
-    /// Returns the top level `Expression` to add to the model.
-    pub fn top_level_expr(&self) -> Expr {
+    /// Returns the top level `Expressionession` to add to the model.
+    pub fn top_level_expr(&self) -> Expression {
         self.aux_expression.clone()
     }
 

@@ -3,6 +3,7 @@ use crate::ast::serde::AsId;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_with::{DeserializeAs, SerializeAs};
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ReprStateSerde;
 
 impl<T> SerializeAs<T> for ReprStateSerde

@@ -45,6 +45,26 @@ pub enum ReprError {
     Instantiate(#[from] ReprInstantiateError),
 }
 
+/// Either [ReprInitError] | [ReprInstantiateError] | [ReprSelectError]
+#[derive(Debug, Error)]
+pub enum ReferenceReprError {
+    #[error(transparent)]
+    Init(#[from] ReprInitError),
+    #[error(transparent)]
+    Instantiate(#[from] ReprInstantiateError),
+    #[error(transparent)]
+    Select(#[from] ReprSelectError),
+}
+
+impl From<ReprError> for ReferenceReprError {
+    fn from(e: ReprError) -> Self {
+        match e {
+            ReprError::Init(e) => Self::Init(e),
+            ReprError::Instantiate(e) => Self::Instantiate(e),
+        }
+    }
+}
+
 #[derive(Debug, Error)]
 pub enum ReprDownError {
     /// The given literal cannot be represented by this representation

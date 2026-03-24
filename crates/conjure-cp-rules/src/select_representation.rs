@@ -1,233 +1,116 @@
+use crate::guard;
+use crate::utils::as_comparison_op;
+use conjure_cp::ast::{Domain, DomainPtr, HasDomain, UnresolvedDomain};
 use conjure_cp::{
-    ast::{Atom, Expression as Expr, GroundDomain, Metadata, Name, SymbolTable, serde::HasId},
-    bug,
-    representation::Representation,
+    ast::{Atom, Expression as Expr, GroundDomain, SymbolTable},
+    representation::get_repr_rules,
     rule_engine::{
         ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
         register_rule_set,
     },
-    settings::SolverFamily,
 };
-use itertools::Itertools;
-use std::sync::Arc;
-use std::sync::atomic::AtomicBool;
-use std::sync::atomic::Ordering;
+use itertools::any;
+use std::collections::VecDeque;
 use uniplate::Biplate;
 
-use conjure_cp::solver::adaptors::smt::{MatrixTheory, TheoryConfig};
+// Representations of Essence abstract types down to Essence'
+// Applies for all solvers
+register_rule_set!("ReprGeneral", ("Base"));
 
-register_rule_set!("Representations", ("Base"), |f: &SolverFamily| {
-    if matches!(
-        f,
-        SolverFamily::Smt(TheoryConfig {
-            matrices: MatrixTheory::Atomic,
-            ..
-        })
-    ) {
-        return true;
-    }
-    matches!(f, SolverFamily::Sat(_) | SolverFamily::Minion)
-});
+/// Select a representation for abstract domains
+#[register_rule(("ReprGeneral", 8000))]
+fn select_representation(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    guard!(
+        let Expr::Atomic(_, Atom::Reference(re)) = expr &&
+        domain_needs_representation(&re.domain_of())    &&
+        re.repr.is_none()
+        else {
+            return Err(RuleNotApplicable)
+        }
+    );
 
-// special case rule to select representations for matrices in one go.
-//
-// we know that they only have one possible representation, so this rule adds a representation for all matrices in the model.
-#[register_rule(("Representations", 8001))]
-fn select_representation_matrix(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
-    let Expr::Root(_, _) = expr else {
-        return Err(RuleNotApplicable);
-    };
-
-    // cannot create representations on non-local variables, so use lookup_local.
-    let matrix_vars = symbols.clone().into_iter_local().filter_map(|(n, decl)| {
-        let id = decl.id();
-        let var = decl.as_find()?.clone();
-        let resolved_domain = var.domain.resolve()?;
-
-        let GroundDomain::Matrix(valdom, indexdoms) = resolved_domain.as_ref() else {
-            return None;
+    let mut re = re.clone();
+    for rule in get_repr_rules() {
+        // Once we find an applicable representation, exit
+        let Ok((_, new_symbols, new_constraints)) = re.select_or_init_repr_via(rule) else {
+            continue;
         };
+        return Ok(Reduction::new(re.into(), new_constraints, new_symbols));
+    }
 
-        // TODO: loosen these requirements once we are able to
-        if !matches!(valdom.as_ref(), GroundDomain::Bool | GroundDomain::Int(_)) {
-            return None;
+    // None of the representations worked
+    Err(RuleNotApplicable)
+}
+
+/// In a comparison operation, it is probably a good idea for the LHS and RHS to
+/// have the same representation, if applicable; E.g:
+/// ```plain
+/// x#MyRepr > y
+/// ~>
+/// x#MyRepr > y#MyRepr
+/// ```
+#[register_rule(("ReprGeneral", 9000))]
+fn uniform_repr_in_comparison_op(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    guard! {
+        let Some((lhs, rhs)) = as_comparison_op(expr)               &&
+        let Expr::Atomic(_, Atom::Reference(lhs_re)) = lhs.as_ref() &&
+        let Expr::Atomic(_, Atom::Reference(rhs_re)) = rhs.as_ref()
+        else {
+            return Err(RuleNotApplicable)
         }
+    }
 
-        if indexdoms
-            .iter()
-            .any(|x| !matches!(x.as_ref(), GroundDomain::Bool | GroundDomain::Int(_)))
-        {
-            return None;
+    match (lhs_re.get_repr(), rhs_re.get_repr()) {
+        (Some((lhs_rule, _)), None) => {
+            let mut new_rhs = rhs_re.clone();
+            let (_, symbols, constraints) = new_rhs
+                .select_or_init_repr_via(lhs_rule)
+                .map_err(|_| RuleNotApplicable)?;
+            let new_expr = expr.with_children_bi(VecDeque::from([lhs.clone(), new_rhs.into()]));
+            Ok(Reduction::new(new_expr, constraints, symbols))
         }
-
-        Some((n, id))
-    });
-
-    let mut symbols = symbols.clone();
-    let mut expr = expr.clone();
-    let has_changed = Arc::new(AtomicBool::new(false));
-    for (name, _id) in matrix_vars {
-        // Even if we have no references to this matrix, still give it the matrix_to_atom
-        // representation, as we still currently need to give it to minion even if its unused.
-        //
-        // If this var has no represnetation yet, the below call to get_or_add will modify the
-        // symbol table by adding the representation and represented variable declarations to the
-        // symbol table.
-        if symbols.representations_for(&name).unwrap().is_empty() {
-            has_changed.store(true, Ordering::Relaxed);
+        (None, Some((rhs_rule, _))) => {
+            let mut new_lhs = lhs_re.clone();
+            let (_, symbols, constraints) = new_lhs
+                .select_or_init_repr_via(rhs_rule)
+                .map_err(|_| RuleNotApplicable)?;
+            let new_expr = expr.with_children_bi(VecDeque::from([new_lhs.into(), rhs.clone()]));
+            Ok(Reduction::new(new_expr, constraints, symbols))
         }
+        _ => Err(RuleNotApplicable),
+    }
+}
 
-        // (creates the represented variables as a side effect)
-        let _ = symbols
-            .get_or_add_representation(&name, &["matrix_to_atom"])
-            .unwrap();
-
-        let old_name = name.clone();
-        let new_name =
-            Name::WithRepresentation(Box::new(old_name.clone()), vec!["matrix_to_atom".into()]);
-        // give all references to this matrix this representation
-        // also do this inside subscopes, as long as they dont define their own variable that shadows this
-        // one.
-
-        let old_name_2 = old_name.clone();
-        let new_name_2 = new_name.clone();
-        let has_changed_ptr = Arc::clone(&has_changed);
-        expr = expr.transform_bi(&move |n: Name| {
-            if n == old_name_2 {
-                has_changed_ptr.store(true, Ordering::SeqCst);
-                new_name_2.clone()
-            } else {
-                n
+/// True if the domain is abstract w.r.t Essence'
+#[allow(clippy::match_like_matches_macro)]
+fn domain_needs_representation(domain: &DomainPtr) -> bool {
+    match domain.as_ref() {
+        Domain::Ground(gd) => match gd.as_ref() {
+            // These domains are concrete for all solvers bar SAT
+            GroundDomain::Bool | GroundDomain::Int(..) | GroundDomain::Empty(..) => false,
+            // Represent matrices if they have abstract types inside them;
+            // Matrices of concrete types are handled separately by the
+            // `ReprMatrixToAtom`rule set
+            GroundDomain::Matrix(inner_dom, idx_doms) => {
+                domain_needs_representation(&inner_dom.into())
+                    || any(idx_doms, |d| domain_needs_representation(&d.into()))
             }
-        });
-    }
-
-    if has_changed.load(Ordering::Relaxed) {
-        Ok(Reduction::with_symbols(expr, symbols))
-    } else {
-        Err(RuleNotApplicable)
-    }
-}
-
-#[register_rule(("Representations", 8000))]
-fn select_representation(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
-    // thing we are representing must be a reference
-    let Expr::Atomic(_, Atom::Reference(decl)) = expr else {
-        return Err(RuleNotApplicable);
-    };
-
-    let name: Name = decl.name().clone();
-
-    // thing we are representing must be a variable
-    {
-        let guard = decl.ptr().as_find().ok_or(RuleNotApplicable)?;
-        drop(guard);
-    }
-
-    if !needs_representation(&name, symbols) {
-        return Err(RuleNotApplicable);
-    }
-
-    let mut symbols = symbols.clone();
-    let representation =
-        get_or_create_representation(&name, &mut symbols).ok_or(RuleNotApplicable)?;
-
-    let representation_names = representation
-        .into_iter()
-        .map(|x| x.repr_name().into())
-        .collect_vec();
-
-    let new_name = Name::WithRepresentation(Box::new(name.clone()), representation_names);
-
-    // HACK: this is suspicious, but hopefully will work until we clean up representations
-    // properly...
-    //
-    // In general, we should not use names atall anymore, including for representations /
-    // represented variables.
-    //
-    // * instead of storing the link from a variable that has a representation to the variable it
-    // is representing in the name as WithRepresentation, we should use declaration pointers instead.
-    //
-    //
-    // see: issue #932
-    let mut decl_ptr = decl.clone().into_ptr().detach();
-    decl_ptr.replace_name(new_name);
-
-    Ok(Reduction::with_symbols(
-        Expr::Atomic(
-            Metadata::new(),
-            Atom::Reference(conjure_cp::ast::Reference::new(decl_ptr)),
-        ),
-        symbols,
-    ))
-}
-
-/// Returns whether `name` needs representing.
-///
-/// # Panics
-///
-///   + If `name` is not in `symbols`.
-fn needs_representation(name: &Name, symbols: &SymbolTable) -> bool {
-    // if name already has a representation, false
-    if let Name::Represented(_) = name {
-        return false;
-    }
-    // might be more logic here in the future?
-    domain_needs_representation(&symbols.resolve_domain(name).unwrap())
-}
-
-/// Returns whether `domain` needs representing.
-fn domain_needs_representation(domain: &GroundDomain) -> bool {
-    // very simple implementation for nows
-    match domain {
-        GroundDomain::Bool | GroundDomain::Int(_) => false,
-        GroundDomain::Matrix(_, _) => false, // we special case these elsewhere
-        GroundDomain::Set(_, _)
-        | GroundDomain::MSet(_, _)
-        | GroundDomain::Tuple(_)
-        | GroundDomain::Record(_)
-        | GroundDomain::Function(_, _, _) => true,
-        GroundDomain::Empty(_) => false,
-    }
-}
-
-/// Returns representations for `name`, creating them if they don't exist.
-///
-///
-/// Returns None if there is no valid representation for `name`.
-///
-/// # Panics
-///
-///   + If `name` is not in `symbols`.
-fn get_or_create_representation(
-    name: &Name,
-    symbols: &mut SymbolTable,
-) -> Option<Vec<Box<dyn Representation>>> {
-    // TODO: pick representations recursively for nested abstract domains: e.g. sets in sets.
-
-    let dom = symbols.resolve_domain(name).unwrap();
-    match dom.as_ref() {
-        GroundDomain::Set(_, _) => None, // has no representations yet!
-        GroundDomain::Tuple(elem_domains) => {
-            if elem_domains
-                .iter()
-                .any(|d| domain_needs_representation(d.as_ref()))
-            {
-                bug!("representing nested abstract domains is not implemented");
+            // All other domains are abstract
+            _ => true,
+        },
+        Domain::Unresolved(ud) => match ud.as_ref() {
+            // Int domains are concrete for all solvers bar SAT
+            UnresolvedDomain::Int(..) => false,
+            // Represent matrices if they have abstract types inside them;
+            // Matrices of concrete types are handled separately by the
+            // `ReprMatrixToAtom`rule set
+            UnresolvedDomain::Matrix(inner_dom, idx_doms) => {
+                domain_needs_representation(inner_dom) || any(idx_doms, domain_needs_representation)
             }
-
-            symbols.get_or_add_representation(name, &["tuple_to_atom"])
-        }
-        GroundDomain::Record(entries) => {
-            if entries
-                .iter()
-                .any(|entry| domain_needs_representation(&entry.domain))
-            {
-                bug!("representing nested abstract domains is not implemented");
-            }
-
-            symbols.get_or_add_representation(name, &["record_to_atom"])
-        }
-        _ => unreachable!("non abstract domains should never need representations"),
+            // Recurse into domain letting
+            UnresolvedDomain::Reference(re) => domain_needs_representation(&re.domain_of()),
+            // All other domains are abstract
+            _ => true,
+        },
     }
 }

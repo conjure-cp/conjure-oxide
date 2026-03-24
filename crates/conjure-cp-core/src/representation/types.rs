@@ -3,6 +3,7 @@ use super::stored::ReprRuleStored;
 use crate::ast::{
     DeclarationPtr, DomainPtr, Expression, Literal, Metadata, Moo, Name, Reference, SymbolTable,
 };
+use crate::bug;
 use parking_lot::MappedRwLockReadGuard;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, VecDeque};
@@ -74,6 +75,8 @@ pub trait ReprAssignment {
 }
 
 pub type ReprResult = Result<(SymbolTable, Vec<Expression>), ReprError>;
+pub type ReprGetOrInitResult<'a, D, E> =
+    Result<(MappedRwLockReadGuard<'a, D>, SymbolTable, Vec<Expression>), E>;
 
 pub trait ReprRule: Send + Sync {
     const NAME: &'static str;
@@ -81,6 +84,20 @@ pub trait ReprRule: Send + Sync {
     type Assignment: ReprAssignment;
     type DeclLevel: ReprDeclLevel<Assignment = Self::Assignment>;
     type DomainLevel: ReprDomainLevel<DeclLevel = Self::DeclLevel>;
+
+    fn get_or_init_for(
+        decl: &'_ mut DeclarationPtr,
+    ) -> ReprGetOrInitResult<'_, Self::DeclLevel, ReprError> {
+        let (symbols, constraints) = Self::init_for_if_not_exists(decl)?;
+        let state = decl.get_repr::<Self>().unwrap_or_else(|| {
+            bug!(
+                "just initialised representation `{}` for `{}`, but it was not stored",
+                Self::NAME,
+                decl
+            )
+        });
+        Ok((state, symbols, constraints))
+    }
 
     fn get_for(decl: &DeclarationPtr) -> Option<MappedRwLockReadGuard<'_, Self::DeclLevel>> {
         decl.get_repr::<Self>()
@@ -114,7 +131,7 @@ pub trait ReprRule: Send + Sync {
         Ok((symbols, constraints))
     }
 
-    fn init_if_not_exists(decl: &mut DeclarationPtr) -> ReprResult {
+    fn init_for_if_not_exists(decl: &mut DeclarationPtr) -> ReprResult {
         if decl.reprs().has::<Self>() {
             return Ok((SymbolTable::default(), Vec::new()));
         }

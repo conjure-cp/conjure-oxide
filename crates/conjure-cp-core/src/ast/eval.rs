@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+use crate::ast::records::RecordValue;
 use crate::ast::{AbstractLiteral, Atom, Expression as Expr, Literal as Lit, Metadata, matrix};
 use crate::into_matrix;
 use itertools::{Itertools as _, izip};
@@ -132,6 +133,20 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         Expr::AbstractLiteral(_, a) => Some(Lit::AbstractLiteral(a.clone().into_literals()?)),
         Expr::Comprehension(_, _) => None,
         Expr::AbstractComprehension(_, _) => None,
+        Expr::RecordField(_, rec, fld_name) => {
+            if let Expr::Atomic(
+                _,
+                Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Record(ents))),
+            ) = rec.as_ref()
+            {
+                for RecordValue { name, value } in ents {
+                    if name.eq(fld_name) {
+                        return Some(value.clone());
+                    }
+                }
+            }
+            None
+        }
         Expr::UnsafeIndex(_, subject, indices) | Expr::SafeIndex(_, subject, indices) => {
             let subject: Lit = eval_constant(subject.as_ref())?;
             let indices: Vec<Lit> = indices

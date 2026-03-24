@@ -5,11 +5,7 @@ pub extern crate self as conjure_cp_core;
 pub use ast::Model;
 
 pub mod ast;
-
-// NOTE: this module defines the bug! macro, which is exported at the crate level, and has no other
-// contents.
-mod bug;
-
+pub mod bug;
 pub mod context;
 pub mod error;
 pub mod instantiate;
