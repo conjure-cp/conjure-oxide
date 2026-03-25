@@ -1,4 +1,8 @@
-use std::{collections::HashMap, ops::DerefMut, sync::atomic::{AtomicU64, Ordering}};
+use std::{
+    collections::HashMap,
+    ops::DerefMut,
+    sync::atomic::{AtomicU64, Ordering},
+};
 
 use tree_morph::{
     cache::{HashMapCache, NoCache, StdHashKey},
@@ -292,5 +296,8 @@ fn ancestor_caching() {
     assert_eq!(result, pair(val(21), val(21)));
 
     let hits = HITS.load(Ordering::Relaxed);
-    assert!(hits > 0, "Expected at least one cache hit from ancestor caching");
+    assert!(
+        hits > 0,
+        "Expected at least one cache hit from ancestor caching"
+    );
 }

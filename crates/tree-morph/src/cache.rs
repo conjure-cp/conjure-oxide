@@ -3,7 +3,8 @@
 //! rules on duplicate subtrees
 
 use std::{
-    hash::{DefaultHasher, Hash, Hasher}, marker::PhantomData,
+    hash::{DefaultHasher, Hash, Hasher},
+    marker::PhantomData,
 };
 
 use fxhash::FxHashMap;
@@ -202,7 +203,6 @@ where
             _key: PhantomData,
         }
     }
-
 }
 
 impl<T, K> Default for HashMapCache<T, K>
@@ -318,7 +318,7 @@ where
             }
 
             // If old_key has a rewrite mapping, don't override (preserves transitive closure).
-            // But DO override terminal entries 
+            // But DO override terminal entries
             if let Some(existing) = self.map.get(&old_key) {
                 if existing.is_some() {
                     return;
@@ -354,10 +354,7 @@ where
                     .append(&mut preds);
             }
 
-            self.predecessors
-                .entry(to_key)
-                .or_default()
-                .push(old_key);
+            self.predecessors.entry(to_key).or_default().push(old_key);
         }
     }
 }

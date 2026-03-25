@@ -219,5 +219,3 @@ fn parse_solver_family(input: &str) -> Result<SolverFamily, String> {
 fn parse_parser(input: &str) -> Result<InputParser, String> {
     input.parse()
 }
-
-

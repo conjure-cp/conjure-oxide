@@ -316,7 +316,10 @@ where
             .map(|f| f.as_slice())
             .unwrap_or(&[]);
         let universal = &self.universal_rules[level];
-        RuleSet { universal, filtered }
+        RuleSet {
+            universal,
+            filtered,
+        }
     }
 
     /// Returns the universal rule groups in priority order.

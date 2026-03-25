@@ -2094,7 +2094,6 @@ impl CacheHashable for Expression {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use crate::matrix_expr;

@@ -32,7 +32,7 @@ where
 
     fixedpoint: bool,
 
-    down_predicate: fn(&T) -> bool
+    down_predicate: fn(&T) -> bool,
 }
 
 macro_rules! add_handler_fns {
@@ -70,7 +70,7 @@ where
             discriminant_fn: None,
             parallel: false,
             fixedpoint: false,
-            down_predicate: |_| true
+            down_predicate: |_| true,
         }
     }
 }
@@ -176,7 +176,7 @@ where
             discriminant_fn: self.discriminant_fn,
             parallel: self.parallel,
             fixedpoint: self.fixedpoint,
-            down_predicate: self.down_predicate
+            down_predicate: self.down_predicate,
         }
     }
 

@@ -3,11 +3,9 @@ use crate::{
     ast::{Expression, SymbolTable, discriminant_from_value},
     bug,
     settings::{
-        MorphCachingStrategy, MorphConfig, Rewriter,
-        comprehension_expander, current_parser, current_rewriter,
-        minion_discrete_threshold,
-        set_comprehension_expander, set_current_parser, set_current_rewriter,
-        set_minion_discrete_threshold,
+        MorphCachingStrategy, MorphConfig, Rewriter, comprehension_expander, current_parser,
+        current_rewriter, minion_discrete_threshold, set_comprehension_expander,
+        set_current_parser, set_current_rewriter, set_minion_discrete_threshold,
     },
 };
 use itertools::Itertools;

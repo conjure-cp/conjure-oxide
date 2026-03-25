@@ -73,8 +73,24 @@ impl Display for MorphConfig {
         write!(f, "morph")?;
         write!(f, "-{}", if self.naive { "levelsoff" } else { "levelson" })?;
         write!(f, "-{}", self.cache)?;
-        write!(f, "-{}", if self.prefilter { "prefilteron" } else { "prefilteroff" })?;
-        write!(f, "-{}", if self.parallel { "parallel" } else { "sequential" })?;
+        write!(
+            f,
+            "-{}",
+            if self.prefilter {
+                "prefilteron"
+            } else {
+                "prefilteroff"
+            }
+        )?;
+        write!(
+            f,
+            "-{}",
+            if self.parallel {
+                "parallel"
+            } else {
+                "sequential"
+            }
+        )?;
         if self.fixedpoint {
             write!(f, "-fixedpoint")?;
         }

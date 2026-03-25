@@ -463,7 +463,13 @@ where
         R: Rule<T, M>,
     {
         // Owns the tree/meta and is consumed to get them back at the end
-        let mut zipper = EngineZipper::new(tree, meta, self.down_predicate, &self.event_handlers, &mut self.cache);
+        let mut zipper = EngineZipper::new(
+            tree,
+            meta,
+            self.down_predicate,
+            &self.event_handlers,
+            &mut self.cache,
+        );
         info!("Beginning Morph");
 
         'main: loop {
@@ -556,7 +562,13 @@ where
         T: Uniplate,
         R: Rule<T, M>,
     {
-        let mut zipper = NaiveZipper::new(tree, meta, self.down_predicate, &self.event_handlers, &mut self.cache);
+        let mut zipper = NaiveZipper::new(
+            tree,
+            meta,
+            self.down_predicate,
+            &self.event_handlers,
+            &mut self.cache,
+        );
         info!("Beginning Naive Morph");
 
         'main: loop {
