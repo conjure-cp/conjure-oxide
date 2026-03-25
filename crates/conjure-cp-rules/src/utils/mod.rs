@@ -1,5 +1,11 @@
 use conjure_cp::ast::records::RecordValue;
-use conjure_cp::ast::{AbstractLiteral, Atom, Expression as Expr, Literal, Name};
+use conjure_cp::ast::{
+    AbstractLiteral, Atom, Expression as Expr, Expression, Literal, Metadata, Moo, Name,
+};
+use conjure_cp::rule_engine::ApplicationError;
+use conjure_cp::rule_engine::ApplicationError::RuleNotApplicable;
+use conjure_cp::{essence_expr, into_matrix_expr};
+use itertools::Itertools;
 use uniplate::{Biplate, Uniplate};
 
 mod to_auxvar;
@@ -89,6 +95,31 @@ pub fn is_all_constant(expression: &Expr) -> bool {
     }
 
     true
+}
+
+pub fn as_eq_or_neq(expr: &Expr) -> Result<(&Expr, &Expr, bool), ApplicationError> {
+    match expr {
+        Expression::Eq(_, left, right) => Ok((left.as_ref(), right.as_ref(), false)),
+        Expression::Neq(_, left, right) => Ok((left.as_ref(), right.as_ref(), true)),
+        _ => Err(RuleNotApplicable),
+    }
+}
+
+pub fn collect_eq_or_neq<A, B>(neq: bool, itr: impl Iterator<Item = (A, B)>) -> Expr
+where
+    A: Into<Expr> + Clone,
+    B: Into<Expr> + Clone,
+{
+    if neq {
+        let neq_constraints = itr.map(|(a, b)| essence_expr!(&a != &b)).collect_vec();
+        Expression::Or(
+            Metadata::new(),
+            Moo::new(into_matrix_expr!(neq_constraints)),
+        )
+    } else {
+        let eq_constraints = itr.map(|(a, b)| essence_expr!(&a == &b)).collect_vec();
+        Expression::And(Metadata::new(), Moo::new(into_matrix_expr!(eq_constraints)))
+    }
 }
 
 /// Converts a vector of expressions to a vector of atoms.
