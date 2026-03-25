@@ -1,4 +1,5 @@
 use crate::bottom_up_adaptor::as_bottom_up;
+use crate::guard;
 use crate::representation::MatrixToAtom;
 use crate::utils::to_aux_var;
 use conjure_cp::ast::matrix::unflatten_matrix_expr;
@@ -42,25 +43,19 @@ fn select_repr_mta(expr: &Expression, symtab: &SymbolTable) -> ApplicationResult
     let mut new_symtab = symtab.clone();
     let mut new_constraints = Vec::new();
     for (_, decl) in symtab.iter_local() {
-        if !matches!(
-            &decl.kind() as &DeclarationKind,
-            DeclarationKind::Find(..) | DeclarationKind::ValueLetting(..)
-        ) {
-            continue;
-        }
-
-        if !decl.reprs().is_empty() {
-            continue;
-        }
-
-        let mut new_decl = decl.clone();
-        let Some(gd) = new_decl.resolve_domain() else {
-            continue;
-        };
-
-        if !matches!(gd.as_ref(), GroundDomain::Matrix(..)) {
-            continue;
-        }
+        guard!(
+            // this is a variable or constant
+            matches!(&decl.kind() as &DeclarationKind, DeclarationKind::Find(..) | DeclarationKind::ValueLetting(..)) &&
+            // ...which hasn't been represented yet
+            decl.reprs().is_empty() &&
+            // ...and its domain resolves to a matrix
+            let mut new_decl = decl.clone() &&
+            let Some(gd) = new_decl.resolve_domain() &&
+            matches!(gd.as_ref(), GroundDomain::Matrix(..))
+            else {
+                continue;
+            }
+        );
 
         let (symbols, new_top) = MatrixToAtom::init_for(&mut new_decl).unwrap();
         new_symtab.update_insert(new_decl);
@@ -103,21 +98,19 @@ fn index_matrix_to_atom(expr: &Expression, symbols: &SymbolTable) -> Application
 }
 
 fn index_matrix_to_atom_impl(expr: &Expression, symbols: &SymbolTable) -> ApplicationResult {
-    let Expression::SafeIndex(_, subject, indices) = expr else {
-        return Err(RuleNotApplicable);
-    };
-    let Expression::Atomic(_, Atom::Reference(re)) = &**subject else {
-        return Err(RuleNotApplicable);
-    };
-    let Some(mta) = re.ptr().get_repr::<MatrixToAtom>() else {
-        return Err(RuleNotApplicable);
-    };
-
-    // ensure that the subject has a matrix domain.
-    let dom = re.domain().ok_or(RuleNotApplicable)?;
-    let Some((_, idx_doms)) = dom.as_matrix() else {
-        return Err(RuleNotApplicable);
-    };
+    guard!(
+        // this is a safe indexing expression
+        let Expression::SafeIndex(_, subject, indices) = expr &&
+        let Expression::Atomic(_, Atom::Reference(re)) = &**subject &&
+        // ...into a variable represented by MatrixToAtom
+        let Some(mta) = re.ptr().get_repr::<MatrixToAtom>() &&
+        // ...which has a matrix domain
+        let dom = re.domain().ok_or(RuleNotApplicable)? &&
+        let Some((_, idx_doms)) = dom.as_matrix()
+        else {
+            return Err(RuleNotApplicable);
+        }
+    );
 
     // All indices that evaluate to a literal are resolved immediately;
     // The rest of the matrix is put into a flat slice which we index by the remaining indices
@@ -231,21 +224,19 @@ fn index_matrix_to_atom_impl(expr: &Expression, symbols: &SymbolTable) -> Applic
 
 #[register_rule(("ReprMatrixToAtom", 5000))]
 fn slice_matrix_to_atom(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
-    let Expression::SafeSlice(_, subject, dim_slices) = expr else {
-        return Err(RuleNotApplicable);
-    };
-    let Expression::Atomic(_, Atom::Reference(re)) = &**subject else {
-        return Err(RuleNotApplicable);
-    };
-    let Some(mta) = re.ptr().get_repr::<MatrixToAtom>() else {
-        return Err(RuleNotApplicable);
-    };
-
-    // ensure that the subject has a matrix domain.
-    let dom = re.domain().ok_or(RuleNotApplicable)?;
-    let Some((_, idx_doms)) = dom.as_matrix() else {
-        return Err(RuleNotApplicable);
-    };
+    guard!(
+        // this is a safe slicing expression
+        let Expression::SafeSlice(_, subject, dim_slices) = expr &&
+        let Expression::Atomic(_, Atom::Reference(re)) = &**subject &&
+        // ...into a variable represented by MatrixToAtom
+        let Some(mta) = re.ptr().get_repr::<MatrixToAtom>() &&
+        // ...which has a matrix domain
+        let dom = re.domain().ok_or(RuleNotApplicable)? &&
+        let Some((_, idx_doms)) = dom.as_matrix()
+        else {
+            return Err(RuleNotApplicable);
+        }
+    );
 
     // All indices that evaluate to a literal are resolved immediately;
     // The rest of the matrix is put into a flat slice which we index by the remaining indices

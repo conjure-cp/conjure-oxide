@@ -2,7 +2,7 @@ use crate::guard;
 use crate::representation::record_to_atom::RecordToAtom;
 use crate::utils::{is_record_lit, record_expr_entries};
 use conjure_cp::ast::{
-    Atom, Expression, HasDomain, Metadata, Moo, Name, RecordEntry, Reference, SymbolTable,
+    Atom, Expression, HasDomain, Metadata, Moo, RecordEntry, Reference, SymbolTable,
 };
 use conjure_cp::representation::ReprRule;
 use conjure_cp::rule_engine::{
@@ -171,7 +171,7 @@ fn record_equality_var_to_lit(expr: &Expression, _: &SymbolTable) -> Application
 fn record_equality_reorder(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
     guard!(
         let Expression::Eq(md, lit, var) = expr &&
-        let Expression::Atomic(_, Atom::Reference(re)) = var.as_ref() &&
+        let Expression::Atomic(_, Atom::Reference(_)) = var.as_ref() &&
         is_record_lit(lit.as_ref())
         else {
             return Err(RuleNotApplicable);

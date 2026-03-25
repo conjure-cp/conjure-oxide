@@ -2,9 +2,10 @@
 ///
 /// ```ignore
 /// guard!(
-///     let My(a, Pattern { b, .. }) = x && // let bindings
+///     let My(a, Pattern { b, .. }) = x && // refutable let bindings
 ///     let Foo(c) = a.bar(b)            && // using a previously bound variable
-///     c >= 2 && c <= 10                   // boolean conditions
+///     let max = b + 10                 && // normal ("irrefutable") let bindings
+///     c >= 2 && c <= max                  // boolean conditions
 ///     else {
 ///         if_any_of_the_above_fails();
 ///     }
@@ -84,6 +85,7 @@ macro_rules! guard {
 
     // Generate a let-else statement
     (@generate [else $fallback:block] @let($p:pat, $($expr:tt)+) $($rest:tt)*) => {
+        #[allow(irrefutable_let_patterns)]
         let $p = $crate::guard_as_expr!($($expr)+) else $fallback;
         $crate::guard!(@generate [else $fallback] $($rest)*);
     };
