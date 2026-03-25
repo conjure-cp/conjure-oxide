@@ -77,7 +77,7 @@ impl Comprehension {
             .iter()
             .filter_map(|q| match q {
 
-                ComprehensionQualifier::ExpressionGenerator { ptr, .. } => Some(ptr.name().clone()),
+                ComprehensionQualifier::ExpressionGenerator { ptr } => Some(ptr.name().clone()),
                 ComprehensionQualifier::Generator { ptr } => Some(ptr.name().clone()),
                 ComprehensionQualifier::Condition(_) => None,
             })
@@ -150,7 +150,7 @@ impl Display for Comprehension {
             .qualifiers
             .iter()
             .map(|qualifier| match qualifier {
-                ComprehensionQualifier::Generator { ptr , ..} => {
+                ComprehensionQualifier::Generator { ptr } => {
                     let domain = ptr.domain().expect("generator declaration has domain");
                     format!("{} : {domain}", ptr.name())
                 }
