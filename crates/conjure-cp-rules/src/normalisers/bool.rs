@@ -72,7 +72,7 @@ fn distribute_or_over_and(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                             }
 
                             Ok(Reduction::pure(Expr::And(
-                                metadata.clone(),
+                                metadata,
                                 Moo::new(into_matrix_expr![new_and_contents]),
                             )))
                         }

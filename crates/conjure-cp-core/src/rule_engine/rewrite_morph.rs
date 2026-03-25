@@ -1,7 +1,3 @@
-use std::collections::HashMap;
-use std::sync::{LazyLock, Mutex};
-use std::sync::atomic::{AtomicU64, Ordering};
-
 use crate::{
     Model,
     ast::{Expression, SymbolTable, discriminant_from_value},
@@ -24,65 +20,6 @@ use tree_morph::{
 
 use super::{RuleData, RuleSet, get_rules_grouped};
 
-/// Counts how many times each rule has been checked (attempted) during rewriting.
-static RULE_CHECK_COUNTS: LazyLock<Mutex<HashMap<String, usize>>> =
-    LazyLock::new(|| Mutex::new(HashMap::new()));
-
-static CACHE_HITS: AtomicU64 = AtomicU64::new(0);
-static CACHE_MISSES: AtomicU64 = AtomicU64::new(0);
-
-/// Returns a snapshot of how many times each rule has been checked.
-pub fn get_rule_check_counts() -> HashMap<String, usize> {
-    RULE_CHECK_COUNTS.lock().unwrap().clone()
-}
-
-/// Resets the rule check counts to zero.
-pub fn reset_rule_check_counts() {
-    RULE_CHECK_COUNTS.lock().unwrap().clear();
-}
-
-/// Returns (hits, misses) for the cache.
-pub fn get_cache_stats() -> (u64, u64) {
-    (CACHE_HITS.load(Ordering::Relaxed), CACHE_MISSES.load(Ordering::Relaxed))
-}
-
-/// Resets cache hit/miss counters.
-pub fn reset_cache_stats() {
-    CACHE_HITS.store(0, Ordering::Relaxed);
-    CACHE_MISSES.store(0, Ordering::Relaxed);
-}
-
-fn count_rule_check(_: &Expression, _: &mut SymbolTable, rule: &RuleData<'_>) {
-    if let Ok(mut counts) = RULE_CHECK_COUNTS.lock() {
-        *counts.entry(rule.name().to_string()).or_insert(0) += 1;
-    }
-}
-
-fn count_cache_hit(_: &Expression, _: &mut SymbolTable) {
-    CACHE_HITS.fetch_add(1, Ordering::Relaxed);
-}
-
-fn count_cache_miss(_: &Expression, _: &mut SymbolTable) {
-    CACHE_MISSES.fetch_add(1, Ordering::Relaxed);
-}
-
-fn print_rule_check_counts() {
-    let counts = RULE_CHECK_COUNTS.lock().unwrap();
-    let mut entries: Vec<(&String, &usize)> = counts.iter().collect();
-    entries.sort_by_key(|(name, _)| *name);
-    println!("Rule check counts:");
-    for (name, count) in entries {
-        println!("  {name}: {count}");
-    }
-}
-
-fn print_cache_stats() {
-    let (hits, misses) = get_cache_stats();
-    let total = hits + misses;
-    let rate = if total > 0 { hits as f64 / total as f64 * 100.0 } else { 0.0 };
-    println!("Cache stats: {hits} hits, {misses} misses, {rate:.1}% hit rate");
-}
-
 /// Rewrites a `Model` by applying rule sets using an optimized, tree-morphing rewriter.
 ///
 /// This function traverses the expression tree of the model and applies the given rules
@@ -97,7 +34,6 @@ fn print_cache_stats() {
 /// - `prop_multiple_equally_applicable`: A boolean flag to control behavior when multiple rules of the same priority can be applied to the same expression.
 ///   - If `true`, the rewriter will use a selection strategy (`select_panic`) that panics.
 ///   - If `false`, the rewriter will use a selection strategy (`select_first`) that simply picks the first applicable rule it encounters.
-///   TODO: CHANGE
 /// - `variant`: The `MorphVariant` selecting cache and traversal behaviour:
 ///   - `NoCache` → no cache, standard traversal
 ///   - `Cache` → `HashMapCache`, standard traversal
@@ -154,9 +90,6 @@ pub fn rewrite_morph<'a>(
     *model_ref.symbols_mut() = symbol_table;
     model_ref.replace_root(expr);
 
-    print_rule_check_counts();
-    print_cache_stats();
-
     trace!(
         target: "rule_engine_human",
         "Final model:\n\n{}",
@@ -197,10 +130,8 @@ fn build_engine<'a>(
         } else {
             None
         })
-        .add_before_rule(count_rule_check)
-        .add_on_cache_hit(count_cache_hit)
-        .add_on_cache_miss(count_cache_miss)
         .set_parallel(config.parallel)
-        .set_faster(config.faster)
+        .set_fixedpoint(config.fixedpoint)
+        // .add_down_predicate(|node| ! matches!(node, Expression::Comprehension(_, _)))
         .build()
 }

@@ -30,7 +30,9 @@ where
 
     parallel: bool,
 
-    faster: bool,
+    fixedpoint: bool,
+
+    down_predicate: fn(&T) -> bool
 }
 
 macro_rules! add_handler_fns {
@@ -67,7 +69,8 @@ where
             cache: NoCache,
             discriminant_fn: None,
             parallel: false,
-            faster: false,
+            fixedpoint: false,
+            down_predicate: |_| true
         }
     }
 }
@@ -86,7 +89,8 @@ where
             selector: self.selector,
             cache: self.cache,
             parallel: self.parallel,
-            faster: self.faster,
+            fixedpoint: self.fixedpoint,
+            down_predicate: self.down_predicate,
         }
     }
 
@@ -171,7 +175,8 @@ where
             cache: cacher,
             discriminant_fn: self.discriminant_fn,
             parallel: self.parallel,
-            faster: self.faster,
+            fixedpoint: self.fixedpoint,
+            down_predicate: self.down_predicate
         }
     }
 
@@ -194,10 +199,16 @@ where
         self
     }
 
-    /// FASTER!!!
-    /// At the cost of correctness
-    pub fn set_faster(mut self, faster: bool) -> Self {
-        self.faster = faster;
+    /// Fixed-point application: after a rule fires, re-apply rules to the
+    /// transformed node until no more rules match, before continuing traversal.
+    pub fn set_fixedpoint(mut self, fixedpoint: bool) -> Self {
+        self.fixedpoint = fixedpoint;
+        self
+    }
+
+    /// Adds a predicate that controls whether the engine descends into a node's children.
+    pub fn add_down_predicate(mut self, predicate: fn(&T) -> bool) -> Self {
+        self.down_predicate = predicate;
         self
     }
 }

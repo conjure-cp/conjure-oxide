@@ -35,7 +35,9 @@ where
     /// Whether to use parallel (Rayon) iteration when checking rules.
     pub(crate) parallel: bool,
 
-    pub(crate) faster: bool,
+    pub(crate) fixedpoint: bool,
+
+    pub(crate) down_predicate: fn(&T) -> bool,
 }
 
 impl<T, M, R, C> Engine<T, M, R, C>
@@ -113,7 +115,7 @@ where
         event_handlers.trigger_on_apply(focus, meta, rule);
     }
 
-    fn apply_rule_faster(
+    fn apply_rule_fixedpoint(
         zipper: &mut EngineZipper<T, M, R, C>,
         event_handlers: &EventHandlers<T, M, R>,
         rule_groups: &RuleGroups<T, M, R>,
@@ -202,7 +204,7 @@ where
         zipper.mark_dirty_to_root(level);
     }
 
-    fn apply_rule_naive_faster(
+    fn apply_rule_naive_fixedpoint(
         zipper: &mut NaiveZipper<T, M, R, C>,
         event_handlers: &EventHandlers<T, M, R>,
         rule_groups: &RuleGroups<T, M, R>,
@@ -461,7 +463,7 @@ where
         R: Rule<T, M>,
     {
         // Owns the tree/meta and is consumed to get them back at the end
-        let mut zipper = EngineZipper::new(tree, meta, &self.event_handlers, &mut self.cache);
+        let mut zipper = EngineZipper::new(tree, meta, self.down_predicate, &self.event_handlers, &mut self.cache);
         info!("Beginning Morph");
 
         'main: loop {
@@ -506,8 +508,8 @@ where
                     let rules = self.rule_groups.get_rules(level, id);
                     match Self::select_rule(self.selector, self.parallel, subtree, meta, rules) {
                         Some(selected) => {
-                            if self.faster {
-                                Self::apply_rule_faster(
+                            if self.fixedpoint {
+                                Self::apply_rule_fixedpoint(
                                     &mut zipper,
                                     &self.event_handlers,
                                     &self.rule_groups,
@@ -554,7 +556,7 @@ where
         T: Uniplate,
         R: Rule<T, M>,
     {
-        let mut zipper = NaiveZipper::new(tree, meta, &self.event_handlers, &mut self.cache);
+        let mut zipper = NaiveZipper::new(tree, meta, self.down_predicate, &self.event_handlers, &mut self.cache);
         info!("Beginning Naive Morph");
 
         'main: loop {
@@ -593,8 +595,8 @@ where
                         Self::select_rule(self.selector, self.parallel, subtree, meta, rules);
 
                     if let Some(selected) = selected {
-                        if self.faster {
-                            let stabilized = Self::apply_rule_naive_faster(
+                        if self.fixedpoint {
+                            let stabilized = Self::apply_rule_naive_fixedpoint(
                                 &mut zipper,
                                 &self.event_handlers,
                                 &self.rule_groups,

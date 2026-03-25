@@ -44,6 +44,7 @@ where
 {
     inner: TaggedZipper<T, EngineNodeState, fn(&T) -> EngineNodeState>,
     event_handlers: &'a EventHandlers<T, M, R>,
+    down_predicate: fn(&T) -> bool,
     pub(crate) cache: &'a mut C,
     pub(crate) meta: M,
 }
@@ -57,12 +58,14 @@ where
     pub fn new(
         tree: T,
         meta: M,
+        down_predicate: fn(&T) -> bool,
         event_handlers: &'a EventHandlers<T, M, R>,
         cache: &'a mut C,
     ) -> Self {
         EngineZipper {
             inner: TaggedZipper::new(tree, EngineNodeState::new),
             event_handlers,
+            down_predicate,
             cache,
             meta,
         }
@@ -134,6 +137,9 @@ where
     }
 
     fn go_down(&mut self) -> Option<()> {
+        if !(self.down_predicate)(self.inner.focus()) {
+            return None;
+        }
         self.cache.push_ancestor(self.inner.focus());
         if self.inner.go_down().is_none() {
             self.cache.pop_ancestor(); // undo speculative push
@@ -238,6 +244,7 @@ where
 {
     inner: Zipper<T>,
     event_handlers: &'a EventHandlers<T, M, R>,
+    down_predicate: fn(&T) -> bool,
     pub(crate) cache: &'a mut C,
     pub(crate) meta: M,
 }
@@ -251,12 +258,14 @@ where
     pub fn new(
         tree: T,
         meta: M,
+        down_predicate: fn(&T) -> bool,
         event_handlers: &'a EventHandlers<T, M, R>,
         cache: &'a mut C,
     ) -> Self {
         NaiveZipper {
             inner: Zipper::new(tree),
             event_handlers,
+            down_predicate,
             cache,
             meta,
         }
@@ -296,11 +305,14 @@ where
 
     pub fn get_next(&mut self) -> Option<()> {
         // Try going down — speculative push, undo on failure
-        self.cache.push_ancestor(self.inner.focus());
-        if self.inner.go_down().is_some() {
-            return Some(());
+        // Do not descend if the down predicate rejects this node.
+        if (self.down_predicate)(self.inner.focus()) {
+            self.cache.push_ancestor(self.inner.focus());
+            if self.inner.go_down().is_some() {
+                return Some(());
+            }
+            self.cache.pop_ancestor();
         }
-        self.cache.pop_ancestor();
         if self.inner.go_right().is_some() {
             return Some(());
         }
@@ -311,24 +323,6 @@ where
             }
         }
         None
-    }
-
-    fn go_up(&mut self) -> Option<()> {
-        if !self.inner.has_up() {
-            return None;
-        }
-        self.event_handlers
-            .trigger_before_up(self.inner.focus(), &mut self.meta);
-        self.inner.go_up().expect("checked above");
-        self.cache.pop_ancestor();
-        trace!("Go up");
-        self.event_handlers
-            .trigger_after_up(self.inner.focus(), &mut self.meta);
-        Some(())
-    }
-
-    pub fn go_to_root(&mut self) {
-        while self.go_up().is_some() {}
     }
 
     /// Walk back to root, inserting ancestor mappings at the given level.

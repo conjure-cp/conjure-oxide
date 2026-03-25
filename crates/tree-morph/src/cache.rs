@@ -226,10 +226,10 @@ where
 
     fn get(&self, subtree: &T, level: usize) -> CacheResult<T> {
         let node_hash = K::node_hash(subtree);
-        if let Some(&max_clean) = self.clean_levels.get(&node_hash) {
-            if max_clean >= level {
-                return CacheResult::Terminal(max_clean);
-            }
+        if let Some(&max_clean) = self.clean_levels.get(&node_hash)
+            && max_clean >= level
+        {
+            return CacheResult::Terminal(max_clean);
         }
 
         let hashed = K::combine(node_hash, level);
@@ -269,7 +269,7 @@ where
         // Forward Resolution
         let to = match self.map.get(&to_hash) {
             Some(stored) => stored.clone(),
-            None => to.clone(),
+            None => to,
         };
 
         let to_hash = match &to {

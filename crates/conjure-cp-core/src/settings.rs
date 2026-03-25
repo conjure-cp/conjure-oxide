@@ -58,26 +58,14 @@ pub fn current_parser() -> Parser {
     })
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct MorphConfig {
     pub cache: MorphCachingStrategy,
     pub prefilter: bool,
     /// Use naive (no-levels) traversal (`morph_naive`). Enabled with `levelsoff`, disabled with `levelson`.
     pub naive: bool,
     pub parallel: bool,
-    pub faster: bool,
-}
-
-impl Default for MorphConfig {
-    fn default() -> Self {
-        Self {
-            cache: Default::default(),
-            prefilter: false,
-            naive: false,
-            parallel: false,
-            faster: false,
-        }
-    }
+    pub fixedpoint: bool,
 }
 
 impl Display for MorphConfig {
@@ -87,24 +75,19 @@ impl Display for MorphConfig {
         write!(f, "-{}", self.cache)?;
         write!(f, "-{}", if self.prefilter { "prefilteron" } else { "prefilteroff" })?;
         write!(f, "-{}", if self.parallel { "parallel" } else { "sequential" })?;
-        if self.faster {
-            write!(f, "-faster")?;
+        if self.fixedpoint {
+            write!(f, "-fixedpoint")?;
         }
         Ok(())
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub enum MorphCachingStrategy {
     NoCache,
     Cache,
+    #[default]
     IncrementalCache,
-}
-
-impl Default for MorphCachingStrategy {
-    fn default() -> Self {
-        Self::IncrementalCache
-    }
 }
 
 impl FromStr for MorphCachingStrategy {
@@ -164,7 +147,7 @@ impl FromStr for Rewriter {
             other => {
                 if !other.starts_with("morph-") {
                     return Err(format!(
-                        "unknown rewriter: {other}; expected one of: naive, morph, morph-[levelson|levelsoff]-[nocache|cache|inccache]-[prefilteron|prefilteroff]-[sequential|parallel]-[faster]"
+                        "unknown rewriter: {other}; expected one of: naive, morph, morph-[levelson|levelsoff]-[nocache|cache|inccache]-[prefilteron|prefilteroff]-[sequential|parallel]-[fixedpoint]"
                     ));
                 }
 
@@ -232,12 +215,12 @@ impl FromStr for Rewriter {
                             config.parallel = true;
                             parallel_set = true;
                         }
-                        "faster" => {
-                            config.faster = true;
+                        "fixedpoint" => {
+                            config.fixedpoint = true;
                         }
                         other_token => {
                             return Err(format!(
-                                "unknown morph option '{other_token}', must be one of levelson|levelsoff|nocache|cache|inccache|prefilteron|prefilteroff|sequential|parallel|faster"
+                                "unknown morph option '{other_token}', must be one of levelson|levelsoff|nocache|cache|inccache|prefilteron|prefilteroff|sequential|parallel|fixedpoint"
                             ));
                         }
                     }

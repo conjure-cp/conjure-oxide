@@ -19,6 +19,7 @@ macro_rules! event_handlers {
             on_cache_miss: Vec<fn(&T, &mut M)>,
         }
 
+        #[allow(dead_code)]
         impl<T: Uniplate, M, R> EventHandlers<T, M, R> {
             pub(crate) fn new() -> Self {
                 Self {
