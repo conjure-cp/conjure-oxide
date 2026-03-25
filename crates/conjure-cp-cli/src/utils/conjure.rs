@@ -22,6 +22,10 @@ use glob::glob;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use uniplate::Uniplate;
 
+/// Coerces a literal into the type expected by a reference domain when possible.
+///
+/// This is currently used to turn `0`/`1` solver outputs back into boolean
+/// literals before substituting them into dominance expressions.
 fn literal_for_reference_domain(
     reference_domain: Option<GroundDomain>,
     value: &Literal,
@@ -38,6 +42,7 @@ fn literal_for_reference_domain(
     Some(value.clone())
 }
 
+/// Replaces `fromSolution(x)` occurrences with the value of `x` from a previous solution.
 fn substitute_from_solution(
     expr: &Expression,
     previous_solution: &BTreeMap<Name, Literal>,
@@ -58,6 +63,7 @@ fn substitute_from_solution(
     }
 }
 
+/// Replaces direct variable references with values from the candidate solution.
 fn substitute_current_solution_refs(
     expr: &Expression,
     candidate_solution: &BTreeMap<Name, Literal>,
@@ -74,6 +80,10 @@ fn substitute_current_solution_refs(
     }
 }
 
+/// Evaluates whether `candidate_solution` dominates `previous_solution`.
+///
+/// The dominance expression is instantiated with values from both solutions and
+/// then constant-folded to a boolean result.
 fn does_solution_dominate(
     dominance_expression: &Expression,
     candidate_solution: &BTreeMap<Name, Literal>,
@@ -89,6 +99,7 @@ fn does_solution_dominate(
     )
 }
 
+/// Removes solutions that are dominated by another solution in the result set.
 fn retroactively_prune_dominated(
     solutions: Vec<BTreeMap<Name, Literal>>,
     dominance_expression: &Expression,
