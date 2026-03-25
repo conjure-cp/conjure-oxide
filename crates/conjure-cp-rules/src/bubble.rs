@@ -57,7 +57,7 @@ fn bubble_up(expr: &Expression, syms: &SymbolTable) -> ApplicationResult {
         syms.lookup(x).is_some_and(|x| {
             matches!(
                 &x.kind() as &DeclarationKind,
-                DeclarationKind::ValueLetting(_)
+                DeclarationKind::ValueLetting(_, _)
             )
         })
     }) {

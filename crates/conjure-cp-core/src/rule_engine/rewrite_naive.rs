@@ -18,11 +18,13 @@ use crate::{
 use itertools::Itertools;
 use std::{sync::Arc, time::Instant};
 use tracing::trace;
-#[cfg(debug_assertions)]
-use tracing::{Level, span};
 
+// debug imports
 #[cfg(debug_assertions)]
-use crate::ast::assertions::debug_assert_model_well_formed;
+use {
+    crate::ast::assertions::debug_assert_model_well_formed,
+    tracing::{Level, span},
+};
 
 type VariableSnapshots = Option<(VariableDeclarationSnapshot, VariableDeclarationSnapshot)>;
 type ApplicableRule<'a, CtxFnType> = (RuleResult<'a>, u16, Expr, CtxFnType, VariableSnapshots);
@@ -96,7 +98,8 @@ fn try_rewrite_model(
     rules_grouped: &Vec<(u16, Vec<RuleData<'_>>)>,
     prop_multiple_equally_applicable: bool,
     stats: &mut RewriterStats,
-    run_start: &Instant,
+    #[cfg(debug_assertions)] run_start: &Instant,
+    #[cfg(not(debug_assertions))] _: &Instant,
 ) -> Option<()> {
     type CtxFn = Arc<dyn Fn(Expr) -> Expr>;
     let mut results: Vec<ApplicableRule<'_, CtxFn>> = vec![];
@@ -127,6 +130,8 @@ fn try_rewrite_model(
 
                 match (rd.rule.application)(&expr, &submodel.symbols()) {
                     Ok(red) => {
+                        // when called a lot, this becomes very expensive!
+                        #[cfg(debug_assertions)]
                         log_verbose_rule_attempt(
                             run_start,
                             priority,
@@ -159,6 +164,8 @@ fn try_rewrite_model(
                         ));
                     }
                     Err(_) => {
+                        // when called a lot, this becomes very expensive!
+                        #[cfg(debug_assertions)]
                         log_verbose_rule_attempt(
                             run_start,
                             priority,
@@ -166,16 +173,6 @@ fn try_rewrite_model(
                             rd.rule_set.name,
                             "fail",
                             &expr,
-                        );
-
-                        // when called a lot, this becomes very expensive!
-                        #[cfg(debug_assertions)]
-                        tracing::trace!(
-                            "Rule attempted but not applied: {} (priority {}, rule set {}), to expression: {}",
-                            rd.rule.name,
-                            priority,
-                            rd.rule_set.name,
-                            expr
                         );
                     }
                 }
@@ -228,6 +225,7 @@ fn try_rewrite_model(
     Some(())
 }
 
+#[cfg(debug_assertions)]
 fn csv_escape(field: &str) -> String {
     if field.contains([',', '"', '\n', '\r']) {
         format!("\"{}\"", field.replace('"', "\"\""))
@@ -236,6 +234,7 @@ fn csv_escape(field: &str) -> String {
     }
 }
 
+#[cfg(debug_assertions)]
 fn log_verbose_rule_attempt(
     run_start: &Instant,
     priority: &u16,
