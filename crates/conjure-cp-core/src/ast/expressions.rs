@@ -990,26 +990,32 @@ impl Expression {
             }
             Expression::Range(_, function) => {
                 let (attrs, domain, codomain) = function.domain_of()?.as_function()?;
+                let jectivity = attrs.resolve()?.jectivity;
 
                 let size_size = attrs.resolve()?.size;
                 let size_size = match size_size {
                     Range::Unbounded => Range::UnboundedR(0),
                     // If lower bound we can guarantee one mapping (unless size = 0)
-                    Range::Single(x) => Range::Bounded(Ord::min(1, x), x),
+                    Range::Single(x) => {match jectivity {
+                        JectivityAttr::Injective | JectivityAttr::Surjective => Range::Single(x),
+                        _ => Range::Bounded(Ord::min(1, x), x)
+                    }},
                     // Upper bound guarantees the same upper bound
                     Range::UnboundedL(x) => Range::Bounded(0, x),
                     // If not bounded by 0 can guarantee min 1
-                    Range::UnboundedR(x) => Range::UnboundedR(Ord::min(1, x)),
+                    Range::UnboundedR(x) => {match jectivity {
+                        JectivityAttr::Injective | JectivityAttr::Surjective => Range::UnboundedR(x),
+                        _ => Range::UnboundedR(Ord::min(1, x))
+                    }},
                     Range::Bounded(x, y) => Range::Bounded(Ord::min(1, x), y),
                 };
 
                 // Gets the size imposed by the partiality and jectivity attributes
                 let partiality = attrs.resolve()?.partiality;
-                let jectivity = attrs.resolve()?.jectivity;
+                let codomain_length = codomain.length_signed();
                 let attr_size = match jectivity {
                     // Bijective and surjective functions must have every element in the codomain mapped to
                     JectivityAttr::Bijective | JectivityAttr::Surjective => {
-                        let codomain_length = codomain.length_signed();
                         match codomain_length {
                             Ok(co_len) => Some(Range::Single(co_len)),
                             Err(_) => None,
@@ -1018,10 +1024,13 @@ impl Expression {
                     JectivityAttr::Injective => {
                         let domain_length = domain.length_signed();
                         match domain_length {
-                            Ok(len) => match partiality {
-                                // When its injective we can guarantee 1 to 1, so the domain length is a single bound
-                                PartialityAttr::Total => Some(Range::Single(len)),
-                                PartialityAttr::Partial => Some(Range::Bounded(0, len)),
+                            Ok(len) => match codomain_length {
+                                Ok(co_len) => match partiality {
+                                    // When its injective we can guarantee 1 to 1, so the maximum domain length is a single bound
+                                    PartialityAttr::Total => Some(Range::Single(Ord::min(len, co_len))),
+                                    PartialityAttr::Partial => Some(Range::Bounded(0,Ord::min(len, co_len))),
+                                },
+                                Err(_) => None,
                             },
                             Err(_) => None,
                         }
