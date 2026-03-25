@@ -60,13 +60,13 @@ fn expand_qualifiers(
                 })?;
             }
         }
-        ComprehensionQualifier::ExpressionGenerator { .. } => {
-            expand_qualifiers(comprehension, qualifier_index + 1, expanded, parent_symbols)?;
-        }
         ComprehensionQualifier::Condition(condition) => {
             if evaluate_guard(condition)? {
                 expand_qualifiers(comprehension, qualifier_index + 1, expanded, parent_symbols)?;
             }
+        }
+        ComprehensionQualifier::ExpressionGenerator { .. } => {
+            panic!("Comprehension expander should not be called on comprehensions containing ExpressionGenerator");
         }
     }
 
