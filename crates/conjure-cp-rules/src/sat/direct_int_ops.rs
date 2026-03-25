@@ -407,7 +407,15 @@ fn add_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
     // There are no expressions to sum, this is a degenerate case that we can handle by returning a constant 0
     if exprs.is_empty() {
-        return Err(RuleNotApplicable);
+        return Ok(Reduction::pure(Expr::SATInt(
+            Metadata::new(),
+            SATIntEncoding::Direct,
+            Moo::new(into_matrix_expr!(vec![Expr::Atomic(
+                Metadata::new(),
+                Atom::Literal(Literal::Bool(true)),
+            )])),
+            (0, 0),
+        )));
     }
 
     let mut new_symbols = symbols.clone();
