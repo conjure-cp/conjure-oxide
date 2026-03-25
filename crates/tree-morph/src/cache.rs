@@ -16,7 +16,7 @@ pub enum CacheResult<T> {
     Unknown,
 
     /// The Subtree exists in cache but no rule is applicable.
-    Terminal,
+    Terminal(usize),
 
     /// The Subtree exists in cache and there is a pre computed value.
     Rewrite(T),
@@ -180,6 +180,7 @@ where
     map: FxHashMap<u64, Option<T>>,
     predecessors: FxHashMap<u64, Vec<u64>>,
     ancestor_stack: Vec<u64>,
+    clean_levels: FxHashMap<u64, usize>,
     _key: PhantomData<K>,
 }
 
@@ -197,6 +198,7 @@ where
             map: FxHashMap::default(),
             predecessors: FxHashMap::default(),
             ancestor_stack: Vec::new(),
+            clean_levels: FxHashMap::default(),
             _key: PhantomData,
         }
     }
@@ -223,22 +225,34 @@ where
     }
 
     fn get(&self, subtree: &T, level: usize) -> CacheResult<T> {
-        let hashed = K::hash(subtree, level);
+        let node_hash = K::node_hash(subtree);
+        if let Some(&max_clean) = self.clean_levels.get(&node_hash) {
+            if max_clean >= level {
+                return CacheResult::Terminal(max_clean);
+            }
+        }
+
+        let hashed = K::combine(node_hash, level);
 
         match self.map.get(&hashed) {
             None => CacheResult::Unknown,
             Some(entry) => match entry {
                 Some(res) => CacheResult::Rewrite(res.clone()),
-                None => CacheResult::Terminal,
+                None => CacheResult::Terminal(level),
             },
         }
     }
 
     fn insert(&mut self, from: &T, to: Option<T>, level: usize) {
-        let from_hash = K::hash(from, level);
+        let node_hash = K::node_hash(from);
+        let from_hash = K::combine(node_hash, level);
 
         if to.is_none() {
             self.map.insert(from_hash, None);
+            self.clean_levels
+                .entry(node_hash)
+                .and_modify(|l| *l = (*l).max(level))
+                .or_insert(level);
             return;
         }
 
@@ -304,8 +318,7 @@ where
             }
 
             // If old_key has a rewrite mapping, don't override (preserves transitive closure).
-            // But DO override terminal (None) entries — a terminal entry means no rule applied
-            // directly, but ancestor caching shows the subtree changed via a child rewrite.
+            // But DO override terminal entries 
             if let Some(existing) = self.map.get(&old_key) {
                 if existing.is_some() {
                     return;
@@ -314,7 +327,7 @@ where
                 self.map.remove(&old_key);
             }
 
-            // Forward resolution: if new_ancestor already maps to something, follow the chain
+            // Forward resolution
             let to = match self.map.get(&new_key) {
                 Some(stored) => stored.clone(),
                 None => Some(new_ancestor.clone()),
@@ -330,7 +343,7 @@ where
 
             self.map.insert(old_key, to.clone());
 
-            // Predecessor tracking: update any predecessors of old_key
+            // Predecessor tracking
             if let Some(mut preds) = self.predecessors.remove(&old_key) {
                 for &dep in &preds {
                     self.map.insert(dep, to.clone());

@@ -202,6 +202,98 @@ where
         zipper.mark_dirty_to_root(level);
     }
 
+    fn apply_rule_naive_faster(
+        zipper: &mut NaiveZipper<T, M, R, C>,
+        event_handlers: &EventHandlers<T, M, R>,
+        rule_groups: &RuleGroups<T, M, R>,
+        selector: SelectorFn<T, M, R>,
+        parallel: bool,
+        application: (&R, Update<T, M>),
+        level: usize,
+    ) -> bool {
+        let (rule, mut update) = application;
+        debug!("Applying Rule '{}' in Fast Mode (naive)", rule.name());
+
+        if update.has_transform() {
+            Self::apply_rule_naive(zipper, event_handlers, (rule, update), level);
+            return false;
+        }
+
+        // No transform — apply locally (no root traversal)
+        let cache_active = zipper.cache.is_active();
+        let original = cache_active.then(|| zipper.focus().clone());
+        let replacement = cache_active.then(|| update.new_subtree.clone());
+        zipper.replace_focus(update.new_subtree);
+
+        {
+            let (focus, meta) = zipper.focus_and_meta();
+            update.commands.apply(focus.clone(), meta);
+        }
+
+        if let (Some(orig), Some(repl)) = (original, replacement) {
+            if orig != repl {
+                zipper.cache.insert(&orig, Some(repl), level);
+            } else {
+                error!("SAME TREE");
+            }
+        }
+
+        let (focus, meta) = zipper.focus_and_meta();
+        event_handlers.trigger_on_apply(focus, meta, rule);
+
+        // Try rules from level 0 up to current level
+        let mut try_level = 0;
+        while try_level <= level {
+            let subtree = zipper.focus();
+            let id = rule_groups.discriminant_fn.map(|f| f(subtree));
+            let rules = rule_groups.get_rules(try_level, id);
+
+            let (subtree, meta) = zipper.focus_and_meta();
+            match Self::select_rule(selector, parallel, subtree, meta, rules) {
+                Some((rule, mut update)) => {
+                    if update.has_transform() {
+                        Self::apply_rule_naive(zipper, event_handlers, (rule, update), level);
+                        return false;
+                    }
+
+                    debug!(
+                        "Applying Rule '{}' in Fast Mode (naive, local)",
+                        rule.name()
+                    );
+                    let cache_active = zipper.cache.is_active();
+                    let original = cache_active.then(|| zipper.focus().clone());
+                    let replacement = cache_active.then(|| update.new_subtree.clone());
+                    zipper.replace_focus(update.new_subtree);
+
+                    {
+                        let (focus, meta) = zipper.focus_and_meta();
+                        update.commands.apply(focus.clone(), meta);
+                    }
+
+                    if let (Some(orig), Some(repl)) = (original, replacement) {
+                        if orig != repl {
+                            zipper.cache.insert(&orig, Some(repl), level);
+                        } else {
+                            error!("SAME TREE");
+                        }
+                    }
+
+                    let (focus, meta) = zipper.focus_and_meta();
+                    event_handlers.trigger_on_apply(focus, meta, rule);
+
+                    try_level = 0;
+                }
+                None => {
+                    try_level += 1;
+                }
+            }
+        }
+
+        // Node stabilized — need to go to root and rebuild ancestors
+        zipper.map_ancestors_to_root(level);
+        true
+    }
+
     fn apply_rule_naive(
         zipper: &mut NaiveZipper<T, M, R, C>,
         event_handlers: &EventHandlers<T, M, R>,
@@ -362,7 +454,7 @@ where
     /// assert_eq!(result, Expr::Val(4));
     /// assert_eq!(num_applications, 3); // Now the sub-expression (1 * 2) is evaluated first
     /// ```
-    #[instrument(skip(self, tree, meta))]
+    // #[instrument(skip(self, tree, meta))]
     pub fn morph(&mut self, tree: T, meta: M) -> (T, M)
     where
         T: Uniplate + Send + Sync,
@@ -385,10 +477,13 @@ where
 
                         debug!("Checking Level {} with {} Rules", level, rules.len());
                         match zipper.cache.get(subtree, level) {
-                            CacheResult::Terminal => {
-                                debug!("Cache Hit - Nothing Applicable");
+                            CacheResult::Terminal(clean_level) => {
+                                debug!(
+                                    "Cache Hit - Nothing Applicable (clean through level {})",
+                                    clean_level
+                                );
                                 zipper.trigger_cache_hit();
-                                zipper.set_dirty_from(level + 1);
+                                zipper.set_dirty_from(clean_level + 1);
                                 continue;
                             }
                             CacheResult::Rewrite(cached) => {
@@ -467,9 +562,8 @@ where
                 loop {
                     {
                         let subtree = zipper.focus();
-                        debug!("Checking Level {} with ? Rules", level);
                         match zipper.cache.get(subtree, level) {
-                            CacheResult::Terminal => {
+                            CacheResult::Terminal(_clean_level) => {
                                 debug!("Cache Hit - Nothing Applicable");
                                 zipper.trigger_cache_hit();
                                 if zipper.get_next().is_none() {
@@ -493,12 +587,35 @@ where
                     let (subtree, meta) = zipper.focus_and_meta();
                     let id = self.rule_groups.discriminant_fn.map(|f| f(subtree));
                     let rules = self.rule_groups.get_rules(level, id);
+                    debug!("Checking Level {} with {} Rules", level, rules.len());
                     // Choose one transformation from all applicable rules at this level
                     let selected =
                         Self::select_rule(self.selector, self.parallel, subtree, meta, rules);
 
                     if let Some(selected) = selected {
-                        Self::apply_rule_naive(&mut zipper, &self.event_handlers, selected, level);
+                        if self.faster {
+                            let stabilized = Self::apply_rule_naive_faster(
+                                &mut zipper,
+                                &self.event_handlers,
+                                &self.rule_groups,
+                                self.selector,
+                                self.parallel,
+                                selected,
+                                level,
+                            );
+                            if !stabilized {
+                                continue 'main;
+                            }
+                            // Stabilized — continue 'main to restart from root
+                            continue 'main;
+                        } else {
+                            Self::apply_rule_naive(
+                                &mut zipper,
+                                &self.event_handlers,
+                                selected,
+                                level,
+                            );
+                        }
                         continue 'main;
                     } else {
                         debug!("Nothing Applicable");
