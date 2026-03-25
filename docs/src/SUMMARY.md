@@ -56,16 +56,18 @@
   - [Expression Rewriting: Rules and RuleSets](./documentation/sets/expression_rewriting_rules_and_rulesets.md)
   - [Horizontal Set Rules](./documentation/sets/conjure-horizontal-set-rules.md)
   - [Vertical Set Rules: Occurrence Representation](./documentation/sets/Conjure-Vertical-Set-Rules-Occurrence-Representation.md)
-- [LSP]()
-  - [Essence Error Catalog for Error Underlining](./documentation/LSP/Essence-Error-Catalog-for-LSP-Error-Underlining-implementation.md)
+- [LSP](./documentation/LSP/lsp_general_structure.md)
+  - [LSP Server-Client](./documentation/LSP/lsp-server-client.md)
+  - [Diagnostics API](./documentation/LSP/diagnostics_api.md)  - [Essence Error Catalog for Error Underlining](./documentation/LSP/Essence-Error-Catalog-for-LSP-Error-Underlining-implementation.md)
+  - [LSP Error Testing](./documentation/LSP/lsp_tests.md)
 - [Testing: The Ideal Scenario](./documentation/testing/ideal-scenario-of-testing.md)
   - [Creating Custom Tests](./documentation/testing/Custom-Tests.md)
 - [Implementing Uniplates and Biplates with Structure Preserving Trees](./documentation/Implementing-Uniplates-and-Biplates-with-Structure-Preserving-Trees.md)
 - [SAT Encoding Types](./documentation/SAT/sat-encoding-types.md)
 - [Rule Types](./documentation/SAT/rule-types.md)
+- [Flatten](./documentation/flatten.md)
 
 <!-- TODO: will be moved -- likely the content of these will end off here -->
-- [Useful Links](./documentation/links.md)
 - [Testing](./documentation/testing/testing.md)
   - [Roundtrip Testing](./documentation/testing/roundtrip/roundtrip_testing.md)
 - [Types]()
@@ -78,6 +80,7 @@
 - [Side Projects]()
   - [Conjure Blocks](./documentation/side_projects/Conjure-Blocks.md)
 
+- [Useful Links](./documentation/links.md)
 ---
 
 [For Interested Students](./footer/interested-students.md)

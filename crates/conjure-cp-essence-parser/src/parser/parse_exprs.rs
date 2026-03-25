@@ -5,6 +5,7 @@ use crate::errors::FatalParseError;
 use crate::expression::parse_expression;
 use crate::util::node_is_expression;
 use conjure_cp_core::ast::{Expression, SymbolTablePtr};
+use std::collections::BTreeMap;
 #[allow(unused)]
 use uniplate::Uniplate;
 
@@ -29,6 +30,7 @@ pub fn parse_exprs(
 
     let root = tree.root_node();
     let mut source_map = SourceMap::default();
+    let mut decl_spans = BTreeMap::new();
     let mut errors = Vec::new();
     let mut ctx = ParseContext::new(
         &source_code,
@@ -36,6 +38,7 @@ pub fn parse_exprs(
         Some(symbols_ptr),
         &mut errors,
         &mut source_map,
+        &mut decl_spans,
     );
     let mut ans = Vec::new();
     for expr in query_toplevel(&root, &node_is_expression) {
