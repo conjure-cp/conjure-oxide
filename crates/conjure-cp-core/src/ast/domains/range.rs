@@ -124,14 +124,20 @@ impl<A: Ord + Clone> Range<A> {
         for rng in rngs {
             lo = match (lo, rng.low()) {
                 (Some(curr), Some(new)) => Some(curr.max(new)),
+                (None, Some(new)) => Some(new),
+                (Some(curr), None) => Some(curr),
                 _ => None,
             };
             hi = match (hi, rng.high()) {
                 (Some(curr), Some(new)) => Some(curr.min(new)),
+                (None, Some(new)) => Some(new),
+                (Some(curr), None) => Some(curr),
                 _ => None,
             };
-            if lo > hi {
-                return Err(DomainOpError::ConflictingAttrs);
+            if lo.is_some() && hi.is_some() {
+                if lo.unwrap() > hi.unwrap() {
+                    return Err(DomainOpError::ConflictingAttrs);
+                }
             }
         }
         Ok(Range::new(lo.cloned(), hi.cloned()))

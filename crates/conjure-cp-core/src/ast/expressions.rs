@@ -953,11 +953,14 @@ impl Expression {
                             let codomain_length = codomain.length_signed();
                             match codomain_length {
                                 Ok(co_len) => match jectivity {
-                                    JectivityAttr::Bijective | JectivityAttr::Surjective => {
+                                    JectivityAttr::Bijective => {
+                                        Some(Range::Single(co_len))
+                                    }
+                                    JectivityAttr::Surjective => {
                                         Some(Range::Bounded(co_len, len))
                                     }
                                     JectivityAttr::Injective => {
-                                        Some(Range::Bounded(0, Ord::max(len, co_len)))
+                                        Some(Range::Bounded(0, Ord::min(len, co_len)))
                                     }
                                     JectivityAttr::None => Some(Range::Bounded(0, len)),
                                 },
