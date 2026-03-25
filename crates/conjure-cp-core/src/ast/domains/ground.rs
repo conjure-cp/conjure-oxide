@@ -1,15 +1,14 @@
 use crate::ast::domains::MSetAttr;
 use crate::ast::pretty::pretty_vec;
 use crate::ast::{
-    AbstractLiteral, Domain, DomainOpError, FuncAttr, HasDomain, Literal, Moo, RecordEntry,
-    SetAttr, Typeable,
-    domains::{domain::Int, range::Range},
+    AbstractLiteral, Domain, DomainOpError, DomainPtr, Expression, FuncAttr, HasDomain, IntVal,
+    Literal, Moo, RecordEntry, Reference, SetAttr, Typeable, UnresolvedDomain,
+    domains::{Int, Range, UInt},
 };
 use crate::range;
 use crate::utils::count_combinations;
-use conjure_cp_core::ast::{Name, ReturnType};
+use conjure_cp_core::ast::ReturnType;
 use itertools::{Itertools, izip};
-use num_traits::ToPrimitive;
 use polyquine::Quine;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
@@ -17,37 +16,15 @@ use std::fmt::{Display, Formatter};
 use std::iter::zip;
 use uniplate::Uniplate;
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Uniplate, Quine)]
-#[path_prefix(conjure_cp::ast)]
-pub struct RecordEntryGround {
-    pub name: Name,
-    pub domain: Moo<GroundDomain>,
-}
-
-impl From<RecordEntryGround> for RecordEntry {
-    fn from(value: RecordEntryGround) -> Self {
-        RecordEntry {
-            name: value.name,
-            domain: value.domain.into(),
-        }
-    }
-}
-
-impl TryFrom<RecordEntry> for RecordEntryGround {
-    type Error = DomainOpError;
-
-    fn try_from(value: RecordEntry) -> Result<Self, Self::Error> {
-        match value.domain.as_ref() {
-            Domain::Ground(gd) => Ok(RecordEntryGround {
-                name: value.name,
-                domain: gd.clone(),
-            }),
-            Domain::Unresolved(_) => Err(DomainOpError::NotGround),
-        }
-    }
-}
-
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine, Uniplate)]
+#[biplate(to=DomainPtr)]
+#[biplate(to=Domain)]
+#[biplate(to=UnresolvedDomain)]
+#[biplate(to=Expression)]
+#[biplate(to=Reference)]
+#[biplate(to=RecordEntry<GroundDomain>)]
+#[biplate(to=RecordEntry<Domain>)]
+#[biplate(to=IntVal)]
 #[path_prefix(conjure_cp::ast)]
 pub enum GroundDomain {
     /// An empty domain of a given type
@@ -57,16 +34,16 @@ pub enum GroundDomain {
     /// An integer value in the given ranges (e.g. int(1, 3..5))
     Int(Vec<Range<Int>>),
     /// A set of elements drawn from the inner domain
-    Set(SetAttr<Int>, Moo<GroundDomain>),
+    Set(SetAttr<UInt>, Moo<GroundDomain>),
     /// A multiset of elements drawn from the inner domain
-    MSet(MSetAttr<Int>, Moo<GroundDomain>),
+    MSet(MSetAttr<UInt>, Moo<GroundDomain>),
     /// An N-dimensional matrix of elements drawn from the inner domain,
     /// and indices from the n index domains
     Matrix(Moo<GroundDomain>, Vec<Moo<GroundDomain>>),
     /// A tuple of N elements, each with its own domain
     Tuple(Vec<Moo<GroundDomain>>),
     /// A record
-    Record(Vec<RecordEntryGround>),
+    Record(Vec<RecordEntry<GroundDomain>>),
     /// A function with a domain and range
     Function(FuncAttr, Moo<GroundDomain>, Moo<GroundDomain>),
 }
@@ -313,6 +290,13 @@ impl GroundDomain {
             .and_then(|len| len.try_into().map_err(|_| DomainOpError::TooLarge))
     }
 
+    pub fn set_cardinality(&self) -> Option<(usize, usize)> {
+        let GroundDomain::Set(attr, inner_dom) = self else {
+            return None;
+        };
+        todo!()
+    }
+
     pub fn contains(&self, lit: &Literal) -> Result<bool, DomainOpError> {
         // not adding a generic wildcard condition for all domains, so that this gives a compile
         // error when a domain is added.
@@ -337,7 +321,10 @@ impl GroundDomain {
             GroundDomain::Set(set_attr, inner_domain) => match lit {
                 Literal::AbstractLiteral(AbstractLiteral::Set(lit_elems)) => {
                     // check if the literal's size is allowed by the set attribute
-                    let sz = lit_elems.len().to_i32().ok_or(DomainOpError::TooLarge)?;
+                    let sz: UInt = lit_elems
+                        .len()
+                        .try_into()
+                        .map_err(|_| DomainOpError::TooLarge)?;
                     if !set_attr.size.contains(&sz) {
                         return Ok(false);
                     }
@@ -354,7 +341,10 @@ impl GroundDomain {
             GroundDomain::MSet(mset_attr, inner_domain) => match lit {
                 Literal::AbstractLiteral(AbstractLiteral::MSet(lit_elems)) => {
                     // check if the literal's size is allowed by the mset attribute
-                    let sz = lit_elems.len().to_i32().ok_or(DomainOpError::TooLarge)?;
+                    let sz = lit_elems
+                        .len()
+                        .try_into()
+                        .map_err(|_| DomainOpError::TooLarge)?;
                     if !mset_attr.size.contains(&sz) {
                         return Ok(false);
                     }
@@ -441,7 +431,10 @@ impl GroundDomain {
             },
             GroundDomain::Function(func_attr, domain, codomain) => match lit {
                 Literal::AbstractLiteral(AbstractLiteral::Function(lit_elems)) => {
-                    let sz = Int::try_from(lit_elems.len()).expect("Should convert");
+                    let sz = lit_elems
+                        .len()
+                        .try_into()
+                        .map_err(|_| DomainOpError::TooLarge)?;
                     if !func_attr.size.contains(&sz) {
                         return Ok(false);
                     }
@@ -895,7 +888,7 @@ impl GroundDomain {
 
                 Ok(GroundDomain::Record(
                     izip!(field_names, elem_domains)
-                        .map(|(name, domain)| RecordEntryGround { name, domain })
+                        .map(|(name, domain)| RecordEntry { name, domain })
                         .collect(),
                 ))
             }

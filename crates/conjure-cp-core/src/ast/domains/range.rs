@@ -1,10 +1,11 @@
 use crate::ast::domains::Int;
+use funcmap::{FuncMap, TryFuncMap};
 use num_traits::Num;
 use polyquine::Quine;
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, FuncMap, TryFuncMap, Quine)]
 #[path_prefix(conjure_cp::ast)]
 pub enum Range<A = Int> {
     Single(A),

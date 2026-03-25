@@ -1,6 +1,7 @@
 use crate::ast::ReturnType;
 use crate::bug;
 use crate::utils::CombinatoricsError;
+use std::num::TryFromIntError;
 use thiserror::Error;
 
 /// An error thrown by an operation on domains.
@@ -21,6 +22,9 @@ pub enum DomainOpError {
     #[error("The operation failed as the input domain was not ground")]
     NotGround,
 
+    #[error("Result would exceed the bounds of this integer domain")]
+    OutOfBounds,
+
     #[error("Could not enumerate the domain as it is too large")]
     TooLarge,
 }
@@ -33,5 +37,11 @@ impl From<CombinatoricsError> for DomainOpError {
                 bug!("Are we passing the right arguments here? ({})", msg)
             }
         }
+    }
+}
+
+impl From<TryFromIntError> for DomainOpError {
+    fn from(value: TryFromIntError) -> Self {
+        Self::OutOfBounds
     }
 }

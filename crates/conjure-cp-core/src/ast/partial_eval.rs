@@ -67,8 +67,8 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
                     .domain()
                     .ok_or(RuleNotApplicable)?
                     .resolve()
-                    .ok_or(RuleNotApplicable)?;
-                let domain = domain.resolve().ok_or(RuleNotApplicable)?;
+                    .map_err(|_| RuleNotApplicable)?;
+                let domain = domain.resolve().map_err(|_| RuleNotApplicable)?;
 
                 let intersection = decl_domain
                     .intersect(&domain)
@@ -95,10 +95,9 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
             } else if let Expr::Atomic(_, Atom::Literal(lit)) = x.as_ref() {
                 if domain
                     .resolve()
-                    .ok_or(RuleNotApplicable)?
+                    .map_err(|_| RuleNotApplicable)?
                     .contains(lit)
-                    .ok()
-                    .ok_or(RuleNotApplicable)?
+                    .map_err(|_| RuleNotApplicable)?
                 {
                     Ok(Reduction::pure(Expr::Atomic(Metadata::new(), true.into())))
                 } else {

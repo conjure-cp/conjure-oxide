@@ -1,346 +1,26 @@
-use crate::ast::domains::attrs::MSetAttr;
-use crate::ast::domains::attrs::SetAttr;
+use super::{DomainPtr, GroundDomain, Int, IntVal, Range};
 use crate::ast::{
-    DeclarationKind, DomainOpError, Expression, FuncAttr, Literal, Metadata, Moo,
-    RecordEntryGround, Reference, Typeable,
-    domains::{
-        GroundDomain,
-        domain::{DomainPtr, Int},
-        range::Range,
-    },
+    Domain, DomainOpError, Expression, FuncAttr, Literal, MSetAttr, Metadata, Moo, Name,
+    RecordEntry, Reference, ReturnType, SetAttr, Typeable,
 };
-use crate::{bug, domain_int, into_matrix_expr, matrix_expr, range};
-use conjure_cp_core::ast::pretty::pretty_vec;
-use conjure_cp_core::ast::{Name, ReturnType, eval_constant};
+use crate::bug;
 use itertools::Itertools;
 use polyquine::Quine;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 use std::iter::zip;
-use std::ops::Deref;
 use uniplate::Uniplate;
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine, Uniplate)]
-#[path_prefix(conjure_cp::ast)]
-#[biplate(to=Expression)]
-#[biplate(to=Reference)]
-pub enum IntVal {
-    Const(Int),
-    #[polyquine_skip]
-    Reference(Reference),
-    Expr(Moo<Expression>),
-}
-
-impl From<Int> for IntVal {
-    fn from(value: Int) -> Self {
-        Self::Const(value)
-    }
-}
-
-impl TryInto<Int> for IntVal {
-    type Error = DomainOpError;
-
-    fn try_into(self) -> Result<Int, Self::Error> {
-        match self {
-            IntVal::Const(val) => Ok(val),
-            _ => Err(DomainOpError::NotGround),
-        }
-    }
-}
-
-impl From<Range<Int>> for Range<IntVal> {
-    fn from(value: Range<Int>) -> Self {
-        match value {
-            Range::Single(x) => Range::Single(x.into()),
-            Range::Bounded(l, r) => Range::Bounded(l.into(), r.into()),
-            Range::UnboundedL(r) => Range::UnboundedL(r.into()),
-            Range::UnboundedR(l) => Range::UnboundedR(l.into()),
-            Range::Unbounded => Range::Unbounded,
-        }
-    }
-}
-
-impl TryInto<Range<Int>> for Range<IntVal> {
-    type Error = DomainOpError;
-
-    fn try_into(self) -> Result<Range<Int>, Self::Error> {
-        match self {
-            Range::Single(x) => Ok(Range::Single(x.try_into()?)),
-            Range::Bounded(l, r) => Ok(Range::Bounded(l.try_into()?, r.try_into()?)),
-            Range::UnboundedL(r) => Ok(Range::UnboundedL(r.try_into()?)),
-            Range::UnboundedR(l) => Ok(Range::UnboundedR(l.try_into()?)),
-            Range::Unbounded => Ok(Range::Unbounded),
-        }
-    }
-}
-
-impl From<SetAttr<Int>> for SetAttr<IntVal> {
-    fn from(value: SetAttr<Int>) -> Self {
-        SetAttr {
-            size: value.size.into(),
-        }
-    }
-}
-
-impl TryInto<SetAttr<Int>> for SetAttr<IntVal> {
-    type Error = DomainOpError;
-
-    fn try_into(self) -> Result<SetAttr<Int>, Self::Error> {
-        let size: Range<Int> = self.size.try_into()?;
-        Ok(SetAttr { size })
-    }
-}
-
-impl From<MSetAttr<Int>> for MSetAttr<IntVal> {
-    fn from(value: MSetAttr<Int>) -> Self {
-        MSetAttr {
-            size: value.size.into(),
-            occurrence: value.occurrence.into(),
-        }
-    }
-}
-
-impl TryInto<MSetAttr<Int>> for MSetAttr<IntVal> {
-    type Error = DomainOpError;
-
-    fn try_into(self) -> Result<MSetAttr<Int>, Self::Error> {
-        let size: Range<Int> = self.size.try_into()?;
-        let occurrence: Range<Int> = self.occurrence.try_into()?;
-        Ok(MSetAttr { size, occurrence })
-    }
-}
-
-impl From<FuncAttr<Int>> for FuncAttr<IntVal> {
-    fn from(value: FuncAttr<Int>) -> Self {
-        FuncAttr {
-            size: value.size.into(),
-            partiality: value.partiality,
-            jectivity: value.jectivity,
-        }
-    }
-}
-
-impl TryInto<FuncAttr<Int>> for FuncAttr<IntVal> {
-    type Error = DomainOpError;
-
-    fn try_into(self) -> Result<FuncAttr<Int>, Self::Error> {
-        let size: Range<Int> = self.size.try_into()?;
-        Ok(FuncAttr {
-            size,
-            jectivity: self.jectivity,
-            partiality: self.partiality,
-        })
-    }
-}
-
-impl Display for IntVal {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            IntVal::Const(val) => write!(f, "{val}"),
-            IntVal::Reference(re) => write!(f, "{re}"),
-            IntVal::Expr(expr) => write!(f, "({expr})"),
-        }
-    }
-}
-
-impl IntVal {
-    pub fn new_ref(re: &Reference) -> Option<IntVal> {
-        match re.ptr.kind().deref() {
-            DeclarationKind::ValueLetting(expr, _)
-            | DeclarationKind::TemporaryValueLetting(expr) => match expr.return_type() {
-                ReturnType::Int => Some(IntVal::Reference(re.clone())),
-                _ => None,
-            },
-            DeclarationKind::Given(dom) => match dom.return_type() {
-                ReturnType::Int => Some(IntVal::Reference(re.clone())),
-                _ => None,
-            },
-            DeclarationKind::Quantified(inner) => match inner.domain().return_type() {
-                ReturnType::Int => Some(IntVal::Reference(re.clone())),
-                _ => None,
-            },
-            DeclarationKind::Find(var) => match var.return_type() {
-                ReturnType::Int => Some(IntVal::Reference(re.clone())),
-                _ => None,
-            },
-            DeclarationKind::DomainLetting(_) | DeclarationKind::RecordField(_) => None,
-        }
-    }
-
-    pub fn new_expr(value: Moo<Expression>) -> Option<IntVal> {
-        if value.return_type() != ReturnType::Int {
-            return None;
-        }
-        Some(IntVal::Expr(value))
-    }
-
-    pub fn resolve(&self) -> Option<Int> {
-        match self {
-            IntVal::Const(value) => Some(*value),
-            IntVal::Expr(expr) => eval_expr_to_int(expr),
-            IntVal::Reference(re) => match re.ptr.kind().deref() {
-                DeclarationKind::ValueLetting(expr, _)
-                | DeclarationKind::TemporaryValueLetting(expr) => eval_expr_to_int(expr),
-                // If this is an int given we will be able to resolve it eventually, but not yet
-                DeclarationKind::Given(_) => None,
-                DeclarationKind::Quantified(inner) => {
-                    if let Some(generator) = inner.generator()
-                        && let Some(expr) = generator.as_value_letting()
-                    {
-                        eval_expr_to_int(&expr)
-                    } else {
-                        None
-                    }
-                }
-                // Decision variables inside domains are unresolved until solving.
-                DeclarationKind::Find(_) => None,
-                DeclarationKind::DomainLetting(_) | DeclarationKind::RecordField(_) => bug!(
-                    "Expected integer expression, given, or letting inside int domain; Got: {re}"
-                ),
-            },
-        }
-    }
-}
-
-fn eval_expr_to_int(expr: &Expression) -> Option<Int> {
-    match eval_constant(expr)? {
-        Literal::Int(v) => Some(v),
-        _ => bug!("Expected integer expression, got: {expr}"),
-    }
-}
-
-impl From<IntVal> for Expression {
-    fn from(value: IntVal) -> Self {
-        match value {
-            IntVal::Const(val) => val.into(),
-            IntVal::Reference(re) => re.into(),
-            IntVal::Expr(expr) => expr.as_ref().clone(),
-        }
-    }
-}
-
-impl From<IntVal> for Moo<Expression> {
-    fn from(value: IntVal) -> Self {
-        match value {
-            IntVal::Const(val) => Moo::new(val.into()),
-            IntVal::Reference(re) => Moo::new(re.into()),
-            IntVal::Expr(expr) => expr,
-        }
-    }
-}
-
-impl std::ops::Neg for IntVal {
-    type Output = IntVal;
-
-    fn neg(self) -> Self::Output {
-        match self {
-            IntVal::Const(val) => IntVal::Const(-val),
-            IntVal::Reference(_) | IntVal::Expr(_) => {
-                IntVal::Expr(Moo::new(Expression::Neg(Metadata::new(), self.into())))
-            }
-        }
-    }
-}
-
-impl<T> std::ops::Add<T> for IntVal
-where
-    T: Into<Expression>,
-{
-    type Output = IntVal;
-
-    fn add(self, rhs: T) -> Self::Output {
-        let lhs: Expression = self.into();
-        let rhs: Expression = rhs.into();
-        let sum = matrix_expr!(lhs, rhs; domain_int!(1..));
-        IntVal::Expr(Moo::new(Expression::Sum(Metadata::new(), Moo::new(sum))))
-    }
-}
-
-impl Range<IntVal> {
-    pub fn resolve(&self) -> Option<Range<Int>> {
-        match self {
-            Range::Single(x) => Some(Range::Single(x.resolve()?)),
-            Range::Bounded(l, r) => Some(Range::Bounded(l.resolve()?, r.resolve()?)),
-            Range::UnboundedL(r) => Some(Range::UnboundedL(r.resolve()?)),
-            Range::UnboundedR(l) => Some(Range::UnboundedR(l.resolve()?)),
-            Range::Unbounded => Some(Range::Unbounded),
-        }
-    }
-
-    /// Generates the expression to compute the size of this range
-    pub fn len_expr(self) -> Option<Expression> {
-        match self {
-            Range::Single(a) => Some(a.into()),
-            Range::Bounded(a, b) => {
-                let neg_b = Expression::Neg(Metadata::new(), Moo::new(b.into()));
-                let sum_matr = into_matrix_expr!(vec![a.into(), neg_b]);
-                Some(Expression::Sum(Metadata::new(), sum_matr.into()))
-            }
-            _ => None,
-        }
-    }
-
-    /// Generates the expression to compute the size of a list of ranges
-    pub fn len_expr_of(rngs: &[Range<IntVal>]) -> Option<Expression> {
-        let mut rng_sizes = Vec::with_capacity(rngs.len());
-        for rng in rngs {
-            rng_sizes.push(rng.clone().len_expr()?);
-        }
-        let rng_sizes = into_matrix_expr!(rng_sizes);
-        Some(Expression::Sum(Metadata::new(), rng_sizes.into()))
-    }
-}
-
-impl SetAttr<IntVal> {
-    pub fn resolve(&self) -> Option<SetAttr<Int>> {
-        Some(SetAttr {
-            size: self.size.resolve()?,
-        })
-    }
-}
-
-impl MSetAttr<IntVal> {
-    pub fn resolve(&self) -> Option<MSetAttr<Int>> {
-        Some(MSetAttr {
-            size: self.size.resolve()?,
-            occurrence: self.occurrence.resolve()?,
-        })
-    }
-}
-
-impl FuncAttr<IntVal> {
-    pub fn resolve(&self) -> Option<FuncAttr<Int>> {
-        Some(FuncAttr {
-            size: self.size.resolve()?,
-            partiality: self.partiality.clone(),
-            jectivity: self.jectivity.clone(),
-        })
-    }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Uniplate, Quine)]
-#[path_prefix(conjure_cp::ast)]
-pub struct RecordEntry {
-    pub name: Name,
-    pub domain: DomainPtr,
-}
-
-impl RecordEntry {
-    pub fn resolve(self) -> Option<RecordEntryGround> {
-        Some(RecordEntryGround {
-            name: self.name,
-            domain: self.domain.resolve()?,
-        })
-    }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine, Uniplate)]
-#[path_prefix(conjure_cp::ast)]
-#[biplate(to=Expression)]
-#[biplate(to=Reference)]
-#[biplate(to=IntVal)]
 #[biplate(to=DomainPtr)]
-#[biplate(to=RecordEntry)]
+#[biplate(to=Domain)]
+#[biplate(to=GroundDomain)]
+#[biplate(to=Expression)]
+#[biplate(to=Reference)]
+#[biplate(to=RecordEntry<GroundDomain>)]
+#[biplate(to=RecordEntry<Domain>)]
+#[biplate(to=IntVal)]
+#[path_prefix(conjure_cp::ast)]
 pub enum UnresolvedDomain {
     Int(Vec<Range<IntVal>>),
     /// A set of elements drawn from the inner domain
@@ -354,47 +34,47 @@ pub enum UnresolvedDomain {
     #[polyquine_skip]
     Reference(Reference),
     /// A record
-    Record(Vec<RecordEntry>),
+    Record(Vec<RecordEntry<Domain>>),
     /// A function with attributes, domain, and range
     Function(FuncAttr<IntVal>, DomainPtr, DomainPtr),
 }
 
 impl UnresolvedDomain {
-    pub fn resolve(&self) -> Option<GroundDomain> {
+    pub fn resolve(&self) -> Result<GroundDomain, DomainOpError> {
         match self {
             UnresolvedDomain::Int(rngs) => rngs
                 .iter()
                 .map(Range::<IntVal>::resolve)
-                .collect::<Option<_>>()
+                .try_collect()
                 .map(GroundDomain::Int),
             UnresolvedDomain::Set(attr, inner) => {
-                Some(GroundDomain::Set(attr.resolve()?, inner.resolve()?))
+                Ok(GroundDomain::Set(attr.resolve_uint()?, inner.resolve()?))
             }
             UnresolvedDomain::MSet(attr, inner) => {
-                Some(GroundDomain::MSet(attr.resolve()?, inner.resolve()?))
+                Ok(GroundDomain::MSet(attr.resolve_uint()?, inner.resolve()?))
             }
             UnresolvedDomain::Matrix(inner, idx_doms) => {
                 let inner_gd = inner.resolve()?;
                 idx_doms
                     .iter()
                     .map(DomainPtr::resolve)
-                    .collect::<Option<_>>()
+                    .try_collect()
                     .map(|idx| GroundDomain::Matrix(inner_gd, idx))
             }
             UnresolvedDomain::Tuple(inners) => inners
                 .iter()
                 .map(DomainPtr::resolve)
-                .collect::<Option<_>>()
+                .try_collect()
                 .map(GroundDomain::Tuple),
             UnresolvedDomain::Record(entries) => entries
                 .iter()
                 .map(|f| {
-                    f.domain.resolve().map(|gd| RecordEntryGround {
+                    f.domain.resolve().map(|gd| RecordEntry {
                         name: f.name.clone(),
                         domain: gd,
                     })
                 })
-                .collect::<Option<_>>()
+                .try_collect()
                 .map(GroundDomain::Record),
             UnresolvedDomain::Reference(re) => re
                 .ptr
@@ -404,15 +84,11 @@ impl UnresolvedDomain {
                 })
                 .resolve()
                 .map(Moo::unwrap_or_clone),
-            UnresolvedDomain::Function(attr, dom, cdom) => {
-                if let Some(attr_gd) = attr.resolve()
-                    && let Some(dom_gd) = dom.resolve()
-                    && let Some(cdom_gd) = cdom.resolve()
-                {
-                    return Some(GroundDomain::Function(attr_gd, dom_gd, cdom_gd));
-                }
-                None
-            }
+            UnresolvedDomain::Function(attr, dom, cdom) => Ok(GroundDomain::Function(
+                attr.resolve_uint()?,
+                dom.resolve()?,
+                cdom.resolve()?,
+            )),
         }
     }
 
@@ -536,27 +212,21 @@ impl Display for UnresolvedDomain {
             UnresolvedDomain::Matrix(value_domain, index_domains) => {
                 write!(
                     f,
-                    "matrix indexed by {} of {value_domain}",
-                    pretty_vec(&index_domains.iter().collect_vec())
+                    "matrix indexed by [{}] of {value_domain}",
+                    &index_domains.iter().join(", ")
                 )
             }
             UnresolvedDomain::Tuple(domains) => {
-                write!(
-                    f,
-                    "tuple of ({})",
-                    pretty_vec(&domains.iter().collect_vec())
-                )
+                write!(f, "tuple of ({})", &domains.iter().join(", "))
             }
             UnresolvedDomain::Record(entries) => {
                 write!(
                     f,
                     "record of ({})",
-                    pretty_vec(
-                        &entries
-                            .iter()
-                            .map(|entry| format!("{}: {}", entry.name, entry.domain))
-                            .collect_vec()
-                    )
+                    &entries
+                        .iter()
+                        .map(|entry| format!("{}: {}", entry.name, entry.domain))
+                        .join(", ")
                 )
             }
             UnresolvedDomain::Function(attribute, domain, codomain) => {

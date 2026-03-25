@@ -283,7 +283,7 @@ impl DeclarationPtr {
     ///
     /// let declaration = DeclarationPtr::new_record_field(field);
     /// ```
-    pub fn new_record_field(entry: RecordEntry) -> DeclarationPtr {
+    pub fn new_record_field(entry: RecordEntry<Domain>) -> DeclarationPtr {
         let kind = DeclarationKind::RecordField(entry.domain);
         DeclarationPtr::new(entry.name, kind)
     }
@@ -333,7 +333,7 @@ impl DeclarationPtr {
                 .kind
                 .transform_bi(&|dom: DomainPtr| dom.resolve().map(DomainPtr::from).unwrap_or(dom));
         }
-        dom.resolve()
+        dom.resolve().ok()
     }
 
     /// Gets the kind of the declaration.

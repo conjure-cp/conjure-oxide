@@ -627,7 +627,7 @@ impl AbstractLiteral<Expression> {
                     literals.push(literal);
                 }
 
-                Some(AbstractLiteral::Matrix(literals, domain.resolve()?))
+                Some(AbstractLiteral::Matrix(literals, domain.resolve().ok()?))
             }
             AbstractLiteral::Tuple(items) => {
                 let mut literals = vec![];

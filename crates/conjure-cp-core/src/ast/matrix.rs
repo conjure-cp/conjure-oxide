@@ -262,7 +262,7 @@ pub fn safe_index_optimised(m: Expr, idx: Literal) -> Option<Expr> {
                 return None;
             };
 
-            let dom = inner.domain_of().and_then(|dom| dom.resolve())?;
+            let dom = inner.domain_of().and_then(|dom| dom.resolve().ok())?;
             let GroundDomain::Matrix(_, index_domains) = dom.as_ref() else {
                 return None;
             };

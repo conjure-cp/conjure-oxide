@@ -33,9 +33,9 @@ pub fn instantiate_model(problem_model: Model, param_model: Model) -> anyhow::Re
 
         let ground_domain = domain
             .resolve()
-            .ok_or_else(|| anyhow!("Domain of given statement `{name}` cannot be resolved"))?;
+            .map_err(|e| anyhow!("Domain of given statement `{name}` cannot be resolved: {e}"))?;
 
-        if !ground_domain.contains(&expr_value).unwrap() {
+        if !ground_domain.contains(&expr_value)? {
             return Err(anyhow!(
                 "Domain of given statement `{name}` does not contain letting value"
             ));
