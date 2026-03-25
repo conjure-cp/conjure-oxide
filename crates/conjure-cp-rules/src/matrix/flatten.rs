@@ -5,7 +5,7 @@ use conjure_cp::rule_engine::{
 };
 use itertools::Itertools;
 
-#[register_rule(("Base", 8000, Flatten))]
+#[register_rule("Base", 8000, [Flatten])]
 fn flatten_matrix(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     if let Expr::Flatten(_, n, matrix) = expr {
         if n.is_some() {

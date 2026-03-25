@@ -9,7 +9,7 @@ use conjure_cp::rule_engine::{
 ///
 /// E.g. instead of transforming flatten(m)[1] ~> [m[1,1],m[1,2],..][1],
 ///                          do: flatten(m)[1] ~> m[1,1]
-#[register_rule(("Base", 8001, SafeIndex, UnsafeIndex))]
+#[register_rule("Base", 8001, [SafeIndex, UnsafeIndex])]
 fn indexed_flatten_matrix(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (subject, index) = match expr {
         Expr::SafeIndex(_, subj, idx) | Expr::UnsafeIndex(_, subj, idx) => (subj, idx),

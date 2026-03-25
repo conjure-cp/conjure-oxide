@@ -25,7 +25,7 @@ use conjure_cp::{
 ///   means that we do not have to reorder the product again once those references get evaluated to
 ///   literals later on in the rewriting process.
 ///
-#[register_rule(("Base", 8800, Product))]
+#[register_rule("Base", 8800, [Product])]
 fn reorder_product(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::Product(meta, factors) = expr.clone() else {
         return Err(RuleNotApplicable);
@@ -165,7 +165,7 @@ fn order_by_complexity(factors: Vec<Expr>) -> (i32, Vec<Expr>) {
 /// product([a]) ~> a
 /// ```
 ///
-#[register_rule(("Base", 8800, Product))]
+#[register_rule("Base", 8800, [Product])]
 fn remove_unit_vector_products(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
         Expr::Product(_, mat) => {

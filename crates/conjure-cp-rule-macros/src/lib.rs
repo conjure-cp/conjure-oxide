@@ -2,14 +2,13 @@ use proc_macro::TokenStream;
 
 use proc_macro2::Span;
 use quote::quote;
-use syn::punctuated::Punctuated;
 use syn::token::Comma;
 use syn::{
-    ExprClosure, Ident, ItemFn, LitInt, LitStr, Result, parenthesized, parse::Parse,
+    ExprClosure, Ident, ItemFn, LitInt, LitStr, Result, bracketed, parenthesized, parse::Parse,
     parse::ParseStream, parse_macro_input,
 };
 
-struct RuleSetAndPriority {
+struct RegisterRuleArgs {
     rule_set: LitStr,
     priority: LitInt,
     /// Expression variant names this rule applies to (e.g. `Add`, `Sub`).
@@ -17,39 +16,32 @@ struct RuleSetAndPriority {
     applicable_variants: Vec<Ident>,
 }
 
-impl Parse for RuleSetAndPriority {
+impl Parse for RegisterRuleArgs {
     fn parse(input: ParseStream) -> Result<Self> {
-        let content;
-        parenthesized!(content in input);
-        let rule_set: LitStr = content.parse()?;
-        let _: Comma = content.parse()?;
-        let priority: LitInt = content.parse()?;
+        let rule_set: LitStr = input.parse()?;
+        let _: Comma = input.parse()?;
+        let priority: LitInt = input.parse()?;
 
-        // Parse optional trailing variant names: ("Minion", 4200, Add, Sub)
+        // Parse optional variant names in brackets: "Minion", 4200, [Add, Sub]
         let mut applicable_variants = Vec::new();
-        while content.peek(Comma) {
-            let _: Comma = content.parse()?;
-            let variant: Ident = content.parse()?;
-            applicable_variants.push(variant);
+        if input.peek(Comma) {
+            let _: Comma = input.parse()?;
+            let content;
+            bracketed!(content in input);
+            while !content.is_empty() {
+                let variant: Ident = content.parse()?;
+                applicable_variants.push(variant);
+                if content.is_empty() {
+                    break;
+                }
+                let _: Comma = content.parse()?;
+            }
         }
 
-        Ok(RuleSetAndPriority {
+        Ok(RegisterRuleArgs {
             rule_set,
             priority,
             applicable_variants,
-        })
-    }
-}
-
-struct RegisterRuleArgs {
-    pub rule_sets: Vec<RuleSetAndPriority>,
-}
-
-impl Parse for RegisterRuleArgs {
-    fn parse(input: ParseStream) -> Result<Self> {
-        let rule_sets = Punctuated::<RuleSetAndPriority, Comma>::parse_terminated(input)?;
-        Ok(RegisterRuleArgs {
-            rule_sets: rule_sets.into_iter().collect(),
         })
     }
 }
@@ -63,31 +55,16 @@ pub fn register_rule(arg_tokens: TokenStream, item: TokenStream) -> TokenStream 
     let static_ident = Ident::new(&static_name, rule_ident.span());
 
     let args = parse_macro_input!(arg_tokens as RegisterRuleArgs);
-    let rule_sets = args
-        .rule_sets
-        .iter()
-        .map(|rule_set| {
-            let rule_set_name = &rule_set.rule_set;
-            let priority = &rule_set.priority;
-            quote! {
-                (#rule_set_name, #priority as u16)
-            }
-        })
-        .collect::<Vec<_>>();
+    let rule_set_name = &args.rule_set;
+    let priority = &args.priority;
+    let rule_set_token = quote! { (#rule_set_name, #priority as u16) };
 
-    // Collect all variant names across all rule sets (union).
-    // If none are specified anywhere, the rule is universal (applicable_to: None).
-    let all_variants: Vec<&Ident> = args
-        .rule_sets
-        .iter()
-        .flat_map(|rs| &rs.applicable_variants)
-        .collect();
-
-    let applicable_to = if all_variants.is_empty() {
+    let applicable_to = if args.applicable_variants.is_empty() {
         quote! { None }
     } else {
+        let variants = &args.applicable_variants;
         quote! {
-            Some(&[#(::conjure_cp::discriminant_from_name!(#all_variants)),*])
+            Some(&[#(::conjure_cp::discriminant_from_name!(#variants)),*])
         }
     };
 
@@ -100,7 +77,7 @@ pub fn register_rule(arg_tokens: TokenStream, item: TokenStream) -> TokenStream 
         pub static #static_ident: ::conjure_cp::rule_engine::Rule<'static> = ::conjure_cp::rule_engine::Rule {
             name: stringify!(#rule_ident),
             application: #rule_ident,
-            rule_sets: &[#(#rule_sets),*],
+            rule_sets: &[#rule_set_token],
             applicable_to: #applicable_to,
         };
     };

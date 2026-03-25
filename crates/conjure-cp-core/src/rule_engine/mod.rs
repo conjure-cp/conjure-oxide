@@ -40,7 +40,7 @@ pub use rewrite_morph::rewrite_morph;
 /// use conjure_cp_core::rule_engine::{ApplicationError, ApplicationResult, Reduction};
 /// use conjure_cp_core::rule_engine::register_rule;
 ///
-/// #[register_rule(("RuleSetName", 10))]
+/// #[register_rule("RuleSetName", 10)]
 /// fn identity(expr: &Expression, symbols: &SymbolTable) -> ApplicationResult {
 ///   Ok(Reduction::pure(expr.clone()))
 /// }
