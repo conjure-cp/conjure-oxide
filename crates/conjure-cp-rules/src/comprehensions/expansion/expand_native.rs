@@ -71,7 +71,7 @@ fn expand_qualifiers(
 }
 
 fn resolve_generator_values(name: &Name, domain: &DomainPtr) -> Result<Vec<Literal>, SolverError> {
-    let resolved = domain.resolve().ok_or_else(|| {
+    let resolved = domain.resolve().map_err(|_| {
         SolverError::ModelFeatureNotSupported(format!(
             "quantified variable '{name}' has unresolved domain after assigning previous generators: {domain}"
         ))

@@ -1,4 +1,4 @@
-use super::atom::parse_int;
+use super::atom::parse_u32;
 use super::util::named_children;
 use crate::diagnostics::source_map::{HoverInfo, span_with_hover};
 use crate::errors::FatalParseError;
@@ -198,16 +198,15 @@ fn parse_int_domain(
     // If all values are resolved constants, convert IntVals to raw integers
     if all_resolved {
         let ranges: Vec<Range<i32>> = ranges_unresolved
-            .into_iter()
-            .map(|r| match r {
-                Range::Single(IntVal::Const(v)) => Range::Single(v),
-                Range::Bounded(IntVal::Const(l), IntVal::Const(u)) => Range::Bounded(l, u),
-                Range::UnboundedR(IntVal::Const(l)) => Range::UnboundedR(l),
-                Range::UnboundedL(IntVal::Const(u)) => Range::UnboundedL(u),
-                Range::Unbounded => Range::Unbounded,
-                _ => unreachable!("all_resolved should be true only if all are Const"),
-            })
-            .collect();
+            .iter()
+            .map(Range::resolve)
+            .collect::<Result<_, _>>()
+            .map_err(|e| {
+                FatalParseError::internal_error(
+                    format!("could not resolve range: {e}"),
+                    Some(range_list.range()),
+                )
+            })?;
         Ok(Some(Domain::int(ranges)))
     } else {
         // Otherwise, keep as an expression-based domain
@@ -222,7 +221,7 @@ fn parse_int_val(ctx: &mut ParseContext, node: Node) -> Result<Option<IntVal>, F
     if node.kind() == "atom" {
         let text = &ctx.source_code[node.start_byte()..node.end_byte()];
         if let Ok(integer) = text.parse::<i32>() {
-            return Ok(Some(IntVal::Const(integer)));
+            return Ok(Some(IntVal::from(integer)));
         }
         // Otherwise, check if it's an identifier reference
         let Some(decl) = get_declaration_ptr_from_identifier(ctx, node)? else {
@@ -275,7 +274,7 @@ fn parse_record_domain(
     ctx: &mut ParseContext,
     record_domain: Node,
 ) -> Result<Option<DomainPtr>, FatalParseError> {
-    let mut record_entries: Vec<RecordEntry> = Vec::new();
+    let mut record_entries: Vec<RecordEntry<Domain>> = Vec::new();
     for record_entry in named_children(&record_domain) {
         let name_node = field!(record_entry, "name");
         let name = Name::user(&ctx.source_code[name_node.start_byte()..name_node.end_byte()]);
@@ -305,21 +304,21 @@ pub fn parse_set_domain(
 
                 if let (Some(min_node), Some(max_node)) = (min_value_node, max_value_node) {
                     // MinMax case
-                    let min_val = parse_int(ctx, &min_node)?;
-                    let max_val = parse_int(ctx, &max_node)?;
+                    let min_val = parse_u32(ctx, &min_node)?;
+                    let max_val = parse_u32(ctx, &max_node)?;
 
                     set_attribute = Some(SetAttr::new_min_max_size(min_val, max_val));
                 } else if let Some(size_node) = size_value_node {
                     // Size case
-                    let size_val = parse_int(ctx, &size_node)?;
+                    let size_val = parse_u32(ctx, &size_node)?;
                     set_attribute = Some(SetAttr::new_size(size_val));
                 } else if let Some(min_node) = min_value_node {
                     // MinSize only case
-                    let min_val = parse_int(ctx, &min_node)?;
+                    let min_val = parse_u32(ctx, &min_node)?;
                     set_attribute = Some(SetAttr::new_min_size(min_val));
                 } else if let Some(max_node) = max_value_node {
                     // MaxSize only case
-                    let max_val = parse_int(ctx, &max_node)?;
+                    let max_val = parse_u32(ctx, &max_node)?;
                     set_attribute = Some(SetAttr::new_max_size(max_val));
                 }
             }

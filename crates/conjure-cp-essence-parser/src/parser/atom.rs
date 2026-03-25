@@ -90,7 +90,7 @@ fn parse_flatten(
 
     if node.child_by_field_name("depth").is_some() {
         let depth_node = field!(node, "depth");
-        let depth = parse_int(ctx, &depth_node)?;
+        let depth = parse_i32(ctx, &depth_node)?;
         let depth_expression =
             Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(depth)));
         Ok(Some(Expression::Flatten(
@@ -263,7 +263,7 @@ fn typecheck_variable(
 
     // Get the variable's domain and resolve it
     let domain = decl.domain()?;
-    let ground_domain = domain.resolve()?;
+    let ground_domain = domain.resolve().ok()?;
 
     // Determine what type is expected
     let expected = match context {
@@ -302,7 +302,7 @@ fn parse_constant(ctx: &mut ParseContext, node: &Node) -> Result<Option<Literal>
     let raw_value = &ctx.source_code[inner.start_byte()..inner.end_byte()];
     let lit = match inner.kind() {
         "integer" => {
-            let value = parse_int(ctx, &inner)?;
+            let value = parse_i32(ctx, &inner)?;
             Literal::Int(value)
         }
         "TRUE" => {
@@ -365,9 +365,19 @@ fn parse_constant(ctx: &mut ParseContext, node: &Node) -> Result<Option<Literal>
     Ok(Some(lit))
 }
 
-pub(crate) fn parse_int(ctx: &ParseContext, node: &Node) -> Result<i32, FatalParseError> {
+pub(crate) fn parse_i32(ctx: &ParseContext, node: &Node) -> Result<i32, FatalParseError> {
     let raw_value = &ctx.source_code[node.start_byte()..node.end_byte()];
     raw_value.parse::<i32>().map_err(|_e| {
         FatalParseError::internal_error("Expected an integer here".to_string(), Some(node.range()))
+    })
+}
+
+pub(crate) fn parse_u32(ctx: &ParseContext, node: &Node) -> Result<u32, FatalParseError> {
+    let raw_value = &ctx.source_code[node.start_byte()..node.end_byte()];
+    raw_value.parse::<u32>().map_err(|_e| {
+        FatalParseError::internal_error(
+            "Expected an unsigned integer here".to_string(),
+            Some(node.range()),
+        )
     })
 }

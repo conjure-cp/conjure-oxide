@@ -32,7 +32,7 @@ fn indexed_flatten_matrix(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // resolve index domains so that we can enumerate them later
     let dom = matrix
         .domain_of()
-        .and_then(|dom| dom.resolve())
+        .and_then(|dom| dom.resolve().ok())
         .ok_or(RuleNotApplicable)?;
 
     let GroundDomain::Matrix(_, index_domains) = dom.as_ref() else {

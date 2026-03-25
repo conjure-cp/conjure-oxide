@@ -19,6 +19,7 @@ fn index_to_bubble(expr: &Expression, symtab: &SymbolTable) -> ApplicationResult
         .domain_of()
         .ok_or(ApplicationError::DomainError)?
         .resolve()
+        .ok()
         .ok_or(RuleNotApplicable)?;
 
     // TODO: tuple, this is a hack right now just to avoid the rule being applied to tuples, but could we safely modify the rule to
@@ -92,6 +93,7 @@ fn slice_to_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
         .domain_of()
         .ok_or(ApplicationError::DomainError)?
         .resolve()
+        .ok()
         .ok_or(RuleNotApplicable)?;
 
     let GroundDomain::Matrix(_, index_domains) = domain.as_ref() else {
