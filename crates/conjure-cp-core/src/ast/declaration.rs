@@ -188,9 +188,7 @@ impl DeclarationPtr {
     }
 
     pub fn new_quantified_expr(name: Name, expr: Expression) -> DeclarationPtr {
-        let kind = DeclarationKind::QuantifiedExpr(
-            expr
-        );
+        let kind = DeclarationKind::QuantifiedExpr(expr);
         DeclarationPtr::new(name, kind)
     }
 

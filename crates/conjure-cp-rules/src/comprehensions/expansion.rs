@@ -11,7 +11,10 @@ pub use expand_via_solver_ac::expand_via_solver_ac;
 
 use conjure_cp::{
     ast::{
-        DeclarationPtr, Domain, DomainPtr, Expression as Expr, IntVal, Moo, Name, Range, Reference, SymbolTable, UnresolvedDomain, comprehension::{Comprehension, ComprehensionQualifier}, serde::{HasId, ObjId}
+        DeclarationPtr, Domain, DomainPtr, Expression as Expr, IntVal, Moo, Name, Range, Reference,
+        SymbolTable, UnresolvedDomain,
+        comprehension::{Comprehension, ComprehensionQualifier},
+        serde::{HasId, ObjId},
     },
     bug, into_matrix_expr,
     rule_engine::{
@@ -119,7 +122,7 @@ fn expand_comprehension_via_solver(expr: &Expr, symbols: &SymbolTable) -> Applic
         if let ComprehensionQualifier::ExpressionGenerator { .. } = qual {
             return Err(RuleNotApplicable);
         }
-    }    
+    }
 
     let results = expand_via_solver(comprehension)
         .unwrap_or_else(|e| bug!("via-solver comprehension expansion failed: {e}"));

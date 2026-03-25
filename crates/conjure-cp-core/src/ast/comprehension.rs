@@ -23,7 +23,7 @@ use super::{
 #[biplate(to=Name)]
 #[biplate(to=DeclarationPtr)]
 pub enum ComprehensionQualifier {
-    ExpressionGenerator { 
+    ExpressionGenerator {
         #[serde_as(as = "AsId")]
         ptr: DeclarationPtr,
     },
@@ -76,8 +76,7 @@ impl Comprehension {
         self.qualifiers
             .iter()
             .filter_map(|q| match q {
-
-                ComprehensionQualifier::ExpressionGenerator { ptr, .. } => Some(ptr.name().clone()),
+                ComprehensionQualifier::ExpressionGenerator { ptr } => Some(ptr.name().clone()),
                 ComprehensionQualifier::Generator { ptr } => Some(ptr.name().clone()),
                 ComprehensionQualifier::Condition(_) => None,
             })
@@ -150,11 +149,11 @@ impl Display for Comprehension {
             .qualifiers
             .iter()
             .map(|qualifier| match qualifier {
-                ComprehensionQualifier::Generator { ptr , ..} => {
+                ComprehensionQualifier::Generator { ptr } => {
                     let domain = ptr.domain().expect("generator declaration has domain");
                     format!("{} : {domain}", ptr.name())
                 }
-                ComprehensionQualifier::ExpressionGenerator {ptr } => {
+                ComprehensionQualifier::ExpressionGenerator { ptr } => {
                     let name = ptr.name();
                     if let Some(expr) = ptr.as_quantified_expr() {
                         format!("{name} <- {expr}")
@@ -231,11 +230,13 @@ impl ComprehensionBuilder {
         self.quantified_variables.insert(name.clone());
 
         // insert into comprehension scope as a local quantified variable
-        let quantified_decl = DeclarationPtr::new_quantified_expr(name.clone(), expr);
+        let quantified_decl = DeclarationPtr::new_quantified_expr(name, expr);
         self.symbols.write().insert(quantified_decl.clone());
 
         self.qualifiers
-            .push(ComprehensionQualifier::ExpressionGenerator { ptr: quantified_decl });
+            .push(ComprehensionQualifier::ExpressionGenerator {
+                ptr: quantified_decl,
+            });
 
         self
     }
