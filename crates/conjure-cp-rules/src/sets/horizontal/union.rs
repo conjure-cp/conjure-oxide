@@ -15,51 +15,60 @@ fn union_set(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             // find if any of the generators are generating from expressions
             for (i, qualifier) in comp.qualifiers.iter().enumerate() {
                 if let ComprehensionQualifier::ExpressionGenerator { ptr } = qualifier {
+                    let decl = ptr.clone();
+
                     // match on expression being of form A union B
-                    if let Expr::Union(_, a, b) = expr.into() {
-                        // [ return_expr | i <- A, guards...] part
-                        let mut comprehension1 = comp.clone();
-                        // modify the generator expression in place to be A
-                        match comprehension1.qualifiers.get_mut(i) {
-                            Some(ComprehensionQualifier::ExpressionGenerator { ptr }) => {
-                                *expr = a;
-                            }
-                            _ => panic!(),
-                        }
+                    if let Some(expr) = ptr.as_quantified_expr() {
+                        if let Expr::Union(_, a, b) = &*expr {
+                            let a = a.clone();
+                            let b = b.clone();
 
-                        // [ return_expr | i <- B, !(i in A), guards...] part
-                        let mut comprehension2 = comp.clone();
-                        // identify the generator qualifier again and modify the expression in place to be B
-                        match comprehension2.qualifiers.get_mut(i) {
-                            Some(ComprehensionQualifier::ExpressionGenerator { decl, expr }) => {
-                                *expr = b;
+                            // [ return_expr | i <- A, guards...] part
+                            let mut comprehension1 = comp.clone();
+                            // modify the generator expression in place to be A
+                            if let Some(qual) = comprehension1.qualifiers.get_mut(i) {
+                                if let ComprehensionQualifier::ExpressionGenerator { ptr } = qual {
+                                    if let Some(mut expr) = ptr.as_quantified_expr_mut() {
+                                        *expr = a.clone().into();
+                                    }
+                                }
                             }
-                            _ => panic!(),
-                        }
 
-                        // add the condition !(i in A)
-                        comprehension2
-                            .qualifiers
-                            .push(ComprehensionQualifier::Condition(Expr::Not(
-                                Metadata::new(),
-                                Moo::new(Expr::In(
+                            // [ return_expr | i <- B, !(i in A), guards...] part
+                            let mut comprehension2 = comp.clone();
+                            // identify the generator qualifier again and modify the expression in place to be B
+                            if let Some(qual) = comprehension2.qualifiers.get_mut(i) {
+                                if let ComprehensionQualifier::ExpressionGenerator { ptr } = qual {
+                                    if let Some(mut expr) = ptr.as_quantified_expr_mut() {
+                                        *expr = b.into();
+                                    }
+                                }
+                            }
+
+                            // add the condition !(i in A)
+                            comprehension2
+                                .qualifiers
+                                .push(ComprehensionQualifier::Condition(Expr::Not(
                                     Metadata::new(),
-                                    Moo::new(Expr::Atomic(
+                                    Moo::new(Expr::In(
                                         Metadata::new(),
-                                        Atom::new_ref(decl.clone()),
+                                        Moo::new(Expr::Atomic(
+                                            Metadata::new(),
+                                            Atom::new_ref(decl),
+                                        )),
+                                        a.clone(),
                                     )),
-                                    a.clone(),
-                                )),
-                            )));
+                                )));
 
-                        return Ok(Reduction::pure(Expr::Flatten(
-                            Metadata::new(),
-                            None,
-                            Moo::new(into_matrix_expr!(vec![
-                                Expr::Comprehension(Metadata::new(), comprehension1),
-                                Expr::Comprehension(Metadata::new(), comprehension2)
-                            ])),
-                        )));
+                            return Ok(Reduction::pure(Expr::Flatten(
+                                Metadata::new(),
+                                None,
+                                Moo::new(into_matrix_expr!(vec![
+                                    Expr::Comprehension(Metadata::new(), comprehension1),
+                                    Expr::Comprehension(Metadata::new(), comprehension2)
+                                ])),
+                            )));
+                        }
                     }
                 }
             }
