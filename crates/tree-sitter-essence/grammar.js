@@ -413,7 +413,7 @@ module.exports = grammar ({
     ),
 
     index_or_slice: $ => seq(
-      field("collection", choice($.identifier, $.tuple, $.matrix, $.record, $.flatten)),
+      field("collection", choice($.identifier, $.metavar, $.tuple, $.matrix, $.record, $.flatten)),
       "[",
       field("indices", $.indices),
       "]"

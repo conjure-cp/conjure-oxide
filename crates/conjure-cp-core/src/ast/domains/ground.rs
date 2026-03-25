@@ -285,16 +285,38 @@ impl GroundDomain {
         }
     }
 
+    /// Get the length of this domain as `usize`
     pub fn len_usize(&self) -> Result<usize, DomainOpError> {
         self.length()
             .and_then(|len| len.try_into().map_err(|_| DomainOpError::TooLarge))
     }
 
-    pub fn set_cardinality(&self) -> Option<(UInt, UInt)> {
+    /// Get the length of this domain as a positive signed integer
+    pub fn len_signed(&self) -> Result<Int, DomainOpError> {
+        self.length()
+            .and_then(|len| len.try_into().map_err(|_| DomainOpError::TooLarge))
+    }
+
+    /// If this is a set domain, get its (min, max) cardinality
+    pub fn set_cardinality(&self) -> Result<(UInt, UInt), DomainOpError> {
         let GroundDomain::Set(attr, inner_dom) = self else {
-            return None;
+            return Err(DomainOpError::WrongType);
         };
-        todo!()
+        let inner_dom_sz: UInt = inner_dom
+            .length()?
+            .try_into()
+            .map_err(|_| DomainOpError::TooLarge)?;
+        let low = attr.size.low().copied().unwrap_or(0);
+        let high = attr.size.high().copied().unwrap_or(inner_dom_sz);
+        Ok((low, high))
+    }
+
+    /// If this is a set domain, get its (min, max) cardinality as positive signed integers
+    pub fn set_cardinality_signed(&self) -> Result<(Int, Int), DomainOpError> {
+        let (min, max) = self.set_cardinality()?;
+        let imin: Int = min.try_into().map_err(|_| DomainOpError::TooLarge)?;
+        let imax: Int = max.try_into().map_err(|_| DomainOpError::TooLarge)?;
+        Ok((imin, imax))
     }
 
     pub fn contains(&self, lit: &Literal) -> Result<bool, DomainOpError> {

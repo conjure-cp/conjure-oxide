@@ -2,6 +2,7 @@ use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 use std::hash::Hash;
+use std::num::TryFromIntError;
 use ustr::Ustr;
 
 use super::{
@@ -567,6 +568,22 @@ impl TryFrom<&Literal> for bool {
 impl From<i32> for Literal {
     fn from(i: i32) -> Self {
         Literal::Int(i)
+    }
+}
+
+impl TryFrom<u32> for Literal {
+    type Error = TryFromIntError;
+
+    fn try_from(value: u32) -> Result<Self, Self::Error> {
+        Ok(Literal::Int(value.try_into()?))
+    }
+}
+
+impl TryFrom<usize> for Literal {
+    type Error = TryFromIntError;
+
+    fn try_from(value: usize) -> Result<Self, Self::Error> {
+        Ok(Literal::Int(value.try_into()?))
     }
 }
 

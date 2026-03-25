@@ -1,20 +1,32 @@
 use syn::visit_mut::VisitMut;
 use syn::{
-    GenericArgument, Ident, PathArguments, ReturnType, Type, parse_quote, punctuated::Punctuated,
+    GenericArgument, Ident, PathArguments, ReturnType, Type, TypePath, parse_quote,
+    punctuated::Punctuated,
 };
 
-/// Check whether a type AST contains a reference to a specific ident (the generic param).
+pub fn type_is_ident(ty: &Type, ident: &Ident) -> bool {
+    match ty {
+        Type::Path(tp) => type_path_is_ident(tp, ident),
+        _ => false,
+    }
+}
+
+/// Check whether a type path *is* exactly a given ident
+pub fn type_path_is_ident(tp: &TypePath, ident: &Ident) -> bool {
+    tp.qself.is_none()
+        && tp.path.segments.len() == 1
+        && tp.path.segments[0].ident == *ident
+        && tp.path.segments[0].arguments.is_empty()
+}
+
+/// Check whether a type AST contains a reference to a specific ident
 pub fn type_contains_ident(ty: &Type, ident: &Ident) -> bool {
     match ty {
         Type::Path(tp) => {
-            // Check if it's just the ident itself (e.g. `T`)
-            if tp.qself.is_none()
-                && tp.path.segments.len() == 1
-                && tp.path.segments[0].ident == *ident
-                && tp.path.segments[0].arguments.is_empty()
-            {
+            if type_path_is_ident(tp, ident) {
                 return true;
             }
+
             // Check type arguments recursively (e.g. `Vec<T>`, `Option<Vec<T>>`)
             tp.path.segments.iter().any(|seg| {
                 if seg.ident == *ident {
@@ -68,12 +80,7 @@ fn build_serde_as_type_inner(
     }
 
     match ty {
-        Type::Path(tp)
-            if tp.qself.is_none()
-                && tp.path.segments.len() == 1
-                && tp.path.segments[0].ident == *ident
-                && tp.path.segments[0].arguments.is_empty() =>
-        {
+        Type::Path(tp) if type_path_is_ident(tp, ident) => {
             parse_quote!(#replacement)
         }
         Type::Path(tp) => {

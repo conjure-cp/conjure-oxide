@@ -12,7 +12,7 @@ use syn::{
     TypePath, parenthesized, parse::Parse, parse::ParseStream, parse_macro_input,
 };
 
-use crate::util::rename_ident_in_impl;
+use crate::util::{rename_ident_in_impl, type_is_ident};
 use util::{build_serde_as_type, rename_fn, rename_ident_in_fn, type_contains_ident};
 
 struct RuleSetAndPriority {
@@ -524,14 +524,20 @@ fn generate_struct_def(
                     let field_ty = &f.ty;
 
                     if type_contains_ident(&f.ty, &generic_param_ident) {
-                        collect_children_exprs.push(quote! {
-                            children.extend(
-                                ::conjure_cp::representation::_dependencies::uniplate::Biplate::<#generic_param_ident>::children_bi(&self.#field_ident)
-                            );
-                        });
-                        biplate_bounds.push(quote! {
-                            #field_ty: ::conjure_cp::representation::_dependencies::uniplate::Biplate<#generic_param_ident>
-                        });
+                        if type_is_ident(&f.ty, &generic_param_ident) {
+                            collect_children_exprs.push(quote! {
+                                children.push_back(self.#field_ident.clone());
+                            });
+                        } else {
+                            collect_children_exprs.push(quote! {
+                                children.extend(
+                                    ::conjure_cp::representation::_dependencies::uniplate::Biplate::<#generic_param_ident>::children_bi(&self.#field_ident)
+                                );
+                            });
+                            biplate_bounds.push(quote! {
+                                #field_ty: ::conjure_cp::representation::_dependencies::uniplate::Biplate<#generic_param_ident>
+                            });
+                        }
 
                         let serde_as_ty =
                             build_serde_as_type(field_ty, &generic_param_ident, "ReprStateSerde");
@@ -564,14 +570,20 @@ fn generate_struct_def(
 
                     if type_contains_ident(&f.ty, &generic_param_ident) {
                         let index = syn::Index::from(idx);
-                        collect_children_exprs.push(quote! {
-                            children.extend(
-                                ::conjure_cp::representation::_dependencies::uniplate::Biplate::<#generic_param_ident>::children_bi(&self.#index)
-                            );
-                        });
-                        biplate_bounds.push(quote! {
-                            #field_ty: ::conjure_cp::representation::_dependencies::uniplate::Biplate<#generic_param_ident>
-                        });
+                        if type_is_ident(&f.ty, &generic_param_ident) {
+                            collect_children_exprs.push(quote! {
+                                children.push_back(self.#index.clone());
+                            });
+                        } else {
+                            collect_children_exprs.push(quote! {
+                                children.extend(
+                                    ::conjure_cp::representation::_dependencies::uniplate::Biplate::<#generic_param_ident>::children_bi(&self.#index)
+                                );
+                            });
+                            biplate_bounds.push(quote! {
+                                #field_ty: ::conjure_cp::representation::_dependencies::uniplate::Biplate<#generic_param_ident>
+                            });
+                        }
 
                         let serde_as_ty =
                             build_serde_as_type(field_ty, &generic_param_ident, "ReprStateSerde");

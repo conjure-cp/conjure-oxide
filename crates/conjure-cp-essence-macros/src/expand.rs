@@ -14,7 +14,7 @@ use tree_sitter::Node;
 pub fn expand_expr(essence: &TokenTree) -> Result<TokenStream> {
     let src = to_src(essence);
     let (tree, source_code) =
-        get_tree(&src).ok_or(Error::new(essence.span(), "Could not parse Essence AST"))?;
+        get_tree(&src).map_err(|e| Error::new(essence.span(), e.to_string()))?;
     let root = tree.root_node();
 
     // Get top level expressions
@@ -42,8 +42,7 @@ pub fn expand_expr(essence: &TokenTree) -> Result<TokenStream> {
 pub fn expand_expr_vec(tt: &TokenTree) -> Result<TokenStream> {
     let mut ans: Vec<TokenStream> = Vec::new();
     let src = to_src(tt);
-    let (tree, source_code) =
-        get_tree(&src).ok_or(Error::new(tt.span(), "Could not parse Essence AST"))?;
+    let (tree, source_code) = get_tree(&src).map_err(|e| Error::new(tt.span(), e.to_string()))?;
     let root = tree.root_node();
 
     let query = query_toplevel(&root, &node_is_expression);

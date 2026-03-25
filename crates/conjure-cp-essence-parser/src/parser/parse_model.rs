@@ -67,14 +67,7 @@ pub fn parse_essence_with_context_and_map(
     context: Arc<RwLock<Context<'static>>>,
     errors: &mut Vec<RecoverableParseError>,
 ) -> Result<Option<(Model, SourceMap)>, FatalParseError> {
-    let (tree, source_code) = match get_tree(src) {
-        Some(tree) => tree,
-        None => {
-            return Err(FatalParseError::TreeSitterError(
-                "Failed to parse source code".to_string(),
-            ));
-        }
-    };
+    let (tree, source_code) = get_tree(src)?;
 
     if tree.root_node().has_error() {
         detect_syntactic_errors(src, &tree, errors);

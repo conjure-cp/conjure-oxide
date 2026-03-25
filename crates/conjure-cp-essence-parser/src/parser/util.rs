@@ -2,6 +2,7 @@ use tree_sitter::{Node, Parser, Tree};
 use tree_sitter_essence::LANGUAGE;
 
 use super::traversal::WalkDFS;
+use crate::FatalParseError;
 use crate::diagnostics::source_map::SourceMap;
 use crate::errors::RecoverableParseError;
 use conjure_cp_core::ast::SymbolTablePtr;
@@ -67,34 +68,37 @@ pub enum TypecheckingContext {
 ///
 /// NOTE: The new source code may be different from the original source code.
 ///       See implementation for details.
-pub fn get_tree(src: &str) -> Option<(Tree, String)> {
+pub fn get_tree(src: &str) -> Result<(Tree, String), FatalParseError> {
     let mut parser = Parser::new();
     parser.set_language(&LANGUAGE.into()).unwrap();
+    let tree = parser.parse(src, None).unwrap();
 
-    parser.parse(src, None).and_then(|tree| {
-        let root = tree.root_node();
-        if root.is_error() {
-            return None;
-        }
+    let root = tree.root_node();
+    if root.is_error() {
+        return Err(FatalParseError::TreeSitterError(root.to_string()));
+    }
 
-        let children: Vec<_> = named_children(&root).collect();
-        let first_child = children.first()?;
+    let children: Vec<_> = named_children(&root).collect();
+    let first_child = children
+        .first()
+        .ok_or(FatalParseError::TreeSitterError(format!(
+            "{root} had no sub-expressions"
+        )))?;
 
-        // HACK: Tree-sitter can only parse a complete program from top to bottom, not an individual bit of syntax.
-        // See: https://github.com/tree-sitter/tree-sitter/issues/711 and linked issues.
-        // However, we can use a dummy _FRAGMENT_EXPRESSION prefix (which we insert as necessary)
-        // to trick the parser into accepting an isolated expression.
-        // This way we can parse an isolated expression and it is only slightly cursed :)
-        if first_child.is_error() {
-            if src.starts_with("_FRAGMENT_EXPRESSION") {
-                None
-            } else {
-                get_tree(&format!("_FRAGMENT_EXPRESSION {src}"))
-            }
+    // HACK: Tree-sitter can only parse a complete program from top to bottom, not an individual bit of syntax.
+    // See: https://github.com/tree-sitter/tree-sitter/issues/711 and linked issues.
+    // However, we can use a dummy _FRAGMENT_EXPRESSION prefix (which we insert as necessary)
+    // to trick the parser into accepting an isolated expression.
+    // This way we can parse an isolated expression and it is only slightly cursed :)
+    if first_child.is_error() {
+        if src.starts_with("_FRAGMENT_EXPRESSION") {
+            Err(FatalParseError::TreeSitterError(first_child.to_string()))
         } else {
-            Some((tree, src.to_string()))
+            get_tree(&format!("_FRAGMENT_EXPRESSION {src}"))
         }
-    })
+    } else {
+        Ok((tree, src.to_string()))
+    }
 }
 
 /// Get the named children of a node

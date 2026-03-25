@@ -38,6 +38,12 @@ impl From<Moo<GroundDomain>> for DomainPtr {
     }
 }
 
+impl From<&Moo<GroundDomain>> for DomainPtr {
+    fn from(value: &Moo<GroundDomain>) -> Self {
+        Moo::new(Domain::Ground(value.clone()))
+    }
+}
+
 impl TryFrom<DomainPtr> for Moo<GroundDomain> {
     type Error = DomainOpError;
 
@@ -60,6 +66,12 @@ impl TryFrom<DomainPtr> for GroundDomain {
 impl From<Moo<UnresolvedDomain>> for DomainPtr {
     fn from(value: Moo<UnresolvedDomain>) -> Self {
         Moo::new(Domain::Unresolved(value))
+    }
+}
+
+impl From<&Moo<UnresolvedDomain>> for DomainPtr {
+    fn from(value: &Moo<UnresolvedDomain>) -> Self {
+        Moo::new(Domain::Unresolved(value.clone()))
     }
 }
 
