@@ -180,14 +180,17 @@ fn needs_representation(name: &Name, symbols: &SymbolTable) -> bool {
 fn domain_needs_representation(domain: &GroundDomain) -> bool {
     // very simple implementation for nows
     match domain {
-        GroundDomain::Bool | GroundDomain::Int(_) => false,
-        GroundDomain::Matrix(_, _) => false, // we special case these elsewhere
+        GroundDomain::Bool
+        | GroundDomain::Int(_)
+        | GroundDomain::Matrix(_, _)
+        | GroundDomain::Empty(_)
+        | GroundDomain::EnumeratedType(_, _)
+        | GroundDomain::UnnamedType(_) => false,
         GroundDomain::Set(_, _)
         | GroundDomain::MSet(_, _)
         | GroundDomain::Tuple(_)
         | GroundDomain::Record(_)
         | GroundDomain::Function(_, _, _) => true,
-        GroundDomain::Empty(_) => false,
     }
 }
 

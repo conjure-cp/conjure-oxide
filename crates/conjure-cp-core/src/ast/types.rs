@@ -3,7 +3,7 @@ use polyquine::Quine;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 
-use crate::ast::enumerated::EnumeratedType;
+use crate::ast::{enumerated::EnumeratedType, pretty::pretty_vec};
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, Hash, Quine)]
 pub enum ReturnType {
@@ -15,8 +15,8 @@ pub enum ReturnType {
     Tuple(Vec<ReturnType>),
     Record(Vec<ReturnType>),
     Function(Box<ReturnType>, Box<ReturnType>),
-    EnumeratedType(EnumeratedType),
-    UnnamedType(u32),
+    EnumeratedType,
+    UnnamedType,
 
     /// An unknown type
     ///
@@ -53,6 +53,8 @@ impl Display for ReturnType {
                 write!(f, "function ({ty1} --> {ty2})")
             }
             ReturnType::Unknown => write!(f, "?"),
+            ReturnType::EnumeratedType => write!(f, "enumerated type"),
+            ReturnType::UnnamedType => write!(f, "unnamed type"),
         }
     }
 }

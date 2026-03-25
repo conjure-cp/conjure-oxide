@@ -71,8 +71,8 @@ pub enum GroundDomain {
     /// A function with a domain and range
     Function(FuncAttr, Moo<GroundDomain>, Moo<GroundDomain>),
     /// An enumerated type
-    EnumeratedType(EnumeratedType, Vec<Range<u32>>),
-    /// An enumerated type
+    EnumeratedType(EnumeratedType, Vec<Range<Name>>),
+    /// An unnamed type
     UnnamedType(u32),
 }
 
@@ -293,25 +293,23 @@ impl GroundDomain {
                     return Ok(e.variants.len() as u64);
                 }
 
+                // TODO: Fix
                 let mut length = 0;
 
-                let low = ranges[0].low().unwrap_or(&0);
-                length += (ranges[0].high().unwrap() - low) as u64;
-
-                for range in ranges {
-                    if let Some(range_length) = range.length() {
-                        length += range_length as u64;
-                    } else {
-                        length += e.variants.len() as u64 - *range.low().unwrap() as u64;
-                    }
-                }
+                // let low = ranges[0].low().unwrap_or(&0);
+                // length += (ranges[0].high().unwrap() - low) as u64;
+                //
+                // for range in ranges {
+                //     if let Some(range_length) = range.length() {
+                //         length += range_length as u64;
+                //     } else {
+                //         length += e.variants.len() as u64 - *range.low().unwrap() as u64;
+                //     }
+                // }
 
                 Ok(length)
             }
-            GroundDomain::UnnamedType(range) => match range.length() {
-                Some(len) => Ok(len as u64),
-                None => Err(DomainOpError::Unbounded),
-            },
+            GroundDomain::UnnamedType(size) => Ok(*size as u64),
         }
     }
 
@@ -968,9 +966,9 @@ impl Typeable for GroundDomain {
             GroundDomain::Function(_, dom, cdom) => {
                 ReturnType::Function(Box::new(dom.return_type()), Box::new(cdom.return_type()))
             }
-            GroundDomain::EnumeratedType(e, _) => ReturnType::EnumeratedType(*e),
+            GroundDomain::EnumeratedType(e, _) => ReturnType::EnumeratedType(e.clone()),
             // TODO: Ensure bounded range on type level
-            GroundDomain::UnnamedType(range) => ReturnType::UnnamedType(range.length().unwrap()),
+            GroundDomain::UnnamedType(size) => ReturnType::UnnamedType(*size),
         }
     }
 }
@@ -1018,6 +1016,18 @@ impl Display for GroundDomain {
             }
             GroundDomain::Function(attribute, domain, codomain) => {
                 write!(f, "function {} {} --> {} ", attribute, domain, codomain)
+            }
+            GroundDomain::EnumeratedType(e, range) => {
+                let variants: Vec<_> = e
+                    .variants
+                    .iter()
+                    .filter(|v| range.iter().any(|r| r.contains(v)))
+                    .collect();
+
+                write!(f, "enum variants {}", pretty_vec(&variants))
+            }
+            GroundDomain::UnnamedType(size) => {
+                write!(f, "unnamed type of size {}", &size)
             }
         }
     }

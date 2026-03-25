@@ -270,6 +270,8 @@ fn typecheck_variable(decl: &DeclarationPtr, context: TypecheckingContext) -> Op
         GroundDomain::Record(_) => "record",
         GroundDomain::Function(_, _, _) => "function",
         GroundDomain::Empty(_) => "empty",
+        GroundDomain::EnumeratedType(_, _) => "enum",
+        GroundDomain::UnnamedType(_) => "unnamed",
     };
 
     // If types match, no error

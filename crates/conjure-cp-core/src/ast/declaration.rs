@@ -1,3 +1,6 @@
+use crate::ast::Domain;
+use crate::ast::enumerated::EnumeratedType;
+
 use super::categories::{Category, CategoryOf};
 use super::name::Name;
 use super::serde::{DefaultWithId, HasId, IdPtr, ObjId, PtrAsInner};
@@ -276,6 +279,20 @@ impl DeclarationPtr {
         DeclarationPtr::new(entry.name, kind)
     }
 
+    /// Creates a new enumerated type declaration
+    /// TODO: Example
+    pub fn new_enumerated(name: Name, variants: Vec<Name>) -> DeclarationPtr {
+        let kind = DeclarationKind::EnumeratedType(EnumeratedType { variants });
+        DeclarationPtr::new(name, kind)
+    }
+
+    /// Creates a new unnamed type declaration
+    /// TODO: Example
+    pub fn new_unnamed(name: Name, size: u32) -> DeclarationPtr {
+        let kind = DeclarationKind::UnnamedType(size);
+        DeclarationPtr::new(name, kind)
+    }
+
     /**********************************************/
     /*        Declaration accessor methods        */
     /**********************************************/
@@ -303,6 +320,8 @@ impl DeclarationPtr {
             DeclarationKind::Given(domain) => Some(domain.clone()),
             DeclarationKind::Quantified(inner) => Some(inner.domain.clone()),
             DeclarationKind::RecordField(domain) => Some(domain.clone()),
+            DeclarationKind::EnumeratedType(e) => todo!(),
+            DeclarationKind::UnnamedType(size) => todo!(),
         }
     }
 
@@ -442,6 +461,54 @@ impl DeclarationPtr {
         .ok()
     }
 
+    /// This declaration as an enumerated type, if it is one.
+    pub fn as_enumerated_type(&self) -> Option<MappedRwLockReadGuard<'_, EnumeratedType>> {
+        RwLockReadGuard::try_map(self.read(), |x| {
+            if let DeclarationKind::EnumeratedType(e) = &x.kind {
+                Some(e)
+            } else {
+                None
+            }
+        })
+        .ok()
+    }
+
+    /// This declaration as a mutable enumerated type, if it is one.
+    pub fn as_enumerated_type_mut(&mut self) -> Option<MappedRwLockWriteGuard<'_, EnumeratedType>> {
+        RwLockWriteGuard::try_map(self.write(), |x| {
+            if let DeclarationKind::EnumeratedType(e) = &mut x.kind {
+                Some(e)
+            } else {
+                None
+            }
+        })
+        .ok()
+    }
+
+    /// This declaration as an unnamed type, if it is one.
+    pub fn as_unnamed_type(&self) -> Option<MappedRwLockReadGuard<'_, u32>> {
+        RwLockReadGuard::try_map(self.read(), |x| {
+            if let DeclarationKind::UnnamedType(e) = &x.kind {
+                Some(e)
+            } else {
+                None
+            }
+        })
+        .ok()
+    }
+
+    /// This declaration as a mutable unnamed type, if it is one.
+    pub fn as_unnamed_type_mut(&mut self) -> Option<MappedRwLockWriteGuard<'_, u32>> {
+        RwLockWriteGuard::try_map(self.write(), |x| {
+            if let DeclarationKind::UnnamedType(e) = &mut x.kind {
+                Some(e)
+            } else {
+                None
+            }
+        })
+        .ok()
+    }
+
     /// Changes the name in this declaration, returning the old one.
     ///
     /// # Examples
@@ -564,6 +631,8 @@ impl CategoryOf for DeclarationPtr {
             DeclarationKind::Given(_) => Category::Parameter,
             DeclarationKind::Quantified(..) => Category::Quantified,
             DeclarationKind::RecordField(_) => Category::Bottom,
+            DeclarationKind::EnumeratedType(_) => todo!(),
+            DeclarationKind::UnnamedType(_) => todo!(),
         }
     }
 }
@@ -598,6 +667,8 @@ impl Typeable for DeclarationPtr {
             DeclarationKind::Given(domain) => domain.return_type(),
             DeclarationKind::Quantified(inner) => inner.domain.return_type(),
             DeclarationKind::RecordField(domain) => domain.return_type(),
+            DeclarationKind::EnumeratedType(_) => todo!(),
+            DeclarationKind::UnnamedType(_) => todo!(),
         }
     }
 }
@@ -772,6 +843,9 @@ fn biplate_declaration_kind_references(
                 }),
             )
         }
+
+        DeclarationKind::EnumeratedType(_) => todo!(),
+        DeclarationKind::UnnamedType(_) => todo!(),
     }
 }
 
@@ -866,6 +940,12 @@ pub enum DeclarationKind {
     /// A named field inside a record type.
     /// e.g. A, B in record{A: int(0..1), B: int(0..2)}
     RecordField(DomainPtr),
+
+    /// An enumerated type.
+    EnumeratedType(EnumeratedType),
+
+    /// An unnamed type.
+    UnnamedType(u32),
 }
 
 #[serde_as]

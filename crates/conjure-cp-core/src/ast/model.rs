@@ -419,6 +419,8 @@ impl Display for Model {
                 DeclarationKind::RecordField(_) => {
                     writeln!(f)?;
                 }
+                DeclarationKind::EnumeratedType(_) => todo!(),
+                DeclarationKind::UnnamedType(_) => todo!(),
             }
         }
 

@@ -3,8 +3,9 @@ use super::ground::GroundDomain;
 use super::range::Range;
 use super::unresolved::{IntVal, UnresolvedDomain};
 use crate::ast::domains::attrs::MSetAttr;
+use crate::ast::enumerated::EnumeratedType;
 use crate::ast::{
-    DeclarationPtr, DomainOpError, Expression, FuncAttr, Literal, Moo, RecordEntry,
+    DeclarationPtr, DomainOpError, Expression, FuncAttr, Literal, Moo, Name, RecordEntry,
     RecordEntryGround, Reference, ReturnType, Typeable,
 };
 use itertools::Itertools;
@@ -245,6 +246,14 @@ impl Domain {
             attrs.into(),
             dom,
             cdom,
+        ))))
+    }
+
+    /// Create a new enumerated type domain
+    pub fn enumerated(ty: DeclarationPtr, ranges: Vec<Range<Name>>) -> DomainPtr {
+        let ty = EnumeratedType { variants };
+        Moo::new(Domain::Ground(Moo::new(GroundDomain::EnumeratedType(
+            ty, ranges,
         ))))
     }
 

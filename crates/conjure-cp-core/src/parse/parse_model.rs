@@ -11,6 +11,7 @@ use crate::ast::Moo;
 use crate::ast::abstract_comprehension::AbstractComprehensionBuilder;
 use crate::ast::ac_operators::ACOperatorKind;
 use crate::ast::comprehension::ComprehensionBuilder;
+use crate::ast::enumerated::EnumeratedType;
 use crate::ast::records::RecordValue;
 use crate::ast::{
     AbstractLiteral, Atom, DeclarationPtr, Domain, Expression, FuncAttr, IntVal, JectivityAttr,
@@ -79,6 +80,11 @@ pub fn model_from_json(str: &str, context: Arc<RwLock<Context<'static>>>) -> Res
                             valid_decl = true;
                             break;
                         }
+                        "LettingDomainDefnEnum" => {
+                            parse_enum(value, &scope)?;
+                            valid_decl = true;
+                            break;
+                        }
                         _ => continue,
                     }
                 }
@@ -112,13 +118,7 @@ fn parse_variable(v: &JsonValue, symtab: &mut SymbolTable) -> Result<()> {
         .as_str()
         .ok_or(error!("FindOrGiven[0] is not a string"))?;
 
-    let name = arr[1]
-        .as_object()
-        .ok_or(error!("FindOrGiven[1] is not an object"))?["Name"]
-        .as_str()
-        .ok_or(error!("FindOrGiven[1].Name is not a string"))?;
-
-    let name = Name::User(Ustr::from(name));
+    let name = parse_name(&arr[1])?;
 
     let domain = arr[2]
         .as_object()
@@ -144,12 +144,8 @@ fn parse_variable(v: &JsonValue, symtab: &mut SymbolTable) -> Result<()> {
 
 fn parse_letting(v: &JsonValue, scope: &SymbolTablePtr) -> Result<()> {
     let arr = v.as_array().ok_or(error!("Letting is not an array"))?;
-    let name = arr[0]
-        .as_object()
-        .ok_or(error!("Letting[0] is not an object"))?["Name"]
-        .as_str()
-        .ok_or(error!("Letting[0].Name is not a string"))?;
-    let name = Name::User(Ustr::from(name));
+    let name = parse_name(&arr[0])?;
+
     // value letting
     if let Ok(value) = parse_expression(&arr[1], scope) {
         let mut symtab = scope.write();
@@ -180,6 +176,29 @@ fn parse_letting(v: &JsonValue, scope: &SymbolTablePtr) -> Result<()> {
     }
 }
 
+fn parse_enum(v: &JsonValue, scope: &SymbolTablePtr) -> Result<()> {
+    let arr = v.as_array().ok_or(error!("Letting is not an array"))?;
+    let name = parse_name(&arr[0])?;
+
+    let mut variants = Vec::new();
+    let definition = arr[1]
+        .as_array()
+        .ok_or(error!("LettingDomainDefnEnum is not an array"))?;
+    for v in definition.iter() {
+        let name = parse_name(v)?;
+        variants.push(name);
+    }
+
+    scope
+        .write()
+        .insert(DeclarationPtr::new_enumerated(name.clone(), variants))
+        .ok_or(Error::Parse(format!(
+            "Could not add {name} to symbol table as it already exists"
+        )))?;
+
+    Ok(())
+}
+
 fn parse_domain(
     domain_name: &str,
     domain_value: &JsonValue,
@@ -189,15 +208,10 @@ fn parse_domain(
         "DomainInt" => Ok(parse_int_domain(domain_value, symbols)?),
         "DomainBool" => Ok(Domain::bool()),
         "DomainReference" => {
-            let name = Name::user(
-                domain_value
-                    .as_array()
-                    .ok_or(error!("DomainReference is not an array"))?[0]
-                    .as_object()
-                    .ok_or(error!("DomainReference[0] is not an object"))?["Name"]
-                    .as_str()
-                    .ok_or(error!("DomainReference[0].Name is not a string"))?,
-            );
+            let arr = domain_value
+                .as_array()
+                .ok_or(error!("DomainReference is not an array"))?;
+            let name = parse_name(&arr[0])?;
             let ptr = symbols
                 .lookup(&name)
                 .ok_or(error!(format!("Name {name} not found")))?;
@@ -329,13 +343,7 @@ fn parse_domain(
 
             for item in domain_value {
                 //collect the name of the record field
-                let name = item[0]
-                    .as_object()
-                    .ok_or(error!("FindOrGiven[1] is not an object"))?["Name"]
-                    .as_str()
-                    .ok_or(error!("FindOrGiven[1].Name is not a string"))?;
-
-                let name = Name::User(Ustr::from(name));
+                let name = parse_name(&item[0])?;
                 // then collect the domain of the record field
                 let domain = item[1]
                     .as_object()
@@ -428,10 +436,44 @@ fn parse_domain(
 
             Ok(Domain::function(attr, domain, codomain))
         }
+        "DomainEnum" => {
+            let scope = SymbolTablePtr::new();
+            *scope.write() = symbols.clone();
+
+            let arr = domain_value
+                .as_array()
+                .ok_or(Error::Parse("DomainEnum is not an array".to_owned()))?;
+
+            let name = parse_name(&arr[0])?;
+            let decl = symbols
+                .lookup(&name)
+                .ok_or(Error::Parse(format!("Enum {name} does not exist")))?;
+
+            let enumerated = decl.as_enumerated_type().ok_or(Error::Parse(format!(
+                "Declaration {name} is not an enumerated type"
+            )));
+
+            let ranges = parse_range_list(&arr[1], parse_name)?;
+
+            Ok(Domain::enumerated(todo!(), ranges))
+        }
         _ => Err(Error::Parse(
             "FindOrGiven[2] is an unknown object".to_owned(), // consider covered
         )),
     }
+}
+
+fn parse_name(v: &JsonValue) -> Result<Name> {
+    dbg!(v);
+    let name = v
+        .as_object()
+        .ok_or(error!("Value is not an object"))?
+        .get("Name")
+        .ok_or(error!("Name does not exist"))?
+        .as_str()
+        .ok_or(error!("Name is not a string"))?;
+
+    Ok(Name::User(Ustr::from(name)))
 }
 
 fn parse_size_attr(
@@ -524,49 +566,64 @@ fn parse_occur_attr(
 fn parse_int_domain(v: &JsonValue, symbols: &SymbolTable) -> Result<DomainPtr> {
     let scope = SymbolTablePtr::new();
     *scope.write() = symbols.clone();
-
-    let mut ranges = Vec::new();
-    let arr = v
+    let range_values = &v
         .as_array()
-        .ok_or(error!("DomainInt is not an array".to_owned()))?[1]
-        .as_array()
-        .ok_or(error!("DomainInt[1] is not an array".to_owned()))?;
-    for range in arr {
-        let range = range
-            .as_object()
-            .ok_or(error!("DomainInt[1] contains a non-object"))?
-            .iter()
-            .next()
-            .ok_or(error!("DomainInt[1] contains an empty object"))?;
-        match range.0.as_str() {
-            "RangeBounded" => {
-                let arr = range
-                    .1
-                    .as_array()
-                    .ok_or(error!("RangeBounded is not an array".to_owned()))?;
-                let mut nums = Vec::new();
-                for item in arr.iter() {
-                    let num = parse_expression_to_int_val(item, &scope)?;
-                    nums.push(num);
-                }
-                let lower = nums
-                    .first()
-                    .cloned()
-                    .ok_or(error!("RangeBounded lower bound missing"))?;
-                let upper = nums
-                    .get(1)
-                    .cloned()
-                    .ok_or(error!("RangeBounded upper bound missing"))?;
-                ranges.push(Range::Bounded(lower, upper));
-            }
-            "RangeSingle" => {
-                let num = parse_expression_to_int_val(range.1, &scope)?;
-                ranges.push(Range::Single(num));
-            }
-            _ => return throw_error!("DomainInt[1] contains an unknown object"),
-        }
-    }
+        .ok_or(Error::Parse("DomainInt[1] is not an array".to_owned()))?[1];
+    let ranges = parse_range_list(range_values, |v| parse_expression_to_int_val(v, &scope))?;
     Ok(Domain::int(ranges))
+}
+
+fn parse_range<T: Clone>(
+    v: &JsonValue,
+    // scope: &SymbolTablePtr,
+    parser: &impl Fn(&JsonValue) -> Result<T>,
+) -> Result<Range<T>> {
+    let range = v
+        .as_object()
+        .ok_or(error!("Range is not an bject"))?
+        .iter()
+        .next()
+        .ok_or(error!("Range is an empty object"))?;
+
+    match range.0.as_str() {
+        "RangeBounded" => {
+            let arr = range
+                .1
+                .as_array()
+                .ok_or(error!("RangeBounded is not an array".to_owned()))?;
+            let mut nums = Vec::new();
+            for item in arr.iter() {
+                let num = parser(item)?;
+                nums.push(num);
+            }
+            let lower = nums
+                .first()
+                .cloned()
+                .ok_or(error!("RangeBounded lower bound missing"))?;
+            let upper = nums
+                .get(1)
+                .cloned()
+                .ok_or(error!("RangeBounded upper bound missing"))?;
+            Ok(Range::Bounded(lower, upper))
+        }
+        "RangeSingle" => {
+            let num = parser(range.1)?;
+            Ok(Range::Single(num))
+        }
+        _ => throw_error!("DomainInt[1] contains an unknown object"),
+    }
+}
+
+fn parse_range_list<T: Clone>(
+    v: &JsonValue,
+    // scope: &SymbolTablePtr,
+    parser: impl Fn(&JsonValue) -> Result<T>,
+) -> Result<Vec<Range<T>>> {
+    v.as_array()
+        .ok_or(error!("Value is not an array".to_owned()))?
+        .iter()
+        .map(|r| parse_range(r, &parser))
+        .collect()
 }
 
 fn parse_expression_to_int_val(obj: &JsonValue, scope: &SymbolTablePtr) -> Result<IntVal> {
@@ -678,15 +735,8 @@ pub fn parse_expression(obj: &JsonValue, scope: &SymbolTablePtr) -> Result<Expre
             let ref_arr = refe["Reference"]
                 .as_array()
                 .ok_or_else(|| fail("Reference.as_array"))?;
-            let ref_obj = ref_arr
-                .first()
-                .and_then(|x| x.as_object())
-                .ok_or_else(|| fail("Reference[0].as_object"))?;
-            let name = ref_obj
-                .get("Name")
-                .and_then(|x| x.as_str())
-                .ok_or_else(|| fail("Reference[0].Name.as_str"))?;
-            let user_name = Name::User(Ustr::from(name));
+
+            let user_name = parse_name(&ref_arr[0])?;
 
             let declaration: DeclarationPtr = scope
                 .read()
@@ -789,15 +839,11 @@ fn parse_abs_record(abs_record: &Value, scope: &SymbolTablePtr) -> Result<Expres
         let entry = entry
             .as_array()
             .ok_or(error!("AbsLitRecord entry is not an array"))?;
-        let name = entry[0]
-            .as_object()
-            .ok_or(error!("AbsLitRecord field name is not an object"))?["Name"]
-            .as_str()
-            .ok_or(error!("AbsLitRecord field name is not a string"))?;
+
+        let name = parse_name(&entry[0])?;
 
         let value = parse_expression(&entry[1], scope)?;
 
-        let name = Name::User(Ustr::from(name));
         let rec_entry = RecordValue {
             name: name.clone(),
             value,

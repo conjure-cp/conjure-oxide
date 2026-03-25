@@ -468,7 +468,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
 
                 match x {
                     Lit::Int(_) | Lit::Bool(_) => {
-                        if lits.contains(x) {
+                        if lits.contains(&x) {
                             return Some(Lit::Bool(false));
                         } else {
                             lits.insert(x.clone());

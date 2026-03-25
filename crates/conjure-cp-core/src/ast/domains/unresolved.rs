@@ -164,6 +164,8 @@ impl IntVal {
                 _ => None,
             },
             DeclarationKind::DomainLetting(_) | DeclarationKind::RecordField(_) => None,
+            DeclarationKind::EnumeratedType(_) => todo!(),
+            DeclarationKind::UnnamedType(_) => todo!(),
         }
     }
 
@@ -197,6 +199,8 @@ impl IntVal {
                 DeclarationKind::DomainLetting(_) | DeclarationKind::RecordField(_) => bug!(
                     "Expected integer expression, given, or letting inside int domain; Got: {re}"
                 ),
+                DeclarationKind::EnumeratedType(_) => todo!(),
+                DeclarationKind::UnnamedType(_) => todo!(),
             },
         }
     }
