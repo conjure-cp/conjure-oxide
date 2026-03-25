@@ -1,285 +1,186 @@
-use conjure_cp::ast::Expression as Expr;
-use conjure_cp::ast::GroundDomain;
-use conjure_cp::ast::Moo;
-use conjure_cp::ast::SymbolTable;
-use conjure_cp::into_matrix_expr;
-use conjure_cp::matrix_expr;
+use crate::guard;
+use crate::representation::record_to_atom::RecordToAtom;
+use crate::utils::{is_record_lit, record_expr_entries};
+use conjure_cp::ast::{
+    Atom, Expression, HasDomain, Metadata, Moo, Name, RecordEntry, Reference, SymbolTable,
+};
+use conjure_cp::representation::ReprRule;
 use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
 };
+use conjure_cp::{bug, essence_expr, into_matrix_expr};
+use itertools::Itertools;
 
-use conjure_cp::ast::Atom;
-use conjure_cp::ast::Expression;
-use conjure_cp::ast::Literal;
-use conjure_cp::ast::Metadata;
-use conjure_cp::ast::Name;
-use conjure_cp::rule_engine::ApplicationError;
-use itertools::izip;
-
-//takes a safe index expression and converts it to an atom via the representation rules
+/// Indexing into a record variable
+/// e.g:
+/// ```plain
+/// x[a]
+/// ~>
+/// x_RecordToAtom_1
+/// ```
+/// where
+/// ```plain
+/// x: record { a : bool, b : int(0..9) }
+/// ```
 #[register_rule(("Base", 2000))]
-fn index_record_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
-    // annoyingly, let chaining only works in if-lets, not let-elses,otherwise I could avoid the
-    // indentation here!
-    if let Expr::SafeIndex(_, subject, indices) = expr
-        && let Expr::Atomic(_, Atom::Reference(decl)) = &**subject
-        && let Name::WithRepresentation(name, reprs) = &decl.name() as &Name
-    {
-        if reprs.first().is_none_or(|x| x.as_str() != "record_to_atom") {
+fn index_record_to_atom(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
+    let (subject, indices, safe) = match expr {
+        Expression::UnsafeIndex(_, subject, indices) => (subject, indices, false),
+        Expression::SafeIndex(_, subject, indices) => (subject, indices, true),
+        _ => return Err(RuleNotApplicable),
+    };
+
+    guard!(
+        let Expression::Atomic(_, Atom::Reference(re)) = &**subject &&
+        let Some(repr) = RecordToAtom::get_for(&re.ptr) &&
+        let Some(Expression::Atomic(_, Atom::Reference(idx_re))) = indices.first() &&
+        let Some((field_name, _)) = idx_re.ptr.as_record_field()
+        else {
             return Err(RuleNotApplicable);
         }
+    );
 
-        // tuples are always one dimensional
-        if indices.len() != 1 {
-            return Err(RuleNotApplicable);
-        }
+    let field_atom = repr
+        .elems
+        .get(&field_name)
+        .unwrap_or_else(|| bug!("field {} does not exist in {}", field_name, subject));
 
-        let repr = symbols
-            .get_representation(name, &["record_to_atom"])
-            .unwrap()[0]
-            .clone();
+    let lhs = Reference::from(field_atom.clone());
+    let rhs = &indices[1..];
 
-        let Some(GroundDomain::Record(_)) = decl.resolved_domain().as_deref() else {
-            return Err(RuleNotApplicable);
-        };
-
-        assert_eq!(
-            indices.len(),
-            1,
-            "record indexing is always one dimensional"
-        );
-
-        let index = indices[0].clone();
-
-        // during the conversion from unsafe index to safe index in bubbling
-        // we convert the field name to a literal integer for direct access
-        let Some(index) = index.into_literal() else {
-            return Err(RuleNotApplicable); // we don't support non-literal indices
-        };
-
-        let indices_as_name = Name::Represented(Box::new((
-            name.as_ref().clone(),
-            "record_to_atom".into(),
-            index.into(),
-        )));
-
-        let subject = repr.expression_down(symbols)?[&indices_as_name].clone();
-
-        Ok(Reduction::pure(subject))
-    } else {
-        Err(RuleNotApplicable)
-    }
-}
-
-#[register_rule(("Bubble", 8000))]
-fn record_index_to_bubble(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    // annoyingly, let chaining only works in if-lets, not let-elses,otherwise I could avoid the
-    // indentation here!
-    if let Expr::UnsafeIndex(_, subject, indices) = expr
-        && let Expr::Atomic(_, Atom::Reference(decl)) = &**subject
-        && let Name::WithRepresentation(_, reprs) = &decl.name() as &Name
-    {
-        if reprs.first().is_none_or(|x| x.as_str() != "record_to_atom") {
-            return Err(RuleNotApplicable);
-        }
-
-        let domain = subject
-            .domain_of()
-            .ok_or(ApplicationError::DomainError)?
-            .resolve()
-            .ok_or(ApplicationError::DomainError)?;
-
-        let GroundDomain::Record(elems) = domain.as_ref() else {
-            return Err(RuleNotApplicable);
-        };
-
-        assert_eq!(
-            indices.len(),
-            1,
-            "record indexing is always one dimensional"
-        );
-
-        let index = indices[0].clone();
-
-        let Expr::Atomic(_, Atom::Reference(decl)) = index else {
-            return Err(RuleNotApplicable);
-        };
-
-        let name: &Name = &decl.name();
-
-        // find what numerical index in elems matches the entry name
-        let Some(idx) = elems.iter().position(|x| &x.name == name) else {
-            return Err(RuleNotApplicable);
-        };
-
-        // converting to an integer for direct access
-        let idx = Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Int(idx as i32 + 1)));
-
-        let bubble_constraint = Moo::new(Expression::And(
-            Metadata::new(),
-            Moo::new(matrix_expr![
-                Expression::Leq(
-                    Metadata::new(),
-                    Moo::new(idx.clone()),
-                    Moo::new(Expression::Atomic(
-                        Metadata::new(),
-                        Atom::Literal(Literal::Int(elems.len() as i32))
-                    ))
-                ),
-                Expression::Geq(
-                    Metadata::new(),
-                    Moo::new(idx.clone()),
-                    Moo::new(Expression::Atomic(
-                        Metadata::new(),
-                        Atom::Literal(Literal::Int(1))
-                    ))
-                )
-            ]),
-        ));
-
-        let new_expr = Moo::new(Expression::SafeIndex(
-            Metadata::new(),
-            subject.clone(),
-            Vec::from([idx]),
-        ));
-
-        Ok(Reduction::pure(Expression::Bubble(
-            Metadata::new(),
-            new_expr,
-            bubble_constraint,
-        )))
-    } else {
-        Err(RuleNotApplicable)
-    }
-}
-
-// dealing with equality over 2 record variables
-#[register_rule(("Base", 2000))]
-fn record_equality(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    // annoyingly, let chaining only works in if-lets, not let-elses, otherwise I could avoid the
-    // indentation here!
-
-    // check if both sides are record variables
-    if let Expr::Eq(_, left, right) = expr
-        && let Expr::Atomic(_, Atom::Reference(decl)) = &**left
-        && let Name::WithRepresentation(_, reprs) = &decl.name() as &Name
-        && let Expr::Atomic(_, Atom::Reference(decl2)) = &**right
-        && let Name::WithRepresentation(_, reprs2) = &decl2.name() as &Name
-
-        // .. that have been represented with record_to_atom
-        && reprs.first().is_none_or(|x| x.as_str() == "record_to_atom")
-        && reprs2.first().is_none_or(|x| x.as_str() == "record_to_atom")
-        && let Some(domain) = decl.resolved_domain()
-        && let Some(domain2) = decl2.resolved_domain()
-
-        // .. and have record variable domains
-        && let GroundDomain::Record(entries) = domain.as_ref()
-        && let GroundDomain::Record(entries2) = domain2.as_ref()
-
-        // we only support equality over records of the same size
-        && entries.len() == entries2.len()
-
-        // assuming all record entry names must match for equality
-        && izip!(entries,entries2).all(|(entry1,entry2)| entry1.name == entry2.name)
-    {
-        let mut equality_constraints = vec![];
-        // unroll the equality into equality constraints for each field
-        for i in 0..entries.len() {
-            let left_elem = Expression::SafeIndex(
-                Metadata::new(),
-                Moo::clone(left),
-                vec![Expression::Atomic(
-                    Metadata::new(),
-                    Atom::Literal(Literal::Int((i + 1) as i32)),
-                )],
-            );
-            let right_elem = Expression::SafeIndex(
-                Metadata::new(),
-                Moo::clone(right),
-                vec![Expression::Atomic(
-                    Metadata::new(),
-                    Atom::Literal(Literal::Int((i + 1) as i32)),
-                )],
-            );
-
-            equality_constraints.push(Expression::Eq(
-                Metadata::new(),
-                Moo::new(left_elem),
-                Moo::new(right_elem),
-            ));
-        }
-
-        let new_expr = Expression::And(
-            Metadata::new(),
-            Moo::new(into_matrix_expr!(equality_constraints)),
-        );
-
+    if rhs.is_empty() {
+        Ok(Reduction::pure(lhs.into()))
+    } else if safe {
+        let new_expr = Expression::SafeIndex(Metadata::new(), Moo::new(lhs.into()), rhs.into());
         Ok(Reduction::pure(new_expr))
     } else {
-        Err(RuleNotApplicable)
+        let new_expr = Expression::UnsafeIndex(Metadata::new(), Moo::new(lhs.into()), rhs.into());
+        Ok(Reduction::pure(new_expr))
     }
 }
 
-// dealing with equality where the left is a record variable, and the right is a constant record
+/// Equality of two record variables
+/// e.g:
+/// ```plain
+/// x == y
+/// ~>
+/// x[a] == y[a] /\ x[b] == y[b]
+/// ```
+/// where
+/// ```plain
+/// x, y: record { a : bool, b : int(0..9) }
+/// ```
 #[register_rule(("Base", 2000))]
-fn record_to_const(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    if let Expr::Eq(_, left, right) = expr
-        && let Expr::Atomic(_, Atom::Reference(decl)) = &**left
-        && let Name::WithRepresentation(_, reprs) = &decl.name() as &Name
-        && reprs.first().is_none_or(|x| x.as_str() == "record_to_atom")
-    {
-        let domain = decl
-            .resolved_domain()
-            .ok_or(ApplicationError::DomainError)?;
-
-        let GroundDomain::Record(entries) = domain.as_ref() else {
-            return Err(RuleNotApplicable);
-        };
-
-        let Some(rhs_record_names) = crate::utils::constant_record_names(right.as_ref()) else {
-            return Err(RuleNotApplicable);
-        };
-
-        if entries.len() != rhs_record_names.len() {
+fn record_var_equality(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
+    guard!(
+        let Expression::Eq(_, left, right) = expr &&
+        let Expression::Atomic(_, Atom::Reference(decl)) = &**left &&
+        let Some(repr) = RecordToAtom::get_for(&decl.ptr) &&
+        let Expression::Atomic(_, Atom::Reference(decl2)) = &**right &&
+        let Some(repr2) = RecordToAtom::get_for(&decl2.ptr) &&
+        let Some(entries) = decl.domain_of().as_record() &&
+        let Some(entries2) = decl.domain_of().as_record()
+        else {
             return Err(RuleNotApplicable);
         }
+    );
 
-        for i in 0..entries.len() {
-            if entries[i].name != rhs_record_names[i] {
-                return Err(RuleNotApplicable);
-            }
-        }
-        let mut equality_constraints = vec![];
-        for i in 0..entries.len() {
-            let left_elem = Expression::SafeIndex(
-                Metadata::new(),
-                Moo::clone(left),
-                vec![Expression::Atomic(
-                    Metadata::new(),
-                    Atom::Literal(Literal::Int((i + 1) as i32)),
-                )],
-            );
-            let right_elem = Expression::SafeIndex(
-                Metadata::new(),
-                Moo::clone(right),
-                vec![Expression::Atomic(
-                    Metadata::new(),
-                    Atom::Literal(Literal::Int((i + 1) as i32)),
-                )],
-            );
-
-            equality_constraints.push(Expression::Eq(
-                Metadata::new(),
-                Moo::new(left_elem),
-                Moo::new(right_elem),
-            ));
-        }
-        let new_expr = Expression::And(
-            Metadata::new(),
-            Moo::new(into_matrix_expr!(equality_constraints)),
-        );
-        Ok(Reduction::pure(new_expr))
-    } else {
-        Err(RuleNotApplicable)
+    // TODO: clarify semantics; maybe this should just return false instead?
+    let valid = entries.len() == entries2.len();
+    if !valid {
+        bug!("equality on records with different shapes: {expr}")
     }
+    let names = entries
+        .iter()
+        .map(|RecordEntry { name, .. }| name)
+        .collect_vec();
+
+    let mut equality_constraints = vec![];
+    for name in names {
+        // we are literally iterating left's names, so if this fails, something is definitely broken
+        let f1 = repr
+            .field_ref(name)
+            .unwrap_or_else(|| bug!("record {left} has no field {name}"));
+
+        // TODO: rhs is different shape; should we fail, not apply, or evaluate to false?
+        let f2 = repr2
+            .field_ref(name)
+            .unwrap_or_else(|| bug!("equality on records with different shapes: {expr}"));
+
+        equality_constraints.push(essence_expr!(&f1 == &f2));
+    }
+
+    let new_expr = Expression::And(
+        Metadata::new(),
+        Moo::new(into_matrix_expr!(equality_constraints)),
+    );
+
+    Ok(Reduction::pure(new_expr))
+}
+
+/// Equality of record variable to record literal/expression
+/// e.g:
+/// ```plain
+/// x == { a: true, b: N + 1 }
+/// ~>
+/// x[a] == true /\ x[b] == N + 1
+/// ```
+/// where
+/// ```plain
+/// x, y: record { a : bool, b : int(0..9) }
+/// ```
+#[register_rule(("Base", 2000))]
+fn record_equality_var_to_lit(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
+    guard!(
+        let Expression::Eq(_, lhs, rhs) = expr &&
+        let Expression::Atomic(_, Atom::Reference(re)) = lhs.as_ref() &&
+        let Some(repr) = RecordToAtom::get_for(&re.ptr) &&
+        let Some(rhs_ents) = record_expr_entries(rhs)
+        else {
+            return Err(RuleNotApplicable);
+        }
+    );
+
+    // unroll the equality into equality constraints for each field
+    let mut equality_constraints = vec![];
+    for (name, expr) in rhs_ents {
+        // TODO: literal is different shape from the variable; should we fail, not apply, or evaluate to false?
+        let field = repr
+            .field_ref(name)
+            .unwrap_or_else(|| bug!("equality on records with different shapes: {expr}"));
+        equality_constraints.push(essence_expr!(&field == &expr));
+    }
+
+    let new_expr = Expression::And(
+        Metadata::new(),
+        Moo::new(into_matrix_expr!(equality_constraints)),
+    );
+
+    Ok(Reduction::pure(new_expr))
+}
+
+/// If we have a record literal on the left and variable on the right, swap them
+/// so the above rule can apply
+/// e.g:
+/// ```plain
+/// { ... } = x
+/// ~>
+/// x == { ... }
+/// ```
+#[register_rule(("Base", 2001))]
+fn record_equality_reorder(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
+    guard!(
+        let Expression::Eq(md, lit, var) = expr &&
+        let Expression::Atomic(_, Atom::Reference(re)) = var.as_ref() &&
+        is_record_lit(lit.as_ref())
+        else {
+            return Err(RuleNotApplicable);
+        }
+    );
+
+    Ok(Reduction::pure(Expression::Eq(
+        md.clone(),
+        var.clone(),
+        lit.clone(),
+    )))
 }

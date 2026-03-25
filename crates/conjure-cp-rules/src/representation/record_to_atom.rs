@@ -1,4 +1,5 @@
 use super::prelude::*;
+use conjure_cp::ast::Reference;
 use conjure_cp::ast::records::RecordValue;
 use std::collections::{HashMap, VecDeque};
 
@@ -6,6 +7,12 @@ register_representation!(
     RecordToAtom
     struct State<T> {
         pub elems: HashMap<Name, T>
+    }
+    impl State<DeclarationPtr> {
+        /// Get the variable representing a field of this record
+        pub fn field_ref(&self, name: &Name) -> Option<Reference> {
+            self.elems.get(name).cloned().map(Reference::from)
+        }
     }
     fn init(dom: DomainPtr) -> Result<State<DomainPtr>, ReprInitError> {
         let Some(ents) = dom.as_record() else {

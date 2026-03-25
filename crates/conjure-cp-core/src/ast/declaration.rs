@@ -486,6 +486,25 @@ impl DeclarationPtr {
         .ok()
     }
 
+    /// If this is a record field, get read locks on the field's name and domain
+    pub fn as_record_field(
+        &self,
+    ) -> Option<(
+        MappedRwLockReadGuard<'_, Name>,
+        MappedRwLockReadGuard<'_, DomainPtr>,
+    )> {
+        let name = self.name();
+        let dom = RwLockReadGuard::try_map(self.read(), |x| {
+            if let DeclarationKind::RecordField(domain) = &x.kind {
+                Some(domain)
+            } else {
+                None
+            }
+        })
+        .ok()?;
+        Some((name, dom))
+    }
+
     /// Changes the name in this declaration, returning the old one.
     ///
     /// # Examples

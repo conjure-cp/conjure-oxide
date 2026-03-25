@@ -292,8 +292,10 @@ pub fn register_representation(input: TokenStream) -> TokenStream {
         ReprStateType::Struct(item_struct, _) => {
             // get ident and body of the struct
             let ident = item_struct.ident.clone();
-            let prefixed_ident =
-                Ident::new(&format!("{}{}", prefix, ident), item_struct.ident.span());
+            let prefixed_ident = Ident::new(
+                &format!("{}{}", repr_name_str, ident),
+                item_struct.ident.span(),
+            );
             let tokens = generate_struct_def(item_struct, &prefixed_ident);
             (ident, tokens)
         }
@@ -315,7 +317,7 @@ pub fn register_representation(input: TokenStream) -> TokenStream {
         ReprStateType::Struct(..) => {
             // prefix user-defined struct's ident so it doesn't clash with anything
             Ident::new(
-                &format!("{}{}", prefix, user_state_ident),
+                &format!("{}{}", repr_name_str, user_state_ident),
                 user_state_ident.span(),
             )
         }
