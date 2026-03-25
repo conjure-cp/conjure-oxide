@@ -946,41 +946,6 @@ fn parse_comprehension(
     ))
 }
 
-// fn parse_in_expr_comprehension(
-//     scope: SymbolTablePtr,
-//     comprehension_value: &Value,
-//     gen_inner: &Value,
-// ) -> Result<Expression> {
-//     let fail = |stage: &str| -> Error {
-//         Error::Parse(format!(
-//             "Could not parse GenInExpr comprehension at stage `{stage}`"
-//         ))
-//     };
-
-//     let name = gen_inner
-//         .pointer("/0/Single/Name")
-//         .and_then(Value::as_str)
-//         .ok_or_else(|| fail("GenInExpr.pointer(/0/Single/Name).as_str"))?;
-//     let generator_expr = gen_inner
-//         .pointer("/1")
-//         .ok_or_else(|| fail("GenInExpr.pointer(/1)"))?;
-//     let expr =
-//         parse_expression(generator_expr, &scope).map_err(|_| fail("GenInExpr.parse_expression"))?;
-
-    // let comprehension =
-    //     AbstractComprehensionBuilder::new(&scope).new_expression_generator(expr, name.into());
-    // let return_expr_value = comprehension_value
-    //     .pointer("/0")
-    //     .ok_or_else(|| fail("comprehension_value.pointer(/0)"))?;
-    // let expr = parse_expression(return_expr_value, &comprehension.return_expr_symbols())
-    //     .map_err(|_| fail("GenInExpr.return_expr.parse_expression"))?;
-
-//     Ok(Expression::AbstractComprehension(
-//         Metadata::new(),
-//         Moo::new(comprehension.with_return_value(expr)),
-//     ))
-// }
-
 fn parse_bin_op(
     bin_op: &serde_json::Map<String, Value>,
     scope: &SymbolTablePtr,
