@@ -6,7 +6,10 @@ use super::{
     serde::{AsId, HasId},
 };
 use crate::bug;
-use crate::representation::{ReprResult, ReprRulePtr, ReprSelectError, ReprStateStored};
+use crate::representation::types::ReprGetOrInitResult;
+use crate::representation::{
+    ReferenceReprError, ReprError, ReprRulePtr, ReprSelectError, ReprStateStored,
+};
 use derivative::Derivative;
 use parking_lot::MappedRwLockReadGuard;
 use serde::{Deserialize, Serialize};
@@ -62,33 +65,100 @@ impl Reference {
         self.ptr.resolve_domain()
     }
 
-    /// Select the given representation for this reference, if it is initialised for
-    /// the underlying declaration
-    pub fn select_repr(&mut self, rule: ReprRulePtr) -> Result<ReprRulePtr, ReprSelectError> {
-        if let Some(repr) = self.repr {
+    /// Select the given representation for this reference, if it is currently unrepresented
+    /// and the representation exists for the underlying variable.
+    ///
+    /// # Errors
+    /// - [ReprSelectError::AlreadySelected] if a different representation is already selected for this reference
+    /// - [ReprSelectError::DoesNotExist] if the representation does not exist for this variable
+    ///
+    /// # Returns
+    /// State of the initialised representation
+    pub fn select_repr(
+        &mut self,
+        rule: ReprRulePtr,
+    ) -> Result<MappedRwLockReadGuard<'_, dyn ReprStateStored>, ReprSelectError> {
+        if let Some(repr) = self.repr
+            && repr != rule
+        {
             return Err(ReprSelectError::AlreadySelected(repr));
         }
         if !self.ptr.reprs().has_repr(rule) {
             return Err(ReprSelectError::DoesNotExist(self.ptr.clone(), rule.name()));
         }
         self.repr = Some(rule);
-        Ok(rule)
+        Ok(self.repr_state_unchecked())
     }
 
-    /// Select the given representation for this reference, initialising it if necessary
-    pub fn select_or_init_repr(&mut self, rule: ReprRulePtr) -> ReprResult {
-        let res = rule.init_if_not_exists(&mut self.ptr);
-        if res.is_ok() {
-            self.repr = Some(rule);
+    /// Select the given representation for this reference, initialising it if necessary.
+    /// Will fail if a different representation is already selected.
+    ///
+    /// # Errors
+    /// - [ReprSelectError] if a different representation is already selected for this reference
+    /// - [ReprInitError] | [ReprInstantiateError] if the representation could not be initialised
+    ///
+    /// # Returns
+    ///
+    /// `(state, symbols, constraints)`
+    /// where:
+    /// - `state` is an instance of the given representation
+    /// - `symbols` are new variables created by the representation
+    /// - `constraints` are new top-level constraints created by the representation
+    pub fn select_or_init_repr(
+        &mut self,
+        rule: ReprRulePtr,
+    ) -> ReprGetOrInitResult<'_, dyn ReprStateStored, ReferenceReprError> {
+        if let Some(repr) = self.repr
+            && repr != rule
+        {
+            return Err(ReprSelectError::AlreadySelected(repr).into());
         }
-        res
+        let (symbols, constraints) = rule.init_for_if_not_exists(&mut self.ptr)?;
+        self.repr = Some(rule);
+        let state = self.repr_state_unchecked();
+        Ok((state, symbols, constraints))
     }
 
-    /// If this reference has a representation selected, return its state
-    pub fn repr_state(&self) -> Option<MappedRwLockReadGuard<'_, dyn ReprStateStored>> {
+    /// Select the given representation for this reference, initialising it if necessary.
+    /// Will overwrite the existing selection.
+    ///
+    /// # Errors
+    /// - [ReprInitError] | [ReprInstantiateError] if the representation could not be initialised
+    ///
+    /// # Returns
+    ///
+    /// `(state, symbols, constraints)`
+    /// where:
+    /// - `state` is an instance of the given representation
+    /// - `symbols` are new variables created by the representation
+    /// - `constraints` are new top-level constraints created by the representation
+    pub fn update_or_init_repr(
+        &mut self,
+        rule: ReprRulePtr,
+    ) -> ReprGetOrInitResult<'_, dyn ReprStateStored, ReprError> {
+        let (symbols, constraints) = rule.init_for_if_not_exists(&mut self.ptr)?;
+        self.repr = Some(rule);
+        let state = self.repr_state_unchecked();
+        Ok((state, symbols, constraints))
+    }
+
+    /// If this reference has a representation selected, return `(rule, state)`
+    /// where
+    /// - `rule` is a pointer to the representation rule
+    /// - `state` is an instance of that representation
+    pub fn get_repr(
+        &self,
+    ) -> Option<(ReprRulePtr, MappedRwLockReadGuard<'_, dyn ReprStateStored>)> {
         let rule = self.repr?;
-        let res = self
-            .ptr
+        Some((rule, self.repr_state_unchecked()))
+    }
+
+    /// If this reference has a representation selected, return its state, otherwise crash
+    fn repr_state_unchecked(&self) -> MappedRwLockReadGuard<'_, dyn ReprStateStored> {
+        let rule = self
+            .repr
+            .unwrap_or_else(|| bug!("`{}` had no representation", self.name()));
+        self.ptr
             .maybe_map(|d| d.representations().get_by_rule(rule))
             .unwrap_or_else(|| {
                 bug!(
@@ -96,8 +166,7 @@ impl Reference {
                     rule.name(),
                     self.name()
                 )
-            });
-        Some(res)
+            })
     }
 
     /// Returns the expression behind a value-letting reference, if this is one.
