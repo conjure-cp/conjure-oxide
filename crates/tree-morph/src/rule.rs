@@ -58,7 +58,7 @@ use uniplate::Uniplate;
 ///     None // Never applicable
 /// }
 ///
-/// let engine = EngineBuilder::new()
+/// let mut engine = EngineBuilder::new()
 ///     .add_rule_group(rule_fns![my_rule_fn])
 ///     .build();
 /// let (result, _) = engine.morph(Term::A, ());
@@ -67,6 +67,7 @@ use uniplate::Uniplate;
 ///
 /// // Custom types can implement the Rule trait to allow more complex behaviour
 /// // Here a rule can be "toggled" to change whether it is applicable
+/// #[derive(Clone)]
 /// struct CustomRule(bool);
 ///
 /// impl Rule<Term, ()> for CustomRule {
@@ -79,13 +80,13 @@ use uniplate::Uniplate;
 ///     }
 /// }
 ///
-/// let engine = EngineBuilder::new()
+/// let mut engine = EngineBuilder::new()
 ///     .add_rule(CustomRule(false))
 ///     .build();
 /// let (result, _) = engine.morph(Term::A, ());
 /// assert_eq!(result, Term::A);
 ///
-/// let engine = EngineBuilder::new()
+/// let mut engine = EngineBuilder::new()
 ///     .add_rule(CustomRule(true))
 ///     .build();
 /// let (result, _) = engine.morph(Term::A, ());

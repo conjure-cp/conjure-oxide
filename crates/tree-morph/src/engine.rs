@@ -438,7 +438,7 @@ where
     /// );
     ///
     /// // Try with both rules in the same group, keeping track of the number of rule applications
-    /// let engine = EngineBuilder::new()
+    /// let mut engine = EngineBuilder::new()
     ///     .set_selector(select_panic)
     ///     .add_rule_group(rule_fns![rule_eval_mul, rule_expand_sqr])
     ///     .build();
@@ -447,7 +447,7 @@ where
     /// assert_eq!(num_applications, 4); // The `Sqr` is expanded first, causing duplicate work
     ///
     /// // Move the evaluation rule to an earlier group
-    /// let engine = EngineBuilder::new()
+    /// let mut engine = EngineBuilder::new()
     ///     .set_selector(select_panic)
     ///     .add_rule_group(rule_fns![rule_eval_mul])
     ///     .add_rule_group(rule_fns![rule_expand_sqr])

@@ -60,7 +60,7 @@ enum Command<T: Uniplate, M> {
 /// }
 ///
 /// // Start with the expression 'A' and a metadata value of 'false'
-/// let engine = EngineBuilder::new()
+/// let mut engine = EngineBuilder::new()
 ///     .add_rule_group(rule_fns![rule])
 ///     .build();
 /// let (result, meta) = engine.morph(Expr::A, false);
