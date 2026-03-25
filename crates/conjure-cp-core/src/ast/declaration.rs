@@ -463,8 +463,8 @@ impl DeclarationPtr {
     }
 
     /// This declaration as a mutable quantified expression, if it is one.
-    pub fn as_quantified_expr_mut(&mut self) -> Option<MappedRwLockReadGuard<'_, Expression>> {
-        RwLockReadGuard::try_map(self.read(), |x| {
+    pub fn as_quantified_expr_mut(&mut self) -> Option<MappedRwLockWriteGuard<'_, Expression>> {
+        RwLockWriteGuard::try_map(self.write(), |x| {
             if let DeclarationKind::QuantifiedExpr(expr) = &mut x.kind {
                 Some(expr)
             } else {
