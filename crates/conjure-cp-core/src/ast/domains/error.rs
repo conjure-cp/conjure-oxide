@@ -41,7 +41,7 @@ impl From<CombinatoricsError> for DomainOpError {
 }
 
 impl From<TryFromIntError> for DomainOpError {
-    fn from(value: TryFromIntError) -> Self {
+    fn from(_: TryFromIntError) -> Self {
         Self::OutOfBounds
     }
 }

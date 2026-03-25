@@ -290,7 +290,7 @@ impl GroundDomain {
             .and_then(|len| len.try_into().map_err(|_| DomainOpError::TooLarge))
     }
 
-    pub fn set_cardinality(&self) -> Option<(usize, usize)> {
+    pub fn set_cardinality(&self) -> Option<(UInt, UInt)> {
         let GroundDomain::Set(attr, inner_dom) = self else {
             return None;
         };

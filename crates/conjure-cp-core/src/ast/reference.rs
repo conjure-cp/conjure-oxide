@@ -6,7 +6,7 @@ use super::{
     serde::{AsId, HasId},
 };
 use crate::bug;
-use crate::representation::{ReprError, ReprResult, ReprRulePtr, ReprSelectError, ReprStateStored};
+use crate::representation::{ReprResult, ReprRulePtr, ReprSelectError, ReprStateStored};
 use derivative::Derivative;
 use parking_lot::MappedRwLockReadGuard;
 use serde::{Deserialize, Serialize};

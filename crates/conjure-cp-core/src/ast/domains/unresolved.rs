@@ -1,7 +1,7 @@
-use super::{DomainPtr, GroundDomain, Int, IntVal, Range};
+use super::{DomainPtr, GroundDomain, IntVal, Range};
 use crate::ast::{
-    Domain, DomainOpError, Expression, FuncAttr, Literal, MSetAttr, Metadata, Moo, Name,
-    RecordEntry, Reference, ReturnType, SetAttr, Typeable,
+    Domain, DomainOpError, Expression, FuncAttr, MSetAttr, Moo, RecordEntry, Reference, ReturnType,
+    SetAttr, Typeable,
 };
 use crate::bug;
 use itertools::Itertools;

@@ -23,7 +23,7 @@ use super::sat_encoding::SATIntEncoding;
 use super::{
     AbstractLiteral, Atom, DeclarationPtr, Domain, DomainPtr, GroundDomain, IntVal, Literal,
     Metadata, Model, Moo, Name, Range, Reference, ReturnType, SetAttr, SymbolTable, SymbolTablePtr,
-    Typeable, UnresolvedDomain, matrix,
+    Typeable, matrix,
 };
 
 // Ensure that this type doesn't get too big

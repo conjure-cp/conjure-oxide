@@ -4,8 +4,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
 use uniplate::{Biplate, Uniplate};
 
-// The only 2 things that make sense inside RecordEntry
-pub(super) trait IsDomain:
+/// The only 2 things that make sense inside RecordEntry
+pub trait IsDomain:
     Clone + Eq + PartialEq + Uniplate + Biplate<RecordEntry<Self>> + 'static
 {
 }
