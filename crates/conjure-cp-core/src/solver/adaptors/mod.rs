@@ -11,7 +11,7 @@ pub use minion::Minion;
 pub use rustsat::Sat;
 
 #[doc(inline)]
-pub use savile_row::SavileRow
+pub use savile_row::SavileRow;
 pub mod smt;
 
 #[doc(inline)]
