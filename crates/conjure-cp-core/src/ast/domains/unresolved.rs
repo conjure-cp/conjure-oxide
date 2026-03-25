@@ -147,7 +147,7 @@ impl IntVal {
     pub fn new_ref(re: &Reference) -> Option<IntVal> {
         match re.ptr.kind().deref() {
             DeclarationKind::ValueLetting(expr, _)
-            | DeclarationKind::TemporaryValueLetting(expr)  
+            | DeclarationKind::TemporaryValueLetting(expr)
             | DeclarationKind::QuantifiedExpr(expr) => match expr.return_type() {
                 ReturnType::Int => Some(IntVal::Reference(re.clone())),
                 _ => None,

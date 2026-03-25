@@ -913,8 +913,7 @@ fn parse_comprehension(
                             .ok_or_else(|| fail("GenInExpr.pointer(/1)"))?;
                         let expr = parse_expression(generator_expr, &scope)
                             .map_err(|_| fail("GenInExpr.parse_expression"))?;
-                        comprehension
-                            .expression_generator(name.into(), expr)
+                        comprehension.expression_generator(name.into(), expr)
                     }
                     _ => {
                         bug!("unknown generator type inside comprehension {name}");
