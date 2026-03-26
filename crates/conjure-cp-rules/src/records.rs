@@ -23,9 +23,9 @@ use conjure_cp::rule_engine::{
 /// ```
 #[register_rule(("ReprGeneral", 2000))]
 fn index_record_to_atom(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
-    let (subject, indices, safe) = match expr {
-        Expression::UnsafeIndex(_, subject, indices) => (subject, indices, false),
-        Expression::SafeIndex(_, subject, indices) => (subject, indices, true),
+    let (subject, indices) = match expr {
+        Expression::UnsafeIndex(_, subject, indices) => (subject, indices),
+        Expression::SafeIndex(_, subject, indices) => (subject, indices),
         _ => return Err(RuleNotApplicable),
     };
 
@@ -39,23 +39,19 @@ fn index_record_to_atom(expr: &Expression, _: &SymbolTable) -> ApplicationResult
         }
     );
 
+    assert_eq!(
+        indices.len(),
+        1,
+        "record indexing is always one dimensional"
+    );
+
     let field_atom = repr
         .elems
         .get(&field_name)
         .unwrap_or_else(|| bug!("field {} does not exist in {}", field_name, subject));
 
     let lhs = Reference::from(field_atom.clone());
-    let rhs = &indices[1..];
-
-    if rhs.is_empty() {
-        Ok(Reduction::pure(lhs.into()))
-    } else if safe {
-        let new_expr = Expression::SafeIndex(Metadata::new(), Moo::new(lhs.into()), rhs.into());
-        Ok(Reduction::pure(new_expr))
-    } else {
-        let new_expr = Expression::UnsafeIndex(Metadata::new(), Moo::new(lhs.into()), rhs.into());
-        Ok(Reduction::pure(new_expr))
-    }
+    Ok(Reduction::pure(lhs.into()))
 }
 
 /// (In)Equality of two record variables

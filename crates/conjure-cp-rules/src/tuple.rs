@@ -1,8 +1,8 @@
 use crate::guard;
-use conjure_cp::ast::{Atom, Expression as Expr, Literal, Metadata, Reference, SymbolTable};
-use conjure_cp::rule_engine::{ApplicationResult, Reduction, register_rule};
-
 use crate::representation::tuple_to_atom::TupleToAtom;
+use conjure_cp::ast::{Atom, Expression as Expr, Literal, Metadata, Reference, SymbolTable};
+use conjure_cp::rule_engine::ApplicationError::RuleNotApplicable;
+use conjure_cp::rule_engine::{ApplicationResult, Reduction, register_rule};
 
 #[register_rule(("ReprGeneral", 2000))]
 fn tuple_to_atom_index_lit(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
@@ -13,9 +13,10 @@ fn tuple_to_atom_index_lit(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         let Atom::Literal(Literal::Int(idx)) = idx             &&
         let Some(repr) = re.get_repr_as::<TupleToAtom>()
         else {
-            todo!()
+            return Err(RuleNotApplicable);
         }
     );
+    assert_eq!(indices.len(), 1, "tuple indexing is always one dimensional");
 
     let lhs = Reference::new(repr.elems[*idx as usize].clone());
     let rhs = &indices[1..];
@@ -28,59 +29,16 @@ fn tuple_to_atom_index_lit(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     }
 }
 
-//     // i assume the MkOpIndexing is the same as matrix indexing
-//     let Expr::SafeIndex(_, subject, indices) = expr else {
-//         return Err(RuleNotApplicable);
-//     };
-//
-//     let Expr::Atomic(_, Atom::Reference(decl)) = &**subject else {
-//         return Err(RuleNotApplicable);
-//     };
-//
-//     let Name::WithRepresentation(name, reprs) = &decl.name() as &Name else {
-//         return Err(RuleNotApplicable);
-//     };
-//
-//     if reprs.first().is_none_or(|x| x.as_str() != "tuple_to_atom") {
-//         return Err(RuleNotApplicable);
-//     }
-//
-//     // tuples are always one dimensional
-//     if indices.len() != 1 {
-//         return Err(RuleNotApplicable);
-//     }
-//
-//     let repr = symbols
-//         .get_representation(name, &["tuple_to_atom"])
-//         .unwrap()[0]
-//         .clone();
-//
-//     // let decl = symbols.lookup(name).unwrap();
-//
-//     let Some(GroundDomain::Tuple(_)) = decl.resolved_domain().as_deref() else {
-//         return Err(RuleNotApplicable);
-//     };
-//
-//     let mut indices_as_lit: Literal = Literal::Bool(false);
-//
-//     for index in indices {
-//         let Some(index) = index.clone().into_literal() else {
-//             return Err(RuleNotApplicable); // we don't support non-literal indices
-//         };
-//         indices_as_lit = index;
-//     }
-//
-//     let indices_as_name = Name::Represented(Box::new((
-//         name.as_ref().clone(),
-//         "tuple_to_atom".into(),
-//         indices_as_lit.into(),
-//     )));
-//
-//     let subject = repr.expression_down(symbols)?[&indices_as_name].clone();
-//
-//     Ok(Reduction::pure(subject))
-// }
-//
+#[register_rule(("Bubble", 8000))]
+fn tuple_index_to_bubble(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    let Expr::UnsafeIndex(_, subject, indices) = expr else {
+        return Err(RuleNotApplicable);
+    };
+    assert_eq!(indices.len(), 1, "tuple indexing is always one dimensional");
+
+    todo!()
+}
+
 // #[register_rule(("Bubble", 8000))]
 // fn tuple_index_to_bubble(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 //     let Expr::UnsafeIndex(_, subject, indices) = expr else {
