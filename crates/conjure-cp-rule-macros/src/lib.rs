@@ -18,6 +18,14 @@ struct RegisterRuleArgs {
 
 impl Parse for RegisterRuleArgs {
     fn parse(input: ParseStream) -> Result<Self> {
+        if input.is_empty() {
+            return Ok(RegisterRuleArgs {
+                rule_set: LitStr::new("", Span::call_site()),
+                priority: LitInt::new("0", Span::call_site()),
+                applicable_variants: Vec::new(),
+            });
+        }
+
         let rule_set: LitStr = input.parse()?;
         let _: Comma = input.parse()?;
         let priority: LitInt = input.parse()?;
@@ -55,9 +63,14 @@ pub fn register_rule(arg_tokens: TokenStream, item: TokenStream) -> TokenStream 
     let static_ident = Ident::new(&static_name, rule_ident.span());
 
     let args = parse_macro_input!(arg_tokens as RegisterRuleArgs);
-    let rule_set_name = &args.rule_set;
-    let priority = &args.priority;
-    let rule_set_token = quote! { (#rule_set_name, #priority as u16) };
+
+    let rule_sets_token = if args.rule_set.value().is_empty() {
+        quote! { &[] }
+    } else {
+        let rule_set_name = &args.rule_set;
+        let priority = &args.priority;
+        quote! { &[(#rule_set_name, #priority as u16)] }
+    };
 
     let applicable_to = if args.applicable_variants.is_empty() {
         quote! { None }
@@ -77,7 +90,7 @@ pub fn register_rule(arg_tokens: TokenStream, item: TokenStream) -> TokenStream 
         pub static #static_ident: ::conjure_cp::rule_engine::Rule<'static> = ::conjure_cp::rule_engine::Rule {
             name: stringify!(#rule_ident),
             application: #rule_ident,
-            rule_sets: &[#rule_set_token],
+            rule_sets: #rule_sets_token,
             applicable_to: #applicable_to,
         };
     };
