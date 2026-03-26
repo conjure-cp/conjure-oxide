@@ -9,7 +9,7 @@ such that
 --
 
 a, 
-   ~~> integer_decision_representation_direct ([("SAT_Direct", 9500)])
+   ~~> integer_decision_representation_direct ([("SAT_Direct", 4800)])
 SATInt(Direct, [a#sat_direct_int_0,a#sat_direct_int_1,a#sat_direct_int_2;int(1..)] [0, 2])
 new variables:
   find a#sat_direct_int_0: bool
@@ -20,26 +20,39 @@ new constraints:
 
 --
 
+or([and([(SATInt(Direct, [a#sat_direct_int_0,a#sat_direct_int_1,a#sat_direct_int_2;int(1..)] [0, 2]) >= 0),(SATInt(Direct, [a#sat_direct_int_0,a#sat_direct_int_1,a#sat_direct_int_2;int(1..)] [0, 2]) <= 2);int(1..)]);int(1..)]), 
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([(SATInt(Direct, [a#sat_direct_int_0,a#sat_direct_int_1,a#sat_direct_int_2;int(1..)] [0, 2]) >= 0),(SATInt(Direct, [a#sat_direct_int_0,a#sat_direct_int_1,a#sat_direct_int_2;int(1..)] [0, 2]) <= 2);int(1..)])
+
+--
+
+(SATInt(Direct, [a#sat_direct_int_0,a#sat_direct_int_1,a#sat_direct_int_2;int(1..)] [0, 2]) = 1),
+and([(SATInt(Direct, [a#sat_direct_int_0,a#sat_direct_int_1,a#sat_direct_int_2;int(1..)] [0, 2]) >= 0),(SATInt(Direct, [a#sat_direct_int_0,a#sat_direct_int_1,a#sat_direct_int_2;int(1..)] [0, 2]) <= 2);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(SATInt(Direct, [a#sat_direct_int_0,a#sat_direct_int_1,a#sat_direct_int_2;int(1..)] [0, 2]) = 1),
+(SATInt(Direct, [a#sat_direct_int_0,a#sat_direct_int_1,a#sat_direct_int_2;int(1..)] [0, 2]) >= 0),
+(SATInt(Direct, [a#sat_direct_int_0,a#sat_direct_int_1,a#sat_direct_int_2;int(1..)] [0, 2]) <= 2)
+
+--
+
 1, 
-   ~~> literal_sat_direct_int ([("SAT_Direct", 9500)])
+   ~~> literal_sat_direct_int ([("SAT_Direct", 4500)])
 SATInt(Direct, [true;int(1..)] [1, 1])
 
 --
 
-0, 
-   ~~> literal_sat_direct_int ([("SAT_Direct", 9500)])
-SATInt(Direct, [true;int(1..)] [0, 0])
+(SATInt(Direct, [a#sat_direct_int_0,a#sat_direct_int_1,a#sat_direct_int_2;int(1..)] [0, 2]) = SATInt(Direct, [true;int(1..)] [1, 1])),
+(SATInt(Direct, [a#sat_direct_int_0,a#sat_direct_int_1,a#sat_direct_int_2;int(1..)] [0, 2]) >= 0),
+(SATInt(Direct, [a#sat_direct_int_0,a#sat_direct_int_1,a#sat_direct_int_2;int(1..)] [0, 2]) <= 2), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(SATInt(Direct, [a#sat_direct_int_0,a#sat_direct_int_1,a#sat_direct_int_2;int(1..)] [0, 2]) = SATInt(Direct, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),
+(SATInt(Direct, [a#sat_direct_int_0,a#sat_direct_int_1,a#sat_direct_int_2;int(1..)] [0, 2]) >= 0),
+(SATInt(Direct, [a#sat_direct_int_0,a#sat_direct_int_1,a#sat_direct_int_2;int(1..)] [0, 2]) <= 2)
 
 --
 
-2, 
-   ~~> literal_sat_direct_int ([("SAT_Direct", 9500)])
-SATInt(Direct, [true;int(1..)] [2, 2])
-
---
-
-(SATInt(Direct, [a#sat_direct_int_0,a#sat_direct_int_1,a#sat_direct_int_2;int(1..)] [0, 2]) = SATInt(Direct, [true;int(1..)] [1, 1])), 
-   ~~> eq_sat_direct ([("SAT_Direct", 9100)])
+(SATInt(Direct, [a#sat_direct_int_0,a#sat_direct_int_1,a#sat_direct_int_2;int(1..)] [0, 2]) = SATInt(Direct, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])), 
+   ~~> eq_sat_direct ([("SAT_Direct", 4600)])
 __5
 new variables:
   find __0: bool
@@ -66,8 +79,24 @@ new clauses:
 
 --
 
-(SATInt(Direct, [a#sat_direct_int_0,a#sat_direct_int_1,a#sat_direct_int_2;int(1..)] [0, 2]) >= SATInt(Direct, [true;int(1..)] [0, 0])), 
-   ~~> ineq_sat_direct ([("SAT", 9100)])
+0, 
+   ~~> literal_sat_direct_int ([("SAT_Direct", 4500)])
+SATInt(Direct, [true;int(1..)] [0, 0])
+
+--
+
+__5,
+(SATInt(Direct, [a#sat_direct_int_0,a#sat_direct_int_1,a#sat_direct_int_2;int(1..)] [0, 2]) >= SATInt(Direct, [true;int(1..)] [0, 0])),
+(SATInt(Direct, [a#sat_direct_int_0,a#sat_direct_int_1,a#sat_direct_int_2;int(1..)] [0, 2]) <= 2), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+__5,
+(SATInt(Direct, [a#sat_direct_int_0,a#sat_direct_int_1,a#sat_direct_int_2;int(1..)] [0, 2]) >= SATInt(Direct, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [0, 0])),
+(SATInt(Direct, [a#sat_direct_int_0,a#sat_direct_int_1,a#sat_direct_int_2;int(1..)] [0, 2]) <= 2)
+
+--
+
+(SATInt(Direct, [a#sat_direct_int_0,a#sat_direct_int_1,a#sat_direct_int_2;int(1..)] [0, 2]) >= SATInt(Direct, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [0, 0])), 
+   ~~> ineq_sat_direct ([("SAT", 4600)])
 __18
 new variables:
   find __6: bool
@@ -117,8 +146,24 @@ new clauses:
 
 --
 
+2, 
+   ~~> literal_sat_direct_int ([("SAT_Direct", 4500)])
+SATInt(Direct, [true;int(1..)] [2, 2])
+
+--
+
+__5,
+__18,
 (SATInt(Direct, [a#sat_direct_int_0,a#sat_direct_int_1,a#sat_direct_int_2;int(1..)] [0, 2]) <= SATInt(Direct, [true;int(1..)] [2, 2])), 
-   ~~> ineq_sat_direct ([("SAT", 9100)])
+   ~~> constant_evaluator ([("Constant", 9001)])
+__5,
+__18,
+(SATInt(Direct, [a#sat_direct_int_0,a#sat_direct_int_1,a#sat_direct_int_2;int(1..)] [0, 2]) <= SATInt(Direct, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2]))
+
+--
+
+(SATInt(Direct, [a#sat_direct_int_0,a#sat_direct_int_1,a#sat_direct_int_2;int(1..)] [0, 2]) <= SATInt(Direct, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2])), 
+   ~~> ineq_sat_direct ([("SAT", 4600)])
 __31
 new variables:
   find __19: bool
@@ -168,25 +213,10 @@ new clauses:
 
 --
 
-or([and([__18,__31;int(1..)]);int(1..)]), 
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__18,__31;int(1..)])
-
---
-
-__5,
-and([__18,__31;int(1..)]), 
-   ~~> constant_evaluator ([("Constant", 9001)])
-__5,
-__18,
-__31
-
---
-
 __5,
 __18,
 __31, 
-   ~~> remove_single_atom ([("SAT", 8400)])
+   ~~> remove_single_atom ([("SAT", 4300)])
 __18,
 __31
 new clauses:
@@ -196,7 +226,7 @@ new clauses:
 
 __18,
 __31, 
-   ~~> remove_single_atom ([("SAT", 8400)])
+   ~~> remove_single_atom ([("SAT", 4300)])
 __31
 new clauses:
   (__18)
@@ -204,7 +234,7 @@ new clauses:
 --
 
 __31, 
-   ~~> remove_single_atom ([("SAT", 8400)])
+   ~~> remove_single_atom ([("SAT", 4300)])
 true
 new clauses:
   (__31)

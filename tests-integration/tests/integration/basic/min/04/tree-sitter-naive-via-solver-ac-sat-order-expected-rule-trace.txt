@@ -10,7 +10,7 @@ such that
 --
 
 a, 
-   ~~> integer_decision_representation_order ([("SAT_Order", 9500)])
+   ~~> integer_decision_representation_order ([("SAT_Order", 4800)])
 SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2])
 new variables:
   find a#sat_order_int_01: bool
@@ -20,8 +20,23 @@ new constraints:
 
 --
 
+or([and([(SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]) >= 1),(SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]) <= 2);int(1..)]);int(1..)]), 
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([(SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]) >= 1),(SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]) <= 2);int(1..)])
+
+--
+
+(min([SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]),b;int(1..2)]) >= 3),
+and([(SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]) >= 1),(SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]) <= 2);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(min([SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]),b;int(1..2)]) >= 3),
+(SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]) >= 1),
+(SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]) <= 2)
+
+--
+
 b, 
-   ~~> integer_decision_representation_order ([("SAT_Order", 9500)])
+   ~~> integer_decision_representation_order ([("SAT_Order", 4800)])
 SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7])
 new variables:
   find b#sat_order_int_04: bool
@@ -33,38 +48,127 @@ new constraints:
 
 --
 
+or([and([(SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]) >= 4),(SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]) <= 7);int(1..)]);int(1..)]), 
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([(SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]) >= 4),(SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]) <= 7);int(1..)])
+
+--
+
+(min([SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]),SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]);int(1..2)]) >= 3),
+(SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]) >= 1),
+(SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]) <= 2),
+and([(SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]) >= 4),(SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]) <= 7);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(min([SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]),SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]);int(1..2)]) >= 3),
+(SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]) >= 1),
+(SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]) <= 2),
+(SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]) >= 4),
+(SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]) <= 7)
+
+--
+
 3, 
-   ~~> literal_sat_order_int ([("SAT_Order", 9500)])
+   ~~> literal_sat_order_int ([("SAT_Order", 4500)])
 SATInt(Order, [true;int(1..)] [3, 3])
 
 --
 
+(min([SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]),SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]);int(1..2)]) >= SATInt(Order, [true;int(1..)] [3, 3])),
+(SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]) >= 1),
+(SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]) <= 2),
+(SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]) >= 4),
+(SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]) <= 7), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(min([SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]),SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]);int(1..2)]) >= SATInt(Order, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3])),
+(SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]) >= 1),
+(SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]) <= 2),
+(SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]) >= 4),
+(SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]) <= 7)
+
+--
+
 1, 
-   ~~> literal_sat_order_int ([("SAT_Order", 9500)])
+   ~~> literal_sat_order_int ([("SAT_Order", 4500)])
 SATInt(Order, [true;int(1..)] [1, 1])
 
 --
 
+(min([SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]),SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]);int(1..2)]) >= SATInt(Order, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3])),
+(SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]) >= SATInt(Order, [true;int(1..)] [1, 1])),
+(SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]) <= 2),
+(SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]) >= 4),
+(SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]) <= 7), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(min([SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]),SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]);int(1..2)]) >= SATInt(Order, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3])),
+(SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]) >= SATInt(Order, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),
+(SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]) <= 2),
+(SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]) >= 4),
+(SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]) <= 7)
+
+--
+
 2, 
-   ~~> literal_sat_order_int ([("SAT_Order", 9500)])
+   ~~> literal_sat_order_int ([("SAT_Order", 4500)])
 SATInt(Order, [true;int(1..)] [2, 2])
 
 --
 
+(min([SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]),SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]);int(1..2)]) >= SATInt(Order, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3])),
+(SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]) >= SATInt(Order, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),
+(SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]) <= SATInt(Order, [true;int(1..)] [2, 2])),
+(SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]) >= 4),
+(SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]) <= 7), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(min([SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]),SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]);int(1..2)]) >= SATInt(Order, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3])),
+(SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]) >= SATInt(Order, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),
+(SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]) <= SATInt(Order, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2])),
+(SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]) >= 4),
+(SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]) <= 7)
+
+--
+
 4, 
-   ~~> literal_sat_order_int ([("SAT_Order", 9500)])
+   ~~> literal_sat_order_int ([("SAT_Order", 4500)])
 SATInt(Order, [true;int(1..)] [4, 4])
 
 --
 
+(min([SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]),SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]);int(1..2)]) >= SATInt(Order, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3])),
+(SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]) >= SATInt(Order, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),
+(SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]) <= SATInt(Order, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2])),
+(SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]) >= SATInt(Order, [true;int(1..)] [4, 4])),
+(SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]) <= 7), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(min([SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]),SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]);int(1..2)]) >= SATInt(Order, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3])),
+(SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]) >= SATInt(Order, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),
+(SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]) <= SATInt(Order, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2])),
+(SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]) >= SATInt(Order, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [4, 4])),
+(SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]) <= 7)
+
+--
+
 7, 
-   ~~> literal_sat_order_int ([("SAT_Order", 9500)])
+   ~~> literal_sat_order_int ([("SAT_Order", 4500)])
 SATInt(Order, [true;int(1..)] [7, 7])
 
 --
 
-(SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]) >= SATInt(Order, [true;int(1..)] [1, 1])), 
-   ~~> ineq_sat_order ([("SAT_Order", 9100)])
+(min([SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]),SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]);int(1..2)]) >= SATInt(Order, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3])),
+(SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]) >= SATInt(Order, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),
+(SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]) <= SATInt(Order, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2])),
+(SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]) >= SATInt(Order, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [4, 4])),
+(SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]) <= SATInt(Order, [true;int(1..)] [7, 7])), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(min([SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]),SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]);int(1..2)]) >= SATInt(Order, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3])),
+(SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]) >= SATInt(Order, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),
+(SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]) <= SATInt(Order, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2])),
+(SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]) >= SATInt(Order, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [4, 4])),
+(SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]) <= SATInt(Order, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [7, 7]))
+
+--
+
+(SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]) >= SATInt(Order, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])), 
+   ~~> ineq_sat_order ([("SAT_Order", 4400)])
 __6
 new variables:
   find __0: bool
@@ -93,8 +197,8 @@ new clauses:
 
 --
 
-(SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]) <= SATInt(Order, [true;int(1..)] [2, 2])), 
-   ~~> ineq_sat_order ([("SAT_Order", 9100)])
+(SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]) <= SATInt(Order, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2])), 
+   ~~> ineq_sat_order ([("SAT_Order", 4400)])
 __13
 new variables:
   find __7: bool
@@ -123,8 +227,8 @@ new clauses:
 
 --
 
-(SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]) >= SATInt(Order, [true;int(1..)] [4, 4])), 
-   ~~> ineq_sat_order ([("SAT_Order", 9100)])
+(SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]) >= SATInt(Order, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [4, 4])), 
+   ~~> ineq_sat_order ([("SAT_Order", 4400)])
 __26
 new variables:
   find __14: bool
@@ -173,8 +277,8 @@ new clauses:
 
 --
 
-(SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]) <= SATInt(Order, [true;int(1..)] [7, 7])), 
-   ~~> ineq_sat_order ([("SAT_Order", 9100)])
+(SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]) <= SATInt(Order, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [7, 7])), 
+   ~~> ineq_sat_order ([("SAT_Order", 4400)])
 __39
 new variables:
   find __27: bool
@@ -223,58 +327,12 @@ new clauses:
 
 --
 
-(min([SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]),SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]);int(1..2)]) >= SATInt(Order, [true;int(1..)] [3, 3])),
-or([and([__6,__13;int(1..)]);int(1..)]),
-or([and([__26,__39;int(1..)]);int(1..)]), 
-   ~~> constant_evaluator ([("Constant", 9001)])
-(min([SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]),SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]);int(1..2)]) >= SATInt(Order, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3])),
-or([and([__6,__13;int(1..)]);int(1..)]),
-or([and([__26,__39;int(1..)]);int(1..)])
-
---
-
-or([and([__6,__13;int(1..)]);int(1..)]), 
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__6,__13;int(1..)])
-
---
-
-(min([SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]),SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]);int(1..2)]) >= SATInt(Order, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3])),
-and([__6,__13;int(1..)]),
-or([and([__26,__39;int(1..)]);int(1..)]), 
-   ~~> constant_evaluator ([("Constant", 9001)])
-(min([SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]),SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]);int(1..2)]) >= SATInt(Order, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3])),
-__6,
-__13,
-or([and([__26,__39;int(1..)]);int(1..)])
-
---
-
-or([and([__26,__39;int(1..)]);int(1..)]), 
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__26,__39;int(1..)])
-
---
-
-(min([SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]),SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]);int(1..2)]) >= SATInt(Order, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3])),
-__6,
-__13,
-and([__26,__39;int(1..)]), 
-   ~~> constant_evaluator ([("Constant", 9001)])
-(min([SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]),SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]);int(1..2)]) >= SATInt(Order, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3])),
-__6,
-__13,
-__26,
-__39
-
---
-
 (min([SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]),SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]);int(1..2)]) >= SATInt(Order, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3])),
 __6,
 __13,
 __26,
 __39, 
-   ~~> remove_single_atom ([("SAT", 8400)])
+   ~~> remove_single_atom ([("SAT", 4300)])
 (min([SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]),SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]);int(1..2)]) >= SATInt(Order, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3])),
 __13,
 __26,
@@ -288,7 +346,7 @@ new clauses:
 __13,
 __26,
 __39, 
-   ~~> remove_single_atom ([("SAT", 8400)])
+   ~~> remove_single_atom ([("SAT", 4300)])
 (min([SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]),SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]);int(1..2)]) >= SATInt(Order, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3])),
 __26,
 __39
@@ -300,7 +358,7 @@ new clauses:
 (min([SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]),SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]);int(1..2)]) >= SATInt(Order, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3])),
 __26,
 __39, 
-   ~~> remove_single_atom ([("SAT", 8400)])
+   ~~> remove_single_atom ([("SAT", 4300)])
 (min([SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]),SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]);int(1..2)]) >= SATInt(Order, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3])),
 __39
 new clauses:
@@ -310,7 +368,7 @@ new clauses:
 
 (min([SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]),SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]);int(1..2)]) >= SATInt(Order, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3])),
 __39, 
-   ~~> remove_single_atom ([("SAT", 8400)])
+   ~~> remove_single_atom ([("SAT", 4300)])
 (min([SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2]),SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]);int(1..2)]) >= SATInt(Order, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3]))
 new clauses:
   (__39)
@@ -336,7 +394,7 @@ new constraints:
 --
 
 __40, 
-   ~~> integer_decision_representation_order ([("SAT_Order", 9500)])
+   ~~> integer_decision_representation_order ([("SAT_Order", 4800)])
 SATInt(Order, [__40#sat_order_int_01,__40#sat_order_int_02;int(1..)] [1, 2])
 new variables:
   find __40#sat_order_int_01: bool
@@ -346,44 +404,97 @@ new constraints:
 
 --
 
+or([and([(SATInt(Order, [__40#sat_order_int_01,__40#sat_order_int_02;int(1..)] [1, 2]) >= 1),(SATInt(Order, [__40#sat_order_int_01,__40#sat_order_int_02;int(1..)] [1, 2]) <= 2);int(1..)]);int(1..)]), 
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([(SATInt(Order, [__40#sat_order_int_01,__40#sat_order_int_02;int(1..)] [1, 2]) >= 1),(SATInt(Order, [__40#sat_order_int_01,__40#sat_order_int_02;int(1..)] [1, 2]) <= 2);int(1..)])
+
+--
+
+(SATInt(Order, [__40#sat_order_int_01,__40#sat_order_int_02;int(1..)] [1, 2]) >= SATInt(Order, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3])),
+(__40 <= SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2])),
+(__40 <= SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7])),
+or([(__40 = SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2])),(__40 = SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]));int(1..)]),
+and([(SATInt(Order, [__40#sat_order_int_01,__40#sat_order_int_02;int(1..)] [1, 2]) >= 1),(SATInt(Order, [__40#sat_order_int_01,__40#sat_order_int_02;int(1..)] [1, 2]) <= 2);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(SATInt(Order, [__40#sat_order_int_01,__40#sat_order_int_02;int(1..)] [1, 2]) >= SATInt(Order, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3])),
+(__40 <= SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2])),
+(__40 <= SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7])),
+or([(__40 = SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2])),(__40 = SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]));int(1..)]),
+(SATInt(Order, [__40#sat_order_int_01,__40#sat_order_int_02;int(1..)] [1, 2]) >= 1),
+(SATInt(Order, [__40#sat_order_int_01,__40#sat_order_int_02;int(1..)] [1, 2]) <= 2)
+
+--
+
 __40, 
-   ~~> integer_decision_representation_order ([("SAT_Order", 9500)])
+   ~~> integer_decision_representation_order ([("SAT_Order", 4800)])
 SATInt(Order, [__40#sat_order_int_01,__40#sat_order_int_02;int(1..)] [1, 2])
 
 --
 
 __40, 
-   ~~> integer_decision_representation_order ([("SAT_Order", 9500)])
+   ~~> integer_decision_representation_order ([("SAT_Order", 4800)])
 SATInt(Order, [__40#sat_order_int_01,__40#sat_order_int_02;int(1..)] [1, 2])
 
 --
 
 __40, 
-   ~~> integer_decision_representation_order ([("SAT_Order", 9500)])
+   ~~> integer_decision_representation_order ([("SAT_Order", 4800)])
 SATInt(Order, [__40#sat_order_int_01,__40#sat_order_int_02;int(1..)] [1, 2])
 
 --
 
 __40, 
-   ~~> integer_decision_representation_order ([("SAT_Order", 9500)])
+   ~~> integer_decision_representation_order ([("SAT_Order", 4800)])
 SATInt(Order, [__40#sat_order_int_01,__40#sat_order_int_02;int(1..)] [1, 2])
 
 --
 
 1, 
-   ~~> literal_sat_order_int ([("SAT_Order", 9500)])
+   ~~> literal_sat_order_int ([("SAT_Order", 4500)])
 SATInt(Order, [true;int(1..)] [1, 1])
 
 --
 
+(SATInt(Order, [__40#sat_order_int_01,__40#sat_order_int_02;int(1..)] [1, 2]) >= SATInt(Order, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3])),
+(SATInt(Order, [__40#sat_order_int_01,__40#sat_order_int_02;int(1..)] [1, 2]) <= SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2])),
+(SATInt(Order, [__40#sat_order_int_01,__40#sat_order_int_02;int(1..)] [1, 2]) <= SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7])),
+or([(SATInt(Order, [__40#sat_order_int_01,__40#sat_order_int_02;int(1..)] [1, 2]) = SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2])),(SATInt(Order, [__40#sat_order_int_01,__40#sat_order_int_02;int(1..)] [1, 2]) = SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]));int(1..)]),
+(SATInt(Order, [__40#sat_order_int_01,__40#sat_order_int_02;int(1..)] [1, 2]) >= SATInt(Order, [true;int(1..)] [1, 1])),
+(SATInt(Order, [__40#sat_order_int_01,__40#sat_order_int_02;int(1..)] [1, 2]) <= 2), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(SATInt(Order, [__40#sat_order_int_01,__40#sat_order_int_02;int(1..)] [1, 2]) >= SATInt(Order, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3])),
+(SATInt(Order, [__40#sat_order_int_01,__40#sat_order_int_02;int(1..)] [1, 2]) <= SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2])),
+(SATInt(Order, [__40#sat_order_int_01,__40#sat_order_int_02;int(1..)] [1, 2]) <= SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7])),
+or([(SATInt(Order, [__40#sat_order_int_01,__40#sat_order_int_02;int(1..)] [1, 2]) = SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2])),(SATInt(Order, [__40#sat_order_int_01,__40#sat_order_int_02;int(1..)] [1, 2]) = SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]));int(1..)]),
+(SATInt(Order, [__40#sat_order_int_01,__40#sat_order_int_02;int(1..)] [1, 2]) >= SATInt(Order, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),
+(SATInt(Order, [__40#sat_order_int_01,__40#sat_order_int_02;int(1..)] [1, 2]) <= 2)
+
+--
+
 2, 
-   ~~> literal_sat_order_int ([("SAT_Order", 9500)])
+   ~~> literal_sat_order_int ([("SAT_Order", 4500)])
 SATInt(Order, [true;int(1..)] [2, 2])
 
 --
 
+(SATInt(Order, [__40#sat_order_int_01,__40#sat_order_int_02;int(1..)] [1, 2]) >= SATInt(Order, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3])),
+(SATInt(Order, [__40#sat_order_int_01,__40#sat_order_int_02;int(1..)] [1, 2]) <= SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2])),
+(SATInt(Order, [__40#sat_order_int_01,__40#sat_order_int_02;int(1..)] [1, 2]) <= SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7])),
+or([(SATInt(Order, [__40#sat_order_int_01,__40#sat_order_int_02;int(1..)] [1, 2]) = SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2])),(SATInt(Order, [__40#sat_order_int_01,__40#sat_order_int_02;int(1..)] [1, 2]) = SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]));int(1..)]),
+(SATInt(Order, [__40#sat_order_int_01,__40#sat_order_int_02;int(1..)] [1, 2]) >= SATInt(Order, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),
+(SATInt(Order, [__40#sat_order_int_01,__40#sat_order_int_02;int(1..)] [1, 2]) <= SATInt(Order, [true;int(1..)] [2, 2])), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(SATInt(Order, [__40#sat_order_int_01,__40#sat_order_int_02;int(1..)] [1, 2]) >= SATInt(Order, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3])),
+(SATInt(Order, [__40#sat_order_int_01,__40#sat_order_int_02;int(1..)] [1, 2]) <= SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2])),
+(SATInt(Order, [__40#sat_order_int_01,__40#sat_order_int_02;int(1..)] [1, 2]) <= SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7])),
+or([(SATInt(Order, [__40#sat_order_int_01,__40#sat_order_int_02;int(1..)] [1, 2]) = SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2])),(SATInt(Order, [__40#sat_order_int_01,__40#sat_order_int_02;int(1..)] [1, 2]) = SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7]));int(1..)]),
+(SATInt(Order, [__40#sat_order_int_01,__40#sat_order_int_02;int(1..)] [1, 2]) >= SATInt(Order, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),
+(SATInt(Order, [__40#sat_order_int_01,__40#sat_order_int_02;int(1..)] [1, 2]) <= SATInt(Order, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2]))
+
+--
+
 (SATInt(Order, [__40#sat_order_int_01,__40#sat_order_int_02;int(1..)] [1, 2]) >= SATInt(Order, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3])), 
-   ~~> ineq_sat_order ([("SAT_Order", 9100)])
+   ~~> ineq_sat_order ([("SAT_Order", 4400)])
 __50
 new variables:
   find __41: bool
@@ -422,7 +533,7 @@ new clauses:
 --
 
 (SATInt(Order, [__40#sat_order_int_01,__40#sat_order_int_02;int(1..)] [1, 2]) <= SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2])), 
-   ~~> ineq_sat_order ([("SAT_Order", 9100)])
+   ~~> ineq_sat_order ([("SAT_Order", 4400)])
 __57
 new variables:
   find __51: bool
@@ -454,7 +565,7 @@ new clauses:
 --
 
 (SATInt(Order, [__40#sat_order_int_01,__40#sat_order_int_02;int(1..)] [1, 2]) <= SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7])), 
-   ~~> ineq_sat_order ([("SAT_Order", 9100)])
+   ~~> ineq_sat_order ([("SAT_Order", 4400)])
 __79
 new variables:
   find __58: bool
@@ -533,7 +644,7 @@ new clauses:
 --
 
 (SATInt(Order, [__40#sat_order_int_01,__40#sat_order_int_02;int(1..)] [1, 2]) = SATInt(Order, [a#sat_order_int_01,a#sat_order_int_02;int(1..)] [1, 2])), 
-   ~~> eq_sat_order ([("SAT_Order", 9100)])
+   ~~> eq_sat_order ([("SAT_Order", 4400)])
 __83
 new variables:
   find __80: bool
@@ -558,7 +669,7 @@ new clauses:
 --
 
 (SATInt(Order, [__40#sat_order_int_01,__40#sat_order_int_02;int(1..)] [1, 2]) = SATInt(Order, [b#sat_order_int_04,b#sat_order_int_05,b#sat_order_int_06,b#sat_order_int_07;int(1..)] [4, 7])), 
-   ~~> eq_sat_order ([("SAT_Order", 9100)])
+   ~~> eq_sat_order ([("SAT_Order", 4400)])
 __97
 new variables:
   find __84: bool
@@ -612,111 +723,90 @@ new clauses:
 
 --
 
-(SATInt(Order, [__40#sat_order_int_01,__40#sat_order_int_02;int(1..)] [1, 2]) >= SATInt(Order, [true;int(1..)] [1, 1])), 
-   ~~> ineq_sat_order ([("SAT_Order", 9100)])
-__104
+or([__83,__97;int(1..)]), 
+   ~~> apply_tseytin_and_or ([("SAT", 4400)])
+__98
 new variables:
   find __98: bool
+new clauses:
+  (¬__83 \/ __98)
+  (¬__97 \/ __98)
+  (¬__98 \/ __83 \/ __97)
+
+--
+
+(SATInt(Order, [__40#sat_order_int_01,__40#sat_order_int_02;int(1..)] [1, 2]) >= SATInt(Order, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])), 
+   ~~> ineq_sat_order ([("SAT_Order", 4400)])
+__105
+new variables:
   find __99: bool
   find __100: bool
   find __101: bool
   find __102: bool
   find __103: bool
   find __104: bool
+  find __105: bool
 new clauses:
-  (¬__40#sat_order_int_01 \/ ¬__98)
-  (__40#sat_order_int_01 \/ __98)
-  (¬__99 \/ __98)
-  (__99 \/ ¬__98)
-  (¬__99 \/ __100)
+  (¬__40#sat_order_int_01 \/ ¬__99)
+  (__40#sat_order_int_01 \/ __99)
   (¬__100 \/ __99)
-  (¬__40#sat_order_int_02 \/ ¬__101)
-  (__40#sat_order_int_02 \/ __101)
-  (¬__102 \/ __101)
-  (¬__102)
-  (¬__100 \/ __103)
-  (¬__102 \/ __103)
-  (¬__103 \/ __100 \/ __102)
-  (¬__103 \/ ¬__104)
-  (__103 \/ __104)
+  (__100 \/ ¬__99)
+  (¬__100 \/ __101)
+  (¬__101 \/ __100)
+  (¬__40#sat_order_int_02 \/ ¬__102)
+  (__40#sat_order_int_02 \/ __102)
+  (¬__103 \/ __102)
+  (¬__103)
+  (¬__101 \/ __104)
+  (¬__103 \/ __104)
+  (¬__104 \/ __101 \/ __103)
+  (¬__104 \/ ¬__105)
+  (__104 \/ __105)
 
 --
 
-(SATInt(Order, [__40#sat_order_int_01,__40#sat_order_int_02;int(1..)] [1, 2]) <= SATInt(Order, [true;int(1..)] [2, 2])), 
-   ~~> ineq_sat_order ([("SAT_Order", 9100)])
-__111
+(SATInt(Order, [__40#sat_order_int_01,__40#sat_order_int_02;int(1..)] [1, 2]) <= SATInt(Order, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2])), 
+   ~~> ineq_sat_order ([("SAT_Order", 4400)])
+__112
 new variables:
-  find __105: bool
   find __106: bool
   find __107: bool
   find __108: bool
   find __109: bool
   find __110: bool
   find __111: bool
-new clauses:
-  (¬__105)
-  (¬__106 \/ __105)
-  (¬__106 \/ __40#sat_order_int_01)
-  (__106 \/ ¬__105 \/ ¬__40#sat_order_int_01)
-  (¬__106 \/ __107)
-  (¬__107 \/ __106)
-  (¬__108)
-  (¬__109 \/ __108)
-  (¬__109 \/ __40#sat_order_int_02)
-  (__109 \/ ¬__108 \/ ¬__40#sat_order_int_02)
-  (¬__107 \/ __110)
-  (¬__109 \/ __110)
-  (¬__110 \/ __107 \/ __109)
-  (¬__110 \/ ¬__111)
-  (__110 \/ __111)
-
---
-
-or([and([__104,__111;int(1..)]);int(1..)]), 
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__104,__111;int(1..)])
-
---
-
-__50,
-__57,
-__79,
-or([__83,__97;int(1..)]),
-and([__104,__111;int(1..)]), 
-   ~~> constant_evaluator ([("Constant", 9001)])
-__50,
-__57,
-__79,
-or([__83,__97;int(1..)]),
-__104,
-__111
-
---
-
-or([__83,__97;int(1..)]), 
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
-__112
-new variables:
   find __112: bool
 new clauses:
-  (¬__83 \/ __112)
-  (¬__97 \/ __112)
-  (¬__112 \/ __83 \/ __97)
+  (¬__106)
+  (¬__107 \/ __106)
+  (¬__107 \/ __40#sat_order_int_01)
+  (__107 \/ ¬__106 \/ ¬__40#sat_order_int_01)
+  (¬__107 \/ __108)
+  (¬__108 \/ __107)
+  (¬__109)
+  (¬__110 \/ __109)
+  (¬__110 \/ __40#sat_order_int_02)
+  (__110 \/ ¬__109 \/ ¬__40#sat_order_int_02)
+  (¬__108 \/ __111)
+  (¬__110 \/ __111)
+  (¬__111 \/ __108 \/ __110)
+  (¬__111 \/ ¬__112)
+  (__111 \/ __112)
 
 --
 
 __50,
 __57,
 __79,
-__112,
-__104,
-__111, 
-   ~~> remove_single_atom ([("SAT", 8400)])
+__98,
+__105,
+__112, 
+   ~~> remove_single_atom ([("SAT", 4300)])
 __57,
 __79,
-__112,
-__104,
-__111
+__98,
+__105,
+__112
 new clauses:
   (__50)
 
@@ -724,57 +814,57 @@ new clauses:
 
 __57,
 __79,
-__112,
-__104,
-__111, 
-   ~~> remove_single_atom ([("SAT", 8400)])
+__98,
+__105,
+__112, 
+   ~~> remove_single_atom ([("SAT", 4300)])
 __79,
-__112,
-__104,
-__111
+__98,
+__105,
+__112
 new clauses:
   (__57)
 
 --
 
 __79,
-__112,
-__104,
-__111, 
-   ~~> remove_single_atom ([("SAT", 8400)])
-__112,
-__104,
-__111
+__98,
+__105,
+__112, 
+   ~~> remove_single_atom ([("SAT", 4300)])
+__98,
+__105,
+__112
 new clauses:
   (__79)
 
 --
 
-__112,
-__104,
-__111, 
-   ~~> remove_single_atom ([("SAT", 8400)])
-__104,
-__111
+__98,
+__105,
+__112, 
+   ~~> remove_single_atom ([("SAT", 4300)])
+__105,
+__112
 new clauses:
-  (__112)
+  (__98)
 
 --
 
-__104,
-__111, 
-   ~~> remove_single_atom ([("SAT", 8400)])
-__111
+__105,
+__112, 
+   ~~> remove_single_atom ([("SAT", 4300)])
+__112
 new clauses:
-  (__104)
+  (__105)
 
 --
 
-__111, 
-   ~~> remove_single_atom ([("SAT", 8400)])
+__112, 
+   ~~> remove_single_atom ([("SAT", 4300)])
 true
 new clauses:
-  (__111)
+  (__112)
 
 --
 
@@ -1143,43 +1233,43 @@ clauses:
 (¬__97 \/ __96),
 (¬__97 \/ __95),
 (__97 \/ ¬__96 \/ ¬__95),
-(¬__40#sat_order_int_01 \/ ¬__98),
-(__40#sat_order_int_01 \/ __98),
-(¬__99 \/ __98),
-(__99 \/ ¬__98),
-(¬__99 \/ __100),
+(¬__83 \/ __98),
+(¬__97 \/ __98),
+(¬__98 \/ __83 \/ __97),
+(¬__40#sat_order_int_01 \/ ¬__99),
+(__40#sat_order_int_01 \/ __99),
 (¬__100 \/ __99),
-(¬__40#sat_order_int_02 \/ ¬__101),
-(__40#sat_order_int_02 \/ __101),
-(¬__102 \/ __101),
-(¬__102),
-(¬__100 \/ __103),
-(¬__102 \/ __103),
-(¬__103 \/ __100 \/ __102),
-(¬__103 \/ ¬__104),
-(__103 \/ __104),
-(¬__105),
-(¬__106 \/ __105),
-(¬__106 \/ __40#sat_order_int_01),
-(__106 \/ ¬__105 \/ ¬__40#sat_order_int_01),
-(¬__106 \/ __107),
+(__100 \/ ¬__99),
+(¬__100 \/ __101),
+(¬__101 \/ __100),
+(¬__40#sat_order_int_02 \/ ¬__102),
+(__40#sat_order_int_02 \/ __102),
+(¬__103 \/ __102),
+(¬__103),
+(¬__101 \/ __104),
+(¬__103 \/ __104),
+(¬__104 \/ __101 \/ __103),
+(¬__104 \/ ¬__105),
+(__104 \/ __105),
+(¬__106),
 (¬__107 \/ __106),
-(¬__108),
-(¬__109 \/ __108),
-(¬__109 \/ __40#sat_order_int_02),
-(__109 \/ ¬__108 \/ ¬__40#sat_order_int_02),
-(¬__107 \/ __110),
-(¬__109 \/ __110),
-(¬__110 \/ __107 \/ __109),
-(¬__110 \/ ¬__111),
-(__110 \/ __111),
-(¬__83 \/ __112),
-(¬__97 \/ __112),
-(¬__112 \/ __83 \/ __97),
+(¬__107 \/ __40#sat_order_int_01),
+(__107 \/ ¬__106 \/ ¬__40#sat_order_int_01),
+(¬__107 \/ __108),
+(¬__108 \/ __107),
+(¬__109),
+(¬__110 \/ __109),
+(¬__110 \/ __40#sat_order_int_02),
+(__110 \/ ¬__109 \/ ¬__40#sat_order_int_02),
+(¬__108 \/ __111),
+(¬__110 \/ __111),
+(¬__111 \/ __108 \/ __110),
+(¬__111 \/ ¬__112),
+(__111 \/ __112),
 (__50),
 (__57),
 (__79),
-(__112),
-(__104),
-(__111)
+(__98),
+(__105),
+(__112)
 
