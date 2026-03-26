@@ -4,7 +4,9 @@ use conjure_cp::{
         SymbolTable,
         comprehension::{Comprehension, ComprehensionQualifier},
         eval_constant,
-    }, bug, solver::SolverError
+    },
+    bug,
+    solver::SolverError,
 };
 use uniplate::Biplate as _;
 
