@@ -1,8 +1,10 @@
 use crate::guard;
 use crate::representation::tuple_to_atom::TupleToAtom;
 use conjure_cp::ast::{Atom, Expression as Expr, Literal, Metadata, Reference, SymbolTable};
+use conjure_cp::bug_assert_eq;
 use conjure_cp::rule_engine::ApplicationError::RuleNotApplicable;
 use conjure_cp::rule_engine::{ApplicationResult, Reduction, register_rule};
+use conjure_cp::{bug_assert, essence_expr};
 
 #[register_rule(("ReprGeneral", 2000))]
 fn tuple_to_atom_index_lit(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
@@ -31,76 +33,30 @@ fn tuple_to_atom_index_lit(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
 #[register_rule(("Bubble", 8000))]
 fn tuple_index_to_bubble(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    let Expr::UnsafeIndex(_, subject, indices) = expr else {
-        return Err(RuleNotApplicable);
-    };
-    assert_eq!(indices.len(), 1, "tuple indexing is always one dimensional");
+    guard!(
+        let Expr::UnsafeIndex(_, subject, indices) = expr &&
+        let Some(idx) = indices.first()                   &&
+        let Some(idx_dom) = idx.domain_of()               &&
+        let Some(dom) = subject.domain_of()               &&
+        let Some(inner_doms) = dom.as_tuple()
+        else {
+            return Err(RuleNotApplicable);
+        }
+    );
+    bug_assert_eq!(indices.len(), 1, "tuple indexing is always one dimensional");
+    bug_assert!(
+        idx_dom.as_int().is_some(),
+        "tuple indexing expression must be integer"
+    );
 
-    todo!()
+    let len = inner_doms.len() as i32;
+    let bubble_cond = essence_expr!(r"(&idx >= 1) /\ (&idx <= &len)");
+    let bubble_expr = Expr::SafeIndex(Metadata::new(), subject.clone(), indices.clone());
+
+    let new_expr = Expr::Bubble(Metadata::new(), bubble_expr.into(), bubble_cond.into());
+    Ok(Reduction::pure(new_expr))
 }
 
-// #[register_rule(("Bubble", 8000))]
-// fn tuple_index_to_bubble(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-//     let Expr::UnsafeIndex(_, subject, indices) = expr else {
-//         return Err(RuleNotApplicable);
-//     };
-//
-//     let Expr::Atomic(_, Atom::Reference(decl)) = &**subject else {
-//         return Err(RuleNotApplicable);
-//     };
-//
-//     let Name::WithRepresentation(_, reprs) = &decl.name() as &Name else {
-//         return Err(RuleNotApplicable);
-//     };
-//
-//     if reprs.first().is_none_or(|x| x.as_str() != "tuple_to_atom") {
-//         return Err(RuleNotApplicable);
-//     }
-//
-//     let domain = subject.domain_of().ok_or(ApplicationError::DomainError)?;
-//
-//     let Some(elems) = domain.as_tuple() else {
-//         return Err(RuleNotApplicable);
-//     };
-//
-//     assert_eq!(indices.len(), 1, "tuple indexing is always one dimensional");
-//     let index = indices[0].clone();
-//
-//     let bubble_constraint = Moo::new(Expression::And(
-//         Metadata::new(),
-//         Moo::new(matrix_expr![
-//             Expression::Leq(
-//                 Metadata::new(),
-//                 Moo::new(index.clone()),
-//                 Moo::new(Expression::Atomic(
-//                     Metadata::new(),
-//                     Atom::Literal(Literal::Int(elems.len() as i32))
-//                 ))
-//             ),
-//             Expression::Geq(
-//                 Metadata::new(),
-//                 Moo::new(index),
-//                 Moo::new(Expression::Atomic(
-//                     Metadata::new(),
-//                     Atom::Literal(Literal::Int(1))
-//                 ))
-//             )
-//         ]),
-//     ));
-//
-//     let new_expr = Moo::new(Expression::SafeIndex(
-//         Metadata::new(),
-//         subject.clone(),
-//         indices.clone(),
-//     ));
-//
-//     Ok(Reduction::pure(Expression::Bubble(
-//         Metadata::new(),
-//         new_expr,
-//         bubble_constraint,
-//     )))
-// }
-//
 // // convert equality to tuple equality
 // #[register_rule(("Base", 2000))]
 // fn tuple_equality(expr: &Expr, _: &SymbolTable) -> ApplicationResult {

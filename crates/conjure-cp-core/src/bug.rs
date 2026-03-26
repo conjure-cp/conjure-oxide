@@ -36,3 +36,44 @@ location: {}:{}:{}
         panic!("{}", full_message);
     }};
 }
+
+/// Like [assert!], but formats the error message using [bug!]
+#[macro_export]
+macro_rules! bug_assert {
+    ($cond:expr, $msg:literal) => {
+        if !$cond {
+            $crate::bug!("assertion failed: {}\n{}", stringify!($cond), $msg);
+        }
+    };
+
+    ($cond:expr) => {
+        if !$cond {
+            $crate::bug!("assertion failed: {}", stringify!($cond));
+        }
+    };
+}
+
+/// Like [assert_eq!], but formats the error message using [bug!]
+#[macro_export]
+macro_rules! bug_assert_eq {
+    ($left:expr, $right:expr, $msg:literal) => {
+        if &$left != &$right {
+            $crate::bug!(
+                "assertion failed: {} != {}\n{}",
+                stringify!($left),
+                stringify!($right),
+                $msg
+            );
+        }
+    };
+
+    ($left:expr, $right:expr) => {
+        if &$left != &$right {
+            $crate::bug!(
+                "assertion failed: {} != {}",
+                stringify!($left),
+                stringify!($right)
+            );
+        }
+    };
+}
