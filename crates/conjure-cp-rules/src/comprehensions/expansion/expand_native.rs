@@ -4,8 +4,7 @@ use conjure_cp::{
         SymbolTable,
         comprehension::{Comprehension, ComprehensionQualifier},
         eval_constant,
-    },
-    solver::SolverError,
+    }, bug, solver::SolverError
 };
 use uniplate::Biplate as _;
 
@@ -66,7 +65,7 @@ fn expand_qualifiers(
             }
         }
         ComprehensionQualifier::ExpressionGenerator { .. } => {
-            panic!(
+            bug!(
                 "Comprehension expander should not be called on comprehensions containing ExpressionGenerator"
             );
         }
