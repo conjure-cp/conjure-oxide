@@ -101,13 +101,30 @@ impl std::fmt::Display for RecoverableParseError {
     }
 }
 
+/// Error type for issues during model instantiation (when applying parameters to a problem model).
+#[derive(Debug)]
+pub struct InstantiateModelError {
+    pub msg: String,
+}
+
+impl std::fmt::Display for InstantiateModelError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.msg)
+    }
+}
+
+impl std::error::Error for InstantiateModelError {}
 /// Collection of parse errors
 #[derive(Debug)]
 pub enum ParseErrorCollection {
     /// A single fatal error that stops parsing entirely
     Fatal(FatalParseError),
     /// Multiple recoverable errors accumulated during parsing
-    Multiple { errors: Vec<RecoverableParseError> },
+    Multiple {
+        errors: Vec<RecoverableParseError>,
+    },
+
+    InstantiateModel(InstantiateModelError),
 }
 
 impl ParseErrorCollection {
@@ -137,6 +154,7 @@ impl std::fmt::Display for ParseErrorCollection {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             ParseErrorCollection::Fatal(error) => write!(f, "{}", error),
+            ParseErrorCollection::InstantiateModel(error) => write!(f, "{}", error),
             ParseErrorCollection::Multiple { errors } => {
                 // Create indices sorted by line and column
                 let mut indices: Vec<usize> = (0..errors.len()).collect();
@@ -183,3 +201,37 @@ impl std::fmt::Display for ParseErrorCollection {
 }
 
 impl std::error::Error for ParseErrorCollection {}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn instantiate_model_error_display_and_error_trait() {
+        let err = InstantiateModelError {
+            msg: "hello".to_string(),
+        };
+
+        assert_eq!(err.to_string(), "hello");
+        let _as_error: &dyn std::error::Error = &err;
+    }
+
+    #[test]
+    fn parse_error_collection_instantiate_model_variant_is_displayed() {
+        let err = ParseErrorCollection::InstantiateModel(InstantiateModelError {
+            msg: "missing param".to_string(),
+        });
+        assert_eq!(err.to_string(), "missing param");
+    }
+
+    #[test]
+    fn parse_error_collection_multiple_constructor_works() {
+        let err = ParseErrorCollection::multiple(
+            vec![RecoverableParseError::new("bad token".to_string(), None)],
+            None,
+            None,
+        );
+        let formatted = err.to_string();
+        assert!(formatted.contains("bad token"));
+    }
+}
