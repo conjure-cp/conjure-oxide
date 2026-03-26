@@ -171,7 +171,7 @@ fn classify_unexpected_token_error(node: Node, source_code: &str) -> Recoverable
 }
 
 /// Determines if an error node represents a malformed line error.
-fn is_malformed_line_error(node: &tree_sitter::Node, source: &str) -> bool {
+pub fn is_malformed_line_error(node: &tree_sitter::Node, source: &str) -> bool {
     if node.start_position().column == 0 || error_node_out_of_range(node, source) {
         return true;
     }
