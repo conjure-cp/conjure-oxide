@@ -1,4 +1,5 @@
 use crate::errors::RecoverableParseError;
+use crate::parser::syntax_errors::is_malformed_line_error;
 
 const KEYWORDS: [&str; 21] = [
     "forall", "exists", "such", "that", "letting", "find", "minimise", "maximise", "subject", "to",
@@ -12,6 +13,9 @@ pub fn keyword_as_identifier(
 ) {
     let mut stack = vec![root];
     while let Some(node) = stack.pop() {
+        if node.is_error() && is_malformed_line_error(&node, source) {
+            return;
+        }
         if (node.kind() == "variable" || node.kind() == "identifier" || node.kind() == "parameter")
             && let Ok(text) = node.utf8_text(source.as_bytes())
         {
