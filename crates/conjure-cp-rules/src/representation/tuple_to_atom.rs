@@ -3,7 +3,7 @@ use super::prelude::*;
 register_representation!(
     TupleToAtom
     struct State<T> {
-        elems: Vec<T>
+        pub elems: Vec<T>
     }
     fn init(dom: DomainPtr) -> Result<State<DomainPtr>, ReprInitError> {
         let Some(elems) = dom.as_tuple() else {

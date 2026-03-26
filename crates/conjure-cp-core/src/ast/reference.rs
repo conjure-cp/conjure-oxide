@@ -176,6 +176,18 @@ impl Reference {
         Some((rule, self.repr_state_unchecked()))
     }
 
+    /// If this reference has this specific representation selected, get its state as a concrete type
+    pub fn get_repr_as<R: ReprRule + ?Sized>(
+        &self,
+    ) -> Option<MappedRwLockReadGuard<'_, R::DeclLevel>> {
+        if let Some(rule) = self.repr
+            && rule == R::STORED
+        {
+            return Some(self.repr_state_as_unchecked::<R>());
+        }
+        None
+    }
+
     /// If this reference has a representation selected, return its state, otherwise crash
     fn repr_state_unchecked(&self) -> MappedRwLockReadGuard<'_, dyn ReprStateStored> {
         let rule = self

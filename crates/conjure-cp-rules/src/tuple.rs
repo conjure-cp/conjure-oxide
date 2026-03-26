@@ -1,29 +1,31 @@
 use crate::guard;
-use conjure_cp::ast::Expression as Expr;
-use conjure_cp::ast::GroundDomain;
-use conjure_cp::ast::Moo;
-use conjure_cp::ast::SymbolTable;
-use conjure_cp::into_matrix_expr;
-use conjure_cp::matrix_expr;
-use conjure_cp::rule_engine::{
-    ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
-};
+use conjure_cp::ast::{Atom, Expression as Expr, Literal, Metadata, Reference, SymbolTable};
+use conjure_cp::rule_engine::{ApplicationResult, Reduction, register_rule};
 
-use conjure_cp::ast::Atom;
-use conjure_cp::ast::Expression;
-use conjure_cp::ast::Literal;
-use conjure_cp::ast::Metadata;
-use conjure_cp::ast::Name;
-use conjure_cp::rule_engine::ApplicationError;
+use crate::representation::tuple_to_atom::TupleToAtom;
 
 #[register_rule(("ReprGeneral", 2000))]
-fn index_tuple_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+fn tuple_to_atom_index_lit(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     guard!(
-        let Expr::SafeIndex(_, subject, indices) = expr       &&
-        let Expr::Atomic(_, Atom::Reference(re)) = &**subject &&
-        let Some(_, )
+        let Expr::SafeIndex(_, subject, indices) = expr        &&
+        let Expr::Atomic(_, Atom::Reference(re)) = &**subject  &&
+        let Some(Expr::Atomic(_, idx)) = indices.first()       &&
+        let Atom::Literal(Literal::Int(idx)) = idx             &&
+        let Some(repr) = re.get_repr_as::<TupleToAtom>()
+        else {
+            todo!()
+        }
     );
-    todo!()
+
+    let lhs = Reference::new(repr.elems[*idx as usize].clone());
+    let rhs = &indices[1..];
+
+    if rhs.is_empty() {
+        Ok(Reduction::pure(lhs.into()))
+    } else {
+        let new_expr = Expr::SafeIndex(Metadata::new(), lhs.into(), Vec::from(rhs));
+        Ok(Reduction::pure(new_expr))
+    }
 }
 
 //     // i assume the MkOpIndexing is the same as matrix indexing

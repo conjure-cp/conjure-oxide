@@ -31,7 +31,7 @@ fn index_record_to_atom(expr: &Expression, _: &SymbolTable) -> ApplicationResult
 
     guard!(
         let Expression::Atomic(_, Atom::Reference(re)) = &**subject                &&
-        let Some(repr) = RecordToAtom::get_for(&re.ptr)                            &&
+        let Some(repr) = re.get_repr_as::<RecordToAtom>()                          &&
         let Some(Expression::Atomic(_, Atom::Reference(idx_re))) = indices.first() &&
         let Some((field_name, _)) = idx_re.ptr.as_record_field()
         else {
@@ -74,12 +74,12 @@ fn record_var_eq_var(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
     let (lhs, rhs, neq) = as_eq_or_neq(expr)?;
 
     guard!(
-        let Expression::Atomic(_, Atom::Reference(decl)) = lhs  &&
-        let Some(repr) = RecordToAtom::get_for(&decl.ptr)       &&
-        let Expression::Atomic(_, Atom::Reference(decl2)) = rhs &&
-        let Some(repr2) = RecordToAtom::get_for(&decl2.ptr)     &&
-        let Some(entries) = decl.domain_of().as_record()        &&
-        let Some(entries2) = decl.domain_of().as_record()
+        let Expression::Atomic(_, Atom::Reference(re)) = lhs   &&
+        let Some(repr) = re.get_repr_as::<RecordToAtom>()      &&
+        let Expression::Atomic(_, Atom::Reference(re2)) = rhs  &&
+        let Some(repr2) = re2.get_repr_as::<RecordToAtom>()    &&
+        let Some(entries) = re.domain_of().as_record()         &&
+        let Some(entries2) = re2.domain_of().as_record()
         else {
             return Err(RuleNotApplicable);
         }
@@ -124,7 +124,7 @@ fn record_var_eq_lit(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
 
     guard!(
         let Expression::Atomic(_, Atom::Reference(re)) = lhs &&
-        let Some(repr) = RecordToAtom::get_for(&re.ptr)      &&
+        let Some(repr) = re.get_repr_as::<RecordToAtom>()    &&
         let Some(rhs_ents) = record_expr_entries(rhs)
         else {
             return Err(RuleNotApplicable);

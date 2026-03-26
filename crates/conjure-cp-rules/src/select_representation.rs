@@ -32,7 +32,7 @@ fn select_representation(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let mut re = re.clone();
     for rule in get_repr_rules() {
         // Once we find an applicable representation, exit
-        let Ok((_, new_symbols, new_constraints)) = re.select_or_init_repr(rule) else {
+        let Ok((_, new_symbols, new_constraints)) = re.select_or_init_repr_via(rule) else {
             continue;
         };
         return Ok(Reduction::new(re.into(), new_constraints, new_symbols));
@@ -64,7 +64,7 @@ fn uniform_repr_in_comparison_op(expr: &Expr, _: &SymbolTable) -> ApplicationRes
         (Some((lhs_rule, _)), None) => {
             let mut new_rhs = rhs_re.clone();
             let (_, symbols, constraints) = new_rhs
-                .select_or_init_repr(lhs_rule)
+                .select_or_init_repr_via(lhs_rule)
                 .map_err(|_| RuleNotApplicable)?;
             let new_expr = expr.with_children_bi(VecDeque::from([lhs.clone(), new_rhs.into()]));
             Ok(Reduction::new(new_expr, constraints, symbols))
@@ -72,7 +72,7 @@ fn uniform_repr_in_comparison_op(expr: &Expr, _: &SymbolTable) -> ApplicationRes
         (None, Some((rhs_rule, _))) => {
             let mut new_lhs = lhs_re.clone();
             let (_, symbols, constraints) = new_lhs
-                .select_or_init_repr(rhs_rule)
+                .select_or_init_repr_via(rhs_rule)
                 .map_err(|_| RuleNotApplicable)?;
             let new_expr = expr.with_children_bi(VecDeque::from([new_lhs.into(), rhs.clone()]));
             Ok(Reduction::new(new_expr, constraints, symbols))
