@@ -432,7 +432,9 @@ impl SolverAdaptor for Sat {
                 let blocking_cl = blocking_clause_for_solution(&solution, &var_map)?;
                 tracing::info!("adding blocking clause for solution: {:#?}", solution);
                 solver.add_clause(blocking_cl).map_err(|e| {
-                    SolverError::Runtime(format!("Failed adding solution blocking clause to SAT solver: {e}"))
+                    SolverError::Runtime(format!(
+                        "Failed adding solution blocking clause to SAT solver: {e}"
+                    ))
                 })?;
             }
         }
