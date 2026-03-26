@@ -163,6 +163,44 @@ fn get_ref_sols(
     solution
 }
 
+fn is_user_visible_solution_var(name: &Name) -> bool {
+    !matches!(name, Name::Machine(_))
+}
+
+fn blocking_clause_for_solution(
+    solution: &HashMap<Name, Literal>,
+    var_map: &HashMap<Name, Lit>,
+) -> Result<Clause, SolverError> {
+    let mut clause = Clause::new();
+
+    for (name, value) in solution {
+        let lit = var_map.get(name).copied().ok_or_else(|| {
+            SolverError::Runtime(format!(
+                "Missing SAT variable for solution variable {name} when building blocking clause"
+            ))
+        })?;
+
+        let blocking_lit = match value {
+            Literal::Bool(true) | Literal::Int(1) => !lit,
+            Literal::Bool(false) | Literal::Int(0) => lit,
+            Literal::Int(2) => {
+                return Err(SolverError::Runtime(format!(
+                    "Cannot build blocking clause from dont-care assignment for {name}"
+                )));
+            }
+            other => {
+                return Err(SolverError::Runtime(format!(
+                    "Cannot build SAT blocking clause from non-boolean value {other:?} for {name}"
+                )));
+            }
+        };
+
+        clause.add(blocking_lit);
+    }
+
+    Ok(clause)
+}
+
 impl Sat {
     fn add_dominance_constraints_for_solution(
         dominance_expression: Option<&Expression>,
@@ -343,7 +381,6 @@ impl SolverAdaptor for Sat {
                 )
             })?;
 
-            let mut has_sol = false;
             for (name, lit) in &var_map {
                 let inserter = sol.var_value(lit.var());
                 sol.assign_var(lit.var(), inserter);
@@ -391,17 +428,13 @@ impl SolverAdaptor for Sat {
                     &dominance_solution,
                     &mut var_map,
                 )?;
-            }
 
-            let blocking_vec: Vec<_> = sol.clone().iter().map(|lit| !lit).collect();
-            let mut blocking_cl = Clause::new();
-            tracing::info!("adding blocking clause with literals: {:#?}", blocking_vec);
-            for lit_i in blocking_vec {
-                blocking_cl.add(lit_i);
+                let blocking_cl = blocking_clause_for_solution(&solution, &var_map)?;
+                tracing::info!("adding blocking clause for solution: {:#?}", solution);
+                solver.add_clause(blocking_cl).map_err(|e| {
+                    SolverError::Runtime(format!("Failed adding solution blocking clause to SAT solver: {e}"))
+                })?;
             }
-            solver.add_clause(blocking_cl).map_err(|e| {
-                SolverError::Runtime(format!("Failed adding blocking clause to SAT solver: {e}"))
-            })?;
         }
     }
 
@@ -421,14 +454,16 @@ impl SolverAdaptor for Sat {
         self.dominance_model_template = self.dominance_expression.as_ref().map(|_| model.clone());
 
         let sym_tab = model.symbols().deref().clone();
-        let decisions = sym_tab.clone().into_iter();
 
         let mut finds: Vec<Name> = Vec::new();
         let mut var_map: HashMap<Name, Lit> = HashMap::new();
 
-        for find_ref in decisions {
-            let domain = find_ref
-                .1
+        for (name, decl) in sym_tab.clone().into_iter_local() {
+            if decl.as_find().is_none() {
+                continue;
+            }
+
+            let domain = decl
                 .domain()
                 .expect("Decision variable should have a domain");
             let domain = domain.as_ground().expect("Domain should be ground");
@@ -436,22 +471,23 @@ impl SolverAdaptor for Sat {
             // only decision variables with boolean domains or representations using booleans are supported at this time
             if (domain != &GroundDomain::Bool
                 && sym_tab
-                    .get_representation(&find_ref.0, &["sat_log_int"])
+                    .get_representation(&name, &["sat_log_int"])
                     .is_none()
                 && sym_tab
-                    .get_representation(&find_ref.0, &["sat_direct_int"])
+                    .get_representation(&name, &["sat_direct_int"])
                     .is_none()
                 && sym_tab
-                    .get_representation(&find_ref.0, &["sat_order_int"])
+                    .get_representation(&name, &["sat_order_int"])
                     .is_none())
             {
                 Err(SolverError::ModelInvalid(
                     "Only Boolean Decision Variables supported".to_string(),
                 ))?;
             }
-            // only boolean variables should be passed to the solver
-            if (domain == &GroundDomain::Bool) {
-                let name = find_ref.0;
+            // Only expose non-internal boolean variables in solver solutions. Machine names are
+            // auxiliaries introduced during rewriting and can create huge powersets of don't-care
+            // assignments without changing the semantic solution.
+            if domain == &GroundDomain::Bool && is_user_visible_solution_var(&name) {
                 finds.push(name);
             }
         }
@@ -592,6 +628,7 @@ fn enumerate_solution(solution: HashMap<Name, Literal>) -> Vec<HashMap<Name, Lit
 mod tests {
     use super::*;
     use crate::ast::{DeclarationPtr, Domain, Moo, Reference};
+    use rustsat::types::Var as SatVar;
 
     #[test]
     fn from_solution_substitution_replaces_reference_with_literal() {
