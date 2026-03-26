@@ -66,7 +66,9 @@ fn expand_qualifiers(
             }
         }
         ComprehensionQualifier::ExpressionGenerator { .. } => {
-            panic!("Comprehension expander should not be called on comprehensions containing ExpressionGenerator");
+            panic!(
+                "Comprehension expander should not be called on comprehensions containing ExpressionGenerator"
+            );
         }
     }
 
