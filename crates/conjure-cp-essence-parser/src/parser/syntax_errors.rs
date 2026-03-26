@@ -75,13 +75,13 @@ pub fn detect_syntactic_errors(
                 continue;
             }
             // Ignore error nodes that start inside a single-line comment.
-            if let Some(line_str) = source.lines().nth(line) {
-                if let Some(dollar_idx) = line_str.find('$') {
-                    if node.start_position().column >= dollar_idx {
-                        continue;
-                    }
-                }
+            if let Some(line_str) = source.lines().nth(line)
+                && let Some(dollar_idx) = line_str.find('$')
+                && node.start_position().column >= dollar_idx
+            {
+                continue;
             }
+
             if is_malformed_line_error(&node, source) {
                 malformed_lines_reported.insert(line);
                 let start_byte = node.start_byte();
