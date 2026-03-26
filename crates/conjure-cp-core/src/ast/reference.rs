@@ -74,6 +74,14 @@ impl Reference {
     ///
     /// # Returns
     /// State of the initialised representation
+    pub fn select_repr<R: ReprRule + ?Sized>(
+        &mut self,
+    ) -> Result<MappedRwLockReadGuard<'_, R::DeclLevel>, ReprSelectError> {
+        let _ = self.select_repr_via(R::STORED);
+        Ok(self.repr_state_as_unchecked::<R>())
+    }
+
+    /// Same as [Reference::select_repr], but type-erased
     pub fn select_repr_via(
         &mut self,
         rule: ReprRulePtr,
@@ -90,21 +98,6 @@ impl Reference {
         Ok(self.repr_state_unchecked())
     }
 
-    pub fn select_repr<R: ReprRule + ?Sized>(
-        &mut self,
-    ) -> Result<MappedRwLockReadGuard<'_, R::DeclLevel>, ReprSelectError> {
-        if let Some(repr) = self.repr
-            && repr != R::STORED
-        {
-            return Err(ReprSelectError::AlreadySelected(repr));
-        }
-        if !self.ptr.reprs().has::<R>() {
-            return Err(ReprSelectError::DoesNotExist(self.ptr.clone(), R::NAME));
-        }
-        self.repr = Some(R::STORED);
-        Ok(self.repr_state_as_unchecked::<R>())
-    }
-
     /// Same as [Reference::select_or_init_repr], but type-erased
     pub fn select_or_init_repr_via(
         &mut self,
@@ -115,10 +108,7 @@ impl Reference {
         {
             return Err(ReprSelectError::AlreadySelected(repr).into());
         }
-        let (symbols, constraints) = rule.init_for_if_not_exists(&mut self.ptr)?;
-        self.repr = Some(rule);
-        let state = self.repr_state_unchecked();
-        Ok((state, symbols, constraints))
+        self.update_or_init_repr_via(rule).map_err(Into::into)
     }
 
     /// Select the given representation for this reference, initialising it if necessary.
@@ -138,25 +128,8 @@ impl Reference {
     pub fn select_or_init_repr<R: ReprRule + ?Sized>(
         &mut self,
     ) -> ReprGetOrInitResult<'_, R::DeclLevel, ReferenceReprError> {
-        if let Some(repr) = self.repr
-            && repr != R::STORED
-        {
-            return Err(ReprSelectError::AlreadySelected(repr).into());
-        }
-        let (symbols, constraints) = R::init_for_if_not_exists(&mut self.ptr)?;
-        self.repr = Some(R::STORED);
+        let (_, symbols, constraints) = self.select_or_init_repr_via(R::STORED)?;
         let state = self.repr_state_as_unchecked::<R>();
-        Ok((state, symbols, constraints))
-    }
-
-    /// Same as [Reference::update_or_init_repr], but type-erased
-    pub fn update_or_init_repr_via(
-        &mut self,
-        rule: ReprRulePtr,
-    ) -> ReprGetOrInitResult<'_, dyn ReprStateStored, ReprError> {
-        let (symbols, constraints) = rule.init_for_if_not_exists(&mut self.ptr)?;
-        self.repr = Some(rule);
-        let state = self.repr_state_unchecked();
         Ok((state, symbols, constraints))
     }
 
@@ -176,9 +149,19 @@ impl Reference {
     pub fn update_or_init_repr<R: ReprRule + ?Sized>(
         &mut self,
     ) -> ReprGetOrInitResult<'_, R::DeclLevel, ReprError> {
-        let (symbols, constraints) = R::init_for_if_not_exists(&mut self.ptr)?;
-        self.repr = Some(R::STORED);
+        let (_, symbols, constraints) = self.update_or_init_repr_via(R::STORED)?;
         let state = self.repr_state_as_unchecked::<R>();
+        Ok((state, symbols, constraints))
+    }
+
+    /// Same as [Reference::update_or_init_repr], but type-erased
+    pub fn update_or_init_repr_via(
+        &mut self,
+        rule: ReprRulePtr,
+    ) -> ReprGetOrInitResult<'_, dyn ReprStateStored, ReprError> {
+        let (symbols, constraints) = rule.init_for_if_not_exists(&mut self.ptr)?;
+        self.repr = Some(rule);
+        let state = self.repr_state_unchecked();
         Ok((state, symbols, constraints))
     }
 
