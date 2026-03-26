@@ -1,3 +1,4 @@
+use crate::guard;
 use conjure_cp::ast::Expression as Expr;
 use conjure_cp::ast::GroundDomain;
 use conjure_cp::ast::Moo;
@@ -15,9 +16,16 @@ use conjure_cp::ast::Metadata;
 use conjure_cp::ast::Name;
 use conjure_cp::rule_engine::ApplicationError;
 
-// //TODO: largely copied from the matrix rules, This should be possible to simplify
-// #[register_rule(("Base", 2000))]
-// fn index_tuple_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+#[register_rule(("ReprGeneral", 2000))]
+fn index_tuple_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    guard!(
+        let Expr::SafeIndex(_, subject, indices) = expr       &&
+        let Expr::Atomic(_, Atom::Reference(re)) = &**subject &&
+        let Some(_, )
+    );
+    todo!()
+}
+
 //     // i assume the MkOpIndexing is the same as matrix indexing
 //     let Expr::SafeIndex(_, subject, indices) = expr else {
 //         return Err(RuleNotApplicable);

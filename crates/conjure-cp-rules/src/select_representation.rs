@@ -1,22 +1,16 @@
 use crate::guard;
 use crate::utils::as_comparison_op;
 use conjure_cp::ast::{Domain, DomainPtr, HasDomain, UnresolvedDomain};
-use conjure_cp::solver::adaptors::smt::{MatrixTheory, TheoryConfig};
 use conjure_cp::{
-    ast::{Atom, Expression as Expr, GroundDomain, Metadata, Name, SymbolTable, serde::HasId},
-    bug,
+    ast::{Atom, Expression as Expr, GroundDomain, SymbolTable},
     representation::get_repr_rules,
     rule_engine::{
         ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
         register_rule_set,
     },
-    settings::SolverFamily,
 };
-use itertools::{Itertools, any};
+use itertools::any;
 use std::collections::VecDeque;
-use std::sync::Arc;
-use std::sync::atomic::AtomicBool;
-use std::sync::atomic::Ordering;
 use uniplate::Biplate;
 
 // Representations of Essence abstract types down to Essence'

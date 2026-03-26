@@ -8,7 +8,7 @@ use super::{
 use crate::bug;
 use crate::representation::types::ReprGetOrInitResult;
 use crate::representation::{
-    ReferenceReprError, ReprError, ReprRulePtr, ReprSelectError, ReprStateStored,
+    ReferenceReprError, ReprError, ReprRule, ReprRulePtr, ReprSelectError, ReprStateStored,
 };
 use derivative::Derivative;
 use parking_lot::MappedRwLockReadGuard;
@@ -119,6 +119,17 @@ impl Reference {
         Ok((state, symbols, constraints))
     }
 
+    /// Same as [Reference::update_or_init_repr], but type-erased
+    pub fn update_or_init_repr_with(
+        &mut self,
+        rule: ReprRulePtr,
+    ) -> ReprGetOrInitResult<'_, dyn ReprStateStored, ReprError> {
+        let (symbols, constraints) = rule.init_for_if_not_exists(&mut self.ptr)?;
+        self.repr = Some(rule);
+        let state = self.repr_state_unchecked();
+        Ok((state, symbols, constraints))
+    }
+
     /// Select the given representation for this reference, initialising it if necessary.
     /// Will overwrite the existing selection.
     ///
@@ -132,13 +143,12 @@ impl Reference {
     /// - `state` is an instance of the given representation
     /// - `symbols` are new variables created by the representation
     /// - `constraints` are new top-level constraints created by the representation
-    pub fn update_or_init_repr(
+    pub fn update_or_init_repr<R: ReprRule + ?Sized>(
         &mut self,
-        rule: ReprRulePtr,
-    ) -> ReprGetOrInitResult<'_, dyn ReprStateStored, ReprError> {
-        let (symbols, constraints) = rule.init_for_if_not_exists(&mut self.ptr)?;
-        self.repr = Some(rule);
-        let state = self.repr_state_unchecked();
+    ) -> ReprGetOrInitResult<'_, R::DeclLevel, ReprError> {
+        let (symbols, constraints) = R::init_for_if_not_exists(&mut self.ptr)?;
+        self.repr = Some(R::STORED);
+        let state = self.repr_state_as_unchecked::<R>();
         Ok((state, symbols, constraints))
     }
 
@@ -167,6 +177,18 @@ impl Reference {
                     self.name()
                 )
             })
+    }
+
+    fn repr_state_as_unchecked<R: ReprRule + ?Sized>(
+        &self,
+    ) -> MappedRwLockReadGuard<'_, R::DeclLevel> {
+        R::get_for(&self.ptr).unwrap_or_else(|| {
+            bug!(
+                "`{}` did not have the expected representation `{}`",
+                self.name(),
+                R::NAME
+            )
+        })
     }
 
     /// Returns the expression behind a value-letting reference, if this is one.

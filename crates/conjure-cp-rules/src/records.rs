@@ -21,7 +21,7 @@ use conjure_cp::rule_engine::{
 /// ```plain
 /// x: record { a : bool, b : int(0..9) }
 /// ```
-#[register_rule(("Base", 2000))]
+#[register_rule(("ReprGeneral", 2000))]
 fn index_record_to_atom(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
     let (subject, indices, safe) = match expr {
         Expression::UnsafeIndex(_, subject, indices) => (subject, indices, false),
@@ -58,7 +58,7 @@ fn index_record_to_atom(expr: &Expression, _: &SymbolTable) -> ApplicationResult
     }
 }
 
-/// Equality of two record variables
+/// (In)Equality of two record variables
 /// e.g:
 /// ```plain
 /// x == y
@@ -69,7 +69,7 @@ fn index_record_to_atom(expr: &Expression, _: &SymbolTable) -> ApplicationResult
 /// ```plainW
 /// x, y: record { a : bool, b : int(0..9) }
 /// ```
-#[register_rule(("Base", 2000))]
+#[register_rule(("ReprGeneral", 2000))]
 fn record_var_eq_var(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
     let (lhs, rhs, neq) = as_eq_or_neq(expr)?;
 
@@ -107,7 +107,7 @@ fn record_var_eq_var(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
     Ok(Reduction::pure(new_expr))
 }
 
-/// Equality of record variable to record literal/expression
+/// (In)Equality of record variable to record literal/expression
 /// e.g:
 /// ```plain
 /// x == { a: true, b: N + 1 }
@@ -118,7 +118,7 @@ fn record_var_eq_var(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
 /// ```plain
 /// x, y: record { a : bool, b : int(0..9) }
 /// ```
-#[register_rule(("Base", 2000))]
+#[register_rule(("ReprGeneral", 2000))]
 fn record_var_eq_lit(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
     let (lhs, rhs, neq) = as_eq_or_neq(expr)?;
 
@@ -151,7 +151,7 @@ fn record_var_eq_lit(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
 /// ~>
 /// x == { ... }
 /// ```
-#[register_rule(("Base", 2001))]
+#[register_rule(("ReprGeneral", 2001))]
 fn record_eq_reorder(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
     guard!(
         let Expression::Eq(md, lit, var) = expr                      &&
