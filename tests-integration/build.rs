@@ -9,6 +9,7 @@ use walkdir::WalkDir;
 // (build.rs cannot depend on the crate it's building)
 #[path = "src/test_config.rs"]
 mod test_config;
+use test_config::TestConfig;
 
 fn main() -> io::Result<()> {
     println!("cargo:rerun-if-changed=tests/integration");
@@ -198,6 +199,25 @@ fn main() -> io::Result<()> {
     Ok(())
 }
 
+fn read_config_or_default(path: &str) -> TestConfig {
+    let config_path = format!("{}/config.toml", path);
+    if let Ok(contents) = std::fs::read_to_string(&config_path) {
+        toml::from_str(&contents).unwrap_or_default()
+    } else {
+        TestConfig::default()
+    }
+}
+
+fn get_ignore_attr(cfg: &TestConfig) -> String {
+    if cfg.skip {
+        String::from(
+            "#[ignore = \"this test has been disabled ('skip=true' in its config.toml)\"]\n",
+        )
+    } else {
+        String::new()
+    }
+}
+
 fn write_integration_test(
     file: &mut File,
     path: String,
@@ -205,6 +225,9 @@ fn write_integration_test(
 ) -> io::Result<()> {
     // TODO: Consider supporting multiple Essence files?
     if essence_files.len() == 1 {
+        let cfg = read_config_or_default(&path);
+        let ignore = get_ignore_attr(&cfg);
+
         write!(
             file,
             include_str!("./tests/integration_test_template"),
@@ -213,6 +236,7 @@ fn write_integration_test(
             test_dir = path,
             essence_file = essence_files[0].0,
             ext = essence_files[0].1,
+            ignore_attr = ignore
         )
     } else {
         Ok(())
@@ -233,12 +257,16 @@ fn write_roundtrip_test(
     path: String,
     essence_file: (String, String),
 ) -> io::Result<()> {
+    let cfg = read_config_or_default(&path);
+    let ignore = get_ignore_attr(&cfg);
+
     write!(
         file,
         include_str!("./tests/roundtrip_test_template"),
         test_name = path.replace("./", "").replace(['/', '-'], "_"),
         test_dir = path,
         essence_file = essence_file.0,
-        ext = essence_file.1
+        ext = essence_file.1,
+        ignore_attr = ignore
     )
 }
