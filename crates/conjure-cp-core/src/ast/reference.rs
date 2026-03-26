@@ -214,6 +214,12 @@ impl From<Reference> for Expression {
     }
 }
 
+impl From<Reference> for Moo<Expression> {
+    fn from(value: Reference) -> Self {
+        Moo::new(value.into())
+    }
+}
+
 impl From<DeclarationPtr> for Reference {
     fn from(ptr: DeclarationPtr) -> Self {
         Reference::new(ptr)

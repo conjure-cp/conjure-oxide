@@ -122,20 +122,24 @@ where
     }
 }
 
-/// Converts a vector of expressions to a vector of atoms.
-///
-/// # Returns
-///
-/// `Some(Vec<Atom>)` if the vectors direct children expressions are all atomic, otherwise `None`.
-#[allow(dead_code)]
-pub fn expressions_to_atoms(exprs: &Vec<Expr>) -> Option<Vec<Atom>> {
-    let mut atoms: Vec<Atom> = vec![];
-    for expr in exprs {
-        let Expr::Atomic(_, atom) = expr else {
-            return None;
-        };
-        atoms.push(atom.clone());
+pub fn as_comparison_op(expr: &Expr) -> Option<(Moo<Expr>, Moo<Expr>)> {
+    match expr {
+        Expr::Eq(_, lhs, rhs)
+        | Expr::Neq(_, lhs, rhs)
+        | Expr::Lt(_, lhs, rhs)
+        | Expr::Gt(_, lhs, rhs)
+        | Expr::Leq(_, lhs, rhs)
+        | Expr::Geq(_, lhs, rhs) => Some((lhs.clone(), rhs.clone())),
+        _ => None,
     }
+}
 
-    Some(atoms)
+pub fn as_lex_comparison_op(expr: &Expr) -> Option<(Moo<Expr>, Moo<Expr>)> {
+    match expr {
+        Expr::LexGt(_, lhs, rhs)
+        | Expr::LexLt(_, lhs, rhs)
+        | Expr::LexGeq(_, lhs, rhs)
+        | Expr::LexLeq(_, lhs, rhs) => Some((lhs.clone(), rhs.clone())),
+        _ => None,
+    }
 }

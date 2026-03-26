@@ -74,6 +74,7 @@ static_assertions::assert_eq_size!([u8; 112], Expression);
 #[biplate(to=SymbolTable)]
 #[biplate(to=SymbolTablePtr)]
 #[biplate(to=Vec<Expression>)]
+#[biplate(to=Moo<Expression>)]
 #[path_prefix(conjure_cp::ast)]
 pub enum Expression {
     AbstractLiteral(Metadata, AbstractLiteral<Expression>),

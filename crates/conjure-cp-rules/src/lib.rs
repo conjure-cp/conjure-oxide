@@ -21,9 +21,7 @@ mod utils;
 mod variables_in_domains;
 
 pub mod representation;
-
-// TODO (repr): representation selection rules
-// mod select_representation;
+mod select_representation;
 
 /// Denotes a block of code as extra, optional checks for a rule. Primarily, these are checks that
 /// are too expensive to do normally, or are implicit in the rule priorities and application order.
