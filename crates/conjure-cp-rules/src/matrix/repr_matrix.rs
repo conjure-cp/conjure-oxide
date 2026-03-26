@@ -65,7 +65,7 @@ fn select_repr_mta(expr: &Expression, symtab: &SymbolTable) -> ApplicationResult
 
     // Select MatrixToAtom for every matrix variable in the model
     let new_expr = expr.transform_bi(&|mut re: Reference| {
-        let _ = re.select_repr(&MatrixToAtom);
+        let _ = re.select_repr_via(&MatrixToAtom);
         re
     });
 
