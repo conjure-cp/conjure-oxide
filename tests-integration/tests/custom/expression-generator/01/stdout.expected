@@ -487,3 +487,41 @@ such that
 
 2
 1641
+Model before rewriting:
+
+find a: set  of int(1..4)
+find b: set  of int(6..7)
+find x: set  of int(1..10)
+
+such that
+
+([ i | i <- x ] = [ i | i : int(1..10) ]),
+(sum([ i | i <- (a union b), j <- b ]) = 2)
+
+--
+
+[ i | i : int(1..10) ], 
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[1,2,3,4,5,6,7,8,9,10;int(1..)]
+
+--
+
+([ i | i <- x ] = [1,2,3,4,5,6,7,8,9,10;int(1..)]),
+(sum([ i | i <- (a union b), j <- b ]) = 2), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+([ i | i <- x ] = Matrix([Int(1), Int(2), Int(3), Int(4), Int(5), Int(6), Int(7), Int(8), Int(9), Int(10)], Moo { inner: Int([UnboundedR(1)]) })),
+(sum([ i | i <- (a union b), j <- b ]) = 2)
+
+--
+
+Final model:
+
+find a: set  of int(1..4)
+find b: set  of int(6..7)
+find x: set  of int(1..10)
+
+such that
+
+([ i | i <- x ] = Matrix([Int(1), Int(2), Int(3), Int(4), Int(5), Int(6), Int(7), Int(8), Int(9), Int(10)], Moo { inner: Int([UnboundedR(1)]) })),
+(sum([ i | i <- (a union b), j <- b ]) = 2)
+
