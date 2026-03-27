@@ -46,23 +46,26 @@ fn union_set(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                     // [ return_expr | i <- B, !(i in A), guards...] part
                     let mut comprehension2 = comp.clone();
                     // modify the generator to be just from b
-                    let b_ptr =  DeclarationPtr::new_quantified_expr(gen_decl.name().clone(), b.into());
+                    let b_ptr =
+                        DeclarationPtr::new_quantified_expr(gen_decl.name().clone(), b.into());
                     let b_gen = ComprehensionQualifier::ExpressionGenerator { ptr: b_ptr.clone() };
                     if let Some(qual2) = comprehension2.qualifiers.get_mut(i) {
                         *qual2 = b_gen;
-                    } 
+                    }
 
                     // replace all occurences of old generator in comprehension2 with new pointer
-                    comprehension2.return_expression.transform_bi(&|atom: Atom| match atom {
-                        Atom::Reference(reference) => {
-                            if reference.clone().into_ptr() == gen_decl {
-                                Atom::new_ref(b_ptr.clone())
-                            } else {
-                                Atom::Reference(reference)
+                    comprehension2
+                        .return_expression
+                        .transform_bi(&|atom: Atom| match atom {
+                            Atom::Reference(reference) => {
+                                if reference.clone().into_ptr() == gen_decl {
+                                    Atom::new_ref(b_ptr.clone())
+                                } else {
+                                    Atom::Reference(reference)
+                                }
                             }
-                        }
-                        other => other,
-                    });
+                            other => other,
+                        });
 
                     // add the condition !(i in A)
                     comprehension2
@@ -72,7 +75,7 @@ fn union_set(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                             Moo::new(Expr::In(
                                 Metadata::new(),
                                 Moo::new(Expr::Atomic(Metadata::new(), Atom::new_ref(b_ptr))),
-                                a.clone(),
+                                a,
                             )),
                         )));
 
