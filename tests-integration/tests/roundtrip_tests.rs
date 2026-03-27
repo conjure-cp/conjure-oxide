@@ -34,7 +34,7 @@ fn roundtrip_test(path: &str, filename: &str, extension: &str) -> Result<(), Box
     let param_file = std::fs::read_dir(path).ok().and_then(|entries| {
         entries
             .filter_map(|entry| entry.ok())
-            .find(|entry| entry.path().extension().map_or(false, |ext| ext == "param"))
+            .find(|entry| entry.path().extension().is_some_and(|ext| ext == "param"))
             .map(|entry| entry.file_name().to_string_lossy().to_string())
     });
 
@@ -134,7 +134,7 @@ fn roundtrip_test_inner(
     let initial_parse = match problem_model {
         Ok(problem_model) => match param_file {
             Some(param_file_name) => {
-                let param_file_path = format!("{path}/{}", param_file_name);
+                let param_file_path = format!("{path}/{param_file_name}");
                 let param_model = parse(&param_file_path, context.clone());
                 match param_model {
                     Ok(param_model) => instantiate_model(problem_model, param_model).map_err(|e| {
@@ -280,7 +280,7 @@ fn save_essence(
 ) -> Result<(), std::io::Error> {
     let filename = roundtrip_essence_path(path, test_name, file_type);
     let mut file = fs::File::create(&filename)?;
-    write!(file, "{}", model)?;
+    write!(file, "{model}")?;
     Ok(())
 }
 
@@ -293,7 +293,7 @@ fn save_parse_error(
 ) -> Result<(), std::io::Error> {
     let filename = roundtrip_error_path(path, test_name, file_type);
     let mut file = fs::File::create(&filename)?;
-    write!(file, "{}", error)?;
+    write!(file, "{error}")?;
     Ok(())
 }
 
