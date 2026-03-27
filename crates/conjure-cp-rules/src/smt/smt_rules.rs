@@ -267,20 +267,22 @@ fn unwrap_abstract_comprehension_sum(expr: &Expr, _: &SymbolTable) -> Applicatio
         return Err(RuleNotApplicable);
     };
 
-    let [ComprehensionQualifier::ExpressionGenerator{ ptr }] = &comp.qualifiers[..]
-    else {
+    let [ComprehensionQualifier::ExpressionGenerator { ptr }] = &comp.qualifiers[..] else {
         return Err(RuleNotApplicable);
     };
 
     let Some(set) = (match ptr.as_quantified_expr() {
         Some(expr_guard) => Some(expr_guard.clone()),
         None => None,
-    }
-    ) else {
+    }) else {
         return Err(RuleNotApplicable);
     };
 
-    let elem_domain = set.domain_of().ok_or(DomainError)?;
+    let elem_domain = set
+        .domain_of()
+        .expect("Expression must have a domain")
+        .element_domain()
+        .expect("Expression must contain elements with uniform domain");
     let list: Vec<_> = elem_domain
         .values()
         .map_err(|_| DomainError)?
