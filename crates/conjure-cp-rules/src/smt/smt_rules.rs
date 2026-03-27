@@ -271,10 +271,10 @@ fn unwrap_abstract_comprehension_sum(expr: &Expr, _: &SymbolTable) -> Applicatio
         return Err(RuleNotApplicable);
     };
 
-    let Some(set) = (match ptr.as_quantified_expr() {
-        Some(expr_guard) => Some(expr_guard.clone()),
-        None => None,
-    }) else {
+    let Some(set) = ptr
+        .as_quantified_expr()
+        .map(|expr_guard| expr_guard.clone())
+    else {
         return Err(RuleNotApplicable);
     };
 
