@@ -5,3 +5,4 @@ mod subset;
 mod supset;
 mod supseteq;
 mod subseteq;
+mod union;
