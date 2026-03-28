@@ -1,4 +1,4 @@
-use conjure_cp::ast::abstract_comprehension::{Generator, Qualifier};
+use conjure_cp::ast::comprehension::ComprehensionQualifier;
 use conjure_cp::ast::{Expression as Expr, *};
 use conjure_cp::rule_engine::ApplicationError;
 use conjure_cp::rule_engine::{
@@ -263,17 +263,26 @@ fn unwrap_abstract_comprehension_sum(expr: &Expr, _: &SymbolTable) -> Applicatio
     let Expr::Sum(_, inner) = expr else {
         return Err(RuleNotApplicable);
     };
-    let Expr::AbstractComprehension(_, comp) = inner.as_ref() else {
+    let Expr::Comprehension(_, comp) = inner.as_ref() else {
         return Err(RuleNotApplicable);
     };
 
-    let [Qualifier::Generator(Generator::ExpressionGenerator(generator))] = &comp.qualifiers[..]
+    let [ComprehensionQualifier::ExpressionGenerator { ptr }] = &comp.qualifiers[..] else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Some(set) = ptr
+        .as_quantified_expr()
+        .map(|expr_guard| expr_guard.clone())
     else {
         return Err(RuleNotApplicable);
     };
 
-    let set = &generator.expression;
-    let elem_domain = generator.decl.domain().ok_or(DomainError)?;
+    let elem_domain = set
+        .domain_of()
+        .expect("Expression must have a domain")
+        .element_domain()
+        .expect("Expression must contain elements with uniform domain");
     let list: Vec<_> = elem_domain
         .values()
         .map_err(|_| DomainError)?

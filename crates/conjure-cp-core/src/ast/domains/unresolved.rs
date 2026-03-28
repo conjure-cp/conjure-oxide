@@ -147,7 +147,8 @@ impl IntVal {
     pub fn new_ref(re: &Reference) -> Option<IntVal> {
         match re.ptr.kind().deref() {
             DeclarationKind::ValueLetting(expr, _)
-            | DeclarationKind::TemporaryValueLetting(expr) => match expr.return_type() {
+            | DeclarationKind::TemporaryValueLetting(expr)
+            | DeclarationKind::QuantifiedExpr(expr) => match expr.return_type() {
                 ReturnType::Int => Some(IntVal::Reference(re.clone())),
                 _ => None,
             },
@@ -192,6 +193,8 @@ impl IntVal {
                         None
                     }
                 }
+                // TODO: idk what this whole file does but I very much doubt it affects this
+                DeclarationKind::QuantifiedExpr(_) => None,
                 // Decision variables inside domains are unresolved until solving.
                 DeclarationKind::Find(_) => None,
                 DeclarationKind::DomainLetting(_) | DeclarationKind::RecordField(_) => bug!(
