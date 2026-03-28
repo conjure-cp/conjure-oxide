@@ -2,11 +2,7 @@ use crate::{
     Model,
     ast::{Expression, SymbolTable, discriminant_from_value},
     bug,
-    settings::{
-        MorphCachingStrategy, MorphConfig, Rewriter, comprehension_expander, current_parser,
-        current_rewriter, minion_discrete_threshold, set_comprehension_expander,
-        set_current_parser, set_current_rewriter, set_minion_discrete_threshold,
-    },
+    settings::{MorphCachingStrategy, MorphConfig, Rewriter, set_current_rewriter},
 };
 use itertools::Itertools;
 use tracing::trace;
@@ -61,21 +57,6 @@ pub fn rewrite_morph<'a>(
         model
     );
 
-    if config.parallel {
-        // Propagate thread-local settings to Rayon worker threads so parallel rule
-        // checking can access them.
-        let tl_parser = current_parser();
-        let tl_rewriter = current_rewriter();
-        let tl_expander = comprehension_expander();
-        let tl_threshold = minion_discrete_threshold();
-        rayon::broadcast(|_| {
-            set_current_parser(tl_parser);
-            set_current_rewriter(tl_rewriter);
-            set_comprehension_expander(tl_expander);
-            set_minion_discrete_threshold(tl_threshold);
-        });
-    }
-
     let model_ref = &mut model;
     let mut engine = build_engine(rule_sets, prop_multiple_equally_applicable, config);
 
@@ -128,7 +109,7 @@ fn build_engine<'a>(
         } else {
             None
         })
-        .set_parallel(config.parallel)
+        .set_parallel(false)
         .set_fixedpoint(config.fixedpoint)
         // .add_down_predicate(|node| ! matches!(node, Expression::Comprehension(_, _)))
         .build()

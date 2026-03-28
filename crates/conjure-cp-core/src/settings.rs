@@ -64,7 +64,6 @@ pub struct MorphConfig {
     pub prefilter: bool,
     /// Use naive (no-levels) traversal (`morph_naive`). Enabled with `levelsoff`, disabled with `levelson`.
     pub naive: bool,
-    pub parallel: bool,
     pub fixedpoint: bool,
 }
 
@@ -74,7 +73,6 @@ impl Default for MorphConfig {
             cache: MorphCachingStrategy::default(),
             prefilter: true,
             naive: false,
-            parallel: false,
             fixedpoint: false,
         }
     }
