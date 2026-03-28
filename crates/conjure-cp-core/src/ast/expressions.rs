@@ -62,8 +62,8 @@ use super::{
 // lot bigger still when we start using it for memoisation, so it should really be
 // boxed ~niklasdewally
 
-// expect size of Expression to be 72 bytes
-// static_assertions::assert_eq_size!([u8; 72], Expression);
+// expect size of Expression to be 112 bytes
+static_assertions::assert_eq_size!([u8; 112], Expression);
 
 /// Represents different types of expressions used to define rules and constraints in the model.
 ///
