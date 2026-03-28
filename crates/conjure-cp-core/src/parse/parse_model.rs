@@ -637,6 +637,7 @@ fn unary_operator(op_name: &str) -> Option<UnaryOp> {
         "MkOpToInt" => Some(Expression::ToInt),
         "MkOpDefined" => Some(Expression::Defined),
         "MkOpRange" => Some(Expression::Range),
+        "MkOpFactorial" => Some(Expression::Factorial),
         _ => None,
     }
 }
