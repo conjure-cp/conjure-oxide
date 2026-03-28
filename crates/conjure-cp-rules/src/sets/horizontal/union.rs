@@ -1,4 +1,4 @@
-use conjure_cp::ast::comprehension::ComprehensionQualifier;
+use conjure_cp::ast::comprehension::{Comprehension, ComprehensionQualifier};
 use conjure_cp::ast::{Atom, DeclarationPtr, Metadata};
 use conjure_cp::ast::{Expression as Expr, Moo, SymbolTable};
 use conjure_cp::into_matrix_expr;
@@ -14,7 +14,7 @@ fn union_set(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
         Expr::Comprehension(_, comp) => {
             // find if any of the generators are generating from expressions
-            for (i, qualifier) in comp.qualifiers.iter().enumerate() {
+            for qualifier in &comp.qualifiers {
                 if let ComprehensionQualifier::ExpressionGenerator { ptr } = qualifier {
                     let gen_decl = ptr.clone();
 
@@ -30,42 +30,12 @@ fn union_set(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                     };
 
                     // [ return_expr | i <- A, guards...] part
-                    let mut comprehension1 = comp.clone();
-                    // modify the generator expression in place to be A
-                    if let Some(qual) = comprehension1.qualifiers.get_mut(i)
-                        && let ComprehensionQualifier::ExpressionGenerator { ptr } = qual
-                        && let Some(mut expr) = ptr.as_quantified_expr_mut()
-                    {
-                        *expr = a.clone().into();
-                    } else {
-                        panic!(
-                            "union_set rule could not find ExpressionGenerator expr while trying to modify first comp in place to a"
-                        );
-                    }
+                    let (comprehension1, _) =
+                        rewrite_union_branch(comp.as_ref(), &gen_decl, a.clone().into());
 
                     // [ return_expr | i <- B, !(i in A), guards...] part
-                    let mut comprehension2 = comp.clone();
-                    // modify the generator to be just from b
-                    let b_ptr =
-                        DeclarationPtr::new_quantified_expr(gen_decl.name().clone(), b.into());
-                    let b_gen = ComprehensionQualifier::ExpressionGenerator { ptr: b_ptr.clone() };
-                    if let Some(qual2) = comprehension2.qualifiers.get_mut(i) {
-                        *qual2 = b_gen;
-                    }
-
-                    // replace all occurences of old generator in comprehension2 with new pointer
-                    comprehension2
-                        .return_expression
-                        .transform_bi(&|atom: Atom| match atom {
-                            Atom::Reference(reference) => {
-                                if reference.clone().into_ptr() == gen_decl {
-                                    Atom::new_ref(b_ptr.clone())
-                                } else {
-                                    Atom::Reference(reference)
-                                }
-                            }
-                            other => other,
-                        });
+                    let (mut comprehension2, b_ptr) =
+                        rewrite_union_branch(comp.as_ref(), &gen_decl, b.into());
 
                     // add the condition !(i in A)
                     comprehension2
@@ -83,8 +53,8 @@ fn union_set(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                         Metadata::new(),
                         None,
                         Moo::new(into_matrix_expr!(vec![
-                            Expr::Comprehension(Metadata::new(), comprehension1),
-                            Expr::Comprehension(Metadata::new(), comprehension2)
+                            Expr::Comprehension(Metadata::new(), comprehension1.into()),
+                            Expr::Comprehension(Metadata::new(), comprehension2.into())
                         ])),
                     )));
                 }
@@ -94,4 +64,65 @@ fn union_set(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         }
         _ => Err(RuleNotApplicable),
     }
+}
+
+/// Clone one union branch into its own detached comprehension scope and rewrite all uses of the
+/// original quantified declaration to a fresh branch-local expression generator.
+fn rewrite_union_branch(
+    comp: &Comprehension,
+    gen_decl: &DeclarationPtr,
+    replacement_expr: Expr,
+) -> (Comprehension, DeclarationPtr) {
+    let replacement_ptr =
+        DeclarationPtr::new_quantified_expr(gen_decl.name().clone(), replacement_expr);
+    let mut comprehension = comp.clone();
+
+    // detach the scope so rewriting this branch does not mutate the original
+    // comprehension through shared pointers
+    comprehension.symbols = comprehension.symbols.detach();
+
+    // rewrite all uses of the original quantified declaration to the branch-local
+    // generator declaration
+    comprehension.return_expression =
+        comprehension
+            .return_expression
+            .transform_bi(&|decl: DeclarationPtr| {
+                if decl == *gen_decl {
+                    replacement_ptr.clone()
+                } else {
+                    decl
+                }
+            });
+
+    comprehension.qualifiers = comprehension
+        .qualifiers
+        .into_iter()
+        .map(|qualifier| {
+            qualifier.transform_bi(&|decl: DeclarationPtr| {
+                if decl == *gen_decl {
+                    replacement_ptr.clone()
+                } else {
+                    decl
+                }
+            })
+        })
+        .collect();
+
+    // keep the detached local scope in sync with the rewritten generator
+    // declarations used by this branch
+    comprehension
+        .symbols
+        .write()
+        .update_insert(replacement_ptr.clone());
+    for qualifier in &comprehension.qualifiers {
+        match qualifier {
+            ComprehensionQualifier::ExpressionGenerator { ptr }
+            | ComprehensionQualifier::Generator { ptr } => {
+                comprehension.symbols.write().update_insert(ptr.clone());
+            }
+            ComprehensionQualifier::Condition(_) => {}
+        }
+    }
+
+    (comprehension, replacement_ptr)
 }
