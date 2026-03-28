@@ -30,7 +30,7 @@
                         {
                           "ExpressionGenerator": {
                             "ptr": {
-                              "object_id": 3,
+                              "object_id": 4,
                               "type_name": "DeclarationPtrInner"
                             }
                           }
@@ -45,7 +45,7 @@
                           {
                             "Reference": {
                               "ptr": {
-                                "object_id": 3,
+                                "object_id": 4,
                                 "type_name": "DeclarationPtrInner"
                               }
                             }
@@ -54,7 +54,7 @@
                       },
                       "symbols": {
                         "id": {
-                          "object_id": 2,
+                          "object_id": 3,
                           "type_name": "SymbolTable"
                         },
                         "next_machine_name": 0,
@@ -69,23 +69,47 @@
                             },
                             {
                               "id": {
-                                "object_id": 3,
+                                "object_id": 4,
                                 "type_name": "DeclarationPtrInner"
                               },
                               "kind": {
                                 "QuantifiedExpr": {
-                                  "Atomic": [
+                                  "Union": [
                                     {
                                       "clean": false,
                                       "etype": null
                                     },
                                     {
-                                      "Reference": {
-                                        "ptr": {
-                                          "object_id": 1,
-                                          "type_name": "DeclarationPtrInner"
+                                      "Atomic": [
+                                        {
+                                          "clean": false,
+                                          "etype": null
+                                        },
+                                        {
+                                          "Reference": {
+                                            "ptr": {
+                                              "object_id": 1,
+                                              "type_name": "DeclarationPtrInner"
+                                            }
+                                          }
                                         }
-                                      }
+                                      ]
+                                    },
+                                    {
+                                      "Atomic": [
+                                        {
+                                          "clean": false,
+                                          "etype": null
+                                        },
+                                        {
+                                          "Reference": {
+                                            "ptr": {
+                                              "object_id": 2,
+                                              "type_name": "DeclarationPtrInner"
+                                            }
+                                          }
+                                        }
+                                      ]
                                     }
                                   ]
                                 }
@@ -132,7 +156,7 @@
     "table": [
       [
         {
-          "User": "x"
+          "User": "a"
         },
         {
           "id": {
@@ -152,7 +176,7 @@
                         {
                           "Bounded": [
                             1,
-                            10
+                            4
                           ]
                         }
                       ]
@@ -163,7 +187,44 @@
             }
           },
           "name": {
-            "User": "x"
+            "User": "a"
+          }
+        }
+      ],
+      [
+        {
+          "User": "b"
+        },
+        {
+          "id": {
+            "object_id": 2,
+            "type_name": "DeclarationPtrInner"
+          },
+          "kind": {
+            "Find": {
+              "domain": {
+                "Ground": {
+                  "Set": [
+                    {
+                      "size": "Unbounded"
+                    },
+                    {
+                      "Int": [
+                        {
+                          "Bounded": [
+                            1,
+                            4
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "name": {
+            "User": "b"
           }
         }
       ]
@@ -172,27 +233,56 @@
 }
 
 
-find x: set  of int(1..10)
+find a: set  of int(1..4)
+find b: set  of int(1..4)
+find __0: matrix indexed by [int(1..)] of set  of int(1..4)
+find __1: matrix indexed by [int(1..)] of set  of int(1..4)
 
 such that
 
-(sum([ i | i <- x ]) = 2)
+(sum(flatten([__0,__1;int(1..)])) = 2),
+__0 =aux [ i | i <- a ],
+__1 =aux [ i | i <- b, !(i in a) ]
 
 Model before rewriting:
 
-find x: set  of int(1..10)
+find a: set  of int(1..4)
+find b: set  of int(1..4)
 
 such that
 
-(sum([ i | i <- x ]) = 2)
+(sum([ i | i <- (a union b) ]) = 2)
+
+--
+
+[ i | i <- (a union b) ], 
+   ~~> union_set ([("Base", 8700)])
+flatten([[ i | i <- a ],[ i | i <- b, !(i in a) ];int(1..)])
+
+--
+
+flatten([[ i | i <- a ],[ i | i <- b, !(i in a) ];int(1..)]), 
+   ~~> flatten_matrix_literal ([("Minion", 1000)])
+flatten([__0,__1;int(1..)])
+new variables:
+  find __0: matrix indexed by [int(1..)] of set  of int(1..4)
+  find __1: matrix indexed by [int(1..)] of set  of int(1..4)
+new constraints:
+  __0 =aux [ i | i <- a ]
+  __1 =aux [ i | i <- b, !(i in a) ]
 
 --
 
 Final model:
 
-find x: set  of int(1..10)
+find a: set  of int(1..4)
+find b: set  of int(1..4)
+find __0: matrix indexed by [int(1..)] of set  of int(1..4)
+find __1: matrix indexed by [int(1..)] of set  of int(1..4)
 
 such that
 
-(sum([ i | i <- x ]) = 2)
+(sum(flatten([__0,__1;int(1..)])) = 2),
+__0 =aux [ i | i <- a ],
+__1 =aux [ i | i <- b, !(i in a) ]
 
