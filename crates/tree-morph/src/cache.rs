@@ -44,6 +44,10 @@ pub trait RewriteCache<T> {
     /// The default implementation is a no-op for caches that don't use node-level hash caching.
     fn invalidate_node(&self, _node: &T) {}
 
+    /// Invalidate cached hashes for the given node and all its descendants.
+    /// Called on replacement subtrees after rule application.
+    fn invalidate_subtree(&self, _node: &T) {}
+
     /// Returns `false` if this cache never stores anything (e.g. [`NoCache`]).
     /// The engine uses this to skip clones that would only feed into a no-op insert.
     fn is_active(&self) -> bool {
@@ -75,6 +79,10 @@ impl<T> RewriteCache<T> for Box<dyn RewriteCache<T>> {
 
     fn invalidate_node(&self, node: &T) {
         (**self).invalidate_node(node)
+    }
+
+    fn invalidate_subtree(&self, node: &T) {
+        (**self).invalidate_subtree(node)
     }
 
     fn is_active(&self) -> bool {
@@ -133,6 +141,10 @@ pub trait CacheKey<T> {
     /// Invalidate any internally cached hash for the given node.
     /// The default is a no-op (used by [`StdHashKey`]).
     fn invalidate(_node: &T) {}
+
+    /// Invalidate cached hashes for the given node and all its descendants.
+    /// The default is a no-op (used by [`StdHashKey`]).
+    fn invalidate_subtree(_node: &T) {}
 }
 
 /// Hashing strategy that delegates to the standard [`Hash`] trait.
@@ -146,12 +158,31 @@ impl<T: Hash> CacheKey<T> for StdHashKey {
     }
 }
 
-#[allow(missing_docs)]
+/// Types with an internally cached hash value.
+///
+/// Implementors store a precomputed hash (e.g. in metadata) to avoid rehashing
+/// entire subtrees on every cache lookup. The cached hash must be invalidated
+/// whenever the node's content changes.
+///
+/// Use [`invalidate_cache`](CacheHashable::invalidate_cache) for single-node
+/// invalidation (e.g. when walking up ancestors after a replacement), and
+/// [`invalidate_cache_recursive`](CacheHashable::invalidate_cache_recursive)
+/// for full-subtree invalidation (e.g. on rule replacement subtrees that may
+/// contain cloned nodes with stale hashes from `with_children` reassembly).
 pub trait CacheHashable {
+    /// Invalidate the cached hash for this node only.
+    /// Used by `mark_dirty_to_root` when walking up ancestors after a child replacement.
     fn invalidate_cache(&self);
 
+    /// Invalidate the cached hash for this node and all descendants.
+    /// Used on replacement subtrees after rule application to clear stale hashes
+    /// from cloned-and-reassembled nodes.
+    fn invalidate_cache_recursive(&self);
+
+    /// Return the cached hash, computing and storing it if not yet cached.
     fn get_cached_hash(&self) -> u64;
 
+    /// Compute the hash from scratch, store it, and return it.
     fn calculate_hash(&self) -> u64;
 }
 
@@ -166,6 +197,10 @@ impl<T: CacheHashable> CacheKey<T> for CachedHashKey {
 
     fn invalidate(node: &T) {
         node.invalidate_cache();
+    }
+
+    fn invalidate_subtree(node: &T) {
+        node.invalidate_cache_recursive();
     }
 }
 
@@ -222,6 +257,10 @@ where
 {
     fn invalidate_node(&self, node: &T) {
         K::invalidate(node);
+    }
+
+    fn invalidate_subtree(&self, node: &T) {
+        K::invalidate_subtree(node);
     }
 
     fn get(&self, subtree: &T, level: usize) -> CacheResult<T> {

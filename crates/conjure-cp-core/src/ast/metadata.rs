@@ -5,7 +5,7 @@ use quote::quote;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Display};
 use std::hash::Hash;
-use std::sync::atomic::AtomicU64;
+use std::sync::atomic::{AtomicU64, Ordering};
 use uniplate::derive_unplateable;
 
 derive_unplateable!(Metadata);
@@ -56,7 +56,7 @@ impl Clone for Metadata {
         Metadata {
             etype: self.etype.clone(),
             span_id: self.span_id,
-            stored_hash: AtomicU64::new(NO_HASH),
+            stored_hash: AtomicU64::new(self.stored_hash.load(Ordering::Relaxed)),
         }
     }
 }

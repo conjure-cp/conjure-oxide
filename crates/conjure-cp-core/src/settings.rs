@@ -58,7 +58,7 @@ pub fn current_parser() -> Parser {
     })
 }
 
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct MorphConfig {
     pub cache: MorphCachingStrategy,
     pub prefilter: bool,
@@ -66,6 +66,18 @@ pub struct MorphConfig {
     pub naive: bool,
     pub parallel: bool,
     pub fixedpoint: bool,
+}
+
+impl Default for MorphConfig {
+    fn default() -> Self {
+        Self {
+            cache: MorphCachingStrategy::default(),
+            prefilter: true,
+            naive: false,
+            parallel: false,
+            fixedpoint: false,
+        }
+    }
 }
 
 impl Display for MorphConfig {
@@ -80,15 +92,6 @@ impl Display for MorphConfig {
                 "prefilteron"
             } else {
                 "prefilteroff"
-            }
-        )?;
-        write!(
-            f,
-            "-{}",
-            if self.parallel {
-                "parallel"
-            } else {
-                "sequential"
             }
         )?;
         if self.fixedpoint {
@@ -163,7 +166,7 @@ impl FromStr for Rewriter {
             other => {
                 if !other.starts_with("morph-") {
                     return Err(format!(
-                        "unknown rewriter: {other}; expected one of: naive, morph, morph-[levelson|levelsoff]-[nocache|cache|inccache]-[prefilteron|prefilteroff]-[sequential|parallel]-[fixedpoint]"
+                        "unknown rewriter: {other}; expected one of: naive, morph, morph-[levelson|levelsoff]-[nocache|cache|inccache]-[prefilteron|prefilteroff]-[fixedpoint]"
                     ));
                 }
 
@@ -172,8 +175,6 @@ impl FromStr for Rewriter {
                 let mut cache_set = false;
                 let mut levels_set = false;
                 let mut prefilter_set = false;
-                let mut parallel_set = false;
-
                 for token in parts {
                     match token {
                         "" => (),
@@ -217,26 +218,12 @@ impl FromStr for Rewriter {
                             config.prefilter = false;
                             prefilter_set = true;
                         }
-                        "sequential" => {
-                            if parallel_set {
-                                return Err("conflicting parallelism options: only one of sequential|parallel is allowed".to_string());
-                            }
-                            config.parallel = false;
-                            parallel_set = true;
-                        }
-                        "parallel" => {
-                            if parallel_set {
-                                return Err("conflicting parallelism options: only one of sequential|parallel is allowed".to_string());
-                            }
-                            config.parallel = true;
-                            parallel_set = true;
-                        }
                         "fixedpoint" => {
                             config.fixedpoint = true;
                         }
                         other_token => {
                             return Err(format!(
-                                "unknown morph option '{other_token}', must be one of levelson|levelsoff|nocache|cache|inccache|prefilteron|prefilteroff|sequential|parallel|fixedpoint"
+                                "unknown morph option '{other_token}', must be one of levelson|levelsoff|nocache|cache|inccache|prefilteron|prefilteroff|fixedpoint"
                             ));
                         }
                     }

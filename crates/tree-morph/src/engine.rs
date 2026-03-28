@@ -87,6 +87,10 @@ where
 
         let cache_active = zipper.cache.is_active();
         let original = cache_active.then(|| zipper.focus().clone());
+
+        // Clear any stale cached hashes in the replacement subtree
+        zipper.cache.invalidate_subtree(&update.new_subtree);
+
         let replacement = cache_active.then(|| update.new_subtree.clone());
 
         // Replace the current subtree, invalidating subtree node states
@@ -136,6 +140,7 @@ where
         // No transform — apply locally
         let cache_active = zipper.cache.is_active();
         let original = cache_active.then(|| zipper.focus().clone());
+        zipper.cache.invalidate_subtree(&update.new_subtree);
         let replacement = cache_active.then(|| update.new_subtree.clone());
         zipper.replace_focus(update.new_subtree);
 
@@ -172,6 +177,7 @@ where
                     debug!("Applying Rule '{}' in Fast Mode (local)", rule.name());
                     let cache_active = zipper.cache.is_active();
                     let original = cache_active.then(|| zipper.focus().clone());
+                    zipper.cache.invalidate_subtree(&update.new_subtree);
                     let replacement = cache_active.then(|| update.new_subtree.clone());
                     zipper.replace_focus(update.new_subtree);
 
@@ -224,6 +230,7 @@ where
         // No transform — apply locally (no root traversal)
         let cache_active = zipper.cache.is_active();
         let original = cache_active.then(|| zipper.focus().clone());
+        zipper.cache.invalidate_subtree(&update.new_subtree);
         let replacement = cache_active.then(|| update.new_subtree.clone());
         zipper.replace_focus(update.new_subtree);
 
@@ -264,6 +271,7 @@ where
                     );
                     let cache_active = zipper.cache.is_active();
                     let original = cache_active.then(|| zipper.focus().clone());
+                    zipper.cache.invalidate_subtree(&update.new_subtree);
                     let replacement = cache_active.then(|| update.new_subtree.clone());
                     zipper.replace_focus(update.new_subtree);
 
@@ -307,6 +315,7 @@ where
 
         let cache_active = zipper.cache.is_active();
         let original = cache_active.then(|| zipper.focus().clone());
+        zipper.cache.invalidate_subtree(&update.new_subtree);
         let replacement = cache_active.then(|| update.new_subtree.clone());
 
         zipper.replace_focus(update.new_subtree);

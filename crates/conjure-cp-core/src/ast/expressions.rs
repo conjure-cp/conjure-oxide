@@ -1834,9 +1834,185 @@ impl Typeable for Expression {
     }
 }
 
+impl Expression {
+    /// Visit each direct `Expression` child by reference, without cloning.
+    fn for_each_expr_child(&self, f: &mut impl FnMut(&Expression)) {
+        match self {
+            // Special Case
+            Expression::AbstractLiteral(_, alit) => match alit {
+                AbstractLiteral::Set(v) | AbstractLiteral::MSet(v) | AbstractLiteral::Tuple(v) => {
+                    for expr in v {
+                        f(expr);
+                    }
+                }
+                AbstractLiteral::Matrix(v, _domain) => {
+                    for expr in v {
+                        f(expr);
+                    }
+                }
+                AbstractLiteral::Record(rs) => {
+                    for r in rs {
+                        f(&r.value);
+                    }
+                }
+                AbstractLiteral::Function(vs) => {
+                    for (a, b) in vs {
+                        f(a);
+                        f(b);
+                    }
+                }
+            },
+            Expression::Root(_, vs) => {
+                for expr in vs {
+                    f(expr);
+                }
+            }
+
+            // Moo<Expression>
+            Expression::DominanceRelation(_, m1)
+            | Expression::ToInt(_, m1)
+            | Expression::Abs(_, m1)
+            | Expression::Sum(_, m1)
+            | Expression::Product(_, m1)
+            | Expression::Min(_, m1)
+            | Expression::Max(_, m1)
+            | Expression::Not(_, m1)
+            | Expression::Or(_, m1)
+            | Expression::And(_, m1)
+            | Expression::Neg(_, m1)
+            | Expression::Defined(_, m1)
+            | Expression::AllDiff(_, m1)
+            | Expression::Range(_, m1) => {
+                f(m1);
+            }
+
+            // Moo<Expression> + Moo<Expression>
+            Expression::Table(_, m1, m2)
+            | Expression::NegativeTable(_, m1, m2)
+            | Expression::Bubble(_, m1, m2)
+            | Expression::Imply(_, m1, m2)
+            | Expression::Iff(_, m1, m2)
+            | Expression::Union(_, m1, m2)
+            | Expression::In(_, m1, m2)
+            | Expression::Intersect(_, m1, m2)
+            | Expression::Supset(_, m1, m2)
+            | Expression::SupsetEq(_, m1, m2)
+            | Expression::Subset(_, m1, m2)
+            | Expression::SubsetEq(_, m1, m2)
+            | Expression::Eq(_, m1, m2)
+            | Expression::Neq(_, m1, m2)
+            | Expression::Geq(_, m1, m2)
+            | Expression::Leq(_, m1, m2)
+            | Expression::Gt(_, m1, m2)
+            | Expression::Lt(_, m1, m2)
+            | Expression::SafeDiv(_, m1, m2)
+            | Expression::UnsafeDiv(_, m1, m2)
+            | Expression::SafeMod(_, m1, m2)
+            | Expression::UnsafeMod(_, m1, m2)
+            | Expression::UnsafePow(_, m1, m2)
+            | Expression::SafePow(_, m1, m2)
+            | Expression::Minus(_, m1, m2)
+            | Expression::PairwiseSum(_, m1, m2)
+            | Expression::PairwiseProduct(_, m1, m2)
+            | Expression::Image(_, m1, m2)
+            | Expression::ImageSet(_, m1, m2)
+            | Expression::PreImage(_, m1, m2)
+            | Expression::Inverse(_, m1, m2)
+            | Expression::Restrict(_, m1, m2)
+            | Expression::LexLt(_, m1, m2)
+            | Expression::LexLeq(_, m1, m2)
+            | Expression::LexGt(_, m1, m2)
+            | Expression::LexGeq(_, m1, m2) => {
+                f(m1);
+                f(m2);
+            }
+
+            // Moo<Expression> + Vec<Expression>
+            Expression::UnsafeIndex(_, m, vs) | Expression::SafeIndex(_, m, vs) => {
+                f(m);
+                for v in vs {
+                    f(v);
+                }
+            }
+
+            // Moo<Expression> + Vec<Option<Expression>>
+            Expression::UnsafeSlice(_, m, vs) | Expression::SafeSlice(_, m, vs) => {
+                f(m);
+                for v in vs {
+                    if let Some(e) = v {
+                        f(e);
+                    }
+                }
+            }
+
+            // Moo<Expression> + DomainPtr
+            Expression::InDomain(_, m, _) => {
+                f(m);
+            }
+
+            // Option<Moo<Expression>> + Moo<Expression>
+            Expression::Flatten(_, opt, m) => {
+                if let Some(e) = opt {
+                    f(e);
+                }
+                f(m);
+            }
+
+            // Moo<Expression> + Atom
+            Expression::MinionReify(_, m, _) | Expression::MinionReifyImply(_, m, _) => {
+                f(m);
+            }
+
+            // Reference + Moo<Expression>
+            Expression::AuxDeclaration(_, _, m) => {
+                f(m);
+            }
+
+            // SATIntEncoding + Moo<Expression> + (i32, i32)
+            Expression::SATInt(_, _, m, _) => {
+                f(m);
+            }
+
+            // No Expression children
+            Expression::Comprehension(_, _)
+            | Expression::AbstractComprehension(_, _)
+            | Expression::Atomic(_, _)
+            | Expression::FromSolution(_, _)
+            | Expression::Metavar(_, _)
+            | Expression::FlatAbsEq(_, _, _)
+            | Expression::FlatMinusEq(_, _, _)
+            | Expression::FlatProductEq(_, _, _, _)
+            | Expression::MinionDivEqUndefZero(_, _, _, _)
+            | Expression::MinionModuloEqUndefZero(_, _, _, _)
+            | Expression::MinionPow(_, _, _, _)
+            | Expression::FlatAllDiff(_, _)
+            | Expression::FlatSumGeq(_, _, _)
+            | Expression::FlatSumLeq(_, _, _)
+            | Expression::FlatIneq(_, _, _, _)
+            | Expression::FlatWatchedLiteral(_, _, _)
+            | Expression::FlatWeightedSumLeq(_, _, _, _)
+            | Expression::FlatWeightedSumGeq(_, _, _, _)
+            | Expression::MinionWInIntervalSet(_, _, _)
+            | Expression::MinionWInSet(_, _, _)
+            | Expression::MinionElementOne(_, _, _, _)
+            | Expression::FlatLexLt(_, _, _)
+            | Expression::FlatLexLeq(_, _, _) => {}
+        }
+    }
+}
+
 impl CacheHashable for Expression {
     fn invalidate_cache(&self) {
-        self.meta_ref().stored_hash.swap(NO_HASH, Ordering::Relaxed);
+        self.meta_ref()
+            .stored_hash
+            .store(NO_HASH, Ordering::Relaxed);
+    }
+
+    fn invalidate_cache_recursive(&self) {
+        self.invalidate_cache();
+        self.for_each_expr_child(&mut |child| {
+            child.invalidate_cache_recursive();
+        });
     }
 
     fn get_cached_hash(&self) -> u64 {
