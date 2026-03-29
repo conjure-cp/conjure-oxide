@@ -231,7 +231,7 @@ impl ComprehensionBuilder {
 
         // insert into comprehension scope as a local quantified variable
         let quantified_decl = DeclarationPtr::new_quantified_expr(name, expr);
-        self.symbols.write().insert(quantified_decl.clone());
+        self.symbols.write().update_insert(quantified_decl.clone());
 
         self.qualifiers
             .push(ComprehensionQualifier::ExpressionGenerator {

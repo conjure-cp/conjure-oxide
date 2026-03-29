@@ -396,6 +396,14 @@ impl SymbolTable {
         decl
     }
 
+    // Reserves a unique machine name in the symbol table
+    // Same as gensym without creating a new declaration in case you want a name not for a find
+    pub fn reservesym(mut self) -> Name {
+        let num = self.next_machine_name;
+        self.next_machine_name += 1;
+        Name::Machine(num)
+    }
+
     /// Gets the parent of this symbol table as a mutable reference.
     ///
     /// This function provides no sanity checks.
