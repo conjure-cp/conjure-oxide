@@ -7,7 +7,7 @@ use crate::{
         get_rules_grouped,
         rewriter_common::{
             RuleResult, VariableDeclarationSnapshot, log_rule_application,
-            snapshot_variable_declarations,
+            snapshot_variable_declarations, try_rewrite_value_letting_once,
         },
         submodel_zipper::expression_ctx,
     },
@@ -187,7 +187,11 @@ fn try_rewrite_model(
 
     match results.as_slice() {
         [] => {
-            return None;
+            return try_rewrite_value_letting_once(
+                submodel,
+                rules_grouped,
+                prop_multiple_equally_applicable,
+            );
         } // no rules are applicable.
         [(result, _priority, expr, ctx, variable_snapshots), ..] => {
             if prop_multiple_equally_applicable {

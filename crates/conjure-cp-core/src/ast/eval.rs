@@ -1,5 +1,9 @@
 #![allow(dead_code)]
-use crate::ast::{AbstractLiteral, Atom, Expression as Expr, Literal as Lit, Metadata, matrix};
+use crate::ast::{
+    AbstractLiteral, Atom, DeclarationKind, Expression as Expr, Literal as Lit, Metadata,
+    comprehension::{Comprehension, ComprehensionQualifier},
+    matrix,
+};
 use crate::into_matrix;
 use itertools::{Itertools as _, izip};
 use std::cmp::Ordering as CmpOrdering;
@@ -130,7 +134,9 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         Expr::Atomic(_, Atom::Literal(c)) => Some(c.clone()),
         Expr::Atomic(_, Atom::Reference(reference)) => reference.resolve_constant(),
         Expr::AbstractLiteral(_, a) => Some(Lit::AbstractLiteral(a.clone().into_literals()?)),
-        Expr::Comprehension(_, _) => None,
+        Expr::Comprehension(_, comprehension) => {
+            eval_constant_comprehension(comprehension.as_ref())
+        }
         Expr::AbstractComprehension(_, _) => None,
         Expr::UnsafeIndex(_, subject, indices) | Expr::SafeIndex(_, subject, indices) => {
             let subject: Lit = eval_constant(subject.as_ref())?;
@@ -695,11 +701,7 @@ pub fn vec_lit_op<T, A>(f: fn(Vec<T>) -> A, a: &Expr) -> Option<A>
 where
     T: TryFrom<Lit>,
 {
-    // we don't care about preserving indices here, as we will be getting rid of the vector
-    // anyways!
-    let a = a.clone().unwrap_matrix_unchecked()?.0;
-    let a = a.iter().map(unwrap_expr).collect::<Option<Vec<T>>>()?;
-    Some(f(a))
+    Some(f(eval_list_items(a)?))
 }
 
 type PairsCallback<T, A> = fn(Vec<(T, T)>, (usize, usize)) -> A;
@@ -743,10 +745,7 @@ pub fn opt_vec_lit_op<T, A>(f: fn(Vec<T>) -> Option<A>, a: &Expr) -> Option<A>
 where
     T: TryFrom<Lit>,
 {
-    let a = a.clone().unwrap_list()?;
-    // FIXME: deal with explicit matrix domains
-    let a = a.iter().map(unwrap_expr).collect::<Option<Vec<T>>>()?;
-    f(a)
+    f(eval_list_items(a)?)
 }
 
 #[allow(dead_code)]
@@ -762,4 +761,120 @@ where
 pub fn unwrap_expr<T: TryFrom<Lit>>(expr: &Expr) -> Option<T> {
     let c = eval_constant(expr)?;
     TryInto::<T>::try_into(c).ok()
+}
+
+fn eval_list_items<T>(expr: &Expr) -> Option<Vec<T>>
+where
+    T: TryFrom<Lit>,
+{
+    if let Some(items) = expr
+        .clone()
+        .unwrap_matrix_unchecked()
+        .map(|(items, _)| items)
+    {
+        return items.iter().map(unwrap_expr).collect();
+    }
+
+    let Lit::AbstractLiteral(list) = eval_constant(expr)? else {
+        return None;
+    };
+
+    let items = list.unwrap_list()?;
+    items
+        .iter()
+        .cloned()
+        .map(TryInto::try_into)
+        .collect::<Result<Vec<_>, _>>()
+        .ok()
+}
+
+fn eval_constant_comprehension(comprehension: &Comprehension) -> Option<Lit> {
+    let mut values = Vec::new();
+    eval_comprehension_qualifiers(comprehension, 0, &mut values)?;
+    Some(Lit::AbstractLiteral(
+        AbstractLiteral::matrix_implied_indices(values),
+    ))
+}
+
+fn eval_comprehension_qualifiers(
+    comprehension: &Comprehension,
+    qualifier_index: usize,
+    values: &mut Vec<Lit>,
+) -> Option<()> {
+    if qualifier_index == comprehension.qualifiers.len() {
+        values.push(eval_constant(&comprehension.return_expression)?);
+        return Some(());
+    }
+
+    match &comprehension.qualifiers[qualifier_index] {
+        ComprehensionQualifier::Generator { ptr } => {
+            let domain = ptr.domain()?;
+            let generator_values = domain.resolve()?.values().ok()?.collect_vec();
+
+            for value in generator_values {
+                with_temporary_quantified_binding(ptr, &value, || {
+                    eval_comprehension_qualifiers(comprehension, qualifier_index + 1, values)
+                })?;
+            }
+        }
+        ComprehensionQualifier::ExpressionGenerator { ptr } => {
+            let expr = ptr.as_quantified_expr()?;
+            let generator_values = generator_values_from_expr(&expr)?;
+
+            for value in generator_values {
+                with_temporary_quantified_binding(ptr, &value, || {
+                    eval_comprehension_qualifiers(comprehension, qualifier_index + 1, values)
+                })?;
+            }
+        }
+        ComprehensionQualifier::Condition(condition) => match eval_constant(condition)? {
+            Lit::Bool(true) => {
+                eval_comprehension_qualifiers(comprehension, qualifier_index + 1, values)?
+            }
+            Lit::Bool(false) => {}
+            _ => return None,
+        },
+    }
+
+    Some(())
+}
+
+fn generator_values_from_expr(expr: &Expr) -> Option<Vec<Lit>> {
+    match eval_constant(expr)? {
+        Lit::AbstractLiteral(AbstractLiteral::Set(values))
+        | Lit::AbstractLiteral(AbstractLiteral::MSet(values))
+        | Lit::AbstractLiteral(AbstractLiteral::Tuple(values)) => Some(values),
+        Lit::AbstractLiteral(list) => list.unwrap_list().cloned(),
+        _ => None,
+    }
+}
+
+fn with_temporary_quantified_binding<T>(
+    quantified: &crate::ast::DeclarationPtr,
+    value: &Lit,
+    f: impl FnOnce() -> Option<T>,
+) -> Option<T> {
+    let mut targets = vec![quantified.clone()];
+    if let DeclarationKind::Quantified(inner) = &*quantified.kind()
+        && let Some(generator) = inner.generator()
+    {
+        targets.push(generator.clone());
+    }
+
+    let mut originals = Vec::with_capacity(targets.len());
+    for mut target in targets {
+        let old_kind = target.replace_kind(DeclarationKind::TemporaryValueLetting(Expr::Atomic(
+            Metadata::new(),
+            Atom::Literal(value.clone()),
+        )));
+        originals.push((target, old_kind));
+    }
+
+    let result = f();
+
+    for (mut target, old_kind) in originals.into_iter().rev() {
+        let _ = target.replace_kind(old_kind);
+    }
+
+    result
 }

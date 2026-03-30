@@ -375,8 +375,7 @@ impl GroundDomain {
                             panic!("a matrix should have at least one index domain");
                         };
 
-                        if *current_index_domain != *idx_domain
-                        {
+                        if *current_index_domain != *idx_domain {
                             return Ok(false);
                         };
 
