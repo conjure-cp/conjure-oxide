@@ -1,11 +1,11 @@
 use super::prelude::*;
+use crate::utils::lit_to_bool;
 use conjure_cp::ast::{Domain, Range, Reference, domains::Int};
 use conjure_cp::utils::BiMap;
 use conjure_cp::{essence_expr, into_matrix_expr};
 use itertools::chain;
 use std::collections::VecDeque;
 use std::hash::Hash;
-use crate::utils::lit_to_bool;
 
 register_representation!(
     SatIntDirect
@@ -65,4 +65,3 @@ register_representation!(
         state.vals.right_values().cloned().collect()
     }
 );
-

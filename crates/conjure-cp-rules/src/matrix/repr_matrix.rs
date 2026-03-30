@@ -284,13 +284,39 @@ fn slice_matrix_to_atom(expr: &Expression, _: &SymbolTable) -> ApplicationResult
     Ok(Reduction::pure(new_expr))
 }
 
+/// Flatten a represented matrix
+/// ```plain
+/// flatten(x)
+/// ~>
+/// [x_MatrixToAtom_1, ..., x_MatrixToAtom_N]
+/// ```
+#[register_rule(("ReprMatrixToAtom", 5000))]
+fn matrix_flatten_to_atom(expr: &Expression, _symbols: &SymbolTable) -> ApplicationResult {
+    guard!(
+        let Expression::Flatten(_, dims, subj) = expr            &&
+        let Expression::Atomic(_, Atom::Reference(re)) = &**subj &&
+        let Some(repr) = re.get_repr_as::<MatrixToAtom>()
+        else {
+            return Err(RuleNotApplicable);
+        }
+    );
+
+    if dims.is_some() {
+        todo!("Handle dimension option in matrix flattening");
+    }
+
+    let flat_elems: Vec<Expression> = repr.flat_elem_refs().map(Expression::from).collect();
+    Ok(Reduction::pure(into_matrix_expr!(flat_elems)))
+}
+
 /// Converts a reference to a 1d-matrix not contained within an indexing or slicing expression to its atoms.
 #[register_rule(("ReprMatrixToAtom", 2000))]
 fn matrix_ref_to_atom(expr: &Expression, _symbols: &SymbolTable) -> ApplicationResult {
-    if let Expression::SafeSlice(_, _, _)
-    | Expression::UnsafeSlice(_, _, _)
-    | Expression::SafeIndex(_, _, _)
-    | Expression::UnsafeIndex(_, _, _) = expr
+    if let Expression::SafeSlice(..)
+    | Expression::UnsafeSlice(..)
+    | Expression::SafeIndex(..)
+    | Expression::UnsafeIndex(..)
+    | Expression::Flatten(..) = expr
     {
         return Err(RuleNotApplicable);
     };
@@ -304,11 +330,8 @@ fn matrix_ref_to_atom(expr: &Expression, _symbols: &SymbolTable) -> ApplicationR
                 && let Some(mta) = re.ptr().get_repr::<MatrixToAtom>()
             {
                 changed = true;
-                let elem_refs: Vec<Expression> = mta
-                    .elements
-                    .iter()
-                    .map(|decl| Reference::new(decl.clone()).into())
-                    .collect();
+                let elem_refs: Vec<Expression> =
+                    mta.flat_elem_refs().map(Expression::from).collect();
                 into_matrix_expr!(elem_refs)
             } else {
                 expr

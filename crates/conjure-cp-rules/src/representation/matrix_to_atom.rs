@@ -1,6 +1,6 @@
 use super::prelude::*;
 use crate::representation::prelude::matrix::{flatten, unflatten_matrix};
-use conjure_cp::ast::{GroundDomain, Moo, Range};
+use conjure_cp::ast::{GroundDomain, Moo, Range, Reference};
 use conjure_cp::representation::ReprInitError;
 use conjure_cp::utils::{BiMap, View};
 use std::collections::VecDeque;
@@ -95,6 +95,11 @@ register_representation!(
                         self.index_lit_to_flat(i, &l)))
                 .collect::<Vec<_>>();
             self.slice_flat(&dim_slices_flat)
+        }
+    }
+    impl State<DeclarationPtr> {
+        pub fn flat_elem_refs(&self) -> impl Iterator<Item=Reference> + '_ {
+            self.elements.iter().cloned().map(Reference::new)
         }
     }
     fn init(dom: DomainPtr) -> Result<State<DomainPtr>, ReprInitError> {
