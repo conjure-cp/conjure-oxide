@@ -14,13 +14,55 @@ true
 
 --
 
+b, 
+   ~~> constant_evaluator ([("Constant", 9001)])
+3
+
+--
+
+m, 
+   ~~> constant_evaluator ([("Constant", 9001)])
+4
+
+--
+
+sum([1,2;int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+3
+
+--
+
+sum([b,m;int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+7
+
+--
+
+|b|, 
+   ~~> constant_evaluator ([("Constant", 9001)])
+3
+
+--
+
+(b = m), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+false
+
+--
+
+(b > m), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+false
+
+--
+
 Final model:
 
-letting a be {b,m,sum([1,2;int(1..)]),sum([b,m;int(1..)]),|b|}
+letting a be {3,4,3,7,3}
 letting b be 3
 letting c be {1,2,3}
 letting m be 4
-letting z be {(b = m),(b > m),true,false}
+letting z be {false,false,true,false}
 
 such that
 
