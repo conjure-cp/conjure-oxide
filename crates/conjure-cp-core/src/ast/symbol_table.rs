@@ -389,13 +389,13 @@ impl SymbolTable {
     /// Creates a new find declaration in this symbol table with a unique name, and returns its
     /// declaration.
     pub fn gen_find(&mut self, domain: &DomainPtr) -> DeclarationPtr {
-        let decl = DeclarationPtr::new_find(self.gensym(), domain.clone());
+        let decl = DeclarationPtr::new_find(self.gen_sym(), domain.clone());
         self.insert(decl.clone());
         decl
     }
 
     // Reserves a unique machine name in the symbol table
-    pub fn gensym(&mut self) -> Name {
+    pub fn gen_sym(&mut self) -> Name {
         let num = self.next_machine_name;
         self.next_machine_name += 1;
         Name::Machine(num)
