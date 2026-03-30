@@ -16,6 +16,8 @@ use std::result::Result::Ok;
 use tracing_subscriber::filter::DynFilterFn;
 use ustr::Ustr;
 
+use rustsat_cadical::CaDiCaL;
+// use rustsat_kissat::Kissat;
 use rustsat_minisat::core::Minisat;
 
 use crate::ast::pretty::pretty_vec;
@@ -36,12 +38,47 @@ use rustsat::instances::{BasicVarManager, Cnf, ManageVars, SatInstance};
 use thiserror::Error;
 
 use itertools::Itertools;
+
+/// A wrapper for the solvers to allow generic use of the solver
+#[allow(non_camel_case_types)] // type names follow solver name conventions
+enum SatSolver {
+    Minisat,
+    CaDiCaL,
+    // Kissat,
+    // Batsat,
+    Glucose,
+    GlucoseSimp,
+    // IPASIR,
+}
+macro_rules! with_solver {
+    ($self:expr, $solver:ident, $body:block) => {
+        match $self.solver {
+            SatSolver::CaDiCaL => {
+                let mut $solver: rustsat_cadical::CaDiCaL = CaDiCaL::default();
+                $body
+            }
+            SatSolver::Minisat => {
+                let mut $solver: rustsat_minisat::core::Minisat = Minisat::default();
+                $body
+            }
+            SatSolver::Glucose => {
+                let mut $solver = rustsat_glucose::core::Glucose::default();
+                $body
+            }
+            SatSolver::GlucoseSimp => {
+                let mut $solver = rustsat_glucose::simp::Glucose::default();
+                $body
+            }
+        }
+    };
+}
+
 /// A [SolverAdaptor] for interacting with the SatSolver generic and the types thereof.
 pub struct Sat {
     __non_constructable: private::Internal,
     model_inst: Option<SatInstance>,
     var_map: Option<HashMap<Name, Lit>>,
-    solver_inst: Minisat,
+    solver: SatSolver,
     decision_refs: Option<Vec<Name>>,
 }
 
@@ -51,7 +88,7 @@ impl Default for Sat {
     fn default() -> Self {
         Sat {
             __non_constructable: private::Internal,
-            solver_inst: Minisat::default(),
+            solver: SatSolver::CaDiCaL,
             var_map: None,
             model_inst: None,
             decision_refs: None,
@@ -94,109 +131,113 @@ impl SolverAdaptor for Sat {
         callback: SolverCallback,
         _: private::Internal,
     ) -> Result<SolveSuccess, SolverError> {
-        let mut solver = &mut self.solver_inst;
+        with_solver!(self, s, {
+            let cnf: (Cnf, BasicVarManager) = self
+                .model_inst
+                .clone()
+                .ok_or_else(|| SolverError::Runtime("Model instance is missing".to_string()))?
+                .into_cnf();
 
-        let cnf: (Cnf, BasicVarManager) = self
-            .model_inst
-            .clone()
-            .ok_or_else(|| SolverError::Runtime("Model instance is missing".to_string()))?
-            .into_cnf();
-
-        (*(solver)).add_cnf(cnf.0);
-
-        let mut has_sol = false;
-        loop {
-            let res = match solver.solve() {
-                Ok(r) => r,
-                Err(e) => {
-                    return Err(SolverError::Runtime(format!(
-                        "Solver encountered an error during solving: {}",
-                        e
-                    )));
-                }
-            };
-
-            match res {
-                SolverResult::Sat => {}
-                SolverResult::Unsat => {
-                    return Ok(SolveSuccess {
-                        stats: SolverStats {
-                            conjure_solver_wall_time_s: -1.0,
-                            solver_family: Some(self.get_family()),
-                            solver_adaptor: Some("SAT".to_string()),
-                            ..Default::default()
-                        },
-                        status: if has_sol {
-                            SearchStatus::Complete(solver::SearchComplete::HasSolutions)
-                        } else {
-                            SearchStatus::Complete(NoSolutions)
-                        },
-                    });
-                }
-                SolverResult::Interrupted => {
-                    return Err(SolverError::Runtime("!!Interrupted Solution!!".to_string()));
-                }
-            };
-
-            let mut sol: Assignment = match solver.full_solution() {
-                Ok(s) => s,
-                Err(e) => {
-                    return Err(SolverError::Runtime(format!(
-                        "Solver encountered an error when retrieving solution: {}",
-                        e
-                    )));
-                }
-            };
-
-            let var_map = self.var_map.clone().ok_or_else(|| {
-                SolverError::Runtime("Variable map is missing when retrieving solution".to_string())
-            })?;
-
-            let find_refs = self.decision_refs.clone().ok_or_else(|| {
-                SolverError::Runtime(
-                    "Decision references are missing when retrieving solution".to_string(),
-                )
-            })?;
+            s.add_cnf(cnf.0);
 
             let mut has_sol = false;
-            for (name, lit) in &var_map {
-                let inserter = sol.var_value(lit.var());
-                sol.assign_var(lit.var(), inserter);
-            }
+            loop {
+                let res = match s.solve() {
+                    Ok(r) => r,
+                    Err(e) => {
+                        return Err(SolverError::Runtime(format!(
+                            "Solver encountered an error during solving: {}",
+                            e
+                        )));
+                    }
+                };
 
-            has_sol = true;
-            let sol_old = get_ref_sols(find_refs.clone(), sol.clone(), var_map.clone());
+                match res {
+                    SolverResult::Sat => {}
+                    SolverResult::Unsat => {
+                        return Ok(SolveSuccess {
+                            stats: SolverStats {
+                                conjure_solver_wall_time_s: -1.0,
+                                solver_family: Some(self.get_family()),
+                                solver_adaptor: Some("SAT".to_string()),
+                                ..Default::default()
+                            },
+                            status: if has_sol {
+                                SearchStatus::Complete(solver::SearchComplete::HasSolutions)
+                            } else {
+                                SearchStatus::Complete(NoSolutions)
+                            },
+                        });
+                    }
+                    SolverResult::Interrupted => {
+                        return Err(SolverError::Runtime("!!Interrupted Solution!!".to_string()));
+                    }
+                };
 
-            tracing::info!("old solution {:#?}", sol_old);
+                let mut sol: Assignment = match s.full_solution() {
+                    Ok(s) => s,
+                    Err(e) => {
+                        return Err(SolverError::Runtime(format!(
+                            "Solver encountered an error when retrieving solution: {}",
+                            e
+                        )));
+                    }
+                };
 
-            let solutions = enumerate_all_solutions(sol_old);
+                let var_map = self.var_map.clone().ok_or_else(|| {
+                    SolverError::Runtime(
+                        "Variable map is missing when retrieving solution".to_string(),
+                    )
+                })?;
 
-            tracing::info!("final solutions for run");
-            tracing::info!("{:#?}", solutions);
+                let find_refs = self.decision_refs.clone().ok_or_else(|| {
+                    SolverError::Runtime(
+                        "Decision references are missing when retrieving solution".to_string(),
+                    )
+                })?;
 
-            for solution in solutions {
-                if !callback(solution) {
-                    // callback false
-                    return Ok(SolveSuccess {
-                        stats: SolverStats {
-                            conjure_solver_wall_time_s: -1.0,
-                            solver_family: Some(self.get_family()),
-                            solver_adaptor: Some("SAT".to_string()),
-                            ..Default::default()
-                        },
-                        status: SearchStatus::Incomplete(solver::SearchIncomplete::UserTerminated),
-                    });
+                let mut has_sol = false;
+                for (name, lit) in &var_map {
+                    let inserter = sol.var_value(lit.var());
+                    sol.assign_var(lit.var(), inserter);
                 }
-            }
 
-            let blocking_vec: Vec<_> = sol.clone().iter().map(|lit| !lit).collect();
-            let mut blocking_cl = Clause::new();
-            tracing::info!("adding blocking clause with literals: {:#?}", blocking_vec);
-            for lit_i in blocking_vec {
-                blocking_cl.add(lit_i);
+                has_sol = true;
+                let sol_old = get_ref_sols(find_refs.clone(), sol.clone(), var_map.clone());
+
+                tracing::info!("old solution {:#?}", sol_old);
+
+                let solutions = enumerate_all_solutions(sol_old);
+
+                tracing::info!("final solutions for run");
+                tracing::info!("{:#?}", solutions);
+
+                for solution in solutions {
+                    if !callback(solution) {
+                        // callback false
+                        return Ok(SolveSuccess {
+                            stats: SolverStats {
+                                conjure_solver_wall_time_s: -1.0,
+                                solver_family: Some(self.get_family()),
+                                solver_adaptor: Some("SAT".to_string()),
+                                ..Default::default()
+                            },
+                            status: SearchStatus::Incomplete(
+                                solver::SearchIncomplete::UserTerminated,
+                            ),
+                        });
+                    }
+                }
+
+                let blocking_vec: Vec<_> = sol.clone().iter().map(|lit| !lit).collect();
+                let mut blocking_cl = Clause::new();
+                tracing::info!("adding blocking clause with literals: {:#?}", blocking_vec);
+                for lit_i in blocking_vec {
+                    blocking_cl.add(lit_i);
+                }
+                s.add_clause(blocking_cl);
             }
-            solver.add_clause(blocking_cl);
-        }
+        })
     }
 
     fn solve_mut(
@@ -271,14 +312,22 @@ impl SolverAdaptor for Sat {
         Ok(())
     }
 
-    fn init_solver(&mut self, _: private::Internal) {}
-
     fn get_family(&self) -> SolverFamily {
         SolverFamily::Sat(crate::settings::SatEncoding::Log)
     }
 
     fn get_name(&self) -> &'static str {
-        "sat"
+        // NOTE: Wildcards not allowed
+        // Should always match the conventional name of the solver, not rust syntax
+        match self.solver {
+            // SatSolver::Kissat => "kissat",
+            // SatSolver::Batsat => "BatSat",
+            SatSolver::Minisat => "Minisat",
+            SatSolver::CaDiCaL => "CaDiCaL",
+            // SatSolver::IPASIR => "IPASIR",
+            SatSolver::Glucose => "Glucose",
+            SatSolver::GlucoseSimp => "Glucose_With_Preprocessing",
+        }
     }
 
     fn write_solver_input_file(
