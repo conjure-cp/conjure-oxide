@@ -20,6 +20,17 @@ fn line_start_byte(source: &[u8], row: usize) -> usize {
     line_start
 }
 
+fn point_range_at(source: &str, row: usize, column: usize) -> tree_sitter::Range {
+    let line_start = line_start_byte(source.as_bytes(), row);
+    let byte = line_start + column;
+    tree_sitter::Range {
+        start_byte: byte,
+        end_byte: byte,
+        start_point: tree_sitter::Point { row, column },
+        end_point: tree_sitter::Point { row, column },
+    }
+}
+
 /// This is a reporting-layer fix: even though comments are treated as "extras" by the grammar,
 /// tree-sitter `ERROR` node spans can overlap those bytes during recovery. We clamp to the end of
 /// the non-comment prefix (with trailing whitespace trimmed) so diagnostics don't include comment
@@ -105,11 +116,68 @@ pub fn detect_syntactic_errors(
                 ));
                 continue;
             } else {
+                if let Some(missing_rparen) = classify_int_domain_missing_rparen(&node, source) {
+                    errors.push(missing_rparen);
+                    continue;
+                }
                 errors.push(classify_unexpected_token_error(node, source));
             }
             continue;
         }
     }
+}
+
+/// Tree-sitter recovery sometimes reduces `int_domain` to bare `int` and then wraps the following
+/// `(` and range text in an `ERROR` node (especially at EOF).
+/// This function detects this specific pattern and reports  "Missing )" error
+fn classify_int_domain_missing_rparen(
+    node: &tree_sitter::Node,
+    source: &str,
+) -> Option<RecoverableParseError> {
+    let start = node.start_position();
+    let end = node.end_position();
+
+    let line = source.lines().nth(start.row)?;
+    // does not account for the in-line comment
+    let comment_col = line.find('$').unwrap_or(line.len());
+    let start_col = start.column.min(comment_col);
+    let end_col = end.column.min(comment_col);
+
+    // checks that the first character that the ERROR node spans is `(`
+    if line.as_bytes().get(start_col).copied()? != b'(' {
+        return None;
+    }
+
+    // checks that the text spanned by the ERROR node is just `(`
+    if !line[end_col..comment_col].trim().is_empty() {
+        return None;
+    }
+
+    // If there is a `)` after the ERROR node on the same line, then this is not a missing `)` error
+    let trimmed = line[..comment_col].trim_end();
+    if line[start_col..comment_col].contains(')') {
+        return None;
+    }
+
+    // checks that the text before the `(` is `int`
+    let prefix = line[..start_col].trim_end();
+    if !prefix.ends_with("int") {
+        return None;
+    }
+    //checks that 'int' is not part of a longer identifier (e.g. 'print')
+    let bytes = prefix.as_bytes();
+    if bytes.len() > 3 {
+        let b = bytes[bytes.len() - 4];
+        if b.is_ascii_alphanumeric() || b == b'_' {
+            return None;
+        }
+    }
+
+    let insertion_col = trimmed.len();
+    Some(RecoverableParseError::new(
+        "Missing )".to_string(),
+        Some(point_range_at(source, start.row, insertion_col)),
+    ))
 }
 
 /// Classifies a missing token node and generates a diagnostic with a context-aware message.
