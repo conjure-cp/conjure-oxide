@@ -4,7 +4,7 @@ use conjure_cp::ast::{
 };
 use conjure_cp::rule_engine::ApplicationError;
 use conjure_cp::rule_engine::ApplicationError::RuleNotApplicable;
-use conjure_cp::{essence_expr, into_matrix_expr};
+use conjure_cp::{bug, essence_expr, into_matrix_expr};
 use itertools::Itertools;
 use uniplate::{Biplate, Uniplate};
 
@@ -36,6 +36,15 @@ pub fn is_flat(expr: &Expr) -> bool {
         }
     }
     true
+}
+
+pub fn lit_to_bool(x: &Literal) -> bool {
+    match x {
+        Literal::Bool(b) => *b,
+        Literal::Int(0) => false,
+        Literal::Int(1) => true,
+        _ => bug!("expected a boolean or int(0..1) literal, got {}", x),
+    }
 }
 
 /// True if the expression is a record literal

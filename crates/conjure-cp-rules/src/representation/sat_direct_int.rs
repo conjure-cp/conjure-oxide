@@ -2,9 +2,10 @@ use super::prelude::*;
 use conjure_cp::ast::{Domain, Range, Reference, domains::Int};
 use conjure_cp::utils::BiMap;
 use conjure_cp::{essence_expr, into_matrix_expr};
-use itertools::{Itertools, chain};
+use itertools::chain;
 use std::collections::VecDeque;
 use std::hash::Hash;
+use crate::utils::lit_to_bool;
 
 register_representation!(
     SatIntDirect
@@ -65,11 +66,3 @@ register_representation!(
     }
 );
 
-fn lit_to_bool(x: &Literal) -> bool {
-    match x {
-        Literal::Bool(b) => *b,
-        Literal::Int(0) => false,
-        Literal::Int(1) => true,
-        _ => bug!("expected a boolean or int(0..1) literal, got {}", x),
-    }
-}
