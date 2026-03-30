@@ -369,22 +369,27 @@ impl GroundDomain {
                         // Matrix literals are represented as nested 1d matrices, so the elements of
                         // the matrix literal will be the inner dimensions of the matrix.
 
-                        let mut index_domains = index_domains.clone();
-                        if index_domains
-                            .pop()
-                            .expect("a matrix should have at least one index domain")
-                            != *idx_domain
+                        let Some((current_index_domain, remaining_index_domains)) =
+                            index_domains.split_first()
+                        else {
+                            panic!("a matrix should have at least one index domain");
+                        };
+
+                        if *current_index_domain != *idx_domain
                         {
                             return Ok(false);
                         };
 
-                        let next_elem_domain = if index_domains.is_empty() {
+                        let next_elem_domain = if remaining_index_domains.is_empty() {
                             // Base case - we have a 1D row. Now check if all elements in the
                             // literal are in this row's element domain.
                             elem_domain.as_ref().clone()
                         } else {
                             // Otherwise, go down a dimension (e.g. 2D matrix inside a 3D tensor)
-                            GroundDomain::Matrix(elem_domain.clone(), index_domains)
+                            GroundDomain::Matrix(
+                                elem_domain.clone(),
+                                remaining_index_domains.to_vec(),
+                            )
                         };
 
                         for elem in elems {
