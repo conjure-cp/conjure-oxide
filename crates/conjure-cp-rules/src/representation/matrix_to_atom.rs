@@ -14,10 +14,11 @@ register_representation!(
         pub strides: Vec<usize>,
         // Index domains of the original matrix
         pub index_domains: Vec<Moo<GroundDomain>>,
+        // -- Larger fields are wrapped in Moo to avoid cloning them --
         // Map all possible indices to integers
-        pub indices: Vec<BiMap<usize, Literal>>,
+        pub indices: Moo<Vec<BiMap<usize, Literal>>>,
         // Flat vec of matrix elements
-        pub elements: Vec<T>,
+        pub elements: Moo<Vec<T>>,
     }
     impl<T> State<T>
     {
@@ -135,8 +136,8 @@ register_representation!(
         }
 
         Ok(State {
-            elements,
-            indices: indices.into(),
+            elements: Moo::new(elements),
+            indices: Moo::new(indices.into()),
             index_domains: index_domains.into(),
             strides: strides.into(),
             dimensions: dimensions.into(),
@@ -165,7 +166,7 @@ register_representation!(
             strides: state.strides.clone(),
             indices: state.indices.clone(),
             dimensions: state.dimensions.clone(),
-            elements,
+            elements: Moo::new(elements)
         })
     }
     fn up(state: State<Literal>) -> Literal {
