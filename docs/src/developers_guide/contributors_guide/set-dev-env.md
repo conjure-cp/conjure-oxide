@@ -20,7 +20,7 @@ Windows users should install [WSL](https://learn.microsoft.com/en-us/windows/wsl
   - **Ensure that Conjure is placed early in your PATH to avoid conflicts with ImageMagick's `conjure` command!**
 
 **Z3**
-One of the solver backends, Z3, requires a seperate install. Using some commandline package installer, install Z3. (e.g. `apt`). 
+One of the solver backends, Z3, requires a separate install. Using some command-line package installer, install Z3. (e.g. `apt`). 
 </details>
 
 <details><summary><b>MacOS</b></summary>
@@ -32,7 +32,7 @@ One of the solver backends, Z3, requires a seperate install. Using some commandl
 * [Conjure](https://github.com/conjure-cp/conjure).
 
 **Z3**
-One of the solver backends, Z3, requires a seperate install. Using some commandline package installer, install Z3. (e.g. for `Homebrew` run `brew install z3`). Depending on your device, you may need to do additional configuration:
+One of the solver backends, Z3, requires a separate install. Using some command-line package installer, install Z3. (e.g. for `Homebrew` run `brew install z3`). Depending on your device, you may need to do additional configuration:
 * For **Intel** Macs, you may need to update your `~/.cargo/config.toml`:
 ```
 [env]
