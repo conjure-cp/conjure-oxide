@@ -1,9 +1,9 @@
 use conjure_cp::{
     ast::{
-        Atom, DeclarationPtr, Expression as Expr, Metadata, Moo, SymbolTable, SymbolTablePtr,
+        Atom, Expression as Expr, Metadata, Moo, SymbolTable, SymbolTablePtr,
         ac_operators::ACOperatorKind, comprehension::ComprehensionBuilder,
     }, bug, rule_engine::{
-        ApplicationError::{self, RuleNotApplicable},
+        ApplicationError::RuleNotApplicable,
         ApplicationResult, Reduction, register_rule,
     }
 };
