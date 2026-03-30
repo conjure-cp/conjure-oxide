@@ -393,7 +393,7 @@ impl SymbolTable {
         self.insert(decl.clone());
         decl
     }
-    
+
     // Reserves a unique machine name in the symbol table
     pub fn gensym(&mut self) -> Name {
         let num = self.next_machine_name;
