@@ -211,7 +211,10 @@ fn integration_test_inner(
         }
         Parser::ViaConjure => parse_essence_file(&file_path, context.clone())?,
     };
-    let should_validate_rule_trace = parsed_model.dominance.is_none();
+    // Rule traces snapshot the initial naive rewrite only.
+    // Solver-time CDP rewrites happen later, outside this subscriber scope, so
+    // dominance models can still have stable initial traces.
+    let should_validate_rule_trace = matches!(rewriter, Rewriter::Naive);
     let generated_trace_path = format!(
         "{path}/{}-{}-generated-rule-trace.txt",
         case_name,
