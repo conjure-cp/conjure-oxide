@@ -1,11 +1,23 @@
 use crate::guard;
 use crate::representation::tuple_to_atom::TupleToAtom;
-use conjure_cp::ast::{Atom, Expression as Expr, Literal, Metadata, Reference, SymbolTable};
+use crate::utils::{
+    as_eq_or_neq, collect_eq_or_neq, is_tuple_lit, tuple_expr_entries, tuple_expr_len,
+};
+use conjure_cp::ast::{
+    Atom, Expression as Expr, Expression, HasDomain, Literal, Metadata, Reference, SymbolTable,
+};
 use conjure_cp::bug_assert_eq;
 use conjure_cp::rule_engine::ApplicationError::RuleNotApplicable;
 use conjure_cp::rule_engine::{ApplicationResult, Reduction, register_rule};
 use conjure_cp::{bug_assert, essence_expr};
+use itertools::izip;
 
+/// Indexing into a tuple variable
+/// ```plain
+/// x[1]
+/// ~>
+/// x_TupleToAtom_1
+/// ```
 #[register_rule(("ReprGeneral", 2000))]
 fn tuple_to_atom_index_lit(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     guard!(
@@ -31,6 +43,12 @@ fn tuple_to_atom_index_lit(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     }
 }
 
+/// Convert an unsafe tuple index into a safe one
+/// ```plain
+/// x[y]
+/// ~>
+/// { x[y] @ (y >= 1 /\ y <= |x|) }
+/// ```
 #[register_rule(("Bubble", 8000))]
 fn tuple_index_to_bubble(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     guard!(
@@ -57,251 +75,81 @@ fn tuple_index_to_bubble(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     Ok(Reduction::pure(new_expr))
 }
 
-// // convert equality to tuple equality
-// #[register_rule(("Base", 2000))]
-// fn tuple_equality(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-//     let Expr::Eq(_, left, right) = expr else {
-//         return Err(RuleNotApplicable);
-//     };
-//
-//     let Expr::Atomic(_, Atom::Reference(decl)) = &**left else {
-//         return Err(RuleNotApplicable);
-//     };
-//
-//     let Name::WithRepresentation(_, reprs) = &decl.name() as &Name else {
-//         return Err(RuleNotApplicable);
-//     };
-//
-//     let Expr::Atomic(_, Atom::Reference(decl2)) = &**right else {
-//         return Err(RuleNotApplicable);
-//     };
-//
-//     let Name::WithRepresentation(_, reprs2) = &decl2.name() as &Name else {
-//         return Err(RuleNotApplicable);
-//     };
-//
-//     if reprs.first().is_none_or(|x| x.as_str() != "tuple_to_atom") {
-//         return Err(RuleNotApplicable);
-//     }
-//
-//     if reprs2.first().is_none_or(|x| x.as_str() != "tuple_to_atom") {
-//         return Err(RuleNotApplicable);
-//     }
-//
-//     // let decl = symbols.lookup(name).unwrap();
-//     // let decl2 = symbols.lookup(name2).unwrap();
-//
-//     let domain = decl
-//         .resolved_domain()
-//         .ok_or(ApplicationError::DomainError)?;
-//     let domain2 = decl2
-//         .resolved_domain()
-//         .ok_or(ApplicationError::DomainError)?;
-//
-//     let GroundDomain::Tuple(elems) = domain.as_ref() else {
-//         return Err(RuleNotApplicable);
-//     };
-//
-//     let GroundDomain::Tuple(elems2) = domain2.as_ref() else {
-//         return Err(RuleNotApplicable);
-//     };
-//
-//     if elems.len() != elems2.len() {
-//         return Err(RuleNotApplicable);
-//     }
-//
-//     let mut equality_constraints = vec![];
-//     for i in 0..elems.len() {
-//         let left_elem = Expression::SafeIndex(
-//             Metadata::new(),
-//             Moo::clone(left),
-//             vec![Expression::Atomic(
-//                 Metadata::new(),
-//                 Atom::Literal(Literal::Int((i + 1) as i32)),
-//             )],
-//         );
-//         let right_elem = Expression::SafeIndex(
-//             Metadata::new(),
-//             Moo::clone(right),
-//             vec![Expression::Atomic(
-//                 Metadata::new(),
-//                 Atom::Literal(Literal::Int((i + 1) as i32)),
-//             )],
-//         );
-//
-//         equality_constraints.push(Expression::Eq(
-//             Metadata::new(),
-//             Moo::new(left_elem),
-//             Moo::new(right_elem),
-//         ));
-//     }
-//
-//     let new_expr = Expression::And(
-//         Metadata::new(),
-//         Moo::new(into_matrix_expr!(equality_constraints)),
-//     );
-//
-//     Ok(Reduction::pure(new_expr))
-// }
-//
-// //tuple equality where the left is a variable and the right is a tuple literal
-// #[register_rule(("Base", 2000))]
-// fn tuple_to_constant(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
-//     let Expr::Eq(_, left, right) = expr else {
-//         return Err(RuleNotApplicable);
-//     };
-//
-//     let Expr::Atomic(_, Atom::Reference(decl)) = &**left else {
-//         return Err(RuleNotApplicable);
-//     };
-//
-//     let Name::WithRepresentation(name, reprs) = &decl.name() as &Name else {
-//         return Err(RuleNotApplicable);
-//     };
-//
-//     let Some(rhs_tuple_len) = crate::utils::constant_tuple_len(right.as_ref()) else {
-//         return Err(RuleNotApplicable);
-//     };
-//
-//     if reprs.first().is_none_or(|x| x.as_str() != "tuple_to_atom") {
-//         return Err(RuleNotApplicable);
-//     }
-//
-//     let decl = symbols.lookup(name).unwrap();
-//
-//     let domain = decl
-//         .resolved_domain()
-//         .ok_or(ApplicationError::DomainError)?;
-//
-//     let GroundDomain::Tuple(elems) = domain.as_ref() else {
-//         return Err(RuleNotApplicable);
-//     };
-//
-//     if elems.len() != rhs_tuple_len {
-//         return Err(RuleNotApplicable);
-//     }
-//
-//     let mut equality_constraints = vec![];
-//     for i in 0..elems.len() {
-//         let left_elem = Expression::SafeIndex(
-//             Metadata::new(),
-//             Moo::clone(left),
-//             vec![Expression::Atomic(
-//                 Metadata::new(),
-//                 Atom::Literal(Literal::Int((i + 1) as i32)),
-//             )],
-//         );
-//         let right_elem = Expression::SafeIndex(
-//             Metadata::new(),
-//             Moo::clone(right),
-//             vec![Expression::Atomic(
-//                 Metadata::new(),
-//                 Atom::Literal(Literal::Int((i + 1) as i32)),
-//             )],
-//         );
-//
-//         equality_constraints.push(Expression::Eq(
-//             Metadata::new(),
-//             Moo::new(left_elem),
-//             Moo::new(right_elem),
-//         ));
-//     }
-//
-//     let new_expr = Expression::And(
-//         Metadata::new(),
-//         Moo::new(into_matrix_expr!(equality_constraints)),
-//     );
-//
-//     Ok(Reduction::pure(new_expr))
-// }
-//
-// // convert equality to tuple inequality
-// #[register_rule(("Base", 2000))]
-// fn tuple_inequality(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-//     let Expr::Neq(_, left, right) = expr else {
-//         return Err(RuleNotApplicable);
-//     };
-//
-//     let Expr::Atomic(_, Atom::Reference(decl)) = &**left else {
-//         return Err(RuleNotApplicable);
-//     };
-//
-//     let Name::WithRepresentation(_, reprs) = &decl.name() as &Name else {
-//         return Err(RuleNotApplicable);
-//     };
-//
-//     let Expr::Atomic(_, Atom::Reference(decl2)) = &**right else {
-//         return Err(RuleNotApplicable);
-//     };
-//
-//     let Name::WithRepresentation(_, reprs2) = &decl2.name() as &Name else {
-//         return Err(RuleNotApplicable);
-//     };
-//
-//     if reprs.first().is_none_or(|x| x.as_str() != "tuple_to_atom") {
-//         return Err(RuleNotApplicable);
-//     }
-//
-//     if reprs2.first().is_none_or(|x| x.as_str() != "tuple_to_atom") {
-//         return Err(RuleNotApplicable);
-//     }
-//
-//     let domain = decl
-//         .resolved_domain()
-//         .ok_or(ApplicationError::DomainError)?;
-//
-//     let domain2 = decl2
-//         .resolved_domain()
-//         .ok_or(ApplicationError::DomainError)?;
-//
-//     let GroundDomain::Tuple(elems) = domain.as_ref() else {
-//         return Err(RuleNotApplicable);
-//     };
-//
-//     let GroundDomain::Tuple(elems2) = domain2.as_ref() else {
-//         return Err(RuleNotApplicable);
-//     };
-//
-//     assert_eq!(
-//         elems.len(),
-//         elems2.len(),
-//         "tuple inequality requires same length domains"
-//     );
-//
-//     let mut equality_constraints = vec![];
-//     for i in 0..elems.len() {
-//         let left_elem = Expression::SafeIndex(
-//             Metadata::new(),
-//             Moo::clone(left),
-//             vec![Expression::Atomic(
-//                 Metadata::new(),
-//                 Atom::Literal(Literal::Int((i + 1) as i32)),
-//             )],
-//         );
-//         let right_elem = Expression::SafeIndex(
-//             Metadata::new(),
-//             Moo::clone(right),
-//             vec![Expression::Atomic(
-//                 Metadata::new(),
-//                 Atom::Literal(Literal::Int((i + 1) as i32)),
-//             )],
-//         );
-//
-//         equality_constraints.push(Expression::Eq(
-//             Metadata::new(),
-//             Moo::new(left_elem),
-//             Moo::new(right_elem),
-//         ));
-//     }
-//
-//     // Just copied from Conjure, would it be better to DeMorgan this?
-//     let new_expr = Expression::Not(
-//         Metadata::new(),
-//         Moo::new(Expression::And(
-//             Metadata::new(),
-//             Moo::new(into_matrix_expr!(equality_constraints)),
-//         )),
-//     );
-//
-//     Ok(Reduction::pure(new_expr))
-// }
+/// Equality of tuple variables
+/// ```plain
+/// x = y
+/// ~>
+/// x[1] = y[1] /\ x[2] = y[2] /\ ... /\ x[N] = y[N]
+/// ```
+#[register_rule(("ReprGeneral", 2000))]
+fn tuple_var_eq_var(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    let (lhs, rhs, neq) = as_eq_or_neq(expr)?;
+
+    guard!(
+        let Expr::Atomic(_, Atom::Reference(re)) = lhs     &&
+        let Some(repr) = re.get_repr_as::<TupleToAtom>()   &&
+        let Expr::Atomic(_, Atom::Reference(re2)) = rhs    &&
+        let Some(repr2) = re2.get_repr_as::<TupleToAtom>()
+        else {
+            return Err(RuleNotApplicable);
+        }
+    );
+
+    bug_assert_eq!(
+        repr.elems.len(),
+        repr2.elems.len(),
+        "equality on tuples with different shapes!"
+    );
+
+    let new_expr = collect_eq_or_neq(neq, izip!(repr.elem_refs(), repr2.elem_refs()));
+    Ok(Reduction::pure(new_expr))
+}
+
+/// Equality of tuple variable to a tuple literal
+/// ```plain
+/// x = (1, true)
+/// ~>
+/// x[1] = 1 /\ x[2] = true
+/// ```
+#[register_rule(("ReprGeneral", 2000))]
+fn tuple_var_eq_lit(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    let (lhs, rhs, neq) = as_eq_or_neq(expr)?;
+
+    guard!(
+        let Expr::Atomic(_, Atom::Reference(re)) = lhs   &&
+        let Some(repr) = re.get_repr_as::<TupleToAtom>() &&
+        let Some(rhs_ents) = tuple_expr_entries(rhs)
+        else {
+            return Err(RuleNotApplicable);
+        }
+    );
+
+    bug_assert_eq!(
+        repr.elems.len(),
+        rhs_ents.len(),
+        "equality on tuples with different shapes!"
+    );
+
+    let new_expr = collect_eq_or_neq(neq, izip!(repr.elem_refs(), rhs_ents));
+    Ok(Reduction::pure(new_expr))
+}
+
+/// If we have a tuple literal on the left and variable on the right, swap them
+/// so the above rule can apply
+#[register_rule(("ReprGeneral", 2001))]
+fn tuple_eq_reorder(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    guard!(
+        let Expression::Eq(_, lit, var) = expr                       &&
+        let Expression::Atomic(_, Atom::Reference(_)) = var.as_ref() &&
+        is_tuple_lit(lit.as_ref())
+        else {
+            return Err(RuleNotApplicable);
+        }
+    );
+
+    Ok(Reduction::pure(Expression::Eq(
+        Metadata::new(),
+        var.clone(),
+        lit.clone(),
+    )))
+}

@@ -1,9 +1,15 @@
 use super::prelude::*;
+use conjure_cp::ast::Reference;
 
 register_representation!(
     TupleToAtom
     struct State<T> {
         pub elems: Vec<T>
+    }
+    impl State<DeclarationPtr> {
+        pub fn elem_refs(&self) -> impl Iterator<Item = Reference> {
+            self.elems.iter().cloned().map(Reference::new)
+        }
     }
     fn init(dom: DomainPtr) -> Result<State<DomainPtr>, ReprInitError> {
         let Some(elems) = dom.as_tuple() else {

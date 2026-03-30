@@ -38,17 +38,6 @@ pub fn is_flat(expr: &Expr) -> bool {
     true
 }
 
-/// Returns the arity of a tuple constant expression, if this expression is one.
-pub fn constant_tuple_len(expr: &Expr) -> Option<usize> {
-    match expr {
-        Expr::AbstractLiteral(_, AbstractLiteral::Tuple(elems)) => Some(elems.len()),
-        Expr::Atomic(_, Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Tuple(elems)))) => {
-            Some(elems.len())
-        }
-        _ => None,
-    }
-}
-
 /// True if the expression is a record literal
 pub fn is_record_lit(expr: &Expr) -> bool {
     matches!(
@@ -59,6 +48,40 @@ pub fn is_record_lit(expr: &Expr) -> bool {
                 Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Record(..)))
             )
     )
+}
+
+/// True iff the expression is a tuple literal
+pub fn is_tuple_lit(expr: &Expr) -> bool {
+    matches!(
+        expr,
+        Expr::AbstractLiteral(_, AbstractLiteral::Tuple(..))
+            | Expr::Atomic(
+                _,
+                Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Tuple(..)))
+            )
+    )
+}
+
+/// Returns the arity of a tuple constant expression, if this expression is one.
+pub fn tuple_expr_len(expr: &Expr) -> Option<usize> {
+    match expr {
+        Expr::AbstractLiteral(_, AbstractLiteral::Tuple(elems)) => Some(elems.len()),
+        Expr::Atomic(_, Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Tuple(elems)))) => {
+            Some(elems.len())
+        }
+        _ => None,
+    }
+}
+
+/// Get the entries of a tuple expression, if it is one
+pub fn tuple_expr_entries(expr: &Expr) -> Option<Vec<Expr>> {
+    match expr {
+        Expr::AbstractLiteral(_, AbstractLiteral::Tuple(elems)) => Some(elems.clone()),
+        Expr::Atomic(_, Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Tuple(elems)))) => {
+            Some(elems.iter().cloned().map(Expr::from).collect())
+        }
+        _ => None,
+    }
 }
 
 /// Iterate over (name, value) of a record, if the expression is one; Fields are converted to Expression
