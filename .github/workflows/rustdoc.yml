@@ -3,7 +3,7 @@ name: Rustdoc
 on:
   push:
     branches:
-      - main # run for pushes to the main branch
+    - main # run for pushes to the main branch
   workflow_dispatch:
 
 
@@ -23,88 +23,88 @@ jobs:
     timeout-minutes: 120
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout the repository
-        uses: actions/checkout@v6
-        with:
-          # Avoid checkout's auth header so deploy uses the app token.
-          persist-credentials: false
-          # Keep checkout detached to avoid worktree branch-name collisions.
-          ref: ${{ github.sha }}
+    - name: Checkout the repository
+      uses: actions/checkout@v6
+      with:
+        # Avoid checkout's auth header so deploy uses the app token.
+        persist-credentials: false
+        # Keep checkout detached to avoid worktree branch-name collisions.
+        ref: ${{ github.sha }}
 
-      - name: free_disk_space.sh
-        run: .github/workflows/tools/free_disk_space.sh
+    - name: free_disk_space.sh
+      run: .github/workflows/tools/free_disk_space.sh
 
-      - name: Restore cache
-        id: restore_cache
-        uses: actions/cache/restore@v5
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-            ~/conjure
-          key: rustdoc--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.event.repository.updated_at }}
-          restore-keys: rustdoc--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}
+    - name: Restore cache
+      id: restore_cache
+      uses: actions/cache/restore@v5
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
+          ~/conjure
+        key: rustdoc--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.event.repository.updated_at }}
+        restore-keys: rustdoc--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}
 
-      - name: Get Sha
-        id: sha
-        run: |
-          echo -e "sha=${{ github.sha }}" >> "$GITHUB_OUTPUT"
-          echo -e "sha=${{ github.sha }}"
+    - name: Get Sha
+      id: sha
+      run: |
+        echo -e "sha=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+        echo -e "sha=${{ github.sha }}"
 
-      - name: Install rust
-        run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
+    - name: Install rust
+      run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
 
-      - name: Initialise submodules
-        run: make submodules
+    - name: Initialise submodules
+      run: make submodules
 
-      - name: Generate documentation
-        working-directory: .
-        run: |
-          ./tools/gen_docs.sh
+    - name: Generate documentation
+      working-directory: .
+      run: |
+        ./tools/gen_docs.sh
 
-      - name: Move all html to correct folders for deployment
-        run: |
-          mkdir deploy
-          cp -r target/doc/* deploy
+    - name: Move all html to correct folders for deployment
+      run: |
+        mkdir deploy
+        cp -r target/doc/* deploy
 
-      - name: Create reports app token
-        id: reports-token
-        uses: actions/create-github-app-token@v2
-        with:
-          app-id: ${{ secrets.CONJURE_BOT_ID }}
-          private-key: ${{ secrets.CONJURE_BOT_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-          repositories: |
-            conjure-oxide-reports
+    - name: Create reports app token
+      id: reports-token
+      uses: actions/create-github-app-token@v2
+      with:
+        app-id: ${{ secrets.CONJURE_BOT_ID }}
+        private-key: ${{ secrets.CONJURE_BOT_PRIVATE_KEY }}
+        owner: ${{ github.repository_owner }}
+        repositories: |
+          conjure-oxide-reports
 
-      - name: Deploy to Github Pages
-        if: ${{ steps.reports-token.outputs.token != '' }}
-        uses: JamesIves/github-pages-deploy-action@v4
-        env:
-          GITHUB_TOKEN: ${{ steps.reports-token.outputs.token }}
-        with:
-          folder: ./deploy
-          target-folder: "main/rustdoc"
-          repository-name: conjure-cp/conjure-oxide-reports
-          branch: main
-          token: ${{ steps.reports-token.outputs.token }}
-          commit-message: "Actions: Rustdoc documentation for ${{ steps.sha.outputs.sha }}"
-          # do not overwrite previous deployments, such as those made by other
-          # actions
-          force: false
+    - name: Deploy to Github Pages
+      if: ${{ steps.reports-token.outputs.token != '' }}
+      uses: JamesIves/github-pages-deploy-action@v4
+      env:
+        GITHUB_TOKEN: ${{ steps.reports-token.outputs.token }}
+      with:
+        folder: ./deploy
+        target-folder: "main/rustdoc"
+        repository-name: conjure-cp/conjure-oxide-reports
+        branch: main
+        token: ${{ steps.reports-token.outputs.token }}
+        commit-message: "Actions: Rustdoc documentation for ${{ steps.sha.outputs.sha }}"
+        # do not overwrite previous deployments, such as those made by other
+        # actions
+        force: false
 
-      - name: Save cache
-        if: ${{ always() && steps.restore_cache.outputs.cache-hit != 'true' }}
-        uses: actions/cache/save@v5
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-            ~/conjure
-          key: rustdoc--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.event.repository.updated_at }}
+    - name: Save cache
+      if: ${{ always() && steps.restore_cache.outputs.cache-hit != 'true' }}
+      uses: actions/cache/save@v5
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
+          ~/conjure
+        key: rustdoc--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.event.repository.updated_at }}

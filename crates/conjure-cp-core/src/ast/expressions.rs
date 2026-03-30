@@ -252,6 +252,10 @@ pub enum Expression {
     #[compatible(JsonInput, SMT)]
     Neg(Metadata, Moo<Expression>),
 
+    /// Factorial: `x!` or 'factorial(x)`
+    #[compatible(JsonInput)]
+    Factorial(Metadata, Moo<Expression>),
+
     /// Set of domain values function is defined for
     #[compatible(JsonInput)]
     Defined(Metadata, Moo<Expression>),
@@ -867,6 +871,7 @@ impl Expression {
             Expression::Leq(_, _, _) => Some(Domain::bool()),
             Expression::Gt(_, _, _) => Some(Domain::bool()),
             Expression::Lt(_, _, _) => Some(Domain::bool()),
+            Expression::Factorial(_, _) => None, // not implemented
             Expression::FlatAbsEq(_, _, _) => Some(Domain::bool()),
             Expression::FlatSumGeq(_, _, _) => Some(Domain::bool()),
             Expression::FlatSumLeq(_, _, _) => Some(Domain::bool()),
@@ -1494,6 +1499,9 @@ impl Display for Expression {
             Expression::Neg(_, a) => {
                 write!(f, "-({})", a.clone())
             }
+            Expression::Factorial(_, a) => {
+                write!(f, "({})!", a.clone())
+            }
             Expression::Minus(_, a, b) => {
                 write!(f, "({} - {})", a.clone(), b.clone())
             }
@@ -1675,6 +1683,7 @@ impl Typeable for Expression {
             Expression::SafeMod(_, _, _) => ReturnType::Int,
             Expression::MinionModuloEqUndefZero(_, _, _, _) => ReturnType::Bool,
             Expression::Neg(_, _) => ReturnType::Int,
+            Expression::Factorial(_, _) => ReturnType::Int,
             Expression::UnsafePow(_, _, _) => ReturnType::Int,
             Expression::SafePow(_, _, _) => ReturnType::Int,
             Expression::Minus(_, _, _) => ReturnType::Int,

@@ -1,10 +1,13 @@
 use conjure_cp_essence_parser::diagnostics::diagnostics_api::get_diagnostics;
 use conjure_cp_essence_parser::diagnostics::error_detection::collect_errors::check_diagnostic;
+use conjure_cp_essence_parser::util::get_tree;
 
 #[test]
 fn missing_identifier() {
     let source = "find: bool";
-    let diagnostics = get_diagnostics(source);
+    let (cst, _) = get_tree(&source).unwrap();
+
+    let diagnostics = get_diagnostics(&source, &cst);
     assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
 
     let diag = &diagnostics[0];
@@ -15,7 +18,9 @@ fn missing_identifier() {
 #[test]
 fn missing_colon() {
     let source = "find x bool";
-    let diagnostics = get_diagnostics(source);
+    let (cst, _) = get_tree(&source).unwrap();
+
+    let diagnostics = get_diagnostics(&source, &cst);
 
     // Should be exactly one diagnostic
     assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
@@ -31,8 +36,9 @@ fn missing_domain() {
 find x: bool
 find y:
     ";
+    let (cst, _) = get_tree(&source).unwrap();
 
-    let diagnostics = get_diagnostics(source);
+    let diagnostics = get_diagnostics(&source, &cst);
 
     // Should be exactly one diagnostic
     assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
@@ -48,7 +54,9 @@ fn missing_contraint() {
 find x: bool
 such that
     ";
-    let diagnostics = get_diagnostics(source);
+    let (cst, _) = get_tree(&source).unwrap();
+
+    let diagnostics = get_diagnostics(&source, &cst);
 
     // Should be exactly one diagnostic
     assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
@@ -65,7 +73,9 @@ fn multiple_missing_tokens() {
 find x: int(1..3
 letting x be
     ";
-    let diagnostics = get_diagnostics(source);
+    let (cst, _) = get_tree(&source).unwrap();
+
+    let diagnostics = get_diagnostics(&source, &cst);
 
     // Should be exactly one diagnostic
     assert_eq!(diagnostics.len(), 2, "Expected two diagnostics");
