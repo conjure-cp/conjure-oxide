@@ -11,6 +11,7 @@ register_representation!(
     SatIntDirect
     struct State<T: Eq + Hash> {
         // Mapping of each possible value i of the original integer x to a boolean b_i <-> (x = i)
+        // TODO: this does NOT work! All booleans are the same
         pub vals: BiMap<Int, T>
     }
     fn init(dom: DomainPtr) -> Result<State<DomainPtr>, ReprInitError> {
