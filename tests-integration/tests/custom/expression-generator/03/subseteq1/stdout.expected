@@ -1,0 +1,162 @@
+{
+  "cnf_clauses": [],
+  "constraints": {
+    "Root": [
+      {
+        "clean": false,
+        "etype": null
+      },
+      [
+        {
+          "SubsetEq": [
+            {
+              "clean": false,
+              "etype": null
+            },
+            {
+              "Atomic": [
+                {
+                  "clean": false,
+                  "etype": null
+                },
+                {
+                  "Reference": {
+                    "ptr": {
+                      "object_id": 1,
+                      "type_name": "DeclarationPtrInner"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "AbstractLiteral": [
+                {
+                  "clean": false,
+                  "etype": null
+                },
+                {
+                  "Set": [
+                    {
+                      "Atomic": [
+                        {
+                          "clean": false,
+                          "etype": null
+                        },
+                        {
+                          "Literal": {
+                            "Int": 1
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "Atomic": [
+                        {
+                          "clean": false,
+                          "etype": null
+                        },
+                        {
+                          "Literal": {
+                            "Int": 2
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    ]
+  },
+  "dominance": null,
+  "search_order": null,
+  "symbols": {
+    "id": {
+      "object_id": 0,
+      "type_name": "SymbolTable"
+    },
+    "next_machine_name": 0,
+    "parent": null,
+    "table": [
+      [
+        {
+          "User": "x"
+        },
+        {
+          "id": {
+            "object_id": 1,
+            "type_name": "DeclarationPtrInner"
+          },
+          "kind": {
+            "Find": {
+              "domain": {
+                "Ground": {
+                  "Set": [
+                    {
+                      "size": "Unbounded"
+                    },
+                    {
+                      "Int": [
+                        {
+                          "Bounded": [
+                            1,
+                            5
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "name": {
+            "User": "x"
+          }
+        }
+      ]
+    ]
+  }
+}
+
+
+find x: set  of int(1..5)
+
+such that
+
+and([ __0 in x | __0 <- Set([Int(1), Int(2)]) ])
+
+Model before rewriting:
+
+find x: set  of int(1..5)
+
+such that
+
+(x subsetEq {1,2})
+
+--
+
+(x subsetEq {1,2}), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(x subsetEq Set([Int(1), Int(2)]))
+
+--
+
+(x subsetEq Set([Int(1), Int(2)])), 
+   ~~> subseteq_set ([("Base", 8700)])
+and([ __0 in x | __0 <- Set([Int(1), Int(2)]) ])
+
+--
+
+Final model:
+
+find x: set  of int(1..5)
+
+such that
+
+and([ __0 in x | __0 <- Set([Int(1), Int(2)]) ])
+
