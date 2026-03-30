@@ -18,7 +18,7 @@ use uniplate::Biplate;
 register_rule_set!("ReprGeneral", ("Base"));
 
 /// Select a representation for abstract domains
-#[register_rule(("Representations", 8000))]
+#[register_rule(("ReprGeneral", 8000))]
 fn select_representation(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     guard!(
         let Expr::Atomic(_, Atom::Reference(re)) = expr &&
@@ -49,7 +49,7 @@ fn select_representation(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// ~>
 /// x#MyRepr > y#MyRepr
 /// ```
-#[register_rule(("Representations", 9000))]
+#[register_rule(("ReprGeneral", 9000))]
 fn uniform_repr_in_comparison_op(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     guard! {
         let Some((lhs, rhs)) = as_comparison_op(expr)               &&

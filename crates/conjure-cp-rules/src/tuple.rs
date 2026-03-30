@@ -1,8 +1,6 @@
 use crate::guard;
 use crate::representation::tuple_to_atom::TupleToAtom;
-use crate::utils::{
-    as_eq_or_neq, collect_eq_or_neq, is_tuple_lit, tuple_expr_entries, tuple_expr_len,
-};
+use crate::utils::{as_eq_or_neq, collect_eq_or_neq, is_tuple_lit, tuple_expr_entries};
 use conjure_cp::ast::{
     Atom, Expression as Expr, Expression, HasDomain, Literal, Metadata, Reference, SymbolTable,
 };
@@ -30,9 +28,11 @@ fn tuple_to_atom_index_lit(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             return Err(RuleNotApplicable);
         }
     );
-    assert_eq!(indices.len(), 1, "tuple indexing is always one dimensional");
+    let idx = (*idx - 1) as usize;
+    bug_assert_eq!(indices.len(), 1, "tuple indexing is always one dimensional");
+    bug_assert!(idx < repr.elems.len(), "tuple indexing is out of bounds");
 
-    let lhs = Reference::new(repr.elems[*idx as usize].clone());
+    let lhs = Reference::new(repr.elems[idx].clone());
     let rhs = &indices[1..];
 
     if rhs.is_empty() {
