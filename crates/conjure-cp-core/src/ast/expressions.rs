@@ -21,7 +21,7 @@ use super::pretty::{pretty_expressions_as_top_level, pretty_vec};
 use super::records::RecordValue;
 use super::sat_encoding::SATIntEncoding;
 use super::{
-    AbstractLiteral, Atom, DeclarationPtr, Domain, DomainPtr, GroundDomain, IntVal, Literal,
+    AbstractLiteral, Atom, DeclarationPtr, Domain, DomainPtr, GroundDomain, Literal,
     Metadata, Model, Moo, Name, Range, Reference, ReturnType, SetAttr, SymbolTable, SymbolTablePtr,
     Typeable, UnresolvedDomain, matrix,
 };
@@ -699,11 +699,25 @@ impl Expression {
                 ))
             }
             Expression::Intersect(_, a, b) => {
-                // thinking about Range::overlaps?
+                // Ascertain range
+                let (a_attr, a_dom) = a.domain_of()?.as_set()?;
+                let (b_attr, b_dom) = b.domain_of()?.as_set()?;
+                let a_range = a_attr.resolve()?.size;
+                let b_range = b_attr.resolve()?.size;
+
+                // lo is the min of the lower bounds; e.g. if set_a had no attrs and set_b had minSize 2, then set_a union set_b has no minSize
+                let lo: Option<i32> = a_range.low().copied().min(b_range.low().copied());
+
+                // hi is the max of the two upper bounds; e.g. if set_a had maxSize 3 and set_b had maxSize 5 then maxSize is 3
+                let hi: Option<i32> = a_range.high().copied().min(b_range.high().copied());
+
+                // TODO: add further optims
+
+                let new_range = Range::new(lo, hi);
 
                 Some(Domain::set(
-                    SetAttr::<IntVal>::default(),
-                    a.domain_of()?.intersect(&b.domain_of()?).ok()?,
+                    SetAttr::new(new_range),
+                    a_dom.union(&b_dom).ok()?,
                 ))
             }
             Expression::In(_, _, _) => Some(Domain::bool()),
