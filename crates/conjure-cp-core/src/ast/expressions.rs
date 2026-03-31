@@ -1033,6 +1033,7 @@ impl Expression {
             Flatten,
             AllDiff,
             Minus,
+            Factorial,
             FlatAbsEq,
             FlatAllDiff,
             FlatSumGeq,
@@ -1891,6 +1892,7 @@ impl Expression {
             | Expression::Neg(_, m1)
             | Expression::Defined(_, m1)
             | Expression::AllDiff(_, m1)
+            | Expression::Factorial(_, m1)
             | Expression::Range(_, m1) => {
                 f(m1);
             }
@@ -1947,10 +1949,8 @@ impl Expression {
             // Moo<Expression> + Vec<Option<Expression>>
             Expression::UnsafeSlice(_, m, vs) | Expression::SafeSlice(_, m, vs) => {
                 f(m);
-                for v in vs {
-                    if let Some(e) = v {
-                        f(e);
-                    }
+                for e in vs.iter().flatten() {
+                    f(e);
                 }
             }
 
@@ -2084,6 +2084,7 @@ impl CacheHashable for Expression {
             | Expression::Neg(_, m1)
             | Expression::Defined(_, m1)
             | Expression::AllDiff(_, m1)
+            | Expression::Factorial(_, m1)
             | Expression::Range(_, m1) => {
                 m1.get_cached_hash().hash(&mut hasher);
             }
