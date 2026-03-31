@@ -92,7 +92,7 @@ fn min_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let domain = expr.domain_of().ok_or(ApplicationError::DomainError)?;
     let mut symbols = symbols.clone();
 
-    let atom_inner = Atom::new_ref(symbols.gensym(&domain));
+    let atom_inner = Atom::new_ref(symbols.gen_find(&domain));
     let atom_expr = Expr::Atomic(Metadata::new(), atom_inner);
 
     let mut new_top = Vec::new();
@@ -135,7 +135,7 @@ fn max_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let domain = expr.domain_of().ok_or(ApplicationError::DomainError)?;
     let mut symbols: SymbolTable = symbols.clone();
 
-    let atom_inner = Atom::new_ref(symbols.gensym(&domain));
+    let atom_inner = Atom::new_ref(symbols.gen_find(&domain));
     let atom_expr = Expr::Atomic(Metadata::new(), atom_inner);
 
     let mut new_top = Vec::new(); // the new variable must be more than or equal to all the other variables

@@ -128,7 +128,7 @@ pub(super) fn lift_machine_references_into_parent_scope(
         }
 
         let id = decl.id();
-        let new_decl = parent_symtab.gensym(&decl.domain().unwrap());
+        let new_decl = parent_symtab.gen_find(&decl.domain().unwrap());
         machine_name_translations.insert(id, new_decl);
     }
 

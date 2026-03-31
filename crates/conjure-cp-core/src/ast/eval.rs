@@ -487,6 +487,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             Some(Lit::Int(-a))
         }
         Expr::Minus(_, a, b) => bin_op::<i32, i32>(|a, b| a - b, a, b).map(Lit::Int),
+        Expr::Factorial(_, _) => None,
         Expr::FlatMinusEq(_, a, b) => {
             let a: i32 = a.try_into().ok()?;
             let b: i32 = b.try_into().ok()?;
