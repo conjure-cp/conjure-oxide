@@ -2,28 +2,21 @@
 
 use crate::diagnostics::diagnostics_api::{Diagnostic, Position, Range, Severity};
 use crate::errors::RecoverableParseError;
-use crate::parse_essence_with_context;
+use crate::parse_essence_with_context_and_map;
+use crate::parser::keyword_checks::keyword_as_identifier;
 use conjure_cp_core::context::Context;
 use std::sync::{Arc, RwLock};
+use tree_sitter::Tree;
 
-pub fn detect_errors(source: &str) -> Vec<Diagnostic> {
-    let mut diagnostics = Vec::new();
-    let mut errors = vec![];
+pub fn detect_errors(source: &str, cst: &Tree) -> Vec<Diagnostic> {
+    let mut diagnostics: Vec<Diagnostic> = Vec::new();
+    let mut errors: Vec<RecoverableParseError> = vec![];
     let context = Arc::new(RwLock::new(Context::default()));
 
-    match parse_essence_with_context(source, context, &mut errors) {
-        Ok(_model) => {
-            // Convert all recoverable errors to diagnostics
-            for error in errors {
-                diagnostics.push(error_to_diagnostic(&error));
-            }
-        }
-        Err(_fatal) => {
-            // Fatal error means something went wrong internally (e.g., tree-sitter parser failure)
-            // We can't provide meaningful diagnostics in this case, so just return empty
-            // TODO: Figure out how LSP should handle fatal errors from the parser.
-        }
-    }
+    let _ = parse_essence_with_context_and_map(source, context, &mut errors, Some(cst));
+
+    keyword_as_identifier(cst.root_node(), source, &mut errors);
+    diagnostics.extend(errors.into_iter().map(|e| error_to_diagnostic(&e)));
 
     diagnostics
 }
