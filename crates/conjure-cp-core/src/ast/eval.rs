@@ -487,11 +487,10 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         }
         Expr::FlatWatchedLiteral(_, _, _) => None,
         Expr::AuxDeclaration(_, _, _) => None,
-        Expr::Neg(_, a) => {
-            let a: &Atom = a.try_into().ok()?;
-            let a: i32 = a.try_into().ok()?;
-            Some(Lit::Int(-a))
-        }
+        Expr::Neg(_, a) => match eval_constant(a.as_ref())? {
+            Lit::Int(a) => Some(Lit::Int(-a)),
+            _ => None,
+        },
         Expr::Factorial(_, _) => None,
         Expr::Minus(_, a, b) => {
             let a: &Atom = a.try_into().ok()?;
