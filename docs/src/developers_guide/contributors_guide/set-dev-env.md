@@ -59,7 +59,7 @@ Z3_SYS_Z3_HEADER = "/opt/homebrew/opt/z3/include/z3.h"
 > To add a binary to your PATH in a way that persists every time you log out, run
 > mkdir -p /cs/home/$USER/.paths.d
 > echo ~/Documents/... > /cs/home/$USER/.paths.d/z3
-> where the "..." if the path to your compiled z3 binary
+> where the "..." is the path to your compiled z3 binary
 
 </details>
 
