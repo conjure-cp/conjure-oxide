@@ -2,7 +2,7 @@ use crate::ast::domains::attrs::MSetAttr;
 use crate::ast::domains::attrs::SetAttr;
 use crate::ast::{
     DeclarationKind, DomainOpError, Expression, FuncAttr, Literal, Metadata, Moo,
-    RecordEntryGround, Reference, Typeable,
+    RecordEntryGround, Reference, SequenceAttr, Typeable,
     domains::{
         GroundDomain,
         domain::{DomainPtr, Int},
@@ -129,6 +129,27 @@ impl TryInto<FuncAttr<Int>> for FuncAttr<IntVal> {
             size,
             jectivity: self.jectivity,
             partiality: self.partiality,
+        })
+    }
+}
+
+impl From<SequenceAttr<Int>> for SequenceAttr<IntVal> {
+    fn from(value: SequenceAttr<Int>) -> Self {
+        SequenceAttr {
+            size: value.size.into(),
+            jectivity: value.jectivity,
+        }
+    }
+}
+
+impl TryInto<SequenceAttr<Int>> for SequenceAttr<IntVal> {
+    type Error = DomainOpError;
+
+    fn try_into(self) -> Result<SequenceAttr<Int>, Self::Error> {
+        let size: Range<Int> = self.size.try_into()?;
+        Ok(SequenceAttr {
+            size,
+            jectivity: self.jectivity,
         })
     }
 }
