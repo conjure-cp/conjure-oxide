@@ -60,6 +60,16 @@ pub fn rewrite_morph<'a>(
         .build();
 
     loop {
+        if try_rewrite_value_letting_once(
+            model_ref,
+            &rules_grouped,
+            prop_multiple_equally_applicable,
+        )
+        .is_some()
+        {
+            continue;
+        }
+
         let (expr, symbol_table) =
             engine.morph(model_ref.root().clone(), model_ref.symbols().clone());
         *model_ref.symbols_mut() = symbol_table;

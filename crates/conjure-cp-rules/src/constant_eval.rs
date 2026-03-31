@@ -38,7 +38,10 @@ fn constant_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             let has_changed_2 = Arc::clone(&has_changed);
 
             let new_expr = expr.transform_bi(&move |x| {
-                if let Expr::Atomic(_, Atom::Literal(_)) = x {
+                if matches!(
+                    x,
+                    Expr::Atomic(_, Atom::Literal(_)) | Expr::Atomic(_, Atom::Reference(_))
+                ) {
                     return x;
                 }
 

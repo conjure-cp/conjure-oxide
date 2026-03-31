@@ -101,6 +101,12 @@ fn try_rewrite_model(
     #[cfg(debug_assertions)] run_start: &Instant,
     #[cfg(not(debug_assertions))] _: &Instant,
 ) -> Option<()> {
+    if let Some(result) =
+        try_rewrite_value_letting_once(submodel, rules_grouped, prop_multiple_equally_applicable)
+    {
+        return Some(result);
+    }
+
     type CtxFn = Arc<dyn Fn(Expr) -> Expr>;
     let mut results: Vec<ApplicableRule<'_, CtxFn>> = vec![];
 
@@ -186,13 +192,7 @@ fn try_rewrite_model(
     }
 
     match results.as_slice() {
-        [] => {
-            return try_rewrite_value_letting_once(
-                submodel,
-                rules_grouped,
-                prop_multiple_equally_applicable,
-            );
-        } // no rules are applicable.
+        [] => return None, // no rules are applicable.
         [(result, _priority, expr, ctx, variable_snapshots), ..] => {
             if prop_multiple_equally_applicable {
                 assert_no_multiple_equally_applicable_rules(&results, rules_grouped);

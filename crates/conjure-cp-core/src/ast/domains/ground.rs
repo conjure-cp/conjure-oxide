@@ -214,6 +214,9 @@ impl GroundDomain {
                     rng_iters.into_iter().flat_map(|ri| ri.map(Literal::from)),
                 ))
             }
+            GroundDomain::Matrix(elem_domain, index_domains) => Ok(Box::new(
+                enumerate_matrix_values(elem_domain.as_ref(), index_domains)?.into_iter(),
+            )),
             _ => todo!("Enumerating nested domains is not yet supported"),
         }
     }
@@ -1013,4 +1016,30 @@ impl Display for GroundDomain {
             }
         }
     }
+}
+
+fn enumerate_matrix_values(
+    elem_domain: &GroundDomain,
+    index_domains: &[Moo<GroundDomain>],
+) -> Result<Vec<Literal>, DomainOpError> {
+    let Some((current_index_domain, remaining_index_domains)) = index_domains.split_first() else {
+        panic!("a matrix should have at least one index domain");
+    };
+
+    let current_dimension_len =
+        usize::try_from(current_index_domain.length()?).map_err(|_| DomainOpError::TooLarge)?;
+
+    let entry_values = if remaining_index_domains.is_empty() {
+        elem_domain.values()?.collect_vec()
+    } else {
+        enumerate_matrix_values(elem_domain, remaining_index_domains)?
+    };
+
+    Ok((0..current_dimension_len)
+        .map(|_| entry_values.iter().cloned())
+        .multi_cartesian_product()
+        .map(|elems| {
+            Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, current_index_domain.clone()))
+        })
+        .collect())
 }
