@@ -1662,7 +1662,18 @@ impl Typeable for Expression {
             Expression::Factorial(_, _) => ReturnType::Int,
             Expression::UnsafePow(_, _, _) => ReturnType::Int,
             Expression::SafePow(_, _, _) => ReturnType::Int,
-            Expression::Minus(_, _, _) => ReturnType::Int,
+            Expression::Minus(_, a, b) => {
+                if a.return_type() == ReturnType::Int && b.return_type() == ReturnType::Int {
+                    ReturnType::Int
+                } else if let ReturnType::Set(a_inner) = a.return_type()
+                    && let ReturnType::Set(b_inner) = b.return_type()
+                    && a_inner == b_inner
+                {
+                    ReturnType::Set(a_inner)
+                } else {
+                    bug!("Invalid minus operation: operands are of different or invalid types for this operation")
+                }
+            }
             Expression::FlatAbsEq(_, _, _) => ReturnType::Bool,
             Expression::FlatMinusEq(_, _, _) => ReturnType::Bool,
             Expression::FlatProductEq(_, _, _, _) => ReturnType::Bool,
