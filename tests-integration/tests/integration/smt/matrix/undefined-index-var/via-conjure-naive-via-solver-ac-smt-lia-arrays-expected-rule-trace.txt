@@ -11,25 +11,17 @@ m[x]
 
 m[x], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-{m[x] @ and([__inDomain(x,int(1..2));int(1..)])}
+{m[x] @ __inDomain(x,int(1..2))}
 
 --
 
-{m[x] @ and([__inDomain(x,int(1..2));int(1..)])}, 
+{m[x] @ __inDomain(x,int(1..2))}, 
    ~~> expand_bubble ([("Bubble", 8900)])
-and([m[x],and([__inDomain(x,int(1..2));int(1..)]);int(1..)])
+and([m[x],__inDomain(x,int(1..2));int(1..)])
 
 --
 
-and([m[x],and([__inDomain(x,int(1..2));int(1..)]);int(1..)]), 
-   ~~> constant_evaluator ([("Constant", 9001)])
-m[x],
-and([__inDomain(x,int(1..2));int(1..)])
-
---
-
-m[x],
-and([__inDomain(x,int(1..2));int(1..)]), 
+and([m[x],__inDomain(x,int(1..2));int(1..)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
 m[x],
 __inDomain(x,int(1..2))
