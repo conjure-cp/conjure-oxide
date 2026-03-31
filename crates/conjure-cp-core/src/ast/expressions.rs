@@ -1753,10 +1753,6 @@ mod tests {
     use crate::matrix_expr;
 
     use super::*;
-    use crate::ast::{
-        DeclarationPtr, Reference,
-        comprehension::{Comprehension, ComprehensionQualifier},
-    };
 
     #[test]
     fn test_domain_of_constant_sum() {
