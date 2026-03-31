@@ -12,7 +12,9 @@ use tree_morph::{
     prelude::*,
 };
 
-use super::{RuleData, RuleSet, get_rules_grouped, rewriter_common::try_rewrite_value_letting_once};
+use super::{
+    RuleData, RuleSet, get_rules_grouped, rewriter_common::try_rewrite_value_letting_once,
+};
 
 /// Rewrites a `Model` by applying rule sets using an optimized, tree-morphing rewriter.
 ///
