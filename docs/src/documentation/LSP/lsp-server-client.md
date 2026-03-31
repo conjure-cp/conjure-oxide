@@ -14,7 +14,7 @@ Where implemented or actively in progress, the details of each goal shall be exp
 - Semantic Highlighting
    - This is highlighting based on meaning rather than grammar 
 - Error Underlining
-   - Underlining errors of varying severity across the characters causing error in tree
+   - Underlining errors of varying severity, providing informative messaging
 - Hover Tooltips
    - When hovering over a word, produce information relating to the hovered word
 - Code Autocomplete
@@ -54,7 +54,7 @@ The client and server communicate asynchronously through I/O streams. Communicat
 A client and server declare their capabilities during the initialisation handshake. These capabilities reflect what the server and client actually support, and so when new features are added these capabilities must be updated. Capabilities essentially allow for server and client to inform the other whether or not they support specific types of requests, ensuring that requests are not made needlessly. For example, `text_document_sync` indicates that the server supports syncing, meaning that the client will communicate on sync events (such as on-change and on-save); and `hover_provider` indicates that the server supports some hovering, meaning that the client will communicate when hovering is occurring.
 
 ## Client
-The Client is a VSCode extension, in TypeScript. As such, the client represents the installed extension which is actively being used by a user. Broadly, we consider the client to be the the VSCode IDE in any instance where a `.essence` file is open.
+The Client is a VSCode extension, in TypeScript. As such, the client represents the installed extension which is actively being used by a user. Broadly, we consider the client to be the VSCode IDE in any instance where a `.essence` file is open.
 
 ### Key Structure
 The Client itself is programmed within a TypeScript file, called `extension.ts`. This simply launches the client, which then launches the server using `ServerOptions` to call `conjure-oxide server-lsp`.
