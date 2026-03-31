@@ -1,22 +1,18 @@
 #![allow(clippy::expect_used)]
-use conjure_cp::bug;
-use conjure_cp::rule_engine::get_rules_grouped;
 use git_version as _;
 
 use conjure_cp::defaults::DEFAULT_RULE_SETS;
 use conjure_cp::parse::tree_sitter::parse_essence_file_native;
-use conjure_cp::rule_engine::rewrite_naive;
+use conjure_cp::rule_engine::{rewrite_morph, rewrite_naive};
 use conjure_cp::solver::Solver;
 use conjure_cp::solver::adaptors::*;
 use conjure_cp_cli::utils::testing::{normalize_solutions_for_comparison, read_human_rule_trace};
-use itertools::Itertools;
 use std::collections::BTreeMap;
 use std::env;
 use std::error::Error;
 use std::fs;
 use std::fs::File;
 use tracing_subscriber::{Layer, filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt};
-use tree_morph::{helpers::select_panic, prelude::*};
 
 use std::sync::Arc;
 use std::sync::RwLock;
@@ -245,29 +241,11 @@ fn integration_test_inner(
 
     let rule_sets = resolve_rule_sets(solver_fam, &rules_to_load)?;
 
-    let mut model = parsed_model;
+    let model = parsed_model;
 
     let rewritten_model = match rewriter {
         Rewriter::Naive => rewrite_naive(&model, &rule_sets, false)?,
-        Rewriter::Morph(_) => {
-            let submodel = &mut model;
-            let rules_grouped = get_rules_grouped(&rule_sets)
-                .unwrap_or_else(|_| bug!("get_rule_priorities() failed!"))
-                .into_iter()
-                .map(|(_, rule)| rule.into_iter().map(|f| f.rule).collect_vec())
-                .collect_vec();
-
-            let mut engine = EngineBuilder::new()
-                .set_selector(select_panic)
-                .append_rule_groups(rules_grouped)
-                .build();
-            let (expr, symbol_table) =
-                engine.morph(submodel.root().clone(), submodel.symbols().clone());
-
-            *submodel.symbols_mut() = symbol_table;
-            submodel.replace_root(expr);
-            model.clone()
-        }
+        Rewriter::Morph(config) => rewrite_morph(model, &rule_sets, false, config),
     };
     let solver_input_file = None;
     let solver = match solver_fam {

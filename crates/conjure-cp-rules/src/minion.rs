@@ -880,6 +880,9 @@ fn introduce_element_from_index(expr: &Expr, _: &SymbolTable) -> ApplicationResu
             }
             _ => Err(RuleNotApplicable),
         },
+        Expr::SafeIndex(_, subject, indices) if expr.return_type() == ReturnType::Bool => {
+            Ok((Atom::Literal(Lit::Bool(true)), subject, indices))
+        }
         _ => Err(RuleNotApplicable),
     }?;
 
