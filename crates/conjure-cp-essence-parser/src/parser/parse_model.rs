@@ -89,11 +89,8 @@ pub fn parse_essence_with_context_and_map(
         }
     };
 
-    let mut cst_has_errors = false;
-
     if tree.root_node().has_error() {
         detect_syntactic_errors(src, &tree, errors);
-        cst_has_errors = true;
     }
 
     let mut model = Model::new(context);
@@ -189,10 +186,11 @@ pub fn parse_essence_with_context_and_map(
                 model.dominance = Some(dominance);
             }
             _ => {
-                return Err(FatalParseError::internal_error(
+                ctx.record_error(RecoverableParseError::new(
                     format!("Unexpected top-level statement: {}", statement.kind()),
                     Some(statement.range()),
                 ));
+                continue;
             }
         }
     }
