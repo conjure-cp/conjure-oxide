@@ -54,9 +54,12 @@ Z3_SYS_Z3_HEADER = "/opt/homebrew/opt/z3/include/z3.h"
    *The school provided Rust version does not work*.
    - By default, `rustup` installs to your local home directory; therefore, you may need to re-install `rustup` and Rust after restarting a machine or when using a new lab PC. 
 
-3. Install `z3`, one of the solver backends.
+3. Install `z3`, one of the solver backends. You may have to build it from [source](https://github.com/Z3Prover/z3), and then add the binary to your path. 
 
-> NOTE: this is currently provided via a zip file Felix put in the teams.
+> To add a binary to your PATH in a way that persists every time you log out, run
+> mkdir -p /cs/home/$USER/.paths.d
+> echo ~/Documents/... > /cs/home/$USER/.paths.d/z3
+> where the "..." if the path to your compiled z3 binary
 
 </details>
 
