@@ -22,7 +22,7 @@ fn subseteq_set(expr: &Expr, scope: &SymbolTable) -> ApplicationResult {
                 .generator_symboltable()
                 .write()
                 .clone()
-                .reservesym();
+                .gen_sym();
 
             comp_builder = comp_builder.expression_generator(quant_name.clone(), b.clone().into());
             let Some(quant_ptr) = comp_builder
