@@ -1,1 +1,1 @@
-conjure-oxide solve model.eprime model.param
+conjure-oxide solve CLA-OC.eprime 100166617566-CLA-OC.eprime-param
