@@ -19,7 +19,7 @@ pub mod matrix_to_atom;
 pub mod record_to_atom;
 pub mod sat_direct_int;
 pub mod set_explicit;
-mod set_occurrence;
+pub mod set_occurrence;
 pub mod tuple_to_atom;
 // mod sat_log_int;
 // mod sat_order_int;
