@@ -348,7 +348,7 @@ fn safediv_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
     // generate boolean variables for all possible quotients
     for _ in quot_min..=quot_max {
-        let decl = new_symbols.gensym(&conjure_cp::ast::Domain::bool());
+        let decl = new_symbols.gen_find(&conjure_cp::ast::Domain::bool());
         quot_bits.push(Expr::Atomic(
             Metadata::new(),
             Atom::Reference(conjure_cp::ast::Reference::new(decl)),
