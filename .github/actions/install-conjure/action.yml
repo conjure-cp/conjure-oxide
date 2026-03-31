@@ -19,9 +19,7 @@ runs:
     shell: bash
 
   - run: |
-      if if [[ $(conjure --version | head -n2 | tail -n1) != "Conjure v${{ inputs.version }}"* ]]; then ; then
-        echo "Found conjure v$${{ inputs.version }}, not fetching again."
-      else
+      if [[ $(conjure --version | head -n2 | tail -n1) != "Conjure v${{ inputs.version }}"* ]]; then
         mkdir -p "${HOME}/conjure"
         cd "${HOME}/conjure"
 
@@ -29,6 +27,8 @@ runs:
         rm -rf conjure-v${{ inputs.version }}-${{ inputs.os_arch }}-with-solvers*
         wget https://github.com/conjure-cp/conjure/releases/download/v${{ inputs.version }}/conjure-v${{ inputs.version }}-${{ inputs.os_arch }}-with-solvers.zip
         unzip conjure-v${{ inputs.version }}-${{ inputs.os_arch }}-with-solvers.zip
+      else
+        echo "Found conjure v${{ inputs.version }}, not fetching again."
       fi
     shell: bash
 
