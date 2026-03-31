@@ -147,7 +147,7 @@ pub fn save_model_json(
     let generated_json_str = serialize_model(model)?;
     let generated_json_str = maybe_truncate_serialised_json(generated_json_str, test_stage);
     let filename = format!("{path}/{test_name}-{marker}.generated-{test_stage}.serialised.json");
-    println!("saving: {}", filename);
+    println!("saving: {filename}");
     File::create(&filename)?.write_all(generated_json_str.as_bytes())?;
     Ok(())
 }
@@ -176,7 +176,7 @@ pub fn save_stats_json(
 /// Reads a file into a `String`, providing a clearer error message that includes the file path.
 fn read_with_path(path: String) -> Result<String, std::io::Error> {
     std::fs::read_to_string(&path)
-        .map_err(|e| io::Error::new(e.kind(), format!("{} (path: {})", e, path)))
+        .map_err(|e| io::Error::new(e.kind(), format!("{e} (path: {path})")))
 }
 
 pub fn read_model_json(
@@ -206,7 +206,7 @@ pub fn read_model_json_prefix(
 ) -> Result<String, std::io::Error> {
     let marker = solver.as_str();
     let filename = format!("{path}/{test_name}-{marker}.{prefix}-{test_stage}.serialised.json");
-    println!("reading: {}", filename);
+    println!("reading: {filename}");
     read_first_n_lines(filename, max_lines)
 }
 

@@ -48,6 +48,7 @@ fn parse_dominance_relation(
         symbols: ctx.symbols.clone(),
         errors: ctx.errors,
         source_map: &mut *ctx.source_map,
+        decl_spans: ctx.decl_spans,
         typechecking_context: ctx.typechecking_context,
     };
 
@@ -69,7 +70,9 @@ fn parse_arithmetic_expression(
     let inner = named_child!(node);
     match inner.kind() {
         "atom" => parse_atom(ctx, &inner),
-        "negative_expr" | "abs_value" | "sub_arith_expr" => parse_unary_expression(ctx, &inner),
+        "negative_expr" | "abs_value" | "sub_arith_expr" | "factorial_expr" => {
+            parse_unary_expression(ctx, &inner)
+        }
         "toInt_expr" => {
             // add special handling for toInt, as it is arithmetic but takes a non-arithmetic operand
             ctx.typechecking_context = TypecheckingContext::Unknown;
@@ -192,6 +195,10 @@ fn parse_unary_expression(
         "abs_value" => Ok(Some(Expression::Abs(Metadata::new(), Moo::new(inner)))),
         "not_expr" => Ok(Some(Expression::Not(Metadata::new(), Moo::new(inner)))),
         "toInt_expr" => Ok(Some(Expression::ToInt(Metadata::new(), Moo::new(inner)))),
+        "factorial_expr" => Ok(Some(Expression::Factorial(
+            Metadata::new(),
+            Moo::new(inner),
+        ))),
         "sub_bool_expr" | "sub_arith_expr" => Ok(Some(inner)),
         _ => Err(FatalParseError::internal_error(
             format!("Unrecognised unary operation: '{}'", node.kind()),
