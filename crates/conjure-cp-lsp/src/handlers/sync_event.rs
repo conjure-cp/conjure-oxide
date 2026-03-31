@@ -48,7 +48,7 @@ impl Backend {
                 );
 
                 match parsed {
-                    Ok(Some((ast_model, source_map))) => CacheCont {
+                    Ok((Some(ast_model), source_map)) => CacheCont {
                         sourcemap: Some(source_map),
                         ast: Some(ast_model),
                         errors,
@@ -56,8 +56,8 @@ impl Backend {
                         contents: text.clone(),
                         version: params.text_document.version,
                     },
-                    Ok(None) => CacheCont {
-                        sourcemap: None,
+                    Ok((None, source_map)) => CacheCont {
+                        sourcemap: Some(source_map),
                         ast: None,
                         errors,
                         cst: Some(cst_tree),
@@ -181,7 +181,7 @@ impl Backend {
             );
 
             let new_cache_conts = match parsed {
-                Ok(Some((ast_model, source_map))) => {
+                Ok((Some(ast_model), source_map)) => {
                     self.client
                         .log_message(MessageType::LOG, "THIS ONE INSTEAD")
                         .await;
@@ -194,12 +194,12 @@ impl Backend {
                         version: params.text_document.version,
                     }
                 }
-                Ok(None) => {
+                Ok((None, source_map)) => {
                     self.client
                         .log_message(MessageType::LOG, "jshdhshshshhs")
                         .await;
                     CacheCont {
-                        sourcemap: None,
+                        sourcemap: Some(source_map),
                         ast: None,
                         errors,
                         cst: Some(new_tree),
