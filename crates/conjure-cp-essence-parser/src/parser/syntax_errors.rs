@@ -50,9 +50,8 @@ fn int_domain_missing_rparen_line(line: &str, start_col: usize, end_col: usize) 
         && is_int_keyword_suffix(&line[..start_col])
 }
 
-/// This is a reporting-layer fix: even though comments are treated as "extras" by the grammar,
-/// tree-sitter `ERROR` node spans can overlap those bytes during recovery. We clamp to the end of
-/// the non-comment prefix (with trailing whitespace trimmed) so diagnostics don't include comment
+/// tree-sitter `ERROR` node spans can overlap bytes during recovery.
+/// Need to clamp to the end of the non-comment prefix so diagnostics don't include comment
 /// contents.
 fn clamp_range_before_line_comment(range: &mut tree_sitter::Range, source: &str) {
     let Some(line) = source.lines().nth(range.start_point.row) else {
