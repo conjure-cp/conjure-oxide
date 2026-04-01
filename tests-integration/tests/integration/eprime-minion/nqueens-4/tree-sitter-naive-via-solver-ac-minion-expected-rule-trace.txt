@@ -86,11 +86,11 @@ new variables:
 
 __0#matrix_to_atom[queen], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-{__0#matrix_to_atom[queen] @ and([__inDomain(queen,int(0..3));int(1..)])}
+{__0#matrix_to_atom[queen] @ __inDomain(queen,int(0..3))}
 
 --
 
-(true != and([({__0#matrix_to_atom[queen] @ and([__inDomain(queen,int(0..3));int(1..)])} = sum([queen,__1#matrix_to_atom[queen];int(1..)])),(__2#matrix_to_atom[queen] = sum([queen,-(__1#matrix_to_atom[queen]);int(1..)]));int(1..2)])), 
+(true != and([({__0#matrix_to_atom[queen] @ __inDomain(queen,int(0..3))} = sum([queen,__1#matrix_to_atom[queen];int(1..)])),(__2#matrix_to_atom[queen] = sum([queen,-(__1#matrix_to_atom[queen]);int(1..)]));int(1..2)])), 
    ~~> constant_evaluator ([("Constant", 9001)])
 (true != and([(__0#matrix_to_atom[queen] = sum([queen,__1#matrix_to_atom[queen];int(1..)])),(__2#matrix_to_atom[queen] = sum([queen,-(__1#matrix_to_atom[queen]);int(1..)]));int(1..2)]))
 
@@ -98,11 +98,11 @@ __0#matrix_to_atom[queen],
 
 __1#matrix_to_atom[queen], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-{__1#matrix_to_atom[queen] @ and([__inDomain(queen,int(0..7));int(1..)])}
+{__1#matrix_to_atom[queen] @ __inDomain(queen,int(0..7))}
 
 --
 
-(true != and([(__0#matrix_to_atom[queen] = sum([queen,{__1#matrix_to_atom[queen] @ and([__inDomain(queen,int(0..7));int(1..)])};int(1..)])),(__2#matrix_to_atom[queen] = sum([queen,-(__1#matrix_to_atom[queen]);int(1..)]));int(1..2)])), 
+(true != and([(__0#matrix_to_atom[queen] = sum([queen,{__1#matrix_to_atom[queen] @ __inDomain(queen,int(0..7))};int(1..)])),(__2#matrix_to_atom[queen] = sum([queen,-(__1#matrix_to_atom[queen]);int(1..)]));int(1..2)])), 
    ~~> constant_evaluator ([("Constant", 9001)])
 (true != and([(__0#matrix_to_atom[queen] = sum([queen,__1#matrix_to_atom[queen];int(1..)])),(__2#matrix_to_atom[queen] = sum([queen,-(__1#matrix_to_atom[queen]);int(1..)]));int(1..2)]))
 
@@ -110,11 +110,11 @@ __1#matrix_to_atom[queen],
 
 __2#matrix_to_atom[queen], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-{__2#matrix_to_atom[queen] @ and([__inDomain(queen,int(0..3));int(1..)])}
+{__2#matrix_to_atom[queen] @ __inDomain(queen,int(0..3))}
 
 --
 
-(true != and([(__0#matrix_to_atom[queen] = sum([queen,__1#matrix_to_atom[queen];int(1..)])),({__2#matrix_to_atom[queen] @ and([__inDomain(queen,int(0..3));int(1..)])} = sum([queen,-(__1#matrix_to_atom[queen]);int(1..)]));int(1..2)])), 
+(true != and([(__0#matrix_to_atom[queen] = sum([queen,__1#matrix_to_atom[queen];int(1..)])),({__2#matrix_to_atom[queen] @ __inDomain(queen,int(0..3))} = sum([queen,-(__1#matrix_to_atom[queen]);int(1..)]));int(1..2)])), 
    ~~> constant_evaluator ([("Constant", 9001)])
 (true != and([(__0#matrix_to_atom[queen] = sum([queen,__1#matrix_to_atom[queen];int(1..)])),(__2#matrix_to_atom[queen] = sum([queen,-(__1#matrix_to_atom[queen]);int(1..)]));int(1..2)]))
 
@@ -122,11 +122,11 @@ __2#matrix_to_atom[queen],
 
 __1#matrix_to_atom[queen], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-{__1#matrix_to_atom[queen] @ and([__inDomain(queen,int(0..7));int(1..)])}
+{__1#matrix_to_atom[queen] @ __inDomain(queen,int(0..7))}
 
 --
 
-(true != and([(__0#matrix_to_atom[queen] = sum([queen,__1#matrix_to_atom[queen];int(1..)])),(__2#matrix_to_atom[queen] = sum([queen,-({__1#matrix_to_atom[queen] @ and([__inDomain(queen,int(0..7));int(1..)])});int(1..)]));int(1..2)])), 
+(true != and([(__0#matrix_to_atom[queen] = sum([queen,__1#matrix_to_atom[queen];int(1..)])),(__2#matrix_to_atom[queen] = sum([queen,-({__1#matrix_to_atom[queen] @ __inDomain(queen,int(0..7))});int(1..)]));int(1..2)])), 
    ~~> constant_evaluator ([("Constant", 9001)])
 (true != and([(__0#matrix_to_atom[queen] = sum([queen,__1#matrix_to_atom[queen];int(1..)])),(__2#matrix_to_atom[queen] = sum([queen,-(__1#matrix_to_atom[queen]);int(1..)]));int(1..2)]))
 
@@ -608,385 +608,97 @@ sum([3,-(row#matrix_to_atom[3]);int(1..)])
 
 majorDiagonal#matrix_to_atom[0], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-{majorDiagonal#matrix_to_atom[0] @ and([__inDomain(0,int(0..3));int(1..)])}
-
---
-
-and([({majorDiagonal#matrix_to_atom[0] @ and([__inDomain(0,int(0..3));int(1..)])} = sum([0,row#matrix_to_atom[0];int(1..)])),(minorDiagonal#matrix_to_atom[0] = sum([0,-(row#matrix_to_atom[0]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[1] = sum([1,row#matrix_to_atom[1];int(1..)])),(minorDiagonal#matrix_to_atom[1] = sum([1,-(row#matrix_to_atom[1]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[2] = sum([2,row#matrix_to_atom[2];int(1..)])),(minorDiagonal#matrix_to_atom[2] = sum([2,-(row#matrix_to_atom[2]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[3] = sum([3,row#matrix_to_atom[3];int(1..)])),(minorDiagonal#matrix_to_atom[3] = sum([3,-(row#matrix_to_atom[3]);int(1..)]));int(1..2)]),
-allDiff(row#matrix_to_atom),
-allDiff(majorDiagonal#matrix_to_atom),
-allDiff(minorDiagonal#matrix_to_atom), 
-   ~~> constant_evaluator ([("Constant", 9001)])
-and([(majorDiagonal#matrix_to_atom[0] = sum([0,row#matrix_to_atom[0];int(1..)])),(minorDiagonal#matrix_to_atom[0] = sum([0,-(row#matrix_to_atom[0]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[1] = sum([1,row#matrix_to_atom[1];int(1..)])),(minorDiagonal#matrix_to_atom[1] = sum([1,-(row#matrix_to_atom[1]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[2] = sum([2,row#matrix_to_atom[2];int(1..)])),(minorDiagonal#matrix_to_atom[2] = sum([2,-(row#matrix_to_atom[2]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[3] = sum([3,row#matrix_to_atom[3];int(1..)])),(minorDiagonal#matrix_to_atom[3] = sum([3,-(row#matrix_to_atom[3]);int(1..)]));int(1..2)]),
-allDiff(row#matrix_to_atom),
-allDiff(majorDiagonal#matrix_to_atom),
-allDiff(minorDiagonal#matrix_to_atom)
+majorDiagonal#matrix_to_atom[0]
 
 --
 
 row#matrix_to_atom[0], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-{row#matrix_to_atom[0] @ and([__inDomain(0,int(0..7));int(1..)])}
-
---
-
-and([(majorDiagonal#matrix_to_atom[0] = sum([0,{row#matrix_to_atom[0] @ and([__inDomain(0,int(0..7));int(1..)])};int(1..)])),(minorDiagonal#matrix_to_atom[0] = sum([0,-(row#matrix_to_atom[0]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[1] = sum([1,row#matrix_to_atom[1];int(1..)])),(minorDiagonal#matrix_to_atom[1] = sum([1,-(row#matrix_to_atom[1]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[2] = sum([2,row#matrix_to_atom[2];int(1..)])),(minorDiagonal#matrix_to_atom[2] = sum([2,-(row#matrix_to_atom[2]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[3] = sum([3,row#matrix_to_atom[3];int(1..)])),(minorDiagonal#matrix_to_atom[3] = sum([3,-(row#matrix_to_atom[3]);int(1..)]));int(1..2)]),
-allDiff(row#matrix_to_atom),
-allDiff(majorDiagonal#matrix_to_atom),
-allDiff(minorDiagonal#matrix_to_atom), 
-   ~~> constant_evaluator ([("Constant", 9001)])
-and([(majorDiagonal#matrix_to_atom[0] = sum([0,row#matrix_to_atom[0];int(1..)])),(minorDiagonal#matrix_to_atom[0] = sum([0,-(row#matrix_to_atom[0]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[1] = sum([1,row#matrix_to_atom[1];int(1..)])),(minorDiagonal#matrix_to_atom[1] = sum([1,-(row#matrix_to_atom[1]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[2] = sum([2,row#matrix_to_atom[2];int(1..)])),(minorDiagonal#matrix_to_atom[2] = sum([2,-(row#matrix_to_atom[2]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[3] = sum([3,row#matrix_to_atom[3];int(1..)])),(minorDiagonal#matrix_to_atom[3] = sum([3,-(row#matrix_to_atom[3]);int(1..)]));int(1..2)]),
-allDiff(row#matrix_to_atom),
-allDiff(majorDiagonal#matrix_to_atom),
-allDiff(minorDiagonal#matrix_to_atom)
+row#matrix_to_atom[0]
 
 --
 
 minorDiagonal#matrix_to_atom[0], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-{minorDiagonal#matrix_to_atom[0] @ and([__inDomain(0,int(0..3));int(1..)])}
-
---
-
-and([(majorDiagonal#matrix_to_atom[0] = sum([0,row#matrix_to_atom[0];int(1..)])),({minorDiagonal#matrix_to_atom[0] @ and([__inDomain(0,int(0..3));int(1..)])} = sum([0,-(row#matrix_to_atom[0]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[1] = sum([1,row#matrix_to_atom[1];int(1..)])),(minorDiagonal#matrix_to_atom[1] = sum([1,-(row#matrix_to_atom[1]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[2] = sum([2,row#matrix_to_atom[2];int(1..)])),(minorDiagonal#matrix_to_atom[2] = sum([2,-(row#matrix_to_atom[2]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[3] = sum([3,row#matrix_to_atom[3];int(1..)])),(minorDiagonal#matrix_to_atom[3] = sum([3,-(row#matrix_to_atom[3]);int(1..)]));int(1..2)]),
-allDiff(row#matrix_to_atom),
-allDiff(majorDiagonal#matrix_to_atom),
-allDiff(minorDiagonal#matrix_to_atom), 
-   ~~> constant_evaluator ([("Constant", 9001)])
-and([(majorDiagonal#matrix_to_atom[0] = sum([0,row#matrix_to_atom[0];int(1..)])),(minorDiagonal#matrix_to_atom[0] = sum([0,-(row#matrix_to_atom[0]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[1] = sum([1,row#matrix_to_atom[1];int(1..)])),(minorDiagonal#matrix_to_atom[1] = sum([1,-(row#matrix_to_atom[1]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[2] = sum([2,row#matrix_to_atom[2];int(1..)])),(minorDiagonal#matrix_to_atom[2] = sum([2,-(row#matrix_to_atom[2]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[3] = sum([3,row#matrix_to_atom[3];int(1..)])),(minorDiagonal#matrix_to_atom[3] = sum([3,-(row#matrix_to_atom[3]);int(1..)]));int(1..2)]),
-allDiff(row#matrix_to_atom),
-allDiff(majorDiagonal#matrix_to_atom),
-allDiff(minorDiagonal#matrix_to_atom)
+minorDiagonal#matrix_to_atom[0]
 
 --
 
 row#matrix_to_atom[0], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-{row#matrix_to_atom[0] @ and([__inDomain(0,int(0..7));int(1..)])}
-
---
-
-and([(majorDiagonal#matrix_to_atom[0] = sum([0,row#matrix_to_atom[0];int(1..)])),(minorDiagonal#matrix_to_atom[0] = sum([0,-({row#matrix_to_atom[0] @ and([__inDomain(0,int(0..7));int(1..)])});int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[1] = sum([1,row#matrix_to_atom[1];int(1..)])),(minorDiagonal#matrix_to_atom[1] = sum([1,-(row#matrix_to_atom[1]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[2] = sum([2,row#matrix_to_atom[2];int(1..)])),(minorDiagonal#matrix_to_atom[2] = sum([2,-(row#matrix_to_atom[2]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[3] = sum([3,row#matrix_to_atom[3];int(1..)])),(minorDiagonal#matrix_to_atom[3] = sum([3,-(row#matrix_to_atom[3]);int(1..)]));int(1..2)]),
-allDiff(row#matrix_to_atom),
-allDiff(majorDiagonal#matrix_to_atom),
-allDiff(minorDiagonal#matrix_to_atom), 
-   ~~> constant_evaluator ([("Constant", 9001)])
-and([(majorDiagonal#matrix_to_atom[0] = sum([0,row#matrix_to_atom[0];int(1..)])),(minorDiagonal#matrix_to_atom[0] = sum([0,-(row#matrix_to_atom[0]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[1] = sum([1,row#matrix_to_atom[1];int(1..)])),(minorDiagonal#matrix_to_atom[1] = sum([1,-(row#matrix_to_atom[1]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[2] = sum([2,row#matrix_to_atom[2];int(1..)])),(minorDiagonal#matrix_to_atom[2] = sum([2,-(row#matrix_to_atom[2]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[3] = sum([3,row#matrix_to_atom[3];int(1..)])),(minorDiagonal#matrix_to_atom[3] = sum([3,-(row#matrix_to_atom[3]);int(1..)]));int(1..2)]),
-allDiff(row#matrix_to_atom),
-allDiff(majorDiagonal#matrix_to_atom),
-allDiff(minorDiagonal#matrix_to_atom)
+row#matrix_to_atom[0]
 
 --
 
 majorDiagonal#matrix_to_atom[1], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-{majorDiagonal#matrix_to_atom[1] @ and([__inDomain(1,int(0..3));int(1..)])}
-
---
-
-and([(majorDiagonal#matrix_to_atom[0] = sum([0,row#matrix_to_atom[0];int(1..)])),(minorDiagonal#matrix_to_atom[0] = sum([0,-(row#matrix_to_atom[0]);int(1..)]));int(1..2)]),
-and([({majorDiagonal#matrix_to_atom[1] @ and([__inDomain(1,int(0..3));int(1..)])} = sum([1,row#matrix_to_atom[1];int(1..)])),(minorDiagonal#matrix_to_atom[1] = sum([1,-(row#matrix_to_atom[1]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[2] = sum([2,row#matrix_to_atom[2];int(1..)])),(minorDiagonal#matrix_to_atom[2] = sum([2,-(row#matrix_to_atom[2]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[3] = sum([3,row#matrix_to_atom[3];int(1..)])),(minorDiagonal#matrix_to_atom[3] = sum([3,-(row#matrix_to_atom[3]);int(1..)]));int(1..2)]),
-allDiff(row#matrix_to_atom),
-allDiff(majorDiagonal#matrix_to_atom),
-allDiff(minorDiagonal#matrix_to_atom), 
-   ~~> constant_evaluator ([("Constant", 9001)])
-and([(majorDiagonal#matrix_to_atom[0] = sum([0,row#matrix_to_atom[0];int(1..)])),(minorDiagonal#matrix_to_atom[0] = sum([0,-(row#matrix_to_atom[0]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[1] = sum([1,row#matrix_to_atom[1];int(1..)])),(minorDiagonal#matrix_to_atom[1] = sum([1,-(row#matrix_to_atom[1]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[2] = sum([2,row#matrix_to_atom[2];int(1..)])),(minorDiagonal#matrix_to_atom[2] = sum([2,-(row#matrix_to_atom[2]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[3] = sum([3,row#matrix_to_atom[3];int(1..)])),(minorDiagonal#matrix_to_atom[3] = sum([3,-(row#matrix_to_atom[3]);int(1..)]));int(1..2)]),
-allDiff(row#matrix_to_atom),
-allDiff(majorDiagonal#matrix_to_atom),
-allDiff(minorDiagonal#matrix_to_atom)
+majorDiagonal#matrix_to_atom[1]
 
 --
 
 row#matrix_to_atom[1], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-{row#matrix_to_atom[1] @ and([__inDomain(1,int(0..7));int(1..)])}
-
---
-
-and([(majorDiagonal#matrix_to_atom[0] = sum([0,row#matrix_to_atom[0];int(1..)])),(minorDiagonal#matrix_to_atom[0] = sum([0,-(row#matrix_to_atom[0]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[1] = sum([1,{row#matrix_to_atom[1] @ and([__inDomain(1,int(0..7));int(1..)])};int(1..)])),(minorDiagonal#matrix_to_atom[1] = sum([1,-(row#matrix_to_atom[1]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[2] = sum([2,row#matrix_to_atom[2];int(1..)])),(minorDiagonal#matrix_to_atom[2] = sum([2,-(row#matrix_to_atom[2]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[3] = sum([3,row#matrix_to_atom[3];int(1..)])),(minorDiagonal#matrix_to_atom[3] = sum([3,-(row#matrix_to_atom[3]);int(1..)]));int(1..2)]),
-allDiff(row#matrix_to_atom),
-allDiff(majorDiagonal#matrix_to_atom),
-allDiff(minorDiagonal#matrix_to_atom), 
-   ~~> constant_evaluator ([("Constant", 9001)])
-and([(majorDiagonal#matrix_to_atom[0] = sum([0,row#matrix_to_atom[0];int(1..)])),(minorDiagonal#matrix_to_atom[0] = sum([0,-(row#matrix_to_atom[0]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[1] = sum([1,row#matrix_to_atom[1];int(1..)])),(minorDiagonal#matrix_to_atom[1] = sum([1,-(row#matrix_to_atom[1]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[2] = sum([2,row#matrix_to_atom[2];int(1..)])),(minorDiagonal#matrix_to_atom[2] = sum([2,-(row#matrix_to_atom[2]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[3] = sum([3,row#matrix_to_atom[3];int(1..)])),(minorDiagonal#matrix_to_atom[3] = sum([3,-(row#matrix_to_atom[3]);int(1..)]));int(1..2)]),
-allDiff(row#matrix_to_atom),
-allDiff(majorDiagonal#matrix_to_atom),
-allDiff(minorDiagonal#matrix_to_atom)
+row#matrix_to_atom[1]
 
 --
 
 minorDiagonal#matrix_to_atom[1], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-{minorDiagonal#matrix_to_atom[1] @ and([__inDomain(1,int(0..3));int(1..)])}
-
---
-
-and([(majorDiagonal#matrix_to_atom[0] = sum([0,row#matrix_to_atom[0];int(1..)])),(minorDiagonal#matrix_to_atom[0] = sum([0,-(row#matrix_to_atom[0]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[1] = sum([1,row#matrix_to_atom[1];int(1..)])),({minorDiagonal#matrix_to_atom[1] @ and([__inDomain(1,int(0..3));int(1..)])} = sum([1,-(row#matrix_to_atom[1]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[2] = sum([2,row#matrix_to_atom[2];int(1..)])),(minorDiagonal#matrix_to_atom[2] = sum([2,-(row#matrix_to_atom[2]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[3] = sum([3,row#matrix_to_atom[3];int(1..)])),(minorDiagonal#matrix_to_atom[3] = sum([3,-(row#matrix_to_atom[3]);int(1..)]));int(1..2)]),
-allDiff(row#matrix_to_atom),
-allDiff(majorDiagonal#matrix_to_atom),
-allDiff(minorDiagonal#matrix_to_atom), 
-   ~~> constant_evaluator ([("Constant", 9001)])
-and([(majorDiagonal#matrix_to_atom[0] = sum([0,row#matrix_to_atom[0];int(1..)])),(minorDiagonal#matrix_to_atom[0] = sum([0,-(row#matrix_to_atom[0]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[1] = sum([1,row#matrix_to_atom[1];int(1..)])),(minorDiagonal#matrix_to_atom[1] = sum([1,-(row#matrix_to_atom[1]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[2] = sum([2,row#matrix_to_atom[2];int(1..)])),(minorDiagonal#matrix_to_atom[2] = sum([2,-(row#matrix_to_atom[2]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[3] = sum([3,row#matrix_to_atom[3];int(1..)])),(minorDiagonal#matrix_to_atom[3] = sum([3,-(row#matrix_to_atom[3]);int(1..)]));int(1..2)]),
-allDiff(row#matrix_to_atom),
-allDiff(majorDiagonal#matrix_to_atom),
-allDiff(minorDiagonal#matrix_to_atom)
+minorDiagonal#matrix_to_atom[1]
 
 --
 
 row#matrix_to_atom[1], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-{row#matrix_to_atom[1] @ and([__inDomain(1,int(0..7));int(1..)])}
-
---
-
-and([(majorDiagonal#matrix_to_atom[0] = sum([0,row#matrix_to_atom[0];int(1..)])),(minorDiagonal#matrix_to_atom[0] = sum([0,-(row#matrix_to_atom[0]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[1] = sum([1,row#matrix_to_atom[1];int(1..)])),(minorDiagonal#matrix_to_atom[1] = sum([1,-({row#matrix_to_atom[1] @ and([__inDomain(1,int(0..7));int(1..)])});int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[2] = sum([2,row#matrix_to_atom[2];int(1..)])),(minorDiagonal#matrix_to_atom[2] = sum([2,-(row#matrix_to_atom[2]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[3] = sum([3,row#matrix_to_atom[3];int(1..)])),(minorDiagonal#matrix_to_atom[3] = sum([3,-(row#matrix_to_atom[3]);int(1..)]));int(1..2)]),
-allDiff(row#matrix_to_atom),
-allDiff(majorDiagonal#matrix_to_atom),
-allDiff(minorDiagonal#matrix_to_atom), 
-   ~~> constant_evaluator ([("Constant", 9001)])
-and([(majorDiagonal#matrix_to_atom[0] = sum([0,row#matrix_to_atom[0];int(1..)])),(minorDiagonal#matrix_to_atom[0] = sum([0,-(row#matrix_to_atom[0]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[1] = sum([1,row#matrix_to_atom[1];int(1..)])),(minorDiagonal#matrix_to_atom[1] = sum([1,-(row#matrix_to_atom[1]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[2] = sum([2,row#matrix_to_atom[2];int(1..)])),(minorDiagonal#matrix_to_atom[2] = sum([2,-(row#matrix_to_atom[2]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[3] = sum([3,row#matrix_to_atom[3];int(1..)])),(minorDiagonal#matrix_to_atom[3] = sum([3,-(row#matrix_to_atom[3]);int(1..)]));int(1..2)]),
-allDiff(row#matrix_to_atom),
-allDiff(majorDiagonal#matrix_to_atom),
-allDiff(minorDiagonal#matrix_to_atom)
+row#matrix_to_atom[1]
 
 --
 
 majorDiagonal#matrix_to_atom[2], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-{majorDiagonal#matrix_to_atom[2] @ and([__inDomain(2,int(0..3));int(1..)])}
-
---
-
-and([(majorDiagonal#matrix_to_atom[0] = sum([0,row#matrix_to_atom[0];int(1..)])),(minorDiagonal#matrix_to_atom[0] = sum([0,-(row#matrix_to_atom[0]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[1] = sum([1,row#matrix_to_atom[1];int(1..)])),(minorDiagonal#matrix_to_atom[1] = sum([1,-(row#matrix_to_atom[1]);int(1..)]));int(1..2)]),
-and([({majorDiagonal#matrix_to_atom[2] @ and([__inDomain(2,int(0..3));int(1..)])} = sum([2,row#matrix_to_atom[2];int(1..)])),(minorDiagonal#matrix_to_atom[2] = sum([2,-(row#matrix_to_atom[2]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[3] = sum([3,row#matrix_to_atom[3];int(1..)])),(minorDiagonal#matrix_to_atom[3] = sum([3,-(row#matrix_to_atom[3]);int(1..)]));int(1..2)]),
-allDiff(row#matrix_to_atom),
-allDiff(majorDiagonal#matrix_to_atom),
-allDiff(minorDiagonal#matrix_to_atom), 
-   ~~> constant_evaluator ([("Constant", 9001)])
-and([(majorDiagonal#matrix_to_atom[0] = sum([0,row#matrix_to_atom[0];int(1..)])),(minorDiagonal#matrix_to_atom[0] = sum([0,-(row#matrix_to_atom[0]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[1] = sum([1,row#matrix_to_atom[1];int(1..)])),(minorDiagonal#matrix_to_atom[1] = sum([1,-(row#matrix_to_atom[1]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[2] = sum([2,row#matrix_to_atom[2];int(1..)])),(minorDiagonal#matrix_to_atom[2] = sum([2,-(row#matrix_to_atom[2]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[3] = sum([3,row#matrix_to_atom[3];int(1..)])),(minorDiagonal#matrix_to_atom[3] = sum([3,-(row#matrix_to_atom[3]);int(1..)]));int(1..2)]),
-allDiff(row#matrix_to_atom),
-allDiff(majorDiagonal#matrix_to_atom),
-allDiff(minorDiagonal#matrix_to_atom)
+majorDiagonal#matrix_to_atom[2]
 
 --
 
 row#matrix_to_atom[2], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-{row#matrix_to_atom[2] @ and([__inDomain(2,int(0..7));int(1..)])}
-
---
-
-and([(majorDiagonal#matrix_to_atom[0] = sum([0,row#matrix_to_atom[0];int(1..)])),(minorDiagonal#matrix_to_atom[0] = sum([0,-(row#matrix_to_atom[0]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[1] = sum([1,row#matrix_to_atom[1];int(1..)])),(minorDiagonal#matrix_to_atom[1] = sum([1,-(row#matrix_to_atom[1]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[2] = sum([2,{row#matrix_to_atom[2] @ and([__inDomain(2,int(0..7));int(1..)])};int(1..)])),(minorDiagonal#matrix_to_atom[2] = sum([2,-(row#matrix_to_atom[2]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[3] = sum([3,row#matrix_to_atom[3];int(1..)])),(minorDiagonal#matrix_to_atom[3] = sum([3,-(row#matrix_to_atom[3]);int(1..)]));int(1..2)]),
-allDiff(row#matrix_to_atom),
-allDiff(majorDiagonal#matrix_to_atom),
-allDiff(minorDiagonal#matrix_to_atom), 
-   ~~> constant_evaluator ([("Constant", 9001)])
-and([(majorDiagonal#matrix_to_atom[0] = sum([0,row#matrix_to_atom[0];int(1..)])),(minorDiagonal#matrix_to_atom[0] = sum([0,-(row#matrix_to_atom[0]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[1] = sum([1,row#matrix_to_atom[1];int(1..)])),(minorDiagonal#matrix_to_atom[1] = sum([1,-(row#matrix_to_atom[1]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[2] = sum([2,row#matrix_to_atom[2];int(1..)])),(minorDiagonal#matrix_to_atom[2] = sum([2,-(row#matrix_to_atom[2]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[3] = sum([3,row#matrix_to_atom[3];int(1..)])),(minorDiagonal#matrix_to_atom[3] = sum([3,-(row#matrix_to_atom[3]);int(1..)]));int(1..2)]),
-allDiff(row#matrix_to_atom),
-allDiff(majorDiagonal#matrix_to_atom),
-allDiff(minorDiagonal#matrix_to_atom)
+row#matrix_to_atom[2]
 
 --
 
 minorDiagonal#matrix_to_atom[2], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-{minorDiagonal#matrix_to_atom[2] @ and([__inDomain(2,int(0..3));int(1..)])}
-
---
-
-and([(majorDiagonal#matrix_to_atom[0] = sum([0,row#matrix_to_atom[0];int(1..)])),(minorDiagonal#matrix_to_atom[0] = sum([0,-(row#matrix_to_atom[0]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[1] = sum([1,row#matrix_to_atom[1];int(1..)])),(minorDiagonal#matrix_to_atom[1] = sum([1,-(row#matrix_to_atom[1]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[2] = sum([2,row#matrix_to_atom[2];int(1..)])),({minorDiagonal#matrix_to_atom[2] @ and([__inDomain(2,int(0..3));int(1..)])} = sum([2,-(row#matrix_to_atom[2]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[3] = sum([3,row#matrix_to_atom[3];int(1..)])),(minorDiagonal#matrix_to_atom[3] = sum([3,-(row#matrix_to_atom[3]);int(1..)]));int(1..2)]),
-allDiff(row#matrix_to_atom),
-allDiff(majorDiagonal#matrix_to_atom),
-allDiff(minorDiagonal#matrix_to_atom), 
-   ~~> constant_evaluator ([("Constant", 9001)])
-and([(majorDiagonal#matrix_to_atom[0] = sum([0,row#matrix_to_atom[0];int(1..)])),(minorDiagonal#matrix_to_atom[0] = sum([0,-(row#matrix_to_atom[0]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[1] = sum([1,row#matrix_to_atom[1];int(1..)])),(minorDiagonal#matrix_to_atom[1] = sum([1,-(row#matrix_to_atom[1]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[2] = sum([2,row#matrix_to_atom[2];int(1..)])),(minorDiagonal#matrix_to_atom[2] = sum([2,-(row#matrix_to_atom[2]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[3] = sum([3,row#matrix_to_atom[3];int(1..)])),(minorDiagonal#matrix_to_atom[3] = sum([3,-(row#matrix_to_atom[3]);int(1..)]));int(1..2)]),
-allDiff(row#matrix_to_atom),
-allDiff(majorDiagonal#matrix_to_atom),
-allDiff(minorDiagonal#matrix_to_atom)
+minorDiagonal#matrix_to_atom[2]
 
 --
 
 row#matrix_to_atom[2], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-{row#matrix_to_atom[2] @ and([__inDomain(2,int(0..7));int(1..)])}
-
---
-
-and([(majorDiagonal#matrix_to_atom[0] = sum([0,row#matrix_to_atom[0];int(1..)])),(minorDiagonal#matrix_to_atom[0] = sum([0,-(row#matrix_to_atom[0]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[1] = sum([1,row#matrix_to_atom[1];int(1..)])),(minorDiagonal#matrix_to_atom[1] = sum([1,-(row#matrix_to_atom[1]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[2] = sum([2,row#matrix_to_atom[2];int(1..)])),(minorDiagonal#matrix_to_atom[2] = sum([2,-({row#matrix_to_atom[2] @ and([__inDomain(2,int(0..7));int(1..)])});int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[3] = sum([3,row#matrix_to_atom[3];int(1..)])),(minorDiagonal#matrix_to_atom[3] = sum([3,-(row#matrix_to_atom[3]);int(1..)]));int(1..2)]),
-allDiff(row#matrix_to_atom),
-allDiff(majorDiagonal#matrix_to_atom),
-allDiff(minorDiagonal#matrix_to_atom), 
-   ~~> constant_evaluator ([("Constant", 9001)])
-and([(majorDiagonal#matrix_to_atom[0] = sum([0,row#matrix_to_atom[0];int(1..)])),(minorDiagonal#matrix_to_atom[0] = sum([0,-(row#matrix_to_atom[0]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[1] = sum([1,row#matrix_to_atom[1];int(1..)])),(minorDiagonal#matrix_to_atom[1] = sum([1,-(row#matrix_to_atom[1]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[2] = sum([2,row#matrix_to_atom[2];int(1..)])),(minorDiagonal#matrix_to_atom[2] = sum([2,-(row#matrix_to_atom[2]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[3] = sum([3,row#matrix_to_atom[3];int(1..)])),(minorDiagonal#matrix_to_atom[3] = sum([3,-(row#matrix_to_atom[3]);int(1..)]));int(1..2)]),
-allDiff(row#matrix_to_atom),
-allDiff(majorDiagonal#matrix_to_atom),
-allDiff(minorDiagonal#matrix_to_atom)
+row#matrix_to_atom[2]
 
 --
 
 majorDiagonal#matrix_to_atom[3], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-{majorDiagonal#matrix_to_atom[3] @ and([__inDomain(3,int(0..3));int(1..)])}
-
---
-
-and([(majorDiagonal#matrix_to_atom[0] = sum([0,row#matrix_to_atom[0];int(1..)])),(minorDiagonal#matrix_to_atom[0] = sum([0,-(row#matrix_to_atom[0]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[1] = sum([1,row#matrix_to_atom[1];int(1..)])),(minorDiagonal#matrix_to_atom[1] = sum([1,-(row#matrix_to_atom[1]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[2] = sum([2,row#matrix_to_atom[2];int(1..)])),(minorDiagonal#matrix_to_atom[2] = sum([2,-(row#matrix_to_atom[2]);int(1..)]));int(1..2)]),
-and([({majorDiagonal#matrix_to_atom[3] @ and([__inDomain(3,int(0..3));int(1..)])} = sum([3,row#matrix_to_atom[3];int(1..)])),(minorDiagonal#matrix_to_atom[3] = sum([3,-(row#matrix_to_atom[3]);int(1..)]));int(1..2)]),
-allDiff(row#matrix_to_atom),
-allDiff(majorDiagonal#matrix_to_atom),
-allDiff(minorDiagonal#matrix_to_atom), 
-   ~~> constant_evaluator ([("Constant", 9001)])
-and([(majorDiagonal#matrix_to_atom[0] = sum([0,row#matrix_to_atom[0];int(1..)])),(minorDiagonal#matrix_to_atom[0] = sum([0,-(row#matrix_to_atom[0]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[1] = sum([1,row#matrix_to_atom[1];int(1..)])),(minorDiagonal#matrix_to_atom[1] = sum([1,-(row#matrix_to_atom[1]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[2] = sum([2,row#matrix_to_atom[2];int(1..)])),(minorDiagonal#matrix_to_atom[2] = sum([2,-(row#matrix_to_atom[2]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[3] = sum([3,row#matrix_to_atom[3];int(1..)])),(minorDiagonal#matrix_to_atom[3] = sum([3,-(row#matrix_to_atom[3]);int(1..)]));int(1..2)]),
-allDiff(row#matrix_to_atom),
-allDiff(majorDiagonal#matrix_to_atom),
-allDiff(minorDiagonal#matrix_to_atom)
+majorDiagonal#matrix_to_atom[3]
 
 --
 
 row#matrix_to_atom[3], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-{row#matrix_to_atom[3] @ and([__inDomain(3,int(0..7));int(1..)])}
-
---
-
-and([(majorDiagonal#matrix_to_atom[0] = sum([0,row#matrix_to_atom[0];int(1..)])),(minorDiagonal#matrix_to_atom[0] = sum([0,-(row#matrix_to_atom[0]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[1] = sum([1,row#matrix_to_atom[1];int(1..)])),(minorDiagonal#matrix_to_atom[1] = sum([1,-(row#matrix_to_atom[1]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[2] = sum([2,row#matrix_to_atom[2];int(1..)])),(minorDiagonal#matrix_to_atom[2] = sum([2,-(row#matrix_to_atom[2]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[3] = sum([3,{row#matrix_to_atom[3] @ and([__inDomain(3,int(0..7));int(1..)])};int(1..)])),(minorDiagonal#matrix_to_atom[3] = sum([3,-(row#matrix_to_atom[3]);int(1..)]));int(1..2)]),
-allDiff(row#matrix_to_atom),
-allDiff(majorDiagonal#matrix_to_atom),
-allDiff(minorDiagonal#matrix_to_atom), 
-   ~~> constant_evaluator ([("Constant", 9001)])
-and([(majorDiagonal#matrix_to_atom[0] = sum([0,row#matrix_to_atom[0];int(1..)])),(minorDiagonal#matrix_to_atom[0] = sum([0,-(row#matrix_to_atom[0]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[1] = sum([1,row#matrix_to_atom[1];int(1..)])),(minorDiagonal#matrix_to_atom[1] = sum([1,-(row#matrix_to_atom[1]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[2] = sum([2,row#matrix_to_atom[2];int(1..)])),(minorDiagonal#matrix_to_atom[2] = sum([2,-(row#matrix_to_atom[2]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[3] = sum([3,row#matrix_to_atom[3];int(1..)])),(minorDiagonal#matrix_to_atom[3] = sum([3,-(row#matrix_to_atom[3]);int(1..)]));int(1..2)]),
-allDiff(row#matrix_to_atom),
-allDiff(majorDiagonal#matrix_to_atom),
-allDiff(minorDiagonal#matrix_to_atom)
+row#matrix_to_atom[3]
 
 --
 
 minorDiagonal#matrix_to_atom[3], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-{minorDiagonal#matrix_to_atom[3] @ and([__inDomain(3,int(0..3));int(1..)])}
-
---
-
-and([(majorDiagonal#matrix_to_atom[0] = sum([0,row#matrix_to_atom[0];int(1..)])),(minorDiagonal#matrix_to_atom[0] = sum([0,-(row#matrix_to_atom[0]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[1] = sum([1,row#matrix_to_atom[1];int(1..)])),(minorDiagonal#matrix_to_atom[1] = sum([1,-(row#matrix_to_atom[1]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[2] = sum([2,row#matrix_to_atom[2];int(1..)])),(minorDiagonal#matrix_to_atom[2] = sum([2,-(row#matrix_to_atom[2]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[3] = sum([3,row#matrix_to_atom[3];int(1..)])),({minorDiagonal#matrix_to_atom[3] @ and([__inDomain(3,int(0..3));int(1..)])} = sum([3,-(row#matrix_to_atom[3]);int(1..)]));int(1..2)]),
-allDiff(row#matrix_to_atom),
-allDiff(majorDiagonal#matrix_to_atom),
-allDiff(minorDiagonal#matrix_to_atom), 
-   ~~> constant_evaluator ([("Constant", 9001)])
-and([(majorDiagonal#matrix_to_atom[0] = sum([0,row#matrix_to_atom[0];int(1..)])),(minorDiagonal#matrix_to_atom[0] = sum([0,-(row#matrix_to_atom[0]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[1] = sum([1,row#matrix_to_atom[1];int(1..)])),(minorDiagonal#matrix_to_atom[1] = sum([1,-(row#matrix_to_atom[1]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[2] = sum([2,row#matrix_to_atom[2];int(1..)])),(minorDiagonal#matrix_to_atom[2] = sum([2,-(row#matrix_to_atom[2]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[3] = sum([3,row#matrix_to_atom[3];int(1..)])),(minorDiagonal#matrix_to_atom[3] = sum([3,-(row#matrix_to_atom[3]);int(1..)]));int(1..2)]),
-allDiff(row#matrix_to_atom),
-allDiff(majorDiagonal#matrix_to_atom),
-allDiff(minorDiagonal#matrix_to_atom)
+minorDiagonal#matrix_to_atom[3]
 
 --
 
 row#matrix_to_atom[3], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-{row#matrix_to_atom[3] @ and([__inDomain(3,int(0..7));int(1..)])}
-
---
-
-and([(majorDiagonal#matrix_to_atom[0] = sum([0,row#matrix_to_atom[0];int(1..)])),(minorDiagonal#matrix_to_atom[0] = sum([0,-(row#matrix_to_atom[0]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[1] = sum([1,row#matrix_to_atom[1];int(1..)])),(minorDiagonal#matrix_to_atom[1] = sum([1,-(row#matrix_to_atom[1]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[2] = sum([2,row#matrix_to_atom[2];int(1..)])),(minorDiagonal#matrix_to_atom[2] = sum([2,-(row#matrix_to_atom[2]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[3] = sum([3,row#matrix_to_atom[3];int(1..)])),(minorDiagonal#matrix_to_atom[3] = sum([3,-({row#matrix_to_atom[3] @ and([__inDomain(3,int(0..7));int(1..)])});int(1..)]));int(1..2)]),
-allDiff(row#matrix_to_atom),
-allDiff(majorDiagonal#matrix_to_atom),
-allDiff(minorDiagonal#matrix_to_atom), 
-   ~~> constant_evaluator ([("Constant", 9001)])
-and([(majorDiagonal#matrix_to_atom[0] = sum([0,row#matrix_to_atom[0];int(1..)])),(minorDiagonal#matrix_to_atom[0] = sum([0,-(row#matrix_to_atom[0]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[1] = sum([1,row#matrix_to_atom[1];int(1..)])),(minorDiagonal#matrix_to_atom[1] = sum([1,-(row#matrix_to_atom[1]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[2] = sum([2,row#matrix_to_atom[2];int(1..)])),(minorDiagonal#matrix_to_atom[2] = sum([2,-(row#matrix_to_atom[2]);int(1..)]));int(1..2)]),
-and([(majorDiagonal#matrix_to_atom[3] = sum([3,row#matrix_to_atom[3];int(1..)])),(minorDiagonal#matrix_to_atom[3] = sum([3,-(row#matrix_to_atom[3]);int(1..)]));int(1..2)]),
-allDiff(row#matrix_to_atom),
-allDiff(majorDiagonal#matrix_to_atom),
-allDiff(minorDiagonal#matrix_to_atom)
+row#matrix_to_atom[3]
 
 --
 
