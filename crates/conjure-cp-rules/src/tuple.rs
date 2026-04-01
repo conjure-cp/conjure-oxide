@@ -1,6 +1,7 @@
 use crate::guard;
 use crate::representation::tuple_to_atom::TupleToAtom;
 use crate::utils::{as_eq_or_neq, collect_eq_or_neq, is_tuple_lit, tuple_expr_entries};
+use conjure_cp::ast::pretty::pretty_vec;
 use conjure_cp::ast::{
     Atom, Expression as Expr, Expression, HasDomain, Literal, Metadata, Reference, SymbolTable,
 };
@@ -9,7 +10,6 @@ use conjure_cp::rule_engine::ApplicationError::RuleNotApplicable;
 use conjure_cp::rule_engine::{ApplicationResult, Reduction, register_rule};
 use conjure_cp::{bug_assert, essence_expr};
 use itertools::izip;
-use conjure_cp::ast::pretty::pretty_vec;
 
 /// Indexing into a tuple variable
 /// ```plain

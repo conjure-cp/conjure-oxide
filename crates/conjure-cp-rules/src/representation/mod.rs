@@ -16,7 +16,7 @@ mod prelude {
 }
 
 pub mod matrix_to_atom;
-pub mod record_to_atom;
+pub mod record_to_tuple;
 pub mod sat_direct_int;
 pub mod set_explicit;
 pub mod set_occurrence;
