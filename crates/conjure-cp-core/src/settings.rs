@@ -282,7 +282,7 @@ impl FromStr for SolverFamily {
 
         match s.as_str() {
             "minion" => Ok(SolverFamily::Minion),
-            "savilerow" | "savile-row" => Ok(SolverFamily::SavileRow),
+            "savilerow" => Ok(SolverFamily::SavileRow),
             "sat" | "sat-log" => Ok(SolverFamily::Sat(SatEncoding::Log)),
             "sat-direct" => Ok(SolverFamily::Sat(SatEncoding::Direct)),
             "sat-order" => Ok(SolverFamily::Sat(SatEncoding::Order)),
