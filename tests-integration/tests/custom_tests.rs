@@ -1,10 +1,13 @@
 use pretty_assertions::assert_eq;
 use std::borrow::Cow;
+use std::collections::BTreeSet;
 use std::env;
 use std::error::Error;
 use std::fs;
+use std::path::Path;
 use std::path::PathBuf;
 use std::process::Command;
+use tests_integration::golden_files::assert_no_redundant_expected_files;
 
 pub fn custom_test(test_dir: &str) -> Result<(), Box<dyn Error>> {
     let accept = env::var("ACCEPT").unwrap_or("false".to_string()) == "true";
@@ -28,7 +31,7 @@ pub fn custom_test(test_dir: &str) -> Result<(), Box<dyn Error>> {
     // Execute the test script in the correct directory
     let output = Command::new("sh")
         .arg("run.sh")
-        .current_dir(test_path)
+        .current_dir(&test_path)
         .output()?;
 
     // Convert captured output/error to string
@@ -37,8 +40,8 @@ pub fn custom_test(test_dir: &str) -> Result<(), Box<dyn Error>> {
 
     if accept {
         // Overwrite expected files
-        update_file(expected_output_path, actual_output)?;
-        update_file(expected_error_path, actual_error)?;
+        update_file(expected_output_path, &actual_output)?;
+        update_file(expected_error_path, &actual_error)?;
     } else {
         // Compare results
         let expected_output = if expected_output_path.exists() {
@@ -56,12 +59,15 @@ pub fn custom_test(test_dir: &str) -> Result<(), Box<dyn Error>> {
         assert_eq!(expected_output, actual_output, "Standard output mismatch");
     }
 
+    let allowed_expected_files = expected_custom_files_for_case(&actual_output, &actual_error);
+    assert_no_redundant_expected_files(Path::new(&test_path), &allowed_expected_files, None)?;
+
     Ok(())
 }
 
 fn update_file(
     expected_file_path: PathBuf,
-    actual_output: Cow<'_, str>,
+    actual_output: &Cow<'_, str>,
 ) -> Result<(), Box<dyn Error>> {
     if expected_file_path.exists() {
         fs::remove_file(&expected_file_path)?;
@@ -71,6 +77,21 @@ fn update_file(
         fs::write(&expected_file_path, actual_output.as_bytes())?;
     }
     Ok(())
+}
+
+/// Returns the expected snapshot files for the observed custom test output.
+fn expected_custom_files_for_case(
+    stdout: &Cow<'_, str>,
+    stderr: &Cow<'_, str>,
+) -> BTreeSet<String> {
+    let mut expected_files = BTreeSet::new();
+    if !stdout.trim().is_empty() {
+        expected_files.insert("stdout.expected".to_string());
+    }
+    if !stderr.trim().is_empty() {
+        expected_files.insert("stderr.expected".to_string());
+    }
+    expected_files
 }
 
 #[test]
