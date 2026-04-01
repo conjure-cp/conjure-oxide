@@ -2,9 +2,10 @@
 use super::{
     Reduction,
     resolve_rules::{ResolveRulesError, RuleData},
+    submodel_zipper::expression_ctx,
 };
 use crate::ast::{
-    Expression, Name, SymbolTable,
+    DeclarationPtr, Expression, Model, Name, SymbolTable,
     pretty::{pretty_variable_declaration, pretty_vec},
 };
 
@@ -12,6 +13,7 @@ use itertools::Itertools;
 use serde_json::json;
 use std::collections::BTreeMap;
 use std::fmt::Debug;
+use std::sync::Arc;
 use thiserror::Error;
 use tracing::{info, trace};
 
@@ -156,6 +158,83 @@ pub fn log_rule_application(
     })
 
     )
+}
+
+type LettingCtxFn = Arc<dyn Fn(Expression) -> Expression>;
+type ApplicableLettingRule<'a> = (
+    RuleResult<'a>,
+    u16,
+    Expression,
+    DeclarationPtr,
+    LettingCtxFn,
+);
+
+pub(crate) fn try_rewrite_value_letting_once(
+    model: &mut Model,
+    rules_grouped: &Vec<(u16, Vec<RuleData<'_>>)>,
+    prop_multiple_equally_applicable: bool,
+) -> Option<()> {
+    let symbols = model.symbols().clone();
+    let mut results: Vec<ApplicableLettingRule<'_>> = vec![];
+
+    'top: for (priority, rules) in rules_grouped.iter() {
+        for (_, decl) in symbols.clone().into_iter_local() {
+            let Some(letting_expr) = decl.as_value_letting().map(|expr| expr.clone()) else {
+                continue;
+            };
+
+            for (expr, ctx) in expression_ctx(letting_expr) {
+                let expr = expr.clone();
+                let ctx = ctx.clone();
+
+                for rd in rules {
+                    let Ok(reduction) = (rd.rule.application)(&expr, &symbols) else {
+                        continue;
+                    };
+
+                    results.push((
+                        RuleResult {
+                            rule_data: rd.clone(),
+                            reduction,
+                        },
+                        *priority,
+                        expr.clone(),
+                        decl.clone(),
+                        ctx.clone(),
+                    ));
+                }
+
+                if !results.is_empty() {
+                    break 'top;
+                }
+            }
+        }
+    }
+
+    let (result, _, expr, decl, ctx) = match results.as_slice() {
+        [] => return None,
+        [single, ..] => single,
+    };
+
+    if prop_multiple_equally_applicable && results.len() > 1 {
+        let names: Vec<_> = results
+            .iter()
+            .map(|(result, _, _, _, _)| result.rule_data.rule.name)
+            .collect();
+        panic!("Multiple equally applicable rules for value letting expression {expr}: {names:?}");
+    }
+
+    log_rule_application(result, expr, &symbols, None);
+
+    let rewritten_expr = ctx(result.reduction.new_expression.clone());
+    result.reduction.clone().apply(model);
+
+    let mut decl = decl.clone();
+    *decl
+        .as_value_letting_mut()
+        .expect("declaration should still be a value letting") = rewritten_expr;
+
+    Some(())
 }
 
 /// Represents errors that can occur during the model rewriting process.
