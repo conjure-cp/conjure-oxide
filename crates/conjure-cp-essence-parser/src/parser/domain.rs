@@ -305,21 +305,31 @@ pub fn parse_set_domain(
 
                 if let (Some(min_node), Some(max_node)) = (min_value_node, max_value_node) {
                     // MinMax case
-                    let min_val = parse_int(ctx, &min_node)?;
-                    let max_val = parse_int(ctx, &max_node)?;
+                    let Some(min_val) = parse_int(ctx, &min_node) else {
+                        return Ok(None);
+                    };
+                    let Some(max_val) = parse_int(ctx, &max_node) else {
+                        return Ok(None);
+                    };
 
                     set_attribute = Some(SetAttr::new_min_max_size(min_val, max_val));
                 } else if let Some(size_node) = size_value_node {
                     // Size case
-                    let size_val = parse_int(ctx, &size_node)?;
+                    let Some(size_val) = parse_int(ctx, &size_node) else {
+                        return Ok(None);
+                    };
                     set_attribute = Some(SetAttr::new_size(size_val));
                 } else if let Some(min_node) = min_value_node {
                     // MinSize only case
-                    let min_val = parse_int(ctx, &min_node)?;
+                    let Some(min_val) = parse_int(ctx, &min_node) else {
+                        return Ok(None);
+                    };
                     set_attribute = Some(SetAttr::new_min_size(min_val));
                 } else if let Some(max_node) = max_value_node {
                     // MaxSize only case
-                    let max_val = parse_int(ctx, &max_node)?;
+                    let Some(max_val) = parse_int(ctx, &max_node) else {
+                        return Ok(None);
+                    };
                     set_attribute = Some(SetAttr::new_max_size(max_val));
                 }
             }
