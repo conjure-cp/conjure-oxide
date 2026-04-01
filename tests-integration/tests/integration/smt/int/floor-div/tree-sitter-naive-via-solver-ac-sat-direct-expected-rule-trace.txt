@@ -9,8 +9,33 @@ such that
 
 --
 
+UnsafeDiv(a, b), 
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(a, b) @ (b != 0)}
+
+--
+
+({SafeDiv(a, b) @ (b != 0)} = 1), 
+   ~~> bubble_up ([("Bubble", 8800)])
+{(SafeDiv(a, b) = 1) @ (b != 0)}
+
+--
+
+{(SafeDiv(a, b) = 1) @ (b != 0)}, 
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([(SafeDiv(a, b) = 1),(b != 0);int(1..)])
+
+--
+
+and([(SafeDiv(a, b) = 1),(b != 0);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(SafeDiv(a, b) = 1),
+(b != 0)
+
+--
+
 a, 
-   ~~> integer_decision_representation_direct ([("SAT_Direct", 9500)])
+   ~~> integer_decision_representation_direct ([("SAT_Direct", 4800)])
 SATInt(Direct, [a#sat_direct_int_3,a#sat_direct_int_4;int(1..)] [3, 4])
 new variables:
   find a#sat_direct_int_3: bool
@@ -20,8 +45,25 @@ new constraints:
 
 --
 
+or([and([(SATInt(Direct, [a#sat_direct_int_3,a#sat_direct_int_4;int(1..)] [3, 4]) >= 3),(SATInt(Direct, [a#sat_direct_int_3,a#sat_direct_int_4;int(1..)] [3, 4]) <= 4);int(1..)]);int(1..)]), 
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([(SATInt(Direct, [a#sat_direct_int_3,a#sat_direct_int_4;int(1..)] [3, 4]) >= 3),(SATInt(Direct, [a#sat_direct_int_3,a#sat_direct_int_4;int(1..)] [3, 4]) <= 4);int(1..)])
+
+--
+
+(SafeDiv(SATInt(Direct, [a#sat_direct_int_3,a#sat_direct_int_4;int(1..)] [3, 4]), b) = 1),
+(b != 0),
+and([(SATInt(Direct, [a#sat_direct_int_3,a#sat_direct_int_4;int(1..)] [3, 4]) >= 3),(SATInt(Direct, [a#sat_direct_int_3,a#sat_direct_int_4;int(1..)] [3, 4]) <= 4);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(SafeDiv(SATInt(Direct, [a#sat_direct_int_3,a#sat_direct_int_4;int(1..)] [3, 4]), b) = 1),
+(b != 0),
+(SATInt(Direct, [a#sat_direct_int_3,a#sat_direct_int_4;int(1..)] [3, 4]) >= 3),
+(SATInt(Direct, [a#sat_direct_int_3,a#sat_direct_int_4;int(1..)] [3, 4]) <= 4)
+
+--
+
 b, 
-   ~~> integer_decision_representation_direct ([("SAT_Direct", 9500)])
+   ~~> integer_decision_representation_direct ([("SAT_Direct", 4800)])
 SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2])
 new variables:
   find b#sat_direct_int_1: bool
@@ -31,80 +73,138 @@ new constraints:
 
 --
 
-1, 
-   ~~> literal_sat_direct_int ([("SAT_Direct", 9500)])
-SATInt(Direct, [true;int(1..)] [1, 1])
+or([and([(SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2]) >= 1),(SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2]) <= 2);int(1..)]);int(1..)]), 
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([(SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2]) >= 1),(SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2]) <= 2);int(1..)])
 
 --
 
-3, 
-   ~~> literal_sat_direct_int ([("SAT_Direct", 9500)])
-SATInt(Direct, [true;int(1..)] [3, 3])
+(SafeDiv(SATInt(Direct, [a#sat_direct_int_3,a#sat_direct_int_4;int(1..)] [3, 4]), SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2])) = 1),
+(b != 0),
+(SATInt(Direct, [a#sat_direct_int_3,a#sat_direct_int_4;int(1..)] [3, 4]) >= 3),
+(SATInt(Direct, [a#sat_direct_int_3,a#sat_direct_int_4;int(1..)] [3, 4]) <= 4),
+and([(SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2]) >= 1),(SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2]) <= 2);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(SafeDiv(SATInt(Direct, [a#sat_direct_int_3,a#sat_direct_int_4;int(1..)] [3, 4]), SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2])) = 1),
+(b != 0),
+(SATInt(Direct, [a#sat_direct_int_3,a#sat_direct_int_4;int(1..)] [3, 4]) >= 3),
+(SATInt(Direct, [a#sat_direct_int_3,a#sat_direct_int_4;int(1..)] [3, 4]) <= 4),
+(SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2]) >= 1),
+(SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2]) <= 2)
 
 --
 
-4, 
-   ~~> literal_sat_direct_int ([("SAT_Direct", 9500)])
-SATInt(Direct, [true;int(1..)] [4, 4])
+b, 
+   ~~> integer_decision_representation_direct ([("SAT_Direct", 4800)])
+SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2])
 
 --
 
-1, 
-   ~~> literal_sat_direct_int ([("SAT_Direct", 9500)])
-SATInt(Direct, [true;int(1..)] [1, 1])
-
---
-
-2, 
-   ~~> literal_sat_direct_int ([("SAT_Direct", 9500)])
-SATInt(Direct, [true;int(1..)] [2, 2])
-
---
-
-(SATInt(Direct, [a#sat_direct_int_3,a#sat_direct_int_4;int(1..)] [3, 4]) >= SATInt(Direct, [true;int(1..)] [3, 3])), 
-   ~~> ineq_sat_direct ([("SAT", 9100)])
-__8
+SafeDiv(SATInt(Direct, [a#sat_direct_int_3,a#sat_direct_int_4;int(1..)] [3, 4]), SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2])), 
+   ~~> safediv_sat_direct ([("SAT_Direct", 4700)])
+SATInt(Direct, [__0,__1,__2,__3;int(1..)] [1, 4])
 new variables:
   find __0: bool
   find __1: bool
   find __2: bool
   find __3: bool
+new clauses:
+  (¬a#sat_direct_int_3 \/ ¬b#sat_direct_int_1 \/ __2)
+  (¬a#sat_direct_int_3 \/ ¬b#sat_direct_int_2 \/ __0)
+  (¬a#sat_direct_int_4 \/ ¬b#sat_direct_int_1 \/ __3)
+  (¬a#sat_direct_int_4 \/ ¬b#sat_direct_int_2 \/ __1)
+  (¬__0 \/ ¬__1)
+  (¬__0 \/ ¬__2)
+  (¬__0 \/ ¬__3)
+  (¬__1 \/ ¬__2)
+  (¬__1 \/ ¬__3)
+  (¬__2 \/ ¬__3)
+
+--
+
+1, 
+   ~~> literal_sat_direct_int ([("SAT_Direct", 4500)])
+SATInt(Direct, [true;int(1..)] [1, 1])
+
+--
+
+(SATInt(Direct, [__0,__1,__2,__3;int(1..)] [1, 4]) = SATInt(Direct, [true;int(1..)] [1, 1])),
+(SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2]) != 0),
+(SATInt(Direct, [a#sat_direct_int_3,a#sat_direct_int_4;int(1..)] [3, 4]) >= 3),
+(SATInt(Direct, [a#sat_direct_int_3,a#sat_direct_int_4;int(1..)] [3, 4]) <= 4),
+(SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2]) >= 1),
+(SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2]) <= 2), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(SATInt(Direct, [__0,__1,__2,__3;int(1..)] [1, 4]) = SATInt(Direct, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),
+(SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2]) != 0),
+(SATInt(Direct, [a#sat_direct_int_3,a#sat_direct_int_4;int(1..)] [3, 4]) >= 3),
+(SATInt(Direct, [a#sat_direct_int_3,a#sat_direct_int_4;int(1..)] [3, 4]) <= 4),
+(SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2]) >= 1),
+(SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2]) <= 2)
+
+--
+
+(SATInt(Direct, [__0,__1,__2,__3;int(1..)] [1, 4]) = SATInt(Direct, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])), 
+   ~~> eq_sat_direct ([("SAT_Direct", 4600)])
+__11
+new variables:
   find __4: bool
   find __5: bool
   find __6: bool
   find __7: bool
   find __8: bool
-new clauses:
-  (__0)
-  (¬__0 \/ ¬__1)
-  (__0 \/ __1)
-  (¬__2 \/ a#sat_direct_int_3)
-  (¬__2 \/ __1)
-  (__2 \/ ¬a#sat_direct_int_3 \/ ¬__1)
-  (¬__2 \/ __3)
-  (¬__3 \/ __2)
-  (¬__0 \/ __4)
-  (¬__4 \/ __0)
-  (¬__4 \/ ¬__5)
-  (__4 \/ __5)
-  (¬__6 \/ a#sat_direct_int_4)
-  (¬__6 \/ __5)
-  (__6 \/ ¬a#sat_direct_int_4 \/ ¬__5)
-  (¬__3 \/ __7)
-  (¬__6 \/ __7)
-  (¬__7 \/ __3 \/ __6)
-  (¬__7 \/ ¬__8)
-  (__7 \/ __8)
-
---
-
-(SATInt(Direct, [a#sat_direct_int_3,a#sat_direct_int_4;int(1..)] [3, 4]) <= SATInt(Direct, [true;int(1..)] [4, 4])), 
-   ~~> ineq_sat_direct ([("SAT", 9100)])
-__17
-new variables:
   find __9: bool
   find __10: bool
   find __11: bool
+new clauses:
+  (¬__0 \/ __4)
+  (__0 \/ ¬__4)
+  (¬__5 \/ __4)
+  (__5 \/ ¬__4)
+  (__1 \/ __6)
+  (¬__1 \/ ¬__6)
+  (¬__7 \/ __6)
+  (¬__7 \/ __5)
+  (__7 \/ ¬__6 \/ ¬__5)
+  (__2 \/ __8)
+  (¬__2 \/ ¬__8)
+  (¬__9 \/ __8)
+  (¬__9 \/ __7)
+  (__9 \/ ¬__8 \/ ¬__7)
+  (__3 \/ __10)
+  (¬__3 \/ ¬__10)
+  (¬__11 \/ __10)
+  (¬__11 \/ __9)
+  (__11 \/ ¬__10 \/ ¬__9)
+
+--
+
+0, 
+   ~~> literal_sat_direct_int ([("SAT_Direct", 4500)])
+SATInt(Direct, [true;int(1..)] [0, 0])
+
+--
+
+__11,
+(SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2]) != SATInt(Direct, [true;int(1..)] [0, 0])),
+(SATInt(Direct, [a#sat_direct_int_3,a#sat_direct_int_4;int(1..)] [3, 4]) >= 3),
+(SATInt(Direct, [a#sat_direct_int_3,a#sat_direct_int_4;int(1..)] [3, 4]) <= 4),
+(SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2]) >= 1),
+(SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2]) <= 2), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+__11,
+(SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2]) != SATInt(Direct, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [0, 0])),
+(SATInt(Direct, [a#sat_direct_int_3,a#sat_direct_int_4;int(1..)] [3, 4]) >= 3),
+(SATInt(Direct, [a#sat_direct_int_3,a#sat_direct_int_4;int(1..)] [3, 4]) <= 4),
+(SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2]) >= 1),
+(SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2]) <= 2)
+
+--
+
+(SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2]) != SATInt(Direct, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [0, 0])), 
+   ~~> neq_sat_direct ([("SAT_Direct", 4600)])
+__17
+new variables:
   find __12: bool
   find __13: bool
   find __14: bool
@@ -112,31 +212,46 @@ new variables:
   find __16: bool
   find __17: bool
 new clauses:
-  (¬a#sat_direct_int_3 \/ __9)
-  (¬__9 \/ a#sat_direct_int_3)
-  (¬__9 \/ ¬__10)
-  (__9 \/ __10)
-  (¬__11)
-  (¬__11 \/ __10)
-  (¬__11 \/ __12)
-  (¬__12 \/ __11)
-  (¬__9 \/ __13)
-  (¬a#sat_direct_int_4 \/ __13)
-  (¬__13 \/ __9 \/ a#sat_direct_int_4)
-  (¬__13 \/ ¬__14)
-  (__13 \/ __14)
-  (¬__15 \/ __14)
-  (__15 \/ ¬__14)
-  (¬__12 \/ __16)
-  (¬__15 \/ __16)
-  (¬__16 \/ __12 \/ __15)
-  (¬__16 \/ ¬__17)
-  (__16 \/ __17)
+  (__12)
+  (¬__12 \/ __13)
+  (¬__13 \/ __12)
+  (b#sat_direct_int_1 \/ ¬__14)
+  (¬b#sat_direct_int_1 \/ __14)
+  (¬__14 \/ __15)
+  (¬__13 \/ __15)
+  (¬__15 \/ __14 \/ __13)
+  (b#sat_direct_int_2 \/ ¬__16)
+  (¬b#sat_direct_int_2 \/ __16)
+  (¬__16 \/ __17)
+  (¬__15 \/ __17)
+  (¬__17 \/ __16 \/ __15)
 
 --
 
-(SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2]) >= SATInt(Direct, [true;int(1..)] [1, 1])), 
-   ~~> ineq_sat_direct ([("SAT", 9100)])
+3, 
+   ~~> literal_sat_direct_int ([("SAT_Direct", 4500)])
+SATInt(Direct, [true;int(1..)] [3, 3])
+
+--
+
+__11,
+__17,
+(SATInt(Direct, [a#sat_direct_int_3,a#sat_direct_int_4;int(1..)] [3, 4]) >= SATInt(Direct, [true;int(1..)] [3, 3])),
+(SATInt(Direct, [a#sat_direct_int_3,a#sat_direct_int_4;int(1..)] [3, 4]) <= 4),
+(SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2]) >= 1),
+(SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2]) <= 2), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+__11,
+__17,
+(SATInt(Direct, [a#sat_direct_int_3,a#sat_direct_int_4;int(1..)] [3, 4]) >= SATInt(Direct, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3])),
+(SATInt(Direct, [a#sat_direct_int_3,a#sat_direct_int_4;int(1..)] [3, 4]) <= 4),
+(SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2]) >= 1),
+(SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2]) <= 2)
+
+--
+
+(SATInt(Direct, [a#sat_direct_int_3,a#sat_direct_int_4;int(1..)] [3, 4]) >= SATInt(Direct, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [3, 3])), 
+   ~~> ineq_sat_direct ([("SAT", 4600)])
 __26
 new variables:
   find __18: bool
@@ -152,18 +267,18 @@ new clauses:
   (__18)
   (¬__18 \/ ¬__19)
   (__18 \/ __19)
-  (¬__20 \/ b#sat_direct_int_1)
+  (¬__20 \/ a#sat_direct_int_3)
   (¬__20 \/ __19)
-  (__20 \/ ¬b#sat_direct_int_1 \/ ¬__19)
+  (__20 \/ ¬a#sat_direct_int_3 \/ ¬__19)
   (¬__20 \/ __21)
   (¬__21 \/ __20)
   (¬__18 \/ __22)
   (¬__22 \/ __18)
   (¬__22 \/ ¬__23)
   (__22 \/ __23)
-  (¬__24 \/ b#sat_direct_int_2)
+  (¬__24 \/ a#sat_direct_int_4)
   (¬__24 \/ __23)
-  (__24 \/ ¬b#sat_direct_int_2 \/ ¬__23)
+  (__24 \/ ¬a#sat_direct_int_4 \/ ¬__23)
   (¬__21 \/ __25)
   (¬__24 \/ __25)
   (¬__25 \/ __21 \/ __24)
@@ -172,8 +287,30 @@ new clauses:
 
 --
 
-(SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2]) <= SATInt(Direct, [true;int(1..)] [2, 2])), 
-   ~~> ineq_sat_direct ([("SAT", 9100)])
+4, 
+   ~~> literal_sat_direct_int ([("SAT_Direct", 4500)])
+SATInt(Direct, [true;int(1..)] [4, 4])
+
+--
+
+__11,
+__17,
+__26,
+(SATInt(Direct, [a#sat_direct_int_3,a#sat_direct_int_4;int(1..)] [3, 4]) <= SATInt(Direct, [true;int(1..)] [4, 4])),
+(SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2]) >= 1),
+(SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2]) <= 2), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+__11,
+__17,
+__26,
+(SATInt(Direct, [a#sat_direct_int_3,a#sat_direct_int_4;int(1..)] [3, 4]) <= SATInt(Direct, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [4, 4])),
+(SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2]) >= 1),
+(SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2]) <= 2)
+
+--
+
+(SATInt(Direct, [a#sat_direct_int_3,a#sat_direct_int_4;int(1..)] [3, 4]) <= SATInt(Direct, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [4, 4])), 
+   ~~> ineq_sat_direct ([("SAT", 4600)])
 __35
 new variables:
   find __27: bool
@@ -186,8 +323,8 @@ new variables:
   find __34: bool
   find __35: bool
 new clauses:
-  (¬b#sat_direct_int_1 \/ __27)
-  (¬__27 \/ b#sat_direct_int_1)
+  (¬a#sat_direct_int_3 \/ __27)
+  (¬__27 \/ a#sat_direct_int_3)
   (¬__27 \/ ¬__28)
   (__27 \/ __28)
   (¬__29)
@@ -195,8 +332,8 @@ new clauses:
   (¬__29 \/ __30)
   (¬__30 \/ __29)
   (¬__27 \/ __31)
-  (¬b#sat_direct_int_2 \/ __31)
-  (¬__31 \/ __27 \/ b#sat_direct_int_2)
+  (¬a#sat_direct_int_4 \/ __31)
+  (¬__31 \/ __27 \/ a#sat_direct_int_4)
   (¬__31 \/ ¬__32)
   (__31 \/ __32)
   (¬__33 \/ __32)
@@ -209,171 +346,92 @@ new clauses:
 
 --
 
-(UnsafeDiv(SATInt(Direct, [a#sat_direct_int_3,a#sat_direct_int_4;int(1..)] [3, 4]), SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2])) = SATInt(Direct, [true;int(1..)] [1, 1])),
-or([and([__8,__17;int(1..)]);int(1..)]),
-or([and([__26,__35;int(1..)]);int(1..)]), 
+1, 
+   ~~> literal_sat_direct_int ([("SAT_Direct", 4500)])
+SATInt(Direct, [true;int(1..)] [1, 1])
+
+--
+
+__11,
+__17,
+__26,
+__35,
+(SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2]) >= SATInt(Direct, [true;int(1..)] [1, 1])),
+(SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2]) <= 2), 
    ~~> constant_evaluator ([("Constant", 9001)])
-(UnsafeDiv(SATInt(Direct, [a#sat_direct_int_3,a#sat_direct_int_4;int(1..)] [3, 4]), SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2])) = SATInt(Direct, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),
-or([and([__8,__17;int(1..)]);int(1..)]),
-or([and([__26,__35;int(1..)]);int(1..)])
-
---
-
-or([and([__8,__17;int(1..)]);int(1..)]), 
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__8,__17;int(1..)])
-
---
-
-(UnsafeDiv(SATInt(Direct, [a#sat_direct_int_3,a#sat_direct_int_4;int(1..)] [3, 4]), SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2])) = SATInt(Direct, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),
-and([__8,__17;int(1..)]),
-or([and([__26,__35;int(1..)]);int(1..)]), 
-   ~~> constant_evaluator ([("Constant", 9001)])
-(UnsafeDiv(SATInt(Direct, [a#sat_direct_int_3,a#sat_direct_int_4;int(1..)] [3, 4]), SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2])) = SATInt(Direct, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),
-__8,
-__17,
-or([and([__26,__35;int(1..)]);int(1..)])
-
---
-
-or([and([__26,__35;int(1..)]);int(1..)]), 
-   ~~> remove_unit_vector_or ([("Base", 8800)])
-and([__26,__35;int(1..)])
-
---
-
-(UnsafeDiv(SATInt(Direct, [a#sat_direct_int_3,a#sat_direct_int_4;int(1..)] [3, 4]), SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2])) = SATInt(Direct, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),
-__8,
-__17,
-and([__26,__35;int(1..)]), 
-   ~~> constant_evaluator ([("Constant", 9001)])
-(UnsafeDiv(SATInt(Direct, [a#sat_direct_int_3,a#sat_direct_int_4;int(1..)] [3, 4]), SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2])) = SATInt(Direct, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),
-__8,
+__11,
 __17,
 __26,
-__35
+__35,
+(SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2]) >= SATInt(Direct, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),
+(SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2]) <= 2)
 
 --
 
-(UnsafeDiv(SATInt(Direct, [a#sat_direct_int_3,a#sat_direct_int_4;int(1..)] [3, 4]), SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2])) = SATInt(Direct, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),
-__8,
-__17,
-__26,
-__35, 
-   ~~> remove_single_atom ([("SAT", 8400)])
-(UnsafeDiv(SATInt(Direct, [a#sat_direct_int_3,a#sat_direct_int_4;int(1..)] [3, 4]), SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2])) = SATInt(Direct, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),
-__17,
-__26,
-__35
-new clauses:
-  (__8)
-
---
-
-(UnsafeDiv(SATInt(Direct, [a#sat_direct_int_3,a#sat_direct_int_4;int(1..)] [3, 4]), SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2])) = SATInt(Direct, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),
-__17,
-__26,
-__35, 
-   ~~> remove_single_atom ([("SAT", 8400)])
-(UnsafeDiv(SATInt(Direct, [a#sat_direct_int_3,a#sat_direct_int_4;int(1..)] [3, 4]), SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2])) = SATInt(Direct, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),
-__26,
-__35
-new clauses:
-  (__17)
-
---
-
-(UnsafeDiv(SATInt(Direct, [a#sat_direct_int_3,a#sat_direct_int_4;int(1..)] [3, 4]), SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2])) = SATInt(Direct, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),
-__26,
-__35, 
-   ~~> remove_single_atom ([("SAT", 8400)])
-(UnsafeDiv(SATInt(Direct, [a#sat_direct_int_3,a#sat_direct_int_4;int(1..)] [3, 4]), SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2])) = SATInt(Direct, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),
-__35
-new clauses:
-  (__26)
-
---
-
-(UnsafeDiv(SATInt(Direct, [a#sat_direct_int_3,a#sat_direct_int_4;int(1..)] [3, 4]), SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2])) = SATInt(Direct, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])),
-__35, 
-   ~~> remove_single_atom ([("SAT", 8400)])
-(UnsafeDiv(SATInt(Direct, [a#sat_direct_int_3,a#sat_direct_int_4;int(1..)] [3, 4]), SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2])) = SATInt(Direct, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1]))
-new clauses:
-  (__35)
-
---
-
-UnsafeDiv(SATInt(Direct, [a#sat_direct_int_3,a#sat_direct_int_4;int(1..)] [3, 4]), SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2])), 
-   ~~> div_to_bubble ([("Bubble", 6000)])
-{SafeDiv(SATInt(Direct, [a#sat_direct_int_3,a#sat_direct_int_4;int(1..)] [3, 4]), SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2])) @ (SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2]) != 0)}
-
---
-
-0, 
-   ~~> literal_sat_direct_int ([("SAT_Direct", 9500)])
-SATInt(Direct, [true;int(1..)] [0, 0])
-
---
-
-SafeDiv(SATInt(Direct, [a#sat_direct_int_3,a#sat_direct_int_4;int(1..)] [3, 4]), SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2])), 
-   ~~> safediv_sat_direct ([("SAT_Direct", 9100)])
-SATInt(Direct, [__36,__37,__38,__39;int(1..)] [1, 4])
+(SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2]) >= SATInt(Direct, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])), 
+   ~~> ineq_sat_direct ([("SAT", 4600)])
+__44
 new variables:
   find __36: bool
   find __37: bool
   find __38: bool
   find __39: bool
-new clauses:
-  (¬a#sat_direct_int_3 \/ ¬b#sat_direct_int_1 \/ __38)
-  (¬a#sat_direct_int_3 \/ ¬b#sat_direct_int_2 \/ __36)
-  (¬a#sat_direct_int_4 \/ ¬b#sat_direct_int_1 \/ __39)
-  (¬a#sat_direct_int_4 \/ ¬b#sat_direct_int_2 \/ __37)
-  (¬__36 \/ ¬__37)
-  (¬__36 \/ ¬__38)
-  (¬__36 \/ ¬__39)
-  (¬__37 \/ ¬__38)
-  (¬__37 \/ ¬__39)
-  (¬__38 \/ ¬__39)
-
---
-
-(SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2]) != SATInt(Direct, [true;int(1..)] [0, 0])), 
-   ~~> neq_sat_direct ([("SAT_Direct", 9100)])
-__45
-new variables:
   find __40: bool
   find __41: bool
   find __42: bool
   find __43: bool
   find __44: bool
-  find __45: bool
 new clauses:
-  (__40)
-  (¬__40 \/ __41)
-  (¬__41 \/ __40)
-  (b#sat_direct_int_1 \/ ¬__42)
-  (¬b#sat_direct_int_1 \/ __42)
+  (__36)
+  (¬__36 \/ ¬__37)
+  (__36 \/ __37)
+  (¬__38 \/ b#sat_direct_int_1)
+  (¬__38 \/ __37)
+  (__38 \/ ¬b#sat_direct_int_1 \/ ¬__37)
+  (¬__38 \/ __39)
+  (¬__39 \/ __38)
+  (¬__36 \/ __40)
+  (¬__40 \/ __36)
+  (¬__40 \/ ¬__41)
+  (__40 \/ __41)
+  (¬__42 \/ b#sat_direct_int_2)
+  (¬__42 \/ __41)
+  (__42 \/ ¬b#sat_direct_int_2 \/ ¬__41)
+  (¬__39 \/ __43)
   (¬__42 \/ __43)
-  (¬__41 \/ __43)
-  (¬__43 \/ __42 \/ __41)
-  (b#sat_direct_int_2 \/ ¬__44)
-  (¬b#sat_direct_int_2 \/ __44)
-  (¬__44 \/ __45)
-  (¬__43 \/ __45)
-  (¬__45 \/ __44 \/ __43)
+  (¬__43 \/ __39 \/ __42)
+  (¬__43 \/ ¬__44)
+  (__43 \/ __44)
 
 --
 
-({SATInt(Direct, [__36,__37,__38,__39;int(1..)] [1, 4]) @ __45} = SATInt(Direct, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])), 
-   ~~> bubble_up ([("Bubble", 8800)])
-{(SATInt(Direct, [__36,__37,__38,__39;int(1..)] [1, 4]) = SATInt(Direct, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])) @ __45}
+2, 
+   ~~> literal_sat_direct_int ([("SAT_Direct", 4500)])
+SATInt(Direct, [true;int(1..)] [2, 2])
 
 --
 
-(SATInt(Direct, [__36,__37,__38,__39;int(1..)] [1, 4]) = SATInt(Direct, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [1, 1])), 
-   ~~> eq_sat_direct ([("SAT_Direct", 9100)])
+__11,
+__17,
+__26,
+__35,
+__44,
+(SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2]) <= SATInt(Direct, [true;int(1..)] [2, 2])), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+__11,
+__17,
+__26,
+__35,
+__44,
+(SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2]) <= SATInt(Direct, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2]))
+
+--
+
+(SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2;int(1..)] [1, 2]) <= SATInt(Direct, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [2, 2])), 
+   ~~> ineq_sat_direct ([("SAT", 4600)])
 __53
 new variables:
+  find __45: bool
   find __46: bool
   find __47: bool
   find __48: bool
@@ -383,55 +441,99 @@ new variables:
   find __52: bool
   find __53: bool
 new clauses:
-  (¬__36 \/ __46)
-  (__36 \/ ¬__46)
+  (¬b#sat_direct_int_1 \/ __45)
+  (¬__45 \/ b#sat_direct_int_1)
+  (¬__45 \/ ¬__46)
+  (__45 \/ __46)
+  (¬__47)
   (¬__47 \/ __46)
-  (__47 \/ ¬__46)
-  (__37 \/ __48)
-  (¬__37 \/ ¬__48)
-  (¬__49 \/ __48)
-  (¬__49 \/ __47)
-  (__49 \/ ¬__48 \/ ¬__47)
-  (__38 \/ __50)
-  (¬__38 \/ ¬__50)
+  (¬__47 \/ __48)
+  (¬__48 \/ __47)
+  (¬__45 \/ __49)
+  (¬b#sat_direct_int_2 \/ __49)
+  (¬__49 \/ __45 \/ b#sat_direct_int_2)
+  (¬__49 \/ ¬__50)
+  (__49 \/ __50)
   (¬__51 \/ __50)
-  (¬__51 \/ __49)
-  (__51 \/ ¬__50 \/ ¬__49)
-  (__39 \/ __52)
-  (¬__39 \/ ¬__52)
-  (¬__53 \/ __52)
-  (¬__53 \/ __51)
-  (__53 \/ ¬__52 \/ ¬__51)
+  (__51 \/ ¬__50)
+  (¬__48 \/ __52)
+  (¬__51 \/ __52)
+  (¬__52 \/ __48 \/ __51)
+  (¬__52 \/ ¬__53)
+  (__52 \/ __53)
 
 --
 
-{__53 @ __45}, 
-   ~~> expand_bubble ([("Bubble", 8900)])
-and([__53,__45;int(1..)])
-
---
-
-and([__53,__45;int(1..)]), 
-   ~~> constant_evaluator ([("Constant", 9001)])
-__53,
-__45
-
---
-
-__53,
-__45, 
-   ~~> remove_single_atom ([("SAT", 8400)])
-__45
+__11,
+__17,
+__26,
+__35,
+__44,
+__53, 
+   ~~> remove_single_atom ([("SAT", 4300)])
+__17,
+__26,
+__35,
+__44,
+__53
 new clauses:
-  (__53)
+  (__11)
 
 --
 
-__45, 
-   ~~> remove_single_atom ([("SAT", 8400)])
+__17,
+__26,
+__35,
+__44,
+__53, 
+   ~~> remove_single_atom ([("SAT", 4300)])
+__26,
+__35,
+__44,
+__53
+new clauses:
+  (__17)
+
+--
+
+__26,
+__35,
+__44,
+__53, 
+   ~~> remove_single_atom ([("SAT", 4300)])
+__35,
+__44,
+__53
+new clauses:
+  (__26)
+
+--
+
+__35,
+__44,
+__53, 
+   ~~> remove_single_atom ([("SAT", 4300)])
+__44,
+__53
+new clauses:
+  (__35)
+
+--
+
+__44,
+__53, 
+   ~~> remove_single_atom ([("SAT", 4300)])
+__53
+new clauses:
+  (__44)
+
+--
+
+__53, 
+   ~~> remove_single_atom ([("SAT", 4300)])
 true
 new clauses:
-  (__45)
+  (__53)
 
 --
 
@@ -506,68 +608,70 @@ clauses:
 
 (¬a#sat_direct_int_3 \/ ¬a#sat_direct_int_4),
 (¬b#sat_direct_int_1 \/ ¬b#sat_direct_int_2),
-(__0),
+(¬a#sat_direct_int_3 \/ ¬b#sat_direct_int_1 \/ __2),
+(¬a#sat_direct_int_3 \/ ¬b#sat_direct_int_2 \/ __0),
+(¬a#sat_direct_int_4 \/ ¬b#sat_direct_int_1 \/ __3),
+(¬a#sat_direct_int_4 \/ ¬b#sat_direct_int_2 \/ __1),
 (¬__0 \/ ¬__1),
-(__0 \/ __1),
-(¬__2 \/ a#sat_direct_int_3),
-(¬__2 \/ __1),
-(__2 \/ ¬a#sat_direct_int_3 \/ ¬__1),
-(¬__2 \/ __3),
-(¬__3 \/ __2),
+(¬__0 \/ ¬__2),
+(¬__0 \/ ¬__3),
+(¬__1 \/ ¬__2),
+(¬__1 \/ ¬__3),
+(¬__2 \/ ¬__3),
 (¬__0 \/ __4),
-(¬__4 \/ __0),
-(¬__4 \/ ¬__5),
-(__4 \/ __5),
-(¬__6 \/ a#sat_direct_int_4),
-(¬__6 \/ __5),
-(__6 \/ ¬a#sat_direct_int_4 \/ ¬__5),
-(¬__3 \/ __7),
-(¬__6 \/ __7),
-(¬__7 \/ __3 \/ __6),
-(¬__7 \/ ¬__8),
-(__7 \/ __8),
-(¬a#sat_direct_int_3 \/ __9),
-(¬__9 \/ a#sat_direct_int_3),
-(¬__9 \/ ¬__10),
-(__9 \/ __10),
-(¬__11),
+(__0 \/ ¬__4),
+(¬__5 \/ __4),
+(__5 \/ ¬__4),
+(__1 \/ __6),
+(¬__1 \/ ¬__6),
+(¬__7 \/ __6),
+(¬__7 \/ __5),
+(__7 \/ ¬__6 \/ ¬__5),
+(__2 \/ __8),
+(¬__2 \/ ¬__8),
+(¬__9 \/ __8),
+(¬__9 \/ __7),
+(__9 \/ ¬__8 \/ ¬__7),
+(__3 \/ __10),
+(¬__3 \/ ¬__10),
 (¬__11 \/ __10),
-(¬__11 \/ __12),
-(¬__12 \/ __11),
-(¬__9 \/ __13),
-(¬a#sat_direct_int_4 \/ __13),
-(¬__13 \/ __9 \/ a#sat_direct_int_4),
-(¬__13 \/ ¬__14),
-(__13 \/ __14),
-(¬__15 \/ __14),
-(__15 \/ ¬__14),
-(¬__12 \/ __16),
-(¬__15 \/ __16),
-(¬__16 \/ __12 \/ __15),
-(¬__16 \/ ¬__17),
-(__16 \/ __17),
+(¬__11 \/ __9),
+(__11 \/ ¬__10 \/ ¬__9),
+(__12),
+(¬__12 \/ __13),
+(¬__13 \/ __12),
+(b#sat_direct_int_1 \/ ¬__14),
+(¬b#sat_direct_int_1 \/ __14),
+(¬__14 \/ __15),
+(¬__13 \/ __15),
+(¬__15 \/ __14 \/ __13),
+(b#sat_direct_int_2 \/ ¬__16),
+(¬b#sat_direct_int_2 \/ __16),
+(¬__16 \/ __17),
+(¬__15 \/ __17),
+(¬__17 \/ __16 \/ __15),
 (__18),
 (¬__18 \/ ¬__19),
 (__18 \/ __19),
-(¬__20 \/ b#sat_direct_int_1),
+(¬__20 \/ a#sat_direct_int_3),
 (¬__20 \/ __19),
-(__20 \/ ¬b#sat_direct_int_1 \/ ¬__19),
+(__20 \/ ¬a#sat_direct_int_3 \/ ¬__19),
 (¬__20 \/ __21),
 (¬__21 \/ __20),
 (¬__18 \/ __22),
 (¬__22 \/ __18),
 (¬__22 \/ ¬__23),
 (__22 \/ __23),
-(¬__24 \/ b#sat_direct_int_2),
+(¬__24 \/ a#sat_direct_int_4),
 (¬__24 \/ __23),
-(__24 \/ ¬b#sat_direct_int_2 \/ ¬__23),
+(__24 \/ ¬a#sat_direct_int_4 \/ ¬__23),
 (¬__21 \/ __25),
 (¬__24 \/ __25),
 (¬__25 \/ __21 \/ __24),
 (¬__25 \/ ¬__26),
 (__25 \/ __26),
-(¬b#sat_direct_int_1 \/ __27),
-(¬__27 \/ b#sat_direct_int_1),
+(¬a#sat_direct_int_3 \/ __27),
+(¬__27 \/ a#sat_direct_int_3),
 (¬__27 \/ ¬__28),
 (__27 \/ __28),
 (¬__29),
@@ -575,8 +679,8 @@ clauses:
 (¬__29 \/ __30),
 (¬__30 \/ __29),
 (¬__27 \/ __31),
-(¬b#sat_direct_int_2 \/ __31),
-(¬__31 \/ __27 \/ b#sat_direct_int_2),
+(¬a#sat_direct_int_4 \/ __31),
+(¬__31 \/ __27 \/ a#sat_direct_int_4),
 (¬__31 \/ ¬__32),
 (__31 \/ __32),
 (¬__33 \/ __32),
@@ -586,52 +690,50 @@ clauses:
 (¬__34 \/ __30 \/ __33),
 (¬__34 \/ ¬__35),
 (__34 \/ __35),
-(__8),
+(__36),
+(¬__36 \/ ¬__37),
+(__36 \/ __37),
+(¬__38 \/ b#sat_direct_int_1),
+(¬__38 \/ __37),
+(__38 \/ ¬b#sat_direct_int_1 \/ ¬__37),
+(¬__38 \/ __39),
+(¬__39 \/ __38),
+(¬__36 \/ __40),
+(¬__40 \/ __36),
+(¬__40 \/ ¬__41),
+(__40 \/ __41),
+(¬__42 \/ b#sat_direct_int_2),
+(¬__42 \/ __41),
+(__42 \/ ¬b#sat_direct_int_2 \/ ¬__41),
+(¬__39 \/ __43),
+(¬__42 \/ __43),
+(¬__43 \/ __39 \/ __42),
+(¬__43 \/ ¬__44),
+(__43 \/ __44),
+(¬b#sat_direct_int_1 \/ __45),
+(¬__45 \/ b#sat_direct_int_1),
+(¬__45 \/ ¬__46),
+(__45 \/ __46),
+(¬__47),
+(¬__47 \/ __46),
+(¬__47 \/ __48),
+(¬__48 \/ __47),
+(¬__45 \/ __49),
+(¬b#sat_direct_int_2 \/ __49),
+(¬__49 \/ __45 \/ b#sat_direct_int_2),
+(¬__49 \/ ¬__50),
+(__49 \/ __50),
+(¬__51 \/ __50),
+(__51 \/ ¬__50),
+(¬__48 \/ __52),
+(¬__51 \/ __52),
+(¬__52 \/ __48 \/ __51),
+(¬__52 \/ ¬__53),
+(__52 \/ __53),
+(__11),
 (__17),
 (__26),
 (__35),
-(¬a#sat_direct_int_3 \/ ¬b#sat_direct_int_1 \/ __38),
-(¬a#sat_direct_int_3 \/ ¬b#sat_direct_int_2 \/ __36),
-(¬a#sat_direct_int_4 \/ ¬b#sat_direct_int_1 \/ __39),
-(¬a#sat_direct_int_4 \/ ¬b#sat_direct_int_2 \/ __37),
-(¬__36 \/ ¬__37),
-(¬__36 \/ ¬__38),
-(¬__36 \/ ¬__39),
-(¬__37 \/ ¬__38),
-(¬__37 \/ ¬__39),
-(¬__38 \/ ¬__39),
-(__40),
-(¬__40 \/ __41),
-(¬__41 \/ __40),
-(b#sat_direct_int_1 \/ ¬__42),
-(¬b#sat_direct_int_1 \/ __42),
-(¬__42 \/ __43),
-(¬__41 \/ __43),
-(¬__43 \/ __42 \/ __41),
-(b#sat_direct_int_2 \/ ¬__44),
-(¬b#sat_direct_int_2 \/ __44),
-(¬__44 \/ __45),
-(¬__43 \/ __45),
-(¬__45 \/ __44 \/ __43),
-(¬__36 \/ __46),
-(__36 \/ ¬__46),
-(¬__47 \/ __46),
-(__47 \/ ¬__46),
-(__37 \/ __48),
-(¬__37 \/ ¬__48),
-(¬__49 \/ __48),
-(¬__49 \/ __47),
-(__49 \/ ¬__48 \/ ¬__47),
-(__38 \/ __50),
-(¬__38 \/ ¬__50),
-(¬__51 \/ __50),
-(¬__51 \/ __49),
-(__51 \/ ¬__50 \/ ¬__49),
-(__39 \/ __52),
-(¬__39 \/ ¬__52),
-(¬__53 \/ __52),
-(¬__53 \/ __51),
-(__53 \/ ¬__52 \/ ¬__51),
-(__53),
-(__45)
+(__44),
+(__53)
 

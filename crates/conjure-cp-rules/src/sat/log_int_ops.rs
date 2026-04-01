@@ -26,7 +26,7 @@ use std::cmp;
 /// SATInt(a) </>/<=/>= SATInt(b) ~> Bool
 ///
 /// ```
-#[register_rule(("SAT_Log", 4100))]
+#[register_rule(("SAT_Log", 4600))]
 fn cnf_int_ineq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let (lhs, rhs, strict) = match expr {
         Expr::Lt(_, x, y) => (y, x, true),
@@ -61,7 +61,7 @@ fn cnf_int_ineq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 /// SATInt(a) = SATInt(b) ~> Bool
 ///
 /// ```
-#[register_rule(("SAT_Log", 9100))]
+#[register_rule(("SAT_Log", 4600))]
 fn cnf_int_eq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Eq(_, lhs, rhs) = expr else {
         return Err(RuleNotApplicable);
@@ -103,7 +103,7 @@ fn cnf_int_eq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 /// SATInt(a) != SATInt(b) ~> Bool
 ///
 /// ```
-#[register_rule(("SAT_Log", 4100))]
+#[register_rule(("SAT_Log", 4600))]
 fn cnf_int_neq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Neq(_, lhs, rhs) = expr else {
         return Err(RuleNotApplicable);
@@ -196,7 +196,7 @@ fn inequality_boolean(
 /// Sum(SATInt(a), SATInt(b), ...) ~> SATInt(c)
 ///
 /// ```
-#[register_rule(("SAT_Log", 4100))]
+#[register_rule(("SAT_Log", 4700))]
 fn cnf_int_sum(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Sum(_, exprs) = expr else {
         return Err(RuleNotApplicable);
@@ -415,7 +415,7 @@ fn product_of_ranges(ranges: Vec<&(i32, i32)>) -> (i32, i32) {
 /// Product(SATInt(a), SATInt(b), ...) ~> SATInt(c)
 ///
 /// ```
-#[register_rule(("SAT_Log", 9000))]
+#[register_rule(("SAT_Log", 4700))]
 fn cnf_int_product(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Product(_, exprs) = expr else {
         return Err(RuleNotApplicable);
@@ -495,7 +495,7 @@ fn cnf_int_product(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 /// -SATInt(a) ~> SATInt(b)
 ///
 /// ```
-#[register_rule(("SAT_Log", 4100))]
+#[register_rule(("SAT_Log", 4700))]
 fn cnf_int_neg(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Neg(_, expr) = expr else {
         return Err(RuleNotApplicable);
@@ -551,7 +551,7 @@ fn tseytin_negate(
 /// Min(SATInt(a), SATInt(b), ...) ~> SATInt(c)
 ///
 /// ```
-#[register_rule(("SAT_Log", 4100))]
+#[register_rule(("SAT_Log", 4700))]
 fn cnf_int_min(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Min(_, exprs) = expr else {
         return Err(RuleNotApplicable);
@@ -671,7 +671,7 @@ fn tseytin_select_array(
 /// Max(SATInt(a), SATInt(b), ...) ~> SATInt(c)
 ///
 /// ```
-#[register_rule(("SAT_Log", 4100))]
+#[register_rule(("SAT_Log", 4700))]
 fn cnf_int_max(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Max(_, exprs) = expr else {
         return Err(RuleNotApplicable);
@@ -737,7 +737,7 @@ fn cnf_int_max(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 /// |SATInt(a)| ~> SATInt(b)
 ///
 /// ```
-#[register_rule(("SAT_Log", 4100))]
+#[register_rule(("SAT_Log", 4700))]
 fn cnf_int_abs(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Abs(_, expr) = expr else {
         return Err(RuleNotApplicable);
@@ -802,7 +802,7 @@ fn cnf_int_abs(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 /// SafeDiv(SATInt(a), SATInt(b)) ~> SATInt(c)
 ///
 /// ```
-#[register_rule(("SAT_Log", 4100))]
+#[register_rule(("SAT_Log", 4700))]
 fn cnf_int_safediv(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     // Using "Restoring division" algorithm
     // https://en.wikipedia.org/wiki/Division_algorithm#Restoring_division

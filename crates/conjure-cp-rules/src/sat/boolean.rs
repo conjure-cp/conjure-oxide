@@ -254,7 +254,7 @@ pub fn tseytin_xor(
 ///  new clauses:
 ///  clause(a)
 /// ```
-#[register_rule(("SAT", 8400))]
+#[register_rule(("SAT", 4300))]
 fn remove_single_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     // The single atom must not be within another expression
     let Expr::Root(_, children) = expr else {
@@ -318,7 +318,7 @@ fn remove_single_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 ///  clause(__0, not(c))
 ///  ...
 /// ```
-#[register_rule(("SAT", 8500))]
+#[register_rule(("SAT", 4400))]
 fn apply_tseytin_and_or(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let exprs = match expr {
         Expr::And(_, exprs) | Expr::Or(_, exprs) => exprs,
@@ -366,7 +366,7 @@ fn apply_tseytin_and_or(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
 ///  clause(__0, a)
 ///  clause(not(__0), not(a))
 /// ```
-#[register_rule(("SAT", 9005))]
+#[register_rule(("SAT", 4400))]
 fn apply_tseytin_not(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Not(_, x) = expr else {
         return Err(RuleNotApplicable);
@@ -405,7 +405,7 @@ fn apply_tseytin_not(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 ///  clause(a, not(b), not(__0))
 ///  clause(not(a), b, not(__0))
 /// ```
-#[register_rule(("SAT", 8500))]
+#[register_rule(("SAT", 4400))]
 fn apply_tseytin_iff_eq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     // Check for iff or eq
     let (x, y) = match expr {
@@ -445,7 +445,7 @@ fn apply_tseytin_iff_eq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
 ///  clause(__0, a)
 ///  clause(__0, not(b))
 /// ```
-#[register_rule(("SAT", 8500))]
+#[register_rule(("SAT", 4400))]
 fn apply_tseytin_imply(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Imply(_, x, y) = expr else {
         return Err(RuleNotApplicable);
@@ -486,7 +486,7 @@ fn apply_tseytin_imply(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
 ///  clause(a, not(b), __0)
 ///  clause(not(a), b, __0)
 /// ```
-#[register_rule(("SAT", 8500))]
+#[register_rule(("SAT", 4400))]
 fn apply_tseytin_xor_neq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Neq(_, x, y) = expr else {
         return Err(RuleNotApplicable);
