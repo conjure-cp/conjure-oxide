@@ -47,13 +47,14 @@ where
     M: Sync,
     C: RewriteCache<T>,
 {
-    #[instrument(skip(selector, parallel, subtree, meta, rules))]
+    #[instrument(skip(selector, parallel, subtree, meta, rules, event_handlers))]
     fn select_rule<'a>(
         selector: SelectorFn<T, M, R>,
         parallel: bool,
         subtree: &T,
         meta: &mut M,
         rules: RuleSet<'a, R>,
+        event_handlers: &EventHandlers<T, M, R>,
     ) -> Option<(&'a R, Update<T, M>)> {
         trace!("Beginning Rule Checks");
         if parallel {
@@ -68,7 +69,11 @@ where
             one_or_select(selector, subtree, &mut applicable.into_iter())
         } else {
             let applicable = &mut rules.into_iter().filter_map(|rule| {
-                let update = apply_into_update(rule, subtree, meta)?;
+                event_handlers.trigger_before_rule(subtree, meta, rule);
+                let result = apply_into_update(rule, subtree, meta);
+                let is_applicable = result.is_some();
+                event_handlers.trigger_after_rule(subtree, meta, rule, is_applicable);
+                let update = result?;
                 Some((rule, update))
             });
             trace!("Finished Rule Checks");
@@ -111,7 +116,7 @@ where
             if orig != repl {
                 zipper.cache.insert(&orig, Some(repl), level);
             } else {
-                error!("SAME TREE");
+                error!("Original Subtree is the same as Replacement Tree");
             }
         }
 
@@ -130,9 +135,10 @@ where
     ) {
         // Apply the initial rule
         let (rule, mut update) = application;
-        debug!("Applying Rule '{}' in Fast Mode", rule.name());
+        debug!("Applying Rules in Fixed Point Mode");
 
         if update.has_transform() {
+            trace!("Rule has Transform. Stopping Fixed Point");
             Self::apply_rule(zipper, event_handlers, (rule, update), level);
             return;
         }
@@ -153,7 +159,7 @@ where
             if orig != repl {
                 zipper.cache.insert(&orig, Some(repl), level);
             } else {
-                error!("SAME TREE");
+                error!("Original Subtree is the same as Replacement Tree");
             }
         }
 
@@ -167,14 +173,15 @@ where
             let rules = rule_groups.get_rules(try_level, id);
 
             let (subtree, meta) = zipper.focus_and_meta();
-            match Self::select_rule(selector, parallel, subtree, meta, rules) {
+            match Self::select_rule(selector, parallel, subtree, meta, rules, event_handlers) {
                 Some((rule, mut update)) => {
                     if update.has_transform() {
+                        trace!("Rule has Transform. Stopping Fixed Point");
                         Self::apply_rule(zipper, event_handlers, (rule, update), level);
                         return;
                     }
 
-                    debug!("Applying Rule '{}' in Fast Mode (local)", rule.name());
+                    debug!("Applying Rule '{}' till Fixed Point (local)", rule.name());
                     let cache_active = zipper.cache.is_active();
                     let original = cache_active.then(|| zipper.focus().clone());
                     zipper.cache.invalidate_subtree(&update.new_subtree);
@@ -190,7 +197,7 @@ where
                         if orig != repl {
                             zipper.cache.insert(&orig, Some(repl), level);
                         } else {
-                            error!("SAME TREE");
+                            error!("Original Subtree is the same as Replacement Tree");
                         }
                     }
 
@@ -223,6 +230,7 @@ where
         debug!("Applying Rule '{}' in Fast Mode (naive)", rule.name());
 
         if update.has_transform() {
+            trace!("Rule has Transform. Stopping Fixed Point");
             Self::apply_rule_naive(zipper, event_handlers, (rule, update), level);
             return false;
         }
@@ -243,7 +251,7 @@ where
             if orig != repl {
                 zipper.cache.insert(&orig, Some(repl), level);
             } else {
-                error!("SAME TREE");
+                error!("Original Subtree is the same as Replacement Tree");
             }
         }
 
@@ -258,9 +266,10 @@ where
             let rules = rule_groups.get_rules(try_level, id);
 
             let (subtree, meta) = zipper.focus_and_meta();
-            match Self::select_rule(selector, parallel, subtree, meta, rules) {
+            match Self::select_rule(selector, parallel, subtree, meta, rules, event_handlers) {
                 Some((rule, mut update)) => {
                     if update.has_transform() {
+                        trace!("Rule has Transform. Stopping Fixed Point");
                         Self::apply_rule_naive(zipper, event_handlers, (rule, update), level);
                         return false;
                     }
@@ -284,7 +293,7 @@ where
                         if orig != repl {
                             zipper.cache.insert(&orig, Some(repl), level);
                         } else {
-                            error!("SAME TREE");
+                            error!("Original Subtree is the same as Replacement Tree");
                         }
                     }
 
@@ -331,7 +340,7 @@ where
             if orig != repl {
                 zipper.cache.insert(&orig, Some(repl), level);
             } else {
-                error!("SAME TREE");
+                error!("Original Subtree is the same as Replacement Tree");
             }
         }
 
@@ -521,7 +530,14 @@ where
                     let id = self.rule_groups.discriminant_fn.map(|f| f(subtree));
 
                     let rules = self.rule_groups.get_rules(level, id);
-                    match Self::select_rule(self.selector, self.parallel, subtree, meta, rules) {
+                    match Self::select_rule(
+                        self.selector,
+                        self.parallel,
+                        subtree,
+                        meta,
+                        rules,
+                        &self.event_handlers,
+                    ) {
                         Some(selected) => {
                             if self.fixedpoint {
                                 Self::apply_rule_fixedpoint(
@@ -612,8 +628,14 @@ where
                     let rules = self.rule_groups.get_rules(level, id);
                     debug!("Checking Level {} with {} Rules", level, rules.len());
                     // Choose one transformation from all applicable rules at this level
-                    let selected =
-                        Self::select_rule(self.selector, self.parallel, subtree, meta, rules);
+                    let selected = Self::select_rule(
+                        self.selector,
+                        self.parallel,
+                        subtree,
+                        meta,
+                        rules,
+                        &self.event_handlers,
+                    );
 
                     if let Some(selected) = selected {
                         if self.fixedpoint {
