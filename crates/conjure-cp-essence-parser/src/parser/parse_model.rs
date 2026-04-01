@@ -90,12 +90,12 @@ pub fn parse_essence_with_context_and_map(
         }
     };
 
-    keyword_as_identifier(tree.root_node(), src, errors);
-
     if tree.root_node().has_error() {
         detect_syntactic_errors(src, &tree, errors);
         return Ok(None);
     }
+
+    keyword_as_identifier(tree.root_node(), src, errors);
 
     let mut model = Model::new(context);
     let mut source_map = SourceMap::default();
