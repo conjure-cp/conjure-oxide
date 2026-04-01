@@ -211,7 +211,7 @@ pub fn parse_essence(src: &str) -> Result<(Model, SourceMap), Box<ParseErrorColl
             debug_assert_model_well_formed(&model, "tree-sitter");
             Ok((model, source_map))
         }
-        Ok((None, source_map)) => {
+        Ok((None, _source_map)) => {
             // Recoverable errors were found, return them as a ParseErrorCollection
             Err(Box::new(ParseErrorCollection::multiple(
                 errors,
