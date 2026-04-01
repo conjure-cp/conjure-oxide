@@ -10,7 +10,6 @@ use crate::diagnostics::diagnostics_api::SymbolKind;
 use crate::diagnostics::source_map::{HoverInfo, span_with_hover};
 use crate::errors::{FatalParseError, RecoverableParseError};
 use crate::expression::parse_expression;
-use crate::field;
 use conjure_cp_core::ast::DeclarationPtr;
 use conjure_cp_core::ast::{Name, SymbolTable};
 
@@ -84,7 +83,17 @@ pub fn parse_letting_statement(
         ctx.save_decl_span(name, span_id);
     }
 
-    let expr_or_domain = field!(letting_statement, "expr_or_domain");
+    let expr_or_domain = letting_statement.child_by_field_name("expr_or_domain");
+    let expr_or_domain = match expr_or_domain {
+        Some(node) => node,
+        None => {
+            ctx.record_error(RecoverableParseError::new(
+                "Missing expression or domain in letting statement".to_string(),
+                Some(letting_statement.range()),
+            ));
+            return Ok(None);
+        }
+    };
     match expr_or_domain.kind() {
         "bool_expr" | "arithmetic_expr" | "atom" => {
             for name in temp_symbols {
@@ -112,13 +121,14 @@ pub fn parse_letting_statement(
             }
         }
         _ => {
-            return Err(FatalParseError::internal_error(
+            ctx.record_error(RecoverableParseError::new(
                 format!(
                     "Expected letting expression, got '{}'",
                     expr_or_domain.kind()
                 ),
                 Some(expr_or_domain.range()),
             ));
+            return Ok(None);
         }
     }
 
