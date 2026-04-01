@@ -5,7 +5,7 @@ use crate::parser::ParseContext;
 use crate::parser::atom::parse_atom;
 use crate::parser::comprehension::parse_quantifier_or_aggregate_expr;
 use crate::util::TypecheckingContext;
-use crate::{field, named_child};
+use crate::{RecoverableParseError, field, named_child};
 use conjure_cp_core::ast::{Expression, Metadata, Moo};
 use conjure_cp_core::{domain_int, matrix_expr, range};
 use tree_sitter::Node;
@@ -21,10 +21,13 @@ pub fn parse_expression(
         "comparison_expr" => parse_comparison_expression(ctx, &node),
         "dominance_relation" => parse_dominance_relation(ctx, &node),
         "all_diff_comparison" => parse_all_diff_comparison(ctx, &node),
-        _ => Err(FatalParseError::internal_error(
-            format!("Unexpected expression type: '{}'", node.kind()),
-            Some(node.range()),
-        )),
+        _ => {
+            ctx.record_error(RecoverableParseError::new(
+                format!("Unexpected expression type: '{}'", node.kind()),
+                Some(node.range()),
+            ));
+            Ok(None)
+        }
     }
 }
 
@@ -33,10 +36,11 @@ fn parse_dominance_relation(
     node: &Node,
 ) -> Result<Option<Expression>, FatalParseError> {
     if ctx.root.kind() == "dominance_relation" {
-        return Err(FatalParseError::internal_error(
+        ctx.record_error(RecoverableParseError::new(
             "Nested dominance relations are not allowed".to_string(),
             Some(node.range()),
         ));
+        return Ok(None);
     }
 
     // NB: In all other cases, we keep the root the same;
@@ -81,10 +85,13 @@ fn parse_arithmetic_expression(
         "exponent" | "product_expr" | "sum_expr" => parse_binary_expression(ctx, &inner),
         "list_combining_expr_arith" => parse_list_combining_expression(ctx, &inner),
         "aggregate_expr" => parse_quantifier_or_aggregate_expr(ctx, &inner),
-        _ => Err(FatalParseError::internal_error(
-            format!("Expected arithmetic expression, found: {}", inner.kind()),
-            Some(inner.range()),
-        )),
+        _ => {
+            ctx.record_error(RecoverableParseError::new(
+                format!("Expected arithmetic expression, found: {}", inner.kind()),
+                Some(inner.range()),
+            ));
+            Ok(None)
+        }
     }
 }
 
@@ -121,10 +128,13 @@ fn parse_comparison_expression(
             ctx.typechecking_context = TypecheckingContext::Unknown;
             parse_all_diff_comparison(ctx, &inner)
         }
-        _ => Err(FatalParseError::internal_error(
-            format!("Expected comparison expression, found '{}'", inner.kind()),
-            Some(inner.range()),
-        )),
+        _ => {
+            ctx.record_error(RecoverableParseError::new(
+                format!("Expected comparison expression, found '{}'", inner.kind()),
+                Some(inner.range()),
+            ));
+            Ok(None)
+        }
     }
 }
 
@@ -140,10 +150,13 @@ fn parse_boolean_expression(
         "and_expr" | "or_expr" | "implication" | "iff_expr" => parse_binary_expression(ctx, &inner),
         "list_combining_expr_bool" => parse_list_combining_expression(ctx, &inner),
         "quantifier_expr" => parse_quantifier_or_aggregate_expr(ctx, &inner),
-        _ => Err(FatalParseError::internal_error(
-            format!("Expected boolean expression, found '{}'", inner.kind()),
-            Some(inner.range()),
-        )),
+        _ => {
+            ctx.record_error(RecoverableParseError::new(
+                format!("Expected boolean expression, found '{}'", inner.kind()),
+                Some(inner.range()),
+            ));
+            Ok(None)
+        }
     }
 }
 
@@ -165,10 +178,13 @@ fn parse_list_combining_expression(
         "product" => Ok(Some(Expression::Product(Metadata::new(), Moo::new(inner)))),
         "min" => Ok(Some(Expression::Min(Metadata::new(), Moo::new(inner)))),
         "max" => Ok(Some(Expression::Max(Metadata::new(), Moo::new(inner)))),
-        _ => Err(FatalParseError::internal_error(
-            format!("Invalid operator: '{operator_str}'"),
-            Some(operator_node.range()),
-        )),
+        _ => {
+            ctx.record_error(RecoverableParseError::new(
+                format!("Invalid operator: '{operator_str}'"),
+                Some(operator_node.range()),
+            ));
+            Ok(None)
+        }
     }
 }
 
@@ -200,10 +216,13 @@ fn parse_unary_expression(
             Moo::new(inner),
         ))),
         "sub_bool_expr" | "sub_arith_expr" => Ok(Some(inner)),
-        _ => Err(FatalParseError::internal_error(
-            format!("Unrecognised unary operation: '{}'", node.kind()),
-            Some(node.range()),
-        )),
+        _ => {
+            ctx.record_error(RecoverableParseError::new(
+                format!("Unrecognised unary operation: '{}'", node.kind()),
+                Some(node.range()),
+            ));
+            Ok(None)
+        }
     }
 }
 
@@ -373,10 +392,13 @@ pub fn parse_binary_expression(
                 Moo::new(right),
             )))
         }
-        _ => Err(FatalParseError::internal_error(
-            format!("Invalid operator: '{op_str}'"),
-            Some(op_node.range()),
-        )),
+        _ => {
+            ctx.record_error(RecoverableParseError::new(
+                format!("Invalid operator: '{op_str}'"),
+                Some(op_node.range()),
+            ));
+            Ok(None)
+        }
     };
 
     if expr.is_ok() {
