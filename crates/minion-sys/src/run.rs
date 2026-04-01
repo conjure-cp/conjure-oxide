@@ -10,7 +10,10 @@ use std::{
 
 use anyhow::anyhow;
 
-use crate::ffi::{self};
+use crate::{
+    ast::Tuple,
+    ffi::{self},
+};
 use crate::{
     ast::{Constant, Constraint, Model, Var, VarDomain, VarName},
     error::{MinionError, RuntimeError},
@@ -245,6 +248,7 @@ unsafe fn convert_model_to_raw(
 
         let (vartype_raw, domain_low, domain_high) = match vartype {
             VarDomain::Bound(a, b) => Ok((ffi::VariableType_VAR_BOUND, a, b)),
+            VarDomain::Discrete(a, b) => Ok((ffi::VariableType_VAR_DISCRETE, a, b)),
             VarDomain::Bool => Ok((ffi::VariableType_VAR_BOOL, 0, 1)), // TODO: will this work?
             x => Err(MinionError::NotImplemented(format!("{x:?}"))),
         }?;
@@ -547,12 +551,20 @@ unsafe fn constraint_add_args(
             read_var(i, r_constr, c)?;
             Ok(())
         }
+        Constraint::LexLess(a, b) => {
+            read_list(i, r_constr, a)?;
+            read_list(i, r_constr, b)?;
+            Ok(())
+        }
+        Constraint::LexLeq(a, b) => {
+            read_list(i, r_constr, a)?;
+            read_list(i, r_constr, b)?;
+            Ok(())
+        }
         //Constraint::LitSumGeq(_, _, _) => todo!(),
         //Constraint::Gcc(_, _, _) => todo!(),
         //Constraint::GccWeak(_, _, _) => todo!(),
         //Constraint::LexLeqRv(_, _) => todo!(),
-        //Constraint::LexLeq(_, _) => todo!(),
-        //Constraint::LexLess(_, _) => todo!(),
         //Constraint::LexLeqQuick(_, _) => todo!(),
         //Constraint::LexLessQuick(_, _) => todo!(),
         //Constraint::WatchVecNeq(_, _) => todo!(),
@@ -560,8 +572,11 @@ unsafe fn constraint_add_args(
         //Constraint::Hamming(_, _, _) => todo!(),
         //Constraint::NotHamming(_, _, _) => todo!(),
         //Constraint::FrameUpdate(_, _, _, _, _) => todo!(),
-        //Constraint::NegativeTable(_, _) => todo!(),
-        //Constraint::Table(_, _) => todo!(),
+        Constraint::NegativeTable(vars, tuple_list) | Constraint::Table(vars, tuple_list) => {
+            read_list(i, r_constr, vars)?;
+            read_tuple_list(r_constr, tuple_list)?;
+            Ok(())
+        }
         //Constraint::GacSchema(_, _) => todo!(),
         //Constraint::LightTable(_, _) => todo!(),
         //Constraint::Mddc(_, _) => todo!(),
@@ -745,7 +760,7 @@ unsafe fn read_constant_list(
     raw_constraint: *mut ffi::ProbSpec_ConstraintBlob,
     constants: &[Constant],
 ) -> Result<(), MinionError> {
-    let raw_consts = Scoped::new(ffi::vec_int_new(), |x| ffi::vec_var_free(x as _));
+    let raw_consts = Scoped::new(ffi::vec_int_new(), |x| ffi::vec_int_free(x as _));
 
     for constant in constants.iter() {
         let val = match constant {
@@ -801,5 +816,36 @@ unsafe fn read_constraint_list(
     }
 
     ffi::constraint_addConstraintList(raw_constraint, raw_inners.ptr);
+    Ok(())
+}
+
+unsafe fn read_tuple_list(
+    raw_constraint: *mut ffi::ProbSpec_ConstraintBlob,
+    tuples: &Vec<Tuple>,
+) -> Result<(), MinionError> {
+    // a tuple list is just a vec<vec<int>>, where each inner vec is a tuple
+    let raw_tuples = Scoped::new(ffi::vec_vec_int_new(), |x| ffi::vec_vec_int_free(x as _));
+    for tuple in tuples {
+        let raw_tuple = Scoped::new(ffi::vec_int_new(), |x| ffi::vec_int_free(x as _));
+        for constant in tuple.iter() {
+            let val = match constant {
+                Constant::Integer(n) => Ok(*n),
+                Constant::Bool(true) => Ok(1),
+                Constant::Bool(false) => Ok(0),
+                #[allow(unreachable_patterns)] // TODO: can there be other types?
+                x => Err(MinionError::NotImplemented(format!("{:?}", x))),
+            }?;
+
+            ffi::vec_int_push_back(raw_tuple.ptr, val);
+        }
+
+        ffi::vec_vec_int_push_back_ptr(raw_tuples.ptr, raw_tuple.ptr);
+    }
+
+    // `constraint_setTuples` transfers ownership of `TupleList` into Minion via shared_ptr.
+    // Do not wrap this pointer in `Scoped` or it will be freed too early.
+    let raw_tuple_list = ffi::tupleList_new(raw_tuples.ptr);
+    ffi::constraint_setTuples(raw_constraint, raw_tuple_list);
+
     Ok(())
 }

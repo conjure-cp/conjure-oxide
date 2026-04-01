@@ -6,14 +6,14 @@ use conjure_cp::defaults::DEFAULT_RULE_SETS;
 use conjure_cp::{
     ast::{Literal, Name},
     rule_engine::rewrite_naive,
-    solver::{adaptors::Minion, states::ExecutionSuccess},
+    solver::states::ExecutionSuccess,
 };
 use itertools::Itertools;
 use std::collections::HashMap;
 
 #[allow(clippy::unwrap_used)]
 pub fn main() {
-    use conjure_cp::solver::SolverFamily;
+    use conjure_cp::settings::SolverFamily;
     use conjure_cp::solver::{Solver, adaptors};
     use conjure_cp::{parse::conjure_json::get_example_model, rule_engine::resolve_rule_sets};
     use std::sync::{Arc, Mutex};
@@ -25,7 +25,7 @@ pub fn main() {
     // TODO: We will have a nicer way to do this in the future
     let rule_sets = resolve_rule_sets(SolverFamily::Minion, DEFAULT_RULE_SETS).unwrap();
 
-    let model = rewrite_naive(&model, &rule_sets, true, false).unwrap();
+    let model = rewrite_naive(&model, &rule_sets, true).unwrap();
     println!("Rewritten model: \n {model} \n",);
 
     // To tell the `Solver` type what solver to use, you pass it a `SolverAdaptor`.
@@ -102,7 +102,7 @@ pub fn main() {
     }));
 
     // Did the solver run successfully?
-    let solver: Solver<Minion, ExecutionSuccess> = match result {
+    let solver: Solver<ExecutionSuccess> = match result {
         Ok(s) => s,
         Err(e) => {
             panic!("Error! {e:?}");

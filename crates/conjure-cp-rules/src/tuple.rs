@@ -1,5 +1,5 @@
-use conjure_cp::ast::AbstractLiteral;
 use conjure_cp::ast::Expression as Expr;
+use conjure_cp::ast::GroundDomain;
 use conjure_cp::ast::Moo;
 use conjure_cp::ast::SymbolTable;
 use conjure_cp::into_matrix_expr;
@@ -9,7 +9,6 @@ use conjure_cp::rule_engine::{
 };
 
 use conjure_cp::ast::Atom;
-use conjure_cp::ast::Domain;
 use conjure_cp::ast::Expression;
 use conjure_cp::ast::Literal;
 use conjure_cp::ast::Metadata;
@@ -48,7 +47,7 @@ fn index_tuple_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
 
     // let decl = symbols.lookup(name).unwrap();
 
-    let Some(Domain::Tuple(_)) = decl.domain().map(|x| x.resolve(symbols)) else {
+    let Some(GroundDomain::Tuple(_)) = decl.resolved_domain().as_deref() else {
         return Err(RuleNotApplicable);
     };
 
@@ -92,7 +91,7 @@ fn tuple_index_to_bubble(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
     let domain = subject.domain_of().ok_or(ApplicationError::DomainError)?;
 
-    let Domain::Tuple(elems) = domain else {
+    let Some(elems) = domain.as_tuple() else {
         return Err(RuleNotApplicable);
     };
 
@@ -136,7 +135,7 @@ fn tuple_index_to_bubble(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
 // convert equality to tuple equality
 #[register_rule(("Base", 2000))]
-fn tuple_equality(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+fn tuple_equality(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::Eq(_, left, right) = expr else {
         return Err(RuleNotApplicable);
     };
@@ -169,19 +168,17 @@ fn tuple_equality(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     // let decl2 = symbols.lookup(name2).unwrap();
 
     let domain = decl
-        .domain()
-        .map(|x| x.resolve(symbols))
+        .resolved_domain()
         .ok_or(ApplicationError::DomainError)?;
     let domain2 = decl2
-        .domain()
-        .map(|x| x.resolve(symbols))
+        .resolved_domain()
         .ok_or(ApplicationError::DomainError)?;
 
-    let Domain::Tuple(elems) = domain else {
+    let GroundDomain::Tuple(elems) = domain.as_ref() else {
         return Err(RuleNotApplicable);
     };
 
-    let Domain::Tuple(elems2) = domain2 else {
+    let GroundDomain::Tuple(elems2) = domain2.as_ref() else {
         return Err(RuleNotApplicable);
     };
 
@@ -238,7 +235,7 @@ fn tuple_to_constant(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let Expr::AbstractLiteral(_, AbstractLiteral::Tuple(elems2)) = &**right else {
+    let Some(rhs_tuple_len) = crate::utils::constant_tuple_len(right.as_ref()) else {
         return Err(RuleNotApplicable);
     };
 
@@ -249,15 +246,14 @@ fn tuple_to_constant(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let decl = symbols.lookup(name).unwrap();
 
     let domain = decl
-        .domain()
-        .map(|x| x.resolve(symbols))
+        .resolved_domain()
         .ok_or(ApplicationError::DomainError)?;
 
-    let Domain::Tuple(elems) = domain else {
+    let GroundDomain::Tuple(elems) = domain.as_ref() else {
         return Err(RuleNotApplicable);
     };
 
-    if elems.len() != elems2.len() {
+    if elems.len() != rhs_tuple_len {
         return Err(RuleNotApplicable);
     }
 
@@ -297,7 +293,7 @@ fn tuple_to_constant(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
 // convert equality to tuple inequality
 #[register_rule(("Base", 2000))]
-fn tuple_inequality(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+fn tuple_inequality(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::Neq(_, left, right) = expr else {
         return Err(RuleNotApplicable);
     };
@@ -327,20 +323,18 @@ fn tuple_inequality(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     }
 
     let domain = decl
-        .domain()
-        .map(|x| x.resolve(symbols))
+        .resolved_domain()
         .ok_or(ApplicationError::DomainError)?;
 
     let domain2 = decl2
-        .domain()
-        .map(|x| x.resolve(symbols))
+        .resolved_domain()
         .ok_or(ApplicationError::DomainError)?;
 
-    let Domain::Tuple(elems) = domain else {
+    let GroundDomain::Tuple(elems) = domain.as_ref() else {
         return Err(RuleNotApplicable);
     };
 
-    let Domain::Tuple(elems2) = domain2 else {
+    let GroundDomain::Tuple(elems2) = domain2.as_ref() else {
         return Err(RuleNotApplicable);
     };
 

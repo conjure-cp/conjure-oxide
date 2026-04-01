@@ -1,58 +1,72 @@
 use conjure_cp::{
-    ast::Metadata,
-    ast::{Atom, Domain, Expression as Expr, Name, SubModel, SymbolTable, serde::HasId},
+    ast::{Atom, Expression as Expr, GroundDomain, Metadata, Name, SymbolTable, serde::HasId},
     bug,
     representation::Representation,
     rule_engine::{
         ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
+        register_rule_set,
     },
+    settings::SolverFamily,
 };
 use itertools::Itertools;
 use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 use uniplate::Biplate;
+
+use conjure_cp::solver::adaptors::smt::{MatrixTheory, TheoryConfig};
+
+register_rule_set!("Representations", ("Base"), |f: &SolverFamily| {
+    if matches!(
+        f,
+        SolverFamily::Smt(TheoryConfig {
+            matrices: MatrixTheory::Atomic,
+            ..
+        })
+    ) {
+        return true;
+    }
+    matches!(f, SolverFamily::Sat(_) | SolverFamily::Minion)
+});
+
 // special case rule to select representations for matrices in one go.
 //
 // we know that they only have one possible representation, so this rule adds a representation for all matrices in the model.
-#[register_rule(("Base", 8001))]
+#[register_rule(("Representations", 8001))]
 fn select_representation_matrix(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Root(_, _) = expr else {
         return Err(RuleNotApplicable);
     };
 
     // cannot create representations on non-local variables, so use lookup_local.
-    let matrix_vars = symbols
-        .clone()
-        .into_iter_local()
-        .filter_map(|(n, decl)| {
-            let id = decl.id();
-            decl.as_var().map(|x| (n, id, x.clone()))
-        })
-        .filter(|(_, _, var)| {
-            let Domain::Matrix(valdom, indexdoms) = &var.domain else {
-                return false;
-            };
+    let matrix_vars = symbols.clone().into_iter_local().filter_map(|(n, decl)| {
+        let id = decl.id();
+        let var = decl.as_find()?.clone();
+        let resolved_domain = var.domain.resolve()?;
 
-            // TODO: loosen these requirements once we are able to
-            if !matches!(valdom.as_ref(), Domain::Bool | Domain::Int(_)) {
-                return false;
-            }
+        let GroundDomain::Matrix(valdom, indexdoms) = resolved_domain.as_ref() else {
+            return None;
+        };
 
-            if indexdoms
-                .iter()
-                .any(|x| !matches!(x, Domain::Bool | Domain::Int(_)))
-            {
-                return false;
-            }
+        // TODO: loosen these requirements once we are able to
+        if !matches!(valdom.as_ref(), GroundDomain::Bool | GroundDomain::Int(_)) {
+            return None;
+        }
 
-            true
-        });
+        if indexdoms
+            .iter()
+            .any(|x| !matches!(x.as_ref(), GroundDomain::Bool | GroundDomain::Int(_)))
+        {
+            return None;
+        }
+
+        Some((n, id))
+    });
 
     let mut symbols = symbols.clone();
     let mut expr = expr.clone();
     let has_changed = Arc::new(AtomicBool::new(false));
-    for (name, id, _) in matrix_vars {
+    for (name, _id) in matrix_vars {
         // Even if we have no references to this matrix, still give it the matrix_to_atom
         // representation, as we still currently need to give it to minion even if its unused.
         //
@@ -86,29 +100,6 @@ fn select_representation_matrix(expr: &Expr, symbols: &SymbolTable) -> Applicati
                 n
             }
         });
-
-        let has_changed_ptr = Arc::clone(&has_changed);
-        let old_name = old_name.clone();
-        let new_name = new_name.clone();
-        expr = expr.transform_bi(&move |mut x: SubModel| {
-            let old_name = old_name.clone();
-            let new_name = new_name.clone();
-            let has_changed_ptr = Arc::clone(&has_changed_ptr);
-
-            // only do things if this inscope and not shadowed..
-            if x.symbols().lookup(&old_name).is_none_or(|x| x.id() == id) {
-                let root = x.root_mut_unchecked();
-                *root = root.transform_bi(&move |n: Name| {
-                    if n == old_name {
-                        has_changed_ptr.store(true, Ordering::SeqCst);
-                        new_name.clone()
-                    } else {
-                        n
-                    }
-                });
-            }
-            x
-        });
     }
 
     if has_changed.load(Ordering::Relaxed) {
@@ -118,7 +109,7 @@ fn select_representation_matrix(expr: &Expr, symbols: &SymbolTable) -> Applicati
     }
 }
 
-#[register_rule(("Base", 8000))]
+#[register_rule(("Representations", 8000))]
 fn select_representation(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     // thing we are representing must be a reference
     let Expr::Atomic(_, Atom::Reference(decl)) = expr else {
@@ -129,7 +120,8 @@ fn select_representation(expr: &Expr, symbols: &SymbolTable) -> ApplicationResul
 
     // thing we are representing must be a variable
     {
-        decl.ptr().as_var().ok_or(RuleNotApplicable)?;
+        let guard = decl.ptr().as_find().ok_or(RuleNotApplicable)?;
+        drop(guard);
     }
 
     if !needs_representation(&name, symbols) {
@@ -172,27 +164,29 @@ fn select_representation(expr: &Expr, symbols: &SymbolTable) -> ApplicationResul
 
 /// Returns whether `name` needs representing.
 ///
-/// # Panics
-///
-///   + If `name` is not in `symbols`.
 fn needs_representation(name: &Name, symbols: &SymbolTable) -> bool {
     // if name already has a representation, false
     if let Name::Represented(_) = name {
         return false;
     }
     // might be more logic here in the future?
-    domain_needs_representation(&symbols.resolve_domain(name).unwrap())
+    symbols
+        .resolve_domain(name)
+        .is_some_and(|domain| domain_needs_representation(domain.as_ref()))
 }
 
 /// Returns whether `domain` needs representing.
-fn domain_needs_representation(domain: &Domain) -> bool {
+fn domain_needs_representation(domain: &GroundDomain) -> bool {
     // very simple implementation for nows
     match domain {
-        Domain::Bool | Domain::Int(_) => false,
-        Domain::Matrix(_, _) => false, // we special case these elsewhere
-        Domain::Set(_, _) | Domain::Tuple(_) | Domain::Record(_) => true,
-        Domain::Reference(_) => unreachable!("domain should be resolved"),
-        Domain::Empty(_) => false, // _ => false,
+        GroundDomain::Bool | GroundDomain::Int(_) => false,
+        GroundDomain::Matrix(_, _) => false, // we special case these elsewhere
+        GroundDomain::Set(_, _)
+        | GroundDomain::MSet(_, _)
+        | GroundDomain::Tuple(_)
+        | GroundDomain::Record(_)
+        | GroundDomain::Function(_, _, _) => true,
+        GroundDomain::Empty(_) => false,
     }
 }
 
@@ -201,25 +195,26 @@ fn domain_needs_representation(domain: &Domain) -> bool {
 ///
 /// Returns None if there is no valid representation for `name`.
 ///
-/// # Panics
-///
-///   + If `name` is not in `symbols`.
 fn get_or_create_representation(
     name: &Name,
     symbols: &mut SymbolTable,
 ) -> Option<Vec<Box<dyn Representation>>> {
     // TODO: pick representations recursively for nested abstract domains: e.g. sets in sets.
 
-    match symbols.resolve_domain(name).unwrap() {
-        Domain::Set(_, _) => None, // has no representations yet!
-        Domain::Tuple(elem_domains) => {
-            if elem_domains.iter().any(domain_needs_representation) {
+    let dom = symbols.resolve_domain(name)?;
+    match dom.as_ref() {
+        GroundDomain::Set(_, _) => None, // has no representations yet!
+        GroundDomain::Tuple(elem_domains) => {
+            if elem_domains
+                .iter()
+                .any(|d| domain_needs_representation(d.as_ref()))
+            {
                 bug!("representing nested abstract domains is not implemented");
             }
 
             symbols.get_or_add_representation(name, &["tuple_to_atom"])
         }
-        Domain::Record(entries) => {
+        GroundDomain::Record(entries) => {
             if entries
                 .iter()
                 .any(|entry| domain_needs_representation(&entry.domain))

@@ -1,7 +1,7 @@
-use conjure_cp::ast::Metadata;
 use conjure_cp::ast::categories::{Category, CategoryOf};
 use conjure_cp::ast::{
-    Atom, Domain, Expression as Expr, Literal, Moo, Name, Range, SymbolTable, matrix,
+    Atom, Expression as Expr, GroundDomain, Literal, Metadata, Moo, Name, Range, SymbolTable,
+    matrix,
 };
 use conjure_cp::essence_expr;
 use conjure_cp::into_matrix_expr;
@@ -35,12 +35,11 @@ fn index_matrix_to_atom_impl(expr: &Expr, symbols: &SymbolTable) -> ApplicationR
             .unwrap()[0]
             .clone();
 
-        // ensure that the subject has a matrix domain.
-        // let decl = symbols.lookup(name).unwrap();
-
         // resolve index domains so that we can enumerate them later
-        let Some(Domain::Matrix(_, index_domains)) = decl.domain().map(|x| x.resolve(symbols))
-        else {
+        let dom = decl.resolved_domain().ok_or(RuleNotApplicable)?;
+
+        // ensure that the subject has a matrix domain.
+        let GroundDomain::Matrix(_, index_domains) = dom.as_ref() else {
             return Err(RuleNotApplicable);
         };
 
@@ -71,7 +70,6 @@ fn index_matrix_to_atom_impl(expr: &Expr, symbols: &SymbolTable) -> ApplicationR
             )));
 
             let subject = repr.expression_down(symbols)?[&indices_as_name].clone();
-
             Ok(Reduction::pure(subject))
         } else {
             // indices are not constant -> flatten matrix and return [flattened_matrix][flattened_index_expr]
@@ -121,7 +119,7 @@ fn index_matrix_to_atom_impl(expr: &Expr, symbols: &SymbolTable) -> ApplicationR
 
                 let old_index_domain = &index_domains[0];
 
-                let Domain::Int(ranges) = old_index_domain else {
+                let GroundDomain::Int(ranges) = old_index_domain.as_ref() else {
                     return Err(RuleNotApplicable);
                 };
 
@@ -145,7 +143,7 @@ fn index_matrix_to_atom_impl(expr: &Expr, symbols: &SymbolTable) -> ApplicationR
             let bounds = index_domains
                 .iter()
                 .map(|dom| {
-                    let Domain::Int(ranges) = dom else {
+                    let GroundDomain::Int(ranges) = dom.as_ref() else {
                         return Err(RuleNotApplicable);
                     };
 
@@ -224,7 +222,7 @@ fn index_matrix_to_atom_impl(expr: &Expr, symbols: &SymbolTable) -> ApplicationR
             // now lets get the flat matrix.
 
             let repr_exprs = repr.expression_down(symbols)?;
-            let flat_elems = matrix::enumerate_indices(index_domains)
+            let flat_elems = matrix::enumerate_indices(index_domains.clone())
                 .map(|xs| {
                     Name::Represented(Box::new((
                         name.as_ref().clone(),
@@ -273,7 +271,8 @@ fn slice_matrix_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
         .clone();
 
     // resolve index domains so that we can enumerate them later
-    let Some(Domain::Matrix(_, index_domains)) = decl.domain().map(|x| x.resolve(symbols)) else {
+    let dom = decl.resolved_domain().ok_or(RuleNotApplicable)?;
+    let GroundDomain::Matrix(_, index_domains) = dom.as_ref() else {
         return Err(RuleNotApplicable);
     };
 
@@ -300,7 +299,6 @@ fn slice_matrix_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
     let slice = index_domains[hole_dim as usize]
         .values()
         .expect("index domain should be finite and enumerable")
-        .into_iter()
         .map(|i| {
             let mut indices_as_lits = indices_as_lits.clone();
             indices_as_lits[hole_dim as usize] = Some(i);
@@ -353,8 +351,8 @@ fn matrix_ref_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
             .clone();
 
         // resolve index domains so that we can enumerate them later
-        let Some(Domain::Matrix(_, index_domains)) = decl.domain().map(|x| x.resolve(symbols))
-        else {
+        let dom = decl.resolved_domain().ok_or(RuleNotApplicable)?;
+        let GroundDomain::Matrix(_, index_domains) = dom.as_ref() else {
             continue;
         };
 
@@ -366,7 +364,7 @@ fn matrix_ref_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
             continue;
         };
 
-        let flat_values = matrix::enumerate_indices(index_domains)
+        let flat_values = matrix::enumerate_indices(index_domains.clone())
             .map(|i| {
                 matrix_values[&Name::Represented(Box::new((
                     name.as_ref().clone(),

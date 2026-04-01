@@ -4,14 +4,17 @@ mod comprehension;
 pub mod domain;
 pub mod expression;
 pub mod find;
+pub mod keyword_checks;
 pub mod letting;
 mod macros;
 pub mod parse_exprs;
 pub mod parse_literal;
 pub mod parse_model;
+pub mod syntax_errors;
 pub mod traversal;
 pub mod util;
 
 pub use parse_exprs::*;
 pub use parse_literal::*;
 pub use parse_model::*;
+pub use util::ParseContext;

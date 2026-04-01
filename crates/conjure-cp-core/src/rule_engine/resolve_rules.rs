@@ -5,7 +5,7 @@ use std::fmt::Display;
 use thiserror::Error;
 
 use crate::rule_engine::{Rule, RuleSet, get_rule_set_by_name, get_rule_sets_for_solver_family};
-use crate::solver::SolverFamily;
+use crate::settings::SolverFamily;
 
 /// Holds a rule and its priority, along with the rule set it came from.
 #[derive(Debug, Clone)]
@@ -153,7 +153,7 @@ pub fn get_rules_grouped<'a>(
     Ok(grouped)
 }
 
-/// Resolves the final set of rule sets to apply based on target solver and extra rule set names.
+/// Resolves the final set of rule sets to apply based on target solver family and extra rule set names.
 ///
 /// # Arguments
 /// - `target_solver` The solver family we're targeting

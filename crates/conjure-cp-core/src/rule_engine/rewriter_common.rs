@@ -2,15 +2,18 @@
 use super::{
     Reduction,
     resolve_rules::{ResolveRulesError, RuleData},
+    submodel_zipper::expression_ctx,
 };
 use crate::ast::{
-    Expression, SubModel,
+    DeclarationPtr, Expression, Model, Name, SymbolTable,
     pretty::{pretty_variable_declaration, pretty_vec},
 };
 
 use itertools::Itertools;
 use serde_json::json;
+use std::collections::BTreeMap;
 use std::fmt::Debug;
+use std::sync::Arc;
 use thiserror::Error;
 use tracing::{info, trace};
 
@@ -20,12 +23,28 @@ pub struct RuleResult<'a> {
     pub reduction: Reduction,
 }
 
+pub type VariableDeclarationSnapshot = BTreeMap<Name, String>;
+
+pub fn snapshot_variable_declarations(symbols: &SymbolTable) -> VariableDeclarationSnapshot {
+    symbols
+        .clone()
+        .into_iter_local()
+        .filter_map(|(name, _)| {
+            pretty_variable_declaration(symbols, &name).map(|declaration| (name, declaration))
+        })
+        .collect()
+}
+
 /// Logs, to the main log, and the human readable traces used by the integration tester, that the
 /// rule has been applied to the expression
 pub fn log_rule_application(
     result: &RuleResult,
     initial_expression: &Expression,
-    initial_model: &SubModel,
+    initial_symbols: &SymbolTable,
+    variable_declaration_snapshots: Option<(
+        &VariableDeclarationSnapshot,
+        &VariableDeclarationSnapshot,
+    )>,
 ) {
     let red = &result.reduction;
     let rule = result.rule_data.rule;
@@ -48,58 +67,81 @@ pub fn log_rule_application(
     );
 
     // empty if no top level constraints
-    let top_level_str = if !red.new_top.is_empty() {
+    let new_constraints_str = if !red.new_top.is_empty() {
         let mut exprs: Vec<String> = vec![];
-
         for expr in &red.new_top {
             exprs.push(format!("  {expr}"));
         }
-
         let exprs = exprs.iter().join("\n");
-
         format!("new constraints:\n{exprs}\n")
     } else if !red.new_clauses.is_empty() {
         let mut exprs: Vec<String> = vec![];
-
         for clause in &red.new_clauses {
             exprs.push(format!("  {clause}"));
         }
-
         let exprs = exprs.iter().join("\n");
-
         format!("new clauses:\n{exprs}\n")
     } else {
         String::new()
     };
 
-    // empty if no new variables
-    // TODO: consider printing modified and removed declarations too, though removing a declaration in a rule is less likely.
-    let new_variables_str = {
-        let mut vars: Vec<String> = vec![];
+    let (new_variables_str, updated_variables_str) =
+        if let Some((before, after)) = variable_declaration_snapshots {
+            let mut new_variables = Vec::new();
+            let mut updated_variables = Vec::new();
 
-        for var_name in red.added_symbols(&initial_model.symbols()) {
-            #[allow(clippy::unwrap_used)]
-            vars.push(format!(
-                "  {}",
-                pretty_variable_declaration(&red.symbols, &var_name).unwrap()
-            ));
-        }
-        if vars.is_empty() {
-            String::new()
+            for (name, declaration_after) in after {
+                match before.get(name) {
+                    None => new_variables.push(format!("  {declaration_after}")),
+                    Some(declaration_before) if declaration_before != declaration_after => {
+                        updated_variables
+                            .push(format!("  {declaration_before} ~~> {declaration_after}"));
+                    }
+                    _ => {}
+                }
+            }
+
+            let new_variables_str = if new_variables.is_empty() {
+                String::new()
+            } else {
+                format!("new variables:\n{}\n", new_variables.join("\n"))
+            };
+
+            let updated_variables_str = if updated_variables.is_empty() {
+                String::new()
+            } else {
+                format!("\nupdated variables:\n{}\n", updated_variables.join("\n"))
+            };
+
+            (new_variables_str, updated_variables_str)
         } else {
-            format!("new variables:\n{}", vars.join("\n"))
-        }
-    };
+            // empty if no new variables
+            let mut vars: Vec<String> = vec![];
+            for var_name in red.added_symbols(initial_symbols) {
+                #[allow(clippy::unwrap_used)]
+                vars.push(format!(
+                    "  {}",
+                    pretty_variable_declaration(&red.symbols, &var_name).unwrap()
+                ));
+            }
+            let new_variables_str = if vars.is_empty() {
+                String::new()
+            } else {
+                format!("new variables:\n{}\n", vars.join("\n"))
+            };
+            (new_variables_str, String::new())
+        };
 
     trace!(
         target: "rule_engine_human",
-        "{}, \n   ~~> {} ({:?}) \n{} \n{}\n{}--\n",
+        "{}, \n   ~~> {} ({:?})\n{}\n{}{}{}\n--\n",
         initial_expression,
         rule.name,
         rule.rule_sets,
         red.new_expression,
         new_variables_str,
-        top_level_str
+        updated_variables_str,
+        new_constraints_str
     );
 
     trace!(
@@ -116,6 +158,83 @@ pub fn log_rule_application(
     })
 
     )
+}
+
+type LettingCtxFn = Arc<dyn Fn(Expression) -> Expression>;
+type ApplicableLettingRule<'a> = (
+    RuleResult<'a>,
+    u16,
+    Expression,
+    DeclarationPtr,
+    LettingCtxFn,
+);
+
+pub(crate) fn try_rewrite_value_letting_once(
+    model: &mut Model,
+    rules_grouped: &Vec<(u16, Vec<RuleData<'_>>)>,
+    prop_multiple_equally_applicable: bool,
+) -> Option<()> {
+    let symbols = model.symbols().clone();
+    let mut results: Vec<ApplicableLettingRule<'_>> = vec![];
+
+    'top: for (priority, rules) in rules_grouped.iter() {
+        for (_, decl) in symbols.clone().into_iter_local() {
+            let Some(letting_expr) = decl.as_value_letting().map(|expr| expr.clone()) else {
+                continue;
+            };
+
+            for (expr, ctx) in expression_ctx(letting_expr) {
+                let expr = expr.clone();
+                let ctx = ctx.clone();
+
+                for rd in rules {
+                    let Ok(reduction) = (rd.rule.application)(&expr, &symbols) else {
+                        continue;
+                    };
+
+                    results.push((
+                        RuleResult {
+                            rule_data: rd.clone(),
+                            reduction,
+                        },
+                        *priority,
+                        expr.clone(),
+                        decl.clone(),
+                        ctx.clone(),
+                    ));
+                }
+
+                if !results.is_empty() {
+                    break 'top;
+                }
+            }
+        }
+    }
+
+    let (result, _, expr, decl, ctx) = match results.as_slice() {
+        [] => return None,
+        [single, ..] => single,
+    };
+
+    if prop_multiple_equally_applicable && results.len() > 1 {
+        let names: Vec<_> = results
+            .iter()
+            .map(|(result, _, _, _, _)| result.rule_data.rule.name)
+            .collect();
+        panic!("Multiple equally applicable rules for value letting expression {expr}: {names:?}");
+    }
+
+    log_rule_application(result, expr, &symbols, None);
+
+    let rewritten_expr = ctx(result.reduction.new_expression.clone());
+    result.reduction.clone().apply(model);
+
+    let mut decl = decl.clone();
+    *decl
+        .as_value_letting_mut()
+        .expect("declaration should still be a value letting") = rewritten_expr;
+
+    Some(())
 }
 
 /// Represents errors that can occur during the model rewriting process.

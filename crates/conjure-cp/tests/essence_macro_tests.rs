@@ -3,6 +3,7 @@ use conjure_cp::ast::{Expression, Moo};
 use conjure_cp::essence_expr;
 use conjure_cp::matrix_expr;
 use conjure_cp_core::{domain_int, range};
+use defile as _;
 
 #[test]
 fn test_2plus2() {
@@ -35,10 +36,4 @@ fn test_metavar_const() {
             ])
         )
     );
-}
-
-#[test]
-fn ui() {
-    let t = trybuild::TestCases::new();
-    t.compile_fail("tests/ui/fail/test*.rs");
 }

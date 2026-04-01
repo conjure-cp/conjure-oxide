@@ -1,6 +1,9 @@
 use conjure_cp::{
     ast::Metadata,
-    ast::{Atom, DeclarationPtr, Expression as Expr, Moo, SymbolTable, categories::Category},
+    ast::{
+        AbstractLiteral, Atom, DeclarationPtr, Expression as Expr, Literal, Moo, Name, SymbolTable,
+        categories::Category,
+    },
 };
 
 use tracing::{instrument, trace};
@@ -28,6 +31,31 @@ pub fn is_flat(expr: &Expr) -> bool {
         }
     }
     true
+}
+
+/// Returns the arity of a tuple constant expression, if this expression is one.
+pub fn constant_tuple_len(expr: &Expr) -> Option<usize> {
+    match expr {
+        Expr::AbstractLiteral(_, AbstractLiteral::Tuple(elems)) => Some(elems.len()),
+        Expr::Atomic(_, Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Tuple(elems)))) => {
+            Some(elems.len())
+        }
+        _ => None,
+    }
+}
+
+/// Returns record field names of a record constant expression, if this expression is one.
+pub fn constant_record_names(expr: &Expr) -> Option<Vec<Name>> {
+    match expr {
+        Expr::AbstractLiteral(_, AbstractLiteral::Record(entries)) => {
+            Some(entries.iter().map(|x| x.name.clone()).collect())
+        }
+        Expr::Atomic(
+            _,
+            Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Record(entries))),
+        ) => Some(entries.iter().map(|x| x.name.clone()).collect()),
+        _ => None,
+    }
 }
 
 /// True if the entire AST is constants.
@@ -134,41 +162,19 @@ pub fn to_aux_var(expr: &Expr, symbols: &SymbolTable) -> Option<ToAuxVarOutput> 
         return None;
     }
 
-    // FIXME: why does removing this make tests fail!
-    //
-    // do not put matrix[e] in auxvar
-    //
-    // eventually this will rewrite into an indomain constraint, or a single variable.
-    //
-    // To understand why deferring this until a lower level constraint is chosen is good, consider
-    // the comprehension:
-    //
-    // and([m[i] = i + 1  | i: int(1..5)])
-    //
-    // Here, if we rewrite inside the comprehension, we will end up making the auxvar
-    // __0  = m[i].
-    //
-    // When we expand the matrix, this will expand to:
-    //
-    // __0 = m[1]
-    // __1 = m[2]
-    // __2 = m[3]
-    // __3 = m[4]
-    // __4 = m[5]
-    //
-    //
-    // These all rewrite to variable references (e.g. m[1] ~> m#matrix_to_atom_1), so these auxvars
-    // are redundant. However, we don't know this before expanding, as they are just m[i].
-    //
-    // In the future, we can do this more fine-grained using categories (e.g. only flatten matrices
-    // indexed by expressions with the decision variable category) : however, doing this for
-    // all matrix indexing is fine, as they can be rewritten into a lower-level expression, then
-    // flattened.
-    if let Expr::SafeIndex(_, _, _) = expr {
-        if cfg!(debug_assertions) {
-            trace!(expr=%expr, why = "expression is an matrix indexing operation", "to_aux_var() failed");
+    // Avoid introducing auxvars for generic matrix indexing (can create many redundant auxvars
+    // before comprehension expansion). However, keep list indexing eligible so Minion lowering
+    // can introduce `element` constraints in non-equality contexts.
+    if let Expr::SafeIndex(_, subject, indices) = expr {
+        let can_lower_via_element = subject.clone().unwrap_list().is_some()
+            && indices.iter().all(|i| matches!(i, Expr::Atomic(_, _)));
+
+        if !can_lower_via_element {
+            if cfg!(debug_assertions) {
+                trace!(expr=%expr, why = "matrix indexing is not element-lowerable", "to_aux_var() failed");
+            }
+            return None;
         }
-        return None;
     }
 
     let Some(domain) = expr.domain_of() else {
@@ -178,7 +184,7 @@ pub fn to_aux_var(expr: &Expr, symbols: &SymbolTable) -> Option<ToAuxVarOutput> 
         return None;
     };
 
-    let decl = symbols.gensym(&domain);
+    let decl = symbols.gen_find(&domain);
 
     if cfg!(debug_assertions) {
         trace!(expr=%expr, "to_auxvar() succeeded in putting expr into an auxvar");

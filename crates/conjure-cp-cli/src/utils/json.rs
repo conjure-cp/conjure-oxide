@@ -45,6 +45,9 @@ pub fn sort_json_variables(value: &Value) -> Value {
 /// serde_json will output JSON objects in an arbitrary key order.
 /// this is normally fine, except in our use case we wouldn't want to update the expected output again and again.
 /// so a consistent (sorted) ordering of the keys is desirable.
+///
+/// We do not sort contained Array objects since order does have meaning for things like matrix literals. We
+/// sort the outer-most array so we can meaningfully compare with Conjure's arbitrarily-ordered solutions.
 pub fn sort_json_object(value: &Value, sort_arrays: bool) -> Value {
     match value {
         Value::Object(obj) => {
@@ -54,7 +57,7 @@ pub fn sort_json_object(value: &Value, sort_arrays: bool) -> Value {
                     if k == "variables" {
                         (k.clone(), sort_json_variables(v))
                     } else {
-                        (k.clone(), sort_json_object(v, sort_arrays))
+                        (k.clone(), sort_json_object(v, false))
                     }
                 })
                 .collect();
@@ -63,10 +66,7 @@ pub fn sort_json_object(value: &Value, sort_arrays: bool) -> Value {
             Value::Object(ordered.into_iter().collect())
         }
         Value::Array(arr) => {
-            let mut arr: Vec<Value> = arr
-                .iter()
-                .map(|val| sort_json_object(val, sort_arrays))
-                .collect();
+            let mut arr: Vec<Value> = arr.iter().map(|val| sort_json_object(val, false)).collect();
 
             if sort_arrays {
                 arr.sort_by(json_value_cmp);

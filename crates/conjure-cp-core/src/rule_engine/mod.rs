@@ -77,9 +77,9 @@ pub use conjure_cp_rule_macros::register_rule;
 ///
 /// ```rust
 /// use conjure_cp_core::rule_engine::register_rule_set;
-/// use conjure_cp_core::solver::SolverFamily;
-/// register_rule_set!("MyRuleSet", (), SolverFamily::Minion);
-/// register_rule_set!("AnotherRuleSet", (), (SolverFamily::Minion, SolverFamily::Sat));
+/// use conjure_cp_core::settings::SolverFamily;
+/// register_rule_set!("MyRuleSet", (), |f: &SolverFamily| matches!(f, SolverFamily::Minion));
+/// register_rule_set!("AnotherRuleSet", (), |f: &SolverFamily| matches!(f, SolverFamily::Minion | SolverFamily::Sat(_)));
 /// ```
 #[doc(inline)]
 pub use conjure_cp_rule_macros::register_rule_set;
@@ -94,7 +94,7 @@ mod submodel_zipper;
 #[doc(hidden)]
 pub use submodel_zipper::SubmodelZipper;
 
-use crate::solver::SolverFamily;
+use crate::settings::SolverFamily;
 
 mod resolve_rules;
 mod rewrite_naive;
@@ -233,12 +233,12 @@ pub fn get_rule_set_by_name(name: &str) -> Option<&'static RuleSet<'static>> {
 /// # Example
 ///
 /// ```rust
-/// use conjure_cp_core::solver::SolverFamily;
+/// use conjure_cp_core::settings::SolverFamily;
 /// use conjure_cp_core::rule_engine::{get_rule_sets_for_solver_family, register_rule_set};
 ///
-/// register_rule_set!("CNF", (), SolverFamily::Sat);
+/// register_rule_set!("CNF", (), |f: &SolverFamily| matches!(f, SolverFamily::Sat(_)));
 ///
-/// let rule_sets = get_rule_sets_for_solver_family(SolverFamily::Sat);
+/// let rule_sets = get_rule_sets_for_solver_family(SolverFamily::Sat(Default::default()));
 /// assert_eq!(rule_sets.len(), 2);
 /// assert_eq!(rule_sets[0].name, "CNF");
 /// ```
@@ -247,12 +247,7 @@ pub fn get_rule_sets_for_solver_family(
 ) -> Vec<&'static RuleSet<'static>> {
     get_all_rule_sets()
         .iter()
-        .filter(|rule_set| {
-            rule_set
-                .solver_families
-                .iter()
-                .any(|family| family.eq(&solver_family))
-        })
+        .filter(|rule_set| rule_set.applies_to_family(&solver_family))
         .copied()
         .collect()
 }

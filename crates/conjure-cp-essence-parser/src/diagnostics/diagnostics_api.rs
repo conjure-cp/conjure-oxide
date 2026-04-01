@@ -1,0 +1,79 @@
+use serde::{Deserialize, Serialize};
+
+use crate::diagnostics::error_detection::collect_errors::detect_errors;
+use tree_sitter::Tree;
+// structs for lsp stuff
+
+// position / range
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct Position {
+    pub line: u32,
+    pub character: u32,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct Range {
+    pub start: Position,
+    pub end: Position,
+}
+
+// the actual values can be chnaged later, if needed
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub enum Severity {
+    Error = 1,
+    Warn = 2,
+    Info = 3,
+    Hint = 4,
+}
+
+// the actual diagnostic struct
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct Diagnostic {
+    pub range: Range,
+    pub severity: Severity,
+    pub message: String,
+    pub source: &'static str,
+}
+
+// document symbol struct is used to denote a single token / node
+// this will be used for syntax highlighting and hovering
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum SymbolKind {
+    Integer = 0,
+    Decimal = 1,
+    Function = 2,
+    Letting = 3,
+    Find = 4,
+    Variable = 5,
+    Constant = 6,
+    Domain = 7,
+} // to be extended
+
+// each type of token / symbol in the essence grammar will be
+// assigned an integer, which would be mapped to a colour
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DocumentSymbol {
+    pub name: String,
+    pub detail: Option<String>,
+    pub kind: SymbolKind,
+    pub range: Range,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub children: Option<Vec<DocumentSymbol>>,
+}
+
+// getting the actual diagnostic
+pub fn get_diagnostics(source: &str, cst: &Tree) -> Vec<Diagnostic> {
+    let mut diagnostics = Vec::new();
+
+    diagnostics.extend(detect_errors(source, cst));
+
+    diagnostics
+}
+
+// get document symbols for semantic highlighting

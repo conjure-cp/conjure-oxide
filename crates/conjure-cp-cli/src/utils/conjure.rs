@@ -1,6 +1,5 @@
 use std::collections::BTreeMap;
 use std::path::PathBuf;
-use std::rc::Rc;
 use std::string::ToString;
 use std::sync::{Arc, Mutex, RwLock};
 
@@ -16,25 +15,24 @@ use tempfile::tempdir;
 use crate::utils::json::sort_json_object;
 use conjure_cp::Model;
 use conjure_cp::parse::tree_sitter::parse_essence_file;
-use conjure_cp::solver::{Solver, SolverAdaptor};
+use conjure_cp::solver::Solver;
 
 use glob::glob;
 
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
 pub fn get_solutions(
-    solver_adaptor: impl SolverAdaptor,
+    solver: Solver,
     model: Model,
     num_sols: i32,
     solver_input_file: &Option<PathBuf>,
 ) -> Result<Vec<BTreeMap<Name, Literal>>, anyhow::Error> {
-    let adaptor_name = solver_adaptor.get_name().unwrap_or("UNKNOWN".into());
-    let solver = Solver::new(solver_adaptor);
+    let adaptor_name = solver.get_name();
 
     eprintln!("Building {adaptor_name} model...");
 
     // Create for later since we consume the model when loading it
-    let symbols_rc = Rc::clone(model.as_submodel().symbols_ptr_unchecked());
+    let symbols_ptr = model.symbols_ptr_unchecked().clone();
 
     let solver = solver.load_model(model)?;
 
@@ -43,8 +41,8 @@ pub fn get_solutions(
             "Writing solver input file to {}",
             solver_input_file.display()
         );
-        let mut file = std::fs::File::create(solver_input_file)?;
-        solver.write_solver_input_file(&mut file)?;
+        let file = Box::new(std::fs::File::create(solver_input_file)?);
+        solver.write_solver_input_file(&mut (file as Box<dyn std::io::Write>))?;
     }
 
     eprintln!("Running {adaptor_name}...");
@@ -86,7 +84,7 @@ pub fn get_solutions(
     #[allow(clippy::unwrap_used)]
     let mut sols_guard = (*all_solutions_ref).lock().unwrap();
     let sols = &mut *sols_guard;
-    let symbols = symbols_rc.borrow();
+    let symbols = symbols_ptr.read();
 
     // Get the representations for each variable by name, since some variables are
     // divided into multiple auxiliary variables(see crate::representation::Representation)
@@ -137,19 +135,25 @@ pub fn get_solutions(
 #[allow(clippy::unwrap_used)]
 pub fn get_solutions_from_conjure(
     essence_file: &str,
+    param_file: Option<&str>,
     context: Arc<RwLock<Context<'static>>>,
 ) -> Result<Vec<BTreeMap<Name, Literal>>, anyhow::Error> {
     let tmp_dir = tempdir()?;
 
     let mut cmd = std::process::Command::new("conjure");
-    let output = cmd
-        .arg("solve")
+
+    cmd.arg("solve")
         .arg("--number-of-solutions=all")
         .arg("--copy-solutions=no")
         .arg("-o")
         .arg(tmp_dir.path())
-        .arg(essence_file)
-        .output()?;
+        .arg(essence_file);
+
+    if let Some(file) = param_file {
+        cmd.arg(file);
+    }
+
+    let output = cmd.output()?;
 
     if !output.status.success() {
         let stderr =
@@ -171,9 +175,9 @@ pub fn get_solutions_from_conjure(
                 .expect("conjure solutions files to be parsable");
 
             let mut solutions = BTreeMap::new();
-            for (name, decl) in model.as_submodel().symbols().clone().into_iter() {
+            for (name, decl) in model.symbols().clone().into_iter() {
                 match &decl.kind() as &DeclarationKind {
-                    conjure_cp::ast::DeclarationKind::ValueLetting(expression) => {
+                    conjure_cp::ast::DeclarationKind::ValueLetting(expression, _) => {
                         let literal = expression
                             .clone()
                             .into_literal()
