@@ -40,7 +40,7 @@ location: {}:{}:{}
 /// Like [assert!], but formats the error message using [bug!]
 #[macro_export]
 macro_rules! bug_assert {
-    ($cond:expr, $msg:literal) => {
+    ($cond:expr, $msg:expr) => {
         if !$cond {
             $crate::bug!("assertion failed: {}\n{}", stringify!($cond), $msg);
         }
@@ -56,15 +56,20 @@ macro_rules! bug_assert {
 /// Like [assert_eq!], but formats the error message using [bug!]
 #[macro_export]
 macro_rules! bug_assert_eq {
-    ($left:expr, $right:expr, $msg:literal) => {
+    ($left:expr, $right:expr, $msg:expr, $($arg:tt)*) => {
         if &$left != &$right {
+            let formatted_msg = format!($msg, $($arg)*);
             $crate::bug!(
                 "assertion failed: {} != {}\n{}",
                 stringify!($left),
                 stringify!($right),
-                $msg
+                formatted_msg
             );
         }
+    };
+
+    ($left:expr, $right:expr, $msg:expr) => {
+        $crate::bug_assert_eq!($left, $right, $msg,);
     };
 
     ($left:expr, $right:expr) => {

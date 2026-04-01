@@ -9,6 +9,7 @@ use conjure_cp::rule_engine::ApplicationError::RuleNotApplicable;
 use conjure_cp::rule_engine::{ApplicationResult, Reduction, register_rule};
 use conjure_cp::{bug_assert, essence_expr};
 use itertools::izip;
+use conjure_cp::ast::pretty::pretty_vec;
 
 /// Indexing into a tuple variable
 /// ```plain
@@ -29,7 +30,6 @@ fn tuple_to_atom_index_lit(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         }
     );
     let idx = (*idx - 1) as usize;
-    bug_assert_eq!(indices.len(), 1, "tuple indexing is always one dimensional");
     bug_assert!(idx < repr.elems.len(), "tuple indexing is out of bounds");
 
     let lhs = Reference::new(repr.elems[idx].clone());
@@ -61,7 +61,6 @@ fn tuple_index_to_bubble(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             return Err(RuleNotApplicable);
         }
     );
-    bug_assert_eq!(indices.len(), 1, "tuple indexing is always one dimensional");
     bug_assert!(
         idx_dom.as_int().is_some(),
         "tuple indexing expression must be integer"
