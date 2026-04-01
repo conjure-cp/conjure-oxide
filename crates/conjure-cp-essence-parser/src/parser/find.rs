@@ -9,7 +9,6 @@ use super::util::named_children;
 use crate::diagnostics::diagnostics_api::SymbolKind;
 use crate::diagnostics::source_map::{HoverInfo, span_with_hover};
 use crate::errors::{FatalParseError, RecoverableParseError};
-use crate::field;
 use conjure_cp_core::ast::{DomainPtr, Name};
 
 /// Parse a find statement into a map of decision variable names to their domains.
@@ -19,14 +18,39 @@ pub fn parse_find_statement(
 ) -> Result<BTreeMap<Name, DomainPtr>, FatalParseError> {
     let mut vars = BTreeMap::new();
 
-    let domain = field!(find_statement, "domain");
-    let Some(domain) = parse_domain(ctx, domain)? else {
+    let domain_node = find_statement.child_by_field_name("domain");
+    let Some(domain_node) = domain_node else {
+        ctx.record_error(RecoverableParseError::new(
+            "Missing domain in find statement".to_string(),
+            Some(find_statement.range()),
+        ));
         return Ok(vars);
     };
 
-    let variable_list = field!(find_statement, "variables");
+    let Some(domain) = parse_domain(ctx, domain_node)? else {
+        return Ok(vars);
+    };
+
+    let variable_list = find_statement.child_by_field_name("variables");
+    let Some(variable_list) = variable_list else {
+        ctx.record_error(RecoverableParseError::new(
+            "Missing variable list in find statement".to_string(),
+            Some(find_statement.range()),
+        ));
+        return Ok(vars);
+    };
     for variable in named_children(&variable_list) {
-        let variable_name = &ctx.source_code[variable.start_byte()..variable.end_byte()];
+        // avoid the _FRAGMENT_EXPRESSION panic by checking range before slicing the source code
+        let start = variable.start_byte();
+        let end = variable.end_byte();
+        if end > ctx.source_code.len() {
+            ctx.record_error(RecoverableParseError::new(
+                "Variable name extends beyond end of source code".to_string(),
+                Some(variable.range()),
+            ));
+            continue;
+        }
+        let variable_name = &ctx.source_code[start..end];
         let name = Name::user(variable_name);
 
         // Check for duplicate within the same statement

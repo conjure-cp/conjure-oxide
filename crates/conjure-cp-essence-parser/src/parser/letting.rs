@@ -23,7 +23,17 @@ pub fn parse_letting_statement(
 
     let mut temp_symbols = BTreeSet::new();
 
-    let variable_list = field!(letting_statement, "variable_list");
+    let variable_list = letting_statement.child_by_field_name("variable_list");
+    let variable_list = match variable_list {
+        Some(node) => node,
+        None => {
+            ctx.record_error(RecoverableParseError::new(
+                "Missing variable list in letting statement".to_string(),
+                Some(letting_statement.range()),
+            ));
+            return Ok(None);
+        }
+    };
     for variable in named_children(&variable_list) {
         let variable_name = &ctx.source_code[variable.start_byte()..variable.end_byte()];
 
