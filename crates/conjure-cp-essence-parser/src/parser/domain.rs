@@ -4,7 +4,7 @@ use crate::diagnostics::source_map::{HoverInfo, span_with_hover};
 use crate::errors::FatalParseError;
 use crate::expression::parse_expression;
 use crate::parser::ParseContext;
-use crate::{child, field};
+use crate::{RecoverableParseError, child, field};
 use conjure_cp_core::ast::{
     DeclarationPtr, Domain, DomainPtr, IntVal, Moo, Name, Range, RecordEntry, Reference, SetAttr,
 };
@@ -65,10 +65,13 @@ pub fn parse_domain(
         "matrix_domain" => parse_matrix_domain(ctx, domain),
         "record_domain" => parse_record_domain(ctx, domain),
         "set_domain" => parse_set_domain(ctx, domain),
-        _ => Err(FatalParseError::internal_error(
-            format!("{} is not a supported domain type", domain.kind()),
-            Some(domain.range()),
-        )),
+        _ => {
+            ctx.record_error(RecoverableParseError::new(
+                format!("{} is not a supported domain type", domain.kind()),
+                Some(domain.range()),
+            ));
+            Ok(None)
+        }
     }
 }
 
@@ -77,15 +80,15 @@ fn get_declaration_ptr_from_identifier(
     identifier: Node,
 ) -> Result<Option<DeclarationPtr>, FatalParseError> {
     let name = Name::user(&ctx.source_code[identifier.start_byte()..identifier.end_byte()]);
-    let decl = ctx
-        .symbols
-        .as_ref()
-        .ok_or(FatalParseError::internal_error(
-            "context needed to resolve identifier".to_string(),
+    let decl = ctx.symbols.as_ref().unwrap().read().lookup(&name);
+
+    if decl.is_none() {
+        ctx.record_error(crate::errors::RecoverableParseError::new(
+            format!("The identifier '{}' is not defined", name),
             Some(identifier.range()),
-        ))?
-        .read()
-        .lookup(&name);
+        ));
+        return Ok(None);
+    }
     match decl {
         Some(decl) => Ok(Some(decl)),
         None => {
@@ -175,22 +178,24 @@ fn parse_int_domain(
                         ranges_unresolved.push(Range::UnboundedL(upper));
                     }
                     _ => {
-                        return Err(FatalParseError::internal_error(
+                        ctx.record_error(RecoverableParseError::new(
                             "Invalid int range: must have at least a lower or upper bound"
                                 .to_string(),
                             Some(domain_component.range()),
                         ));
+                        return Ok(None);
                     }
                 }
             }
             _ => {
-                return Err(FatalParseError::internal_error(
+                ctx.record_error(RecoverableParseError::new(
                     format!(
                         "Unexpected int domain component: {}",
                         domain_component.kind()
                     ),
                     Some(domain_component.range()),
                 ));
+                return Ok(None);
             }
         }
     }
@@ -340,10 +345,11 @@ pub fn parse_set_domain(
                 value_domain = Some(parsed_domain);
             }
             _ => {
-                return Err(FatalParseError::internal_error(
+                ctx.record_error(RecoverableParseError::new(
                     format!("Unrecognized set domain child kind: {}", child.kind()),
                     Some(child.range()),
                 ));
+                return Ok(None);
             }
         }
     }
@@ -351,9 +357,10 @@ pub fn parse_set_domain(
     if let Some(domain) = value_domain {
         Ok(Some(Domain::set(set_attribute.unwrap_or_default(), domain)))
     } else {
-        Err(FatalParseError::internal_error(
+        ctx.record_error(RecoverableParseError::new(
             "Set domain must have a value domain".to_string(),
             Some(set_domain.range()),
-        ))
+        ));
+        Ok(None)
     }
 }
