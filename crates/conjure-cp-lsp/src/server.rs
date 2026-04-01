@@ -48,20 +48,18 @@ impl LanguageServer for Backend {
                         ..Default::default()
                     },
                 )),
-<<<<<<< HEAD
+                // provides semantic highlighting
                 semantic_tokens_provider: Some(
-                    SemanticTokenServerCapabilities::SemanticTokensOptions(
+                    SemanticTokensServerCapabilities::SemanticTokensOptions(
                         SemanticTokensOptions {
                             legend: SemanticTokensLegend {
                                 token_types: vec![
-                                    SemanticTokenType::INTEGER,
-                                    SemanticTokenType::DECIMAL,
+                                    SemanticTokenType::NUMBER,
                                     SemanticTokenType::FUNCTION,
-                                    SemanticTokenType::LETTING,
-                                    SemanticTokenType::FIND,
                                     SemanticTokenType::VARIABLE,
-                                    SemanticTokenType::CONSTANT,
-                                    SemanticTokenType::DOMAIN,
+                                    SemanticTokenType::new("letting"),
+                                    SemanticTokenType::new("find"),
+                                    SemanticTokenType::new("domain"),
                                 ],
                                 token_modifiers:vec![],
                             },
@@ -71,11 +69,8 @@ impl LanguageServer for Backend {
                         },
                     )
                 ),
-                // hover_provider: Some(HoverProviderCapability::Simple(true)),
-=======
                 //provides some simple hovering
                 hover_provider: Some(HoverProviderCapability::Simple(true)),
->>>>>>> f350d09cd4ead29271b9d3e520bfb28fd13d33b6
                 ..ServerCapabilities::default()
             },
         })
@@ -108,6 +103,12 @@ impl LanguageServer for Backend {
     async fn hover(&self, params: HoverParams) -> Result<Option<Hover>> {
         self.client.log_message(MessageType::INFO, "hovering").await;
         self.handle_hovering(params).await
+    }
+
+    // set up semantic highlighting
+    async fn semantic_tokens_full(&self, params: SemanticTokensParams) -> Result<Option<SemanticTokensResult>> {
+        self.client.log_message(MessageType::INFO, "semantic highlighting").await;
+        self.handle_semantic_highlighting(params).await
     }
 }
 
