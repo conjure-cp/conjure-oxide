@@ -19,7 +19,7 @@ use ustr::Ustr;
 use rustsat_cadical::CaDiCaL;
 
 use crate::ast::pretty::pretty_vec;
-use crate::ast::{Atom, Expression, GroundDomain, Literal, Metadata, Name};
+use crate::ast::{Atom, Expression, GroundDomain, Literal, Metadata, Moo, Name};
 use crate::rule_engine::rewrite_model_with_configured_rewriter;
 use crate::settings::current_rewriter;
 use crate::solver::SearchComplete::NoSolutions;
@@ -35,6 +35,7 @@ use crate::{into_matrix_expr, matrix_expr};
 use rustsat::instances::{BasicVarManager, Cnf, ManageVars, SatInstance};
 
 use thiserror::Error;
+use uniplate::Uniplate;
 
 use itertools::Itertools;
 /// A [SolverAdaptor] for interacting with the SatSolver generic and the types thereof.
@@ -94,6 +95,59 @@ fn sub_in_solution_into_dominance_expr(
         }
         _ => Some(expr.clone()),
     }
+}
+
+fn sub_in_solution_into_current_refs(
+    expr: &Expression,
+    solution: &HashMap<Name, Literal>,
+) -> Option<Expression> {
+    match expr {
+        Expression::Atomic(_, Atom::Reference(reference)) => {
+            let var_name = reference.name();
+            let value = solution.get(&var_name)?;
+            let value = if let Some(domain) = reference.resolved_domain() {
+                if domain.as_ref() == &GroundDomain::Bool {
+                    match value {
+                        Literal::Bool(x) => Literal::Bool(*x),
+                        Literal::Int(1) => Literal::Bool(true),
+                        Literal::Int(0) => Literal::Bool(false),
+                        _ => return None,
+                    }
+                } else {
+                    value.clone()
+                }
+            } else {
+                value.clone()
+            };
+
+            Some(Expression::Atomic(Metadata::new(), Atom::Literal(value)))
+        }
+        _ => Some(expr.clone()),
+    }
+}
+
+fn swap_from_solution_to_current_ref(expr: &Expression) -> Option<Expression> {
+    match expr {
+        Expression::FromSolution(_, atom_expr) => Some(Expression::Atomic(
+            Metadata::new(),
+            atom_expr.as_ref().clone(),
+        )),
+        _ => Some(expr.clone()),
+    }
+}
+
+fn rewrite_dominance_to_block_dominated_futures(
+    dominance_expression: &Expression,
+    solution: &HashMap<Name, Literal>,
+) -> Expression {
+    Expression::Not(
+        Metadata::new(),
+        Moo::new(
+            dominance_expression
+                .rewrite(&|e| sub_in_solution_into_current_refs(&e, solution))
+                .rewrite(&|e| swap_from_solution_to_current_ref(&e)),
+        ),
+    )
 }
 
 fn add_represented_decision_values(solution: &mut HashMap<Name, Literal>, model: &ConjureModel) {
@@ -217,10 +271,8 @@ impl Sat {
             return Ok(());
         };
 
-        use uniplate::Uniplate;
-
         let rewritten_dominance =
-            dominance_expression.rewrite(&|e| sub_in_solution_into_dominance_expr(&e, solution));
+            rewrite_dominance_to_block_dominated_futures(dominance_expression, solution);
 
         let mut dominance_model = model_template.clone();
         dominance_model.replace_constraints(vec![]);
