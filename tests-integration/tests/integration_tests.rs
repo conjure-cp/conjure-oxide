@@ -25,7 +25,7 @@ use conjure_cp::rule_engine::resolve_rule_sets;
 use conjure_cp::settings::{
     Parser, QuantifiedExpander, Rewriter, SolverFamily, set_comprehension_expander,
     set_current_parser, set_current_rewriter, set_current_solver_family,
-    set_minion_discrete_threshold,
+    set_minion_discrete_threshold, set_rule_trace_enabled,
 };
 use conjure_cp_cli::utils::conjure::solutions_to_json;
 use conjure_cp_cli::utils::conjure::{get_solutions, get_solutions_from_conjure};
@@ -124,17 +124,40 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
                         solver,
                         case_name: case_name.as_str(),
                     };
+                    let file = File::create(format!(
+                        "{path}/{}-{}-generated-rule-trace.txt",
+                        run_case.case_name,
+                        run_case.solver.as_str()
+                    ))?;
+                    let subscriber = Arc::new(
+                        tracing_subscriber::registry().with(
+                            fmt::layer()
+                                .with_writer(file)
+                                .with_level(false)
+                                .without_time()
+                                .with_target(false)
+                                .with_filter(EnvFilter::new("rule_engine_human=trace"))
+                                .with_filter(FilterFn::new(|meta| {
+                                    meta.target() == "rule_engine_human"
+                                })),
+                        ),
+                    )
+                        as Arc<dyn tracing::Subscriber + Send + Sync>;
                     let run_label = run_case_label(path, essence_base, extension, run_case);
                     eprintln!("[integration] running {run_label}");
-                    integration_test_inner(
-                        path,
-                        essence_base,
-                        extension,
-                        run_case,
-                        minion_discrete_threshold,
-                        conjure_solutions.clone(),
-                        accept,
-                    )
+                    // TODO: enable this for both rewriters once morph supports rule traces.
+                    set_rule_trace_enabled(matches!(rewriter, Rewriter::Naive));
+                    tracing::subscriber::with_default(subscriber, || {
+                        integration_test_inner(
+                            path,
+                            essence_base,
+                            extension,
+                            run_case,
+                            minion_discrete_threshold,
+                            conjure_solutions.clone(),
+                            accept,
+                        )
+                    })
                     .map_err(|err| std::io::Error::other(format!("{run_label}: {err}")))?;
                     allowed_expected_files.extend(expected_integration_files_for_case(
                         run_case.case_name,
@@ -217,19 +240,6 @@ fn integration_test_inner(
         }
         Parser::ViaConjure => parse_essence_file(&file_path, context.clone())?,
     };
-    // Rule traces snapshot the initial naive rewrite only.
-    // Solver-time CDP rewrites happen later, outside this subscriber scope, so
-    // dominance models can still have stable initial traces.
-    let should_validate_rule_trace = matches!(rewriter, Rewriter::Naive);
-    let generated_trace_path = format!(
-        "{path}/{}-{}-generated-rule-trace.txt",
-        case_name,
-        solver_fam.as_str()
-    );
-    if !should_validate_rule_trace {
-        let _ = fs::remove_file(&generated_trace_path);
-    }
-
     // Stage 2a: Rewrite the model using the rule engine
     let mut extra_rules = vec![];
 
@@ -245,24 +255,6 @@ fn integration_test_inner(
     let model = parsed_model;
 
     let rewritten_model = match rewriter {
-        Rewriter::Naive if should_validate_rule_trace => {
-            let file = File::create(&generated_trace_path)?;
-            let subscriber = Arc::new(
-                tracing_subscriber::registry().with(
-                    fmt::layer()
-                        .with_writer(file)
-                        .with_level(false)
-                        .without_time()
-                        .with_target(false)
-                        .with_filter(EnvFilter::new("rule_engine_human=trace"))
-                        .with_filter(FilterFn::new(|meta| meta.target() == "rule_engine_human")),
-                ),
-            ) as Arc<dyn tracing::Subscriber + Send + Sync>;
-
-            tracing::subscriber::with_default(subscriber, || {
-                rewrite_naive(&model, &rule_sets, false)
-            })?
-        }
         Rewriter::Naive => rewrite_naive(&model, &rule_sets, false)?,
         Rewriter::Morph => rewrite_morph(model, &rule_sets, false),
     };
@@ -275,7 +267,7 @@ fn integration_test_inner(
     };
 
     let solutions = {
-        let solved = get_solutions(solver, rewritten_model, 0, &solver_input_file)?;
+        let solved = get_solutions(solver, rewritten_model, 0, &solver_input_file, false)?;
         save_solutions_json(&solved, path, case_name, solver_fam)?;
         solved
     };
@@ -306,9 +298,7 @@ fn integration_test_inner(
         // Always overwrite these ones. Unlike the rest, we don't need to selectively do these
         // based on the test results, so they don't get done later.
         copy_generated_to_expected(path, case_name, "solutions", "json", solver_fam)?;
-        if should_validate_rule_trace {
-            copy_human_trace_generated_to_expected(path, case_name, solver_fam)?;
-        }
+        copy_human_trace_generated_to_expected(path, case_name, solver_fam)?;
     }
 
     // Check Stage 3a (solutions)
@@ -320,15 +310,13 @@ fn integration_test_inner(
     match rewriter {
         Rewriter::Morph => {}
         Rewriter::Naive => {
-            if should_validate_rule_trace {
-                let generated = read_human_rule_trace(path, case_name, "generated", &solver_fam)?;
-                let expected = read_human_rule_trace(path, case_name, "expected", &solver_fam)?;
+            let generated = read_human_rule_trace(path, case_name, "generated", &solver_fam)?;
+            let expected = read_human_rule_trace(path, case_name, "expected", &solver_fam)?;
 
-                assert_eq!(
-                    expected, generated,
-                    "Generated rule trace does not match the expected trace!"
-                );
-            }
+            assert_eq!(
+                expected, generated,
+                "Generated rule trace does not match the expected trace!"
+            );
         }
     }
 
