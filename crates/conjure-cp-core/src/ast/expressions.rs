@@ -642,6 +642,12 @@ fn bounded_i32_domain_for_matrix_literal_monotonic(
     }
 }
 
+fn matrix_element_domain(e: &Expression) -> Option<DomainPtr> {
+    let (elem_domain, _) = e.domain_of()?.as_matrix()?;
+    elem_domain.as_ref().as_int()?;
+    Some(elem_domain)
+}
+
 // Returns none if unbounded
 fn range_vec_bounds_i32(ranges: &Vec<Range<i32>>) -> Option<(i32, i32)> {
     let mut min = i32::MAX;
@@ -744,10 +750,12 @@ impl Expression {
             }
             Expression::Min(_, e) => bounded_i32_domain_for_matrix_literal_monotonic(e, |x, y| {
                 Some(if x < y { x } else { y })
-            }),
+            })
+            .or_else(|| matrix_element_domain(e)),
             Expression::Max(_, e) => bounded_i32_domain_for_matrix_literal_monotonic(e, |x, y| {
                 Some(if x > y { x } else { y })
-            }),
+            })
+            .or_else(|| matrix_element_domain(e)),
             Expression::UnsafeDiv(_, a, b) => a
                 .domain_of()?
                 .resolve()?
