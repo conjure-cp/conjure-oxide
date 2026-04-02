@@ -80,15 +80,6 @@ pub fn parse_letting_statement(
                 let Some(domain) = parse_domain(ctx, expr_or_domain)? else {
                     continue;
                 };
-
-                // If it's a record domain, add the field names to the symbol table
-                if let Some(entries) = domain.as_record() {
-                    for entry in entries {
-                        // Add each field name as a record field declaration
-                        symbol_table.insert(DeclarationPtr::new_record_field(entry.clone()));
-                    }
-                }
-
                 symbol_table.insert(DeclarationPtr::new_domain_letting(Name::user(name), domain));
             }
         }

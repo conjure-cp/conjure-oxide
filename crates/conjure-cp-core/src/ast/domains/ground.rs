@@ -1,13 +1,14 @@
 use crate::ast::domains::MSetAttr;
-use crate::ast::pretty::pretty_vec;
+use crate::ast::records::RecordValue;
 use crate::ast::{
     AbstractLiteral, Domain, DomainOpError, DomainPtr, Expression, FuncAttr, HasDomain, IntVal,
-    Literal, Moo, RecordEntry, Reference, SetAttr, Typeable, UnresolvedDomain,
+    Literal, Moo, Reference, SetAttr, Typeable, UnresolvedDomain,
     domains::{Int, Range, UInt},
 };
 use crate::range;
 use crate::utils::count_combinations;
 use conjure_cp_core::ast::ReturnType;
+use funcmap::FuncMap;
 use itertools::{Itertools, izip};
 use polyquine::Quine;
 use serde::{Deserialize, Serialize};
@@ -22,8 +23,6 @@ use uniplate::Uniplate;
 #[biplate(to=UnresolvedDomain)]
 #[biplate(to=Expression)]
 #[biplate(to=Reference)]
-#[biplate(to=RecordEntry<GroundDomain>)]
-#[biplate(to=RecordEntry<Domain>)]
 #[biplate(to=IntVal)]
 #[path_prefix(conjure_cp::ast)]
 pub enum GroundDomain {
@@ -43,7 +42,7 @@ pub enum GroundDomain {
     /// A tuple of N elements, each with its own domain
     Tuple(Vec<Moo<GroundDomain>>),
     /// A record
-    Record(Vec<RecordEntry<GroundDomain>>),
+    Record(Vec<RecordValue<Moo<GroundDomain>>>),
     /// A function with a domain and range
     Function(FuncAttr, Moo<GroundDomain>, Moo<GroundDomain>),
 }
@@ -266,7 +265,7 @@ impl GroundDomain {
                 // A record is just a named tuple
                 let mut ans = 1u64;
                 for entry in entries {
-                    let sz = entry.domain.length()?;
+                    let sz = entry.value.length()?;
                     ans = ans.checked_mul(sz).ok_or(DomainOpError::TooLarge)?;
                 }
                 Ok(ans)
@@ -442,7 +441,7 @@ impl GroundDomain {
 
                     for (entry, lit_entry) in itertools::izip!(entries, lit_entries) {
                         if entry.name != lit_entry.name
-                            || !(entry.domain.contains(&lit_entry.value)?)
+                            || !(entry.value.contains(&lit_entry.value)?)
                         {
                             return Ok(false);
                         }
@@ -910,7 +909,7 @@ impl GroundDomain {
 
                 Ok(GroundDomain::Record(
                     izip!(field_names, elem_domains)
-                        .map(|(name, domain)| RecordEntry { name, domain })
+                        .map(|(name, value)| RecordValue { name, value })
                         .collect(),
                 ))
             }
@@ -972,7 +971,7 @@ impl Typeable for GroundDomain {
             GroundDomain::Record(entries) => {
                 let mut entry_types = Vec::new();
                 for entry in entries {
-                    entry_types.push(entry.domain.return_type());
+                    entry_types.push(entry.clone().func_map(|x| x.return_type()));
                 }
                 ReturnType::Record(entry_types)
             }
@@ -1001,27 +1000,22 @@ impl Display for GroundDomain {
             GroundDomain::Matrix(value_domain, index_domains) => {
                 write!(
                     f,
-                    "matrix indexed by {} of {value_domain}",
-                    pretty_vec(&index_domains.iter().collect_vec())
+                    "matrix indexed by [{}] of {value_domain}",
+                    &index_domains.iter().join(", ")
                 )
             }
             GroundDomain::Tuple(domains) => {
-                write!(
-                    f,
-                    "tuple of ({})",
-                    pretty_vec(&domains.iter().collect_vec())
-                )
+                write!(f, "tuple of ({})", &domains.iter().join(", "))
             }
             GroundDomain::Record(entries) => {
                 write!(
                     f,
-                    "record of ({})",
-                    pretty_vec(
-                        &entries
-                            .iter()
-                            .map(|entry| format!("{}: {}", entry.name, entry.domain))
-                            .collect_vec()
-                    )
+                    "record of {{{}}}",
+                    entries
+                        .iter()
+                        .map(|entry| format!("{}: {}", entry.name, entry.value))
+                        .collect_vec()
+                        .join(", ")
                 )
             }
             GroundDomain::Function(attribute, domain, codomain) => {

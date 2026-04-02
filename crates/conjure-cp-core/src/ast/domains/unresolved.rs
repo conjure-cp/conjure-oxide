@@ -1,9 +1,11 @@
 use super::{DomainPtr, GroundDomain, IntVal, Range};
+use crate::ast::records::RecordValue;
 use crate::ast::{
-    Domain, DomainOpError, Expression, FuncAttr, MSetAttr, Moo, RecordEntry, Reference, ReturnType,
-    SetAttr, Typeable,
+    Domain, DomainOpError, Expression, FuncAttr, MSetAttr, Moo, Reference, ReturnType, SetAttr,
+    Typeable,
 };
 use crate::bug;
+use funcmap::FuncMap;
 use itertools::Itertools;
 use polyquine::Quine;
 use serde::{Deserialize, Serialize};
@@ -17,8 +19,6 @@ use uniplate::Uniplate;
 #[biplate(to=GroundDomain)]
 #[biplate(to=Expression)]
 #[biplate(to=Reference)]
-#[biplate(to=RecordEntry<GroundDomain>)]
-#[biplate(to=RecordEntry<Domain>)]
 #[biplate(to=IntVal)]
 #[path_prefix(conjure_cp::ast)]
 pub enum UnresolvedDomain {
@@ -34,7 +34,7 @@ pub enum UnresolvedDomain {
     #[polyquine_skip]
     Reference(Reference),
     /// A record
-    Record(Vec<RecordEntry<Domain>>),
+    Record(Vec<RecordValue<Moo<Domain>>>),
     /// A function with attributes, domain, and range
     Function(FuncAttr<IntVal>, DomainPtr, DomainPtr),
 }
@@ -69,9 +69,9 @@ impl UnresolvedDomain {
             UnresolvedDomain::Record(entries) => entries
                 .iter()
                 .map(|f| {
-                    f.domain.resolve().map(|gd| RecordEntry {
+                    f.value.resolve().map(|gd| RecordValue {
                         name: f.name.clone(),
-                        domain: gd,
+                        value: gd,
                     })
                 })
                 .try_collect()
@@ -184,7 +184,7 @@ impl Typeable for UnresolvedDomain {
             UnresolvedDomain::Record(entries) => {
                 let mut entry_types = Vec::new();
                 for entry in entries {
-                    entry_types.push(entry.domain.return_type());
+                    entry_types.push(entry.clone().func_map(|x| x.return_type()));
                 }
                 ReturnType::Record(entry_types)
             }
@@ -225,7 +225,7 @@ impl Display for UnresolvedDomain {
                     "record of ({})",
                     &entries
                         .iter()
-                        .map(|entry| format!("{}: {}", entry.name, entry.domain))
+                        .map(|entry| format!("{}: {}", entry.name, entry.value))
                         .join(", ")
                 )
             }

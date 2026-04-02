@@ -31,7 +31,7 @@ pub use cnf_clause::CnfClause;
 pub use declaration::{DeclarationKind, DeclarationPtr};
 pub use domains::{
     Domain, DomainOpError, DomainPtr, FuncAttr, GroundDomain, HasDomain, IntVal, JectivityAttr,
-    MSetAttr, PartialityAttr, Range, RecordEntry, SetAttr, UnresolvedDomain,
+    MSetAttr, PartialityAttr, Range, SetAttr, UnresolvedDomain,
 };
 pub use eval::eval_constant;
 pub use expressions::Expression;
@@ -42,6 +42,7 @@ pub use model::*;
 pub use moo::Moo;
 pub use name::Name;
 pub use partial_eval::run_partial_evaluator;
+pub use records::RecordValue;
 pub use reference::Reference;
 pub use sat_encoding::SATIntEncoding;
 pub use symbol_table::{SymbolTable, SymbolTablePtr};

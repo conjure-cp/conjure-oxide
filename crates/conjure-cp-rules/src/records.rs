@@ -1,6 +1,9 @@
 use crate::guard;
 use crate::representation::record_to_tuple::RecordToTuple;
-use conjure_cp::ast::{Atom, Expression, Metadata, Reference, SymbolTable};
+use conjure_cp::ast::{
+    AbstractLiteral, Atom, Expression, Literal, Metadata, Reference, SymbolTable,
+};
+use conjure_cp::bug::UnwrapOrBug;
 use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
 };
@@ -19,36 +22,51 @@ use uniplate::Uniplate;
 /// ```
 #[register_rule(("ReprGeneral", 2000))]
 fn index_record_to_tuple(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
-    let (subject, indices, safe) = match expr {
-        Expression::UnsafeIndex(_, subject, indices) => (subject, indices, false),
-        Expression::SafeIndex(_, subject, indices) => (subject, indices, true),
-        _ => return Err(RuleNotApplicable),
-    };
-
     guard!(
-        let Expression::Atomic(_, Atom::Reference(re)) = &**subject                &&
-        let Some(repr) = re.get_repr_as::<RecordToTuple>()                         &&
-        let Some(Expression::Atomic(_, Atom::Reference(idx_re))) = indices.first() &&
-        let Some((field_name, _)) = idx_re.ptr.as_record_field()
+        let Expression::RecordField(_, rec_expr, field_name) = expr        &&
+        let Expression::Atomic(_, Atom::Reference(re)) = rec_expr.as_ref() &&
+        let Some(repr) = re.get_repr_as::<RecordToTuple>()
         else {
             return Err(RuleNotApplicable);
         }
     );
 
-    let lhs = repr
-        .name_to_idx_expr(&field_name)
-        .expect("unexpected record index");
-    let rhs = &indices[1..];
+    let new_expr = repr.name_to_idx_expr(&field_name).unwrap_or_bug();
+    Ok(Reduction::pure(new_expr))
+}
 
-    if rhs.is_empty() {
-        Ok(Reduction::pure(lhs))
-    } else if safe {
-        let new_expr = Expression::SafeIndex(Metadata::new(), lhs.into(), Vec::from(rhs));
-        Ok(Reduction::pure(new_expr))
-    } else {
-        let new_expr = Expression::UnsafeIndex(Metadata::new(), lhs.into(), Vec::from(rhs));
-        Ok(Reduction::pure(new_expr))
-    }
+/// Convert all record literals to tuples
+#[register_rule(("ReprGeneral", 2000))]
+fn record_lit_to_tuple(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
+    guard!(
+        let Expression::Atomic(_, Atom::Literal(lit)) = expr              &&
+        let Literal::AbstractLiteral(AbstractLiteral::Record(ents)) = lit
+        else {
+            return Err(RuleNotApplicable);
+        }
+    );
+
+    let mut ents = ents.clone();
+    ents.sort();
+
+    let tuple = AbstractLiteral::Tuple(ents.into_iter().map(|x| x.value).collect());
+    let new_expr = Expression::Atomic(Metadata::new(), Atom::Literal(tuple.into()));
+    Ok(Reduction::pure(new_expr))
+}
+
+/// Convert all record expressions to tuples
+#[register_rule(("ReprGeneral", 2000))]
+fn record_abslit_to_tuple(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
+    let Expression::AbstractLiteral(_, AbstractLiteral::Record(ents)) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let mut ents = ents.clone();
+    ents.sort();
+
+    let tuple = AbstractLiteral::Tuple(ents.into_iter().map(|x| x.value).collect());
+    let new_expr = Expression::AbstractLiteral(Metadata::new(), tuple);
+    Ok(Reduction::pure(new_expr))
 }
 
 /// Convert all references to a record variable outside of indexing expressions to a tuple

@@ -110,6 +110,9 @@ pub enum Expression {
 
     Atomic(Metadata, Atom),
 
+    /// A record index
+    RecordField(Metadata, Moo<Expression>, Name),
+
     /// A matrix index.
     ///
     /// Defined iff the indices are within their respective index domains.
@@ -690,6 +693,15 @@ impl Expression {
             Expression::Metavar(_, _) => None,
             Expression::Comprehension(_, comprehension) => comprehension.domain_of(),
             Expression::AbstractComprehension(_, comprehension) => comprehension.domain_of(),
+            Expression::RecordField(_, rec, field_name) => {
+                let rec_ents = rec.domain_of()?.as_record()?;
+                for ent in rec_ents {
+                    if ent.name.eq(field_name) {
+                        return Some(ent.value);
+                    }
+                }
+                None
+            }
             Expression::UnsafeIndex(_, matrix, _) | Expression::SafeIndex(_, matrix, _) => {
                 let dom = matrix.domain_of()?;
                 if let Some((elem_domain, _)) = dom.as_matrix() {
@@ -718,7 +730,7 @@ impl Expression {
 
                 let dom = matrix.domain_of()?;
                 let Some((elem_domain, index_domains)) = dom.as_matrix() else {
-                    bug!("subject of an index operation should be a matrix");
+                    bug!("subject of an index operation should be a matrix, but got {matrix}: {dom}");
                 };
 
                 match sliced_dimension {
@@ -1298,6 +1310,9 @@ impl Display for Expression {
             Expression::AbstractLiteral(_, l) => l.fmt(f),
             Expression::Comprehension(_, c) => c.fmt(f),
             Expression::AbstractComprehension(_, c) => c.fmt(f),
+            Expression::RecordField(_, r, fld) => {
+                write!(f, "{r}[{fld}]")
+            }
             Expression::UnsafeIndex(_, e1, e2) | Expression::SafeIndex(_, e1, e2) => {
                 write!(f, "{e1}{}", pretty_vec(e2))
             }
@@ -1552,6 +1567,16 @@ impl Typeable for Expression {
             Expression::Subset(_, _, _) => ReturnType::Bool,
             Expression::SubsetEq(_, _, _) => ReturnType::Bool,
             Expression::AbstractLiteral(_, lit) => lit.return_type(),
+            Expression::RecordField(_, rec, field_name) => {
+                if let ReturnType::Record(ents) = rec.return_type() {
+                    for RecordValue { name, value } in ents {
+                        if name.eq(field_name) {
+                            return value;
+                        }
+                    }
+                }
+                ReturnType::Unknown
+            }
             Expression::UnsafeIndex(_, subject, idx) | Expression::SafeIndex(_, subject, idx) => {
                 let subject_ty = subject.return_type();
                 match subject_ty {

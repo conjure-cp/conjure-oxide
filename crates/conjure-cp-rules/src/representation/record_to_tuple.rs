@@ -23,12 +23,12 @@ register_representation!(
         let Some(mut ents) = dom.as_record() else {
             return Err(ReprInitError::UnsupportedDomain(dom, RecordToTuple::NAME, String::from("expected a record domain")));
         };
-        ents.sort_by(|x, y| x.name.cmp(&y.name));
+        ents.sort();
         let mut indices = BiMap::<Name, usize>::with_capacity(ents.len());
         let mut domains = Vec::<DomainPtr>::with_capacity(ents.len());
-        for (i, RecordEntry { name, domain }) in ents.into_iter().enumerate() {
+        for (i, RecordValue { name, value }) in ents.into_iter().enumerate() {
             indices.insert(name, i);
-            domains.push(domain);
+            domains.push(value);
         }
 
         let tuple = Domain::tuple(domains);

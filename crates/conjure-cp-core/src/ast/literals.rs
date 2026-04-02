@@ -1,3 +1,4 @@
+use funcmap::FuncMap;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
@@ -233,7 +234,7 @@ impl Typeable for AbstractLiteral<Expression> {
             AbstractLiteral::Record(items) => {
                 let mut item_types = vec![];
                 for item in items {
-                    item_types.push(item.value.return_type());
+                    item_types.push(item.clone().func_map(|x| x.return_type()));
                 }
                 ReturnType::Record(item_types)
             }

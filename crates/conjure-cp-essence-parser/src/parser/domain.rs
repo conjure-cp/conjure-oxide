@@ -6,7 +6,7 @@ use crate::expression::parse_expression;
 use crate::parser::ParseContext;
 use crate::{child, field};
 use conjure_cp_core::ast::{
-    DeclarationPtr, Domain, DomainPtr, IntVal, Moo, Name, Range, RecordEntry, Reference, SetAttr,
+    DeclarationPtr, Domain, DomainPtr, IntVal, Moo, Name, Range, RecordValue, Reference, SetAttr,
 };
 use tree_sitter::Node;
 
@@ -274,15 +274,15 @@ fn parse_record_domain(
     ctx: &mut ParseContext,
     record_domain: Node,
 ) -> Result<Option<DomainPtr>, FatalParseError> {
-    let mut record_entries: Vec<RecordEntry<Domain>> = Vec::new();
+    let mut record_entries: Vec<RecordValue<DomainPtr>> = Vec::new();
     for record_entry in named_children(&record_domain) {
         let name_node = field!(record_entry, "name");
         let name = Name::user(&ctx.source_code[name_node.start_byte()..name_node.end_byte()]);
         let domain_node = field!(record_entry, "domain");
-        let Some(domain) = parse_domain(ctx, domain_node)? else {
+        let Some(value) = parse_domain(ctx, domain_node)? else {
             return Ok(None);
         };
-        record_entries.push(RecordEntry { name, domain });
+        record_entries.push(RecordValue { name, value });
     }
     Ok(Some(Domain::record(record_entries)))
 }

@@ -10,6 +10,7 @@ use crate::{field, named_child};
 use conjure_cp_core::ast::{
     Atom, DeclarationPtr, Expression, GroundDomain, Literal, Metadata, Moo, Name,
 };
+use std::collections::VecDeque;
 use tree_sitter::Node;
 use ustr::Ustr;
 
@@ -152,12 +153,40 @@ fn parse_index_or_slice(
     // Save current context and temporarily set to Unknown for the collection
     let saved_context = ctx.typechecking_context;
     ctx.typechecking_context = TypecheckingContext::Unknown;
-    let Some(collection) = parse_atom(ctx, &field!(node, "collection"))? else {
-        return Ok(None);
-    };
+    let mut collection: Expression;
+    match parse_atom(ctx, &field!(node, "collection"))? {
+        Some(expr) => collection = expr,
+        None => return Ok(None),
+    }
     ctx.typechecking_context = saved_context;
+
+    let indices_field = field!(node, "indices");
+    let mut idx_nodes = named_children(&indices_field).collect::<VecDeque<_>>();
+
+    // If LHS is a record, parse first index as a record field
+    if let Some(dom) = collection.domain_of()
+        && let Some(ents) = dom.as_record()
+    {
+        let idx = idx_nodes
+            .pop_front()
+            .ok_or(FatalParseError::internal_error(
+                "Expected at least one indexing expression".into(),
+                Some(indices_field.range()),
+            ))?;
+        let name = Name::user(ctx.source_code[idx.start_byte()..idx.end_byte()].trim());
+        let has_name = ents.iter().any(|e| e.name == name);
+        if !has_name {
+            return Err(FatalParseError::internal_error(
+                format!("`{name}` is not a valid field name for `{collection}`"),
+                Some(idx.range()),
+            ));
+        }
+        collection = Expression::RecordField(Metadata::new(), Moo::new(collection), name);
+    }
+
+    // Parse the rest of the indices as normal
     let mut indices = Vec::new();
-    for idx_node in named_children(&field!(node, "indices")) {
+    for idx_node in idx_nodes {
         indices.push(parse_index(ctx, &idx_node)?);
     }
 
