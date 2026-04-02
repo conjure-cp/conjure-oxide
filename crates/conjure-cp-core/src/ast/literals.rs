@@ -672,7 +672,7 @@ impl Display for Literal {
         match &self {
             Literal::Int(i) => write!(f, "{i}"),
             Literal::Bool(b) => write!(f, "{b}"),
-            Literal::AbstractLiteral(l) => write!(f, "{l:?}"),
+            Literal::AbstractLiteral(l) => write!(f, "{l}"),
         }
     }
 }
@@ -705,5 +705,15 @@ mod tests {
             });
 
         assert_eq!(actual_index_domains, expected_index_domains);
+    }
+
+    #[test]
+    fn set_literal_display_uses_braces() {
+        let lit = Literal::AbstractLiteral(AbstractLiteral::Set(vec![
+            Literal::Int(1),
+            Literal::Int(2),
+        ]));
+
+        assert_eq!(lit.to_string(), "{1,2}");
     }
 }
