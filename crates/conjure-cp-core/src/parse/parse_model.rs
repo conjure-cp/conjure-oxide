@@ -1115,6 +1115,11 @@ fn parse_indexing_slicing_op(
         }
     }
 
+    // If we had a record field and no other indices, the list will be empty
+    if indices.is_empty() {
+        return Ok(target);
+    }
+
     indices.reverse();
 
     if all_known {

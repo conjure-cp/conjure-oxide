@@ -3,7 +3,7 @@ language Essence 1.4
 letting R1 be domain record { a : bool, b : int(0..9) }
 
 letting M1 be domain matrix indexed by [int(2, 4, 6)] of int(1..4)
-letting R2 be domain record { b: int(3, 5..8), c: M1 }
+letting R2 be domain record { b: int(3, 5..7), c: M1 }
 
 letting T1 be domain tuple(int(1..3), bool)
 
@@ -14,4 +14,5 @@ such that
   r[x] = record { b = 5, a = true },
   r[x][b] > r[y][b],
   allDiff(r[y][c]),
+  sum(r[y][c]) <= r[y][b] * 2,
   r[z] = (2, false)
