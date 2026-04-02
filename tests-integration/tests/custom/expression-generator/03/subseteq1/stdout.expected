@@ -255,9 +255,9 @@ find y: set  of int(1..6)
 
 such that
 
-and([ __0 in x | __0 <- Set([Int(1), Int(2)]) ]),
+and([ __0 in x | __0 <- {1,2} ]),
 and([ __0 in x | __0 <- y ]),
-and([ __0 in Set([Int(1)]) | __0 <- x ])
+and([ __0 in {1} | __0 <- x ])
 
 Model before rewriting:
 
@@ -276,15 +276,15 @@ such that
 (x subsetEq y),
 ({1} subsetEq x), 
    ~~> constant_evaluator ([("Constant", 9001)])
-(x subsetEq Set([Int(1), Int(2)])),
+(x subsetEq {1,2}),
 (x subsetEq y),
-(Set([Int(1)]) subsetEq x)
+({1} subsetEq x)
 
 --
 
-(x subsetEq Set([Int(1), Int(2)])), 
+(x subsetEq {1,2}), 
    ~~> subseteq_set ([("Base", 8700)])
-and([ __0 in x | __0 <- Set([Int(1), Int(2)]) ])
+and([ __0 in x | __0 <- {1,2} ])
 
 --
 
@@ -294,9 +294,9 @@ and([ __0 in x | __0 <- y ])
 
 --
 
-(Set([Int(1)]) subsetEq x), 
+({1} subsetEq x), 
    ~~> subseteq_set ([("Base", 8700)])
-and([ __0 in Set([Int(1)]) | __0 <- x ])
+and([ __0 in {1} | __0 <- x ])
 
 --
 
@@ -307,7 +307,7 @@ find y: set  of int(1..6)
 
 such that
 
-and([ __0 in x | __0 <- Set([Int(1), Int(2)]) ]),
+and([ __0 in x | __0 <- {1,2} ]),
 and([ __0 in x | __0 <- y ]),
-and([ __0 in Set([Int(1)]) | __0 <- x ])
+and([ __0 in {1} | __0 <- x ])
 
