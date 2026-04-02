@@ -17,7 +17,6 @@ use crate::diagnostics::diagnostics_api::SymbolKind;
 use crate::diagnostics::source_map::{HoverInfo, SourceMap, span_with_hover};
 use crate::errors::{FatalParseError, ParseErrorCollection, RecoverableParseError};
 use crate::expression::parse_expression;
-use crate::field;
 use crate::parser::keyword_checks::keyword_as_identifier;
 use crate::syntax_errors::detect_syntactic_errors;
 use tree_sitter::Tree;
