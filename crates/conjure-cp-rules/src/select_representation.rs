@@ -164,16 +164,15 @@ fn select_representation(expr: &Expr, symbols: &SymbolTable) -> ApplicationResul
 
 /// Returns whether `name` needs representing.
 ///
-/// # Panics
-///
-///   + If `name` is not in `symbols`.
 fn needs_representation(name: &Name, symbols: &SymbolTable) -> bool {
     // if name already has a representation, false
     if let Name::Represented(_) = name {
         return false;
     }
     // might be more logic here in the future?
-    domain_needs_representation(&symbols.resolve_domain(name).unwrap())
+    symbols
+        .resolve_domain(name)
+        .is_some_and(|domain| domain_needs_representation(domain.as_ref()))
 }
 
 /// Returns whether `domain` needs representing.
@@ -196,16 +195,13 @@ fn domain_needs_representation(domain: &GroundDomain) -> bool {
 ///
 /// Returns None if there is no valid representation for `name`.
 ///
-/// # Panics
-///
-///   + If `name` is not in `symbols`.
 fn get_or_create_representation(
     name: &Name,
     symbols: &mut SymbolTable,
 ) -> Option<Vec<Box<dyn Representation>>> {
     // TODO: pick representations recursively for nested abstract domains: e.g. sets in sets.
 
-    let dom = symbols.resolve_domain(name).unwrap();
+    let dom = symbols.resolve_domain(name)?;
     match dom.as_ref() {
         GroundDomain::Set(_, _) => None, // has no representations yet!
         GroundDomain::Tuple(elem_domains) => {
