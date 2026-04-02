@@ -6,6 +6,7 @@ use std::sync::{Arc, Mutex, RwLock};
 use conjure_cp::ast::{Atom, DeclarationKind, Expression, GroundDomain, Literal, Metadata, Name};
 use conjure_cp::bug;
 use conjure_cp::context::Context;
+use conjure_cp::settings::set_rule_trace_enabled;
 
 use serde_json::{Map, Value as JsonValue};
 
@@ -128,6 +129,8 @@ pub fn get_solutions(
     solver_input_file: &Option<PathBuf>,
     rule_trace_cdp: bool,
 ) -> Result<Vec<BTreeMap<Name, Literal>>, anyhow::Error> {
+    set_rule_trace_enabled(rule_trace_cdp);
+
     let dominance_expression = model.dominance.as_ref().map(|expr| match expr {
         Expression::DominanceRelation(_, inner) => inner.as_ref().clone(),
         _ => expr.clone(),
