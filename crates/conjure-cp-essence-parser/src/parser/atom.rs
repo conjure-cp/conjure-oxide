@@ -8,7 +8,8 @@ use crate::parser::comprehension::parse_comprehension;
 use crate::util::{TypecheckingContext, named_children};
 use crate::{field, named_child};
 use conjure_cp_core::ast::{
-    Atom, DeclarationPtr, Expression, GroundDomain, Literal, Metadata, Moo, Name,
+    Atom, DeclarationPtr, Expression, GroundDomain, Literal, Metadata, Moo, Name, ReturnType,
+    Typeable,
 };
 use std::collections::VecDeque;
 use tree_sitter::Node;
@@ -164,9 +165,7 @@ fn parse_index_or_slice(
     let mut idx_nodes = named_children(&indices_field).collect::<VecDeque<_>>();
 
     // If LHS is a record, parse first index as a record field
-    if let Some(dom) = collection.domain_of()
-        && let Some(ents) = dom.as_record()
-    {
+    if let ReturnType::Record(ents) = collection.return_type() {
         let idx = idx_nodes
             .pop_front()
             .ok_or(FatalParseError::internal_error(
@@ -182,6 +181,11 @@ fn parse_index_or_slice(
             ));
         }
         collection = Expression::RecordField(Metadata::new(), Moo::new(collection), name);
+
+        // If there are no more indices, return the record field directly
+        if idx_nodes.is_empty() {
+            return Ok(Some(collection));
+        }
     }
 
     // Parse the rest of the indices as normal

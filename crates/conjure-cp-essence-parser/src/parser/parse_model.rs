@@ -207,7 +207,7 @@ mod test {
     #[allow(unused_imports)]
     use crate::parse_essence;
     #[allow(unused_imports)]
-    use conjure_cp_core::ast::{Atom, Expression, Metadata, Moo, Name, HasDomain};
+    use conjure_cp_core::ast::{Atom, Expression, HasDomain, Metadata, Moo, Name};
     #[allow(unused_imports)]
     use conjure_cp_core::{domain_int, matrix_expr, range};
     #[allow(unused_imports)]

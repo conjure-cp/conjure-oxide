@@ -730,7 +730,9 @@ impl Expression {
 
                 let dom = matrix.domain_of()?;
                 let Some((elem_domain, index_domains)) = dom.as_matrix() else {
-                    bug!("subject of an index operation should be a matrix, but got {matrix}: {dom}");
+                    bug!(
+                        "subject of an index operation should be a matrix, but got {matrix}: {dom}"
+                    );
                 };
 
                 match sliced_dimension {

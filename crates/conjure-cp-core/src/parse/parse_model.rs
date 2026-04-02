@@ -7,7 +7,6 @@ use serde_json::Map as JsonMap;
 use serde_json::Value;
 use serde_json::Value as JsonValue;
 
-use crate::ast::Moo;
 use crate::ast::abstract_comprehension::AbstractComprehensionBuilder;
 use crate::ast::ac_operators::ACOperatorKind;
 use crate::ast::comprehension::ComprehensionBuilder;
@@ -17,6 +16,7 @@ use crate::ast::{
     Literal, MSetAttr, Name, PartialityAttr, Range, SetAttr, SymbolTable, SymbolTablePtr,
 };
 use crate::ast::{DomainPtr, Metadata};
+use crate::ast::{Moo, ReturnType, Typeable};
 use crate::context::Context;
 use crate::error::{Error, Result};
 use crate::{Model, bug, error, into_matrix_expr, throw_error};
@@ -1063,9 +1063,7 @@ fn parse_indexing_slicing_op(
             match &value {
                 Value::Array(op_args) if op_args.len() == 2 => {
                     target = parse_expression(&op_args[0], scope)?;
-                    if let Some(dom) = target.domain_of()
-                        && let Some(ents) = dom.as_record()
-                    {
+                    if let ReturnType::Record(ents) = target.return_type() {
                         let field_name = parse_reference_name(&op_args[1])?;
                         let has_name = ents.iter().any(|x| x.name.eq(&field_name));
                         if !has_name {
