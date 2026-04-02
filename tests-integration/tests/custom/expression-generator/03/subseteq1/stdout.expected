@@ -68,6 +68,95 @@
               ]
             }
           ]
+        },
+        {
+          "SubsetEq": [
+            {
+              "clean": false,
+              "etype": null
+            },
+            {
+              "Atomic": [
+                {
+                  "clean": false,
+                  "etype": null
+                },
+                {
+                  "Reference": {
+                    "ptr": {
+                      "object_id": 1,
+                      "type_name": "DeclarationPtrInner"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "Atomic": [
+                {
+                  "clean": false,
+                  "etype": null
+                },
+                {
+                  "Reference": {
+                    "ptr": {
+                      "object_id": 2,
+                      "type_name": "DeclarationPtrInner"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "SubsetEq": [
+            {
+              "clean": false,
+              "etype": null
+            },
+            {
+              "AbstractLiteral": [
+                {
+                  "clean": false,
+                  "etype": null
+                },
+                {
+                  "Set": [
+                    {
+                      "Atomic": [
+                        {
+                          "clean": false,
+                          "etype": null
+                        },
+                        {
+                          "Literal": {
+                            "Int": 1
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "Atomic": [
+                {
+                  "clean": false,
+                  "etype": null
+                },
+                {
+                  "Reference": {
+                    "ptr": {
+                      "object_id": 1,
+                      "type_name": "DeclarationPtrInner"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
         }
       ]
     ]
@@ -118,6 +207,43 @@
             "User": "x"
           }
         }
+      ],
+      [
+        {
+          "User": "y"
+        },
+        {
+          "id": {
+            "object_id": 2,
+            "type_name": "DeclarationPtrInner"
+          },
+          "kind": {
+            "Find": {
+              "domain": {
+                "Ground": {
+                  "Set": [
+                    {
+                      "size": "Unbounded"
+                    },
+                    {
+                      "Int": [
+                        {
+                          "Bounded": [
+                            1,
+                            6
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "name": {
+            "User": "y"
+          }
+        }
       ]
     ]
   }
@@ -125,24 +251,34 @@
 
 
 find x: set  of int(1..5)
+find y: set  of int(1..6)
 
 such that
 
-and([ __0 in x | __0 <- Set([Int(1), Int(2)]) ])
+and([ __0 in x | __0 <- Set([Int(1), Int(2)]) ]),
+and([ __0 in x | __0 <- y ]),
+and([ __0 in Set([Int(1)]) | __0 <- x ])
 
 Model before rewriting:
 
 find x: set  of int(1..5)
+find y: set  of int(1..6)
 
 such that
 
-(x subsetEq {1,2})
+(x subsetEq {1,2}),
+(x subsetEq y),
+({1} subsetEq x)
 
 --
 
-(x subsetEq {1,2}), 
+(x subsetEq {1,2}),
+(x subsetEq y),
+({1} subsetEq x), 
    ~~> constant_evaluator ([("Constant", 9001)])
-(x subsetEq Set([Int(1), Int(2)]))
+(x subsetEq Set([Int(1), Int(2)])),
+(x subsetEq y),
+(Set([Int(1)]) subsetEq x)
 
 --
 
@@ -152,11 +288,26 @@ and([ __0 in x | __0 <- Set([Int(1), Int(2)]) ])
 
 --
 
+(x subsetEq y), 
+   ~~> subseteq_set ([("Base", 8700)])
+and([ __0 in x | __0 <- y ])
+
+--
+
+(Set([Int(1)]) subsetEq x), 
+   ~~> subseteq_set ([("Base", 8700)])
+and([ __0 in Set([Int(1)]) | __0 <- x ])
+
+--
+
 Final model:
 
 find x: set  of int(1..5)
+find y: set  of int(1..6)
 
 such that
 
-and([ __0 in x | __0 <- Set([Int(1), Int(2)]) ])
+and([ __0 in x | __0 <- Set([Int(1), Int(2)]) ]),
+and([ __0 in x | __0 <- y ]),
+and([ __0 in Set([Int(1)]) | __0 <- x ])
 
