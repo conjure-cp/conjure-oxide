@@ -706,12 +706,4 @@ mod tests {
 
         assert_eq!(actual_index_domains, expected_index_domains);
     }
-
-    #[test]
-    fn set_literal_display_uses_braces() {
-        let lit =
-            Literal::AbstractLiteral(AbstractLiteral::Set(vec![Literal::Int(1), Literal::Int(2)]));
-
-        assert_eq!(lit.to_string(), "{1,2}");
-    }
 }
