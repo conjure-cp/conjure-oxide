@@ -337,6 +337,7 @@ fn run_solver(
         model,
         cmd_args.number_of_solutions.as_solver_limit(),
         &global_args.save_solver_input_file,
+        global_args.rule_trace_cdp,
     )?;
     tracing::info!(target: "file", "Solutions: {}", solutions_to_json(&solutions));
 

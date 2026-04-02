@@ -126,6 +126,7 @@ pub fn get_solutions(
     model: Model,
     num_sols: i32,
     solver_input_file: &Option<PathBuf>,
+    rule_trace_cdp: bool,
 ) -> Result<Vec<BTreeMap<Name, Literal>>, anyhow::Error> {
     let dominance_expression = model.dominance.as_ref().map(|expr| match expr {
         Expression::DominanceRelation(_, inner) => inner.as_ref().clone(),
