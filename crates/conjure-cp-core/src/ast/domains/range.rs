@@ -53,6 +53,19 @@ impl<A> Range<A> {
             Range::Unbounded => Range::Unbounded,
         }
     }
+
+    pub fn try_map<B, F, E>(&self, mut f: F) -> Result<Range<B>, E>
+    where
+        F: FnMut(&A) -> Result<B, E>,
+    {
+        Ok(match self {
+            Range::Single(a) => Range::Single(f(a)?),
+            Range::Bounded(a, b) => Range::Bounded(f(a)?, f(b)?),
+            Range::UnboundedL(a) => Range::UnboundedL(f(a)?),
+            Range::UnboundedR(a) => Range::UnboundedR(f(a)?),
+            Range::Unbounded => Range::Unbounded,
+        })
+    }
 }
 
 impl<A: Ord> Range<A> {

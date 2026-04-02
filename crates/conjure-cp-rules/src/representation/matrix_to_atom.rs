@@ -3,7 +3,17 @@ use crate::representation::prelude::matrix::{flatten, unflatten_matrix};
 use conjure_cp::ast::{GroundDomain, Moo, Range, Reference};
 use conjure_cp::representation::ReprInitError;
 use conjure_cp::utils::{BiMap, View};
+use itertools::Itertools;
 use std::collections::VecDeque;
+use thiserror::Error;
+
+#[derive(Debug, Clone, Error)]
+pub enum IdxError {
+    #[error("{1} is not a valid index for dimension {0}")]
+    Lit(usize, Literal),
+    #[error("{1} is not a valid index for dimension {0}")]
+    Int(usize, usize),
+}
 
 register_representation!(
     MatrixToAtom
@@ -31,32 +41,32 @@ register_representation!(
             self.elements.is_empty()
         }
         /// Convert a matrix index to flat integer index into `elements`
-        pub fn indices_lits_to_flat(&self, idx: &[Literal]) -> Option<usize> {
+        pub fn indices_lits_to_flat(&self, idx: &[Literal]) -> Result<usize, IdxError> {
             let mut ans: usize = 0;
             for (i, lit) in idx.iter().enumerate() {
-                let flat = self.indices[i].get_by_right(lit)?;
+                let flat = self.index_lit_to_flat(i, lit)?;
                 ans += flat * self.strides[i];
             }
-            Some(ans)
+            Ok(ans)
         }
         /// Convert a flat index into the original matrix index
-        pub fn indices_flat_to_lits(&self, mut idx: usize) -> Vec<Literal> {
+        pub fn indices_flat_to_lits(&self, mut idx: usize) -> Result<Vec<Literal>, IdxError> {
             let mut ans: Vec<Literal> = Vec::new();
             for (i, s) in self.strides.iter().copied().enumerate() {
                 let dim_idx = idx / s;
-                let dim_idx_lit = self.index_flat_to_lit(i, dim_idx);
+                let dim_idx_lit = self.index_flat_to_lit(i, dim_idx)?;
                 ans.push(dim_idx_lit.clone());
                 idx %= s;
             }
-            ans
+            Ok(ans)
         }
         /// Convert a flat index along the given dimension to a Literal
-        pub fn index_flat_to_lit(&self, dim: usize, idx: usize) -> &Literal {
-            self.indices[dim].get_by_left(&idx).expect("invalid index")
+        pub fn index_flat_to_lit(&self, dim: usize, idx: usize) -> Result<&Literal, IdxError> {
+            self.indices[dim].get_by_left(&idx).ok_or(IdxError::Int(dim, idx))
         }
         /// Convert a literal index along the given dimension to a flat index
-        pub fn index_lit_to_flat(&self, dim: usize, lit: &Literal) -> usize {
-            *self.indices[dim].get_by_right(lit).expect("invalid index")
+        pub fn index_lit_to_flat(&self, dim: usize, lit: &Literal) -> Result<usize, IdxError> {
+            self.indices[dim].get_by_right(lit).copied().ok_or(IdxError::Lit(dim, lit.clone()))
         }
         /// Subset of `elements` corresponding to a matrix with the given dimensions and strides
         pub fn view<'a>(&'a self, view: &View) -> Vec<&'a T> {
@@ -88,14 +98,14 @@ register_representation!(
             View::new(offset, new_dims, new_strides)
         }
         /// Slice into the elements matrix via literal indices
-        pub fn slice_lit(&self, dim_slices: &[Range<Literal>]) -> View {
-            let dim_slices_flat = dim_slices.iter()
+        pub fn slice_lit(&self, dim_slices: &[Range<Literal>]) -> Result<View, IdxError> {
+            let dim_slices_flat: Vec<Range<usize>> = dim_slices.iter()
                 .enumerate()
                 .map(|(i, rng)|
-                    rng.map(|l|
+                    rng.try_map(|l|
                         self.index_lit_to_flat(i, &l)))
-                .collect::<Vec<_>>();
-            self.slice_flat(&dim_slices_flat)
+                .try_collect()?;
+            Ok(self.slice_flat(&dim_slices_flat))
         }
     }
     impl State<DeclarationPtr> {

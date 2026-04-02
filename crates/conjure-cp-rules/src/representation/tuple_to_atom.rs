@@ -10,6 +10,9 @@ register_representation!(
         pub fn elem_refs(&self) -> impl Iterator<Item = Reference> {
             self.elems.iter().cloned().map(Reference::new)
         }
+        pub fn field_exprs(&self) -> Vec<Expression> {
+            self.elem_refs().map(Expression::from).collect()
+        }
     }
     fn init(dom: DomainPtr) -> Result<State<DomainPtr>, ReprInitError> {
         let Some(elems) = dom.as_tuple() else {

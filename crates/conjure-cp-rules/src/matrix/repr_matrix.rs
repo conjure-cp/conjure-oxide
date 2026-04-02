@@ -7,6 +7,7 @@ use conjure_cp::ast::{
     Atom, DeclarationKind, Expression, GroundDomain, Metadata, Moo, Range, Reference, SymbolTable,
     eval_constant,
 };
+use conjure_cp::bug::UnwrapOrBug;
 use conjure_cp::into_matrix_expr;
 use conjure_cp::representation::ReprRule;
 use conjure_cp::rule_engine::{
@@ -125,7 +126,7 @@ fn index_matrix_to_atom_impl(expr: &Expression, symbols: &SymbolTable) -> Applic
         }
     }
 
-    let view = mta.slice_lit(&slices);
+    let view = mta.slice_lit(&slices).unwrap_or_bug();
 
     // Flat slice of remaining elements to index
     let mut lhs_elems: Vec<Expression> = mta
@@ -185,7 +186,7 @@ fn index_matrix_to_atom_impl(expr: &Expression, symbols: &SymbolTable) -> Applic
                     Reference::new(idx_auxvars.gensym(&domain_int!(0..(dim_sz as i32 - 1))));
                 let mut eq_cases = Vec::new();
                 for idx_val in 0..dim_sz {
-                    let orig_idx_val = mta.index_flat_to_lit(di, idx_val);
+                    let orig_idx_val = mta.index_flat_to_lit(di, idx_val).unwrap_or_bug();
                     eq_cases.push(essence_expr!(
                         r"(&idx_expr = &orig_idx_val) /\ (&mapped_idx = &idx_val)"
                     ));
@@ -257,7 +258,7 @@ fn slice_matrix_to_atom(expr: &Expression, _: &SymbolTable) -> ApplicationResult
         //       Add handling of `a..b` when range expressions are supported by AST / parser
     }
 
-    let view = mta.slice_lit(&slices);
+    let view = mta.slice_lit(&slices).unwrap_or_bug();
 
     // Flat slice of remaining elements to index
     let mut lhs_elems: Vec<Expression> = mta

@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 /// Triggers a panic with a detailed bug report message, while ensuring the panic is ignored in coverage reports.
 ///
 /// This macro is useful in situations where an unreachable code path is hit or when a bug occurs.
@@ -81,4 +83,23 @@ macro_rules! bug_assert_eq {
             );
         }
     };
+}
+
+pub trait UnwrapOrBug {
+    type Output;
+    fn unwrap_or_bug(self) -> Self::Output;
+}
+
+impl<T, E: Display> UnwrapOrBug for Result<T, E> {
+    type Output = T;
+    fn unwrap_or_bug(self) -> Self::Output {
+        self.unwrap_or_else(|e| bug!("error: {}", e))
+    }
+}
+
+impl<T> UnwrapOrBug for Option<T> {
+    type Output = T;
+    fn unwrap_or_bug(self) -> Self::Output {
+        self.unwrap_or_else(|| bug!("expected a value, but got None"))
+    }
 }

@@ -1,15 +1,15 @@
 use crate::guard;
 use crate::representation::tuple_to_atom::TupleToAtom;
-use crate::utils::{as_eq_or_neq, collect_eq_or_neq, is_tuple_lit, tuple_expr_entries};
-use conjure_cp::ast::pretty::pretty_vec;
-use conjure_cp::ast::{
-    Atom, Expression as Expr, Expression, HasDomain, Literal, Metadata, Reference, SymbolTable,
+use crate::utils::{
+    as_comparison_op, as_eq_or_neq, collect_eq_or_neq, is_tuple_lit, tuple_expr_entries,
 };
-use conjure_cp::bug_assert_eq;
+use conjure_cp::ast::{Atom, Expression as Expr, Literal, Metadata, Moo, Reference, SymbolTable};
 use conjure_cp::rule_engine::ApplicationError::RuleNotApplicable;
 use conjure_cp::rule_engine::{ApplicationResult, Reduction, register_rule};
 use conjure_cp::{bug_assert, essence_expr};
+use conjure_cp::{bug_assert_eq, into_matrix_expr};
 use itertools::izip;
+use uniplate::Uniplate;
 
 /// Indexing into a tuple variable
 /// ```plain
@@ -133,22 +133,114 @@ fn tuple_var_eq_lit(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     Ok(Reduction::pure(new_expr))
 }
 
-/// If we have a tuple literal on the left and variable on the right, swap them
-/// so the above rule can apply
-#[register_rule(("ReprGeneral", 2001))]
-fn tuple_eq_reorder(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+/// Comparison operations on tuple variables;
+/// comparisons are done in the order of the fields
+/// ```plain
+/// x > y
+/// ~>
+/// or([
+///   x[1] > y[1],
+///   x[1] = y[1] /\ x[2] > y[2],
+///   ...
+///   x[1] = y[1] /\ x[2] = y[2] /\ ... /\ x[n-1] = y[n-1] /\ x[n] > y[n]
+/// ])
+/// ```
+#[register_rule(("ReprGeneral", 2000))]
+fn tuple_var_cmp_var(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     guard!(
-        let Expression::Eq(_, lit, var) = expr                       &&
-        let Expression::Atomic(_, Atom::Reference(_)) = var.as_ref() &&
+        as_eq_or_neq(expr).is_err() && // equality handled separately
+        let Some((lhs, rhs)) = as_comparison_op(expr)               &&
+        let Expr::Atomic(_, Atom::Reference(lhs_re)) = lhs.as_ref() &&
+        let Expr::Atomic(_, Atom::Reference(rhs_re)) = rhs.as_ref() &&
+        let Some(lhs_repr) = lhs_re.get_repr_as::<TupleToAtom>()    &&
+        let Some(rhs_repr) = rhs_re.get_repr_as::<TupleToAtom>()
+        else {
+            return Err(RuleNotApplicable);
+        }
+    );
+
+    let new_expr = generate_cmp_exprs(expr, lhs_repr.field_exprs(), rhs_repr.field_exprs());
+    Ok(Reduction::pure(new_expr))
+}
+
+/// Comparison operations on tuple variables;
+/// comparisons are done in the order of the fields
+/// ```plain
+/// x > (1, 2, 3)
+/// ~>
+/// or([
+///   x[1] > 1,
+///   x[1] = 1 /\ x[2] > 2,
+///   x[1] = 1 /\ x[2] = 2 /\ x[3] > 3
+/// ])
+/// ```
+#[register_rule(("ReprGeneral", 2000))]
+fn tuple_var_cmp_lit(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    guard!(
+        as_eq_or_neq(expr).is_err() && // equality handled separately
+        let Some((lhs, rhs)) = as_comparison_op(expr)               &&
+        let Expr::Atomic(_, Atom::Reference(lhs_re)) = lhs.as_ref() &&
+        let Some(lhs_repr) = lhs_re.get_repr_as::<TupleToAtom>()    &&
+        let Some(rhs_ents) = tuple_expr_entries(&rhs)
+        else {
+            return Err(RuleNotApplicable);
+        }
+    );
+
+    let new_expr = generate_cmp_exprs(expr, lhs_repr.field_exprs(), rhs_ents);
+    Ok(Reduction::pure(new_expr))
+}
+
+/// If we have a tuple literal on the left and variable on the right, swap them
+/// so the above rules can apply
+#[register_rule(("ReprGeneral", 2001))]
+fn tuple_comparison_reorder(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    guard!(
+        let Some((lit, var)) = as_comparison_op(expr)          &&
+        let Expr::Atomic(_, Atom::Reference(_)) = var.as_ref() &&
         is_tuple_lit(lit.as_ref())
         else {
             return Err(RuleNotApplicable);
         }
     );
 
-    Ok(Reduction::pure(Expression::Eq(
-        Metadata::new(),
-        var.clone(),
-        lit.clone(),
-    )))
+    let new_expr = match expr {
+        // commutative - just swap around the operands
+        Expr::Eq(..) => essence_expr!(&var = &lit),
+        Expr::Neq(..) => essence_expr!(&var != &lit),
+        // noncommutative, swap and replace the operator with its opposite
+        Expr::Gt(..) => essence_expr!(&var < &lit),
+        Expr::Lt(..) => essence_expr!(&var > &lit),
+        Expr::Geq(..) => essence_expr!(&var <= &lit),
+        Expr::Leq(..) => essence_expr!(&var >= &lit),
+        _ => return Err(RuleNotApplicable),
+    };
+
+    Ok(Reduction::pure(new_expr))
+}
+
+fn generate_cmp_exprs(cmp_op: &Expr, lhs_fields: Vec<Expr>, rhs_fields: Vec<Expr>) -> Expr {
+    let len = lhs_fields.len();
+    bug_assert_eq!(
+        len,
+        rhs_fields.len(),
+        "comparison of tuples with different shapes!"
+    );
+
+    let mut cases = vec![Vec::<Expr>::with_capacity(len); len];
+    for (i, (lhs_f, rhs_f)) in izip!(lhs_fields, rhs_fields).enumerate() {
+        let eq_expr = essence_expr!(&lhs_f = &rhs_f);
+        let cmp_expr = cmp_op.with_children(vec![lhs_f, rhs_f].into());
+
+        for case in cases.iter_mut().take(i) {
+            case.push(eq_expr.clone());
+        }
+        cases[i].push(cmp_expr);
+    }
+
+    let conjs: Vec<Expr> = cases
+        .into_iter()
+        .map(|c| Expr::And(Metadata::new(), Moo::new(into_matrix_expr!(c))))
+        .collect();
+    Expr::Or(Metadata::new(), Moo::new(into_matrix_expr!(conjs)))
 }
