@@ -208,7 +208,7 @@ fn rewrite_exists_comprehension_to_constraints(
         let domain = decl.domain()?;
         let rewritten_domain =
             replace_declaration_ptrs_in_domain(domain, &replacements_by_id, &replacements_by_name);
-        let fresh_decl = symbols.gensym(&rewritten_domain);
+        let fresh_decl = symbols.gen_find(&rewritten_domain);
         replacements_by_id.insert(decl.id(), fresh_decl.clone());
         replacements_by_name.insert(decl.name().clone(), fresh_decl);
     }
