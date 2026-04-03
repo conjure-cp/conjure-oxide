@@ -387,6 +387,12 @@ thread_local! {
     /// it uses `BOUND`, unless another constraint requires `DISCRETE`.
     static MINION_DISCRETE_THRESHOLD: Cell<usize> =
         const { Cell::new(DEFAULT_MINION_DISCRETE_THRESHOLD) };
+
+    /// Thread-local setting controlling whether human-readable rule traces are emitted.
+    ///
+    /// This is intentionally off by default and can be disabled before solver-time rewrites so
+    /// follow-up dominance-blocking rewrites do not pollute the initial rewrite trace.
+    static RULE_TRACE_ENABLED: Cell<bool> = const { Cell::new(false) };
 }
 
 pub fn set_current_solver_family(solver_family: SolverFamily) {
@@ -410,6 +416,14 @@ pub fn set_minion_discrete_threshold(threshold: usize) {
 
 pub fn minion_discrete_threshold() -> usize {
     MINION_DISCRETE_THRESHOLD.with(|current| current.get())
+}
+
+pub fn set_rule_trace_enabled(enabled: bool) {
+    RULE_TRACE_ENABLED.with(|current| current.set(enabled));
+}
+
+pub fn rule_trace_enabled() -> bool {
+    RULE_TRACE_ENABLED.with(|current| current.get())
 }
 
 impl FromStr for SolverFamily {

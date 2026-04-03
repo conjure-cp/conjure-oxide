@@ -7,11 +7,12 @@ use conjure_cp::rule_engine::{rewrite_morph, rewrite_naive};
 use conjure_cp::solver::Solver;
 use conjure_cp::solver::adaptors::*;
 use conjure_cp_cli::utils::testing::{normalize_solutions_for_comparison, read_human_rule_trace};
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::env;
 use std::error::Error;
 use std::fs;
 use std::fs::File;
+use std::path::Path;
 use tracing_subscriber::{Layer, filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt};
 
 use std::sync::Arc;
@@ -24,7 +25,7 @@ use conjure_cp::rule_engine::resolve_rule_sets;
 use conjure_cp::settings::{
     Parser, QuantifiedExpander, Rewriter, SolverFamily, set_comprehension_expander,
     set_current_parser, set_current_rewriter, set_current_solver_family,
-    set_minion_discrete_threshold,
+    set_minion_discrete_threshold, set_rule_trace_enabled,
 };
 use conjure_cp_cli::utils::conjure::solutions_to_json;
 use conjure_cp_cli::utils::conjure::{get_solutions, get_solutions_from_conjure};
@@ -34,6 +35,7 @@ use conjure_cp_cli::utils::testing::{read_solutions_json, save_solutions_json};
 use conjure_cp_rules;
 use pretty_assertions::assert_eq;
 use tests_integration::TestConfig;
+use tests_integration::golden_files::assert_no_redundant_expected_files;
 
 #[derive(Clone, Copy, Debug)]
 struct RunCase<'a> {
@@ -90,6 +92,7 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
     let solvers = config
         .configured_solvers()
         .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?;
+
     // Conjure output depends only on the input model, so cache it once per test case.
     let model_path = format!("{path}/{essence_base}.{extension}");
     let conjure_solutions = if accept && validate_with_conjure {
@@ -107,8 +110,9 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
         }
         None
     };
+    let mut allowed_expected_files = BTreeSet::new();
 
-    for parser in parsers {
+    for parser in parsers.iter().copied() {
         for rewriter in rewriters.clone() {
             for comprehension_expander in comprehension_expanders.clone() {
                 for solver in solvers.clone() {
@@ -141,6 +145,8 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
                         as Arc<dyn tracing::Subscriber + Send + Sync>;
                     let run_label = run_case_label(path, essence_base, extension, run_case);
                     eprintln!("[integration] running {run_label}");
+                    // TODO: enable this for both rewriters once morph supports rule traces.
+                    set_rule_trace_enabled(matches!(rewriter, Rewriter::Naive));
                     tracing::subscriber::with_default(subscriber, || {
                         integration_test_inner(
                             path,
@@ -153,10 +159,16 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
                         )
                     })
                     .map_err(|err| std::io::Error::other(format!("{run_label}: {err}")))?;
+                    allowed_expected_files.extend(expected_integration_files_for_case(
+                        run_case.case_name,
+                        solver,
+                    ));
                 }
             }
         }
     }
+
+    assert_no_redundant_expected_files(Path::new(path), &allowed_expected_files, None)?;
 
     Ok(())
 }
@@ -228,7 +240,6 @@ fn integration_test_inner(
         }
         Parser::ViaConjure => parse_essence_file(&file_path, context.clone())?,
     };
-
     // Stage 2a: Rewrite the model using the rule engine
     let mut extra_rules = vec![];
 
@@ -256,7 +267,7 @@ fn integration_test_inner(
     };
 
     let solutions = {
-        let solved = get_solutions(solver, rewritten_model, 0, &solver_input_file)?;
+        let solved = get_solutions(solver, rewritten_model, 0, &solver_input_file, false)?;
         save_solutions_json(&solved, path, case_name, solver_fam)?;
         solved
     };
@@ -320,6 +331,15 @@ fn run_case_name(
     comprehension_expander: QuantifiedExpander,
 ) -> String {
     format!("{parser}-{rewriter}-{comprehension_expander}")
+}
+
+/// Returns the expected snapshot files for an executed integration run case.
+fn expected_integration_files_for_case(case_name: &str, solver: SolverFamily) -> BTreeSet<String> {
+    let solver_name = solver.as_str();
+    BTreeSet::from([
+        format!("{case_name}-{solver_name}.expected-solutions.json"),
+        format!("{case_name}-{solver_name}-expected-rule-trace.txt"),
+    ])
 }
 
 fn clean_test_dir_for_accept(

@@ -326,8 +326,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c673075a2e0e5f4a1dde27ce9dee1ea4558c7ffe648f576438a20ca1d2acc4b0"
 dependencies = [
  "iana-time-zone",
+ "js-sys",
  "num-traits",
  "serde",
+ "wasm-bindgen",
  "windows-link",
 ]
 
@@ -483,6 +485,7 @@ dependencies = [
  "glob",
  "humantime",
  "itertools 0.14.0",
+ "mimalloc",
  "rayon",
  "schemars 1.2.1",
  "serde_json",
@@ -520,7 +523,7 @@ dependencies = [
  "quote",
  "regex",
  "rustsat",
- "rustsat-minisat",
+ "rustsat-cadical",
  "schemars 1.2.1",
  "serde",
  "serde_json",
@@ -1597,6 +1600,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "libmimalloc-sys"
+version = "0.1.44"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "667f4fec20f29dfc6bc7357c582d91796c169ad7e2fce709468aefeb2c099870"
+dependencies = [
+ "cc",
+ "libc",
+]
+
+[[package]]
 name = "linkme"
 version = "0.3.35"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1685,6 +1698,15 @@ name = "memchr"
 version = "2.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f8ca58f447f06ed17d5fc4043ce1b10dd205e060fb3ce5b979b8ed8e59ff3f79"
+
+[[package]]
+name = "mimalloc"
+version = "0.1.48"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e1ee66a4b64c74f4ef288bcbb9192ad9c3feaad75193129ac8509af543894fd8"
+dependencies = [
+ "libmimalloc-sys",
+]
 
 [[package]]
 name = "minimal-lexical"
@@ -2454,14 +2476,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "rustsat-minisat"
+name = "rustsat-cadical"
 version = "0.7.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b9f9786f5a328e7328a299bf4a406e3ab2d039f8e1e3e7f5ee3823cf4944b014"
+checksum = "36c1940036a11c1ff492fdbdad940ba100220f50a0ecabea1f2de08c18aa3a90"
 dependencies = [
  "anyhow",
  "bindgen",
- "cmake",
+ "cc",
+ "chrono",
+ "glob",
  "rustsat",
  "thiserror",
 ]

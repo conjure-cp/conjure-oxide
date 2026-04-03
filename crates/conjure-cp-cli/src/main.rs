@@ -1,4 +1,8 @@
 #![allow(clippy::unwrap_used)]
+
+#[global_allocator]
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
 mod cli;
 mod pretty;
 mod print_info_schema;

@@ -95,7 +95,10 @@ mod submodel_zipper;
 #[doc(hidden)]
 pub use submodel_zipper::SubmodelZipper;
 
-use crate::settings::SolverFamily;
+use crate::{
+    Model,
+    settings::{Rewriter, SolverFamily},
+};
 
 mod resolve_rules;
 mod rewrite_naive;
@@ -202,6 +205,18 @@ pub fn get_rule_by_name(name: &str) -> Option<&'static Rule<'static>> {
 ///
 pub fn get_all_rule_sets() -> Vec<&'static RuleSet<'static>> {
     RULE_SETS_DISTRIBUTED_SLICE.iter().collect()
+}
+
+/// Rewrites a model using the supplied rewriter configuration.
+pub fn rewrite_model_with_configured_rewriter<'a>(
+    model: Model,
+    rule_sets: &Vec<&'a RuleSet<'a>>,
+    configured_rewriter: Rewriter,
+) -> Result<Model, RewriteError> {
+    match configured_rewriter {
+        Rewriter::Morph(config) => Ok(rewrite_morph(model, rule_sets, false, config)),
+        Rewriter::Naive => rewrite_naive(&model, rule_sets, false),
+    }
 }
 
 /// Get a rule set by name.

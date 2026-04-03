@@ -809,7 +809,8 @@ fn eval_comprehension_qualifiers(
             }
         }
         ComprehensionQualifier::ExpressionGenerator { ptr } => {
-            let expr = ptr.as_quantified_expr()?;
+            // clone immediately so the read lock guard is dropped
+            let expr = ptr.as_quantified_expr()?.clone();
             let generator_values = generator_values_from_expr(&expr)?;
 
             for value in generator_values {
