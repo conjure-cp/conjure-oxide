@@ -75,9 +75,31 @@ impl SolverAdaptor for SavileRow {
             SolverError::Runtime(format!("Failed to write model file: {e}"))
         })?;
 
+        // Step 2: invoke Savile Row as an external process
+        // -in-eprime tells Savile Row the input is an Essence' file
+        // -run-solver tells Savile Row to actually run the solver and produce a solution file
+        let output = Command::new("savilerow")
+            .arg("-in-eprime")
+            .arg(&input_path)
+            .arg("-run-solver")
+            .output()
+            .map_err(|e| SolverError::Runtime(
+                format!("Could not launch Savile Row. Is it installed and on your PATH? Error: {e}")
+            ))?;
+
+        // Check if Savile Row exited successfully
+        // If it failed, return the error message it printed to stderr
+        if !output.status.success() {
+            let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+            return Err(SolverError::Runtime(
+                format!("Savile Row exited with an error:\n{stderr}")
+            ));
+        }
+
         Err(SolverError::OpNotImplemented(
-            "Savile Row solve not yet implemented".into(),
+            "Savile Row output parsing not yet implemented".into(),
         ))
+    
     }
 
     fn solve_mut(
