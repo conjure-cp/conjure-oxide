@@ -80,6 +80,13 @@ pub struct GlobalArgs {
     #[arg(long, global = true, help_heading=LOGGING_HELP_HEADING)]
     pub rule_trace: Option<PathBuf>,
 
+    /// Continue rule trace generation during solver-time CDP rewrites.
+    ///
+    /// This is off by default, so follow-up dominance-blocking rewrites do not contribute to the
+    /// trace.
+    #[arg(long, default_value_t = false, global = true, help_heading=LOGGING_HELP_HEADING)]
+    pub rule_trace_cdp: bool,
+
     /// Output file for verbose rule-attempt trace in CSV format.
     ///
     /// Each row includes: elapsed_s, rule_level, rule_name, rule_set, status, expression.

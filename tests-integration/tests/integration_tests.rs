@@ -25,7 +25,7 @@ use conjure_cp::rule_engine::resolve_rule_sets;
 use conjure_cp::settings::{
     Parser, QuantifiedExpander, Rewriter, SolverFamily, set_comprehension_expander,
     set_current_parser, set_current_rewriter, set_current_solver_family,
-    set_minion_discrete_threshold,
+    set_minion_discrete_threshold, set_rule_trace_enabled,
 };
 use conjure_cp_cli::utils::conjure::solutions_to_json;
 use conjure_cp_cli::utils::conjure::{get_solutions, get_solutions_from_conjure};
@@ -145,6 +145,8 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
                         as Arc<dyn tracing::Subscriber + Send + Sync>;
                     let run_label = run_case_label(path, essence_base, extension, run_case);
                     eprintln!("[integration] running {run_label}");
+                    // TODO: enable this for both rewriters once morph supports rule traces.
+                    set_rule_trace_enabled(matches!(rewriter, Rewriter::Naive));
                     tracing::subscriber::with_default(subscriber, || {
                         integration_test_inner(
                             path,
@@ -238,7 +240,6 @@ fn integration_test_inner(
         }
         Parser::ViaConjure => parse_essence_file(&file_path, context.clone())?,
     };
-
     // Stage 2a: Rewrite the model using the rule engine
     let mut extra_rules = vec![];
 
@@ -266,7 +267,7 @@ fn integration_test_inner(
     };
 
     let solutions = {
-        let solved = get_solutions(solver, rewritten_model, 0, &solver_input_file)?;
+        let solved = get_solutions(solver, rewritten_model, 0, &solver_input_file, false)?;
         save_solutions_json(&solved, path, case_name, solver_fam)?;
         solved
     };
