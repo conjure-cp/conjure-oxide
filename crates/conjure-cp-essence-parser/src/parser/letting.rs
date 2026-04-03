@@ -89,41 +89,28 @@ pub fn parse_letting_statement(
         }
 
         let expr_or_domain = field!(variable_decl, "expr_or_domain");
-        match expr_or_domain.kind() {
-            "bool_expr" | "arithmetic_expr" | "atom" => {
-                for name in temp_symbols {
-                    let Some(expr) = parse_expression(ctx, expr_or_domain)? else {
-                        continue;
-                    };
-                    symbol_table.insert(DeclarationPtr::new_value_letting(Name::user(name), expr));
-                }
-            }
-            "domain" => {
-                for name in temp_symbols {
-                    let Some(domain) = parse_domain(ctx, expr_or_domain)? else {
-                        continue;
-                    };
+        if variable_decl.child_by_field_name("domain").is_some() {
+            for name in temp_symbols {
+                let Some(domain) = parse_domain(ctx, expr_or_domain)? else {
+                    continue;
+                };
 
-                    // If it's a record domain, add the field names to the symbol table
-                    if let Some(entries) = domain.as_record() {
-                        for entry in entries {
-                            // Add each field name as a record field declaration
-                            symbol_table.insert(DeclarationPtr::new_record_field(entry.clone()));
-                        }
+                // If it's a record domain, add the field names to the symbol table
+                if let Some(entries) = domain.as_record() {
+                    for entry in entries {
+                        // Add each field name as a record field declaration
+                        symbol_table.insert(DeclarationPtr::new_record_field(entry.clone()));
                     }
-
-                    symbol_table
-                        .insert(DeclarationPtr::new_domain_letting(Name::user(name), domain));
                 }
+
+                symbol_table.insert(DeclarationPtr::new_domain_letting(Name::user(name), domain));
             }
-            _ => {
-                return Err(FatalParseError::internal_error(
-                    format!(
-                        "Expected letting expression, got '{}'",
-                        expr_or_domain.kind()
-                    ),
-                    Some(expr_or_domain.range()),
-                ));
+        } else {
+            for name in temp_symbols {
+                let Some(expr) = parse_expression(ctx, expr_or_domain)? else {
+                    continue;
+                };
+                symbol_table.insert(DeclarationPtr::new_value_letting(Name::user(name), expr));
             }
         }
     }

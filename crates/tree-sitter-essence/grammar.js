@@ -195,8 +195,13 @@ module.exports = grammar ({
     letting_variable_declaration: $ => seq(
       field("variable_list", $.variable_list), 
       field("be", "be"), 
-      optional(field ("domain", "domain")),
-      field("expr_or_domain", choice($.bool_expr, $.arithmetic_expr, $.domain, $.atom))
+      choice(
+        field("expr_or_domain", choice($.bool_expr, $.arithmetic_expr, $.atom)),
+        seq(
+          field("domain", "domain"),
+          field("expr_or_domain", $.domain)
+        )
+      )
     ),
 
     // Constraints 
