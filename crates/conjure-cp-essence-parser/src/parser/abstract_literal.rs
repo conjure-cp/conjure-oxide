@@ -1,4 +1,5 @@
 use crate::errors::FatalParseError;
+use crate::errors::RecoverableParseError;
 use crate::expression::parse_expression;
 use crate::field;
 use crate::parser::ParseContext;
@@ -17,10 +18,13 @@ pub fn parse_abstract(
         "tuple" => parse_tuple(ctx, node),
         "matrix" => parse_matrix(ctx, node),
         "set_literal" => parse_set_literal(ctx, node),
-        _ => Err(FatalParseError::internal_error(
-            format!("Expected abstract literal, got: {}", node.kind()),
-            Some(node.range()),
-        )),
+        _ => {
+            ctx.record_error(RecoverableParseError::new(
+                format!("Expected abstract literal, got: {}", node.kind()),
+                Some(node.range()),
+            ));
+            Ok(None)
+        }
     }
 }
 
