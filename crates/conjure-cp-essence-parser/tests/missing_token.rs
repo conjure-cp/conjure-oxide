@@ -86,3 +86,15 @@ letting x be
     check_diagnostic(diag1, 0, 16, 0, 16, "Missing )");
     check_diagnostic(diag2, 1, 12, 1, 12, "Missing Expression or Domain");
 }
+
+#[test]
+fn missing_rparen_in_int_domain_at_eof() {
+    let source = "find x: int(1..3";
+    let (cst, _) = get_tree(&source).unwrap();
+
+    let diagnostics = get_diagnostics(&source, &cst);
+    assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
+
+    let diag = &diagnostics[0];
+    check_diagnostic(diag, 0, 16, 0, 16, "Missing )");
+}

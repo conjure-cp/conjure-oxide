@@ -3,8 +3,8 @@ use std::sync::{Arc, RwLock};
 use std::{fs, vec};
 
 use conjure_cp_core::Model;
+use conjure_cp_core::ast::DeclarationPtr;
 use conjure_cp_core::ast::assertions::debug_assert_model_well_formed;
-use conjure_cp_core::ast::{DeclarationPtr, Expression, Metadata, Moo};
 use conjure_cp_core::context::Context;
 #[allow(unused)]
 use uniplate::Uniplate;
@@ -17,6 +17,7 @@ use crate::diagnostics::diagnostics_api::SymbolKind;
 use crate::diagnostics::source_map::{HoverInfo, SourceMap, span_with_hover};
 use crate::errors::{FatalParseError, ParseErrorCollection, RecoverableParseError};
 use crate::expression::parse_expression;
+use crate::parser::keyword_checks::keyword_as_identifier;
 use crate::syntax_errors::detect_syntactic_errors;
 use tree_sitter::Tree;
 
@@ -91,6 +92,8 @@ pub fn parse_essence_with_context_and_map(
     if tree.root_node().has_error() {
         detect_syntactic_errors(src, &tree, errors);
     }
+
+    keyword_as_identifier(tree.root_node(), src, errors);
 
     let mut model = Model::new(context);
     let mut source_map = SourceMap::default();
@@ -184,10 +187,9 @@ pub fn parse_essence_with_context_and_map(
                         continue;
                     }
                 };
-                let Some(expr) = parse_expression(&mut ctx, inner)? else {
+                let Some(dominance) = parse_expression(&mut ctx, inner)? else {
                     continue;
                 };
-                let dominance = Expression::DominanceRelation(Metadata::new(), Moo::new(expr));
                 if model.dominance.is_some() {
                     ctx.record_error(RecoverableParseError::new(
                         "Duplicate dominance relation".to_string(),

@@ -6,7 +6,7 @@ use crate::{
     settings::{Rewriter, set_current_rewriter},
 };
 
-use super::{RuleSet, get_rules_grouped};
+use super::{RuleSet, get_rules_grouped, rewriter_common::try_rewrite_value_letting_once};
 
 /// Rewrites a `Model` by applying rule sets using an optimized, tree-morphing rewriter.
 ///
@@ -43,7 +43,10 @@ pub fn rewrite_morph<'a>(
     let rules_grouped = get_rules_grouped(rule_sets)
         .unwrap_or_else(|_| bug!("get_rule_priorities() failed!"))
         .into_iter()
-        .map(|(_, rule)| rule.into_iter().map(|f| f.rule).collect_vec())
+        .collect_vec();
+    let morph_rule_groups = rules_grouped
+        .iter()
+        .map(|(_, rule)| rule.iter().map(|f| f.rule).collect_vec())
         .collect_vec();
     let selector = if prop_multiple_equally_applicable {
         select_panic
@@ -53,11 +56,35 @@ pub fn rewrite_morph<'a>(
 
     let engine = EngineBuilder::new()
         .set_selector(selector)
-        .append_rule_groups(rules_grouped)
+        .append_rule_groups(morph_rule_groups)
         .build();
-    let (expr, symbol_table) = engine.morph(model_ref.root().clone(), model_ref.symbols().clone());
 
-    *model_ref.symbols_mut() = symbol_table;
-    model_ref.replace_root(expr);
+    loop {
+        if try_rewrite_value_letting_once(
+            model_ref,
+            &rules_grouped,
+            prop_multiple_equally_applicable,
+        )
+        .is_some()
+        {
+            continue;
+        }
+
+        let (expr, symbol_table) =
+            engine.morph(model_ref.root().clone(), model_ref.symbols().clone());
+        *model_ref.symbols_mut() = symbol_table;
+        model_ref.replace_root(expr);
+
+        if try_rewrite_value_letting_once(
+            model_ref,
+            &rules_grouped,
+            prop_multiple_equally_applicable,
+        )
+        .is_none()
+        {
+            break;
+        }
+    }
+
     model
 }
