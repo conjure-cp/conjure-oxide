@@ -10,11 +10,10 @@ use conjure_cp_core::context::Context;
 use uniplate::Uniplate;
 
 use super::ParseContext;
-use super::find::parse_find_statement;
+use super::find::{parse_find_statement, parse_given_statement};
 use super::letting::parse_letting_statement;
 use super::util::{TypecheckingContext, get_tree};
-use crate::diagnostics::diagnostics_api::SymbolKind;
-use crate::diagnostics::source_map::{HoverInfo, SourceMap, span_with_hover};
+use crate::diagnostics::source_map::SourceMap;
 use crate::errors::{FatalParseError, ParseErrorCollection, RecoverableParseError};
 use crate::expression::parse_expression;
 use crate::parser::keyword_checks::keyword_as_identifier;
@@ -113,37 +112,6 @@ pub fn parse_essence_with_context_and_map(
 
     let mut cursor = root_node.walk();
     for statement in root_node.children(&mut cursor) {
-        /*
-           since find and letting are unnamed children
-           hover info is added here.
-           other unnamed children will be skipped.
-        */
-        if statement.kind() == "find" {
-            span_with_hover(
-                &statement,
-                ctx.source_code,
-                ctx.source_map,
-                HoverInfo {
-                    description: "Find keyword".to_string(),
-                    kind: Some(SymbolKind::Find),
-                    ty: None,
-                    decl_span: None,
-                },
-            );
-        } else if statement.kind() == "letting" {
-            span_with_hover(
-                &statement,
-                ctx.source_code,
-                ctx.source_map,
-                HoverInfo {
-                    description: "Letting keyword".to_string(),
-                    kind: Some(SymbolKind::Letting),
-                    ty: None,
-                    decl_span: None,
-                },
-            );
-        }
-
         if !statement.is_named() {
             continue;
         }
@@ -157,6 +125,14 @@ pub fn parse_essence_with_context_and_map(
                     model
                         .symbols_mut()
                         .insert(DeclarationPtr::new_find(name, domain));
+                }
+            }
+            "given_statement" => {
+                let var_hashmap = parse_given_statement(&mut ctx, statement)?;
+                for (name, domain) in var_hashmap {
+                    model
+                        .symbols_mut()
+                        .insert(DeclarationPtr::new_given(name, domain));
                 }
             }
             "bool_expr" | "atom" | "comparison_expr" => {
