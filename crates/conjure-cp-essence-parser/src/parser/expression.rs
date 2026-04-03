@@ -5,7 +5,7 @@ use crate::parser::ParseContext;
 use crate::parser::atom::parse_atom;
 use crate::parser::comprehension::parse_quantifier_or_aggregate_expr;
 use crate::util::TypecheckingContext;
-use crate::{RecoverableParseError, field, named_child};
+use crate::RecoverableParseError;
 use conjure_cp_core::ast::{Expression, Metadata, Moo};
 use conjure_cp_core::{domain_int, matrix_expr, range};
 use tree_sitter::Node;
@@ -56,7 +56,21 @@ fn parse_dominance_relation(
         typechecking_context: ctx.typechecking_context,
     };
 
-    let Some(inner) = parse_expression(&mut inner_ctx, field!(node, "expression"))? else {
+    let inner_node = match node.child_by_field_name("expression") {
+        Some(node) => node,
+        None => {
+            ctx.record_error(RecoverableParseError::new(
+                format!(
+                    "Missing field '{}' in expression of kind '{}'",
+                    "expression",
+                    node.kind()
+                ),
+                Some(node.range()),
+            ));
+            return Ok(None);
+        }
+    };
+    let Some(inner) = parse_expression(&mut inner_ctx, inner_node)? else {
         return Ok(None);
     };
 
@@ -71,7 +85,16 @@ fn parse_arithmetic_expression(
     node: &Node,
 ) -> Result<Option<Expression>, FatalParseError> {
     ctx.typechecking_context = TypecheckingContext::Arithmetic;
-    let inner = named_child!(node);
+    let inner = match node.named_child(0) {
+        Some(node) => node,
+        None => {
+            ctx.record_error(RecoverableParseError::new(
+                format!("Missing sub-expression in expression of kind '{}'", node.kind()),
+                Some(node.range()),
+            ));
+            return Ok(None);
+        }
+    };
     match inner.kind() {
         "atom" => parse_atom(ctx, &inner),
         "negative_expr" | "abs_value" | "sub_arith_expr" | "factorial_expr" => {
@@ -99,7 +122,16 @@ fn parse_comparison_expression(
     ctx: &mut ParseContext,
     node: &Node,
 ) -> Result<Option<Expression>, FatalParseError> {
-    let inner = named_child!(node);
+    let inner = match node.named_child(0) {
+        Some(node) => node,
+        None => {
+            ctx.record_error(RecoverableParseError::new(
+                format!("Missing sub-expression in expression of kind '{}'", node.kind()),
+                Some(node.range()),
+            ));
+            return Ok(None);
+        }
+    };
     match inner.kind() {
         "arithmetic_comparison" => {
             // Arithmetic comparisons require arithmetic operands
@@ -143,7 +175,16 @@ fn parse_boolean_expression(
     node: &Node,
 ) -> Result<Option<Expression>, FatalParseError> {
     ctx.typechecking_context = TypecheckingContext::Boolean;
-    let inner = named_child!(node);
+    let inner = match node.named_child(0) {
+        Some(node) => node,
+        None => {
+            ctx.record_error(RecoverableParseError::new(
+                format!("Missing sub-expression in expression of kind '{}'", node.kind()),
+                Some(node.range()),
+            ));
+            return Ok(None);
+        }
+    };
     match inner.kind() {
         "atom" => parse_atom(ctx, &inner),
         "not_expr" | "sub_bool_expr" => parse_unary_expression(ctx, &inner),
@@ -164,10 +205,37 @@ fn parse_list_combining_expression(
     ctx: &mut ParseContext,
     node: &Node,
 ) -> Result<Option<Expression>, FatalParseError> {
-    let operator_node = field!(node, "operator");
+    let operator_node = match node.child_by_field_name("operator") {
+        Some(node) => node,
+        None => {
+            ctx.record_error(RecoverableParseError::new(
+                format!(
+                    "Missing field '{}' in expression of kind '{}'",
+                    "operator",
+                    node.kind()
+                ),
+                Some(node.range()),
+            ));
+            return Ok(None);
+        }
+    };
     let operator_str = &ctx.source_code[operator_node.start_byte()..operator_node.end_byte()];
 
-    let Some(inner) = parse_atom(ctx, &field!(node, "arg"))? else {
+    let arg_node = match node.child_by_field_name("arg") {
+        Some(node) => node,
+        None => {
+            ctx.record_error(RecoverableParseError::new(
+                format!(
+                    "Missing field '{}' in expression of kind '{}'",
+                    "arg",
+                    node.kind()
+                ),
+                Some(node.range()),
+            ));
+            return Ok(None);
+        }
+    };
+    let Some(inner) = parse_atom(ctx, &arg_node)? else {
         return Ok(None);
     };
 
@@ -192,7 +260,21 @@ fn parse_all_diff_comparison(
     ctx: &mut ParseContext,
     node: &Node,
 ) -> Result<Option<Expression>, FatalParseError> {
-    let Some(inner) = parse_expression(ctx, field!(node, "arg"))? else {
+    let arg_node = match node.child_by_field_name("arg") {
+        Some(node) => node,
+        None => {
+            ctx.record_error(RecoverableParseError::new(
+                format!(
+                    "Missing field '{}' in expression of kind '{}'",
+                    "arg",
+                    node.kind()
+                ),
+                Some(node.range()),
+            ));
+            return Ok(None);
+        }
+    };
+    let Some(inner) = parse_expression(ctx, arg_node)? else {
         return Ok(None);
     };
 
@@ -203,7 +285,21 @@ fn parse_unary_expression(
     ctx: &mut ParseContext,
     node: &Node,
 ) -> Result<Option<Expression>, FatalParseError> {
-    let Some(inner) = parse_expression(ctx, field!(node, "expression"))? else {
+    let expr_node = match node.child_by_field_name("expression") {
+        Some(node) => node,
+        None => {
+            ctx.record_error(RecoverableParseError::new(
+                format!(
+                    "Missing field '{}' in expression of kind '{}'",
+                    "expression",
+                    node.kind()
+                ),
+                Some(node.range()),
+            ));
+            return Ok(None);
+        }
+    };
+    let Some(inner) = parse_expression(ctx, expr_node)? else {
         return Ok(None);
     };
     match node.kind() {
@@ -232,14 +328,55 @@ pub fn parse_binary_expression(
 ) -> Result<Option<Expression>, FatalParseError> {
     let mut parse_subexpr = |expr: Node| parse_expression(ctx, expr);
 
-    let Some(left) = parse_subexpr(field!(node, "left"))? else {
+    let left_node = match node.child_by_field_name("left") {
+        Some(node) => node,
+        None => {
+            ctx.record_error(RecoverableParseError::new(
+                format!(
+                    "Missing field '{}' in expression of kind '{}'",
+                    "left",
+                    node.kind()
+                ),
+                Some(node.range()),
+            ));
+            return Ok(None);
+        }
+    };
+    let Some(left) = parse_subexpr(left_node)? else {
         return Ok(None);
     };
-    let Some(right) = parse_subexpr(field!(node, "right"))? else {
+    let right_node = match node.child_by_field_name("right") {
+        Some(node) => node,
+        None => {
+            ctx.record_error(RecoverableParseError::new(
+                format!(
+                    "Missing field '{}' in expression of kind '{}'",
+                    "right",
+                    node.kind()
+                ),
+                Some(node.range()),
+            ));
+            return Ok(None);
+        }
+    };
+    let Some(right) = parse_subexpr(right_node)? else {
         return Ok(None);
     };
 
-    let op_node = field!(node, "operator");
+    let op_node = match node.child_by_field_name("operator") {
+        Some(node) => node,
+        None => {
+            ctx.record_error(RecoverableParseError::new(
+                format!(
+                    "Missing field '{}' in expression of kind '{}'",
+                    "operator",
+                    node.kind()
+                ),
+                Some(node.range()),
+            ));
+            return Ok(None);
+        }
+    };
     let op_str = &ctx.source_code[op_node.start_byte()..op_node.end_byte()];
 
     let mut description = format!("Operator '{op_str}'");

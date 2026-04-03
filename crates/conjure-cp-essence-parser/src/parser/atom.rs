@@ -6,7 +6,6 @@ use crate::parser::ParseContext;
 use crate::parser::abstract_literal::parse_abstract;
 use crate::parser::comprehension::parse_comprehension;
 use crate::util::{TypecheckingContext, named_children};
-use crate::named_child;
 use conjure_cp_core::ast::{
     Atom, DeclarationPtr, Expression, GroundDomain, Literal, Metadata, Moo, Name,
 };
@@ -18,7 +17,19 @@ pub fn parse_atom(
     node: &Node,
 ) -> Result<Option<Expression>, FatalParseError> {
     match node.kind() {
-        "atom" | "sub_atom_expr" => parse_atom(ctx, &named_child!(node)),
+        "atom" | "sub_atom_expr" => {
+            let inner = match node.named_child(0) {
+                Some(node) => node,
+                None => {
+                    ctx.record_error(RecoverableParseError::new(
+                        format!("Missing sub-expression in expression of kind '{}'", node.kind()),
+                        Some(node.range()),
+                    ));
+                    return Ok(None);
+                }
+            };
+            parse_atom(ctx, &inner)
+        }
         "metavar" => {
             let ident = match node.child_by_field_name("identifier") {
                 Some(node) => node,
@@ -404,7 +415,16 @@ fn typecheck_variable(
 }
 
 fn parse_constant(ctx: &mut ParseContext, node: &Node) -> Result<Option<Literal>, FatalParseError> {
-    let inner = named_child!(node);
+    let inner = match node.named_child(0) {
+        Some(node) => node,
+        None => {
+            ctx.record_error(RecoverableParseError::new(
+                format!("Missing sub-expression in expression of kind '{}'", node.kind()),
+                Some(node.range()),
+            ));
+            return Ok(None);
+        }
+    };
     let raw_value = &ctx.source_code[inner.start_byte()..inner.end_byte()];
     let lit = match inner.kind() {
         "integer" => {

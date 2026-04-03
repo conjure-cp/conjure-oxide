@@ -4,7 +4,7 @@ use crate::diagnostics::source_map::{HoverInfo, span_with_hover};
 use crate::errors::FatalParseError;
 use crate::expression::parse_expression;
 use crate::parser::ParseContext;
-use crate::{RecoverableParseError, child, field};
+use crate::RecoverableParseError;
 use conjure_cp_core::ast::{
     DeclarationPtr, Domain, DomainPtr, IntVal, Moo, Name, Range, RecordEntry, Reference, SetAttr,
 };
@@ -16,7 +16,23 @@ pub fn parse_domain(
     domain: Node,
 ) -> Result<Option<DomainPtr>, FatalParseError> {
     match domain.kind() {
-        "domain" => parse_domain(ctx, child!(domain, 0, "domain")),
+        "domain" => {
+            let inner = match domain.child(0) {
+                Some(node) => node,
+                None => {
+                    ctx.record_error(RecoverableParseError::new(
+                        format!(
+                            "{} in expression of kind '{}'",
+                            "domain",
+                            domain.kind()
+                        ),
+                        Some(domain.range()),
+                    ));
+                    return Ok(None);
+                }
+            };
+            parse_domain(ctx, inner)
+        }
         "bool_domain" => {
             let hover = HoverInfo {
                 description: "Boolean domain".to_string(),
@@ -111,7 +127,20 @@ fn parse_int_domain(
         return Ok(Some(Domain::int(vec![Range::Bounded(i32::MIN, i32::MAX)])));
     }
 
-    let range_list = field!(int_domain, "ranges");
+    let range_list = match int_domain.child_by_field_name("ranges") {
+        Some(node) => node,
+        None => {
+            ctx.record_error(RecoverableParseError::new(
+                format!(
+                    "Missing field '{}' in expression of kind '{}'",
+                    "ranges",
+                    int_domain.kind()
+                ),
+                Some(int_domain.range()),
+            ));
+            return Ok(None);
+        }
+    };
     let mut ranges_unresolved: Vec<Range<IntVal>> = Vec::new();
     let mut all_resolved = true;
 
@@ -263,14 +292,41 @@ fn parse_matrix_domain(
     matrix_domain: Node,
 ) -> Result<Option<DomainPtr>, FatalParseError> {
     let mut domains: Vec<DomainPtr> = Vec::new();
-    let index_domain_list = field!(matrix_domain, "index_domain_list");
+    let index_domain_list = match matrix_domain.child_by_field_name("index_domain_list") {
+        Some(node) => node,
+        None => {
+            ctx.record_error(RecoverableParseError::new(
+                format!(
+                    "Missing field '{}' in expression of kind '{}'",
+                    "index_domain_list",
+                    matrix_domain.kind()
+                ),
+                Some(matrix_domain.range()),
+            ));
+            return Ok(None);
+        }
+    };
     for domain in named_children(&index_domain_list) {
         let Some(parsed_domain) = parse_domain(ctx, domain)? else {
             return Ok(None);
         };
         domains.push(parsed_domain);
     }
-    let Some(value_domain) = parse_domain(ctx, field!(matrix_domain, "value_domain"))? else {
+    let value_domain_node = match matrix_domain.child_by_field_name("value_domain") {
+        Some(node) => node,
+        None => {
+            ctx.record_error(RecoverableParseError::new(
+                format!(
+                    "Missing field '{}' in expression of kind '{}'",
+                    "value_domain",
+                    matrix_domain.kind()
+                ),
+                Some(matrix_domain.range()),
+            ));
+            return Ok(None);
+        }
+    };
+    let Some(value_domain) = parse_domain(ctx, value_domain_node)? else {
         return Ok(None);
     };
     Ok(Some(Domain::matrix(value_domain, domains)))
@@ -282,9 +338,35 @@ fn parse_record_domain(
 ) -> Result<Option<DomainPtr>, FatalParseError> {
     let mut record_entries: Vec<RecordEntry> = Vec::new();
     for record_entry in named_children(&record_domain) {
-        let name_node = field!(record_entry, "name");
+        let name_node = match record_entry.child_by_field_name("name") {
+            Some(node) => node,
+            None => {
+                ctx.record_error(RecoverableParseError::new(
+                    format!(
+                        "Missing field '{}' in expression of kind '{}'",
+                        "name",
+                        record_entry.kind()
+                    ),
+                    Some(record_entry.range()),
+                ));
+                return Ok(None);
+            }
+        };
         let name = Name::user(&ctx.source_code[name_node.start_byte()..name_node.end_byte()]);
-        let domain_node = field!(record_entry, "domain");
+        let domain_node = match record_entry.child_by_field_name("domain") {
+            Some(node) => node,
+            None => {
+                ctx.record_error(RecoverableParseError::new(
+                    format!(
+                        "Missing field '{}' in expression of kind '{}'",
+                        "domain",
+                        record_entry.kind()
+                    ),
+                    Some(record_entry.range()),
+                ));
+                return Ok(None);
+            }
+        };
         let Some(domain) = parse_domain(ctx, domain_node)? else {
             return Ok(None);
         };
