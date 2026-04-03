@@ -18,6 +18,7 @@ use crate::diagnostics::source_map::{HoverInfo, SourceMap, span_with_hover};
 use crate::errors::{FatalParseError, ParseErrorCollection, RecoverableParseError};
 use crate::expression::parse_expression;
 use crate::field;
+use crate::parser::keyword_checks::keyword_as_identifier;
 use crate::syntax_errors::detect_syntactic_errors;
 use tree_sitter::Tree;
 
@@ -93,6 +94,8 @@ pub fn parse_essence_with_context_and_map(
         detect_syntactic_errors(src, &tree, errors);
         return Ok(None);
     }
+
+    keyword_as_identifier(tree.root_node(), src, errors);
 
     let mut model = Model::new(context);
     let mut source_map = SourceMap::default();
