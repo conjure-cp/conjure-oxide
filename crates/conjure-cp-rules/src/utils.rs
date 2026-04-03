@@ -1,4 +1,9 @@
-use conjure_cp::ast::{AbstractLiteral, Atom, DeclarationPtr, Expression as Expr, Literal, Metadata, Moo, Name, SymbolTable, categories::Category, comprehension::{Comprehension, ComprehensionQualifier}};
+use conjure_cp::ast::{
+    AbstractLiteral, Atom, DeclarationPtr, Expression as Expr, Literal, Metadata, Moo, Name,
+    SymbolTable,
+    categories::Category,
+    comprehension::{Comprehension, ComprehensionQualifier},
+};
 
 use tracing::{instrument, trace};
 use uniplate::{Biplate, Uniplate};
@@ -231,7 +236,7 @@ impl ToAuxVarOutput {
 }
 
 /// Clone comprehension with expression generator into its own detached comprehension scope
-/// and rewrite all uses of the original quantified declaration to a fresh branch-local 
+/// and rewrite all uses of the original quantified declaration to a fresh branch-local
 /// expression generator.
 pub fn replace_expression_generator_source(
     comp: &Comprehension,

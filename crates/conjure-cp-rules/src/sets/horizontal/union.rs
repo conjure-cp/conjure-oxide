@@ -31,8 +31,11 @@ fn union_set(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                     };
 
                     // [ return_expr | i <- A, guards...] part
-                    let (comprehension1, _) =
-                        replace_expression_generator_source(comp.as_ref(), &gen_decl, a.clone().into());
+                    let (comprehension1, _) = replace_expression_generator_source(
+                        comp.as_ref(),
+                        &gen_decl,
+                        a.clone().into(),
+                    );
 
                     // [ return_expr | i <- B, !(i in A), guards...] part
                     let (mut comprehension2, b_ptr) =

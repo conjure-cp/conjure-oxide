@@ -1679,7 +1679,9 @@ impl Typeable for Expression {
                 {
                     ReturnType::Set(a_inner)
                 } else {
-                    bug!("Invalid minus operation: operands are of different or invalid types for this operation")
+                    bug!(
+                        "Invalid minus operation: operands are of different or invalid types for this operation"
+                    )
                 }
             }
             Expression::FlatAbsEq(_, _, _) => ReturnType::Bool,
