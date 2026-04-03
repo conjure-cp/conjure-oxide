@@ -23,25 +23,19 @@ new variables:
 
 m#matrix_to_atom[sum([a,b;int(1..2)])], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-{m#matrix_to_atom[sum([a,b;int(1..2)])] @ and([__inDomain(sum([a,b;int(1..2)]),int(1..2));int(1..)])}
+{m#matrix_to_atom[sum([a,b;int(1..2)])] @ __inDomain(sum([a,b;int(1..2)]),int(1..2))}
 
 --
 
-({m#matrix_to_atom[sum([a,b;int(1..2)])] @ and([__inDomain(sum([a,b;int(1..2)]),int(1..2));int(1..)])} = c), 
+({m#matrix_to_atom[sum([a,b;int(1..2)])] @ __inDomain(sum([a,b;int(1..2)]),int(1..2))} = c), 
    ~~> bubble_up ([("Bubble", 8800)])
-{(m#matrix_to_atom[sum([a,b;int(1..2)])] = c) @ and([__inDomain(sum([a,b;int(1..2)]),int(1..2));int(1..)])}
+{(m#matrix_to_atom[sum([a,b;int(1..2)])] = c) @ __inDomain(sum([a,b;int(1..2)]),int(1..2))}
 
 --
 
-{(m#matrix_to_atom[sum([a,b;int(1..2)])] = c) @ and([__inDomain(sum([a,b;int(1..2)]),int(1..2));int(1..)])}, 
+{(m#matrix_to_atom[sum([a,b;int(1..2)])] = c) @ __inDomain(sum([a,b;int(1..2)]),int(1..2))}, 
    ~~> expand_bubble ([("Bubble", 8900)])
-and([(m#matrix_to_atom[sum([a,b;int(1..2)])] = c),and([__inDomain(sum([a,b;int(1..2)]),int(1..2));int(1..)]);int(1..)])
-
---
-
-and([__inDomain(sum([a,b;int(1..2)]),int(1..2));int(1..)]), 
-   ~~> remove_unit_vector_and ([("Base", 8800)])
-__inDomain(sum([a,b;int(1..2)]),int(1..2))
+and([(m#matrix_to_atom[sum([a,b;int(1..2)])] = c),__inDomain(sum([a,b;int(1..2)]),int(1..2));int(1..)])
 
 --
 

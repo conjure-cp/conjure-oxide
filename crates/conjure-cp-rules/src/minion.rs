@@ -116,7 +116,7 @@ fn introduce_producteq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
         .domain_of()
         .ok_or(ApplicationError::DomainError)?;
 
-        let aux_decl = symbols.gensym(&aux_domain);
+        let aux_decl = symbols.gen_find(&aux_domain);
         let aux_var = Atom::Reference(Reference::new(aux_decl));
 
         let new_top_expr = Expr::FlatProductEq(
@@ -880,6 +880,9 @@ fn introduce_element_from_index(expr: &Expr, _: &SymbolTable) -> ApplicationResu
             }
             _ => Err(RuleNotApplicable),
         },
+        Expr::SafeIndex(_, subject, indices) if expr.return_type() == ReturnType::Bool => {
+            Ok((Atom::Literal(Lit::Bool(true)), subject, indices))
+        }
         _ => Err(RuleNotApplicable),
     }?;
 
@@ -1168,7 +1171,7 @@ fn flatten_matrix_literal(expr: &Expr, symtab: &SymbolTable) -> ApplicationResul
                     continue;
                 }
 
-                let decl = symbols.gensym(&domain);
+                let decl = symbols.gen_find(&domain);
 
                 top_level_exprs.push(Expr::AuxDeclaration(
                     Metadata::new(),

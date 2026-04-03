@@ -521,7 +521,7 @@ module.exports = grammar ({
     )),
 
     dominance_relation: $ => seq(
-      "dominanceRelation",
+      "dominance relation",
       field("expression", choice($.bool_expr, $.comparison_expr, $.arithmetic_expr, $.atom)),
     )
   }

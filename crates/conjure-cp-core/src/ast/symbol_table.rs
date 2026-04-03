@@ -386,14 +386,19 @@ impl SymbolTable {
         self.table.extend(other.table);
     }
 
-    /// Creates a new variable in this symbol table with a unique name, and returns its
+    /// Creates a new find declaration in this symbol table with a unique name, and returns its
     /// declaration.
-    pub fn gensym(&mut self, domain: &DomainPtr) -> DeclarationPtr {
-        let num = self.next_machine_name;
-        self.next_machine_name += 1;
-        let decl = DeclarationPtr::new_find(Name::Machine(num), domain.clone());
+    pub fn gen_find(&mut self, domain: &DomainPtr) -> DeclarationPtr {
+        let decl = DeclarationPtr::new_find(self.gen_sym(), domain.clone());
         self.insert(decl.clone());
         decl
+    }
+
+    // Reserves a unique machine name in the symbol table
+    pub fn gen_sym(&mut self) -> Name {
+        let num = self.next_machine_name;
+        self.next_machine_name += 1;
+        Name::Machine(num)
     }
 
     /// Gets the parent of this symbol table as a mutable reference.
