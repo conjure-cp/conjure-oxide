@@ -1,20 +1,17 @@
 use crate::guard;
-use crate::representation::sat_direct_int::SatIntDirect;
 use crate::utils::as_comparison_op;
 // use conjure_cp::ast::Literal;
-use conjure_cp::ast::{Domain, DomainPtr, HasDomain, Name, UnresolvedDomain};
-use conjure_cp::utils::View;
+use conjure_cp::ast::{Domain, DomainPtr, HasDomain, UnresolvedDomain};
+use conjure_cp::settings::SolverFamily;
 use conjure_cp::{
-    ast::{Atom, Expression as Expr, GroundDomain, SymbolTable},
+    ast::{Atom, Expression as Expr, GroundDomain, Metadata, Moo, Reference, SymbolTable},
     representation::get_repr_rules,
     rule_engine::{
         ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
         register_rule_set,
     },
 };
-use conjure_cp::{domain_int, domain_int_ground, matrix_lit};
 use itertools::any;
-use std::collections::HashSet;
 use std::collections::VecDeque;
 use uniplate::Biplate;
 
@@ -22,38 +19,60 @@ use uniplate::Biplate;
 // Applies for all solvers
 register_rule_set!("ReprGeneral", ("Base"));
 
-#[register_rule(("SAT_Direct", 10000))]
-fn create_repr_sat_direct(expr: &Expr, st: &SymbolTable) -> ApplicationResult {
-    println!("sat representation creation");
+// #[register_rule(("SAT_Direct", 10000))]
+// fn integer_literal_to_reference(expr: &Expr, st: &SymbolTable) -> ApplicationResult {
+//     println!("fuckin huh");
+//     guard!(
+//         let Expr::Atomic(_, Atom::Literal(conjure_cp::ast::Literal::Int(i))) = expr
+//         else {
+//             return Err(RuleNotApplicable)
+//         }
+//     );
 
-    if let Expr::Atomic(_, Atom::Literal(i)) = expr {
-        println!("found: {}", i);
-        let a = init(i.domain_of());
-    } else {
-        return Err(RuleNotApplicable);
-    }
+//     let mut symbols = st.clone();
 
-    Err(RuleNotApplicable)
-}
+//     // Create a singleton domain for this integer value
+//     let domain: DomainPtr = Domain::Ground(Moo::new(GroundDomain::Int(
+//         vec![conjure_cp::ast::Range::Bounded(0, 10)]
+//     ))).into();
+
+//     // Create a new auxiliary variable with this domain
+//     let aux_decl = symbols.gensym(&domain);
+//     let reference = Reference::new(aux_decl);
+
+//     // Wrap the literal in an AuxDeclaration, returning a reference to it
+//     let new_expr = Expr::AuxDeclaration(
+//         Metadata::new(),
+//         reference,
+//         Moo::new(expr.clone()),
+//     );
+
+//     Ok(Reduction::new(new_expr, vec![], symbols))
+// }
 
 /// Select a representation for abstract domains
+/// This gets called greedily, but will pass the type checks once per decision variable.
 #[register_rule(("ReprGeneral", 8000))]
 fn select_representation(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     guard!(
         let Expr::Atomic(_, Atom::Reference(re)) = expr &&
-        domain_needs_representation(&re.domain_of())    &&
+        domain_needs_representation(&re.domain_of(), SolverFamily::Sat(conjure_cp::settings::SatEncoding::Direct))    &&
         re.repr.is_none()
         else {
             return Err(RuleNotApplicable)
         }
     );
+    eprintln!("calling select_representation");
 
     let mut re = re.clone();
     for rule in get_repr_rules() {
+        eprint!("trying rule: {} | ", rule.name());
         // Once we find an applicable representation, exit
         let Ok((_, new_symbols, new_constraints)) = re.select_or_init_repr_via(rule) else {
+            eprintln!("failed");
             continue;
         };
+        eprintln!("select representation application on {}", re);
         return Ok(Reduction::new(re.into(), new_constraints, new_symbols));
     }
 
@@ -102,17 +121,27 @@ fn uniform_repr_in_comparison_op(expr: &Expr, _: &SymbolTable) -> ApplicationRes
 
 /// True if the domain is abstract w.r.t Essence'
 #[allow(clippy::match_like_matches_macro)]
-fn domain_needs_representation(domain: &DomainPtr) -> bool {
+fn domain_needs_representation(domain: &DomainPtr, solver: SolverFamily) -> bool {
+    eprintln!("\n=====DOMAIN {}=====\n", domain);
     match domain.as_ref() {
         Domain::Ground(gd) => match gd.as_ref() {
-            // These domains are concrete for all solvers bar SAT
-            GroundDomain::Bool | GroundDomain::Int(..) | GroundDomain::Empty(..) => false,
+            // These domains are concrete for all solvers
+            GroundDomain::Bool | GroundDomain::Empty(..) => false,
+            // Int is concrete for all solvers other than sat
+            // This works because we are effectively saying: "is solver is sat, true (needs repr); for any other solver, false (doesn't need repr)"
+            // NOTE: This is what needs changing IF there is ever another solver with different primitives
+            GroundDomain::Int(_) => match solver {
+                // true for sat solvers, because it needs a representation
+                SolverFamily::Sat(_) => true,
+                // false for everything else, because they don't need reprs
+                _ => false,
+            },
             // Represent matrices if they have abstract types inside them;
             // Matrices of concrete types are handled separately by the
             // `ReprMatrixToAtom`rule set
             GroundDomain::Matrix(inner_dom, idx_doms) => {
-                domain_needs_representation(&inner_dom.into())
-                    || any(idx_doms, |d| domain_needs_representation(&d.into()))
+                domain_needs_representation(&inner_dom.into(), solver)
+                    || any(idx_doms, |d| domain_needs_representation(&d.into(), solver))
             }
             // All other domains are abstract
             _ => true,
@@ -124,10 +153,11 @@ fn domain_needs_representation(domain: &DomainPtr) -> bool {
             // Matrices of concrete types are handled separately by the
             // `ReprMatrixToAtom`rule set
             UnresolvedDomain::Matrix(inner_dom, idx_doms) => {
-                domain_needs_representation(inner_dom) || any(idx_doms, domain_needs_representation)
+                domain_needs_representation(inner_dom, solver)
+                    || any(idx_doms, |d| domain_needs_representation(d, solver))
             }
             // Recurse into domain letting
-            UnresolvedDomain::Reference(re) => domain_needs_representation(&re.domain_of()),
+            UnresolvedDomain::Reference(re) => domain_needs_representation(&re.domain_of(), solver),
             // All other domains are abstract
             _ => true,
         },

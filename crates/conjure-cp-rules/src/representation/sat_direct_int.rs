@@ -1,26 +1,23 @@
 // crates/conjure-cp-rules/src/representation/sat_direct_int.rs
-
 use super::prelude::*;
 use crate::utils::lit_to_bool;
-use conjure_cp::ast::{Domain, Range, Reference, domains::Int};
-use conjure_cp::{essence_expr, into_matrix_expr};
-use itertools::{Itertools, chain};
+use conjure_cp::ast::{Domain, Range, domains::Int};
 use std::collections::HashMap;
 use std::collections::VecDeque;
 use std::hash::Hash;
 
 register_representation!(
-    SatIntDirect
+    IntToBoolDirect
     struct State<T: Eq + Hash> {
         // Mapping of each possible value i of the original integer x to a boolean b_i <-> (x = i)
         pub vals: HashMap<Int, T>
     }
     pub fn init(dom: DomainPtr) -> Result<State<DomainPtr>, ReprInitError> {
         let Some(rngs) = dom.as_int_ground() else {
-            return Err(ReprInitError::UnsupportedDomain(dom, SatIntDirect::NAME, String::from("expected a ground int domain")));
+            return Err(ReprInitError::UnsupportedDomain(dom, IntToBoolDirect::NAME, String::from("expected a ground int domain")));
         };
         let Some(itr) = Range::values(rngs) else {
-            return Err(ReprInitError::UnsupportedDomain(dom, SatIntDirect::NAME, String::from("domain is not enumerable")));
+            return Err(ReprInitError::UnsupportedDomain(dom, IntToBoolDirect::NAME, String::from("domain is not enumerable")));
         };
         let vals: HashMap<Int, DomainPtr> = itr.map(|v| (v, Domain::bool())).collect();
         Ok(State { vals })
@@ -50,6 +47,7 @@ register_representation!(
         };
         let mut vals: HashMap<Int, Literal> = state.vals.keys().map(|k| (*k, false.into())).collect();
         vals.insert(x, true.into());
+        println!("{:#?}", vals);
         Ok(State { vals })
     }
     fn up(state: State<Literal>) -> Literal {

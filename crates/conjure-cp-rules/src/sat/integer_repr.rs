@@ -11,8 +11,6 @@ use conjure_cp::into_matrix_expr;
 
 use conjure_cp::{bug, essence_expr};
 
-
-
 /// This function takes a target expression and a vector of ranges and creates an expression representing the ranges with the target expression as the subject
 ///
 /// E.g. x : int(4), int(10..20), int(30..) ~~> Or(x=4, 10<=x<=20, x>=30)

@@ -215,60 +215,64 @@ impl SolverAdaptor for Sat {
         let mut var_map: HashMap<Name, Lit> = HashMap::new();
 
         for find_ref in decisions {
-            let domain = find_ref
-                .1
-                .domain()
-                .expect("Decision variable should have a domain");
-            let domain = domain.as_ground().expect("Domain should be ground");
-
-            // only decision variables with boolean domains or representations using booleans are supported at this time
-            if (
-                domain != &GroundDomain::Bool
-                // TODO (repr): handle representations in rustsat solver adaptor
-                // && sym_tab
-                //     .get_representation(&find_ref.0, &["sat_log_int"])
-                //     .is_none()
-                // && sym_tab
-                //     .get_representation(&find_ref.0, &["sat_direct_int"])
-                //     .is_none()
-                // && sym_tab
-                //     .get_representation(&find_ref.0, &["sat_order_int"])
-                //     .is_none()
-            ) {
-                Err(SolverError::ModelInvalid(
-                    "Only Boolean Decision Variables supported".to_string(),
-                ))?;
-            }
-            // only boolean variables should be passed to the solver
-            if (domain == &GroundDomain::Bool) {
-                let name = find_ref.0;
-                finds.push(name);
-            }
+            println!("{:?}", find_ref);
         }
+        panic!(";-;");
+        // for find_ref in decisions {
+        //     let domain = find_ref
+        //         .1
+        //         .domain()
+        //         .expect("Decision variable should have a domain");
+        //     let domain = domain.as_ground().expect("Domain should be ground");
 
-        self.decision_refs = Some(finds.clone());
+        //     // only decision variables with boolean domains or representations using booleans are supported at this time
+        //     if (
+        //         domain != &GroundDomain::Bool
+        //         // TODO (repr): handle representations in rustsat solver adaptor
+        //         // && sym_tab
+        //         //     .get_representation(&find_ref.0, &["sat_log_int"])
+        //         //     .is_none()
+        //         // && sym_tab
+        //         //     .get_representation(&find_ref.0, &["sat_direct_int"])
+        //         //     .is_none()
+        //         // && sym_tab
+        //         //     .get_representation(&find_ref.0, &["sat_order_int"])
+        //         //     .is_none()
+        //     ) {
+        //         Err(SolverError::ModelInvalid(
+        //             "Only Boolean Decision Variables supported".to_string(),
+        //         ))?;
+        //     }
+        //     // only boolean variables should be passed to the solver
+        //     if (domain == &GroundDomain::Bool) {
+        //         let name = find_ref.0;
+        //         finds.push(name);
+        //     }
+        // }
 
-        let m_clone = model;
+        // self.decision_refs = Some(finds.clone());
 
-        // all constraints should be encoded as clauses
-        // the remaining constraint (if it exists) should just be a true/false expression
-        let constraints = m_clone.constraints();
-        assert!(
-            constraints.is_empty()
-                || (constraints.len() == 1
-                    && (constraints[0] == true.into() || constraints[0] == false.into())),
-            "Un-encoded constraints in the model: {}",
-            pretty_vec(constraints)
-        );
+        // let m_clone = model;
 
-        let clauses = m_clone.clauses();
+        // // all constraints should be encoded as clauses
+        // // the remaining constraint (if it exists) should just be a true/false expression
+        // let constraints = m_clone.constraints();
+        // assert!(
+        //     constraints.is_empty()
+        //         || (constraints.len() == 1
+        //             && (constraints[0] == true.into() || constraints[0] == false.into())),
+        //     "Un-encoded constraints in the model: {}",
+        //     pretty_vec(constraints)
+        // );
 
-        let inst: SatInstance = handle_cnf(clauses, &mut var_map, finds.clone());
+        // let clauses = m_clone.clauses();
 
-        self.var_map = Some(var_map);
-        let cnf: (Cnf, BasicVarManager) = inst.clone().into_cnf();
-        tracing::info!("CNF: {:?}", cnf.0);
-        self.model_inst = Some(inst);
+        // let inst: SatInstance = handle_cnf(clauses, &mut var_map, finds.clone());
+
+        // self.var_map = Some(var_map);
+        // let cnf: (Cnf, BasicVarManager) = inst.clone().into_cnf();
+        // tracing::info!("CNF: {:?}", cnf.0);
+        // self.model_inst = Some(inst);
 
         Ok(())
     }
