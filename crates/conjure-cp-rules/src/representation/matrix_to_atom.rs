@@ -98,6 +98,7 @@ register_representation!(
         }
     }
     fn init(dom: DomainPtr) -> Result<State<DomainPtr>, ReprInitError> {
+        println!("JKASHDKASJDHKSJDHKSDJ MATRIX TO ATOM");
         let domain_err = |msg: &str| ReprInitError::UnsupportedDomain(dom.clone(), MatrixToAtom::NAME, String::from(msg));
 
         let Some((inner_gd, index_gds)) = dom.as_matrix_ground() else {

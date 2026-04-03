@@ -237,6 +237,8 @@ fn integration_test_inner(
     let mut extra_rules = vec![];
 
     if let SolverFamily::Sat(sat_encoding) = solver_fam {
+        let rs = sat_encoding.as_rule_set();
+        println!("enc: {}, rules: {:#?}", sat_encoding, rs);
         extra_rules.push(sat_encoding.as_rule_set());
     }
 
@@ -244,6 +246,8 @@ fn integration_test_inner(
     rules_to_load.extend(extra_rules);
 
     let rule_sets = resolve_rule_sets(solver_fam, &rules_to_load)?;
+
+    println!("{:#?}", rule_sets);
 
     let mut model = parsed_model;
 

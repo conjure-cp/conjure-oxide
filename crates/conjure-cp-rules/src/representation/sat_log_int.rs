@@ -1,170 +1,79 @@
 // https://conjure-cp.github.io/conjure-oxide/docs/conjure_core/representation/trait.Representation.html
-use conjure_cp::ast::GroundDomain;
-use conjure_cp::bug;
-use conjure_cp::{
-    ast::{Atom, DeclarationPtr, Domain, Expression, Literal, Metadata, Name, SymbolTable},
-    register_representation,
-    representation::Representation,
-    rule_engine::ApplicationError,
-};
+use super::prelude::*;
+use conjure_cp::ast::{Domain, Range, Reference, domains::Int};
+use conjure_cp::{essence_expr, into_matrix_expr};
+use itertools::chain;
+use std::collections::HashMap;
+use std::collections::VecDeque;
+use std::hash::Hash;
 
-register_representation!(SATLogInt, "sat_log_int");
-
-#[derive(Clone, Debug)]
-pub struct SATLogInt {
-    src_var: Name,
-    bits: u32,
-}
-
-impl SATLogInt {
-    /// Returns the names of the representation variable
-    fn names(&self) -> impl Iterator<Item = Name> + '_ {
-        (0..self.bits).map(move |index| self.index_to_name(index))
+register_representation!(
+    SatIntLog
+    struct State<T: Eq + Hash> {
+        // Mapping of each possible value i of the original integer x to a boolean map -> (x = i?)
+        pub vals: HashMap<Int, T>
     }
 
-    /// Gets the representation variable name for a specific index.
-    fn index_to_name(&self, index: u32) -> Name {
-        Name::Represented(Box::new((
-            self.src_var.clone(),
-            self.repr_name().into(),
-            format!("{index:02}").into(), // stored as _00, _01, ...
-        )))
-    }
-}
-
-impl Representation for SATLogInt {
-    /// Creates a log int representation object for the given name.
-    fn init(name: &Name, symtab: &SymbolTable) -> Option<Self> {
-        let domain = symtab.resolve_domain(name)?;
-
-        if !domain.is_finite() {
-            return None;
-        }
-
-        let GroundDomain::Int(ranges) = domain.as_ref() else {
-            return None;
+    // Initalise something for the integer,
+    fn init(dom: DomainPtr) -> Result<State<DomainPtr>, ReprInitError> {
+        let Some(rngs) = dom.as_int_ground() else {
+            return Err(ReprInitError::UnsupportedDomain(dom, SatIntLog::NAME, String::from("expected a ground int domain")));
         };
-
-        // Determine min/max and return None if range is unbounded
-        let (min, max) =
-            ranges
-                .iter()
-                .try_fold((i32::MAX, i32::MIN), |(min_a, max_b), range| {
-                    let lb = range.low()?;
-                    let ub = range.high()?;
-                    Some((min_a.min(*lb), max_b.max(*ub)))
-                })?;
-
-        // calculate the bits needed to represent the integer
-        let bit_count = (1..=32)
-            .find(|&bits| {
-                let min_possible = -(1i64 << (bits - 1));
-                let max_possible = (1i64 << (bits - 1)) - 1;
-                (min as i64) >= min_possible && (max as i64) <= max_possible
-            })
-            .unwrap_or_else(|| bug!("Should never be reached: i32 integer should always be with storable with 32 bits.")); // safe unwrap as i32 fits in 32 bits
-
-        Some(SATLogInt {
-            src_var: name.clone(),
-            bits: bit_count,
-        })
-    }
-
-    /// The variable being represented.
-    fn variable_name(&self) -> &Name {
-        &self.src_var
-    }
-
-    /// Given the integer assignment for `self`, creates assignments for its representation variables.
-    fn value_down(
-        &self,
-        value: Literal,
-    ) -> Result<std::collections::BTreeMap<Name, Literal>, ApplicationError> {
-        let Literal::Int(mut value_i32) = value else {
-            return Err(ApplicationError::RuleNotApplicable);
+        let Some(itr) = Range::values(rngs) else {
+            return Err(ReprInitError::UnsupportedDomain(dom, SatIntLog::NAME, String::from("domain is not enumerable")));
         };
-
-        let mut result = std::collections::BTreeMap::new();
-
-        // name_0 is the least significant bit, name_<final> is the sign bit
-        for name in self.names() {
-            result.insert(name, Literal::Bool((value_i32 & 1) != 0));
-            value_i32 >>= 1;
-        }
-
-        Ok(result)
+        let vals: HashMap<Int, DomainPtr> = itr.map(|v| (v, Domain::bool())).collect();
+        Ok(State { vals })
     }
+    fn structural(state: &State<DeclarationPtr>) -> Vec<Expression> {
+        let elems: Vec<&DeclarationPtr> = state.vals.values().collect();
+        let n = elems.len();
+        let mut res = Vec::<Expression>::with_capacity(n);
+        for i in 0..n {
+            // the i-th bool variable
+            let this = Reference::from(elems[i].clone());
 
-    /// Given the values for its boolean representation variables, creates an assignment for `self` - the integer form.
-    fn value_up(
-        &self,
-        values: &std::collections::BTreeMap<Name, Literal>,
-    ) -> Result<Literal, ApplicationError> {
-        let mut out: i32 = 0;
-        let mut power: i32 = 1;
+            // all other bool variables from this representation
+            let others: Vec<Expression> = chain!(&elems[0..i], &elems[i + 1..n])
+                .map(|d| Reference::from((*d).clone()).into()).collect();
+            let others_mat = into_matrix_expr!(others);
 
-        for name in self.names() {
-            let value = values
-                .get(&name)
-                .ok_or(ApplicationError::RuleNotApplicable)?;
-
-            if let Literal::Int(value) = value {
-                out += *value * power;
-                power <<= 1;
-            } else {
-                return Err(ApplicationError::RuleNotApplicable);
+            // if b_i is true, all others must be false
+            res.push(essence_expr!(&this <-> !or(&others_mat)));
+        }
+        res
+    }
+    fn down(state: &State<DomainPtr>, value: Literal) -> Result<State<Literal>, ReprDownError> {
+        let Literal::Int(x) = value else {
+            return Err(ReprDownError::BadValue(value, String::from("expected an int literal")))
+        };
+        let mut vals: HashMap<Int, Literal> = state.vals.keys().map(|k| (*k, false.into())).collect();
+        vals.insert(x, true.into());
+        Ok(State { vals })
+    }
+    fn up(state: State<Literal>) -> Literal {
+        let mut ans = None;
+        for (k, v) in state.vals.into_iter() {
+            if lit_to_bool(&v) {
+                if ans.is_some() {
+                    bug!("more than one value was true");
+                }
+                ans = Some(Literal::from(k));
             }
         }
-
-        let sign_bit = 1 << (self.bits - 1);
-        // Mask to `BITS` bits
-        out &= (sign_bit << 1) - 1;
-
-        // If the sign bit is set, convert to negative using two's complement
-        if out & sign_bit != 0 {
-            out -= sign_bit << 1;
-        }
-
-        Ok(Literal::Int(out))
+        ans.unwrap_or_else(|| bug!("none of the given values were true"))
     }
-
-    /// Returns [`Expression`]s representing each boolean representation variable.
-    fn expression_down(
-        &self,
-        st: &SymbolTable,
-    ) -> Result<std::collections::BTreeMap<Name, Expression>, ApplicationError> {
-        Ok(self
-            .names()
-            .enumerate()
-            .map(|(index, name)| {
-                let decl = st.lookup(&name).unwrap();
-                (
-                    // Machine names are used so that the derived ordering matches the correct ordering of the representation variables
-                    Name::Machine(index as i32),
-                    Expression::Atomic(
-                        Metadata::new(),
-                        Atom::Reference(conjure_cp::ast::Reference { ptr: decl }),
-                    ),
-                )
-            })
-            .collect())
+    fn repr_vars(state: &State<DeclarationPtr>) -> VecDeque<DeclarationPtr> {
+        state.vals.values().cloned().collect()
     }
+);
 
-    /// Creates declarations for the boolean representation variables of `self`.
-    fn declaration_down(&self) -> Result<Vec<DeclarationPtr>, ApplicationError> {
-        Ok(self
-            .names()
-            .map(|name| DeclarationPtr::new_find(name, Domain::bool()))
-            .collect())
-    }
 
-    /// The rule name for this representaion.
-    fn repr_name(&self) -> &str {
-        "sat_log_int"
-    }
-
-    /// Makes a clone of `self` into a `Representation` trait object.
-    fn box_clone(&self) -> Box<dyn Representation> {
-        Box::new(self.clone()) as _
+fn lit_to_bool(x: &Literal) -> bool {
+    match x {
+        Literal::Bool(b) => *b,
+        Literal::Int(0) => false,
+        Literal::Int(1) => true,
+        _ => bug!("expected a boolean or int(0..1) literal, got {}", x),
     }
 }

@@ -42,6 +42,7 @@ fn load_symbol_table(
 
         // add search vars in order first
         for name in vars {
+            eprintln!("var: {}", name);
             let decl = conjure_model
                 .symbols()
                 .lookup(name)
@@ -63,6 +64,7 @@ fn load_symbol_table(
             load_var(name, var, false, table_vars, minion_model)
         })?;
     } else {
+        eprintln!("Huh");
         for_each_unrepresented_var(conjure_model, |name, var| {
             let is_search_var = !matches!(name, conjure_ast::Name::Machine(_));
             load_var(name, var, is_search_var, table_vars, minion_model)
@@ -88,11 +90,13 @@ fn collect_table_variables(conjure_model: &ConjureModel) -> HashSet<conjure_ast:
         .collect()
 }
 
+// NOTE: this maybe?
 fn for_each_unrepresented_var(
     conjure_model: &ConjureModel,
     mut f: impl FnMut(&conjure_ast::Name, &conjure_ast::DecisionVariable) -> Result<(), SolverError>,
 ) -> Result<(), SolverError> {
     for (name, decl) in conjure_model.symbols().clone().into_iter_local() {
+        eprintln!("foreach_unrepr name: {}", name);
         let Some(var) = decl.as_find() else {
             continue;
         };

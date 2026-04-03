@@ -181,7 +181,7 @@ impl SatEncoding {
 
     pub const fn as_rule_set(self) -> &'static str {
         match self {
-            SatEncoding::Log => "SAT_Log",
+            SatEncoding::Log => "SatIntLog",
             SatEncoding::Direct => "SAT_Direct",
             SatEncoding::Order => "SAT_Order",
         }
