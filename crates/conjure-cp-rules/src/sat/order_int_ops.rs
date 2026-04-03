@@ -235,3 +235,100 @@ fn ineq_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
     Ok(Reduction::cnf(output, new_clauses, new_symbols))
 }
+
+/// Builds exact-value selector bits from an order-encoded SATInt bit-vector.
+///
+/// For a normalized range `min..=max`, input bit `b_i` encodes `x >= min + i`.
+///
+/// The exact-value selector for value `v` is:
+/// - `b_i AND NOT(b_{i+1})` for `v < max`
+/// - `b_last` for `v = max`
+fn sat_order_exact_value_selectors(
+    bits: &[Expr],
+    clauses: &mut Vec<conjure_cp::ast::CnfClause>,
+    symbols: &mut SymbolTable,
+) -> Vec<Expr> {
+    if bits.len() == 1 {
+        return vec![bits[0].clone()];
+    }
+
+    let mut selectors = Vec::with_capacity(bits.len());
+    for i in 0..(bits.len() - 1) {
+        let not_next = tseytin_not(bits[i + 1].clone(), clauses, symbols);
+        let selector = tseytin_and(&vec![bits[i].clone(), not_next], clauses, symbols);
+        selectors.push(selector);
+    }
+
+    selectors.push(bits[bits.len() - 1].clone());
+    selectors
+}
+
+/// Converts Abs of an order SATInt to an order SATInt.
+///
+/// ```text
+/// |SATInt(a)| ~> SATInt(b)
+///
+/// ```
+#[register_rule(("SAT_Order", 9100))]
+fn abs_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    let Expr::Abs(_, value_expr) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let (binding, old_min, old_max) =
+        validate_order_int_operands(vec![value_expr.as_ref().clone()])?;
+
+    let [val_bits] = binding.as_slice() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let new_min = if old_min <= 0 && old_max >= 0 {
+        0
+    } else {
+        old_min.abs().min(old_max.abs())
+    };
+    let new_max = old_min.abs().max(old_max.abs());
+
+    let mut new_symbols = symbols.clone();
+    let mut new_clauses = vec![];
+
+    let selectors = sat_order_exact_value_selectors(val_bits, &mut new_clauses, &mut new_symbols);
+
+    let mut out_bits = Vec::with_capacity((new_max - new_min + 1) as usize);
+    for threshold in new_min..=new_max {
+        let mut bucket = Vec::new();
+
+        for value in old_min..=old_max {
+            if value.abs() >= threshold {
+                let idx = (value - old_min) as usize;
+                bucket.push(selectors[idx].clone());
+            }
+        }
+
+        let out_bit = match bucket.len() {
+            0 => Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false))),
+            1 => bucket[0].clone(),
+            _ => {
+                let mut iter = bucket.into_iter();
+                let mut acc = iter.next().unwrap();
+                for bit in iter {
+                    acc = tseytin_or(&vec![acc, bit], &mut new_clauses, &mut new_symbols);
+                }
+                acc
+            }
+        };
+
+        out_bits.push(out_bit);
+    }
+
+    Ok(Reduction::cnf(
+        Expr::SATInt(
+            Metadata::new(),
+            SATIntEncoding::Order,
+            Moo::new(into_matrix_expr!(out_bits)),
+            (new_min, new_max),
+        ),
+        new_clauses,
+        new_symbols,
+    ))
+}
