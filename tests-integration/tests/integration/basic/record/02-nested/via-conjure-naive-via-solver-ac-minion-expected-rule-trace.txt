@@ -1,0 +1,690 @@
+Model before rewriting:
+
+letting M1 be domain matrix indexed by [int(2, 4, 6)] of int(1..4)
+letting R be domain record of (x: R1, y: R2, z: T1)
+letting R1 be domain record of {a: bool, b: int(0..9)}
+letting R2 be domain record of (b: int(3, 5..7), c: M1)
+letting T1 be domain tuple of (int(1..3), bool)
+find r: R
+
+such that
+
+(r[x] = {b: 5,a: true}),
+(r[x][b] > r[y][b]),
+allDiff(r[y][c]),
+(sum(r[y][c]) <= product([r[y][b],2;int(1..2)])),
+(r[z] = (2,false))
+
+--
+
+(r[x] = {b: 5,a: true}),
+(r[x][b] > r[y][b]),
+allDiff(r[y][c]),
+(sum(r[y][c]) <= product([r[y][b],2;int(1..2)])),
+(r[z] = (2,false)), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(r[x] = {b: 5,a: true}),
+(r[x][b] > r[y][b]),
+allDiff(r[y][c]),
+(sum(r[y][c]) <= product([r[y][b],2;int(1..2)])),
+(r[z] = (2,false))
+
+--
+
+product([r[y][b],2;int(1..2)]), 
+   ~~> reorder_product ([("Base", 8800)])
+product([2,r[y][b];int(1..2)])
+
+--
+
+(r[x][b] > r[y][b]), 
+   ~~> gt_to_geq ([("Minion", 8400)])
+(sum([r[x][b],-1;int(1..)]) >= r[y][b])
+
+--
+
+r, 
+   ~~> select_representation ([("ReprGeneral", 8000)])
+r
+new variables:
+  find r#RecordToTuple_1: tuple of (record of {a: bool, b: int(0..9)}, record of {b: int(3, 5..7), c: matrix indexed by [int(2, 4, 6)] of int(1..4)}, tuple of (int(1..3), bool))
+
+--
+
+r, 
+   ~~> select_representation ([("ReprGeneral", 8000)])
+r
+
+--
+
+r, 
+   ~~> select_representation ([("ReprGeneral", 8000)])
+r
+
+--
+
+r, 
+   ~~> select_representation ([("ReprGeneral", 8000)])
+r
+
+--
+
+r, 
+   ~~> select_representation ([("ReprGeneral", 8000)])
+r
+
+--
+
+r, 
+   ~~> select_representation ([("ReprGeneral", 8000)])
+r
+
+--
+
+r, 
+   ~~> select_representation ([("ReprGeneral", 8000)])
+r
+
+--
+
+(sum([r[x][b],-1;int(1..)]) >= r[y][b]), 
+   ~~> flatten_generic ([("Minion", 4200)])
+(__0 >= __1)
+new variables:
+  find __0: int(-1..8)
+  find __1: int(3, 5..7)
+new constraints:
+  __0 =aux sum([r[x][b],-1;int(1..)])
+  __1 =aux r[y][b]
+
+--
+
+__0 =aux sum([r[x][b],-1;int(1..)]), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([-1, __2], __0),SumGeq([-1, __2], __0);int(1..)])
+new variables:
+  find __2: int(0..9)
+new constraints:
+  __2 =aux r[x][b]
+
+--
+
+(r[x] = {b: 5,a: true}),
+(__0 >= __1),
+allDiff(r[y][c]),
+(sum(r[y][c]) <= product([2,r[y][b];int(1..2)])),
+(r[z] = (2,false)),
+and([SumLeq([-1, __2], __0),SumGeq([-1, __2], __0);int(1..)]),
+__1 =aux r[y][b],
+__2 =aux r[x][b], 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(r[x] = {b: 5,a: true}),
+(__0 >= __1),
+allDiff(r[y][c]),
+(sum(r[y][c]) <= product([2,r[y][b];int(1..2)])),
+(r[z] = (2,false)),
+SumLeq([-1, __2], __0),
+SumGeq([-1, __2], __0),
+__1 =aux r[y][b],
+__2 =aux r[x][b]
+
+--
+
+(sum(r[y][c]) <= product([2,r[y][b];int(1..2)])), 
+   ~~> flatten_generic ([("Minion", 4200)])
+(sum(r[y][c]) <= __3)
+new variables:
+  find __3: int(6..14)
+new constraints:
+  __3 =aux product([2,r[y][b];int(1..2)])
+
+--
+
+(__0 >= __1), 
+   ~~> geq_to_ineq ([("Minion", 4100)])
+Ineq(__1, __0, 0)
+
+--
+
+r[x], 
+   ~~> index_record_to_tuple ([("ReprGeneral", 2000)])
+r#RecordToTuple_1[1]
+
+--
+
+r#RecordToTuple_1, 
+   ~~> select_representation ([("ReprGeneral", 8000)])
+r#RecordToTuple_1
+new variables:
+  find r#RecordToTuple_1#TupleToAtom_1: record of {a: bool, b: int(0..9)}
+  find r#RecordToTuple_1#TupleToAtom_2: record of {b: int(3, 5..7), c: matrix indexed by [int(2, 4, 6)] of int(1..4)}
+  find r#RecordToTuple_1#TupleToAtom_3: tuple of (int(1..3), bool)
+
+--
+
+r#RecordToTuple_1[1], 
+   ~~> tuple_to_atom_index_lit ([("ReprGeneral", 2000)])
+r#RecordToTuple_1#TupleToAtom_1
+
+--
+
+r#RecordToTuple_1#TupleToAtom_1, 
+   ~~> select_representation ([("ReprGeneral", 8000)])
+r#RecordToTuple_1#TupleToAtom_1
+new variables:
+  find r#RecordToTuple_1#TupleToAtom_1#RecordToTuple_1: tuple of (bool, int(0..9))
+
+--
+
+(r#RecordToTuple_1#TupleToAtom_1 = {b: 5,a: true}), 
+   ~~> ref_record_to_tuple ([("ReprGeneral", 2000)])
+(r#RecordToTuple_1#TupleToAtom_1#RecordToTuple_1 = {b: 5,a: true})
+
+--
+
+r#RecordToTuple_1#TupleToAtom_1#RecordToTuple_1, 
+   ~~> select_representation ([("ReprGeneral", 8000)])
+r#RecordToTuple_1#TupleToAtom_1#RecordToTuple_1
+new variables:
+  find r#RecordToTuple_1#TupleToAtom_1#RecordToTuple_1#TupleToAtom_1: bool
+  find r#RecordToTuple_1#TupleToAtom_1#RecordToTuple_1#TupleToAtom_2: int(0..9)
+
+--
+
+{b: 5,a: true}, 
+   ~~> record_lit_to_tuple ([("ReprGeneral", 2000)])
+(true,5)
+
+--
+
+(r#RecordToTuple_1#TupleToAtom_1#RecordToTuple_1 = (true,5)), 
+   ~~> tuple_var_eq_lit ([("ReprGeneral", 2000)])
+and([(r#RecordToTuple_1#TupleToAtom_1#RecordToTuple_1#TupleToAtom_1 = true),(r#RecordToTuple_1#TupleToAtom_1#RecordToTuple_1#TupleToAtom_2 = 5);int(1..)])
+
+--
+
+and([(r#RecordToTuple_1#TupleToAtom_1#RecordToTuple_1#TupleToAtom_1 = true),(r#RecordToTuple_1#TupleToAtom_1#RecordToTuple_1#TupleToAtom_2 = 5);int(1..)]),
+Ineq(__1, __0, 0),
+allDiff(r[y][c]),
+(sum(r[y][c]) <= __3),
+(r[z] = (2,false)),
+SumLeq([-1, __2], __0),
+SumGeq([-1, __2], __0),
+__1 =aux r[y][b],
+__2 =aux r[x][b],
+__3 =aux product([2,r[y][b];int(1..2)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(r#RecordToTuple_1#TupleToAtom_1#RecordToTuple_1#TupleToAtom_1 = true),
+(r#RecordToTuple_1#TupleToAtom_1#RecordToTuple_1#TupleToAtom_2 = 5),
+Ineq(__1, __0, 0),
+allDiff(r[y][c]),
+(sum(r[y][c]) <= __3),
+(r[z] = (2,false)),
+SumLeq([-1, __2], __0),
+SumGeq([-1, __2], __0),
+__1 =aux r[y][b],
+__2 =aux r[x][b],
+__3 =aux product([2,r[y][b];int(1..2)])
+
+--
+
+(r#RecordToTuple_1#TupleToAtom_1#RecordToTuple_1#TupleToAtom_1 = true), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(true, r#RecordToTuple_1#TupleToAtom_1#RecordToTuple_1#TupleToAtom_1)
+
+--
+
+r[y], 
+   ~~> index_record_to_tuple ([("ReprGeneral", 2000)])
+r#RecordToTuple_1[2]
+
+--
+
+r#RecordToTuple_1, 
+   ~~> select_representation ([("ReprGeneral", 8000)])
+r#RecordToTuple_1
+
+--
+
+r#RecordToTuple_1[2], 
+   ~~> tuple_to_atom_index_lit ([("ReprGeneral", 2000)])
+r#RecordToTuple_1#TupleToAtom_2
+
+--
+
+r#RecordToTuple_1#TupleToAtom_2, 
+   ~~> select_representation ([("ReprGeneral", 8000)])
+r#RecordToTuple_1#TupleToAtom_2
+new variables:
+  find r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1: tuple of (int(3, 5..7), matrix indexed by [int(2, 4, 6)] of int(1..4))
+
+--
+
+r#RecordToTuple_1#TupleToAtom_2[c], 
+   ~~> index_record_to_tuple ([("ReprGeneral", 2000)])
+r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1[2]
+
+--
+
+r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1, 
+   ~~> select_representation ([("ReprGeneral", 8000)])
+r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1
+new variables:
+  find r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_1: int(3, 5..7)
+  find r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2: matrix indexed by [int(2, 4, 6)] of int(1..4)
+
+--
+
+Reify(true, r#RecordToTuple_1#TupleToAtom_1#RecordToTuple_1#TupleToAtom_1),
+(r#RecordToTuple_1#TupleToAtom_1#RecordToTuple_1#TupleToAtom_2 = 5),
+Ineq(__1, __0, 0),
+allDiff(r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1[2]),
+(sum(r[y][c]) <= __3),
+(r[z] = (2,false)),
+SumLeq([-1, __2], __0),
+SumGeq([-1, __2], __0),
+__1 =aux r[y][b],
+__2 =aux r[x][b],
+__3 =aux product([2,r[y][b];int(1..2)]), 
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8001)])
+Reify(true, r#RecordToTuple_1#TupleToAtom_1#RecordToTuple_1#TupleToAtom_1),
+(r#RecordToTuple_1#TupleToAtom_1#RecordToTuple_1#TupleToAtom_2 = 5),
+Ineq(__1, __0, 0),
+allDiff(r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1[2]),
+(sum(r[y][c]) <= __3),
+(r[z] = (2,false)),
+SumLeq([-1, __2], __0),
+SumGeq([-1, __2], __0),
+__1 =aux r[y][b],
+__2 =aux r[x][b],
+__3 =aux product([2,r[y][b];int(1..2)])
+new variables:
+  find r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2#MatrixToAtom_1: int(1..4)
+  find r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2#MatrixToAtom_2: int(1..4)
+  find r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2#MatrixToAtom_3: int(1..4)
+
+--
+
+r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1[2], 
+   ~~> tuple_to_atom_index_lit ([("ReprGeneral", 2000)])
+r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2
+
+--
+
+Reify(true, r#RecordToTuple_1#TupleToAtom_1#RecordToTuple_1#TupleToAtom_1),
+(r#RecordToTuple_1#TupleToAtom_1#RecordToTuple_1#TupleToAtom_2 = 5),
+Ineq(__1, __0, 0),
+allDiff(r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2),
+(sum(r[y][c]) <= __3),
+(r[z] = (2,false)),
+SumLeq([-1, __2], __0),
+SumGeq([-1, __2], __0),
+__1 =aux r[y][b],
+__2 =aux r[x][b],
+__3 =aux product([2,r[y][b];int(1..2)]), 
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8001)])
+Reify(true, r#RecordToTuple_1#TupleToAtom_1#RecordToTuple_1#TupleToAtom_1),
+(r#RecordToTuple_1#TupleToAtom_1#RecordToTuple_1#TupleToAtom_2 = 5),
+Ineq(__1, __0, 0),
+allDiff(r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2),
+(sum(r[y][c]) <= __3),
+(r[z] = (2,false)),
+SumLeq([-1, __2], __0),
+SumGeq([-1, __2], __0),
+__1 =aux r[y][b],
+__2 =aux r[x][b],
+__3 =aux product([2,r[y][b];int(1..2)])
+
+--
+
+allDiff(r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2), 
+   ~~> matrix_ref_to_atom ([("ReprMatrixToAtom", 2000)])
+allDiff([r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2#MatrixToAtom_1,r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2#MatrixToAtom_2,r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2#MatrixToAtom_3;int(1..)])
+
+--
+
+allDiff([r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2#MatrixToAtom_1,r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2#MatrixToAtom_2,r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2#MatrixToAtom_3;int(1..)]), 
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2#MatrixToAtom_1, r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2#MatrixToAtom_2, r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2#MatrixToAtom_3])
+
+--
+
+r[y], 
+   ~~> index_record_to_tuple ([("ReprGeneral", 2000)])
+r#RecordToTuple_1[2]
+
+--
+
+r#RecordToTuple_1, 
+   ~~> select_representation ([("ReprGeneral", 8000)])
+r#RecordToTuple_1
+
+--
+
+r#RecordToTuple_1[2], 
+   ~~> tuple_to_atom_index_lit ([("ReprGeneral", 2000)])
+r#RecordToTuple_1#TupleToAtom_2
+
+--
+
+r#RecordToTuple_1#TupleToAtom_2, 
+   ~~> select_representation ([("ReprGeneral", 8000)])
+r#RecordToTuple_1#TupleToAtom_2
+
+--
+
+r#RecordToTuple_1#TupleToAtom_2[c], 
+   ~~> index_record_to_tuple ([("ReprGeneral", 2000)])
+r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1[2]
+
+--
+
+r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1, 
+   ~~> select_representation ([("ReprGeneral", 8000)])
+r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1
+
+--
+
+r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1[2], 
+   ~~> tuple_to_atom_index_lit ([("ReprGeneral", 2000)])
+r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2
+
+--
+
+Reify(true, r#RecordToTuple_1#TupleToAtom_1#RecordToTuple_1#TupleToAtom_1),
+(r#RecordToTuple_1#TupleToAtom_1#RecordToTuple_1#TupleToAtom_2 = 5),
+Ineq(__1, __0, 0),
+__flat_alldiff([r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2#MatrixToAtom_1, r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2#MatrixToAtom_2, r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2#MatrixToAtom_3]),
+(sum(r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2) <= __3),
+(r[z] = (2,false)),
+SumLeq([-1, __2], __0),
+SumGeq([-1, __2], __0),
+__1 =aux r[y][b],
+__2 =aux r[x][b],
+__3 =aux product([2,r[y][b];int(1..2)]), 
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8001)])
+Reify(true, r#RecordToTuple_1#TupleToAtom_1#RecordToTuple_1#TupleToAtom_1),
+(r#RecordToTuple_1#TupleToAtom_1#RecordToTuple_1#TupleToAtom_2 = 5),
+Ineq(__1, __0, 0),
+__flat_alldiff([r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2#MatrixToAtom_1, r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2#MatrixToAtom_2, r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2#MatrixToAtom_3]),
+(sum(r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2) <= __3),
+(r[z] = (2,false)),
+SumLeq([-1, __2], __0),
+SumGeq([-1, __2], __0),
+__1 =aux r[y][b],
+__2 =aux r[x][b],
+__3 =aux product([2,r[y][b];int(1..2)])
+
+--
+
+sum(r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2), 
+   ~~> matrix_ref_to_atom ([("ReprMatrixToAtom", 2000)])
+sum([r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2#MatrixToAtom_1,r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2#MatrixToAtom_2,r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2#MatrixToAtom_3;int(1..)])
+
+--
+
+(sum([r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2#MatrixToAtom_1,r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2#MatrixToAtom_2,r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2#MatrixToAtom_3;int(1..)]) <= __3), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2#MatrixToAtom_1, r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2#MatrixToAtom_2, r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2#MatrixToAtom_3], __3)
+
+--
+
+r[z], 
+   ~~> index_record_to_tuple ([("ReprGeneral", 2000)])
+r#RecordToTuple_1[3]
+
+--
+
+r#RecordToTuple_1, 
+   ~~> select_representation ([("ReprGeneral", 8000)])
+r#RecordToTuple_1
+
+--
+
+r#RecordToTuple_1[3], 
+   ~~> tuple_to_atom_index_lit ([("ReprGeneral", 2000)])
+r#RecordToTuple_1#TupleToAtom_3
+
+--
+
+r#RecordToTuple_1#TupleToAtom_3, 
+   ~~> select_representation ([("ReprGeneral", 8000)])
+r#RecordToTuple_1#TupleToAtom_3
+new variables:
+  find r#RecordToTuple_1#TupleToAtom_3#TupleToAtom_1: int(1..3)
+  find r#RecordToTuple_1#TupleToAtom_3#TupleToAtom_2: bool
+
+--
+
+(r#RecordToTuple_1#TupleToAtom_3 = (2,false)), 
+   ~~> tuple_var_eq_lit ([("ReprGeneral", 2000)])
+and([(r#RecordToTuple_1#TupleToAtom_3#TupleToAtom_1 = 2),(r#RecordToTuple_1#TupleToAtom_3#TupleToAtom_2 = false);int(1..)])
+
+--
+
+Reify(true, r#RecordToTuple_1#TupleToAtom_1#RecordToTuple_1#TupleToAtom_1),
+(r#RecordToTuple_1#TupleToAtom_1#RecordToTuple_1#TupleToAtom_2 = 5),
+Ineq(__1, __0, 0),
+__flat_alldiff([r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2#MatrixToAtom_1, r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2#MatrixToAtom_2, r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2#MatrixToAtom_3]),
+SumLeq([r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2#MatrixToAtom_1, r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2#MatrixToAtom_2, r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2#MatrixToAtom_3], __3),
+and([(r#RecordToTuple_1#TupleToAtom_3#TupleToAtom_1 = 2),(r#RecordToTuple_1#TupleToAtom_3#TupleToAtom_2 = false);int(1..)]),
+SumLeq([-1, __2], __0),
+SumGeq([-1, __2], __0),
+__1 =aux r[y][b],
+__2 =aux r[x][b],
+__3 =aux product([2,r[y][b];int(1..2)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+Reify(true, r#RecordToTuple_1#TupleToAtom_1#RecordToTuple_1#TupleToAtom_1),
+(r#RecordToTuple_1#TupleToAtom_1#RecordToTuple_1#TupleToAtom_2 = 5),
+Ineq(__1, __0, 0),
+__flat_alldiff([r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2#MatrixToAtom_1, r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2#MatrixToAtom_2, r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2#MatrixToAtom_3]),
+SumLeq([r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2#MatrixToAtom_1, r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2#MatrixToAtom_2, r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2#MatrixToAtom_3], __3),
+(r#RecordToTuple_1#TupleToAtom_3#TupleToAtom_1 = 2),
+(r#RecordToTuple_1#TupleToAtom_3#TupleToAtom_2 = false),
+SumLeq([-1, __2], __0),
+SumGeq([-1, __2], __0),
+__1 =aux r[y][b],
+__2 =aux r[x][b],
+__3 =aux product([2,r[y][b];int(1..2)])
+
+--
+
+(r#RecordToTuple_1#TupleToAtom_3#TupleToAtom_2 = false), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(false, r#RecordToTuple_1#TupleToAtom_3#TupleToAtom_2)
+
+--
+
+r[y], 
+   ~~> index_record_to_tuple ([("ReprGeneral", 2000)])
+r#RecordToTuple_1[2]
+
+--
+
+r#RecordToTuple_1, 
+   ~~> select_representation ([("ReprGeneral", 8000)])
+r#RecordToTuple_1
+
+--
+
+r#RecordToTuple_1[2], 
+   ~~> tuple_to_atom_index_lit ([("ReprGeneral", 2000)])
+r#RecordToTuple_1#TupleToAtom_2
+
+--
+
+r#RecordToTuple_1#TupleToAtom_2, 
+   ~~> select_representation ([("ReprGeneral", 8000)])
+r#RecordToTuple_1#TupleToAtom_2
+
+--
+
+r#RecordToTuple_1#TupleToAtom_2[b], 
+   ~~> index_record_to_tuple ([("ReprGeneral", 2000)])
+r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1[1]
+
+--
+
+r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1, 
+   ~~> select_representation ([("ReprGeneral", 8000)])
+r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1
+
+--
+
+r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1[1], 
+   ~~> tuple_to_atom_index_lit ([("ReprGeneral", 2000)])
+r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_1
+
+--
+
+r[x], 
+   ~~> index_record_to_tuple ([("ReprGeneral", 2000)])
+r#RecordToTuple_1[1]
+
+--
+
+r#RecordToTuple_1, 
+   ~~> select_representation ([("ReprGeneral", 8000)])
+r#RecordToTuple_1
+
+--
+
+r#RecordToTuple_1[1], 
+   ~~> tuple_to_atom_index_lit ([("ReprGeneral", 2000)])
+r#RecordToTuple_1#TupleToAtom_1
+
+--
+
+r#RecordToTuple_1#TupleToAtom_1, 
+   ~~> select_representation ([("ReprGeneral", 8000)])
+r#RecordToTuple_1#TupleToAtom_1
+
+--
+
+r#RecordToTuple_1#TupleToAtom_1[b], 
+   ~~> index_record_to_tuple ([("ReprGeneral", 2000)])
+r#RecordToTuple_1#TupleToAtom_1#RecordToTuple_1[2]
+
+--
+
+r#RecordToTuple_1#TupleToAtom_1#RecordToTuple_1, 
+   ~~> select_representation ([("ReprGeneral", 8000)])
+r#RecordToTuple_1#TupleToAtom_1#RecordToTuple_1
+
+--
+
+r#RecordToTuple_1#TupleToAtom_1#RecordToTuple_1[2], 
+   ~~> tuple_to_atom_index_lit ([("ReprGeneral", 2000)])
+r#RecordToTuple_1#TupleToAtom_1#RecordToTuple_1#TupleToAtom_2
+
+--
+
+product([2,r[y][b];int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)])
+product([2,r[y][b];int(1..)])
+
+--
+
+product([2,r[y][b];int(1..)]), 
+   ~~> flatten_product ([("Minion", 4200)])
+product([2,__4;int(1..)])
+new variables:
+  find __4: int(3, 5..7)
+new constraints:
+  __4 =aux r[y][b]
+
+--
+
+__3 =aux product([2,__4;int(1..)]), 
+   ~~> introduce_producteq ([("Minion", 4200)])
+FlatProductEq(__4,2,__3)
+
+--
+
+r[y], 
+   ~~> index_record_to_tuple ([("ReprGeneral", 2000)])
+r#RecordToTuple_1[2]
+
+--
+
+r#RecordToTuple_1, 
+   ~~> select_representation ([("ReprGeneral", 8000)])
+r#RecordToTuple_1
+
+--
+
+r#RecordToTuple_1[2], 
+   ~~> tuple_to_atom_index_lit ([("ReprGeneral", 2000)])
+r#RecordToTuple_1#TupleToAtom_2
+
+--
+
+r#RecordToTuple_1#TupleToAtom_2, 
+   ~~> select_representation ([("ReprGeneral", 8000)])
+r#RecordToTuple_1#TupleToAtom_2
+
+--
+
+r#RecordToTuple_1#TupleToAtom_2[b], 
+   ~~> index_record_to_tuple ([("ReprGeneral", 2000)])
+r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1[1]
+
+--
+
+r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1, 
+   ~~> select_representation ([("ReprGeneral", 8000)])
+r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1
+
+--
+
+r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1[1], 
+   ~~> tuple_to_atom_index_lit ([("ReprGeneral", 2000)])
+r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_1
+
+--
+
+Final model:
+
+letting M1 be domain matrix indexed by [int(2, 4, 6)] of int(1..4)
+letting R be domain record of (x: R1, y: R2, z: T1)
+letting R1 be domain record of {a: bool, b: int(0..9)}
+letting R2 be domain record of (b: int(3, 5..7), c: M1)
+letting T1 be domain tuple of (int(1..3), bool)
+find r: record of {x: record of {a: bool, b: int(0..9)}, y: record of {b: int(3, 5..7), c: matrix indexed by [int(2, 4, 6)] of int(1..4)}, z: tuple of (int(1..3), bool)}
+find __0: int(-1..8)
+find __1: int(3, 5..7)
+find __2: int(0..9)
+find __3: int(6..14)
+find __4: int(3, 5..7)
+find r#RecordToTuple_1: tuple of (record of {a: bool, b: int(0..9)}, record of {b: int(3, 5..7), c: matrix indexed by [int(2, 4, 6)] of int(1..4)}, tuple of (int(1..3), bool))
+find r#RecordToTuple_1#TupleToAtom_1: record of {a: bool, b: int(0..9)}
+find r#RecordToTuple_1#TupleToAtom_2: record of {b: int(3, 5..7), c: matrix indexed by [int(2, 4, 6)] of int(1..4)}
+find r#RecordToTuple_1#TupleToAtom_3: tuple of (int(1..3), bool)
+find r#RecordToTuple_1#TupleToAtom_1#RecordToTuple_1: tuple of (bool, int(0..9))
+find r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1: tuple of (int(3, 5..7), matrix indexed by [int(2, 4, 6)] of int(1..4))
+find r#RecordToTuple_1#TupleToAtom_3#TupleToAtom_1: int(1..3)
+find r#RecordToTuple_1#TupleToAtom_3#TupleToAtom_2: bool
+find r#RecordToTuple_1#TupleToAtom_1#RecordToTuple_1#TupleToAtom_1: bool
+find r#RecordToTuple_1#TupleToAtom_1#RecordToTuple_1#TupleToAtom_2: int(0..9)
+find r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_1: int(3, 5..7)
+find r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2: matrix indexed by [int(2, 4, 6)] of int(1..4)
+find r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2#MatrixToAtom_1: int(1..4)
+find r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2#MatrixToAtom_2: int(1..4)
+find r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2#MatrixToAtom_3: int(1..4)
+
+such that
+
+Reify(true, r#RecordToTuple_1#TupleToAtom_1#RecordToTuple_1#TupleToAtom_1),
+(r#RecordToTuple_1#TupleToAtom_1#RecordToTuple_1#TupleToAtom_2 = 5),
+Ineq(__1, __0, 0),
+__flat_alldiff([r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2#MatrixToAtom_1, r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2#MatrixToAtom_2, r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2#MatrixToAtom_3]),
+SumLeq([r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2#MatrixToAtom_1, r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2#MatrixToAtom_2, r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_2#MatrixToAtom_3], __3),
+(r#RecordToTuple_1#TupleToAtom_3#TupleToAtom_1 = 2),
+Reify(false, r#RecordToTuple_1#TupleToAtom_3#TupleToAtom_2),
+SumLeq([-1, __2], __0),
+SumGeq([-1, __2], __0),
+__1 =aux r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_1,
+__2 =aux r#RecordToTuple_1#TupleToAtom_1#RecordToTuple_1#TupleToAtom_2,
+FlatProductEq(__4,2,__3),
+__4 =aux r#RecordToTuple_1#TupleToAtom_2#RecordToTuple_1#TupleToAtom_1
+

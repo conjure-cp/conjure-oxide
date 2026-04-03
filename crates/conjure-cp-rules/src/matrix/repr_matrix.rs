@@ -7,6 +7,7 @@ use conjure_cp::ast::{
     Atom, DeclarationKind, Expression, GroundDomain, Metadata, Moo, Range, Reference, SymbolTable,
     eval_constant,
 };
+use conjure_cp::bug::UnwrapOrBug;
 use conjure_cp::into_matrix_expr;
 use conjure_cp::representation::ReprRule;
 use conjure_cp::rule_engine::{
@@ -65,7 +66,7 @@ fn select_repr_mta(expr: &Expression, symtab: &SymbolTable) -> ApplicationResult
 
     // Select MatrixToAtom for every matrix variable in the model
     let new_expr = expr.transform_bi(&|mut re: Reference| {
-        let _ = re.select_repr(&MatrixToAtom);
+        let _ = re.select_repr_via(&MatrixToAtom);
         re
     });
 
@@ -125,7 +126,7 @@ fn index_matrix_to_atom_impl(expr: &Expression, symbols: &SymbolTable) -> Applic
         }
     }
 
-    let view = mta.slice_lit(&slices);
+    let view = mta.slice_lit(&slices).unwrap_or_bug();
 
     // Flat slice of remaining elements to index
     let mut lhs_elems: Vec<Expression> = mta
@@ -185,7 +186,7 @@ fn index_matrix_to_atom_impl(expr: &Expression, symbols: &SymbolTable) -> Applic
                     Reference::new(idx_auxvars.gensym(&domain_int!(0..(dim_sz as i32 - 1))));
                 let mut eq_cases = Vec::new();
                 for idx_val in 0..dim_sz {
-                    let orig_idx_val = mta.index_flat_to_lit(di, idx_val);
+                    let orig_idx_val = mta.index_flat_to_lit(di, idx_val).unwrap_or_bug();
                     eq_cases.push(essence_expr!(
                         r"(&idx_expr = &orig_idx_val) /\ (&mapped_idx = &idx_val)"
                     ));
@@ -257,7 +258,7 @@ fn slice_matrix_to_atom(expr: &Expression, _: &SymbolTable) -> ApplicationResult
         //       Add handling of `a..b` when range expressions are supported by AST / parser
     }
 
-    let view = mta.slice_lit(&slices);
+    let view = mta.slice_lit(&slices).unwrap_or_bug();
 
     // Flat slice of remaining elements to index
     let mut lhs_elems: Vec<Expression> = mta
@@ -284,13 +285,39 @@ fn slice_matrix_to_atom(expr: &Expression, _: &SymbolTable) -> ApplicationResult
     Ok(Reduction::pure(new_expr))
 }
 
+/// Flatten a represented matrix
+/// ```plain
+/// flatten(x)
+/// ~>
+/// [x_MatrixToAtom_1, ..., x_MatrixToAtom_N]
+/// ```
+#[register_rule(("ReprMatrixToAtom", 5000))]
+fn matrix_flatten_to_atom(expr: &Expression, _symbols: &SymbolTable) -> ApplicationResult {
+    guard!(
+        let Expression::Flatten(_, dims, subj) = expr            &&
+        let Expression::Atomic(_, Atom::Reference(re)) = &**subj &&
+        let Some(repr) = re.get_repr_as::<MatrixToAtom>()
+        else {
+            return Err(RuleNotApplicable);
+        }
+    );
+
+    if dims.is_some() {
+        todo!("Handle dimension option in matrix flattening");
+    }
+
+    let flat_elems: Vec<Expression> = repr.flat_elem_refs().map(Expression::from).collect();
+    Ok(Reduction::pure(into_matrix_expr!(flat_elems)))
+}
+
 /// Converts a reference to a 1d-matrix not contained within an indexing or slicing expression to its atoms.
 #[register_rule(("ReprMatrixToAtom", 2000))]
 fn matrix_ref_to_atom(expr: &Expression, _symbols: &SymbolTable) -> ApplicationResult {
-    if let Expression::SafeSlice(_, _, _)
-    | Expression::UnsafeSlice(_, _, _)
-    | Expression::SafeIndex(_, _, _)
-    | Expression::UnsafeIndex(_, _, _) = expr
+    if let Expression::SafeSlice(..)
+    | Expression::UnsafeSlice(..)
+    | Expression::SafeIndex(..)
+    | Expression::UnsafeIndex(..)
+    | Expression::Flatten(..) = expr
     {
         return Err(RuleNotApplicable);
     };
@@ -304,11 +331,8 @@ fn matrix_ref_to_atom(expr: &Expression, _symbols: &SymbolTable) -> ApplicationR
                 && let Some(mta) = re.ptr().get_repr::<MatrixToAtom>()
             {
                 changed = true;
-                let elem_refs: Vec<Expression> = mta
-                    .elements
-                    .iter()
-                    .map(|decl| Reference::new(decl.clone()).into())
-                    .collect();
+                let elem_refs: Vec<Expression> =
+                    mta.flat_elem_refs().map(Expression::from).collect();
                 into_matrix_expr!(elem_refs)
             } else {
                 expr

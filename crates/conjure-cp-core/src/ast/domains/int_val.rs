@@ -109,9 +109,7 @@ impl IntVal {
                 ReturnType::Int => Ok(IntVal::Reference(re.clone())),
                 _ => Err(DomainOpError::WrongType),
             },
-            DeclarationKind::DomainLetting(_) | DeclarationKind::RecordField(_) => {
-                Err(DomainOpError::WrongType)
-            }
+            DeclarationKind::DomainLetting(_) => Err(DomainOpError::WrongType),
         }
     }
 
@@ -144,7 +142,7 @@ impl IntVal {
                 }
                 // Decision variables inside domains are unresolved until solving.
                 DeclarationKind::Find(_) => Err(DomainOpError::NotGround),
-                DeclarationKind::DomainLetting(_) | DeclarationKind::RecordField(_) => bug!(
+                DeclarationKind::DomainLetting(_) => bug!(
                     "Expected integer expression, given, or letting inside int domain; Got: {re}"
                 ),
             },

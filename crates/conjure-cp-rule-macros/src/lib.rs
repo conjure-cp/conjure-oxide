@@ -183,15 +183,18 @@ pub fn register_rule_set(args: TokenStream) -> TokenStream {
 // this is only constructed once at comptime so this doesn't matter
 #[allow(clippy::large_enum_variant)]
 enum ReprStateType {
-    Struct(ItemStruct, Option<ItemImpl>),
+    Struct(ItemStruct, Vec<ItemImpl>),
     Path(TypePath),
 }
 
 impl Parse for ReprStateType {
     fn parse(input: ParseStream) -> Result<Self> {
         if let Ok(strct) = input.parse::<ItemStruct>() {
-            let imp = input.parse::<ItemImpl>().ok();
-            return Ok(ReprStateType::Struct(strct, imp));
+            let mut imps = Vec::new();
+            while let Ok(imp) = input.parse::<ItemImpl>() {
+                imps.push(imp);
+            }
+            return Ok(ReprStateType::Struct(strct, imps));
         }
         if let Ok(path) = input.parse::<TypePath>() {
             return Ok(ReprStateType::Path(path));
@@ -358,14 +361,13 @@ pub fn register_representation(input: TokenStream) -> TokenStream {
     }
 
     // Rename idents in the user-provided impl
-    let renamed_impl = if let ReprStateType::Struct(_, Some(item_impl)) = args.state_ty {
-        Some(rename_ident_in_impl(
-            item_impl,
-            &user_state_ident,
-            &state_ident,
-        ))
+    let renamed_impls = if let ReprStateType::Struct(_, impls) = args.state_ty {
+        impls
+            .into_iter()
+            .map(|imp| rename_ident_in_impl(imp, &user_state_ident, &state_ident))
+            .collect()
     } else {
-        None
+        Vec::new()
     };
 
     let repr_vars_impl = if repr_vars_fn.is_some() {
@@ -395,7 +397,7 @@ pub fn register_representation(input: TokenStream) -> TokenStream {
         #struct_def_tokens
 
         // -- User-provided struct impl
-        #renamed_impl
+        #(#renamed_impls)*
 
         // -- User-provided functions
         #[allow(non_snake_case)]

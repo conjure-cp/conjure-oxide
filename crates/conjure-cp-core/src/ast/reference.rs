@@ -8,7 +8,7 @@ use super::{
 use crate::bug;
 use crate::representation::types::ReprGetOrInitResult;
 use crate::representation::{
-    ReferenceReprError, ReprError, ReprRulePtr, ReprSelectError, ReprStateStored,
+    ReferenceReprError, ReprError, ReprRule, ReprRulePtr, ReprSelectError, ReprStateStored,
 };
 use derivative::Derivative;
 use parking_lot::MappedRwLockReadGuard;
@@ -74,7 +74,15 @@ impl Reference {
     ///
     /// # Returns
     /// State of the initialised representation
-    pub fn select_repr(
+    pub fn select_repr<R: ReprRule + ?Sized>(
+        &mut self,
+    ) -> Result<MappedRwLockReadGuard<'_, R::DeclLevel>, ReprSelectError> {
+        let _ = self.select_repr_via(R::STORED);
+        Ok(self.repr_state_as_unchecked::<R>())
+    }
+
+    /// Same as [Reference::select_repr], but type-erased
+    pub fn select_repr_via(
         &mut self,
         rule: ReprRulePtr,
     ) -> Result<MappedRwLockReadGuard<'_, dyn ReprStateStored>, ReprSelectError> {
@@ -88,6 +96,19 @@ impl Reference {
         }
         self.repr = Some(rule);
         Ok(self.repr_state_unchecked())
+    }
+
+    /// Same as [Reference::select_or_init_repr], but type-erased
+    pub fn select_or_init_repr_via(
+        &mut self,
+        rule: ReprRulePtr,
+    ) -> ReprGetOrInitResult<'_, dyn ReprStateStored, ReferenceReprError> {
+        if let Some(repr) = self.repr
+            && repr != rule
+        {
+            return Err(ReprSelectError::AlreadySelected(repr).into());
+        }
+        self.update_or_init_repr_via(rule).map_err(Into::into)
     }
 
     /// Select the given representation for this reference, initialising it if necessary.
@@ -104,18 +125,11 @@ impl Reference {
     /// - `state` is an instance of the given representation
     /// - `symbols` are new variables created by the representation
     /// - `constraints` are new top-level constraints created by the representation
-    pub fn select_or_init_repr(
+    pub fn select_or_init_repr<R: ReprRule + ?Sized>(
         &mut self,
-        rule: ReprRulePtr,
-    ) -> ReprGetOrInitResult<'_, dyn ReprStateStored, ReferenceReprError> {
-        if let Some(repr) = self.repr
-            && repr != rule
-        {
-            return Err(ReprSelectError::AlreadySelected(repr).into());
-        }
-        let (symbols, constraints) = rule.init_for_if_not_exists(&mut self.ptr)?;
-        self.repr = Some(rule);
-        let state = self.repr_state_unchecked();
+    ) -> ReprGetOrInitResult<'_, R::DeclLevel, ReferenceReprError> {
+        let (_, symbols, constraints) = self.select_or_init_repr_via(R::STORED)?;
+        let state = self.repr_state_as_unchecked::<R>();
         Ok((state, symbols, constraints))
     }
 
@@ -132,7 +146,16 @@ impl Reference {
     /// - `state` is an instance of the given representation
     /// - `symbols` are new variables created by the representation
     /// - `constraints` are new top-level constraints created by the representation
-    pub fn update_or_init_repr(
+    pub fn update_or_init_repr<R: ReprRule + ?Sized>(
+        &mut self,
+    ) -> ReprGetOrInitResult<'_, R::DeclLevel, ReprError> {
+        let (_, symbols, constraints) = self.update_or_init_repr_via(R::STORED)?;
+        let state = self.repr_state_as_unchecked::<R>();
+        Ok((state, symbols, constraints))
+    }
+
+    /// Same as [Reference::update_or_init_repr], but type-erased
+    pub fn update_or_init_repr_via(
         &mut self,
         rule: ReprRulePtr,
     ) -> ReprGetOrInitResult<'_, dyn ReprStateStored, ReprError> {
@@ -153,6 +176,18 @@ impl Reference {
         Some((rule, self.repr_state_unchecked()))
     }
 
+    /// If this reference has this specific representation selected, get its state as a concrete type
+    pub fn get_repr_as<R: ReprRule + ?Sized>(
+        &self,
+    ) -> Option<MappedRwLockReadGuard<'_, R::DeclLevel>> {
+        if let Some(rule) = self.repr
+            && rule == R::STORED
+        {
+            return Some(self.repr_state_as_unchecked::<R>());
+        }
+        None
+    }
+
     /// If this reference has a representation selected, return its state, otherwise crash
     fn repr_state_unchecked(&self) -> MappedRwLockReadGuard<'_, dyn ReprStateStored> {
         let rule = self
@@ -167,6 +202,20 @@ impl Reference {
                     self.name()
                 )
             })
+    }
+
+    /// If this reference has this specific representation selected, return its state
+    /// as a concrete type, otherwise crash
+    fn repr_state_as_unchecked<R: ReprRule + ?Sized>(
+        &self,
+    ) -> MappedRwLockReadGuard<'_, R::DeclLevel> {
+        R::get_for(&self.ptr).unwrap_or_else(|| {
+            bug!(
+                "`{}` did not have the expected representation `{}`",
+                self.name(),
+                R::NAME
+            )
+        })
     }
 
     /// Returns the expression behind a value-letting reference, if this is one.
@@ -211,6 +260,12 @@ impl Reference {
 impl From<Reference> for Expression {
     fn from(value: Reference) -> Self {
         Expression::Atomic(Metadata::new(), value.into())
+    }
+}
+
+impl From<Reference> for Moo<Expression> {
+    fn from(value: Reference) -> Self {
+        Moo::new(value.into())
     }
 }
 

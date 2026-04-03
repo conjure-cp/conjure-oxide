@@ -10,9 +10,13 @@
 //
 // ~niklasdewally 13/08/25
 
+use funcmap::{FuncMap, TryFuncMap};
 use polyquine::Quine;
 use proc_macro2::TokenStream;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde_with::de::DeserializeAsWrap;
+use serde_with::ser::SerializeAsWrap;
+use serde_with::{DeserializeAs, SerializeAs};
 use std::hash::{Hash, Hasher};
 use std::ops::DerefMut;
 use std::{collections::VecDeque, fmt::Display, ops::Deref, sync::Arc};
@@ -179,6 +183,37 @@ where
     }
 }
 
+impl<A, B> FuncMap<A, B> for Moo<A>
+where
+    A: Clone,
+{
+    type Output = Moo<B>;
+
+    fn func_map<F>(self, mut f: F) -> Self::Output
+    where
+        F: FnMut(A) -> B,
+    {
+        let inner = Moo::unwrap_or_clone(self);
+        Moo::new(f(inner))
+    }
+}
+
+impl<A, B> TryFuncMap<A, B> for Moo<A>
+where
+    A: Clone,
+{
+    type Output = Moo<B>;
+
+    fn try_func_map<E, F>(self, mut f: F) -> Result<Self::Output, E>
+    where
+        F: FnMut(A) -> Result<B, E>,
+    {
+        let inner = Moo::unwrap_or_clone(self);
+        let res = f(inner)?;
+        Ok(Moo::new(res))
+    }
+}
+
 impl<'de, T: Deserialize<'de>> Deserialize<'de> for Moo<T> {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
@@ -194,6 +229,32 @@ impl<T: Serialize> Serialize for Moo<T> {
         S: serde::Serializer,
     {
         T::serialize(&**self, serializer)
+    }
+}
+
+impl<T, As> SerializeAs<Moo<T>> for Moo<As>
+where
+    As: SerializeAs<T>,
+{
+    fn serialize_as<S>(source: &Moo<T>, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let wrap = SerializeAsWrap::<T, As>::new(&**source);
+        wrap.serialize(serializer)
+    }
+}
+
+impl<'de, T, As> DeserializeAs<'de, Moo<T>> for Moo<As>
+where
+    As: DeserializeAs<'de, T>,
+{
+    fn deserialize_as<D>(deserializer: D) -> Result<Moo<T>, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let wrap = DeserializeAsWrap::<T, As>::deserialize(deserializer)?;
+        Ok(Moo::new(wrap.into_inner()))
     }
 }
 

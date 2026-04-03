@@ -10,4 +10,6 @@ pub mod parse {
     pub use conjure_cp_essence_parser as tree_sitter;
 }
 
-pub mod defaults;
+pub mod defaults {
+    pub static DEFAULT_RULE_SETS: &[&str] = &["Base", "Constant", "Bubble", "ReprGeneral"];
+}

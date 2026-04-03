@@ -1,17 +1,30 @@
+use std::cmp::Ordering;
 use std::collections::VecDeque;
 
 use super::Name;
-use super::literals::AbstractLiteralValue;
 use serde::{Deserialize, Serialize};
 
+use funcmap::{FuncMap, TryFuncMap};
 use polyquine::Quine;
 use uniplate::{Biplate, Uniplate};
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Hash, Quine)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Hash, Quine, FuncMap, TryFuncMap)]
 #[path_prefix(conjure_cp::ast)]
-pub struct RecordValue<T: AbstractLiteralValue> {
+pub struct RecordValue<T> {
     pub name: Name,
     pub value: T,
+}
+
+impl<T: Eq> PartialOrd<Self> for RecordValue<T> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl<T: Eq> Ord for RecordValue<T> {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.name.cmp(&other.name)
+    }
 }
 
 // Uniplate instance copy and pasted from cargo expand
@@ -20,7 +33,7 @@ pub struct RecordValue<T: AbstractLiteralValue> {
 
 impl<T> Uniplate for RecordValue<T>
 where
-    T: AbstractLiteralValue,
+    T: Biplate<RecordValue<T>>,
 {
     fn uniplate(
         &self,
@@ -30,10 +43,7 @@ where
     ) {
         let _name_copy = self.name.clone();
         let (tree_value, ctx_value) = <T as Biplate<RecordValue<T>>>::biplate(&self.value);
-        let children = ::uniplate::Tree::Many(::std::collections::VecDeque::from([
-            tree_value,
-            ::uniplate::Tree::Zero,
-        ]));
+        let children = ::uniplate::Tree::Many(VecDeque::from([tree_value, ::uniplate::Tree::Zero]));
         let ctx = Box::new(move |x: ::uniplate::Tree<RecordValue<T>>| {
             let ::uniplate::Tree::Many(xs) = x else {
                 panic!()
@@ -53,7 +63,7 @@ where
 // (I'll follow U wherever U will go)
 impl<To, U> Biplate<To> for RecordValue<U>
 where
-    U: AbstractLiteralValue + Biplate<To>,
+    U: Biplate<RecordValue<U>> + Biplate<To>,
     To: Uniplate,
 {
     fn biplate(&self) -> (uniplate::Tree<To>, Box<dyn Fn(uniplate::Tree<To>) -> Self>) {

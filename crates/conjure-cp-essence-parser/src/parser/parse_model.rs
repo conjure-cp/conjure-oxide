@@ -207,7 +207,7 @@ mod test {
     #[allow(unused_imports)]
     use crate::parse_essence;
     #[allow(unused_imports)]
-    use conjure_cp_core::ast::{Atom, Expression, Metadata, Moo, Name};
+    use conjure_cp_core::ast::{Atom, Expression, HasDomain, Metadata, Moo, Name};
     #[allow(unused_imports)]
     use conjure_cp_core::{domain_int, matrix_expr, range};
     #[allow(unused_imports)]
@@ -286,5 +286,31 @@ mod test {
                 domain_int!(-2..0)
             )
         )
+    }
+
+    #[test]
+    pub fn parse_record_index_simple() {
+        let src = "
+        find x: record { a: int(1..3), b: bool }
+        such that
+            x[a] > 2
+        ";
+
+        let (model, _source_map) = parse_essence(src).unwrap();
+        let Expression::Root(_, exprs) = model.root() else {
+            panic!("expected Root");
+        };
+        assert_eq!(exprs.len(), 1);
+        let Expression::Gt(_, lhs, rhs) = &exprs[0] else {
+            panic!("expected Gt");
+        };
+        let Expression::RecordField(_, rec_expr, field) = lhs.as_ref() else {
+            panic!("expected LHS to be RecordField");
+        };
+        let Expression::Atomic(_, Atom::Reference(re)) = rec_expr.as_ref() else {
+            panic!("expected Reference");
+        };
+        assert_eq!(field, &Name::user("a"));
+        assert!(re.domain_of().as_record().is_some());
     }
 }

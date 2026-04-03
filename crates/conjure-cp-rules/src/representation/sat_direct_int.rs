@@ -1,6 +1,7 @@
 // crates/conjure-cp-rules/src/representation/sat_direct_int.rs
 
 use super::prelude::*;
+use crate::utils::lit_to_bool;
 use conjure_cp::ast::{Domain, Range, Reference, domains::Int};
 use conjure_cp::{essence_expr, into_matrix_expr};
 use itertools::{Itertools, chain};
@@ -67,12 +68,3 @@ register_representation!(
         state.vals.right_values().cloned().collect()
     }
 );
-
-fn lit_to_bool(x: &Literal) -> bool {
-    match x {
-        Literal::Bool(b) => *b,
-        Literal::Int(0) => false,
-        Literal::Int(1) => true,
-        _ => bug!("expected a boolean or int(0..1) literal, got {}", x),
-    }
-}

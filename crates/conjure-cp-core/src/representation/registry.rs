@@ -9,6 +9,10 @@ pub type ReprRulePtr = &'static dyn ReprRuleStored;
 #[distributed_slice]
 pub static REPR_RULES_DISTRIBUTED_SLICE: [ReprRulePtr];
 
+pub fn get_repr_rules() -> impl Iterator<Item = ReprRulePtr> {
+    REPR_RULES_DISTRIBUTED_SLICE.iter().copied()
+}
+
 pub fn get_repr_by_name(name: &str) -> Option<ReprRulePtr> {
     let mut idx = -1;
     for i in 0..REPR_RULES_DISTRIBUTED_SLICE.len() {

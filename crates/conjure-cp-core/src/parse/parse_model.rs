@@ -7,17 +7,16 @@ use serde_json::Map as JsonMap;
 use serde_json::Value;
 use serde_json::Value as JsonValue;
 
-use crate::ast::Moo;
 use crate::ast::abstract_comprehension::AbstractComprehensionBuilder;
 use crate::ast::ac_operators::ACOperatorKind;
 use crate::ast::comprehension::ComprehensionBuilder;
 use crate::ast::records::RecordValue;
 use crate::ast::{
     AbstractLiteral, Atom, DeclarationPtr, Domain, Expression, FuncAttr, IntVal, JectivityAttr,
-    Literal, MSetAttr, Name, PartialityAttr, Range, RecordEntry, SetAttr, SymbolTable,
-    SymbolTablePtr,
+    Literal, MSetAttr, Name, PartialityAttr, Range, SetAttr, SymbolTable, SymbolTablePtr,
 };
 use crate::ast::{DomainPtr, Metadata};
+use crate::ast::{Moo, ReturnType, Typeable};
 use crate::context::Context;
 use crate::error::{Error, Result};
 use crate::{Model, bug, error, into_matrix_expr, throw_error};
@@ -142,6 +141,18 @@ fn parse_variable(v: &JsonValue, symtab: &mut SymbolTable) -> Result<()> {
     )))
 }
 
+fn get_domain_letting(v: &JsonValue) -> Result<(&String, &Value)> {
+    v.as_object()
+        .ok_or(error!("Letting[1] is not an object"))?
+        .get("Domain")
+        .ok_or(error!("Letting[1] did not have a domain"))?
+        .as_object()
+        .ok_or(error!("Letting[1].Domain is not an object"))?
+        .iter()
+        .next()
+        .ok_or(error!("Letting[1].Domain is an empty object"))
+}
+
 fn parse_letting(v: &JsonValue, scope: &SymbolTablePtr) -> Result<()> {
     let arr = v.as_array().ok_or(error!("Letting is not an array"))?;
     let name = arr[0]
@@ -150,25 +161,17 @@ fn parse_letting(v: &JsonValue, scope: &SymbolTablePtr) -> Result<()> {
         .as_str()
         .ok_or(error!("Letting[0].Name is not a string"))?;
     let name = Name::User(Ustr::from(name));
-    // value letting
-    if let Ok(value) = parse_expression(&arr[1], scope) {
+    let res = parse_expression(&arr[1], scope);
+    if let Ok(value) = res {
+        // value letting
         let mut symtab = scope.write();
         symtab
             .insert(DeclarationPtr::new_value_letting(name.clone(), value))
             .ok_or(Error::Parse(format!(
                 "Could not add {name} to symbol table as it already exists"
             )))
-    } else {
+    } else if let Ok(domain) = get_domain_letting(&arr[1]) {
         // domain letting
-        let domain = &arr[1]
-            .as_object()
-            .ok_or(error!("Letting[1] is not an object".to_owned()))?["Domain"]
-            .as_object()
-            .ok_or(error!("Letting[1].Domain is not an object"))?
-            .iter()
-            .next()
-            .ok_or(error!("Letting[1].Domain is an empty object"))?;
-
         let mut symtab = scope.write();
         let domain = parse_domain(domain.0, domain.1, &mut symtab)?;
 
@@ -177,6 +180,8 @@ fn parse_letting(v: &JsonValue, scope: &SymbolTablePtr) -> Result<()> {
             .ok_or(Error::Parse(format!(
                 "Could not add {name} to symbol table as it already exists"
             )))
+    } else {
+        Err(res.unwrap_err())
     }
 }
 
@@ -344,24 +349,11 @@ fn parse_domain(
                     .next()
                     .ok_or(error!("FindOrGiven[2] is an empty object"))?;
 
-                let domain = parse_domain(domain.0, domain.1, symbols)?;
-
-                let rec = RecordEntry { name, domain };
+                let value = parse_domain(domain.0, domain.1, symbols)?;
+                let rec = RecordValue { name, value };
 
                 record_entries.push(rec);
             }
-
-            // add record fields to symbol table
-            for decl in record_entries
-                .iter()
-                .cloned()
-                .map(DeclarationPtr::new_record_field)
-            {
-                symbols.insert(decl).ok_or(error!(
-                    "record field should not already be in the symbol table"
-                ))?;
-            }
-
             Ok(Domain::record(record_entries))
         }
         "DomainFunction" => {
@@ -642,6 +634,21 @@ fn unary_operator(op_name: &str) -> Option<UnaryOp> {
     }
 }
 
+fn parse_reference_name(obj: &JsonValue) -> Result<Name> {
+    let ref_arr = obj["Reference"]
+        .as_array()
+        .ok_or_else(|| error!("Reference.as_array"))?;
+    let ref_obj = ref_arr
+        .first()
+        .and_then(|x| x.as_object())
+        .ok_or_else(|| error!("Reference[0].as_object"))?;
+    let name = ref_obj
+        .get("Name")
+        .and_then(|x| x.as_str())
+        .ok_or_else(|| error!("Reference[0].Name.as_str"))?;
+    Ok(Name::User(Ustr::from(name)))
+}
+
 pub fn parse_expression(obj: &JsonValue, scope: &SymbolTablePtr) -> Result<Expression> {
     let fail = |stage: &str| -> Error {
         Error::Parse(format!(
@@ -675,18 +682,7 @@ pub fn parse_expression(obj: &JsonValue, scope: &SymbolTablePtr) -> Result<Expre
             parse_comprehension(comprehension, scope.clone(), None)
         }
         Value::Object(refe) if refe.contains_key("Reference") => {
-            let ref_arr = refe["Reference"]
-                .as_array()
-                .ok_or_else(|| fail("Reference.as_array"))?;
-            let ref_obj = ref_arr
-                .first()
-                .and_then(|x| x.as_object())
-                .ok_or_else(|| fail("Reference[0].as_object"))?;
-            let name = ref_obj
-                .get("Name")
-                .and_then(|x| x.as_str())
-                .ok_or_else(|| fail("Reference[0].Name.as_str"))?;
-            let user_name = Name::User(Ustr::from(name));
+            let user_name = parse_reference_name(obj)?;
 
             let declaration: DeclarationPtr = scope
                 .read()
@@ -715,11 +711,11 @@ pub fn parse_expression(obj: &JsonValue, scope: &SymbolTablePtr) -> Result<Expre
         }
 
         Value::Object(constant) if constant.contains_key("Constant") => {
-            parse_constant(constant, scope).or_else(|_| parse_abstract_matrix_as_expr(obj, scope))
+            parse_constant(constant, scope)
         }
 
         Value::Object(constant) if constant.contains_key("ConstantAbstract") => {
-            parse_abstract_matrix_as_expr(obj, scope)
+            parse_constant(constant, scope)
         }
 
         Value::Object(constant) if constant.contains_key("ConstantInt") => {
@@ -1067,7 +1063,19 @@ fn parse_indexing_slicing_op(
             match &value {
                 Value::Array(op_args) if op_args.len() == 2 => {
                     target = parse_expression(&op_args[0], scope)?;
-                    indices.push(Some(parse_expression(&op_args[1], scope)?));
+                    if let ReturnType::Record(ents) = target.return_type() {
+                        let field_name = parse_reference_name(&op_args[1])?;
+                        let has_name = ents.iter().any(|x| x.name.eq(&field_name));
+                        if !has_name {
+                            return Err(error!(format!(
+                                "Unknown field `{field_name}` in record `{target}`"
+                            )));
+                        }
+                        target =
+                            Expression::RecordField(Metadata::new(), Moo::new(target), field_name);
+                    } else {
+                        indices.push(Some(parse_expression(&op_args[1], scope)?));
+                    }
                 }
                 _ => return Err(error!("Unknown object inside MkOpIndexing")),
             };
@@ -1105,6 +1113,11 @@ fn parse_indexing_slicing_op(
                 break;
             }
         }
+    }
+
+    // If we had a record field and no other indices, the list will be empty
+    if indices.is_empty() {
+        return Ok(target);
     }
 
     indices.reverse();
@@ -1277,6 +1290,28 @@ fn parse_abstract_matrix_as_expr(
     }
 }
 
+fn parse_constant_abstract(
+    abstract_literal: &serde_json::Map<String, Value>,
+    scope: &SymbolTablePtr,
+    matrix_context: &Value,
+) -> Result<Expression> {
+    if let Some(arr) = abstract_literal.get("AbsLitSet") {
+        parse_abs_lit(arr, scope)
+    } else if let Some(arr) = abstract_literal.get("AbsLitMSet") {
+        parse_abs_mset(arr, scope)
+    } else if abstract_literal.contains_key("AbsLitMatrix") {
+        parse_abstract_matrix_as_expr(matrix_context, scope)
+    } else if let Some(arr) = abstract_literal.get("AbsLitTuple") {
+        parse_abs_tuple(arr, scope)
+    } else if let Some(arr) = abstract_literal.get("AbsLitRecord") {
+        parse_abs_record(arr, scope)
+    } else if let Some(arr) = abstract_literal.get("AbsLitFunction") {
+        parse_abs_function(arr, scope)
+    } else {
+        Err(error!("Unhandled ConstantAbstract literal type"))
+    }
+}
+
 fn parse_constant(
     constant: &serde_json::Map<String, Value>,
     scope: &SymbolTablePtr,
@@ -1312,19 +1347,8 @@ fn parse_constant(
 
         Some(Value::Object(int)) if int.contains_key("ConstantAbstract") => {
             if let Some(Value::Object(obj)) = int.get("ConstantAbstract") {
-                if let Some(arr) = obj.get("AbsLitSet") {
-                    return parse_abs_lit(arr, scope);
-                } else if let Some(arr) = obj.get("AbsLitMSet") {
-                    return parse_abs_mset(arr, scope);
-                } else if let Some(arr) = obj.get("AbsLitMatrix") {
-                    return parse_abstract_matrix_as_expr(arr, scope);
-                } else if let Some(arr) = obj.get("AbsLitTuple") {
-                    return parse_abs_tuple(arr, scope);
-                } else if let Some(arr) = obj.get("AbsLitRecord") {
-                    return parse_abs_record(arr, scope);
-                } else if let Some(arr) = obj.get("AbsLitFunction") {
-                    return parse_abs_function(arr, scope);
-                }
+                let matrix_context = Value::Object(constant.clone());
+                return parse_constant_abstract(obj, scope, &matrix_context);
             }
             Err(error!("Unhandled ConstantAbstract literal type"))
         }
@@ -1332,6 +1356,11 @@ fn parse_constant(
         // sometimes (e.g. constant matrices) we can have a ConstantInt / Constant bool that is
         // not wrapped in Constant
         None => {
+            if let Some(Value::Object(obj)) = constant.get("ConstantAbstract") {
+                let matrix_context = Value::Object(constant.clone());
+                return parse_constant_abstract(obj, scope, &matrix_context);
+            }
+
             let int_expr = constant
                 .get("ConstantInt")
                 .and_then(|x| x.as_array())
@@ -1355,5 +1384,116 @@ fn parse_constant(
             Err(error!(format!("Unhandled parse_constant {constant:#?}")))
         }
         otherwise => Err(error!(format!("Unhandled parse_constant {otherwise:#?}"))),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::ast::HasDomain;
+    use serde_json::json;
+
+    #[test]
+    fn parses_unwrapped_constant_abstract_tuple() {
+        let scope = SymbolTablePtr::new();
+        let value = json!({
+            "ConstantAbstract": {
+                "AbsLitTuple": [
+                    {"ConstantInt": [{"TagInt": []}, 2]},
+                    {"ConstantInt": [{"TagInt": []}, 6]}
+                ]
+            }
+        });
+
+        let expr = parse_expression(&value, &scope).expect("tuple constant should parse");
+        let Expression::AbstractLiteral(_, AbstractLiteral::Tuple(items)) = expr else {
+            panic!("expected tuple abstract literal");
+        };
+
+        assert_eq!(items.len(), 2);
+        assert!(matches!(
+            &items[0],
+            Expression::Atomic(_, Atom::Literal(Literal::Int(2)))
+        ));
+        assert!(matches!(
+            &items[1],
+            Expression::Atomic(_, Atom::Literal(Literal::Int(6)))
+        ));
+    }
+
+    #[test]
+    fn parses_wrapped_constant_abstract_tuple() {
+        let scope = SymbolTablePtr::new();
+        let value = json!({
+            "Constant": {
+                "ConstantAbstract": {
+                    "AbsLitTuple": [
+                        {"ConstantInt": [{"TagInt": []}, 1]},
+                        {"ConstantInt": [{"TagInt": []}, 3]}
+                    ]
+                }
+            }
+        });
+
+        let expr = parse_expression(&value, &scope).expect("tuple constant should parse");
+        let Expression::AbstractLiteral(_, AbstractLiteral::Tuple(items)) = expr else {
+            panic!("expected tuple abstract literal");
+        };
+
+        assert_eq!(items.len(), 2);
+        assert!(matches!(
+            &items[0],
+            Expression::Atomic(_, Atom::Literal(Literal::Int(1)))
+        ));
+        assert!(matches!(
+            &items[1],
+            Expression::Atomic(_, Atom::Literal(Literal::Int(3)))
+        ));
+    }
+
+    #[test]
+    fn parses_record_index() {
+        let scope = SymbolTablePtr::new();
+        scope.write().insert(DeclarationPtr::new_find(
+            Name::user("x"),
+            Domain::record(vec![RecordValue {
+                name: Name::user("a"),
+                value: Domain::bool(),
+            }]),
+        ));
+
+        let value = json!({
+            "Op": {
+                "MkOpIndexing": [
+                    {
+                        "Reference": [
+                            {
+                                "Name": "x"
+                            },
+                            null
+                        ]
+                    },
+                    {
+                        "Reference": [
+                            {
+                                "Name": "a"
+                            },
+                            null
+                        ]
+                    }
+                ]
+            }
+        });
+
+        let expr = parse_expression(&value, &scope).expect("record index should parse");
+        let Expression::RecordField(_, rec_expr, field_name) = expr else {
+            panic!("expected record field access");
+        };
+        let Expression::Atomic(_, Atom::Reference(re)) = rec_expr.as_ref() else {
+            panic!("expected LHS to be a record reference");
+        };
+        assert_eq!(re.name().clone(), Name::user("x"));
+        assert!(re.domain_of().as_record().is_some());
+        assert_eq!(field_name, Name::user("a"));
     }
 }
