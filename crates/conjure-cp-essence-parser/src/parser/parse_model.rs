@@ -17,7 +17,6 @@ use crate::diagnostics::diagnostics_api::SymbolKind;
 use crate::diagnostics::source_map::{HoverInfo, SourceMap, span_with_hover};
 use crate::errors::{FatalParseError, ParseErrorCollection, RecoverableParseError};
 use crate::expression::parse_expression;
-use crate::field;
 use crate::syntax_errors::detect_syntactic_errors;
 use tree_sitter::Tree;
 
@@ -171,7 +170,20 @@ pub fn parse_essence_with_context_and_map(
                 model.symbols_mut().extend(letting_vars);
             }
             "dominance_relation" => {
-                let inner = field!(statement, "expression");
+                let inner = match statement.child_by_field_name("expression") {
+                    Some(node) => node,
+                    None => {
+                        ctx.record_error(RecoverableParseError::new(
+                            format!(
+                                "Missing field '{}' in expression of kind '{}'",
+                                "expression",
+                                statement.kind()
+                            ),
+                            Some(statement.range()),
+                        ));
+                        continue;
+                    }
+                };
                 let Some(expr) = parse_expression(&mut ctx, inner)? else {
                     continue;
                 };

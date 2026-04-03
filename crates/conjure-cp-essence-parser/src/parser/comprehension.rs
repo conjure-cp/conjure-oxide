@@ -3,7 +3,7 @@ use crate::expression::parse_expression;
 use crate::parser::ParseContext;
 use crate::parser::domain::parse_domain;
 use crate::util::named_children;
-use crate::{RecoverableParseError, field};
+use crate::RecoverableParseError;
 use conjure_cp_core::ast::ac_operators::ACOperatorKind;
 use conjure_cp_core::ast::comprehension::ComprehensionBuilder;
 use conjure_cp_core::ast::{DeclarationPtr, Expression, Metadata, Moo, Name};
@@ -41,12 +41,38 @@ pub fn parse_comprehension(
             }
             "generator" => {
                 // Parse the generator variable
-                let var_node = field!(child, "variable");
+                let var_node = match child.child_by_field_name("variable") {
+                    Some(node) => node,
+                    None => {
+                        ctx.record_error(RecoverableParseError::new(
+                            format!(
+                                "Missing field '{}' in expression of kind '{}'",
+                                "variable",
+                                child.kind()
+                            ),
+                            Some(child.range()),
+                        ));
+                        return Ok(None);
+                    }
+                };
                 let var_name_str = &ctx.source_code[var_node.start_byte()..var_node.end_byte()];
                 let var_name = Name::user(var_name_str);
 
                 // Parse the domain
-                let domain_node = field!(child, "domain");
+                let domain_node = match child.child_by_field_name("domain") {
+                    Some(node) => node,
+                    None => {
+                        ctx.record_error(RecoverableParseError::new(
+                            format!(
+                                "Missing field '{}' in expression of kind '{}'",
+                                "domain",
+                                child.kind()
+                            ),
+                            Some(child.range()),
+                        ));
+                        return Ok(None);
+                    }
+                };
 
                 // Parse with a new context using the generator symbol table
                 let mut domain_ctx = ctx.with_new_symbols(Some(builder.generator_symboltable()));
@@ -60,7 +86,20 @@ pub fn parse_comprehension(
             }
             "condition" => {
                 // Parse the condition expression
-                let expr_node = field!(child, "expression");
+                let expr_node = match child.child_by_field_name("expression") {
+                    Some(node) => node,
+                    None => {
+                        ctx.record_error(RecoverableParseError::new(
+                            format!(
+                                "Missing field '{}' in expression of kind '{}'",
+                                "expression",
+                                child.kind()
+                            ),
+                            Some(child.range()),
+                        ));
+                        return Ok(None);
+                    }
+                };
                 let generator_symboltable = builder.generator_symboltable();
 
                 // Parse with a new context using the generator symbol table
@@ -172,7 +211,20 @@ pub fn parse_quantifier_or_aggregate_expr(
     }
 
     // Get the operator type
-    let operator_node = field!(node, "operator");
+    let operator_node = match node.child_by_field_name("operator") {
+        Some(node) => node,
+        None => {
+            ctx.record_error(RecoverableParseError::new(
+                format!(
+                    "Missing field '{}' in expression of kind '{}'",
+                    "operator",
+                    node.kind()
+                ),
+                Some(node.range()),
+            ));
+            return Ok(None);
+        }
+    };
     let operator_str = &ctx.source_code[operator_node.start_byte()..operator_node.end_byte()];
 
     let (ac_operator_kind, wrapper) = match operator_str {
@@ -206,7 +258,20 @@ pub fn parse_quantifier_or_aggregate_expr(
     }
 
     // Parse the expression (after variables are in the symbol table)
-    let expression_node = field!(node, "expression");
+    let expression_node = match node.child_by_field_name("expression") {
+        Some(node) => node,
+        None => {
+            ctx.record_error(RecoverableParseError::new(
+                format!(
+                    "Missing field '{}' in expression of kind '{}'",
+                    "expression",
+                    node.kind()
+                ),
+                Some(node.range()),
+            ));
+            return Ok(None);
+        }
+    };
 
     // Parse with a new context using the return expression symbol table
     let mut expr_ctx = ctx.with_new_symbols(Some(builder.return_expr_symboltable()));
