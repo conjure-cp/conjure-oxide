@@ -994,32 +994,26 @@
     "type": "find_statement",
     "named": true,
     "fields": {
-      "colon": {
+      "find_keyword": {
         "multiple": false,
         "required": true,
         "types": [
           {
-            "type": "COLON",
-            "named": true
+            "type": "find",
+            "named": false
           }
         ]
       },
-      "domain": {
-        "multiple": false,
+      "variable_declaration": {
+        "multiple": true,
         "required": true,
         "types": [
           {
-            "type": "domain",
-            "named": true
-          }
-        ]
-      },
-      "variables": {
-        "multiple": false,
-        "required": true,
-        "types": [
+            "type": ",",
+            "named": false
+          },
           {
-            "type": "variable_list",
+            "type": "variable_declaration",
             "named": true
           }
         ]
@@ -1114,6 +1108,36 @@
           },
           {
             "type": "tuple",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "given_statement",
+    "named": true,
+    "fields": {
+      "given_keyword": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "given",
+            "named": false
+          }
+        ]
+      },
+      "variable_declaration": {
+        "multiple": true,
+        "required": true,
+        "types": [
+          {
+            "type": ",",
+            "named": false
+          },
+          {
+            "type": "variable_declaration",
             "named": true
           }
         ]
@@ -1368,6 +1392,36 @@
   },
   {
     "type": "letting_statement",
+    "named": true,
+    "fields": {
+      "letting_keyword": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "letting",
+            "named": false
+          }
+        ]
+      },
+      "letting_variable_declaration": {
+        "multiple": true,
+        "required": true,
+        "types": [
+          {
+            "type": ",",
+            "named": false
+          },
+          {
+            "type": "letting_variable_declaration",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "letting_variable_declaration",
     "named": true,
     "fields": {
       "be": {
@@ -1929,6 +1983,16 @@
           }
         ]
       },
+      "given_statement": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": "given_statement",
+            "named": true
+          }
+        ]
+      },
       "letting_statement": {
         "multiple": true,
         "required": false,
@@ -1936,6 +2000,16 @@
           {
             "type": "letting_statement",
             "named": true
+          }
+        ]
+      },
+      "such_that_keyword": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": "such that",
+            "named": false
           }
         ]
       }
@@ -2488,6 +2562,42 @@
     }
   },
   {
+    "type": "variable_declaration",
+    "named": true,
+    "fields": {
+      "colon": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "COLON",
+            "named": true
+          }
+        ]
+      },
+      "domain": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "domain",
+            "named": true
+          }
+        ]
+      },
+      "variables": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "variable_list",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
     "type": "variable_list",
     "named": true,
     "fields": {},
@@ -2696,6 +2806,10 @@
   },
   {
     "type": "fromSolution",
+    "named": false
+  },
+  {
+    "type": "given",
     "named": false
   },
   {
