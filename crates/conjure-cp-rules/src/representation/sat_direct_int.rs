@@ -15,7 +15,7 @@ register_representation!(
         // Mapping of each possible value i of the original integer x to a boolean b_i <-> (x = i)
         pub vals: HashMap<Int, T>
     }
-    fn init(dom: DomainPtr) -> Result<State<DomainPtr>, ReprInitError> {
+    pub fn init(dom: DomainPtr) -> Result<State<DomainPtr>, ReprInitError> {
         let Some(rngs) = dom.as_int_ground() else {
             return Err(ReprInitError::UnsupportedDomain(dom, SatIntDirect::NAME, String::from("expected a ground int domain")));
         };

@@ -1,7 +1,9 @@
 use crate::guard;
+use crate::representation::sat_direct_int::SatIntDirect;
 use crate::utils::as_comparison_op;
-use conjure_cp::ast::Literal;
-use conjure_cp::ast::{Domain, DomainPtr, HasDomain, UnresolvedDomain};
+// use conjure_cp::ast::Literal;
+use conjure_cp::ast::{Domain, DomainPtr, HasDomain, Name, UnresolvedDomain};
+use conjure_cp::utils::View;
 use conjure_cp::{
     ast::{Atom, Expression as Expr, GroundDomain, SymbolTable},
     representation::get_repr_rules,
@@ -10,7 +12,9 @@ use conjure_cp::{
         register_rule_set,
     },
 };
+use conjure_cp::{domain_int, domain_int_ground, matrix_lit};
 use itertools::any;
+use std::collections::HashSet;
 use std::collections::VecDeque;
 use uniplate::Biplate;
 
@@ -22,8 +26,9 @@ register_rule_set!("ReprGeneral", ("Base"));
 fn create_repr_sat_direct(expr: &Expr, st: &SymbolTable) -> ApplicationResult {
     println!("sat representation creation");
 
-    if let Expr::Atomic(_, Atom::Literal(Literal::Int(i))) = expr {
+    if let Expr::Atomic(_, Atom::Literal(i)) = expr {
         println!("found: {}", i);
+        let a = init(i.domain_of());
     } else {
         return Err(RuleNotApplicable);
     }
