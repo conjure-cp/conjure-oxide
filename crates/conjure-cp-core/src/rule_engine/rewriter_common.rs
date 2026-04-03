@@ -8,6 +8,7 @@ use crate::ast::{
     DeclarationPtr, Expression, Model, Name, SymbolTable,
     pretty::{pretty_variable_declaration, pretty_vec},
 };
+use crate::settings::rule_trace_enabled;
 
 use itertools::Itertools;
 use serde_json::json;
@@ -132,17 +133,19 @@ pub fn log_rule_application(
             (new_variables_str, String::new())
         };
 
-    trace!(
-        target: "rule_engine_human",
-        "{}, \n   ~~> {} ({:?})\n{}\n{}{}{}\n--\n",
-        initial_expression,
-        rule.name,
-        rule.rule_sets,
-        red.new_expression,
-        new_variables_str,
-        updated_variables_str,
-        new_constraints_str
-    );
+    if rule_trace_enabled() {
+        trace!(
+            target: "rule_engine_human",
+            "{}, \n   ~~> {} ({:?})\n{}\n{}{}{}\n--\n",
+            initial_expression,
+            rule.name,
+            rule.rule_sets,
+            red.new_expression,
+            new_variables_str,
+            updated_variables_str,
+            new_constraints_str
+        );
+    }
 
     trace!(
         target: "rule_engine",

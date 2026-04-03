@@ -11,7 +11,7 @@ use crate::{
         },
         submodel_zipper::expression_ctx,
     },
-    settings::{Rewriter, set_current_rewriter},
+    settings::{Rewriter, rule_trace_enabled, set_current_rewriter},
     stats::RewriterStats,
 };
 
@@ -50,15 +50,17 @@ pub fn rewrite_naive<'a>(
     rewriter_stats.is_optimization_enabled = Some(false);
     let run_start = Instant::now();
 
-    trace!(
-        target: "rule_engine_human",
-        "Model before rewriting:\n\n{}\n--\n",
-        model
-    );
-    trace!(
-        target: "rule_engine_human_verbose",
-        "elapsed_s,rule_level,rule_name,rule_set,status,expression"
-    );
+    if rule_trace_enabled() {
+        trace!(
+            target: "rule_engine_human",
+            "Model before rewriting:\n\n{}\n--\n",
+            model
+        );
+        trace!(
+            target: "rule_engine_human_verbose",
+            "elapsed_s,rule_level,rule_name,rule_set,status,expression"
+        );
+    }
 
     // Rewrite until there are no more rules left to apply.
     while done_something {
@@ -82,11 +84,13 @@ pub fn rewrite_naive<'a>(
         .stats
         .add_rewriter_run(rewriter_stats);
 
-    trace!(
-        target: "rule_engine_human",
-        "Final model:\n\n{}",
-        model
-    );
+    if rule_trace_enabled() {
+        trace!(
+            target: "rule_engine_human",
+            "Final model:\n\n{}",
+            model
+        );
+    }
     Ok(model)
 }
 
@@ -138,14 +142,16 @@ fn try_rewrite_model(
                     Ok(red) => {
                         // when called a lot, this becomes very expensive!
                         #[cfg(debug_assertions)]
-                        log_verbose_rule_attempt(
-                            run_start,
-                            priority,
-                            rd.rule.name,
-                            rd.rule_set.name,
-                            "success",
-                            &expr,
-                        );
+                        if rule_trace_enabled() {
+                            log_verbose_rule_attempt(
+                                run_start,
+                                priority,
+                                rd.rule.name,
+                                rd.rule_set.name,
+                                "success",
+                                &expr,
+                            );
+                        }
 
                         // Count successful rule applications
                         stats.rewriter_rule_applications =
@@ -172,14 +178,16 @@ fn try_rewrite_model(
                     Err(_) => {
                         // when called a lot, this becomes very expensive!
                         #[cfg(debug_assertions)]
-                        log_verbose_rule_attempt(
-                            run_start,
-                            priority,
-                            rd.rule.name,
-                            rd.rule_set.name,
-                            "fail",
-                            &expr,
-                        );
+                        if rule_trace_enabled() {
+                            log_verbose_rule_attempt(
+                                run_start,
+                                priority,
+                                rd.rule.name,
+                                rd.rule_set.name,
+                                "fail",
+                                &expr,
+                            );
+                        }
                     }
                 }
             }
