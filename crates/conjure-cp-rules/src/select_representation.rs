@@ -1,5 +1,6 @@
 use crate::guard;
 use crate::utils::as_comparison_op;
+use conjure_cp::ast::Literal;
 use conjure_cp::ast::{Domain, DomainPtr, HasDomain, UnresolvedDomain};
 use conjure_cp::{
     ast::{Atom, Expression as Expr, GroundDomain, SymbolTable},
@@ -16,6 +17,19 @@ use uniplate::Biplate;
 // Representations of Essence abstract types down to Essence'
 // Applies for all solvers
 register_rule_set!("ReprGeneral", ("Base"));
+
+#[register_rule(("SAT_Direct", 10000))]
+fn create_repr_sat_direct(expr: &Expr, st: &SymbolTable) -> ApplicationResult {
+    println!("sat representation creation");
+
+    if let Expr::Atomic(_, Atom::Literal(Literal::Int(i))) = expr {
+        println!("found: {}", i);
+    } else {
+        return Err(RuleNotApplicable);
+    }
+
+    Err(RuleNotApplicable)
+}
 
 /// Select a representation for abstract domains
 #[register_rule(("ReprGeneral", 8000))]

@@ -48,7 +48,7 @@ register_representation!(
         let Literal::Int(x) = value else {
             return Err(ReprDownError::BadValue(value, String::from("expected an int literal")))
         };
-        let mut vals: HashMap<Int, Literal> = state.vals.left_values().map(|k| (*k, false.into())).collect();
+        let mut vals: HashMap<Int, Literal> = state.vals.keys().map(|k| (*k, false.into())).collect();
         vals.insert(x, true.into());
         Ok(State { vals })
     }
@@ -65,6 +65,6 @@ register_representation!(
         ans.unwrap_or_else(|| bug!("none of the given values were true"))
     }
     fn repr_vars(state: &State<DeclarationPtr>) -> VecDeque<DeclarationPtr> {
-        state.vals.right_values().cloned().collect()
+        state.vals.values().cloned().collect()
     }
 );
