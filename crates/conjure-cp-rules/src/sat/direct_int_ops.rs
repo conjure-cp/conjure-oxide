@@ -22,6 +22,7 @@ use conjure_cp::ast::CnfClause;
 /// ```
 #[register_rule(("SAT_Direct", 9500))]
 fn literal_sat_direct_int(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    panic!("literal_sat_direct_int");
     let value = {
         if let Expr::Atomic(_, Atom::Literal(Literal::Int(value))) = expr {
             *value
