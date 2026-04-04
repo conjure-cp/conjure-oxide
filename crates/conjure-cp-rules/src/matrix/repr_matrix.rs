@@ -2,13 +2,12 @@ use crate::bottom_up_adaptor::as_bottom_up;
 use crate::guard;
 use crate::representation::MatrixToAtom;
 use crate::utils::to_aux_var;
-use conjure_cp::ast::matrix::unflatten_matrix_expr;
+use conjure_cp::ast::matrix::unflatten_matrix;
 use conjure_cp::ast::{
-    Atom, DeclarationKind, Expression, GroundDomain, Metadata, Moo, Range, Reference, SymbolTable,
-    eval_constant,
+    Atom, DeclarationKind, Expression, GroundDomain, Literal, Metadata, Moo, Range, Reference,
+    SymbolTable, eval_constant,
 };
 use conjure_cp::bug::UnwrapOrBug;
-use conjure_cp::into_matrix_expr;
 use conjure_cp::representation::ReprRule;
 use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
@@ -16,6 +15,7 @@ use conjure_cp::rule_engine::{
 };
 use conjure_cp::settings::SolverFamily;
 use conjure_cp::solver::adaptors::smt::{MatrixTheory, TheoryConfig};
+use conjure_cp::{bug, into_matrix_expr};
 use conjure_cp::{domain_int, essence_expr};
 use std::collections::VecDeque;
 use uniplate::{Biplate, Uniplate};
@@ -280,7 +280,7 @@ fn slice_matrix_to_atom(expr: &Expression, _: &SymbolTable) -> ApplicationResult
     }
 
     // Some indices were not resolved so output a slice into a matrix literal
-    let new_lhs = unflatten_matrix_expr(&lhs_elems, &new_index_domains, &view.strides);
+    let new_lhs = unflatten_matrix(&lhs_elems, &new_index_domains, &view.strides);
     let new_expr = Expression::SafeSlice(Metadata::new(), Moo::new(new_lhs), new_indices);
     Ok(Reduction::pure(new_expr))
 }
@@ -302,12 +302,22 @@ fn matrix_flatten_to_atom(expr: &Expression, _symbols: &SymbolTable) -> Applicat
         }
     );
 
-    if dims.is_some() {
-        todo!("Handle dimension option in matrix flattening");
+    let mut n = 0;
+    if let Some(dims) = dims {
+        n = match eval_constant(dims) {
+            Some(Literal::Int(n)) if n >= 0 => n as usize,
+            Some(lit) => bug!("Flatten expected a positive integer, got `{lit}`"),
+            None => bug!("Flatten expected a constant expr, got: `{dims}`"),
+        }
     }
 
-    let flat_elems: Vec<Expression> = repr.flat_elem_refs().map(Expression::from).collect();
-    Ok(Reduction::pure(into_matrix_expr!(flat_elems)))
+    let view = repr.flatten(n);
+    let elems = repr
+        .view_cloned(&view)
+        .into_iter()
+        .map(|d| Expression::from(Reference::new(d)))
+        .collect();
+    Ok(Reduction::pure(into_matrix_expr!(elems)))
 }
 
 /// Converts a reference to a 1d-matrix not contained within an indexing or slicing expression to its atoms.

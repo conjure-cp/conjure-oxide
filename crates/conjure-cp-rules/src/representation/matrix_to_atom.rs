@@ -78,6 +78,16 @@ register_representation!(
         {
             self.view(view).into_iter().cloned().collect()
         }
+        /// Flatten the first n dimensions (inclusive)
+        pub fn flatten(&self, n: usize) -> View {
+            let new_strides = Vec::from(&self.strides[n..]);
+
+            let mut new_dims = Vec::<usize>::with_capacity(self.dimensions.len() - n);
+            new_dims.push(self.dimensions[0..n + 1].iter().copied().product());
+            new_dims.extend(&self.dimensions[n + 1..]);
+
+            View::new(0, new_dims, new_strides)
+        }
         /// Slice into the elements matrix via flat indices along each dimension
         pub fn slice_flat(&self, dim_slices: &[Range<usize>]) -> View {
             let mut offset = 0;

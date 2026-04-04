@@ -1223,6 +1223,12 @@ impl From<Literal> for Expression {
     }
 }
 
+impl From<AbstractLiteral<Expression>> for Expression {
+    fn from(value: AbstractLiteral<Expression>) -> Self {
+        Expression::AbstractLiteral(Metadata::new(), value)
+    }
+}
+
 impl From<Moo<Expression>> for Expression {
     fn from(val: Moo<Expression>) -> Self {
         val.as_ref().clone()
