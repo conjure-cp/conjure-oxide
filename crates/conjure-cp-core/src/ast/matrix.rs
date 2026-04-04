@@ -9,7 +9,7 @@ use crate::ast::literals::AbstractLiteralValue;
 use crate::ast::{DomainOpError, Expression as Expr, GroundDomain, Metadata, Moo, Range};
 use crate::bug::UnwrapOrBug;
 use crate::utils::View;
-use crate::{domain_int, domain_int_ground};
+use crate::{bug_assert, domain_int, domain_int_ground};
 use itertools::{Itertools, izip};
 use uniplate::{Biplate, Uniplate as _};
 
@@ -237,6 +237,10 @@ pub fn partial_flatten<T: MatrixValue>(n: usize, matrix: AbstractLiteral<T>) -> 
     }
 
     let shape = shape_of(&matrix);
+    bug_assert!(
+        n > 0 && n < shape.dims.len(),
+        "Invalid number of dimensions to flatten"
+    );
     let new_strides = Vec::from(&shape.strides[n..]);
 
     let flattened = flatten_owned(matrix).collect_vec();
