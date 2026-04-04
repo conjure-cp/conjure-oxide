@@ -282,7 +282,7 @@ fn sat_order_leq_expr(
 /// |SATInt(a)| ~> SATInt(b)
 ///
 /// ```
-#[register_rule(("SAT_Order", 9100))]
+#[register_rule("SAT_Order", 9100, [Abs])]
 fn abs_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Abs(_, value_expr) = expr else {
         return Err(RuleNotApplicable);
