@@ -164,6 +164,16 @@ where
     }
 }
 
+fn to_atoms(exprs: &[Expr]) -> Option<Vec<Atom>> {
+    exprs
+        .iter()
+        .map(|e| match e {
+            Expr::Atomic(_, atom) => Some(atom.clone()),
+            _ => None,
+        })
+        .collect()
+}
+
 pub fn collect_cmp_exprs(cmp_op: &Expr, lhs_fields: Vec<Expr>, rhs_fields: Vec<Expr>) -> Expr {
     let len = lhs_fields.len();
     bug_assert_eq!(
@@ -172,6 +182,18 @@ pub fn collect_cmp_exprs(cmp_op: &Expr, lhs_fields: Vec<Expr>, rhs_fields: Vec<E
         "comparison of collections with different shapes!"
     );
 
+    // If we can, make this a flat lex constraint immediately!
+    if let Some(lhs_atoms) = to_atoms(&lhs_fields)
+        && let Some(rhs_atoms) = to_atoms(&rhs_fields)
+    {
+        match cmp_op {
+            Expr::LexLeq(..) => return Expr::FlatLexLeq(Metadata::new(), lhs_atoms, rhs_atoms),
+            Expr::LexLt(..) => return Expr::FlatLexLt(Metadata::new(), lhs_atoms, rhs_atoms),
+            _ => {}
+        }
+    }
+
+    // Bad case - generate recursive or clauses
     let mut cases = vec![Vec::<Expr>::with_capacity(len); len];
     for (i, (lhs_f, rhs_f)) in izip!(lhs_fields, rhs_fields).enumerate() {
         let eq_expr = essence_expr!(&lhs_f = &rhs_f);
