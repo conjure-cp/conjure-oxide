@@ -3,20 +3,17 @@
   "constraints": {
     "Root": [
       {
-        "clean": false,
         "etype": null
       },
       [
         {
           "SubsetEq": [
             {
-              "clean": false,
               "etype": null
             },
             {
               "Atomic": [
                 {
-                  "clean": false,
                   "etype": null
                 },
                 {
@@ -32,7 +29,6 @@
             {
               "AbstractLiteral": [
                 {
-                  "clean": false,
                   "etype": null
                 },
                 {
@@ -40,7 +36,6 @@
                     {
                       "Atomic": [
                         {
-                          "clean": false,
                           "etype": null
                         },
                         {
@@ -53,7 +48,6 @@
                     {
                       "Atomic": [
                         {
-                          "clean": false,
                           "etype": null
                         },
                         {
@@ -72,13 +66,11 @@
         {
           "SubsetEq": [
             {
-              "clean": false,
               "etype": null
             },
             {
               "Atomic": [
                 {
-                  "clean": false,
                   "etype": null
                 },
                 {
@@ -94,7 +86,6 @@
             {
               "Atomic": [
                 {
-                  "clean": false,
                   "etype": null
                 },
                 {
@@ -112,13 +103,11 @@
         {
           "SubsetEq": [
             {
-              "clean": false,
               "etype": null
             },
             {
               "AbstractLiteral": [
                 {
-                  "clean": false,
                   "etype": null
                 },
                 {
@@ -126,7 +115,6 @@
                     {
                       "Atomic": [
                         {
-                          "clean": false,
                           "etype": null
                         },
                         {
@@ -143,7 +131,6 @@
             {
               "Atomic": [
                 {
-                  "clean": false,
                   "etype": null
                 },
                 {
@@ -255,9 +242,9 @@ find y: set  of int(1..6)
 
 such that
 
-and([ __0 in x | __0 <- {1,2} ]),
-and([ __0 in x | __0 <- y ]),
-and([ __0 in {1} | __0 <- x ])
+and([ __0 in {1,2} | __0 <- x ]),
+and([ __0 in y | __0 <- x ]),
+and([ __0 in x | __0 <- {1} ])
 
 Model before rewriting:
 
@@ -284,19 +271,19 @@ such that
 
 (x subsetEq {1,2}), 
    ~~> subseteq_set ([("Base", 8700)])
-and([ __0 in x | __0 <- {1,2} ])
+and([ __0 in {1,2} | __0 <- x ])
 
 --
 
 (x subsetEq y), 
    ~~> subseteq_set ([("Base", 8700)])
-and([ __0 in x | __0 <- y ])
+and([ __0 in y | __0 <- x ])
 
 --
 
 ({1} subsetEq x), 
    ~~> subseteq_set ([("Base", 8700)])
-and([ __0 in {1} | __0 <- x ])
+and([ __0 in x | __0 <- {1} ])
 
 --
 
@@ -307,7 +294,7 @@ find y: set  of int(1..6)
 
 such that
 
-and([ __0 in x | __0 <- {1,2} ]),
-and([ __0 in x | __0 <- y ]),
-and([ __0 in {1} | __0 <- x ])
+and([ __0 in {1,2} | __0 <- x ]),
+and([ __0 in y | __0 <- x ]),
+and([ __0 in x | __0 <- {1} ])
 

@@ -11,11 +11,11 @@ use std::{
 
 use anyhow::anyhow;
 use clap::ValueHint;
-use conjure_cp::defaults::DEFAULT_RULE_SETS;
 use conjure_cp::instantiate::instantiate_model;
 use conjure_cp::{
     Model,
     context::Context,
+    defaults::DEFAULT_RULE_SETS,
     rule_engine::{resolve_rule_sets, rewrite_morph, rewrite_naive},
     settings::{
         Rewriter, set_comprehension_expander, set_current_parser, set_current_rewriter,
@@ -288,7 +288,8 @@ pub(crate) fn rewrite(
 ) -> anyhow::Result<Model> {
     tracing::info!("Initial model: \n{}\n", model);
 
-    set_current_rewriter(global_args.rewriter);
+    let rewriter = global_args.rewriter;
+    set_current_rewriter(rewriter);
 
     let comprehension_expander = global_args.comprehension_expander;
     set_comprehension_expander(comprehension_expander);
@@ -296,13 +297,14 @@ pub(crate) fn rewrite(
 
     let rule_sets = context.read().unwrap().rule_sets.clone();
 
-    let new_model = match global_args.rewriter {
-        Rewriter::Morph => {
-            tracing::info!("Rewriting the model using the morph rewriter");
+    let new_model = match rewriter {
+        Rewriter::Morph(config) => {
+            tracing::info!("Rewriting the model using the morph rewriter ({})", config);
             rewrite_morph(
                 model,
                 &rule_sets,
                 global_args.check_equally_applicable_rules,
+                config,
             )
         }
         Rewriter::Naive => {

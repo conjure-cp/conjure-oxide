@@ -113,7 +113,7 @@ pub struct GlobalArgs {
 
     /// Which rewriter to use.
     ///
-    /// Possible values: `naive`, `morph`.
+    /// Possible values: `naive`, `morph`
     #[arg(long, default_value_t = Rewriter::Naive, value_parser = parse_rewriter, global = true, help_heading = CONFIGURATION_HELP_HEADING)]
     pub rewriter: Rewriter,
 
@@ -207,7 +207,7 @@ fn parse_comprehension_expander(input: &str) -> Result<QuantifiedExpander, Strin
 }
 
 fn parse_rewriter(input: &str) -> Result<Rewriter, String> {
-    input.parse()
+    input.parse::<Rewriter>()
 }
 
 fn parse_solver_family(input: &str) -> Result<SolverFamily, String> {
