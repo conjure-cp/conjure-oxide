@@ -388,11 +388,20 @@ thread_local! {
     static MINION_DISCRETE_THRESHOLD: Cell<usize> =
         const { Cell::new(DEFAULT_MINION_DISCRETE_THRESHOLD) };
 
-    /// Thread-local setting controlling whether human-readable rule traces are emitted.
+    /// Thread-local setting controlling whether rule-trace outputs are active in this phase.
     ///
     /// This is intentionally off by default and can be disabled before solver-time rewrites so
     /// follow-up dominance-blocking rewrites do not pollute the initial rewrite trace.
     static RULE_TRACE_ENABLED: Cell<bool> = const { Cell::new(false) };
+
+    /// Thread-local setting controlling whether default rule traces are configured.
+    static DEFAULT_RULE_TRACE_ENABLED: Cell<bool> = const { Cell::new(false) };
+
+    /// Thread-local setting controlling whether verbose rule-attempt traces are configured.
+    static RULE_TRACE_VERBOSE_ENABLED: Cell<bool> = const { Cell::new(false) };
+
+    /// Thread-local setting controlling whether aggregate rule-application traces are configured.
+    static RULE_TRACE_AGGREGATES_ENABLED: Cell<bool> = const { Cell::new(false) };
 }
 
 pub fn set_current_solver_family(solver_family: SolverFamily) {
@@ -424,6 +433,36 @@ pub fn set_rule_trace_enabled(enabled: bool) {
 
 pub fn rule_trace_enabled() -> bool {
     RULE_TRACE_ENABLED.with(|current| current.get())
+}
+
+pub fn set_default_rule_trace_enabled(enabled: bool) {
+    DEFAULT_RULE_TRACE_ENABLED.with(|current| current.set(enabled));
+}
+
+pub fn default_rule_trace_enabled() -> bool {
+    DEFAULT_RULE_TRACE_ENABLED.with(|current| current.get())
+}
+
+pub fn set_rule_trace_verbose_enabled(enabled: bool) {
+    RULE_TRACE_VERBOSE_ENABLED.with(|current| current.set(enabled));
+}
+
+pub fn rule_trace_verbose_enabled() -> bool {
+    RULE_TRACE_VERBOSE_ENABLED.with(|current| current.get())
+}
+
+pub fn set_rule_trace_aggregates_enabled(enabled: bool) {
+    RULE_TRACE_AGGREGATES_ENABLED.with(|current| current.set(enabled));
+}
+
+pub fn rule_trace_aggregates_enabled() -> bool {
+    RULE_TRACE_AGGREGATES_ENABLED.with(|current| current.get())
+}
+
+pub fn configured_rule_trace_enabled() -> bool {
+    default_rule_trace_enabled()
+        || rule_trace_verbose_enabled()
+        || rule_trace_aggregates_enabled()
 }
 
 impl FromStr for SolverFamily {
