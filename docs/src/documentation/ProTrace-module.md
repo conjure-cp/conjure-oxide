@@ -300,7 +300,7 @@ Similar to how a `Consumer` is created in solve.rs for `cargo run solve`, a `com
         );
 ```
 
-The rule traces is verified using the functions `read_human_rule_trace` and `read_json_rule_trace` defined in `testing.rs` which compare the generated trace output to the expected one. `read_json_rule_trace` ignores the `id` fields since they can change from one run to another.  
+The rule traces is verified using the functions `read_default_rule_trace` and `read_json_rule_trace` defined in `testing.rs` which compare the generated trace output to the expected one. `read_json_rule_trace` ignores the `id` fields since they can change from one run to another.  
 
 # Command line arguments and flags
 
