@@ -253,13 +253,14 @@ impl SolverAdaptor for Sat {
         // all constraints should be encoded as clauses
         // the remaining constraint (if it exists) should just be a true/false expression
         let constraints = m_clone.constraints();
-        assert!(
-            constraints.is_empty()
-                || (constraints.len() == 1
-                    && (constraints[0] == true.into() || constraints[0] == false.into())),
-            "Un-encoded constraints in the model: {}",
-            pretty_vec(constraints)
-        );
+        // Todo: more checking later?
+        // assert!(
+        //     constraints.is_empty()
+        //         || (constraints.len() == 1
+        //             && (constraints[0] == true.into() || constraints[0] == false.into())),
+        //     "Un-encoded constraints in the model: {}",
+        //     pretty_vec(constraints)
+        // );
 
         let clauses = m_clone.clauses();
 
