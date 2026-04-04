@@ -394,3 +394,64 @@ fn safediv_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
     Ok(Reduction::cnf(quot_int, new_clauses, new_symbols))
 }
+
+#[register_rule("SAT_Direct", 9100, [Abs])]
+fn abs_value_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    let Expr::Abs(_, value_expr) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let (binding, old_min, old_max) =
+        validate_direct_int_operands(vec![value_expr.as_ref().clone()])?;
+
+    let [val_bits] = binding.as_slice() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let new_min = if old_min <= 0 && old_max >= 0 {
+        0
+    } else {
+        old_min.abs().min(old_max.abs())
+    };
+    let new_max = old_min.abs().max(old_max.abs());
+
+    let mut new_symbols = symbols.clone();
+    let mut new_clauses = vec![];
+
+    let bucket_count = (new_max - new_min + 1) as usize;
+    let mut buckets: Vec<Vec<Expr>> = vec![Vec::new(); bucket_count];
+
+    for value in old_min..=old_max {
+        let input_bit = val_bits[(value - old_min) as usize].clone();
+        let abs_value = value.abs();
+        let bucket_idx = (abs_value - new_min) as usize;
+        buckets[bucket_idx].push(input_bit);
+    }
+
+    let mut abs_bits = Vec::with_capacity(bucket_count);
+    for bucket in buckets {
+        let out_bit = match bucket.len() {
+            0 => Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false))),
+            1 => bucket[0].clone(),
+            _ => {
+                let mut iter = bucket.into_iter();
+                let mut acc = iter.next().unwrap();
+                for bit in iter {
+                    acc = tseytin_or(&vec![acc, bit], &mut new_clauses, &mut new_symbols);
+                }
+                acc
+            }
+        };
+
+        abs_bits.push(out_bit);
+    }
+
+    let abs_int = Expr::SATInt(
+        Metadata::new(),
+        SATIntEncoding::Direct,
+        Moo::new(into_matrix_expr!(abs_bits)),
+        (new_min, new_max),
+    );
+
+    Ok(Reduction::cnf(abs_int, new_clauses, new_symbols))
+}
