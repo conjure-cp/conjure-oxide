@@ -253,7 +253,7 @@ impl SolverAdaptor for Sat {
         // all constraints should be encoded as clauses
         // the remaining constraint (if it exists) should just be a true/false expression
         let constraints = m_clone.constraints();
-        // Todo: more checking later?
+        // // Todo: more checking later?
         // assert!(
         //     constraints.is_empty()
         //         || (constraints.len() == 1
@@ -262,8 +262,26 @@ impl SolverAdaptor for Sat {
         //     pretty_vec(constraints)
         // );
 
-        let clauses = m_clone.clauses();
+        // constraints should be empty, or only have one single boolean constant
+        if (!constraints.is_empty()) {
+            println!("!!constraints not empty!!");
+            if (constraints[0] != true.into() && constraints[0] != false.into()) {
+                println!(
+                    "constraints: {:#}, of length {} with impl {:#?}",
+                    pretty_vec(constraints),
+                    constraints.len(),
+                    constraints[0]
+                );
+                panic!();
+            }
+        }
 
+        let clauses = m_clone.clauses();
+        panic!(
+            "clauses: {}\nconstraints: {}",
+            pretty_vec(clauses),
+            pretty_vec(constraints)
+        );
         let inst: SatInstance = handle_cnf(clauses, &mut var_map, finds.clone());
 
         self.var_map = Some(var_map);
