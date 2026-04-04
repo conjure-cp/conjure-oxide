@@ -18,92 +18,99 @@ pub fn parse_letting_statement(
     ctx: &mut ParseContext,
     letting_statement: Node,
 ) -> Result<Option<SymbolTable>, FatalParseError> {
-    let mut symbol_table = SymbolTable::new();
-
-    let mut temp_symbols = BTreeSet::new();
-
-    let variable_list = letting_statement.child_by_field_name("variable_list");
-    let variable_list = match variable_list {
-        Some(node) => node,
-        None => {
-            ctx.record_error(RecoverableParseError::new(
-                "Missing variable list in letting statement".to_string(),
-                Some(letting_statement.range()),
-            ));
-            return Ok(None);
-        }
+    let keyword = letting_statement.child_by_field_name("letting_keyword");
+    let Some(keyword) = keyword else {
+        ctx.record_error(RecoverableParseError::new(
+            "Missing letting keyword".to_string(),
+            Some(letting_statement.range()),
+        ));
+        return Ok(None);
     };
-    for variable in named_children(&variable_list) {
-        let variable_name = &ctx.source_code[variable.start_byte()..variable.end_byte()];
-
-        // Check for duplicate within the same statement
-        if temp_symbols.contains(variable_name) {
-            ctx.errors.push(RecoverableParseError::new(
-                format!(
-                    "Variable '{}' is already declared in this letting statement",
-                    variable_name
-                ),
-                Some(variable.range()),
-            ));
-            // don't return here, as we can still add the other variables to the symbol table
-            continue;
-        }
-
-        // Check for duplicate declaration across statements
-        let name = Name::user(variable_name);
-        if let Some(symbols) = &ctx.symbols
-            && symbols.read().lookup(&name).is_some()
-        {
-            let previous_line = ctx.lookup_decl_line(&name);
-            ctx.errors.push(RecoverableParseError::new(
-                match previous_line {
-                    Some(line) => format!(
-                        "Variable '{}' is already declared in a previous statement on line {}",
-                        variable_name, line
-                    ),
-                    None => format!(
-                        "Variable '{}' is already declared in a previous statement",
-                        variable_name
-                    ),
-                },
-                Some(variable.range()),
-            ));
-            // don't return here, as we can still add the other variables to the symbol table
-            continue;
-        }
-
-        temp_symbols.insert(variable_name);
-        let hover = HoverInfo {
-            description: format!("Letting variable: {variable_name}"),
+    span_with_hover(
+        &keyword,
+        ctx.source_code,
+        ctx.source_map,
+        HoverInfo {
+            description: "Letting keyword".to_string(),
             kind: Some(SymbolKind::Letting),
             ty: None,
             decl_span: None,
-        };
-        let span_id = span_with_hover(&variable, ctx.source_code, ctx.source_map, hover);
-        ctx.save_decl_span(name, span_id);
-    }
+        },
+    );
 
-    let expr_or_domain = letting_statement.child_by_field_name("expr_or_domain");
-    let expr_or_domain = match expr_or_domain {
-        Some(node) => node,
-        None => {
+    let mut symbol_table = SymbolTable::new();
+
+    for variable_decl in named_children(&letting_statement) {
+        let mut temp_symbols = BTreeSet::new();
+
+        let variable_list = variable_decl.child_by_field_name("variable_list");
+        let Some(variable_list) = variable_list else {
             ctx.record_error(RecoverableParseError::new(
                 "Missing expression or domain in letting statement".to_string(),
-                Some(letting_statement.range()),
+                Some(variable_decl.range()),
             ));
             return Ok(None);
-        }
-    };
-    match expr_or_domain.kind() {
-        "bool_expr" | "arithmetic_expr" | "atom" => {
-            for name in temp_symbols {
-                let Some(expr) = parse_expression(ctx, expr_or_domain)? else {
-                    continue;
-                };
-                symbol_table.insert(DeclarationPtr::new_value_letting(Name::user(name), expr));
+        };
+        for variable in named_children(&variable_list) {
+            let variable_name = &ctx.source_code[variable.start_byte()..variable.end_byte()];
+
+            // Check for duplicate within the same statement
+            if temp_symbols.contains(variable_name) {
+                ctx.errors.push(RecoverableParseError::new(
+                    format!(
+                        "Variable '{}' is already declared in this letting statement",
+                        variable_name
+                    ),
+                    Some(variable.range()),
+                ));
+                // don't return here, as we can still add the other variables to the symbol table
+                continue;
             }
+
+            // Check for duplicate declaration across statements
+            let name = Name::user(variable_name);
+            if let Some(symbols) = &ctx.symbols
+                && symbols.read().lookup(&name).is_some()
+            {
+                let previous_line = ctx.lookup_decl_line(&name);
+                ctx.errors.push(RecoverableParseError::new(
+                    match previous_line {
+                        Some(line) => format!(
+                            "Variable '{}' is already declared in a previous statement on line {}",
+                            variable_name, line
+                        ),
+                        None => format!(
+                            "Variable '{}' is already declared in a previous statement",
+                            variable_name
+                        ),
+                    },
+                    Some(variable.range()),
+                ));
+                // don't return here, as we can still add the other variables to the symbol table
+                continue;
+            }
+
+            temp_symbols.insert(variable_name);
+            let hover = HoverInfo {
+                description: format!("Letting variable: {variable_name}"),
+                kind: Some(SymbolKind::Letting),
+                ty: None,
+                decl_span: None,
+            };
+            let span_id = span_with_hover(&variable, ctx.source_code, ctx.source_map, hover);
+            ctx.save_decl_span(name, span_id);
         }
-        "domain" => {
+
+        let expr_or_domain = variable_decl.child_by_field_name("expr_or_domain");
+        let Some(expr_or_domain) = expr_or_domain else {
+            ctx.record_error(RecoverableParseError::new(
+                "Missing expression or domain in letting statement".to_string(),
+                Some(variable_decl.range()),
+            ));
+            return Ok(None);
+        };
+
+        if variable_decl.child_by_field_name("domain").is_some() {
             for name in temp_symbols {
                 let Some(domain) = parse_domain(ctx, expr_or_domain)? else {
                     continue;
@@ -119,16 +126,13 @@ pub fn parse_letting_statement(
 
                 symbol_table.insert(DeclarationPtr::new_domain_letting(Name::user(name), domain));
             }
-        }
-        _ => {
-            ctx.record_error(RecoverableParseError::new(
-                format!(
-                    "Expected letting expression, got '{}'",
-                    expr_or_domain.kind()
-                ),
-                Some(expr_or_domain.range()),
-            ));
-            return Ok(None);
+        } else {
+            for name in temp_symbols {
+                let Some(expr) = parse_expression(ctx, expr_or_domain)? else {
+                    continue;
+                };
+                symbol_table.insert(DeclarationPtr::new_value_letting(Name::user(name), expr));
+            }
         }
     }
 

@@ -40,6 +40,7 @@ find y:
 
     let diagnostics = get_diagnostics(&source, &cst);
 
+    println!("{:?}", diagnostics);
     // Should be exactly one diagnostic
     assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
     let diag = &diagnostics[0];

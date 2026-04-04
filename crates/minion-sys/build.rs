@@ -66,8 +66,13 @@ fn bind() {
         .header("vendor/minion/libwrapper.h")
         // Make all templates opaque as reccomended by bindgen
         .opaque_type("std::.*")
+        // Suppress layout tests - we use these structs only through opaque pointers
+        .layout_tests(false)
         // Manually allow C++ functions to stop bindgen getting confused.
-        .allowlist_function("resetMinion")
+        .allowlist_function("minion_newContext")
+        .allowlist_function("minion_freeContext")
+        .allowlist_function("minion_activateContext")
+        .allowlist_function("minion_deactivateContext")
         .allowlist_function("runMinion")
         .allowlist_function("constantAsVar")
         .allowlist_function("tupleList_new")
@@ -82,6 +87,7 @@ fn bind() {
         .allowlist_function("instance_getTupleTableSymbol")
         .allowlist_function("printMatrix_addVar")
         .allowlist_function("printMatrix_getValue")
+        .allowlist_function("printMatrix_getValueByName")
         .allowlist_function("constraint_addList")
         .allowlist_function("constraint_new")
         .allowlist_function("constraint_free")
