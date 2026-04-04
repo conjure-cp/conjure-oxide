@@ -236,31 +236,44 @@ fn ineq_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     Ok(Reduction::cnf(output, new_clauses, new_symbols))
 }
 
-/// Builds exact-value selector bits from an order-encoded SATInt bit-vector.
+/// Builds an expression for `x >= threshold` from an order-encoded SATInt bit-vector.
 ///
 /// For a normalized range `min..=max`, input bit `b_i` encodes `x >= min + i`.
+fn sat_order_geq_expr(bits: &[Expr], min: i32, max: i32, threshold: i32) -> Expr {
+    if threshold <= min {
+        return Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(true)));
+    }
+
+    if threshold > max {
+        return Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false)));
+    }
+
+    let idx = (threshold - min) as usize;
+    bits[idx].clone()
+}
+
+/// Builds an expression for `x <= threshold` from an order-encoded SATInt bit-vector.
 ///
-/// The exact-value selector for value `v` is:
-/// - `b_i AND NOT(b_{i+1})` for `v < max`
-/// - `b_last` for `v = max`
-fn sat_order_exact_value_selectors(
+/// Uses:
+/// `x <= t` <-> `NOT(x >= t + 1)`
+fn sat_order_leq_expr(
     bits: &[Expr],
+    min: i32,
+    max: i32,
+    threshold: i32,
     clauses: &mut Vec<conjure_cp::ast::CnfClause>,
     symbols: &mut SymbolTable,
-) -> Vec<Expr> {
-    if bits.len() == 1 {
-        return vec![bits[0].clone()];
+) -> Expr {
+    if threshold < min {
+        return Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false)));
     }
 
-    let mut selectors = Vec::with_capacity(bits.len());
-    for i in 0..(bits.len() - 1) {
-        let not_next = tseytin_not(bits[i + 1].clone(), clauses, symbols);
-        let selector = tseytin_and(&vec![bits[i].clone(), not_next], clauses, symbols);
-        selectors.push(selector);
+    if threshold >= max {
+        return Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(true)));
     }
 
-    selectors.push(bits[bits.len() - 1].clone());
-    selectors
+    let geq_next = sat_order_geq_expr(bits, min, max, threshold + 1);
+    tseytin_not(geq_next, clauses, symbols)
 }
 
 /// Converts Abs of an order SATInt to an order SATInt.
@@ -275,48 +288,55 @@ fn abs_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
+    // Validate operand and get normalized bits and bounds
     let (binding, old_min, old_max) =
         validate_order_int_operands(vec![value_expr.as_ref().clone()])?;
 
+    // We should have exactly one operand with its bits extracted
+    // This represents the bits of the input SATInt, normalized to a common range [old_min..=old_max]
     let [val_bits] = binding.as_slice() else {
         return Err(RuleNotApplicable);
     };
 
+    // Calculate new bounds for the output absolute value:
+    // The minimum absolute value is 0 if the input range includes 0, otherwise it's the smaller of the absolute values of the old bounds.
     let new_min = if old_min <= 0 && old_max >= 0 {
         0
     } else {
         old_min.abs().min(old_max.abs())
     };
+
+    // The maximum absolute value is the larger of the absolute values of the old bounds.
     let new_max = old_min.abs().max(old_max.abs());
 
     let mut new_symbols = symbols.clone();
     let mut new_clauses = vec![];
 
-    let selectors = sat_order_exact_value_selectors(val_bits, &mut new_clauses, &mut new_symbols);
-
+    // Build each output threshold bit directly in O(1):
+    //
+    //   |x| >= t  <->  (x >= t) OR (x <= -t)
+    //
+    // Where x is the input SATInt and t is the threshold corresponding to the output bit we are building. For example, if the input range is [-2..=3] and the output range is [0..=3], the output bit for threshold 2 would be:
+    //   |x| >= 2  <->  (x >= 2) OR (x <= -2)
     let mut out_bits = Vec::with_capacity((new_max - new_min + 1) as usize);
     for threshold in new_min..=new_max {
-        let mut bucket = Vec::new();
+        // Build (x >= threshold) and (x <= -threshold) expressions
+        let geq_threshold = sat_order_geq_expr(val_bits, old_min, old_max, threshold);
+        let leq_neg_threshold = sat_order_leq_expr(
+            val_bits,
+            old_min,
+            old_max,
+            -threshold,
+            &mut new_clauses,
+            &mut new_symbols,
+        );
 
-        for value in old_min..=old_max {
-            if value.abs() >= threshold {
-                let idx = (value - old_min) as usize;
-                bucket.push(selectors[idx].clone());
-            }
-        }
-
-        let out_bit = match bucket.len() {
-            0 => Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false))),
-            1 => bucket[0].clone(),
-            _ => {
-                let mut iter = bucket.into_iter();
-                let mut acc = iter.next().unwrap();
-                for bit in iter {
-                    acc = tseytin_or(&vec![acc, bit], &mut new_clauses, &mut new_symbols);
-                }
-                acc
-            }
-        };
+        // Combine them with OR to get the output bit for this threshold
+        let out_bit = tseytin_or(
+            &vec![geq_threshold, leq_neg_threshold],
+            &mut new_clauses,
+            &mut new_symbols,
+        );
 
         out_bits.push(out_bit);
     }
