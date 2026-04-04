@@ -14,6 +14,17 @@ pub fn parse_comprehension(
     ctx: &mut ParseContext,
     node: &Node,
 ) -> Result<Option<Expression>, FatalParseError> {
+    // If we're in a set context, add error and return early since comprehensions don't produce sets
+    if ctx.typechecking_context == crate::util::TypecheckingContext::Set {
+        ctx.record_error(crate::errors::RecoverableParseError::new(
+            format!(
+                "Type error: {}\n\tExpected: set\n\tGot: comprehension",
+                ctx.source_code[node.start_byte()..node.end_byte()].trim()
+            ),
+            Some(node.range()),
+        ));
+    }
+
     // Comprehensions require a symbol table passed in
     let symbols_ptr = ctx.symbols.clone().ok_or_else(|| {
         FatalParseError::internal_error(

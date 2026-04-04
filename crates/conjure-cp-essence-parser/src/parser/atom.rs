@@ -83,7 +83,7 @@ fn parse_flatten(
     ctx: &mut ParseContext,
     node: &Node,
 ) -> Result<Option<Expression>, FatalParseError> {
-    // add error and return early if we're in a set context, since flatten isn't allowed there
+    // add error and return early if we're in a set context, since flatten doesn't produce sets
     if ctx.typechecking_context == TypecheckingContext::Set {
         ctx.record_error(RecoverableParseError::new(
             format!(
@@ -173,7 +173,7 @@ fn parse_index_or_slice(
     ctx: &mut ParseContext,
     node: &Node,
 ) -> Result<Option<Expression>, FatalParseError> {
-    // add error and return early if we're in a set context, since indexing/slicing isn't allowed there
+    // add error and return early if we're in a set context, since indexing/slicing doesn't produce sets
     if ctx.typechecking_context == TypecheckingContext::Set {
         ctx.record_error(RecoverableParseError::new(
             format!(
