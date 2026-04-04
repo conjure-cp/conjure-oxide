@@ -235,3 +235,120 @@ fn ineq_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
     Ok(Reduction::cnf(output, new_clauses, new_symbols))
 }
+
+/// Builds an expression for `x >= threshold` from an order-encoded SATInt bit-vector.
+///
+/// For a normalized range `min..=max`, input bit `b_i` encodes `x >= min + i`.
+fn sat_order_geq_expr(bits: &[Expr], min: i32, max: i32, threshold: i32) -> Expr {
+    if threshold <= min {
+        return Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(true)));
+    }
+
+    if threshold > max {
+        return Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false)));
+    }
+
+    let idx = (threshold - min) as usize;
+    bits[idx].clone()
+}
+
+/// Builds an expression for `x <= threshold` from an order-encoded SATInt bit-vector.
+///
+/// Uses:
+/// `x <= t` <-> `NOT(x >= t + 1)`
+fn sat_order_leq_expr(
+    bits: &[Expr],
+    min: i32,
+    max: i32,
+    threshold: i32,
+    clauses: &mut Vec<conjure_cp::ast::CnfClause>,
+    symbols: &mut SymbolTable,
+) -> Expr {
+    if threshold < min {
+        return Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false)));
+    }
+
+    if threshold >= max {
+        return Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(true)));
+    }
+
+    let geq_next = sat_order_geq_expr(bits, min, max, threshold + 1);
+    tseytin_not(geq_next, clauses, symbols)
+}
+
+/// Converts Abs of an order SATInt to an order SATInt.
+///
+/// ```text
+/// |SATInt(a)| ~> SATInt(b)
+///
+/// ```
+#[register_rule("SAT_Order", 9100, [Abs])]
+fn abs_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    let Expr::Abs(_, value_expr) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    // Validate operand and get normalized bits and bounds
+    let (binding, old_min, old_max) =
+        validate_order_int_operands(vec![value_expr.as_ref().clone()])?;
+
+    // We should have exactly one operand with its bits extracted
+    // This represents the bits of the input SATInt, normalized to a common range [old_min..=old_max]
+    let [val_bits] = binding.as_slice() else {
+        return Err(RuleNotApplicable);
+    };
+
+    // Calculate new bounds for the output absolute value:
+    // The minimum absolute value is 0 if the input range includes 0, otherwise it's the smaller of the absolute values of the old bounds.
+    let new_min = if old_min <= 0 && old_max >= 0 {
+        0
+    } else {
+        old_min.abs().min(old_max.abs())
+    };
+
+    // The maximum absolute value is the larger of the absolute values of the old bounds.
+    let new_max = old_min.abs().max(old_max.abs());
+
+    let mut new_symbols = symbols.clone();
+    let mut new_clauses = vec![];
+
+    // Build each output threshold bit directly in O(1):
+    //
+    //   |x| >= t  <->  (x >= t) OR (x <= -t)
+    //
+    // Where x is the input SATInt and t is the threshold corresponding to the output bit we are building. For example, if the input range is [-2..=3] and the output range is [0..=3], the output bit for threshold 2 would be:
+    //   |x| >= 2  <->  (x >= 2) OR (x <= -2)
+    let mut out_bits = Vec::with_capacity((new_max - new_min + 1) as usize);
+    for threshold in new_min..=new_max {
+        // Build (x >= threshold) and (x <= -threshold) expressions
+        let geq_threshold = sat_order_geq_expr(val_bits, old_min, old_max, threshold);
+        let leq_neg_threshold = sat_order_leq_expr(
+            val_bits,
+            old_min,
+            old_max,
+            -threshold,
+            &mut new_clauses,
+            &mut new_symbols,
+        );
+
+        // Combine them with OR to get the output bit for this threshold
+        let out_bit = tseytin_or(
+            &vec![geq_threshold, leq_neg_threshold],
+            &mut new_clauses,
+            &mut new_symbols,
+        );
+
+        out_bits.push(out_bit);
+    }
+
+    Ok(Reduction::cnf(
+        Expr::SATInt(
+            Metadata::new(),
+            SATIntEncoding::Order,
+            Moo::new(into_matrix_expr!(out_bits)),
+            (new_min, new_max),
+        ),
+        new_clauses,
+        new_symbols,
+    ))
+}
