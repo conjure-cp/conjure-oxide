@@ -19,7 +19,8 @@ use conjure_cp::{
     rule_engine::{resolve_rule_sets, rewrite_morph, rewrite_naive},
     settings::{
         Rewriter, set_comprehension_expander, set_current_parser, set_current_rewriter,
-        set_current_solver_family, set_minion_discrete_threshold, set_rule_trace_enabled,
+        set_current_solver_family, set_default_rule_trace_enabled, set_minion_discrete_threshold,
+        set_rule_trace_aggregates_enabled, set_rule_trace_enabled, set_rule_trace_verbose_enabled,
     },
     solver::Solver,
 };
@@ -162,8 +163,11 @@ pub(crate) fn init_context(
     essence_file: PathBuf,
     param_file: Option<PathBuf>,
 ) -> anyhow::Result<Arc<RwLock<Context<'static>>>> {
+    let default_rule_trace_enabled = global_args.rule_trace.is_some();
+    let verbose_rule_trace_enabled = global_args.rule_trace_verbose.is_some();
+    let rule_trace_aggregates_enabled = global_args.rule_trace_aggregates.is_some();
     let rule_trace_enabled =
-        global_args.rule_trace.is_some() || global_args.rule_trace_verbose.is_some();
+        default_rule_trace_enabled || verbose_rule_trace_enabled || rule_trace_aggregates_enabled;
 
     set_current_parser(global_args.parser);
     set_current_rewriter(global_args.rewriter);
@@ -171,6 +175,9 @@ pub(crate) fn init_context(
     set_current_solver_family(global_args.solver);
     set_minion_discrete_threshold(global_args.minion_discrete_threshold);
     set_rule_trace_enabled(rule_trace_enabled);
+    set_default_rule_trace_enabled(default_rule_trace_enabled);
+    set_rule_trace_verbose_enabled(verbose_rule_trace_enabled);
+    set_rule_trace_aggregates_enabled(rule_trace_aggregates_enabled);
 
     let target_family = global_args.solver;
     let mut extra_rule_sets: Vec<&str> = DEFAULT_RULE_SETS.to_vec();

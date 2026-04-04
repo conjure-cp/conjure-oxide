@@ -11,7 +11,10 @@ use crate::{
         },
         submodel_zipper::expression_ctx,
     },
-    settings::{Rewriter, rule_trace_enabled, set_current_rewriter},
+    settings::{
+        Rewriter, default_rule_trace_enabled, rule_trace_enabled, rule_trace_verbose_enabled,
+        set_current_rewriter,
+    },
     stats::RewriterStats,
 };
 
@@ -50,14 +53,16 @@ pub fn rewrite_naive<'a>(
     rewriter_stats.is_optimization_enabled = Some(false);
     let run_start = Instant::now();
 
-    if rule_trace_enabled() {
+    if rule_trace_enabled() && default_rule_trace_enabled() {
         trace!(
-            target: "rule_engine_human",
+            target: "rule_engine_rule_trace",
             "Model before rewriting:\n\n{}\n--\n",
             model
         );
+    }
+    if rule_trace_enabled() && rule_trace_verbose_enabled() {
         trace!(
-            target: "rule_engine_human_verbose",
+            target: "rule_engine_rule_trace_verbose",
             "elapsed_s,rule_level,rule_name,rule_set,status,expression"
         );
     }
@@ -84,9 +89,9 @@ pub fn rewrite_naive<'a>(
         .stats
         .add_rewriter_run(rewriter_stats);
 
-    if rule_trace_enabled() {
+    if rule_trace_enabled() && default_rule_trace_enabled() {
         trace!(
-            target: "rule_engine_human",
+            target: "rule_engine_rule_trace",
             "Final model:\n\n{}",
             model
         );
@@ -142,7 +147,7 @@ fn try_rewrite_model(
                     Ok(red) => {
                         // when called a lot, this becomes very expensive!
                         #[cfg(debug_assertions)]
-                        if rule_trace_enabled() {
+                        if rule_trace_enabled() && rule_trace_verbose_enabled() {
                             log_verbose_rule_attempt(
                                 run_start,
                                 priority,
@@ -178,7 +183,7 @@ fn try_rewrite_model(
                     Err(_) => {
                         // when called a lot, this becomes very expensive!
                         #[cfg(debug_assertions)]
-                        if rule_trace_enabled() {
+                        if rule_trace_enabled() && rule_trace_verbose_enabled() {
                             log_verbose_rule_attempt(
                                 run_start,
                                 priority,
@@ -258,7 +263,7 @@ fn log_verbose_rule_attempt(
     let elapsed_seconds = run_start.elapsed().as_secs_f64();
     let expr_str = expr.to_string();
     trace!(
-        target: "rule_engine_human_verbose",
+        target: "rule_engine_rule_trace_verbose",
         "{:.3},{},{},{},{},{}",
         elapsed_seconds,
         priority,
