@@ -187,7 +187,14 @@ fn unexpected_token_in_identifier() {
     let diagnostics = get_diagnostics(&source, &cst);
     assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
     let diag = &diagnostics[0];
-    check_diagnostic(diag, 0, 6, 0, 10, "Unexpected @lue inside a Find Statement");
+    check_diagnostic(
+        diag,
+        0,
+        6,
+        0,
+        10,
+        "Unexpected @lue inside a Variable Declaration",
+    );
 }
 
 // Temporary before better logic is developed

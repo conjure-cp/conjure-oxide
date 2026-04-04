@@ -9,7 +9,9 @@ pub fn parse_literal(src: &str) -> Result<Literal, FatalParseError> {
     let symbol_table = SymbolTablePtr::new();
     let expr = parse_expr(src, symbol_table)?;
     let Some(expr) = expr else {
-        return Err(ConjureParseError::Parse("Expected a literal, got no expression".to_string()).into());
+        return Err(
+            ConjureParseError::Parse("Expected a literal, got no expression".to_string()).into(),
+        );
     };
     match expr {
         Expression::Atomic(_metadata, atom) => match atom {

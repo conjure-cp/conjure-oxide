@@ -1,10 +1,10 @@
 use super::atom::parse_int;
 use super::util::named_children;
+use crate::RecoverableParseError;
 use crate::diagnostics::source_map::{HoverInfo, span_with_hover};
 use crate::errors::FatalParseError;
 use crate::expression::parse_expression;
 use crate::parser::ParseContext;
-use crate::RecoverableParseError;
 use conjure_cp_core::ast::{
     DeclarationPtr, Domain, DomainPtr, IntVal, Moo, Name, Range, RecordEntry, Reference, SetAttr,
 };
@@ -21,11 +21,7 @@ pub fn parse_domain(
                 Some(node) => node,
                 None => {
                     ctx.record_error(RecoverableParseError::new(
-                        format!(
-                            "{} in expression of kind '{}'",
-                            "domain",
-                            domain.kind()
-                        ),
+                        format!("{} in expression of kind '{}'", "domain", domain.kind()),
                         Some(domain.range()),
                     ));
                     return Ok(None);

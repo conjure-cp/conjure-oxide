@@ -9,7 +9,10 @@ use std::collections::BTreeMap;
 #[allow(unused)]
 use uniplate::Uniplate;
 
-pub fn parse_expr(src: &str, symbols_ptr: SymbolTablePtr) -> Result<Option<Expression>, FatalParseError> {
+pub fn parse_expr(
+    src: &str,
+    symbols_ptr: SymbolTablePtr,
+) -> Result<Option<Expression>, FatalParseError> {
     let exprs = parse_exprs(src, symbols_ptr)?;
     if exprs.len() != 1 {
         return Ok(None);
