@@ -1,4 +1,4 @@
-use conjure_cp::ast::abstract_comprehension::{Generator, Qualifier};
+use conjure_cp::ast::comprehension::ComprehensionQualifier;
 use conjure_cp::ast::{Expression as Expr, *};
 use conjure_cp::rule_engine::ApplicationError;
 use conjure_cp::rule_engine::{
@@ -14,7 +14,7 @@ register_rule_set!("Smt", ("Base"), |f: &SolverFamily| {
     matches!(f, SolverFamily::Smt(..))
 });
 
-#[register_rule(("Smt", 1000))]
+#[register_rule("Smt", 1000, [InDomain])]
 fn flatten_indomain(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::InDomain(_, inner, domain) = expr else {
         return Err(RuleNotApplicable);
@@ -80,7 +80,7 @@ fn flatten_indomain(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// a = b ~> a[1] = b[1] /\ a[2] = b[2] /\ a[3] = b[3]
 // Must run before `matrix_ref_to_atom` ("Base", 2000), otherwise matrix equality can be
 // rewritten into `int(1..)` indexed literals, losing finite index bounds for this rule.
-#[register_rule(("Smt", 3000))]
+#[register_rule("Smt", 3000, [Eq, Neq])]
 fn flatten_matrix_eq_neq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (a, b) = match expr {
         Expr::Eq(_, a, b) | Expr::Neq(_, a, b) => (a, b),
@@ -138,7 +138,7 @@ fn flatten_matrix_eq_neq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
 /// Turn a matrix slice into a 1-d matrix of the slice elements
 /// E.g. m[1,..] ~> [m[1,1], m[1,2], m[1,3]]
-#[register_rule(("Smt", 1000))]
+#[register_rule("Smt", 1000, [SafeSlice])]
 fn flatten_matrix_slice(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::SafeSlice(_, m, slice_idxs) = expr else {
         return Err(RuleNotApplicable);
@@ -185,7 +185,7 @@ fn flatten_matrix_slice(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 ///
 /// This rule is very similar to `matrix_ref_to_atom`, but turns the matrix reference into a slice rather its atoms.
 /// Other rules like `flatten_matrix_slice` take care of actually turning the slice into the matrix elements.
-#[register_rule(("Smt", 999))]
+#[register_rule("Smt", 999)]
 fn matrix_ref_to_slice(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     if let Expr::SafeSlice(_, _, _)
     | Expr::UnsafeSlice(_, _, _)
@@ -220,7 +220,7 @@ fn matrix_ref_to_slice(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// This rule is applicable in SMT when atomic representation is not used for matrices.
 ///
 /// Namely, it unwraps flatten(m) into [m[1, 1], m[1, 2], ...]
-#[register_rule(("Smt", 999))]
+#[register_rule("Smt", 999, [Flatten])]
 fn unwrap_flatten_matrix_nonatomic(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // TODO: depth not supported yet
     let Expr::Flatten(_, None, m) = expr else {
@@ -258,22 +258,31 @@ fn unwrap_flatten_matrix_nonatomic(expr: &Expr, _: &SymbolTable) -> ApplicationR
 ///
 /// TODO: We currently only support one "in set" generator.
 /// This rule can be made much more general and nicer.
-#[register_rule(("Smt", 999))]
+#[register_rule("Smt", 999, [Sum])]
 fn unwrap_abstract_comprehension_sum(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::Sum(_, inner) = expr else {
         return Err(RuleNotApplicable);
     };
-    let Expr::AbstractComprehension(_, comp) = inner.as_ref() else {
+    let Expr::Comprehension(_, comp) = inner.as_ref() else {
         return Err(RuleNotApplicable);
     };
 
-    let [Qualifier::Generator(Generator::ExpressionGenerator(generator))] = &comp.qualifiers[..]
+    let [ComprehensionQualifier::ExpressionGenerator { ptr }] = &comp.qualifiers[..] else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Some(set) = ptr
+        .as_quantified_expr()
+        .map(|expr_guard| expr_guard.clone())
     else {
         return Err(RuleNotApplicable);
     };
 
-    let set = &generator.expression;
-    let elem_domain = generator.decl.domain().ok_or(DomainError)?;
+    let elem_domain = set
+        .domain_of()
+        .expect("Expression must have a domain")
+        .element_domain()
+        .expect("Expression must contain elements with uniform domain");
     let list: Vec<_> = elem_domain
         .values()
         .map_err(|_| DomainError)?
@@ -293,7 +302,7 @@ fn unwrap_abstract_comprehension_sum(expr: &Expr, _: &SymbolTable) -> Applicatio
 /// Unwraps a subsetEq expression into checking membership equality.
 ///
 /// Any elements not in the domain of one set must not be in the other set.
-#[register_rule(("Smt", 999))]
+#[register_rule("Smt", 999, [SubsetEq])]
 fn unwrap_subseteq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::SubsetEq(_, a, b) = expr else {
         return Err(RuleNotApplicable);
@@ -335,7 +344,7 @@ fn unwrap_subseteq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 ///
 /// This is an optimisation over unwrap_subseteq to avoid unnecessary additional -> exprs
 /// where a single <-> is enough. This must apply before eq_to_subset_eq.
-#[register_rule(("Smt", 8801))]
+#[register_rule("Smt", 8801, [Eq])]
 fn unwrap_set_eq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::Eq(_, a, b) = expr else {
         return Err(RuleNotApplicable);

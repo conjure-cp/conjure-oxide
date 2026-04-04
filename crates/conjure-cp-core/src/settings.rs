@@ -59,9 +59,83 @@ pub fn current_parser() -> Parser {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub struct MorphConfig {
+    pub cache: MorphCachingStrategy,
+    pub prefilter: bool,
+    /// Use naive (no-levels) traversal (`morph_naive`). Enabled with `levelsoff`, disabled with `levelson`.
+    pub naive: bool,
+    pub fixedpoint: bool,
+}
+
+impl Default for MorphConfig {
+    fn default() -> Self {
+        Self {
+            cache: MorphCachingStrategy::default(),
+            prefilter: true,
+            naive: false,
+            fixedpoint: false,
+        }
+    }
+}
+
+impl Display for MorphConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "morph")?;
+        write!(f, "-{}", if self.naive { "levelsoff" } else { "levelson" })?;
+        write!(f, "-{}", self.cache)?;
+        write!(
+            f,
+            "-{}",
+            if self.prefilter {
+                "prefilteron"
+            } else {
+                "prefilteroff"
+            }
+        )?;
+        if self.fixedpoint {
+            write!(f, "-fixedpoint")?;
+        }
+        Ok(())
+    }
+}
+
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+pub enum MorphCachingStrategy {
+    NoCache,
+    Cache,
+    #[default]
+    IncrementalCache,
+}
+
+impl FromStr for MorphCachingStrategy {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.trim().to_ascii_lowercase().as_str() {
+            "no-cache" => Ok(Self::NoCache),
+            "cache" => Ok(Self::Cache),
+            "inc-cache" => Ok(Self::IncrementalCache),
+            other => Err(format!(
+                "unknown cache strategy: {other}; expected one of: no-cache, cahce, inc-cache"
+            )),
+        }
+    }
+}
+
+impl Display for MorphCachingStrategy {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            MorphCachingStrategy::NoCache => write!(f, "nocache"),
+            MorphCachingStrategy::Cache => write!(f, "cache"),
+            MorphCachingStrategy::IncrementalCache => write!(f, "inccache"),
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Rewriter {
     Naive,
-    Morph,
+    Morph(MorphConfig),
 }
 
 thread_local! {
@@ -75,7 +149,7 @@ impl Display for Rewriter {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Rewriter::Naive => write!(f, "naive"),
-            Rewriter::Morph => write!(f, "morph"),
+            Rewriter::Morph(config) => write!(f, "{config}"),
         }
     }
 }
@@ -86,10 +160,75 @@ impl FromStr for Rewriter {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.trim().to_ascii_lowercase().as_str() {
             "naive" => Ok(Rewriter::Naive),
-            "morph" => Ok(Rewriter::Morph),
-            other => Err(format!(
-                "unknown rewriter: {other}; expected one of: naive, morph"
-            )),
+            "morph" => Ok(Rewriter::Morph(MorphConfig::default())),
+            other => {
+                if !other.starts_with("morph-") {
+                    return Err(format!(
+                        "unknown rewriter: {other}; expected one of: naive, morph, morph-[levelson|levelsoff]-[nocache|cache|inccache]-[prefilteron|prefilteroff]-[fixedpoint]"
+                    ));
+                }
+
+                let parts = other.split('-').skip(1);
+                let mut config = MorphConfig::default();
+                let mut cache_set = false;
+                let mut levels_set = false;
+                let mut prefilter_set = false;
+                for token in parts {
+                    match token {
+                        "" => (),
+                        "levelson" => {
+                            if levels_set {
+                                return Err("conflicting levels options: only one of levelson|levelsoff is allowed".to_string());
+                            }
+                            config.naive = false;
+                            levels_set = true;
+                        }
+                        "levelsoff" => {
+                            if levels_set {
+                                return Err("conflicting levels options: only one of levelson|levelsoff is allowed".to_string());
+                            }
+                            config.naive = true;
+                            levels_set = true;
+                        }
+                        "nocache" | "cache" | "inccache" => {
+                            if cache_set {
+                                return Err("conflicting cache options: only one of nocache|cache|inccache is allowed".to_string());
+                            }
+                            config.cache = match token {
+                                "nocache" => MorphCachingStrategy::NoCache,
+                                "cache" => MorphCachingStrategy::Cache,
+                                "inccache" => MorphCachingStrategy::IncrementalCache,
+                                _ => unreachable!(),
+                            };
+                            cache_set = true;
+                        }
+                        "prefilteron" => {
+                            if prefilter_set {
+                                return Err("conflicting prefilter options: only one of prefilteron|prefilteroff is allowed".to_string());
+                            }
+                            config.prefilter = true;
+                            prefilter_set = true;
+                        }
+                        "prefilteroff" => {
+                            if prefilter_set {
+                                return Err("conflicting prefilter options: only one of prefilteron|prefilteroff is allowed".to_string());
+                            }
+                            config.prefilter = false;
+                            prefilter_set = true;
+                        }
+                        "fixedpoint" => {
+                            config.fixedpoint = true;
+                        }
+                        other_token => {
+                            return Err(format!(
+                                "unknown morph option '{other_token}', must be one of levelson|levelsoff|nocache|cache|inccache|prefilteron|prefilteroff|fixedpoint"
+                            ));
+                        }
+                    }
+                }
+
+                Ok(Rewriter::Morph(config))
+            }
         }
     }
 }
@@ -248,6 +387,21 @@ thread_local! {
     /// it uses `BOUND`, unless another constraint requires `DISCRETE`.
     static MINION_DISCRETE_THRESHOLD: Cell<usize> =
         const { Cell::new(DEFAULT_MINION_DISCRETE_THRESHOLD) };
+
+    /// Thread-local setting controlling whether rule-trace outputs are active in this phase.
+    ///
+    /// This is intentionally off by default and can be disabled before solver-time rewrites so
+    /// follow-up dominance-blocking rewrites do not pollute the initial rewrite trace.
+    static RULE_TRACE_ENABLED: Cell<bool> = const { Cell::new(false) };
+
+    /// Thread-local setting controlling whether default rule traces are configured.
+    static DEFAULT_RULE_TRACE_ENABLED: Cell<bool> = const { Cell::new(false) };
+
+    /// Thread-local setting controlling whether verbose rule-attempt traces are configured.
+    static RULE_TRACE_VERBOSE_ENABLED: Cell<bool> = const { Cell::new(false) };
+
+    /// Thread-local setting controlling whether aggregate rule-application traces are configured.
+    static RULE_TRACE_AGGREGATES_ENABLED: Cell<bool> = const { Cell::new(false) };
 }
 
 pub fn set_current_solver_family(solver_family: SolverFamily) {
@@ -271,6 +425,42 @@ pub fn set_minion_discrete_threshold(threshold: usize) {
 
 pub fn minion_discrete_threshold() -> usize {
     MINION_DISCRETE_THRESHOLD.with(|current| current.get())
+}
+
+pub fn set_rule_trace_enabled(enabled: bool) {
+    RULE_TRACE_ENABLED.with(|current| current.set(enabled));
+}
+
+pub fn rule_trace_enabled() -> bool {
+    RULE_TRACE_ENABLED.with(|current| current.get())
+}
+
+pub fn set_default_rule_trace_enabled(enabled: bool) {
+    DEFAULT_RULE_TRACE_ENABLED.with(|current| current.set(enabled));
+}
+
+pub fn default_rule_trace_enabled() -> bool {
+    DEFAULT_RULE_TRACE_ENABLED.with(|current| current.get())
+}
+
+pub fn set_rule_trace_verbose_enabled(enabled: bool) {
+    RULE_TRACE_VERBOSE_ENABLED.with(|current| current.set(enabled));
+}
+
+pub fn rule_trace_verbose_enabled() -> bool {
+    RULE_TRACE_VERBOSE_ENABLED.with(|current| current.get())
+}
+
+pub fn set_rule_trace_aggregates_enabled(enabled: bool) {
+    RULE_TRACE_AGGREGATES_ENABLED.with(|current| current.set(enabled));
+}
+
+pub fn rule_trace_aggregates_enabled() -> bool {
+    RULE_TRACE_AGGREGATES_ENABLED.with(|current| current.get())
+}
+
+pub fn configured_rule_trace_enabled() -> bool {
+    default_rule_trace_enabled() || rule_trace_verbose_enabled() || rule_trace_aggregates_enabled()
 }
 
 impl FromStr for SolverFamily {

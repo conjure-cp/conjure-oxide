@@ -1,24 +1,24 @@
+use std::collections::BTreeMap;
 use std::sync::{Arc, RwLock};
 use std::{fs, vec};
 
 use conjure_cp_core::Model;
+use conjure_cp_core::ast::DeclarationPtr;
 use conjure_cp_core::ast::assertions::debug_assert_model_well_formed;
-use conjure_cp_core::ast::{DeclarationPtr, Expression, Metadata, Moo};
 use conjure_cp_core::context::Context;
 #[allow(unused)]
 use uniplate::Uniplate;
 
 use super::ParseContext;
-use super::find::parse_find_statement;
-use super::keyword_checks::keyword_as_identifier;
+use super::find::{parse_find_statement, parse_given_statement};
 use super::letting::parse_letting_statement;
 use super::util::{TypecheckingContext, get_tree};
-use crate::diagnostics::diagnostics_api::SymbolKind;
-use crate::diagnostics::source_map::{HoverInfo, SourceMap, span_with_hover};
+use crate::diagnostics::source_map::SourceMap;
 use crate::errors::{FatalParseError, ParseErrorCollection, RecoverableParseError};
 use crate::expression::parse_expression;
-use crate::field;
+use crate::parser::keyword_checks::keyword_as_identifier;
 use crate::syntax_errors::detect_syntactic_errors;
+use tree_sitter::Tree;
 
 /// Parse an Essence file into a Model using the tree-sitter parser.
 pub fn parse_essence_file_native(
@@ -56,23 +56,35 @@ pub fn parse_essence_with_context(
     context: Arc<RwLock<Context<'static>>>,
     errors: &mut Vec<RecoverableParseError>,
 ) -> Result<Option<Model>, FatalParseError> {
-    match parse_essence_with_context_and_map(src, context, errors)? {
+    match parse_essence_with_context_and_map(src, context, errors, None)? {
         Some((model, _source_map)) => Ok(Some(model)),
         None => Ok(None),
     }
 }
 
+/*
+    this function is used by both the file-based parser and the LSP parser (which needs the source map)
+    the LSP parser can also optionally pass in a pre-parsed tree to avoid parsing twice (which is how caching is implemented)
+    if the tree is not passed in, we will parse it from scratch (this is what the file-based parser does)
+    when cache is dirty, LSP has to call parse_essence_with_context_and_map with None for the tree,
+    which will cause it to re-parse the source code and update the cache (Model = ast, SorceMap = map)
+*/
 pub fn parse_essence_with_context_and_map(
     src: &str,
     context: Arc<RwLock<Context<'static>>>,
     errors: &mut Vec<RecoverableParseError>,
+    tree: Option<&Tree>,
 ) -> Result<Option<(Model, SourceMap)>, FatalParseError> {
-    let (tree, source_code) = match get_tree(src) {
-        Some(tree) => tree,
-        None => {
-            return Err(FatalParseError::TreeSitterError(
-                "Failed to parse source code".to_string(),
-            ));
+    let (tree, source_code) = if let Some(tree) = tree {
+        (tree.clone(), src.to_string())
+    } else {
+        match get_tree(src) {
+            Some(tree) => tree,
+            None => {
+                return Err(FatalParseError::TreeSitterError(
+                    "Failed to parse source code".to_string(),
+                ));
+            }
         }
     };
 
@@ -81,8 +93,11 @@ pub fn parse_essence_with_context_and_map(
         return Ok(None);
     }
 
+    keyword_as_identifier(tree.root_node(), src, errors);
+
     let mut model = Model::new(context);
     let mut source_map = SourceMap::default();
+    let mut declaration_spans = BTreeMap::new();
     let root_node = tree.root_node();
 
     // Create a ParseContext
@@ -92,41 +107,11 @@ pub fn parse_essence_with_context_and_map(
         Some(model.symbols_ptr_unchecked().clone()),
         errors,
         &mut source_map,
+        &mut declaration_spans,
     );
 
     let mut cursor = root_node.walk();
     for statement in root_node.children(&mut cursor) {
-        /*
-           since find and letting are unnamed children
-           hover info is added here.
-           other unnamed children will be skipped.
-        */
-        if statement.kind() == "find" {
-            span_with_hover(
-                &statement,
-                ctx.source_code,
-                ctx.source_map,
-                HoverInfo {
-                    description: "Find keyword".to_string(),
-                    kind: Some(SymbolKind::Find),
-                    ty: None,
-                    decl_span: None,
-                },
-            );
-        } else if statement.kind() == "letting" {
-            span_with_hover(
-                &statement,
-                ctx.source_code,
-                ctx.source_map,
-                HoverInfo {
-                    description: "Letting keyword".to_string(),
-                    kind: Some(SymbolKind::Letting),
-                    ty: None,
-                    decl_span: None,
-                },
-            );
-        }
-
         if !statement.is_named() {
             continue;
         }
@@ -140,6 +125,14 @@ pub fn parse_essence_with_context_and_map(
                     model
                         .symbols_mut()
                         .insert(DeclarationPtr::new_find(name, domain));
+                }
+            }
+            "given_statement" => {
+                let var_hashmap = parse_given_statement(&mut ctx, statement)?;
+                for (name, domain) in var_hashmap {
+                    model
+                        .symbols_mut()
+                        .insert(DeclarationPtr::new_given(name, domain));
                 }
             }
             "bool_expr" | "atom" | "comparison_expr" => {
@@ -157,11 +150,9 @@ pub fn parse_essence_with_context_and_map(
                 model.symbols_mut().extend(letting_vars);
             }
             "dominance_relation" => {
-                let inner = field!(statement, "expression");
-                let Some(expr) = parse_expression(&mut ctx, inner)? else {
+                let Some(dominance) = parse_expression(&mut ctx, statement)? else {
                     continue;
                 };
-                let dominance = Expression::DominanceRelation(Metadata::new(), Moo::new(expr));
                 if model.dominance.is_some() {
                     ctx.record_error(RecoverableParseError::new(
                         "Duplicate dominance relation".to_string(),
@@ -179,8 +170,6 @@ pub fn parse_essence_with_context_and_map(
             }
         }
     }
-    // check for errors (keyword as identifier)
-    keyword_as_identifier(*ctx.root, ctx.source_code, ctx.errors);
 
     // Check if there were any recoverable errors
     if !errors.is_empty() {
@@ -193,7 +182,7 @@ pub fn parse_essence_with_context_and_map(
 pub fn parse_essence(src: &str) -> Result<(Model, SourceMap), Box<ParseErrorCollection>> {
     let context = Arc::new(RwLock::new(Context::default()));
     let mut errors = vec![];
-    match parse_essence_with_context_and_map(src, context, &mut errors) {
+    match parse_essence_with_context_and_map(src, context, &mut errors, None) {
         Ok(Some((model, source_map))) => {
             debug_assert_model_well_formed(&model, "tree-sitter");
             Ok((model, source_map))

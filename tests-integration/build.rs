@@ -200,7 +200,7 @@ fn main() -> io::Result<()> {
 }
 
 fn read_config_or_default(path: &str) -> TestConfig {
-    let config_path = format!("{}/config.toml", path);
+    let config_path = format!("{path}/config.toml");
     if let Ok(contents) = std::fs::read_to_string(&config_path) {
         toml::from_str(&contents).unwrap_or_default()
     } else {

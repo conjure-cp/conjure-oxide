@@ -257,7 +257,7 @@ fn parse_variable(ctx: &mut ParseContext, node: &Node) -> Result<Option<Atom>, F
                 description: format!("Variable: {name}"),
                 kind: Some(SymbolKind::Decimal),
                 ty: decl.domain().map(|d| d.to_string()),
-                decl_span: None,
+                decl_span: ctx.lookup_decl_span(&name),
             };
             span_with_hover(node, ctx.source_code, ctx.source_map, hover);
 

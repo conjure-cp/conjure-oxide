@@ -1,10 +1,12 @@
+use std::collections::BTreeMap;
+
 use tree_sitter::{Node, Parser, Tree};
 use tree_sitter_essence::LANGUAGE;
 
 use super::traversal::WalkDFS;
-use crate::diagnostics::source_map::SourceMap;
+use crate::diagnostics::source_map::{SourceMap, SpanId};
 use crate::errors::RecoverableParseError;
-use conjure_cp_core::ast::SymbolTablePtr;
+use conjure_cp_core::ast::{Name, SymbolTablePtr};
 
 /// Context for parsing, containing shared state passed through parser functions.
 pub struct ParseContext<'a> {
@@ -13,6 +15,7 @@ pub struct ParseContext<'a> {
     pub symbols: Option<SymbolTablePtr>,
     pub errors: &'a mut Vec<RecoverableParseError>,
     pub source_map: &'a mut SourceMap,
+    pub decl_spans: &'a mut BTreeMap<Name, SpanId>,
     pub typechecking_context: TypecheckingContext,
 }
 
@@ -23,6 +26,7 @@ impl<'a> ParseContext<'a> {
         symbols: Option<SymbolTablePtr>,
         errors: &'a mut Vec<RecoverableParseError>,
         source_map: &'a mut SourceMap,
+        decl_spans: &'a mut BTreeMap<Name, SpanId>,
     ) -> Self {
         Self {
             source_code,
@@ -30,6 +34,7 @@ impl<'a> ParseContext<'a> {
             symbols,
             errors,
             source_map,
+            decl_spans,
             typechecking_context: TypecheckingContext::Unknown,
         }
     }
@@ -46,8 +51,23 @@ impl<'a> ParseContext<'a> {
             symbols,
             errors: self.errors,
             source_map: self.source_map,
+            decl_spans: self.decl_spans,
             typechecking_context: self.typechecking_context,
         }
+    }
+
+    pub fn save_decl_span(&mut self, name: Name, span_id: SpanId) {
+        self.decl_spans.insert(name, span_id);
+    }
+
+    pub fn lookup_decl_span(&self, name: &Name) -> Option<SpanId> {
+        self.decl_spans.get(name).copied()
+    }
+
+    pub fn lookup_decl_line(&self, name: &Name) -> Option<u32> {
+        let span_id = self.lookup_decl_span(name)?;
+        let span = self.source_map.spans.get(span_id as usize)?;
+        Some(span.start_point.line + 1)
     }
 }
 
