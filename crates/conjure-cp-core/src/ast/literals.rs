@@ -706,8 +706,17 @@ mod tests {
 
     use super::*;
     use crate::ast::matrix::flatten;
+    use crate::ast::matrix::partial_flatten;
     use crate::{domain_int, domain_int_ground, into_matrix, matrix, matrix_lit};
+    use conjure_cp_core::ast::matrix::shape_of;
     use uniplate::Uniplate;
+
+    fn unwrap_matrix(lit: Literal) -> AbstractLiteral<Literal> {
+        let Literal::AbstractLiteral(abslit) = tensor else {
+            panic!("expected abstract literal")
+        };
+        abslit
+    }
 
     #[test]
     fn matrix_uniplate_universe() {
@@ -739,9 +748,7 @@ mod tests {
             [[13, 14, 15, 16], [17, 18, 19, 20], [21, 22, 23, 24]]
         ];
 
-        let Literal::AbstractLiteral(abslit) = tensor else {
-            panic!("expected abstract literal")
-        };
+        let abslit = unwrap_matrix(tensor);
         let actual_elems: Vec<Literal> = flatten(&abslit).cloned().collect();
 
         let expected_elems = (1..25).map(Literal::from).collect::<Vec<_>>();
@@ -776,5 +783,44 @@ mod tests {
         assert_eq!(idx_doms.len(), 2);
         assert_eq!(&idx_doms[0], &domain_int_ground!(1..2));
         assert_eq!(&idx_doms[1], &domain_int_ground!(1..4));
+    }
+
+    #[test]
+    fn matrix_shape_3d() {
+        let tensor = matrix_lit![
+            [
+                [1, 2, 3, 4],
+                [5, 6, 7, 8],
+                [9, 10, 11, 12]
+            ],
+            [
+                [13, 14, 15, 16],
+                [17, 18, 19, 20],
+                [21, 22, 23, 24]
+            ];
+            [
+                domain_int_ground!(1..2),
+                domain_int_ground!(1..3),
+                domain_int_ground!(1..4)
+            ]
+        ];
+
+        let abslit = unwrap_matrix(tensor);
+        let shape = shape_of(&abslit);
+        assert_eq!(shape.offset, 0);
+        assert_eq!(shape.dims, vec![2, 3, 4]);
+        assert_eq!(shape.strides, vec![12, 4, 1]);
+    }
+
+    #[test]
+    fn matrix_partial_flatten() {
+        let tensor = matrix_lit![
+            [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]],
+            [[13, 14, 15, 16], [17, 18, 19, 20], [21, 22, 23, 24]]
+        ];
+
+        let abslit = unwrap_matrix(tensor);
+
+        assert_eq!(partial_flatten(0, abslit.clone()), abslit);
     }
 }

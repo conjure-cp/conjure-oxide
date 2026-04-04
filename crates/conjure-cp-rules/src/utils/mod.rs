@@ -1,11 +1,12 @@
+use conjure_cp::ast::matrix::flatten_owned;
 use conjure_cp::ast::records::RecordValue;
 use conjure_cp::ast::{
     AbstractLiteral, Atom, Expression as Expr, Expression, Literal, Metadata, Moo, Name,
 };
 use conjure_cp::rule_engine::ApplicationError;
 use conjure_cp::rule_engine::ApplicationError::RuleNotApplicable;
-use conjure_cp::{bug, essence_expr, into_matrix_expr};
-use itertools::Itertools;
+use conjure_cp::{bug, bug_assert_eq, essence_expr, into_matrix_expr};
+use itertools::{Itertools, izip};
 use uniplate::{Biplate, Uniplate};
 
 mod to_auxvar;
@@ -154,6 +155,49 @@ where
     }
 }
 
+pub fn collect_cmp_exprs(cmp_op: &Expr, lhs_fields: Vec<Expr>, rhs_fields: Vec<Expr>) -> Expr {
+    let len = lhs_fields.len();
+    bug_assert_eq!(
+        len,
+        rhs_fields.len(),
+        "comparison of collections with different shapes!"
+    );
+
+    let mut cases = vec![Vec::<Expr>::with_capacity(len); len];
+    for (i, (lhs_f, rhs_f)) in izip!(lhs_fields, rhs_fields).enumerate() {
+        let eq_expr = essence_expr!(&lhs_f = &rhs_f);
+        let cmp_expr = cmp_op.with_children(vec![lhs_f, rhs_f].into());
+
+        for case in cases.iter_mut().take(i) {
+            case.push(eq_expr.clone());
+        }
+        cases[i].push(cmp_expr);
+    }
+
+    let conjs: Vec<Expr> = cases
+        .into_iter()
+        .map(|c| Expr::And(Metadata::new(), Moo::new(into_matrix_expr!(c))))
+        .collect();
+    Expr::Or(Metadata::new(), Moo::new(into_matrix_expr!(conjs)))
+}
+
+/// If this is a matrix expression, clone its elements and get a flat iterator over them
+pub fn try_flatten_matrix(expr: &Expr) -> Option<impl Iterator<Item = Expr>> {
+    match expr {
+        Expr::AbstractLiteral(_, m @ AbstractLiteral::Matrix(..)) => {
+            Some(Box::new(flatten_owned(m.clone())) as Box<dyn Iterator<Item = Expr>>)
+        }
+        Expr::Atomic(
+            _,
+            Atom::Literal(Literal::AbstractLiteral(m @ AbstractLiteral::Matrix(..))),
+        ) => {
+            Some(Box::new(flatten_owned(m.clone()).map(Expr::from))
+                as Box<dyn Iterator<Item = Expr>>)
+        }
+        _ => None,
+    }
+}
+
 pub fn as_comparison_op(expr: &Expr) -> Option<(Moo<Expr>, Moo<Expr>)> {
     match expr {
         Expr::Eq(_, lhs, rhs)
@@ -174,4 +218,8 @@ pub fn as_lex_comparison_op(expr: &Expr) -> Option<(Moo<Expr>, Moo<Expr>)> {
         | Expr::LexLeq(_, lhs, rhs) => Some((lhs.clone(), rhs.clone())),
         _ => None,
     }
+}
+
+pub fn as_cmp_or_lex_op(expr: &Expr) -> Option<(Moo<Expr>, Moo<Expr>)> {
+    as_lex_comparison_op(expr).or_else(|| as_comparison_op(expr))
 }

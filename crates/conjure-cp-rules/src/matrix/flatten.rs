@@ -1,5 +1,7 @@
+use crate::guard;
+use conjure_cp::ast::matrix::index_domains;
 use conjure_cp::ast::{
-    Atom, Expression as Expr, GroundDomain, Literal, Metadata, SymbolTable, matrix,
+    AbstractLiteral, Atom, Expression as Expr, GroundDomain, Literal, Metadata, SymbolTable, matrix,
 };
 use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
@@ -46,4 +48,17 @@ fn indexed_flatten_matrix(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // TODO: this can be made safe if matrix::flat_index_to_full_index fails out of bounds
     let new_expr = Expr::UnsafeIndex(Metadata::new(), matrix.clone(), flat_index);
     Ok(Reduction::pure(new_expr))
+}
+
+#[register_rule(("Base", 2001))]
+fn flatten_matrix_expr(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    guard!(
+        let Expr::Flatten(_, n, subj) = expr                                          &&
+        let Expr::AbstractLiteral(_, m @ AbstractLiteral::Matrix(..)) = subj.as_ref() &&
+        let idx_doms = index_domains(m).into_iter().map(|d| d.resolve())
+        else {
+            return Err(RuleNotApplicable);
+        }
+    );
+    todo!()
 }
