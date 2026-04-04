@@ -1,10 +1,15 @@
+use std::cell::RefCell;
 use std::collections::BTreeSet;
 use std::fmt::{self, Display, Formatter};
 use std::hash::Hash;
+use std::rc::Rc;
 
 use thiserror::Error;
 
-use crate::ast::{CnfClause, DeclarationPtr, Expression, Model, Name, SymbolTable};
+use crate::Model;
+use crate::ast::{CnfClause, DeclarationPtr, Expression, Name, SymbolTable};
+use crate::rule_engine::RuleData;
+use crate::rule_engine::rewriter_common::{RuleResult, log_rule_application};
 use tree_morph::prelude::Commands;
 use tree_morph::prelude::Rule as MorphRule;
 
@@ -184,6 +189,8 @@ pub struct Rule<'a> {
     pub name: &'a str,
     pub application: RuleFn,
     pub rule_sets: &'a [(&'a str, u16)], // (name, priority). At runtime, we add the rule to rulesets
+    /// Discriminant ids of Expression variants this rule applies to, or None for universal rules.
+    pub applicable_to: Option<&'static [usize]>,
 }
 
 impl<'a> Rule<'a> {
@@ -196,6 +203,7 @@ impl<'a> Rule<'a> {
             name,
             application,
             rule_sets,
+            applicable_to: None,
         }
     }
 
@@ -238,6 +246,14 @@ impl MorphRule<Expression, SymbolTable> for Rule<'_> {
         }
         Some(reduction.new_expression)
     }
+
+    fn name(&self) -> &str {
+        self.name
+    }
+
+    fn applicable_to(&self) -> Option<Vec<usize>> {
+        self.applicable_to.map(|s| s.to_vec())
+    }
 }
 
 impl MorphRule<Expression, SymbolTable> for &Rule<'_> {
@@ -253,5 +269,64 @@ impl MorphRule<Expression, SymbolTable> for &Rule<'_> {
             commands.transform(Box::new(|m| m.extend_root(reduction.new_top)));
         }
         Some(reduction.new_expression)
+    }
+
+    fn name(&self) -> &str {
+        self.name
+    }
+}
+
+impl MorphRule<Expression, Rc<RefCell<SymbolTable>>> for Rule<'_> {
+    fn apply(
+        &self,
+        commands: &mut Commands<Expression, Rc<RefCell<SymbolTable>>>,
+        subtree: &Expression,
+        meta: &Rc<RefCell<SymbolTable>>,
+    ) -> Option<Expression> {
+        let symbols = meta.borrow();
+        let reduction = self.apply(subtree, &symbols).ok()?;
+        commands.mut_meta(Box::new(|m| m.borrow_mut().extend(reduction.symbols)));
+
+        if !reduction.new_top.is_empty() {
+            commands.transform(Box::new(|m| m.extend_root(reduction.new_top)));
+        }
+
+        Some(reduction.new_expression)
+    }
+
+    fn name(&self) -> &str {
+        self.name
+    }
+}
+
+impl MorphRule<Expression, SymbolTable> for RuleData<'_> {
+    fn apply(
+        &self,
+        commands: &mut Commands<Expression, SymbolTable>,
+        subtree: &Expression,
+        meta: &SymbolTable,
+    ) -> Option<Expression> {
+        let reduction = self.rule.apply(subtree, meta).ok()?;
+        let result = RuleResult {
+            rule_data: self.clone(),
+            reduction: reduction.clone(),
+        };
+
+        log_rule_application(&result, subtree, meta, None);
+
+        commands.mut_meta(Box::new(|m: &mut SymbolTable| m.extend(reduction.symbols)));
+
+        if !reduction.new_top.is_empty() {
+            commands.transform(Box::new(|m| m.extend_root(reduction.new_top)));
+        }
+        Some(reduction.new_expression)
+    }
+
+    fn name(&self) -> &str {
+        self.rule.name
+    }
+
+    fn applicable_to(&self) -> Option<Vec<usize>> {
+        self.rule.applicable_to.map(|s| s.to_vec())
     }
 }

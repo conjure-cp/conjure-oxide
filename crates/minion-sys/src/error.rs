@@ -36,6 +36,14 @@ pub enum RuntimeError {
     #[error("the given instance is invalid")]
     InvalidInstance,
 
+    /// The solver exceeded its time limit.
+    #[error("solver timed out")]
+    Timeout,
+
+    /// The solver ran out of memory.
+    #[error("solver ran out of memory")]
+    MemoryError,
+
     /// An unknown error has occurred.
     #[error("an unknown error has occurred while running minion")]
     UnknownError,
@@ -48,6 +56,10 @@ impl From<u32> for RuntimeError {
         match return_code {
             #[allow(non_upper_case_globals)]
             ffi::ReturnCodes_INVALID_INSTANCE => RuntimeError::InvalidInstance,
+            #[allow(non_upper_case_globals)]
+            ffi::ReturnCodes_TIMEOUT => RuntimeError::Timeout,
+            #[allow(non_upper_case_globals)]
+            ffi::ReturnCodes_MEMORY_ERROR => RuntimeError::MemoryError,
             _ => RuntimeError::UnknownError,
         }
     }

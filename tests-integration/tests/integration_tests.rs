@@ -256,7 +256,7 @@ fn integration_test_inner(
 
     let rewritten_model = match rewriter {
         Rewriter::Naive => rewrite_naive(&model, &rule_sets, false)?,
-        Rewriter::Morph => rewrite_morph(model, &rule_sets, false),
+        Rewriter::Morph(config) => rewrite_morph(model, &rule_sets, false, config),
     };
     let solver_input_file = None;
     let solver = match solver_fam {
@@ -308,7 +308,7 @@ fn integration_test_inner(
 
     // TODO: Implement rule trace validation for morph
     match rewriter {
-        Rewriter::Morph => {}
+        Rewriter::Morph(_) => {}
         Rewriter::Naive => {
             let generated = read_human_rule_trace(path, case_name, "generated", &solver_fam)?;
             let expected = read_human_rule_trace(path, case_name, "expected", &solver_fam)?;
