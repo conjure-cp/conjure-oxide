@@ -59,9 +59,83 @@ pub fn current_parser() -> Parser {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub struct MorphConfig {
+    pub cache: MorphCachingStrategy,
+    pub prefilter: bool,
+    /// Use naive (no-levels) traversal (`morph_naive`). Enabled with `levelsoff`, disabled with `levelson`.
+    pub naive: bool,
+    pub fixedpoint: bool,
+}
+
+impl Default for MorphConfig {
+    fn default() -> Self {
+        Self {
+            cache: MorphCachingStrategy::default(),
+            prefilter: true,
+            naive: false,
+            fixedpoint: false,
+        }
+    }
+}
+
+impl Display for MorphConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "morph")?;
+        write!(f, "-{}", if self.naive { "levelsoff" } else { "levelson" })?;
+        write!(f, "-{}", self.cache)?;
+        write!(
+            f,
+            "-{}",
+            if self.prefilter {
+                "prefilteron"
+            } else {
+                "prefilteroff"
+            }
+        )?;
+        if self.fixedpoint {
+            write!(f, "-fixedpoint")?;
+        }
+        Ok(())
+    }
+}
+
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+pub enum MorphCachingStrategy {
+    NoCache,
+    Cache,
+    #[default]
+    IncrementalCache,
+}
+
+impl FromStr for MorphCachingStrategy {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.trim().to_ascii_lowercase().as_str() {
+            "no-cache" => Ok(Self::NoCache),
+            "cache" => Ok(Self::Cache),
+            "inc-cache" => Ok(Self::IncrementalCache),
+            other => Err(format!(
+                "unknown cache strategy: {other}; expected one of: no-cache, cahce, inc-cache"
+            )),
+        }
+    }
+}
+
+impl Display for MorphCachingStrategy {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            MorphCachingStrategy::NoCache => write!(f, "nocache"),
+            MorphCachingStrategy::Cache => write!(f, "cache"),
+            MorphCachingStrategy::IncrementalCache => write!(f, "inccache"),
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Rewriter {
     Naive,
-    Morph,
+    Morph(MorphConfig),
 }
 
 thread_local! {
@@ -75,7 +149,7 @@ impl Display for Rewriter {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Rewriter::Naive => write!(f, "naive"),
-            Rewriter::Morph => write!(f, "morph"),
+            Rewriter::Morph(config) => write!(f, "{config}"),
         }
     }
 }
@@ -86,10 +160,75 @@ impl FromStr for Rewriter {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.trim().to_ascii_lowercase().as_str() {
             "naive" => Ok(Rewriter::Naive),
-            "morph" => Ok(Rewriter::Morph),
-            other => Err(format!(
-                "unknown rewriter: {other}; expected one of: naive, morph"
-            )),
+            "morph" => Ok(Rewriter::Morph(MorphConfig::default())),
+            other => {
+                if !other.starts_with("morph-") {
+                    return Err(format!(
+                        "unknown rewriter: {other}; expected one of: naive, morph, morph-[levelson|levelsoff]-[nocache|cache|inccache]-[prefilteron|prefilteroff]-[fixedpoint]"
+                    ));
+                }
+
+                let parts = other.split('-').skip(1);
+                let mut config = MorphConfig::default();
+                let mut cache_set = false;
+                let mut levels_set = false;
+                let mut prefilter_set = false;
+                for token in parts {
+                    match token {
+                        "" => (),
+                        "levelson" => {
+                            if levels_set {
+                                return Err("conflicting levels options: only one of levelson|levelsoff is allowed".to_string());
+                            }
+                            config.naive = false;
+                            levels_set = true;
+                        }
+                        "levelsoff" => {
+                            if levels_set {
+                                return Err("conflicting levels options: only one of levelson|levelsoff is allowed".to_string());
+                            }
+                            config.naive = true;
+                            levels_set = true;
+                        }
+                        "nocache" | "cache" | "inccache" => {
+                            if cache_set {
+                                return Err("conflicting cache options: only one of nocache|cache|inccache is allowed".to_string());
+                            }
+                            config.cache = match token {
+                                "nocache" => MorphCachingStrategy::NoCache,
+                                "cache" => MorphCachingStrategy::Cache,
+                                "inccache" => MorphCachingStrategy::IncrementalCache,
+                                _ => unreachable!(),
+                            };
+                            cache_set = true;
+                        }
+                        "prefilteron" => {
+                            if prefilter_set {
+                                return Err("conflicting prefilter options: only one of prefilteron|prefilteroff is allowed".to_string());
+                            }
+                            config.prefilter = true;
+                            prefilter_set = true;
+                        }
+                        "prefilteroff" => {
+                            if prefilter_set {
+                                return Err("conflicting prefilter options: only one of prefilteron|prefilteroff is allowed".to_string());
+                            }
+                            config.prefilter = false;
+                            prefilter_set = true;
+                        }
+                        "fixedpoint" => {
+                            config.fixedpoint = true;
+                        }
+                        other_token => {
+                            return Err(format!(
+                                "unknown morph option '{other_token}', must be one of levelson|levelsoff|nocache|cache|inccache|prefilteron|prefilteroff|fixedpoint"
+                            ));
+                        }
+                    }
+                }
+
+                Ok(Rewriter::Morph(config))
+            }
         }
     }
 }

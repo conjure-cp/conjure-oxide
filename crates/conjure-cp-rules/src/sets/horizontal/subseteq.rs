@@ -9,8 +9,8 @@ use conjure_cp::{
     },
 };
 
-// A subsetEq B ~~> and([ i in A | i <- B ])
-#[register_rule(("Base", 8700))]
+// A subsetEq B ~~> and([ i in B | i <- A ])
+#[register_rule("Base", 8700, [SubsetEq])]
 fn subseteq_set(expr: &Expr, scope: &SymbolTable) -> ApplicationResult {
     match expr {
         Expr::SubsetEq(_, a, b) => {
@@ -24,7 +24,7 @@ fn subseteq_set(expr: &Expr, scope: &SymbolTable) -> ApplicationResult {
                 .clone()
                 .gen_sym();
 
-            comp_builder = comp_builder.expression_generator(quant_name.clone(), b.clone().into());
+            comp_builder = comp_builder.expression_generator(quant_name.clone(), a.clone().into());
             let Some(quant_ptr) = comp_builder
                 .generator_symboltable()
                 .read()
@@ -36,7 +36,7 @@ fn subseteq_set(expr: &Expr, scope: &SymbolTable) -> ApplicationResult {
             let return_expr = Expr::In(
                 Metadata::new(),
                 Moo::new(Expr::Atomic(Metadata::new(), Atom::new_ref(quant_ptr))),
-                a.clone(),
+                b.clone(),
             );
 
             let comp = comp_builder.with_return_value(return_expr, Some(ACOperatorKind::And));
