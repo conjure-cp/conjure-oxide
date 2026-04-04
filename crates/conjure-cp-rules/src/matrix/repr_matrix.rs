@@ -1,7 +1,7 @@
 use crate::bottom_up_adaptor::as_bottom_up;
 use crate::guard;
 use crate::representation::MatrixToAtom;
-use crate::utils::to_aux_var;
+use crate::utils::{eval_to_usize, to_aux_var};
 use conjure_cp::ast::matrix::unflatten_matrix;
 use conjure_cp::ast::{
     Atom, DeclarationKind, Expression, GroundDomain, Literal, Metadata, Moo, Range, Reference,
@@ -302,14 +302,7 @@ fn matrix_flatten_to_atom(expr: &Expression, _symbols: &SymbolTable) -> Applicat
         }
     );
 
-    let mut n = 0;
-    if let Some(dims) = dims {
-        n = match eval_constant(dims) {
-            Some(Literal::Int(n)) if n >= 0 => n as usize,
-            Some(lit) => bug!("Flatten expected a positive integer, got `{lit}`"),
-            None => bug!("Flatten expected a constant expr, got: `{dims}`"),
-        }
-    }
+    let n = dims.as_ref().map(|x| eval_to_usize(x)).unwrap_or(0);
 
     let view = repr.flatten(n);
     let elems = repr

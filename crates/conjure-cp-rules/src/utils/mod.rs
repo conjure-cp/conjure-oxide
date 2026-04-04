@@ -2,6 +2,7 @@ use conjure_cp::ast::matrix::flatten_owned;
 use conjure_cp::ast::records::RecordValue;
 use conjure_cp::ast::{
     AbstractLiteral, Atom, Expression as Expr, Expression, Literal, Metadata, Moo, Name,
+    eval_constant,
 };
 use conjure_cp::rule_engine::ApplicationError;
 use conjure_cp::rule_engine::ApplicationError::RuleNotApplicable;
@@ -45,6 +46,14 @@ pub fn lit_to_bool(x: &Literal) -> bool {
         Literal::Int(0) => false,
         Literal::Int(1) => true,
         _ => bug!("expected a boolean or int(0..1) literal, got {}", x),
+    }
+}
+
+pub fn eval_to_usize(x: &Expr) -> usize {
+    match eval_constant(x) {
+        Some(Literal::Int(n)) if n >= 0 => n as usize,
+        Some(lit) => bug!("Flatten expected a positive integer, got `{lit}`"),
+        None => bug!("Flatten expected a constant expr, got: `{x}`"),
     }
 }
 
