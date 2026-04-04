@@ -62,7 +62,6 @@ fn select_representation(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             return Err(RuleNotApplicable)
         }
     );
-    eprintln!("calling select_representation");
 
     let mut re = re.clone();
     for rule in get_repr_rules() {
