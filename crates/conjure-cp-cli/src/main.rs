@@ -37,12 +37,10 @@ struct LoggingState {
 }
 
 impl LoggingState {
-    fn flush(&self) -> anyhow::Result<()> {
+    fn flush(&self) {
         if let Some(handle) = &self.rule_trace_aggregates {
-            handle.flush()?;
+            handle.flush();
         }
-
-        Ok(())
     }
 }
 
@@ -69,14 +67,7 @@ pub fn run() -> anyhow::Result<()> {
 
     let logging_state = setup_logging(&cli.global_args)?;
     let result = run_subcommand(cli);
-
-    if let Err(flush_error) = logging_state.flush() {
-        if result.is_ok() {
-            return Err(flush_error);
-        }
-        eprintln!("Failed to write rule trace aggregates: {flush_error:#}");
-    }
-
+    logging_state.flush();
     result
 }
 
@@ -119,7 +110,9 @@ fn setup_logging(global_args: &GlobalArgs) -> anyhow::Result<LoggingState> {
             .without_time()
             .with_target(false)
             .with_filter(EnvFilter::new("rule_engine_rule_trace=trace"))
-            .with_filter(FilterFn::new(|meta| meta.target() == "rule_engine_rule_trace"))
+            .with_filter(FilterFn::new(|meta| {
+                meta.target() == "rule_engine_rule_trace"
+            }))
     });
 
     let rule_trace_verbose_layer = global_args.rule_trace_verbose.clone().map(|x| {

@@ -460,9 +460,7 @@ pub fn rule_trace_aggregates_enabled() -> bool {
 }
 
 pub fn configured_rule_trace_enabled() -> bool {
-    default_rule_trace_enabled()
-        || rule_trace_verbose_enabled()
-        || rule_trace_aggregates_enabled()
+    default_rule_trace_enabled() || rule_trace_verbose_enabled() || rule_trace_aggregates_enabled()
 }
 
 impl FromStr for SolverFamily {

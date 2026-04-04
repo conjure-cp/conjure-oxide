@@ -47,11 +47,12 @@ impl RuleTraceAggregatesHandle {
         }
     }
 
-    pub fn flush(&self) -> anyhow::Result<()> {
+    pub fn flush(&self) {
         self.state
             .lock()
             .expect("rule trace aggregate state lock poisoned")
             .write_snapshot()
+            .expect("failed to write rule trace aggregates")
     }
 }
 
@@ -67,9 +68,11 @@ where
             return;
         };
 
-        if let Ok(mut state) = self.state.lock() {
-            let _ = state.record_rule(rule_name);
-        }
+        self.state
+            .lock()
+            .expect("rule trace aggregate state lock poisoned")
+            .record_rule(rule_name)
+            .expect("failed to write rule trace aggregates");
     }
 }
 
@@ -92,7 +95,9 @@ impl RuleTraceAggregatesState {
     fn write_snapshot(&self) -> anyhow::Result<()> {
         let mut rows: Vec<_> = self.counts.iter().collect();
         rows.sort_by(|(rule_name_a, count_a), (rule_name_b, count_b)| {
-            count_b.cmp(count_a).then_with(|| rule_name_a.cmp(rule_name_b))
+            count_b
+                .cmp(count_a)
+                .then_with(|| rule_name_a.cmp(rule_name_b))
         });
 
         let mut file = File::create(&self.tmp_path).with_context(|| {
@@ -110,7 +115,8 @@ impl RuleTraceAggregatesState {
         for (rule_name, count) in rows {
             writeln!(file, "{count:6} {rule_name}")?;
         }
-        file.flush()?;
+        file.flush()
+            .expect("failed to flush temporary aggregate trace file");
 
         fs::rename(&self.tmp_path, &self.path).with_context(|| {
             format!(
