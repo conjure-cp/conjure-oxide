@@ -153,10 +153,7 @@ impl Drop for SolverContext {
 
 /// The C callback passed to `runMinion`. Receives the active context and our
 /// `CallbackState` via the userdata pointer.
-unsafe extern "C" fn run_callback(
-    ctx: *mut ffi::MinionContext,
-    userdata: *mut c_void,
-) -> bool {
+unsafe extern "C" fn run_callback(ctx: *mut ffi::MinionContext, userdata: *mut c_void) -> bool {
     // Safety: userdata is a pointer to our CallbackState, set by run_minion
     // and valid for the duration of the runMinion call.
     let state = unsafe { &mut *(userdata as *mut CallbackState<'_>) };
