@@ -108,9 +108,8 @@ fn parse_comparison_expression(
             parse_binary_expression(ctx, &inner)
         }
         "set_comparison" => {
-            // Set comparisons require set operands (no specific type checking for now)
-            // TODO: add typechecking for sets
-            ctx.typechecking_context = TypecheckingContext::Unknown;
+            // Set comparisons require set operands (except 'in', which is hadled later)
+            ctx.typechecking_context = TypecheckingContext::Set;
             parse_binary_expression(ctx, &inner)
         }
         "all_diff_comparison" => {
