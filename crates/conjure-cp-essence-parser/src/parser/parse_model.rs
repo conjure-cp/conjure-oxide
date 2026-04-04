@@ -158,21 +158,7 @@ pub fn parse_essence_with_context_and_map(
                 model.symbols_mut().extend(letting_vars);
             }
             "dominance_relation" => {
-                let inner = match statement.child_by_field_name("expression") {
-                    Some(node) => node,
-                    None => {
-                        ctx.record_error(RecoverableParseError::new(
-                            format!(
-                                "Missing field '{}' in expression of kind '{}'",
-                                "expression",
-                                statement.kind()
-                            ),
-                            Some(statement.range()),
-                        ));
-                        continue;
-                    }
-                };
-                let Some(dominance) = parse_expression(&mut ctx, inner)? else {
+                let Some(dominance) = parse_expression(&mut ctx, statement)? else {
                     continue;
                 };
                 if model.dominance.is_some() {
