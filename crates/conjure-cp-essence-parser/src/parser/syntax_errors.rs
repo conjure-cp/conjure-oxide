@@ -229,7 +229,17 @@ fn classify_unexpected_token_error(node: Node, source_code: &str) -> Recoverable
 
 /// Determines if an error node represents a malformed line error.
 pub fn is_malformed_line_error(node: &tree_sitter::Node, source: &str) -> bool {
-    if node.start_position().column == 0 || error_node_out_of_range(node, source) {
+    // check for the first non-whitespace character on the line before the error node
+    // if the error node is before or at the first non-whitespace character, it's a malformed line error
+    let line = source.lines().nth(node.start_position().row).unwrap_or("");
+    let first_non_witespace = line
+        .as_bytes()
+        .iter()
+        .take_while(|b| b.is_ascii_whitespace())
+        .count();
+
+    if node.start_position().column <= first_non_witespace || error_node_out_of_range(node, source)
+    {
         return true;
     }
     let parent = node.parent();

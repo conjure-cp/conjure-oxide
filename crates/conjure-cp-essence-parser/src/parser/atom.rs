@@ -22,7 +22,10 @@ pub fn parse_atom(
                 Some(node) => node,
                 None => {
                     ctx.record_error(RecoverableParseError::new(
-                        format!("Missing sub-expression in expression of kind '{}'", node.kind()),
+                        format!(
+                            "Missing sub-expression in expression of kind '{}'",
+                            node.kind()
+                        ),
                         Some(node.range()),
                     ));
                     return Ok(None);
@@ -45,7 +48,13 @@ pub fn parse_atom(
                     return Ok(None);
                 }
             };
-            let name_str = &ctx.source_code[ident.start_byte()..ident.end_byte()];
+            // guard against source code range misalignment
+            let start = ident.start_byte();
+            let end = ident.end_byte();
+            let name_str = match ctx.source_code.get(start..end) {
+                Some(s) => s,
+                None => return Ok(None),
+            };
             Ok(Some(Expression::Metavar(
                 Metadata::new(),
                 Ustr::from(name_str),
@@ -324,7 +333,14 @@ fn parse_index(ctx: &mut ParseContext, node: &Node) -> Result<Option<Expression>
 }
 
 fn parse_variable(ctx: &mut ParseContext, node: &Node) -> Result<Option<Atom>, FatalParseError> {
-    let raw_name = &ctx.source_code[node.start_byte()..node.end_byte()];
+    // guard against source code range misalignment
+    let start = node.start_byte();
+    let end = node.end_byte();
+    let raw_name = match ctx.source_code.get(start..end) {
+        Some(s) => s,
+        None => return Ok(None),
+    };
+
     let name = Name::user(raw_name.trim());
     if let Some(symbols) = &ctx.symbols {
         let lookup_result = {
@@ -419,13 +435,22 @@ fn parse_constant(ctx: &mut ParseContext, node: &Node) -> Result<Option<Literal>
         Some(node) => node,
         None => {
             ctx.record_error(RecoverableParseError::new(
-                format!("Missing sub-expression in expression of kind '{}'", node.kind()),
+                format!(
+                    "Missing sub-expression in expression of kind '{}'",
+                    node.kind()
+                ),
                 Some(node.range()),
             ));
             return Ok(None);
         }
     };
-    let raw_value = &ctx.source_code[inner.start_byte()..inner.end_byte()];
+    // guard against source code range misalignment
+    let start = inner.start_byte();
+    let end = inner.end_byte();
+    let raw_value = match ctx.source_code.get(start..end) {
+        Some(s) => s,
+        None => return Ok(None),
+    };
     let lit = match inner.kind() {
         "integer" => {
             let Some(value) = parse_int(ctx, &inner) else {

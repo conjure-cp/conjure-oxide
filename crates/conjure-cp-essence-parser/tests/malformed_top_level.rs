@@ -98,6 +98,9 @@ fn missing_colon_domain_in_find_statement_1st_line() {
 
     let diagnostics = get_diagnostics(&source, &cst);
 
+    // debug print
+    println!("{:?}", diagnostics);
+
     // Should be exactly one diagnostic
     assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
 

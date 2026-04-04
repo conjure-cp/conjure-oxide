@@ -143,7 +143,7 @@ pub fn parse_essence_with_context_and_map(
             );
         }
 
-        if !statement.is_named() {
+        if !statement.is_named() || statement.is_error() || statement.kind() == "ERROR" {
             continue;
         }
 
