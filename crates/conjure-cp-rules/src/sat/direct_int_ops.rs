@@ -395,7 +395,7 @@ fn safediv_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     Ok(Reduction::cnf(quot_int, new_clauses, new_symbols))
 }
 
-#[register_rule(("SAT_Direct", 9100))]
+#[register_rule("SAT_Direct", 9100, [Abs])]
 fn abs_value_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Abs(_, value_expr) = expr else {
         return Err(RuleNotApplicable);
