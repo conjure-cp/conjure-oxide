@@ -13,7 +13,7 @@ use std::sync::{Arc, RwLock};
 use std::{io, mem, vec};
 use uniplate::{Biplate, Uniplate};
 
-use conjure_cp::ast::{AbstractLiteral, Expression, GroundDomain, Moo, SerdeModel};
+use conjure_cp::ast::{AbstractLiteral, Expression, GroundDomain, Moo, Range, SerdeModel};
 use conjure_cp::context::Context;
 use serde_json::{Error as JsonError, Value as JsonValue};
 
@@ -24,6 +24,7 @@ use crate::utils::json::sort_json_object;
 use crate::utils::misc::to_set;
 use conjure_cp::Model as ConjureModel;
 use conjure_cp::ast::Name::User;
+use conjure_cp::ast::matrix;
 use conjure_cp::ast::{Literal, Name};
 use conjure_cp::settings::SolverFamily;
 
@@ -361,4 +362,35 @@ fn read_first_n_lines<P: AsRef<Path>>(filename: P, n: usize) -> io::Result<Strin
         .unwrap()
         .collect::<Result<Vec<_>, _>>()?;
     Ok(lines.join("\n"))
+}
+
+/// Flatten all matrix literals in the given solutions for comparison.
+///
+/// This handles models with matrix-indexed-by-matrix, where our representation uses flat elements
+/// with a `GroundDomain::Matrix` index domain, but Conjure represents the same data as nested
+/// sub-matrices with simple integer index domains. Flattening both to a canonical form
+/// (`Matrix(flat_elements, int(1..n))`) makes them comparable.
+pub fn flatten_matrices_for_comparison(solutions: &mut [BTreeMap<Name, Literal>]) {
+    for solset in solutions.iter_mut() {
+        let updates: Vec<_> = solset
+            .iter()
+            .filter_map(|(k, v)| {
+                if let Literal::AbstractLiteral(abslit @ AbstractLiteral::Matrix(..)) = v {
+                    let flat_elems: Vec<Literal> = matrix::flatten(abslit).cloned().collect();
+                    let n = flat_elems.len() as i32;
+                    let canonical = AbstractLiteral::Matrix(
+                        flat_elems,
+                        Moo::new(GroundDomain::Int(vec![Range::Bounded(1, n)])),
+                    );
+                    Some((k.clone(), Literal::AbstractLiteral(canonical)))
+                } else {
+                    None
+                }
+            })
+            .collect();
+
+        for (k, v) in updates {
+            solset.insert(k, v);
+        }
+    }
 }
