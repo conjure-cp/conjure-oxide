@@ -9,7 +9,7 @@
 //!
 //! ```bash
 //! cargo install cargo-afl
-//! cargo afl build -p conjure-cp-fuzz --release
+//! cargo afl build -p conjure-cp-fuzz
 //! ```
 //!
 //! # Running
@@ -26,7 +26,10 @@ use conjure_cp_rules as _;
 use conjure_cp::defaults::DEFAULT_RULE_SETS;
 use conjure_cp::parse::tree_sitter::parse_essence;
 use conjure_cp::rule_engine::{resolve_rule_sets, rewrite_naive};
-use conjure_cp::settings::{SolverFamily, set_current_solver_family};
+use conjure_cp::settings::{
+    QuantifiedExpander, Rewriter, SolverFamily, set_comprehension_expander, set_current_rewriter,
+    set_current_solver_family,
+};
 use conjure_cp::solver::Solver;
 use conjure_cp::solver::adaptors::Minion;
 
@@ -43,8 +46,12 @@ fn run_pipeline(src: &str) {
     };
 
     // ── Stage 2: Rewrite ────────────────────────────────────────────────
+    // Set thread-local globals that the rewriter/rules expect to be present.
+    // These mirror the CLI defaults in conjure-cp-cli.
     let target_family = SolverFamily::Minion;
     set_current_solver_family(target_family);
+    set_current_rewriter(Rewriter::Naive);
+    set_comprehension_expander(QuantifiedExpander::ViaSolverAc);
 
     let rule_sets = resolve_rule_sets(target_family, DEFAULT_RULE_SETS)
         .unwrap_or_else(|e| panic!("rule resolution failed: {e}"));
