@@ -20,7 +20,7 @@ use conjure_cp::ast::CnfClause;
 ///  SATInt([true;int(1..), (3, 3)])
 ///
 /// ```
-#[register_rule(("SAT_Direct", 8501))]
+#[register_rule(("SAT_Direct", 9501))]
 // 9500 -> Works
 // 9250 -> Works
 // 9000 -> Works
@@ -33,7 +33,6 @@ use conjure_cp::ast::CnfClause;
 fn literal_sat_direct_int(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // TODO: How is this the rule that creates reprs??
 
-    // panic!("literal_sat_direct_int");
     let value = {
         if let Expr::Atomic(_, Atom::Literal(Literal::Int(value))) = expr {
             *value
@@ -53,111 +52,118 @@ fn literal_sat_direct_int(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     )))
 }
 
-// /// This function confirms that all of the input expressions are direct SATInts, and returns vectors for each input of their bits
-// /// This function also normalizes direct SATInt operands to a common value range by zero-padding.
-// pub fn validate_direct_int_operands(
-//     exprs: Vec<Expr>,
-// ) -> Result<(Vec<Vec<Expr>>, i32, i32), ApplicationError> {
-//     // TODO: In the future it may be possible to optimize operations between integers with different bit sizes
-//     // Collect inner bit vectors from each SATInt
-//
-//     // Iterate over all inputs
-//     // Check they are direct and calulate a lower and upper bound
-//     let mut global_min: i32 = i32::MAX;
-//     let mut global_max: i32 = i32::MIN;
-//
-//     for operand in &exprs {
-//         let Expr::SATInt(_, SATIntEncoding::Direct, _, (local_min, local_max)) = operand else {
-//             return Err(RuleNotApplicable);
-//         };
-//         global_min = global_min.min(*local_min);
-//         global_max = global_max.max(*local_max);
-//     }
-//
-//     // build out by iterating over each operand and expanding it to match the new bounds
-//
-//     let out: Vec<Vec<Expr>> = exprs
-//         .into_iter()
-//         .map(|expr| {
-//             let Expr::SATInt(_, SATIntEncoding::Direct, inner, (local_min, local_max)) = expr
-//             else {
-//                 return Err(RuleNotApplicable);
-//             };
-//
-//             let Some(v) = inner.as_ref().clone().unwrap_list() else {
-//                 return Err(RuleNotApplicable);
-//             };
-//
-//             // calulcate how many zeroes to prepend/append
-//             let prefix_len = (local_min - global_min) as usize;
-//             let postfix_len = (global_max - local_max) as usize;
-//
-//             let mut bits = Vec::with_capacity(v.len() + prefix_len + postfix_len);
-//
-//             // add 0s to start
-//             bits.extend(std::iter::repeat_n(
-//                 Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false))),
-//                 prefix_len,
-//             ));
-//
-//             bits.extend(v);
-//
-//             // add 0s to end
-//             bits.extend(std::iter::repeat_n(
-//                 Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false))),
-//                 postfix_len,
-//             ));
-//
-//             Ok(bits)
-//         })
-//         .collect::<Result<_, _>>()?;
-//
-//     Ok((out, global_min, global_max))
-// }
-//
-// /// Converts a = expression between two direct SATInts to a boolean expression in cnf
-// ///
-// /// ```text
-// /// SATInt(a) = SATInt(b) ~> Bool
-// /// ```
-// /// NOTE: This rule reduces to AND_i (a[i] ≡ b[i]) and does not enforce one-hotness.
-// #[register_rule(("SAT_Direct", 9100))]
-// fn eq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
-//     // TODO: this could be optimized by just going over the sections of both vectors where the ranges intersect
-//     // this does require enforcing structure separately
-//     let Expr::Eq(_, lhs, rhs) = expr else {
-//         return Err(RuleNotApplicable);
-//     };
-//
-//     let (binding, _, _) =
-//         validate_direct_int_operands(vec![lhs.as_ref().clone(), rhs.as_ref().clone()])?;
-//     let [lhs_bits, rhs_bits] = binding.as_slice() else {
-//         return Err(RuleNotApplicable);
-//     };
-//
-//     let bit_count = lhs_bits.len();
-//
-//     let mut output = true.into();
-//     let mut new_symbols = symbols.clone();
-//     let mut new_clauses = vec![];
-//     let mut comparison;
-//
-//     for i in 0..bit_count {
-//         comparison = tseytin_iff(
-//             lhs_bits[i].clone(),
-//             rhs_bits[i].clone(),
-//             &mut new_clauses,
-//             &mut new_symbols,
-//         );
-//         output = tseytin_and(
-//             &vec![comparison, output],
-//             &mut new_clauses,
-//             &mut new_symbols,
-//         );
-//     }
-//
-//     Ok(Reduction::cnf(output, new_clauses, new_symbols))
-// }
+/// This function confirms that all of the input expressions are direct SATInts, and returns vectors for each input of their bits
+/// This function also normalizes direct SATInt operands to a common value range by zero-padding.
+pub fn validate_direct_int_operands(
+    exprs: Vec<Expr>,
+) -> Result<(Vec<Vec<Expr>>, i32, i32), ApplicationError> {
+    // TODO: In the future it may be possible to optimize operations between integers with different bit sizes
+    // Collect inner bit vectors from each SATInt
+
+    // Iterate over all inputs
+    // Check they are direct and calulate a lower and upper bound
+    let mut global_min: i32 = i32::MAX;
+    let mut global_max: i32 = i32::MIN;
+
+    for operand in &exprs {
+        let Expr::SATInt(_, SATIntEncoding::Direct, _, (local_min, local_max)) = operand else {
+            eprintln!("Erring from vdio: {:?}", operand);
+            return Err(RuleNotApplicable);
+        };
+        global_min = global_min.min(*local_min);
+        global_max = global_max.max(*local_max);
+    }
+
+    // build out by iterating over each operand and expanding it to match the new bounds
+
+    let out: Vec<Vec<Expr>> = exprs
+        .into_iter()
+        .map(|expr| {
+            let Expr::SATInt(_, SATIntEncoding::Direct, inner, (local_min, local_max)) = expr
+            else {
+                return Err(RuleNotApplicable);
+            };
+
+            let Some(v) = inner.as_ref().clone().unwrap_list() else {
+                return Err(RuleNotApplicable);
+            };
+
+            // calulcate how many zeroes to prepend/append
+            let prefix_len = (local_min - global_min) as usize;
+            let postfix_len = (global_max - local_max) as usize;
+
+            let mut bits = Vec::with_capacity(v.len() + prefix_len + postfix_len);
+
+            // add 0s to start
+            bits.extend(std::iter::repeat_n(
+                Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false))),
+                prefix_len,
+            ));
+
+            bits.extend(v);
+
+            // add 0s to end
+            bits.extend(std::iter::repeat_n(
+                Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false))),
+                postfix_len,
+            ));
+
+            Ok(bits)
+        })
+        .collect::<Result<_, _>>()?;
+
+    Ok((out, global_min, global_max))
+}
+
+/// Converts a = expression between two direct SATInts to a boolean expression in cnf
+///
+/// ```text
+/// SATInt(a) = SATInt(b) ~> Bool
+/// ```
+/// NOTE: This rule reduces to AND_i (a[i] ≡ b[i]) and does not enforce one-hotness.
+#[register_rule(("SAT_Direct", 8500))]
+fn eq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    // TODO: this could be optimized by just going over the sections of both vectors where the ranges intersect
+    // this does require enforcing structure separately
+    // panic!("whuhuh");
+    eprintln!("starting to meow");
+    let Expr::Eq(_, lhs, rhs) = expr else {
+        eprintln!("what in the meow");
+        return Err(RuleNotApplicable);
+    };
+
+    let (binding, _, _) =
+        validate_direct_int_operands(vec![lhs.as_ref().clone(), rhs.as_ref().clone()])?;
+    let [lhs_bits, rhs_bits] = binding.as_slice() else {
+        eprintln!("what in the second meow");
+        return Err(RuleNotApplicable);
+    };
+    eprintln!("meow go meow");
+
+    let bit_count = lhs_bits.len();
+
+    let mut output = true.into();
+    let mut new_symbols = symbols.clone();
+    let mut new_clauses = vec![];
+    let mut comparison;
+
+    for i in 0..bit_count {
+        comparison = tseytin_iff(
+            lhs_bits[i].clone(),
+            rhs_bits[i].clone(),
+            &mut new_clauses,
+            &mut new_symbols,
+        );
+        output = tseytin_and(
+            &vec![comparison, output],
+            &mut new_clauses,
+            &mut new_symbols,
+        );
+    }
+
+    eprintln!("finished application on");
+    Ok(Reduction::cnf(output, new_clauses, new_symbols))
+}
 //
 // /// Converts a != expression between two direct SATInts to a boolean expression in cnf
 // ///

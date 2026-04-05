@@ -226,40 +226,29 @@ impl SolverAdaptor for Sat {
 
             // only decision variables with boolean domains or representations using booleans are supported at this time
             let reprs = find_ref.1.reprs();
-            if domain != &GroundDomain::Bool
-            // && reprs
-            //     .has_repr(get_repr_by_name("IntToBoolDirect").expect("buuhhhhh what now huh"))
-            //     == false
-            // && reprs
-            //     .has_repr(get_repr_by_name("IntToBoolOrder").expect("buuhhhhh what now huh"))
-            //     == false
-            // && reprs.has_repr(get_repr_by_name("IntToBoolLog").expect("buuhhhhh what now huh"))
-            //     == false)
-            {
+            if domain != &GroundDomain::Bool {
                 println!("{} is not a boolean", find_ref.0);
 
                 if (!reprs.has_repr(
                     get_repr_by_name("IntToBoolDirect").expect("No Such Repr IntToBoolDirect"),
                 )) {
                     println!("no IntToBoolDirect repr");
-                    if (!reprs.has_repr(
-                        get_repr_by_name("IntToBoolLog").expect("No Such Repr IntToBoolLog"),
-                    )) {
-                        println!("no IntToBoolLog");
-                        if (!reprs.has_repr(
-                            get_repr_by_name("IntToBoolOrder")
-                                .expect("No Such Repr IntToBoolOrder"),
-                        )) {
-                            println!("No IntToBoolOrder repr");
-                            panic!("why");
-                        }
-                    }
+                    // if (!reprs.has_repr(
+                    //     get_repr_by_name("IntToBoolLog").expect("No Such Repr IntToBoolLog"),
+                    // )) {
+                    //     println!("no IntToBoolLog");
+                    //     if (!reprs.has_repr(
+                    //         get_repr_by_name("IntToBoolOrder")
+                    //             .expect("No Such Repr IntToBoolOrder"),
+                    //     )) {
+                    //              println!("No IntToBoolOrder repr");
+                    Err(SolverError::ModelInvalid(
+                        "Only Boolean Decision Variables supported".to_string(),
+                    ))?;
+                    //     }
+                    // }
                 }
-                // Err(SolverError::ModelInvalid(
-                //     "Only Boolean Decision Variables supported".to_string(),
-                // ))?;
             }
-            eprintln!("adding");
             // only boolean variables should be passed to the solver
             if (domain == &GroundDomain::Bool) {
                 let name = find_ref.0;
@@ -274,20 +263,20 @@ impl SolverAdaptor for Sat {
         // all constraints should be encoded as clauses
         // the remaining constraint (if it exists) should just be a true/false expression
         let constraints = m_clone.constraints();
-        // // Todo: more checking later?
-        // assert!(
-        //     constraints.is_empty()
-        //         || (constraints.len() == 1
-        //             && (constraints[0] == true.into() || constraints[0] == false.into())),
-        //     "Un-encoded constraints in the model: {}",
-        //     pretty_vec(constraints)
-        // );
+        // Todo: more checking later?
+        assert!(
+            constraints.is_empty()
+                || (constraints.len() == 1
+                    && (constraints[0] == true.into() || constraints[0] == false.into())),
+            "Un-encoded constraints in the model: {}",
+            pretty_vec(constraints)
+        );
 
         // constraints should be empty, or only have one single boolean constant
         if (!constraints.is_empty()) {
             println!("!!constraints not empty!!");
             if (constraints[0] != true.into() && constraints[0] != false.into()) {
-                println!(
+                eprintln!(
                     "constraints: {:#}, of length {} with impl {:#?}",
                     pretty_vec(constraints),
                     constraints.len(),
@@ -298,11 +287,11 @@ impl SolverAdaptor for Sat {
         }
 
         let clauses = m_clone.clauses();
-        panic!(
-            "clauses: {}\nconstraints: {}",
-            pretty_vec(clauses),
-            pretty_vec(constraints)
-        );
+        // panic!(
+        //     "clauses: {}\nconstraints: {}",
+        //     pretty_vec(clauses),
+        //     pretty_vec(constraints)
+        // );
         let inst: SatInstance = handle_cnf(clauses, &mut var_map, finds.clone());
 
         self.var_map = Some(var_map);
