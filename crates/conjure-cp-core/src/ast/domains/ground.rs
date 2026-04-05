@@ -191,7 +191,22 @@ impl GroundDomain {
                 ))
             }
             GroundDomain::Matrix(elem_dom, idx_doms) => {
-                todo!()
+                use crate::ast::matrix;
+
+                let shape = matrix::shape_of_dom(self)?;
+                let idx_doms = idx_doms.clone();
+
+                // Collect all possible element values
+                let elem_values: Vec<Literal> = elem_dom.values()?.collect();
+
+                // Generate all possible cell assignments in lexicographic order
+                let iter = std::iter::repeat_n(elem_values, shape.size)
+                    .multi_cartesian_product()
+                    .map(move |flat_elems| {
+                        matrix::unflatten_matrix::<Literal>(&flat_elems, &idx_doms, &shape.strides)
+                    });
+
+                Ok(Box::new(iter))
             }
             GroundDomain::Tuple(elem_doms) => {
                 todo!()
@@ -1037,5 +1052,108 @@ impl Display for GroundDomain {
                 write!(f, "function {} {} --> {} ", attribute, domain, codomain)
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{domain_int_ground, matrix_lit};
+
+    #[test]
+    fn matrix_values_1d_bool_of_bool() {
+        // matrix indexed by [bool] of bool
+        // 2 cells, 2 possible values => 2^2 = 4 matrices
+        let dom = GroundDomain::Matrix(
+            Moo::new(GroundDomain::Bool),
+            vec![Moo::new(GroundDomain::Bool)],
+        );
+
+        let values: Vec<Literal> = dom.values().unwrap().collect();
+
+        assert_eq!(values.len(), 4);
+        assert_eq!(
+            values[0],
+            matrix_lit![false, false; Moo::new(GroundDomain::Bool)]
+        );
+        assert_eq!(
+            values[1],
+            matrix_lit![false, true; Moo::new(GroundDomain::Bool)]
+        );
+        assert_eq!(
+            values[2],
+            matrix_lit![true, false; Moo::new(GroundDomain::Bool)]
+        );
+        assert_eq!(
+            values[3],
+            matrix_lit![true, true; Moo::new(GroundDomain::Bool)]
+        );
+    }
+
+    #[test]
+    fn matrix_values_1d_int() {
+        // matrix indexed by [int(1..2)] of int(0..1)
+        // 2 cells, 2 possible values => 4 matrices
+        let dom = GroundDomain::Matrix(domain_int_ground!(0..1), vec![domain_int_ground!(1..2)]);
+
+        let values: Vec<Literal> = dom.values().unwrap().collect();
+
+        assert_eq!(values.len(), 4);
+        assert_eq!(values[0], matrix_lit![0, 0; domain_int_ground!(1..2)]);
+        assert_eq!(values[1], matrix_lit![0, 1; domain_int_ground!(1..2)]);
+        assert_eq!(values[2], matrix_lit![1, 0; domain_int_ground!(1..2)]);
+        assert_eq!(values[3], matrix_lit![1, 1; domain_int_ground!(1..2)]);
+    }
+
+    #[test]
+    fn matrix_values_2d_lexicographic() {
+        // matrix indexed by [int(1..2), int(1..2)] of int(0..1)
+        // 4 cells, 2 possible values => 2^4 = 16 matrices
+        let dom = GroundDomain::Matrix(
+            domain_int_ground!(0..1),
+            vec![domain_int_ground!(1..2), domain_int_ground!(1..2)],
+        );
+
+        let values: Vec<Literal> = dom.values().unwrap().collect();
+
+        assert_eq!(values.len(), 16);
+
+        // First: [[0,0],[0,0]]
+        assert_eq!(
+            values[0],
+            matrix_lit![[0, 0], [0, 0]; [domain_int_ground!(1..2), domain_int_ground!(1..2)]]
+        );
+        // Second: [[0,0],[0,1]]
+        assert_eq!(
+            values[1],
+            matrix_lit![[0, 0], [0, 1]; [domain_int_ground!(1..2), domain_int_ground!(1..2)]]
+        );
+        // Third: [[0,0],[1,0]]
+        assert_eq!(
+            values[2],
+            matrix_lit![[0, 0], [1, 0]; [domain_int_ground!(1..2), domain_int_ground!(1..2)]]
+        );
+        // Fourth: [[0,0],[1,1]]
+        assert_eq!(
+            values[3],
+            matrix_lit![[0, 0], [1, 1]; [domain_int_ground!(1..2), domain_int_ground!(1..2)]]
+        );
+        // Last: [[1,1],[1,1]]
+        assert_eq!(
+            values[15],
+            matrix_lit![[1, 1], [1, 1]; [domain_int_ground!(1..2), domain_int_ground!(1..2)]]
+        );
+    }
+
+    #[test]
+    fn matrix_values_count_matches_length() {
+        // matrix indexed by [int(1..3)] of int(0..1)
+        // 3 cells, 2 possible values => 2^3 = 8 matrices
+        let dom = GroundDomain::Matrix(domain_int_ground!(0..1), vec![domain_int_ground!(1..3)]);
+
+        let count = dom.values().unwrap().count();
+        let length = dom.length().unwrap();
+
+        assert_eq!(count as u64, length);
     }
 }
