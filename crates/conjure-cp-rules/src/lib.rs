@@ -17,6 +17,7 @@ mod records;
 mod sat;
 mod sets;
 mod tuple;
+mod tuple_packed;
 mod utils;
 mod variables_in_domains;
 

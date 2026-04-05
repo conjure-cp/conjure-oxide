@@ -83,6 +83,15 @@ pub struct TestConfig {
     #[serde(default, rename = "flatten-matrices")]
     pub flatten_matrices: bool,
 
+    /// Extra rule set names to load in addition to the defaults.
+    /// Empty by default.
+    #[serde(
+        default,
+        rename = "extra-rule-sets",
+        deserialize_with = "deserialize_string_or_vec"
+    )]
+    pub extra_rule_sets: Vec<String>,
+
     // Generate this test but do not run it
     pub skip: bool,
 }
@@ -123,6 +132,7 @@ impl Default for TestConfig {
             minion_discrete_threshold: default_minion_discrete_threshold(),
             validate_with_conjure: true,
             flatten_matrices: false,
+            extra_rule_sets: vec![],
         }
     }
 }

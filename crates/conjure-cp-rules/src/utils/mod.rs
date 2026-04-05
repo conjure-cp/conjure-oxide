@@ -254,3 +254,12 @@ pub fn as_lex_comparison_op(expr: &Expr) -> Option<(Moo<Expr>, Moo<Expr>)> {
 pub fn as_cmp_or_lex_op(expr: &Expr) -> Option<(Moo<Expr>, Moo<Expr>)> {
     as_lex_comparison_op(expr).or_else(|| as_comparison_op(expr))
 }
+
+/// Build `lhs = rhs` or `lhs != rhs`.
+pub fn eq_or_neq(neq: bool, lhs: Expr, rhs: Expr) -> Expr {
+    if neq {
+        essence_expr!(&lhs != &rhs)
+    } else {
+        essence_expr!(&lhs = &rhs)
+    }
+}
