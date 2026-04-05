@@ -11,7 +11,6 @@ register_representation!(
         /// Domain sizes for each element (number of values in each element domain)
         pub sizes: Vec<i32>,
         /// Strides for each element; stride[i] = product of sizes[i+1..n].
-        /// The last element varies fastest, preserving lexicographic ordering.
         pub strides: Vec<i32>,
         /// Minimum values for each element domain (offset for encoding)
         pub mins: Vec<i32>,
@@ -60,6 +59,7 @@ register_representation!(
             return Err(domain_err("expected a ground tuple domain"));
         };
 
+        // Collect element domain sizes and minima
         let mut sizes = Vec::with_capacity(gd_tuple.len());
         let mut mins = Vec::with_capacity(gd_tuple.len());
 
@@ -84,7 +84,7 @@ register_representation!(
             mins.push(*lo);
         }
 
-        // Compute strides (last element varies fastest for lex-order preservation)
+        // Compute strides
         let n = sizes.len();
         let mut strides = vec![1i32; n];
         for i in (0..n.saturating_sub(1)).rev() {
@@ -95,9 +95,8 @@ register_representation!(
         let total_size = strides[0].checked_mul(sizes[0])
             .ok_or_else(|| domain_err("packed representation would overflow i32"))?;
 
-        let packed_dom = domain_int!(0..(total_size - 1));
-
-        Ok(State { packed: packed_dom.into(), sizes, strides, mins, total_size })
+        let packed = domain_int!(0..(total_size - 1));
+        Ok(State { packed, sizes, strides, mins, total_size })
     }
     fn structural(_state: &State<DeclarationPtr>) -> Vec<Expression> {
         vec![]
