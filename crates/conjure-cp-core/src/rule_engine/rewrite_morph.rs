@@ -54,7 +54,7 @@ pub fn rewrite_morph<'a>(
     set_current_rewriter(Rewriter::Morph(config));
 
     trace!(
-        target: "rule_engine_human",
+        target: "rule_engine_rule_trace",
         "Model before rewriting:\n\n{}\n--\n",
         model
     );
@@ -99,7 +99,7 @@ pub fn rewrite_morph<'a>(
     }
 
     trace!(
-        target: "rule_engine_human",
+        target: "rule_engine_rule_trace",
         "Final model:\n\n{}",
         model
     );
