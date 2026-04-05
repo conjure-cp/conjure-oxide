@@ -30,7 +30,6 @@ run_case() {
     aggregate_path="$TMP_DIR/$model_name.aggregate"
     stderr_path="$TMP_DIR/$model_name.stderr"
 
-    start_s=$(date +%s)
     set +e
     "$TIMEOUT_BIN" 60 \
         conjure-oxide-debug solve \
@@ -44,8 +43,6 @@ run_case() {
         >/dev/null 2>"$stderr_path"
     rc=$?
     set -e
-    end_s=$(date +%s)
-    elapsed_s=$((end_s - start_s))
 
     case "$rc" in
         0)
@@ -62,7 +59,6 @@ run_case() {
     echo "CASE $model_name"
     echo "param: $(basename "$param_path")"
     echo "status: $status"
-    echo "time_taken_s: $elapsed_s"
     if [ -s "$aggregate_path" ]; then
         cat "$aggregate_path"
     else
