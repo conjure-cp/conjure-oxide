@@ -111,9 +111,8 @@ fn parse_comparison_expression(
             parse_binary_expression(ctx, &inner)
         }
         "set_comparison" => {
-            // Set comparisons require set operands (no specific type checking for now)
-            // TODO: add typechecking for sets
-            ctx.typechecking_context = TypecheckingContext::Unknown;
+            // Set comparisons require set operands (except 'in', which is hadled later)
+            ctx.typechecking_context = TypecheckingContext::Set;
             parse_binary_expression(ctx, &inner)
         }
         "all_diff_comparison" => {
@@ -211,17 +210,28 @@ pub fn parse_binary_expression(
     ctx: &mut ParseContext,
     node: &Node,
 ) -> Result<Option<Expression>, FatalParseError> {
-    let mut parse_subexpr = |expr: Node| parse_expression(ctx, expr);
-
-    let Some(left) = parse_subexpr(field!(node, "left"))? else {
-        return Ok(None);
-    };
-    let Some(right) = parse_subexpr(field!(node, "right"))? else {
-        return Ok(None);
-    };
-
     let op_node = field!(node, "operator");
     let op_str = &ctx.source_code[op_node.start_byte()..op_node.end_byte()];
+
+    let saved_ctx = ctx.typechecking_context;
+
+    // Special handling for 'in' operator, as the left operand doesn't have to be a set
+    if op_str == "in" {
+        ctx.typechecking_context = TypecheckingContext::Unknown
+    }
+
+    // parse left operand
+    let Some(left) = parse_expression(ctx, field!(node, "left"))? else {
+        return Ok(None);
+    };
+
+    // reset context, if needed
+    ctx.typechecking_context = saved_ctx;
+
+    // parse right operand
+    let Some(right) = parse_expression(ctx, field!(node, "right"))? else {
+        return Ok(None);
+    };
 
     let mut description = format!("Operator '{op_str}'");
     let expr = match op_str {
