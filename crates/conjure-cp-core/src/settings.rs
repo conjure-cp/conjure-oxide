@@ -369,6 +369,7 @@ pub enum SolverFamily {
     Minion,
     Sat(SatEncoding),
     Smt(TheoryConfig),
+    SavileRow,
 }
 
 thread_local! {
@@ -471,6 +472,7 @@ impl FromStr for SolverFamily {
 
         match s.as_str() {
             "minion" => Ok(SolverFamily::Minion),
+            "savilerow" => Ok(SolverFamily::SavileRow),
             "sat" | "sat-log" => Ok(SolverFamily::Sat(SatEncoding::Log)),
             "sat-direct" => Ok(SolverFamily::Sat(SatEncoding::Direct)),
             "sat-order" => Ok(SolverFamily::Sat(SatEncoding::Order)),
@@ -506,7 +508,7 @@ impl FromStr for SolverFamily {
                     }));
                 }
                 Err(format!(
-                    "unknown solver family '{other}', expected one of: minion, sat-log, sat-direct, sat-order, smt[(bv|lia)-(arrays|atomic)][-nodiscrete]"
+                    "unknown solver family '{other}', expected one of: minion, savilerow, savile-row, sat-log, sat-direct, sat-order, smt[(bv|lia)-(arrays|atomic)][-nodiscrete]"
                 ))
             }
         }
@@ -517,6 +519,7 @@ impl SolverFamily {
     pub fn as_str(&self) -> String {
         match self {
             SolverFamily::Minion => "minion".to_owned(),
+            SolverFamily::SavileRow => "savile-row".to_owned(),
             SolverFamily::Sat(encoding) => format!("sat-{}", encoding.as_str()),
             SolverFamily::Smt(theory_config) => format!("smt-{}", theory_config.as_str()),
         }

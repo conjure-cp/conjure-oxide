@@ -242,6 +242,7 @@ pub(crate) fn init_solver(global_args: &GlobalArgs) -> Solver {
         SolverFamily::Minion => Solver::new(Minion::default()),
         SolverFamily::Sat(_) => Solver::new(Sat::default()),
         SolverFamily::Smt(theory_cfg) => Solver::new(Smt::new(timeout_ms, theory_cfg)),
+        SolverFamily::SavileRow => Solver::new(SavileRow::default()),
     }
 }
 
