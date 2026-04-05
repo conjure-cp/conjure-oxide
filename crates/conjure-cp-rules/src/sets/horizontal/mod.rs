@@ -5,4 +5,5 @@ mod subset;
 mod subseteq;
 mod supset;
 mod supseteq;
+mod in_rule;
 mod union;
