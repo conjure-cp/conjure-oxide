@@ -121,6 +121,9 @@ static CALLBACK: Mutex<Option<Callback>> = Mutex::new(None);
 // the variables we want to return, and their ordering in the print matrix
 static PRINT_VARS: Mutex<Option<Vec<VarName>>> = Mutex::new(None);
 
+// variables declared with VarDomain::Bool, so we can convert their integer solutions back
+static VAR_DOMAINS: Mutex<Option<HashMap<VarName, VarDomain>>> = Mutex::new(None);
+
 static LOCK: (Mutex<bool>, Condvar) = (Mutex::new(false), Condvar::new());
 
 #[unsafe(no_mangle)]
@@ -148,11 +151,20 @@ unsafe extern "C" fn run_callback() -> bool {
     // build nice solutions view to be used by callback
     let mut solutions: HashMap<VarName, Constant> = HashMap::new();
 
+    #[allow(clippy::unwrap_used)]
+    let var_domains_guard = VAR_DOMAINS.lock().unwrap();
+    let var_domains = var_domains_guard.as_ref();
+
     for (i, var) in print_vars.iter().enumerate() {
         let solution_int: i32 = ffi::printMatrix_getValue(i as _);
-        let solution: Constant = Constant::Integer(solution_int);
+        let solution: Constant = match var_domains.and_then(|vd| vd.get(var)) {
+            Some(VarDomain::Bool) => Constant::Bool(solution_int != 0),
+            _ => Constant::Integer(solution_int),
+        };
         solutions.insert(var.to_string(), solution);
     }
+
+    drop(var_domains_guard);
 
     #[allow(clippy::unwrap_used)]
     match *CALLBACK.lock().unwrap() {
@@ -232,6 +244,10 @@ unsafe fn convert_model_to_raw(
     let mut print_vars_guard = PRINT_VARS.lock().unwrap();
     *print_vars_guard = Some(vec![]);
 
+    #[allow(clippy::unwrap_used)]
+    let mut var_domains_guard = VAR_DOMAINS.lock().unwrap();
+    *var_domains_guard = Some(HashMap::new());
+
     // initialise all variables, and add all variables to the print order
     for var_name in model.named_variables.get_variable_order() {
         let c_str = CString::new(var_name.clone()).map_err(|_| {
@@ -252,6 +268,12 @@ unsafe fn convert_model_to_raw(
             VarDomain::Bool => Ok((ffi::VariableType_VAR_BOOL, 0, 1)), // TODO: will this work?
             x => Err(MinionError::NotImplemented(format!("{x:?}"))),
         }?;
+
+        // Store the original domain so we can convert integer solutions back to the
+        // correct type (e.g. Bool) in the callback.
+        if let Some(ref mut vd) = *var_domains_guard {
+            vd.insert(var_name.clone(), vartype);
+        }
 
         ffi::newVar_ffi(
             instance,
