@@ -1,4 +1,5 @@
 #![allow(clippy::legacy_numeric_constants)]
+use crate::field;
 
 use std::collections::BTreeMap;
 use tree_sitter::Node;
@@ -9,14 +10,15 @@ use super::util::named_children;
 use crate::diagnostics::diagnostics_api::SymbolKind;
 use crate::diagnostics::source_map::{HoverInfo, span_with_hover};
 use crate::errors::{FatalParseError, RecoverableParseError};
-use crate::field;
 use conjure_cp_core::ast::{DomainPtr, Name};
 
 pub fn parse_find_statement(
     ctx: &mut ParseContext,
     find_statement: Node,
 ) -> Result<BTreeMap<Name, DomainPtr>, FatalParseError> {
-    let keyword = field!(find_statement, "find_keyword");
+    let Some(keyword) = field!(recover, ctx, find_statement, "find_keyword") else {
+        return Ok(BTreeMap::new());
+    };
     span_with_hover(
         &keyword,
         ctx.source_code,
@@ -41,7 +43,9 @@ pub fn parse_given_statement(
     ctx: &mut ParseContext,
     given_statement: Node,
 ) -> Result<BTreeMap<Name, DomainPtr>, FatalParseError> {
-    let keyword = field!(given_statement, "given_keyword");
+    let Some(keyword) = field!(recover, ctx, given_statement, "given_keyword") else {
+        return Ok(BTreeMap::new());
+    };
     span_with_hover(
         &keyword,
         ctx.source_code,
@@ -70,14 +74,29 @@ pub fn parse_declaration_statement(
 ) -> Result<BTreeMap<Name, DomainPtr>, FatalParseError> {
     let mut vars = BTreeMap::new();
 
-    let domain = field!(statement_node, "domain");
-    let Some(domain) = parse_domain(ctx, domain)? else {
+    let Some(domain_node) = field!(recover, ctx, statement_node, "domain") else {
         return Ok(vars);
     };
 
-    let variable_list = field!(statement_node, "variables");
+    let Some(domain) = parse_domain(ctx, domain_node)? else {
+        return Ok(vars);
+    };
+
+    let Some(variable_list) = field!(recover, ctx, statement_node, "variables") else {
+        return Ok(vars);
+    };
     for variable in named_children(&variable_list) {
-        let variable_name = &ctx.source_code[variable.start_byte()..variable.end_byte()];
+        // avoid the _FRAGMENT_EXPRESSION panic by checking range before slicing the source code
+        let start = variable.start_byte();
+        let end = variable.end_byte();
+        if end > ctx.source_code.len() {
+            ctx.record_error(RecoverableParseError::new(
+                "Variable name extends beyond end of source code".to_string(),
+                Some(variable.range()),
+            ));
+            continue;
+        }
+        let variable_name = &ctx.source_code[start..end];
         let name = Name::user(variable_name);
 
         // Check for duplicate within the same statement
