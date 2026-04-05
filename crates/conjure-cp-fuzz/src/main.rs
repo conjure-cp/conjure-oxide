@@ -75,15 +75,16 @@ fn run_pipeline(src: &str) -> Result<(), String> {
     let model_clone = model.clone();
     let rewritten = with_timeout(move || rewrite_naive(&model_clone, &rule_sets_clone, false));
     let rewritten = match rewritten {
-        None => return Ok(()),                     // timed out
-        Some(Err(e)) => return Err(e.to_string()), // rewrite failure
-        Some(Ok(m)) => m,
+        None => return Ok(()), // timed out
+        Some(m) => m.map_err(|e| format!("rewrite error: {}", e))?,
     };
 
     // ── Stage 3: Solve ──────────────────────────────────────────────────
     let solved = with_timeout(move || {
         let solver = Solver::new(Minion::default());
-        let solver = solver.load_model(rewritten).expect("load model failed");
+        let solver = solver
+            .load_model(rewritten)
+            .map_err(|e| format!("load model failed: {e}"))?;
         // Run solver, collecting at most 1 solution to keep it fast.
         let _result = solver.solve(Box::new(|_| true));
         Ok(())
