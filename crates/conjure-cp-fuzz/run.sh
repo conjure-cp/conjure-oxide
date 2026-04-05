@@ -4,8 +4,8 @@ set -euo pipefail
 # ── Configuration ────────────────────────────────────────────────────
 CORES="${FUZZ_CORES:-8}"
 CAMPAIGN_TIMEOUT="${FUZZ_CAMPAIGN_TIMEOUT:-86400}"  # whole campaign timeout (seconds), default 24h
-RUN_TIMEOUT="${FUZZ_RUN_TIMEOUT:-1200}"               # per-harness-run timeout (seconds), default 20min
-MEM_LIMIT="${FUZZ_MEM_LIMIT:-2048}"                  # per-instance memory limit (MB), default 2G
+RUN_TIMEOUT="${FUZZ_RUN_TIMEOUT:-1200}"             # per-harness-run timeout (seconds), default 20min
+MEM_LIMIT="${FUZZ_MEM_LIMIT:-2048}"                 # per-instance memory limit (MB), default 2G
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
@@ -20,29 +20,40 @@ export AFL_TESTCACHE_SIZE=500           # shared testcase cache (MB)
 export AFL_IGNORE_SEED_PROBLEMS=1       # skip seeds that crash/timeout on startup
 export AFL_IMPORT_FIRST=1               # load other fuzzers' findings first
 export AFL_FINAL_SYNC=1                 # main instance does a final sync pass
+export AFL_AUTORESUME=1                 # auto-resume from existing corpus
 
 # ── Build ────────────────────────────────────────────────────────────
 echo "[*] Building harness..."
 cargo afl build -p conjure-cp-fuzz --profile profiling
 
-# ── Validate seeds dir ───────────────────────────────────────────────
-if [ ! -d "$SEEDS_DIR" ] || [ -z "$(find "$SEEDS_DIR" -maxdepth 1 -type f 2>/dev/null)" ]; then
-    echo "[!] No seed files found in $SEEDS_DIR"
-    echo "    Add .essence files there before running."
-    exit 1
-fi
+# ── Determine input directory (fresh start vs. resume) ───────────────
+MAIN_INSTANCE="main-$(hostname)"
+MAIN_QUEUE="$CORPUS_DIR/$MAIN_INSTANCE/queue"
 
-# ── Seed corpus minimization (afl-cmin) ──────────────────────────────
-SEEDS_MIN_DIR="$SCRIPT_DIR/seeds_minimized"
-echo "[*] Minimizing seed corpus into $SEEDS_MIN_DIR ..."
-rm -rf "$SEEDS_MIN_DIR"
-mkdir -p "$SEEDS_MIN_DIR"
-cargo afl cmin -i "$SEEDS_DIR" -o "$SEEDS_MIN_DIR" -m "$MEM_LIMIT" -t "$((RUN_TIMEOUT * 1000))" -- "$HARNESS"
-echo "[*] Minimized: $(find "$SEEDS_MIN_DIR" -maxdepth 1 -type f | wc -l) seeds (from $(find "$SEEDS_DIR" -maxdepth 1 -type f | wc -l))"
+if [ -d "$MAIN_QUEUE" ] && [ -n "$(find "$MAIN_QUEUE" -maxdepth 1 -type f 2>/dev/null)" ]; then
+    # ── Resuming a previous campaign ─────────────────────────────────
+    echo "[*] Existing corpus found in $CORPUS_DIR — resuming previous campaign."
+    INPUT_DIR="-"
+else
+    # ── Fresh start — validate and minimize seeds ────────────────────
+    if [ ! -d "$SEEDS_DIR" ] || [ -z "$(find "$SEEDS_DIR" -maxdepth 1 -type f 2>/dev/null)" ]; then
+        echo "[!] No seed files found in $SEEDS_DIR"
+        echo "    Add .essence files there before running."
+        exit 1
+    fi
+
+    SEEDS_MIN_DIR="$SCRIPT_DIR/seeds_minimized"
+    echo "[*] Minimizing seed corpus into $SEEDS_MIN_DIR ..."
+    rm -rf "$SEEDS_MIN_DIR"
+    mkdir -p "$SEEDS_MIN_DIR"
+    cargo afl cmin -i "$SEEDS_DIR" -o "$SEEDS_MIN_DIR" -m "$MEM_LIMIT" -t "$((RUN_TIMEOUT * 1000))" -- "$HARNESS"
+    echo "[*] Minimized: $(find "$SEEDS_MIN_DIR" -maxdepth 1 -type f | wc -l) seeds (from $(find "$SEEDS_DIR" -maxdepth 1 -type f | wc -l))"
+    INPUT_DIR="$SEEDS_MIN_DIR"
+fi
 
 # ── Common fuzz flags ────────────────────────────────────────────────
 RUN_TIMEOUT_MS=$((RUN_TIMEOUT * 1000))
-COMMON_FLAGS=(-i "$SEEDS_MIN_DIR" -o "$CORPUS_DIR" -x "$DICT" -m "$MEM_LIMIT" -t "$RUN_TIMEOUT_MS")
+COMMON_FLAGS=(-i "$INPUT_DIR" -o "$CORPUS_DIR" -x "$DICT" -m "$MEM_LIMIT" -t "$RUN_TIMEOUT_MS")
 
 # ── Launch AFL instances ─────────────────────────────────────────────
 mkdir -p "$CORPUS_DIR"
@@ -56,7 +67,7 @@ SCHEDULES=(fast coe lin quad exploit rare)
 echo "[*] Starting $CORES AFL instances (campaign: ${CAMPAIGN_TIMEOUT}s, per-run: ${RUN_TIMEOUT}s, mem: ${MEM_LIMIT}MB)..."
 
 cargo afl fuzz "${COMMON_FLAGS[@]}" \
-    -M "main-$(hostname)" \
+    -M "$MAIN_INSTANCE" \
     -p explore \
     -a binary \
     -- "$HARNESS" &

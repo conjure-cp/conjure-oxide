@@ -194,6 +194,23 @@ pub fn get_solutions_from_conjure(
         .collect())
 }
 
+/// Like [`get_solutions_from_conjure`], but takes Essence source text instead of
+/// a file path.  Writes the source to a temporary `.essence` file under the
+/// hood.
+#[doc(hidden)]
+pub fn get_solutions_from_conjure_str(
+    src: &str,
+    context: Arc<RwLock<Context<'static>>>,
+) -> Result<Vec<BTreeMap<Name, Literal>>, anyhow::Error> {
+    use std::io::Write;
+
+    let tmp_dir = tempdir()?;
+    let model_path = tmp_dir.path().join("model.essence");
+    std::fs::File::create(&model_path)?.write_all(src.as_bytes())?;
+
+    get_solutions_from_conjure(model_path.to_str().unwrap(), None, context)
+}
+
 pub fn solutions_to_json(solutions: &Vec<BTreeMap<Name, Literal>>) -> JsonValue {
     let mut json_solutions = Vec::new();
     for solution in solutions {
