@@ -6,7 +6,7 @@ use crate::parser::atom::parse_atom;
 use crate::parser::comprehension::parse_quantifier_or_aggregate_expr;
 use crate::util::TypecheckingContext;
 use crate::{field, named_child};
-use conjure_cp_core::ast::{Expression, Metadata, Moo};
+use conjure_cp_core::ast::{Expression, GroundDomain, Metadata, Moo};
 use conjure_cp_core::{domain_int, matrix_expr, range};
 use tree_sitter::Node;
 
@@ -231,10 +231,18 @@ pub fn parse_binary_expression(
     // reset context, if needed
     ctx.typechecking_context = saved_ctx;
 
+    // Equality/inequality: enforce right operand to match left operand type when inferable
+    if matches!(op_str, "=" | "!=") {
+        ctx.typechecking_context = inferred_context_from_expression(&left);
+    }
+
     // parse right operand
     let Some(right) = parse_expression(ctx, right_node)? else {
         return Ok(None);
     };
+
+    // restore original context for parent expression parsing
+    ctx.typechecking_context = saved_ctx;
 
     let mut description = format!("Operator '{op_str}'");
     let expr = match op_str {
@@ -403,4 +411,25 @@ pub fn parse_binary_expression(
     }
 
     expr
+}
+
+fn inferred_context_from_expression(expr: &Expression) -> TypecheckingContext {
+    let Some(domain) = expr.domain_of() else {
+        return TypecheckingContext::Unknown;
+    };
+    let Some(ground) = domain.resolve() else {
+        return TypecheckingContext::Unknown;
+    };
+
+    match ground.as_ref() {
+        GroundDomain::Bool => TypecheckingContext::Boolean,
+        GroundDomain::Int(_) => TypecheckingContext::Arithmetic,
+        GroundDomain::Set(_, _) => TypecheckingContext::Set,
+        GroundDomain::MSet(_, _) => TypecheckingContext::MSet,
+        GroundDomain::Matrix(_, _) => TypecheckingContext::Matrix,
+        GroundDomain::Tuple(_) => TypecheckingContext::Tuple,
+        GroundDomain::Record(_) => TypecheckingContext::Record,
+        GroundDomain::Function(_, _, _) => TypecheckingContext::Function,
+        GroundDomain::Empty(_) => TypecheckingContext::Empty,
+    }
 }
