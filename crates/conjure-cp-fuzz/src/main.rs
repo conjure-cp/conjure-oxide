@@ -88,7 +88,7 @@ fn conjure_solutions(pth: &str) -> Option<Vec<BTreeMap<Name, Literal>>> {
 /// Returns normally in all cases except a solution mismatch, where it calls
 /// `process::abort()` so AFL registers the input as a crash.
 fn run_pipeline(src: &str) {
-    let Some((essence_file, _tmp_guard)) = write_model(src).ok() else {
+    let Some((essence_file, tmp_guard)) = write_model(src).ok() else {
         return;
     };
 
@@ -114,6 +114,8 @@ fn run_pipeline(src: &str) {
     let conjure_json = solutions_to_json(&conjure_normalized);
 
     if oxide_json != conjure_json {
+        // clean up before we abort
+        drop(tmp_guard);
         // Case we want to catch - conjure and oxide disagreeing
         process::abort();
     }
