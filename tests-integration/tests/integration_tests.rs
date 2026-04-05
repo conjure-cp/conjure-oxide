@@ -146,8 +146,7 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
                         as Arc<dyn tracing::Subscriber + Send + Sync>;
                     let run_label = run_case_label(path, essence_base, extension, run_case);
                     eprintln!("[integration] running {run_label}");
-                    // TODO: enable this for both rewriters once morph supports rule traces.
-                    let default_rule_trace_enabled = matches!(rewriter, Rewriter::Naive);
+                    let default_rule_trace_enabled = true;
                     set_rule_trace_enabled(default_rule_trace_enabled);
                     set_default_rule_trace_enabled(default_rule_trace_enabled);
                     set_rule_trace_verbose_enabled(false);
