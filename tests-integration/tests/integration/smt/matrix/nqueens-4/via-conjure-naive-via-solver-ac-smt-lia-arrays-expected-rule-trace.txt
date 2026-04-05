@@ -218,6 +218,12 @@ x[4]
 
 --
 
+x[..], 
+   ~~> flatten_matrix_slice ([("Smt", 1000)])
+[x[1],x[2],x[3],x[4];int(1..)]
+
+--
+
 Final model:
 
 letting dom be domain int(1..n)
@@ -226,7 +232,7 @@ find x: matrix indexed by [dom] of dom
 
 such that
 
-allDiff(x[..]),
+allDiff([x[1],x[2],x[3],x[4];int(1..)]),
 allDiff([sum([x[1],1;int(1..)]),sum([x[2],2;int(1..)]),sum([x[3],3;int(1..)]),sum([x[4],4;int(1..)]);int(1..)]),
 allDiff([sum([x[1],-1;int(1..)]),sum([x[2],-2;int(1..)]),sum([x[3],-3;int(1..)]),sum([x[4],-4;int(1..)]);int(1..)])
 
