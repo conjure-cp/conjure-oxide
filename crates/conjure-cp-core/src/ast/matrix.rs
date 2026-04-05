@@ -7,7 +7,7 @@ use std::collections::VecDeque;
 use itertools::{Itertools, izip};
 use uniplate::Uniplate as _;
 
-use crate::ast::{DomainOpError, Expression as Expr, GroundDomain, Metadata, Moo, Range};
+use crate::ast::{DomainOpError, Expression as Expr, GroundDomain, Metadata, Moo, Range, domains::UInt};
 
 use super::{AbstractLiteral, Literal};
 
@@ -55,7 +55,7 @@ pub fn enumerate_indices(
 /// Returns the number of possible elements indexable by the given index domains.
 ///
 /// In short, returns the product of the sizes of the given indices.
-pub fn num_elements(index_domains: &[Moo<GroundDomain>]) -> Result<u64, DomainOpError> {
+pub fn num_elements(index_domains: &[Moo<GroundDomain>]) -> Result<UInt, DomainOpError> {
     let idx_dom_lengths = index_domains
         .iter()
         .map(|d| d.length())
@@ -183,7 +183,7 @@ pub fn enumerate_index_union_indices(
 }
 
 // Given index domains for a multi-dimensional matrix and the nth index in the flattened matrix, find the coordinates in the original matrix
-pub fn flat_index_to_full_index(index_domains: &[Moo<GroundDomain>], index: u64) -> Vec<Literal> {
+pub fn flat_index_to_full_index(index_domains: &[Moo<GroundDomain>], index: UInt) -> Vec<Literal> {
     let mut remaining = index;
     let mut multipliers = vec![1; index_domains.len()];
 
@@ -194,7 +194,7 @@ pub fn flat_index_to_full_index(index_domains: &[Moo<GroundDomain>], index: u64)
     let mut coords = Vec::new();
     for m in multipliers.iter() {
         // adjust for 1-based indexing
-        coords.push(((remaining / m + 1) as i32).into());
+        coords.push((remaining / m + 1).into());
         remaining %= *m;
     }
 
@@ -235,7 +235,7 @@ pub fn safe_index_optimised(m: Expr, idx: Literal) -> Option<Expr> {
             let GroundDomain::Matrix(_, index_domains) = dom.as_ref() else {
                 return None;
             };
-            let flat_index = flat_index_to_full_index(index_domains, (index - 1) as u64);
+            let flat_index = flat_index_to_full_index(index_domains, (index - 1) as UInt);
             let flat_index: Vec<Expr> = flat_index.into_iter().map(Into::into).collect();
 
             Some(Expr::SafeIndex(Metadata::new(), inner, flat_index))

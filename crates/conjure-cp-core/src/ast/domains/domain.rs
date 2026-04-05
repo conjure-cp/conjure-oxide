@@ -16,6 +16,7 @@ use uniplate::Uniplate;
 
 /// The integer type used in all domain code (int ranges, set sizes, etc)
 pub type Int = i32;
+pub type UInt = u32;
 
 pub type DomainPtr = Moo<Domain>;
 
@@ -141,7 +142,7 @@ impl Domain {
     /// will be [GroundDomain::Set]. Otherwise, it will be [UnresolvedDomain::Set].
     pub fn set<T>(attr: T, inner_dom: DomainPtr) -> DomainPtr
     where
-        T: Into<SetAttr<IntVal>> + TryInto<SetAttr<Int>> + Clone,
+        T: Into<SetAttr<IntVal>> + TryInto<SetAttr<UInt>> + Clone,
     {
         if let Domain::Ground(gd) = inner_dom.as_ref()
             && let Ok(int_attr) = attr.clone().try_into()
@@ -160,7 +161,7 @@ impl Domain {
     /// Create a new multiset domain with the given element domain and attributes
     pub fn mset<T>(attr: T, inner_dom: DomainPtr) -> DomainPtr
     where
-        T: Into<MSetAttr<IntVal>> + TryInto<MSetAttr<Int>> + Clone,
+        T: Into<MSetAttr<IntVal>> + TryInto<MSetAttr<UInt>> + Clone,
     {
         if let Domain::Ground(gd) = inner_dom.as_ref()
             && let Ok(int_attr) = attr.clone().try_into()
@@ -228,7 +229,7 @@ impl Domain {
     /// Create a new function domain
     pub fn function<T>(attrs: T, dom: DomainPtr, cdom: DomainPtr) -> DomainPtr
     where
-        T: Into<FuncAttr<IntVal>> + TryInto<FuncAttr<Int>> + Clone,
+        T: Into<FuncAttr<IntVal>> + TryInto<FuncAttr<UInt>> + Clone,
     {
         if let Ok(attrs_gd) = attrs.clone().try_into()
             && let Some(dom_gd) = dom.as_ground()
@@ -444,7 +445,7 @@ impl Domain {
     }
 
     /// If this is a [GroundDomain::Set], get immutable references to its attributes and inner domain
-    pub fn as_set_ground(&self) -> Option<(&SetAttr<Int>, &Moo<GroundDomain>)> {
+    pub fn as_set_ground(&self) -> Option<(&SetAttr<UInt>, &Moo<GroundDomain>)> {
         if let Some(GroundDomain::Set(attr, inner_dom)) = self.as_ground() {
             return Some((attr, inner_dom));
         }
@@ -452,7 +453,7 @@ impl Domain {
     }
 
     /// If this is a [GroundDomain::Set], get mutable references to its attributes and inner domain
-    pub fn as_set_ground_mut(&mut self) -> Option<(&mut SetAttr<Int>, &mut Moo<GroundDomain>)> {
+    pub fn as_set_ground_mut(&mut self) -> Option<(&mut SetAttr<UInt>, &mut Moo<GroundDomain>)> {
         if let Some(GroundDomain::Set(attr, inner_dom)) = self.as_ground_mut() {
             return Some((attr, inner_dom));
         }
@@ -634,7 +635,7 @@ impl Domain {
     }
 
     /// If the domain is ground, return its size bound
-    pub fn length(&self) -> Result<u64, DomainOpError> {
+    pub fn length(&self) -> Result<UInt, DomainOpError> {
         if let Some(gd) = self.as_ground() {
             return gd.length();
         }

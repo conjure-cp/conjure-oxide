@@ -1,5 +1,5 @@
 use conjure_cp::ast::{
-    Atom, Expression as Expr, GroundDomain, Literal, Metadata, SymbolTable, matrix,
+    Atom, Expression as Expr, GroundDomain, Literal, Metadata, SymbolTable, matrix, domains::UInt
 };
 use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
@@ -39,7 +39,7 @@ fn indexed_flatten_matrix(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let flat_index = matrix::flat_index_to_full_index(index_domains, (index - 1) as u64);
+    let flat_index = matrix::flat_index_to_full_index(index_domains, (index - 1) as UInt);
     let flat_index: Vec<Expr> = flat_index.into_iter().map(Into::into).collect();
 
     // This must be unsafe since we are using a possibly unsafe flat index.
