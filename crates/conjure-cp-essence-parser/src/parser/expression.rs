@@ -213,9 +213,6 @@ pub fn parse_binary_expression(
     let op_node = field!(node, "operator");
     let op_str = &ctx.source_code[op_node.start_byte()..op_node.end_byte()];
 
-    let left_node = field!(node, "left");
-    let right_node = field!(node, "right");
-
     let saved_ctx = ctx.typechecking_context;
 
     // Special handling for 'in' operator, as the left operand doesn't have to be a set
@@ -224,7 +221,7 @@ pub fn parse_binary_expression(
     }
 
     // parse left operand
-    let Some(left) = parse_expression(ctx, left_node)? else {
+    let Some(left) = parse_expression(ctx, field!(node, "left"))? else {
         return Ok(None);
     };
 
@@ -232,7 +229,7 @@ pub fn parse_binary_expression(
     ctx.typechecking_context = saved_ctx;
 
     // parse right operand
-    let Some(right) = parse_expression(ctx, right_node)? else {
+    let Some(right) = parse_expression(ctx, field!(node, "right"))? else {
         return Ok(None);
     };
 
