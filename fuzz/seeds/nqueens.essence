@@ -1,0 +1,21 @@
+language ESSENCE' 1.0
+
+$ 8-queens problem
+$
+$ modified from savile rows' nqueens test.
+
+letting    AMOUNT_QUEENS be domain int(0..7)
+find       q1: matrix indexed by [ AMOUNT_QUEENS ] of int(0..7)
+find       q2: matrix indexed by [ AMOUNT_QUEENS ] of int(-7..7)
+find       q3: matrix indexed by [ AMOUNT_QUEENS ] of int(0..14)
+
+such that  allDiff(q1), 
+           allDiff(q2), 
+           allDiff(q3),
+           
+         $ diagonals
+           forAll i : AMOUNT_QUEENS . (
+               (q2[i]=q1[i]-i)  /\
+               (q3[i]=q1[i]+i)
+           )
+           
