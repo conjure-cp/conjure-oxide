@@ -214,13 +214,9 @@ impl GroundDomain {
             GroundDomain::Record(entries) => {
                 todo!()
             }
-            GroundDomain::Set(attr, inner_dom) => {
-                todo!()
-            }
+            GroundDomain::Set(..) => todo!("Enumerating set domains is not yet supported"),
             GroundDomain::MSet(..) => todo!("Enumerating multi-set domains is not yet supported"),
-            GroundDomain::Function(..) => {
-                todo!("Enumerating function domains is not yet supported")
-            }
+            GroundDomain::Function(..) => todo!("Enumerating function domains is not yet supported")
         }
     }
 
