@@ -1,6 +1,6 @@
 #![allow(clippy::legacy_numeric_constants)]
+use crate::field;
 use std::collections::BTreeSet;
-
 use tree_sitter::Node;
 
 use super::ParseContext;
@@ -18,12 +18,7 @@ pub fn parse_letting_statement(
     ctx: &mut ParseContext,
     letting_statement: Node,
 ) -> Result<Option<SymbolTable>, FatalParseError> {
-    let keyword = letting_statement.child_by_field_name("letting_keyword");
-    let Some(keyword) = keyword else {
-        ctx.record_error(RecoverableParseError::new(
-            "Missing letting keyword".to_string(),
-            Some(letting_statement.range()),
-        ));
+    let Some(keyword) = field!(recover, ctx, letting_statement, "letting_keyword") else {
         return Ok(None);
     };
     span_with_hover(
@@ -43,12 +38,7 @@ pub fn parse_letting_statement(
     for variable_decl in named_children(&letting_statement) {
         let mut temp_symbols = BTreeSet::new();
 
-        let variable_list = variable_decl.child_by_field_name("variable_list");
-        let Some(variable_list) = variable_list else {
-            ctx.record_error(RecoverableParseError::new(
-                "Missing expression or domain in letting statement".to_string(),
-                Some(variable_decl.range()),
-            ));
+        let Some(variable_list) = field!(recover, ctx, variable_decl, "variable_list") else {
             return Ok(None);
         };
         for variable in named_children(&variable_list) {
@@ -101,12 +91,7 @@ pub fn parse_letting_statement(
             ctx.save_decl_span(name, span_id);
         }
 
-        let expr_or_domain = variable_decl.child_by_field_name("expr_or_domain");
-        let Some(expr_or_domain) = expr_or_domain else {
-            ctx.record_error(RecoverableParseError::new(
-                "Missing expression or domain in letting statement".to_string(),
-                Some(variable_decl.range()),
-            ));
+        let Some(expr_or_domain) = field!(recover, ctx, variable_decl, "expr_or_domain") else {
             return Ok(None);
         };
 

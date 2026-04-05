@@ -1,6 +1,7 @@
 use crate::errors::FatalParseError;
 use crate::errors::RecoverableParseError;
 use crate::expression::parse_expression;
+use crate::field;
 use crate::parser::ParseContext;
 use crate::parser::domain::parse_domain;
 use crate::util::{TypecheckingContext, named_children};
@@ -33,36 +34,14 @@ fn parse_record(
 ) -> Result<Option<AbstractLiteral<Expression>>, FatalParseError> {
     let mut values = Vec::new();
     for child in node.children_by_field_name("name_value_pair", &mut node.walk()) {
-        let name_node = match child.child_by_field_name("name") {
-            Some(node) => node,
-            None => {
-                ctx.record_error(RecoverableParseError::new(
-                    format!(
-                        "Missing field '{}' in expression of kind '{}'",
-                        "name",
-                        child.kind()
-                    ),
-                    Some(child.range()),
-                ));
-                return Ok(None);
-            }
+        let Some(name_node) = field!(recover, ctx, child, "name") else {
+            return Ok(None);
         };
         let name_str = &ctx.source_code[name_node.start_byte()..name_node.end_byte()];
         let name = conjure_cp_core::ast::Name::user(name_str);
 
-        let value_node = match child.child_by_field_name("value") {
-            Some(node) => node,
-            None => {
-                ctx.record_error(RecoverableParseError::new(
-                    format!(
-                        "Missing field '{}' in expression of kind '{}'",
-                        "value",
-                        child.kind()
-                    ),
-                    Some(child.range()),
-                ));
-                return Ok(None);
-            }
+        let Some(value_node) = field!(recover, ctx, child, "value") else {
+            return Ok(None);
         };
         let Some(value) = parse_expression(ctx, value_node)? else {
             return Ok(None);

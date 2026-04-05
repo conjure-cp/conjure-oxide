@@ -6,6 +6,7 @@ use crate::parser::ParseContext;
 use crate::parser::abstract_literal::parse_abstract;
 use crate::parser::comprehension::parse_comprehension;
 use crate::util::{TypecheckingContext, named_children};
+use crate::{field, named_child};
 use conjure_cp_core::ast::{
     Atom, DeclarationPtr, Expression, GroundDomain, Literal, Metadata, Moo, Name,
 };
@@ -18,35 +19,14 @@ pub fn parse_atom(
 ) -> Result<Option<Expression>, FatalParseError> {
     match node.kind() {
         "atom" | "sub_atom_expr" => {
-            let inner = match node.named_child(0) {
-                Some(node) => node,
-                None => {
-                    ctx.record_error(RecoverableParseError::new(
-                        format!(
-                            "Missing sub-expression in expression of kind '{}'",
-                            node.kind()
-                        ),
-                        Some(node.range()),
-                    ));
-                    return Ok(None);
-                }
+            let Some(inner) = named_child!(recover, ctx, node) else {
+                return Ok(None);
             };
             parse_atom(ctx, &inner)
         }
         "metavar" => {
-            let ident = match node.child_by_field_name("identifier") {
-                Some(node) => node,
-                None => {
-                    ctx.record_error(RecoverableParseError::new(
-                        format!(
-                            "Missing field '{}' in expression of kind '{}'",
-                            "identifier",
-                            node.kind()
-                        ),
-                        Some(node.range()),
-                    ));
-                    return Ok(None);
-                }
+            let Some(ident) = field!(recover, ctx, node, "identifier") else {
+                return Ok(None);
             };
             // guard against source code range misalignment
             let start = ident.start_byte();
@@ -75,19 +55,8 @@ pub fn parse_atom(
                 return Ok(None);
             }
 
-            let var_node = match node.child_by_field_name("variable") {
-                Some(var_node) => var_node,
-                None => {
-                    ctx.record_error(RecoverableParseError::new(
-                        format!(
-                            "Missing field '{}' in expression of kind '{}'",
-                            "variable",
-                            node.kind()
-                        ),
-                        Some(node.range()),
-                    ));
-                    return Ok(None);
-                }
+            let Some(var_node) = field!(recover, ctx, node, "variable") else {
+                return Ok(None);
             };
             let Some(inner) = parse_variable(ctx, &var_node)? else {
                 return Ok(None);
@@ -134,19 +103,8 @@ fn parse_flatten(
     ctx: &mut ParseContext,
     node: &Node,
 ) -> Result<Option<Expression>, FatalParseError> {
-    let expr_node = match node.child_by_field_name("expression") {
-        Some(node) => node,
-        None => {
-            ctx.record_error(RecoverableParseError::new(
-                format!(
-                    "Missing field '{}' in expression of kind '{}'",
-                    "expression",
-                    node.kind()
-                ),
-                Some(node.range()),
-            ));
-            return Ok(None);
-        }
+    let Some(expr_node) = field!(recover, ctx, node, "expression") else {
+        return Ok(None);
     };
     let Some(expr) = parse_atom(ctx, &expr_node)? else {
         return Ok(None);
@@ -177,37 +135,15 @@ fn parse_table(ctx: &mut ParseContext, node: &Node) -> Result<Option<Expression>
     let saved_context = ctx.typechecking_context;
     ctx.typechecking_context = TypecheckingContext::Unknown;
 
-    let variables_node = match node.child_by_field_name("variables") {
-        Some(node) => node,
-        None => {
-            ctx.record_error(RecoverableParseError::new(
-                format!(
-                    "Missing field '{}' in expression of kind '{}'",
-                    "variables",
-                    node.kind()
-                ),
-                Some(node.range()),
-            ));
-            return Ok(None);
-        }
+    let Some(variables_node) = field!(recover, ctx, node, "variables") else {
+        return Ok(None);
     };
     let Some(variables) = parse_atom(ctx, &variables_node)? else {
         return Ok(None);
     };
 
-    let rows_node = match node.child_by_field_name("rows") {
-        Some(node) => node,
-        None => {
-            ctx.record_error(RecoverableParseError::new(
-                format!(
-                    "Missing field '{}' in expression of kind '{}'",
-                    "rows",
-                    node.kind()
-                ),
-                Some(node.range()),
-            ));
-            return Ok(None);
-        }
+    let Some(rows_node) = field!(recover, ctx, node, "rows") else {
+        return Ok(None);
     };
     let Some(rows) = parse_atom(ctx, &rows_node)? else {
         return Ok(None);
@@ -246,38 +182,16 @@ fn parse_index_or_slice(
     // Save current context and temporarily set to Unknown for the collection
     let saved_context = ctx.typechecking_context;
     ctx.typechecking_context = TypecheckingContext::Unknown;
-    let collection_node = match node.child_by_field_name("collection") {
-        Some(node) => node,
-        None => {
-            ctx.record_error(RecoverableParseError::new(
-                format!(
-                    "Missing field '{}' in expression of kind '{}'",
-                    "collection",
-                    node.kind()
-                ),
-                Some(node.range()),
-            ));
-            return Ok(None);
-        }
+    let Some(collection_node) = field!(recover, ctx, node, "collection") else {
+        return Ok(None);
     };
     let Some(collection) = parse_atom(ctx, &collection_node)? else {
         return Ok(None);
     };
     ctx.typechecking_context = saved_context;
     let mut indices = Vec::new();
-    let indices_node = match node.child_by_field_name("indices") {
-        Some(node) => node,
-        None => {
-            ctx.record_error(RecoverableParseError::new(
-                format!(
-                    "Missing field '{}' in expression of kind '{}'",
-                    "indices",
-                    node.kind()
-                ),
-                Some(node.range()),
-            ));
-            return Ok(None);
-        }
+    let Some(indices_node) = field!(recover, ctx, node, "indices") else {
+        return Ok(None);
     };
     for idx_node in named_children(&indices_node) {
         indices.push(parse_index(ctx, &idx_node)?);
@@ -431,18 +345,8 @@ fn typecheck_variable(
 }
 
 fn parse_constant(ctx: &mut ParseContext, node: &Node) -> Result<Option<Literal>, FatalParseError> {
-    let inner = match node.named_child(0) {
-        Some(node) => node,
-        None => {
-            ctx.record_error(RecoverableParseError::new(
-                format!(
-                    "Missing sub-expression in expression of kind '{}'",
-                    node.kind()
-                ),
-                Some(node.range()),
-            ));
-            return Ok(None);
-        }
+    let Some(inner) = named_child!(recover, ctx, node) else {
+        return Ok(None);
     };
     // guard against source code range misalignment
     let start = inner.start_byte();

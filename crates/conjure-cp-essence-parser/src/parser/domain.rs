@@ -10,6 +10,8 @@ use conjure_cp_core::ast::{
 };
 use tree_sitter::Node;
 
+use crate::field;
+
 /// Parse an Essence variable domain into its Conjure AST representation.
 pub fn parse_domain(
     ctx: &mut ParseContext,
@@ -123,19 +125,8 @@ fn parse_int_domain(
         return Ok(Some(Domain::int(vec![Range::Bounded(i32::MIN, i32::MAX)])));
     }
 
-    let range_list = match int_domain.child_by_field_name("ranges") {
-        Some(node) => node,
-        None => {
-            ctx.record_error(RecoverableParseError::new(
-                format!(
-                    "Missing field '{}' in expression of kind '{}'",
-                    "ranges",
-                    int_domain.kind()
-                ),
-                Some(int_domain.range()),
-            ));
-            return Ok(None);
-        }
+    let Some(range_list) = field!(recover, ctx, int_domain, "ranges") else {
+        return Ok(None);
     };
     let mut ranges_unresolved: Vec<Range<IntVal>> = Vec::new();
     let mut all_resolved = true;
@@ -288,19 +279,8 @@ fn parse_matrix_domain(
     matrix_domain: Node,
 ) -> Result<Option<DomainPtr>, FatalParseError> {
     let mut domains: Vec<DomainPtr> = Vec::new();
-    let index_domain_list = match matrix_domain.child_by_field_name("index_domain_list") {
-        Some(node) => node,
-        None => {
-            ctx.record_error(RecoverableParseError::new(
-                format!(
-                    "Missing field '{}' in expression of kind '{}'",
-                    "index_domain_list",
-                    matrix_domain.kind()
-                ),
-                Some(matrix_domain.range()),
-            ));
-            return Ok(None);
-        }
+    let Some(index_domain_list) = field!(recover, ctx, matrix_domain, "index_domain_list") else {
+        return Ok(None);
     };
     for domain in named_children(&index_domain_list) {
         let Some(parsed_domain) = parse_domain(ctx, domain)? else {
@@ -308,19 +288,8 @@ fn parse_matrix_domain(
         };
         domains.push(parsed_domain);
     }
-    let value_domain_node = match matrix_domain.child_by_field_name("value_domain") {
-        Some(node) => node,
-        None => {
-            ctx.record_error(RecoverableParseError::new(
-                format!(
-                    "Missing field '{}' in expression of kind '{}'",
-                    "value_domain",
-                    matrix_domain.kind()
-                ),
-                Some(matrix_domain.range()),
-            ));
-            return Ok(None);
-        }
+    let Some(value_domain_node) = field!(recover, ctx, matrix_domain, "value_domain") else {
+        return Ok(None);
     };
     let Some(value_domain) = parse_domain(ctx, value_domain_node)? else {
         return Ok(None);
@@ -334,34 +303,12 @@ fn parse_record_domain(
 ) -> Result<Option<DomainPtr>, FatalParseError> {
     let mut record_entries: Vec<RecordEntry> = Vec::new();
     for record_entry in named_children(&record_domain) {
-        let name_node = match record_entry.child_by_field_name("name") {
-            Some(node) => node,
-            None => {
-                ctx.record_error(RecoverableParseError::new(
-                    format!(
-                        "Missing field '{}' in expression of kind '{}'",
-                        "name",
-                        record_entry.kind()
-                    ),
-                    Some(record_entry.range()),
-                ));
-                return Ok(None);
-            }
+        let Some(name_node) = field!(recover, ctx, record_entry, "name") else {
+            return Ok(None);
         };
         let name = Name::user(&ctx.source_code[name_node.start_byte()..name_node.end_byte()]);
-        let domain_node = match record_entry.child_by_field_name("domain") {
-            Some(node) => node,
-            None => {
-                ctx.record_error(RecoverableParseError::new(
-                    format!(
-                        "Missing field '{}' in expression of kind '{}'",
-                        "domain",
-                        record_entry.kind()
-                    ),
-                    Some(record_entry.range()),
-                ));
-                return Ok(None);
-            }
+        let Some(domain_node) = field!(recover, ctx, record_entry, "domain") else {
+            return Ok(None);
         };
         let Some(domain) = parse_domain(ctx, domain_node)? else {
             return Ok(None);

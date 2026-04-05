@@ -1,4 +1,5 @@
 #![allow(clippy::legacy_numeric_constants)]
+use crate::field;
 
 use std::collections::BTreeMap;
 use tree_sitter::Node;
@@ -15,12 +16,7 @@ pub fn parse_find_statement(
     ctx: &mut ParseContext,
     find_statement: Node,
 ) -> Result<BTreeMap<Name, DomainPtr>, FatalParseError> {
-    let keyword = find_statement.child_by_field_name("find_keyword");
-    let Some(keyword) = keyword else {
-        ctx.record_error(RecoverableParseError::new(
-            "Missing find keyword".to_string(),
-            Some(find_statement.range()),
-        ));
+    let Some(keyword) = field!(recover, ctx, find_statement, "find_keyword") else {
         return Ok(BTreeMap::new());
     };
     span_with_hover(
@@ -47,12 +43,7 @@ pub fn parse_given_statement(
     ctx: &mut ParseContext,
     given_statement: Node,
 ) -> Result<BTreeMap<Name, DomainPtr>, FatalParseError> {
-    let keyword = given_statement.child_by_field_name("given_keyword");
-    let Some(keyword) = keyword else {
-        ctx.record_error(RecoverableParseError::new(
-            "Missing given keyword".to_string(),
-            Some(given_statement.range()),
-        ));
+    let Some(keyword) = field!(recover, ctx, given_statement, "given_keyword") else {
         return Ok(BTreeMap::new());
     };
     span_with_hover(
@@ -83,12 +74,7 @@ pub fn parse_declaration_statement(
 ) -> Result<BTreeMap<Name, DomainPtr>, FatalParseError> {
     let mut vars = BTreeMap::new();
 
-    let domain_node = statement_node.child_by_field_name("domain");
-    let Some(domain_node) = domain_node else {
-        ctx.record_error(RecoverableParseError::new(
-            "Missing domain in find statement".to_string(),
-            Some(statement_node.range()),
-        ));
+    let Some(domain_node) = field!(recover, ctx, statement_node, "domain") else {
         return Ok(vars);
     };
 
@@ -96,12 +82,7 @@ pub fn parse_declaration_statement(
         return Ok(vars);
     };
 
-    let variable_list = statement_node.child_by_field_name("variables");
-    let Some(variable_list) = variable_list else {
-        ctx.record_error(RecoverableParseError::new(
-            "Missing variable list in find statement".to_string(),
-            Some(statement_node.range()),
-        ));
+    let Some(variable_list) = field!(recover, ctx, statement_node, "variables") else {
         return Ok(vars);
     };
     for variable in named_children(&variable_list) {

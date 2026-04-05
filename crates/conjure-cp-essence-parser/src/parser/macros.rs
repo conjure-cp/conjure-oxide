@@ -16,12 +16,31 @@ macro_rules! named_child {
             ))?
     };
     // recoverable version
-    (recover, $ctx:expr, $node:expr, $i:literal, $msg:expr) => {{
+    (recover, $ctx:expr, $node:expr) => {{
+        match $node.named_child(0) {
+            Some(child) => Some(child),
+            None => {
+                $ctx.record_error($crate::errors::RecoverableParseError::new(
+                    format!(
+                        "Missing sub-expression in expression of kind '{}'",
+                        $node.kind()
+                    ),
+                    Some($node.range()),
+                ));
+                None
+            }
+        }
+    }};
+    (recover, $ctx:expr, $node:expr, $i:literal) => {{
         match $node.named_child($i) {
             Some(child) => Some(child),
             None => {
-                $ctx.record_error(crate::errors::RecoverableParseError::new(
-                    format!("{} in expression of kind '{}'", $msg, $node.kind()),
+                $ctx.record_error($crate::errors::RecoverableParseError::new(
+                    format!(
+                        "Missing sub-expression #{} in expression of kind '{}'",
+                        $i + 1,
+                        $node.kind()
+                    ),
                     Some($node.range()),
                 ));
                 None
@@ -46,12 +65,31 @@ macro_rules! child {
         ))?
     };
     // recoverable version
-    (recover, $ctx:expr, $node:expr, $i:literal, $msg:expr) => {{
+    (recover, $ctx:expr, $node:expr) => {{
+        match $node.child(0) {
+            Some(child) => Some(child),
+            None => {
+                $ctx.record_error($crate::errors::RecoverableParseError::new(
+                    format!(
+                        "Missing sub-expression in expression of kind '{}'",
+                        $node.kind()
+                    ),
+                    Some($node.range()),
+                ));
+                None
+            }
+        }
+    }};
+    (recover, $ctx:expr, $node:expr, $i:literal) => {{
         match $node.child($i) {
             Some(child) => Some(child),
             None => {
-                $ctx.record_error(crate::errors::RecoverableParseError::new(
-                    format!("{} in expression of kind '{}'", $msg, $node.kind()),
+                $ctx.record_error($crate::errors::RecoverableParseError::new(
+                    format!(
+                        "Missing sub-expression #{} in expression of kind '{}'",
+                        $i + 1,
+                        $node.kind()
+                    ),
                     Some($node.range()),
                 ));
                 None
@@ -76,12 +114,16 @@ macro_rules! field {
             ))?
     };
     // recoverable version
-    (recover, $ctx:expr, $node:expr, $name:expr, $msg:expr) => {{
+    (recover, $ctx:expr, $node:expr, $name:expr) => {{
         match $node.child_by_field_name($name) {
             Some(child) => Some(child),
             None => {
-                $ctx.record_error(crate::errors::RecoverableParseError::new(
-                    format!("{} in expression of kind '{}'", $msg, $node.kind()),
+                $ctx.record_error($crate::errors::RecoverableParseError::new(
+                    format!(
+                        "Missing field '{}' in expression of kind '{}'",
+                        $name,
+                        $node.kind()
+                    ),
                     Some($node.range()),
                 ));
                 None
