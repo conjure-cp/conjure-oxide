@@ -218,8 +218,7 @@ fn unwrap_flatten_matrix_nonatomic(expr: &Expr, _: &SymbolTable) -> ApplicationR
         return Err(RuleNotApplicable);
     };
 
-    let index_domains =
-        matrix::bound_index_domains_of_expr(m.as_ref()).ok_or(RuleNotApplicable)?;
+    let index_domains = matrix::bound_index_domains_of_expr(m.as_ref()).ok_or(RuleNotApplicable)?;
 
     let elems: Vec<Expr> = matrix::try_enumerate_indices(index_domains)
         .map_err(|_| DomainError)?
