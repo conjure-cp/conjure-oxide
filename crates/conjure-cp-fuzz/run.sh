@@ -16,14 +16,14 @@ DICT="$SCRIPT_DIR/essence.dict"
 HARNESS="$ROOT_DIR/target/release/conjure-fuzz-harness"
 
 # AFL++ environment
-export AFL_TESTCACHE_SIZE=200           # shared testcase cache (MB)
+export AFL_TESTCACHE_SIZE=500           # shared testcase cache (MB)
 export AFL_IGNORE_SEED_PROBLEMS=1       # skip seeds that crash/timeout on startup
 export AFL_IMPORT_FIRST=1               # load other fuzzers' findings first
 export AFL_FINAL_SYNC=1                 # main instance does a final sync pass
 
 # ── Build ────────────────────────────────────────────────────────────
-echo "[*] Building harness (release)..."
-cargo afl build -p conjure-cp-fuzz --release
+echo "[*] Building harness..."
+cargo afl build -p conjure-cp-fuzz --profile profiling
 
 # ── Validate seeds dir ───────────────────────────────────────────────
 if [ ! -d "$SEEDS_DIR" ] || [ -z "$(find "$SEEDS_DIR" -maxdepth 1 -type f 2>/dev/null)" ]; then
