@@ -67,6 +67,8 @@ pub enum GroundDomain {
     Tuple(Vec<Moo<GroundDomain>>),
     /// A record
     Record(Vec<RecordEntryGround>),
+    /// A sequence of elements drawn from the inner domain
+    Sequence(SequenceAttr, Vec<Moo<GroundDomain>>),
     /// A function with a domain and range
     Function(FuncAttr, Moo<GroundDomain>, Moo<GroundDomain>),
 }

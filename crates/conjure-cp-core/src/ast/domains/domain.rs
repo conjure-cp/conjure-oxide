@@ -5,7 +5,7 @@ use super::unresolved::{IntVal, UnresolvedDomain};
 use crate::ast::domains::attrs::MSetAttr;
 use crate::ast::{
     DeclarationPtr, DomainOpError, Expression, FuncAttr, Literal, Moo, RecordEntry,
-    RecordEntryGround, Reference, ReturnType, Typeable,
+    RecordEntryGround, Reference, ReturnType, SequenceAttr, Typeable,
 };
 use itertools::Itertools;
 use polyquine::Quine;
@@ -246,6 +246,14 @@ impl Domain {
             dom,
             cdom,
         ))))
+    }
+
+    /// Create a new Sequence domain
+    pub fn sequence<T>(attrs: T, dom: DomainPtr) -> DomainPtr
+    where 
+        T: Into<SequenceAttr<IntVal>> + TryInto<SequenceAttr<Int>> + Clone,
+    {
+        
     }
 
     /// If this domain is ground, return a [Moo] to the underlying [GroundDomain].
