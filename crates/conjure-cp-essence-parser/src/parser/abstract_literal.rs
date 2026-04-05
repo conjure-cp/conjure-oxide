@@ -29,19 +29,38 @@ pub fn parse_abstract(
 }
 
 fn typecheck_abstract_literal(ctx: &mut ParseContext, node: &Node) -> bool {
-    let expected_kind = match ctx.typechecking_context {
-        TypecheckingContext::Set => Some("set_literal"),
-        TypecheckingContext::Matrix => Some("matrix"),
-        TypecheckingContext::Tuple => Some("tuple"),
-        TypecheckingContext::Record => Some("record"),
-        TypecheckingContext::Unknown => return true,
-        _ => None,
-    };
-
-    if let Some(expected_kind) = expected_kind {
-        if node.kind() == expected_kind {
-            return true;
+    match ctx.typechecking_context {
+        // In arithmetic/boolean contexts, matrix literals are allowed because list-combining
+        // operators (sum/or/and/...) take matrix/list arguments and typecheck their elements.
+        TypecheckingContext::Arithmetic | TypecheckingContext::Boolean => {
+            if node.kind() == "matrix" {
+                return true;
+            }
         }
+        TypecheckingContext::Set => {
+            if node.kind() == "set_literal" {
+                return true;
+            }
+        }
+        TypecheckingContext::Matrix => {
+            if node.kind() == "matrix" {
+                return true;
+            }
+        }
+        TypecheckingContext::Tuple => {
+            if node.kind() == "tuple" {
+                return true;
+            }
+        }
+        TypecheckingContext::Record => {
+            if node.kind() == "record" {
+                return true;
+            }
+        }
+        TypecheckingContext::Unknown => return true,
+
+        // Not supported by grammar yet, skip for now
+        TypecheckingContext::MSet | TypecheckingContext::Function | TypecheckingContext::Empty => {}
     }
 
     let expected = match ctx.typechecking_context {
