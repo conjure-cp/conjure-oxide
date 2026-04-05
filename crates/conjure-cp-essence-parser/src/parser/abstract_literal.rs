@@ -12,16 +12,7 @@ pub fn parse_abstract(
     ctx: &mut ParseContext,
     node: &Node,
 ) -> Result<Option<AbstractLiteral<Expression>>, FatalParseError> {
-    // If we're in a set context, we can only parse set literals, so add an error if we see any other kind of abstract literal
-    if ctx.typechecking_context == TypecheckingContext::Set && node.kind() != "set_literal" {
-        ctx.record_error(RecoverableParseError::new(
-            format!(
-                "Type error: {}\n\tExpected: set\n\tGot: {}",
-                ctx.source_code[node.start_byte()..node.end_byte()].trim(),
-                node.kind()
-            ),
-            Some(node.range()),
-        ));
+    if !typecheck_abstract_literal(ctx, node) {
         return Ok(None);
     }
 
@@ -35,6 +26,56 @@ pub fn parse_abstract(
             Some(node.range()),
         )),
     }
+}
+
+fn typecheck_abstract_literal(ctx: &mut ParseContext, node: &Node) -> bool {
+    let expected_kind = match ctx.typechecking_context {
+        TypecheckingContext::Set => Some("set_literal"),
+        TypecheckingContext::Matrix => Some("matrix"),
+        TypecheckingContext::Tuple => Some("tuple"),
+        TypecheckingContext::Record => Some("record"),
+        TypecheckingContext::Unknown => return true,
+        _ => None,
+    };
+
+    if let Some(expected_kind) = expected_kind {
+        if node.kind() == expected_kind {
+            return true;
+        }
+    }
+
+    let expected = match ctx.typechecking_context {
+        TypecheckingContext::Boolean => "bool",
+        TypecheckingContext::Arithmetic => "int",
+        TypecheckingContext::Set => "set",
+        TypecheckingContext::MSet => "mset",
+        TypecheckingContext::Matrix => "matrix",
+        TypecheckingContext::Tuple => "tuple",
+        TypecheckingContext::Record => "record",
+        TypecheckingContext::Function => "function",
+        TypecheckingContext::Empty => "empty",
+        TypecheckingContext::Unknown => "unknown",
+    };
+
+    let got = match node.kind() {
+        "set_literal" => "set",
+        "matrix" => "matrix",
+        "tuple" => "tuple",
+        "record" => "record",
+        _ => "abstract literal",
+    };
+
+    ctx.record_error(RecoverableParseError::new(
+        format!(
+            "Type error: {}\n\tExpected: {}\n\tGot: {}",
+            ctx.source_code[node.start_byte()..node.end_byte()].trim(),
+            expected,
+            got
+        ),
+        Some(node.range()),
+    ));
+
+    false
 }
 
 fn parse_record(
