@@ -15,6 +15,19 @@ macro_rules! named_child {
                 Some($node.range()),
             ))?
     };
+    // recoverable version
+    (recover, $ctx:expr, $node:expr, $i:literal, $msg:expr) => {{
+        match $node.named_child($i) {
+            Some(child) => Some(child),
+            None => {
+                $ctx.record_error(crate::errors::RecoverableParseError::new(
+                    format!("{} in expression of kind '{}'", $msg, $node.kind()),
+                    Some($node.range()),
+                ));
+                None
+            }
+        }
+    }};
 }
 
 /// Get the i-th child of a node, or return a syntax error with a message if it doesn't exist.
@@ -32,6 +45,19 @@ macro_rules! child {
             Some($node.range()),
         ))?
     };
+    // recoverable version
+    (recover, $ctx:expr, $node:expr, $i:literal, $msg:expr) => {{
+        match $node.child($i) {
+            Some(child) => Some(child),
+            None => {
+                $ctx.record_error(crate::errors::RecoverableParseError::new(
+                    format!("{} in expression of kind '{}'", $msg, $node.kind()),
+                    Some($node.range()),
+                ));
+                None
+            }
+        }
+    }};
 }
 
 /// Get the named field of a node, or return a syntax error with a message if it doesn't exist.
@@ -49,4 +75,17 @@ macro_rules! field {
                 Some($node.range()),
             ))?
     };
+    // recoverable version
+    (recover, $ctx:expr, $node:expr, $name:expr, $msg:expr) => {{
+        match $node.child_by_field_name($name) {
+            Some(child) => Some(child),
+            None => {
+                $ctx.record_error(crate::errors::RecoverableParseError::new(
+                    format!("{} in expression of kind '{}'", $msg, $node.kind()),
+                    Some($node.range()),
+                ));
+                None
+            }
+        }
+    }};
 }
