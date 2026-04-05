@@ -47,7 +47,7 @@ fn normalise_int_domain(domain: &GroundDomain) -> GroundDomain {
         GroundDomain::Int(ranges) => GroundDomain::Int(Range::squeeze(
             &ranges
                 .iter()
-                .map(|range| Range::new(range.low().cloned(), range.high().cloned()))
+                .map(|range| Range::new(range.low().copied(), range.high().copied()))
                 .collect_vec(),
         )),
         _ => domain.clone(),
