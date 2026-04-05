@@ -1,9 +1,8 @@
-use conjure_cp::{
-    ast::Metadata,
-    ast::{
-        AbstractLiteral, Atom, DeclarationPtr, Expression as Expr, Literal, Moo, Name, SymbolTable,
-        categories::Category,
-    },
+use conjure_cp::ast::{
+    AbstractLiteral, Atom, DeclarationPtr, Expression as Expr, Literal, Metadata, Moo, Name,
+    SymbolTable,
+    categories::Category,
+    comprehension::{Comprehension, ComprehensionQualifier},
 };
 
 use tracing::{instrument, trace};
@@ -234,4 +233,66 @@ impl ToAuxVarOutput {
     pub fn symbols(&self) -> SymbolTable {
         self.symbols.clone()
     }
+}
+
+/// Clone comprehension with expression generator into its own detached comprehension scope
+/// and rewrite all uses of the original quantified declaration to a fresh branch-local
+/// expression generator.
+pub fn replace_expression_generator_source(
+    comp: &Comprehension,
+    gen_decl: &DeclarationPtr,
+    replacement_expr: Expr,
+) -> (Comprehension, DeclarationPtr) {
+    let replacement_ptr =
+        DeclarationPtr::new_quantified_expr(gen_decl.name().clone(), replacement_expr);
+    let mut comprehension = comp.clone();
+
+    // detach the scope so rewriting this branch does not mutate the original
+    // comprehension through shared pointers
+    comprehension.symbols = comprehension.symbols.detach();
+
+    // rewrite all uses of the original quantified declaration to the branch-local
+    // generator declaration
+    comprehension.return_expression =
+        comprehension
+            .return_expression
+            .transform_bi(&|decl: DeclarationPtr| {
+                if decl == *gen_decl {
+                    replacement_ptr.clone()
+                } else {
+                    decl
+                }
+            });
+
+    comprehension.qualifiers = comprehension
+        .qualifiers
+        .into_iter()
+        .map(|qualifier| {
+            qualifier.transform_bi(&|decl: DeclarationPtr| {
+                if decl == *gen_decl {
+                    replacement_ptr.clone()
+                } else {
+                    decl
+                }
+            })
+        })
+        .collect();
+
+    // keep the detached local scope in sync with the rewritten generator
+    // declarations used by this branch
+    comprehension
+        .symbols
+        .write()
+        .update_insert(replacement_ptr.clone());
+    for qualifier in &comprehension.qualifiers {
+        match qualifier {
+            ComprehensionQualifier::ExpressionGenerator { ptr }
+            | ComprehensionQualifier::Generator { ptr } => {
+                comprehension.symbols.write().update_insert(ptr.clone());
+            }
+            ComprehensionQualifier::Condition(_) => {}
+        }
+    }
+
+    (comprehension, replacement_ptr)
 }
