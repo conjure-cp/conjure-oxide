@@ -13,7 +13,7 @@ ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 SEEDS_DIR="$SCRIPT_DIR/seeds"
 CORPUS_DIR="$SCRIPT_DIR/corpus"
 DICT="$SCRIPT_DIR/essence.dict"
-HARNESS="$ROOT_DIR/target/release/conjure-fuzz-harness"
+HARNESS="$ROOT_DIR/target/profiling/conjure-fuzz-harness"
 
 # AFL++ environment
 export AFL_TESTCACHE_SIZE=500           # shared testcase cache (MB)
@@ -37,7 +37,7 @@ SEEDS_MIN_DIR="$SCRIPT_DIR/seeds_minimized"
 echo "[*] Minimizing seed corpus into $SEEDS_MIN_DIR ..."
 rm -rf "$SEEDS_MIN_DIR"
 mkdir -p "$SEEDS_MIN_DIR"
-cargo afl cmin -C -i "$SEEDS_DIR" -o "$SEEDS_MIN_DIR" -m "$MEM_LIMIT" -t "$((RUN_TIMEOUT * 1000))" -- "$HARNESS"
+cargo afl cmin -i "$SEEDS_DIR" -o "$SEEDS_MIN_DIR" -m "$MEM_LIMIT" -t "$((RUN_TIMEOUT * 1000))" -- "$HARNESS"
 echo "[*] Minimized: $(find "$SEEDS_MIN_DIR" -maxdepth 1 -type f | wc -l) seeds (from $(find "$SEEDS_DIR" -maxdepth 1 -type f | wc -l))"
 
 # ── Common fuzz flags ────────────────────────────────────────────────
