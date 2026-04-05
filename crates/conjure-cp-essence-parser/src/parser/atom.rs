@@ -28,13 +28,7 @@ pub fn parse_atom(
             let Some(ident) = field!(recover, ctx, node, "identifier") else {
                 return Ok(None);
             };
-            // guard against source code range misalignment
-            let start = ident.start_byte();
-            let end = ident.end_byte();
-            let name_str = match ctx.source_code.get(start..end) {
-                Some(s) => s,
-                None => return Ok(None),
-            };
+            let name_str = &ctx.source_code[ident.start_byte()..ident.end_byte()];
             Ok(Some(Expression::Metavar(
                 Metadata::new(),
                 Ustr::from(name_str),
@@ -247,13 +241,7 @@ fn parse_index(ctx: &mut ParseContext, node: &Node) -> Result<Option<Expression>
 }
 
 fn parse_variable(ctx: &mut ParseContext, node: &Node) -> Result<Option<Atom>, FatalParseError> {
-    // guard against source code range misalignment
-    let start = node.start_byte();
-    let end = node.end_byte();
-    let raw_name = match ctx.source_code.get(start..end) {
-        Some(s) => s,
-        None => return Ok(None),
-    };
+    let raw_name = &ctx.source_code[node.start_byte()..node.end_byte()];
 
     let name = Name::user(raw_name.trim());
     if let Some(symbols) = &ctx.symbols {
@@ -348,13 +336,7 @@ fn parse_constant(ctx: &mut ParseContext, node: &Node) -> Result<Option<Literal>
     let Some(inner) = named_child!(recover, ctx, node) else {
         return Ok(None);
     };
-    // guard against source code range misalignment
-    let start = inner.start_byte();
-    let end = inner.end_byte();
-    let raw_value = match ctx.source_code.get(start..end) {
-        Some(s) => s,
-        None => return Ok(None),
-    };
+    let raw_value = &ctx.source_code[inner.start_byte()..inner.end_byte()];
     let lit = match inner.kind() {
         "integer" => {
             let Some(value) = parse_int(ctx, &inner) else {
