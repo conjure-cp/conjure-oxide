@@ -8,7 +8,7 @@ use conjure_cp::rule_engine::{
 };
 
 // [ return_expr | i <- A - B ] ~~> [ return_expr | i <- A, !(i in B) ]
-#[register_rule(("Base", 8700))]
+#[register_rule("Base", 8700)]
 fn difference_set(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
         Expr::Comprehension(_, comp) => {
