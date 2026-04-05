@@ -46,17 +46,17 @@ use conjure_cp_cli::utils::conjure::{
 use conjure_cp_cli::utils::testing::normalize_solutions_for_comparison;
 
 /// Write Essence to a temp file
-#[doc(hidden)]
-pub fn write_model(src: &str) -> Result<String, anyhow::Error> {
+pub fn write_model(src: &str) -> Result<(String, tempfile::TempDir), anyhow::Error> {
     use std::io::Write;
 
     let tmp_dir = tempdir()?;
     let model_path = tmp_dir.path().join("model.essence");
     File::create(&model_path)?.write_all(src.as_bytes())?;
-    Ok(model_path
+    let path_str = model_path
         .to_str()
         .ok_or(anyhow!("invalid UTF-8"))?
-        .to_string())
+        .to_string();
+    Ok((path_str, tmp_dir))  // caller keeps tmp_dir alive
 }
 
 /// Run our pipeline (parse - rewrite - solve) and return all solutions.
@@ -88,7 +88,7 @@ fn conjure_solutions(pth: &str) -> Option<Vec<BTreeMap<Name, Literal>>> {
 /// Returns normally in all cases except a solution mismatch, where it calls
 /// `process::abort()` so AFL registers the input as a crash.
 fn run_pipeline(src: &str) {
-    let Some(essence_file) = write_model(src).ok() else {
+    let Some((essence_file, _tmp_guard)) = write_model(src).ok() else {
         return;
     };
 
