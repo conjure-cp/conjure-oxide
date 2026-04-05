@@ -1,9 +1,10 @@
 use crate::guard;
+use crate::representation::tuple_packed::TuplePacked;
 use crate::utils::as_comparison_op;
 use conjure_cp::ast::{Domain, DomainPtr, HasDomain, UnresolvedDomain};
 use conjure_cp::{
     ast::{Atom, Expression as Expr, GroundDomain, SymbolTable},
-    representation::get_repr_rules,
+    representation::{ReprRule, get_repr_rules},
     rule_engine::{
         ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
         register_rule_set,
@@ -12,6 +13,10 @@ use conjure_cp::{
 use itertools::any;
 use std::collections::VecDeque;
 use uniplate::Biplate;
+
+/// Representations that should not be auto-selected by `select_representation`.
+/// These are managed by their own dedicated rule sets.
+const SKIP_AUTO_SELECT: &[&str] = &[TuplePacked::NAME];
 
 // Representations of Essence abstract types down to Essence'
 // Applies for all solvers
@@ -31,6 +36,10 @@ fn select_representation(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
     let mut re = re.clone();
     for rule in get_repr_rules() {
+        // Skip representations that are managed by their own rule sets
+        if SKIP_AUTO_SELECT.contains(&rule.name()) {
+            continue;
+        }
         // Once we find an applicable representation, exit
         let Ok((_, new_symbols, new_constraints)) = re.select_or_init_repr_via(rule) else {
             continue;

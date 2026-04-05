@@ -84,6 +84,7 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
     let validate_with_conjure = config.validate_with_conjure;
     let flatten_matrices = config.flatten_matrices;
     let minion_discrete_threshold = config.minion_discrete_threshold;
+    let extra_rule_sets = config.extra_rule_sets.clone();
 
     let parsers = config
         .configured_parsers()
@@ -158,6 +159,7 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
                             conjure_solutions.clone(),
                             accept,
                             flatten_matrices,
+                            &extra_rule_sets,
                         )
                     })
                     .map_err(|err| std::io::Error::other(format!("{run_label}: {err}")))?;
@@ -210,6 +212,7 @@ fn integration_test_inner(
     conjure_solutions: Option<Arc<Vec<BTreeMap<Name, Literal>>>>,
     accept: bool,
     flatten_matrices: bool,
+    extra_rule_sets: &[String],
 ) -> Result<(), Box<dyn Error>> {
     let parser = run_case.parser;
     let rewriter = run_case.rewriter;
@@ -247,6 +250,8 @@ fn integration_test_inner(
 
     let mut rules_to_load = DEFAULT_RULE_SETS.to_vec();
     rules_to_load.extend(extra_rules);
+    let extra_rs_strs: Vec<&str> = extra_rule_sets.iter().map(|s| s.as_str()).collect();
+    rules_to_load.extend(extra_rs_strs);
 
     let rule_sets = resolve_rule_sets(solver_fam, &rules_to_load)?;
 
