@@ -23,13 +23,10 @@
 #[allow(unused)]
 use conjure_cp_rules as _;
 
-use std::collections::BTreeMap;
-use std::panic::{self, AssertUnwindSafe};
-use std::process;
-
+use anyhow::anyhow;
 use conjure_cp::ast::{Literal, Name};
 use conjure_cp::defaults::DEFAULT_RULE_SETS;
-use conjure_cp::parse::tree_sitter::parse_essence;
+use conjure_cp::parse::tree_sitter::parse_essence_file;
 use conjure_cp::rule_engine::{resolve_rule_sets, rewrite_naive};
 use conjure_cp::settings::{
     QuantifiedExpander, Rewriter, SolverFamily, set_comprehension_expander, set_current_rewriter,
@@ -37,16 +34,35 @@ use conjure_cp::settings::{
 };
 use conjure_cp::solver::Solver;
 use conjure_cp::solver::adaptors::Minion;
+use std::collections::BTreeMap;
+use std::fs::File;
+use std::panic::{self, AssertUnwindSafe};
+use std::process;
+use tempfile::tempdir;
 
 use conjure_cp_cli::utils::conjure::{
-    get_solutions, get_solutions_from_conjure_str, solutions_to_json,
+    get_solutions, get_solutions_from_conjure, solutions_to_json,
 };
 use conjure_cp_cli::utils::testing::normalize_solutions_for_comparison;
 
+/// Write Essence to a temp file
+#[doc(hidden)]
+pub fn write_model(src: &str) -> Result<String, anyhow::Error> {
+    use std::io::Write;
+
+    let tmp_dir = tempdir()?;
+    let model_path = tmp_dir.path().join("model.essence");
+    File::create(&model_path)?.write_all(src.as_bytes())?;
+    Ok(model_path
+        .to_str()
+        .ok_or(anyhow!("invalid UTF-8"))?
+        .to_string())
+}
+
 /// Run our pipeline (parse - rewrite - solve) and return all solutions.
 /// Returns `None` if any stage fails.
-fn oxide_solutions(src: &str) -> Option<Vec<BTreeMap<Name, Literal>>> {
-    let (model, _) = parse_essence(src).ok()?;
+fn oxide_solutions(pth: &str) -> Option<Vec<BTreeMap<Name, Literal>>> {
+    let model = parse_essence_file(pth, Default::default()).ok()?;
 
     let target_family = SolverFamily::Minion;
     set_current_solver_family(target_family);
@@ -63,8 +79,8 @@ fn oxide_solutions(src: &str) -> Option<Vec<BTreeMap<Name, Literal>>> {
 /// Run `conjure solve` on the given source text and return all solutions.
 ///
 /// Returns `None` if conjure fails or the model is invalid.
-fn conjure_solutions(src: &str) -> Option<Vec<BTreeMap<Name, Literal>>> {
-    get_solutions_from_conjure_str(src, Default::default()).ok()
+fn conjure_solutions(pth: &str) -> Option<Vec<BTreeMap<Name, Literal>>> {
+    get_solutions_from_conjure(pth, None, Default::default()).ok()
 }
 
 /// The core fuzz target.
@@ -72,9 +88,13 @@ fn conjure_solutions(src: &str) -> Option<Vec<BTreeMap<Name, Literal>>> {
 /// Returns normally in all cases except a solution mismatch, where it calls
 /// `process::abort()` so AFL registers the input as a crash.
 fn run_pipeline(src: &str) {
+    let Some(essence_file) = write_model(src).ok() else {
+        return;
+    };
+
     // Run both pipelines, catching panics
-    let oxide = panic::catch_unwind(AssertUnwindSafe(|| oxide_solutions(src)));
-    let conjure = panic::catch_unwind(AssertUnwindSafe(|| conjure_solutions(src)));
+    let oxide = panic::catch_unwind(AssertUnwindSafe(|| oxide_solutions(&essence_file)));
+    let conjure = panic::catch_unwind(AssertUnwindSafe(|| conjure_solutions(&essence_file)));
 
     // Unwrap panic results — if either panicked, treat as "no solutions"
     let oxide = oxide.ok().flatten();
@@ -83,7 +103,6 @@ fn run_pipeline(src: &str) {
     // Both must have produced solutions for us to compare
     let (oxide, conjure) = match (oxide, conjure) {
         (Some(o), Some(c)) => (o, c),
-        (None, Some(_)) => return, // Conjure solved but we couldn't.. also ignore this for now?
         _ => return,               // Neither could solve, skip
     };
 
