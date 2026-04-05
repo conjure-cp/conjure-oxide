@@ -258,7 +258,8 @@ fn init_packed_repr(
     }
 }
 
-/// Check if a domain is a packable tuple of contiguous integers fitting in i32.
+/// Check if a domain is a packable tuple of bounded integers fitting in i32.
+/// Accepts both contiguous and non-contiguous ("holey") integer domains.
 fn is_packable_tuple_domain(domain: &DomainPtr) -> bool {
     let Some(gd_tuple) = domain.as_tuple_ground() else {
         return false;
@@ -268,8 +269,7 @@ fn is_packable_tuple_domain(domain: &DomainPtr) -> bool {
     for elem_dom in gd_tuple {
         guard!(
             let GroundDomain::Int(ranges) = elem_dom.as_ref() &&
-            Range::is_contiguous(ranges)                      &&
-            let Some(span) = Range::total_length(ranges)      &&
+            let Some(span) = Range::spanning(ranges).length() &&
             span > 0
             else {
                 return false;

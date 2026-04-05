@@ -8,7 +8,7 @@ register_representation!(
     struct State<T> {
         /// The single packed integer variable / domain / literal
         pub packed: T,
-        /// Domain sizes for each element (number of values in each element domain)
+        /// Domain sizes for each element (spanning range length, i.e. hi - lo + 1)
         pub sizes: Vec<i32>,
         /// Strides for each element; stride[i] = product of sizes[i+1..n].
         pub strides: Vec<i32>,
@@ -16,6 +16,8 @@ register_representation!(
         pub mins: Vec<i32>,
         /// The total number of packed values (product of sizes)
         pub total_size: i32,
+        /// The original ranges for each element domain (used to filter out holes)
+        pub elem_ranges: Vec<Vec<Range<i32>>>,
     }
     impl State<DeclarationPtr> {
         pub fn packed_ref(&self) -> Reference {
@@ -49,6 +51,11 @@ register_representation!(
             }
             Ok(Expression::from(Literal::Int(packed_val)))
         }
+
+        /// True if any element domain has holes (non-contiguous ranges).
+        pub fn has_holes(&self) -> bool {
+            self.elem_ranges.iter().any(|rngs| !Range::is_contiguous(rngs))
+        }
     }
     fn init(dom: DomainPtr) -> Result<State<DomainPtr>, ReprInitError> {
         let domain_err = |msg: &str| {
@@ -59,29 +66,29 @@ register_representation!(
             return Err(domain_err("expected a ground tuple domain"));
         };
 
-        // Collect element domain sizes and minima
+        // Collect element domain sizes and minima using spanning range
         let mut sizes = Vec::with_capacity(gd_tuple.len());
         let mut mins = Vec::with_capacity(gd_tuple.len());
+        let mut elem_ranges = Vec::with_capacity(gd_tuple.len());
 
         for (i, elem_dom) in gd_tuple.iter().enumerate() {
             let GroundDomain::Int(ranges) = elem_dom.as_ref() else {
                 return Err(domain_err(&format!("element {i} is not an integer domain")));
             };
 
-            if !Range::is_contiguous(ranges) {
-                return Err(domain_err(&format!(
-                    "element {i} has non-contiguous ranges; packed repr requires contiguous int domains"
-                )));
-            }
-
-            let lo = Range::low_of(ranges)
+            let span_range = Range::spanning(ranges);
+            let lo = span_range.low()
                 .ok_or_else(|| domain_err(&format!("element {i} has an unbounded or empty domain")))?;
-
-            let span = Range::total_length(ranges)
+            let span = span_range.length()
                 .ok_or_else(|| domain_err(&format!("element {i} has an unbounded range")))?;
+
+            if span <= 0 {
+                return Err(domain_err(&format!("element {i} has an empty domain")));
+            }
 
             sizes.push(span);
             mins.push(*lo);
+            elem_ranges.push(ranges.clone());
         }
 
         // Compute strides
@@ -96,10 +103,16 @@ register_representation!(
             .ok_or_else(|| domain_err("packed representation would overflow i32"))?;
 
         let packed = domain_int!(0..(total_size - 1));
-        Ok(State { packed, sizes, strides, mins, total_size })
+        Ok(State { packed, sizes, strides, mins, total_size, elem_ranges })
     }
-    fn structural(_state: &State<DeclarationPtr>) -> Vec<Expression> {
-        vec![]
+    fn structural(state: &State<DeclarationPtr>) -> Vec<Expression> {
+        if !state.has_holes() {
+            return vec![];
+        }
+
+        let valid_values = enumerate_valid_packed_values(state);
+        let packed_atom = Atom::Reference(state.packed_ref());
+        vec![Expression::MinionWInSet(Metadata::new(), packed_atom, valid_values)]
     }
     fn down(state: &State<DomainPtr>, value: Literal) -> Result<State<Literal>, ReprDownError> {
         let Literal::AbstractLiteral(AbstractLiteral::Tuple(vals)) = value else {
@@ -122,6 +135,7 @@ register_representation!(
             strides: state.strides.clone(),
             mins: state.mins.clone(),
             total_size: state.total_size,
+            elem_ranges: state.elem_ranges.clone(),
         })
     }
     fn up(state: State<Literal>) -> Literal {
@@ -137,3 +151,40 @@ register_representation!(
         Literal::AbstractLiteral(AbstractLiteral::Tuple(vals))
     }
 );
+
+/// Enumerate all valid packed integer values for a state with holey element domains.
+/// Iterates over the Cartesian product of all element domain values and encodes each
+/// valid combination.
+fn enumerate_valid_packed_values<T>(state: &TuplePackedState<T>) -> Vec<i32> {
+    let elem_values: Vec<Vec<i32>> = state
+        .elem_ranges
+        .iter()
+        .map(|rngs| {
+            Range::values(rngs)
+                .map(|iter| iter.collect())
+                .unwrap_or_default()
+        })
+        .collect();
+
+    let mut result = Vec::new();
+    let mut combo = vec![0i32; elem_values.len()];
+    enumerate_helper(&elem_values, &mut combo, 0, state, &mut result);
+    result
+}
+
+fn enumerate_helper<T>(
+    elem_values: &[Vec<i32>],
+    combo: &mut [i32],
+    depth: usize,
+    state: &TuplePackedState<T>,
+    result: &mut Vec<i32>,
+) {
+    if depth == elem_values.len() {
+        result.push(state.encode(combo));
+        return;
+    }
+    for &val in &elem_values[depth] {
+        combo[depth] = val;
+        enumerate_helper(elem_values, combo, depth + 1, state, result);
+    }
+}
