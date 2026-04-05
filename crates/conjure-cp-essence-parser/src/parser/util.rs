@@ -77,6 +77,12 @@ pub enum TypecheckingContext {
     Boolean,
     Arithmetic,
     Set,
+    MSet,
+    Matrix,
+    Tuple,
+    Record,
+    Function,
+    Empty,
     /// Context is unknown or flexible
     Unknown,
 }
