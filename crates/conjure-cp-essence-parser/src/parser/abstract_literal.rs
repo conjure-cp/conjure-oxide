@@ -1,4 +1,4 @@
-use crate::errors::FatalParseError;
+use crate::errors::{FatalParseError, RecoverableParseError};
 use crate::expression::parse_expression;
 use crate::field;
 use crate::parser::ParseContext;
@@ -12,6 +12,10 @@ pub fn parse_abstract(
     ctx: &mut ParseContext,
     node: &Node,
 ) -> Result<Option<AbstractLiteral<Expression>>, FatalParseError> {
+    if !typecheck_abstract_literal(ctx, node) {
+        return Ok(None);
+    }
+
     match node.kind() {
         "record" => parse_record(ctx, node),
         "tuple" => parse_tuple(ctx, node),
@@ -22,6 +26,75 @@ pub fn parse_abstract(
             Some(node.range()),
         )),
     }
+}
+
+fn typecheck_abstract_literal(ctx: &mut ParseContext, node: &Node) -> bool {
+    match ctx.typechecking_context {
+        // In arithmetic/boolean contexts, matrix literals are allowed because list-combining
+        // operators (sum/or/and/...) take matrix/list arguments and typecheck their elements.
+        TypecheckingContext::Arithmetic | TypecheckingContext::Boolean => {
+            if node.kind() == "matrix" {
+                return true;
+            }
+        }
+        TypecheckingContext::Set => {
+            if node.kind() == "set_literal" {
+                return true;
+            }
+        }
+        TypecheckingContext::Matrix => {
+            if node.kind() == "matrix" {
+                return true;
+            }
+        }
+        TypecheckingContext::Tuple => {
+            if node.kind() == "tuple" {
+                return true;
+            }
+        }
+        TypecheckingContext::Record => {
+            if node.kind() == "record" {
+                return true;
+            }
+        }
+        TypecheckingContext::Unknown => return true,
+
+        // Not supported by grammar yet, skip for now
+        TypecheckingContext::MSet | TypecheckingContext::Function | TypecheckingContext::Empty => {}
+    }
+
+    let expected = match ctx.typechecking_context {
+        TypecheckingContext::Boolean => "bool",
+        TypecheckingContext::Arithmetic => "int",
+        TypecheckingContext::Set => "set",
+        TypecheckingContext::MSet => "mset",
+        TypecheckingContext::Matrix => "matrix",
+        TypecheckingContext::Tuple => "tuple",
+        TypecheckingContext::Record => "record",
+        TypecheckingContext::Function => "function",
+        TypecheckingContext::Empty => "empty",
+        TypecheckingContext::Unknown => "unknown",
+    };
+
+    let got = match node.kind() {
+        "set_literal" => "set",
+        "matrix" => "matrix",
+        "tuple" => "tuple",
+        "record" => "record",
+        _ => "abstract literal",
+    };
+
+    ctx.record_error(RecoverableParseError::new(
+        format!(
+            "Type error: {}\n\tExpected: {}\n\tGot: {}",
+            ctx.source_code[node.start_byte()..node.end_byte()].trim(),
+            expected,
+            got
+        ),
+        Some(node.range()),
+    ));
+
+    false
 }
 
 fn parse_record(

@@ -6,7 +6,7 @@ use crate::parser::atom::parse_atom;
 use crate::parser::comprehension::parse_quantifier_or_aggregate_expr;
 use crate::util::TypecheckingContext;
 use crate::{field, named_child};
-use conjure_cp_core::ast::{Expression, Metadata, Moo};
+use conjure_cp_core::ast::{Expression, GroundDomain, Metadata, Moo};
 use conjure_cp_core::{domain_int, matrix_expr, range};
 use tree_sitter::Node;
 
@@ -111,9 +111,8 @@ fn parse_comparison_expression(
             parse_binary_expression(ctx, &inner)
         }
         "set_comparison" => {
-            // Set comparisons require set operands (no specific type checking for now)
-            // TODO: add typechecking for sets
-            ctx.typechecking_context = TypecheckingContext::Unknown;
+            // Set comparisons require set operands (except 'in', which is hadled later)
+            ctx.typechecking_context = TypecheckingContext::Set;
             parse_binary_expression(ctx, &inner)
         }
         "all_diff_comparison" => {
@@ -211,17 +210,36 @@ pub fn parse_binary_expression(
     ctx: &mut ParseContext,
     node: &Node,
 ) -> Result<Option<Expression>, FatalParseError> {
-    let mut parse_subexpr = |expr: Node| parse_expression(ctx, expr);
-
-    let Some(left) = parse_subexpr(field!(node, "left"))? else {
-        return Ok(None);
-    };
-    let Some(right) = parse_subexpr(field!(node, "right"))? else {
-        return Ok(None);
-    };
-
     let op_node = field!(node, "operator");
     let op_str = &ctx.source_code[op_node.start_byte()..op_node.end_byte()];
+
+    let saved_ctx = ctx.typechecking_context;
+
+    // Special handling for 'in' operator, as the left operand doesn't have to be a set
+    if op_str == "in" {
+        ctx.typechecking_context = TypecheckingContext::Unknown
+    }
+
+    // parse left operand
+    let Some(left) = parse_expression(ctx, field!(node, "left"))? else {
+        return Ok(None);
+    };
+
+    // reset context, if needed
+    ctx.typechecking_context = saved_ctx;
+
+    // Equality/inequality: enforce right operand to match left operand type when inferable
+    if matches!(op_str, "=" | "!=") {
+        ctx.typechecking_context = inferred_context_from_expression(&left);
+    }
+
+    // parse right operand
+    let Some(right) = parse_expression(ctx, field!(node, "right"))? else {
+        return Ok(None);
+    };
+
+    // restore original context for parent expression parsing
+    ctx.typechecking_context = saved_ctx;
 
     let mut description = format!("Operator '{op_str}'");
     let expr = match op_str {
@@ -390,4 +408,25 @@ pub fn parse_binary_expression(
     }
 
     expr
+}
+
+fn inferred_context_from_expression(expr: &Expression) -> TypecheckingContext {
+    let Some(domain) = expr.domain_of() else {
+        return TypecheckingContext::Unknown;
+    };
+    let Some(ground) = domain.resolve() else {
+        return TypecheckingContext::Unknown;
+    };
+
+    match ground.as_ref() {
+        GroundDomain::Bool => TypecheckingContext::Boolean,
+        GroundDomain::Int(_) => TypecheckingContext::Arithmetic,
+        GroundDomain::Set(_, _) => TypecheckingContext::Set,
+        GroundDomain::MSet(_, _) => TypecheckingContext::MSet,
+        GroundDomain::Matrix(_, _) => TypecheckingContext::Matrix,
+        GroundDomain::Tuple(_) => TypecheckingContext::Tuple,
+        GroundDomain::Record(_) => TypecheckingContext::Record,
+        GroundDomain::Function(_, _, _) => TypecheckingContext::Function,
+        GroundDomain::Empty(_) => TypecheckingContext::Empty,
+    }
 }
