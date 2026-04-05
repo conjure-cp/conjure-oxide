@@ -21,6 +21,7 @@ export AFL_IGNORE_SEED_PROBLEMS=1       # skip seeds that crash/timeout on start
 export AFL_IMPORT_FIRST=1               # load other fuzzers' findings first
 export AFL_FINAL_SYNC=1                 # main instance does a final sync pass
 export AFL_AUTORESUME=1                 # auto-resume from existing corpus
+export AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1  # skip core_pattern check — our "crashes" are deliberate abort()
 
 # ── Build ────────────────────────────────────────────────────────────
 echo "[*] Building harness..."
