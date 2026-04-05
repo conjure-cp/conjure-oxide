@@ -1,4 +1,5 @@
 use crate::ast::domains::MSetAttr;
+use crate::ast::matrix;
 use crate::ast::records::RecordValue;
 use crate::ast::{
     AbstractLiteral, Domain, DomainOpError, DomainPtr, Expression, FuncAttr, HasDomain, IntVal,
@@ -191,8 +192,6 @@ impl GroundDomain {
                 ))
             }
             GroundDomain::Matrix(elem_dom, idx_doms) => {
-                use crate::ast::matrix;
-
                 let shape = matrix::shape_of_dom(self)?;
                 let idx_doms = idx_doms.clone();
 
@@ -209,14 +208,53 @@ impl GroundDomain {
                 Ok(Box::new(iter))
             }
             GroundDomain::Tuple(elem_doms) => {
-                todo!()
+                // Collect the possible values for each element
+                let elem_value_pools: Vec<Vec<Literal>> = elem_doms
+                    .iter()
+                    .map(|d| d.values().map(|it| it.collect()))
+                    .collect::<Result<_, _>>()?;
+
+                // Generate all combinations in lexicographic order
+                let iter = elem_value_pools
+                    .into_iter()
+                    .multi_cartesian_product()
+                    .map(|elems| Literal::AbstractLiteral(AbstractLiteral::Tuple(elems)));
+
+                Ok(Box::new(iter))
             }
             GroundDomain::Record(entries) => {
-                todo!()
+                // Sort entries by name
+                let mut sorted_entries = entries.clone();
+                sorted_entries.sort_by(|a, b| a.name.cmp(&b.name));
+
+                // Collect the names and possible values of each entry
+                let names: Vec<_> = sorted_entries.iter().map(|e| e.name.clone()).collect();
+                let value_pools: Vec<Vec<Literal>> = sorted_entries
+                    .iter()
+                    .map(|e| e.value.values().map(|it| it.collect()))
+                    .collect::<Result<_, _>>()?;
+
+                // Generate all combinations in lexicographic order
+                let iter = value_pools
+                    .into_iter()
+                    .multi_cartesian_product()
+                    .map(move |vals| {
+                        let record_entries = names
+                            .iter()
+                            .cloned()
+                            .zip(vals)
+                            .map(|(name, value)| RecordValue { name, value })
+                            .collect();
+                        Literal::AbstractLiteral(AbstractLiteral::Record(record_entries))
+                    });
+
+                Ok(Box::new(iter))
             }
             GroundDomain::Set(..) => todo!("Enumerating set domains is not yet supported"),
             GroundDomain::MSet(..) => todo!("Enumerating multi-set domains is not yet supported"),
-            GroundDomain::Function(..) => todo!("Enumerating function domains is not yet supported")
+            GroundDomain::Function(..) => {
+                todo!("Enumerating function domains is not yet supported")
+            }
         }
     }
 
@@ -1054,6 +1092,7 @@ impl Display for GroundDomain {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::ast::Name;
     use crate::{domain_int_ground, matrix_lit};
 
     #[test]
@@ -1150,6 +1189,123 @@ mod tests {
         let count = dom.values().unwrap().count();
         let length = dom.length().unwrap();
 
+        assert_eq!(count as u64, length);
+    }
+
+    #[test]
+    fn tuple_values_two_bools() {
+        // tuple of (bool, bool) => 2*2 = 4 values
+        let dom = GroundDomain::Tuple(vec![
+            Moo::new(GroundDomain::Bool),
+            Moo::new(GroundDomain::Bool),
+        ]);
+
+        let values: Vec<Literal> = dom.values().unwrap().collect();
+
+        assert_eq!(values.len(), 4);
+        let t = |a, b| {
+            Literal::AbstractLiteral(AbstractLiteral::Tuple(vec![
+                Literal::Bool(a),
+                Literal::Bool(b),
+            ]))
+        };
+        assert_eq!(values[0], t(false, false));
+        assert_eq!(values[1], t(false, true));
+        assert_eq!(values[2], t(true, false));
+        assert_eq!(values[3], t(true, true));
+    }
+
+    #[test]
+    fn tuple_values_mixed_domains() {
+        // tuple of (bool, int(0..2)) => 2*3 = 6 values, lexicographic
+        let dom = GroundDomain::Tuple(vec![Moo::new(GroundDomain::Bool), domain_int_ground!(0..2)]);
+
+        let values: Vec<Literal> = dom.values().unwrap().collect();
+
+        assert_eq!(values.len(), 6);
+        let t = |b: bool, i: i32| {
+            Literal::AbstractLiteral(AbstractLiteral::Tuple(vec![
+                Literal::Bool(b),
+                Literal::Int(i),
+            ]))
+        };
+        // bool false first, then ints 0,1,2
+        assert_eq!(values[0], t(false, 0));
+        assert_eq!(values[1], t(false, 1));
+        assert_eq!(values[2], t(false, 2));
+        // then bool true
+        assert_eq!(values[3], t(true, 0));
+        assert_eq!(values[4], t(true, 1));
+        assert_eq!(values[5], t(true, 2));
+    }
+
+    #[test]
+    fn tuple_values_count_matches_length() {
+        let dom = GroundDomain::Tuple(vec![
+            domain_int_ground!(1..3),
+            Moo::new(GroundDomain::Bool),
+            domain_int_ground!(0..1),
+        ]);
+        let count = dom.values().unwrap().count();
+        let length = dom.length().unwrap();
+        assert_eq!(count as u64, length);
+    }
+
+    #[test]
+    fn record_values_lexicographic_by_name() {
+        // record {b: bool, a: int(0..1)}
+        // Entries should be ordered by name: a first, then b
+        let dom = GroundDomain::Record(vec![
+            RecordValue {
+                name: Name::user("b"),
+                value: Moo::new(GroundDomain::Bool),
+            },
+            RecordValue {
+                name: Name::user("a"),
+                value: domain_int_ground!(0..1),
+            },
+        ]);
+
+        let values: Vec<Literal> = dom.values().unwrap().collect();
+
+        // 2 * 2 = 4 values
+        assert_eq!(values.len(), 4);
+
+        // Entries should be sorted by name: "a" before "b"
+        let r = |a_val: i32, b_val: bool| {
+            Literal::AbstractLiteral(AbstractLiteral::Record(vec![
+                RecordValue {
+                    name: Name::user("a"),
+                    value: Literal::Int(a_val),
+                },
+                RecordValue {
+                    name: Name::user("b"),
+                    value: Literal::Bool(b_val),
+                },
+            ]))
+        };
+
+        // "a" (int) varies slowest, "b" (bool) varies fastest
+        assert_eq!(values[0], r(0, false));
+        assert_eq!(values[1], r(0, true));
+        assert_eq!(values[2], r(1, false));
+        assert_eq!(values[3], r(1, true));
+    }
+
+    #[test]
+    fn record_values_count_matches_length() {
+        let dom = GroundDomain::Record(vec![
+            RecordValue {
+                name: Name::user("x"),
+                value: domain_int_ground!(1..3),
+            },
+            RecordValue {
+                name: Name::user("y"),
+                value: Moo::new(GroundDomain::Bool),
+            },
+        ]);
+        let count = dom.values().unwrap().count();
+        let length = dom.length().unwrap();
         assert_eq!(count as u64, length);
     }
 }
