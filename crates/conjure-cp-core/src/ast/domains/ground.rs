@@ -190,7 +190,22 @@ impl GroundDomain {
                     rng_iters.into_iter().flat_map(|ri| ri.map(Literal::from)),
                 ))
             }
-            _ => todo!("Enumerating nested domains is not yet supported"),
+            GroundDomain::Matrix(elem_dom, idx_doms) => {
+                todo!()
+            }
+            GroundDomain::Tuple(elem_doms) => {
+                todo!()
+            }
+            GroundDomain::Record(entries) => {
+                todo!()
+            }
+            GroundDomain::Set(attr, inner_dom) => {
+                todo!()
+            }
+            GroundDomain::MSet(..) => todo!("Enumerating multi-set domains is not yet supported"),
+            GroundDomain::Function(..) => {
+                todo!("Enumerating function domains is not yet supported")
+            }
         }
     }
 

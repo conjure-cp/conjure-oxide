@@ -806,9 +806,17 @@ mod tests {
         ];
         let shape = shape_of(&tensor);
 
-        assert_eq!(shape.offset, 0);
+        assert_eq!(shape.size, 24);
         assert_eq!(shape.dims, vec![2, 3, 4]);
         assert_eq!(shape.strides, vec![12, 4, 1]);
+        assert_eq!(
+            shape.idx_doms,
+            vec![
+                domain_int_ground!(1..2),
+                domain_int_ground!(1..3),
+                domain_int_ground!(1..4)
+            ]
+        );
     }
 
     #[test]

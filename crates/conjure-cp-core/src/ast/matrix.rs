@@ -8,7 +8,7 @@ use super::{AbstractLiteral, DomainPtr, Literal};
 use crate::ast::literals::AbstractLiteralValue;
 use crate::ast::{DomainOpError, Expression as Expr, GroundDomain, Metadata, Moo, Range};
 use crate::bug::UnwrapOrBug;
-use crate::utils::View;
+use crate::utils::MatrixShape;
 use crate::{bug_assert, domain_int, domain_int_ground};
 use itertools::{Itertools, izip};
 use uniplate::{Biplate, Uniplate as _};
@@ -249,39 +249,79 @@ pub fn partial_flatten<T: MatrixValue>(n: usize, matrix: AbstractLiteral<T>) -> 
     res.into_nested_matrix().unwrap_or_bug()
 }
 
-/// Get the sizes and strides of this matrix along each dimension;
-/// offset field will always be 0
-pub fn shape_of<T: MatrixValue>(matrix: &AbstractLiteral<T>) -> View {
+type ShapeAcc<T> = VecDeque<(VecDeque<usize>, VecDeque<usize>, VecDeque<T>)>;
+
+/// Get the shape of this matrix: sizes, strides, and index domains along each dimension.
+pub fn shape_of<T: MatrixValue>(matrix: &AbstractLiteral<T>) -> MatrixShape<T::Dom> {
     let AbstractLiteral::Matrix(..) = matrix else {
         panic!("expected a matrix");
     };
 
     // TODO(perf): uniplate clones every node it passes, which is wasteful.. could rewrite this to an imperative style
-    let (dims, strides) = matrix.cata(
-        &|elem, mut acc: VecDeque<(VecDeque<usize>, VecDeque<usize>)>| {
-            assert!(
-                acc.iter().all_equal(),
-                "each child of a matrix should have the same shape"
-            );
+    let (dims, strides, idx_doms) = matrix.cata(&|elem, mut acc: ShapeAcc<T::Dom>| {
+        assert!(
+            acc.iter().all_equal(),
+            "each child of a matrix should have the same shape"
+        );
 
-            let (mut dims, mut strides) = acc.pop_front().unwrap_or_default();
+        let (mut dims, mut strides, mut idx_doms) = acc.pop_front().unwrap_or_default();
 
-            match elem {
-                AbstractLiteral::Matrix(elems, _) => {
-                    let dim = elems.len();
-                    let stride: usize = dims.iter().product();
+        match elem {
+            AbstractLiteral::Matrix(elems, domain) => {
+                let dim = elems.len();
+                let stride: usize = dims.iter().product();
 
-                    dims.push_front(dim);
-                    strides.push_front(stride);
+                dims.push_front(dim);
+                strides.push_front(stride);
+                idx_doms.push_front(domain);
 
-                    (dims, strides)
-                }
-                _ => Default::default(),
+                (dims, strides, idx_doms)
             }
-        },
-    );
+            _ => Default::default(),
+        }
+    });
 
-    View::new(0, dims.into(), strides.into())
+    let dims: Vec<usize> = dims.into();
+    let size: usize = dims.iter().product();
+
+    MatrixShape {
+        size,
+        dims,
+        strides: strides.into(),
+        idx_doms: idx_doms.into(),
+    }
+}
+
+/// Same as [shape_of] but for a ground matrix domain
+pub fn shape_of_dom(
+    matrix_dom_gd: &GroundDomain,
+) -> Result<MatrixShape<Moo<GroundDomain>>, DomainOpError> {
+    let GroundDomain::Matrix(_, idx_doms) = matrix_dom_gd else {
+        return Err(DomainOpError::WrongType);
+    };
+
+    let len = idx_doms.len();
+    let mut index_domains = VecDeque::with_capacity(len);
+    let mut strides = VecDeque::with_capacity(len);
+    let mut dimensions = VecDeque::with_capacity(len);
+
+    let mut size: usize = 1;
+    for gd in idx_doms.iter().rev() {
+        let gd_sz = gd.len_usize()?;
+
+        index_domains.push_front(gd.clone());
+        strides.push_front(size);
+        dimensions.push_front(gd_sz);
+
+        size = size.checked_mul(gd_sz).ok_or(DomainOpError::TooLarge)?;
+    }
+
+    Ok(MatrixShape {
+        size,
+        dims: dimensions.into(),
+        strides: strides.into(),
+        idx_doms: idx_doms.clone(),
+    })
 }
 
 /// Gets the index domains for a matrix literal.
@@ -292,33 +332,7 @@ pub fn shape_of<T: MatrixValue>(matrix: &AbstractLiteral<T>) -> View {
 ///
 /// + If the number or type of elements in each dimension is inconsistent.
 pub fn index_domains<T: MatrixValue>(matrix: &AbstractLiteral<T>) -> Vec<T::Dom> {
-    let AbstractLiteral::Matrix(..) = matrix else {
-        panic!("expected a matrix");
-    };
-
-    matrix.cata(
-        &move |element: AbstractLiteral<T>, child_index_domains: VecDeque<Vec<T::Dom>>| {
-            assert!(
-                child_index_domains.iter().all_equal(),
-                "each child of a matrix should have the same index domain"
-            );
-
-            let child_index_domains = child_index_domains
-                .front()
-                .unwrap_or(&vec![])
-                .iter()
-                .cloned()
-                .collect_vec();
-            match element {
-                AbstractLiteral::Matrix(_, domain) => {
-                    let mut index_domains = vec![domain];
-                    index_domains.extend(child_index_domains);
-                    index_domains
-                }
-                _ => vec![],
-            }
-        },
-    )
+    shape_of(matrix).idx_doms
 }
 
 /// Gets the index domains for a matrix expression and resolves them
