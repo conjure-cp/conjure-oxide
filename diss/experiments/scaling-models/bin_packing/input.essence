@@ -1,0 +1,49 @@
+language Essence 1.4
+
+$ Bin packing with tuple items: (weight, colour).
+$ n items, n bins, capacity cap.
+$ Scale: increase n.
+
+given n : int
+given cap : int
+
+given items : matrix indexed by [int(1..n)] of tuple(int(0..cap), int(1..n))
+
+$ assign[i] = which bin item i goes into
+find assign: matrix indexed by [int(1..n)] of int(1..n)
+
+$ bin_load[b] = total weight in bin b
+find bin_load: matrix indexed by [int(1..n)] of int(0..cap)
+
+$ bin_used[b] = true if bin b contains at least one item
+find bin_used: matrix indexed by [int(1..n)] of bool
+
+$ n_bins_used = total bins used (minimise this)
+find n_bins_used: int(1..n)
+
+such that
+    $ Load definition
+    forAll b: int(1..n) .
+        bin_load[b] = sum i: int(1..n) . toInt(assign[i] = b) * items[i][1],
+
+    $ Capacity
+    forAll b: int(1..n) . bin_load[b] <= cap,
+
+    $ bin_used definition
+    forAll b: int(1..n) .
+        bin_used[b] = (bin_load[b] > 0),
+
+    $ Count used bins
+    n_bins_used = sum b: int(1..n) . toInt(bin_used[b]),
+
+    $ Items of the same colour may not share a bin
+    forAll i: int(1..n) .
+        forAll j: int(1..n) .
+            ((i < j) -> ((items[i][2] = items[j][2]) -> (assign[i] != assign[j]))),
+
+    $ Symmetry breaking: bins used in contiguous prefix
+    forAll b: int(1..n-1) .
+        bin_used[b] \/ !bin_used[b+1],
+
+    $ Symmetry breaking: heaviest item goes in bin 1
+    assign[n] = 1

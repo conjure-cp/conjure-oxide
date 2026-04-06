@@ -15,6 +15,19 @@ Reify(and([ (k <= 5) | k : int(1..2) ]), b)
 
 --
 
+and([a,Reify(and([ (k <= 5) | k : int(1..2) ]), b);int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)])
+and([a,Reify(and([ (k <= 5) | k : int(1..2) ]), b);int(1..)])
+
+--
+
+and([a,Reify(and([ (k <= 5) | k : int(1..2) ]), b);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+a,
+Reify(and([ (k <= 5) | k : int(1..2) ]), b)
+
+--
+
 Model before rewriting:
 
 find k: int(1..2)
@@ -58,24 +71,13 @@ such that
 Reify(Ineq(k, 5, 0), __0)
 
 and([ (k <= 5) | k : int(1..2) ]), 
-   ~~> expand_comprehension_via_solver_ac ([("Base", 2002)])
+   ~~> expand_comprehension_via_solver_ac ([("Base", 1500)])
 and([;int(1..)])
 
 --
 
-and([a,Reify(and([;int(1..)]), b);int(1..2)]), 
-   ~~> constant_evaluator ([("Constant", 9001)])
-and([a,Reify(true, b);int(1..2)])
-
---
-
-and([a,Reify(true, b);int(1..2)]), 
-   ~~> matrix_to_list ([("Base", 2000)])
-and([a,Reify(true, b);int(1..)])
-
---
-
-and([a,Reify(true, b);int(1..)]), 
+a,
+Reify(and([;int(1..)]), b), 
    ~~> constant_evaluator ([("Constant", 9001)])
 a,
 Reify(true, b)

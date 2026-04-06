@@ -1,0 +1,47 @@
+language Essence 1.4
+
+$ 3D tensor with double-slice assignment and mixed direct/slice access.
+$ Tests: tensor[p, .., ..] double-slice, tensor[p, r, ..] row slice,
+$        tensor[p, .., c] column-sum via quantifier.
+
+find tensor: matrix indexed by [int(1..2), int(1..3), int(1..4)] of int(1..6)
+find plane1: matrix indexed by [int(1..3), int(1..4)] of int(1..6)
+find rowslice: matrix indexed by [int(1..4)] of int(1..6)
+find row_sums: matrix indexed by [int(1..2), int(1..3)] of int(4..24)
+
+such that
+    $ Assign entire plane via double-slice
+    plane1 = tensor[1, .., ..],
+
+    $ Assign a single row via row-slice
+    rowslice = tensor[2, 2, ..],
+
+    $ Compute row sums
+    forAll p: int(1..2) .
+        forAll r: int(1..3) .
+            row_sums[p, r] = sum(tensor[p, r, ..]),
+
+    $ Rows within each plane are lex-ordered
+    forAll p: int(1..2) .
+        forAll r: int(1..2) .
+            tensor[p, r, ..] <lex tensor[p, r+1, ..],
+
+    $ allDiff in each row of plane 1
+    forAll r: int(1..3) .
+        allDiff(tensor[1, r, ..]),
+
+    $ Column sums: plane 1 dominates plane 2 column-wise
+    forAll c: int(1..4) .
+        (sum r: int(1..3) . tensor[1, r, c]) >=
+        (sum r: int(1..3) . tensor[2, r, c]),
+
+    $ rowslice is non-decreasing (plane2, row2 - should follow from lex on cols via indirect test)
+    forAll c: int(1..3) .
+        rowslice[c] <= rowslice[c+1],
+
+    $ Corner pins
+    tensor[1, 1, 1] = 1,
+    tensor[2, 3, 4] = 6,
+
+    $ Cross-check: slice and direct access agree
+    plane1[3, 4] = tensor[1, 3, 4]

@@ -1,0 +1,44 @@
+language Essence 1.4
+
+$ Matrix of records where each record has a tuple position field.
+$ Tests: items[i][pos][1], items[i][pos] != items[j][pos], toInt on record field.
+
+letting Pos  be domain tuple(int(1..5), int(1..5))
+letting Item be domain record { pos: Pos, weight: int(1..10), tag: int(1..3) }
+
+find items: matrix indexed by [int(1..5)] of Item
+find tag_counts: matrix indexed by [int(1..3)] of int(0..5)
+
+such that
+    $ Count items per tag
+    forAll t: int(1..3) .
+        tag_counts[t] = sum i: int(1..5) . toInt(items[i][tag] = t),
+
+    $ Every tag used at least once
+    forAll t: int(1..3) .
+        tag_counts[t] >= 1,
+
+    $ Items ordered by pos: first coord asc, then second coord asc
+    forAll i: int(1..4) .
+        items[i][pos][1] < items[i+1][pos][1] \/
+        (items[i][pos][1] = items[i+1][pos][1] /\
+         items[i][pos][2] <= items[i+1][pos][2]),
+
+    $ All positions distinct (tuple inequality)
+    forAll i: int(1..5) .
+        forAll j: int(1..5) .
+            i < j -> items[i][pos] != items[j][pos],
+
+    $ Tag-weight rules
+    forAll i: int(1..5) .
+        items[i][tag] = 1 -> items[i][weight] <= 4,
+    forAll i: int(1..5) .
+        items[i][tag] = 2 -> (items[i][weight] >= 3 /\ items[i][weight] <= 7),
+    forAll i: int(1..5) .
+        items[i][tag] = 3 -> items[i][weight] >= 6,
+
+    $ Total weight bounded
+    (sum i: int(1..5) . items[i][weight]) <= 30,
+
+    $ Symmetry breaking
+    items[1][tag] = 1

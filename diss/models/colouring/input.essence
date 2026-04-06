@@ -1,0 +1,20 @@
+language Essence 1.4
+
+$ Graph colouring via adjacency matrix.
+
+given n_nodes : int
+given n_cols : int
+
+$ Symmetric adjacency matrix (upper triangle only enforced)
+given adj : matrix indexed by [int(1..n_nodes), int(1..n_nodes)] of bool
+
+find colour: matrix indexed by [int(1..n_nodes)] of int(1..n_cols)
+
+such that
+    $ No two adjacent nodes share a colour
+    forAll i: int(1..n_nodes) .
+        forAll j: int(1..n_nodes) .
+            adj[i, j] -> colour[i] != colour[j],
+
+    $ Symmetry breaking: first node gets colour 1
+    colour[1] = 1

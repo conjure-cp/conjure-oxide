@@ -22,6 +22,23 @@ new constraints:
 
 --
 
+x, 
+   ~~> select_representation ([("ReprGeneral", 8100)])
+x
+new variables:
+  find x#TupleToAtom_1: int(1, 3..4)
+  find x#TupleToAtom_2: int(1..2, 5)
+new constraints:
+  (x = x)
+
+--
+
+x, 
+   ~~> select_representation ([("ReprGeneral", 8100)])
+x
+
+--
+
 x[1], 
    ~~> tuple_index_to_bubble ([("Bubble", 8000)])
 {x[1] @ and([(1 >= 1),(1 <= 2);int(1..)])}
@@ -31,23 +48,14 @@ x[1],
 (x = y),
 (sum([{x[1] @ and([(1 >= 1),(1 <= 2);int(1..)])},x[2];int(1..)]) <= 6),
 __minion_w_inset(x#TuplePacked_1,[0,1,4,10,11,14,15,16,19]),
-__minion_w_inset(y#TuplePacked_1,[0,1,4,10,11,14,15,16,19]), 
+__minion_w_inset(y#TuplePacked_1,[0,1,4,10,11,14,15,16,19]),
+(x = x), 
    ~~> constant_evaluator ([("Constant", 9001)])
 (x = y),
 (sum([x[1],x[2];int(1..)]) <= 6),
 __minion_w_inset(x#TuplePacked_1,[0,1,4,10,11,14,15,16,19]),
-__minion_w_inset(y#TuplePacked_1,[0,1,4,10,11,14,15,16,19])
-
---
-
-x, 
-   ~~> select_representation ([("ReprGeneral", 8000)])
-x
-new variables:
-  find x#TupleToAtom_1: int(1, 3..4)
-  find x#TupleToAtom_2: int(1..2, 5)
-new constraints:
-  (x = x)
+__minion_w_inset(y#TuplePacked_1,[0,1,4,10,11,14,15,16,19]),
+(x = x)
 
 --
 
@@ -71,9 +79,23 @@ __minion_w_inset(y#TuplePacked_1,[0,1,4,10,11,14,15,16,19]),
 
 --
 
-x, 
-   ~~> select_representation ([("ReprGeneral", 8000)])
-x
+(x = y),
+(sum([x[1],x[2];int(1..)]) <= 6),
+__minion_w_inset(x#TuplePacked_1,[0,1,4,10,11,14,15,16,19]),
+__minion_w_inset(y#TuplePacked_1,[0,1,4,10,11,14,15,16,19]),
+(x = x), 
+   ~~> tuple_to_atom_index_lit ([("ReprGeneral", 5000)])
+(x = y),
+(sum([x#TupleToAtom_1,x#TupleToAtom_2;int(1..)]) <= 6),
+__minion_w_inset(x#TuplePacked_1,[0,1,4,10,11,14,15,16,19]),
+__minion_w_inset(y#TuplePacked_1,[0,1,4,10,11,14,15,16,19]),
+(x = x)
+
+--
+
+(sum([x#TupleToAtom_1,x#TupleToAtom_2;int(1..)]) <= 6), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([x#TupleToAtom_1, x#TupleToAtom_2], 6)
 
 --
 
@@ -96,13 +118,13 @@ sum([x#TupleToAtom_1,-(1);int(1..)])
 --
 
 (x = y),
-(sum([x[1],x[2];int(1..)]) <= 6),
+SumLeq([x#TupleToAtom_1, x#TupleToAtom_2], 6),
 __minion_w_inset(x#TuplePacked_1,[0,1,4,10,11,14,15,16,19]),
 __minion_w_inset(y#TuplePacked_1,[0,1,4,10,11,14,15,16,19]),
 (x#TuplePacked_1 = sum([product([5,sum([x#TupleToAtom_1,-(1);int(1..)]);int(1..)]),(x#TupleToAtom_2 - 1);int(1..)])), 
    ~~> constant_evaluator ([("Constant", 9001)])
 (x = y),
-(sum([x[1],x[2];int(1..)]) <= 6),
+SumLeq([x#TupleToAtom_1, x#TupleToAtom_2], 6),
 __minion_w_inset(x#TuplePacked_1,[0,1,4,10,11,14,15,16,19]),
 __minion_w_inset(y#TuplePacked_1,[0,1,4,10,11,14,15,16,19]),
 (x#TuplePacked_1 = sum([product([5,sum([x#TupleToAtom_1,-1;int(1..)]);int(1..)]),(x#TupleToAtom_2 - 1);int(1..)]))
@@ -116,13 +138,13 @@ sum([x#TupleToAtom_2,-(1);int(1..)])
 --
 
 (x = y),
-(sum([x[1],x[2];int(1..)]) <= 6),
+SumLeq([x#TupleToAtom_1, x#TupleToAtom_2], 6),
 __minion_w_inset(x#TuplePacked_1,[0,1,4,10,11,14,15,16,19]),
 __minion_w_inset(y#TuplePacked_1,[0,1,4,10,11,14,15,16,19]),
 (x#TuplePacked_1 = sum([product([5,sum([x#TupleToAtom_1,-1;int(1..)]);int(1..)]),sum([x#TupleToAtom_2,-(1);int(1..)]);int(1..)])), 
    ~~> constant_evaluator ([("Constant", 9001)])
 (x = y),
-(sum([x[1],x[2];int(1..)]) <= 6),
+SumLeq([x#TupleToAtom_1, x#TupleToAtom_2], 6),
 __minion_w_inset(x#TuplePacked_1,[0,1,4,10,11,14,15,16,19]),
 __minion_w_inset(y#TuplePacked_1,[0,1,4,10,11,14,15,16,19]),
 (x#TuplePacked_1 = sum([product([5,sum([x#TupleToAtom_1,-1;int(1..)]);int(1..)]),sum([x#TupleToAtom_2,-1;int(1..)]);int(1..)]))
@@ -146,14 +168,14 @@ new constraints:
 --
 
 (x = y),
-(sum([x[1],x[2];int(1..)]) <= 6),
+SumLeq([x#TupleToAtom_1, x#TupleToAtom_2], 6),
 __minion_w_inset(x#TuplePacked_1,[0,1,4,10,11,14,15,16,19]),
 __minion_w_inset(y#TuplePacked_1,[0,1,4,10,11,14,15,16,19]),
 and([FlatWeightedSumLeq([1, 5, 1],[-1, __0, x#TupleToAtom_2],x#TuplePacked_1),FlatWeightedSumGeq([1, 5, 1],[-1, __0, x#TupleToAtom_2],x#TuplePacked_1);int(1..)]),
 __0 =aux sum([x#TupleToAtom_1,-1;int(1..)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
 (x = y),
-(sum([x[1],x[2];int(1..)]) <= 6),
+SumLeq([x#TupleToAtom_1, x#TupleToAtom_2], 6),
 __minion_w_inset(x#TuplePacked_1,[0,1,4,10,11,14,15,16,19]),
 __minion_w_inset(y#TuplePacked_1,[0,1,4,10,11,14,15,16,19]),
 FlatWeightedSumLeq([1, 5, 1],[-1, __0, x#TupleToAtom_2],x#TuplePacked_1),
@@ -169,7 +191,7 @@ and([SumLeq([-1, x#TupleToAtom_1], __0),SumGeq([-1, x#TupleToAtom_1], __0);int(1
 --
 
 (x = y),
-(sum([x[1],x[2];int(1..)]) <= 6),
+SumLeq([x#TupleToAtom_1, x#TupleToAtom_2], 6),
 __minion_w_inset(x#TuplePacked_1,[0,1,4,10,11,14,15,16,19]),
 __minion_w_inset(y#TuplePacked_1,[0,1,4,10,11,14,15,16,19]),
 FlatWeightedSumLeq([1, 5, 1],[-1, __0, x#TupleToAtom_2],x#TuplePacked_1),
@@ -177,7 +199,7 @@ FlatWeightedSumGeq([1, 5, 1],[-1, __0, x#TupleToAtom_2],x#TuplePacked_1),
 and([SumLeq([-1, x#TupleToAtom_1], __0),SumGeq([-1, x#TupleToAtom_1], __0);int(1..)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
 (x = y),
-(sum([x[1],x[2];int(1..)]) <= 6),
+SumLeq([x#TupleToAtom_1, x#TupleToAtom_2], 6),
 __minion_w_inset(x#TuplePacked_1,[0,1,4,10,11,14,15,16,19]),
 __minion_w_inset(y#TuplePacked_1,[0,1,4,10,11,14,15,16,19]),
 FlatWeightedSumLeq([1, 5, 1],[-1, __0, x#TupleToAtom_2],x#TuplePacked_1),
@@ -190,24 +212,6 @@ SumGeq([-1, x#TupleToAtom_1], __0)
 (x = y), 
    ~~> tuple_packed_var_eq_var ([("ReprTuplePacked", 2000)])
 (x#TuplePacked_1 = y#TuplePacked_1)
-
---
-
-x[1], 
-   ~~> tuple_to_atom_index_lit ([("ReprGeneral", 2000)])
-x#TupleToAtom_1
-
---
-
-x[2], 
-   ~~> tuple_to_atom_index_lit ([("ReprGeneral", 2000)])
-x#TupleToAtom_2
-
---
-
-(sum([x#TupleToAtom_1,x#TupleToAtom_2;int(1..)]) <= 6), 
-   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
-SumLeq([x#TupleToAtom_1, x#TupleToAtom_2], 6)
 
 --
 

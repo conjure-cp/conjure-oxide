@@ -288,7 +288,7 @@ fn integration_test_inner(
     };
 
     let solutions = {
-        let solved = get_solutions(solver, rewritten_model, 0, &solver_input_file)?;
+        let solved = get_solutions(solver, rewritten_model, 0, &solver_input_file)?.solutions;
         save_solutions_json(&solved, path, case_name, solver_fam)?;
         solved
     };

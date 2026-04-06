@@ -5,7 +5,6 @@ use conjure_cp::ast::{GroundDomain, Moo, Range, Reference};
 use conjure_cp::representation::ReprInitError;
 use conjure_cp::utils::{BiMap, MatrixShape, View};
 use itertools::Itertools;
-use std::collections::VecDeque;
 use thiserror::Error;
 
 #[derive(Debug, Clone, Error)]
@@ -122,6 +121,13 @@ register_representation!(
     impl State<DeclarationPtr> {
         pub fn flat_elem_refs(&self) -> impl Iterator<Item=Reference> + '_ {
             self.elements.iter().cloned().map(Reference::new)
+        }
+        /// Get elements selected by a [`View`] as reference expressions.
+        pub fn view_as_exprs(&self, view: &View) -> Vec<Expression> {
+            self.view_cloned(view)
+                .into_iter()
+                .map(|decl| Expression::from(Reference::new(decl)))
+                .collect()
         }
     }
     fn init(dom: DomainPtr) -> Result<State<DomainPtr>, ReprInitError> {

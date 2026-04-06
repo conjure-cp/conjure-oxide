@@ -1,0 +1,49 @@
+language Essence 1.4
+
+$ Deeply nested records: tests 3-level field access and cross-branch constraints.
+
+letting Leaf   be domain record { val: int(1..9), act: bool }
+letting Branch be domain record { lft: Leaf, rgt: Leaf, depth: int(1..3) }
+letting Root   be domain record { a: Branch, b: Branch, c: Branch, tot: int(0..54) }
+
+find tree: Root
+
+such that
+    $ val ordering within each branch
+    tree[a][lft][val] < tree[a][rgt][val],
+    tree[b][lft][val] < tree[b][rgt][val],
+    tree[c][lft][val] < tree[c][rgt][val],
+
+    $ total = sum of all six leaf values
+    tree[tot] = tree[a][lft][val] + tree[a][rgt][val]
+                + tree[b][lft][val] + tree[b][rgt][val]
+                + tree[c][lft][val] + tree[c][rgt][val],
+
+    $ Depths are a permutation of {1,2,3}
+    tree[a][depth] != tree[b][depth],
+    tree[b][depth] != tree[c][depth],
+    tree[a][depth] != tree[c][depth],
+
+    $ Symmetry breaking: fix depth ordering
+    tree[a][depth] < tree[b][depth],
+    tree[b][depth] < tree[c][depth],
+
+    $ At least one active leaf per branch
+    tree[a][lft][act] \/ tree[a][rgt][act],
+    tree[b][lft][act] \/ tree[b][rgt][act],
+    tree[c][lft][act] \/ tree[c][rgt][act],
+
+    $ If both leaves active: vals differ by at least 3
+    (tree[a][lft][act] /\ tree[a][rgt][act]) ->
+        tree[a][rgt][val] - tree[a][lft][val] >= 3,
+    (tree[b][lft][act] /\ tree[b][rgt][act]) ->
+        tree[b][rgt][val] - tree[b][lft][val] >= 3,
+    (tree[c][lft][act] /\ tree[c][rgt][act]) ->
+        tree[c][rgt][val] - tree[c][lft][val] >= 3,
+
+    $ Deeper branch has strictly larger lft.val
+    tree[a][lft][val] < tree[b][lft][val],
+    tree[b][lft][val] < tree[c][lft][val],
+
+    $ total is even
+    tree[tot] % 2 = 0

@@ -1,0 +1,1554 @@
+Model before rewriting:
+
+letting Task be domain record of (duration: int(1..5), start: int(0..max_time), finish: int(1..max_time))
+letting max_time be 5
+letting n be 4
+letting prd be [(0,0),(1,2),(1,1),(2,0);int(1..4)]
+find tasks: matrix indexed by [int(1..n)] of Task
+
+such that
+
+and([ (tasks[i][finish] = sum([tasks[i][start],tasks[i][duration];int(1..)])) | i : int(1..n) ]),
+and([ ((prd[i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[prd[i][1]][finish],prd[i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks[1][start] = 0)
+
+--
+
+and([ (tasks[i][finish] = sum([tasks[i][start],tasks[i][duration];int(1..)])) | i : int(1..n) ]),
+and([ ((prd[i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[prd[i][1]][finish],prd[i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks[1][start] = 0), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+and([ (tasks[i][finish] = sum([tasks[i][start],tasks[i][duration];int(1..)])) | i : int(1..n) ]),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks[1][start] = 0)
+
+--
+
+and([ (tasks[i][finish] = sum([tasks[i][start],tasks[i][duration];int(1..)])) | i : int(1..n) ]),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks[1][start] = 0), 
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
+and([ (tasks[i][finish] = sum([tasks[i][start],tasks[i][duration];int(1..)])) | i : int(1..n) ]),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks[1][start] = 0)
+new variables:
+  letting prd#MatrixToAtom_1 be (0,0)
+  letting prd#MatrixToAtom_2 be (1,2)
+  letting prd#MatrixToAtom_3 be (1,1)
+  letting prd#MatrixToAtom_4 be (2,0)
+  find tasks#MatrixToAtom_1: record of {duration: int(1..5), start: int(0..5), finish: int(1..5)}
+  find tasks#MatrixToAtom_2: record of {duration: int(1..5), start: int(0..5), finish: int(1..5)}
+  find tasks#MatrixToAtom_3: record of {duration: int(1..5), start: int(0..5), finish: int(1..5)}
+  find tasks#MatrixToAtom_4: record of {duration: int(1..5), start: int(0..5), finish: int(1..5)}
+
+updated variables:
+  find tasks: matrix indexed by [int(1..n)] of Task ~~> find tasks: matrix indexed by [int(1..4)] of record of {duration: int(1..5), start: int(0..5), finish: int(1..5)}
+
+--
+
+and([ (tasks[i][finish] = sum([tasks[i][start],tasks[i][duration];int(1..)])) | i : int(1..n) ]),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks[1][start] = 0), 
+   ~~> select_representation_unconstrained ([("ReprGeneral", 8000)])
+and([ (tasks[i][finish] = sum([tasks[i][start],tasks[i][duration];int(1..)])) | i : int(1..n) ]),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks[1][start] = 0)
+new variables:
+  find tasks#MatrixToAtom_1#RecordToTuple_1: tuple of (int(1..5), int(1..5), int(0..5))
+  find tasks#MatrixToAtom_2#RecordToTuple_1: tuple of (int(1..5), int(1..5), int(0..5))
+  find tasks#MatrixToAtom_3#RecordToTuple_1: tuple of (int(1..5), int(1..5), int(0..5))
+  find tasks#MatrixToAtom_4#RecordToTuple_1: tuple of (int(1..5), int(1..5), int(0..5))
+
+--
+
+and([ (tasks[i][finish] = sum([tasks[i][start],tasks[i][duration];int(1..)])) | i : int(1..n) ]),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks[1][start] = 0), 
+   ~~> select_representation_unconstrained ([("ReprGeneral", 8000)])
+and([ (tasks[i][finish] = sum([tasks[i][start],tasks[i][duration];int(1..)])) | i : int(1..n) ]),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks[1][start] = 0)
+new variables:
+  find tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1: int(1..5)
+  find tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2: int(1..5)
+  find tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3: int(0..5)
+  find tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1: int(1..5)
+  find tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2: int(1..5)
+  find tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3: int(0..5)
+  find tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1: int(1..5)
+  find tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2: int(1..5)
+  find tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3: int(0..5)
+  find tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1: int(1..5)
+  find tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2: int(1..5)
+  find tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3: int(0..5)
+
+--
+
+tasks[1], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{tasks[1] @ and([__inDomain(1,int(1..4));int(1..)])}
+
+--
+
+and([ (tasks[i][finish] = sum([tasks[i][start],tasks[i][duration];int(1..)])) | i : int(1..n) ]),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+({tasks[1] @ and([__inDomain(1,int(1..4));int(1..)])}[start] = 0), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+and([ (tasks[i][finish] = sum([tasks[i][start],tasks[i][duration];int(1..)])) | i : int(1..n) ]),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks[1][start] = 0)
+
+--
+
+and([ (tasks[i][finish] = sum([tasks[i][start],tasks[i][duration];int(1..)])) | i : int(1..n) ]),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks[1][start] = 0), 
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+and([ (tasks[i][finish] = sum([tasks[i][start],tasks[i][duration];int(1..)])) | i : int(1..n) ]),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks#MatrixToAtom_1[start] = 0)
+
+--
+
+tasks#MatrixToAtom_1, 
+   ~~> select_representation ([("ReprGeneral", 8100)])
+tasks#MatrixToAtom_1
+
+--
+
+and([ (tasks[i][finish] = sum([tasks[i][start],tasks[i][duration];int(1..)])) | i : int(1..n) ]),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks#MatrixToAtom_1[start] = 0), 
+   ~~> index_record_to_tuple ([("ReprGeneral", 5000)])
+and([ (tasks[i][finish] = sum([tasks[i][start],tasks[i][duration];int(1..)])) | i : int(1..n) ]),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks#MatrixToAtom_1#RecordToTuple_1[3] = 0)
+
+--
+
+tasks#MatrixToAtom_1#RecordToTuple_1, 
+   ~~> select_representation ([("ReprGeneral", 8100)])
+tasks#MatrixToAtom_1#RecordToTuple_1
+
+--
+
+and([ (tasks[i][finish] = sum([tasks[i][start],tasks[i][duration];int(1..)])) | i : int(1..n) ]),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks#MatrixToAtom_1#RecordToTuple_1[3] = 0), 
+   ~~> tuple_to_atom_index_lit ([("ReprGeneral", 5000)])
+and([ (tasks[i][finish] = sum([tasks[i][start],tasks[i][duration];int(1..)])) | i : int(1..n) ]),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0)
+
+--
+
+Model before rewriting:
+
+find i: int(1..n)
+find __0: matrix indexed by [int(1..4)] of record of {duration: int(1..5), start: int(0..5), finish: int(1..5)}
+find __1: bool
+
+such that
+
+(true != __1)
+
+--
+
+(true != __1), 
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
+(true != __1)
+new variables:
+  find __0#MatrixToAtom_1: record of {duration: int(1..5), start: int(0..5), finish: int(1..5)}
+  find __0#MatrixToAtom_2: record of {duration: int(1..5), start: int(0..5), finish: int(1..5)}
+  find __0#MatrixToAtom_3: record of {duration: int(1..5), start: int(0..5), finish: int(1..5)}
+  find __0#MatrixToAtom_4: record of {duration: int(1..5), start: int(0..5), finish: int(1..5)}
+
+updated variables:
+  find i: int(1..n) ~~> find i: int(1..4)
+
+--
+
+(true != __1), 
+   ~~> select_representation_unconstrained ([("ReprGeneral", 8000)])
+(true != __1)
+new variables:
+  find __0#MatrixToAtom_1#RecordToTuple_1: tuple of (int(1..5), int(1..5), int(0..5))
+  find __0#MatrixToAtom_2#RecordToTuple_1: tuple of (int(1..5), int(1..5), int(0..5))
+  find __0#MatrixToAtom_3#RecordToTuple_1: tuple of (int(1..5), int(1..5), int(0..5))
+  find __0#MatrixToAtom_4#RecordToTuple_1: tuple of (int(1..5), int(1..5), int(0..5))
+
+--
+
+(true != __1), 
+   ~~> select_representation_unconstrained ([("ReprGeneral", 8000)])
+(true != __1)
+new variables:
+  find __0#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1: int(1..5)
+  find __0#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2: int(1..5)
+  find __0#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3: int(0..5)
+  find __0#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1: int(1..5)
+  find __0#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2: int(1..5)
+  find __0#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3: int(0..5)
+  find __0#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1: int(1..5)
+  find __0#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2: int(1..5)
+  find __0#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3: int(0..5)
+  find __0#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1: int(1..5)
+  find __0#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2: int(1..5)
+  find __0#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3: int(0..5)
+
+--
+
+Final model:
+
+find i: int(1..4)
+find __0: matrix indexed by [int(1..4)] of record of {duration: int(1..5), start: int(0..5), finish: int(1..5)}
+find __1: bool
+find __0#MatrixToAtom_1: record of {duration: int(1..5), start: int(0..5), finish: int(1..5)}
+find __0#MatrixToAtom_2: record of {duration: int(1..5), start: int(0..5), finish: int(1..5)}
+find __0#MatrixToAtom_3: record of {duration: int(1..5), start: int(0..5), finish: int(1..5)}
+find __0#MatrixToAtom_4: record of {duration: int(1..5), start: int(0..5), finish: int(1..5)}
+find __0#MatrixToAtom_1#RecordToTuple_1: tuple of (int(1..5), int(1..5), int(0..5))
+find __0#MatrixToAtom_2#RecordToTuple_1: tuple of (int(1..5), int(1..5), int(0..5))
+find __0#MatrixToAtom_3#RecordToTuple_1: tuple of (int(1..5), int(1..5), int(0..5))
+find __0#MatrixToAtom_4#RecordToTuple_1: tuple of (int(1..5), int(1..5), int(0..5))
+find __0#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1: int(1..5)
+find __0#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2: int(1..5)
+find __0#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3: int(0..5)
+find __0#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1: int(1..5)
+find __0#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2: int(1..5)
+find __0#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3: int(0..5)
+find __0#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1: int(1..5)
+find __0#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2: int(1..5)
+find __0#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3: int(0..5)
+find __0#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1: int(1..5)
+find __0#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2: int(1..5)
+find __0#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3: int(0..5)
+
+such that
+
+(true != __1)
+
+and([ (tasks[i][finish] = sum([tasks[i][start],tasks[i][duration];int(1..)])) | i : int(1..n) ]), 
+   ~~> expand_comprehension_via_solver_ac ([("Base", 1500)])
+and([(tasks[1][finish] = sum([tasks[1][start],tasks[1][duration];int(1..)])),(tasks[2][finish] = sum([tasks[2][start],tasks[2][duration];int(1..)])),(tasks[3][finish] = sum([tasks[3][start],tasks[3][duration];int(1..)])),(tasks[4][finish] = sum([tasks[4][start],tasks[4][duration];int(1..)]));int(1..)])
+
+--
+
+and([(tasks[1][finish] = sum([tasks[1][start],tasks[1][duration];int(1..)])),(tasks[2][finish] = sum([tasks[2][start],tasks[2][duration];int(1..)])),(tasks[3][finish] = sum([tasks[3][start],tasks[3][duration];int(1..)])),(tasks[4][finish] = sum([tasks[4][start],tasks[4][duration];int(1..)]));int(1..)]),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(tasks[1][finish] = sum([tasks[1][start],tasks[1][duration];int(1..)])),
+(tasks[2][finish] = sum([tasks[2][start],tasks[2][duration];int(1..)])),
+(tasks[3][finish] = sum([tasks[3][start],tasks[3][duration];int(1..)])),
+(tasks[4][finish] = sum([tasks[4][start],tasks[4][duration];int(1..)])),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0)
+
+--
+
+(tasks[1][finish] = sum([tasks[1][start],tasks[1][duration];int(1..)])),
+(tasks[2][finish] = sum([tasks[2][start],tasks[2][duration];int(1..)])),
+(tasks[3][finish] = sum([tasks[3][start],tasks[3][duration];int(1..)])),
+(tasks[4][finish] = sum([tasks[4][start],tasks[4][duration];int(1..)])),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0), 
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
+(tasks[1][finish] = sum([tasks[1][start],tasks[1][duration];int(1..)])),
+(tasks[2][finish] = sum([tasks[2][start],tasks[2][duration];int(1..)])),
+(tasks[3][finish] = sum([tasks[3][start],tasks[3][duration];int(1..)])),
+(tasks[4][finish] = sum([tasks[4][start],tasks[4][duration];int(1..)])),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0)
+
+--
+
+tasks[1], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{tasks[1] @ and([__inDomain(1,int(1..4));int(1..)])}
+
+--
+
+({tasks[1] @ and([__inDomain(1,int(1..4));int(1..)])}[finish] = sum([tasks[1][start],tasks[1][duration];int(1..)])),
+(tasks[2][finish] = sum([tasks[2][start],tasks[2][duration];int(1..)])),
+(tasks[3][finish] = sum([tasks[3][start],tasks[3][duration];int(1..)])),
+(tasks[4][finish] = sum([tasks[4][start],tasks[4][duration];int(1..)])),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(tasks[1][finish] = sum([tasks[1][start],tasks[1][duration];int(1..)])),
+(tasks[2][finish] = sum([tasks[2][start],tasks[2][duration];int(1..)])),
+(tasks[3][finish] = sum([tasks[3][start],tasks[3][duration];int(1..)])),
+(tasks[4][finish] = sum([tasks[4][start],tasks[4][duration];int(1..)])),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0)
+
+--
+
+tasks[1], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{tasks[1] @ and([__inDomain(1,int(1..4));int(1..)])}
+
+--
+
+(tasks[1][finish] = sum([{tasks[1] @ and([__inDomain(1,int(1..4));int(1..)])}[start],tasks[1][duration];int(1..)])),
+(tasks[2][finish] = sum([tasks[2][start],tasks[2][duration];int(1..)])),
+(tasks[3][finish] = sum([tasks[3][start],tasks[3][duration];int(1..)])),
+(tasks[4][finish] = sum([tasks[4][start],tasks[4][duration];int(1..)])),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(tasks[1][finish] = sum([tasks[1][start],tasks[1][duration];int(1..)])),
+(tasks[2][finish] = sum([tasks[2][start],tasks[2][duration];int(1..)])),
+(tasks[3][finish] = sum([tasks[3][start],tasks[3][duration];int(1..)])),
+(tasks[4][finish] = sum([tasks[4][start],tasks[4][duration];int(1..)])),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0)
+
+--
+
+tasks[1], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{tasks[1] @ and([__inDomain(1,int(1..4));int(1..)])}
+
+--
+
+(tasks[1][finish] = sum([tasks[1][start],{tasks[1] @ and([__inDomain(1,int(1..4));int(1..)])}[duration];int(1..)])),
+(tasks[2][finish] = sum([tasks[2][start],tasks[2][duration];int(1..)])),
+(tasks[3][finish] = sum([tasks[3][start],tasks[3][duration];int(1..)])),
+(tasks[4][finish] = sum([tasks[4][start],tasks[4][duration];int(1..)])),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(tasks[1][finish] = sum([tasks[1][start],tasks[1][duration];int(1..)])),
+(tasks[2][finish] = sum([tasks[2][start],tasks[2][duration];int(1..)])),
+(tasks[3][finish] = sum([tasks[3][start],tasks[3][duration];int(1..)])),
+(tasks[4][finish] = sum([tasks[4][start],tasks[4][duration];int(1..)])),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0)
+
+--
+
+tasks[2], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{tasks[2] @ and([__inDomain(2,int(1..4));int(1..)])}
+
+--
+
+(tasks[1][finish] = sum([tasks[1][start],tasks[1][duration];int(1..)])),
+({tasks[2] @ and([__inDomain(2,int(1..4));int(1..)])}[finish] = sum([tasks[2][start],tasks[2][duration];int(1..)])),
+(tasks[3][finish] = sum([tasks[3][start],tasks[3][duration];int(1..)])),
+(tasks[4][finish] = sum([tasks[4][start],tasks[4][duration];int(1..)])),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(tasks[1][finish] = sum([tasks[1][start],tasks[1][duration];int(1..)])),
+(tasks[2][finish] = sum([tasks[2][start],tasks[2][duration];int(1..)])),
+(tasks[3][finish] = sum([tasks[3][start],tasks[3][duration];int(1..)])),
+(tasks[4][finish] = sum([tasks[4][start],tasks[4][duration];int(1..)])),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0)
+
+--
+
+tasks[2], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{tasks[2] @ and([__inDomain(2,int(1..4));int(1..)])}
+
+--
+
+(tasks[1][finish] = sum([tasks[1][start],tasks[1][duration];int(1..)])),
+(tasks[2][finish] = sum([{tasks[2] @ and([__inDomain(2,int(1..4));int(1..)])}[start],tasks[2][duration];int(1..)])),
+(tasks[3][finish] = sum([tasks[3][start],tasks[3][duration];int(1..)])),
+(tasks[4][finish] = sum([tasks[4][start],tasks[4][duration];int(1..)])),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(tasks[1][finish] = sum([tasks[1][start],tasks[1][duration];int(1..)])),
+(tasks[2][finish] = sum([tasks[2][start],tasks[2][duration];int(1..)])),
+(tasks[3][finish] = sum([tasks[3][start],tasks[3][duration];int(1..)])),
+(tasks[4][finish] = sum([tasks[4][start],tasks[4][duration];int(1..)])),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0)
+
+--
+
+tasks[2], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{tasks[2] @ and([__inDomain(2,int(1..4));int(1..)])}
+
+--
+
+(tasks[1][finish] = sum([tasks[1][start],tasks[1][duration];int(1..)])),
+(tasks[2][finish] = sum([tasks[2][start],{tasks[2] @ and([__inDomain(2,int(1..4));int(1..)])}[duration];int(1..)])),
+(tasks[3][finish] = sum([tasks[3][start],tasks[3][duration];int(1..)])),
+(tasks[4][finish] = sum([tasks[4][start],tasks[4][duration];int(1..)])),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(tasks[1][finish] = sum([tasks[1][start],tasks[1][duration];int(1..)])),
+(tasks[2][finish] = sum([tasks[2][start],tasks[2][duration];int(1..)])),
+(tasks[3][finish] = sum([tasks[3][start],tasks[3][duration];int(1..)])),
+(tasks[4][finish] = sum([tasks[4][start],tasks[4][duration];int(1..)])),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0)
+
+--
+
+tasks[3], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{tasks[3] @ and([__inDomain(3,int(1..4));int(1..)])}
+
+--
+
+(tasks[1][finish] = sum([tasks[1][start],tasks[1][duration];int(1..)])),
+(tasks[2][finish] = sum([tasks[2][start],tasks[2][duration];int(1..)])),
+({tasks[3] @ and([__inDomain(3,int(1..4));int(1..)])}[finish] = sum([tasks[3][start],tasks[3][duration];int(1..)])),
+(tasks[4][finish] = sum([tasks[4][start],tasks[4][duration];int(1..)])),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(tasks[1][finish] = sum([tasks[1][start],tasks[1][duration];int(1..)])),
+(tasks[2][finish] = sum([tasks[2][start],tasks[2][duration];int(1..)])),
+(tasks[3][finish] = sum([tasks[3][start],tasks[3][duration];int(1..)])),
+(tasks[4][finish] = sum([tasks[4][start],tasks[4][duration];int(1..)])),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0)
+
+--
+
+tasks[3], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{tasks[3] @ and([__inDomain(3,int(1..4));int(1..)])}
+
+--
+
+(tasks[1][finish] = sum([tasks[1][start],tasks[1][duration];int(1..)])),
+(tasks[2][finish] = sum([tasks[2][start],tasks[2][duration];int(1..)])),
+(tasks[3][finish] = sum([{tasks[3] @ and([__inDomain(3,int(1..4));int(1..)])}[start],tasks[3][duration];int(1..)])),
+(tasks[4][finish] = sum([tasks[4][start],tasks[4][duration];int(1..)])),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(tasks[1][finish] = sum([tasks[1][start],tasks[1][duration];int(1..)])),
+(tasks[2][finish] = sum([tasks[2][start],tasks[2][duration];int(1..)])),
+(tasks[3][finish] = sum([tasks[3][start],tasks[3][duration];int(1..)])),
+(tasks[4][finish] = sum([tasks[4][start],tasks[4][duration];int(1..)])),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0)
+
+--
+
+tasks[3], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{tasks[3] @ and([__inDomain(3,int(1..4));int(1..)])}
+
+--
+
+(tasks[1][finish] = sum([tasks[1][start],tasks[1][duration];int(1..)])),
+(tasks[2][finish] = sum([tasks[2][start],tasks[2][duration];int(1..)])),
+(tasks[3][finish] = sum([tasks[3][start],{tasks[3] @ and([__inDomain(3,int(1..4));int(1..)])}[duration];int(1..)])),
+(tasks[4][finish] = sum([tasks[4][start],tasks[4][duration];int(1..)])),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(tasks[1][finish] = sum([tasks[1][start],tasks[1][duration];int(1..)])),
+(tasks[2][finish] = sum([tasks[2][start],tasks[2][duration];int(1..)])),
+(tasks[3][finish] = sum([tasks[3][start],tasks[3][duration];int(1..)])),
+(tasks[4][finish] = sum([tasks[4][start],tasks[4][duration];int(1..)])),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0)
+
+--
+
+tasks[4], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{tasks[4] @ and([__inDomain(4,int(1..4));int(1..)])}
+
+--
+
+(tasks[1][finish] = sum([tasks[1][start],tasks[1][duration];int(1..)])),
+(tasks[2][finish] = sum([tasks[2][start],tasks[2][duration];int(1..)])),
+(tasks[3][finish] = sum([tasks[3][start],tasks[3][duration];int(1..)])),
+({tasks[4] @ and([__inDomain(4,int(1..4));int(1..)])}[finish] = sum([tasks[4][start],tasks[4][duration];int(1..)])),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(tasks[1][finish] = sum([tasks[1][start],tasks[1][duration];int(1..)])),
+(tasks[2][finish] = sum([tasks[2][start],tasks[2][duration];int(1..)])),
+(tasks[3][finish] = sum([tasks[3][start],tasks[3][duration];int(1..)])),
+(tasks[4][finish] = sum([tasks[4][start],tasks[4][duration];int(1..)])),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0)
+
+--
+
+tasks[4], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{tasks[4] @ and([__inDomain(4,int(1..4));int(1..)])}
+
+--
+
+(tasks[1][finish] = sum([tasks[1][start],tasks[1][duration];int(1..)])),
+(tasks[2][finish] = sum([tasks[2][start],tasks[2][duration];int(1..)])),
+(tasks[3][finish] = sum([tasks[3][start],tasks[3][duration];int(1..)])),
+(tasks[4][finish] = sum([{tasks[4] @ and([__inDomain(4,int(1..4));int(1..)])}[start],tasks[4][duration];int(1..)])),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(tasks[1][finish] = sum([tasks[1][start],tasks[1][duration];int(1..)])),
+(tasks[2][finish] = sum([tasks[2][start],tasks[2][duration];int(1..)])),
+(tasks[3][finish] = sum([tasks[3][start],tasks[3][duration];int(1..)])),
+(tasks[4][finish] = sum([tasks[4][start],tasks[4][duration];int(1..)])),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0)
+
+--
+
+tasks[4], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{tasks[4] @ and([__inDomain(4,int(1..4));int(1..)])}
+
+--
+
+(tasks[1][finish] = sum([tasks[1][start],tasks[1][duration];int(1..)])),
+(tasks[2][finish] = sum([tasks[2][start],tasks[2][duration];int(1..)])),
+(tasks[3][finish] = sum([tasks[3][start],tasks[3][duration];int(1..)])),
+(tasks[4][finish] = sum([tasks[4][start],{tasks[4] @ and([__inDomain(4,int(1..4));int(1..)])}[duration];int(1..)])),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(tasks[1][finish] = sum([tasks[1][start],tasks[1][duration];int(1..)])),
+(tasks[2][finish] = sum([tasks[2][start],tasks[2][duration];int(1..)])),
+(tasks[3][finish] = sum([tasks[3][start],tasks[3][duration];int(1..)])),
+(tasks[4][finish] = sum([tasks[4][start],tasks[4][duration];int(1..)])),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0)
+
+--
+
+(tasks[1][finish] = sum([tasks[1][start],tasks[1][duration];int(1..)])),
+(tasks[2][finish] = sum([tasks[2][start],tasks[2][duration];int(1..)])),
+(tasks[3][finish] = sum([tasks[3][start],tasks[3][duration];int(1..)])),
+(tasks[4][finish] = sum([tasks[4][start],tasks[4][duration];int(1..)])),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0), 
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+(tasks#MatrixToAtom_1[finish] = sum([tasks#MatrixToAtom_1[start],tasks#MatrixToAtom_1[duration];int(1..)])),
+(tasks#MatrixToAtom_2[finish] = sum([tasks#MatrixToAtom_2[start],tasks#MatrixToAtom_2[duration];int(1..)])),
+(tasks#MatrixToAtom_3[finish] = sum([tasks#MatrixToAtom_3[start],tasks#MatrixToAtom_3[duration];int(1..)])),
+(tasks#MatrixToAtom_4[finish] = sum([tasks#MatrixToAtom_4[start],tasks#MatrixToAtom_4[duration];int(1..)])),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0)
+
+--
+
+tasks#MatrixToAtom_1, 
+   ~~> select_representation ([("ReprGeneral", 8100)])
+tasks#MatrixToAtom_1
+
+--
+
+tasks#MatrixToAtom_1, 
+   ~~> select_representation ([("ReprGeneral", 8100)])
+tasks#MatrixToAtom_1
+
+--
+
+tasks#MatrixToAtom_1, 
+   ~~> select_representation ([("ReprGeneral", 8100)])
+tasks#MatrixToAtom_1
+
+--
+
+tasks#MatrixToAtom_2, 
+   ~~> select_representation ([("ReprGeneral", 8100)])
+tasks#MatrixToAtom_2
+
+--
+
+tasks#MatrixToAtom_2, 
+   ~~> select_representation ([("ReprGeneral", 8100)])
+tasks#MatrixToAtom_2
+
+--
+
+tasks#MatrixToAtom_2, 
+   ~~> select_representation ([("ReprGeneral", 8100)])
+tasks#MatrixToAtom_2
+
+--
+
+tasks#MatrixToAtom_3, 
+   ~~> select_representation ([("ReprGeneral", 8100)])
+tasks#MatrixToAtom_3
+
+--
+
+tasks#MatrixToAtom_3, 
+   ~~> select_representation ([("ReprGeneral", 8100)])
+tasks#MatrixToAtom_3
+
+--
+
+tasks#MatrixToAtom_3, 
+   ~~> select_representation ([("ReprGeneral", 8100)])
+tasks#MatrixToAtom_3
+
+--
+
+tasks#MatrixToAtom_4, 
+   ~~> select_representation ([("ReprGeneral", 8100)])
+tasks#MatrixToAtom_4
+
+--
+
+tasks#MatrixToAtom_4, 
+   ~~> select_representation ([("ReprGeneral", 8100)])
+tasks#MatrixToAtom_4
+
+--
+
+tasks#MatrixToAtom_4, 
+   ~~> select_representation ([("ReprGeneral", 8100)])
+tasks#MatrixToAtom_4
+
+--
+
+(tasks#MatrixToAtom_1[finish] = sum([tasks#MatrixToAtom_1[start],tasks#MatrixToAtom_1[duration];int(1..)])),
+(tasks#MatrixToAtom_2[finish] = sum([tasks#MatrixToAtom_2[start],tasks#MatrixToAtom_2[duration];int(1..)])),
+(tasks#MatrixToAtom_3[finish] = sum([tasks#MatrixToAtom_3[start],tasks#MatrixToAtom_3[duration];int(1..)])),
+(tasks#MatrixToAtom_4[finish] = sum([tasks#MatrixToAtom_4[start],tasks#MatrixToAtom_4[duration];int(1..)])),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0), 
+   ~~> index_record_to_tuple ([("ReprGeneral", 5000)])
+(tasks#MatrixToAtom_1#RecordToTuple_1[2] = sum([tasks#MatrixToAtom_1#RecordToTuple_1[3],tasks#MatrixToAtom_1#RecordToTuple_1[1];int(1..)])),
+(tasks#MatrixToAtom_2#RecordToTuple_1[2] = sum([tasks#MatrixToAtom_2#RecordToTuple_1[3],tasks#MatrixToAtom_2#RecordToTuple_1[1];int(1..)])),
+(tasks#MatrixToAtom_3#RecordToTuple_1[2] = sum([tasks#MatrixToAtom_3#RecordToTuple_1[3],tasks#MatrixToAtom_3#RecordToTuple_1[1];int(1..)])),
+(tasks#MatrixToAtom_4#RecordToTuple_1[2] = sum([tasks#MatrixToAtom_4#RecordToTuple_1[3],tasks#MatrixToAtom_4#RecordToTuple_1[1];int(1..)])),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0)
+
+--
+
+tasks#MatrixToAtom_1#RecordToTuple_1, 
+   ~~> select_representation ([("ReprGeneral", 8100)])
+tasks#MatrixToAtom_1#RecordToTuple_1
+
+--
+
+tasks#MatrixToAtom_1#RecordToTuple_1, 
+   ~~> select_representation ([("ReprGeneral", 8100)])
+tasks#MatrixToAtom_1#RecordToTuple_1
+
+--
+
+tasks#MatrixToAtom_1#RecordToTuple_1, 
+   ~~> select_representation ([("ReprGeneral", 8100)])
+tasks#MatrixToAtom_1#RecordToTuple_1
+
+--
+
+tasks#MatrixToAtom_2#RecordToTuple_1, 
+   ~~> select_representation ([("ReprGeneral", 8100)])
+tasks#MatrixToAtom_2#RecordToTuple_1
+
+--
+
+tasks#MatrixToAtom_2#RecordToTuple_1, 
+   ~~> select_representation ([("ReprGeneral", 8100)])
+tasks#MatrixToAtom_2#RecordToTuple_1
+
+--
+
+tasks#MatrixToAtom_2#RecordToTuple_1, 
+   ~~> select_representation ([("ReprGeneral", 8100)])
+tasks#MatrixToAtom_2#RecordToTuple_1
+
+--
+
+tasks#MatrixToAtom_3#RecordToTuple_1, 
+   ~~> select_representation ([("ReprGeneral", 8100)])
+tasks#MatrixToAtom_3#RecordToTuple_1
+
+--
+
+tasks#MatrixToAtom_3#RecordToTuple_1, 
+   ~~> select_representation ([("ReprGeneral", 8100)])
+tasks#MatrixToAtom_3#RecordToTuple_1
+
+--
+
+tasks#MatrixToAtom_3#RecordToTuple_1, 
+   ~~> select_representation ([("ReprGeneral", 8100)])
+tasks#MatrixToAtom_3#RecordToTuple_1
+
+--
+
+tasks#MatrixToAtom_4#RecordToTuple_1, 
+   ~~> select_representation ([("ReprGeneral", 8100)])
+tasks#MatrixToAtom_4#RecordToTuple_1
+
+--
+
+tasks#MatrixToAtom_4#RecordToTuple_1, 
+   ~~> select_representation ([("ReprGeneral", 8100)])
+tasks#MatrixToAtom_4#RecordToTuple_1
+
+--
+
+tasks#MatrixToAtom_4#RecordToTuple_1, 
+   ~~> select_representation ([("ReprGeneral", 8100)])
+tasks#MatrixToAtom_4#RecordToTuple_1
+
+--
+
+(tasks#MatrixToAtom_1#RecordToTuple_1[2] = sum([tasks#MatrixToAtom_1#RecordToTuple_1[3],tasks#MatrixToAtom_1#RecordToTuple_1[1];int(1..)])),
+(tasks#MatrixToAtom_2#RecordToTuple_1[2] = sum([tasks#MatrixToAtom_2#RecordToTuple_1[3],tasks#MatrixToAtom_2#RecordToTuple_1[1];int(1..)])),
+(tasks#MatrixToAtom_3#RecordToTuple_1[2] = sum([tasks#MatrixToAtom_3#RecordToTuple_1[3],tasks#MatrixToAtom_3#RecordToTuple_1[1];int(1..)])),
+(tasks#MatrixToAtom_4#RecordToTuple_1[2] = sum([tasks#MatrixToAtom_4#RecordToTuple_1[3],tasks#MatrixToAtom_4#RecordToTuple_1[1];int(1..)])),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0), 
+   ~~> tuple_to_atom_index_lit ([("ReprGeneral", 5000)])
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2 = sum([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3,tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1;int(1..)])),
+(tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2 = sum([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3,tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1;int(1..)])),
+(tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2 = sum([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3,tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1;int(1..)])),
+(tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2 = sum([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3,tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1;int(1..)])),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0)
+
+--
+
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2 = sum([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3,tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1;int(1..)])), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),SumGeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2);int(1..)])
+
+--
+
+and([SumLeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),SumGeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2);int(1..)]),
+(tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2 = sum([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3,tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1;int(1..)])),
+(tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2 = sum([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3,tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1;int(1..)])),
+(tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2 = sum([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3,tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1;int(1..)])),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+SumLeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+(tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2 = sum([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3,tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1;int(1..)])),
+(tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2 = sum([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3,tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1;int(1..)])),
+(tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2 = sum([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3,tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1;int(1..)])),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0)
+
+--
+
+(tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2 = sum([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3,tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1;int(1..)])), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),SumGeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2);int(1..)])
+
+--
+
+SumLeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+and([SumLeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),SumGeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2);int(1..)]),
+(tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2 = sum([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3,tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1;int(1..)])),
+(tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2 = sum([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3,tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1;int(1..)])),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+SumLeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+(tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2 = sum([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3,tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1;int(1..)])),
+(tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2 = sum([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3,tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1;int(1..)])),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0)
+
+--
+
+(tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2 = sum([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3,tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1;int(1..)])), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2),SumGeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2);int(1..)])
+
+--
+
+SumLeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+and([SumLeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2),SumGeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2);int(1..)]),
+(tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2 = sum([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3,tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1;int(1..)])),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+SumLeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2),
+(tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2 = sum([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3,tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1;int(1..)])),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0)
+
+--
+
+(tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2 = sum([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3,tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1;int(1..)])), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2),SumGeq([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2);int(1..)])
+
+--
+
+SumLeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2),
+and([SumLeq([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2),SumGeq([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2);int(1..)]),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+SumLeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2),
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0)
+
+--
+
+Model before rewriting:
+
+find i: int(1..n)
+find __0: matrix indexed by [int(1..4)] of record of {duration: int(1..5), start: int(0..5), finish: int(1..5)}
+find __1: bool
+
+such that
+
+(true != (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> (__1))
+
+--
+
+(true != (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> (__1)), 
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
+(true != (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> (__1))
+new variables:
+  find __0#MatrixToAtom_1: record of {duration: int(1..5), start: int(0..5), finish: int(1..5)}
+  find __0#MatrixToAtom_2: record of {duration: int(1..5), start: int(0..5), finish: int(1..5)}
+  find __0#MatrixToAtom_3: record of {duration: int(1..5), start: int(0..5), finish: int(1..5)}
+  find __0#MatrixToAtom_4: record of {duration: int(1..5), start: int(0..5), finish: int(1..5)}
+
+updated variables:
+  find i: int(1..n) ~~> find i: int(1..4)
+
+--
+
+([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0), 
+   ~~> gt_to_geq ([("Minion", 8400)])
+(sum([[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1],-1;int(1..)]) >= 0)
+
+--
+
+(true != ((sum([[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1],-1;int(1..)]) >= 0)) -> (__1)), 
+   ~~> select_representation_unconstrained ([("ReprGeneral", 8000)])
+(true != ((sum([[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1],-1;int(1..)]) >= 0)) -> (__1))
+new variables:
+  find __0#MatrixToAtom_1#RecordToTuple_1: tuple of (int(1..5), int(1..5), int(0..5))
+  find __0#MatrixToAtom_2#RecordToTuple_1: tuple of (int(1..5), int(1..5), int(0..5))
+  find __0#MatrixToAtom_3#RecordToTuple_1: tuple of (int(1..5), int(1..5), int(0..5))
+  find __0#MatrixToAtom_4#RecordToTuple_1: tuple of (int(1..5), int(1..5), int(0..5))
+
+--
+
+(true != ((sum([[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1],-1;int(1..)]) >= 0)) -> (__1)), 
+   ~~> select_representation_unconstrained ([("ReprGeneral", 8000)])
+(true != ((sum([[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1],-1;int(1..)]) >= 0)) -> (__1))
+new variables:
+  find __0#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1: int(1..5)
+  find __0#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2: int(1..5)
+  find __0#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3: int(0..5)
+  find __0#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1: int(1..5)
+  find __0#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2: int(1..5)
+  find __0#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3: int(0..5)
+  find __0#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1: int(1..5)
+  find __0#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2: int(1..5)
+  find __0#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3: int(0..5)
+  find __0#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1: int(1..5)
+  find __0#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2: int(1..5)
+  find __0#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3: int(0..5)
+
+--
+
+[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1], 
+   ~~> tuple_index_to_bubble ([("Bubble", 8000)])
+{[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] @ and([(1 >= 1),(1 <= 2);int(1..)])}
+
+--
+
+(true != ((sum([{[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] @ and([(1 >= 1),(1 <= 2);int(1..)])},-1;int(1..)]) >= 0)) -> (__1)), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(true != ((sum([[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1],-1;int(1..)]) >= 0)) -> (__1))
+
+--
+
+[(0,0),(1,2),(1,1),(2,0);int(1..4)][i], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{[(0,0),(1,2),(1,1),(2,0);int(1..4)][i] @ and([__inDomain(i,int(1..4));int(1..)])}
+
+--
+
+(true != ((sum([{[(0,0),(1,2),(1,1),(2,0);int(1..4)][i] @ and([__inDomain(i,int(1..4));int(1..)])}[1],-1;int(1..)]) >= 0)) -> (__1)), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(true != ((sum([[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1],-1;int(1..)]) >= 0)) -> (__1))
+
+--
+
+(true != ((sum([[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1],-1;int(1..)]) >= 0)) -> (__1)), 
+   ~~> flatten_generic ([("Minion", 4200)])
+(true != __2)
+new variables:
+  find __2: bool
+new constraints:
+  __2 =aux ((sum([[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1],-1;int(1..)]) >= 0)) -> (__1)
+
+--
+
+__2 =aux ((sum([[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1],-1;int(1..)]) >= 0)) -> (__1), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(((sum([[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1],-1;int(1..)]) >= 0)) -> (__1), __2)
+
+--
+
+((sum([[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1],-1;int(1..)]) >= 0)) -> (__1), 
+   ~~> flatten_imply ([("Minion", 4200)])
+(__3) -> (__1)
+new variables:
+  find __3: bool
+new constraints:
+  __3 =aux (sum([[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1],-1;int(1..)]) >= 0)
+
+--
+
+(__3) -> (__1), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+Ineq(__3, __1, 0)
+
+--
+
+__3 =aux (sum([[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1],-1;int(1..)]) >= 0), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify((sum([[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1],-1;int(1..)]) >= 0), __3)
+
+--
+
+[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1], 
+   ~~> remove_dimension_from_multiple_matrix_indexing ([("Base", 2000)])
+[(0,0)[1],(1,2)[1],(1,1)[1],(2,0)[1];int(1..4)][i]
+
+--
+
+(true != __2),
+Reify(Ineq(__3, __1, 0), __2),
+Reify((sum([[(0,0)[1],(1,2)[1],(1,1)[1],(2,0)[1];int(1..4)][i],-1;int(1..)]) >= 0), __3), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(true != __2),
+Reify(Ineq(__3, __1, 0), __2),
+Reify((sum([[0,1,1,2;int(1..4)][i],-1;int(1..)]) >= 0), __3)
+
+--
+
+(sum([[0,1,1,2;int(1..4)][i],-1;int(1..)]) >= 0), 
+   ~~> flatten_generic ([("Minion", 4200)])
+(__4 >= 0)
+new variables:
+  find __4: int(-1..1)
+new constraints:
+  __4 =aux sum([[0,1,1,2;int(1..4)][i],-1;int(1..)])
+
+--
+
+(__4 >= 0), 
+   ~~> geq_to_ineq ([("Minion", 4100)])
+Ineq(0, __4, 0)
+
+--
+
+[0,1,1,2;int(1..4)][i], 
+   ~~> matrix_to_list ([("Base", 2000)])
+[0,1,1,2;int(1..)][i]
+
+--
+
+(true != __2),
+Reify(Ineq(__3, __1, 0), __2),
+Reify(Ineq(0, __4, 0), __3),
+__4 =aux sum([[0,1,1,2;int(1..)][i],-1;int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(true != __2),
+Reify(Ineq(__3, __1, 0), __2),
+Reify(Ineq(0, __4, 0), __3),
+__4 =aux sum([[0,1,1,2;int(1..)][i],-1;int(1..)])
+
+--
+
+__4 =aux sum([[0,1,1,2;int(1..)][i],-1;int(1..)]), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([-1, __5], __4),SumGeq([-1, __5], __4);int(1..)])
+new variables:
+  find __5: int(0..2)
+new constraints:
+  __5 =aux [0,1,1,2;int(1..)][i]
+
+--
+
+(true != __2),
+Reify(Ineq(__3, __1, 0), __2),
+Reify(Ineq(0, __4, 0), __3),
+and([SumLeq([-1, __5], __4),SumGeq([-1, __5], __4);int(1..)]),
+__5 =aux [0,1,1,2;int(1..)][i], 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(true != __2),
+Reify(Ineq(__3, __1, 0), __2),
+Reify(Ineq(0, __4, 0), __3),
+SumLeq([-1, __5], __4),
+SumGeq([-1, __5], __4),
+__5 =aux [0,1,1,2;int(1..)][i]
+
+--
+
+__5 =aux [0,1,1,2;int(1..)][i], 
+   ~~> introduce_element_from_index ([("Minion", 4400)])
+__minion_element_one([0,1,1,2],i,__5)
+
+--
+
+Final model:
+
+find i: int(1..4)
+find __0: matrix indexed by [int(1..4)] of record of {duration: int(1..5), start: int(0..5), finish: int(1..5)}
+find __1: bool
+find __2: bool
+find __3: bool
+find __4: int(-1..1)
+find __5: int(0..2)
+find __0#MatrixToAtom_1: record of {duration: int(1..5), start: int(0..5), finish: int(1..5)}
+find __0#MatrixToAtom_2: record of {duration: int(1..5), start: int(0..5), finish: int(1..5)}
+find __0#MatrixToAtom_3: record of {duration: int(1..5), start: int(0..5), finish: int(1..5)}
+find __0#MatrixToAtom_4: record of {duration: int(1..5), start: int(0..5), finish: int(1..5)}
+find __0#MatrixToAtom_1#RecordToTuple_1: tuple of (int(1..5), int(1..5), int(0..5))
+find __0#MatrixToAtom_2#RecordToTuple_1: tuple of (int(1..5), int(1..5), int(0..5))
+find __0#MatrixToAtom_3#RecordToTuple_1: tuple of (int(1..5), int(1..5), int(0..5))
+find __0#MatrixToAtom_4#RecordToTuple_1: tuple of (int(1..5), int(1..5), int(0..5))
+find __0#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1: int(1..5)
+find __0#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2: int(1..5)
+find __0#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3: int(0..5)
+find __0#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1: int(1..5)
+find __0#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2: int(1..5)
+find __0#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3: int(0..5)
+find __0#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1: int(1..5)
+find __0#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2: int(1..5)
+find __0#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3: int(0..5)
+find __0#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1: int(1..5)
+find __0#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2: int(1..5)
+find __0#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3: int(0..5)
+
+such that
+
+(true != __2),
+Reify(Ineq(__3, __1, 0), __2),
+Reify(Ineq(0, __4, 0), __3),
+SumLeq([-1, __5], __4),
+SumGeq([-1, __5], __4),
+__minion_element_one([0,1,1,2],i,__5)
+
+and([ (([(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1] > 0)) -> ((tasks[i][start] >= sum([tasks[[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][1]][finish],[(0,0),(1,2),(1,1),(2,0);int(1..4)][i][2];int(1..)]))) | i : int(1..n) ]), 
+   ~~> expand_comprehension_via_solver_ac ([("Base", 1500)])
+and([(tasks[2][start] >= sum([tasks[1][finish],2;int(1..)])),(tasks[3][start] >= sum([tasks[1][finish],1;int(1..)])),(tasks[4][start] >= sum([tasks[2][finish],0;int(1..)]));int(1..)])
+
+--
+
+SumLeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2),
+and([(tasks[2][start] >= sum([tasks[1][finish],2;int(1..)])),(tasks[3][start] >= sum([tasks[1][finish],1;int(1..)])),(tasks[4][start] >= sum([tasks[2][finish],0;int(1..)]));int(1..)]),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+SumLeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2),
+(tasks[2][start] >= sum([tasks[1][finish],2;int(1..)])),
+(tasks[3][start] >= sum([tasks[1][finish],1;int(1..)])),
+(tasks[4][start] >= sum([tasks[2][finish],0;int(1..)])),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0)
+
+--
+
+SumLeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2),
+(tasks[2][start] >= sum([tasks[1][finish],2;int(1..)])),
+(tasks[3][start] >= sum([tasks[1][finish],1;int(1..)])),
+(tasks[4][start] >= sum([tasks[2][finish],0;int(1..)])),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0), 
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
+SumLeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2),
+(tasks[2][start] >= sum([tasks[1][finish],2;int(1..)])),
+(tasks[3][start] >= sum([tasks[1][finish],1;int(1..)])),
+(tasks[4][start] >= sum([tasks[2][finish],0;int(1..)])),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0)
+
+--
+
+tasks[2], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{tasks[2] @ and([__inDomain(2,int(1..4));int(1..)])}
+
+--
+
+SumLeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2),
+({tasks[2] @ and([__inDomain(2,int(1..4));int(1..)])}[start] >= sum([tasks[1][finish],2;int(1..)])),
+(tasks[3][start] >= sum([tasks[1][finish],1;int(1..)])),
+(tasks[4][start] >= sum([tasks[2][finish],0;int(1..)])),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+SumLeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2),
+(tasks[2][start] >= sum([tasks[1][finish],2;int(1..)])),
+(tasks[3][start] >= sum([tasks[1][finish],1;int(1..)])),
+(tasks[4][start] >= sum([tasks[2][finish],0;int(1..)])),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0)
+
+--
+
+tasks[1], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{tasks[1] @ and([__inDomain(1,int(1..4));int(1..)])}
+
+--
+
+SumLeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2),
+(tasks[2][start] >= sum([{tasks[1] @ and([__inDomain(1,int(1..4));int(1..)])}[finish],2;int(1..)])),
+(tasks[3][start] >= sum([tasks[1][finish],1;int(1..)])),
+(tasks[4][start] >= sum([tasks[2][finish],0;int(1..)])),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+SumLeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2),
+(tasks[2][start] >= sum([tasks[1][finish],2;int(1..)])),
+(tasks[3][start] >= sum([tasks[1][finish],1;int(1..)])),
+(tasks[4][start] >= sum([tasks[2][finish],0;int(1..)])),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0)
+
+--
+
+tasks[3], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{tasks[3] @ and([__inDomain(3,int(1..4));int(1..)])}
+
+--
+
+SumLeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2),
+(tasks[2][start] >= sum([tasks[1][finish],2;int(1..)])),
+({tasks[3] @ and([__inDomain(3,int(1..4));int(1..)])}[start] >= sum([tasks[1][finish],1;int(1..)])),
+(tasks[4][start] >= sum([tasks[2][finish],0;int(1..)])),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+SumLeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2),
+(tasks[2][start] >= sum([tasks[1][finish],2;int(1..)])),
+(tasks[3][start] >= sum([tasks[1][finish],1;int(1..)])),
+(tasks[4][start] >= sum([tasks[2][finish],0;int(1..)])),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0)
+
+--
+
+tasks[1], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{tasks[1] @ and([__inDomain(1,int(1..4));int(1..)])}
+
+--
+
+SumLeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2),
+(tasks[2][start] >= sum([tasks[1][finish],2;int(1..)])),
+(tasks[3][start] >= sum([{tasks[1] @ and([__inDomain(1,int(1..4));int(1..)])}[finish],1;int(1..)])),
+(tasks[4][start] >= sum([tasks[2][finish],0;int(1..)])),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+SumLeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2),
+(tasks[2][start] >= sum([tasks[1][finish],2;int(1..)])),
+(tasks[3][start] >= sum([tasks[1][finish],1;int(1..)])),
+(tasks[4][start] >= sum([tasks[2][finish],0;int(1..)])),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0)
+
+--
+
+tasks[4], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{tasks[4] @ and([__inDomain(4,int(1..4));int(1..)])}
+
+--
+
+SumLeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2),
+(tasks[2][start] >= sum([tasks[1][finish],2;int(1..)])),
+(tasks[3][start] >= sum([tasks[1][finish],1;int(1..)])),
+({tasks[4] @ and([__inDomain(4,int(1..4));int(1..)])}[start] >= sum([tasks[2][finish],0;int(1..)])),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+SumLeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2),
+(tasks[2][start] >= sum([tasks[1][finish],2;int(1..)])),
+(tasks[3][start] >= sum([tasks[1][finish],1;int(1..)])),
+(tasks[4][start] >= sum([tasks[2][finish],0;int(1..)])),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0)
+
+--
+
+tasks[2], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{tasks[2] @ and([__inDomain(2,int(1..4));int(1..)])}
+
+--
+
+SumLeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2),
+(tasks[2][start] >= sum([tasks[1][finish],2;int(1..)])),
+(tasks[3][start] >= sum([tasks[1][finish],1;int(1..)])),
+(tasks[4][start] >= sum([{tasks[2] @ and([__inDomain(2,int(1..4));int(1..)])}[finish],0;int(1..)])),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+SumLeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2),
+(tasks[2][start] >= sum([tasks[1][finish],2;int(1..)])),
+(tasks[3][start] >= sum([tasks[1][finish],1;int(1..)])),
+(tasks[4][start] >= sum([tasks[2][finish],0;int(1..)])),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0)
+
+--
+
+SumLeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2),
+(tasks[2][start] >= sum([tasks[1][finish],2;int(1..)])),
+(tasks[3][start] >= sum([tasks[1][finish],1;int(1..)])),
+(tasks[4][start] >= sum([tasks[2][finish],0;int(1..)])),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0), 
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+SumLeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2),
+(tasks#MatrixToAtom_2[start] >= sum([tasks#MatrixToAtom_1[finish],2;int(1..)])),
+(tasks#MatrixToAtom_3[start] >= sum([tasks#MatrixToAtom_1[finish],1;int(1..)])),
+(tasks#MatrixToAtom_4[start] >= sum([tasks#MatrixToAtom_2[finish],0;int(1..)])),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0)
+
+--
+
+tasks#MatrixToAtom_2, 
+   ~~> select_representation ([("ReprGeneral", 8100)])
+tasks#MatrixToAtom_2
+
+--
+
+tasks#MatrixToAtom_1, 
+   ~~> select_representation ([("ReprGeneral", 8100)])
+tasks#MatrixToAtom_1
+
+--
+
+tasks#MatrixToAtom_3, 
+   ~~> select_representation ([("ReprGeneral", 8100)])
+tasks#MatrixToAtom_3
+
+--
+
+tasks#MatrixToAtom_1, 
+   ~~> select_representation ([("ReprGeneral", 8100)])
+tasks#MatrixToAtom_1
+
+--
+
+tasks#MatrixToAtom_4, 
+   ~~> select_representation ([("ReprGeneral", 8100)])
+tasks#MatrixToAtom_4
+
+--
+
+tasks#MatrixToAtom_2, 
+   ~~> select_representation ([("ReprGeneral", 8100)])
+tasks#MatrixToAtom_2
+
+--
+
+SumLeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2),
+(tasks#MatrixToAtom_2[start] >= sum([tasks#MatrixToAtom_1[finish],2;int(1..)])),
+(tasks#MatrixToAtom_3[start] >= sum([tasks#MatrixToAtom_1[finish],1;int(1..)])),
+(tasks#MatrixToAtom_4[start] >= sum([tasks#MatrixToAtom_2[finish],0;int(1..)])),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0), 
+   ~~> index_record_to_tuple ([("ReprGeneral", 5000)])
+SumLeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2),
+(tasks#MatrixToAtom_2#RecordToTuple_1[3] >= sum([tasks#MatrixToAtom_1#RecordToTuple_1[2],2;int(1..)])),
+(tasks#MatrixToAtom_3#RecordToTuple_1[3] >= sum([tasks#MatrixToAtom_1#RecordToTuple_1[2],1;int(1..)])),
+(tasks#MatrixToAtom_4#RecordToTuple_1[3] >= sum([tasks#MatrixToAtom_2#RecordToTuple_1[2],0;int(1..)])),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0)
+
+--
+
+tasks#MatrixToAtom_2#RecordToTuple_1, 
+   ~~> select_representation ([("ReprGeneral", 8100)])
+tasks#MatrixToAtom_2#RecordToTuple_1
+
+--
+
+tasks#MatrixToAtom_1#RecordToTuple_1, 
+   ~~> select_representation ([("ReprGeneral", 8100)])
+tasks#MatrixToAtom_1#RecordToTuple_1
+
+--
+
+tasks#MatrixToAtom_3#RecordToTuple_1, 
+   ~~> select_representation ([("ReprGeneral", 8100)])
+tasks#MatrixToAtom_3#RecordToTuple_1
+
+--
+
+tasks#MatrixToAtom_1#RecordToTuple_1, 
+   ~~> select_representation ([("ReprGeneral", 8100)])
+tasks#MatrixToAtom_1#RecordToTuple_1
+
+--
+
+tasks#MatrixToAtom_4#RecordToTuple_1, 
+   ~~> select_representation ([("ReprGeneral", 8100)])
+tasks#MatrixToAtom_4#RecordToTuple_1
+
+--
+
+tasks#MatrixToAtom_2#RecordToTuple_1, 
+   ~~> select_representation ([("ReprGeneral", 8100)])
+tasks#MatrixToAtom_2#RecordToTuple_1
+
+--
+
+SumLeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2),
+(tasks#MatrixToAtom_2#RecordToTuple_1[3] >= sum([tasks#MatrixToAtom_1#RecordToTuple_1[2],2;int(1..)])),
+(tasks#MatrixToAtom_3#RecordToTuple_1[3] >= sum([tasks#MatrixToAtom_1#RecordToTuple_1[2],1;int(1..)])),
+(tasks#MatrixToAtom_4#RecordToTuple_1[3] >= sum([tasks#MatrixToAtom_2#RecordToTuple_1[2],0;int(1..)])),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0), 
+   ~~> tuple_to_atom_index_lit ([("ReprGeneral", 5000)])
+SumLeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2),
+(tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3 >= sum([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2,2;int(1..)])),
+(tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3 >= sum([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2,1;int(1..)])),
+(tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3 >= sum([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2,0;int(1..)])),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0)
+
+--
+
+(tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3 >= sum([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2,2;int(1..)])), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([2, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3)
+
+--
+
+(tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3 >= sum([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2,1;int(1..)])), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3)
+
+--
+
+(tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3 >= sum([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2,0;int(1..)])), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+SumLeq([0, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2], tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3)
+
+--
+
+Final model:
+
+letting Task be domain record of (duration: int(1..5), start: int(0..max_time), finish: int(1..max_time))
+letting max_time be 5
+letting n be 4
+letting prd be [(0,0),(1,2),(1,1),(2,0);int(1..4)]
+find tasks: matrix indexed by [int(1..4)] of record of {duration: int(1..5), start: int(0..5), finish: int(1..5)}
+letting prd#MatrixToAtom_1 be (0,0)
+letting prd#MatrixToAtom_2 be (1,2)
+letting prd#MatrixToAtom_3 be (1,1)
+letting prd#MatrixToAtom_4 be (2,0)
+find tasks#MatrixToAtom_1: record of {duration: int(1..5), start: int(0..5), finish: int(1..5)}
+find tasks#MatrixToAtom_2: record of {duration: int(1..5), start: int(0..5), finish: int(1..5)}
+find tasks#MatrixToAtom_3: record of {duration: int(1..5), start: int(0..5), finish: int(1..5)}
+find tasks#MatrixToAtom_4: record of {duration: int(1..5), start: int(0..5), finish: int(1..5)}
+find tasks#MatrixToAtom_1#RecordToTuple_1: tuple of (int(1..5), int(1..5), int(0..5))
+find tasks#MatrixToAtom_2#RecordToTuple_1: tuple of (int(1..5), int(1..5), int(0..5))
+find tasks#MatrixToAtom_3#RecordToTuple_1: tuple of (int(1..5), int(1..5), int(0..5))
+find tasks#MatrixToAtom_4#RecordToTuple_1: tuple of (int(1..5), int(1..5), int(0..5))
+find tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1: int(1..5)
+find tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2: int(1..5)
+find tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3: int(0..5)
+find tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1: int(1..5)
+find tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2: int(1..5)
+find tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3: int(0..5)
+find tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1: int(1..5)
+find tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2: int(1..5)
+find tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3: int(0..5)
+find tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1: int(1..5)
+find tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2: int(1..5)
+find tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3: int(0..5)
+
+such that
+
+SumLeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_2),
+SumLeq([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2),
+SumGeq([tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_1, tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3], tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_2),
+SumLeq([2, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2], tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_3),
+SumLeq([1, tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_2], tasks#MatrixToAtom_3#RecordToTuple_1#TupleToAtom_3),
+SumLeq([0, tasks#MatrixToAtom_2#RecordToTuple_1#TupleToAtom_2], tasks#MatrixToAtom_4#RecordToTuple_1#TupleToAtom_3),
+(tasks#MatrixToAtom_1#RecordToTuple_1#TupleToAtom_3 = 0)
+

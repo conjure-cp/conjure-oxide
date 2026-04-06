@@ -1,8 +1,5 @@
-use conjure_cp::ast::records::RecordValue;
 use conjure_cp::ast::serde::ObjId;
-use conjure_cp::bug;
 use itertools::Itertools as _;
-use std::cmp::Ordering;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fmt::Debug;
 use std::fs::File;
@@ -10,7 +7,7 @@ use std::hash::Hash;
 use std::io::{BufRead, BufReader, Write};
 use std::path::Path;
 use std::sync::{Arc, RwLock};
-use std::{io, mem, vec};
+use std::{io, vec};
 use uniplate::{Biplate, Uniplate};
 
 use conjure_cp::ast::{AbstractLiteral, Expression, GroundDomain, Moo, Range, SerdeModel};

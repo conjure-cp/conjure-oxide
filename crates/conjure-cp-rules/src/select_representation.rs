@@ -20,10 +20,10 @@ const SKIP_AUTO_SELECT: &[&str] = &[TuplePacked::NAME];
 
 // Representations of Essence abstract types down to Essence'
 // Applies for all solvers
-register_rule_set!("ReprGeneral", ("Base"));
+register_rule_set!("ReprGeneral", ("Base"), |_| true);
 
 /// Select a representation for abstract domains
-#[register_rule(("ReprGeneral", 8000))]
+#[register_rule(("ReprGeneral", 8100))]
 fn select_representation(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     guard!(
         let Expr::Atomic(_, Atom::Reference(re)) = expr &&
@@ -49,6 +49,51 @@ fn select_representation(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
     // None of the representations worked
     Err(RuleNotApplicable)
+}
+
+/// Select a representation for unconstrained finds with abstract domains
+#[register_rule(("ReprGeneral", 8000))]
+fn select_representation_unconstrained(expr: &Expr, symtab: &SymbolTable) -> ApplicationResult {
+    let Expr::Root(..) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let mut symbols = symtab.clone();
+    let mut constraints = Vec::<Expr>::new();
+    for (_, decl) in symtab.iter_local() {
+        // We want unrepresented decision vars!
+        guard!(
+            decl.as_find().is_some()          &&
+            decl.reprs().is_empty()           &&
+            let Some(dom) = decl.domain()     &&
+            domain_needs_representation(&dom)
+            else {
+                continue;
+            }
+        );
+
+        for rule in get_repr_rules() {
+            // Skip representations that are managed by their own rule sets
+            if SKIP_AUTO_SELECT.contains(&rule.name()) {
+                continue;
+            }
+            let mut decl = decl.clone();
+
+            // Once we find an applicable representation, exit
+            let Ok((new_symbols, new_constraints)) = rule.init_for(&mut decl) else {
+                continue;
+            };
+            symbols.update_insert(decl);
+            symbols.extend(new_symbols);
+            constraints.extend(new_constraints);
+        }
+    }
+
+    if symbols.eq(symtab) && constraints.is_empty() {
+        Err(RuleNotApplicable)
+    } else {
+        Ok(Reduction::new(expr.clone(), constraints, symbols))
+    }
 }
 
 /// In a comparison operation, it is probably a good idea for the LHS and RHS to

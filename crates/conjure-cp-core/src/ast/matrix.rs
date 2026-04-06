@@ -4,12 +4,12 @@
 
 use std::collections::VecDeque;
 
-use super::{AbstractLiteral, DomainPtr, Literal};
+use super::{AbstractLiteral, Literal};
 use crate::ast::literals::AbstractLiteralValue;
 use crate::ast::{DomainOpError, Expression as Expr, GroundDomain, Metadata, Moo, Range};
 use crate::bug::UnwrapOrBug;
+use crate::bug_assert;
 use crate::utils::MatrixShape;
-use crate::{bug_assert, domain_int, domain_int_ground};
 use itertools::{Itertools, izip};
 use uniplate::{Biplate, Uniplate as _};
 

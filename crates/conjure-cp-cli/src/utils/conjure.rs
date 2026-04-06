@@ -2,6 +2,7 @@ use std::collections::{BTreeMap, HashMap};
 use std::path::PathBuf;
 use std::string::ToString;
 use std::sync::{Arc, Mutex, RwLock};
+use std::time::{Duration, Instant};
 
 use conjure_cp::ast::{DeclarationKind, DeclarationPtr, Literal, Name};
 use conjure_cp::bug;
@@ -23,12 +24,20 @@ use conjure_cp::ast::categories::{Category, CategoryOf};
 use conjure_cp::representation::util::try_up;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
+/// Result of running the solver and translating solutions.
+pub struct SolveResult {
+    /// The translated high-level solutions.
+    pub solutions: Vec<BTreeMap<Name, Literal>>,
+    /// Time spent translating solver-level solutions back to Essence.
+    pub translation_time: Duration,
+}
+
 pub fn get_solutions(
     solver: Solver,
     model: Model,
     num_sols: i32,
     solver_input_file: &Option<PathBuf>,
-) -> Result<Vec<BTreeMap<Name, Literal>>, anyhow::Error> {
+) -> Result<SolveResult, anyhow::Error> {
     let adaptor_name = solver.get_name();
 
     eprintln!("Building {adaptor_name} model...");
@@ -106,6 +115,8 @@ pub fn get_solutions(
         .cloned()
         .collect();
 
+    let translation_start = Instant::now();
+
     let ans = sols_guard
         .iter()
         .filter_map(|sol| {
@@ -124,7 +135,13 @@ pub fn get_solutions(
             if ans.is_empty() { None } else { Some(ans) }
         })
         .collect();
-    Ok(ans)
+
+    let translation_time = translation_start.elapsed();
+
+    Ok(SolveResult {
+        solutions: ans,
+        translation_time,
+    })
 }
 
 #[allow(clippy::unwrap_used)]

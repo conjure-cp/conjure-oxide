@@ -28,7 +28,7 @@ use conjure_cp::{
 };
 use conjure_cp::{parse::tree_sitter::parse_essence_file_native, solver::adaptors::*};
 use conjure_cp_cli::find_conjure::conjure_executable;
-use conjure_cp_cli::utils::conjure::{get_solutions, solutions_to_essence, solutions_to_json};
+use conjure_cp_cli::utils::conjure::{get_solutions, solutions_to_json};
 use serde_json::to_string_pretty;
 
 use crate::cli::{GlobalArgs, LOGGING_HELP_HEADING};
@@ -143,7 +143,35 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
             solver.write_solver_input_file(&mut file)?;
         }
     } else {
-        run_solver(solver, &global_args, &solve_args, rewritten_model)?
+        run_solver(
+            solver,
+            &global_args,
+            &solve_args,
+            rewritten_model,
+            Arc::clone(&context),
+        )?
+    }
+
+    // Print timing stats if --stats was requested
+    if global_args.stats {
+        let ctx = context.read().unwrap();
+        eprintln!("\n--- Timing Statistics ---");
+        for (i, rw) in ctx.stats.rewriter_runs.iter().enumerate() {
+            if let Some(dur) = rw.rewriter_run_time {
+                eprintln!("Rewrite time (run {}): {:.3}s", i + 1, dur.as_secs_f64());
+            }
+        }
+        for (i, sr) in ctx.stats.solver_runs.iter().enumerate() {
+            eprintln!(
+                "Solver time  (run {}): {:.3}s",
+                i + 1,
+                sr.conjure_solver_wall_time_s
+            );
+        }
+        if let Some(dur) = ctx.stats.solution_translation_time {
+            eprintln!("Solution translation time: {:.3}s", dur.as_secs_f64());
+        }
+        eprintln!("-------------------------");
     }
 
     // still do postamble even if we didn't run the solver
@@ -320,6 +348,7 @@ fn run_solver(
     global_args: &GlobalArgs,
     cmd_args: &Args,
     model: Model,
+    context: Arc<RwLock<Context<'static>>>,
 ) -> anyhow::Result<()> {
     let out_file: Option<File> = match &cmd_args.output {
         None => None,
@@ -332,12 +361,17 @@ fn run_solver(
         ),
     };
 
-    let solutions = get_solutions(
+    let solve_result = get_solutions(
         solver,
         model,
         cmd_args.number_of_solutions.as_solver_limit(),
         &global_args.save_solver_input_file,
     )?;
+
+    // Store solution translation time in context stats
+    context.write().unwrap().stats.solution_translation_time = Some(solve_result.translation_time);
+
+    let solutions = solve_result.solutions;
     tracing::info!(target: "file", "Solutions: {}", solutions_to_json(&solutions));
 
     let solutions_json = solutions_to_json(&solutions);

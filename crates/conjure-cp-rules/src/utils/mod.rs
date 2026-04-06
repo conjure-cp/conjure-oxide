@@ -58,6 +58,7 @@ pub fn eval_to_usize(x: &Expr) -> usize {
 }
 
 /// True if the expression is a record literal
+#[allow(dead_code)]
 pub fn is_record_lit(expr: &Expr) -> bool {
     matches!(
         expr,
@@ -65,6 +66,18 @@ pub fn is_record_lit(expr: &Expr) -> bool {
             | Expr::Atomic(
                 _,
                 Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Record(..)))
+            )
+    )
+}
+
+/// True iff the expression is a matrix (or list) literal
+pub fn is_matrix_lit(expr: &Expr) -> bool {
+    matches!(
+        expr,
+        Expr::AbstractLiteral(_, AbstractLiteral::Matrix(..))
+            | Expr::Atomic(
+                _,
+                Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Matrix(..)))
             )
     )
 }
@@ -82,6 +95,7 @@ pub fn is_tuple_lit(expr: &Expr) -> bool {
 }
 
 /// Returns the arity of a tuple constant expression, if this expression is one.
+#[allow(dead_code)]
 pub fn tuple_expr_len(expr: &Expr) -> Option<usize> {
     match expr {
         Expr::AbstractLiteral(_, AbstractLiteral::Tuple(elems)) => Some(elems.len()),
@@ -104,6 +118,7 @@ pub fn tuple_expr_entries(expr: &Expr) -> Option<Vec<Expr>> {
 }
 
 /// Iterate over (name, value) of a record, if the expression is one; Fields are converted to Expression
+#[allow(dead_code)]
 pub fn record_expr_entries<'a>(
     expr: &'a Expr,
 ) -> Option<Box<dyn Iterator<Item = (&'a Name, Expr)> + 'a>> {
@@ -225,6 +240,17 @@ pub fn try_flatten_matrix(expr: &Expr) -> Option<impl Iterator<Item = Expr>> {
             Some(Box::new(flatten_owned(m.clone()).map(Expr::from))
                 as Box<dyn Iterator<Item = Expr>>)
         }
+        _ => None,
+    }
+}
+
+pub fn as_list_combining_op(expr: &Expr) -> Option<Moo<Expr>> {
+    match expr {
+        Expr::Sum(_, xs)
+        | Expr::Product(_, xs)
+        | Expr::And(_, xs)
+        | Expr::Or(_, xs)
+        | Expr::AllDiff(_, xs) => Some(xs.clone()),
         _ => None,
     }
 }
