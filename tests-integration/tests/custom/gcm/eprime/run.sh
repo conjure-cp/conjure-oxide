@@ -69,7 +69,9 @@ run_case() {
 
     if [ "$rc" -ne 0 ] && [ -s "$stderr_path" ]; then
         echo "stderr_tail:"
-        tail -n 20 "$stderr_path"
+        tail -n 20 "$stderr_path" \
+            | grep -v '^version: ' \
+            | sed -E "s/(thread 'main') \\([0-9]+\\)( panicked at )/\\1\\2/"
     fi
 
     echo ""
