@@ -2,11 +2,174 @@ use std::collections::HashSet;
 
 use crate::ast::Typeable;
 use crate::{
-    ast::{Atom, Expression as Expr, Literal as Lit, Metadata, Moo, ReturnType},
+    ast::{
+        AbstractLiteral, Atom, DomainPtr, Expression as Expr, GroundDomain, Literal as Lit,
+        Metadata, Moo, Range, ReturnType,
+    },
     into_matrix_expr,
     rule_engine::{ApplicationError::RuleNotApplicable, ApplicationResult, Reduction},
 };
 use itertools::iproduct;
+use uniplate::Uniplate;
+
+/// Normalises integer ranges so equivalent domains compare structurally equal.
+fn normalise_int_domain(domain: &GroundDomain) -> GroundDomain {
+    match domain {
+        GroundDomain::Int(ranges) => GroundDomain::Int(Range::squeeze(
+            &ranges
+                .iter()
+                .map(|range| Range::new(range.low().copied(), range.high().copied()))
+                .collect::<Vec<_>>(),
+        )),
+        _ => domain.clone(),
+    }
+}
+
+/// Returns whether `expr` is safe after resolving any referenced expressions.
+fn is_semantically_safe(expr: &Expr) -> bool {
+    fn helper(expr: &Expr, resolving: &mut HashSet<crate::ast::serde::ObjId>) -> bool {
+        if !expr.is_safe() {
+            return false;
+        }
+
+        for subexpr in expr.universe() {
+            let Expr::Atomic(_, Atom::Reference(reference)) = subexpr else {
+                continue;
+            };
+
+            let Some(resolved) = reference.resolve_expression() else {
+                continue;
+            };
+
+            let id = reference.id();
+            if !resolving.insert(id.clone()) {
+                return false;
+            }
+
+            let is_safe = helper(&resolved, resolving);
+            resolving.remove(&id);
+
+            if !is_safe {
+                return false;
+            }
+        }
+
+        true
+    }
+
+    helper(expr, &mut HashSet::new())
+}
+
+/// Tries to decide `expr in domain` from resolved domains alone.
+fn simplify_in_domain(expr: &Expr, domain: &DomainPtr) -> Option<bool> {
+    if !is_semantically_safe(expr) {
+        return None;
+    }
+
+    let expr_domain = expr.domain_of()?.resolve()?;
+    let domain = domain.resolve()?;
+    let intersection = expr_domain.intersect(&domain).ok()?;
+
+    if normalise_int_domain(&intersection) == normalise_int_domain(expr_domain.as_ref()) {
+        return Some(true);
+    }
+
+    if let Ok(values_in_domain) = intersection.values_i32()
+        && values_in_domain.is_empty()
+    {
+        return Some(false);
+    }
+
+    None
+}
+
+/// Extracts an integer when `expr` is known to be a singleton integer value.
+fn singleton_int_value(expr: &Expr) -> Option<i32> {
+    if let Ok(value) = expr.try_into() {
+        return Some(value);
+    }
+
+    let domain = expr.domain_of()?.resolve()?;
+    let GroundDomain::Int(ranges) = domain.as_ref() else {
+        return None;
+    };
+    let [range] = ranges.as_slice() else {
+        return None;
+    };
+    let (Some(low), Some(high)) = (range.low(), range.high()) else {
+        return None;
+    };
+
+    if low == high { Some(*low) } else { None }
+}
+
+/// Resolves a matrix literal subject, including constant references to matrix literals.
+fn resolve_matrix_subject(subject: &Expr) -> Option<(Vec<Expr>, DomainPtr)> {
+    subject.clone().unwrap_matrix_unchecked().or_else(|| {
+        let Expr::Atomic(_, Atom::Reference(reference)) = subject else {
+            return None;
+        };
+
+        let Lit::AbstractLiteral(AbstractLiteral::Matrix(elems, index_domain)) =
+            reference.resolve_constant()?
+        else {
+            return None;
+        };
+
+        Some((
+            elems
+                .into_iter()
+                .map(|elem| Expr::Atomic(Metadata::new(), Atom::Literal(elem)))
+                .collect(),
+            index_domain.into(),
+        ))
+    })
+}
+
+/// Tries to decide `expr = lit` and `expr != lit` from the resolved domain of `expr`.
+fn simplify_comparison_with_literal(expr: &Expr, lit: &Lit) -> Option<(bool, bool)> {
+    if !is_semantically_safe(expr) {
+        return None;
+    }
+
+    let expr_domain = expr.domain_of()?.resolve()?;
+
+    if !expr_domain.contains(lit).ok()? {
+        return Some((false, true));
+    }
+
+    match (expr_domain.as_ref(), lit) {
+        (GroundDomain::Int(ranges), Lit::Int(value)) => {
+            let [range] = ranges.as_slice() else {
+                return None;
+            };
+            let (Some(low), Some(high)) = (range.low(), range.high()) else {
+                return None;
+            };
+
+            if low == high && low == value {
+                Some((true, false))
+            } else {
+                None
+            }
+        }
+        (GroundDomain::Bool, Lit::Bool(_)) => None,
+        _ => None,
+    }
+}
+
+/// Tries to decide reflexive equality and inequality when both sides are semantically safe.
+fn simplify_reflexive_comparison(x: &Expr, y: &Expr) -> Option<(bool, bool)> {
+    if x.identical_atom_to(y) && is_semantically_safe(x) && is_semantically_safe(y) {
+        return Some((true, false));
+    }
+
+    if is_semantically_safe(x) && is_semantically_safe(y) && x == y {
+        return Some((true, false));
+    }
+
+    None
+}
 
 pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
     // NOTE: If nothing changes, we must return RuleNotApplicable, or the rewriter will try this
@@ -34,20 +197,14 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
             // partially evaluate matrix literals indexed by a constant.
 
             // subject must be a matrix literal
-            let (es, index_domain) = Moo::unwrap_or_clone(subject.clone())
-                .unwrap_matrix_unchecked()
-                .ok_or(RuleNotApplicable)?;
+            let (es, index_domain) = resolve_matrix_subject(subject).ok_or(RuleNotApplicable)?;
 
-            // must be indexing a 1d matrix.
-            //
-            // for n-d matrices, wait for the `remove_dimension_from_matrix_indexing` rule to run
-            // first. This reduces n-d indexing operations to 1d.
-            if indices.len() != 1 {
+            if indices.is_empty() {
                 return Err(RuleNotApplicable);
             }
 
-            // the index must be a number
-            let index: i32 = (&indices[0]).try_into().map_err(|_| RuleNotApplicable)?;
+            // the leading index must be fixed to a single value
+            let index = singleton_int_value(&indices[0]).ok_or(RuleNotApplicable)?;
 
             // index domain must be a single integer range with a lower bound
             if let Some(ranges) = index_domain.as_int_ground()
@@ -55,14 +212,32 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
                 && let Some(from) = ranges[0].low()
             {
                 let zero_indexed_index = index - from;
-                Ok(Reduction::pure(es[zero_indexed_index as usize].clone()))
+                let selected = es
+                    .get(zero_indexed_index as usize)
+                    .ok_or(RuleNotApplicable)?
+                    .clone();
+
+                if indices.len() == 1 {
+                    Ok(Reduction::pure(selected))
+                } else {
+                    Ok(Reduction::pure(Expr::SafeIndex(
+                        Metadata::new(),
+                        Moo::new(selected),
+                        indices[1..].to_vec(),
+                    )))
+                }
             } else {
                 Err(RuleNotApplicable)
             }
         }
         Expr::SafeSlice(_, _, _) => Err(RuleNotApplicable),
         Expr::InDomain(_, x, domain) => {
-            if let Expr::Atomic(_, Atom::Reference(decl)) = x.as_ref() {
+            if let Some(result) = simplify_in_domain(x, domain) {
+                Ok(Reduction::pure(Expr::Atomic(
+                    Metadata::new(),
+                    result.into(),
+                )))
+            } else if let Expr::Atomic(_, Atom::Reference(decl)) = x.as_ref() {
                 let decl_domain = decl
                     .domain()
                     .ok_or(RuleNotApplicable)?
@@ -191,7 +366,7 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
             if acc == 0 {
                 // if safe, 0 * exprs ~> 0
                 // otherwise, just return 0* exprs
-                if new_product.is_safe() {
+                if is_semantically_safe(&new_product) {
                     Ok(Reduction::pure(Expr::Atomic(
                         Default::default(),
                         Atom::Literal(Lit::Int(0)),
@@ -286,7 +461,31 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
                 )))
             }
         }
-        Expr::Not(_, _) => Err(RuleNotApplicable),
+        Expr::Not(_, e1) => {
+            let Expr::Imply(_, p, q) = e1.as_ref() else {
+                return Err(RuleNotApplicable);
+            };
+
+            if !is_semantically_safe(e1) {
+                return Err(RuleNotApplicable);
+            }
+
+            match (p.as_ref(), q.as_ref()) {
+                (_, Expr::Atomic(_, Atom::Literal(Lit::Bool(true)))) => {
+                    Ok(Reduction::pure(Expr::from(false)))
+                }
+                (_, Expr::Atomic(_, Atom::Literal(Lit::Bool(false)))) => {
+                    Ok(Reduction::pure(Moo::unwrap_or_clone(p.clone())))
+                }
+                (Expr::Atomic(_, Atom::Literal(Lit::Bool(true))), _) => {
+                    Ok(Reduction::pure(Expr::Not(Metadata::new(), q.clone())))
+                }
+                (Expr::Atomic(_, Atom::Literal(Lit::Bool(false))), _) => {
+                    Ok(Reduction::pure(Expr::from(false)))
+                }
+                _ => Err(RuleNotApplicable),
+            }
+        }
         Expr::Or(m, e) => {
             let Some(terms) = Moo::unwrap_or_clone(e.clone()).unwrap_list() else {
                 return Err(RuleNotApplicable);
@@ -421,13 +620,24 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
                 }
             };
 
+            if let Expr::Atomic(_, Atom::Literal(Lit::Bool(y))) = y.as_ref() {
+                if *y {
+                    // x -> (true) ~~> true
+                    return Ok(Reduction::pure(Expr::from(true)));
+                } else {
+                    // x -> (false) ~~> !x
+                    return Ok(Reduction::pure(Expr::Not(Metadata::new(), x.clone())));
+                }
+            };
+
             // reflexivity: p -> p ~> true
 
             // instead of checking syntactic equivalence of a possibly deep expression,
             // let identical-CSE turn them into identical variables first. Then, check if they are
             // identical variables.
 
-            if x.identical_atom_to(y.as_ref()) {
+            if x.identical_atom_to(y.as_ref()) && is_semantically_safe(x) && is_semantically_safe(y)
+            {
                 return Ok(Reduction::pure(true.into()));
             }
 
@@ -459,14 +669,61 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
             // let identical-CSE turn them into identical variables first. Then, check if they are
             // identical variables.
 
-            if x.identical_atom_to(y.as_ref()) {
+            if x.identical_atom_to(y.as_ref()) && is_semantically_safe(x) && is_semantically_safe(y)
+            {
                 return Ok(Reduction::pure(true.into()));
             }
 
             Err(RuleNotApplicable)
         }
-        Expr::Eq(_, _, _) => Err(RuleNotApplicable),
-        Expr::Neq(_, _, _) => Err(RuleNotApplicable),
+        Expr::Eq(_, x, y) => {
+            if let Some((eq_result, _)) = simplify_reflexive_comparison(x, y) {
+                Ok(Reduction::pure(Expr::Atomic(
+                    Metadata::new(),
+                    Atom::Literal(Lit::Bool(eq_result)),
+                )))
+            } else if let Expr::Atomic(_, Atom::Literal(lit)) = x.as_ref()
+                && let Some((eq_result, _)) = simplify_comparison_with_literal(y, lit)
+            {
+                Ok(Reduction::pure(Expr::Atomic(
+                    Metadata::new(),
+                    Atom::Literal(Lit::Bool(eq_result)),
+                )))
+            } else if let Expr::Atomic(_, Atom::Literal(lit)) = y.as_ref()
+                && let Some((eq_result, _)) = simplify_comparison_with_literal(x, lit)
+            {
+                Ok(Reduction::pure(Expr::Atomic(
+                    Metadata::new(),
+                    Atom::Literal(Lit::Bool(eq_result)),
+                )))
+            } else {
+                Err(RuleNotApplicable)
+            }
+        }
+        Expr::Neq(_, x, y) => {
+            if let Some((_, neq_result)) = simplify_reflexive_comparison(x, y) {
+                Ok(Reduction::pure(Expr::Atomic(
+                    Metadata::new(),
+                    Atom::Literal(Lit::Bool(neq_result)),
+                )))
+            } else if let Expr::Atomic(_, Atom::Literal(lit)) = x.as_ref()
+                && let Some((_, neq_result)) = simplify_comparison_with_literal(y, lit)
+            {
+                Ok(Reduction::pure(Expr::Atomic(
+                    Metadata::new(),
+                    Atom::Literal(Lit::Bool(neq_result)),
+                )))
+            } else if let Expr::Atomic(_, Atom::Literal(lit)) = y.as_ref()
+                && let Some((_, neq_result)) = simplify_comparison_with_literal(x, lit)
+            {
+                Ok(Reduction::pure(Expr::Atomic(
+                    Metadata::new(),
+                    Atom::Literal(Lit::Bool(neq_result)),
+                )))
+            } else {
+                Err(RuleNotApplicable)
+            }
+        }
         Expr::Geq(_, _, _) => Err(RuleNotApplicable),
         Expr::Leq(_, _, _) => Err(RuleNotApplicable),
         Expr::Gt(_, _, _) => Err(RuleNotApplicable),

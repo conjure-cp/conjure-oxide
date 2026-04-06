@@ -41,7 +41,7 @@ fn expression_membership_proof(
     Ok(MembershipProof::Unknown)
 }
 
-/// Normalizes integer domains so equivalent range partitions compare equal.
+/// Normalises integer domains so equivalent range partitions compare equal.
 fn normalise_int_domain(domain: &GroundDomain) -> GroundDomain {
     match domain {
         GroundDomain::Int(ranges) => GroundDomain::Int(Range::squeeze(
