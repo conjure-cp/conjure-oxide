@@ -45,17 +45,17 @@ or([!((schur#matrix_to_atom[1] = schur#matrix_to_atom[1])),!((schur#matrix_to_at
 
 schur#matrix_to_atom[1], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-schur#matrix_to_atom[1]
+SafeIndex(schur#matrix_to_atom,[1])
 
 --
 
 schur#matrix_to_atom[1], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-schur#matrix_to_atom[1]
+SafeIndex(schur#matrix_to_atom,[1])
 
 --
 
-or([!((schur#matrix_to_atom[1] = schur#matrix_to_atom[1])),!((schur#matrix_to_atom[1] = schur#matrix_to_atom[2]));int(1..)]), 
+or([!((SafeIndex(schur#matrix_to_atom,[1]) = SafeIndex(schur#matrix_to_atom,[1]))),!((schur#matrix_to_atom[1] = schur#matrix_to_atom[2]));int(1..)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
 or([!((schur#matrix_to_atom[1] = schur#matrix_to_atom[2]));int(1..)])
 
@@ -69,23 +69,23 @@ or([!((schur#matrix_to_atom[1] = schur#matrix_to_atom[2]));int(1..)]),
 
 schur#matrix_to_atom[1], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-schur#matrix_to_atom[1]
+SafeIndex(schur#matrix_to_atom,[1])
 
 --
 
 schur#matrix_to_atom[2], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-schur#matrix_to_atom[2]
+SafeIndex(schur#matrix_to_atom,[2])
 
 --
 
-!((schur#matrix_to_atom[1] = schur#matrix_to_atom[2])), 
+!((SafeIndex(schur#matrix_to_atom,[1]) = SafeIndex(schur#matrix_to_atom,[2]))), 
    ~~> negated_eq_to_neq ([("Base", 8800)])
-(schur#matrix_to_atom[1] != schur#matrix_to_atom[2])
+(SafeIndex(schur#matrix_to_atom,[1]) != SafeIndex(schur#matrix_to_atom,[2]))
 
 --
 
-(schur#matrix_to_atom[1] != schur#matrix_to_atom[2]), 
+(SafeIndex(schur#matrix_to_atom,[1]) != SafeIndex(schur#matrix_to_atom,[2])), 
    ~~> index_matrix_to_atom ([("Base", 5000)])
 (schur#matrix_to_atom_1 != schur#matrix_to_atom_2)
 

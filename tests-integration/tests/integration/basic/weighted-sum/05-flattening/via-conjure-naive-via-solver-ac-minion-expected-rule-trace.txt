@@ -11,13 +11,13 @@ find h: int(2..10)
 
 such that
 
-(sum([sum([sum([sum([sum([sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]);int(1..2)]),product([product([3,c;int(1..2)]),d;int(1..2)]);int(1..2)]),UnsafeDiv(e, f);int(1..2)]),product([6,UnsafeDiv(g, h);int(1..2)]);int(1..2)]),-(a);int(1..2)]),-(UnsafeDiv(g, h));int(1..2)]) <= 18)
+(sum([sum([sum([sum([sum([sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]);int(1..2)]),product([product([3,c;int(1..2)]),d;int(1..2)]);int(1..2)]),(e / f);int(1..2)]),product([6,(g / h);int(1..2)]);int(1..2)]),-(a);int(1..2)]),-((g / h));int(1..2)]) <= 18)
 
 --
 
-sum([sum([sum([sum([sum([sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]);int(1..2)]),product([product([3,c;int(1..2)]),d;int(1..2)]);int(1..2)]),UnsafeDiv(e, f);int(1..2)]),product([6,UnsafeDiv(g, h);int(1..2)]);int(1..2)]),-(a);int(1..2)]),-(UnsafeDiv(g, h));int(1..2)]), 
+sum([sum([sum([sum([sum([sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]);int(1..2)]),product([product([3,c;int(1..2)]),d;int(1..2)]);int(1..2)]),(e / f);int(1..2)]),product([6,(g / h);int(1..2)]);int(1..2)]),-(a);int(1..2)]),-((g / h));int(1..2)]), 
    ~~> normalise_associative_commutative ([("Base", 8900)])
-sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([product([3,c;int(1..2)]),d;int(1..2)]),UnsafeDiv(e, f),product([6,UnsafeDiv(g, h);int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)])
+sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([product([3,c;int(1..2)]),d;int(1..2)]),(e / f),product([6,(g / h);int(1..2)]),-(a),-((g / h));int(1..2)])
 
 --
 
@@ -27,31 +27,31 @@ product([3,c,d;int(1..2)])
 
 --
 
-UnsafeDiv(e, f), 
+(e / f), 
    ~~> div_to_bubble ([("Bubble", 6000)])
 {SafeDiv(e, f) @ (f != 0)}
 
 --
 
-(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),{SafeDiv(e, f) @ (f != 0)},product([6,UnsafeDiv(g, h);int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18), 
+(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),{SafeDiv(e, f) @ (f != 0)},product([6,(g / h);int(1..2)]),-(a),-((g / h));int(1..2)]) <= 18), 
    ~~> constant_evaluator ([("Constant", 9001)])
-(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,UnsafeDiv(g, h);int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18)
+(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,(g / h);int(1..2)]),-(a),-((g / h));int(1..2)]) <= 18)
 
 --
 
-UnsafeDiv(g, h), 
+(g / h), 
    ~~> div_to_bubble ([("Bubble", 6000)])
 {SafeDiv(g, h) @ (h != 0)}
 
 --
 
-(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,{SafeDiv(g, h) @ (h != 0)};int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18), 
+(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,{SafeDiv(g, h) @ (h != 0)};int(1..2)]),-(a),-((g / h));int(1..2)]) <= 18), 
    ~~> constant_evaluator ([("Constant", 9001)])
-(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18)
+(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..2)]),-(a),-((g / h));int(1..2)]) <= 18)
 
 --
 
-UnsafeDiv(g, h), 
+(g / h), 
    ~~> div_to_bubble ([("Bubble", 6000)])
 {SafeDiv(g, h) @ (h != 0)}
 

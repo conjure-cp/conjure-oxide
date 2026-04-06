@@ -14,7 +14,7 @@ allDiff([ (x[i] - i) | i : dom ])
 
 x[..], 
    ~~> slice_to_bubble ([("Bubble", 6000)])
-x[..]
+SafeSlice(x,[..])
 
 --
 
@@ -52,49 +52,49 @@ true
 
 x[1], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-x[1]
+SafeIndex(x,[1])
 
 --
 
 x[2], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-x[2]
+SafeIndex(x,[2])
 
 --
 
 x[3], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-x[3]
+SafeIndex(x,[3])
 
 --
 
 x[4], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-x[4]
+SafeIndex(x,[4])
 
 --
 
-sum([x[1],1;int(1..2)]), 
+sum([SafeIndex(x,[1]),1;int(1..2)]), 
    ~~> matrix_to_list ([("Base", 2000)])
-sum([x[1],1;int(1..)])
+sum([SafeIndex(x,[1]),1;int(1..)])
 
 --
 
-sum([x[2],2;int(1..2)]), 
+sum([SafeIndex(x,[2]),2;int(1..2)]), 
    ~~> matrix_to_list ([("Base", 2000)])
-sum([x[2],2;int(1..)])
+sum([SafeIndex(x,[2]),2;int(1..)])
 
 --
 
-sum([x[3],3;int(1..2)]), 
+sum([SafeIndex(x,[3]),3;int(1..2)]), 
    ~~> matrix_to_list ([("Base", 2000)])
-sum([x[3],3;int(1..)])
+sum([SafeIndex(x,[3]),3;int(1..)])
 
 --
 
-sum([x[4],4;int(1..2)]), 
+sum([SafeIndex(x,[4]),4;int(1..2)]), 
    ~~> matrix_to_list ([("Base", 2000)])
-sum([x[4],4;int(1..)])
+sum([SafeIndex(x,[4]),4;int(1..)])
 
 --
 
@@ -136,12 +136,12 @@ sum([x[1],-(1);int(1..)])
 
 --
 
-allDiff(x[..]),
-allDiff([sum([x[1],1;int(1..)]),sum([x[2],2;int(1..)]),sum([x[3],3;int(1..)]),sum([x[4],4;int(1..)]);int(1..)]),
+allDiff(SafeSlice(x,[..])),
+allDiff([sum([SafeIndex(x,[1]),1;int(1..)]),sum([SafeIndex(x,[2]),2;int(1..)]),sum([SafeIndex(x,[3]),3;int(1..)]),sum([SafeIndex(x,[4]),4;int(1..)]);int(1..)]),
 allDiff([sum([x[1],-(1);int(1..)]),(x[2] - 2),(x[3] - 3),(x[4] - 4);int(1..)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
-allDiff(x[..]),
-allDiff([sum([x[1],1;int(1..)]),sum([x[2],2;int(1..)]),sum([x[3],3;int(1..)]),sum([x[4],4;int(1..)]);int(1..)]),
+allDiff(SafeSlice(x,[..])),
+allDiff([sum([SafeIndex(x,[1]),1;int(1..)]),sum([SafeIndex(x,[2]),2;int(1..)]),sum([SafeIndex(x,[3]),3;int(1..)]),sum([SafeIndex(x,[4]),4;int(1..)]);int(1..)]),
 allDiff([sum([x[1],-1;int(1..)]),(x[2] - 2),(x[3] - 3),(x[4] - 4);int(1..)])
 
 --
@@ -152,12 +152,12 @@ sum([x[2],-(2);int(1..)])
 
 --
 
-allDiff(x[..]),
-allDiff([sum([x[1],1;int(1..)]),sum([x[2],2;int(1..)]),sum([x[3],3;int(1..)]),sum([x[4],4;int(1..)]);int(1..)]),
+allDiff(SafeSlice(x,[..])),
+allDiff([sum([SafeIndex(x,[1]),1;int(1..)]),sum([SafeIndex(x,[2]),2;int(1..)]),sum([SafeIndex(x,[3]),3;int(1..)]),sum([SafeIndex(x,[4]),4;int(1..)]);int(1..)]),
 allDiff([sum([x[1],-1;int(1..)]),sum([x[2],-(2);int(1..)]),(x[3] - 3),(x[4] - 4);int(1..)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
-allDiff(x[..]),
-allDiff([sum([x[1],1;int(1..)]),sum([x[2],2;int(1..)]),sum([x[3],3;int(1..)]),sum([x[4],4;int(1..)]);int(1..)]),
+allDiff(SafeSlice(x,[..])),
+allDiff([sum([SafeIndex(x,[1]),1;int(1..)]),sum([SafeIndex(x,[2]),2;int(1..)]),sum([SafeIndex(x,[3]),3;int(1..)]),sum([SafeIndex(x,[4]),4;int(1..)]);int(1..)]),
 allDiff([sum([x[1],-1;int(1..)]),sum([x[2],-2;int(1..)]),(x[3] - 3),(x[4] - 4);int(1..)])
 
 --
@@ -168,12 +168,12 @@ sum([x[3],-(3);int(1..)])
 
 --
 
-allDiff(x[..]),
-allDiff([sum([x[1],1;int(1..)]),sum([x[2],2;int(1..)]),sum([x[3],3;int(1..)]),sum([x[4],4;int(1..)]);int(1..)]),
+allDiff(SafeSlice(x,[..])),
+allDiff([sum([SafeIndex(x,[1]),1;int(1..)]),sum([SafeIndex(x,[2]),2;int(1..)]),sum([SafeIndex(x,[3]),3;int(1..)]),sum([SafeIndex(x,[4]),4;int(1..)]);int(1..)]),
 allDiff([sum([x[1],-1;int(1..)]),sum([x[2],-2;int(1..)]),sum([x[3],-(3);int(1..)]),(x[4] - 4);int(1..)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
-allDiff(x[..]),
-allDiff([sum([x[1],1;int(1..)]),sum([x[2],2;int(1..)]),sum([x[3],3;int(1..)]),sum([x[4],4;int(1..)]);int(1..)]),
+allDiff(SafeSlice(x,[..])),
+allDiff([sum([SafeIndex(x,[1]),1;int(1..)]),sum([SafeIndex(x,[2]),2;int(1..)]),sum([SafeIndex(x,[3]),3;int(1..)]),sum([SafeIndex(x,[4]),4;int(1..)]);int(1..)]),
 allDiff([sum([x[1],-1;int(1..)]),sum([x[2],-2;int(1..)]),sum([x[3],-3;int(1..)]),(x[4] - 4);int(1..)])
 
 --
@@ -184,43 +184,43 @@ sum([x[4],-(4);int(1..)])
 
 --
 
-allDiff(x[..]),
-allDiff([sum([x[1],1;int(1..)]),sum([x[2],2;int(1..)]),sum([x[3],3;int(1..)]),sum([x[4],4;int(1..)]);int(1..)]),
+allDiff(SafeSlice(x,[..])),
+allDiff([sum([SafeIndex(x,[1]),1;int(1..)]),sum([SafeIndex(x,[2]),2;int(1..)]),sum([SafeIndex(x,[3]),3;int(1..)]),sum([SafeIndex(x,[4]),4;int(1..)]);int(1..)]),
 allDiff([sum([x[1],-1;int(1..)]),sum([x[2],-2;int(1..)]),sum([x[3],-3;int(1..)]),sum([x[4],-(4);int(1..)]);int(1..)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
-allDiff(x[..]),
-allDiff([sum([x[1],1;int(1..)]),sum([x[2],2;int(1..)]),sum([x[3],3;int(1..)]),sum([x[4],4;int(1..)]);int(1..)]),
+allDiff(SafeSlice(x,[..])),
+allDiff([sum([SafeIndex(x,[1]),1;int(1..)]),sum([SafeIndex(x,[2]),2;int(1..)]),sum([SafeIndex(x,[3]),3;int(1..)]),sum([SafeIndex(x,[4]),4;int(1..)]);int(1..)]),
 allDiff([sum([x[1],-1;int(1..)]),sum([x[2],-2;int(1..)]),sum([x[3],-3;int(1..)]),sum([x[4],-4;int(1..)]);int(1..)])
 
 --
 
 x[1], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-x[1]
+SafeIndex(x,[1])
 
 --
 
 x[2], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-x[2]
+SafeIndex(x,[2])
 
 --
 
 x[3], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-x[3]
+SafeIndex(x,[3])
 
 --
 
 x[4], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-x[4]
+SafeIndex(x,[4])
 
 --
 
-x[..], 
+SafeSlice(x,[..]), 
    ~~> flatten_matrix_slice ([("Smt", 1000)])
-[x[1],x[2],x[3],x[4];int(1..)]
+[SafeIndex(x,[1]),SafeIndex(x,[2]),SafeIndex(x,[3]),SafeIndex(x,[4]);int(1..)]
 
 --
 
@@ -232,7 +232,7 @@ find x: matrix indexed by [dom] of dom
 
 such that
 
-allDiff([x[1],x[2],x[3],x[4];int(1..)]),
-allDiff([sum([x[1],1;int(1..)]),sum([x[2],2;int(1..)]),sum([x[3],3;int(1..)]),sum([x[4],4;int(1..)]);int(1..)]),
-allDiff([sum([x[1],-1;int(1..)]),sum([x[2],-2;int(1..)]),sum([x[3],-3;int(1..)]),sum([x[4],-4;int(1..)]);int(1..)])
+allDiff([SafeIndex(x,[1]),SafeIndex(x,[2]),SafeIndex(x,[3]),SafeIndex(x,[4]);int(1..)]),
+allDiff([sum([SafeIndex(x,[1]),1;int(1..)]),sum([SafeIndex(x,[2]),2;int(1..)]),sum([SafeIndex(x,[3]),3;int(1..)]),sum([SafeIndex(x,[4]),4;int(1..)]);int(1..)]),
+allDiff([sum([SafeIndex(x,[1]),-1;int(1..)]),sum([SafeIndex(x,[2]),-2;int(1..)]),sum([SafeIndex(x,[3]),-3;int(1..)]),sum([SafeIndex(x,[4]),-4;int(1..)]);int(1..)])
 

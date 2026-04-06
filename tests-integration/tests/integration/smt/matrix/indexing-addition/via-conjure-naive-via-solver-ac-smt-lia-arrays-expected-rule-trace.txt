@@ -10,25 +10,25 @@ such that
 
 a[1], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-a[1]
+SafeIndex(a,[1])
 
 --
 
 a[2], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-a[2]
+SafeIndex(a,[2])
 
 --
 
 a[3], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-a[3]
+SafeIndex(a,[3])
 
 --
 
-sum([a[1],a[2];int(1..2)]), 
+sum([SafeIndex(a,[1]),SafeIndex(a,[2]);int(1..2)]), 
    ~~> matrix_to_list ([("Base", 2000)])
-sum([a[1],a[2];int(1..)])
+sum([SafeIndex(a,[1]),SafeIndex(a,[2]);int(1..)])
 
 --
 
@@ -38,5 +38,5 @@ find a: matrix indexed by [int(1..3)] of int(1..3)
 
 such that
 
-(sum([a[1],a[2];int(1..)]) = a[3])
+(sum([SafeIndex(a,[1]),SafeIndex(a,[2]);int(1..)]) = SafeIndex(a,[3]))
 
