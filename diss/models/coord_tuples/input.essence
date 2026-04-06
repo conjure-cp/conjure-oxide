@@ -1,0 +1,44 @@
+language Essence 1.4
+
+$ Nested tuples, a bool-indexed matrix, and a grid accessed by tuple-derived indices.
+$ Tests: t[1][2], t[2][3], flags[false], grid[e[1][1], e[1][2]].
+
+letting CoordPair be domain tuple(int(1..4), int(1..4))
+letting Metadata  be domain tuple(int(0..9), bool, int(1..3))
+letting Entry     be domain tuple(CoordPair, Metadata)
+
+find e: Entry
+find grid: matrix indexed by [int(1..4), int(1..4)] of int(0..9)
+find flags: matrix indexed by [bool] of int(0..5)
+
+such that
+    $ Nested tuple field access
+    e[1][1] + e[1][2] <= 6,
+
+    $ metadata mode tracks first coordinate
+    e[2][3] = e[1][1],
+
+    $ If flag set: coords must be equal and mode must be 2
+    e[2][2] -> e[1][1] = e[1][2],
+    e[2][2] -> e[2][3] = 2,
+
+    $ Use coord values to index the grid (tests dynamic indexing)
+    grid[e[1][1], e[1][2]] = e[2][1],
+    grid[e[1][2], e[1][1]] = e[2][1],  $ symmetric cell
+
+    $ Bool-indexed matrix
+    flags[false] + flags[true] = 6,
+    flags[true] >= flags[false],
+
+    $ flags[true] loosely bounds the metadata integer
+    flags[true] * 3 >= e[2][1],
+
+    $ Grid rows lex-ordered
+    forAll r: int(1..3) .
+        grid[r, ..] <lex grid[r+1, ..],
+
+    $ Row 1 entries small, row 4 entries large (forces spread)
+    forAll c: int(1..4) .
+        grid[1, c] <= 3,
+    forAll c: int(1..4) .
+        grid[4, c] >= 6

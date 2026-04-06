@@ -1,0 +1,45 @@
+language Essence 1.4
+
+$ Social golfer problem variant.
+$ n golfers, group_size golfers per group, n/group_size groups per week, weeks weeks.
+$ No pair of golfers plays together more than once.
+$ Scale: increase n or weeks.
+
+given n : int
+given group_size : int
+given weeks : int
+
+letting n_groups   be n / group_size
+
+$ groups[w, g, p] = the p-th member of group g in week w
+find groups: matrix indexed by [int(1..weeks), int(1..n_groups), int(1..group_size)] of int(1..n)
+
+such that
+    $ Each golfer appears exactly once per week
+    forAll w: int(1..weeks) .
+        allDiff(groups[w, .., ..]),
+
+    $ Within each group, members listed in ascending order (symmetry)
+    forAll w: int(1..weeks) .
+        forAll g: int(1..n_groups) .
+            forAll p: int(1..group_size-1) .
+                groups[w, g, p] < groups[w, g, p+1],
+
+    $ Groups listed in ascending order of first member (symmetry)
+    forAll w: int(1..weeks) .
+        forAll g: int(1..n_groups-1) .
+            groups[w, g, 1] < groups[w, g+1, 1],
+
+    $ No pair meets twice
+    forAll w1: int(1..weeks) .
+        forAll w2: int(1..weeks) .
+            w1 < w2 ->
+                forAll g1: int(1..n_groups) .
+                    forAll g2: int(1..n_groups) .
+                        forAll p1: int(1..group_size) .
+                            forAll p2: int(1..group_size) .
+                                forAll p3: int(1..group_size) .
+                                    forAll p4: int(1..group_size) .
+                                        p1 < p2 ->
+                                            !(groups[w1, g1, p1] = groups[w2, g2, p3] /\
+                                              groups[w1, g1, p2] = groups[w2, g2, p4])

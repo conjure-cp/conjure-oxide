@@ -17,7 +17,7 @@ and([ and([(majorDiagonal[queen] = sum([queen,row[queen];int(1..2)])),(minorDiag
 allDiff(row),
 allDiff(majorDiagonal),
 allDiff(minorDiagonal), 
-   ~~> select_repr_mta ([("ReprMatrixToAtom", 8001)])
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
 and([ and([(majorDiagonal[queen] = sum([queen,row[queen];int(1..2)])),(minorDiagonal[queen] = (queen - row[queen]));int(1..2)]) | queen : int(0..3) ]),
 allDiff(row),
 allDiff(majorDiagonal),
@@ -42,6 +42,42 @@ new variables:
 
 --
 
+allDiff(row), 
+   ~~> matrix_ref_to_atom ([("ReprMatrixToAtom", 2000)])
+allDiff([row#MatrixToAtom_1,row#MatrixToAtom_2,row#MatrixToAtom_3,row#MatrixToAtom_4,row#MatrixToAtom_5,row#MatrixToAtom_6,row#MatrixToAtom_7,row#MatrixToAtom_8;int(1..)])
+
+--
+
+allDiff([row#MatrixToAtom_1,row#MatrixToAtom_2,row#MatrixToAtom_3,row#MatrixToAtom_4,row#MatrixToAtom_5,row#MatrixToAtom_6,row#MatrixToAtom_7,row#MatrixToAtom_8;int(1..)]), 
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8])
+
+--
+
+allDiff(majorDiagonal), 
+   ~~> matrix_ref_to_atom ([("ReprMatrixToAtom", 2000)])
+allDiff([majorDiagonal#MatrixToAtom_1,majorDiagonal#MatrixToAtom_2,majorDiagonal#MatrixToAtom_3,majorDiagonal#MatrixToAtom_4;int(1..)])
+
+--
+
+allDiff([majorDiagonal#MatrixToAtom_1,majorDiagonal#MatrixToAtom_2,majorDiagonal#MatrixToAtom_3,majorDiagonal#MatrixToAtom_4;int(1..)]), 
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4])
+
+--
+
+allDiff(minorDiagonal), 
+   ~~> matrix_ref_to_atom ([("ReprMatrixToAtom", 2000)])
+allDiff([minorDiagonal#MatrixToAtom_1,minorDiagonal#MatrixToAtom_2,minorDiagonal#MatrixToAtom_3,minorDiagonal#MatrixToAtom_4;int(1..)])
+
+--
+
+allDiff([minorDiagonal#MatrixToAtom_1,minorDiagonal#MatrixToAtom_2,minorDiagonal#MatrixToAtom_3,minorDiagonal#MatrixToAtom_4;int(1..)]), 
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([minorDiagonal#MatrixToAtom_1, minorDiagonal#MatrixToAtom_2, minorDiagonal#MatrixToAtom_3, minorDiagonal#MatrixToAtom_4])
+
+--
+
 Model before rewriting:
 
 find queen: int(0..3)
@@ -55,15 +91,9 @@ such that
 
 --
 
-(queen - __1[queen]), 
-   ~~> minus_to_sum ([("Base", 8400)])
-sum([queen,-(__1[queen]);int(1..)])
-
---
-
-(true != and([(__0[queen] = sum([queen,__1[queen];int(1..2)])),(__2[queen] = sum([queen,-(__1[queen]);int(1..)]));int(1..2)])), 
-   ~~> select_repr_mta ([("ReprMatrixToAtom", 8001)])
-(true != and([(__0[queen] = sum([queen,__1[queen];int(1..2)])),(__2[queen] = sum([queen,-(__1[queen]);int(1..)]));int(1..2)]))
+(true != and([(__0[queen] = sum([queen,__1[queen];int(1..2)])),(__2[queen] = (queen - __1[queen]));int(1..2)])), 
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
+(true != and([(__0[queen] = sum([queen,__1[queen];int(1..2)])),(__2[queen] = (queen - __1[queen]));int(1..2)]))
 new variables:
   find __0#MatrixToAtom_1: int(0..6)
   find __0#MatrixToAtom_2: int(0..6)
@@ -81,6 +111,12 @@ new variables:
   find __2#MatrixToAtom_2: int(-3..3)
   find __2#MatrixToAtom_3: int(-3..3)
   find __2#MatrixToAtom_4: int(-3..3)
+
+--
+
+(queen - __1[queen]), 
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([queen,-(__1[queen]);int(1..)])
 
 --
 
@@ -662,23 +698,41 @@ __minion_element_one([__1#MatrixToAtom_1,__1#MatrixToAtom_2,__1#MatrixToAtom_3,_
 __minion_element_one([__1#MatrixToAtom_1,__1#MatrixToAtom_2,__1#MatrixToAtom_3,__1#MatrixToAtom_4,__1#MatrixToAtom_5,__1#MatrixToAtom_6,__1#MatrixToAtom_7,__1#MatrixToAtom_8],__10,__13)
 
 and([ and([(majorDiagonal[queen] = sum([queen,row[queen];int(1..2)])),(minorDiagonal[queen] = (queen - row[queen]));int(1..2)]) | queen : int(0..3) ]), 
-   ~~> expand_comprehension_via_solver_ac ([("Base", 2002)])
+   ~~> expand_comprehension_via_solver_ac ([("Base", 1500)])
 and([and([(majorDiagonal[0] = sum([0,row[0];int(1..2)])),(minorDiagonal[0] = (0 - row[0]));int(1..2)]),and([(majorDiagonal[1] = sum([1,row[1];int(1..2)])),(minorDiagonal[1] = (1 - row[1]));int(1..2)]),and([(majorDiagonal[2] = sum([2,row[2];int(1..2)])),(minorDiagonal[2] = (2 - row[2]));int(1..2)]),and([(majorDiagonal[3] = sum([3,row[3];int(1..2)])),(minorDiagonal[3] = (3 - row[3]));int(1..2)]);int(1..)])
 
 --
 
 and([and([(majorDiagonal[0] = sum([0,row[0];int(1..2)])),(minorDiagonal[0] = (0 - row[0]));int(1..2)]),and([(majorDiagonal[1] = sum([1,row[1];int(1..2)])),(minorDiagonal[1] = (1 - row[1]));int(1..2)]),and([(majorDiagonal[2] = sum([2,row[2];int(1..2)])),(minorDiagonal[2] = (2 - row[2]));int(1..2)]),and([(majorDiagonal[3] = sum([3,row[3];int(1..2)])),(minorDiagonal[3] = (3 - row[3]));int(1..2)]);int(1..)]),
-allDiff(row),
-allDiff(majorDiagonal),
-allDiff(minorDiagonal), 
+__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8]),
+__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4]),
+__flat_alldiff([minorDiagonal#MatrixToAtom_1, minorDiagonal#MatrixToAtom_2, minorDiagonal#MatrixToAtom_3, minorDiagonal#MatrixToAtom_4]), 
    ~~> constant_evaluator ([("Constant", 9001)])
 and([(majorDiagonal[0] = sum([0,row[0];int(1..2)])),(minorDiagonal[0] = (0 - row[0]));int(1..2)]),
 and([(majorDiagonal[1] = sum([1,row[1];int(1..2)])),(minorDiagonal[1] = (1 - row[1]));int(1..2)]),
 and([(majorDiagonal[2] = sum([2,row[2];int(1..2)])),(minorDiagonal[2] = (2 - row[2]));int(1..2)]),
 and([(majorDiagonal[3] = sum([3,row[3];int(1..2)])),(minorDiagonal[3] = (3 - row[3]));int(1..2)]),
-allDiff(row),
-allDiff(majorDiagonal),
-allDiff(minorDiagonal)
+__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8]),
+__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4]),
+__flat_alldiff([minorDiagonal#MatrixToAtom_1, minorDiagonal#MatrixToAtom_2, minorDiagonal#MatrixToAtom_3, minorDiagonal#MatrixToAtom_4])
+
+--
+
+and([(majorDiagonal[0] = sum([0,row[0];int(1..2)])),(minorDiagonal[0] = (0 - row[0]));int(1..2)]),
+and([(majorDiagonal[1] = sum([1,row[1];int(1..2)])),(minorDiagonal[1] = (1 - row[1]));int(1..2)]),
+and([(majorDiagonal[2] = sum([2,row[2];int(1..2)])),(minorDiagonal[2] = (2 - row[2]));int(1..2)]),
+and([(majorDiagonal[3] = sum([3,row[3];int(1..2)])),(minorDiagonal[3] = (3 - row[3]));int(1..2)]),
+__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8]),
+__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4]),
+__flat_alldiff([minorDiagonal#MatrixToAtom_1, minorDiagonal#MatrixToAtom_2, minorDiagonal#MatrixToAtom_3, minorDiagonal#MatrixToAtom_4]), 
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
+and([(majorDiagonal[0] = sum([0,row[0];int(1..2)])),(minorDiagonal[0] = (0 - row[0]));int(1..2)]),
+and([(majorDiagonal[1] = sum([1,row[1];int(1..2)])),(minorDiagonal[1] = (1 - row[1]));int(1..2)]),
+and([(majorDiagonal[2] = sum([2,row[2];int(1..2)])),(minorDiagonal[2] = (2 - row[2]));int(1..2)]),
+and([(majorDiagonal[3] = sum([3,row[3];int(1..2)])),(minorDiagonal[3] = (3 - row[3]));int(1..2)]),
+__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8]),
+__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4]),
+__flat_alldiff([minorDiagonal#MatrixToAtom_1, minorDiagonal#MatrixToAtom_2, minorDiagonal#MatrixToAtom_3, minorDiagonal#MatrixToAtom_4])
 
 --
 
@@ -706,24 +760,6 @@ sum([3,-(row[3]);int(1..)])
 
 --
 
-and([(majorDiagonal[0] = sum([0,row[0];int(1..2)])),(minorDiagonal[0] = sum([0,-(row[0]);int(1..)]));int(1..2)]),
-and([(majorDiagonal[1] = sum([1,row[1];int(1..2)])),(minorDiagonal[1] = sum([1,-(row[1]);int(1..)]));int(1..2)]),
-and([(majorDiagonal[2] = sum([2,row[2];int(1..2)])),(minorDiagonal[2] = sum([2,-(row[2]);int(1..)]));int(1..2)]),
-and([(majorDiagonal[3] = sum([3,row[3];int(1..2)])),(minorDiagonal[3] = sum([3,-(row[3]);int(1..)]));int(1..2)]),
-allDiff(row),
-allDiff(majorDiagonal),
-allDiff(minorDiagonal), 
-   ~~> select_repr_mta ([("ReprMatrixToAtom", 8001)])
-and([(majorDiagonal[0] = sum([0,row[0];int(1..2)])),(minorDiagonal[0] = sum([0,-(row[0]);int(1..)]));int(1..2)]),
-and([(majorDiagonal[1] = sum([1,row[1];int(1..2)])),(minorDiagonal[1] = sum([1,-(row[1]);int(1..)]));int(1..2)]),
-and([(majorDiagonal[2] = sum([2,row[2];int(1..2)])),(minorDiagonal[2] = sum([2,-(row[2]);int(1..)]));int(1..2)]),
-and([(majorDiagonal[3] = sum([3,row[3];int(1..2)])),(minorDiagonal[3] = sum([3,-(row[3]);int(1..)]));int(1..2)]),
-allDiff(row),
-allDiff(majorDiagonal),
-allDiff(minorDiagonal)
-
---
-
 majorDiagonal[0], 
    ~~> index_to_bubble ([("Bubble", 6000)])
 {majorDiagonal[0] @ and([__inDomain(0,int(0..3));int(1..)])}
@@ -734,17 +770,17 @@ and([({majorDiagonal[0] @ and([__inDomain(0,int(0..3));int(1..)])} = sum([0,row[
 and([(majorDiagonal[1] = sum([1,row[1];int(1..2)])),(minorDiagonal[1] = sum([1,-(row[1]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[2] = sum([2,row[2];int(1..2)])),(minorDiagonal[2] = sum([2,-(row[2]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[3] = sum([3,row[3];int(1..2)])),(minorDiagonal[3] = sum([3,-(row[3]);int(1..)]));int(1..2)]),
-allDiff(row),
-allDiff(majorDiagonal),
-allDiff(minorDiagonal), 
+__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8]),
+__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4]),
+__flat_alldiff([minorDiagonal#MatrixToAtom_1, minorDiagonal#MatrixToAtom_2, minorDiagonal#MatrixToAtom_3, minorDiagonal#MatrixToAtom_4]), 
    ~~> constant_evaluator ([("Constant", 9001)])
 and([(majorDiagonal[0] = sum([0,row[0];int(1..2)])),(minorDiagonal[0] = sum([0,-(row[0]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[1] = sum([1,row[1];int(1..2)])),(minorDiagonal[1] = sum([1,-(row[1]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[2] = sum([2,row[2];int(1..2)])),(minorDiagonal[2] = sum([2,-(row[2]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[3] = sum([3,row[3];int(1..2)])),(minorDiagonal[3] = sum([3,-(row[3]);int(1..)]));int(1..2)]),
-allDiff(row),
-allDiff(majorDiagonal),
-allDiff(minorDiagonal)
+__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8]),
+__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4]),
+__flat_alldiff([minorDiagonal#MatrixToAtom_1, minorDiagonal#MatrixToAtom_2, minorDiagonal#MatrixToAtom_3, minorDiagonal#MatrixToAtom_4])
 
 --
 
@@ -758,17 +794,17 @@ and([(majorDiagonal[0] = sum([0,{row[0] @ and([__inDomain(0,int(0..7));int(1..)]
 and([(majorDiagonal[1] = sum([1,row[1];int(1..2)])),(minorDiagonal[1] = sum([1,-(row[1]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[2] = sum([2,row[2];int(1..2)])),(minorDiagonal[2] = sum([2,-(row[2]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[3] = sum([3,row[3];int(1..2)])),(minorDiagonal[3] = sum([3,-(row[3]);int(1..)]));int(1..2)]),
-allDiff(row),
-allDiff(majorDiagonal),
-allDiff(minorDiagonal), 
+__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8]),
+__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4]),
+__flat_alldiff([minorDiagonal#MatrixToAtom_1, minorDiagonal#MatrixToAtom_2, minorDiagonal#MatrixToAtom_3, minorDiagonal#MatrixToAtom_4]), 
    ~~> constant_evaluator ([("Constant", 9001)])
 and([(majorDiagonal[0] = sum([0,row[0];int(1..2)])),(minorDiagonal[0] = sum([0,-(row[0]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[1] = sum([1,row[1];int(1..2)])),(minorDiagonal[1] = sum([1,-(row[1]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[2] = sum([2,row[2];int(1..2)])),(minorDiagonal[2] = sum([2,-(row[2]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[3] = sum([3,row[3];int(1..2)])),(minorDiagonal[3] = sum([3,-(row[3]);int(1..)]));int(1..2)]),
-allDiff(row),
-allDiff(majorDiagonal),
-allDiff(minorDiagonal)
+__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8]),
+__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4]),
+__flat_alldiff([minorDiagonal#MatrixToAtom_1, minorDiagonal#MatrixToAtom_2, minorDiagonal#MatrixToAtom_3, minorDiagonal#MatrixToAtom_4])
 
 --
 
@@ -782,17 +818,17 @@ and([(majorDiagonal[0] = sum([0,row[0];int(1..2)])),({minorDiagonal[0] @ and([__
 and([(majorDiagonal[1] = sum([1,row[1];int(1..2)])),(minorDiagonal[1] = sum([1,-(row[1]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[2] = sum([2,row[2];int(1..2)])),(minorDiagonal[2] = sum([2,-(row[2]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[3] = sum([3,row[3];int(1..2)])),(minorDiagonal[3] = sum([3,-(row[3]);int(1..)]));int(1..2)]),
-allDiff(row),
-allDiff(majorDiagonal),
-allDiff(minorDiagonal), 
+__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8]),
+__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4]),
+__flat_alldiff([minorDiagonal#MatrixToAtom_1, minorDiagonal#MatrixToAtom_2, minorDiagonal#MatrixToAtom_3, minorDiagonal#MatrixToAtom_4]), 
    ~~> constant_evaluator ([("Constant", 9001)])
 and([(majorDiagonal[0] = sum([0,row[0];int(1..2)])),(minorDiagonal[0] = sum([0,-(row[0]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[1] = sum([1,row[1];int(1..2)])),(minorDiagonal[1] = sum([1,-(row[1]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[2] = sum([2,row[2];int(1..2)])),(minorDiagonal[2] = sum([2,-(row[2]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[3] = sum([3,row[3];int(1..2)])),(minorDiagonal[3] = sum([3,-(row[3]);int(1..)]));int(1..2)]),
-allDiff(row),
-allDiff(majorDiagonal),
-allDiff(minorDiagonal)
+__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8]),
+__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4]),
+__flat_alldiff([minorDiagonal#MatrixToAtom_1, minorDiagonal#MatrixToAtom_2, minorDiagonal#MatrixToAtom_3, minorDiagonal#MatrixToAtom_4])
 
 --
 
@@ -806,17 +842,17 @@ and([(majorDiagonal[0] = sum([0,row[0];int(1..2)])),(minorDiagonal[0] = sum([0,-
 and([(majorDiagonal[1] = sum([1,row[1];int(1..2)])),(minorDiagonal[1] = sum([1,-(row[1]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[2] = sum([2,row[2];int(1..2)])),(minorDiagonal[2] = sum([2,-(row[2]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[3] = sum([3,row[3];int(1..2)])),(minorDiagonal[3] = sum([3,-(row[3]);int(1..)]));int(1..2)]),
-allDiff(row),
-allDiff(majorDiagonal),
-allDiff(minorDiagonal), 
+__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8]),
+__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4]),
+__flat_alldiff([minorDiagonal#MatrixToAtom_1, minorDiagonal#MatrixToAtom_2, minorDiagonal#MatrixToAtom_3, minorDiagonal#MatrixToAtom_4]), 
    ~~> constant_evaluator ([("Constant", 9001)])
 and([(majorDiagonal[0] = sum([0,row[0];int(1..2)])),(minorDiagonal[0] = sum([0,-(row[0]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[1] = sum([1,row[1];int(1..2)])),(minorDiagonal[1] = sum([1,-(row[1]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[2] = sum([2,row[2];int(1..2)])),(minorDiagonal[2] = sum([2,-(row[2]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[3] = sum([3,row[3];int(1..2)])),(minorDiagonal[3] = sum([3,-(row[3]);int(1..)]));int(1..2)]),
-allDiff(row),
-allDiff(majorDiagonal),
-allDiff(minorDiagonal)
+__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8]),
+__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4]),
+__flat_alldiff([minorDiagonal#MatrixToAtom_1, minorDiagonal#MatrixToAtom_2, minorDiagonal#MatrixToAtom_3, minorDiagonal#MatrixToAtom_4])
 
 --
 
@@ -830,17 +866,17 @@ and([(majorDiagonal[0] = sum([0,row[0];int(1..2)])),(minorDiagonal[0] = sum([0,-
 and([({majorDiagonal[1] @ and([__inDomain(1,int(0..3));int(1..)])} = sum([1,row[1];int(1..2)])),(minorDiagonal[1] = sum([1,-(row[1]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[2] = sum([2,row[2];int(1..2)])),(minorDiagonal[2] = sum([2,-(row[2]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[3] = sum([3,row[3];int(1..2)])),(minorDiagonal[3] = sum([3,-(row[3]);int(1..)]));int(1..2)]),
-allDiff(row),
-allDiff(majorDiagonal),
-allDiff(minorDiagonal), 
+__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8]),
+__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4]),
+__flat_alldiff([minorDiagonal#MatrixToAtom_1, minorDiagonal#MatrixToAtom_2, minorDiagonal#MatrixToAtom_3, minorDiagonal#MatrixToAtom_4]), 
    ~~> constant_evaluator ([("Constant", 9001)])
 and([(majorDiagonal[0] = sum([0,row[0];int(1..2)])),(minorDiagonal[0] = sum([0,-(row[0]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[1] = sum([1,row[1];int(1..2)])),(minorDiagonal[1] = sum([1,-(row[1]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[2] = sum([2,row[2];int(1..2)])),(minorDiagonal[2] = sum([2,-(row[2]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[3] = sum([3,row[3];int(1..2)])),(minorDiagonal[3] = sum([3,-(row[3]);int(1..)]));int(1..2)]),
-allDiff(row),
-allDiff(majorDiagonal),
-allDiff(minorDiagonal)
+__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8]),
+__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4]),
+__flat_alldiff([minorDiagonal#MatrixToAtom_1, minorDiagonal#MatrixToAtom_2, minorDiagonal#MatrixToAtom_3, minorDiagonal#MatrixToAtom_4])
 
 --
 
@@ -854,17 +890,17 @@ and([(majorDiagonal[0] = sum([0,row[0];int(1..2)])),(minorDiagonal[0] = sum([0,-
 and([(majorDiagonal[1] = sum([1,{row[1] @ and([__inDomain(1,int(0..7));int(1..)])};int(1..2)])),(minorDiagonal[1] = sum([1,-(row[1]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[2] = sum([2,row[2];int(1..2)])),(minorDiagonal[2] = sum([2,-(row[2]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[3] = sum([3,row[3];int(1..2)])),(minorDiagonal[3] = sum([3,-(row[3]);int(1..)]));int(1..2)]),
-allDiff(row),
-allDiff(majorDiagonal),
-allDiff(minorDiagonal), 
+__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8]),
+__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4]),
+__flat_alldiff([minorDiagonal#MatrixToAtom_1, minorDiagonal#MatrixToAtom_2, minorDiagonal#MatrixToAtom_3, minorDiagonal#MatrixToAtom_4]), 
    ~~> constant_evaluator ([("Constant", 9001)])
 and([(majorDiagonal[0] = sum([0,row[0];int(1..2)])),(minorDiagonal[0] = sum([0,-(row[0]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[1] = sum([1,row[1];int(1..2)])),(minorDiagonal[1] = sum([1,-(row[1]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[2] = sum([2,row[2];int(1..2)])),(minorDiagonal[2] = sum([2,-(row[2]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[3] = sum([3,row[3];int(1..2)])),(minorDiagonal[3] = sum([3,-(row[3]);int(1..)]));int(1..2)]),
-allDiff(row),
-allDiff(majorDiagonal),
-allDiff(minorDiagonal)
+__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8]),
+__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4]),
+__flat_alldiff([minorDiagonal#MatrixToAtom_1, minorDiagonal#MatrixToAtom_2, minorDiagonal#MatrixToAtom_3, minorDiagonal#MatrixToAtom_4])
 
 --
 
@@ -878,17 +914,17 @@ and([(majorDiagonal[0] = sum([0,row[0];int(1..2)])),(minorDiagonal[0] = sum([0,-
 and([(majorDiagonal[1] = sum([1,row[1];int(1..2)])),({minorDiagonal[1] @ and([__inDomain(1,int(0..3));int(1..)])} = sum([1,-(row[1]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[2] = sum([2,row[2];int(1..2)])),(minorDiagonal[2] = sum([2,-(row[2]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[3] = sum([3,row[3];int(1..2)])),(minorDiagonal[3] = sum([3,-(row[3]);int(1..)]));int(1..2)]),
-allDiff(row),
-allDiff(majorDiagonal),
-allDiff(minorDiagonal), 
+__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8]),
+__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4]),
+__flat_alldiff([minorDiagonal#MatrixToAtom_1, minorDiagonal#MatrixToAtom_2, minorDiagonal#MatrixToAtom_3, minorDiagonal#MatrixToAtom_4]), 
    ~~> constant_evaluator ([("Constant", 9001)])
 and([(majorDiagonal[0] = sum([0,row[0];int(1..2)])),(minorDiagonal[0] = sum([0,-(row[0]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[1] = sum([1,row[1];int(1..2)])),(minorDiagonal[1] = sum([1,-(row[1]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[2] = sum([2,row[2];int(1..2)])),(minorDiagonal[2] = sum([2,-(row[2]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[3] = sum([3,row[3];int(1..2)])),(minorDiagonal[3] = sum([3,-(row[3]);int(1..)]));int(1..2)]),
-allDiff(row),
-allDiff(majorDiagonal),
-allDiff(minorDiagonal)
+__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8]),
+__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4]),
+__flat_alldiff([minorDiagonal#MatrixToAtom_1, minorDiagonal#MatrixToAtom_2, minorDiagonal#MatrixToAtom_3, minorDiagonal#MatrixToAtom_4])
 
 --
 
@@ -902,17 +938,17 @@ and([(majorDiagonal[0] = sum([0,row[0];int(1..2)])),(minorDiagonal[0] = sum([0,-
 and([(majorDiagonal[1] = sum([1,row[1];int(1..2)])),(minorDiagonal[1] = sum([1,-({row[1] @ and([__inDomain(1,int(0..7));int(1..)])});int(1..)]));int(1..2)]),
 and([(majorDiagonal[2] = sum([2,row[2];int(1..2)])),(minorDiagonal[2] = sum([2,-(row[2]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[3] = sum([3,row[3];int(1..2)])),(minorDiagonal[3] = sum([3,-(row[3]);int(1..)]));int(1..2)]),
-allDiff(row),
-allDiff(majorDiagonal),
-allDiff(minorDiagonal), 
+__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8]),
+__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4]),
+__flat_alldiff([minorDiagonal#MatrixToAtom_1, minorDiagonal#MatrixToAtom_2, minorDiagonal#MatrixToAtom_3, minorDiagonal#MatrixToAtom_4]), 
    ~~> constant_evaluator ([("Constant", 9001)])
 and([(majorDiagonal[0] = sum([0,row[0];int(1..2)])),(minorDiagonal[0] = sum([0,-(row[0]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[1] = sum([1,row[1];int(1..2)])),(minorDiagonal[1] = sum([1,-(row[1]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[2] = sum([2,row[2];int(1..2)])),(minorDiagonal[2] = sum([2,-(row[2]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[3] = sum([3,row[3];int(1..2)])),(minorDiagonal[3] = sum([3,-(row[3]);int(1..)]));int(1..2)]),
-allDiff(row),
-allDiff(majorDiagonal),
-allDiff(minorDiagonal)
+__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8]),
+__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4]),
+__flat_alldiff([minorDiagonal#MatrixToAtom_1, minorDiagonal#MatrixToAtom_2, minorDiagonal#MatrixToAtom_3, minorDiagonal#MatrixToAtom_4])
 
 --
 
@@ -926,17 +962,17 @@ and([(majorDiagonal[0] = sum([0,row[0];int(1..2)])),(minorDiagonal[0] = sum([0,-
 and([(majorDiagonal[1] = sum([1,row[1];int(1..2)])),(minorDiagonal[1] = sum([1,-(row[1]);int(1..)]));int(1..2)]),
 and([({majorDiagonal[2] @ and([__inDomain(2,int(0..3));int(1..)])} = sum([2,row[2];int(1..2)])),(minorDiagonal[2] = sum([2,-(row[2]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[3] = sum([3,row[3];int(1..2)])),(minorDiagonal[3] = sum([3,-(row[3]);int(1..)]));int(1..2)]),
-allDiff(row),
-allDiff(majorDiagonal),
-allDiff(minorDiagonal), 
+__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8]),
+__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4]),
+__flat_alldiff([minorDiagonal#MatrixToAtom_1, minorDiagonal#MatrixToAtom_2, minorDiagonal#MatrixToAtom_3, minorDiagonal#MatrixToAtom_4]), 
    ~~> constant_evaluator ([("Constant", 9001)])
 and([(majorDiagonal[0] = sum([0,row[0];int(1..2)])),(minorDiagonal[0] = sum([0,-(row[0]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[1] = sum([1,row[1];int(1..2)])),(minorDiagonal[1] = sum([1,-(row[1]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[2] = sum([2,row[2];int(1..2)])),(minorDiagonal[2] = sum([2,-(row[2]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[3] = sum([3,row[3];int(1..2)])),(minorDiagonal[3] = sum([3,-(row[3]);int(1..)]));int(1..2)]),
-allDiff(row),
-allDiff(majorDiagonal),
-allDiff(minorDiagonal)
+__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8]),
+__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4]),
+__flat_alldiff([minorDiagonal#MatrixToAtom_1, minorDiagonal#MatrixToAtom_2, minorDiagonal#MatrixToAtom_3, minorDiagonal#MatrixToAtom_4])
 
 --
 
@@ -950,17 +986,17 @@ and([(majorDiagonal[0] = sum([0,row[0];int(1..2)])),(minorDiagonal[0] = sum([0,-
 and([(majorDiagonal[1] = sum([1,row[1];int(1..2)])),(minorDiagonal[1] = sum([1,-(row[1]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[2] = sum([2,{row[2] @ and([__inDomain(2,int(0..7));int(1..)])};int(1..2)])),(minorDiagonal[2] = sum([2,-(row[2]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[3] = sum([3,row[3];int(1..2)])),(minorDiagonal[3] = sum([3,-(row[3]);int(1..)]));int(1..2)]),
-allDiff(row),
-allDiff(majorDiagonal),
-allDiff(minorDiagonal), 
+__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8]),
+__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4]),
+__flat_alldiff([minorDiagonal#MatrixToAtom_1, minorDiagonal#MatrixToAtom_2, minorDiagonal#MatrixToAtom_3, minorDiagonal#MatrixToAtom_4]), 
    ~~> constant_evaluator ([("Constant", 9001)])
 and([(majorDiagonal[0] = sum([0,row[0];int(1..2)])),(minorDiagonal[0] = sum([0,-(row[0]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[1] = sum([1,row[1];int(1..2)])),(minorDiagonal[1] = sum([1,-(row[1]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[2] = sum([2,row[2];int(1..2)])),(minorDiagonal[2] = sum([2,-(row[2]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[3] = sum([3,row[3];int(1..2)])),(minorDiagonal[3] = sum([3,-(row[3]);int(1..)]));int(1..2)]),
-allDiff(row),
-allDiff(majorDiagonal),
-allDiff(minorDiagonal)
+__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8]),
+__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4]),
+__flat_alldiff([minorDiagonal#MatrixToAtom_1, minorDiagonal#MatrixToAtom_2, minorDiagonal#MatrixToAtom_3, minorDiagonal#MatrixToAtom_4])
 
 --
 
@@ -974,17 +1010,17 @@ and([(majorDiagonal[0] = sum([0,row[0];int(1..2)])),(minorDiagonal[0] = sum([0,-
 and([(majorDiagonal[1] = sum([1,row[1];int(1..2)])),(minorDiagonal[1] = sum([1,-(row[1]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[2] = sum([2,row[2];int(1..2)])),({minorDiagonal[2] @ and([__inDomain(2,int(0..3));int(1..)])} = sum([2,-(row[2]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[3] = sum([3,row[3];int(1..2)])),(minorDiagonal[3] = sum([3,-(row[3]);int(1..)]));int(1..2)]),
-allDiff(row),
-allDiff(majorDiagonal),
-allDiff(minorDiagonal), 
+__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8]),
+__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4]),
+__flat_alldiff([minorDiagonal#MatrixToAtom_1, minorDiagonal#MatrixToAtom_2, minorDiagonal#MatrixToAtom_3, minorDiagonal#MatrixToAtom_4]), 
    ~~> constant_evaluator ([("Constant", 9001)])
 and([(majorDiagonal[0] = sum([0,row[0];int(1..2)])),(minorDiagonal[0] = sum([0,-(row[0]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[1] = sum([1,row[1];int(1..2)])),(minorDiagonal[1] = sum([1,-(row[1]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[2] = sum([2,row[2];int(1..2)])),(minorDiagonal[2] = sum([2,-(row[2]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[3] = sum([3,row[3];int(1..2)])),(minorDiagonal[3] = sum([3,-(row[3]);int(1..)]));int(1..2)]),
-allDiff(row),
-allDiff(majorDiagonal),
-allDiff(minorDiagonal)
+__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8]),
+__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4]),
+__flat_alldiff([minorDiagonal#MatrixToAtom_1, minorDiagonal#MatrixToAtom_2, minorDiagonal#MatrixToAtom_3, minorDiagonal#MatrixToAtom_4])
 
 --
 
@@ -998,17 +1034,17 @@ and([(majorDiagonal[0] = sum([0,row[0];int(1..2)])),(minorDiagonal[0] = sum([0,-
 and([(majorDiagonal[1] = sum([1,row[1];int(1..2)])),(minorDiagonal[1] = sum([1,-(row[1]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[2] = sum([2,row[2];int(1..2)])),(minorDiagonal[2] = sum([2,-({row[2] @ and([__inDomain(2,int(0..7));int(1..)])});int(1..)]));int(1..2)]),
 and([(majorDiagonal[3] = sum([3,row[3];int(1..2)])),(minorDiagonal[3] = sum([3,-(row[3]);int(1..)]));int(1..2)]),
-allDiff(row),
-allDiff(majorDiagonal),
-allDiff(minorDiagonal), 
+__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8]),
+__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4]),
+__flat_alldiff([minorDiagonal#MatrixToAtom_1, minorDiagonal#MatrixToAtom_2, minorDiagonal#MatrixToAtom_3, minorDiagonal#MatrixToAtom_4]), 
    ~~> constant_evaluator ([("Constant", 9001)])
 and([(majorDiagonal[0] = sum([0,row[0];int(1..2)])),(minorDiagonal[0] = sum([0,-(row[0]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[1] = sum([1,row[1];int(1..2)])),(minorDiagonal[1] = sum([1,-(row[1]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[2] = sum([2,row[2];int(1..2)])),(minorDiagonal[2] = sum([2,-(row[2]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[3] = sum([3,row[3];int(1..2)])),(minorDiagonal[3] = sum([3,-(row[3]);int(1..)]));int(1..2)]),
-allDiff(row),
-allDiff(majorDiagonal),
-allDiff(minorDiagonal)
+__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8]),
+__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4]),
+__flat_alldiff([minorDiagonal#MatrixToAtom_1, minorDiagonal#MatrixToAtom_2, minorDiagonal#MatrixToAtom_3, minorDiagonal#MatrixToAtom_4])
 
 --
 
@@ -1022,17 +1058,17 @@ and([(majorDiagonal[0] = sum([0,row[0];int(1..2)])),(minorDiagonal[0] = sum([0,-
 and([(majorDiagonal[1] = sum([1,row[1];int(1..2)])),(minorDiagonal[1] = sum([1,-(row[1]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[2] = sum([2,row[2];int(1..2)])),(minorDiagonal[2] = sum([2,-(row[2]);int(1..)]));int(1..2)]),
 and([({majorDiagonal[3] @ and([__inDomain(3,int(0..3));int(1..)])} = sum([3,row[3];int(1..2)])),(minorDiagonal[3] = sum([3,-(row[3]);int(1..)]));int(1..2)]),
-allDiff(row),
-allDiff(majorDiagonal),
-allDiff(minorDiagonal), 
+__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8]),
+__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4]),
+__flat_alldiff([minorDiagonal#MatrixToAtom_1, minorDiagonal#MatrixToAtom_2, minorDiagonal#MatrixToAtom_3, minorDiagonal#MatrixToAtom_4]), 
    ~~> constant_evaluator ([("Constant", 9001)])
 and([(majorDiagonal[0] = sum([0,row[0];int(1..2)])),(minorDiagonal[0] = sum([0,-(row[0]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[1] = sum([1,row[1];int(1..2)])),(minorDiagonal[1] = sum([1,-(row[1]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[2] = sum([2,row[2];int(1..2)])),(minorDiagonal[2] = sum([2,-(row[2]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[3] = sum([3,row[3];int(1..2)])),(minorDiagonal[3] = sum([3,-(row[3]);int(1..)]));int(1..2)]),
-allDiff(row),
-allDiff(majorDiagonal),
-allDiff(minorDiagonal)
+__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8]),
+__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4]),
+__flat_alldiff([minorDiagonal#MatrixToAtom_1, minorDiagonal#MatrixToAtom_2, minorDiagonal#MatrixToAtom_3, minorDiagonal#MatrixToAtom_4])
 
 --
 
@@ -1046,17 +1082,17 @@ and([(majorDiagonal[0] = sum([0,row[0];int(1..2)])),(minorDiagonal[0] = sum([0,-
 and([(majorDiagonal[1] = sum([1,row[1];int(1..2)])),(minorDiagonal[1] = sum([1,-(row[1]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[2] = sum([2,row[2];int(1..2)])),(minorDiagonal[2] = sum([2,-(row[2]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[3] = sum([3,{row[3] @ and([__inDomain(3,int(0..7));int(1..)])};int(1..2)])),(minorDiagonal[3] = sum([3,-(row[3]);int(1..)]));int(1..2)]),
-allDiff(row),
-allDiff(majorDiagonal),
-allDiff(minorDiagonal), 
+__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8]),
+__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4]),
+__flat_alldiff([minorDiagonal#MatrixToAtom_1, minorDiagonal#MatrixToAtom_2, minorDiagonal#MatrixToAtom_3, minorDiagonal#MatrixToAtom_4]), 
    ~~> constant_evaluator ([("Constant", 9001)])
 and([(majorDiagonal[0] = sum([0,row[0];int(1..2)])),(minorDiagonal[0] = sum([0,-(row[0]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[1] = sum([1,row[1];int(1..2)])),(minorDiagonal[1] = sum([1,-(row[1]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[2] = sum([2,row[2];int(1..2)])),(minorDiagonal[2] = sum([2,-(row[2]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[3] = sum([3,row[3];int(1..2)])),(minorDiagonal[3] = sum([3,-(row[3]);int(1..)]));int(1..2)]),
-allDiff(row),
-allDiff(majorDiagonal),
-allDiff(minorDiagonal)
+__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8]),
+__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4]),
+__flat_alldiff([minorDiagonal#MatrixToAtom_1, minorDiagonal#MatrixToAtom_2, minorDiagonal#MatrixToAtom_3, minorDiagonal#MatrixToAtom_4])
 
 --
 
@@ -1070,17 +1106,17 @@ and([(majorDiagonal[0] = sum([0,row[0];int(1..2)])),(minorDiagonal[0] = sum([0,-
 and([(majorDiagonal[1] = sum([1,row[1];int(1..2)])),(minorDiagonal[1] = sum([1,-(row[1]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[2] = sum([2,row[2];int(1..2)])),(minorDiagonal[2] = sum([2,-(row[2]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[3] = sum([3,row[3];int(1..2)])),({minorDiagonal[3] @ and([__inDomain(3,int(0..3));int(1..)])} = sum([3,-(row[3]);int(1..)]));int(1..2)]),
-allDiff(row),
-allDiff(majorDiagonal),
-allDiff(minorDiagonal), 
+__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8]),
+__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4]),
+__flat_alldiff([minorDiagonal#MatrixToAtom_1, minorDiagonal#MatrixToAtom_2, minorDiagonal#MatrixToAtom_3, minorDiagonal#MatrixToAtom_4]), 
    ~~> constant_evaluator ([("Constant", 9001)])
 and([(majorDiagonal[0] = sum([0,row[0];int(1..2)])),(minorDiagonal[0] = sum([0,-(row[0]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[1] = sum([1,row[1];int(1..2)])),(minorDiagonal[1] = sum([1,-(row[1]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[2] = sum([2,row[2];int(1..2)])),(minorDiagonal[2] = sum([2,-(row[2]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[3] = sum([3,row[3];int(1..2)])),(minorDiagonal[3] = sum([3,-(row[3]);int(1..)]));int(1..2)]),
-allDiff(row),
-allDiff(majorDiagonal),
-allDiff(minorDiagonal)
+__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8]),
+__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4]),
+__flat_alldiff([minorDiagonal#MatrixToAtom_1, minorDiagonal#MatrixToAtom_2, minorDiagonal#MatrixToAtom_3, minorDiagonal#MatrixToAtom_4])
 
 --
 
@@ -1094,17 +1130,17 @@ and([(majorDiagonal[0] = sum([0,row[0];int(1..2)])),(minorDiagonal[0] = sum([0,-
 and([(majorDiagonal[1] = sum([1,row[1];int(1..2)])),(minorDiagonal[1] = sum([1,-(row[1]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[2] = sum([2,row[2];int(1..2)])),(minorDiagonal[2] = sum([2,-(row[2]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[3] = sum([3,row[3];int(1..2)])),(minorDiagonal[3] = sum([3,-({row[3] @ and([__inDomain(3,int(0..7));int(1..)])});int(1..)]));int(1..2)]),
-allDiff(row),
-allDiff(majorDiagonal),
-allDiff(minorDiagonal), 
+__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8]),
+__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4]),
+__flat_alldiff([minorDiagonal#MatrixToAtom_1, minorDiagonal#MatrixToAtom_2, minorDiagonal#MatrixToAtom_3, minorDiagonal#MatrixToAtom_4]), 
    ~~> constant_evaluator ([("Constant", 9001)])
 and([(majorDiagonal[0] = sum([0,row[0];int(1..2)])),(minorDiagonal[0] = sum([0,-(row[0]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[1] = sum([1,row[1];int(1..2)])),(minorDiagonal[1] = sum([1,-(row[1]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[2] = sum([2,row[2];int(1..2)])),(minorDiagonal[2] = sum([2,-(row[2]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[3] = sum([3,row[3];int(1..2)])),(minorDiagonal[3] = sum([3,-(row[3]);int(1..)]));int(1..2)]),
-allDiff(row),
-allDiff(majorDiagonal),
-allDiff(minorDiagonal)
+__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8]),
+__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4]),
+__flat_alldiff([minorDiagonal#MatrixToAtom_1, minorDiagonal#MatrixToAtom_2, minorDiagonal#MatrixToAtom_3, minorDiagonal#MatrixToAtom_4])
 
 --
 
@@ -1112,17 +1148,17 @@ and([(majorDiagonal[0] = sum([0,row[0];int(1..2)])),(minorDiagonal[0] = sum([0,-
 and([(majorDiagonal[1] = sum([1,row[1];int(1..2)])),(minorDiagonal[1] = sum([1,-(row[1]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[2] = sum([2,row[2];int(1..2)])),(minorDiagonal[2] = sum([2,-(row[2]);int(1..)]));int(1..2)]),
 and([(majorDiagonal[3] = sum([3,row[3];int(1..2)])),(minorDiagonal[3] = sum([3,-(row[3]);int(1..)]));int(1..2)]),
-allDiff(row),
-allDiff(majorDiagonal),
-allDiff(minorDiagonal), 
+__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8]),
+__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4]),
+__flat_alldiff([minorDiagonal#MatrixToAtom_1, minorDiagonal#MatrixToAtom_2, minorDiagonal#MatrixToAtom_3, minorDiagonal#MatrixToAtom_4]), 
    ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
 and([(majorDiagonal#MatrixToAtom_1 = sum([0,row#MatrixToAtom_1;int(1..2)])),(minorDiagonal#MatrixToAtom_1 = sum([0,-(row#MatrixToAtom_1);int(1..)]));int(1..2)]),
 and([(majorDiagonal#MatrixToAtom_2 = sum([1,row#MatrixToAtom_2;int(1..2)])),(minorDiagonal#MatrixToAtom_2 = sum([1,-(row#MatrixToAtom_2);int(1..)]));int(1..2)]),
 and([(majorDiagonal#MatrixToAtom_3 = sum([2,row#MatrixToAtom_3;int(1..2)])),(minorDiagonal#MatrixToAtom_3 = sum([2,-(row#MatrixToAtom_3);int(1..)]));int(1..2)]),
 and([(majorDiagonal#MatrixToAtom_4 = sum([3,row#MatrixToAtom_4;int(1..2)])),(minorDiagonal#MatrixToAtom_4 = sum([3,-(row#MatrixToAtom_4);int(1..)]));int(1..2)]),
-allDiff(row),
-allDiff(majorDiagonal),
-allDiff(minorDiagonal)
+__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8]),
+__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4]),
+__flat_alldiff([minorDiagonal#MatrixToAtom_1, minorDiagonal#MatrixToAtom_2, minorDiagonal#MatrixToAtom_3, minorDiagonal#MatrixToAtom_4])
 
 --
 
@@ -1184,9 +1220,9 @@ and([(majorDiagonal#MatrixToAtom_1 = sum([0,row#MatrixToAtom_1;int(1..2)])),Flat
 and([(majorDiagonal#MatrixToAtom_2 = sum([1,row#MatrixToAtom_2;int(1..2)])),FlatWeightedSumLeq([1, -1],[1, row#MatrixToAtom_2],minorDiagonal#MatrixToAtom_2),FlatWeightedSumGeq([1, -1],[1, row#MatrixToAtom_2],minorDiagonal#MatrixToAtom_2);int(1..2)]),
 and([(majorDiagonal#MatrixToAtom_3 = sum([2,row#MatrixToAtom_3;int(1..2)])),FlatWeightedSumLeq([1, -1],[2, row#MatrixToAtom_3],minorDiagonal#MatrixToAtom_3),FlatWeightedSumGeq([1, -1],[2, row#MatrixToAtom_3],minorDiagonal#MatrixToAtom_3);int(1..2)]),
 and([(majorDiagonal#MatrixToAtom_4 = sum([3,row#MatrixToAtom_4;int(1..2)])),FlatWeightedSumLeq([1, -1],[3, row#MatrixToAtom_4],minorDiagonal#MatrixToAtom_4),FlatWeightedSumGeq([1, -1],[3, row#MatrixToAtom_4],minorDiagonal#MatrixToAtom_4);int(1..2)]),
-allDiff(row),
-allDiff(majorDiagonal),
-allDiff(minorDiagonal), 
+__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8]),
+__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4]),
+__flat_alldiff([minorDiagonal#MatrixToAtom_1, minorDiagonal#MatrixToAtom_2, minorDiagonal#MatrixToAtom_3, minorDiagonal#MatrixToAtom_4]), 
    ~~> constant_evaluator ([("Constant", 9001)])
 (majorDiagonal#MatrixToAtom_1 = sum([0,row#MatrixToAtom_1;int(1..2)])),
 FlatWeightedSumLeq([1, -1],[0, row#MatrixToAtom_1],minorDiagonal#MatrixToAtom_1),
@@ -1194,9 +1230,9 @@ FlatWeightedSumGeq([1, -1],[0, row#MatrixToAtom_1],minorDiagonal#MatrixToAtom_1)
 and([(majorDiagonal#MatrixToAtom_2 = sum([1,row#MatrixToAtom_2;int(1..2)])),FlatWeightedSumLeq([1, -1],[1, row#MatrixToAtom_2],minorDiagonal#MatrixToAtom_2),FlatWeightedSumGeq([1, -1],[1, row#MatrixToAtom_2],minorDiagonal#MatrixToAtom_2);int(1..2)]),
 and([(majorDiagonal#MatrixToAtom_3 = sum([2,row#MatrixToAtom_3;int(1..2)])),FlatWeightedSumLeq([1, -1],[2, row#MatrixToAtom_3],minorDiagonal#MatrixToAtom_3),FlatWeightedSumGeq([1, -1],[2, row#MatrixToAtom_3],minorDiagonal#MatrixToAtom_3);int(1..2)]),
 and([(majorDiagonal#MatrixToAtom_4 = sum([3,row#MatrixToAtom_4;int(1..2)])),FlatWeightedSumLeq([1, -1],[3, row#MatrixToAtom_4],minorDiagonal#MatrixToAtom_4),FlatWeightedSumGeq([1, -1],[3, row#MatrixToAtom_4],minorDiagonal#MatrixToAtom_4);int(1..2)]),
-allDiff(row),
-allDiff(majorDiagonal),
-allDiff(minorDiagonal)
+__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8]),
+__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4]),
+__flat_alldiff([minorDiagonal#MatrixToAtom_1, minorDiagonal#MatrixToAtom_2, minorDiagonal#MatrixToAtom_3, minorDiagonal#MatrixToAtom_4])
 
 --
 
@@ -1218,9 +1254,9 @@ FlatWeightedSumGeq([1, -1],[0, row#MatrixToAtom_1],minorDiagonal#MatrixToAtom_1)
 and([(majorDiagonal#MatrixToAtom_2 = sum([1,row#MatrixToAtom_2;int(1..2)])),FlatWeightedSumLeq([1, -1],[1, row#MatrixToAtom_2],minorDiagonal#MatrixToAtom_2),FlatWeightedSumGeq([1, -1],[1, row#MatrixToAtom_2],minorDiagonal#MatrixToAtom_2);int(1..2)]),
 and([(majorDiagonal#MatrixToAtom_3 = sum([2,row#MatrixToAtom_3;int(1..2)])),FlatWeightedSumLeq([1, -1],[2, row#MatrixToAtom_3],minorDiagonal#MatrixToAtom_3),FlatWeightedSumGeq([1, -1],[2, row#MatrixToAtom_3],minorDiagonal#MatrixToAtom_3);int(1..2)]),
 and([(majorDiagonal#MatrixToAtom_4 = sum([3,row#MatrixToAtom_4;int(1..2)])),FlatWeightedSumLeq([1, -1],[3, row#MatrixToAtom_4],minorDiagonal#MatrixToAtom_4),FlatWeightedSumGeq([1, -1],[3, row#MatrixToAtom_4],minorDiagonal#MatrixToAtom_4);int(1..2)]),
-allDiff(row),
-allDiff(majorDiagonal),
-allDiff(minorDiagonal), 
+__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8]),
+__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4]),
+__flat_alldiff([minorDiagonal#MatrixToAtom_1, minorDiagonal#MatrixToAtom_2, minorDiagonal#MatrixToAtom_3, minorDiagonal#MatrixToAtom_4]), 
    ~~> constant_evaluator ([("Constant", 9001)])
 SumLeq([0, row#MatrixToAtom_1], majorDiagonal#MatrixToAtom_1),
 SumGeq([0, row#MatrixToAtom_1], majorDiagonal#MatrixToAtom_1),
@@ -1229,9 +1265,9 @@ FlatWeightedSumGeq([1, -1],[0, row#MatrixToAtom_1],minorDiagonal#MatrixToAtom_1)
 and([(majorDiagonal#MatrixToAtom_2 = sum([1,row#MatrixToAtom_2;int(1..2)])),FlatWeightedSumLeq([1, -1],[1, row#MatrixToAtom_2],minorDiagonal#MatrixToAtom_2),FlatWeightedSumGeq([1, -1],[1, row#MatrixToAtom_2],minorDiagonal#MatrixToAtom_2);int(1..2)]),
 and([(majorDiagonal#MatrixToAtom_3 = sum([2,row#MatrixToAtom_3;int(1..2)])),FlatWeightedSumLeq([1, -1],[2, row#MatrixToAtom_3],minorDiagonal#MatrixToAtom_3),FlatWeightedSumGeq([1, -1],[2, row#MatrixToAtom_3],minorDiagonal#MatrixToAtom_3);int(1..2)]),
 and([(majorDiagonal#MatrixToAtom_4 = sum([3,row#MatrixToAtom_4;int(1..2)])),FlatWeightedSumLeq([1, -1],[3, row#MatrixToAtom_4],minorDiagonal#MatrixToAtom_4),FlatWeightedSumGeq([1, -1],[3, row#MatrixToAtom_4],minorDiagonal#MatrixToAtom_4);int(1..2)]),
-allDiff(row),
-allDiff(majorDiagonal),
-allDiff(minorDiagonal)
+__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8]),
+__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4]),
+__flat_alldiff([minorDiagonal#MatrixToAtom_1, minorDiagonal#MatrixToAtom_2, minorDiagonal#MatrixToAtom_3, minorDiagonal#MatrixToAtom_4])
 
 --
 
@@ -1248,9 +1284,9 @@ FlatWeightedSumGeq([1, -1],[0, row#MatrixToAtom_1],minorDiagonal#MatrixToAtom_1)
 and([(majorDiagonal#MatrixToAtom_2 = sum([1,row#MatrixToAtom_2;int(1..2)])),FlatWeightedSumLeq([1, -1],[1, row#MatrixToAtom_2],minorDiagonal#MatrixToAtom_2),FlatWeightedSumGeq([1, -1],[1, row#MatrixToAtom_2],minorDiagonal#MatrixToAtom_2);int(1..)]),
 and([(majorDiagonal#MatrixToAtom_3 = sum([2,row#MatrixToAtom_3;int(1..2)])),FlatWeightedSumLeq([1, -1],[2, row#MatrixToAtom_3],minorDiagonal#MatrixToAtom_3),FlatWeightedSumGeq([1, -1],[2, row#MatrixToAtom_3],minorDiagonal#MatrixToAtom_3);int(1..2)]),
 and([(majorDiagonal#MatrixToAtom_4 = sum([3,row#MatrixToAtom_4;int(1..2)])),FlatWeightedSumLeq([1, -1],[3, row#MatrixToAtom_4],minorDiagonal#MatrixToAtom_4),FlatWeightedSumGeq([1, -1],[3, row#MatrixToAtom_4],minorDiagonal#MatrixToAtom_4);int(1..2)]),
-allDiff(row),
-allDiff(majorDiagonal),
-allDiff(minorDiagonal), 
+__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8]),
+__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4]),
+__flat_alldiff([minorDiagonal#MatrixToAtom_1, minorDiagonal#MatrixToAtom_2, minorDiagonal#MatrixToAtom_3, minorDiagonal#MatrixToAtom_4]), 
    ~~> constant_evaluator ([("Constant", 9001)])
 SumLeq([0, row#MatrixToAtom_1], majorDiagonal#MatrixToAtom_1),
 SumGeq([0, row#MatrixToAtom_1], majorDiagonal#MatrixToAtom_1),
@@ -1261,9 +1297,9 @@ FlatWeightedSumLeq([1, -1],[1, row#MatrixToAtom_2],minorDiagonal#MatrixToAtom_2)
 FlatWeightedSumGeq([1, -1],[1, row#MatrixToAtom_2],minorDiagonal#MatrixToAtom_2),
 and([(majorDiagonal#MatrixToAtom_3 = sum([2,row#MatrixToAtom_3;int(1..2)])),FlatWeightedSumLeq([1, -1],[2, row#MatrixToAtom_3],minorDiagonal#MatrixToAtom_3),FlatWeightedSumGeq([1, -1],[2, row#MatrixToAtom_3],minorDiagonal#MatrixToAtom_3);int(1..2)]),
 and([(majorDiagonal#MatrixToAtom_4 = sum([3,row#MatrixToAtom_4;int(1..2)])),FlatWeightedSumLeq([1, -1],[3, row#MatrixToAtom_4],minorDiagonal#MatrixToAtom_4),FlatWeightedSumGeq([1, -1],[3, row#MatrixToAtom_4],minorDiagonal#MatrixToAtom_4);int(1..2)]),
-allDiff(row),
-allDiff(majorDiagonal),
-allDiff(minorDiagonal)
+__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8]),
+__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4]),
+__flat_alldiff([minorDiagonal#MatrixToAtom_1, minorDiagonal#MatrixToAtom_2, minorDiagonal#MatrixToAtom_3, minorDiagonal#MatrixToAtom_4])
 
 --
 
@@ -1288,9 +1324,9 @@ FlatWeightedSumLeq([1, -1],[1, row#MatrixToAtom_2],minorDiagonal#MatrixToAtom_2)
 FlatWeightedSumGeq([1, -1],[1, row#MatrixToAtom_2],minorDiagonal#MatrixToAtom_2),
 and([(majorDiagonal#MatrixToAtom_3 = sum([2,row#MatrixToAtom_3;int(1..2)])),FlatWeightedSumLeq([1, -1],[2, row#MatrixToAtom_3],minorDiagonal#MatrixToAtom_3),FlatWeightedSumGeq([1, -1],[2, row#MatrixToAtom_3],minorDiagonal#MatrixToAtom_3);int(1..2)]),
 and([(majorDiagonal#MatrixToAtom_4 = sum([3,row#MatrixToAtom_4;int(1..2)])),FlatWeightedSumLeq([1, -1],[3, row#MatrixToAtom_4],minorDiagonal#MatrixToAtom_4),FlatWeightedSumGeq([1, -1],[3, row#MatrixToAtom_4],minorDiagonal#MatrixToAtom_4);int(1..2)]),
-allDiff(row),
-allDiff(majorDiagonal),
-allDiff(minorDiagonal), 
+__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8]),
+__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4]),
+__flat_alldiff([minorDiagonal#MatrixToAtom_1, minorDiagonal#MatrixToAtom_2, minorDiagonal#MatrixToAtom_3, minorDiagonal#MatrixToAtom_4]), 
    ~~> constant_evaluator ([("Constant", 9001)])
 SumLeq([0, row#MatrixToAtom_1], majorDiagonal#MatrixToAtom_1),
 SumGeq([0, row#MatrixToAtom_1], majorDiagonal#MatrixToAtom_1),
@@ -1302,9 +1338,9 @@ FlatWeightedSumLeq([1, -1],[1, row#MatrixToAtom_2],minorDiagonal#MatrixToAtom_2)
 FlatWeightedSumGeq([1, -1],[1, row#MatrixToAtom_2],minorDiagonal#MatrixToAtom_2),
 and([(majorDiagonal#MatrixToAtom_3 = sum([2,row#MatrixToAtom_3;int(1..2)])),FlatWeightedSumLeq([1, -1],[2, row#MatrixToAtom_3],minorDiagonal#MatrixToAtom_3),FlatWeightedSumGeq([1, -1],[2, row#MatrixToAtom_3],minorDiagonal#MatrixToAtom_3);int(1..2)]),
 and([(majorDiagonal#MatrixToAtom_4 = sum([3,row#MatrixToAtom_4;int(1..2)])),FlatWeightedSumLeq([1, -1],[3, row#MatrixToAtom_4],minorDiagonal#MatrixToAtom_4),FlatWeightedSumGeq([1, -1],[3, row#MatrixToAtom_4],minorDiagonal#MatrixToAtom_4);int(1..2)]),
-allDiff(row),
-allDiff(majorDiagonal),
-allDiff(minorDiagonal)
+__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8]),
+__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4]),
+__flat_alldiff([minorDiagonal#MatrixToAtom_1, minorDiagonal#MatrixToAtom_2, minorDiagonal#MatrixToAtom_3, minorDiagonal#MatrixToAtom_4])
 
 --
 
@@ -1324,9 +1360,9 @@ FlatWeightedSumLeq([1, -1],[1, row#MatrixToAtom_2],minorDiagonal#MatrixToAtom_2)
 FlatWeightedSumGeq([1, -1],[1, row#MatrixToAtom_2],minorDiagonal#MatrixToAtom_2),
 and([(majorDiagonal#MatrixToAtom_3 = sum([2,row#MatrixToAtom_3;int(1..2)])),FlatWeightedSumLeq([1, -1],[2, row#MatrixToAtom_3],minorDiagonal#MatrixToAtom_3),FlatWeightedSumGeq([1, -1],[2, row#MatrixToAtom_3],minorDiagonal#MatrixToAtom_3);int(1..)]),
 and([(majorDiagonal#MatrixToAtom_4 = sum([3,row#MatrixToAtom_4;int(1..2)])),FlatWeightedSumLeq([1, -1],[3, row#MatrixToAtom_4],minorDiagonal#MatrixToAtom_4),FlatWeightedSumGeq([1, -1],[3, row#MatrixToAtom_4],minorDiagonal#MatrixToAtom_4);int(1..2)]),
-allDiff(row),
-allDiff(majorDiagonal),
-allDiff(minorDiagonal), 
+__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8]),
+__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4]),
+__flat_alldiff([minorDiagonal#MatrixToAtom_1, minorDiagonal#MatrixToAtom_2, minorDiagonal#MatrixToAtom_3, minorDiagonal#MatrixToAtom_4]), 
    ~~> constant_evaluator ([("Constant", 9001)])
 SumLeq([0, row#MatrixToAtom_1], majorDiagonal#MatrixToAtom_1),
 SumGeq([0, row#MatrixToAtom_1], majorDiagonal#MatrixToAtom_1),
@@ -1340,9 +1376,9 @@ FlatWeightedSumGeq([1, -1],[1, row#MatrixToAtom_2],minorDiagonal#MatrixToAtom_2)
 FlatWeightedSumLeq([1, -1],[2, row#MatrixToAtom_3],minorDiagonal#MatrixToAtom_3),
 FlatWeightedSumGeq([1, -1],[2, row#MatrixToAtom_3],minorDiagonal#MatrixToAtom_3),
 and([(majorDiagonal#MatrixToAtom_4 = sum([3,row#MatrixToAtom_4;int(1..2)])),FlatWeightedSumLeq([1, -1],[3, row#MatrixToAtom_4],minorDiagonal#MatrixToAtom_4),FlatWeightedSumGeq([1, -1],[3, row#MatrixToAtom_4],minorDiagonal#MatrixToAtom_4);int(1..2)]),
-allDiff(row),
-allDiff(majorDiagonal),
-allDiff(minorDiagonal)
+__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8]),
+__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4]),
+__flat_alldiff([minorDiagonal#MatrixToAtom_1, minorDiagonal#MatrixToAtom_2, minorDiagonal#MatrixToAtom_3, minorDiagonal#MatrixToAtom_4])
 
 --
 
@@ -1370,9 +1406,9 @@ and([SumLeq([2, row#MatrixToAtom_3], majorDiagonal#MatrixToAtom_3),SumGeq([2, ro
 FlatWeightedSumLeq([1, -1],[2, row#MatrixToAtom_3],minorDiagonal#MatrixToAtom_3),
 FlatWeightedSumGeq([1, -1],[2, row#MatrixToAtom_3],minorDiagonal#MatrixToAtom_3),
 and([(majorDiagonal#MatrixToAtom_4 = sum([3,row#MatrixToAtom_4;int(1..2)])),FlatWeightedSumLeq([1, -1],[3, row#MatrixToAtom_4],minorDiagonal#MatrixToAtom_4),FlatWeightedSumGeq([1, -1],[3, row#MatrixToAtom_4],minorDiagonal#MatrixToAtom_4);int(1..2)]),
-allDiff(row),
-allDiff(majorDiagonal),
-allDiff(minorDiagonal), 
+__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8]),
+__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4]),
+__flat_alldiff([minorDiagonal#MatrixToAtom_1, minorDiagonal#MatrixToAtom_2, minorDiagonal#MatrixToAtom_3, minorDiagonal#MatrixToAtom_4]), 
    ~~> constant_evaluator ([("Constant", 9001)])
 SumLeq([0, row#MatrixToAtom_1], majorDiagonal#MatrixToAtom_1),
 SumGeq([0, row#MatrixToAtom_1], majorDiagonal#MatrixToAtom_1),
@@ -1387,9 +1423,9 @@ SumGeq([2, row#MatrixToAtom_3], majorDiagonal#MatrixToAtom_3),
 FlatWeightedSumLeq([1, -1],[2, row#MatrixToAtom_3],minorDiagonal#MatrixToAtom_3),
 FlatWeightedSumGeq([1, -1],[2, row#MatrixToAtom_3],minorDiagonal#MatrixToAtom_3),
 and([(majorDiagonal#MatrixToAtom_4 = sum([3,row#MatrixToAtom_4;int(1..2)])),FlatWeightedSumLeq([1, -1],[3, row#MatrixToAtom_4],minorDiagonal#MatrixToAtom_4),FlatWeightedSumGeq([1, -1],[3, row#MatrixToAtom_4],minorDiagonal#MatrixToAtom_4);int(1..2)]),
-allDiff(row),
-allDiff(majorDiagonal),
-allDiff(minorDiagonal)
+__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8]),
+__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4]),
+__flat_alldiff([minorDiagonal#MatrixToAtom_1, minorDiagonal#MatrixToAtom_2, minorDiagonal#MatrixToAtom_3, minorDiagonal#MatrixToAtom_4])
 
 --
 
@@ -1412,9 +1448,9 @@ SumGeq([2, row#MatrixToAtom_3], majorDiagonal#MatrixToAtom_3),
 FlatWeightedSumLeq([1, -1],[2, row#MatrixToAtom_3],minorDiagonal#MatrixToAtom_3),
 FlatWeightedSumGeq([1, -1],[2, row#MatrixToAtom_3],minorDiagonal#MatrixToAtom_3),
 and([(majorDiagonal#MatrixToAtom_4 = sum([3,row#MatrixToAtom_4;int(1..2)])),FlatWeightedSumLeq([1, -1],[3, row#MatrixToAtom_4],minorDiagonal#MatrixToAtom_4),FlatWeightedSumGeq([1, -1],[3, row#MatrixToAtom_4],minorDiagonal#MatrixToAtom_4);int(1..)]),
-allDiff(row),
-allDiff(majorDiagonal),
-allDiff(minorDiagonal), 
+__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8]),
+__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4]),
+__flat_alldiff([minorDiagonal#MatrixToAtom_1, minorDiagonal#MatrixToAtom_2, minorDiagonal#MatrixToAtom_3, minorDiagonal#MatrixToAtom_4]), 
    ~~> constant_evaluator ([("Constant", 9001)])
 SumLeq([0, row#MatrixToAtom_1], majorDiagonal#MatrixToAtom_1),
 SumGeq([0, row#MatrixToAtom_1], majorDiagonal#MatrixToAtom_1),
@@ -1431,9 +1467,9 @@ FlatWeightedSumGeq([1, -1],[2, row#MatrixToAtom_3],minorDiagonal#MatrixToAtom_3)
 (majorDiagonal#MatrixToAtom_4 = sum([3,row#MatrixToAtom_4;int(1..2)])),
 FlatWeightedSumLeq([1, -1],[3, row#MatrixToAtom_4],minorDiagonal#MatrixToAtom_4),
 FlatWeightedSumGeq([1, -1],[3, row#MatrixToAtom_4],minorDiagonal#MatrixToAtom_4),
-allDiff(row),
-allDiff(majorDiagonal),
-allDiff(minorDiagonal)
+__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8]),
+__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4]),
+__flat_alldiff([minorDiagonal#MatrixToAtom_1, minorDiagonal#MatrixToAtom_2, minorDiagonal#MatrixToAtom_3, minorDiagonal#MatrixToAtom_4])
 
 --
 
@@ -1464,9 +1500,9 @@ FlatWeightedSumGeq([1, -1],[2, row#MatrixToAtom_3],minorDiagonal#MatrixToAtom_3)
 and([SumLeq([3, row#MatrixToAtom_4], majorDiagonal#MatrixToAtom_4),SumGeq([3, row#MatrixToAtom_4], majorDiagonal#MatrixToAtom_4);int(1..)]),
 FlatWeightedSumLeq([1, -1],[3, row#MatrixToAtom_4],minorDiagonal#MatrixToAtom_4),
 FlatWeightedSumGeq([1, -1],[3, row#MatrixToAtom_4],minorDiagonal#MatrixToAtom_4),
-allDiff(row),
-allDiff(majorDiagonal),
-allDiff(minorDiagonal), 
+__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8]),
+__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4]),
+__flat_alldiff([minorDiagonal#MatrixToAtom_1, minorDiagonal#MatrixToAtom_2, minorDiagonal#MatrixToAtom_3, minorDiagonal#MatrixToAtom_4]), 
    ~~> constant_evaluator ([("Constant", 9001)])
 SumLeq([0, row#MatrixToAtom_1], majorDiagonal#MatrixToAtom_1),
 SumGeq([0, row#MatrixToAtom_1], majorDiagonal#MatrixToAtom_1),
@@ -1484,44 +1520,8 @@ SumLeq([3, row#MatrixToAtom_4], majorDiagonal#MatrixToAtom_4),
 SumGeq([3, row#MatrixToAtom_4], majorDiagonal#MatrixToAtom_4),
 FlatWeightedSumLeq([1, -1],[3, row#MatrixToAtom_4],minorDiagonal#MatrixToAtom_4),
 FlatWeightedSumGeq([1, -1],[3, row#MatrixToAtom_4],minorDiagonal#MatrixToAtom_4),
-allDiff(row),
-allDiff(majorDiagonal),
-allDiff(minorDiagonal)
-
---
-
-allDiff(row), 
-   ~~> matrix_ref_to_atom ([("ReprMatrixToAtom", 2000)])
-allDiff([row#MatrixToAtom_1,row#MatrixToAtom_2,row#MatrixToAtom_3,row#MatrixToAtom_4,row#MatrixToAtom_5,row#MatrixToAtom_6,row#MatrixToAtom_7,row#MatrixToAtom_8;int(1..)])
-
---
-
-allDiff([row#MatrixToAtom_1,row#MatrixToAtom_2,row#MatrixToAtom_3,row#MatrixToAtom_4,row#MatrixToAtom_5,row#MatrixToAtom_6,row#MatrixToAtom_7,row#MatrixToAtom_8;int(1..)]), 
-   ~~> introduce_flat_alldiff ([("Minion", 4200)])
-__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8])
-
---
-
-allDiff(majorDiagonal), 
-   ~~> matrix_ref_to_atom ([("ReprMatrixToAtom", 2000)])
-allDiff([majorDiagonal#MatrixToAtom_1,majorDiagonal#MatrixToAtom_2,majorDiagonal#MatrixToAtom_3,majorDiagonal#MatrixToAtom_4;int(1..)])
-
---
-
-allDiff([majorDiagonal#MatrixToAtom_1,majorDiagonal#MatrixToAtom_2,majorDiagonal#MatrixToAtom_3,majorDiagonal#MatrixToAtom_4;int(1..)]), 
-   ~~> introduce_flat_alldiff ([("Minion", 4200)])
-__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4])
-
---
-
-allDiff(minorDiagonal), 
-   ~~> matrix_ref_to_atom ([("ReprMatrixToAtom", 2000)])
-allDiff([minorDiagonal#MatrixToAtom_1,minorDiagonal#MatrixToAtom_2,minorDiagonal#MatrixToAtom_3,minorDiagonal#MatrixToAtom_4;int(1..)])
-
---
-
-allDiff([minorDiagonal#MatrixToAtom_1,minorDiagonal#MatrixToAtom_2,minorDiagonal#MatrixToAtom_3,minorDiagonal#MatrixToAtom_4;int(1..)]), 
-   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([row#MatrixToAtom_1, row#MatrixToAtom_2, row#MatrixToAtom_3, row#MatrixToAtom_4, row#MatrixToAtom_5, row#MatrixToAtom_6, row#MatrixToAtom_7, row#MatrixToAtom_8]),
+__flat_alldiff([majorDiagonal#MatrixToAtom_1, majorDiagonal#MatrixToAtom_2, majorDiagonal#MatrixToAtom_3, majorDiagonal#MatrixToAtom_4]),
 __flat_alldiff([minorDiagonal#MatrixToAtom_1, minorDiagonal#MatrixToAtom_2, minorDiagonal#MatrixToAtom_3, minorDiagonal#MatrixToAtom_4])
 
 --

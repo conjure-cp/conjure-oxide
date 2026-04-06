@@ -1,0 +1,29 @@
+language Essence 1.4
+
+$ Magic square of order n.
+$ All rows, columns, and both diagonals sum to the magic constant n*(n^2+1)/2.
+
+given n : int
+
+letting magic_sum be (n * (n*n + 1)) / 2
+
+find sq: matrix indexed by [int(1..n), int(1..n)] of int(1..n*n)
+
+such that
+    allDiff(sq),
+
+    forAll r: int(1..n) .
+        sum(sq[r, ..]) = magic_sum,
+
+    forAll c: int(1..n) .
+        (sum r: int(1..n) . sq[r, c]) = magic_sum,
+
+    $ Main diagonal
+    (sum i: int(1..n) . sq[i, i]) = magic_sum,
+
+    $ Anti-diagonal
+    (sum i: int(1..n) . sq[i, n+1-i]) = magic_sum,
+
+    $ Symmetry breaking: top-left < top-right, top-left < bottom-left
+    sq[1, 1] < sq[1, n],
+    sq[1, 1] < sq[n, 1]

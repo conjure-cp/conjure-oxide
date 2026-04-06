@@ -22,7 +22,7 @@ allDiff(position)
 
 and([ (position[sum([i,3;int(1..)])] = sum([sum([position[i],i;int(1..)]),1;int(1..)])) | i : int(1..k) ]),
 allDiff(position), 
-   ~~> select_repr_mta ([("ReprMatrixToAtom", 8001)])
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
 and([ (position[sum([i,3;int(1..)])] = sum([sum([position[i],i;int(1..)]),1;int(1..)])) | i : int(1..k) ]),
 allDiff(position)
 new variables:
@@ -35,6 +35,18 @@ new variables:
 
 updated variables:
   find position: matrix indexed by [positionDomain] of positionDomain ~~> find position: matrix indexed by [int(1..6)] of int(1..6)
+
+--
+
+allDiff(position), 
+   ~~> matrix_ref_to_atom ([("ReprMatrixToAtom", 2000)])
+allDiff([position#MatrixToAtom_1,position#MatrixToAtom_2,position#MatrixToAtom_3,position#MatrixToAtom_4,position#MatrixToAtom_5,position#MatrixToAtom_6;int(1..)])
+
+--
+
+allDiff([position#MatrixToAtom_1,position#MatrixToAtom_2,position#MatrixToAtom_3,position#MatrixToAtom_4,position#MatrixToAtom_5,position#MatrixToAtom_6;int(1..)]), 
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([position#MatrixToAtom_1, position#MatrixToAtom_2, position#MatrixToAtom_3, position#MatrixToAtom_4, position#MatrixToAtom_5, position#MatrixToAtom_6])
 
 --
 
@@ -56,7 +68,7 @@ sum([__0[i],i,1;int(1..)])
 --
 
 (true != (__0[sum([i,3;int(1..)])] = sum([__0[i],i,1;int(1..)]))), 
-   ~~> select_repr_mta ([("ReprMatrixToAtom", 8001)])
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
 (true != (__0[sum([i,3;int(1..)])] = sum([__0[i],i,1;int(1..)])))
 new variables:
   find __0#MatrixToAtom_1: int(1..6)
@@ -315,18 +327,18 @@ SumGeq([1, __5, i], __4),
 __minion_element_one([__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3,__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6],i,__5)
 
 and([ (position[sum([i,3;int(1..)])] = sum([sum([position[i],i;int(1..)]),1;int(1..)])) | i : int(1..k) ]), 
-   ~~> expand_comprehension_via_solver_ac ([("Base", 2002)])
+   ~~> expand_comprehension_via_solver_ac ([("Base", 1500)])
 and([(position[4] = sum([sum([position[1],1;int(1..)]),1;int(1..)])),(position[5] = sum([sum([position[2],2;int(1..)]),1;int(1..)])),(position[6] = sum([sum([position[3],3;int(1..)]),1;int(1..)]));int(1..)])
 
 --
 
 and([(position[4] = sum([sum([position[1],1;int(1..)]),1;int(1..)])),(position[5] = sum([sum([position[2],2;int(1..)]),1;int(1..)])),(position[6] = sum([sum([position[3],3;int(1..)]),1;int(1..)]));int(1..)]),
-allDiff(position), 
+__flat_alldiff([position#MatrixToAtom_1, position#MatrixToAtom_2, position#MatrixToAtom_3, position#MatrixToAtom_4, position#MatrixToAtom_5, position#MatrixToAtom_6]), 
    ~~> constant_evaluator ([("Constant", 9001)])
 (position[4] = sum([sum([position[1],1;int(1..)]),1;int(1..)])),
 (position[5] = sum([sum([position[2],2;int(1..)]),1;int(1..)])),
 (position[6] = sum([sum([position[3],3;int(1..)]),1;int(1..)])),
-allDiff(position)
+__flat_alldiff([position#MatrixToAtom_1, position#MatrixToAtom_2, position#MatrixToAtom_3, position#MatrixToAtom_4, position#MatrixToAtom_5, position#MatrixToAtom_6])
 
 --
 
@@ -339,12 +351,12 @@ sum([position[1],1,1;int(1..)])
 (position[4] = sum([position[1],1,1;int(1..)])),
 (position[5] = sum([sum([position[2],2;int(1..)]),1;int(1..)])),
 (position[6] = sum([sum([position[3],3;int(1..)]),1;int(1..)])),
-allDiff(position), 
+__flat_alldiff([position#MatrixToAtom_1, position#MatrixToAtom_2, position#MatrixToAtom_3, position#MatrixToAtom_4, position#MatrixToAtom_5, position#MatrixToAtom_6]), 
    ~~> constant_evaluator ([("Constant", 9001)])
 (position[4] = sum([position[1],2;int(1..)])),
 (position[5] = sum([sum([position[2],2;int(1..)]),1;int(1..)])),
 (position[6] = sum([sum([position[3],3;int(1..)]),1;int(1..)])),
-allDiff(position)
+__flat_alldiff([position#MatrixToAtom_1, position#MatrixToAtom_2, position#MatrixToAtom_3, position#MatrixToAtom_4, position#MatrixToAtom_5, position#MatrixToAtom_6])
 
 --
 
@@ -357,12 +369,12 @@ sum([position[2],2,1;int(1..)])
 (position[4] = sum([position[1],2;int(1..)])),
 (position[5] = sum([position[2],2,1;int(1..)])),
 (position[6] = sum([sum([position[3],3;int(1..)]),1;int(1..)])),
-allDiff(position), 
+__flat_alldiff([position#MatrixToAtom_1, position#MatrixToAtom_2, position#MatrixToAtom_3, position#MatrixToAtom_4, position#MatrixToAtom_5, position#MatrixToAtom_6]), 
    ~~> constant_evaluator ([("Constant", 9001)])
 (position[4] = sum([position[1],2;int(1..)])),
 (position[5] = sum([position[2],3;int(1..)])),
 (position[6] = sum([sum([position[3],3;int(1..)]),1;int(1..)])),
-allDiff(position)
+__flat_alldiff([position#MatrixToAtom_1, position#MatrixToAtom_2, position#MatrixToAtom_3, position#MatrixToAtom_4, position#MatrixToAtom_5, position#MatrixToAtom_6])
 
 --
 
@@ -375,24 +387,24 @@ sum([position[3],3,1;int(1..)])
 (position[4] = sum([position[1],2;int(1..)])),
 (position[5] = sum([position[2],3;int(1..)])),
 (position[6] = sum([position[3],3,1;int(1..)])),
-allDiff(position), 
+__flat_alldiff([position#MatrixToAtom_1, position#MatrixToAtom_2, position#MatrixToAtom_3, position#MatrixToAtom_4, position#MatrixToAtom_5, position#MatrixToAtom_6]), 
    ~~> constant_evaluator ([("Constant", 9001)])
 (position[4] = sum([position[1],2;int(1..)])),
 (position[5] = sum([position[2],3;int(1..)])),
 (position[6] = sum([position[3],4;int(1..)])),
-allDiff(position)
+__flat_alldiff([position#MatrixToAtom_1, position#MatrixToAtom_2, position#MatrixToAtom_3, position#MatrixToAtom_4, position#MatrixToAtom_5, position#MatrixToAtom_6])
 
 --
 
 (position[4] = sum([position[1],2;int(1..)])),
 (position[5] = sum([position[2],3;int(1..)])),
 (position[6] = sum([position[3],4;int(1..)])),
-allDiff(position), 
-   ~~> select_repr_mta ([("ReprMatrixToAtom", 8001)])
+__flat_alldiff([position#MatrixToAtom_1, position#MatrixToAtom_2, position#MatrixToAtom_3, position#MatrixToAtom_4, position#MatrixToAtom_5, position#MatrixToAtom_6]), 
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
 (position[4] = sum([position[1],2;int(1..)])),
 (position[5] = sum([position[2],3;int(1..)])),
 (position[6] = sum([position[3],4;int(1..)])),
-allDiff(position)
+__flat_alldiff([position#MatrixToAtom_1, position#MatrixToAtom_2, position#MatrixToAtom_3, position#MatrixToAtom_4, position#MatrixToAtom_5, position#MatrixToAtom_6])
 
 --
 
@@ -405,12 +417,12 @@ position[4],
 ({position[4] @ and([__inDomain(4,int(1..6));int(1..)])} = sum([position[1],2;int(1..)])),
 (position[5] = sum([position[2],3;int(1..)])),
 (position[6] = sum([position[3],4;int(1..)])),
-allDiff(position), 
+__flat_alldiff([position#MatrixToAtom_1, position#MatrixToAtom_2, position#MatrixToAtom_3, position#MatrixToAtom_4, position#MatrixToAtom_5, position#MatrixToAtom_6]), 
    ~~> constant_evaluator ([("Constant", 9001)])
 (position[4] = sum([position[1],2;int(1..)])),
 (position[5] = sum([position[2],3;int(1..)])),
 (position[6] = sum([position[3],4;int(1..)])),
-allDiff(position)
+__flat_alldiff([position#MatrixToAtom_1, position#MatrixToAtom_2, position#MatrixToAtom_3, position#MatrixToAtom_4, position#MatrixToAtom_5, position#MatrixToAtom_6])
 
 --
 
@@ -423,12 +435,12 @@ position[1],
 (position[4] = sum([{position[1] @ and([__inDomain(1,int(1..6));int(1..)])},2;int(1..)])),
 (position[5] = sum([position[2],3;int(1..)])),
 (position[6] = sum([position[3],4;int(1..)])),
-allDiff(position), 
+__flat_alldiff([position#MatrixToAtom_1, position#MatrixToAtom_2, position#MatrixToAtom_3, position#MatrixToAtom_4, position#MatrixToAtom_5, position#MatrixToAtom_6]), 
    ~~> constant_evaluator ([("Constant", 9001)])
 (position[4] = sum([position[1],2;int(1..)])),
 (position[5] = sum([position[2],3;int(1..)])),
 (position[6] = sum([position[3],4;int(1..)])),
-allDiff(position)
+__flat_alldiff([position#MatrixToAtom_1, position#MatrixToAtom_2, position#MatrixToAtom_3, position#MatrixToAtom_4, position#MatrixToAtom_5, position#MatrixToAtom_6])
 
 --
 
@@ -441,12 +453,12 @@ position[5],
 (position[4] = sum([position[1],2;int(1..)])),
 ({position[5] @ and([__inDomain(5,int(1..6));int(1..)])} = sum([position[2],3;int(1..)])),
 (position[6] = sum([position[3],4;int(1..)])),
-allDiff(position), 
+__flat_alldiff([position#MatrixToAtom_1, position#MatrixToAtom_2, position#MatrixToAtom_3, position#MatrixToAtom_4, position#MatrixToAtom_5, position#MatrixToAtom_6]), 
    ~~> constant_evaluator ([("Constant", 9001)])
 (position[4] = sum([position[1],2;int(1..)])),
 (position[5] = sum([position[2],3;int(1..)])),
 (position[6] = sum([position[3],4;int(1..)])),
-allDiff(position)
+__flat_alldiff([position#MatrixToAtom_1, position#MatrixToAtom_2, position#MatrixToAtom_3, position#MatrixToAtom_4, position#MatrixToAtom_5, position#MatrixToAtom_6])
 
 --
 
@@ -459,12 +471,12 @@ position[2],
 (position[4] = sum([position[1],2;int(1..)])),
 (position[5] = sum([{position[2] @ and([__inDomain(2,int(1..6));int(1..)])},3;int(1..)])),
 (position[6] = sum([position[3],4;int(1..)])),
-allDiff(position), 
+__flat_alldiff([position#MatrixToAtom_1, position#MatrixToAtom_2, position#MatrixToAtom_3, position#MatrixToAtom_4, position#MatrixToAtom_5, position#MatrixToAtom_6]), 
    ~~> constant_evaluator ([("Constant", 9001)])
 (position[4] = sum([position[1],2;int(1..)])),
 (position[5] = sum([position[2],3;int(1..)])),
 (position[6] = sum([position[3],4;int(1..)])),
-allDiff(position)
+__flat_alldiff([position#MatrixToAtom_1, position#MatrixToAtom_2, position#MatrixToAtom_3, position#MatrixToAtom_4, position#MatrixToAtom_5, position#MatrixToAtom_6])
 
 --
 
@@ -477,12 +489,12 @@ position[6],
 (position[4] = sum([position[1],2;int(1..)])),
 (position[5] = sum([position[2],3;int(1..)])),
 ({position[6] @ and([__inDomain(6,int(1..6));int(1..)])} = sum([position[3],4;int(1..)])),
-allDiff(position), 
+__flat_alldiff([position#MatrixToAtom_1, position#MatrixToAtom_2, position#MatrixToAtom_3, position#MatrixToAtom_4, position#MatrixToAtom_5, position#MatrixToAtom_6]), 
    ~~> constant_evaluator ([("Constant", 9001)])
 (position[4] = sum([position[1],2;int(1..)])),
 (position[5] = sum([position[2],3;int(1..)])),
 (position[6] = sum([position[3],4;int(1..)])),
-allDiff(position)
+__flat_alldiff([position#MatrixToAtom_1, position#MatrixToAtom_2, position#MatrixToAtom_3, position#MatrixToAtom_4, position#MatrixToAtom_5, position#MatrixToAtom_6])
 
 --
 
@@ -495,24 +507,24 @@ position[3],
 (position[4] = sum([position[1],2;int(1..)])),
 (position[5] = sum([position[2],3;int(1..)])),
 (position[6] = sum([{position[3] @ and([__inDomain(3,int(1..6));int(1..)])},4;int(1..)])),
-allDiff(position), 
+__flat_alldiff([position#MatrixToAtom_1, position#MatrixToAtom_2, position#MatrixToAtom_3, position#MatrixToAtom_4, position#MatrixToAtom_5, position#MatrixToAtom_6]), 
    ~~> constant_evaluator ([("Constant", 9001)])
 (position[4] = sum([position[1],2;int(1..)])),
 (position[5] = sum([position[2],3;int(1..)])),
 (position[6] = sum([position[3],4;int(1..)])),
-allDiff(position)
+__flat_alldiff([position#MatrixToAtom_1, position#MatrixToAtom_2, position#MatrixToAtom_3, position#MatrixToAtom_4, position#MatrixToAtom_5, position#MatrixToAtom_6])
 
 --
 
 (position[4] = sum([position[1],2;int(1..)])),
 (position[5] = sum([position[2],3;int(1..)])),
 (position[6] = sum([position[3],4;int(1..)])),
-allDiff(position), 
+__flat_alldiff([position#MatrixToAtom_1, position#MatrixToAtom_2, position#MatrixToAtom_3, position#MatrixToAtom_4, position#MatrixToAtom_5, position#MatrixToAtom_6]), 
    ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
 (position#MatrixToAtom_4 = sum([position#MatrixToAtom_1,2;int(1..)])),
 (position#MatrixToAtom_5 = sum([position#MatrixToAtom_2,3;int(1..)])),
 (position#MatrixToAtom_6 = sum([position#MatrixToAtom_3,4;int(1..)])),
-allDiff(position)
+__flat_alldiff([position#MatrixToAtom_1, position#MatrixToAtom_2, position#MatrixToAtom_3, position#MatrixToAtom_4, position#MatrixToAtom_5, position#MatrixToAtom_6])
 
 --
 
@@ -525,13 +537,13 @@ and([SumLeq([2, position#MatrixToAtom_1], position#MatrixToAtom_4),SumGeq([2, po
 and([SumLeq([2, position#MatrixToAtom_1], position#MatrixToAtom_4),SumGeq([2, position#MatrixToAtom_1], position#MatrixToAtom_4);int(1..)]),
 (position#MatrixToAtom_5 = sum([position#MatrixToAtom_2,3;int(1..)])),
 (position#MatrixToAtom_6 = sum([position#MatrixToAtom_3,4;int(1..)])),
-allDiff(position), 
+__flat_alldiff([position#MatrixToAtom_1, position#MatrixToAtom_2, position#MatrixToAtom_3, position#MatrixToAtom_4, position#MatrixToAtom_5, position#MatrixToAtom_6]), 
    ~~> constant_evaluator ([("Constant", 9001)])
 SumLeq([2, position#MatrixToAtom_1], position#MatrixToAtom_4),
 SumGeq([2, position#MatrixToAtom_1], position#MatrixToAtom_4),
 (position#MatrixToAtom_5 = sum([position#MatrixToAtom_2,3;int(1..)])),
 (position#MatrixToAtom_6 = sum([position#MatrixToAtom_3,4;int(1..)])),
-allDiff(position)
+__flat_alldiff([position#MatrixToAtom_1, position#MatrixToAtom_2, position#MatrixToAtom_3, position#MatrixToAtom_4, position#MatrixToAtom_5, position#MatrixToAtom_6])
 
 --
 
@@ -545,14 +557,14 @@ SumLeq([2, position#MatrixToAtom_1], position#MatrixToAtom_4),
 SumGeq([2, position#MatrixToAtom_1], position#MatrixToAtom_4),
 and([SumLeq([3, position#MatrixToAtom_2], position#MatrixToAtom_5),SumGeq([3, position#MatrixToAtom_2], position#MatrixToAtom_5);int(1..)]),
 (position#MatrixToAtom_6 = sum([position#MatrixToAtom_3,4;int(1..)])),
-allDiff(position), 
+__flat_alldiff([position#MatrixToAtom_1, position#MatrixToAtom_2, position#MatrixToAtom_3, position#MatrixToAtom_4, position#MatrixToAtom_5, position#MatrixToAtom_6]), 
    ~~> constant_evaluator ([("Constant", 9001)])
 SumLeq([2, position#MatrixToAtom_1], position#MatrixToAtom_4),
 SumGeq([2, position#MatrixToAtom_1], position#MatrixToAtom_4),
 SumLeq([3, position#MatrixToAtom_2], position#MatrixToAtom_5),
 SumGeq([3, position#MatrixToAtom_2], position#MatrixToAtom_5),
 (position#MatrixToAtom_6 = sum([position#MatrixToAtom_3,4;int(1..)])),
-allDiff(position)
+__flat_alldiff([position#MatrixToAtom_1, position#MatrixToAtom_2, position#MatrixToAtom_3, position#MatrixToAtom_4, position#MatrixToAtom_5, position#MatrixToAtom_6])
 
 --
 
@@ -567,7 +579,7 @@ SumGeq([2, position#MatrixToAtom_1], position#MatrixToAtom_4),
 SumLeq([3, position#MatrixToAtom_2], position#MatrixToAtom_5),
 SumGeq([3, position#MatrixToAtom_2], position#MatrixToAtom_5),
 and([SumLeq([4, position#MatrixToAtom_3], position#MatrixToAtom_6),SumGeq([4, position#MatrixToAtom_3], position#MatrixToAtom_6);int(1..)]),
-allDiff(position), 
+__flat_alldiff([position#MatrixToAtom_1, position#MatrixToAtom_2, position#MatrixToAtom_3, position#MatrixToAtom_4, position#MatrixToAtom_5, position#MatrixToAtom_6]), 
    ~~> constant_evaluator ([("Constant", 9001)])
 SumLeq([2, position#MatrixToAtom_1], position#MatrixToAtom_4),
 SumGeq([2, position#MatrixToAtom_1], position#MatrixToAtom_4),
@@ -575,18 +587,6 @@ SumLeq([3, position#MatrixToAtom_2], position#MatrixToAtom_5),
 SumGeq([3, position#MatrixToAtom_2], position#MatrixToAtom_5),
 SumLeq([4, position#MatrixToAtom_3], position#MatrixToAtom_6),
 SumGeq([4, position#MatrixToAtom_3], position#MatrixToAtom_6),
-allDiff(position)
-
---
-
-allDiff(position), 
-   ~~> matrix_ref_to_atom ([("ReprMatrixToAtom", 2000)])
-allDiff([position#MatrixToAtom_1,position#MatrixToAtom_2,position#MatrixToAtom_3,position#MatrixToAtom_4,position#MatrixToAtom_5,position#MatrixToAtom_6;int(1..)])
-
---
-
-allDiff([position#MatrixToAtom_1,position#MatrixToAtom_2,position#MatrixToAtom_3,position#MatrixToAtom_4,position#MatrixToAtom_5,position#MatrixToAtom_6;int(1..)]), 
-   ~~> introduce_flat_alldiff ([("Minion", 4200)])
 __flat_alldiff([position#MatrixToAtom_1, position#MatrixToAtom_2, position#MatrixToAtom_3, position#MatrixToAtom_4, position#MatrixToAtom_5, position#MatrixToAtom_6])
 
 --

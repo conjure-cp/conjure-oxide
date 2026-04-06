@@ -1,11 +1,11 @@
 use crate::ast::domains::MSetAttr;
-use crate::ast::matrix;
 use crate::ast::records::RecordValue;
 use crate::ast::{
     AbstractLiteral, Domain, DomainOpError, DomainPtr, Expression, FuncAttr, HasDomain, IntVal,
     Literal, Moo, Reference, SetAttr, Typeable, UnresolvedDomain,
     domains::{Int, Range, UInt},
 };
+use crate::ast::{Name, matrix};
 use crate::range;
 use crate::utils::count_combinations;
 use conjure_cp_core::ast::ReturnType;
@@ -13,7 +13,7 @@ use funcmap::FuncMap;
 use itertools::{Itertools, izip};
 use polyquine::Quine;
 use serde::{Deserialize, Serialize};
-use std::collections::BTreeSet;
+use std::collections::{BTreeSet, HashMap};
 use std::fmt::{Display, Formatter};
 use std::iter::zip;
 use uniplate::Uniplate;
@@ -96,7 +96,24 @@ impl GroundDomain {
             (GroundDomain::Tuple(_), _) | (_, GroundDomain::Tuple(_)) => {
                 Err(DomainOpError::WrongType)
             }
-            // TODO: Eventually we may define semantics for joining record domains. This day is not today.
+            (GroundDomain::Record(in1s), GroundDomain::Record(in2s))
+                if in1s.len() == in2s.len() =>
+            {
+                let lhs_fields: HashMap<&Name, &Moo<GroundDomain>> =
+                    in1s.iter().map(|x| (&x.name, &x.value)).collect();
+                let rhs_fields: HashMap<&Name, &Moo<GroundDomain>> =
+                    in2s.iter().map(|x| (&x.name, &x.value)).collect();
+                let mut new_fields = Vec::with_capacity(in1s.len());
+                for (n, d) in lhs_fields {
+                    let d2 = rhs_fields.get(&n).ok_or(DomainOpError::WrongType)?;
+                    let dom = d.union(d2)?;
+                    new_fields.push(RecordValue {
+                        name: n.clone(),
+                        value: dom.into(),
+                    });
+                }
+                Ok(GroundDomain::Record(new_fields))
+            }
             #[allow(unreachable_patterns)]
             // Technically redundant but logically clearer to have both
             (GroundDomain::Record(_), _) | (_, GroundDomain::Record(_)) => {

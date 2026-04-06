@@ -18,6 +18,7 @@ use crate::diagnostics::source_map::{HoverInfo, SourceMap, span_with_hover};
 use crate::errors::{FatalParseError, ParseErrorCollection, RecoverableParseError};
 use crate::expression::parse_expression;
 use crate::field;
+use crate::given::parse_given;
 use crate::syntax_errors::detect_syntactic_errors;
 
 /// Parse an Essence file into a Model using the tree-sitter parser.
@@ -125,8 +126,6 @@ pub fn parse_essence_with_context_and_map(
         }
 
         match statement.kind() {
-            "single_line_comment" => {}
-            "language_declaration" => {}
             "find_statement" => {
                 let var_hashmap = parse_find_statement(&mut ctx, statement)?;
                 for (name, domain) in var_hashmap {
@@ -148,6 +147,12 @@ pub fn parse_essence_with_context_and_map(
                     continue;
                 };
                 model.symbols_mut().extend(letting_vars);
+            }
+            "given_statement" => {
+                let Some(givens) = parse_given(&mut ctx, statement)? else {
+                    continue;
+                };
+                model.symbols_mut().extend(givens);
             }
             "dominance_relation" => {
                 let inner = field!(statement, "expression");

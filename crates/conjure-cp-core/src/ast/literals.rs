@@ -154,8 +154,25 @@ impl AbstractLiteral<Expression> {
                 }
                 Some(Domain::matrix(item_domain, new_index_domain))
             }
-            AbstractLiteral::Tuple(_) => None,
-            AbstractLiteral::Record(_) => None,
+            AbstractLiteral::Tuple(items) => {
+                let item_domains = items
+                    .iter()
+                    .map(|x| x.domain_of())
+                    .collect::<Option<Vec<DomainPtr>>>()?;
+                Some(Domain::tuple(item_domains))
+            }
+            AbstractLiteral::Record(fields) => {
+                let field_doms = fields
+                    .iter()
+                    .map(|f| {
+                        f.value.domain_of().map(|d| RecordValue {
+                            name: f.name.clone(),
+                            value: d,
+                        })
+                    })
+                    .collect::<Option<Vec<RecordValue<_>>>>()?;
+                Some(Domain::record(field_doms))
+            }
             AbstractLiteral::Function(_) => None,
         }
     }
@@ -207,13 +224,21 @@ impl Typeable for AbstractLiteral<Expression> {
                 ReturnType::Matrix(Box::new(ReturnType::Unknown))
             }
             AbstractLiteral::Matrix(items, _) => {
-                let item_type = items[0].return_type();
-
                 // if any items do not have a type, return none.
-                let item_types: Vec<ReturnType> = items.iter().map(|x| x.return_type()).collect();
+                let Some(item_types) = items
+                    .iter()
+                    .map(|x| match x.return_type() {
+                        ReturnType::Unknown => None,
+                        x => Some(x),
+                    })
+                    .collect::<Option<Vec<_>>>()
+                else {
+                    return ReturnType::Unknown;
+                };
+                let item_type = &item_types[0];
 
                 assert!(
-                    item_types.iter().all(|x| x == &item_type),
+                    item_types.iter().all(|x| x == item_type),
                     "all items in a matrix should have the same type. items: {items} types: {types:#?}",
                     items = pretty_vec(items),
                     types = items
@@ -222,7 +247,7 @@ impl Typeable for AbstractLiteral<Expression> {
                         .collect::<Vec<ReturnType>>()
                 );
 
-                ReturnType::Matrix(Box::new(item_type))
+                ReturnType::Matrix(Box::new(item_type.clone()))
             }
             AbstractLiteral::Tuple(items) => {
                 let mut item_types = vec![];

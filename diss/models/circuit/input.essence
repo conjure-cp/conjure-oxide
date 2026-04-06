@@ -1,0 +1,76 @@
+language Essence 1.4
+
+$ Circuit design: place n components on a grid, connected by wires.
+$ Each component is a record; wires are tuples of endpoint coordinates.
+$ Scale: increase n (also increase grid_size to keep it feasible).
+
+given n : int
+given grid_size : int
+
+letting n_wires   be n - 1
+
+letting Component be domain record {
+    pos:   tuple(int(1..grid_size), int(1..grid_size)),
+    type_: int(1..3),   $ 1=gate, 2=register, 3=memory
+    power: int(1..5)
+}
+
+letting Wire be domain record {
+    src:    tuple(int(1..grid_size), int(1..grid_size)),
+    dst:    tuple(int(1..grid_size), int(1..grid_size)),
+    length: int(1..grid_size*2)
+}
+
+find comp: matrix indexed by [int(1..n)] of Component
+find wire: matrix indexed by [int(1..n_wires)] of Wire
+
+such that
+    $ All components at distinct positions
+    forAll i: int(1..n) .
+        forAll j: int(1..n) .
+            ((i < j) ->
+                (comp[i][pos] != comp[j][pos])),
+
+    $ Wire i connects component i to component i+1 (chain topology)
+    forAll i: int(1..n_wires) .
+        (wire[i][src] = comp[i][pos]),
+    forAll i: int(1..n_wires) .
+        (wire[i][dst] = comp[i+1][pos]),
+
+    $ Wire length = Manhattan distance between endpoints
+    forAll i: int(1..n_wires) .
+        (wire[i][length] =
+            |wire[i][src][1] - wire[i][dst][1]| +
+            |wire[i][src][2] - wire[i][dst][2]|),
+
+    $ Total wire length bounded
+    (sum i: int(1..n_wires) . wire[i][length]) <= grid_size * n_wires / 2 + n,
+
+    $ Memory components (type 3) must be on the grid boundary
+    forAll i: int(1..n) .
+        ((comp[i][type_] = 3) ->
+            ((comp[i][pos][1] = 1 \/ comp[i][pos][1] = grid_size) \/
+             (comp[i][pos][2] = 1 \/ comp[i][pos][2] = grid_size))),
+
+    $ Gates (type 1) must not be adjacent to other gates
+    forAll i: int(1..n) .
+        forAll j: int(1..n) .
+            ((i < j) ->
+                ((comp[i][type_] = 1 /\ comp[j][type_] = 1) ->
+                    |comp[i][pos][1] - comp[j][pos][1]| +
+                    |comp[i][pos][2] - comp[j][pos][2]| >= 2)),
+
+    $ High-power components placed in first half of grid (x <= grid_size/2)
+    forAll i: int(1..n) .
+        comp[i][power] >= 4 -> comp[i][pos][1] <= grid_size / 2,
+
+    $ Component ordering: sorted by x then y (symmetry breaking)
+    forAll i: int(1..n-1) .
+        (comp[i][pos][1] < comp[i+1][pos][1] \/
+        (comp[i][pos][1] = comp[i+1][pos][1] /\
+         comp[i][pos][2] < comp[i+1][pos][2])),
+
+    $ At least one component of each type
+    (sum i: int(1..n) . toInt(comp[i][type_] = 1)) >= 1,
+    (sum i: int(1..n) . toInt(comp[i][type_] = 2)) >= 1,
+    (sum i: int(1..n) . toInt(comp[i][type_] = 3)) >= 1

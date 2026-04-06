@@ -2,9 +2,9 @@ module.exports = grammar ({
   name: 'essence',
 
   extras: $ => [
-    $.single_line_comment,
+    $._single_line_comment,
     /\s/,
-    $.language_declaration
+    $._language_declaration
   ],
 
   rules: {
@@ -27,6 +27,7 @@ module.exports = grammar ({
         commaSep1(choice(field("bool_expr", $.bool_expr), field("atom", $.atom), field("comparison_expr", $.comparison_expr))), 
       ),
       seq("letting", commaSep1(field("letting_statement", $.letting_statement))),
+      seq("given", commaSep1(field("given_statement", $.given_statement))),
       field("dominance_relation", $.dominance_relation),
       // field("find", $.FIND),
       // field("letting", $.LETTING),
@@ -38,9 +39,9 @@ module.exports = grammar ({
     LETTING: $ => "letting",
     COLON: $ => ":",
 
-    single_line_comment: $ => token(seq('$', /.*/)),
+    _single_line_comment: $ => token(seq('$', /.*/)),
 
-    language_declaration: $ => token(seq("language", /.*/)),
+    _language_declaration: $ => token(seq("language", /.*/)),
 
     //general
     constant: $ => choice(
@@ -178,6 +179,12 @@ module.exports = grammar ({
     ),
 
     index_domain_list: $ => commaSep1($.domain),
+
+    given_statement: $ => seq(
+        field("name", $.identifier),
+        ":",
+        field("domain", $.domain),
+    ),
 
     //letting statements
     letting_statement: $ => seq(

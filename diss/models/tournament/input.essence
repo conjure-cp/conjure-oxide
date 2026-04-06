@@ -1,0 +1,55 @@
+language Essence 1.4
+
+$ Tournament bracket: n teams, n_rounds rounds (n = 2^n_rounds).
+$ bracket[r, m] is match m in round r.
+$ Round r has n / 2^r matches.
+$ Scale: increase n (must be power of 2).
+
+given n : int
+given n_rounds : int
+
+letting Match be domain record {
+    home:   int(1..n),
+    away:   int(1..n),
+    winner: int(1..n)
+}
+
+$ bracket[r, m]: round r has n/(2^r) matches, but we allocate n/2 slots
+$ and only use the first n/(2^r) in each round.
+find bracket: matrix indexed by [int(1..n_rounds), int(1..n/2)] of Match
+
+such that
+    $ Round 1: all n teams appear exactly once across all matches
+    allDiff(flatten([ [bracket[1, m][home], bracket[1, m][away]] | m : int(1..n/2) ])),
+
+    $ In every round, home != away
+    forAll r : int(1..n_rounds) .
+        forAll m : int(1..n / 2**r) .
+            bracket[r, m][home] != bracket[r, m][away],
+
+    $ Winner must be home or away
+    forAll r : int(1..n_rounds) .
+        forAll m : int(1..n / 2**r) .
+            bracket[r, m][winner] = bracket[r, m][home] \/
+            bracket[r, m][winner] = bracket[r, m][away],
+
+    $ Advancement: winner of match m in round r feeds into round r+1
+    $ Match 2*m-1 winner becomes home of match m in next round
+    $ Match 2*m   winner becomes away of match m in next round
+    forAll r : int(1..n_rounds - 1) .
+        forAll m : int(1..n / 2**(r+1)) .
+            bracket[r+1, m][home] = bracket[r, 2*m - 1][winner] /\
+            bracket[r+1, m][away] = bracket[r, 2*m][winner],
+
+    $ Symmetry breaking: in round 1, home < away
+    forAll m : int(1..n/2) .
+        bracket[1, m][home] < bracket[1, m][away],
+
+    $ Unused slots (beyond n/2^r in round r) are zeroed out via dummy values
+    $ Since we only constrain indices 1..n/2^r per round, the rest are unconstrained.
+    $ To keep it clean, force unused slots to a fixed value.
+    forAll r : int(1..n_rounds) .
+        forAll m : int(n / 2**r + 1..n/2) .
+            bracket[r, m][home] = 1 /\
+            bracket[r, m][away] = 1 /\
+            bracket[r, m][winner] = 1

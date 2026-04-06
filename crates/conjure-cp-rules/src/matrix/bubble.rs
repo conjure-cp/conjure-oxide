@@ -1,5 +1,5 @@
 use crate::utils::to_aux_var;
-use conjure_cp::ast::{DomainPtr, GroundDomain, Metadata, Reference, eval_constant};
+use conjure_cp::ast::{DomainPtr, GroundDomain, Metadata, eval_constant};
 use conjure_cp::ast::{Expression, Moo, SymbolTable};
 use conjure_cp::rule_engine::{
     ApplicationError, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,

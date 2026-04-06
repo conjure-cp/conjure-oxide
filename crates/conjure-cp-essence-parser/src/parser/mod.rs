@@ -4,6 +4,7 @@ mod comprehension;
 pub mod domain;
 pub mod expression;
 pub mod find;
+pub mod given;
 pub mod keyword_checks;
 pub mod letting;
 mod macros;

@@ -282,6 +282,11 @@ impl SymbolTable {
         }
     }
 
+    /// Number of entries in the LOCAL scope only
+    pub fn len_local(&self) -> usize {
+        self.table.len()
+    }
+
     /// Looks up the declaration with the given name in the current scope only.
     ///
     /// Returns `None` if there is no declaration with that name in the current scope.
@@ -358,6 +363,14 @@ impl SymbolTable {
     /// Iterates over entries in the LOCAL symbol table, by mutable reference.
     pub fn iter_local_mut(&mut self) -> impl Iterator<Item = (&Name, &mut DeclarationPtr)> {
         self.table.iter_mut()
+    }
+
+    /// Iterates over all parents of this symbol table.
+    /// Note that this does NOT include self!
+    pub fn iter_parents(&self) -> impl Iterator<Item = SymbolTablePtr> {
+        SymbolTableParentIter {
+            current: self.parent.clone(),
+        }
     }
 
     /// Extends the symbol table with the given symbol table, updating the gensym counter if
@@ -446,6 +459,28 @@ impl Iterator for SymbolTableIter {
         }
 
         val
+    }
+}
+
+pub struct SymbolTableParentIter {
+    current: Option<SymbolTablePtr>,
+}
+
+impl Iterator for SymbolTableParentIter {
+    type Item = SymbolTablePtr;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let current = self.current.take()?;
+        self.current = current.read().parent().clone();
+        Some(current)
+    }
+}
+
+impl SymbolTable {
+    pub fn parent_iter(&self) -> SymbolTableParentIter {
+        SymbolTableParentIter {
+            current: self.parent().clone(),
+        }
     }
 }
 

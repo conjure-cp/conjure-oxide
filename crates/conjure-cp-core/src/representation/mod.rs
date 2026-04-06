@@ -29,6 +29,7 @@ pub mod _dependencies {
     pub use super::util::try_up_via;
     pub use crate::ast::eval_constant;
     pub use crate::rule_engine::_dependencies::*;
+    pub use elsa::sync::FrozenMap;
     pub use funcmap;
     pub use funcmap::{FuncMap, TryFuncMap};
     pub use serde;

@@ -56,7 +56,7 @@ pub fn write_model(src: &str) -> Result<(String, tempfile::TempDir), anyhow::Err
         .to_str()
         .ok_or(anyhow!("invalid UTF-8"))?
         .to_string();
-    Ok((path_str, tmp_dir))  // caller keeps tmp_dir alive
+    Ok((path_str, tmp_dir)) // caller keeps tmp_dir alive
 }
 
 /// Run our pipeline (parse - rewrite - solve) and return all solutions.
@@ -73,7 +73,9 @@ fn oxide_solutions(pth: &str) -> Option<Vec<BTreeMap<Name, Literal>>> {
     let rewritten = rewrite_naive(&model, &rule_sets, false).ok()?;
 
     let solver = Solver::new(Minion::default());
-    get_solutions(solver, rewritten, 0, &None).ok()
+    get_solutions(solver, rewritten, 0, &None)
+        .ok()
+        .map(|r| r.solutions)
 }
 
 /// Run `conjure solve` on the given source text and return all solutions.
@@ -103,7 +105,7 @@ fn run_pipeline(src: &str) {
     // Both must have produced solutions for us to compare
     let (oxide, conjure) = match (oxide, conjure) {
         (Some(o), Some(c)) => (o, c),
-        _ => return,               // Neither could solve, skip
+        _ => return, // Neither could solve, skip
     };
 
     // Normalize and compare

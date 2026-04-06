@@ -4,10 +4,11 @@ use crate::representation::MatrixToAtom;
 use crate::utils::{eval_to_usize, to_aux_var};
 use conjure_cp::ast::matrix::unflatten_matrix;
 use conjure_cp::ast::{
-    Atom, DeclarationKind, Expression, GroundDomain, Literal, Metadata, Moo, Range, Reference,
-    SymbolTable, eval_constant,
+    Atom, DeclarationKind, Expression, GroundDomain, Metadata, Moo, Range, Reference, SymbolTable,
+    eval_constant,
 };
 use conjure_cp::bug::UnwrapOrBug;
+use conjure_cp::into_matrix_expr;
 use conjure_cp::representation::ReprRule;
 use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
@@ -15,7 +16,7 @@ use conjure_cp::rule_engine::{
 };
 use conjure_cp::settings::SolverFamily;
 use conjure_cp::solver::adaptors::smt::{MatrixTheory, TheoryConfig};
-use conjure_cp::{bug, into_matrix_expr};
+use conjure_cp::utils::View;
 use conjure_cp::{domain_int, essence_expr};
 use std::collections::VecDeque;
 use uniplate::{Biplate, Uniplate};
@@ -34,7 +35,7 @@ register_rule_set!("ReprMatrixToAtom", ("Base"), |f: &SolverFamily| {
 });
 
 /// Special-case repr selection for matrices as their only representation is MatrixToAtom
-#[register_rule(("ReprMatrixToAtom", 8001))]
+#[register_rule(("ReprMatrixToAtom", 8500))]
 fn select_repr_mta(expr: &Expression, symtab: &SymbolTable) -> ApplicationResult {
     let Expression::Root(..) = expr else {
         return Err(RuleNotApplicable);
@@ -129,11 +130,7 @@ fn index_matrix_to_atom_impl(expr: &Expression, symbols: &SymbolTable) -> Applic
     let view = mta.slice_lit(&slices).unwrap_or_bug();
 
     // Flat slice of remaining elements to index
-    let mut lhs_elems: Vec<Expression> = mta
-        .view_cloned(&view)
-        .into_iter()
-        .map(|decl| Reference::new(decl).into())
-        .collect();
+    let mut lhs_elems: Vec<Expression> = mta.view_as_exprs(&view);
 
     // We've resolved all indices so the result is a scalar
     if remaining_dims.is_empty() {
@@ -261,11 +258,7 @@ fn slice_matrix_to_atom(expr: &Expression, _: &SymbolTable) -> ApplicationResult
     let view = mta.slice_lit(&slices).unwrap_or_bug();
 
     // Flat slice of remaining elements to index
-    let mut lhs_elems: Vec<Expression> = mta
-        .view_cloned(&view)
-        .into_iter()
-        .map(|decl| Reference::new(decl).into())
-        .collect();
+    let mut lhs_elems: Vec<Expression> = mta.view_as_exprs(&view);
 
     // We've resolved all indices so the result is a scalar
     if new_indices.is_empty() {
@@ -279,9 +272,35 @@ fn slice_matrix_to_atom(expr: &Expression, _: &SymbolTable) -> ApplicationResult
         return Ok(Reduction::pure(new_lhs));
     }
 
-    // Some indices were not resolved so output a slice into a matrix literal
-    let new_lhs = unflatten_matrix(&lhs_elems, &new_index_domains, &view.strides);
-    let new_expr = Expression::SafeSlice(Metadata::new(), Moo::new(new_lhs), new_indices);
+    // Separate remaining dimensions into indexed (Some(expr)) and sliced (None / `..`).
+    // Build a permutation that puts indexed dims first so they become the outer
+    // dimensions of a matrix literal, addressable by SafeIndex.
+    let (idx_positions, slice_positions): (Vec<_>, Vec<_>) = new_indices
+        .iter()
+        .enumerate()
+        .partition::<Vec<_>, _>(|(_, idx)| idx.is_some());
+    let perm: Vec<usize> = idx_positions
+        .iter()
+        .chain(slice_positions.iter())
+        .map(|(i, _)| *i)
+        .collect();
+
+    // Permute the view so elements come out in the reorganised order,
+    // then unflatten into a matrix literal with indexed dims as outer structure.
+    let permuted_view = view.permute(&perm);
+    let permuted_elems: Vec<Expression> = mta.view_as_exprs(&permuted_view);
+    let permuted_index_domains: Vec<_> =
+        perm.iter().map(|&i| new_index_domains[i].clone()).collect();
+    let unflatten_strides = View::row_major_strides(&permuted_view.dims);
+    let new_lhs = unflatten_matrix(&permuted_elems, &permuted_index_domains, &unflatten_strides);
+
+    // Now index into it using the remaining expressions
+    let index_exprs: Vec<Expression> = idx_positions
+        .iter()
+        .map(|(i, _)| new_indices[*i].clone().unwrap())
+        .collect();
+
+    let new_expr = Expression::SafeIndex(Metadata::new(), Moo::new(new_lhs), index_exprs);
     Ok(Reduction::pure(new_expr))
 }
 
@@ -305,11 +324,7 @@ fn matrix_flatten_to_atom(expr: &Expression, _symbols: &SymbolTable) -> Applicat
     let n = dims.as_ref().map(|x| eval_to_usize(x)).unwrap_or(0);
 
     let view = repr.flatten(n);
-    let elems = repr
-        .view_cloned(&view)
-        .into_iter()
-        .map(|d| Expression::from(Reference::new(d)))
-        .collect();
+    let elems: Vec<Expression> = repr.view_as_exprs(&view);
     Ok(Reduction::pure(into_matrix_expr!(elems)))
 }
 

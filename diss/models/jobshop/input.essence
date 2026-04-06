@@ -1,0 +1,43 @@
+language Essence 1.4
+
+$ Job-shop scheduling: n jobs, n machines.
+$ Each job visits all machines in a fixed order; no two jobs share a machine at the same time.
+$ Scale: increase n for more jobs/machines, or increase horizon.
+
+given n : int
+given horizon : int
+
+$ duration[j, m] = processing time of job j on machine m
+given duration : matrix indexed by [int(1..n), int(1..n)] of int(1..horizon)
+
+$ machine order for each job (permutation of 1..n)
+given order : matrix indexed by [int(1..n), int(1..n)] of int(1..n)
+
+$ start[j, m] = start time of job j on machine m
+find start: matrix indexed by [int(1..n), int(1..n)] of int(0..horizon)
+
+find makespan: int(0..horizon)
+
+such that
+    $ Technological order: each job respects its machine sequence
+    forAll j: int(1..n) .
+        forAll s: int(1..n-1) .
+            start[j, order[j, s]] + duration[j, order[j, s]]
+                <= start[j, order[j, s+1]],
+
+    $ No overlap on machines: for each pair of jobs and each machine,
+    $ one must finish before the other starts
+    forAll m: int(1..n) .
+        forAll j1: int(1..n) .
+            forAll j2: int(1..n) .
+                j1 < j2 ->
+                    start[j1, m] + duration[j1, m] <= start[j2, m] \/
+                    start[j2, m] + duration[j2, m] <= start[j1, m],
+
+    $ Makespan = max completion time
+    forAll j: int(1..n) .
+        forAll m: int(1..n) .
+            makespan >= start[j, m] + duration[j, m],
+
+    $ Symmetry breaking: job 1 starts first overall
+    start[1, order[1, 1]] = 0

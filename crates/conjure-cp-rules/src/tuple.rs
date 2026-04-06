@@ -1,10 +1,13 @@
+use crate::bottom_up_adaptor::as_bottom_up;
 use crate::guard;
 use crate::representation::tuple_to_atom::TupleToAtom;
 use crate::utils::{
-    as_cmp_or_lex_op, as_comparison_op, as_eq_or_neq, collect_cmp_exprs, collect_eq_or_neq,
-    is_tuple_lit, tuple_expr_entries,
+    as_cmp_or_lex_op, as_eq_or_neq, collect_cmp_exprs, collect_eq_or_neq, is_tuple_lit,
+    tuple_expr_entries,
 };
-use conjure_cp::ast::{Atom, Expression as Expr, Literal, Metadata, Reference, SymbolTable};
+use conjure_cp::ast::{
+    Atom, Expression as Expr, Expression, Literal, Metadata, Reference, SymbolTable,
+};
 use conjure_cp::bug_assert_eq;
 use conjure_cp::rule_engine::ApplicationError::RuleNotApplicable;
 use conjure_cp::rule_engine::{ApplicationResult, Reduction, register_rule};
@@ -17,8 +20,12 @@ use itertools::izip;
 /// ~>
 /// x_TupleToAtom_1
 /// ```
-#[register_rule(("ReprGeneral", 2000))]
-fn tuple_to_atom_index_lit(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+#[register_rule(("ReprGeneral", 5000))]
+fn tuple_to_atom_index_lit(expr: &Expression, symbols: &SymbolTable) -> ApplicationResult {
+    as_bottom_up(tuple_to_atom_index_lit_impl)(expr, symbols)
+}
+
+fn tuple_to_atom_index_lit_impl(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     guard!(
         let Expr::SafeIndex(_, subject, indices) = expr        &&
         let Expr::Atomic(_, Atom::Reference(re)) = &**subject  &&

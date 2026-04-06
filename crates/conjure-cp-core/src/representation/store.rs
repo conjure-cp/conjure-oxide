@@ -41,6 +41,12 @@ impl PartialEq for ReprStore {
 
 impl Eq for ReprStore {}
 
+impl Default for ReprStore {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ReprStore {
     pub fn new() -> Self {
         Self {

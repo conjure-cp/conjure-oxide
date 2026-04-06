@@ -1,0 +1,939 @@
+Model before rewriting:
+
+letting I be domain int(1..3)
+find i: I
+find x: matrix indexed by [I] of int(1..5)
+
+such that
+
+(x[UnsafeDiv(i, 2)] < x[i]),
+(product([x[(i - 1)],x[2];int(1..2)]) > x[UnsafeDiv(i, 3)])
+
+--
+
+(x[UnsafeDiv(i, 2)] < x[i]), 
+   ~~> lt_to_leq ([("Minion", 8400)])
+(x[UnsafeDiv(i, 2)] <= sum([x[i],-1;int(1..)]))
+
+--
+
+(product([x[(i - 1)],x[2];int(1..2)]) > x[UnsafeDiv(i, 3)]), 
+   ~~> gt_to_geq ([("Minion", 8400)])
+(sum([product([x[(i - 1)],x[2];int(1..2)]),-1;int(1..)]) >= x[UnsafeDiv(i, 3)])
+
+--
+
+(i - 1), 
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([i,-(1);int(1..)])
+
+--
+
+(x[UnsafeDiv(i, 2)] <= sum([x[i],-1;int(1..)])),
+(sum([product([x[sum([i,-(1);int(1..)])],x[2];int(1..2)]),-1;int(1..)]) >= x[UnsafeDiv(i, 3)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(x[UnsafeDiv(i, 2)] <= sum([x[i],-1;int(1..)])),
+(sum([product([x[sum([i,-1;int(1..)])],x[2];int(1..2)]),-1;int(1..)]) >= x[UnsafeDiv(i, 3)])
+
+--
+
+(x[UnsafeDiv(i, 2)] <= sum([x[i],-1;int(1..)])),
+(sum([product([x[sum([i,-1;int(1..)])],x[2];int(1..2)]),-1;int(1..)]) >= x[UnsafeDiv(i, 3)]), 
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8001)])
+(x[UnsafeDiv(i, 2)] <= sum([x[i],-1;int(1..)])),
+(sum([product([x[sum([i,-1;int(1..)])],x[2];int(1..2)]),-1;int(1..)]) >= x[UnsafeDiv(i, 3)])
+new variables:
+  find x#MatrixToAtom_1: int(1..5)
+  find x#MatrixToAtom_2: int(1..5)
+  find x#MatrixToAtom_3: int(1..5)
+
+updated variables:
+  find i: I ~~> find i: int(1..3)
+  find x: matrix indexed by [I] of int(1..5) ~~> find x: matrix indexed by [int(1..3)] of int(1..5)
+
+--
+
+x[UnsafeDiv(i, 2)], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{x[UnsafeDiv(i, 2)] @ and([__inDomain(UnsafeDiv(i, 2),int(1..3));int(1..)])}
+
+--
+
+({x[UnsafeDiv(i, 2)] @ and([__inDomain(UnsafeDiv(i, 2),int(1..3));int(1..)])} <= sum([x[i],-1;int(1..)])), 
+   ~~> bubble_up ([("Bubble", 8800)])
+{(x[UnsafeDiv(i, 2)] <= sum([x[i],-1;int(1..)])) @ and([__inDomain(UnsafeDiv(i, 2),int(1..3));int(1..)])}
+
+--
+
+{(x[UnsafeDiv(i, 2)] <= sum([x[i],-1;int(1..)])) @ and([__inDomain(UnsafeDiv(i, 2),int(1..3));int(1..)])}, 
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([(x[UnsafeDiv(i, 2)] <= sum([x[i],-1;int(1..)])),and([__inDomain(UnsafeDiv(i, 2),int(1..3));int(1..)]);int(1..)])
+
+--
+
+and([(x[UnsafeDiv(i, 2)] <= sum([x[i],-1;int(1..)])),and([__inDomain(UnsafeDiv(i, 2),int(1..3));int(1..)]);int(1..)]),
+(sum([product([x[sum([i,-1;int(1..)])],x[2];int(1..2)]),-1;int(1..)]) >= x[UnsafeDiv(i, 3)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(x[UnsafeDiv(i, 2)] <= sum([x[i],-1;int(1..)])),
+and([__inDomain(UnsafeDiv(i, 2),int(1..3));int(1..)]),
+(sum([product([x[sum([i,-1;int(1..)])],x[2];int(1..2)]),-1;int(1..)]) >= x[UnsafeDiv(i, 3)])
+
+--
+
+(x[UnsafeDiv(i, 2)] <= sum([x[i],-1;int(1..)])),
+and([__inDomain(UnsafeDiv(i, 2),int(1..3));int(1..)]),
+(sum([product([x[sum([i,-1;int(1..)])],x[2];int(1..2)]),-1;int(1..)]) >= x[UnsafeDiv(i, 3)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(x[UnsafeDiv(i, 2)] <= sum([x[i],-1;int(1..)])),
+__inDomain(UnsafeDiv(i, 2),int(1..3)),
+(sum([product([x[sum([i,-1;int(1..)])],x[2];int(1..2)]),-1;int(1..)]) >= x[UnsafeDiv(i, 3)])
+
+--
+
+UnsafeDiv(i, 2), 
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(i, 2) @ (2 != 0)}
+
+--
+
+(x[{SafeDiv(i, 2) @ (2 != 0)}] <= sum([x[i],-1;int(1..)])),
+__inDomain(UnsafeDiv(i, 2),int(1..3)),
+(sum([product([x[sum([i,-1;int(1..)])],x[2];int(1..2)]),-1;int(1..)]) >= x[UnsafeDiv(i, 3)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(x[SafeDiv(i, 2)] <= sum([x[i],-1;int(1..)])),
+__inDomain(UnsafeDiv(i, 2),int(1..3)),
+(sum([product([x[sum([i,-1;int(1..)])],x[2];int(1..2)]),-1;int(1..)]) >= x[UnsafeDiv(i, 3)])
+
+--
+
+x[i], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{x[i] @ and([__inDomain(i,int(1..3));int(1..)])}
+
+--
+
+(x[SafeDiv(i, 2)] <= sum([{x[i] @ and([__inDomain(i,int(1..3));int(1..)])},-1;int(1..)])),
+__inDomain(UnsafeDiv(i, 2),int(1..3)),
+(sum([product([x[sum([i,-1;int(1..)])],x[2];int(1..2)]),-1;int(1..)]) >= x[UnsafeDiv(i, 3)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(x[SafeDiv(i, 2)] <= sum([x[i],-1;int(1..)])),
+__inDomain(UnsafeDiv(i, 2),int(1..3)),
+(sum([product([x[sum([i,-1;int(1..)])],x[2];int(1..2)]),-1;int(1..)]) >= x[UnsafeDiv(i, 3)])
+
+--
+
+UnsafeDiv(i, 2), 
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(i, 2) @ (2 != 0)}
+
+--
+
+(x[SafeDiv(i, 2)] <= sum([x[i],-1;int(1..)])),
+__inDomain({SafeDiv(i, 2) @ (2 != 0)},int(1..3)),
+(sum([product([x[sum([i,-1;int(1..)])],x[2];int(1..2)]),-1;int(1..)]) >= x[UnsafeDiv(i, 3)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(x[SafeDiv(i, 2)] <= sum([x[i],-1;int(1..)])),
+__inDomain(SafeDiv(i, 2),int(1..3)),
+(sum([product([x[sum([i,-1;int(1..)])],x[2];int(1..2)]),-1;int(1..)]) >= x[UnsafeDiv(i, 3)])
+
+--
+
+x[sum([i,-1;int(1..)])], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{x[__0] @ and([__inDomain(__0,int(1..3));int(1..)])}
+new variables:
+  find __0: int(0..2)
+new constraints:
+  __0 =aux sum([i,-1;int(1..)])
+
+--
+
+[{x[__0] @ and([__inDomain(__0,int(1..3));int(1..)])},x[2];int(1..2)], 
+   ~~> bubble_up ([("Bubble", 8800)])
+{[x[__0],x[2];int(1..2)] @ and([__inDomain(__0,int(1..3));int(1..)])}
+
+--
+
+product({[x[__0],x[2];int(1..2)] @ and([__inDomain(__0,int(1..3));int(1..)])}), 
+   ~~> bubble_up ([("Bubble", 8800)])
+{product([x[__0],x[2];int(1..2)]) @ and([__inDomain(__0,int(1..3));int(1..)])}
+
+--
+
+[{product([x[__0],x[2];int(1..2)]) @ and([__inDomain(__0,int(1..3));int(1..)])},-1;int(1..)], 
+   ~~> bubble_up ([("Bubble", 8800)])
+{[product([x[__0],x[2];int(1..2)]),-1;int(1..)] @ and([__inDomain(__0,int(1..3));int(1..)])}
+
+--
+
+sum({[product([x[__0],x[2];int(1..2)]),-1;int(1..)] @ and([__inDomain(__0,int(1..3));int(1..)])}), 
+   ~~> bubble_up ([("Bubble", 8800)])
+{sum([product([x[__0],x[2];int(1..2)]),-1;int(1..)]) @ and([__inDomain(__0,int(1..3));int(1..)])}
+
+--
+
+({sum([product([x[__0],x[2];int(1..2)]),-1;int(1..)]) @ and([__inDomain(__0,int(1..3));int(1..)])} >= x[UnsafeDiv(i, 3)]), 
+   ~~> bubble_up ([("Bubble", 8800)])
+{(sum([product([x[__0],x[2];int(1..2)]),-1;int(1..)]) >= x[UnsafeDiv(i, 3)]) @ and([__inDomain(__0,int(1..3));int(1..)])}
+
+--
+
+{(sum([product([x[__0],x[2];int(1..2)]),-1;int(1..)]) >= x[UnsafeDiv(i, 3)]) @ and([__inDomain(__0,int(1..3));int(1..)])}, 
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([(sum([product([x[__0],x[2];int(1..2)]),-1;int(1..)]) >= x[UnsafeDiv(i, 3)]),and([__inDomain(__0,int(1..3));int(1..)]);int(1..)])
+
+--
+
+(x[SafeDiv(i, 2)] <= sum([x[i],-1;int(1..)])),
+__inDomain(SafeDiv(i, 2),int(1..3)),
+and([(sum([product([x[__0],x[2];int(1..2)]),-1;int(1..)]) >= x[UnsafeDiv(i, 3)]),and([__inDomain(__0,int(1..3));int(1..)]);int(1..)]),
+__0 =aux sum([i,-1;int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(x[SafeDiv(i, 2)] <= sum([x[i],-1;int(1..)])),
+__inDomain(SafeDiv(i, 2),int(1..3)),
+(sum([product([x[__0],x[2];int(1..2)]),-1;int(1..)]) >= x[UnsafeDiv(i, 3)]),
+and([__inDomain(__0,int(1..3));int(1..)]),
+__0 =aux sum([i,-1;int(1..)])
+
+--
+
+(x[SafeDiv(i, 2)] <= sum([x[i],-1;int(1..)])),
+__inDomain(SafeDiv(i, 2),int(1..3)),
+(sum([product([x[__0],x[2];int(1..2)]),-1;int(1..)]) >= x[UnsafeDiv(i, 3)]),
+and([__inDomain(__0,int(1..3));int(1..)]),
+__0 =aux sum([i,-1;int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(x[SafeDiv(i, 2)] <= sum([x[i],-1;int(1..)])),
+__inDomain(SafeDiv(i, 2),int(1..3)),
+(sum([product([x[__0],x[2];int(1..2)]),-1;int(1..)]) >= x[UnsafeDiv(i, 3)]),
+__inDomain(__0,int(1..3)),
+__0 =aux sum([i,-1;int(1..)])
+
+--
+
+x[2], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{x[2] @ and([__inDomain(2,int(1..3));int(1..)])}
+
+--
+
+(x[SafeDiv(i, 2)] <= sum([x[i],-1;int(1..)])),
+__inDomain(SafeDiv(i, 2),int(1..3)),
+(sum([product([x[__0],{x[2] @ and([__inDomain(2,int(1..3));int(1..)])};int(1..2)]),-1;int(1..)]) >= x[UnsafeDiv(i, 3)]),
+__inDomain(__0,int(1..3)),
+__0 =aux sum([i,-1;int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(x[SafeDiv(i, 2)] <= sum([x[i],-1;int(1..)])),
+__inDomain(SafeDiv(i, 2),int(1..3)),
+(sum([product([x[__0],x[2];int(1..2)]),-1;int(1..)]) >= x[UnsafeDiv(i, 3)]),
+__inDomain(__0,int(1..3)),
+__0 =aux sum([i,-1;int(1..)])
+
+--
+
+x[UnsafeDiv(i, 3)], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{x[UnsafeDiv(i, 3)] @ and([__inDomain(UnsafeDiv(i, 3),int(1..3));int(1..)])}
+
+--
+
+(sum([product([x[__0],x[2];int(1..2)]),-1;int(1..)]) >= {x[UnsafeDiv(i, 3)] @ and([__inDomain(UnsafeDiv(i, 3),int(1..3));int(1..)])}), 
+   ~~> bubble_up ([("Bubble", 8800)])
+{(sum([product([x[__0],x[2];int(1..2)]),-1;int(1..)]) >= x[UnsafeDiv(i, 3)]) @ and([__inDomain(UnsafeDiv(i, 3),int(1..3));int(1..)])}
+
+--
+
+{(sum([product([x[__0],x[2];int(1..2)]),-1;int(1..)]) >= x[UnsafeDiv(i, 3)]) @ and([__inDomain(UnsafeDiv(i, 3),int(1..3));int(1..)])}, 
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([(sum([product([x[__0],x[2];int(1..2)]),-1;int(1..)]) >= x[UnsafeDiv(i, 3)]),and([__inDomain(UnsafeDiv(i, 3),int(1..3));int(1..)]);int(1..)])
+
+--
+
+(x[SafeDiv(i, 2)] <= sum([x[i],-1;int(1..)])),
+__inDomain(SafeDiv(i, 2),int(1..3)),
+and([(sum([product([x[__0],x[2];int(1..2)]),-1;int(1..)]) >= x[UnsafeDiv(i, 3)]),and([__inDomain(UnsafeDiv(i, 3),int(1..3));int(1..)]);int(1..)]),
+__inDomain(__0,int(1..3)),
+__0 =aux sum([i,-1;int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(x[SafeDiv(i, 2)] <= sum([x[i],-1;int(1..)])),
+__inDomain(SafeDiv(i, 2),int(1..3)),
+(sum([product([x[__0],x[2];int(1..2)]),-1;int(1..)]) >= x[UnsafeDiv(i, 3)]),
+and([__inDomain(UnsafeDiv(i, 3),int(1..3));int(1..)]),
+__inDomain(__0,int(1..3)),
+__0 =aux sum([i,-1;int(1..)])
+
+--
+
+(x[SafeDiv(i, 2)] <= sum([x[i],-1;int(1..)])),
+__inDomain(SafeDiv(i, 2),int(1..3)),
+(sum([product([x[__0],x[2];int(1..2)]),-1;int(1..)]) >= x[UnsafeDiv(i, 3)]),
+and([__inDomain(UnsafeDiv(i, 3),int(1..3));int(1..)]),
+__inDomain(__0,int(1..3)),
+__0 =aux sum([i,-1;int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(x[SafeDiv(i, 2)] <= sum([x[i],-1;int(1..)])),
+__inDomain(SafeDiv(i, 2),int(1..3)),
+(sum([product([x[__0],x[2];int(1..2)]),-1;int(1..)]) >= x[UnsafeDiv(i, 3)]),
+__inDomain(UnsafeDiv(i, 3),int(1..3)),
+__inDomain(__0,int(1..3)),
+__0 =aux sum([i,-1;int(1..)])
+
+--
+
+UnsafeDiv(i, 3), 
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(i, 3) @ (3 != 0)}
+
+--
+
+(x[SafeDiv(i, 2)] <= sum([x[i],-1;int(1..)])),
+__inDomain(SafeDiv(i, 2),int(1..3)),
+(sum([product([x[__0],x[2];int(1..2)]),-1;int(1..)]) >= x[{SafeDiv(i, 3) @ (3 != 0)}]),
+__inDomain(UnsafeDiv(i, 3),int(1..3)),
+__inDomain(__0,int(1..3)),
+__0 =aux sum([i,-1;int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(x[SafeDiv(i, 2)] <= sum([x[i],-1;int(1..)])),
+__inDomain(SafeDiv(i, 2),int(1..3)),
+(sum([product([x[__0],x[2];int(1..2)]),-1;int(1..)]) >= x[SafeDiv(i, 3)]),
+__inDomain(UnsafeDiv(i, 3),int(1..3)),
+__inDomain(__0,int(1..3)),
+__0 =aux sum([i,-1;int(1..)])
+
+--
+
+UnsafeDiv(i, 3), 
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(i, 3) @ (3 != 0)}
+
+--
+
+(x[SafeDiv(i, 2)] <= sum([x[i],-1;int(1..)])),
+__inDomain(SafeDiv(i, 2),int(1..3)),
+(sum([product([x[__0],x[2];int(1..2)]),-1;int(1..)]) >= x[SafeDiv(i, 3)]),
+__inDomain({SafeDiv(i, 3) @ (3 != 0)},int(1..3)),
+__inDomain(__0,int(1..3)),
+__0 =aux sum([i,-1;int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(x[SafeDiv(i, 2)] <= sum([x[i],-1;int(1..)])),
+__inDomain(SafeDiv(i, 2),int(1..3)),
+(sum([product([x[__0],x[2];int(1..2)]),-1;int(1..)]) >= x[SafeDiv(i, 3)]),
+__inDomain(SafeDiv(i, 3),int(1..3)),
+__inDomain(__0,int(1..3)),
+__0 =aux sum([i,-1;int(1..)])
+
+--
+
+(x[SafeDiv(i, 2)] <= sum([x[i],-1;int(1..)])),
+__inDomain(SafeDiv(i, 2),int(1..3)),
+(sum([product([x[__0],x[2];int(1..2)]),-1;int(1..)]) >= x[SafeDiv(i, 3)]),
+__inDomain(SafeDiv(i, 3),int(1..3)),
+__inDomain(__0,int(1..3)),
+__0 =aux sum([i,-1;int(1..)]), 
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+([x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][sum([product([1,(__1 - 1);int(1..)]),1;int(1..)])] <= sum([[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][sum([product([1,(i - 1);int(1..)]),1;int(1..)])],-1;int(1..)])),
+__inDomain(SafeDiv(i, 2),int(1..3)),
+(sum([product([[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][sum([product([1,(__0 - 1);int(1..)]),1;int(1..)])],x#MatrixToAtom_2;int(1..2)]),-1;int(1..)]) >= [x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][sum([product([1,(__2 - 1);int(1..)]),1;int(1..)])]),
+__inDomain(SafeDiv(i, 3),int(1..3)),
+__inDomain(__0,int(1..3)),
+__0 =aux sum([i,-1;int(1..)])
+new variables:
+  find __1: int(0..1)
+  find __2: int(0..1)
+new constraints:
+  __1 =aux SafeDiv(i, 2)
+  __2 =aux SafeDiv(i, 3)
+
+--
+
+product([1,(__1 - 1);int(1..)]), 
+   ~~> reorder_product ([("Base", 8800)])
+product([(__1 - 1);int(1..)])
+
+--
+
+product([(__1 - 1);int(1..)]), 
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+(__1 - 1)
+
+--
+
+product([1,(i - 1);int(1..)]), 
+   ~~> reorder_product ([("Base", 8800)])
+product([(i - 1);int(1..)])
+
+--
+
+product([(i - 1);int(1..)]), 
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+(i - 1)
+
+--
+
+product([[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][sum([product([1,(__0 - 1);int(1..)]),1;int(1..)])],x#MatrixToAtom_2;int(1..2)]), 
+   ~~> reorder_product ([("Base", 8800)])
+product([x#MatrixToAtom_2,[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][sum([product([1,(__0 - 1);int(1..)]),1;int(1..)])];int(1..2)])
+
+--
+
+product([1,(__0 - 1);int(1..)]), 
+   ~~> reorder_product ([("Base", 8800)])
+product([(__0 - 1);int(1..)])
+
+--
+
+product([(__0 - 1);int(1..)]), 
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+(__0 - 1)
+
+--
+
+product([1,(__2 - 1);int(1..)]), 
+   ~~> reorder_product ([("Base", 8800)])
+product([(__2 - 1);int(1..)])
+
+--
+
+product([(__2 - 1);int(1..)]), 
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+(__2 - 1)
+
+--
+
+(__1 - 1), 
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([__1,-(1);int(1..)])
+
+--
+
+([x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][sum([sum([__1,-(1);int(1..)]),1;int(1..)])] <= sum([[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][sum([(i - 1),1;int(1..)])],-1;int(1..)])),
+__inDomain(SafeDiv(i, 2),int(1..3)),
+(sum([product([x#MatrixToAtom_2,[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][sum([(__0 - 1),1;int(1..)])];int(1..2)]),-1;int(1..)]) >= [x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][sum([(__2 - 1),1;int(1..)])]),
+__inDomain(SafeDiv(i, 3),int(1..3)),
+__inDomain(__0,int(1..3)),
+__0 =aux sum([i,-1;int(1..)]),
+__1 =aux SafeDiv(i, 2),
+__2 =aux SafeDiv(i, 3), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+([x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][sum([sum([__1,-1;int(1..)]),1;int(1..)])] <= sum([[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][sum([(i - 1),1;int(1..)])],-1;int(1..)])),
+__inDomain(SafeDiv(i, 2),int(1..3)),
+(sum([product([x#MatrixToAtom_2,[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][sum([(__0 - 1),1;int(1..)])];int(1..2)]),-1;int(1..)]) >= [x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][sum([(__2 - 1),1;int(1..)])]),
+__inDomain(SafeDiv(i, 3),int(1..3)),
+__inDomain(__0,int(1..3)),
+__0 =aux sum([i,-1;int(1..)]),
+__1 =aux SafeDiv(i, 2),
+__2 =aux SafeDiv(i, 3)
+
+--
+
+sum([sum([__1,-1;int(1..)]),1;int(1..)]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([__1,-1,1;int(1..)])
+
+--
+
+([x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][sum([__1,-1,1;int(1..)])] <= sum([[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][sum([(i - 1),1;int(1..)])],-1;int(1..)])),
+__inDomain(SafeDiv(i, 2),int(1..3)),
+(sum([product([x#MatrixToAtom_2,[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][sum([(__0 - 1),1;int(1..)])];int(1..2)]),-1;int(1..)]) >= [x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][sum([(__2 - 1),1;int(1..)])]),
+__inDomain(SafeDiv(i, 3),int(1..3)),
+__inDomain(__0,int(1..3)),
+__0 =aux sum([i,-1;int(1..)]),
+__1 =aux SafeDiv(i, 2),
+__2 =aux SafeDiv(i, 3), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+([x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][sum([__1;int(1..)])] <= sum([[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][sum([(i - 1),1;int(1..)])],-1;int(1..)])),
+__inDomain(SafeDiv(i, 2),int(1..3)),
+(sum([product([x#MatrixToAtom_2,[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][sum([(__0 - 1),1;int(1..)])];int(1..2)]),-1;int(1..)]) >= [x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][sum([(__2 - 1),1;int(1..)])]),
+__inDomain(SafeDiv(i, 3),int(1..3)),
+__inDomain(__0,int(1..3)),
+__0 =aux sum([i,-1;int(1..)]),
+__1 =aux SafeDiv(i, 2),
+__2 =aux SafeDiv(i, 3)
+
+--
+
+sum([__1;int(1..)]), 
+   ~~> remove_unit_vector_sum ([("Base", 8800)])
+__1
+
+--
+
+(i - 1), 
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([i,-(1);int(1..)])
+
+--
+
+([x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][__1] <= sum([[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][sum([sum([i,-(1);int(1..)]),1;int(1..)])],-1;int(1..)])),
+__inDomain(SafeDiv(i, 2),int(1..3)),
+(sum([product([x#MatrixToAtom_2,[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][sum([(__0 - 1),1;int(1..)])];int(1..2)]),-1;int(1..)]) >= [x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][sum([(__2 - 1),1;int(1..)])]),
+__inDomain(SafeDiv(i, 3),int(1..3)),
+__inDomain(__0,int(1..3)),
+__0 =aux sum([i,-1;int(1..)]),
+__1 =aux SafeDiv(i, 2),
+__2 =aux SafeDiv(i, 3), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+([x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][__1] <= sum([[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][sum([sum([i,-1;int(1..)]),1;int(1..)])],-1;int(1..)])),
+__inDomain(SafeDiv(i, 2),int(1..3)),
+(sum([product([x#MatrixToAtom_2,[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][sum([(__0 - 1),1;int(1..)])];int(1..2)]),-1;int(1..)]) >= [x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][sum([(__2 - 1),1;int(1..)])]),
+__inDomain(SafeDiv(i, 3),int(1..3)),
+__inDomain(__0,int(1..3)),
+__0 =aux sum([i,-1;int(1..)]),
+__1 =aux SafeDiv(i, 2),
+__2 =aux SafeDiv(i, 3)
+
+--
+
+sum([sum([i,-1;int(1..)]),1;int(1..)]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([i,-1,1;int(1..)])
+
+--
+
+([x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][__1] <= sum([[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][sum([i,-1,1;int(1..)])],-1;int(1..)])),
+__inDomain(SafeDiv(i, 2),int(1..3)),
+(sum([product([x#MatrixToAtom_2,[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][sum([(__0 - 1),1;int(1..)])];int(1..2)]),-1;int(1..)]) >= [x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][sum([(__2 - 1),1;int(1..)])]),
+__inDomain(SafeDiv(i, 3),int(1..3)),
+__inDomain(__0,int(1..3)),
+__0 =aux sum([i,-1;int(1..)]),
+__1 =aux SafeDiv(i, 2),
+__2 =aux SafeDiv(i, 3), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+([x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][__1] <= sum([[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][sum([i;int(1..)])],-1;int(1..)])),
+__inDomain(SafeDiv(i, 2),int(1..3)),
+(sum([product([x#MatrixToAtom_2,[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][sum([(__0 - 1),1;int(1..)])];int(1..2)]),-1;int(1..)]) >= [x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][sum([(__2 - 1),1;int(1..)])]),
+__inDomain(SafeDiv(i, 3),int(1..3)),
+__inDomain(__0,int(1..3)),
+__0 =aux sum([i,-1;int(1..)]),
+__1 =aux SafeDiv(i, 2),
+__2 =aux SafeDiv(i, 3)
+
+--
+
+sum([i;int(1..)]), 
+   ~~> remove_unit_vector_sum ([("Base", 8800)])
+i
+
+--
+
+(__0 - 1), 
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([__0,-(1);int(1..)])
+
+--
+
+([x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][__1] <= sum([[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][i],-1;int(1..)])),
+__inDomain(SafeDiv(i, 2),int(1..3)),
+(sum([product([x#MatrixToAtom_2,[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][sum([sum([__0,-(1);int(1..)]),1;int(1..)])];int(1..2)]),-1;int(1..)]) >= [x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][sum([(__2 - 1),1;int(1..)])]),
+__inDomain(SafeDiv(i, 3),int(1..3)),
+__inDomain(__0,int(1..3)),
+__0 =aux sum([i,-1;int(1..)]),
+__1 =aux SafeDiv(i, 2),
+__2 =aux SafeDiv(i, 3), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+([x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][__1] <= sum([[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][i],-1;int(1..)])),
+__inDomain(SafeDiv(i, 2),int(1..3)),
+(sum([product([x#MatrixToAtom_2,[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][sum([sum([__0,-1;int(1..)]),1;int(1..)])];int(1..2)]),-1;int(1..)]) >= [x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][sum([(__2 - 1),1;int(1..)])]),
+__inDomain(SafeDiv(i, 3),int(1..3)),
+__inDomain(__0,int(1..3)),
+__0 =aux sum([i,-1;int(1..)]),
+__1 =aux SafeDiv(i, 2),
+__2 =aux SafeDiv(i, 3)
+
+--
+
+sum([sum([__0,-1;int(1..)]),1;int(1..)]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([__0,-1,1;int(1..)])
+
+--
+
+([x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][__1] <= sum([[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][i],-1;int(1..)])),
+__inDomain(SafeDiv(i, 2),int(1..3)),
+(sum([product([x#MatrixToAtom_2,[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][sum([__0,-1,1;int(1..)])];int(1..2)]),-1;int(1..)]) >= [x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][sum([(__2 - 1),1;int(1..)])]),
+__inDomain(SafeDiv(i, 3),int(1..3)),
+__inDomain(__0,int(1..3)),
+__0 =aux sum([i,-1;int(1..)]),
+__1 =aux SafeDiv(i, 2),
+__2 =aux SafeDiv(i, 3), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+([x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][__1] <= sum([[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][i],-1;int(1..)])),
+__inDomain(SafeDiv(i, 2),int(1..3)),
+(sum([product([x#MatrixToAtom_2,[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][sum([__0;int(1..)])];int(1..2)]),-1;int(1..)]) >= [x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][sum([(__2 - 1),1;int(1..)])]),
+__inDomain(SafeDiv(i, 3),int(1..3)),
+__inDomain(__0,int(1..3)),
+__0 =aux sum([i,-1;int(1..)]),
+__1 =aux SafeDiv(i, 2),
+__2 =aux SafeDiv(i, 3)
+
+--
+
+sum([__0;int(1..)]), 
+   ~~> remove_unit_vector_sum ([("Base", 8800)])
+__0
+
+--
+
+(__2 - 1), 
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([__2,-(1);int(1..)])
+
+--
+
+([x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][__1] <= sum([[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][i],-1;int(1..)])),
+__inDomain(SafeDiv(i, 2),int(1..3)),
+(sum([product([x#MatrixToAtom_2,[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][__0];int(1..2)]),-1;int(1..)]) >= [x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][sum([sum([__2,-(1);int(1..)]),1;int(1..)])]),
+__inDomain(SafeDiv(i, 3),int(1..3)),
+__inDomain(__0,int(1..3)),
+__0 =aux sum([i,-1;int(1..)]),
+__1 =aux SafeDiv(i, 2),
+__2 =aux SafeDiv(i, 3), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+([x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][__1] <= sum([[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][i],-1;int(1..)])),
+__inDomain(SafeDiv(i, 2),int(1..3)),
+(sum([product([x#MatrixToAtom_2,[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][__0];int(1..2)]),-1;int(1..)]) >= [x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][sum([sum([__2,-1;int(1..)]),1;int(1..)])]),
+__inDomain(SafeDiv(i, 3),int(1..3)),
+__inDomain(__0,int(1..3)),
+__0 =aux sum([i,-1;int(1..)]),
+__1 =aux SafeDiv(i, 2),
+__2 =aux SafeDiv(i, 3)
+
+--
+
+sum([sum([__2,-1;int(1..)]),1;int(1..)]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([__2,-1,1;int(1..)])
+
+--
+
+([x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][__1] <= sum([[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][i],-1;int(1..)])),
+__inDomain(SafeDiv(i, 2),int(1..3)),
+(sum([product([x#MatrixToAtom_2,[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][__0];int(1..2)]),-1;int(1..)]) >= [x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][sum([__2,-1,1;int(1..)])]),
+__inDomain(SafeDiv(i, 3),int(1..3)),
+__inDomain(__0,int(1..3)),
+__0 =aux sum([i,-1;int(1..)]),
+__1 =aux SafeDiv(i, 2),
+__2 =aux SafeDiv(i, 3), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+([x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][__1] <= sum([[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][i],-1;int(1..)])),
+__inDomain(SafeDiv(i, 2),int(1..3)),
+(sum([product([x#MatrixToAtom_2,[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][__0];int(1..2)]),-1;int(1..)]) >= [x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][sum([__2;int(1..)])]),
+__inDomain(SafeDiv(i, 3),int(1..3)),
+__inDomain(__0,int(1..3)),
+__0 =aux sum([i,-1;int(1..)]),
+__1 =aux SafeDiv(i, 2),
+__2 =aux SafeDiv(i, 3)
+
+--
+
+sum([__2;int(1..)]), 
+   ~~> remove_unit_vector_sum ([("Base", 8800)])
+__2
+
+--
+
+__0 =aux sum([i,-1;int(1..)]), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([-1, i], __0),SumGeq([-1, i], __0);int(1..)])
+
+--
+
+([x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][__1] <= sum([[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][i],-1;int(1..)])),
+__inDomain(SafeDiv(i, 2),int(1..3)),
+(sum([product([x#MatrixToAtom_2,[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][__0];int(1..2)]),-1;int(1..)]) >= [x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][__2]),
+__inDomain(SafeDiv(i, 3),int(1..3)),
+__inDomain(__0,int(1..3)),
+and([SumLeq([-1, i], __0),SumGeq([-1, i], __0);int(1..)]),
+__1 =aux SafeDiv(i, 2),
+__2 =aux SafeDiv(i, 3), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+([x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][__1] <= sum([[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][i],-1;int(1..)])),
+__inDomain(SafeDiv(i, 2),int(1..3)),
+(sum([product([x#MatrixToAtom_2,[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][__0];int(1..2)]),-1;int(1..)]) >= [x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][__2]),
+__inDomain(SafeDiv(i, 3),int(1..3)),
+__inDomain(__0,int(1..3)),
+SumLeq([-1, i], __0),
+SumGeq([-1, i], __0),
+__1 =aux SafeDiv(i, 2),
+__2 =aux SafeDiv(i, 3)
+
+--
+
+__inDomain(__0,int(1..3)), 
+   ~~> introduce_wininterval_set_from_indomain ([("Minion", 4400)])
+__minion_w_inintervalset(__0,[1,3])
+
+--
+
+([x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][__1] <= sum([[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][i],-1;int(1..)])), 
+   ~~> flatten_generic ([("Minion", 4200)])
+(__3 <= __4)
+new variables:
+  find __3: int(1..5)
+  find __4: int(0..4)
+new constraints:
+  __3 =aux [x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][__1]
+  __4 =aux sum([[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][i],-1;int(1..)])
+
+--
+
+__4 =aux sum([[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][i],-1;int(1..)]), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([-1, __5], __4),SumGeq([-1, __5], __4);int(1..)])
+new variables:
+  find __5: int(1..5)
+new constraints:
+  __5 =aux [x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][i]
+
+--
+
+(__3 <= __4),
+__inDomain(SafeDiv(i, 2),int(1..3)),
+(sum([product([x#MatrixToAtom_2,[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][__0];int(1..2)]),-1;int(1..)]) >= [x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][__2]),
+__inDomain(SafeDiv(i, 3),int(1..3)),
+__minion_w_inintervalset(__0,[1,3]),
+SumLeq([-1, i], __0),
+SumGeq([-1, i], __0),
+__1 =aux SafeDiv(i, 2),
+__2 =aux SafeDiv(i, 3),
+__3 =aux [x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][__1],
+and([SumLeq([-1, __5], __4),SumGeq([-1, __5], __4);int(1..)]),
+__5 =aux [x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][i], 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(__3 <= __4),
+__inDomain(SafeDiv(i, 2),int(1..3)),
+(sum([product([x#MatrixToAtom_2,[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][__0];int(1..2)]),-1;int(1..)]) >= [x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][__2]),
+__inDomain(SafeDiv(i, 3),int(1..3)),
+__minion_w_inintervalset(__0,[1,3]),
+SumLeq([-1, i], __0),
+SumGeq([-1, i], __0),
+__1 =aux SafeDiv(i, 2),
+__2 =aux SafeDiv(i, 3),
+__3 =aux [x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][__1],
+SumLeq([-1, __5], __4),
+SumGeq([-1, __5], __4),
+__5 =aux [x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][i]
+
+--
+
+__3 =aux [x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][__1], 
+   ~~> introduce_element_from_index ([("Minion", 4400)])
+__minion_element_one([x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3],__1,__3)
+
+--
+
+__5 =aux [x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][i], 
+   ~~> introduce_element_from_index ([("Minion", 4400)])
+__minion_element_one([x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3],i,__5)
+
+--
+
+__inDomain(SafeDiv(i, 2),int(1..3)), 
+   ~~> flatten_generic ([("Minion", 4200)])
+__inDomain(__6,int(1..3))
+new variables:
+  find __6: int(0..1)
+new constraints:
+  __6 =aux SafeDiv(i, 2)
+
+--
+
+__inDomain(__6,int(1..3)), 
+   ~~> introduce_wininterval_set_from_indomain ([("Minion", 4400)])
+__minion_w_inintervalset(__6,[1,3])
+
+--
+
+(sum([product([x#MatrixToAtom_2,[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][__0];int(1..2)]),-1;int(1..)]) >= [x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][__2]), 
+   ~~> flatten_generic ([("Minion", 4200)])
+(__7 >= __8)
+new variables:
+  find __7: int(0..24)
+  find __8: int(1..5)
+new constraints:
+  __7 =aux sum([product([x#MatrixToAtom_2,[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][__0];int(1..2)]),-1;int(1..)])
+  __8 =aux [x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][__2]
+
+--
+
+__8 =aux [x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][__2], 
+   ~~> introduce_element_from_index ([("Minion", 4400)])
+__minion_element_one([x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3],__2,__8)
+
+--
+
+__inDomain(SafeDiv(i, 3),int(1..3)), 
+   ~~> flatten_generic ([("Minion", 4200)])
+__inDomain(__9,int(1..3))
+new variables:
+  find __9: int(0..1)
+new constraints:
+  __9 =aux SafeDiv(i, 3)
+
+--
+
+__inDomain(__9,int(1..3)), 
+   ~~> introduce_wininterval_set_from_indomain ([("Minion", 4400)])
+__minion_w_inintervalset(__9,[1,3])
+
+--
+
+__1 =aux SafeDiv(i, 2), 
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(i, 2, __1)
+
+--
+
+__2 =aux SafeDiv(i, 3), 
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(i, 3, __2)
+
+--
+
+__6 =aux SafeDiv(i, 2), 
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(i, 2, __6)
+
+--
+
+__9 =aux SafeDiv(i, 3), 
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(i, 3, __9)
+
+--
+
+(__3 <= __4), 
+   ~~> leq_to_ineq ([("Minion", 4100)])
+Ineq(__3, __4, 0)
+
+--
+
+(__7 >= __8), 
+   ~~> geq_to_ineq ([("Minion", 4100)])
+Ineq(__8, __7, 0)
+
+--
+
+product([x#MatrixToAtom_2,[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][__0];int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)])
+product([x#MatrixToAtom_2,[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][__0];int(1..)])
+
+--
+
+__7 =aux sum([product([x#MatrixToAtom_2,[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][__0];int(1..)]),-1;int(1..)]), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([-1, __10], __7),SumGeq([-1, __10], __7);int(1..)])
+new variables:
+  find __10: int(1..25)
+new constraints:
+  __10 =aux product([x#MatrixToAtom_2,[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][__0];int(1..)])
+
+--
+
+Ineq(__3, __4, 0),
+__minion_w_inintervalset(__6,[1,3]),
+Ineq(__8, __7, 0),
+__minion_w_inintervalset(__9,[1,3]),
+__minion_w_inintervalset(__0,[1,3]),
+SumLeq([-1, i], __0),
+SumGeq([-1, i], __0),
+DivEq(i, 2, __1),
+DivEq(i, 3, __2),
+__minion_element_one([x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3],__1,__3),
+SumLeq([-1, __5], __4),
+SumGeq([-1, __5], __4),
+__minion_element_one([x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3],i,__5),
+DivEq(i, 2, __6),
+and([SumLeq([-1, __10], __7),SumGeq([-1, __10], __7);int(1..)]),
+__minion_element_one([x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3],__2,__8),
+DivEq(i, 3, __9),
+__10 =aux product([x#MatrixToAtom_2,[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][__0];int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+Ineq(__3, __4, 0),
+__minion_w_inintervalset(__6,[1,3]),
+Ineq(__8, __7, 0),
+__minion_w_inintervalset(__9,[1,3]),
+__minion_w_inintervalset(__0,[1,3]),
+SumLeq([-1, i], __0),
+SumGeq([-1, i], __0),
+DivEq(i, 2, __1),
+DivEq(i, 3, __2),
+__minion_element_one([x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3],__1,__3),
+SumLeq([-1, __5], __4),
+SumGeq([-1, __5], __4),
+__minion_element_one([x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3],i,__5),
+DivEq(i, 2, __6),
+SumLeq([-1, __10], __7),
+SumGeq([-1, __10], __7),
+__minion_element_one([x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3],__2,__8),
+DivEq(i, 3, __9),
+__10 =aux product([x#MatrixToAtom_2,[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][__0];int(1..)])
+
+--
+
+product([x#MatrixToAtom_2,[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][__0];int(1..)]), 
+   ~~> flatten_product ([("Minion", 4200)])
+product([x#MatrixToAtom_2,__11;int(1..)])
+new variables:
+  find __11: int(1..5)
+new constraints:
+  __11 =aux [x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][__0]
+
+--
+
+__11 =aux [x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)][__0], 
+   ~~> introduce_element_from_index ([("Minion", 4400)])
+__minion_element_one([x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3],__0,__11)
+
+--
+
+__10 =aux product([x#MatrixToAtom_2,__11;int(1..)]), 
+   ~~> introduce_producteq ([("Minion", 4200)])
+FlatProductEq(__11,x#MatrixToAtom_2,__10)
+
+--
+
+Final model:
+
+letting I be domain int(1..3)
+find i: int(1..3)
+find x: matrix indexed by [int(1..3)] of int(1..5)
+find __0: int(0..2)
+find __1: int(0..1)
+find __2: int(0..1)
+find __3: int(1..5)
+find __4: int(0..4)
+find __5: int(1..5)
+find __6: int(0..1)
+find __7: int(0..24)
+find __8: int(1..5)
+find __9: int(0..1)
+find __10: int(1..25)
+find __11: int(1..5)
+find x#MatrixToAtom_1: int(1..5)
+find x#MatrixToAtom_2: int(1..5)
+find x#MatrixToAtom_3: int(1..5)
+
+such that
+
+Ineq(__3, __4, 0),
+__minion_w_inintervalset(__6,[1,3]),
+Ineq(__8, __7, 0),
+__minion_w_inintervalset(__9,[1,3]),
+__minion_w_inintervalset(__0,[1,3]),
+SumLeq([-1, i], __0),
+SumGeq([-1, i], __0),
+DivEq(i, 2, __1),
+DivEq(i, 3, __2),
+__minion_element_one([x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3],__1,__3),
+SumLeq([-1, __5], __4),
+SumGeq([-1, __5], __4),
+__minion_element_one([x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3],i,__5),
+DivEq(i, 2, __6),
+SumLeq([-1, __10], __7),
+SumGeq([-1, __10], __7),
+__minion_element_one([x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3],__2,__8),
+DivEq(i, 3, __9),
+FlatProductEq(__11,x#MatrixToAtom_2,__10),
+__minion_element_one([x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3],__0,__11)
+
