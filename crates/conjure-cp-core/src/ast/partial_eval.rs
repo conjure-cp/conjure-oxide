@@ -66,9 +66,9 @@ fn simplify_in_domain(expr: &Expr, domain: &DomainPtr) -> Option<bool> {
         return None;
     }
 
-    let expr_domain = resolved_ground_domain_of(expr)?;
+    let expr_domain = resolved_ground_domain_of_for_partial_eval(expr)?;
     let domain = domain.resolve()?;
-    let intersection = expr_domain.intersect(domain.as_ref()).ok()?;
+    let intersection = expr_domain.intersect(&domain).ok()?;
 
     if normalise_int_domain(&intersection) == normalise_int_domain(expr_domain.as_ref()) {
         return Some(true);
@@ -89,7 +89,7 @@ fn singleton_int_value(expr: &Expr) -> Option<i32> {
         return Some(value);
     }
 
-    let domain = resolved_ground_domain_of(expr)?;
+    let domain = resolved_ground_domain_of_for_partial_eval(expr)?;
     let GroundDomain::Int(ranges) = domain.as_ref() else {
         return None;
     };
@@ -126,27 +126,11 @@ fn resolve_matrix_subject(subject: &Expr) -> Option<(Vec<Expr>, DomainPtr)> {
     })
 }
 
-/// Rebuilds a constant matrix reference as a matrix literal expression when needed.
-fn inline_constant_matrix_subject(subject: &Expr) -> Option<Expr> {
-    let Expr::Atomic(_, Atom::Reference(reference)) = subject else {
-        return None;
-    };
-
-    let Lit::AbstractLiteral(AbstractLiteral::Matrix(_, _)) = reference.resolve_constant()? else {
-        return None;
-    };
-
-    Some(Expr::Atomic(
-        Metadata::new(),
-        Atom::Literal(reference.resolve_constant()?),
-    ))
-}
-
-/// Resolves the domain of `expr` without panicking on transient malformed index expressions.
-fn resolved_ground_domain_of(expr: &Expr) -> Option<Moo<GroundDomain>> {
+/// Resolves domains for partial evaluation while avoiding malformed indexing panics.
+fn resolved_ground_domain_of_for_partial_eval(expr: &Expr) -> Option<Moo<GroundDomain>> {
     match expr {
         Expr::SafeIndex(_, subject, _) => {
-            let subject_domain = resolved_ground_domain_of(subject)?;
+            let subject_domain = resolved_ground_domain_of_for_partial_eval(subject)?;
             let GroundDomain::Matrix(elem_domain, _) = subject_domain.as_ref() else {
                 return None;
             };
@@ -154,7 +138,7 @@ fn resolved_ground_domain_of(expr: &Expr) -> Option<Moo<GroundDomain>> {
             Some(elem_domain.clone())
         }
         Expr::SafeSlice(_, subject, indices) => {
-            let subject_domain = resolved_ground_domain_of(subject)?;
+            let subject_domain = resolved_ground_domain_of_for_partial_eval(subject)?;
             let GroundDomain::Matrix(elem_domain, index_domains) = subject_domain.as_ref() else {
                 return None;
             };
@@ -179,7 +163,7 @@ fn simplify_comparison_with_literal(expr: &Expr, lit: &Lit) -> Option<(bool, boo
         return None;
     }
 
-    let expr_domain = resolved_ground_domain_of(expr)?;
+    let expr_domain = resolved_ground_domain_of_for_partial_eval(expr)?;
 
     if !expr_domain.contains(lit).ok()? {
         return Some((false, true));
@@ -242,14 +226,6 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
         Expr::NegativeTable(_, _, _) => Err(RuleNotApplicable),
         Expr::SafeIndex(_, subject, indices) => {
             // partially evaluate matrix literals indexed by a constant.
-
-            if let Some(inlined_subject) = inline_constant_matrix_subject(subject) {
-                return Ok(Reduction::pure(Expr::SafeIndex(
-                    Metadata::new(),
-                    Moo::new(inlined_subject),
-                    indices.clone(),
-                )));
-            }
 
             // subject must be a matrix literal
             let (es, index_domain) = resolve_matrix_subject(subject).ok_or(RuleNotApplicable)?;

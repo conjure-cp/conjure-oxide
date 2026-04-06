@@ -59,10 +59,12 @@ run_case() {
     echo "CASE $model_name"
     echo "param: $(basename "$param_path")"
     echo "status: $status"
-    if [ -s "$aggregate_path" ]; then
-        cat "$aggregate_path"
-    else
-        echo "total_rule_applications: 0"
+    if [ "$status" = "ok" ]; then
+        if [ -s "$aggregate_path" ]; then
+            cat "$aggregate_path"
+        else
+            echo "total_rule_applications: 0"
+        fi
     fi
 
     if [ "$rc" -ne 0 ] && [ -s "$stderr_path" ]; then
