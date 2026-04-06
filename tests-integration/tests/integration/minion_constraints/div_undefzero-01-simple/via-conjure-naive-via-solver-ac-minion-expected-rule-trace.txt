@@ -16,21 +16,8 @@ UnsafeDiv(x, y),
 --
 
 ({SafeDiv(x, y) @ (y != 0)} = 5), 
-   ~~> bubble_up ([("Bubble", 8800)])
-{(SafeDiv(x, y) = 5) @ (y != 0)}
-
---
-
-{(SafeDiv(x, y) = 5) @ (y != 0)}, 
-   ~~> expand_bubble ([("Bubble", 8900)])
-and([(SafeDiv(x, y) = 5),(y != 0);int(1..)])
-
---
-
-and([(SafeDiv(x, y) = 5),(y != 0);int(1..)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
-(SafeDiv(x, y) = 5),
-(y != 0)
+(SafeDiv(x, y) = 5)
 
 --
 
@@ -47,6 +34,5 @@ find y: int(2..4)
 
 such that
 
-DivEq(x, y, 5),
-(y != 0)
+DivEq(x, y, 5)
 

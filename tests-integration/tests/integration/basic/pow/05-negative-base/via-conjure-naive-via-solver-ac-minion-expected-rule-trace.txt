@@ -17,29 +17,34 @@ UnsafePow(x, y),
 --
 
 ({SafePow(x, y) @ and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)])} = z), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+({SafePow(x, y) @ and([(y >= 0);int(1..)])} = z)
+
+--
+
+({SafePow(x, y) @ and([(y >= 0);int(1..)])} = z), 
    ~~> bubble_up ([("Bubble", 8800)])
-{(SafePow(x, y) = z) @ and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)])}
+{(SafePow(x, y) = z) @ and([(y >= 0);int(1..)])}
 
 --
 
-{(SafePow(x, y) = z) @ and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)])}, 
+{(SafePow(x, y) = z) @ and([(y >= 0);int(1..)])}, 
    ~~> expand_bubble ([("Bubble", 8900)])
-and([(SafePow(x, y) = z),and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)]);int(1..)])
+and([(SafePow(x, y) = z),and([(y >= 0);int(1..)]);int(1..)])
 
 --
 
-and([(SafePow(x, y) = z),and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)]);int(1..)]), 
+and([(SafePow(x, y) = z),and([(y >= 0);int(1..)]);int(1..)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
 (SafePow(x, y) = z),
-and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)])
+and([(y >= 0);int(1..)])
 
 --
 
 (SafePow(x, y) = z),
-and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)]), 
+and([(y >= 0);int(1..)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
 (SafePow(x, y) = z),
-or([(x != 0),(y != 0);int(1..)]),
 (y >= 0)
 
 --
@@ -65,6 +70,5 @@ find z: int(-10..-1)
 such that
 
 MinionPow(x,y,z),
-or([(x != 0),(y != 0);int(1..)]),
 Ineq(0, y, 0)
 
