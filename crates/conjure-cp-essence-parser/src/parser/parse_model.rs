@@ -93,7 +93,7 @@ pub fn parse_essence_with_context_and_map(
         detect_syntactic_errors(src, &tree, errors);
     }
 
-    // Suppress semantic errors if there are syntactic errors, but still parse for source map.
+    // don't detect semantic errors if there are syntactic errors, but still parse for source map.
     let mut suppressed_semantic_errors = Vec::new();
     let semantic_errors: &mut Vec<RecoverableParseError> = if has_syntax_errors {
         &mut suppressed_semantic_errors
