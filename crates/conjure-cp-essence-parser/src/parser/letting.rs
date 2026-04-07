@@ -1,6 +1,6 @@
 #![allow(clippy::legacy_numeric_constants)]
+use crate::field;
 use std::collections::BTreeSet;
-
 use tree_sitter::Node;
 
 use super::ParseContext;
@@ -10,7 +10,6 @@ use crate::diagnostics::diagnostics_api::SymbolKind;
 use crate::diagnostics::source_map::{HoverInfo, span_with_hover};
 use crate::errors::{FatalParseError, RecoverableParseError};
 use crate::expression::parse_expression;
-use crate::field;
 use conjure_cp_core::ast::DeclarationPtr;
 use conjure_cp_core::ast::{Name, SymbolTable};
 
@@ -19,7 +18,9 @@ pub fn parse_letting_statement(
     ctx: &mut ParseContext,
     letting_statement: Node,
 ) -> Result<Option<SymbolTable>, FatalParseError> {
-    let keyword = field!(letting_statement, "letting_keyword");
+    let Some(keyword) = field!(recover, ctx, letting_statement, "letting_keyword") else {
+        return Ok(None);
+    };
     span_with_hover(
         &keyword,
         ctx.source_code,
@@ -37,7 +38,9 @@ pub fn parse_letting_statement(
     for variable_decl in named_children(&letting_statement) {
         let mut temp_symbols = BTreeSet::new();
 
-        let variable_list = field!(variable_decl, "variable_list");
+        let Some(variable_list) = field!(recover, ctx, variable_decl, "variable_list") else {
+            return Ok(None);
+        };
         for variable in named_children(&variable_list) {
             let variable_name = &ctx.source_code[variable.start_byte()..variable.end_byte()];
 
@@ -88,7 +91,10 @@ pub fn parse_letting_statement(
             ctx.save_decl_span(name, span_id);
         }
 
-        let expr_or_domain = field!(variable_decl, "expr_or_domain");
+        let Some(expr_or_domain) = field!(recover, ctx, variable_decl, "expr_or_domain") else {
+            return Ok(None);
+        };
+
         if variable_decl.child_by_field_name("domain").is_some() {
             for name in temp_symbols {
                 let Some(domain) = parse_domain(ctx, expr_or_domain)? else {
