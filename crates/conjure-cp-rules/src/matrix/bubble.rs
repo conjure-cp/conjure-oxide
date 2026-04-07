@@ -1,4 +1,4 @@
-use conjure_cp::ast::{DomainPtr, GroundDomain, Metadata};
+use conjure_cp::ast::{Atom, DomainPtr, GroundDomain, Metadata, eval_constant};
 use conjure_cp::ast::{Expression, Moo, SymbolTable};
 use conjure_cp::rule_engine::{
     ApplicationError, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
@@ -7,8 +7,45 @@ use conjure_cp::rule_engine::{
 use conjure_cp::{bug, into_matrix_expr};
 use itertools::{Itertools as _, izip};
 
+fn index_bubble_condition(
+    index_domains: &[Moo<GroundDomain>],
+    indices: &[Expression],
+) -> Result<Option<Expression>, ApplicationError> {
+    let mut bubble_constraints = vec![];
+
+    for (domain, index) in izip!(index_domains, indices) {
+        match eval_constant(index) {
+            Some(lit) => match domain
+                .contains(&lit)
+                .map_err(|_| ApplicationError::DomainError)?
+            {
+                true => {}
+                false => {
+                    return Ok(Some(Expression::Atomic(Metadata::new(), Atom::from(false))));
+                }
+            },
+            None => bubble_constraints.push(Expression::InDomain(
+                Metadata::new(),
+                Moo::new(index.clone()),
+                DomainPtr::from(domain.clone()),
+            )),
+        }
+    }
+
+    match bubble_constraints.len() {
+        0 => Ok(None),
+        1 => Ok(Some(
+            bubble_constraints.pop().expect("length checked above"),
+        )),
+        _ => Ok(Some(Expression::And(
+            Metadata::new(),
+            Moo::new(into_matrix_expr![bubble_constraints]),
+        ))),
+    }
+}
+
 /// Converts an unsafe index to a safe index using a bubble expression.
-#[register_rule(("Bubble", 6000))]
+#[register_rule("Bubble", 6000, [UnsafeIndex])]
 fn index_to_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
     let Expression::UnsafeIndex(_, subject, indices) = expr else {
         return Err(RuleNotApplicable);
@@ -42,33 +79,24 @@ fn index_to_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
         "in an index expression, there should be the same number of indices as the subject has index domains"
     );
 
-    let bubble_constraints = Moo::new(into_matrix_expr![
-        izip!(index_domains, indices)
-            .map(|(domain, index)| {
-                Expression::InDomain(
-                    Metadata::new(),
-                    Moo::new(index.clone()),
-                    DomainPtr::from(domain.clone()),
-                )
-            })
-            .collect_vec()
-    ]);
-
     let new_expr = Moo::new(Expression::SafeIndex(
         Metadata::new(),
         subject.clone(),
         indices.clone(),
     ));
 
-    Ok(Reduction::pure(Expression::Bubble(
-        Metadata::new(),
-        new_expr,
-        Moo::new(Expression::And(Metadata::new(), bubble_constraints)),
-    )))
+    match index_bubble_condition(index_domains, indices)? {
+        None => Ok(Reduction::pure(Moo::unwrap_or_clone(new_expr))),
+        Some(condition) => Ok(Reduction::pure(Expression::Bubble(
+            Metadata::new(),
+            new_expr,
+            Moo::new(condition),
+        ))),
+    }
 }
 
 /// Converts an unsafe slice to a safe slice using a bubble expression.
-#[register_rule(("Bubble", 6000))]
+#[register_rule("Bubble", 6000, [UnsafeSlice])]
 fn slice_to_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
     let Expression::UnsafeSlice(_, subject, indices) = expr else {
         return Err(RuleNotApplicable);
@@ -94,23 +122,11 @@ fn slice_to_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
         "in a slice expression, there should be the same number of indices as the subject has index domains"
     );
 
-    // the wildcard dimension doesn't need a constraint.
-    let bubble_constraints = Moo::new(into_matrix_expr![
-        izip!(index_domains, indices)
-            .filter_map(|(domain, index)| {
-                index
-                    .clone()
-                    // TODO(perf): This pattern of "take something with a ground domain G and re-wrap it in Moo(Domain::Ground(G))" is fairly common...
-                    .map(|index| {
-                        Expression::InDomain(
-                            Metadata::new(),
-                            Moo::new(index),
-                            DomainPtr::from(domain.clone()),
-                        )
-                    })
-            })
-            .collect_vec()
-    ]);
+    let constrained_index_domains = izip!(index_domains, indices)
+        .filter_map(|(domain, index)| index.clone().map(|index| (domain.clone(), index)))
+        .collect_vec();
+    let (filtered_index_domains, filtered_indices): (Vec<_>, Vec<_>) =
+        constrained_index_domains.into_iter().unzip();
 
     let new_expr = Moo::new(Expression::SafeSlice(
         Metadata::new(),
@@ -118,9 +134,12 @@ fn slice_to_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
         indices.clone(),
     ));
 
-    Ok(Reduction::pure(Expression::Bubble(
-        Metadata::new(),
-        new_expr,
-        Moo::new(Expression::And(Metadata::new(), bubble_constraints)),
-    )))
+    match index_bubble_condition(&filtered_index_domains, &filtered_indices)? {
+        None => Ok(Reduction::pure(Moo::unwrap_or_clone(new_expr))),
+        Some(condition) => Ok(Reduction::pure(Expression::Bubble(
+            Metadata::new(),
+            new_expr,
+            Moo::new(condition),
+        ))),
+    }
 }

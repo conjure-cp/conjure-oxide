@@ -1,0 +1,300 @@
+{
+  "cnf_clauses": [],
+  "constraints": {
+    "Root": [
+      {
+        "etype": null
+      },
+      [
+        {
+          "SubsetEq": [
+            {
+              "etype": null
+            },
+            {
+              "Atomic": [
+                {
+                  "etype": null
+                },
+                {
+                  "Reference": {
+                    "ptr": {
+                      "object_id": 1,
+                      "type_name": "DeclarationPtrInner"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "AbstractLiteral": [
+                {
+                  "etype": null
+                },
+                {
+                  "Set": [
+                    {
+                      "Atomic": [
+                        {
+                          "etype": null
+                        },
+                        {
+                          "Literal": {
+                            "Int": 1
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "Atomic": [
+                        {
+                          "etype": null
+                        },
+                        {
+                          "Literal": {
+                            "Int": 2
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "SubsetEq": [
+            {
+              "etype": null
+            },
+            {
+              "Atomic": [
+                {
+                  "etype": null
+                },
+                {
+                  "Reference": {
+                    "ptr": {
+                      "object_id": 1,
+                      "type_name": "DeclarationPtrInner"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "Atomic": [
+                {
+                  "etype": null
+                },
+                {
+                  "Reference": {
+                    "ptr": {
+                      "object_id": 2,
+                      "type_name": "DeclarationPtrInner"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "SubsetEq": [
+            {
+              "etype": null
+            },
+            {
+              "AbstractLiteral": [
+                {
+                  "etype": null
+                },
+                {
+                  "Set": [
+                    {
+                      "Atomic": [
+                        {
+                          "etype": null
+                        },
+                        {
+                          "Literal": {
+                            "Int": 1
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "Atomic": [
+                {
+                  "etype": null
+                },
+                {
+                  "Reference": {
+                    "ptr": {
+                      "object_id": 1,
+                      "type_name": "DeclarationPtrInner"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    ]
+  },
+  "dominance": null,
+  "search_order": null,
+  "symbols": {
+    "id": {
+      "object_id": 0,
+      "type_name": "SymbolTable"
+    },
+    "next_machine_name": 0,
+    "parent": null,
+    "table": [
+      [
+        {
+          "User": "x"
+        },
+        {
+          "id": {
+            "object_id": 1,
+            "type_name": "DeclarationPtrInner"
+          },
+          "kind": {
+            "Find": {
+              "domain": {
+                "Ground": {
+                  "Set": [
+                    {
+                      "size": "Unbounded"
+                    },
+                    {
+                      "Int": [
+                        {
+                          "Bounded": [
+                            1,
+                            5
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "name": {
+            "User": "x"
+          }
+        }
+      ],
+      [
+        {
+          "User": "y"
+        },
+        {
+          "id": {
+            "object_id": 2,
+            "type_name": "DeclarationPtrInner"
+          },
+          "kind": {
+            "Find": {
+              "domain": {
+                "Ground": {
+                  "Set": [
+                    {
+                      "size": "Unbounded"
+                    },
+                    {
+                      "Int": [
+                        {
+                          "Bounded": [
+                            1,
+                            6
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "name": {
+            "User": "y"
+          }
+        }
+      ]
+    ]
+  }
+}
+
+
+find x: set  of int(1..5)
+find y: set  of int(1..6)
+
+such that
+
+and([ __0 in {1,2} | __0 <- x ]),
+and([ __0 in y | __0 <- x ]),
+and([ __0 in x | __0 <- {1} ])
+
+Model before rewriting:
+
+find x: set  of int(1..5)
+find y: set  of int(1..6)
+
+such that
+
+(x subsetEq {1,2}),
+(x subsetEq y),
+({1} subsetEq x)
+
+--
+
+(x subsetEq {1,2}),
+(x subsetEq y),
+({1} subsetEq x), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(x subsetEq {1,2}),
+(x subsetEq y),
+({1} subsetEq x)
+
+--
+
+(x subsetEq {1,2}), 
+   ~~> subseteq_set ([("Base", 8700)])
+and([ __0 in {1,2} | __0 <- x ])
+
+--
+
+(x subsetEq y), 
+   ~~> subseteq_set ([("Base", 8700)])
+and([ __0 in y | __0 <- x ])
+
+--
+
+({1} subsetEq x), 
+   ~~> subseteq_set ([("Base", 8700)])
+and([ __0 in x | __0 <- {1} ])
+
+--
+
+Final model:
+
+find x: set  of int(1..5)
+find y: set  of int(1..6)
+
+such that
+
+and([ __0 in {1,2} | __0 <- x ]),
+and([ __0 in y | __0 <- x ]),
+and([ __0 in x | __0 <- {1} ])
+

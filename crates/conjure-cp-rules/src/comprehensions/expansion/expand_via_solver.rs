@@ -28,7 +28,7 @@ pub fn expand_via_solver(comprehension: Comprehension) -> Result<Vec<Expression>
     // only branch on the quantified variables.
     let generator_model = with_temporary_model(generator_model, Some(quantified_vars.clone()));
     tracing::trace!(
-        target: "rule_engine_human",
+        target: "rule_engine_rule_trace",
         "Via-solver generator model before rewriting:\n\n{}\n--\n",
         generator_model
     );
