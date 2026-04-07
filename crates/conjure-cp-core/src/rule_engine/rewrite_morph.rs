@@ -1,6 +1,6 @@
 use crate::{
     Model,
-    ast::{Expression, SymbolTable, discriminant_from_value},
+    ast::{Expression, discriminant_from_value},
     bug,
     settings::{MorphCachingStrategy, MorphConfig, Rewriter, set_current_rewriter},
 };
@@ -13,7 +13,8 @@ use tree_morph::{
 };
 
 use super::{
-    RuleData, RuleSet, get_rules_grouped, rewriter_common::try_rewrite_value_letting_once,
+    MorphState, RuleData, RuleSet, get_rules_grouped,
+    rewriter_common::try_rewrite_value_letting_once,
 };
 
 /// Rewrites a `Model` by applying rule sets using an optimized, tree-morphing rewriter.
@@ -78,13 +79,18 @@ pub fn rewrite_morph<'a>(
             continue;
         }
 
-        let (expr, symbol_table) = if config.naive {
-            engine.morph_naive(model_ref.root().clone(), model_ref.symbols().clone())
+        let initial_state = MorphState {
+            symbols: model_ref.symbols().clone(),
+            clauses: model_ref.clauses().clone(),
+        };
+        let (expr, morph_state) = if config.naive {
+            engine.morph_naive(model_ref.root().clone(), initial_state)
         } else {
-            engine.morph(model_ref.root().clone(), model_ref.symbols().clone())
+            engine.morph(model_ref.root().clone(), initial_state)
         };
 
-        *model_ref.symbols_mut() = symbol_table;
+        *model_ref.symbols_mut() = morph_state.symbols;
+        model_ref.replace_clauses(morph_state.clauses);
         model_ref.replace_root(expr);
 
         if try_rewrite_value_letting_once(
@@ -111,7 +117,7 @@ fn build_engine<'a>(
     rules_grouped: &Vec<(u16, Vec<RuleData<'a>>)>,
     prop_multiple_equally_applicable: bool,
     config: MorphConfig,
-) -> Engine<Expression, SymbolTable, RuleData<'a>, Box<dyn RewriteCache<Expression>>> {
+) -> Engine<Expression, MorphState, RuleData<'a>, Box<dyn RewriteCache<Expression>>> {
     let morph_rule_groups = rules_grouped
         .iter()
         .map(|(_, rules)| rules.clone())
