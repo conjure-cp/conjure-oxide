@@ -229,20 +229,78 @@ fn classify_unexpected_token_error(node: Node, source_code: &str) -> Recoverable
 
 /// Determines if an error node represents a malformed line error.
 pub fn is_malformed_line_error(node: &tree_sitter::Node, source: &str) -> bool {
-    if node.start_position().column == 0 || error_node_out_of_range(node, source) {
-        return true;
-    }
     let parent = node.parent();
     let grandparent = parent.and_then(|n| n.parent());
     let root = grandparent.and_then(|n| n.parent());
 
-    if let (Some(parent), Some(grandparent), Some(root)) = (parent, grandparent, root) {
-        parent.kind() == "set_comparison"
-            && grandparent.kind() == "comparison_expr"
-            && root.kind() == "program"
-    } else {
-        false
+    if let (Some(parent), Some(grandparent), Some(root)) = (parent, grandparent, root)
+        && parent.kind() == "set_comparison"
+        && grandparent.kind() == "comparison_expr"
+        && root.kind() == "program"
+    {
+        return true;
     }
+
+    // check parent kinds to see if the error is a constraint continuation
+    let mut curr = node.parent();
+    while let Some(n) = curr {
+        let kind = n.kind();
+        if matches!(
+            kind,
+            "find_statement"
+                | "given_statement"
+                | "letting_statement"
+                | "dominance_relation"
+                | "bool_expr"
+                | "comparison_expr"
+                | "arithmetic_expr"
+                | "atom"
+        ) {
+            return false;
+        }
+        curr = n.parent();
+    }
+
+    // check for the first non-whitespace character on the line before the error node
+    let line = source.lines().nth(node.start_position().row).unwrap_or("");
+    let first_non_witespace = line
+        .as_bytes()
+        .iter()
+        .take_while(|b| b.is_ascii_whitespace())
+        .count();
+
+    // if the error node is before or at the first non-whitespace character, it's a malformed line error
+    // if the first non-whitespace character is after the error node, it could be a constraint continuation
+    if node.start_position().column <= first_non_witespace || error_node_out_of_range(node, source)
+    {
+        if first_non_witespace > 0 && is_constraint_continuation(source, node.start_position().row)
+        {
+            return false;
+        }
+        return true;
+    }
+    false
+}
+
+/// Checks if a line is a continuation of a constraint (i.e., it ends with a comma or has "such that" at the start).
+fn is_constraint_continuation(source: &str, row: usize) -> bool {
+    let lines: Vec<&str> = source.lines().collect();
+    if row == 0 {
+        return false;
+    }
+
+    let mut r = row;
+    while r > 0 {
+        r -= 1;
+        let line = lines.get(r).copied().unwrap_or("");
+        let line = line.split('$').next().unwrap_or("").trim_end();
+        if line.trim().is_empty() {
+            continue;
+        }
+        let lower = line.trim_start().to_ascii_lowercase();
+        return lower.starts_with("such that") || line.ends_with(',');
+    }
+    false
 }
 
 /// Coverts a token name into a more user-friendly format for error messages.
