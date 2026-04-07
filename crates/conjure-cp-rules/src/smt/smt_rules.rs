@@ -87,16 +87,10 @@ fn flatten_matrix_eq_neq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         _ => return Err(RuleNotApplicable),
     };
 
-    let dom_a = a.domain_of().ok_or(RuleNotApplicable)?;
-    let dom_b = b.domain_of().ok_or(RuleNotApplicable)?;
+    let a_idx_domains = matrix::bound_index_domains_of_expr(a.as_ref()).ok_or(RuleNotApplicable)?;
+    let b_idx_domains = matrix::bound_index_domains_of_expr(b.as_ref()).ok_or(RuleNotApplicable)?;
 
-    let (Some((_, a_idx_domains)), Some((_, b_idx_domains))) =
-        (dom_a.as_matrix_ground(), dom_b.as_matrix_ground())
-    else {
-        return Err(RuleNotApplicable);
-    };
-
-    let pairs = matrix::enumerate_index_union_indices(a_idx_domains, b_idx_domains)
+    let pairs = matrix::enumerate_index_union_indices(&a_idx_domains, &b_idx_domains)
         .map_err(|_| ApplicationError::DomainError)?
         .map(|idx_lits| {
             let idx_vec: Vec<_> = idx_lits
@@ -144,10 +138,7 @@ fn flatten_matrix_slice(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let dom = m.domain_of().ok_or(RuleNotApplicable)?;
-    let Some((_, mat_idxs)) = dom.as_matrix_ground() else {
-        return Err(RuleNotApplicable);
-    };
+    let mat_idxs = matrix::bound_index_domains_of_expr(m.as_ref()).ok_or(RuleNotApplicable)?;
 
     if slice_idxs.len() != mat_idxs.len() {
         return Err(DomainError);
@@ -227,13 +218,10 @@ fn unwrap_flatten_matrix_nonatomic(expr: &Expr, _: &SymbolTable) -> ApplicationR
         return Err(RuleNotApplicable);
     };
 
-    let dom = m.domain_of().ok_or(RuleNotApplicable)?;
-    let Some(GroundDomain::Matrix(_, index_domains)) = dom.resolve().map(Moo::unwrap_or_clone)
-    else {
-        return Err(RuleNotApplicable);
-    };
+    let index_domains = matrix::bound_index_domains_of_expr(m.as_ref()).ok_or(RuleNotApplicable)?;
 
-    let elems: Vec<Expr> = matrix::enumerate_indices(index_domains)
+    let elems: Vec<Expr> = matrix::try_enumerate_indices(index_domains)
+        .map_err(|_| DomainError)?
         .map(|lits| {
             let idxs: Vec<Expr> = lits.into_iter().map(Into::into).collect();
             Expr::SafeIndex(Metadata::new(), m.clone(), idxs)
