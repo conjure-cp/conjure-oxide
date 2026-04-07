@@ -3,7 +3,12 @@ use crate::{
     ast::{Expression, discriminant_from_value},
     bug,
     settings::{
+<<<<<<< HEAD
         MorphCachingStrategy, MorphConfig, Rewriter, rule_trace_enabled, set_current_rewriter,
+=======
+        MorphCachingStrategy, MorphConfig, Rewriter, default_rule_trace_enabled,
+        rule_trace_enabled, set_current_rewriter,
+>>>>>>> 397bf5d8 (feat: various fixes to (partially) support the GCM models (#1750))
     },
 };
 use itertools::Itertools;
@@ -56,7 +61,11 @@ pub fn rewrite_morph<'a>(
 ) -> Model {
     set_current_rewriter(Rewriter::Morph(config));
 
+<<<<<<< HEAD
     if rule_trace_enabled() {
+=======
+    if rule_trace_enabled() && default_rule_trace_enabled() {
+>>>>>>> 397bf5d8 (feat: various fixes to (partially) support the GCM models (#1750))
         trace!(
             target: "rule_engine_rule_trace",
             "Model before rewriting:\n\n{}\n--\n",
@@ -108,7 +117,11 @@ pub fn rewrite_morph<'a>(
         }
     }
 
+<<<<<<< HEAD
     if rule_trace_enabled() {
+=======
+    if rule_trace_enabled() && default_rule_trace_enabled() {
+>>>>>>> 397bf5d8 (feat: various fixes to (partially) support the GCM models (#1750))
         trace!(
             target: "rule_engine_rule_trace",
             "Final model:\n\n{}",
