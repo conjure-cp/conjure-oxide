@@ -23,7 +23,7 @@ Where implemented or actively in progress, the details of each goal shall be exp
 ## Files
 ```bash
 # the server (excluding diagnostics)
-crates/conjue-cp-lsp
+crates/conjure-cp-lsp
 ├─ src/
 ├── lib.rs
 ├── server.rs
