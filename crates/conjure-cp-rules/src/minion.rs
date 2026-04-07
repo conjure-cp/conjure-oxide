@@ -14,8 +14,8 @@ use conjure_cp::ast::categories::Category;
 use conjure_cp::{
     ast::Metadata,
     ast::{
-        Atom, Expression as Expr, Literal as Lit, Range, Reference, ReturnType, SymbolTable,
-        Typeable,
+        AbstractLiteral, Atom, Expression as Expr, Literal as Lit, Range, Reference, ReturnType,
+        SymbolTable, Typeable,
     },
     into_matrix_expr, matrix_expr,
     rule_engine::{
@@ -32,6 +32,30 @@ use ApplicationError::RuleNotApplicable;
 register_rule_set!("Minion", ("Base"), |f: &SolverFamily| {
     matches!(f, SolverFamily::Minion)
 });
+
+/// Inlines constant matrix references just for Minion so Base matrix rules can lower them
+/// without affecting other backends.
+#[register_rule("Minion", 9000, [SafeIndex])]
+fn inline_constant_matrix_subject_for_minion(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    let Expr::SafeIndex(_, subject, indices) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Expr::Atomic(_, Atom::Reference(reference)) = subject.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let constant = reference.resolve_constant().ok_or(RuleNotApplicable)?;
+    let Lit::AbstractLiteral(AbstractLiteral::Matrix(_, _)) = &constant else {
+        return Err(RuleNotApplicable);
+    };
+
+    Ok(Reduction::pure(Expr::SafeIndex(
+        Metadata::new(),
+        Moo::new(Expr::Atomic(Metadata::new(), Atom::Literal(constant))),
+        indices.clone(),
+    )))
+}
 
 #[register_rule("Minion", 4200, [Eq, AuxDeclaration])]
 fn introduce_producteq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
