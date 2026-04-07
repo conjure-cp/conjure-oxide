@@ -1,0 +1,24 @@
+Model before rewriting:
+
+find a: int(0..3)
+find b: int(0..3)
+find c: int(0..3)
+
+such that
+
+!((a = UnsafeDiv(b, c)))
+
+--
+
+Final model:
+
+find a: int(0..3)
+find b: int(0..3)
+find c: int(0..3)
+find __0: int(0..3)
+
+such that
+
+or([(a != __0),(c = 0);int(1..)]),
+DivEq(b, c, __0)
+

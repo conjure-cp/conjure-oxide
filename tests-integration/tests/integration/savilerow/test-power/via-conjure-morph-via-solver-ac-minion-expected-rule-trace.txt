@@ -1,0 +1,45 @@
+Model before rewriting:
+
+find x: int(2..2)
+
+such that
+
+(-(UnsafePow(1, 1)) = -(1)),
+(-(UnsafePow(1, 2)) = -(1)),
+(-(UnsafePow(1, 3)) = -(1)),
+(-(UnsafePow(1, 4)) = -(1)),
+(-(UnsafePow(2, 1)) = -(2)),
+(-(UnsafePow(2, 2)) = -(4)),
+(-(UnsafePow(2, 3)) = -(8)),
+(-(UnsafePow(2, 4)) = -(16)),
+(-(UnsafePow(x, 1)) = -(2)),
+(-(UnsafePow(x, 2)) = -(4)),
+(-(UnsafePow(x, 3)) = -(8)),
+(-(UnsafePow(x, 4)) = -(16)),
+(UnsafePow(x, 2) = 4),
+(-(UnsafePow(2, UnsafePow(2, 3))) = -(256)),
+(UnsafePow(2, UnsafePow(2, 3)) = 256),
+true
+
+--
+
+Final model:
+
+find x: int(2..2)
+find __0: int(2)
+find __1: int(4)
+find __2: int(8)
+find __3: int(16)
+
+such that
+
+MinusEq(-2,__0),
+MinusEq(-4,__1),
+MinusEq(-8,__2),
+MinusEq(-16,__3),
+MinionPow(x,2,4),
+MinionPow(x,1,__0),
+MinionPow(x,2,__1),
+MinionPow(x,3,__2),
+MinionPow(x,4,__3)
+

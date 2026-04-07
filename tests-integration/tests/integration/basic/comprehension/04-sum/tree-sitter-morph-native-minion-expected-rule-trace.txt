@@ -1,0 +1,21 @@
+Model before rewriting:
+
+find a: matrix indexed by [int(1..2)] of int(1..2)
+
+such that
+
+(sum([ a[i] | i : int(1..2) ]) = 3)
+
+--
+
+Final model:
+
+find a: matrix indexed by [int(1..2)] of int(1..2)
+find a#matrix_to_atom_1: int(1..2)
+find a#matrix_to_atom_2: int(1..2)
+
+such that
+
+SumLeq([a#matrix_to_atom_1, a#matrix_to_atom_2], 3),
+SumGeq([a#matrix_to_atom_1, a#matrix_to_atom_2], 3)
+

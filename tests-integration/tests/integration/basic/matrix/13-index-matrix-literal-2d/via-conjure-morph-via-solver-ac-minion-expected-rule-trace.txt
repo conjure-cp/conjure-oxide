@@ -1,0 +1,30 @@
+Model before rewriting:
+
+find i: int(1..2)
+find j: int(1..3)
+
+such that
+
+([[j,2,3;int(1..3)],[4,UnsafeDiv(j, 2),6;int(1..3)],[j,8,product([9,j;int(1..2)]);int(1..3)];int(1..3)][i, i] = i)
+
+--
+
+Final model:
+
+find i: int(1..2)
+find j: int(1..3)
+find __0: int(1..3)
+find __1: int(4, 0..1, 6)
+find __2: int(1..3, 8..27)
+find __3: int(0..1)
+find __4: int(9..27)
+
+such that
+
+__minion_element_one([__0,__1,__2],i,i),
+__minion_element_one([j,2,3],i,__0),
+__minion_element_one([4,__3,6],i,__1),
+__minion_element_one([j,8,__4],i,__2),
+DivEq(j, 2, __3),
+FlatProductEq(j,9,__4)
+

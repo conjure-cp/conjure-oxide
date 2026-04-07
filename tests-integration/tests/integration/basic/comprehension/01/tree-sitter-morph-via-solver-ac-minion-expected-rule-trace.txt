@@ -1,0 +1,57 @@
+Model before rewriting:
+
+find m: matrix indexed by [int(1..5)] of int(1..5)
+
+such that
+
+and([ (m[i] = i) | i : int(1..5) ])
+
+--
+
+Model before rewriting:
+
+find i: int(1..5)
+find __0: matrix indexed by [int(1..5)] of int(1..5)
+
+such that
+
+(true != (__0[i] = i))
+
+--
+
+Final model:
+
+find i: int(1..5)
+find __0: matrix indexed by [int(1..5)] of int(1..5)
+find __1: bool
+find __2: int(1..5)
+find __0#matrix_to_atom_1: int(1..5)
+find __0#matrix_to_atom_2: int(1..5)
+find __0#matrix_to_atom_3: int(1..5)
+find __0#matrix_to_atom_4: int(1..5)
+find __0#matrix_to_atom_5: int(1..5)
+
+such that
+
+(true != __1),
+Reify(__minion_element_one([__0#matrix_to_atom_1,__0#matrix_to_atom_2,__0#matrix_to_atom_3,__0#matrix_to_atom_4,__0#matrix_to_atom_5],__2,i), __1),
+SumLeq([0, i], __2),
+SumGeq([0, i], __2)
+
+Final model:
+
+find m: matrix indexed by [int(1..5)] of int(1..5)
+find m#matrix_to_atom_1: int(1..5)
+find m#matrix_to_atom_2: int(1..5)
+find m#matrix_to_atom_3: int(1..5)
+find m#matrix_to_atom_4: int(1..5)
+find m#matrix_to_atom_5: int(1..5)
+
+such that
+
+(m#matrix_to_atom_1 = 1),
+(m#matrix_to_atom_2 = 2),
+(m#matrix_to_atom_3 = 3),
+(m#matrix_to_atom_4 = 4),
+(m#matrix_to_atom_5 = 5)
+

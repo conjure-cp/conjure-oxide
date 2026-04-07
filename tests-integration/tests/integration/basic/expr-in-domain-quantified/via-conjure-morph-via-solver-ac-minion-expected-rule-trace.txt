@@ -1,0 +1,88 @@
+Model before rewriting:
+
+letting m be 5
+find x: int(1..10)
+
+such that
+
+and([ (sum([x,i;int(1..2)]) = 10) | i : int(((m - 1))..10) ]),
+and([ (sum([x,i;int(1..2)]) = 10) | i : int((sum([1,m;int(1..2)]))..10) ])
+
+--
+
+Model before rewriting:
+
+find i: int(((m - 1))..10)
+find __0: int(1..10)
+
+such that
+
+(true != (sum([__0,i;int(1..2)]) = 10))
+
+--
+
+Final model:
+
+find i: int(((m - 1))..10)
+find __0: int(1..10)
+find __1: bool
+
+such that
+
+(true != __1),
+Reify(and([SumLeq([__0, i], 10),SumGeq([__0, i], 10);int(1..)]), __1)
+
+Model before rewriting:
+
+find i: int((sum([1,m;int(1..2)]))..10)
+find __0: int(1..10)
+
+such that
+
+(true != (sum([__0,i;int(1..2)]) = 10))
+
+--
+
+Final model:
+
+find i: int((sum([1,m;int(1..2)]))..10)
+find __0: int(1..10)
+find __1: bool
+
+such that
+
+(true != __1),
+Reify(and([SumLeq([__0, i], 10),SumGeq([__0, i], 10);int(1..)]), __1)
+
+Final model:
+
+letting m be 5
+find x: int(1..10)
+
+such that
+
+SumLeq([4, x], 10),
+SumGeq([4, x], 10),
+SumLeq([5, x], 10),
+SumGeq([5, x], 10),
+SumLeq([6, x], 10),
+SumGeq([6, x], 10),
+SumLeq([7, x], 10),
+SumGeq([7, x], 10),
+SumLeq([8, x], 10),
+SumGeq([8, x], 10),
+SumLeq([9, x], 10),
+SumGeq([9, x], 10),
+SumLeq([10, x], 10),
+SumGeq([10, x], 10),
+SumLeq([6, x], 10),
+SumGeq([6, x], 10),
+SumLeq([7, x], 10),
+SumGeq([7, x], 10),
+SumLeq([8, x], 10),
+SumGeq([8, x], 10),
+SumLeq([9, x], 10),
+SumGeq([9, x], 10),
+SumLeq([10, x], 10),
+SumGeq([10, x], 10)
+
