@@ -57,8 +57,8 @@ pub fn parse_essence_with_context(
     errors: &mut Vec<RecoverableParseError>,
 ) -> Result<Option<Model>, FatalParseError> {
     match parse_essence_with_context_and_map(src, context, errors, None)? {
-        Some((model, _source_map)) => Ok(Some(model)),
-        None => Ok(None),
+        (Some(model), _source_map) => Ok(Some(model)),
+        (None, _source_map) => Ok(None),
     }
 }
 
@@ -74,7 +74,7 @@ pub fn parse_essence_with_context_and_map(
     context: Arc<RwLock<Context<'static>>>,
     errors: &mut Vec<RecoverableParseError>,
     tree: Option<&Tree>,
-) -> Result<Option<(Model, SourceMap)>, FatalParseError> {
+) -> Result<(Option<Model>, SourceMap), FatalParseError> {
     let (tree, source_code) = if let Some(tree) = tree {
         (tree.clone(), src.to_string())
     } else {
@@ -88,12 +88,20 @@ pub fn parse_essence_with_context_and_map(
         }
     };
 
-    if tree.root_node().has_error() {
+    let has_syntax_errors = tree.root_node().has_error();
+    if has_syntax_errors {
         detect_syntactic_errors(src, &tree, errors);
-        return Ok(None);
     }
 
-    keyword_as_identifier(tree.root_node(), src, errors);
+    // don't detect semantic errors if there are syntactic errors, but still parse for source map.
+    let mut suppressed_semantic_errors = Vec::new();
+    let semantic_errors: &mut Vec<RecoverableParseError> = if has_syntax_errors {
+        &mut suppressed_semantic_errors
+    } else {
+        errors
+    };
+
+    keyword_as_identifier(tree.root_node(), src, semantic_errors);
 
     let mut model = Model::new(context);
     let mut source_map = SourceMap::default();
@@ -105,14 +113,14 @@ pub fn parse_essence_with_context_and_map(
         &source_code,
         &root_node,
         Some(model.symbols_ptr_unchecked().clone()),
-        errors,
+        semantic_errors,
         &mut source_map,
         &mut declaration_spans,
     );
 
     let mut cursor = root_node.walk();
     for statement in root_node.children(&mut cursor) {
-        if !statement.is_named() {
+        if !statement.is_named() || statement.is_error() || statement.kind() == "ERROR" {
             continue;
         }
 
@@ -163,31 +171,32 @@ pub fn parse_essence_with_context_and_map(
                 model.dominance = Some(dominance);
             }
             _ => {
-                return Err(FatalParseError::internal_error(
+                ctx.record_error(RecoverableParseError::new(
                     format!("Unexpected top-level statement: {}", statement.kind()),
                     Some(statement.range()),
                 ));
+                continue;
             }
         }
     }
 
     // Check if there were any recoverable errors
     if !errors.is_empty() {
-        return Ok(None);
+        return Ok((None, source_map));
     }
     // otherwise return the model
-    Ok(Some((model, source_map)))
+    Ok((Some(model), source_map))
 }
 
 pub fn parse_essence(src: &str) -> Result<(Model, SourceMap), Box<ParseErrorCollection>> {
     let context = Arc::new(RwLock::new(Context::default()));
     let mut errors = vec![];
     match parse_essence_with_context_and_map(src, context, &mut errors, None) {
-        Ok(Some((model, source_map))) => {
+        Ok((Some(model), source_map)) => {
             debug_assert_model_well_formed(&model, "tree-sitter");
             Ok((model, source_map))
         }
-        Ok(None) => {
+        Ok((None, _source_map)) => {
             // Recoverable errors were found, return them as a ParseErrorCollection
             Err(Box::new(ParseErrorCollection::multiple(
                 errors,
