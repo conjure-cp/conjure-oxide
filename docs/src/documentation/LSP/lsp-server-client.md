@@ -1,5 +1,5 @@
 [//]: # (Author: Liz Dempster)
-[//]: # (Last Updated: 19/12/2025)
+[//]: # (LAST Updated: 19/12/2025)
 
 # LSP Documentation
 ## Overview 
@@ -8,17 +8,17 @@ This is the overview documentation for the Language Server which is developed fo
 At present this addresses the client and server, with abstraction over lower level functions called by the server. 
 
 ## Current Functionality Goals 
-Where implemented or actively in progress, the details of each goal shall be expanded upon. Achieving these goals would be considered to be a fully completed implementation.
+Where implemented or actively in progress, the details of each goal shall be expanded upon. Achieving these goals would be considered a completed implementation.
 - Syntax Highlighting
-   - This is highlighting based on grammar structure
+   - This is highlighting based on grammar structure.
 - Semantic Highlighting
-   - This is highlighting based on meaning rather than grammar 
+   - This is highlighting based on meaning rather than grammar. 
 - Error Underlining
-   - Underlining errors of varying severity, providing informative messaging
+   - Underlining errors of varying severity, providing informative messaging.
 - Hover Tooltips
-   - When hovering over a word, produce information relating to the hovered word
+   - When hovering over a word, produces information relating to the hovered word.
 - Code Autocomplete
-   - Produce completion options while user types 
+   - Produce completion options while user types.
 
 ## Files
 ```bash
@@ -71,44 +71,44 @@ The server is a Rust server, created using tower-lsp. This library was used as i
 
 ### Key Structure
 #### Backend
-Backend is the custom struct which represents the state and functionality of the Language Server. In this, it **must** implement towerlsp's LanguageServer trait. This struct is named Backend simply because it represents the basis of the Language Server, and because this is common naming convention.
+Backend is the custom struct which represents the state and functionality of the Language Server. In this, it **must** implement tower-lsp's LanguageServer trait. This struct is named Backend simply because it represents the basis of the Language Server, and because this is common naming convention.
 
-The LanguageServer trait defined by towerlsp is the interface through which our language server is capable of adhering to the Language Server Protocol. In this, the capabilities of our server, and the implementation of these capabilities on given events, are specified. The current capabilities of the server are limited to syncing (as is required for error underlining).
+The LanguageServer trait defined by tower-lsp is the interface through which our language server is capable of adhering to the Language Server Protocol. In this, the capabilities of our server, and the implementation of these capabilities on given events, are specified. The current capabilities of the server are limited to syncing (as is required for error underlining).
 
 As established above, during the initialise handshake, the capabilities of the server are laid out. At present, the server only has it's default capabilities and syncing capabilities (as required for error underlining), as it currently is in an in-development state. As more functionality is added to the server, more capabilities will be communicated across this handshake. It is worth noting that in the capabilities, the `text_document_sync` is set to `INCREMENTAL` to ensure that each trigger event causes the client to pass only the modified content of the file, and the range (except for the first call, where the file is passed in its entirety). This is not the default case.
 
 There are currently six events handled, of which one is after the initialize handshake (simply communicates for log purposes) and one is shutdown. The four additional events implemented at current are `did_open`, `did_save`, `did_change`, the functionality of which is handled by `handlers/sync_events`; and `hover`, which is managed by `handlers/hover.rs`. 
 
-#### cache
-This LSP uses a library called [Moka](https://github.com/moka-rs/moka) in order to implement caching. The reason that caching has been added is to reduce the time required to load longer files, especially if they are being reused, as this means that they can simply be recovered from the cache. The cache is also used alongside the incremental updates. Modifying the cache occurs within `sync_events`, but the cache is defined and instantiated using a method from within caching. The cache itself is made up of a series of `CacheCont`s, which store a given files sourcemap, ast, cst, errors, contents, and versioned index. The cache automatically evicts after reaching a size of 10,000B, and has a time to live of 30 minutes (time something exists, actively being used, in cache before being evicted) and a time to idle of 5 minutes (time something exists and is not being used before eviction). The cache uses the uri of a file as its identifier, as this is unique to a file. This means that if a file changes location in the file tree (and therefore its URI changes), it will have to be re-entered into the cache, and the previous copy will time out of TTL/TTI and will be evicted.
+#### Cache
+This LSP uses a library called [Moka](https://github.com/moka-rs/moka) in order to implement caching. The reason that caching has been added is to reduce the time required to load longer files, especially if they are being reused, as this means that they can simply be recovered from the cache. The cache is also used alongside the incremental updates. Modifying the cache occurs within `sync_events`, but the cache is defined and instantiated using a method from within caching. The cache itself is made up of a series of `CacheCont`s, which store a given files sourcemap, AST, CST, errors, contents, and versioned index. The cache automatically evicts after reaching a size of 10,000B, and has a time to live of 30 minutes (time something exists in the cache while actively in use before being evicted) and a time to idle of 5 minutes (time something exists and is not being used before eviction). The cache uses the uri (uniform resource identifier) of a file as its key, as this is unique to a file. This means that if a file changes location in the file tree (and therefore its URI changes), it will have to be re-entered into the cache, and the previous copy will time out of TTL/TTI and will be evicted.
 
 #### sync_events
 These are split from the main `server.rs` primarily for readability, and to prevent the main body of the server from becoming bloated. Rust allows a struct to have it's `impl` split over multiple files, so this file also simply implements functionality to the Backend struct. 
 
 **handle_did_open**
-This is the handler for the did_open event. On open, the cache is queried by the uri of the opened file to see whether it currently exists in the cache. If not, the file is used to generate the cst, ast, sourcemap, etc., which populate the CacheConts. Diagnostics (`handle_diagnostics`) are then ran to produce the error underlining.
+This is the handler for the did_open event. On open, the cache is queried by the uri of the opened file to see whether it currently exists in the cache. If not, the file is used to generate the CST, AST, sourcemap, etc., which populate the CacheConts. Diagnostics (`handle_diagnostics`) are then ran to produce the error underlining.
 
 **handle_did_save**
 If saving a file, it is not currently being changed (this is triggered by a different event). As such, when saving a file, simply fetch the correct entry from the cache and get its diagnostics using `handle_diagnostics`.
 
 **handle_did_change**
-When changing a file, due to the `INCREMENTAL` change setting, passes only the change and the range. As such, the handler must use `replace_range` to update the cache store of the text document, and then update the cst. Treesitter has a function called `treesitter::edit` which allows only modified subtrees to be regenerated, therefore not requiring the whole tree to be regenerated. This is another speed advantage of the method of caching. Once the cst is generated, it can be parsed, and the cache contents can be updated. The diagnostics can then be generated.
+When changing a file, due to the `INCREMENTAL` change setting, passes only the change and the range. As such, the handler must use `replace_range` to update the cache store of the text document, and then update the CST.  has a function called `treesitter::edit` which allows only modified subtrees to be regenerated, therefore not requiring the whole tree to be regenerated. This is another speed advantage of the method of caching. Once the CST is generated, it can be parsed, and the cache contents can be updated. The diagnostics can then be generated.
 
-Backend has a custom function, `handle_diagnostics` which takes in a uri (uniform resource identifier: uniquely identifies a file) and the text of a file. This file is then passed to the background Diagnostic API, transformed from a vector of `parserDianostic` to a vector of `lspDiagnostic` (our name for towerlsp's `Diagnostic` type), and published to the client. When a diagnostic is published to a client, it replaces any previous published diagnostics. 
+Backend has a custom function, `handle_diagnostics` which takes in a uri (uniform resource identifier: uniquely identifies a file) and the text of a file. This file is then passed to the background Diagnostic API, transformed from a vector of `parserDianostic` to a vector of `lspDiagnostic` (our name for tower-lsp's `Diagnostic` type), and published to the client. When a diagnostic is published to a client, it replaces any previous published diagnostics. 
 
 #### convert_diagnostics, parser_to_lsp_range, parser_to_lsp_position
 These are helper functions which allow for the transformation of a vector of `parseDiagnostics` to `lspDiagnostics`. This is done through iterating through the vector, and setting values according to `parseDiagnostics`. This is because the JSON communication between the Server and it's Diagnostic API is not defined the same as the communication between the Server and the Client, though all of the correct information is communicated. 
 
 #### position_to_byte, position_to_treesitter_point, calculate_new_end_position
-These are helper functions to allow for the functionality of INCREMENTAL synchronising. `position_to_byte` converts from an LSP Position into a byte index, to allow for `replace_range` to function `calculate_new_end_position` is used by 
+These are helper functions to allow for the functionality of INCREMENTAL synchronising. `position_to_byte` converts from an LSP Position into a byte index, to allow for `replace_range` to function, and `calculate_new_end_position` is used to calculate the new end of the range. `position_to_treesitter_point` operates to allow for the incremental editing to function.
 
-#### main
-Main is responsible for launching the server using the tokio library, as this is the async library towerlsp is designed to be used with. This is the function which is called from outwith the `conjure-cp-lsp` crate: for example, this is what is called in order to run the server, from conjure-oxide's subcommand `server-lsp`. This also instantiates the cache, using `create_cache`.
+#### Main
+Main is responsible for launching the server using the tokio library, as this is the async library tower-lsp is designed to be used with. This is the function which is called from outwith the `conjure-cp-lsp` crate. For example, main is called to run the server, from conjure-oxide's subcommand `server-lsp`. This also instantiates the cache, using `create_cache`.
 
 ### Error Underlining
-The core functionality of this is expanded upon within the [Diagnostic API Documentation](https://github.com/conjure-cp/conjure-oxide/tree/main/docs/src/documentation/LSP/diagnostics_api.md). Most implementation details of Error Underlining are covered above. Error underlining is done through publishing diagnostics, which contain a range, warning level, and associated error text. The client recieves these diagnostics, and then displays the underlining as directed. The IDE will contain the error message on hover. Error underlining is demonstrated is documented in [Error Underlining Video](https://github.com/conjure-cp/conjure-oxide/tree/main/docs/src/documentation/ErrorUnderlineExample.mp4). 
+The core functionality of this is expanded upon within the [Diagnostic API Documentation](https://github.com/conjure-cp/conjure-oxide/tree/main/docs/src/documentation/LSP/diagnostics_api.md). Most implementation details of Error Underlining are covered above. Error underlining is done through publishing diagnostics, which contain a range, warning level, and associated error text. The client receives these diagnostics, and then displays the underlining as directed. The IDE will contain the error message on hover. Error underlining is demonstrated and documented in [Error Underlining Video](https://github.com/conjure-cp/conjure-oxide/tree/main/docs/src/documentation/ErrorUnderlineExample.mp4). 
 
-#### hovering
+#### Hovering
 
 Hovering is implemented by `handle_hovering`. The contents of the file are gathered from the cache using the uri, and then the sourcemap (from cache) is gathered. The LSP Position is converted into a byte, and then the helper method `hover_info_at_byte` is used to gather the information from the sourcemap for this byte. This is then posted to the client, allowing for the information to be seen on hover.
 
@@ -116,7 +116,7 @@ It is of note that the hovering does not currently work if there is an error any
 
 ## Development 
 ### How to use (for development)
-At the current stage of development, the extension is not released into the VSCode Marketplace. This means that functionality must be tested using VSCode's extension Development environment. In order to ensure that this works as intended, compile `extension.ts` using `npm run compile` (or ctrl-shift-b and select this). Then launch the extension Development environment, and this will cause the client to run. Due to the structure of the client-server, the server will then run and link to the client, and the LSP can then be tested. Please ensure that `npm install` has been run in advance/all required node modules are installed, otherwise the client will not be able to launch. The client can be seen running when opening a .essence file. In the VSCode panel (bar at bottom)'s output, it is possible to select Conjure-Oxide Language Server as the channel to listen to. This will display the logs communicated to the client.
+At the current stage of development, the extension is not released into the VSCode Marketplace. This means that functionality must be tested using VSCode's Extension Development Environment. In order to ensure that this works as intended, compile `extension.ts` using `npm run compile` (or ctrl-shift-b and select this). Then launch the Extension Development Environment. This can be launched **either** by pressing F5 from within `extension.ts`, or by pressing on 'Run' within the 'Run and Debug' VSCode tab. Running the Extension Development Envrionment will cause the client to run. Due to the structure of the client-server, the server will then run and link to the client, and the LSP can then be tested. Please ensure that `npm install` has been run in advance/all required node modules are installed, otherwise the client will not be able to launch. The client can be seen running when opening a .essence file. In the VSCode panel (bar at bottom)'s output, it is possible to select Conjure-Oxide Language Server as the channel to listen to. This will display the logs communicated to the client.
 
 It is worth noting that a copy of conjure-oxide **MUST** be installed in order for the client to work. Testing the server requires for an updated install. 
 
