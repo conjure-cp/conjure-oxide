@@ -1,4 +1,5 @@
-use crate::errors::{FatalParseError, RecoverableParseError};
+use crate::errors::FatalParseError;
+use crate::errors::RecoverableParseError;
 use crate::expression::parse_expression;
 use crate::field;
 use crate::parser::ParseContext;
@@ -37,6 +38,13 @@ pub fn parse_abstract(
             ));
             Ok(None)
         }
+        _ => {
+            ctx.record_error(RecoverableParseError::new(
+                format!("Expected abstract literal, got: {}", node.kind()),
+                Some(node.range()),
+            ));
+            Ok(None)
+        }
     }
 }
 
@@ -49,9 +57,16 @@ fn parse_record(
         let Some(name_node) = field!(recover, ctx, child, "name") else {
             return Ok(None);
         };
+        let Some(name_node) = field!(recover, ctx, child, "name") else {
+            return Ok(None);
+        };
         let name_str = &ctx.source_code[name_node.start_byte()..name_node.end_byte()];
         let name = conjure_cp_core::ast::Name::user(name_str);
 
+        let Some(value_node) = field!(recover, ctx, child, "value") else {
+            return Ok(None);
+        };
+        let Some(value) = parse_expression(ctx, value_node)? else {
         let Some(value_node) = field!(recover, ctx, child, "value") else {
             return Ok(None);
         };
