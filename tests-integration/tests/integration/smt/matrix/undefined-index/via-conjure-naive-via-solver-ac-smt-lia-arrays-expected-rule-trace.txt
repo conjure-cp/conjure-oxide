@@ -10,23 +10,23 @@ such that
 
 m[4], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-{m[4] @ false}
+{SafeIndex(m,[4]) @ false}
 
 --
 
-({m[4] @ false} = 0), 
+({SafeIndex(m,[4]) @ false} = 0), 
    ~~> bubble_up ([("Bubble", 8800)])
-{(m[4] = 0) @ false}
+{(SafeIndex(m,[4]) = 0) @ false}
 
 --
 
-{(m[4] = 0) @ false}, 
+{(SafeIndex(m,[4]) = 0) @ false}, 
    ~~> expand_bubble ([("Bubble", 8900)])
-and([(m[4] = 0),false;int(1..)])
+and([(SafeIndex(m,[4]) = 0),false;int(1..)])
 
 --
 
-!(and([(m[4] = 0),false;int(1..)])), 
+!(and([(SafeIndex(m,[4]) = 0),false;int(1..)])), 
    ~~> constant_evaluator ([("Constant", 9001)])
 true
 
