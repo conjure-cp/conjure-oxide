@@ -41,65 +41,65 @@ new variables:
 
 a#matrix_to_atom[..,1], 
    ~~> slice_to_bubble ([("Bubble", 6000)])
-a#matrix_to_atom[..,1]
+SafeSlice(a#matrix_to_atom,[..,1])
 
 --
 
 a#matrix_to_atom[..,2], 
    ~~> slice_to_bubble ([("Bubble", 6000)])
-a#matrix_to_atom[..,2]
+SafeSlice(a#matrix_to_atom,[..,2])
 
 --
 
 a#matrix_to_atom[1,..], 
    ~~> slice_to_bubble ([("Bubble", 6000)])
-a#matrix_to_atom[1,..]
+SafeSlice(a#matrix_to_atom,[1,..])
 
 --
 
 a#matrix_to_atom[2,..], 
    ~~> slice_to_bubble ([("Bubble", 6000)])
-a#matrix_to_atom[2,..]
+SafeSlice(a#matrix_to_atom,[2,..])
 
 --
 
 a#matrix_to_atom[3,..], 
    ~~> slice_to_bubble ([("Bubble", 6000)])
-a#matrix_to_atom[3,..]
+SafeSlice(a#matrix_to_atom,[3,..])
 
 --
 
 a#matrix_to_atom[1, 1], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-a#matrix_to_atom[1, 1]
+SafeIndex(a#matrix_to_atom,[1, 1])
 
 --
 
 a#matrix_to_atom[2, 2], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-a#matrix_to_atom[2, 2]
+SafeIndex(a#matrix_to_atom,[2, 2])
 
 --
 
-allDiff(a#matrix_to_atom[..,1]),
-allDiff(a#matrix_to_atom[..,2]),
-allDiff(a#matrix_to_atom[1,..]),
-allDiff(a#matrix_to_atom[2,..]),
-allDiff(a#matrix_to_atom[3,..]),
-(a#matrix_to_atom[1, 1] = 1),
-(a#matrix_to_atom[2, 2] = 1), 
+allDiff(SafeSlice(a#matrix_to_atom,[..,1])),
+allDiff(SafeSlice(a#matrix_to_atom,[..,2])),
+allDiff(SafeSlice(a#matrix_to_atom,[1,..])),
+allDiff(SafeSlice(a#matrix_to_atom,[2,..])),
+allDiff(SafeSlice(a#matrix_to_atom,[3,..])),
+(SafeIndex(a#matrix_to_atom,[1, 1]) = 1),
+(SafeIndex(a#matrix_to_atom,[2, 2]) = 1), 
    ~~> index_matrix_to_atom ([("Base", 5000)])
-allDiff(a#matrix_to_atom[..,1]),
-allDiff(a#matrix_to_atom[..,2]),
-allDiff(a#matrix_to_atom[1,..]),
-allDiff(a#matrix_to_atom[2,..]),
-allDiff(a#matrix_to_atom[3,..]),
+allDiff(SafeSlice(a#matrix_to_atom,[..,1])),
+allDiff(SafeSlice(a#matrix_to_atom,[..,2])),
+allDiff(SafeSlice(a#matrix_to_atom,[1,..])),
+allDiff(SafeSlice(a#matrix_to_atom,[2,..])),
+allDiff(SafeSlice(a#matrix_to_atom,[3,..])),
 (a#matrix_to_atom_1_1 = 1),
 (a#matrix_to_atom_2_2 = 1)
 
 --
 
-a#matrix_to_atom[..,1], 
+SafeSlice(a#matrix_to_atom,[..,1]), 
    ~~> slice_matrix_to_atom ([("Base", 2000)])
 [a#matrix_to_atom_1_1,a#matrix_to_atom_2_1,a#matrix_to_atom_3_1;int(1..)]
 
@@ -111,7 +111,7 @@ __flat_alldiff([a#matrix_to_atom_1_1, a#matrix_to_atom_2_1, a#matrix_to_atom_3_1
 
 --
 
-a#matrix_to_atom[..,2], 
+SafeSlice(a#matrix_to_atom,[..,2]), 
    ~~> slice_matrix_to_atom ([("Base", 2000)])
 [a#matrix_to_atom_1_2,a#matrix_to_atom_2_2,a#matrix_to_atom_3_2;int(1..)]
 
@@ -123,7 +123,7 @@ __flat_alldiff([a#matrix_to_atom_1_2, a#matrix_to_atom_2_2, a#matrix_to_atom_3_2
 
 --
 
-a#matrix_to_atom[1,..], 
+SafeSlice(a#matrix_to_atom,[1,..]), 
    ~~> slice_matrix_to_atom ([("Base", 2000)])
 [a#matrix_to_atom_1_1,a#matrix_to_atom_1_2;int(1..)]
 
@@ -135,7 +135,7 @@ __flat_alldiff([a#matrix_to_atom_1_1, a#matrix_to_atom_1_2])
 
 --
 
-a#matrix_to_atom[2,..], 
+SafeSlice(a#matrix_to_atom,[2,..]), 
    ~~> slice_matrix_to_atom ([("Base", 2000)])
 [a#matrix_to_atom_2_1,a#matrix_to_atom_2_2;int(1..)]
 
@@ -147,7 +147,7 @@ __flat_alldiff([a#matrix_to_atom_2_1, a#matrix_to_atom_2_2])
 
 --
 
-a#matrix_to_atom[3,..], 
+SafeSlice(a#matrix_to_atom,[3,..]), 
    ~~> slice_matrix_to_atom ([("Base", 2000)])
 [a#matrix_to_atom_3_1,a#matrix_to_atom_3_2;int(1..)]
 

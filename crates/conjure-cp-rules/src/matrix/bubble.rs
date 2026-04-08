@@ -1,4 +1,4 @@
-use conjure_cp::ast::{Atom, DomainPtr, GroundDomain, Metadata, eval_constant};
+use conjure_cp::ast::{Atom, DomainPtr, GroundDomain, Metadata, Range, eval_constant};
 use conjure_cp::ast::{Expression, Moo, SymbolTable};
 use conjure_cp::rule_engine::{
     ApplicationError, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
@@ -7,6 +7,54 @@ use conjure_cp::rule_engine::{
 use conjure_cp::{bug, into_matrix_expr};
 use itertools::{Itertools as _, izip};
 
+/// Whether an index expression is provably inside or outside a target domain.
+#[derive(Debug, PartialEq, Eq)]
+enum MembershipProof {
+    AlwaysIn,
+    AlwaysOut,
+    Unknown,
+}
+
+/// Tries to prove whether `index` is always in, always out, or unknown for `domain`.
+fn expression_membership_proof(
+    domain: &GroundDomain,
+    index: &Expression,
+) -> Result<MembershipProof, ApplicationError> {
+    let Some(index_domain) = index.domain_of().and_then(|domain| domain.resolve()) else {
+        return Ok(MembershipProof::Unknown);
+    };
+
+    let Ok(intersection) = index_domain.as_ref().intersect(domain) else {
+        return Ok(MembershipProof::Unknown);
+    };
+
+    if normalise_int_domain(&intersection) == normalise_int_domain(index_domain.as_ref()) {
+        return Ok(MembershipProof::AlwaysIn);
+    }
+
+    if let Ok(values) = intersection.values_i32()
+        && values.is_empty()
+    {
+        return Ok(MembershipProof::AlwaysOut);
+    }
+
+    Ok(MembershipProof::Unknown)
+}
+
+/// Normalises integer domains so equivalent range partitions compare equal.
+fn normalise_int_domain(domain: &GroundDomain) -> GroundDomain {
+    match domain {
+        GroundDomain::Int(ranges) => GroundDomain::Int(Range::squeeze(
+            &ranges
+                .iter()
+                .map(|range| Range::new(range.low().copied(), range.high().copied()))
+                .collect_vec(),
+        )),
+        _ => domain.clone(),
+    }
+}
+
+/// Builds the bubble condition needed to make an unsafe index operation safe.
 fn index_bubble_condition(
     index_domains: &[Moo<GroundDomain>],
     indices: &[Expression],
@@ -24,11 +72,17 @@ fn index_bubble_condition(
                     return Ok(Some(Expression::Atomic(Metadata::new(), Atom::from(false))));
                 }
             },
-            None => bubble_constraints.push(Expression::InDomain(
-                Metadata::new(),
-                Moo::new(index.clone()),
-                DomainPtr::from(domain.clone()),
-            )),
+            None => match expression_membership_proof(domain.as_ref(), index)? {
+                MembershipProof::AlwaysIn => {}
+                MembershipProof::AlwaysOut => {
+                    return Ok(Some(Expression::Atomic(Metadata::new(), Atom::from(false))));
+                }
+                MembershipProof::Unknown => bubble_constraints.push(Expression::InDomain(
+                    Metadata::new(),
+                    Moo::new(index.clone()),
+                    DomainPtr::from(domain.clone()),
+                )),
+            },
         }
     }
 
