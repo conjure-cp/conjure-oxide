@@ -1,0 +1,31 @@
+Model before rewriting:
+
+find a: bool
+find b: bool
+find c: bool
+find d: bool
+
+such that
+
+or([a,b;int(1..)]),
+or([!(c),and([b,d;int(1..)]);int(1..)]),
+b,
+or([d,c;int(1..)])
+
+--
+
+Final model:
+
+find a: bool
+find b: bool
+find c: bool
+find d: bool
+
+such that
+
+or([a,b;int(1..)]),
+or([WatchedLiteral(c,false),b;int(1..)]),
+or([WatchedLiteral(c,false),d;int(1..)]),
+b,
+or([d,c;int(1..)])
+

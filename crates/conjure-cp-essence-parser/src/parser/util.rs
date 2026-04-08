@@ -91,10 +91,24 @@ pub enum TypecheckingContext {
 ///
 /// If successful, returns a tuple containing the syntax tree and the raw source code.
 /// If the source code is not valid Essence, returns None.
+pub fn get_tree(src: &str) -> Option<(Tree, String)> {
+    let mut parser = Parser::new();
+    parser.set_language(&LANGUAGE.into()).unwrap();
+
+    parser.parse(src, None).and_then(|tree| {
+        let root = tree.root_node();
+        if root.is_error() {
+            return None;
+        }
+        Some((tree, src.to_string()))
+    })
+}
+
+/// Parse an expression fragment, allowing a dummy prefix for error recovery.
 ///
 /// NOTE: The new source code may be different from the original source code.
 ///       See implementation for details.
-pub fn get_tree(src: &str) -> Option<(Tree, String)> {
+pub fn get_expr_tree(src: &str) -> Option<(Tree, String)> {
     let mut parser = Parser::new();
     parser.set_language(&LANGUAGE.into()).unwrap();
 
@@ -116,7 +130,7 @@ pub fn get_tree(src: &str) -> Option<(Tree, String)> {
             if src.starts_with("_FRAGMENT_EXPRESSION") {
                 None
             } else {
-                get_tree(&format!("_FRAGMENT_EXPRESSION {src}"))
+                get_expr_tree(&format!("_FRAGMENT_EXPRESSION {src}"))
             }
         } else {
             Some((tree, src.to_string()))

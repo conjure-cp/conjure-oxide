@@ -1,3 +1,4 @@
+use crate::RecoverableParseError;
 use crate::diagnostics::diagnostics_api::SymbolKind;
 use crate::diagnostics::source_map::{HoverInfo, span_with_hover};
 use crate::errors::FatalParseError;
@@ -21,10 +22,13 @@ pub fn parse_expression(
         "comparison_expr" => parse_comparison_expression(ctx, &node),
         "dominance_relation" => parse_dominance_relation(ctx, &node),
         "all_diff_comparison" => parse_all_diff_comparison(ctx, &node),
-        _ => Err(FatalParseError::internal_error(
-            format!("Unexpected expression type: '{}'", node.kind()),
-            Some(node.range()),
-        )),
+        _ => {
+            ctx.record_error(RecoverableParseError::new(
+                format!("Unexpected expression type: '{}'", node.kind()),
+                Some(node.range()),
+            ));
+            Ok(None)
+        }
     }
 }
 
@@ -33,11 +37,16 @@ fn parse_dominance_relation(
     node: &Node,
 ) -> Result<Option<Expression>, FatalParseError> {
     if ctx.root.kind() == "dominance_relation" {
-        return Err(FatalParseError::internal_error(
+        ctx.record_error(RecoverableParseError::new(
             "Nested dominance relations are not allowed".to_string(),
             Some(node.range()),
         ));
+        return Ok(None);
     }
+
+    let Some(inner_node) = field!(recover, ctx, node, "expression") else {
+        return Ok(None);
+    };
 
     // NB: In all other cases, we keep the root the same;
     // However, here we create a new context with the new root so downstream functions
@@ -52,7 +61,7 @@ fn parse_dominance_relation(
         typechecking_context: ctx.typechecking_context,
     };
 
-    let Some(inner) = parse_expression(&mut inner_ctx, field!(node, "expression"))? else {
+    let Some(inner) = parse_expression(&mut inner_ctx, inner_node)? else {
         return Ok(None);
     };
 
@@ -67,7 +76,9 @@ fn parse_arithmetic_expression(
     node: &Node,
 ) -> Result<Option<Expression>, FatalParseError> {
     ctx.typechecking_context = TypecheckingContext::Arithmetic;
-    let inner = named_child!(node);
+    let Some(inner) = named_child!(recover, ctx, node) else {
+        return Ok(None);
+    };
     match inner.kind() {
         "atom" => parse_atom(ctx, &inner),
         "negative_expr" | "abs_value" | "sub_arith_expr" | "factorial_expr" => {
@@ -81,10 +92,13 @@ fn parse_arithmetic_expression(
         "exponent" | "product_expr" | "sum_expr" => parse_binary_expression(ctx, &inner),
         "list_combining_expr_arith" => parse_list_combining_expression(ctx, &inner),
         "aggregate_expr" => parse_quantifier_or_aggregate_expr(ctx, &inner),
-        _ => Err(FatalParseError::internal_error(
-            format!("Expected arithmetic expression, found: {}", inner.kind()),
-            Some(inner.range()),
-        )),
+        _ => {
+            ctx.record_error(RecoverableParseError::new(
+                format!("Expected arithmetic expression, found: {}", inner.kind()),
+                Some(inner.range()),
+            ));
+            Ok(None)
+        }
     }
 }
 
@@ -92,7 +106,9 @@ fn parse_comparison_expression(
     ctx: &mut ParseContext,
     node: &Node,
 ) -> Result<Option<Expression>, FatalParseError> {
-    let inner = named_child!(node);
+    let Some(inner) = named_child!(recover, ctx, node) else {
+        return Ok(None);
+    };
     match inner.kind() {
         "arithmetic_comparison" => {
             // Arithmetic comparisons require arithmetic operands
@@ -105,8 +121,7 @@ fn parse_comparison_expression(
             parse_binary_expression(ctx, &inner)
         }
         "equality_comparison" => {
-            // Equality works on any type
-            // TODO: add type checking to ensure both sides have the same type
+            // Equality works on any type, typechecking of operands will be handled within parse_binary_expression
             ctx.typechecking_context = TypecheckingContext::Unknown;
             parse_binary_expression(ctx, &inner)
         }
@@ -120,10 +135,13 @@ fn parse_comparison_expression(
             ctx.typechecking_context = TypecheckingContext::Unknown;
             parse_all_diff_comparison(ctx, &inner)
         }
-        _ => Err(FatalParseError::internal_error(
-            format!("Expected comparison expression, found '{}'", inner.kind()),
-            Some(inner.range()),
-        )),
+        _ => {
+            ctx.record_error(RecoverableParseError::new(
+                format!("Expected comparison expression, found '{}'", inner.kind()),
+                Some(inner.range()),
+            ));
+            Ok(None)
+        }
     }
 }
 
@@ -132,17 +150,22 @@ fn parse_boolean_expression(
     node: &Node,
 ) -> Result<Option<Expression>, FatalParseError> {
     ctx.typechecking_context = TypecheckingContext::Boolean;
-    let inner = named_child!(node);
+    let Some(inner) = named_child!(recover, ctx, node) else {
+        return Ok(None);
+    };
     match inner.kind() {
         "atom" => parse_atom(ctx, &inner),
         "not_expr" | "sub_bool_expr" => parse_unary_expression(ctx, &inner),
         "and_expr" | "or_expr" | "implication" | "iff_expr" => parse_binary_expression(ctx, &inner),
         "list_combining_expr_bool" => parse_list_combining_expression(ctx, &inner),
         "quantifier_expr" => parse_quantifier_or_aggregate_expr(ctx, &inner),
-        _ => Err(FatalParseError::internal_error(
-            format!("Expected boolean expression, found '{}'", inner.kind()),
-            Some(inner.range()),
-        )),
+        _ => {
+            ctx.record_error(RecoverableParseError::new(
+                format!("Expected boolean expression, found '{}'", inner.kind()),
+                Some(inner.range()),
+            ));
+            Ok(None)
+        }
     }
 }
 
@@ -150,10 +173,15 @@ fn parse_list_combining_expression(
     ctx: &mut ParseContext,
     node: &Node,
 ) -> Result<Option<Expression>, FatalParseError> {
-    let operator_node = field!(node, "operator");
+    let Some(operator_node) = field!(recover, ctx, node, "operator") else {
+        return Ok(None);
+    };
     let operator_str = &ctx.source_code[operator_node.start_byte()..operator_node.end_byte()];
 
-    let Some(inner) = parse_atom(ctx, &field!(node, "arg"))? else {
+    let Some(arg_node) = field!(recover, ctx, node, "arg") else {
+        return Ok(None);
+    };
+    let Some(inner) = parse_atom(ctx, &arg_node)? else {
         return Ok(None);
     };
 
@@ -164,10 +192,13 @@ fn parse_list_combining_expression(
         "product" => Ok(Some(Expression::Product(Metadata::new(), Moo::new(inner)))),
         "min" => Ok(Some(Expression::Min(Metadata::new(), Moo::new(inner)))),
         "max" => Ok(Some(Expression::Max(Metadata::new(), Moo::new(inner)))),
-        _ => Err(FatalParseError::internal_error(
-            format!("Invalid operator: '{operator_str}'"),
-            Some(operator_node.range()),
-        )),
+        _ => {
+            ctx.record_error(RecoverableParseError::new(
+                format!("Invalid operator: '{operator_str}'"),
+                Some(operator_node.range()),
+            ));
+            Ok(None)
+        }
     }
 }
 
@@ -175,7 +206,10 @@ fn parse_all_diff_comparison(
     ctx: &mut ParseContext,
     node: &Node,
 ) -> Result<Option<Expression>, FatalParseError> {
-    let Some(inner) = parse_expression(ctx, field!(node, "arg"))? else {
+    let Some(arg_node) = field!(recover, ctx, node, "arg") else {
+        return Ok(None);
+    };
+    let Some(inner) = parse_expression(ctx, arg_node)? else {
         return Ok(None);
     };
 
@@ -186,7 +220,10 @@ fn parse_unary_expression(
     ctx: &mut ParseContext,
     node: &Node,
 ) -> Result<Option<Expression>, FatalParseError> {
-    let Some(inner) = parse_expression(ctx, field!(node, "expression"))? else {
+    let Some(expr_node) = field!(recover, ctx, node, "expression") else {
+        return Ok(None);
+    };
+    let Some(inner) = parse_expression(ctx, expr_node)? else {
         return Ok(None);
     };
     match node.kind() {
@@ -199,10 +236,13 @@ fn parse_unary_expression(
             Moo::new(inner),
         ))),
         "sub_bool_expr" | "sub_arith_expr" => Ok(Some(inner)),
-        _ => Err(FatalParseError::internal_error(
-            format!("Unrecognised unary operation: '{}'", node.kind()),
-            Some(node.range()),
-        )),
+        _ => {
+            ctx.record_error(RecoverableParseError::new(
+                format!("Unrecognised unary operation: '{}'", node.kind()),
+                Some(node.range()),
+            ));
+            Ok(None)
+        }
     }
 }
 
@@ -221,7 +261,10 @@ pub fn parse_binary_expression(
     }
 
     // parse left operand
-    let Some(left) = parse_expression(ctx, field!(node, "left"))? else {
+    let Some(left_node) = field!(recover, ctx, node, "left") else {
+        return Ok(None);
+    };
+    let Some(left) = parse_expression(ctx, left_node)? else {
         return Ok(None);
     };
 
@@ -234,7 +277,10 @@ pub fn parse_binary_expression(
     }
 
     // parse right operand
-    let Some(right) = parse_expression(ctx, field!(node, "right"))? else {
+    let Some(right_node) = field!(recover, ctx, node, "right") else {
+        return Ok(None);
+    };
+    let Some(right) = parse_expression(ctx, right_node)? else {
         return Ok(None);
     };
 
@@ -391,10 +437,13 @@ pub fn parse_binary_expression(
                 Moo::new(right),
             )))
         }
-        _ => Err(FatalParseError::internal_error(
-            format!("Invalid operator: '{op_str}'"),
-            Some(op_node.range()),
-        )),
+        _ => {
+            ctx.record_error(RecoverableParseError::new(
+                format!("Invalid operator: '{op_str}'"),
+                Some(op_node.range()),
+            ));
+            Ok(None)
+        }
     };
 
     if expr.is_ok() {

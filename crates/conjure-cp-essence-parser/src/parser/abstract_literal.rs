@@ -21,10 +21,13 @@ pub fn parse_abstract(
         "tuple" => parse_tuple(ctx, node),
         "matrix" => parse_matrix(ctx, node),
         "set_literal" => parse_set_literal(ctx, node),
-        _ => Err(FatalParseError::internal_error(
-            format!("Expected abstract literal, got: {}", node.kind()),
-            Some(node.range()),
-        )),
+        _ => {
+            ctx.record_error(RecoverableParseError::new(
+                format!("Expected abstract literal, got: {}", node.kind()),
+                Some(node.range()),
+            ));
+            Ok(None)
+        }
     }
 }
 
@@ -103,11 +106,16 @@ fn parse_record(
 ) -> Result<Option<AbstractLiteral<Expression>>, FatalParseError> {
     let mut values = Vec::new();
     for child in node.children_by_field_name("name_value_pair", &mut node.walk()) {
-        let name_node = field!(child, "name");
+        let Some(name_node) = field!(recover, ctx, child, "name") else {
+            return Ok(None);
+        };
         let name_str = &ctx.source_code[name_node.start_byte()..name_node.end_byte()];
         let name = conjure_cp_core::ast::Name::user(name_str);
 
-        let Some(value) = parse_expression(ctx, field!(child, "value"))? else {
+        let Some(value_node) = field!(recover, ctx, child, "value") else {
+            return Ok(None);
+        };
+        let Some(value) = parse_expression(ctx, value_node)? else {
             return Ok(None);
         };
         values.push(conjure_cp_core::ast::records::RecordValue { name, value });

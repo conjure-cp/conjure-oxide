@@ -18,6 +18,57 @@ use crate::{
     scoped_ptr::Scoped,
 };
 
+unsafe fn take_minion_ffi_error() -> String {
+    let error_ptr = ffi::minion_get_last_error();
+    if error_ptr.is_null() {
+        return "unknown Minion FFI error".to_string();
+    }
+
+    let message = CStr::from_ptr(error_ptr).to_string_lossy().into_owned();
+    ffi::minion_clear_last_error();
+    if message.is_empty() {
+        "unknown Minion FFI error".to_string()
+    } else {
+        message
+    }
+}
+
+unsafe fn new_var_ffi_checked(
+    instance: *mut ffi::ProbSpec_CSPInstance,
+    name: *const c_char,
+    vartype_raw: ffi::VariableType,
+    domain_low: i32,
+    domain_high: i32,
+) -> Result<(), MinionError> {
+    if ffi::newVar_ffi_safe(
+        instance,
+        name as *mut c_char,
+        vartype_raw,
+        domain_low,
+        domain_high,
+    ) {
+        Ok(())
+    } else {
+        Err(MinionError::Other(anyhow!(take_minion_ffi_error())))
+    }
+}
+
+unsafe fn get_var_by_name_checked(
+    instance: *mut ffi::ProbSpec_CSPInstance,
+    name: *const c_char,
+) -> Result<ffi::ProbSpec_Var, MinionError> {
+    let mut var = ffi::ProbSpec_Var {
+        type_m: ffi::VariableType_VAR_CONSTANT,
+        pos_m: 0,
+    };
+
+    if ffi::getVarByName_safe(instance, name as *mut c_char, &mut var) {
+        Ok(var)
+    } else {
+        Err(MinionError::Other(anyhow!(take_minion_ffi_error())))
+    }
+}
+
 /// The callback type used by [`run_minion`].
 ///
 /// Called by Minion whenever a solution is found. The input is
@@ -192,6 +243,12 @@ pub fn run_minion(model: Model, callback: Callback<'_>) -> Result<SolverContext,
         let search_method = ffi::searchMethod_new();
         let search_instance = ffi::instance_new();
 
+        // Use Minion as a quiet library by default. Low-level FFI callers that
+        // want native solver output can opt out by configuring SearchOptions
+        // themselves instead of going through this wrapper.
+        (*search_opts).silent = true;
+        (*search_opts).print_solution = false;
+
         convert_model_to_raw(search_instance, &model, &mut state.print_vars)?;
 
         let userdata = &mut state as *mut CallbackState<'_> as *mut c_void;
@@ -259,15 +316,15 @@ unsafe fn convert_model_to_raw(
             x => Err(MinionError::NotImplemented(format!("{x:?}"))),
         }?;
 
-        ffi::newVar_ffi(
+        new_var_ffi_checked(
             instance,
-            c_str.as_ptr() as _,
+            c_str.as_ptr(),
             vartype_raw,
             domain_low,
             domain_high,
-        );
+        )?;
 
-        let var = ffi::getVarByName(instance, c_str.as_ptr() as _);
+        let var = get_var_by_name_checked(instance, c_str.as_ptr())?;
 
         ffi::printMatrix_addVar(instance, var);
 
@@ -283,7 +340,7 @@ unsafe fn convert_model_to_raw(
                 search_var_name.clone()
             )
         })?;
-        let var = ffi::getVarByName(instance, c_str.as_ptr() as _);
+        let var = get_var_by_name_checked(instance, c_str.as_ptr())?;
         ffi::vec_var_push_back(search_vars.ptr, var);
     }
 
@@ -668,7 +725,7 @@ unsafe fn read_list(
                         name.clone()
                     )
                 })?;
-                ffi::getVarByName(instance, c_str.as_ptr() as _)
+                get_var_by_name_checked(instance, c_str.as_ptr())?
             }
             Var::ConstantAsVar(n) => ffi::constantAsVar(*n),
         };
@@ -695,7 +752,7 @@ unsafe fn read_var(
                     name.clone()
                 )
             })?;
-            ffi::getVarByName(instance, c_str.as_ptr() as _)
+            get_var_by_name_checked(instance, c_str.as_ptr())?
         }
         Var::ConstantAsVar(n) => ffi::constantAsVar(*n),
     };
@@ -720,7 +777,7 @@ unsafe fn read_2_vars(
                     name.clone()
                 )
             })?;
-            ffi::getVarByName(instance, c_str.as_ptr() as _)
+            get_var_by_name_checked(instance, c_str.as_ptr())?
         }
         Var::ConstantAsVar(n) => ffi::constantAsVar(*n),
     };
@@ -732,7 +789,7 @@ unsafe fn read_2_vars(
                     name.clone()
                 )
             })?;
-            ffi::getVarByName(instance, c_str.as_ptr() as _)
+            get_var_by_name_checked(instance, c_str.as_ptr())?
         }
         Var::ConstantAsVar(n) => ffi::constantAsVar(*n),
     };
