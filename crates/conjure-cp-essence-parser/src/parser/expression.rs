@@ -293,7 +293,7 @@ fn rewrite_references(expr: &Expression, to_previous_solution: bool) -> Expressi
                 };
 
                 match action {
-                    ReferenceRewriteAction::LeaveAsIs => Some(subexpr.clone()),
+                    ReferenceRewriteAction::LeaveAsIs => Some(subexpr),
                     ReferenceRewriteAction::ExpandValueLetting => reference.resolve_expression(),
                     ReferenceRewriteAction::WrapInFromSolution => Some(Expression::FromSolution(
                         Metadata::new(),
@@ -301,7 +301,7 @@ fn rewrite_references(expr: &Expression, to_previous_solution: bool) -> Expressi
                     )),
                 }
             }
-            _ => Some(subexpr.clone()),
+            _ => Some(subexpr),
         });
 
         if next == lifted {
