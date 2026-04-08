@@ -291,6 +291,7 @@ fn neg_sat_direct(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     )))
 }
 
+// just for floor division
 fn floor_div(a: i32, b: i32) -> i32 {
     let (q, r) = (a / b, a % b);
     if (r > 0 && b < 0) || (r < 0 && b > 0) {
@@ -309,29 +310,40 @@ fn floor_div(a: i32, b: i32) -> i32 {
 /// ```
 #[register_rule("SAT_Direct", 9100, [SafeDiv])]
 fn safediv_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    // check that expr is a SafeDiv
     let Expr::SafeDiv(_, numer_expr, denom_expr) = expr else {
         return Err(RuleNotApplicable);
     };
 
+    // check that safediv numerator is a Direct-encoded SATInt
     let Expr::SATInt(_, SATIntEncoding::Direct, numer_inner, (numer_min, numer_max)) =
         numer_expr.as_ref()
     else {
         return Err(RuleNotApplicable);
     };
+
+    // check that numerator of safediv expr exists in the domain of the int passed
     let Some(numer_bits) = numer_inner.as_ref().clone().unwrap_list() else {
-        return Err(RuleNotApplicable);
+        conjure_cp::bug!("direct_int_ops::327, this should not be possible to initialise");
+        // return Err(RuleNotApplicable);
     };
 
+    // check that safediv denomerator is a dir-sat-int
     let Expr::SATInt(_, SATIntEncoding::Direct, denom_inner, (denom_min, denom_max)) =
         denom_expr.as_ref()
     else {
         return Err(RuleNotApplicable);
     };
 
+    // check that
     let Some(denom_bits) = denom_inner.as_ref().clone().unwrap_list() else {
-        return Err(RuleNotApplicable);
+        conjure_cp::bug!("direct_int_ops::340, this should not be possible to initialise");
+        // return Err(RuleNotApplicable);
     };
 
+    // find the minimum and maximum quotient possible
+    // loop over both domains, find min and max values of a/b | a \in numerator_domain and
+    // b \in denom_domain
     let mut quot_min = i32::MAX;
     let mut quot_max = i32::MIN;
 
@@ -346,7 +358,8 @@ fn safediv_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let mut new_symbols = symbols.clone();
     let mut quot_bits = Vec::new();
 
-    // generate boolean variables for all possible quotients
+    // generate boolean variables for all possible quotients (min..max)
+    // loop over min..max, then declare a new boolean to represent that number
     for _ in quot_min..=quot_max {
         let decl = new_symbols.gen_find(&conjure_cp::ast::Domain::bool());
         quot_bits.push(Expr::Atomic(

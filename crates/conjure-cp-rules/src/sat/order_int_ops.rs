@@ -302,7 +302,7 @@ fn safediv_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
     let mut new_clauses = vec![];
 
-    // generate the lookup table clauses: (n_i AND d_j) => q_k
+    // generate the lookup table clauses: (n_i AND d_j) => q_k ~~> ~(n_i AND d_j) OR q_k
     for i in *numer_min..=*numer_max {
         let numer_bit = &numer_bits[(i - numer_min) as usize];
         for j in *denom_min..=*denom_max {
