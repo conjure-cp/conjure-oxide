@@ -2,7 +2,9 @@ use crate::{
     Model,
     ast::{Expression, discriminant_from_value},
     bug,
-    settings::{MorphCachingStrategy, MorphConfig, Rewriter, set_current_rewriter},
+    settings::{
+        MorphCachingStrategy, MorphConfig, Rewriter, rule_trace_enabled, set_current_rewriter,
+    },
 };
 use itertools::Itertools;
 use tracing::trace;
@@ -54,11 +56,13 @@ pub fn rewrite_morph<'a>(
 ) -> Model {
     set_current_rewriter(Rewriter::Morph(config));
 
-    trace!(
-        target: "rule_engine_rule_trace",
-        "Model before rewriting:\n\n{}\n--\n",
-        model
-    );
+    if rule_trace_enabled() {
+        trace!(
+            target: "rule_engine_rule_trace",
+            "Model before rewriting:\n\n{}\n--\n",
+            model
+        );
+    }
 
     let rules_grouped = get_rules_grouped(rule_sets)
         .unwrap_or_else(|_| bug!("get_rule_priorities() failed!"))
@@ -104,11 +108,13 @@ pub fn rewrite_morph<'a>(
         }
     }
 
-    trace!(
-        target: "rule_engine_rule_trace",
-        "Final model:\n\n{}",
-        model
-    );
+    if rule_trace_enabled() {
+        trace!(
+            target: "rule_engine_rule_trace",
+            "Final model:\n\n{}",
+            model
+        );
+    }
 
     model
 }
