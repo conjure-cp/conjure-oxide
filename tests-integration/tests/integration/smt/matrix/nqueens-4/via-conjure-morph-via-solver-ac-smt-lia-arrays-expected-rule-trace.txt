@@ -1,0 +1,66 @@
+Model before rewriting:
+
+letting dom be domain int(1..n)
+letting n be 4
+find x: matrix indexed by [dom] of dom
+
+such that
+
+allDiff(x[..]),
+allDiff([ sum([x[i],i;int(1..2)]) | i : dom ]),
+allDiff([ (x[i] - i) | i : dom ])
+
+--
+
+Via-solver generator model before rewriting:
+
+find i: dom
+
+--
+
+Model before rewriting:
+
+find i: dom
+
+--
+
+Final model:
+
+find i: dom
+
+such that
+
+true
+
+Via-solver generator model before rewriting:
+
+find i: dom
+
+--
+
+Model before rewriting:
+
+find i: dom
+
+--
+
+Final model:
+
+find i: dom
+
+such that
+
+true
+
+Final model:
+
+letting dom be domain int(1..n)
+letting n be 4
+find x: matrix indexed by [dom] of dom
+
+such that
+
+allDiff([SafeIndex(x,[1]),SafeIndex(x,[2]),SafeIndex(x,[3]),SafeIndex(x,[4]);int(1..)]),
+allDiff([sum([SafeIndex(x,[1]),1;int(1..)]),sum([SafeIndex(x,[2]),2;int(1..)]),sum([SafeIndex(x,[3]),3;int(1..)]),sum([SafeIndex(x,[4]),4;int(1..)]);int(1..)]),
+allDiff([sum([SafeIndex(x,[1]),-1;int(1..)]),sum([SafeIndex(x,[2]),-2;int(1..)]),sum([SafeIndex(x,[3]),-3;int(1..)]),sum([SafeIndex(x,[4]),-4;int(1..)]);int(1..)])
+

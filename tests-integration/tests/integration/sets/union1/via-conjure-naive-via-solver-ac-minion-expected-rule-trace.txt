@@ -16,33 +16,9 @@ c,
 
 --
 
-a, 
+({1,2,3} = (a union b)), 
    ~~> constant_evaluator ([("Constant", 9001)])
-{2,3}
-
---
-
-b, 
-   ~~> constant_evaluator ([("Constant", 9001)])
-{1,2}
-
---
-
-({1,2,3} = ({2,3} union {1,2})), 
-   ~~> constant_evaluator ([("Constant", 9001)])
-({1,2,3} = {2,3,1})
-
---
-
-({1,2,3} = {2,3,1}), 
-   ~~> eq_to_subset_eq ([("Base", 8800)])
-and([({1,2,3} subsetEq {2,3,1}),({2,3,1} subsetEq {1,2,3});int(1..)])
-
---
-
-and([({1,2,3} subsetEq {2,3,1}),({2,3,1} subsetEq {1,2,3});int(1..)]), 
-   ~~> constant_evaluator ([("Constant", 9001)])
-true
+false
 
 --
 
@@ -54,5 +30,5 @@ letting c be {1,2,3}
 
 such that
 
-true
+false
 

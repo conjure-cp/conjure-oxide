@@ -6,35 +6,35 @@ find z: int(0..6)
 
 such that
 
-!((UnsafeDiv(x, UnsafeDiv(y, z)) = 10))
+!(((x / (y / z)) = 10))
 
 --
 
-UnsafeDiv(y, z), 
+(y / z), 
    ~~> div_to_bubble ([("Bubble", 6000)])
 {SafeDiv(y, z) @ (z != 0)}
 
 --
 
-UnsafeDiv(x, {SafeDiv(y, z) @ (z != 0)}), 
+(x / {SafeDiv(y, z) @ (z != 0)}), 
    ~~> bubble_up ([("Bubble", 8800)])
-{UnsafeDiv(x, SafeDiv(y, z)) @ (z != 0)}
+{(x / SafeDiv(y, z)) @ (z != 0)}
 
 --
 
-({UnsafeDiv(x, SafeDiv(y, z)) @ (z != 0)} = 10), 
+({(x / SafeDiv(y, z)) @ (z != 0)} = 10), 
    ~~> bubble_up ([("Bubble", 8800)])
-{(UnsafeDiv(x, SafeDiv(y, z)) = 10) @ (z != 0)}
+{((x / SafeDiv(y, z)) = 10) @ (z != 0)}
 
 --
 
-{(UnsafeDiv(x, SafeDiv(y, z)) = 10) @ (z != 0)}, 
+{((x / SafeDiv(y, z)) = 10) @ (z != 0)}, 
    ~~> expand_bubble ([("Bubble", 8900)])
-and([(UnsafeDiv(x, SafeDiv(y, z)) = 10),(z != 0);int(1..)])
+and([((x / SafeDiv(y, z)) = 10),(z != 0);int(1..)])
 
 --
 
-UnsafeDiv(x, SafeDiv(y, z)), 
+(x / SafeDiv(y, z)), 
    ~~> div_to_bubble ([("Bubble", 6000)])
 {SafeDiv(x, SafeDiv(y, z)) @ (SafeDiv(y, z) != 0)}
 

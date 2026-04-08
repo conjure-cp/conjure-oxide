@@ -39,61 +39,61 @@ a[2, 2]
 
 a[1, 1], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-a[1, 1]
+SafeIndex(a,[1, 1])
 
 --
 
 b[1], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-b[1]
+SafeIndex(b,[1])
 
 --
 
 a[1, 2], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-a[1, 2]
+SafeIndex(a,[1, 2])
 
 --
 
 b[2], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-b[2]
+SafeIndex(b,[2])
 
 --
 
 a[2, 1], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-a[2, 1]
+SafeIndex(a,[2, 1])
 
 --
 
 b[3], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-b[3]
+SafeIndex(b,[3])
 
 --
 
 a[2, 2], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-a[2, 2]
+SafeIndex(a,[2, 2])
 
 --
 
 b[4], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-b[4]
+SafeIndex(b,[4])
 
 --
 
 flatten(a), 
    ~~> unwrap_flatten_matrix_nonatomic ([("Smt", 999)])
-[a[1, 1],a[1, 2],a[2, 1],a[2, 2];int(1..4)]
+[SafeIndex(a,[1, 1]),SafeIndex(a,[1, 2]),SafeIndex(a,[2, 1]),SafeIndex(a,[2, 2]);int(1..4)]
 
 --
 
-allDiff([a[1, 1],a[1, 2],a[2, 1],a[2, 2];int(1..4)]), 
+allDiff([SafeIndex(a,[1, 1]),SafeIndex(a,[1, 2]),SafeIndex(a,[2, 1]),SafeIndex(a,[2, 2]);int(1..4)]), 
    ~~> matrix_to_list ([("Base", 2000)])
-allDiff([a[1, 1],a[1, 2],a[2, 1],a[2, 2];int(1..)])
+allDiff([SafeIndex(a,[1, 1]),SafeIndex(a,[1, 2]),SafeIndex(a,[2, 1]),SafeIndex(a,[2, 2]);int(1..)])
 
 --
 
@@ -104,9 +104,9 @@ find b: matrix indexed by [int(1..4)] of int(1..4)
 
 such that
 
-allDiff([a[1, 1],a[1, 2],a[2, 1],a[2, 2];int(1..)]),
-(a[1, 1] = b[1]),
-(a[1, 2] = b[2]),
-(a[2, 1] = b[3]),
-(a[2, 2] = b[4])
+allDiff([SafeIndex(a,[1, 1]),SafeIndex(a,[1, 2]),SafeIndex(a,[2, 1]),SafeIndex(a,[2, 2]);int(1..)]),
+(SafeIndex(a,[1, 1]) = SafeIndex(b,[1])),
+(SafeIndex(a,[1, 2]) = SafeIndex(b,[2])),
+(SafeIndex(a,[2, 1]) = SafeIndex(b,[3])),
+(SafeIndex(a,[2, 2]) = SafeIndex(b,[4]))
 

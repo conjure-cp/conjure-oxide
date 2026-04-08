@@ -25,24 +25,24 @@ new variables:
 
 (x#tuple_to_atom = (2,3)), 
    ~~> tuple_to_constant ([("Base", 2000)])
-and([(x#tuple_to_atom[1] = (2,3)[1]),(x#tuple_to_atom[2] = (2,3)[2]);int(1..)])
+and([(SafeIndex(x#tuple_to_atom,[1]) = SafeIndex((2,3),[1])),(SafeIndex(x#tuple_to_atom,[2]) = SafeIndex((2,3),[2]));int(1..)])
 
 --
 
-and([(x#tuple_to_atom[1] = (2,3)[1]),(x#tuple_to_atom[2] = (2,3)[2]);int(1..)]), 
+and([(SafeIndex(x#tuple_to_atom,[1]) = SafeIndex((2,3),[1])),(SafeIndex(x#tuple_to_atom,[2]) = SafeIndex((2,3),[2]));int(1..)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
-(x#tuple_to_atom[1] = 2),
-(x#tuple_to_atom[2] = 3)
+(SafeIndex(x#tuple_to_atom,[1]) = 2),
+(SafeIndex(x#tuple_to_atom,[2]) = 3)
 
 --
 
-x#tuple_to_atom[1], 
+SafeIndex(x#tuple_to_atom,[1]), 
    ~~> index_tuple_to_atom ([("Base", 2000)])
 x#tuple_to_atom_1
 
 --
 
-x#tuple_to_atom[2], 
+SafeIndex(x#tuple_to_atom,[2]), 
    ~~> index_tuple_to_atom ([("Base", 2000)])
 x#tuple_to_atom_2
 
