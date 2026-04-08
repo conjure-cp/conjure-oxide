@@ -271,7 +271,7 @@ fn rewrite_references(expr: &Expression, to_previous_solution: bool) -> Expressi
 
     loop {
         let next = lifted.rewrite(&|subexpr| match subexpr {
-            Expression::Atomic(_, Atom::Reference(reference)) => {
+            Expression::Atomic(_, Atom::Reference(ref reference)) => {
                 let action = {
                     let kind = reference.ptr.kind();
                     match &*kind {
