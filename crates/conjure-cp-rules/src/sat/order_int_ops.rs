@@ -250,7 +250,7 @@ fn add_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     if exprs.is_empty() {
         return Ok(Reduction::pure(Expr::SATInt(
             Metadata::new(),
-            SATIntEncoding::Direct,
+            SATIntEncoding::Order,
             Moo::new(into_matrix_expr!(vec![Expr::Atomic(
                 Metadata::new(),
                 Atom::Literal(Literal::Bool(true)),
@@ -262,7 +262,7 @@ fn add_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let mut new_symbols = symbols.clone();
     let mut new_clauses: Vec<CnfClause> = vec![];
 
-    // Validate all operands are direct SATInts and extract their bit vectors, also calculate a common min and max for all operands to normalize them to the same size by padding with zeroes as needed to simplify the addition logic.
+    // Validate all operands are order SATInts and extract their bit vectors, also calculate a common min and max for all operands to normalize them to the same size by padding with zeroes as needed to simplify the addition logic.
     let (mut operands, common_min, common_max) =
         validate_order_int_operands(exprs).map_err(|_| RuleNotApplicable)?;
 
