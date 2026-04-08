@@ -13,6 +13,12 @@ use crate::rule_engine::rewriter_common::{RuleResult, log_rule_application};
 use tree_morph::prelude::Commands;
 use tree_morph::prelude::Rule as MorphRule;
 
+#[derive(Clone, Debug, Default)]
+pub(crate) struct MorphState {
+    pub symbols: SymbolTable,
+    pub clauses: Vec<CnfClause>,
+}
+
 #[derive(Debug, Error)]
 pub enum ApplicationError {
     #[error("Rule is not applicable")]
@@ -232,19 +238,26 @@ impl Hash for Rule<'_> {
     }
 }
 
-impl MorphRule<Expression, SymbolTable> for Rule<'_> {
+impl MorphRule<Expression, MorphState> for Rule<'_> {
     fn apply(
         &self,
-        commands: &mut Commands<Expression, SymbolTable>,
+        commands: &mut Commands<Expression, MorphState>,
         subtree: &Expression,
-        meta: &SymbolTable,
+        meta: &MorphState,
     ) -> Option<Expression> {
-        let reduction = self.apply(subtree, meta).ok()?;
-        commands.mut_meta(Box::new(|m: &mut SymbolTable| m.extend(reduction.symbols)));
-        if !reduction.new_top.is_empty() {
-            commands.transform(Box::new(|m| m.extend_root(reduction.new_top)));
+        let reduction = self.apply(subtree, &meta.symbols).ok()?;
+        let new_expression = reduction.new_expression;
+        let new_top = reduction.new_top;
+        let added_symbols = reduction.symbols;
+        let added_clauses = reduction.new_clauses;
+        commands.mut_meta(Box::new(move |m: &mut MorphState| {
+            m.symbols.extend(added_symbols);
+            m.clauses.extend(added_clauses);
+        }));
+        if !new_top.is_empty() {
+            commands.transform(Box::new(move |m| m.extend_root(new_top)));
         }
-        Some(reduction.new_expression)
+        Some(new_expression)
     }
 
     fn name(&self) -> &str {
@@ -256,19 +269,26 @@ impl MorphRule<Expression, SymbolTable> for Rule<'_> {
     }
 }
 
-impl MorphRule<Expression, SymbolTable> for &Rule<'_> {
+impl MorphRule<Expression, MorphState> for &Rule<'_> {
     fn apply(
         &self,
-        commands: &mut Commands<Expression, SymbolTable>,
+        commands: &mut Commands<Expression, MorphState>,
         subtree: &Expression,
-        meta: &SymbolTable,
+        meta: &MorphState,
     ) -> Option<Expression> {
-        let reduction = Rule::apply(self, subtree, meta).ok()?;
-        commands.mut_meta(Box::new(|m: &mut SymbolTable| m.extend(reduction.symbols)));
-        if !reduction.new_top.is_empty() {
-            commands.transform(Box::new(|m| m.extend_root(reduction.new_top)));
+        let reduction = Rule::apply(self, subtree, &meta.symbols).ok()?;
+        let new_expression = reduction.new_expression;
+        let new_top = reduction.new_top;
+        let added_symbols = reduction.symbols;
+        let added_clauses = reduction.new_clauses;
+        commands.mut_meta(Box::new(move |m: &mut MorphState| {
+            m.symbols.extend(added_symbols);
+            m.clauses.extend(added_clauses);
+        }));
+        if !new_top.is_empty() {
+            commands.transform(Box::new(move |m| m.extend_root(new_top)));
         }
-        Some(reduction.new_expression)
+        Some(new_expression)
     }
 
     fn name(&self) -> &str {
@@ -276,22 +296,30 @@ impl MorphRule<Expression, SymbolTable> for &Rule<'_> {
     }
 }
 
-impl MorphRule<Expression, Rc<RefCell<SymbolTable>>> for Rule<'_> {
+impl MorphRule<Expression, Rc<RefCell<MorphState>>> for Rule<'_> {
     fn apply(
         &self,
-        commands: &mut Commands<Expression, Rc<RefCell<SymbolTable>>>,
+        commands: &mut Commands<Expression, Rc<RefCell<MorphState>>>,
         subtree: &Expression,
-        meta: &Rc<RefCell<SymbolTable>>,
+        meta: &Rc<RefCell<MorphState>>,
     ) -> Option<Expression> {
-        let symbols = meta.borrow();
-        let reduction = self.apply(subtree, &symbols).ok()?;
-        commands.mut_meta(Box::new(|m| m.borrow_mut().extend(reduction.symbols)));
+        let state = meta.borrow();
+        let reduction = self.apply(subtree, &state.symbols).ok()?;
+        let new_expression = reduction.new_expression;
+        let new_top = reduction.new_top;
+        let added_symbols = reduction.symbols;
+        let added_clauses = reduction.new_clauses;
+        commands.mut_meta(Box::new(move |m| {
+            let mut state = m.borrow_mut();
+            state.symbols.extend(added_symbols);
+            state.clauses.extend(added_clauses);
+        }));
 
-        if !reduction.new_top.is_empty() {
-            commands.transform(Box::new(|m| m.extend_root(reduction.new_top)));
+        if !new_top.is_empty() {
+            commands.transform(Box::new(move |m| m.extend_root(new_top)));
         }
 
-        Some(reduction.new_expression)
+        Some(new_expression)
     }
 
     fn name(&self) -> &str {
@@ -299,27 +327,34 @@ impl MorphRule<Expression, Rc<RefCell<SymbolTable>>> for Rule<'_> {
     }
 }
 
-impl MorphRule<Expression, SymbolTable> for RuleData<'_> {
+impl MorphRule<Expression, MorphState> for RuleData<'_> {
     fn apply(
         &self,
-        commands: &mut Commands<Expression, SymbolTable>,
+        commands: &mut Commands<Expression, MorphState>,
         subtree: &Expression,
-        meta: &SymbolTable,
+        meta: &MorphState,
     ) -> Option<Expression> {
-        let reduction = self.rule.apply(subtree, meta).ok()?;
+        let reduction = self.rule.apply(subtree, &meta.symbols).ok()?;
         let result = RuleResult {
             rule_data: self.clone(),
             reduction: reduction.clone(),
         };
 
-        log_rule_application(&result, subtree, meta, None);
+        log_rule_application(&result, subtree, &meta.symbols, None);
 
-        commands.mut_meta(Box::new(|m: &mut SymbolTable| m.extend(reduction.symbols)));
+        let new_expression = reduction.new_expression;
+        let new_top = reduction.new_top;
+        let added_symbols = reduction.symbols;
+        let added_clauses = reduction.new_clauses;
+        commands.mut_meta(Box::new(move |m: &mut MorphState| {
+            m.symbols.extend(added_symbols);
+            m.clauses.extend(added_clauses);
+        }));
 
-        if !reduction.new_top.is_empty() {
-            commands.transform(Box::new(|m| m.extend_root(reduction.new_top)));
+        if !new_top.is_empty() {
+            commands.transform(Box::new(move |m| m.extend_root(new_top)));
         }
-        Some(reduction.new_expression)
+        Some(new_expression)
     }
 
     fn name(&self) -> &str {

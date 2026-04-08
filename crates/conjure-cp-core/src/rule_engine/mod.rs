@@ -87,6 +87,7 @@ pub use conjure_cp_rule_macros::register_rule_set;
 pub use resolve_rules::{RuleData, get_rules, get_rules_grouped, resolve_rule_sets};
 pub use rewrite_naive::rewrite_naive;
 pub use rewriter_common::RewriteError;
+pub(crate) use rule::MorphState;
 pub use rule::{ApplicationError, ApplicationResult, Reduction, Rule, RuleFn};
 pub use rule_set::RuleSet;
 
