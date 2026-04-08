@@ -1,9 +1,10 @@
 use crate::errors::RecoverableParseError;
 use crate::parser::syntax_errors::is_malformed_line_error;
 
-const KEYWORDS: [&str; 21] = [
+const KEYWORDS: [&str; 24] = [
     "forall", "exists", "such", "that", "letting", "find", "minimise", "maximise", "subject", "to",
     "where", "and", "or", "not", "if", "then", "else", "in", "sum", "product", "bool",
+    "pareto", "minimising", "maximising",
 ];
 
 pub fn keyword_as_identifier(

@@ -355,7 +355,8 @@ module.exports = grammar ({
       field("set_operation", $.set_operation),
       field("flatten", $.flatten),
       field("table", $.table),
-      field("negative_table", $.negative_table)
+      field("negative_table", $.negative_table),
+      field("pareto_expression", $.pareto_expression)
     )),
 
     sub_atom_expr: $ => seq("(", field("expression", $.atom), ")"),
@@ -524,6 +525,26 @@ module.exports = grammar ({
       field("arg", $.atom),
       ")"
     )),
+
+    pareto_expression: $ => seq(
+      "pareto",
+      "(",
+      field("components", choice($.pareto_list, $.pareto_items)),
+      ")"
+    ),
+
+    pareto_items: $ => commaSep1($.pareto_item),
+
+    pareto_item: $ => seq(
+      field("direction", choice("minimising", "maximising")),
+      field("expression", choice($.bool_expr, $.comparison_expr, $.arithmetic_expr, $.atom))
+    ),
+
+    pareto_list: $ => seq(
+      "[",
+      commaSep1(choice($.bool_expr, $.comparison_expr, $.arithmetic_expr, $.atom)),
+      "]"
+    ),
 
     dominance_relation: $ => seq(
       "dominance relation",

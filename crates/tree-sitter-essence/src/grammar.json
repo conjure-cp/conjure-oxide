@@ -2936,6 +2936,14 @@
               "type": "SYMBOL",
               "name": "negative_table"
             }
+          },
+          {
+            "type": "FIELD",
+            "name": "pareto_expression",
+            "content": {
+              "type": "SYMBOL",
+              "name": "pareto_expression"
+            }
           }
         ]
       }
@@ -4344,6 +4352,224 @@
           }
         ]
       }
+    },
+    "pareto_expression": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "pareto"
+        },
+        {
+          "type": "STRING",
+          "value": "("
+        },
+        {
+          "type": "FIELD",
+          "name": "components",
+          "content": {
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "pareto_list"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "pareto_items"
+              }
+            ]
+          }
+        },
+        {
+          "type": "STRING",
+          "value": ")"
+        }
+      ]
+    },
+    "pareto_items": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "SYMBOL",
+          "name": "pareto_item"
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "REPEAT",
+              "content": {
+                "type": "SEQ",
+                "members": [
+                  {
+                    "type": "STRING",
+                    "value": ","
+                  },
+                  {
+                    "type": "SYMBOL",
+                    "name": "pareto_item"
+                  }
+                ]
+              }
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "STRING",
+              "value": ","
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
+        }
+      ]
+    },
+    "pareto_item": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "FIELD",
+          "name": "direction",
+          "content": {
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "STRING",
+                "value": "minimising"
+              },
+              {
+                "type": "STRING",
+                "value": "maximising"
+              }
+            ]
+          }
+        },
+        {
+          "type": "FIELD",
+          "name": "expression",
+          "content": {
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "bool_expr"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "comparison_expr"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "arithmetic_expr"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "atom"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "pareto_list": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "["
+        },
+        {
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "SYMBOL",
+                  "name": "bool_expr"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "comparison_expr"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "arithmetic_expr"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "atom"
+                }
+              ]
+            },
+            {
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "REPEAT",
+                  "content": {
+                    "type": "SEQ",
+                    "members": [
+                      {
+                        "type": "STRING",
+                        "value": ","
+                      },
+                      {
+                        "type": "CHOICE",
+                        "members": [
+                          {
+                            "type": "SYMBOL",
+                            "name": "bool_expr"
+                          },
+                          {
+                            "type": "SYMBOL",
+                            "name": "comparison_expr"
+                          },
+                          {
+                            "type": "SYMBOL",
+                            "name": "arithmetic_expr"
+                          },
+                          {
+                            "type": "SYMBOL",
+                            "name": "atom"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                },
+                {
+                  "type": "BLANK"
+                }
+              ]
+            },
+            {
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "STRING",
+                  "value": ","
+                },
+                {
+                  "type": "BLANK"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "STRING",
+          "value": "]"
+        }
+      ]
     },
     "dominance_relation": {
       "type": "SEQ",
