@@ -242,7 +242,7 @@ fn ineq_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 /// -SATInt(a) ~> SATInt(b)
 ///
 /// ```
-#[register_rule(("SAT_Order", 9100))]
+#[register_rule("SAT_Order", 9100, [Neg])]
 fn neg_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Neg(_, value) = expr else {
         return Err(RuleNotApplicable);
