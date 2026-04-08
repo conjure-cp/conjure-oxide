@@ -1,10 +1,9 @@
 use crate::{
     Model,
-    ast::{Expression, SymbolTable, discriminant_from_value},
+    ast::{Expression, discriminant_from_value},
     bug,
     settings::{
-        MorphCachingStrategy, MorphConfig, Rewriter, default_rule_trace_enabled,
-        rule_trace_enabled, set_current_rewriter,
+        MorphCachingStrategy, MorphConfig, Rewriter, rule_trace_enabled, set_current_rewriter,
     },
 };
 use itertools::Itertools;
@@ -16,7 +15,8 @@ use tree_morph::{
 };
 
 use super::{
-    RuleData, RuleSet, get_rules_grouped, rewriter_common::try_rewrite_value_letting_once,
+    MorphState, RuleData, RuleSet, get_rules_grouped,
+    rewriter_common::try_rewrite_value_letting_once,
 };
 
 /// Rewrites a `Model` by applying rule sets using an optimized, tree-morphing rewriter.
@@ -56,7 +56,7 @@ pub fn rewrite_morph<'a>(
 ) -> Model {
     set_current_rewriter(Rewriter::Morph(config));
 
-    if rule_trace_enabled() && default_rule_trace_enabled() {
+    if rule_trace_enabled() {
         trace!(
             target: "rule_engine_rule_trace",
             "Model before rewriting:\n\n{}\n--\n",
@@ -83,13 +83,18 @@ pub fn rewrite_morph<'a>(
             continue;
         }
 
-        let (expr, symbol_table) = if config.naive {
-            engine.morph_naive(model_ref.root().clone(), model_ref.symbols().clone())
+        let initial_state = MorphState {
+            symbols: model_ref.symbols().clone(),
+            clauses: model_ref.clauses().clone(),
+        };
+        let (expr, morph_state) = if config.naive {
+            engine.morph_naive(model_ref.root().clone(), initial_state)
         } else {
-            engine.morph(model_ref.root().clone(), model_ref.symbols().clone())
+            engine.morph(model_ref.root().clone(), initial_state)
         };
 
-        *model_ref.symbols_mut() = symbol_table;
+        *model_ref.symbols_mut() = morph_state.symbols;
+        model_ref.replace_clauses(morph_state.clauses);
         model_ref.replace_root(expr);
 
         if try_rewrite_value_letting_once(
@@ -103,7 +108,7 @@ pub fn rewrite_morph<'a>(
         }
     }
 
-    if rule_trace_enabled() && default_rule_trace_enabled() {
+    if rule_trace_enabled() {
         trace!(
             target: "rule_engine_rule_trace",
             "Final model:\n\n{}",
@@ -118,7 +123,7 @@ fn build_engine<'a>(
     rules_grouped: &Vec<(u16, Vec<RuleData<'a>>)>,
     prop_multiple_equally_applicable: bool,
     config: MorphConfig,
-) -> Engine<Expression, SymbolTable, RuleData<'a>, Box<dyn RewriteCache<Expression>>> {
+) -> Engine<Expression, MorphState, RuleData<'a>, Box<dyn RewriteCache<Expression>>> {
     let morph_rule_groups = rules_grouped
         .iter()
         .map(|(_, rules)| rules.clone())

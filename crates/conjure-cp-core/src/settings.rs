@@ -70,9 +70,9 @@ pub struct MorphConfig {
 impl Default for MorphConfig {
     fn default() -> Self {
         Self {
-            cache: MorphCachingStrategy::default(),
-            prefilter: true,
-            naive: false,
+            cache: MorphCachingStrategy::NoCache,
+            prefilter: false,
+            naive: true,
             fixedpoint: false,
         }
     }
@@ -81,20 +81,27 @@ impl Default for MorphConfig {
 impl Display for MorphConfig {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "morph")?;
-        write!(f, "-{}", if self.naive { "levelsoff" } else { "levelson" })?;
-        write!(f, "-{}", self.cache)?;
-        write!(
-            f,
-            "-{}",
-            if self.prefilter {
-                "prefilteron"
-            } else {
-                "prefilteroff"
-            }
-        )?;
-        if self.fixedpoint {
-            write!(f, "-fixedpoint")?;
+
+        let mut features = Vec::new();
+        if !self.naive {
+            features.push("levelson");
         }
+        match self.cache {
+            MorphCachingStrategy::NoCache => {}
+            MorphCachingStrategy::Cache => features.push("cache"),
+            MorphCachingStrategy::IncrementalCache => features.push("inccache"),
+        }
+        if self.prefilter {
+            features.push("prefilteron");
+        }
+        if self.fixedpoint {
+            features.push("fixedpoint");
+        }
+
+        if !features.is_empty() {
+            write!(f, "-{}", features.join("-"))?;
+        }
+
         Ok(())
     }
 }
@@ -158,79 +165,81 @@ impl FromStr for Rewriter {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.trim().to_ascii_lowercase().as_str() {
+        let trimmed = s.trim().to_ascii_lowercase();
+        match trimmed.as_str() {
             "naive" => Ok(Rewriter::Naive),
             "morph" => Ok(Rewriter::Morph(MorphConfig::default())),
             other => {
                 if !other.starts_with("morph-") {
                     return Err(format!(
-                        "unknown rewriter: {other}; expected one of: naive, morph, morph-[levelson|levelsoff]-[nocache|cache|inccache]-[prefilteron|prefilteroff]-[fixedpoint]"
+                        "unknown rewriter: {other}; expected one of: naive, morph, morph-[levelson]-[cache|inccache]-[prefilteron]-[fixedpoint]"
                     ));
                 }
 
                 let parts = other.split('-').skip(1);
-                let mut config = MorphConfig::default();
-                let mut cache_set = false;
-                let mut levels_set = false;
-                let mut prefilter_set = false;
-                for token in parts {
-                    match token {
-                        "" => (),
-                        "levelson" => {
-                            if levels_set {
-                                return Err("conflicting levels options: only one of levelson|levelsoff is allowed".to_string());
-                            }
-                            config.naive = false;
-                            levels_set = true;
-                        }
-                        "levelsoff" => {
-                            if levels_set {
-                                return Err("conflicting levels options: only one of levelson|levelsoff is allowed".to_string());
-                            }
-                            config.naive = true;
-                            levels_set = true;
-                        }
-                        "nocache" | "cache" | "inccache" => {
-                            if cache_set {
-                                return Err("conflicting cache options: only one of nocache|cache|inccache is allowed".to_string());
-                            }
-                            config.cache = match token {
-                                "nocache" => MorphCachingStrategy::NoCache,
-                                "cache" => MorphCachingStrategy::Cache,
-                                "inccache" => MorphCachingStrategy::IncrementalCache,
-                                _ => unreachable!(),
-                            };
-                            cache_set = true;
-                        }
-                        "prefilteron" => {
-                            if prefilter_set {
-                                return Err("conflicting prefilter options: only one of prefilteron|prefilteroff is allowed".to_string());
-                            }
-                            config.prefilter = true;
-                            prefilter_set = true;
-                        }
-                        "prefilteroff" => {
-                            if prefilter_set {
-                                return Err("conflicting prefilter options: only one of prefilteron|prefilteroff is allowed".to_string());
-                            }
-                            config.prefilter = false;
-                            prefilter_set = true;
-                        }
-                        "fixedpoint" => {
-                            config.fixedpoint = true;
-                        }
-                        other_token => {
-                            return Err(format!(
-                                "unknown morph option '{other_token}', must be one of levelson|levelsoff|nocache|cache|inccache|prefilteron|prefilteroff|fixedpoint"
-                            ));
-                        }
-                    }
-                }
-
-                Ok(Rewriter::Morph(config))
+                Ok(Rewriter::Morph(parse_morph_config_tokens(parts)?))
             }
         }
     }
+}
+
+fn parse_morph_config_tokens<'a>(
+    tokens: impl IntoIterator<Item = &'a str>,
+) -> Result<MorphConfig, String> {
+    let mut config = MorphConfig::default();
+    let mut cache_set = false;
+    let mut levels_set = false;
+    let mut prefilter_set = false;
+
+    for token in tokens {
+        match token {
+            "" => (),
+            "levelson" => {
+                if levels_set {
+                    return Err(
+                        "conflicting levels options: only one levels setting is allowed"
+                            .to_string(),
+                    );
+                }
+                config.naive = false;
+                levels_set = true;
+            }
+            "cache" | "inccache" => {
+                if cache_set {
+                    return Err(
+                        "conflicting cache options: only one of cache|inccache is allowed"
+                            .to_string(),
+                    );
+                }
+                config.cache = match token {
+                    "cache" => MorphCachingStrategy::Cache,
+                    "inccache" => MorphCachingStrategy::IncrementalCache,
+                    _ => unreachable!(),
+                };
+                cache_set = true;
+            }
+            "prefilteron" => {
+                if prefilter_set {
+                    return Err(
+                        "conflicting prefilter options: only one prefilter setting is allowed"
+                            .to_string(),
+                    );
+                }
+                config.prefilter = true;
+                prefilter_set = true;
+            }
+            "fixedpoint" => {
+                config.fixedpoint = true;
+            }
+            other_token => {
+                return Err(format!(
+                    "unknown morph option '{other_token}', must be one of levelson|cache|inccache|prefilteron|fixedpoint"
+                ));
+            }
+        }
+    }
+
+    Ok(config)
 }
 
 pub fn set_current_rewriter(rewriter: Rewriter) {
