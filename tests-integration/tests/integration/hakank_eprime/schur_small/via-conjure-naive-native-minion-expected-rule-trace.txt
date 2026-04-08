@@ -39,47 +39,53 @@ and([true,!(and([(schur[1] = schur[1]),(schur[1] = schur[2]);int(1..2)])),true,t
 
 schur#matrix_to_atom[1], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-schur#matrix_to_atom[1]
+SafeIndex(schur#matrix_to_atom,[1])
 
 --
 
 schur#matrix_to_atom[1], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-schur#matrix_to_atom[1]
+SafeIndex(schur#matrix_to_atom,[1])
+
+--
+
+!(and([(SafeIndex(schur#matrix_to_atom,[1]) = SafeIndex(schur#matrix_to_atom,[1])),(schur#matrix_to_atom[1] = schur#matrix_to_atom[2]);int(1..2)])), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+!(and([true,(schur#matrix_to_atom[1] = schur#matrix_to_atom[2]);int(1..2)]))
 
 --
 
 schur#matrix_to_atom[1], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-schur#matrix_to_atom[1]
+SafeIndex(schur#matrix_to_atom,[1])
 
 --
 
 schur#matrix_to_atom[2], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-schur#matrix_to_atom[2]
+SafeIndex(schur#matrix_to_atom,[2])
 
 --
 
-!(and([(schur#matrix_to_atom[1] = schur#matrix_to_atom[1]),(schur#matrix_to_atom[1] = schur#matrix_to_atom[2]);int(1..2)])), 
+!(and([true,(SafeIndex(schur#matrix_to_atom,[1]) = SafeIndex(schur#matrix_to_atom,[2]));int(1..2)])), 
    ~~> index_matrix_to_atom ([("Base", 5000)])
-!(and([(schur#matrix_to_atom_1 = schur#matrix_to_atom_1),(schur#matrix_to_atom_1 = schur#matrix_to_atom_2);int(1..2)]))
+!(and([true,(schur#matrix_to_atom_1 = schur#matrix_to_atom_2);int(1..2)]))
 
 --
 
-!(and([(schur#matrix_to_atom_1 = schur#matrix_to_atom_1),(schur#matrix_to_atom_1 = schur#matrix_to_atom_2);int(1..2)])), 
+!(and([true,(schur#matrix_to_atom_1 = schur#matrix_to_atom_2);int(1..2)])), 
    ~~> flatten_generic ([("Minion", 4200)])
 !(__0)
 new variables:
   find __0: bool
 new constraints:
-  __0 =aux and([(schur#matrix_to_atom_1 = schur#matrix_to_atom_1),(schur#matrix_to_atom_1 = schur#matrix_to_atom_2);int(1..2)])
+  __0 =aux and([true,(schur#matrix_to_atom_1 = schur#matrix_to_atom_2);int(1..2)])
 
 --
 
-__0 =aux and([(schur#matrix_to_atom_1 = schur#matrix_to_atom_1),(schur#matrix_to_atom_1 = schur#matrix_to_atom_2);int(1..2)]), 
+__0 =aux and([true,(schur#matrix_to_atom_1 = schur#matrix_to_atom_2);int(1..2)]), 
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(and([(schur#matrix_to_atom_1 = schur#matrix_to_atom_1),(schur#matrix_to_atom_1 = schur#matrix_to_atom_2);int(1..2)]), __0)
+Reify(and([true,(schur#matrix_to_atom_1 = schur#matrix_to_atom_2);int(1..2)]), __0)
 
 --
 
@@ -89,9 +95,23 @@ WatchedLiteral(__0,false)
 
 --
 
-and([(schur#matrix_to_atom_1 = schur#matrix_to_atom_1),(schur#matrix_to_atom_1 = schur#matrix_to_atom_2);int(1..2)]), 
+and([true,(schur#matrix_to_atom_1 = schur#matrix_to_atom_2);int(1..2)]), 
    ~~> matrix_to_list ([("Base", 2000)])
-and([(schur#matrix_to_atom_1 = schur#matrix_to_atom_1),(schur#matrix_to_atom_1 = schur#matrix_to_atom_2);int(1..)])
+and([true,(schur#matrix_to_atom_1 = schur#matrix_to_atom_2);int(1..)])
+
+--
+
+WatchedLiteral(__0,false),
+Reify(and([true,(schur#matrix_to_atom_1 = schur#matrix_to_atom_2);int(1..)]), __0), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+WatchedLiteral(__0,false),
+Reify(and([(schur#matrix_to_atom_1 = schur#matrix_to_atom_2);int(1..)]), __0)
+
+--
+
+and([(schur#matrix_to_atom_1 = schur#matrix_to_atom_2);int(1..)]), 
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+(schur#matrix_to_atom_1 = schur#matrix_to_atom_2)
 
 --
 
@@ -107,5 +127,5 @@ find schur#matrix_to_atom_2: int(1..3)
 such that
 
 WatchedLiteral(__0,false),
-Reify(and([(schur#matrix_to_atom_1 = schur#matrix_to_atom_1),(schur#matrix_to_atom_1 = schur#matrix_to_atom_2);int(1..)]), __0)
+Reify((schur#matrix_to_atom_1 = schur#matrix_to_atom_2), __0)
 

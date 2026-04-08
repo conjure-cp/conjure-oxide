@@ -6,7 +6,7 @@ use conjure_cp::parse::tree_sitter::parse_essence_file_native;
 use conjure_cp::rule_engine::{rewrite_morph, rewrite_naive};
 use conjure_cp::solver::Solver;
 use conjure_cp::solver::adaptors::*;
-use conjure_cp_cli::utils::testing::{normalize_solutions_for_comparison, read_human_rule_trace};
+use conjure_cp_cli::utils::testing::{normalize_solutions_for_comparison, read_default_rule_trace};
 use std::collections::{BTreeMap, BTreeSet};
 use std::env;
 use std::error::Error;
@@ -25,7 +25,8 @@ use conjure_cp::rule_engine::resolve_rule_sets;
 use conjure_cp::settings::{
     Parser, QuantifiedExpander, Rewriter, SolverFamily, set_comprehension_expander,
     set_current_parser, set_current_rewriter, set_current_solver_family,
-    set_minion_discrete_threshold,
+    set_default_rule_trace_enabled, set_minion_discrete_threshold,
+    set_rule_trace_aggregates_enabled, set_rule_trace_enabled, set_rule_trace_verbose_enabled,
 };
 use conjure_cp_cli::utils::conjure::solutions_to_json;
 use conjure_cp_cli::utils::conjure::{get_solutions, get_solutions_from_conjure};
@@ -136,15 +137,20 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
                                 .with_level(false)
                                 .without_time()
                                 .with_target(false)
-                                .with_filter(EnvFilter::new("rule_engine_human=trace"))
+                                .with_filter(EnvFilter::new("rule_engine_rule_trace=trace"))
                                 .with_filter(FilterFn::new(|meta| {
-                                    meta.target() == "rule_engine_human"
+                                    meta.target() == "rule_engine_rule_trace"
                                 })),
                         ),
                     )
                         as Arc<dyn tracing::Subscriber + Send + Sync>;
                     let run_label = run_case_label(path, essence_base, extension, run_case);
                     eprintln!("[integration] running {run_label}");
+                    let default_rule_trace_enabled = matches!(rewriter, Rewriter::Naive);
+                    set_rule_trace_enabled(true);
+                    set_default_rule_trace_enabled(default_rule_trace_enabled);
+                    set_rule_trace_verbose_enabled(false);
+                    set_rule_trace_aggregates_enabled(false);
                     tracing::subscriber::with_default(subscriber, || {
                         integration_test_inner(
                             path,
@@ -238,7 +244,6 @@ fn integration_test_inner(
         }
         Parser::ViaConjure => parse_essence_file(&file_path, context.clone())?,
     };
-
     // Stage 2a: Rewrite the model using the rule engine
     let mut extra_rules = vec![];
 
@@ -255,7 +260,7 @@ fn integration_test_inner(
 
     let rewritten_model = match rewriter {
         Rewriter::Naive => rewrite_naive(&model, &rule_sets, false)?,
-        Rewriter::Morph => rewrite_morph(model, &rule_sets, false),
+        Rewriter::Morph(config) => rewrite_morph(model, &rule_sets, false, config),
     };
     let solver_input_file = None;
     let solver = match solver_fam {
@@ -266,7 +271,7 @@ fn integration_test_inner(
     };
 
     let solutions = {
-        let solved = get_solutions(solver, rewritten_model, 0, &solver_input_file)?;
+        let solved = get_solutions(solver, rewritten_model, 0, &solver_input_file, false)?;
         save_solutions_json(&solved, path, case_name, solver_fam)?;
         solved
     };
@@ -307,10 +312,10 @@ fn integration_test_inner(
 
     // TODO: Implement rule trace validation for morph
     match rewriter {
-        Rewriter::Morph => {}
+        Rewriter::Morph(_) => {}
         Rewriter::Naive => {
-            let generated = read_human_rule_trace(path, case_name, "generated", &solver_fam)?;
-            let expected = read_human_rule_trace(path, case_name, "expected", &solver_fam)?;
+            let generated = read_default_rule_trace(path, case_name, "generated", &solver_fam)?;
+            let expected = read_default_rule_trace(path, case_name, "expected", &solver_fam)?;
 
             assert_eq!(
                 expected, generated,

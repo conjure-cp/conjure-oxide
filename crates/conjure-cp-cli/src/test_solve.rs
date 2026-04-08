@@ -64,6 +64,7 @@ pub fn run_test_solve_command(global_args: GlobalArgs, local_args: Args) -> anyh
         rewritten_model,
         0,
         &global_args.save_solver_input_file,
+        global_args.rule_trace_cdp,
     )?;
 
     let conjure_solutions = get_solutions_from_conjure(

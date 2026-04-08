@@ -1,0 +1,34 @@
+Model before rewriting:
+
+find a: int(-1..2)
+find b: int(-1..2)
+find c: int(1..2)
+find m: matrix indexed by [int(1..2)] of int(1..2)
+find z: bool
+
+such that
+
+(z) <-> ((m[sum([a,b;int(1..)])] = c))
+
+--
+
+Final model:
+
+find a: int(-1..2)
+find b: int(-1..2)
+find c: int(1..2)
+find m: matrix indexed by [int(1..2)] of int(1..2)
+find z: bool
+find __0: int(-2..4)
+find __1: int(-2..4)
+find m#matrix_to_atom_1: int(1..2)
+find m#matrix_to_atom_2: int(1..2)
+
+such that
+
+Reify(and([__minion_element_one([m#matrix_to_atom_1,m#matrix_to_atom_2],__0,c),__minion_w_inintervalset(__1,[1,2]);int(1..)]), z),
+SumLeq([0, a, b], __0),
+SumGeq([0, a, b], __0),
+SumLeq([a, b], __1),
+SumGeq([a, b], __1)
+

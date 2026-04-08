@@ -3,7 +3,7 @@ use conjure_cp_essence_parser::util::node_is_expression;
 use conjure_cp_essence_parser::{
     diagnostics::source_map::SourceMap,
     expression::parse_expression,
-    util::{get_tree, query_toplevel},
+    util::{get_expr_tree, query_toplevel},
 };
 use polyquine::Quine;
 use proc_macro2::{TokenStream, TokenTree};
@@ -15,7 +15,7 @@ use tree_sitter::Node;
 pub fn expand_expr(essence: &TokenTree) -> Result<TokenStream> {
     let src = to_src(essence);
     let (tree, source_code) =
-        get_tree(&src).ok_or(Error::new(essence.span(), "Could not parse Essence AST"))?;
+        get_expr_tree(&src).ok_or(Error::new(essence.span(), "Could not parse Essence AST"))?;
     let root = tree.root_node();
 
     // Get top level expressions
@@ -44,7 +44,7 @@ pub fn expand_expr_vec(tt: &TokenTree) -> Result<TokenStream> {
     let mut ans: Vec<TokenStream> = Vec::new();
     let src = to_src(tt);
     let (tree, source_code) =
-        get_tree(&src).ok_or(Error::new(tt.span(), "Could not parse Essence AST"))?;
+        get_expr_tree(&src).ok_or(Error::new(tt.span(), "Could not parse Essence AST"))?;
     let root = tree.root_node();
 
     let query = query_toplevel(&root, &node_is_expression);

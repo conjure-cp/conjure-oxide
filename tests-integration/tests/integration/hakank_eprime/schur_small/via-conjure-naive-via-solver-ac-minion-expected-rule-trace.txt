@@ -43,55 +43,31 @@ new variables:
 
 __0#matrix_to_atom[i], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-{__0#matrix_to_atom[i] @ __inDomain(i,int(1..2))}
-
---
-
-(true != ((sum([i,j;int(1..2)]) = k)) -> (!(and([({__0#matrix_to_atom[i] @ __inDomain(i,int(1..2))} = __0#matrix_to_atom[j]),(__0#matrix_to_atom[j] = __0#matrix_to_atom[k]);int(1..2)])))), 
-   ~~> constant_evaluator ([("Constant", 9001)])
-(true != ((sum([i,j;int(1..2)]) = k)) -> (!(and([(__0#matrix_to_atom[i] = __0#matrix_to_atom[j]),(__0#matrix_to_atom[j] = __0#matrix_to_atom[k]);int(1..2)]))))
+SafeIndex(__0#matrix_to_atom,[i])
 
 --
 
 __0#matrix_to_atom[j], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-{__0#matrix_to_atom[j] @ __inDomain(j,int(1..2))}
-
---
-
-(true != ((sum([i,j;int(1..2)]) = k)) -> (!(and([(__0#matrix_to_atom[i] = {__0#matrix_to_atom[j] @ __inDomain(j,int(1..2))}),(__0#matrix_to_atom[j] = __0#matrix_to_atom[k]);int(1..2)])))), 
-   ~~> constant_evaluator ([("Constant", 9001)])
-(true != ((sum([i,j;int(1..2)]) = k)) -> (!(and([(__0#matrix_to_atom[i] = __0#matrix_to_atom[j]),(__0#matrix_to_atom[j] = __0#matrix_to_atom[k]);int(1..2)]))))
+SafeIndex(__0#matrix_to_atom,[j])
 
 --
 
 __0#matrix_to_atom[j], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-{__0#matrix_to_atom[j] @ __inDomain(j,int(1..2))}
-
---
-
-(true != ((sum([i,j;int(1..2)]) = k)) -> (!(and([(__0#matrix_to_atom[i] = __0#matrix_to_atom[j]),({__0#matrix_to_atom[j] @ __inDomain(j,int(1..2))} = __0#matrix_to_atom[k]);int(1..2)])))), 
-   ~~> constant_evaluator ([("Constant", 9001)])
-(true != ((sum([i,j;int(1..2)]) = k)) -> (!(and([(__0#matrix_to_atom[i] = __0#matrix_to_atom[j]),(__0#matrix_to_atom[j] = __0#matrix_to_atom[k]);int(1..2)]))))
+SafeIndex(__0#matrix_to_atom,[j])
 
 --
 
 __0#matrix_to_atom[k], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-{__0#matrix_to_atom[k] @ __inDomain(k,int(1..2))}
+SafeIndex(__0#matrix_to_atom,[k])
 
 --
 
-(true != ((sum([i,j;int(1..2)]) = k)) -> (!(and([(__0#matrix_to_atom[i] = __0#matrix_to_atom[j]),(__0#matrix_to_atom[j] = {__0#matrix_to_atom[k] @ __inDomain(k,int(1..2))});int(1..2)])))), 
-   ~~> constant_evaluator ([("Constant", 9001)])
-(true != ((sum([i,j;int(1..2)]) = k)) -> (!(and([(__0#matrix_to_atom[i] = __0#matrix_to_atom[j]),(__0#matrix_to_atom[j] = __0#matrix_to_atom[k]);int(1..2)]))))
-
---
-
-(true != ((sum([i,j;int(1..2)]) = k)) -> (!(and([(__0#matrix_to_atom[i] = __0#matrix_to_atom[j]),(__0#matrix_to_atom[j] = __0#matrix_to_atom[k]);int(1..2)])))), 
+(true != ((sum([i,j;int(1..2)]) = k)) -> (!(and([(SafeIndex(__0#matrix_to_atom,[i]) = SafeIndex(__0#matrix_to_atom,[j])),(SafeIndex(__0#matrix_to_atom,[j]) = SafeIndex(__0#matrix_to_atom,[k]));int(1..2)])))), 
    ~~> index_matrix_to_atom ([("Base", 5000)])
-(true != ((sum([i,j;int(1..2)]) = k)) -> (!(and([([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][(i - 0)] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][(j - 0)]),([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][(j - 0)] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][(k - 0)]);int(1..2)]))))
+(true != ((sum([i,j;int(1..2)]) = k)) -> (!(and([(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[(i - 0)]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[(j - 0)])),(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[(j - 0)]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[(k - 0)]));int(1..2)]))))
 
 --
 
@@ -101,9 +77,9 @@ sum([i,-(0);int(1..)])
 
 --
 
-(true != ((sum([i,j;int(1..2)]) = k)) -> (!(and([([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([i,-(0);int(1..)])] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][(j - 0)]),([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][(j - 0)] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][(k - 0)]);int(1..2)])))), 
+(true != ((sum([i,j;int(1..2)]) = k)) -> (!(and([(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([i,-(0);int(1..)])]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[(j - 0)])),(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[(j - 0)]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[(k - 0)]));int(1..2)])))), 
    ~~> constant_evaluator ([("Constant", 9001)])
-(true != ((sum([i,j;int(1..2)]) = k)) -> (!(and([([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([i,0;int(1..)])] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][(j - 0)]),([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][(j - 0)] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][(k - 0)]);int(1..2)]))))
+(true != ((sum([i,j;int(1..2)]) = k)) -> (!(and([(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([i,0;int(1..)])]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[(j - 0)])),(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[(j - 0)]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[(k - 0)]));int(1..2)]))))
 
 --
 
@@ -113,9 +89,9 @@ sum([j,-(0);int(1..)])
 
 --
 
-(true != ((sum([i,j;int(1..2)]) = k)) -> (!(and([([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([i,0;int(1..)])] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([j,-(0);int(1..)])]),([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][(j - 0)] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][(k - 0)]);int(1..2)])))), 
+(true != ((sum([i,j;int(1..2)]) = k)) -> (!(and([(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([i,0;int(1..)])]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([j,-(0);int(1..)])])),(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[(j - 0)]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[(k - 0)]));int(1..2)])))), 
    ~~> constant_evaluator ([("Constant", 9001)])
-(true != ((sum([i,j;int(1..2)]) = k)) -> (!(and([([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([i,0;int(1..)])] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([j,0;int(1..)])]),([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][(j - 0)] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][(k - 0)]);int(1..2)]))))
+(true != ((sum([i,j;int(1..2)]) = k)) -> (!(and([(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([i,0;int(1..)])]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([j,0;int(1..)])])),(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[(j - 0)]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[(k - 0)]));int(1..2)]))))
 
 --
 
@@ -125,9 +101,9 @@ sum([j,-(0);int(1..)])
 
 --
 
-(true != ((sum([i,j;int(1..2)]) = k)) -> (!(and([([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([i,0;int(1..)])] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([j,0;int(1..)])]),([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([j,-(0);int(1..)])] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][(k - 0)]);int(1..2)])))), 
+(true != ((sum([i,j;int(1..2)]) = k)) -> (!(and([(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([i,0;int(1..)])]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([j,0;int(1..)])])),(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([j,-(0);int(1..)])]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[(k - 0)]));int(1..2)])))), 
    ~~> constant_evaluator ([("Constant", 9001)])
-(true != ((sum([i,j;int(1..2)]) = k)) -> (!(and([([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([i,0;int(1..)])] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([j,0;int(1..)])]),([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([j,0;int(1..)])] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][(k - 0)]);int(1..2)]))))
+(true != ((sum([i,j;int(1..2)]) = k)) -> (!(and([(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([i,0;int(1..)])]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([j,0;int(1..)])])),(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([j,0;int(1..)])]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[(k - 0)]));int(1..2)]))))
 
 --
 
@@ -137,31 +113,31 @@ sum([k,-(0);int(1..)])
 
 --
 
-(true != ((sum([i,j;int(1..2)]) = k)) -> (!(and([([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([i,0;int(1..)])] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([j,0;int(1..)])]),([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([j,0;int(1..)])] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([k,-(0);int(1..)])]);int(1..2)])))), 
+(true != ((sum([i,j;int(1..2)]) = k)) -> (!(and([(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([i,0;int(1..)])]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([j,0;int(1..)])])),(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([j,0;int(1..)])]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([k,-(0);int(1..)])]));int(1..2)])))), 
    ~~> constant_evaluator ([("Constant", 9001)])
-(true != ((sum([i,j;int(1..2)]) = k)) -> (!(and([([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([i,0;int(1..)])] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([j,0;int(1..)])]),([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([j,0;int(1..)])] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([k,0;int(1..)])]);int(1..2)]))))
+(true != ((sum([i,j;int(1..2)]) = k)) -> (!(and([(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([i,0;int(1..)])]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([j,0;int(1..)])])),(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([j,0;int(1..)])]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([k,0;int(1..)])]));int(1..2)]))))
 
 --
 
-(true != ((sum([i,j;int(1..2)]) = k)) -> (!(and([([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([i,0;int(1..)])] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([j,0;int(1..)])]),([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([j,0;int(1..)])] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([k,0;int(1..)])]);int(1..2)])))), 
+(true != ((sum([i,j;int(1..2)]) = k)) -> (!(and([(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([i,0;int(1..)])]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([j,0;int(1..)])])),(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([j,0;int(1..)])]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([k,0;int(1..)])]));int(1..2)])))), 
    ~~> flatten_generic ([("Minion", 4200)])
 (true != __1)
 new variables:
   find __1: bool
 new constraints:
-  __1 =aux ((sum([i,j;int(1..2)]) = k)) -> (!(and([([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([i,0;int(1..)])] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([j,0;int(1..)])]),([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([j,0;int(1..)])] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([k,0;int(1..)])]);int(1..2)])))
+  __1 =aux ((sum([i,j;int(1..2)]) = k)) -> (!(and([(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([i,0;int(1..)])]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([j,0;int(1..)])])),(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([j,0;int(1..)])]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([k,0;int(1..)])]));int(1..2)])))
 
 --
 
-__1 =aux ((sum([i,j;int(1..2)]) = k)) -> (!(and([([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([i,0;int(1..)])] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([j,0;int(1..)])]),([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([j,0;int(1..)])] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([k,0;int(1..)])]);int(1..2)]))), 
+__1 =aux ((sum([i,j;int(1..2)]) = k)) -> (!(and([(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([i,0;int(1..)])]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([j,0;int(1..)])])),(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([j,0;int(1..)])]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([k,0;int(1..)])]));int(1..2)]))), 
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(((sum([i,j;int(1..2)]) = k)) -> (!(and([([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([i,0;int(1..)])] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([j,0;int(1..)])]),([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([j,0;int(1..)])] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([k,0;int(1..)])]);int(1..2)]))), __1)
+Reify(((sum([i,j;int(1..2)]) = k)) -> (!(and([(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([i,0;int(1..)])]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([j,0;int(1..)])])),(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([j,0;int(1..)])]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([k,0;int(1..)])]));int(1..2)]))), __1)
 
 --
 
-((sum([i,j;int(1..2)]) = k)) -> (!(and([([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([i,0;int(1..)])] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([j,0;int(1..)])]),([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([j,0;int(1..)])] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([k,0;int(1..)])]);int(1..2)]))), 
+((sum([i,j;int(1..2)]) = k)) -> (!(and([(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([i,0;int(1..)])]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([j,0;int(1..)])])),(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([j,0;int(1..)])]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([k,0;int(1..)])]));int(1..2)]))), 
    ~~> flatten_imply ([("Minion", 4200)])
-(__2) -> (!(and([([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([i,0;int(1..)])] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([j,0;int(1..)])]),([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([j,0;int(1..)])] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([k,0;int(1..)])]);int(1..2)])))
+(__2) -> (!(and([(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([i,0;int(1..)])]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([j,0;int(1..)])])),(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([j,0;int(1..)])]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([k,0;int(1..)])]));int(1..2)])))
 new variables:
   find __2: bool
 new constraints:
@@ -169,9 +145,9 @@ new constraints:
 
 --
 
-(__2) -> (!(and([([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([i,0;int(1..)])] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([j,0;int(1..)])]),([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([j,0;int(1..)])] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([k,0;int(1..)])]);int(1..2)]))), 
+(__2) -> (!(and([(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([i,0;int(1..)])]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([j,0;int(1..)])])),(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([j,0;int(1..)])]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([k,0;int(1..)])]));int(1..2)]))), 
    ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
-ReifyImply(!(and([([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([i,0;int(1..)])] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([j,0;int(1..)])]),([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([j,0;int(1..)])] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([k,0;int(1..)])]);int(1..2)])), __2)
+ReifyImply(!(and([(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([i,0;int(1..)])]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([j,0;int(1..)])])),(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([j,0;int(1..)])]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([k,0;int(1..)])]));int(1..2)])), __2)
 
 --
 
@@ -181,25 +157,25 @@ Reify((sum([i,j;int(1..2)]) = k), __2)
 
 --
 
-!(and([([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([i,0;int(1..)])] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([j,0;int(1..)])]),([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([j,0;int(1..)])] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([k,0;int(1..)])]);int(1..2)])), 
+!(and([(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([i,0;int(1..)])]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([j,0;int(1..)])])),(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([j,0;int(1..)])]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([k,0;int(1..)])]));int(1..2)])), 
    ~~> flatten_generic ([("Minion", 4200)])
 !(__3)
 new variables:
   find __3: bool
 new constraints:
-  __3 =aux and([([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([i,0;int(1..)])] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([j,0;int(1..)])]),([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([j,0;int(1..)])] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([k,0;int(1..)])]);int(1..2)])
+  __3 =aux and([(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([i,0;int(1..)])]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([j,0;int(1..)])])),(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([j,0;int(1..)])]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([k,0;int(1..)])]));int(1..2)])
 
 --
 
-__3 =aux and([([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([i,0;int(1..)])] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([j,0;int(1..)])]),([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([j,0;int(1..)])] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([k,0;int(1..)])]);int(1..2)]), 
+__3 =aux and([(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([i,0;int(1..)])]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([j,0;int(1..)])])),(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([j,0;int(1..)])]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([k,0;int(1..)])]));int(1..2)]), 
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(and([([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([i,0;int(1..)])] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([j,0;int(1..)])]),([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([j,0;int(1..)])] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([k,0;int(1..)])]);int(1..2)]), __3)
+Reify(and([(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([i,0;int(1..)])]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([j,0;int(1..)])])),(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([j,0;int(1..)])]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([k,0;int(1..)])]));int(1..2)]), __3)
 
 --
 
-[__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([i,0;int(1..)])], 
+SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([i,0;int(1..)])]), 
    ~~> flatten_generic ([("Minion", 4200)])
-[__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][__4]
+SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[__4])
 new variables:
   find __4: int(1..2)
 new constraints:
@@ -216,21 +192,21 @@ and([SumLeq([0, i], __4),SumGeq([0, i], __4);int(1..)])
 (true != __1),
 Reify(ReifyImply(!(__3), __2), __1),
 Reify((sum([i,j;int(1..2)]) = k), __2),
-Reify(and([([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][__4] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([j,0;int(1..)])]),([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([j,0;int(1..)])] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([k,0;int(1..)])]);int(1..2)]), __3),
+Reify(and([(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[__4]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([j,0;int(1..)])])),(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([j,0;int(1..)])]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([k,0;int(1..)])]));int(1..2)]), __3),
 and([SumLeq([0, i], __4),SumGeq([0, i], __4);int(1..)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
 (true != __1),
 Reify(ReifyImply(!(__3), __2), __1),
 Reify((sum([i,j;int(1..2)]) = k), __2),
-Reify(and([([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][__4] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([j,0;int(1..)])]),([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([j,0;int(1..)])] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([k,0;int(1..)])]);int(1..2)]), __3),
+Reify(and([(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[__4]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([j,0;int(1..)])])),(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([j,0;int(1..)])]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([k,0;int(1..)])]));int(1..2)]), __3),
 SumLeq([0, i], __4),
 SumGeq([0, i], __4)
 
 --
 
-[__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([j,0;int(1..)])], 
+SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([j,0;int(1..)])]), 
    ~~> flatten_generic ([("Minion", 4200)])
-[__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][__5]
+SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[__5])
 new variables:
   find __5: int(1..2)
 new constraints:
@@ -247,7 +223,7 @@ and([SumLeq([0, j], __5),SumGeq([0, j], __5);int(1..)])
 (true != __1),
 Reify(ReifyImply(!(__3), __2), __1),
 Reify((sum([i,j;int(1..2)]) = k), __2),
-Reify(and([([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][__4] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][__5]),([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([j,0;int(1..)])] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([k,0;int(1..)])]);int(1..2)]), __3),
+Reify(and([(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[__4]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[__5])),(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([j,0;int(1..)])]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([k,0;int(1..)])]));int(1..2)]), __3),
 SumLeq([0, i], __4),
 SumGeq([0, i], __4),
 and([SumLeq([0, j], __5),SumGeq([0, j], __5);int(1..)]), 
@@ -255,7 +231,7 @@ and([SumLeq([0, j], __5),SumGeq([0, j], __5);int(1..)]),
 (true != __1),
 Reify(ReifyImply(!(__3), __2), __1),
 Reify((sum([i,j;int(1..2)]) = k), __2),
-Reify(and([([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][__4] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][__5]),([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([j,0;int(1..)])] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([k,0;int(1..)])]);int(1..2)]), __3),
+Reify(and([(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[__4]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[__5])),(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([j,0;int(1..)])]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([k,0;int(1..)])]));int(1..2)]), __3),
 SumLeq([0, i], __4),
 SumGeq([0, i], __4),
 SumLeq([0, j], __5),
@@ -263,33 +239,33 @@ SumGeq([0, j], __5)
 
 --
 
-([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][__4] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][__5]), 
+(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[__4]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[__5])), 
    ~~> flatten_eq ([("Minion", 4200)])
 (__6 = __7)
 new variables:
   find __6: int(1..3)
   find __7: int(1..3)
 new constraints:
-  __6 =aux [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][__4]
-  __7 =aux [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][__5]
+  __6 =aux SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[__4])
+  __7 =aux SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[__5])
 
 --
 
-__6 =aux [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][__4], 
+__6 =aux SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[__4]), 
    ~~> introduce_element_from_index ([("Minion", 4400)])
 __minion_element_one([__0#matrix_to_atom_1,__0#matrix_to_atom_2],__4,__6)
 
 --
 
-__7 =aux [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][__5], 
+__7 =aux SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[__5]), 
    ~~> introduce_element_from_index ([("Minion", 4400)])
 __minion_element_one([__0#matrix_to_atom_1,__0#matrix_to_atom_2],__5,__7)
 
 --
 
-[__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([j,0;int(1..)])], 
+SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([j,0;int(1..)])]), 
    ~~> flatten_generic ([("Minion", 4200)])
-[__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][__8]
+SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[__8])
 new variables:
   find __8: int(1..2)
 new constraints:
@@ -306,7 +282,7 @@ and([SumLeq([0, j], __8),SumGeq([0, j], __8);int(1..)])
 (true != __1),
 Reify(ReifyImply(!(__3), __2), __1),
 Reify((sum([i,j;int(1..2)]) = k), __2),
-Reify(and([(__6 = __7),([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][__8] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([k,0;int(1..)])]);int(1..2)]), __3),
+Reify(and([(__6 = __7),(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[__8]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([k,0;int(1..)])]));int(1..2)]), __3),
 SumLeq([0, i], __4),
 SumGeq([0, i], __4),
 SumLeq([0, j], __5),
@@ -318,7 +294,7 @@ and([SumLeq([0, j], __8),SumGeq([0, j], __8);int(1..)]),
 (true != __1),
 Reify(ReifyImply(!(__3), __2), __1),
 Reify((sum([i,j;int(1..2)]) = k), __2),
-Reify(and([(__6 = __7),([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][__8] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([k,0;int(1..)])]);int(1..2)]), __3),
+Reify(and([(__6 = __7),(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[__8]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([k,0;int(1..)])]));int(1..2)]), __3),
 SumLeq([0, i], __4),
 SumGeq([0, i], __4),
 SumLeq([0, j], __5),
@@ -330,9 +306,9 @@ SumGeq([0, j], __8)
 
 --
 
-[__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][sum([k,0;int(1..)])], 
+SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[sum([k,0;int(1..)])]), 
    ~~> flatten_generic ([("Minion", 4200)])
-[__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][__9]
+SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[__9])
 new variables:
   find __9: int(1..2)
 new constraints:
@@ -349,7 +325,7 @@ and([SumLeq([0, k], __9),SumGeq([0, k], __9);int(1..)])
 (true != __1),
 Reify(ReifyImply(!(__3), __2), __1),
 Reify((sum([i,j;int(1..2)]) = k), __2),
-Reify(and([(__6 = __7),([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][__8] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][__9]);int(1..2)]), __3),
+Reify(and([(__6 = __7),(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[__8]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[__9]));int(1..2)]), __3),
 SumLeq([0, i], __4),
 SumGeq([0, i], __4),
 SumLeq([0, j], __5),
@@ -363,7 +339,7 @@ and([SumLeq([0, k], __9),SumGeq([0, k], __9);int(1..)]),
 (true != __1),
 Reify(ReifyImply(!(__3), __2), __1),
 Reify((sum([i,j;int(1..2)]) = k), __2),
-Reify(and([(__6 = __7),([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][__8] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][__9]);int(1..2)]), __3),
+Reify(and([(__6 = __7),(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[__8]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[__9]));int(1..2)]), __3),
 SumLeq([0, i], __4),
 SumGeq([0, i], __4),
 SumLeq([0, j], __5),
@@ -377,25 +353,25 @@ SumGeq([0, k], __9)
 
 --
 
-([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][__8] = [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][__9]), 
+(SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[__8]) = SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[__9])), 
    ~~> flatten_eq ([("Minion", 4200)])
 (__10 = __11)
 new variables:
   find __10: int(1..3)
   find __11: int(1..3)
 new constraints:
-  __10 =aux [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][__8]
-  __11 =aux [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][__9]
+  __10 =aux SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[__8])
+  __11 =aux SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[__9])
 
 --
 
-__10 =aux [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][__8], 
+__10 =aux SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[__8]), 
    ~~> introduce_element_from_index ([("Minion", 4400)])
 __minion_element_one([__0#matrix_to_atom_1,__0#matrix_to_atom_2],__8,__10)
 
 --
 
-__11 =aux [__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)][__9], 
+__11 =aux SafeIndex([__0#matrix_to_atom_1,__0#matrix_to_atom_2;int(1..)],[__9]), 
    ~~> introduce_element_from_index ([("Minion", 4400)])
 __minion_element_one([__0#matrix_to_atom_1,__0#matrix_to_atom_2],__9,__11)
 
@@ -484,47 +460,53 @@ and([!(and([(schur[1] = schur[1]),(schur[1] = schur[2]);int(1..2)]));int(1..)]),
 
 schur#matrix_to_atom[1], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-schur#matrix_to_atom[1]
+SafeIndex(schur#matrix_to_atom,[1])
 
 --
 
 schur#matrix_to_atom[1], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-schur#matrix_to_atom[1]
+SafeIndex(schur#matrix_to_atom,[1])
+
+--
+
+!(and([(SafeIndex(schur#matrix_to_atom,[1]) = SafeIndex(schur#matrix_to_atom,[1])),(schur#matrix_to_atom[1] = schur#matrix_to_atom[2]);int(1..2)])), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+!(and([true,(schur#matrix_to_atom[1] = schur#matrix_to_atom[2]);int(1..2)]))
 
 --
 
 schur#matrix_to_atom[1], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-schur#matrix_to_atom[1]
+SafeIndex(schur#matrix_to_atom,[1])
 
 --
 
 schur#matrix_to_atom[2], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-schur#matrix_to_atom[2]
+SafeIndex(schur#matrix_to_atom,[2])
 
 --
 
-!(and([(schur#matrix_to_atom[1] = schur#matrix_to_atom[1]),(schur#matrix_to_atom[1] = schur#matrix_to_atom[2]);int(1..2)])), 
+!(and([true,(SafeIndex(schur#matrix_to_atom,[1]) = SafeIndex(schur#matrix_to_atom,[2]));int(1..2)])), 
    ~~> index_matrix_to_atom ([("Base", 5000)])
-!(and([(schur#matrix_to_atom_1 = schur#matrix_to_atom_1),(schur#matrix_to_atom_1 = schur#matrix_to_atom_2);int(1..2)]))
+!(and([true,(schur#matrix_to_atom_1 = schur#matrix_to_atom_2);int(1..2)]))
 
 --
 
-!(and([(schur#matrix_to_atom_1 = schur#matrix_to_atom_1),(schur#matrix_to_atom_1 = schur#matrix_to_atom_2);int(1..2)])), 
+!(and([true,(schur#matrix_to_atom_1 = schur#matrix_to_atom_2);int(1..2)])), 
    ~~> flatten_generic ([("Minion", 4200)])
 !(__0)
 new variables:
   find __0: bool
 new constraints:
-  __0 =aux and([(schur#matrix_to_atom_1 = schur#matrix_to_atom_1),(schur#matrix_to_atom_1 = schur#matrix_to_atom_2);int(1..2)])
+  __0 =aux and([true,(schur#matrix_to_atom_1 = schur#matrix_to_atom_2);int(1..2)])
 
 --
 
-__0 =aux and([(schur#matrix_to_atom_1 = schur#matrix_to_atom_1),(schur#matrix_to_atom_1 = schur#matrix_to_atom_2);int(1..2)]), 
+__0 =aux and([true,(schur#matrix_to_atom_1 = schur#matrix_to_atom_2);int(1..2)]), 
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(and([(schur#matrix_to_atom_1 = schur#matrix_to_atom_1),(schur#matrix_to_atom_1 = schur#matrix_to_atom_2);int(1..2)]), __0)
+Reify(and([true,(schur#matrix_to_atom_1 = schur#matrix_to_atom_2);int(1..2)]), __0)
 
 --
 
@@ -534,9 +516,23 @@ WatchedLiteral(__0,false)
 
 --
 
-and([(schur#matrix_to_atom_1 = schur#matrix_to_atom_1),(schur#matrix_to_atom_1 = schur#matrix_to_atom_2);int(1..2)]), 
+and([true,(schur#matrix_to_atom_1 = schur#matrix_to_atom_2);int(1..2)]), 
    ~~> matrix_to_list ([("Base", 2000)])
-and([(schur#matrix_to_atom_1 = schur#matrix_to_atom_1),(schur#matrix_to_atom_1 = schur#matrix_to_atom_2);int(1..)])
+and([true,(schur#matrix_to_atom_1 = schur#matrix_to_atom_2);int(1..)])
+
+--
+
+WatchedLiteral(__0,false),
+Reify(and([true,(schur#matrix_to_atom_1 = schur#matrix_to_atom_2);int(1..)]), __0), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+WatchedLiteral(__0,false),
+Reify(and([(schur#matrix_to_atom_1 = schur#matrix_to_atom_2);int(1..)]), __0)
+
+--
+
+and([(schur#matrix_to_atom_1 = schur#matrix_to_atom_2);int(1..)]), 
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+(schur#matrix_to_atom_1 = schur#matrix_to_atom_2)
 
 --
 
@@ -552,5 +548,5 @@ find schur#matrix_to_atom_2: int(1..3)
 such that
 
 WatchedLiteral(__0,false),
-Reify(and([(schur#matrix_to_atom_1 = schur#matrix_to_atom_1),(schur#matrix_to_atom_1 = schur#matrix_to_atom_2);int(1..)]), __0)
+Reify((schur#matrix_to_atom_1 = schur#matrix_to_atom_2), __0)
 

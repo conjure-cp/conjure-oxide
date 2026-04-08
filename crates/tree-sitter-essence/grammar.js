@@ -21,22 +21,15 @@ module.exports = grammar ({
           field("arithmetic_expr", $.arithmetic_expr)
         ))
       ),
-      seq("find", commaSep1(field("find_statement", $.find_statement))),
+      field("find_statement", $.find_statement),
+      field("given_statement", $.given_statement),
       seq(
-        "such that", 
+        field("such_that_keyword", "such that"),
         commaSep1(choice(field("bool_expr", $.bool_expr), field("atom", $.atom), field("comparison_expr", $.comparison_expr))), 
       ),
-      seq("letting", commaSep1(field("letting_statement", $.letting_statement))),
+      field("letting_statement", $.letting_statement),
       field("dominance_relation", $.dominance_relation),
-      // field("find", $.FIND),
-      // field("letting", $.LETTING),
-      // field("such_that", $.SUCH_THAT),
     )),
-
-    SUCH_THAT: $ => "such that",
-    FIND: $ => "find",
-    LETTING: $ => "letting",
-    COLON: $ => ":",
 
     single_line_comment: $ => token(seq('$', /.*/)),
 
@@ -63,10 +56,24 @@ module.exports = grammar ({
 
     //find statements
     find_statement: $ => seq(
-      field("variables", $.variable_list),
-      field("colon", $.COLON),
-      field("domain", $.domain),
+      field("find_keyword", "find"),
+      field("variable_declaration", commaSep1($.variable_declaration))
     ),
+
+    //given statements
+    given_statement: $ => seq(
+      field("given_keyword", "given"),
+      field("variable_declaration", commaSep1($.variable_declaration))
+    ),
+
+    COLON: $ => ":",
+    
+    variable_declaration: $ => seq(
+      field("variables", $.variable_list), 
+      field("colon", $.COLON), 
+      field("domain", $.domain)
+    ),
+
     variable_list: $ => commaSep1($.identifier),
 
     domain: $ => choice(
@@ -181,10 +188,20 @@ module.exports = grammar ({
 
     //letting statements
     letting_statement: $ => seq(
+      field("letting_keyword", "letting"),
+      field("letting_variable_declaration", commaSep1($.letting_variable_declaration))
+    ),
+
+    letting_variable_declaration: $ => seq(
       field("variable_list", $.variable_list), 
       field("be", "be"), 
-      optional(field ("domain", "domain")),
-      field("expr_or_domain", choice($.bool_expr, $.arithmetic_expr, $.domain, $.atom))
+      choice(
+        field("expr_or_domain", choice($.bool_expr, $.arithmetic_expr, $.atom)),
+        seq(
+          field("domain", "domain"),
+          field("expr_or_domain", $.domain)
+        )
+      )
     ),
 
     // Constraints 
@@ -509,7 +526,7 @@ module.exports = grammar ({
     )),
 
     dominance_relation: $ => seq(
-      "dominanceRelation",
+      "dominance relation",
       field("expression", choice($.bool_expr, $.comparison_expr, $.arithmetic_expr, $.atom)),
     )
   }
