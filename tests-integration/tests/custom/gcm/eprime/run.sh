@@ -34,7 +34,7 @@ run_case() {
     "$TIMEOUT_BIN" 60 \
         conjure-oxide-debug solve \
         --parser tree-sitter \
-        --rewriter morph-levelson-nocache-prefilteroff-fixedpoint \
+        --rewriter morph-levelson-fixedpoint \
         --solver smt-lia-arrays \
         --no-run-solver \
         --rule-trace-aggregates "$aggregate_path" \
