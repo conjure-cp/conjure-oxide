@@ -17,11 +17,48 @@ pub fn parse_expression(
 ) -> Result<Option<Expression>, FatalParseError> {
     match node.kind() {
         "atom" => parse_atom(ctx, &node),
-        "bool_expr" => parse_boolean_expression(ctx, &node),
-        "arithmetic_expr" => parse_arithmetic_expression(ctx, &node),
-        "comparison_expr" => parse_comparison_expression(ctx, &node),
+        "bool_expr" => {
+            if ctx.typechecking_context == TypecheckingContext::Arithmetic {
+                ctx.record_error(RecoverableParseError::new(
+                    format!("Type error: {}\n\tExepected: arithmetic expression\n\tFound: boolean expression", ctx.source_code[node.start_byte()..node.end_byte()].to_string()),
+                    Some(node.range()),
+                ));
+                return Ok(None);
+            }
+            parse_boolean_expression(ctx, &node)
+        }
+        "arithmetic_expr" => {
+            if ctx.typechecking_context == TypecheckingContext::Boolean {
+                ctx.record_error(RecoverableParseError::new(
+                    format!("Type error: {}\n\tExepected: boolean expression\n\tFound: arithmetic expression", ctx.source_code[node.start_byte()..node.end_byte()].to_string()),
+                    Some(node.range()),
+                ));
+                return Ok(None);
+            }
+            parse_arithmetic_expression(ctx, &node)
+        }
+        "comparison_expr" => {
+            if ctx.typechecking_context == TypecheckingContext::Arithmetic {
+                ctx.record_error(RecoverableParseError::new(
+                    format!("Type error: {}\n\tExepected: arithmetic expression\n\tFound: comparison expression", ctx.source_code[node.start_byte()..node.end_byte()].to_string()),
+                    Some(node.range()),
+                ));
+                return Ok(None);
+            }
+            parse_comparison_expression(ctx, &node)
+        }
+        "all_diff_comparison" => {
+            if ctx.typechecking_context == TypecheckingContext::Arithmetic {
+                ctx.record_error(RecoverableParseError::new(
+                    format!("Type error: {}\n\tExepected: arithmetic expression\n\tFound: comparison expression", ctx.source_code[node.start_byte()..node.end_byte()].to_string()),
+                    Some(node.range()),
+                ));
+                return Ok(None);
+            }
+            ctx.typechecking_context = TypecheckingContext::Unknown;
+            parse_all_diff_comparison(ctx, &node)
+        }
         "dominance_relation" => parse_dominance_relation(ctx, &node),
-        "all_diff_comparison" => parse_all_diff_comparison(ctx, &node),
         _ => {
             ctx.record_error(RecoverableParseError::new(
                 format!("Unexpected expression type: '{}'", node.kind()),
@@ -59,6 +96,7 @@ fn parse_dominance_relation(
         source_map: &mut *ctx.source_map,
         decl_spans: ctx.decl_spans,
         typechecking_context: ctx.typechecking_context,
+        inner_typechecking_context: ctx.inner_typechecking_context,
     };
 
     let Some(inner) = parse_expression(&mut inner_ctx, inner_node)? else {
@@ -76,6 +114,7 @@ fn parse_arithmetic_expression(
     node: &Node,
 ) -> Result<Option<Expression>, FatalParseError> {
     ctx.typechecking_context = TypecheckingContext::Arithmetic;
+    ctx.inner_typechecking_context = TypecheckingContext::Unknown;
     let Some(inner) = named_child!(recover, ctx, node) else {
         return Ok(None);
     };
@@ -90,8 +129,19 @@ fn parse_arithmetic_expression(
             parse_unary_expression(ctx, &inner)
         }
         "exponent" | "product_expr" | "sum_expr" => parse_binary_expression(ctx, &inner),
-        "list_combining_expr_arith" => parse_list_combining_expression(ctx, &inner),
-        "aggregate_expr" => parse_quantifier_or_aggregate_expr(ctx, &inner),
+        "list_combining_expr_arith" => {
+            // set the typechecking context as Unknown, as the operand can be a set or a matrix
+            // TODO: typecheck that the operand is a set/matrix
+            ctx.typechecking_context = TypecheckingContext::Unknown;
+
+            // set inner context to arithmetic to ensure elements of list are arithmetic expressions
+            ctx.inner_typechecking_context = TypecheckingContext::Arithmetic;
+            parse_list_combining_expression(ctx, &inner)
+        }
+        "aggregate_expr" => {
+            ctx.inner_typechecking_context = TypecheckingContext::Arithmetic;
+            parse_quantifier_or_aggregate_expr(ctx, &inner)
+        }
         _ => {
             ctx.record_error(RecoverableParseError::new(
                 format!("Expected arithmetic expression, found: {}", inner.kind()),
@@ -150,6 +200,7 @@ fn parse_boolean_expression(
     node: &Node,
 ) -> Result<Option<Expression>, FatalParseError> {
     ctx.typechecking_context = TypecheckingContext::Boolean;
+    ctx.inner_typechecking_context = TypecheckingContext::Unknown;
     let Some(inner) = named_child!(recover, ctx, node) else {
         return Ok(None);
     };
@@ -157,7 +208,15 @@ fn parse_boolean_expression(
         "atom" => parse_atom(ctx, &inner),
         "not_expr" | "sub_bool_expr" => parse_unary_expression(ctx, &inner),
         "and_expr" | "or_expr" | "implication" | "iff_expr" => parse_binary_expression(ctx, &inner),
-        "list_combining_expr_bool" => parse_list_combining_expression(ctx, &inner),
+        "list_combining_expr_bool" => {
+            // set the typechecking context as Unknown, as the operand can be a set or a matrix
+            // TODO: typecheck that the operand is a set/matrix
+            ctx.typechecking_context = TypecheckingContext::Unknown;
+
+            // set inner context to boolean to ensure elements of list are boolean expressions
+            ctx.inner_typechecking_context = TypecheckingContext::Boolean;
+            parse_list_combining_expression(ctx, &inner)
+        }
         "quantifier_expr" => parse_quantifier_or_aggregate_expr(ctx, &inner),
         _ => {
             ctx.record_error(RecoverableParseError::new(
@@ -181,6 +240,8 @@ fn parse_list_combining_expression(
     let Some(arg_node) = field!(recover, ctx, node, "arg") else {
         return Ok(None);
     };
+    // While parsing inner, the typechecking context is Unknown (TODO), since the atom can be a set or a matrix.
+    // The inner context is either Boolean or Arithmetic so the elements of the set/matrix are typechecked correctly.
     let Some(inner) = parse_atom(ctx, &arg_node)? else {
         return Ok(None);
     };
@@ -284,7 +345,7 @@ pub fn parse_binary_expression(
         return Ok(None);
     };
 
-    // restore original context for parent expression parsing
+    // restore original contexts for parent expression parsing
     ctx.typechecking_context = saved_ctx;
 
     let mut description = format!("Operator '{op_str}'");
@@ -460,6 +521,14 @@ pub fn parse_binary_expression(
 }
 
 fn inferred_context_from_expression(expr: &Expression) -> TypecheckingContext {
+    // TODO: typechecking for index/slice expressions
+    if matches!(
+        expr,
+        Expression::UnsafeIndex(_, _, _) | Expression::UnsafeSlice(_, _, _)
+    ) {
+        return TypecheckingContext::Unknown;
+    }
+
     let Some(domain) = expr.domain_of() else {
         return TypecheckingContext::Unknown;
     };

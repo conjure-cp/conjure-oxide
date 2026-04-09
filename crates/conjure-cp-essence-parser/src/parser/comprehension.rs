@@ -4,7 +4,7 @@ use crate::expression::parse_expression;
 use crate::field;
 use crate::parser::ParseContext;
 use crate::parser::domain::parse_domain;
-use crate::util::named_children;
+use crate::util::{TypecheckingContext, named_children};
 use conjure_cp_core::ast::ac_operators::ACOperatorKind;
 use conjure_cp_core::ast::comprehension::ComprehensionBuilder;
 use conjure_cp_core::ast::{DeclarationPtr, Expression, Metadata, Moo, Name};
@@ -158,10 +158,21 @@ pub fn parse_quantifier_or_aggregate_expr(
                 variables.push(var_name);
             }
             "domain" => {
-                // Parse with the current symbol table (no need for a new context)
+                // Parse domains under Unknown context so arithmetic bounds in domains
+                // (e.g. int(1..m-1)) are not rejected by surrounding boolean/arithmetic contexts.
+                let saved_ctx = ctx.typechecking_context;
+                let saved_inner_ctx = ctx.inner_typechecking_context;
+                ctx.typechecking_context = TypecheckingContext::Unknown;
+                ctx.inner_typechecking_context = TypecheckingContext::Unknown;
+
                 let Some(parsed_domain) = parse_domain(ctx, child)? else {
+                    ctx.typechecking_context = saved_ctx;
+                    ctx.inner_typechecking_context = saved_inner_ctx;
                     return Ok(None);
                 };
+
+                ctx.typechecking_context = saved_ctx;
+                ctx.inner_typechecking_context = saved_inner_ctx;
                 domain = Some(parsed_domain);
             }
             "set_literal" | "matrix" | "tuple" | "record" => {

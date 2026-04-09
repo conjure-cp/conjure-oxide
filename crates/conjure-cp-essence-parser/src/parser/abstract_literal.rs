@@ -12,7 +12,7 @@ pub fn parse_abstract(
     ctx: &mut ParseContext,
     node: &Node,
 ) -> Result<Option<AbstractLiteral<Expression>>, FatalParseError> {
-    if !typecheck_abstract_literal(ctx, node) {
+    if typecheck_abstract_literal(ctx, node) {
         return Ok(None);
     }
 
@@ -32,40 +32,6 @@ pub fn parse_abstract(
 }
 
 fn typecheck_abstract_literal(ctx: &mut ParseContext, node: &Node) -> bool {
-    match ctx.typechecking_context {
-        // In arithmetic/boolean contexts, matrix literals are allowed because list-combining
-        // operators (sum/or/and/...) take matrix/list arguments and typecheck their elements.
-        TypecheckingContext::Arithmetic | TypecheckingContext::Boolean => {
-            if node.kind() == "matrix" {
-                return true;
-            }
-        }
-        TypecheckingContext::Set => {
-            if node.kind() == "set_literal" {
-                return true;
-            }
-        }
-        TypecheckingContext::Matrix => {
-            if node.kind() == "matrix" {
-                return true;
-            }
-        }
-        TypecheckingContext::Tuple => {
-            if node.kind() == "tuple" {
-                return true;
-            }
-        }
-        TypecheckingContext::Record => {
-            if node.kind() == "record" {
-                return true;
-            }
-        }
-        TypecheckingContext::Unknown => return true,
-
-        // Not supported by grammar yet, skip for now
-        TypecheckingContext::MSet | TypecheckingContext::Function | TypecheckingContext::Empty => {}
-    }
-
     let expected = match ctx.typechecking_context {
         TypecheckingContext::Boolean => "bool",
         TypecheckingContext::Arithmetic => "int",
@@ -84,18 +50,27 @@ fn typecheck_abstract_literal(ctx: &mut ParseContext, node: &Node) -> bool {
         "matrix" => "matrix",
         "tuple" => "tuple",
         "record" => "record",
-        _ => "abstract literal",
+        _ => {
+            ctx.record_error(RecoverableParseError::new(
+                format!("Expected abstract literal, got: {}", node.kind()),
+                Some(node.range()),
+            ));
+            return true;
+        }
     };
 
-    ctx.record_error(RecoverableParseError::new(
-        format!(
-            "Type error: {}\n\tExpected: {}\n\tGot: {}",
-            ctx.source_code[node.start_byte()..node.end_byte()].trim(),
-            expected,
-            got
-        ),
-        Some(node.range()),
-    ));
+    if expected != "unknown" && expected != got {
+        ctx.record_error(RecoverableParseError::new(
+            format!(
+                "Type error: {}\n\tExpected: {}\n\tGot: {}",
+                ctx.source_code[node.start_byte()..node.end_byte()].trim(),
+                expected,
+                got
+            ),
+            Some(node.range()),
+        ));
+        return true;
+    }
 
     false
 }
@@ -115,9 +90,20 @@ fn parse_record(
         let Some(value_node) = field!(recover, ctx, child, "value") else {
             return Ok(None);
         };
+
+        // Parse value with inner typechecking context
+        let saved_ctx = ctx.typechecking_context;
+        ctx.typechecking_context = ctx.inner_typechecking_context;
+        ctx.inner_typechecking_context = TypecheckingContext::Unknown;
+
         let Some(value) = parse_expression(ctx, value_node)? else {
             return Ok(None);
         };
+
+        // Reset contexts
+        ctx.inner_typechecking_context = ctx.typechecking_context;
+        ctx.typechecking_context = saved_ctx;
+
         values.push(conjure_cp_core::ast::records::RecordValue { name, value });
     }
     Ok(Some(AbstractLiteral::Record(values)))
@@ -127,13 +113,23 @@ fn parse_tuple(
     ctx: &mut ParseContext,
     node: &Node,
 ) -> Result<Option<AbstractLiteral<Expression>>, FatalParseError> {
+    // Parse elements parse under inner_typechecking_context
+    let saved_ctx = ctx.typechecking_context;
+    ctx.typechecking_context = ctx.inner_typechecking_context;
+    ctx.inner_typechecking_context = TypecheckingContext::Unknown;
+
     let mut elements = Vec::new();
     for child in named_children(node) {
         let Some(expr) = parse_expression(ctx, child)? else {
+            ctx.inner_typechecking_context = ctx.typechecking_context;
+            ctx.typechecking_context = saved_ctx;
             return Ok(None);
         };
         elements.push(expr);
     }
+
+    ctx.inner_typechecking_context = ctx.typechecking_context;
+    ctx.typechecking_context = saved_ctx;
     Ok(Some(AbstractLiteral::Tuple(elements)))
 }
 
@@ -141,6 +137,11 @@ fn parse_matrix(
     ctx: &mut ParseContext,
     node: &Node,
 ) -> Result<Option<AbstractLiteral<Expression>>, FatalParseError> {
+    // Parse elements parse under inner_typechecking_context
+    let saved_ctx = ctx.typechecking_context;
+    ctx.typechecking_context = ctx.inner_typechecking_context;
+    ctx.inner_typechecking_context = TypecheckingContext::Unknown;
+
     let mut elements = vec![];
     let mut domain: Option<DomainPtr> = None;
     for child in named_children(node) {
@@ -150,11 +151,15 @@ fn parse_matrix(
             || child.kind() == "atom"
         {
             let Some(expr) = parse_expression(ctx, child)? else {
+                ctx.inner_typechecking_context = ctx.typechecking_context;
+                ctx.typechecking_context = saved_ctx;
                 return Ok(None);
             };
             elements.push(expr);
         } else {
             let Some(parsed_domain) = parse_domain(ctx, child)? else {
+                ctx.inner_typechecking_context = ctx.typechecking_context;
+                ctx.typechecking_context = saved_ctx;
                 return Ok(None);
             };
             domain = Some(parsed_domain);
@@ -165,6 +170,8 @@ fn parse_matrix(
         domain = Some(domain_int!(1..count));
     }
 
+    ctx.inner_typechecking_context = ctx.typechecking_context;
+    ctx.typechecking_context = saved_ctx;
     Ok(Some(AbstractLiteral::Matrix(elements, domain.unwrap())))
 }
 
@@ -172,13 +179,22 @@ fn parse_set_literal(
     ctx: &mut ParseContext,
     node: &Node,
 ) -> Result<Option<AbstractLiteral<Expression>>, FatalParseError> {
+    // Parse elements parse under inner_typechecking_context, not typechecking_context.
+    let saved_ctx = ctx.typechecking_context;
+    ctx.typechecking_context = ctx.inner_typechecking_context;
+    ctx.inner_typechecking_context = TypecheckingContext::Unknown;
+
     let mut elements = Vec::new();
     for child in named_children(node) {
-        ctx.typechecking_context = TypecheckingContext::Unknown;
         let Some(expr) = parse_expression(ctx, child)? else {
+            ctx.inner_typechecking_context = ctx.typechecking_context;
+            ctx.typechecking_context = saved_ctx;
             return Ok(None);
         };
         elements.push(expr);
     }
+
+    ctx.inner_typechecking_context = ctx.typechecking_context;
+    ctx.typechecking_context = saved_ctx;
     Ok(Some(AbstractLiteral::Set(elements)))
 }
