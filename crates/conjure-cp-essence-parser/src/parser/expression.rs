@@ -103,59 +103,39 @@ pub fn parse_pareto_expression(
     let mut strict_improvements = Vec::new();
     let components = field!(node, "components");
 
-    match components.kind() {
-        "pareto_list" => {
-            for component_node in named_children(&components) {
-                let Some(component_expr) = parse_pareto_component(ctx, &component_node)? else {
-                    return Ok(None);
-                };
-                let Some((non_worse, strict)) = build_pareto_constraints(
-                    ctx,
-                    &component_node,
-                    component_expr,
-                    ParetoDirection::Minimising,
-                ) else {
-                    return Ok(None);
-                };
-                non_worsening.push(non_worse);
-                strict_improvements.push(strict);
-            }
-        }
-        "pareto_items" => {
-            for item_node in named_children(&components) {
-                let direction_node = field!(item_node, "direction");
-                let direction_str =
-                    &ctx.source_code[direction_node.start_byte()..direction_node.end_byte()];
-                let direction = match direction_str {
-                    "minimising" => ParetoDirection::Minimising,
-                    "maximising" => ParetoDirection::Maximising,
-                    _ => {
-                        return Err(FatalParseError::internal_error(
-                            format!("Unexpected pareto direction: '{direction_str}'"),
-                            Some(direction_node.range()),
-                        ));
-                    }
-                };
+    if components.kind() != "pareto_items" {
+        return Err(FatalParseError::internal_error(
+            format!("Unexpected pareto component list: '{}'", components.kind()),
+            Some(components.range()),
+        ));
+    }
 
-                let component_node = field!(item_node, "expression");
-                let Some(component_expr) = parse_pareto_component(ctx, &component_node)? else {
-                    return Ok(None);
-                };
-                let Some((non_worse, strict)) =
-                    build_pareto_constraints(ctx, &component_node, component_expr, direction)
-                else {
-                    return Ok(None);
-                };
-                non_worsening.push(non_worse);
-                strict_improvements.push(strict);
+    for item_node in named_children(&components) {
+        let direction_node = field!(item_node, "direction");
+        let direction_str =
+            &ctx.source_code[direction_node.start_byte()..direction_node.end_byte()];
+        let direction = match direction_str {
+            "minimising" => ParetoDirection::Minimising,
+            "maximising" => ParetoDirection::Maximising,
+            _ => {
+                return Err(FatalParseError::internal_error(
+                    format!("Unexpected pareto direction: '{direction_str}'"),
+                    Some(direction_node.range()),
+                ));
             }
-        }
-        _ => {
-            return Err(FatalParseError::internal_error(
-                format!("Unexpected pareto component list: '{}'", components.kind()),
-                Some(components.range()),
-            ));
-        }
+        };
+
+        let component_node = field!(item_node, "expression");
+        let Some(component_expr) = parse_pareto_component(ctx, &component_node)? else {
+            return Ok(None);
+        };
+        let Some((non_worse, strict)) =
+            build_pareto_constraints(ctx, &component_node, component_expr, direction)
+        else {
+            return Ok(None);
+        };
+        non_worsening.push(non_worse);
+        strict_improvements.push(strict);
     }
 
     let mut conjuncts = non_worsening;

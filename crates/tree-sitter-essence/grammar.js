@@ -529,7 +529,7 @@ module.exports = grammar ({
     pareto_expression: $ => seq(
       "pareto",
       "(",
-      field("components", choice($.pareto_list, $.pareto_items)),
+      field("components", $.pareto_items),
       ")"
     ),
 
@@ -538,12 +538,6 @@ module.exports = grammar ({
     pareto_item: $ => seq(
       field("direction", choice("minimising", "maximising")),
       field("expression", choice($.bool_expr, $.comparison_expr, $.arithmetic_expr, $.atom))
-    ),
-
-    pareto_list: $ => seq(
-      "[",
-      commaSep1(choice($.bool_expr, $.comparison_expr, $.arithmetic_expr, $.atom)),
-      "]"
     ),
 
     dominance_relation: $ => seq(

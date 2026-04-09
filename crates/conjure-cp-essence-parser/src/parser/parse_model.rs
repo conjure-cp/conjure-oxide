@@ -294,12 +294,12 @@ mod test {
     }
 
     #[test]
-    pub fn test_parse_pareto_list_in_dominance_relation() {
+    pub fn test_parse_pareto_in_dominance_relation() {
         let src = "
         find x : int(0..3)
 
         dominance relation
-            pareto([x])
+            pareto(minimising x)
         ";
 
         let (model, _source_map) = parse_essence(src).unwrap();
@@ -382,7 +382,7 @@ mod test {
         find x : int(0..3)
 
         dominance relation
-            pareto([x + 1])
+            pareto(minimising x + 1)
         ";
 
         let (model, _source_map) = parse_essence(src).unwrap();
