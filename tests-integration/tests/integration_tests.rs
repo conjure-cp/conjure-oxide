@@ -151,12 +151,17 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
                     let run_label = run_case_label(path, essence_base, extension, run_case);
                     eprintln!("[integration] running {run_label}");
 <<<<<<< HEAD
+<<<<<<< HEAD
                     let default_rule_trace_enabled = matches!(rewriter, Rewriter::Naive);
                     set_rule_trace_enabled(true);
 =======
                     let default_rule_trace_enabled = true;
                     set_rule_trace_enabled(default_rule_trace_enabled);
 >>>>>>> 397bf5d8 (feat: various fixes to (partially) support the GCM models (#1750))
+=======
+                    let default_rule_trace_enabled = matches!(rewriter, Rewriter::Naive);
+                    set_rule_trace_enabled(true);
+>>>>>>> 3fe72a10 (feat(morph): enable morph for as many integration tests as possible, fix issues for the sat backend (#1754))
                     set_default_rule_trace_enabled(default_rule_trace_enabled);
                     set_rule_trace_verbose_enabled(false);
                     set_rule_trace_aggregates_enabled(false);

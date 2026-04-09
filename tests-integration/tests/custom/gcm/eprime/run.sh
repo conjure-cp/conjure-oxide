@@ -52,8 +52,12 @@ run_case() {
     "$TIMEOUT_BIN" 60 \
         conjure-oxide-debug solve \
         --parser tree-sitter \
+<<<<<<< HEAD
         --rewriter morph-levelson-nocache-prefilteroff-fixedpoint \
 >>>>>>> 397bf5d8 (feat: various fixes to (partially) support the GCM models (#1750))
+=======
+        --rewriter morph-levelson-fixedpoint \
+>>>>>>> 3fe72a10 (feat(morph): enable morph for as many integration tests as possible, fix issues for the sat backend (#1754))
         --solver smt-lia-arrays \
         --no-run-solver \
         --rule-trace-aggregates "$aggregate_path" \
