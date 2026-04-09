@@ -1,33 +1,27 @@
-use serde::{Deserialize, Serialize};
-use serde_json::Value;
-
 use tower_lsp::{
-    Client, LanguageServer, LspService, Server,
-    jsonrpc::{Error, Result},
-    lsp_types::{
-        ExecuteCommandOptions, ExecuteCommandParams, InitializeParams, InitializeResult,
-        InitializedParams, MessageType, ServerCapabilities, notification::Notification,
-    },
+    Client,
+    LanguageServer,
+    LspService,
+    Server,
+    jsonrpc::Result, //add error in future if needed
+    lsp_types::*,
 };
 
-#[derive(Debug, Serialize, Deserialize)]
-struct NotifactionParams {
-    title: String,
-    message: String,
-    description: String,
-}
+use crate::handlers::cache::{CacheCont, create_cache};
 
-enum CustomNotifciation {}
-
-impl Notification for CustomNotifciation {
-    type Params = NotifactionParams;
-
-    const METHOD: &'static str = "custom/notification";
-}
+use moka::future::Cache;
 
 #[derive(Debug)]
-struct Backend {
-    client: Client,
+pub struct Backend {
+    pub client: Client,
+    //cache is a member of backend and therefore can be accessed from within backend
+    pub lsp_cache: Cache<Url, CacheCont>,
+}
+
+impl Backend {
+    pub fn new(client: Client, lsp_cache: Cache<Url, CacheCont>) -> Self {
+        Backend { client, lsp_cache } //add cache here
+    }
 }
 
 #[tower_lsp::async_trait]
@@ -43,6 +37,19 @@ impl LanguageServer for Backend {
                     commands: vec![String::from("custom.notification")],
                     work_done_progress_options: Default::default(),
                 }),
+                text_document_sync: Some(TextDocumentSyncCapability::Options(
+                    TextDocumentSyncOptions {
+                        open_close: Some(true),
+                        // sends only the change and the range of the change
+                        change: Some(TextDocumentSyncKind::INCREMENTAL),
+                        save: Some(TextDocumentSyncSaveOptions::SaveOptions(SaveOptions {
+                            include_text: Some(true),
+                        })),
+                        ..Default::default()
+                    },
+                )),
+                //provides some simple hovering
+                hover_provider: Some(HoverProviderCapability::Simple(true)),
                 ..ServerCapabilities::default()
             },
         })
@@ -56,30 +63,25 @@ impl LanguageServer for Backend {
     async fn shutdown(&self) -> Result<()> {
         Ok(())
     }
-    async fn execute_command(&self, params: ExecuteCommandParams) -> Result<Option<Value>> {
-        if params.command == "custom.notification" {
-            //one of the commands that we support (see line 34)
-            self.client
-                .send_notification::<CustomNotifciation>(NotifactionParams {
-                    //send_notification is defined by the client
-                    title: String::from("Hello Notification"),
-                    message: String::from("This is a test message"),
-                    description: String::from("This is a description"),
-                })
-                .await;
+    //set up synchronising handlers
+    async fn did_open(&self, params: DidOpenTextDocumentParams) {
+        self.client.log_message(MessageType::INFO, "opened").await;
+        self.handle_did_open(params).await;
+    }
+    async fn did_save(&self, params: DidSaveTextDocumentParams) {
+        self.client.log_message(MessageType::INFO, "saved").await;
 
-            self.client
-                .log_message(
-                    MessageType::INFO,
-                    format!("Command executed successfully with params: {params:?}"),
-                )
-                .await;
-            Ok(None)
-        }
-        //can add additional commands here in an if-else block
-        else {
-            Err(Error::invalid_request())
-        }
+        self.handle_did_save(params).await;
+    }
+    async fn did_change(&self, params: DidChangeTextDocumentParams) {
+        self.client.log_message(MessageType::INFO, "changed").await;
+
+        self.handle_did_change(params).await;
+    }
+    //set up hover handler
+    async fn hover(&self, params: HoverParams) -> Result<Option<Hover>> {
+        self.client.log_message(MessageType::INFO, "hovering").await;
+        self.handle_hovering(params).await
     }
 }
 
@@ -88,7 +90,11 @@ pub async fn main() {
     let stdin = tokio::io::stdin();
     let stdout = tokio::io::stdout();
 
-    let (service, socket) = LspService::build(|client| Backend { client }).finish();
+    //make a new cache
+    let lsp_cache = create_cache().await;
+
+    //set cache into service when built
+    let (service, socket) = LspService::build(|client| Backend::new(client, lsp_cache)).finish();
 
     Server::new(stdin, stdout, socket).serve(service).await;
 }

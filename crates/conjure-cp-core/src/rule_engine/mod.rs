@@ -1,6 +1,7 @@
 pub use linkme::distributed_slice;
 
 mod rewrite_morph;
+pub use crate::settings::MorphConfig;
 pub use rewrite_morph::rewrite_morph;
 
 /// This procedural macro registers a decorated function with `conjure_cp_rules`' global registry, and
@@ -39,7 +40,7 @@ pub use rewrite_morph::rewrite_morph;
 /// use conjure_cp_core::rule_engine::{ApplicationError, ApplicationResult, Reduction};
 /// use conjure_cp_core::rule_engine::register_rule;
 ///
-/// #[register_rule(("RuleSetName", 10))]
+/// #[register_rule("RuleSetName", 10)]
 /// fn identity(expr: &Expression, symbols: &SymbolTable) -> ApplicationResult {
 ///   Ok(Reduction::pure(expr.clone()))
 /// }
@@ -77,15 +78,16 @@ pub use conjure_cp_rule_macros::register_rule;
 ///
 /// ```rust
 /// use conjure_cp_core::rule_engine::register_rule_set;
-/// use conjure_cp_core::solver::SolverFamily;
+/// use conjure_cp_core::settings::SolverFamily;
 /// register_rule_set!("MyRuleSet", (), |f: &SolverFamily| matches!(f, SolverFamily::Minion));
-/// register_rule_set!("AnotherRuleSet", (), |f: &SolverFamily| matches!(f, SolverFamily::Minion | SolverFamily::Sat));
+/// register_rule_set!("AnotherRuleSet", (), |f: &SolverFamily| matches!(f, SolverFamily::Minion | SolverFamily::Sat(_)));
 /// ```
 #[doc(inline)]
 pub use conjure_cp_rule_macros::register_rule_set;
 pub use resolve_rules::{RuleData, get_rules, get_rules_grouped, resolve_rule_sets};
 pub use rewrite_naive::rewrite_naive;
 pub use rewriter_common::RewriteError;
+pub(crate) use rule::MorphState;
 pub use rule::{ApplicationError, ApplicationResult, Reduction, Rule, RuleFn};
 pub use rule_set::RuleSet;
 
@@ -94,7 +96,10 @@ mod submodel_zipper;
 #[doc(hidden)]
 pub use submodel_zipper::SubmodelZipper;
 
-use crate::solver::SolverFamily;
+use crate::{
+    Model,
+    settings::{Rewriter, SolverFamily},
+};
 
 mod resolve_rules;
 mod rewrite_naive;
@@ -203,6 +208,18 @@ pub fn get_all_rule_sets() -> Vec<&'static RuleSet<'static>> {
     RULE_SETS_DISTRIBUTED_SLICE.iter().collect()
 }
 
+/// Rewrites a model using the supplied rewriter configuration.
+pub fn rewrite_model_with_configured_rewriter<'a>(
+    model: Model,
+    rule_sets: &Vec<&'a RuleSet<'a>>,
+    configured_rewriter: Rewriter,
+) -> Result<Model, RewriteError> {
+    match configured_rewriter {
+        Rewriter::Morph(config) => Ok(rewrite_morph(model, rule_sets, false, config)),
+        Rewriter::Naive => rewrite_naive(&model, rule_sets, false),
+    }
+}
+
 /// Get a rule set by name.
 /// Returns the rule set with the given name or None if it doesn't exist.
 ///
@@ -233,12 +250,12 @@ pub fn get_rule_set_by_name(name: &str) -> Option<&'static RuleSet<'static>> {
 /// # Example
 ///
 /// ```rust
-/// use conjure_cp_core::solver::SolverFamily;
+/// use conjure_cp_core::settings::SolverFamily;
 /// use conjure_cp_core::rule_engine::{get_rule_sets_for_solver_family, register_rule_set};
 ///
-/// register_rule_set!("CNF", (), |f: &SolverFamily| matches!(f, SolverFamily::Sat));
+/// register_rule_set!("CNF", (), |f: &SolverFamily| matches!(f, SolverFamily::Sat(_)));
 ///
-/// let rule_sets = get_rule_sets_for_solver_family(SolverFamily::Sat);
+/// let rule_sets = get_rule_sets_for_solver_family(SolverFamily::Sat(Default::default()));
 /// assert_eq!(rule_sets.len(), 2);
 /// assert_eq!(rule_sets[0].name, "CNF");
 /// ```

@@ -1,0 +1,21 @@
+Model before rewriting:
+
+find m: matrix indexed by [int(1..2)] of int(1..2)
+find m2: matrix indexed by [int(1..2)] of int(1..2)
+
+such that
+
+(m2 <lex m)
+
+--
+
+Final model:
+
+find m: matrix indexed by [int(1..2)] of int(1..2)
+find m2: matrix indexed by [int(1..2)] of int(1..2)
+
+such that
+
+or([(SafeIndex(m2,[1]) < SafeIndex(m,[1])),(SafeIndex(m2,[1]) = SafeIndex(m,[1]));int(1..)]),
+or([(SafeIndex(m2,[1]) < SafeIndex(m,[1])),(SafeIndex(m2,[2]) < SafeIndex(m,[2]));int(1..)])
+

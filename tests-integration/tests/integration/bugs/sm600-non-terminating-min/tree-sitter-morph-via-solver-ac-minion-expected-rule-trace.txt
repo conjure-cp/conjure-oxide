@@ -1,0 +1,26 @@
+Model before rewriting:
+
+find a: int(1..7)
+find b: int(1..7)
+
+such that
+
+(sum([min([a,b;int(1..2)]),6;int(1..)]) <= 10)
+
+--
+
+Final model:
+
+find a: int(1..7)
+find b: int(1..7)
+find __0: int(1..7)
+find __1: int(1..7)
+
+such that
+
+SumLeq([6, __0], 10),
+__0 =aux __1,
+Ineq(__1, a, 0),
+Ineq(__1, b, 0),
+or([(__1 = a),(__1 = b);int(1..)])
+

@@ -1,3 +1,4 @@
+use conjure_cp::ast::matrix::safe_index_optimised;
 use conjure_cp::ast::{Atom, Expression as Expr, Literal, Metadata, Moo, SymbolTable};
 use conjure_cp::essence_expr;
 use conjure_cp::rule_engine::{ApplicationError, ApplicationResult, Reduction, register_rule};
@@ -6,16 +7,16 @@ use ApplicationError::{DomainError, RuleNotApplicable};
 
 use itertools::Itertools as _;
 
-#[register_rule(("Base", 9000))]
+#[register_rule("Base", 9000, [LexGt, LexGeq])]
 fn normalise_lex_gt_geq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
         Expr::LexGt(metadata, a, b) => Ok(Reduction::pure(Expr::LexLt(
-            metadata.clone_dirty(),
+            metadata.clone(),
             b.clone(),
             a.clone(),
         ))),
         Expr::LexGeq(metadata, a, b) => Ok(Reduction::pure(Expr::LexLeq(
-            metadata.clone_dirty(),
+            metadata.clone(),
             b.clone(),
             a.clone(),
         ))),
@@ -31,7 +32,7 @@ fn normalise_lex_gt_geq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// - [a,b,c,d] <=lex [e,f,g] <-> [a,b,c] <lex [d,e,f]
 /// - [a,b,c] <lex [d,e,f,g] <-> [a,b,c] <=lex [d,e,f]
 /// - Everything else stays the same, with the longer matrix being chopped off
-#[register_rule(("Minion", 2000))]
+#[register_rule("Minion", 2000, [LexLt, LexLeq])]
 fn flatten_lex_lt_leq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (a, b) = match expr {
         Expr::LexLt(_, a, b) | Expr::LexLeq(_, a, b) => (
@@ -89,7 +90,7 @@ fn flatten_lex_lt_leq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// If they are the same length, then the strictness of the comparison comes into effect.
 ///
 /// Must be applied before matrix_to_list since this enumerates over operand indices.
-#[register_rule(("Smt", 2001))]
+#[register_rule("Smt", 2001, [LexLt, LexLeq])]
 fn expand_lex_lt_leq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (a, b) = match expr {
         Expr::LexLt(_, a, b) | Expr::LexLeq(_, a, b) => (a, b),
@@ -139,35 +140,11 @@ fn lex_lt_to_recursive_or(
         ([], [..]) => true.into(),   // Base case: a is shorter
 
         ([a_idx, a_tail @ ..], [b_idx, b_tail @ ..]) => {
-            let a_at_idx = index_maybe_slice(a, a_idx);
-            let b_at_idx = index_maybe_slice(b, b_idx);
+            let a_at_idx = safe_index_optimised(a.clone(), a_idx.clone()).unwrap();
+            let b_at_idx = safe_index_optimised(b.clone(), b_idx.clone()).unwrap();
             let tail = lex_lt_to_recursive_or(a, b, a_tail, b_tail, allow_eq);
 
             essence_expr!(r"&a_at_idx < &b_at_idx \/ (&a_at_idx = &b_at_idx /\ &tail)")
         }
-    }
-}
-
-/// This is the same as m[x] except when m is of the form n[..]
-/// Then it produces n[x] instead of n[..][x]
-fn index_maybe_slice(m: &Expr, x: &Literal) -> Expr {
-    match m {
-        Expr::SafeSlice(_, mat, idxs) => {
-            // TODO: support >1 slice index (i.e. multidimensional slices)
-
-            let mut idxs = idxs.clone();
-            let (slice_idx, _) = idxs
-                .iter()
-                .find_position(|opt| opt.is_none())
-                .expect("slice expression must contain one unspecified index");
-            let _ = idxs[slice_idx].replace(x.clone().into());
-
-            let Some(idxs) = idxs.into_iter().collect::<Option<Vec<_>>>() else {
-                todo!("slice expression should not contain more than one unspecified index")
-            };
-
-            Expr::SafeIndex(Metadata::new(), mat.clone(), idxs)
-        }
-        _ => Expr::SafeIndex(Metadata::new(), Moo::new(m.clone()), vec![x.clone().into()]),
     }
 }

@@ -1,0 +1,31 @@
+find a : bool
+find b : bool
+find c : bool
+find d : bool
+find e : bool
+
+such that
+    a \/ b \/ c
+such that
+    b \/ d
+such that
+    c \/ e
+such that
+    !(a /\ d)
+such that
+    !(b /\ e)
+
+dominance relation
+    $ For bools, this implication-based form is equivalent to using <= and < with false < true.
+    (a -> fromSolution(a)) /\
+    (b -> fromSolution(b)) /\
+    (c -> fromSolution(c)) /\
+    (d -> fromSolution(d)) /\
+    (e -> fromSolution(e)) /\
+    (
+        ((!a) /\ fromSolution(a)) \/
+        ((!b) /\ fromSolution(b)) \/
+        ((!c) /\ fromSolution(c)) \/
+        ((!d) /\ fromSolution(d)) \/
+        ((!e) /\ fromSolution(e))
+    )

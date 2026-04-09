@@ -123,7 +123,7 @@ impl Representation for TupleToAtom {
         Ok(self
             .names()
             .zip(self.elem_domain.iter().cloned())
-            .map(|(name, domain)| DeclarationPtr::new_var(name, DomainPtr::from(domain)))
+            .map(|(name, domain)| DeclarationPtr::new_find(name, DomainPtr::from(domain)))
             .collect())
     }
 

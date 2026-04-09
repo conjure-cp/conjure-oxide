@@ -1,32 +1,45 @@
 use std::collections::{HashSet, VecDeque};
 use std::fmt::{Display, Formatter};
+use std::hash::{DefaultHasher, Hash, Hasher};
+use std::sync::atomic::{AtomicU64, Ordering};
+
+static HASH_HITS: AtomicU64 = AtomicU64::new(0);
+static HASH_MISSES: AtomicU64 = AtomicU64::new(0);
+
+pub fn print_hash_stats() {
+    println!(
+        "Expression hash stats: hits={}, misses={}",
+        HASH_HITS.load(Ordering::Relaxed),
+        HASH_MISSES.load(Ordering::Relaxed)
+    );
+}
 use tracing::trace;
 
-use crate::ast::ReturnType;
-use crate::ast::SetAttr;
-use crate::ast::literals::AbstractLiteral;
-use crate::ast::literals::Literal;
-use crate::ast::pretty::{pretty_expressions_as_top_level, pretty_vec};
-use crate::ast::{Atom, DomainPtr};
-use crate::ast::{GroundDomain, Metadata, UnresolvedDomain};
-use crate::ast::{IntVal, Moo};
-use crate::ast::{Name, matrix};
-use crate::bug;
-use conjure_cp_enum_compatibility_macro::document_compatibility;
+use conjure_cp_enum_compatibility_macro::{document_compatibility, generate_discriminants};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
+use tree_morph::cache::CacheHashable;
 use ustr::Ustr;
 
 use polyquine::Quine;
 use uniplate::{Biplate, Uniplate};
+
+use crate::ast::metadata::NO_HASH;
+use crate::bug;
 
 use super::abstract_comprehension::AbstractComprehension;
 use super::ac_operators::ACOperatorKind;
 use super::categories::{Category, CategoryOf};
 use super::comprehension::Comprehension;
 use super::domains::HasDomain as _;
+use super::pretty::{pretty_expressions_as_top_level, pretty_vec};
 use super::records::RecordValue;
-use super::{DeclarationPtr, Domain, Range, Reference, SubModel, Typeable};
+use super::sat_encoding::SATIntEncoding;
+use super::{
+    AbstractLiteral, Atom, DeclarationPtr, Domain, DomainPtr, GroundDomain, IntVal, Literal,
+    Metadata, Model, Moo, Name, Range, Reference, ReturnType, SetAttr, SymbolTable, SymbolTablePtr,
+    Typeable, UnresolvedDomain, matrix,
+};
 
 // Ensure that this type doesn't get too big
 //
@@ -50,29 +63,33 @@ use super::{DeclarationPtr, Domain, Range, Reference, SubModel, Typeable};
 // boxed ~niklasdewally
 
 // expect size of Expression to be 112 bytes
-static_assertions::assert_eq_size!([u8; 104], Expression);
+static_assertions::assert_eq_size!([u8; 112], Expression);
 
 /// Represents different types of expressions used to define rules and constraints in the model.
 ///
 /// The `Expression` enum includes operations, constants, and variable references
 /// used to build rules and conditions for the model.
+#[generate_discriminants]
 #[document_compatibility]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, Serialize, Deserialize, Uniplate, Quine)]
-#[biplate(to=Metadata)]
-#[biplate(to=Atom)]
-#[biplate(to=DeclarationPtr)]
-#[biplate(to=Name)]
-#[biplate(to=Reference)]
-#[biplate(to=Vec<Expression>)]
-#[biplate(to=Option<Expression>)]
-#[biplate(to=SubModel)]
-#[biplate(to=Comprehension)]
+#[biplate(to=AbstractComprehension)]
 #[biplate(to=AbstractLiteral<Expression>)]
 #[biplate(to=AbstractLiteral<Literal>)]
+#[biplate(to=Atom)]
+#[biplate(to=Comprehension)]
+#[biplate(to=DeclarationPtr)]
+#[biplate(to=DomainPtr)]
+#[biplate(to=Literal)]
+#[biplate(to=Metadata)]
+#[biplate(to=Name)]
+#[biplate(to=Option<Expression>)]
 #[biplate(to=RecordValue<Expression>)]
 #[biplate(to=RecordValue<Literal>)]
-#[biplate(to=Literal)]
-#[biplate(to=DomainPtr)]
+#[biplate(to=Reference)]
+#[biplate(to=Model)]
+#[biplate(to=SymbolTable)]
+#[biplate(to=SymbolTablePtr)]
+#[biplate(to=Vec<Expression>)]
 #[path_prefix(conjure_cp::ast)]
 pub enum Expression {
     AbstractLiteral(Metadata, AbstractLiteral<Expression>),
@@ -86,7 +103,7 @@ pub enum Expression {
     /// A comprehension.
     ///
     /// The inside of the comprehension opens a new scope.
-    // todo (gskorokhod): Comprehension contains a SubModel which contains a bunch of Rc pointers.
+    // todo (gskorokhod): Comprehension contains a symbol table which contains a bunch of pointers.
     // This makes implementing Quine tricky (it doesnt support Rc, by design). Skip it for now.
     #[polyquine_skip]
     Comprehension(Metadata, Moo<Comprehension>),
@@ -151,10 +168,6 @@ pub enum Expression {
     /// - If b is true, then `toInt(b) == 1`
     #[compatible(SMT)]
     ToInt(Metadata, Moo<Expression>),
-
-    // todo (gskorokhod): Same reason as for Comprehension
-    #[polyquine_skip]
-    Scope(Metadata, Moo<SubModel>),
 
     /// `|x|` - absolute value of `x`
     #[compatible(JsonInput, SMT)]
@@ -255,6 +268,10 @@ pub enum Expression {
     #[compatible(JsonInput, SMT)]
     Neg(Metadata, Moo<Expression>),
 
+    /// Factorial: `x!` or 'factorial(x)`
+    #[compatible(JsonInput)]
+    Factorial(Metadata, Moo<Expression>),
+
     /// Set of domain values function is defined for
     #[compatible(JsonInput)]
     Defined(Metadata, Moo<Expression>),
@@ -281,6 +298,19 @@ pub enum Expression {
     #[compatible(JsonInput)]
     AllDiff(Metadata, Moo<Expression>),
 
+    /// `table([x1, x2, ...], [[r11, r12, ...], [r21, r22, ...], ...])`
+    ///
+    /// Represents a positive table constraint: the tuple `[x1, x2, ...]` must match one of the
+    /// allowed rows.
+    #[compatible(JsonInput)]
+    Table(Metadata, Moo<Expression>, Moo<Expression>),
+
+    /// `negativeTable([x1, x2, ...], [[r11, r12, ...], [r21, r22, ...], ...])`
+    ///
+    /// Represents a negative table constraint: the tuple `[x1, x2, ...]` must NOT match any of the
+    /// forbidden rows.
+    #[compatible(JsonInput)]
+    NegativeTable(Metadata, Moo<Expression>, Moo<Expression>),
     /// Binary subtraction operator
     ///
     /// This is a parser-level construct, and is immediately normalised to `Sum([a,-b])`.
@@ -501,9 +531,9 @@ pub enum Expression {
     #[polyquine_skip]
     AuxDeclaration(Metadata, Reference, Moo<Expression>),
 
-    /// This expression is for encoding i32 ints as a vector of boolean expressions for cnf - using 2s complement
+    /// This expression is for encoding ints for the SAT solver, it stores the encoding type, the vector of booleans and the min/max for the int.
     #[compatible(SAT)]
-    SATInt(Metadata, Moo<Expression>),
+    SATInt(Metadata, SATIntEncoding, Moo<Expression>, (i32, i32)),
 
     /// Addition over a pair of expressions (i.e. a + b) rather than a vec-expr like Expression::Sum.
     /// This is for compatibility with backends that do not support addition over vectors.
@@ -588,7 +618,8 @@ fn bounded_i32_domain_for_matrix_literal_monotonic(
 
     let expr = exprs.pop()?;
     let dom = expr.domain_of()?;
-    let Some(GroundDomain::Int(ranges)) = dom.as_ground() else {
+    let resolved = dom.resolve()?;
+    let GroundDomain::Int(ranges) = resolved.as_ref() else {
         return None;
     };
 
@@ -596,7 +627,8 @@ fn bounded_i32_domain_for_matrix_literal_monotonic(
 
     for expr in exprs {
         let dom = expr.domain_of()?;
-        let Some(GroundDomain::Int(ranges)) = dom.as_ground() else {
+        let resolved = dom.resolve()?;
+        let GroundDomain::Int(ranges) = resolved.as_ref() else {
             return None;
         };
 
@@ -624,6 +656,12 @@ fn bounded_i32_domain_for_matrix_literal_monotonic(
     } else {
         Some(Domain::int(vec![Range::Bounded(current_min, current_max)]))
     }
+}
+
+fn matrix_element_domain(e: &Expression) -> Option<DomainPtr> {
+    let (elem_domain, _) = e.domain_of()?.as_matrix()?;
+    elem_domain.as_ref().as_int()?;
+    Some(elem_domain)
 }
 
 // Returns none if unbounded
@@ -657,8 +695,7 @@ fn range_vec_bounds_i32(ranges: &Vec<Range<i32>>) -> Option<(i32, i32)> {
 impl Expression {
     /// Returns the possible values of the expression, recursing to leaf expressions
     pub fn domain_of(&self) -> Option<DomainPtr> {
-        //println!("domain_of {self}");
-        let ret = match self {
+        match self {
             Expression::Union(_, a, b) => Some(Domain::set(
                 SetAttr::<IntVal>::default(),
                 a.domain_of()?.union(&b.domain_of()?).ok()?,
@@ -721,7 +758,6 @@ impl Expression {
             }
             Expression::InDomain(_, _, _) => Some(Domain::bool()),
             Expression::Atomic(_, atom) => Some(atom.domain_of()),
-            Expression::Scope(_, _) => Some(Domain::bool()),
             Expression::Sum(_, e) => {
                 bounded_i32_domain_for_matrix_literal_monotonic(e, |x, y| Some(x + y))
             }
@@ -730,10 +766,12 @@ impl Expression {
             }
             Expression::Min(_, e) => bounded_i32_domain_for_matrix_literal_monotonic(e, |x, y| {
                 Some(if x < y { x } else { y })
-            }),
+            })
+            .or_else(|| matrix_element_domain(e)),
             Expression::Max(_, e) => bounded_i32_domain_for_matrix_literal_monotonic(e, |x, y| {
                 Some(if x > y { x } else { y })
-            }),
+            })
+            .or_else(|| matrix_element_domain(e)),
             Expression::UnsafeDiv(_, a, b) => a
                 .domain_of()?
                 .resolve()?
@@ -772,7 +810,7 @@ impl Expression {
                 if let GroundDomain::Int(ranges) = domain {
                     let mut ranges = ranges;
                     ranges.push(Range::Single(0));
-                    return Some(Domain::int(ranges));
+                    Some(Domain::int(ranges))
                 } else {
                     bug!("Domain of {self} was not integer")
                 }
@@ -799,7 +837,7 @@ impl Expression {
                 if let GroundDomain::Int(ranges) = domain {
                     let mut ranges = ranges;
                     ranges.push(Range::Single(0));
-                    return Some(Domain::int(ranges));
+                    Some(Domain::int(ranges))
                 } else {
                     bug!("Domain of {self} was not integer")
                 }
@@ -833,6 +871,7 @@ impl Expression {
             Expression::Leq(_, _, _) => Some(Domain::bool()),
             Expression::Gt(_, _, _) => Some(Domain::bool()),
             Expression::Lt(_, _, _) => Some(Domain::bool()),
+            Expression::Factorial(_, _) => None, // not implemented
             Expression::FlatAbsEq(_, _, _) => Some(Domain::bool()),
             Expression::FlatSumGeq(_, _, _) => Some(Domain::bool()),
             Expression::FlatSumLeq(_, _, _) => Some(Domain::bool()),
@@ -863,6 +902,8 @@ impl Expression {
                 None
             }
             Expression::AllDiff(_, _) => Some(Domain::bool()),
+            Expression::Table(_, _, _) => Some(Domain::bool()),
+            Expression::NegativeTable(_, _, _) => Some(Domain::bool()),
             Expression::FlatWatchedLiteral(_, _, _) => Some(Domain::bool()),
             Expression::MinionReify(_, _, _) => Some(Domain::bool()),
             Expression::MinionReifyImply(_, _, _) => Some(Domain::bool()),
@@ -905,15 +946,9 @@ impl Expression {
                 .ok(),
             Expression::MinionPow(_, _, _, _) => Some(Domain::bool()),
             Expression::ToInt(_, _) => Some(Domain::int(vec![Range::Bounded(0, 1)])),
-            Expression::SATInt(_, _) => {
-                Some(Domain::int_ground(vec![Range::Bounded(
-                    i8::MIN.into(),
-                    i8::MAX.into(),
-                )])) // BITS
-            } // A CnfInt can represent any i8 integer at the moment
-            // A CnfInt contains multiple boolean expressions and represents the integer
-            // formed when these booleans are treated as the bits in an integer encoding.
-            // So the 'domain of' should be an integer
+            Expression::SATInt(_, _, _, (low, high)) => {
+                Some(Domain::int_ground(vec![Range::Bounded(*low, *high)]))
+            }
             Expression::PairwiseSum(_, a, b) => a
                 .domain_of()?
                 .resolve()?
@@ -932,33 +967,9 @@ impl Expression {
             Expression::ImageSet(_, function, _) => get_function_codomain(function),
             Expression::PreImage(_, function, _) => get_function_domain(function),
             Expression::Restrict(_, function, new_domain) => {
-                let function_domain = function.domain_of()?;
-                match function_domain.resolve().as_ref() {
-                    Some(d) => {
-                        match d.as_ref() {
-                            GroundDomain::Function(attrs, _, codomain) => Some(Domain::function(
-                                attrs.clone(),
-                                new_domain.domain_of()?,
-                                codomain.clone().into(),
-                            )),
-                            // Not defined for anything other than a function
-                            _ => None,
-                        }
-                    }
-                    None => {
-                        match function_domain.as_unresolved()? {
-                            UnresolvedDomain::Function(attrs, _, codomain) => {
-                                Some(Domain::function(
-                                    attrs.clone(),
-                                    new_domain.domain_of()?,
-                                    codomain.clone(),
-                                ))
-                            }
-                            // Not defined for anything other than a function
-                            _ => None,
-                        }
-                    }
-                }
+                let (attrs, _, codom) = function.domain_of()?.as_function()?;
+                let new_dom = new_domain.domain_of()?;
+                Some(Domain::function(attrs, new_dom, codom))
             }
             Expression::Inverse(..) => Some(Domain::bool()),
             Expression::LexLt(..) => Some(Domain::bool()),
@@ -967,17 +978,106 @@ impl Expression {
             Expression::LexGeq(..) => Some(Domain::bool()),
             Expression::FlatLexLt(..) => Some(Domain::bool()),
             Expression::FlatLexLeq(..) => Some(Domain::bool()),
-        };
-        if let Some(dom) = &ret
-            && let Some(ranges) = dom.as_int_ground()
-            && ranges.len() > 1
-        {
-            // TODO: (flm8) the Minion bindings currently only support single ranges for domains, so we use the min/max bounds
-            // Once they support a full domain as we define it, we can remove this conversion
-            let (min, max) = range_vec_bounds_i32(ranges)?;
-            return Some(Domain::int(vec![Range::Bounded(min, max)]));
         }
-        ret
+    }
+
+    /// Returns a reference to this expression's metadata without cloning.
+    pub fn meta_ref(&self) -> &Metadata {
+        macro_rules! match_meta_ref {
+            ($($variant:ident),* $(,)?) => {
+                match self {
+                    $(Expression::$variant(meta, ..) => meta,)*
+                }
+            };
+        }
+        match_meta_ref!(
+            AbstractLiteral,
+            Root,
+            Bubble,
+            Comprehension,
+            AbstractComprehension,
+            DominanceRelation,
+            FromSolution,
+            Metavar,
+            Atomic,
+            UnsafeIndex,
+            SafeIndex,
+            UnsafeSlice,
+            SafeSlice,
+            InDomain,
+            ToInt,
+            Abs,
+            Sum,
+            Product,
+            Min,
+            Max,
+            Not,
+            Or,
+            And,
+            Imply,
+            Iff,
+            Union,
+            In,
+            Intersect,
+            Supset,
+            SupsetEq,
+            Subset,
+            SubsetEq,
+            Eq,
+            Neq,
+            Geq,
+            Leq,
+            Gt,
+            Lt,
+            SafeDiv,
+            UnsafeDiv,
+            SafeMod,
+            UnsafeMod,
+            Neg,
+            Defined,
+            Range,
+            UnsafePow,
+            SafePow,
+            Flatten,
+            AllDiff,
+            Minus,
+            Factorial,
+            FlatAbsEq,
+            FlatAllDiff,
+            FlatSumGeq,
+            FlatSumLeq,
+            FlatIneq,
+            FlatWatchedLiteral,
+            FlatWeightedSumLeq,
+            FlatWeightedSumGeq,
+            FlatMinusEq,
+            FlatProductEq,
+            MinionDivEqUndefZero,
+            MinionModuloEqUndefZero,
+            MinionPow,
+            MinionReify,
+            MinionReifyImply,
+            MinionWInIntervalSet,
+            MinionWInSet,
+            MinionElementOne,
+            AuxDeclaration,
+            SATInt,
+            PairwiseSum,
+            PairwiseProduct,
+            Image,
+            ImageSet,
+            PreImage,
+            Inverse,
+            Restrict,
+            LexLt,
+            LexLeq,
+            LexGt,
+            LexGeq,
+            FlatLexLt,
+            FlatLexLeq,
+            NegativeTable,
+            Table
+        )
     }
 
     pub fn get_meta(&self) -> Metadata {
@@ -1011,17 +1111,6 @@ impl Expression {
             }
         }
         true
-    }
-
-    pub fn is_clean(&self) -> bool {
-        let metadata = self.get_meta();
-        metadata.clean
-    }
-
-    pub fn set_clean(&mut self, bool_value: bool) {
-        let mut metadata = self.get_meta();
-        metadata.clean = bool_value;
-        self.set_meta(metadata);
     }
 
     /// True if the expression is an associative and commutative operator
@@ -1060,11 +1149,11 @@ impl Expression {
         }
     }
 
-    /// If the expression is a list, returns the inner expressions.
+    /// If the expression is a list, returns a *copied* vector of the inner expressions.
     ///
     /// A list is any a matrix with the domain `int(1..)`. This includes matrix literals without
     /// any explicitly specified domain.
-    pub fn unwrap_list(self) -> Option<Vec<Expression>> {
+    pub fn unwrap_list(&self) -> Option<Vec<Expression>> {
         match self {
             Expression::AbstractLiteral(_, matrix @ AbstractLiteral::Matrix(_, _)) => {
                 matrix.unwrap_list().cloned()
@@ -1273,7 +1362,7 @@ impl CategoryOf for Expression {
                 // this should generically cover all leaf types we currently have in oxide.
 
                 // if x contains submodels (including comprehensions)
-                if !Biplate::<SubModel>::universe_bi(&x).is_empty() {
+                if !Biplate::<Model>::universe_bi(&x).is_empty() {
                     // assume that the category is decision
                     return Category::Decision;
                 }
@@ -1282,7 +1371,7 @@ impl CategoryOf for Expression {
                 if let Some(max_atom_category) = Biplate::<Atom>::universe_bi(&x).iter().map(|x| x.category_of()).max()
                 // and those atoms have a higher category than we already know about
                 && max_atom_category > max_category{
-                    // update category 
+                    // update category
                     max_category = max_atom_category;
                 }
 
@@ -1290,7 +1379,7 @@ impl CategoryOf for Expression {
                 if let Some(max_declaration_category) = Biplate::<DeclarationPtr>::universe_bi(&x).iter().map(|x| x.category_of()).max()
                 // and those pointers have a higher category than we already know about
                 && max_declaration_category > max_category{
-                    // update category 
+                    // update category
                     max_category = max_declaration_category;
                 }
                 max_category
@@ -1337,10 +1426,9 @@ impl Display for Expression {
             Expression::AbstractLiteral(_, l) => l.fmt(f),
             Expression::Comprehension(_, c) => c.fmt(f),
             Expression::AbstractComprehension(_, c) => c.fmt(f),
-            Expression::UnsafeIndex(_, e1, e2) | Expression::SafeIndex(_, e1, e2) => {
-                write!(f, "{e1}{}", pretty_vec(e2))
-            }
-            Expression::UnsafeSlice(_, e1, es) | Expression::SafeSlice(_, e1, es) => {
+            Expression::UnsafeIndex(_, e1, e2) => write!(f, "{e1}{}", pretty_vec(e2)),
+            Expression::SafeIndex(_, e1, e2) => write!(f, "SafeIndex({e1},{})", pretty_vec(e2)),
+            Expression::UnsafeSlice(_, e1, es) => {
                 let args = es
                     .iter()
                     .map(|x| match x {
@@ -1350,6 +1438,17 @@ impl Display for Expression {
                     .join(",");
 
                 write!(f, "{e1}[{args}]")
+            }
+            Expression::SafeSlice(_, e1, es) => {
+                let args = es
+                    .iter()
+                    .map(|x| match x {
+                        Some(x) => format!("{x}"),
+                        None => "..".into(),
+                    })
+                    .join(",");
+
+                write!(f, "SafeSlice({e1},[{args}])")
             }
             Expression::InDomain(_, e, domain) => {
                 write!(f, "__inDomain({e},{domain})")
@@ -1361,7 +1460,6 @@ impl Display for Expression {
             Expression::FromSolution(_, expr) => write!(f, "FromSolution({expr})"),
             Expression::Metavar(_, name) => write!(f, "&{name}"),
             Expression::Atomic(_, atom) => atom.fmt(f),
-            Expression::Scope(_, submodel) => write!(f, "{{\n{submodel}\n}}"),
             Expression::Abs(_, a) => write!(f, "|{a}|"),
             Expression::Sum(_, e) => {
                 write!(f, "sum({e})")
@@ -1431,6 +1529,12 @@ impl Display for Expression {
             Expression::AllDiff(_, e) => {
                 write!(f, "allDiff({e})")
             }
+            Expression::Table(_, tuple_expr, rows_expr) => {
+                write!(f, "table({tuple_expr}, {rows_expr})")
+            }
+            Expression::NegativeTable(_, tuple_expr, rows_expr) => {
+                write!(f, "negativeTable({tuple_expr}, {rows_expr})")
+            }
             Expression::Bubble(_, box1, box2) => {
                 write!(f, "{{{} @ {}}}", box1.clone(), box2.clone())
             }
@@ -1438,10 +1542,10 @@ impl Display for Expression {
                 write!(f, "SafeDiv({}, {})", box1.clone(), box2.clone())
             }
             Expression::UnsafeDiv(_, box1, box2) => {
-                write!(f, "UnsafeDiv({}, {})", box1.clone(), box2.clone())
+                write!(f, "({} / {})", box1.clone(), box2.clone())
             }
             Expression::UnsafePow(_, box1, box2) => {
-                write!(f, "UnsafePow({}, {})", box1.clone(), box2.clone())
+                write!(f, "({} ** {})", box1.clone(), box2.clone())
             }
             Expression::SafePow(_, box1, box2) => {
                 write!(f, "SafePow({}, {})", box1.clone(), box2.clone())
@@ -1479,7 +1583,7 @@ impl Display for Expression {
             }
             Expression::MinionWInSet(_, atom, values) => {
                 let values = values.iter().join(",");
-                write!(f, "__minion_w_inset({atom},{values})")
+                write!(f, "__minion_w_inset({atom},[{values}])")
             }
             Expression::AuxDeclaration(_, reference, e) => {
                 write!(f, "{} =aux {}", reference, e.clone())
@@ -1492,6 +1596,9 @@ impl Display for Expression {
             }
             Expression::Neg(_, a) => {
                 write!(f, "-({})", a.clone())
+            }
+            Expression::Factorial(_, a) => {
+                write!(f, "({})!", a.clone())
             }
             Expression::Minus(_, a, b) => {
                 write!(f, "({} - {})", a.clone(), b.clone())
@@ -1544,8 +1651,8 @@ impl Display for Expression {
                 write!(f, "toInt({expr})")
             }
 
-            Expression::SATInt(_, e) => {
-                write!(f, "SATInt({e})")
+            Expression::SATInt(_, encoding, bits, (min, max)) => {
+                write!(f, "SATInt({encoding:?}, {bits} [{min}, {max}])")
             }
 
             Expression::PairwiseSum(_, a, b) => write!(f, "PairwiseSum({a}, {b})"),
@@ -1620,7 +1727,6 @@ impl Typeable for Expression {
             Expression::FromSolution(_, expr) => expr.return_type(),
             Expression::Metavar(_, _) => ReturnType::Unknown,
             Expression::Atomic(_, atom) => atom.return_type(),
-            Expression::Scope(_, scope) => scope.return_type(),
             Expression::Abs(_, _) => ReturnType::Int,
             Expression::Sum(_, _) => ReturnType::Int,
             Expression::Product(_, _) => ReturnType::Int,
@@ -1661,6 +1767,8 @@ impl Typeable for Expression {
                 }
             }
             Expression::AllDiff(_, _) => ReturnType::Bool,
+            Expression::Table(_, _, _) => ReturnType::Bool,
+            Expression::NegativeTable(_, _, _) => ReturnType::Bool,
             Expression::Bubble(_, inner, _) => inner.return_type(),
             Expression::FlatWatchedLiteral(_, _, _) => ReturnType::Bool,
             Expression::MinionReify(_, _, _) => ReturnType::Bool,
@@ -1673,6 +1781,7 @@ impl Typeable for Expression {
             Expression::SafeMod(_, _, _) => ReturnType::Int,
             Expression::MinionModuloEqUndefZero(_, _, _, _) => ReturnType::Bool,
             Expression::Neg(_, _) => ReturnType::Int,
+            Expression::Factorial(_, _) => ReturnType::Int,
             Expression::UnsafePow(_, _, _) => ReturnType::Int,
             Expression::SafePow(_, _, _) => ReturnType::Int,
             Expression::Minus(_, _, _) => ReturnType::Int,
@@ -1683,7 +1792,7 @@ impl Typeable for Expression {
             Expression::FlatWeightedSumGeq(_, _, _, _) => ReturnType::Bool,
             Expression::MinionPow(_, _, _, _) => ReturnType::Bool,
             Expression::ToInt(_, _) => ReturnType::Int,
-            Expression::SATInt(_, _) => ReturnType::Int,
+            Expression::SATInt(..) => ReturnType::Int,
             Expression::PairwiseSum(_, _, _) => ReturnType::Int,
             Expression::PairwiseProduct(_, _, _) => ReturnType::Int,
             Expression::Defined(_, function) => {
@@ -1753,9 +1862,444 @@ impl Typeable for Expression {
     }
 }
 
+impl Expression {
+    /// Visit each direct `Expression` child by reference, without cloning.
+    fn for_each_expr_child(&self, f: &mut impl FnMut(&Expression)) {
+        match self {
+            // Special Case
+            Expression::AbstractLiteral(_, alit) => match alit {
+                AbstractLiteral::Set(v) | AbstractLiteral::MSet(v) | AbstractLiteral::Tuple(v) => {
+                    for expr in v {
+                        f(expr);
+                    }
+                }
+                AbstractLiteral::Matrix(v, _domain) => {
+                    for expr in v {
+                        f(expr);
+                    }
+                }
+                AbstractLiteral::Record(rs) => {
+                    for r in rs {
+                        f(&r.value);
+                    }
+                }
+                AbstractLiteral::Function(vs) => {
+                    for (a, b) in vs {
+                        f(a);
+                        f(b);
+                    }
+                }
+            },
+            Expression::Root(_, vs) => {
+                for expr in vs {
+                    f(expr);
+                }
+            }
+
+            // Moo<Expression>
+            Expression::DominanceRelation(_, m1)
+            | Expression::ToInt(_, m1)
+            | Expression::Abs(_, m1)
+            | Expression::Sum(_, m1)
+            | Expression::Product(_, m1)
+            | Expression::Min(_, m1)
+            | Expression::Max(_, m1)
+            | Expression::Not(_, m1)
+            | Expression::Or(_, m1)
+            | Expression::And(_, m1)
+            | Expression::Neg(_, m1)
+            | Expression::Defined(_, m1)
+            | Expression::AllDiff(_, m1)
+            | Expression::Factorial(_, m1)
+            | Expression::Range(_, m1) => {
+                f(m1);
+            }
+
+            // Moo<Expression> + Moo<Expression>
+            Expression::Table(_, m1, m2)
+            | Expression::NegativeTable(_, m1, m2)
+            | Expression::Bubble(_, m1, m2)
+            | Expression::Imply(_, m1, m2)
+            | Expression::Iff(_, m1, m2)
+            | Expression::Union(_, m1, m2)
+            | Expression::In(_, m1, m2)
+            | Expression::Intersect(_, m1, m2)
+            | Expression::Supset(_, m1, m2)
+            | Expression::SupsetEq(_, m1, m2)
+            | Expression::Subset(_, m1, m2)
+            | Expression::SubsetEq(_, m1, m2)
+            | Expression::Eq(_, m1, m2)
+            | Expression::Neq(_, m1, m2)
+            | Expression::Geq(_, m1, m2)
+            | Expression::Leq(_, m1, m2)
+            | Expression::Gt(_, m1, m2)
+            | Expression::Lt(_, m1, m2)
+            | Expression::SafeDiv(_, m1, m2)
+            | Expression::UnsafeDiv(_, m1, m2)
+            | Expression::SafeMod(_, m1, m2)
+            | Expression::UnsafeMod(_, m1, m2)
+            | Expression::UnsafePow(_, m1, m2)
+            | Expression::SafePow(_, m1, m2)
+            | Expression::Minus(_, m1, m2)
+            | Expression::PairwiseSum(_, m1, m2)
+            | Expression::PairwiseProduct(_, m1, m2)
+            | Expression::Image(_, m1, m2)
+            | Expression::ImageSet(_, m1, m2)
+            | Expression::PreImage(_, m1, m2)
+            | Expression::Inverse(_, m1, m2)
+            | Expression::Restrict(_, m1, m2)
+            | Expression::LexLt(_, m1, m2)
+            | Expression::LexLeq(_, m1, m2)
+            | Expression::LexGt(_, m1, m2)
+            | Expression::LexGeq(_, m1, m2) => {
+                f(m1);
+                f(m2);
+            }
+
+            // Moo<Expression> + Vec<Expression>
+            Expression::UnsafeIndex(_, m, vs) | Expression::SafeIndex(_, m, vs) => {
+                f(m);
+                for v in vs {
+                    f(v);
+                }
+            }
+
+            // Moo<Expression> + Vec<Option<Expression>>
+            Expression::UnsafeSlice(_, m, vs) | Expression::SafeSlice(_, m, vs) => {
+                f(m);
+                for e in vs.iter().flatten() {
+                    f(e);
+                }
+            }
+
+            // Moo<Expression> + DomainPtr
+            Expression::InDomain(_, m, _) => {
+                f(m);
+            }
+
+            // Option<Moo<Expression>> + Moo<Expression>
+            Expression::Flatten(_, opt, m) => {
+                if let Some(e) = opt {
+                    f(e);
+                }
+                f(m);
+            }
+
+            // Moo<Expression> + Atom
+            Expression::MinionReify(_, m, _) | Expression::MinionReifyImply(_, m, _) => {
+                f(m);
+            }
+
+            // Reference + Moo<Expression>
+            Expression::AuxDeclaration(_, _, m) => {
+                f(m);
+            }
+
+            // SATIntEncoding + Moo<Expression> + (i32, i32)
+            Expression::SATInt(_, _, m, _) => {
+                f(m);
+            }
+
+            // No Expression children
+            Expression::Comprehension(_, _)
+            | Expression::AbstractComprehension(_, _)
+            | Expression::Atomic(_, _)
+            | Expression::FromSolution(_, _)
+            | Expression::Metavar(_, _)
+            | Expression::FlatAbsEq(_, _, _)
+            | Expression::FlatMinusEq(_, _, _)
+            | Expression::FlatProductEq(_, _, _, _)
+            | Expression::MinionDivEqUndefZero(_, _, _, _)
+            | Expression::MinionModuloEqUndefZero(_, _, _, _)
+            | Expression::MinionPow(_, _, _, _)
+            | Expression::FlatAllDiff(_, _)
+            | Expression::FlatSumGeq(_, _, _)
+            | Expression::FlatSumLeq(_, _, _)
+            | Expression::FlatIneq(_, _, _, _)
+            | Expression::FlatWatchedLiteral(_, _, _)
+            | Expression::FlatWeightedSumLeq(_, _, _, _)
+            | Expression::FlatWeightedSumGeq(_, _, _, _)
+            | Expression::MinionWInIntervalSet(_, _, _)
+            | Expression::MinionWInSet(_, _, _)
+            | Expression::MinionElementOne(_, _, _, _)
+            | Expression::FlatLexLt(_, _, _)
+            | Expression::FlatLexLeq(_, _, _) => {}
+        }
+    }
+}
+
+impl CacheHashable for Expression {
+    fn invalidate_cache(&self) {
+        self.meta_ref()
+            .stored_hash
+            .store(NO_HASH, Ordering::Relaxed);
+    }
+
+    fn invalidate_cache_recursive(&self) {
+        self.invalidate_cache();
+        self.for_each_expr_child(&mut |child| {
+            child.invalidate_cache_recursive();
+        });
+    }
+
+    fn get_cached_hash(&self) -> u64 {
+        let stored = self.meta_ref().stored_hash.load(Ordering::Relaxed);
+        if stored != NO_HASH {
+            HASH_HITS.fetch_add(1, Ordering::Relaxed);
+            return stored;
+        }
+        HASH_MISSES.fetch_add(1, Ordering::Relaxed);
+        self.calculate_hash()
+    }
+
+    fn calculate_hash(&self) -> u64 {
+        let mut hasher = DefaultHasher::new();
+        std::mem::discriminant(self).hash(&mut hasher);
+        match self {
+            // Special Case
+            Expression::AbstractLiteral(_, alit) => match alit {
+                AbstractLiteral::Set(v) | AbstractLiteral::MSet(v) | AbstractLiteral::Tuple(v) => {
+                    for expr in v {
+                        expr.get_cached_hash().hash(&mut hasher);
+                    }
+                }
+                AbstractLiteral::Matrix(v, domain) => {
+                    domain.hash(&mut hasher);
+                    for expr in v {
+                        expr.get_cached_hash().hash(&mut hasher);
+                    }
+                }
+                AbstractLiteral::Record(rs) => {
+                    for r in rs {
+                        r.name.hash(&mut hasher);
+                        r.value.get_cached_hash().hash(&mut hasher);
+                    }
+                }
+                AbstractLiteral::Function(vs) => {
+                    for (a, b) in vs {
+                        a.get_cached_hash().hash(&mut hasher);
+                        b.get_cached_hash().hash(&mut hasher);
+                    }
+                }
+            },
+            Expression::Root(_, vs) => {
+                for expr in vs {
+                    expr.get_cached_hash().hash(&mut hasher);
+                }
+            }
+
+            // Moo<Expression>
+            Expression::DominanceRelation(_, m1)
+            | Expression::ToInt(_, m1)
+            | Expression::Abs(_, m1)
+            | Expression::Sum(_, m1)
+            | Expression::Product(_, m1)
+            | Expression::Min(_, m1)
+            | Expression::Max(_, m1)
+            | Expression::Not(_, m1)
+            | Expression::Or(_, m1)
+            | Expression::And(_, m1)
+            | Expression::Neg(_, m1)
+            | Expression::Defined(_, m1)
+            | Expression::AllDiff(_, m1)
+            | Expression::Factorial(_, m1)
+            | Expression::Range(_, m1) => {
+                m1.get_cached_hash().hash(&mut hasher);
+            }
+
+            // Moo<Expression> + Moo<Expression>
+            Expression::Table(_, m1, m2)
+            | Expression::NegativeTable(_, m1, m2)
+            | Expression::Bubble(_, m1, m2)
+            | Expression::Imply(_, m1, m2)
+            | Expression::Iff(_, m1, m2)
+            | Expression::Union(_, m1, m2)
+            | Expression::In(_, m1, m2)
+            | Expression::Intersect(_, m1, m2)
+            | Expression::Supset(_, m1, m2)
+            | Expression::SupsetEq(_, m1, m2)
+            | Expression::Subset(_, m1, m2)
+            | Expression::SubsetEq(_, m1, m2)
+            | Expression::Eq(_, m1, m2)
+            | Expression::Neq(_, m1, m2)
+            | Expression::Geq(_, m1, m2)
+            | Expression::Leq(_, m1, m2)
+            | Expression::Gt(_, m1, m2)
+            | Expression::Lt(_, m1, m2)
+            | Expression::SafeDiv(_, m1, m2)
+            | Expression::UnsafeDiv(_, m1, m2)
+            | Expression::SafeMod(_, m1, m2)
+            | Expression::UnsafeMod(_, m1, m2)
+            | Expression::UnsafePow(_, m1, m2)
+            | Expression::SafePow(_, m1, m2)
+            | Expression::Minus(_, m1, m2)
+            | Expression::PairwiseSum(_, m1, m2)
+            | Expression::PairwiseProduct(_, m1, m2)
+            | Expression::Image(_, m1, m2)
+            | Expression::ImageSet(_, m1, m2)
+            | Expression::PreImage(_, m1, m2)
+            | Expression::Inverse(_, m1, m2)
+            | Expression::Restrict(_, m1, m2)
+            | Expression::LexLt(_, m1, m2)
+            | Expression::LexLeq(_, m1, m2)
+            | Expression::LexGt(_, m1, m2)
+            | Expression::LexGeq(_, m1, m2) => {
+                m1.get_cached_hash().hash(&mut hasher);
+                m2.get_cached_hash().hash(&mut hasher);
+            }
+            // Moo<Expression> + Vec<Expression>
+            Expression::UnsafeIndex(_, m, vs) | Expression::SafeIndex(_, m, vs) => {
+                m.get_cached_hash().hash(&mut hasher);
+                for v in vs {
+                    v.get_cached_hash().hash(&mut hasher);
+                }
+            }
+
+            // Moo<Expression> + Vec<Option<Expression>>
+            Expression::UnsafeSlice(_, m, vs) | Expression::SafeSlice(_, m, vs) => {
+                m.get_cached_hash().hash(&mut hasher);
+                for v in vs {
+                    match v {
+                        Some(e) => e.get_cached_hash().hash(&mut hasher),
+                        None => 0u64.hash(&mut hasher),
+                    }
+                }
+            }
+
+            // Moo<Expression> + DomainPtr
+            Expression::InDomain(_, m, d) => {
+                m.get_cached_hash().hash(&mut hasher);
+                d.hash(&mut hasher);
+            }
+
+            // Option<Moo<Expression>> + Moo<Expression>
+            Expression::Flatten(_, opt, m) => {
+                if let Some(e) = opt {
+                    e.get_cached_hash().hash(&mut hasher);
+                }
+                m.get_cached_hash().hash(&mut hasher);
+            }
+
+            // Moo<Expression> + Atom
+            Expression::MinionReify(_, m, a) | Expression::MinionReifyImply(_, m, a) => {
+                m.get_cached_hash().hash(&mut hasher);
+                a.hash(&mut hasher);
+            }
+
+            // Reference + Moo<Expression>
+            Expression::AuxDeclaration(_, r, m) => {
+                r.hash(&mut hasher);
+                m.get_cached_hash().hash(&mut hasher);
+            }
+
+            // SATIntEncoding + Moo<Expression> + (i32, i32)
+            Expression::SATInt(_, enc, m, bounds) => {
+                enc.hash(&mut hasher);
+                m.get_cached_hash().hash(&mut hasher);
+                bounds.hash(&mut hasher);
+            }
+
+            // Non-Expression Moo types - hash normally
+            Expression::Comprehension(_, c) => c.hash(&mut hasher),
+            Expression::AbstractComprehension(_, c) => c.hash(&mut hasher),
+
+            // Leaf types - no Expression children
+            Expression::Atomic(_, a) => a.hash(&mut hasher),
+            Expression::FromSolution(_, a) => a.hash(&mut hasher),
+            Expression::Metavar(_, u) => u.hash(&mut hasher),
+
+            // Two Moo<Atom>
+            Expression::FlatAbsEq(_, a1, a2) | Expression::FlatMinusEq(_, a1, a2) => {
+                a1.hash(&mut hasher);
+                a2.hash(&mut hasher);
+            }
+
+            // Three Moo<Atom>
+            Expression::FlatProductEq(_, a1, a2, a3)
+            | Expression::MinionDivEqUndefZero(_, a1, a2, a3)
+            | Expression::MinionModuloEqUndefZero(_, a1, a2, a3)
+            | Expression::MinionPow(_, a1, a2, a3) => {
+                a1.hash(&mut hasher);
+                a2.hash(&mut hasher);
+                a3.hash(&mut hasher);
+            }
+
+            // Vec<Atom>
+            Expression::FlatAllDiff(_, vs) => {
+                for v in vs {
+                    v.hash(&mut hasher);
+                }
+            }
+
+            // Vec<Atom> + Atom
+            Expression::FlatSumGeq(_, vs, a) | Expression::FlatSumLeq(_, vs, a) => {
+                for v in vs {
+                    v.hash(&mut hasher);
+                }
+                a.hash(&mut hasher);
+            }
+
+            // Moo<Atom> + Moo<Atom> + Box<Literal>
+            Expression::FlatIneq(_, a1, a2, lit) => {
+                a1.hash(&mut hasher);
+                a2.hash(&mut hasher);
+                lit.hash(&mut hasher);
+            }
+
+            // Reference + Literal
+            Expression::FlatWatchedLiteral(_, r, l) => {
+                r.hash(&mut hasher);
+                l.hash(&mut hasher);
+            }
+
+            // Vec<Literal> + Vec<Atom> + Moo<Atom>
+            Expression::FlatWeightedSumLeq(_, lits, atoms, a)
+            | Expression::FlatWeightedSumGeq(_, lits, atoms, a) => {
+                for l in lits {
+                    l.hash(&mut hasher);
+                }
+                for at in atoms {
+                    at.hash(&mut hasher);
+                }
+                a.hash(&mut hasher);
+            }
+
+            // Atom + Vec<i32>
+            Expression::MinionWInIntervalSet(_, a, vs) | Expression::MinionWInSet(_, a, vs) => {
+                a.hash(&mut hasher);
+                for v in vs {
+                    v.hash(&mut hasher);
+                }
+            }
+
+            // Vec<Atom> + Moo<Atom> + Moo<Atom>
+            Expression::MinionElementOne(_, vs, a1, a2) => {
+                for v in vs {
+                    v.hash(&mut hasher);
+                }
+                a1.hash(&mut hasher);
+                a2.hash(&mut hasher);
+            }
+
+            // Vec<Atom> + Vec<Atom>
+            Expression::FlatLexLt(_, v1, v2) | Expression::FlatLexLeq(_, v1, v2) => {
+                for v in v1 {
+                    v.hash(&mut hasher);
+                }
+                for v in v2 {
+                    v.hash(&mut hasher);
+                }
+            }
+        };
+
+        let result = hasher.finish();
+        self.meta_ref().stored_hash.swap(result, Ordering::Relaxed);
+        result
+    }
+}
+
 #[cfg(test)]
 mod tests {
-
     use crate::matrix_expr;
 
     use super::*;

@@ -1,0 +1,30 @@
+Model before rewriting:
+
+find x: bool
+
+such that
+
+(x = or([ (product([i,i;int(1..2)]) = i) | i : int(0..5) ]))
+
+--
+
+(x = or([ (product([i,i;int(1..2)]) = i) | i : int(0..5) ])), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(x = true)
+
+--
+
+(x = true), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(true, x)
+
+--
+
+Final model:
+
+find x: bool
+
+such that
+
+Reify(true, x)
+

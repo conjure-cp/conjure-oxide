@@ -7,7 +7,7 @@ use std::collections::VecDeque;
 use itertools::{Itertools, izip};
 use uniplate::Uniplate as _;
 
-use crate::ast::{DomainOpError, GroundDomain, Moo, Range};
+use crate::ast::{DomainOpError, Expression as Expr, GroundDomain, Metadata, Moo, Range};
 
 use super::{AbstractLiteral, Literal};
 
@@ -39,17 +39,23 @@ use super::{AbstractLiteral, Literal};
 ///
 /// assert_eq!(actual_indices, expected_indices);
 /// ```
+pub fn try_enumerate_indices(
+    index_domains: Vec<Moo<GroundDomain>>,
+) -> Result<impl Iterator<Item = Vec<Literal>>, DomainOpError> {
+    let domains = index_domains
+        .into_iter()
+        .map(|x| x.values().map(|values| values.collect_vec()))
+        .collect::<Result<Vec<_>, _>>()?;
+    Ok(domains.into_iter().multi_cartesian_product())
+}
+
+/// For some index domains, returns a list containing each of the possible indices.
+///
+/// See [`try_enumerate_indices`] for the fallible variant.
 pub fn enumerate_indices(
     index_domains: Vec<Moo<GroundDomain>>,
 ) -> impl Iterator<Item = Vec<Literal>> {
-    index_domains
-        .into_iter()
-        .map(|x| {
-            x.values()
-                .expect("index domain should be enumerable with .values()")
-                .collect_vec()
-        })
-        .multi_cartesian_product()
+    try_enumerate_indices(index_domains).expect("index domain should be enumerable with .values()")
 }
 
 /// Returns the number of possible elements indexable by the given index domains.
@@ -106,19 +112,7 @@ pub fn flatten_enumerate(
         panic!("matrix should be a matrix");
     };
 
-    let index_domains = index_domains(matrix)
-        .into_iter()
-        .map(|mut x| match Moo::make_mut(&mut x) {
-            // give unboundedr index domains an end
-            GroundDomain::Int(ranges) if ranges.len() == 1 && !elems.is_empty() => {
-                if let Range::UnboundedR(start) = ranges[0] {
-                    ranges[0] = Range::Bounded(start, start + (elems.len() as i32 - 1));
-                };
-                x
-            }
-            _ => x,
-        })
-        .collect_vec();
+    let index_domains = index_domains(matrix);
 
     izip!(enumerate_indices(index_domains), flatten_1(elems))
 }
@@ -150,8 +144,9 @@ pub fn index_domains(matrix: AbstractLiteral<Literal>) -> Vec<Moo<GroundDomain>>
             .collect_vec();
         match element {
             AbstractLiteral::Set(_) => vec![],
-            AbstractLiteral::Matrix(_, domain) => {
-                let mut index_domains = vec![domain];
+            AbstractLiteral::MSet(_) => vec![],
+            AbstractLiteral::Matrix(elems, domain) => {
+                let mut index_domains = vec![bound_index_domain_from_length(domain, elems.len())];
                 index_domains.extend(child_index_domains);
                 index_domains
             }
@@ -178,7 +173,7 @@ pub fn enumerate_index_union_indices(
         .collect();
     let idx_domains = idx_domains?.into_iter().map(Moo::new).collect();
 
-    Ok(enumerate_indices(idx_domains))
+    try_enumerate_indices(idx_domains)
 }
 
 // Given index domains for a multi-dimensional matrix and the nth index in the flattened matrix, find the coordinates in the original matrix
@@ -198,4 +193,115 @@ pub fn flat_index_to_full_index(index_domains: &[Moo<GroundDomain>], index: u64)
     }
 
     coords
+}
+
+/// Gets concrete index domains for a matrix expression.
+///
+/// For matrix literals, right-unbounded integer index domains like `int(1..)` are bounded using
+/// the literal's realised size in that dimension. For non-literals, this falls back to the
+/// expression's resolved domain.
+pub fn bound_index_domains_of_expr(expr: &Expr) -> Option<Vec<Moo<GroundDomain>>> {
+    let dom = expr.domain_of().and_then(|dom| dom.resolve())?;
+    let GroundDomain::Matrix(_, index_domains) = dom.as_ref() else {
+        return None;
+    };
+
+    let Some(dimension_lengths) = expr_matrix_dimension_lengths(expr) else {
+        return Some(index_domains.clone());
+    };
+
+    assert_eq!(
+        index_domains.len(),
+        dimension_lengths.len(),
+        "matrix literal domain rank should match its realised rank"
+    );
+
+    Some(
+        index_domains
+            .iter()
+            .cloned()
+            .zip(dimension_lengths)
+            .map(|(domain, len)| bound_index_domain_from_length(domain, len))
+            .collect(),
+    )
+}
+
+/// This is the same as `m[x]` except when `m` is of the forms:
+///
+/// - `n[..]`, then it produces n[x] instead of n[..][x]
+/// - `flatten(n)`, then it produces `n[y]` instead of `flatten(n)[y]`,
+///   where `y` is the full index corresponding to flat index `x`
+///
+/// # Returns
+/// + `Some(expr)` if the safe indexing could be constructed
+/// + `None` if it could not be constructed (e.g. invalid index type)
+pub fn safe_index_optimised(m: Expr, idx: Literal) -> Option<Expr> {
+    match m {
+        Expr::SafeSlice(_, mat, idxs) => {
+            // TODO: support >1 slice index (i.e. multidimensional slices)
+
+            let mut idxs = idxs;
+            let (slice_idx, _) = idxs.iter().find_position(|opt| opt.is_none())?;
+            let _ = idxs[slice_idx].replace(idx.into());
+
+            let Some(idxs) = idxs.into_iter().collect::<Option<Vec<_>>>() else {
+                todo!("slice expression should not contain more than one unspecified index")
+            };
+
+            Some(Expr::SafeIndex(Metadata::new(), mat, idxs))
+        }
+        Expr::Flatten(_, None, inner) => {
+            // Similar to indexed_flatten_matrix rule, but we don't care about out of bounds here
+            let Literal::Int(index) = idx else {
+                return None;
+            };
+
+            let index_domains = bound_index_domains_of_expr(inner.as_ref())?;
+            if index_domains.iter().any(|domain| domain.length().is_err()) {
+                return None;
+            }
+            let flat_index = flat_index_to_full_index(&index_domains, (index - 1) as u64);
+            let flat_index: Vec<Expr> = flat_index.into_iter().map(Into::into).collect();
+
+            Some(Expr::SafeIndex(Metadata::new(), inner, flat_index))
+        }
+        _ => Some(Expr::SafeIndex(
+            Metadata::new(),
+            Moo::new(m),
+            vec![idx.into()],
+        )),
+    }
+}
+
+fn bound_index_domain_from_length(mut domain: Moo<GroundDomain>, len: usize) -> Moo<GroundDomain> {
+    match Moo::make_mut(&mut domain) {
+        GroundDomain::Int(ranges) if ranges.len() == 1 && len > 0 => {
+            if let Range::UnboundedR(start) = ranges[0] {
+                let end = start + (len as i32 - 1);
+                ranges[0] = Range::Bounded(start, end);
+            }
+            domain
+        }
+        _ => domain,
+    }
+}
+
+fn expr_matrix_dimension_lengths(expr: &Expr) -> Option<Vec<usize>> {
+    let (elems, _) = expr.clone().unwrap_matrix_unchecked()?;
+
+    let child_dimensions = elems
+        .iter()
+        .map(|elem| expr_matrix_dimension_lengths(elem).unwrap_or_default())
+        .collect_vec();
+
+    assert!(
+        child_dimensions.iter().all_equal(),
+        "each child of a matrix should have the same shape"
+    );
+
+    let mut dimensions = vec![elems.len()];
+    if let Some(child_dimensions) = child_dimensions.into_iter().next() {
+        dimensions.extend(child_dimensions);
+    }
+    Some(dimensions)
 }

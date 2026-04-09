@@ -1,6 +1,4 @@
 use conjure_cp::essence_expr;
-use conjure_cp::rule_engine::register_rule_set;
-use conjure_cp::solver::SolverFamily;
 
 use conjure_cp::ast::Metadata;
 use conjure_cp::ast::{Atom, CnfClause, Expression as Expr, Literal, Moo};
@@ -14,7 +12,7 @@ use conjure_cp::ast::{Domain, SymbolTable};
 use crate::utils::is_literal;
 
 fn create_bool_aux(symbols: &mut SymbolTable) -> Expr {
-    let name = symbols.gensym(&Domain::bool());
+    let name = symbols.gen_find(&Domain::bool());
 
     symbols.insert(name.clone());
 
@@ -247,13 +245,6 @@ pub fn tseytin_xor(
     new_expr
 }
 
-// BOOLEAN SAT ENCODING RULES:
-
-register_rule_set!("SAT", ("Base"), |f: &SolverFamily| matches!(
-    f,
-    SolverFamily::Sat
-));
-
 /// Converts a single boolean atom to a clause
 ///
 /// ```text
@@ -263,7 +254,7 @@ register_rule_set!("SAT", ("Base"), |f: &SolverFamily| matches!(
 ///  new clauses:
 ///  clause(a)
 /// ```
-#[register_rule(("SAT", 8400))]
+#[register_rule("SAT", 8400, [Root])]
 fn remove_single_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     // The single atom must not be within another expression
     let Expr::Root(_, children) = expr else {
@@ -327,7 +318,7 @@ fn remove_single_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 ///  clause(__0, not(c))
 ///  ...
 /// ```
-#[register_rule(("SAT", 8500))]
+#[register_rule("SAT", 8500, [And, Or])]
 fn apply_tseytin_and_or(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let exprs = match expr {
         Expr::And(_, exprs) | Expr::Or(_, exprs) => exprs,
@@ -375,7 +366,7 @@ fn apply_tseytin_and_or(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
 ///  clause(__0, a)
 ///  clause(not(__0), not(a))
 /// ```
-#[register_rule(("SAT", 9005))]
+#[register_rule("SAT", 9005, [Not])]
 fn apply_tseytin_not(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Not(_, x) = expr else {
         return Err(RuleNotApplicable);
@@ -397,10 +388,11 @@ fn apply_tseytin_not(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     Ok(Reduction::cnf(new_expr, new_clauses, new_symbols))
 }
 
-/// Converts an iff expression to an aux variable, using the tseytin transformation
+/// Converts an iff/boolean equality expression to an aux variable, using the tseytin transformation
 ///
 /// ```text
-///  a <-> b
+/// find a, b : bool
+///  a <-> b OR a = b
 ///  ~~>
 ///  __0
 ///
@@ -413,10 +405,12 @@ fn apply_tseytin_not(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 ///  clause(a, not(b), not(__0))
 ///  clause(not(a), b, not(__0))
 /// ```
-#[register_rule(("SAT", 8500))]
-fn apply_tseytin_iff(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
-    let Expr::Iff(_, x, y) = expr else {
-        return Err(RuleNotApplicable);
+#[register_rule("SAT", 8500, [Iff, Eq])]
+fn apply_tseytin_iff_eq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    // Check for iff or eq
+    let (x, y) = match expr {
+        Expr::Iff(_, x, y) | Expr::Eq(_, x, y) => (x, y),
+        _ => return Err(RuleNotApplicable),
     };
 
     if !is_literal(x.as_ref()) || !is_literal(y.as_ref()) {
@@ -451,7 +445,7 @@ fn apply_tseytin_iff(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 ///  clause(__0, a)
 ///  clause(__0, not(b))
 /// ```
-#[register_rule(("SAT", 8500))]
+#[register_rule("SAT", 8500, [Imply])]
 fn apply_tseytin_imply(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Imply(_, x, y) = expr else {
         return Err(RuleNotApplicable);
@@ -466,6 +460,46 @@ fn apply_tseytin_imply(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
     let mut new_symbols = symbols.clone();
 
     new_expr = tseytin_imply(
+        x.as_ref().clone(),
+        y.as_ref().clone(),
+        &mut new_clauses,
+        &mut new_symbols,
+    );
+
+    Ok(Reduction::cnf(new_expr, new_clauses, new_symbols))
+}
+
+/// Converts a boolean != expression to an aux variable, using the tseytin transformation
+///
+/// ```text
+///  find a, b : bool
+///  a != b
+///  ~~>
+///  __0
+///
+///  new clauses:
+///  find __0: bool
+///
+///  new clauses:
+///  clause(not(a), not(b), not(__0))
+///  clause(a, b, not(__0))
+///  clause(a, not(b), __0)
+///  clause(not(a), b, __0)
+/// ```
+#[register_rule("SAT", 8500, [Neq])]
+fn apply_tseytin_xor_neq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    let Expr::Neq(_, x, y) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    if !is_literal(x.as_ref()) || !is_literal(y.as_ref()) {
+        return Err(RuleNotApplicable);
+    };
+
+    let mut new_clauses = vec![];
+    let mut new_symbols = symbols.clone();
+
+    let new_expr = tseytin_xor(
         x.as_ref().clone(),
         y.as_ref().clone(),
         &mut new_clauses,

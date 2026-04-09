@@ -60,9 +60,9 @@ FROM build-environment AS builder
 # grab conjure oxide source
 WORKDIR /build
 COPY . .
-RUN git submodule update  --init --remote --recursive;
+RUN git submodule update --init --recursive;
 
-RUN cargo build --release;
+RUN cargo build --release --features z3-bundled;
 
 ###########################################################
 # 3) a container that contains conjure oxide and conjure.

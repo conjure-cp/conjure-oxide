@@ -1,89 +1,91 @@
+use crate::errors::FatalParseError;
+use crate::errors::RecoverableParseError;
 use crate::expression::parse_expression;
+use crate::field;
+use crate::parser::ParseContext;
 use crate::parser::domain::parse_domain;
-use crate::util::named_children;
-use crate::{EssenceParseError, field};
-use conjure_cp_core::ast::{AbstractLiteral, DomainPtr, Expression, SymbolTable};
+use crate::util::{TypecheckingContext, named_children};
+use conjure_cp_core::ast::{AbstractLiteral, DomainPtr, Expression};
 use conjure_cp_core::{domain_int, range};
-use std::cell::RefCell;
-use std::rc::Rc;
 use tree_sitter::Node;
 
 pub fn parse_abstract(
+    ctx: &mut ParseContext,
     node: &Node,
-    source_code: &str,
-    symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
-) -> Result<AbstractLiteral<Expression>, EssenceParseError> {
+) -> Result<Option<AbstractLiteral<Expression>>, FatalParseError> {
     match node.kind() {
-        "record" => parse_record(node, source_code, symbols_ptr),
-        "tuple" => parse_tuple(node, source_code, symbols_ptr),
-        "matrix" => parse_matrix(node, source_code, symbols_ptr),
-        "set_literal" => parse_set_literal(node, source_code, symbols_ptr),
-        _ => Err(EssenceParseError::syntax_error(
-            format!("Expected abstract literal, got: '{}'", node.kind()),
-            Some(node.range()),
-        )),
+        "record" => parse_record(ctx, node),
+        "tuple" => parse_tuple(ctx, node),
+        "matrix" => parse_matrix(ctx, node),
+        "set_literal" => parse_set_literal(ctx, node),
+        _ => {
+            ctx.record_error(RecoverableParseError::new(
+                format!("Expected abstract literal, got: {}", node.kind()),
+                Some(node.range()),
+            ));
+            Ok(None)
+        }
     }
 }
 
 fn parse_record(
+    ctx: &mut ParseContext,
     node: &Node,
-    source_code: &str,
-    symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
-) -> Result<AbstractLiteral<Expression>, EssenceParseError> {
+) -> Result<Option<AbstractLiteral<Expression>>, FatalParseError> {
     let mut values = Vec::new();
     for child in node.children_by_field_name("name_value_pair", &mut node.walk()) {
-        let name_node = field!(child, "name");
-        let name_str = &source_code[name_node.start_byte()..name_node.end_byte()];
+        let Some(name_node) = field!(recover, ctx, child, "name") else {
+            return Ok(None);
+        };
+        let name_str = &ctx.source_code[name_node.start_byte()..name_node.end_byte()];
         let name = conjure_cp_core::ast::Name::user(name_str);
 
-        let value: Expression = parse_expression(
-            field!(child, "value"),
-            source_code,
-            node,
-            symbols_ptr.clone(),
-        )?;
+        let Some(value_node) = field!(recover, ctx, child, "value") else {
+            return Ok(None);
+        };
+        let Some(value) = parse_expression(ctx, value_node)? else {
+            return Ok(None);
+        };
         values.push(conjure_cp_core::ast::records::RecordValue { name, value });
     }
-    Ok(AbstractLiteral::Record(values))
+    Ok(Some(AbstractLiteral::Record(values)))
 }
 
 fn parse_tuple(
+    ctx: &mut ParseContext,
     node: &Node,
-    source_code: &str,
-    symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
-) -> Result<AbstractLiteral<Expression>, EssenceParseError> {
+) -> Result<Option<AbstractLiteral<Expression>>, FatalParseError> {
     let mut elements = Vec::new();
     for child in named_children(node) {
-        elements.push(parse_expression(
-            child,
-            source_code,
-            node,
-            symbols_ptr.clone(),
-        )?);
+        let Some(expr) = parse_expression(ctx, child)? else {
+            return Ok(None);
+        };
+        elements.push(expr);
     }
-    Ok(AbstractLiteral::Tuple(elements))
+    Ok(Some(AbstractLiteral::Tuple(elements)))
 }
 
 fn parse_matrix(
+    ctx: &mut ParseContext,
     node: &Node,
-    source_code: &str,
-    symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
-) -> Result<AbstractLiteral<Expression>, EssenceParseError> {
+) -> Result<Option<AbstractLiteral<Expression>>, FatalParseError> {
     let mut elements = vec![];
     let mut domain: Option<DomainPtr> = None;
     for child in named_children(node) {
         if child.kind() == "arithmetic_expr"
             || child.kind() == "bool_expr"
             || child.kind() == "comparison_expr"
+            || child.kind() == "atom"
         {
-            elements.push(parse_expression(
-                child,
-                source_code,
-                node,
-                symbols_ptr.clone(),
-            )?);
+            let Some(expr) = parse_expression(ctx, child)? else {
+                return Ok(None);
+            };
+            elements.push(expr);
         } else {
-            domain = Some(parse_domain(child, source_code, symbols_ptr.clone())?);
+            let Some(parsed_domain) = parse_domain(ctx, child)? else {
+                return Ok(None);
+            };
+            domain = Some(parsed_domain);
         }
     }
     if domain.is_none() {
@@ -91,22 +93,20 @@ fn parse_matrix(
         domain = Some(domain_int!(1..count));
     }
 
-    Ok(AbstractLiteral::Matrix(elements, domain.unwrap()))
+    Ok(Some(AbstractLiteral::Matrix(elements, domain.unwrap())))
 }
 
 fn parse_set_literal(
+    ctx: &mut ParseContext,
     node: &Node,
-    source_code: &str,
-    symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
-) -> Result<AbstractLiteral<Expression>, EssenceParseError> {
+) -> Result<Option<AbstractLiteral<Expression>>, FatalParseError> {
     let mut elements = Vec::new();
     for child in named_children(node) {
-        elements.push(parse_expression(
-            child,
-            source_code,
-            node,
-            symbols_ptr.clone(),
-        )?);
+        ctx.typechecking_context = TypecheckingContext::Unknown;
+        let Some(expr) = parse_expression(ctx, child)? else {
+            return Ok(None);
+        };
+        elements.push(expr);
     }
-    Ok(AbstractLiteral::Set(elements))
+    Ok(Some(AbstractLiteral::Set(elements)))
 }

@@ -1,26 +1,31 @@
 //! conjure_oxide solve sub-command
 #![allow(clippy::unwrap_used)]
+use std::time::Duration;
 use std::{
     fs::File,
     io::Write as _,
     path::PathBuf,
     process::exit,
     sync::{Arc, RwLock},
-    time::Duration,
 };
 
-use anyhow::{anyhow, ensure};
+use anyhow::anyhow;
 use clap::ValueHint;
+use conjure_cp::instantiate::instantiate_model;
 use conjure_cp::{
     Model,
-    ast::comprehension::USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS,
     context::Context,
+    defaults::DEFAULT_RULE_SETS,
     rule_engine::{resolve_rule_sets, rewrite_morph, rewrite_naive},
+    settings::{
+        Rewriter, set_comprehension_expander, set_current_parser, set_current_rewriter,
+        set_current_solver_family, set_default_rule_trace_enabled, set_minion_discrete_threshold,
+        set_rule_trace_aggregates_enabled, set_rule_trace_enabled, set_rule_trace_verbose_enabled,
+    },
     solver::Solver,
 };
-use conjure_cp::{defaults::DEFAULT_RULE_SETS, solver::adaptors::smt::TheoryConfig};
 use conjure_cp::{
-    parse::conjure_json::model_from_json, rule_engine::get_rules, solver::SolverFamily,
+    parse::conjure_json::model_from_json, rule_engine::get_rules, settings::SolverFamily,
 };
 use conjure_cp::{parse::tree_sitter::parse_essence_file_native, solver::adaptors::*};
 use conjure_cp_cli::find_conjure::conjure_executable;
@@ -29,11 +34,46 @@ use serde_json::to_string_pretty;
 
 use crate::cli::{GlobalArgs, LOGGING_HELP_HEADING};
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum NumberOfSolutions {
+    All,
+    Limit(i32),
+}
+
+impl NumberOfSolutions {
+    fn as_solver_limit(self) -> i32 {
+        match self {
+            NumberOfSolutions::All => 0,
+            NumberOfSolutions::Limit(limit) => limit,
+        }
+    }
+}
+
+fn parse_number_of_solutions(input: &str) -> Result<NumberOfSolutions, String> {
+    if input.eq_ignore_ascii_case("all") {
+        return Ok(NumberOfSolutions::All);
+    }
+
+    let limit = input
+        .parse::<i32>()
+        .map_err(|_| "expected a positive integer or 'all'".to_string())?;
+
+    if limit <= 0 {
+        return Err("expected a positive integer or 'all'".to_string());
+    }
+
+    Ok(NumberOfSolutions::Limit(limit))
+}
+
 #[derive(Clone, Debug, clap::Args)]
 pub struct Args {
-    /// The input Essence file
+    /// The input Essence problem file
     #[arg(value_name = "INPUT_ESSENCE", value_hint = ValueHint::FilePath)]
-    pub input_file: PathBuf,
+    pub essence_file: PathBuf,
+
+    /// The input Essence parameter file
+    #[arg(value_name = "PARAM_ESSENCE", value_hint = ValueHint::FilePath)]
+    pub param_file: Option<PathBuf>,
 
     /// Save execution info as JSON to the given filepath.
     #[arg(long ,value_hint=ValueHint::FilePath,help_heading=LOGGING_HELP_HEADING)]
@@ -46,9 +86,15 @@ pub struct Args {
     #[arg(long, default_value_t = false)]
     pub no_run_solver: bool,
 
-    /// Number of solutions to return. 0 returns all solutions
-    #[arg(long, default_value_t = 0, short = 'n')]
-    pub number_of_solutions: i32,
+    /// Number of solutions to return. Use a positive integer, or `all`.
+    #[arg(
+        long,
+        short = 'n',
+        default_value = "1",
+        value_name = "N|all",
+        value_parser = parse_number_of_solutions
+    )]
+    pub number_of_solutions: NumberOfSolutions,
 
     /// Save solutions to the given JSON file
     #[arg(long, short = 'o', value_hint = ValueHint::FilePath,help_heading=LOGGING_HELP_HEADING)]
@@ -56,14 +102,36 @@ pub struct Args {
 }
 
 pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::Result<()> {
-    let input_file = solve_args.input_file.clone();
+    let essence_file = solve_args.essence_file.clone();
+    let param_file = solve_args.param_file.clone();
 
     // each step is in its own method so that similar commands
     // (e.g. testsolve) can reuse some of these steps.
 
-    let context = init_context(&global_args, input_file)?;
-    let model = parse(&global_args, Arc::clone(&context))?;
-    let rewritten_model = rewrite(model, &global_args, Arc::clone(&context))?;
+    let context = init_context(&global_args, essence_file, param_file)?;
+
+    let ctx_lock = context.read().unwrap();
+    let essence_file_name = ctx_lock
+        .essence_file_name
+        .as_ref()
+        .expect("context should contain the problem input file");
+    let param_file_name = ctx_lock.param_file_name.as_ref();
+
+    // parse models
+    let problem_model = parse(&global_args, Arc::clone(&context), essence_file_name)?;
+
+    // unify models
+    let unified_model = match param_file_name {
+        Some(param_file_name) => {
+            let param_model = parse(&global_args, Arc::clone(&context), param_file_name)?;
+            instantiate_model(problem_model, param_model)?
+        }
+        None => problem_model,
+    };
+    drop(ctx_lock);
+
+    let rewritten_model = rewrite(unified_model, &global_args, Arc::clone(&context))?;
+
     let solver = init_solver(&global_args);
 
     if solve_args.no_run_solver {
@@ -92,16 +160,33 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
 /// Returns a new Context and Solver for solving.
 pub(crate) fn init_context(
     global_args: &GlobalArgs,
-    input_file: PathBuf,
+    essence_file: PathBuf,
+    param_file: Option<PathBuf>,
 ) -> anyhow::Result<Arc<RwLock<Context<'static>>>> {
+    let default_rule_trace_enabled = global_args.rule_trace.is_some();
+    let verbose_rule_trace_enabled = global_args.rule_trace_verbose.is_some();
+    let rule_trace_aggregates_enabled = global_args.rule_trace_aggregates.is_some();
+    let rule_trace_enabled =
+        default_rule_trace_enabled || verbose_rule_trace_enabled || rule_trace_aggregates_enabled;
+
+    set_current_parser(global_args.parser);
+    set_current_rewriter(global_args.rewriter);
+    set_comprehension_expander(global_args.comprehension_expander);
+    set_current_solver_family(global_args.solver);
+    set_minion_discrete_threshold(global_args.minion_discrete_threshold);
+    set_rule_trace_enabled(rule_trace_enabled);
+    set_default_rule_trace_enabled(default_rule_trace_enabled);
+    set_rule_trace_verbose_enabled(verbose_rule_trace_enabled);
+    set_rule_trace_aggregates_enabled(rule_trace_aggregates_enabled);
+
     let target_family = global_args.solver;
     let mut extra_rule_sets: Vec<&str> = DEFAULT_RULE_SETS.to_vec();
     for rs in &global_args.extra_rule_sets {
         extra_rule_sets.push(rs.as_str());
     }
 
-    if global_args.no_use_expand_ac {
-        extra_rule_sets.pop_if(|x| x == &"Better_AC_Comprehension_Expansion");
+    if let SolverFamily::Sat(sat_encoding) = target_family {
+        extra_rule_sets.push(sat_encoding.as_rule_set());
     }
 
     let rule_sets = match resolve_rule_sets(target_family, &extra_rule_sets) {
@@ -138,66 +223,69 @@ pub(crate) fn init_context(
         rule_sets.clone(),
     );
 
-    context.write().unwrap().file_name = Some(input_file.to_str().expect("").into());
+    context.write().unwrap().essence_file_name = Some(essence_file.to_str().expect("").into());
+    if let Some(param_file) = param_file {
+        context.write().unwrap().param_file_name = Some(param_file.to_str().expect("").into());
+    }
 
     Ok(context)
 }
 
 pub(crate) fn init_solver(global_args: &GlobalArgs) -> Solver {
     let family = global_args.solver;
-    let solver_timeout = global_args
+    let timeout_ms = global_args
         .solver_timeout
-        .map(|dur| Duration::from(dur).as_millis());
+        .map(|dur| Duration::from(dur).as_millis())
+        .map(|timeout_ms| u64::try_from(timeout_ms).expect("Timeout too large"));
 
     match family {
         SolverFamily::Minion => Solver::new(Minion::default()),
-        SolverFamily::Sat => Solver::new(Sat::default()),
-        SolverFamily::Smt(TheoryConfig { ints, matrices }) => {
-            let timeout_ms = solver_timeout.map(|ms| u64::try_from(ms).expect("Timeout too large"));
-            Solver::new(Smt::new(timeout_ms, ints, matrices))
-        }
+        SolverFamily::Sat(_) => Solver::new(Sat::default()),
+        SolverFamily::Smt(theory_cfg) => Solver::new(Smt::new(timeout_ms, theory_cfg)),
     }
 }
 
 pub(crate) fn parse(
     global_args: &GlobalArgs,
     context: Arc<RwLock<Context<'static>>>,
+    file_path: &str,
 ) -> anyhow::Result<Model> {
-    let input_file: String = context
-        .read()
-        .unwrap()
-        .file_name
-        .clone()
-        .expect("context should contain the input file");
+    tracing::info!(target: "file", "Input file: {}", file_path);
 
-    tracing::info!(target: "file", "Input file: {}", input_file);
-    if global_args.use_native_parser {
-        parse_essence_file_native(input_file.as_str(), context.clone()).map_err(|e| e.into())
-    } else {
-        conjure_executable()
-            .map_err(|e| anyhow!("Could not find correct conjure executable: {e}"))?;
-
-        let mut cmd = std::process::Command::new("conjure");
-        let output = cmd
-            .arg("pretty")
-            .arg("--output-format=astjson")
-            .arg(input_file)
-            .output()?;
-
-        let conjure_stderr = String::from_utf8(output.stderr)?;
-
-        ensure!(conjure_stderr.is_empty(), conjure_stderr);
-
-        let astjson = String::from_utf8(output.stdout)?;
-
-        if cfg!(feature = "extra-rule-checks") {
-            tracing::info!("extra-rule-checks: enabled");
-        } else {
-            tracing::info!("extra-rule-checks: disabled");
+    match global_args.parser {
+        conjure_cp::settings::Parser::TreeSitter => {
+            parse_essence_file_native(file_path, context.clone()).map_err(|e| e.into())
         }
-
-        model_from_json(&astjson, context.clone()).map_err(|e| anyhow!(e))
+        conjure_cp::settings::Parser::ViaConjure => parse_with_conjure(file_path, context.clone()),
     }
+}
+
+pub(crate) fn parse_with_conjure(
+    input_file: &str,
+    context: Arc<RwLock<Context<'static>>>,
+) -> anyhow::Result<Model> {
+    conjure_executable().map_err(|e| anyhow!("Could not find correct conjure executable: {e}"))?;
+
+    let mut cmd = std::process::Command::new("conjure");
+    let output = cmd
+        .arg("pretty")
+        .arg("--output-format=astjson")
+        .arg(input_file)
+        .output()?;
+
+    if !output.status.success() {
+        println!("Parsing error: {}", String::from_utf8(output.stderr)?);
+    }
+
+    let astjson = String::from_utf8(output.stdout)?;
+
+    if cfg!(feature = "extra-rule-checks") {
+        tracing::info!("extra-rule-checks: enabled");
+    } else {
+        tracing::info!("extra-rule-checks: disabled");
+    }
+
+    model_from_json(&astjson, context.clone()).map_err(|e| anyhow!(e))
 }
 
 pub(crate) fn rewrite(
@@ -207,27 +295,33 @@ pub(crate) fn rewrite(
 ) -> anyhow::Result<Model> {
     tracing::info!("Initial model: \n{}\n", model);
 
+    let rewriter = global_args.rewriter;
+    set_current_rewriter(rewriter);
+
+    let comprehension_expander = global_args.comprehension_expander;
+    set_comprehension_expander(comprehension_expander);
+    tracing::info!("Comprehension expander: {}", comprehension_expander);
+
     let rule_sets = context.read().unwrap().rule_sets.clone();
 
-    let new_model = if global_args.use_optimised_rewriter {
-        USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS.store(true, std::sync::atomic::Ordering::Relaxed);
-        tracing::info!("Rewriting the model using the optimising rewriter");
-        rewrite_morph(
-            model,
-            &rule_sets,
-            global_args.check_equally_applicable_rules,
-        )
-    } else {
-        tracing::info!("Rewriting the model using the default / naive rewriter");
-        if global_args.exit_after_unrolling {
-            tracing::info!("Exiting after unrolling");
+    let new_model = match rewriter {
+        Rewriter::Morph(config) => {
+            tracing::info!("Rewriting the model using the morph rewriter ({})", config);
+            rewrite_morph(
+                model,
+                &rule_sets,
+                global_args.check_equally_applicable_rules,
+                config,
+            )
         }
-        rewrite_naive(
-            &model,
-            &rule_sets,
-            global_args.check_equally_applicable_rules,
-            global_args.exit_after_unrolling,
-        )?
+        Rewriter::Naive => {
+            tracing::info!("Rewriting the model using the default / naive rewriter");
+            rewrite_naive(
+                &model,
+                &rule_sets,
+                global_args.check_equally_applicable_rules,
+            )?
+        }
     };
 
     tracing::info!("Rewritten model: \n{}\n", new_model);
@@ -254,8 +348,9 @@ fn run_solver(
     let solutions = get_solutions(
         solver,
         model,
-        cmd_args.number_of_solutions,
+        cmd_args.number_of_solutions.as_solver_limit(),
         &global_args.save_solver_input_file,
+        global_args.rule_trace_cdp,
     )?;
     tracing::info!(target: "file", "Solutions: {}", solutions_to_json(&solutions));
 

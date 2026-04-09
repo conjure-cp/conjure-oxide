@@ -1,0 +1,38 @@
+Model before rewriting:
+
+find a: bool
+find b: bool
+
+such that
+
+or([a,(b = or([ (product([m,m;int(1..2)]) = 4) | m : int(0..3) ]));int(1..2)])
+
+--
+
+or([a,(b = or([ (product([m,m;int(1..2)]) = 4) | m : int(0..3) ]));int(1..2)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+or([a,(b = true);int(1..2)])
+
+--
+
+(b = true), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(true, b)
+
+--
+
+or([a,Reify(true, b);int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)])
+or([a,Reify(true, b);int(1..)])
+
+--
+
+Final model:
+
+find a: bool
+find b: bool
+
+such that
+
+or([a,Reify(true, b);int(1..)])
+

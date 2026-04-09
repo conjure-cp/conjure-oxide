@@ -1,6 +1,4 @@
-use conjure_cp::ast::{
-    Atom, Expression as Expr, GroundDomain, Literal, Metadata, SymbolTable, matrix,
-};
+use conjure_cp::ast::{Atom, Expression as Expr, Literal, Metadata, SymbolTable, matrix};
 use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
 };
@@ -9,7 +7,7 @@ use conjure_cp::rule_engine::{
 ///
 /// E.g. instead of transforming flatten(m)[1] ~> [m[1,1],m[1,2],..][1],
 ///                          do: flatten(m)[1] ~> m[1,1]
-#[register_rule(("Base", 8001))]
+#[register_rule("Base", 8001, [SafeIndex, UnsafeIndex])]
 fn indexed_flatten_matrix(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (subject, index) = match expr {
         Expr::SafeIndex(_, subj, idx) | Expr::UnsafeIndex(_, subj, idx) => (subj, idx),
@@ -30,15 +28,13 @@ fn indexed_flatten_matrix(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     };
 
     // resolve index domains so that we can enumerate them later
-    let dom = dbg!(matrix.domain_of())
-        .and_then(|dom| dom.resolve())
-        .ok_or(RuleNotApplicable)?;
-
-    let GroundDomain::Matrix(_, index_domains) = dom.as_ref() else {
+    let index_domains =
+        matrix::bound_index_domains_of_expr(matrix.as_ref()).ok_or(RuleNotApplicable)?;
+    if index_domains.iter().any(|domain| domain.length().is_err()) {
         return Err(RuleNotApplicable);
-    };
+    }
 
-    let flat_index = matrix::flat_index_to_full_index(index_domains, (index - 1) as u64);
+    let flat_index = matrix::flat_index_to_full_index(&index_domains, (index - 1) as u64);
     let flat_index: Vec<Expr> = flat_index.into_iter().map(Into::into).collect();
 
     // This must be unsafe since we are using a possibly unsafe flat index.

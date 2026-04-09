@@ -2,7 +2,10 @@ name: Lint PR
 
 on:
   pull_request:
-    types: [opened, edited, synchronize]
+    types:
+    - opened
+    - edited
+    - synchronize
 
 jobs:
   main:
@@ -11,17 +14,18 @@ jobs:
     permissions:
       pull-requests: read
     steps:
-      - uses: amannn/action-semantic-pull-request@v6
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          types: |
-            feat
-            fix
-            docs
-            style
-            refactor
-            test
-            chore
-            build
-            minor
+    - uses: amannn/action-semantic-pull-request@v6
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        types: |
+          feat
+          fix
+          docs
+          style
+          refactor
+          test
+          chore
+          build
+          minor
+          ci

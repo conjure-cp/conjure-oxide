@@ -1,0 +1,66 @@
+Model before rewriting:
+
+letting n be 6
+letting price be [215,275,335,355,420,580;int(1..6)]
+letting total_ be 1505
+find x: matrix indexed by [int(1..n)] of int(0..100000)
+
+such that
+
+(total_ = sum([ product([price[i],x[i];int(1..2)]) | i : int(1..n) ]))
+
+--
+
+Model before rewriting:
+
+find i: int(1..n)
+find __0: matrix indexed by [int(1..n)] of int(0..100000)
+
+such that
+
+(0 != product([SafeIndex([215,275,335,355,420,580;int(1..6)],[i]),SafeIndex(__0,[i]);int(1..2)]))
+
+--
+
+Final model:
+
+find i: int(1..n)
+find __0: matrix indexed by [int(1..n)] of int(0..100000)
+find __1: int(0..58000000)
+find __2: int(1..6)
+find __3: int(215, 275, 335, 355, 420, 580)
+find __4: int(0..100000)
+find __0#matrix_to_atom_1: int(0..100000)
+find __0#matrix_to_atom_2: int(0..100000)
+find __0#matrix_to_atom_3: int(0..100000)
+find __0#matrix_to_atom_4: int(0..100000)
+find __0#matrix_to_atom_5: int(0..100000)
+find __0#matrix_to_atom_6: int(0..100000)
+
+such that
+
+(0 != __1),
+FlatProductEq(__4,__3,__1),
+SumLeq([0, i], __2),
+SumGeq([0, i], __2),
+__minion_element_one([215,275,335,355,420,580],i,__3),
+__minion_element_one([__0#matrix_to_atom_1,__0#matrix_to_atom_2,__0#matrix_to_atom_3,__0#matrix_to_atom_4,__0#matrix_to_atom_5,__0#matrix_to_atom_6],__2,__4)
+
+Final model:
+
+letting n be 6
+letting price be [215,275,335,355,420,580;int(1..6)]
+letting total_ be 1505
+find x: matrix indexed by [int(1..n)] of int(0..100000)
+find x#matrix_to_atom_1: int(0..100000)
+find x#matrix_to_atom_2: int(0..100000)
+find x#matrix_to_atom_3: int(0..100000)
+find x#matrix_to_atom_4: int(0..100000)
+find x#matrix_to_atom_5: int(0..100000)
+find x#matrix_to_atom_6: int(0..100000)
+
+such that
+
+FlatWeightedSumLeq([215, 275, 335, 355, 420, 580],[x#matrix_to_atom_1, x#matrix_to_atom_2, x#matrix_to_atom_3, x#matrix_to_atom_4, x#matrix_to_atom_5, x#matrix_to_atom_6],1505),
+FlatWeightedSumGeq([215, 275, 335, 355, 420, 580],[x#matrix_to_atom_1, x#matrix_to_atom_2, x#matrix_to_atom_3, x#matrix_to_atom_4, x#matrix_to_atom_5, x#matrix_to_atom_6],1505)
+
