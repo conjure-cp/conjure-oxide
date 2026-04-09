@@ -1,4 +1,3 @@
-use crate::RecoverableParseError;
 use crate::diagnostics::diagnostics_api::SymbolKind;
 use crate::diagnostics::source_map::{HoverInfo, span_with_hover};
 use crate::errors::{FatalParseError, RecoverableParseError};
@@ -6,12 +5,14 @@ use crate::parser::ParseContext;
 use crate::parser::atom::parse_atom;
 use crate::parser::comprehension::parse_quantifier_or_aggregate_expr;
 use crate::util::TypecheckingContext;
+use crate::util::named_children;
+use crate::{field, named_child};
+use conjure_cp_core::ast::{Atom, DeclarationKind, ReturnType, Typeable};
 use conjure_cp_core::ast::{Expression, Metadata, Moo};
 use conjure_cp_core::into_matrix_expr;
 use conjure_cp_core::{domain_int, matrix_expr, range};
 use tree_sitter::Node;
-
-use crate::{field, named_child};
+use uniplate::Uniplate;
 
 pub fn parse_expression(
     ctx: &mut ParseContext,
