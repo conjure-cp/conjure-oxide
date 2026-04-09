@@ -1,6 +1,6 @@
 use super::atom::parse_int;
 use super::util::named_children;
-use crate::diagnostics::source_map::{HoverInfo, span_with_hover};
+use crate::diagnostics::source_map::{HoverInfo, get_documentation, span_with_hover};
 use crate::errors::FatalParseError;
 use crate::expression::parse_expression;
 use crate::parser::ParseContext;
@@ -19,11 +19,13 @@ pub fn parse_domain(
         "domain" => parse_domain(ctx, child!(domain, 0, "domain")),
         "bool_domain" => {
             let hover = HoverInfo {
-                description: "Boolean domain".to_string(),
+                description: get_documentation("bool")
+                    .unwrap_or_else(|| "Boolean Domain".to_string()),
                 kind: Some(crate::diagnostics::diagnostics_api::SymbolKind::Domain),
                 ty: None,
                 decl_span: None,
             };
+
             span_with_hover(&domain, ctx.source_code, ctx.source_map, hover);
             Ok(Some(Domain::bool()))
         }
