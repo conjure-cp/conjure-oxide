@@ -478,8 +478,9 @@ fn parse_all_diff_comparison(
         return Ok(None);
     };
 
+    let all_diff_keyword_node = child!(node, 0, "allDiff");
     ctx.add_span_and_doc_hover(
-        node,
+        &all_diff_keyword_node,
         "allDiff",
         "allDiff comparison expression",
         SymbolKind::Function,
