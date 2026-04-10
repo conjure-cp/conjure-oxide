@@ -113,23 +113,26 @@ fn parse_tuple(
     ctx: &mut ParseContext,
     node: &Node,
 ) -> Result<Option<AbstractLiteral<Expression>>, FatalParseError> {
-    // Parse elements parse under inner_typechecking_context
+    // Save the typechecking context
     let saved_ctx = ctx.typechecking_context;
-    ctx.typechecking_context = ctx.inner_typechecking_context;
-    ctx.inner_typechecking_context = TypecheckingContext::Unknown;
+    let saved_inner_ctx = ctx.inner_typechecking_context;
 
     let mut elements = Vec::new();
     for child in named_children(node) {
+        // Parse elements with inner typechecking context
+        ctx.typechecking_context = saved_inner_ctx;
+        ctx.inner_typechecking_context = TypecheckingContext::Unknown;
+
         let Some(expr) = parse_expression(ctx, child)? else {
-            ctx.inner_typechecking_context = ctx.typechecking_context;
             ctx.typechecking_context = saved_ctx;
+            ctx.inner_typechecking_context = saved_inner_ctx;
             return Ok(None);
         };
         elements.push(expr);
     }
 
-    ctx.inner_typechecking_context = ctx.typechecking_context;
     ctx.typechecking_context = saved_ctx;
+    ctx.inner_typechecking_context = saved_inner_ctx;
     Ok(Some(AbstractLiteral::Tuple(elements)))
 }
 
@@ -137,10 +140,9 @@ fn parse_matrix(
     ctx: &mut ParseContext,
     node: &Node,
 ) -> Result<Option<AbstractLiteral<Expression>>, FatalParseError> {
-    // Parse elements parse under inner_typechecking_context
+    // Save the typechecking contexts
     let saved_ctx = ctx.typechecking_context;
-    ctx.typechecking_context = ctx.inner_typechecking_context;
-    ctx.inner_typechecking_context = TypecheckingContext::Unknown;
+    let saved_inner_ctx = ctx.inner_typechecking_context;
 
     let mut elements = vec![];
     let mut domain: Option<DomainPtr> = None;
@@ -150,16 +152,23 @@ fn parse_matrix(
             || child.kind() == "comparison_expr"
             || child.kind() == "atom"
         {
+            // Parse elements with inner typechecking context
+            ctx.typechecking_context = saved_inner_ctx;
+            ctx.inner_typechecking_context = TypecheckingContext::Unknown;
+
             let Some(expr) = parse_expression(ctx, child)? else {
-                ctx.inner_typechecking_context = ctx.typechecking_context;
                 ctx.typechecking_context = saved_ctx;
+                ctx.inner_typechecking_context = saved_inner_ctx;
                 return Ok(None);
             };
             elements.push(expr);
         } else {
+            // Parse domains with unknown typechecking context
+            ctx.typechecking_context = TypecheckingContext::Unknown;
+
             let Some(parsed_domain) = parse_domain(ctx, child)? else {
-                ctx.inner_typechecking_context = ctx.typechecking_context;
                 ctx.typechecking_context = saved_ctx;
+                ctx.inner_typechecking_context = saved_inner_ctx;
                 return Ok(None);
             };
             domain = Some(parsed_domain);
@@ -170,8 +179,8 @@ fn parse_matrix(
         domain = Some(domain_int!(1..count));
     }
 
-    ctx.inner_typechecking_context = ctx.typechecking_context;
     ctx.typechecking_context = saved_ctx;
+    ctx.inner_typechecking_context = saved_inner_ctx;
     Ok(Some(AbstractLiteral::Matrix(elements, domain.unwrap())))
 }
 
@@ -179,22 +188,25 @@ fn parse_set_literal(
     ctx: &mut ParseContext,
     node: &Node,
 ) -> Result<Option<AbstractLiteral<Expression>>, FatalParseError> {
-    // Parse elements parse under inner_typechecking_context, not typechecking_context.
+    // Save the typechecking contexts
     let saved_ctx = ctx.typechecking_context;
-    ctx.typechecking_context = ctx.inner_typechecking_context;
-    ctx.inner_typechecking_context = TypecheckingContext::Unknown;
+    let saved_inner_ctx = ctx.inner_typechecking_context;
 
     let mut elements = Vec::new();
     for child in named_children(node) {
+        // Parse elements with inner typechecking context
+        ctx.typechecking_context = saved_inner_ctx;
+        ctx.inner_typechecking_context = TypecheckingContext::Unknown;
+
         let Some(expr) = parse_expression(ctx, child)? else {
-            ctx.inner_typechecking_context = ctx.typechecking_context;
             ctx.typechecking_context = saved_ctx;
+            ctx.inner_typechecking_context = saved_inner_ctx;
             return Ok(None);
         };
         elements.push(expr);
     }
 
-    ctx.inner_typechecking_context = ctx.typechecking_context;
     ctx.typechecking_context = saved_ctx;
+    ctx.inner_typechecking_context = saved_inner_ctx;
     Ok(Some(AbstractLiteral::Set(elements)))
 }
