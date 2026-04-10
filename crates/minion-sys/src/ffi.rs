@@ -40,13 +40,28 @@ mod tests {
             let y_str = CString::new("y").expect("bad y");
             let z_str = CString::new("z").expect("bad z");
 
-            newVar_ffi(instance, x_str.as_ptr() as _, VariableType_VAR_BOUND, 1, 3);
-            newVar_ffi(instance, y_str.as_ptr() as _, VariableType_VAR_BOUND, 2, 4);
-            newVar_ffi(instance, z_str.as_ptr() as _, VariableType_VAR_BOUND, 1, 5);
+            assert_eq!(
+                minion_newVar(instance, x_str.as_ptr() as _, VariableType_VAR_BOUND, 1, 3),
+                MinionResult_MINION_OK
+            );
+            assert_eq!(
+                minion_newVar(instance, y_str.as_ptr() as _, VariableType_VAR_BOUND, 2, 4),
+                MinionResult_MINION_OK
+            );
+            assert_eq!(
+                minion_newVar(instance, z_str.as_ptr() as _, VariableType_VAR_BOUND, 1, 5),
+                MinionResult_MINION_OK
+            );
 
-            let x = getVarByName(instance, x_str.as_ptr() as _);
-            let y = getVarByName(instance, y_str.as_ptr() as _);
-            let z = getVarByName(instance, z_str.as_ptr() as _);
+            let x_res = minion_getVarByName(instance, x_str.as_ptr() as _);
+            assert_eq!(x_res.result, MinionResult_MINION_OK);
+            let x = x_res.var;
+            let y_res = minion_getVarByName(instance, y_str.as_ptr() as _);
+            assert_eq!(y_res.result, MinionResult_MINION_OK);
+            let y = y_res.var;
+            let z_res = minion_getVarByName(instance, z_str.as_ptr() as _);
+            assert_eq!(z_res.result, MinionResult_MINION_OK);
+            let z = z_res.var;
 
             // PRINT
             printMatrix_addVar(instance, x);

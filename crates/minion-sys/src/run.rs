@@ -14,60 +14,9 @@ use crate::{
 };
 use crate::{
     ast::{Constant, Constraint, Model, Var, VarDomain, VarName},
-    error::{MinionError, RuntimeError},
+    error::{MinionError, check_minion_result},
     scoped_ptr::Scoped,
 };
-
-unsafe fn take_minion_ffi_error() -> String {
-    let error_ptr = ffi::minion_get_last_error();
-    if error_ptr.is_null() {
-        return "unknown Minion FFI error".to_string();
-    }
-
-    let message = CStr::from_ptr(error_ptr).to_string_lossy().into_owned();
-    ffi::minion_clear_last_error();
-    if message.is_empty() {
-        "unknown Minion FFI error".to_string()
-    } else {
-        message
-    }
-}
-
-unsafe fn new_var_ffi_checked(
-    instance: *mut ffi::ProbSpec_CSPInstance,
-    name: *const c_char,
-    vartype_raw: ffi::VariableType,
-    domain_low: i32,
-    domain_high: i32,
-) -> Result<(), MinionError> {
-    if ffi::newVar_ffi_safe(
-        instance,
-        name as *mut c_char,
-        vartype_raw,
-        domain_low,
-        domain_high,
-    ) {
-        Ok(())
-    } else {
-        Err(MinionError::Other(anyhow!(take_minion_ffi_error())))
-    }
-}
-
-unsafe fn get_var_by_name_checked(
-    instance: *mut ffi::ProbSpec_CSPInstance,
-    name: *const c_char,
-) -> Result<ffi::ProbSpec_Var, MinionError> {
-    let mut var = ffi::ProbSpec_Var {
-        type_m: ffi::VariableType_VAR_CONSTANT,
-        pos_m: 0,
-    };
-
-    if ffi::getVarByName_safe(instance, name as *mut c_char, &mut var) {
-        Ok(var)
-    } else {
-        Err(MinionError::Other(anyhow!(take_minion_ffi_error())))
-    }
-}
 
 /// The callback type used by [`run_minion`].
 ///
@@ -265,11 +214,11 @@ pub fn run_minion(model: Model, callback: Callback<'_>) -> Result<SolverContext,
         ffi::searchOptions_free(search_opts);
         ffi::instance_free(search_instance);
 
-        match res {
-            0 => Ok(SolverContext { ctx }),
-            x => {
+        match check_minion_result(res) {
+            Ok(()) => Ok(SolverContext { ctx }),
+            Err(e) => {
                 ffi::minion_freeContext(ctx);
-                Err(MinionError::from(RuntimeError::from(x)))
+                Err(MinionError::from(e))
             }
         }
     }
@@ -316,15 +265,17 @@ unsafe fn convert_model_to_raw(
             x => Err(MinionError::NotImplemented(format!("{x:?}"))),
         }?;
 
-        new_var_ffi_checked(
+        check_minion_result(ffi::minion_newVar(
             instance,
             c_str.as_ptr(),
             vartype_raw,
             domain_low,
             domain_high,
-        )?;
+        ))?;
 
-        let var = get_var_by_name_checked(instance, c_str.as_ptr())?;
+        let var_result = ffi::minion_getVarByName(instance, c_str.as_ptr() as _);
+        check_minion_result(var_result.result)?;
+        let var = var_result.var;
 
         ffi::printMatrix_addVar(instance, var);
 
@@ -340,8 +291,9 @@ unsafe fn convert_model_to_raw(
                 search_var_name.clone()
             )
         })?;
-        let var = get_var_by_name_checked(instance, c_str.as_ptr())?;
-        ffi::vec_var_push_back(search_vars.ptr, var);
+        let var_result = ffi::minion_getVarByName(instance, c_str.as_ptr() as _);
+        check_minion_result(var_result.result)?;
+        ffi::vec_var_push_back(search_vars.ptr, var_result.var);
     }
 
     let search_order = Scoped::new(
@@ -710,6 +662,27 @@ unsafe fn constraint_add_args(
 
 // DO NOT call manually - this assumes that all needed vars are already in the symbol table.
 // TODO not happy with this just assuming the name is in the symbol table
+/// Resolve an AST Var to a raw FFI Var.
+unsafe fn resolve_var(
+    instance: *mut ffi::ProbSpec_CSPInstance,
+    var: &Var,
+) -> Result<ffi::ProbSpec_Var, MinionError> {
+    match var {
+        Var::NameRef(name) => {
+            let c_str = CString::new(name.clone()).map_err(|_| {
+                anyhow!(
+                    "Variable name {:?} contains a null character.",
+                    name.clone()
+                )
+            })?;
+            let var_result = ffi::minion_getVarByName(instance, c_str.as_ptr() as _);
+            check_minion_result(var_result.result)?;
+            Ok(var_result.var)
+        }
+        Var::ConstantAsVar(n) => Ok(ffi::constantAsVar(*n)),
+    }
+}
+
 unsafe fn read_list(
     instance: *mut ffi::ProbSpec_CSPInstance,
     raw_constraint: *mut ffi::ProbSpec_ConstraintBlob,
@@ -717,19 +690,7 @@ unsafe fn read_list(
 ) -> Result<(), MinionError> {
     let raw_vars = Scoped::new(ffi::vec_var_new(), |x| ffi::vec_var_free(x as _));
     for var in vars {
-        let raw_var = match var {
-            Var::NameRef(name) => {
-                let c_str = CString::new(name.clone()).map_err(|_| {
-                    anyhow!(
-                        "Variable name {:?} contains a null character.",
-                        name.clone()
-                    )
-                })?;
-                get_var_by_name_checked(instance, c_str.as_ptr())?
-            }
-            Var::ConstantAsVar(n) => ffi::constantAsVar(*n),
-        };
-
+        let raw_var = resolve_var(instance, var)?;
         ffi::vec_var_push_back(raw_vars.ptr, raw_var);
     }
 
@@ -744,19 +705,7 @@ unsafe fn read_var(
     var: &Var,
 ) -> Result<(), MinionError> {
     let raw_vars = Scoped::new(ffi::vec_var_new(), |x| ffi::vec_var_free(x as _));
-    let raw_var = match var {
-        Var::NameRef(name) => {
-            let c_str = CString::new(name.clone()).map_err(|_| {
-                anyhow!(
-                    "Variable name {:?} contains a null character.",
-                    name.clone()
-                )
-            })?;
-            get_var_by_name_checked(instance, c_str.as_ptr())?
-        }
-        Var::ConstantAsVar(n) => ffi::constantAsVar(*n),
-    };
-
+    let raw_var = resolve_var(instance, var)?;
     ffi::vec_var_push_back(raw_vars.ptr, raw_var);
     ffi::constraint_addList(raw_constraint, raw_vars.ptr);
 
@@ -769,30 +718,8 @@ unsafe fn read_2_vars(
     var1: &Var,
     var2: &Var,
 ) -> Result<(), MinionError> {
-    let mut raw_var = match var1 {
-        Var::NameRef(name) => {
-            let c_str = CString::new(name.clone()).map_err(|_| {
-                anyhow!(
-                    "Variable name {:?} contains a null character.",
-                    name.clone()
-                )
-            })?;
-            get_var_by_name_checked(instance, c_str.as_ptr())?
-        }
-        Var::ConstantAsVar(n) => ffi::constantAsVar(*n),
-    };
-    let mut raw_var2 = match var2 {
-        Var::NameRef(name) => {
-            let c_str = CString::new(name.clone()).map_err(|_| {
-                anyhow!(
-                    "Variable name {:?} contains a null character.",
-                    name.clone()
-                )
-            })?;
-            get_var_by_name_checked(instance, c_str.as_ptr())?
-        }
-        Var::ConstantAsVar(n) => ffi::constantAsVar(*n),
-    };
+    let mut raw_var = resolve_var(instance, var1)?;
+    let mut raw_var2 = resolve_var(instance, var2)?;
     // todo: does this move or copy? I am confus!
     // TODO need to mkae the semantics of move vs copy / ownership clear in libminion!!
     // This shouldve leaked everywhere by now but i think libminion copies stuff??
