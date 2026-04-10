@@ -36,12 +36,11 @@ fn typecheck_abstract_literal(ctx: &mut ParseContext, node: &Node) -> bool {
         TypecheckingContext::Boolean => "bool",
         TypecheckingContext::Arithmetic => "int",
         TypecheckingContext::Set => "set",
+        TypecheckingContext::SetOrMatrix => "set or matrix",
         TypecheckingContext::MSet => "mset",
         TypecheckingContext::Matrix => "matrix",
         TypecheckingContext::Tuple => "tuple",
         TypecheckingContext::Record => "record",
-        TypecheckingContext::Function => "function",
-        TypecheckingContext::Empty => "empty",
         TypecheckingContext::Unknown => "unknown",
     };
 
@@ -59,7 +58,11 @@ fn typecheck_abstract_literal(ctx: &mut ParseContext, node: &Node) -> bool {
         }
     };
 
-    if expected != "unknown" && expected != got {
+    if expected != "unknown"
+        && !(ctx.typechecking_context == TypecheckingContext::SetOrMatrix
+            && matches!(got, "set" | "matrix"))
+        && expected != got
+    {
         ctx.record_error(RecoverableParseError::new(
             format!(
                 "Type error: {}\n\tExpected: {}\n\tGot: {}",

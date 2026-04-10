@@ -342,12 +342,11 @@ fn typecheck_variable(
         TypecheckingContext::Boolean => "bool",
         TypecheckingContext::Arithmetic => "int",
         TypecheckingContext::Set => "set",
+        TypecheckingContext::SetOrMatrix => "set or matrix",
         TypecheckingContext::MSet => "mset",
         TypecheckingContext::Matrix => "matrix",
         TypecheckingContext::Tuple => "tuple",
         TypecheckingContext::Record => "record",
-        TypecheckingContext::Function => "function",
-        TypecheckingContext::Empty => "empty",
         TypecheckingContext::Unknown => return None, // shouldn't reach here
     };
 
@@ -365,7 +364,9 @@ fn typecheck_variable(
     };
 
     // If types match, no error
-    if expected == actual {
+    if expected == actual
+        || (context == TypecheckingContext::SetOrMatrix && matches!(actual, "set" | "matrix"))
+    {
         return None;
     }
 
@@ -427,12 +428,11 @@ fn parse_constant(ctx: &mut ParseContext, node: &Node) -> Result<Option<Literal>
             TypecheckingContext::Boolean => "bool",
             TypecheckingContext::Arithmetic => "int",
             TypecheckingContext::Set => "set",
+            TypecheckingContext::SetOrMatrix => "set or matrix",
             TypecheckingContext::MSet => "mset",
             TypecheckingContext::Matrix => "matrix",
             TypecheckingContext::Tuple => "tuple",
             TypecheckingContext::Record => "record",
-            TypecheckingContext::Function => "function",
-            TypecheckingContext::Empty => "empty",
             TypecheckingContext::Unknown => "",
         };
 

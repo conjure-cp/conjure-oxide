@@ -383,9 +383,8 @@ fn parse_arithmetic_expression(
         }
         "exponent" | "product_expr" | "sum_expr" => parse_binary_expression(ctx, &inner),
         "list_combining_expr_arith" => {
-            // set the typechecking context as Unknown, as the operand can be a set or a matrix
-            // TODO: typecheck that the operand is a set/matrix
-            ctx.typechecking_context = TypecheckingContext::Unknown;
+            // list-combining arithmetic operators accept either set or matrix operands
+            ctx.typechecking_context = TypecheckingContext::SetOrMatrix;
 
             // set inner context to arithmetic to ensure elements of list are arithmetic expressions
             ctx.inner_typechecking_context = TypecheckingContext::Arithmetic;
@@ -462,9 +461,8 @@ fn parse_boolean_expression(
         "not_expr" | "sub_bool_expr" => parse_unary_expression(ctx, &inner),
         "and_expr" | "or_expr" | "implication" | "iff_expr" => parse_binary_expression(ctx, &inner),
         "list_combining_expr_bool" => {
-            // set the typechecking context as Unknown, as the operand can be a set or a matrix
-            // TODO: typecheck that the operand is a set/matrix
-            ctx.typechecking_context = TypecheckingContext::Unknown;
+            // list-combining boolean operators accept either set or matrix operands
+            ctx.typechecking_context = TypecheckingContext::SetOrMatrix;
 
             // set inner context to boolean to ensure elements of list are boolean expressions
             ctx.inner_typechecking_context = TypecheckingContext::Boolean;
@@ -797,7 +795,6 @@ fn inferred_context_from_expression(expr: &Expression) -> TypecheckingContext {
         GroundDomain::Matrix(_, _) => TypecheckingContext::Matrix,
         GroundDomain::Tuple(_) => TypecheckingContext::Tuple,
         GroundDomain::Record(_) => TypecheckingContext::Record,
-        GroundDomain::Function(_, _, _) => TypecheckingContext::Function,
-        GroundDomain::Empty(_) => TypecheckingContext::Empty,
+        GroundDomain::Function(_, _, _) | GroundDomain::Empty(_) => TypecheckingContext::Unknown,
     }
 }
