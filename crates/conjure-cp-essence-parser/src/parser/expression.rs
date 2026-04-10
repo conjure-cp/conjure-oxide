@@ -433,7 +433,7 @@ fn parse_comparison_expression(
             parse_binary_expression(ctx, &inner)
         }
         "all_diff_comparison" => {
-            // TODO: check that operand is a collection with compatible element type.
+            // TODO: check that operand is a matrix.
             ctx.typechecking_context = TypecheckingContext::Unknown;
             parse_all_diff_comparison(ctx, &inner)
         }
@@ -491,7 +491,7 @@ fn parse_list_combining_expression(
     let Some(arg_node) = field!(recover, ctx, node, "arg") else {
         return Ok(None);
     };
-    // While parsing inner, the typechecking context is Unknown (TODO), since the atom can be a set or a matrix.
+    // While parsing inner, the typechecking context is SetOrMatrix
     // The inner context is either Boolean or Arithmetic so the elements of the set/matrix are typechecked correctly.
     let Some(inner) = parse_atom(ctx, &arg_node)? else {
         return Ok(None);

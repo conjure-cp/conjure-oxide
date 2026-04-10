@@ -113,6 +113,7 @@ fn parse_flatten(
     let Some(expr_node) = field!(recover, ctx, node, "expression") else {
         return Ok(None);
     };
+    // TODO: verify the atom is a matrix
     let Some(expr) = parse_atom(ctx, &expr_node)? else {
         return Ok(None);
     };
