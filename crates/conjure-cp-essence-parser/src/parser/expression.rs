@@ -23,7 +23,10 @@ pub fn parse_expression(
         "bool_expr" => {
             if ctx.typechecking_context == TypecheckingContext::Arithmetic {
                 ctx.record_error(RecoverableParseError::new(
-                    format!("Type error: {}\n\tExepected: arithmetic expression\n\tFound: boolean expression", ctx.source_code[node.start_byte()..node.end_byte()].to_string()),
+                    format!(
+                        "Type error: {}\n\tExepected: int\n\tGot: boolean expression",
+                        ctx.source_code[node.start_byte()..node.end_byte()].to_string()
+                    ),
                     Some(node.range()),
                 ));
                 return Ok(None);
@@ -33,7 +36,10 @@ pub fn parse_expression(
         "arithmetic_expr" => {
             if ctx.typechecking_context == TypecheckingContext::Boolean {
                 ctx.record_error(RecoverableParseError::new(
-                    format!("Type error: {}\n\tExepected: boolean expression\n\tFound: arithmetic expression", ctx.source_code[node.start_byte()..node.end_byte()].to_string()),
+                    format!(
+                        "Type error: {}\n\tExepected: bool\n\tGot: arithmetic expression",
+                        ctx.source_code[node.start_byte()..node.end_byte()].to_string()
+                    ),
                     Some(node.range()),
                 ));
                 return Ok(None);
@@ -43,7 +49,10 @@ pub fn parse_expression(
         "comparison_expr" => {
             if ctx.typechecking_context == TypecheckingContext::Arithmetic {
                 ctx.record_error(RecoverableParseError::new(
-                    format!("Type error: {}\n\tExepected: arithmetic expression\n\tFound: comparison expression", ctx.source_code[node.start_byte()..node.end_byte()].to_string()),
+                    format!(
+                        "Type error: {}\n\tExepected: int\n\tGot: comparison expression",
+                        ctx.source_code[node.start_byte()..node.end_byte()].to_string()
+                    ),
                     Some(node.range()),
                 ));
                 return Ok(None);
