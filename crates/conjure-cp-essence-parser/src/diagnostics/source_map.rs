@@ -86,8 +86,7 @@ pub fn span_with_hover(
 
 /// Fetch Essence syntax documentation from Conjure's `docs/bits/` folder on GitHub.
 ///
-/// `name` should typically be something like `"bool"`, which maps to `L_bool.md`.
-/// For convenience, callers may also pass `"L_bool"` or `"L_bool.md"`.
+/// `name` should typically be something like `"bool" or "L_bool"
 pub fn get_documentation(name: &str) -> Option<String> {
     let trimmed = name.trim();
     if trimmed.is_empty() {
@@ -98,7 +97,6 @@ pub fn get_documentation(name: &str) -> Option<String> {
     if let Some(stripped) = base.strip_suffix(".md") {
         base = stripped.to_string();
     }
-    base = format!("L_{base}");
 
     // This url is for raw Markdown bytes
     let url =

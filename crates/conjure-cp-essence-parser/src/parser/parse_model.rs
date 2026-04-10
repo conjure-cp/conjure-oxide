@@ -14,7 +14,7 @@ use super::find::parse_find_statement;
 use super::letting::parse_letting_statement;
 use super::util::{TypecheckingContext, get_tree};
 use crate::diagnostics::diagnostics_api::SymbolKind;
-use crate::diagnostics::source_map::{HoverInfo, SourceMap, span_with_hover};
+use crate::diagnostics::source_map::{HoverInfo, SourceMap, get_documentation, span_with_hover};
 use crate::errors::{FatalParseError, ParseErrorCollection, RecoverableParseError};
 use crate::expression::parse_expression;
 use crate::parser::keyword_checks::keyword_as_identifier;
@@ -124,7 +124,8 @@ pub fn parse_essence_with_context_and_map(
                 ctx.source_code,
                 ctx.source_map,
                 HoverInfo {
-                    description: "Find keyword".to_string(),
+                    description: get_documentation("find")
+                        .unwrap_or_else(|| "Find keyword".to_string()),
                     kind: Some(SymbolKind::Find),
                     ty: None,
                     decl_span: None,
@@ -136,6 +137,7 @@ pub fn parse_essence_with_context_and_map(
                 ctx.source_code,
                 ctx.source_map,
                 HoverInfo {
+                    // No Bits documentation for letting
                     description: "Letting keyword".to_string(),
                     kind: Some(SymbolKind::Letting),
                     ty: None,

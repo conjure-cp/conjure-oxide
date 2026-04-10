@@ -1,6 +1,6 @@
 use super::atom::parse_int;
 use super::util::named_children;
-use crate::diagnostics::source_map::{HoverInfo, get_documentation, span_with_hover};
+use crate::diagnostics::diagnostics_api::SymbolKind;
 use crate::errors::FatalParseError;
 use crate::expression::parse_expression;
 use crate::parser::ParseContext;
@@ -18,27 +18,17 @@ pub fn parse_domain(
     match domain.kind() {
         "domain" => parse_domain(ctx, child!(domain, 0, "domain")),
         "bool_domain" => {
-            let hover = HoverInfo {
-                description: get_documentation("bool")
-                    .unwrap_or_else(|| "Boolean Domain".to_string()),
-                kind: Some(crate::diagnostics::diagnostics_api::SymbolKind::Domain),
-                ty: None,
-                decl_span: None,
-            };
-
-            span_with_hover(&domain, ctx.source_code, ctx.source_map, hover);
+            ctx.add_span_and_doc_hover(
+                &domain,
+                "L_bool",
+                "Boolean Domain",
+                SymbolKind::Domain,
+                None,
+                None,
+            );
             Ok(Some(Domain::bool()))
         }
-        "int_domain" => {
-            let hover = HoverInfo {
-                description: "Integer domain".to_string(),
-                kind: Some(crate::diagnostics::diagnostics_api::SymbolKind::Domain),
-                ty: None,
-                decl_span: None,
-            };
-            span_with_hover(&domain, ctx.source_code, ctx.source_map, hover);
-            parse_int_domain(ctx, domain)
-        }
+        "int_domain" => parse_int_domain(ctx, domain),
         "identifier" => {
             let Some(decl) = get_declaration_ptr_from_identifier(ctx, domain)? else {
                 return Ok(None);
@@ -54,13 +44,14 @@ pub fn parse_domain(
                 return Ok(None);
             };
             let name = &ctx.source_code[domain.start_byte()..domain.end_byte()];
-            let hover = HoverInfo {
-                description: format!("Domain reference: {name}"),
-                kind: None,
-                ty: None,
-                decl_span: None,
-            };
-            span_with_hover(&domain, ctx.source_code, ctx.source_map, hover);
+            ctx.add_span_and_doc_hover(
+                &domain,
+                "",
+                &format!("Domain reference: {name}"),
+                SymbolKind::Domain,
+                None,
+                None,
+            );
             Ok(Some(dom))
         }
         "tuple_domain" => parse_tuple_domain(ctx, domain),
@@ -105,8 +96,17 @@ fn parse_int_domain(
     ctx: &mut ParseContext,
     int_domain: Node,
 ) -> Result<Option<DomainPtr>, FatalParseError> {
+    let int_keyword_node = child!(int_domain, 0, "int");
     if int_domain.child_count() == 1 {
         // for domains of just 'int' with no range
+        ctx.add_span_and_doc_hover(
+            &int_keyword_node,
+            "L_int",
+            "Integer Domain",
+            SymbolKind::Domain,
+            None,
+            None,
+        );
         return Ok(Some(Domain::int(vec![Range::Bounded(i32::MIN, i32::MAX)])));
     }
 
@@ -210,9 +210,28 @@ fn parse_int_domain(
                 _ => unreachable!("all_resolved should be true only if all are Const"),
             })
             .collect();
+
+        ctx.add_span_and_doc_hover(
+            &int_keyword_node,
+            "L_int",
+            "Integer Domain",
+            SymbolKind::Domain,
+            None,
+            None,
+        );
         Ok(Some(Domain::int(ranges)))
     } else {
         // Otherwise, keep as an expression-based domain
+
+        // Adding int keyword to the source map with hover info from documentation
+        ctx.add_span_and_doc_hover(
+            &int_keyword_node,
+            "L_int",
+            "Integer Domain",
+            SymbolKind::Domain,
+            None,
+            None,
+        );
         Ok(Some(Domain::int(ranges_unresolved)))
     }
 }
@@ -252,6 +271,28 @@ fn parse_tuple_domain(
         };
         domains.push(parsed_domain);
     }
+    // Adding tuple to the source map with hover info from documentation
+    // let hover = HoverInfo {
+    //     description: get_documentation("L_tuple").unwrap_or_else(|| "Tuple Keyword".to_string()),
+    //     kind: Some(SymbolKind::Domain),
+    //     ty: None,
+    //     decl_span: None,
+    // };
+    // extract the first child node which should be the 'tuple' keyword for hover info
+    if let Some(first) = tuple_domain.child(0)
+        && first.kind() == "tuple"
+    {
+        // span_with_hover(&first, ctx.source_code, ctx.source_map, hover);
+        ctx.add_span_and_doc_hover(
+            &first,
+            "L_tuple",
+            "Tuple Keyword",
+            SymbolKind::Domain,
+            None,
+            None,
+        );
+    }
+
     Ok(Some(Domain::tuple(domains)))
 }
 
@@ -270,6 +311,17 @@ fn parse_matrix_domain(
     let Some(value_domain) = parse_domain(ctx, field!(matrix_domain, "value_domain"))? else {
         return Ok(None);
     };
+
+    // Adding matrix to the source map with hover info from documentation
+    let matrix_keyword_node = child!(matrix_domain, 0, "matrix");
+    ctx.add_span_and_doc_hover(
+        &matrix_keyword_node,
+        "matrix",
+        "Matrix Keyword",
+        SymbolKind::Domain,
+        None,
+        None,
+    );
     Ok(Some(Domain::matrix(value_domain, domains)))
 }
 
@@ -287,6 +339,17 @@ fn parse_record_domain(
         };
         record_entries.push(RecordEntry { name, domain });
     }
+
+    // Adding record keyword to the source map with hover info from documentation
+    let record_keyword_node = child!(record_domain, 0, "record");
+    ctx.add_span_and_doc_hover(
+        &record_keyword_node,
+        "L_record",
+        "Record Keyword",
+        SymbolKind::Domain,
+        None,
+        None,
+    );
     Ok(Some(Domain::record(record_entries)))
 }
 
@@ -341,6 +404,17 @@ pub fn parse_set_domain(
     }
 
     if let Some(domain) = value_domain {
+        // Adding set to the source map with hover info from documentation
+        let set_keyword_node = child!(set_domain, 0, "set");
+        // No documentation available for set domain, using fallback description
+        ctx.add_span_and_doc_hover(
+            &set_keyword_node,
+            "",
+            "Set Keyword",
+            SymbolKind::Domain,
+            None,
+            None,
+        );
         Ok(Some(Domain::set(set_attribute.unwrap_or_default(), domain)))
     } else {
         Err(FatalParseError::internal_error(
