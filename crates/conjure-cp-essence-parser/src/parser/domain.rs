@@ -4,11 +4,13 @@ use crate::diagnostics::diagnostics_api::SymbolKind;
 use crate::errors::FatalParseError;
 use crate::expression::parse_expression;
 use crate::parser::ParseContext;
-use crate::{child, field};
+use crate::{RecoverableParseError, child};
 use conjure_cp_core::ast::{
     DeclarationPtr, Domain, DomainPtr, IntVal, Moo, Name, Range, RecordEntry, Reference, SetAttr,
 };
 use tree_sitter::Node;
+
+use crate::field;
 
 /// Parse an Essence variable domain into its Conjure AST representation.
 pub fn parse_domain(
@@ -16,7 +18,19 @@ pub fn parse_domain(
     domain: Node,
 ) -> Result<Option<DomainPtr>, FatalParseError> {
     match domain.kind() {
-        "domain" => parse_domain(ctx, child!(domain, 0, "domain")),
+        "domain" => {
+            let inner = match domain.child(0) {
+                Some(node) => node,
+                None => {
+                    ctx.record_error(RecoverableParseError::new(
+                        format!("{} in expression of kind '{}'", "domain", domain.kind()),
+                        Some(domain.range()),
+                    ));
+                    return Ok(None);
+                }
+            };
+            parse_domain(ctx, inner)
+        }
         "bool_domain" => {
             ctx.add_span_and_doc_hover(
                 &domain,
@@ -58,10 +72,13 @@ pub fn parse_domain(
         "matrix_domain" => parse_matrix_domain(ctx, domain),
         "record_domain" => parse_record_domain(ctx, domain),
         "set_domain" => parse_set_domain(ctx, domain),
-        _ => Err(FatalParseError::internal_error(
-            format!("{} is not a supported domain type", domain.kind()),
-            Some(domain.range()),
-        )),
+        _ => {
+            ctx.record_error(RecoverableParseError::new(
+                format!("{} is not a supported domain type", domain.kind()),
+                Some(domain.range()),
+            ));
+            Ok(None)
+        }
     }
 }
 
@@ -70,15 +87,15 @@ fn get_declaration_ptr_from_identifier(
     identifier: Node,
 ) -> Result<Option<DeclarationPtr>, FatalParseError> {
     let name = Name::user(&ctx.source_code[identifier.start_byte()..identifier.end_byte()]);
-    let decl = ctx
-        .symbols
-        .as_ref()
-        .ok_or(FatalParseError::internal_error(
-            "context needed to resolve identifier".to_string(),
+    let decl = ctx.symbols.as_ref().unwrap().read().lookup(&name);
+
+    if decl.is_none() {
+        ctx.record_error(crate::errors::RecoverableParseError::new(
+            format!("The identifier '{}' is not defined", name),
             Some(identifier.range()),
-        ))?
-        .read()
-        .lookup(&name);
+        ));
+        return Ok(None);
+    }
     match decl {
         Some(decl) => Ok(Some(decl)),
         None => {
@@ -110,7 +127,9 @@ fn parse_int_domain(
         return Ok(Some(Domain::int(vec![Range::Bounded(i32::MIN, i32::MAX)])));
     }
 
-    let range_list = field!(int_domain, "ranges");
+    let Some(range_list) = field!(recover, ctx, int_domain, "ranges") else {
+        return Ok(None);
+    };
     let mut ranges_unresolved: Vec<Range<IntVal>> = Vec::new();
     let mut all_resolved = true;
 
@@ -177,22 +196,24 @@ fn parse_int_domain(
                         ranges_unresolved.push(Range::UnboundedL(upper));
                     }
                     _ => {
-                        return Err(FatalParseError::internal_error(
+                        ctx.record_error(RecoverableParseError::new(
                             "Invalid int range: must have at least a lower or upper bound"
                                 .to_string(),
                             Some(domain_component.range()),
                         ));
+                        return Ok(None);
                     }
                 }
             }
             _ => {
-                return Err(FatalParseError::internal_error(
+                ctx.record_error(RecoverableParseError::new(
                     format!(
                         "Unexpected int domain component: {}",
                         domain_component.kind()
                     ),
                     Some(domain_component.range()),
                 ));
+                return Ok(None);
             }
         }
     }
@@ -301,14 +322,19 @@ fn parse_matrix_domain(
     matrix_domain: Node,
 ) -> Result<Option<DomainPtr>, FatalParseError> {
     let mut domains: Vec<DomainPtr> = Vec::new();
-    let index_domain_list = field!(matrix_domain, "index_domain_list");
+    let Some(index_domain_list) = field!(recover, ctx, matrix_domain, "index_domain_list") else {
+        return Ok(None);
+    };
     for domain in named_children(&index_domain_list) {
         let Some(parsed_domain) = parse_domain(ctx, domain)? else {
             return Ok(None);
         };
         domains.push(parsed_domain);
     }
-    let Some(value_domain) = parse_domain(ctx, field!(matrix_domain, "value_domain"))? else {
+    let Some(value_domain_node) = field!(recover, ctx, matrix_domain, "value_domain") else {
+        return Ok(None);
+    };
+    let Some(value_domain) = parse_domain(ctx, value_domain_node)? else {
         return Ok(None);
     };
 
@@ -331,9 +357,13 @@ fn parse_record_domain(
 ) -> Result<Option<DomainPtr>, FatalParseError> {
     let mut record_entries: Vec<RecordEntry> = Vec::new();
     for record_entry in named_children(&record_domain) {
-        let name_node = field!(record_entry, "name");
+        let Some(name_node) = field!(recover, ctx, record_entry, "name") else {
+            return Ok(None);
+        };
         let name = Name::user(&ctx.source_code[name_node.start_byte()..name_node.end_byte()]);
-        let domain_node = field!(record_entry, "domain");
+        let Some(domain_node) = field!(recover, ctx, record_entry, "domain") else {
+            return Ok(None);
+        };
         let Some(domain) = parse_domain(ctx, domain_node)? else {
             return Ok(None);
         };
@@ -370,21 +400,31 @@ pub fn parse_set_domain(
 
                 if let (Some(min_node), Some(max_node)) = (min_value_node, max_value_node) {
                     // MinMax case
-                    let min_val = parse_int(ctx, &min_node)?;
-                    let max_val = parse_int(ctx, &max_node)?;
+                    let Some(min_val) = parse_int(ctx, &min_node) else {
+                        return Ok(None);
+                    };
+                    let Some(max_val) = parse_int(ctx, &max_node) else {
+                        return Ok(None);
+                    };
 
                     set_attribute = Some(SetAttr::new_min_max_size(min_val, max_val));
                 } else if let Some(size_node) = size_value_node {
                     // Size case
-                    let size_val = parse_int(ctx, &size_node)?;
+                    let Some(size_val) = parse_int(ctx, &size_node) else {
+                        return Ok(None);
+                    };
                     set_attribute = Some(SetAttr::new_size(size_val));
                 } else if let Some(min_node) = min_value_node {
                     // MinSize only case
-                    let min_val = parse_int(ctx, &min_node)?;
+                    let Some(min_val) = parse_int(ctx, &min_node) else {
+                        return Ok(None);
+                    };
                     set_attribute = Some(SetAttr::new_min_size(min_val));
                 } else if let Some(max_node) = max_value_node {
                     // MaxSize only case
-                    let max_val = parse_int(ctx, &max_node)?;
+                    let Some(max_val) = parse_int(ctx, &max_node) else {
+                        return Ok(None);
+                    };
                     set_attribute = Some(SetAttr::new_max_size(max_val));
                 }
             }
@@ -395,10 +435,11 @@ pub fn parse_set_domain(
                 value_domain = Some(parsed_domain);
             }
             _ => {
-                return Err(FatalParseError::internal_error(
+                ctx.record_error(RecoverableParseError::new(
                     format!("Unrecognized set domain child kind: {}", child.kind()),
                     Some(child.range()),
                 ));
+                return Ok(None);
             }
         }
     }
@@ -417,9 +458,10 @@ pub fn parse_set_domain(
         );
         Ok(Some(Domain::set(set_attribute.unwrap_or_default(), domain)))
     } else {
-        Err(FatalParseError::internal_error(
+        ctx.record_error(RecoverableParseError::new(
             "Set domain must have a value domain".to_string(),
             Some(set_domain.range()),
-        ))
+        ));
+        Ok(None)
     }
 }

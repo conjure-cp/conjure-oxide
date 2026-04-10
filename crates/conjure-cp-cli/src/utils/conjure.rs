@@ -6,7 +6,7 @@ use std::sync::{Arc, Mutex, RwLock};
 use conjure_cp::ast::{Atom, DeclarationKind, Expression, GroundDomain, Literal, Metadata, Name};
 use conjure_cp::bug;
 use conjure_cp::context::Context;
-use conjure_cp::settings::set_rule_trace_enabled;
+use conjure_cp::settings::{configured_rule_trace_enabled, set_rule_trace_enabled};
 
 use serde_json::{Map, Value as JsonValue};
 
@@ -129,7 +129,7 @@ pub fn get_solutions(
     solver_input_file: &Option<PathBuf>,
     rule_trace_cdp: bool,
 ) -> Result<Vec<BTreeMap<Name, Literal>>, anyhow::Error> {
-    set_rule_trace_enabled(rule_trace_cdp);
+    set_rule_trace_enabled(rule_trace_cdp && configured_rule_trace_enabled());
 
     let dominance_expression = model.dominance.as_ref().map(|expr| match expr {
         Expression::DominanceRelation(_, inner) => inner.as_ref().clone(),
@@ -164,7 +164,6 @@ pub fn get_solutions(
         // Get num_sols solutions
         let sols_left = Mutex::new(num_sols);
 
-        #[allow(clippy::unwrap_used)]
         solver
             .solve(Box::new(move |sols| {
                 let mut all_solutions = (*all_solutions_ref_2).lock().unwrap();
@@ -174,17 +173,16 @@ pub fn get_solutions(
 
                 *sols_left != 0
             }))
-            .unwrap()
+            .map_err(|err| anyhow::anyhow!("solver failed while collecting solutions: {err}"))?
     } else {
         // Get all solutions
-        #[allow(clippy::unwrap_used)]
         solver
             .solve(Box::new(move |sols| {
                 let mut all_solutions = (*all_solutions_ref_2).lock().unwrap();
                 (*all_solutions).push(sols.into_iter().collect());
                 true
             }))
-            .unwrap()
+            .map_err(|err| anyhow::anyhow!("solver failed while collecting solutions: {err}"))?
     };
 
     solver.save_stats_to_context();
@@ -222,7 +220,11 @@ pub fn get_solutions(
     for sol in sols.iter_mut() {
         // Get the value of complex variables using their auxiliary variables
         for (name, representation) in representations.iter() {
-            let value = representation.value_up(sol).unwrap();
+            let value = representation.value_up(sol).map_err(|err| {
+                anyhow::anyhow!(
+                    "failed to reconstruct value for variable {name} from solver solution: {err}"
+                )
+            })?;
             sol.insert(name.clone(), value);
         }
 

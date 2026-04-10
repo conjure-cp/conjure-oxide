@@ -1,6 +1,7 @@
 pub use linkme::distributed_slice;
 
 mod rewrite_morph;
+pub use crate::settings::MorphConfig;
 pub use rewrite_morph::rewrite_morph;
 
 /// This procedural macro registers a decorated function with `conjure_cp_rules`' global registry, and
@@ -39,7 +40,7 @@ pub use rewrite_morph::rewrite_morph;
 /// use conjure_cp_core::rule_engine::{ApplicationError, ApplicationResult, Reduction};
 /// use conjure_cp_core::rule_engine::register_rule;
 ///
-/// #[register_rule(("RuleSetName", 10))]
+/// #[register_rule("RuleSetName", 10)]
 /// fn identity(expr: &Expression, symbols: &SymbolTable) -> ApplicationResult {
 ///   Ok(Reduction::pure(expr.clone()))
 /// }
@@ -86,6 +87,7 @@ pub use conjure_cp_rule_macros::register_rule_set;
 pub use resolve_rules::{RuleData, get_rules, get_rules_grouped, resolve_rule_sets};
 pub use rewrite_naive::rewrite_naive;
 pub use rewriter_common::RewriteError;
+pub(crate) use rule::MorphState;
 pub use rule::{ApplicationError, ApplicationResult, Reduction, Rule, RuleFn};
 pub use rule_set::RuleSet;
 
@@ -213,7 +215,7 @@ pub fn rewrite_model_with_configured_rewriter<'a>(
     configured_rewriter: Rewriter,
 ) -> Result<Model, RewriteError> {
     match configured_rewriter {
-        Rewriter::Morph => Ok(rewrite_morph(model, rule_sets, false)),
+        Rewriter::Morph(config) => Ok(rewrite_morph(model, rule_sets, false, config)),
         Rewriter::Naive => rewrite_naive(&model, rule_sets, false),
     }
 }
