@@ -292,18 +292,12 @@ fn parse_tuple_domain(
         };
         domains.push(parsed_domain);
     }
-    // Adding tuple to the source map with hover info from documentation
-    // let hover = HoverInfo {
-    //     description: get_documentation("L_tuple").unwrap_or_else(|| "Tuple Keyword".to_string()),
-    //     kind: Some(SymbolKind::Domain),
-    //     ty: None,
-    //     decl_span: None,
-    // };
+
     // extract the first child node which should be the 'tuple' keyword for hover info
     if let Some(first) = tuple_domain.child(0)
         && first.kind() == "tuple"
     {
-        // span_with_hover(&first, ctx.source_code, ctx.source_map, hover);
+        // Adding tuple to the source map with hover info from documentation
         ctx.add_span_and_doc_hover(
             &first,
             "L_tuple",

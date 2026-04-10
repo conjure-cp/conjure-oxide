@@ -19,17 +19,6 @@ pub fn parse_find_statement(
     let Some(keyword) = field!(recover, ctx, find_statement, "find_keyword") else {
         return Ok(BTreeMap::new());
     };
-    // span_with_hover(
-    //     &keyword,
-    //     ctx.source_code,
-    //     ctx.source_map,
-    //     HoverInfo {
-    //         description: "Find keyword".to_string(),
-    //         kind: Some(SymbolKind::Find),
-    //         ty: None,
-    //         decl_span: None,
-    //     },
-    // );
     ctx.add_span_and_doc_hover(
         &keyword,
         "find",
