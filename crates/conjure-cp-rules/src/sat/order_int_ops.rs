@@ -6,6 +6,7 @@ use conjure_cp::rule_engine::{
 };
 
 use crate::sat::boolean::{tseytin_and, tseytin_iff, tseytin_not, tseytin_or};
+use crate::sat::direct_int_ops::floor_div;
 use conjure_cp::ast::Metadata;
 use conjure_cp::ast::Moo;
 use conjure_cp::into_matrix_expr;
@@ -236,16 +237,7 @@ fn ineq_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     Ok(Reduction::cnf(output, new_clauses, new_symbols))
 }
 
-fn floor_div(a: i32, b: i32) -> i32 {
-    let (q, r) = (a / b, a % b);
-    if (r > 0 && b < 0) || (r < 0 && b > 0) {
-        q - 1
-    } else {
-        q
-    }
-}
-
-/// Converts a / expression between two direct SATInts to a new order SATInt
+/// Converts a / expression between two order SATInts to a new order SATInt
 /// using the "lookup table" method.
 ///
 /// ```text
@@ -253,7 +245,7 @@ fn floor_div(a: i32, b: i32) -> i32 {
 ///
 /// ```
 #[register_rule("SAT_Order", 9100, [SafeDiv])]
-fn safediv_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+fn safediv_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::SafeDiv(_, numer_expr, denom_expr) = expr else {
         return Err(RuleNotApplicable);
     };
@@ -302,31 +294,57 @@ fn safediv_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
     let mut new_clauses = vec![];
 
-    // generate the lookup table clauses: (n_i AND d_j) => q_k ~~> ~(n_i AND d_j) OR q_k
+    // Generate the lookup table clauses, and extract exact bounds
     for i in *numer_min..=*numer_max {
-        let numer_bit = &numer_bits[(i - numer_min) as usize];
+        let n_idx = (i - numer_min) as usize;
+        let n_bit = &numer_bits[n_idx];
+        let n_next_bit = if i < *numer_max {
+            Some(&numer_bits[n_idx + 1])
+        } else {
+            None
+        };
+
         for j in *denom_min..=*denom_max {
-            let denom_bit = &denom_bits[(j - denom_min) as usize];
+            let d_idx = (j - denom_min) as usize;
+            let d_bit = &denom_bits[d_idx];
+            let d_next_bit = if j < *denom_max {
+                Some(&denom_bits[d_idx + 1])
+            } else {
+                None
+            };
 
             let k = if j == 0 { 0 } else { floor_div(i, j) };
 
-            let quot_bit = &quot_bits[(k - quot_min) as usize];
+            // we needed to represent (n >= i) and not (n >= i+1) or ((d >= j) and not (d >= j+1))
+            // using or's so using de-morgans we do
+            // NOT(N >= i) OR (N >= i+1) OR NOT(D >= j) OR (D >= j+1)
+            let mut base_cond = vec![Expr::Not(Metadata::new(), Moo::new(n_bit.clone()))];
+            if let Some(n_next) = n_next_bit {
+                base_cond.push(n_next.clone());
+            }
 
-            new_clauses.push(CnfClause::new(vec![
-                Expr::Not(Metadata::new(), Moo::new(numer_bit.clone())),
-                Expr::Not(Metadata::new(), Moo::new(denom_bit.clone())),
-                quot_bit.clone(),
-            ]));
-        }
-    }
+            base_cond.push(Expr::Not(Metadata::new(), Moo::new(d_bit.clone())));
+            if let Some(d_next) = d_next_bit {
+                base_cond.push(d_next.clone());
+            }
 
-    // the quotient cannot take more than one value simultaneously.
-    for a in 0..quot_bits.len() {
-        for b in (a + 1)..quot_bits.len() {
-            new_clauses.push(CnfClause::new(vec![
-                Expr::Not(Metadata::new(), Moo::new(quot_bits[a].clone())),
-                Expr::Not(Metadata::new(), Moo::new(quot_bits[b].clone())),
-            ]));
+            // force the quotient to represent exactly value 'k'
+            for m in quot_min..=quot_max {
+                let q_idx = (m - quot_min) as usize;
+                let q_bit = &quot_bits[q_idx];
+
+                let mut clause = base_cond.clone();
+                if m <= k {
+                    // the value is at least m, so bit (Q >= m) is True
+                    clause.push(q_bit.clone());
+                } else {
+                    // the value is less than m, so bit (Q >= m) is False
+                    clause.push(Expr::Not(Metadata::new(), Moo::new(q_bit.clone())));
+                }
+
+                // push (NOT condition) OR quotient
+                new_clauses.push(conjure_cp::ast::CnfClause::new(clause));
+            }
         }
     }
 
@@ -336,6 +354,5 @@ fn safediv_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         Moo::new(into_matrix_expr!(quot_bits)),
         (quot_min, quot_max),
     );
-    println!("Called div rule: {:#?}", new_clauses);
     Ok(Reduction::cnf(quot_int, new_clauses, new_symbols))
 }

@@ -291,8 +291,7 @@ fn neg_sat_direct(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     )))
 }
 
-// just for floor division
-fn floor_div(a: i32, b: i32) -> i32 {
+pub fn floor_div(a: i32, b: i32) -> i32 {
     let (q, r) = (a / b, a % b);
     if (r > 0 && b < 0) || (r < 0 && b > 0) {
         q - 1
