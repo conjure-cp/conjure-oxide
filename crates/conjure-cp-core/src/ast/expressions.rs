@@ -1426,10 +1426,9 @@ impl Display for Expression {
             Expression::AbstractLiteral(_, l) => l.fmt(f),
             Expression::Comprehension(_, c) => c.fmt(f),
             Expression::AbstractComprehension(_, c) => c.fmt(f),
-            Expression::UnsafeIndex(_, e1, e2) | Expression::SafeIndex(_, e1, e2) => {
-                write!(f, "{e1}{}", pretty_vec(e2))
-            }
-            Expression::UnsafeSlice(_, e1, es) | Expression::SafeSlice(_, e1, es) => {
+            Expression::UnsafeIndex(_, e1, e2) => write!(f, "{e1}{}", pretty_vec(e2)),
+            Expression::SafeIndex(_, e1, e2) => write!(f, "SafeIndex({e1},{})", pretty_vec(e2)),
+            Expression::UnsafeSlice(_, e1, es) => {
                 let args = es
                     .iter()
                     .map(|x| match x {
@@ -1439,6 +1438,17 @@ impl Display for Expression {
                     .join(",");
 
                 write!(f, "{e1}[{args}]")
+            }
+            Expression::SafeSlice(_, e1, es) => {
+                let args = es
+                    .iter()
+                    .map(|x| match x {
+                        Some(x) => format!("{x}"),
+                        None => "..".into(),
+                    })
+                    .join(",");
+
+                write!(f, "SafeSlice({e1},[{args}])")
             }
             Expression::InDomain(_, e, domain) => {
                 write!(f, "__inDomain({e},{domain})")
@@ -1532,10 +1542,10 @@ impl Display for Expression {
                 write!(f, "SafeDiv({}, {})", box1.clone(), box2.clone())
             }
             Expression::UnsafeDiv(_, box1, box2) => {
-                write!(f, "UnsafeDiv({}, {})", box1.clone(), box2.clone())
+                write!(f, "({} / {})", box1.clone(), box2.clone())
             }
             Expression::UnsafePow(_, box1, box2) => {
-                write!(f, "UnsafePow({}, {})", box1.clone(), box2.clone())
+                write!(f, "({} ** {})", box1.clone(), box2.clone())
             }
             Expression::SafePow(_, box1, box2) => {
                 write!(f, "SafePow({}, {})", box1.clone(), box2.clone())

@@ -6,35 +6,35 @@ find c: int(1..5)
 
 such that
 
-(UnsafePow(c, 2) = sum([UnsafePow(a, 2),UnsafePow(b, 2);int(1..2)]))
+((c ** 2) = sum([(a ** 2),(b ** 2);int(1..2)]))
 
 --
 
-UnsafePow(c, 2), 
+(c ** 2), 
    ~~> pow_to_bubble ([("Bubble", 6000)])
 {SafePow(c, 2) @ and([or([(c != 0),(2 != 0);int(1..)]),(2 >= 0);int(1..)])}
 
 --
 
-({SafePow(c, 2) @ and([or([(c != 0),(2 != 0);int(1..)]),(2 >= 0);int(1..)])} = sum([UnsafePow(a, 2),UnsafePow(b, 2);int(1..2)])), 
+({SafePow(c, 2) @ and([or([(c != 0),(2 != 0);int(1..)]),(2 >= 0);int(1..)])} = sum([(a ** 2),(b ** 2);int(1..2)])), 
    ~~> constant_evaluator ([("Constant", 9001)])
-(SafePow(c, 2) = sum([UnsafePow(a, 2),UnsafePow(b, 2);int(1..2)]))
+(SafePow(c, 2) = sum([(a ** 2),(b ** 2);int(1..2)]))
 
 --
 
-UnsafePow(a, 2), 
+(a ** 2), 
    ~~> pow_to_bubble ([("Bubble", 6000)])
 {SafePow(a, 2) @ and([or([(a != 0),(2 != 0);int(1..)]),(2 >= 0);int(1..)])}
 
 --
 
-(SafePow(c, 2) = sum([{SafePow(a, 2) @ and([or([(a != 0),(2 != 0);int(1..)]),(2 >= 0);int(1..)])},UnsafePow(b, 2);int(1..2)])), 
+(SafePow(c, 2) = sum([{SafePow(a, 2) @ and([or([(a != 0),(2 != 0);int(1..)]),(2 >= 0);int(1..)])},(b ** 2);int(1..2)])), 
    ~~> constant_evaluator ([("Constant", 9001)])
-(SafePow(c, 2) = sum([SafePow(a, 2),UnsafePow(b, 2);int(1..2)]))
+(SafePow(c, 2) = sum([SafePow(a, 2),(b ** 2);int(1..2)]))
 
 --
 
-UnsafePow(b, 2), 
+(b ** 2), 
    ~~> pow_to_bubble ([("Bubble", 6000)])
 {SafePow(b, 2) @ and([or([(b != 0),(2 != 0);int(1..)]),(2 >= 0);int(1..)])}
 

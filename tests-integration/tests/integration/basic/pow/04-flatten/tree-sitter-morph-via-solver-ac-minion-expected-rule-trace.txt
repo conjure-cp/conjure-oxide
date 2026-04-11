@@ -1,0 +1,28 @@
+Model before rewriting:
+
+find x: int(2..20)
+find y: int(0..5)
+
+such that
+
+((sum([x,2;int(1..)]) ** (y / 2)) = 4)
+
+--
+
+Final model:
+
+find x: int(2..20)
+find y: int(0..5)
+find __0: int(4..22)
+find __1: int(0..2)
+find __2: int(0..2)
+
+such that
+
+MinionPow(__0,__1,4),
+Ineq(0, __2, 0),
+SumLeq([2, x], __0),
+SumGeq([2, x], __0),
+DivEq(y, 2, __1),
+DivEq(y, 2, __2)
+

@@ -16,73 +16,73 @@ allDiff(a[3,..]),
 
 a[..,1], 
    ~~> slice_to_bubble ([("Bubble", 6000)])
-a[..,1]
+SafeSlice(a,[..,1])
 
 --
 
 a[..,2], 
    ~~> slice_to_bubble ([("Bubble", 6000)])
-a[..,2]
+SafeSlice(a,[..,2])
 
 --
 
 a[1,..], 
    ~~> slice_to_bubble ([("Bubble", 6000)])
-a[1,..]
+SafeSlice(a,[1,..])
 
 --
 
 a[2,..], 
    ~~> slice_to_bubble ([("Bubble", 6000)])
-a[2,..]
+SafeSlice(a,[2,..])
 
 --
 
 a[3,..], 
    ~~> slice_to_bubble ([("Bubble", 6000)])
-a[3,..]
+SafeSlice(a,[3,..])
 
 --
 
 a[1, 1], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-a[1, 1]
+SafeIndex(a,[1, 1])
 
 --
 
 a[2, 2], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-a[2, 2]
+SafeIndex(a,[2, 2])
 
 --
 
-a[..,1], 
+SafeSlice(a,[..,1]), 
    ~~> flatten_matrix_slice ([("Smt", 1000)])
-[a[1, 1],a[2, 1],a[3, 1];int(1..)]
+[SafeIndex(a,[1, 1]),SafeIndex(a,[2, 1]),SafeIndex(a,[3, 1]);int(1..)]
 
 --
 
-a[..,2], 
+SafeSlice(a,[..,2]), 
    ~~> flatten_matrix_slice ([("Smt", 1000)])
-[a[1, 2],a[2, 2],a[3, 2];int(1..)]
+[SafeIndex(a,[1, 2]),SafeIndex(a,[2, 2]),SafeIndex(a,[3, 2]);int(1..)]
 
 --
 
-a[1,..], 
+SafeSlice(a,[1,..]), 
    ~~> flatten_matrix_slice ([("Smt", 1000)])
-[a[1, 1],a[1, 2];int(1..)]
+[SafeIndex(a,[1, 1]),SafeIndex(a,[1, 2]);int(1..)]
 
 --
 
-a[2,..], 
+SafeSlice(a,[2,..]), 
    ~~> flatten_matrix_slice ([("Smt", 1000)])
-[a[2, 1],a[2, 2];int(1..)]
+[SafeIndex(a,[2, 1]),SafeIndex(a,[2, 2]);int(1..)]
 
 --
 
-a[3,..], 
+SafeSlice(a,[3,..]), 
    ~~> flatten_matrix_slice ([("Smt", 1000)])
-[a[3, 1],a[3, 2];int(1..)]
+[SafeIndex(a,[3, 1]),SafeIndex(a,[3, 2]);int(1..)]
 
 --
 
@@ -92,11 +92,11 @@ find a: matrix indexed by [int(1..3), int(1..2)] of int(1..3)
 
 such that
 
-allDiff([a[1, 1],a[2, 1],a[3, 1];int(1..)]),
-allDiff([a[1, 2],a[2, 2],a[3, 2];int(1..)]),
-allDiff([a[1, 1],a[1, 2];int(1..)]),
-allDiff([a[2, 1],a[2, 2];int(1..)]),
-allDiff([a[3, 1],a[3, 2];int(1..)]),
-(a[1, 1] = 1),
-(a[2, 2] = 1)
+allDiff([SafeIndex(a,[1, 1]),SafeIndex(a,[2, 1]),SafeIndex(a,[3, 1]);int(1..)]),
+allDiff([SafeIndex(a,[1, 2]),SafeIndex(a,[2, 2]),SafeIndex(a,[3, 2]);int(1..)]),
+allDiff([SafeIndex(a,[1, 1]),SafeIndex(a,[1, 2]);int(1..)]),
+allDiff([SafeIndex(a,[2, 1]),SafeIndex(a,[2, 2]);int(1..)]),
+allDiff([SafeIndex(a,[3, 1]),SafeIndex(a,[3, 2]);int(1..)]),
+(SafeIndex(a,[1, 1]) = 1),
+(SafeIndex(a,[2, 2]) = 1)
 

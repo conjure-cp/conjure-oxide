@@ -1,0 +1,39 @@
+Model before rewriting:
+
+find a: bool
+find b: bool
+
+such that
+
+and([or([a,b;int(1..2)]),or([!(a),b;int(1..2)]);int(1..2)])
+
+--
+
+Final model:
+
+find a: bool
+find b: bool
+find __0: bool
+find __1: bool
+find __2: bool
+find __3: bool
+
+such that
+
+true
+
+clauses:
+
+(¬a \/ ¬__0),
+(a \/ __0),
+(¬a \/ __1),
+(¬b \/ __1),
+(¬__1 \/ a \/ b),
+(¬__0 \/ __2),
+(¬b \/ __2),
+(¬__2 \/ __0 \/ b),
+(¬__3 \/ __1),
+(¬__3 \/ __2),
+(__3 \/ ¬__1 \/ ¬__2),
+(__3)
+
