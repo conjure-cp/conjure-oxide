@@ -8,6 +8,7 @@ Runs analysis scripts for:
   - scaling-models/nqueens (analyse.py, analyse_no_solver.py)
   - scaling-models/pythagorean-triples (analyse.py, analyse_no_solver.py)
   - scaling-models/bin_packing (analyse.py)
+  - scaling-models (compare_stages.py - cross-experiment comparison)
 """
 
 import subprocess
@@ -22,12 +23,14 @@ ANALYSIS_SCRIPTS = [
     # Top-level experiments
     (SCRIPT_DIR / "linear", "analyse.py"),
     (SCRIPT_DIR / "nested", "analyse.py"),
-    # Scaling models
+    # Scaling models (individual)
     (SCALING_MODELS_DIR / "nqueens", "analyse.py"),
     (SCALING_MODELS_DIR / "nqueens", "analyse_no_solver.py"),
     (SCALING_MODELS_DIR / "pythagorean-triples", "analyse.py"),
     (SCALING_MODELS_DIR / "pythagorean-triples", "analyse_no_solver.py"),
     (SCALING_MODELS_DIR / "bin_packing", "analyse.py"),
+    # Scaling models (cross-experiment comparison)
+    (SCALING_MODELS_DIR, "compare_stages.py"),
 ]
 
 
