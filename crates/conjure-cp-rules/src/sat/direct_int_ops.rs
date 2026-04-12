@@ -514,14 +514,7 @@ fn abs_value_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
         let out_bit = match bucket.len() {
             0 => Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false))),
             1 => bucket[0].clone(),
-            _ => {
-                let mut iter = bucket.into_iter();
-                let mut acc = iter.next().unwrap();
-                for bit in iter {
-                    acc = tseytin_or(&vec![acc, bit], &mut new_clauses, &mut new_symbols);
-                }
-                acc
-            }
+            _ => tseytin_or(&bucket, &mut new_clauses, &mut new_symbols),
         };
 
         abs_bits.push(out_bit);
