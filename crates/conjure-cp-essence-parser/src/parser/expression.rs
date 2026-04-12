@@ -430,20 +430,13 @@ fn parse_list_combining_expression(
         return Ok(None);
     };
 
-    let mut doc_name = "";
     let expr = match operator_str {
         "and" => Ok(Some(Expression::And(Metadata::new(), Moo::new(inner)))),
         "or" => Ok(Some(Expression::Or(Metadata::new(), Moo::new(inner)))),
         "sum" => Ok(Some(Expression::Sum(Metadata::new(), Moo::new(inner)))),
         "product" => Ok(Some(Expression::Product(Metadata::new(), Moo::new(inner)))),
-        "min" => {
-            doc_name = "min";
-            Ok(Some(Expression::Min(Metadata::new(), Moo::new(inner))))
-        }
-        "max" => {
-            doc_name = "max";
-            Ok(Some(Expression::Max(Metadata::new(), Moo::new(inner))))
-        }
+        "min" => Ok(Some(Expression::Min(Metadata::new(), Moo::new(inner)))),
+        "max" => Ok(Some(Expression::Max(Metadata::new(), Moo::new(inner)))),
         _ => {
             ctx.record_error(RecoverableParseError::new(
                 format!("Invalid operator: '{operator_str}'"),
@@ -456,8 +449,7 @@ fn parse_list_combining_expression(
     if expr.is_ok() {
         ctx.add_span_and_doc_hover(
             &operator_node,
-            doc_name, // using the operator string as the doc key, which should work for all except "and" and "or"
-            format!("Operator '{operator_str}'").as_str(),
+            operator_str,
             SymbolKind::Function,
             None,
             None,
@@ -482,7 +474,6 @@ fn parse_all_diff_comparison(
     ctx.add_span_and_doc_hover(
         &all_diff_keyword_node,
         "allDiff",
-        "allDiff comparison expression",
         SymbolKind::Function,
         None,
         None,
@@ -510,7 +501,6 @@ fn parse_unary_expression(
             ctx.add_span_and_doc_hover(
                 &to_int_keyword_node,
                 "toInt",
-                "toInt type conversion function",
                 SymbolKind::Function,
                 None,
                 None,
@@ -526,7 +516,6 @@ fn parse_unary_expression(
                 ctx.add_span_and_doc_hover(
                     &op_node,
                     "post_factorial",
-                    "Factorial operator/function",
                     SymbolKind::Function,
                     None,
                     None,
@@ -571,7 +560,6 @@ pub fn parse_binary_expression(
     };
     let op_str = &ctx.source_code[op_node.start_byte()..op_node.end_byte()];
 
-    let mut fallback_descr = format!("Operator '{op_str}'");
     let mut doc_name = "";
     let expr = match op_str {
         // NB: We are deliberately setting the index domain to 1.., not 1..2.
@@ -608,8 +596,8 @@ pub fn parse_binary_expression(
             )))
         }
         "\\/" => {
-            // No documentation for or in Bits
-            fallback_descr = "Disjunction (logical or) operator. Returns true if at least one of the operands is true.".to_string();
+            // No documentation for or in Bits yet
+            doc_name = "or";
             Ok(Some(Expression::Or(
                 Metadata::new(),
                 Moo::new(matrix_expr![left, right; domain_int!(1..)]),
@@ -642,39 +630,57 @@ pub fn parse_binary_expression(
             )))
         }
 
-        "=" => Ok(Some(Expression::Eq(
-            Metadata::new(),
-            Moo::new(left),
-            Moo::new(right),
-        ))),
-        "!=" => Ok(Some(Expression::Neq(
-            Metadata::new(),
-            Moo::new(left),
-            Moo::new(right),
-        ))),
-        "<=" => Ok(Some(Expression::Leq(
-            Metadata::new(),
-            Moo::new(left),
-            Moo::new(right),
-        ))),
-        ">=" => Ok(Some(Expression::Geq(
-            Metadata::new(),
-            Moo::new(left),
-            Moo::new(right),
-        ))),
-        "<" => Ok(Some(Expression::Lt(
-            Metadata::new(),
-            Moo::new(left),
-            Moo::new(right),
-        ))),
-        ">" => Ok(Some(Expression::Gt(
-            Metadata::new(),
-            Moo::new(left),
-            Moo::new(right),
-        ))),
+        "=" => {
+            doc_name = "L_Eq"; //no docs yet
+            Ok(Some(Expression::Eq(
+                Metadata::new(),
+                Moo::new(left),
+                Moo::new(right),
+            )))
+        }
+        "!=" => {
+            doc_name = "L_Neq"; //no docs yet
+            Ok(Some(Expression::Neq(
+                Metadata::new(),
+                Moo::new(left),
+                Moo::new(right),
+            )))
+        }
+        "<=" => {
+            doc_name = "L_Leq"; //no docs yet
+            Ok(Some(Expression::Leq(
+                Metadata::new(),
+                Moo::new(left),
+                Moo::new(right),
+            )))
+        }
+        ">=" => {
+            doc_name = "L_Geq"; //no docs yet
+            Ok(Some(Expression::Geq(
+                Metadata::new(),
+                Moo::new(left),
+                Moo::new(right),
+            )))
+        }
+        "<" => {
+            doc_name = "L_Lt"; //no docs yet
+            Ok(Some(Expression::Lt(
+                Metadata::new(),
+                Moo::new(left),
+                Moo::new(right),
+            )))
+        }
+        ">" => {
+            doc_name = "L_Gt"; //no docs yet
+            Ok(Some(Expression::Gt(
+                Metadata::new(),
+                Moo::new(left),
+                Moo::new(right),
+            )))
+        }
 
         "->" => {
-            fallback_descr = "Implication operator".to_string();
+            doc_name = "L_Imply"; //no docs yet
             Ok(Some(Expression::Imply(
                 Metadata::new(),
                 Moo::new(left),
@@ -682,7 +688,7 @@ pub fn parse_binary_expression(
             )))
         }
         "<->" => {
-            fallback_descr = "Biconditional operator (if and only if)".to_string();
+            doc_name = "L_Iff"; //no docs yet
             Ok(Some(Expression::Iff(
                 Metadata::new(),
                 Moo::new(left),
@@ -690,7 +696,7 @@ pub fn parse_binary_expression(
             )))
         }
         "<lex" => {
-            fallback_descr = "Lexicographic less-than comparison".to_string();
+            doc_name = "L_LexLt"; //no docs yet
             Ok(Some(Expression::LexLt(
                 Metadata::new(),
                 Moo::new(left),
@@ -698,7 +704,7 @@ pub fn parse_binary_expression(
             )))
         }
         ">lex" => {
-            fallback_descr = "Lexicographic greater-than comparison".to_string();
+            doc_name = "L_LexGt"; //no docs yet
             Ok(Some(Expression::LexGt(
                 Metadata::new(),
                 Moo::new(left),
@@ -706,7 +712,7 @@ pub fn parse_binary_expression(
             )))
         }
         "<=lex" => {
-            fallback_descr = "Lexicographic less-than-or-equal comparison".to_string();
+            doc_name = "L_LexLeq"; //no docs yet
             Ok(Some(Expression::LexLeq(
                 Metadata::new(),
                 Moo::new(left),
@@ -714,7 +720,7 @@ pub fn parse_binary_expression(
             )))
         }
         ">=lex" => {
-            fallback_descr = "Lexicographic greater-than-or-equal comparison".to_string();
+            doc_name = "L_LexGeq"; //no docs yet
             Ok(Some(Expression::LexGeq(
                 Metadata::new(),
                 Moo::new(left),
@@ -787,14 +793,7 @@ pub fn parse_binary_expression(
     };
 
     if expr.is_ok() {
-        ctx.add_span_and_doc_hover(
-            &op_node,
-            doc_name,
-            fallback_descr.as_str(),
-            SymbolKind::Function,
-            None,
-            None,
-        );
+        ctx.add_span_and_doc_hover(&op_node, doc_name, SymbolKind::Function, None, None);
     }
 
     expr
