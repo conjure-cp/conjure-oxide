@@ -21,6 +21,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
 from pathlib import Path
+from scipy import stats
 
 # -- font setup --------------------------------------------------------------
 
@@ -174,15 +175,125 @@ def create_n_bins(df, num_bins=12):
 def aggregate_by_bin(df, bin_col, metric_col):
     """
     Aggregate times by system and bin.
-    Returns mean and std for each group.
+    Returns mean, std, and count for each group.
     """
     agg = df.groupby([bin_col, 'bin_label', 'system']).agg({
-        metric_col: ['mean', 'std'],
+        metric_col: ['mean', 'std', 'count'],
     }).reset_index()
 
-    agg.columns = [bin_col, 'bin_label', 'system', 'time_mean', 'time_std']
+    agg.columns = [bin_col, 'bin_label', 'system', 'time_mean', 'time_std', 'count']
 
     return agg
+
+
+def compute_pvalues(df, bin_col, metric_col):
+    """
+    Compute p-values for each bin comparing oxide vs conjure.
+    Uses Mann-Whitney U test (non-parametric).
+    """
+    pvalues = {}
+    for bin_id in df[bin_col].unique():
+        bin_data = df[df[bin_col] == bin_id]
+        oxide_data = bin_data[bin_data['system'] == 'oxide'][metric_col].values
+        conjure_data = bin_data[bin_data['system'] == 'conjure'][metric_col].values
+        
+        if len(oxide_data) > 1 and len(conjure_data) > 1:
+            # Mann-Whitney U test
+            _, pvalue = stats.mannwhitneyu(oxide_data, conjure_data, alternative='two-sided')
+        else:
+            pvalue = np.nan
+        
+        pvalues[bin_id] = pvalue
+    
+    return pvalues
+
+
+def generate_latex_table(agg_df, bin_col, pvalues, output_path, use_seconds=True, caption="", label=""):
+    """
+    Generate a LaTeX table from aggregated data.
+    
+    Columns: Bucket, N samples, Conjure avg, Oxide avg, Speedup, p-value
+    """
+    # Pivot to get oxide and conjure side by side
+    pivot_mean = agg_df.pivot(index=[bin_col, 'bin_label'],
+                              columns='system',
+                              values='time_mean').reset_index()
+    pivot_count = agg_df.pivot(index=[bin_col, 'bin_label'],
+                               columns='system',
+                               values='count').reset_index()
+    
+    pivot = pivot_mean.merge(pivot_count, on=[bin_col, 'bin_label'], suffixes=('', '_n'))
+    pivot = pivot.sort_values(bin_col)
+    
+    # Convert to seconds if needed
+    divisor = 1000 if use_seconds else 1
+    unit = 's' if use_seconds else 'ms'
+    
+    # Build table rows
+    rows = []
+    for _, row in pivot.iterrows():
+        bin_label = row['bin_label']
+        # Sample count (should be same for both, use oxide)
+        n_samples = int(row['oxide_n'])
+        conjure_avg = row['conjure'] / divisor
+        oxide_avg = row['oxide'] / divisor
+        
+        # Speedup (always faster/slower)
+        if oxide_avg < conjure_avg:
+            speedup = conjure_avg / oxide_avg
+            speedup_str = f"\\textcolor{{green!60!black}}{{${speedup:.2f}\\times$}}"
+        else:
+            speedup = oxide_avg / conjure_avg
+            speedup_str = f"\\textcolor{{red!70!black}}{{${speedup:.2f}\\times$}}"
+        
+        # P-value
+        pval = pvalues.get(row[bin_col], np.nan)
+        if np.isnan(pval):
+            pval_str = "---"
+        elif pval < 0.001:
+            pval_str = "$< 0.001$"
+        elif pval < 0.01:
+            pval_str = f"${pval:.3f}$"
+        else:
+            pval_str = f"${pval:.2f}$"
+        
+        # Format values
+        if conjure_avg >= 100:
+            conjure_str = f"{conjure_avg:.1f}"
+        elif conjure_avg >= 10:
+            conjure_str = f"{conjure_avg:.2f}"
+        else:
+            conjure_str = f"{conjure_avg:.3f}"
+            
+        if oxide_avg >= 100:
+            oxide_str = f"{oxide_avg:.1f}"
+        elif oxide_avg >= 10:
+            oxide_str = f"{oxide_avg:.2f}"
+        else:
+            oxide_str = f"{oxide_avg:.3f}"
+        
+        rows.append(f"        {bin_label} & {n_samples} & {conjure_str} & {oxide_str} & {speedup_str} & {pval_str} \\\\")
+    
+    # Build full table
+    table = f"""\\begin{{table}}[htbp]
+    \\centering
+    \\caption{{{caption}}}
+    \\label{{{label}}}
+    \\begin{{tabular}}{{lrrrcr}}
+        \\toprule
+        Bucket & N & Conjure ({unit}) & Oxide ({unit}) & Speedup & p-value \\\\
+        \\midrule
+{chr(10).join(rows)}
+        \\bottomrule
+    \\end{{tabular}}
+\\end{{table}}
+"""
+    
+    # Save to file
+    with open(output_path, 'w') as f:
+        f.write(table)
+    
+    print(f"Saved LaTeX table to {output_path}")
 
 
 def plot_comparison(agg_df, bin_col, output_path, title, xlabel,
@@ -400,6 +511,16 @@ def main():
         show_speedup=REWRITE_SHOW_SPEEDUP
     )
     print_summary_stats(pivot_rewrite, "Rewrite Time")
+    
+    # Generate LaTeX table
+    pvalues_rewrite = compute_pvalues(df_rewrite, 'solution_bin', 'rewrite_time_ms')
+    generate_latex_table(
+        agg_rewrite, 'solution_bin', pvalues_rewrite,
+        plots_dir / 'compare_rewrite_time.tex',
+        use_seconds=REWRITE_USE_SECONDS,
+        caption="Rewrite time comparison across all scaling-models experiments",
+        label="tab:compare-rewrite-time"
+    )
 
     # ==========================================
     # 2. Solution translation comparison (solver results only)
@@ -427,6 +548,16 @@ def main():
         show_speedup=TRANSLATION_SHOW_SPEEDUP
     )
     print_summary_stats(pivot_translation, "Translation Time")
+    
+    # Generate LaTeX table
+    pvalues_translation = compute_pvalues(df_translation, 'solution_bin', 'solution_translation_time_ms')
+    generate_latex_table(
+        agg_translation, 'solution_bin', pvalues_translation,
+        plots_dir / 'compare_translation_time.tex',
+        use_seconds=TRANSLATION_USE_SECONDS,
+        caption="Solution translation time comparison across all scaling-models experiments",
+        label="tab:compare-translation-time"
+    )
 
     # ==========================================
     # 3. End-to-end time comparison (solver results only)
@@ -469,6 +600,16 @@ def main():
         show_speedup=E2E_SHOW_SPEEDUP
     )
     print_summary_stats(pivot_e2e, "E2E Time")
+    
+    # Generate LaTeX table
+    pvalues_e2e = compute_pvalues(df_e2e, 'solution_bin', 'e2e_time_ms')
+    generate_latex_table(
+        agg_e2e, 'solution_bin', pvalues_e2e,
+        plots_dir / 'compare_e2e_time.tex',
+        use_seconds=E2E_USE_SECONDS,
+        caption="End-to-end time comparison across all scaling-models experiments",
+        label="tab:compare-e2e-time"
+    )
 
     # ==========================================
     # 4. N-Queens no-solver rewrite time comparison
@@ -496,6 +637,16 @@ def main():
         show_speedup=NQUEENS_SHOW_SPEEDUP
     )
     print_summary_stats(pivot_nqueens, "N-Queens Rewrite Time")
+    
+    # Generate LaTeX table
+    pvalues_nqueens = compute_pvalues(df_nqueens, 'n_bin', 'rewrite_time_ms')
+    generate_latex_table(
+        agg_nqueens, 'n_bin', pvalues_nqueens,
+        plots_dir / 'compare_nqueens_rewrite.tex',
+        use_seconds=REWRITE_USE_SECONDS,
+        caption="N-Queens rewrite time comparison (no solver)",
+        label="tab:compare-nqueens-rewrite"
+    )
 
     print("\n" + "="*60)
     print("Done!")
