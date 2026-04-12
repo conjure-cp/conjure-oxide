@@ -65,14 +65,6 @@ pub fn parse_domain(
                     decl_span: None, // could link to the declaration span if we wanted
                 },
             );
-            // ctx.add_span_and_doc_hover(
-            //     &domain,
-            //     "",
-            //     &format!("Domain reference: {name}"),
-            //     SymbolKind::Domain,
-            //     None,
-            //     None,
-            // );
             Ok(Some(dom))
         }
         "tuple_domain" => parse_tuple_domain(ctx, domain),
