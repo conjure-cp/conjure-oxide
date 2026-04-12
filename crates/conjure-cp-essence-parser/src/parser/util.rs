@@ -76,6 +76,7 @@ impl<'a> ParseContext<'a> {
 pub enum TypecheckingContext {
     Boolean,
     Arithmetic,
+    Set,
     /// Context is unknown or flexible
     Unknown,
 }
