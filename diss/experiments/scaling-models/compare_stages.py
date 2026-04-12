@@ -185,11 +185,20 @@ def aggregate_by_bin(df, bin_col, metric_col):
     return agg
 
 
-def plot_comparison(agg_df, bin_col, output_path, title, xlabel):
+def plot_comparison(agg_df, bin_col, output_path, title, xlabel,
+                    use_log_scale=True, use_seconds=True, log_ticks=None,
+                    show_speedup=False):
     """
     Create the comparison plot.
     Each row shows a bin with dots for oxide and conjure,
     connected by a colored line (green if oxide < conjure, red otherwise).
+
+    Args:
+        use_log_scale: If True, use log scale on x-axis. If False, use linear.
+        use_seconds: If True, convert ms to seconds. If False, keep ms.
+        log_ticks: List of tick values for log scale (e.g., [0.1, 1, 10, 100]).
+                   If None, uses default matplotlib ticks.
+        show_speedup: If True, show relative speedup text above each line.
     """
     # Pivot to get oxide and conjure side by side
     pivot = agg_df.pivot(index=[bin_col, 'bin_label'],
@@ -199,18 +208,27 @@ def plot_comparison(agg_df, bin_col, output_path, title, xlabel):
     # Sort by bin
     pivot = pivot.sort_values(bin_col)
 
-    # Convert to seconds
+    # Convert units for plotting
+    if use_seconds:
+        pivot['oxide_plot'] = pivot['oxide'] / 1000
+        pivot['conjure_plot'] = pivot['conjure'] / 1000
+    else:
+        pivot['oxide_plot'] = pivot['oxide']
+        pivot['conjure_plot'] = pivot['conjure']
+
+    # Also keep seconds for summary stats
     pivot['oxide_s'] = pivot['oxide'] / 1000
     pivot['conjure_s'] = pivot['conjure'] / 1000
 
-    # Set up the figure
-    fig, ax = plt.subplots(figsize=(14, max(8, len(pivot) * 0.6)))
+    # Set up the figure - height scales with number of bins
+    fig_height = max(4, len(pivot) * 0.5)
+    fig, ax = plt.subplots(figsize=(14, fig_height))
 
     # Plot each bin
     for i, (_, row) in enumerate(pivot.iterrows()):
         y = len(pivot) - 1 - i  # Reverse order so smallest is at top
-        oxide_time = row['oxide_s']
-        conjure_time = row['conjure_s']
+        oxide_time = row['oxide_plot']
+        conjure_time = row['conjure_plot']
 
         # Determine color based on which is faster
         if oxide_time < conjure_time:
@@ -239,19 +257,49 @@ def plot_comparison(agg_df, bin_col, output_path, title, xlabel):
         ax.scatter(conjure_time, y, color='#9b59b6', s=100, zorder=3,
                    edgecolors='white', linewidths=1.5, label='Conjure' if i == 0 else '')
 
+        # Show speedup text if enabled
+        if show_speedup:
+            if oxide_time < conjure_time:
+                speedup = conjure_time / oxide_time
+                speedup_color = '#27ae60'  # Green - oxide wins
+            else:
+                speedup = oxide_time / conjure_time
+                speedup_color = '#c0392b'  # Red - conjure wins
+
+            # Position text above the line, centered between the two dots
+            text_x = (oxide_time * conjure_time) ** 0.5 if use_log_scale else (oxide_time + conjure_time) / 2
+            ax.text(text_x, y + 0.25, f'{speedup:.1f}×',
+                    ha='center', va='bottom', fontsize=9, fontweight='bold',
+                    color=speedup_color)
+
     # Customize the plot
     ax.set_yticks(range(len(pivot)))
     ax.set_yticklabels(pivot['bin_label'].iloc[::-1])
-    ax.set_xlabel(xlabel, fontsize=12)
+    # Add ", log" to xlabel if using log scale
+    full_xlabel = f"{xlabel}, log" if use_log_scale else xlabel
+    ax.set_xlabel(full_xlabel, fontsize=12)
     ax.set_ylabel('Number of solutions (Buckets)', fontsize=12)
     _set_title(ax, title)
 
-    # Use log scale for better visualization
-    ax.set_xscale('log')
+    # Add padding at top if speedup is shown (so text doesn't clip)
+    if show_speedup:
+        ax.set_ylim(-0.5, len(pivot) - 0.3)
+    else:
+        ax.set_ylim(-0.5, len(pivot) - 0.5)
+
+    # Scale
+    if use_log_scale:
+        ax.set_xscale('log')
+        # Add reference line at 1 second (or 1000ms)
+        ref_val = 1 if use_seconds else 1000
+        ax.axvline(x=ref_val, color='gray', linestyle=':', alpha=0.5)
+        # Set custom ticks if provided
+        if log_ticks is not None:
+            ax.set_xticks(log_ticks)
+            ax.set_xticklabels([str(t) for t in log_ticks])
 
     # Add grid
     ax.grid(True, axis='x', alpha=0.3, linestyle='--')
-    ax.axvline(x=1, color='gray', linestyle=':', alpha=0.5)  # 1 second reference line
 
     # Add legend in top right corner
     handles = [
@@ -300,6 +348,31 @@ def main():
     plots_dir.mkdir(exist_ok=True)
 
     # ==========================================
+    # Plot settings - controllable variables
+    # ==========================================
+    # Rewrite time plots
+    REWRITE_USE_LOG_SCALE = False
+    REWRITE_USE_SECONDS = True
+    REWRITE_NUM_BINS = 6
+    REWRITE_SHOW_SPEEDUP = True
+
+    # Translation time plots
+    TRANSLATION_USE_LOG_SCALE = True
+    TRANSLATION_USE_SECONDS = True
+    TRANSLATION_NUM_BINS = 6
+    TRANSLATION_SHOW_SPEEDUP = True
+
+    # E2E time plots
+    E2E_USE_LOG_SCALE = True
+    E2E_USE_SECONDS = True
+    E2E_NUM_BINS = 6
+    E2E_SHOW_SPEEDUP = True
+
+    # N-Queens no-solver rewrite
+    NQUEENS_NUM_BINS = 15
+    NQUEENS_SHOW_SPEEDUP = True
+
+    # ==========================================
     # 1. Rewriting comparison (solver results only)
     # ==========================================
     print("\n" + "="*60)
@@ -312,7 +385,7 @@ def main():
     df_rewrite = df_rewrite[df_rewrite['num_solutions'] > 0].copy()
     print(f"\nTotal valid rows for rewriting: {len(df_rewrite)}")
 
-    df_rewrite, bin_labels = create_solution_bins(df_rewrite, num_bins=12)
+    df_rewrite, bin_labels = create_solution_bins(df_rewrite, num_bins=REWRITE_NUM_BINS)
     print(f"Created {len(bin_labels)} bins")
 
     agg_rewrite = aggregate_by_bin(df_rewrite, 'solution_bin', 'rewrite_time_ms')
@@ -321,7 +394,10 @@ def main():
         agg_rewrite, 'solution_bin',
         plots_dir / 'compare_rewrite_time.png',
         'Oxide vs Conjure: Rewrite Time',
-        'Rewrite Time (seconds)'
+        'Rewrite Time (ms)' if not REWRITE_USE_SECONDS else 'Rewrite Time (s)',
+        use_log_scale=REWRITE_USE_LOG_SCALE,
+        use_seconds=REWRITE_USE_SECONDS,
+        show_speedup=REWRITE_SHOW_SPEEDUP
     )
     print_summary_stats(pivot_rewrite, "Rewrite Time")
 
@@ -336,7 +412,7 @@ def main():
     df_translation = filter_valid_rows(df_translation, for_translation=True)
     print(f"\nTotal valid rows for translation: {len(df_translation)}")
 
-    df_translation, bin_labels = create_solution_bins(df_translation, num_bins=12)
+    df_translation, bin_labels = create_solution_bins(df_translation, num_bins=TRANSLATION_NUM_BINS)
     print(f"Created {len(bin_labels)} bins")
 
     agg_translation = aggregate_by_bin(df_translation, 'solution_bin', 'solution_translation_time_ms')
@@ -345,12 +421,57 @@ def main():
         agg_translation, 'solution_bin',
         plots_dir / 'compare_translation_time.png',
         'Oxide vs Conjure: Solution Translation Time',
-        'Solution Translation Time (seconds)'
+        'Solution Translation Time (s)' if TRANSLATION_USE_SECONDS else 'Solution Translation Time (ms)',
+        use_log_scale=TRANSLATION_USE_LOG_SCALE,
+        use_seconds=TRANSLATION_USE_SECONDS,
+        show_speedup=TRANSLATION_SHOW_SPEEDUP
     )
     print_summary_stats(pivot_translation, "Translation Time")
 
     # ==========================================
-    # 3. N-Queens no-solver rewrite time comparison
+    # 3. End-to-end time comparison (solver results only)
+    # ==========================================
+    print("\n" + "="*60)
+    print("LOADING DATA FOR E2E TIME COMPARISON")
+    print("="*60)
+
+    df_e2e = load_all_results()
+    df_e2e = filter_valid_rows(df_e2e, for_translation=True)
+
+    # Compute e2e time:
+    # - For oxide: sum of rewrite + solver + translation
+    # - For conjure: conjure_solve_e2e_ms
+    oxide_mask = df_e2e['system'] == 'oxide'
+    conjure_mask = df_e2e['system'] == 'conjure'
+
+    df_e2e.loc[oxide_mask, 'e2e_time_ms'] = (
+        df_e2e.loc[oxide_mask, 'rewrite_time_ms'] +
+        df_e2e.loc[oxide_mask, 'solver_time_ms'] +
+        df_e2e.loc[oxide_mask, 'solution_translation_time_ms']
+    )
+    df_e2e.loc[conjure_mask, 'e2e_time_ms'] = df_e2e.loc[conjure_mask, 'conjure_solve_e2e_ms']
+
+    print(f"\nTotal valid rows for e2e: {len(df_e2e)}")
+
+    df_e2e, bin_labels = create_solution_bins(df_e2e, num_bins=E2E_NUM_BINS)
+    print(f"Created {len(bin_labels)} bins")
+
+    agg_e2e = aggregate_by_bin(df_e2e, 'solution_bin', 'e2e_time_ms')
+
+    pivot_e2e = plot_comparison(
+        agg_e2e, 'solution_bin',
+        plots_dir / 'compare_e2e_time.png',
+        'Oxide vs Conjure: End-to-End Time',
+        'E2E Time (s)' if E2E_USE_SECONDS else 'E2E Time (ms)',
+        use_log_scale=E2E_USE_LOG_SCALE,
+        use_seconds=E2E_USE_SECONDS,
+        log_ticks=[0.5, 1, 2, 5, 10, 20, 50, 100, 200, 500],
+        show_speedup=E2E_SHOW_SPEEDUP
+    )
+    print_summary_stats(pivot_e2e, "E2E Time")
+
+    # ==========================================
+    # 4. N-Queens no-solver rewrite time comparison
     # ==========================================
     print("\n" + "="*60)
     print("N-QUEENS NO-SOLVER REWRITE TIME COMPARISON")
@@ -360,7 +481,7 @@ def main():
     df_nqueens = df_nqueens[df_nqueens['rewrite_time_ms'] > 0].copy()
     print(f"\nTotal valid rows: {len(df_nqueens)}")
 
-    df_nqueens, bin_labels = create_n_bins(df_nqueens, num_bins=15)
+    df_nqueens, bin_labels = create_n_bins(df_nqueens, num_bins=NQUEENS_NUM_BINS)
     print(f"Created {len(bin_labels)} bins")
 
     agg_nqueens = aggregate_by_bin(df_nqueens, 'n_bin', 'rewrite_time_ms')
@@ -369,7 +490,10 @@ def main():
         agg_nqueens, 'n_bin',
         plots_dir / 'compare_nqueens_rewrite.png',
         'Oxide vs Conjure: N-Queens Rewrite Time (No Solver)',
-        'Rewrite Time (seconds)'
+        'Rewrite Time (ms)' if not REWRITE_USE_SECONDS else 'Rewrite Time (s)',
+        use_log_scale=REWRITE_USE_LOG_SCALE,
+        use_seconds=REWRITE_USE_SECONDS,
+        show_speedup=NQUEENS_SHOW_SPEEDUP
     )
     print_summary_stats(pivot_nqueens, "N-Queens Rewrite Time")
 
