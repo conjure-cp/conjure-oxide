@@ -120,6 +120,18 @@ fn parse_flatten(
     ctx: &mut ParseContext,
     node: &Node,
 ) -> Result<Option<Expression>, FatalParseError> {
+    // add error and return early if we're in a set context, since flatten doesn't produce sets
+    if ctx.typechecking_context == TypecheckingContext::Set {
+        ctx.record_error(RecoverableParseError::new(
+            format!(
+                "Type error: {}\n\tExpected: set\n\tGot: flatten",
+                ctx.source_code[node.start_byte()..node.end_byte()].trim()
+            ),
+            Some(node.range()),
+        ));
+        return Ok(None);
+    }
+
     let Some(expr_node) = field!(recover, ctx, node, "expression") else {
         return Ok(None);
     };

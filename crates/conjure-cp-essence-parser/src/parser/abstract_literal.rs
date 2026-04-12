@@ -1,5 +1,4 @@
-use crate::errors::FatalParseError;
-use crate::errors::RecoverableParseError;
+use crate::errors::{FatalParseError, RecoverableParseError};
 use crate::expression::parse_expression;
 use crate::field;
 use crate::parser::ParseContext;
