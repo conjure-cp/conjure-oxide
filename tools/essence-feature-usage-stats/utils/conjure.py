@@ -31,7 +31,9 @@ def get_essence_file_ast(
     return json.loads(result.stdout)
 
 
-def get_version(conjure_bin_path: Path | PathLike[str] | str) -> tuple[str, str]:
+def get_version(
+    conjure_bin_path: Path | PathLike[str] | str,
+) -> tuple[str | None, str | None]:
     """
     Get version from conjure binary.
 
@@ -45,15 +47,15 @@ def get_version(conjure_bin_path: Path | PathLike[str] | str) -> tuple[str, str]
         check=True,
     )
 
-    version, commit = None, None
-    lines = result.stdout.split("\n")
-    for line in lines:
-        if "Release version" in line:
-            version = "v" + line.removeprefix("Release version ")
-        if "Repository version" in line:
-            commit, *ts_parts = line.removeprefix("Repository version ").split()
+    version_line = result.stdout.splitlines()[1]
+    version_info = version_line.removeprefix("Conjure v")
+    version, repository_version = version_info.split(
+        " (Repository version ",
+        maxsplit=1,
+    )
+    commit = repository_version.split()[0]
 
-    return version, commit
+    return "v" + version, commit
 
 
 def get_release_id_by_version(repository_url: str, version: str) -> str | None:

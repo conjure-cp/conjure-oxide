@@ -47,8 +47,9 @@ name: Nightly CI
 
 on:
   schedule:
-    - cron: "0 0 * * *"
+  - cron: "0 0 * * *"
   workflow_dispatch:
+
 
 permissions:
   contents: write
@@ -66,16 +67,16 @@ jobs:
     outputs:
       should_run: ${{ steps.should_run.outputs.should_run }}
     steps:
-      - uses: actions/checkout@v6
+    - uses: actions/checkout@v6
 
-      - name: print latest_commit
-        run: echo ${{ github.sha }}
+    - name: print latest_commit
+      run: echo ${{ github.sha }}
 
-      - id: should_run
-        continue-on-error: true
-        name: check latest commit is less than a day
-        if: ${{ github.event_name == 'schedule' }}
-        run: test -z $(git rev-list  --after="24 hours" ${{ github.sha }}) && echo "::set-output name=should_run::false" &&  gh run list -b main -w Test -L 1 --json conclusion | jq '.[].conclusion == "success"'
+    - id: should_run
+      continue-on-error: true
+      name: check latest commit is less than a day
+      if: ${{ github.event_name == 'schedule' }}
+      run: test -z $(git rev-list  --after="24 hours" ${{ github.sha }}) && echo "::set-output name=should_run::false" &&  gh run list -b main -w Test -L 1 --json conclusion | jq '.[].conclusion == "success"'
 
   # From https://docs.github.com/en/actions/use-cases-and-examples/publishing-packages/publishing-docker-images#publishing-images-to-github-packages
   publish_container:
@@ -94,54 +95,53 @@ jobs:
       id-token: write
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
+    - name: Checkout repository
+      uses: actions/checkout@v6
 
-      # Uses the `docker/login-action` action to log in to the Container
-      # registry registry using the account and password that will publish the
-      # packages. Once published, the packages are scoped to the account
-      # defined here.
-      #
-      - name: Log in to the Container registry
-        uses: docker/login-action@v3.7.0
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+    # Uses the `docker/login-action` action to log in to the Container
+    # registry registry using the account and password that will publish the
+    # packages. Once published, the packages are scoped to the account
+    # defined here.
+    #
+    - name: Log in to the Container registry
+      uses: docker/login-action@v4.0.0
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+      # This step uses
+      # [docker/metadata-action](https://github.com/docker/metadata-action#about)
+      # to extract tags and labels that will be applied to the specified image. The
+      # `id` "meta" allows the output of this step to be referenced in a subsequent
+      # step. The `images` value provides the base name for the tags and labels.
+    - name: Extract metadata (tags, labels) for Docker
+      id: meta
+      uses: docker/metadata-action@v6.0.0
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        flavor: |
+          latest=false
+        tags: |
+          nightly
+          type=sha
 
-        # This step uses
-        # [docker/metadata-action](https://github.com/docker/metadata-action#about)
-        # to extract tags and labels that will be applied to the specified image. The
-        # `id` "meta" allows the output of this step to be referenced in a subsequent
-        # step. The `images` value provides the base name for the tags and labels.
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@v5.10.0
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          flavor: |
-            latest=false
-          tags: |
-            nightly
-            type=sha
-
-      # This step uses the `docker/build-push-action` action to build the
-      # image, based on your repository's `Dockerfile`. If the build
-      # succeeds, it pushes the image to GitHub Packages. It uses the `context`
-      # parameter to define the build's context as the set of files located in the
-      # specified path. For more information, see
-      # [Usage](https://github.com/docker/build-push-action#usage) in the README of
-      # the `docker/build-push-action` repository. It uses the `tags` and `labels`
-      # parameters to tag and label the image with the output from the "meta" step.
-      - name: Build and push Docker image
-        id: push
-        uses: docker/build-push-action@v6.19.2
-        with:
-          context: .
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          provenance: false
+    # This step uses the `docker/build-push-action` action to build the
+    # image, based on your repository's `Dockerfile`. If the build
+    # succeeds, it pushes the image to GitHub Packages. It uses the `context`
+    # parameter to define the build's context as the set of files located in the
+    # specified path. For more information, see
+    # [Usage](https://github.com/docker/build-push-action#usage) in the README of
+    # the `docker/build-push-action` repository. It uses the `tags` and `labels`
+    # parameters to tag and label the image with the output from the "meta" step.
+    - name: Build and push Docker image
+      id: push
+      uses: docker/build-push-action@v7.0.0
+      with:
+        context: .
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        provenance: false
 
   # From https://docs.github.com/en/actions/use-cases-and-examples/publishing-packages/publishing-docker-images#publishing-images-to-github-packages
   publish_build_container:
@@ -161,57 +161,56 @@ jobs:
       id-token: write
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
+    - name: Checkout repository
+      uses: actions/checkout@v6
 
-      # Uses the `docker/login-action` action to log in to the Container
-      # registry registry using the account and password that will publish the
-      # packages. Once published, the packages are scoped to the account
-      # defined here.
-      #
-      - name: Log in to the Container registry
-        uses: docker/login-action@v3.7.0
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+    # Uses the `docker/login-action` action to log in to the Container
+    # registry registry using the account and password that will publish the
+    # packages. Once published, the packages are scoped to the account
+    # defined here.
+    #
+    - name: Log in to the Container registry
+      uses: docker/login-action@v4.0.0
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+      # This step uses
+      # [docker/metadata-action](https://github.com/docker/metadata-action#about)
+      # to extract tags and labels that will be applied to the specified image. The
+      # `id` "meta" allows the output of this step to be referenced in a subsequent
+      # step. The `images` value provides the base name for the tags and labels.
+    - name: Extract metadata (tags, labels) for Docker
+      id: meta
+      uses: docker/metadata-action@v6.0.0
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        flavor: |
+          # no latest tag
+          latest=false
+          prefix=build-environment-
 
-        # This step uses
-        # [docker/metadata-action](https://github.com/docker/metadata-action#about)
-        # to extract tags and labels that will be applied to the specified image. The
-        # `id` "meta" allows the output of this step to be referenced in a subsequent
-        # step. The `images` value provides the base name for the tags and labels.
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@v5.10.0
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          flavor: |
-            # no latest tag
-            latest=false
-            prefix=build-environment-
+        tags: |
+          nightly
 
-          tags: |
-            nightly
-
-      # This step uses the `docker/build-push-action` action to build the
-      # image, based on your repository's `Dockerfile`. If the build
-      # succeeds, it pushes the image to GitHub Packages. It uses the `context`
-      # parameter to define the build's context as the set of files located in the
-      # specified path. For more information, see
-      # [Usage](https://github.com/docker/build-push-action#usage) in the README of
-      # the `docker/build-push-action` repository. It uses the `tags` and `labels`
-      # parameters to tag and label the image with the output from the "meta" step.
-      - name: Build and push Docker image
-        id: push
-        uses: docker/build-push-action@v6.19.2
-        with:
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          context: .
-          push: true
-          target: build-environment
-          provenance: false
+    # This step uses the `docker/build-push-action` action to build the
+    # image, based on your repository's `Dockerfile`. If the build
+    # succeeds, it pushes the image to GitHub Packages. It uses the `context`
+    # parameter to define the build's context as the set of files located in the
+    # specified path. For more information, see
+    # [Usage](https://github.com/docker/build-push-action#usage) in the README of
+    # the `docker/build-push-action` repository. It uses the `tags` and `labels`
+    # parameters to tag and label the image with the output from the "meta" step.
+    - name: Build and push Docker image
+      id: push
+      uses: docker/build-push-action@v7.0.0
+      with:
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        context: .
+        push: true
+        target: build-environment
+        provenance: false
 
   build_nightly_mac:
     name: "Build Nightly (${{ matrix.arch_name }}-${{ matrix.os_name }})"
@@ -221,14 +220,13 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          - macos-latest # aarch64 mac
-
+        - macos-latest # aarch64 mac
         # platform and arch info for naming the binary
         include:
-          - os: macos-latest
-            os_name: darwin
-            arch_name: aarch64
-            conjure_prefix: macos-arm
+        - os: macos-latest
+          os_name: darwin
+          arch_name: aarch64
+          conjure_prefix: macos-arm
 
     runs-on: ${{ matrix.os }}
     env:
@@ -236,52 +234,52 @@ jobs:
       conjure_version: 2.5.1
 
     steps:
-      - uses: actions/checkout@v6
-        with:
-          submodules: recursive
-          fetch-depth: 0
+    - uses: actions/checkout@v6
+      with:
+        submodules: recursive
+        fetch-depth: 0
 
-      - name: Install rust
-        run: rustup update stable && rustup default stable
+    - name: Install rust
+      run: rustup update stable && rustup default stable
 
-      - name: Build release
-        run: |
-          cargo build --release -p conjure-cp-cli --features z3-bundled
-          mkdir -p bin # place to store all the different stuff we want to add to the release
-          cp target/release/conjure-oxide bin
+    - name: Build release
+      run: |
+        cargo build --release -p conjure-cp-cli --features z3-bundled
+        mkdir -p bin # place to store all the different stuff we want to add to the release
+        cp target/release/conjure-oxide bin
 
-      - name: Download Conjure release
-        if: ${{ !(matrix.arch_name == 'aarch64' && matrix.os_name == 'linux-gnu') }}
-        run: |
-          CONJURE_FOLDER="conjure-v${{ env.conjure_version }}-${{ matrix.conjure_prefix }}-with-solvers"
-          CONJURE_ZIP="${CONJURE_FOLDER}.zip"
+    - name: Download Conjure release
+      if: ${{ !(matrix.arch_name == 'aarch64' && matrix.os_name == 'linux-gnu') }}
+      run: |
+        CONJURE_FOLDER="conjure-v${{ env.conjure_version }}-${{ matrix.conjure_prefix }}-with-solvers"
+        CONJURE_ZIP="${CONJURE_FOLDER}.zip"
 
-          wget "https://github.com/conjure-cp/conjure/releases/download/v${{ env.conjure_version }}/${CONJURE_ZIP}"
-          unzip -d bin ${CONJURE_ZIP}
-          mv bin/${CONJURE_FOLDER}/* bin/
-          rm -rf bin/${CONJURE_FOLDER}
+        wget "https://github.com/conjure-cp/conjure/releases/download/v${{ env.conjure_version }}/${CONJURE_ZIP}"
+        unzip -d bin ${CONJURE_ZIP}
+        mv bin/${CONJURE_FOLDER}/* bin/
+        rm -rf bin/${CONJURE_FOLDER}
 
-      - name: Prepare releases
-        run: |
-          mkdir dist
+    - name: Prepare releases
+      run: |
+        mkdir dist
 
-          cd bin
-          zip "../dist/${{ env.release_prefix }}-standalone.zip" conjure-oxide
-          zip "../dist/${{ env.release_prefix }}-with-conjure.zip" conjure-oxide conjure
-          zip "../dist/${{ env.release_prefix }}-with-solvers.zip" *
-          cd ..
+        cd bin
+        zip "../dist/${{ env.release_prefix }}-standalone.zip" conjure-oxide
+        zip "../dist/${{ env.release_prefix }}-with-conjure.zip" conjure-oxide conjure
+        zip "../dist/${{ env.release_prefix }}-with-solvers.zip" *
+        cd ..
 
-      - name: Save builds
-        uses: actions/upload-artifact@v7
-        with:
-          name: artifact-${{ env.release_prefix }}
-          path: dist/*.zip
+    - name: Save builds
+      uses: actions/upload-artifact@v7
+      with:
+        name: artifact-${{ env.release_prefix }}
+        path: dist/*.zip
 
   build_nightly_linux:
     name: "Build Nightly (x86_64-linux-gnu)"
     needs:
-      - check_date
-      - publish_build_container
+    - check_date
+    - publish_build_container
     if: ${{ needs.check_date.outputs.should_run != 'false' }}
     runs-on: ubuntu-latest
     container: "ghcr.io/${{ github.repository}}:build-environment-nightly"
@@ -291,77 +289,77 @@ jobs:
       conjure_version: 2.5.1
 
     steps:
-      - name: Align with container ownership
-        run: chown root:root .
+    - name: Align with container ownership
+      run: chown root:root .
 
-      - uses: actions/checkout@v6
-        with:
-          submodules: recursive
-          fetch-depth: 0
+    - uses: actions/checkout@v6
+      with:
+        submodules: recursive
+        fetch-depth: 0
 
-      - name: Build release
-        run: |
-          cargo build --release -p conjure-cp-cli --features z3-bundled
-          mkdir -p bin # place to store all the different stuff we want to add to the release
-          cp target/release/conjure-oxide bin
+    - name: Build release
+      run: |
+        cargo build --release -p conjure-cp-cli --features z3-bundled
+        mkdir -p bin # place to store all the different stuff we want to add to the release
+        cp target/release/conjure-oxide bin
 
-      - name: Download Conjure release
-        run: |
-          CONJURE_FOLDER="conjure-v${{ env.conjure_version }}-${{ env.conjure_prefix }}-with-solvers"
-          CONJURE_ZIP="${CONJURE_FOLDER}.zip"
+    - name: Download Conjure release
+      run: |
+        CONJURE_FOLDER="conjure-v${{ env.conjure_version }}-${{ env.conjure_prefix }}-with-solvers"
+        CONJURE_ZIP="${CONJURE_FOLDER}.zip"
 
-          wget "https://github.com/conjure-cp/conjure/releases/download/v${{ env.conjure_version }}/${CONJURE_ZIP}"
-          unzip -d bin ${CONJURE_ZIP}
-          mv bin/${CONJURE_FOLDER}/* bin/
-          rm -rf bin/${CONJURE_FOLDER}
+        wget "https://github.com/conjure-cp/conjure/releases/download/v${{ env.conjure_version }}/${CONJURE_ZIP}"
+        unzip -d bin ${CONJURE_ZIP}
+        mv bin/${CONJURE_FOLDER}/* bin/
+        rm -rf bin/${CONJURE_FOLDER}
 
-      - name: Prepare releases
-        run: |
-          mkdir dist
+    - name: Prepare releases
+      run: |
+        mkdir dist
 
-          cd bin
-          zip "../dist/${{ env.release_prefix }}-standalone.zip" conjure-oxide
-          zip "../dist/${{ env.release_prefix }}-with-conjure.zip" conjure-oxide conjure
-          zip "../dist/${{ env.release_prefix }}-with-solvers.zip" *
-          cd ..
+        cd bin
+        zip "../dist/${{ env.release_prefix }}-standalone.zip" conjure-oxide
+        zip "../dist/${{ env.release_prefix }}-with-conjure.zip" conjure-oxide conjure
+        zip "../dist/${{ env.release_prefix }}-with-solvers.zip" *
+        cd ..
 
-      - name: Save builds
-        uses: actions/upload-artifact@v7
-        with:
-          name: artifact-${{ env.release_prefix }}
-          path: dist/*.zip
+    - name: Save builds
+      uses: actions/upload-artifact@v7
+      with:
+        name: artifact-${{ env.release_prefix }}
+        path: dist/*.zip
 
   create_release:
     runs-on: ubuntu-latest
     name: Create release
     needs:
-      - build_nightly_mac
-      - build_nightly_linux
+    - build_nightly_mac
+    - build_nightly_linux
     steps:
-      - uses: actions/checkout@v6
-      - run: mkdir dist
+    - uses: actions/checkout@v6
+    - run: mkdir dist
 
-      # download all artifacts made in this workflow (i.e. all the different builds)
-      - uses: actions/download-artifact@v8
-        with:
-          merge-multiple: true # put all releases in the same folder
-          path: dist/
-          pattern: artifact-*
+    # download all artifacts made in this workflow (i.e. all the different builds)
+    - uses: actions/download-artifact@v8
+      with:
+        merge-multiple: true # put all releases in the same folder
+        path: dist/
+        pattern: artifact-*
 
-      - name: Publish nightly release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          git config user.name "GitHub Actions"
-          git config user.email "github-actions@users.noreply.github.com"
+    - name: Publish nightly release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        git config user.name "GitHub Actions"
+        git config user.email "github-actions@users.noreply.github.com"
 
-          # delete nightly tag
-          git push --delete origin nightly  || true
+        # delete nightly tag
+        git push --delete origin nightly  || true
 
-          # create new nightly tag
-          git tag nightly -am "Nightly release: $(date -I)"
-          git push origin nightly
+        # create new nightly tag
+        git tag nightly -am "Nightly release: $(date -I)"
+        git push origin nightly
 
-          # create release
-          gh release delete nightly || true # ensure release doesn't exist (don't fail if it doesn't, as it may not!)
-          gh release create nightly --notes-from-tag --prerelease --title "nightly ($(date -I))" --verify-tag dist/*.zip
+        # create release
+        gh release delete nightly || true # ensure release doesn't exist (don't fail if it doesn't, as it may not!)
+        gh release create nightly --notes-from-tag --prerelease --title "nightly ($(date -I))" --verify-tag dist/*.zip
