@@ -24,11 +24,8 @@ use ustr::Ustr;
 use polyquine::Quine;
 use uniplate::{Biplate, Uniplate};
 
-<<<<<<< nd-function-expr-domains
 use crate::ast::FuncAttr;
-=======
 use crate::ast::metadata::NO_HASH;
->>>>>>> main
 use crate::bug;
 
 use super::abstract_comprehension::AbstractComprehension;
