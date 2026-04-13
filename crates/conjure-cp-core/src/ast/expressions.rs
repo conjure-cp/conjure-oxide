@@ -1785,6 +1785,19 @@ impl Typeable for Expression {
             Expression::UnsafePow(_, _, _) => ReturnType::Int,
             Expression::SafePow(_, _, _) => ReturnType::Int,
             Expression::Minus(_, a, b) => {
+                // This works which proves it's the left hand side of a minus somewhere that triggered the problem
+                    // if b.return_type() == ReturnType::Int {
+                    //     ReturnType::Int
+                    // } else if let ReturnType::Set(b_inner) = b.return_type()
+                    // {
+                    //     ReturnType::Set(b_inner)
+                    // } else {
+                    //     bug!(
+                    //         "Invalid minus operation: operands are of different or invalid types for this operation"
+                    //     )
+                    // }
+
+                // But this doesn't. Specifically the custom test given 07 has a letting called let1 which doesn't appear to have a domain
                 if a.return_type() == ReturnType::Int && b.return_type() == ReturnType::Int {
                     ReturnType::Int
                 } else if let ReturnType::Set(a_inner) = a.return_type()
