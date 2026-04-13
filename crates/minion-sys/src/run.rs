@@ -267,7 +267,7 @@ unsafe fn convert_model_to_raw(
 
         check_minion_result(ffi::minion_newVar(
             instance,
-            c_str.as_ptr(),
+            c_str.as_ptr() as *mut c_char,
             vartype_raw,
             domain_low,
             domain_high,
