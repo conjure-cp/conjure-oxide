@@ -953,12 +953,8 @@ impl Expression {
                             let codomain_length = codomain.length_signed();
                             match codomain_length {
                                 Ok(co_len) => match jectivity {
-                                    JectivityAttr::Bijective => {
-                                        Some(Range::Single(co_len))
-                                    }
-                                    JectivityAttr::Surjective => {
-                                        Some(Range::Bounded(co_len, len))
-                                    }
+                                    JectivityAttr::Bijective => Some(Range::Single(co_len)),
+                                    JectivityAttr::Surjective => Some(Range::Bounded(co_len, len)),
                                     JectivityAttr::Injective => {
                                         Some(Range::Bounded(0, Ord::min(len, co_len)))
                                     }
@@ -996,17 +992,19 @@ impl Expression {
                 let size_size = match size_size {
                     Range::Unbounded => Range::UnboundedR(0),
                     // If lower bound we can guarantee one mapping (unless size = 0)
-                    Range::Single(x) => {match jectivity {
+                    Range::Single(x) => match jectivity {
                         JectivityAttr::Injective | JectivityAttr::Surjective => Range::Single(x),
-                        _ => Range::Bounded(Ord::min(1, x), x)
-                    }},
+                        _ => Range::Bounded(Ord::min(1, x), x),
+                    },
                     // Upper bound guarantees the same upper bound
                     Range::UnboundedL(x) => Range::Bounded(0, x),
                     // If not bounded by 0 can guarantee min 1
-                    Range::UnboundedR(x) => {match jectivity {
-                        JectivityAttr::Injective | JectivityAttr::Surjective => Range::UnboundedR(x),
-                        _ => Range::UnboundedR(Ord::min(1, x))
-                    }},
+                    Range::UnboundedR(x) => match jectivity {
+                        JectivityAttr::Injective | JectivityAttr::Surjective => {
+                            Range::UnboundedR(x)
+                        }
+                        _ => Range::UnboundedR(Ord::min(1, x)),
+                    },
                     Range::Bounded(x, y) => Range::Bounded(Ord::min(1, x), y),
                 };
 
@@ -1015,20 +1013,22 @@ impl Expression {
                 let codomain_length = codomain.length_signed();
                 let attr_size = match jectivity {
                     // Bijective and surjective functions must have every element in the codomain mapped to
-                    JectivityAttr::Bijective | JectivityAttr::Surjective => {
-                        match codomain_length {
-                            Ok(co_len) => Some(Range::Single(co_len)),
-                            Err(_) => None,
-                        }
-                    }
+                    JectivityAttr::Bijective | JectivityAttr::Surjective => match codomain_length {
+                        Ok(co_len) => Some(Range::Single(co_len)),
+                        Err(_) => None,
+                    },
                     JectivityAttr::Injective => {
                         let domain_length = domain.length_signed();
                         match domain_length {
                             Ok(len) => match codomain_length {
                                 Ok(co_len) => match partiality {
                                     // When its injective we can guarantee 1 to 1, so the maximum domain length is a single bound
-                                    PartialityAttr::Total => Some(Range::Single(Ord::min(len, co_len))),
-                                    PartialityAttr::Partial => Some(Range::Bounded(0,Ord::min(len, co_len))),
+                                    PartialityAttr::Total => {
+                                        Some(Range::Single(Ord::min(len, co_len)))
+                                    }
+                                    PartialityAttr::Partial => {
+                                        Some(Range::Bounded(0, Ord::min(len, co_len)))
+                                    }
                                 },
                                 Err(_) => None,
                             },
@@ -1068,7 +1068,7 @@ impl Expression {
                 codomain.map(|inner_dom| Domain::set(SetAttr::new(Range::Bounded(0, 1)), inner_dom))
             }
             Expression::PreImage(_, function, _) => {
-                let (attrs, domain, _) = function.domain_of()?.as_function()?;
+                let (attrs, domain, codomain) = function.domain_of()?.as_function()?;
 
                 let size_size = attrs.resolve()?.size;
                 let size_size = match size_size {
@@ -1081,20 +1081,52 @@ impl Expression {
                 };
 
                 let jectivity = attrs.resolve()?.jectivity;
-
+                let codomain_length = codomain.length_signed();
                 let attr_size = match jectivity {
                     // When there is 1-to-1 mapping we can guarantee no more than 1 occurrence
                     JectivityAttr::Bijective => Some(Range::Single(1)),
-                    JectivityAttr::Injective => Some(Range::Bounded(0, 1)),
+                    JectivityAttr::Injective => {
+                        match size_size {
+                            Range::Single(x) | Range::UnboundedL(x) | Range::Bounded(x,_) => {
+                                match codomain_length {
+                                    Ok(co_len) => {
+                                        if x >= co_len{
+                                            Some(Range::Single(1))
+                                        } else {
+                                            Some(Range::Bounded(0, 1))
+                                        }
+                                    },
+                                    Err(_) => Some(Range::Bounded(0, 1))
+                                }
+                            },
+                            _ => Some(Range::Bounded(0, 1))
+                        }
+                    },
                     JectivityAttr::Surjective => {
                         let domain_length = domain.length_signed();
                         match domain_length {
-                            // We know the element is mapped but not how many times
-                            Ok(len) => Some(Range::Bounded(1, len)),
+                            Ok(len) => match codomain_length {
+                                // We know the element is mapped but not how many times
+                                // Every element must be mapped so it cannot be every element of domain
+                                Ok(co_len) => match size_size {
+                                    Range::Bounded(_,x) | Range::UnboundedL(x) | Range::Single(x) => {
+                                        Some(Range::Bounded(1,Ord::max(Ord::min(len,x)-co_len+1,0)))
+                                    },
+                                    _ => Some(Range::Bounded(1,Ord::max(len-co_len+1,0)))
+                                },
+                                Err(_) => Some(Range::UnboundedR(1)),
+                            },
                             Err(_) => Some(Range::UnboundedR(1)),
                         }
                     }
-                    JectivityAttr::None => Some(Range::UnboundedR(0)),
+                    JectivityAttr::None => {
+                        let domain_length = domain.length_signed();
+                        match domain_length {
+                            Ok(len) => Some(Range::Bounded(0,len)),
+                            Err(_) => Some(Range::UnboundedR(0)),
+                            
+                        }
+                    }
                 };
 
                 let size = match attr_size {
