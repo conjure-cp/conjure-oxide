@@ -1085,22 +1085,20 @@ impl Expression {
                 let attr_size = match jectivity {
                     // When there is 1-to-1 mapping we can guarantee no more than 1 occurrence
                     JectivityAttr::Bijective => Some(Range::Single(1)),
-                    JectivityAttr::Injective => {
-                        match size_size {
-                            Range::Single(x) | Range::UnboundedL(x) | Range::Bounded(x,_) => {
-                                match codomain_length {
-                                    Ok(co_len) => {
-                                        if x >= co_len{
-                                            Some(Range::Single(1))
-                                        } else {
-                                            Some(Range::Bounded(0, 1))
-                                        }
-                                    },
-                                    Err(_) => Some(Range::Bounded(0, 1))
+                    JectivityAttr::Injective => match size_size {
+                        Range::Single(x) | Range::UnboundedL(x) | Range::Bounded(x, _) => {
+                            match codomain_length {
+                                Ok(co_len) => {
+                                    if x >= co_len {
+                                        Some(Range::Single(1))
+                                    } else {
+                                        Some(Range::Bounded(0, 1))
+                                    }
                                 }
-                            },
-                            _ => Some(Range::Bounded(0, 1))
+                                Err(_) => Some(Range::Bounded(0, 1)),
+                            }
                         }
+                        _ => Some(Range::Bounded(0, 1)),
                     },
                     JectivityAttr::Surjective => {
                         let domain_length = domain.length_signed();
@@ -1109,10 +1107,13 @@ impl Expression {
                                 // We know the element is mapped but not how many times
                                 // Every element must be mapped so it cannot be every element of domain
                                 Ok(co_len) => match size_size {
-                                    Range::Bounded(_,x) | Range::UnboundedL(x) | Range::Single(x) => {
-                                        Some(Range::Bounded(1,Ord::max(Ord::min(len,x)-co_len+1,0)))
-                                    },
-                                    _ => Some(Range::Bounded(1,Ord::max(len-co_len+1,0)))
+                                    Range::Bounded(_, x)
+                                    | Range::UnboundedL(x)
+                                    | Range::Single(x) => Some(Range::Bounded(
+                                        1,
+                                        Ord::max(Ord::min(len, x) - co_len + 1, 0),
+                                    )),
+                                    _ => Some(Range::Bounded(1, Ord::max(len - co_len + 1, 0))),
                                 },
                                 Err(_) => Some(Range::UnboundedR(1)),
                             },
@@ -1122,9 +1123,8 @@ impl Expression {
                     JectivityAttr::None => {
                         let domain_length = domain.length_signed();
                         match domain_length {
-                            Ok(len) => Some(Range::Bounded(0,len)),
+                            Ok(len) => Some(Range::Bounded(0, len)),
                             Err(_) => Some(Range::UnboundedR(0)),
-                            
                         }
                     }
                 };
@@ -1146,8 +1146,26 @@ impl Expression {
                 Some(Domain::set(SetAttr::new(size), domain))
             }
             Expression::Restrict(_, function, new_domain) => {
-                let (attrs, _, codom) = function.domain_of()?.as_function()?;
-                let new_dom = new_domain.domain_of()?;
+                let mut domain = function.domain_of()?;
+                let (attrs_mut, dom, codom_mut) = domain.as_function_mut()?;
+
+                // Stops other references being mutable
+                let attrs: &FuncAttr<IntVal> = attrs_mut;
+                let codom: &Moo<Domain> = codom_mut;
+
+                // Gets the minimal range between the old domain and new domain
+                let mut new_dom = new_domain.domain_of()?;
+                // If domains cannot be resolved we just stick to the restricted one
+                if let Some(new_rng) = new_dom.as_int_ground_mut() {
+                    if let Some(old_rng) = dom.as_int_ground_mut() {
+                        new_rng.append(old_rng);
+                        if let Ok(rng) = Range::minimal(new_rng) {
+                            let mut ranges = Vec::new();
+                            ranges.push(rng);
+                            new_dom = Domain::int(ranges);
+                        }
+                    }
+                }
                 let attr_size = attrs.resolve()?.size;
                 let new_size = match new_dom.length_signed() {
                     // Combines current size attributes with length of new domain
@@ -1164,13 +1182,13 @@ impl Expression {
                     Err(_) => attr_size,
                 };
                 let jectivity = attrs.jectivity.clone();
-                let partiality = attrs.partiality;
+                let partiality = attrs.partiality.clone();
                 let new_attrs = FuncAttr {
                     size: new_size,
                     jectivity,
                     partiality,
                 };
-                Some(Domain::function(new_attrs, new_dom, codom))
+                Some(Domain::function(new_attrs, new_dom, codom.clone()))
             }
             Expression::Inverse(..) => Some(Domain::bool()),
             Expression::LexLt(..) => Some(Domain::bool()),
