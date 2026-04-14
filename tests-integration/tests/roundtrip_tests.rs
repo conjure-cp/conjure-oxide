@@ -1,4 +1,3 @@
-use conjure_cp::Model;
 use conjure_cp::ast::SerdeModel;
 use conjure_cp::context::Context;
 use conjure_cp::instantiate::instantiate_model;
@@ -6,16 +5,19 @@ use conjure_cp::parse::tree_sitter::errors::InstantiateModelError;
 use conjure_cp::parse::tree_sitter::errors::ParseErrorCollection;
 use conjure_cp::parse::tree_sitter::{parse_essence_file, parse_essence_file_native};
 use conjure_cp::settings::Parser;
+use conjure_cp::Model;
 use conjure_cp_cli::utils::testing::serialize_model;
 use std::collections::BTreeSet;
-use std::env;
 use std::error::Error;
 use std::fs;
 use std::path::Path;
 use std::sync::Arc;
 use std::sync::RwLock;
-use tests_integration::TestConfig;
+use std::time::Instant;
 use tests_integration::golden_files::assert_no_redundant_expected_files;
+use tests_integration::test_config::{round_expected_time, upsert_expected_time_config};
+use tests_integration::AcceptMode;
+use tests_integration::TestConfig;
 
 use std::io::Write;
 
@@ -24,7 +26,9 @@ type ParseFn = fn(&str, Arc<RwLock<Context<'static>>>) -> Result<Model, Box<Pars
 
 /// Runs a roundtrip parse test for one input model using the parsers configured in `config.toml`.
 fn roundtrip_test(path: &str, filename: &str, extension: &str) -> Result<(), Box<dyn Error>> {
-    let accept = env::var("ACCEPT").unwrap_or("false".to_string()) == "true";
+    let accept_mode = AcceptMode::from_env();
+    let accept = accept_mode.accepts_outputs();
+    let started_at = Instant::now();
 
     let file_config: TestConfig =
         if let Ok(config_contents) = fs::read_to_string(format!("{path}/config.toml")) {
@@ -66,10 +70,17 @@ fn roundtrip_test(path: &str, filename: &str, extension: &str) -> Result<(), Box
     }
 
     assert_no_redundant_expected_files(Path::new(path), &allowed_expected_files, None)?;
+
+    if accept_mode.records_expected_time() {
+        let expected_time = round_expected_time(started_at.elapsed());
+        let config_path = Path::new(path).join("config.toml");
+        upsert_expected_time_config(&config_path, expected_time)?;
+    }
+
     Ok(())
 }
 
-/// Removes generated and expected artefacts for a roundtrip test directory when `ACCEPT=true`.
+/// Removes generated and expected artefacts for a roundtrip test directory when accept mode is enabled.
 ///
 /// Keeps source model files (`.essence`, `.param`) and `config.toml`. Nested directories are not removed,
 /// because each nested test directory performs its own cleanup when executed.
@@ -112,13 +123,13 @@ fn clean_test_dir_for_accept(path: &str) -> Result<(), std::io::Error> {
 /// 1. Parse the input model file.
 /// 2. If parsing succeeds:
 /// 3. Save generated model JSON and generated Essence output.
-/// 4. If `ACCEPT=true`, copy generated outputs to expected outputs.
+/// 4. If accept mode is enabled, copy generated outputs to expected outputs.
 /// 5. Load and compare generated vs expected model JSON.
 /// 6. Load and compare generated vs expected Essence output.
 /// 7. Parse generated Essence again, re-emit Essence, and assert roundtrip stability.
 /// 8. If parsing fails:
 /// 9. Save generated parse error output.
-/// 10. If `ACCEPT=true`, copy generated error output to expected error output.
+/// 10. If accept mode is enabled, copy generated error output to expected error output.
 /// 11. Load and compare generated vs expected error output.
 fn roundtrip_test_inner(
     path: &str,
@@ -128,7 +139,7 @@ fn roundtrip_test_inner(
     parse: ParseFn,
     param_file: Option<&str>,
 ) -> Result<BTreeSet<String>, Box<dyn Error>> {
-    let accept = env::var("ACCEPT").unwrap_or("false".to_string()) == "true";
+    let accept = AcceptMode::from_env().accepts_outputs();
 
     let file_path = format!("{path}/{input_filename}.{extension}");
     let context: Arc<RwLock<Context<'static>>> = Default::default();
@@ -177,7 +188,10 @@ fn roundtrip_test_inner(
             {
                 return Err(Box::new(std::io::Error::new(
                     std::io::ErrorKind::NotFound,
-                    "Expected output file not found: Run with ACCEPT=true".to_string(),
+                    format!(
+                        "Expected output file not found: {}",
+                        AcceptMode::refresh_hint()
+                    ),
                 )));
             }
 
@@ -218,7 +232,10 @@ fn roundtrip_test_inner(
             if !accept && !Path::new(&roundtrip_error_path(path, case_name, "expected")).exists() {
                 return Err(Box::new(std::io::Error::new(
                     std::io::ErrorKind::NotFound,
-                    "Expected output file not found: Run with ACCEPT=true".to_string(),
+                    format!(
+                        "Expected output file not found: {}",
+                        AcceptMode::refresh_hint()
+                    ),
                 )));
             }
 
