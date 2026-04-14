@@ -224,12 +224,13 @@ fn max_expected_time_limit() -> io::Result<Option<u64>> {
     }
 }
 
-fn get_ignore_attr(cfg: &TestConfig) -> io::Result<String> {
+fn get_ignore_attr(cfg: &TestConfig, include_expected_time: bool) -> io::Result<String> {
     if cfg.skip {
         Ok(String::from(
             "#[ignore = \"this test has been disabled ('skip=true' in its config.toml)\"]\n",
         ))
-    } else if let (Some(expected_time), Some(limit)) =
+    } else if include_expected_time
+        && let (Some(expected_time), Some(limit)) =
         (cfg.expected_time, max_expected_time_limit()?)
     {
         if expected_time > limit {
@@ -252,7 +253,7 @@ fn write_integration_test(
     // TODO: Consider supporting multiple Essence files?
     if essence_files.len() == 1 {
         let cfg = read_config_or_default(&path);
-        let ignore = get_ignore_attr(&cfg)?;
+        let ignore = get_ignore_attr(&cfg, true)?;
 
         write!(
             file,
@@ -271,7 +272,7 @@ fn write_integration_test(
 
 fn write_custom_test(file: &mut File, path: String) -> io::Result<()> {
     let cfg = read_config_or_default(&path);
-    let ignore = get_ignore_attr(&cfg)?;
+    let ignore = get_ignore_attr(&cfg, true)?;
 
     write!(
         file,
@@ -288,7 +289,7 @@ fn write_roundtrip_test(
     essence_file: (String, String),
 ) -> io::Result<()> {
     let cfg = read_config_or_default(&path);
-    let ignore = get_ignore_attr(&cfg)?;
+    let ignore = get_ignore_attr(&cfg, false)?;
 
     write!(
         file,

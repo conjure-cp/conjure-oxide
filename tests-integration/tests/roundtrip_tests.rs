@@ -13,9 +13,7 @@ use std::fs;
 use std::path::Path;
 use std::sync::Arc;
 use std::sync::RwLock;
-use std::time::Instant;
 use tests_integration::golden_files::assert_no_redundant_expected_files;
-use tests_integration::test_config::{round_expected_time, upsert_expected_time_config};
 use tests_integration::AcceptMode;
 use tests_integration::TestConfig;
 
@@ -26,9 +24,7 @@ type ParseFn = fn(&str, Arc<RwLock<Context<'static>>>) -> Result<Model, Box<Pars
 
 /// Runs a roundtrip parse test for one input model using the parsers configured in `config.toml`.
 fn roundtrip_test(path: &str, filename: &str, extension: &str) -> Result<(), Box<dyn Error>> {
-    let accept_mode = AcceptMode::from_env();
-    let accept = accept_mode.accepts_outputs();
-    let started_at = Instant::now();
+    let accept = AcceptMode::from_env().accepts_outputs();
 
     let file_config: TestConfig =
         if let Ok(config_contents) = fs::read_to_string(format!("{path}/config.toml")) {
@@ -70,12 +66,6 @@ fn roundtrip_test(path: &str, filename: &str, extension: &str) -> Result<(), Box
     }
 
     assert_no_redundant_expected_files(Path::new(path), &allowed_expected_files, None)?;
-
-    if accept_mode.records_expected_time() {
-        let expected_time = round_expected_time(started_at.elapsed());
-        let config_path = Path::new(path).join("config.toml");
-        upsert_expected_time_config(&config_path, expected_time)?;
-    }
 
     Ok(())
 }
