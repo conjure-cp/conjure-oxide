@@ -19,17 +19,7 @@ pub fn parse_find_statement(
     let Some(keyword) = field!(recover, ctx, find_statement, "find_keyword") else {
         return Ok(BTreeMap::new());
     };
-    span_with_hover(
-        &keyword,
-        ctx.source_code,
-        ctx.source_map,
-        HoverInfo {
-            description: "Find keyword".to_string(),
-            kind: Some(SymbolKind::Find),
-            ty: None,
-            decl_span: None,
-        },
-    );
+    ctx.add_span_and_doc_hover(&keyword, "find", SymbolKind::Find, None, None);
     let mut var_hashmap = BTreeMap::new();
     for var_decl in named_children(&find_statement) {
         if let Ok(mut decls) = parse_declaration_statement(ctx, var_decl, SymbolKind::Find) {
