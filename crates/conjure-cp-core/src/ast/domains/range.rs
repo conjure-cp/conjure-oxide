@@ -134,10 +134,10 @@ impl<A: Ord + Clone> Range<A> {
                 (Some(curr), None) => Some(curr),
                 _ => None,
             };
-            if lo.is_some() && hi.is_some() {
-                if lo.unwrap() > hi.unwrap() {
-                    return Err(DomainOpError::ConflictingAttrs);
-                }
+            if let (Some(l), Some(h)) = (lo, hi)
+                && l > h
+            {
+                return Err(DomainOpError::ConflictingAttrs);
             }
         }
         Ok(Range::new(lo.cloned(), hi.cloned()))

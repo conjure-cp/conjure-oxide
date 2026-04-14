@@ -1185,14 +1185,13 @@ impl Expression {
                 // Gets the minimal range between the old domain and new domain
                 let mut new_dom = new_domain.domain_of()?;
                 // If domains cannot be resolved we just stick to the restricted one
-                if let Some(new_rng) = new_dom.as_int_ground_mut() {
-                    if let Some(old_rng) = dom.as_int_ground_mut() {
-                        new_rng.append(old_rng);
-                        if let Ok(rng) = Range::minimal(new_rng) {
-                            let mut ranges = Vec::new();
-                            ranges.push(rng);
-                            new_dom = Domain::int(ranges);
-                        }
+                if let Some(new_rng) = new_dom.as_int_ground_mut()
+                    && let Some(old_rng) = dom.as_int_ground_mut()
+                {
+                    new_rng.append(old_rng);
+                    if let Ok(rng) = Range::minimal(new_rng) {
+                        let ranges = vec![rng];
+                        new_dom = Domain::int(ranges);
                     }
                 }
                 let attr_size = attrs.resolve()?.size;
