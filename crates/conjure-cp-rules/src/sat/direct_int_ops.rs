@@ -20,7 +20,7 @@ use conjure_cp::ast::CnfClause;
 ///  SATInt([true;int(1..), (3, 3)])
 ///
 /// ```
-#[register_rule(("SAT_Direct", 9501))]
+#[register_rule(("SAT_Direct", 8500))]
 // 9500 -> Works
 // 9250 -> Works
 // 9000 -> Works
@@ -164,251 +164,251 @@ fn eq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     eprintln!("finished application on");
     Ok(Reduction::cnf(output, new_clauses, new_symbols))
 }
-//
-// /// Converts a != expression between two direct SATInts to a boolean expression in cnf
-// ///
-// /// ```text
-// /// SATInt(a) != SATInt(b) ~> Bool
-// ///
-// /// ```
-// ///
-// /// True iff at least one value position differs.
-// #[register_rule(("SAT_Direct", 9100))]
-// fn neq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
-//     let Expr::Neq(_, lhs, rhs) = expr else {
-//         return Err(RuleNotApplicable);
-//     };
-//
-//     let (binding, _, _) =
-//         validate_direct_int_operands(vec![lhs.as_ref().clone(), rhs.as_ref().clone()])?;
-//     let [lhs_bits, rhs_bits] = binding.as_slice() else {
-//         return Err(RuleNotApplicable);
-//     };
-//
-//     let bit_count = lhs_bits.len();
-//
-//     let mut output = false.into();
-//     let mut new_symbols = symbols.clone();
-//     let mut new_clauses = vec![];
-//     let mut comparison;
-//
-//     for i in 0..bit_count {
-//         comparison = tseytin_xor(
-//             lhs_bits[i].clone(),
-//             rhs_bits[i].clone(),
-//             &mut new_clauses,
-//             &mut new_symbols,
-//         );
-//         output = tseytin_or(
-//             &vec![comparison, output],
-//             &mut new_clauses,
-//             &mut new_symbols,
-//         );
-//     }
-//
-//     Ok(Reduction::cnf(output, new_clauses, new_symbols))
-// }
-//
-// /// Converts a </>/<=/>= expression between two direct SATInts to a boolean expression in cnf
-// ///
-// /// ```text
-// /// SATInt(a) </>/<=/>= SATInt(b) ~> Bool
-// ///
-// /// ```
-// /// Note: < and <= are rewritten by swapping operands to reuse lt logic.
-// #[register_rule(("SAT", 9100))]
-// fn ineq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
-//     let (lhs, rhs, negate) = match expr {
-//         // A < B -> sat_direct_lt(A, B)
-//         Expr::Lt(_, x, y) => (x, y, false),
-//         // A > B -> sat_direct_lt(B, A)
-//         Expr::Gt(_, x, y) => (y, x, false),
-//         // A <= B -> NOT (B < A)
-//         Expr::Leq(_, x, y) => (y, x, true),
-//         // A >= B -> NOT (A < B)
-//         Expr::Geq(_, x, y) => (x, y, true),
-//         _ => return Err(RuleNotApplicable),
-//     };
-//
-//     let (binding, _, _) =
-//         validate_direct_int_operands(vec![lhs.as_ref().clone(), rhs.as_ref().clone()])?;
-//     let [lhs_bits, rhs_bits] = binding.as_slice() else {
-//         return Err(RuleNotApplicable);
-//     };
-//
-//     let mut new_symbols = symbols.clone();
-//     let mut new_clauses = vec![];
-//
-//     let mut output = sat_direct_lt(
-//         lhs_bits.clone(),
-//         rhs_bits.clone(),
-//         &mut new_clauses,
-//         &mut new_symbols,
-//     );
-//
-//     if negate {
-//         output = tseytin_not(output, &mut new_clauses, &mut new_symbols);
-//     }
-//
-//     Ok(Reduction::cnf(output, new_clauses, new_symbols))
-// }
-//
-// /// Encodes a < b for one-hot direct integers using prefix OR logic.
-// fn sat_direct_lt(
-//     a: Vec<Expr>,
-//     b: Vec<Expr>,
-//     clauses: &mut Vec<CnfClause>,
-//     symbols: &mut SymbolTable,
-// ) -> Expr {
-//     let mut b_or = Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false)));
-//     let mut cum_result = Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false)));
-//
-//     for (a_i, b_i) in a.iter().zip(b.iter()) {
-//         // b_or is prefix_or of b up to index i: B_i = b_0 | ... | b_i
-//         b_or = tseytin_or(&vec![b_or, b_i.clone()], clauses, symbols);
-//
-//         // a < b if there exists i such that a=i and b > i.
-//         // b > i is equivalent to NOT(B_i) assuming one-hotness.
-//         let not_b_or = tseytin_not(b_or.clone(), clauses, symbols);
-//         let a_i_and_not_b_i = tseytin_and(&vec![a_i.clone(), not_b_or], clauses, symbols);
-//
-//         cum_result = tseytin_or(&vec![cum_result, a_i_and_not_b_i], clauses, symbols);
-//     }
-//
-//     cum_result
-// }
-//
-// /// Converts a - expression for a SATInt to a new SATInt
-// ///
-// /// ```text
-// /// -SATInt(a) ~> SATInt(b)
-// ///
-// /// ```
-// #[register_rule(("SAT_Direct", 9100))]
-// fn neg_sat_direct(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-//     let Expr::Neg(_, value) = expr else {
-//         return Err(RuleNotApplicable);
-//     };
-//
-//     let (binding, old_min, old_max) = validate_direct_int_operands(vec![value.as_ref().clone()])?;
-//     let [val_bits] = binding.as_slice() else {
-//         return Err(RuleNotApplicable);
-//     };
-//
-//     let new_min = -old_max;
-//     let new_max = -old_min;
-//
-//     let mut out = val_bits.clone();
-//     out.reverse();
-//
-//     Ok(Reduction::pure(Expr::SATInt(
-//         Metadata::new(),
-//         SATIntEncoding::Direct,
-//         Moo::new(into_matrix_expr!(out)),
-//         (new_min, new_max),
-//     )))
-// }
-//
-// fn floor_div(a: i32, b: i32) -> i32 {
-//     let (q, r) = (a / b, a % b);
-//     if (r > 0 && b < 0) || (r < 0 && b > 0) {
-//         q - 1
-//     } else {
-//         q
-//     }
-// }
-//
-// /// Converts a / expression between two direct SATInts to a new direct SATInt
-// /// using the "lookup table" method.
-// ///
-// /// ```text
-// /// SafeDiv(SATInt(a), SATInt(b)) ~> SATInt(c)
-// ///
-// /// ```
-// #[register_rule(("SAT_Direct", 9100))]
-// fn safediv_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
-//     let Expr::SafeDiv(_, numer_expr, denom_expr) = expr else {
-//         return Err(RuleNotApplicable);
-//     };
-//
-//     let Expr::SATInt(_, SATIntEncoding::Direct, numer_inner, (numer_min, numer_max)) =
-//         numer_expr.as_ref()
-//     else {
-//         return Err(RuleNotApplicable);
-//     };
-//     let Some(numer_bits) = numer_inner.as_ref().clone().unwrap_list() else {
-//         return Err(RuleNotApplicable);
-//     };
-//
-//     let Expr::SATInt(_, SATIntEncoding::Direct, denom_inner, (denom_min, denom_max)) =
-//         denom_expr.as_ref()
-//     else {
-//         return Err(RuleNotApplicable);
-//     };
-//
-//     let Some(denom_bits) = denom_inner.as_ref().clone().unwrap_list() else {
-//         return Err(RuleNotApplicable);
-//     };
-//
-//     let mut quot_min = i32::MAX;
-//     let mut quot_max = i32::MIN;
-//
-//     for i in *numer_min..=*numer_max {
-//         for j in *denom_min..=*denom_max {
-//             let k = if j == 0 { 0 } else { i / j };
-//             quot_min = quot_min.min(k);
-//             quot_max = quot_max.max(k);
-//         }
-//     }
-//
-//     let mut new_symbols = symbols.clone();
-//     let mut quot_bits = Vec::new();
-//
-//     // generate boolean variables for all possible quotients
-//     for _ in quot_min..=quot_max {
-//         let decl = new_symbols.gensym(&conjure_cp::ast::Domain::bool());
-//         quot_bits.push(Expr::Atomic(
-//             Metadata::new(),
-//             Atom::Reference(conjure_cp::ast::Reference::new(decl)),
-//         ));
-//     }
-//
-//     let mut new_clauses = vec![];
-//
-//     // generate the lookup table clauses: (n_i AND d_j) => q_k
-//     for i in *numer_min..=*numer_max {
-//         let numer_bit = &numer_bits[(i - numer_min) as usize];
-//         for j in *denom_min..=*denom_max {
-//             let denom_bit = &denom_bits[(j - denom_min) as usize];
-//
-//             let k = if j == 0 { 0 } else { floor_div(i, j) };
-//
-//             let quot_bit = &quot_bits[(k - quot_min) as usize];
-//
-//             new_clauses.push(CnfClause::new(vec![
-//                 Expr::Not(Metadata::new(), Moo::new(numer_bit.clone())),
-//                 Expr::Not(Metadata::new(), Moo::new(denom_bit.clone())),
-//                 quot_bit.clone(),
-//             ]));
-//         }
-//     }
-//
-//     // the quotient cannot take more than one value simultaneously.
-//     for a in 0..quot_bits.len() {
-//         for b in (a + 1)..quot_bits.len() {
-//             new_clauses.push(CnfClause::new(vec![
-//                 Expr::Not(Metadata::new(), Moo::new(quot_bits[a].clone())),
-//                 Expr::Not(Metadata::new(), Moo::new(quot_bits[b].clone())),
-//             ]));
-//         }
-//     }
-//
-//     let quot_int = Expr::SATInt(
-//         Metadata::new(),
-//         SATIntEncoding::Direct,
-//         Moo::new(into_matrix_expr!(quot_bits)),
-//         (quot_min, quot_max),
-//     );
-//
-//     Ok(Reduction::cnf(quot_int, new_clauses, new_symbols))
-// }
+
+/// Converts a != expression between two direct SATInts to a boolean expression in cnf
+///
+/// ```text
+/// SATInt(a) != SATInt(b) ~> Bool
+///
+/// ```
+///
+/// True iff at least one value position differs.
+#[register_rule(("SAT_Direct", 9100))]
+fn neq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    let Expr::Neq(_, lhs, rhs) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let (binding, _, _) =
+        validate_direct_int_operands(vec![lhs.as_ref().clone(), rhs.as_ref().clone()])?;
+    let [lhs_bits, rhs_bits] = binding.as_slice() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let bit_count = lhs_bits.len();
+
+    let mut output = false.into();
+    let mut new_symbols = symbols.clone();
+    let mut new_clauses = vec![];
+    let mut comparison;
+
+    for i in 0..bit_count {
+        comparison = tseytin_xor(
+            lhs_bits[i].clone(),
+            rhs_bits[i].clone(),
+            &mut new_clauses,
+            &mut new_symbols,
+        );
+        output = tseytin_or(
+            &vec![comparison, output],
+            &mut new_clauses,
+            &mut new_symbols,
+        );
+    }
+
+    Ok(Reduction::cnf(output, new_clauses, new_symbols))
+}
+
+/// Converts a </>/<=/>= expression between two direct SATInts to a boolean expression in cnf
+///
+/// ```text
+/// SATInt(a) </>/<=/>= SATInt(b) ~> Bool
+///
+/// ```
+/// Note: < and <= are rewritten by swapping operands to reuse lt logic.
+#[register_rule(("SAT", 9100))]
+fn ineq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    let (lhs, rhs, negate) = match expr {
+        // A < B -> sat_direct_lt(A, B)
+        Expr::Lt(_, x, y) => (x, y, false),
+        // A > B -> sat_direct_lt(B, A)
+        Expr::Gt(_, x, y) => (y, x, false),
+        // A <= B -> NOT (B < A)
+        Expr::Leq(_, x, y) => (y, x, true),
+        // A >= B -> NOT (A < B)
+        Expr::Geq(_, x, y) => (x, y, true),
+        _ => return Err(RuleNotApplicable),
+    };
+
+    let (binding, _, _) =
+        validate_direct_int_operands(vec![lhs.as_ref().clone(), rhs.as_ref().clone()])?;
+    let [lhs_bits, rhs_bits] = binding.as_slice() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let mut new_symbols = symbols.clone();
+    let mut new_clauses = vec![];
+
+    let mut output = sat_direct_lt(
+        lhs_bits.clone(),
+        rhs_bits.clone(),
+        &mut new_clauses,
+        &mut new_symbols,
+    );
+
+    if negate {
+        output = tseytin_not(output, &mut new_clauses, &mut new_symbols);
+    }
+
+    Ok(Reduction::cnf(output, new_clauses, new_symbols))
+}
+
+/// Encodes a < b for one-hot direct integers using prefix OR logic.
+fn sat_direct_lt(
+    a: Vec<Expr>,
+    b: Vec<Expr>,
+    clauses: &mut Vec<CnfClause>,
+    symbols: &mut SymbolTable,
+) -> Expr {
+    let mut b_or = Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false)));
+    let mut cum_result = Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false)));
+
+    for (a_i, b_i) in a.iter().zip(b.iter()) {
+        // b_or is prefix_or of b up to index i: B_i = b_0 | ... | b_i
+        b_or = tseytin_or(&vec![b_or, b_i.clone()], clauses, symbols);
+
+        // a < b if there exists i such that a=i and b > i.
+        // b > i is equivalent to NOT(B_i) assuming one-hotness.
+        let not_b_or = tseytin_not(b_or.clone(), clauses, symbols);
+        let a_i_and_not_b_i = tseytin_and(&vec![a_i.clone(), not_b_or], clauses, symbols);
+
+        cum_result = tseytin_or(&vec![cum_result, a_i_and_not_b_i], clauses, symbols);
+    }
+
+    cum_result
+}
+
+/// Converts a - expression for a SATInt to a new SATInt
+///
+/// ```text
+/// -SATInt(a) ~> SATInt(b)
+///
+/// ```
+#[register_rule(("SAT_Direct", 9100))]
+fn neg_sat_direct(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    let Expr::Neg(_, value) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let (binding, old_min, old_max) = validate_direct_int_operands(vec![value.as_ref().clone()])?;
+    let [val_bits] = binding.as_slice() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let new_min = -old_max;
+    let new_max = -old_min;
+
+    let mut out = val_bits.clone();
+    out.reverse();
+
+    Ok(Reduction::pure(Expr::SATInt(
+        Metadata::new(),
+        SATIntEncoding::Direct,
+        Moo::new(into_matrix_expr!(out)),
+        (new_min, new_max),
+    )))
+}
+
+fn floor_div(a: i32, b: i32) -> i32 {
+    let (q, r) = (a / b, a % b);
+    if (r > 0 && b < 0) || (r < 0 && b > 0) {
+        q - 1
+    } else {
+        q
+    }
+}
+
+/// Converts a / expression between two direct SATInts to a new direct SATInt
+/// using the "lookup table" method.
+///
+/// ```text
+/// SafeDiv(SATInt(a), SATInt(b)) ~> SATInt(c)
+///
+/// ```
+#[register_rule(("SAT_Direct", 9100))]
+fn safediv_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    let Expr::SafeDiv(_, numer_expr, denom_expr) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Expr::SATInt(_, SATIntEncoding::Direct, numer_inner, (numer_min, numer_max)) =
+        numer_expr.as_ref()
+    else {
+        return Err(RuleNotApplicable);
+    };
+    let Some(numer_bits) = numer_inner.as_ref().clone().unwrap_list() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Expr::SATInt(_, SATIntEncoding::Direct, denom_inner, (denom_min, denom_max)) =
+        denom_expr.as_ref()
+    else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Some(denom_bits) = denom_inner.as_ref().clone().unwrap_list() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let mut quot_min = i32::MAX;
+    let mut quot_max = i32::MIN;
+
+    for i in *numer_min..=*numer_max {
+        for j in *denom_min..=*denom_max {
+            let k = if j == 0 { 0 } else { i / j };
+            quot_min = quot_min.min(k);
+            quot_max = quot_max.max(k);
+        }
+    }
+
+    let mut new_symbols = symbols.clone();
+    let mut quot_bits = Vec::new();
+
+    // generate boolean variables for all possible quotients
+    for _ in quot_min..=quot_max {
+        let decl = new_symbols.gensym(&conjure_cp::ast::Domain::bool());
+        quot_bits.push(Expr::Atomic(
+            Metadata::new(),
+            Atom::Reference(conjure_cp::ast::Reference::new(decl)),
+        ));
+    }
+
+    let mut new_clauses = vec![];
+
+    // generate the lookup table clauses: (n_i AND d_j) => q_k
+    for i in *numer_min..=*numer_max {
+        let numer_bit = &numer_bits[(i - numer_min) as usize];
+        for j in *denom_min..=*denom_max {
+            let denom_bit = &denom_bits[(j - denom_min) as usize];
+
+            let k = if j == 0 { 0 } else { floor_div(i, j) };
+
+            let quot_bit = &quot_bits[(k - quot_min) as usize];
+
+            new_clauses.push(CnfClause::new(vec![
+                Expr::Not(Metadata::new(), Moo::new(numer_bit.clone())),
+                Expr::Not(Metadata::new(), Moo::new(denom_bit.clone())),
+                quot_bit.clone(),
+            ]));
+        }
+    }
+
+    // the quotient cannot take more than one value simultaneously.
+    for a in 0..quot_bits.len() {
+        for b in (a + 1)..quot_bits.len() {
+            new_clauses.push(CnfClause::new(vec![
+                Expr::Not(Metadata::new(), Moo::new(quot_bits[a].clone())),
+                Expr::Not(Metadata::new(), Moo::new(quot_bits[b].clone())),
+            ]));
+        }
+    }
+
+    let quot_int = Expr::SATInt(
+        Metadata::new(),
+        SATIntEncoding::Direct,
+        Moo::new(into_matrix_expr!(quot_bits)),
+        (quot_min, quot_max),
+    );
+
+    Ok(Reduction::cnf(quot_int, new_clauses, new_symbols))
+}
