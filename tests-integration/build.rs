@@ -244,11 +244,15 @@ fn write_integration_test(
 }
 
 fn write_custom_test(file: &mut File, path: String) -> io::Result<()> {
+    let cfg = read_config_or_default(&path);
+    let ignore = get_ignore_attr(&cfg);
+
     write!(
         file,
         include_str!("./tests/custom_test_template"),
         test_name = path.replace("./", "").replace(['/', '-'], "_"),
-        test_dir = path
+        test_dir = path,
+        ignore_attr = ignore
     )
 }
 
