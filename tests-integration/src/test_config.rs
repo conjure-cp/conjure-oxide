@@ -36,6 +36,13 @@ fn default_minion_discrete_threshold() -> usize {
     conjure_cp::settings::DEFAULT_MINION_DISCRETE_THRESHOLD
 }
 
+fn deserialise_expected_time<'de, D>(deserializer: D) -> Result<Option<u64>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    Option::<u64>::deserialize(deserializer)
+}
+
 #[derive(Deserialize, Debug)]
 #[serde(default)]
 #[serde(deny_unknown_fields)]
@@ -77,12 +84,20 @@ pub struct TestConfig {
 
     // Generate this test but do not run it
     pub skip: bool,
+
+    #[serde(
+        default,
+        rename = "expected-time",
+        deserialize_with = "deserialise_expected_time"
+    )]
+    pub expected_time: Option<u64>,
 }
 
 impl Default for TestConfig {
     fn default() -> Self {
         Self {
             skip: false,
+            expected_time: None,
             parser: vec!["tree-sitter".to_string(), "via-conjure".to_string()],
             rewriter: vec!["naive".to_string()],
             comprehension_expander: vec![
