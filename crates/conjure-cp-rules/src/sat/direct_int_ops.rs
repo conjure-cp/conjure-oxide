@@ -11,7 +11,9 @@ use conjure_cp::into_matrix_expr;
 
 use super::boolean::{tseytin_and, tseytin_iff, tseytin_not, tseytin_or, tseytin_xor};
 
+use crate::representation::sat_direct_int::IntToBoolDirect;
 use conjure_cp::ast::CnfClause;
+
 /// Converts an integer literal to SATInt form
 ///
 /// ```text
@@ -52,6 +54,30 @@ fn literal_sat_direct_int(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     )))
 }
 
+pub fn local_bounds_and_bits(expr: &Expr) -> Result<(i32, i32, Vec<Expr>), ApplicationError> {
+    match expr {
+        Expr::SATInt(_, SATIntEncoding::Direct, inner, (local_min, local_max)) => {
+            let Some(v) = inner.as_ref().clone().unwrap_list() else {
+                return Err(RuleNotApplicable);
+            };
+            Ok((*local_min, *local_max, v))
+        }
+        Expr::Atomic(_, Atom::Reference(re)) => {
+            let Some(repr) = re.get_repr_as::<IntToBoolDirect>() else {
+                eprintln!("Does not have representation: {}", expr);
+                eprintln!("Selected: {:#?}", re.repr);
+                return Err(RuleNotApplicable);
+            };
+            let (lo, hi) = repr.bounds();
+            Ok((lo, hi, repr.bits()))
+        }
+        _ => {
+            eprintln!("Unexpected operand: {}", expr);
+            Err(RuleNotApplicable)
+        }
+    }
+}
+
 /// This function confirms that all of the input expressions are direct SATInts, and returns vectors for each input of their bits
 /// This function also normalizes direct SATInt operands to a common value range by zero-padding.
 pub fn validate_direct_int_operands(
@@ -66,27 +92,19 @@ pub fn validate_direct_int_operands(
     let mut global_max: i32 = i32::MIN;
 
     for operand in &exprs {
-        let Expr::SATInt(_, SATIntEncoding::Direct, _, (local_min, local_max)) = operand else {
-            eprintln!("Erring from vdio: {:?}", operand);
-            return Err(RuleNotApplicable);
-        };
-        global_min = global_min.min(*local_min);
-        global_max = global_max.max(*local_max);
+        let (local_min, local_max, _) = local_bounds_and_bits(operand)?;
+        global_min = global_min.min(local_min);
+        global_max = global_max.max(local_max);
     }
+
+    eprintln!("Global min/max: {}..{}", global_min, global_max);
 
     // build out by iterating over each operand and expanding it to match the new bounds
 
     let out: Vec<Vec<Expr>> = exprs
         .into_iter()
         .map(|expr| {
-            let Expr::SATInt(_, SATIntEncoding::Direct, inner, (local_min, local_max)) = expr
-            else {
-                return Err(RuleNotApplicable);
-            };
-
-            let Some(v) = inner.as_ref().clone().unwrap_list() else {
-                return Err(RuleNotApplicable);
-            };
+            let (local_min, local_max, v) = local_bounds_and_bits(&expr)?;
 
             // calulcate how many zeroes to prepend/append
             let prefix_len = (local_min - global_min) as usize;
@@ -216,8 +234,9 @@ fn neq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 ///
 /// ```
 /// Note: < and <= are rewritten by swapping operands to reuse lt logic.
-#[register_rule(("SAT", 9100))]
+#[register_rule(("SAT_Direct", 9100))]
 fn ineq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    eprintln!("--- ineq_sat_direct called");
     let (lhs, rhs, negate) = match expr {
         // A < B -> sat_direct_lt(A, B)
         Expr::Lt(_, x, y) => (x, y, false),
@@ -229,12 +248,15 @@ fn ineq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         Expr::Geq(_, x, y) => (x, y, true),
         _ => return Err(RuleNotApplicable),
     };
+    eprintln!("ineq_sat_direct lhs: {lhs}, rhs: {rhs}");
 
     let (binding, _, _) =
         validate_direct_int_operands(vec![lhs.as_ref().clone(), rhs.as_ref().clone()])?;
+    eprintln!("ineq_sat_direct binding: {binding:#?}");
     let [lhs_bits, rhs_bits] = binding.as_slice() else {
         return Err(RuleNotApplicable);
     };
+    eprintln!("ineq_sat_direct got bits");
 
     let mut new_symbols = symbols.clone();
     let mut new_clauses = vec![];

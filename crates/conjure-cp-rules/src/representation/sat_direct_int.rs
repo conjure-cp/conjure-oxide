@@ -1,16 +1,30 @@
 // crates/conjure-cp-rules/src/representation/sat_direct_int.rs
 use super::prelude::*;
 use crate::utils::lit_to_bool;
-use conjure_cp::ast::{Domain, Range, domains::Int};
-use std::collections::HashMap;
+use conjure_cp::ast::{Domain, Range, Reference, domains::Int};
 use std::collections::VecDeque;
+use std::collections::{BTreeMap, HashMap};
 use std::hash::Hash;
 
 register_representation!(
     IntToBoolDirect
     struct State<T: Eq + Hash> {
         // Mapping of each possible value i of the original integer x to a boolean b_i <-> (x = i)
-        pub vals: HashMap<Int, T>
+        pub vals: BTreeMap<Int, T>
+    }
+    impl State<DeclarationPtr> {
+        pub fn bounds(&self) -> (Int, Int) {
+            let mut lo = i32::MAX;
+            let mut hi = i32::MIN;
+            for x in self.vals.keys() {
+                lo = lo.min(*x);
+                hi = hi.max(*x);
+            }
+            (lo, hi)
+        }
+        pub fn bits(&self) -> Vec<Expression> {
+            self.vals.values().map(|v| Expression::from(Reference::new(v.clone()))).collect()
+        }
     }
     pub fn init(dom: DomainPtr) -> Result<State<DomainPtr>, ReprInitError> {
         let Some(rngs) = dom.as_int_ground() else {
@@ -19,7 +33,7 @@ register_representation!(
         let Some(itr) = Range::values(rngs) else {
             return Err(ReprInitError::UnsupportedDomain(dom, IntToBoolDirect::NAME, String::from("domain is not enumerable")));
         };
-        let vals: HashMap<Int, DomainPtr> = itr.map(|v| (v, Domain::bool())).collect();
+        let vals: BTreeMap<Int, DomainPtr> = itr.map(|v| (v, Domain::bool())).collect();
         Ok(State { vals })
     }
     fn structural(_: &State<DeclarationPtr>) -> Vec<Expression> {
@@ -45,7 +59,7 @@ register_representation!(
         let Literal::Int(x) = value else {
             return Err(ReprDownError::BadValue(value, String::from("expected an int literal")))
         };
-        let mut vals: HashMap<Int, Literal> = state.vals.keys().map(|k| (*k, false.into())).collect();
+        let mut vals: BTreeMap<Int, Literal> = state.vals.keys().map(|k| (*k, false.into())).collect();
         vals.insert(x, true.into());
         println!("{:#?}", vals);
         Ok(State { vals })

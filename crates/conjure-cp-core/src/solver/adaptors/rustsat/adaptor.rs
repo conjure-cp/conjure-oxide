@@ -215,44 +215,48 @@ impl SolverAdaptor for Sat {
         let mut finds: Vec<Name> = Vec::new();
         let mut var_map: HashMap<Name, Lit> = HashMap::new();
 
-        for find_ref in decisions {
-            println!("going over decs var: {}", find_ref.0);
+        for (find_name, find_decl) in decisions {
+            println!("going over decs var: {find_name}: {find_decl}");
 
-            let domain = find_ref
-                .1
+            let domain = find_decl
                 .domain()
                 .expect("Decision variable should have a domain");
             let domain = domain.as_ground().expect("Domain should be ground");
 
             // only decision variables with boolean domains or representations using booleans are supported at this time
-            let reprs = find_ref.1.reprs();
+            let reprs = find_decl.reprs();
             if domain != &GroundDomain::Bool {
-                println!("{} is not a boolean", find_ref.0);
+                println!("{} is not a boolean", find_name);
 
-                if (!reprs.has_repr(
-                    get_repr_by_name("IntToBoolDirect").expect("No Such Repr IntToBoolDirect"),
-                )) {
-                    println!("no IntToBoolDirect repr");
-                    // if (!reprs.has_repr(
-                    //     get_repr_by_name("IntToBoolLog").expect("No Such Repr IntToBoolLog"),
-                    // )) {
-                    //     println!("no IntToBoolLog");
-                    //     if (!reprs.has_repr(
-                    //         get_repr_by_name("IntToBoolOrder")
-                    //             .expect("No Such Repr IntToBoolOrder"),
-                    //     )) {
-                    //              println!("No IntToBoolOrder repr");
-                    Err(SolverError::ModelInvalid(
+                if reprs.is_empty() {
+                    return Err(SolverError::ModelInvalid(
                         "Only Boolean Decision Variables supported".to_string(),
                     ))?;
-                    //     }
-                    // }
                 }
+
+                // if (!reprs.has_repr(
+                //     get_repr_by_name("IntToBoolDirect").expect("No Such Repr IntToBoolDirect"),
+                // )) {
+                //     println!("no IntToBoolDirect repr");
+                //     // if (!reprs.has_repr(
+                //     //     get_repr_by_name("IntToBoolLog").expect("No Such Repr IntToBoolLog"),
+                //     // )) {
+                //     //     println!("no IntToBoolLog");
+                //     //     if (!reprs.has_repr(
+                //     //         get_repr_by_name("IntToBoolOrder")
+                //     //             .expect("No Such Repr IntToBoolOrder"),
+                //     //     )) {
+                //     //              println!("No IntToBoolOrder repr");
+                //     Err(SolverError::ModelInvalid(
+                //         "Only Boolean Decision Variables supported".to_string(),
+                //     ))?;
+                //     //     }
+                //     // }
+                // }
             }
             // only boolean variables should be passed to the solver
             if (domain == &GroundDomain::Bool) {
-                let name = find_ref.0;
-                finds.push(name);
+                finds.push(find_name);
             }
         }
 
