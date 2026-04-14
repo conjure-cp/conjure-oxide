@@ -1,14 +1,16 @@
 use crate::server::Backend;
-use tower_lsp::{jsonrpc::Error, lsp_types::*};
 use conjure_cp_essence_parser::diagnostics::semantic_tokens::encode_semantic_tokens;
+use tower_lsp::{jsonrpc::Error, lsp_types::*};
 
 impl Backend {
-    pub async fn handle_semantic_highlighting(&self, params: SemanticTokensParams) -> Result<Option<SemanticTokensResult>, Error> {
-        self.client.log_message(MessageType::INFO, "semantic highlighting").await;
-        let uri = params
-            .text_document
-            .uri
-            .clone();
+    pub async fn handle_semantic_highlighting(
+        &self,
+        params: SemanticTokensParams,
+    ) -> Result<Option<SemanticTokensResult>, Error> {
+        self.client
+            .log_message(MessageType::INFO, "semantic highlighting")
+            .await;
+        let uri = params.text_document.uri.clone();
 
         let lsp_cache = &self.lsp_cache;
 
@@ -31,6 +33,17 @@ impl Backend {
                 return Ok(None);
             }
         };
+
+        // if let Some(ref ast) = cache_conts.ast {
+        //     if let Some(ref cst) = cache_conts.cst {
+        //         resolve_references(
+        //             &cst.root_node(),
+        //             &cache_conts.contents,
+        //             &mut source_map,
+        //             &ast.symbols.read(),
+        //         );
+        //     }
+        // }
 
         let data = encode_semantic_tokens(source_map)
             .chunks(5)

@@ -60,14 +60,16 @@ impl LanguageServer for Backend {
                                     SemanticTokenType::new("letting"),
                                     SemanticTokenType::new("find"),
                                     SemanticTokenType::new("domain"),
+                                    SemanticTokenType::new("lettingVar"),
+                                    SemanticTokenType::new("findVar"),
                                 ],
-                                token_modifiers:vec![],
+                                token_modifiers: vec![],
                             },
                             full: Some(SemanticTokensFullOptions::Bool(true)),
                             range: None,
                             work_done_progress_options: Default::default(),
                         },
-                    )
+                    ),
                 ),
                 //provides some simple hovering
                 hover_provider: Some(HoverProviderCapability::Simple(true)),
@@ -106,8 +108,13 @@ impl LanguageServer for Backend {
     }
 
     // set up semantic highlighting
-    async fn semantic_tokens_full(&self, params: SemanticTokensParams) -> Result<Option<SemanticTokensResult>> {
-        self.client.log_message(MessageType::INFO, "semantic highlighting").await;
+    async fn semantic_tokens_full(
+        &self,
+        params: SemanticTokensParams,
+    ) -> Result<Option<SemanticTokensResult>> {
+        self.client
+            .log_message(MessageType::INFO, "semantic highlighting")
+            .await;
         self.handle_semantic_highlighting(params).await
     }
 }

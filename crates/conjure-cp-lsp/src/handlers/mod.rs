@@ -1,4 +1,4 @@
 pub mod cache;
 pub mod hovering;
-pub mod sync_event;
 pub mod semantic_highlighting;
+pub mod sync_event;

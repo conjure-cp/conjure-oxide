@@ -67,7 +67,7 @@ pub fn parse_find_statement(
         vars.insert(name.clone(), domain.clone());
         let hover = HoverInfo {
             description: format!("Find variable: {variable_name}"),
-            kind: Some(SymbolKind::Find),
+            kind: Some(SymbolKind::FindVar),
             ty: Some(domain.to_string()),
             decl_span: None,
         };

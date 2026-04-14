@@ -40,11 +40,21 @@
     "semanticTokenTypes": [
       {
         "id": "letting",
-        "description": "An Essence letting bind",
+        "description": "An Essence letting binding",
+        "superType": "keyword"
+      },
+      {
+        "id": "findVar",
+        "description": "An Essence letting variable",
         "superType": "variable"
       },
       {
         "id": "find",
+        "description": "An Essence find binding",
+        "superType": "keyword"
+      },
+      {
+        "id": "findVar",
         "description": "An Essence decision variable",
         "superType": "variable"
       },
@@ -59,11 +69,27 @@
         "number": ["constant.numeric"],
         "function": ["entity.name.function"],
         "variable": ["variable.other"],
-        "letting": ["storage.type.letting"],
-        "find": ["variable.other.find"],
-        "domain": ["entity.name.type.domain"]
+        "letting": ["keyword.letting"],
+        "find": ["keyword.find"],
+        "domain": ["entity.name.type.domain"],
+        "findVar": ["variable.other.findVar"],
+        "lettingVar": ["variable.other.lettingVar"]
       }
-    }]
+    }],
+    "configurationDefaults": {
+      "editor.semanticHighlighting.enabled": true,
+      "editor.semanticTokenColorCustomizations": {
+        "rules": {
+          "letting": "#49ecc8",
+          "lettingVar": "#195980",
+          "find": "#ff0000",
+          "findVar": {
+            "foreground": "#26a726",
+            "underline": true
+          }
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
