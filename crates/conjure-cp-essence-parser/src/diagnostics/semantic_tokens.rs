@@ -113,6 +113,6 @@ pub fn encode_semantic_tokens(source_map: &SourceMap) -> Vec<u32> {
         prev_line = line;
         prev_col = col;
     }
-    
+
     data
 }

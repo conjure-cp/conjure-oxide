@@ -53,7 +53,7 @@ pub enum SymbolKind {
     Constant = 6,
     Domain = 7,
     FindVar = 8,
-    LettingVar = 9
+    LettingVar = 9,
 } // to be extended
 
 // each type of token / symbol in the essence grammar will be
