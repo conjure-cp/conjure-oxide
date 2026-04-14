@@ -167,44 +167,40 @@ impl Backend {
                 get_tree(&new_text).unwrap().0
             };
 
-            // if let Some(old_cst) = cache_conts.cst.clone() {
-            //     // for old_cst.changed_ranges(&new_tree) {
-            //         // ByteRange changed_range = {UINT32_MAX, 0u};
-            //         // if (old_tree != nullptr) {
-            //         //     let num_changed_ranges: uint32;
-            //         //     const TSRange *changed_ranges = ts_tree_get_changed_ranges(old_tree, Tree, &num_changed_ranges);
-            //         //     for (uint i = 0; i < num_changed_ranges; ++i) {
-            //         //         changed_range.Start = std::min(changed_range.Start, changed_ranges[i].start_byte);
-            //         //         changed_range.End = std::max(changed_range.End, changed_ranges[i].end_byte);
-            //         //     }
-            //         //     free((void *)changed_ranges);
-            //         // }
-            //         let only_extras_changed = changed_ranges_are_only_extras(&old_cst, &new_tree);
+            if let Some(old_cst) = cache_conts.cst.clone() {
+                let only_extras_changed = changed_ranges_are_only_extras(&old_cst, &new_tree);
 
-            //         if only_extras_changed {
-            //             self.client
-            //                 .log_message(MessageType::INFO, "Only extra nodes changed")
-            //                 .await;
+                if only_extras_changed || (old_cst.changed_ranges(&new_tree).len() == 0) {
+                    self.client
+                        .log_message(MessageType::INFO, "Only extra nodes changed or no changes")
+                        .await;
 
-            //             // Optional optimization: keep old ast/sourcemap and only update text/cst/version.
-            //             // return early here if that matches your design.
-            //         }
+                    // IMPORTANT: would need to shift the sourcemap and error spans to adjust for whitespace changes
+                    // bc the cst changes -> ranges also do
 
-                    
-            //         // if old_cst.changed_ranges(&new_tree).len() == 0{                        self.client
-            //         //     .log_message(MessageType::INFO, "whitespace non-important change")
-            //         //     .await;
-            //         // } else{
-            //         //     self.client
-            //         //     .log_message(MessageType::INFO, "whitespace important change")
-            //         //     .await;
-            //         // }
-            //     } else {
-                    
-            //     }
-            // //if change is only made to whitespace and doesnt modify nodes, don't regen the ast and sourcemap
-            // // let old_cst = cache_conts.cst.clone();
-            
+                    // update cache
+                    let new_cache_conts = CacheCont {
+                        sourcemap: cache_conts.sourcemap.clone(),
+                        ast: cache_conts.ast.clone(),
+                        errors: cache_conts.errors.clone(),
+                        cst: Some(new_tree.clone()),
+                        contents: new_text.clone(),
+                        version: params.text_document.version,
+                    };
+
+                    lsp_cache.insert(uri.clone(), new_cache_conts.clone()).await;
+                    self.handle_diagnostics(&uri, new_cache_conts).await;
+
+                    // skip re-parsing and diagnostics if only whitespace (extra) nodes changed
+                    return;
+                }
+            } else {
+                self.client
+                    .log_message(MessageType::INFO, "No previous CST, so full parse")
+                    .await;
+            }
+            //if change is only made to whitespace and doesnt modify nodes, don't regen the ast and sourcemap
+            // let old_cst = cache_conts.cst.clone();
 
             let context = Arc::new(RwLock::new(Context::default()));
             let mut errors: Vec<RecoverableParseError> = Vec::new();
@@ -373,57 +369,38 @@ fn calculate_new_end_position(text: &str, start: Position) -> Point {
     Point::new(row, column)
 }
 
+/// check if any non-extra leaf nodes are in the changed range by
+/// traversing the new tree but pruning out of range subtrees for efficiency
+fn range_has_non_extra_leaf(root: Node, start: usize, end: usize) -> bool {
+    let mut stack = vec![root];
+    while let Some(n) = stack.pop() {
+        let ns: usize = n.start_byte();
+        let ne: usize = n.end_byte();
+        if ne <= start || ns >= end {
+            continue;
+        }
+
+        if n.child_count() == 0 {
+            // we just treat any non-extra leaf as meaningful / ast-affecting
+            if !n.is_extra() && !n.is_error() && !n.is_missing() {
+                return true;
+            }
+        } else {
+            let mut cur = n.walk();
+            for c in n.children(&mut cur) {
+                stack.push(c);
+            }
+        }
+    }
+    false
+}
+
+/// check if all changed ranges consist of only extra nodes
 fn changed_ranges_are_only_extras(old_tree: &Tree, new_tree: &Tree) -> bool {
     for r in old_tree.changed_ranges(new_tree) {
-        let old_has_non_extra = check_range_nodes(old_tree.root_node(), r.start_byte, r.end_byte);
-        let new_has_non_extra = check_range_nodes(new_tree.root_node(), r.start_byte, r.end_byte);
-
-        if old_has_non_extra || new_has_non_extra {
+        if range_has_non_extra_leaf(new_tree.root_node(), r.start_byte, r.end_byte) {
             return false;
         }
     }
     true
 }
-
-// fn check_range_nodes(root: Node, start: usize, end: usize) -> bool {
-//     //walk through tree
-//     //check if any node in the range of changes is non-extra
-//     //
-//     let mut stack = vec![root];
-
-//     while let Some(node) = stack.pop() {
-//         let ns = node.start_byte();
-//         let ne = node.end_byte();
-//         // no overlap with changed byte range
-//         if ne <= start || ns >= end {
-//             continue;
-//         }
-//         if !node.is_extra() {
-//             return true;
-//         }
-//         let mut cursor = node.walk();
-//         for child in node.children(&mut cursor) {
-//             stack.push(child);
-//         }
-//     }
-//     false
-// }
-
-// fn helper(){
-//     let mut stack = vec![]
-// }
-
-// fn check_leaf_nodes(){
-//     // if node.child_count() == 0 {
-//     //     if !node.is_extra() {
-//     //         let text = node.utf8_text(src.as_bytes()).unwrap_or("").to_string();
-//     //         out.push((node.kind().to_string(), text));
-//     //     }
-//     //     return;
-//     // }
-
-//     // let mut cursor = node.walk();
-//     // for child in node.children(&mut cursor) {
-//     //     collect_non_extra_leaves(child, src, out);
-//     // }
-// }
