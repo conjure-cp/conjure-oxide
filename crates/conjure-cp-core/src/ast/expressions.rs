@@ -1806,7 +1806,6 @@ impl Typeable for Expression {
             Expression::UnsafePow(_, _, _) => ReturnType::Int,
             Expression::SafePow(_, _, _) => ReturnType::Int,
             Expression::Minus(_, a, b) => {
-
                 // rather than calling .return_type on a and b which sometimes errors on references that don't have domains
                 // use custom function that extracts return type from atomic references based on each declaration variant
                 let a_type = minus_operand_return_type(a);
