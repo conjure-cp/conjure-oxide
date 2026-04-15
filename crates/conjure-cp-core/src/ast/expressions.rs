@@ -1889,6 +1889,13 @@ impl Expression {
                         f(b);
                     }
                 }
+                AbstractLiteral::Relation(vs) => {
+                    for exprs in vs {
+                        for expr in exprs {
+                            f(expr);
+                        }
+                    }
+                }
             },
             Expression::Root(_, vs) => {
                 for expr in vs {
@@ -2079,6 +2086,13 @@ impl CacheHashable for Expression {
                     for (a, b) in vs {
                         a.get_cached_hash().hash(&mut hasher);
                         b.get_cached_hash().hash(&mut hasher);
+                    }
+                }
+                AbstractLiteral::Relation(v) => {
+                    for exprs in v {
+                        for expr in exprs {
+                            expr.get_cached_hash().hash(&mut hasher);
+                        }
                     }
                 }
             },

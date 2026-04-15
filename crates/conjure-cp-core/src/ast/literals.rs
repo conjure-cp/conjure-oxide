@@ -71,6 +71,8 @@ pub enum AbstractLiteral<T: AbstractLiteralValue> {
     Record(Vec<RecordValue<T>>),
 
     Function(Vec<(T, T)>),
+
+    Relation(Vec<Vec<T>>),
 }
 
 // TODO: use HasDomain instead once Expression::domain_of returns Domain not Option<Domain>
@@ -149,6 +151,7 @@ impl AbstractLiteral<Expression> {
             AbstractLiteral::Tuple(_) => None,
             AbstractLiteral::Record(_) => None,
             AbstractLiteral::Function(_) => None,
+            AbstractLiteral::Relation(_) => None,
         }
     }
 }
@@ -253,6 +256,32 @@ impl Typeable for AbstractLiteral<Expression> {
 
                 ReturnType::Function(Box::new(t1), Box::new(t2))
             }
+            AbstractLiteral::Relation(items) => {
+                if items.is_empty() {
+                    return ReturnType::Relation(vec![ReturnType::Unknown]);
+                }
+                let mut item_types = vec![];
+                let x1 = &items[0];
+                let size = x1.len();
+                for item in x1 {
+                    item_types.push(item.return_type());
+                }
+                for x in items {
+                    if x.len() != size {
+                        let strs = item_types.iter().map(|x| format!("{}", x)).join(",");
+                        bug!("Expected ({strs}) with length {size}, got size {}", x.len());
+                    }
+                    for i in 1..size {
+                        if let Some(new_type) = x.get(i)
+                            && let Some(old_type) = item_types.get(i)
+                            && new_type.return_type() != *old_type
+                        {
+                            bug!("Expected {old_type}, got {new_type}");
+                        }
+                    }
+                }
+                ReturnType::Relation(item_types)
+            }
         }
     }
 }
@@ -326,6 +355,13 @@ where
                     .join(",");
                 write!(f, "function({entries_str})")
             }
+            AbstractLiteral::Relation(elems) => {
+                let elems_str: String = elems
+                    .iter()
+                    .map(|x| format!("({})", x.iter().map(|x| format!("{x}")).join(",")))
+                    .join(",");
+                write!(f, "relation({elems_str})")
+            }
         }
     }
 }
@@ -394,6 +430,13 @@ where
 
                         AbstractLiteral::Function(pairs)
                     }),
+                )
+            }
+            AbstractLiteral::Relation(elems) => {
+                let (f1_tree, f1_ctx) = <_ as Biplate<AbstractLiteral<T>>>::biplate(elems);
+                (
+                    f1_tree,
+                    Box::new(move |x| AbstractLiteral::Relation(f1_ctx(x))),
                 )
             }
         }
@@ -483,6 +526,13 @@ where
 
                             AbstractLiteral::Function(pairs)
                         }),
+                    )
+                }
+                AbstractLiteral::Relation(elems) => {
+                    let (f1_tree, f1_ctx) = <_ as Biplate<To>>::biplate(elems);
+                    (
+                        f1_tree,
+                        Box::new(move |x| AbstractLiteral::Relation(f1_ctx(x))),
                     )
                 }
             }
@@ -662,6 +712,7 @@ impl AbstractLiteral<Expression> {
                 ))
             }
             AbstractLiteral::Function(_) => todo!("Implement into_literals for functions"),
+            AbstractLiteral::Relation(_) => todo!("Implement into_literals for relations"),
         }
     }
 }
