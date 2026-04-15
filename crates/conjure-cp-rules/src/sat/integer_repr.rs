@@ -311,18 +311,13 @@ fn integer_decision_representation_log(expr: &Expr, symbols: &SymbolTable) -> Ap
 /// ```text
 ///  3
 ///  ~~>
-///  SATInt([true,true,false,false,false,false,false,false;int(1..)])
+///  SATInt([true,true,false;int(1..)])
 ///
 /// ```
 #[register_rule("SAT_Log", 4500, [Atomic])]
 fn literal_cnf_int(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    let value = {
-        if let Expr::Atomic(_, Atom::Literal(Literal::Int(v))) = expr {
-            *v
-        } else {
-            return Err(RuleNotApplicable);
-        }
-    };
+    let value: i32 = expr.try_into().map_err(|_| RuleNotApplicable)?;
+
     //TODO: Adding constant optimization to all int operations should hopefully make this rule redundant
 
     let mut binary_encoding = vec![];
@@ -345,6 +340,28 @@ fn literal_cnf_int(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         Moo::new(into_matrix_expr!(binary_encoding)),
         (value, value),
     )))
+}
+
+
+/// Converts a integer letting to a SATInt literal 
+///
+/// ```text
+/// letting A be SATInt(...)
+/// 
+///  A
+///  ~~>
+///  SATInt(...)
+///
+/// ```
+#[register_rule("SAT", 4500, [Atomic])]
+fn sat_value_letting(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    let Expr::Atomic(_, Atom::Reference(r)) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let out = r.resolve_expression().ok_or(RuleNotApplicable)?;
+
+    Ok(Reduction::pure(out))
 }
 
 /// Determine the number of bits required to encode an i32 in 2s complement

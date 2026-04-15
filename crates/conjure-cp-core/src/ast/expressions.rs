@@ -1294,15 +1294,17 @@ impl TryFrom<&Expression> for i32 {
             return Err(());
         };
 
-        let Atom::Literal(lit) = atom else {
-            return Err(());
-        };
+        match atom {
+            Atom::Literal(Literal::Int(i)) => Ok(*i),
 
-        let Literal::Int(i) = lit else {
-            return Err(());
-        };
+            Atom::Reference(r) => {
+                let expr = r.resolve_expression().ok_or(())?;
+                let v: i32 = expr.try_into()?;
+                Ok(v)
+            }
 
-        Ok(*i)
+            _ => Err(()),
+        }
     }
 }
 
