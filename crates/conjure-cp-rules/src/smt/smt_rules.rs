@@ -14,7 +14,7 @@ register_rule_set!("Smt", ("Base"), |f: &SolverFamily| {
     matches!(f, SolverFamily::Smt(..))
 });
 
-#[register_rule(("Smt", 1000))]
+#[register_rule("Smt", 1000, [InDomain])]
 fn flatten_indomain(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::InDomain(_, inner, domain) = expr else {
         return Err(RuleNotApplicable);
@@ -80,23 +80,17 @@ fn flatten_indomain(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// a = b ~> a[1] = b[1] /\ a[2] = b[2] /\ a[3] = b[3]
 // Must run before `matrix_ref_to_atom` ("Base", 2000), otherwise matrix equality can be
 // rewritten into `int(1..)` indexed literals, losing finite index bounds for this rule.
-#[register_rule(("Smt", 3000))]
+#[register_rule("Smt", 3000, [Eq, Neq])]
 fn flatten_matrix_eq_neq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (a, b) = match expr {
         Expr::Eq(_, a, b) | Expr::Neq(_, a, b) => (a, b),
         _ => return Err(RuleNotApplicable),
     };
 
-    let dom_a = a.domain_of().ok_or(RuleNotApplicable)?;
-    let dom_b = b.domain_of().ok_or(RuleNotApplicable)?;
+    let a_idx_domains = matrix::bound_index_domains_of_expr(a.as_ref()).ok_or(RuleNotApplicable)?;
+    let b_idx_domains = matrix::bound_index_domains_of_expr(b.as_ref()).ok_or(RuleNotApplicable)?;
 
-    let (Some((_, a_idx_domains)), Some((_, b_idx_domains))) =
-        (dom_a.as_matrix_ground(), dom_b.as_matrix_ground())
-    else {
-        return Err(RuleNotApplicable);
-    };
-
-    let pairs = matrix::enumerate_index_union_indices(a_idx_domains, b_idx_domains)
+    let pairs = matrix::enumerate_index_union_indices(&a_idx_domains, &b_idx_domains)
         .map_err(|_| ApplicationError::DomainError)?
         .map(|idx_lits| {
             let idx_vec: Vec<_> = idx_lits
@@ -138,16 +132,13 @@ fn flatten_matrix_eq_neq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
 /// Turn a matrix slice into a 1-d matrix of the slice elements
 /// E.g. m[1,..] ~> [m[1,1], m[1,2], m[1,3]]
-#[register_rule(("Smt", 1000))]
+#[register_rule("Smt", 1000, [SafeSlice])]
 fn flatten_matrix_slice(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::SafeSlice(_, m, slice_idxs) = expr else {
         return Err(RuleNotApplicable);
     };
 
-    let dom = m.domain_of().ok_or(RuleNotApplicable)?;
-    let Some((_, mat_idxs)) = dom.as_matrix_ground() else {
-        return Err(RuleNotApplicable);
-    };
+    let mat_idxs = matrix::bound_index_domains_of_expr(m.as_ref()).ok_or(RuleNotApplicable)?;
 
     if slice_idxs.len() != mat_idxs.len() {
         return Err(DomainError);
@@ -185,7 +176,7 @@ fn flatten_matrix_slice(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 ///
 /// This rule is very similar to `matrix_ref_to_atom`, but turns the matrix reference into a slice rather its atoms.
 /// Other rules like `flatten_matrix_slice` take care of actually turning the slice into the matrix elements.
-#[register_rule(("Smt", 999))]
+#[register_rule("Smt", 999)]
 fn matrix_ref_to_slice(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     if let Expr::SafeSlice(_, _, _)
     | Expr::UnsafeSlice(_, _, _)
@@ -220,20 +211,17 @@ fn matrix_ref_to_slice(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// This rule is applicable in SMT when atomic representation is not used for matrices.
 ///
 /// Namely, it unwraps flatten(m) into [m[1, 1], m[1, 2], ...]
-#[register_rule(("Smt", 999))]
+#[register_rule("Smt", 999, [Flatten])]
 fn unwrap_flatten_matrix_nonatomic(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // TODO: depth not supported yet
     let Expr::Flatten(_, None, m) = expr else {
         return Err(RuleNotApplicable);
     };
 
-    let dom = m.domain_of().ok_or(RuleNotApplicable)?;
-    let Some(GroundDomain::Matrix(_, index_domains)) = dom.resolve().map(Moo::unwrap_or_clone)
-    else {
-        return Err(RuleNotApplicable);
-    };
+    let index_domains = matrix::bound_index_domains_of_expr(m.as_ref()).ok_or(RuleNotApplicable)?;
 
-    let elems: Vec<Expr> = matrix::enumerate_indices(index_domains)
+    let elems: Vec<Expr> = matrix::try_enumerate_indices(index_domains)
+        .map_err(|_| DomainError)?
         .map(|lits| {
             let idxs: Vec<Expr> = lits.into_iter().map(Into::into).collect();
             Expr::SafeIndex(Metadata::new(), m.clone(), idxs)
@@ -258,7 +246,7 @@ fn unwrap_flatten_matrix_nonatomic(expr: &Expr, _: &SymbolTable) -> ApplicationR
 ///
 /// TODO: We currently only support one "in set" generator.
 /// This rule can be made much more general and nicer.
-#[register_rule(("Smt", 999))]
+#[register_rule("Smt", 999, [Sum])]
 fn unwrap_abstract_comprehension_sum(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::Sum(_, inner) = expr else {
         return Err(RuleNotApplicable);
@@ -302,7 +290,7 @@ fn unwrap_abstract_comprehension_sum(expr: &Expr, _: &SymbolTable) -> Applicatio
 /// Unwraps a subsetEq expression into checking membership equality.
 ///
 /// Any elements not in the domain of one set must not be in the other set.
-#[register_rule(("Smt", 999))]
+#[register_rule("Smt", 999, [SubsetEq])]
 fn unwrap_subseteq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::SubsetEq(_, a, b) = expr else {
         return Err(RuleNotApplicable);
@@ -344,7 +332,7 @@ fn unwrap_subseteq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 ///
 /// This is an optimisation over unwrap_subseteq to avoid unnecessary additional -> exprs
 /// where a single <-> is enough. This must apply before eq_to_subset_eq.
-#[register_rule(("Smt", 8801))]
+#[register_rule("Smt", 8801, [Eq])]
 fn unwrap_set_eq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::Eq(_, a, b) = expr else {
         return Err(RuleNotApplicable);
