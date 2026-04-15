@@ -6,35 +6,35 @@ find z: int(0..6)
 
 such that
 
-!((UnsafeDiv(x, UnsafeDiv(y, z)) = 10))
+!(((x / (y / z)) = 10))
 
 --
 
-UnsafeDiv(y, z), 
+(y / z), 
    ~~> div_to_bubble ([("Bubble", 6000)])
 {SafeDiv(y, z) @ (z != 0)}
 
 --
 
-UnsafeDiv(x, {SafeDiv(y, z) @ (z != 0)}), 
+(x / {SafeDiv(y, z) @ (z != 0)}), 
    ~~> bubble_up ([("Bubble", 8800)])
-{UnsafeDiv(x, SafeDiv(y, z)) @ (z != 0)}
+{(x / SafeDiv(y, z)) @ (z != 0)}
 
 --
 
-({UnsafeDiv(x, SafeDiv(y, z)) @ (z != 0)} = 10), 
+({(x / SafeDiv(y, z)) @ (z != 0)} = 10), 
    ~~> bubble_up ([("Bubble", 8800)])
-{(UnsafeDiv(x, SafeDiv(y, z)) = 10) @ (z != 0)}
+{((x / SafeDiv(y, z)) = 10) @ (z != 0)}
 
 --
 
-{(UnsafeDiv(x, SafeDiv(y, z)) = 10) @ (z != 0)}, 
+{((x / SafeDiv(y, z)) = 10) @ (z != 0)}, 
    ~~> expand_bubble ([("Bubble", 8900)])
-and([(UnsafeDiv(x, SafeDiv(y, z)) = 10),(z != 0);int(1..)])
+and([((x / SafeDiv(y, z)) = 10),(z != 0);int(1..)])
 
 --
 
-UnsafeDiv(x, SafeDiv(y, z)), 
+(x / SafeDiv(y, z)), 
    ~~> div_to_bubble ([("Bubble", 6000)])
 {SafeDiv(x, SafeDiv(y, z)) @ (SafeDiv(y, z) != 0)}
 
@@ -704,7 +704,7 @@ or([(SATInt(Direct, [__6,__7,__8,__9,__10,__11,__12,__13,__14,__15,__16,__17,__1
 (SATInt(Direct, [z#sat_direct_int_0,z#sat_direct_int_1,z#sat_direct_int_2,z#sat_direct_int_3,z#sat_direct_int_4,z#sat_direct_int_5,z#sat_direct_int_6;int(1..)] [0, 6]) >= 0),
 (SATInt(Direct, [z#sat_direct_int_0,z#sat_direct_int_1,z#sat_direct_int_2,z#sat_direct_int_3,z#sat_direct_int_4,z#sat_direct_int_5,z#sat_direct_int_6;int(1..)] [0, 6]) <= 6), 
    ~~> constant_evaluator ([("Constant", 9001)])
-or([(SATInt(Direct, [__6,__7,__8,__9,__10,__11,__12,__13,__14,__15,__16,__17,__18,__19,__20,__21,__22,__23,__24,__25,__26;int(1..)] [0, 20]) != SATInt(Direct, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [10, 10])),(SATInt(Direct, [__27,__28,__29,__30,__31,__32;int(1..)] [0, 5]) = 0),(SATInt(Direct, [z#sat_direct_int_0,z#sat_direct_int_1,z#sat_direct_int_2,z#sat_direct_int_3,z#sat_direct_int_4,z#sat_direct_int_5,z#sat_direct_int_6;int(1..)] [0, 6]) = 0);int(1..)]),
+or([(SATInt(Direct, [__6,__7,__8,__9,__10,__11,__12,__13,__14,__15,__16,__17,__18,__19,__20,__21,__22,__23,__24,__25,__26;int(1..)] [0, 20]) != SATInt(Direct, [true;int(1..)] [10, 10])),(SATInt(Direct, [__27,__28,__29,__30,__31,__32;int(1..)] [0, 5]) = 0),(SATInt(Direct, [z#sat_direct_int_0,z#sat_direct_int_1,z#sat_direct_int_2,z#sat_direct_int_3,z#sat_direct_int_4,z#sat_direct_int_5,z#sat_direct_int_6;int(1..)] [0, 6]) = 0);int(1..)]),
 (SATInt(Direct, [x#sat_direct_int_5,x#sat_direct_int_6,x#sat_direct_int_7,x#sat_direct_int_8,x#sat_direct_int_9,x#sat_direct_int_10,x#sat_direct_int_11,x#sat_direct_int_12,x#sat_direct_int_13,x#sat_direct_int_14,x#sat_direct_int_15,x#sat_direct_int_16,x#sat_direct_int_17,x#sat_direct_int_18,x#sat_direct_int_19,x#sat_direct_int_20;int(1..)] [5, 20]) >= 5),
 (SATInt(Direct, [x#sat_direct_int_5,x#sat_direct_int_6,x#sat_direct_int_7,x#sat_direct_int_8,x#sat_direct_int_9,x#sat_direct_int_10,x#sat_direct_int_11,x#sat_direct_int_12,x#sat_direct_int_13,x#sat_direct_int_14,x#sat_direct_int_15,x#sat_direct_int_16,x#sat_direct_int_17,x#sat_direct_int_18,x#sat_direct_int_19,x#sat_direct_int_20;int(1..)] [5, 20]) <= 20),
 (SATInt(Direct, [y#sat_direct_int_0,y#sat_direct_int_1,y#sat_direct_int_2,y#sat_direct_int_3,y#sat_direct_int_4,y#sat_direct_int_5;int(1..)] [0, 5]) >= 0),
@@ -714,7 +714,7 @@ or([(SATInt(Direct, [__6,__7,__8,__9,__10,__11,__12,__13,__14,__15,__16,__17,__1
 
 --
 
-(SATInt(Direct, [__6,__7,__8,__9,__10,__11,__12,__13,__14,__15,__16,__17,__18,__19,__20,__21,__22,__23,__24,__25,__26;int(1..)] [0, 20]) != SATInt(Direct, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [10, 10])), 
+(SATInt(Direct, [__6,__7,__8,__9,__10,__11,__12,__13,__14,__15,__16,__17,__18,__19,__20,__21,__22,__23,__24,__25,__26;int(1..)] [0, 20]) != SATInt(Direct, [true;int(1..)] [10, 10])), 
    ~~> neq_sat_direct ([("SAT_Direct", 4600)])
 __74
 new variables:
@@ -882,7 +882,7 @@ or([__74,(SATInt(Direct, [__27,__28,__29,__30,__31,__32;int(1..)] [0, 5]) = SATI
 (SATInt(Direct, [z#sat_direct_int_0,z#sat_direct_int_1,z#sat_direct_int_2,z#sat_direct_int_3,z#sat_direct_int_4,z#sat_direct_int_5,z#sat_direct_int_6;int(1..)] [0, 6]) >= 0),
 (SATInt(Direct, [z#sat_direct_int_0,z#sat_direct_int_1,z#sat_direct_int_2,z#sat_direct_int_3,z#sat_direct_int_4,z#sat_direct_int_5,z#sat_direct_int_6;int(1..)] [0, 6]) <= 6), 
    ~~> constant_evaluator ([("Constant", 9001)])
-or([__74,(SATInt(Direct, [__27,__28,__29,__30,__31,__32;int(1..)] [0, 5]) = SATInt(Direct, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [0, 0])),(SATInt(Direct, [z#sat_direct_int_0,z#sat_direct_int_1,z#sat_direct_int_2,z#sat_direct_int_3,z#sat_direct_int_4,z#sat_direct_int_5,z#sat_direct_int_6;int(1..)] [0, 6]) = 0);int(1..)]),
+or([__74,(SATInt(Direct, [__27,__28,__29,__30,__31,__32;int(1..)] [0, 5]) = SATInt(Direct, [true;int(1..)] [0, 0])),(SATInt(Direct, [z#sat_direct_int_0,z#sat_direct_int_1,z#sat_direct_int_2,z#sat_direct_int_3,z#sat_direct_int_4,z#sat_direct_int_5,z#sat_direct_int_6;int(1..)] [0, 6]) = 0);int(1..)]),
 (SATInt(Direct, [x#sat_direct_int_5,x#sat_direct_int_6,x#sat_direct_int_7,x#sat_direct_int_8,x#sat_direct_int_9,x#sat_direct_int_10,x#sat_direct_int_11,x#sat_direct_int_12,x#sat_direct_int_13,x#sat_direct_int_14,x#sat_direct_int_15,x#sat_direct_int_16,x#sat_direct_int_17,x#sat_direct_int_18,x#sat_direct_int_19,x#sat_direct_int_20;int(1..)] [5, 20]) >= 5),
 (SATInt(Direct, [x#sat_direct_int_5,x#sat_direct_int_6,x#sat_direct_int_7,x#sat_direct_int_8,x#sat_direct_int_9,x#sat_direct_int_10,x#sat_direct_int_11,x#sat_direct_int_12,x#sat_direct_int_13,x#sat_direct_int_14,x#sat_direct_int_15,x#sat_direct_int_16,x#sat_direct_int_17,x#sat_direct_int_18,x#sat_direct_int_19,x#sat_direct_int_20;int(1..)] [5, 20]) <= 20),
 (SATInt(Direct, [y#sat_direct_int_0,y#sat_direct_int_1,y#sat_direct_int_2,y#sat_direct_int_3,y#sat_direct_int_4,y#sat_direct_int_5;int(1..)] [0, 5]) >= 0),
@@ -892,7 +892,7 @@ or([__74,(SATInt(Direct, [__27,__28,__29,__30,__31,__32;int(1..)] [0, 5]) = SATI
 
 --
 
-(SATInt(Direct, [__27,__28,__29,__30,__31,__32;int(1..)] [0, 5]) = SATInt(Direct, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [0, 0])), 
+(SATInt(Direct, [__27,__28,__29,__30,__31,__32;int(1..)] [0, 5]) = SATInt(Direct, [true;int(1..)] [0, 0])), 
    ~~> eq_sat_direct ([("SAT_Direct", 4600)])
 __86
 new variables:
@@ -955,7 +955,7 @@ or([__74,__86,(SATInt(Direct, [z#sat_direct_int_0,z#sat_direct_int_1,z#sat_direc
 (SATInt(Direct, [z#sat_direct_int_0,z#sat_direct_int_1,z#sat_direct_int_2,z#sat_direct_int_3,z#sat_direct_int_4,z#sat_direct_int_5,z#sat_direct_int_6;int(1..)] [0, 6]) >= 0),
 (SATInt(Direct, [z#sat_direct_int_0,z#sat_direct_int_1,z#sat_direct_int_2,z#sat_direct_int_3,z#sat_direct_int_4,z#sat_direct_int_5,z#sat_direct_int_6;int(1..)] [0, 6]) <= 6), 
    ~~> constant_evaluator ([("Constant", 9001)])
-or([__74,__86,(SATInt(Direct, [z#sat_direct_int_0,z#sat_direct_int_1,z#sat_direct_int_2,z#sat_direct_int_3,z#sat_direct_int_4,z#sat_direct_int_5,z#sat_direct_int_6;int(1..)] [0, 6]) = SATInt(Direct, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [0, 0]));int(1..)]),
+or([__74,__86,(SATInt(Direct, [z#sat_direct_int_0,z#sat_direct_int_1,z#sat_direct_int_2,z#sat_direct_int_3,z#sat_direct_int_4,z#sat_direct_int_5,z#sat_direct_int_6;int(1..)] [0, 6]) = SATInt(Direct, [true;int(1..)] [0, 0]));int(1..)]),
 (SATInt(Direct, [x#sat_direct_int_5,x#sat_direct_int_6,x#sat_direct_int_7,x#sat_direct_int_8,x#sat_direct_int_9,x#sat_direct_int_10,x#sat_direct_int_11,x#sat_direct_int_12,x#sat_direct_int_13,x#sat_direct_int_14,x#sat_direct_int_15,x#sat_direct_int_16,x#sat_direct_int_17,x#sat_direct_int_18,x#sat_direct_int_19,x#sat_direct_int_20;int(1..)] [5, 20]) >= 5),
 (SATInt(Direct, [x#sat_direct_int_5,x#sat_direct_int_6,x#sat_direct_int_7,x#sat_direct_int_8,x#sat_direct_int_9,x#sat_direct_int_10,x#sat_direct_int_11,x#sat_direct_int_12,x#sat_direct_int_13,x#sat_direct_int_14,x#sat_direct_int_15,x#sat_direct_int_16,x#sat_direct_int_17,x#sat_direct_int_18,x#sat_direct_int_19,x#sat_direct_int_20;int(1..)] [5, 20]) <= 20),
 (SATInt(Direct, [y#sat_direct_int_0,y#sat_direct_int_1,y#sat_direct_int_2,y#sat_direct_int_3,y#sat_direct_int_4,y#sat_direct_int_5;int(1..)] [0, 5]) >= 0),
@@ -965,7 +965,7 @@ or([__74,__86,(SATInt(Direct, [z#sat_direct_int_0,z#sat_direct_int_1,z#sat_direc
 
 --
 
-(SATInt(Direct, [z#sat_direct_int_0,z#sat_direct_int_1,z#sat_direct_int_2,z#sat_direct_int_3,z#sat_direct_int_4,z#sat_direct_int_5,z#sat_direct_int_6;int(1..)] [0, 6]) = SATInt(Direct, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [0, 0])), 
+(SATInt(Direct, [z#sat_direct_int_0,z#sat_direct_int_1,z#sat_direct_int_2,z#sat_direct_int_3,z#sat_direct_int_4,z#sat_direct_int_5,z#sat_direct_int_6;int(1..)] [0, 6]) = SATInt(Direct, [true;int(1..)] [0, 0])), 
    ~~> eq_sat_direct ([("SAT_Direct", 4600)])
 __100
 new variables:
@@ -1036,7 +1036,7 @@ or([__74,__86,__100;int(1..)]),
 (SATInt(Direct, [z#sat_direct_int_0,z#sat_direct_int_1,z#sat_direct_int_2,z#sat_direct_int_3,z#sat_direct_int_4,z#sat_direct_int_5,z#sat_direct_int_6;int(1..)] [0, 6]) <= 6), 
    ~~> constant_evaluator ([("Constant", 9001)])
 or([__74,__86,__100;int(1..)]),
-(SATInt(Direct, [x#sat_direct_int_5,x#sat_direct_int_6,x#sat_direct_int_7,x#sat_direct_int_8,x#sat_direct_int_9,x#sat_direct_int_10,x#sat_direct_int_11,x#sat_direct_int_12,x#sat_direct_int_13,x#sat_direct_int_14,x#sat_direct_int_15,x#sat_direct_int_16,x#sat_direct_int_17,x#sat_direct_int_18,x#sat_direct_int_19,x#sat_direct_int_20;int(1..)] [5, 20]) >= SATInt(Direct, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [5, 5])),
+(SATInt(Direct, [x#sat_direct_int_5,x#sat_direct_int_6,x#sat_direct_int_7,x#sat_direct_int_8,x#sat_direct_int_9,x#sat_direct_int_10,x#sat_direct_int_11,x#sat_direct_int_12,x#sat_direct_int_13,x#sat_direct_int_14,x#sat_direct_int_15,x#sat_direct_int_16,x#sat_direct_int_17,x#sat_direct_int_18,x#sat_direct_int_19,x#sat_direct_int_20;int(1..)] [5, 20]) >= SATInt(Direct, [true;int(1..)] [5, 5])),
 (SATInt(Direct, [x#sat_direct_int_5,x#sat_direct_int_6,x#sat_direct_int_7,x#sat_direct_int_8,x#sat_direct_int_9,x#sat_direct_int_10,x#sat_direct_int_11,x#sat_direct_int_12,x#sat_direct_int_13,x#sat_direct_int_14,x#sat_direct_int_15,x#sat_direct_int_16,x#sat_direct_int_17,x#sat_direct_int_18,x#sat_direct_int_19,x#sat_direct_int_20;int(1..)] [5, 20]) <= 20),
 (SATInt(Direct, [y#sat_direct_int_0,y#sat_direct_int_1,y#sat_direct_int_2,y#sat_direct_int_3,y#sat_direct_int_4,y#sat_direct_int_5;int(1..)] [0, 5]) >= 0),
 (SATInt(Direct, [y#sat_direct_int_0,y#sat_direct_int_1,y#sat_direct_int_2,y#sat_direct_int_3,y#sat_direct_int_4,y#sat_direct_int_5;int(1..)] [0, 5]) <= 5),
@@ -1045,7 +1045,7 @@ or([__74,__86,__100;int(1..)]),
 
 --
 
-(SATInt(Direct, [x#sat_direct_int_5,x#sat_direct_int_6,x#sat_direct_int_7,x#sat_direct_int_8,x#sat_direct_int_9,x#sat_direct_int_10,x#sat_direct_int_11,x#sat_direct_int_12,x#sat_direct_int_13,x#sat_direct_int_14,x#sat_direct_int_15,x#sat_direct_int_16,x#sat_direct_int_17,x#sat_direct_int_18,x#sat_direct_int_19,x#sat_direct_int_20;int(1..)] [5, 20]) >= SATInt(Direct, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [5, 5])), 
+(SATInt(Direct, [x#sat_direct_int_5,x#sat_direct_int_6,x#sat_direct_int_7,x#sat_direct_int_8,x#sat_direct_int_9,x#sat_direct_int_10,x#sat_direct_int_11,x#sat_direct_int_12,x#sat_direct_int_13,x#sat_direct_int_14,x#sat_direct_int_15,x#sat_direct_int_16,x#sat_direct_int_17,x#sat_direct_int_18,x#sat_direct_int_19,x#sat_direct_int_20;int(1..)] [5, 20]) >= SATInt(Direct, [true;int(1..)] [5, 5])), 
    ~~> ineq_sat_direct ([("SAT", 4600)])
 __165
 new variables:
@@ -1294,7 +1294,7 @@ __165,
    ~~> constant_evaluator ([("Constant", 9001)])
 or([__74,__86,__100;int(1..)]),
 __165,
-(SATInt(Direct, [x#sat_direct_int_5,x#sat_direct_int_6,x#sat_direct_int_7,x#sat_direct_int_8,x#sat_direct_int_9,x#sat_direct_int_10,x#sat_direct_int_11,x#sat_direct_int_12,x#sat_direct_int_13,x#sat_direct_int_14,x#sat_direct_int_15,x#sat_direct_int_16,x#sat_direct_int_17,x#sat_direct_int_18,x#sat_direct_int_19,x#sat_direct_int_20;int(1..)] [5, 20]) <= SATInt(Direct, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [20, 20])),
+(SATInt(Direct, [x#sat_direct_int_5,x#sat_direct_int_6,x#sat_direct_int_7,x#sat_direct_int_8,x#sat_direct_int_9,x#sat_direct_int_10,x#sat_direct_int_11,x#sat_direct_int_12,x#sat_direct_int_13,x#sat_direct_int_14,x#sat_direct_int_15,x#sat_direct_int_16,x#sat_direct_int_17,x#sat_direct_int_18,x#sat_direct_int_19,x#sat_direct_int_20;int(1..)] [5, 20]) <= SATInt(Direct, [true;int(1..)] [20, 20])),
 (SATInt(Direct, [y#sat_direct_int_0,y#sat_direct_int_1,y#sat_direct_int_2,y#sat_direct_int_3,y#sat_direct_int_4,y#sat_direct_int_5;int(1..)] [0, 5]) >= 0),
 (SATInt(Direct, [y#sat_direct_int_0,y#sat_direct_int_1,y#sat_direct_int_2,y#sat_direct_int_3,y#sat_direct_int_4,y#sat_direct_int_5;int(1..)] [0, 5]) <= 5),
 (SATInt(Direct, [z#sat_direct_int_0,z#sat_direct_int_1,z#sat_direct_int_2,z#sat_direct_int_3,z#sat_direct_int_4,z#sat_direct_int_5,z#sat_direct_int_6;int(1..)] [0, 6]) >= 0),
@@ -1302,7 +1302,7 @@ __165,
 
 --
 
-(SATInt(Direct, [x#sat_direct_int_5,x#sat_direct_int_6,x#sat_direct_int_7,x#sat_direct_int_8,x#sat_direct_int_9,x#sat_direct_int_10,x#sat_direct_int_11,x#sat_direct_int_12,x#sat_direct_int_13,x#sat_direct_int_14,x#sat_direct_int_15,x#sat_direct_int_16,x#sat_direct_int_17,x#sat_direct_int_18,x#sat_direct_int_19,x#sat_direct_int_20;int(1..)] [5, 20]) <= SATInt(Direct, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [20, 20])), 
+(SATInt(Direct, [x#sat_direct_int_5,x#sat_direct_int_6,x#sat_direct_int_7,x#sat_direct_int_8,x#sat_direct_int_9,x#sat_direct_int_10,x#sat_direct_int_11,x#sat_direct_int_12,x#sat_direct_int_13,x#sat_direct_int_14,x#sat_direct_int_15,x#sat_direct_int_16,x#sat_direct_int_17,x#sat_direct_int_18,x#sat_direct_int_19,x#sat_direct_int_20;int(1..)] [5, 20]) <= SATInt(Direct, [true;int(1..)] [20, 20])), 
    ~~> ineq_sat_direct ([("SAT", 4600)])
 __230
 new variables:
@@ -1552,14 +1552,14 @@ __230,
 or([__74,__86,__100;int(1..)]),
 __165,
 __230,
-(SATInt(Direct, [y#sat_direct_int_0,y#sat_direct_int_1,y#sat_direct_int_2,y#sat_direct_int_3,y#sat_direct_int_4,y#sat_direct_int_5;int(1..)] [0, 5]) >= SATInt(Direct, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [0, 0])),
+(SATInt(Direct, [y#sat_direct_int_0,y#sat_direct_int_1,y#sat_direct_int_2,y#sat_direct_int_3,y#sat_direct_int_4,y#sat_direct_int_5;int(1..)] [0, 5]) >= SATInt(Direct, [true;int(1..)] [0, 0])),
 (SATInt(Direct, [y#sat_direct_int_0,y#sat_direct_int_1,y#sat_direct_int_2,y#sat_direct_int_3,y#sat_direct_int_4,y#sat_direct_int_5;int(1..)] [0, 5]) <= 5),
 (SATInt(Direct, [z#sat_direct_int_0,z#sat_direct_int_1,z#sat_direct_int_2,z#sat_direct_int_3,z#sat_direct_int_4,z#sat_direct_int_5,z#sat_direct_int_6;int(1..)] [0, 6]) >= 0),
 (SATInt(Direct, [z#sat_direct_int_0,z#sat_direct_int_1,z#sat_direct_int_2,z#sat_direct_int_3,z#sat_direct_int_4,z#sat_direct_int_5,z#sat_direct_int_6;int(1..)] [0, 6]) <= 6)
 
 --
 
-(SATInt(Direct, [y#sat_direct_int_0,y#sat_direct_int_1,y#sat_direct_int_2,y#sat_direct_int_3,y#sat_direct_int_4,y#sat_direct_int_5;int(1..)] [0, 5]) >= SATInt(Direct, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [0, 0])), 
+(SATInt(Direct, [y#sat_direct_int_0,y#sat_direct_int_1,y#sat_direct_int_2,y#sat_direct_int_3,y#sat_direct_int_4,y#sat_direct_int_5;int(1..)] [0, 5]) >= SATInt(Direct, [true;int(1..)] [0, 0])), 
    ~~> ineq_sat_direct ([("SAT", 4600)])
 __255
 new variables:
@@ -1670,13 +1670,13 @@ or([__74,__86,__100;int(1..)]),
 __165,
 __230,
 __255,
-(SATInt(Direct, [y#sat_direct_int_0,y#sat_direct_int_1,y#sat_direct_int_2,y#sat_direct_int_3,y#sat_direct_int_4,y#sat_direct_int_5;int(1..)] [0, 5]) <= SATInt(Direct, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [5, 5])),
+(SATInt(Direct, [y#sat_direct_int_0,y#sat_direct_int_1,y#sat_direct_int_2,y#sat_direct_int_3,y#sat_direct_int_4,y#sat_direct_int_5;int(1..)] [0, 5]) <= SATInt(Direct, [true;int(1..)] [5, 5])),
 (SATInt(Direct, [z#sat_direct_int_0,z#sat_direct_int_1,z#sat_direct_int_2,z#sat_direct_int_3,z#sat_direct_int_4,z#sat_direct_int_5,z#sat_direct_int_6;int(1..)] [0, 6]) >= 0),
 (SATInt(Direct, [z#sat_direct_int_0,z#sat_direct_int_1,z#sat_direct_int_2,z#sat_direct_int_3,z#sat_direct_int_4,z#sat_direct_int_5,z#sat_direct_int_6;int(1..)] [0, 6]) <= 6)
 
 --
 
-(SATInt(Direct, [y#sat_direct_int_0,y#sat_direct_int_1,y#sat_direct_int_2,y#sat_direct_int_3,y#sat_direct_int_4,y#sat_direct_int_5;int(1..)] [0, 5]) <= SATInt(Direct, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [5, 5])), 
+(SATInt(Direct, [y#sat_direct_int_0,y#sat_direct_int_1,y#sat_direct_int_2,y#sat_direct_int_3,y#sat_direct_int_4,y#sat_direct_int_5;int(1..)] [0, 5]) <= SATInt(Direct, [true;int(1..)] [5, 5])), 
    ~~> ineq_sat_direct ([("SAT", 4600)])
 __280
 new variables:
@@ -1788,12 +1788,12 @@ __165,
 __230,
 __255,
 __280,
-(SATInt(Direct, [z#sat_direct_int_0,z#sat_direct_int_1,z#sat_direct_int_2,z#sat_direct_int_3,z#sat_direct_int_4,z#sat_direct_int_5,z#sat_direct_int_6;int(1..)] [0, 6]) >= SATInt(Direct, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [0, 0])),
+(SATInt(Direct, [z#sat_direct_int_0,z#sat_direct_int_1,z#sat_direct_int_2,z#sat_direct_int_3,z#sat_direct_int_4,z#sat_direct_int_5,z#sat_direct_int_6;int(1..)] [0, 6]) >= SATInt(Direct, [true;int(1..)] [0, 0])),
 (SATInt(Direct, [z#sat_direct_int_0,z#sat_direct_int_1,z#sat_direct_int_2,z#sat_direct_int_3,z#sat_direct_int_4,z#sat_direct_int_5,z#sat_direct_int_6;int(1..)] [0, 6]) <= 6)
 
 --
 
-(SATInt(Direct, [z#sat_direct_int_0,z#sat_direct_int_1,z#sat_direct_int_2,z#sat_direct_int_3,z#sat_direct_int_4,z#sat_direct_int_5,z#sat_direct_int_6;int(1..)] [0, 6]) >= SATInt(Direct, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [0, 0])), 
+(SATInt(Direct, [z#sat_direct_int_0,z#sat_direct_int_1,z#sat_direct_int_2,z#sat_direct_int_3,z#sat_direct_int_4,z#sat_direct_int_5,z#sat_direct_int_6;int(1..)] [0, 6]) >= SATInt(Direct, [true;int(1..)] [0, 0])), 
    ~~> ineq_sat_direct ([("SAT", 4600)])
 __309
 new variables:
@@ -1920,11 +1920,11 @@ __230,
 __255,
 __280,
 __309,
-(SATInt(Direct, [z#sat_direct_int_0,z#sat_direct_int_1,z#sat_direct_int_2,z#sat_direct_int_3,z#sat_direct_int_4,z#sat_direct_int_5,z#sat_direct_int_6;int(1..)] [0, 6]) <= SATInt(Direct, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [6, 6]))
+(SATInt(Direct, [z#sat_direct_int_0,z#sat_direct_int_1,z#sat_direct_int_2,z#sat_direct_int_3,z#sat_direct_int_4,z#sat_direct_int_5,z#sat_direct_int_6;int(1..)] [0, 6]) <= SATInt(Direct, [true;int(1..)] [6, 6]))
 
 --
 
-(SATInt(Direct, [z#sat_direct_int_0,z#sat_direct_int_1,z#sat_direct_int_2,z#sat_direct_int_3,z#sat_direct_int_4,z#sat_direct_int_5,z#sat_direct_int_6;int(1..)] [0, 6]) <= SATInt(Direct, Matrix([Bool(true)], Moo { inner: Int([UnboundedR(1)]) }) [6, 6])), 
+(SATInt(Direct, [z#sat_direct_int_0,z#sat_direct_int_1,z#sat_direct_int_2,z#sat_direct_int_3,z#sat_direct_int_4,z#sat_direct_int_5,z#sat_direct_int_6;int(1..)] [0, 6]) <= SATInt(Direct, [true;int(1..)] [6, 6])), 
    ~~> ineq_sat_direct ([("SAT", 4600)])
 __338
 new variables:

@@ -7,6 +7,7 @@ use conjure_cp::parse::tree_sitter::errors::ParseErrorCollection;
 use conjure_cp::parse::tree_sitter::{parse_essence_file, parse_essence_file_native};
 use conjure_cp::settings::Parser;
 use conjure_cp_cli::utils::testing::serialize_model;
+use std::collections::BTreeSet;
 use std::env;
 use std::error::Error;
 use std::fs;
@@ -14,6 +15,7 @@ use std::path::Path;
 use std::sync::Arc;
 use std::sync::RwLock;
 use tests_integration::TestConfig;
+use tests_integration::golden_files::assert_no_redundant_expected_files;
 
 use std::io::Write;
 
@@ -34,7 +36,7 @@ fn roundtrip_test(path: &str, filename: &str, extension: &str) -> Result<(), Box
     let param_file = std::fs::read_dir(path).ok().and_then(|entries| {
         entries
             .filter_map(|entry| entry.ok())
-            .find(|entry| entry.path().extension().map_or(false, |ext| ext == "param"))
+            .find(|entry| entry.path().extension().is_some_and(|ext| ext == "param"))
             .map(|entry| entry.file_name().to_string_lossy().to_string())
     });
 
@@ -45,6 +47,7 @@ fn roundtrip_test(path: &str, filename: &str, extension: &str) -> Result<(), Box
     let parsers = file_config
         .configured_parsers()
         .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?;
+    let mut allowed_expected_files = BTreeSet::new();
 
     for parser in parsers {
         let case_name = parser.to_string();
@@ -52,15 +55,17 @@ fn roundtrip_test(path: &str, filename: &str, extension: &str) -> Result<(), Box
             Parser::TreeSitter => parse_essence_file_native,
             Parser::ViaConjure => parse_essence_file,
         };
-        roundtrip_test_inner(
+        allowed_expected_files.extend(roundtrip_test_inner(
             path,
             filename,
             &case_name,
             extension,
             parse,
             param_file.as_deref(),
-        )?;
+        )?);
     }
+
+    assert_no_redundant_expected_files(Path::new(path), &allowed_expected_files, None)?;
     Ok(())
 }
 
@@ -122,7 +127,7 @@ fn roundtrip_test_inner(
     extension: &str,
     parse: ParseFn,
     param_file: Option<&str>,
-) -> Result<(), Box<dyn Error>> {
+) -> Result<BTreeSet<String>, Box<dyn Error>> {
     let accept = env::var("ACCEPT").unwrap_or("false".to_string()) == "true";
 
     let file_path = format!("{path}/{input_filename}.{extension}");
@@ -134,7 +139,7 @@ fn roundtrip_test_inner(
     let initial_parse = match problem_model {
         Ok(problem_model) => match param_file {
             Some(param_file_name) => {
-                let param_file_path = format!("{path}/{}", param_file_name);
+                let param_file_path = format!("{path}/{param_file_name}");
                 let param_model = parse(&param_file_path, context.clone());
                 match param_model {
                     Ok(param_model) => instantiate_model(problem_model, param_model).map_err(|e| {
@@ -196,6 +201,8 @@ fn roundtrip_test_inner(
             let new_generated_essence =
                 fs::read_to_string(roundtrip_essence_path(path, case_name, "generated"))?;
             assert_eq!(generated_essence, new_generated_essence);
+
+            return Ok(expected_roundtrip_files_for_case(case_name, true));
         }
 
         Err(parse_error) => {
@@ -220,10 +227,10 @@ fn roundtrip_test_inner(
             let generated_error =
                 fs::read_to_string(roundtrip_error_path(path, case_name, "generated"))?;
             assert_eq!(expected_error, generated_error);
+
+            return Ok(expected_roundtrip_files_for_case(case_name, false));
         }
     }
-
-    Ok(())
 }
 
 /// Returns the roundtrip model JSON path for a parser case and model type.
@@ -239,6 +246,18 @@ fn roundtrip_essence_path(path: &str, case_name: &str, file_type: &str) -> Strin
 /// Returns the roundtrip parser-error path for a parser case and model type.
 fn roundtrip_error_path(path: &str, case_name: &str, file_type: &str) -> String {
     format!("{path}/{case_name}.{file_type}-error.txt")
+}
+
+/// Returns the expected snapshot files for a roundtrip parser case outcome.
+fn expected_roundtrip_files_for_case(case_name: &str, parse_succeeded: bool) -> BTreeSet<String> {
+    if parse_succeeded {
+        BTreeSet::from([
+            format!("{case_name}.expected.serialised.json"),
+            format!("{case_name}.expected.essence"),
+        ])
+    } else {
+        BTreeSet::from([format!("{case_name}.expected-error.txt")])
+    }
 }
 
 /// Serialises and writes a generated model snapshot for roundtrip comparison.
@@ -280,7 +299,7 @@ fn save_essence(
 ) -> Result<(), std::io::Error> {
     let filename = roundtrip_essence_path(path, test_name, file_type);
     let mut file = fs::File::create(&filename)?;
-    write!(file, "{}", model)?;
+    write!(file, "{model}")?;
     Ok(())
 }
 
@@ -293,7 +312,7 @@ fn save_parse_error(
 ) -> Result<(), std::io::Error> {
     let filename = roundtrip_error_path(path, test_name, file_type);
     let mut file = fs::File::create(&filename)?;
-    write!(file, "{}", error)?;
+    write!(file, "{error}")?;
     Ok(())
 }
 

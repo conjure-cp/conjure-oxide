@@ -20,7 +20,7 @@ use conjure_cp::ast::CnfClause;
 ///  SATInt([true;int(1..), (3, 3)])
 ///
 /// ```
-#[register_rule(("SAT_Direct", 4500))]
+#[register_rule("SAT_Direct", 4500, [Atomic])]
 fn literal_sat_direct_int(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let value = {
         if let Expr::Atomic(_, Atom::Literal(Literal::Int(value))) = expr {
@@ -109,7 +109,7 @@ pub fn validate_direct_int_operands(
 /// SATInt(a) = SATInt(b) ~> Bool
 /// ```
 /// NOTE: This rule reduces to AND_i (a[i] ≡ b[i]) and does not enforce one-hotness.
-#[register_rule(("SAT_Direct", 4600))]
+#[register_rule("SAT_Direct", 4600, [Eq])]
 fn eq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     // TODO: this could be optimized by just going over the sections of both vectors where the ranges intersect
     // this does require enforcing structure separately
@@ -155,7 +155,7 @@ fn eq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 /// ```
 ///
 /// True iff at least one value position differs.
-#[register_rule(("SAT_Direct", 4600))]
+#[register_rule("SAT_Direct", 4600, [Neq])]
 fn neq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Neq(_, lhs, rhs) = expr else {
         return Err(RuleNotApplicable);
@@ -198,7 +198,7 @@ fn neq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 ///
 /// ```
 /// Note: < and <= are rewritten by swapping operands to reuse lt logic.
-#[register_rule(("SAT", 4600))]
+#[register_rule("SAT", 4600, [Lt, Gt, Leq, Geq])]
 fn ineq_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let (lhs, rhs, negate) = match expr {
         // A < B -> sat_direct_lt(A, B)
@@ -266,7 +266,7 @@ fn sat_direct_lt(
 /// -SATInt(a) ~> SATInt(b)
 ///
 /// ```
-#[register_rule(("SAT_Direct", 4700))]
+#[register_rule("SAT_Direct", 4700, [Neg])]
 fn neg_sat_direct(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::Neg(_, value) = expr else {
         return Err(RuleNotApplicable);
@@ -307,7 +307,7 @@ fn floor_div(a: i32, b: i32) -> i32 {
 /// SafeDiv(SATInt(a), SATInt(b)) ~> SATInt(c)
 ///
 /// ```
-#[register_rule(("SAT_Direct", 4700))]
+#[register_rule("SAT_Direct", 4700, [SafeDiv])]
 fn safediv_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::SafeDiv(_, numer_expr, denom_expr) = expr else {
         return Err(RuleNotApplicable);
@@ -348,7 +348,7 @@ fn safediv_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
     // generate boolean variables for all possible quotients
     for _ in quot_min..=quot_max {
-        let decl = new_symbols.gensym(&conjure_cp::ast::Domain::bool());
+        let decl = new_symbols.gen_find(&conjure_cp::ast::Domain::bool());
         quot_bits.push(Expr::Atomic(
             Metadata::new(),
             Atom::Reference(conjure_cp::ast::Reference::new(decl)),
@@ -393,4 +393,85 @@ fn safediv_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     );
 
     Ok(Reduction::cnf(quot_int, new_clauses, new_symbols))
+}
+
+#[register_rule("SAT_Direct", 9100, [Sum])]
+fn add_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    let Expr::Sum(_, sum_exprs) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Some(exprs) = sum_exprs.as_ref().clone().unwrap_list() else {
+        return Err(RuleNotApplicable);
+    };
+
+    // There are no expressions to sum, this is a degenerate case that we can handle by returning a constant 0
+    if exprs.is_empty() {
+        return Ok(Reduction::pure(Expr::SATInt(
+            Metadata::new(),
+            SATIntEncoding::Direct,
+            Moo::new(into_matrix_expr!(vec![Expr::Atomic(
+                Metadata::new(),
+                Atom::Literal(Literal::Bool(true)),
+            )])),
+            (0, 0),
+        )));
+    }
+
+    let mut new_symbols = symbols.clone();
+    let mut new_clauses: Vec<CnfClause> = vec![];
+
+    // Validate all operands are direct SATInts and extract their bit vectors, also calculate a common min and max for all operands to normalize them to the same size by padding with zeroes as needed to simplify the addition logic.
+    let (mut operands, common_min, common_max) =
+        validate_direct_int_operands(exprs).map_err(|_| RuleNotApplicable)?;
+
+    // Addition is implemented as a series of pairwise additions. The bits of the output are defined by iterating over all possible output values, and for each output value k, ORing together ANDs for each pair of input values i,j where i+j=k. This is effectively a big disjunction of all possible ways to sum to k.
+    let false_expr = || Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false)));
+
+    let mut acc_bits = operands.remove(0);
+    let mut acc_min = common_min;
+    let mut acc_max = common_max;
+
+    for right_bits in operands {
+        let right_min = common_min;
+        let right_max = common_max;
+
+        let new_min = acc_min + right_min;
+        let new_max = acc_max + right_max;
+        let mut out_bits = Vec::with_capacity((new_max - new_min + 1) as usize);
+
+        for k in new_min..=new_max {
+            let mut sum_expr = false_expr();
+
+            for i in acc_min..=acc_max {
+                let j = k - i;
+                if j < right_min || j > right_max {
+                    continue;
+                }
+
+                let a = acc_bits[(i - acc_min) as usize].clone();
+                let b = right_bits[(j - right_min) as usize].clone();
+
+                let and_ab = tseytin_and(&vec![a, b], &mut new_clauses, &mut new_symbols);
+                sum_expr = tseytin_or(&vec![sum_expr, and_ab], &mut new_clauses, &mut new_symbols);
+            }
+
+            out_bits.push(sum_expr);
+        }
+
+        acc_bits = out_bits;
+        acc_min = new_min;
+        acc_max = new_max;
+    }
+
+    Ok(Reduction::cnf(
+        Expr::SATInt(
+            Metadata::new(),
+            SATIntEncoding::Direct,
+            Moo::new(into_matrix_expr!(acc_bits)),
+            (acc_min, acc_max),
+        ),
+        new_clauses,
+        new_symbols,
+    ))
 }

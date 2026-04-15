@@ -6,7 +6,7 @@ use crate::diagnostics::diagnostics_api::{Position, SymbolKind};
 use rangemap::RangeMap;
 pub type SpanId = u32;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct HoverInfo {
     pub description: String,       // keyword description, type info...
     pub kind: Option<SymbolKind>,  // var, domain, function...
@@ -15,7 +15,7 @@ pub struct HoverInfo {
 }
 // source span with start and end positions
 // in the essence source code
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SourceSpan {
     pub start_byte: usize, // byte offset in the source code
     pub end_byte: usize,
@@ -25,7 +25,7 @@ pub struct SourceSpan {
 }
 
 // can add more metadata for hovering and stuff
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct SourceMap {
     pub spans: Vec<SourceSpan>,
     pub by_byte: RangeMap<usize, SpanId>,
@@ -53,9 +53,13 @@ pub fn alloc_span(
         hover_info,
     });
     // map byte offsets to span id (RangeMap handles lookup)
-    source_map
-        .by_byte
-        .insert(range.start_byte..range.end_byte, span_id);
+    // tree-sitter can generate zero-length ranges for missing tokens;
+    // avoid inserting empty ranges, which RangeMap rejects.
+    if range.start_byte < range.end_byte {
+        source_map
+            .by_byte
+            .insert(range.start_byte..range.end_byte, span_id);
+    }
     span_id
 }
 
@@ -63,6 +67,13 @@ impl SourceMap {
     // helper to get hover info for a given byte offset (e.g. cursor position)
     pub fn span_id_at_byte(&self, byte: usize) -> Option<SpanId> {
         self.by_byte.get(&byte).copied()
+    }
+
+    // helper to get hover info for a given byte offset (e.g. cursor position)
+    pub fn hover_info_at_byte(&self, byte: usize) -> Option<&HoverInfo> {
+        self.span_id_at_byte(byte)
+            .and_then(|span_id| self.spans.get(span_id as usize))
+            .and_then(|span| span.hover_info.as_ref())
     }
 }
 

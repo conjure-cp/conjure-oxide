@@ -10,7 +10,10 @@ use conjure_cp::{
         serde::{HasId as _, ObjId},
     },
     context::Context,
-    rule_engine::{RuleSet, rewrite_morph, rewrite_naive},
+    rule_engine::{
+        RuleSet,
+        rewrite_model_with_configured_rewriter as rewrite_model_with_configured_rewriter_core,
+    },
     settings::Rewriter,
 };
 use uniplate::Biplate as _;
@@ -29,10 +32,7 @@ pub(super) fn rewrite_model_with_configured_rewriter<'a>(
     rule_sets: &Vec<&'a RuleSet<'a>>,
     configured_rewriter: Rewriter,
 ) -> Model {
-    match configured_rewriter {
-        Rewriter::Morph => rewrite_morph(model, rule_sets, false),
-        Rewriter::Naive => rewrite_naive(&model, rule_sets, false).unwrap(),
-    }
+    rewrite_model_with_configured_rewriter_core(model, rule_sets, configured_rewriter).unwrap()
 }
 
 /// Instantiates rewritten return expressions with quantified assignments.
@@ -128,7 +128,7 @@ pub(super) fn lift_machine_references_into_parent_scope(
         }
 
         let id = decl.id();
-        let new_decl = parent_symtab.gensym(&decl.domain().unwrap());
+        let new_decl = parent_symtab.gen_find(&decl.domain().unwrap());
         machine_name_translations.insert(id, new_decl);
     }
 

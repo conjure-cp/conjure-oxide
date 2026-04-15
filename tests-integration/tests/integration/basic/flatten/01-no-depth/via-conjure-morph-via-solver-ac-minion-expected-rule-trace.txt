@@ -1,0 +1,30 @@
+Model before rewriting:
+
+find a: matrix indexed by [int(1..2), int(1..2)] of int(1..5)
+letting b be [1,2,3,4;int(1..4)]
+
+such that
+
+(flatten(a)[1] = b[1]),
+(flatten(a)[2] = b[2]),
+(flatten(a)[3] = b[3]),
+(flatten(a)[4] = b[4])
+
+--
+
+Final model:
+
+find a: matrix indexed by [int(1..2), int(1..2)] of int(1..5)
+letting b be [1,2,3,4;int(1..4)]
+find a#matrix_to_atom_1_1: int(1..5)
+find a#matrix_to_atom_1_2: int(1..5)
+find a#matrix_to_atom_2_1: int(1..5)
+find a#matrix_to_atom_2_2: int(1..5)
+
+such that
+
+(a#matrix_to_atom_1_1 = 1),
+(a#matrix_to_atom_1_2 = 2),
+(a#matrix_to_atom_2_1 = 3),
+(a#matrix_to_atom_2_2 = 4)
+

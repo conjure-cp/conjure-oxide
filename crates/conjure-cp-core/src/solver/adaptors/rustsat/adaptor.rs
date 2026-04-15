@@ -16,13 +16,14 @@ use std::result::Result::Ok;
 use tracing_subscriber::filter::DynFilterFn;
 use ustr::Ustr;
 
-use rustsat_minisat::core::Minisat;
+use rustsat_cadical::CaDiCaL;
 
 use crate::ast::pretty::pretty_vec;
-use crate::ast::{Atom, Expression, Literal, Name};
-use crate::ast::{GroundDomain, Metadata};
+use crate::ast::{Atom, Expression, GroundDomain, Literal, Metadata, Moo, Name};
+use crate::rule_engine::rewrite_model_with_configured_rewriter;
+use crate::settings::current_rewriter;
 use crate::solver::SearchComplete::NoSolutions;
-use crate::solver::adaptors::rustsat::convs::handle_cnf;
+use crate::solver::adaptors::rustsat::convs::{cnf_clause_to_sat_clause, handle_cnf};
 use crate::solver::{
     self, SearchStatus, SolveSuccess, SolverAdaptor, SolverCallback, SolverError, SolverFamily,
     SolverMutCallback, private,
@@ -34,6 +35,7 @@ use crate::{into_matrix_expr, matrix_expr};
 use rustsat::instances::{BasicVarManager, Cnf, ManageVars, SatInstance};
 
 use thiserror::Error;
+use uniplate::Uniplate;
 
 use itertools::Itertools;
 /// A [SolverAdaptor] for interacting with the SatSolver generic and the types thereof.
@@ -41,8 +43,10 @@ pub struct Sat {
     __non_constructable: private::Internal,
     model_inst: Option<SatInstance>,
     var_map: Option<HashMap<Name, Lit>>,
-    solver_inst: Minisat,
+    solver_inst: CaDiCaL<'static, 'static>,
     decision_refs: Option<Vec<Name>>,
+    dominance_expression: Option<Expression>,
+    dominance_model_template: Option<ConjureModel>,
 }
 
 impl private::Sealed for Sat {}
@@ -51,11 +55,136 @@ impl Default for Sat {
     fn default() -> Self {
         Sat {
             __non_constructable: private::Internal,
-            solver_inst: Minisat::default(),
+            solver_inst: CaDiCaL::default(),
             var_map: None,
             model_inst: None,
             decision_refs: None,
+            dominance_expression: None,
+            dominance_model_template: None,
         }
+    }
+}
+
+fn sub_in_solution_into_dominance_expr(
+    expr: &Expression,
+    solution: &HashMap<Name, Literal>,
+) -> Option<Expression> {
+    match expr {
+        Expression::FromSolution(_, atom_expr) => {
+            if let Atom::Reference(reference) = atom_expr.as_ref() {
+                let var_name = reference.name();
+                let value = solution.get(&var_name)?;
+                let value = if let Some(domain) = reference.resolved_domain() {
+                    if domain.as_ref() == &GroundDomain::Bool {
+                        match value {
+                            Literal::Bool(x) => Literal::Bool(*x),
+                            Literal::Int(1) => Literal::Bool(true),
+                            Literal::Int(0) => Literal::Bool(false),
+                            _ => return None,
+                        }
+                    } else {
+                        value.clone()
+                    }
+                } else {
+                    value.clone()
+                };
+
+                return Some(Expression::Atomic(Metadata::new(), Atom::Literal(value)));
+            }
+            Some(expr.clone())
+        }
+        _ => Some(expr.clone()),
+    }
+}
+
+fn sub_in_solution_into_current_refs(
+    expr: &Expression,
+    solution: &HashMap<Name, Literal>,
+) -> Option<Expression> {
+    match expr {
+        Expression::Atomic(_, Atom::Reference(reference)) => {
+            let var_name = reference.name();
+            let value = solution.get(&var_name)?;
+            let value = if let Some(domain) = reference.resolved_domain() {
+                if domain.as_ref() == &GroundDomain::Bool {
+                    match value {
+                        Literal::Bool(x) => Literal::Bool(*x),
+                        Literal::Int(1) => Literal::Bool(true),
+                        Literal::Int(0) => Literal::Bool(false),
+                        _ => return None,
+                    }
+                } else {
+                    value.clone()
+                }
+            } else {
+                value.clone()
+            };
+
+            Some(Expression::Atomic(Metadata::new(), Atom::Literal(value)))
+        }
+        _ => Some(expr.clone()),
+    }
+}
+
+fn swap_from_solution_to_current_ref(expr: &Expression) -> Option<Expression> {
+    match expr {
+        Expression::FromSolution(_, atom_expr) => Some(Expression::Atomic(
+            Metadata::new(),
+            atom_expr.as_ref().clone(),
+        )),
+        _ => Some(expr.clone()),
+    }
+}
+
+fn rewrite_dominance_to_block_dominated_futures(
+    dominance_expression: &Expression,
+    solution: &HashMap<Name, Literal>,
+) -> Expression {
+    Expression::Not(
+        Metadata::new(),
+        Moo::new(
+            dominance_expression
+                .rewrite(&|e| sub_in_solution_into_current_refs(&e, solution))
+                .rewrite(&|e| swap_from_solution_to_current_ref(&e)),
+        ),
+    )
+}
+
+fn add_represented_decision_values(solution: &mut HashMap<Name, Literal>, model: &ConjureModel) {
+    let symbols = model.symbols().clone();
+    let names = symbols.clone().into_iter().map(|x| x.0).collect_vec();
+    let representations = names
+        .into_iter()
+        .filter_map(|name| {
+            symbols
+                .representations_for(&name)
+                .map(|reprs| (name, reprs))
+        })
+        .filter_map(|(name, reprs)| {
+            if reprs.is_empty() {
+                return None;
+            }
+            if reprs.len() > 1 || reprs[0].len() != 1 {
+                return None;
+            }
+            Some((name, reprs[0][0].clone()))
+        })
+        .collect_vec();
+
+    if representations.is_empty() {
+        return;
+    }
+
+    let mut solution_btree = solution
+        .clone()
+        .into_iter()
+        .collect::<BTreeMap<Name, Literal>>();
+    for (name, representation) in representations {
+        let Ok(value) = representation.value_up(&solution_btree) else {
+            continue;
+        };
+        solution.insert(name.clone(), value.clone());
+        solution_btree.insert(name, value);
     }
 }
 
@@ -88,13 +217,161 @@ fn get_ref_sols(
     solution
 }
 
+fn is_user_visible_solution_var(name: &Name) -> bool {
+    !matches!(name, Name::Machine(_))
+}
+
+fn blocking_clause_for_solution(
+    solution: &HashMap<Name, Literal>,
+    var_map: &HashMap<Name, Lit>,
+) -> Result<Clause, SolverError> {
+    let mut clause = Clause::new();
+
+    for (name, value) in solution {
+        let lit = var_map.get(name).copied().ok_or_else(|| {
+            SolverError::Runtime(format!(
+                "Missing SAT variable for solution variable {name} when building blocking clause"
+            ))
+        })?;
+
+        let blocking_lit = match value {
+            Literal::Bool(true) | Literal::Int(1) => !lit,
+            Literal::Bool(false) | Literal::Int(0) => lit,
+            Literal::Int(2) => {
+                return Err(SolverError::Runtime(format!(
+                    "Cannot build blocking clause from dont-care assignment for {name}"
+                )));
+            }
+            other => {
+                return Err(SolverError::Runtime(format!(
+                    "Cannot build SAT blocking clause from non-boolean value {other:?} for {name}"
+                )));
+            }
+        };
+
+        clause.add(blocking_lit);
+    }
+
+    Ok(clause)
+}
+
+impl Sat {
+    fn add_dominance_constraints_for_solution(
+        dominance_expression: Option<&Expression>,
+        dominance_model_template: Option<&ConjureModel>,
+        solver: &mut CaDiCaL<'static, 'static>,
+        solution: &HashMap<Name, Literal>,
+        var_map: &mut HashMap<Name, Lit>,
+    ) -> Result<(), SolverError> {
+        let Some(dominance_expression) = dominance_expression else {
+            return Ok(());
+        };
+
+        let Some(model_template) = dominance_model_template else {
+            return Ok(());
+        };
+
+        let rewritten_dominance =
+            rewrite_dominance_to_block_dominated_futures(dominance_expression, solution);
+
+        let mut dominance_model = model_template.clone();
+        dominance_model.replace_constraints(vec![]);
+        dominance_model.replace_clauses(vec![]);
+        dominance_model.dominance = None;
+        dominance_model.add_constraint(rewritten_dominance);
+
+        let rule_sets = dominance_model.context.read().unwrap().rule_sets.clone();
+        let rewritten =
+            rewrite_model_with_configured_rewriter(dominance_model, &rule_sets, current_rewriter())
+                .map_err(|e| {
+                    SolverError::Runtime(format!(
+                        "Failed to rewrite dominance constraint into CNF clauses: {e}"
+                    ))
+                })?;
+
+        for clause in rewritten.clauses() {
+            let mut missing_refs: Vec<Name> = Vec::new();
+            let mut largest_new_var: Option<satVar> = None;
+            for literal in clause.iter() {
+                let maybe_name = match literal {
+                    Expression::Atomic(_, Atom::Reference(reference)) => {
+                        Some(reference.name().clone())
+                    }
+                    Expression::Not(_, inner) => {
+                        if let Expression::Atomic(_, Atom::Reference(reference)) = inner.as_ref() {
+                            Some(reference.name().clone())
+                        } else {
+                            None
+                        }
+                    }
+                    _ => None,
+                };
+
+                if let Some(name) = maybe_name
+                    && !var_map.contains_key(&name)
+                {
+                    missing_refs.push(name);
+                }
+            }
+
+            if !missing_refs.is_empty() {
+                missing_refs.sort_by_key(|name| name.to_string());
+                missing_refs.dedup();
+
+                for name in &missing_refs {
+                    if var_map.contains_key(name) {
+                        continue;
+                    }
+                    let next_idx = var_map
+                        .values()
+                        .map(|lit| lit.var().idx32())
+                        .max()
+                        .map(|idx| idx + 1)
+                        .unwrap_or(0);
+                    let new_var = satVar::new(next_idx);
+                    let new_lit = new_var.pos_lit();
+                    var_map.insert(name.clone(), new_lit);
+                    largest_new_var = Some(new_var);
+                }
+            }
+
+            if let Some(max_var) = largest_new_var {
+                solver.reserve(max_var).map_err(|e| {
+                    SolverError::Runtime(format!(
+                        "Failed reserving SAT variable capacity up to {max_var} for dominance clauses: {e}"
+                    ))
+                })?;
+            }
+
+            if let Some(sat_clause) = cnf_clause_to_sat_clause(clause, var_map).map_err(|e| {
+                SolverError::Runtime(format!(
+                    "Failed converting dominance CNF clause to SAT clause. clause={clause:?}; error={e}"
+                ))
+            })? {
+                solver.add_clause(sat_clause).map_err(|e| {
+                    SolverError::Runtime(format!(
+                        "Failed adding dominance clause to SAT solver: {e}"
+                    ))
+                })?;
+            }
+        }
+
+        Ok(())
+    }
+}
+
 impl SolverAdaptor for Sat {
     fn solve(
         &mut self,
         callback: SolverCallback,
         _: private::Internal,
     ) -> Result<SolveSuccess, SolverError> {
+        let dominance_expression = self.dominance_expression.clone();
+        let dominance_model_template = self.dominance_model_template.clone();
         let mut solver = &mut self.solver_inst;
+        let mut var_map = self.var_map.clone().ok_or_else(|| {
+            SolverError::Runtime("Variable map is missing when retrieving solution".to_string())
+        })?;
 
         let cnf: (Cnf, BasicVarManager) = self
             .model_inst
@@ -102,7 +379,9 @@ impl SolverAdaptor for Sat {
             .ok_or_else(|| SolverError::Runtime("Model instance is missing".to_string()))?
             .into_cnf();
 
-        (*(solver)).add_cnf(cnf.0);
+        solver.add_cnf(cnf.0).map_err(|e| {
+            SolverError::Runtime(format!("Failed adding CNF to SAT solver before solve: {e}"))
+        })?;
 
         let mut has_sol = false;
         loop {
@@ -148,17 +427,12 @@ impl SolverAdaptor for Sat {
                 }
             };
 
-            let var_map = self.var_map.clone().ok_or_else(|| {
-                SolverError::Runtime("Variable map is missing when retrieving solution".to_string())
-            })?;
-
             let find_refs = self.decision_refs.clone().ok_or_else(|| {
                 SolverError::Runtime(
                     "Decision references are missing when retrieving solution".to_string(),
                 )
             })?;
 
-            let mut has_sol = false;
             for (name, lit) in &var_map {
                 let inserter = sol.var_value(lit.var());
                 sol.assign_var(lit.var(), inserter);
@@ -166,6 +440,11 @@ impl SolverAdaptor for Sat {
 
             has_sol = true;
             let sol_old = get_ref_sols(find_refs.clone(), sol.clone(), var_map.clone());
+            let full_assignment_solution = get_ref_sols(
+                var_map.keys().cloned().collect(),
+                sol.clone(),
+                var_map.clone(),
+            );
 
             tracing::info!("old solution {:#?}", sol_old);
 
@@ -175,7 +454,7 @@ impl SolverAdaptor for Sat {
             tracing::info!("{:#?}", solutions);
 
             for solution in solutions {
-                if !callback(solution) {
+                if !callback(solution.clone()) {
                     // callback false
                     return Ok(SolveSuccess {
                         stats: SolverStats {
@@ -187,15 +466,29 @@ impl SolverAdaptor for Sat {
                         status: SearchStatus::Incomplete(solver::SearchIncomplete::UserTerminated),
                     });
                 }
-            }
 
-            let blocking_vec: Vec<_> = sol.clone().iter().map(|lit| !lit).collect();
-            let mut blocking_cl = Clause::new();
-            tracing::info!("adding blocking clause with literals: {:#?}", blocking_vec);
-            for lit_i in blocking_vec {
-                blocking_cl.add(lit_i);
+                let mut dominance_solution = full_assignment_solution.clone();
+                dominance_solution.extend(solution.clone());
+                if let Some(model_template) = dominance_model_template.as_ref() {
+                    add_represented_decision_values(&mut dominance_solution, model_template);
+                }
+
+                Sat::add_dominance_constraints_for_solution(
+                    dominance_expression.as_ref(),
+                    dominance_model_template.as_ref(),
+                    solver,
+                    &dominance_solution,
+                    &mut var_map,
+                )?;
+
+                let blocking_cl = blocking_clause_for_solution(&solution, &var_map)?;
+                tracing::info!("adding blocking clause for solution: {:#?}", solution);
+                solver.add_clause(blocking_cl).map_err(|e| {
+                    SolverError::Runtime(format!(
+                        "Failed adding solution blocking clause to SAT solver: {e}"
+                    ))
+                })?;
             }
-            solver.add_clause(blocking_cl);
         }
     }
 
@@ -208,17 +501,21 @@ impl SolverAdaptor for Sat {
     }
 
     fn load_model(&mut self, model: ConjureModel, _: private::Internal) -> Result<(), SolverError> {
+        self.dominance_expression = model.dominance.as_ref().map(|expr| match expr {
+            Expression::DominanceRelation(_, inner) => inner.as_ref().clone(),
+            _ => expr.clone(),
+        });
+        self.dominance_model_template = self.dominance_expression.as_ref().map(|_| model.clone());
+
         let sym_tab = model.symbols().deref().clone();
-        let decisions = sym_tab.clone().into_iter();
 
         let mut finds: Vec<Name> = Vec::new();
         let mut var_map: HashMap<Name, Lit> = HashMap::new();
 
-        for find_ref in decisions {
-            match find_ref.1.kind().clone() {
+        for (name, decl) in sym_tab.clone().into_iter_local() {
+            match decl.kind().clone() {
                 conjure_ast::DeclarationKind::Find(_) => {
-                    let domain = find_ref
-                        .1
+                    let domain = decl
                         .domain()
                         .expect("Decision variable should have a domain");
                     let domain = domain.as_ground().expect("Domain should be ground");
@@ -226,13 +523,13 @@ impl SolverAdaptor for Sat {
                     // only decision variables with boolean domains or representations using booleans are supported at this time
                     if (domain != &GroundDomain::Bool
                         && sym_tab
-                            .get_representation(&find_ref.0, &["sat_log_int"])
+                            .get_representation(&name, &["sat_log_int"])
                             .is_none()
                         && sym_tab
-                            .get_representation(&find_ref.0, &["sat_direct_int"])
+                            .get_representation(&name, &["sat_direct_int"])
                             .is_none()
                         && sym_tab
-                            .get_representation(&find_ref.0, &["sat_order_int"])
+                            .get_representation(&name, &["sat_order_int"])
                             .is_none())
                     {
                         Err(SolverError::ModelInvalid(
@@ -240,8 +537,7 @@ impl SolverAdaptor for Sat {
                         ))?;
                     }
                     // only boolean variables should be passed to the solver
-                    if (domain == &GroundDomain::Bool) {
-                        let name = find_ref.0;
+                    if (domain == &GroundDomain::Bool && is_user_visible_solution_var(&name)) {
                         finds.push(name);
                     }
                 }
@@ -385,4 +681,71 @@ fn enumerate_solution(solution: HashMap<Name, Literal>) -> Vec<HashMap<Name, Lit
 
     sols.push(solutions_inclusive);
     sols
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::ast::{DeclarationPtr, Domain, Moo, Reference};
+    use rustsat::types::Var as SatVar;
+
+    #[test]
+    fn from_solution_substitution_replaces_reference_with_literal() {
+        let x = Name::User(Ustr::from("x"));
+        let x_ref = DeclarationPtr::new_value_letting(
+            x.clone(),
+            Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(0))),
+        );
+
+        let expr = Expression::FromSolution(
+            Metadata::new(),
+            Moo::new(Atom::Reference(Reference::new(x_ref))),
+        );
+        let mut solution = HashMap::new();
+        solution.insert(x, Literal::Int(7));
+
+        let replaced = sub_in_solution_into_dominance_expr(&expr, &solution)
+            .expect("FromSolution should be replaced when solution contains the variable");
+
+        assert!(matches!(
+            replaced,
+            Expression::Atomic(_, Atom::Literal(Literal::Int(7)))
+        ));
+    }
+
+    #[test]
+    fn from_solution_substitution_returns_none_for_missing_solution_value() {
+        let x = Name::User(Ustr::from("x"));
+        let x_ref = DeclarationPtr::new_value_letting(
+            x,
+            Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(0))),
+        );
+        let expr = Expression::FromSolution(
+            Metadata::new(),
+            Moo::new(Atom::Reference(Reference::new(x_ref))),
+        );
+        let solution = HashMap::new();
+
+        assert!(sub_in_solution_into_dominance_expr(&expr, &solution).is_none());
+    }
+
+    #[test]
+    fn from_solution_substitution_coerces_ints_to_bool_for_bool_refs() {
+        let x = Name::User(Ustr::from("x"));
+        let x_ref = DeclarationPtr::new_find(x.clone(), Domain::bool());
+        let expr = Expression::FromSolution(
+            Metadata::new(),
+            Moo::new(Atom::Reference(Reference::new(x_ref))),
+        );
+        let mut solution = HashMap::new();
+        solution.insert(x, Literal::Int(1));
+
+        let replaced = sub_in_solution_into_dominance_expr(&expr, &solution)
+            .expect("FromSolution should be replaced when solution contains the variable");
+
+        assert!(matches!(
+            replaced,
+            Expression::Atomic(_, Atom::Literal(Literal::Bool(true)))
+        ));
+    }
 }

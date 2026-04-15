@@ -307,6 +307,16 @@
           }
         ]
       },
+      "factorial_expression": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "factorial_expr",
+            "named": true
+          }
+        ]
+      },
       "list_combining_expression_arith": {
         "multiple": false,
         "required": false,
@@ -449,6 +459,16 @@
         "types": [
           {
             "type": "negative_table",
+            "named": true
+          }
+        ]
+      },
+      "pareto_expression": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "pareto_expression",
             "named": true
           }
         ]
@@ -961,35 +981,49 @@
     }
   },
   {
+    "type": "factorial_expr",
+    "named": true,
+    "fields": {
+      "expression": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "arithmetic_expr",
+            "named": true
+          },
+          {
+            "type": "atom",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
     "type": "find_statement",
     "named": true,
     "fields": {
-      "colon": {
+      "find_keyword": {
         "multiple": false,
         "required": true,
         "types": [
           {
-            "type": "COLON",
-            "named": true
+            "type": "find",
+            "named": false
           }
         ]
       },
-      "domain": {
-        "multiple": false,
+      "variable_declaration": {
+        "multiple": true,
         "required": true,
         "types": [
           {
-            "type": "domain",
-            "named": true
-          }
-        ]
-      },
-      "variables": {
-        "multiple": false,
-        "required": true,
-        "types": [
+            "type": ",",
+            "named": false
+          },
           {
-            "type": "variable_list",
+            "type": "variable_declaration",
             "named": true
           }
         ]
@@ -1084,6 +1118,36 @@
           },
           {
             "type": "tuple",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "given_statement",
+    "named": true,
+    "fields": {
+      "given_keyword": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "given",
+            "named": false
+          }
+        ]
+      },
+      "variable_declaration": {
+        "multiple": true,
+        "required": true,
+        "types": [
+          {
+            "type": ",",
+            "named": false
+          },
+          {
+            "type": "variable_declaration",
             "named": true
           }
         ]
@@ -1338,6 +1402,36 @@
   },
   {
     "type": "letting_statement",
+    "named": true,
+    "fields": {
+      "letting_keyword": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "letting",
+            "named": false
+          }
+        ]
+      },
+      "letting_variable_declaration": {
+        "multiple": true,
+        "required": true,
+        "types": [
+          {
+            "type": ",",
+            "named": false
+          },
+          {
+            "type": "letting_variable_declaration",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "letting_variable_declaration",
     "named": true,
     "fields": {
       "be": {
@@ -1791,6 +1885,79 @@
     }
   },
   {
+    "type": "pareto_expression",
+    "named": true,
+    "fields": {
+      "components": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "pareto_items",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "pareto_item",
+    "named": true,
+    "fields": {
+      "direction": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "maximising",
+            "named": false
+          },
+          {
+            "type": "minimising",
+            "named": false
+          }
+        ]
+      },
+      "expression": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "arithmetic_expr",
+            "named": true
+          },
+          {
+            "type": "atom",
+            "named": true
+          },
+          {
+            "type": "bool_expr",
+            "named": true
+          },
+          {
+            "type": "comparison_expr",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "pareto_items",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "pareto_item",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "product_expr",
     "named": true,
     "fields": {
@@ -1899,6 +2066,16 @@
           }
         ]
       },
+      "given_statement": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": "given_statement",
+            "named": true
+          }
+        ]
+      },
       "letting_statement": {
         "multiple": true,
         "required": false,
@@ -1906,6 +2083,16 @@
           {
             "type": "letting_statement",
             "named": true
+          }
+        ]
+      },
+      "such_that_keyword": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": "such that",
+            "named": false
           }
         ]
       }
@@ -2458,6 +2645,42 @@
     }
   },
   {
+    "type": "variable_declaration",
+    "named": true,
+    "fields": {
+      "colon": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "COLON",
+            "named": true
+          }
+        ]
+      },
+      "domain": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "domain",
+            "named": true
+          }
+        ]
+      },
+      "variables": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "variable_list",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
     "type": "variable_list",
     "named": true,
     "fields": {},
@@ -2637,11 +2860,15 @@
     "named": false
   },
   {
-    "type": "dominanceRelation",
+    "type": "dominance relation",
     "named": false
   },
   {
     "type": "exists",
+    "named": false
+  },
+  {
+    "type": "factorial",
     "named": false
   },
   {
@@ -2662,6 +2889,10 @@
   },
   {
     "type": "fromSolution",
+    "named": false
+  },
+  {
+    "type": "given",
     "named": false
   },
   {
@@ -2686,7 +2917,8 @@
   },
   {
     "type": "language_declaration",
-    "named": true
+    "named": true,
+    "extra": true
   },
   {
     "type": "letting",
@@ -2705,11 +2937,19 @@
     "named": false
   },
   {
+    "type": "maximising",
+    "named": false
+  },
+  {
     "type": "min",
     "named": false
   },
   {
     "type": "minSize",
+    "named": false
+  },
+  {
+    "type": "minimising",
     "named": false
   },
   {
@@ -2725,6 +2965,10 @@
     "named": false
   },
   {
+    "type": "pareto",
+    "named": false
+  },
+  {
     "type": "record",
     "named": false
   },
@@ -2734,7 +2978,8 @@
   },
   {
     "type": "single_line_comment",
-    "named": true
+    "named": true,
+    "extra": true
   },
   {
     "type": "size",

@@ -184,7 +184,7 @@ pub fn to_aux_var(expr: &Expr, symbols: &SymbolTable) -> Option<ToAuxVarOutput> 
         return None;
     };
 
-    let decl = symbols.gensym(&domain);
+    let decl = symbols.gen_find(&domain);
 
     if cfg!(debug_assertions) {
         trace!(expr=%expr, "to_auxvar() succeeded in putting expr into an auxvar");

@@ -672,7 +672,7 @@ impl Display for Literal {
         match &self {
             Literal::Int(i) => write!(f, "{i}"),
             Literal::Bool(b) => write!(f, "{b}"),
-            Literal::AbstractLiteral(l) => write!(f, "{l:?}"),
+            Literal::AbstractLiteral(l) => write!(f, "{l}"),
         }
     }
 }

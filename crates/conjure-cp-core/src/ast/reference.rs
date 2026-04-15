@@ -119,12 +119,15 @@ impl CategoryOf for Reference {
 
 impl HasDomain for Reference {
     fn domain_of(&self) -> DomainPtr {
-        self.ptr.domain().unwrap_or_else(|| {
-            bug!(
-                "reference ({name}) should have a domain",
-                name = self.ptr.name()
-            )
-        })
+        self.ptr
+            .domain()
+            .or_else(|| self.resolve_constant().map(|literal| literal.domain_of()))
+            .unwrap_or_else(|| {
+                bug!(
+                    "reference ({name}) should have a domain",
+                    name = self.ptr.name()
+                )
+            })
     }
 }
 

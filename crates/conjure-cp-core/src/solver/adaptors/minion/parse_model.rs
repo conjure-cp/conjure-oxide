@@ -14,7 +14,6 @@ use minion_ast::Model as MinionModel;
 use minion_sys::ast as minion_ast;
 use minion_sys::ast::{Constant, Constraint, Var};
 use minion_sys::error::MinionError;
-use minion_sys::{get_from_table, run_minion};
 use std::cell::Ref;
 use std::cell::RefCell;
 use std::collections::HashSet;

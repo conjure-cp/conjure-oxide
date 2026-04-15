@@ -4,18 +4,18 @@ on:
   pull_request_target:
     types:
     - opened
-    - unassigned
 
 jobs:
   assign-author:
     name: Assign PR to author
+    if: ${{ github.event.pull_request.user.login != 'dependabot[bot]' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
     - name: Create conjure-bot token
       id: bot-token
-      uses: actions/create-github-app-token@v2
+      uses: actions/create-github-app-token@v3
       with:
         app-id: ${{ secrets.CONJURE_BOT_ID }}
         private-key: ${{ secrets.CONJURE_BOT_PRIVATE_KEY }}
