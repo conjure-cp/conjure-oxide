@@ -22,7 +22,7 @@ pub fn parse_find_statement(
     ctx.add_span_and_doc_hover(&keyword, "find", SymbolKind::Find, None, None);
     let mut var_hashmap = BTreeMap::new();
     for var_decl in named_children(&find_statement) {
-        if let Ok(mut decls) = parse_declaration_statement(ctx, var_decl, SymbolKind::Find) {
+        if let Ok(mut decls) = parse_declaration_statement(ctx, var_decl, SymbolKind::FindVar) {
             var_hashmap.append(&mut decls);
         }
     }
@@ -50,7 +50,7 @@ pub fn parse_given_statement(
 
     let mut var_hashmap = BTreeMap::new();
     for var_decl in named_children(&given_statement) {
-        if let Ok(mut decls) = parse_declaration_statement(ctx, var_decl, SymbolKind::Given) {
+        if let Ok(mut decls) = parse_declaration_statement(ctx, var_decl, SymbolKind::GivenVar) {
             var_hashmap.append(&mut decls);
         }
     }
@@ -96,8 +96,8 @@ pub fn parse_declaration_statement(
                     "Variable '{}' is already declared in this {} statement",
                     variable_name,
                     match symbol_kind {
-                        SymbolKind::Find => "find",
-                        SymbolKind::Given => "given",
+                        SymbolKind::FindVar => "find",
+                        SymbolKind::GivenVar => "given",
                         _ => "declaration",
                     }
                 ),
@@ -134,8 +134,8 @@ pub fn parse_declaration_statement(
             description: format!(
                 "{} variable: {variable_name}",
                 match symbol_kind {
-                    SymbolKind::Find => "Find",
-                    SymbolKind::Given => "Given",
+                    SymbolKind::FindVar => "Find",
+                    SymbolKind::GivenVar => "Given",
                     _ => "Declaration",
                 }
             ),

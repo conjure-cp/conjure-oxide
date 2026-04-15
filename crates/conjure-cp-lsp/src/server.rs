@@ -62,6 +62,8 @@ impl LanguageServer for Backend {
                                     SemanticTokenType::new("domain"),
                                     SemanticTokenType::new("lettingVar"),
                                     SemanticTokenType::new("findVar"),
+                                    SemanticTokenType::new("given"),
+                                    SemanticTokenType::new("givenVar"),
                                 ],
                                 token_modifiers: vec![],
                             },

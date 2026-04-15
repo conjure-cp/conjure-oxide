@@ -9,6 +9,8 @@ pub const TOKEN_TYPE_FIND: u32 = 4;
 pub const TOKEN_TYPE_DOMAIN: u32 = 5;
 pub const TOKEN_TYPE_LETTINGVAR: u32 = 6;
 pub const TOKEN_TYPE_FINDVAR: u32 = 7;
+pub const TOKEN_TYPE_GIVEN: u32 = 8;
+pub const TOKEN_TYPE_GIVENVAR: u32 = 9;
 
 pub const MODIFIER_NONE: u32 = 0;
 pub const MODIFIER_DECLARATION: u32 = 1;
@@ -60,6 +62,14 @@ pub fn token_encoding(kind: &SymbolKind) -> Option<TokenEncoding> {
         }),
         SymbolKind::LettingVar => Some(TokenEncoding {
             ty: TOKEN_TYPE_LETTINGVAR,
+            modifiers: MODIFIER_DECLARATION,
+        }),
+        SymbolKind::Given => Some(TokenEncoding {
+            ty: TOKEN_TYPE_GIVEN,
+            modifiers: MODIFIER_NONE,
+        }),
+        SymbolKind::GivenVar => Some(TokenEncoding {
+            ty: TOKEN_TYPE_GIVENVAR,
             modifiers: MODIFIER_DECLARATION,
         }),
     }
