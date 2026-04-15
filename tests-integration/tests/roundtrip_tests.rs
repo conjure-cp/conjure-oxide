@@ -1,3 +1,4 @@
+use conjure_cp::Model;
 use conjure_cp::ast::SerdeModel;
 use conjure_cp::context::Context;
 use conjure_cp::instantiate::instantiate_model;
@@ -5,7 +6,6 @@ use conjure_cp::parse::tree_sitter::errors::InstantiateModelError;
 use conjure_cp::parse::tree_sitter::errors::ParseErrorCollection;
 use conjure_cp::parse::tree_sitter::{parse_essence_file, parse_essence_file_native};
 use conjure_cp::settings::Parser;
-use conjure_cp::Model;
 use conjure_cp_cli::utils::testing::serialize_model;
 use std::collections::BTreeSet;
 use std::error::Error;
@@ -13,9 +13,9 @@ use std::fs;
 use std::path::Path;
 use std::sync::Arc;
 use std::sync::RwLock;
-use tests_integration::golden_files::assert_no_redundant_expected_files;
 use tests_integration::AcceptMode;
 use tests_integration::TestConfig;
+use tests_integration::golden_files::assert_no_redundant_expected_files;
 
 use std::io::Write;
 

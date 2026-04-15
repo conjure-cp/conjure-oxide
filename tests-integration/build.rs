@@ -1,5 +1,5 @@
 use std::env::var;
-use std::fs::{read_dir, File};
+use std::fs::{File, read_dir};
 use std::io::{self, Write};
 use std::path::Path;
 
@@ -230,8 +230,7 @@ fn get_ignore_attr(cfg: &TestConfig, include_expected_time: bool) -> io::Result<
             "#[ignore = \"this test has been disabled ('skip=true' in its config.toml)\"]\n",
         ))
     } else if include_expected_time
-        && let (Some(expected_time), Some(limit)) =
-        (cfg.expected_time, max_expected_time_limit()?)
+        && let (Some(expected_time), Some(limit)) = (cfg.expected_time, max_expected_time_limit()?)
     {
         if expected_time > limit {
             Ok(format!(

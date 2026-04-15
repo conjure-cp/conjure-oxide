@@ -7,9 +7,9 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::process::Command;
 use std::time::Instant;
+use tests_integration::AcceptMode;
 use tests_integration::golden_files::assert_no_redundant_expected_files;
 use tests_integration::test_config::{round_expected_time, upsert_expected_time_config};
-use tests_integration::AcceptMode;
 
 pub fn custom_test(test_dir: &str) -> Result<(), Box<dyn Error>> {
     let accept_mode = AcceptMode::from_env();
