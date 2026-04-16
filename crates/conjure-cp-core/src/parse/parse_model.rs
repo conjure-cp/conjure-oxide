@@ -12,9 +12,9 @@ use crate::ast::ac_operators::ACOperatorKind;
 use crate::ast::comprehension::ComprehensionBuilder;
 use crate::ast::records::RecordValue;
 use crate::ast::{
-    AbstractLiteral, Atom, DeclarationPtr, Domain, Expression, FuncAttr, IntVal, JectivityAttr,
-    Literal, MSetAttr, Name, PartialityAttr, Range, RecordEntry, SetAttr, SymbolTable,
-    SymbolTablePtr,
+    AbstractLiteral, Atom, BinaryAttr, DeclarationPtr, Domain, Expression, FuncAttr, IntVal,
+    JectivityAttr, Literal, MSetAttr, Name, PartialityAttr, Range, RecordEntry, RelAttr, SetAttr,
+    SymbolTable, SymbolTablePtr,
 };
 use crate::ast::{DomainPtr, Metadata};
 use crate::context::Context;
@@ -426,6 +426,80 @@ fn parse_domain(
             };
 
             Ok(Domain::function(attr, domain, codomain))
+        }
+
+        "DomainRelation" => {
+            let domains = domain_value
+                .get(2)
+                .and_then(|v| v.as_array())
+                .ok_or(Error::Parse(
+                    "Relation domains are not a json array".to_owned(),
+                ))?;
+            let domains = domains
+                .iter()
+                .map(|x| {
+                    let domain = x
+                        .as_object()
+                        .ok_or(Error::Parse("Relation domain is not an object".to_owned()))?
+                        .iter()
+                        .next()
+                        .ok_or(Error::Parse(
+                            "Relation domain is an empty object".to_owned(),
+                        ))?;
+                    parse_domain(domain.0, domain.1, symbols)
+                })
+                .collect::<Result<Vec<DomainPtr>>>()?;
+
+            // Attribute parsing
+            let attributes = domain_value
+                .get(1)
+                .and_then(|v| v.as_array())
+                .ok_or(Error::Parse(
+                    "Relation attributes are not a json array".to_owned(),
+                ))?;
+            let size = attributes
+                .first()
+                .and_then(|v| v.as_object())
+                .ok_or(Error::Parse(
+                    "Relation size attributes are not an object".to_owned(),
+                ))?;
+            let size = parse_size_attr(size, symbols)?;
+            let binary = attributes
+                .get(1)
+                .and_then(|v| v.as_array())
+                .ok_or(Error::Parse(
+                    "Relation binary attributes are not a json array".to_owned(),
+                ))?;
+            let binary = binary
+                .iter()
+                .map(|x| {
+                    let attr = x.as_str().ok_or(Error::Parse(
+                        "Relation binary attribute is not a string".to_owned(),
+                    ))?;
+                    match attr {
+                        "BinRelAttr_Reflexive" => Ok(BinaryAttr::Reflexive),
+                        "BinRelAttr_Irreflexive" => Ok(BinaryAttr::Irreflexive),
+                        "BinRelAttr_Coreflexive" => Ok(BinaryAttr::Coreflexive),
+                        "BinRelAttr_Symmetric" => Ok(BinaryAttr::Symmetric),
+                        "BinRelAttr_Antisymmetric" => Ok(BinaryAttr::AntiSymmetric),
+                        "BinRelAttr_ASymmetric" => Ok(BinaryAttr::ASymmetric),
+                        "BinRelAttr_Transitive" => Ok(BinaryAttr::Transitive),
+                        "BinRelAttr_Total" => Ok(BinaryAttr::Total),
+                        "BinRelAttr_Connex" => Ok(BinaryAttr::Connex),
+                        "BinRelAttr_Euclidean" => Ok(BinaryAttr::Euclidean),
+                        "BinRelAttr_Serial" => Ok(BinaryAttr::Serial),
+                        "BinRelAttr_Equivalence" => Ok(BinaryAttr::Equivalence),
+                        "BinRelAttr_PartialOrder" => Ok(BinaryAttr::PartialOrder),
+                        _ => Err(Error::Parse(
+                            "Relation binary attribute is invalid".to_owned(),
+                        )),
+                    }
+                })
+                .collect::<Result<Vec<BinaryAttr>>>()?;
+
+            let attr: RelAttr<IntVal> = RelAttr { size, binary };
+
+            Ok(Domain::relation(attr, domains))
         }
         _ => Err(Error::Parse(
             "FindOrGiven[2] is an unknown object".to_owned(), // consider covered

@@ -5,7 +5,7 @@ use super::unresolved::{IntVal, UnresolvedDomain};
 use crate::ast::domains::attrs::MSetAttr;
 use crate::ast::{
     DeclarationPtr, DomainOpError, Expression, FuncAttr, Literal, Moo, RecordEntry,
-    RecordEntryGround, Reference, ReturnType, Typeable,
+    RecordEntryGround, Reference, RelAttr, ReturnType, Typeable,
 };
 use itertools::Itertools;
 use polyquine::Quine;
@@ -245,6 +245,26 @@ impl Domain {
             attrs.into(),
             dom,
             cdom,
+        ))))
+    }
+
+    /// Create a new relation domain
+    pub fn relation<T>(attrs: T, inner_doms: Vec<DomainPtr>) -> DomainPtr
+    where
+        T: Into<RelAttr<IntVal>> + TryInto<RelAttr<Int>> + Clone,
+    {
+        if let Ok(attrs_gd) = attrs.clone().try_into()
+            && let Some(doms_gd) = as_grounds(&inner_doms)
+        {
+            return Moo::new(Domain::Ground(Moo::new(GroundDomain::Relation(
+                attrs_gd,
+                doms_gd.clone(),
+            ))));
+        }
+
+        Moo::new(Domain::Unresolved(Moo::new(UnresolvedDomain::Relation(
+            attrs.into(),
+            inner_doms,
         ))))
     }
 
