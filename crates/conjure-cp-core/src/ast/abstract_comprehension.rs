@@ -128,7 +128,7 @@ impl AbstractComprehensionBuilder {
     }
 
     pub fn new_domain_generator(&mut self, domain: DomainPtr) -> DeclarationPtr {
-        let generator_decl = self.return_expr_symbols.write().gensym(&domain);
+        let generator_decl = self.return_expr_symbols.write().gen_find(&domain);
 
         self.qualifiers
             .push(Qualifier::Generator(Generator::DomainGenerator(
@@ -181,7 +181,7 @@ impl AbstractComprehensionBuilder {
     }
 
     pub fn new_letting(&mut self, expression: Expression) -> DeclarationPtr {
-        let letting_decl = self.return_expr_symbols.write().gensym(
+        let letting_decl = self.return_expr_symbols.write().gen_find(
             &expression
                 .domain_of()
                 .expect("Expression must have a domain"),

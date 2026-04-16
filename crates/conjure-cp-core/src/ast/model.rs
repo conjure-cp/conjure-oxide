@@ -396,7 +396,7 @@ impl Display for Model {
                         pretty_variable_declaration(&self.symbols(), &name).unwrap()
                     )?;
                 }
-                DeclarationKind::ValueLetting(_) | DeclarationKind::TemporaryValueLetting(_) => {
+                DeclarationKind::ValueLetting(_, _) | DeclarationKind::TemporaryValueLetting(_) => {
                     writeln!(
                         f,
                         "{}",
@@ -415,6 +415,9 @@ impl Display for Model {
                 }
                 DeclarationKind::Quantified(inner) => {
                     writeln!(f, "quantified {name}: {}", inner.domain())?;
+                }
+                DeclarationKind::QuantifiedExpr(expr) => {
+                    writeln!(f, "quantified expr {name} <- {}", expr)?;
                 }
                 DeclarationKind::RecordField(_) => {
                     writeln!(f)?;
