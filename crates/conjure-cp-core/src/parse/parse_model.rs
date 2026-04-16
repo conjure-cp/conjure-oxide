@@ -783,6 +783,8 @@ pub fn parse_expression(obj: &JsonValue, scope: &SymbolTablePtr) -> Result<Expre
                 parse_abs_function(&abslit["AbstractLiteral"]["AbsLitFunction"], scope)
             } else if abstract_literal.contains_key("AbsLitMSet") {
                 parse_abs_mset(&abslit["AbstractLiteral"]["AbsLitMSet"], scope)
+            } else if abstract_literal.contains_key("AbsLitRelation") {
+                parse_abs_relation(&abslit["AbstractLiteral"]["AbsLitRelation"], scope)
             } else {
                 parse_abstract_matrix_as_expr(obj, scope)
             }
@@ -912,6 +914,29 @@ fn parse_abs_function(abs_function: &Value, scope: &SymbolTablePtr) -> Result<Ex
     Ok(Expression::AbstractLiteral(
         Metadata::new(),
         AbstractLiteral::Function(assignments),
+    ))
+}
+
+//parses an abstract relation as an expression
+fn parse_abs_relation(abs_relation: &Value, scope: &SymbolTablePtr) -> Result<Expression> {
+    let entries = abs_relation
+        .as_array()
+        .ok_or(error!("AbsLitRelation is not an array"))?;
+    let mut assignments = vec![];
+
+    for entry in entries {
+        let entry = entry
+            .as_array()
+            .ok_or(error!("Explicit relation assignment is not an array"))?;
+        let expression = entry
+            .iter()
+            .map(|values| parse_expression(values, scope))
+            .collect::<Result<Vec<_>>>()?;
+        assignments.push(expression);
+    }
+    Ok(Expression::AbstractLiteral(
+        Metadata::new(),
+        AbstractLiteral::Relation(assignments),
     ))
 }
 
@@ -1374,6 +1399,8 @@ fn parse_constant(
                     return parse_abs_record(arr, scope);
                 } else if let Some(arr) = obj.get("AbsLitFunction") {
                     return parse_abs_function(arr, scope);
+                } else if let Some(arr) = obj.get("AbsLitRelation") {
+                    return parse_abs_relation(arr, scope);
                 }
             }
             Err(error!("Unhandled ConstantAbstract literal type"))
