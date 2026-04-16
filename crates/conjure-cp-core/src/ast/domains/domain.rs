@@ -679,9 +679,7 @@ impl Domain {
     /// If this is a relation domain, convert it to unresolved and get mutable references to
     /// its (attrs, [domains]).
     /// The domain always becomes [UnresolvedDomain::Relation] after this operation.
-    pub fn as_relation_mut(
-        &mut self,
-    ) -> Option<(&mut RelAttr<IntVal>, &mut Vec<Moo<Domain>>)> {
+    pub fn as_relation_mut(&mut self) -> Option<(&mut RelAttr<IntVal>, &mut Vec<Moo<Domain>>)> {
         if let Some(GroundDomain::Relation(attrs, doms)) = self.as_ground() {
             *self = Domain::Unresolved(Moo::new(UnresolvedDomain::Relation(
                 attrs.clone().into(),
@@ -696,9 +694,7 @@ impl Domain {
     }
 
     /// If this is a [GroundDomain::Relation], get its (attrs, [domains])
-    pub fn as_relation_ground(
-        &self,
-    ) -> Option<(&RelAttr, &Vec<Moo<GroundDomain>>)> {
+    pub fn as_relation_ground(&self) -> Option<(&RelAttr, &Vec<Moo<GroundDomain>>)> {
         if let Some(GroundDomain::Relation(attrs, doms)) = self.as_ground() {
             return Some((attrs, doms));
         }
@@ -708,10 +704,7 @@ impl Domain {
     /// If this is a [GroundDomain::RElation], get mutable references to its (attrs, [domains])
     pub fn as_relation_ground_mut(
         &mut self,
-    ) -> Option<(
-        &mut RelAttr,
-        &mut Vec<Moo<GroundDomain>>
-    )> {
+    ) -> Option<(&mut RelAttr, &mut Vec<Moo<GroundDomain>>)> {
         if let Some(GroundDomain::Relation(attrs, doms)) = self.as_ground_mut() {
             return Some((attrs, doms));
         }
