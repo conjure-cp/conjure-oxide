@@ -1,5 +1,4 @@
-use crate::errors::FatalParseError;
-use crate::errors::RecoverableParseError;
+use crate::errors::{FatalParseError, RecoverableParseError};
 use crate::expression::parse_expression;
 use crate::field;
 use crate::parser::ParseContext;
@@ -13,6 +12,19 @@ pub fn parse_abstract(
     ctx: &mut ParseContext,
     node: &Node,
 ) -> Result<Option<AbstractLiteral<Expression>>, FatalParseError> {
+    // If we're in a set context, we can only parse set literals, so add an error if we see any other kind of abstract literal
+    if ctx.typechecking_context == TypecheckingContext::Set && node.kind() != "set_literal" {
+        ctx.record_error(RecoverableParseError::new(
+            format!(
+                "Type error: {}\n\tExpected: set\n\tGot: {}",
+                ctx.source_code[node.start_byte()..node.end_byte()].trim(),
+                node.kind()
+            ),
+            Some(node.range()),
+        ));
+        return Ok(None);
+    }
+
     match node.kind() {
         "record" => parse_record(ctx, node),
         "tuple" => parse_tuple(ctx, node),

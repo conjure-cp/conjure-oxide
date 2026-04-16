@@ -98,6 +98,18 @@ fn parse_flatten(
     ctx: &mut ParseContext,
     node: &Node,
 ) -> Result<Option<Expression>, FatalParseError> {
+    // add error and return early if we're in a set context, since flatten doesn't produce sets
+    if ctx.typechecking_context == TypecheckingContext::Set {
+        ctx.record_error(RecoverableParseError::new(
+            format!(
+                "Type error: {}\n\tExpected: set\n\tGot: flatten",
+                ctx.source_code[node.start_byte()..node.end_byte()].trim()
+            ),
+            Some(node.range()),
+        ));
+        return Ok(None);
+    }
+
     let Some(expr_node) = field!(recover, ctx, node, "expression") else {
         return Ok(None);
     };
@@ -126,6 +138,18 @@ fn parse_flatten(
 }
 
 fn parse_table(ctx: &mut ParseContext, node: &Node) -> Result<Option<Expression>, FatalParseError> {
+    // add error and return early if we're in a set context, since tables aren't allowed there
+    if ctx.typechecking_context == TypecheckingContext::Set {
+        ctx.record_error(RecoverableParseError::new(
+            format!(
+                "Type error: {}\n\tExpected: set\n\tGot: table",
+                ctx.source_code[node.start_byte()..node.end_byte()].trim()
+            ),
+            Some(node.range()),
+        ));
+        return Ok(None);
+    }
+
     // the variables and rows can contain arbitrary expressions, so we temporarily set the context to Unknown to avoid typechecking errors
     let saved_context = ctx.typechecking_context;
     ctx.typechecking_context = TypecheckingContext::Unknown;
@@ -174,6 +198,18 @@ fn parse_index_or_slice(
     ctx: &mut ParseContext,
     node: &Node,
 ) -> Result<Option<Expression>, FatalParseError> {
+    // add error and return early if we're in a set context, since indexing/slicing doesn't produce sets
+    if ctx.typechecking_context == TypecheckingContext::Set {
+        ctx.record_error(RecoverableParseError::new(
+            format!(
+                "Type error: {}\n\tExpected: set\n\tGot: index or slice",
+                ctx.source_code[node.start_byte()..node.end_byte()].trim()
+            ),
+            Some(node.range()),
+        ));
+        return Ok(None);
+    }
+
     // Save current context and temporarily set to Unknown for the collection
     let saved_context = ctx.typechecking_context;
     ctx.typechecking_context = TypecheckingContext::Unknown;
@@ -305,6 +341,7 @@ fn typecheck_variable(
     let expected = match context {
         TypecheckingContext::Boolean => "bool",
         TypecheckingContext::Arithmetic => "int",
+        TypecheckingContext::Set => "set",
         TypecheckingContext::Unknown => return None, // shouldn't reach here
     };
 
@@ -383,6 +420,7 @@ fn parse_constant(ctx: &mut ParseContext, node: &Node) -> Result<Option<Literal>
         let expected = match ctx.typechecking_context {
             TypecheckingContext::Boolean => "bool",
             TypecheckingContext::Arithmetic => "int",
+            TypecheckingContext::Set => "set",
             TypecheckingContext::Unknown => "",
         };
 
