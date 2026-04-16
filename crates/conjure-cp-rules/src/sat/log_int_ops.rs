@@ -907,8 +907,16 @@ fn cnf_int_safediv(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let mut new_symbols = symbols.clone();
     let mut new_clauses = vec![];
 
-    let (quotient, remainder, sign_bit, _numer_sign, _abs_denom) =
+    let (quotient, full_remainder, sign_bit, _numer_sign, _abs_denom) =
         tseytin_divmod(numer_bits, denom_bits, &mut new_clauses, &mut new_symbols);
+
+    // The upper half contains the absolute remainder
+    let bit_count_padded = bit_count + 1;
+    let remainder = full_remainder
+        .iter()
+        .skip(bit_count_padded)
+        .cloned()
+        .collect_vec();
 
     let minus_quotient = tseytin_negate(
         &quotient.clone(),
@@ -972,10 +980,19 @@ fn tseytin_divmod(
 ) -> (Vec<Expr>, Vec<Expr>, Expr, Expr, Vec<Expr>) {
     let bit_count = numer_bits.len();
 
+    // extend by one bit to account for trying to flip the MIN_INT
+    // suppose we have -8..7 range and we try flip the min value -8
+    // we would get 1000 (-8 in two's complement), instead of 01000
+    let mut padded_numer = numer_bits.to_vec();
+    padded_numer.push(numer_bits.last().unwrap().clone());
+    let mut padded_denom = denom_bits.to_vec();
+    padded_denom.push(denom_bits.last().unwrap().clone());
+    let bit_count_padded = bit_count + 1;
+
     let mut quotient = vec![false.into(); bit_count];
 
-    let minus_numer = tseytin_negate(&numer_bits.to_vec(), bit_count, clauses, symbols);
-    let minus_denom = tseytin_negate(&denom_bits.to_vec(), bit_count, clauses, symbols);
+    let minus_numer = tseytin_negate(&padded_numer, bit_count_padded, clauses, symbols);
+    let minus_denom = tseytin_negate(&padded_denom, bit_count_padded, clauses, symbols);
 
     // original sign bits
     let numer_sign = numer_bits[bit_count - 1].clone();
@@ -983,26 +1000,27 @@ fn tseytin_divmod(
 
     let sign_bit = tseytin_xor(numer_sign.clone(), denom_sign.clone(), clauses, symbols);
 
-    let abs_numer = tseytin_select_array(numer_sign, numer_bits, &minus_numer, clauses, symbols);
+    let abs_numer = tseytin_select_array(numer_sign, &padded_numer, &minus_numer, clauses, symbols);
     let abs_denom = tseytin_select_array(
         denom_sign.clone(),
-        denom_bits,
+        &padded_denom,
         &minus_denom,
         clauses,
         symbols,
     );
 
     let mut r = abs_numer;
-    r.extend(std::iter::repeat_n(r[bit_count - 1].clone(), bit_count));
-    let mut d = std::iter::repeat_n(false.into(), bit_count).collect_vec();
+    // R register should be 2*bit_count_padded wide
+    r.extend(std::iter::repeat_n(false.into(), bit_count_padded));
+    let mut d = std::iter::repeat_n(false.into(), bit_count_padded).collect_vec();
     d.extend(abs_denom.clone());
 
-    let minus_d = tseytin_negate(&d.clone(), 2 * bit_count, clauses, symbols);
+    let minus_d = tseytin_negate(&d.clone(), 2 * bit_count_padded, clauses, symbols);
     let mut rminusd;
 
-    for i in (0..bit_count).rev() {
+    for i in (0..bit_count_padded).rev() {
         // r << 1
-        for j in (1..bit_count * 2).rev() {
+        for j in (1..bit_count_padded * 2).rev() {
             r[j] = r[j - 1].clone();
         }
         r[0] = false.into();
@@ -1010,17 +1028,21 @@ fn tseytin_divmod(
         rminusd = tseytin_int_adder(
             &r.clone(),
             &minus_d.clone(),
-            2 * bit_count,
+            2 * bit_count_padded,
             clauses,
             symbols,
         );
 
-        // q[i] = inverse of sign bit - 1 if positive, 0 if negative
-        quotient[i] = tseytin_not(rminusd[2 * bit_count - 1].clone(), clauses, symbols);
+        let q_bit = tseytin_not(rminusd[2 * bit_count_padded - 1].clone(), clauses, symbols);
 
-        for j in 0..(2 * bit_count) {
+        // We only need bit_count bits for the output quotient
+        if i < bit_count {
+            quotient[i] = q_bit.clone();
+        }
+
+        for j in 0..(2 * bit_count_padded) {
             r[j] = tseytin_mux(
-                quotient[i].clone(),
+                q_bit.clone(),
                 r[j].clone(),       // use r if negative
                 rminusd[j].clone(), // use r-d if positive
                 clauses,
@@ -1085,10 +1107,11 @@ fn cnf_int_safemod(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
     // The restoring-division algorithm uses a 2*bit_count wide "r" register.
     // The final remainder is stored in the upper half of that register.
-    let bit_count = numer_bits.len();
+    // We added 1 bit of padding in tseytin_divmod, so bit_count is numer_bits.len() + 1
+    let bit_count_padded = numer_bits.len() + 1;
     let remainder: Vec<Expr> = full_remainder
         .iter()
-        .skip(bit_count)
+        .skip(bit_count_padded)
         .take(new_bit_count)
         .cloned()
         .collect();
@@ -1100,8 +1123,15 @@ fn cnf_int_safemod(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         &mut new_symbols,
     );
 
+    // Ensure abs_denom has enough bits for the adder (it has bit_count_padded bits)
+    let mut abs_denom_extended = abs_denom.clone();
+    if abs_denom_extended.len() < new_bit_count {
+        let last = abs_denom_extended.last().unwrap().clone();
+        abs_denom_extended.resize(new_bit_count, last);
+    }
+
     let denom_minus_remainder = tseytin_int_adder(
-        &abs_denom,
+        &abs_denom_extended,
         &minus_remainder,
         new_bit_count,
         &mut new_clauses,
