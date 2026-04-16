@@ -7,6 +7,11 @@ use tower_lsp::{
     lsp_types::*,
 };
 
+use tower_lsp::lsp_types::{
+    SemanticTokenModifier, SemanticTokenType, SemanticTokensLegend, SemanticTokensOptions,
+    SemanticTokensServerCapabilities, ServerCapabilities,
+};
+
 use crate::handlers::cache::{CacheCont, create_cache};
 
 use moka::future::Cache;
@@ -65,7 +70,10 @@ impl LanguageServer for Backend {
                                     SemanticTokenType::new("given"),
                                     SemanticTokenType::new("givenVar"),
                                 ],
-                                token_modifiers: vec![],
+                                token_modifiers: vec![
+                                    SemanticTokenModifier::DECLARATION,
+                                    SemanticTokenModifier::READONLY,
+                                ],
                             },
                             full: Some(SemanticTokensFullOptions::Bool(true)),
                             range: None,

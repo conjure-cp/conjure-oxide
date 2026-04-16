@@ -12,9 +12,8 @@ pub const TOKEN_TYPE_FINDVAR: u32 = 7;
 pub const TOKEN_TYPE_GIVEN: u32 = 8;
 pub const TOKEN_TYPE_GIVENVAR: u32 = 9;
 
-pub const MODIFIER_NONE: u32 = 0;
-pub const MODIFIER_DECLARATION: u32 = 1;
-pub const MODIFIER_READONLY: u32 = 2;
+pub const MODIFIER_DECLARATION: u32 = 0;
+pub const MODIFIER_READONLY: u32 = 1;
 
 pub struct TokenEncoding {
     pub ty: u32,
@@ -26,51 +25,51 @@ pub fn token_encoding(kind: &SymbolKind) -> Option<TokenEncoding> {
     match kind {
         SymbolKind::Integer => Some(TokenEncoding {
             ty: TOKEN_TYPE_NUMBER,
-            modifiers: MODIFIER_NONE,
+            modifiers: 0,
         }),
         SymbolKind::Decimal => Some(TokenEncoding {
             ty: TOKEN_TYPE_NUMBER,
-            modifiers: MODIFIER_NONE,
+            modifiers: 0,
         }),
         SymbolKind::Function => Some(TokenEncoding {
             ty: TOKEN_TYPE_FUNCTION,
-            modifiers: MODIFIER_NONE,
+            modifiers: 0,
         }),
         SymbolKind::Variable => Some(TokenEncoding {
             ty: TOKEN_TYPE_VARIABLE,
-            modifiers: MODIFIER_NONE,
+            modifiers: 0,
         }),
         SymbolKind::Constant => Some(TokenEncoding {
             ty: TOKEN_TYPE_VARIABLE,
-            modifiers: MODIFIER_READONLY,
+            modifiers: (1 << MODIFIER_READONLY),
         }),
         SymbolKind::Letting => Some(TokenEncoding {
             ty: TOKEN_TYPE_LETTING,
-            modifiers: MODIFIER_NONE,
+            modifiers: 0,
         }),
         SymbolKind::Find => Some(TokenEncoding {
             ty: TOKEN_TYPE_FIND,
-            modifiers: MODIFIER_NONE,
+            modifiers: 0,
         }),
         SymbolKind::Domain => Some(TokenEncoding {
             ty: TOKEN_TYPE_DOMAIN,
-            modifiers: MODIFIER_NONE,
+            modifiers: 0,
         }),
         SymbolKind::FindVar => Some(TokenEncoding {
             ty: TOKEN_TYPE_FINDVAR,
-            modifiers: MODIFIER_DECLARATION,
+            modifiers: (1 << MODIFIER_DECLARATION),
         }),
         SymbolKind::LettingVar => Some(TokenEncoding {
             ty: TOKEN_TYPE_LETTINGVAR,
-            modifiers: MODIFIER_DECLARATION,
+            modifiers: (1 << MODIFIER_DECLARATION),
         }),
         SymbolKind::Given => Some(TokenEncoding {
             ty: TOKEN_TYPE_GIVEN,
-            modifiers: MODIFIER_NONE,
+            modifiers: 0,
         }),
         SymbolKind::GivenVar => Some(TokenEncoding {
             ty: TOKEN_TYPE_GIVENVAR,
-            modifiers: MODIFIER_DECLARATION,
+            modifiers: (1 << MODIFIER_DECLARATION),
         }),
     }
 }
