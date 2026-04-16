@@ -81,6 +81,7 @@ fn bind() {
         .allowlist_function("minion_getVarByName")
         .allowlist_function("minion_newVar")
         .allowlist_function("minion_addConstraintMidsearch")
+        .allowlist_function("minion_newVarMidsearch")
         .allowlist_function("instance_new")
         .allowlist_function("instance_free")
         .allowlist_function("instance_addSearchOrder")
