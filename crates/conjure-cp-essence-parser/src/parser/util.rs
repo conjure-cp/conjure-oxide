@@ -4,7 +4,8 @@ use tree_sitter::{Node, Parser, Tree};
 use tree_sitter_essence::LANGUAGE;
 
 use super::traversal::WalkDFS;
-use crate::diagnostics::source_map::{SourceMap, SpanId};
+use crate::diagnostics::diagnostics_api::SymbolKind;
+use crate::diagnostics::source_map::{HoverInfo, SourceMap, SpanId, span_with_hover};
 use crate::errors::RecoverableParseError;
 use conjure_cp_core::ast::{Name, SymbolTablePtr};
 
@@ -69,6 +70,27 @@ impl<'a> ParseContext<'a> {
         let span = self.source_map.spans.get(span_id as usize)?;
         Some(span.start_point.line + 1)
     }
+
+    /// Helper to add to span and documentation hover info into the source map
+    pub fn add_span_and_doc_hover(
+        &mut self,
+        node: &tree_sitter::Node,
+        doc_key: &str, // name of the documentation file in Bits
+        kind: SymbolKind,
+        ty: Option<String>,
+        decl_span: Option<u32>,
+    ) {
+        if let Some(description) = get_documentation(doc_key) {
+            let hover = HoverInfo {
+                description,
+                kind: Some(kind),
+                ty,
+                decl_span,
+            };
+            span_with_hover(node, self.source_code, self.source_map, hover);
+        }
+        // If documentation is not found, do nothing (no fallback, no addition to source map)
+    }
 }
 
 // Used to detect type mismatches during parsing.
@@ -76,6 +98,7 @@ impl<'a> ParseContext<'a> {
 pub enum TypecheckingContext {
     Boolean,
     Arithmetic,
+    Set,
     /// Context is unknown or flexible
     Unknown,
 }
@@ -159,6 +182,31 @@ pub fn get_metavars<'a>(node: &'a Node<'a>, src: &'a str) -> impl Iterator<Item 
             .named_child(0)
             .map(|name| src[name.start_byte()..name.end_byte()].to_string())
     })
+}
+
+/// Fetch Essence syntax documentation from Conjure's `docs/bits/` folder on GitHub.
+///
+/// `name` is the name of the documentation file (without .md suffix). If the file is not found or an error occurs, returns None.
+pub fn get_documentation(name: &str) -> Option<String> {
+    let mut base = name.to_string();
+    if let Some(stripped) = base.strip_suffix(".md") {
+        base = stripped.to_string();
+    }
+
+    // This url is for raw Markdown bytes
+    let url =
+        format!("https://raw.githubusercontent.com/conjure-cp/conjure/main/docs/bits/{base}.md");
+
+    let output = std::process::Command::new("curl")
+        .args(["-fsSL", &url])
+        .output()
+        .ok()?;
+
+    if !output.status.success() {
+        return None;
+    }
+
+    String::from_utf8(output.stdout).ok()
 }
 
 mod test {
