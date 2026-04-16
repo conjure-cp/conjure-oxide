@@ -5,6 +5,7 @@ use conjure_cp::{
         comprehension::{Comprehension, ComprehensionQualifier},
         eval_constant,
     },
+    bug,
     solver::SolverError,
 };
 use uniplate::Biplate as _;
@@ -49,12 +50,13 @@ fn expand_qualifiers(
     }
 
     match &comprehension.qualifiers[qualifier_index] {
-        ComprehensionQualifier::Generator { name, domain } => {
-            let values = resolve_generator_values(name, domain)?;
-            let quantified_declaration = lookup_quantified_declaration(comprehension, name)?;
+        ComprehensionQualifier::Generator { ptr } => {
+            let name = ptr.name().clone();
+            let domain = ptr.domain().expect("generator declaration has domain");
+            let values = resolve_generator_values(&name, &domain)?;
 
             for literal in values {
-                with_temporary_quantified_binding(&quantified_declaration, &literal, || {
+                with_temporary_quantified_binding(ptr, &literal, || {
                     expand_qualifiers(comprehension, qualifier_index + 1, expanded, parent_symbols)
                 })?;
             }
@@ -63,6 +65,11 @@ fn expand_qualifiers(
             if evaluate_guard(condition)? {
                 expand_qualifiers(comprehension, qualifier_index + 1, expanded, parent_symbols)?;
             }
+        }
+        ComprehensionQualifier::ExpressionGenerator { .. } => {
+            bug!(
+                "Comprehension expander should not be called on comprehensions containing ExpressionGenerator"
+            );
         }
     }
 
@@ -79,17 +86,6 @@ fn resolve_generator_values(name: &Name, domain: &DomainPtr) -> Result<Vec<Liter
     resolved.values().map(|iter| iter.collect()).map_err(|err| {
         SolverError::ModelFeatureNotSupported(format!(
             "quantified variable '{name}' has non-enumerable domain: {err}"
-        ))
-    })
-}
-
-fn lookup_quantified_declaration(
-    comprehension: &Comprehension,
-    name: &Name,
-) -> Result<DeclarationPtr, SolverError> {
-    comprehension.symbols().lookup_local(name).ok_or_else(|| {
-        SolverError::ModelInvalid(format!(
-            "quantified variable '{name}' is missing from local comprehension symbol table"
         ))
     })
 }

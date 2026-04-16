@@ -1,0 +1,126 @@
+name: Test
+
+on:
+  push:
+    branches:
+    - main # run for pushes to the main branch. other branches need to create a PR if they want testing.
+    paths:
+    - crates/**
+    - tests-integration/**
+    - Cargo.*
+    - rust-toolchain.toml
+    - .github/workflows/test.yml
+  pull_request:
+    paths:
+    - crates/**
+    - tests-integration/**
+    - Cargo.*
+    - rust-toolchain.toml
+    - .github/workflows/test.yml
+  workflow_dispatch:
+
+
+env:
+  # we define the following 2 values as the defaults here, matrix jobs may overwrite their values.
+  os: ubuntu-latest
+  rust_release: stable
+
+  # for smaller cache size
+  CARGO_INCREMENTAL: 0
+
+  # to avoid github rate limits (for z3-bundled, for example)
+  READ_ONLY_GITHUB_TOKEN: ${{ secrets.PUBLIC_REPO_TOKEN }}
+
+jobs:
+  test:
+    name: Test
+
+    timeout-minutes: 120
+    strategy:
+      # run all combinations of the matrix even if one combination fails.
+      fail-fast: false
+      matrix:
+        rust_release:
+        - stable
+        - nightly
+        conjure_version:
+        - 2.6.0
+        os:
+        - ubuntu-latest
+        - macos-latest
+        include:
+        - os: ubuntu-latest
+          release_suffix: linux
+        - os: macos-latest
+          release_suffix: macos
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        submodules: recursive
+        fetch-depth: 0
+
+    - name: free_disk_space.sh
+      run: .github/workflows/tools/free_disk_space.sh
+
+    - name: Restore cache
+      id: restore_cache
+      if: ${{ matrix.os == 'ubuntu-latest' }}
+      uses: actions/cache/restore@v5
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
+          ~/conjure
+        key: test--${{ matrix.os }}--${{ matrix.rust_release }}--${{ github.event.repository.updated_at }}
+        restore-keys: test--${{ matrix.os }}--${{ matrix.rust_release }}
+
+    # Override RUSTUP_TOOLCHAIN to nightly when we are testing with nightly
+    # This value is read from the rust-toolchain.toml file otherwise
+    - name: Set RUSTUP_TOOLCHAIN
+      if: ${{ matrix.rust_release == 'nightly' }}
+      run: echo "RUSTUP_TOOLCHAIN=nightly" >> $GITHUB_ENV
+
+    - name: rustup
+      run: rustup update ${{ matrix.rust_release }} && rustup default ${{ matrix.rust_release }}
+
+    - uses: ./.github/actions/install-conjure
+      with:
+        os_arch: ${{ matrix.release_suffix }}
+        version: ${{ matrix.conjure_version }}
+
+    - name: Install z3 (Ubuntu)
+      if: ${{ matrix.os == 'ubuntu-latest' }}
+      uses: pavpanchekha/setup-z3@v0.3.0
+      with:
+        version: 4.16.0
+        distribution: glibc-2.39
+
+    - name: Install z3 (macOS)
+      if: ${{ matrix.os == 'macos-latest' }}
+      run: brew install z3
+
+    - name: Install coreutils (macOS)
+      if: ${{ matrix.os == 'macos-latest' }}
+      run: brew install coreutils
+
+    - name: Run tests
+      run: make test
+
+    - name: Save cache
+      if: ${{ always() && github.event_name == 'push' && matrix.os == 'ubuntu-latest' && steps.restore_cache.outputs.cache-hit != 'true' }}
+      uses: actions/cache/save@v5
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
+          ~/conjure
+        key: test--${{ matrix.os }}--${{ matrix.rust_release }}--${{ github.event.repository.updated_at }}

@@ -1,4 +1,4 @@
-use crate::errors::FatalParseError;
+use crate::errors::{FatalParseError, RecoverableParseError};
 use crate::expression::parse_expression;
 use crate::field;
 use crate::parser::ParseContext;
@@ -12,15 +12,31 @@ pub fn parse_abstract(
     ctx: &mut ParseContext,
     node: &Node,
 ) -> Result<Option<AbstractLiteral<Expression>>, FatalParseError> {
+    // If we're in a set context, we can only parse set literals, so add an error if we see any other kind of abstract literal
+    if ctx.typechecking_context == TypecheckingContext::Set && node.kind() != "set_literal" {
+        ctx.record_error(RecoverableParseError::new(
+            format!(
+                "Type error: {}\n\tExpected: set\n\tGot: {}",
+                ctx.source_code[node.start_byte()..node.end_byte()].trim(),
+                node.kind()
+            ),
+            Some(node.range()),
+        ));
+        return Ok(None);
+    }
+
     match node.kind() {
         "record" => parse_record(ctx, node),
         "tuple" => parse_tuple(ctx, node),
         "matrix" => parse_matrix(ctx, node),
         "set_literal" => parse_set_literal(ctx, node),
-        _ => Err(FatalParseError::internal_error(
-            format!("Expected abstract literal, got: {}", node.kind()),
-            Some(node.range()),
-        )),
+        _ => {
+            ctx.record_error(RecoverableParseError::new(
+                format!("Expected abstract literal, got: {}", node.kind()),
+                Some(node.range()),
+            ));
+            Ok(None)
+        }
     }
 }
 
@@ -30,11 +46,16 @@ fn parse_record(
 ) -> Result<Option<AbstractLiteral<Expression>>, FatalParseError> {
     let mut values = Vec::new();
     for child in node.children_by_field_name("name_value_pair", &mut node.walk()) {
-        let name_node = field!(child, "name");
+        let Some(name_node) = field!(recover, ctx, child, "name") else {
+            return Ok(None);
+        };
         let name_str = &ctx.source_code[name_node.start_byte()..name_node.end_byte()];
         let name = conjure_cp_core::ast::Name::user(name_str);
 
-        let Some(value) = parse_expression(ctx, field!(child, "value"))? else {
+        let Some(value_node) = field!(recover, ctx, child, "value") else {
+            return Ok(None);
+        };
+        let Some(value) = parse_expression(ctx, value_node)? else {
             return Ok(None);
         };
         values.push(conjure_cp_core::ast::records::RecordValue { name, value });

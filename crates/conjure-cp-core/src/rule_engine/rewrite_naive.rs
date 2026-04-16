@@ -1,23 +1,33 @@
 use super::{RewriteError, RuleSet, resolve_rules::RuleData};
 use crate::{
     Model,
-    ast::{Expression as Expr, assertions::debug_assert_model_well_formed},
+    ast::Expression as Expr,
     bug,
     rule_engine::{
         get_rules_grouped,
         rewriter_common::{
             RuleResult, VariableDeclarationSnapshot, log_rule_application,
-            snapshot_variable_declarations,
+            snapshot_variable_declarations, try_rewrite_value_letting_once,
         },
         submodel_zipper::expression_ctx,
     },
-    settings::{Rewriter, set_current_rewriter},
+    settings::{
+        Rewriter, default_rule_trace_enabled, rule_trace_enabled, rule_trace_verbose_enabled,
+        set_current_rewriter,
+    },
     stats::RewriterStats,
 };
 
 use itertools::Itertools;
 use std::{sync::Arc, time::Instant};
-use tracing::{Level, span, trace};
+use tracing::trace;
+
+// debug imports
+#[cfg(debug_assertions)]
+use {
+    crate::ast::assertions::debug_assert_model_well_formed,
+    tracing::{Level, span},
+};
 
 type VariableSnapshots = Option<(VariableDeclarationSnapshot, VariableDeclarationSnapshot)>;
 type ApplicableRule<'a, CtxFnType> = (RuleResult<'a>, u16, Expr, CtxFnType, VariableSnapshots);
@@ -43,15 +53,19 @@ pub fn rewrite_naive<'a>(
     rewriter_stats.is_optimization_enabled = Some(false);
     let run_start = Instant::now();
 
-    trace!(
-        target: "rule_engine_human",
-        "Model before rewriting:\n\n{}\n--\n",
-        model
-    );
-    trace!(
-        target: "rule_engine_human_verbose",
-        "elapsed_s,rule_level,rule_name,rule_set,status,expression"
-    );
+    if rule_trace_enabled() && default_rule_trace_enabled() {
+        trace!(
+            target: "rule_engine_rule_trace",
+            "Model before rewriting:\n\n{}\n--\n",
+            model
+        );
+    }
+    if rule_trace_enabled() && rule_trace_verbose_enabled() {
+        trace!(
+            target: "rule_engine_rule_trace_verbose",
+            "elapsed_s,rule_level,rule_name,rule_set,status,expression"
+        );
+    }
 
     // Rewrite until there are no more rules left to apply.
     while done_something {
@@ -75,11 +89,13 @@ pub fn rewrite_naive<'a>(
         .stats
         .add_rewriter_run(rewriter_stats);
 
-    trace!(
-        target: "rule_engine_human",
-        "Final model:\n\n{}",
-        model
-    );
+    if rule_trace_enabled() && default_rule_trace_enabled() {
+        trace!(
+            target: "rule_engine_rule_trace",
+            "Final model:\n\n{}",
+            model
+        );
+    }
     Ok(model)
 }
 
@@ -91,8 +107,15 @@ fn try_rewrite_model(
     rules_grouped: &Vec<(u16, Vec<RuleData<'_>>)>,
     prop_multiple_equally_applicable: bool,
     stats: &mut RewriterStats,
-    run_start: &Instant,
+    #[cfg(debug_assertions)] run_start: &Instant,
+    #[cfg(not(debug_assertions))] _: &Instant,
 ) -> Option<()> {
+    if let Some(result) =
+        try_rewrite_value_letting_once(submodel, rules_grouped, prop_multiple_equally_applicable)
+    {
+        return Some(result);
+    }
+
     type CtxFn = Arc<dyn Fn(Expr) -> Expr>;
     let mut results: Vec<ApplicableRule<'_, CtxFn>> = vec![];
 
@@ -122,14 +145,18 @@ fn try_rewrite_model(
 
                 match (rd.rule.application)(&expr, &submodel.symbols()) {
                     Ok(red) => {
-                        log_verbose_rule_attempt(
-                            run_start,
-                            priority,
-                            rd.rule.name,
-                            rd.rule_set.name,
-                            "success",
-                            &expr,
-                        );
+                        // when called a lot, this becomes very expensive!
+                        #[cfg(debug_assertions)]
+                        if rule_trace_enabled() && rule_trace_verbose_enabled() {
+                            log_verbose_rule_attempt(
+                                run_start,
+                                priority,
+                                rd.rule.name,
+                                rd.rule_set.name,
+                                "success",
+                                &expr,
+                            );
+                        }
 
                         // Count successful rule applications
                         stats.rewriter_rule_applications =
@@ -154,24 +181,18 @@ fn try_rewrite_model(
                         ));
                     }
                     Err(_) => {
-                        log_verbose_rule_attempt(
-                            run_start,
-                            priority,
-                            rd.rule.name,
-                            rd.rule_set.name,
-                            "fail",
-                            &expr,
-                        );
-
                         // when called a lot, this becomes very expensive!
                         #[cfg(debug_assertions)]
-                        tracing::trace!(
-                            "Rule attempted but not applied: {} (priority {}, rule set {}), to expression: {}",
-                            rd.rule.name,
-                            priority,
-                            rd.rule_set.name,
-                            expr
-                        );
+                        if rule_trace_enabled() && rule_trace_verbose_enabled() {
+                            log_verbose_rule_attempt(
+                                run_start,
+                                priority,
+                                rd.rule.name,
+                                rd.rule_set.name,
+                                "fail",
+                                &expr,
+                            );
+                        }
                     }
                 }
             }
@@ -184,9 +205,7 @@ fn try_rewrite_model(
     }
 
     match results.as_slice() {
-        [] => {
-            return None;
-        } // no rules are applicable.
+        [] => return None, // no rules are applicable.
         [(result, _priority, expr, ctx, variable_snapshots), ..] => {
             if prop_multiple_equally_applicable {
                 assert_no_multiple_equally_applicable_rules(&results, rules_grouped);
@@ -223,6 +242,7 @@ fn try_rewrite_model(
     Some(())
 }
 
+#[cfg(debug_assertions)]
 fn csv_escape(field: &str) -> String {
     if field.contains([',', '"', '\n', '\r']) {
         format!("\"{}\"", field.replace('"', "\"\""))
@@ -231,6 +251,7 @@ fn csv_escape(field: &str) -> String {
     }
 }
 
+#[cfg(debug_assertions)]
 fn log_verbose_rule_attempt(
     run_start: &Instant,
     priority: &u16,
@@ -242,7 +263,7 @@ fn log_verbose_rule_attempt(
     let elapsed_seconds = run_start.elapsed().as_secs_f64();
     let expr_str = expr.to_string();
     trace!(
-        target: "rule_engine_human_verbose",
+        target: "rule_engine_rule_trace_verbose",
         "{:.3},{},{},{},{},{}",
         elapsed_seconds,
         priority,
