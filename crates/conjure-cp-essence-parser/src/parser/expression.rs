@@ -1,12 +1,11 @@
 use crate::diagnostics::diagnostics_api::SymbolKind;
-use crate::diagnostics::source_map::{HoverInfo, span_with_hover};
 use crate::errors::{FatalParseError, RecoverableParseError};
 use crate::parser::ParseContext;
 use crate::parser::atom::parse_atom;
 use crate::parser::comprehension::parse_quantifier_or_aggregate_expr;
 use crate::util::TypecheckingContext;
 use crate::util::named_children;
-use crate::{field, named_child};
+use crate::{child, field, named_child};
 use conjure_cp_core::ast::{Atom, DeclarationKind, ReturnType, Typeable};
 use conjure_cp_core::ast::{Expression, Metadata, Moo};
 use conjure_cp_core::into_matrix_expr;
@@ -371,9 +370,8 @@ fn parse_comparison_expression(
             parse_binary_expression(ctx, &inner)
         }
         "set_comparison" => {
-            // Set comparisons require set operands (no specific type checking for now)
-            // TODO: add typechecking for sets
-            ctx.typechecking_context = TypecheckingContext::Unknown;
+            // Set comparisons require set operands (except 'in', which is hadled later)
+            ctx.typechecking_context = TypecheckingContext::Set;
             parse_binary_expression(ctx, &inner)
         }
         "all_diff_comparison" => {
@@ -431,7 +429,7 @@ fn parse_list_combining_expression(
         return Ok(None);
     };
 
-    match operator_str {
+    let expr = match operator_str {
         "and" => Ok(Some(Expression::And(Metadata::new(), Moo::new(inner)))),
         "or" => Ok(Some(Expression::Or(Metadata::new(), Moo::new(inner)))),
         "sum" => Ok(Some(Expression::Sum(Metadata::new(), Moo::new(inner)))),
@@ -445,7 +443,19 @@ fn parse_list_combining_expression(
             ));
             Ok(None)
         }
+    };
+
+    if expr.is_ok() {
+        ctx.add_span_and_doc_hover(
+            &operator_node,
+            operator_str,
+            SymbolKind::Function,
+            None,
+            None,
+        );
     }
+
+    expr
 }
 
 fn parse_all_diff_comparison(
@@ -459,6 +469,14 @@ fn parse_all_diff_comparison(
         return Ok(None);
     };
 
+    let all_diff_keyword_node = child!(node, 0, "allDiff");
+    ctx.add_span_and_doc_hover(
+        &all_diff_keyword_node,
+        "allDiff",
+        SymbolKind::Function,
+        None,
+        None,
+    );
     Ok(Some(Expression::AllDiff(Metadata::new(), Moo::new(inner))))
 }
 
@@ -472,15 +490,42 @@ fn parse_unary_expression(
     let Some(inner) = parse_expression(ctx, expr_node)? else {
         return Ok(None);
     };
+
     match node.kind() {
         "negative_expr" => Ok(Some(Expression::Neg(Metadata::new(), Moo::new(inner)))),
         "abs_value" => Ok(Some(Expression::Abs(Metadata::new(), Moo::new(inner)))),
         "not_expr" => Ok(Some(Expression::Not(Metadata::new(), Moo::new(inner)))),
-        "toInt_expr" => Ok(Some(Expression::ToInt(Metadata::new(), Moo::new(inner)))),
-        "factorial_expr" => Ok(Some(Expression::Factorial(
-            Metadata::new(),
-            Moo::new(inner),
-        ))),
+        "toInt_expr" => {
+            let to_int_keyword_node = child!(node, 0, "toInt");
+            ctx.add_span_and_doc_hover(
+                &to_int_keyword_node,
+                "toInt",
+                SymbolKind::Function,
+                None,
+                None,
+            );
+            Ok(Some(Expression::ToInt(Metadata::new(), Moo::new(inner))))
+        }
+        "factorial_expr" => {
+            // looking for the operator node (either '!' at the end or 'factorial' at the start) to add hover info
+            if let Some(op_node) = (0..node.child_count())
+                .filter_map(|i| node.child(i.try_into().unwrap()))
+                .find(|c| matches!(c.kind(), "!" | "factorial"))
+            {
+                ctx.add_span_and_doc_hover(
+                    &op_node,
+                    "post_factorial",
+                    SymbolKind::Function,
+                    None,
+                    None,
+                );
+            }
+
+            Ok(Some(Expression::Factorial(
+                Metadata::new(),
+                Moo::new(inner),
+            )))
+        }
         "sub_bool_expr" | "sub_arith_expr" => Ok(Some(inner)),
         _ => {
             ctx.record_error(RecoverableParseError::new(
@@ -496,12 +541,30 @@ pub fn parse_binary_expression(
     ctx: &mut ParseContext,
     node: &Node,
 ) -> Result<Option<Expression>, FatalParseError> {
+    let Some(op_node) = field!(recover, ctx, node, "operator") else {
+        return Ok(None);
+    };
+    let op_str = &ctx.source_code[op_node.start_byte()..op_node.end_byte()];
+
+    let saved_ctx = ctx.typechecking_context;
+
+    // Special handling for 'in' operator, as the left operand doesn't have to be a set
+    if op_str == "in" {
+        ctx.typechecking_context = TypecheckingContext::Unknown
+    }
+
+    // parse left operand
     let Some(left_node) = field!(recover, ctx, node, "left") else {
         return Ok(None);
     };
     let Some(left) = parse_expression(ctx, left_node)? else {
         return Ok(None);
     };
+
+    // reset context, if needed
+    ctx.typechecking_context = saved_ctx;
+
+    // parse right operand
     let Some(right_node) = field!(recover, ctx, node, "right") else {
         return Ok(None);
     };
@@ -514,40 +577,60 @@ pub fn parse_binary_expression(
     };
     let op_str = &ctx.source_code[op_node.start_byte()..op_node.end_byte()];
 
-    let mut description = format!("Operator '{op_str}'");
+    let mut doc_name = "";
     let expr = match op_str {
         // NB: We are deliberately setting the index domain to 1.., not 1..2.
         // Semantically, this means "a list that can grow/shrink arbitrarily".
         // This is expected by rules which will modify the terms of the sum expression
         // (e.g. by partially evaluating them).
-        "+" => Ok(Some(Expression::Sum(
-            Metadata::new(),
-            Moo::new(matrix_expr![left, right; domain_int!(1..)]),
-        ))),
-        "-" => Ok(Some(Expression::Minus(
-            Metadata::new(),
-            Moo::new(left),
-            Moo::new(right),
-        ))),
-        "*" => Ok(Some(Expression::Product(
-            Metadata::new(),
-            Moo::new(matrix_expr![left, right; domain_int!(1..)]),
-        ))),
-        "/\\" => Ok(Some(Expression::And(
-            Metadata::new(),
-            Moo::new(matrix_expr![left, right; domain_int!(1..)]),
-        ))),
-        "\\/" => Ok(Some(Expression::Or(
-            Metadata::new(),
-            Moo::new(matrix_expr![left, right; domain_int!(1..)]),
-        ))),
-        "**" => Ok(Some(Expression::UnsafePow(
-            Metadata::new(),
-            Moo::new(left),
-            Moo::new(right),
-        ))),
+        "+" => {
+            doc_name = "L_Plus";
+            Ok(Some(Expression::Sum(
+                Metadata::new(),
+                Moo::new(matrix_expr![left, right; domain_int!(1..)]),
+            )))
+        }
+        "-" => {
+            doc_name = "L_Minus";
+            Ok(Some(Expression::Minus(
+                Metadata::new(),
+                Moo::new(left),
+                Moo::new(right),
+            )))
+        }
+        "*" => {
+            doc_name = "L_Times";
+            Ok(Some(Expression::Product(
+                Metadata::new(),
+                Moo::new(matrix_expr![left, right; domain_int!(1..)]),
+            )))
+        }
+        "/\\" => {
+            doc_name = "and";
+            Ok(Some(Expression::And(
+                Metadata::new(),
+                Moo::new(matrix_expr![left, right; domain_int!(1..)]),
+            )))
+        }
+        "\\/" => {
+            // No documentation for or in Bits yet
+            doc_name = "or";
+            Ok(Some(Expression::Or(
+                Metadata::new(),
+                Moo::new(matrix_expr![left, right; domain_int!(1..)]),
+            )))
+        }
+        "**" => {
+            doc_name = "L_Pow";
+            Ok(Some(Expression::UnsafePow(
+                Metadata::new(),
+                Moo::new(left),
+                Moo::new(right),
+            )))
+        }
         "/" => {
             //TODO: add checks for if division is safe or not
+            doc_name = "L_Div";
             Ok(Some(Expression::UnsafeDiv(
                 Metadata::new(),
                 Moo::new(left),
@@ -556,99 +639,153 @@ pub fn parse_binary_expression(
         }
         "%" => {
             //TODO: add checks for if mod is safe or not
+            doc_name = "L_Mod";
             Ok(Some(Expression::UnsafeMod(
                 Metadata::new(),
                 Moo::new(left),
                 Moo::new(right),
             )))
         }
-        "=" => Ok(Some(Expression::Eq(
-            Metadata::new(),
-            Moo::new(left),
-            Moo::new(right),
-        ))),
-        "!=" => Ok(Some(Expression::Neq(
-            Metadata::new(),
-            Moo::new(left),
-            Moo::new(right),
-        ))),
-        "<=" => Ok(Some(Expression::Leq(
-            Metadata::new(),
-            Moo::new(left),
-            Moo::new(right),
-        ))),
-        ">=" => Ok(Some(Expression::Geq(
-            Metadata::new(),
-            Moo::new(left),
-            Moo::new(right),
-        ))),
-        "<" => Ok(Some(Expression::Lt(
-            Metadata::new(),
-            Moo::new(left),
-            Moo::new(right),
-        ))),
-        ">" => Ok(Some(Expression::Gt(
-            Metadata::new(),
-            Moo::new(left),
-            Moo::new(right),
-        ))),
-        "->" => Ok(Some(Expression::Imply(
-            Metadata::new(),
-            Moo::new(left),
-            Moo::new(right),
-        ))),
-        "<->" => Ok(Some(Expression::Iff(
-            Metadata::new(),
-            Moo::new(left),
-            Moo::new(right),
-        ))),
-        "<lex" => Ok(Some(Expression::LexLt(
-            Metadata::new(),
-            Moo::new(left),
-            Moo::new(right),
-        ))),
-        ">lex" => Ok(Some(Expression::LexGt(
-            Metadata::new(),
-            Moo::new(left),
-            Moo::new(right),
-        ))),
-        "<=lex" => Ok(Some(Expression::LexLeq(
-            Metadata::new(),
-            Moo::new(left),
-            Moo::new(right),
-        ))),
-        ">=lex" => Ok(Some(Expression::LexGeq(
-            Metadata::new(),
-            Moo::new(left),
-            Moo::new(right),
-        ))),
-        "in" => Ok(Some(Expression::In(
-            Metadata::new(),
-            Moo::new(left),
-            Moo::new(right),
-        ))),
-        "subset" => Ok(Some(Expression::Subset(
-            Metadata::new(),
-            Moo::new(left),
-            Moo::new(right),
-        ))),
-        "subsetEq" => Ok(Some(Expression::SubsetEq(
-            Metadata::new(),
-            Moo::new(left),
-            Moo::new(right),
-        ))),
-        "supset" => Ok(Some(Expression::Supset(
-            Metadata::new(),
-            Moo::new(left),
-            Moo::new(right),
-        ))),
-        "supsetEq" => Ok(Some(Expression::SupsetEq(
-            Metadata::new(),
-            Moo::new(left),
-            Moo::new(right),
-        ))),
+
+        "=" => {
+            doc_name = "L_Eq"; //no docs yet
+            Ok(Some(Expression::Eq(
+                Metadata::new(),
+                Moo::new(left),
+                Moo::new(right),
+            )))
+        }
+        "!=" => {
+            doc_name = "L_Neq"; //no docs yet
+            Ok(Some(Expression::Neq(
+                Metadata::new(),
+                Moo::new(left),
+                Moo::new(right),
+            )))
+        }
+        "<=" => {
+            doc_name = "L_Leq"; //no docs yet
+            Ok(Some(Expression::Leq(
+                Metadata::new(),
+                Moo::new(left),
+                Moo::new(right),
+            )))
+        }
+        ">=" => {
+            doc_name = "L_Geq"; //no docs yet
+            Ok(Some(Expression::Geq(
+                Metadata::new(),
+                Moo::new(left),
+                Moo::new(right),
+            )))
+        }
+        "<" => {
+            doc_name = "L_Lt"; //no docs yet
+            Ok(Some(Expression::Lt(
+                Metadata::new(),
+                Moo::new(left),
+                Moo::new(right),
+            )))
+        }
+        ">" => {
+            doc_name = "L_Gt"; //no docs yet
+            Ok(Some(Expression::Gt(
+                Metadata::new(),
+                Moo::new(left),
+                Moo::new(right),
+            )))
+        }
+
+        "->" => {
+            doc_name = "L_Imply"; //no docs yet
+            Ok(Some(Expression::Imply(
+                Metadata::new(),
+                Moo::new(left),
+                Moo::new(right),
+            )))
+        }
+        "<->" => {
+            doc_name = "L_Iff"; //no docs yet
+            Ok(Some(Expression::Iff(
+                Metadata::new(),
+                Moo::new(left),
+                Moo::new(right),
+            )))
+        }
+        "<lex" => {
+            doc_name = "L_LexLt"; //no docs yet
+            Ok(Some(Expression::LexLt(
+                Metadata::new(),
+                Moo::new(left),
+                Moo::new(right),
+            )))
+        }
+        ">lex" => {
+            doc_name = "L_LexGt"; //no docs yet
+            Ok(Some(Expression::LexGt(
+                Metadata::new(),
+                Moo::new(left),
+                Moo::new(right),
+            )))
+        }
+        "<=lex" => {
+            doc_name = "L_LexLeq"; //no docs yet
+            Ok(Some(Expression::LexLeq(
+                Metadata::new(),
+                Moo::new(left),
+                Moo::new(right),
+            )))
+        }
+        ">=lex" => {
+            doc_name = "L_LexGeq"; //no docs yet
+            Ok(Some(Expression::LexGeq(
+                Metadata::new(),
+                Moo::new(left),
+                Moo::new(right),
+            )))
+        }
+        "in" => {
+            doc_name = "L_in";
+            Ok(Some(Expression::In(
+                Metadata::new(),
+                Moo::new(left),
+                Moo::new(right),
+            )))
+        }
+        "subset" => {
+            doc_name = "L_subset";
+            Ok(Some(Expression::Subset(
+                Metadata::new(),
+                Moo::new(left),
+                Moo::new(right),
+            )))
+        }
+        "subsetEq" => {
+            doc_name = "L_subsetEq";
+            Ok(Some(Expression::SubsetEq(
+                Metadata::new(),
+                Moo::new(left),
+                Moo::new(right),
+            )))
+        }
+        "supset" => {
+            doc_name = "L_supset";
+            Ok(Some(Expression::Supset(
+                Metadata::new(),
+                Moo::new(left),
+                Moo::new(right),
+            )))
+        }
+        "supsetEq" => {
+            doc_name = "L_supsetEq";
+            Ok(Some(Expression::SupsetEq(
+                Metadata::new(),
+                Moo::new(left),
+                Moo::new(right),
+            )))
+        }
         "union" => {
-            description = "set union: combines the elements from both operands".to_string();
+            doc_name = "L_union";
             Ok(Some(Expression::Union(
                 Metadata::new(),
                 Moo::new(left),
@@ -656,8 +793,7 @@ pub fn parse_binary_expression(
             )))
         }
         "intersect" => {
-            description =
-                "set intersection: keeps only elements common to both operands".to_string();
+            doc_name = "L_intersect";
             Ok(Some(Expression::Intersect(
                 Metadata::new(),
                 Moo::new(left),
@@ -674,13 +810,7 @@ pub fn parse_binary_expression(
     };
 
     if expr.is_ok() {
-        let hover = HoverInfo {
-            description,
-            kind: Some(SymbolKind::Function),
-            ty: None,
-            decl_span: None,
-        };
-        span_with_hover(&op_node, ctx.source_code, ctx.source_map, hover);
+        ctx.add_span_and_doc_hover(&op_node, doc_name, SymbolKind::Function, None, None);
     }
 
     expr
