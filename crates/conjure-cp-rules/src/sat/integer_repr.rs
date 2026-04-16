@@ -342,12 +342,11 @@ fn literal_cnf_int(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     )))
 }
 
-
-/// Converts a integer letting to a SATInt literal 
+/// Converts a integer letting to a SATInt literal
 ///
 /// ```text
 /// letting A be SATInt(...)
-/// 
+///
 ///  A
 ///  ~~>
 ///  SATInt(...)
