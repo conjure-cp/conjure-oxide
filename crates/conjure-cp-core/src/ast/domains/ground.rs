@@ -1066,12 +1066,7 @@ impl Display for GroundDomain {
                 write!(f, "function {} {} --> {} ", attribute, domain, codomain)
             }
             GroundDomain::Relation(attrs, domains) => {
-                write!(
-                    f,
-                    "relation {} of ({})",
-                    attrs,
-                    domains.iter().join(" * ")
-                )
+                write!(f, "relation {} of ({})", attrs, domains.iter().join(" * "))
             }
         }
     }

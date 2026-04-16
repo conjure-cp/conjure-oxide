@@ -258,7 +258,7 @@ impl Domain {
         {
             return Moo::new(Domain::Ground(Moo::new(GroundDomain::Relation(
                 attrs_gd,
-                doms_gd.clone(),
+                doms_gd,
             ))));
         }
 
