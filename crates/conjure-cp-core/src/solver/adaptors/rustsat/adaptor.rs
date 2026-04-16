@@ -196,6 +196,8 @@ impl SolverAdaptor for Sat {
             for lit_i in blocking_vec {
                 blocking_cl.add(lit_i);
             }
+
+            eprintln!("blocking on: {}", blocking_cl);
             solver.add_clause(blocking_cl);
         }
     }
@@ -225,34 +227,11 @@ impl SolverAdaptor for Sat {
 
             // only decision variables with boolean domains or representations using booleans are supported at this time
             let reprs = find_decl.reprs();
+            reprs.pretty();
+            println!("=================== reprs: {:#?}", reprs);
             if domain != &GroundDomain::Bool {
                 println!("{} is not a boolean", find_name);
-
-                if reprs.is_empty() {
-                    return Err(SolverError::ModelInvalid(
-                        "Only Boolean Decision Variables supported".to_string(),
-                    ))?;
-                }
-
-                // if (!reprs.has_repr(
-                //     get_repr_by_name("IntToBoolDirect").expect("No Such Repr IntToBoolDirect"),
-                // )) {
-                //     println!("no IntToBoolDirect repr");
-                //     // if (!reprs.has_repr(
-                //     //     get_repr_by_name("IntToBoolLog").expect("No Such Repr IntToBoolLog"),
-                //     // )) {
-                //     //     println!("no IntToBoolLog");
-                //     //     if (!reprs.has_repr(
-                //     //         get_repr_by_name("IntToBoolOrder")
-                //     //             .expect("No Such Repr IntToBoolOrder"),
-                //     //     )) {
-                //     //              println!("No IntToBoolOrder repr");
-                //     Err(SolverError::ModelInvalid(
-                //         "Only Boolean Decision Variables supported".to_string(),
-                //     ))?;
-                //     //     }
-                //     // }
-                // }
+                // TODO: We need to check at some point if a non-bool variable has a representation
             }
             // only boolean variables should be passed to the solver
             if (domain == &GroundDomain::Bool) {
@@ -267,7 +246,6 @@ impl SolverAdaptor for Sat {
         // all constraints should be encoded as clauses
         // the remaining constraint (if it exists) should just be a true/false expression
         let constraints = m_clone.constraints();
-        // Todo: more checking later?
         assert!(
             constraints.is_empty()
                 || (constraints.len() == 1

@@ -60,10 +60,13 @@ pub fn handle_atom(
     inst: &mut SatInstance,
 ) -> Lit {
     // polarity false for not
+
+    eprintln!("handle_atom: {}", a);
+
     match a {
         Expression::Atomic(_, atom) => match atom {
             conjure_cp_core::ast::Atom::Literal(literal) => {
-                todo!("Not Sure if we are handling Lits as-is or not..")
+                todo!("Not Sure if we are handling Lits as-is or not..");
             }
             conjure_cp_core::ast::Atom::Reference(reference) => match &*(reference.name()) {
                 Name::User(_) | Name::Machine(_) | Name::Repr(_) => {

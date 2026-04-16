@@ -52,6 +52,10 @@ impl ReprStore {
         self.get::<T>().is_some()
     }
 
+    pub fn pretty(&self) {
+        eprintln!("{:#?}", self.inner);
+    }
+
     pub fn get<T: ReprRule + ?Sized>(&self) -> Option<&T::DeclLevel> {
         self.inner
             .get(T::NAME)
