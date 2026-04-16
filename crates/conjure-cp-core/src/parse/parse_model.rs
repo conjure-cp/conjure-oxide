@@ -481,7 +481,7 @@ fn parse_domain(
                         "BinRelAttr_Irreflexive" => Ok(BinaryAttr::Irreflexive),
                         "BinRelAttr_Coreflexive" => Ok(BinaryAttr::Coreflexive),
                         "BinRelAttr_Symmetric" => Ok(BinaryAttr::Symmetric),
-                        "BinRelAttr_Antisymmetric" => Ok(BinaryAttr::AntiSymmetric),
+                        "BinRelAttr_AntiSymmetric" => Ok(BinaryAttr::AntiSymmetric),
                         "BinRelAttr_ASymmetric" => Ok(BinaryAttr::ASymmetric),
                         "BinRelAttr_Transitive" => Ok(BinaryAttr::Transitive),
                         "BinRelAttr_Total" => Ok(BinaryAttr::Total),

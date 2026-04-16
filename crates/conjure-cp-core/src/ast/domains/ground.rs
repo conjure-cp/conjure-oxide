@@ -1068,9 +1068,9 @@ impl Display for GroundDomain {
             GroundDomain::Relation(attrs, domains) => {
                 write!(
                     f,
-                    "relation({})({})",
+                    "relation {} of ({})",
                     attrs,
-                    pretty_vec(&domains.iter().collect_vec())
+                    domains.iter().join(" * ")
                 )
             }
         }
