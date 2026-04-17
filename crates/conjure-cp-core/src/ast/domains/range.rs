@@ -114,12 +114,12 @@ impl<A: Ord + Clone> Range<A> {
         }
         Range::new(lo.cloned(), hi.cloned())
     }
-/// Find the range such that:
-/// - the lower bound is the maximum of the lower bounds
-/// - the upper bound is the minimum of the upper bounds
-/// - **ranges must not be disjoint**
-///
-/// * `DomainopError::ConflictingArgs`: if given disjoint ranges; e.g. (2..4) (6..8)
+    /// Find the range such that:
+    /// - the lower bound is the maximum of the lower bounds
+    /// - the upper bound is the minimum of the upper bounds
+    /// - **ranges must not be disjoint**
+    ///
+    /// * `DomainopError::ConflictingArgs`: if given disjoint ranges; e.g. (2..4) (6..8)
     pub fn minimal(rngs: &[Range<A>]) -> Result<Range<A>, DomainOpError> {
         if rngs.is_empty() {
             return Ok(Range::Unbounded);
