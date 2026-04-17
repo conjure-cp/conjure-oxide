@@ -728,19 +728,26 @@ impl Expression {
                 let a_range = a_attr.resolve()?.size;
                 let b_range = b_attr.resolve()?.size;
 
-                // lo is the min of the lower bounds; e.g. if set_a had no attrs and set_b had minSize 2, then set_a union set_b has no minSize
-                let lo: Option<i32> = a_range.low().copied().min(b_range.low().copied());
+                // // lo is the min of the lower bounds; e.g. if set_a had no attrs and set_b had minSize 2, then set_a union set_b has no minSize
+                // let lo: Option<i32> = a_range.low().copied().min(b_range.low().copied());
 
-                // hi is the max of the two upper bounds; e.g. if set_a had maxSize 3 and set_b had maxSize 5 then maxSize is 3
-                let hi: Option<i32> = a_range.high().copied().min(b_range.high().copied());
+                // // hi is the min of the two upper bounds; e.g. if set_a had maxSize 3 and set_b had maxSize 5 then maxSize is 3
+                // let hi: Option<i32> = a_range.high().copied().min(b_range.high().copied());
+
+                let intersection = match Range::minimal(&[a_range, b_range]) {
+                    Ok(range) => range,
+                    Err(_) => {
+                        return Some(Domain::empty(ReturnType::Set(Box::new(a.return_type()))));
+                    }
+                };
 
                 // TODO: add further optims
 
-                let new_range = Range::new(lo, hi);
+                // let new_range = Range::new(lo, hi);
 
                 Some(Domain::set(
-                    SetAttr::new(new_range),
-                    a_dom.union(&b_dom).ok()?,
+                    SetAttr::new(intersection),
+                    a_dom.intersect(&b_dom).ok()?,
                 ))
             }
             Expression::In(_, _, _) => Some(Domain::bool()),
