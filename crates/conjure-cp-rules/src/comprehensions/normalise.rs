@@ -19,7 +19,7 @@ use conjure_cp::{
 /// ```
 ///
 /// where `op` is one of `and`, `or`, `sum`, or `product`.
-#[register_rule(("Base", 8900))]
+#[register_rule("Base", 8900)]
 fn merge_nested_ac_comprehensions(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let new_expr = merge_nested_ac_comprehensions_impl(expr).ok_or(RuleNotApplicable)?;
     Ok(Reduction::pure(new_expr))

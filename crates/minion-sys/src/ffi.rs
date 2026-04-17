@@ -6,7 +6,7 @@ include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 
 #[cfg(test)]
 mod tests {
-    use std::ffi::CString;
+    use std::ffi::{CString, c_void};
 
     use super::*;
 
@@ -15,12 +15,11 @@ mod tests {
     static Y_VAL: AtomicI32 = AtomicI32::new(0);
     static Z_VAL: AtomicI32 = AtomicI32::new(0);
 
-    #[unsafe(no_mangle)]
-    pub extern "C" fn hello_from_rust() -> bool {
+    pub extern "C" fn hello_from_rust(ctx: *mut MinionContext, _userdata: *mut c_void) -> bool {
         unsafe {
-            X_VAL.store(printMatrix_getValue(0) as _, Ordering::Relaxed);
-            Y_VAL.store(printMatrix_getValue(1) as _, Ordering::Relaxed);
-            Z_VAL.store(printMatrix_getValue(2) as _, Ordering::Relaxed);
+            X_VAL.store(printMatrix_getValue(ctx, 0) as _, Ordering::Relaxed);
+            Y_VAL.store(printMatrix_getValue(ctx, 1) as _, Ordering::Relaxed);
+            Z_VAL.store(printMatrix_getValue(ctx, 2) as _, Ordering::Relaxed);
             return true;
         }
     }
@@ -32,6 +31,7 @@ mod tests {
         // Results can be manually inspected in the outputted minion logs.
         unsafe {
             // See https://rust-lang.github.io/rust-bindgen/cpp.html
+            let ctx = minion_newContext();
             let options = searchOptions_new();
             let args = searchMethod_new();
             let instance = instance_new();
@@ -94,7 +94,14 @@ mod tests {
             instance_addConstraint(instance, geq);
             instance_addConstraint(instance, ineq);
 
-            let res = runMinion(options, args, instance, Some(hello_from_rust));
+            let res = runMinion(
+                ctx,
+                options,
+                args,
+                instance,
+                Some(hello_from_rust),
+                std::ptr::null_mut(),
+            );
 
             // does it get this far?
             assert_eq!(res, 0);
@@ -103,6 +110,8 @@ mod tests {
             assert_eq!(X_VAL.load(Ordering::Relaxed), 1);
             assert_eq!(Y_VAL.load(Ordering::Relaxed), 2);
             assert_eq!(Z_VAL.load(Ordering::Relaxed), 1);
+
+            minion_freeContext(ctx);
         }
     }
 }

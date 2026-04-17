@@ -1,0 +1,26 @@
+Model before rewriting:
+
+find x: int(5..20)
+find y: int(0..5)
+find z: int(0..6)
+
+such that
+
+!(((x / (y / z)) = 10))
+
+--
+
+Final model:
+
+find x: int(5..20)
+find y: int(0..5)
+find z: int(0..6)
+find __0: int(0..20)
+find __1: int(0..5)
+
+such that
+
+or([(__0 != 10),DivEq(y, z, 0),(z = 0);int(1..)]),
+DivEq(x, __1, __0),
+DivEq(y, z, __1)
+

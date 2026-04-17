@@ -281,8 +281,8 @@ pub fn read_solutions_json(
     Ok(expected_solutions)
 }
 
-/// Reads a human-readable rule trace text file.
-pub fn read_human_rule_trace(
+/// Reads a default rule trace text file.
+pub fn read_default_rule_trace(
     path: &str,
     test_name: &str,
     prefix: &str,
