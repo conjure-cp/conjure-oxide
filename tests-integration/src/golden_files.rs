@@ -1,6 +1,8 @@
 use std::collections::BTreeSet;
 use std::path::Path;
 
+use crate::AcceptMode;
+
 /// Returns whether a file name represents an expected golden artifact.
 fn is_expected_golden_file(file_name: &str) -> bool {
     file_name.contains(".expected") || file_name.contains("-expected-")
@@ -46,8 +48,9 @@ pub fn redundant_golden_files_error(
     let context = context.map_or(String::new(), |context| format!(" {context}"));
 
     std::io::Error::other(format!(
-        "Redundant golden files detected in {}{context}:\n{file_list}\nRun with ACCEPT=true to refresh snapshots.",
-        path.display()
+        "Redundant golden files detected in {}{context}:\n{file_list}\n{} to refresh snapshots.",
+        path.display(),
+        AcceptMode::refresh_hint()
     ))
 }
 
