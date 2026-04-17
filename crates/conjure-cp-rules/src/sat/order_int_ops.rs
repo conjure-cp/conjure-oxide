@@ -265,7 +265,7 @@ fn neg_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let ff = Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false)));
     out.push(tseytin_not(ff, &mut new_clauses, &mut new_symbols));
 
-    for i in 1..n {        
+    for i in 1..n {
         let src = val_bits[n - i].clone();
         let neg_bit = tseytin_not(src, &mut new_clauses, &mut new_symbols);
         out.push(neg_bit);
