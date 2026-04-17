@@ -99,13 +99,7 @@ fn sat_order_lt(
 /// ```
 #[register_rule("SAT_Order", 4500, [Atomic])]
 fn literal_sat_order_int(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    let value = {
-        if let Expr::Atomic(_, Atom::Literal(Literal::Int(value))) = expr {
-            *value
-        } else {
-            return Err(RuleNotApplicable);
-        }
-    };
+    let value: i32 = expr.try_into().map_err(|_| RuleNotApplicable)?;
 
     Ok(Reduction::pure(Expr::SATInt(
         Metadata::new(),

@@ -22,13 +22,7 @@ use conjure_cp::ast::CnfClause;
 /// ```
 #[register_rule("SAT_Direct", 4500, [Atomic])]
 fn literal_sat_direct_int(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    let value = {
-        if let Expr::Atomic(_, Atom::Literal(Literal::Int(value))) = expr {
-            *value
-        } else {
-            return Err(RuleNotApplicable);
-        }
-    };
+    let value: i32 = expr.try_into().map_err(|_| RuleNotApplicable)?;
 
     Ok(Reduction::pure(Expr::SATInt(
         Metadata::new(),
@@ -477,7 +471,7 @@ fn add_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 }
 
 /// Matches a `|SATInt|` with an absolute value operation and rewrites it to a direct-encoded absolute-value `SATInt` by grouping input indicator bits by `|value|` and OR-ing each group (named here as buckets) into the corresponding output bit.
-#[register_rule("SAT_Direct", 9100, [Abs])]
+#[register_rule("SAT_Direct", 4700, [Abs])]
 fn abs_value_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Abs(_, value_expr) = expr else {
         return Err(RuleNotApplicable);

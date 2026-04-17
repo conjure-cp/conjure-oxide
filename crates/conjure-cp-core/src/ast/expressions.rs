@@ -1301,19 +1301,26 @@ impl TryFrom<&Expression> for i32 {
     type Error = ();
 
     fn try_from(value: &Expression) -> Result<Self, Self::Error> {
-        let Expression::Atomic(_, atom) = value else {
-            return Err(());
-        };
+        match value {
+            Expression::Atomic(_, atom) => match atom {
+                Atom::Literal(Literal::Int(i)) => Ok(*i),
 
-        match atom {
-            Atom::Literal(Literal::Int(i)) => Ok(*i),
+                Atom::Reference(r) => {
+                    let expr = r.resolve_expression().ok_or(())?;
+                    let v: i32 = expr.try_into()?;
+                    Ok(v)
+                }
 
-            Atom::Reference(r) => {
-                let expr = r.resolve_expression().ok_or(())?;
-                let v: i32 = expr.try_into()?;
-                Ok(v)
+                _ => Err(()),
+            },
+            //if low=high the SATInt must be a constant
+            Expression::SATInt(_, _, _, (low, high)) => {
+                if low == high {
+                    Ok(*low)
+                } else {
+                    Err(())
+                }
             }
-
             _ => Err(()),
         }
     }
