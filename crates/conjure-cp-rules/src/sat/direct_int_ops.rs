@@ -490,6 +490,7 @@ fn abs_value_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
         return Err(RuleNotApplicable);
     };
 
+    // The new range is from the minimum absolute value to the maximum absolute value. The minimum absolute value is either 0 if the old range includes 0, or the smaller of the absolute values of the old min and max if the old range does not include 0. The maximum absolute value is the larger of the absolute values of the old min and max.
     let new_min = if old_min <= 0 && old_max >= 0 {
         0
     } else {
