@@ -502,6 +502,7 @@ fn abs_value_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
     let bucket_count = (new_max - new_min + 1) as usize;
     let mut buckets: Vec<Vec<Expr>> = vec![Vec::new(); bucket_count];
 
+    // Iterates over all possible input values, calculate their absolute value, and place them in the corresponding bucket. Each bucket corresponds to a possible output value, and contains the disjunction of all input bits that could produce that output.
     for value in old_min..=old_max {
         let input_bit = val_bits[(value - old_min) as usize].clone();
         let abs_value = value.abs();
@@ -509,6 +510,7 @@ fn abs_value_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
         buckets[bucket_idx].push(input_bit);
     }
 
+    // For each bucket, if it's empty then the output bit is false, if it contains one element then the output bit is that element, and if it contains multiple elements then the output bit is the OR of all elements in the bucket.
     let mut abs_bits = Vec::with_capacity(bucket_count);
     for bucket in buckets {
         let out_bit = match bucket.len() {
