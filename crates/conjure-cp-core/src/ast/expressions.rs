@@ -996,6 +996,11 @@ impl Expression {
                     Err(_) => None,
                 };
 
+                // We combine the sizes:
+                // size_size relates to size constraints imposed by the size attributes of the function
+                // attr_size relates to size constraints imposed by the jectivity and partiality attributes.
+                //       This uses inference from the domain and codomain lengths.
+                // If the attributes clash the function is unsolveable, and an empty domain is returned
                 let size = match attr_size {
                     Some(attr_size) => {
                         let unsafe_range = Range::minimal(&[size_size, attr_size]);
