@@ -146,7 +146,7 @@ fn check_my_expression() {
         Box::new(Expr::Val(1)),
         Box::new(Expr::Val(2)),
     )));
-    let engine = EngineBuilder::new()
+    let mut engine = EngineBuilder::new()
         .set_selector(tree_morph::helpers::select_panic)
         .append_rule_groups(vec![vec![rule_eval_add, rule_eval_mul, rule_expand_sqr]])
         .build();
@@ -307,7 +307,7 @@ fn number_of_operations() {
     let metadata = Meta {
         num_applications_addition: 0,
     };
-    let engine = EngineBuilder::new()
+    let mut engine = EngineBuilder::new()
         .set_selector(tree_morph::helpers::select_panic)
         .add_rule_group(vec![rule_eval_add, rule_eval_mul, rule_expand_sqr])
         .build();
@@ -379,7 +379,7 @@ fn number_of_operations() {
 #          num_applications_addition: 0,
 #      };
     // --snip--
-    let engine = EngineBuilder::new()
+    let mut engine = EngineBuilder::new()
         .set_selector(tree_morph::helpers::select_panic)
         .append_rule_groups(vec![
             vec![rule_eval_add, rule_eval_mul],
@@ -445,7 +445,7 @@ fn number_of_operations() {
 #          num_applications_addition: 0,
 #      };
     // --snip--
-    let engine = EngineBuilder::new()
+    let mut engine = EngineBuilder::new()
         .set_selector(tree_morph::helpers::select_panic)
         .append_rule_groups(vec![
             vec![rule_eval_add, rule_eval_mul],

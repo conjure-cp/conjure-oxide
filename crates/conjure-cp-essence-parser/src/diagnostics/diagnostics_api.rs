@@ -52,6 +52,7 @@ pub enum SymbolKind {
     Variable = 5,
     Constant = 6,
     Domain = 7,
+    Given = 8,
 } // to be extended
 
 // each type of token / symbol in the essence grammar will be
