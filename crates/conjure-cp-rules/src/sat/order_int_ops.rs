@@ -1,14 +1,14 @@
+use crate::sat::boolean::{tseytin_and, tseytin_iff, tseytin_not, tseytin_or};
+use conjure_cp::ast::CnfClause;
+use conjure_cp::ast::Metadata;
+use conjure_cp::ast::Moo;
 use conjure_cp::ast::{Atom, Expression as Expr, Literal};
 use conjure_cp::ast::{SATIntEncoding, SymbolTable};
+use conjure_cp::into_matrix_expr;
 use conjure_cp::rule_engine::ApplicationError;
 use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
 };
-
-use crate::sat::boolean::{tseytin_and, tseytin_iff, tseytin_not, tseytin_or};
-use conjure_cp::ast::Metadata;
-use conjure_cp::ast::Moo;
-use conjure_cp::into_matrix_expr;
 
 /// This function confirms that all of the input expressions are order SATInts, and returns vectors for each input of their bits
 /// This function also normalizes order SATInt operands to a common value range.
@@ -234,4 +234,85 @@ fn ineq_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     }
 
     Ok(Reduction::cnf(output, new_clauses, new_symbols))
+}
+
+#[register_rule("SAT_Order", 9100, [Sum])]
+fn add_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    let Expr::Sum(_, sum_exprs) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Some(exprs) = sum_exprs.as_ref().clone().unwrap_list() else {
+        return Err(RuleNotApplicable);
+    };
+
+    // There are no expressions to sum, this is a degenerate case that we can handle by returning a constant 0
+    if exprs.is_empty() {
+        return Ok(Reduction::pure(Expr::SATInt(
+            Metadata::new(),
+            SATIntEncoding::Order,
+            Moo::new(into_matrix_expr!(vec![Expr::Atomic(
+                Metadata::new(),
+                Atom::Literal(Literal::Bool(true)),
+            )])),
+            (0, 0),
+        )));
+    }
+
+    let mut new_symbols = symbols.clone();
+    let mut new_clauses: Vec<CnfClause> = vec![];
+
+    // Validate all operands are order SATInts and extract their bit vectors, also calculate a common min and max for all operands to normalize them to the same size by padding with zeroes as needed to simplify the addition logic.
+    let (mut operands, common_min, common_max) =
+        validate_order_int_operands(exprs).map_err(|_| RuleNotApplicable)?;
+
+    // Addition is implemented as a series of pairwise additions. The bits of the output are defined by iterating over all possible output values, and for each output value k, ORing together ANDs for each pair of input values i,j where i+j=k. This is effectively a big disjunction of all possible ways to sum to k.
+    let false_expr = || Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false)));
+
+    let mut acc_bits = operands.remove(0);
+    let mut acc_min = common_min;
+    let mut acc_max = common_max;
+
+    for right_bits in operands {
+        let right_min = common_min;
+        let right_max = common_max;
+
+        let new_min = acc_min + right_min;
+        let new_max = acc_max + right_max;
+        let mut out_bits = Vec::with_capacity((new_max - new_min + 1) as usize);
+
+        for k in new_min..=new_max {
+            let mut sum_expr = false_expr();
+
+            for i in acc_min..=acc_max {
+                let j = k - i;
+                if j < right_min || j > right_max {
+                    continue;
+                }
+
+                let a = acc_bits[(i - acc_min) as usize].clone();
+                let b = right_bits[(j - right_min) as usize].clone();
+
+                let and_ab = tseytin_and(&vec![a, b], &mut new_clauses, &mut new_symbols);
+                sum_expr = tseytin_or(&vec![sum_expr, and_ab], &mut new_clauses, &mut new_symbols);
+            }
+
+            out_bits.push(sum_expr);
+        }
+
+        acc_bits = out_bits;
+        acc_min = new_min;
+        acc_max = new_max;
+    }
+
+    Ok(Reduction::cnf(
+        Expr::SATInt(
+            Metadata::new(),
+            SATIntEncoding::Order,
+            Moo::new(into_matrix_expr!(acc_bits)),
+            (acc_min, acc_max),
+        ),
+        new_clauses,
+        new_symbols,
+    ))
 }
