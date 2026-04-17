@@ -24,16 +24,7 @@ pub fn parse_atom(
             };
             parse_atom(ctx, &inner)
         }
-        "atom" | "sub_atom_expr" => {
-            let Some(inner) = named_child!(recover, ctx, node) else {
-                return Ok(None);
-            };
-            parse_atom(ctx, &inner)
-        }
         "metavar" => {
-            let Some(ident) = field!(recover, ctx, node, "identifier") else {
-                return Ok(None);
-            };
             let Some(ident) = field!(recover, ctx, node, "identifier") else {
                 return Ok(None);
             };
@@ -52,18 +43,12 @@ pub fn parse_atom(
         "from_solution" => {
             if ctx.root.kind() != "dominance_relation" {
                 ctx.record_error(RecoverableParseError::new(
-                ctx.record_error(RecoverableParseError::new(
                     "fromSolution only allowed inside dominance relations".to_string(),
                     Some(node.range()),
                 ));
                 return Ok(None);
-                return Ok(None);
             }
 
-            let Some(var_node) = field!(recover, ctx, node, "variable") else {
-                return Ok(None);
-            };
-            let Some(inner) = parse_variable(ctx, &var_node)? else {
             let Some(var_node) = field!(recover, ctx, node, "variable") else {
                 return Ok(None);
             };
@@ -106,13 +91,6 @@ pub fn parse_atom(
             ));
             Ok(None)
         }
-        _ => {
-            ctx.record_error(RecoverableParseError::new(
-                format!("Expected atom, got: {}", node.kind()),
-                Some(node.range()),
-            ));
-            Ok(None)
-        }
     }
 }
 
@@ -139,10 +117,6 @@ fn parse_flatten(
         return Ok(None);
     };
 
-    if let Some(depth_node) = node.child_by_field_name("depth") {
-        let Some(depth) = parse_int(ctx, &depth_node) else {
-            return Ok(None);
-        };
     if let Some(depth_node) = node.child_by_field_name("depth") {
         let Some(depth) = parse_int(ctx, &depth_node) else {
             return Ok(None);
@@ -183,16 +157,10 @@ fn parse_table(ctx: &mut ParseContext, node: &Node) -> Result<Option<Expression>
     let Some(variables_node) = field!(recover, ctx, node, "variables") else {
         return Ok(None);
     };
-    let Some(variables_node) = field!(recover, ctx, node, "variables") else {
-        return Ok(None);
-    };
     let Some(variables) = parse_atom(ctx, &variables_node)? else {
         return Ok(None);
     };
 
-    let Some(rows_node) = field!(recover, ctx, node, "rows") else {
-        return Ok(None);
-    };
     let Some(rows_node) = field!(recover, ctx, node, "rows") else {
         return Ok(None);
     };
@@ -213,16 +181,6 @@ fn parse_table(ctx: &mut ParseContext, node: &Node) -> Result<Option<Expression>
             Moo::new(variables),
             Moo::new(rows),
         ))),
-        _ => {
-            ctx.record_error(RecoverableParseError::new(
-                format!(
-                    "Expected 'table' or 'negative_table', got: '{}'",
-                    node.kind()
-                ),
-                Some(node.range()),
-            ));
-            Ok(None)
-        }
         _ => {
             ctx.record_error(RecoverableParseError::new(
                 format!(
@@ -259,18 +217,10 @@ fn parse_index_or_slice(
         return Ok(None);
     };
     let Some(collection) = parse_atom(ctx, &collection_node)? else {
-    let Some(collection_node) = field!(recover, ctx, node, "collection") else {
-        return Ok(None);
-    };
-    let Some(collection) = parse_atom(ctx, &collection_node)? else {
         return Ok(None);
     };
     ctx.typechecking_context = saved_context;
     let mut indices = Vec::new();
-    let Some(indices_node) = field!(recover, ctx, node, "indices") else {
-        return Ok(None);
-    };
-    for idx_node in named_children(&indices_node) {
     let Some(indices_node) = field!(recover, ctx, node, "indices") else {
         return Ok(None);
     };
@@ -324,19 +274,11 @@ fn parse_index(ctx: &mut ParseContext, node: &Node) -> Result<Option<Expression>
             ));
             Ok(None)
         }
-        _ => {
-            ctx.record_error(RecoverableParseError::new(
-                format!("Expected an index, got: '{}'", node.kind()),
-                Some(node.range()),
-            ));
-            Ok(None)
-        }
     }
 }
 
 fn parse_variable(ctx: &mut ParseContext, node: &Node) -> Result<Option<Atom>, FatalParseError> {
     let raw_name = &ctx.source_code[node.start_byte()..node.end_byte()];
-
 
     let name = Name::user(raw_name.trim());
     if let Some(symbols) = &ctx.symbols {
@@ -372,11 +314,8 @@ fn parse_variable(ctx: &mut ParseContext, node: &Node) -> Result<Option<Atom>, F
         }
     } else {
         ctx.record_error(RecoverableParseError::new(
-        ctx.record_error(RecoverableParseError::new(
             format!("Symbol table missing when parsing variable '{raw_name}'"),
             Some(node.range()),
-        ));
-        Ok(None)
         ));
         Ok(None)
     }
@@ -435,15 +374,9 @@ fn parse_constant(ctx: &mut ParseContext, node: &Node) -> Result<Option<Literal>
     let Some(inner) = named_child!(recover, ctx, node) else {
         return Ok(None);
     };
-    let Some(inner) = named_child!(recover, ctx, node) else {
-        return Ok(None);
-    };
     let raw_value = &ctx.source_code[inner.start_byte()..inner.end_byte()];
     let lit = match inner.kind() {
         "integer" => {
-            let Some(value) = parse_int(ctx, &inner) else {
-                return Ok(None);
-            };
             let Some(value) = parse_int(ctx, &inner) else {
                 return Ok(None);
             };
@@ -471,7 +404,6 @@ fn parse_constant(ctx: &mut ParseContext, node: &Node) -> Result<Option<Literal>
         }
         _ => {
             ctx.record_error(RecoverableParseError::new(
-            ctx.record_error(RecoverableParseError::new(
                 format!(
                     "'{}' (kind: '{}') is not a valid constant",
                     raw_value,
@@ -479,7 +411,6 @@ fn parse_constant(ctx: &mut ParseContext, node: &Node) -> Result<Option<Literal>
                 ),
                 Some(inner.range()),
             ));
-            return Ok(None);
             return Ok(None);
         }
     };
@@ -514,17 +445,7 @@ fn parse_constant(ctx: &mut ParseContext, node: &Node) -> Result<Option<Literal>
 }
 
 pub(crate) fn parse_int(ctx: &mut ParseContext, node: &Node) -> Option<i32> {
-pub(crate) fn parse_int(ctx: &mut ParseContext, node: &Node) -> Option<i32> {
     let raw_value = &ctx.source_code[node.start_byte()..node.end_byte()];
-    if let Ok(v) = raw_value.parse::<i32>() {
-        Some(v)
-    } else {
-        ctx.record_error(RecoverableParseError::new(
-            "Expected an integer here".to_string(),
-            Some(node.range()),
-        ));
-        None
-    }
     if let Ok(v) = raw_value.parse::<i32>() {
         Some(v)
     } else {

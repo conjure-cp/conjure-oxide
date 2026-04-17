@@ -1,5 +1,4 @@
 use crate::RecoverableParseError;
-use crate::RecoverableParseError;
 use crate::errors::FatalParseError;
 use crate::expression::parse_expression;
 use crate::field;
@@ -38,16 +37,6 @@ pub fn parse_comprehension(
             return Ok(None);
         }
     };
-    let symbols_ptr = match ctx.symbols.clone() {
-        Some(s) => s,
-        None => {
-            ctx.record_error(RecoverableParseError::new(
-                "Comprehensions require a symbol table".to_string(),
-                Some(node.range()),
-            ));
-            return Ok(None);
-        }
-    };
 
     let mut builder = ComprehensionBuilder::new(symbols_ptr);
 
@@ -67,16 +56,10 @@ pub fn parse_comprehension(
                 let Some(var_node) = field!(recover, ctx, child, "variable") else {
                     return Ok(None);
                 };
-                let Some(var_node) = field!(recover, ctx, child, "variable") else {
-                    return Ok(None);
-                };
                 let var_name_str = &ctx.source_code[var_node.start_byte()..var_node.end_byte()];
                 let var_name = Name::user(var_name_str);
 
                 // Parse the domain
-                let Some(domain_node) = field!(recover, ctx, child, "domain") else {
-                    return Ok(None);
-                };
                 let Some(domain_node) = field!(recover, ctx, child, "domain") else {
                     return Ok(None);
                 };
@@ -93,9 +76,6 @@ pub fn parse_comprehension(
             }
             "condition" => {
                 // Parse the condition expression
-                let Some(expr_node) = field!(recover, ctx, child, "expression") else {
-                    return Ok(None);
-                };
                 let Some(expr_node) = field!(recover, ctx, child, "expression") else {
                     return Ok(None);
                 };
@@ -117,16 +97,6 @@ pub fn parse_comprehension(
     }
 
     // parse the return expression
-    let return_expr_node = match return_expr_node {
-        Some(node) => node,
-        None => {
-            ctx.record_error(RecoverableParseError::new(
-                "Comprehension missing return expression".to_string(),
-                Some(node.range()),
-            ));
-            return Ok(None);
-        }
-    };
     let return_expr_node = match return_expr_node {
         Some(node) => node,
         None => {
@@ -171,16 +141,6 @@ pub fn parse_quantifier_or_aggregate_expr(
             return Ok(None);
         }
     };
-    let symbols_ptr = match ctx.symbols.clone() {
-        Some(s) => s,
-        None => {
-            ctx.record_error(RecoverableParseError::new(
-                "Quantifier and aggregate expressions require a symbol table".to_string(),
-                Some(node.range()),
-            ));
-            return Ok(None);
-        }
-    };
 
     // Create the comprehension builder
     let mut builder = ComprehensionBuilder::new(symbols_ptr);
@@ -215,28 +175,21 @@ pub fn parse_quantifier_or_aggregate_expr(
     // We need either a domain or a collection
     if domain.is_none() && collection_node.is_none() {
         ctx.record_error(RecoverableParseError::new(
-        ctx.record_error(RecoverableParseError::new(
             "Quantifier and aggregate expressions require a domain or collection".to_string(),
             Some(node.range()),
         ));
-        return Ok(None);
         return Ok(None);
     }
 
     if variables.is_empty() {
         ctx.record_error(RecoverableParseError::new(
-        ctx.record_error(RecoverableParseError::new(
             "Quantifier and aggregate expressions require variables".to_string(),
             Some(node.range()),
         ));
         return Ok(None);
-        return Ok(None);
     }
 
     // Get the operator type
-    let Some(operator_node) = field!(recover, ctx, node, "operator") else {
-        return Ok(None);
-    };
     let Some(operator_node) = field!(recover, ctx, node, "operator") else {
         return Ok(None);
     };
@@ -250,11 +203,9 @@ pub fn parse_quantifier_or_aggregate_expr(
         "max" => (ACOperatorKind::Sum, "Max"),
         _ => {
             ctx.record_error(RecoverableParseError::new(
-            ctx.record_error(RecoverableParseError::new(
                 format!("Unknown operator: {}", operator_str),
                 Some(operator_node.range()),
             ));
-            return Ok(None);
             return Ok(None);
         }
     };
@@ -268,19 +219,13 @@ pub fn parse_quantifier_or_aggregate_expr(
     } else if let Some(_coll_node) = collection_node {
         // TODO: support collection domains
         ctx.record_error(RecoverableParseError::new(
-        ctx.record_error(RecoverableParseError::new(
             "Collection domains in quantifier and aggregate expressions".to_string(),
             Some(_coll_node.range()),
-            Some(_coll_node.range()),
         ));
-        return Ok(None);
         return Ok(None);
     }
 
     // Parse the expression (after variables are in the symbol table)
-    let Some(expression_node) = field!(recover, ctx, node, "expression") else {
-        return Ok(None);
-    };
     let Some(expression_node) = field!(recover, ctx, node, "expression") else {
         return Ok(None);
     };

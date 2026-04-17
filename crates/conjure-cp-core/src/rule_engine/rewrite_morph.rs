@@ -3,16 +3,7 @@ use crate::{
     ast::{Expression, discriminant_from_value},
     bug,
     settings::{
-<<<<<<< HEAD
-<<<<<<< HEAD
         MorphCachingStrategy, MorphConfig, Rewriter, rule_trace_enabled, set_current_rewriter,
-=======
-        MorphCachingStrategy, MorphConfig, Rewriter, default_rule_trace_enabled,
-        rule_trace_enabled, set_current_rewriter,
->>>>>>> 397bf5d8 (feat: various fixes to (partially) support the GCM models (#1750))
-=======
-        MorphCachingStrategy, MorphConfig, Rewriter, rule_trace_enabled, set_current_rewriter,
->>>>>>> 3fe72a10 (feat(morph): enable morph for as many integration tests as possible, fix issues for the sat backend (#1754))
     },
 };
 use itertools::Itertools;
@@ -65,15 +56,7 @@ pub fn rewrite_morph<'a>(
 ) -> Model {
     set_current_rewriter(Rewriter::Morph(config));
 
-<<<<<<< HEAD
-<<<<<<< HEAD
     if rule_trace_enabled() {
-=======
-    if rule_trace_enabled() && default_rule_trace_enabled() {
->>>>>>> 397bf5d8 (feat: various fixes to (partially) support the GCM models (#1750))
-=======
-    if rule_trace_enabled() {
->>>>>>> 3fe72a10 (feat(morph): enable morph for as many integration tests as possible, fix issues for the sat backend (#1754))
         trace!(
             target: "rule_engine_rule_trace",
             "Model before rewriting:\n\n{}\n--\n",
@@ -125,15 +108,7 @@ pub fn rewrite_morph<'a>(
         }
     }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
     if rule_trace_enabled() {
-=======
-    if rule_trace_enabled() && default_rule_trace_enabled() {
->>>>>>> 397bf5d8 (feat: various fixes to (partially) support the GCM models (#1750))
-=======
-    if rule_trace_enabled() {
->>>>>>> 3fe72a10 (feat(morph): enable morph for as many integration tests as possible, fix issues for the sat backend (#1754))
         trace!(
             target: "rule_engine_rule_trace",
             "Final model:\n\n{}",
