@@ -712,7 +712,6 @@ fn unary_operator(op_name: &str) -> Option<UnaryOp> {
         "MkOpDefined" => Some(Expression::Defined),
         "MkOpRange" => Some(Expression::Range),
         "MkOpFactorial" => Some(Expression::Factorial),
-        "MkOpToSet" => Some(Expression::ToSet),
         "MkOpToMSet" => Some(Expression::ToMSet),
         "MkOpToRelation" => Some(Expression::ToRelation),
         _ => None,
@@ -742,7 +741,9 @@ pub fn parse_expression(obj: &JsonValue, scope: &SymbolTablePtr) -> Result<Expre
                 parse_indexing_slicing_op(op_obj, scope)
             } else if op_obj.contains_key("MkOpRelationProj") {
                 parse_relation_projection(op_obj, scope)
-            } else if binary_operator(op_name).is_some() {
+            } else if op_obj.contains_key("MkOpToSet") {
+                parse_to_set(op_obj, scope)
+            }else if binary_operator(op_name).is_some() {
                 parse_bin_op(op_obj, scope)
             } else if unary_operator(op_name).is_some() {
                 parse_unary_op(op_obj, scope)
@@ -1238,6 +1239,22 @@ fn parse_relation_projection(
     } else {
         Err(error!("MkOpRelationProj does not contain relation"))
     }
+}
+
+fn parse_to_set(
+    op: &serde_json::Map<String, Value>,
+    scope: &SymbolTablePtr,
+) -> Result<Expression> {
+    let args = op
+        .get("MkOpToSet")
+        .ok_or(error!("MkOpToSet missing"))?
+        .as_array()
+        .ok_or(error!("MkOpToSet is not an array"))?;
+    let second = args
+        .get(1)
+        .ok_or(error!("MkOpToSet missing second argument"))?;
+    let inner = parse_expression(second, scope)?;
+    Ok(Expression::ToSet(Metadata::new(), Moo::new(inner)))
 }
 
 fn parse_flatten_op(
