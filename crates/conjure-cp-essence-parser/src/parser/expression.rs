@@ -63,7 +63,7 @@ pub fn parse_expression(
                 ));
                 return Ok(None);
             }
-            ctx.typechecking_context = TypecheckingContext::Unknown;
+            ctx.typechecking_context = TypecheckingContext::Matrix;
             parse_all_diff_comparison(ctx, &node)
         }
         "dominance_relation" => parse_dominance_relation(ctx, &node),
@@ -148,8 +148,7 @@ fn parse_comparison_expression(
             parse_binary_expression(ctx, &inner)
         }
         "all_diff_comparison" => {
-            // TODO: check that operand is a matrix.
-            ctx.typechecking_context = TypecheckingContext::Unknown;
+            ctx.typechecking_context = TypecheckingContext::Matrix;
             parse_all_diff_comparison(ctx, &inner)
         }
         _ => {
