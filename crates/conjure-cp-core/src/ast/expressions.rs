@@ -745,7 +745,10 @@ impl Expression {
                 // Can take the upper bounds on either maxSize attribute.
                 let a_attr_range = a_attr.resolve()?.size;
                 let b_attr_range = b_attr.resolve()?.size;
-                let hi: Option<i32> = a_attr_range.high().copied().min(b_attr_range.high().copied());
+                let hi: Option<i32> = a_attr_range
+                    .high()
+                    .copied()
+                    .min(b_attr_range.high().copied());
                 let size_attr = Range::new(None, hi);
 
                 // lo is the min of the lower bounds; e.g. if set_a had no attrs and set_b had minSize 2, then set_a union set_b has no minSize
@@ -761,7 +764,7 @@ impl Expression {
                 // let lo: Option<i32> = a_range.low().copied().min(b_range.low().copied());
                 // let hi: Option<i32> = a_range.high().copied().min(b_range.high().copied());
                 // let new_range = Range::new(lo, hi);
-// 
+                //
                 Some(Domain::set(
                     SetAttr::new(size_attr),
                     a_dom.intersect(&b_dom).ok()?,
