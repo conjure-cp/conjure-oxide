@@ -10,6 +10,7 @@ use conjure_cp_core::context::Context;
 use uniplate::Uniplate;
 
 use super::ParseContext;
+use super::dominance::parse_dominance_relation;
 use super::find::{parse_find_statement, parse_given_statement};
 use super::letting::parse_letting_statement;
 use super::util::{TypecheckingContext, get_tree};
@@ -161,7 +162,7 @@ pub fn parse_essence_with_context_and_map(
                 model.symbols_mut().extend(letting_vars);
             }
             "dominance_relation" => {
-                let Some(dominance) = parse_expression(&mut ctx, statement)? else {
+                let Some(dominance) = parse_dominance_relation(&mut ctx, &statement)? else {
                     continue;
                 };
                 if model.dominance.is_some() {

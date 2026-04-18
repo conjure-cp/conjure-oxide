@@ -66,7 +66,6 @@ pub fn parse_expression(
             ctx.typechecking_context = TypecheckingContext::Matrix;
             parse_all_diff_comparison(ctx, &node)
         }
-        "dominance_relation" => parse_dominance_relation(ctx, &node),
         _ => {
             ctx.record_error(RecoverableParseError::new(
                 format!("Unexpected expression type: '{}'", node.kind()),
