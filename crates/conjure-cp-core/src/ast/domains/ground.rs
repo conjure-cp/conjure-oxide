@@ -975,7 +975,7 @@ impl Typeable for GroundDomain {
 impl Display for GroundDomain {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self {
-            GroundDomain::Empty(ty) => write!(f, "empty({ty:?})"),
+            GroundDomain::Empty(ty) => write!(f, "empty({ty})"),
             GroundDomain::Bool => write!(f, "bool"),
             GroundDomain::Int(ranges) => {
                 if ranges.iter().all(Range::is_lower_or_upper_bounded) {
