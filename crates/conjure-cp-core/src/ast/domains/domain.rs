@@ -750,6 +750,16 @@ impl Domain {
         }
         Err(DomainOpError::NotGround)
     }
+    /// Get the size of some domain
+    ///
+    /// As opposed to `Domain::length`, this function returns a signed integer (`i32`) rather than unsigned.
+    /// * `DomainOpError::NotGround` - This function only applies to `ground` domains
+    /// * `DomainOpError::TooLarge` - Converting to an integer my not be possible if the domain is too big
+    pub fn length_signed(&self) -> Result<i32, DomainOpError> {
+        let gd = self.as_ground().ok_or(DomainOpError::NotGround)?;
+        let len = gd.length()?;
+        len.try_into().map_err(|_| DomainOpError::TooLarge)
+    }
 
     /// Construct a ground domain from a slice of values
     pub fn from_literal_vec(vals: &[Literal]) -> Result<DomainPtr, DomainOpError> {
