@@ -17,6 +17,7 @@ use conjure_cp_essence_parser::diagnostics::diagnostics_api::get_diagnostics;
 use tower_lsp::lsp_types::Position as LspPosition;
 use tower_lsp::lsp_types::Range as LspRange;
 
+use tree_sitter::Node;
 use tree_sitter::Point;
 use tree_sitter::Tree;
 
@@ -165,6 +166,41 @@ impl Backend {
             } else {
                 get_tree(&new_text).unwrap().0
             };
+
+            if let Some(old_cst) = cache_conts.cst.clone() {
+                let only_extras_changed = changed_ranges_are_only_extras(&old_cst, &new_tree);
+
+                if only_extras_changed || (old_cst.changed_ranges(&new_tree).len() == 0) {
+                    self.client
+                        .log_message(MessageType::INFO, "Only extra nodes changed or no changes")
+                        .await;
+
+                    // IMPORTANT: would need to shift the sourcemap and error spans to adjust for whitespace changes
+                    // bc the cst changes -> ranges also do
+
+                    // update cache
+                    let new_cache_conts = CacheCont {
+                        sourcemap: cache_conts.sourcemap.clone(),
+                        ast: cache_conts.ast.clone(),
+                        errors: cache_conts.errors.clone(),
+                        cst: Some(new_tree.clone()),
+                        contents: new_text.clone(),
+                        version: params.text_document.version,
+                    };
+
+                    lsp_cache.insert(uri.clone(), new_cache_conts.clone()).await;
+                    self.handle_diagnostics(&uri, new_cache_conts).await;
+
+                    // skip re-parsing and diagnostics if only whitespace (extra) nodes changed
+                    return;
+                }
+            } else {
+                self.client
+                    .log_message(MessageType::INFO, "No previous CST, so full parse")
+                    .await;
+            }
+            //if change is only made to whitespace and doesnt modify nodes, don't regen the ast and sourcemap
+            // let old_cst = cache_conts.cst.clone();
 
             let context = Arc::new(RwLock::new(Context::default()));
             let mut errors: Vec<RecoverableParseError> = Vec::new();
@@ -331,4 +367,40 @@ fn calculate_new_end_position(text: &str, start: Position) -> Point {
     }
 
     Point::new(row, column)
+}
+
+/// check if any non-extra leaf nodes are in the changed range by
+/// traversing the new tree but pruning out of range subtrees for efficiency
+fn range_has_non_extra_leaf(root: Node, start: usize, end: usize) -> bool {
+    let mut stack = vec![root];
+    while let Some(n) = stack.pop() {
+        let ns: usize = n.start_byte();
+        let ne: usize = n.end_byte();
+        if ne <= start || ns >= end {
+            continue;
+        }
+
+        if n.child_count() == 0 {
+            // we just treat any non-extra leaf as meaningful / ast-affecting
+            if !n.is_extra() && !n.is_error() && !n.is_missing() {
+                return true;
+            }
+        } else {
+            let mut cur = n.walk();
+            for c in n.children(&mut cur) {
+                stack.push(c);
+            }
+        }
+    }
+    false
+}
+
+/// check if all changed ranges consist of only extra nodes
+fn changed_ranges_are_only_extras(old_tree: &Tree, new_tree: &Tree) -> bool {
+    for r in old_tree.changed_ranges(new_tree) {
+        if range_has_non_extra_leaf(new_tree.root_node(), r.start_byte, r.end_byte) {
+            return false;
+        }
+    }
+    true
 }
