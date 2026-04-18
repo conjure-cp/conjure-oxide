@@ -1050,7 +1050,7 @@ impl Expression {
                     .iter()
                     .zip(projections.iter())
                     .filter_map(|(domain, included)| {
-                        if included.is_some() {
+                        if included.is_none() {
                             Some(domain.clone())
                         } else {
                             None
@@ -1774,7 +1774,7 @@ impl Display for Expression {
                             String::from("_")
                         }
                     })
-                    .join(",");
+                    .join(", ");
                 write!(f, "{relation}({projections_str})")
             }
         }
@@ -2009,7 +2009,7 @@ impl Typeable for Expression {
                             .iter()
                             .zip(projections.iter())
                             .filter_map(|(domain, included)| {
-                                if included.is_some() {
+                                if included.is_none() {
                                     Some(domain.clone())
                                 } else {
                                     None
