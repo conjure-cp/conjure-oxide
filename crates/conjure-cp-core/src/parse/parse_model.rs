@@ -743,7 +743,7 @@ pub fn parse_expression(obj: &JsonValue, scope: &SymbolTablePtr) -> Result<Expre
                 parse_relation_projection(op_obj, scope)
             } else if op_obj.contains_key("MkOpToSet") {
                 parse_to_set(op_obj, scope)
-            }else if binary_operator(op_name).is_some() {
+            } else if binary_operator(op_name).is_some() {
                 parse_bin_op(op_obj, scope)
             } else if unary_operator(op_name).is_some() {
                 parse_unary_op(op_obj, scope)
@@ -1241,10 +1241,7 @@ fn parse_relation_projection(
     }
 }
 
-fn parse_to_set(
-    op: &serde_json::Map<String, Value>,
-    scope: &SymbolTablePtr,
-) -> Result<Expression> {
+fn parse_to_set(op: &serde_json::Map<String, Value>, scope: &SymbolTablePtr) -> Result<Expression> {
     let args = op
         .get("MkOpToSet")
         .ok_or(error!("MkOpToSet missing"))?
