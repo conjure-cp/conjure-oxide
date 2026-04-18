@@ -21,7 +21,7 @@ pub fn parse_expression(
                 ctx.record_error(RecoverableParseError::new(
                     format!(
                         "Type error: {}\n\tExepected: int\n\tGot: boolean expression",
-                        ctx.source_code[node.start_byte()..node.end_byte()].to_string()
+                        &ctx.source_code[node.start_byte()..node.end_byte()]
                     ),
                     Some(node.range()),
                 ));
@@ -34,7 +34,7 @@ pub fn parse_expression(
                 ctx.record_error(RecoverableParseError::new(
                     format!(
                         "Type error: {}\n\tExepected: bool\n\tGot: arithmetic expression",
-                        ctx.source_code[node.start_byte()..node.end_byte()].to_string()
+                        &ctx.source_code[node.start_byte()..node.end_byte()]
                     ),
                     Some(node.range()),
                 ));
@@ -47,7 +47,7 @@ pub fn parse_expression(
                 ctx.record_error(RecoverableParseError::new(
                     format!(
                         "Type error: {}\n\tExepected: int\n\tGot: comparison expression",
-                        ctx.source_code[node.start_byte()..node.end_byte()].to_string()
+                        &ctx.source_code[node.start_byte()..node.end_byte()]
                     ),
                     Some(node.range()),
                 ));
@@ -58,7 +58,7 @@ pub fn parse_expression(
         "all_diff_comparison" => {
             if ctx.typechecking_context == TypecheckingContext::Arithmetic {
                 ctx.record_error(RecoverableParseError::new(
-                    format!("Type error: {}\n\tExepected: arithmetic expression\n\tFound: comparison expression", ctx.source_code[node.start_byte()..node.end_byte()].to_string()),
+                    format!("Type error: {}\n\tExepected: arithmetic expression\n\tFound: comparison expression", &ctx.source_code[node.start_byte()..node.end_byte()]),
                     Some(node.range()),
                 ));
                 return Ok(None);
