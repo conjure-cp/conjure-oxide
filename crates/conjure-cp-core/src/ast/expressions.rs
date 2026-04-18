@@ -32,6 +32,7 @@ use super::abstract_comprehension::AbstractComprehension;
 use super::ac_operators::ACOperatorKind;
 use super::categories::{Category, CategoryOf};
 use super::comprehension::Comprehension;
+use super::declaration::DeclarationKind;
 use super::domains::HasDomain as _;
 use super::pretty::{pretty_expressions_as_top_level, pretty_vec};
 use super::records::RecordValue;
@@ -1912,6 +1913,26 @@ impl Display for Expression {
     }
 }
 
+fn minus_operand_return_type(expr: &Expression) -> ReturnType {
+    match expr {
+        Expression::Atomic(_, Atom::Reference(reference)) => {
+            let decl_kind = reference.ptr.kind().clone();
+            match decl_kind {
+                DeclarationKind::Find(var) => var.return_type(),
+                DeclarationKind::Given(domain)
+                | DeclarationKind::DomainLetting(domain)
+                | DeclarationKind::RecordField(domain) => domain.return_type(),
+                DeclarationKind::Quantified(inner) => inner.domain().return_type(),
+                DeclarationKind::QuantifiedExpr(inner)
+                | DeclarationKind::TemporaryValueLetting(inner)
+                // not sure if i should ever be looking at the domain ptr but seems to work
+                | DeclarationKind::ValueLetting(inner, _) => inner.return_type(),
+            }
+        }
+        _ => expr.return_type(),
+    }
+}
+
 impl Typeable for Expression {
     fn return_type(&self) -> ReturnType {
         match self {
@@ -2016,7 +2037,25 @@ impl Typeable for Expression {
             Expression::Factorial(_, _) => ReturnType::Int,
             Expression::UnsafePow(_, _, _) => ReturnType::Int,
             Expression::SafePow(_, _, _) => ReturnType::Int,
-            Expression::Minus(_, _, _) => ReturnType::Int,
+            Expression::Minus(_, a, b) => {
+                // rather than calling .return_type on a and b which sometimes errors on references that don't have domains
+                // use custom function that extracts return type from atomic references based on each declaration variant
+                let a_type = minus_operand_return_type(a);
+                let b_type = minus_operand_return_type(b);
+
+                if a_type == ReturnType::Int && b_type == ReturnType::Int {
+                    ReturnType::Int
+                } else if let ReturnType::Set(a_inner) = a_type
+                    && let ReturnType::Set(b_inner) = b_type
+                    && a_inner == b_inner
+                {
+                    ReturnType::Set(a_inner)
+                } else {
+                    bug!(
+                        "Invalid minus operation: operands are of different or invalid types for this operation"
+                    )
+                }
+            }
             Expression::FlatAbsEq(_, _, _) => ReturnType::Bool,
             Expression::FlatMinusEq(_, _, _) => ReturnType::Bool,
             Expression::FlatProductEq(_, _, _, _) => ReturnType::Bool,
