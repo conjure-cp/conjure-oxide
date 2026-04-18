@@ -1044,11 +1044,7 @@ impl Display for GroundDomain {
                 )
             }
             GroundDomain::Tuple(domains) => {
-                write!(
-                    f,
-                    "tuple ({})",
-                    &domains.iter().join(", ")
-                )
+                write!(f, "tuple ({})", &domains.iter().join(", "))
             }
             GroundDomain::Record(entries) => {
                 write!(
