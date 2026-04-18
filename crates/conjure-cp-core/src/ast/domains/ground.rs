@@ -1046,8 +1046,8 @@ impl Display for GroundDomain {
             GroundDomain::Tuple(domains) => {
                 write!(
                     f,
-                    "tuple of ({})",
-                    pretty_vec(&domains.iter().collect_vec())
+                    "tuple ({})",
+                    &domains.iter().join(", ")
                 )
             }
             GroundDomain::Record(entries) => {
