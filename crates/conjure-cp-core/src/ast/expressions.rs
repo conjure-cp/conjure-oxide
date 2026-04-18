@@ -725,23 +725,6 @@ impl Expression {
                 let (a_attr, a_dom) = a.domain_of()?.as_set()?;
                 let (b_attr, b_dom) = b.domain_of()?.as_set()?;
 
-                // Temporarily initialising a mutable domain to a_dom; will become the intersection of a & b
-                // If that can't happen, then an empty domain will be returned early
-                // let mut new_dom = a_dom;
-
-                // if let Some(a_dom_rng) = a_dom.as_int_ground_mut()
-                //     && let Some(b_dom_rng) = b_dom.as_int_ground_mut()
-                // {
-                //     a_dom_rng.append(b_dom_rng);
-                //     if let Ok(rng) = Range::minimal(a_dom_rng) {
-                //         let ranges = vec![rng];
-                //         new_dom = Domain::int(ranges);
-                //     } else {
-                //         // There is no intersection of the two domains
-                //         return Some(Domain::empty(ReturnType::Set(Box::new(a.return_type()))));
-                //     }
-                // }
-
                 // Can take the upper bounds on either maxSize attribute.
                 let a_attr_range = a_attr.resolve()?.size;
                 let b_attr_range = b_attr.resolve()?.size;
@@ -751,20 +734,6 @@ impl Expression {
                     .min(b_attr_range.high().copied());
                 let size_attr = Range::new(None, hi);
 
-                // lo is the min of the lower bounds; e.g. if set_a had no attrs and set_b had minSize 2, then set_a union set_b has no minSize
-                // let lo: Option<i32> = a_range.low().copied().min(b_range.low().copied());
-
-                // let attr_intersection = match Range::minimal(&[a_range, b_range]) {
-                //     Ok(range) => range,
-                //     Err(_) => {
-                //         return Some(Domain::empty(ReturnType::Set(Box::new(a.return_type()))));
-                //     }
-                // };
-
-                // let lo: Option<i32> = a_range.low().copied().min(b_range.low().copied());
-                // let hi: Option<i32> = a_range.high().copied().min(b_range.high().copied());
-                // let new_range = Range::new(lo, hi);
-                //
                 Some(Domain::set(
                     SetAttr::new(size_attr),
                     a_dom.intersect(&b_dom).ok()?,
