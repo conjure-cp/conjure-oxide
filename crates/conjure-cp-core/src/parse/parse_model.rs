@@ -740,6 +740,8 @@ pub fn parse_expression(obj: &JsonValue, scope: &SymbolTablePtr) -> Result<Expre
                 parse_table_op(op_obj, scope)
             } else if op_obj.contains_key("MkOpIndexing") || op_obj.contains_key("MkOpSlicing") {
                 parse_indexing_slicing_op(op_obj, scope)
+            } else if op_obj.contains_key("MkOpRelationProj") {
+                parse_relation_projection(op_obj, scope)
             } else if binary_operator(op_name).is_some() {
                 parse_bin_op(op_obj, scope)
             } else if unary_operator(op_name).is_some() {
@@ -1202,6 +1204,39 @@ fn parse_indexing_slicing_op(
             Moo::new(target),
             indices,
         ))
+    }
+}
+
+fn parse_relation_projection(
+    op: &serde_json::Map<String, Value>,
+    scope: &SymbolTablePtr,
+) -> Result<Expression> {
+    let args = op
+        .get("MkOpRelationProj")
+        .ok_or(error!("MkOpRelationProj missing"))?
+        .as_array()
+        .ok_or(error!("MkOpRelationProj is not an array"))?;
+    let first = args
+        .first()
+        .ok_or(error!("MkOpRelationProj missing first argument"))?;
+    let second = args
+        .get(1)
+        .ok_or(error!("MkOpRelationProj missing second argument"))?
+        .as_array()
+        .ok_or(error!("MkOpRelationProj second argument is not an array"))?;
+    let relation = parse_expression(first, scope).ok();
+    let projections = second
+        .iter()
+        .map(|expr| parse_expression(expr, scope).ok())
+        .collect();
+    if let Some(relation) = relation {
+        Ok(Expression::RelationProj(
+            Metadata::new(),
+            Moo::new(relation),
+            projections,
+        ))
+    } else {
+        Err(error!("MkOpRelationProj does not contain relation"))
     }
 }
 

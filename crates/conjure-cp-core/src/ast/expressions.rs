@@ -595,6 +595,9 @@ pub enum Expression {
 
     /// Low-level minion constraint. See Expression::LexLeq
     FlatLexLeq(Metadata, Vec<Atom>, Vec<Atom>),
+
+    #[compatible(JsonInput)]
+    RelationProj(Metadata, Moo<Expression>, Vec<Option<Expression>>),
 }
 
 // for the given matrix literal, return a bounded domain from the min to max of applying op to each
@@ -1041,6 +1044,21 @@ impl Expression {
                 };
                 Some(Domain::relation(rel_attrs, vec![domain, codomain]))
             }
+            Expression::RelationProj(_, relation, projections) => {
+                let (_, domains) = relation.domain_of()?.as_relation()?;
+                let new_doms = domains
+                    .iter()
+                    .zip(projections.iter())
+                    .filter_map(|(domain, included)| {
+                        if included.is_some() {
+                            Some(domain.clone())
+                        } else {
+                            None
+                        }
+                    })
+                    .collect();
+                Some(Domain::relation(RelAttr::<IntVal>::default(), new_doms))
+            }
         }
     }
 
@@ -1143,6 +1161,7 @@ impl Expression {
             ToSet,
             ToMSet,
             ToRelation,
+            RelationProj,
         )
     }
 
@@ -1745,6 +1764,19 @@ impl Display for Expression {
             Expression::ToSet(_, other) => write!(f, "toSet({other})"),
             Expression::ToMSet(_, other) => write!(f, "toMSet({other})"),
             Expression::ToRelation(_, function) => write!(f, "toRelation({function})"),
+            Expression::RelationProj(_, relation, projections) => {
+                let projections_str = projections
+                    .iter()
+                    .map(|x| {
+                        if let Some(x) = x {
+                            x.to_string()
+                        } else {
+                            String::from("_")
+                        }
+                    })
+                    .join(",");
+                write!(f, "{relation}({projections_str})")
+            }
         }
     }
 }
@@ -1969,6 +2001,28 @@ impl Typeable for Expression {
                     ),
                 }
             }
+            Expression::RelationProj(_, relation, projections) => {
+                let subject = relation.return_type();
+                match subject {
+                    ReturnType::Relation(domains) => {
+                        let new_doms = domains
+                            .iter()
+                            .zip(projections.iter())
+                            .filter_map(|(domain, included)| {
+                                if included.is_some() {
+                                    Some(domain.clone())
+                                } else {
+                                    None
+                                }
+                            })
+                            .collect();
+                        ReturnType::Relation(new_doms)
+                    }
+                    _ => bug!(
+                        "Invalid RelationProj operation: expected the operand to be a relation, got {self}: {subject}"
+                    ),
+                }
+            }
         }
     }
 }
@@ -2084,9 +2138,10 @@ impl Expression {
                     f(v);
                 }
             }
-
             // Moo<Expression> + Vec<Option<Expression>>
-            Expression::UnsafeSlice(_, m, vs) | Expression::SafeSlice(_, m, vs) => {
+            Expression::UnsafeSlice(_, m, vs)
+            | Expression::SafeSlice(_, m, vs)
+            | Expression::RelationProj(_, m, vs) => {
                 f(m);
                 for e in vs.iter().flatten() {
                     f(e);
@@ -2287,7 +2342,9 @@ impl CacheHashable for Expression {
             }
 
             // Moo<Expression> + Vec<Option<Expression>>
-            Expression::UnsafeSlice(_, m, vs) | Expression::SafeSlice(_, m, vs) => {
+            Expression::UnsafeSlice(_, m, vs)
+            | Expression::SafeSlice(_, m, vs)
+            | Expression::RelationProj(_, m, vs) => {
                 m.get_cached_hash().hash(&mut hasher);
                 for v in vs {
                     match v {
