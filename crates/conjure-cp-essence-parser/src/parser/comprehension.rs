@@ -109,7 +109,11 @@ pub fn parse_comprehension(
     };
 
     // Use the return expression symbol table which already has quantified variables (as Given) and parent as parent
+    // Parse using the inner typechecking context
+    let saved_inner_ctx = ctx.inner_typechecking_context;
     let mut return_ctx = ctx.with_new_symbols(Some(builder.return_expr_symboltable()));
+    return_ctx.typechecking_context = saved_inner_ctx;
+    return_ctx.inner_typechecking_context = TypecheckingContext::Unknown;
     let Some(return_expr) = parse_expression(&mut return_ctx, return_expr_node)? else {
         return Ok(None);
     };
@@ -242,7 +246,11 @@ pub fn parse_quantifier_or_aggregate_expr(
     };
 
     // Parse with a new context using the return expression symbol table
+    // Prase using the inner typechecking context
+    let saved_inner_ctx = ctx.inner_typechecking_context;
     let mut expr_ctx = ctx.with_new_symbols(Some(builder.return_expr_symboltable()));
+    expr_ctx.typechecking_context = saved_inner_ctx;
+    expr_ctx.inner_typechecking_context = TypecheckingContext::Unknown;
     let Some(expression) = parse_expression(&mut expr_ctx, expression_node)? else {
         return Ok(None);
     };

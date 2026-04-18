@@ -3,7 +3,6 @@ use crate::errors::{FatalParseError, RecoverableParseError};
 use crate::parser::ParseContext;
 use crate::parser::atom::parse_atom;
 use crate::parser::comprehension::parse_quantifier_or_aggregate_expr;
-use crate::parser::dominance::parse_dominance_relation;
 use crate::util::TypecheckingContext;
 use crate::{child, field, named_child};
 use conjure_cp_core::ast::{Expression, GroundDomain, Metadata, Moo};
