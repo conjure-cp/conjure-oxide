@@ -651,16 +651,6 @@ impl Domain {
         len.try_into().map_err(|_| DomainOpError::TooLarge)
     }
 
-    pub fn length_signed(&self) -> Result<i32, DomainOpError> {
-        if let Some(gd) = self.as_ground() {
-            return match gd.length() {
-                Ok(len) => len.try_into().map_err(|_| DomainOpError::TooLarge),
-                Err(error) => Err(error),
-            };
-        }
-        Err(DomainOpError::NotGround)
-    }
-
     /// Construct a ground domain from a slice of values
     pub fn from_literal_vec(vals: &[Literal]) -> Result<DomainPtr, DomainOpError> {
         GroundDomain::from_literal_vec(vals).map(DomainPtr::from)
