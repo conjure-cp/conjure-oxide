@@ -712,6 +712,9 @@ fn unary_operator(op_name: &str) -> Option<UnaryOp> {
         "MkOpDefined" => Some(Expression::Defined),
         "MkOpRange" => Some(Expression::Range),
         "MkOpFactorial" => Some(Expression::Factorial),
+        "MkOpToSet" => Some(Expression::ToSet),
+        "MkOpToMSet" => Some(Expression::ToMSet),
+        "MkOpToRelation" => Some(Expression::ToRelation),
         _ => None,
     }
 }
