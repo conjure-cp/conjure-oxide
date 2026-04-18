@@ -580,8 +580,8 @@ impl Display for UnresolvedDomain {
             UnresolvedDomain::Tuple(domains) => {
                 write!(
                     f,
-                    "tuple of ({})",
-                    pretty_vec(&domains.iter().collect_vec())
+                    "tuple ({})",
+                    &domains.iter().join(",")
                 )
             }
             UnresolvedDomain::Record(entries) => {
