@@ -124,6 +124,9 @@ pub fn parse_essence_with_context_and_map(
             continue;
         }
 
+        ctx.typechecking_context = TypecheckingContext::Unknown;
+        ctx.inner_typechecking_context = TypecheckingContext::Unknown;
+
         match statement.kind() {
             "single_line_comment" => {}
             "language_declaration" => {}
