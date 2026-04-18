@@ -38,8 +38,8 @@ use super::records::RecordValue;
 use super::sat_encoding::SATIntEncoding;
 use super::{
     AbstractLiteral, Atom, DeclarationPtr, Domain, DomainPtr, GroundDomain, IntVal, JectivityAttr,
-    Literal, Metadata, Model, Moo, Name, PartialityAttr, Range, Reference, RelAttr, ReturnType,
-    SetAttr, SymbolTable, SymbolTablePtr, Typeable, UnresolvedDomain, matrix,
+    Literal, MSetAttr, Metadata, Model, Moo, Name, PartialityAttr, Range, Reference, RelAttr,
+    ReturnType, SetAttr, SymbolTable, SymbolTablePtr, Typeable, UnresolvedDomain, matrix,
 };
 
 // Ensure that this type doesn't get too big
@@ -1253,6 +1253,7 @@ impl Expression {
                     let set_attrs = SetAttr { size: attrs.size };
                     Some(Domain::set(set_attrs, dom))
                 } else if let Some((outer_dom, inner_doms)) = other.domain_of()?.as_matrix() {
+                    // We combine all matrix domains into a tuple
                     let mut doms = vec![outer_dom];
                     doms.extend(inner_doms);
                     Some(Domain::set(
@@ -1290,6 +1291,7 @@ impl Expression {
             }
             Expression::ToRelation(_, function) => {
                 let (attrs, domain, codomain) = function.domain_of()?.as_function()?;
+                // Function attributes apply to the relation
                 let rel_attrs = RelAttr {
                     size: attrs.size,
                     binary: vec![],
@@ -1303,6 +1305,7 @@ impl Expression {
                     .zip(projections.iter())
                     .filter_map(|(domain, included)| {
                         if included.is_none() {
+                            // The domains corresponding to projections which are None remain in the relation
                             Some(domain.clone())
                         } else {
                             None
@@ -2242,6 +2245,7 @@ impl Typeable for Expression {
                             .zip(projections.iter())
                             .filter_map(|(domain, included)| {
                                 if included.is_none() {
+                                    // The domains corresponding to projections which are None remain in the relation
                                     Some(domain.clone())
                                 } else {
                                     None

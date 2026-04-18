@@ -1208,6 +1208,7 @@ fn parse_indexing_slicing_op(
     }
 }
 
+// Parses relation projection, to get a Vec<Option<Expression>> for the projections
 fn parse_relation_projection(
     op: &serde_json::Map<String, Value>,
     scope: &SymbolTablePtr,
@@ -1226,6 +1227,9 @@ fn parse_relation_projection(
         .as_array()
         .ok_or(error!("MkOpRelationProj second argument is not an array"))?;
     let relation = parse_expression(first, scope).ok();
+    // We build a vec of option expressions.
+    // In the case where a relation domain is not being projected it is None, otherwise it is Some with the expression
+    // We parse the 'null' as an error, which is mapped to None after parse_expression()
     let projections = second
         .iter()
         .map(|expr| parse_expression(expr, scope).ok())
@@ -1241,6 +1245,9 @@ fn parse_relation_projection(
     }
 }
 
+// The ToSet operator is not truely a unary operator.
+// The internal expression is 2nd in the array, with 'false' as the first element
+// Therefore it needs separate parsing
 fn parse_to_set(op: &serde_json::Map<String, Value>, scope: &SymbolTablePtr) -> Result<Expression> {
     let args = op
         .get("MkOpToSet")
