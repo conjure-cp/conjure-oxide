@@ -3,9 +3,7 @@
 
 # Sequences
 ## What Are Sequences
-A sequence is a datatype for storing a series of values, where values can occur multiple times and ordering is preserved. It differs from a [matrix](https://github.com/conjure-cp/conjure-oxide/wiki/), in that:
-- Not recursive; i.e. the inner domain of a sequence cannot be another high-level type, it must be either an integer or a boolean.
-- Can have defined attributes; i.e. you can define a sequence to have varying lengths, and to restrict what values it can draw from it's inner domain.
+A sequence is a datatype for storing a series of values, where values can occur multiple times and ordering is preserved. It differs from a [matrix](https://github.com/conjure-cp/conjure-oxide/wiki/), in that it can have defined attributes; i.e. you can define a sequence to have varying lengths, and to restrict what values it can draw from it's inner domain.
 
 
 ## Attributes
