@@ -10,6 +10,7 @@ use crate::ast::{
 use itertools::Itertools;
 use polyquine::Quine;
 use serde::{Deserialize, Serialize};
+use tracing_subscriber::util::SubscriberInitExt;
 use std::fmt::{Display, Formatter};
 use std::thread_local;
 use uniplate::Uniplate;
@@ -253,7 +254,18 @@ impl Domain {
     where 
         T: Into<SequenceAttr<IntVal>> + TryInto<SequenceAttr<Int>> + Clone,
     {
-        
+        if let Domain::Ground(gd) = inner_dom.as_ref()
+            && let Ok(int_attr) = attr.clone().try_into()
+        {
+            return Moo::new(Domain::Ground(Moo::new(GroundDomain::Sequence(
+                int_attr,
+                gd.clone(),
+            ))));
+        }
+        Moo::new(Domain::Unresolved(Moo::new(UnresolvedDomain::Sequence(
+            attr.into(),
+            inner_dom,
+        ))))
     }
 
     /// If this domain is ground, return a [Moo] to the underlying [GroundDomain].
