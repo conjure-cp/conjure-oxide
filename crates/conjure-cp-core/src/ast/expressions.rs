@@ -2121,6 +2121,9 @@ impl Expression {
                         f(b);
                     }
                 }
+                AbstractLiteral::Variant(v) => {
+                    f(&v.value);
+                }
             },
             Expression::Root(_, vs) => {
                 for expr in vs {
@@ -2312,6 +2315,10 @@ impl CacheHashable for Expression {
                         a.get_cached_hash().hash(&mut hasher);
                         b.get_cached_hash().hash(&mut hasher);
                     }
+                }
+                AbstractLiteral::Variant(v) => {
+                    v.name.hash(&mut hasher);
+                    v.value.get_cached_hash().hash(&mut hasher);
                 }
             },
             Expression::Root(_, vs) => {

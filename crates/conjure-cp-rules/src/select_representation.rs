@@ -185,7 +185,8 @@ fn domain_needs_representation(domain: &GroundDomain) -> bool {
         | GroundDomain::MSet(_, _)
         | GroundDomain::Tuple(_)
         | GroundDomain::Record(_)
-        | GroundDomain::Function(_, _, _) => true,
+        | GroundDomain::Function(_, _, _)
+        | GroundDomain::Variant(_) => true,
         GroundDomain::Empty(_) => false,
     }
 }

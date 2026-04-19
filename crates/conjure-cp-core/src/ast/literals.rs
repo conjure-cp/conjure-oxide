@@ -71,6 +71,9 @@ pub enum AbstractLiteral<T: AbstractLiteralValue> {
     Record(Vec<RecordValue<T>>),
 
     Function(Vec<(T, T)>),
+
+    // Variants only contain one of their name-domain pairs
+    Variant(Moo<RecordValue<T>>),
 }
 
 // TODO: use HasDomain instead once Expression::domain_of returns Domain not Option<Domain>
@@ -149,6 +152,7 @@ impl AbstractLiteral<Expression> {
             AbstractLiteral::Tuple(_) => None,
             AbstractLiteral::Record(_) => None,
             AbstractLiteral::Function(_) => None,
+            AbstractLiteral::Variant(_) => None,
         }
     }
 }
@@ -253,6 +257,10 @@ impl Typeable for AbstractLiteral<Expression> {
 
                 ReturnType::Function(Box::new(t1), Box::new(t2))
             }
+            AbstractLiteral::Variant(item) => {
+                // Variants hold multiple possible types. In the case of a literal we know which type it chose
+                ReturnType::Variant(vec![item.value.return_type()])
+            }
         }
     }
 }
@@ -326,6 +334,9 @@ where
                     .join(",");
                 write!(f, "function({entries_str})")
             }
+            AbstractLiteral::Variant(entry) => {
+                write!(f, "{{{}: {}}}",entry.name,entry.value)
+            }
         }
     }
 }
@@ -394,6 +405,13 @@ where
 
                         AbstractLiteral::Function(pairs)
                     }),
+                )
+            }
+            AbstractLiteral::Variant(entries) => {
+                let (f1_tree, f1_ctx) = <_ as Biplate<AbstractLiteral<T>>>::biplate(entries);
+                (
+                    f1_tree,
+                    Box::new(move |x| AbstractLiteral::Variant(f1_ctx(x))),
                 )
             }
         }
@@ -483,6 +501,13 @@ where
 
                             AbstractLiteral::Function(pairs)
                         }),
+                    )
+                }
+                AbstractLiteral::Variant(entries) => {
+                    let (f1_tree, f1_ctx) = <_ as Biplate<To>>::biplate(entries);
+                    (
+                        f1_tree,
+                        Box::new(move |x| AbstractLiteral::Variant(f1_ctx(x))),
                     )
                 }
             }
@@ -662,6 +687,16 @@ impl AbstractLiteral<Expression> {
                 ))
             }
             AbstractLiteral::Function(_) => todo!("Implement into_literals for functions"),
+            AbstractLiteral::Variant(entry) => {
+                let literal = match entry.value.clone() {
+                    Expression::Atomic(_, Atom::Literal(lit)) => Some(lit),
+                    Expression::AbstractLiteral(_, abslit) => {
+                        Some(Literal::AbstractLiteral(abslit.into_literals()?))
+                    }
+                    _ => None,
+                }?;
+                Some(AbstractLiteral::Variant(Moo::new(RecordValue {name: entry.name.clone(), value: literal})))
+            }
         }
     }
 }

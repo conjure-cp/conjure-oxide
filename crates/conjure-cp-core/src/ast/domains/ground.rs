@@ -69,6 +69,8 @@ pub enum GroundDomain {
     Record(Vec<RecordEntryGround>),
     /// A function with a domain and range
     Function(FuncAttr, Moo<GroundDomain>, Moo<GroundDomain>),
+    /// A variant domain with its domain options (reusing record entries)
+    Variant(Vec<RecordEntryGround>)
 }
 
 impl GroundDomain {
@@ -123,6 +125,11 @@ impl GroundDomain {
             #[allow(unreachable_patterns)]
             // Technically redundant but logically clearer to have both
             (GroundDomain::Record(_), _) | (_, GroundDomain::Record(_)) => {
+                Err(DomainOpError::WrongType)
+            }
+            #[allow(unreachable_patterns)]
+            // Technically redundant but logically clearer to have both
+            (GroundDomain::Variant(_), _) | (_, GroundDomain::Variant(_)) => {
                 Err(DomainOpError::WrongType)
             }
             #[allow(unreachable_patterns)]
@@ -308,6 +315,17 @@ impl GroundDomain {
             GroundDomain::Function(_, _, _) => {
                 todo!("Length bound of functions is not yet supported")
             }
+            GroundDomain::Variant(entries) => {
+                let mut largest = 1u64;
+                for entry in entries {
+                    let sz = entry.domain.length()?;
+                    // Only one name-domain pair is inside the variant, so we must assume the largest for space
+                    if sz > largest{
+                        largest = sz;
+                    }
+                }
+                Ok(largest)
+            }
         }
     }
 
@@ -458,6 +476,19 @@ impl GroundDomain {
                         }
                     }
                     Ok(true)
+                }
+                _ => Ok(false),
+            },
+            GroundDomain::Variant(entries) => match lit {
+                Literal::AbstractLiteral(AbstractLiteral::Variant(lit_entry)) => {
+                    for entry in entries {
+                        if entry.name == lit_entry.name
+                            && !(entry.domain.contains(&lit_entry.value)?)
+                        {
+                            return Ok(true);
+                        }
+                    }
+                    Ok(false)
                 }
                 _ => Ok(false),
             },
@@ -927,6 +958,9 @@ impl GroundDomain {
 
                 todo!();
             }
+            Literal::AbstractLiteral(AbstractLiteral::Variant(_)) => {
+                todo!();
+            }
         }
     }
 
@@ -965,6 +999,13 @@ impl Typeable for GroundDomain {
             }
             GroundDomain::Function(_, dom, cdom) => {
                 ReturnType::Function(Box::new(dom.return_type()), Box::new(cdom.return_type()))
+            }
+            GroundDomain::Variant(entries) => {
+                let mut entry_types = Vec::new();
+                for entry in entries {
+                    entry_types.push(entry.domain.return_type());
+                }
+                ReturnType::Record(entry_types)
             }
         }
     }
@@ -1013,6 +1054,18 @@ impl Display for GroundDomain {
             }
             GroundDomain::Function(attribute, domain, codomain) => {
                 write!(f, "function {} {} --> {} ", attribute, domain, codomain)
+            }
+            GroundDomain::Variant(entries) => {
+                write!(
+                    f,
+                    "variant {{{}}}",
+                    pretty_vec(
+                        &entries
+                            .iter()
+                            .map(|entry| format!("{}: {}", entry.name, entry.domain))
+                            .collect_vec()
+                    )
+                )
             }
         }
     }

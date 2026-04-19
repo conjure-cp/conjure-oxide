@@ -337,6 +337,8 @@ pub enum UnresolvedDomain {
     Record(Vec<RecordEntry>),
     /// A function with attributes, domain, and range
     Function(FuncAttr<IntVal>, DomainPtr, DomainPtr),
+    /// A variant domain with its domain options (reusing record entries)
+    Variant(Vec<RecordEntry>)
 }
 
 impl UnresolvedDomain {
@@ -393,6 +395,16 @@ impl UnresolvedDomain {
                 }
                 None
             }
+            UnresolvedDomain::Variant(entries) => entries
+                .iter()
+                .map(|f| {
+                    f.domain.resolve().map(|gd| RecordEntryGround {
+                        name: f.name.clone(),
+                        domain: gd,
+                    })
+                })
+                .collect::<Option<_>>()
+                .map(GroundDomain::Variant),
         }
     }
 
@@ -454,6 +466,10 @@ impl UnresolvedDomain {
             (UnresolvedDomain::Function(_, _, _), _) | (_, UnresolvedDomain::Function(_, _, _)) => {
                 Err(DomainOpError::WrongType)
             }
+            #[allow(unreachable_patterns)] // Technically redundant but logically makes sense
+            (UnresolvedDomain::Variant(_), _) | (_, UnresolvedDomain::Variant(_)) => {
+                Err(DomainOpError::WrongType)
+            }
         }
     }
 
@@ -494,6 +510,13 @@ impl Typeable for UnresolvedDomain {
             }
             UnresolvedDomain::Function(_, dom, cdom) => {
                 ReturnType::Function(Box::new(dom.return_type()), Box::new(cdom.return_type()))
+            }
+            UnresolvedDomain::Variant(entries) => {
+                let mut entry_types = Vec::new();
+                for entry in entries {
+                    entry_types.push(entry.domain.return_type());
+                }
+                ReturnType::Variant(entry_types)
             }
         }
     }
@@ -541,6 +564,18 @@ impl Display for UnresolvedDomain {
             }
             UnresolvedDomain::Function(attribute, domain, codomain) => {
                 write!(f, "function {} {} --> {} ", attribute, domain, codomain)
+            }
+            UnresolvedDomain::Variant(entries) => {
+                write!(
+                    f,
+                    "variant {{{}}}",
+                    pretty_vec(
+                        &entries
+                            .iter()
+                            .map(|entry| format!("{}: {}", entry.name, entry.domain))
+                            .collect_vec()
+                    )
+                )
             }
         }
     }
