@@ -319,15 +319,22 @@ fn parse_domain(
 
             Ok(Domain::tuple(domain))
         }
-        "DomainRecord" => {
+        "DomainRecord" | "DomainVariant" => {
+            // Records and Variants can be parsed the same way for the most part
+            let is_record = domain_name == "DomainRecord";
+            // Get the actual string for error message purposes
+            let domain_string = match is_record {
+                true => "Record",
+                false => "Variant",
+            };
             let domain_value = domain_value
                 .as_array()
-                .ok_or(error!("Domain Record is not a json array"))?;
+                .ok_or(error!(&format!("Domain {domain_string} is not a json array")))?;
 
-            let mut record_entries = vec![];
+            let mut entries = vec![];
 
             for item in domain_value {
-                //collect the name of the record field
+                //collect the name of the field
                 let name = item[0]
                     .as_object()
                     .ok_or(error!("FindOrGiven[1] is not an object"))?["Name"]
@@ -335,7 +342,7 @@ fn parse_domain(
                     .ok_or(error!("FindOrGiven[1].Name is not a string"))?;
 
                 let name = Name::User(Ustr::from(name));
-                // then collect the domain of the record field
+                // then collect the domain of the field
                 let domain = item[1]
                     .as_object()
                     .ok_or(error!("FindOrGiven[2] is not an object"))?
@@ -347,11 +354,11 @@ fn parse_domain(
 
                 let rec = RecordEntry { name, domain };
 
-                record_entries.push(rec);
+                entries.push(rec);
             }
 
-            // add record fields to symbol table
-            for decl in record_entries
+            // add fields to symbol table
+            for decl in entries
                 .iter()
                 .cloned()
                 .map(DeclarationPtr::new_record_field)
@@ -360,8 +367,11 @@ fn parse_domain(
                     "record field should not already be in the symbol table"
                 ))?;
             }
-
-            Ok(Domain::record(record_entries))
+            if is_record{
+                Ok(Domain::record(entries))
+            } else {
+                Ok(Domain::variant(entries))
+            }
         }
         "DomainFunction" => {
             let domain = domain_value
