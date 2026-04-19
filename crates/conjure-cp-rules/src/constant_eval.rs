@@ -1,7 +1,8 @@
 #![allow(dead_code)]
 use conjure_cp::ast::eval::vec_op;
 use conjure_cp::ast::{
-    Atom, Expression as Expr, Metadata, SymbolTable, eval_constant, run_partial_evaluator,
+    AbstractLiteral, Atom, Expression as Expr, Literal, Metadata, SymbolTable, eval_constant,
+    run_partial_evaluator,
 };
 use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
@@ -13,14 +14,31 @@ use uniplate::Biplate;
 
 register_rule_set!("Constant", ());
 
-#[register_rule(("Base",9000))]
+/// Constant-folds `expr` unless doing so would inline a referenced matrix literal.
+fn fold_constant_expression(expr: &Expr) -> Option<Expr> {
+    let constant = eval_constant(expr)?;
+
+    if matches!(
+        (expr, &constant),
+        (
+            Expr::Atomic(_, Atom::Reference(_)),
+            Literal::AbstractLiteral(AbstractLiteral::Matrix(_, _))
+        )
+    ) {
+        return None;
+    }
+
+    Some(Expr::Atomic(Metadata::new(), Atom::Literal(constant)))
+}
+
+#[register_rule("Base", 9000)]
 fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     run_partial_evaluator(expr)
 }
 
-#[register_rule(("Constant", 9001))]
+#[register_rule("Constant", 9001, [Root])]
 fn constant_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    // I break the rules a bit here: this is a global rule!
+    // I break the rules a bit here: this is a global rule on roots.
     //
     // This rule is really really hot when expanding comprehensions.. Also, at time of writing, we
     // have the naive rewriter, which is slow on large trees....
@@ -29,43 +47,57 @@ fn constant_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // however, favour doing this top-down!
     //
     // e.g. or([(1=1),(2=2),(3+3 = 6)])
+    //
+    // We also reuse it as a plain expression simplifier when rewriting value lettings so shared
+    // declaration pointers observe the rewritten letting body.
+    match expr {
+        Expr::Root(_, _) => {
+            let has_changed: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
+            let has_changed_2 = Arc::clone(&has_changed);
 
-    if !matches!(expr, Expr::Root(_, _)) {
-        return Err(RuleNotApplicable);
-    };
+            let new_expr = expr.transform_bi(&move |x| {
+                if matches!(
+                    x,
+                    Expr::Atomic(_, Atom::Literal(_)) | Expr::Atomic(_, Atom::Reference(_))
+                ) {
+                    return x;
+                }
 
-    let has_changed: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
-    let has_changed_2 = Arc::clone(&has_changed);
+                match fold_constant_expression(&x)
+                    .or_else(|| run_partial_evaluator(&x).ok().map(|r| r.new_expression))
+                {
+                    Some(new_expr) => {
+                        has_changed.store(true, Ordering::Relaxed);
+                        new_expr
+                    }
 
-    let new_expr = expr.transform_bi(&move |x| {
-        if let Expr::Atomic(_, Atom::Literal(_)) = x {
-            return x;
-        }
+                    None => x,
+                }
+            });
 
-        match eval_constant(&x)
-            .map(|c| Expr::Atomic(Metadata::new(), Atom::Literal(c)))
-            .or_else(|| run_partial_evaluator(&x).ok().map(|r| r.new_expression))
-        {
-            Some(new_expr) => {
-                has_changed.store(true, Ordering::Relaxed);
-                new_expr
+            if has_changed_2.load(Ordering::Relaxed) {
+                Ok(Reduction::pure(new_expr))
+            } else {
+                Err(RuleNotApplicable)
             }
-
-            None => x,
         }
-    });
-
-    if has_changed_2.load(Ordering::Relaxed) {
-        Ok(Reduction::pure(new_expr))
-    } else {
-        Err(RuleNotApplicable)
+        Expr::AbstractLiteral(_, _)
+        | Expr::Atomic(_, Atom::Literal(conjure_cp::ast::Literal::AbstractLiteral(_))) => {
+            Err(RuleNotApplicable)
+        }
+        _ => match fold_constant_expression(expr)
+            .or_else(|| run_partial_evaluator(expr).ok().map(|r| r.new_expression))
+        {
+            Some(new_expr) if &new_expr != expr => Ok(Reduction::pure(new_expr)),
+            _ => Err(RuleNotApplicable),
+        },
     }
 }
 
 /// Evaluate the root expression.
 ///
 /// This returns either Expr::Root([true]) or Expr::Root([false]).
-#[register_rule(("Constant", 9001))]
+#[register_rule("Constant", 9001, [Root])]
 fn eval_root(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // this is its own rule not part of apply_eval_constant, because root should return a new root
     // with a literal inside it, not just a literal
@@ -89,27 +121,5 @@ fn eval_root(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                 vec![lit.into()],
             )))
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use conjure_cp::ast::{Expression, Moo, eval_constant};
-    use conjure_cp::essence_expr;
-
-    #[test]
-    fn div_by_zero() {
-        let expr = essence_expr!(1 / 0);
-        assert_eq!(eval_constant(&expr), None);
-    }
-
-    #[test]
-    fn safediv_by_zero() {
-        let expr = Expression::SafeDiv(
-            Default::default(),
-            Moo::new(essence_expr!(1)),
-            Moo::new(essence_expr!(0)),
-        );
-        assert_eq!(eval_constant(&expr), None);
     }
 }

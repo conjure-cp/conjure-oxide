@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::diagnostics::error_detection::collect_errors::detect_errors;
-
+use tree_sitter::Tree;
 // structs for lsp stuff
 
 // position / range
@@ -52,6 +52,7 @@ pub enum SymbolKind {
     Variable = 5,
     Constant = 6,
     Domain = 7,
+    Given = 8,
 } // to be extended
 
 // each type of token / symbol in the essence grammar will be
@@ -68,10 +69,10 @@ pub struct DocumentSymbol {
 }
 
 // getting the actual diagnostic
-pub fn get_diagnostics(source: &str) -> Vec<Diagnostic> {
+pub fn get_diagnostics(source: &str, cst: &Tree) -> Vec<Diagnostic> {
     let mut diagnostics = Vec::new();
 
-    diagnostics.extend(detect_errors(source));
+    diagnostics.extend(detect_errors(source, cst));
 
     diagnostics
 }

@@ -30,7 +30,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
 
     c.bench_function("Identity", |b| {
         b.iter(|| {
-            let engine = EngineBuilder::new()
+            let mut engine = EngineBuilder::new()
                 .append_rule_groups(rules.clone())
                 .build();
             engine.morph(

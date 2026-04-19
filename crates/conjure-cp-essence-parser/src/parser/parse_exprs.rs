@@ -1,34 +1,36 @@
 use super::ParseContext;
-use super::util::{get_tree, query_toplevel};
+use super::util::{get_expr_tree, query_toplevel};
 use crate::diagnostics::source_map::SourceMap;
 use crate::errors::FatalParseError;
 use crate::expression::parse_expression;
 use crate::util::node_is_expression;
 use conjure_cp_core::ast::{Expression, SymbolTablePtr};
+use std::collections::BTreeMap;
 #[allow(unused)]
 use uniplate::Uniplate;
 
-pub fn parse_expr(src: &str, symbols_ptr: SymbolTablePtr) -> Result<Expression, FatalParseError> {
+pub fn parse_expr(
+    src: &str,
+    symbols_ptr: SymbolTablePtr,
+) -> Result<Option<Expression>, FatalParseError> {
     let exprs = parse_exprs(src, symbols_ptr)?;
     if exprs.len() != 1 {
-        return Err(FatalParseError::internal_error(
-            "Expected a single expression".to_string(),
-            None,
-        ));
+        return Ok(None);
     }
-    Ok(exprs[0].clone())
+    Ok(Some(exprs[0].clone()))
 }
 
 pub fn parse_exprs(
     src: &str,
     symbols_ptr: SymbolTablePtr,
 ) -> Result<Vec<Expression>, FatalParseError> {
-    let (tree, source_code) = get_tree(src).ok_or(FatalParseError::TreeSitterError(
-        "Failed to parse Essence source code".to_string(),
-    ))?;
+    let Some((tree, source_code)) = get_expr_tree(src) else {
+        return Ok(Vec::new());
+    };
 
     let root = tree.root_node();
     let mut source_map = SourceMap::default();
+    let mut decl_spans = BTreeMap::new();
     let mut errors = Vec::new();
     let mut ctx = ParseContext::new(
         &source_code,
@@ -36,6 +38,7 @@ pub fn parse_exprs(
         Some(symbols_ptr),
         &mut errors,
         &mut source_map,
+        &mut decl_spans,
     );
     let mut ans = Vec::new();
     for expr in query_toplevel(&root, &node_is_expression) {
@@ -68,15 +71,15 @@ mod test {
         let symbols = SymbolTablePtr::new();
 
         assert_eq!(
-            parse_expr("42", symbols.clone()).unwrap(),
+            parse_expr("42", symbols.clone()).unwrap().unwrap(),
             Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(42)))
         );
         assert_eq!(
-            parse_expr("true", symbols.clone()).unwrap(),
+            parse_expr("true", symbols.clone()).unwrap().unwrap(),
             Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(true)))
         );
         assert_eq!(
-            parse_expr("false", symbols).unwrap(),
+            parse_expr("false", symbols).unwrap().unwrap(),
             Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false)))
         )
     }

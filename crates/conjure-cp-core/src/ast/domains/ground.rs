@@ -214,6 +214,9 @@ impl GroundDomain {
                     rng_iters.into_iter().flat_map(|ri| ri.map(Literal::from)),
                 ))
             }
+            GroundDomain::Matrix(elem_domain, index_domains) => Ok(Box::new(
+                enumerate_matrix_values(elem_domain.as_ref(), index_domains)?.into_iter(),
+            )),
             _ => todo!("Enumerating nested domains is not yet supported"),
         }
     }
@@ -369,22 +372,26 @@ impl GroundDomain {
                         // Matrix literals are represented as nested 1d matrices, so the elements of
                         // the matrix literal will be the inner dimensions of the matrix.
 
-                        let mut index_domains = index_domains.clone();
-                        if index_domains
-                            .pop()
-                            .expect("a matrix should have at least one index domain")
-                            != *idx_domain
-                        {
+                        let Some((current_index_domain, remaining_index_domains)) =
+                            index_domains.split_first()
+                        else {
+                            panic!("a matrix should have at least one index domain");
+                        };
+
+                        if *current_index_domain != *idx_domain {
                             return Ok(false);
                         };
 
-                        let next_elem_domain = if index_domains.is_empty() {
+                        let next_elem_domain = if remaining_index_domains.is_empty() {
                             // Base case - we have a 1D row. Now check if all elements in the
                             // literal are in this row's element domain.
                             elem_domain.as_ref().clone()
                         } else {
                             // Otherwise, go down a dimension (e.g. 2D matrix inside a 3D tensor)
-                            GroundDomain::Matrix(elem_domain.clone(), index_domains)
+                            GroundDomain::Matrix(
+                                elem_domain.clone(),
+                                remaining_index_domains.to_vec(),
+                            )
                         };
 
                         for elem in elems {
@@ -966,7 +973,7 @@ impl Typeable for GroundDomain {
 impl Display for GroundDomain {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self {
-            GroundDomain::Empty(ty) => write!(f, "empty({ty:?})"),
+            GroundDomain::Empty(ty) => write!(f, "empty({ty})"),
             GroundDomain::Bool => write!(f, "bool"),
             GroundDomain::Int(ranges) => {
                 if ranges.iter().all(Range::is_lower_or_upper_bounded) {
@@ -1009,4 +1016,30 @@ impl Display for GroundDomain {
             }
         }
     }
+}
+
+fn enumerate_matrix_values(
+    elem_domain: &GroundDomain,
+    index_domains: &[Moo<GroundDomain>],
+) -> Result<Vec<Literal>, DomainOpError> {
+    let Some((current_index_domain, remaining_index_domains)) = index_domains.split_first() else {
+        panic!("a matrix should have at least one index domain");
+    };
+
+    let current_dimension_len =
+        usize::try_from(current_index_domain.length()?).map_err(|_| DomainOpError::TooLarge)?;
+
+    let entry_values = if remaining_index_domains.is_empty() {
+        elem_domain.values()?.collect_vec()
+    } else {
+        enumerate_matrix_values(elem_domain, remaining_index_domains)?
+    };
+
+    Ok((0..current_dimension_len)
+        .map(|_| entry_values.iter().cloned())
+        .multi_cartesian_product()
+        .map(|elems| {
+            Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, current_index_domain.clone()))
+        })
+        .collect())
 }

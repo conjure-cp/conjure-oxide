@@ -6,7 +6,7 @@ use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, register_rule,
 };
 
-#[register_rule(("Base", 8700))]
+#[register_rule("Base", 8700, [Neq])]
 fn neq_not_eq_sets(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
         Expr::Neq(_, a, b)
