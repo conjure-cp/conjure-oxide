@@ -95,11 +95,73 @@ impl SolverAdaptor for SavileRow {
                 format!("Savile Row exited with an error:\n{stderr}")
             ));
         }
+        
+        // Step 3: find .solution files Savile Row produced
+        // Savile Row writes solutions to the same temp directory as the input file
+        // They are named like model.eprime.solution or model.eprime.001.solution
+        let solution_files: Vec<_> = std::fs::read_dir(tmp_dir.path())
+            .map_err(|e| SolverError::Runtime(
+                format!("Could not read temp directory: {e}")
+            ))?
+            .filter_map(|entry| entry.ok())
+            .map(|entry| entry.path())
+            .filter(|path| {
+                path.extension().map(|ext| ext == "solution").unwrap_or(false)
+            })
+            .collect();
+        
+        // If no solution files exist, the problem has no solutions
+        if solution_files.is_empty() {
+            return Ok(SolveSuccess {
+                stats: SolverStats::default(),
+                status: SearchStatus::Complete(SearchComplete::NoSolutions),
+            });
+        }
 
-        Err(SolverError::OpNotImplemented(
-            "Savile Row output parsing not yet implemented".into(),
-        ))
-    
+        // Step 4: parse each solution file and call the callback
+        for solution_path in &solution_files {
+            // Read the entire file into a string
+            let content = std::fs::read_to_string(solution_path)
+                .map_err(|e| SolverError::Runtime(
+                    format!("Could not read solution file: {e}")
+                ))?;
+
+            // Build a map of variable name -> value for this solution
+            let mut solution: HashMap<Name, Literal> = HashMap::new();
+
+            for line in content.lines() {
+                let line = line.trim();
+
+                // Solution lines look like: letting x be 3
+                // We check if the line starts with "letting "
+                if let Some(rest) = line.strip_prefix("letting ") {
+                    // rest is now "x be 3"
+                    // split_once splits on the FIRST occurrence of " be "
+                    // giving us ("x", "3")
+                    if let Some((name_part, value_part)) = rest.split_once(" be ") {
+                        let name = Name::user(name_part.trim());
+                        let value = parse_literal(value_part.trim());
+
+                        if let Some(literal) = value {
+                            solution.insert(name, literal);
+                        }
+                    }
+                }
+            }
+
+            // Pass this solution up to the pipeline via the callback
+            // The callback returns true if we should keep looking for more solutions
+            // and false if we should stop
+            if !callback(solution) {
+                break;
+            }
+        }
+
+        // All solutions have been passed to the callback
+        Ok(SolveSuccess {
+            stats: SolverStats::default(),
+            status: SearchStatus::Complete(SearchComplete::HasSolutions),
+        })
     }
 
     fn solve_mut(
@@ -126,4 +188,24 @@ impl SolverAdaptor for SavileRow {
     ) -> Result<(), std::io::Error> {
         writer.write_all(b"// Savile Row input file (not yet implemented)\n")
     }
+}
+
+/// Converts a value string from a Savile Row solution file into a Literal.
+/// For example "3" becomes Literal::Int(3), "true" becomes Literal::Bool(true).
+/// Returns None if the value cannot be parsed.
+fn parse_literal(s: &str) -> Option<Literal> {
+    // Try parsing as an integer first
+    if let Ok(n) = s.parse::<i32>() {
+        return Some(Literal::Int(n));
+    }
+
+    // Try parsing as a boolean
+    match s {
+        "true" => return Some(Literal::Bool(true)),
+        "false" => return Some(Literal::Bool(false)),
+        _ => {}
+    }
+
+    // Unknown format - skip this value
+    None
 }
