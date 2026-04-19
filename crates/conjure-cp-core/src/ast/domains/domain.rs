@@ -248,6 +248,18 @@ impl Domain {
         ))))
     }
 
+    /// Create a new variant domain with the given entries.
+    /// If the entries are all ground, the variant will be [GroundDomain::Variant].
+    /// Otherwise, it will be [UnresolvedDomain::Variant].
+    pub fn variant(entries: Vec<RecordEntry>) -> DomainPtr {
+        if let Ok(entries_gds) = entries.iter().cloned().map(TryInto::try_into).try_collect() {
+            return Moo::new(Domain::Ground(Moo::new(GroundDomain::Variant(entries_gds))));
+        }
+        Moo::new(Domain::Unresolved(Moo::new(UnresolvedDomain::Variant(
+            entries,
+        ))))
+    }
+
     /// If this domain is ground, return a [Moo] to the underlying [GroundDomain].
     /// Otherwise, try to resolve it; Return None if this is not yet possible.
     /// Domains which contain references to givens cannot be resolved until these
@@ -597,6 +609,47 @@ impl Domain {
     )> {
         if let Some(GroundDomain::Function(attrs, dom, codom)) = self.as_ground_mut() {
             return Some((attrs, dom, codom));
+        }
+        None
+    }
+
+    /// If this is a variant domain, clone and return its entries.
+    pub fn as_variant(&self) -> Option<Vec<RecordEntry>> {
+        if let Some(GroundDomain::Variant(entries)) = self.as_ground() {
+            return Some(entries.iter().cloned().map(|r| r.into()).collect());
+        }
+        if let Some(UnresolvedDomain::Variant(entries)) = self.as_unresolved() {
+            return Some(entries.clone());
+        }
+        None
+    }
+
+    /// If this is a [GroundDomain::Variant], get a mutable reference to its entries
+    pub fn as_variant_ground(&self) -> Option<&Vec<RecordEntryGround>> {
+        if let Some(GroundDomain::Variant(entries)) = self.as_ground() {
+            return Some(entries);
+        }
+        None
+    }
+
+    /// If this is a variant domain, get a mutable reference to its list of entries.
+    /// The domain always becomes [UnresolvedDomain::Variant] after this operation.
+    pub fn as_variant_mut(&mut self) -> Option<&mut Vec<RecordEntry>> {
+        if let Some(GroundDomain::Variant(entries_gds)) = self.as_ground() {
+            let entries: Vec<RecordEntry> = entries_gds.iter().cloned().map(|r| r.into()).collect();
+            *self = Domain::Unresolved(Moo::new(UnresolvedDomain::Variant(entries)));
+        }
+
+        if let Some(UnresolvedDomain::Variant(entries_gds)) = self.as_unresolved_mut() {
+            return Some(entries_gds);
+        }
+        None
+    }
+
+    /// If this is a [GroundDomain::Variant], get a mutable reference to its entries
+    pub fn as_variant_ground_mut(&mut self) -> Option<&mut Vec<RecordEntryGround>> {
+        if let Some(GroundDomain::Variant(entries)) = self.as_ground_mut() {
+            return Some(entries);
         }
         None
     }
