@@ -3,7 +3,7 @@
 
 # Relations
 ## What Are Relations
-A relation is effectively a set of tuples. The internal tuples can be of any arity and can have different internal domains, as long as every tuple in the relation has the same airty and domains. If a relation is binary we can also add additional attributes to define properties of the relation.
+A relation is effectively a set of tuples. The internal tuples can be of any arity and can have different internal domains, as long as every tuple in the relation has the same arity and domains. If a relation is binary we can also add additional attributes to define properties of the relation.
 
 Relations have attributes and a list of domains for inside the tuples. They are defined for both `GroundDomain` and `UnresolvedDomain` as `Relation(RelAttr, Vec<GroundDomain>)`.
 
@@ -20,7 +20,7 @@ Size attributes determine how many tuples are in the relation. Size attributes a
 - A range of sizes `minSize x maxSize x`
 - Or unbounded by not specifying any attribute
 
-Binary attributes determine properties of the relation when it is a binary relation. Binary attributes are stored as a list of attributes `Vec<BinaryAttr>` and any number of them can be provided. The avaliable binary attributes are as follows:
+Binary attributes determine properties of the relation when it is a binary relation. Binary attributes are stored as a list of attributes `Vec<BinaryAttr>` and any number of them can be provided. The available binary attributes are as follows:
 - `reflexive`
 - `irreflexive`
 - `coreflexive`
