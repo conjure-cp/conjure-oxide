@@ -186,7 +186,18 @@ impl SolverAdaptor for SavileRow {
         &self,
         writer: &mut Box<dyn Write>,
     ) -> Result<(), std::io::Error> {
-        writer.write_all(b"// Savile Row input file (not yet implemented)\n")
+        // Get the model, returning an error if none is loaded
+        let model = self.model.as_ref().ok_or_else(|| {
+            std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "No model loaded"
+            )
+        })?;
+
+        // Write the Essence' header and model to the writer
+        // This is the same format we pass to Savile Row in solve()
+        let model_str = format!("language ESSENCE' 1.0\n\n{}", model);
+        writer.write_all(model_str.as_bytes())
     }
 }
 
