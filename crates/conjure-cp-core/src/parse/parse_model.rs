@@ -317,7 +317,7 @@ fn parse_domain(
                 .ok_or(error!("Sequence attributes is not a json array"))?;
 
             let size = attributes
-                .get(0)
+                .first()
                 .and_then(|v| v.as_object())
                 .ok_or(error!("Sequence size attributes is not an object"))?;
             let size = parse_size_attr(size, symbols)?;
