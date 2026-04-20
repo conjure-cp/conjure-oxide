@@ -14,6 +14,8 @@ pub use solver_stats::SolverStats;
 pub struct Stats {
     pub solver_runs: Vec<SolverStats>,
     pub rewriter_runs: Vec<RewriterStats>,
+    /// Time spent translating solver-level solutions back to high-level Essence solutions.
+    pub solution_translation_time: Option<std::time::Duration>,
 }
 
 impl Stats {

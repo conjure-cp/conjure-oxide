@@ -1,0 +1,16 @@
+language ESSENCE' 1.0
+
+find row: matrix indexed by [ int(0..7) ] of  int(0..7)
+find minorDiagonal: matrix indexed by [ int(0..3) ] of int(-3..3)
+find majorDiagonal: matrix indexed by [ int(0..3) ] of int(0..6)
+
+such that 
+
+forAll queen: int(0..3) . 
+  and([majorDiagonal[queen] = queen + row[queen],
+       minorDiagonal[queen] = queen - row[queen]]),
+
+allDiff(row),
+allDiff(majorDiagonal),
+allDiff(minorDiagonal)
+

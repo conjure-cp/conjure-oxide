@@ -5,6 +5,7 @@ use crate::ast::{
     Literal, Moo, Reference, SetAttr, Typeable, UnresolvedDomain,
     domains::{Int, Range, UInt},
 };
+use crate::ast::{Name, matrix};
 use crate::range;
 use crate::utils::count_combinations;
 use conjure_cp_core::ast::ReturnType;
@@ -12,7 +13,7 @@ use funcmap::FuncMap;
 use itertools::{Itertools, izip};
 use polyquine::Quine;
 use serde::{Deserialize, Serialize};
-use std::collections::BTreeSet;
+use std::collections::{BTreeSet, HashMap};
 use std::fmt::{Display, Formatter};
 use std::iter::zip;
 use uniplate::Uniplate;
@@ -95,7 +96,24 @@ impl GroundDomain {
             (GroundDomain::Tuple(_), _) | (_, GroundDomain::Tuple(_)) => {
                 Err(DomainOpError::WrongType)
             }
-            // TODO: Eventually we may define semantics for joining record domains. This day is not today.
+            (GroundDomain::Record(in1s), GroundDomain::Record(in2s))
+                if in1s.len() == in2s.len() =>
+            {
+                let lhs_fields: HashMap<&Name, &Moo<GroundDomain>> =
+                    in1s.iter().map(|x| (&x.name, &x.value)).collect();
+                let rhs_fields: HashMap<&Name, &Moo<GroundDomain>> =
+                    in2s.iter().map(|x| (&x.name, &x.value)).collect();
+                let mut new_fields = Vec::with_capacity(in1s.len());
+                for (n, d) in lhs_fields {
+                    let d2 = rhs_fields.get(&n).ok_or(DomainOpError::WrongType)?;
+                    let dom = d.union(d2)?;
+                    new_fields.push(RecordValue {
+                        name: n.clone(),
+                        value: dom.into(),
+                    });
+                }
+                Ok(GroundDomain::Record(new_fields))
+            }
             #[allow(unreachable_patterns)]
             // Technically redundant but logically clearer to have both
             (GroundDomain::Record(_), _) | (_, GroundDomain::Record(_)) => {
@@ -190,7 +208,70 @@ impl GroundDomain {
                     rng_iters.into_iter().flat_map(|ri| ri.map(Literal::from)),
                 ))
             }
-            _ => todo!("Enumerating nested domains is not yet supported"),
+            GroundDomain::Matrix(elem_dom, idx_doms) => {
+                let shape = matrix::shape_of_dom(self)?;
+                let idx_doms = idx_doms.clone();
+
+                // Collect all possible element values
+                let elem_values: Vec<Literal> = elem_dom.values()?.collect();
+
+                // Generate all possible cell assignments in lexicographic order
+                let iter = std::iter::repeat_n(elem_values, shape.size)
+                    .multi_cartesian_product()
+                    .map(move |flat_elems| {
+                        matrix::unflatten_matrix::<Literal>(&flat_elems, &idx_doms, &shape.strides)
+                    });
+
+                Ok(Box::new(iter))
+            }
+            GroundDomain::Tuple(elem_doms) => {
+                // Collect the possible values for each element
+                let elem_value_pools: Vec<Vec<Literal>> = elem_doms
+                    .iter()
+                    .map(|d| d.values().map(|it| it.collect()))
+                    .collect::<Result<_, _>>()?;
+
+                // Generate all combinations in lexicographic order
+                let iter = elem_value_pools
+                    .into_iter()
+                    .multi_cartesian_product()
+                    .map(|elems| Literal::AbstractLiteral(AbstractLiteral::Tuple(elems)));
+
+                Ok(Box::new(iter))
+            }
+            GroundDomain::Record(entries) => {
+                // Sort entries by name
+                let mut sorted_entries = entries.clone();
+                sorted_entries.sort_by(|a, b| a.name.cmp(&b.name));
+
+                // Collect the names and possible values of each entry
+                let names: Vec<_> = sorted_entries.iter().map(|e| e.name.clone()).collect();
+                let value_pools: Vec<Vec<Literal>> = sorted_entries
+                    .iter()
+                    .map(|e| e.value.values().map(|it| it.collect()))
+                    .collect::<Result<_, _>>()?;
+
+                // Generate all combinations in lexicographic order
+                let iter = value_pools
+                    .into_iter()
+                    .multi_cartesian_product()
+                    .map(move |vals| {
+                        let record_entries = names
+                            .iter()
+                            .cloned()
+                            .zip(vals)
+                            .map(|(name, value)| RecordValue { name, value })
+                            .collect();
+                        Literal::AbstractLiteral(AbstractLiteral::Record(record_entries))
+                    });
+
+                Ok(Box::new(iter))
+            }
+            GroundDomain::Set(..) => todo!("Enumerating set domains is not yet supported"),
+            GroundDomain::MSet(..) => todo!("Enumerating multi-set domains is not yet supported"),
+            GroundDomain::Function(..) => {
+                todo!("Enumerating function domains is not yet supported")
+            }
         }
     }
 
@@ -1022,5 +1103,226 @@ impl Display for GroundDomain {
                 write!(f, "function {} {} --> {} ", attribute, domain, codomain)
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::ast::Name;
+    use crate::{domain_int_ground, matrix_lit};
+
+    #[test]
+    fn matrix_values_1d_bool_of_bool() {
+        // matrix indexed by [bool] of bool
+        // 2 cells, 2 possible values => 2^2 = 4 matrices
+        let dom = GroundDomain::Matrix(
+            Moo::new(GroundDomain::Bool),
+            vec![Moo::new(GroundDomain::Bool)],
+        );
+
+        let values: Vec<Literal> = dom.values().unwrap().collect();
+
+        assert_eq!(values.len(), 4);
+        assert_eq!(
+            values[0],
+            matrix_lit![false, false; Moo::new(GroundDomain::Bool)]
+        );
+        assert_eq!(
+            values[1],
+            matrix_lit![false, true; Moo::new(GroundDomain::Bool)]
+        );
+        assert_eq!(
+            values[2],
+            matrix_lit![true, false; Moo::new(GroundDomain::Bool)]
+        );
+        assert_eq!(
+            values[3],
+            matrix_lit![true, true; Moo::new(GroundDomain::Bool)]
+        );
+    }
+
+    #[test]
+    fn matrix_values_1d_int() {
+        // matrix indexed by [int(1..2)] of int(0..1)
+        // 2 cells, 2 possible values => 4 matrices
+        let dom = GroundDomain::Matrix(domain_int_ground!(0..1), vec![domain_int_ground!(1..2)]);
+
+        let values: Vec<Literal> = dom.values().unwrap().collect();
+
+        assert_eq!(values.len(), 4);
+        assert_eq!(values[0], matrix_lit![0, 0; domain_int_ground!(1..2)]);
+        assert_eq!(values[1], matrix_lit![0, 1; domain_int_ground!(1..2)]);
+        assert_eq!(values[2], matrix_lit![1, 0; domain_int_ground!(1..2)]);
+        assert_eq!(values[3], matrix_lit![1, 1; domain_int_ground!(1..2)]);
+    }
+
+    #[test]
+    fn matrix_values_2d_lexicographic() {
+        // matrix indexed by [int(1..2), int(1..2)] of int(0..1)
+        // 4 cells, 2 possible values => 2^4 = 16 matrices
+        let dom = GroundDomain::Matrix(
+            domain_int_ground!(0..1),
+            vec![domain_int_ground!(1..2), domain_int_ground!(1..2)],
+        );
+
+        let values: Vec<Literal> = dom.values().unwrap().collect();
+
+        assert_eq!(values.len(), 16);
+
+        // First: [[0,0],[0,0]]
+        assert_eq!(
+            values[0],
+            matrix_lit![[0, 0], [0, 0]; [domain_int_ground!(1..2), domain_int_ground!(1..2)]]
+        );
+        // Second: [[0,0],[0,1]]
+        assert_eq!(
+            values[1],
+            matrix_lit![[0, 0], [0, 1]; [domain_int_ground!(1..2), domain_int_ground!(1..2)]]
+        );
+        // Third: [[0,0],[1,0]]
+        assert_eq!(
+            values[2],
+            matrix_lit![[0, 0], [1, 0]; [domain_int_ground!(1..2), domain_int_ground!(1..2)]]
+        );
+        // Fourth: [[0,0],[1,1]]
+        assert_eq!(
+            values[3],
+            matrix_lit![[0, 0], [1, 1]; [domain_int_ground!(1..2), domain_int_ground!(1..2)]]
+        );
+        // Last: [[1,1],[1,1]]
+        assert_eq!(
+            values[15],
+            matrix_lit![[1, 1], [1, 1]; [domain_int_ground!(1..2), domain_int_ground!(1..2)]]
+        );
+    }
+
+    #[test]
+    fn matrix_values_count_matches_length() {
+        // matrix indexed by [int(1..3)] of int(0..1)
+        // 3 cells, 2 possible values => 2^3 = 8 matrices
+        let dom = GroundDomain::Matrix(domain_int_ground!(0..1), vec![domain_int_ground!(1..3)]);
+
+        let count = dom.values().unwrap().count();
+        let length = dom.length().unwrap();
+
+        assert_eq!(count as u64, length);
+    }
+
+    #[test]
+    fn tuple_values_two_bools() {
+        // tuple of (bool, bool) => 2*2 = 4 values
+        let dom = GroundDomain::Tuple(vec![
+            Moo::new(GroundDomain::Bool),
+            Moo::new(GroundDomain::Bool),
+        ]);
+
+        let values: Vec<Literal> = dom.values().unwrap().collect();
+
+        assert_eq!(values.len(), 4);
+        let t = |a, b| {
+            Literal::AbstractLiteral(AbstractLiteral::Tuple(vec![
+                Literal::Bool(a),
+                Literal::Bool(b),
+            ]))
+        };
+        assert_eq!(values[0], t(false, false));
+        assert_eq!(values[1], t(false, true));
+        assert_eq!(values[2], t(true, false));
+        assert_eq!(values[3], t(true, true));
+    }
+
+    #[test]
+    fn tuple_values_mixed_domains() {
+        // tuple of (bool, int(0..2)) => 2*3 = 6 values, lexicographic
+        let dom = GroundDomain::Tuple(vec![Moo::new(GroundDomain::Bool), domain_int_ground!(0..2)]);
+
+        let values: Vec<Literal> = dom.values().unwrap().collect();
+
+        assert_eq!(values.len(), 6);
+        let t = |b: bool, i: i32| {
+            Literal::AbstractLiteral(AbstractLiteral::Tuple(vec![
+                Literal::Bool(b),
+                Literal::Int(i),
+            ]))
+        };
+        // bool false first, then ints 0,1,2
+        assert_eq!(values[0], t(false, 0));
+        assert_eq!(values[1], t(false, 1));
+        assert_eq!(values[2], t(false, 2));
+        // then bool true
+        assert_eq!(values[3], t(true, 0));
+        assert_eq!(values[4], t(true, 1));
+        assert_eq!(values[5], t(true, 2));
+    }
+
+    #[test]
+    fn tuple_values_count_matches_length() {
+        let dom = GroundDomain::Tuple(vec![
+            domain_int_ground!(1..3),
+            Moo::new(GroundDomain::Bool),
+            domain_int_ground!(0..1),
+        ]);
+        let count = dom.values().unwrap().count();
+        let length = dom.length().unwrap();
+        assert_eq!(count as u64, length);
+    }
+
+    #[test]
+    fn record_values_lexicographic_by_name() {
+        // record {b: bool, a: int(0..1)}
+        // Entries should be ordered by name: a first, then b
+        let dom = GroundDomain::Record(vec![
+            RecordValue {
+                name: Name::user("b"),
+                value: Moo::new(GroundDomain::Bool),
+            },
+            RecordValue {
+                name: Name::user("a"),
+                value: domain_int_ground!(0..1),
+            },
+        ]);
+
+        let values: Vec<Literal> = dom.values().unwrap().collect();
+
+        // 2 * 2 = 4 values
+        assert_eq!(values.len(), 4);
+
+        // Entries should be sorted by name: "a" before "b"
+        let r = |a_val: i32, b_val: bool| {
+            Literal::AbstractLiteral(AbstractLiteral::Record(vec![
+                RecordValue {
+                    name: Name::user("a"),
+                    value: Literal::Int(a_val),
+                },
+                RecordValue {
+                    name: Name::user("b"),
+                    value: Literal::Bool(b_val),
+                },
+            ]))
+        };
+
+        // "a" (int) varies slowest, "b" (bool) varies fastest
+        assert_eq!(values[0], r(0, false));
+        assert_eq!(values[1], r(0, true));
+        assert_eq!(values[2], r(1, false));
+        assert_eq!(values[3], r(1, true));
+    }
+
+    #[test]
+    fn record_values_count_matches_length() {
+        let dom = GroundDomain::Record(vec![
+            RecordValue {
+                name: Name::user("x"),
+                value: domain_int_ground!(1..3),
+            },
+            RecordValue {
+                name: Name::user("y"),
+                value: Moo::new(GroundDomain::Bool),
+            },
+        ]);
+        let count = dom.values().unwrap().count();
+        let length = dom.length().unwrap();
+        assert_eq!(count as u64, length);
     }
 }

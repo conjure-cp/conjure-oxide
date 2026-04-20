@@ -1,0 +1,60 @@
+language Essence 1.4
+
+$ Nested record and tuple: timetabling.
+$ n slots, n teachers, n classes; each teacher teaches each class once.
+$ Scale: increase n.
+
+given n : int
+
+letting Slot be domain record {
+    teacher: int(1..n),
+    class_:  int(1..n),
+    room:    int(1..n)
+}
+
+$ schedule[day, period] is a Slot
+find schedule: matrix indexed by [int(1..n), int(1..n)] of Slot
+
+find teacher_load: matrix indexed by [int(1..n)] of int(0..n*n)
+find room_usage:   matrix indexed by [int(1..n)] of int(0..n*n)
+
+such that
+    $ No teacher in two rooms at the same time (same period, different days don't clash)
+    forAll d: int(1..n) .
+        forAll p: int(1..n) .
+            forAll d2: int(1..n) .
+                d < d2 ->
+                    schedule[d, p][teacher] != schedule[d2, p][teacher],
+
+    $ No two classes in the same room at the same period
+    forAll d: int(1..n) .
+        forAll p: int(1..n) .
+            forAll d2: int(1..n) .
+                d < d2 ->
+                    schedule[d, p][room] != schedule[d2, p][room],
+
+    $ Each teacher teaches each class exactly once across all days/periods
+    forAll t: int(1..n) .
+        forAll c: int(1..n) .
+            1 = (sum d: int(1..n) .
+                 sum p: int(1..n) .
+                    toInt(schedule[d, p][teacher] = t /\ schedule[d, p][class_] = c)),
+
+    $ Compute teacher loads
+    forAll t: int(1..n) .
+        teacher_load[t] = sum d: int(1..n) .
+                          sum p: int(1..n) .
+                              toInt(schedule[d, p][teacher] = t),
+
+    $ Loads are balanced: all equal n (each teacher teaches n classes)
+    forAll t: int(1..n) .
+        teacher_load[t] = n,
+
+    $ Compute room usage
+    forAll r: int(1..n) .
+        room_usage[r] = sum d: int(1..n) .
+                        sum p: int(1..n) .
+                            toInt(schedule[d, p][room] = r),
+
+    $ Symmetry breaking: day 1, period 1 has teacher 1
+    schedule[1, 1][teacher] = 1

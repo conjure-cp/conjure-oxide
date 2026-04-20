@@ -748,10 +748,10 @@ impl Expression {
             Expression::InDomain(_, _, _) => Some(Domain::bool()),
             Expression::Atomic(_, atom) => Some(atom.domain_of()),
             Expression::Sum(_, e) => {
-                bounded_i32_domain_for_matrix_literal_monotonic(e, |x, y| Some(x + y))
+                bounded_i32_domain_for_matrix_literal_monotonic(e, |x, y| x.checked_add(y))
             }
             Expression::Product(_, e) => {
-                bounded_i32_domain_for_matrix_literal_monotonic(e, |x, y| Some(x * y))
+                bounded_i32_domain_for_matrix_literal_monotonic(e, |x, y| x.checked_mul(y))
             }
             Expression::Min(_, e) => bounded_i32_domain_for_matrix_literal_monotonic(e, |x, y| {
                 Some(if x < y { x } else { y })
@@ -840,7 +840,7 @@ impl Expression {
                 .apply_i32(
                     |x, y| {
                         if (x != 0 || y != 0) && y >= 0 {
-                            Some(x.pow(y as u32))
+                            x.checked_pow(y as u32)
                         } else {
                             None
                         }
@@ -949,14 +949,20 @@ impl Expression {
                 .domain_of()?
                 .resolve()
                 .ok()?
-                .apply_i32(|a, b| Some(a + b), b.domain_of()?.resolve().ok()?.as_ref())
+                .apply_i32(
+                    |a, b| a.checked_add(b),
+                    b.domain_of()?.resolve().ok()?.as_ref(),
+                )
                 .map(DomainPtr::from)
                 .ok(),
             Expression::PairwiseProduct(_, a, b) => a
                 .domain_of()?
                 .resolve()
                 .ok()?
-                .apply_i32(|a, b| Some(a * b), b.domain_of()?.resolve().ok()?.as_ref())
+                .apply_i32(
+                    |a, b| a.checked_mul(b),
+                    b.domain_of()?.resolve().ok()?.as_ref(),
+                )
                 .map(DomainPtr::from)
                 .ok(),
             Expression::Defined(_, function) => get_function_domain(function),
@@ -1220,6 +1226,12 @@ impl From<Atom> for Expression {
 impl From<Literal> for Expression {
     fn from(value: Literal) -> Self {
         Expression::Atomic(Metadata::new(), value.into())
+    }
+}
+
+impl From<AbstractLiteral<Expression>> for Expression {
+    fn from(value: AbstractLiteral<Expression>) -> Self {
+        Expression::AbstractLiteral(Metadata::new(), value)
     }
 }
 
@@ -1582,6 +1594,7 @@ impl Typeable for Expression {
             Expression::UnsafeIndex(_, subject, idx) | Expression::SafeIndex(_, subject, idx) => {
                 let subject_ty = subject.return_type();
                 match subject_ty {
+                    ReturnType::Unknown => ReturnType::Unknown,
                     ReturnType::Matrix(_) => {
                         // For n-dimensional matrices, unwrap the element type until
                         // we either get to the innermost element type or the last index

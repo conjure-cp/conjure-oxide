@@ -1,0 +1,1454 @@
+Model before rewriting:
+
+find x: matrix indexed by [int(1..2), int(1..3), int(1..4)] of int(1..5)
+find y: matrix indexed by [int(1..3), int(1..4)] of int(1..5)
+
+such that
+
+(x[1,..,..] = [[1,1,1,1;int(1..4)],[2,2,2,2;int(1..4)],[3,3,3,3;int(1..4)];int(1..3)]),
+(x[2,1,..] = [4,4,4,4;int(1..4)]),
+(y = x[2,..,..]),
+and([ and([ (y[i, j] = i) | j : int(1..4) ]) | i : int(2..3) ])
+
+--
+
+(x[1,..,..] = [[1,1,1,1;int(1..4)],[2,2,2,2;int(1..4)],[3,3,3,3;int(1..4)];int(1..3)]),
+(x[2,1,..] = [4,4,4,4;int(1..4)]),
+(y = x[2,..,..]),
+and([ and([ (y[i, j] = i) | j : int(1..4) ]) | i : int(2..3) ]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(x[1,..,..] = [[1,1,1,1;int(1..4)],[2,2,2,2;int(1..4)],[3,3,3,3;int(1..4)];int(1..3)]),
+(x[2,1,..] = [4,4,4,4;int(1..4)]),
+(y = x[2,..,..]),
+and([ and([ (y[i, j] = i) | j : int(1..4) ]) | i : int(2..3) ])
+
+--
+
+and([ and([ (y[i, j] = i) | j : int(1..4) ]) | i : int(2..3) ]), 
+   ~~> merge_nested_ac_comprehensions ([("Base", 8900)])
+and([ (y[i, j] = i) | i : int(2..3), j : int(1..4) ])
+
+--
+
+(x[1,..,..] = [[1,1,1,1;int(1..4)],[2,2,2,2;int(1..4)],[3,3,3,3;int(1..4)];int(1..3)]),
+(x[2,1,..] = [4,4,4,4;int(1..4)]),
+(y = x[2,..,..]),
+and([ (y[i, j] = i) | i : int(2..3), j : int(1..4) ]), 
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
+(x[1,..,..] = [[1,1,1,1;int(1..4)],[2,2,2,2;int(1..4)],[3,3,3,3;int(1..4)];int(1..3)]),
+(x[2,1,..] = [4,4,4,4;int(1..4)]),
+(y = x[2,..,..]),
+and([ (y[i, j] = i) | i : int(2..3), j : int(1..4) ])
+new variables:
+  find x#MatrixToAtom_1: int(1..5)
+  find x#MatrixToAtom_10: int(1..5)
+  find x#MatrixToAtom_11: int(1..5)
+  find x#MatrixToAtom_12: int(1..5)
+  find x#MatrixToAtom_13: int(1..5)
+  find x#MatrixToAtom_14: int(1..5)
+  find x#MatrixToAtom_15: int(1..5)
+  find x#MatrixToAtom_16: int(1..5)
+  find x#MatrixToAtom_17: int(1..5)
+  find x#MatrixToAtom_18: int(1..5)
+  find x#MatrixToAtom_19: int(1..5)
+  find x#MatrixToAtom_2: int(1..5)
+  find x#MatrixToAtom_20: int(1..5)
+  find x#MatrixToAtom_21: int(1..5)
+  find x#MatrixToAtom_22: int(1..5)
+  find x#MatrixToAtom_23: int(1..5)
+  find x#MatrixToAtom_24: int(1..5)
+  find x#MatrixToAtom_3: int(1..5)
+  find x#MatrixToAtom_4: int(1..5)
+  find x#MatrixToAtom_5: int(1..5)
+  find x#MatrixToAtom_6: int(1..5)
+  find x#MatrixToAtom_7: int(1..5)
+  find x#MatrixToAtom_8: int(1..5)
+  find x#MatrixToAtom_9: int(1..5)
+  find y#MatrixToAtom_1: int(1..5)
+  find y#MatrixToAtom_10: int(1..5)
+  find y#MatrixToAtom_11: int(1..5)
+  find y#MatrixToAtom_12: int(1..5)
+  find y#MatrixToAtom_2: int(1..5)
+  find y#MatrixToAtom_3: int(1..5)
+  find y#MatrixToAtom_4: int(1..5)
+  find y#MatrixToAtom_5: int(1..5)
+  find y#MatrixToAtom_6: int(1..5)
+  find y#MatrixToAtom_7: int(1..5)
+  find y#MatrixToAtom_8: int(1..5)
+  find y#MatrixToAtom_9: int(1..5)
+
+--
+
+x[1,..,..], 
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+{x[1,..,..] @ and([__inDomain(1,int(1..2));int(1..)])}
+
+--
+
+({x[1,..,..] @ and([__inDomain(1,int(1..2));int(1..)])} = [[1,1,1,1;int(1..4)],[2,2,2,2;int(1..4)],[3,3,3,3;int(1..4)];int(1..3)]),
+(x[2,1,..] = [4,4,4,4;int(1..4)]),
+(y = x[2,..,..]),
+and([ (y[i, j] = i) | i : int(2..3), j : int(1..4) ]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(x[1,..,..] = [[1,1,1,1;int(1..4)],[2,2,2,2;int(1..4)],[3,3,3,3;int(1..4)];int(1..3)]),
+(x[2,1,..] = [4,4,4,4;int(1..4)]),
+(y = x[2,..,..]),
+and([ (y[i, j] = i) | i : int(2..3), j : int(1..4) ])
+
+--
+
+x[2,1,..], 
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+{x[2,1,..] @ and([__inDomain(2,int(1..2)),__inDomain(1,int(1..3));int(1..)])}
+
+--
+
+(x[1,..,..] = [[1,1,1,1;int(1..4)],[2,2,2,2;int(1..4)],[3,3,3,3;int(1..4)];int(1..3)]),
+({x[2,1,..] @ and([__inDomain(2,int(1..2)),__inDomain(1,int(1..3));int(1..)])} = [4,4,4,4;int(1..4)]),
+(y = x[2,..,..]),
+and([ (y[i, j] = i) | i : int(2..3), j : int(1..4) ]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(x[1,..,..] = [[1,1,1,1;int(1..4)],[2,2,2,2;int(1..4)],[3,3,3,3;int(1..4)];int(1..3)]),
+(x[2,1,..] = [4,4,4,4;int(1..4)]),
+(y = x[2,..,..]),
+and([ (y[i, j] = i) | i : int(2..3), j : int(1..4) ])
+
+--
+
+x[2,..,..], 
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+{x[2,..,..] @ and([__inDomain(2,int(1..2));int(1..)])}
+
+--
+
+(x[1,..,..] = [[1,1,1,1;int(1..4)],[2,2,2,2;int(1..4)],[3,3,3,3;int(1..4)];int(1..3)]),
+(x[2,1,..] = [4,4,4,4;int(1..4)]),
+(y = {x[2,..,..] @ and([__inDomain(2,int(1..2));int(1..)])}),
+and([ (y[i, j] = i) | i : int(2..3), j : int(1..4) ]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(x[1,..,..] = [[1,1,1,1;int(1..4)],[2,2,2,2;int(1..4)],[3,3,3,3;int(1..4)];int(1..3)]),
+(x[2,1,..] = [4,4,4,4;int(1..4)]),
+(y = x[2,..,..]),
+and([ (y[i, j] = i) | i : int(2..3), j : int(1..4) ])
+
+--
+
+x[1,..,..], 
+   ~~> slice_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3,x#MatrixToAtom_4,x#MatrixToAtom_5,x#MatrixToAtom_6,x#MatrixToAtom_7,x#MatrixToAtom_8,x#MatrixToAtom_9,x#MatrixToAtom_10,x#MatrixToAtom_11,x#MatrixToAtom_12;int(1..)]
+
+--
+
+x[2,1,..], 
+   ~~> slice_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+[x#MatrixToAtom_13,x#MatrixToAtom_14,x#MatrixToAtom_15,x#MatrixToAtom_16;int(1..)]
+
+--
+
+x[2,..,..], 
+   ~~> slice_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+[x#MatrixToAtom_13,x#MatrixToAtom_14,x#MatrixToAtom_15,x#MatrixToAtom_16,x#MatrixToAtom_17,x#MatrixToAtom_18,x#MatrixToAtom_19,x#MatrixToAtom_20,x#MatrixToAtom_21,x#MatrixToAtom_22,x#MatrixToAtom_23,x#MatrixToAtom_24;int(1..)]
+
+--
+
+([x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3,x#MatrixToAtom_4,x#MatrixToAtom_5,x#MatrixToAtom_6,x#MatrixToAtom_7,x#MatrixToAtom_8,x#MatrixToAtom_9,x#MatrixToAtom_10,x#MatrixToAtom_11,x#MatrixToAtom_12;int(1..)] = [[1,1,1,1;int(1..4)],[2,2,2,2;int(1..4)],[3,3,3,3;int(1..4)];int(1..3)]), 
+   ~~> matrix_eq_matrix ([("Base", 2000)])
+and([(x#MatrixToAtom_1 = 1),(x#MatrixToAtom_2 = 1),(x#MatrixToAtom_3 = 1),(x#MatrixToAtom_4 = 1),(x#MatrixToAtom_5 = 2),(x#MatrixToAtom_6 = 2),(x#MatrixToAtom_7 = 2),(x#MatrixToAtom_8 = 2),(x#MatrixToAtom_9 = 3),(x#MatrixToAtom_10 = 3),(x#MatrixToAtom_11 = 3),(x#MatrixToAtom_12 = 3);int(1..)])
+
+--
+
+and([(x#MatrixToAtom_1 = 1),(x#MatrixToAtom_2 = 1),(x#MatrixToAtom_3 = 1),(x#MatrixToAtom_4 = 1),(x#MatrixToAtom_5 = 2),(x#MatrixToAtom_6 = 2),(x#MatrixToAtom_7 = 2),(x#MatrixToAtom_8 = 2),(x#MatrixToAtom_9 = 3),(x#MatrixToAtom_10 = 3),(x#MatrixToAtom_11 = 3),(x#MatrixToAtom_12 = 3);int(1..)]),
+([x#MatrixToAtom_13,x#MatrixToAtom_14,x#MatrixToAtom_15,x#MatrixToAtom_16;int(1..)] = [4,4,4,4;int(1..4)]),
+(y = [x#MatrixToAtom_13,x#MatrixToAtom_14,x#MatrixToAtom_15,x#MatrixToAtom_16,x#MatrixToAtom_17,x#MatrixToAtom_18,x#MatrixToAtom_19,x#MatrixToAtom_20,x#MatrixToAtom_21,x#MatrixToAtom_22,x#MatrixToAtom_23,x#MatrixToAtom_24;int(1..)]),
+and([ (y[i, j] = i) | i : int(2..3), j : int(1..4) ]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(x#MatrixToAtom_1 = 1),
+(x#MatrixToAtom_2 = 1),
+(x#MatrixToAtom_3 = 1),
+(x#MatrixToAtom_4 = 1),
+(x#MatrixToAtom_5 = 2),
+(x#MatrixToAtom_6 = 2),
+(x#MatrixToAtom_7 = 2),
+(x#MatrixToAtom_8 = 2),
+(x#MatrixToAtom_9 = 3),
+(x#MatrixToAtom_10 = 3),
+(x#MatrixToAtom_11 = 3),
+(x#MatrixToAtom_12 = 3),
+([x#MatrixToAtom_13,x#MatrixToAtom_14,x#MatrixToAtom_15,x#MatrixToAtom_16;int(1..)] = [4,4,4,4;int(1..4)]),
+(y = [x#MatrixToAtom_13,x#MatrixToAtom_14,x#MatrixToAtom_15,x#MatrixToAtom_16,x#MatrixToAtom_17,x#MatrixToAtom_18,x#MatrixToAtom_19,x#MatrixToAtom_20,x#MatrixToAtom_21,x#MatrixToAtom_22,x#MatrixToAtom_23,x#MatrixToAtom_24;int(1..)]),
+and([ (y[i, j] = i) | i : int(2..3), j : int(1..4) ])
+
+--
+
+([x#MatrixToAtom_13,x#MatrixToAtom_14,x#MatrixToAtom_15,x#MatrixToAtom_16;int(1..)] = [4,4,4,4;int(1..4)]), 
+   ~~> matrix_eq_matrix ([("Base", 2000)])
+and([(x#MatrixToAtom_13 = 4),(x#MatrixToAtom_14 = 4),(x#MatrixToAtom_15 = 4),(x#MatrixToAtom_16 = 4);int(1..)])
+
+--
+
+(x#MatrixToAtom_1 = 1),
+(x#MatrixToAtom_2 = 1),
+(x#MatrixToAtom_3 = 1),
+(x#MatrixToAtom_4 = 1),
+(x#MatrixToAtom_5 = 2),
+(x#MatrixToAtom_6 = 2),
+(x#MatrixToAtom_7 = 2),
+(x#MatrixToAtom_8 = 2),
+(x#MatrixToAtom_9 = 3),
+(x#MatrixToAtom_10 = 3),
+(x#MatrixToAtom_11 = 3),
+(x#MatrixToAtom_12 = 3),
+and([(x#MatrixToAtom_13 = 4),(x#MatrixToAtom_14 = 4),(x#MatrixToAtom_15 = 4),(x#MatrixToAtom_16 = 4);int(1..)]),
+(y = [x#MatrixToAtom_13,x#MatrixToAtom_14,x#MatrixToAtom_15,x#MatrixToAtom_16,x#MatrixToAtom_17,x#MatrixToAtom_18,x#MatrixToAtom_19,x#MatrixToAtom_20,x#MatrixToAtom_21,x#MatrixToAtom_22,x#MatrixToAtom_23,x#MatrixToAtom_24;int(1..)]),
+and([ (y[i, j] = i) | i : int(2..3), j : int(1..4) ]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(x#MatrixToAtom_1 = 1),
+(x#MatrixToAtom_2 = 1),
+(x#MatrixToAtom_3 = 1),
+(x#MatrixToAtom_4 = 1),
+(x#MatrixToAtom_5 = 2),
+(x#MatrixToAtom_6 = 2),
+(x#MatrixToAtom_7 = 2),
+(x#MatrixToAtom_8 = 2),
+(x#MatrixToAtom_9 = 3),
+(x#MatrixToAtom_10 = 3),
+(x#MatrixToAtom_11 = 3),
+(x#MatrixToAtom_12 = 3),
+(x#MatrixToAtom_13 = 4),
+(x#MatrixToAtom_14 = 4),
+(x#MatrixToAtom_15 = 4),
+(x#MatrixToAtom_16 = 4),
+(y = [x#MatrixToAtom_13,x#MatrixToAtom_14,x#MatrixToAtom_15,x#MatrixToAtom_16,x#MatrixToAtom_17,x#MatrixToAtom_18,x#MatrixToAtom_19,x#MatrixToAtom_20,x#MatrixToAtom_21,x#MatrixToAtom_22,x#MatrixToAtom_23,x#MatrixToAtom_24;int(1..)]),
+and([ (y[i, j] = i) | i : int(2..3), j : int(1..4) ])
+
+--
+
+(y = [x#MatrixToAtom_13,x#MatrixToAtom_14,x#MatrixToAtom_15,x#MatrixToAtom_16,x#MatrixToAtom_17,x#MatrixToAtom_18,x#MatrixToAtom_19,x#MatrixToAtom_20,x#MatrixToAtom_21,x#MatrixToAtom_22,x#MatrixToAtom_23,x#MatrixToAtom_24;int(1..)]), 
+   ~~> matrix_ref_to_atom ([("ReprMatrixToAtom", 2000)])
+([y#MatrixToAtom_1,y#MatrixToAtom_2,y#MatrixToAtom_3,y#MatrixToAtom_4,y#MatrixToAtom_5,y#MatrixToAtom_6,y#MatrixToAtom_7,y#MatrixToAtom_8,y#MatrixToAtom_9,y#MatrixToAtom_10,y#MatrixToAtom_11,y#MatrixToAtom_12;int(1..)] = [x#MatrixToAtom_13,x#MatrixToAtom_14,x#MatrixToAtom_15,x#MatrixToAtom_16,x#MatrixToAtom_17,x#MatrixToAtom_18,x#MatrixToAtom_19,x#MatrixToAtom_20,x#MatrixToAtom_21,x#MatrixToAtom_22,x#MatrixToAtom_23,x#MatrixToAtom_24;int(1..)])
+
+--
+
+([y#MatrixToAtom_1,y#MatrixToAtom_2,y#MatrixToAtom_3,y#MatrixToAtom_4,y#MatrixToAtom_5,y#MatrixToAtom_6,y#MatrixToAtom_7,y#MatrixToAtom_8,y#MatrixToAtom_9,y#MatrixToAtom_10,y#MatrixToAtom_11,y#MatrixToAtom_12;int(1..)] = [x#MatrixToAtom_13,x#MatrixToAtom_14,x#MatrixToAtom_15,x#MatrixToAtom_16,x#MatrixToAtom_17,x#MatrixToAtom_18,x#MatrixToAtom_19,x#MatrixToAtom_20,x#MatrixToAtom_21,x#MatrixToAtom_22,x#MatrixToAtom_23,x#MatrixToAtom_24;int(1..)]), 
+   ~~> matrix_eq_matrix ([("Base", 2000)])
+and([(y#MatrixToAtom_1 = x#MatrixToAtom_13),(y#MatrixToAtom_2 = x#MatrixToAtom_14),(y#MatrixToAtom_3 = x#MatrixToAtom_15),(y#MatrixToAtom_4 = x#MatrixToAtom_16),(y#MatrixToAtom_5 = x#MatrixToAtom_17),(y#MatrixToAtom_6 = x#MatrixToAtom_18),(y#MatrixToAtom_7 = x#MatrixToAtom_19),(y#MatrixToAtom_8 = x#MatrixToAtom_20),(y#MatrixToAtom_9 = x#MatrixToAtom_21),(y#MatrixToAtom_10 = x#MatrixToAtom_22),(y#MatrixToAtom_11 = x#MatrixToAtom_23),(y#MatrixToAtom_12 = x#MatrixToAtom_24);int(1..)])
+
+--
+
+(x#MatrixToAtom_1 = 1),
+(x#MatrixToAtom_2 = 1),
+(x#MatrixToAtom_3 = 1),
+(x#MatrixToAtom_4 = 1),
+(x#MatrixToAtom_5 = 2),
+(x#MatrixToAtom_6 = 2),
+(x#MatrixToAtom_7 = 2),
+(x#MatrixToAtom_8 = 2),
+(x#MatrixToAtom_9 = 3),
+(x#MatrixToAtom_10 = 3),
+(x#MatrixToAtom_11 = 3),
+(x#MatrixToAtom_12 = 3),
+(x#MatrixToAtom_13 = 4),
+(x#MatrixToAtom_14 = 4),
+(x#MatrixToAtom_15 = 4),
+(x#MatrixToAtom_16 = 4),
+and([(y#MatrixToAtom_1 = x#MatrixToAtom_13),(y#MatrixToAtom_2 = x#MatrixToAtom_14),(y#MatrixToAtom_3 = x#MatrixToAtom_15),(y#MatrixToAtom_4 = x#MatrixToAtom_16),(y#MatrixToAtom_5 = x#MatrixToAtom_17),(y#MatrixToAtom_6 = x#MatrixToAtom_18),(y#MatrixToAtom_7 = x#MatrixToAtom_19),(y#MatrixToAtom_8 = x#MatrixToAtom_20),(y#MatrixToAtom_9 = x#MatrixToAtom_21),(y#MatrixToAtom_10 = x#MatrixToAtom_22),(y#MatrixToAtom_11 = x#MatrixToAtom_23),(y#MatrixToAtom_12 = x#MatrixToAtom_24);int(1..)]),
+and([ (y[i, j] = i) | i : int(2..3), j : int(1..4) ]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(x#MatrixToAtom_1 = 1),
+(x#MatrixToAtom_2 = 1),
+(x#MatrixToAtom_3 = 1),
+(x#MatrixToAtom_4 = 1),
+(x#MatrixToAtom_5 = 2),
+(x#MatrixToAtom_6 = 2),
+(x#MatrixToAtom_7 = 2),
+(x#MatrixToAtom_8 = 2),
+(x#MatrixToAtom_9 = 3),
+(x#MatrixToAtom_10 = 3),
+(x#MatrixToAtom_11 = 3),
+(x#MatrixToAtom_12 = 3),
+(x#MatrixToAtom_13 = 4),
+(x#MatrixToAtom_14 = 4),
+(x#MatrixToAtom_15 = 4),
+(x#MatrixToAtom_16 = 4),
+(y#MatrixToAtom_1 = x#MatrixToAtom_13),
+(y#MatrixToAtom_2 = x#MatrixToAtom_14),
+(y#MatrixToAtom_3 = x#MatrixToAtom_15),
+(y#MatrixToAtom_4 = x#MatrixToAtom_16),
+(y#MatrixToAtom_5 = x#MatrixToAtom_17),
+(y#MatrixToAtom_6 = x#MatrixToAtom_18),
+(y#MatrixToAtom_7 = x#MatrixToAtom_19),
+(y#MatrixToAtom_8 = x#MatrixToAtom_20),
+(y#MatrixToAtom_9 = x#MatrixToAtom_21),
+(y#MatrixToAtom_10 = x#MatrixToAtom_22),
+(y#MatrixToAtom_11 = x#MatrixToAtom_23),
+(y#MatrixToAtom_12 = x#MatrixToAtom_24),
+and([ (y[i, j] = i) | i : int(2..3), j : int(1..4) ])
+
+--
+
+Model before rewriting:
+
+find i: int(2..3)
+find j: int(1..4)
+find __0: matrix indexed by [int(1..3), int(1..4)] of int(1..5)
+
+such that
+
+(true != (__0[i, j] = i))
+
+--
+
+(true != (__0[i, j] = i)), 
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
+(true != (__0[i, j] = i))
+new variables:
+  find __0#MatrixToAtom_1: int(1..5)
+  find __0#MatrixToAtom_10: int(1..5)
+  find __0#MatrixToAtom_11: int(1..5)
+  find __0#MatrixToAtom_12: int(1..5)
+  find __0#MatrixToAtom_2: int(1..5)
+  find __0#MatrixToAtom_3: int(1..5)
+  find __0#MatrixToAtom_4: int(1..5)
+  find __0#MatrixToAtom_5: int(1..5)
+  find __0#MatrixToAtom_6: int(1..5)
+  find __0#MatrixToAtom_7: int(1..5)
+  find __0#MatrixToAtom_8: int(1..5)
+  find __0#MatrixToAtom_9: int(1..5)
+
+--
+
+__0[i, j], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{__0[i, j] @ and([__inDomain(i,int(1..3)),__inDomain(j,int(1..4));int(1..)])}
+
+--
+
+(true != ({__0[i, j] @ and([__inDomain(i,int(1..3)),__inDomain(j,int(1..4));int(1..)])} = i)), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(true != (__0[i, j] = i))
+
+--
+
+(true != (__0[i, j] = i)), 
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+(true != ([__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3,__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6,__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9,__0#MatrixToAtom_10,__0#MatrixToAtom_11,__0#MatrixToAtom_12;int(1..)][sum([product([4,(i - 1);int(1..)]),product([1,(j - 1);int(1..)]),1;int(1..)])] = i))
+
+--
+
+product([1,(j - 1);int(1..)]), 
+   ~~> reorder_product ([("Base", 8800)])
+product([(j - 1);int(1..)])
+
+--
+
+product([(j - 1);int(1..)]), 
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+(j - 1)
+
+--
+
+(i - 1), 
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([i,-(1);int(1..)])
+
+--
+
+(true != ([__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3,__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6,__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9,__0#MatrixToAtom_10,__0#MatrixToAtom_11,__0#MatrixToAtom_12;int(1..)][sum([product([4,sum([i,-(1);int(1..)]);int(1..)]),(j - 1),1;int(1..)])] = i)), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(true != ([__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3,__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6,__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9,__0#MatrixToAtom_10,__0#MatrixToAtom_11,__0#MatrixToAtom_12;int(1..)][sum([product([4,sum([i,-1;int(1..)]);int(1..)]),(j - 1),1;int(1..)])] = i))
+
+--
+
+(j - 1), 
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([j,-(1);int(1..)])
+
+--
+
+(true != ([__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3,__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6,__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9,__0#MatrixToAtom_10,__0#MatrixToAtom_11,__0#MatrixToAtom_12;int(1..)][sum([product([4,sum([i,-1;int(1..)]);int(1..)]),sum([j,-(1);int(1..)]),1;int(1..)])] = i)), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(true != ([__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3,__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6,__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9,__0#MatrixToAtom_10,__0#MatrixToAtom_11,__0#MatrixToAtom_12;int(1..)][sum([product([4,sum([i,-1;int(1..)]);int(1..)]),sum([j,-1;int(1..)]),1;int(1..)])] = i))
+
+--
+
+sum([product([4,sum([i,-1;int(1..)]);int(1..)]),sum([j,-1;int(1..)]),1;int(1..)]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([product([4,sum([i,-1;int(1..)]);int(1..)]),j,-1,1;int(1..)])
+
+--
+
+(true != ([__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3,__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6,__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9,__0#MatrixToAtom_10,__0#MatrixToAtom_11,__0#MatrixToAtom_12;int(1..)][sum([product([4,sum([i,-1;int(1..)]);int(1..)]),j,-1,1;int(1..)])] = i)), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(true != ([__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3,__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6,__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9,__0#MatrixToAtom_10,__0#MatrixToAtom_11,__0#MatrixToAtom_12;int(1..)][sum([product([4,sum([i,-1;int(1..)]);int(1..)]),j;int(1..)])] = i))
+
+--
+
+(true != ([__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3,__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6,__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9,__0#MatrixToAtom_10,__0#MatrixToAtom_11,__0#MatrixToAtom_12;int(1..)][sum([product([4,sum([i,-1;int(1..)]);int(1..)]),j;int(1..)])] = i)), 
+   ~~> flatten_generic ([("Minion", 4200)])
+(true != __1)
+new variables:
+  find __1: bool
+new constraints:
+  __1 =aux ([__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3,__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6,__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9,__0#MatrixToAtom_10,__0#MatrixToAtom_11,__0#MatrixToAtom_12;int(1..)][sum([product([4,sum([i,-1;int(1..)]);int(1..)]),j;int(1..)])] = i)
+
+--
+
+__1 =aux ([__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3,__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6,__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9,__0#MatrixToAtom_10,__0#MatrixToAtom_11,__0#MatrixToAtom_12;int(1..)][sum([product([4,sum([i,-1;int(1..)]);int(1..)]),j;int(1..)])] = i), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(([__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3,__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6,__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9,__0#MatrixToAtom_10,__0#MatrixToAtom_11,__0#MatrixToAtom_12;int(1..)][sum([product([4,sum([i,-1;int(1..)]);int(1..)]),j;int(1..)])] = i), __1)
+
+--
+
+[__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3,__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6,__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9,__0#MatrixToAtom_10,__0#MatrixToAtom_11,__0#MatrixToAtom_12;int(1..)][sum([product([4,sum([i,-1;int(1..)]);int(1..)]),j;int(1..)])], 
+   ~~> flatten_generic ([("Minion", 4200)])
+[__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3,__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6,__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9,__0#MatrixToAtom_10,__0#MatrixToAtom_11,__0#MatrixToAtom_12;int(1..)][__2]
+new variables:
+  find __2: int(5..12)
+new constraints:
+  __2 =aux sum([product([4,sum([i,-1;int(1..)]);int(1..)]),j;int(1..)])
+
+--
+
+__2 =aux sum([product([4,sum([i,-1;int(1..)]);int(1..)]),j;int(1..)]), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([4, 1],[__3, j],__2),FlatWeightedSumGeq([4, 1],[__3, j],__2);int(1..)])
+new variables:
+  find __3: int(1..2)
+new constraints:
+  __3 =aux sum([i,-1;int(1..)])
+
+--
+
+(true != __1),
+Reify(([__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3,__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6,__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9,__0#MatrixToAtom_10,__0#MatrixToAtom_11,__0#MatrixToAtom_12;int(1..)][__2] = i), __1),
+and([FlatWeightedSumLeq([4, 1],[__3, j],__2),FlatWeightedSumGeq([4, 1],[__3, j],__2);int(1..)]),
+__3 =aux sum([i,-1;int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(true != __1),
+Reify(([__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3,__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6,__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9,__0#MatrixToAtom_10,__0#MatrixToAtom_11,__0#MatrixToAtom_12;int(1..)][__2] = i), __1),
+FlatWeightedSumLeq([4, 1],[__3, j],__2),
+FlatWeightedSumGeq([4, 1],[__3, j],__2),
+__3 =aux sum([i,-1;int(1..)])
+
+--
+
+__3 =aux sum([i,-1;int(1..)]), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([-1, i], __3),SumGeq([-1, i], __3);int(1..)])
+
+--
+
+(true != __1),
+Reify(([__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3,__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6,__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9,__0#MatrixToAtom_10,__0#MatrixToAtom_11,__0#MatrixToAtom_12;int(1..)][__2] = i), __1),
+FlatWeightedSumLeq([4, 1],[__3, j],__2),
+FlatWeightedSumGeq([4, 1],[__3, j],__2),
+and([SumLeq([-1, i], __3),SumGeq([-1, i], __3);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(true != __1),
+Reify(([__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3,__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6,__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9,__0#MatrixToAtom_10,__0#MatrixToAtom_11,__0#MatrixToAtom_12;int(1..)][__2] = i), __1),
+FlatWeightedSumLeq([4, 1],[__3, j],__2),
+FlatWeightedSumGeq([4, 1],[__3, j],__2),
+SumLeq([-1, i], __3),
+SumGeq([-1, i], __3)
+
+--
+
+([__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3,__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6,__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9,__0#MatrixToAtom_10,__0#MatrixToAtom_11,__0#MatrixToAtom_12;int(1..)][__2] = i), 
+   ~~> introduce_element_from_index ([("Minion", 4400)])
+__minion_element_one([__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3,__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6,__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9,__0#MatrixToAtom_10,__0#MatrixToAtom_11,__0#MatrixToAtom_12],__2,i)
+
+--
+
+Final model:
+
+find i: int(2..3)
+find j: int(1..4)
+find __0: matrix indexed by [int(1..3), int(1..4)] of int(1..5)
+find __1: bool
+find __2: int(5..12)
+find __3: int(1..2)
+find __0#MatrixToAtom_1: int(1..5)
+find __0#MatrixToAtom_10: int(1..5)
+find __0#MatrixToAtom_11: int(1..5)
+find __0#MatrixToAtom_12: int(1..5)
+find __0#MatrixToAtom_2: int(1..5)
+find __0#MatrixToAtom_3: int(1..5)
+find __0#MatrixToAtom_4: int(1..5)
+find __0#MatrixToAtom_5: int(1..5)
+find __0#MatrixToAtom_6: int(1..5)
+find __0#MatrixToAtom_7: int(1..5)
+find __0#MatrixToAtom_8: int(1..5)
+find __0#MatrixToAtom_9: int(1..5)
+
+such that
+
+(true != __1),
+Reify(__minion_element_one([__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3,__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6,__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9,__0#MatrixToAtom_10,__0#MatrixToAtom_11,__0#MatrixToAtom_12],__2,i), __1),
+FlatWeightedSumLeq([4, 1],[__3, j],__2),
+FlatWeightedSumGeq([4, 1],[__3, j],__2),
+SumLeq([-1, i], __3),
+SumGeq([-1, i], __3)
+
+and([ (y[i, j] = i) | i : int(2..3), j : int(1..4) ]), 
+   ~~> expand_comprehension_via_solver_ac ([("Base", 1500)])
+and([(y[2, 1] = 2),(y[2, 2] = 2),(y[2, 3] = 2),(y[2, 4] = 2),(y[3, 1] = 3),(y[3, 2] = 3),(y[3, 3] = 3),(y[3, 4] = 3);int(1..)])
+
+--
+
+(x#MatrixToAtom_1 = 1),
+(x#MatrixToAtom_2 = 1),
+(x#MatrixToAtom_3 = 1),
+(x#MatrixToAtom_4 = 1),
+(x#MatrixToAtom_5 = 2),
+(x#MatrixToAtom_6 = 2),
+(x#MatrixToAtom_7 = 2),
+(x#MatrixToAtom_8 = 2),
+(x#MatrixToAtom_9 = 3),
+(x#MatrixToAtom_10 = 3),
+(x#MatrixToAtom_11 = 3),
+(x#MatrixToAtom_12 = 3),
+(x#MatrixToAtom_13 = 4),
+(x#MatrixToAtom_14 = 4),
+(x#MatrixToAtom_15 = 4),
+(x#MatrixToAtom_16 = 4),
+(y#MatrixToAtom_1 = x#MatrixToAtom_13),
+(y#MatrixToAtom_2 = x#MatrixToAtom_14),
+(y#MatrixToAtom_3 = x#MatrixToAtom_15),
+(y#MatrixToAtom_4 = x#MatrixToAtom_16),
+(y#MatrixToAtom_5 = x#MatrixToAtom_17),
+(y#MatrixToAtom_6 = x#MatrixToAtom_18),
+(y#MatrixToAtom_7 = x#MatrixToAtom_19),
+(y#MatrixToAtom_8 = x#MatrixToAtom_20),
+(y#MatrixToAtom_9 = x#MatrixToAtom_21),
+(y#MatrixToAtom_10 = x#MatrixToAtom_22),
+(y#MatrixToAtom_11 = x#MatrixToAtom_23),
+(y#MatrixToAtom_12 = x#MatrixToAtom_24),
+and([(y[2, 1] = 2),(y[2, 2] = 2),(y[2, 3] = 2),(y[2, 4] = 2),(y[3, 1] = 3),(y[3, 2] = 3),(y[3, 3] = 3),(y[3, 4] = 3);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(x#MatrixToAtom_1 = 1),
+(x#MatrixToAtom_2 = 1),
+(x#MatrixToAtom_3 = 1),
+(x#MatrixToAtom_4 = 1),
+(x#MatrixToAtom_5 = 2),
+(x#MatrixToAtom_6 = 2),
+(x#MatrixToAtom_7 = 2),
+(x#MatrixToAtom_8 = 2),
+(x#MatrixToAtom_9 = 3),
+(x#MatrixToAtom_10 = 3),
+(x#MatrixToAtom_11 = 3),
+(x#MatrixToAtom_12 = 3),
+(x#MatrixToAtom_13 = 4),
+(x#MatrixToAtom_14 = 4),
+(x#MatrixToAtom_15 = 4),
+(x#MatrixToAtom_16 = 4),
+(y#MatrixToAtom_1 = x#MatrixToAtom_13),
+(y#MatrixToAtom_2 = x#MatrixToAtom_14),
+(y#MatrixToAtom_3 = x#MatrixToAtom_15),
+(y#MatrixToAtom_4 = x#MatrixToAtom_16),
+(y#MatrixToAtom_5 = x#MatrixToAtom_17),
+(y#MatrixToAtom_6 = x#MatrixToAtom_18),
+(y#MatrixToAtom_7 = x#MatrixToAtom_19),
+(y#MatrixToAtom_8 = x#MatrixToAtom_20),
+(y#MatrixToAtom_9 = x#MatrixToAtom_21),
+(y#MatrixToAtom_10 = x#MatrixToAtom_22),
+(y#MatrixToAtom_11 = x#MatrixToAtom_23),
+(y#MatrixToAtom_12 = x#MatrixToAtom_24),
+(y[2, 1] = 2),
+(y[2, 2] = 2),
+(y[2, 3] = 2),
+(y[2, 4] = 2),
+(y[3, 1] = 3),
+(y[3, 2] = 3),
+(y[3, 3] = 3),
+(y[3, 4] = 3)
+
+--
+
+(x#MatrixToAtom_1 = 1),
+(x#MatrixToAtom_2 = 1),
+(x#MatrixToAtom_3 = 1),
+(x#MatrixToAtom_4 = 1),
+(x#MatrixToAtom_5 = 2),
+(x#MatrixToAtom_6 = 2),
+(x#MatrixToAtom_7 = 2),
+(x#MatrixToAtom_8 = 2),
+(x#MatrixToAtom_9 = 3),
+(x#MatrixToAtom_10 = 3),
+(x#MatrixToAtom_11 = 3),
+(x#MatrixToAtom_12 = 3),
+(x#MatrixToAtom_13 = 4),
+(x#MatrixToAtom_14 = 4),
+(x#MatrixToAtom_15 = 4),
+(x#MatrixToAtom_16 = 4),
+(y#MatrixToAtom_1 = x#MatrixToAtom_13),
+(y#MatrixToAtom_2 = x#MatrixToAtom_14),
+(y#MatrixToAtom_3 = x#MatrixToAtom_15),
+(y#MatrixToAtom_4 = x#MatrixToAtom_16),
+(y#MatrixToAtom_5 = x#MatrixToAtom_17),
+(y#MatrixToAtom_6 = x#MatrixToAtom_18),
+(y#MatrixToAtom_7 = x#MatrixToAtom_19),
+(y#MatrixToAtom_8 = x#MatrixToAtom_20),
+(y#MatrixToAtom_9 = x#MatrixToAtom_21),
+(y#MatrixToAtom_10 = x#MatrixToAtom_22),
+(y#MatrixToAtom_11 = x#MatrixToAtom_23),
+(y#MatrixToAtom_12 = x#MatrixToAtom_24),
+(y[2, 1] = 2),
+(y[2, 2] = 2),
+(y[2, 3] = 2),
+(y[2, 4] = 2),
+(y[3, 1] = 3),
+(y[3, 2] = 3),
+(y[3, 3] = 3),
+(y[3, 4] = 3), 
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
+(x#MatrixToAtom_1 = 1),
+(x#MatrixToAtom_2 = 1),
+(x#MatrixToAtom_3 = 1),
+(x#MatrixToAtom_4 = 1),
+(x#MatrixToAtom_5 = 2),
+(x#MatrixToAtom_6 = 2),
+(x#MatrixToAtom_7 = 2),
+(x#MatrixToAtom_8 = 2),
+(x#MatrixToAtom_9 = 3),
+(x#MatrixToAtom_10 = 3),
+(x#MatrixToAtom_11 = 3),
+(x#MatrixToAtom_12 = 3),
+(x#MatrixToAtom_13 = 4),
+(x#MatrixToAtom_14 = 4),
+(x#MatrixToAtom_15 = 4),
+(x#MatrixToAtom_16 = 4),
+(y#MatrixToAtom_1 = x#MatrixToAtom_13),
+(y#MatrixToAtom_2 = x#MatrixToAtom_14),
+(y#MatrixToAtom_3 = x#MatrixToAtom_15),
+(y#MatrixToAtom_4 = x#MatrixToAtom_16),
+(y#MatrixToAtom_5 = x#MatrixToAtom_17),
+(y#MatrixToAtom_6 = x#MatrixToAtom_18),
+(y#MatrixToAtom_7 = x#MatrixToAtom_19),
+(y#MatrixToAtom_8 = x#MatrixToAtom_20),
+(y#MatrixToAtom_9 = x#MatrixToAtom_21),
+(y#MatrixToAtom_10 = x#MatrixToAtom_22),
+(y#MatrixToAtom_11 = x#MatrixToAtom_23),
+(y#MatrixToAtom_12 = x#MatrixToAtom_24),
+(y[2, 1] = 2),
+(y[2, 2] = 2),
+(y[2, 3] = 2),
+(y[2, 4] = 2),
+(y[3, 1] = 3),
+(y[3, 2] = 3),
+(y[3, 3] = 3),
+(y[3, 4] = 3)
+
+--
+
+y[2, 1], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{y[2, 1] @ and([__inDomain(2,int(1..3)),__inDomain(1,int(1..4));int(1..)])}
+
+--
+
+(x#MatrixToAtom_1 = 1),
+(x#MatrixToAtom_2 = 1),
+(x#MatrixToAtom_3 = 1),
+(x#MatrixToAtom_4 = 1),
+(x#MatrixToAtom_5 = 2),
+(x#MatrixToAtom_6 = 2),
+(x#MatrixToAtom_7 = 2),
+(x#MatrixToAtom_8 = 2),
+(x#MatrixToAtom_9 = 3),
+(x#MatrixToAtom_10 = 3),
+(x#MatrixToAtom_11 = 3),
+(x#MatrixToAtom_12 = 3),
+(x#MatrixToAtom_13 = 4),
+(x#MatrixToAtom_14 = 4),
+(x#MatrixToAtom_15 = 4),
+(x#MatrixToAtom_16 = 4),
+(y#MatrixToAtom_1 = x#MatrixToAtom_13),
+(y#MatrixToAtom_2 = x#MatrixToAtom_14),
+(y#MatrixToAtom_3 = x#MatrixToAtom_15),
+(y#MatrixToAtom_4 = x#MatrixToAtom_16),
+(y#MatrixToAtom_5 = x#MatrixToAtom_17),
+(y#MatrixToAtom_6 = x#MatrixToAtom_18),
+(y#MatrixToAtom_7 = x#MatrixToAtom_19),
+(y#MatrixToAtom_8 = x#MatrixToAtom_20),
+(y#MatrixToAtom_9 = x#MatrixToAtom_21),
+(y#MatrixToAtom_10 = x#MatrixToAtom_22),
+(y#MatrixToAtom_11 = x#MatrixToAtom_23),
+(y#MatrixToAtom_12 = x#MatrixToAtom_24),
+({y[2, 1] @ and([__inDomain(2,int(1..3)),__inDomain(1,int(1..4));int(1..)])} = 2),
+(y[2, 2] = 2),
+(y[2, 3] = 2),
+(y[2, 4] = 2),
+(y[3, 1] = 3),
+(y[3, 2] = 3),
+(y[3, 3] = 3),
+(y[3, 4] = 3), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(x#MatrixToAtom_1 = 1),
+(x#MatrixToAtom_2 = 1),
+(x#MatrixToAtom_3 = 1),
+(x#MatrixToAtom_4 = 1),
+(x#MatrixToAtom_5 = 2),
+(x#MatrixToAtom_6 = 2),
+(x#MatrixToAtom_7 = 2),
+(x#MatrixToAtom_8 = 2),
+(x#MatrixToAtom_9 = 3),
+(x#MatrixToAtom_10 = 3),
+(x#MatrixToAtom_11 = 3),
+(x#MatrixToAtom_12 = 3),
+(x#MatrixToAtom_13 = 4),
+(x#MatrixToAtom_14 = 4),
+(x#MatrixToAtom_15 = 4),
+(x#MatrixToAtom_16 = 4),
+(y#MatrixToAtom_1 = x#MatrixToAtom_13),
+(y#MatrixToAtom_2 = x#MatrixToAtom_14),
+(y#MatrixToAtom_3 = x#MatrixToAtom_15),
+(y#MatrixToAtom_4 = x#MatrixToAtom_16),
+(y#MatrixToAtom_5 = x#MatrixToAtom_17),
+(y#MatrixToAtom_6 = x#MatrixToAtom_18),
+(y#MatrixToAtom_7 = x#MatrixToAtom_19),
+(y#MatrixToAtom_8 = x#MatrixToAtom_20),
+(y#MatrixToAtom_9 = x#MatrixToAtom_21),
+(y#MatrixToAtom_10 = x#MatrixToAtom_22),
+(y#MatrixToAtom_11 = x#MatrixToAtom_23),
+(y#MatrixToAtom_12 = x#MatrixToAtom_24),
+(y[2, 1] = 2),
+(y[2, 2] = 2),
+(y[2, 3] = 2),
+(y[2, 4] = 2),
+(y[3, 1] = 3),
+(y[3, 2] = 3),
+(y[3, 3] = 3),
+(y[3, 4] = 3)
+
+--
+
+y[2, 2], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{y[2, 2] @ and([__inDomain(2,int(1..3)),__inDomain(2,int(1..4));int(1..)])}
+
+--
+
+(x#MatrixToAtom_1 = 1),
+(x#MatrixToAtom_2 = 1),
+(x#MatrixToAtom_3 = 1),
+(x#MatrixToAtom_4 = 1),
+(x#MatrixToAtom_5 = 2),
+(x#MatrixToAtom_6 = 2),
+(x#MatrixToAtom_7 = 2),
+(x#MatrixToAtom_8 = 2),
+(x#MatrixToAtom_9 = 3),
+(x#MatrixToAtom_10 = 3),
+(x#MatrixToAtom_11 = 3),
+(x#MatrixToAtom_12 = 3),
+(x#MatrixToAtom_13 = 4),
+(x#MatrixToAtom_14 = 4),
+(x#MatrixToAtom_15 = 4),
+(x#MatrixToAtom_16 = 4),
+(y#MatrixToAtom_1 = x#MatrixToAtom_13),
+(y#MatrixToAtom_2 = x#MatrixToAtom_14),
+(y#MatrixToAtom_3 = x#MatrixToAtom_15),
+(y#MatrixToAtom_4 = x#MatrixToAtom_16),
+(y#MatrixToAtom_5 = x#MatrixToAtom_17),
+(y#MatrixToAtom_6 = x#MatrixToAtom_18),
+(y#MatrixToAtom_7 = x#MatrixToAtom_19),
+(y#MatrixToAtom_8 = x#MatrixToAtom_20),
+(y#MatrixToAtom_9 = x#MatrixToAtom_21),
+(y#MatrixToAtom_10 = x#MatrixToAtom_22),
+(y#MatrixToAtom_11 = x#MatrixToAtom_23),
+(y#MatrixToAtom_12 = x#MatrixToAtom_24),
+(y[2, 1] = 2),
+({y[2, 2] @ and([__inDomain(2,int(1..3)),__inDomain(2,int(1..4));int(1..)])} = 2),
+(y[2, 3] = 2),
+(y[2, 4] = 2),
+(y[3, 1] = 3),
+(y[3, 2] = 3),
+(y[3, 3] = 3),
+(y[3, 4] = 3), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(x#MatrixToAtom_1 = 1),
+(x#MatrixToAtom_2 = 1),
+(x#MatrixToAtom_3 = 1),
+(x#MatrixToAtom_4 = 1),
+(x#MatrixToAtom_5 = 2),
+(x#MatrixToAtom_6 = 2),
+(x#MatrixToAtom_7 = 2),
+(x#MatrixToAtom_8 = 2),
+(x#MatrixToAtom_9 = 3),
+(x#MatrixToAtom_10 = 3),
+(x#MatrixToAtom_11 = 3),
+(x#MatrixToAtom_12 = 3),
+(x#MatrixToAtom_13 = 4),
+(x#MatrixToAtom_14 = 4),
+(x#MatrixToAtom_15 = 4),
+(x#MatrixToAtom_16 = 4),
+(y#MatrixToAtom_1 = x#MatrixToAtom_13),
+(y#MatrixToAtom_2 = x#MatrixToAtom_14),
+(y#MatrixToAtom_3 = x#MatrixToAtom_15),
+(y#MatrixToAtom_4 = x#MatrixToAtom_16),
+(y#MatrixToAtom_5 = x#MatrixToAtom_17),
+(y#MatrixToAtom_6 = x#MatrixToAtom_18),
+(y#MatrixToAtom_7 = x#MatrixToAtom_19),
+(y#MatrixToAtom_8 = x#MatrixToAtom_20),
+(y#MatrixToAtom_9 = x#MatrixToAtom_21),
+(y#MatrixToAtom_10 = x#MatrixToAtom_22),
+(y#MatrixToAtom_11 = x#MatrixToAtom_23),
+(y#MatrixToAtom_12 = x#MatrixToAtom_24),
+(y[2, 1] = 2),
+(y[2, 2] = 2),
+(y[2, 3] = 2),
+(y[2, 4] = 2),
+(y[3, 1] = 3),
+(y[3, 2] = 3),
+(y[3, 3] = 3),
+(y[3, 4] = 3)
+
+--
+
+y[2, 3], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{y[2, 3] @ and([__inDomain(2,int(1..3)),__inDomain(3,int(1..4));int(1..)])}
+
+--
+
+(x#MatrixToAtom_1 = 1),
+(x#MatrixToAtom_2 = 1),
+(x#MatrixToAtom_3 = 1),
+(x#MatrixToAtom_4 = 1),
+(x#MatrixToAtom_5 = 2),
+(x#MatrixToAtom_6 = 2),
+(x#MatrixToAtom_7 = 2),
+(x#MatrixToAtom_8 = 2),
+(x#MatrixToAtom_9 = 3),
+(x#MatrixToAtom_10 = 3),
+(x#MatrixToAtom_11 = 3),
+(x#MatrixToAtom_12 = 3),
+(x#MatrixToAtom_13 = 4),
+(x#MatrixToAtom_14 = 4),
+(x#MatrixToAtom_15 = 4),
+(x#MatrixToAtom_16 = 4),
+(y#MatrixToAtom_1 = x#MatrixToAtom_13),
+(y#MatrixToAtom_2 = x#MatrixToAtom_14),
+(y#MatrixToAtom_3 = x#MatrixToAtom_15),
+(y#MatrixToAtom_4 = x#MatrixToAtom_16),
+(y#MatrixToAtom_5 = x#MatrixToAtom_17),
+(y#MatrixToAtom_6 = x#MatrixToAtom_18),
+(y#MatrixToAtom_7 = x#MatrixToAtom_19),
+(y#MatrixToAtom_8 = x#MatrixToAtom_20),
+(y#MatrixToAtom_9 = x#MatrixToAtom_21),
+(y#MatrixToAtom_10 = x#MatrixToAtom_22),
+(y#MatrixToAtom_11 = x#MatrixToAtom_23),
+(y#MatrixToAtom_12 = x#MatrixToAtom_24),
+(y[2, 1] = 2),
+(y[2, 2] = 2),
+({y[2, 3] @ and([__inDomain(2,int(1..3)),__inDomain(3,int(1..4));int(1..)])} = 2),
+(y[2, 4] = 2),
+(y[3, 1] = 3),
+(y[3, 2] = 3),
+(y[3, 3] = 3),
+(y[3, 4] = 3), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(x#MatrixToAtom_1 = 1),
+(x#MatrixToAtom_2 = 1),
+(x#MatrixToAtom_3 = 1),
+(x#MatrixToAtom_4 = 1),
+(x#MatrixToAtom_5 = 2),
+(x#MatrixToAtom_6 = 2),
+(x#MatrixToAtom_7 = 2),
+(x#MatrixToAtom_8 = 2),
+(x#MatrixToAtom_9 = 3),
+(x#MatrixToAtom_10 = 3),
+(x#MatrixToAtom_11 = 3),
+(x#MatrixToAtom_12 = 3),
+(x#MatrixToAtom_13 = 4),
+(x#MatrixToAtom_14 = 4),
+(x#MatrixToAtom_15 = 4),
+(x#MatrixToAtom_16 = 4),
+(y#MatrixToAtom_1 = x#MatrixToAtom_13),
+(y#MatrixToAtom_2 = x#MatrixToAtom_14),
+(y#MatrixToAtom_3 = x#MatrixToAtom_15),
+(y#MatrixToAtom_4 = x#MatrixToAtom_16),
+(y#MatrixToAtom_5 = x#MatrixToAtom_17),
+(y#MatrixToAtom_6 = x#MatrixToAtom_18),
+(y#MatrixToAtom_7 = x#MatrixToAtom_19),
+(y#MatrixToAtom_8 = x#MatrixToAtom_20),
+(y#MatrixToAtom_9 = x#MatrixToAtom_21),
+(y#MatrixToAtom_10 = x#MatrixToAtom_22),
+(y#MatrixToAtom_11 = x#MatrixToAtom_23),
+(y#MatrixToAtom_12 = x#MatrixToAtom_24),
+(y[2, 1] = 2),
+(y[2, 2] = 2),
+(y[2, 3] = 2),
+(y[2, 4] = 2),
+(y[3, 1] = 3),
+(y[3, 2] = 3),
+(y[3, 3] = 3),
+(y[3, 4] = 3)
+
+--
+
+y[2, 4], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{y[2, 4] @ and([__inDomain(2,int(1..3)),__inDomain(4,int(1..4));int(1..)])}
+
+--
+
+(x#MatrixToAtom_1 = 1),
+(x#MatrixToAtom_2 = 1),
+(x#MatrixToAtom_3 = 1),
+(x#MatrixToAtom_4 = 1),
+(x#MatrixToAtom_5 = 2),
+(x#MatrixToAtom_6 = 2),
+(x#MatrixToAtom_7 = 2),
+(x#MatrixToAtom_8 = 2),
+(x#MatrixToAtom_9 = 3),
+(x#MatrixToAtom_10 = 3),
+(x#MatrixToAtom_11 = 3),
+(x#MatrixToAtom_12 = 3),
+(x#MatrixToAtom_13 = 4),
+(x#MatrixToAtom_14 = 4),
+(x#MatrixToAtom_15 = 4),
+(x#MatrixToAtom_16 = 4),
+(y#MatrixToAtom_1 = x#MatrixToAtom_13),
+(y#MatrixToAtom_2 = x#MatrixToAtom_14),
+(y#MatrixToAtom_3 = x#MatrixToAtom_15),
+(y#MatrixToAtom_4 = x#MatrixToAtom_16),
+(y#MatrixToAtom_5 = x#MatrixToAtom_17),
+(y#MatrixToAtom_6 = x#MatrixToAtom_18),
+(y#MatrixToAtom_7 = x#MatrixToAtom_19),
+(y#MatrixToAtom_8 = x#MatrixToAtom_20),
+(y#MatrixToAtom_9 = x#MatrixToAtom_21),
+(y#MatrixToAtom_10 = x#MatrixToAtom_22),
+(y#MatrixToAtom_11 = x#MatrixToAtom_23),
+(y#MatrixToAtom_12 = x#MatrixToAtom_24),
+(y[2, 1] = 2),
+(y[2, 2] = 2),
+(y[2, 3] = 2),
+({y[2, 4] @ and([__inDomain(2,int(1..3)),__inDomain(4,int(1..4));int(1..)])} = 2),
+(y[3, 1] = 3),
+(y[3, 2] = 3),
+(y[3, 3] = 3),
+(y[3, 4] = 3), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(x#MatrixToAtom_1 = 1),
+(x#MatrixToAtom_2 = 1),
+(x#MatrixToAtom_3 = 1),
+(x#MatrixToAtom_4 = 1),
+(x#MatrixToAtom_5 = 2),
+(x#MatrixToAtom_6 = 2),
+(x#MatrixToAtom_7 = 2),
+(x#MatrixToAtom_8 = 2),
+(x#MatrixToAtom_9 = 3),
+(x#MatrixToAtom_10 = 3),
+(x#MatrixToAtom_11 = 3),
+(x#MatrixToAtom_12 = 3),
+(x#MatrixToAtom_13 = 4),
+(x#MatrixToAtom_14 = 4),
+(x#MatrixToAtom_15 = 4),
+(x#MatrixToAtom_16 = 4),
+(y#MatrixToAtom_1 = x#MatrixToAtom_13),
+(y#MatrixToAtom_2 = x#MatrixToAtom_14),
+(y#MatrixToAtom_3 = x#MatrixToAtom_15),
+(y#MatrixToAtom_4 = x#MatrixToAtom_16),
+(y#MatrixToAtom_5 = x#MatrixToAtom_17),
+(y#MatrixToAtom_6 = x#MatrixToAtom_18),
+(y#MatrixToAtom_7 = x#MatrixToAtom_19),
+(y#MatrixToAtom_8 = x#MatrixToAtom_20),
+(y#MatrixToAtom_9 = x#MatrixToAtom_21),
+(y#MatrixToAtom_10 = x#MatrixToAtom_22),
+(y#MatrixToAtom_11 = x#MatrixToAtom_23),
+(y#MatrixToAtom_12 = x#MatrixToAtom_24),
+(y[2, 1] = 2),
+(y[2, 2] = 2),
+(y[2, 3] = 2),
+(y[2, 4] = 2),
+(y[3, 1] = 3),
+(y[3, 2] = 3),
+(y[3, 3] = 3),
+(y[3, 4] = 3)
+
+--
+
+y[3, 1], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{y[3, 1] @ and([__inDomain(3,int(1..3)),__inDomain(1,int(1..4));int(1..)])}
+
+--
+
+(x#MatrixToAtom_1 = 1),
+(x#MatrixToAtom_2 = 1),
+(x#MatrixToAtom_3 = 1),
+(x#MatrixToAtom_4 = 1),
+(x#MatrixToAtom_5 = 2),
+(x#MatrixToAtom_6 = 2),
+(x#MatrixToAtom_7 = 2),
+(x#MatrixToAtom_8 = 2),
+(x#MatrixToAtom_9 = 3),
+(x#MatrixToAtom_10 = 3),
+(x#MatrixToAtom_11 = 3),
+(x#MatrixToAtom_12 = 3),
+(x#MatrixToAtom_13 = 4),
+(x#MatrixToAtom_14 = 4),
+(x#MatrixToAtom_15 = 4),
+(x#MatrixToAtom_16 = 4),
+(y#MatrixToAtom_1 = x#MatrixToAtom_13),
+(y#MatrixToAtom_2 = x#MatrixToAtom_14),
+(y#MatrixToAtom_3 = x#MatrixToAtom_15),
+(y#MatrixToAtom_4 = x#MatrixToAtom_16),
+(y#MatrixToAtom_5 = x#MatrixToAtom_17),
+(y#MatrixToAtom_6 = x#MatrixToAtom_18),
+(y#MatrixToAtom_7 = x#MatrixToAtom_19),
+(y#MatrixToAtom_8 = x#MatrixToAtom_20),
+(y#MatrixToAtom_9 = x#MatrixToAtom_21),
+(y#MatrixToAtom_10 = x#MatrixToAtom_22),
+(y#MatrixToAtom_11 = x#MatrixToAtom_23),
+(y#MatrixToAtom_12 = x#MatrixToAtom_24),
+(y[2, 1] = 2),
+(y[2, 2] = 2),
+(y[2, 3] = 2),
+(y[2, 4] = 2),
+({y[3, 1] @ and([__inDomain(3,int(1..3)),__inDomain(1,int(1..4));int(1..)])} = 3),
+(y[3, 2] = 3),
+(y[3, 3] = 3),
+(y[3, 4] = 3), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(x#MatrixToAtom_1 = 1),
+(x#MatrixToAtom_2 = 1),
+(x#MatrixToAtom_3 = 1),
+(x#MatrixToAtom_4 = 1),
+(x#MatrixToAtom_5 = 2),
+(x#MatrixToAtom_6 = 2),
+(x#MatrixToAtom_7 = 2),
+(x#MatrixToAtom_8 = 2),
+(x#MatrixToAtom_9 = 3),
+(x#MatrixToAtom_10 = 3),
+(x#MatrixToAtom_11 = 3),
+(x#MatrixToAtom_12 = 3),
+(x#MatrixToAtom_13 = 4),
+(x#MatrixToAtom_14 = 4),
+(x#MatrixToAtom_15 = 4),
+(x#MatrixToAtom_16 = 4),
+(y#MatrixToAtom_1 = x#MatrixToAtom_13),
+(y#MatrixToAtom_2 = x#MatrixToAtom_14),
+(y#MatrixToAtom_3 = x#MatrixToAtom_15),
+(y#MatrixToAtom_4 = x#MatrixToAtom_16),
+(y#MatrixToAtom_5 = x#MatrixToAtom_17),
+(y#MatrixToAtom_6 = x#MatrixToAtom_18),
+(y#MatrixToAtom_7 = x#MatrixToAtom_19),
+(y#MatrixToAtom_8 = x#MatrixToAtom_20),
+(y#MatrixToAtom_9 = x#MatrixToAtom_21),
+(y#MatrixToAtom_10 = x#MatrixToAtom_22),
+(y#MatrixToAtom_11 = x#MatrixToAtom_23),
+(y#MatrixToAtom_12 = x#MatrixToAtom_24),
+(y[2, 1] = 2),
+(y[2, 2] = 2),
+(y[2, 3] = 2),
+(y[2, 4] = 2),
+(y[3, 1] = 3),
+(y[3, 2] = 3),
+(y[3, 3] = 3),
+(y[3, 4] = 3)
+
+--
+
+y[3, 2], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{y[3, 2] @ and([__inDomain(3,int(1..3)),__inDomain(2,int(1..4));int(1..)])}
+
+--
+
+(x#MatrixToAtom_1 = 1),
+(x#MatrixToAtom_2 = 1),
+(x#MatrixToAtom_3 = 1),
+(x#MatrixToAtom_4 = 1),
+(x#MatrixToAtom_5 = 2),
+(x#MatrixToAtom_6 = 2),
+(x#MatrixToAtom_7 = 2),
+(x#MatrixToAtom_8 = 2),
+(x#MatrixToAtom_9 = 3),
+(x#MatrixToAtom_10 = 3),
+(x#MatrixToAtom_11 = 3),
+(x#MatrixToAtom_12 = 3),
+(x#MatrixToAtom_13 = 4),
+(x#MatrixToAtom_14 = 4),
+(x#MatrixToAtom_15 = 4),
+(x#MatrixToAtom_16 = 4),
+(y#MatrixToAtom_1 = x#MatrixToAtom_13),
+(y#MatrixToAtom_2 = x#MatrixToAtom_14),
+(y#MatrixToAtom_3 = x#MatrixToAtom_15),
+(y#MatrixToAtom_4 = x#MatrixToAtom_16),
+(y#MatrixToAtom_5 = x#MatrixToAtom_17),
+(y#MatrixToAtom_6 = x#MatrixToAtom_18),
+(y#MatrixToAtom_7 = x#MatrixToAtom_19),
+(y#MatrixToAtom_8 = x#MatrixToAtom_20),
+(y#MatrixToAtom_9 = x#MatrixToAtom_21),
+(y#MatrixToAtom_10 = x#MatrixToAtom_22),
+(y#MatrixToAtom_11 = x#MatrixToAtom_23),
+(y#MatrixToAtom_12 = x#MatrixToAtom_24),
+(y[2, 1] = 2),
+(y[2, 2] = 2),
+(y[2, 3] = 2),
+(y[2, 4] = 2),
+(y[3, 1] = 3),
+({y[3, 2] @ and([__inDomain(3,int(1..3)),__inDomain(2,int(1..4));int(1..)])} = 3),
+(y[3, 3] = 3),
+(y[3, 4] = 3), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(x#MatrixToAtom_1 = 1),
+(x#MatrixToAtom_2 = 1),
+(x#MatrixToAtom_3 = 1),
+(x#MatrixToAtom_4 = 1),
+(x#MatrixToAtom_5 = 2),
+(x#MatrixToAtom_6 = 2),
+(x#MatrixToAtom_7 = 2),
+(x#MatrixToAtom_8 = 2),
+(x#MatrixToAtom_9 = 3),
+(x#MatrixToAtom_10 = 3),
+(x#MatrixToAtom_11 = 3),
+(x#MatrixToAtom_12 = 3),
+(x#MatrixToAtom_13 = 4),
+(x#MatrixToAtom_14 = 4),
+(x#MatrixToAtom_15 = 4),
+(x#MatrixToAtom_16 = 4),
+(y#MatrixToAtom_1 = x#MatrixToAtom_13),
+(y#MatrixToAtom_2 = x#MatrixToAtom_14),
+(y#MatrixToAtom_3 = x#MatrixToAtom_15),
+(y#MatrixToAtom_4 = x#MatrixToAtom_16),
+(y#MatrixToAtom_5 = x#MatrixToAtom_17),
+(y#MatrixToAtom_6 = x#MatrixToAtom_18),
+(y#MatrixToAtom_7 = x#MatrixToAtom_19),
+(y#MatrixToAtom_8 = x#MatrixToAtom_20),
+(y#MatrixToAtom_9 = x#MatrixToAtom_21),
+(y#MatrixToAtom_10 = x#MatrixToAtom_22),
+(y#MatrixToAtom_11 = x#MatrixToAtom_23),
+(y#MatrixToAtom_12 = x#MatrixToAtom_24),
+(y[2, 1] = 2),
+(y[2, 2] = 2),
+(y[2, 3] = 2),
+(y[2, 4] = 2),
+(y[3, 1] = 3),
+(y[3, 2] = 3),
+(y[3, 3] = 3),
+(y[3, 4] = 3)
+
+--
+
+y[3, 3], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{y[3, 3] @ and([__inDomain(3,int(1..3)),__inDomain(3,int(1..4));int(1..)])}
+
+--
+
+(x#MatrixToAtom_1 = 1),
+(x#MatrixToAtom_2 = 1),
+(x#MatrixToAtom_3 = 1),
+(x#MatrixToAtom_4 = 1),
+(x#MatrixToAtom_5 = 2),
+(x#MatrixToAtom_6 = 2),
+(x#MatrixToAtom_7 = 2),
+(x#MatrixToAtom_8 = 2),
+(x#MatrixToAtom_9 = 3),
+(x#MatrixToAtom_10 = 3),
+(x#MatrixToAtom_11 = 3),
+(x#MatrixToAtom_12 = 3),
+(x#MatrixToAtom_13 = 4),
+(x#MatrixToAtom_14 = 4),
+(x#MatrixToAtom_15 = 4),
+(x#MatrixToAtom_16 = 4),
+(y#MatrixToAtom_1 = x#MatrixToAtom_13),
+(y#MatrixToAtom_2 = x#MatrixToAtom_14),
+(y#MatrixToAtom_3 = x#MatrixToAtom_15),
+(y#MatrixToAtom_4 = x#MatrixToAtom_16),
+(y#MatrixToAtom_5 = x#MatrixToAtom_17),
+(y#MatrixToAtom_6 = x#MatrixToAtom_18),
+(y#MatrixToAtom_7 = x#MatrixToAtom_19),
+(y#MatrixToAtom_8 = x#MatrixToAtom_20),
+(y#MatrixToAtom_9 = x#MatrixToAtom_21),
+(y#MatrixToAtom_10 = x#MatrixToAtom_22),
+(y#MatrixToAtom_11 = x#MatrixToAtom_23),
+(y#MatrixToAtom_12 = x#MatrixToAtom_24),
+(y[2, 1] = 2),
+(y[2, 2] = 2),
+(y[2, 3] = 2),
+(y[2, 4] = 2),
+(y[3, 1] = 3),
+(y[3, 2] = 3),
+({y[3, 3] @ and([__inDomain(3,int(1..3)),__inDomain(3,int(1..4));int(1..)])} = 3),
+(y[3, 4] = 3), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(x#MatrixToAtom_1 = 1),
+(x#MatrixToAtom_2 = 1),
+(x#MatrixToAtom_3 = 1),
+(x#MatrixToAtom_4 = 1),
+(x#MatrixToAtom_5 = 2),
+(x#MatrixToAtom_6 = 2),
+(x#MatrixToAtom_7 = 2),
+(x#MatrixToAtom_8 = 2),
+(x#MatrixToAtom_9 = 3),
+(x#MatrixToAtom_10 = 3),
+(x#MatrixToAtom_11 = 3),
+(x#MatrixToAtom_12 = 3),
+(x#MatrixToAtom_13 = 4),
+(x#MatrixToAtom_14 = 4),
+(x#MatrixToAtom_15 = 4),
+(x#MatrixToAtom_16 = 4),
+(y#MatrixToAtom_1 = x#MatrixToAtom_13),
+(y#MatrixToAtom_2 = x#MatrixToAtom_14),
+(y#MatrixToAtom_3 = x#MatrixToAtom_15),
+(y#MatrixToAtom_4 = x#MatrixToAtom_16),
+(y#MatrixToAtom_5 = x#MatrixToAtom_17),
+(y#MatrixToAtom_6 = x#MatrixToAtom_18),
+(y#MatrixToAtom_7 = x#MatrixToAtom_19),
+(y#MatrixToAtom_8 = x#MatrixToAtom_20),
+(y#MatrixToAtom_9 = x#MatrixToAtom_21),
+(y#MatrixToAtom_10 = x#MatrixToAtom_22),
+(y#MatrixToAtom_11 = x#MatrixToAtom_23),
+(y#MatrixToAtom_12 = x#MatrixToAtom_24),
+(y[2, 1] = 2),
+(y[2, 2] = 2),
+(y[2, 3] = 2),
+(y[2, 4] = 2),
+(y[3, 1] = 3),
+(y[3, 2] = 3),
+(y[3, 3] = 3),
+(y[3, 4] = 3)
+
+--
+
+y[3, 4], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{y[3, 4] @ and([__inDomain(3,int(1..3)),__inDomain(4,int(1..4));int(1..)])}
+
+--
+
+(x#MatrixToAtom_1 = 1),
+(x#MatrixToAtom_2 = 1),
+(x#MatrixToAtom_3 = 1),
+(x#MatrixToAtom_4 = 1),
+(x#MatrixToAtom_5 = 2),
+(x#MatrixToAtom_6 = 2),
+(x#MatrixToAtom_7 = 2),
+(x#MatrixToAtom_8 = 2),
+(x#MatrixToAtom_9 = 3),
+(x#MatrixToAtom_10 = 3),
+(x#MatrixToAtom_11 = 3),
+(x#MatrixToAtom_12 = 3),
+(x#MatrixToAtom_13 = 4),
+(x#MatrixToAtom_14 = 4),
+(x#MatrixToAtom_15 = 4),
+(x#MatrixToAtom_16 = 4),
+(y#MatrixToAtom_1 = x#MatrixToAtom_13),
+(y#MatrixToAtom_2 = x#MatrixToAtom_14),
+(y#MatrixToAtom_3 = x#MatrixToAtom_15),
+(y#MatrixToAtom_4 = x#MatrixToAtom_16),
+(y#MatrixToAtom_5 = x#MatrixToAtom_17),
+(y#MatrixToAtom_6 = x#MatrixToAtom_18),
+(y#MatrixToAtom_7 = x#MatrixToAtom_19),
+(y#MatrixToAtom_8 = x#MatrixToAtom_20),
+(y#MatrixToAtom_9 = x#MatrixToAtom_21),
+(y#MatrixToAtom_10 = x#MatrixToAtom_22),
+(y#MatrixToAtom_11 = x#MatrixToAtom_23),
+(y#MatrixToAtom_12 = x#MatrixToAtom_24),
+(y[2, 1] = 2),
+(y[2, 2] = 2),
+(y[2, 3] = 2),
+(y[2, 4] = 2),
+(y[3, 1] = 3),
+(y[3, 2] = 3),
+(y[3, 3] = 3),
+({y[3, 4] @ and([__inDomain(3,int(1..3)),__inDomain(4,int(1..4));int(1..)])} = 3), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(x#MatrixToAtom_1 = 1),
+(x#MatrixToAtom_2 = 1),
+(x#MatrixToAtom_3 = 1),
+(x#MatrixToAtom_4 = 1),
+(x#MatrixToAtom_5 = 2),
+(x#MatrixToAtom_6 = 2),
+(x#MatrixToAtom_7 = 2),
+(x#MatrixToAtom_8 = 2),
+(x#MatrixToAtom_9 = 3),
+(x#MatrixToAtom_10 = 3),
+(x#MatrixToAtom_11 = 3),
+(x#MatrixToAtom_12 = 3),
+(x#MatrixToAtom_13 = 4),
+(x#MatrixToAtom_14 = 4),
+(x#MatrixToAtom_15 = 4),
+(x#MatrixToAtom_16 = 4),
+(y#MatrixToAtom_1 = x#MatrixToAtom_13),
+(y#MatrixToAtom_2 = x#MatrixToAtom_14),
+(y#MatrixToAtom_3 = x#MatrixToAtom_15),
+(y#MatrixToAtom_4 = x#MatrixToAtom_16),
+(y#MatrixToAtom_5 = x#MatrixToAtom_17),
+(y#MatrixToAtom_6 = x#MatrixToAtom_18),
+(y#MatrixToAtom_7 = x#MatrixToAtom_19),
+(y#MatrixToAtom_8 = x#MatrixToAtom_20),
+(y#MatrixToAtom_9 = x#MatrixToAtom_21),
+(y#MatrixToAtom_10 = x#MatrixToAtom_22),
+(y#MatrixToAtom_11 = x#MatrixToAtom_23),
+(y#MatrixToAtom_12 = x#MatrixToAtom_24),
+(y[2, 1] = 2),
+(y[2, 2] = 2),
+(y[2, 3] = 2),
+(y[2, 4] = 2),
+(y[3, 1] = 3),
+(y[3, 2] = 3),
+(y[3, 3] = 3),
+(y[3, 4] = 3)
+
+--
+
+(x#MatrixToAtom_1 = 1),
+(x#MatrixToAtom_2 = 1),
+(x#MatrixToAtom_3 = 1),
+(x#MatrixToAtom_4 = 1),
+(x#MatrixToAtom_5 = 2),
+(x#MatrixToAtom_6 = 2),
+(x#MatrixToAtom_7 = 2),
+(x#MatrixToAtom_8 = 2),
+(x#MatrixToAtom_9 = 3),
+(x#MatrixToAtom_10 = 3),
+(x#MatrixToAtom_11 = 3),
+(x#MatrixToAtom_12 = 3),
+(x#MatrixToAtom_13 = 4),
+(x#MatrixToAtom_14 = 4),
+(x#MatrixToAtom_15 = 4),
+(x#MatrixToAtom_16 = 4),
+(y#MatrixToAtom_1 = x#MatrixToAtom_13),
+(y#MatrixToAtom_2 = x#MatrixToAtom_14),
+(y#MatrixToAtom_3 = x#MatrixToAtom_15),
+(y#MatrixToAtom_4 = x#MatrixToAtom_16),
+(y#MatrixToAtom_5 = x#MatrixToAtom_17),
+(y#MatrixToAtom_6 = x#MatrixToAtom_18),
+(y#MatrixToAtom_7 = x#MatrixToAtom_19),
+(y#MatrixToAtom_8 = x#MatrixToAtom_20),
+(y#MatrixToAtom_9 = x#MatrixToAtom_21),
+(y#MatrixToAtom_10 = x#MatrixToAtom_22),
+(y#MatrixToAtom_11 = x#MatrixToAtom_23),
+(y#MatrixToAtom_12 = x#MatrixToAtom_24),
+(y[2, 1] = 2),
+(y[2, 2] = 2),
+(y[2, 3] = 2),
+(y[2, 4] = 2),
+(y[3, 1] = 3),
+(y[3, 2] = 3),
+(y[3, 3] = 3),
+(y[3, 4] = 3), 
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+(x#MatrixToAtom_1 = 1),
+(x#MatrixToAtom_2 = 1),
+(x#MatrixToAtom_3 = 1),
+(x#MatrixToAtom_4 = 1),
+(x#MatrixToAtom_5 = 2),
+(x#MatrixToAtom_6 = 2),
+(x#MatrixToAtom_7 = 2),
+(x#MatrixToAtom_8 = 2),
+(x#MatrixToAtom_9 = 3),
+(x#MatrixToAtom_10 = 3),
+(x#MatrixToAtom_11 = 3),
+(x#MatrixToAtom_12 = 3),
+(x#MatrixToAtom_13 = 4),
+(x#MatrixToAtom_14 = 4),
+(x#MatrixToAtom_15 = 4),
+(x#MatrixToAtom_16 = 4),
+(y#MatrixToAtom_1 = x#MatrixToAtom_13),
+(y#MatrixToAtom_2 = x#MatrixToAtom_14),
+(y#MatrixToAtom_3 = x#MatrixToAtom_15),
+(y#MatrixToAtom_4 = x#MatrixToAtom_16),
+(y#MatrixToAtom_5 = x#MatrixToAtom_17),
+(y#MatrixToAtom_6 = x#MatrixToAtom_18),
+(y#MatrixToAtom_7 = x#MatrixToAtom_19),
+(y#MatrixToAtom_8 = x#MatrixToAtom_20),
+(y#MatrixToAtom_9 = x#MatrixToAtom_21),
+(y#MatrixToAtom_10 = x#MatrixToAtom_22),
+(y#MatrixToAtom_11 = x#MatrixToAtom_23),
+(y#MatrixToAtom_12 = x#MatrixToAtom_24),
+(y#MatrixToAtom_5 = 2),
+(y#MatrixToAtom_6 = 2),
+(y#MatrixToAtom_7 = 2),
+(y#MatrixToAtom_8 = 2),
+(y#MatrixToAtom_9 = 3),
+(y#MatrixToAtom_10 = 3),
+(y#MatrixToAtom_11 = 3),
+(y#MatrixToAtom_12 = 3)
+
+--
+
+Final model:
+
+find x: matrix indexed by [int(1..2), int(1..3), int(1..4)] of int(1..5)
+find y: matrix indexed by [int(1..3), int(1..4)] of int(1..5)
+find x#MatrixToAtom_1: int(1..5)
+find x#MatrixToAtom_10: int(1..5)
+find x#MatrixToAtom_11: int(1..5)
+find x#MatrixToAtom_12: int(1..5)
+find x#MatrixToAtom_13: int(1..5)
+find x#MatrixToAtom_14: int(1..5)
+find x#MatrixToAtom_15: int(1..5)
+find x#MatrixToAtom_16: int(1..5)
+find x#MatrixToAtom_17: int(1..5)
+find x#MatrixToAtom_18: int(1..5)
+find x#MatrixToAtom_19: int(1..5)
+find x#MatrixToAtom_2: int(1..5)
+find x#MatrixToAtom_20: int(1..5)
+find x#MatrixToAtom_21: int(1..5)
+find x#MatrixToAtom_22: int(1..5)
+find x#MatrixToAtom_23: int(1..5)
+find x#MatrixToAtom_24: int(1..5)
+find x#MatrixToAtom_3: int(1..5)
+find x#MatrixToAtom_4: int(1..5)
+find x#MatrixToAtom_5: int(1..5)
+find x#MatrixToAtom_6: int(1..5)
+find x#MatrixToAtom_7: int(1..5)
+find x#MatrixToAtom_8: int(1..5)
+find x#MatrixToAtom_9: int(1..5)
+find y#MatrixToAtom_1: int(1..5)
+find y#MatrixToAtom_10: int(1..5)
+find y#MatrixToAtom_11: int(1..5)
+find y#MatrixToAtom_12: int(1..5)
+find y#MatrixToAtom_2: int(1..5)
+find y#MatrixToAtom_3: int(1..5)
+find y#MatrixToAtom_4: int(1..5)
+find y#MatrixToAtom_5: int(1..5)
+find y#MatrixToAtom_6: int(1..5)
+find y#MatrixToAtom_7: int(1..5)
+find y#MatrixToAtom_8: int(1..5)
+find y#MatrixToAtom_9: int(1..5)
+
+such that
+
+(x#MatrixToAtom_1 = 1),
+(x#MatrixToAtom_2 = 1),
+(x#MatrixToAtom_3 = 1),
+(x#MatrixToAtom_4 = 1),
+(x#MatrixToAtom_5 = 2),
+(x#MatrixToAtom_6 = 2),
+(x#MatrixToAtom_7 = 2),
+(x#MatrixToAtom_8 = 2),
+(x#MatrixToAtom_9 = 3),
+(x#MatrixToAtom_10 = 3),
+(x#MatrixToAtom_11 = 3),
+(x#MatrixToAtom_12 = 3),
+(x#MatrixToAtom_13 = 4),
+(x#MatrixToAtom_14 = 4),
+(x#MatrixToAtom_15 = 4),
+(x#MatrixToAtom_16 = 4),
+(y#MatrixToAtom_1 = x#MatrixToAtom_13),
+(y#MatrixToAtom_2 = x#MatrixToAtom_14),
+(y#MatrixToAtom_3 = x#MatrixToAtom_15),
+(y#MatrixToAtom_4 = x#MatrixToAtom_16),
+(y#MatrixToAtom_5 = x#MatrixToAtom_17),
+(y#MatrixToAtom_6 = x#MatrixToAtom_18),
+(y#MatrixToAtom_7 = x#MatrixToAtom_19),
+(y#MatrixToAtom_8 = x#MatrixToAtom_20),
+(y#MatrixToAtom_9 = x#MatrixToAtom_21),
+(y#MatrixToAtom_10 = x#MatrixToAtom_22),
+(y#MatrixToAtom_11 = x#MatrixToAtom_23),
+(y#MatrixToAtom_12 = x#MatrixToAtom_24),
+(y#MatrixToAtom_5 = 2),
+(y#MatrixToAtom_6 = 2),
+(y#MatrixToAtom_7 = 2),
+(y#MatrixToAtom_8 = 2),
+(y#MatrixToAtom_9 = 3),
+(y#MatrixToAtom_10 = 3),
+(y#MatrixToAtom_11 = 3),
+(y#MatrixToAtom_12 = 3)
+

@@ -8,7 +8,9 @@ use conjure_cp::parse::tree_sitter::parse_essence_file_native;
 use conjure_cp::rule_engine::rewrite_naive;
 use conjure_cp::solver::Solver;
 use conjure_cp::solver::adaptors::*;
-use conjure_cp_cli::utils::testing::{normalize_solutions_for_comparison, read_human_rule_trace};
+use conjure_cp_cli::utils::testing::{
+    flatten_matrices_for_comparison, normalize_solutions_for_comparison, read_human_rule_trace,
+};
 use itertools::Itertools;
 use std::collections::BTreeMap;
 use std::env;
@@ -80,7 +82,9 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
     let config = file_config;
 
     let validate_with_conjure = config.validate_with_conjure;
+    let flatten_matrices = config.flatten_matrices;
     let minion_discrete_threshold = config.minion_discrete_threshold;
+    let extra_rule_sets = config.extra_rule_sets.clone();
 
     let parsers = config
         .configured_parsers()
@@ -154,6 +158,8 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
                             minion_discrete_threshold,
                             conjure_solutions.clone(),
                             accept,
+                            flatten_matrices,
+                            &extra_rule_sets,
                         )
                     })
                     .map_err(|err| std::io::Error::other(format!("{run_label}: {err}")))?;
@@ -205,6 +211,8 @@ fn integration_test_inner(
     minion_discrete_threshold: usize,
     conjure_solutions: Option<Arc<Vec<BTreeMap<Name, Literal>>>>,
     accept: bool,
+    flatten_matrices: bool,
+    extra_rule_sets: &[String],
 ) -> Result<(), Box<dyn Error>> {
     let parser = run_case.parser;
     let rewriter = run_case.rewriter;
@@ -244,6 +252,8 @@ fn integration_test_inner(
 
     let mut rules_to_load = DEFAULT_RULE_SETS.to_vec();
     rules_to_load.extend(extra_rules);
+    let extra_rs_strs: Vec<&str> = extra_rule_sets.iter().map(|s| s.as_str()).collect();
+    rules_to_load.extend(extra_rs_strs);
 
     let rule_sets = resolve_rule_sets(solver_fam, &rules_to_load)?;
 
@@ -282,7 +292,7 @@ fn integration_test_inner(
     };
 
     let solutions = {
-        let solved = get_solutions(solver, rewritten_model, 0, &solver_input_file)?;
+        let solved = get_solutions(solver, rewritten_model, 0, &solver_input_file)?.solutions;
         save_solutions_json(&solved, path, case_name, solver_fam)?;
         solved
     };
@@ -293,8 +303,13 @@ fn integration_test_inner(
             .as_deref()
             .expect("conjure solutions should be present when Conjure validation is enabled");
 
-        let username_solutions = normalize_solutions_for_comparison(&solutions);
-        let conjure_solutions = normalize_solutions_for_comparison(conjure_solutions);
+        let mut username_solutions = normalize_solutions_for_comparison(&solutions);
+        let mut conjure_solutions = normalize_solutions_for_comparison(conjure_solutions);
+
+        if flatten_matrices {
+            flatten_matrices_for_comparison(&mut username_solutions);
+            flatten_matrices_for_comparison(&mut conjure_solutions);
+        }
 
         let mut conjure_solutions_json = solutions_to_json(&conjure_solutions);
         let mut username_solutions_json = solutions_to_json(&username_solutions);

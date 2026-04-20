@@ -10,7 +10,7 @@ or([ (S[1, k1] < S[2, k1]) | k1 : int(1..n) ])
 --
 
 or([ (S[1, k1] < S[2, k1]) | k1 : int(1..n) ]), 
-   ~~> select_repr_mta ([("ReprMatrixToAtom", 8001)])
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
 or([ (S[1, k1] < S[2, k1]) | k1 : int(1..n) ])
 new variables:
   find S#MatrixToAtom_1: int(0..1)
@@ -34,17 +34,17 @@ new variables:
 --
 
 (S[1, __0] < S[2, __0]), 
-   ~~> lt_to_leq ([("Minion", 8400)])
-(S[1, __0] <= sum([S[2, __0],-1;int(1..)]))
-
---
-
-(S[1, __0] <= sum([S[2, __0],-1;int(1..)])), 
-   ~~> select_repr_mta ([("ReprMatrixToAtom", 8001)])
-(S[1, __0] <= sum([S[2, __0],-1;int(1..)]))
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
+(S[1, __0] < S[2, __0])
 
 updated variables:
   find __0: int(1..n) ~~> find __0: int(1..3)
+
+--
+
+(S[1, __0] < S[2, __0]), 
+   ~~> lt_to_leq ([("Minion", 8400)])
+(S[1, __0] <= sum([S[2, __0],-1;int(1..)]))
 
 --
 

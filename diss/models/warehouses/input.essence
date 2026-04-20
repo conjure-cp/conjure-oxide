@@ -1,0 +1,66 @@
+language Essence 1.4
+
+$ Inventory management: track stock levels across warehouses and time periods.
+$ Each period has a record of deliveries and sales; tuples encode (quantity, product).
+
+given n_products : int
+given n_warehouses : int
+given n_periods : int
+given max_stock : int
+given max_move : int
+
+letting Event be domain record {
+    delivery: int(0..max_move),
+    sales:    int(0..max_move),
+    transfer: tuple(int(0..max_move), int(1..n_warehouses))  $ (qty, destination)
+}
+
+$ stock[w, p, t] = stock of product p at warehouse w at start of period t
+find stock: matrix indexed by [int(1..n_warehouses), int(1..n_products), int(1..n_periods)] of int(0..max_stock)
+
+$ events[w, p, t] = what happens to product p at warehouse w in period t
+find events: matrix indexed by [int(1..n_warehouses), int(1..n_products), int(1..n_periods)] of Event
+
+such that
+    $ Stock balance: next period's stock = current + delivery - sales - transfer out
+    forAll w: int(1..n_warehouses) .
+        forAll p: int(1..n_products) .
+            forAll t: int(1..n_periods-1) .
+                stock[w, p, t+1] = stock[w, p, t]
+                    + events[w, p, t][delivery]
+                    - events[w, p, t][sales]
+                    - events[w, p, t][transfer][1],
+
+    $ Can't sell or transfer more than you have
+    forAll w: int(1..n_warehouses) .
+        forAll p: int(1..n_products) .
+            forAll t: int(1..n_periods) .
+                events[w, p, t][sales] + events[w, p, t][transfer][1] <= stock[w, p, t],
+
+    $ Transfers don't go to self
+    forAll w: int(1..n_warehouses) .
+        forAll p: int(1..n_products) .
+            forAll t: int(1..n_periods) .
+                events[w, p, t][transfer][1] > 0 ->
+                    events[w, p, t][transfer][2] != w,
+
+    $ Total deliveries per period across all warehouses bounded
+    forAll t: int(1..n_periods) .
+        forAll p: int(1..n_products) .
+            (sum w: int(1..n_warehouses) . events[w, p, t][delivery]) <= max_move * 2,
+
+    $ Every warehouse must have stock > 0 for every product in every period
+    forAll w: int(1..n_warehouses) .
+        forAll p: int(1..n_products) .
+            forAll t: int(1..n_periods) .
+                stock[w, p, t] >= 1,
+
+    $ Symmetry breaking: initial stock identical across warehouses per product
+    forAll p: int(1..n_products) .
+        stock[1, p, 1] = stock[2, p, 1],
+    forAll p: int(1..n_products) .
+        stock[2, p, 1] = stock[3, p, 1],
+
+    $ Products ordered by initial stock at warehouse 1
+    forAll p: int(1..n_products-1) .
+        stock[1, p, 1] <= stock[1, p+1, 1]

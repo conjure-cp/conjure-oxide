@@ -1,62 +1,34 @@
 use crate::guard;
+use crate::representation::tuple_packed::TuplePacked;
 use crate::utils::as_comparison_op;
-// use conjure_cp::ast::Literal;
 use conjure_cp::ast::{Domain, DomainPtr, HasDomain, UnresolvedDomain};
-use conjure_cp::settings::SolverFamily;
 use conjure_cp::{
-    ast::{Atom, Expression as Expr, GroundDomain, Metadata, Moo, Reference, SymbolTable},
-    representation::get_repr_rules,
+    ast::{Atom, Expression as Expr, GroundDomain, SymbolTable},
+    representation::{ReprRule, get_repr_rules},
     rule_engine::{
         ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
         register_rule_set,
     },
+    settings::{SatEncoding, SolverFamily},
 };
 use itertools::any;
 use std::collections::VecDeque;
 use uniplate::Biplate;
 
+/// Representations that should not be auto-selected by `select_representation`.
+/// These are managed by their own dedicated rule sets.
+const SKIP_AUTO_SELECT: &[&str] = &[TuplePacked::NAME];
+
 // Representations of Essence abstract types down to Essence'
 // Applies for all solvers
-register_rule_set!("ReprGeneral", ("Base"));
-
-// #[register_rule(("SAT_Direct", 10000))]
-// fn integer_literal_to_reference(expr: &Expr, st: &SymbolTable) -> ApplicationResult {
-//     println!("fuckin huh");
-//     guard!(
-//         let Expr::Atomic(_, Atom::Literal(conjure_cp::ast::Literal::Int(i))) = expr
-//         else {
-//             return Err(RuleNotApplicable)
-//         }
-//     );
-
-//     let mut symbols = st.clone();
-
-//     // Create a singleton domain for this integer value
-//     let domain: DomainPtr = Domain::Ground(Moo::new(GroundDomain::Int(
-//         vec![conjure_cp::ast::Range::Bounded(0, 10)]
-//     ))).into();
-
-//     // Create a new auxiliary variable with this domain
-//     let aux_decl = symbols.gensym(&domain);
-//     let reference = Reference::new(aux_decl);
-
-//     // Wrap the literal in an AuxDeclaration, returning a reference to it
-//     let new_expr = Expr::AuxDeclaration(
-//         Metadata::new(),
-//         reference,
-//         Moo::new(expr.clone()),
-//     );
-
-//     Ok(Reduction::new(new_expr, vec![], symbols))
-// }
+register_rule_set!("ReprGeneral", ("Base"), |_| true);
 
 /// Select a representation for abstract domains
-/// This gets called greedily, but will pass the type checks once per decision variable.
-#[register_rule(("ReprGeneral", 8000))]
+#[register_rule(("ReprGeneral", 8100))]
 fn select_representation(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     guard!(
         let Expr::Atomic(_, Atom::Reference(re)) = expr &&
-        domain_needs_representation(&re.domain_of(), SolverFamily::Sat(conjure_cp::settings::SatEncoding::Direct))    &&
+        domain_needs_representation(&re.domain_of(), SolverFamily::Sat(SatEncoding::Direct))    &&
         re.repr.is_none()
         else {
             return Err(RuleNotApplicable)
@@ -65,18 +37,64 @@ fn select_representation(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
     let mut re = re.clone();
     for rule in get_repr_rules() {
-        eprint!("trying rule: {} | ", rule.name());
+        // Skip representations that are managed by their own rule sets
+        if SKIP_AUTO_SELECT.contains(&rule.name()) {
+            continue;
+        }
         // Once we find an applicable representation, exit
         let Ok((_, new_symbols, new_constraints)) = re.select_or_init_repr_via(rule) else {
-            eprintln!("failed");
             continue;
         };
-        eprintln!("select representation application on {}", re);
         return Ok(Reduction::new(re.into(), new_constraints, new_symbols));
     }
 
     // None of the representations worked
     Err(RuleNotApplicable)
+}
+
+/// Select a representation for unconstrained finds with abstract domains
+#[register_rule(("ReprGeneral", 8000))]
+fn select_representation_unconstrained(expr: &Expr, symtab: &SymbolTable) -> ApplicationResult {
+    let Expr::Root(..) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let mut symbols = symtab.clone();
+    let mut constraints = Vec::<Expr>::new();
+    for (_, decl) in symtab.iter_local() {
+        // We want unrepresented decision vars!
+        guard!(
+            decl.as_find().is_some()          &&
+            decl.reprs().is_empty()           &&
+            let Some(dom) = decl.domain()     &&
+            domain_needs_representation(&dom, SolverFamily::Sat(SatEncoding::Direct))
+            else {
+                continue;
+            }
+        );
+
+        for rule in get_repr_rules() {
+            // Skip representations that are managed by their own rule sets
+            if SKIP_AUTO_SELECT.contains(&rule.name()) {
+                continue;
+            }
+            let mut decl = decl.clone();
+
+            // Once we find an applicable representation, exit
+            let Ok((new_symbols, new_constraints)) = rule.init_for(&mut decl) else {
+                continue;
+            };
+            symbols.update_insert(decl);
+            symbols.extend(new_symbols);
+            constraints.extend(new_constraints);
+        }
+    }
+
+    if symbols.eq(symtab) && constraints.is_empty() {
+        Err(RuleNotApplicable)
+    } else {
+        Ok(Reduction::new(expr.clone(), constraints, symbols))
+    }
 }
 
 /// In a comparison operation, it is probably a good idea for the LHS and RHS to

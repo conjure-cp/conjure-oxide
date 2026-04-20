@@ -177,6 +177,10 @@ pub struct GlobalArgs {
     /// Output file for conjure-oxide's json logs
     #[arg(long, value_name = "JSON LOGFILE", global = true, help_heading = LOGGING_HELP_HEADING)]
     pub logfile_json: Option<PathBuf>,
+
+    /// Print timing statistics (rewrite, solver, solution translation) to stderr.
+    #[arg(long, default_value_t = false, global = true, help_heading = LOGGING_HELP_HEADING)]
+    pub stats: bool,
 }
 
 #[derive(Debug, Clone, Args)]

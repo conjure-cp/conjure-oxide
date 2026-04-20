@@ -544,7 +544,7 @@ fn parse_atomic_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Var, S
             }
 
             Err(ModelInvalid(format!(
-                "expected atomic expression, got {expr:?}"
+                "expected atomic expression, got:\n{expr}\n\nAST:\n {expr:#?}"
             )))
         }
     }

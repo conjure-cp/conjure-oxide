@@ -1,0 +1,36 @@
+language Essence 1.4
+
+$ Tuple containing two matrices and a bool flag.
+$ Tests: tuple indexing, row/column slice of a matrix inside a tuple,
+$        sum of a slice, lex on slices.
+
+letting Mat2x4 be domain matrix indexed by [int(1..2), int(1..4)] of int(1..8)
+letting Vec3   be domain matrix indexed by [int(1..3)] of int(1..8)
+
+find t: tuple(Mat2x4, Vec3, bool)
+
+such that
+    $ allDiff within each row
+    allDiff(t[1][1, ..]),
+    allDiff(t[1][2, ..]),
+
+    $ Row 1 is lexicographically smaller than row 2
+    t[1][1, ..] <lex t[1][2, ..],
+
+    $ allDiff on first and last columns
+    allDiff(t[1][.., 1]),
+    allDiff(t[1][.., 4]),
+
+    $ Vector is strictly increasing
+    t[2][1] < t[2][2],
+    t[2][2] < t[2][3],
+
+    $ Matrix corners are pinned to vector endpoints
+    t[1][1, 1] = t[2][1],
+    t[1][2, 4] = t[2][3],
+
+    $ If flag: both row sums are equal
+    t[3] -> sum(t[1][1, ..]) = sum(t[1][2, ..]),
+
+    $ If flag: inner 2x2 block is symmetric
+    t[3] -> t[1][1, 2] + t[1][1, 3] = t[1][2, 2] + t[1][2, 3]

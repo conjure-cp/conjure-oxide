@@ -281,6 +281,13 @@ impl<A: Num + Ord + Clone> Range<A> {
         Some(hi)
     }
 
+    /// Total number of values across a slice of ranges.
+    /// Returns `None` if any range is unbounded.
+    pub fn total_length(rngs: &[Range<A>]) -> Option<A> {
+        rngs.iter()
+            .try_fold(A::zero(), |acc, r| Some(acc + r.length()?))
+    }
+
     /// If this range is bounded, returns a lazy iterator over all values within the range.
     /// Otherwise, returns None.
     pub fn iter(&self) -> Option<RangeIterator<A>> {

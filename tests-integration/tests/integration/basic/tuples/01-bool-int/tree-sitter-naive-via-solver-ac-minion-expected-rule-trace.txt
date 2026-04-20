@@ -9,6 +9,21 @@ such that
 
 --
 
+x, 
+   ~~> select_representation ([("ReprGeneral", 8100)])
+x
+new variables:
+  find x#TupleToAtom_1: bool
+  find x#TupleToAtom_2: int(1..4)
+
+--
+
+x, 
+   ~~> select_representation ([("ReprGeneral", 8100)])
+x
+
+--
+
 x[1], 
    ~~> tuple_index_to_bubble ([("Bubble", 8000)])
 {x[1] @ and([(1 >= 1),(1 <= 2);int(1..)])}
@@ -20,15 +35,6 @@ x[1],
    ~~> constant_evaluator ([("Constant", 9001)])
 (x[1] = false),
 (x[2] = 2)
-
---
-
-x, 
-   ~~> select_representation ([("ReprGeneral", 8000)])
-x
-new variables:
-  find x#TupleToAtom_1: bool
-  find x#TupleToAtom_2: int(1..4)
 
 --
 
@@ -46,27 +52,17 @@ x[2],
 
 --
 
-x, 
-   ~~> select_representation ([("ReprGeneral", 8000)])
-x
-
---
-
-x[1], 
-   ~~> tuple_to_atom_index_lit ([("ReprGeneral", 2000)])
-x#TupleToAtom_1
+(x[1] = false),
+(x[2] = 2), 
+   ~~> tuple_to_atom_index_lit ([("ReprGeneral", 5000)])
+(x#TupleToAtom_1 = false),
+(x#TupleToAtom_2 = 2)
 
 --
 
 (x#TupleToAtom_1 = false), 
    ~~> bool_eq_to_reify ([("Minion", 4400)])
 Reify(false, x#TupleToAtom_1)
-
---
-
-x[2], 
-   ~~> tuple_to_atom_index_lit ([("ReprGeneral", 2000)])
-x#TupleToAtom_2
 
 --
 

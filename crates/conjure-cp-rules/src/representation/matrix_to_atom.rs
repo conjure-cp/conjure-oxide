@@ -1,10 +1,10 @@
 use super::prelude::*;
 use crate::representation::prelude::matrix::{flatten, unflatten_matrix};
+use conjure_cp::ast::matrix::shape_of_dom;
 use conjure_cp::ast::{GroundDomain, Moo, Range, Reference};
 use conjure_cp::representation::ReprInitError;
-use conjure_cp::utils::{BiMap, View};
+use conjure_cp::utils::{BiMap, MatrixShape, View};
 use itertools::Itertools;
-use std::collections::VecDeque;
 use thiserror::Error;
 
 #[derive(Debug, Clone, Error)]
@@ -78,6 +78,16 @@ register_representation!(
         {
             self.view(view).into_iter().cloned().collect()
         }
+        /// Flatten the first n dimensions (inclusive)
+        pub fn flatten(&self, n: usize) -> View {
+            let new_strides = Vec::from(&self.strides[n..]);
+
+            let mut new_dims = Vec::<usize>::with_capacity(self.dimensions.len() - n);
+            new_dims.push(self.dimensions[0..n + 1].iter().copied().product());
+            new_dims.extend(&self.dimensions[n + 1..]);
+
+            View::new(0, new_dims, new_strides)
+        }
         /// Slice into the elements matrix via flat indices along each dimension
         pub fn slice_flat(&self, dim_slices: &[Range<usize>]) -> View {
             let mut offset = 0;
@@ -112,46 +122,37 @@ register_representation!(
         pub fn flat_elem_refs(&self) -> impl Iterator<Item=Reference> + '_ {
             self.elements.iter().cloned().map(Reference::new)
         }
+        /// Get elements selected by a [`View`] as reference expressions.
+        pub fn view_as_exprs(&self, view: &View) -> Vec<Expression> {
+            self.view_cloned(view)
+                .into_iter()
+                .map(|decl| Expression::from(Reference::new(decl)))
+                .collect()
+        }
     }
     fn init(dom: DomainPtr) -> Result<State<DomainPtr>, ReprInitError> {
-        println!("JKASHDKASJDHKSJDHKSDJ MATRIX TO ATOM");
         let domain_err = |msg: &str| ReprInitError::UnsupportedDomain(dom.clone(), MatrixToAtom::NAME, String::from(msg));
 
-        let Some((inner_gd, index_gds)) = dom.as_matrix_ground() else {
-            return Err(domain_err("expected ground matrix"));
+        let dom_gd = dom.resolve().ok().ok_or(domain_err("expected a ground domain"))?;
+        let GroundDomain::Matrix(elem_dom, _) = dom_gd.as_ref() else {
+            return Err(domain_err("expected a matrix domain"));
         };
+        let MatrixShape { size, dims, strides, idx_doms } = shape_of_dom(dom_gd.as_ref()).ok().ok_or(domain_err("expected a matrix domain"))?;
 
-        let len = index_gds.len();
-        let mut index_domains = VecDeque::with_capacity(len);
-        let mut strides = VecDeque::with_capacity(len);
-        let mut indices = VecDeque::with_capacity(len);
-        let mut dimensions = VecDeque::with_capacity(len);
-
-        let mut size: usize = 1;
-        for gd in index_gds.iter().rev() {
-            let gd_sz = gd.len_usize().ok().ok_or(domain_err("domain too large"))?;
-            let gd_vals = gd.values().ok().ok_or(domain_err("domain not enumerable"))?;
-            let gd_idx = BiMap::from_iter(gd_vals.enumerate());
-
-            index_domains.push_front(gd.clone());
-            strides.push_front(size);
-            indices.push_front(gd_idx);
-            dimensions.push_front(gd_sz);
-
-            size = size.checked_mul(gd_sz).ok_or(domain_err("total size of the matrix is too large"))?;
+        let mut indices = Vec::with_capacity(dims.len());
+        for dom in idx_doms.iter() {
+            let vals = dom.values().map_err(|e| domain_err(&format!("could not enumerate index domain: {e}")))?;
+            indices.push(BiMap::from_iter(vals.enumerate()))
         }
 
-        let mut elements = Vec::new();
-        for _ in 0..size {
-            elements.push(inner_gd.clone().into());
-        }
+        let elements = vec![DomainPtr::from(elem_dom.clone()); size];
 
         Ok(State {
             elements: Moo::new(elements),
-            indices: Moo::new(indices.into()),
-            index_domains: index_domains.into(),
-            strides: strides.into(),
-            dimensions: dimensions.into(),
+            indices: Moo::new(indices),
+            index_domains: idx_doms,
+            dimensions: dims,
+            strides
         })
     }
     fn structural(_state: &State<DeclarationPtr>) -> Vec<Expression> {

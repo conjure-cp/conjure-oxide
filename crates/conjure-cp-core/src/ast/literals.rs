@@ -154,8 +154,25 @@ impl AbstractLiteral<Expression> {
                 }
                 Some(Domain::matrix(item_domain, new_index_domain))
             }
-            AbstractLiteral::Tuple(_) => None,
-            AbstractLiteral::Record(_) => None,
+            AbstractLiteral::Tuple(items) => {
+                let item_domains = items
+                    .iter()
+                    .map(|x| x.domain_of())
+                    .collect::<Option<Vec<DomainPtr>>>()?;
+                Some(Domain::tuple(item_domains))
+            }
+            AbstractLiteral::Record(fields) => {
+                let field_doms = fields
+                    .iter()
+                    .map(|f| {
+                        f.value.domain_of().map(|d| RecordValue {
+                            name: f.name.clone(),
+                            value: d,
+                        })
+                    })
+                    .collect::<Option<Vec<RecordValue<_>>>>()?;
+                Some(Domain::record(field_doms))
+            }
             AbstractLiteral::Function(_) => None,
         }
     }
@@ -207,13 +224,21 @@ impl Typeable for AbstractLiteral<Expression> {
                 ReturnType::Matrix(Box::new(ReturnType::Unknown))
             }
             AbstractLiteral::Matrix(items, _) => {
-                let item_type = items[0].return_type();
-
                 // if any items do not have a type, return none.
-                let item_types: Vec<ReturnType> = items.iter().map(|x| x.return_type()).collect();
+                let Some(item_types) = items
+                    .iter()
+                    .map(|x| match x.return_type() {
+                        ReturnType::Unknown => None,
+                        x => Some(x),
+                    })
+                    .collect::<Option<Vec<_>>>()
+                else {
+                    return ReturnType::Unknown;
+                };
+                let item_type = &item_types[0];
 
                 assert!(
-                    item_types.iter().all(|x| x == &item_type),
+                    item_types.iter().all(|x| x == item_type),
                     "all items in a matrix should have the same type. items: {items} types: {types:#?}",
                     items = pretty_vec(items),
                     types = items
@@ -222,7 +247,7 @@ impl Typeable for AbstractLiteral<Expression> {
                         .collect::<Vec<ReturnType>>()
                 );
 
-                ReturnType::Matrix(Box::new(item_type))
+                ReturnType::Matrix(Box::new(item_type.clone()))
             }
             AbstractLiteral::Tuple(items) => {
                 let mut item_types = vec![];
@@ -703,10 +728,11 @@ impl Display for Literal {
 
 #[cfg(test)]
 mod tests {
-
     use super::*;
     use crate::ast::matrix::flatten;
-    use crate::{domain_int, domain_int_ground, into_matrix, matrix, matrix_lit};
+    use crate::ast::matrix::partial_flatten;
+    use crate::{domain_int_ground, into_matrix, matrix, matrix_lit};
+    use conjure_cp_core::ast::matrix::shape_of;
     use uniplate::Uniplate;
 
     #[test]
@@ -734,16 +760,22 @@ mod tests {
 
     #[test]
     fn matrix_flatten() {
-        let tensor = matrix_lit![
-            [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]],
-            [[13, 14, 15, 16], [17, 18, 19, 20], [21, 22, 23, 24]]
+        let tensor: AbstractLiteral<Literal> = matrix![
+            [
+                // batch 1
+                [1, 2, 3, 4],
+                [5, 6, 7, 8],
+                [9, 10, 11, 12]
+            ],
+            [
+                // batch 2
+                [13, 14, 15, 16],
+                [17, 18, 19, 20],
+                [21, 22, 23, 24]
+            ]
         ];
 
-        let Literal::AbstractLiteral(abslit) = tensor else {
-            panic!("expected abstract literal")
-        };
-        let actual_elems: Vec<Literal> = flatten(&abslit).cloned().collect();
-
+        let actual_elems: Vec<Literal> = flatten(&tensor).cloned().collect();
         let expected_elems = (1..25).map(Literal::from).collect::<Vec<_>>();
         assert_eq!(actual_elems, expected_elems);
     }
@@ -776,5 +808,72 @@ mod tests {
         assert_eq!(idx_doms.len(), 2);
         assert_eq!(&idx_doms[0], &domain_int_ground!(1..2));
         assert_eq!(&idx_doms[1], &domain_int_ground!(1..4));
+    }
+
+    #[test]
+    fn matrix_shape_3d() {
+        let tensor: AbstractLiteral<Literal> = matrix![
+            [
+                [1, 2, 3, 4],
+                [5, 6, 7, 8],
+                [9, 10, 11, 12]
+            ],
+            [
+                [13, 14, 15, 16],
+                [17, 18, 19, 20],
+                [21, 22, 23, 24]
+            ];
+            [
+                domain_int_ground!(1..2),
+                domain_int_ground!(1..3),
+                domain_int_ground!(1..4)
+            ]
+        ];
+        let shape = shape_of(&tensor);
+
+        assert_eq!(shape.size, 24);
+        assert_eq!(shape.dims, vec![2, 3, 4]);
+        assert_eq!(shape.strides, vec![12, 4, 1]);
+        assert_eq!(
+            shape.idx_doms,
+            vec![
+                domain_int_ground!(1..2),
+                domain_int_ground!(1..3),
+                domain_int_ground!(1..4)
+            ]
+        );
+    }
+
+    #[test]
+    fn matrix_partial_flatten() {
+        let tensor: AbstractLiteral<Literal> = matrix![
+            [
+                // batch 1
+                [1, 2, 3, 4],
+                [5, 6, 7, 8],
+                [9, 10, 11, 12]
+            ],
+            [
+                // batch 2
+                [13, 14, 15, 16],
+                [17, 18, 19, 20],
+                [21, 22, 23, 24]
+            ]
+        ];
+        assert_eq!(partial_flatten(0, tensor.clone()), tensor);
+
+        let expected_flatten_1: AbstractLiteral<Literal> = matrix![
+            [1, 2, 3, 4],
+            [5, 6, 7, 8],
+            [9, 10, 11, 12],
+            [13, 14, 15, 16],
+            [17, 18, 19, 20],
+            [21, 22, 23, 24]
+        ];
+        assert_eq!(partial_flatten(1, tensor.clone()), expected_flatten_1);
+
+        let expected_flatten_2 =
+            AbstractLiteral::matrix_implied_indices((1..25).map(Literal::from).collect());
+        assert_eq!(partial_flatten(2, tensor), expected_flatten_2);
     }
 }

@@ -2,8 +2,8 @@
 use super::prelude::*;
 use crate::utils::lit_to_bool;
 use conjure_cp::ast::{Domain, Range, Reference, domains::Int};
+use std::collections::BTreeMap;
 use std::collections::VecDeque;
-use std::collections::{BTreeMap, HashMap};
 use std::hash::Hash;
 
 register_representation!(

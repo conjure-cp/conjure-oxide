@@ -18,7 +18,7 @@ allDiff(q1),
 allDiff(q2),
 allDiff(q3),
 and([ and([(q2[i] = (q1[i] - i)),(q3[i] = sum([q1[i],i;int(1..2)]));int(1..2)]) | i : AMOUNT_QUEENS ]), 
-   ~~> select_repr_mta ([("ReprMatrixToAtom", 8001)])
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
 allDiff(q1),
 allDiff(q2),
 allDiff(q3),
@@ -56,6 +56,42 @@ updated variables:
 
 --
 
+allDiff(q1), 
+   ~~> matrix_ref_to_atom ([("ReprMatrixToAtom", 2000)])
+allDiff([q1#MatrixToAtom_1,q1#MatrixToAtom_2,q1#MatrixToAtom_3,q1#MatrixToAtom_4,q1#MatrixToAtom_5,q1#MatrixToAtom_6,q1#MatrixToAtom_7,q1#MatrixToAtom_8;int(1..)])
+
+--
+
+allDiff([q1#MatrixToAtom_1,q1#MatrixToAtom_2,q1#MatrixToAtom_3,q1#MatrixToAtom_4,q1#MatrixToAtom_5,q1#MatrixToAtom_6,q1#MatrixToAtom_7,q1#MatrixToAtom_8;int(1..)]), 
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8])
+
+--
+
+allDiff(q2), 
+   ~~> matrix_ref_to_atom ([("ReprMatrixToAtom", 2000)])
+allDiff([q2#MatrixToAtom_1,q2#MatrixToAtom_2,q2#MatrixToAtom_3,q2#MatrixToAtom_4,q2#MatrixToAtom_5,q2#MatrixToAtom_6,q2#MatrixToAtom_7,q2#MatrixToAtom_8;int(1..)])
+
+--
+
+allDiff([q2#MatrixToAtom_1,q2#MatrixToAtom_2,q2#MatrixToAtom_3,q2#MatrixToAtom_4,q2#MatrixToAtom_5,q2#MatrixToAtom_6,q2#MatrixToAtom_7,q2#MatrixToAtom_8;int(1..)]), 
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8])
+
+--
+
+allDiff(q3), 
+   ~~> matrix_ref_to_atom ([("ReprMatrixToAtom", 2000)])
+allDiff([q3#MatrixToAtom_1,q3#MatrixToAtom_2,q3#MatrixToAtom_3,q3#MatrixToAtom_4,q3#MatrixToAtom_5,q3#MatrixToAtom_6,q3#MatrixToAtom_7,q3#MatrixToAtom_8;int(1..)])
+
+--
+
+allDiff([q3#MatrixToAtom_1,q3#MatrixToAtom_2,q3#MatrixToAtom_3,q3#MatrixToAtom_4,q3#MatrixToAtom_5,q3#MatrixToAtom_6,q3#MatrixToAtom_7,q3#MatrixToAtom_8;int(1..)]), 
+   ~~> introduce_flat_alldiff ([("Minion", 4200)])
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8])
+
+--
+
 Model before rewriting:
 
 find i: AMOUNT_QUEENS
@@ -69,15 +105,9 @@ such that
 
 --
 
-(__1[i] - i), 
-   ~~> minus_to_sum ([("Base", 8400)])
-sum([__1[i],-(i);int(1..)])
-
---
-
-(true != and([(__0[i] = sum([__1[i],-(i);int(1..)])),(__2[i] = sum([__1[i],i;int(1..2)]));int(1..2)])), 
-   ~~> select_repr_mta ([("ReprMatrixToAtom", 8001)])
-(true != and([(__0[i] = sum([__1[i],-(i);int(1..)])),(__2[i] = sum([__1[i],i;int(1..2)]));int(1..2)]))
+(true != and([(__0[i] = (__1[i] - i)),(__2[i] = sum([__1[i],i;int(1..2)]));int(1..2)])), 
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
+(true != and([(__0[i] = (__1[i] - i)),(__2[i] = sum([__1[i],i;int(1..2)]));int(1..2)]))
 new variables:
   find __0#MatrixToAtom_1: int(-7..7)
   find __0#MatrixToAtom_2: int(-7..7)
@@ -106,6 +136,12 @@ new variables:
 
 updated variables:
   find i: AMOUNT_QUEENS ~~> find i: int(0..7)
+
+--
+
+(__1[i] - i), 
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([__1[i],-(i);int(1..)])
 
 --
 
@@ -695,19 +731,45 @@ SumGeq([1, i], __12),
 __minion_element_one([__1#MatrixToAtom_1,__1#MatrixToAtom_2,__1#MatrixToAtom_3,__1#MatrixToAtom_4,__1#MatrixToAtom_5,__1#MatrixToAtom_6,__1#MatrixToAtom_7,__1#MatrixToAtom_8],__12,__13)
 
 and([ and([(q2[i] = (q1[i] - i)),(q3[i] = sum([q1[i],i;int(1..2)]));int(1..2)]) | i : AMOUNT_QUEENS ]), 
-   ~~> expand_comprehension_via_solver_ac ([("Base", 2002)])
+   ~~> expand_comprehension_via_solver_ac ([("Base", 1500)])
 and([and([(q2[0] = (q1[0] - 0)),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),and([(q2[1] = (q1[1] - 1)),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),and([(q2[2] = (q1[2] - 2)),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),and([(q2[3] = (q1[3] - 3)),(q3[3] = sum([q1[3],3;int(1..2)]));int(1..2)]),and([(q2[4] = (q1[4] - 4)),(q3[4] = sum([q1[4],4;int(1..2)]));int(1..2)]),and([(q2[5] = (q1[5] - 5)),(q3[5] = sum([q1[5],5;int(1..2)]));int(1..2)]),and([(q2[6] = (q1[6] - 6)),(q3[6] = sum([q1[6],6;int(1..2)]));int(1..2)]),and([(q2[7] = (q1[7] - 7)),(q3[7] = sum([q1[7],7;int(1..2)]));int(1..2)]);int(1..)])
 
 --
 
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([and([(q2[0] = (q1[0] - 0)),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),and([(q2[1] = (q1[1] - 1)),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),and([(q2[2] = (q1[2] - 2)),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),and([(q2[3] = (q1[3] - 3)),(q3[3] = sum([q1[3],3;int(1..2)]));int(1..2)]),and([(q2[4] = (q1[4] - 4)),(q3[4] = sum([q1[4],4;int(1..2)]));int(1..2)]),and([(q2[5] = (q1[5] - 5)),(q3[5] = sum([q1[5],5;int(1..2)]));int(1..2)]),and([(q2[6] = (q1[6] - 6)),(q3[6] = sum([q1[6],6;int(1..2)]));int(1..2)]),and([(q2[7] = (q1[7] - 7)),(q3[7] = sum([q1[7],7;int(1..2)]));int(1..2)]);int(1..)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
+and([(q2[0] = (q1[0] - 0)),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
+and([(q2[1] = (q1[1] - 1)),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
+and([(q2[2] = (q1[2] - 2)),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
+and([(q2[3] = (q1[3] - 3)),(q3[3] = sum([q1[3],3;int(1..2)]));int(1..2)]),
+and([(q2[4] = (q1[4] - 4)),(q3[4] = sum([q1[4],4;int(1..2)]));int(1..2)]),
+and([(q2[5] = (q1[5] - 5)),(q3[5] = sum([q1[5],5;int(1..2)]));int(1..2)]),
+and([(q2[6] = (q1[6] - 6)),(q3[6] = sum([q1[6],6;int(1..2)]));int(1..2)]),
+and([(q2[7] = (q1[7] - 7)),(q3[7] = sum([q1[7],7;int(1..2)]));int(1..2)])
+
+--
+
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
+and([(q2[0] = (q1[0] - 0)),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
+and([(q2[1] = (q1[1] - 1)),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
+and([(q2[2] = (q1[2] - 2)),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
+and([(q2[3] = (q1[3] - 3)),(q3[3] = sum([q1[3],3;int(1..2)]));int(1..2)]),
+and([(q2[4] = (q1[4] - 4)),(q3[4] = sum([q1[4],4;int(1..2)]));int(1..2)]),
+and([(q2[5] = (q1[5] - 5)),(q3[5] = sum([q1[5],5;int(1..2)]));int(1..2)]),
+and([(q2[6] = (q1[6] - 6)),(q3[6] = sum([q1[6],6;int(1..2)]));int(1..2)]),
+and([(q2[7] = (q1[7] - 7)),(q3[7] = sum([q1[7],7;int(1..2)]));int(1..2)]), 
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = (q1[0] - 0)),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = (q1[1] - 1)),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = (q1[2] - 2)),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -725,9 +787,9 @@ sum([q1[0],-(0);int(1..)])
 
 --
 
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],-(0);int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = (q1[1] - 1)),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = (q1[2] - 2)),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -737,9 +799,9 @@ and([(q2[5] = (q1[5] - 5)),(q3[5] = sum([q1[5],5;int(1..2)]));int(1..2)]),
 and([(q2[6] = (q1[6] - 6)),(q3[6] = sum([q1[6],6;int(1..2)]));int(1..2)]),
 and([(q2[7] = (q1[7] - 7)),(q3[7] = sum([q1[7],7;int(1..2)]));int(1..2)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = (q1[1] - 1)),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = (q1[2] - 2)),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -757,9 +819,9 @@ sum([q1[1],-(1);int(1..)])
 
 --
 
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-(1);int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = (q1[2] - 2)),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -769,9 +831,9 @@ and([(q2[5] = (q1[5] - 5)),(q3[5] = sum([q1[5],5;int(1..2)]));int(1..2)]),
 and([(q2[6] = (q1[6] - 6)),(q3[6] = sum([q1[6],6;int(1..2)]));int(1..2)]),
 and([(q2[7] = (q1[7] - 7)),(q3[7] = sum([q1[7],7;int(1..2)]));int(1..2)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = (q1[2] - 2)),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -789,9 +851,9 @@ sum([q1[2],-(2);int(1..)])
 
 --
 
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-(2);int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -801,9 +863,9 @@ and([(q2[5] = (q1[5] - 5)),(q3[5] = sum([q1[5],5;int(1..2)]));int(1..2)]),
 and([(q2[6] = (q1[6] - 6)),(q3[6] = sum([q1[6],6;int(1..2)]));int(1..2)]),
 and([(q2[7] = (q1[7] - 7)),(q3[7] = sum([q1[7],7;int(1..2)]));int(1..2)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -821,9 +883,9 @@ sum([q1[3],-(3);int(1..)])
 
 --
 
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -833,9 +895,9 @@ and([(q2[5] = (q1[5] - 5)),(q3[5] = sum([q1[5],5;int(1..2)]));int(1..2)]),
 and([(q2[6] = (q1[6] - 6)),(q3[6] = sum([q1[6],6;int(1..2)]));int(1..2)]),
 and([(q2[7] = (q1[7] - 7)),(q3[7] = sum([q1[7],7;int(1..2)]));int(1..2)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -853,9 +915,9 @@ sum([q1[4],-(4);int(1..)])
 
 --
 
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -865,9 +927,9 @@ and([(q2[5] = (q1[5] - 5)),(q3[5] = sum([q1[5],5;int(1..2)]));int(1..2)]),
 and([(q2[6] = (q1[6] - 6)),(q3[6] = sum([q1[6],6;int(1..2)]));int(1..2)]),
 and([(q2[7] = (q1[7] - 7)),(q3[7] = sum([q1[7],7;int(1..2)]));int(1..2)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -885,9 +947,9 @@ sum([q1[5],-(5);int(1..)])
 
 --
 
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -897,9 +959,9 @@ and([(q2[5] = sum([q1[5],-(5);int(1..)])),(q3[5] = sum([q1[5],5;int(1..2)]));int
 and([(q2[6] = (q1[6] - 6)),(q3[6] = sum([q1[6],6;int(1..2)]));int(1..2)]),
 and([(q2[7] = (q1[7] - 7)),(q3[7] = sum([q1[7],7;int(1..2)]));int(1..2)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -917,9 +979,9 @@ sum([q1[6],-(6);int(1..)])
 
 --
 
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -929,9 +991,9 @@ and([(q2[5] = sum([q1[5],-5;int(1..)])),(q3[5] = sum([q1[5],5;int(1..2)]));int(1
 and([(q2[6] = sum([q1[6],-(6);int(1..)])),(q3[6] = sum([q1[6],6;int(1..2)]));int(1..2)]),
 and([(q2[7] = (q1[7] - 7)),(q3[7] = sum([q1[7],7;int(1..2)]));int(1..2)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -949,9 +1011,9 @@ sum([q1[7],-(7);int(1..)])
 
 --
 
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -961,35 +1023,9 @@ and([(q2[5] = sum([q1[5],-5;int(1..)])),(q3[5] = sum([q1[5],5;int(1..2)]));int(1
 and([(q2[6] = sum([q1[6],-6;int(1..)])),(q3[6] = sum([q1[6],6;int(1..2)]));int(1..2)]),
 and([(q2[7] = sum([q1[7],-(7);int(1..)])),(q3[7] = sum([q1[7],7;int(1..2)]));int(1..2)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
-and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
-and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
-and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
-and([(q2[3] = sum([q1[3],-3;int(1..)])),(q3[3] = sum([q1[3],3;int(1..2)]));int(1..2)]),
-and([(q2[4] = sum([q1[4],-4;int(1..)])),(q3[4] = sum([q1[4],4;int(1..2)]));int(1..2)]),
-and([(q2[5] = sum([q1[5],-5;int(1..)])),(q3[5] = sum([q1[5],5;int(1..2)]));int(1..2)]),
-and([(q2[6] = sum([q1[6],-6;int(1..)])),(q3[6] = sum([q1[6],6;int(1..2)]));int(1..2)]),
-and([(q2[7] = sum([q1[7],-7;int(1..)])),(q3[7] = sum([q1[7],7;int(1..2)]));int(1..2)])
-
---
-
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
-and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
-and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
-and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
-and([(q2[3] = sum([q1[3],-3;int(1..)])),(q3[3] = sum([q1[3],3;int(1..2)]));int(1..2)]),
-and([(q2[4] = sum([q1[4],-4;int(1..)])),(q3[4] = sum([q1[4],4;int(1..2)]));int(1..2)]),
-and([(q2[5] = sum([q1[5],-5;int(1..)])),(q3[5] = sum([q1[5],5;int(1..2)]));int(1..2)]),
-and([(q2[6] = sum([q1[6],-6;int(1..)])),(q3[6] = sum([q1[6],6;int(1..2)]));int(1..2)]),
-and([(q2[7] = sum([q1[7],-7;int(1..)])),(q3[7] = sum([q1[7],7;int(1..2)]));int(1..2)]), 
-   ~~> select_repr_mta ([("ReprMatrixToAtom", 8001)])
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1007,9 +1043,9 @@ q2[0],
 
 --
 
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([({q2[0] @ and([__inDomain(0,int(0..7));int(1..)])} = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1019,9 +1055,9 @@ and([(q2[5] = sum([q1[5],-5;int(1..)])),(q3[5] = sum([q1[5],5;int(1..2)]));int(1
 and([(q2[6] = sum([q1[6],-6;int(1..)])),(q3[6] = sum([q1[6],6;int(1..2)]));int(1..2)]),
 and([(q2[7] = sum([q1[7],-7;int(1..)])),(q3[7] = sum([q1[7],7;int(1..2)]));int(1..2)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1039,9 +1075,9 @@ q1[0],
 
 --
 
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([{q1[0] @ and([__inDomain(0,int(0..7));int(1..)])},0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1051,9 +1087,9 @@ and([(q2[5] = sum([q1[5],-5;int(1..)])),(q3[5] = sum([q1[5],5;int(1..2)]));int(1
 and([(q2[6] = sum([q1[6],-6;int(1..)])),(q3[6] = sum([q1[6],6;int(1..2)]));int(1..2)]),
 and([(q2[7] = sum([q1[7],-7;int(1..)])),(q3[7] = sum([q1[7],7;int(1..2)]));int(1..2)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1071,9 +1107,9 @@ q3[0],
 
 --
 
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),({q3[0] @ and([__inDomain(0,int(0..7));int(1..)])} = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1083,9 +1119,9 @@ and([(q2[5] = sum([q1[5],-5;int(1..)])),(q3[5] = sum([q1[5],5;int(1..2)]));int(1
 and([(q2[6] = sum([q1[6],-6;int(1..)])),(q3[6] = sum([q1[6],6;int(1..2)]));int(1..2)]),
 and([(q2[7] = sum([q1[7],-7;int(1..)])),(q3[7] = sum([q1[7],7;int(1..2)]));int(1..2)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1103,9 +1139,9 @@ q1[0],
 
 --
 
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([{q1[0] @ and([__inDomain(0,int(0..7));int(1..)])},0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1115,9 +1151,9 @@ and([(q2[5] = sum([q1[5],-5;int(1..)])),(q3[5] = sum([q1[5],5;int(1..2)]));int(1
 and([(q2[6] = sum([q1[6],-6;int(1..)])),(q3[6] = sum([q1[6],6;int(1..2)]));int(1..2)]),
 and([(q2[7] = sum([q1[7],-7;int(1..)])),(q3[7] = sum([q1[7],7;int(1..2)]));int(1..2)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1135,9 +1171,9 @@ q2[1],
 
 --
 
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([({q2[1] @ and([__inDomain(1,int(0..7));int(1..)])} = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1147,9 +1183,9 @@ and([(q2[5] = sum([q1[5],-5;int(1..)])),(q3[5] = sum([q1[5],5;int(1..2)]));int(1
 and([(q2[6] = sum([q1[6],-6;int(1..)])),(q3[6] = sum([q1[6],6;int(1..2)]));int(1..2)]),
 and([(q2[7] = sum([q1[7],-7;int(1..)])),(q3[7] = sum([q1[7],7;int(1..2)]));int(1..2)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1167,9 +1203,9 @@ q1[1],
 
 --
 
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([{q1[1] @ and([__inDomain(1,int(0..7));int(1..)])},-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1179,9 +1215,9 @@ and([(q2[5] = sum([q1[5],-5;int(1..)])),(q3[5] = sum([q1[5],5;int(1..2)]));int(1
 and([(q2[6] = sum([q1[6],-6;int(1..)])),(q3[6] = sum([q1[6],6;int(1..2)]));int(1..2)]),
 and([(q2[7] = sum([q1[7],-7;int(1..)])),(q3[7] = sum([q1[7],7;int(1..2)]));int(1..2)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1199,9 +1235,9 @@ q3[1],
 
 --
 
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),({q3[1] @ and([__inDomain(1,int(0..7));int(1..)])} = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1211,9 +1247,9 @@ and([(q2[5] = sum([q1[5],-5;int(1..)])),(q3[5] = sum([q1[5],5;int(1..2)]));int(1
 and([(q2[6] = sum([q1[6],-6;int(1..)])),(q3[6] = sum([q1[6],6;int(1..2)]));int(1..2)]),
 and([(q2[7] = sum([q1[7],-7;int(1..)])),(q3[7] = sum([q1[7],7;int(1..2)]));int(1..2)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1231,9 +1267,9 @@ q1[1],
 
 --
 
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([{q1[1] @ and([__inDomain(1,int(0..7));int(1..)])},1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1243,9 +1279,9 @@ and([(q2[5] = sum([q1[5],-5;int(1..)])),(q3[5] = sum([q1[5],5;int(1..2)]));int(1
 and([(q2[6] = sum([q1[6],-6;int(1..)])),(q3[6] = sum([q1[6],6;int(1..2)]));int(1..2)]),
 and([(q2[7] = sum([q1[7],-7;int(1..)])),(q3[7] = sum([q1[7],7;int(1..2)]));int(1..2)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1263,9 +1299,9 @@ q2[2],
 
 --
 
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([({q2[2] @ and([__inDomain(2,int(0..7));int(1..)])} = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1275,9 +1311,9 @@ and([(q2[5] = sum([q1[5],-5;int(1..)])),(q3[5] = sum([q1[5],5;int(1..2)]));int(1
 and([(q2[6] = sum([q1[6],-6;int(1..)])),(q3[6] = sum([q1[6],6;int(1..2)]));int(1..2)]),
 and([(q2[7] = sum([q1[7],-7;int(1..)])),(q3[7] = sum([q1[7],7;int(1..2)]));int(1..2)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1295,9 +1331,9 @@ q1[2],
 
 --
 
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([{q1[2] @ and([__inDomain(2,int(0..7));int(1..)])},-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1307,9 +1343,9 @@ and([(q2[5] = sum([q1[5],-5;int(1..)])),(q3[5] = sum([q1[5],5;int(1..2)]));int(1
 and([(q2[6] = sum([q1[6],-6;int(1..)])),(q3[6] = sum([q1[6],6;int(1..2)]));int(1..2)]),
 and([(q2[7] = sum([q1[7],-7;int(1..)])),(q3[7] = sum([q1[7],7;int(1..2)]));int(1..2)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1327,9 +1363,9 @@ q3[2],
 
 --
 
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),({q3[2] @ and([__inDomain(2,int(0..7));int(1..)])} = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1339,9 +1375,9 @@ and([(q2[5] = sum([q1[5],-5;int(1..)])),(q3[5] = sum([q1[5],5;int(1..2)]));int(1
 and([(q2[6] = sum([q1[6],-6;int(1..)])),(q3[6] = sum([q1[6],6;int(1..2)]));int(1..2)]),
 and([(q2[7] = sum([q1[7],-7;int(1..)])),(q3[7] = sum([q1[7],7;int(1..2)]));int(1..2)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1359,9 +1395,9 @@ q1[2],
 
 --
 
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([{q1[2] @ and([__inDomain(2,int(0..7));int(1..)])},2;int(1..2)]));int(1..2)]),
@@ -1371,9 +1407,9 @@ and([(q2[5] = sum([q1[5],-5;int(1..)])),(q3[5] = sum([q1[5],5;int(1..2)]));int(1
 and([(q2[6] = sum([q1[6],-6;int(1..)])),(q3[6] = sum([q1[6],6;int(1..2)]));int(1..2)]),
 and([(q2[7] = sum([q1[7],-7;int(1..)])),(q3[7] = sum([q1[7],7;int(1..2)]));int(1..2)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1391,9 +1427,9 @@ q2[3],
 
 --
 
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1403,9 +1439,9 @@ and([(q2[5] = sum([q1[5],-5;int(1..)])),(q3[5] = sum([q1[5],5;int(1..2)]));int(1
 and([(q2[6] = sum([q1[6],-6;int(1..)])),(q3[6] = sum([q1[6],6;int(1..2)]));int(1..2)]),
 and([(q2[7] = sum([q1[7],-7;int(1..)])),(q3[7] = sum([q1[7],7;int(1..2)]));int(1..2)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1423,9 +1459,9 @@ q1[3],
 
 --
 
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1435,9 +1471,9 @@ and([(q2[5] = sum([q1[5],-5;int(1..)])),(q3[5] = sum([q1[5],5;int(1..2)]));int(1
 and([(q2[6] = sum([q1[6],-6;int(1..)])),(q3[6] = sum([q1[6],6;int(1..2)]));int(1..2)]),
 and([(q2[7] = sum([q1[7],-7;int(1..)])),(q3[7] = sum([q1[7],7;int(1..2)]));int(1..2)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1455,9 +1491,9 @@ q3[3],
 
 --
 
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1467,9 +1503,9 @@ and([(q2[5] = sum([q1[5],-5;int(1..)])),(q3[5] = sum([q1[5],5;int(1..2)]));int(1
 and([(q2[6] = sum([q1[6],-6;int(1..)])),(q3[6] = sum([q1[6],6;int(1..2)]));int(1..2)]),
 and([(q2[7] = sum([q1[7],-7;int(1..)])),(q3[7] = sum([q1[7],7;int(1..2)]));int(1..2)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1487,9 +1523,9 @@ q1[3],
 
 --
 
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1499,9 +1535,9 @@ and([(q2[5] = sum([q1[5],-5;int(1..)])),(q3[5] = sum([q1[5],5;int(1..2)]));int(1
 and([(q2[6] = sum([q1[6],-6;int(1..)])),(q3[6] = sum([q1[6],6;int(1..2)]));int(1..2)]),
 and([(q2[7] = sum([q1[7],-7;int(1..)])),(q3[7] = sum([q1[7],7;int(1..2)]));int(1..2)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1519,9 +1555,9 @@ q2[4],
 
 --
 
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1531,9 +1567,9 @@ and([(q2[5] = sum([q1[5],-5;int(1..)])),(q3[5] = sum([q1[5],5;int(1..2)]));int(1
 and([(q2[6] = sum([q1[6],-6;int(1..)])),(q3[6] = sum([q1[6],6;int(1..2)]));int(1..2)]),
 and([(q2[7] = sum([q1[7],-7;int(1..)])),(q3[7] = sum([q1[7],7;int(1..2)]));int(1..2)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1551,9 +1587,9 @@ q1[4],
 
 --
 
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1563,9 +1599,9 @@ and([(q2[5] = sum([q1[5],-5;int(1..)])),(q3[5] = sum([q1[5],5;int(1..2)]));int(1
 and([(q2[6] = sum([q1[6],-6;int(1..)])),(q3[6] = sum([q1[6],6;int(1..2)]));int(1..2)]),
 and([(q2[7] = sum([q1[7],-7;int(1..)])),(q3[7] = sum([q1[7],7;int(1..2)]));int(1..2)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1583,9 +1619,9 @@ q3[4],
 
 --
 
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1595,9 +1631,9 @@ and([(q2[5] = sum([q1[5],-5;int(1..)])),(q3[5] = sum([q1[5],5;int(1..2)]));int(1
 and([(q2[6] = sum([q1[6],-6;int(1..)])),(q3[6] = sum([q1[6],6;int(1..2)]));int(1..2)]),
 and([(q2[7] = sum([q1[7],-7;int(1..)])),(q3[7] = sum([q1[7],7;int(1..2)]));int(1..2)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1615,9 +1651,9 @@ q1[4],
 
 --
 
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1627,9 +1663,9 @@ and([(q2[5] = sum([q1[5],-5;int(1..)])),(q3[5] = sum([q1[5],5;int(1..2)]));int(1
 and([(q2[6] = sum([q1[6],-6;int(1..)])),(q3[6] = sum([q1[6],6;int(1..2)]));int(1..2)]),
 and([(q2[7] = sum([q1[7],-7;int(1..)])),(q3[7] = sum([q1[7],7;int(1..2)]));int(1..2)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1647,9 +1683,9 @@ q2[5],
 
 --
 
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1659,9 +1695,9 @@ and([({q2[5] @ and([__inDomain(5,int(0..7));int(1..)])} = sum([q1[5],-5;int(1..)
 and([(q2[6] = sum([q1[6],-6;int(1..)])),(q3[6] = sum([q1[6],6;int(1..2)]));int(1..2)]),
 and([(q2[7] = sum([q1[7],-7;int(1..)])),(q3[7] = sum([q1[7],7;int(1..2)]));int(1..2)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1679,9 +1715,9 @@ q1[5],
 
 --
 
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1691,9 +1727,9 @@ and([(q2[5] = sum([{q1[5] @ and([__inDomain(5,int(0..7));int(1..)])},-5;int(1..)
 and([(q2[6] = sum([q1[6],-6;int(1..)])),(q3[6] = sum([q1[6],6;int(1..2)]));int(1..2)]),
 and([(q2[7] = sum([q1[7],-7;int(1..)])),(q3[7] = sum([q1[7],7;int(1..2)]));int(1..2)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1711,9 +1747,9 @@ q3[5],
 
 --
 
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1723,9 +1759,9 @@ and([(q2[5] = sum([q1[5],-5;int(1..)])),({q3[5] @ and([__inDomain(5,int(0..7));i
 and([(q2[6] = sum([q1[6],-6;int(1..)])),(q3[6] = sum([q1[6],6;int(1..2)]));int(1..2)]),
 and([(q2[7] = sum([q1[7],-7;int(1..)])),(q3[7] = sum([q1[7],7;int(1..2)]));int(1..2)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1743,9 +1779,9 @@ q1[5],
 
 --
 
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1755,9 +1791,9 @@ and([(q2[5] = sum([q1[5],-5;int(1..)])),(q3[5] = sum([{q1[5] @ and([__inDomain(5
 and([(q2[6] = sum([q1[6],-6;int(1..)])),(q3[6] = sum([q1[6],6;int(1..2)]));int(1..2)]),
 and([(q2[7] = sum([q1[7],-7;int(1..)])),(q3[7] = sum([q1[7],7;int(1..2)]));int(1..2)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1775,9 +1811,9 @@ q2[6],
 
 --
 
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1787,9 +1823,9 @@ and([(q2[5] = sum([q1[5],-5;int(1..)])),(q3[5] = sum([q1[5],5;int(1..2)]));int(1
 and([({q2[6] @ and([__inDomain(6,int(0..7));int(1..)])} = sum([q1[6],-6;int(1..)])),(q3[6] = sum([q1[6],6;int(1..2)]));int(1..2)]),
 and([(q2[7] = sum([q1[7],-7;int(1..)])),(q3[7] = sum([q1[7],7;int(1..2)]));int(1..2)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1807,9 +1843,9 @@ q1[6],
 
 --
 
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1819,9 +1855,9 @@ and([(q2[5] = sum([q1[5],-5;int(1..)])),(q3[5] = sum([q1[5],5;int(1..2)]));int(1
 and([(q2[6] = sum([{q1[6] @ and([__inDomain(6,int(0..7));int(1..)])},-6;int(1..)])),(q3[6] = sum([q1[6],6;int(1..2)]));int(1..2)]),
 and([(q2[7] = sum([q1[7],-7;int(1..)])),(q3[7] = sum([q1[7],7;int(1..2)]));int(1..2)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1839,9 +1875,9 @@ q3[6],
 
 --
 
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1851,9 +1887,9 @@ and([(q2[5] = sum([q1[5],-5;int(1..)])),(q3[5] = sum([q1[5],5;int(1..2)]));int(1
 and([(q2[6] = sum([q1[6],-6;int(1..)])),({q3[6] @ and([__inDomain(6,int(0..7));int(1..)])} = sum([q1[6],6;int(1..2)]));int(1..2)]),
 and([(q2[7] = sum([q1[7],-7;int(1..)])),(q3[7] = sum([q1[7],7;int(1..2)]));int(1..2)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1871,9 +1907,9 @@ q1[6],
 
 --
 
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1883,9 +1919,9 @@ and([(q2[5] = sum([q1[5],-5;int(1..)])),(q3[5] = sum([q1[5],5;int(1..2)]));int(1
 and([(q2[6] = sum([q1[6],-6;int(1..)])),(q3[6] = sum([{q1[6] @ and([__inDomain(6,int(0..7));int(1..)])},6;int(1..2)]));int(1..2)]),
 and([(q2[7] = sum([q1[7],-7;int(1..)])),(q3[7] = sum([q1[7],7;int(1..2)]));int(1..2)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1903,9 +1939,9 @@ q2[7],
 
 --
 
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1915,9 +1951,9 @@ and([(q2[5] = sum([q1[5],-5;int(1..)])),(q3[5] = sum([q1[5],5;int(1..2)]));int(1
 and([(q2[6] = sum([q1[6],-6;int(1..)])),(q3[6] = sum([q1[6],6;int(1..2)]));int(1..2)]),
 and([({q2[7] @ and([__inDomain(7,int(0..7));int(1..)])} = sum([q1[7],-7;int(1..)])),(q3[7] = sum([q1[7],7;int(1..2)]));int(1..2)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1935,9 +1971,9 @@ q1[7],
 
 --
 
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1947,9 +1983,9 @@ and([(q2[5] = sum([q1[5],-5;int(1..)])),(q3[5] = sum([q1[5],5;int(1..2)]));int(1
 and([(q2[6] = sum([q1[6],-6;int(1..)])),(q3[6] = sum([q1[6],6;int(1..2)]));int(1..2)]),
 and([(q2[7] = sum([{q1[7] @ and([__inDomain(7,int(0..7));int(1..)])},-7;int(1..)])),(q3[7] = sum([q1[7],7;int(1..2)]));int(1..2)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1967,9 +2003,9 @@ q3[7],
 
 --
 
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1979,9 +2015,9 @@ and([(q2[5] = sum([q1[5],-5;int(1..)])),(q3[5] = sum([q1[5],5;int(1..2)]));int(1
 and([(q2[6] = sum([q1[6],-6;int(1..)])),(q3[6] = sum([q1[6],6;int(1..2)]));int(1..2)]),
 and([(q2[7] = sum([q1[7],-7;int(1..)])),({q3[7] @ and([__inDomain(7,int(0..7));int(1..)])} = sum([q1[7],7;int(1..2)]));int(1..2)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -1999,9 +2035,9 @@ q1[7],
 
 --
 
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -2011,9 +2047,9 @@ and([(q2[5] = sum([q1[5],-5;int(1..)])),(q3[5] = sum([q1[5],5;int(1..2)]));int(1
 and([(q2[6] = sum([q1[6],-6;int(1..)])),(q3[6] = sum([q1[6],6;int(1..2)]));int(1..2)]),
 and([(q2[7] = sum([q1[7],-7;int(1..)])),(q3[7] = sum([{q1[7] @ and([__inDomain(7,int(0..7));int(1..)])},7;int(1..2)]));int(1..2)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -2025,9 +2061,9 @@ and([(q2[7] = sum([q1[7],-7;int(1..)])),(q3[7] = sum([q1[7],7;int(1..2)]));int(1
 
 --
 
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2[0] = sum([q1[0],0;int(1..)])),(q3[0] = sum([q1[0],0;int(1..2)]));int(1..2)]),
 and([(q2[1] = sum([q1[1],-1;int(1..)])),(q3[1] = sum([q1[1],1;int(1..2)]));int(1..2)]),
 and([(q2[2] = sum([q1[2],-2;int(1..)])),(q3[2] = sum([q1[2],2;int(1..2)]));int(1..2)]),
@@ -2037,9 +2073,9 @@ and([(q2[5] = sum([q1[5],-5;int(1..)])),(q3[5] = sum([q1[5],5;int(1..2)]));int(1
 and([(q2[6] = sum([q1[6],-6;int(1..)])),(q3[6] = sum([q1[6],6;int(1..2)]));int(1..2)]),
 and([(q2[7] = sum([q1[7],-7;int(1..)])),(q3[7] = sum([q1[7],7;int(1..2)]));int(1..2)]), 
    ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
-allDiff(q1),
-allDiff(q2),
-allDiff(q3),
+__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8]),
+__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8]),
+__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8]),
 and([(q2#MatrixToAtom_1 = sum([q1#MatrixToAtom_1,0;int(1..)])),(q3#MatrixToAtom_1 = sum([q1#MatrixToAtom_1,0;int(1..2)]));int(1..2)]),
 and([(q2#MatrixToAtom_2 = sum([q1#MatrixToAtom_2,-1;int(1..)])),(q3#MatrixToAtom_2 = sum([q1#MatrixToAtom_2,1;int(1..2)]));int(1..2)]),
 and([(q2#MatrixToAtom_3 = sum([q1#MatrixToAtom_3,-2;int(1..)])),(q3#MatrixToAtom_3 = sum([q1#MatrixToAtom_3,2;int(1..2)]));int(1..2)]),
@@ -2144,42 +2180,6 @@ and([SumLeq([-7, q1#MatrixToAtom_8], q2#MatrixToAtom_8),SumGeq([-7, q1#MatrixToA
 and([and([SumLeq([-7, q1#MatrixToAtom_8], q2#MatrixToAtom_8),SumGeq([-7, q1#MatrixToAtom_8], q2#MatrixToAtom_8);int(1..)]),(q3#MatrixToAtom_8 = sum([q1#MatrixToAtom_8,7;int(1..2)]));int(1..2)]), 
    ~~> normalise_associative_commutative ([("Base", 8900)])
 and([SumLeq([-7, q1#MatrixToAtom_8], q2#MatrixToAtom_8),SumGeq([-7, q1#MatrixToAtom_8], q2#MatrixToAtom_8),(q3#MatrixToAtom_8 = sum([q1#MatrixToAtom_8,7;int(1..2)]));int(1..2)])
-
---
-
-allDiff(q1), 
-   ~~> matrix_ref_to_atom ([("ReprMatrixToAtom", 2000)])
-allDiff([q1#MatrixToAtom_1,q1#MatrixToAtom_2,q1#MatrixToAtom_3,q1#MatrixToAtom_4,q1#MatrixToAtom_5,q1#MatrixToAtom_6,q1#MatrixToAtom_7,q1#MatrixToAtom_8;int(1..)])
-
---
-
-allDiff([q1#MatrixToAtom_1,q1#MatrixToAtom_2,q1#MatrixToAtom_3,q1#MatrixToAtom_4,q1#MatrixToAtom_5,q1#MatrixToAtom_6,q1#MatrixToAtom_7,q1#MatrixToAtom_8;int(1..)]), 
-   ~~> introduce_flat_alldiff ([("Minion", 4200)])
-__flat_alldiff([q1#MatrixToAtom_1, q1#MatrixToAtom_2, q1#MatrixToAtom_3, q1#MatrixToAtom_4, q1#MatrixToAtom_5, q1#MatrixToAtom_6, q1#MatrixToAtom_7, q1#MatrixToAtom_8])
-
---
-
-allDiff(q2), 
-   ~~> matrix_ref_to_atom ([("ReprMatrixToAtom", 2000)])
-allDiff([q2#MatrixToAtom_1,q2#MatrixToAtom_2,q2#MatrixToAtom_3,q2#MatrixToAtom_4,q2#MatrixToAtom_5,q2#MatrixToAtom_6,q2#MatrixToAtom_7,q2#MatrixToAtom_8;int(1..)])
-
---
-
-allDiff([q2#MatrixToAtom_1,q2#MatrixToAtom_2,q2#MatrixToAtom_3,q2#MatrixToAtom_4,q2#MatrixToAtom_5,q2#MatrixToAtom_6,q2#MatrixToAtom_7,q2#MatrixToAtom_8;int(1..)]), 
-   ~~> introduce_flat_alldiff ([("Minion", 4200)])
-__flat_alldiff([q2#MatrixToAtom_1, q2#MatrixToAtom_2, q2#MatrixToAtom_3, q2#MatrixToAtom_4, q2#MatrixToAtom_5, q2#MatrixToAtom_6, q2#MatrixToAtom_7, q2#MatrixToAtom_8])
-
---
-
-allDiff(q3), 
-   ~~> matrix_ref_to_atom ([("ReprMatrixToAtom", 2000)])
-allDiff([q3#MatrixToAtom_1,q3#MatrixToAtom_2,q3#MatrixToAtom_3,q3#MatrixToAtom_4,q3#MatrixToAtom_5,q3#MatrixToAtom_6,q3#MatrixToAtom_7,q3#MatrixToAtom_8;int(1..)])
-
---
-
-allDiff([q3#MatrixToAtom_1,q3#MatrixToAtom_2,q3#MatrixToAtom_3,q3#MatrixToAtom_4,q3#MatrixToAtom_5,q3#MatrixToAtom_6,q3#MatrixToAtom_7,q3#MatrixToAtom_8;int(1..)]), 
-   ~~> introduce_flat_alldiff ([("Minion", 4200)])
-__flat_alldiff([q3#MatrixToAtom_1, q3#MatrixToAtom_2, q3#MatrixToAtom_3, q3#MatrixToAtom_4, q3#MatrixToAtom_5, q3#MatrixToAtom_6, q3#MatrixToAtom_7, q3#MatrixToAtom_8])
 
 --
 

@@ -172,7 +172,10 @@ where
     where
         S: Serializer,
     {
-        self.inner.serialize(serializer)
+        // Serialize as a list of pairs rather than as a map, so that non-string
+        // key types (e.g. usize) work with JSON serializers.
+        let entries: Vec<(&L, &R)> = self.inner.iter().collect();
+        entries.serialize(serializer)
     }
 }
 
@@ -185,8 +188,10 @@ where
     where
         D: Deserializer<'de>,
     {
-        let inner = BiHashMap::deserialize(deserializer)?;
-        Ok(Self { inner })
+        let entries: Vec<(L, R)> = Vec::deserialize(deserializer)?;
+        Ok(Self {
+            inner: entries.into_iter().collect(),
+        })
     }
 }
 

@@ -1,0 +1,815 @@
+Model before rewriting:
+
+find x: matrix indexed by [int(1..3), int(1..3)] of int(1..2)
+
+such that
+
+(x[1,..] >=lex [1,2,2;int(1..3)]),
+and([ and([(x[i,..] <lex x[sum([i,1;int(1..)]),..]),(x[..,i] >lex x[..,sum([i,1;int(1..)])]);int(1..)]) | i : int(1..2) ])
+
+--
+
+(x[1,..] >=lex [1,2,2;int(1..3)]),
+and([ and([(x[i,..] <lex x[sum([i,1;int(1..)]),..]),(x[..,i] >lex x[..,sum([i,1;int(1..)])]);int(1..)]) | i : int(1..2) ]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(x[1,..] >=lex [1,2,2;int(1..3)]),
+and([ and([(x[i,..] <lex x[sum([i,1;int(1..)]),..]),(x[..,i] >lex x[..,sum([i,1;int(1..)])]);int(1..)]) | i : int(1..2) ])
+
+--
+
+(x[1,..] >=lex [1,2,2;int(1..3)]), 
+   ~~> normalise_lex_gt_geq ([("Base", 9000)])
+([1,2,2;int(1..3)] <=lex x[1,..])
+
+--
+
+([1,2,2;int(1..3)] <=lex x[1,..]),
+and([ and([(x[i,..] <lex x[sum([i,1;int(1..)]),..]),(x[..,i] >lex x[..,sum([i,1;int(1..)])]);int(1..)]) | i : int(1..2) ]), 
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
+([1,2,2;int(1..3)] <=lex x[1,..]),
+and([ and([(x[i,..] <lex x[sum([i,1;int(1..)]),..]),(x[..,i] >lex x[..,sum([i,1;int(1..)])]);int(1..)]) | i : int(1..2) ])
+new variables:
+  find x#MatrixToAtom_1: int(1..2)
+  find x#MatrixToAtom_2: int(1..2)
+  find x#MatrixToAtom_3: int(1..2)
+  find x#MatrixToAtom_4: int(1..2)
+  find x#MatrixToAtom_5: int(1..2)
+  find x#MatrixToAtom_6: int(1..2)
+  find x#MatrixToAtom_7: int(1..2)
+  find x#MatrixToAtom_8: int(1..2)
+  find x#MatrixToAtom_9: int(1..2)
+
+--
+
+x[1,..], 
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+{x[1,..] @ and([__inDomain(1,int(1..3));int(1..)])}
+
+--
+
+([1,2,2;int(1..3)] <=lex {x[1,..] @ and([__inDomain(1,int(1..3));int(1..)])}),
+and([ and([(x[i,..] <lex x[sum([i,1;int(1..)]),..]),(x[..,i] >lex x[..,sum([i,1;int(1..)])]);int(1..)]) | i : int(1..2) ]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+([1,2,2;int(1..3)] <=lex x[1,..]),
+and([ and([(x[i,..] <lex x[sum([i,1;int(1..)]),..]),(x[..,i] >lex x[..,sum([i,1;int(1..)])]);int(1..)]) | i : int(1..2) ])
+
+--
+
+x[1,..], 
+   ~~> slice_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)]
+
+--
+
+([1,2,2;int(1..3)] <=lex [x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)]), 
+   ~~> matrix_cmp_matrix ([("Base", 2000)])
+FlatLexLeq([1, 2, 2], [x#MatrixToAtom_1, x#MatrixToAtom_2, x#MatrixToAtom_3])
+
+--
+
+Model before rewriting:
+
+find i: int(1..2)
+find __0: matrix indexed by [int(1..3), int(1..3)] of int(1..2)
+
+such that
+
+(true != and([(__0[i,..] <lex __0[sum([i,1;int(1..)]),..]),(__0[..,i] >lex __0[..,sum([i,1;int(1..)])]);int(1..)]))
+
+--
+
+(__0[..,i] >lex __0[..,sum([i,1;int(1..)])]), 
+   ~~> normalise_lex_gt_geq ([("Base", 9000)])
+(__0[..,sum([i,1;int(1..)])] <lex __0[..,i])
+
+--
+
+(true != and([(__0[i,..] <lex __0[sum([i,1;int(1..)]),..]),(__0[..,sum([i,1;int(1..)])] <lex __0[..,i]);int(1..)])), 
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
+(true != and([(__0[i,..] <lex __0[sum([i,1;int(1..)]),..]),(__0[..,sum([i,1;int(1..)])] <lex __0[..,i]);int(1..)]))
+new variables:
+  find __0#MatrixToAtom_1: int(1..2)
+  find __0#MatrixToAtom_2: int(1..2)
+  find __0#MatrixToAtom_3: int(1..2)
+  find __0#MatrixToAtom_4: int(1..2)
+  find __0#MatrixToAtom_5: int(1..2)
+  find __0#MatrixToAtom_6: int(1..2)
+  find __0#MatrixToAtom_7: int(1..2)
+  find __0#MatrixToAtom_8: int(1..2)
+  find __0#MatrixToAtom_9: int(1..2)
+
+--
+
+__0[i,..], 
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+{__0[i,..] @ and([__inDomain(i,int(1..3));int(1..)])}
+
+--
+
+(true != and([({__0[i,..] @ and([__inDomain(i,int(1..3));int(1..)])} <lex __0[sum([i,1;int(1..)]),..]),(__0[..,sum([i,1;int(1..)])] <lex __0[..,i]);int(1..)])), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(true != and([(__0[i,..] <lex __0[sum([i,1;int(1..)]),..]),(__0[..,sum([i,1;int(1..)])] <lex __0[..,i]);int(1..)]))
+
+--
+
+__0[sum([i,1;int(1..)]),..], 
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+{__0[sum([i,1;int(1..)]),..] @ and([__inDomain(sum([i,1;int(1..)]),int(1..3));int(1..)])}
+
+--
+
+(__0[i,..] <lex {__0[sum([i,1;int(1..)]),..] @ and([__inDomain(sum([i,1;int(1..)]),int(1..3));int(1..)])}), 
+   ~~> bubble_up ([("Bubble", 8800)])
+{(__0[i,..] <lex __0[sum([i,1;int(1..)]),..]) @ and([__inDomain(sum([i,1;int(1..)]),int(1..3));int(1..)])}
+
+--
+
+{(__0[i,..] <lex __0[sum([i,1;int(1..)]),..]) @ and([__inDomain(sum([i,1;int(1..)]),int(1..3));int(1..)])}, 
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([(__0[i,..] <lex __0[sum([i,1;int(1..)]),..]),and([__inDomain(sum([i,1;int(1..)]),int(1..3));int(1..)]);int(1..)])
+
+--
+
+and([and([(__0[i,..] <lex __0[sum([i,1;int(1..)]),..]),and([__inDomain(sum([i,1;int(1..)]),int(1..3));int(1..)]);int(1..)]),(__0[..,sum([i,1;int(1..)])] <lex __0[..,i]);int(1..)]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([(__0[i,..] <lex __0[sum([i,1;int(1..)]),..]),__inDomain(sum([i,1;int(1..)]),int(1..3)),(__0[..,sum([i,1;int(1..)])] <lex __0[..,i]);int(1..)])
+
+--
+
+__0[..,sum([i,1;int(1..)])], 
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+{__0[..,sum([i,1;int(1..)])] @ and([__inDomain(sum([i,1;int(1..)]),int(1..3));int(1..)])}
+
+--
+
+({__0[..,sum([i,1;int(1..)])] @ and([__inDomain(sum([i,1;int(1..)]),int(1..3));int(1..)])} <lex __0[..,i]), 
+   ~~> bubble_up ([("Bubble", 8800)])
+{(__0[..,sum([i,1;int(1..)])] <lex __0[..,i]) @ and([__inDomain(sum([i,1;int(1..)]),int(1..3));int(1..)])}
+
+--
+
+{(__0[..,sum([i,1;int(1..)])] <lex __0[..,i]) @ and([__inDomain(sum([i,1;int(1..)]),int(1..3));int(1..)])}, 
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([(__0[..,sum([i,1;int(1..)])] <lex __0[..,i]),and([__inDomain(sum([i,1;int(1..)]),int(1..3));int(1..)]);int(1..)])
+
+--
+
+and([(__0[i,..] <lex __0[sum([i,1;int(1..)]),..]),__inDomain(sum([i,1;int(1..)]),int(1..3)),and([(__0[..,sum([i,1;int(1..)])] <lex __0[..,i]),and([__inDomain(sum([i,1;int(1..)]),int(1..3));int(1..)]);int(1..)]);int(1..)]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([(__0[i,..] <lex __0[sum([i,1;int(1..)]),..]),__inDomain(sum([i,1;int(1..)]),int(1..3)),(__0[..,sum([i,1;int(1..)])] <lex __0[..,i]),__inDomain(sum([i,1;int(1..)]),int(1..3));int(1..)])
+
+--
+
+__0[..,i], 
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+{__0[..,i] @ and([__inDomain(i,int(1..3));int(1..)])}
+
+--
+
+(true != and([(__0[i,..] <lex __0[sum([i,1;int(1..)]),..]),__inDomain(sum([i,1;int(1..)]),int(1..3)),(__0[..,sum([i,1;int(1..)])] <lex {__0[..,i] @ and([__inDomain(i,int(1..3));int(1..)])}),__inDomain(sum([i,1;int(1..)]),int(1..3));int(1..)])), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(true != and([(__0[i,..] <lex __0[sum([i,1;int(1..)]),..]),__inDomain(sum([i,1;int(1..)]),int(1..3)),(__0[..,sum([i,1;int(1..)])] <lex __0[..,i]),__inDomain(sum([i,1;int(1..)]),int(1..3));int(1..)]))
+
+--
+
+__0[i,..], 
+   ~~> slice_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+[[__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3;int(1..3)],[__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6;int(1..3)],[__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9;int(1..3)];int(1..3)][i]
+
+--
+
+__0[sum([i,1;int(1..)]),..], 
+   ~~> slice_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+[[__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3;int(1..3)],[__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6;int(1..3)],[__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9;int(1..3)];int(1..3)][sum([i,1;int(1..)])]
+
+--
+
+__0[..,sum([i,1;int(1..)])], 
+   ~~> slice_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+[[__0#MatrixToAtom_1,__0#MatrixToAtom_4,__0#MatrixToAtom_7;int(1..3)],[__0#MatrixToAtom_2,__0#MatrixToAtom_5,__0#MatrixToAtom_8;int(1..3)],[__0#MatrixToAtom_3,__0#MatrixToAtom_6,__0#MatrixToAtom_9;int(1..3)];int(1..3)][sum([i,1;int(1..)])]
+
+--
+
+__0[..,i], 
+   ~~> slice_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+[[__0#MatrixToAtom_1,__0#MatrixToAtom_4,__0#MatrixToAtom_7;int(1..3)],[__0#MatrixToAtom_2,__0#MatrixToAtom_5,__0#MatrixToAtom_8;int(1..3)],[__0#MatrixToAtom_3,__0#MatrixToAtom_6,__0#MatrixToAtom_9;int(1..3)];int(1..3)][i]
+
+--
+
+(true != and([([[__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3;int(1..3)],[__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6;int(1..3)],[__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9;int(1..3)];int(1..3)][i] <lex [[__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3;int(1..3)],[__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6;int(1..3)],[__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9;int(1..3)];int(1..3)][sum([i,1;int(1..)])]),__inDomain(sum([i,1;int(1..)]),int(1..3)),([[__0#MatrixToAtom_1,__0#MatrixToAtom_4,__0#MatrixToAtom_7;int(1..3)],[__0#MatrixToAtom_2,__0#MatrixToAtom_5,__0#MatrixToAtom_8;int(1..3)],[__0#MatrixToAtom_3,__0#MatrixToAtom_6,__0#MatrixToAtom_9;int(1..3)];int(1..3)][sum([i,1;int(1..)])] <lex [[__0#MatrixToAtom_1,__0#MatrixToAtom_4,__0#MatrixToAtom_7;int(1..3)],[__0#MatrixToAtom_2,__0#MatrixToAtom_5,__0#MatrixToAtom_8;int(1..3)],[__0#MatrixToAtom_3,__0#MatrixToAtom_6,__0#MatrixToAtom_9;int(1..3)];int(1..3)][i]),__inDomain(sum([i,1;int(1..)]),int(1..3));int(1..)])), 
+   ~~> flatten_generic ([("Minion", 4200)])
+(true != __1)
+new variables:
+  find __1: bool
+new constraints:
+  __1 =aux and([([[__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3;int(1..3)],[__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6;int(1..3)],[__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9;int(1..3)];int(1..3)][i] <lex [[__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3;int(1..3)],[__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6;int(1..3)],[__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9;int(1..3)];int(1..3)][sum([i,1;int(1..)])]),__inDomain(sum([i,1;int(1..)]),int(1..3)),([[__0#MatrixToAtom_1,__0#MatrixToAtom_4,__0#MatrixToAtom_7;int(1..3)],[__0#MatrixToAtom_2,__0#MatrixToAtom_5,__0#MatrixToAtom_8;int(1..3)],[__0#MatrixToAtom_3,__0#MatrixToAtom_6,__0#MatrixToAtom_9;int(1..3)];int(1..3)][sum([i,1;int(1..)])] <lex [[__0#MatrixToAtom_1,__0#MatrixToAtom_4,__0#MatrixToAtom_7;int(1..3)],[__0#MatrixToAtom_2,__0#MatrixToAtom_5,__0#MatrixToAtom_8;int(1..3)],[__0#MatrixToAtom_3,__0#MatrixToAtom_6,__0#MatrixToAtom_9;int(1..3)];int(1..3)][i]),__inDomain(sum([i,1;int(1..)]),int(1..3));int(1..)])
+
+--
+
+__1 =aux and([([[__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3;int(1..3)],[__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6;int(1..3)],[__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9;int(1..3)];int(1..3)][i] <lex [[__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3;int(1..3)],[__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6;int(1..3)],[__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9;int(1..3)];int(1..3)][sum([i,1;int(1..)])]),__inDomain(sum([i,1;int(1..)]),int(1..3)),([[__0#MatrixToAtom_1,__0#MatrixToAtom_4,__0#MatrixToAtom_7;int(1..3)],[__0#MatrixToAtom_2,__0#MatrixToAtom_5,__0#MatrixToAtom_8;int(1..3)],[__0#MatrixToAtom_3,__0#MatrixToAtom_6,__0#MatrixToAtom_9;int(1..3)];int(1..3)][sum([i,1;int(1..)])] <lex [[__0#MatrixToAtom_1,__0#MatrixToAtom_4,__0#MatrixToAtom_7;int(1..3)],[__0#MatrixToAtom_2,__0#MatrixToAtom_5,__0#MatrixToAtom_8;int(1..3)],[__0#MatrixToAtom_3,__0#MatrixToAtom_6,__0#MatrixToAtom_9;int(1..3)];int(1..3)][i]),__inDomain(sum([i,1;int(1..)]),int(1..3));int(1..)]), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([([[__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3;int(1..3)],[__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6;int(1..3)],[__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9;int(1..3)];int(1..3)][i] <lex [[__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3;int(1..3)],[__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6;int(1..3)],[__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9;int(1..3)];int(1..3)][sum([i,1;int(1..)])]),__inDomain(sum([i,1;int(1..)]),int(1..3)),([[__0#MatrixToAtom_1,__0#MatrixToAtom_4,__0#MatrixToAtom_7;int(1..3)],[__0#MatrixToAtom_2,__0#MatrixToAtom_5,__0#MatrixToAtom_8;int(1..3)],[__0#MatrixToAtom_3,__0#MatrixToAtom_6,__0#MatrixToAtom_9;int(1..3)];int(1..3)][sum([i,1;int(1..)])] <lex [[__0#MatrixToAtom_1,__0#MatrixToAtom_4,__0#MatrixToAtom_7;int(1..3)],[__0#MatrixToAtom_2,__0#MatrixToAtom_5,__0#MatrixToAtom_8;int(1..3)],[__0#MatrixToAtom_3,__0#MatrixToAtom_6,__0#MatrixToAtom_9;int(1..3)];int(1..3)][i]),__inDomain(sum([i,1;int(1..)]),int(1..3));int(1..)]), __1)
+
+--
+
+[[__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3;int(1..3)],[__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6;int(1..3)],[__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9;int(1..3)];int(1..3)][sum([i,1;int(1..)])], 
+   ~~> flatten_generic ([("Minion", 4200)])
+[[__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3;int(1..3)],[__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6;int(1..3)],[__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9;int(1..3)];int(1..3)][__2]
+new variables:
+  find __2: int(2..3)
+new constraints:
+  __2 =aux sum([i,1;int(1..)])
+
+--
+
+__2 =aux sum([i,1;int(1..)]), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, i], __2),SumGeq([1, i], __2);int(1..)])
+
+--
+
+(true != __1),
+Reify(and([([[__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3;int(1..3)],[__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6;int(1..3)],[__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9;int(1..3)];int(1..3)][i] <lex [[__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3;int(1..3)],[__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6;int(1..3)],[__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9;int(1..3)];int(1..3)][__2]),__inDomain(sum([i,1;int(1..)]),int(1..3)),([[__0#MatrixToAtom_1,__0#MatrixToAtom_4,__0#MatrixToAtom_7;int(1..3)],[__0#MatrixToAtom_2,__0#MatrixToAtom_5,__0#MatrixToAtom_8;int(1..3)],[__0#MatrixToAtom_3,__0#MatrixToAtom_6,__0#MatrixToAtom_9;int(1..3)];int(1..3)][sum([i,1;int(1..)])] <lex [[__0#MatrixToAtom_1,__0#MatrixToAtom_4,__0#MatrixToAtom_7;int(1..3)],[__0#MatrixToAtom_2,__0#MatrixToAtom_5,__0#MatrixToAtom_8;int(1..3)],[__0#MatrixToAtom_3,__0#MatrixToAtom_6,__0#MatrixToAtom_9;int(1..3)];int(1..3)][i]),__inDomain(sum([i,1;int(1..)]),int(1..3));int(1..)]), __1),
+and([SumLeq([1, i], __2),SumGeq([1, i], __2);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(true != __1),
+Reify(and([([[__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3;int(1..3)],[__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6;int(1..3)],[__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9;int(1..3)];int(1..3)][i] <lex [[__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3;int(1..3)],[__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6;int(1..3)],[__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9;int(1..3)];int(1..3)][__2]),__inDomain(sum([i,1;int(1..)]),int(1..3)),([[__0#MatrixToAtom_1,__0#MatrixToAtom_4,__0#MatrixToAtom_7;int(1..3)],[__0#MatrixToAtom_2,__0#MatrixToAtom_5,__0#MatrixToAtom_8;int(1..3)],[__0#MatrixToAtom_3,__0#MatrixToAtom_6,__0#MatrixToAtom_9;int(1..3)];int(1..3)][sum([i,1;int(1..)])] <lex [[__0#MatrixToAtom_1,__0#MatrixToAtom_4,__0#MatrixToAtom_7;int(1..3)],[__0#MatrixToAtom_2,__0#MatrixToAtom_5,__0#MatrixToAtom_8;int(1..3)],[__0#MatrixToAtom_3,__0#MatrixToAtom_6,__0#MatrixToAtom_9;int(1..3)];int(1..3)][i]),__inDomain(sum([i,1;int(1..)]),int(1..3));int(1..)]), __1),
+SumLeq([1, i], __2),
+SumGeq([1, i], __2)
+
+--
+
+__inDomain(sum([i,1;int(1..)]),int(1..3)), 
+   ~~> flatten_generic ([("Minion", 4200)])
+__inDomain(__3,int(1..3))
+new variables:
+  find __3: int(2..3)
+new constraints:
+  __3 =aux sum([i,1;int(1..)])
+
+--
+
+(true != __1),
+Reify(and([([[__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3;int(1..3)],[__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6;int(1..3)],[__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9;int(1..3)];int(1..3)][i] <lex [[__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3;int(1..3)],[__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6;int(1..3)],[__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9;int(1..3)];int(1..3)][__2]),__inDomain(__3,int(1..3)),([[__0#MatrixToAtom_1,__0#MatrixToAtom_4,__0#MatrixToAtom_7;int(1..3)],[__0#MatrixToAtom_2,__0#MatrixToAtom_5,__0#MatrixToAtom_8;int(1..3)],[__0#MatrixToAtom_3,__0#MatrixToAtom_6,__0#MatrixToAtom_9;int(1..3)];int(1..3)][sum([i,1;int(1..)])] <lex [[__0#MatrixToAtom_1,__0#MatrixToAtom_4,__0#MatrixToAtom_7;int(1..3)],[__0#MatrixToAtom_2,__0#MatrixToAtom_5,__0#MatrixToAtom_8;int(1..3)],[__0#MatrixToAtom_3,__0#MatrixToAtom_6,__0#MatrixToAtom_9;int(1..3)];int(1..3)][i]),__inDomain(sum([i,1;int(1..)]),int(1..3));int(1..)]), __1),
+SumLeq([1, i], __2),
+SumGeq([1, i], __2),
+__3 =aux sum([i,1;int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(true != __1),
+Reify(and([([[__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3;int(1..3)],[__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6;int(1..3)],[__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9;int(1..3)];int(1..3)][i] <lex [[__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3;int(1..3)],[__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6;int(1..3)],[__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9;int(1..3)];int(1..3)][__2]),([[__0#MatrixToAtom_1,__0#MatrixToAtom_4,__0#MatrixToAtom_7;int(1..3)],[__0#MatrixToAtom_2,__0#MatrixToAtom_5,__0#MatrixToAtom_8;int(1..3)],[__0#MatrixToAtom_3,__0#MatrixToAtom_6,__0#MatrixToAtom_9;int(1..3)];int(1..3)][sum([i,1;int(1..)])] <lex [[__0#MatrixToAtom_1,__0#MatrixToAtom_4,__0#MatrixToAtom_7;int(1..3)],[__0#MatrixToAtom_2,__0#MatrixToAtom_5,__0#MatrixToAtom_8;int(1..3)],[__0#MatrixToAtom_3,__0#MatrixToAtom_6,__0#MatrixToAtom_9;int(1..3)];int(1..3)][i]),__inDomain(sum([i,1;int(1..)]),int(1..3));int(1..)]), __1),
+SumLeq([1, i], __2),
+SumGeq([1, i], __2),
+__3 =aux sum([i,1;int(1..)])
+
+--
+
+__3 =aux sum([i,1;int(1..)]), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, i], __3),SumGeq([1, i], __3);int(1..)])
+
+--
+
+(true != __1),
+Reify(and([([[__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3;int(1..3)],[__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6;int(1..3)],[__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9;int(1..3)];int(1..3)][i] <lex [[__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3;int(1..3)],[__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6;int(1..3)],[__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9;int(1..3)];int(1..3)][__2]),([[__0#MatrixToAtom_1,__0#MatrixToAtom_4,__0#MatrixToAtom_7;int(1..3)],[__0#MatrixToAtom_2,__0#MatrixToAtom_5,__0#MatrixToAtom_8;int(1..3)],[__0#MatrixToAtom_3,__0#MatrixToAtom_6,__0#MatrixToAtom_9;int(1..3)];int(1..3)][sum([i,1;int(1..)])] <lex [[__0#MatrixToAtom_1,__0#MatrixToAtom_4,__0#MatrixToAtom_7;int(1..3)],[__0#MatrixToAtom_2,__0#MatrixToAtom_5,__0#MatrixToAtom_8;int(1..3)],[__0#MatrixToAtom_3,__0#MatrixToAtom_6,__0#MatrixToAtom_9;int(1..3)];int(1..3)][i]),__inDomain(sum([i,1;int(1..)]),int(1..3));int(1..)]), __1),
+SumLeq([1, i], __2),
+SumGeq([1, i], __2),
+and([SumLeq([1, i], __3),SumGeq([1, i], __3);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(true != __1),
+Reify(and([([[__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3;int(1..3)],[__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6;int(1..3)],[__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9;int(1..3)];int(1..3)][i] <lex [[__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3;int(1..3)],[__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6;int(1..3)],[__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9;int(1..3)];int(1..3)][__2]),([[__0#MatrixToAtom_1,__0#MatrixToAtom_4,__0#MatrixToAtom_7;int(1..3)],[__0#MatrixToAtom_2,__0#MatrixToAtom_5,__0#MatrixToAtom_8;int(1..3)],[__0#MatrixToAtom_3,__0#MatrixToAtom_6,__0#MatrixToAtom_9;int(1..3)];int(1..3)][sum([i,1;int(1..)])] <lex [[__0#MatrixToAtom_1,__0#MatrixToAtom_4,__0#MatrixToAtom_7;int(1..3)],[__0#MatrixToAtom_2,__0#MatrixToAtom_5,__0#MatrixToAtom_8;int(1..3)],[__0#MatrixToAtom_3,__0#MatrixToAtom_6,__0#MatrixToAtom_9;int(1..3)];int(1..3)][i]),__inDomain(sum([i,1;int(1..)]),int(1..3));int(1..)]), __1),
+SumLeq([1, i], __2),
+SumGeq([1, i], __2),
+SumLeq([1, i], __3),
+SumGeq([1, i], __3)
+
+--
+
+[[__0#MatrixToAtom_1,__0#MatrixToAtom_4,__0#MatrixToAtom_7;int(1..3)],[__0#MatrixToAtom_2,__0#MatrixToAtom_5,__0#MatrixToAtom_8;int(1..3)],[__0#MatrixToAtom_3,__0#MatrixToAtom_6,__0#MatrixToAtom_9;int(1..3)];int(1..3)][sum([i,1;int(1..)])], 
+   ~~> flatten_generic ([("Minion", 4200)])
+[[__0#MatrixToAtom_1,__0#MatrixToAtom_4,__0#MatrixToAtom_7;int(1..3)],[__0#MatrixToAtom_2,__0#MatrixToAtom_5,__0#MatrixToAtom_8;int(1..3)],[__0#MatrixToAtom_3,__0#MatrixToAtom_6,__0#MatrixToAtom_9;int(1..3)];int(1..3)][__4]
+new variables:
+  find __4: int(2..3)
+new constraints:
+  __4 =aux sum([i,1;int(1..)])
+
+--
+
+__4 =aux sum([i,1;int(1..)]), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, i], __4),SumGeq([1, i], __4);int(1..)])
+
+--
+
+(true != __1),
+Reify(and([([[__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3;int(1..3)],[__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6;int(1..3)],[__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9;int(1..3)];int(1..3)][i] <lex [[__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3;int(1..3)],[__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6;int(1..3)],[__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9;int(1..3)];int(1..3)][__2]),([[__0#MatrixToAtom_1,__0#MatrixToAtom_4,__0#MatrixToAtom_7;int(1..3)],[__0#MatrixToAtom_2,__0#MatrixToAtom_5,__0#MatrixToAtom_8;int(1..3)],[__0#MatrixToAtom_3,__0#MatrixToAtom_6,__0#MatrixToAtom_9;int(1..3)];int(1..3)][__4] <lex [[__0#MatrixToAtom_1,__0#MatrixToAtom_4,__0#MatrixToAtom_7;int(1..3)],[__0#MatrixToAtom_2,__0#MatrixToAtom_5,__0#MatrixToAtom_8;int(1..3)],[__0#MatrixToAtom_3,__0#MatrixToAtom_6,__0#MatrixToAtom_9;int(1..3)];int(1..3)][i]),__inDomain(sum([i,1;int(1..)]),int(1..3));int(1..)]), __1),
+SumLeq([1, i], __2),
+SumGeq([1, i], __2),
+SumLeq([1, i], __3),
+SumGeq([1, i], __3),
+and([SumLeq([1, i], __4),SumGeq([1, i], __4);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(true != __1),
+Reify(and([([[__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3;int(1..3)],[__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6;int(1..3)],[__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9;int(1..3)];int(1..3)][i] <lex [[__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3;int(1..3)],[__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6;int(1..3)],[__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9;int(1..3)];int(1..3)][__2]),([[__0#MatrixToAtom_1,__0#MatrixToAtom_4,__0#MatrixToAtom_7;int(1..3)],[__0#MatrixToAtom_2,__0#MatrixToAtom_5,__0#MatrixToAtom_8;int(1..3)],[__0#MatrixToAtom_3,__0#MatrixToAtom_6,__0#MatrixToAtom_9;int(1..3)];int(1..3)][__4] <lex [[__0#MatrixToAtom_1,__0#MatrixToAtom_4,__0#MatrixToAtom_7;int(1..3)],[__0#MatrixToAtom_2,__0#MatrixToAtom_5,__0#MatrixToAtom_8;int(1..3)],[__0#MatrixToAtom_3,__0#MatrixToAtom_6,__0#MatrixToAtom_9;int(1..3)];int(1..3)][i]),__inDomain(sum([i,1;int(1..)]),int(1..3));int(1..)]), __1),
+SumLeq([1, i], __2),
+SumGeq([1, i], __2),
+SumLeq([1, i], __3),
+SumGeq([1, i], __3),
+SumLeq([1, i], __4),
+SumGeq([1, i], __4)
+
+--
+
+__inDomain(sum([i,1;int(1..)]),int(1..3)), 
+   ~~> flatten_generic ([("Minion", 4200)])
+__inDomain(__5,int(1..3))
+new variables:
+  find __5: int(2..3)
+new constraints:
+  __5 =aux sum([i,1;int(1..)])
+
+--
+
+(true != __1),
+Reify(and([([[__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3;int(1..3)],[__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6;int(1..3)],[__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9;int(1..3)];int(1..3)][i] <lex [[__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3;int(1..3)],[__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6;int(1..3)],[__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9;int(1..3)];int(1..3)][__2]),([[__0#MatrixToAtom_1,__0#MatrixToAtom_4,__0#MatrixToAtom_7;int(1..3)],[__0#MatrixToAtom_2,__0#MatrixToAtom_5,__0#MatrixToAtom_8;int(1..3)],[__0#MatrixToAtom_3,__0#MatrixToAtom_6,__0#MatrixToAtom_9;int(1..3)];int(1..3)][__4] <lex [[__0#MatrixToAtom_1,__0#MatrixToAtom_4,__0#MatrixToAtom_7;int(1..3)],[__0#MatrixToAtom_2,__0#MatrixToAtom_5,__0#MatrixToAtom_8;int(1..3)],[__0#MatrixToAtom_3,__0#MatrixToAtom_6,__0#MatrixToAtom_9;int(1..3)];int(1..3)][i]),__inDomain(__5,int(1..3));int(1..)]), __1),
+SumLeq([1, i], __2),
+SumGeq([1, i], __2),
+SumLeq([1, i], __3),
+SumGeq([1, i], __3),
+SumLeq([1, i], __4),
+SumGeq([1, i], __4),
+__5 =aux sum([i,1;int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(true != __1),
+Reify(and([([[__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3;int(1..3)],[__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6;int(1..3)],[__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9;int(1..3)];int(1..3)][i] <lex [[__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3;int(1..3)],[__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6;int(1..3)],[__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9;int(1..3)];int(1..3)][__2]),([[__0#MatrixToAtom_1,__0#MatrixToAtom_4,__0#MatrixToAtom_7;int(1..3)],[__0#MatrixToAtom_2,__0#MatrixToAtom_5,__0#MatrixToAtom_8;int(1..3)],[__0#MatrixToAtom_3,__0#MatrixToAtom_6,__0#MatrixToAtom_9;int(1..3)];int(1..3)][__4] <lex [[__0#MatrixToAtom_1,__0#MatrixToAtom_4,__0#MatrixToAtom_7;int(1..3)],[__0#MatrixToAtom_2,__0#MatrixToAtom_5,__0#MatrixToAtom_8;int(1..3)],[__0#MatrixToAtom_3,__0#MatrixToAtom_6,__0#MatrixToAtom_9;int(1..3)];int(1..3)][i]);int(1..)]), __1),
+SumLeq([1, i], __2),
+SumGeq([1, i], __2),
+SumLeq([1, i], __3),
+SumGeq([1, i], __3),
+SumLeq([1, i], __4),
+SumGeq([1, i], __4),
+__5 =aux sum([i,1;int(1..)])
+
+--
+
+__5 =aux sum([i,1;int(1..)]), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([1, i], __5),SumGeq([1, i], __5);int(1..)])
+
+--
+
+(true != __1),
+Reify(and([([[__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3;int(1..3)],[__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6;int(1..3)],[__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9;int(1..3)];int(1..3)][i] <lex [[__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3;int(1..3)],[__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6;int(1..3)],[__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9;int(1..3)];int(1..3)][__2]),([[__0#MatrixToAtom_1,__0#MatrixToAtom_4,__0#MatrixToAtom_7;int(1..3)],[__0#MatrixToAtom_2,__0#MatrixToAtom_5,__0#MatrixToAtom_8;int(1..3)],[__0#MatrixToAtom_3,__0#MatrixToAtom_6,__0#MatrixToAtom_9;int(1..3)];int(1..3)][__4] <lex [[__0#MatrixToAtom_1,__0#MatrixToAtom_4,__0#MatrixToAtom_7;int(1..3)],[__0#MatrixToAtom_2,__0#MatrixToAtom_5,__0#MatrixToAtom_8;int(1..3)],[__0#MatrixToAtom_3,__0#MatrixToAtom_6,__0#MatrixToAtom_9;int(1..3)];int(1..3)][i]);int(1..)]), __1),
+SumLeq([1, i], __2),
+SumGeq([1, i], __2),
+SumLeq([1, i], __3),
+SumGeq([1, i], __3),
+SumLeq([1, i], __4),
+SumGeq([1, i], __4),
+and([SumLeq([1, i], __5),SumGeq([1, i], __5);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(true != __1),
+Reify(and([([[__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3;int(1..3)],[__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6;int(1..3)],[__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9;int(1..3)];int(1..3)][i] <lex [[__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3;int(1..3)],[__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6;int(1..3)],[__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9;int(1..3)];int(1..3)][__2]),([[__0#MatrixToAtom_1,__0#MatrixToAtom_4,__0#MatrixToAtom_7;int(1..3)],[__0#MatrixToAtom_2,__0#MatrixToAtom_5,__0#MatrixToAtom_8;int(1..3)],[__0#MatrixToAtom_3,__0#MatrixToAtom_6,__0#MatrixToAtom_9;int(1..3)];int(1..3)][__4] <lex [[__0#MatrixToAtom_1,__0#MatrixToAtom_4,__0#MatrixToAtom_7;int(1..3)],[__0#MatrixToAtom_2,__0#MatrixToAtom_5,__0#MatrixToAtom_8;int(1..3)],[__0#MatrixToAtom_3,__0#MatrixToAtom_6,__0#MatrixToAtom_9;int(1..3)];int(1..3)][i]);int(1..)]), __1),
+SumLeq([1, i], __2),
+SumGeq([1, i], __2),
+SumLeq([1, i], __3),
+SumGeq([1, i], __3),
+SumLeq([1, i], __4),
+SumGeq([1, i], __4),
+SumLeq([1, i], __5),
+SumGeq([1, i], __5)
+
+--
+
+[[__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3;int(1..3)],[__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6;int(1..3)],[__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9;int(1..3)];int(1..3)][i], 
+   ~~> matrix_to_list ([("Base", 2000)])
+[[__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3;int(1..3)],[__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6;int(1..3)],[__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9;int(1..3)];int(1..)][i]
+
+--
+
+[[__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3;int(1..3)],[__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6;int(1..3)],[__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9;int(1..3)];int(1..3)][__2], 
+   ~~> matrix_to_list ([("Base", 2000)])
+[[__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3;int(1..3)],[__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6;int(1..3)],[__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9;int(1..3)];int(1..)][__2]
+
+--
+
+[[__0#MatrixToAtom_1,__0#MatrixToAtom_4,__0#MatrixToAtom_7;int(1..3)],[__0#MatrixToAtom_2,__0#MatrixToAtom_5,__0#MatrixToAtom_8;int(1..3)],[__0#MatrixToAtom_3,__0#MatrixToAtom_6,__0#MatrixToAtom_9;int(1..3)];int(1..3)][__4], 
+   ~~> matrix_to_list ([("Base", 2000)])
+[[__0#MatrixToAtom_1,__0#MatrixToAtom_4,__0#MatrixToAtom_7;int(1..3)],[__0#MatrixToAtom_2,__0#MatrixToAtom_5,__0#MatrixToAtom_8;int(1..3)],[__0#MatrixToAtom_3,__0#MatrixToAtom_6,__0#MatrixToAtom_9;int(1..3)];int(1..)][__4]
+
+--
+
+[[__0#MatrixToAtom_1,__0#MatrixToAtom_4,__0#MatrixToAtom_7;int(1..3)],[__0#MatrixToAtom_2,__0#MatrixToAtom_5,__0#MatrixToAtom_8;int(1..3)],[__0#MatrixToAtom_3,__0#MatrixToAtom_6,__0#MatrixToAtom_9;int(1..3)];int(1..3)][i], 
+   ~~> matrix_to_list ([("Base", 2000)])
+[[__0#MatrixToAtom_1,__0#MatrixToAtom_4,__0#MatrixToAtom_7;int(1..3)],[__0#MatrixToAtom_2,__0#MatrixToAtom_5,__0#MatrixToAtom_8;int(1..3)],[__0#MatrixToAtom_3,__0#MatrixToAtom_6,__0#MatrixToAtom_9;int(1..3)];int(1..)][i]
+
+--
+
+Final model:
+
+find i: int(1..2)
+find __0: matrix indexed by [int(1..3), int(1..3)] of int(1..2)
+find __1: bool
+find __2: int(2..3)
+find __3: int(2..3)
+find __4: int(2..3)
+find __5: int(2..3)
+find __0#MatrixToAtom_1: int(1..2)
+find __0#MatrixToAtom_2: int(1..2)
+find __0#MatrixToAtom_3: int(1..2)
+find __0#MatrixToAtom_4: int(1..2)
+find __0#MatrixToAtom_5: int(1..2)
+find __0#MatrixToAtom_6: int(1..2)
+find __0#MatrixToAtom_7: int(1..2)
+find __0#MatrixToAtom_8: int(1..2)
+find __0#MatrixToAtom_9: int(1..2)
+
+such that
+
+(true != __1),
+Reify(and([([[__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3;int(1..3)],[__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6;int(1..3)],[__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9;int(1..3)];int(1..)][i] <lex [[__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3;int(1..3)],[__0#MatrixToAtom_4,__0#MatrixToAtom_5,__0#MatrixToAtom_6;int(1..3)],[__0#MatrixToAtom_7,__0#MatrixToAtom_8,__0#MatrixToAtom_9;int(1..3)];int(1..)][__2]),([[__0#MatrixToAtom_1,__0#MatrixToAtom_4,__0#MatrixToAtom_7;int(1..3)],[__0#MatrixToAtom_2,__0#MatrixToAtom_5,__0#MatrixToAtom_8;int(1..3)],[__0#MatrixToAtom_3,__0#MatrixToAtom_6,__0#MatrixToAtom_9;int(1..3)];int(1..)][__4] <lex [[__0#MatrixToAtom_1,__0#MatrixToAtom_4,__0#MatrixToAtom_7;int(1..3)],[__0#MatrixToAtom_2,__0#MatrixToAtom_5,__0#MatrixToAtom_8;int(1..3)],[__0#MatrixToAtom_3,__0#MatrixToAtom_6,__0#MatrixToAtom_9;int(1..3)];int(1..)][i]);int(1..)]), __1),
+SumLeq([1, i], __2),
+SumGeq([1, i], __2),
+SumLeq([1, i], __3),
+SumGeq([1, i], __3),
+SumLeq([1, i], __4),
+SumGeq([1, i], __4),
+SumLeq([1, i], __5),
+SumGeq([1, i], __5)
+
+Via-solver generator model before rewriting:
+
+find i: int(1..2)
+find __0: matrix indexed by [int(1..3), int(1..3)] of int(1..2)
+find __1: bool
+find __2: int(2..3)
+find __3: int(2..3)
+find __4: int(2..3)
+find __5: int(2..3)
+find __0#MatrixToAtom_1: int(1..2)
+find __0#MatrixToAtom_2: int(1..2)
+find __0#MatrixToAtom_3: int(1..2)
+find __0#MatrixToAtom_4: int(1..2)
+find __0#MatrixToAtom_5: int(1..2)
+find __0#MatrixToAtom_6: int(1..2)
+find __0#MatrixToAtom_7: int(1..2)
+find __0#MatrixToAtom_8: int(1..2)
+find __0#MatrixToAtom_9: int(1..2)
+
+--
+
+Model before rewriting:
+
+find i: int(1..2)
+find __0: matrix indexed by [int(1..3), int(1..3)] of int(1..2)
+find __1: bool
+find __2: int(2..3)
+find __3: int(2..3)
+find __4: int(2..3)
+find __5: int(2..3)
+find __0#MatrixToAtom_1: int(1..2)
+find __0#MatrixToAtom_2: int(1..2)
+find __0#MatrixToAtom_3: int(1..2)
+find __0#MatrixToAtom_4: int(1..2)
+find __0#MatrixToAtom_5: int(1..2)
+find __0#MatrixToAtom_6: int(1..2)
+find __0#MatrixToAtom_7: int(1..2)
+find __0#MatrixToAtom_8: int(1..2)
+find __0#MatrixToAtom_9: int(1..2)
+
+--
+
+, 
+   ~~> eval_root ([("Constant", 9001)])
+true
+
+--
+
+Final model:
+
+find i: int(1..2)
+find __0: matrix indexed by [int(1..3), int(1..3)] of int(1..2)
+find __1: bool
+find __2: int(2..3)
+find __3: int(2..3)
+find __4: int(2..3)
+find __5: int(2..3)
+find __0#MatrixToAtom_1: int(1..2)
+find __0#MatrixToAtom_2: int(1..2)
+find __0#MatrixToAtom_3: int(1..2)
+find __0#MatrixToAtom_4: int(1..2)
+find __0#MatrixToAtom_5: int(1..2)
+find __0#MatrixToAtom_6: int(1..2)
+find __0#MatrixToAtom_7: int(1..2)
+find __0#MatrixToAtom_8: int(1..2)
+find __0#MatrixToAtom_9: int(1..2)
+
+such that
+
+true
+
+[ and([(x[i,..] <lex x[sum([i,1;int(1..)]),..]),(x[..,i] >lex x[..,sum([i,1;int(1..)])]);int(1..)]) | i : int(1..2) ], 
+   ~~> expand_comprehension_via_solver ([("Base", 1500)])
+[and([(x[1,..] <lex x[2,..]),(x[..,1] >lex x[..,2]);int(1..)]),and([(x[2,..] <lex x[3,..]),(x[..,2] >lex x[..,3]);int(1..)]);int(1..)]
+
+--
+
+FlatLexLeq([1, 2, 2], [x#MatrixToAtom_1, x#MatrixToAtom_2, x#MatrixToAtom_3]),
+and([and([(x[1,..] <lex x[2,..]),(x[..,1] >lex x[..,2]);int(1..)]),and([(x[2,..] <lex x[3,..]),(x[..,2] >lex x[..,3]);int(1..)]);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+FlatLexLeq([1, 2, 2], [x#MatrixToAtom_1, x#MatrixToAtom_2, x#MatrixToAtom_3]),
+and([(x[1,..] <lex x[2,..]),(x[..,1] >lex x[..,2]);int(1..)]),
+and([(x[2,..] <lex x[3,..]),(x[..,2] >lex x[..,3]);int(1..)])
+
+--
+
+FlatLexLeq([1, 2, 2], [x#MatrixToAtom_1, x#MatrixToAtom_2, x#MatrixToAtom_3]),
+and([(x[1,..] <lex x[2,..]),(x[..,1] >lex x[..,2]);int(1..)]),
+and([(x[2,..] <lex x[3,..]),(x[..,2] >lex x[..,3]);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+FlatLexLeq([1, 2, 2], [x#MatrixToAtom_1, x#MatrixToAtom_2, x#MatrixToAtom_3]),
+(x[1,..] <lex x[2,..]),
+(x[..,1] >lex x[..,2]),
+(x[2,..] <lex x[3,..]),
+(x[..,2] >lex x[..,3])
+
+--
+
+(x[..,1] >lex x[..,2]), 
+   ~~> normalise_lex_gt_geq ([("Base", 9000)])
+(x[..,2] <lex x[..,1])
+
+--
+
+(x[..,2] >lex x[..,3]), 
+   ~~> normalise_lex_gt_geq ([("Base", 9000)])
+(x[..,3] <lex x[..,2])
+
+--
+
+FlatLexLeq([1, 2, 2], [x#MatrixToAtom_1, x#MatrixToAtom_2, x#MatrixToAtom_3]),
+(x[1,..] <lex x[2,..]),
+(x[..,2] <lex x[..,1]),
+(x[2,..] <lex x[3,..]),
+(x[..,3] <lex x[..,2]), 
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
+FlatLexLeq([1, 2, 2], [x#MatrixToAtom_1, x#MatrixToAtom_2, x#MatrixToAtom_3]),
+(x[1,..] <lex x[2,..]),
+(x[..,2] <lex x[..,1]),
+(x[2,..] <lex x[3,..]),
+(x[..,3] <lex x[..,2])
+
+--
+
+x[1,..], 
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+{x[1,..] @ and([__inDomain(1,int(1..3));int(1..)])}
+
+--
+
+FlatLexLeq([1, 2, 2], [x#MatrixToAtom_1, x#MatrixToAtom_2, x#MatrixToAtom_3]),
+({x[1,..] @ and([__inDomain(1,int(1..3));int(1..)])} <lex x[2,..]),
+(x[..,2] <lex x[..,1]),
+(x[2,..] <lex x[3,..]),
+(x[..,3] <lex x[..,2]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+FlatLexLeq([1, 2, 2], [x#MatrixToAtom_1, x#MatrixToAtom_2, x#MatrixToAtom_3]),
+(x[1,..] <lex x[2,..]),
+(x[..,2] <lex x[..,1]),
+(x[2,..] <lex x[3,..]),
+(x[..,3] <lex x[..,2])
+
+--
+
+x[2,..], 
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+{x[2,..] @ and([__inDomain(2,int(1..3));int(1..)])}
+
+--
+
+FlatLexLeq([1, 2, 2], [x#MatrixToAtom_1, x#MatrixToAtom_2, x#MatrixToAtom_3]),
+(x[1,..] <lex {x[2,..] @ and([__inDomain(2,int(1..3));int(1..)])}),
+(x[..,2] <lex x[..,1]),
+(x[2,..] <lex x[3,..]),
+(x[..,3] <lex x[..,2]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+FlatLexLeq([1, 2, 2], [x#MatrixToAtom_1, x#MatrixToAtom_2, x#MatrixToAtom_3]),
+(x[1,..] <lex x[2,..]),
+(x[..,2] <lex x[..,1]),
+(x[2,..] <lex x[3,..]),
+(x[..,3] <lex x[..,2])
+
+--
+
+x[..,2], 
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+{x[..,2] @ and([__inDomain(2,int(1..3));int(1..)])}
+
+--
+
+FlatLexLeq([1, 2, 2], [x#MatrixToAtom_1, x#MatrixToAtom_2, x#MatrixToAtom_3]),
+(x[1,..] <lex x[2,..]),
+({x[..,2] @ and([__inDomain(2,int(1..3));int(1..)])} <lex x[..,1]),
+(x[2,..] <lex x[3,..]),
+(x[..,3] <lex x[..,2]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+FlatLexLeq([1, 2, 2], [x#MatrixToAtom_1, x#MatrixToAtom_2, x#MatrixToAtom_3]),
+(x[1,..] <lex x[2,..]),
+(x[..,2] <lex x[..,1]),
+(x[2,..] <lex x[3,..]),
+(x[..,3] <lex x[..,2])
+
+--
+
+x[..,1], 
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+{x[..,1] @ and([__inDomain(1,int(1..3));int(1..)])}
+
+--
+
+FlatLexLeq([1, 2, 2], [x#MatrixToAtom_1, x#MatrixToAtom_2, x#MatrixToAtom_3]),
+(x[1,..] <lex x[2,..]),
+(x[..,2] <lex {x[..,1] @ and([__inDomain(1,int(1..3));int(1..)])}),
+(x[2,..] <lex x[3,..]),
+(x[..,3] <lex x[..,2]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+FlatLexLeq([1, 2, 2], [x#MatrixToAtom_1, x#MatrixToAtom_2, x#MatrixToAtom_3]),
+(x[1,..] <lex x[2,..]),
+(x[..,2] <lex x[..,1]),
+(x[2,..] <lex x[3,..]),
+(x[..,3] <lex x[..,2])
+
+--
+
+x[2,..], 
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+{x[2,..] @ and([__inDomain(2,int(1..3));int(1..)])}
+
+--
+
+FlatLexLeq([1, 2, 2], [x#MatrixToAtom_1, x#MatrixToAtom_2, x#MatrixToAtom_3]),
+(x[1,..] <lex x[2,..]),
+(x[..,2] <lex x[..,1]),
+({x[2,..] @ and([__inDomain(2,int(1..3));int(1..)])} <lex x[3,..]),
+(x[..,3] <lex x[..,2]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+FlatLexLeq([1, 2, 2], [x#MatrixToAtom_1, x#MatrixToAtom_2, x#MatrixToAtom_3]),
+(x[1,..] <lex x[2,..]),
+(x[..,2] <lex x[..,1]),
+(x[2,..] <lex x[3,..]),
+(x[..,3] <lex x[..,2])
+
+--
+
+x[3,..], 
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+{x[3,..] @ and([__inDomain(3,int(1..3));int(1..)])}
+
+--
+
+FlatLexLeq([1, 2, 2], [x#MatrixToAtom_1, x#MatrixToAtom_2, x#MatrixToAtom_3]),
+(x[1,..] <lex x[2,..]),
+(x[..,2] <lex x[..,1]),
+(x[2,..] <lex {x[3,..] @ and([__inDomain(3,int(1..3));int(1..)])}),
+(x[..,3] <lex x[..,2]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+FlatLexLeq([1, 2, 2], [x#MatrixToAtom_1, x#MatrixToAtom_2, x#MatrixToAtom_3]),
+(x[1,..] <lex x[2,..]),
+(x[..,2] <lex x[..,1]),
+(x[2,..] <lex x[3,..]),
+(x[..,3] <lex x[..,2])
+
+--
+
+x[..,3], 
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+{x[..,3] @ and([__inDomain(3,int(1..3));int(1..)])}
+
+--
+
+FlatLexLeq([1, 2, 2], [x#MatrixToAtom_1, x#MatrixToAtom_2, x#MatrixToAtom_3]),
+(x[1,..] <lex x[2,..]),
+(x[..,2] <lex x[..,1]),
+(x[2,..] <lex x[3,..]),
+({x[..,3] @ and([__inDomain(3,int(1..3));int(1..)])} <lex x[..,2]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+FlatLexLeq([1, 2, 2], [x#MatrixToAtom_1, x#MatrixToAtom_2, x#MatrixToAtom_3]),
+(x[1,..] <lex x[2,..]),
+(x[..,2] <lex x[..,1]),
+(x[2,..] <lex x[3,..]),
+(x[..,3] <lex x[..,2])
+
+--
+
+x[..,2], 
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+{x[..,2] @ and([__inDomain(2,int(1..3));int(1..)])}
+
+--
+
+FlatLexLeq([1, 2, 2], [x#MatrixToAtom_1, x#MatrixToAtom_2, x#MatrixToAtom_3]),
+(x[1,..] <lex x[2,..]),
+(x[..,2] <lex x[..,1]),
+(x[2,..] <lex x[3,..]),
+(x[..,3] <lex {x[..,2] @ and([__inDomain(2,int(1..3));int(1..)])}), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+FlatLexLeq([1, 2, 2], [x#MatrixToAtom_1, x#MatrixToAtom_2, x#MatrixToAtom_3]),
+(x[1,..] <lex x[2,..]),
+(x[..,2] <lex x[..,1]),
+(x[2,..] <lex x[3,..]),
+(x[..,3] <lex x[..,2])
+
+--
+
+x[1,..], 
+   ~~> slice_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+[x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)]
+
+--
+
+x[2,..], 
+   ~~> slice_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+[x#MatrixToAtom_4,x#MatrixToAtom_5,x#MatrixToAtom_6;int(1..)]
+
+--
+
+x[..,2], 
+   ~~> slice_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+[x#MatrixToAtom_2,x#MatrixToAtom_5,x#MatrixToAtom_8;int(1..)]
+
+--
+
+x[..,1], 
+   ~~> slice_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+[x#MatrixToAtom_1,x#MatrixToAtom_4,x#MatrixToAtom_7;int(1..)]
+
+--
+
+x[2,..], 
+   ~~> slice_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+[x#MatrixToAtom_4,x#MatrixToAtom_5,x#MatrixToAtom_6;int(1..)]
+
+--
+
+x[3,..], 
+   ~~> slice_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+[x#MatrixToAtom_7,x#MatrixToAtom_8,x#MatrixToAtom_9;int(1..)]
+
+--
+
+x[..,3], 
+   ~~> slice_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+[x#MatrixToAtom_3,x#MatrixToAtom_6,x#MatrixToAtom_9;int(1..)]
+
+--
+
+x[..,2], 
+   ~~> slice_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+[x#MatrixToAtom_2,x#MatrixToAtom_5,x#MatrixToAtom_8;int(1..)]
+
+--
+
+([x#MatrixToAtom_1,x#MatrixToAtom_2,x#MatrixToAtom_3;int(1..)] <lex [x#MatrixToAtom_4,x#MatrixToAtom_5,x#MatrixToAtom_6;int(1..)]), 
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLt([x#MatrixToAtom_1, x#MatrixToAtom_2, x#MatrixToAtom_3], [x#MatrixToAtom_4, x#MatrixToAtom_5, x#MatrixToAtom_6])
+
+--
+
+([x#MatrixToAtom_2,x#MatrixToAtom_5,x#MatrixToAtom_8;int(1..)] <lex [x#MatrixToAtom_1,x#MatrixToAtom_4,x#MatrixToAtom_7;int(1..)]), 
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLt([x#MatrixToAtom_2, x#MatrixToAtom_5, x#MatrixToAtom_8], [x#MatrixToAtom_1, x#MatrixToAtom_4, x#MatrixToAtom_7])
+
+--
+
+([x#MatrixToAtom_4,x#MatrixToAtom_5,x#MatrixToAtom_6;int(1..)] <lex [x#MatrixToAtom_7,x#MatrixToAtom_8,x#MatrixToAtom_9;int(1..)]), 
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLt([x#MatrixToAtom_4, x#MatrixToAtom_5, x#MatrixToAtom_6], [x#MatrixToAtom_7, x#MatrixToAtom_8, x#MatrixToAtom_9])
+
+--
+
+([x#MatrixToAtom_3,x#MatrixToAtom_6,x#MatrixToAtom_9;int(1..)] <lex [x#MatrixToAtom_2,x#MatrixToAtom_5,x#MatrixToAtom_8;int(1..)]), 
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLt([x#MatrixToAtom_3, x#MatrixToAtom_6, x#MatrixToAtom_9], [x#MatrixToAtom_2, x#MatrixToAtom_5, x#MatrixToAtom_8])
+
+--
+
+Final model:
+
+find x: matrix indexed by [int(1..3), int(1..3)] of int(1..2)
+find x#MatrixToAtom_1: int(1..2)
+find x#MatrixToAtom_2: int(1..2)
+find x#MatrixToAtom_3: int(1..2)
+find x#MatrixToAtom_4: int(1..2)
+find x#MatrixToAtom_5: int(1..2)
+find x#MatrixToAtom_6: int(1..2)
+find x#MatrixToAtom_7: int(1..2)
+find x#MatrixToAtom_8: int(1..2)
+find x#MatrixToAtom_9: int(1..2)
+
+such that
+
+FlatLexLeq([1, 2, 2], [x#MatrixToAtom_1, x#MatrixToAtom_2, x#MatrixToAtom_3]),
+FlatLexLt([x#MatrixToAtom_1, x#MatrixToAtom_2, x#MatrixToAtom_3], [x#MatrixToAtom_4, x#MatrixToAtom_5, x#MatrixToAtom_6]),
+FlatLexLt([x#MatrixToAtom_2, x#MatrixToAtom_5, x#MatrixToAtom_8], [x#MatrixToAtom_1, x#MatrixToAtom_4, x#MatrixToAtom_7]),
+FlatLexLt([x#MatrixToAtom_4, x#MatrixToAtom_5, x#MatrixToAtom_6], [x#MatrixToAtom_7, x#MatrixToAtom_8, x#MatrixToAtom_9]),
+FlatLexLt([x#MatrixToAtom_3, x#MatrixToAtom_6, x#MatrixToAtom_9], [x#MatrixToAtom_2, x#MatrixToAtom_5, x#MatrixToAtom_8])
+

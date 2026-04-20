@@ -15,6 +15,12 @@ Reify(or([ (product([m,m;int(1..2)]) = 4) | m : int(0..3) ]), b)
 
 --
 
+or([a,Reify(or([ (product([m,m;int(1..2)]) = 4) | m : int(0..3) ]), b);int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)])
+or([a,Reify(or([ (product([m,m;int(1..2)]) = 4) | m : int(0..3) ]), b);int(1..)])
+
+--
+
 Model before rewriting:
 
 find m: int(0..3)
@@ -64,19 +70,13 @@ such that
 Reify(FlatProductEq(m,m,4), __0)
 
 or([ (product([m,m;int(1..2)]) = 4) | m : int(0..3) ]), 
-   ~~> expand_comprehension_via_solver_ac ([("Base", 2002)])
+   ~~> expand_comprehension_via_solver_ac ([("Base", 1500)])
 or([true;int(1..)])
 
 --
 
-or([a,Reify(or([true;int(1..)]), b);int(1..2)]), 
+or([a,Reify(or([true;int(1..)]), b);int(1..)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
-or([a,Reify(true, b);int(1..2)])
-
---
-
-or([a,Reify(true, b);int(1..2)]), 
-   ~~> matrix_to_list ([("Base", 2000)])
 or([a,Reify(true, b);int(1..)])
 
 --

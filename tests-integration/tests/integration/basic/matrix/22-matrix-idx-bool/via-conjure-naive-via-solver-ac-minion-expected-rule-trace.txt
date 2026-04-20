@@ -1,0 +1,438 @@
+Model before rewriting:
+
+find x: matrix indexed by [bool, bool] of int(1..4)
+
+such that
+
+(x[false, false] = 1),
+(x[true, false] = 2),
+and([ (x[i, i] = sum([1,product([toInt(i),2;int(1..2)]);int(1..2)])) | i : bool ])
+
+--
+
+(x[false, false] = 1),
+(x[true, false] = 2),
+and([ (x[i, i] = sum([1,product([toInt(i),2;int(1..2)]);int(1..2)])) | i : bool ]), 
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
+(x[false, false] = 1),
+(x[true, false] = 2),
+and([ (x[i, i] = sum([1,product([toInt(i),2;int(1..2)]);int(1..2)])) | i : bool ])
+new variables:
+  find x#MatrixToAtom_1: int(1..4)
+  find x#MatrixToAtom_2: int(1..4)
+  find x#MatrixToAtom_3: int(1..4)
+  find x#MatrixToAtom_4: int(1..4)
+
+--
+
+x[false, false], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{x[false, false] @ and([__inDomain(false,bool),__inDomain(false,bool);int(1..)])}
+
+--
+
+({x[false, false] @ and([__inDomain(false,bool),__inDomain(false,bool);int(1..)])} = 1),
+(x[true, false] = 2),
+and([ (x[i, i] = sum([1,product([toInt(i),2;int(1..2)]);int(1..2)])) | i : bool ]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(x[false, false] = 1),
+(x[true, false] = 2),
+and([ (x[i, i] = sum([1,product([toInt(i),2;int(1..2)]);int(1..2)])) | i : bool ])
+
+--
+
+x[true, false], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{x[true, false] @ and([__inDomain(true,bool),__inDomain(false,bool);int(1..)])}
+
+--
+
+(x[false, false] = 1),
+({x[true, false] @ and([__inDomain(true,bool),__inDomain(false,bool);int(1..)])} = 2),
+and([ (x[i, i] = sum([1,product([toInt(i),2;int(1..2)]);int(1..2)])) | i : bool ]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(x[false, false] = 1),
+(x[true, false] = 2),
+and([ (x[i, i] = sum([1,product([toInt(i),2;int(1..2)]);int(1..2)])) | i : bool ])
+
+--
+
+(x[false, false] = 1),
+(x[true, false] = 2),
+and([ (x[i, i] = sum([1,product([toInt(i),2;int(1..2)]);int(1..2)])) | i : bool ]), 
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+(x#MatrixToAtom_1 = 1),
+(x#MatrixToAtom_3 = 2),
+and([ (x[i, i] = sum([1,product([toInt(i),2;int(1..2)]);int(1..2)])) | i : bool ])
+
+--
+
+Model before rewriting:
+
+find i: bool
+find __0: matrix indexed by [bool, bool] of int(1..4)
+
+such that
+
+(true != (__0[i, i] = sum([1,product([toInt(i),2;int(1..2)]);int(1..2)])))
+
+--
+
+product([toInt(i),2;int(1..2)]), 
+   ~~> reorder_product ([("Base", 8800)])
+product([2,toInt(i);int(1..2)])
+
+--
+
+(true != (__0[i, i] = sum([1,product([2,toInt(i);int(1..2)]);int(1..2)]))), 
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
+(true != (__0[i, i] = sum([1,product([2,toInt(i);int(1..2)]);int(1..2)])))
+new variables:
+  find __0#MatrixToAtom_1: int(1..4)
+  find __0#MatrixToAtom_2: int(1..4)
+  find __0#MatrixToAtom_3: int(1..4)
+  find __0#MatrixToAtom_4: int(1..4)
+
+--
+
+__0[i, i], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{__0[i, i] @ and([__inDomain(i,bool),__inDomain(i,bool);int(1..)])}
+
+--
+
+({__0[i, i] @ and([__inDomain(i,bool),__inDomain(i,bool);int(1..)])} = sum([1,product([2,toInt(i);int(1..2)]);int(1..2)])), 
+   ~~> bubble_up ([("Bubble", 8800)])
+{(__0[i, i] = sum([1,product([2,toInt(i);int(1..2)]);int(1..2)])) @ and([__inDomain(i,bool),__inDomain(i,bool);int(1..)])}
+
+--
+
+{(__0[i, i] = sum([1,product([2,toInt(i);int(1..2)]);int(1..2)])) @ and([__inDomain(i,bool),__inDomain(i,bool);int(1..)])}, 
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([(__0[i, i] = sum([1,product([2,toInt(i);int(1..2)]);int(1..2)])),and([__inDomain(i,bool),__inDomain(i,bool);int(1..)]);int(1..)])
+
+--
+
+and([(__0[i, i] = sum([1,product([2,toInt(i);int(1..2)]);int(1..2)])),and([__inDomain(i,bool),__inDomain(i,bool);int(1..)]);int(1..)]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([(__0[i, i] = sum([1,product([2,toInt(i);int(1..2)]);int(1..2)])),__inDomain(i,bool),__inDomain(i,bool);int(1..)])
+
+--
+
+(true != and([(__0[i, i] = sum([1,product([2,toInt(i);int(1..2)]);int(1..2)])),__inDomain(i,bool),__inDomain(i,bool);int(1..)])), 
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+(true != and([([__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3,__0#MatrixToAtom_4;int(1..)][sum([product([2,toInt(i);int(1..)]),product([1,toInt(i);int(1..)]),1;int(1..)])] = sum([1,product([2,toInt(i);int(1..2)]);int(1..2)])),__inDomain(i,bool),__inDomain(i,bool);int(1..)]))
+
+--
+
+product([1,toInt(i);int(1..)]), 
+   ~~> reorder_product ([("Base", 8800)])
+product([toInt(i);int(1..)])
+
+--
+
+product([toInt(i);int(1..)]), 
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(i)
+
+--
+
+(true != and([([__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3,__0#MatrixToAtom_4;int(1..)][sum([product([2,toInt(i);int(1..)]),toInt(i),1;int(1..)])] = sum([1,product([2,toInt(i);int(1..2)]);int(1..2)])),__inDomain(i,bool),__inDomain(i,bool);int(1..)])), 
+   ~~> flatten_generic ([("Minion", 4200)])
+(true != __1)
+new variables:
+  find __1: bool
+new constraints:
+  __1 =aux and([([__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3,__0#MatrixToAtom_4;int(1..)][sum([product([2,toInt(i);int(1..)]),toInt(i),1;int(1..)])] = sum([1,product([2,toInt(i);int(1..2)]);int(1..2)])),__inDomain(i,bool),__inDomain(i,bool);int(1..)])
+
+--
+
+__1 =aux and([([__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3,__0#MatrixToAtom_4;int(1..)][sum([product([2,toInt(i);int(1..)]),toInt(i),1;int(1..)])] = sum([1,product([2,toInt(i);int(1..2)]);int(1..2)])),__inDomain(i,bool),__inDomain(i,bool);int(1..)]), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([([__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3,__0#MatrixToAtom_4;int(1..)][sum([product([2,toInt(i);int(1..)]),toInt(i),1;int(1..)])] = sum([1,product([2,toInt(i);int(1..2)]);int(1..2)])),__inDomain(i,bool),__inDomain(i,bool);int(1..)]), __1)
+
+--
+
+[__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3,__0#MatrixToAtom_4;int(1..)][sum([product([2,toInt(i);int(1..)]),toInt(i),1;int(1..)])], 
+   ~~> flatten_generic ([("Minion", 4200)])
+[__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3,__0#MatrixToAtom_4;int(1..)][__2]
+new variables:
+  find __2: int(1..4)
+new constraints:
+  __2 =aux sum([product([2,toInt(i);int(1..)]),toInt(i),1;int(1..)])
+
+--
+
+__2 =aux sum([product([2,toInt(i);int(1..)]),toInt(i),1;int(1..)]), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, 2, 1],[1, __3, __4],__2),FlatWeightedSumGeq([1, 2, 1],[1, __3, __4],__2);int(1..)])
+new variables:
+  find __3: int(0..1)
+  find __4: int(0..1)
+new constraints:
+  __3 =aux toInt(i)
+  __4 =aux toInt(i)
+
+--
+
+(true != __1),
+Reify(and([([__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3,__0#MatrixToAtom_4;int(1..)][__2] = sum([1,product([2,toInt(i);int(1..2)]);int(1..2)])),__inDomain(i,bool),__inDomain(i,bool);int(1..)]), __1),
+and([FlatWeightedSumLeq([1, 2, 1],[1, __3, __4],__2),FlatWeightedSumGeq([1, 2, 1],[1, __3, __4],__2);int(1..)]),
+__3 =aux toInt(i),
+__4 =aux toInt(i), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(true != __1),
+Reify(and([([__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3,__0#MatrixToAtom_4;int(1..)][__2] = sum([1,product([2,toInt(i);int(1..2)]);int(1..2)])),__inDomain(i,bool),__inDomain(i,bool);int(1..)]), __1),
+FlatWeightedSumLeq([1, 2, 1],[1, __3, __4],__2),
+FlatWeightedSumGeq([1, 2, 1],[1, __3, __4],__2),
+__3 =aux toInt(i),
+__4 =aux toInt(i)
+
+--
+
+([__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3,__0#MatrixToAtom_4;int(1..)][__2] = sum([1,product([2,toInt(i);int(1..2)]);int(1..2)])), 
+   ~~> flatten_eq ([("Minion", 4200)])
+(__5 = __6)
+new variables:
+  find __5: int(1..4)
+  find __6: int(1..3)
+new constraints:
+  __5 =aux [__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3,__0#MatrixToAtom_4;int(1..)][__2]
+  __6 =aux sum([1,product([2,toInt(i);int(1..2)]);int(1..2)])
+
+--
+
+__5 =aux [__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3,__0#MatrixToAtom_4;int(1..)][__2], 
+   ~~> introduce_element_from_index ([("Minion", 4400)])
+__minion_element_one([__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3,__0#MatrixToAtom_4],__2,__5)
+
+--
+
+sum([1,product([2,toInt(i);int(1..2)]);int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)])
+sum([1,product([2,toInt(i);int(1..2)]);int(1..)])
+
+--
+
+product([2,toInt(i);int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)])
+product([2,toInt(i);int(1..)])
+
+--
+
+__6 =aux sum([1,product([2,toInt(i);int(1..)]);int(1..)]), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([FlatWeightedSumLeq([1, 2],[1, __7],__6),FlatWeightedSumGeq([1, 2],[1, __7],__6);int(1..)])
+new variables:
+  find __7: int(0..1)
+new constraints:
+  __7 =aux toInt(i)
+
+--
+
+(true != __1),
+Reify(and([(__5 = __6),__inDomain(i,bool),__inDomain(i,bool);int(1..)]), __1),
+FlatWeightedSumLeq([1, 2, 1],[1, __3, __4],__2),
+FlatWeightedSumGeq([1, 2, 1],[1, __3, __4],__2),
+__3 =aux toInt(i),
+__4 =aux toInt(i),
+__minion_element_one([__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3,__0#MatrixToAtom_4],__2,__5),
+and([FlatWeightedSumLeq([1, 2],[1, __7],__6),FlatWeightedSumGeq([1, 2],[1, __7],__6);int(1..)]),
+__7 =aux toInt(i), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(true != __1),
+Reify(and([(__5 = __6),__inDomain(i,bool),__inDomain(i,bool);int(1..)]), __1),
+FlatWeightedSumLeq([1, 2, 1],[1, __3, __4],__2),
+FlatWeightedSumGeq([1, 2, 1],[1, __3, __4],__2),
+__3 =aux toInt(i),
+__4 =aux toInt(i),
+__minion_element_one([__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3,__0#MatrixToAtom_4],__2,__5),
+FlatWeightedSumLeq([1, 2],[1, __7],__6),
+FlatWeightedSumGeq([1, 2],[1, __7],__6),
+__7 =aux toInt(i)
+
+--
+
+Final model:
+
+find i: bool
+find __0: matrix indexed by [bool, bool] of int(1..4)
+find __1: bool
+find __2: int(1..4)
+find __3: int(0..1)
+find __4: int(0..1)
+find __5: int(1..4)
+find __6: int(1..3)
+find __7: int(0..1)
+find __0#MatrixToAtom_1: int(1..4)
+find __0#MatrixToAtom_2: int(1..4)
+find __0#MatrixToAtom_3: int(1..4)
+find __0#MatrixToAtom_4: int(1..4)
+
+such that
+
+(true != __1),
+Reify(and([(__5 = __6),__inDomain(i,bool),__inDomain(i,bool);int(1..)]), __1),
+FlatWeightedSumLeq([1, 2, 1],[1, __3, __4],__2),
+FlatWeightedSumGeq([1, 2, 1],[1, __3, __4],__2),
+__3 =aux toInt(i),
+__4 =aux toInt(i),
+__minion_element_one([__0#MatrixToAtom_1,__0#MatrixToAtom_2,__0#MatrixToAtom_3,__0#MatrixToAtom_4],__2,__5),
+FlatWeightedSumLeq([1, 2],[1, __7],__6),
+FlatWeightedSumGeq([1, 2],[1, __7],__6),
+__7 =aux toInt(i)
+
+Via-solver generator model before rewriting:
+
+find i: bool
+find __0: matrix indexed by [bool, bool] of int(1..4)
+find __1: bool
+find __2: int(1..4)
+find __3: int(0..1)
+find __4: int(0..1)
+find __5: int(1..4)
+find __6: int(1..3)
+find __7: int(0..1)
+find __0#MatrixToAtom_1: int(1..4)
+find __0#MatrixToAtom_2: int(1..4)
+find __0#MatrixToAtom_3: int(1..4)
+find __0#MatrixToAtom_4: int(1..4)
+
+--
+
+Model before rewriting:
+
+find i: bool
+find __0: matrix indexed by [bool, bool] of int(1..4)
+find __1: bool
+find __2: int(1..4)
+find __3: int(0..1)
+find __4: int(0..1)
+find __5: int(1..4)
+find __6: int(1..3)
+find __7: int(0..1)
+find __0#MatrixToAtom_1: int(1..4)
+find __0#MatrixToAtom_2: int(1..4)
+find __0#MatrixToAtom_3: int(1..4)
+find __0#MatrixToAtom_4: int(1..4)
+
+--
+
+, 
+   ~~> eval_root ([("Constant", 9001)])
+true
+
+--
+
+Final model:
+
+find i: bool
+find __0: matrix indexed by [bool, bool] of int(1..4)
+find __1: bool
+find __2: int(1..4)
+find __3: int(0..1)
+find __4: int(0..1)
+find __5: int(1..4)
+find __6: int(1..3)
+find __7: int(0..1)
+find __0#MatrixToAtom_1: int(1..4)
+find __0#MatrixToAtom_2: int(1..4)
+find __0#MatrixToAtom_3: int(1..4)
+find __0#MatrixToAtom_4: int(1..4)
+
+such that
+
+true
+
+[ (x[i, i] = sum([1,product([toInt(i),2;int(1..2)]);int(1..2)])) | i : bool ], 
+   ~~> expand_comprehension_via_solver ([("Base", 1500)])
+[(x[false, false] = 1),(x[true, true] = 3);int(1..)]
+
+--
+
+(x#MatrixToAtom_1 = 1),
+(x#MatrixToAtom_3 = 2),
+and([(x[false, false] = 1),(x[true, true] = 3);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(x#MatrixToAtom_1 = 1),
+(x#MatrixToAtom_3 = 2),
+(x[false, false] = 1),
+(x[true, true] = 3)
+
+--
+
+(x#MatrixToAtom_1 = 1),
+(x#MatrixToAtom_3 = 2),
+(x[false, false] = 1),
+(x[true, true] = 3), 
+   ~~> select_repr_mta ([("ReprMatrixToAtom", 8500)])
+(x#MatrixToAtom_1 = 1),
+(x#MatrixToAtom_3 = 2),
+(x[false, false] = 1),
+(x[true, true] = 3)
+
+--
+
+x[false, false], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{x[false, false] @ and([__inDomain(false,bool),__inDomain(false,bool);int(1..)])}
+
+--
+
+(x#MatrixToAtom_1 = 1),
+(x#MatrixToAtom_3 = 2),
+({x[false, false] @ and([__inDomain(false,bool),__inDomain(false,bool);int(1..)])} = 1),
+(x[true, true] = 3), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(x#MatrixToAtom_1 = 1),
+(x#MatrixToAtom_3 = 2),
+(x[false, false] = 1),
+(x[true, true] = 3)
+
+--
+
+x[true, true], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{x[true, true] @ and([__inDomain(true,bool),__inDomain(true,bool);int(1..)])}
+
+--
+
+(x#MatrixToAtom_1 = 1),
+(x#MatrixToAtom_3 = 2),
+(x[false, false] = 1),
+({x[true, true] @ and([__inDomain(true,bool),__inDomain(true,bool);int(1..)])} = 3), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(x#MatrixToAtom_1 = 1),
+(x#MatrixToAtom_3 = 2),
+(x[false, false] = 1),
+(x[true, true] = 3)
+
+--
+
+(x#MatrixToAtom_1 = 1),
+(x#MatrixToAtom_3 = 2),
+(x[false, false] = 1),
+(x[true, true] = 3), 
+   ~~> index_matrix_to_atom ([("ReprMatrixToAtom", 5000)])
+(x#MatrixToAtom_1 = 1),
+(x#MatrixToAtom_3 = 2),
+(x#MatrixToAtom_1 = 1),
+(x#MatrixToAtom_4 = 3)
+
+--
+
+Final model:
+
+find x: matrix indexed by [bool, bool] of int(1..4)
+find x#MatrixToAtom_1: int(1..4)
+find x#MatrixToAtom_2: int(1..4)
+find x#MatrixToAtom_3: int(1..4)
+find x#MatrixToAtom_4: int(1..4)
+
+such that
+
+(x#MatrixToAtom_1 = 1),
+(x#MatrixToAtom_3 = 2),
+(x#MatrixToAtom_1 = 1),
+(x#MatrixToAtom_4 = 3)
+

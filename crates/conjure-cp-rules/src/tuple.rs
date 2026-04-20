@@ -1,15 +1,18 @@
+use crate::bottom_up_adaptor::as_bottom_up;
 use crate::guard;
 use crate::representation::tuple_to_atom::TupleToAtom;
 use crate::utils::{
-    as_comparison_op, as_eq_or_neq, collect_eq_or_neq, is_tuple_lit, tuple_expr_entries,
+    as_cmp_or_lex_op, as_eq_or_neq, collect_cmp_exprs, collect_eq_or_neq, is_tuple_lit,
+    tuple_expr_entries,
 };
-use conjure_cp::ast::{Atom, Expression as Expr, Literal, Metadata, Moo, Reference, SymbolTable};
+use conjure_cp::ast::{
+    Atom, Expression as Expr, Expression, Literal, Metadata, Reference, SymbolTable,
+};
+use conjure_cp::bug_assert_eq;
 use conjure_cp::rule_engine::ApplicationError::RuleNotApplicable;
 use conjure_cp::rule_engine::{ApplicationResult, Reduction, register_rule};
 use conjure_cp::{bug_assert, essence_expr};
-use conjure_cp::{bug_assert_eq, into_matrix_expr};
 use itertools::izip;
-use uniplate::Uniplate;
 
 /// Indexing into a tuple variable
 /// ```plain
@@ -17,8 +20,12 @@ use uniplate::Uniplate;
 /// ~>
 /// x_TupleToAtom_1
 /// ```
-#[register_rule(("ReprGeneral", 2000))]
-fn tuple_to_atom_index_lit(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+#[register_rule(("ReprGeneral", 5000))]
+fn tuple_to_atom_index_lit(expr: &Expression, symbols: &SymbolTable) -> ApplicationResult {
+    as_bottom_up(tuple_to_atom_index_lit_impl)(expr, symbols)
+}
+
+fn tuple_to_atom_index_lit_impl(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     guard!(
         let Expr::SafeIndex(_, subject, indices) = expr        &&
         let Expr::Atomic(_, Atom::Reference(re)) = &**subject  &&
@@ -149,7 +156,7 @@ fn tuple_var_eq_lit(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 fn tuple_var_cmp_var(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     guard!(
         as_eq_or_neq(expr).is_err() && // equality handled separately
-        let Some((lhs, rhs)) = as_comparison_op(expr)               &&
+        let Some((lhs, rhs)) = as_cmp_or_lex_op(expr)               &&
         let Expr::Atomic(_, Atom::Reference(lhs_re)) = lhs.as_ref() &&
         let Expr::Atomic(_, Atom::Reference(rhs_re)) = rhs.as_ref() &&
         let Some(lhs_repr) = lhs_re.get_repr_as::<TupleToAtom>()    &&
@@ -159,7 +166,7 @@ fn tuple_var_cmp_var(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         }
     );
 
-    let new_expr = generate_cmp_exprs(expr, lhs_repr.field_exprs(), rhs_repr.field_exprs());
+    let new_expr = collect_cmp_exprs(expr, lhs_repr.field_exprs(), rhs_repr.field_exprs());
     Ok(Reduction::pure(new_expr))
 }
 
@@ -178,7 +185,7 @@ fn tuple_var_cmp_var(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 fn tuple_var_cmp_lit(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     guard!(
         as_eq_or_neq(expr).is_err() && // equality handled separately
-        let Some((lhs, rhs)) = as_comparison_op(expr)               &&
+        let Some((lhs, rhs)) = as_cmp_or_lex_op(expr)               &&
         let Expr::Atomic(_, Atom::Reference(lhs_re)) = lhs.as_ref() &&
         let Some(lhs_repr) = lhs_re.get_repr_as::<TupleToAtom>()    &&
         let Some(rhs_ents) = tuple_expr_entries(&rhs)
@@ -187,7 +194,7 @@ fn tuple_var_cmp_lit(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         }
     );
 
-    let new_expr = generate_cmp_exprs(expr, lhs_repr.field_exprs(), rhs_ents);
+    let new_expr = collect_cmp_exprs(expr, lhs_repr.field_exprs(), rhs_ents);
     Ok(Reduction::pure(new_expr))
 }
 
@@ -196,7 +203,7 @@ fn tuple_var_cmp_lit(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 #[register_rule(("ReprGeneral", 2001))]
 fn tuple_comparison_reorder(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     guard!(
-        let Some((lit, var)) = as_comparison_op(expr)          &&
+        let Some((lit, var)) = as_cmp_or_lex_op(expr)          &&
         let Expr::Atomic(_, Atom::Reference(_)) = var.as_ref() &&
         is_tuple_lit(lit.as_ref())
         else {
@@ -217,30 +224,4 @@ fn tuple_comparison_reorder(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     };
 
     Ok(Reduction::pure(new_expr))
-}
-
-fn generate_cmp_exprs(cmp_op: &Expr, lhs_fields: Vec<Expr>, rhs_fields: Vec<Expr>) -> Expr {
-    let len = lhs_fields.len();
-    bug_assert_eq!(
-        len,
-        rhs_fields.len(),
-        "comparison of tuples with different shapes!"
-    );
-
-    let mut cases = vec![Vec::<Expr>::with_capacity(len); len];
-    for (i, (lhs_f, rhs_f)) in izip!(lhs_fields, rhs_fields).enumerate() {
-        let eq_expr = essence_expr!(&lhs_f = &rhs_f);
-        let cmp_expr = cmp_op.with_children(vec![lhs_f, rhs_f].into());
-
-        for case in cases.iter_mut().take(i) {
-            case.push(eq_expr.clone());
-        }
-        cases[i].push(cmp_expr);
-    }
-
-    let conjs: Vec<Expr> = cases
-        .into_iter()
-        .map(|c| Expr::And(Metadata::new(), Moo::new(into_matrix_expr!(c))))
-        .collect();
-    Expr::Or(Metadata::new(), Moo::new(into_matrix_expr!(conjs)))
 }

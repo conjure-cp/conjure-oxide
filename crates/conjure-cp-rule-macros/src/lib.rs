@@ -383,8 +383,11 @@ pub fn register_representation(input: TokenStream) -> TokenStream {
     });
 
     // Static name for distributed_slice entry
-    let static_name = format!("CONJURE_GEN_REPR_{}", repr_name_str).to_uppercase();
-    let static_ident = Ident::new(&static_name, repr_ident.span());
+    let dist_slice_name = format!("CONJURE_GEN_REPR_{}", repr_name_str).to_uppercase();
+    let dist_slice_ident = Ident::new(&dist_slice_name, repr_ident.span());
+
+    let init_cache_name = format!("CONJURE_GEN_REPR_{}_INIT_CACHE", repr_name_str).to_uppercase();
+    let init_cache_ident = Ident::new(&init_cache_name, repr_ident.span());
 
     let expanded = quote! {
         // -- Dependencies
@@ -410,6 +413,8 @@ pub fn register_representation(input: TokenStream) -> TokenStream {
         #up_fn
         #repr_vars_fn_toks
 
+        static #init_cache_ident: std::sync::LazyLock<FrozenMap<DomainPtr, Box<#state_ident<DomainPtr>>>> = std::sync::LazyLock::new(|| FrozenMap::new());
+
         // -- Trait implementations
         impl ReprDomainLevel for #state_ident<DomainPtr> {
             const RULE: &'static dyn ReprRuleStored = &#repr_ident;
@@ -420,7 +425,13 @@ pub fn register_representation(input: TokenStream) -> TokenStream {
             where
                 Self: Sized,
             {
-                #prefixed_init(dom)
+                if let Some(res) = #init_cache_ident.get(&dom) {
+                    return Ok(res.clone());
+                }
+
+                let res = #prefixed_init(dom.clone())?;
+                let _ = #init_cache_ident.insert(dom, Box::new(res.clone()));
+                Ok(res)
             }
 
             fn down(
@@ -475,7 +486,7 @@ pub fn register_representation(input: TokenStream) -> TokenStream {
 
         // -- Registry entry
         #[::conjure_cp::representation::_dependencies::distributed_slice(::conjure_cp::representation::_dependencies::REPR_RULES_DISTRIBUTED_SLICE)]
-        pub static #static_ident: &'static dyn ReprRuleStored = &#repr_ident;
+        pub static #dist_slice_ident: &'static dyn ReprRuleStored = &#repr_ident;
     };
 
     TokenStream::from(expanded)
