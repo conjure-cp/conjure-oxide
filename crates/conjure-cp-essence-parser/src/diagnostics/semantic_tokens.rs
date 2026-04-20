@@ -1,5 +1,6 @@
 use crate::diagnostics::diagnostics_api::SymbolKind;
 use crate::diagnostics::source_map::SourceMap;
+use crate::parser::syntax_errors::line_start_byte;
 
 pub const TOKEN_TYPE_NUMBER: u32 = 0;
 pub const TOKEN_TYPE_FUNCTION: u32 = 1;
@@ -18,6 +19,25 @@ pub const MODIFIER_READONLY: u32 = 1;
 pub struct TokenEncoding {
     pub ty: u32,
     pub modifiers: u32,
+}
+
+fn utf16_units(bytes: &[u8]) -> u32 {
+    String::from_utf8_lossy(bytes).encode_utf16().count() as u32
+}
+
+fn line_start_offsets(source: &[u8]) -> Vec<usize> {
+    let mut starts = vec![0usize];
+    for (idx, b) in source.iter().enumerate() {
+        if *b == b'\n' {
+            starts.push(idx + 1);
+        }
+    }
+    starts
+}
+
+fn line_index_at_byte(line_starts: &[usize], byte: usize) -> usize {
+    // index of last line start <= byte
+    line_starts.partition_point(|&start| start <= byte).saturating_sub(1)
 }
 
 // maps kind in SourceMap into a TokenEncoding
@@ -75,7 +95,10 @@ pub fn token_encoding(kind: &SymbolKind) -> Option<TokenEncoding> {
 }
 
 // translate span in SourceMap into the VSCode semantic token format
-pub fn encode_semantic_tokens(source_map: &SourceMap) -> Vec<u32> {
+// NOTE: LSP semantic token positions and lengths are UTF-16 code units.
+pub fn encode_semantic_tokens(source_map: &SourceMap, source: &str) -> Vec<u32> {
+    let source_bytes = source.as_bytes();
+    let line_starts = line_start_offsets(source_bytes);
     let mut entries: Vec<(u32, u32, u32, u32, u32)> = source_map
         .spans
         .iter()
@@ -84,10 +107,34 @@ pub fn encode_semantic_tokens(source_map: &SourceMap) -> Vec<u32> {
             // if (kind == )
             // let ty = span.hover_info.as_ref()?.ty.as_ref()?
             let enc = token_encoding(kind)?;
+
+            let start_byte = span.start_byte;
+            let end_byte = span.end_byte;
+            if end_byte <= start_byte || end_byte > source_bytes.len() || start_byte > source_bytes.len() {
+                return None;
+            }
+
+            let start_line = line_index_at_byte(&line_starts, start_byte);
+            let end_line = line_index_at_byte(&line_starts, end_byte.saturating_sub(1));
+            if start_line != end_line {
+                // LSP semantic token entries should not span lines.
+                return None;
+            }
+
+            let line_start = line_start_byte(source_bytes, start_line);
+            if start_byte < line_start {
+                return None;
+            }
+
+            let col = utf16_units(source_bytes.get(line_start..start_byte)?);
+            let len = utf16_units(source_bytes.get(start_byte..end_byte)?);
+            if len == 0 {
+                return None;
+            }
             Some((
-                span.start_point.line,
-                span.start_point.character,
-                (span.end_byte - span.start_byte) as u32,
+                start_line as u32,
+                col,
+                len,
                 enc.ty,
                 enc.modifiers,
             ))

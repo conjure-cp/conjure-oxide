@@ -82,6 +82,14 @@ impl Backend {
 
         //diagnostic stuff here
         self.handle_diagnostics(&uri.clone(), cache_content).await;
+        if let Err(err) = self.client.semantic_tokens_refresh().await {
+            self.client
+                .log_message(
+                    MessageType::WARNING,
+                    format!("semantic_tokens_refresh failed on open: {err}"),
+                )
+                .await;
+        }
     }
     pub async fn handle_did_save(&self, params: DidSaveTextDocumentParams) {
         //if save, do not update existing entry,simply access from cache
@@ -131,9 +139,11 @@ impl Backend {
                 let old_end_byte = position_to_byte(&cache_conts.contents, lsp_range.end);
                 let new_end_byte = start_byte + change.text.len();
 
-                let start_position = position_to_treesitter_point(lsp_range.start);
-                let old_end_position = position_to_treesitter_point(lsp_range.end);
-                let new_end_position = calculate_new_end_position(&change.text, lsp_range.start);
+                let start_position =
+                    position_to_treesitter_point(&cache_conts.contents, lsp_range.start);
+                let old_end_position =
+                    position_to_treesitter_point(&cache_conts.contents, lsp_range.end);
+                let new_end_position = calculate_new_end_position(&change.text, start_position);
 
                 self.client
                     .log_message(MessageType::INFO, "before edit")
@@ -220,6 +230,14 @@ impl Backend {
             lsp_cache.insert(uri.clone(), new_cache_conts.clone()).await;
 
             self.handle_diagnostics(&uri, new_cache_conts).await;
+            if let Err(err) = self.client.semantic_tokens_refresh().await {
+                self.client
+                    .log_message(
+                        MessageType::WARNING,
+                        format!("semantic_tokens_refresh failed on change: {err}"),
+                    )
+                    .await;
+            }
         }
     }
 
@@ -296,39 +314,65 @@ pub fn parser_to_lsp_position(position: ParserPosition) -> LspPosition {
 
 //need to convert from character and line to byte value in a file
 pub fn position_to_byte(text: &str, position: Position) -> usize {
-    //as_bytes converts a string into bytes which I could do with text but the issue is finding
-    //the position from that point???
-    let mut byte_offset = 0;
-    //go through every line
-    for (line_idx, line) in text.lines().enumerate() {
-        if line_idx < position.line as usize {
-            byte_offset += line.len() + 1; // +1 for newline
-        } else {
-            //can directly convert character as it's a byte offset alr
-            byte_offset += position.character as usize;
-            break;
-        }
-    }
-    byte_offset
+    let row = position.line as usize;
+    let line_start = line_start_byte(text.as_bytes(), row);
+    let line_end = text[line_start..]
+        .find('\n')
+        .map(|off| line_start + off)
+        .unwrap_or(text.len());
+    let line_text = &text[line_start..line_end];
+    let col_bytes = utf16_col_to_byte(line_text, position.character as usize);
+    line_start + col_bytes
 }
 
 //need to convert from character and line to row and line
 //this allows for incremental editing of treesitter
-fn position_to_treesitter_point(position: Position) -> Point {
-    Point::new(position.line as usize, position.character as usize)
+fn position_to_treesitter_point(text: &str, position: Position) -> Point {
+    let row = position.line as usize;
+    let line_start = line_start_byte(text.as_bytes(), row);
+    let absolute = position_to_byte(text, position);
+    Point::new(row, absolute.saturating_sub(line_start))
 }
 
-fn calculate_new_end_position(text: &str, start: Position) -> Point {
-    let mut row = start.line as usize;
-    let mut column = start.character as usize;
-    for ch in text.chars() {
-        if ch == '\n' {
-            row += 1;
-            column = 0;
-        } else {
-            column += 1;
-        }
+fn calculate_new_end_position(inserted_text: &str, start: Point) -> Point {
+    let bytes = inserted_text.as_bytes();
+    let newline_count = bytes.iter().filter(|&&b| b == b'\n').count();
+
+    if newline_count == 0 {
+        return Point::new(start.row, start.column + bytes.len());
     }
 
-    Point::new(row, column)
+    let last_newline = bytes.iter().rposition(|&b| b == b'\n').unwrap_or(0);
+    let trailing_bytes = bytes.len().saturating_sub(last_newline + 1);
+    Point::new(start.row + newline_count, trailing_bytes)
+}
+
+fn line_start_byte(source: &[u8], row: usize) -> usize {
+    let mut current_row = 0usize;
+    let mut line_start = 0usize;
+    for (idx, b) in source.iter().enumerate() {
+        if current_row == row {
+            break;
+        }
+        if *b == b'\n' {
+            current_row += 1;
+            line_start = idx + 1;
+        }
+    }
+    line_start
+}
+
+fn utf16_col_to_byte(line: &str, utf16_col: usize) -> usize {
+    let mut units = 0usize;
+    for (idx, ch) in line.char_indices() {
+        if units >= utf16_col {
+            return idx;
+        }
+        let next = units + ch.len_utf16();
+        if next > utf16_col {
+            return idx;
+        }
+        units = next;
+    }
+    line.len()
 }

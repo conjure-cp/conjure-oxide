@@ -45,7 +45,7 @@ impl Backend {
         //     }
         // }
 
-        let data = encode_semantic_tokens(source_map)
+        let data = encode_semantic_tokens(source_map, &cache_conts.contents)
             .chunks(5)
             .map(|c| SemanticToken {
                 delta_line: c[0],
