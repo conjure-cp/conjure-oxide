@@ -1234,33 +1234,7 @@ impl Expression {
                 Some(Domain::function(new_attrs, new_dom, codom.clone()))
             }
             Expression::Subsequence(_, _, _) => Some(Domain::bool()),
-            Expression::Substring(_, s, t) => {
-                let mut s_full = s.domain_of()?;
-                let mut t_full = t.domain_of()?;
-                let (s_attr, _s_dom) = s_full.as_sequence_mut()?;
-                let (t_attr, _t_dom) = t_full.as_sequence_mut()?;
-
-                // |s| <= |t|
-                let s_range = s_attr.resolve()?.size;
-                let t_range = t_attr.resolve()?.size;
-
-                let s_lo = s_range.low().unwrap_or(&0);
-                let t_hi = t_range.high().unwrap_or(&i32::MAX);
-
-                // if s_lo is > t_hi then the whole thing should evaluate to false. But there is no mechanism for that at the moment.
-                if s_lo <= t_hi {
-                    let new_size: Range<IntVal> =
-                        match Range::minimal(&[s_range.clone(), t_range.clone()]) {
-                            Ok(size) => size.into(),
-                            Err(_) => s_range.into(),
-                        };
-                    s_attr.size = new_size;
-                } else {
-                    s_attr.size = Range::Single(IntVal::Const(0));
-                }
-
-                Some(Domain::bool())
-            }
+            Expression::Substring(_, s, t) => Some(Domain::bool()),
             Expression::Inverse(..) => Some(Domain::bool()),
             Expression::LexLt(..) => Some(Domain::bool()),
             Expression::LexLeq(..) => Some(Domain::bool()),
