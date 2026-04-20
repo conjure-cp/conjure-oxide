@@ -1,7 +1,7 @@
 use conjure_cp::ast::matrix::flatten_owned;
 use conjure_cp::ast::records::RecordValue;
 use conjure_cp::ast::{
-    AbstractLiteral, Atom, Expression as Expr, Expression, Literal, Metadata, Moo, Name,
+    AbstractLiteral, Atom, Expression as Expr, Expression, HasDomain, Literal, Metadata, Moo, Name,
     eval_constant,
 };
 use conjure_cp::rule_engine::ApplicationError;
@@ -26,6 +26,15 @@ pub fn is_literal(expr: &Expr) -> bool {
     match expr {
         Expr::Atomic(_, _) => true,
         Expr::Not(_, inner) => matches!(**inner, Expr::Atomic(_, _)),
+        _ => false,
+    }
+}
+
+pub fn is_bool_lit(expr: &Expr) -> bool {
+    match expr {
+        Expr::Atomic(_, Atom::Literal(Literal::Bool(_))) => true,
+        Expr::Atomic(_, Atom::Reference(re)) => re.domain_of().is_bool(),
+        Expr::Not(_, x) => is_bool_lit(x.as_ref()),
         _ => false,
     }
 }

@@ -9,7 +9,7 @@ use conjure_cp::rule_engine::{
 use conjure_cp::ast::AbstractLiteral::Matrix;
 use conjure_cp::ast::{Domain, SymbolTable};
 
-use crate::utils::is_literal;
+use crate::utils::{is_bool_lit, is_literal};
 
 fn create_bool_aux(symbols: &mut SymbolTable) -> Expr {
     let name = symbols.gensym(&Domain::bool());
@@ -413,7 +413,7 @@ fn apply_tseytin_iff_eq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
         _ => return Err(RuleNotApplicable),
     };
 
-    if !is_literal(x.as_ref()) || !is_literal(y.as_ref()) {
+    if !is_bool_lit(x.as_ref()) || !is_bool_lit(y.as_ref()) {
         return Err(RuleNotApplicable);
     };
 
