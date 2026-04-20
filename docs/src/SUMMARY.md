@@ -74,6 +74,7 @@
   - [Creating Types Guide](./documentation/types/creating_types_guide.md)
   - [Functions](./documentation/types/functions.md)
   - [Multisets](./documentation/types/multisets.md)
+  - [Sequences](./documentation/types/sequences.md)
 - [Essence Parser](./documentation/essence_parser.md)
 <!-- TODO: add the error detection documentations -->
 - [Error Detection](./documentation/error_detection/error_classification.md)
