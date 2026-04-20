@@ -350,7 +350,7 @@ where
             }
             AbstractLiteral::Sequence(elems) => {
                 let elems_str: String = elems.iter().map(|x| format!("{x}")).join(",");
-                write!(f, "({elems_str})")
+                write!(f, "sequence({elems_str})")
             }
             AbstractLiteral::Record(entries) => {
                 let entries_str: String = entries

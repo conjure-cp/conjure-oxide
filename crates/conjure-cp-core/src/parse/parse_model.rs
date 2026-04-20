@@ -325,7 +325,7 @@ fn parse_domain(
             let jectivity = attributes
                 .get(1)
                 .and_then(|v| v.as_str())
-                .ok_or(error!("Function jectivity is not a string"))?;
+                .ok_or(error!("jectivity is not a string"))?;
             let jectivity = match jectivity {
                 "JectivityAttr_Injective" => Some(JectivityAttr::Injective),
                 "JectivityAttr_Surjective" => Some(JectivityAttr::Surjective),
@@ -660,6 +660,8 @@ fn binary_operator(op_name: &str) -> Option<BinOp> {
         "MkOpPreImage" => Some(Expression::PreImage),
         "MkOpInverse" => Some(Expression::Inverse),
         "MkOpRestrict" => Some(Expression::Restrict),
+        "MkOpSubstring" => Some(Expression::Substring),
+        "MkOpSubsequence" => Some(Expression::Subsequence),
         _ => None,
     }
 }
@@ -751,6 +753,8 @@ pub fn parse_expression(obj: &JsonValue, scope: &SymbolTablePtr) -> Result<Expre
                 parse_abs_function(&abslit["AbstractLiteral"]["AbsLitFunction"], scope)
             } else if abstract_literal.contains_key("AbsLitMSet") {
                 parse_abs_mset(&abslit["AbstractLiteral"]["AbsLitMSet"], scope)
+            } else if abstract_literal.contains_key("AbsLitSequence") {
+                parse_abs_sequence(&abslit["AbstractLiteral"]["AbsLitSequence"], scope)
             } else {
                 parse_abstract_matrix_as_expr(obj, scope)
             }
@@ -802,6 +806,21 @@ fn parse_abs_mset(abs_mset: &Value, scope: &SymbolTablePtr) -> Result<Expression
     Ok(Expression::AbstractLiteral(
         Metadata::new(),
         AbstractLiteral::MSet(expressions),
+    ))
+}
+
+fn parse_abs_sequence(abs_seq: &Value, scope: &SymbolTablePtr) -> Result<Expression> {
+    let values = abs_seq
+        .as_array()
+        .ok_or(error!("AbsLitSequence is not an array"))?;
+    let expressions = values
+        .iter()
+        .map(|values| parse_expression(values, scope))
+        .collect::<Result<Vec<_>>>()?;
+
+    Ok(Expression::AbstractLiteral(
+        Metadata::new(),
+        AbstractLiteral::Sequence(expressions),
     ))
 }
 
@@ -1342,6 +1361,8 @@ fn parse_constant(
                     return parse_abs_record(arr, scope);
                 } else if let Some(arr) = obj.get("AbsLitFunction") {
                     return parse_abs_function(arr, scope);
+                } else if let Some(arr) = obj.get("AbsLitSequence") {
+                    return parse_abs_sequence(arr, scope)
                 }
             }
             Err(error!("Unhandled ConstantAbstract literal type"))
