@@ -1,5 +1,4 @@
-use crate::ast::domains::SequenceAttr;
-use crate::ast::domains::attrs::MSetAttr;
+ use crate::ast::domains::attrs::MSetAttr;
 use crate::ast::domains::attrs::SetAttr;
 use crate::ast::{
     DeclarationKind, DomainOpError, Expression, FuncAttr, Literal, Metadata, Moo,
@@ -301,6 +300,15 @@ impl SetAttr<IntVal> {
     }
 }
 
+impl SequenceAttr<IntVal> {
+    pub fn resolve(&self) -> Option<SequenceAttr<Int>> {
+        Some(SequenceAttr {
+            size: self.size.resolve()?,
+            jectivity: self.jectivity.clone(),
+        })
+    }
+}
+
 impl MSetAttr<IntVal> {
     pub fn resolve(&self) -> Option<MSetAttr<Int>> {
         Some(MSetAttr {
@@ -352,7 +360,7 @@ pub enum UnresolvedDomain {
     Matrix(DomainPtr, Vec<DomainPtr>),
     /// A tuple of N elements, each with its own domain
     Tuple(Vec<DomainPtr>),
-    Sequence(SequenceAttr, DomainPtr),
+    Sequence(SequenceAttr<IntVal>, DomainPtr),
     /// A reference to a domain letting
     #[polyquine_skip]
     Reference(Reference),
@@ -480,6 +488,7 @@ impl UnresolvedDomain {
             (UnresolvedDomain::Function(_, _, _), _) | (_, UnresolvedDomain::Function(_, _, _)) => {
                 Err(DomainOpError::WrongType)
             }
+            #[allow(unreachable_patterns)]
             (UnresolvedDomain::Sequence(_, _), _) | (_, UnresolvedDomain::Sequence(_, _)) => {
                 Err(DomainOpError::WrongType)
             }
@@ -489,6 +498,7 @@ impl UnresolvedDomain {
     pub fn element_domain(&self) -> Option<DomainPtr> {
         match self {
             UnresolvedDomain::Set(_, inner_dom) => Some(inner_dom.clone()),
+            UnresolvedDomain::Sequence(_, inner_dom) => Some(inner_dom.clone()),
             UnresolvedDomain::Matrix(_, _) => {
                 todo!("Unwrap one dimension of the domain")
             }

@@ -1,4 +1,3 @@
-use crate::ast::JectivityAttr;
 use crate::ast::domains::{MSetAttr, SequenceAttr};
 use crate::ast::pretty::pretty_vec;
 use crate::ast::{
@@ -113,7 +112,7 @@ impl GroundDomain {
                 Err(DomainOpError::WrongType)
             }
             (GroundDomain::Sequence(_, _), _) | (_, GroundDomain::Sequence(_, _)) => {
-                Err(DomainOperror::WrongType)
+                Err(DomainOpError::WrongType)
             }
             (GroundDomain::Tuple(in1s), GroundDomain::Tuple(in2s)) if in1s.len() == in2s.len() => {
                 let mut inners = Vec::new();
@@ -285,7 +284,7 @@ impl GroundDomain {
                 }
                 Ok(ans)
             }
-            GroundDomain::Sequence(seq_attr, inner_dom) => {
+            GroundDomain::Sequence(_, _) => {
                 // If jectivity is not set, the sequence can have any permutation. 
                 // 
                 todo!("Length bound currently not supported");
@@ -379,12 +378,12 @@ impl GroundDomain {
             },
             GroundDomain::Sequence(seq_attr, inner_dom ) => match lit {
                 Literal::AbstractLiteral(AbstractLiteral::Sequence(elems)) => {
-                    let sz = lit_elems.len().to_i32().ok_or(DomainOpError::TooLarge)?;
-                    if !seq_attr.size.contains(sz) {
+                    let sz = elems.len().to_i32().ok_or(DomainOpError::TooLarge)?;
+                    if !seq_attr.size.contains(&sz) {
                         return Ok(false);
                     }
 
-                    for elem in lit_elems {
+                    for elem in elems {
                         if !inner_dom.contains(elem)? {
                             return Ok(false);
                         }
@@ -893,7 +892,7 @@ impl GroundDomain {
                 Ok(GroundDomain::Tuple(elem_domains))
             }
 
-            Literal::AbstractLiteral(AbstractLiteral::Sequence(first_elems)) => {
+            Literal::AbstractLiteral(AbstractLiteral::Sequence(_)) => {
                 let mut all_elems = vec![];
 
                 for lit in literals {
@@ -905,10 +904,7 @@ impl GroundDomain {
                 }
                 let elem_domain = GroundDomain::from_literal_vec(&all_elems)?;
 
-                Ok(GroundDomain::Sequence(
-                    SequenceAttr::default(),
-                    Moo::new(elem_domain),
-                ))
+                Ok(GroundDomain::Sequence(SequenceAttr::default(), Moo::new(elem_domain)))
             }
 
             Literal::AbstractLiteral(AbstractLiteral::Record(first_elems)) => {

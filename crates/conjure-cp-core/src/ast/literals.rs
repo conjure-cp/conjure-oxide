@@ -1,6 +1,5 @@
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
-use syn::token::Abstract;
 use std::fmt::{Display, Formatter};
 use std::hash::Hash;
 use ustr::Ustr;
@@ -117,6 +116,11 @@ impl AbstractLiteral<Expression> {
             }
 
             AbstractLiteral::Sequence(elems) => {
+                let item_domains: Vec<DomainPtr> = elems
+                    .iter()
+                    .map(|x| x.domain_of())
+                    .collect::<Option<Vec<DomainPtr>>>()?;
+
                 // Get the union of all domains in the sequence.
                 // i.e. if <(1..3), (1..3), (5), (8..9)> then seq dom is (1..3, 5, 8..9)
                 let mut item_domain_iter = item_domains.iter().cloned();
@@ -217,9 +221,11 @@ impl Typeable for AbstractLiteral<Expression> {
             AbstractLiteral::Sequence(items) => {
                 let item_type = items[0].return_type();
 
+                // if any items do not have a type, return none.
                 let item_types: Vec<ReturnType> = items.iter().map(|x| x.return_type()).collect();
+
                 assert!(
-                    items.iter().all(|x| x == &item_type),
+                    item_types.iter().all(|x| x == &item_type),
                     "all items in a sequence should have the same type"
                 );
 

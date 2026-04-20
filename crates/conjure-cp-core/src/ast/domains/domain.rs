@@ -250,8 +250,8 @@ impl Domain {
     }
 
     /// Create a new Sequence domain
-    pub fn sequence<T>(attrs: T, dom: DomainPtr) -> DomainPtr
-    where 
+    pub fn sequence<T>(attr: T, inner_dom: DomainPtr) -> DomainPtr
+    where
         T: Into<SequenceAttr<IntVal>> + TryInto<SequenceAttr<Int>> + Clone,
     {
         if let Domain::Ground(gd) = inner_dom.as_ref()

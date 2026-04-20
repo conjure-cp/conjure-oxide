@@ -13,7 +13,7 @@ use crate::ast::comprehension::ComprehensionBuilder;
 use crate::ast::records::RecordValue;
 use crate::ast::{
     AbstractLiteral, Atom, DeclarationPtr, Domain, Expression, FuncAttr, IntVal, JectivityAttr,
-    Literal, MSetAttr, Name, PartialityAttr, Range, RecordEntry, SetAttr, SymbolTable,
+    Literal, MSetAttr, Name, PartialityAttr, Range, RecordEntry, SetAttr, SequenceAttr, SymbolTable,
     SymbolTablePtr,
 };
 use crate::ast::{DomainPtr, Metadata};
@@ -298,6 +298,48 @@ fn parse_domain(
 
             Ok(Domain::matrix(value_domain, index_domains))
         }
+
+        "DomainSequence" => {
+            let dom = domain_value
+                .get(2)
+                .and_then(|v| v.as_object())
+                .expect("domain object exists");
+            let domain = dom
+                .iter()
+                .next()
+                .ok_or(Error::Parse("DomainSequence is an empty object".to_owned()))?;
+            let domain = parse_domain(domain.0.as_str(), domain.1, symbols)?;
+
+            // Parse Attributes
+            let attributes = domain_value
+                .get(1)
+                .and_then(|v| v.as_array())
+                .ok_or(error!("Sequence attributes is not a json array"))?;
+
+            let size = attributes
+                .get(0)
+                .and_then(|v| v.as_object())
+                .ok_or(error!("Sequence size attributes is not an object"))?;
+            let size = parse_size_attr(size, symbols)?;
+
+            let jectivity = attributes
+                .get(1)
+                .and_then(|v| v.as_str())
+                .ok_or(error!("Function jectivity is not a string"))?;
+            let jectivity = match jectivity {
+                "JectivityAttr_Injective" => Some(JectivityAttr::Injective),
+                "JectivityAttr_Surjective" => Some(JectivityAttr::Surjective),
+                "JectivityAttr_Bijective" => Some(JectivityAttr::Bijective),
+                "JectivityAttr_None" => Some(JectivityAttr::None),
+                _ => None,
+            };
+            let jectivity =
+                jectivity.ok_or(Error::Parse("Jectivity is an unknown type".to_owned()))?;
+
+            let attr: SequenceAttr<IntVal> = SequenceAttr { size, jectivity };
+            Ok(Domain::sequence(attr, domain))
+        }
+
         "DomainTuple" => {
             let domain_value = domain_value
                 .as_array()

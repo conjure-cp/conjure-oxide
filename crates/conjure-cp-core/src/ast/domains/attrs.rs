@@ -161,6 +161,15 @@ pub struct SequenceAttr<A = Int> {
     pub jectivity: JectivityAttr,
 }
 
+impl<A> Default for SequenceAttr<A> {
+    fn default() -> Self {
+        SequenceAttr {
+            size: Range::Unbounded,
+            jectivity: JectivityAttr::None,
+        }
+    }
+}
+
 impl<A: Display> Display for SequenceAttr<A> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let size_str = match &self.size {
