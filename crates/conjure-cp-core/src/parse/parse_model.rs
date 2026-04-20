@@ -13,8 +13,8 @@ use crate::ast::comprehension::ComprehensionBuilder;
 use crate::ast::records::RecordValue;
 use crate::ast::{
     AbstractLiteral, Atom, DeclarationPtr, Domain, Expression, FuncAttr, IntVal, JectivityAttr,
-    Literal, MSetAttr, Name, PartialityAttr, Range, RecordEntry, SetAttr, SequenceAttr, SymbolTable,
-    SymbolTablePtr,
+    Literal, MSetAttr, Name, PartialityAttr, Range, RecordEntry, SequenceAttr, SetAttr,
+    SymbolTable, SymbolTablePtr,
 };
 use crate::ast::{DomainPtr, Metadata};
 use crate::context::Context;
@@ -1362,7 +1362,7 @@ fn parse_constant(
                 } else if let Some(arr) = obj.get("AbsLitFunction") {
                     return parse_abs_function(arr, scope);
                 } else if let Some(arr) = obj.get("AbsLitSequence") {
-                    return parse_abs_sequence(arr, scope)
+                    return parse_abs_sequence(arr, scope);
                 }
             }
             Err(error!("Unhandled ConstantAbstract literal type"))

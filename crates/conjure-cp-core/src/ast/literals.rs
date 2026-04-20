@@ -130,7 +130,10 @@ impl AbstractLiteral<Expression> {
                     .try_fold(first_item, |x, y| x.union(y))
                     .expect("taking the union of all item domains of a set literal should succeed");
 
-                Some(Domain::sequence(SequenceAttr::<Int>::default(), item_domain))
+                Some(Domain::sequence(
+                    SequenceAttr::<Int>::default(),
+                    item_domain,
+                ))
             }
 
             AbstractLiteral::Matrix(items, _) => {
@@ -395,7 +398,10 @@ where
             }
             AbstractLiteral::Sequence(vec) => {
                 let (f1_tree, f1_ctx) = <_ as Biplate<AbstractLiteral<T>>>::biplate(vec);
-                (f1_tree, Box::new(move |x| AbstractLiteral::Sequence(f1_ctx(x))))
+                (
+                    f1_tree,
+                    Box::new(move |x| AbstractLiteral::Sequence(f1_ctx(x))),
+                )
             }
             AbstractLiteral::Tuple(elems) => {
                 let (f1_tree, f1_ctx) = <_ as Biplate<AbstractLiteral<T>>>::biplate(elems);
@@ -489,7 +495,10 @@ where
                 }
                 AbstractLiteral::Sequence(vec) => {
                     let (f1_tree, f1_ctx) = <_ as Biplate<To>>::biplate(vec);
-                    (f1_tree, Box::new(move |x| AbstractLiteral::Sequence(f1_ctx(x))))
+                    (
+                        f1_tree,
+                        Box::new(move |x| AbstractLiteral::Sequence(f1_ctx(x))),
+                    )
                 }
                 AbstractLiteral::Tuple(elems) => {
                     let (f1_tree, f1_ctx) = <_ as Biplate<To>>::biplate(elems);

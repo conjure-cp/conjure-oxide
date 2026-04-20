@@ -249,12 +249,12 @@ pub enum Expression {
     #[compatible(JsonInput, SMT)]
     Lt(Metadata, Moo<Expression>, Moo<Expression>),
 
-    /// `s subsequence t` tests whether the list of values taken by s occurs in the same order 
+    /// `s subsequence t` tests whether the list of values taken by s occurs in the same order
     /// in the list of values taken by t
     #[compatible(JsonInput)]
     Subsequence(Metadata, Moo<Expression>, Moo<Expression>),
 
-    /// `s substring t` tests whether the list of values taken by s occurs in the same order 
+    /// `s substring t` tests whether the list of values taken by s occurs in the same order
     /// and contiguously in the list of values taken by t
     #[compatible(JsonInput)]
     Substring(Metadata, Moo<Expression>, Moo<Expression>),
@@ -2319,7 +2319,7 @@ impl CacheHashable for Expression {
         match self {
             // Special Case
             Expression::AbstractLiteral(_, alit) => match alit {
-                AbstractLiteral::Set(v) 
+                AbstractLiteral::Set(v)
                 | AbstractLiteral::MSet(v)
                 | AbstractLiteral::Tuple(v)
                 | AbstractLiteral::Sequence(v) => {

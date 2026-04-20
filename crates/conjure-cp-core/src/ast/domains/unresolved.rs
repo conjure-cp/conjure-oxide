@@ -1,4 +1,5 @@
- use crate::ast::domains::attrs::MSetAttr;
+
+use crate::ast::domains::attrs::MSetAttr;
 use crate::ast::domains::attrs::SetAttr;
 use crate::ast::{
     DeclarationKind, DomainOpError, Expression, FuncAttr, Literal, Metadata, Moo,
@@ -514,7 +515,9 @@ impl Typeable for UnresolvedDomain {
             UnresolvedDomain::Int(_) => ReturnType::Int,
             UnresolvedDomain::Set(_attr, inner) => ReturnType::Set(Box::new(inner.return_type())),
             UnresolvedDomain::MSet(_attr, inner) => ReturnType::MSet(Box::new(inner.return_type())),
-            UnresolvedDomain::Sequence(_attr, inner) => ReturnType::Sequence(Box::new(inner.return_type())),
+            UnresolvedDomain::Sequence(_attr, inner) => {
+                ReturnType::Sequence(Box::new(inner.return_type()))
+            }
             UnresolvedDomain::Matrix(inner, _idx) => {
                 ReturnType::Matrix(Box::new(inner.return_type()))
             }
@@ -553,7 +556,9 @@ impl Display for UnresolvedDomain {
             }
             UnresolvedDomain::Set(attrs, inner_dom) => write!(f, "set {attrs} of {inner_dom}"),
             UnresolvedDomain::MSet(attrs, inner_dom) => write!(f, "mset {attrs} of {inner_dom}"),
-            UnresolvedDomain::Sequence(attrs, inner_dom) => write!(f, "sequence {attrs} of {inner_dom}"),
+            UnresolvedDomain::Sequence(attrs, inner_dom) => {
+                write!(f, "sequence {attrs} of {inner_dom}")
+            }
             UnresolvedDomain::Matrix(value_domain, index_domains) => {
                 write!(
                     f,

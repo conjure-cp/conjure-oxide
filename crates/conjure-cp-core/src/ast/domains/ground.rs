@@ -285,8 +285,8 @@ impl GroundDomain {
                 Ok(ans)
             }
             GroundDomain::Sequence(_, _) => {
-                // If jectivity is not set, the sequence can have any permutation. 
-                // 
+                // If jectivity is not set, the sequence can have any permutation.
+                //
                 todo!("Length bound currently not supported");
             }
             GroundDomain::Tuple(domains) => {
@@ -376,7 +376,7 @@ impl GroundDomain {
                 }
                 _ => Ok(false),
             },
-            GroundDomain::Sequence(seq_attr, inner_dom ) => match lit {
+            GroundDomain::Sequence(seq_attr, inner_dom) => match lit {
                 Literal::AbstractLiteral(AbstractLiteral::Sequence(elems)) => {
                     let sz = elems.len().to_i32().ok_or(DomainOpError::TooLarge)?;
                     if !seq_attr.size.contains(&sz) {
@@ -391,7 +391,7 @@ impl GroundDomain {
                     Ok(true)
                 }
                 _ => Ok(false),
-            }
+            },
             GroundDomain::Matrix(elem_domain, index_domains) => {
                 match lit {
                     Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, idx_domain)) => {
@@ -904,7 +904,10 @@ impl GroundDomain {
                 }
                 let elem_domain = GroundDomain::from_literal_vec(&all_elems)?;
 
-                Ok(GroundDomain::Sequence(SequenceAttr::default(), Moo::new(elem_domain)))
+                Ok(GroundDomain::Sequence(
+                    SequenceAttr::default(),
+                    Moo::new(elem_domain),
+                ))
             }
 
             Literal::AbstractLiteral(AbstractLiteral::Record(first_elems)) => {
@@ -989,7 +992,9 @@ impl Typeable for GroundDomain {
             GroundDomain::Int(_) => ReturnType::Int,
             GroundDomain::Set(_attr, inner) => ReturnType::Set(Box::new(inner.return_type())),
             GroundDomain::MSet(_attr, inner) => ReturnType::MSet(Box::new(inner.return_type())),
-            GroundDomain::Sequence(_attr, inner) => ReturnType::Sequence(Box::new(inner.return_type())),
+            GroundDomain::Sequence(_attr, inner) => {
+                ReturnType::Sequence(Box::new(inner.return_type()))
+            }
             GroundDomain::Matrix(inner, _idx) => ReturnType::Matrix(Box::new(inner.return_type())),
             GroundDomain::Tuple(inners) => {
                 let mut inner_types = Vec::new();
@@ -1027,7 +1032,9 @@ impl Display for GroundDomain {
             }
             GroundDomain::Set(attrs, inner_dom) => write!(f, "set {attrs} of {inner_dom}"),
             GroundDomain::MSet(attrs, inner_dom) => write!(f, "mset {attrs} of {inner_dom}"),
-            GroundDomain::Sequence(attrs, inner_dom) => write!(f, "sequence {attrs} of {inner_dom}"),
+            GroundDomain::Sequence(attrs, inner_dom) => {
+                write!(f, "sequence {attrs} of {inner_dom}")
+            }
             GroundDomain::Matrix(value_domain, index_domains) => {
                 write!(
                     f,

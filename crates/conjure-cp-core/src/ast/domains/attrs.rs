@@ -179,20 +179,16 @@ impl<A: Display> Display for SequenceAttr<A> {
             Range::UnboundedR(l) => format!("minSize {l} "),
             Range::Unbounded => "".to_string(),
         };
-        let mut strs = [
-            size_str,
-            self.jectivity.to_string(),
-        ]
-        .iter()
-        .filter(|s| !s.is_empty())
-        .join(", ");
+        let mut strs = [size_str, self.jectivity.to_string()]
+            .iter()
+            .filter(|s| !s.is_empty())
+            .join(", ");
         if !strs.is_empty() {
             strs = format!("({})", strs);
         }
         write!(f, "{strs}")
     }
 }
-
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
 pub enum PartialityAttr {
