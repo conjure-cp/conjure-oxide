@@ -337,7 +337,12 @@ fn parse_domain(
                 jectivity.ok_or(Error::Parse("Jectivity is an unknown type".to_owned()))?;
 
             let attr: SequenceAttr<IntVal> = SequenceAttr { size, jectivity };
-            Ok(Domain::sequence(attr, domain))
+            match attr.size {
+                Range::Unbounded | Range::UnboundedR(_) => Err(Error::Parse(
+                    "Sequence must have size or maxSize attribute".to_string(),
+                )),
+                _ => Ok(Domain::sequence(attr, domain)),
+            }
         }
 
         "DomainTuple" => {
