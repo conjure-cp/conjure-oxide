@@ -719,6 +719,8 @@ pub fn parse_expression(obj: &JsonValue, scope: &SymbolTablePtr) -> Result<Expre
                 parse_abs_function(&abslit["AbstractLiteral"]["AbsLitFunction"], scope)
             } else if abstract_literal.contains_key("AbsLitMSet") {
                 parse_abs_mset(&abslit["AbstractLiteral"]["AbsLitMSet"], scope)
+            } else if abstract_literal.contains_key("AbsLitVariant") {
+                parse_abs_variant(&abslit["AbstractLiteral"]["AbsLitVariant"], scope)
             } else {
                 parse_abstract_matrix_as_expr(obj, scope)
             }
@@ -818,6 +820,31 @@ fn parse_abs_record(abs_record: &Value, scope: &SymbolTablePtr) -> Result<Expres
     Ok(Expression::AbstractLiteral(
         Metadata::new(),
         AbstractLiteral::Record(rec),
+    ))
+}
+
+//parses an abstract variant as an expression
+fn parse_abs_variant(abs_variant: &Value, scope: &SymbolTablePtr) -> Result<Expression> {
+    let entry = abs_variant
+        .as_array()
+        .ok_or(error!("AbsLitVariant is not an array"))?;
+    let name = entry[1]
+        .as_object()
+        .ok_or(error!("AbsLitVariant field name is not an object"))?["Name"]
+        .as_str()
+        .ok_or(error!("AbsLitVariant field name is not a string"))?;
+
+    let value = parse_expression(&entry[2], scope)?;
+
+    let name = Name::User(Ustr::from(name));
+    let rec_entry = FieldValue {
+        name: name.clone(),
+        value,
+    };
+
+    Ok(Expression::AbstractLiteral(
+        Metadata::new(),
+        AbstractLiteral::Variant(Moo::new(rec_entry)),
     ))
 }
 
@@ -1310,6 +1337,8 @@ fn parse_constant(
                     return parse_abs_record(arr, scope);
                 } else if let Some(arr) = obj.get("AbsLitFunction") {
                     return parse_abs_function(arr, scope);
+                } else if let Some(arr) = obj.get("AbsLitVariant") {
+                    return parse_abs_variant(arr, scope);
                 }
             }
             Err(error!("Unhandled ConstantAbstract literal type"))

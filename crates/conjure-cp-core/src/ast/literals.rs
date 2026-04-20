@@ -335,7 +335,7 @@ where
                 write!(f, "function({entries_str})")
             }
             AbstractLiteral::Variant(entry) => {
-                write!(f, "{{{}: {}}}", entry.name, entry.value)
+                write!(f, "variant{{{} = {}}}", entry.name, entry.value)
             }
         }
     }
