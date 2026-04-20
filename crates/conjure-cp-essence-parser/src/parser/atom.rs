@@ -8,7 +8,7 @@ use crate::parser::comprehension::parse_comprehension;
 use crate::util::{TypecheckingContext, named_children};
 use crate::{field, named_child};
 use conjure_cp_core::ast::{
-    Atom, DeclarationPtr, Expression, GroundDomain, Literal, Metadata, Moo, Name,
+    Atom, DeclarationKind, DeclarationPtr, Expression, GroundDomain, Literal, Metadata, Moo, Name,
 };
 use tree_sitter::Node;
 use ustr::Ustr;
@@ -288,9 +288,16 @@ fn parse_variable(ctx: &mut ParseContext, node: &Node) -> Result<Option<Atom>, F
         };
 
         if let Some(decl) = lookup_result {
+            let symbol_kind = match &decl.kind() as &DeclarationKind {
+                DeclarationKind::Find(_) => SymbolKind::FindVar,
+                DeclarationKind::Given(_) => SymbolKind::GivenVar,
+                DeclarationKind::ValueLetting(_, _) => SymbolKind::LettingVar,
+                _ => return Ok(None),
+            };
+
             let hover = HoverInfo {
                 description: format!("Variable: {name}"),
-                kind: Some(SymbolKind::Decimal),
+                kind: Some(symbol_kind),
                 ty: decl.domain().map(|d| d.to_string()),
                 decl_span: ctx.lookup_decl_span(&name),
             };

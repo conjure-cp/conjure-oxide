@@ -37,7 +37,9 @@ fn line_start_offsets(source: &[u8]) -> Vec<usize> {
 
 fn line_index_at_byte(line_starts: &[usize], byte: usize) -> usize {
     // index of last line start <= byte
-    line_starts.partition_point(|&start| start <= byte).saturating_sub(1)
+    line_starts
+        .partition_point(|&start| start <= byte)
+        .saturating_sub(1)
 }
 
 // maps kind in SourceMap into a TokenEncoding
@@ -110,7 +112,10 @@ pub fn encode_semantic_tokens(source_map: &SourceMap, source: &str) -> Vec<u32> 
 
             let start_byte = span.start_byte;
             let end_byte = span.end_byte;
-            if end_byte <= start_byte || end_byte > source_bytes.len() || start_byte > source_bytes.len() {
+            if end_byte <= start_byte
+                || end_byte > source_bytes.len()
+                || start_byte > source_bytes.len()
+            {
                 return None;
             }
 
@@ -131,13 +136,7 @@ pub fn encode_semantic_tokens(source_map: &SourceMap, source: &str) -> Vec<u32> 
             if len == 0 {
                 return None;
             }
-            Some((
-                start_line as u32,
-                col,
-                len,
-                enc.ty,
-                enc.modifiers,
-            ))
+            Some((start_line as u32, col, len, enc.ty, enc.modifiers))
         })
         .collect();
 
