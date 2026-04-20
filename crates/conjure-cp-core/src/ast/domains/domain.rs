@@ -10,7 +10,6 @@ use crate::ast::{
 use itertools::Itertools;
 use polyquine::Quine;
 use serde::{Deserialize, Serialize};
-use tracing_subscriber::util::SubscriberInitExt;
 use std::fmt::{Display, Formatter};
 use std::thread_local;
 use uniplate::Uniplate;
