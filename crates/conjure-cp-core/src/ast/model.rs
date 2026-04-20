@@ -420,7 +420,7 @@ impl Display for Model {
                     writeln!(f, "quantified expr {name} <- {}", expr)?;
                 }
                 DeclarationKind::RecordField(_) => {
-                    writeln!(f)?;
+                    // We do not want to print anything, as it will be in the domains
                 }
             }
         }
