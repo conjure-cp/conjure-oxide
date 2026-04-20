@@ -355,7 +355,7 @@ fn typecheck_variable(
         GroundDomain::Tuple(_) => "tuple",
         GroundDomain::Record(_) => "record",
         GroundDomain::Function(_, _, _) => "function",
-        GroundDomain::Variant(_,) => "variant",
+        GroundDomain::Variant(_) => "variant",
         GroundDomain::Empty(_) => "empty",
     };
 

@@ -327,9 +327,9 @@ fn parse_domain(
                 true => "Record",
                 false => "Variant",
             };
-            let domain_value = domain_value
-                .as_array()
-                .ok_or(error!(&format!("Domain {domain_string} is not a json array")))?;
+            let domain_value = domain_value.as_array().ok_or(error!(&format!(
+                "Domain {domain_string} is not a json array"
+            )))?;
 
             let mut entries = vec![];
 
@@ -367,7 +367,7 @@ fn parse_domain(
                     "record field should not already be in the symbol table"
                 ))?;
             }
-            if is_record{
+            if is_record {
                 Ok(Domain::record(entries))
             } else {
                 Ok(Domain::variant(entries))

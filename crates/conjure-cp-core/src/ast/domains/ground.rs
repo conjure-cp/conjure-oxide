@@ -70,7 +70,7 @@ pub enum GroundDomain {
     /// A function with a domain and range
     Function(FuncAttr, Moo<GroundDomain>, Moo<GroundDomain>),
     /// A variant domain with its domain options (reusing record entries)
-    Variant(Vec<RecordEntryGround>)
+    Variant(Vec<RecordEntryGround>),
 }
 
 impl GroundDomain {
@@ -320,7 +320,7 @@ impl GroundDomain {
                 for entry in entries {
                     let sz = entry.domain.length()?;
                     // Only one name-domain pair is inside the variant, so we must assume the largest for space
-                    if sz > largest{
+                    if sz > largest {
                         largest = sz;
                     }
                 }

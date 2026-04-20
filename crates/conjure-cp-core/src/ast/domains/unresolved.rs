@@ -338,7 +338,7 @@ pub enum UnresolvedDomain {
     /// A function with attributes, domain, and range
     Function(FuncAttr<IntVal>, DomainPtr, DomainPtr),
     /// A variant domain with its domain options (reusing record entries)
-    Variant(Vec<RecordEntry>)
+    Variant(Vec<RecordEntry>),
 }
 
 impl UnresolvedDomain {

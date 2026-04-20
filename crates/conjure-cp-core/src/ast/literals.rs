@@ -335,7 +335,7 @@ where
                 write!(f, "function({entries_str})")
             }
             AbstractLiteral::Variant(entry) => {
-                write!(f, "{{{}: {}}}",entry.name,entry.value)
+                write!(f, "{{{}: {}}}", entry.name, entry.value)
             }
         }
     }
@@ -695,7 +695,10 @@ impl AbstractLiteral<Expression> {
                     }
                     _ => None,
                 }?;
-                Some(AbstractLiteral::Variant(Moo::new(RecordValue {name: entry.name.clone(), value: literal})))
+                Some(AbstractLiteral::Variant(Moo::new(RecordValue {
+                    name: entry.name.clone(),
+                    value: literal,
+                })))
             }
         }
     }
