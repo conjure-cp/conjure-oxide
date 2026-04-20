@@ -1245,9 +1245,7 @@ impl Expression {
                 let t_range = t_attr.resolve()?.size;
 
                 let s_lo = s_range.low().unwrap_or(&0);
-                let t_hi = t_range
-                    .high()
-                    .expect("Sequence must have size or maxSize attr");
+                let t_hi = t_range.high().unwrap_or(&i32::MAX);
 
                 // if s_lo is > t_hi then the whole thing should evaluate to false. But there is no mechanism for that at the moment.
                 if s_lo <= t_hi {
