@@ -58,7 +58,7 @@ fn parse_record(
         let Some(value) = parse_expression(ctx, value_node)? else {
             return Ok(None);
         };
-        values.push(conjure_cp_core::ast::records::RecordValue { name, value });
+        values.push(conjure_cp_core::ast::records::FieldValue { name, value });
     }
     Ok(Some(AbstractLiteral::Record(values)))
 }

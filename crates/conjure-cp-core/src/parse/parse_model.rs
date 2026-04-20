@@ -10,7 +10,7 @@ use serde_json::Value as JsonValue;
 use crate::ast::Moo;
 use crate::ast::ac_operators::ACOperatorKind;
 use crate::ast::comprehension::ComprehensionBuilder;
-use crate::ast::records::RecordValue;
+use crate::ast::records::FieldValue;
 use crate::ast::{
     AbstractLiteral, Atom, DeclarationPtr, Domain, Expression, FuncAttr, IntVal, JectivityAttr,
     Literal, MSetAttr, Name, PartialityAttr, Range, FieldEntry, SetAttr, SymbolTable,
@@ -808,7 +808,7 @@ fn parse_abs_record(abs_record: &Value, scope: &SymbolTablePtr) -> Result<Expres
         let value = parse_expression(&entry[1], scope)?;
 
         let name = Name::User(Ustr::from(name));
-        let rec_entry = RecordValue {
+        let rec_entry = FieldValue {
             name: name.clone(),
             value,
         };

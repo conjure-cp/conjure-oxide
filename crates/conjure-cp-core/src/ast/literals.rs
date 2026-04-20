@@ -6,7 +6,7 @@ use ustr::Ustr;
 
 use super::{
     Atom, Domain, DomainPtr, Expression, GroundDomain, Metadata, Moo, Range, ReturnType, SetAttr,
-    Typeable, domains::HasDomain, domains::Int, records::RecordValue,
+    Typeable, domains::HasDomain, domains::Int, records::FieldValue,
 };
 use crate::ast::domains::MSetAttr;
 use crate::ast::pretty::pretty_vec;
@@ -19,8 +19,8 @@ use uniplate::{Biplate, Tree, Uniplate};
 #[biplate(to=Atom)]
 #[biplate(to=AbstractLiteral<Literal>)]
 #[biplate(to=AbstractLiteral<Expression>)]
-#[biplate(to=RecordValue<Literal>)]
-#[biplate(to=RecordValue<Expression>)]
+#[biplate(to=FieldValue<Literal>)]
+#[biplate(to=FieldValue<Expression>)]
 #[biplate(to=Expression)]
 #[path_prefix(conjure_cp::ast)]
 /// A literal value, equivalent to constants in Conjure.
@@ -44,7 +44,7 @@ impl HasDomain for Literal {
 
 // make possible values of an AbstractLiteral a closed world to make the trait bounds more sane (particularly in Uniplate instances!!)
 pub trait AbstractLiteralValue:
-    Clone + Eq + PartialEq + Display + Uniplate + Biplate<RecordValue<Self>> + 'static
+    Clone + Eq + PartialEq + Display + Uniplate + Biplate<FieldValue<Self>> + 'static
 {
     type Dom: Clone + Eq + PartialEq + Display + Quine + From<GroundDomain> + Into<DomainPtr>;
 }
@@ -68,12 +68,12 @@ pub enum AbstractLiteral<T: AbstractLiteralValue> {
     // a tuple of literals
     Tuple(Vec<T>),
 
-    Record(Vec<RecordValue<T>>),
+    Record(Vec<FieldValue<T>>),
 
     Function(Vec<(T, T)>),
 
     // Variants only contain one of their name-domain pairs
-    Variant(Moo<RecordValue<T>>),
+    Variant(Moo<FieldValue<T>>),
 }
 
 // TODO: use HasDomain instead once Expression::domain_of returns Domain not Option<Domain>
@@ -422,7 +422,7 @@ impl<U, To> Biplate<To> for AbstractLiteral<U>
 where
     To: Uniplate,
     U: AbstractLiteralValue + Biplate<AbstractLiteral<U>> + Biplate<To>,
-    RecordValue<U>: Biplate<AbstractLiteral<U>> + Biplate<To>,
+    FieldValue<U>: Biplate<AbstractLiteral<U>> + Biplate<To>,
 {
     fn biplate(&self) -> (Tree<To>, Box<dyn Fn(Tree<To>) -> Self>) {
         if std::any::TypeId::of::<To>() == std::any::TypeId::of::<AbstractLiteral<U>>() {
@@ -679,7 +679,7 @@ impl AbstractLiteral<Expression> {
                 Some(AbstractLiteral::Record(
                     literals
                         .into_iter()
-                        .map(|(name, literal)| RecordValue {
+                        .map(|(name, literal)| FieldValue {
                             name,
                             value: literal,
                         })
@@ -695,7 +695,7 @@ impl AbstractLiteral<Expression> {
                     }
                     _ => None,
                 }?;
-                Some(AbstractLiteral::Variant(Moo::new(RecordValue {
+                Some(AbstractLiteral::Variant(Moo::new(FieldValue {
                     name: entry.name.clone(),
                     value: literal,
                 })))
