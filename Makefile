@@ -118,6 +118,13 @@ test-clean:
 	cd tests-integration/tests/integration/; find -type f -path '**expected**' -delete
 	cd tests-integration/tests/integration/; find -type f -path '**stats**' -delete
 
+
+clean-tests:
+	find ./tests-integration/tests/integration/ -type f -name '**generated**' -delete
+	find ./tests-integration/tests/integration/ -type f -name '**expected**' -delete
+	find ./tests-integration/tests/integration/ -type f -name '**stats**' -delete
+
+
 .PHONY: help
 ## Shows this help text
 help: show-help
