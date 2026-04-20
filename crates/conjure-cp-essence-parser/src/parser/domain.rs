@@ -7,7 +7,7 @@ use crate::expression::parse_expression;
 use crate::parser::ParseContext;
 use crate::{RecoverableParseError, child};
 use conjure_cp_core::ast::{
-    DeclarationPtr, Domain, DomainPtr, IntVal, Moo, Name, Range, FieldEntry, Reference, SetAttr,
+    DeclarationPtr, Domain, DomainPtr, FieldEntry, IntVal, Moo, Name, Range, Reference, SetAttr,
 };
 use tree_sitter::Node;
 

@@ -4,8 +4,8 @@ use super::range::Range;
 use super::unresolved::{IntVal, UnresolvedDomain};
 use crate::ast::domains::attrs::MSetAttr;
 use crate::ast::{
-    DeclarationPtr, DomainOpError, Expression, FuncAttr, Literal, Moo, FieldEntry,
-    FieldEntryGround, Reference, ReturnType, Typeable,
+    DeclarationPtr, DomainOpError, Expression, FieldEntry, FieldEntryGround, FuncAttr, Literal,
+    Moo, Reference, ReturnType, Typeable,
 };
 use itertools::Itertools;
 use polyquine::Quine;

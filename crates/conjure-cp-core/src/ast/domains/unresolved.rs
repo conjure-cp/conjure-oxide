@@ -1,8 +1,8 @@
 use crate::ast::domains::attrs::MSetAttr;
 use crate::ast::domains::attrs::SetAttr;
 use crate::ast::{
-    DeclarationKind, DomainOpError, Expression, FuncAttr, Literal, Metadata, Moo,
-    FieldEntryGround, Reference, Typeable,
+    DeclarationKind, DomainOpError, Expression, FieldEntryGround, FuncAttr, Literal, Metadata, Moo,
+    Reference, Typeable,
     domains::{
         GroundDomain,
         domain::{DomainPtr, Int},

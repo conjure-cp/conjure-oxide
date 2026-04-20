@@ -8,6 +8,6 @@ mod unresolved;
 pub use attrs::{FuncAttr, JectivityAttr, MSetAttr, PartialityAttr, SetAttr};
 pub use domain::{Domain, DomainPtr, HasDomain, Int};
 pub use error::DomainOpError;
-pub use ground::{GroundDomain, FieldEntryGround};
+pub use ground::{FieldEntryGround, GroundDomain};
 pub use range::Range;
-pub use unresolved::{IntVal, FieldEntry, UnresolvedDomain};
+pub use unresolved::{FieldEntry, IntVal, UnresolvedDomain};

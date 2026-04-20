@@ -12,8 +12,8 @@ use crate::ast::ac_operators::ACOperatorKind;
 use crate::ast::comprehension::ComprehensionBuilder;
 use crate::ast::records::FieldValue;
 use crate::ast::{
-    AbstractLiteral, Atom, DeclarationPtr, Domain, Expression, FuncAttr, IntVal, JectivityAttr,
-    Literal, MSetAttr, Name, PartialityAttr, Range, FieldEntry, SetAttr, SymbolTable,
+    AbstractLiteral, Atom, DeclarationPtr, Domain, Expression, FieldEntry, FuncAttr, IntVal,
+    JectivityAttr, Literal, MSetAttr, Name, PartialityAttr, Range, SetAttr, SymbolTable,
     SymbolTablePtr,
 };
 use crate::ast::{DomainPtr, Metadata};
@@ -838,7 +838,7 @@ fn parse_abs_variant(abs_variant: &Value, scope: &SymbolTablePtr) -> Result<Expr
 
     let name = Name::User(Ustr::from(name));
     let rec_entry = FieldValue {
-        name: name.clone(),
+        name,
         value,
     };
 

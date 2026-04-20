@@ -2,7 +2,7 @@ use super::categories::{Category, CategoryOf};
 use super::name::Name;
 use super::serde::{DefaultWithId, HasId, IdPtr, ObjId, PtrAsInner};
 use super::{
-    DecisionVariable, DomainPtr, Expression, GroundDomain, HasDomain, Moo, FieldEntry, Reference,
+    DecisionVariable, DomainPtr, Expression, FieldEntry, GroundDomain, HasDomain, Moo, Reference,
     ReturnType, Typeable,
 };
 use parking_lot::{

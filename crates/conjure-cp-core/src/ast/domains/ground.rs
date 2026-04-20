@@ -1,8 +1,8 @@
 use crate::ast::domains::MSetAttr;
 use crate::ast::pretty::pretty_vec;
 use crate::ast::{
-    AbstractLiteral, Domain, DomainOpError, FuncAttr, HasDomain, Literal, Moo, FieldEntry,
-    SetAttr, Typeable,
+    AbstractLiteral, Domain, DomainOpError, FieldEntry, FuncAttr, HasDomain, Literal, Moo, SetAttr,
+    Typeable,
     domains::{domain::Int, range::Range},
 };
 use crate::range;
