@@ -61,7 +61,6 @@
   - [LSP Error Testing](./documentation/LSP/lsp_tests.md)
 - [Testing: The Ideal Scenario](./documentation/testing/ideal-scenario-of-testing.md)
   - [Creating Custom Tests](./documentation/testing/Custom-Tests.md)
-- [Implementing Uniplates and Biplates with Structure Preserving Trees](./documentation/Implementing-Uniplates-and-Biplates-with-Structure-Preserving-Trees.md)
 - [SAT Encoding Types](./documentation/SAT/sat-encoding-types.md)
 - [Rule Types](./documentation/SAT/rule-types.md)
 - [Flatten](./documentation/flatten.md)
