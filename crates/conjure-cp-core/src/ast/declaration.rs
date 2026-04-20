@@ -2,7 +2,7 @@ use super::categories::{Category, CategoryOf};
 use super::name::Name;
 use super::serde::{DefaultWithId, HasId, IdPtr, ObjId, PtrAsInner};
 use super::{
-    DecisionVariable, DomainPtr, Expression, GroundDomain, HasDomain, Moo, RecordEntry, Reference,
+    DecisionVariable, DomainPtr, Expression, GroundDomain, HasDomain, Moo, FieldEntry, Reference,
     ReturnType, Typeable,
 };
 use parking_lot::{
@@ -265,19 +265,19 @@ impl DeclarationPtr {
     /// # Examples
     ///
     /// ```
-    /// use conjure_cp_core::ast::{DeclarationPtr,Name,RecordEntry,Domain,Range};
+    /// use conjure_cp_core::ast::{DeclarationPtr,Name,FieldEntry,Domain,Range};
     ///
     /// // create declaration for field A in `find rec: record {A: int(0..1), B: int(0..2)}`
     ///
-    /// let field = RecordEntry {
+    /// let field = FieldEntry {
     ///     name: Name::User("n".into()),
     ///     domain: Domain::int(vec![Range::Bounded(1,5)])
     /// };
     ///
     /// let declaration = DeclarationPtr::new_record_field(field);
     /// ```
-    pub fn new_record_field(entry: RecordEntry) -> DeclarationPtr {
-        let kind = DeclarationKind::RecordField(entry.domain);
+    pub fn new_record_field(entry: FieldEntry) -> DeclarationPtr {
+        let kind = DeclarationKind::Field(entry.domain);
         DeclarationPtr::new(entry.name, kind)
     }
 
@@ -308,7 +308,7 @@ impl DeclarationPtr {
             DeclarationKind::Given(domain) => Some(domain.clone()),
             DeclarationKind::Quantified(inner) => Some(inner.domain.clone()),
             DeclarationKind::QuantifiedExpr(expr) => expr.domain_of(),
-            DeclarationKind::RecordField(domain) => Some(domain.clone()),
+            DeclarationKind::Field(domain) => Some(domain.clone()),
         }
     }
 
@@ -594,7 +594,7 @@ impl CategoryOf for DeclarationPtr {
             DeclarationKind::Given(_) => Category::Parameter,
             DeclarationKind::Quantified(..) => Category::Quantified,
             DeclarationKind::QuantifiedExpr(..) => Category::Quantified,
-            DeclarationKind::RecordField(_) => Category::Bottom,
+            DeclarationKind::Field(_) => Category::Bottom,
         }
     }
 }
@@ -629,7 +629,7 @@ impl Typeable for DeclarationPtr {
             DeclarationKind::Given(domain) => domain.return_type(),
             DeclarationKind::Quantified(inner) => inner.domain.return_type(),
             DeclarationKind::QuantifiedExpr(expr) => expr.return_type(),
-            DeclarationKind::RecordField(domain) => domain.return_type(),
+            DeclarationKind::Field(domain) => domain.return_type(),
         }
     }
 }
@@ -746,11 +746,11 @@ fn biplate_declaration_kind_references(
                 Box::new(move |x| DeclarationKind::DomainLetting(recons_domain(x))),
             )
         }
-        DeclarationKind::RecordField(domain) => {
+        DeclarationKind::Field(domain) => {
             let (tree, recons_domain) = biplate_domain_ptr_references(domain);
             (
                 tree,
-                Box::new(move |x| DeclarationKind::RecordField(recons_domain(x))),
+                Box::new(move |x| DeclarationKind::Field(recons_domain(x))),
             )
         }
         DeclarationKind::ValueLetting(expression, domain) => {
@@ -903,9 +903,9 @@ pub enum DeclarationKind {
     /// Unlike `ValueLetting`, this is not intended to represent a user-visible top-level `letting`.
     TemporaryValueLetting(Expression),
 
-    /// A named field inside a record type.
+    /// A named field inside a record / variant type.
     /// e.g. A, B in record{A: int(0..1), B: int(0..2)}
-    RecordField(DomainPtr),
+    Field(DomainPtr),
 }
 
 #[serde_as]

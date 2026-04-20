@@ -2,7 +2,7 @@ use crate::ast::domains::attrs::MSetAttr;
 use crate::ast::domains::attrs::SetAttr;
 use crate::ast::{
     DeclarationKind, DomainOpError, Expression, FuncAttr, Literal, Metadata, Moo,
-    RecordEntryGround, Reference, Typeable,
+    FieldEntryGround, Reference, Typeable,
     domains::{
         GroundDomain,
         domain::{DomainPtr, Int},
@@ -164,7 +164,7 @@ impl IntVal {
                 ReturnType::Int => Some(IntVal::Reference(re.clone())),
                 _ => None,
             },
-            DeclarationKind::DomainLetting(_) | DeclarationKind::RecordField(_) => None,
+            DeclarationKind::DomainLetting(_) | DeclarationKind::Field(_) => None,
         }
     }
 
@@ -197,7 +197,7 @@ impl IntVal {
                 DeclarationKind::QuantifiedExpr(_) => None,
                 // Decision variables inside domains are unresolved until solving.
                 DeclarationKind::Find(_) => None,
-                DeclarationKind::DomainLetting(_) | DeclarationKind::RecordField(_) => bug!(
+                DeclarationKind::DomainLetting(_) | DeclarationKind::Field(_) => bug!(
                     "Expected integer expression, given, or letting inside int domain; Got: {re}"
                 ),
             },
@@ -300,14 +300,14 @@ impl FuncAttr<IntVal> {
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Uniplate, Quine)]
 #[path_prefix(conjure_cp::ast)]
-pub struct RecordEntry {
+pub struct FieldEntry {
     pub name: Name,
     pub domain: DomainPtr,
 }
 
-impl RecordEntry {
-    pub fn resolve(self) -> Option<RecordEntryGround> {
-        Some(RecordEntryGround {
+impl FieldEntry {
+    pub fn resolve(self) -> Option<FieldEntryGround> {
+        Some(FieldEntryGround {
             name: self.name,
             domain: self.domain.resolve()?,
         })
@@ -320,7 +320,7 @@ impl RecordEntry {
 #[biplate(to=Reference)]
 #[biplate(to=IntVal)]
 #[biplate(to=DomainPtr)]
-#[biplate(to=RecordEntry)]
+#[biplate(to=FieldEntry)]
 pub enum UnresolvedDomain {
     Int(Vec<Range<IntVal>>),
     /// A set of elements drawn from the inner domain
@@ -334,11 +334,11 @@ pub enum UnresolvedDomain {
     #[polyquine_skip]
     Reference(Reference),
     /// A record
-    Record(Vec<RecordEntry>),
+    Record(Vec<FieldEntry>),
     /// A function with attributes, domain, and range
     Function(FuncAttr<IntVal>, DomainPtr, DomainPtr),
-    /// A variant domain with its domain options (reusing record entries)
-    Variant(Vec<RecordEntry>),
+    /// A variant domain with its domain options (reusing field entries)
+    Variant(Vec<FieldEntry>),
 }
 
 impl UnresolvedDomain {
@@ -371,7 +371,7 @@ impl UnresolvedDomain {
             UnresolvedDomain::Record(entries) => entries
                 .iter()
                 .map(|f| {
-                    f.domain.resolve().map(|gd| RecordEntryGround {
+                    f.domain.resolve().map(|gd| FieldEntryGround {
                         name: f.name.clone(),
                         domain: gd,
                     })
@@ -398,7 +398,7 @@ impl UnresolvedDomain {
             UnresolvedDomain::Variant(entries) => entries
                 .iter()
                 .map(|f| {
-                    f.domain.resolve().map(|gd| RecordEntryGround {
+                    f.domain.resolve().map(|gd| FieldEntryGround {
                         name: f.name.clone(),
                         domain: gd,
                     })

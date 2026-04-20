@@ -266,7 +266,7 @@ fn rewrite_references(expr: &Expression, to_previous_solution: bool) -> Expressi
                         | DeclarationKind::Quantified(_)
                         | DeclarationKind::QuantifiedExpr(_)
                         | DeclarationKind::DomainLetting(_)
-                        | DeclarationKind::RecordField(_)
+                        | DeclarationKind::Field(_)
                         | _ => ReferenceRewriteAction::LeaveAsIs,
                     }
                 };

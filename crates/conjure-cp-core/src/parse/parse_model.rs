@@ -13,7 +13,7 @@ use crate::ast::comprehension::ComprehensionBuilder;
 use crate::ast::records::RecordValue;
 use crate::ast::{
     AbstractLiteral, Atom, DeclarationPtr, Domain, Expression, FuncAttr, IntVal, JectivityAttr,
-    Literal, MSetAttr, Name, PartialityAttr, Range, RecordEntry, SetAttr, SymbolTable,
+    Literal, MSetAttr, Name, PartialityAttr, Range, FieldEntry, SetAttr, SymbolTable,
     SymbolTablePtr,
 };
 use crate::ast::{DomainPtr, Metadata};
@@ -352,7 +352,7 @@ fn parse_domain(
 
                 let domain = parse_domain(domain.0, domain.1, symbols)?;
 
-                let rec = RecordEntry { name, domain };
+                let rec = FieldEntry { name, domain };
 
                 entries.push(rec);
             }

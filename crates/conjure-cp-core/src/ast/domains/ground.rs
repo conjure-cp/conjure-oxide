@@ -1,7 +1,7 @@
 use crate::ast::domains::MSetAttr;
 use crate::ast::pretty::pretty_vec;
 use crate::ast::{
-    AbstractLiteral, Domain, DomainOpError, FuncAttr, HasDomain, Literal, Moo, RecordEntry,
+    AbstractLiteral, Domain, DomainOpError, FuncAttr, HasDomain, Literal, Moo, FieldEntry,
     SetAttr, Typeable,
     domains::{domain::Int, range::Range},
 };
@@ -19,26 +19,26 @@ use uniplate::Uniplate;
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Uniplate, Quine)]
 #[path_prefix(conjure_cp::ast)]
-pub struct RecordEntryGround {
+pub struct FieldEntryGround {
     pub name: Name,
     pub domain: Moo<GroundDomain>,
 }
 
-impl From<RecordEntryGround> for RecordEntry {
-    fn from(value: RecordEntryGround) -> Self {
-        RecordEntry {
+impl From<FieldEntryGround> for FieldEntry {
+    fn from(value: FieldEntryGround) -> Self {
+        FieldEntry {
             name: value.name,
             domain: value.domain.into(),
         }
     }
 }
 
-impl TryFrom<RecordEntry> for RecordEntryGround {
+impl TryFrom<FieldEntry> for FieldEntryGround {
     type Error = DomainOpError;
 
-    fn try_from(value: RecordEntry) -> Result<Self, Self::Error> {
+    fn try_from(value: FieldEntry) -> Result<Self, Self::Error> {
         match value.domain.as_ref() {
-            Domain::Ground(gd) => Ok(RecordEntryGround {
+            Domain::Ground(gd) => Ok(FieldEntryGround {
                 name: value.name,
                 domain: gd.clone(),
             }),
@@ -66,11 +66,11 @@ pub enum GroundDomain {
     /// A tuple of N elements, each with its own domain
     Tuple(Vec<Moo<GroundDomain>>),
     /// A record
-    Record(Vec<RecordEntryGround>),
+    Record(Vec<FieldEntryGround>),
     /// A function with a domain and range
     Function(FuncAttr, Moo<GroundDomain>, Moo<GroundDomain>),
-    /// A variant domain with its domain options (reusing record entries)
-    Variant(Vec<RecordEntryGround>),
+    /// A variant domain with its domain options (reusing field entries)
+    Variant(Vec<FieldEntryGround>),
 }
 
 impl GroundDomain {
@@ -316,15 +316,13 @@ impl GroundDomain {
                 todo!("Length bound of functions is not yet supported")
             }
             GroundDomain::Variant(entries) => {
-                let mut largest = 1u64;
+                let mut ans = 1u64;
                 for entry in entries {
                     let sz = entry.domain.length()?;
-                    // Only one name-domain pair is inside the variant, so we must assume the largest for space
-                    if sz > largest {
-                        largest = sz;
-                    }
+                    // Only one field can be in the variant at once
+                    ans = ans.checked_add(sz).ok_or(DomainOpError::TooLarge)?;
                 }
-                Ok(largest)
+                Ok(ans)
             }
         }
     }
@@ -928,7 +926,7 @@ impl GroundDomain {
 
                 Ok(GroundDomain::Record(
                     izip!(field_names, elem_domains)
-                        .map(|(name, domain)| RecordEntryGround { name, domain })
+                        .map(|(name, domain)| FieldEntryGround { name, domain })
                         .collect(),
                 ))
             }
