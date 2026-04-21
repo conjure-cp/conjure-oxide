@@ -1254,7 +1254,9 @@ impl Expression {
                             Ok(size) => size.into(),
                             Err(_) => s_range.into(),
                         };
-                    s_attr.size = new_size;
+                    dbg!(&s_attr, &new_size);
+                    s_attr.size = new_size.clone();
+                    t_attr.size = new_size;
                 } else {
                     s_attr.size = Range::Single(IntVal::Const(0));
                 }
