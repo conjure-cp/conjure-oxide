@@ -595,13 +595,8 @@ impl Display for UnresolvedDomain {
             UnresolvedDomain::Function(attribute, domain, codomain) => {
                 write!(f, "function {} {} --> {} ", attribute, domain, codomain)
             }
-            UnresolvedDomain::Relation(attribute, domains) => {
-                write!(
-                    f,
-                    "relation {} ({})",
-                    attribute,
-                    pretty_vec(&domains.iter().collect_vec())
-                )
+            UnresolvedDomain::Relation(attrs, domains) => {
+                write!(f, "relation {} of ({})", attrs, domains.iter().join(" * "))
             }
         }
     }
