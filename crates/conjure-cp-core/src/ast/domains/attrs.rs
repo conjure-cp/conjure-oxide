@@ -175,8 +175,8 @@ impl<A: Display> Display for SequenceAttr<A> {
         let size_str = match &self.size {
             Range::Single(x) => format!("size {x}"),
             Range::Bounded(l, r) => format!("minSize {l}, maxSize {r}"),
-            Range::UnboundedL(r) => format!("maxSize {r} "),
-            Range::UnboundedR(l) => format!("minSize {l} "),
+            Range::UnboundedL(r) => format!("maxSize {r}"),
+            Range::UnboundedR(l) => format!("minSize {l}"),
             Range::Unbounded => "".to_string(),
         };
         let mut strs = [size_str, self.jectivity.to_string()]
