@@ -628,6 +628,7 @@ fn binary_operator(op_name: &str) -> Option<BinOp> {
         "MkOpPreImage" => Some(Expression::PreImage),
         "MkOpInverse" => Some(Expression::Inverse),
         "MkOpRestrict" => Some(Expression::Restrict),
+        "MkOpActive" => Some(Expression::Active),
         _ => None,
     }
 }
@@ -693,6 +694,24 @@ pub fn parse_expression(obj: &JsonValue, scope: &SymbolTablePtr) -> Result<Expre
                 .and_then(|x| x.as_object())
                 .ok_or_else(|| fail("Reference[0].as_object"))?;
             let name = ref_obj
+                .get("Name")
+                .and_then(|x| x.as_str())
+                .ok_or_else(|| fail("Reference[0].Name.as_str"))?;
+            let user_name = Name::User(Ustr::from(name));
+
+            let declaration: DeclarationPtr = scope
+                .read()
+                .lookup(&user_name)
+                .ok_or_else(|| fail("Reference.lookup"))?;
+
+            Ok(Expression::Atomic(
+                Metadata::new(),
+                Atom::Reference(crate::ast::Reference::new(declaration)),
+            ))
+        }
+        // In the case where refering to fields. This not behind a reference
+        Value::Object(refe) if refe.contains_key("Name") => {
+            let name = refe
                 .get("Name")
                 .and_then(|x| x.as_str())
                 .ok_or_else(|| fail("Reference[0].Name.as_str"))?;

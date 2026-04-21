@@ -587,6 +587,10 @@ pub enum Expression {
 
     /// Low-level minion constraint. See Expression::LexLeq
     FlatLexLeq(Metadata, Vec<Atom>, Vec<Atom>),
+
+    /// To tell which field is used in a variant domain
+    #[compatible(JsonInput)]
+    Active(Metadata, Moo<Expression>, Moo<Expression>),
 }
 
 // for the given matrix literal, return a bounded domain from the min to max of applying op to each
@@ -1237,6 +1241,7 @@ impl Expression {
             Expression::LexGeq(..) => Some(Domain::bool()),
             Expression::FlatLexLt(..) => Some(Domain::bool()),
             Expression::FlatLexLeq(..) => Some(Domain::bool()),
+            Expression::Active(..) => Some(Domain::bool()),
         }
     }
 
@@ -1335,7 +1340,8 @@ impl Expression {
             FlatLexLt,
             FlatLexLeq,
             NegativeTable,
-            Table
+            Table,
+            Active,
         )
     }
 
@@ -1915,6 +1921,9 @@ impl Display for Expression {
             Expression::FlatLexLeq(_, a, b) => {
                 write!(f, "FlatLexLeq({}, {})", pretty_vec(a), pretty_vec(b))
             }
+            Expression::Active(_, variant, field_name) => {
+                write!(f, "active({variant}, {field_name})")
+            }
         }
     }
 }
@@ -2099,6 +2108,7 @@ impl Typeable for Expression {
             Expression::LexGeq(..) => ReturnType::Bool,
             Expression::FlatLexLt(..) => ReturnType::Bool,
             Expression::FlatLexLeq(..) => ReturnType::Bool,
+            Expression::Active(..) => ReturnType::Bool,
         }
     }
 }
@@ -2195,7 +2205,8 @@ impl Expression {
             | Expression::LexLt(_, m1, m2)
             | Expression::LexLeq(_, m1, m2)
             | Expression::LexGt(_, m1, m2)
-            | Expression::LexGeq(_, m1, m2) => {
+            | Expression::LexGeq(_, m1, m2)
+            | Expression::Active(_, m1, m2) => {
                 f(m1);
                 f(m2);
             }
@@ -2391,7 +2402,8 @@ impl CacheHashable for Expression {
             | Expression::LexLt(_, m1, m2)
             | Expression::LexLeq(_, m1, m2)
             | Expression::LexGt(_, m1, m2)
-            | Expression::LexGeq(_, m1, m2) => {
+            | Expression::LexGeq(_, m1, m2)
+            | Expression::Active(_, m1, m2) => {
                 m1.get_cached_hash().hash(&mut hasher);
                 m2.get_cached_hash().hash(&mut hasher);
             }
