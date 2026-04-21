@@ -1234,7 +1234,7 @@ impl Expression {
                 Some(Domain::function(new_attrs, new_dom, codom.clone()))
             }
             Expression::Subsequence(_, _, _) => Some(Domain::bool()),
-            Expression::Substring(_, s, t) => Some(Domain::bool()),
+            Expression::Substring(_, _, _) => Some(Domain::bool()),
             Expression::Inverse(..) => Some(Domain::bool()),
             Expression::LexLt(..) => Some(Domain::bool()),
             Expression::LexLeq(..) => Some(Domain::bool()),
