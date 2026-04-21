@@ -837,10 +837,7 @@ fn parse_abs_variant(abs_variant: &Value, scope: &SymbolTablePtr) -> Result<Expr
     let value = parse_expression(&entry[2], scope)?;
 
     let name = Name::User(Ustr::from(name));
-    let rec_entry = FieldValue {
-        name,
-        value,
-    };
+    let rec_entry = FieldValue { name, value };
 
     Ok(Expression::AbstractLiteral(
         Metadata::new(),

@@ -736,6 +736,13 @@ impl Expression {
                     return None;
                 }
 
+                // may actually use the value in the future
+                #[allow(clippy::redundant_pattern_matching)]
+                if let Some(_) = dom.as_variant() {
+                    // TODO: We can implement proper indexing for variants
+                    return None;
+                }
+
                 bug!("subject of an index operation should support indexing")
             }
             Expression::UnsafeSlice(_, matrix, indices)
@@ -1942,7 +1949,9 @@ impl Typeable for Expression {
                         elem_typ
                     }
                     // TODO: We can implement indexing for these eventually
-                    ReturnType::Record(_) | ReturnType::Tuple(_) => ReturnType::Unknown,
+                    ReturnType::Record(_) | ReturnType::Tuple(_) | ReturnType::Variant(_) => {
+                        ReturnType::Unknown
+                    }
                     _ => bug!(
                         "Invalid indexing operation: expected the operand to be a collection, got {self}: {subject_ty}"
                     ),
