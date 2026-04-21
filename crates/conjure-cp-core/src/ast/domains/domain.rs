@@ -572,15 +572,14 @@ impl Domain {
         None
     }
 
-    /// If this is a function domain, convert it to unresolved and get mutable references to
-    /// its (attrs, domain, co-domain).
-    /// The domain always becomes [UnresolvedDomain::Function] after this operation.
+    /// If this is a sequence domain, convert it to unresolved and get mutable references to
     pub fn as_sequence_mut(&mut self) -> Option<(&mut SequenceAttr<IntVal>, &mut Moo<Domain>)> {
         if let Some(GroundDomain::Sequence(attrs, dom)) = self.as_ground() {
-            *self = Domain::Unresolved(Moo::new(UnresolvedDomain::Sequence(
-                attrs.clone().into(),
-                dom.clone().into(),
-            )));
+            // *self = Domain::Unresolved(Moo::new(UnresolvedDomain::Sequence(
+            //     attrs.clone().into(),
+            //     dom.clone().into(),
+            // )));
+            return Some(self.att)
         }
 
         if let Some(UnresolvedDomain::Sequence(attrs, dom)) = self.as_unresolved_mut() {
