@@ -207,10 +207,10 @@ impl<A> Default for RelAttr<A> {
 impl<A: Display> Display for RelAttr<A> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let size_str = match &self.size {
-            Range::Single(x) => format!("size({x})"),
-            Range::Bounded(l, r) => format!("minSize({l}), maxSize({r})"),
-            Range::UnboundedL(r) => format!("maxSize({r})"),
-            Range::UnboundedR(l) => format!("minSize({l})"),
+            Range::Single(x) => format!("size {x}"),
+            Range::Bounded(l, r) => format!("minSize {l}, maxSize {r}"),
+            Range::UnboundedL(r) => format!("maxSize {r}"),
+            Range::UnboundedR(l) => format!("minSize {l}"),
             Range::Unbounded => "".to_string(),
         };
         let mut strs = [size_str, self.binary.iter().join(", ")]
