@@ -292,6 +292,7 @@ fn parse_variable(ctx: &mut ParseContext, node: &Node) -> Result<Option<Atom>, F
                 DeclarationKind::Find(_) => SymbolKind::FindVar,
                 DeclarationKind::Given(_) => SymbolKind::GivenVar,
                 DeclarationKind::ValueLetting(_, _) => SymbolKind::LettingVar,
+                DeclarationKind::DomainLetting(_) => SymbolKind::LettingVar,
                 _ => return Ok(None),
             };
 
