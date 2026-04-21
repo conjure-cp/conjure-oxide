@@ -7,14 +7,13 @@ use minion_ast::Model as MinionModel;
 use minion_sys::ast as minion_ast;
 use minion_sys::run_minion;
 
+use crate::Model as ConjureModel;
 use crate::ast::{self as conjure_ast, Expression, Name};
 use crate::settings::SolverFamily;
 use crate::solver::SolverCallback;
 use crate::solver::SolverMutCallback;
 use crate::stats::SolverStats;
-use crate::Model as ConjureModel;
 
-use crate::solver::private;
 use crate::solver::SearchComplete::{HasSolutions, NoSolutions};
 use crate::solver::SearchIncomplete::UserTerminated;
 use crate::solver::SearchStatus::{Complete, Incomplete};
@@ -22,6 +21,7 @@ use crate::solver::SolveSuccess;
 use crate::solver::SolverAdaptor;
 use crate::solver::SolverError;
 use crate::solver::SolverError::OpNotImplemented;
+use crate::solver::private;
 
 use super::dominance_injection::{
     add_dominance_constraints_for_solution, add_represented_decision_values,

@@ -8,12 +8,12 @@ use minion_sys::error::{MinionError, RuntimeError};
 use minion_sys::{add_aux_var_during_search, add_constraint_during_search};
 use uniplate::Uniplate;
 
+use crate::Model as ConjureModel;
 use crate::ast::{Atom, Expression, GroundDomain, Literal, Metadata, Moo, Name};
 use crate::rule_engine::{get_rule_sets_for_solver_family, rewrite_model_with_configured_rewriter};
-use crate::settings::{current_rewriter, SolverFamily};
+use crate::settings::{SolverFamily, current_rewriter};
 use crate::solver::SolverError;
 use crate::solver::SolverError::{Runtime, RuntimeNotImplemented};
-use crate::Model as ConjureModel;
 
 use super::parse_model::model_to_minion;
 
