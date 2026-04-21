@@ -4,14 +4,10 @@ use crate::parser::ParseContext;
 use crate::parser::atom::parse_atom;
 use crate::parser::comprehension::parse_quantifier_or_aggregate_expr;
 use crate::util::TypecheckingContext;
-use crate::util::named_children;
 use crate::{child, field, named_child};
-use conjure_cp_core::ast::{Atom, DeclarationKind, ReturnType, Typeable};
-use conjure_cp_core::ast::{Expression, Metadata, Moo};
-use conjure_cp_core::into_matrix_expr;
+use conjure_cp_core::ast::{Expression, GroundDomain, Metadata, Moo};
 use conjure_cp_core::{domain_int, matrix_expr, range};
 use tree_sitter::Node;
-use uniplate::Uniplate;
 
 pub fn parse_expression(
     ctx: &mut ParseContext,
@@ -19,11 +15,56 @@ pub fn parse_expression(
 ) -> Result<Option<Expression>, FatalParseError> {
     match node.kind() {
         "atom" => parse_atom(ctx, &node),
-        "bool_expr" => parse_boolean_expression(ctx, &node),
-        "arithmetic_expr" => parse_arithmetic_expression(ctx, &node),
-        "comparison_expr" => parse_comparison_expression(ctx, &node),
-        "dominance_relation" => parse_dominance_relation(ctx, &node),
-        "all_diff_comparison" => parse_all_diff_comparison(ctx, &node),
+        "bool_expr" => {
+            if ctx.typechecking_context == TypecheckingContext::Arithmetic {
+                ctx.record_error(RecoverableParseError::new(
+                    format!(
+                        "Type error: {}\n\tExepected: int\n\tGot: boolean expression",
+                        &ctx.source_code[node.start_byte()..node.end_byte()]
+                    ),
+                    Some(node.range()),
+                ));
+                return Ok(None);
+            }
+            parse_boolean_expression(ctx, &node)
+        }
+        "arithmetic_expr" => {
+            if ctx.typechecking_context == TypecheckingContext::Boolean {
+                ctx.record_error(RecoverableParseError::new(
+                    format!(
+                        "Type error: {}\n\tExepected: bool\n\tGot: arithmetic expression",
+                        &ctx.source_code[node.start_byte()..node.end_byte()]
+                    ),
+                    Some(node.range()),
+                ));
+                return Ok(None);
+            }
+            parse_arithmetic_expression(ctx, &node)
+        }
+        "comparison_expr" => {
+            if ctx.typechecking_context == TypecheckingContext::Arithmetic {
+                ctx.record_error(RecoverableParseError::new(
+                    format!(
+                        "Type error: {}\n\tExepected: int\n\tGot: comparison expression",
+                        &ctx.source_code[node.start_byte()..node.end_byte()]
+                    ),
+                    Some(node.range()),
+                ));
+                return Ok(None);
+            }
+            parse_comparison_expression(ctx, &node)
+        }
+        "all_diff_comparison" => {
+            if ctx.typechecking_context == TypecheckingContext::Arithmetic {
+                ctx.record_error(RecoverableParseError::new(
+                    format!("Type error: {}\n\tExepected: arithmetic expression\n\tFound: comparison expression", &ctx.source_code[node.start_byte()..node.end_byte()]),
+                    Some(node.range()),
+                ));
+                return Ok(None);
+            }
+            ctx.typechecking_context = TypecheckingContext::Matrix;
+            parse_all_diff_comparison(ctx, &node)
+        }
         _ => {
             ctx.record_error(RecoverableParseError::new(
                 format!("Unexpected expression type: '{}'", node.kind()),
@@ -34,291 +75,12 @@ pub fn parse_expression(
     }
 }
 
-fn parse_dominance_relation(
-    ctx: &mut ParseContext,
-    node: &Node,
-) -> Result<Option<Expression>, FatalParseError> {
-    if ctx.root.kind() == "dominance_relation" {
-        ctx.record_error(RecoverableParseError::new(
-            "Nested dominance relations are not allowed".to_string(),
-            Some(node.range()),
-        ));
-        return Ok(None);
-    }
-
-    let Some(inner_node) = field!(recover, ctx, node, "expression") else {
-        return Ok(None);
-    };
-
-    // NB: In all other cases, we keep the root the same;
-    // However, here we create a new context with the new root so downstream functions
-    // know we are inside a dominance relation
-    let mut inner_ctx = ParseContext {
-        source_code: ctx.source_code,
-        root: node,
-        symbols: ctx.symbols.clone(),
-        errors: ctx.errors,
-        source_map: &mut *ctx.source_map,
-        decl_spans: ctx.decl_spans,
-        typechecking_context: ctx.typechecking_context,
-    };
-
-    let Some(inner) = parse_expression(&mut inner_ctx, inner_node)? else {
-        return Ok(None);
-    };
-
-    Ok(Some(Expression::DominanceRelation(
-        Metadata::new(),
-        Moo::new(inner),
-    )))
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum ParetoDirection {
-    Minimising,
-    Maximising,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum ReferenceRewriteAction {
-    LeaveAsIs,
-    ExpandValueLetting,
-    WrapInFromSolution,
-}
-
-pub fn parse_pareto_expression(
-    ctx: &mut ParseContext,
-    node: &Node,
-) -> Result<Option<Expression>, FatalParseError> {
-    if ctx.root.kind() != "dominance_relation" {
-        ctx.record_error(RecoverableParseError::new(
-            "pareto(...) only allowed inside dominance relations".to_string(),
-            Some(node.range()),
-        ));
-        return Ok(None);
-    }
-
-    let mut non_worsening = Vec::new();
-    let mut strict_improvements = Vec::new();
-    let components = field!(node, "components");
-
-    if components.kind() != "pareto_items" {
-        return Err(FatalParseError::internal_error(
-            format!("Unexpected pareto component list: '{}'", components.kind()),
-            Some(components.range()),
-        ));
-    }
-
-    for item_node in named_children(&components) {
-        let direction_node = field!(item_node, "direction");
-        let direction_str =
-            &ctx.source_code[direction_node.start_byte()..direction_node.end_byte()];
-        let direction = match direction_str {
-            "minimising" => ParetoDirection::Minimising,
-            "maximising" => ParetoDirection::Maximising,
-            _ => {
-                return Err(FatalParseError::internal_error(
-                    format!("Unexpected pareto direction: '{direction_str}'"),
-                    Some(direction_node.range()),
-                ));
-            }
-        };
-
-        let component_node = field!(item_node, "expression");
-        let Some(component_expr) = parse_pareto_component(ctx, &component_node)? else {
-            return Ok(None);
-        };
-        let Some((non_worse, strict)) =
-            build_pareto_constraints(ctx, &component_node, component_expr, direction)
-        else {
-            return Ok(None);
-        };
-        non_worsening.push(non_worse);
-        strict_improvements.push(strict);
-    }
-
-    let mut conjuncts = non_worsening;
-    conjuncts.push(combine_with_and_or(strict_improvements, true));
-
-    Ok(Some(combine_with_and_or(conjuncts, false)))
-}
-
-fn parse_pareto_component(
-    ctx: &mut ParseContext,
-    node: &Node,
-) -> Result<Option<Expression>, FatalParseError> {
-    let saved_context = ctx.typechecking_context;
-    ctx.typechecking_context = TypecheckingContext::Unknown;
-    let parsed = parse_expression(ctx, *node)?;
-    ctx.typechecking_context = saved_context;
-    Ok(parsed)
-}
-
-fn build_pareto_constraints(
-    ctx: &mut ParseContext,
-    node: &Node,
-    component: Expression,
-    direction: ParetoDirection,
-) -> Option<(Expression, Expression)> {
-    if component
-        .universe()
-        .iter()
-        .any(|expr| matches!(expr, Expression::FromSolution(_, _)))
-    {
-        ctx.record_error(RecoverableParseError::new(
-            "pareto(...) components cannot contain fromSolution(...) explicitly".to_string(),
-            Some(node.range()),
-        ));
-        return None;
-    }
-
-    let current = expand_value_lettings(&component);
-    let previous = lift_to_previous_solution(&current);
-
-    match current.return_type() {
-        ReturnType::Int => Some(match direction {
-            ParetoDirection::Minimising => (
-                Expression::Leq(
-                    Metadata::new(),
-                    Moo::new(current.clone()),
-                    Moo::new(previous.clone()),
-                ),
-                Expression::Lt(Metadata::new(), Moo::new(current), Moo::new(previous)),
-            ),
-            ParetoDirection::Maximising => (
-                Expression::Geq(
-                    Metadata::new(),
-                    Moo::new(current.clone()),
-                    Moo::new(previous.clone()),
-                ),
-                Expression::Gt(Metadata::new(), Moo::new(current), Moo::new(previous)),
-            ),
-        }),
-        ReturnType::Bool => Some(match direction {
-            ParetoDirection::Minimising => (
-                Expression::Imply(
-                    Metadata::new(),
-                    Moo::new(current.clone()),
-                    Moo::new(previous.clone()),
-                ),
-                combine_with_and_or(
-                    vec![
-                        Expression::Not(Metadata::new(), Moo::new(current)),
-                        previous,
-                    ],
-                    false,
-                ),
-            ),
-            ParetoDirection::Maximising => (
-                Expression::Imply(
-                    Metadata::new(),
-                    Moo::new(previous.clone()),
-                    Moo::new(current.clone()),
-                ),
-                combine_with_and_or(
-                    vec![
-                        current,
-                        Expression::Not(Metadata::new(), Moo::new(previous)),
-                    ],
-                    false,
-                ),
-            ),
-        }),
-        found => {
-            ctx.record_error(RecoverableParseError::new(
-                format!(
-                    "pareto(...) only supports int or bool components, found '{}'",
-                    found
-                ),
-                Some(node.range()),
-            ));
-            None
-        }
-    }
-}
-
-fn expand_value_lettings(expr: &Expression) -> Expression {
-    rewrite_references(expr, false)
-}
-
-fn lift_to_previous_solution(expr: &Expression) -> Expression {
-    rewrite_references(expr, true)
-}
-
-fn rewrite_references(expr: &Expression, to_previous_solution: bool) -> Expression {
-    let mut lifted = expr.clone();
-
-    loop {
-        let next = lifted.rewrite(&|subexpr| match subexpr {
-            Expression::Atomic(_, Atom::Reference(ref reference)) => {
-                let action = {
-                    let kind = reference.ptr.kind();
-                    match &*kind {
-                        DeclarationKind::Find(_) if to_previous_solution => {
-                            ReferenceRewriteAction::WrapInFromSolution
-                        }
-                        DeclarationKind::Find(_) => ReferenceRewriteAction::LeaveAsIs,
-                        DeclarationKind::ValueLetting(_, _)
-                        | DeclarationKind::TemporaryValueLetting(_) => {
-                            ReferenceRewriteAction::ExpandValueLetting
-                        }
-                        DeclarationKind::Given(_)
-                        | DeclarationKind::Quantified(_)
-                        | DeclarationKind::QuantifiedExpr(_)
-                        | DeclarationKind::DomainLetting(_)
-                        | DeclarationKind::RecordField(_)
-                        | _ => ReferenceRewriteAction::LeaveAsIs,
-                    }
-                };
-
-                match action {
-                    ReferenceRewriteAction::LeaveAsIs => Some(subexpr),
-                    ReferenceRewriteAction::ExpandValueLetting => reference.resolve_expression(),
-                    ReferenceRewriteAction::WrapInFromSolution => Some(Expression::FromSolution(
-                        Metadata::new(),
-                        Moo::new(Atom::Reference(reference.clone())),
-                    )),
-                }
-            }
-            _ => Some(subexpr),
-        });
-
-        if next == lifted {
-            return lifted;
-        }
-
-        lifted = next;
-    }
-}
-
-fn combine_with_and_or(exprs: Vec<Expression>, is_or: bool) -> Expression {
-    match exprs.len() {
-        0 => {
-            if is_or {
-                Expression::Or(Metadata::new(), Moo::new(into_matrix_expr![exprs]))
-            } else {
-                Expression::And(Metadata::new(), Moo::new(into_matrix_expr![exprs]))
-            }
-        }
-        1 => match exprs.into_iter().next() {
-            Some(expr) => expr,
-            None => unreachable!("vector length already checked"),
-        },
-        _ => {
-            if is_or {
-                Expression::Or(Metadata::new(), Moo::new(into_matrix_expr![exprs]))
-            } else {
-                Expression::And(Metadata::new(), Moo::new(into_matrix_expr![exprs]))
-            }
-        }
-    }
-}
-
 fn parse_arithmetic_expression(
     ctx: &mut ParseContext,
     node: &Node,
 ) -> Result<Option<Expression>, FatalParseError> {
     ctx.typechecking_context = TypecheckingContext::Arithmetic;
+    ctx.inner_typechecking_context = TypecheckingContext::Unknown;
     let Some(inner) = named_child!(recover, ctx, node) else {
         return Ok(None);
     };
@@ -333,8 +95,18 @@ fn parse_arithmetic_expression(
             parse_unary_expression(ctx, &inner)
         }
         "exponent" | "product_expr" | "sum_expr" => parse_binary_expression(ctx, &inner),
-        "list_combining_expr_arith" => parse_list_combining_expression(ctx, &inner),
-        "aggregate_expr" => parse_quantifier_or_aggregate_expr(ctx, &inner),
+        "list_combining_expr_arith" => {
+            // list-combining arithmetic operators accept either set or matrix operands
+            ctx.typechecking_context = TypecheckingContext::SetOrMatrix;
+
+            // set inner context to arithmetic to ensure elements of list are arithmetic expressions
+            ctx.inner_typechecking_context = TypecheckingContext::Arithmetic;
+            parse_list_combining_expression(ctx, &inner)
+        }
+        "aggregate_expr" => {
+            ctx.inner_typechecking_context = TypecheckingContext::Arithmetic;
+            parse_quantifier_or_aggregate_expr(ctx, &inner)
+        }
         _ => {
             ctx.record_error(RecoverableParseError::new(
                 format!("Expected arithmetic expression, found: {}", inner.kind()),
@@ -364,8 +136,7 @@ fn parse_comparison_expression(
             parse_binary_expression(ctx, &inner)
         }
         "equality_comparison" => {
-            // Equality works on any type
-            // TODO: add type checking to ensure both sides have the same type
+            // Equality works on any type, typechecking of operands will be handled within parse_binary_expression
             ctx.typechecking_context = TypecheckingContext::Unknown;
             parse_binary_expression(ctx, &inner)
         }
@@ -375,8 +146,7 @@ fn parse_comparison_expression(
             parse_binary_expression(ctx, &inner)
         }
         "all_diff_comparison" => {
-            // TODO: check that operand is a collection with compatible element type.
-            ctx.typechecking_context = TypecheckingContext::Unknown;
+            ctx.typechecking_context = TypecheckingContext::Matrix;
             parse_all_diff_comparison(ctx, &inner)
         }
         _ => {
@@ -394,6 +164,7 @@ fn parse_boolean_expression(
     node: &Node,
 ) -> Result<Option<Expression>, FatalParseError> {
     ctx.typechecking_context = TypecheckingContext::Boolean;
+    ctx.inner_typechecking_context = TypecheckingContext::Unknown;
     let Some(inner) = named_child!(recover, ctx, node) else {
         return Ok(None);
     };
@@ -401,7 +172,14 @@ fn parse_boolean_expression(
         "atom" => parse_atom(ctx, &inner),
         "not_expr" | "sub_bool_expr" => parse_unary_expression(ctx, &inner),
         "and_expr" | "or_expr" | "implication" | "iff_expr" => parse_binary_expression(ctx, &inner),
-        "list_combining_expr_bool" => parse_list_combining_expression(ctx, &inner),
+        "list_combining_expr_bool" => {
+            // list-combining boolean operators accept either set or matrix operands
+            ctx.typechecking_context = TypecheckingContext::SetOrMatrix;
+
+            // set inner context to boolean to ensure elements of list are boolean expressions
+            ctx.inner_typechecking_context = TypecheckingContext::Boolean;
+            parse_list_combining_expression(ctx, &inner)
+        }
         "quantifier_expr" => parse_quantifier_or_aggregate_expr(ctx, &inner),
         _ => {
             ctx.record_error(RecoverableParseError::new(
@@ -425,6 +203,8 @@ fn parse_list_combining_expression(
     let Some(arg_node) = field!(recover, ctx, node, "arg") else {
         return Ok(None);
     };
+    // While parsing inner, the typechecking context is SetOrMatrix
+    // The inner context is either Boolean or Arithmetic so the elements of the set/matrix are typechecked correctly.
     let Some(inner) = parse_atom(ctx, &arg_node)? else {
         return Ok(None);
     };
@@ -564,6 +344,11 @@ pub fn parse_binary_expression(
     // reset context, if needed
     ctx.typechecking_context = saved_ctx;
 
+    // Equality/inequality: enforce right operand to match left operand type when inferable
+    if matches!(op_str, "=" | "!=") {
+        ctx.typechecking_context = inferred_context_from_expression(&left);
+    }
+
     // parse right operand
     let Some(right_node) = field!(recover, ctx, node, "right") else {
         return Ok(None);
@@ -572,10 +357,8 @@ pub fn parse_binary_expression(
         return Ok(None);
     };
 
-    let Some(op_node) = field!(recover, ctx, node, "operator") else {
-        return Ok(None);
-    };
-    let op_str = &ctx.source_code[op_node.start_byte()..op_node.end_byte()];
+    // restore original contexts for parent expression parsing
+    ctx.typechecking_context = saved_ctx;
 
     let mut doc_name = "";
     let expr = match op_str {
@@ -814,4 +597,32 @@ pub fn parse_binary_expression(
     }
 
     expr
+}
+
+fn inferred_context_from_expression(expr: &Expression) -> TypecheckingContext {
+    // TODO: typechecking for index/slice expressions
+    if matches!(
+        expr,
+        Expression::UnsafeIndex(_, _, _) | Expression::UnsafeSlice(_, _, _)
+    ) {
+        return TypecheckingContext::Unknown;
+    }
+
+    let Some(domain) = expr.domain_of() else {
+        return TypecheckingContext::Unknown;
+    };
+    let Some(ground) = domain.resolve() else {
+        return TypecheckingContext::Unknown;
+    };
+
+    match ground.as_ref() {
+        GroundDomain::Bool => TypecheckingContext::Boolean,
+        GroundDomain::Int(_) => TypecheckingContext::Arithmetic,
+        GroundDomain::Set(_, _) => TypecheckingContext::Set,
+        GroundDomain::MSet(_, _) => TypecheckingContext::MSet,
+        GroundDomain::Matrix(_, _) => TypecheckingContext::Matrix,
+        GroundDomain::Tuple(_) => TypecheckingContext::Tuple,
+        GroundDomain::Record(_) => TypecheckingContext::Record,
+        GroundDomain::Function(_, _, _) | GroundDomain::Empty(_) => TypecheckingContext::Unknown,
+    }
 }
