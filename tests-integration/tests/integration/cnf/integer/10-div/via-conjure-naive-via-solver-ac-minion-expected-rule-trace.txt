@@ -1,7 +1,7 @@
 Model before rewriting:
 
-find a: int(1..10)
-find b: int(1..10)
+find a: int(-10..10)
+find b: int(-10..10)
 find c: int(-100..100)
 
 such that
@@ -17,8 +17,21 @@ such that
 --
 
 ({SafeDiv(a, b) @ (b != 0)} = c), 
+   ~~> bubble_up ([("Bubble", 8800)])
+{(SafeDiv(a, b) = c) @ (b != 0)}
+
+--
+
+{(SafeDiv(a, b) = c) @ (b != 0)}, 
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([(SafeDiv(a, b) = c),(b != 0);int(1..)])
+
+--
+
+and([(SafeDiv(a, b) = c),(b != 0);int(1..)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
-(SafeDiv(a, b) = c)
+(SafeDiv(a, b) = c),
+(b != 0)
 
 --
 
@@ -30,11 +43,12 @@ DivEq(a, b, c)
 
 Final model:
 
-find a: int(1..10)
-find b: int(1..10)
+find a: int(-10..10)
+find b: int(-10..10)
 find c: int(-100..100)
 
 such that
 
-DivEq(a, b, c)
+DivEq(a, b, c),
+(b != 0)
 

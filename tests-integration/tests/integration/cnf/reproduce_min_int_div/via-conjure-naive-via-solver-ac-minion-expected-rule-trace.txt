@@ -1,0 +1,72 @@
+Model before rewriting:
+
+find x: int(-8..7)
+find y: int(-8..7)
+find z: int(-16..16)
+
+such that
+
+(x = -(8)),
+(y = 2),
+(z = (x / y))
+
+--
+
+(x = -(8)),
+(y = 2),
+(z = (x / y)), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(x = -8),
+(y = 2),
+(z = (x / y))
+
+--
+
+(x / y), 
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(x, y) @ (y != 0)}
+
+--
+
+(z = {SafeDiv(x, y) @ (y != 0)}), 
+   ~~> bubble_up ([("Bubble", 8800)])
+{(z = SafeDiv(x, y)) @ (y != 0)}
+
+--
+
+{(z = SafeDiv(x, y)) @ (y != 0)}, 
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([(z = SafeDiv(x, y)),(y != 0);int(1..)])
+
+--
+
+(x = -8),
+(y = 2),
+and([(z = SafeDiv(x, y)),(y != 0);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(x = -8),
+(y = 2),
+(z = SafeDiv(x, y)),
+(y != 0)
+
+--
+
+(z = SafeDiv(x, y)), 
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(x, y, z)
+
+--
+
+Final model:
+
+find x: int(-8..7)
+find y: int(-8..7)
+find z: int(-16..16)
+
+such that
+
+(x = -8),
+(y = 2),
+DivEq(x, y, z),
+(y != 0)
+

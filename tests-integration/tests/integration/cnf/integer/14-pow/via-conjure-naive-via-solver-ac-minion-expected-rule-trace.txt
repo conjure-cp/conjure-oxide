@@ -1,0 +1,70 @@
+Model before rewriting:
+
+find a: int(-3..6)
+find b: int(-2..4)
+find c: int(-2000..2000)
+
+such that
+
+((a ** b) = c)
+
+--
+
+(a ** b), 
+   ~~> pow_to_bubble ([("Bubble", 6000)])
+{SafePow(a, b) @ and([or([(a != 0),(b != 0);int(1..)]),(b >= 0);int(1..)])}
+
+--
+
+({SafePow(a, b) @ and([or([(a != 0),(b != 0);int(1..)]),(b >= 0);int(1..)])} = c), 
+   ~~> bubble_up ([("Bubble", 8800)])
+{(SafePow(a, b) = c) @ and([or([(a != 0),(b != 0);int(1..)]),(b >= 0);int(1..)])}
+
+--
+
+{(SafePow(a, b) = c) @ and([or([(a != 0),(b != 0);int(1..)]),(b >= 0);int(1..)])}, 
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([(SafePow(a, b) = c),and([or([(a != 0),(b != 0);int(1..)]),(b >= 0);int(1..)]);int(1..)])
+
+--
+
+and([(SafePow(a, b) = c),and([or([(a != 0),(b != 0);int(1..)]),(b >= 0);int(1..)]);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(SafePow(a, b) = c),
+and([or([(a != 0),(b != 0);int(1..)]),(b >= 0);int(1..)])
+
+--
+
+(SafePow(a, b) = c),
+and([or([(a != 0),(b != 0);int(1..)]),(b >= 0);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(SafePow(a, b) = c),
+or([(a != 0),(b != 0);int(1..)]),
+(b >= 0)
+
+--
+
+(SafePow(a, b) = c), 
+   ~~> introduce_poweq ([("Minion", 4200)])
+MinionPow(a,b,c)
+
+--
+
+(b >= 0), 
+   ~~> geq_to_ineq ([("Minion", 4100)])
+Ineq(0, b, 0)
+
+--
+
+Final model:
+
+find a: int(-3..6)
+find b: int(-2..4)
+find c: int(-2000..2000)
+
+such that
+
+MinionPow(a,b,c),
+or([(a != 0),(b != 0);int(1..)]),
+Ineq(0, b, 0)
+

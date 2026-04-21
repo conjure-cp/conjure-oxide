@@ -1,11 +1,12 @@
 Model before rewriting:
 
-find a: int(1..30)
-find b: int(1..30)
+find a: int(-30..30)
+find b: int(-30..30)
+find c: int(-30, 30)
 
 such that
 
-(product([a,b;int(1..2)]) = 30)
+(product([a,b;int(1..2)]) = c)
 
 --
 
@@ -15,18 +16,19 @@ product([a,b;int(1..)])
 
 --
 
-(product([a,b;int(1..)]) = 30), 
+(product([a,b;int(1..)]) = c), 
    ~~> introduce_producteq ([("Minion", 4200)])
-FlatProductEq(b,a,30)
+FlatProductEq(b,a,c)
 
 --
 
 Final model:
 
-find a: int(1..30)
-find b: int(1..30)
+find a: int(-30..30)
+find b: int(-30..30)
+find c: int(-30, 30)
 
 such that
 
-FlatProductEq(b,a,30)
+FlatProductEq(b,a,c)
 
