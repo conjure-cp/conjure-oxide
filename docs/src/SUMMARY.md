@@ -2,8 +2,11 @@
 - [Introduction](intro.md)
     - [Purpose]()
     - [Reading This Book]()
+    - [Glossary]()
     - [Side Projects]()
     - [Useful Links]()
+- [For Interested Students]()
+- [Contributors]()
 
 # User's Guide
 - [Installation](getting_started/installation.md)
@@ -30,3 +33,36 @@
 
 
 # Developer's Guide
+- [Project Overview]()
+    - [General Structure]()
+    - [Main Concepts]()
+    - [Useful Libraries]()
+- [Coding Resources and Conventions]()
+    - [Style Guide]()
+    - [Benchmarking Guide]()
+    - [Crate Structure]()
+    - [Functional Rust]()
+- [Architecture]()
+    - [Essence Parser]()
+    - [Rule Types]()
+    - [Solvers]()
+    - [SAT Encoding Types]()
+    - [Flatten]()
+    - [Types]()
+        - [Sets]()
+        - [Functions]()
+        - [Multisets]()
+    - [LSP]()
+        - [Error Detection]()
+- [Testing]()
+    - [Setup]()
+    - [Implementation]()
+- [CI/CD for Developers]()
+    
+
+# Nuggets
+- [Design Documents](./developers_guide/design_documents/index.md)
+  - [2023‐11: High Level Plan](./developers_guide/design_documents/2023_11.md)
+  - [2024‐03: Implementing Uniplates and Biplates with Structure Preserving Trees](./developers_guide/design_documents/2024_03.md)
+  - [Semantics of Rewriting Expressions with Side‐Effects](./developers_guide/design_documents/semantics-of-rewriting-expressions.md)
+  - [What we didn't do](./developers_guide/design_documents/what_we_didnt_do.md)
