@@ -83,20 +83,13 @@ impl Backend {
         self.handle_diagnostics(&uri.clone(), cache_content).await;
     }
     pub async fn handle_did_save(&self, params: DidSaveTextDocumentParams) {
-        //if save, do not update existing entry,simply access from cache
+        // Diagnostics are driven by did_change. Re-publishing cached diagnostics on save can
+        // race with in-flight did_change parsing and temporarily re-show stale diagnostics.
         let uri = params.text_document.uri;
-        let lsp_cache = &self.lsp_cache;
-
-        if let Some(lsp_cont) = lsp_cache.get(&uri).await {
-            //CANNOT USE PRINTLNs AS THIS WILL BREAK CONNECTION WITH SERVER
-
-            //check versioning? might modify for dirty clean later cos i dont fw current situ
-
-            self.client
-                .log_message(MessageType::INFO, "Did save document")
-                .await;
-            self.handle_diagnostics(&uri, lsp_cont).await;
-        }
+        let _ = uri; // keep param usage explicit for now
+        self.client
+            .log_message(MessageType::INFO, "Did save document")
+            .await;
     }
     pub async fn handle_did_change(&self, params: DidChangeTextDocumentParams) {
         let uri = params.text_document.uri;
