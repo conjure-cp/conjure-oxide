@@ -733,7 +733,7 @@ impl Expression {
             Expression::Metavar(_, _) => None,
             Expression::Comprehension(_, comprehension) => comprehension.domain_of(),
             Expression::AbstractComprehension(_, comprehension) => comprehension.domain_of(),
-            Expression::UnsafeIndex(_, matrix, _) | Expression::SafeIndex(_, matrix, _) => {
+            Expression::UnsafeIndex(_, matrix, index) | Expression::SafeIndex(_, matrix, index) => {
                 let dom = matrix.domain_of()?;
                 if let Some((elem_domain, _)) = dom.as_matrix() {
                     return Some(elem_domain);
@@ -746,18 +746,20 @@ impl Expression {
                     return None;
                 }
 
-                // may actually use the value in the future
-                #[allow(clippy::redundant_pattern_matching)]
-                if let Some(_) = dom.as_record() {
-                    // TODO: We can implement proper indexing for records
-                    return None;
-                }
-
-                // may actually use the value in the future
-                #[allow(clippy::redundant_pattern_matching)]
-                if let Some(_) = dom.as_variant() {
-                    // TODO: We can implement proper indexing for variants
-                    return None;
+                if let Some(doms) = dom.as_variant().or(dom.as_record()) {
+                    let index_expr = index.first()?;
+                    return match index_expr {
+                        Expression::Atomic(_, atom) => {
+                            let decl = atom.clone().into_declaration();
+                            for inner_dom in doms {
+                                if *decl.name() == inner_dom.name{
+                                    return Some(inner_dom.domain)
+                                }
+                            }
+                            None
+                        },
+                        _ => None
+                    }
                 }
 
                 bug!("subject of an index operation should support indexing")
