@@ -138,7 +138,6 @@ pub fn encode_semantic_tokens(source_map: &SourceMap, source: &str) -> Vec<u32> 
         })
         .collect();
 
-
     entries.sort_by_key(|&(line, col, _, _, _)| (line, col));
 
     let mut data = Vec::with_capacity(entries.len() * 5);
