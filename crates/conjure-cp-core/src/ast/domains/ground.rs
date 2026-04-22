@@ -1,3 +1,4 @@
+use crate::ast::IntVal;
 use crate::ast::domains::MSetAttr;
 use crate::ast::enumerated::EnumeratedType;
 use crate::ast::pretty::pretty_vec;
@@ -71,7 +72,7 @@ pub enum GroundDomain {
     /// A function with a domain and range
     Function(FuncAttr, Moo<GroundDomain>, Moo<GroundDomain>),
     /// An enumerated type
-    EnumeratedType(EnumeratedType, Vec<Range<Name>>),
+    EnumeratedType(Moo<EnumeratedType>, Vec<Range<u32>>),
     /// An unnamed type
     UnnamedType(u32),
 }
@@ -288,24 +289,24 @@ impl GroundDomain {
             GroundDomain::Function(_, _, _) => {
                 todo!("Length bound of functions is not yet supported")
             }
-            GroundDomain::EnumeratedType(e, ranges) => {
+            GroundDomain::EnumeratedType(et, ranges) => {
                 if ranges.is_empty() || ranges[0].is_unbounded() {
-                    return Ok(e.variants.len() as u64);
+                    return Ok(et.len() as u64);
                 }
 
                 // TODO: Fix
                 let mut length = 0;
 
-                // let low = ranges[0].low().unwrap_or(&0);
-                // length += (ranges[0].high().unwrap() - low) as u64;
-                //
-                // for range in ranges {
-                //     if let Some(range_length) = range.length() {
-                //         length += range_length as u64;
-                //     } else {
-                //         length += e.variants.len() as u64 - *range.low().unwrap() as u64;
-                //     }
-                // }
+                let low = ranges[0].low().unwrap_or(&0);
+                length += (ranges[0].high().unwrap() - low) as u64;
+
+                for range in ranges {
+                    if let Some(range_length) = range.length() {
+                        length += range_length as u64;
+                    } else {
+                        length += et.len() as u64 - *range.low().unwrap() as u64;
+                    }
+                }
 
                 Ok(length)
             }
@@ -752,6 +753,26 @@ impl GroundDomain {
                     Ok(GroundDomain::Bool)
                 }
             }
+            Literal::EnumVariant(first_ev) => {
+                let mut variants = BTreeSet::new();
+
+                for lit in literals {
+                    let Literal::EnumVariant(current_ev) = lit else {
+                        return Err(DomainOpError::WrongType);
+                    };
+
+                    if current_ev.ty != first_ev.ty {
+                        return Err(DomainOpError::WrongType);
+                    }
+
+                    variants.insert(current_ev.variant);
+                }
+
+                Ok(GroundDomain::EnumeratedType(
+                    first_ev.ty.clone(),
+                    variants.into_iter().map(Range::Single).collect(),
+                ))
+            }
             Literal::AbstractLiteral(AbstractLiteral::Set(_)) => {
                 let mut all_elems = vec![];
 
@@ -966,9 +987,9 @@ impl Typeable for GroundDomain {
             GroundDomain::Function(_, dom, cdom) => {
                 ReturnType::Function(Box::new(dom.return_type()), Box::new(cdom.return_type()))
             }
-            GroundDomain::EnumeratedType(e, _) => ReturnType::EnumeratedType(e.clone()),
+            GroundDomain::EnumeratedType(et, _) => ReturnType::EnumeratedType(et.clone()),
             // TODO: Ensure bounded range on type level
-            GroundDomain::UnnamedType(size) => ReturnType::UnnamedType(*size),
+            GroundDomain::UnnamedType(size) => ReturnType::UnnamedType,
         }
     }
 }
@@ -1017,14 +1038,14 @@ impl Display for GroundDomain {
             GroundDomain::Function(attribute, domain, codomain) => {
                 write!(f, "function {} {} --> {} ", attribute, domain, codomain)
             }
-            GroundDomain::EnumeratedType(e, range) => {
-                let variants: Vec<_> = e
-                    .variants
-                    .iter()
-                    .filter(|v| range.iter().any(|r| r.contains(v)))
-                    .collect();
-
-                write!(f, "enum variants {}", pretty_vec(&variants))
+            GroundDomain::EnumeratedType(et, ranges) => {
+                if ranges.iter().all(Range::is_lower_or_upper_bounded) {
+                    let rngs: String = ranges.iter().map(|r| format!("{r}")).join(", ");
+                    write!(f, "{}({})", et, rngs)
+                } else {
+                    write!(f, "{}", et)
+                }
+                // TODO: Convert to Names in ranges
             }
             GroundDomain::UnnamedType(size) => {
                 write!(f, "unnamed type of size {}", &size)

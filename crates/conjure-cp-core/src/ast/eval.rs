@@ -1,5 +1,8 @@
 #![allow(dead_code)]
-use crate::ast::{AbstractLiteral, Atom, Expression as Expr, Literal as Lit, Metadata, matrix};
+use crate::ast::enumerated::EnumVariant;
+use crate::ast::{
+    AbstractLiteral, Atom, EnumVariantVal, Expression as Expr, Literal as Lit, Metadata, matrix,
+};
 use crate::into_matrix;
 use itertools::{Itertools as _, izip};
 use std::cmp::Ordering as CmpOrdering;
@@ -447,7 +450,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                     return None;
                 };
                 match x {
-                    Lit::Int(_) | Lit::Bool(_) => {
+                    Lit::Int(_) | Lit::Bool(_) | Lit::EnumVariant(_) => {
                         if lits.contains(&x) {
                             return Some(Lit::Bool(false));
                         } else {
@@ -467,7 +470,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                 };
 
                 match x {
-                    Lit::Int(_) | Lit::Bool(_) => {
+                    Lit::Int(_) | Lit::Bool(_) | Lit::EnumVariant(_) => {
                         if lits.contains(&x) {
                             return Some(Lit::Bool(false));
                         } else {
@@ -650,6 +653,14 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                     .unwrap_or(a_len <= b_len)
             })?;
             Some(lt.into())
+        }
+        Expr::Pred(_, expr) => {
+            let ev = unwrap_expr::<EnumVariant>(expr)?;
+            ev.pred().map(Lit::EnumVariant)
+        }
+        Expr::Succ(_, expr) => {
+            let ev = unwrap_expr::<EnumVariant>(expr)?;
+            ev.succ().map(Lit::EnumVariant)
         }
     }
 }

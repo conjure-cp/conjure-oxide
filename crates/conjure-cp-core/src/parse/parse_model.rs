@@ -8,15 +8,17 @@ use serde_json::Value;
 use serde_json::Value as JsonValue;
 
 use crate::ast::Moo;
+use crate::ast::Reference;
 use crate::ast::abstract_comprehension::AbstractComprehensionBuilder;
 use crate::ast::ac_operators::ACOperatorKind;
 use crate::ast::comprehension::ComprehensionBuilder;
+use crate::ast::enumerated::EnumVariant;
 use crate::ast::enumerated::EnumeratedType;
 use crate::ast::records::RecordValue;
 use crate::ast::{
-    AbstractLiteral, Atom, DeclarationPtr, Domain, Expression, FuncAttr, IntVal, JectivityAttr,
-    Literal, MSetAttr, Name, PartialityAttr, Range, RecordEntry, SetAttr, SymbolTable,
-    SymbolTablePtr,
+    AbstractLiteral, Atom, DeclarationPtr, Domain, EnumVariantVal, Expression, FuncAttr, IntVal,
+    JectivityAttr, Literal, MSetAttr, Name, PartialityAttr, Range, RecordEntry, SetAttr,
+    SymbolTable, SymbolTablePtr,
 };
 use crate::ast::{DomainPtr, Metadata};
 use crate::context::Context;
@@ -81,7 +83,12 @@ pub fn model_from_json(str: &str, context: Arc<RwLock<Context<'static>>>) -> Res
                             break;
                         }
                         "LettingDomainDefnEnum" => {
-                            parse_enum(value, &scope)?;
+                            parse_enum_declaration(value, &scope)?;
+                            valid_decl = true;
+                            break;
+                        }
+                        "LettingDomainDefnUnnamed" => {
+                            parse_unnamed_type(value, &scope)?;
                             valid_decl = true;
                             break;
                         }
@@ -109,6 +116,10 @@ pub fn model_from_json(str: &str, context: Arc<RwLock<Context<'static>>>) -> Res
         }
     }
     Ok(m)
+}
+
+fn parse_unnamed_type(value: &Value, scope: &SymbolTablePtr) -> Result<()> {
+    todo!()
 }
 
 fn parse_variable(v: &JsonValue, symtab: &mut SymbolTable) -> Result<()> {
@@ -176,27 +187,69 @@ fn parse_letting(v: &JsonValue, scope: &SymbolTablePtr) -> Result<()> {
     }
 }
 
-fn parse_enum(v: &JsonValue, scope: &SymbolTablePtr) -> Result<()> {
+fn parse_enum_declaration(v: &JsonValue, scope: &SymbolTablePtr) -> Result<()> {
     let arr = v.as_array().ok_or(error!("Letting is not an array"))?;
     let name = parse_name(&arr[0])?;
 
-    let mut variants = Vec::new();
+    let mut symbols = scope.write();
+
     let definition = arr[1]
         .as_array()
         .ok_or(error!("LettingDomainDefnEnum is not an array"))?;
-    for v in definition.iter() {
-        let name = parse_name(v)?;
-        variants.push(name);
+
+    let variants = definition
+        .iter()
+        .map(parse_name)
+        .collect::<Result<Vec<_>>>()?;
+
+    let ty = Moo::new(EnumeratedType::new(name.clone(), variants.clone()));
+
+    for (i, variant_name) in variants.iter().enumerate() {
+        let variant = Expression::Atomic(
+            Metadata::new(),
+            Atom::Literal(Literal::EnumVariant(EnumVariant::new(ty.clone(), i as u32))),
+        );
+
+        symbols
+            .insert(DeclarationPtr::new_value_letting(
+                variant_name.clone(),
+                variant,
+            ))
+            .ok_or(Error::Parse(format!(
+                "Could not add {variant_name} to symbol table as it already exists"
+            )))?;
     }
 
-    scope
-        .write()
-        .insert(DeclarationPtr::new_enumerated(name.clone(), variants))
+    symbols
+        .insert(DeclarationPtr::new_enumerated(name.clone(), ty))
         .ok_or(Error::Parse(format!(
             "Could not add {name} to symbol table as it already exists"
         )))?;
 
     Ok(())
+}
+
+fn parse_reference(v: &JsonValue, scope: &SymbolTablePtr) -> Result<Reference> {
+    let array = v
+        .as_object()
+        .ok_or(error!("Value is not an object"))?
+        .get("Reference")
+        .ok_or(error!("Reference does not exist"))?
+        .as_array()
+        .ok_or(error!("Reference is not an array"))?;
+
+    let name_value = array
+        .first()
+        .ok_or(error!("Reference does not contain name"))?;
+    let name = parse_name(name_value)?;
+    let decl = scope
+        .read()
+        .lookup(&name)
+        .ok_or(error!(format!("Symbol table does not contain '{name}'")))?;
+
+    // TODO: Second value?
+
+    Ok(Reference::new(decl))
 }
 
 fn parse_domain(
@@ -449,13 +502,16 @@ fn parse_domain(
                 .lookup(&name)
                 .ok_or(Error::Parse(format!("Enum {name} does not exist")))?;
 
-            let enumerated = decl.as_enumerated_type().ok_or(Error::Parse(format!(
-                "Declaration {name} is not an enumerated type"
-            )));
+            let Some(et) = decl.as_enumerated_type() else {
+                return Err(Error::Parse(format!(
+                    "Declaration {name} is not an enumerated type"
+                )));
+            };
 
-            let ranges = parse_range_list(&arr[1], parse_name)?;
+            let ranges =
+                parse_range_list(&arr[1], |r| parse_reference(r, &scope).map(EnumVariantVal))?;
 
-            Ok(Domain::enumerated(todo!(), ranges))
+            Ok(Domain::enumerated(et.clone(), ranges))
         }
         _ => Err(Error::Parse(
             "FindOrGiven[2] is an unknown object".to_owned(), // consider covered
@@ -464,7 +520,6 @@ fn parse_domain(
 }
 
 fn parse_name(v: &JsonValue) -> Result<Name> {
-    dbg!(v);
     let name = v
         .as_object()
         .ok_or(error!("Value is not an object"))?
@@ -695,6 +750,8 @@ fn unary_operator(op_name: &str) -> Option<UnaryOp> {
         "MkOpToInt" => Some(Expression::ToInt),
         "MkOpDefined" => Some(Expression::Defined),
         "MkOpRange" => Some(Expression::Range),
+        "MkOpPred" => Some(Expression::Pred),
+        "MkOpSucc" => Some(Expression::Succ),
         _ => None,
     }
 }
@@ -732,20 +789,11 @@ pub fn parse_expression(obj: &JsonValue, scope: &SymbolTablePtr) -> Result<Expre
             parse_comprehension(comprehension, scope.clone(), None)
         }
         Value::Object(refe) if refe.contains_key("Reference") => {
-            let ref_arr = refe["Reference"]
-                .as_array()
-                .ok_or_else(|| fail("Reference.as_array"))?;
-
-            let user_name = parse_name(&ref_arr[0])?;
-
-            let declaration: DeclarationPtr = scope
-                .read()
-                .lookup(&user_name)
-                .ok_or_else(|| fail("Reference.lookup"))?;
+            let reference = parse_reference(obj, scope)?;
 
             Ok(Expression::Atomic(
                 Metadata::new(),
-                Atom::Reference(crate::ast::Reference::new(declaration)),
+                Atom::Reference(reference),
             ))
         }
         Value::Object(abslit) if abslit.contains_key("AbstractLiteral") => {

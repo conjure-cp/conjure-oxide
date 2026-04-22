@@ -232,6 +232,12 @@ pub enum Expression {
     #[compatible(JsonInput, SMT)]
     Lt(Metadata, Moo<Expression>, Moo<Expression>),
 
+    #[compatible(JsonInput)]
+    Pred(Metadata, Moo<Expression>),
+
+    #[compatible(JsonInput)]
+    Succ(Metadata, Moo<Expression>),
+
     /// Division after preventing division by zero, usually with a bubble
     #[compatible(SMT)]
     SafeDiv(Metadata, Moo<Expression>, Moo<Expression>),
@@ -744,6 +750,8 @@ impl Expression {
             Expression::Max(_, e) => bounded_i32_domain_for_matrix_literal_monotonic(e, |x, y| {
                 Some(if x > y { x } else { y })
             }),
+            Expression::Pred(_, e) => todo!(),
+            Expression::Succ(_, e) => todo!(),
             Expression::UnsafeDiv(_, a, b) => a
                 .domain_of()?
                 .resolve()?
@@ -1546,6 +1554,9 @@ impl Display for Expression {
             Expression::FlatLexLeq(_, a, b) => {
                 write!(f, "FlatLexLeq({}, {})", pretty_vec(a), pretty_vec(b))
             }
+
+            Expression::Pred(_, ev) => write!(f, "Pred({})", ev),
+            Expression::Succ(_, ev) => write!(f, "Succ({})", ev),
         }
     }
 }
@@ -1727,6 +1738,8 @@ impl Typeable for Expression {
             Expression::LexGeq(..) => ReturnType::Bool,
             Expression::FlatLexLt(..) => ReturnType::Bool,
             Expression::FlatLexLeq(..) => ReturnType::Bool,
+            Expression::Pred(_, ev) => ev.return_type(),
+            Expression::Succ(_, ev) => ev.return_type(),
         }
     }
 }

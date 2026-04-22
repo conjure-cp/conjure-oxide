@@ -9,6 +9,7 @@ use super::{
     Typeable, domains::HasDomain, domains::Int, records::RecordValue,
 };
 use crate::ast::domains::MSetAttr;
+use crate::ast::enumerated::EnumVariant;
 use crate::ast::pretty::pretty_vec;
 use crate::bug;
 use polyquine::Quine;
@@ -27,6 +28,7 @@ use uniplate::{Biplate, Tree, Uniplate};
 pub enum Literal {
     Int(i32),
     Bool(bool),
+    EnumVariant(EnumVariant),
     //abstract literal variant ends in Literal, but that's ok
     #[allow(clippy::enum_variant_names)]
     AbstractLiteral(AbstractLiteral<Literal>),
@@ -37,6 +39,9 @@ impl HasDomain for Literal {
         match self {
             Literal::Int(i) => Domain::int(vec![Range::Single(*i)]),
             Literal::Bool(_) => Domain::bool(),
+            Literal::EnumVariant(ev) => {
+                Domain::enumerated_ground(ev.ty.clone(), vec![Range::Single(ev.variant)])
+            }
             Literal::AbstractLiteral(abstract_literal) => abstract_literal.domain_of(),
         }
     }
@@ -558,6 +563,28 @@ impl TryFrom<&Literal> for bool {
     }
 }
 
+impl TryFrom<Literal> for EnumVariant {
+    type Error = &'static str;
+
+    fn try_from(value: Literal) -> Result<Self, Self::Error> {
+        match value {
+            Literal::EnumVariant(v) => Ok(v),
+            _ => Err("Cannot convert non-enum literal to enum variant"),
+        }
+    }
+}
+
+impl TryFrom<&Literal> for EnumVariant {
+    type Error = &'static str;
+
+    fn try_from(value: &Literal) -> Result<Self, Self::Error> {
+        match value {
+            Literal::EnumVariant(v) => Ok(v.clone()),
+            _ => Err("Cannot convert non-enum literal to enum variant"),
+        }
+    }
+}
+
 impl From<i32> for Literal {
     fn from(i: i32) -> Self {
         Literal::Int(i)
@@ -673,6 +700,7 @@ impl Display for Literal {
             Literal::Int(i) => write!(f, "{i}"),
             Literal::Bool(b) => write!(f, "{b}"),
             Literal::AbstractLiteral(l) => write!(f, "{l:?}"),
+            Literal::EnumVariant(ev) => write!(f, "{ev:?}"), // TODO: better display
         }
     }
 }

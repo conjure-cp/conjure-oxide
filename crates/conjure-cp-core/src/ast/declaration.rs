@@ -281,8 +281,8 @@ impl DeclarationPtr {
 
     /// Creates a new enumerated type declaration
     /// TODO: Example
-    pub fn new_enumerated(name: Name, variants: Vec<Name>) -> DeclarationPtr {
-        let kind = DeclarationKind::EnumeratedType(EnumeratedType { variants });
+    pub fn new_enumerated(name: Name, ty: Moo<EnumeratedType>) -> DeclarationPtr {
+        let kind = DeclarationKind::EnumeratedType(ty);
         DeclarationPtr::new(name, kind)
     }
 
@@ -320,7 +320,7 @@ impl DeclarationPtr {
             DeclarationKind::Given(domain) => Some(domain.clone()),
             DeclarationKind::Quantified(inner) => Some(inner.domain.clone()),
             DeclarationKind::RecordField(domain) => Some(domain.clone()),
-            DeclarationKind::EnumeratedType(e) => todo!(),
+            DeclarationKind::EnumeratedType(et) => Some(et.to_domain()),
             DeclarationKind::UnnamedType(size) => todo!(),
         }
     }
@@ -462,7 +462,7 @@ impl DeclarationPtr {
     }
 
     /// This declaration as an enumerated type, if it is one.
-    pub fn as_enumerated_type(&self) -> Option<MappedRwLockReadGuard<'_, EnumeratedType>> {
+    pub fn as_enumerated_type(&self) -> Option<MappedRwLockReadGuard<'_, Moo<EnumeratedType>>> {
         RwLockReadGuard::try_map(self.read(), |x| {
             if let DeclarationKind::EnumeratedType(e) = &x.kind {
                 Some(e)
@@ -474,7 +474,9 @@ impl DeclarationPtr {
     }
 
     /// This declaration as a mutable enumerated type, if it is one.
-    pub fn as_enumerated_type_mut(&mut self) -> Option<MappedRwLockWriteGuard<'_, EnumeratedType>> {
+    pub fn as_enumerated_type_mut(
+        &mut self,
+    ) -> Option<MappedRwLockWriteGuard<'_, Moo<EnumeratedType>>> {
         RwLockWriteGuard::try_map(self.write(), |x| {
             if let DeclarationKind::EnumeratedType(e) = &mut x.kind {
                 Some(e)
@@ -942,7 +944,7 @@ pub enum DeclarationKind {
     RecordField(DomainPtr),
 
     /// An enumerated type.
-    EnumeratedType(EnumeratedType),
+    EnumeratedType(Moo<EnumeratedType>),
 
     /// An unnamed type.
     UnnamedType(u32),
