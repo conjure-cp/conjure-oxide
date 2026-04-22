@@ -148,7 +148,7 @@ fn sat_order_eq_expr(
 /// ```text
 /// SATInt(a) = SATInt(b) ~> Bool
 /// ```
-#[register_rule("SAT_Order", 4400, [Eq])]
+#[register_rule("SAT_Order", 4600, [Eq])]
 fn eq_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Eq(_, lhs, rhs) = expr else {
         return Err(RuleNotApplicable);
@@ -166,7 +166,7 @@ fn eq_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 }
 
 /// Converts a != expression between two order SATInts to a boolean expression in cnf
-#[register_rule("SAT_Order", 4700, [Neq])]
+#[register_rule("SAT_Order", 4600, [Neq])]
 fn neq_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Neq(_, lhs, rhs) = expr else {
         return Err(RuleNotApplicable);
@@ -193,7 +193,7 @@ fn neq_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 ///
 /// ```
 /// Note: < and <= are rewritten by swapping operands to reuse lt logic.
-#[register_rule("SAT_Order", 4400, [Lt, Gt, Leq, Geq])]
+#[register_rule("SAT_Order", 4600, [Lt, Gt, Leq, Geq])]
 fn ineq_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let (lhs, rhs, negate) = match expr {
         // A < B -> sat_order_lt(A, B)
