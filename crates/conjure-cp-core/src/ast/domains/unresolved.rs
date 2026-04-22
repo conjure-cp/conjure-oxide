@@ -2,7 +2,7 @@ use crate::ast::domains::attrs::MSetAttr;
 use crate::ast::domains::attrs::SetAttr;
 use crate::ast::{
     DeclarationKind, DomainOpError, Expression, FieldEntryGround, FuncAttr, Literal, Metadata, Moo,
-    Reference, Typeable,
+    Reference, RelAttr, Typeable,
     domains::{
         GroundDomain,
         domain::{DomainPtr, Int},
@@ -129,6 +129,27 @@ impl TryInto<FuncAttr<Int>> for FuncAttr<IntVal> {
             size,
             jectivity: self.jectivity,
             partiality: self.partiality,
+        })
+    }
+}
+
+impl From<RelAttr<Int>> for RelAttr<IntVal> {
+    fn from(value: RelAttr<Int>) -> Self {
+        RelAttr {
+            size: value.size.into(),
+            binary: value.binary,
+        }
+    }
+}
+
+impl TryInto<RelAttr<Int>> for RelAttr<IntVal> {
+    type Error = DomainOpError;
+
+    fn try_into(self) -> Result<RelAttr<Int>, Self::Error> {
+        let size: Range<Int> = self.size.try_into()?;
+        Ok(RelAttr {
+            size,
+            binary: self.binary,
         })
     }
 }
@@ -298,6 +319,15 @@ impl FuncAttr<IntVal> {
     }
 }
 
+impl RelAttr<IntVal> {
+    pub fn resolve(&self) -> Option<RelAttr<Int>> {
+        Some(RelAttr {
+            size: self.size.resolve()?,
+            binary: self.binary.clone(),
+        })
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Uniplate, Quine)]
 #[path_prefix(conjure_cp::ast)]
 pub struct FieldEntry {
@@ -339,6 +369,8 @@ pub enum UnresolvedDomain {
     Function(FuncAttr<IntVal>, DomainPtr, DomainPtr),
     /// A variant domain with its domain options (reusing field entries)
     Variant(Vec<FieldEntry>),
+    /// A relation as a set of tuples
+    Relation(RelAttr<IntVal>, Vec<DomainPtr>),
 }
 
 impl UnresolvedDomain {
@@ -405,6 +437,14 @@ impl UnresolvedDomain {
                 })
                 .collect::<Option<_>>()
                 .map(GroundDomain::Variant),
+            UnresolvedDomain::Relation(attr, inners) => {
+                let resolved_attr = attr.resolve()?;
+                inners
+                    .iter()
+                    .map(DomainPtr::resolve)
+                    .collect::<Option<_>>()
+                    .map(|items| GroundDomain::Relation(resolved_attr, items))
+            }
         }
     }
 
@@ -450,6 +490,16 @@ impl UnresolvedDomain {
                 Ok(UnresolvedDomain::Tuple(merged))
             }
             (UnresolvedDomain::Tuple(_), _) | (_, UnresolvedDomain::Tuple(_)) => {
+                Err(DomainOpError::WrongType)
+            }
+            (UnresolvedDomain::Relation(_, in1s), UnresolvedDomain::Relation(_, in2s)) => {
+                let mut inners = Vec::new();
+                for (in1, in2) in in1s.iter().zip(in2s.iter()) {
+                    inners.push(in1.union(in2)?)
+                }
+                Ok(UnresolvedDomain::Relation(RelAttr::default(), inners))
+            }
+            (UnresolvedDomain::Relation(_, _), _) | (_, UnresolvedDomain::Relation(_, _)) => {
                 Err(DomainOpError::WrongType)
             }
             // TODO: Could we support unions of reference domains symbolically?
@@ -517,6 +567,13 @@ impl Typeable for UnresolvedDomain {
                     entry_types.push(entry.domain.return_type());
                 }
                 ReturnType::Variant(entry_types)
+          }
+            UnresolvedDomain::Relation(_, inners) => {
+                let mut inner_types = Vec::new();
+                for inner in inners {
+                    inner_types.push(inner.return_type());
+                }
+                ReturnType::Relation(inner_types)
             }
         }
     }
@@ -544,11 +601,7 @@ impl Display for UnresolvedDomain {
                 )
             }
             UnresolvedDomain::Tuple(domains) => {
-                write!(
-                    f,
-                    "tuple of ({})",
-                    pretty_vec(&domains.iter().collect_vec())
-                )
+                write!(f, "tuple ({})", &domains.iter().join(","))
             }
             UnresolvedDomain::Record(entries) => {
                 write!(
@@ -574,6 +627,9 @@ impl Display for UnresolvedDomain {
                         .map(|entry| format!("{}: {}", entry.name, entry.domain))
                         .join(", ")
                 )
+          }
+            UnresolvedDomain::Relation(attrs, domains) => {
+                write!(f, "relation {} of ({})", attrs, domains.iter().join(" * "))
             }
         }
     }

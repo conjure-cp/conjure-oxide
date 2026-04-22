@@ -2,8 +2,14 @@
 #![allow(unsafe_op_in_unsafe_fn)]
 
 use std::{
+    cell::Cell,
     collections::HashMap,
     ffi::{CStr, CString, c_char, c_void},
+    ptr,
+    sync::{
+        LazyLock, Mutex,
+        atomic::{AtomicPtr, Ordering},
+    },
 };
 
 use anyhow::anyhow;
@@ -107,6 +113,13 @@ struct CallbackState<'a> {
     print_vars: Vec<VarName>,
 }
 
+static CURRENT_INSTANCE: AtomicPtr<ffi::ProbSpec_CSPInstance> = AtomicPtr::new(ptr::null_mut());
+static CURRENT_CTX: AtomicPtr<ffi::MinionContext> = AtomicPtr::new(ptr::null_mut());
+static MINION_RUN_LOCK: LazyLock<Mutex<()>> = LazyLock::new(|| Mutex::new(()));
+thread_local! {
+    static INSIDE_MINION_CALLBACK: Cell<bool> = const { Cell::new(false) };
+}
+
 /// Opaque handle to a Minion solver context.
 ///
 /// Holds solver state (including run statistics) after a solve completes.
@@ -170,7 +183,10 @@ unsafe extern "C" fn run_callback(ctx: *mut ffi::MinionContext, userdata: *mut c
         solutions.insert(var.to_string(), solution);
     }
 
-    (state.callback)(solutions)
+    INSIDE_MINION_CALLBACK.with(|flag| flag.set(true));
+    let continue_search = (state.callback)(solutions);
+    INSIDE_MINION_CALLBACK.with(|flag| flag.set(false));
+    continue_search
 }
 
 /// Run Minion on the given [Model].
@@ -181,6 +197,7 @@ unsafe extern "C" fn run_callback(ctx: *mut ffi::MinionContext, userdata: *mut c
 /// statistics via [`SolverContext::get_from_table`].
 #[allow(clippy::unwrap_used)]
 pub fn run_minion(model: Model, callback: Callback<'_>) -> Result<SolverContext, MinionError> {
+    let _run_guard = MINION_RUN_LOCK.lock().unwrap();
     let mut state = CallbackState {
         callback,
         print_vars: vec![],
@@ -191,6 +208,8 @@ pub fn run_minion(model: Model, callback: Callback<'_>) -> Result<SolverContext,
         let search_opts = ffi::searchOptions_new();
         let search_method = ffi::searchMethod_new();
         let search_instance = ffi::instance_new();
+        CURRENT_INSTANCE.store(search_instance, Ordering::SeqCst);
+        CURRENT_CTX.store(ctx, Ordering::SeqCst);
 
         // Use Minion as a quiet library by default. Low-level FFI callers that
         // want native solver output can opt out by configuring SearchOptions
@@ -212,6 +231,8 @@ pub fn run_minion(model: Model, callback: Callback<'_>) -> Result<SolverContext,
 
         ffi::searchMethod_free(search_method);
         ffi::searchOptions_free(search_opts);
+        CURRENT_INSTANCE.store(ptr::null_mut(), Ordering::SeqCst);
+        CURRENT_CTX.store(ptr::null_mut(), Ordering::SeqCst);
         ffi::instance_free(search_instance);
 
         match check_minion_result(res) {
@@ -222,6 +243,73 @@ pub fn run_minion(model: Model, callback: Callback<'_>) -> Result<SolverContext,
             }
         }
     }
+}
+
+/// Adds a new auxiliary variable to the currently-running Minion instance.
+///
+/// This is intended for use from a solver callback while `run_minion` is active.
+pub fn add_aux_var_during_search(name: VarName, domain: VarDomain) -> Result<(), MinionError> {
+    let instance = CURRENT_INSTANCE.load(Ordering::SeqCst);
+    let ctx = CURRENT_CTX.load(Ordering::SeqCst);
+    let inside_callback = INSIDE_MINION_CALLBACK.with(|flag| flag.get());
+    if instance.is_null() || ctx.is_null() || !inside_callback {
+        return Err(MinionError::Other(anyhow!(
+            "cannot add a Minion variable outside an active callback"
+        )));
+    }
+
+    let c_str = CString::new(name.clone())
+        .map_err(|_| anyhow!("variable name {:?} contains a null character", name))?;
+
+    let (vartype_raw, domain_low, domain_high) = match domain {
+        VarDomain::Bound(a, b) => Ok((ffi::VariableType_VAR_BOUND, a, b)),
+        VarDomain::Discrete(a, b) => Ok((ffi::VariableType_VAR_DISCRETE, a, b)),
+        VarDomain::Bool => Ok((ffi::VariableType_VAR_BOOL, 0, 1)),
+        x => Err(MinionError::NotImplemented(format!("{x:?}"))),
+    }?;
+
+    unsafe {
+        check_minion_result(ffi::minion_newVarMidsearch(
+            ctx,
+            instance,
+            c_str.as_ptr() as *mut c_char,
+            vartype_raw,
+            domain_low,
+            domain_high,
+        ))?;
+    }
+
+    Ok(())
+}
+
+/// Adds a constraint to the currently-running Minion instance.
+///
+/// This is intended for use from a solver callback while `run_minion` is active.
+pub fn add_constraint_during_search(constraint: Constraint) -> Result<(), MinionError> {
+    let instance = CURRENT_INSTANCE.load(Ordering::SeqCst);
+    let ctx = CURRENT_CTX.load(Ordering::SeqCst);
+    let inside_callback = INSIDE_MINION_CALLBACK.with(|flag| flag.get());
+    if instance.is_null() || ctx.is_null() || !inside_callback {
+        return Err(MinionError::Other(anyhow!(
+            "cannot add a Minion constraint outside an active callback"
+        )));
+    }
+
+    unsafe {
+        let constraint_type = get_constraint_type(&constraint)?;
+        let raw_constraint = Scoped::new(ffi::constraint_new(constraint_type), |x| {
+            ffi::constraint_free(x as _)
+        });
+
+        constraint_add_args(instance, raw_constraint.ptr, &constraint)?;
+        check_minion_result(ffi::minion_addConstraintMidsearch(
+            ctx,
+            instance,
+            raw_constraint.ptr,
+        ))?;
+    }
+
+    Ok(())
 }
 
 unsafe fn convert_model_to_raw(
@@ -573,13 +661,17 @@ unsafe fn constraint_add_args(
             read_list(i, r_constr, b)?;
             Ok(())
         }
+        Constraint::WatchVecNeq(a, b) => {
+            read_list(i, r_constr, a)?;
+            read_list(i, r_constr, b)?;
+            Ok(())
+        }
         //Constraint::LitSumGeq(_, _, _) => todo!(),
         //Constraint::Gcc(_, _, _) => todo!(),
         //Constraint::GccWeak(_, _, _) => todo!(),
         //Constraint::LexLeqRv(_, _) => todo!(),
         //Constraint::LexLeqQuick(_, _) => todo!(),
         //Constraint::LexLessQuick(_, _) => todo!(),
-        //Constraint::WatchVecNeq(_, _) => todo!(),
         //Constraint::WatchVecExistsLess(_, _) => todo!(),
         //Constraint::Hamming(_, _, _) => todo!(),
         //Constraint::NotHamming(_, _, _) => todo!(),

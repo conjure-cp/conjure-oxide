@@ -363,6 +363,7 @@ fn typecheck_variable(
         GroundDomain::Record(_) => "record",
         GroundDomain::Function(_, _, _) => "function",
         GroundDomain::Variant(_) => "variant",
+        GroundDomain::Relation(_, _) => "relation",
         GroundDomain::Empty(_) => "empty",
     };
 
