@@ -67,6 +67,8 @@ pub enum GroundDomain {
     Tuple(Vec<Moo<GroundDomain>>),
     /// A record
     Record(Vec<RecordEntryGround>),
+    /// A Partition
+    Partition(PartitionAttr, Moo<GroundDomain>),
     /// A function with a domain and range
     Function(FuncAttr, Moo<GroundDomain>, Moo<GroundDomain>),
 }
@@ -128,6 +130,10 @@ impl GroundDomain {
             #[allow(unreachable_patterns)]
             // Technically redundant but logically clearer to have both
             (GroundDomain::Function(_, _, _), _) | (_, GroundDomain::Function(_, _, _)) => {
+                Err(DomainOpError::WrongType)
+            }
+            #[allow(unreachable_patterns)]
+            (GroundDomain::Partition(_, _), _) | (_, GroundDomain::Partition(_, _)) => {
                 Err(DomainOpError::WrongType)
             }
         }
