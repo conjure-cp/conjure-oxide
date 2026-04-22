@@ -14,7 +14,7 @@ Sequences _must_ have either a `size` or `maxSize` cardinality attribute.
 
 ## Operators
 
-There are two operators which are defined on functions. These are represented as `Expressions` in Conjure-Oxide.
+There are two operators which are defined on sequences. These are represented as `Expressions` in Conjure-Oxide.
 
 - `subsequence`: does the sequence `s` appear in the same order in `t` (e.g. `s=1,2,3` and `t=1,3` are subsequences)
 - `substring`: does the sequence `s` appear in the same order _and_ contiguously in `t` (e.g. `s=1,2` is a substring of `t=1,2,3` )
