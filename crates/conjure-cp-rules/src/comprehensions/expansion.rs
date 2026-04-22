@@ -376,6 +376,12 @@ fn rewrite_int_ranges_in_unresolved_domain(
             rewrite_int_ranges_in_domain_ptr(domain, replacements_by_id, replacements_by_name);
             rewrite_int_ranges_in_domain_ptr(codomain, replacements_by_id, replacements_by_name);
         }
+        UnresolvedDomain::Relation(attr, domains) => {
+            rewrite_int_range(&mut attr.size, replacements_by_id, replacements_by_name);
+            for domain in domains {
+                rewrite_int_ranges_in_domain_ptr(domain, replacements_by_id, replacements_by_name);
+            }
+        }
     }
 }
 
