@@ -13,7 +13,6 @@ use conjure_cp_essence_parser::diagnostics::diagnostics_api::Diagnostic as Parse
 use conjure_cp_essence_parser::diagnostics::diagnostics_api::Position as ParserPosition;
 use conjure_cp_essence_parser::diagnostics::diagnostics_api::Range as ParserRange;
 use conjure_cp_essence_parser::diagnostics::diagnostics_api::Severity as ParserSeverity;
-use conjure_cp_essence_parser::diagnostics::diagnostics_api::get_diagnostics;
 use tower_lsp::lsp_types::Position as LspPosition;
 use tower_lsp::lsp_types::Range as LspRange;
 
@@ -221,23 +220,13 @@ impl Backend {
     }
 
     pub async fn handle_diagnostics(&self, uri: &Url, cache_conts: CacheCont) {
-        // Get syntactic diagnostics from CST
-        let syntactic_diagnostics = if let Some(ref cst) = cache_conts.cst {
-            get_diagnostics(&cache_conts.contents, cst)
-        } else {
-            Vec::new()
-        };
-
-        // Get semantic diagnostics from errors
-        let semantic_diagnostics: Vec<Diagnostic> = cache_conts
+        // Build diagnostics from the parse errors cached for this document.
+        // parse_essence_with_context_and_map already produces both syntactic and semantic errors.
+        let diagnostics: Vec<Diagnostic> = cache_conts
             .errors
             .into_iter()
             .map(|err| error_to_diagnostic(&err))
             .collect();
-
-        // Combine all diagnostics
-        let mut diagnostics = syntactic_diagnostics;
-        diagnostics.extend(semantic_diagnostics);
 
         // Convert to LSP format
         let lsp_diagnostics = convert_diagnostics(diagnostics);
