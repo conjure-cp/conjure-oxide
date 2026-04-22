@@ -600,6 +600,8 @@ pub enum Expression {
     /// To tell which field is used in a variant domain
     #[compatible(JsonInput)]
     Active(Metadata, Moo<Expression>, Moo<Expression>),
+
+    /// Alters the shape of relations by projection
     #[compatible(JsonInput)]
     RelationProj(Metadata, Moo<Expression>, Vec<Option<Expression>>),
 }
@@ -2010,7 +2012,7 @@ impl Display for Expression {
             }
             Expression::Active(_, variant, field_name) => {
                 write!(f, "active({variant}, {field_name})")
-          }
+            }
             Expression::ToSet(_, other) => write!(f, "toSet({other})"),
             Expression::ToMSet(_, other) => write!(f, "toMSet({other})"),
             Expression::ToRelation(_, function) => write!(f, "toRelation({function})"),
@@ -2310,7 +2312,7 @@ impl Expression {
                 }
                 AbstractLiteral::Variant(v) => {
                     f(&v.value);
-              }
+                }
                 AbstractLiteral::Relation(vs) => {
                     for exprs in vs {
                         for expr in exprs {
@@ -2518,7 +2520,7 @@ impl CacheHashable for Expression {
                 AbstractLiteral::Variant(v) => {
                     v.name.hash(&mut hasher);
                     v.value.get_cached_hash().hash(&mut hasher);
-              }
+                }
                 AbstractLiteral::Relation(v) => {
                     for exprs in v {
                         for expr in exprs {

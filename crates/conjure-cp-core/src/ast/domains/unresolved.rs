@@ -567,7 +567,7 @@ impl Typeable for UnresolvedDomain {
                     entry_types.push(entry.domain.return_type());
                 }
                 ReturnType::Variant(entry_types)
-          }
+            }
             UnresolvedDomain::Relation(_, inners) => {
                 let mut inner_types = Vec::new();
                 for inner in inners {
@@ -627,7 +627,7 @@ impl Display for UnresolvedDomain {
                         .map(|entry| format!("{}: {}", entry.name, entry.domain))
                         .join(", ")
                 )
-          }
+            }
             UnresolvedDomain::Relation(attrs, domains) => {
                 write!(f, "relation {} of ({})", attrs, domains.iter().join(" * "))
             }

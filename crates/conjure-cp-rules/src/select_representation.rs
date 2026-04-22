@@ -187,7 +187,7 @@ fn domain_needs_representation(domain: &GroundDomain) -> bool {
         | GroundDomain::Record(_)
         | GroundDomain::Function(_, _, _)
         | GroundDomain::Variant(_) => true,
-        | GroundDomain::Relation(_, _) => true,
+        GroundDomain::Relation(_, _) => true,
         GroundDomain::Empty(_) => false,
     }
 }

@@ -1,8 +1,8 @@
 use crate::ast::domains::MSetAttr;
 use crate::ast::pretty::pretty_vec;
 use crate::ast::{
-    AbstractLiteral, Domain, DomainOpError, FieldEntry, FuncAttr, HasDomain, Literal, Moo, RelAttr, SetAttr,
-    Typeable,
+    AbstractLiteral, Domain, DomainOpError, FieldEntry, FuncAttr, HasDomain, Literal, Moo, RelAttr,
+    SetAttr, Typeable,
     domains::{domain::Int, range::Range},
 };
 use crate::range;
@@ -66,7 +66,7 @@ pub enum GroundDomain {
     /// A tuple of N elements, each with its own domain
     Tuple(Vec<Moo<GroundDomain>>),
     /// A record
-    Record(Vec<RecordEntryGround>),
+    Record(Vec<FieldEntryGround>),
     /// A function with a domain and codomain
     Function(FuncAttr, Moo<GroundDomain>, Moo<GroundDomain>),
     /// A relation as a set of tuples
@@ -338,7 +338,7 @@ impl GroundDomain {
                     ans = ans.checked_add(sz).ok_or(DomainOpError::TooLarge)?;
                 }
                 Ok(ans)
-          }
+            }
             GroundDomain::Relation(_, _) => {
                 todo!("Length bound of relations is not yet support")
             }
@@ -505,7 +505,9 @@ impl GroundDomain {
                         }
                     }
                     Ok(false)
-              }
+                }
+                _ => Ok(false),
+            },
             GroundDomain::Relation(rel_attr, inner_domains) => match lit {
                 Literal::AbstractLiteral(AbstractLiteral::Relation(lit_elems)) => {
                     // check if the literal's size is allowed by the attributes
@@ -996,7 +998,7 @@ impl GroundDomain {
                 todo!();
             }
             Literal::AbstractLiteral(AbstractLiteral::Variant(_)) => {
-                 todo!();
+                todo!();
             }
             Literal::AbstractLiteral(AbstractLiteral::Relation(_)) => {
                 todo!();
@@ -1046,7 +1048,7 @@ impl Typeable for GroundDomain {
                     entry_types.push(entry.domain.return_type());
                 }
                 ReturnType::Record(entry_types)
-          }
+            }
             GroundDomain::Relation(_, inners) => {
                 let mut inner_types = Vec::new();
                 for inner in inners {
@@ -1107,7 +1109,7 @@ impl Display for GroundDomain {
                         .map(|entry| format!("{}: {}", entry.name, entry.domain))
                         .join(", ")
                 )
-          }
+            }
             GroundDomain::Relation(attrs, domains) => {
                 write!(f, "relation {} of ({})", attrs, domains.iter().join(" * "))
             }

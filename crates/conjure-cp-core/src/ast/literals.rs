@@ -74,7 +74,7 @@ pub enum AbstractLiteral<T: AbstractLiteralValue> {
 
     // Variants only contain one of their name-domain pairs
     Variant(Moo<FieldValue<T>>),
-  
+
     Relation(Vec<Vec<T>>),
 }
 
@@ -263,7 +263,7 @@ impl Typeable for AbstractLiteral<Expression> {
             AbstractLiteral::Variant(item) => {
                 // Variants hold multiple possible types. In the case of a literal we know which type it chose
                 ReturnType::Variant(vec![item.value.return_type()])
-          }
+            }
             AbstractLiteral::Relation(items) => {
                 if items.is_empty() {
                     return ReturnType::Relation(vec![ReturnType::Unknown]);
@@ -365,7 +365,7 @@ where
             }
             AbstractLiteral::Variant(entry) => {
                 write!(f, "variant{{{} = {}}}", entry.name, entry.value)
-          }
+            }
             AbstractLiteral::Relation(elems) => {
                 let elems_str: String = elems
                     .iter()
@@ -448,8 +448,8 @@ where
                 (
                     f1_tree,
                     Box::new(move |x| AbstractLiteral::Variant(f1_ctx(x))),
-              )
-          }
+                )
+            }
             AbstractLiteral::Relation(elems) => {
                 let (f1_tree, f1_ctx) = <_ as Biplate<AbstractLiteral<T>>>::biplate(elems);
                 (
@@ -551,8 +551,8 @@ where
                     (
                         f1_tree,
                         Box::new(move |x| AbstractLiteral::Variant(f1_ctx(x))),
-                      )
-              }
+                    )
+                }
                 AbstractLiteral::Relation(elems) => {
                     let (f1_tree, f1_ctx) = <_ as Biplate<To>>::biplate(elems);
                     (

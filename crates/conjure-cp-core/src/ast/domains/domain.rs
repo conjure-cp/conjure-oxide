@@ -259,8 +259,10 @@ impl Domain {
             entries,
         ))))
     }
-  
+
     /// Create a new relation domain
+    /// If the entries are all ground, the variant will be [GroundDomain::Relation].
+    /// Otherwise, it will be [UnresolvedDomain::Relation].
     pub fn relation<T>(attrs: T, inner_doms: Vec<DomainPtr>) -> DomainPtr
     where
         T: Into<RelAttr<IntVal>> + TryInto<RelAttr<Int>> + Clone,
@@ -681,20 +683,6 @@ impl Domain {
         }
         if let Some(UnresolvedDomain::Variant(entries)) = self.as_unresolved() {
             return Some(entries.clone());
-                  }
-        None
-    }
-  
-    /// If this is a relation domain, get its (attributes, [domains])
-    pub fn as_relation(&self) -> Option<(RelAttr<IntVal>, Vec<Moo<Domain>>)> {
-        if let Some(GroundDomain::Relation(attrs, doms)) = self.as_ground() {
-            return Some((
-                attrs.clone().into(),
-                doms.iter().cloned().map(|d| d.into()).collect(),
-            ));
-        }
-        if let Some(UnresolvedDomain::Relation(attrs, doms)) = self.as_unresolved() {
-            return Some((attrs.clone(), doms.clone()));
         }
         None
     }
@@ -717,9 +705,32 @@ impl Domain {
 
         if let Some(UnresolvedDomain::Variant(entries_gds)) = self.as_unresolved_mut() {
             return Some(entries_gds);
-      }
-      None
-  }
+        }
+        None
+    }
+
+    /// If this is a [GroundDomain::Variant], get a mutable reference to its entries
+    pub fn as_variant_ground_mut(&mut self) -> Option<&mut Vec<FieldEntryGround>> {
+        if let Some(GroundDomain::Variant(entries)) = self.as_ground_mut() {
+            return Some(entries);
+        }
+        None
+    }
+
+    /// If this is a relation domain, get its (attributes, [domains])
+    pub fn as_relation(&self) -> Option<(RelAttr<IntVal>, Vec<Moo<Domain>>)> {
+        if let Some(GroundDomain::Relation(attrs, doms)) = self.as_ground() {
+            return Some((
+                attrs.clone().into(),
+                doms.iter().cloned().map(|d| d.into()).collect(),
+            ));
+        }
+        if let Some(UnresolvedDomain::Relation(attrs, doms)) = self.as_unresolved() {
+            return Some((attrs.clone(), doms.clone()));
+        }
+        None
+    }
+    
     /// If this is a relation domain, convert it to unresolved and get mutable references to
     /// its (attrs, [domains]).
     /// The domain always becomes [UnresolvedDomain::Relation] after this operation.
@@ -744,14 +755,7 @@ impl Domain {
         }
         None
     }
-
-    /// If this is a [GroundDomain::Variant], get a mutable reference to its entries
-    pub fn as_variant_ground_mut(&mut self) -> Option<&mut Vec<FieldEntryGround>> {
-        if let Some(GroundDomain::Variant(entries)) = self.as_ground_mut() {
-            return Some(entries);
-      }
-      None
-  }
+    
     /// If this is a [GroundDomain::RElation], get mutable references to its (attrs, [domains])
     pub fn as_relation_ground_mut(
         &mut self,

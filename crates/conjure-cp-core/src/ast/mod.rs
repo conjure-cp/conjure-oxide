@@ -30,8 +30,9 @@ pub use atom::Atom;
 pub use cnf_clause::CnfClause;
 pub use declaration::{DeclarationKind, DeclarationPtr};
 pub use domains::{
-    BinaryAttr, Domain, DomainOpError, DomainPtr, FieldEntry, FieldEntryGround, FuncAttr, GroundDomain,
-    HasDomain, IntVal, JectivityAttr, MSetAttr, PartialityAttr, Range, RelAttr, SetAttr, UnresolvedDomain,
+    BinaryAttr, Domain, DomainOpError, DomainPtr, FieldEntry, FieldEntryGround, FuncAttr,
+    GroundDomain, HasDomain, IntVal, JectivityAttr, MSetAttr, PartialityAttr, Range, RelAttr,
+    SetAttr, UnresolvedDomain,
 };
 pub use eval::eval_constant;
 pub use expressions::{Expression, discriminant_from_value, print_hash_stats};
