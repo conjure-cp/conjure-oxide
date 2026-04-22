@@ -106,8 +106,6 @@ pub fn encode_semantic_tokens(source_map: &SourceMap, source: &str) -> Vec<u32> 
         .iter()
         .filter_map(|span| {
             let kind = span.hover_info.as_ref()?.kind.as_ref()?;
-            // if (kind == )
-            // let ty = span.hover_info.as_ref()?.ty.as_ref()?
             let enc = token_encoding(kind)?;
 
             let start_byte = span.start_byte;
