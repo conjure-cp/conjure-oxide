@@ -5,6 +5,7 @@ use conjure_cp_core::context::Context;
 use conjure_cp_essence_parser::RecoverableParseError;
 use conjure_cp_essence_parser::diagnostics::diagnostics_api::Diagnostic;
 use conjure_cp_essence_parser::diagnostics::error_detection::collect_errors::error_to_diagnostic;
+use conjure_cp_essence_parser::diagnostics::source_map::SourceMap;
 use conjure_cp_essence_parser::parse_essence_with_context_and_map;
 use conjure_cp_essence_parser::util::get_tree;
 use tower_lsp::{lsp_types::Diagnostic as LspDiagnostic, lsp_types::*};
@@ -126,6 +127,7 @@ impl Backend {
 
         let mut new_text = cache_conts.contents.clone();
         let mut edited_tree = cache_conts.cst.clone();
+        let mut provisional_sourcemap = cache_conts.sourcemap.clone();
 
         // LSP may send multiple incremental edits in one notification.
         for change in &params.content_changes {
@@ -143,10 +145,8 @@ impl Backend {
                     continue;
                 }
 
-                let start_position =
-                    position_to_treesitter_point(&cache_conts.contents, lsp_range.start);
-                let old_end_position =
-                    position_to_treesitter_point(&cache_conts.contents, lsp_range.end);
+                let start_position = position_to_treesitter_point(&new_text, lsp_range.start);
+                let old_end_position = position_to_treesitter_point(&new_text, lsp_range.end);
                 let new_end_position = calculate_new_end_position(&change.text, start_position);
                 let new_end_byte = start_byte + change.text.len();
 
@@ -161,11 +161,16 @@ impl Backend {
                     });
                 }
 
+                if let Some(map) = provisional_sourcemap.as_mut() {
+                    shift_sourcemap_after_edit(map, start_byte, old_end_byte, new_end_byte);
+                }
+
                 new_text.replace_range(start_byte..old_end_byte, &change.text);
             } else {
                 // Full content replacement.
                 new_text = change.text.clone();
                 edited_tree = None;
+                provisional_sourcemap = None;
             }
         }
 
@@ -186,7 +191,7 @@ impl Backend {
         // store updated text/tree IMMEDIATELY so subsequent incremental edits are based on
         // the latest document state, then parse & diagnose in a debounced task
         let provisional = CacheCont {
-            sourcemap: cache_conts.sourcemap.clone(),
+            sourcemap: provisional_sourcemap,
             ast: cache_conts.ast.clone(),
             errors: cache_conts.errors.clone(),
             cst: new_tree.clone(),
@@ -391,4 +396,49 @@ fn utf16_col_to_byte(line: &str, utf16_col: usize) -> usize {
         units = next;
     }
     line.len()
+}
+
+fn shift_sourcemap_after_edit(
+    source_map: &mut SourceMap,
+    start_byte: usize,
+    old_end_byte: usize,
+    new_end_byte: usize,
+) {
+    let delta = new_end_byte as isize - old_end_byte as isize;
+
+    for span in &mut source_map.spans {
+        if span.end_byte <= start_byte {
+            continue;
+        }
+
+        if span.start_byte >= old_end_byte {
+            span.start_byte = shift_byte(span.start_byte, delta);
+            span.end_byte = shift_byte(span.end_byte, delta);
+            continue;
+        }
+
+        // if the edited region intersects this span, invalidate it
+        //  until the debounced full parse
+        span.start_byte = 0;
+        span.end_byte = 0;
+        span.hover_info = None;
+    }
+
+    source_map.by_byte = Default::default();
+    for (idx, span) in source_map.spans.iter().enumerate() {
+        if span.start_byte < span.end_byte {
+            source_map
+                .by_byte
+                .insert(span.start_byte..span.end_byte, idx as u32);
+        }
+    }
+}
+
+// helpr to shift a byte position
+fn shift_byte(byte: usize, delta: isize) -> usize {
+    if delta >= 0 {
+        byte.saturating_add(delta as usize)
+    } else {
+        byte.saturating_sub((-delta) as usize)
+    }
 }
