@@ -22,6 +22,10 @@ use tree_sitter::Tree;
 use crate::handlers::cache::CacheCont;
 use crate::server::Backend;
 
+// parse debounce is the amount of time to wait after a document change before re-parsing and updating diagnostics
+// helps avoid excessive parsing on rapid successive edits
+const PARSE_DEBOUNCE_MS: u64 = 120;
+
 impl Backend {
     pub async fn handle_did_open(&self, params: DidOpenTextDocumentParams) {
         //on open, check whether cache has existing entry, if not, add to cache
@@ -169,66 +173,98 @@ impl Backend {
             new_tree = get_tree(&new_text).map(|(tree, _)| tree);
         }
 
-        let context = Arc::new(RwLock::new(Context::default()));
-        let mut errors: Vec<RecoverableParseError> = Vec::new();
-        let parsed =
-            parse_essence_with_context_and_map(&new_text, context, &mut errors, new_tree.as_ref());
-
-        let new_cache_conts = match parsed {
-            Ok((Some(ast_model), source_map)) => CacheCont {
-                sourcemap: Some(source_map),
-                ast: Some(ast_model),
-                errors,
-                cst: new_tree.clone(),
-                contents: new_text.clone(),
-                version: incoming_version,
-            },
-            Ok((None, source_map)) => CacheCont {
-                sourcemap: Some(source_map),
-                ast: None,
-                errors,
-                cst: new_tree.clone(),
-                contents: new_text.clone(),
-                version: incoming_version,
-            },
-            Err(fatal) => CacheCont {
-                sourcemap: None,
-                ast: None,
-                errors: vec![RecoverableParseError::new(fatal.to_string(), None)],
-                cst: new_tree.clone(),
-                contents: new_text.clone(),
-                version: incoming_version,
-            },
+        // store updated text/tree IMMEDIATELY so subsequent incremental edits are based on
+        // the latest document state, then parse & diagnose in a debounced task
+        let provisional = CacheCont {
+            sourcemap: cache_conts.sourcemap.clone(),
+            ast: cache_conts.ast.clone(),
+            errors: cache_conts.errors.clone(),
+            cst: new_tree.clone(),
+            contents: new_text.clone(),
+            version: incoming_version,
         };
+        lsp_cache.insert(uri.clone(), provisional).await;
 
-        // Drop stale parse results if a newer update landed while parsing.
-        if let Some(latest) = lsp_cache.get(&uri).await
-            && latest.version >= incoming_version
-        {
-            return;
-        }
+        let lsp_cache = lsp_cache.clone();
+        let client = self.client.clone();
+        tokio::spawn(async move {
+            tokio::time::sleep(std::time::Duration::from_millis(PARSE_DEBOUNCE_MS)).await;
 
-        lsp_cache.insert(uri.clone(), new_cache_conts.clone()).await;
-        self.handle_diagnostics(&uri, new_cache_conts).await;
+            let Some(current) = lsp_cache.get(&uri).await else {
+                return;
+            };
+
+            // only parse the newest queued version
+            if current.version != incoming_version {
+                return;
+            }
+
+            let context = Arc::new(RwLock::new(Context::default()));
+            let mut errors: Vec<RecoverableParseError> = Vec::new();
+            let parsed = parse_essence_with_context_and_map(
+                &current.contents,
+                context,
+                &mut errors,
+                current.cst.as_ref(),
+            );
+
+            let parsed_cache = match parsed {
+                Ok((Some(ast_model), source_map)) => CacheCont {
+                    sourcemap: Some(source_map),
+                    ast: Some(ast_model),
+                    errors,
+                    cst: current.cst.clone(),
+                    contents: current.contents.clone(),
+                    version: incoming_version,
+                },
+                Ok((None, source_map)) => CacheCont {
+                    sourcemap: Some(source_map),
+                    ast: None,
+                    errors,
+                    cst: current.cst.clone(),
+                    contents: current.contents.clone(),
+                    version: incoming_version,
+                },
+                Err(fatal) => CacheCont {
+                    sourcemap: None,
+                    ast: None,
+                    errors: vec![RecoverableParseError::new(fatal.to_string(), None)],
+                    cst: current.cst.clone(),
+                    contents: current.contents.clone(),
+                    version: incoming_version,
+                },
+            };
+
+            if let Some(latest) = lsp_cache.get(&uri).await
+                && latest.version != incoming_version
+            {
+                return;
+            }
+
+            lsp_cache.insert(uri.clone(), parsed_cache.clone()).await;
+            publish_diagnostics(&client, &uri, parsed_cache).await;
+        });
     }
 
     pub async fn handle_diagnostics(&self, uri: &Url, cache_conts: CacheCont) {
-        // Build diagnostics from the parse errors cached for this document.
-        // parse_essence_with_context_and_map already produces both syntactic and semantic errors.
-        let diagnostics: Vec<Diagnostic> = cache_conts
-            .errors
-            .into_iter()
-            .map(|err| error_to_diagnostic(&err))
-            .collect();
-
-        // Convert to LSP format
-        let lsp_diagnostics = convert_diagnostics(diagnostics);
-
-        // Publish diagnostics - this should be the ONLY call
-        self.client
-            .publish_diagnostics(uri.clone(), lsp_diagnostics, None)
-            .await;
+        publish_diagnostics(&self.client, uri, cache_conts).await;
     }
+}
+
+async fn publish_diagnostics(client: &tower_lsp::Client, uri: &Url, cache_conts: CacheCont) {
+    // Build diagnostics from the parse errors cached for this document.
+    // parse_essence_with_context_and_map already produces both syntactic and semantic errors.
+    let diagnostics: Vec<Diagnostic> = cache_conts
+        .errors
+        .into_iter()
+        .map(|err| error_to_diagnostic(&err))
+        .collect();
+
+    let lsp_diagnostics = convert_diagnostics(diagnostics);
+
+    client
+        .publish_diagnostics(uri.clone(), lsp_diagnostics, None)
+        .await;
 }
 // convert diagnostics from cp-essence-parser to LSP diagnostics
 pub fn convert_diagnostics(diagnostics: Vec<ParserDiagnostic>) -> Vec<LspDiagnostic> {
