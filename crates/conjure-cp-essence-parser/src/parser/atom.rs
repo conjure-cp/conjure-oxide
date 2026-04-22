@@ -296,7 +296,7 @@ fn parse_variable(ctx: &mut ParseContext, node: &Node) -> Result<Option<Atom>, F
                 DeclarationKind::DomainLetting(_) => SymbolKind::LettingVar,
                 DeclarationKind::Quantified(..) => SymbolKind::FindVar,
                 DeclarationKind::QuantifiedExpr(..) => SymbolKind::FindVar,
-                DeclarationKind::RecordField(_) => return Ok(None),
+                DeclarationKind::RecordField(_) => SymbolKind::Decimal,
                 &_ => todo!(),
             };
 
