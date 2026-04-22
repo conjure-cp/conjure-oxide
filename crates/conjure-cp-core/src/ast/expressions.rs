@@ -1428,7 +1428,7 @@ impl Expression {
             ToSet,
             ToMSet,
             ToRelation,
-            RelationProj,,
+            RelationProj,
             Subsequence,
             Substring,
         )
