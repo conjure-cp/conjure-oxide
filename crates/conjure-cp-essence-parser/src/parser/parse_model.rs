@@ -3,21 +3,21 @@ use std::sync::{Arc, RwLock};
 use std::{fs, vec};
 
 use conjure_cp_core::Model;
+use conjure_cp_core::ast::DeclarationPtr;
 use conjure_cp_core::ast::assertions::debug_assert_model_well_formed;
-use conjure_cp_core::ast::{DeclarationPtr, Expression, Metadata, Moo};
 use conjure_cp_core::context::Context;
 #[allow(unused)]
 use uniplate::Uniplate;
 
 use super::ParseContext;
-use super::find::parse_find_statement;
+use super::dominance::parse_dominance_relation;
+use super::find::{parse_find_statement, parse_given_statement};
 use super::letting::parse_letting_statement;
 use super::util::{TypecheckingContext, get_tree};
-use crate::diagnostics::diagnostics_api::SymbolKind;
-use crate::diagnostics::source_map::{HoverInfo, SourceMap, span_with_hover};
+use crate::diagnostics::source_map::SourceMap;
 use crate::errors::{FatalParseError, ParseErrorCollection, RecoverableParseError};
 use crate::expression::parse_expression;
-use crate::field;
+use crate::parser::keyword_checks::keyword_as_identifier;
 use crate::syntax_errors::detect_syntactic_errors;
 use tree_sitter::Tree;
 
@@ -58,8 +58,8 @@ pub fn parse_essence_with_context(
     errors: &mut Vec<RecoverableParseError>,
 ) -> Result<Option<Model>, FatalParseError> {
     match parse_essence_with_context_and_map(src, context, errors, None)? {
-        Some((model, _source_map)) => Ok(Some(model)),
-        None => Ok(None),
+        (Some(model), _source_map) => Ok(Some(model)),
+        (None, _source_map) => Ok(None),
     }
 }
 
@@ -75,7 +75,7 @@ pub fn parse_essence_with_context_and_map(
     context: Arc<RwLock<Context<'static>>>,
     errors: &mut Vec<RecoverableParseError>,
     tree: Option<&Tree>,
-) -> Result<Option<(Model, SourceMap)>, FatalParseError> {
+) -> Result<(Option<Model>, SourceMap), FatalParseError> {
     let (tree, source_code) = if let Some(tree) = tree {
         (tree.clone(), src.to_string())
     } else {
@@ -89,10 +89,20 @@ pub fn parse_essence_with_context_and_map(
         }
     };
 
-    if tree.root_node().has_error() {
+    let has_syntax_errors = tree.root_node().has_error();
+    if has_syntax_errors {
         detect_syntactic_errors(src, &tree, errors);
-        return Ok(None);
     }
+
+    // don't detect semantic errors if there are syntactic errors, but still parse for source map.
+    let mut suppressed_semantic_errors = Vec::new();
+    let semantic_errors: &mut Vec<RecoverableParseError> = if has_syntax_errors {
+        &mut suppressed_semantic_errors
+    } else {
+        errors
+    };
+
+    keyword_as_identifier(tree.root_node(), src, semantic_errors);
 
     let mut model = Model::new(context);
     let mut source_map = SourceMap::default();
@@ -104,47 +114,19 @@ pub fn parse_essence_with_context_and_map(
         &source_code,
         &root_node,
         Some(model.symbols_ptr_unchecked().clone()),
-        errors,
+        semantic_errors,
         &mut source_map,
         &mut declaration_spans,
     );
 
     let mut cursor = root_node.walk();
     for statement in root_node.children(&mut cursor) {
-        /*
-           since find and letting are unnamed children
-           hover info is added here.
-           other unnamed children will be skipped.
-        */
-        if statement.kind() == "find" {
-            span_with_hover(
-                &statement,
-                ctx.source_code,
-                ctx.source_map,
-                HoverInfo {
-                    description: "Find keyword".to_string(),
-                    kind: Some(SymbolKind::Find),
-                    ty: None,
-                    decl_span: None,
-                },
-            );
-        } else if statement.kind() == "letting" {
-            span_with_hover(
-                &statement,
-                ctx.source_code,
-                ctx.source_map,
-                HoverInfo {
-                    description: "Letting keyword".to_string(),
-                    kind: Some(SymbolKind::Letting),
-                    ty: None,
-                    decl_span: None,
-                },
-            );
-        }
-
-        if !statement.is_named() {
+        if !statement.is_named() || statement.is_error() || statement.kind() == "ERROR" {
             continue;
         }
+
+        ctx.typechecking_context = TypecheckingContext::Unknown;
+        ctx.inner_typechecking_context = TypecheckingContext::Unknown;
 
         match statement.kind() {
             "single_line_comment" => {}
@@ -155,6 +137,14 @@ pub fn parse_essence_with_context_and_map(
                     model
                         .symbols_mut()
                         .insert(DeclarationPtr::new_find(name, domain));
+                }
+            }
+            "given_statement" => {
+                let var_hashmap = parse_given_statement(&mut ctx, statement)?;
+                for (name, domain) in var_hashmap {
+                    model
+                        .symbols_mut()
+                        .insert(DeclarationPtr::new_given(name, domain));
                 }
             }
             "bool_expr" | "atom" | "comparison_expr" => {
@@ -172,11 +162,9 @@ pub fn parse_essence_with_context_and_map(
                 model.symbols_mut().extend(letting_vars);
             }
             "dominance_relation" => {
-                let inner = field!(statement, "expression");
-                let Some(expr) = parse_expression(&mut ctx, inner)? else {
+                let Some(dominance) = parse_dominance_relation(&mut ctx, &statement)? else {
                     continue;
                 };
-                let dominance = Expression::DominanceRelation(Metadata::new(), Moo::new(expr));
                 if model.dominance.is_some() {
                     ctx.record_error(RecoverableParseError::new(
                         "Duplicate dominance relation".to_string(),
@@ -187,31 +175,32 @@ pub fn parse_essence_with_context_and_map(
                 model.dominance = Some(dominance);
             }
             _ => {
-                return Err(FatalParseError::internal_error(
+                ctx.record_error(RecoverableParseError::new(
                     format!("Unexpected top-level statement: {}", statement.kind()),
                     Some(statement.range()),
                 ));
+                continue;
             }
         }
     }
 
     // Check if there were any recoverable errors
     if !errors.is_empty() {
-        return Ok(None);
+        return Ok((None, source_map));
     }
     // otherwise return the model
-    Ok(Some((model, source_map)))
+    Ok((Some(model), source_map))
 }
 
 pub fn parse_essence(src: &str) -> Result<(Model, SourceMap), Box<ParseErrorCollection>> {
     let context = Arc::new(RwLock::new(Context::default()));
     let mut errors = vec![];
     match parse_essence_with_context_and_map(src, context, &mut errors, None) {
-        Ok(Some((model, source_map))) => {
+        Ok((Some(model), source_map)) => {
             debug_assert_model_well_formed(&model, "tree-sitter");
             Ok((model, source_map))
         }
-        Ok(None) => {
+        Ok((None, _source_map)) => {
             // Recoverable errors were found, return them as a ParseErrorCollection
             Err(Box::new(ParseErrorCollection::multiple(
                 errors,
@@ -306,5 +295,128 @@ mod test {
                 domain_int!(-2..0)
             )
         )
+    }
+
+    #[test]
+    pub fn test_parse_pareto_in_dominance_relation() {
+        let src = "
+        find x : int(0..3)
+
+        dominance relation
+            pareto(minimising x)
+        ";
+
+        let (model, _source_map) = parse_essence(src).unwrap();
+        let st = model.symbols();
+        let x = st.lookup(&Name::user("x")).unwrap();
+        let x_e = Expression::Atomic(Metadata::new(), Atom::new_ref(x.clone()));
+        let x_prev = Expression::FromSolution(Metadata::new(), Moo::new(Atom::new_ref(x)));
+
+        assert_eq!(
+            model.dominance,
+            Some(Expression::DominanceRelation(
+                Metadata::new(),
+                Moo::new(Expression::And(
+                    Metadata::new(),
+                    Moo::new(matrix_expr!(
+                        Expression::Leq(
+                            Metadata::new(),
+                            Moo::new(x_e.clone()),
+                            Moo::new(x_prev.clone())
+                        ),
+                        Expression::Lt(Metadata::new(), Moo::new(x_e), Moo::new(x_prev))
+                    ))
+                ))
+            ))
+        );
+    }
+
+    #[test]
+    pub fn test_parse_pareto_with_mixed_directions() {
+        let src = "
+        find x : int(0..3)
+        find y : int(0..3)
+
+        dominance relation
+            pareto(minimising x, maximising y)
+        ";
+
+        let (model, _source_map) = parse_essence(src).unwrap();
+        let st = model.symbols();
+        let x = st.lookup(&Name::user("x")).unwrap();
+        let y = st.lookup(&Name::user("y")).unwrap();
+        let x_e = Expression::Atomic(Metadata::new(), Atom::new_ref(x.clone()));
+        let y_e = Expression::Atomic(Metadata::new(), Atom::new_ref(y.clone()));
+        let x_prev = Expression::FromSolution(Metadata::new(), Moo::new(Atom::new_ref(x)));
+        let y_prev = Expression::FromSolution(Metadata::new(), Moo::new(Atom::new_ref(y)));
+
+        assert_eq!(
+            model.dominance,
+            Some(Expression::DominanceRelation(
+                Metadata::new(),
+                Moo::new(Expression::And(
+                    Metadata::new(),
+                    Moo::new(matrix_expr!(
+                        Expression::Leq(
+                            Metadata::new(),
+                            Moo::new(x_e.clone()),
+                            Moo::new(x_prev.clone())
+                        ),
+                        Expression::Geq(
+                            Metadata::new(),
+                            Moo::new(y_e.clone()),
+                            Moo::new(y_prev.clone())
+                        ),
+                        Expression::Or(
+                            Metadata::new(),
+                            Moo::new(matrix_expr!(
+                                Expression::Lt(Metadata::new(), Moo::new(x_e), Moo::new(x_prev)),
+                                Expression::Gt(Metadata::new(), Moo::new(y_e), Moo::new(y_prev))
+                            ))
+                        )
+                    ))
+                ))
+            ))
+        );
+    }
+
+    #[test]
+    pub fn test_parse_pareto_over_expression_component() {
+        let src = "
+        find x : int(0..3)
+
+        dominance relation
+            pareto(minimising x + 1)
+        ";
+
+        let (model, _source_map) = parse_essence(src).unwrap();
+        let st = model.symbols();
+        let x = st.lookup(&Name::user("x")).unwrap();
+        let x_e = Expression::Atomic(Metadata::new(), Atom::new_ref(x.clone()));
+        let x_prev = Expression::FromSolution(Metadata::new(), Moo::new(Atom::new_ref(x)));
+        let one = Expression::Atomic(Metadata::new(), 1.into());
+        let current = Expression::Sum(
+            Metadata::new(),
+            Moo::new(matrix_expr!(x_e.clone(), one.clone())),
+        );
+        let previous = Expression::Sum(Metadata::new(), Moo::new(matrix_expr!(x_prev, one)));
+
+        assert_eq!(
+            model.dominance,
+            Some(Expression::DominanceRelation(
+                Metadata::new(),
+                Moo::new(Expression::And(
+                    Metadata::new(),
+                    Moo::new(matrix_expr!(
+                        Expression::Leq(
+                            Metadata::new(),
+                            Moo::new(current.clone()),
+                            Moo::new(previous.clone())
+                        ),
+                        Expression::Lt(Metadata::new(), Moo::new(current), Moo::new(previous))
+                    ))
+                ))
+            ))
+        );
     }
 }

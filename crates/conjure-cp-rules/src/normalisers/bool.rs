@@ -14,7 +14,7 @@ use uniplate::Uniplate;
 /// ```text
 /// not(not(a)) = a
 /// ```
-#[register_rule(("Base", 8400))]
+#[register_rule("Base", 8400, [Not])]
 fn remove_double_negation(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
         Expr::Not(_, contents) => match contents.as_ref() {
@@ -30,7 +30,7 @@ fn remove_double_negation(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// ```text
 /// or(and(a, b), c) ~> and(or(a, c), or(b, c))
 /// ```
-#[register_rule(("Base", 8400))]
+#[register_rule("Base", 8400, [Or])]
 fn distribute_or_over_and(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     fn find_and(exprs: &[Expr]) -> Option<usize> {
         // ToDo: may be better to move this to some kind of utils module?
@@ -66,13 +66,13 @@ fn distribute_or_over_and(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                                 let mut new_or_contents = rest.clone();
                                 new_or_contents.push(e.clone());
                                 new_and_contents.push(Expr::Or(
-                                    metadata.clone_dirty(),
+                                    metadata.clone(),
                                     Moo::new(into_matrix_expr![new_or_contents]),
                                 ))
                             }
 
                             Ok(Reduction::pure(Expr::And(
-                                metadata.clone_dirty(),
+                                metadata,
                                 Moo::new(into_matrix_expr![new_and_contents]),
                             )))
                         }
@@ -91,7 +91,7 @@ fn distribute_or_over_and(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// ```text
 /// not(and(a, b)) ~> or(not(a), not(b))
 /// ```
-#[register_rule(("Base", 8400))]
+#[register_rule("Base", 8400, [Not])]
 fn distribute_not_over_and(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     for child in expr.universe() {
         if matches!(
@@ -133,7 +133,7 @@ fn distribute_not_over_and(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// ```text
 /// not(or(a, b)) ~> and(not(a), not(b))
 /// ```
-#[register_rule(("Base", 8400))]
+#[register_rule("Base", 8400, [Not])]
 fn distribute_not_over_or(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
         Expr::Not(_, contents) => match contents.as_ref() {
@@ -169,7 +169,7 @@ fn distribute_not_over_or(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// ```text
 /// and([a]) ~> a
 /// ```
-#[register_rule(("Base", 8800))]
+#[register_rule("Base", 8800, [And])]
 
 fn remove_unit_vector_and(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
@@ -193,7 +193,7 @@ fn remove_unit_vector_and(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// ```text
 /// or([a]) ~> a
 /// ```
-#[register_rule(("Base", 8800))]
+#[register_rule("Base", 8800, [Or])]
 fn remove_unit_vector_or(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::Or(_, e) = expr else {
         return Err(RuleNotApplicable);
@@ -217,7 +217,7 @@ fn remove_unit_vector_or(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// !p -> !q ~> q -> p
 /// ```
 /// where p,q are safe.
-#[register_rule(("Base", 8800))]
+#[register_rule("Base", 8800, [Imply])]
 fn normalise_implies_contrapositive(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::Imply(_, e1, e2) = expr else {
         return Err(RuleNotApplicable);
@@ -246,7 +246,7 @@ fn normalise_implies_contrapositive(expr: &Expr, _: &SymbolTable) -> Application
 /// ```,
 ///
 /// where p->q is safe
-#[register_rule(("Base", 8800))]
+#[register_rule("Base", 8800, [Not])]
 fn normalise_implies_negation(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::Not(_, e1) = expr else {
         return Err(RuleNotApplicable);
@@ -275,7 +275,7 @@ fn normalise_implies_negation(expr: &Expr, _: &SymbolTable) -> ApplicationResult
 ///
 /// Has a higher priority than `normalise_implies_uncurry` as this should apply first. See the
 /// docstring for `normalise_implies_uncurry`.
-#[register_rule(("Base", 8800))]
+#[register_rule("Base", 8800, [Imply])]
 fn normalise_implies_left_distributivity(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::Imply(_, e1, e2) = expr else {
         return Err(RuleNotApplicable);
@@ -328,7 +328,7 @@ fn normalise_implies_left_distributivity(expr: &Expr, _: &SymbolTable) -> Applic
 ///
 /// With this rule, I am assuming (without empirical evidence) that and is a cheaper constraint
 /// than implication (in particular, Minion's reifyimply constraint).
-#[register_rule(("Base", 8400))]
+#[register_rule("Base", 8400, [Imply])]
 fn normalise_implies_uncurry(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::Imply(_, p, e1) = expr else {
         return Err(RuleNotApplicable);

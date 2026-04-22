@@ -1,9 +1,10 @@
+use crate::RecoverableParseError;
 use crate::errors::FatalParseError;
 use crate::expression::parse_expression;
 use crate::field;
 use crate::parser::ParseContext;
 use crate::parser::domain::parse_domain;
-use crate::util::named_children;
+use crate::util::{TypecheckingContext, named_children};
 use conjure_cp_core::ast::ac_operators::ACOperatorKind;
 use conjure_cp_core::ast::comprehension::ComprehensionBuilder;
 use conjure_cp_core::ast::{DeclarationPtr, Expression, Metadata, Moo, Name};
@@ -14,13 +15,28 @@ pub fn parse_comprehension(
     ctx: &mut ParseContext,
     node: &Node,
 ) -> Result<Option<Expression>, FatalParseError> {
-    // Comprehensions require a symbol table passed in
-    let symbols_ptr = ctx.symbols.clone().ok_or_else(|| {
-        FatalParseError::internal_error(
-            "Comprehensions require a symbol table".to_string(),
+    // If we're in a set context, add error and return early since comprehensions don't produce sets
+    if ctx.typechecking_context == crate::util::TypecheckingContext::Set {
+        ctx.record_error(crate::errors::RecoverableParseError::new(
+            format!(
+                "Type error: {}\n\tExpected: set\n\tGot: comprehension",
+                ctx.source_code[node.start_byte()..node.end_byte()].trim()
+            ),
             Some(node.range()),
-        )
-    })?;
+        ));
+    }
+
+    // Comprehensions require a symbol table passed in
+    let symbols_ptr = match ctx.symbols.clone() {
+        Some(s) => s,
+        None => {
+            ctx.record_error(RecoverableParseError::new(
+                "Comprehensions require a symbol table".to_string(),
+                Some(node.range()),
+            ));
+            return Ok(None);
+        }
+    };
 
     let mut builder = ComprehensionBuilder::new(symbols_ptr);
 
@@ -37,12 +53,16 @@ pub fn parse_comprehension(
             }
             "generator" => {
                 // Parse the generator variable
-                let var_node = field!(child, "variable");
+                let Some(var_node) = field!(recover, ctx, child, "variable") else {
+                    return Ok(None);
+                };
                 let var_name_str = &ctx.source_code[var_node.start_byte()..var_node.end_byte()];
                 let var_name = Name::user(var_name_str);
 
                 // Parse the domain
-                let domain_node = field!(child, "domain");
+                let Some(domain_node) = field!(recover, ctx, child, "domain") else {
+                    return Ok(None);
+                };
 
                 // Parse with a new context using the generator symbol table
                 let mut domain_ctx = ctx.with_new_symbols(Some(builder.generator_symboltable()));
@@ -56,7 +76,9 @@ pub fn parse_comprehension(
             }
             "condition" => {
                 // Parse the condition expression
-                let expr_node = field!(child, "expression");
+                let Some(expr_node) = field!(recover, ctx, child, "expression") else {
+                    return Ok(None);
+                };
                 let generator_symboltable = builder.generator_symboltable();
 
                 // Parse with a new context using the generator symbol table
@@ -75,15 +97,23 @@ pub fn parse_comprehension(
     }
 
     // parse the return expression
-    let return_expr_node = return_expr_node.ok_or_else(|| {
-        FatalParseError::internal_error(
-            "Comprehension missing return expression".to_string(),
-            Some(node.range()),
-        )
-    })?;
+    let return_expr_node = match return_expr_node {
+        Some(node) => node,
+        None => {
+            ctx.record_error(RecoverableParseError::new(
+                "Comprehension missing return expression".to_string(),
+                Some(node.range()),
+            ));
+            return Ok(None);
+        }
+    };
 
     // Use the return expression symbol table which already has quantified variables (as Given) and parent as parent
+    // Parse using the inner typechecking context
+    let saved_inner_ctx = ctx.inner_typechecking_context;
     let mut return_ctx = ctx.with_new_symbols(Some(builder.return_expr_symboltable()));
+    return_ctx.typechecking_context = saved_inner_ctx;
+    return_ctx.inner_typechecking_context = TypecheckingContext::Unknown;
     let Some(return_expr) = parse_expression(&mut return_ctx, return_expr_node)? else {
         return Ok(None);
     };
@@ -105,12 +135,16 @@ pub fn parse_quantifier_or_aggregate_expr(
     node: &Node,
 ) -> Result<Option<Expression>, FatalParseError> {
     // Quantifier and aggregate expressions require a symbol table
-    let symbols_ptr = ctx.symbols.clone().ok_or_else(|| {
-        FatalParseError::internal_error(
-            "Quantifier and aggregate expressions require a symbol table".to_string(),
-            Some(node.range()),
-        )
-    })?;
+    let symbols_ptr = match ctx.symbols.clone() {
+        Some(s) => s,
+        None => {
+            ctx.record_error(RecoverableParseError::new(
+                "Quantifier and aggregate expressions require a symbol table".to_string(),
+                Some(node.range()),
+            ));
+            return Ok(None);
+        }
+    };
 
     // Create the comprehension builder
     let mut builder = ComprehensionBuilder::new(symbols_ptr);
@@ -128,10 +162,21 @@ pub fn parse_quantifier_or_aggregate_expr(
                 variables.push(var_name);
             }
             "domain" => {
-                // Parse with the current symbol table (no need for a new context)
+                // Parse domains under Unknown context so arithmetic bounds in domains
+                // (e.g. int(1..m-1)) are not rejected by surrounding boolean/arithmetic contexts.
+                let saved_ctx = ctx.typechecking_context;
+                let saved_inner_ctx = ctx.inner_typechecking_context;
+                ctx.typechecking_context = TypecheckingContext::Unknown;
+                ctx.inner_typechecking_context = TypecheckingContext::Unknown;
+
                 let Some(parsed_domain) = parse_domain(ctx, child)? else {
+                    ctx.typechecking_context = saved_ctx;
+                    ctx.inner_typechecking_context = saved_inner_ctx;
                     return Ok(None);
                 };
+
+                ctx.typechecking_context = saved_ctx;
+                ctx.inner_typechecking_context = saved_inner_ctx;
                 domain = Some(parsed_domain);
             }
             "set_literal" | "matrix" | "tuple" | "record" => {
@@ -144,21 +189,25 @@ pub fn parse_quantifier_or_aggregate_expr(
 
     // We need either a domain or a collection
     if domain.is_none() && collection_node.is_none() {
-        return Err(FatalParseError::internal_error(
+        ctx.record_error(RecoverableParseError::new(
             "Quantifier and aggregate expressions require a domain or collection".to_string(),
             Some(node.range()),
         ));
+        return Ok(None);
     }
 
     if variables.is_empty() {
-        return Err(FatalParseError::internal_error(
+        ctx.record_error(RecoverableParseError::new(
             "Quantifier and aggregate expressions require variables".to_string(),
             Some(node.range()),
         ));
+        return Ok(None);
     }
 
     // Get the operator type
-    let operator_node = field!(node, "operator");
+    let Some(operator_node) = field!(recover, ctx, node, "operator") else {
+        return Ok(None);
+    };
     let operator_str = &ctx.source_code[operator_node.start_byte()..operator_node.end_byte()];
 
     let (ac_operator_kind, wrapper) = match operator_str {
@@ -168,10 +217,11 @@ pub fn parse_quantifier_or_aggregate_expr(
         "min" => (ACOperatorKind::Sum, "Min"), // AC operator doesn't matter for non-boolean aggregates
         "max" => (ACOperatorKind::Sum, "Max"),
         _ => {
-            return Err(FatalParseError::internal_error(
+            ctx.record_error(RecoverableParseError::new(
                 format!("Unknown operator: {}", operator_str),
                 Some(operator_node.range()),
             ));
+            return Ok(None);
         }
     };
 
@@ -183,16 +233,24 @@ pub fn parse_quantifier_or_aggregate_expr(
         }
     } else if let Some(_coll_node) = collection_node {
         // TODO: support collection domains
-        return Err(FatalParseError::NotImplemented(
+        ctx.record_error(RecoverableParseError::new(
             "Collection domains in quantifier and aggregate expressions".to_string(),
+            Some(_coll_node.range()),
         ));
+        return Ok(None);
     }
 
     // Parse the expression (after variables are in the symbol table)
-    let expression_node = field!(node, "expression");
+    let Some(expression_node) = field!(recover, ctx, node, "expression") else {
+        return Ok(None);
+    };
 
     // Parse with a new context using the return expression symbol table
+    // Prase using the inner typechecking context
+    let saved_inner_ctx = ctx.inner_typechecking_context;
     let mut expr_ctx = ctx.with_new_symbols(Some(builder.return_expr_symboltable()));
+    expr_ctx.typechecking_context = saved_inner_ctx;
+    expr_ctx.inner_typechecking_context = TypecheckingContext::Unknown;
     let Some(expression) = parse_expression(&mut expr_ctx, expression_node)? else {
         return Ok(None);
     };

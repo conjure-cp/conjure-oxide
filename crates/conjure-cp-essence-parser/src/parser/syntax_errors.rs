@@ -20,9 +20,38 @@ fn line_start_byte(source: &[u8], row: usize) -> usize {
     line_start
 }
 
-/// This is a reporting-layer fix: even though comments are treated as "extras" by the grammar,
-/// tree-sitter `ERROR` node spans can overlap those bytes during recovery. We clamp to the end of
-/// the non-comment prefix (with trailing whitespace trimmed) so diagnostics don't include comment
+fn point_range_at(source: &str, row: usize, column: usize) -> tree_sitter::Range {
+    let line_start = line_start_byte(source.as_bytes(), row);
+    let byte = line_start + column;
+    tree_sitter::Range {
+        start_byte: byte,
+        end_byte: byte,
+        start_point: tree_sitter::Point { row, column },
+        end_point: tree_sitter::Point { row, column },
+    }
+}
+
+fn is_int_keyword_suffix(prefix: &str) -> bool {
+    let prefix = prefix.trim_end();
+    if !prefix.ends_with("int") {
+        return false;
+    }
+    let bytes = prefix.as_bytes();
+    bytes.len() == 3 || {
+        let b = bytes[bytes.len() - 4];
+        !(b.is_ascii_alphanumeric() || b == b'_')
+    }
+}
+
+fn int_domain_missing_rparen_line(line: &str, start_col: usize, end_col: usize) -> bool {
+    line.as_bytes().get(start_col) == Some(&b'(')
+        && line[end_col..].trim().is_empty()
+        && !line[start_col..].contains(')')
+        && is_int_keyword_suffix(&line[..start_col])
+}
+
+/// tree-sitter `ERROR` node spans can overlap bytes during recovery.
+/// Need to clamp to the end of the non-comment prefix so diagnostics don't include comment
 /// contents.
 fn clamp_range_before_line_comment(range: &mut tree_sitter::Range, source: &str) {
     let Some(line) = source.lines().nth(range.start_point.row) else {
@@ -105,11 +134,39 @@ pub fn detect_syntactic_errors(
                 ));
                 continue;
             } else {
+                if let Some(missing_rparen) = classify_int_domain_missing_rparen(&node, source) {
+                    errors.push(missing_rparen);
+                    continue;
+                }
                 errors.push(classify_unexpected_token_error(node, source));
             }
             continue;
         }
     }
+}
+
+/// Tree-sitter recovery sometimes reduces `int_domain` to bare `int` and then wraps the following
+/// `(` and range text in an `ERROR` node (especially at EOF).
+/// This function detects this specific pattern and reports  "Missing )" error
+fn classify_int_domain_missing_rparen(
+    node: &tree_sitter::Node,
+    source: &str,
+) -> Option<RecoverableParseError> {
+    let start = node.start_position();
+    let end = node.end_position();
+    let line = source.lines().nth(start.row)?;
+    let comment_col = line.find('$').unwrap_or(line.len());
+    let line = &line[..comment_col];
+    let start_col = start.column.min(line.len());
+    let end_col = end.column.min(line.len());
+    if !int_domain_missing_rparen_line(line, start_col, end_col) {
+        return None;
+    }
+    let insertion_col = line.trim_end().len();
+    Some(RecoverableParseError::new(
+        "Missing )".to_string(),
+        Some(point_range_at(source, start.row, insertion_col)),
+    ))
 }
 
 /// Classifies a missing token node and generates a diagnostic with a context-aware message.
@@ -124,7 +181,7 @@ fn classify_missing_token(node: Node, source: &str) -> RecoverableParseError {
 
     let message = if let Some(parent) = node.parent() {
         match parent.kind() {
-            "letting_statement" => "Missing Expression or Domain".to_string(),
+            "letting_variable_declaration" => "Missing Expression or Domain".to_string(),
             _ => format!("Missing {}", user_friendly_token_name(node.kind(), false)),
         }
     } else {
@@ -172,20 +229,78 @@ fn classify_unexpected_token_error(node: Node, source_code: &str) -> Recoverable
 
 /// Determines if an error node represents a malformed line error.
 pub fn is_malformed_line_error(node: &tree_sitter::Node, source: &str) -> bool {
-    if node.start_position().column == 0 || error_node_out_of_range(node, source) {
-        return true;
-    }
     let parent = node.parent();
     let grandparent = parent.and_then(|n| n.parent());
     let root = grandparent.and_then(|n| n.parent());
 
-    if let (Some(parent), Some(grandparent), Some(root)) = (parent, grandparent, root) {
-        parent.kind() == "set_comparison"
-            && grandparent.kind() == "comparison_expr"
-            && root.kind() == "program"
-    } else {
-        false
+    if let (Some(parent), Some(grandparent), Some(root)) = (parent, grandparent, root)
+        && parent.kind() == "set_comparison"
+        && grandparent.kind() == "comparison_expr"
+        && root.kind() == "program"
+    {
+        return true;
     }
+
+    // check parent kinds to see if the error is a constraint continuation
+    let mut curr = node.parent();
+    while let Some(n) = curr {
+        let kind = n.kind();
+        if matches!(
+            kind,
+            "find_statement"
+                | "given_statement"
+                | "letting_statement"
+                | "dominance_relation"
+                | "bool_expr"
+                | "comparison_expr"
+                | "arithmetic_expr"
+                | "atom"
+        ) {
+            return false;
+        }
+        curr = n.parent();
+    }
+
+    // check for the first non-whitespace character on the line before the error node
+    let line = source.lines().nth(node.start_position().row).unwrap_or("");
+    let first_non_witespace = line
+        .as_bytes()
+        .iter()
+        .take_while(|b| b.is_ascii_whitespace())
+        .count();
+
+    // if the error node is before or at the first non-whitespace character, it's a malformed line error
+    // if the first non-whitespace character is after the error node, it could be a constraint continuation
+    if node.start_position().column <= first_non_witespace || error_node_out_of_range(node, source)
+    {
+        if first_non_witespace > 0 && is_constraint_continuation(source, node.start_position().row)
+        {
+            return false;
+        }
+        return true;
+    }
+    false
+}
+
+/// Checks if a line is a continuation of a constraint (i.e., it ends with a comma or has "such that" at the start).
+fn is_constraint_continuation(source: &str, row: usize) -> bool {
+    let lines: Vec<&str> = source.lines().collect();
+    if row == 0 {
+        return false;
+    }
+
+    let mut r = row;
+    while r > 0 {
+        r -= 1;
+        let line = lines.get(r).copied().unwrap_or("");
+        let line = line.split('$').next().unwrap_or("").trim_end();
+        if line.trim().is_empty() {
+            continue;
+        }
+        let lower = line.trim_start().to_ascii_lowercase();
+        return lower.starts_with("such that") || line.ends_with(',');
+    }
+    false
 }
 
 /// Coverts a token name into a more user-friendly format for error messages.
@@ -267,8 +382,9 @@ fn error_node_out_of_range(node: &tree_sitter::Node, source: &str) -> bool {
 mod test {
 
     use super::{
-        clamp_range_before_line_comment, detect_syntactic_errors, is_malformed_line_error,
-        line_start_byte, user_friendly_token_name,
+        clamp_range_before_line_comment, detect_syntactic_errors, int_domain_missing_rparen_line,
+        is_int_keyword_suffix, is_malformed_line_error, line_start_byte, point_range_at,
+        user_friendly_token_name,
     };
     use crate::errors::RecoverableParseError;
     use crate::{parser::traversal::WalkDFS, util::get_tree};
@@ -420,6 +536,17 @@ mod test {
     }
 
     #[test]
+    fn point_range_at_returns_correct_zero_length_range() {
+        let source = "a\nbc\ndef";
+        let range = point_range_at(source, 1, 1); // points to 'c'
+        assert_eq!(range.start_point.row, 1);
+        assert_eq!(range.start_point.column, 1);
+        assert_eq!(range.end_point, range.start_point);
+        assert_eq!(range.start_byte, 3);
+        assert_eq!(range.end_byte, 3);
+    }
+
+    #[test]
     fn clamp_range_before_line_comment_clamps_end_to_before_dollar() {
         let source = "find x: int(1..3 $comment";
         let mut range = tree_sitter::Range {
@@ -438,5 +565,40 @@ mod test {
         assert_eq!(range.end_point.row, 0);
         assert_eq!(range.end_point.column, 16);
         assert_eq!(range.end_byte, 16);
+    }
+
+    #[test]
+    fn int_keyword_suffix_checks_word_boundary() {
+        assert!(is_int_keyword_suffix("find x: int"));
+        assert!(!is_int_keyword_suffix("foo"));
+        assert!(!is_int_keyword_suffix("mint"));
+    }
+
+    #[test]
+    fn int_domain_missing_rparen_line_positive_and_negative_cases() {
+        let ok = "find x: int(1..2";
+        let start = ok.find('(').unwrap();
+        assert!(int_domain_missing_rparen_line(ok, start, ok.len()));
+
+        let has_rparen = "find x: int(1..2)";
+        let start = has_rparen.find('(').unwrap();
+        assert!(!int_domain_missing_rparen_line(
+            has_rparen,
+            start,
+            has_rparen.len()
+        ));
+
+        let trailing = "find x: int(1..2 foo";
+        let start = trailing.find('(').unwrap();
+        let end = trailing.find(" foo").unwrap();
+        assert!(!int_domain_missing_rparen_line(trailing, start, end));
+
+        let print_like = "find x: print(1..2";
+        let start = print_like.find('(').unwrap();
+        assert!(!int_domain_missing_rparen_line(
+            print_like,
+            start,
+            print_like.len()
+        ));
     }
 }
