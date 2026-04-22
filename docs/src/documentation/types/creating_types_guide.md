@@ -1,8 +1,8 @@
 [//]: # (Author: Nicholas Davidson)
-[//]: # (Last Updated: 09/12/2025)
+[//]: # (Last Updated: 19/04/2026)
 
 # Creating Types Guide
-Currently Conjure-Oxide does not have any support for Essence's sequences, relations, partitions or variants.
+Currently Conjure-Oxide does not have any support for Essence's sequences, partitions or variants.
 This guide outlines the process of creating support for those types to the AST. This does not currently cover rewriting rules or solving.
 ## Creating the Type
 - The domains of these types can contain pointers and so must be able to be both ground and unresolved. Hence you must add to the `GroundDomain` and `UnresolvedDomain` Enums
