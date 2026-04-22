@@ -28,7 +28,6 @@
 - [Coding Resources and Conventions](./developers_guide/coding_resources/index.md)
   - [Glossary](./developers_guide/coding_resources/glossary.md)
   - [Functional Rust](./getting_started/functional-rust.md)
-  - [Style Guide](./developers_guide/coding_resources/style_guide.md)
   - [Crate Structure](./developers_guide/coding_resources/crate_structure.md)
   - [Benchmarking Guide](./developers_guide/coding_resources/benchmarking-guide.md)
 
@@ -56,18 +55,12 @@
   - [Expression Rewriting: Rules and RuleSets](./documentation/sets/expression_rewriting_rules_and_rulesets.md)
   - [Horizontal Set Rules](./documentation/sets/conjure-horizontal-set-rules.md)
   - [Vertical Set Rules: Occurrence Representation](./documentation/sets/Conjure-Vertical-Set-Rules-Occurrence-Representation.md)
-<<<<<<< HEAD
 - [LSP](./documentation/LSP/lsp_general_structure.md)
   - [LSP Server-Client](./documentation/LSP/lsp-server-client.md)
-  - [Diagnostics API](./documentation/LSP/diagnostics_api.md)
-=======
-- [LSP]()
->>>>>>> f9c9e1d54f00ddfe4ffdd8f50055f20b775626cd
-  - [Essence Error Catalog for Error Underlining](./documentation/LSP/Essence-Error-Catalog-for-LSP-Error-Underlining-implementation.md)
+  - [Diagnostics API](./documentation/LSP/diagnostics_api.md)  - [Essence Error Catalog for Error Underlining](./documentation/LSP/Essence-Error-Catalog-for-LSP-Error-Underlining-implementation.md)
   - [LSP Error Testing](./documentation/LSP/lsp_tests.md)
 - [Testing: The Ideal Scenario](./documentation/testing/ideal-scenario-of-testing.md)
   - [Creating Custom Tests](./documentation/testing/Custom-Tests.md)
-- [Implementing Uniplates and Biplates with Structure Preserving Trees](./documentation/Implementing-Uniplates-and-Biplates-with-Structure-Preserving-Trees.md)
 - [SAT Encoding Types](./documentation/SAT/sat-encoding-types.md)
 - [Rule Types](./documentation/SAT/rule-types.md)
 - [Flatten](./documentation/flatten.md)
@@ -79,6 +72,7 @@
   - [Creating Types Guide](./documentation/types/creating_types_guide.md)
   - [Functions](./documentation/types/functions.md)
   - [Multisets](./documentation/types/multisets.md)
+  - [Relations](./documentation/types/relations.md)
 - [Essence Parser](./documentation/essence_parser.md)
 <!-- TODO: add the error detection documentations -->
 - [Error Detection](./documentation/error_detection/error_classification.md)

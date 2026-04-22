@@ -11,18 +11,19 @@ use std::{
 
 use anyhow::anyhow;
 use clap::ValueHint;
+use conjure_cp::instantiate::instantiate_model;
 use conjure_cp::{
     Model,
-    ast::{DeclarationPtr, declaration::Declaration, eval_constant},
     context::Context,
+    defaults::DEFAULT_RULE_SETS,
     rule_engine::{resolve_rule_sets, rewrite_morph, rewrite_naive},
     settings::{
         Rewriter, set_comprehension_expander, set_current_parser, set_current_rewriter,
-        set_current_solver_family, set_minion_discrete_threshold,
+        set_current_solver_family, set_default_rule_trace_enabled, set_minion_discrete_threshold,
+        set_rule_trace_aggregates_enabled, set_rule_trace_enabled, set_rule_trace_verbose_enabled,
     },
     solver::Solver,
 };
-use conjure_cp::{ast::DeclarationKind, defaults::DEFAULT_RULE_SETS};
 use conjure_cp::{
     parse::conjure_json::model_from_json, rule_engine::get_rules, settings::SolverFamily,
 };
@@ -156,66 +157,27 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
     Ok(())
 }
 
-pub(crate) fn instantiate_model(problem_model: Model, param_model: Model) -> anyhow::Result<Model> {
-    let mut symbol_table = problem_model.symbols_ptr_unchecked().write();
-    let param_table = param_model.symbols_ptr_unchecked().write();
-
-    for (name, decl) in symbol_table.iter_local_mut() {
-        let Some(domain) = decl.as_given() else {
-            continue;
-        };
-
-        // Find corresponding letting in param file
-        let param_decl = param_table.lookup(name);
-        let expr = param_decl
-                .as_ref()
-                .and_then(DeclarationPtr::as_value_letting)
-                .ok_or_else(|| anyhow!(
-                    "Given declaration `{name}` does not have corresponding letting in parameter file"
-                ))?;
-
-        // Evaluate the letting expresison to a literal
-        let expr_value = eval_constant(&expr)
-            .ok_or_else(|| anyhow!("Letting expression `{expr}` cannot be evaluated"))?;
-
-        // Resolve the given's domain
-        let ground_domain = domain
-            .resolve()
-            .ok_or_else(|| anyhow!("Domain of given statement `{name}` cannot be resolved"))?;
-
-        // Ensure the letting value is contained within the given expression's domain
-        if !ground_domain.contains(&expr_value).unwrap() {
-            return Err(anyhow!(
-                "Domain of given statement `{name}` does not contain letting value"
-            ));
-        }
-
-        // Replace the given statement in the model with the statement
-        let new_decl = Declaration::new(
-            name.clone(),
-            DeclarationKind::ValueLetting(expr.clone(), Some(domain.clone())),
-        );
-        drop(domain);
-        decl.replace(new_decl);
-
-        tracing::info!("Replaced {name} given with letting.");
-    }
-
-    drop(symbol_table);
-    Ok(problem_model)
-}
-
 /// Returns a new Context and Solver for solving.
 pub(crate) fn init_context(
     global_args: &GlobalArgs,
     essence_file: PathBuf,
     param_file: Option<PathBuf>,
 ) -> anyhow::Result<Arc<RwLock<Context<'static>>>> {
+    let default_rule_trace_enabled = global_args.rule_trace.is_some();
+    let verbose_rule_trace_enabled = global_args.rule_trace_verbose.is_some();
+    let rule_trace_aggregates_enabled = global_args.rule_trace_aggregates.is_some();
+    let rule_trace_enabled =
+        default_rule_trace_enabled || verbose_rule_trace_enabled || rule_trace_aggregates_enabled;
+
     set_current_parser(global_args.parser);
     set_current_rewriter(global_args.rewriter);
     set_comprehension_expander(global_args.comprehension_expander);
     set_current_solver_family(global_args.solver);
     set_minion_discrete_threshold(global_args.minion_discrete_threshold);
+    set_rule_trace_enabled(rule_trace_enabled);
+    set_default_rule_trace_enabled(default_rule_trace_enabled);
+    set_rule_trace_verbose_enabled(verbose_rule_trace_enabled);
+    set_rule_trace_aggregates_enabled(rule_trace_aggregates_enabled);
 
     let target_family = global_args.solver;
     let mut extra_rule_sets: Vec<&str> = DEFAULT_RULE_SETS.to_vec();
@@ -333,7 +295,8 @@ pub(crate) fn rewrite(
 ) -> anyhow::Result<Model> {
     tracing::info!("Initial model: \n{}\n", model);
 
-    set_current_rewriter(global_args.rewriter);
+    let rewriter = global_args.rewriter;
+    set_current_rewriter(rewriter);
 
     let comprehension_expander = global_args.comprehension_expander;
     set_comprehension_expander(comprehension_expander);
@@ -341,13 +304,14 @@ pub(crate) fn rewrite(
 
     let rule_sets = context.read().unwrap().rule_sets.clone();
 
-    let new_model = match global_args.rewriter {
-        Rewriter::Morph => {
-            tracing::info!("Rewriting the model using the morph rewriter");
+    let new_model = match rewriter {
+        Rewriter::Morph(config) => {
+            tracing::info!("Rewriting the model using the morph rewriter ({})", config);
             rewrite_morph(
                 model,
                 &rule_sets,
                 global_args.check_equally_applicable_rules,
+                config,
             )
         }
         Rewriter::Naive => {
@@ -386,6 +350,7 @@ fn run_solver(
         model,
         cmd_args.number_of_solutions.as_solver_limit(),
         &global_args.save_solver_input_file,
+        global_args.rule_trace_cdp,
     )?;
     tracing::info!(target: "file", "Solutions: {}", solutions_to_json(&solutions));
 

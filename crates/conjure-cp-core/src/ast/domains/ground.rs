@@ -4,7 +4,7 @@ use crate::ast::enumerated::EnumeratedType;
 use crate::ast::pretty::pretty_vec;
 use crate::ast::{
     AbstractLiteral, Domain, DomainOpError, FuncAttr, HasDomain, Literal, Moo, RecordEntry,
-    SetAttr, Typeable,
+    RelAttr, SetAttr, Typeable,
     domains::{domain::Int, range::Range},
 };
 use crate::range;
@@ -69,8 +69,10 @@ pub enum GroundDomain {
     Tuple(Vec<Moo<GroundDomain>>),
     /// A record
     Record(Vec<RecordEntryGround>),
-    /// A function with a domain and range
+    /// A function with a domain and codomain
     Function(FuncAttr, Moo<GroundDomain>, Moo<GroundDomain>),
+    /// A relation as a set of tuples
+    Relation(RelAttr, Vec<Moo<GroundDomain>>),
     /// An enumerated type
     EnumeratedType(Moo<EnumeratedType>, Vec<Range<u32>>),
     /// An unnamed type
@@ -80,17 +82,15 @@ pub enum GroundDomain {
 impl GroundDomain {
     pub fn union(&self, other: &GroundDomain) -> Result<GroundDomain, DomainOpError> {
         match (self, other) {
-            (GroundDomain::Empty(ty), dom) | (dom, GroundDomain::Empty(ty))
-                if *ty == dom.return_type() =>
-            {
-                Ok(dom.clone())
+            (GroundDomain::Empty(ty), dom) | (dom, GroundDomain::Empty(ty)) => {
+                if *ty == dom.return_type() {
+                    Ok(dom.clone())
+                } else {
+                    Err(DomainOpError::WrongType)
+                }
             }
             (GroundDomain::Bool, GroundDomain::Bool) => Ok(GroundDomain::Bool),
-            (GroundDomain::Int(r1), GroundDomain::Int(r2)) => {
-                let mut rngs = r1.clone();
-                rngs.extend(r2.clone());
-                Ok(GroundDomain::Int(Range::squeeze(&rngs)))
-            }
+            (GroundDomain::Int(r1), GroundDomain::Int(r2)) => Err(DomainOpError::WrongType),
             (GroundDomain::Set(_, in1), GroundDomain::Set(_, in2)) => Ok(GroundDomain::Set(
                 SetAttr::default(),
                 Moo::new(in1.union(in2)?),
@@ -106,6 +106,13 @@ impl GroundDomain {
                 ))
             }
             (GroundDomain::Tuple(in1s), GroundDomain::Tuple(in2s)) if in1s.len() == in2s.len() => {
+                let mut inners = Vec::new();
+                for (in1, in2) in zip(in1s, in2s) {
+                    inners.push(Moo::new(in1.union(in2)?));
+                }
+                Ok(GroundDomain::Tuple(inners))
+            }
+            (GroundDomain::Relation(_, in1s), GroundDomain::Relation(_, in2s)) => {
                 let mut inners = Vec::new();
                 for (in1, in2) in zip(in1s, in2s) {
                     inners.push(Moo::new(in1.union(in2)?));
@@ -178,6 +185,9 @@ impl GroundDomain {
                 }
                 Ok(GroundDomain::from_set_i32(&v))
             }
+            (GroundDomain::Relation(_, _), GroundDomain::Relation(_, _)) => {
+                todo!("Relation union not yet supported")
+            }
             _ => Err(DomainOpError::WrongType),
         }
     }
@@ -198,6 +208,9 @@ impl GroundDomain {
                     rng_iters.into_iter().flat_map(|ri| ri.map(Literal::from)),
                 ))
             }
+            GroundDomain::Matrix(elem_domain, index_domains) => Ok(Box::new(
+                enumerate_matrix_values(elem_domain.as_ref(), index_domains)?.into_iter(),
+            )),
             _ => todo!("Enumerating nested domains is not yet supported"),
         }
     }
@@ -289,6 +302,9 @@ impl GroundDomain {
             GroundDomain::Function(_, _, _) => {
                 todo!("Length bound of functions is not yet supported")
             }
+            GroundDomain::Relation(_, _) => {
+                todo!("Length bound of relations is not yet support")
+            }
             GroundDomain::EnumeratedType(et, ranges) => {
                 if ranges.is_empty() || ranges[0].is_unbounded() {
                     return Ok(et.len() as u64);
@@ -375,22 +391,26 @@ impl GroundDomain {
                         // Matrix literals are represented as nested 1d matrices, so the elements of
                         // the matrix literal will be the inner dimensions of the matrix.
 
-                        let mut index_domains = index_domains.clone();
-                        if index_domains
-                            .pop()
-                            .expect("a matrix should have at least one index domain")
-                            != *idx_domain
-                        {
+                        let Some((current_index_domain, remaining_index_domains)) =
+                            index_domains.split_first()
+                        else {
+                            panic!("a matrix should have at least one index domain");
+                        };
+
+                        if *current_index_domain != *idx_domain {
                             return Ok(false);
                         };
 
-                        let next_elem_domain = if index_domains.is_empty() {
+                        let next_elem_domain = if remaining_index_domains.is_empty() {
                             // Base case - we have a 1D row. Now check if all elements in the
                             // literal are in this row's element domain.
                             elem_domain.as_ref().clone()
                         } else {
                             // Otherwise, go down a dimension (e.g. 2D matrix inside a 3D tensor)
-                            GroundDomain::Matrix(elem_domain.clone(), index_domains)
+                            GroundDomain::Matrix(
+                                elem_domain.clone(),
+                                remaining_index_domains.to_vec(),
+                            )
                         };
 
                         for elem in elems {
@@ -453,6 +473,29 @@ impl GroundDomain {
                             return Ok(false);
                         }
                         if !codomain.contains(codomain_element)? {
+                            return Ok(false);
+                        }
+                    }
+                    Ok(true)
+                }
+                _ => Ok(false),
+            },
+            GroundDomain::Relation(rel_attr, inner_domains) => match lit {
+                Literal::AbstractLiteral(AbstractLiteral::Relation(lit_elems)) => {
+                    // check if the literal's size is allowed by the attributes
+                    let sz = lit_elems.len().to_i32().ok_or(DomainOpError::TooLarge)?;
+                    if !rel_attr.size.contains(&sz) {
+                        return Ok(false);
+                    }
+
+                    for elem_tuple in lit_elems {
+                        if elem_tuple.len() == inner_domains.len() {
+                            for (elem, inner_dom) in elem_tuple.iter().zip(inner_domains.iter()) {
+                                if !inner_dom.contains(elem)? {
+                                    return Ok(false);
+                                }
+                            }
+                        } else {
                             return Ok(false);
                         }
                     }
@@ -948,6 +991,9 @@ impl GroundDomain {
 
                 todo!();
             }
+            Literal::AbstractLiteral(AbstractLiteral::Relation(_)) => {
+                todo!();
+            }
         }
     }
 
@@ -987,6 +1033,13 @@ impl Typeable for GroundDomain {
             GroundDomain::Function(_, dom, cdom) => {
                 ReturnType::Function(Box::new(dom.return_type()), Box::new(cdom.return_type()))
             }
+            GroundDomain::Relation(_, inners) => {
+                let mut inner_types = Vec::new();
+                for inner in inners {
+                    inner_types.push(inner.return_type());
+                }
+                ReturnType::Relation(inner_types)
+            }
             GroundDomain::EnumeratedType(et, _) => ReturnType::EnumeratedType(et.clone()),
             // TODO: Ensure bounded range on type level
             GroundDomain::UnnamedType(size) => ReturnType::UnnamedType,
@@ -997,7 +1050,7 @@ impl Typeable for GroundDomain {
 impl Display for GroundDomain {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self {
-            GroundDomain::Empty(ty) => write!(f, "empty({ty:?})"),
+            GroundDomain::Empty(ty) => write!(f, "empty({ty})"),
             GroundDomain::Bool => write!(f, "bool"),
             GroundDomain::Int(ranges) => {
                 if ranges.iter().all(Range::is_lower_or_upper_bounded) {
@@ -1017,11 +1070,7 @@ impl Display for GroundDomain {
                 )
             }
             GroundDomain::Tuple(domains) => {
-                write!(
-                    f,
-                    "tuple of ({})",
-                    pretty_vec(&domains.iter().collect_vec())
-                )
+                write!(f, "tuple ({})", &domains.iter().join(", "))
             }
             GroundDomain::Record(entries) => {
                 write!(
@@ -1038,6 +1087,9 @@ impl Display for GroundDomain {
             GroundDomain::Function(attribute, domain, codomain) => {
                 write!(f, "function {} {} --> {} ", attribute, domain, codomain)
             }
+            GroundDomain::Relation(attrs, domains) => {
+                write!(f, "relation {} of ({})", attrs, domains.iter().join(" * "))
+            }
             GroundDomain::EnumeratedType(et, ranges) => {
                 if ranges.iter().all(Range::is_lower_or_upper_bounded) {
                     let rngs: String = ranges.iter().map(|r| format!("{r}")).join(", ");
@@ -1052,4 +1104,30 @@ impl Display for GroundDomain {
             }
         }
     }
+}
+
+fn enumerate_matrix_values(
+    elem_domain: &GroundDomain,
+    index_domains: &[Moo<GroundDomain>],
+) -> Result<Vec<Literal>, DomainOpError> {
+    let Some((current_index_domain, remaining_index_domains)) = index_domains.split_first() else {
+        panic!("a matrix should have at least one index domain");
+    };
+
+    let current_dimension_len =
+        usize::try_from(current_index_domain.length()?).map_err(|_| DomainOpError::TooLarge)?;
+
+    let entry_values = if remaining_index_domains.is_empty() {
+        elem_domain.values()?.collect_vec()
+    } else {
+        enumerate_matrix_values(elem_domain, remaining_index_domains)?
+    };
+
+    Ok((0..current_dimension_len)
+        .map(|_| entry_values.iter().cloned())
+        .multi_cartesian_product()
+        .map(|elems| {
+            Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, current_index_domain.clone()))
+        })
+        .collect())
 }

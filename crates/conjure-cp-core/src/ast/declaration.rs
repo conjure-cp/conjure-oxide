@@ -190,6 +190,11 @@ impl DeclarationPtr {
         Some(DeclarationPtr::new(decl.name().clone(), kind))
     }
 
+    pub fn new_quantified_expr(name: Name, expr: Expression) -> DeclarationPtr {
+        let kind = DeclarationKind::QuantifiedExpr(expr);
+        DeclarationPtr::new(name, kind)
+    }
+
     /// Creates a new value letting declaration.
     ///
     /// # Examples
@@ -319,6 +324,7 @@ impl DeclarationPtr {
             DeclarationKind::DomainLetting(domain) => Some(domain.clone()),
             DeclarationKind::Given(domain) => Some(domain.clone()),
             DeclarationKind::Quantified(inner) => Some(inner.domain.clone()),
+            DeclarationKind::QuantifiedExpr(expr) => expr.domain_of(),
             DeclarationKind::RecordField(domain) => Some(domain.clone()),
             DeclarationKind::EnumeratedType(et) => Some(et.to_domain()),
             DeclarationKind::UnnamedType(size) => todo!(),
@@ -454,6 +460,30 @@ impl DeclarationPtr {
         RwLockWriteGuard::try_map(self.write(), |x| {
             if let DeclarationKind::Given(domain) = &mut x.kind {
                 Some(domain)
+            } else {
+                None
+            }
+        })
+        .ok()
+    }
+
+    /// This declaration as a quantified expression, if it is one.
+    pub fn as_quantified_expr(&self) -> Option<MappedRwLockReadGuard<'_, Expression>> {
+        RwLockReadGuard::try_map(self.read(), |x| {
+            if let DeclarationKind::QuantifiedExpr(expr) = &x.kind {
+                Some(expr)
+            } else {
+                None
+            }
+        })
+        .ok()
+    }
+
+    /// This declaration as a mutable quantified expression, if it is one.
+    pub fn as_quantified_expr_mut(&mut self) -> Option<MappedRwLockWriteGuard<'_, Expression>> {
+        RwLockWriteGuard::try_map(self.write(), |x| {
+            if let DeclarationKind::QuantifiedExpr(expr) = &mut x.kind {
+                Some(expr)
             } else {
                 None
             }
@@ -632,6 +662,7 @@ impl CategoryOf for DeclarationPtr {
             DeclarationKind::DomainLetting(_) => Category::Constant,
             DeclarationKind::Given(_) => Category::Parameter,
             DeclarationKind::Quantified(..) => Category::Quantified,
+            DeclarationKind::QuantifiedExpr(..) => Category::Quantified,
             DeclarationKind::RecordField(_) => Category::Bottom,
             DeclarationKind::EnumeratedType(_) => todo!(),
             DeclarationKind::UnnamedType(_) => todo!(),
@@ -668,6 +699,7 @@ impl Typeable for DeclarationPtr {
             DeclarationKind::DomainLetting(domain) => domain.return_type(),
             DeclarationKind::Given(domain) => domain.return_type(),
             DeclarationKind::Quantified(inner) => inner.domain.return_type(),
+            DeclarationKind::QuantifiedExpr(expr) => expr.return_type(),
             DeclarationKind::RecordField(domain) => domain.return_type(),
             DeclarationKind::EnumeratedType(_) => todo!(),
             DeclarationKind::UnnamedType(_) => todo!(),
@@ -845,7 +877,13 @@ fn biplate_declaration_kind_references(
                 }),
             )
         }
-
+        DeclarationKind::QuantifiedExpr(expr) => {
+            let (tree, recons_expr) = Biplate::<Reference>::biplate(&expr);
+            (
+                tree,
+                Box::new(move |x| DeclarationKind::QuantifiedExpr(recons_expr(x))),
+            )
+        }
         DeclarationKind::EnumeratedType(_) => todo!(),
         DeclarationKind::UnnamedType(_) => todo!(),
     }
@@ -929,6 +967,7 @@ pub enum DeclarationKind {
     Find(DecisionVariable),
     Given(DomainPtr),
     Quantified(Quantified),
+    QuantifiedExpr(Expression),
 
     /// Carries an optional domain so instantiated `given`s can retain their declared domain.
     ValueLetting(Expression, Option<DomainPtr>),

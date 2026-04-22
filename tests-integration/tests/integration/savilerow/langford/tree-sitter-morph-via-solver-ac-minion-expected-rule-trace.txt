@@ -1,0 +1,78 @@
+Model before rewriting:
+
+letting k be 3
+letting two_k be 6
+letting positionDomain be domain int(1..two_k)
+find position: matrix indexed by [positionDomain] of positionDomain
+
+such that
+
+and([ (position[sum([i,k;int(1..)])] = sum([sum([position[i],i;int(1..)]),1;int(1..)])) | i : int(1..k) ]),
+allDiff(position)
+
+--
+
+Model before rewriting:
+
+find i: int(1..k)
+find __0: matrix indexed by [positionDomain] of positionDomain
+
+such that
+
+(true != (SafeIndex(__0,[sum([i,3;int(1..)])]) = sum([SafeIndex(__0,[i]),i,1;int(1..)])))
+
+--
+
+Final model:
+
+find i: int(1..k)
+find __0: matrix indexed by [positionDomain] of positionDomain
+find __0#matrix_to_atom_1: int(1..6)
+find __0#matrix_to_atom_2: int(1..6)
+find __0#matrix_to_atom_3: int(1..6)
+find __0#matrix_to_atom_4: int(1..6)
+find __0#matrix_to_atom_5: int(1..6)
+find __0#matrix_to_atom_6: int(1..6)
+find __1: bool
+find __2: int(4..6)
+find __3: int(1..6)
+find __4: int(3..10)
+find __5: int(1..3)
+find __6: int(1..6)
+
+such that
+
+(true != __1),
+Reify((__3 = __4), __1),
+SumLeq([3, i], __2),
+SumGeq([3, i], __2),
+__minion_element_one([__0#matrix_to_atom_1,__0#matrix_to_atom_2,__0#matrix_to_atom_3,__0#matrix_to_atom_4,__0#matrix_to_atom_5,__0#matrix_to_atom_6],__2,__3),
+SumLeq([1, __6, i], __4),
+SumGeq([1, __6, i], __4),
+SumLeq([0, i], __5),
+SumGeq([0, i], __5),
+__minion_element_one([__0#matrix_to_atom_1,__0#matrix_to_atom_2,__0#matrix_to_atom_3,__0#matrix_to_atom_4,__0#matrix_to_atom_5,__0#matrix_to_atom_6],__5,__6)
+
+Final model:
+
+letting k be 3
+letting two_k be 6
+letting positionDomain be domain int(1..two_k)
+find position: matrix indexed by [positionDomain] of positionDomain
+find position#matrix_to_atom_1: int(1..6)
+find position#matrix_to_atom_2: int(1..6)
+find position#matrix_to_atom_3: int(1..6)
+find position#matrix_to_atom_4: int(1..6)
+find position#matrix_to_atom_5: int(1..6)
+find position#matrix_to_atom_6: int(1..6)
+
+such that
+
+SumLeq([2, position#matrix_to_atom_1], position#matrix_to_atom_4),
+SumGeq([2, position#matrix_to_atom_1], position#matrix_to_atom_4),
+SumLeq([3, position#matrix_to_atom_2], position#matrix_to_atom_5),
+SumGeq([3, position#matrix_to_atom_2], position#matrix_to_atom_5),
+SumLeq([4, position#matrix_to_atom_3], position#matrix_to_atom_6),
+SumGeq([4, position#matrix_to_atom_3], position#matrix_to_atom_6),
+__flat_alldiff([position#matrix_to_atom_1, position#matrix_to_atom_2, position#matrix_to_atom_3, position#matrix_to_atom_4, position#matrix_to_atom_5, position#matrix_to_atom_6])
+

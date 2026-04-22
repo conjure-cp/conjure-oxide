@@ -6,7 +6,7 @@ use crate::ast::enumerated::EnumVariant;
 use crate::ast::enumerated::EnumeratedType;
 use crate::ast::{
     DeclarationKind, DomainOpError, Expression, FuncAttr, Literal, Metadata, Moo,
-    RecordEntryGround, Reference, Typeable,
+    RecordEntryGround, Reference, RelAttr, Typeable,
     domains::{
         GroundDomain,
         domain::{DomainPtr, Int},
@@ -138,6 +138,27 @@ impl TryInto<FuncAttr<Int>> for FuncAttr<IntVal> {
     }
 }
 
+impl From<RelAttr<Int>> for RelAttr<IntVal> {
+    fn from(value: RelAttr<Int>) -> Self {
+        RelAttr {
+            size: value.size.into(),
+            binary: value.binary,
+        }
+    }
+}
+
+impl TryInto<RelAttr<Int>> for RelAttr<IntVal> {
+    type Error = DomainOpError;
+
+    fn try_into(self) -> Result<RelAttr<Int>, Self::Error> {
+        let size: Range<Int> = self.size.try_into()?;
+        Ok(RelAttr {
+            size,
+            binary: self.binary,
+        })
+    }
+}
+
 impl Display for IntVal {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -152,7 +173,8 @@ impl IntVal {
     pub fn new_ref(re: &Reference) -> Option<IntVal> {
         match re.ptr.kind().deref() {
             DeclarationKind::ValueLetting(expr, _)
-            | DeclarationKind::TemporaryValueLetting(expr) => match expr.return_type() {
+            | DeclarationKind::TemporaryValueLetting(expr)
+            | DeclarationKind::QuantifiedExpr(expr) => match expr.return_type() {
                 ReturnType::Int => Some(IntVal::Reference(re.clone())),
                 _ => None,
             },
@@ -199,6 +221,8 @@ impl IntVal {
                         None
                     }
                 }
+                // TODO: idk what this whole file does but I very much doubt it affects this
+                DeclarationKind::QuantifiedExpr(_) => None,
                 // Decision variables inside domains are unresolved until solving.
                 DeclarationKind::Find(_) => None,
                 DeclarationKind::DomainLetting(_)
@@ -278,32 +302,6 @@ impl Range<IntVal> {
     }
 }
 
-fn eval_expr_to_enum_variant(expr: &Expression, expected: &Moo<EnumeratedType>) -> Option<u32> {
-    let Literal::EnumVariant(EnumVariant { ty, variant }) = eval_constant(expr)? else {
-        return bug!("Expected enum variant expression, got: {expr}");
-    };
-
-    if ty != *expected {
-        return bug!("Expected variant of enum {expected}, got {ty}:");
-    }
-
-    Some(variant)
-}
-
-impl Range<EnumVariantVal> {
-    pub fn resolve(&self, expected: &Moo<EnumeratedType>) -> Option<Range<u32>> {
-        match self {
-            Range::Single(x) => Some(Range::Single(x.resolve(expected)?)),
-            Range::Bounded(l, r) => {
-                Some(Range::Bounded(l.resolve(expected)?, r.resolve(expected)?))
-            }
-            Range::UnboundedL(r) => Some(Range::UnboundedL(r.resolve(expected)?)),
-            Range::UnboundedR(l) => Some(Range::UnboundedR(l.resolve(expected)?)),
-            Range::Unbounded => Some(Range::Unbounded),
-        }
-    }
-}
-
 impl SetAttr<IntVal> {
     pub fn resolve(&self) -> Option<SetAttr<Int>> {
         Some(SetAttr {
@@ -331,6 +329,27 @@ impl FuncAttr<IntVal> {
     }
 }
 
+impl RelAttr<IntVal> {
+    pub fn resolve(&self) -> Option<RelAttr<Int>> {
+        Some(RelAttr {
+            size: self.size.resolve()?,
+            binary: self.binary.clone(),
+        })
+    }
+}
+
+fn eval_expr_to_enum_variant(expr: &Expression, expected: &Moo<EnumeratedType>) -> Option<u32> {
+    let Literal::EnumVariant(EnumVariant { ty, variant }) = eval_constant(expr)? else {
+        return bug!("Expected enum variant expression, got: {expr}");
+    };
+
+    if ty != *expected {
+        return bug!("Expected variant of enum {expected}, got {ty}:");
+    }
+
+    Some(variant)
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Uniplate)]
 #[biplate(to=Expression)]
 #[biplate(to=Reference)]
@@ -341,9 +360,8 @@ impl EnumVariantVal {
         let re = &self.0;
         match re.ptr.kind().deref() {
             DeclarationKind::ValueLetting(expr, _)
-            | DeclarationKind::TemporaryValueLetting(expr) => {
-                eval_expr_to_enum_variant(expr, expected)
-            }
+            | DeclarationKind::TemporaryValueLetting(expr)
+            | DeclarationKind::QuantifiedExpr(expr) => eval_expr_to_enum_variant(expr, expected),
             // If this is an int given we will be able to resolve it eventually, but not yet
             DeclarationKind::Given(_) => None,
             DeclarationKind::Quantified(inner) => {
@@ -363,6 +381,20 @@ impl EnumVariantVal {
             | DeclarationKind::UnnamedType(_) => {
                 bug!("Expected integer expression, given, or letting inside enum domain; Got: {re}")
             }
+        }
+    }
+}
+
+impl Range<EnumVariantVal> {
+    pub fn resolve(&self, expected: &Moo<EnumeratedType>) -> Option<Range<u32>> {
+        match self {
+            Range::Single(x) => Some(Range::Single(x.resolve(expected)?)),
+            Range::Bounded(l, r) => {
+                Some(Range::Bounded(l.resolve(expected)?, r.resolve(expected)?))
+            }
+            Range::UnboundedL(r) => Some(Range::UnboundedL(r.resolve(expected)?)),
+            Range::UnboundedR(l) => Some(Range::UnboundedR(l.resolve(expected)?)),
+            Range::Unbounded => Some(Range::Unbounded),
         }
     }
 }
@@ -414,6 +446,8 @@ pub enum UnresolvedDomain {
     Record(Vec<RecordEntry>),
     /// A function with attributes, domain, and range
     Function(FuncAttr<IntVal>, DomainPtr, DomainPtr),
+    /// A relation as a set of tuples
+    Relation(RelAttr<IntVal>, Vec<DomainPtr>),
     /// An enumerated type
     #[polyquine_skip]
     EnumeratedType(Moo<EnumeratedType>, Vec<Range<EnumVariantVal>>),
@@ -475,6 +509,14 @@ impl UnresolvedDomain {
                     return Some(GroundDomain::Function(attr_gd, dom_gd, cdom_gd));
                 }
                 None
+            }
+            UnresolvedDomain::Relation(attr, inners) => {
+                let resolved_attr = attr.resolve()?;
+                inners
+                    .iter()
+                    .map(DomainPtr::resolve)
+                    .collect::<Option<_>>()
+                    .map(|items| GroundDomain::Relation(resolved_attr, items))
             }
             UnresolvedDomain::EnumeratedType(et, ranges) => {
                 let ranges: Vec<_> = ranges
@@ -543,6 +585,16 @@ impl UnresolvedDomain {
             (UnresolvedDomain::Tuple(_), _) | (_, UnresolvedDomain::Tuple(_)) => {
                 Err(DomainOpError::WrongType)
             }
+            (UnresolvedDomain::Relation(_, in1s), UnresolvedDomain::Relation(_, in2s)) => {
+                let mut inners = Vec::new();
+                for (in1, in2) in in1s.iter().zip(in2s.iter()) {
+                    inners.push(in1.union(in2)?)
+                }
+                Ok(UnresolvedDomain::Relation(RelAttr::default(), inners))
+            }
+            (UnresolvedDomain::Relation(_, _), _) | (_, UnresolvedDomain::Relation(_, _)) => {
+                Err(DomainOpError::WrongType)
+            }
             // TODO: Could we support unions of reference domains symbolically?
             (UnresolvedDomain::Reference(_), _) | (_, UnresolvedDomain::Reference(_)) => {
                 Err(DomainOpError::NotGround)
@@ -607,6 +659,13 @@ impl Typeable for UnresolvedDomain {
             UnresolvedDomain::Function(_, dom, cdom) => {
                 ReturnType::Function(Box::new(dom.return_type()), Box::new(cdom.return_type()))
             }
+            UnresolvedDomain::Relation(_, inners) => {
+                let mut inner_types = Vec::new();
+                for inner in inners {
+                    inner_types.push(inner.return_type());
+                }
+                ReturnType::Relation(inner_types)
+            }
             UnresolvedDomain::EnumeratedType(et, _) => ReturnType::EnumeratedType(et.clone()),
             UnresolvedDomain::UnnamedType(_) => ReturnType::UnnamedType,
         }
@@ -635,11 +694,7 @@ impl Display for UnresolvedDomain {
                 )
             }
             UnresolvedDomain::Tuple(domains) => {
-                write!(
-                    f,
-                    "tuple of ({})",
-                    pretty_vec(&domains.iter().collect_vec())
-                )
+                write!(f, "tuple ({})", &domains.iter().join(","))
             }
             UnresolvedDomain::Record(entries) => {
                 write!(
@@ -655,6 +710,9 @@ impl Display for UnresolvedDomain {
             }
             UnresolvedDomain::Function(attribute, domain, codomain) => {
                 write!(f, "function {} {} --> {} ", attribute, domain, codomain)
+            }
+            UnresolvedDomain::Relation(attrs, domains) => {
+                write!(f, "relation {} of ({})", attrs, domains.iter().join(" * "))
             }
             UnresolvedDomain::EnumeratedType(ty, ranges) => {
                 // TODO: Name ranges

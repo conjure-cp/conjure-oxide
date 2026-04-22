@@ -7,8 +7,7 @@ use crate::representation::{Representation, get_repr_rule};
 use std::any::TypeId;
 
 use std::collections::BTreeSet;
-use std::collections::btree_map::Entry;
-use std::collections::{BTreeMap, VecDeque};
+use std::collections::VecDeque;
 use std::hash::{Hash, Hasher};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU32, Ordering};
@@ -24,6 +23,9 @@ use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use tracing::trace;
 use uniplate::{Biplate, Tree, Uniplate};
+
+use indexmap::IndexMap;
+use indexmap::map::Entry;
 
 /// Global counter of symbol tables.
 /// Note that the counter is shared between all threads
@@ -250,7 +252,7 @@ impl Eq for SymbolTablePtrInner {}
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
 pub struct SymbolTable {
     #[serde_as(as = "Vec<(_,PtrAsInner)>")]
-    table: BTreeMap<Name, DeclarationPtr>,
+    table: IndexMap<Name, DeclarationPtr>,
 
     #[serde_as(as = "Option<AsId>")]
     parent: Option<SymbolTablePtr>,
@@ -279,7 +281,7 @@ impl SymbolTable {
                 .unwrap_or(String::from("none"))
         );
         SymbolTable {
-            table: BTreeMap::new(),
+            table: IndexMap::new(),
             next_machine_name: 0,
             parent,
         }
@@ -386,14 +388,19 @@ impl SymbolTable {
         self.table.extend(other.table);
     }
 
-    /// Creates a new variable in this symbol table with a unique name, and returns its
+    /// Creates a new find declaration in this symbol table with a unique name, and returns its
     /// declaration.
-    pub fn gensym(&mut self, domain: &DomainPtr) -> DeclarationPtr {
-        let num = self.next_machine_name;
-        self.next_machine_name += 1;
-        let decl = DeclarationPtr::new_find(Name::Machine(num), domain.clone());
+    pub fn gen_find(&mut self, domain: &DomainPtr) -> DeclarationPtr {
+        let decl = DeclarationPtr::new_find(self.gen_sym(), domain.clone());
         self.insert(decl.clone());
         decl
+    }
+
+    // Reserves a unique machine name in the symbol table
+    pub fn gen_sym(&mut self) -> Name {
+        let num = self.next_machine_name;
+        self.next_machine_name += 1;
+        Name::Machine(num)
     }
 
     /// Gets the parent of this symbol table as a mutable reference.
@@ -526,7 +533,7 @@ impl IntoIterator for SymbolTable {
 /// Iterator over all symbol table entries in scope.
 pub struct SymbolTableIter {
     // iterator over the current scopes' btreemap
-    inner: std::collections::btree_map::IntoIter<Name, DeclarationPtr>,
+    inner: indexmap::map::IntoIter<Name, DeclarationPtr>,
 
     // the parent scope
     parent: Option<SymbolTablePtr>,

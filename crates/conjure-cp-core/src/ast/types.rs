@@ -15,6 +15,7 @@ pub enum ReturnType {
     Tuple(Vec<ReturnType>),
     Record(Vec<ReturnType>),
     Function(Box<ReturnType>, Box<ReturnType>),
+    Relation(Vec<ReturnType>),
     EnumeratedType(Moo<EnumeratedType>),
     UnnamedType,
 
@@ -50,7 +51,11 @@ impl Display for ReturnType {
                 write!(f, "record of ({inners})")
             }
             ReturnType::Function(ty1, ty2) => {
-                write!(f, "function ({ty1} --> {ty2})")
+                write!(f, "function of ({ty1} --> {ty2})")
+            }
+            ReturnType::Relation(types) => {
+                let inners = types.iter().map(|t| format!("{}", t)).join(", ");
+                write!(f, "relation of ({inners})")
             }
             ReturnType::Unknown => write!(f, "?"),
             ReturnType::EnumeratedType(et) => write!(f, "{}", et),

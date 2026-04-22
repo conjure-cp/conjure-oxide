@@ -24,7 +24,7 @@ register_rule_set!("Base", ());
 /// or([])  ~> false
 /// X([]) ~> Nothing
 /// ```
-#[register_rule(("Base", 8800))]
+#[register_rule("Base", 8800, [Or, And])]
 fn remove_empty_expression(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // excluded expressions
     if matches!(
@@ -79,7 +79,7 @@ fn remove_empty_expression(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
  * min([a, b]) ~> c ; c <= a & c <= b & (c = a | c = b)
  * ```
  */
-#[register_rule(("Base", 6000))]
+#[register_rule("Base", 6000, [Min])]
 fn min_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Min(_, inside_min_expr) = expr else {
         return Err(RuleNotApplicable);
@@ -92,7 +92,7 @@ fn min_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let domain = expr.domain_of().ok_or(ApplicationError::DomainError)?;
     let mut symbols = symbols.clone();
 
-    let atom_inner = Atom::new_ref(symbols.gensym(&domain));
+    let atom_inner = Atom::new_ref(symbols.gen_find(&domain));
     let atom_expr = Expr::Atomic(Metadata::new(), atom_inner);
 
     let mut new_top = Vec::new();
@@ -122,7 +122,7 @@ fn min_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
  * max([a, b]) ~> c ; c >= a & c >= b & (c = a | c = b)
  * ```
  */
-#[register_rule(("Base", 6000))]
+#[register_rule("Base", 6000, [Max])]
 fn max_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Max(_, inside_max_expr) = expr else {
         return Err(RuleNotApplicable);
@@ -135,7 +135,7 @@ fn max_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let domain = expr.domain_of().ok_or(ApplicationError::DomainError)?;
     let mut symbols: SymbolTable = symbols.clone();
 
-    let atom_inner = Atom::new_ref(symbols.gensym(&domain));
+    let atom_inner = Atom::new_ref(symbols.gen_find(&domain));
     let atom_expr = Expr::Atomic(Metadata::new(), atom_inner);
 
     let mut new_top = Vec::new(); // the new variable must be more than or equal to all the other variables
