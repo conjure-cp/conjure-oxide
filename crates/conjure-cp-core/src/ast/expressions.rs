@@ -38,8 +38,8 @@ use super::records::RecordValue;
 use super::sat_encoding::SATIntEncoding;
 use super::{
     AbstractLiteral, Atom, DeclarationPtr, Domain, DomainPtr, GroundDomain, IntVal, JectivityAttr,
-    Literal, Metadata, Model, Moo, Name, PartialityAttr, Range, Reference, ReturnType, SetAttr,
-    SymbolTable, SymbolTablePtr, Typeable, UnresolvedDomain, matrix,
+    Literal, MSetAttr, Metadata, Model, Moo, Name, PartialityAttr, Range, Reference, RelAttr,
+    ReturnType, SetAttr, SymbolTable, SymbolTablePtr, Typeable, UnresolvedDomain, matrix,
 };
 
 // Ensure that this type doesn't get too big
@@ -280,6 +280,15 @@ pub enum Expression {
     /// Set of codomain values function is defined for
     #[compatible(JsonInput)]
     Range(Metadata, Moo<Expression>),
+
+    #[compatible(JsonInput)]
+    ToSet(Metadata, Moo<Expression>),
+
+    #[compatible(JsonInput)]
+    ToMSet(Metadata, Moo<Expression>),
+
+    #[compatible(JsonInput)]
+    ToRelation(Metadata, Moo<Expression>),
 
     /// Unsafe power`x**y` (possibly undefined)
     ///
@@ -587,6 +596,9 @@ pub enum Expression {
 
     /// Low-level minion constraint. See Expression::LexLeq
     FlatLexLeq(Metadata, Vec<Atom>, Vec<Atom>),
+
+    #[compatible(JsonInput)]
+    RelationProj(Metadata, Moo<Expression>, Vec<Option<Expression>>),
 }
 
 // for the given matrix literal, return a bounded domain from the min to max of applying op to each
@@ -1230,6 +1242,78 @@ impl Expression {
             Expression::LexGeq(..) => Some(Domain::bool()),
             Expression::FlatLexLt(..) => Some(Domain::bool()),
             Expression::FlatLexLeq(..) => Some(Domain::bool()),
+            Expression::ToSet(_, other) => {
+                if let Some((attrs, dom, codom)) = other.domain_of()?.as_function() {
+                    let set_attrs = SetAttr { size: attrs.size };
+                    Some(Domain::set(set_attrs, Domain::tuple(vec![dom, codom])))
+                } else if let Some((attrs, doms)) = other.domain_of()?.as_relation() {
+                    let set_attrs = SetAttr { size: attrs.size };
+                    Some(Domain::set(set_attrs, Domain::tuple(doms)))
+                } else if let Some((attrs, dom)) = other.domain_of()?.as_mset() {
+                    let set_attrs = SetAttr { size: attrs.size };
+                    Some(Domain::set(set_attrs, dom))
+                } else if let Some((outer_dom, inner_doms)) = other.domain_of()?.as_matrix() {
+                    // We combine all matrix domains into a tuple
+                    let mut doms = vec![outer_dom];
+                    doms.extend(inner_doms);
+                    Some(Domain::set(
+                        SetAttr::<IntVal>::default(),
+                        Domain::tuple(doms),
+                    ))
+                } else {
+                    bug!(
+                        "Domain of {self} needed to be a function, relation, mset, or matrix for ToSet"
+                    )
+                }
+            }
+            Expression::ToMSet(_, other) => {
+                if let Some((attrs, dom, codom)) = other.domain_of()?.as_function() {
+                    let set_attrs = MSetAttr {
+                        size: attrs.size,
+                        occurrence: Range::Single(IntVal::Const(1)),
+                    };
+                    Some(Domain::mset(set_attrs, Domain::tuple(vec![dom, codom])))
+                } else if let Some((attrs, doms)) = other.domain_of()?.as_relation() {
+                    let set_attrs = MSetAttr {
+                        size: attrs.size,
+                        occurrence: Range::Single(IntVal::Const(1)),
+                    };
+                    Some(Domain::mset(set_attrs, Domain::tuple(doms)))
+                } else if let Some((attrs, dom)) = other.domain_of()?.as_set() {
+                    let set_attrs = MSetAttr {
+                        size: attrs.size,
+                        occurrence: Range::Single(IntVal::Const(1)),
+                    };
+                    Some(Domain::mset(set_attrs, dom))
+                } else {
+                    bug!("Domain of {self} needed to be a function, relation, or set for ToMSet")
+                }
+            }
+            Expression::ToRelation(_, function) => {
+                let (attrs, domain, codomain) = function.domain_of()?.as_function()?;
+                // Function attributes apply to the relation
+                let rel_attrs = RelAttr {
+                    size: attrs.size,
+                    binary: vec![],
+                };
+                Some(Domain::relation(rel_attrs, vec![domain, codomain]))
+            }
+            Expression::RelationProj(_, relation, projections) => {
+                let (_, domains) = relation.domain_of()?.as_relation()?;
+                let new_doms = domains
+                    .iter()
+                    .zip(projections.iter())
+                    .filter_map(|(domain, included)| {
+                        if included.is_none() {
+                            // The domains corresponding to projections which are None remain in the relation
+                            Some(domain.clone())
+                        } else {
+                            None
+                        }
+                    })
+                    .collect();
+                Some(Domain::relation(RelAttr::<IntVal>::default(), new_doms))
+            }
         }
     }
 
@@ -1328,7 +1412,11 @@ impl Expression {
             FlatLexLt,
             FlatLexLeq,
             NegativeTable,
-            Table
+            Table,
+            ToSet,
+            ToMSet,
+            ToRelation,
+            RelationProj,
         )
     }
 
@@ -1908,6 +1996,22 @@ impl Display for Expression {
             Expression::FlatLexLeq(_, a, b) => {
                 write!(f, "FlatLexLeq({}, {})", pretty_vec(a), pretty_vec(b))
             }
+            Expression::ToSet(_, other) => write!(f, "toSet({other})"),
+            Expression::ToMSet(_, other) => write!(f, "toMSet({other})"),
+            Expression::ToRelation(_, function) => write!(f, "toRelation({function})"),
+            Expression::RelationProj(_, relation, projections) => {
+                let projections_str = projections
+                    .iter()
+                    .map(|x| {
+                        if let Some(x) = x {
+                            x.to_string()
+                        } else {
+                            String::from("_")
+                        }
+                    })
+                    .join(", ");
+                write!(f, "{relation}({projections_str})")
+            }
         }
     }
 }
@@ -2030,7 +2134,7 @@ impl Typeable for Expression {
             Expression::Defined(_, function) => {
                 let subject = function.return_type();
                 match subject {
-                    ReturnType::Function(domain, _) => *domain,
+                    ReturnType::Function(domain, _) => ReturnType::Set(Box::new(*domain)),
                     _ => bug!(
                         "Invalid defined operation: expected the operand to be a function, got {self}: {subject}"
                     ),
@@ -2039,7 +2143,7 @@ impl Typeable for Expression {
             Expression::Range(_, function) => {
                 let subject = function.return_type();
                 match subject {
-                    ReturnType::Function(_, codomain) => *codomain,
+                    ReturnType::Function(_, codomain) => ReturnType::Set(Box::new(*codomain)),
                     _ => bug!(
                         "Invalid range operation: expected the operand to be a function, got {self}: {subject}"
                     ),
@@ -2057,7 +2161,7 @@ impl Typeable for Expression {
             Expression::ImageSet(_, function, _) => {
                 let subject = function.return_type();
                 match subject {
-                    ReturnType::Function(_, codomain) => *codomain,
+                    ReturnType::Function(_, codomain) => ReturnType::Set(Box::new(*codomain)),
                     _ => bug!(
                         "Invalid imageSet operation: expected the operand to be a function, got {self}: {subject}"
                     ),
@@ -2066,7 +2170,7 @@ impl Typeable for Expression {
             Expression::PreImage(_, function, _) => {
                 let subject = function.return_type();
                 match subject {
-                    ReturnType::Function(domain, _) => *domain,
+                    ReturnType::Function(domain, _) => ReturnType::Set(Box::new(*domain)),
                     _ => bug!(
                         "Invalid preImage operation: expected the operand to be a function, got {self}: {subject}"
                     ),
@@ -2090,6 +2194,71 @@ impl Typeable for Expression {
             Expression::LexGeq(..) => ReturnType::Bool,
             Expression::FlatLexLt(..) => ReturnType::Bool,
             Expression::FlatLexLeq(..) => ReturnType::Bool,
+            Expression::ToSet(_, other) => {
+                let subject = other.return_type();
+                match subject {
+                    ReturnType::Function(domain, codomain) => {
+                        ReturnType::Set(Box::new(ReturnType::Tuple(vec![*domain, *codomain])))
+                    }
+                    ReturnType::Relation(domains) => {
+                        ReturnType::Set(Box::new(ReturnType::Tuple(domains)))
+                    }
+                    ReturnType::MSet(domain) => ReturnType::Set(Box::new(*domain)),
+                    ReturnType::Matrix(domain) => ReturnType::Set(Box::new(*domain)),
+                    _ => bug!(
+                        "Invalid toSet operation: expected the operand to be a mset, matrix, relation, or function, got {self}: {subject}"
+                    ),
+                }
+            }
+            Expression::ToMSet(_, other) => {
+                let subject = other.return_type();
+                match subject {
+                    ReturnType::Function(domain, codomain) => {
+                        ReturnType::MSet(Box::new(ReturnType::Tuple(vec![*domain, *codomain])))
+                    }
+                    ReturnType::Relation(domains) => {
+                        ReturnType::MSet(Box::new(ReturnType::Tuple(domains)))
+                    }
+                    ReturnType::Set(domain) => ReturnType::MSet(Box::new(*domain)),
+                    _ => bug!(
+                        "Invalid toMSet operation: expected the operand to be a set, relation, or function, got {self}: {subject}"
+                    ),
+                }
+            }
+            Expression::ToRelation(_, function) => {
+                let subject = function.return_type();
+                match subject {
+                    ReturnType::Function(domain, codomain) => {
+                        ReturnType::Relation(vec![*domain, *codomain])
+                    }
+                    _ => bug!(
+                        "Invalid toRelation operation: expected the operand to be a function, got {self}: {subject}"
+                    ),
+                }
+            }
+            Expression::RelationProj(_, relation, projections) => {
+                let subject = relation.return_type();
+                match subject {
+                    ReturnType::Relation(domains) => {
+                        let new_doms = domains
+                            .iter()
+                            .zip(projections.iter())
+                            .filter_map(|(domain, included)| {
+                                if included.is_none() {
+                                    // The domains corresponding to projections which are None remain in the relation
+                                    Some(domain.clone())
+                                } else {
+                                    None
+                                }
+                            })
+                            .collect();
+                        ReturnType::Relation(new_doms)
+                    }
+                    _ => bug!(
+                        "Invalid RelationProj operation: expected the operand to be a relation, got {self}: {subject}"
+                    ),
+                }
+            }
         }
     }
 }
@@ -2121,6 +2290,13 @@ impl Expression {
                         f(b);
                     }
                 }
+                AbstractLiteral::Relation(vs) => {
+                    for exprs in vs {
+                        for expr in exprs {
+                            f(expr);
+                        }
+                    }
+                }
             },
             Expression::Root(_, vs) => {
                 for expr in vs {
@@ -2143,7 +2319,10 @@ impl Expression {
             | Expression::Defined(_, m1)
             | Expression::AllDiff(_, m1)
             | Expression::Factorial(_, m1)
-            | Expression::Range(_, m1) => {
+            | Expression::Range(_, m1)
+            | Expression::ToSet(_, m1)
+            | Expression::ToMSet(_, m1)
+            | Expression::ToRelation(_, m1) => {
                 f(m1);
             }
 
@@ -2195,9 +2374,10 @@ impl Expression {
                     f(v);
                 }
             }
-
             // Moo<Expression> + Vec<Option<Expression>>
-            Expression::UnsafeSlice(_, m, vs) | Expression::SafeSlice(_, m, vs) => {
+            Expression::UnsafeSlice(_, m, vs)
+            | Expression::SafeSlice(_, m, vs)
+            | Expression::RelationProj(_, m, vs) => {
                 f(m);
                 for e in vs.iter().flatten() {
                     f(e);
@@ -2313,6 +2493,13 @@ impl CacheHashable for Expression {
                         b.get_cached_hash().hash(&mut hasher);
                     }
                 }
+                AbstractLiteral::Relation(v) => {
+                    for exprs in v {
+                        for expr in exprs {
+                            expr.get_cached_hash().hash(&mut hasher);
+                        }
+                    }
+                }
             },
             Expression::Root(_, vs) => {
                 for expr in vs {
@@ -2335,7 +2522,10 @@ impl CacheHashable for Expression {
             | Expression::Defined(_, m1)
             | Expression::AllDiff(_, m1)
             | Expression::Factorial(_, m1)
-            | Expression::Range(_, m1) => {
+            | Expression::Range(_, m1)
+            | Expression::ToSet(_, m1)
+            | Expression::ToMSet(_, m1)
+            | Expression::ToRelation(_, m1) => {
                 m1.get_cached_hash().hash(&mut hasher);
             }
 
@@ -2388,7 +2578,9 @@ impl CacheHashable for Expression {
             }
 
             // Moo<Expression> + Vec<Option<Expression>>
-            Expression::UnsafeSlice(_, m, vs) | Expression::SafeSlice(_, m, vs) => {
+            Expression::UnsafeSlice(_, m, vs)
+            | Expression::SafeSlice(_, m, vs)
+            | Expression::RelationProj(_, m, vs) => {
                 m.get_cached_hash().hash(&mut hasher);
                 for v in vs {
                     match v {
