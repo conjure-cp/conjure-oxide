@@ -100,46 +100,52 @@ impl Backend {
         }
     }
     pub async fn handle_did_change(&self, params: DidChangeTextDocumentParams) {
-        //on change, take change and range of change
-        //modify existing document given uri and cache content to update the document version in cache
-        //TODO: check whether changes are purely whitespace
-        //if changes are purely whitespace, check whether they
-
         let uri = params.text_document.uri;
+        let incoming_version = params.text_document.version;
         let lsp_cache = &self.lsp_cache;
 
         self.client
             .log_message(MessageType::INFO, "in document change")
             .await;
 
-        if let Some(change) = params.content_changes.first()
-            && let Some(cache_conts) = lsp_cache.get(&uri).await
-        {
-            let mut new_text = cache_conts.contents.clone();
+        let Some(cache_conts) = lsp_cache.get(&uri).await else {
+            self.client
+                .log_message(MessageType::WARNING, "DidChange for uncached document")
+                .await;
+            return;
+        };
+
+        // Drop stale/out-of-order changes.
+        if incoming_version <= cache_conts.version {
+            return;
+        }
+
+        let mut new_text = cache_conts.contents.clone();
+        let mut edited_tree = cache_conts.cst.clone();
+
+        // LSP may send multiple incremental edits in one notification.
+        for change in &params.content_changes {
             if let Some(lsp_range) = change.range {
-                //convert range for string conversion here
+                let start_byte = position_to_byte(&new_text, lsp_range.start);
+                let old_end_byte = position_to_byte(&new_text, lsp_range.end);
 
-                let start_byte = position_to_byte(&cache_conts.contents, lsp_range.start);
-                let end_byte = position_to_byte(&cache_conts.contents, lsp_range.end);
-                new_text.replace_range(start_byte..end_byte, &change.text);
-            } else {
-                new_text = change.text.clone();
-            }
-
-            let new_tree: Tree = if let Some(lsp_range) = change.range {
-                let start_byte = position_to_byte(&cache_conts.contents, lsp_range.start);
-                let old_end_byte = position_to_byte(&cache_conts.contents, lsp_range.end);
-                let new_end_byte = start_byte + change.text.len();
+                if start_byte > old_end_byte || old_end_byte > new_text.len() {
+                    self.client
+                        .log_message(
+                            MessageType::WARNING,
+                            "Ignoring invalid edit range in DidChange",
+                        )
+                        .await;
+                    continue;
+                }
 
                 let start_position = position_to_treesitter_point(lsp_range.start);
                 let old_end_position = position_to_treesitter_point(lsp_range.end);
                 let new_end_position = calculate_new_end_position(&change.text, lsp_range.start);
+                let new_end_byte = start_byte + change.text.len();
 
-                self.client
-                    .log_message(MessageType::INFO, "before edit")
-                    .await;
-                if let Some(ref mut old_cst) = cache_conts.cst.clone() {
-                    old_cst.edit(&tree_sitter::InputEdit {
+                if let Some(tree) = edited_tree.as_mut() {
+                    tree.edit(&tree_sitter::InputEdit {
                         start_byte,
                         old_end_byte,
                         new_end_byte,
@@ -147,80 +153,71 @@ impl Backend {
                         old_end_position,
                         new_end_position,
                     });
-
-                    // parse the new text with the edited tree as a starting point for incremental parsing
-                    // TODO: handle _FRAGMENT_EXPRESSION like get_tree does
-                    // maybe make separate helper for that or something
-                    let mut parser = tree_sitter::Parser::new();
-                    parser
-                        .set_language(&tree_sitter_essence::LANGUAGE.into())
-                        .unwrap();
-                    tree_sitter::Parser::parse(&mut parser, &new_text, Some(old_cst)).unwrap()
-                } else {
-                    // if cst was None due to a failure to parse,
-                    // we should re-parse the entire new text instead of trying to edit a non-existent tree
-                    // there could be a better way to handle this, but for now this is a safe fallback
-                    get_tree(&new_text).unwrap().0
                 }
+
+                new_text.replace_range(start_byte..old_end_byte, &change.text);
             } else {
-                get_tree(&new_text).unwrap().0
-            };
-
-            let context = Arc::new(RwLock::new(Context::default()));
-            let mut errors: Vec<RecoverableParseError> = Vec::new();
-
-            self.client
-                .log_message(MessageType::INFO, new_text.clone())
-                .await;
-
-            let parsed = parse_essence_with_context_and_map(
-                &new_text,
-                context,
-                &mut errors,
-                Some(&new_tree),
-            );
-
-            let new_cache_conts = match parsed {
-                Ok((Some(ast_model), source_map)) => {
-                    self.client
-                        .log_message(MessageType::LOG, "THIS ONE INSTEAD")
-                        .await;
-                    CacheCont {
-                        sourcemap: Some(source_map),
-                        ast: Some(ast_model),
-                        errors,
-                        cst: Some(new_tree),
-                        contents: new_text.clone(),
-                        version: params.text_document.version,
-                    }
-                }
-                Ok((None, source_map)) => {
-                    self.client
-                        .log_message(MessageType::LOG, "jshdhshshshhs")
-                        .await;
-                    CacheCont {
-                        sourcemap: Some(source_map),
-                        ast: None,
-                        errors,
-                        cst: Some(new_tree),
-                        contents: new_text.clone(),
-                        version: params.text_document.version,
-                    }
-                }
-                Err(fatal) => CacheCont {
-                    sourcemap: None,
-                    ast: None,
-                    errors: vec![RecoverableParseError::new(fatal.to_string(), None)],
-                    cst: Some(new_tree),
-                    contents: new_text.clone(),
-                    version: params.text_document.version,
-                },
-            };
-
-            lsp_cache.insert(uri.clone(), new_cache_conts.clone()).await;
-
-            self.handle_diagnostics(&uri, new_cache_conts).await;
+                // Full content replacement.
+                new_text = change.text.clone();
+                edited_tree = None;
+            }
         }
+
+        let mut new_tree: Option<Tree> = if let Some(ref old_tree) = edited_tree {
+            let mut parser = tree_sitter::Parser::new();
+            parser
+                .set_language(&tree_sitter_essence::LANGUAGE.into())
+                .unwrap();
+            parser.parse(&new_text, Some(old_tree))
+        } else {
+            None
+        };
+
+        if new_tree.is_none() {
+            new_tree = get_tree(&new_text).map(|(tree, _)| tree);
+        }
+
+        let context = Arc::new(RwLock::new(Context::default()));
+        let mut errors: Vec<RecoverableParseError> = Vec::new();
+        let parsed =
+            parse_essence_with_context_and_map(&new_text, context, &mut errors, new_tree.as_ref());
+
+        let new_cache_conts = match parsed {
+            Ok((Some(ast_model), source_map)) => CacheCont {
+                sourcemap: Some(source_map),
+                ast: Some(ast_model),
+                errors,
+                cst: new_tree.clone(),
+                contents: new_text.clone(),
+                version: incoming_version,
+            },
+            Ok((None, source_map)) => CacheCont {
+                sourcemap: Some(source_map),
+                ast: None,
+                errors,
+                cst: new_tree.clone(),
+                contents: new_text.clone(),
+                version: incoming_version,
+            },
+            Err(fatal) => CacheCont {
+                sourcemap: None,
+                ast: None,
+                errors: vec![RecoverableParseError::new(fatal.to_string(), None)],
+                cst: new_tree.clone(),
+                contents: new_text.clone(),
+                version: incoming_version,
+            },
+        };
+
+        // Drop stale parse results if a newer update landed while parsing.
+        if let Some(latest) = lsp_cache.get(&uri).await
+            && latest.version >= incoming_version
+        {
+            return;
+        }
+
+        lsp_cache.insert(uri.clone(), new_cache_conts.clone()).await;
+        self.handle_diagnostics(&uri, new_cache_conts).await;
     }
 
     pub async fn handle_diagnostics(&self, uri: &Url, cache_conts: CacheCont) {
