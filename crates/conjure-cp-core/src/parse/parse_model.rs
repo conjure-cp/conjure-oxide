@@ -12,9 +12,9 @@ use crate::ast::ac_operators::ACOperatorKind;
 use crate::ast::comprehension::ComprehensionBuilder;
 use crate::ast::records::RecordValue;
 use crate::ast::{
-    AbstractLiteral, Atom, BinaryAttr, DeclarationPtr, Domain, Expression, FuncAttr, IntVal, JectivityAttr,
-    Literal, MSetAttr, Name, PartialityAttr, Range, RecordEntry, RelAttr, SequenceAttr, SetAttr,
-    SymbolTable, SymbolTablePtr,
+    AbstractLiteral, Atom, BinaryAttr, DeclarationPtr, Domain, Expression, FuncAttr, IntVal,
+    JectivityAttr, Literal, MSetAttr, Name, PartialityAttr, Range, RecordEntry, RelAttr,
+    SequenceAttr, SetAttr, SymbolTable, SymbolTablePtr,
 };
 use crate::ast::{DomainPtr, Metadata};
 use crate::context::Context;

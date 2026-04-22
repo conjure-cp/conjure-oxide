@@ -2,7 +2,7 @@ use crate::ast::domains::attrs::MSetAttr;
 use crate::ast::domains::attrs::SetAttr;
 use crate::ast::{
     DeclarationKind, DomainOpError, Expression, FuncAttr, Literal, Metadata, Moo,
-    RecordEntryGround, Reference, SequenceAttr, RelAttr, Typeable,
+    RecordEntryGround, Reference, RelAttr, SequenceAttr, Typeable,
     domains::{
         GroundDomain,
         domain::{DomainPtr, Int},
