@@ -7,7 +7,7 @@ use conjure_cp::rule_engine::{
     ApplicationError::{DomainError, RuleNotApplicable},
     ApplicationResult, Reduction, register_rule, register_rule_set,
 };
-use conjure_cp::solver::SolverFamily;
+use conjure_cp::settings::SolverFamily;
 use conjure_cp::solver::adaptors::smt::TheoryConfig;
 
 // Only applicable when unwrap_alldiff is enabled in the SMT adaptor
@@ -19,7 +19,7 @@ register_rule_set!("SmtUnwrapAllDiff", ("Base"), |f: &SolverFamily| matches!(
     })
 ));
 
-#[register_rule(("SmtUnwrapAllDiff", 1000))]
+#[register_rule("SmtUnwrapAllDiff", 1000)]
 fn unwrap_alldiff(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::AllDiff(_, m) = expr else {
         return Err(RuleNotApplicable);

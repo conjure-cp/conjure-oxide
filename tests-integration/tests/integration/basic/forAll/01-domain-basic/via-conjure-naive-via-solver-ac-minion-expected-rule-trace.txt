@@ -1,0 +1,30 @@
+Model before rewriting:
+
+find x: bool
+
+such that
+
+(x = and([ (i > 0) | i : int(1..5) ]))
+
+--
+
+(x = and([ (i > 0) | i : int(1..5) ])), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(x = true)
+
+--
+
+(x = true), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(true, x)
+
+--
+
+Final model:
+
+find x: bool
+
+such that
+
+Reify(true, x)
+

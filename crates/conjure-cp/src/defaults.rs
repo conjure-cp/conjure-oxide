@@ -1,6 +1,1 @@
-pub static DEFAULT_RULE_SETS: &[&str] = &[
-    "Base",
-    "Constant",
-    "Bubble",
-    "Better_AC_Comprehension_Expansion",
-];
+pub static DEFAULT_RULE_SETS: &[&str] = &["Base", "Constant", "Bubble"];

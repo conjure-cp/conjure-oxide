@@ -1,0 +1,1354 @@
+Model before rewriting:
+
+find a: int(1..3)
+find b: int(1..3)
+
+such that
+
+(min([a,b;int(1..2)]) <= 2)
+
+--
+
+a, 
+   ~~> integer_decision_representation_direct ([("SAT_Direct", 9500)])
+SATInt(Direct, [a#sat_direct_int_1,a#sat_direct_int_2,a#sat_direct_int_3;int(1..)] [1, 3])
+new variables:
+  find a#sat_direct_int_1: bool
+  find a#sat_direct_int_2: bool
+  find a#sat_direct_int_3: bool
+new constraints:
+  or([and([(SATInt(Direct, [a#sat_direct_int_1,a#sat_direct_int_2,a#sat_direct_int_3;int(1..)] [1, 3]) >= 1),(SATInt(Direct, [a#sat_direct_int_1,a#sat_direct_int_2,a#sat_direct_int_3;int(1..)] [1, 3]) <= 3);int(1..)]);int(1..)])
+
+--
+
+b, 
+   ~~> integer_decision_representation_direct ([("SAT_Direct", 9500)])
+SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2,b#sat_direct_int_3;int(1..)] [1, 3])
+new variables:
+  find b#sat_direct_int_1: bool
+  find b#sat_direct_int_2: bool
+  find b#sat_direct_int_3: bool
+new constraints:
+  or([and([(SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2,b#sat_direct_int_3;int(1..)] [1, 3]) >= 1),(SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2,b#sat_direct_int_3;int(1..)] [1, 3]) <= 3);int(1..)]);int(1..)])
+
+--
+
+2, 
+   ~~> literal_sat_direct_int ([("SAT_Direct", 9500)])
+SATInt(Direct, [true;int(1..)] [2, 2])
+
+--
+
+1, 
+   ~~> literal_sat_direct_int ([("SAT_Direct", 9500)])
+SATInt(Direct, [true;int(1..)] [1, 1])
+
+--
+
+3, 
+   ~~> literal_sat_direct_int ([("SAT_Direct", 9500)])
+SATInt(Direct, [true;int(1..)] [3, 3])
+
+--
+
+1, 
+   ~~> literal_sat_direct_int ([("SAT_Direct", 9500)])
+SATInt(Direct, [true;int(1..)] [1, 1])
+
+--
+
+3, 
+   ~~> literal_sat_direct_int ([("SAT_Direct", 9500)])
+SATInt(Direct, [true;int(1..)] [3, 3])
+
+--
+
+(SATInt(Direct, [a#sat_direct_int_1,a#sat_direct_int_2,a#sat_direct_int_3;int(1..)] [1, 3]) >= SATInt(Direct, [true;int(1..)] [1, 1])), 
+   ~~> ineq_sat_direct ([("SAT", 9100)])
+__12
+new variables:
+  find __0: bool
+  find __1: bool
+  find __2: bool
+  find __3: bool
+  find __4: bool
+  find __5: bool
+  find __6: bool
+  find __7: bool
+  find __8: bool
+  find __9: bool
+  find __10: bool
+  find __11: bool
+  find __12: bool
+new clauses:
+  (__0)
+  (¬__0 \/ ¬__1)
+  (__0 \/ __1)
+  (¬__2 \/ a#sat_direct_int_1)
+  (¬__2 \/ __1)
+  (__2 \/ ¬a#sat_direct_int_1 \/ ¬__1)
+  (¬__2 \/ __3)
+  (¬__3 \/ __2)
+  (¬__0 \/ __4)
+  (¬__4 \/ __0)
+  (¬__4 \/ ¬__5)
+  (__4 \/ __5)
+  (¬__6 \/ a#sat_direct_int_2)
+  (¬__6 \/ __5)
+  (__6 \/ ¬a#sat_direct_int_2 \/ ¬__5)
+  (¬__3 \/ __7)
+  (¬__6 \/ __7)
+  (¬__7 \/ __3 \/ __6)
+  (¬__4 \/ __8)
+  (¬__8 \/ __4)
+  (¬__8 \/ ¬__9)
+  (__8 \/ __9)
+  (¬__10 \/ a#sat_direct_int_3)
+  (¬__10 \/ __9)
+  (__10 \/ ¬a#sat_direct_int_3 \/ ¬__9)
+  (¬__7 \/ __11)
+  (¬__10 \/ __11)
+  (¬__11 \/ __7 \/ __10)
+  (¬__11 \/ ¬__12)
+  (__11 \/ __12)
+
+--
+
+(SATInt(Direct, [a#sat_direct_int_1,a#sat_direct_int_2,a#sat_direct_int_3;int(1..)] [1, 3]) <= SATInt(Direct, [true;int(1..)] [3, 3])), 
+   ~~> ineq_sat_direct ([("SAT", 9100)])
+__25
+new variables:
+  find __13: bool
+  find __14: bool
+  find __15: bool
+  find __16: bool
+  find __17: bool
+  find __18: bool
+  find __19: bool
+  find __20: bool
+  find __21: bool
+  find __22: bool
+  find __23: bool
+  find __24: bool
+  find __25: bool
+new clauses:
+  (¬a#sat_direct_int_1 \/ __13)
+  (¬__13 \/ a#sat_direct_int_1)
+  (¬__13 \/ ¬__14)
+  (__13 \/ __14)
+  (¬__15)
+  (¬__15 \/ __14)
+  (¬__15 \/ __16)
+  (¬__16 \/ __15)
+  (¬__13 \/ __17)
+  (¬a#sat_direct_int_2 \/ __17)
+  (¬__17 \/ __13 \/ a#sat_direct_int_2)
+  (¬__17 \/ ¬__18)
+  (__17 \/ __18)
+  (¬__19)
+  (¬__19 \/ __18)
+  (¬__16 \/ __20)
+  (¬__19 \/ __20)
+  (¬__20 \/ __16 \/ __19)
+  (¬__17 \/ __21)
+  (¬a#sat_direct_int_3 \/ __21)
+  (¬__21 \/ __17 \/ a#sat_direct_int_3)
+  (¬__21 \/ ¬__22)
+  (__21 \/ __22)
+  (¬__23 \/ __22)
+  (__23 \/ ¬__22)
+  (¬__20 \/ __24)
+  (¬__23 \/ __24)
+  (¬__24 \/ __20 \/ __23)
+  (¬__24 \/ ¬__25)
+  (__24 \/ __25)
+
+--
+
+(SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2,b#sat_direct_int_3;int(1..)] [1, 3]) >= SATInt(Direct, [true;int(1..)] [1, 1])), 
+   ~~> ineq_sat_direct ([("SAT", 9100)])
+__38
+new variables:
+  find __26: bool
+  find __27: bool
+  find __28: bool
+  find __29: bool
+  find __30: bool
+  find __31: bool
+  find __32: bool
+  find __33: bool
+  find __34: bool
+  find __35: bool
+  find __36: bool
+  find __37: bool
+  find __38: bool
+new clauses:
+  (__26)
+  (¬__26 \/ ¬__27)
+  (__26 \/ __27)
+  (¬__28 \/ b#sat_direct_int_1)
+  (¬__28 \/ __27)
+  (__28 \/ ¬b#sat_direct_int_1 \/ ¬__27)
+  (¬__28 \/ __29)
+  (¬__29 \/ __28)
+  (¬__26 \/ __30)
+  (¬__30 \/ __26)
+  (¬__30 \/ ¬__31)
+  (__30 \/ __31)
+  (¬__32 \/ b#sat_direct_int_2)
+  (¬__32 \/ __31)
+  (__32 \/ ¬b#sat_direct_int_2 \/ ¬__31)
+  (¬__29 \/ __33)
+  (¬__32 \/ __33)
+  (¬__33 \/ __29 \/ __32)
+  (¬__30 \/ __34)
+  (¬__34 \/ __30)
+  (¬__34 \/ ¬__35)
+  (__34 \/ __35)
+  (¬__36 \/ b#sat_direct_int_3)
+  (¬__36 \/ __35)
+  (__36 \/ ¬b#sat_direct_int_3 \/ ¬__35)
+  (¬__33 \/ __37)
+  (¬__36 \/ __37)
+  (¬__37 \/ __33 \/ __36)
+  (¬__37 \/ ¬__38)
+  (__37 \/ __38)
+
+--
+
+(SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2,b#sat_direct_int_3;int(1..)] [1, 3]) <= SATInt(Direct, [true;int(1..)] [3, 3])), 
+   ~~> ineq_sat_direct ([("SAT", 9100)])
+__51
+new variables:
+  find __39: bool
+  find __40: bool
+  find __41: bool
+  find __42: bool
+  find __43: bool
+  find __44: bool
+  find __45: bool
+  find __46: bool
+  find __47: bool
+  find __48: bool
+  find __49: bool
+  find __50: bool
+  find __51: bool
+new clauses:
+  (¬b#sat_direct_int_1 \/ __39)
+  (¬__39 \/ b#sat_direct_int_1)
+  (¬__39 \/ ¬__40)
+  (__39 \/ __40)
+  (¬__41)
+  (¬__41 \/ __40)
+  (¬__41 \/ __42)
+  (¬__42 \/ __41)
+  (¬__39 \/ __43)
+  (¬b#sat_direct_int_2 \/ __43)
+  (¬__43 \/ __39 \/ b#sat_direct_int_2)
+  (¬__43 \/ ¬__44)
+  (__43 \/ __44)
+  (¬__45)
+  (¬__45 \/ __44)
+  (¬__42 \/ __46)
+  (¬__45 \/ __46)
+  (¬__46 \/ __42 \/ __45)
+  (¬__43 \/ __47)
+  (¬b#sat_direct_int_3 \/ __47)
+  (¬__47 \/ __43 \/ b#sat_direct_int_3)
+  (¬__47 \/ ¬__48)
+  (__47 \/ __48)
+  (¬__49 \/ __48)
+  (__49 \/ ¬__48)
+  (¬__46 \/ __50)
+  (¬__49 \/ __50)
+  (¬__50 \/ __46 \/ __49)
+  (¬__50 \/ ¬__51)
+  (__50 \/ __51)
+
+--
+
+(min([SATInt(Direct, [a#sat_direct_int_1,a#sat_direct_int_2,a#sat_direct_int_3;int(1..)] [1, 3]),SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2,b#sat_direct_int_3;int(1..)] [1, 3]);int(1..2)]) <= SATInt(Direct, [true;int(1..)] [2, 2])),
+or([and([__12,__25;int(1..)]);int(1..)]),
+or([and([__38,__51;int(1..)]);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(min([SATInt(Direct, [a#sat_direct_int_1,a#sat_direct_int_2,a#sat_direct_int_3;int(1..)] [1, 3]),SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2,b#sat_direct_int_3;int(1..)] [1, 3]);int(1..2)]) <= SATInt(Direct, [true;int(1..)] [2, 2])),
+or([and([__12,__25;int(1..)]);int(1..)]),
+or([and([__38,__51;int(1..)]);int(1..)])
+
+--
+
+or([and([__12,__25;int(1..)]);int(1..)]), 
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__12,__25;int(1..)])
+
+--
+
+(min([SATInt(Direct, [a#sat_direct_int_1,a#sat_direct_int_2,a#sat_direct_int_3;int(1..)] [1, 3]),SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2,b#sat_direct_int_3;int(1..)] [1, 3]);int(1..2)]) <= SATInt(Direct, [true;int(1..)] [2, 2])),
+and([__12,__25;int(1..)]),
+or([and([__38,__51;int(1..)]);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(min([SATInt(Direct, [a#sat_direct_int_1,a#sat_direct_int_2,a#sat_direct_int_3;int(1..)] [1, 3]),SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2,b#sat_direct_int_3;int(1..)] [1, 3]);int(1..2)]) <= SATInt(Direct, [true;int(1..)] [2, 2])),
+__12,
+__25,
+or([and([__38,__51;int(1..)]);int(1..)])
+
+--
+
+or([and([__38,__51;int(1..)]);int(1..)]), 
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__38,__51;int(1..)])
+
+--
+
+(min([SATInt(Direct, [a#sat_direct_int_1,a#sat_direct_int_2,a#sat_direct_int_3;int(1..)] [1, 3]),SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2,b#sat_direct_int_3;int(1..)] [1, 3]);int(1..2)]) <= SATInt(Direct, [true;int(1..)] [2, 2])),
+__12,
+__25,
+and([__38,__51;int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(min([SATInt(Direct, [a#sat_direct_int_1,a#sat_direct_int_2,a#sat_direct_int_3;int(1..)] [1, 3]),SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2,b#sat_direct_int_3;int(1..)] [1, 3]);int(1..2)]) <= SATInt(Direct, [true;int(1..)] [2, 2])),
+__12,
+__25,
+__38,
+__51
+
+--
+
+(min([SATInt(Direct, [a#sat_direct_int_1,a#sat_direct_int_2,a#sat_direct_int_3;int(1..)] [1, 3]),SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2,b#sat_direct_int_3;int(1..)] [1, 3]);int(1..2)]) <= SATInt(Direct, [true;int(1..)] [2, 2])),
+__12,
+__25,
+__38,
+__51, 
+   ~~> remove_single_atom ([("SAT", 8400)])
+(min([SATInt(Direct, [a#sat_direct_int_1,a#sat_direct_int_2,a#sat_direct_int_3;int(1..)] [1, 3]),SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2,b#sat_direct_int_3;int(1..)] [1, 3]);int(1..2)]) <= SATInt(Direct, [true;int(1..)] [2, 2])),
+__25,
+__38,
+__51
+new clauses:
+  (__12)
+
+--
+
+(min([SATInt(Direct, [a#sat_direct_int_1,a#sat_direct_int_2,a#sat_direct_int_3;int(1..)] [1, 3]),SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2,b#sat_direct_int_3;int(1..)] [1, 3]);int(1..2)]) <= SATInt(Direct, [true;int(1..)] [2, 2])),
+__25,
+__38,
+__51, 
+   ~~> remove_single_atom ([("SAT", 8400)])
+(min([SATInt(Direct, [a#sat_direct_int_1,a#sat_direct_int_2,a#sat_direct_int_3;int(1..)] [1, 3]),SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2,b#sat_direct_int_3;int(1..)] [1, 3]);int(1..2)]) <= SATInt(Direct, [true;int(1..)] [2, 2])),
+__38,
+__51
+new clauses:
+  (__25)
+
+--
+
+(min([SATInt(Direct, [a#sat_direct_int_1,a#sat_direct_int_2,a#sat_direct_int_3;int(1..)] [1, 3]),SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2,b#sat_direct_int_3;int(1..)] [1, 3]);int(1..2)]) <= SATInt(Direct, [true;int(1..)] [2, 2])),
+__38,
+__51, 
+   ~~> remove_single_atom ([("SAT", 8400)])
+(min([SATInt(Direct, [a#sat_direct_int_1,a#sat_direct_int_2,a#sat_direct_int_3;int(1..)] [1, 3]),SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2,b#sat_direct_int_3;int(1..)] [1, 3]);int(1..2)]) <= SATInt(Direct, [true;int(1..)] [2, 2])),
+__51
+new clauses:
+  (__38)
+
+--
+
+(min([SATInt(Direct, [a#sat_direct_int_1,a#sat_direct_int_2,a#sat_direct_int_3;int(1..)] [1, 3]),SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2,b#sat_direct_int_3;int(1..)] [1, 3]);int(1..2)]) <= SATInt(Direct, [true;int(1..)] [2, 2])),
+__51, 
+   ~~> remove_single_atom ([("SAT", 8400)])
+(min([SATInt(Direct, [a#sat_direct_int_1,a#sat_direct_int_2,a#sat_direct_int_3;int(1..)] [1, 3]),SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2,b#sat_direct_int_3;int(1..)] [1, 3]);int(1..2)]) <= SATInt(Direct, [true;int(1..)] [2, 2]))
+new clauses:
+  (__51)
+
+--
+
+min([SATInt(Direct, [a#sat_direct_int_1,a#sat_direct_int_2,a#sat_direct_int_3;int(1..)] [1, 3]),SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2,b#sat_direct_int_3;int(1..)] [1, 3]);int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)])
+min([SATInt(Direct, [a#sat_direct_int_1,a#sat_direct_int_2,a#sat_direct_int_3;int(1..)] [1, 3]),SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2,b#sat_direct_int_3;int(1..)] [1, 3]);int(1..)])
+
+--
+
+min([SATInt(Direct, [a#sat_direct_int_1,a#sat_direct_int_2,a#sat_direct_int_3;int(1..)] [1, 3]),SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2,b#sat_direct_int_3;int(1..)] [1, 3]);int(1..)]), 
+   ~~> min_to_var ([("Base", 6000)])
+__52
+new variables:
+  find __52: int(1..3)
+new constraints:
+  (__52 <= SATInt(Direct, [a#sat_direct_int_1,a#sat_direct_int_2,a#sat_direct_int_3;int(1..)] [1, 3]))
+  (__52 <= SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2,b#sat_direct_int_3;int(1..)] [1, 3]))
+  or([(__52 = SATInt(Direct, [a#sat_direct_int_1,a#sat_direct_int_2,a#sat_direct_int_3;int(1..)] [1, 3])),(__52 = SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2,b#sat_direct_int_3;int(1..)] [1, 3]));int(1..)])
+
+--
+
+__52, 
+   ~~> integer_decision_representation_direct ([("SAT_Direct", 9500)])
+SATInt(Direct, [__52#sat_direct_int_1,__52#sat_direct_int_2,__52#sat_direct_int_3;int(1..)] [1, 3])
+new variables:
+  find __52#sat_direct_int_1: bool
+  find __52#sat_direct_int_2: bool
+  find __52#sat_direct_int_3: bool
+new constraints:
+  or([and([(SATInt(Direct, [__52#sat_direct_int_1,__52#sat_direct_int_2,__52#sat_direct_int_3;int(1..)] [1, 3]) >= 1),(SATInt(Direct, [__52#sat_direct_int_1,__52#sat_direct_int_2,__52#sat_direct_int_3;int(1..)] [1, 3]) <= 3);int(1..)]);int(1..)])
+
+--
+
+__52, 
+   ~~> integer_decision_representation_direct ([("SAT_Direct", 9500)])
+SATInt(Direct, [__52#sat_direct_int_1,__52#sat_direct_int_2,__52#sat_direct_int_3;int(1..)] [1, 3])
+
+--
+
+__52, 
+   ~~> integer_decision_representation_direct ([("SAT_Direct", 9500)])
+SATInt(Direct, [__52#sat_direct_int_1,__52#sat_direct_int_2,__52#sat_direct_int_3;int(1..)] [1, 3])
+
+--
+
+__52, 
+   ~~> integer_decision_representation_direct ([("SAT_Direct", 9500)])
+SATInt(Direct, [__52#sat_direct_int_1,__52#sat_direct_int_2,__52#sat_direct_int_3;int(1..)] [1, 3])
+
+--
+
+__52, 
+   ~~> integer_decision_representation_direct ([("SAT_Direct", 9500)])
+SATInt(Direct, [__52#sat_direct_int_1,__52#sat_direct_int_2,__52#sat_direct_int_3;int(1..)] [1, 3])
+
+--
+
+1, 
+   ~~> literal_sat_direct_int ([("SAT_Direct", 9500)])
+SATInt(Direct, [true;int(1..)] [1, 1])
+
+--
+
+3, 
+   ~~> literal_sat_direct_int ([("SAT_Direct", 9500)])
+SATInt(Direct, [true;int(1..)] [3, 3])
+
+--
+
+(SATInt(Direct, [__52#sat_direct_int_1,__52#sat_direct_int_2,__52#sat_direct_int_3;int(1..)] [1, 3]) <= SATInt(Direct, [true;int(1..)] [2, 2])), 
+   ~~> ineq_sat_direct ([("SAT", 9100)])
+__65
+new variables:
+  find __53: bool
+  find __54: bool
+  find __55: bool
+  find __56: bool
+  find __57: bool
+  find __58: bool
+  find __59: bool
+  find __60: bool
+  find __61: bool
+  find __62: bool
+  find __63: bool
+  find __64: bool
+  find __65: bool
+new clauses:
+  (¬__52#sat_direct_int_1 \/ __53)
+  (¬__53 \/ __52#sat_direct_int_1)
+  (¬__53 \/ ¬__54)
+  (__53 \/ __54)
+  (¬__55)
+  (¬__55 \/ __54)
+  (¬__55 \/ __56)
+  (¬__56 \/ __55)
+  (¬__53 \/ __57)
+  (¬__52#sat_direct_int_2 \/ __57)
+  (¬__57 \/ __53 \/ __52#sat_direct_int_2)
+  (¬__57 \/ ¬__58)
+  (__57 \/ __58)
+  (¬__59 \/ __58)
+  (__59 \/ ¬__58)
+  (¬__56 \/ __60)
+  (¬__59 \/ __60)
+  (¬__60 \/ __56 \/ __59)
+  (¬__57 \/ __61)
+  (¬__52#sat_direct_int_3 \/ __61)
+  (¬__61 \/ __57 \/ __52#sat_direct_int_3)
+  (¬__61 \/ ¬__62)
+  (__61 \/ __62)
+  (¬__63)
+  (¬__63 \/ __62)
+  (¬__60 \/ __64)
+  (¬__63 \/ __64)
+  (¬__64 \/ __60 \/ __63)
+  (¬__64 \/ ¬__65)
+  (__64 \/ __65)
+
+--
+
+(SATInt(Direct, [__52#sat_direct_int_1,__52#sat_direct_int_2,__52#sat_direct_int_3;int(1..)] [1, 3]) <= SATInt(Direct, [a#sat_direct_int_1,a#sat_direct_int_2,a#sat_direct_int_3;int(1..)] [1, 3])), 
+   ~~> ineq_sat_direct ([("SAT", 9100)])
+__78
+new variables:
+  find __66: bool
+  find __67: bool
+  find __68: bool
+  find __69: bool
+  find __70: bool
+  find __71: bool
+  find __72: bool
+  find __73: bool
+  find __74: bool
+  find __75: bool
+  find __76: bool
+  find __77: bool
+  find __78: bool
+new clauses:
+  (¬__52#sat_direct_int_1 \/ __66)
+  (¬__66 \/ __52#sat_direct_int_1)
+  (¬__66 \/ ¬__67)
+  (__66 \/ __67)
+  (¬__68 \/ a#sat_direct_int_1)
+  (¬__68 \/ __67)
+  (__68 \/ ¬a#sat_direct_int_1 \/ ¬__67)
+  (¬__68 \/ __69)
+  (¬__69 \/ __68)
+  (¬__66 \/ __70)
+  (¬__52#sat_direct_int_2 \/ __70)
+  (¬__70 \/ __66 \/ __52#sat_direct_int_2)
+  (¬__70 \/ ¬__71)
+  (__70 \/ __71)
+  (¬__72 \/ a#sat_direct_int_2)
+  (¬__72 \/ __71)
+  (__72 \/ ¬a#sat_direct_int_2 \/ ¬__71)
+  (¬__69 \/ __73)
+  (¬__72 \/ __73)
+  (¬__73 \/ __69 \/ __72)
+  (¬__70 \/ __74)
+  (¬__52#sat_direct_int_3 \/ __74)
+  (¬__74 \/ __70 \/ __52#sat_direct_int_3)
+  (¬__74 \/ ¬__75)
+  (__74 \/ __75)
+  (¬__76 \/ a#sat_direct_int_3)
+  (¬__76 \/ __75)
+  (__76 \/ ¬a#sat_direct_int_3 \/ ¬__75)
+  (¬__73 \/ __77)
+  (¬__76 \/ __77)
+  (¬__77 \/ __73 \/ __76)
+  (¬__77 \/ ¬__78)
+  (__77 \/ __78)
+
+--
+
+(SATInt(Direct, [__52#sat_direct_int_1,__52#sat_direct_int_2,__52#sat_direct_int_3;int(1..)] [1, 3]) <= SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2,b#sat_direct_int_3;int(1..)] [1, 3])), 
+   ~~> ineq_sat_direct ([("SAT", 9100)])
+__91
+new variables:
+  find __79: bool
+  find __80: bool
+  find __81: bool
+  find __82: bool
+  find __83: bool
+  find __84: bool
+  find __85: bool
+  find __86: bool
+  find __87: bool
+  find __88: bool
+  find __89: bool
+  find __90: bool
+  find __91: bool
+new clauses:
+  (¬__52#sat_direct_int_1 \/ __79)
+  (¬__79 \/ __52#sat_direct_int_1)
+  (¬__79 \/ ¬__80)
+  (__79 \/ __80)
+  (¬__81 \/ b#sat_direct_int_1)
+  (¬__81 \/ __80)
+  (__81 \/ ¬b#sat_direct_int_1 \/ ¬__80)
+  (¬__81 \/ __82)
+  (¬__82 \/ __81)
+  (¬__79 \/ __83)
+  (¬__52#sat_direct_int_2 \/ __83)
+  (¬__83 \/ __79 \/ __52#sat_direct_int_2)
+  (¬__83 \/ ¬__84)
+  (__83 \/ __84)
+  (¬__85 \/ b#sat_direct_int_2)
+  (¬__85 \/ __84)
+  (__85 \/ ¬b#sat_direct_int_2 \/ ¬__84)
+  (¬__82 \/ __86)
+  (¬__85 \/ __86)
+  (¬__86 \/ __82 \/ __85)
+  (¬__83 \/ __87)
+  (¬__52#sat_direct_int_3 \/ __87)
+  (¬__87 \/ __83 \/ __52#sat_direct_int_3)
+  (¬__87 \/ ¬__88)
+  (__87 \/ __88)
+  (¬__89 \/ b#sat_direct_int_3)
+  (¬__89 \/ __88)
+  (__89 \/ ¬b#sat_direct_int_3 \/ ¬__88)
+  (¬__86 \/ __90)
+  (¬__89 \/ __90)
+  (¬__90 \/ __86 \/ __89)
+  (¬__90 \/ ¬__91)
+  (__90 \/ __91)
+
+--
+
+(SATInt(Direct, [__52#sat_direct_int_1,__52#sat_direct_int_2,__52#sat_direct_int_3;int(1..)] [1, 3]) = SATInt(Direct, [a#sat_direct_int_1,a#sat_direct_int_2,a#sat_direct_int_3;int(1..)] [1, 3])), 
+   ~~> eq_sat_direct ([("SAT_Direct", 9100)])
+__97
+new variables:
+  find __92: bool
+  find __93: bool
+  find __94: bool
+  find __95: bool
+  find __96: bool
+  find __97: bool
+new clauses:
+  (¬__52#sat_direct_int_1 \/ ¬a#sat_direct_int_1 \/ __92)
+  (__52#sat_direct_int_1 \/ a#sat_direct_int_1 \/ __92)
+  (__52#sat_direct_int_1 \/ ¬a#sat_direct_int_1 \/ ¬__92)
+  (¬__52#sat_direct_int_1 \/ a#sat_direct_int_1 \/ ¬__92)
+  (¬__93 \/ __92)
+  (__93 \/ ¬__92)
+  (¬__52#sat_direct_int_2 \/ ¬a#sat_direct_int_2 \/ __94)
+  (__52#sat_direct_int_2 \/ a#sat_direct_int_2 \/ __94)
+  (__52#sat_direct_int_2 \/ ¬a#sat_direct_int_2 \/ ¬__94)
+  (¬__52#sat_direct_int_2 \/ a#sat_direct_int_2 \/ ¬__94)
+  (¬__95 \/ __94)
+  (¬__95 \/ __93)
+  (__95 \/ ¬__94 \/ ¬__93)
+  (¬__52#sat_direct_int_3 \/ ¬a#sat_direct_int_3 \/ __96)
+  (__52#sat_direct_int_3 \/ a#sat_direct_int_3 \/ __96)
+  (__52#sat_direct_int_3 \/ ¬a#sat_direct_int_3 \/ ¬__96)
+  (¬__52#sat_direct_int_3 \/ a#sat_direct_int_3 \/ ¬__96)
+  (¬__97 \/ __96)
+  (¬__97 \/ __95)
+  (__97 \/ ¬__96 \/ ¬__95)
+
+--
+
+(SATInt(Direct, [__52#sat_direct_int_1,__52#sat_direct_int_2,__52#sat_direct_int_3;int(1..)] [1, 3]) = SATInt(Direct, [b#sat_direct_int_1,b#sat_direct_int_2,b#sat_direct_int_3;int(1..)] [1, 3])), 
+   ~~> eq_sat_direct ([("SAT_Direct", 9100)])
+__103
+new variables:
+  find __98: bool
+  find __99: bool
+  find __100: bool
+  find __101: bool
+  find __102: bool
+  find __103: bool
+new clauses:
+  (¬__52#sat_direct_int_1 \/ ¬b#sat_direct_int_1 \/ __98)
+  (__52#sat_direct_int_1 \/ b#sat_direct_int_1 \/ __98)
+  (__52#sat_direct_int_1 \/ ¬b#sat_direct_int_1 \/ ¬__98)
+  (¬__52#sat_direct_int_1 \/ b#sat_direct_int_1 \/ ¬__98)
+  (¬__99 \/ __98)
+  (__99 \/ ¬__98)
+  (¬__52#sat_direct_int_2 \/ ¬b#sat_direct_int_2 \/ __100)
+  (__52#sat_direct_int_2 \/ b#sat_direct_int_2 \/ __100)
+  (__52#sat_direct_int_2 \/ ¬b#sat_direct_int_2 \/ ¬__100)
+  (¬__52#sat_direct_int_2 \/ b#sat_direct_int_2 \/ ¬__100)
+  (¬__101 \/ __100)
+  (¬__101 \/ __99)
+  (__101 \/ ¬__100 \/ ¬__99)
+  (¬__52#sat_direct_int_3 \/ ¬b#sat_direct_int_3 \/ __102)
+  (__52#sat_direct_int_3 \/ b#sat_direct_int_3 \/ __102)
+  (__52#sat_direct_int_3 \/ ¬b#sat_direct_int_3 \/ ¬__102)
+  (¬__52#sat_direct_int_3 \/ b#sat_direct_int_3 \/ ¬__102)
+  (¬__103 \/ __102)
+  (¬__103 \/ __101)
+  (__103 \/ ¬__102 \/ ¬__101)
+
+--
+
+(SATInt(Direct, [__52#sat_direct_int_1,__52#sat_direct_int_2,__52#sat_direct_int_3;int(1..)] [1, 3]) >= SATInt(Direct, [true;int(1..)] [1, 1])), 
+   ~~> ineq_sat_direct ([("SAT", 9100)])
+__116
+new variables:
+  find __104: bool
+  find __105: bool
+  find __106: bool
+  find __107: bool
+  find __108: bool
+  find __109: bool
+  find __110: bool
+  find __111: bool
+  find __112: bool
+  find __113: bool
+  find __114: bool
+  find __115: bool
+  find __116: bool
+new clauses:
+  (__104)
+  (¬__104 \/ ¬__105)
+  (__104 \/ __105)
+  (¬__106 \/ __52#sat_direct_int_1)
+  (¬__106 \/ __105)
+  (__106 \/ ¬__52#sat_direct_int_1 \/ ¬__105)
+  (¬__106 \/ __107)
+  (¬__107 \/ __106)
+  (¬__104 \/ __108)
+  (¬__108 \/ __104)
+  (¬__108 \/ ¬__109)
+  (__108 \/ __109)
+  (¬__110 \/ __52#sat_direct_int_2)
+  (¬__110 \/ __109)
+  (__110 \/ ¬__52#sat_direct_int_2 \/ ¬__109)
+  (¬__107 \/ __111)
+  (¬__110 \/ __111)
+  (¬__111 \/ __107 \/ __110)
+  (¬__108 \/ __112)
+  (¬__112 \/ __108)
+  (¬__112 \/ ¬__113)
+  (__112 \/ __113)
+  (¬__114 \/ __52#sat_direct_int_3)
+  (¬__114 \/ __113)
+  (__114 \/ ¬__52#sat_direct_int_3 \/ ¬__113)
+  (¬__111 \/ __115)
+  (¬__114 \/ __115)
+  (¬__115 \/ __111 \/ __114)
+  (¬__115 \/ ¬__116)
+  (__115 \/ __116)
+
+--
+
+(SATInt(Direct, [__52#sat_direct_int_1,__52#sat_direct_int_2,__52#sat_direct_int_3;int(1..)] [1, 3]) <= SATInt(Direct, [true;int(1..)] [3, 3])), 
+   ~~> ineq_sat_direct ([("SAT", 9100)])
+__129
+new variables:
+  find __117: bool
+  find __118: bool
+  find __119: bool
+  find __120: bool
+  find __121: bool
+  find __122: bool
+  find __123: bool
+  find __124: bool
+  find __125: bool
+  find __126: bool
+  find __127: bool
+  find __128: bool
+  find __129: bool
+new clauses:
+  (¬__52#sat_direct_int_1 \/ __117)
+  (¬__117 \/ __52#sat_direct_int_1)
+  (¬__117 \/ ¬__118)
+  (__117 \/ __118)
+  (¬__119)
+  (¬__119 \/ __118)
+  (¬__119 \/ __120)
+  (¬__120 \/ __119)
+  (¬__117 \/ __121)
+  (¬__52#sat_direct_int_2 \/ __121)
+  (¬__121 \/ __117 \/ __52#sat_direct_int_2)
+  (¬__121 \/ ¬__122)
+  (__121 \/ __122)
+  (¬__123)
+  (¬__123 \/ __122)
+  (¬__120 \/ __124)
+  (¬__123 \/ __124)
+  (¬__124 \/ __120 \/ __123)
+  (¬__121 \/ __125)
+  (¬__52#sat_direct_int_3 \/ __125)
+  (¬__125 \/ __121 \/ __52#sat_direct_int_3)
+  (¬__125 \/ ¬__126)
+  (__125 \/ __126)
+  (¬__127 \/ __126)
+  (__127 \/ ¬__126)
+  (¬__124 \/ __128)
+  (¬__127 \/ __128)
+  (¬__128 \/ __124 \/ __127)
+  (¬__128 \/ ¬__129)
+  (__128 \/ __129)
+
+--
+
+or([and([__116,__129;int(1..)]);int(1..)]), 
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+and([__116,__129;int(1..)])
+
+--
+
+__65,
+__78,
+__91,
+or([__97,__103;int(1..)]),
+and([__116,__129;int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+__65,
+__78,
+__91,
+or([__97,__103;int(1..)]),
+__116,
+__129
+
+--
+
+or([__97,__103;int(1..)]), 
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__130
+new variables:
+  find __130: bool
+new clauses:
+  (¬__97 \/ __130)
+  (¬__103 \/ __130)
+  (¬__130 \/ __97 \/ __103)
+
+--
+
+__65,
+__78,
+__91,
+__130,
+__116,
+__129, 
+   ~~> remove_single_atom ([("SAT", 8400)])
+__78,
+__91,
+__130,
+__116,
+__129
+new clauses:
+  (__65)
+
+--
+
+__78,
+__91,
+__130,
+__116,
+__129, 
+   ~~> remove_single_atom ([("SAT", 8400)])
+__91,
+__130,
+__116,
+__129
+new clauses:
+  (__78)
+
+--
+
+__91,
+__130,
+__116,
+__129, 
+   ~~> remove_single_atom ([("SAT", 8400)])
+__130,
+__116,
+__129
+new clauses:
+  (__91)
+
+--
+
+__130,
+__116,
+__129, 
+   ~~> remove_single_atom ([("SAT", 8400)])
+__116,
+__129
+new clauses:
+  (__130)
+
+--
+
+__116,
+__129, 
+   ~~> remove_single_atom ([("SAT", 8400)])
+__129
+new clauses:
+  (__116)
+
+--
+
+__129, 
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new clauses:
+  (__129)
+
+--
+
+Final model:
+
+find a: int(1..3)
+find b: int(1..3)
+find a#sat_direct_int_1: bool
+find a#sat_direct_int_2: bool
+find a#sat_direct_int_3: bool
+find b#sat_direct_int_1: bool
+find b#sat_direct_int_2: bool
+find b#sat_direct_int_3: bool
+find __0: bool
+find __1: bool
+find __2: bool
+find __3: bool
+find __4: bool
+find __5: bool
+find __6: bool
+find __7: bool
+find __8: bool
+find __9: bool
+find __10: bool
+find __11: bool
+find __12: bool
+find __13: bool
+find __14: bool
+find __15: bool
+find __16: bool
+find __17: bool
+find __18: bool
+find __19: bool
+find __20: bool
+find __21: bool
+find __22: bool
+find __23: bool
+find __24: bool
+find __25: bool
+find __26: bool
+find __27: bool
+find __28: bool
+find __29: bool
+find __30: bool
+find __31: bool
+find __32: bool
+find __33: bool
+find __34: bool
+find __35: bool
+find __36: bool
+find __37: bool
+find __38: bool
+find __39: bool
+find __40: bool
+find __41: bool
+find __42: bool
+find __43: bool
+find __44: bool
+find __45: bool
+find __46: bool
+find __47: bool
+find __48: bool
+find __49: bool
+find __50: bool
+find __51: bool
+find __52: int(1..3)
+find __52#sat_direct_int_1: bool
+find __52#sat_direct_int_2: bool
+find __52#sat_direct_int_3: bool
+find __53: bool
+find __54: bool
+find __55: bool
+find __56: bool
+find __57: bool
+find __58: bool
+find __59: bool
+find __60: bool
+find __61: bool
+find __62: bool
+find __63: bool
+find __64: bool
+find __65: bool
+find __66: bool
+find __67: bool
+find __68: bool
+find __69: bool
+find __70: bool
+find __71: bool
+find __72: bool
+find __73: bool
+find __74: bool
+find __75: bool
+find __76: bool
+find __77: bool
+find __78: bool
+find __79: bool
+find __80: bool
+find __81: bool
+find __82: bool
+find __83: bool
+find __84: bool
+find __85: bool
+find __86: bool
+find __87: bool
+find __88: bool
+find __89: bool
+find __90: bool
+find __91: bool
+find __92: bool
+find __93: bool
+find __94: bool
+find __95: bool
+find __96: bool
+find __97: bool
+find __98: bool
+find __99: bool
+find __100: bool
+find __101: bool
+find __102: bool
+find __103: bool
+find __104: bool
+find __105: bool
+find __106: bool
+find __107: bool
+find __108: bool
+find __109: bool
+find __110: bool
+find __111: bool
+find __112: bool
+find __113: bool
+find __114: bool
+find __115: bool
+find __116: bool
+find __117: bool
+find __118: bool
+find __119: bool
+find __120: bool
+find __121: bool
+find __122: bool
+find __123: bool
+find __124: bool
+find __125: bool
+find __126: bool
+find __127: bool
+find __128: bool
+find __129: bool
+find __130: bool
+
+such that
+
+true
+
+clauses:
+
+(¬a#sat_direct_int_1 \/ ¬a#sat_direct_int_2),
+(¬a#sat_direct_int_1 \/ ¬a#sat_direct_int_3),
+(¬a#sat_direct_int_2 \/ ¬a#sat_direct_int_3),
+(¬b#sat_direct_int_1 \/ ¬b#sat_direct_int_2),
+(¬b#sat_direct_int_1 \/ ¬b#sat_direct_int_3),
+(¬b#sat_direct_int_2 \/ ¬b#sat_direct_int_3),
+(__0),
+(¬__0 \/ ¬__1),
+(__0 \/ __1),
+(¬__2 \/ a#sat_direct_int_1),
+(¬__2 \/ __1),
+(__2 \/ ¬a#sat_direct_int_1 \/ ¬__1),
+(¬__2 \/ __3),
+(¬__3 \/ __2),
+(¬__0 \/ __4),
+(¬__4 \/ __0),
+(¬__4 \/ ¬__5),
+(__4 \/ __5),
+(¬__6 \/ a#sat_direct_int_2),
+(¬__6 \/ __5),
+(__6 \/ ¬a#sat_direct_int_2 \/ ¬__5),
+(¬__3 \/ __7),
+(¬__6 \/ __7),
+(¬__7 \/ __3 \/ __6),
+(¬__4 \/ __8),
+(¬__8 \/ __4),
+(¬__8 \/ ¬__9),
+(__8 \/ __9),
+(¬__10 \/ a#sat_direct_int_3),
+(¬__10 \/ __9),
+(__10 \/ ¬a#sat_direct_int_3 \/ ¬__9),
+(¬__7 \/ __11),
+(¬__10 \/ __11),
+(¬__11 \/ __7 \/ __10),
+(¬__11 \/ ¬__12),
+(__11 \/ __12),
+(¬a#sat_direct_int_1 \/ __13),
+(¬__13 \/ a#sat_direct_int_1),
+(¬__13 \/ ¬__14),
+(__13 \/ __14),
+(¬__15),
+(¬__15 \/ __14),
+(¬__15 \/ __16),
+(¬__16 \/ __15),
+(¬__13 \/ __17),
+(¬a#sat_direct_int_2 \/ __17),
+(¬__17 \/ __13 \/ a#sat_direct_int_2),
+(¬__17 \/ ¬__18),
+(__17 \/ __18),
+(¬__19),
+(¬__19 \/ __18),
+(¬__16 \/ __20),
+(¬__19 \/ __20),
+(¬__20 \/ __16 \/ __19),
+(¬__17 \/ __21),
+(¬a#sat_direct_int_3 \/ __21),
+(¬__21 \/ __17 \/ a#sat_direct_int_3),
+(¬__21 \/ ¬__22),
+(__21 \/ __22),
+(¬__23 \/ __22),
+(__23 \/ ¬__22),
+(¬__20 \/ __24),
+(¬__23 \/ __24),
+(¬__24 \/ __20 \/ __23),
+(¬__24 \/ ¬__25),
+(__24 \/ __25),
+(__26),
+(¬__26 \/ ¬__27),
+(__26 \/ __27),
+(¬__28 \/ b#sat_direct_int_1),
+(¬__28 \/ __27),
+(__28 \/ ¬b#sat_direct_int_1 \/ ¬__27),
+(¬__28 \/ __29),
+(¬__29 \/ __28),
+(¬__26 \/ __30),
+(¬__30 \/ __26),
+(¬__30 \/ ¬__31),
+(__30 \/ __31),
+(¬__32 \/ b#sat_direct_int_2),
+(¬__32 \/ __31),
+(__32 \/ ¬b#sat_direct_int_2 \/ ¬__31),
+(¬__29 \/ __33),
+(¬__32 \/ __33),
+(¬__33 \/ __29 \/ __32),
+(¬__30 \/ __34),
+(¬__34 \/ __30),
+(¬__34 \/ ¬__35),
+(__34 \/ __35),
+(¬__36 \/ b#sat_direct_int_3),
+(¬__36 \/ __35),
+(__36 \/ ¬b#sat_direct_int_3 \/ ¬__35),
+(¬__33 \/ __37),
+(¬__36 \/ __37),
+(¬__37 \/ __33 \/ __36),
+(¬__37 \/ ¬__38),
+(__37 \/ __38),
+(¬b#sat_direct_int_1 \/ __39),
+(¬__39 \/ b#sat_direct_int_1),
+(¬__39 \/ ¬__40),
+(__39 \/ __40),
+(¬__41),
+(¬__41 \/ __40),
+(¬__41 \/ __42),
+(¬__42 \/ __41),
+(¬__39 \/ __43),
+(¬b#sat_direct_int_2 \/ __43),
+(¬__43 \/ __39 \/ b#sat_direct_int_2),
+(¬__43 \/ ¬__44),
+(__43 \/ __44),
+(¬__45),
+(¬__45 \/ __44),
+(¬__42 \/ __46),
+(¬__45 \/ __46),
+(¬__46 \/ __42 \/ __45),
+(¬__43 \/ __47),
+(¬b#sat_direct_int_3 \/ __47),
+(¬__47 \/ __43 \/ b#sat_direct_int_3),
+(¬__47 \/ ¬__48),
+(__47 \/ __48),
+(¬__49 \/ __48),
+(__49 \/ ¬__48),
+(¬__46 \/ __50),
+(¬__49 \/ __50),
+(¬__50 \/ __46 \/ __49),
+(¬__50 \/ ¬__51),
+(__50 \/ __51),
+(__12),
+(__25),
+(__38),
+(__51),
+(¬__52#sat_direct_int_1 \/ ¬__52#sat_direct_int_2),
+(¬__52#sat_direct_int_1 \/ ¬__52#sat_direct_int_3),
+(¬__52#sat_direct_int_2 \/ ¬__52#sat_direct_int_3),
+(¬__52#sat_direct_int_1 \/ __53),
+(¬__53 \/ __52#sat_direct_int_1),
+(¬__53 \/ ¬__54),
+(__53 \/ __54),
+(¬__55),
+(¬__55 \/ __54),
+(¬__55 \/ __56),
+(¬__56 \/ __55),
+(¬__53 \/ __57),
+(¬__52#sat_direct_int_2 \/ __57),
+(¬__57 \/ __53 \/ __52#sat_direct_int_2),
+(¬__57 \/ ¬__58),
+(__57 \/ __58),
+(¬__59 \/ __58),
+(__59 \/ ¬__58),
+(¬__56 \/ __60),
+(¬__59 \/ __60),
+(¬__60 \/ __56 \/ __59),
+(¬__57 \/ __61),
+(¬__52#sat_direct_int_3 \/ __61),
+(¬__61 \/ __57 \/ __52#sat_direct_int_3),
+(¬__61 \/ ¬__62),
+(__61 \/ __62),
+(¬__63),
+(¬__63 \/ __62),
+(¬__60 \/ __64),
+(¬__63 \/ __64),
+(¬__64 \/ __60 \/ __63),
+(¬__64 \/ ¬__65),
+(__64 \/ __65),
+(¬__52#sat_direct_int_1 \/ __66),
+(¬__66 \/ __52#sat_direct_int_1),
+(¬__66 \/ ¬__67),
+(__66 \/ __67),
+(¬__68 \/ a#sat_direct_int_1),
+(¬__68 \/ __67),
+(__68 \/ ¬a#sat_direct_int_1 \/ ¬__67),
+(¬__68 \/ __69),
+(¬__69 \/ __68),
+(¬__66 \/ __70),
+(¬__52#sat_direct_int_2 \/ __70),
+(¬__70 \/ __66 \/ __52#sat_direct_int_2),
+(¬__70 \/ ¬__71),
+(__70 \/ __71),
+(¬__72 \/ a#sat_direct_int_2),
+(¬__72 \/ __71),
+(__72 \/ ¬a#sat_direct_int_2 \/ ¬__71),
+(¬__69 \/ __73),
+(¬__72 \/ __73),
+(¬__73 \/ __69 \/ __72),
+(¬__70 \/ __74),
+(¬__52#sat_direct_int_3 \/ __74),
+(¬__74 \/ __70 \/ __52#sat_direct_int_3),
+(¬__74 \/ ¬__75),
+(__74 \/ __75),
+(¬__76 \/ a#sat_direct_int_3),
+(¬__76 \/ __75),
+(__76 \/ ¬a#sat_direct_int_3 \/ ¬__75),
+(¬__73 \/ __77),
+(¬__76 \/ __77),
+(¬__77 \/ __73 \/ __76),
+(¬__77 \/ ¬__78),
+(__77 \/ __78),
+(¬__52#sat_direct_int_1 \/ __79),
+(¬__79 \/ __52#sat_direct_int_1),
+(¬__79 \/ ¬__80),
+(__79 \/ __80),
+(¬__81 \/ b#sat_direct_int_1),
+(¬__81 \/ __80),
+(__81 \/ ¬b#sat_direct_int_1 \/ ¬__80),
+(¬__81 \/ __82),
+(¬__82 \/ __81),
+(¬__79 \/ __83),
+(¬__52#sat_direct_int_2 \/ __83),
+(¬__83 \/ __79 \/ __52#sat_direct_int_2),
+(¬__83 \/ ¬__84),
+(__83 \/ __84),
+(¬__85 \/ b#sat_direct_int_2),
+(¬__85 \/ __84),
+(__85 \/ ¬b#sat_direct_int_2 \/ ¬__84),
+(¬__82 \/ __86),
+(¬__85 \/ __86),
+(¬__86 \/ __82 \/ __85),
+(¬__83 \/ __87),
+(¬__52#sat_direct_int_3 \/ __87),
+(¬__87 \/ __83 \/ __52#sat_direct_int_3),
+(¬__87 \/ ¬__88),
+(__87 \/ __88),
+(¬__89 \/ b#sat_direct_int_3),
+(¬__89 \/ __88),
+(__89 \/ ¬b#sat_direct_int_3 \/ ¬__88),
+(¬__86 \/ __90),
+(¬__89 \/ __90),
+(¬__90 \/ __86 \/ __89),
+(¬__90 \/ ¬__91),
+(__90 \/ __91),
+(¬__52#sat_direct_int_1 \/ ¬a#sat_direct_int_1 \/ __92),
+(__52#sat_direct_int_1 \/ a#sat_direct_int_1 \/ __92),
+(__52#sat_direct_int_1 \/ ¬a#sat_direct_int_1 \/ ¬__92),
+(¬__52#sat_direct_int_1 \/ a#sat_direct_int_1 \/ ¬__92),
+(¬__93 \/ __92),
+(__93 \/ ¬__92),
+(¬__52#sat_direct_int_2 \/ ¬a#sat_direct_int_2 \/ __94),
+(__52#sat_direct_int_2 \/ a#sat_direct_int_2 \/ __94),
+(__52#sat_direct_int_2 \/ ¬a#sat_direct_int_2 \/ ¬__94),
+(¬__52#sat_direct_int_2 \/ a#sat_direct_int_2 \/ ¬__94),
+(¬__95 \/ __94),
+(¬__95 \/ __93),
+(__95 \/ ¬__94 \/ ¬__93),
+(¬__52#sat_direct_int_3 \/ ¬a#sat_direct_int_3 \/ __96),
+(__52#sat_direct_int_3 \/ a#sat_direct_int_3 \/ __96),
+(__52#sat_direct_int_3 \/ ¬a#sat_direct_int_3 \/ ¬__96),
+(¬__52#sat_direct_int_3 \/ a#sat_direct_int_3 \/ ¬__96),
+(¬__97 \/ __96),
+(¬__97 \/ __95),
+(__97 \/ ¬__96 \/ ¬__95),
+(¬__52#sat_direct_int_1 \/ ¬b#sat_direct_int_1 \/ __98),
+(__52#sat_direct_int_1 \/ b#sat_direct_int_1 \/ __98),
+(__52#sat_direct_int_1 \/ ¬b#sat_direct_int_1 \/ ¬__98),
+(¬__52#sat_direct_int_1 \/ b#sat_direct_int_1 \/ ¬__98),
+(¬__99 \/ __98),
+(__99 \/ ¬__98),
+(¬__52#sat_direct_int_2 \/ ¬b#sat_direct_int_2 \/ __100),
+(__52#sat_direct_int_2 \/ b#sat_direct_int_2 \/ __100),
+(__52#sat_direct_int_2 \/ ¬b#sat_direct_int_2 \/ ¬__100),
+(¬__52#sat_direct_int_2 \/ b#sat_direct_int_2 \/ ¬__100),
+(¬__101 \/ __100),
+(¬__101 \/ __99),
+(__101 \/ ¬__100 \/ ¬__99),
+(¬__52#sat_direct_int_3 \/ ¬b#sat_direct_int_3 \/ __102),
+(__52#sat_direct_int_3 \/ b#sat_direct_int_3 \/ __102),
+(__52#sat_direct_int_3 \/ ¬b#sat_direct_int_3 \/ ¬__102),
+(¬__52#sat_direct_int_3 \/ b#sat_direct_int_3 \/ ¬__102),
+(¬__103 \/ __102),
+(¬__103 \/ __101),
+(__103 \/ ¬__102 \/ ¬__101),
+(__104),
+(¬__104 \/ ¬__105),
+(__104 \/ __105),
+(¬__106 \/ __52#sat_direct_int_1),
+(¬__106 \/ __105),
+(__106 \/ ¬__52#sat_direct_int_1 \/ ¬__105),
+(¬__106 \/ __107),
+(¬__107 \/ __106),
+(¬__104 \/ __108),
+(¬__108 \/ __104),
+(¬__108 \/ ¬__109),
+(__108 \/ __109),
+(¬__110 \/ __52#sat_direct_int_2),
+(¬__110 \/ __109),
+(__110 \/ ¬__52#sat_direct_int_2 \/ ¬__109),
+(¬__107 \/ __111),
+(¬__110 \/ __111),
+(¬__111 \/ __107 \/ __110),
+(¬__108 \/ __112),
+(¬__112 \/ __108),
+(¬__112 \/ ¬__113),
+(__112 \/ __113),
+(¬__114 \/ __52#sat_direct_int_3),
+(¬__114 \/ __113),
+(__114 \/ ¬__52#sat_direct_int_3 \/ ¬__113),
+(¬__111 \/ __115),
+(¬__114 \/ __115),
+(¬__115 \/ __111 \/ __114),
+(¬__115 \/ ¬__116),
+(__115 \/ __116),
+(¬__52#sat_direct_int_1 \/ __117),
+(¬__117 \/ __52#sat_direct_int_1),
+(¬__117 \/ ¬__118),
+(__117 \/ __118),
+(¬__119),
+(¬__119 \/ __118),
+(¬__119 \/ __120),
+(¬__120 \/ __119),
+(¬__117 \/ __121),
+(¬__52#sat_direct_int_2 \/ __121),
+(¬__121 \/ __117 \/ __52#sat_direct_int_2),
+(¬__121 \/ ¬__122),
+(__121 \/ __122),
+(¬__123),
+(¬__123 \/ __122),
+(¬__120 \/ __124),
+(¬__123 \/ __124),
+(¬__124 \/ __120 \/ __123),
+(¬__121 \/ __125),
+(¬__52#sat_direct_int_3 \/ __125),
+(¬__125 \/ __121 \/ __52#sat_direct_int_3),
+(¬__125 \/ ¬__126),
+(__125 \/ __126),
+(¬__127 \/ __126),
+(__127 \/ ¬__126),
+(¬__124 \/ __128),
+(¬__127 \/ __128),
+(¬__128 \/ __124 \/ __127),
+(¬__128 \/ ¬__129),
+(__128 \/ __129),
+(¬__97 \/ __130),
+(¬__103 \/ __130),
+(¬__130 \/ __97 \/ __103),
+(__65),
+(__78),
+(__91),
+(__130),
+(__116),
+(__129)
+

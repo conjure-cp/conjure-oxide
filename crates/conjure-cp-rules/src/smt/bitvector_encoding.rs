@@ -2,7 +2,7 @@ use conjure_cp::ast::{Expression, Metadata, Moo, SymbolTable};
 use conjure_cp::rule_engine::{
     ApplicationError, ApplicationResult, Reduction, register_rule, register_rule_set,
 };
-use conjure_cp::solver::SolverFamily;
+use conjure_cp::settings::SolverFamily;
 use conjure_cp::solver::adaptors::smt::{IntTheory, TheoryConfig};
 
 // Only applicable when the Bitvector theory is being used for integers
@@ -14,7 +14,7 @@ register_rule_set!("SmtBvInts", ("Base"), |f: &SolverFamily| matches!(
     })
 ));
 
-#[register_rule(("SmtBvInts", 1000))]
+#[register_rule("SmtBvInts", 1000, [Sum, Product])]
 fn fold_list_exprs_pairwise(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
     match expr {
         Expression::Sum(_, vec_expr) => fold_list_pairwise(vec_expr, Expression::PairwiseSum),

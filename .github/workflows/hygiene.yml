@@ -3,21 +3,22 @@ name: Hygiene
 on:
   push:
     branches:
-      - main # run for pushes to the main branch. other branches need to create a PR if they want testing.
+    - main # run for pushes to the main branch. other branches need to create a PR if they want testing.
     paths:
-      - crates/**
-      - tests-integration/**
-      - Cargo.*
-      - rust-toolchain.toml
-      - .github/workflows/hygiene.yml
+    - crates/**
+    - tests-integration/**
+    - Cargo.*
+    - rust-toolchain.toml
+    - .github/workflows/hygiene.yml
   pull_request:
     paths:
-      - crates/**
-      - tests-integration/**
-      - Cargo.*
-      - rust-toolchain.toml
-      - .github/workflows/hygiene.yml
+    - crates/**
+    - tests-integration/**
+    - Cargo.*
+    - rust-toolchain.toml
+    - .github/workflows/hygiene.yml
   workflow_dispatch:
+
 
 env:
   # we define the following 3 values as the defaults here, matrix jobs may overwrite their values.
@@ -33,41 +34,39 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
-      - uses: actions/checkout@v6
+    - uses: actions/checkout@v6
 
-      - name: free_disk_space.sh
-        run: .github/workflows/tools/free_disk_space.sh
+    - name: free_disk_space.sh
+      run: .github/workflows/tools/free_disk_space.sh
 
-      - name: Restore cache
-        id: restore_cache
-        uses: actions/cache/restore@v4
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-            ~/conjure
-          key: hygiene--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.event.repository.updated_at }}
-          restore-keys: hygiene--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}
+    - name: Restore cache
+      id: restore_cache
+      uses: actions/cache/restore@v5
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
+          ~/conjure
+        key: hygiene--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.event.repository.updated_at }}
+        restore-keys: hygiene--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}
 
-      - name: "Install rust-toolchain.toml"
-        run: rustup toolchain install
+    - name: "Install rust-toolchain.toml"
+      run: rustup toolchain install
 
-      - run: RUSTFLAGS="-D warnings" cargo check $(EXTRA_CARGO_CHECK_FLAGS) --workspace --all-targets
-      - run: cargo clippy $(EXTRA_CARGO_CHECK_FLAGS) -- -D warnings -A clippy::unwrap_used -A clippy::expect_used
-      - run: cargo fmt --check
+    - run: make check
 
-      - name: Save cache
-        if: ${{ always() && github.ref == 'refs/heads/main' && steps.restore_cache.outputs.cache-hit != 'true' }}
-        uses: actions/cache/save@v4
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-            ~/conjure
-          key: hygiene--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.event.repository.updated_at }}
+    - name: Save cache
+      if: ${{ always() && github.ref == 'refs/heads/main' && steps.restore_cache.outputs.cache-hit != 'true' }}
+      uses: actions/cache/save@v5
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
+          ~/conjure
+        key: hygiene--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.event.repository.updated_at }}

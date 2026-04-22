@@ -2,47 +2,59 @@ use proc_macro::TokenStream;
 
 use proc_macro2::Span;
 use quote::quote;
-use syn::punctuated::Punctuated;
 use syn::token::Comma;
 use syn::{
-    ExprClosure, Ident, ItemFn, LitInt, LitStr, Result, parenthesized, parse::Parse,
+    ExprClosure, Ident, ItemFn, LitInt, LitStr, Result, bracketed, parenthesized, parse::Parse,
     parse::ParseStream, parse_macro_input,
 };
 
-#[derive(Debug)]
-struct RuleSetAndPriority {
+struct RegisterRuleArgs {
     rule_set: LitStr,
     priority: LitInt,
-}
-
-impl Parse for RuleSetAndPriority {
-    fn parse(input: ParseStream) -> Result<Self> {
-        let content;
-        parenthesized!(content in input);
-        let rule_set: LitStr = content.parse()?;
-        let _: Comma = content.parse()?;
-        let priority: LitInt = content.parse()?;
-        Ok(RuleSetAndPriority { rule_set, priority })
-    }
-}
-
-#[derive(Debug)]
-struct RegisterRuleArgs {
-    pub rule_sets: Vec<RuleSetAndPriority>,
+    /// Expression variant names this rule applies to (e.g. `Add`, `Sub`).
+    /// Empty means applicable to all variants (universal rule).
+    applicable_variants: Vec<Ident>,
 }
 
 impl Parse for RegisterRuleArgs {
     fn parse(input: ParseStream) -> Result<Self> {
-        let rule_sets = Punctuated::<RuleSetAndPriority, Comma>::parse_terminated(input)?;
+        if input.is_empty() {
+            return Ok(RegisterRuleArgs {
+                rule_set: LitStr::new("", Span::call_site()),
+                priority: LitInt::new("0", Span::call_site()),
+                applicable_variants: Vec::new(),
+            });
+        }
+
+        let rule_set: LitStr = input.parse()?;
+        let _: Comma = input.parse()?;
+        let priority: LitInt = input.parse()?;
+
+        // Parse optional variant names in brackets: "Minion", 4200, [Add, Sub]
+        let mut applicable_variants = Vec::new();
+        if input.peek(Comma) {
+            let _: Comma = input.parse()?;
+            let content;
+            bracketed!(content in input);
+            while !content.is_empty() {
+                let variant: Ident = content.parse()?;
+                applicable_variants.push(variant);
+                if content.is_empty() {
+                    break;
+                }
+                let _: Comma = content.parse()?;
+            }
+        }
+
         Ok(RegisterRuleArgs {
-            rule_sets: rule_sets.into_iter().collect(),
+            rule_set,
+            priority,
+            applicable_variants,
         })
     }
 }
 
-/**
- * Register a rule with the given rule sets and priorities.
- */
+/// Register a rule with the given rule sets and priorities.
 #[proc_macro_attribute]
 pub fn register_rule(arg_tokens: TokenStream, item: TokenStream) -> TokenStream {
     let func = parse_macro_input!(item as ItemFn);
@@ -51,17 +63,23 @@ pub fn register_rule(arg_tokens: TokenStream, item: TokenStream) -> TokenStream 
     let static_ident = Ident::new(&static_name, rule_ident.span());
 
     let args = parse_macro_input!(arg_tokens as RegisterRuleArgs);
-    let rule_sets = args
-        .rule_sets
-        .iter()
-        .map(|rule_set| {
-            let rule_set_name = &rule_set.rule_set;
-            let priority = &rule_set.priority;
-            quote! {
-                (#rule_set_name, #priority as u16)
-            }
-        })
-        .collect::<Vec<_>>();
+
+    let rule_sets_token = if args.rule_set.value().is_empty() {
+        quote! { &[] }
+    } else {
+        let rule_set_name = &args.rule_set;
+        let priority = &args.priority;
+        quote! { &[(#rule_set_name, #priority as u16)] }
+    };
+
+    let applicable_to = if args.applicable_variants.is_empty() {
+        quote! { None }
+    } else {
+        let variants = &args.applicable_variants;
+        quote! {
+            Some(&[#(::conjure_cp::discriminant_from_name!(#variants)),*])
+        }
+    };
 
     let expanded = quote! {
         #func
@@ -72,7 +90,8 @@ pub fn register_rule(arg_tokens: TokenStream, item: TokenStream) -> TokenStream 
         pub static #static_ident: ::conjure_cp::rule_engine::Rule<'static> = ::conjure_cp::rule_engine::Rule {
             name: stringify!(#rule_ident),
             application: #rule_ident,
-            rule_sets: &[#(#rule_sets),*],
+            rule_sets: #rule_sets_token,
+            applicable_to: #applicable_to,
         };
     };
 
@@ -162,7 +181,7 @@ pub fn register_rule_set(args: TokenStream) -> TokenStream {
 
     let applies_to_family = match applies_fn {
         // Does not apply by default, e.g. only used as a dependency
-        None => quote! { |_: &::conjure_cp::solver::SolverFamily| false },
+        None => quote! { |_: &::conjure_cp::settings::SolverFamily| false },
         Some(func) => quote! { #func },
     };
 

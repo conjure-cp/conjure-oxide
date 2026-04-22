@@ -14,7 +14,8 @@ enum Expr {
 fn named_children<'a>(
     node: &'a tree_sitter::Node<'a>,
 ) -> impl Iterator<Item = tree_sitter::Node<'a>> + 'a {
-    (0..node.named_child_count()).filter_map(|i| node.named_child(i))
+    (0..node.named_child_count())
+        .filter_map(|i| u32::try_from(i).ok().and_then(|i| node.named_child(i)))
 }
 
 // Function to parse and convert Tree-sitter nodes to Expr

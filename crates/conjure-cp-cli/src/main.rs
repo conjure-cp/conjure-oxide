@@ -1,7 +1,12 @@
 #![allow(clippy::unwrap_used)]
+
+#[global_allocator]
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
 mod cli;
 mod pretty;
 mod print_info_schema;
+mod rule_trace_aggregates;
 mod solve;
 mod test_solve;
 use clap::{CommandFactory, Parser};
@@ -9,6 +14,7 @@ use clap_complete::generate;
 use cli::{Cli, GlobalArgs};
 use pretty::run_pretty_command;
 use print_info_schema::run_print_info_schema_command;
+use rule_trace_aggregates::RuleTraceAggregatesHandle;
 use solve::run_solve_command;
 use std::fs::File;
 use std::io;
@@ -25,6 +31,18 @@ use tracing_subscriber::util::SubscriberInitExt as _;
 use tracing_subscriber::{EnvFilter, Layer, fmt};
 
 use conjure_cp_lsp::server;
+
+struct LoggingState {
+    rule_trace_aggregates: Option<RuleTraceAggregatesHandle>,
+}
+
+impl LoggingState {
+    fn flush(&self) {
+        if let Some(handle) = &self.rule_trace_aggregates {
+            handle.flush();
+        }
+    }
+}
 
 pub fn main() {
     // exit with 2 instead of 1 on failure,like grep
@@ -47,43 +65,15 @@ pub fn run() -> anyhow::Result<()> {
         return Ok(());
     }
 
-    setup_logging(&cli.global_args)?;
-
-    run_subcommand(cli)
+    let logging_state = setup_logging(&cli.global_args)?;
+    let result = run_subcommand(cli);
+    logging_state.flush();
+    result
 }
 
-fn setup_logging(global_args: &GlobalArgs) -> anyhow::Result<()> {
-    // Logging:
-    //
-    // Using `tracing` framework, but this automatically reads stuff from `log`.
-    //
-    // A Subscriber is responsible for logging.
-    //
+fn setup_logging(global_args: &GlobalArgs) -> anyhow::Result<LoggingState> {
     // It consists of composable layers, each of which logs to a different place in a different
     // format.
-    let json_log_file = File::options()
-        .create(true)
-        .append(true)
-        .open("conjure_oxide_log.json")?;
-
-    let log_file = File::options()
-        .create(true)
-        .append(true)
-        .open("conjure_oxide.log")?;
-
-    // get log level from env-var RUST_LOG
-
-    let json_layer = tracing_subscriber::fmt::layer()
-        .json()
-        .with_writer(Arc::new(json_log_file))
-        .with_filter(LevelFilter::TRACE);
-
-    let file_layer = tracing_subscriber::fmt::layer()
-        .compact()
-        .with_ansi(false)
-        .with_writer(Arc::new(log_file))
-        .with_filter(LevelFilter::TRACE);
-
     let default_stderr_level = if global_args.verbose {
         LevelFilter::DEBUG
     } else {
@@ -112,25 +102,104 @@ fn setup_logging(global_args: &GlobalArgs) -> anyhow::Result<()> {
         )
     };
 
-    let human_rule_trace_layer = global_args.human_rule_trace.clone().map(|x| {
+    let rule_trace_layer = global_args.rule_trace.clone().map(|x| {
         let file = File::create(x).expect("Unable to create rule trace file");
         fmt::layer()
             .with_writer(file)
             .with_level(false)
             .without_time()
             .with_target(false)
-            .with_filter(EnvFilter::new("rule_engine_human=trace"))
-            .with_filter(FilterFn::new(|meta| meta.target() == "rule_engine_human"))
+            .with_filter(EnvFilter::new("rule_engine_rule_trace=trace"))
+            .with_filter(FilterFn::new(|meta| {
+                meta.target() == "rule_engine_rule_trace"
+            }))
     });
-    // load the loggers
+
+    let rule_trace_verbose_layer = global_args.rule_trace_verbose.clone().map(|x| {
+        let file = File::create(x).expect("Unable to create verbose rule trace file");
+        fmt::layer()
+            .with_writer(file)
+            .with_level(false)
+            .without_time()
+            .with_target(false)
+            .compact()
+            .with_ansi(false)
+            .with_filter(EnvFilter::new("rule_engine_rule_trace_verbose=trace"))
+            .with_filter(FilterFn::new(|meta| {
+                meta.target() == "rule_engine_rule_trace_verbose"
+            }))
+    });
+
+    let rule_trace_aggregates_handle = global_args
+        .rule_trace_aggregates
+        .clone()
+        .map(RuleTraceAggregatesHandle::new)
+        .transpose()?;
+
+    let rule_trace_aggregates_layer = rule_trace_aggregates_handle.as_ref().map(|handle| {
+        handle
+            .layer()
+            .with_filter(EnvFilter::new("rule_engine_rule_trace_aggregates=trace"))
+            .with_filter(FilterFn::new(|meta| {
+                meta.target() == "rule_engine_rule_trace_aggregates"
+            }))
+    });
+
+    let (json_layer, file_layer) = if global_args.log {
+        let mut log_path = global_args
+            .logfile
+            .clone()
+            .unwrap_or_else(|| std::path::PathBuf::from("conjure_oxide.log"));
+        let mut log_json = global_args
+            .logfile_json
+            .clone()
+            .unwrap_or_else(|| std::path::PathBuf::from("conjure_oxide_log.json"));
+
+        log_path.set_extension("log");
+        log_json.set_extension("json");
+
+        let json_log_file = File::options()
+            .truncate(true)
+            .write(true)
+            .create(true)
+            .append(false)
+            .open(log_json)?;
+
+        let log_file = File::options()
+            .truncate(true)
+            .write(true)
+            .create(true)
+            .append(false)
+            .open(log_path)?;
+
+        let json_layer = tracing_subscriber::fmt::layer()
+            .json()
+            .with_writer(Arc::new(json_log_file))
+            .with_filter(LevelFilter::TRACE);
+
+        let file_layer = tracing_subscriber::fmt::layer()
+            .compact()
+            .with_ansi(false)
+            .with_writer(Arc::new(log_file))
+            .with_filter(LevelFilter::TRACE);
+
+        (Some(json_layer), Some(file_layer))
+    } else {
+        (None, None)
+    };
+
     tracing_subscriber::registry()
-        .with(json_layer)
         .with(stderr_layer)
+        .with(rule_trace_layer)
+        .with(rule_trace_verbose_layer)
+        .with(rule_trace_aggregates_layer)
+        .with(json_layer)
         .with(file_layer)
-        .with(human_rule_trace_layer)
         .init();
 
-    Ok(())
+    Ok(LoggingState {
+        rule_trace_aggregates: rule_trace_aggregates_handle,
+    })
 }
 
 fn run_completion_command(completion_args: cli::CompletionArgs) -> anyhow::Result<()> {
