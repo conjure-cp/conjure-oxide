@@ -1314,13 +1314,13 @@ impl TryFrom<&Expression> for i32 {
                 _ => Err(()),
             },
             //if low=high the SATInt must be a constant
-            Expression::SATInt(_, _, _, (low, high)) => {
-                if low == high {
-                    Ok(*low)
-                } else {
-                    Err(())
-                }
-            }
+            // Expression::SATInt(_, _, _, (low, high)) => {
+            //     if low == high {
+            //         Ok(*low)
+            //     } else {
+            //         Err(())
+            //     }
+            // }
             _ => Err(()),
         }
     }
