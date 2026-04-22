@@ -106,8 +106,6 @@ pub fn encode_semantic_tokens(source_map: &SourceMap, source: &str) -> Vec<u32> 
         .iter()
         .filter_map(|span| {
             let kind = span.hover_info.as_ref()?.kind.as_ref()?;
-            // if (kind == )
-            // let ty = span.hover_info.as_ref()?.ty.as_ref()?
             let enc = token_encoding(kind)?;
 
             let start_byte = span.start_byte;
@@ -140,20 +138,6 @@ pub fn encode_semantic_tokens(source_map: &SourceMap, source: &str) -> Vec<u32> 
         })
         .collect();
 
-    // filter out spans with nested spans
-    // let mut filtered: Vec<(u32, u32, u32, u32, u32)> = Vec::new();
-    // for entry in entries {
-    //     let (line, col, len, _, _) = entry;
-    //     let end = col + len;
-
-    //     let overlaps = filtered.iter().any(|&(fl, fc, fl_len, _, _)| {
-    //         fl == line && fc <= col && fc + fl_len >= end
-    //     });
-
-    //     if !overlaps {
-    //         filtered.push(entry);
-    //     }
-    // }
 
     entries.sort_by_key(|&(line, col, _, _, _)| (line, col));
 

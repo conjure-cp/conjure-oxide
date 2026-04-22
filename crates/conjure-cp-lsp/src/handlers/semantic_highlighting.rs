@@ -34,16 +34,6 @@ impl Backend {
             }
         };
 
-        // if let Some(ref ast) = cache_conts.ast {
-        //     if let Some(ref cst) = cache_conts.cst {
-        //         resolve_references(
-        //             &cst.root_node(),
-        //             &cache_conts.contents,
-        //             &mut source_map,
-        //             &ast.symbols.read(),
-        //         );
-        //     }
-        // }
 
         let data = encode_semantic_tokens(source_map, &cache_conts.contents)
             .chunks(5)
