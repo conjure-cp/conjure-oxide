@@ -286,6 +286,37 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
             parse_atom(Moo::unwrap_or_clone(b))?,
             parse_literal(*c)?,
         )),
+        conjure_ast::Expression::Not(_metadata, inner) => {
+            let inner_expr = Moo::unwrap_or_clone(inner);
+            match inner_expr {
+                conjure_ast::Expression::Atomic(
+                    _,
+                    conjure_ast::Atom::Literal(conjure_ast::Literal::Bool(v)),
+                ) => Ok(if v {
+                    minion_ast::Constraint::False
+                } else {
+                    minion_ast::Constraint::True
+                }),
+                conjure_ast::Expression::Atomic(_, atom) => Ok(minion_ast::Constraint::WLiteral(
+                    parse_atom(atom)?,
+                    minion_ast::Constant::Integer(0),
+                )),
+                other => {
+                    if let Some(conjure_ast::Literal::Bool(v)) = conjure_ast::eval_constant(&other)
+                    {
+                        Ok(if v {
+                            minion_ast::Constraint::False
+                        } else {
+                            minion_ast::Constraint::True
+                        })
+                    } else {
+                        Err(ModelFeatureNotSupported(format!(
+                            "unsupported negation form for Minion: {other:?}"
+                        )))
+                    }
+                }
+            }
+        }
         conjure_ast::Expression::Neq(_metadata, a, b) => Ok(minion_ast::Constraint::DisEq(
             parse_atomic_expr(Moo::unwrap_or_clone(a))?,
             parse_atomic_expr(Moo::unwrap_or_clone(b))?,

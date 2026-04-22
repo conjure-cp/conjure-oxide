@@ -363,6 +363,7 @@ fn typecheck_variable(
         GroundDomain::Tuple(_) => "tuple",
         GroundDomain::Record(_) => "record",
         GroundDomain::Function(_, _, _) => "function",
+        GroundDomain::Relation(_, _) => "relation",
         GroundDomain::Sequence(_, _) => "sequence",
         GroundDomain::Empty(_) => "empty",
     };
