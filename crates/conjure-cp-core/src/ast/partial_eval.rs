@@ -759,6 +759,10 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
         Expr::Leq(_, _, _) => Err(RuleNotApplicable),
         Expr::Gt(_, _, _) => Err(RuleNotApplicable),
         Expr::Lt(_, _, _) => Err(RuleNotApplicable),
+
+        Expr::Pred(_, _) => Err(RuleNotApplicable),
+        Expr::Succ(_, _) => Err(RuleNotApplicable),
+
         Expr::SafeDiv(_, _, _) => Err(RuleNotApplicable),
         Expr::UnsafeDiv(_, _, _) => Err(RuleNotApplicable),
         Expr::Flatten(_, _, _) => Err(RuleNotApplicable), // TODO: check if anything can be done here

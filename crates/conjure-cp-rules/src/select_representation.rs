@@ -186,7 +186,9 @@ fn domain_needs_representation(domain: &GroundDomain) -> bool {
         | GroundDomain::Tuple(_)
         | GroundDomain::Record(_)
         | GroundDomain::Function(_, _, _)
-        | GroundDomain::Relation(_, _) => true,
+        | GroundDomain::Relation(_, _)
+        | GroundDomain::EnumeratedType(_, _)
+        | GroundDomain::UnnamedType(_) => true,
         GroundDomain::Empty(_) => false,
     }
 }

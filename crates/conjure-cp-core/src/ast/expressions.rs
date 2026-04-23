@@ -249,6 +249,12 @@ pub enum Expression {
     #[compatible(JsonInput, SMT)]
     Lt(Metadata, Moo<Expression>, Moo<Expression>),
 
+    #[compatible(JsonInput)]
+    Pred(Metadata, Moo<Expression>),
+
+    #[compatible(JsonInput)]
+    Succ(Metadata, Moo<Expression>),
+
     /// Division after preventing division by zero, usually with a bubble
     #[compatible(SMT)]
     SafeDiv(Metadata, Moo<Expression>, Moo<Expression>),
@@ -785,6 +791,8 @@ impl Expression {
                 Some(if x > y { x } else { y })
             })
             .or_else(|| matrix_element_domain(e)),
+            Expression::Pred(_, e) => todo!(),
+            Expression::Succ(_, e) => todo!(),
             Expression::UnsafeDiv(_, a, b) => a
                 .domain_of()?
                 .resolve()?
@@ -1417,6 +1425,8 @@ impl Expression {
             ToMSet,
             ToRelation,
             RelationProj,
+            Pred,
+            Succ,
         )
     }
 
@@ -2012,6 +2022,8 @@ impl Display for Expression {
                     .join(", ");
                 write!(f, "{relation}({projections_str})")
             }
+            Expression::Pred(_, ev) => write!(f, "Pred({})", ev),
+            Expression::Succ(_, ev) => write!(f, "Succ({})", ev),
         }
     }
 }
@@ -2259,6 +2271,8 @@ impl Typeable for Expression {
                     ),
                 }
             }
+            Expression::Pred(_, ev) => ev.return_type(),
+            Expression::Succ(_, ev) => ev.return_type(),
         }
     }
 }
@@ -2322,7 +2336,9 @@ impl Expression {
             | Expression::Range(_, m1)
             | Expression::ToSet(_, m1)
             | Expression::ToMSet(_, m1)
-            | Expression::ToRelation(_, m1) => {
+            | Expression::ToRelation(_, m1)
+            | Expression::Pred(_, m1)
+            | Expression::Succ(_, m1) => {
                 f(m1);
             }
 
@@ -2525,7 +2541,9 @@ impl CacheHashable for Expression {
             | Expression::Range(_, m1)
             | Expression::ToSet(_, m1)
             | Expression::ToMSet(_, m1)
-            | Expression::ToRelation(_, m1) => {
+            | Expression::ToRelation(_, m1)
+            | Expression::Pred(_, m1)
+            | Expression::Succ(_, m1) => {
                 m1.get_cached_hash().hash(&mut hasher);
             }
 
