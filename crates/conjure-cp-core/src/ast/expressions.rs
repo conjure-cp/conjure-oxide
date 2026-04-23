@@ -599,6 +599,10 @@ pub enum Expression {
 
     #[compatible(JsonInput)]
     RelationProj(Metadata, Moo<Expression>, Vec<Option<Expression>>),
+
+    /// Cardinality of a collection type
+    #[compatible(JsonInput)]
+    Card(Metadata, Moo<Expression>),
 }
 
 // for the given matrix literal, return a bounded domain from the min to max of applying op to each
@@ -1314,6 +1318,7 @@ impl Expression {
                     .collect();
                 Some(Domain::relation(RelAttr::<IntVal>::default(), new_doms))
             }
+            Expression::Card(..) => Some(Domain::int(vec![0])),
         }
     }
 
@@ -1417,6 +1422,7 @@ impl Expression {
             ToMSet,
             ToRelation,
             RelationProj,
+            Card,
         )
     }
 
@@ -1780,7 +1786,7 @@ impl Display for Expression {
             Expression::FromSolution(_, expr) => write!(f, "FromSolution({expr})"),
             Expression::Metavar(_, name) => write!(f, "&{name}"),
             Expression::Atomic(_, atom) => atom.fmt(f),
-            Expression::Abs(_, a) => write!(f, "|{a}|"),
+            Expression::Abs(_, a) | Expression::Card(_, a) => write!(f, "|{a}|"),
             Expression::Sum(_, e) => {
                 write!(f, "sum({e})")
             }
@@ -2259,6 +2265,7 @@ impl Typeable for Expression {
                     ),
                 }
             }
+            Expression::Card(..) => ReturnType::Int,
         }
     }
 }
@@ -2322,7 +2329,8 @@ impl Expression {
             | Expression::Range(_, m1)
             | Expression::ToSet(_, m1)
             | Expression::ToMSet(_, m1)
-            | Expression::ToRelation(_, m1) => {
+            | Expression::ToRelation(_, m1)
+            | Expression::Card(_, m1) => {
                 f(m1);
             }
 
@@ -2525,7 +2533,8 @@ impl CacheHashable for Expression {
             | Expression::Range(_, m1)
             | Expression::ToSet(_, m1)
             | Expression::ToMSet(_, m1)
-            | Expression::ToRelation(_, m1) => {
+            | Expression::ToRelation(_, m1)
+            | Expression::Card(_, m1) => {
                 m1.get_cached_hash().hash(&mut hasher);
             }
 
