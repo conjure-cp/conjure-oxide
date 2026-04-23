@@ -158,7 +158,7 @@ impl<A: Display> Display for FuncAttr<A> {
 #[path_prefix(conjure_cp::ast)]
 pub struct PartitionAttr<A = Int> {
     pub num_parts: Range<A>, // i.e. how many parts there are in the partition
-    pub part_len: Range<A>, // i.e. the size of each constitutent part
+    pub part_len: Range<A>,  // i.e. the size of each constitutent part
 }
 
 impl<A: Display> Display for PartitionAttr<A> {

@@ -1,4 +1,5 @@
 use crate::ast::domains::attrs::MSetAttr;
+use crate::ast::domains::attrs::PartitionAttr;
 use crate::ast::domains::attrs::SetAttr;
 use crate::ast::{
     DeclarationKind, DomainOpError, Expression, FuncAttr, Literal, Metadata, Moo,
@@ -130,6 +131,25 @@ impl TryInto<FuncAttr<Int>> for FuncAttr<IntVal> {
             jectivity: self.jectivity,
             partiality: self.partiality,
         })
+    }
+}
+
+impl From<PartitionAttr<Int>> for PartitionAttr<IntVal> {
+    fn from(value: PartitionAttr<Int>) -> Self {
+        PartitionAttr { 
+            num_parts: value.num_parts.into(),
+            part_len: value.part_len.into(),
+        }
+    }
+}
+
+impl TryInto<PartitionAttr<Int>> for PartitionAttr<IntVal> {
+    type Error = DomainOpError;
+
+    fn try_into(self) -> Result<PartitionAttr<Int>, Self::Error> {
+        let num_parts: Range<Int> = self.num_parts.try_into()?;
+        let part_len: Range<Int> = self.part_len.try_into()?;
+        Ok(PartitionAttr { num_parts, part_len } )
     }
 }
 
@@ -337,6 +357,7 @@ pub enum UnresolvedDomain {
     Record(Vec<RecordEntry>),
     /// A function with attributes, domain, and range
     Function(FuncAttr<IntVal>, DomainPtr, DomainPtr),
+    Partition(PartitionAttr<IntVal>, DomainPtr),
 }
 
 impl UnresolvedDomain {
@@ -352,6 +373,9 @@ impl UnresolvedDomain {
             }
             UnresolvedDomain::MSet(attr, inner) => {
                 Some(GroundDomain::MSet(attr.resolve()?, inner.resolve()?))
+            }
+            UnresolvedDomain::Partition(attr, inner) => {
+                Some(GroundDomain::Partition(attr.resolve()?, inner.resolve()?))
             }
             UnresolvedDomain::Matrix(inner, idx_doms) => {
                 let inner_gd = inner.resolve()?;
@@ -454,6 +478,11 @@ impl UnresolvedDomain {
             (UnresolvedDomain::Function(_, _, _), _) | (_, UnresolvedDomain::Function(_, _, _)) => {
                 Err(DomainOpError::WrongType)
             }
+            #[allow(unreachable_patterns)]
+            // Technically redundant but logically clearer to have both
+            (UnresolvedDomain::Partition(_, _), _) | (_, UnresolvedDomain::Partition(_, _)) => {
+                Err(DomainOpError::WrongType)
+            }
         }
     }
 
@@ -475,6 +504,7 @@ impl Typeable for UnresolvedDomain {
             UnresolvedDomain::Int(_) => ReturnType::Int,
             UnresolvedDomain::Set(_attr, inner) => ReturnType::Set(Box::new(inner.return_type())),
             UnresolvedDomain::MSet(_attr, inner) => ReturnType::MSet(Box::new(inner.return_type())),
+            UnresolvedDomain::Partition(_, inner) => ReturnType::Partition(Box::new(inner.return_type())),
             UnresolvedDomain::Matrix(inner, _idx) => {
                 ReturnType::Matrix(Box::new(inner.return_type()))
             }
@@ -513,6 +543,7 @@ impl Display for UnresolvedDomain {
             }
             UnresolvedDomain::Set(attrs, inner_dom) => write!(f, "set {attrs} of {inner_dom}"),
             UnresolvedDomain::MSet(attrs, inner_dom) => write!(f, "mset {attrs} of {inner_dom}"),
+            UnresolvedDomain::Partition(attrs, inner_dom) => write!(f, "partition {attrs} of {inner_dom}"),
             UnresolvedDomain::Matrix(value_domain, index_domains) => {
                 write!(
                     f,

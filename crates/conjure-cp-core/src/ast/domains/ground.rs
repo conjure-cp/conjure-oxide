@@ -1,4 +1,5 @@
 use crate::ast::domains::MSetAttr;
+use crate::ast::domains::attrs::PartitionAttr;
 use crate::ast::pretty::pretty_vec;
 use crate::ast::{
     AbstractLiteral, Domain, DomainOpError, FuncAttr, HasDomain, Literal, Moo, RecordEntry,
@@ -314,6 +315,9 @@ impl GroundDomain {
             GroundDomain::Function(_, _, _) => {
                 todo!("Length bound of functions is not yet supported")
             }
+            GroundDomain::Partition(_, _) => {
+                todo!("Length bound of Partitions is not yet supported")
+            }
         }
     }
 
@@ -467,6 +471,22 @@ impl GroundDomain {
                 }
                 _ => Ok(false),
             },
+            GroundDomain::Partition(attr, dom) => match lit {
+                Literal::AbstractLiteral(AbstractLiteral::Partition(lit_elems)) => {
+                    let sz = lit_elems.len().to_i32().ok_or(DomainOpError::TooLarge)?;
+                    if !mset_attr.size.contains(&sz) {
+                        return Ok(false);
+                    }
+
+                    for elem in lit_elems {
+                        if !inner_domain.contains(elem)? {
+                            return Ok(false);
+                        }
+                    }
+                    Ok(true)
+                },
+                _ => Ok(false)
+            }
         }
     }
 
@@ -789,6 +809,9 @@ impl GroundDomain {
                     Moo::new(elem_domain),
                 ))
             }
+            Literal::AbstractLiteral(AbstractLiteral::Partition(_)) => {
+                todo!("Need to figure out how this is going to work")
+            }
             l @ Literal::AbstractLiteral(AbstractLiteral::Matrix(_, _)) => {
                 let mut first_index_domain = vec![];
                 // flatten index domains of n-d matrix into list
@@ -972,6 +995,7 @@ impl Typeable for GroundDomain {
             GroundDomain::Function(_, dom, cdom) => {
                 ReturnType::Function(Box::new(dom.return_type()), Box::new(cdom.return_type()))
             }
+            GroundDomain::Partition(_, inner) => ReturnType::Set(Box::new(inner.return_type())),
         }
     }
 }
@@ -1019,6 +1043,9 @@ impl Display for GroundDomain {
             }
             GroundDomain::Function(attribute, domain, codomain) => {
                 write!(f, "function {} {} --> {} ", attribute, domain, codomain)
+            }
+            GroundDomain::Partition(attrs, inner) => {
+                write!(f, "partition {attrs} of {inner}")
             }
         }
     }

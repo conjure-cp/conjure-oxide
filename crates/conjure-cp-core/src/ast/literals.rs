@@ -71,6 +71,9 @@ pub enum AbstractLiteral<T: AbstractLiteralValue> {
     Record(Vec<RecordValue<T>>),
 
     Function(Vec<(T, T)>),
+
+    // A list of partitions, each part has a set of values
+    Partition(Vec<Vec<T>>),
 }
 
 // TODO: use HasDomain instead once Expression::domain_of returns Domain not Option<Domain>
