@@ -5,8 +5,8 @@
 ## Types of Tests
 Conjure-Oxide currently has four forms of tests:
 - Integration tests
-- [Custom tests](./Custom-Tests.md)
-- [Roundtrip tests](./roundtrip/roundtrip_testing.md)
+- [Custom tests](writing-custom-tests.md)
+- [Roundtrip tests](roundtrip-testing.md)
 - A small number of unit tests
 ## Test generation
 The test generation occurs in the file `./tests_integration/build.rs`. This generates the integration, custom and roundtrip tests all in a similar manner.

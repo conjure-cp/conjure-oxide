@@ -77,8 +77,8 @@ Conjure Oxide transformed your high-level Essence model through several steps:
 3. **Solving** - The transformed model was sent to the solver
 4. **Solution Extraction** - The solver's output was converted back to Essence format
 
-Want to see exactly what rules were applied? Check out the [Logging guide](./command-line/logging.md).
+Want to see exactly what rules were applied? Check out the [Logging guide](command-line-guide/logging.md).
 
 ## Functional Programming Style
 
-For developers who come from programming languages like Scala or Haskell, or those who favour a functional programming style, we have a [Functional Rust](./functional-rust.md) guide that you might find useful.
+For developers who come from programming languages like Scala or Haskell, or those who favour a functional programming style, we have a [Functional Rust](developers-guide/resources-conventions/functional-rust.md) guide that you might find useful.

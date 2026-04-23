@@ -6,7 +6,7 @@ author: Nadine Martin
 last updated: 21-12-2025
 -->
 
-![Conjure Blocks website](../../images/conjure_blocks.png)
+![Conjure Blocks website](conjure-blocks.png)
 
 Conjure blocks is an online block editor for Essence. This tool allows you to write constraint programs in blocks, which are then translated into Essence. [Conjure-aaS](https://conjure-aas.cs.st-andrews.ac.uk/) is used to solve these problems. Conjure blocks is an ongoing project.
 
