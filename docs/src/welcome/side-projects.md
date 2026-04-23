@@ -1,8 +1,10 @@
+# Side Projects
+
+## Conjure Blocks
 <!--
 author: Nadine Martin
 last updated: 21-12-2025
 -->
-# Conjure Blocks
 
 ![Conjure Blocks website](../../images/conjure_blocks.png)
 
