@@ -11,7 +11,7 @@ Roundtrip tests do not consider rewriting or solving.
 The structure of a roundtrip test is shown in the following diagram:
 
 
-<img src="./roundtripTest.png" width="500">
+<img src="roundtrip-test.png" width="500">
 
 
 The first phase tests that the parser is still performing as expected. As with the other tests in the suite, if the expected should have changed the suite can be run with `ACCEPT=true` to overwrite these expected files with whatever is generated.

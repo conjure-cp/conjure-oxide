@@ -17,7 +17,7 @@ To be able to accurately diagnose the Essence files for errors, tests cases have
 ## Testing
 ### Parser
 <!-- TODO: Roundtrip testing does not exist -- waiting on an update from LSP team -->
-Test cases that test the coverage of the Native parser use [Roundtrip testing](../testing/roundtrip-testing.md). The `syntax-error` and `semantic-error` test directories exist in the `test-integration` crate as child directories of `roundtrip\native-errors`. Furthermore, `config.toml` sets only the Native parser to be used when testing test cases.
+Test cases that test the coverage of the Native parser use [Roundtrip testing](../../testing/roundtrip-testing.md). The `syntax-error` and `semantic-error` test directories exist in the `test-integration` crate as child directories of `roundtrip\native-errors`. Furthermore, `config.toml` sets only the Native parser to be used when testing test cases.
 
 These test cases will run alongside all the integration tests in the `tests-integration` crate, which can be done by using:
 ```bash
