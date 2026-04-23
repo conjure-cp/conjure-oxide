@@ -730,7 +730,7 @@ impl Domain {
         }
         None
     }
-    
+
     /// If this is a relation domain, convert it to unresolved and get mutable references to
     /// its (attrs, [domains]).
     /// The domain always becomes [UnresolvedDomain::Relation] after this operation.
@@ -755,8 +755,8 @@ impl Domain {
         }
         None
     }
-    
-    /// If this is a [GroundDomain::RElation], get mutable references to its (attrs, [domains])
+
+    /// If this is a [GroundDomain::Relation], get mutable references to its (attrs, [domains])
     pub fn as_relation_ground_mut(
         &mut self,
     ) -> Option<(&mut RelAttr, &mut Vec<Moo<GroundDomain>>)> {

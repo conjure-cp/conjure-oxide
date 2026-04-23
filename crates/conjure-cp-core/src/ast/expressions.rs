@@ -752,14 +752,14 @@ impl Expression {
                         Expression::Atomic(_, atom) => {
                             let decl = atom.clone().into_declaration();
                             for inner_dom in doms {
-                                if *decl.name() == inner_dom.name{
-                                    return Some(inner_dom.domain)
+                                if *decl.name() == inner_dom.name {
+                                    return Some(inner_dom.domain);
                                 }
                             }
                             None
-                        },
-                        _ => None
-                    }
+                        }
+                        _ => None,
+                    };
                 }
 
                 bug!("subject of an index operation should support indexing")
