@@ -1211,12 +1211,26 @@ impl Expression {
                 } else if let Some((attrs, dom)) = other.domain_of()?.as_mset() {
                     let set_attrs = SetAttr { size: attrs.size };
                     Some(Domain::set(set_attrs, dom))
-                } else if let Some((outer_dom, inner_doms)) = other.domain_of()?.as_matrix() {
+                } else if let Some((dom, dimensions)) = other.domain_of()?.as_matrix() {
                     // We combine all matrix domains into a tuple
-                    let mut doms = vec![outer_dom];
-                    doms.extend(inner_doms);
+                    let mut doms = vec![];
+                    for _ in dimensions {
+                        doms.push(dom.clone());
+                    }
+                    let ground: Result<Vec<i32>,_> = doms.iter().map(|x| x.length_signed()).collect();
+                    let attr = match ground {
+                        Ok(vals) => {
+                            if let Some(&size) = vals.iter().min(){
+                                SetAttr::new(Range::Single(size)) 
+                            } else {
+                                SetAttr::<i32>::default()
+                            }
+                        }
+                        // We do not know the ground dimensions yet so default is chosen
+                        Err(_) => SetAttr::<i32>::default()
+                    };
                     Some(Domain::set(
-                        SetAttr::<IntVal>::default(),
+                        attr,
                         Domain::tuple(doms),
                     ))
                 } else {
