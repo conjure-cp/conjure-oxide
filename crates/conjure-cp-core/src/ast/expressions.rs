@@ -1318,21 +1318,15 @@ impl Expression {
                         Range::UnboundedL(x) => Some(x),
                     };
                     if let Some(occ) = attr_occ {
-                        // Finds the maximum size of the mset based on attributes
-                        let size = match attr_size {
-                            Range::Single(x) => Range::Bounded(0, x * occ),
-                            Range::Unbounded | Range::UnboundedR(_) => Range::UnboundedR(0),
-                            Range::Bounded(_, x) => Range::Bounded(0, x * occ),
-                            Range::UnboundedL(x) => Range::Bounded(0, x * occ),
-                        };
                         if let Ok(length) = dom.length_signed() {
-                            let unsafe_range = Range::minimal(&[size, Range::Bounded(0, length)]);
+                            let unsafe_range = Range::minimal(&[attr_size, Range::Bounded(0, length*occ)]);
                             match unsafe_range {
                                 Ok(range) => Some(Domain::int(vec![range])),
                                 Err(_) => None,
                             }
                         } else {
-                            Some(Domain::int(vec![size]))
+                            // If the domain is not known we just need to go off of attributes
+                            Some(Domain::int(vec![attr_size]))
                         }
                     } else {
                         // If no occurrence is provided then it must have bounded size
