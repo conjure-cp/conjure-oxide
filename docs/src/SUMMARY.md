@@ -73,6 +73,7 @@
   - [Functions](./documentation/types/functions.md)
   - [Multisets](./documentation/types/multisets.md)
   - [Relations](./documentation/types/relations.md)
+  - [Variants](./documentation/types/variants.md)
 - [Essence Parser](./documentation/essence_parser.md)
 <!-- TODO: add the error detection documentations -->
 - [Error Detection](./documentation/error_detection/error_classification.md)
