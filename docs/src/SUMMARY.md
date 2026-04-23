@@ -38,7 +38,6 @@
     - [Main Concepts]()
     - [Useful Libraries]()
 - [Coding Resources and Conventions](developers-guide/resources-conventions/index.md)
-    - [Style Guide](developers-guide/resources-conventions/style-guide.md)
     - [Benchmarking Guide](developers-guide/resources-conventions/benchmarking-guide.md)
     - [Crate Structure](developers-guide/resources-conventions/crate-structure.md)
     - [Functional Rust](developers-guide/resources-conventions/functional-rust.md)
