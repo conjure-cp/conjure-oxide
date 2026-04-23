@@ -29,7 +29,10 @@
 - [Writing Documentation](contributors-guide/writing-documentation/index.md)
     - [Writing For The Book](contributors-guide/writing-documentation/writing-for-the-book.md)
     - [Documenting Code](contributors-guide/writing-documentation/documenting-code.md)
-- [CI/CD for Contributors]()
+- [CI/CD](contributors-guide/ci-cd/index.md)
+    - [Code Coverage](contributors-guide/ci-cd/code-coverage.md)
+    - [GitHub Actions](contributors-guide/ci-cd/github-actions.md)
+    - [Test CI Locally](contributors-guide/ci-cd/test-ci-locally.md)
 
 
 # Developer's Guide
@@ -60,4 +63,7 @@
     
 
 # Nuggets
-- [What Are Nuggets](./nuggets/what-are-nuggets.md)
+- [What Are Nuggets](nuggets/what-are-nuggets.md)
+- [2024-09: Semantics of Rewriting Expressions with Side-Effects](nuggets/2024-09.md)
+- [2024-03: Implementing Uniplates and Biplates with Structure Preserving Trees](nuggets/2024-03.md)
+- [2023-11: High-Level Plan](nuggets/2023-11.md)
