@@ -1286,7 +1286,8 @@ impl Expression {
                 Some(Domain::relation(RelAttr::<IntVal>::default(), new_doms))
             }
             Expression::Card(_, collection) => {
-                if let Some((_, dimensions)) = collection.domain_of()?.as_matrix() {
+                let domain = collection.domain_of()?;
+                if let Some((_, dimensions)) = domain.as_matrix() {
                     let doms_ground: Result<Vec<i32>, _> =
                         dimensions.iter().map(|x| x.length_signed()).collect();
                     if let Ok(doms_ground) = doms_ground {
@@ -1295,7 +1296,7 @@ impl Expression {
                     } else {
                         Some(Domain::int(vec![Range::<i32>::Unbounded]))
                     }
-                } else if let Some((attr, dom)) = collection.domain_of()?.as_set() {
+                } else if let Some((attr, dom)) = domain.as_set() {
                     let attr_size = attr.resolve()?.size;
                     if let Ok(length) = dom.length_signed() {
                         let unsafe_range = Range::minimal(&[attr_size, Range::Bounded(0, length)]);
@@ -1306,7 +1307,7 @@ impl Expression {
                     }
                     // If the domain is not known we just need to go off of attributes
                     Some(Domain::int(vec![attr_size]))
-                } else if let Some((attrs, dom)) = collection.domain_of()?.as_mset() {
+                } else if let Some((attrs, dom)) = domain.as_mset() {
                     let attr_size = attrs.resolve()?.size;
                     let attr_occ_range = attrs.resolve()?.occurrence;
                     // Gets maximum value of the occurrence
@@ -1337,7 +1338,7 @@ impl Expression {
                         // If no occurrence is provided then it must have bounded size
                         Some(Domain::int(vec![attr_size]))
                     }
-                } else if let Some((attrs, doms)) = collection.domain_of()?.as_relation() {
+                } else if let Some((attrs, doms)) = domain.as_relation() {
                     // TODO: Further inference may be possible using the binary attributes
 
                     let attr_size = attrs.resolve()?.size;
@@ -1355,7 +1356,7 @@ impl Expression {
                     }
                     // If the domain is not known we just need to go off of attributes
                     Some(Domain::int(vec![attr_size]))
-                } else if let Some((attrs, dom, codom)) = collection.domain_of()?.as_function() {
+                } else if let Some((attrs, dom, codom)) = domain.as_function() {
                     let size = Self::function_elements_size(attrs, &dom, &codom);
                     size.map(|size| Domain::int(vec![size]))
                 } else {
