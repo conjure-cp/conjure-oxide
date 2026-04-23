@@ -81,4 +81,4 @@ Want to see exactly what rules were applied? Check out the [Logging guide](comma
 
 ## Functional Programming Style
 
-For developers who come from programming languages like Scala or Haskell, or those who favour a functional programming style, we have a [Functional Rust](/developers-guide/resources-conventions/functional-rust.md) guide that you might find useful.
+For developers who come from programming languages like Scala or Haskell, or those who favour a functional programming style, we have a [Functional Rust](../../developers-guide/resources-conventions/functional-rust.md) guide that you might find useful.
