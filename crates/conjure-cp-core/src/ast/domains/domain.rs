@@ -5,7 +5,7 @@ use super::unresolved::{IntVal, UnresolvedDomain};
 use crate::ast::domains::attrs::MSetAttr;
 use crate::ast::{
     DeclarationPtr, DomainOpError, Expression, FuncAttr, Literal, Moo, RecordEntry,
-    RecordEntryGround, Reference, ReturnType, Typeable,
+    RecordEntryGround, Reference, RelAttr, ReturnType, Typeable,
 };
 use itertools::Itertools;
 use polyquine::Quine;
@@ -248,6 +248,25 @@ impl Domain {
         ))))
     }
 
+    /// Create a new relation domain
+    pub fn relation<T>(attrs: T, inner_doms: Vec<DomainPtr>) -> DomainPtr
+    where
+        T: Into<RelAttr<IntVal>> + TryInto<RelAttr<Int>> + Clone,
+    {
+        if let Ok(attrs_gd) = attrs.clone().try_into()
+            && let Some(doms_gd) = as_grounds(&inner_doms)
+        {
+            return Moo::new(Domain::Ground(Moo::new(GroundDomain::Relation(
+                attrs_gd, doms_gd,
+            ))));
+        }
+
+        Moo::new(Domain::Unresolved(Moo::new(UnresolvedDomain::Relation(
+            attrs.into(),
+            inner_doms,
+        ))))
+    }
+
     /// If this domain is ground, return a [Moo] to the underlying [GroundDomain].
     /// Otherwise, try to resolve it; Return None if this is not yet possible.
     /// Domains which contain references to givens cannot be resolved until these
@@ -459,6 +478,48 @@ impl Domain {
         None
     }
 
+    /// If this is a mset domain, get its attributes and a pointer to its element domain.
+    pub fn as_mset(&self) -> Option<(MSetAttr<IntVal>, DomainPtr)> {
+        if let Some(GroundDomain::MSet(attr, inner_dom)) = self.as_ground() {
+            return Some((attr.clone().into(), inner_dom.clone().into()));
+        }
+        if let Some(UnresolvedDomain::MSet(attr, inner_dom)) = self.as_unresolved() {
+            return Some((attr.clone(), inner_dom.clone()));
+        }
+        None
+    }
+
+    /// If this is a set domain, get mutable reference to its attributes and element domain.
+    /// The domain always becomes [UnresolvedDomain::MSet] after this operation.
+    pub fn as_mset_mut(&mut self) -> Option<(&mut MSetAttr<IntVal>, &mut DomainPtr)> {
+        if let Some(GroundDomain::MSet(attr_gd, inner_dom_gd)) = self.as_ground() {
+            let attr: MSetAttr<IntVal> = attr_gd.clone().into();
+            let inner_dom = inner_dom_gd.clone().into();
+            *self = Domain::Unresolved(Moo::new(UnresolvedDomain::MSet(attr, inner_dom)));
+        }
+
+        if let Some(UnresolvedDomain::MSet(attr, inner_dom)) = self.as_unresolved_mut() {
+            return Some((attr, inner_dom));
+        }
+        None
+    }
+
+    /// If this is a [GroundDomain::MSet], get immutable references to its attributes and inner domain
+    pub fn as_mset_ground(&self) -> Option<(&MSetAttr<Int>, &Moo<GroundDomain>)> {
+        if let Some(GroundDomain::MSet(attr, inner_dom)) = self.as_ground() {
+            return Some((attr, inner_dom));
+        }
+        None
+    }
+
+    /// If this is a [GroundDomain::MSet], get mutable references to its attributes and inner domain
+    pub fn as_mset_ground_mut(&mut self) -> Option<(&mut MSetAttr<Int>, &mut Moo<GroundDomain>)> {
+        if let Some(GroundDomain::MSet(attr, inner_dom)) = self.as_ground_mut() {
+            return Some((attr, inner_dom));
+        }
+        None
+    }
+
     /// If this is a tuple domain, get pointers to its element domains.
     pub fn as_tuple(&self) -> Option<Vec<DomainPtr>> {
         if let Some(GroundDomain::Tuple(inner_doms)) = self.as_ground() {
@@ -601,6 +662,55 @@ impl Domain {
         None
     }
 
+    /// If this is a relation domain, get its (attributes, [domains])
+    pub fn as_relation(&self) -> Option<(RelAttr<IntVal>, Vec<Moo<Domain>>)> {
+        if let Some(GroundDomain::Relation(attrs, doms)) = self.as_ground() {
+            return Some((
+                attrs.clone().into(),
+                doms.iter().cloned().map(|d| d.into()).collect(),
+            ));
+        }
+        if let Some(UnresolvedDomain::Relation(attrs, doms)) = self.as_unresolved() {
+            return Some((attrs.clone(), doms.clone()));
+        }
+        None
+    }
+
+    /// If this is a relation domain, convert it to unresolved and get mutable references to
+    /// its (attrs, [domains]).
+    /// The domain always becomes [UnresolvedDomain::Relation] after this operation.
+    pub fn as_relation_mut(&mut self) -> Option<(&mut RelAttr<IntVal>, &mut Vec<Moo<Domain>>)> {
+        if let Some(GroundDomain::Relation(attrs, doms)) = self.as_ground() {
+            *self = Domain::Unresolved(Moo::new(UnresolvedDomain::Relation(
+                attrs.clone().into(),
+                doms.iter().cloned().map(|d| d.into()).collect(),
+            )));
+        }
+
+        if let Some(UnresolvedDomain::Relation(attrs, doms)) = self.as_unresolved_mut() {
+            return Some((attrs, doms));
+        }
+        None
+    }
+
+    /// If this is a [GroundDomain::Relation], get its (attrs, [domains])
+    pub fn as_relation_ground(&self) -> Option<(&RelAttr, &Vec<Moo<GroundDomain>>)> {
+        if let Some(GroundDomain::Relation(attrs, doms)) = self.as_ground() {
+            return Some((attrs, doms));
+        }
+        None
+    }
+
+    /// If this is a [GroundDomain::RElation], get mutable references to its (attrs, [domains])
+    pub fn as_relation_ground_mut(
+        &mut self,
+    ) -> Option<(&mut RelAttr, &mut Vec<Moo<GroundDomain>>)> {
+        if let Some(GroundDomain::Relation(attrs, doms)) = self.as_ground_mut() {
+            return Some((attrs, doms));
+        }
+        None
+    }
+
     /// Compute the intersection of two domains
     pub fn union(&self, other: &Domain) -> Result<Domain, DomainOpError> {
         match (self, other) {
@@ -639,6 +749,16 @@ impl Domain {
             return gd.length();
         }
         Err(DomainOpError::NotGround)
+    }
+    /// Get the size of some domain
+    ///
+    /// As opposed to `Domain::length`, this function returns a signed integer (`i32`) rather than unsigned.
+    /// * `DomainOpError::NotGround` - This function only applies to `ground` domains
+    /// * `DomainOpError::TooLarge` - Converting to an integer my not be possible if the domain is too big
+    pub fn length_signed(&self) -> Result<i32, DomainOpError> {
+        let gd = self.as_ground().ok_or(DomainOpError::NotGround)?;
+        let len = gd.length()?;
+        len.try_into().map_err(|_| DomainOpError::TooLarge)
     }
 
     /// Construct a ground domain from a slice of values
