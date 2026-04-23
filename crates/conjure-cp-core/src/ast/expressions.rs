@@ -980,13 +980,13 @@ impl Expression {
                 .ok(),
             Expression::Defined(_, function) => {
                 let (attrs, domain, codomain) = function.domain_of()?.as_function()?;
-                let size = Self::function_elements_size(attrs,&domain,&codomain);
+                let size = Self::function_elements_size(attrs, &domain, &codomain);
                 if let Some(size) = size {
                     Some(Domain::set(SetAttr::new(size), domain))
                 } else {
-                    return Some(Domain::empty(ReturnType::Set(Box::new(
-                            domain.return_type(),
-                        ))));
+                    Some(Domain::empty(ReturnType::Set(Box::new(
+                        domain.return_type(),
+                    ))))
                 }
             }
             Expression::Range(_, function) => {
@@ -1217,22 +1217,20 @@ impl Expression {
                     for _ in dimensions {
                         doms.push(dom.clone());
                     }
-                    let ground: Result<Vec<i32>,_> = doms.iter().map(|x| x.length_signed()).collect();
-                    let attr = match ground {
+                    let doms_sizes: Result<Vec<i32>, _> =
+                        doms.iter().map(|x| x.length_signed()).collect();
+                    let attr = match doms_sizes {
                         Ok(vals) => {
-                            if let Some(&size) = vals.iter().min(){
-                                SetAttr::new(Range::Single(size)) 
+                            if let Some(&size) = vals.iter().min() {
+                                SetAttr::new(Range::Single(size))
                             } else {
                                 SetAttr::<i32>::default()
                             }
                         }
                         // We do not know the ground dimensions yet so default is chosen
-                        Err(_) => SetAttr::<i32>::default()
+                        Err(_) => SetAttr::<i32>::default(),
                     };
-                    Some(Domain::set(
-                        attr,
-                        Domain::tuple(doms),
-                    ))
+                    Some(Domain::set(attr, Domain::tuple(doms)))
                 } else {
                     bug!(
                         "Domain of {self} needed to be a function, relation, mset, or matrix for ToSet"
@@ -1289,7 +1287,8 @@ impl Expression {
             }
             Expression::Card(_, collection) => {
                 if let Some((_, dimensions)) = collection.domain_of()?.as_matrix() {
-                    let doms_ground: Result<Vec<i32>,_> = dimensions.iter().map(|x| x.length_signed()).collect();
+                    let doms_ground: Result<Vec<i32>, _> =
+                        dimensions.iter().map(|x| x.length_signed()).collect();
                     if let Ok(doms_ground) = doms_ground {
                         let size: Range<i32> = Range::Single(doms_ground.iter().product());
                         Some(Domain::int(vec![size]))
@@ -1298,11 +1297,11 @@ impl Expression {
                     }
                 } else if let Some((attr, dom)) = collection.domain_of()?.as_set() {
                     let attr_size = attr.resolve()?.size;
-                    if let Ok(length) = dom.length_signed(){
-                        let unsafe_range = Range::minimal(&[attr_size, Range::Bounded(0,length)]);
+                    if let Ok(length) = dom.length_signed() {
+                        let unsafe_range = Range::minimal(&[attr_size, Range::Bounded(0, length)]);
                         match unsafe_range {
                             Ok(range) => return Some(Domain::int(vec![range])),
-                            Err(_) => return None
+                            Err(_) => return None,
                         }
                     }
                     // If the domain is not known we just need to go off of attributes
@@ -1325,14 +1324,14 @@ impl Expression {
                             Range::Bounded(_, x) => Range::Bounded(0, x * occ),
                             Range::UnboundedL(x) => Range::Bounded(0, x * occ),
                         };
-                        if let Ok(length) = dom.length_signed(){
-                            let unsafe_range = Range::minimal(&[size, Range::Bounded(0,length)]);
+                        if let Ok(length) = dom.length_signed() {
+                            let unsafe_range = Range::minimal(&[size, Range::Bounded(0, length)]);
                             match unsafe_range {
-                                Ok(range) => return Some(Domain::int(vec![range])),
-                                Err(_) => return None
+                                Ok(range) => Some(Domain::int(vec![range])),
+                                Err(_) => None,
                             }
                         } else {
-                            return Some(Domain::int(vec![size]))
+                            Some(Domain::int(vec![size]))
                         }
                     } else {
                         // If no occurrence is provided then it must have bounded size
@@ -1343,36 +1342,37 @@ impl Expression {
 
                     let attr_size = attrs.resolve()?.size;
                     // See if all domains are ground
-                    let doms_ground: Result<Vec<i32>,_> = doms.iter().map(|x| x.length_signed()).collect();
-                    if let Ok(doms_ground) = doms_ground {
-                        let length = Range::Bounded(0, doms_ground.iter().product());
+                    let doms_sizes: Result<Vec<i32>, _> =
+                        doms.iter().map(|x| x.length_signed()).collect();
+                    if let Ok(doms_sizes) = doms_sizes {
+                        let length = Range::Bounded(0, doms_sizes.iter().product());
                         // Combine the attributes and the domain possibilities
                         let unsafe_range = Range::minimal(&[attr_size, length]);
                         match unsafe_range {
                             Ok(range) => return Some(Domain::int(vec![range])),
-                            Err(_) => return None
+                            Err(_) => return None,
                         }
                     }
                     // If the domain is not known we just need to go off of attributes
                     Some(Domain::int(vec![attr_size]))
-                }else if let Some((attrs, dom, codom)) = collection.domain_of()?.as_function() {
-                    let size = Self::function_elements_size(attrs,&dom,&codom);
-                    if let Some(size) = size {
-                        Some(Domain::int(vec![size]))
-                    } else {
-                        None
-                    }
+                } else if let Some((attrs, dom, codom)) = collection.domain_of()?.as_function() {
+                    let size = Self::function_elements_size(attrs, &dom, &codom);
+                    size.map(|size| Domain::int(vec![size]))
                 } else {
                     bug!(
                         "Domain of {self} needed to be a matrix, set, mset, relation, or function for cardinality"
                     )
                 }
-            },
+            }
         }
     }
 
     // Gets the number of domain elements mapped in a function. This is the cardinality and also the defined
-    fn function_elements_size(attrs: FuncAttr<IntVal>, domain: &DomainPtr, codomain: &DomainPtr) -> Option<Range>{
+    fn function_elements_size(
+        attrs: FuncAttr<IntVal>,
+        domain: &DomainPtr,
+        codomain: &DomainPtr,
+    ) -> Option<Range> {
         // Gets the size imposed by the size attribute
         // The elements defined in the domain is the same as the size of the function itself
         let size_size = attrs.resolve()?.size;
@@ -1410,10 +1410,7 @@ impl Expression {
         match attr_size {
             Some(attr_size) => {
                 let unsafe_range = Range::minimal(&[size_size, attr_size]);
-                match unsafe_range {
-                    Ok(range) => Some(range),
-                    Err(_) => None,
-                }
+                unsafe_range.ok()
             }
             None => Some(size_size),
         }
