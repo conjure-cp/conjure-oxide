@@ -352,9 +352,9 @@ where
             AbstractLiteral::Record(entries) => {
                 let entries_str: String = entries
                     .iter()
-                    .map(|entry| format!("{}: {}", entry.name, entry.value))
+                    .map(|entry| format!("{} = {}", entry.name, entry.value))
                     .join(",");
-                write!(f, "{{{entries_str}}}")
+                write!(f, "record {{{entries_str}}}")
             }
             AbstractLiteral::Function(entries) => {
                 let entries_str: String = entries
