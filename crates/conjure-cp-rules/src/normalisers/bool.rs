@@ -59,6 +59,13 @@ fn distribute_or_over_and(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                                 return Err(RuleNotApplicable);
                             };
 
+                            // Wide distribution is a net expression-size blow-up and can be
+                            // catastrophic on large models. Keep this rule for small local
+                            // simplifications only.
+                            if and_exprs.len() > 2 {
+                                return Err(RuleNotApplicable);
+                            }
+
                             let mut new_and_contents = Vec::new();
 
                             for e in and_exprs {
