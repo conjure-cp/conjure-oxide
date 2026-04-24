@@ -1,15 +1,14 @@
 use regex::Regex;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::sync::LazyLock;
 use ustr::Ustr;
 
 use minion_ast::Model as MinionModel;
 use minion_sys::ast as minion_ast;
-use minion_sys::error::MinionError;
 use minion_sys::run_minion;
 
 use crate::Model as ConjureModel;
-use crate::ast::{self as conjure_ast, Name};
+use crate::ast::{self as conjure_ast, Expression, Name};
 use crate::settings::SolverFamily;
 use crate::solver::SolverCallback;
 use crate::solver::SolverMutCallback;
@@ -21,10 +20,13 @@ use crate::solver::SearchStatus::{Complete, Incomplete};
 use crate::solver::SolveSuccess;
 use crate::solver::SolverAdaptor;
 use crate::solver::SolverError;
-use crate::solver::SolverError::{OpNotImplemented, Runtime, RuntimeNotImplemented};
-use crate::solver::model_modifier::NotModifiable;
+use crate::solver::SolverError::OpNotImplemented;
 use crate::solver::private;
 
+use super::dominance_injection::{
+    add_dominance_constraints_for_solution, add_represented_decision_values,
+    minion_error_to_solver_error,
+};
 use super::parse_model::model_to_minion;
 
 /// A [SolverAdaptor] for interacting with Minion.
@@ -33,6 +35,8 @@ use super::parse_model::model_to_minion;
 pub struct Minion {
     __non_constructable: private::Internal,
     model: Option<MinionModel>,
+    dominance_expression: Option<Expression>,
+    dominance_model_template: Option<ConjureModel>,
 }
 
 fn parse_name(minion_name: &str) -> Name {
@@ -78,6 +82,8 @@ impl Minion {
         Minion {
             __non_constructable: private::Internal,
             model: None,
+            dominance_expression: None,
+            dominance_model_template: None,
         }
     }
 }
@@ -96,25 +102,54 @@ impl SolverAdaptor for Minion {
     ) -> Result<SolveSuccess, SolverError> {
         let mut any_solutions = false;
         let mut user_terminated = false;
+        let dominance_expression = self.dominance_expression.clone();
+        let dominance_model_template = self.dominance_model_template.clone();
+        let mut midsearch_error: Option<SolverError> = None;
+        let base_model = self.model.as_ref().expect("STATE MACHINE ERR");
+        let mut known_var_names = base_model
+            .named_variables
+            .get_variable_order()
+            .into_iter()
+            .collect::<HashSet<_>>();
+        let mut next_midsearch_aux_var_id = 0usize;
+        let mut solution_ordinal = 0usize;
 
         let solver_ctx = run_minion(
             self.model.clone().expect("STATE MACHINE ERR"),
             Box::new(|solutions| {
                 any_solutions = true;
-                let conjure_solutions = translate_solution(solutions);
-                let continue_search = callback(conjure_solutions);
+                solution_ordinal += 1;
+                let mut conjure_solutions = translate_solution(solutions);
+                if let Some(model_template) = dominance_model_template.as_ref() {
+                    add_represented_decision_values(&mut conjure_solutions, model_template);
+                }
+
+                let continue_search = callback(conjure_solutions.clone());
                 if !continue_search {
                     user_terminated = true;
+                    return false;
                 }
-                continue_search
+
+                if let Err(err) = add_dominance_constraints_for_solution(
+                    dominance_expression.as_ref(),
+                    dominance_model_template.as_ref(),
+                    &conjure_solutions,
+                    &mut known_var_names,
+                    &mut next_midsearch_aux_var_id,
+                    solution_ordinal,
+                ) {
+                    midsearch_error = Some(err);
+                    return false;
+                }
+
+                true
             }),
         )
-        .map_err(|err| match err {
-            MinionError::RuntimeError(x) => Runtime(format!("{x:#?}")),
-            MinionError::Other(x) => Runtime(format!("{x:#?}")),
-            MinionError::NotImplemented(x) => RuntimeNotImplemented(x),
-            x => Runtime(format!("unknown minion_sys error: {x:#?}")),
-        })?;
+        .map_err(minion_error_to_solver_error)?;
+
+        if let Some(err) = midsearch_error {
+            return Err(err);
+        }
 
         let status = if user_terminated {
             Incomplete(UserTerminated)
@@ -138,6 +173,11 @@ impl SolverAdaptor for Minion {
     }
 
     fn load_model(&mut self, model: ConjureModel, _: private::Internal) -> Result<(), SolverError> {
+        self.dominance_expression = model.dominance.as_ref().map(|expr| match expr {
+            Expression::DominanceRelation(_, inner) => inner.as_ref().clone(),
+            _ => expr.clone(),
+        });
+        self.dominance_model_template = self.dominance_expression.as_ref().map(|_| model.clone());
         self.model = Some(model_to_minion(model)?);
         Ok(())
     }

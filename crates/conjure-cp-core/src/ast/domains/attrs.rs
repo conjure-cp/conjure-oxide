@@ -239,3 +239,76 @@ impl Display for JectivityAttr {
         }
     }
 }
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
+#[path_prefix(conjure_cp::ast)]
+pub struct RelAttr<A = Int> {
+    pub size: Range<A>,
+    pub binary: Vec<BinaryAttr>,
+}
+
+impl<A> Default for RelAttr<A> {
+    fn default() -> Self {
+        RelAttr {
+            size: Range::Unbounded,
+            binary: Vec::new(),
+        }
+    }
+}
+
+impl<A: Display> Display for RelAttr<A> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let size_str = match &self.size {
+            Range::Single(x) => format!("size {x}"),
+            Range::Bounded(l, r) => format!("minSize {l}, maxSize {r}"),
+            Range::UnboundedL(r) => format!("maxSize {r}"),
+            Range::UnboundedR(l) => format!("minSize {l}"),
+            Range::Unbounded => "".to_string(),
+        };
+        let mut strs = [size_str, self.binary.iter().join(", ")]
+            .iter()
+            .filter(|s| !s.is_empty())
+            .join(", ");
+        if !strs.is_empty() {
+            strs = format!("({})", strs);
+        }
+        write!(f, "{strs}")
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
+pub enum BinaryAttr {
+    Reflexive,
+    Irreflexive,
+    Coreflexive,
+    Symmetric,
+    AntiSymmetric,
+    ASymmetric,
+    Transitive,
+    Total,
+    Connex,
+    Euclidean,
+    Serial,
+    Equivalence,
+    PartialOrder,
+}
+
+impl Display for BinaryAttr {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            BinaryAttr::Reflexive => write!(f, "reflexive"),
+            BinaryAttr::Irreflexive => write!(f, "irreflexive"),
+            BinaryAttr::Coreflexive => write!(f, "coreflexive"),
+            BinaryAttr::Symmetric => write!(f, "symmetric"),
+            BinaryAttr::AntiSymmetric => write!(f, "antiSymmetric"),
+            BinaryAttr::ASymmetric => write!(f, "aSymmetric"),
+            BinaryAttr::Transitive => write!(f, "transitive"),
+            BinaryAttr::Total => write!(f, "total"),
+            BinaryAttr::Connex => write!(f, "connex"),
+            BinaryAttr::Euclidean => write!(f, "Euclidean"),
+            BinaryAttr::Serial => write!(f, "serial"),
+            BinaryAttr::Equivalence => write!(f, "equivalence"),
+            BinaryAttr::PartialOrder => write!(f, "partialOrder"),
+        }
+    }
+}
