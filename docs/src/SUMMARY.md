@@ -74,7 +74,7 @@
         - [Functions](developers-guide/architecture/types/functions.md)
         - [Multisets](developers-guide/architecture/types/multisets.md)
         - [Relations](developers-guide/architecture/types/relations.md)
-        - [Sequences](./documentation/types/sequences.md)
+        - [Sequences](developers-guide/architecture/types/sequences.md)
 - [Testing](developers-guide/testing/index.md)
     - [The Ideal Scenario](developers-guide/testing/the-ideal-scenario.md)
     - [Roundtrip Testing](developers-guide/testing/roundtrip-testing.md)
