@@ -697,13 +697,13 @@ fn binary_operator(op_name: &str) -> Option<BinOp> {
     }
 }
 
-fn unary_operator(op_name: &str, inner: Option<&ReturnType>) -> Option<UnaryOp> {
+fn unary_operator(op_name: &str, inner: Option<&Expression>) -> Option<UnaryOp> {
     match op_name {
         "MkOpNot" => Some(Expression::Not),
         "MkOpNegate" => Some(Expression::Neg),
         "MkOpTwoBars" => {
             if let Some(inner) = inner {
-                match inner {
+                match inner.return_type() {
                     ReturnType::Int => Some(Expression::Abs),
                     ReturnType::Matrix(_)
                     | ReturnType::Set(_)
@@ -1339,8 +1339,8 @@ fn parse_unary_op(
     }
     .map_err(|_| fail("arg"))?;
 
-    let constructor = unary_operator(key.as_str(), Some(&arg.return_type()))
-        .ok_or_else(|| fail("unary_operator"))?;
+    let constructor =
+        unary_operator(key.as_str(), Some(&arg)).ok_or_else(|| fail("unary_operator"))?;
 
     Ok(constructor(Metadata::new(), Moo::new(arg)))
 }

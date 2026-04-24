@@ -1319,7 +1319,8 @@ impl Expression {
                     };
                     if let Some(occ) = attr_occ {
                         if let Ok(length) = dom.length_signed() {
-                            let unsafe_range = Range::minimal(&[attr_size, Range::Bounded(0, length*occ)]);
+                            let unsafe_range =
+                                Range::minimal(&[attr_size, Range::Bounded(0, length * occ)]);
                             match unsafe_range {
                                 Ok(range) => Some(Domain::int(vec![range])),
                                 Err(_) => None,
