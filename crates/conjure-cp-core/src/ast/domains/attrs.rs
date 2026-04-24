@@ -159,6 +159,7 @@ impl<A: Display> Display for FuncAttr<A> {
 pub struct PartitionAttr<A = Int> {
     pub num_parts: Range<A>, // i.e. how many parts there are in the partition
     pub part_len: Range<A>,  // i.e. the size of each constitutent part
+    pub is_regular: bool,
 }
 
 impl<A: Display> Display for PartitionAttr<A> {
@@ -179,7 +180,12 @@ impl<A: Display> Display for PartitionAttr<A> {
             Range::Unbounded => "".to_string(),
         };
 
-        let mut strs = [num_parts_str, part_len_str]
+        let regular_str = match &self.is_regular {
+            true => format!("regular"),
+            false => format!(""),
+        };
+
+        let mut strs = [num_parts_str, part_len_str, regular_str]
             .iter()
             .filter(|s| !s.is_empty())
             .join(", ");
@@ -195,6 +201,7 @@ impl<A> Default for PartitionAttr<A> {
         PartitionAttr {
             num_parts: Range::Unbounded,
             part_len: Range::Unbounded,
+            is_regular: bool,
         }
     }
 }

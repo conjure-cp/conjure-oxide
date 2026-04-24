@@ -139,6 +139,7 @@ impl From<PartitionAttr<Int>> for PartitionAttr<IntVal> {
         PartitionAttr { 
             num_parts: value.num_parts.into(),
             part_len: value.part_len.into(),
+            is_regular: value.is_regular.into(),
         }
     }
 }
@@ -149,7 +150,8 @@ impl TryInto<PartitionAttr<Int>> for PartitionAttr<IntVal> {
     fn try_into(self) -> Result<PartitionAttr<Int>, Self::Error> {
         let num_parts: Range<Int> = self.num_parts.try_into()?;
         let part_len: Range<Int> = self.part_len.try_into()?;
-        Ok(PartitionAttr { num_parts, part_len } )
+        let is_regular: bool = self.is_regular.try_into()?;
+        Ok(PartitionAttr { num_parts, part_len, is_regular } )
     }
 }
 

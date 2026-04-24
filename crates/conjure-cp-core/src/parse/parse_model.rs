@@ -709,6 +709,8 @@ pub fn parse_expression(obj: &JsonValue, scope: &SymbolTablePtr) -> Result<Expre
                 parse_abs_function(&abslit["AbstractLiteral"]["AbsLitFunction"], scope)
             } else if abstract_literal.contains_key("AbsLitMSet") {
                 parse_abs_mset(&abslit["AbstractLiteral"]["AbsLitMSet"], scope)
+            } else if abstract_literal.contains_key("AbstractLiteralPartition") {
+                parse_abs_partition(&abslit["AbstractLiteral"]["AbsLitPartition"])
             } else {
                 parse_abstract_matrix_as_expr(obj, scope)
             }
@@ -760,6 +762,21 @@ fn parse_abs_mset(abs_mset: &Value, scope: &SymbolTablePtr) -> Result<Expression
     Ok(Expression::AbstractLiteral(
         Metadata::new(),
         AbstractLiteral::MSet(expressions),
+    ))
+}
+
+fn parse_abs_partition(abs_partition: &Value, scope: &SymbolTablePtr) -> Result<Expression> {
+    let values = abs_partition
+        .as_array()
+        .ok_or(error!("AbsLitPartition is not an array"))?;
+    let expressions = values
+        .iter()
+        .map(|values| parse_expression(values, scope))
+        .collect::<Result<Vec<_>>>()?;
+
+    Ok(Expression::AbstractLiteral(
+        Metadata::new(),
+        AbstractLiteral::Partition(expressions),
     ))
 }
 
