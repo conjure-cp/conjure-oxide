@@ -1,6 +1,7 @@
 #![allow(clippy::unwrap_used)]
 #![allow(clippy::expect_used)]
 use std::sync::{Arc, RwLock};
+use syn::Meta;
 use ustr::Ustr;
 
 use serde_json::Map as JsonMap;
@@ -848,17 +849,28 @@ fn parse_abs_mset(abs_mset: &Value, scope: &SymbolTablePtr) -> Result<Expression
 }
 
 fn parse_abs_partition(abs_partition: &Value, scope: &SymbolTablePtr) -> Result<Expression> {
-    let values = abs_partition
+    let parts = abs_partition
         .as_array()
         .ok_or(error!("AbsLitPartition is not an array"))?;
-    let expressions = values
-        .iter()
-        .map(|values| parse_expression(values, scope))
-        .collect::<Result<Vec<_>>>()?;
+
+    let mut partition: Vec<Vec<T>> = Vec::new();
+
+    for part in parts {
+        let vals = part
+            .as_array()
+            .ok_or(errror!("Part in AbsLitPartition is not an array"))?;
+        
+        let exprs = vals
+            .iter()
+            .map(|values| parse_expression(values, scope))
+            .collect::<Result<Vec<_>>>()?;
+        
+        partition.push(exprs);
+    };
 
     Ok(Expression::AbstractLiteral(
         Metadata::new(),
-        AbstractLiteral::Partition(expressions),
+        AbstractLiteral::Partition(partition),
     ))
 }
 
