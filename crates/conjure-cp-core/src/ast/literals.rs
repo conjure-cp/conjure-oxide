@@ -1,13 +1,13 @@
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
-use syn::token::Return;
 use std::fmt::{Display, Formatter};
 use std::hash::Hash;
+use syn::token::Return;
 use ustr::Ustr;
 
 use super::{
-    Atom, Domain, DomainPtr, Expression, GroundDomain, Metadata, Moo, Range, ReturnType, SetAttr,
-    PartitionAttr, Typeable, domains::HasDomain, domains::Int, records::RecordValue,
+    Atom, Domain, DomainPtr, Expression, GroundDomain, Metadata, Moo, PartitionAttr, Range,
+    ReturnType, SetAttr, Typeable, domains::HasDomain, domains::Int, records::RecordValue,
 };
 use crate::ast::domains::MSetAttr;
 use crate::ast::pretty::pretty_vec;
@@ -135,7 +135,10 @@ impl AbstractLiteral<Expression> {
                     .try_fold(first_item, |x, y| x.union(y))
                     .expect("taking the union of all item domains of a partition literal should succeed");
 
-                Some(Domain::partition(PartitionAttr::<Int>::default(), item_domain))
+                Some(Domain::partition(
+                    PartitionAttr::<Int>::default(),
+                    item_domain,
+                ))
             }
 
             AbstractLiteral::Matrix(items, _) => {
@@ -228,7 +231,8 @@ impl Typeable for AbstractLiteral<Expression> {
                 let item_type = items[0].return_type();
 
                 // if any items do not have a type, return none.
-                let item_types:Vec<ReturnType> = items.iter().flat_map(|x| x.return_type()).collect();
+                let item_types: Vec<ReturnType> =
+                    items.iter().flat_map(|x| x.return_type()).collect();
 
                 assert!(
                     item_types.iter().all(|x| x == &item_type),
@@ -381,7 +385,8 @@ where
                 write!(f, "({elems_str})")
             }
             AbstractLiteral::Partition(parts) => {
-                let elems_str: String = parts.iter()
+                let elems_str: String = parts
+                    .iter()
                     .map(|inner| {
                         let elems_str = inner.iter().map(|x| format!("{x}")).join(",");
                         format!("{{{}}}", elems_str)
@@ -708,25 +713,24 @@ impl AbstractLiteral<Expression> {
                 Some(AbstractLiteral::MSet(literals))
             }
             AbstractLiteral::Partition(elems) => {
-
-                // want to ascertain if every elem in Vec<Vec<Expr>> is a literal. If any are not, return none 
+                // want to ascertain if every elem in Vec<Vec<Expr>> is a literal. If any are not, return none
                 // otherwise confirm it is an abslit<lit>
                 let mut partition: Vec<Vec<T>> = Vec::new();
 
                 for part in elems {
-                    let literals = part.into_iter().map(|expr| {
-                        match expr {
+                    let literals = part
+                        .into_iter()
+                        .map(|expr| match expr {
                             Expression::Atomic(_, Atom::Literal(lit)) => Some(lit),
                             Expression::AbstractLiteral(_, abslit) => {
                                 Some(Literal::AbstractLiteral(abslit.into_literals()?))
                             }
                             _ => None,
-                        }
-                    })
-                    .collect::<Option<Vec<_>>>()?;
-                    
+                        })
+                        .collect::<Option<Vec<_>>>()?;
+
                     partition.push(literals);
-                };
+                }
 
                 Some(AbstractLiteral::Partition(partition))
             }

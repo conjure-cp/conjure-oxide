@@ -525,9 +525,9 @@ impl GroundDomain {
                         }
                     }
                     Ok(true)
-                },
-                _ => Ok(false)
-            }
+                }
+                _ => Ok(false),
+            },
         }
     }
 

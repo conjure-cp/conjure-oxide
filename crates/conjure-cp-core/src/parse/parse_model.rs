@@ -859,14 +859,14 @@ fn parse_abs_partition(abs_partition: &Value, scope: &SymbolTablePtr) -> Result<
         let vals = part
             .as_array()
             .ok_or(errror!("Part in AbsLitPartition is not an array"))?;
-        
+
         let exprs = vals
             .iter()
             .map(|values| parse_expression(values, scope))
             .collect::<Result<Vec<_>>>()?;
-        
+
         partition.push(exprs);
-    };
+    }
 
     Ok(Expression::AbstractLiteral(
         Metadata::new(),

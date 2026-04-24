@@ -157,7 +157,7 @@ impl TryInto<RelAttr<Int>> for RelAttr<IntVal> {
 
 impl From<PartitionAttr<Int>> for PartitionAttr<IntVal> {
     fn from(value: PartitionAttr<Int>) -> Self {
-        PartitionAttr { 
+        PartitionAttr {
             num_parts: value.num_parts.into(),
             part_len: value.part_len.into(),
             is_regular: value.is_regular.into(),
@@ -172,7 +172,11 @@ impl TryInto<PartitionAttr<Int>> for PartitionAttr<IntVal> {
         let num_parts: Range<Int> = self.num_parts.try_into()?;
         let part_len: Range<Int> = self.part_len.try_into()?;
         let is_regular: bool = self.is_regular.try_into()?;
-        Ok(PartitionAttr { num_parts, part_len, is_regular } )
+        Ok(PartitionAttr {
+            num_parts,
+            part_len,
+            is_regular,
+        })
     }
 }
 
@@ -556,7 +560,9 @@ impl Typeable for UnresolvedDomain {
             UnresolvedDomain::Int(_) => ReturnType::Int,
             UnresolvedDomain::Set(_attr, inner) => ReturnType::Set(Box::new(inner.return_type())),
             UnresolvedDomain::MSet(_attr, inner) => ReturnType::MSet(Box::new(inner.return_type())),
-            UnresolvedDomain::Partition(_, inner) => ReturnType::Partition(Box::new(inner.return_type())),
+            UnresolvedDomain::Partition(_, inner) => {
+                ReturnType::Partition(Box::new(inner.return_type()))
+            }
             UnresolvedDomain::Matrix(inner, _idx) => {
                 ReturnType::Matrix(Box::new(inner.return_type()))
             }
@@ -602,7 +608,9 @@ impl Display for UnresolvedDomain {
             }
             UnresolvedDomain::Set(attrs, inner_dom) => write!(f, "set {attrs} of {inner_dom}"),
             UnresolvedDomain::MSet(attrs, inner_dom) => write!(f, "mset {attrs} of {inner_dom}"),
-            UnresolvedDomain::Partition(attrs, inner_dom) => write!(f, "partition {attrs} of {inner_dom}"),
+            UnresolvedDomain::Partition(attrs, inner_dom) => {
+                write!(f, "partition {attrs} of {inner_dom}")
+            }
             UnresolvedDomain::Matrix(value_domain, index_domains) => {
                 write!(
                     f,
