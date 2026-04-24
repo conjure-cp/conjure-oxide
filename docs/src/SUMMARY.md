@@ -74,6 +74,7 @@
         - [Functions](developers-guide/architecture/types/functions.md)
         - [Multisets](developers-guide/architecture/types/multisets.md)
         - [Relations](developers-guide/architecture/types/relations.md)
+    - [Domain Refinement](developers-guide/architecture/domain_refinement.md)
 - [Testing](developers-guide/testing/index.md)
     - [The Ideal Scenario](developers-guide/testing/the-ideal-scenario.md)
     - [Roundtrip Testing](developers-guide/testing/roundtrip-testing.md)
