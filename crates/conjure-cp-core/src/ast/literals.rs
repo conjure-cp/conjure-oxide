@@ -1,12 +1,13 @@
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
+use syn::token::Return;
 use std::fmt::{Display, Formatter};
 use std::hash::Hash;
 use ustr::Ustr;
 
 use super::{
     Atom, Domain, DomainPtr, Expression, GroundDomain, Metadata, Moo, Range, ReturnType, SetAttr,
-    Typeable, domains::HasDomain, domains::Int, records::RecordValue,
+    PartitionAttr, Typeable, domains::HasDomain, domains::Int, records::RecordValue,
 };
 use crate::ast::domains::MSetAttr;
 use crate::ast::pretty::pretty_vec;
@@ -116,6 +117,26 @@ impl AbstractLiteral<Expression> {
                 Some(Domain::mset(MSetAttr::<Int>::default(), item_domain))
             }
 
+            AbstractLiteral::Partition(items) => {
+                // Flatten the Vec<Vec< into a single vec
+                // ensure that all elemes in each part have a domain, or return None
+
+                let item_domains: Vec<DomainPtr> = items
+                    .iter()
+                    .flat_map(|x| x.domain_of())
+                    .collect::<Option<Vec<DomainPtr>>>()?;
+
+                // union all item domains together
+                let mut item_domain_iter = item_domains.iter().cloned();
+                let first_item = item_domain_iter.next()?;
+                let item_domain = item_domains
+                    .iter()
+                    .try_fold(first_item, |x, y| x.union(y))
+                    .expect("taking the union of all item domains of a partition literal should succeed");
+
+                Some(Domain::partition(PartitionAttr::<Int>::default(), item_domain))
+            }
+
             AbstractLiteral::Matrix(items, _) => {
                 // ensure that all items have a domain, or return None
                 let item_domains = items
@@ -197,6 +218,22 @@ impl Typeable for AbstractLiteral<Expression> {
                 );
 
                 ReturnType::MSet(Box::new(item_type))
+            }
+            AbstractLiteral::Partition(items) if items.is_empty() => {
+                ReturnType::Partition(Box::new(ReturnType::Unknown))
+            }
+            AbstractLiteral::Partition(items) => {
+                let item_type = items[0].return_type();
+
+                // if any items do not have a type, return none.
+                let item_types:Vec<ReturnType> = items.iter().flat_map(|x| x.return_type()).collect();
+
+                assert!(
+                    item_types.iter().all(|x| x == &item_type),
+                    "all items in every part of a partition should have the same type"
+                );
+
+                ReturnType::Partition(Box::new(item_type))
             }
             AbstractLiteral::Matrix(items, _) if items.is_empty() => {
                 ReturnType::Matrix(Box::new(ReturnType::Unknown))
@@ -314,6 +351,16 @@ where
             AbstractLiteral::Tuple(elems) => {
                 let elems_str: String = elems.iter().map(|x| format!("{x}")).join(",");
                 write!(f, "({elems_str})")
+            }
+            AbstractLiteral::Partition(parts) => {
+                let elems_str: String = parts.iter()
+                    .map(|inner| {
+                        let elems_str = inner.iter().map(|x| format!("{x}")).join(",");
+                        format!("{{{}}}", elems_str)
+                    })
+                    .join(", ");
+
+                write!(f, "{{{elems_str}}}")
             }
             AbstractLiteral::Record(entries) => {
                 let entries_str: String = entries
@@ -610,6 +657,29 @@ impl AbstractLiteral<Expression> {
                     })
                     .collect::<Option<Vec<_>>>()?;
                 Some(AbstractLiteral::MSet(literals))
+            }
+            AbstractLiteral::Partition(elems) => {
+
+                // want to ascertain if every elem in Vec<Vec<Expr>> is a literal. If any are not, return none 
+                // otherwise confirm it is an abslit<lit>
+                let mut partition: Vec<Vec<T>> = Vec::new();
+
+                for part in elems {
+                    let literals = part.into_iter().map(|expr| {
+                        match expr {
+                            Expression::Atomic(_, Atom::Literal(lit)) => Some(lit),
+                            Expression::AbstractLiteral(_, abslit) => {
+                                Some(Literal::AbstractLiteral(abslit.into_literals()?))
+                            }
+                            _ => None,
+                        }
+                    })
+                    .collect::<Option<Vec<_>>>()?;
+                    
+                    partition.push(literals);
+                };
+
+                Some(AbstractLiteral::Partition(partition))
             }
             AbstractLiteral::Matrix(items, domain) => {
                 let mut literals = vec![];

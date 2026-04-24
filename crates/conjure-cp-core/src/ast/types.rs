@@ -1,6 +1,7 @@
 use itertools::Itertools;
 use polyquine::Quine;
 use serde::{Deserialize, Serialize};
+use syn::token::Return;
 use std::fmt::{Display, Formatter};
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, Hash, Quine)]
@@ -13,6 +14,7 @@ pub enum ReturnType {
     Tuple(Vec<ReturnType>),
     Record(Vec<ReturnType>),
     Function(Box<ReturnType>, Box<ReturnType>),
+    Partition(Box<ReturnType>),
 
     /// An unknown type
     ///
@@ -48,6 +50,7 @@ impl Display for ReturnType {
             ReturnType::Function(ty1, ty2) => {
                 write!(f, "function ({ty1} --> {ty2})")
             }
+            ReturnType::Partition(inner) => write!(f, "partition of {inner}"),
             ReturnType::Unknown => write!(f, "?"),
         }
     }
