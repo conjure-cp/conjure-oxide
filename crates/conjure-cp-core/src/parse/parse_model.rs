@@ -710,7 +710,7 @@ pub fn parse_expression(obj: &JsonValue, scope: &SymbolTablePtr) -> Result<Expre
             } else if abstract_literal.contains_key("AbsLitMSet") {
                 parse_abs_mset(&abslit["AbstractLiteral"]["AbsLitMSet"], scope)
             } else if abstract_literal.contains_key("AbstractLiteralPartition") {
-                parse_abs_partition(&abslit["AbstractLiteral"]["AbsLitPartition"])
+                parse_abs_partition(&abslit["AbstractLiteral"]["AbsLitPartition"], scope)
             } else {
                 parse_abstract_matrix_as_expr(obj, scope)
             }
