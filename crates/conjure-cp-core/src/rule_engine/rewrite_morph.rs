@@ -16,7 +16,7 @@ use tree_morph::{
 
 use super::{
     MorphState, RuleData, RuleSet, get_rules_grouped,
-    rewriter_common::try_rewrite_value_letting_once,
+    rewriter_common::{try_rewrite_root_once, try_rewrite_value_letting_once},
 };
 
 /// Rewrites a `Model` by applying rule sets using an optimized, tree-morphing rewriter.
@@ -73,6 +73,12 @@ pub fn rewrite_morph<'a>(
     let model_ref = &mut model;
 
     loop {
+        if try_rewrite_root_once(model_ref, &rules_grouped, prop_multiple_equally_applicable)
+            .is_some()
+        {
+            continue;
+        }
+
         if try_rewrite_value_letting_once(
             model_ref,
             &rules_grouped,
