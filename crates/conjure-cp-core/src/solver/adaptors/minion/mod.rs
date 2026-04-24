@@ -2,4 +2,4 @@
 mod adaptor;
 mod parse_model;
 
-pub use adaptor::Minion;
+pub use adaptor::{Minion, MinionValueOrder};
