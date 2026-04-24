@@ -5,6 +5,7 @@ mod expand_via_solver;
 mod expand_via_solver_ac;
 mod via_solver_common;
 
+use crate::bottom_up_adaptor::as_bottom_up;
 pub use expand_native::expand_native;
 pub use expand_via_solver::expand_via_solver;
 pub use expand_via_solver_ac::expand_via_solver_ac;
@@ -66,8 +67,7 @@ fn exists_quantified_to_finds(expr: &Expr, symbols: &SymbolTable) -> Application
 }
 
 /// Expand comprehensions using `--comprehension-expander native`.
-#[register_rule("Base", 2000, [Comprehension])]
-fn expand_comprehension_native(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+fn expand_comprehension_native_impl(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     if comprehension_expander() != QuantifiedExpander::Native {
         return Err(RuleNotApplicable);
     }
@@ -88,6 +88,31 @@ fn expand_comprehension_native(expr: &Expr, symbols: &SymbolTable) -> Applicatio
     let results = expand_native(comprehension, &mut symbols)
         .unwrap_or_else(|e| bug!("native comprehension expansion failed: {e}"));
     Ok(Reduction::with_symbols(into_matrix_expr!(results), symbols))
+}
+
+#[register_rule("Base", 9500, [Root])]
+/// Eagerly expands native comprehensions in small root models.
+///
+/// This gives tiny dominance-injection models the same local normalisation as larger models
+/// without adding a dominance-specific preprocessing pass.
+fn eagerly_expand_native_comprehensions_in_small_roots(
+    expr: &Expr,
+    symbols: &SymbolTable,
+) -> ApplicationResult {
+    let Expr::Root(_, constraints) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    if comprehension_expander() != QuantifiedExpander::Native || constraints.len() != 1 {
+        return Err(RuleNotApplicable);
+    }
+
+    as_bottom_up(expand_comprehension_native_impl)(expr, symbols)
+}
+
+#[register_rule("Base", 2000, [Comprehension])]
+fn expand_comprehension_native(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    expand_comprehension_native_impl(expr, symbols)
 }
 
 /// Expand comprehensions using `--comprehension-expander via-solver`.
