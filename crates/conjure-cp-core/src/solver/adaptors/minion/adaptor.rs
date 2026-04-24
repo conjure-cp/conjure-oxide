@@ -177,7 +177,14 @@ impl SolverAdaptor for Minion {
             Expression::DominanceRelation(_, inner) => inner.as_ref().clone(),
             _ => expr.clone(),
         });
-        self.dominance_model_template = self.dominance_expression.as_ref().map(|_| model.clone());
+        self.dominance_model_template = self.dominance_expression.as_ref().map(|_| {
+            // Keep only the declaration and symbol context needed for mid-search dominance models.
+            let mut dominance_template = model.clone();
+            dominance_template.replace_constraints(vec![]);
+            dominance_template.replace_clauses(vec![]);
+            dominance_template.dominance = None;
+            dominance_template
+        });
         self.model = Some(model_to_minion(model)?);
         Ok(())
     }
