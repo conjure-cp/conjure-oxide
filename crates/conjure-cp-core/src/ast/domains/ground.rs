@@ -1053,13 +1053,11 @@ impl Display for GroundDomain {
             GroundDomain::Record(entries) => {
                 write!(
                     f,
-                    "record of ({})",
-                    pretty_vec(
-                        &entries
-                            .iter()
-                            .map(|entry| format!("{}: {}", entry.name, entry.domain))
-                            .collect_vec()
-                    )
+                    "record {{{}}}",
+                    entries
+                        .iter()
+                        .map(|entry| format!("{}: {}", entry.name, entry.domain))
+                        .join(", ")
                 )
             }
             GroundDomain::Function(attribute, domain, codomain) => {
