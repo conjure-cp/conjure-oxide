@@ -1,6 +1,6 @@
 //! Normalising rules for boolean operations (not, and, or, ->).
 
-use conjure_cp::ast::{Atom, Expression as Expr, Moo, SymbolTable};
+use conjure_cp::ast::{Atom, Expression as Expr, Literal as Lit, Metadata, Moo, SymbolTable};
 use conjure_cp::essence_expr;
 use conjure_cp::into_matrix_expr;
 use conjure_cp::rule_engine::{
@@ -162,6 +162,76 @@ fn distribute_not_over_or(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         },
         _ => Err(ApplicationError::RuleNotApplicable),
     }
+}
+
+fn remove_boolean_identities_from_expr(
+    exprs: Moo<Expr>,
+    is_and: bool,
+) -> ApplicationResult {
+    let Some(exprs) = exprs.as_ref().clone().unwrap_list() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let mut changed = false;
+    let mut new_exprs = Vec::with_capacity(exprs.len());
+
+    for child in exprs {
+        match child {
+            Expr::Atomic(_, Atom::Literal(Lit::Bool(value))) => {
+                if (is_and && !value) || (!is_and && value) {
+                    return Ok(Reduction::pure(Expr::Atomic(
+                        Metadata::new(),
+                        Atom::Literal(Lit::Bool(value)),
+                    )));
+                }
+
+                changed = true;
+            }
+            other => new_exprs.push(other),
+        }
+    }
+
+    if !changed {
+        return Err(RuleNotApplicable);
+    }
+
+    let out = if is_and {
+        Expr::And(Metadata::new(), Moo::new(into_matrix_expr![new_exprs]))
+    } else {
+        Expr::Or(Metadata::new(), Moo::new(into_matrix_expr![new_exprs]))
+    };
+
+    Ok(Reduction::pure(out))
+}
+
+/// Removes neutral boolean constants from `and` and short-circuits `false`.
+///
+/// ```text
+/// and([a, true, b]) ~> and([a, b])
+/// and([a, false, b]) ~> false
+/// ```
+#[register_rule("Base", 8800, [And])]
+fn remove_and_identities(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    let Expr::And(_, exprs) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    remove_boolean_identities_from_expr(exprs.clone(), true)
+}
+
+/// Removes neutral boolean constants from `or` and short-circuits `true`.
+///
+/// ```text
+/// or([a, false, b]) ~> or([a, b])
+/// or([a, true, b]) ~> true
+/// ```
+#[register_rule("Base", 8800, [Or])]
+fn remove_or_identities(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    let Expr::Or(_, exprs) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    remove_boolean_identities_from_expr(exprs.clone(), false)
 }
 
 /// Removes ands with a single argument.
