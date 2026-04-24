@@ -144,7 +144,7 @@ fn write_combined_group_file(group: &InputGroup) -> PathBuf {
 
     source.push_str(&read_input_file(&group.primary_file));
     source.push('\n');
-    
+
     // Write the combined source to a temporary file and return the path to that file
     let mut temp_path = std::env::temp_dir();
     let stamp = SystemTime::now()

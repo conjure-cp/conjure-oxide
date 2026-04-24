@@ -2,7 +2,11 @@ use crate::model::{ParserSelection, RepoSelection, RowResult};
 use std::collections::BTreeSet;
 use std::path::Path;
 
-pub fn build_html(rows: &[RowResult], parser_selection: &ParserSelection, repo_selection: &RepoSelection) -> String {
+pub fn build_html(
+    rows: &[RowResult],
+    parser_selection: &ParserSelection,
+    repo_selection: &RepoSelection,
+) -> String {
     let mut rows_html = String::new();
 
     let show_native = matches!(
@@ -153,7 +157,10 @@ pub fn build_html(rows: &[RowResult], parser_selection: &ParserSelection, repo_s
     let template = include_str!("template.html");
     template
         .replace("__TOTAL__", &rows.len().to_string())
-        .replace("__RUN_INFO__", &run_info_text(parser_selection, repo_selection))
+        .replace(
+            "__RUN_INFO__",
+            &run_info_text(parser_selection, repo_selection),
+        )
         .replace("__REPO_OPTIONS__", &repo_options)
         .replace("__HEADER_CELLS__", &header_cells)
         .replace("__ROWS__", &rows_html)

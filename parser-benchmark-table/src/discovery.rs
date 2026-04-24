@@ -1,6 +1,6 @@
 use crate::model::{
-    CONJURE_REPO_URL, ESSENCE_CATALOG_REPO_URL, InputGroup, ParserSelection,
-    REPO_CACHE_DIR, RepoSelection,
+    CONJURE_REPO_URL, ESSENCE_CATALOG_REPO_URL, InputGroup, ParserSelection, REPO_CACHE_DIR,
+    RepoSelection,
 };
 use std::collections::BTreeMap;
 use std::fs;
@@ -11,6 +11,14 @@ struct ScanTarget {
     repo_name: &'static str,
     repo_root: PathBuf,
     scan_root: PathBuf,
+}
+
+#[derive(Default)]
+struct GroupBucket {
+    essence_models: Vec<PathBuf>,
+    essence_params: Vec<PathBuf>,
+    eprime_models: Vec<PathBuf>,
+    eprime_params: Vec<PathBuf>,
 }
 
 pub fn discover_input_groups(
@@ -33,11 +41,7 @@ pub fn discover_input_groups(
 
         let grouped = group_repo_files(target.repo_name, &target.repo_root, &target.scan_root);
 
-        println!(
-            "- {}: {} input groups",
-            target.repo_name,
-            grouped.len()
-        );
+        println!("- {}: {} input groups", target.repo_name, grouped.len());
         all_groups.extend(grouped);
     }
 
@@ -86,10 +90,7 @@ fn build_scan_targets(repo_selection: RepoSelection) -> Option<Vec<ScanTarget>> 
 
     if repo_selection.essence_catalog {
         let essence_catalog_target = cache_root.join("EssenceCatalog");
-        let _ = ensure_repo_checkout(
-            ESSENCE_CATALOG_REPO_URL,
-            &essence_catalog_target,
-        );
+        let _ = ensure_repo_checkout(ESSENCE_CATALOG_REPO_URL, &essence_catalog_target);
         let repo = cache_root.join("EssenceCatalog");
         targets.push(ScanTarget {
             repo_name: "EssenceCatalog",
@@ -113,7 +114,7 @@ fn ensure_repo_checkout(repo_url: &str, target_path: &Path) -> Option<PathBuf> {
 
         match pull {
             Ok(status) if status.success() => return Some(target_path.to_path_buf()),
-            _ => return None
+            _ => return None,
         }
     }
 
@@ -126,22 +127,24 @@ fn ensure_repo_checkout(repo_url: &str, target_path: &Path) -> Option<PathBuf> {
 
     match clone {
         Ok(status) if status.success() => return Some(target_path.to_path_buf()),
-        _ => return None
+        _ => return None,
     }
 }
 
 fn group_repo_files(repo_name: &str, repo_root: &Path, scan_root: &Path) -> Vec<InputGroup> {
-    let mut groups = Vec::new();
-    let mut group_indexes: BTreeMap<String, usize> = BTreeMap::new();
+    let mut buckets: BTreeMap<String, GroupBucket> = BTreeMap::new();
+    collect_and_group_files(scan_root, repo_name, &mut buckets);
 
-    // Recursively scan the target directory for candidate files, grouping them as we go
-    collect_and_group_files(
-        scan_root,
-        repo_name,
-        repo_root,
-        &mut groups,
-        &mut group_indexes,
-    );
+    let mut groups = Vec::new();
+    // For each bucket of related files, emit one or more input groups based on the presence of model and param files
+    for bucket in buckets.values_mut() {
+        bucket.essence_models.sort();
+        bucket.essence_params.sort();
+        bucket.eprime_models.sort();
+        bucket.eprime_params.sort();
+
+        emit_groups(repo_name, repo_root, bucket, &mut groups);
+    }
 
     groups
 }
@@ -149,9 +152,7 @@ fn group_repo_files(repo_name: &str, repo_root: &Path, scan_root: &Path) -> Vec<
 fn collect_and_group_files(
     dir: &Path,
     repo_name: &str,
-    repo_root: &Path,
-    groups: &mut Vec<InputGroup>,
-    group_indexes: &mut BTreeMap<String, usize>,
+    buckets: &mut BTreeMap<String, GroupBucket>,
 ) {
     let Ok(entries) = fs::read_dir(dir) else {
         return;
@@ -162,7 +163,7 @@ fn collect_and_group_files(
 
         // If directory, recursively collect files from it
         if path.is_dir() {
-            collect_and_group_files(&path, repo_name, repo_root, groups, group_indexes);
+            collect_and_group_files(&path, repo_name, buckets);
             continue;
         }
 
@@ -170,111 +171,91 @@ fn collect_and_group_files(
             continue;
         }
 
-        // Use the parent directory as the grouping key, so files in the same directory are grouped together
-        let key = path
-            .parent()
-            .map(|p| p.display().to_string())
-            .unwrap_or_default();
+        // Get the grouping key for this file and add it to the appropriate bucket based on its extension
+        let key = grouping_key(repo_name, &path);
+        let bucket = buckets.entry(key).or_default();
 
-        if let Some(idx) = group_indexes.get(&key).copied() {
-            // If we've already seen a file from the same group, apply this file to the existing group
-            apply_file_to_group(&mut groups[idx], path);
-        } else {
-            // Otherwise, create a new group for this file
-            let text = path.to_string_lossy();
-            let group_kind = if text.ends_with(".eprime-param") {
-                "eprime-param-only"
-            } else if text.ends_with(".param") {
-                "param-only"
-            } else if text.ends_with(".eprime") {
-                "eprime"
-            } else {
-                "essence"
-            };
-
-            groups.push(InputGroup {
-                repo_name: repo_name.to_string(),
-                repo_root: repo_root.to_path_buf(),
-                primary_file: path,
-                param_file: None,
-                group_kind,
-            });
-            group_indexes.insert(key, groups.len() - 1);
+        let text = path.to_string_lossy();
+        if text.ends_with(".eprime-param") {
+            bucket.eprime_params.push(path);
+        } else if text.ends_with(".param") {
+            bucket.essence_params.push(path);
+        } else if text.ends_with(".eprime") {
+            bucket.eprime_models.push(path);
+        } else if text.ends_with(".essence") {
+            bucket.essence_models.push(path);
         }
     }
 }
 
+fn emit_groups(
+    repo_name: &str,
+    repo_root: &Path,
+    bucket: &GroupBucket,
+    groups: &mut Vec<InputGroup>,
+) {
+    // Get the input file (should only be one essence or eprime model file)
+    let model = bucket
+        .essence_models
+        .first()
+        .cloned()
+        .or_else(|| bucket.eprime_models.first().cloned());
 
-fn apply_file_to_group(group: &mut InputGroup, path: PathBuf) {
-    // Determine the role of the file based on its name and extension, and update the group accordingly
-    let text = path.to_string_lossy();
-
-    if text.ends_with(".essence") {
-        if group.group_kind == "param-only" {
-            let param_path = group.primary_file.clone();
-            group.primary_file = path;
-            group.param_file = Some(param_path);
-            group.group_kind = "essence+param";
+    if let Some(model_path) = model {
+        if bucket.essence_params.is_empty() {
+            // Model file with no params
+            groups.push(InputGroup {
+                repo_name: repo_name.to_string(),
+                repo_root: repo_root.to_path_buf(),
+                primary_file: model_path,
+                param_file: None,
+                group_kind: "essence",
+            });
         } else {
-            group.primary_file = path;
-            group.group_kind = if group.param_file.is_some() {
-                "essence+param"
-            } else {
-                "essence"
-            };
+            // Add a group for each param file paired with the model file
+            for param in &bucket.essence_params {
+                groups.push(InputGroup {
+                    repo_name: repo_name.to_string(),
+                    repo_root: repo_root.to_path_buf(),
+                    primary_file: model_path.clone(),
+                    param_file: Some(param.clone()),
+                    group_kind: "essence+param",
+                });
+            }
         }
-        return;
+    } else {
+        // Only param files with no model file - add each as its own group
+        for param in &bucket.essence_params {
+            groups.push(InputGroup {
+                repo_name: repo_name.to_string(),
+                repo_root: repo_root.to_path_buf(),
+                primary_file: param.clone(),
+                param_file: None,
+                group_kind: "param-only",
+            });
+        }
+    }
+}
+
+fn grouping_key(repo_name: &str, path: &Path) -> String {
+    // Group files by their parent directory by default
+    let parent = path.parent();
+    let parent_name = parent
+        .and_then(|p| p.file_name())
+        .and_then(|n| n.to_str())
+        .unwrap_or_default();
+
+    // EssenceCatalog commonly uses a test file in a problem directory
+    // and params under a sibling params/ directory. Normalize params/ files
+    // to the parent problem directory key so each param pairs with that test file.
+    if repo_name == "EssenceCatalog" && parent_name == "params" {
+        return parent
+            .and_then(|p| p.parent())
+            .map(|p| p.display().to_string())
+            .unwrap_or_default();
     }
 
-    if text.ends_with(".param") {
-        match group.group_kind {
-            "essence" => {
-                group.param_file = Some(path);
-                group.group_kind = "essence+param";
-            }
-            "essence+param" => {
-                group.param_file = Some(path);
-            }
-            "param-only" => {
-                group.primary_file = path;
-            }
-            _ => {}
-        }
-        return;
-    }
-
-    if text.ends_with(".eprime") {
-        if group.group_kind == "eprime-param-only" {
-            let param_path = group.primary_file.clone();
-            group.primary_file = path;
-            group.param_file = Some(param_path);
-            group.group_kind = "eprime+eprime-param";
-        } else {
-            group.primary_file = path;
-            group.group_kind = if group.param_file.is_some() {
-                "eprime+eprime-param"
-            } else {
-                "eprime"
-            };
-        }
-        return;
-    }
-
-    if text.ends_with(".eprime-param") {
-        match group.group_kind {
-            "eprime" => {
-                group.param_file = Some(path);
-                group.group_kind = "eprime+eprime-param";
-            }
-            "eprime+eprime-param" => {
-                group.param_file = Some(path);
-            }
-            "eprime-param-only" => {
-                group.primary_file = path;
-            }
-            _ => {}
-        }
-    }
+    parent.map(|p| p.display().to_string()).unwrap_or_default()
 }
 
 fn is_candidate_file(path: &Path) -> bool {
@@ -293,4 +274,3 @@ fn is_candidate_file(path: &Path) -> bool {
         || file_name.ends_with(".param")
         || file_name.ends_with(".eprime-param")
 }
-
