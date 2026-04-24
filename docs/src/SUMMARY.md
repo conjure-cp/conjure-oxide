@@ -28,7 +28,6 @@
 - [Coding Resources and Conventions](./developers_guide/coding_resources/index.md)
   - [Glossary](./developers_guide/coding_resources/glossary.md)
   - [Functional Rust](./getting_started/functional-rust.md)
-  - [Style Guide](./developers_guide/coding_resources/style_guide.md)
   - [Crate Structure](./developers_guide/coding_resources/crate_structure.md)
   - [Benchmarking Guide](./developers_guide/coding_resources/benchmarking-guide.md)
 
@@ -62,7 +61,6 @@
   - [LSP Error Testing](./documentation/LSP/lsp_tests.md)
 - [Testing: The Ideal Scenario](./documentation/testing/ideal-scenario-of-testing.md)
   - [Creating Custom Tests](./documentation/testing/Custom-Tests.md)
-- [Implementing Uniplates and Biplates with Structure Preserving Trees](./documentation/Implementing-Uniplates-and-Biplates-with-Structure-Preserving-Trees.md)
 - [SAT Encoding Types](./documentation/SAT/sat-encoding-types.md)
 - [Rule Types](./documentation/SAT/rule-types.md)
 - [Flatten](./documentation/flatten.md)
@@ -74,6 +72,7 @@
   - [Creating Types Guide](./documentation/types/creating_types_guide.md)
   - [Functions](./documentation/types/functions.md)
   - [Multisets](./documentation/types/multisets.md)
+  - [Relations](./documentation/types/relations.md)
 - [Essence Parser](./documentation/essence_parser.md)
 <!-- TODO: add the error detection documentations -->
 - [Error Detection](./documentation/error_detection/error_classification.md)
