@@ -5,6 +5,7 @@ use crate::expression::{parse_binary_expression, parse_expression};
 use crate::parser::ParseContext;
 use crate::parser::abstract_literal::parse_abstract;
 use crate::parser::comprehension::parse_comprehension;
+use crate::parser::dominance::parse_pareto_expression;
 use crate::util::{TypecheckingContext, named_children};
 use crate::{field, named_child};
 use conjure_cp_core::ast::{
@@ -61,6 +62,7 @@ pub fn parse_atom(
                 Moo::new(inner),
             )))
         }
+        "pareto_expression" => parse_pareto_expression(ctx, node),
         "constant" => {
             let Some(lit) = parse_constant(ctx, node)? else {
                 return Ok(None);
@@ -97,9 +99,22 @@ fn parse_flatten(
     ctx: &mut ParseContext,
     node: &Node,
 ) -> Result<Option<Expression>, FatalParseError> {
+    // add error and return early if we're in a set context, since flatten doesn't produce sets
+    if ctx.typechecking_context == TypecheckingContext::Set {
+        ctx.record_error(RecoverableParseError::new(
+            format!(
+                "Type error: {}\n\tExpected: set\n\tGot: flatten",
+                ctx.source_code[node.start_byte()..node.end_byte()].trim()
+            ),
+            Some(node.range()),
+        ));
+        return Ok(None);
+    }
+
     let Some(expr_node) = field!(recover, ctx, node, "expression") else {
         return Ok(None);
     };
+    // TODO: verify the atom is a matrix
     let Some(expr) = parse_atom(ctx, &expr_node)? else {
         return Ok(None);
     };
@@ -125,6 +140,18 @@ fn parse_flatten(
 }
 
 fn parse_table(ctx: &mut ParseContext, node: &Node) -> Result<Option<Expression>, FatalParseError> {
+    // add error and return early if we're in a set context, since tables aren't allowed there
+    if ctx.typechecking_context == TypecheckingContext::Set {
+        ctx.record_error(RecoverableParseError::new(
+            format!(
+                "Type error: {}\n\tExpected: set\n\tGot: table",
+                ctx.source_code[node.start_byte()..node.end_byte()].trim()
+            ),
+            Some(node.range()),
+        ));
+        return Ok(None);
+    }
+
     // the variables and rows can contain arbitrary expressions, so we temporarily set the context to Unknown to avoid typechecking errors
     let saved_context = ctx.typechecking_context;
     ctx.typechecking_context = TypecheckingContext::Unknown;
@@ -173,6 +200,18 @@ fn parse_index_or_slice(
     ctx: &mut ParseContext,
     node: &Node,
 ) -> Result<Option<Expression>, FatalParseError> {
+    // add error and return early if we're in a set context, since indexing/slicing doesn't produce sets
+    if ctx.typechecking_context == TypecheckingContext::Set {
+        ctx.record_error(RecoverableParseError::new(
+            format!(
+                "Type error: {}\n\tExpected: set\n\tGot: index or slice",
+                ctx.source_code[node.start_byte()..node.end_byte()].trim()
+            ),
+            Some(node.range()),
+        ));
+        return Ok(None);
+    }
+
     // Save current context and temporarily set to Unknown for the collection
     let saved_context = ctx.typechecking_context;
     ctx.typechecking_context = TypecheckingContext::Unknown;
@@ -304,6 +343,12 @@ fn typecheck_variable(
     let expected = match context {
         TypecheckingContext::Boolean => "bool",
         TypecheckingContext::Arithmetic => "int",
+        TypecheckingContext::Set => "set",
+        TypecheckingContext::SetOrMatrix => "set or matrix",
+        TypecheckingContext::MSet => "mset",
+        TypecheckingContext::Matrix => "matrix",
+        TypecheckingContext::Tuple => "tuple",
+        TypecheckingContext::Record => "record",
         TypecheckingContext::Unknown => return None, // shouldn't reach here
     };
 
@@ -317,11 +362,14 @@ fn typecheck_variable(
         GroundDomain::Tuple(_) => "tuple",
         GroundDomain::Record(_) => "record",
         GroundDomain::Function(_, _, _) => "function",
+        GroundDomain::Relation(_, _) => "relation",
         GroundDomain::Empty(_) => "empty",
     };
 
     // If types match, no error
-    if expected == actual {
+    if expected == actual
+        || (context == TypecheckingContext::SetOrMatrix && matches!(actual, "set" | "matrix"))
+    {
         return None;
     }
 
@@ -382,6 +430,12 @@ fn parse_constant(ctx: &mut ParseContext, node: &Node) -> Result<Option<Literal>
         let expected = match ctx.typechecking_context {
             TypecheckingContext::Boolean => "bool",
             TypecheckingContext::Arithmetic => "int",
+            TypecheckingContext::Set => "set",
+            TypecheckingContext::SetOrMatrix => "set or matrix",
+            TypecheckingContext::MSet => "mset",
+            TypecheckingContext::Matrix => "matrix",
+            TypecheckingContext::Tuple => "tuple",
+            TypecheckingContext::Record => "record",
             TypecheckingContext::Unknown => "",
         };
 

@@ -8,11 +8,11 @@ use conjure_cp::solver::Solver;
 use conjure_cp::solver::adaptors::*;
 use conjure_cp_cli::utils::testing::{normalize_solutions_for_comparison, read_default_rule_trace};
 use std::collections::{BTreeMap, BTreeSet};
-use std::env;
 use std::error::Error;
 use std::fs;
 use std::fs::File;
 use std::path::Path;
+use std::time::Instant;
 use tracing_subscriber::{Layer, filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt};
 
 use std::sync::Arc;
@@ -35,8 +35,10 @@ use conjure_cp_cli::utils::testing::{read_solutions_json, save_solutions_json};
 #[allow(clippy::single_component_path_imports, unused_imports)]
 use conjure_cp_rules;
 use pretty_assertions::assert_eq;
+use tests_integration::AcceptMode;
 use tests_integration::TestConfig;
 use tests_integration::golden_files::assert_no_redundant_expected_files;
+use tests_integration::test_config::{round_expected_time, upsert_expected_time_config};
 
 #[derive(Clone, Copy, Debug)]
 struct RunCase<'a> {
@@ -63,7 +65,9 @@ fn run_case_label(
 }
 
 fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(), Box<dyn Error>> {
-    let accept = env::var("ACCEPT").unwrap_or("false".to_string()) == "true";
+    let accept_mode = AcceptMode::from_env();
+    let accept = accept_mode.accepts_outputs();
+    let started_at = Instant::now();
 
     if accept {
         clean_test_dir_for_accept(path, essence_base, extension)?;
@@ -146,8 +150,8 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
                         as Arc<dyn tracing::Subscriber + Send + Sync>;
                     let run_label = run_case_label(path, essence_base, extension, run_case);
                     eprintln!("[integration] running {run_label}");
-                    let default_rule_trace_enabled = true;
-                    set_rule_trace_enabled(default_rule_trace_enabled);
+                    let default_rule_trace_enabled = matches!(rewriter, Rewriter::Naive);
+                    set_rule_trace_enabled(true);
                     set_default_rule_trace_enabled(default_rule_trace_enabled);
                     set_rule_trace_verbose_enabled(false);
                     set_rule_trace_aggregates_enabled(false);
@@ -173,6 +177,12 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
     }
 
     assert_no_redundant_expected_files(Path::new(path), &allowed_expected_files, None)?;
+
+    if accept_mode.records_expected_time() {
+        let expected_time = round_expected_time(started_at.elapsed());
+        let config_path = Path::new(path).join("config.toml");
+        upsert_expected_time_config(&config_path, expected_time)?;
+    }
 
     Ok(())
 }
@@ -276,7 +286,7 @@ fn integration_test_inner(
         solved
     };
 
-    // Stage 3b: Check solutions against Conjure when ACCEPT=true and validation is enabled.
+    // Stage 3b: Check solutions against Conjure when accept mode is enabled and validation is enabled.
     if accept && conjure_solutions.is_some() {
         let conjure_solutions = conjure_solutions
             .as_deref()
@@ -297,7 +307,7 @@ fn integration_test_inner(
         );
     }
 
-    // When ACCEPT=true, copy all generated files to expected
+    // When accept mode is enabled, copy all generated files to expected
     if accept {
         // Always overwrite these ones. Unlike the rest, we don't need to selectively do these
         // based on the test results, so they don't get done later.

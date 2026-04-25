@@ -47,7 +47,7 @@ pub fn named_rule(attr: TokenStream, item: TokenStream) -> TokenStream {
     };
 
     // Create a private helper function with the original implementation
-    let helper_name = syn::Ident::new(&format!("__{}_impl", name), name.span());
+    let helper_name = syn::Ident::new(&format!("__{name}_impl"), name.span());
     let mut helper_function = function.clone();
     helper_function.sig.ident = helper_name.clone();
     helper_function.vis = syn::Visibility::Inherited;

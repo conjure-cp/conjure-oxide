@@ -10,6 +10,7 @@ use conjure_cp_core::context::Context;
 use uniplate::Uniplate;
 
 use super::ParseContext;
+use super::dominance::parse_dominance_relation;
 use super::find::{parse_find_statement, parse_given_statement};
 use super::letting::parse_letting_statement;
 use super::util::{TypecheckingContext, get_tree};
@@ -124,6 +125,9 @@ pub fn parse_essence_with_context_and_map(
             continue;
         }
 
+        ctx.typechecking_context = TypecheckingContext::Unknown;
+        ctx.inner_typechecking_context = TypecheckingContext::Unknown;
+
         match statement.kind() {
             "single_line_comment" => {}
             "language_declaration" => {}
@@ -158,7 +162,7 @@ pub fn parse_essence_with_context_and_map(
                 model.symbols_mut().extend(letting_vars);
             }
             "dominance_relation" => {
-                let Some(dominance) = parse_expression(&mut ctx, statement)? else {
+                let Some(dominance) = parse_dominance_relation(&mut ctx, &statement)? else {
                     continue;
                 };
                 if model.dominance.is_some() {
@@ -291,5 +295,128 @@ mod test {
                 domain_int!(-2..0)
             )
         )
+    }
+
+    #[test]
+    pub fn test_parse_pareto_in_dominance_relation() {
+        let src = "
+        find x : int(0..3)
+
+        dominance relation
+            pareto(minimising x)
+        ";
+
+        let (model, _source_map) = parse_essence(src).unwrap();
+        let st = model.symbols();
+        let x = st.lookup(&Name::user("x")).unwrap();
+        let x_e = Expression::Atomic(Metadata::new(), Atom::new_ref(x.clone()));
+        let x_prev = Expression::FromSolution(Metadata::new(), Moo::new(Atom::new_ref(x)));
+
+        assert_eq!(
+            model.dominance,
+            Some(Expression::DominanceRelation(
+                Metadata::new(),
+                Moo::new(Expression::And(
+                    Metadata::new(),
+                    Moo::new(matrix_expr!(
+                        Expression::Leq(
+                            Metadata::new(),
+                            Moo::new(x_e.clone()),
+                            Moo::new(x_prev.clone())
+                        ),
+                        Expression::Lt(Metadata::new(), Moo::new(x_e), Moo::new(x_prev))
+                    ))
+                ))
+            ))
+        );
+    }
+
+    #[test]
+    pub fn test_parse_pareto_with_mixed_directions() {
+        let src = "
+        find x : int(0..3)
+        find y : int(0..3)
+
+        dominance relation
+            pareto(minimising x, maximising y)
+        ";
+
+        let (model, _source_map) = parse_essence(src).unwrap();
+        let st = model.symbols();
+        let x = st.lookup(&Name::user("x")).unwrap();
+        let y = st.lookup(&Name::user("y")).unwrap();
+        let x_e = Expression::Atomic(Metadata::new(), Atom::new_ref(x.clone()));
+        let y_e = Expression::Atomic(Metadata::new(), Atom::new_ref(y.clone()));
+        let x_prev = Expression::FromSolution(Metadata::new(), Moo::new(Atom::new_ref(x)));
+        let y_prev = Expression::FromSolution(Metadata::new(), Moo::new(Atom::new_ref(y)));
+
+        assert_eq!(
+            model.dominance,
+            Some(Expression::DominanceRelation(
+                Metadata::new(),
+                Moo::new(Expression::And(
+                    Metadata::new(),
+                    Moo::new(matrix_expr!(
+                        Expression::Leq(
+                            Metadata::new(),
+                            Moo::new(x_e.clone()),
+                            Moo::new(x_prev.clone())
+                        ),
+                        Expression::Geq(
+                            Metadata::new(),
+                            Moo::new(y_e.clone()),
+                            Moo::new(y_prev.clone())
+                        ),
+                        Expression::Or(
+                            Metadata::new(),
+                            Moo::new(matrix_expr!(
+                                Expression::Lt(Metadata::new(), Moo::new(x_e), Moo::new(x_prev)),
+                                Expression::Gt(Metadata::new(), Moo::new(y_e), Moo::new(y_prev))
+                            ))
+                        )
+                    ))
+                ))
+            ))
+        );
+    }
+
+    #[test]
+    pub fn test_parse_pareto_over_expression_component() {
+        let src = "
+        find x : int(0..3)
+
+        dominance relation
+            pareto(minimising x + 1)
+        ";
+
+        let (model, _source_map) = parse_essence(src).unwrap();
+        let st = model.symbols();
+        let x = st.lookup(&Name::user("x")).unwrap();
+        let x_e = Expression::Atomic(Metadata::new(), Atom::new_ref(x.clone()));
+        let x_prev = Expression::FromSolution(Metadata::new(), Moo::new(Atom::new_ref(x)));
+        let one = Expression::Atomic(Metadata::new(), 1.into());
+        let current = Expression::Sum(
+            Metadata::new(),
+            Moo::new(matrix_expr!(x_e.clone(), one.clone())),
+        );
+        let previous = Expression::Sum(Metadata::new(), Moo::new(matrix_expr!(x_prev, one)));
+
+        assert_eq!(
+            model.dominance,
+            Some(Expression::DominanceRelation(
+                Metadata::new(),
+                Moo::new(Expression::And(
+                    Metadata::new(),
+                    Moo::new(matrix_expr!(
+                        Expression::Leq(
+                            Metadata::new(),
+                            Moo::new(current.clone()),
+                            Moo::new(previous.clone())
+                        ),
+                        Expression::Lt(Metadata::new(), Moo::new(current), Moo::new(previous))
+                    ))
+                ))
+            ))
+        );
     }
 }

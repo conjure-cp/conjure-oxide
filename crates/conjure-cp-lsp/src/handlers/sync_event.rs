@@ -13,7 +13,6 @@ use conjure_cp_essence_parser::diagnostics::diagnostics_api::Diagnostic as Parse
 use conjure_cp_essence_parser::diagnostics::diagnostics_api::Position as ParserPosition;
 use conjure_cp_essence_parser::diagnostics::diagnostics_api::Range as ParserRange;
 use conjure_cp_essence_parser::diagnostics::diagnostics_api::Severity as ParserSeverity;
-use conjure_cp_essence_parser::diagnostics::diagnostics_api::get_diagnostics;
 use tower_lsp::lsp_types::Position as LspPosition;
 use tower_lsp::lsp_types::Range as LspRange;
 
@@ -22,6 +21,10 @@ use tree_sitter::Tree;
 
 use crate::handlers::cache::CacheCont;
 use crate::server::Backend;
+
+// parse debounce is the amount of time to wait after a document change before re-parsing and updating diagnostics
+// helps avoid excessive parsing on rapid successive edits
+const PARSE_DEBOUNCE_MS: u64 = 120;
 
 impl Backend {
     pub async fn handle_did_open(&self, params: DidOpenTextDocumentParams) {
@@ -81,65 +84,64 @@ impl Backend {
             .await;
 
         //diagnostic stuff here
-        self.handle_diagnostics(&uri.clone(), cache_content).await;
+        publish_diagnostics(&self.client, &uri.clone(), cache_content).await;
     }
     pub async fn handle_did_save(&self, params: DidSaveTextDocumentParams) {
-        //if save, do not update existing entry,simply access from cache
+        // Diagnostics are driven by did_change. Re-publishing cached diagnostics on save can
+        // race with in-flight did_change parsing and temporarily re-show stale diagnostics.
         let uri = params.text_document.uri;
-        let lsp_cache = &self.lsp_cache;
-
-        if let Some(lsp_cont) = lsp_cache.get(&uri).await {
-            //CANNOT USE PRINTLNs AS THIS WILL BREAK CONNECTION WITH SERVER
-
-            //check versioning? might modify for dirty clean later cos i dont fw current situ
-
-            self.client
-                .log_message(MessageType::INFO, "Did save document")
-                .await;
-            self.handle_diagnostics(&uri, lsp_cont).await;
-        }
+        let _ = uri; // keep param usage explicit for now
+        self.client
+            .log_message(MessageType::INFO, "Did save document")
+            .await;
     }
     pub async fn handle_did_change(&self, params: DidChangeTextDocumentParams) {
-        //on change, take change and range of change
-        //modify existing document given uri and cache content to update the document version in cache
-        //TODO: check whether changes are purely whitespace
-        //if changes are purely whitespace, check whether they
-
         let uri = params.text_document.uri;
+        let incoming_version = params.text_document.version;
         let lsp_cache = &self.lsp_cache;
 
         self.client
             .log_message(MessageType::INFO, "in document change")
             .await;
 
-        if let Some(change) = params.content_changes.first()
-            && let Some(cache_conts) = lsp_cache.get(&uri).await
-        {
-            let mut new_text = cache_conts.contents.clone();
+        let Some(cache_conts) = lsp_cache.get(&uri).await else {
+            self.client
+                .log_message(MessageType::WARNING, "DidChange for uncached document")
+                .await;
+            return;
+        };
+
+        // Drop stale/out-of-order changes.
+        if incoming_version <= cache_conts.version {
+            return;
+        }
+
+        let mut new_text = cache_conts.contents.clone();
+        let mut edited_tree = cache_conts.cst.clone();
+
+        // LSP may send multiple incremental edits in one notification.
+        for change in &params.content_changes {
             if let Some(lsp_range) = change.range {
-                //convert range for string conversion here
+                let start_byte = position_to_byte(&new_text, lsp_range.start);
+                let old_end_byte = position_to_byte(&new_text, lsp_range.end);
 
-                let start_byte = position_to_byte(&cache_conts.contents, lsp_range.start);
-                let end_byte = position_to_byte(&cache_conts.contents, lsp_range.end);
-                new_text.replace_range(start_byte..end_byte, &change.text);
-            } else {
-                new_text = change.text.clone();
-            }
-
-            let new_tree: Tree = if let Some(lsp_range) = change.range {
-                let start_byte = position_to_byte(&cache_conts.contents, lsp_range.start);
-                let old_end_byte = position_to_byte(&cache_conts.contents, lsp_range.end);
-                let new_end_byte = start_byte + change.text.len();
+                if start_byte > old_end_byte || old_end_byte > new_text.len() {
+                    self.client
+                        .log_message(
+                            MessageType::WARNING,
+                            "Ignoring invalid edit range in DidChange",
+                        )
+                        .await;
+                    continue;
+                }
 
                 let start_position = position_to_treesitter_point(lsp_range.start);
                 let old_end_position = position_to_treesitter_point(lsp_range.end);
                 let new_end_position = calculate_new_end_position(&change.text, lsp_range.start);
+                let new_end_byte = start_byte + change.text.len();
 
-                self.client
-                    .log_message(MessageType::INFO, "before edit")
-                    .await;
-                if let Some(ref mut old_cst) = cache_conts.cst.clone() {
-                    old_cst.edit(&tree_sitter::InputEdit {
+                if let Some(tree) = edited_tree.as_mut() {
+                    tree.edit(&tree_sitter::InputEdit {
                         start_byte,
                         old_end_byte,
                         new_end_byte,
@@ -147,109 +149,118 @@ impl Backend {
                         old_end_position,
                         new_end_position,
                     });
-
-                    // parse the new text with the edited tree as a starting point for incremental parsing
-                    // TODO: handle _FRAGMENT_EXPRESSION like get_tree does
-                    // maybe make separate helper for that or something
-                    let mut parser = tree_sitter::Parser::new();
-                    parser
-                        .set_language(&tree_sitter_essence::LANGUAGE.into())
-                        .unwrap();
-                    tree_sitter::Parser::parse(&mut parser, &new_text, Some(old_cst)).unwrap()
-                } else {
-                    // if cst was None due to a failure to parse,
-                    // we should re-parse the entire new text instead of trying to edit a non-existent tree
-                    // there could be a better way to handle this, but for now this is a safe fallback
-                    get_tree(&new_text).unwrap().0
                 }
+
+                new_text.replace_range(start_byte..old_end_byte, &change.text);
             } else {
-                get_tree(&new_text).unwrap().0
+                // Full content replacement.
+                new_text = change.text.clone();
+                edited_tree = None;
+            }
+        }
+
+        let mut new_tree: Option<Tree> = if let Some(ref old_tree) = edited_tree {
+            let mut parser = tree_sitter::Parser::new();
+            parser
+                .set_language(&tree_sitter_essence::LANGUAGE.into())
+                .unwrap();
+            parser.parse(&new_text, Some(old_tree))
+        } else {
+            None
+        };
+
+        if new_tree.is_none() {
+            new_tree = get_tree(&new_text).map(|(tree, _)| tree);
+        }
+
+        // store updated text/tree IMMEDIATELY so subsequent incremental edits are based on
+        // the latest document state, then parse & diagnose in a debounced task
+        let provisional = CacheCont {
+            sourcemap: cache_conts.sourcemap.clone(),
+            ast: cache_conts.ast.clone(),
+            errors: cache_conts.errors.clone(),
+            cst: new_tree.clone(),
+            contents: new_text.clone(),
+            version: incoming_version,
+        };
+        lsp_cache.insert(uri.clone(), provisional).await;
+
+        let lsp_cache = lsp_cache.clone();
+        let client = self.client.clone();
+        tokio::spawn(async move {
+            tokio::time::sleep(std::time::Duration::from_millis(PARSE_DEBOUNCE_MS)).await;
+
+            let Some(current) = lsp_cache.get(&uri).await else {
+                return;
             };
+
+            // only parse the newest queued version
+            if current.version != incoming_version {
+                return;
+            }
 
             let context = Arc::new(RwLock::new(Context::default()));
             let mut errors: Vec<RecoverableParseError> = Vec::new();
-
-            self.client
-                .log_message(MessageType::INFO, new_text.clone())
-                .await;
-
             let parsed = parse_essence_with_context_and_map(
-                &new_text,
+                &current.contents,
                 context,
                 &mut errors,
-                Some(&new_tree),
+                current.cst.as_ref(),
             );
 
-            let new_cache_conts = match parsed {
-                Ok((Some(ast_model), source_map)) => {
-                    self.client
-                        .log_message(MessageType::LOG, "THIS ONE INSTEAD")
-                        .await;
-                    CacheCont {
-                        sourcemap: Some(source_map),
-                        ast: Some(ast_model),
-                        errors,
-                        cst: Some(new_tree),
-                        contents: new_text.clone(),
-                        version: params.text_document.version,
-                    }
-                }
-                Ok((None, source_map)) => {
-                    self.client
-                        .log_message(MessageType::LOG, "jshdhshshshhs")
-                        .await;
-                    CacheCont {
-                        sourcemap: Some(source_map),
-                        ast: None,
-                        errors,
-                        cst: Some(new_tree),
-                        contents: new_text.clone(),
-                        version: params.text_document.version,
-                    }
-                }
+            let parsed_cache = match parsed {
+                Ok((Some(ast_model), source_map)) => CacheCont {
+                    sourcemap: Some(source_map),
+                    ast: Some(ast_model),
+                    errors,
+                    cst: current.cst.clone(),
+                    contents: current.contents.clone(),
+                    version: incoming_version,
+                },
+                Ok((None, source_map)) => CacheCont {
+                    sourcemap: Some(source_map),
+                    ast: None,
+                    errors,
+                    cst: current.cst.clone(),
+                    contents: current.contents.clone(),
+                    version: incoming_version,
+                },
                 Err(fatal) => CacheCont {
                     sourcemap: None,
                     ast: None,
                     errors: vec![RecoverableParseError::new(fatal.to_string(), None)],
-                    cst: Some(new_tree),
-                    contents: new_text.clone(),
-                    version: params.text_document.version,
+                    cst: current.cst.clone(),
+                    contents: current.contents.clone(),
+                    version: incoming_version,
                 },
             };
 
-            lsp_cache.insert(uri.clone(), new_cache_conts.clone()).await;
+            if let Some(latest) = lsp_cache.get(&uri).await
+                && latest.version != incoming_version
+            {
+                return;
+            }
 
-            self.handle_diagnostics(&uri, new_cache_conts).await;
-        }
+            lsp_cache.insert(uri.clone(), parsed_cache.clone()).await;
+            publish_diagnostics(&client, &uri, parsed_cache).await;
+        });
     }
+}
 
-    pub async fn handle_diagnostics(&self, uri: &Url, cache_conts: CacheCont) {
-        // Get syntactic diagnostics from CST
-        let syntactic_diagnostics = if let Some(ref cst) = cache_conts.cst {
-            get_diagnostics(&cache_conts.contents, cst)
-        } else {
-            Vec::new()
-        };
+async fn publish_diagnostics(client: &tower_lsp::Client, uri: &Url, cache_conts: CacheCont) {
+    // Build diagnostics from the parse errors cached for this document.
+    // parse_essence_with_context_and_map already produces both syntactic and semantic errors.
+    let diagnostics: Vec<Diagnostic> = cache_conts
+        .errors
+        .into_iter()
+        .map(|err| error_to_diagnostic(&err))
+        .collect();
 
-        // Get semantic diagnostics from errors
-        let semantic_diagnostics: Vec<Diagnostic> = cache_conts
-            .errors
-            .into_iter()
-            .map(|err| error_to_diagnostic(&err))
-            .collect();
+    let lsp_diagnostics = convert_diagnostics(diagnostics);
 
-        // Combine all diagnostics
-        let mut diagnostics = syntactic_diagnostics;
-        diagnostics.extend(semantic_diagnostics);
-
-        // Convert to LSP format
-        let lsp_diagnostics = convert_diagnostics(diagnostics);
-
-        // Publish diagnostics - this should be the ONLY call
-        self.client
-            .publish_diagnostics(uri.clone(), lsp_diagnostics, None)
-            .await;
-    }
+    client
+        .publish_diagnostics(uri.clone(), lsp_diagnostics, None)
+        .await;
 }
 // convert diagnostics from cp-essence-parser to LSP diagnostics
 pub fn convert_diagnostics(diagnostics: Vec<ParserDiagnostic>) -> Vec<LspDiagnostic> {

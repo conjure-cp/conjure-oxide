@@ -64,6 +64,12 @@ test-accept: install
 	PATH="$$HOME/.cargo/bin:$$PATH" ACCEPT=true cargo test $(CARGO_LOCKED) --workspace
 	PATH="$$HOME/.cargo/bin:$$PATH" cargo test $(CARGO_LOCKED) --workspace
 
+.PHONY: test-accept-times
+## Runs all tests in accept mode, updates the expected run times, then one more time in normal mode
+test-accept-times: install
+	PATH="$$HOME/.cargo/bin:$$PATH" ACCEPT=with-times cargo test $(CARGO_LOCKED) --workspace
+	PATH="$$HOME/.cargo/bin:$$PATH" cargo test $(CARGO_LOCKED) --workspace
+
 .PHONY: fix
 ## Tries to auto-fix hygiene issues reported by `make check`. 
 ## Fixes will not be applied if there are uncommitted changes: to always apply fixes, use `make fix-dirty`.

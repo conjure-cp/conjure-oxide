@@ -1,0 +1,22 @@
+Model before rewriting:
+
+find x: tuple (bool, int(1..4))
+
+such that
+
+(x[1] = false),
+(x[2] = 2)
+
+--
+
+Final model:
+
+find x: tuple (bool, int(1..4))
+find x#tuple_to_atom_1: bool
+find x#tuple_to_atom_2: int(1..4)
+
+such that
+
+Reify(false, x#tuple_to_atom_1),
+(x#tuple_to_atom_2 = 2)
+
