@@ -393,7 +393,7 @@ where
                     })
                     .join(", ");
 
-                write!(f, "{{{elems_str}}}")
+                write!(f, "partition({elems_str})")
             }
             AbstractLiteral::Record(entries) => {
                 let entries_str: String = entries

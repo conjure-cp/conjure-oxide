@@ -1524,6 +1524,8 @@ fn parse_constant(
                     return parse_abs_tuple(arr, scope);
                 } else if let Some(arr) = obj.get("AbsLitRecord") {
                     return parse_abs_record(arr, scope);
+                } else if let Some(arr) = obj.get("AbsLitPartition") {
+                    return parse_abs_partition(arr, scope);
                 } else if let Some(arr) = obj.get("AbsLitFunction") {
                     return parse_abs_function(arr, scope);
                 } else if let Some(arr) = obj.get("AbsLitRelation") {
