@@ -1111,7 +1111,7 @@ impl Display for GroundDomain {
                 write!(f, "relation {} of ({})", attrs, domains.iter().join(" * "))
             }
             GroundDomain::Partition(attrs, inner) => {
-                write!(f, "partition {attrs} of {inner}")
+                write!(f, "partition {attrs} from {inner}")
             }
         }
     }

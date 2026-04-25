@@ -619,7 +619,7 @@ impl Display for UnresolvedDomain {
             UnresolvedDomain::Set(attrs, inner_dom) => write!(f, "set {attrs} of {inner_dom}"),
             UnresolvedDomain::MSet(attrs, inner_dom) => write!(f, "mset {attrs} of {inner_dom}"),
             UnresolvedDomain::Partition(attrs, inner_dom) => {
-                write!(f, "partition {attrs} of {inner_dom}")
+                write!(f, "partition {attrs} from {inner_dom}")
             }
             UnresolvedDomain::Matrix(value_domain, index_domains) => {
                 write!(
