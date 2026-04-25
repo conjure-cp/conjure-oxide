@@ -261,7 +261,6 @@ impl Backend {
             publish_diagnostics(&client, &uri, parsed_cache).await;
         });
     }
-
 }
 
 async fn publish_diagnostics(client: &tower_lsp::Client, uri: &Url, cache_conts: CacheCont) {
