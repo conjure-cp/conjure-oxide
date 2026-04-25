@@ -85,15 +85,7 @@ impl Backend {
             .await;
 
         //diagnostic stuff here
-        self.handle_diagnostics(&uri.clone(), cache_content).await;
-        if let Err(err) = self.client.semantic_tokens_refresh().await {
-            self.client
-                .log_message(
-                    MessageType::WARNING,
-                    format!("semantic_tokens_refresh failed on open: {err}"),
-                )
-                .await;
-        }
+        publish_diagnostics(&self.client, &uri.clone(), cache_content).await;
     }
     pub async fn handle_did_save(&self, params: DidSaveTextDocumentParams) {
         // Diagnostics are driven by did_change. Re-publishing cached diagnostics on save can
@@ -270,9 +262,6 @@ impl Backend {
         });
     }
 
-    pub async fn handle_diagnostics(&self, uri: &Url, cache_conts: CacheCont) {
-        publish_diagnostics(&self.client, uri, cache_conts).await;
-    }
 }
 
 async fn publish_diagnostics(client: &tower_lsp::Client, uri: &Url, cache_conts: CacheCont) {
