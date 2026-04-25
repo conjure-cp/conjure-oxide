@@ -5,7 +5,35 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Parser Benchmark Table</title>
   <style>
-    body { font-family: sans-serif; margin: 16px; }
+    html, body { height: 100%; }
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .page {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+      box-sizing: border-box;
+      gap: 12px;
+    }
+    .banner {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: #fff;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .table-wrap {
+      flex: 1;
+      overflow: auto;
+      min-height: 0;
+    }
     table { border-collapse: collapse; width: 100%; table-layout: fixed; }
     th, td { border: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: top; }
     th { background: #f4f4f4; position: sticky; top: 0; z-index: 1; }
@@ -138,51 +166,57 @@
   </script>
 </head>
 <body>
-  <h1>Parser Benchmark Table</h1>
-  <p>Pass/fail rule: only fatal parse errors fail. Recoverable parse errors pass.</p>
-  <p>__RUN_INFO__</p>
-  <p>Total rows: __TOTAL__</p>
+  <div class="page">
+    <div class="banner">
+      <h1>Parser Benchmark Table</h1>
+      <p>Pass/fail rule: only fatal parse errors fail. Recoverable parse errors pass.</p>
+      <p>__RUN_INFO__</p>
+      <p>Total rows: __TOTAL__</p>
 
-  <div class="controls">
-    <div class="control">
-      <label for="filter-parser-view">Parser View</label>
-      <select id="filter-parser-view">
-        <option value="both">Both</option>
-        <option value="native">Native only</option>
-        <option value="via">Via-conjure only</option>
-      </select>
-    </div>
-    <div class="control">
-      <label for="filter-status">Status</label>
-      <select id="filter-status">
-        <option value="all">All</option>
-        <option value="pass">Pass only</option>
-        <option value="fail">Fail only</option>
-      </select>
-    </div>
-    <div class="control">
-      <label for="filter-repo">Repository</label>
-      <select id="filter-repo">
-        <option value="all">All</option>
+      <div class="controls">
+        <div class="control">
+          <label for="filter-parser-view">Parser View</label>
+          <select id="filter-parser-view">
+            <option value="both">Both</option>
+            <option value="native">Native only</option>
+            <option value="via">Via-conjure only</option>
+          </select>
+        </div>
+        <div class="control">
+          <label for="filter-status">Status</label>
+          <select id="filter-status">
+            <option value="all">All</option>
+            <option value="pass">Pass only</option>
+            <option value="fail">Fail only</option>
+          </select>
+        </div>
+        <div class="control">
+          <label for="filter-repo">Repository</label>
+          <select id="filter-repo">
+            <option value="all">All</option>
 __REPO_OPTIONS__
-      </select>
+          </select>
+        </div>
+        <div class="control" style="grid-column: span 2;">
+          <label for="filter-keyword">Keyword Search (includes input file contents)</label>
+          <input id="filter-keyword" type="text" placeholder="e.g. allDiff, dominance, letting" />
+        </div>
+      </div>
     </div>
-    <div class="control" style="grid-column: span 2;">
-      <label for="filter-keyword">Keyword Search (includes input file contents)</label>
-      <input id="filter-keyword" type="text" placeholder="e.g. allDiff, dominance, letting" />
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Test</th>
+__HEADER_CELLS__
+          </tr>
+        </thead>
+        <tbody>
+__ROWS__
+        </tbody>
+      </table>
     </div>
   </div>
-
-  <table>
-    <thead>
-      <tr>
-        <th>Test</th>
-__HEADER_CELLS__
-      </tr>
-    </thead>
-    <tbody>
-__ROWS__
-    </tbody>
-  </table>
 </body>
 </html>
