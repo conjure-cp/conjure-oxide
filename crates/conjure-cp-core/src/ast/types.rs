@@ -2,7 +2,6 @@ use itertools::Itertools;
 use polyquine::Quine;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
-use syn::token::Return;
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, Hash, Quine)]
 pub enum ReturnType {

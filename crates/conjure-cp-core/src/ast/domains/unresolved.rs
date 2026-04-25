@@ -171,7 +171,7 @@ impl TryInto<PartitionAttr<Int>> for PartitionAttr<IntVal> {
     fn try_into(self) -> Result<PartitionAttr<Int>, Self::Error> {
         let num_parts: Range<Int> = self.num_parts.try_into()?;
         let part_len: Range<Int> = self.part_len.try_into()?;
-        let is_regular: bool = self.is_regular.try_into()?;
+        let is_regular: bool = self.is_regular;
         Ok(PartitionAttr {
             num_parts,
             part_len,
@@ -331,6 +331,16 @@ impl MSetAttr<IntVal> {
         Some(MSetAttr {
             size: self.size.resolve()?,
             occurrence: self.occurrence.resolve()?,
+        })
+    }
+}
+
+impl PartitionAttr<IntVal> {
+    pub fn resolve(&self) -> Option<PartitionAttr<Int>> {
+        Some(PartitionAttr {
+            num_parts: self.num_parts.resolve()?,
+            part_len: self.part_len.resolve()?,
+            is_regular: self.is_regular,
         })
     }
 }

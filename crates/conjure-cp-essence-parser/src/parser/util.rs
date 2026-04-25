@@ -109,6 +109,7 @@ pub enum TypecheckingContext {
     Matrix,
     Tuple,
     Record,
+    Partition,
     /// Context is unknown or flexible
     Unknown,
 }

@@ -173,7 +173,7 @@ impl<A: Display> Display for PartitionAttr<A> {
         };
 
         let part_len_str = match &self.part_len {
-            Range::Single(x) => format!("partSize"),
+            Range::Single(x) => format!("partSize {x}"),
             Range::Bounded(l, r) => format!("minPartSize {l} , maxPartSize {r}"),
             Range::UnboundedL(r) => format!("maxPartSize {r}"),
             Range::UnboundedR(l) => format!("minPartSize {l}"),
@@ -201,7 +201,7 @@ impl<A> Default for PartitionAttr<A> {
         PartitionAttr {
             num_parts: Range::Unbounded,
             part_len: Range::Unbounded,
-            is_regular: bool,
+            is_regular: false,
         }
     }
 }

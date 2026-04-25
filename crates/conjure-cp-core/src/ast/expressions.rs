@@ -2274,6 +2274,13 @@ impl Expression {
                         f(expr);
                     }
                 }
+                AbstractLiteral::Partition(two_d_v) => {
+                    for part in two_d_v {
+                        for expr in part {
+                            f(expr);
+                        }
+                    }
+                }
                 AbstractLiteral::Matrix(v, _domain) => {
                     for expr in v {
                         f(expr);
@@ -2494,6 +2501,13 @@ impl CacheHashable for Expression {
                     }
                 }
                 AbstractLiteral::Relation(v) => {
+                    for exprs in v {
+                        for expr in exprs {
+                            expr.get_cached_hash().hash(&mut hasher);
+                        }
+                    }
+                }
+                AbstractLiteral::Partition(v) => {
                     for exprs in v {
                         for expr in exprs {
                             expr.get_cached_hash().hash(&mut hasher);

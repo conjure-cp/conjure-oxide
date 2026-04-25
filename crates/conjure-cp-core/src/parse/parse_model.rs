@@ -1,7 +1,6 @@
 #![allow(clippy::unwrap_used)]
 #![allow(clippy::expect_used)]
 use std::sync::{Arc, RwLock};
-use syn::Meta;
 use ustr::Ustr;
 
 use serde_json::Map as JsonMap;
@@ -853,12 +852,12 @@ fn parse_abs_partition(abs_partition: &Value, scope: &SymbolTablePtr) -> Result<
         .as_array()
         .ok_or(error!("AbsLitPartition is not an array"))?;
 
-    let mut partition: Vec<Vec<T>> = Vec::new();
+    let mut partition: Vec<Vec<_>> = Vec::new();
 
     for part in parts {
         let vals = part
             .as_array()
-            .ok_or(errror!("Part in AbsLitPartition is not an array"))?;
+            .ok_or(error!("Part in AbsLitPartition is not an array"))?;
 
         let exprs = vals
             .iter()

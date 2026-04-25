@@ -514,13 +514,31 @@ impl GroundDomain {
             },
             GroundDomain::Partition(attr, dom) => match lit {
                 Literal::AbstractLiteral(AbstractLiteral::Partition(lit_elems)) => {
-                    let sz = lit_elems.len().to_i32().ok_or(DomainOpError::TooLarge)?;
-                    if !attr.size.contains(&sz) {
+                    // let sz = lit_elems.len().to_i32().ok_or(DomainOpError::TooLarge)?;
+                    let sz: i32 = lit_elems
+                        .iter()
+                        .flatten()
+                        .count()
+                        .to_i32()
+                        .ok_or(DomainOpError::TooLarge)?;
+
+                    let min: Option<i32> = match (attr.num_parts.low(), attr.part_len.low()) {
+                        (Some(x), Some(y)) => Some(x * y),
+                        _ => None,
+                    };
+
+                    let max: Option<i32> = match (attr.num_parts.high(), attr.part_len.high()) {
+                        (Some(x), Some(y)) => Some(x * y),
+                        _ => None,
+                    };
+
+                    let rng = Range::new(min, max);
+                    if rng.contains(&sz) {
                         return Ok(false);
                     }
 
-                    for elem in lit_elems {
-                        if !inner_domain.contains(elem)? {
+                    for elem in lit_elems.iter().flatten() {
+                        if !dom.contains(elem)? {
                             return Ok(false);
                         }
                     }

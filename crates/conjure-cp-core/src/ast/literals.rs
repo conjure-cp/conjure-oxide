@@ -2,7 +2,6 @@ use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 use std::hash::Hash;
-use syn::token::Return;
 use ustr::Ustr;
 
 use super::{
@@ -124,7 +123,8 @@ impl AbstractLiteral<Expression> {
 
                 let item_domains: Vec<DomainPtr> = items
                     .iter()
-                    .flat_map(|x| x.domain_of())
+                    .flatten()
+                    .map(|x| x.domain_of())
                     .collect::<Option<Vec<DomainPtr>>>()?;
 
                 // union all item domains together
@@ -224,15 +224,15 @@ impl Typeable for AbstractLiteral<Expression> {
 
                 ReturnType::MSet(Box::new(item_type))
             }
-            AbstractLiteral::Partition(items) if items.is_empty() => {
+            AbstractLiteral::Partition(items) if items.is_empty() || items[0].is_empty() => {
                 ReturnType::Partition(Box::new(ReturnType::Unknown))
             }
             AbstractLiteral::Partition(items) => {
-                let item_type = items[0].return_type();
+                let item_type = items[0][0].return_type();
 
                 // if any items do not have a type, return none.
                 let item_types: Vec<ReturnType> =
-                    items.iter().flat_map(|x| x.return_type()).collect();
+                    items.iter().flatten().map(|x| x.return_type()).collect();
 
                 assert!(
                     item_types.iter().all(|x| x == &item_type),
@@ -493,6 +493,13 @@ where
                     Box::new(move |x| AbstractLiteral::Relation(f1_ctx(x))),
                 )
             }
+            AbstractLiteral::Partition(elems) => {
+                let (f1_tree, f1_ctx) = <_ as Biplate<AbstractLiteral<T>>>::biplate(elems);
+                (
+                    f1_tree,
+                    Box::new(move |x| AbstractLiteral::Partition(f1_ctx(x))),
+                )
+            }
         }
     }
 }
@@ -587,6 +594,13 @@ where
                     (
                         f1_tree,
                         Box::new(move |x| AbstractLiteral::Relation(f1_ctx(x))),
+                    )
+                }
+                AbstractLiteral::Partition(elems) => {
+                    let (f1_tree, f1_ctx) = <_ as Biplate<To>>::biplate(elems);
+                    (
+                        f1_tree,
+                        Box::new(move |x| AbstractLiteral::Partition(f1_ctx(x))),
                     )
                 }
             }
@@ -715,7 +729,7 @@ impl AbstractLiteral<Expression> {
             AbstractLiteral::Partition(elems) => {
                 // want to ascertain if every elem in Vec<Vec<Expr>> is a literal. If any are not, return none
                 // otherwise confirm it is an abslit<lit>
-                let mut partition: Vec<Vec<T>> = Vec::new();
+                let mut partition: Vec<Vec<_>> = Vec::new();
 
                 for part in elems {
                     let literals = part
