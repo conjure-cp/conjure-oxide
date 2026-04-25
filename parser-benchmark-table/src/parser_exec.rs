@@ -15,25 +15,7 @@ pub fn run_parser_on_group(group: &InputGroup, native: bool) -> ParseResult {
 
     let _ = fs::remove_file(&temp_path);
 
-    match parse_result {
-        ParseResult { pass: true, .. } => ParseResult {
-            pass: true,
-            summary: "pass",
-            output_or_error: format!(
-                "{}\nparsed combined group successfully",
-                group.primary_file.display()
-            ),
-        },
-        ParseResult {
-            pass: false,
-            output_or_error,
-            ..
-        } => ParseResult {
-            pass: false,
-            summary: "fail",
-            output_or_error,
-        },
-    }
+    parse_result
 }
 
 pub fn read_input_file(path: &Path) -> String {
@@ -96,7 +78,7 @@ fn run_one_file(path: &Path, native: bool) -> ParseResult {
             Ok(_) => ParseResult {
                 pass: true,
                 summary: "pass",
-                output_or_error: format!("{}\nparsed successfully", path.display()),
+                output_or_error: format!("{}\nparsed input successfully", path.display()),
             },
             Err(err_box) => match err_box.as_ref() {
                 ParseErrorCollection::Fatal(_) => ParseResult {
