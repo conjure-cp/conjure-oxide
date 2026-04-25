@@ -1,14 +1,15 @@
 CASE RC.eprime
 param: 100166617566-RC.eprime-param
 status: ok
-total_rule_applications: 57
+total_rule_applications: 68
+    20 constant_evaluator
     16 expand_comprehension_native
     13 index_to_bubble
     12 distribute_not_over_and
-    10 constant_evaluator
      4 remove_unit_vector_and
      1 expand_bubble
      1 minus_to_sum
+     1 remove_unit_vector_sum
 
 CASE SRC-asymmetric.eprime
 param: 100166617566-SRC-asymmetric.eprime-param
@@ -73,3 +74,31 @@ total_rule_applications: 164
      2 merge_nested_ac_comprehensions
      1 distribute_not_over_and
      1 remove_unit_vector_or
+
+CASE CLA-OC.eprime
+param: 100166617566-CLA-OC.eprime-param
+status: timeout
+
+CASE CLA-general.eprime
+param: 100166617566-CLA-general.eprime-param
+status: error(101)
+stderr_tail:
+
+thread 'main' panicked at crates/conjure-cp-core/src/ast/expressions.rs:1714:26:
+
+This should never happen, sorry!
+
+However, it did happen, so it must be a bug. Please report it to us!
+
+Conjure Oxide is actively developed and maintained. We will get back to you as soon as possible.
+
+You can help us by providing a minimal failing example.
+
+Issue tracker: http://github.com/conjure-cp/conjure-oxide/issues
+
+location: crates/conjure-cp-core/src/ast/expressions.rs:conjure_cp_core::ast::expressions:1714
+
+Invalid indexing operation: expected the operand to be a collection, got SafeIndex(dataset_ExplicitBoundedR6_Values_1_ExplicitVarSizeWithDummy,[row, q35])[1]: int
+
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+

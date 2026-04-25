@@ -1,4 +1,4 @@
-use conjure_cp::ast::{Atom, Expression as Expr, Literal};
+use conjure_cp::ast::{Atom, CnfClause, Expression as Expr, Literal};
 use conjure_cp::ast::{SATIntEncoding, SymbolTable};
 use conjure_cp::rule_engine::ApplicationError;
 use conjure_cp::rule_engine::{
@@ -6,6 +6,7 @@ use conjure_cp::rule_engine::{
 };
 
 use crate::sat::boolean::{tseytin_and, tseytin_iff, tseytin_not, tseytin_or};
+use crate::sat::direct_int_ops::floor_div;
 use conjure_cp::ast::Metadata;
 use conjure_cp::ast::Moo;
 use conjure_cp::into_matrix_expr;
@@ -234,4 +235,124 @@ fn ineq_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     }
 
     Ok(Reduction::cnf(output, new_clauses, new_symbols))
+}
+
+/// Converts a / expression between two order SATInts to a new order SATInt
+/// using the "lookup table" method.
+///
+/// ```text
+/// SafeDiv(SATInt(a), SATInt(b)) ~> SATInt(c)
+///
+/// ```
+#[register_rule("SAT_Order", 9100, [SafeDiv])]
+fn safediv_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    let Expr::SafeDiv(_, numer_expr, denom_expr) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Expr::SATInt(_, SATIntEncoding::Order, numer_inner, (numer_min, numer_max)) =
+        numer_expr.as_ref()
+    else {
+        return Err(RuleNotApplicable);
+    };
+    let Some(numer_bits) = numer_inner.as_ref().clone().unwrap_list() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Expr::SATInt(_, SATIntEncoding::Order, denom_inner, (denom_min, denom_max)) =
+        denom_expr.as_ref()
+    else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Some(denom_bits) = denom_inner.as_ref().clone().unwrap_list() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let mut quot_min = i32::MAX;
+    let mut quot_max = i32::MIN;
+
+    for i in *numer_min..=*numer_max {
+        for j in *denom_min..=*denom_max {
+            let k = if j == 0 { 0 } else { i / j };
+            quot_min = quot_min.min(k);
+            quot_max = quot_max.max(k);
+        }
+    }
+
+    let mut new_symbols = symbols.clone();
+    let mut quot_bits = Vec::new();
+
+    // generate boolean variables for all possible quotients
+    for _ in quot_min..=quot_max {
+        let decl = new_symbols.gen_find(&conjure_cp::ast::Domain::bool());
+        quot_bits.push(Expr::Atomic(
+            Metadata::new(),
+            Atom::Reference(conjure_cp::ast::Reference::new(decl)),
+        ));
+    }
+
+    let mut new_clauses = vec![];
+
+    // Generate the lookup table clauses, and extract exact bounds
+    for i in *numer_min..=*numer_max {
+        let n_idx = (i - numer_min) as usize;
+        let n_bit = &numer_bits[n_idx];
+        let n_next_bit = if i < *numer_max {
+            Some(&numer_bits[n_idx + 1])
+        } else {
+            None
+        };
+
+        for j in *denom_min..=*denom_max {
+            let d_idx = (j - denom_min) as usize;
+            let d_bit = &denom_bits[d_idx];
+            let d_next_bit = if j < *denom_max {
+                Some(&denom_bits[d_idx + 1])
+            } else {
+                None
+            };
+
+            let k = if j == 0 { 0 } else { floor_div(i, j) };
+
+            // we needed to represent (n >= i) and not (n >= i+1) or ((d >= j) and not (d >= j+1))
+            // using or's so using de-morgans we do
+            // NOT(N >= i) OR (N >= i+1) OR NOT(D >= j) OR (D >= j+1)
+            let mut base_cond = vec![Expr::Not(Metadata::new(), Moo::new(n_bit.clone()))];
+            if let Some(n_next) = n_next_bit {
+                base_cond.push(n_next.clone());
+            }
+
+            base_cond.push(Expr::Not(Metadata::new(), Moo::new(d_bit.clone())));
+            if let Some(d_next) = d_next_bit {
+                base_cond.push(d_next.clone());
+            }
+
+            // force the quotient to represent exactly value 'k'
+            for m in quot_min..=quot_max {
+                let q_idx = (m - quot_min) as usize;
+                let q_bit = &quot_bits[q_idx];
+
+                let mut clause = base_cond.clone();
+                if m <= k {
+                    // the value is at least m, so bit (Q >= m) is True
+                    clause.push(q_bit.clone());
+                } else {
+                    // the value is less than m, so bit (Q >= m) is False
+                    clause.push(Expr::Not(Metadata::new(), Moo::new(q_bit.clone())));
+                }
+
+                // push (NOT condition) OR quotient
+                new_clauses.push(conjure_cp::ast::CnfClause::new(clause));
+            }
+        }
+    }
+
+    let quot_int = Expr::SATInt(
+        Metadata::new(),
+        SATIntEncoding::Order,
+        Moo::new(into_matrix_expr!(quot_bits)),
+        (quot_min, quot_max),
+    );
+    Ok(Reduction::cnf(quot_int, new_clauses, new_symbols))
 }
