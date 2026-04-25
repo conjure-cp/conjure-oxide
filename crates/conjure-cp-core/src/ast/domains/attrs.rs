@@ -181,8 +181,8 @@ impl<A: Display> Display for PartitionAttr<A> {
         };
 
         let regular_str = match &self.is_regular {
-            true => format!("regular"),
-            false => format!(""),
+            true => "regular".to_string(),
+            false => String::new(),
         };
 
         let mut strs = [num_parts_str, part_len_str, regular_str]

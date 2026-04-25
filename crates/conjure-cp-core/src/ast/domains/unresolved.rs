@@ -160,7 +160,7 @@ impl From<PartitionAttr<Int>> for PartitionAttr<IntVal> {
         PartitionAttr {
             num_parts: value.num_parts.into(),
             part_len: value.part_len.into(),
-            is_regular: value.is_regular.into(),
+            is_regular: value.is_regular,
         }
     }
 }
