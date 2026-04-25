@@ -48,7 +48,7 @@ impl Display for ReturnType {
                 write!(f, "record of ({inners})")
             }
             ReturnType::Function(ty1, ty2) => {
-                write!(f, "function ({ty1} --> {ty2})")
+                write!(f, "function of ({ty1} --> {ty2})")
             }
             ReturnType::Relation(types) => {
                 let inners = types.iter().map(|t| format!("{}", t)).join(", ");
