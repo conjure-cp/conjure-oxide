@@ -258,40 +258,40 @@ fn parse_domain(
                 .get(2)
                 .and_then(|v| v.as_object())
                 .expect("domain object exists");
-            let domain = dom
-                .iter()
-                .next()
-                .ok_or(Error::Parse("DomainPartition is an empty object".to_owned()))?;
+            let domain = dom.iter().next().ok_or(Error::Parse(
+                "DomainPartition is an empty object".to_owned(),
+            ))?;
             let domain = parse_domain(domain.0.as_str(), domain.1, symbols)?;
 
             let attributes = domain_value
                 .get(1)
                 .and_then(|v| v.as_object())
                 .ok_or(error!("Partition attributes is not an object"))?;
-            
+
             let mut num_parts = Range::Unbounded;
             let mut part_len = Range::Unbounded;
             let mut is_regular = false;
 
-            if let Some(val) =  attributes.get("partsNum")
-            {
+            if let Some(val) = attributes.get("partsNum") {
                 let attr_map = val.as_object().expect("numParts should be an object");
-                num_parts = parse_size_attr( attr_map, symbols)?;
+                num_parts = parse_size_attr(attr_map, symbols)?;
             }
-            if let Some(val) =  attributes.get("partsSize")
-            {
+            if let Some(val) = attributes.get("partsSize") {
                 let attr_map = val.as_object().expect("partsSize should be an object");
-                part_len = parse_size_attr( attr_map, symbols)?;
+                part_len = parse_size_attr(attr_map, symbols)?;
             }
-            if let Some(val) = attributes.get("isRegular").and_then(|v| v.as_str())
-            {
-                if val == "true" { is_regular = true; }
+            if let Some(val) = attributes.get("isRegular").and_then(|v| v.as_str()) {
+                if val == "true" {
+                    is_regular = true;
+                }
             }
 
-
-            let attr: PartitionAttr<IntVal> = PartitionAttr { num_parts, part_len, is_regular };
+            let attr: PartitionAttr<IntVal> = PartitionAttr {
+                num_parts,
+                part_len,
+                is_regular,
+            };
             Ok(Domain::partition(attr, domain))
-
         }
         "DomainMatrix" => {
             let domain_value = domain_value
