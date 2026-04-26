@@ -253,6 +253,7 @@ pub(crate) fn try_rewrite_value_letting_once(
 ///
 /// Morph normally rewrites within the root expression. This hook lets root-specific rules perform
 /// whole-model normalisation before the regular tree morph pass runs.
+#[allow(dead_code)]
 pub(crate) fn try_rewrite_root_once(
     model: &mut Model,
     rules_grouped: &Vec<(u16, Vec<RuleData<'_>>)>,
