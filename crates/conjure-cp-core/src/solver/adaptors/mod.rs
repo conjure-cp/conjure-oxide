@@ -10,7 +10,7 @@ pub mod ortools_cpsat;
 pub mod smt;
 
 #[doc(inline)]
-pub use minion::Minion;
+pub use minion::{Minion, MinionValueOrder};
 
 #[doc(inline)]
 pub use ortools_cpsat::OrToolsCpSat;
