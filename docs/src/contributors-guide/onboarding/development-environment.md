@@ -45,11 +45,12 @@ The following software is required:
 3. Install `z3`, one of the solver backends. You may have to build it from [source](https://github.com/Z3Prover/z3), and then add the binary to your path. 
 
 > To add a binary to your PATH in a way that persists every time you log out, run:
-> ```
-> mkdir -p /cs/home/$USER/.paths.d`
-> echo ~/Documents/... > /cs/home/$USER/.paths.d/z3
-> ```
-> where the "..." is the path to your compiled z3 binary
+```
+mkdir -p /cs/home/$USER/.paths.d`
+echo ~/Documents/... > /cs/home/$USER/.paths.d/z3
+// where the "..." is the path to your compiled z3 binary
+```
+
 
 </details>
 
