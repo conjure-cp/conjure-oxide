@@ -9,7 +9,7 @@ use conjure_cp::rule_engine::{
 use uniplate::Biplate;
 
 // [ return_expr | i <- A union B, qualifiers...] -> flatten([[ return_expr | i <- A, qualifiers...], [ return_expr | i <- B, !(i in A), qualifiers...]; int(1..2)])
-#[register_rule(("Base", 8700))]
+#[register_rule("Base", 8700, [Comprehension])]
 fn union_set(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
         Expr::Comprehension(_, comp) => {

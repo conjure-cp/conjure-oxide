@@ -26,35 +26,23 @@ and([(a[1] = b[1]),(a[2] = b[2]),(a[3] = b[3]),(a[4] = b[4]);int(1..)]),
 
 a[1], 
    ~~> index_to_bubble ([("Bubble", 6000)])
-{a[1] @ and([__inDomain(1,int(2..4));int(1..)])}
+{SafeIndex(a,[1]) @ false}
 
 --
 
-({a[1] @ and([__inDomain(1,int(2..4));int(1..)])} = b[1]),
-(a[2] = b[2]),
-(a[3] = b[3]),
-(a[4] = b[4]), 
-   ~~> constant_evaluator ([("Constant", 9001)])
-({a[1] @ false} = b[1]),
-(a[2] = b[2]),
-(a[3] = b[3]),
-(a[4] = b[4])
-
---
-
-({a[1] @ false} = b[1]), 
+({SafeIndex(a,[1]) @ false} = b[1]), 
    ~~> bubble_up ([("Bubble", 8800)])
-{(a[1] = b[1]) @ false}
+{(SafeIndex(a,[1]) = b[1]) @ false}
 
 --
 
-{(a[1] = b[1]) @ false}, 
+{(SafeIndex(a,[1]) = b[1]) @ false}, 
    ~~> expand_bubble ([("Bubble", 8900)])
-and([(a[1] = b[1]),false;int(1..)])
+and([(SafeIndex(a,[1]) = b[1]),false;int(1..)])
 
 --
 
-and([(a[1] = b[1]),false;int(1..)]),
+and([(SafeIndex(a,[1]) = b[1]),false;int(1..)]),
 (a[2] = b[2]),
 (a[3] = b[3]),
 (a[4] = b[4]), 

@@ -44,7 +44,7 @@ jobs:
         - stable
         - nightly
         conjure_version:
-        - 2.5.1
+        - 2.6.0
         os:
         - ubuntu-latest
         - macos-latest
@@ -52,7 +52,7 @@ jobs:
         - os: ubuntu-latest
           release_suffix: linux
         - os: macos-latest
-          release_suffix: macos-arm
+          release_suffix: macos
 
     runs-on: ${{ matrix.os }}
 
@@ -94,16 +94,20 @@ jobs:
         os_arch: ${{ matrix.release_suffix }}
         version: ${{ matrix.conjure_version }}
 
-    - name: Install Z3 (Ubuntu)
+    - name: Install z3 (Ubuntu)
       if: ${{ matrix.os == 'ubuntu-latest' }}
       uses: pavpanchekha/setup-z3@v0.3.0
       with:
         version: 4.16.0
         distribution: glibc-2.39
 
-    - name: Install Z3 (macOS)
+    - name: Install z3 (macOS)
       if: ${{ matrix.os == 'macos-latest' }}
       run: brew install z3
+
+    - name: Install coreutils (macOS)
+      if: ${{ matrix.os == 'macos-latest' }}
+      run: brew install coreutils
 
     - name: Run tests
       run: make test

@@ -4,7 +4,8 @@ use tree_sitter::{Node, Parser, Tree};
 use tree_sitter_essence::LANGUAGE;
 
 use super::traversal::WalkDFS;
-use crate::diagnostics::source_map::{SourceMap, SpanId};
+use crate::diagnostics::diagnostics_api::SymbolKind;
+use crate::diagnostics::source_map::{HoverInfo, SourceMap, SpanId, span_with_hover};
 use crate::errors::RecoverableParseError;
 use conjure_cp_core::ast::{Name, SymbolTablePtr};
 
@@ -16,7 +17,10 @@ pub struct ParseContext<'a> {
     pub errors: &'a mut Vec<RecoverableParseError>,
     pub source_map: &'a mut SourceMap,
     pub decl_spans: &'a mut BTreeMap<Name, SpanId>,
+    /// What type the current expression/literal itself should be
     pub typechecking_context: TypecheckingContext,
+    /// What type the elements within a collection should be
+    pub inner_typechecking_context: TypecheckingContext,
 }
 
 impl<'a> ParseContext<'a> {
@@ -36,6 +40,7 @@ impl<'a> ParseContext<'a> {
             source_map,
             decl_spans,
             typechecking_context: TypecheckingContext::Unknown,
+            inner_typechecking_context: TypecheckingContext::Unknown,
         }
     }
 
@@ -53,6 +58,7 @@ impl<'a> ParseContext<'a> {
             source_map: self.source_map,
             decl_spans: self.decl_spans,
             typechecking_context: self.typechecking_context,
+            inner_typechecking_context: self.inner_typechecking_context,
         }
     }
 
@@ -69,6 +75,27 @@ impl<'a> ParseContext<'a> {
         let span = self.source_map.spans.get(span_id as usize)?;
         Some(span.start_point.line + 1)
     }
+
+    /// Helper to add to span and documentation hover info into the source map
+    pub fn add_span_and_doc_hover(
+        &mut self,
+        node: &tree_sitter::Node,
+        doc_key: &str, // name of the documentation file in Bits
+        kind: SymbolKind,
+        ty: Option<String>,
+        decl_span: Option<u32>,
+    ) {
+        if let Some(description) = get_documentation(doc_key) {
+            let hover = HoverInfo {
+                description,
+                kind: Some(kind),
+                ty,
+                decl_span,
+            };
+            span_with_hover(node, self.source_code, self.source_map, hover);
+        }
+        // If documentation is not found, do nothing (no fallback, no addition to source map)
+    }
 }
 
 // Used to detect type mismatches during parsing.
@@ -76,6 +103,12 @@ impl<'a> ParseContext<'a> {
 pub enum TypecheckingContext {
     Boolean,
     Arithmetic,
+    Set,
+    SetOrMatrix,
+    MSet,
+    Matrix,
+    Tuple,
+    Record,
     /// Context is unknown or flexible
     Unknown,
 }
@@ -84,10 +117,24 @@ pub enum TypecheckingContext {
 ///
 /// If successful, returns a tuple containing the syntax tree and the raw source code.
 /// If the source code is not valid Essence, returns None.
+pub fn get_tree(src: &str) -> Option<(Tree, String)> {
+    let mut parser = Parser::new();
+    parser.set_language(&LANGUAGE.into()).unwrap();
+
+    parser.parse(src, None).and_then(|tree| {
+        let root = tree.root_node();
+        if root.is_error() {
+            return None;
+        }
+        Some((tree, src.to_string()))
+    })
+}
+
+/// Parse an expression fragment, allowing a dummy prefix for error recovery.
 ///
 /// NOTE: The new source code may be different from the original source code.
 ///       See implementation for details.
-pub fn get_tree(src: &str) -> Option<(Tree, String)> {
+pub fn get_expr_tree(src: &str) -> Option<(Tree, String)> {
     let mut parser = Parser::new();
     parser.set_language(&LANGUAGE.into()).unwrap();
 
@@ -109,7 +156,7 @@ pub fn get_tree(src: &str) -> Option<(Tree, String)> {
             if src.starts_with("_FRAGMENT_EXPRESSION") {
                 None
             } else {
-                get_tree(&format!("_FRAGMENT_EXPRESSION {src}"))
+                get_expr_tree(&format!("_FRAGMENT_EXPRESSION {src}"))
             }
         } else {
             Some((tree, src.to_string()))
@@ -145,6 +192,31 @@ pub fn get_metavars<'a>(node: &'a Node<'a>, src: &'a str) -> impl Iterator<Item 
             .named_child(0)
             .map(|name| src[name.start_byte()..name.end_byte()].to_string())
     })
+}
+
+/// Fetch Essence syntax documentation from Conjure's `docs/bits/` folder on GitHub.
+///
+/// `name` is the name of the documentation file (without .md suffix). If the file is not found or an error occurs, returns None.
+pub fn get_documentation(name: &str) -> Option<String> {
+    let mut base = name.to_string();
+    if let Some(stripped) = base.strip_suffix(".md") {
+        base = stripped.to_string();
+    }
+
+    // This url is for raw Markdown bytes
+    let url =
+        format!("https://raw.githubusercontent.com/conjure-cp/conjure/main/docs/bits/{base}.md");
+
+    let output = std::process::Command::new("curl")
+        .args(["-fsSL", &url])
+        .output()
+        .ok()?;
+
+    if !output.status.success() {
+        return None;
+    }
+
+    String::from_utf8(output.stdout).ok()
 }
 
 mod test {
