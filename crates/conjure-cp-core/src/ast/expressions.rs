@@ -928,12 +928,21 @@ impl Expression {
 
                 Some(Domain::int(ranges))
             }
-            Expression::Minus(_, a, b) => a
-                .domain_of()?
-                .resolve()?
-                .apply_i32(|x, y| Some(x - y), b.domain_of()?.resolve()?.as_ref())
-                .map(DomainPtr::from)
-                .ok(),
+            Expression::Minus(_, a, b) => {
+                let a_resolved = a.domain_of()?.resolve()?;
+                let b_resolved = b.domain_of()?.resolve()?;
+
+                if matches!(a_resolved.as_ref(), GroundDomain::Int(_))
+                    && matches!(b_resolved.as_ref(), GroundDomain::Int(_))
+                {
+                    a_resolved
+                        .apply_i32(|x, y| Some(x - y), b_resolved.as_ref())
+                        .map(DomainPtr::from)
+                        .ok()
+                } else {
+                    None
+                }
+            }
             Expression::FlatAllDiff(_, _) => Some(Domain::bool()),
             Expression::FlatMinusEq(_, _, _) => Some(Domain::bool()),
             Expression::FlatProductEq(_, _, _, _) => Some(Domain::bool()),
