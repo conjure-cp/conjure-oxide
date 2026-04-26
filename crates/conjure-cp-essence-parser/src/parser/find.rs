@@ -42,6 +42,7 @@ pub fn parse_given_statement(
         ctx.source_map,
         HoverInfo {
             description: "Given keyword".to_string(),
+            doc_key: None,
             kind: Some(SymbolKind::Given),
             ty: None,
             decl_span: None,
@@ -139,6 +140,7 @@ pub fn parse_declaration_statement(
                     _ => "Declaration",
                 }
             ),
+            doc_key: None,
             kind: Some(symbol_kind),
             ty: Some(domain.to_string()),
             decl_span: None,
