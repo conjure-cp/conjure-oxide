@@ -280,10 +280,8 @@ fn parse_domain(
                 let attr_map = val.as_object().expect("partsSize should be an object");
                 part_len = parse_size_attr(attr_map, symbols)?;
             }
-            if let Some(val) = attributes.get("isRegular").and_then(|v| v.as_str())
-                && val == "true"
-            {
-                is_regular = true;
+            if let Some(val) = attributes.get("isRegular").and_then(|v| v.as_bool()) {
+                is_regular = val;
             }
 
             let attr: PartitionAttr<IntVal> = PartitionAttr {
