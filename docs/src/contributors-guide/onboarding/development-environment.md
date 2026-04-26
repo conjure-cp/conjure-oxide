@@ -11,16 +11,14 @@ Windows users should install [WSL](https://learn.microsoft.com/en-us/windows/wsl
 
 <details><summary><b>Linux (Debian/Ubuntu)</b></summary>
 
-**The following software is required:**
+The following software is required:
 - The latest version of stable Rust, installed using [rustup](https://www.rust-lang.org/tools/install).
 - A C/C++ compilation toolchain and libraries:
   - Debian, Ubuntu and derivatives: `sudo apt install build-essential libclang-dev`
   - Fedora: `sudo dnf group install c-development` and `sudo dnf install clang-devel`
 * [Conjure](https://github.com/conjure-cp/conjure).
   - **Ensure that Conjure is placed early in your PATH to avoid conflicts with ImageMagick's `conjure` command!**
-
-**Z3**
-One of the solver backends, Z3, requires a separate install. Using some command-line package installer, install Z3. (e.g. `apt`). 
+* Z3, one of the solver backends, requires a separate install. Using a package installer (e.g. `apt`), install Z3. 
 </details>
 
 <details><summary><b>MacOS</b></summary>
@@ -30,20 +28,10 @@ One of the solver backends, Z3, requires a separate install. Using some command-
 * an XCode Command Line Tools installation (installable using `xcode-select --install`)
 * CMake: `brew install cmake` (for SAT solving)
 * [Conjure](https://github.com/conjure-cp/conjure).
+* Z3, one of the solver backends, requires a separate install. Using a package installer, install Z3 (e.g. for `Homebrew` run `brew install z3`). 
 
-**Z3**
-One of the solver backends, Z3, requires a separate install. Using some command-line package installer, install Z3. (e.g. for `Homebrew` run `brew install z3`). Depending on your device, you may need to do additional configuration:
-* For **Intel** Macs, you may need to update your `~/.cargo/config.toml`:
-```
-[env]
-Z3_LIBRARY_PATH_OVERRIDE = "/usr/local/lib"
-Z3_SYS_Z3_HEADER = "/usr/local/include/z3.h"
-```
-Note that the Z3 shared object file (`libz3.dylib`) and header (`z3.h`) may be elsewhere. E.g. on a M3 Mac using Homebrew, the paths (as of writing) were:
-```
-Z3_LIBRARY_PATH_OVERRIDE = "/opt/homebrew/opt/z3/lib"
-Z3_SYS_Z3_HEADER = "/opt/homebrew/opt/z3/include/z3.h"
-```
+> If you are having issues with Z3, you may need to update `~/.cargo/config.toml` to ensure the `Z3_LIBRARY_PATH_OVERRIDE` and `Z3_SYS_Z3_HEADER` environment variables are pointed to the right library path and `z3.h` file that you installed. 
+
 </details>
 
 <details><summary><b>St Andrews CS Linux Systems</b></summary>
