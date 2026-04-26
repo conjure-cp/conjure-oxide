@@ -50,6 +50,7 @@ impl LanguageServer for Backend {
                 )),
                 //provides some simple hovering
                 hover_provider: Some(HoverProviderCapability::Simple(true)),
+                references_provider: Some(OneOf::Left(true)),
                 ..ServerCapabilities::default()
             },
         })
@@ -82,6 +83,10 @@ impl LanguageServer for Backend {
     async fn hover(&self, params: HoverParams) -> Result<Option<Hover>> {
         self.client.log_message(MessageType::INFO, "hovering").await;
         self.handle_hovering(params).await
+    }
+    async fn references(&self, params: ReferenceParams) -> Result<Option<Vec<Location>>> {
+        self.client.log_message(MessageType::INFO, "referencing").await;
+        self.handle_references(params).await
     }
 }
 

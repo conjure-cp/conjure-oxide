@@ -69,6 +69,13 @@ impl SourceMap {
         self.by_byte.get(&byte).copied()
     }
 
+    // helper to get byte range for a given span id
+    pub fn byte_range_for_span(&self, span_id: SpanId) -> Option<(usize, usize)> {
+        self.spans
+            .get(span_id as usize)
+            .map(|span| (span.start_byte, span.end_byte))
+    }
+
     // helper to get hover info for a given byte offset (e.g. cursor position)
     pub fn hover_info_at_byte(&self, byte: usize) -> Option<&HoverInfo> {
         self.span_id_at_byte(byte)

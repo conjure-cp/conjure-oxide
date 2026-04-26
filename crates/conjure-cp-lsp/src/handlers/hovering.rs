@@ -4,7 +4,7 @@ use tower_lsp::{jsonrpc::Error, lsp_types::*};
 
 impl Backend {
     pub async fn handle_hovering(&self, params: HoverParams) -> Result<Option<Hover>, Error> {
-        self.client.log_message(MessageType::INFO, "hovering").await;
+        // self.client.log_message(MessageType::INFO, "hovering").await;
 
         let uri = params
             .text_document_position_params
