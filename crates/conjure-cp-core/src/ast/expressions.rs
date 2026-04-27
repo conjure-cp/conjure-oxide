@@ -959,9 +959,20 @@ impl Expression {
                 .ok(),
             Expression::MinionPow(_, _, _, _) => Some(Domain::bool()),
             Expression::ToInt(_, _) => Some(Domain::int(vec![Range::Bounded(0, 1)])),
-            Expression::SATInt(_, _, _, (low, high)) => {
-                Some(Domain::int_ground(vec![Range::Bounded(*low, *high)]))
-            }
+            Expression::SATInt(_, encoding, bits, (low, high)) => match encoding {
+                // for log encodings, the bounds serve as metadata but the actual bitvector can still take values outside that range
+                // so the returned domain must reflect the domain of the bit vector to ensure rules work correctly
+                SATIntEncoding::Log => {
+                    let n = bits.unwrap_list().unwrap().len();
+                    Some(Domain::int_ground(vec![Range::Bounded(
+                        -1 << (n - 1),
+                        (1 << (n - 1)) - 1,
+                    )]))
+                }
+                SATIntEncoding::Order | SATIntEncoding::Direct => {
+                    Some(Domain::int_ground(vec![Range::Bounded(*low, *high)]))
+                }
+            },
             Expression::PairwiseSum(_, a, b) => a
                 .domain_of()?
                 .resolve()?
@@ -1610,19 +1621,28 @@ impl TryFrom<&Expression> for i32 {
     type Error = ();
 
     fn try_from(value: &Expression) -> Result<Self, Self::Error> {
-        let Expression::Atomic(_, atom) = value else {
-            return Err(());
-        };
+        match value {
+            Expression::Atomic(_, atom) => match atom {
+                Atom::Literal(Literal::Int(i)) => Ok(*i),
 
-        let Atom::Literal(lit) = atom else {
-            return Err(());
-        };
+                Atom::Reference(r) => {
+                    let expr = r.resolve_expression().ok_or(())?;
+                    let v: i32 = expr.try_into()?;
+                    Ok(v)
+                }
 
-        let Literal::Int(i) = lit else {
-            return Err(());
-        };
-
-        Ok(*i)
+                _ => Err(()),
+            },
+            //if low=high the SATInt must be a constant
+            // Expression::SATInt(_, _, _, (low, high)) => {
+            //     if low == high {
+            //         Ok(*low)
+            //     } else {
+            //         Err(())
+            //     }
+            // }
+            _ => Err(()),
+        }
     }
 }
 
