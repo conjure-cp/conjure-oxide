@@ -5,7 +5,8 @@ use std::collections::HashSet;
 use tree_sitter::Node;
 
 /// Returns the absolute byte offset of the start of `row` in `source`.
-fn line_start_byte(source: &[u8], row: usize) -> usize {
+/// TODO: move to a separate module like utils, we don't want semantic tokens to depend on parser internals
+pub fn line_start_byte(source: &[u8], row: usize) -> usize {
     let mut current_row = 0usize;
     let mut line_start = 0usize;
     for (idx, b) in source.iter().enumerate() {
