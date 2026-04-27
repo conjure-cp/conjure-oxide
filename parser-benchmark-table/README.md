@@ -22,7 +22,7 @@ If `Conjure` or `EssenceCatalog` are selected, their repositories are cloned/pul
 
 - HTML report path: `parser-benchmark-table/parser_benchmark_table.html`
 
-To view the HTML outpt:
+To view the HTML output:
 
 ```bash
 open parser-benchmark-table/parser_benchmark_table.html
