@@ -7,6 +7,11 @@ use tower_lsp::{
     lsp_types::*,
 };
 
+use tower_lsp::lsp_types::{
+    SemanticTokenModifier, SemanticTokenType, SemanticTokensLegend, SemanticTokensOptions,
+    SemanticTokensServerCapabilities, ServerCapabilities,
+};
+
 use crate::handlers::cache::{CacheCont, create_cache};
 
 use moka::future::Cache;
@@ -48,6 +53,34 @@ impl LanguageServer for Backend {
                         ..Default::default()
                     },
                 )),
+                // provides semantic highlighting
+                semantic_tokens_provider: Some(
+                    SemanticTokensServerCapabilities::SemanticTokensOptions(
+                        SemanticTokensOptions {
+                            legend: SemanticTokensLegend {
+                                token_types: vec![
+                                    SemanticTokenType::NUMBER,
+                                    SemanticTokenType::FUNCTION,
+                                    SemanticTokenType::VARIABLE,
+                                    SemanticTokenType::new("letting"),
+                                    SemanticTokenType::new("find"),
+                                    SemanticTokenType::new("domain"),
+                                    SemanticTokenType::new("lettingVar"),
+                                    SemanticTokenType::new("findVar"),
+                                    SemanticTokenType::new("given"),
+                                    SemanticTokenType::new("givenVar"),
+                                ],
+                                token_modifiers: vec![
+                                    SemanticTokenModifier::DECLARATION,
+                                    SemanticTokenModifier::READONLY,
+                                ],
+                            },
+                            full: Some(SemanticTokensFullOptions::Bool(true)),
+                            range: None,
+                            work_done_progress_options: Default::default(),
+                        },
+                    ),
+                ),
                 //provides some simple hovering
                 hover_provider: Some(HoverProviderCapability::Simple(true)),
                 ..ServerCapabilities::default()
@@ -82,6 +115,17 @@ impl LanguageServer for Backend {
     async fn hover(&self, params: HoverParams) -> Result<Option<Hover>> {
         self.client.log_message(MessageType::INFO, "hovering").await;
         self.handle_hovering(params).await
+    }
+
+    // set up semantic highlighting
+    async fn semantic_tokens_full(
+        &self,
+        params: SemanticTokensParams,
+    ) -> Result<Option<SemanticTokensResult>> {
+        self.client
+            .log_message(MessageType::INFO, "semantic highlighting")
+            .await;
+        self.handle_semantic_highlighting(params).await
     }
 }
 
