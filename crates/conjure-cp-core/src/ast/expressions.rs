@@ -709,14 +709,48 @@ impl Expression {
     /// Returns the possible values of the expression, recursing to leaf expressions
     pub fn domain_of(&self) -> Option<DomainPtr> {
         match self {
-            Expression::Union(_, a, b) => Some(Domain::set(
-                SetAttr::<IntVal>::default(),
-                a.domain_of()?.union(&b.domain_of()?).ok()?,
-            )),
-            Expression::Intersect(_, a, b) => Some(Domain::set(
-                SetAttr::<IntVal>::default(),
-                a.domain_of()?.intersect(&b.domain_of()?).ok()?,
-            )),
+            Expression::Union(_, a, b) => {
+                // Ascertain range
+                let (a_attr, a_dom) = a.domain_of()?.as_set()?;
+                let (b_attr, b_dom) = b.domain_of()?.as_set()?;
+                let a_range = a_attr.resolve()?.size;
+                let b_range = b_attr.resolve()?.size;
+
+                // let new_range = Range::spanning(&[a_range, b_range]); // not it
+
+                // lo is the max of the lower bounds; e.g. if set_a had no attrs and set_b had minSize 2, then set_a union set_b is minSize 2
+                let lo: Option<i32> = a_range.low().copied().max(b_range.low().copied());
+
+                // hi is (at most) the sum of the two upper bounds; e.g. if set_a had maxSize 3 and set_b had maxSize 5 then maxSize is 8
+                let hi: Option<i32> = a_range.high().zip(b_range.high()).map(|(a, b)| a + b);
+
+                // TODO: add further optims
+
+                let new_range = Range::new(lo, hi);
+
+                Some(Domain::set(
+                    SetAttr::new(new_range),
+                    a_dom.union(&b_dom).ok()?,
+                ))
+            }
+            Expression::Intersect(_, a, b) => {
+                let (a_attr, a_dom) = a.domain_of()?.as_set()?;
+                let (b_attr, b_dom) = b.domain_of()?.as_set()?;
+
+                // Can take the upper bounds on either maxSize attribute.
+                let a_attr_range = a_attr.resolve()?.size;
+                let b_attr_range = b_attr.resolve()?.size;
+                let hi: Option<i32> = a_attr_range
+                    .high()
+                    .copied()
+                    .min(b_attr_range.high().copied());
+                let size_attr = Range::new(None, hi);
+
+                Some(Domain::set(
+                    SetAttr::new(size_attr),
+                    a_dom.intersect(&b_dom).ok()?,
+                ))
+            }
             Expression::In(_, _, _) => Some(Domain::bool()),
             Expression::Supset(_, _, _) => Some(Domain::bool()),
             Expression::SupsetEq(_, _, _) => Some(Domain::bool()),
