@@ -17,7 +17,10 @@ pub struct ParseContext<'a> {
     pub errors: &'a mut Vec<RecoverableParseError>,
     pub source_map: &'a mut SourceMap,
     pub decl_spans: &'a mut BTreeMap<Name, SpanId>,
+    /// What type the current expression/literal itself should be
     pub typechecking_context: TypecheckingContext,
+    /// What type the elements within a collection should be
+    pub inner_typechecking_context: TypecheckingContext,
 }
 
 impl<'a> ParseContext<'a> {
@@ -37,6 +40,7 @@ impl<'a> ParseContext<'a> {
             source_map,
             decl_spans,
             typechecking_context: TypecheckingContext::Unknown,
+            inner_typechecking_context: TypecheckingContext::Unknown,
         }
     }
 
@@ -54,6 +58,7 @@ impl<'a> ParseContext<'a> {
             source_map: self.source_map,
             decl_spans: self.decl_spans,
             typechecking_context: self.typechecking_context,
+            inner_typechecking_context: self.inner_typechecking_context,
         }
     }
 
@@ -99,6 +104,11 @@ pub enum TypecheckingContext {
     Boolean,
     Arithmetic,
     Set,
+    SetOrMatrix,
+    MSet,
+    Matrix,
+    Tuple,
+    Record,
     /// Context is unknown or flexible
     Unknown,
 }

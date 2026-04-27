@@ -2,6 +2,7 @@ mod abstract_literal;
 mod atom;
 mod comprehension;
 pub mod domain;
+mod dominance;
 pub mod expression;
 pub mod find;
 pub mod keyword_checks;
