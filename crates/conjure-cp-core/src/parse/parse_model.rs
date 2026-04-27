@@ -730,6 +730,9 @@ fn binary_operator(op_name: &str) -> Option<BinOp> {
         "MkOpPreImage" => Some(Expression::PreImage),
         "MkOpInverse" => Some(Expression::Inverse),
         "MkOpRestrict" => Some(Expression::Restrict),
+        "MkOpApart" => Some(Expression::Apart),
+        "MkOpTogether" => Some(Expression::Together),
+        "MkOpParty" => Some(Expression::Party),
         _ => None,
     }
 }
@@ -752,6 +755,8 @@ fn unary_operator(op_name: &str) -> Option<UnaryOp> {
         "MkOpFactorial" => Some(Expression::Factorial),
         "MkOpToMSet" => Some(Expression::ToMSet),
         "MkOpToRelation" => Some(Expression::ToRelation),
+        "MkOpParticipants" => Some(Expression::Participants),
+        "MkOpParts" => Some(Expression::Parts),
         _ => None,
     }
 }

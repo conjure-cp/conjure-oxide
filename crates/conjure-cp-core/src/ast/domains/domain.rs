@@ -681,6 +681,17 @@ impl Domain {
         None
     }
 
+    /// If this is a partition domain, get its (attributes, domain)
+    pub fn as_partition(&self) -> Option<(PartitionAttr<IntVal>, Moo<Domain>)> {
+        if let Some(GroundDomain::Partition(attrs, doms)) = self.as_ground() {
+            return Some((attrs.clone().into(), doms.clone().into()));
+        }
+        if let Some(UnresolvedDomain::Partition(attrs, doms)) = self.as_unresolved() {
+            return Some((attrs.clone(), doms.clone()));
+        }
+        None
+    }
+
     /// If this is a relation domain, get its (attributes, [domains])
     pub fn as_relation(&self) -> Option<(RelAttr<IntVal>, Vec<Moo<Domain>>)> {
         if let Some(GroundDomain::Relation(attrs, doms)) = self.as_ground() {

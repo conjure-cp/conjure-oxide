@@ -329,6 +329,34 @@ pub enum Expression {
     #[compatible(JsonInput)]
     Minus(Metadata, Moo<Expression>, Moo<Expression>),
 
+    /// Partition Operator: test if a list of elements are not all contained in one part of the partition
+    /// First Expr Arg is a list of elements
+    /// Second Expr Arg is the partition
+    #[compatible(JsonInput)]
+    Apart(Metadata, Moo<Expression>, Moo<Expression>),
+
+    /// Partition Operator: union of all parts of a partition
+    /// Expr Arg is a partition
+    #[compatible(JsonInput)]
+    Participants(Metadata, Moo<Expression>),
+
+    /// Partition Operator: part of partition that contains specified element
+    /// First Expr Arg is an element that should be contained
+    /// Second Expr Arg is the partition that should contain that element
+    #[compatible(JsonInput)]
+    Party(Metadata, Moo<Expression>, Moo<Expression>),
+
+    /// Partition Operator: partition to its set of parts
+    /// Expr Arg is the partition from which the parts come from
+    #[compatible(JsonInput)]
+    Parts(Metadata, Moo<Expression>),
+
+    /// Partition Operator: test if a list of elements are all in the same part of the partition
+    /// First Expr Arg is the list of elements to test with
+    /// Second Expr Arg is the partition to test on
+    #[compatible(JsonInput)]
+    Together(Metadata, Moo<Expression>, Moo<Expression>),
+
     /// Ensures that x=|y| i.e. x is the absolute value of y.
     ///
     /// Low-level Minion constraint.
@@ -1314,6 +1342,65 @@ impl Expression {
                     .collect();
                 Some(Domain::relation(RelAttr::<IntVal>::default(), new_doms))
             }
+            Expression::Apart(_, _, _) => Some(Domain::bool()),
+            Expression::Together(_, _, _) => Some(Domain::bool()),
+            Expression::Participants(_, p) => {
+                // Every single element of the domain _must_ be in the set, so fixed size on that.
+                let (attr, inner) = p.domain_of()?.as_partition()?;
+                let len = inner.length_signed().ok()?;
+
+                let p_parts = attr.resolve()?.num_parts;
+                let p_card = attr.resolve()?.part_len;
+
+                // if
+                match (p_parts.low(), p_parts.high(), p_card.low(), p_card.high()) {
+                    (Some(p), Some(q), Some(r), Some(s)) => {
+                        let lo = p * r;
+                        let hi = q * s;
+                        if len < lo || len > hi {
+                            return Some(Domain::empty(ReturnType::Set(Box::new(
+                                inner.return_type(),
+                            ))));
+                        }
+                    }
+
+                    (None, Some(q), None, Some(s)) => {
+                        let hi = q * s;
+                        if len > hi {
+                            return Some(Domain::empty(ReturnType::Set(Box::new(
+                                inner.return_type(),
+                            ))));
+                        }
+                    }
+
+                    (Some(p), None, Some(r), None) => {
+                        let lo = p * r;
+                        if len < lo {
+                            return Some(Domain::empty(ReturnType::Set(Box::new(
+                                inner.return_type(),
+                            ))));
+                        }
+                    }
+
+                    _ => {}
+                }
+
+                Some(Domain::set(SetAttr::new_size(len), p.domain_of()?))
+            }
+            Expression::Party(_, _, p) => {
+                // Will pick a part, so set will share same attrs
+                let (attr, inner) = p.domain_of()?.as_partition()?;
+
+                Some(Domain::set(SetAttr::new(attr.part_len), inner))
+            }
+            Expression::Parts(_, p) => {
+                let (attr, inner) = p.domain_of()?.as_partition()?;
+
+                Some(Domain::set(
+                    SetAttr::new(attr.num_parts.clone()),
+                    Domain::set(SetAttr::new(attr.part_len), inner),
+                ))
+            }
         }
     }
 
@@ -1369,6 +1456,11 @@ impl Expression {
             UnsafeDiv,
             SafeMod,
             UnsafeMod,
+            Apart,
+            Together,
+            Participants,
+            Party,
+            Parts,
             Neg,
             Defined,
             Range,
@@ -1826,6 +1918,21 @@ impl Display for Expression {
             Expression::Lt(_, box1, box2) => {
                 write!(f, "({} < {})", box1.clone(), box2.clone())
             }
+            Expression::Apart(_, list, partition) => {
+                write!(f, "apart({list}, {partition})")
+            }
+            Expression::Together(_, list, partition) => {
+                write!(f, "together({list}, {partition})")
+            }
+            Expression::Participants(_, partition) => {
+                write!(f, "participants({partition})")
+            }
+            Expression::Party(_, element, partition) => {
+                write!(f, "party({element}, {partition})")
+            }
+            Expression::Parts(_, partition) => {
+                write!(f, "parts({partition})")
+            }
             Expression::FlatSumGeq(_, box1, box2) => {
                 write!(f, "SumGeq({}, {})", pretty_vec(box1), box2.clone())
             }
@@ -2079,6 +2186,15 @@ impl Typeable for Expression {
             Expression::Leq(_, _, _) => ReturnType::Bool,
             Expression::Gt(_, _, _) => ReturnType::Bool,
             Expression::Lt(_, _, _) => ReturnType::Bool,
+            Expression::Apart(_, _, _) => ReturnType::Bool,
+            Expression::Together(_, _, _) => ReturnType::Bool,
+            Expression::Party(_, _, subject) => ReturnType::Set(Box::new(subject.return_type())),
+            Expression::Participants(_, subject) => {
+                ReturnType::Set(Box::new(subject.return_type()))
+            }
+            Expression::Parts(_, subject) => {
+                ReturnType::Set(Box::new(ReturnType::Set(Box::new(subject.return_type()))))
+            }
             Expression::SafeDiv(_, _, _) => ReturnType::Int,
             Expression::UnsafeDiv(_, _, _) => ReturnType::Int,
             Expression::FlatAllDiff(_, _) => ReturnType::Bool,
@@ -2327,6 +2443,8 @@ impl Expression {
             | Expression::AllDiff(_, m1)
             | Expression::Factorial(_, m1)
             | Expression::Range(_, m1)
+            | Expression::Participants(_, m1)
+            | Expression::Parts(_, m1)
             | Expression::ToSet(_, m1)
             | Expression::ToMSet(_, m1)
             | Expression::ToRelation(_, m1) => {
@@ -2366,6 +2484,9 @@ impl Expression {
             | Expression::PreImage(_, m1, m2)
             | Expression::Inverse(_, m1, m2)
             | Expression::Restrict(_, m1, m2)
+            | Expression::Apart(_, m1, m2)
+            | Expression::Together(_, m1, m2)
+            | Expression::Party(_, m1, m2)
             | Expression::LexLt(_, m1, m2)
             | Expression::LexLeq(_, m1, m2)
             | Expression::LexGt(_, m1, m2)
@@ -2536,6 +2657,8 @@ impl CacheHashable for Expression {
             | Expression::Defined(_, m1)
             | Expression::AllDiff(_, m1)
             | Expression::Factorial(_, m1)
+            | Expression::Participants(_, m1)
+            | Expression::Parts(_, m1)
             | Expression::Range(_, m1)
             | Expression::ToSet(_, m1)
             | Expression::ToMSet(_, m1)
@@ -2562,6 +2685,9 @@ impl CacheHashable for Expression {
             | Expression::Leq(_, m1, m2)
             | Expression::Gt(_, m1, m2)
             | Expression::Lt(_, m1, m2)
+            | Expression::Apart(_, m1, m2)
+            | Expression::Together(_, m1, m2)
+            | Expression::Party(_, m1, m2)
             | Expression::SafeDiv(_, m1, m2)
             | Expression::UnsafeDiv(_, m1, m2)
             | Expression::SafeMod(_, m1, m2)
