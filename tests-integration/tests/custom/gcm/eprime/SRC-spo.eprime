@@ -90,6 +90,27 @@ such that
     and([rel2_RelationAsMatrix[q14, q15] /\ rel2_RelationAsMatrix[q15, q16] -> rel2_RelationAsMatrix[q14, q16]
              | q14 : int(1..n), q15 : int(1..n), q16 : int(1..n)])
 
+dominance relation
+    score < fromSolution(score)
+    \/
+    (score = fromSolution(score)
+     /\
+     and([fromSolution(rel1_RelationAsMatrix)[q101, q102] ->
+          rel1_RelationAsMatrix[q101, q102]
+              | q101 : int(1..n), q102 : int(1..n)])
+     /\
+     and([fromSolution(rel2_RelationAsMatrix)[q103, q104] ->
+          rel2_RelationAsMatrix[q103, q104]
+              | q103 : int(1..n), q104 : int(1..n)])
+     /\
+     (or([rel1_RelationAsMatrix[q105, q106] /\
+          !fromSolution(rel1_RelationAsMatrix)[q105, q106]
+              | q105 : int(1..n), q106 : int(1..n)])
+      \/
+      or([rel2_RelationAsMatrix[q107, q108] /\
+          !fromSolution(rel2_RelationAsMatrix)[q107, q108]
+              | q107 : int(1..n), q108 : int(1..n)])))
+
 $ Conjure's
 $ {"finds":
 $      [{"Name": "omitList"}, {"Name": "rel1"}, {"Name": "survivor1"}, {"Name": "rel2"}, {"Name": "survivor2"},

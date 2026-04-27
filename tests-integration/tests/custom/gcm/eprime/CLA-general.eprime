@@ -196,6 +196,87 @@ such that
     and([rel_RelationAsMatrix[q37, q38] \/ rel_RelationAsMatrix[q38, q37] \/ q37 = q38
              | q37 : int(1..n), q38 : int(1..n)])
 
+dominance relation
+    score < fromSolution(score)
+    \/
+    (score = fromSolution(score)
+     /\
+     and([rel_RelationAsMatrix[q101, q102] =
+          fromSolution(rel_RelationAsMatrix)[q101, q102]
+              | q101 : int(1..n), q102 : int(1..n)])
+     /\
+     and([(and([G_FunctionAsRelationR2R2_RelationAsSetR2R2_ExplicitR2R2_1_Occurrence[q103, q104] ->
+                or([dataset_ExplicitBoundedR6_Values_1_ExplicitVarSizeWithDummy[row, q105] = q104
+                        | q105 : int(1..fin2),
+                          dataset_ExplicitBoundedR6_Values_1_ExplicitVarSizeWithDummy[row, q105] !=
+                          fin4 + 1])
+                    | q104 : int(1..n)])
+           /\
+           and([G_FunctionAsRelationR2R2_RelationAsSetR2R2_ExplicitR2R2_1_Occurrence
+                    [q103, dataset_ExplicitBoundedR6_Values_1_ExplicitVarSizeWithDummy[row, q106]]
+                    | q106 : int(1..fin2),
+                      dataset_ExplicitBoundedR6_Values_1_ExplicitVarSizeWithDummy[row, q106] !=
+                      fin4 + 1])
+           /\
+           and([fromSolution
+                    (G_FunctionAsRelationR2R2_RelationAsSetR2R2_ExplicitR2R2_1_Occurrence)[q107, q108]
+                ->
+                or([dataset_ExplicitBoundedR6_Values_1_ExplicitVarSizeWithDummy[row, q109] = q108
+                        | q109 : int(1..fin2),
+                          dataset_ExplicitBoundedR6_Values_1_ExplicitVarSizeWithDummy[row, q109] !=
+                          fin4 + 1])
+                    | q108 : int(1..n)])
+           /\
+           and([fromSolution
+                    (G_FunctionAsRelationR2R2_RelationAsSetR2R2_ExplicitR2R2_1_Occurrence)
+                    [q107, dataset_ExplicitBoundedR6_Values_1_ExplicitVarSizeWithDummy[row, q110]]
+                    | q110 : int(1..fin2),
+                      dataset_ExplicitBoundedR6_Values_1_ExplicitVarSizeWithDummy[row, q110] !=
+                      fin4 + 1]))
+          ->
+          and([fromSolution
+                   (G_FunctionAsRelationR2R2_RelationAsSetR2R2_ExplicitR2R2_2_Occurrence)[q107, q111]
+               ->
+               G_FunctionAsRelationR2R2_RelationAsSetR2R2_ExplicitR2R2_2_Occurrence[q103, q111]
+                   | q111 : int(1..n)])
+              | row : int(1..nbObservations), q103 : int(1..let1), q107 : int(1..let1)])
+     /\
+     or([and([G_FunctionAsRelationR2R2_RelationAsSetR2R2_ExplicitR2R2_1_Occurrence[q112, q113] ->
+              or([dataset_ExplicitBoundedR6_Values_1_ExplicitVarSizeWithDummy[row, q114] = q113
+                      | q114 : int(1..fin2),
+                        dataset_ExplicitBoundedR6_Values_1_ExplicitVarSizeWithDummy[row, q114] !=
+                        fin4 + 1])
+                  | q113 : int(1..n)])
+         /\
+         and([G_FunctionAsRelationR2R2_RelationAsSetR2R2_ExplicitR2R2_1_Occurrence
+                  [q112, dataset_ExplicitBoundedR6_Values_1_ExplicitVarSizeWithDummy[row, q115]]
+                  | q115 : int(1..fin2),
+                    dataset_ExplicitBoundedR6_Values_1_ExplicitVarSizeWithDummy[row, q115] !=
+                    fin4 + 1])
+         /\
+         and([fromSolution
+                  (G_FunctionAsRelationR2R2_RelationAsSetR2R2_ExplicitR2R2_1_Occurrence)[q116, q117]
+              ->
+              or([dataset_ExplicitBoundedR6_Values_1_ExplicitVarSizeWithDummy[row, q118] = q117
+                      | q118 : int(1..fin2),
+                        dataset_ExplicitBoundedR6_Values_1_ExplicitVarSizeWithDummy[row, q118] !=
+                        fin4 + 1])
+                  | q117 : int(1..n)])
+         /\
+         and([fromSolution
+                  (G_FunctionAsRelationR2R2_RelationAsSetR2R2_ExplicitR2R2_1_Occurrence)
+                  [q116, dataset_ExplicitBoundedR6_Values_1_ExplicitVarSizeWithDummy[row, q119]]
+                  | q119 : int(1..fin2),
+                    dataset_ExplicitBoundedR6_Values_1_ExplicitVarSizeWithDummy[row, q119] !=
+                    fin4 + 1])
+         /\
+         or([G_FunctionAsRelationR2R2_RelationAsSetR2R2_ExplicitR2R2_2_Occurrence[q112, q120]
+              /\
+              !fromSolution
+                   (G_FunctionAsRelationR2R2_RelationAsSetR2R2_ExplicitR2R2_2_Occurrence)[q116, q120]
+                  | q120 : int(1..n)])
+             | row : int(1..nbObservations), q112 : int(1..let1), q116 : int(1..let1)]))
+
 $ Conjure's
 $ {"finds": [{"Name": "omitList"}, {"Name": "G"}, {"Name": "rel"}, {"Name": "score"}], "givens": [{"Name": "dataset"}],
 $  "enumGivens": [], "enumLettings": [],

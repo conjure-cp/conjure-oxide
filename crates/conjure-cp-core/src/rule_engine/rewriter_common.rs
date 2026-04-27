@@ -249,6 +249,60 @@ pub(crate) fn try_rewrite_value_letting_once(
     Some(())
 }
 
+/// Applies the highest-priority rule that matches the model root, if any.
+///
+/// Morph normally rewrites within the root expression. This hook lets root-specific rules perform
+/// whole-model normalisation before the regular tree morph pass runs.
+#[allow(dead_code)]
+pub(crate) fn try_rewrite_root_once(
+    model: &mut Model,
+    rules_grouped: &Vec<(u16, Vec<RuleData<'_>>)>,
+    prop_multiple_equally_applicable: bool,
+) -> Option<()> {
+    let symbols = model.symbols().clone();
+    let root = model.root().clone();
+    let mut results = Vec::new();
+
+    'top: for (priority, rules) in rules_grouped.iter() {
+        for rd in rules {
+            let Ok(reduction) = (rd.rule.application)(&root, &symbols) else {
+                continue;
+            };
+
+            results.push((
+                RuleResult {
+                    rule_data: rd.clone(),
+                    reduction,
+                },
+                *priority,
+            ));
+        }
+
+        if !results.is_empty() {
+            break 'top;
+        }
+    }
+
+    let (result, _) = match results.as_slice() {
+        [] => return None,
+        [single, ..] => single,
+    };
+
+    if prop_multiple_equally_applicable && results.len() > 1 {
+        let names: Vec<_> = results
+            .iter()
+            .map(|(result, _)| result.rule_data.rule.name)
+            .collect();
+        panic!("Multiple equally applicable rules for root expression {root}: {names:?}");
+    }
+
+    log_rule_application(result, &root, &symbols, None);
+    result.reduction.clone().apply(model);
+    model.replace_root(result.reduction.new_expression.clone());
+
+    Some(())
+}
+
 /// Represents errors that can occur during the model rewriting process.
 #[derive(Debug, Error)]
 pub enum RewriteError {

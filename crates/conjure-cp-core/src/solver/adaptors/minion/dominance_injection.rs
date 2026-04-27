@@ -10,7 +10,7 @@ use uniplate::Uniplate;
 
 use crate::Model as ConjureModel;
 use crate::ast::{Atom, Expression, GroundDomain, Literal, Metadata, Moo, Name};
-use crate::rule_engine::{get_rule_sets_for_solver_family, rewrite_model_with_configured_rewriter};
+use crate::rule_engine::{resolve_rule_sets, rewrite_model_with_configured_rewriter};
 use crate::settings::{SolverFamily, current_rewriter};
 use crate::solver::SolverError;
 use crate::solver::SolverError::{Runtime, RuntimeNotImplemented};
@@ -623,22 +623,24 @@ pub(super) fn add_dominance_constraints_for_solution(
         "[minion-inject] rewritten_dominance(solution#{solution_ordinal}) = {rewritten_dominance:#?}"
     ));
 
+    // `model_template` is pre-stripped at load time so mid-search injection only clones the
+    // declaration/symbol context needed to rewrite this dominance constraint.
     let mut dominance_model = model_template.clone();
-    dominance_model.replace_constraints(vec![]);
-    dominance_model.replace_clauses(vec![]);
-    dominance_model.dominance = None;
     dominance_model.add_constraint(rewritten_dominance);
 
-    let rewritten = rewrite_model_with_configured_rewriter(
-        dominance_model,
-        &get_rule_sets_for_solver_family(SolverFamily::Minion),
-        current_rewriter(),
-    )
-    .map_err(|e| {
+    let dominance_rewriter = current_rewriter();
+    let rule_sets = resolve_rule_sets(SolverFamily::Minion, &[]).map_err(|e| {
         Runtime(format!(
-            "failed to rewrite dominance constraint for Minion injection: {e}"
+            "failed to resolve Minion rule sets for dominance injection: {e}"
         ))
     })?;
+    let rewritten =
+        rewrite_model_with_configured_rewriter(dominance_model, &rule_sets, dominance_rewriter)
+            .map_err(|e| {
+                Runtime(format!(
+                    "failed to rewrite dominance constraint for Minion injection: {e}"
+                ))
+            })?;
 
     let dominance_minion_model = model_to_minion(rewritten)?;
     append_minion_injection_log(&format!(

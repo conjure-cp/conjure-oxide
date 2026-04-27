@@ -361,6 +361,12 @@ module.exports = grammar ({
 
     sub_atom_expr: $ => seq("(", field("expression", $.atom), ")"),
 
+    indexable_expr: $ => prec(25, choice(
+      $.atom,
+      $.sub_arith_expr,
+      $.sub_bool_expr
+    )),
+
     tuple: $ => prec(-5,choice(
       // explicit tuple value using the 'tuple' keyword (allows empty, singleton, multi-arity)
       seq(
@@ -431,12 +437,12 @@ module.exports = grammar ({
       field("value", choice($.arithmetic_expr, $.bool_expr, $.comparison_expr, $.atom))
     ),
 
-    index_or_slice: $ => seq(
-      field("collection", choice($.identifier, $.tuple, $.matrix, $.record, $.flatten)),
+    index_or_slice: $ => prec(25, seq(
+      field("collection", $.indexable_expr),
       "[",
       field("indices", $.indices),
       "]"
-    ),
+    )),
 
     // TODO: add unary set operation support (powerSet)
     set_operation: $ => prec.left(seq(
