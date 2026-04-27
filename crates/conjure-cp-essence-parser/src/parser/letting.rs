@@ -83,7 +83,7 @@ pub fn parse_letting_statement(
             temp_symbols.insert(variable_name);
             let hover = HoverInfo {
                 description: format!("Letting variable: {variable_name}"),
-                kind: Some(SymbolKind::Letting),
+                kind: Some(SymbolKind::LettingVar),
                 ty: None,
                 decl_span: None,
             };
