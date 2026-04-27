@@ -304,6 +304,7 @@ fn parse_variable(ctx: &mut ParseContext, node: &Node) -> Result<Option<Atom>, F
 
             let hover = HoverInfo {
                 description: format!("Variable: {name}"),
+                doc_key: None,
                 kind: Some(symbol_kind),
                 ty: decl.domain().map(|d| d.to_string()),
                 decl_span: ctx.lookup_decl_span(&name),
@@ -407,6 +408,7 @@ fn parse_constant(ctx: &mut ParseContext, node: &Node) -> Result<Option<Literal>
         "TRUE" => {
             let hover = HoverInfo {
                 description: format!("Boolean constant: {raw_value}"),
+                doc_key: None,
                 kind: None,
                 ty: None,
                 decl_span: None,
@@ -417,6 +419,7 @@ fn parse_constant(ctx: &mut ParseContext, node: &Node) -> Result<Option<Literal>
         "FALSE" => {
             let hover = HoverInfo {
                 description: format!("Boolean constant: {raw_value}"),
+                doc_key: None,
                 kind: None,
                 ty: None,
                 decl_span: None,
