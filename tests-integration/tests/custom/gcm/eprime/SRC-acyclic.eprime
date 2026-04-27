@@ -23,7 +23,7 @@ find survivor1_ExplicitBoundedR2_Values_Occurrence: matrix indexed by [int(1..nb
 find rel2_RelationAsMatrix: matrix indexed by [int(1..n), int(1..n)] of bool
 find survivor2_ExplicitBoundedR3_Length: int(nbObservations)
 find survivor2_ExplicitBoundedR3_Values_Explicit: matrix indexed by [int(1..nbObservations), int(1)] of int(1..n)
-find score: int(0)
+find score: int(0..nbObservations)
 find path1_RelationAsMatrix: matrix indexed by [int(1..n), int(1..n)] of bool
 find path2_RelationAsMatrix: matrix indexed by [int(1..n), int(1..n)] of bool
 such that
@@ -80,7 +80,7 @@ such that
                         | y : int(1..n), row <= nbObservations]))
                   | q2 : int(1..n), row <= nbObservations])
              | row : int(1..nbObservations)]),
-    0 = sum([toInt(omitList_ExplicitBounded_Values[row]) | row : int(1..nbObservations)]),
+    score = sum([toInt(omitList_ExplicitBounded_Values[row]) | row : int(1..nbObservations)]),
     and([row <= nbObservations | row : int(1..nbObservations)]),
     and([rel1_RelationAsMatrix[q30_1, q30_2] -> path1_RelationAsMatrix[q30_1, q30_2]
              | q30_1 : int(1..n), q30_2 : int(1..n), q30_1 != q30_2]),
