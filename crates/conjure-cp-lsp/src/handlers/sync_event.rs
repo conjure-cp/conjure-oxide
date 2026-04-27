@@ -296,7 +296,8 @@ pub fn convert_diagnostics(diagnostics: Vec<ParserDiagnostic>) -> Vec<LspDiagnos
                 },
                 code: None,             // for now
                 code_description: None, // also for now
-                source: Some(diag.source.to_string()),
+                // source: Some(diag.source.to_string()),
+                source: None,
                 message: diag.message,
                 related_information: None,
                 tags: None,
