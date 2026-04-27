@@ -33,7 +33,7 @@ open parser-benchmark-table/parser_benchmark_table.html
 Run from the repository root:
 
 ```bash
-cargo run -p parser-benchmark
+cargo run -p parser-benchmark-table
 ```
 
 ### Options
