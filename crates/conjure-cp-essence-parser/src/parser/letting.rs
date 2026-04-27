@@ -85,7 +85,7 @@ pub fn parse_letting_statement(
             let hover = HoverInfo {
                 description: format!("Letting variable: {variable_name}"),
                 doc_key: None,
-                kind: Some(SymbolKind::Letting),
+                kind: Some(SymbolKind::LettingVar),
                 ty: None,
                 decl_span: None,
             };
