@@ -10,4 +10,4 @@ pub use domain::{Domain, DomainPtr, HasDomain, Int};
 pub use error::DomainOpError;
 pub use ground::{GroundDomain, RecordEntryGround};
 pub use range::Range;
-pub use unresolved::{IntVal, RecordEntry, UnresolvedDomain};
+pub use unresolved::{EnumVariantVal, IntVal, RecordEntry, UnresolvedDomain};
