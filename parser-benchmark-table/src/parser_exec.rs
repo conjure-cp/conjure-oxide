@@ -7,7 +7,7 @@ use std::io::Write;
 use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, RwLock};
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
 pub fn run_parser_on_group(group: &InputGroup, native: bool) -> ParseResult {
     let temp_path = write_combined_group_file(group);
@@ -63,6 +63,8 @@ fn run_one_file(path: &Path, native: bool) -> ParseResult {
     let context: Arc<RwLock<Context<'static>>> = Default::default();
     let path_str = path.to_string_lossy().to_string();
 
+    let start = Instant::now();
+
     // Run the parser in a catch_unwind block to catch any panics and convert them into test failures
     let parse_result = catch_unwind_silent(AssertUnwindSafe(|| {
         if native {
@@ -72,6 +74,8 @@ fn run_one_file(path: &Path, native: bool) -> ParseResult {
         }
     }));
 
+    let duration_ms = start.elapsed().as_millis() as u64;
+
     // Handle any panics that occured and convert them into a ParseResult
     match parse_result {
         Ok(parser_outcome) => match parser_outcome {
@@ -79,17 +83,20 @@ fn run_one_file(path: &Path, native: bool) -> ParseResult {
                 pass: true,
                 summary: "pass",
                 output_or_error: format!("{}\nparsed input successfully", path.display()),
+                duration_ms,
             },
             Err(err_box) => match err_box.as_ref() {
                 ParseErrorCollection::Fatal(_) => ParseResult {
                     pass: false,
                     summary: "fail",
                     output_or_error: format!("{}\n{}", path.display(), err_box),
+                    duration_ms,
                 },
                 _ => ParseResult {
                     pass: true,
                     summary: "pass",
                     output_or_error: format!("{}\n{}", path.display(), err_box),
+                    duration_ms,
                 },
             },
         },
@@ -110,6 +117,7 @@ fn run_one_file(path: &Path, native: bool) -> ParseResult {
                     path.display(),
                     panic_message
                 ),
+                duration_ms,
             }
         }
     }

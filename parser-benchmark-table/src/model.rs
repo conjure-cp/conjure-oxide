@@ -33,6 +33,7 @@ pub struct ParseResult {
     pub pass: bool,
     pub summary: &'static str,
     pub output_or_error: String,
+    pub duration_ms: u64,
 }
 
 #[derive(Clone, Debug)]

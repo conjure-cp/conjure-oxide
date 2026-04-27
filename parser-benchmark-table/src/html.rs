@@ -138,6 +138,10 @@ pub fn build_html(
         if let Some(native) = &row.native {
             rows_html.push_str("<div class=\"details-block detail-native\"><div class=\"details-title\">Native parser output</div>");
             rows_html.push_str(&format!(
+                "<div class=\"parser-meta\">Runtime: {}ms</div>\n",
+                native.duration_ms
+            ));
+            rows_html.push_str(&format!(
                 "<div class=\"mono\">{}</div></div>\n",
                 escape_html(&native.output_or_error)
             ));
@@ -145,6 +149,10 @@ pub fn build_html(
 
         if let Some(via) = &row.via_conjure {
             rows_html.push_str("<div class=\"details-block detail-via\"><div class=\"details-title\">Via-conjure parser output</div>");
+            rows_html.push_str(&format!(
+                "<div class=\"parser-meta\">Runtime: {}ms</div>\n",
+                via.duration_ms
+            ));
             rows_html.push_str(&format!(
                 "<div class=\"mono\">{}</div></div>\n",
                 escape_html(&via.output_or_error)
