@@ -13,6 +13,7 @@ pub enum ReturnType {
     Tuple(Vec<ReturnType>),
     Record(Vec<ReturnType>),
     Function(Box<ReturnType>, Box<ReturnType>),
+    Variant(Vec<ReturnType>),
     Relation(Vec<ReturnType>),
 
     /// An unknown type
@@ -52,6 +53,10 @@ impl Display for ReturnType {
             ReturnType::Relation(types) => {
                 let inners = types.iter().map(|t| format!("{}", t)).join(", ");
                 write!(f, "relation of ({inners})")
+            }
+            ReturnType::Variant(types) => {
+                let inners = types.iter().map(|t| format!("{}", t)).join(", ");
+                write!(f, "variant {{{inners}}}")
             }
             ReturnType::Unknown => write!(f, "?"),
         }
