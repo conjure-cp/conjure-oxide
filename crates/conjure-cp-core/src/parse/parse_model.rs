@@ -8,6 +8,7 @@ use serde_json::Value;
 use serde_json::Value as JsonValue;
 
 use crate::ast::Moo;
+use crate::ast::PartitionAttr;
 use crate::ast::ac_operators::ACOperatorKind;
 use crate::ast::comprehension::ComprehensionBuilder;
 use crate::ast::records::RecordValue;
@@ -252,7 +253,44 @@ fn parse_domain(
             let attr: MSetAttr<IntVal> = MSetAttr { size, occurrence };
             Ok(Domain::mset(attr, domain))
         }
+        "DomainPartition" => {
+            let dom = domain_value
+                .get(2)
+                .and_then(|v| v.as_object())
+                .expect("domain object exists");
+            let domain = dom.iter().next().ok_or(Error::Parse(
+                "DomainPartition is an empty object".to_owned(),
+            ))?;
+            let domain = parse_domain(domain.0.as_str(), domain.1, symbols)?;
 
+            let attributes = domain_value
+                .get(1)
+                .and_then(|v| v.as_object())
+                .ok_or(error!("Partition attributes is not an object"))?;
+
+            let mut num_parts = Range::Unbounded;
+            let mut part_len = Range::Unbounded;
+            let mut is_regular = false;
+
+            if let Some(val) = attributes.get("partsNum") {
+                let attr_map = val.as_object().expect("numParts should be an object");
+                num_parts = parse_size_attr(attr_map, symbols)?;
+            }
+            if let Some(val) = attributes.get("partsSize") {
+                let attr_map = val.as_object().expect("partsSize should be an object");
+                part_len = parse_size_attr(attr_map, symbols)?;
+            }
+            if let Some(val) = attributes.get("isRegular").and_then(|v| v.as_bool()) {
+                is_regular = val;
+            }
+
+            let attr: PartitionAttr<IntVal> = PartitionAttr {
+                num_parts,
+                part_len,
+                is_regular,
+            };
+            Ok(Domain::partition(attr, domain))
+        }
         "DomainMatrix" => {
             let domain_value = domain_value
                 .as_array()
@@ -791,6 +829,8 @@ pub fn parse_expression(obj: &JsonValue, scope: &SymbolTablePtr) -> Result<Expre
                 parse_abs_mset(&abslit["AbstractLiteral"]["AbsLitMSet"], scope)
             } else if abstract_literal.contains_key("AbsLitRelation") {
                 parse_abs_relation(&abslit["AbstractLiteral"]["AbsLitRelation"], scope)
+            } else if abstract_literal.contains_key("AbstractLiteralPartition") {
+                parse_abs_partition(&abslit["AbstractLiteral"]["AbsLitPartition"], scope)
             } else {
                 parse_abstract_matrix_as_expr(obj, scope)
             }
@@ -842,6 +882,32 @@ fn parse_abs_mset(abs_mset: &Value, scope: &SymbolTablePtr) -> Result<Expression
     Ok(Expression::AbstractLiteral(
         Metadata::new(),
         AbstractLiteral::MSet(expressions),
+    ))
+}
+
+fn parse_abs_partition(abs_partition: &Value, scope: &SymbolTablePtr) -> Result<Expression> {
+    let parts = abs_partition
+        .as_array()
+        .ok_or(error!("AbsLitPartition is not an array"))?;
+
+    let mut partition: Vec<Vec<_>> = Vec::new();
+
+    for part in parts {
+        let vals = part
+            .as_array()
+            .ok_or(error!("Part in AbsLitPartition is not an array"))?;
+
+        let exprs = vals
+            .iter()
+            .map(|values| parse_expression(values, scope))
+            .collect::<Result<Vec<_>>>()?;
+
+        partition.push(exprs);
+    }
+
+    Ok(Expression::AbstractLiteral(
+        Metadata::new(),
+        AbstractLiteral::Partition(partition),
     ))
 }
 
@@ -1456,6 +1522,8 @@ fn parse_constant(
                     return parse_abs_tuple(arr, scope);
                 } else if let Some(arr) = obj.get("AbsLitRecord") {
                     return parse_abs_record(arr, scope);
+                } else if let Some(arr) = obj.get("AbsLitPartition") {
+                    return parse_abs_partition(arr, scope);
                 } else if let Some(arr) = obj.get("AbsLitFunction") {
                     return parse_abs_function(arr, scope);
                 } else if let Some(arr) = obj.get("AbsLitRelation") {

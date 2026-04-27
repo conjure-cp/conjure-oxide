@@ -14,6 +14,7 @@ pub enum ReturnType {
     Record(Vec<ReturnType>),
     Function(Box<ReturnType>, Box<ReturnType>),
     Relation(Vec<ReturnType>),
+    Partition(Box<ReturnType>),
 
     /// An unknown type
     ///
@@ -53,6 +54,7 @@ impl Display for ReturnType {
                 let inners = types.iter().map(|t| format!("{}", t)).join(", ");
                 write!(f, "relation of ({inners})")
             }
+            ReturnType::Partition(inner) => write!(f, "partition of {inner}"),
             ReturnType::Unknown => write!(f, "?"),
         }
     }
