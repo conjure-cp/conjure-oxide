@@ -716,15 +716,11 @@ impl Expression {
                 let a_range = a_attr.resolve()?.size;
                 let b_range = b_attr.resolve()?.size;
 
-                // let new_range = Range::spanning(&[a_range, b_range]); // not it
-
                 // lo is the max of the lower bounds; e.g. if set_a had no attrs and set_b had minSize 2, then set_a union set_b is minSize 2
                 let lo: Option<i32> = a_range.low().copied().max(b_range.low().copied());
 
                 // hi is (at most) the sum of the two upper bounds; e.g. if set_a had maxSize 3 and set_b had maxSize 5 then maxSize is 8
                 let hi: Option<i32> = a_range.high().zip(b_range.high()).map(|(a, b)| a + b);
-
-                // TODO: add further optims
 
                 let new_range = Range::new(lo, hi);
 
