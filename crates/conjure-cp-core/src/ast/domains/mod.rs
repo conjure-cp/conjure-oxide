@@ -5,7 +5,9 @@ mod ground;
 mod range;
 mod unresolved;
 
-pub use attrs::{BinaryAttr, FuncAttr, JectivityAttr, MSetAttr, PartialityAttr, RelAttr, SetAttr};
+pub use attrs::{
+    BinaryAttr, FuncAttr, JectivityAttr, MSetAttr, PartialityAttr, RelAttr, SequenceAttr, SetAttr,
+};
 pub use domain::{Domain, DomainPtr, HasDomain, Int};
 pub use error::DomainOpError;
 pub use ground::{GroundDomain, RecordEntryGround};
