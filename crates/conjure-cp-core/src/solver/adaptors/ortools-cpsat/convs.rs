@@ -1,11 +1,17 @@
-use crate::Model;
 use crate::solver::{SolverError, SolverResult};
+use super::proto::CpModelProto;
+use std::collections::HashMap;
+use crate::Model;
+use crate::ast::Name;
 
-pub(super) fn model_to_cp_sat(model: Model) -> SolverResult<Model> {
-    if model.constraints().is_empty() {
-        return Err(SolverError::ModelInvalid(
-            "cannot load empty model into ortools-cpsat adaptor".to_owned(),
-        ));
-    }
-    Ok(model)
+struct TranslationContext {
+    var_mapping: HashMap<Name, i32>,
+}
+
+pub(super) fn model_to_cp_sat(model: Model) -> SolverResult<CpModelProto> {
+    let mut cp_model = CpModelProto::default();
+    // variables translation cycle
+    // constraint translation cycle
+    
+    Ok(cp_model)
 }
