@@ -41,10 +41,10 @@ Whilst these conditions are specific to defined as an operator, similarly logic 
 There is however, one currently known limitation, so the results are not always completely minimal. We cannot guarantee a domain is ground and the lengths are known, so there are specific cases where we could infer simple bounds based on domain size, but the added complexity is not worth it in individual parts of the code. In these cases, the size is left as UnboundedR. Instead of adding these extra checks, I propose a separate small project could be to add the inferred domain size of a function as size attributes to that function, when the domain lengths are first known as ground. This means we do not need to separately check the domain size every time.
 
 ### Partition Operators
-There are 5 operators for [Partitions](developers-guide/architecture/types/partitions.md), three return sets (`Parts`, `Party`, `Participants`) and two return booleans (`Together`, `Apart`). The current implementations of these may be improved upon, and have just been added as a part of supporting the Partition type.
+There are 5 operators for Partitions, three return sets (`Parts`, `Party`, `Participants`) and two return booleans (`Together`, `Apart`). The current implementations of these may be improved upon, and have just been added as a part of supporting the Partition type.
 
 ### Sequence Operators
-There are 2 operators for [Sequences](developers-guide/architecture/types/sequences.md) (`Subsequence`, `Substring`), and booth return booleans. They are both of the form `s sub.. t`, where `s` must occur in `t`. You can conclude that either a `Subsequence` or `Substring` is definitively false if `s` is strictly larger than `t`, but as of writing this documentation there is no mechanism to 'restrict' the domain of a boolean to being strictly true or false.
+There are 2 operators for Sequences (`Subsequence`, `Substring`), and booth return booleans. They are both of the form `s sub.. t`, where `s` must occur in `t`. You can conclude that either a `Subsequence` or `Substring` is definitively false if `s` is strictly larger than `t`, but as of writing this documentation there is no mechanism to 'restrict' the domain of a boolean to being strictly true or false.
 
 When it becomes possible to alter the domains of children of an expression, `s` and `t` may be able to trim each others domains. Take the following example:
 ```
