@@ -1,15 +1,16 @@
 use std::io::Write;
 
-use crate::Model;
 use crate::settings::SolverFamily;
 use crate::solver::private;
 use crate::solver::{SolveSuccess, SolverAdaptor, SolverCallback, SolverError, SolverMutCallback};
+use super::proto::CpModelProto;
+use crate::Model;
 
 use super::convs::model_to_cp_sat;
 
 pub struct OrToolsCpSat {
     __non_constructable: private::Internal,
-    model: Option<Model>,
+    model: Option<CpModelProto>,
 }
 
 impl private::Sealed for OrToolsCpSat {}
@@ -71,7 +72,7 @@ impl SolverAdaptor for OrToolsCpSat {
         )?;
 
         if let Some(model) = &self.model {
-            writeln!(writer, "{model}")?;
+            writeln!(writer, "{model:#?}")?;
         }
         Ok(())
     }
