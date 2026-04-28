@@ -3,7 +3,12 @@
 In Conjure-Oxide when we convert Essence-level domains into lower-level domains for the solver they can often be blown-up necessarily large, which negatively impacts solver performance.
 
 We can see an example of this in the following Essence code:<br>
-`find a : set (maxSize 2) of int(1..10)`<br> `find b : set of int(1..1000)`<br>`such that b subset a`<br>
+```
+find a : set (maxSize 2) of int(1..10)
+find b : set of int(1..1000)
+such that b subset a
+```
+<br>
 Here instead of being treated as a set of maximum size 1000, we can deduce that b has a maximum size of 1.
 
 There is lot of domain refinement that can be done at an Essence level, making this a very interesting project. This has the potential to make measurable improvements to Conjure-Oxide in a way that goes beyond Conjure, and is the first step in an Essence-level solver.
