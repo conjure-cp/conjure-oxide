@@ -42,6 +42,7 @@ fn typecheck_abstract_literal(ctx: &mut ParseContext, node: &Node) -> bool {
         TypecheckingContext::Tuple => "tuple",
         TypecheckingContext::Record => "record",
         TypecheckingContext::Partition => "partition",
+        TypecheckingContext::Sequence => "sequence",
         TypecheckingContext::Unknown => "unknown",
     };
 

@@ -832,6 +832,8 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
         Expr::Participants(_, _) => todo!(),
         Expr::Party(_, _, _) => todo!(),
         Expr::Parts(_, _) => todo!(),
+        Expr::Subsequence(_, _, _) => todo!(),
+        Expr::Substring(_, _, _) => todo!(),
         Expr::LexLt(_, _, _) => Err(RuleNotApplicable),
         Expr::LexLeq(_, _, _) => Err(RuleNotApplicable),
         Expr::LexGt(_, _, _) => Err(RuleNotApplicable),

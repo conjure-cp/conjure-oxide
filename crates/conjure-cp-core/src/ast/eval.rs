@@ -338,6 +338,39 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             bin_op::<i32, i32>(|a, b| a - b * (a as f32 / b as f32).floor() as i32, a, b)
                 .map(Lit::Int)
         }
+        Expr::Substring(_, s, t) => match (s.as_ref(), t.as_ref()) {
+            (
+                Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Sequence(s)))),
+                Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Sequence(t)))),
+            ) => {
+                if s.len() > t.len() {
+                    return Some(Lit::Bool(false));
+                }
+
+                let found = t.windows(s.len()).any(|window| window == s.as_slice());
+                Some(Lit::Bool(found))
+            }
+            _ => None,
+        },
+        Expr::Subsequence(_, s, t) => match (s.as_ref(), t.as_ref()) {
+            (
+                Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Sequence(s)))),
+                Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Sequence(t)))),
+            ) => {
+                let mut i = 0;
+                let mut j = 0;
+
+                while i < s.len() && j < t.len() {
+                    if s[i] == t[j] {
+                        i += 1;
+                    }
+                    j += 1;
+                }
+
+                Some(Lit::Bool(i == s.len()))
+            }
+            _ => None,
+        },
         Expr::MinionDivEqUndefZero(_, a, b, c) => {
             // div always rounds down
             let a: i32 = a.try_into().ok()?;
