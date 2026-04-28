@@ -692,6 +692,39 @@ impl Domain {
         None
     }
 
+    /// If this is a partition domain, get mutable reference to its attributes and element domain.
+    /// The domain always becomes [UnresolvedDomain::Partition] after this operation.
+    pub fn as_partition_mut(&mut self) -> Option<(&mut PartitionAttr<IntVal>, &mut DomainPtr)> {
+        if let Some(GroundDomain::Partition(attr_gd, inner_dom_gd)) = self.as_ground() {
+            let attr: PartitionAttr<IntVal> = attr_gd.clone().into();
+            let inner_dom = inner_dom_gd.clone().into();
+            *self = Domain::Unresolved(Moo::new(UnresolvedDomain::Partition(attr, inner_dom)));
+        }
+
+        if let Some(UnresolvedDomain::Partition(attr, inner_dom)) = self.as_unresolved_mut() {
+            return Some((attr, inner_dom));
+        }
+        None
+    }
+
+    /// If this is a [GroundDomain::Partition], get immutable references to its attributes and inner domain
+    pub fn as_partition_ground(&self) -> Option<(&PartitionAttr<Int>, &Moo<GroundDomain>)> {
+        if let Some(GroundDomain::Partition(attr, inner_dom)) = self.as_ground() {
+            return Some((attr, inner_dom));
+        }
+        None
+    }
+
+    /// If this is a [GroundDomain::Partition], get mutable references to its attributes and inner domain
+    pub fn as_partition_ground_mut(
+        &mut self,
+    ) -> Option<(&mut PartitionAttr<Int>, &mut Moo<GroundDomain>)> {
+        if let Some(GroundDomain::Partition(attr, inner_dom)) = self.as_ground_mut() {
+            return Some((attr, inner_dom));
+        }
+        None
+    }
+
     /// If this is a relation domain, get its (attributes, [domains])
     pub fn as_relation(&self) -> Option<(RelAttr<IntVal>, Vec<Moo<Domain>>)> {
         if let Some(GroundDomain::Relation(attrs, doms)) = self.as_ground() {
