@@ -1,5 +1,5 @@
-use crate::ast::domains::{MSetAttr, SequenceAttr};
 use crate::ast::domains::attrs::PartitionAttr;
+use crate::ast::domains::{MSetAttr, SequenceAttr};
 use crate::ast::pretty::pretty_vec;
 use crate::ast::{
     AbstractLiteral, Domain, DomainOpError, FuncAttr, HasDomain, Literal, Moo, RecordEntry,
