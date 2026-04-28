@@ -1385,7 +1385,7 @@ impl Expression {
                     _ => {}
                 }
 
-                Some(Domain::set(SetAttr::new_size(len), p.domain_of()?))
+                Some(Domain::set(SetAttr::new_size(len), Domain::int(inner.as_int()?)))
             }
             Expression::Party(_, _, p) => {
                 // Will pick a part, so set will share same attrs
