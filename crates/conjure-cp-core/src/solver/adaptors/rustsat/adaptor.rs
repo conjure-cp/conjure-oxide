@@ -513,36 +513,42 @@ impl SolverAdaptor for Sat {
         let mut var_map: HashMap<Name, Lit> = HashMap::new();
 
         for (name, decl) in sym_tab.clone().into_iter_local() {
-            if decl.as_find().is_none() {
-                continue;
-            }
+            match decl.kind().clone() {
+                conjure_ast::DeclarationKind::Find(_) => {
+                    let domain = decl
+                        .domain()
+                        .expect("Decision variable should have a domain");
+                    let domain = domain.as_ground().expect("Domain should be ground");
 
-            let domain = decl
-                .domain()
-                .expect("Decision variable should have a domain");
-            let domain = domain.as_ground().expect("Domain should be ground");
+                    // only decision variables with boolean domains or representations using booleans are supported at this time
+                    if (domain != &GroundDomain::Bool
+                        && sym_tab
+                            .get_representation(&name, &["sat_log_int"])
+                            .is_none()
+                        && sym_tab
+                            .get_representation(&name, &["sat_direct_int"])
+                            .is_none()
+                        && sym_tab
+                            .get_representation(&name, &["sat_order_int"])
+                            .is_none())
+                    {
+                        Err(SolverError::ModelInvalid(
+                            "Only Boolean Decision Variables supported".to_string(),
+                        ))?;
+                    }
+                    // only boolean variables should be passed to the solver
+                    if (domain == &GroundDomain::Bool && is_user_visible_solution_var(&name)) {
+                        finds.push(name);
+                    }
+                }
 
-            // only decision variables with boolean domains or representations using booleans are supported at this time
-            if (domain != &GroundDomain::Bool
-                && sym_tab
-                    .get_representation(&name, &["sat_log_int"])
-                    .is_none()
-                && sym_tab
-                    .get_representation(&name, &["sat_direct_int"])
-                    .is_none()
-                && sym_tab
-                    .get_representation(&name, &["sat_order_int"])
-                    .is_none())
-            {
-                Err(SolverError::ModelInvalid(
-                    "Only Boolean Decision Variables supported".to_string(),
-                ))?;
-            }
-            // Only expose non-internal boolean variables in solver solutions. Machine names are
-            // auxiliaries introduced during rewriting and can create huge powersets of don't-care
-            // assignments without changing the semantic solution.
-            if domain == &GroundDomain::Bool && is_user_visible_solution_var(&name) {
-                finds.push(name);
+                conjure_ast::DeclarationKind::ValueLetting(_expression, _)
+                | conjure_ast::DeclarationKind::TemporaryValueLetting(_expression) => {}
+                conjure_ast::DeclarationKind::DomainLetting(_moo) => {}
+                conjure_ast::DeclarationKind::Given(_moo) => todo!(),
+                conjure_ast::DeclarationKind::Quantified(_given_quantified) => todo!(),
+                conjure_ast::DeclarationKind::RecordField(_moo) => todo!(),
+                conjure_ast::DeclarationKind::QuantifiedExpr(_) => todo!(),
             }
         }
 
