@@ -242,6 +242,7 @@ pub(crate) fn init_solver(global_args: &GlobalArgs) -> Solver {
         SolverFamily::Minion => Solver::new(Minion::with_value_order(global_args.minion_valorder)),
         SolverFamily::Sat(_) => Solver::new(Sat::default()),
         SolverFamily::Smt(theory_cfg) => Solver::new(Smt::new(timeout_ms, theory_cfg)),
+        SolverFamily::OrToolsCpSat => Solver::new(OrToolsCpSat::default()),
     }
 }
 
