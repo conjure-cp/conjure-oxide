@@ -69,7 +69,7 @@ pub enum AbstractLiteral<T: AbstractLiteralValue> {
     Tuple(Vec<T>),
 
     Record(Vec<FieldValue<T>>),
-   
+
     Sequence(Vec<T>),
 
     Function(Vec<(T, T)>),

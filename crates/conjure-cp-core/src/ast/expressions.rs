@@ -2415,7 +2415,7 @@ impl Expression {
             | Expression::LexLeq(_, m1, m2)
             | Expression::LexGt(_, m1, m2)
             | Expression::LexGeq(_, m1, m2)
-            | Expression::Active(_, m1, m2) => {
+            | Expression::Active(_, m1, m2)
             | Expression::Subsequence(_, m1, m2)
             | Expression::Substring(_, m1, m2) => {
                 f(m1);
@@ -2628,7 +2628,7 @@ impl CacheHashable for Expression {
             | Expression::LexLeq(_, m1, m2)
             | Expression::LexGt(_, m1, m2)
             | Expression::LexGeq(_, m1, m2)
-            | Expression::Active(_, m1, m2) => {
+            | Expression::Active(_, m1, m2)
             | Expression::Subsequence(_, m1, m2)
             | Expression::Substring(_, m1, m2) => {
                 m1.get_cached_hash().hash(&mut hasher);

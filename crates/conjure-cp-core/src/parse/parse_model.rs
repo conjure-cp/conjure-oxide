@@ -13,8 +13,8 @@ use crate::ast::comprehension::ComprehensionBuilder;
 use crate::ast::records::FieldValue;
 use crate::ast::{
     AbstractLiteral, Atom, BinaryAttr, DeclarationPtr, Domain, Expression, FieldEntry, FuncAttr,
-    IntVal, JectivityAttr, Literal, MSetAttr, Name, PartialityAttr, Range, RelAttr, SetAttr, SequenceAttr,
-    SymbolTable, SymbolTablePtr,
+    IntVal, JectivityAttr, Literal, MSetAttr, Name, PartialityAttr, Range, RelAttr, SequenceAttr,
+    SetAttr, SymbolTable, SymbolTablePtr,
 };
 use crate::ast::{DomainPtr, Metadata};
 use crate::context::Context;

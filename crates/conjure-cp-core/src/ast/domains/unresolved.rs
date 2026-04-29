@@ -552,7 +552,7 @@ impl UnresolvedDomain {
             }
             #[allow(unreachable_patterns)]
             (UnresolvedDomain::Variant(_), _) | (_, UnresolvedDomain::Variant(_)) => {
-              Err(DomainOpError::WrongType)
+                Err(DomainOpError::WrongType)
             }
             #[allow(unreachable_patterns)]
             (UnresolvedDomain::Sequence(_, _), _) | (_, UnresolvedDomain::Sequence(_, _)) => {
