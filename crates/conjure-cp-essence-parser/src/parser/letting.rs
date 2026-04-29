@@ -27,6 +27,7 @@ pub fn parse_letting_statement(
         ctx.source_map,
         HoverInfo {
             description: "Letting keyword".to_string(),
+            doc_key: None,
             kind: Some(SymbolKind::Letting),
             ty: None,
             decl_span: None,
@@ -83,6 +84,7 @@ pub fn parse_letting_statement(
             temp_symbols.insert(variable_name);
             let hover = HoverInfo {
                 description: format!("Letting variable: {variable_name}"),
+                doc_key: None,
                 kind: Some(SymbolKind::LettingVar),
                 ty: None,
                 decl_span: None,

@@ -155,6 +155,42 @@ impl<A: Display> Display for FuncAttr<A> {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
+#[path_prefix(conjure_cp::ast)]
+pub struct SequenceAttr<A = Int> {
+    pub size: Range<A>,
+    pub jectivity: JectivityAttr,
+}
+
+impl<A> Default for SequenceAttr<A> {
+    fn default() -> Self {
+        SequenceAttr {
+            size: Range::Unbounded,
+            jectivity: JectivityAttr::None,
+        }
+    }
+}
+
+impl<A: Display> Display for SequenceAttr<A> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let size_str = match &self.size {
+            Range::Single(x) => format!("size {x}"),
+            Range::Bounded(l, r) => format!("minSize {l}, maxSize {r}"),
+            Range::UnboundedL(r) => format!("maxSize {r}"),
+            Range::UnboundedR(l) => format!("minSize {l}"),
+            Range::Unbounded => "".to_string(),
+        };
+        let mut strs = [size_str, self.jectivity.to_string()]
+            .iter()
+            .filter(|s| !s.is_empty())
+            .join(", ");
+        if !strs.is_empty() {
+            strs = format!("({})", strs);
+        }
+        write!(f, "{strs}")
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
 pub enum PartialityAttr {
     Total,
     Partial,
