@@ -626,6 +626,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         Expr::PreImage(_, _, _) => todo!(),
         Expr::Inverse(_, _, _) => todo!(),
         Expr::Restrict(_, _, _) => todo!(),
+        Expr::Active(_, _, _) => todo!(),
         Expr::ToSet(_, _) => todo!(),
         Expr::ToMSet(_, _) => todo!(),
         Expr::ToRelation(_, _) => todo!(),

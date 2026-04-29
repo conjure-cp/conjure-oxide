@@ -2,8 +2,8 @@ use crate::ast::domains::attrs::MSetAttr;
 use crate::ast::domains::attrs::PartitionAttr;
 use crate::ast::domains::attrs::SetAttr;
 use crate::ast::{
-    DeclarationKind, DomainOpError, Expression, FuncAttr, Literal, Metadata, Moo,
-    RecordEntryGround, Reference, RelAttr, SequenceAttr, Typeable,
+    DeclarationKind, DomainOpError, Expression, FieldEntryGround, FuncAttr, Literal, Metadata, Moo,
+    Reference, RelAttr, SequenceAttr, Typeable,
     domains::{
         GroundDomain,
         domain::{DomainPtr, Int},
@@ -232,7 +232,7 @@ impl IntVal {
                 ReturnType::Int => Some(IntVal::Reference(re.clone())),
                 _ => None,
             },
-            DeclarationKind::DomainLetting(_) | DeclarationKind::RecordField(_) => None,
+            DeclarationKind::DomainLetting(_) | DeclarationKind::Field(_) => None,
         }
     }
 
@@ -265,7 +265,7 @@ impl IntVal {
                 DeclarationKind::QuantifiedExpr(_) => None,
                 // Decision variables inside domains are unresolved until solving.
                 DeclarationKind::Find(_) => None,
-                DeclarationKind::DomainLetting(_) | DeclarationKind::RecordField(_) => bug!(
+                DeclarationKind::DomainLetting(_) | DeclarationKind::Field(_) => bug!(
                     "Expected integer expression, given, or letting inside int domain; Got: {re}"
                 ),
             },
@@ -396,14 +396,14 @@ impl RelAttr<IntVal> {
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Uniplate, Quine)]
 #[path_prefix(conjure_cp::ast)]
-pub struct RecordEntry {
+pub struct FieldEntry {
     pub name: Name,
     pub domain: DomainPtr,
 }
 
-impl RecordEntry {
-    pub fn resolve(self) -> Option<RecordEntryGround> {
-        Some(RecordEntryGround {
+impl FieldEntry {
+    pub fn resolve(self) -> Option<FieldEntryGround> {
+        Some(FieldEntryGround {
             name: self.name,
             domain: self.domain.resolve()?,
         })
@@ -416,7 +416,7 @@ impl RecordEntry {
 #[biplate(to=Reference)]
 #[biplate(to=IntVal)]
 #[biplate(to=DomainPtr)]
-#[biplate(to=RecordEntry)]
+#[biplate(to=FieldEntry)]
 pub enum UnresolvedDomain {
     Int(Vec<Range<IntVal>>),
     /// A set of elements drawn from the inner domain
@@ -431,9 +431,11 @@ pub enum UnresolvedDomain {
     #[polyquine_skip]
     Reference(Reference),
     /// A record
-    Record(Vec<RecordEntry>),
+    Record(Vec<FieldEntry>),
     /// A function with attributes, domain, and range
     Function(FuncAttr<IntVal>, DomainPtr, DomainPtr),
+    /// A variant domain with its domain options (reusing field entries)
+    Variant(Vec<FieldEntry>),
     /// A relation as a set of tuples
     Relation(RelAttr<IntVal>, Vec<DomainPtr>),
     Partition(PartitionAttr<IntVal>, DomainPtr),
@@ -475,7 +477,7 @@ impl UnresolvedDomain {
             UnresolvedDomain::Record(entries) => entries
                 .iter()
                 .map(|f| {
-                    f.domain.resolve().map(|gd| RecordEntryGround {
+                    f.domain.resolve().map(|gd| FieldEntryGround {
                         name: f.name.clone(),
                         domain: gd,
                     })
@@ -499,6 +501,16 @@ impl UnresolvedDomain {
                 }
                 None
             }
+            UnresolvedDomain::Variant(entries) => entries
+                .iter()
+                .map(|f| {
+                    f.domain.resolve().map(|gd| FieldEntryGround {
+                        name: f.name.clone(),
+                        domain: gd,
+                    })
+                })
+                .collect::<Option<_>>()
+                .map(GroundDomain::Variant),
             UnresolvedDomain::Relation(attr, inners) => {
                 let resolved_attr = attr.resolve()?;
                 inners
@@ -584,6 +596,10 @@ impl UnresolvedDomain {
                 Err(DomainOpError::WrongType)
             }
             #[allow(unreachable_patterns)]
+            (UnresolvedDomain::Variant(_), _) | (_, UnresolvedDomain::Variant(_)) => {
+                Err(DomainOpError::WrongType)
+            }
+            #[allow(unreachable_patterns)]
             (UnresolvedDomain::Sequence(_, _), _) | (_, UnresolvedDomain::Sequence(_, _)) => {
                 Err(DomainOpError::WrongType)
             }
@@ -634,6 +650,13 @@ impl Typeable for UnresolvedDomain {
             }
             UnresolvedDomain::Function(_, dom, cdom) => {
                 ReturnType::Function(Box::new(dom.return_type()), Box::new(cdom.return_type()))
+            }
+            UnresolvedDomain::Variant(entries) => {
+                let mut entry_types = Vec::new();
+                for entry in entries {
+                    entry_types.push(entry.domain.return_type());
+                }
+                ReturnType::Variant(entry_types)
             }
             UnresolvedDomain::Relation(_, inners) => {
                 let mut inner_types = Vec::new();
@@ -688,6 +711,16 @@ impl Display for UnresolvedDomain {
             }
             UnresolvedDomain::Function(attribute, domain, codomain) => {
                 write!(f, "function {} {} --> {} ", attribute, domain, codomain)
+            }
+            UnresolvedDomain::Variant(entries) => {
+                write!(
+                    f,
+                    "variant {{{}}}",
+                    entries
+                        .iter()
+                        .map(|entry| format!("{}: {}", entry.name, entry.domain))
+                        .join(", ")
+                )
             }
             UnresolvedDomain::Relation(attrs, domains) => {
                 write!(f, "relation {} of ({})", attrs, domains.iter().join(" * "))

@@ -75,6 +75,7 @@
         - [Multisets](developers-guide/architecture/types/multisets.md)
         - [Relations](developers-guide/architecture/types/relations.md)
         - [Partitions](developers-guide/architecture/types/partitions.md)
+        - [Variants](developers-guide/architecture/types/variants.md)
         - [Sequences](developers-guide/architecture/types/sequences.md)
 - [Testing](developers-guide/testing/index.md)
     - [The Ideal Scenario](developers-guide/testing/the-ideal-scenario.md)

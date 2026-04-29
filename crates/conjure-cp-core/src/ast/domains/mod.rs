@@ -11,6 +11,6 @@ pub use attrs::{
 };
 pub use domain::{Domain, DomainPtr, HasDomain, Int};
 pub use error::DomainOpError;
-pub use ground::{GroundDomain, RecordEntryGround};
+pub use ground::{FieldEntryGround, GroundDomain};
 pub use range::Range;
-pub use unresolved::{IntVal, RecordEntry, UnresolvedDomain};
+pub use unresolved::{FieldEntry, IntVal, UnresolvedDomain};
