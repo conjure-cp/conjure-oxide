@@ -631,6 +631,11 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         Expr::ToMSet(_, _) => todo!(),
         Expr::ToRelation(_, _) => todo!(),
         Expr::RelationProj(_, _, _) => todo!(),
+        Expr::Apart(_, _, _) => todo!(),
+        Expr::Together(_, _, _) => todo!(),
+        Expr::Participants(_, _) => todo!(),
+        Expr::Party(_, _, _) => todo!(),
+        Expr::Parts(_, _) => todo!(),
         Expr::LexLt(_, a, b) => {
             let lt = vec_expr_pairs_op::<i32, _>(a, b, |pairs, (a_len, b_len)| {
                 pairs

@@ -1,4 +1,5 @@
 use crate::ast::domains::attrs::MSetAttr;
+use crate::ast::domains::attrs::PartitionAttr;
 use crate::ast::domains::attrs::SetAttr;
 use crate::ast::{
     DeclarationKind, DomainOpError, Expression, FieldEntryGround, FuncAttr, Literal, Metadata, Moo,
@@ -150,6 +151,31 @@ impl TryInto<RelAttr<Int>> for RelAttr<IntVal> {
         Ok(RelAttr {
             size,
             binary: self.binary,
+        })
+    }
+}
+
+impl From<PartitionAttr<Int>> for PartitionAttr<IntVal> {
+    fn from(value: PartitionAttr<Int>) -> Self {
+        PartitionAttr {
+            num_parts: value.num_parts.into(),
+            part_len: value.part_len.into(),
+            is_regular: value.is_regular,
+        }
+    }
+}
+
+impl TryInto<PartitionAttr<Int>> for PartitionAttr<IntVal> {
+    type Error = DomainOpError;
+
+    fn try_into(self) -> Result<PartitionAttr<Int>, Self::Error> {
+        let num_parts: Range<Int> = self.num_parts.try_into()?;
+        let part_len: Range<Int> = self.part_len.try_into()?;
+        let is_regular: bool = self.is_regular;
+        Ok(PartitionAttr {
+            num_parts,
+            part_len,
+            is_regular,
         })
     }
 }
@@ -339,6 +365,16 @@ impl MSetAttr<IntVal> {
     }
 }
 
+impl PartitionAttr<IntVal> {
+    pub fn resolve(&self) -> Option<PartitionAttr<Int>> {
+        Some(PartitionAttr {
+            num_parts: self.num_parts.resolve()?,
+            part_len: self.part_len.resolve()?,
+            is_regular: self.is_regular,
+        })
+    }
+}
+
 impl FuncAttr<IntVal> {
     pub fn resolve(&self) -> Option<FuncAttr<Int>> {
         Some(FuncAttr {
@@ -402,6 +438,7 @@ pub enum UnresolvedDomain {
     Variant(Vec<FieldEntry>),
     /// A relation as a set of tuples
     Relation(RelAttr<IntVal>, Vec<DomainPtr>),
+    Partition(PartitionAttr<IntVal>, DomainPtr),
 }
 
 impl UnresolvedDomain {
@@ -417,6 +454,9 @@ impl UnresolvedDomain {
             }
             UnresolvedDomain::MSet(attr, inner) => {
                 Some(GroundDomain::MSet(attr.resolve()?, inner.resolve()?))
+            }
+            UnresolvedDomain::Partition(attr, inner) => {
+                Some(GroundDomain::Partition(attr.resolve()?, inner.resolve()?))
             }
             UnresolvedDomain::Matrix(inner, idx_doms) => {
                 let inner_gd = inner.resolve()?;
@@ -551,6 +591,11 @@ impl UnresolvedDomain {
                 Err(DomainOpError::WrongType)
             }
             #[allow(unreachable_patterns)]
+            // Technically redundant but logically clearer to have both
+            (UnresolvedDomain::Partition(_, _), _) | (_, UnresolvedDomain::Partition(_, _)) => {
+                Err(DomainOpError::WrongType)
+            }
+            #[allow(unreachable_patterns)]
             (UnresolvedDomain::Variant(_), _) | (_, UnresolvedDomain::Variant(_)) => {
                 Err(DomainOpError::WrongType)
             }
@@ -580,6 +625,9 @@ impl Typeable for UnresolvedDomain {
             UnresolvedDomain::Int(_) => ReturnType::Int,
             UnresolvedDomain::Set(_attr, inner) => ReturnType::Set(Box::new(inner.return_type())),
             UnresolvedDomain::MSet(_attr, inner) => ReturnType::MSet(Box::new(inner.return_type())),
+            UnresolvedDomain::Partition(_, inner) => {
+                ReturnType::Partition(Box::new(inner.return_type()))
+            }
             UnresolvedDomain::Sequence(_attr, inner) => {
                 ReturnType::Sequence(Box::new(inner.return_type()))
             }
@@ -635,6 +683,9 @@ impl Display for UnresolvedDomain {
             }
             UnresolvedDomain::Set(attrs, inner_dom) => write!(f, "set {attrs} of {inner_dom}"),
             UnresolvedDomain::MSet(attrs, inner_dom) => write!(f, "mset {attrs} of {inner_dom}"),
+            UnresolvedDomain::Partition(attrs, inner_dom) => {
+                write!(f, "partition {attrs} from {inner_dom}")
+            }
             UnresolvedDomain::Sequence(attrs, inner_dom) => {
                 write!(f, "sequence {attrs} of {inner_dom}")
             }

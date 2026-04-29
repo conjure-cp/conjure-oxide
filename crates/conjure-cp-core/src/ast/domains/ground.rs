@@ -1,3 +1,4 @@
+use crate::ast::domains::attrs::PartitionAttr;
 use crate::ast::domains::{MSetAttr, SequenceAttr};
 use crate::ast::pretty::pretty_vec;
 use crate::ast::{
@@ -67,6 +68,8 @@ pub enum GroundDomain {
     Tuple(Vec<Moo<GroundDomain>>),
     /// A record
     Record(Vec<FieldEntryGround>),
+    /// A Partition
+    Partition(PartitionAttr, Moo<GroundDomain>),
     /// A sequence of elements drawn from the inner domain
     Sequence(SequenceAttr, Moo<GroundDomain>),
     /// A function with a domain and codomain
@@ -152,6 +155,10 @@ impl GroundDomain {
                 Ok(GroundDomain::Tuple(inners))
             }
             (GroundDomain::Relation(_, _), _) | (_, GroundDomain::Relation(_, _)) => {
+                Err(DomainOpError::WrongType)
+            }
+            #[allow(unreachable_patterns)]
+            (GroundDomain::Partition(_, _), _) | (_, GroundDomain::Partition(_, _)) => {
                 Err(DomainOpError::WrongType)
             }
         }
@@ -352,6 +359,9 @@ impl GroundDomain {
             GroundDomain::Relation(_, _) => {
                 todo!("Length bound of relations is not yet support")
             }
+            GroundDomain::Partition(_, _) => {
+                todo!("Length bound of Partitions is not yet supported")
+            }
         }
     }
 
@@ -550,6 +560,40 @@ impl GroundDomain {
                                 }
                             }
                         } else {
+                            return Ok(false);
+                        }
+                    }
+                    Ok(true)
+                }
+                _ => Ok(false),
+            },
+            GroundDomain::Partition(attr, dom) => match lit {
+                Literal::AbstractLiteral(AbstractLiteral::Partition(lit_elems)) => {
+                    // let sz = lit_elems.len().to_i32().ok_or(DomainOpError::TooLarge)?;
+                    let sz: i32 = lit_elems
+                        .iter()
+                        .flatten()
+                        .count()
+                        .to_i32()
+                        .ok_or(DomainOpError::TooLarge)?;
+
+                    let min: Option<i32> = match (attr.num_parts.low(), attr.part_len.low()) {
+                        (Some(x), Some(y)) => Some(x * y),
+                        _ => None,
+                    };
+
+                    let max: Option<i32> = match (attr.num_parts.high(), attr.part_len.high()) {
+                        (Some(x), Some(y)) => Some(x * y),
+                        _ => None,
+                    };
+
+                    let rng = Range::new(min, max);
+                    if rng.contains(&sz) {
+                        return Ok(false);
+                    }
+
+                    for elem in lit_elems.iter().flatten() {
+                        if !dom.contains(elem)? {
                             return Ok(false);
                         }
                     }
@@ -879,6 +923,9 @@ impl GroundDomain {
                     Moo::new(elem_domain),
                 ))
             }
+            Literal::AbstractLiteral(AbstractLiteral::Partition(_)) => {
+                todo!("Need to figure out how this is going to work")
+            }
             l @ Literal::AbstractLiteral(AbstractLiteral::Matrix(_, _)) => {
                 let mut first_index_domain = vec![];
                 // flatten index domains of n-d matrix into list
@@ -1103,6 +1150,7 @@ impl Typeable for GroundDomain {
                 }
                 ReturnType::Relation(inner_types)
             }
+            GroundDomain::Partition(_, inner) => ReturnType::Set(Box::new(inner.return_type())),
         }
     }
 }
@@ -1160,6 +1208,9 @@ impl Display for GroundDomain {
             }
             GroundDomain::Relation(attrs, domains) => {
                 write!(f, "relation {} of ({})", attrs, domains.iter().join(" * "))
+            }
+            GroundDomain::Partition(attrs, inner) => {
+                write!(f, "partition {attrs} from {inner}")
             }
         }
     }

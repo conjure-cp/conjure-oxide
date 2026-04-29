@@ -6,7 +6,8 @@ mod range;
 mod unresolved;
 
 pub use attrs::{
-    BinaryAttr, FuncAttr, JectivityAttr, MSetAttr, PartialityAttr, RelAttr, SequenceAttr, SetAttr,
+    BinaryAttr, FuncAttr, JectivityAttr, MSetAttr, PartialityAttr, PartitionAttr, RelAttr,
+    SequenceAttr, SetAttr,
 };
 pub use domain::{Domain, DomainPtr, HasDomain, Int};
 pub use error::DomainOpError;

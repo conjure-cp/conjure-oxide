@@ -623,6 +623,7 @@ fn inferred_context_from_expression(expr: &Expression) -> TypecheckingContext {
         GroundDomain::Matrix(_, _) => TypecheckingContext::Matrix,
         GroundDomain::Tuple(_) => TypecheckingContext::Tuple,
         GroundDomain::Record(_) => TypecheckingContext::Record,
+        GroundDomain::Partition(_, _) => TypecheckingContext::Partition,
         GroundDomain::Sequence(_, _) => TypecheckingContext::Sequence,
         GroundDomain::Function(_, _, _)
         | GroundDomain::Variant(_)
