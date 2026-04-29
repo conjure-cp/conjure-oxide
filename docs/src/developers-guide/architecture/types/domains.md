@@ -3,10 +3,10 @@
 ## What are Domains
 Domains are essentially some collection of values that some type can inherit. In maths, there are a few very common domains such as the set of natural numbers or the empty set. 
 
-The word 'domain' is _seemingly_ used in multiple different contexts; in the original [Conjure docs](https://conjure.readthedocs.io/en/latest/essence.html), 'domain' is both used to describe high level 'types' (e.g. sets, matrices, sequences) and the collection inner atomic literals (i.e. booleans and integers). The trick is that a domain is both, and recursive in a sense where the atomic literals are the base case, and comlex high-level types are domains composed of domains. 
+The word 'domain' is _seemingly_ used in multiple different contexts; in the original [Conjure docs](https://conjure.readthedocs.io/en/latest/essence.html), 'domain' is both used to describe high level 'types' (e.g. sets, matrices, sequences) and the collection inner atomic literals (i.e. booleans and integers). The trick is that a domain is both, and recursive in a sense where the atomic literals are the base case, and complex high-level types are domains composed of domains. 
 
 ## Domains in Essence and Conjure-Oxide
-Looking at `conjure-cp-core::ast::domains`, you can see that a `Domain` is an Enum, that is either `Ground` or `Unresolved` (this is discussed in more detail below). These themselves are both Enums that can be any one of the many complex types or simple types like booleans, integers, and the empty domain. The variants also have values, with the compelx types often containing attribute structs and some 'inner' domain from which the complex type pulls it's values. 
+Looking at `conjure-cp-core::ast::domains`, you can see that a `Domain` is an Enum, that is either `Ground` or `Unresolved` (this is discussed in more detail below). These themselves are both Enums that can be any one of the many complex types or simple types like booleans, integers, and the empty domain. The variants also have values, with the complex types often containing attribute structs and some 'inner' domain from which the complex type pulls it's values. 
 
 > When defining a Set type, it may have attributes and an inner domain. For example, the domain `set (size 2) of int(1..3)` could have valid values like `{1,2}`, `{1,3}`, `{2,3}`. The 'inner' domain is `int(1..3)`, from which the values that make up the set are pulled.
 
