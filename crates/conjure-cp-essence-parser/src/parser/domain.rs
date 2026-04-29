@@ -60,6 +60,7 @@ pub fn parse_domain(
                 ctx.source_map,
                 HoverInfo {
                     description: format!("Domain reference: {name}"),
+                    doc_key: None,
                     kind: Some(SymbolKind::Variable),
                     ty: None,
                     decl_span: None, // could link to the declaration span if we wanted
