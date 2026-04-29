@@ -249,6 +249,16 @@ pub enum Expression {
     #[compatible(JsonInput, SMT)]
     Lt(Metadata, Moo<Expression>, Moo<Expression>),
 
+    /// `s subsequence t` tests whether the list of values taken by s occurs in the same order
+    /// in the list of values taken by t
+    #[compatible(JsonInput)]
+    Subsequence(Metadata, Moo<Expression>, Moo<Expression>),
+
+    /// `s substring t` tests whether the list of values taken by s occurs in the same order
+    /// and contiguously in the list of values taken by t
+    #[compatible(JsonInput)]
+    Substring(Metadata, Moo<Expression>, Moo<Expression>),
+
     /// Division after preventing division by zero, usually with a bubble
     #[compatible(SMT)]
     SafeDiv(Metadata, Moo<Expression>, Moo<Expression>),
@@ -1249,6 +1259,8 @@ impl Expression {
                 };
                 Some(Domain::function(new_attrs, new_dom, codom.clone()))
             }
+            Expression::Subsequence(_, _, _) => Some(Domain::bool()),
+            Expression::Substring(_, _, _) => Some(Domain::bool()),
             Expression::Inverse(..) => Some(Domain::bool()),
             Expression::LexLt(..) => Some(Domain::bool()),
             Expression::LexLeq(..) => Some(Domain::bool()),
@@ -1433,6 +1445,8 @@ impl Expression {
             ToMSet,
             ToRelation,
             RelationProj,
+            Subsequence,
+            Substring,
         )
     }
 
@@ -1886,6 +1900,12 @@ impl Display for Expression {
             Expression::SafePow(_, box1, box2) => {
                 write!(f, "SafePow({}, {})", box1.clone(), box2.clone())
             }
+            Expression::Subsequence(_, s, t) => {
+                write!(f, "{} subsequence {}", s.clone(), t.clone())
+            }
+            Expression::Substring(_, s, t) => {
+                write!(f, "{} substring {}", s.clone(), t.clone())
+            }
             Expression::MinionDivEqUndefZero(_, box1, box2, box3) => {
                 write!(
                     f,
@@ -2281,6 +2301,8 @@ impl Typeable for Expression {
                     ),
                 }
             }
+            Expression::Subsequence(_, _, _) => ReturnType::Bool,
+            Expression::Substring(_, _, _) => ReturnType::Bool,
         }
     }
 }
@@ -2304,6 +2326,11 @@ impl Expression {
                 AbstractLiteral::Record(rs) => {
                     for r in rs {
                         f(&r.value);
+                    }
+                }
+                AbstractLiteral::Sequence(v) => {
+                    for expr in v {
+                        f(expr);
                     }
                 }
                 AbstractLiteral::Function(vs) => {
@@ -2389,6 +2416,8 @@ impl Expression {
             | Expression::LexGt(_, m1, m2)
             | Expression::LexGeq(_, m1, m2)
             | Expression::Active(_, m1, m2) => {
+            | Expression::Subsequence(_, m1, m2)
+            | Expression::Substring(_, m1, m2) => {
                 f(m1);
                 f(m2);
             }
@@ -2496,7 +2525,10 @@ impl CacheHashable for Expression {
         match self {
             // Special Case
             Expression::AbstractLiteral(_, alit) => match alit {
-                AbstractLiteral::Set(v) | AbstractLiteral::MSet(v) | AbstractLiteral::Tuple(v) => {
+                AbstractLiteral::Set(v)
+                | AbstractLiteral::MSet(v)
+                | AbstractLiteral::Tuple(v)
+                | AbstractLiteral::Sequence(v) => {
                     for expr in v {
                         expr.get_cached_hash().hash(&mut hasher);
                     }
@@ -2597,6 +2629,8 @@ impl CacheHashable for Expression {
             | Expression::LexGt(_, m1, m2)
             | Expression::LexGeq(_, m1, m2)
             | Expression::Active(_, m1, m2) => {
+            | Expression::Subsequence(_, m1, m2)
+            | Expression::Substring(_, m1, m2) => {
                 m1.get_cached_hash().hash(&mut hasher);
                 m2.get_cached_hash().hash(&mut hasher);
             }

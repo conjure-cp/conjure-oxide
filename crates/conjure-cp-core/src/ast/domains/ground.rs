@@ -1,4 +1,4 @@
-use crate::ast::domains::MSetAttr;
+use crate::ast::domains::{MSetAttr, SequenceAttr};
 use crate::ast::pretty::pretty_vec;
 use crate::ast::{
     AbstractLiteral, Domain, DomainOpError, FieldEntry, FuncAttr, HasDomain, Literal, Moo, RelAttr,
@@ -111,6 +111,9 @@ impl GroundDomain {
                 ))
             }
             (GroundDomain::Matrix(_, _), _) | (_, GroundDomain::Matrix(_, _)) => {
+                Err(DomainOpError::WrongType)
+            }
+            (GroundDomain::Sequence(_, _), _) | (_, GroundDomain::Sequence(_, _)) => {
                 Err(DomainOpError::WrongType)
             }
             (GroundDomain::Tuple(in1s), GroundDomain::Tuple(in2s)) if in1s.len() == in2s.len() => {
@@ -301,6 +304,11 @@ impl GroundDomain {
                 }
                 Ok(ans)
             }
+            GroundDomain::Sequence(_, _) => {
+                // If jectivity is not set, the sequence can have any permutation.
+                //
+                todo!("Length bound currently not supported");
+            }
             GroundDomain::Tuple(domains) => {
                 let mut ans = 1u64;
                 for domain in domains {
@@ -393,6 +401,22 @@ impl GroundDomain {
 
                     for elem in lit_elems {
                         if !inner_domain.contains(elem)? {
+                            return Ok(false);
+                        }
+                    }
+                    Ok(true)
+                }
+                _ => Ok(false),
+            },
+            GroundDomain::Sequence(seq_attr, inner_dom) => match lit {
+                Literal::AbstractLiteral(AbstractLiteral::Sequence(elems)) => {
+                    let sz = elems.len().to_i32().ok_or(DomainOpError::TooLarge)?;
+                    if !seq_attr.size.contains(&sz) {
+                        return Ok(false);
+                    }
+
+                    for elem in elems {
+                        if !inner_dom.contains(elem)? {
                             return Ok(false);
                         }
                     }
@@ -936,6 +960,24 @@ impl GroundDomain {
                 Ok(GroundDomain::Tuple(elem_domains))
             }
 
+            Literal::AbstractLiteral(AbstractLiteral::Sequence(_)) => {
+                let mut all_elems = vec![];
+
+                for lit in literals {
+                    let Literal::AbstractLiteral(AbstractLiteral::Sequence(elems)) = lit else {
+                        return Err(DomainOpError::WrongType);
+                    };
+
+                    all_elems.extend(elems.clone());
+                }
+                let elem_domain = GroundDomain::from_literal_vec(&all_elems)?;
+
+                Ok(GroundDomain::Sequence(
+                    SequenceAttr::default(),
+                    Moo::new(elem_domain),
+                ))
+            }
+
             Literal::AbstractLiteral(AbstractLiteral::Record(first_elems)) => {
                 let n_fields = first_elems.len();
                 let field_names = first_elems.iter().map(|x| x.name.clone()).collect_vec();
@@ -1024,6 +1066,9 @@ impl Typeable for GroundDomain {
             GroundDomain::Int(_) => ReturnType::Int,
             GroundDomain::Set(_attr, inner) => ReturnType::Set(Box::new(inner.return_type())),
             GroundDomain::MSet(_attr, inner) => ReturnType::MSet(Box::new(inner.return_type())),
+            GroundDomain::Sequence(_attr, inner) => {
+                ReturnType::Sequence(Box::new(inner.return_type()))
+            }
             GroundDomain::Matrix(inner, _idx) => ReturnType::Matrix(Box::new(inner.return_type())),
             GroundDomain::Tuple(inners) => {
                 let mut inner_types = Vec::new();
@@ -1075,6 +1120,9 @@ impl Display for GroundDomain {
             }
             GroundDomain::Set(attrs, inner_dom) => write!(f, "set {attrs} of {inner_dom}"),
             GroundDomain::MSet(attrs, inner_dom) => write!(f, "mset {attrs} of {inner_dom}"),
+            GroundDomain::Sequence(attrs, inner_dom) => {
+                write!(f, "sequence {attrs} of {inner_dom}")
+            }
             GroundDomain::Matrix(value_domain, index_domains) => {
                 write!(
                     f,

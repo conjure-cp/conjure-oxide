@@ -2,7 +2,7 @@ use crate::ast::domains::attrs::MSetAttr;
 use crate::ast::domains::attrs::SetAttr;
 use crate::ast::{
     DeclarationKind, DomainOpError, Expression, FieldEntryGround, FuncAttr, Literal, Metadata, Moo,
-    Reference, RelAttr, Typeable,
+    Reference, RelAttr, SequenceAttr, Typeable,
     domains::{
         GroundDomain,
         domain::{DomainPtr, Int},
@@ -154,6 +154,27 @@ impl TryInto<RelAttr<Int>> for RelAttr<IntVal> {
     }
 }
 
+impl From<SequenceAttr<Int>> for SequenceAttr<IntVal> {
+    fn from(value: SequenceAttr<Int>) -> Self {
+        SequenceAttr {
+            size: value.size.into(),
+            jectivity: value.jectivity,
+        }
+    }
+}
+
+impl TryInto<SequenceAttr<Int>> for SequenceAttr<IntVal> {
+    type Error = DomainOpError;
+
+    fn try_into(self) -> Result<SequenceAttr<Int>, Self::Error> {
+        let size: Range<Int> = self.size.try_into()?;
+        Ok(SequenceAttr {
+            size,
+            jectivity: self.jectivity,
+        })
+    }
+}
+
 impl Display for IntVal {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -300,6 +321,15 @@ impl SetAttr<IntVal> {
     }
 }
 
+impl SequenceAttr<IntVal> {
+    pub fn resolve(&self) -> Option<SequenceAttr<Int>> {
+        Some(SequenceAttr {
+            size: self.size.resolve()?,
+            jectivity: self.jectivity.clone(),
+        })
+    }
+}
+
 impl MSetAttr<IntVal> {
     pub fn resolve(&self) -> Option<MSetAttr<Int>> {
         Some(MSetAttr {
@@ -360,6 +390,7 @@ pub enum UnresolvedDomain {
     Matrix(DomainPtr, Vec<DomainPtr>),
     /// A tuple of N elements, each with its own domain
     Tuple(Vec<DomainPtr>),
+    Sequence(SequenceAttr<IntVal>, DomainPtr),
     /// A reference to a domain letting
     #[polyquine_skip]
     Reference(Reference),
@@ -394,6 +425,9 @@ impl UnresolvedDomain {
                     .map(DomainPtr::resolve)
                     .collect::<Option<_>>()
                     .map(|idx| GroundDomain::Matrix(inner_gd, idx))
+            }
+            UnresolvedDomain::Sequence(attr, inner) => {
+                Some(GroundDomain::Sequence(attr.resolve()?, inner.resolve()?))
             }
             UnresolvedDomain::Tuple(inners) => inners
                 .iter()
@@ -516,8 +550,12 @@ impl UnresolvedDomain {
             (UnresolvedDomain::Function(_, _, _), _) | (_, UnresolvedDomain::Function(_, _, _)) => {
                 Err(DomainOpError::WrongType)
             }
-            #[allow(unreachable_patterns)] // Technically redundant but logically makes sense
+            #[allow(unreachable_patterns)]
             (UnresolvedDomain::Variant(_), _) | (_, UnresolvedDomain::Variant(_)) => {
+              Err(DomainOpError::WrongType)
+            }
+            #[allow(unreachable_patterns)]
+            (UnresolvedDomain::Sequence(_, _), _) | (_, UnresolvedDomain::Sequence(_, _)) => {
                 Err(DomainOpError::WrongType)
             }
         }
@@ -526,6 +564,7 @@ impl UnresolvedDomain {
     pub fn element_domain(&self) -> Option<DomainPtr> {
         match self {
             UnresolvedDomain::Set(_, inner_dom) => Some(inner_dom.clone()),
+            UnresolvedDomain::Sequence(_, inner_dom) => Some(inner_dom.clone()),
             UnresolvedDomain::Matrix(_, _) => {
                 todo!("Unwrap one dimension of the domain")
             }
@@ -541,6 +580,9 @@ impl Typeable for UnresolvedDomain {
             UnresolvedDomain::Int(_) => ReturnType::Int,
             UnresolvedDomain::Set(_attr, inner) => ReturnType::Set(Box::new(inner.return_type())),
             UnresolvedDomain::MSet(_attr, inner) => ReturnType::MSet(Box::new(inner.return_type())),
+            UnresolvedDomain::Sequence(_attr, inner) => {
+                ReturnType::Sequence(Box::new(inner.return_type()))
+            }
             UnresolvedDomain::Matrix(inner, _idx) => {
                 ReturnType::Matrix(Box::new(inner.return_type()))
             }
@@ -593,6 +635,9 @@ impl Display for UnresolvedDomain {
             }
             UnresolvedDomain::Set(attrs, inner_dom) => write!(f, "set {attrs} of {inner_dom}"),
             UnresolvedDomain::MSet(attrs, inner_dom) => write!(f, "mset {attrs} of {inner_dom}"),
+            UnresolvedDomain::Sequence(attrs, inner_dom) => {
+                write!(f, "sequence {attrs} of {inner_dom}")
+            }
             UnresolvedDomain::Matrix(value_domain, index_domains) => {
                 write!(
                     f,

@@ -805,6 +805,8 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
         Expr::ToMSet(_, _) => todo!(),
         Expr::ToRelation(_, _) => todo!(),
         Expr::RelationProj(_, _, _) => todo!(),
+        Expr::Subsequence(_, _, _) => todo!(),
+        Expr::Substring(_, _, _) => todo!(),
 
         // As these are in a low level solver form, I'm assuming that these have already been
         // simplified and partially evaluated.
