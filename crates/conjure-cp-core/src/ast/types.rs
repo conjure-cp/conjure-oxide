@@ -11,8 +11,11 @@ pub enum ReturnType {
     Set(Box<ReturnType>),
     MSet(Box<ReturnType>),
     Tuple(Vec<ReturnType>),
+    Sequence(Box<ReturnType>),
     Record(Vec<ReturnType>),
     Function(Box<ReturnType>, Box<ReturnType>),
+    Variant(Vec<ReturnType>),
+    Relation(Vec<ReturnType>),
 
     /// An unknown type
     ///
@@ -37,6 +40,7 @@ impl Display for ReturnType {
             ReturnType::Matrix(inner) => write!(f, "matrix of {inner}"),
             ReturnType::Set(inner) => write!(f, "set of {inner}"),
             ReturnType::MSet(inner) => write!(f, "mset of {inner}"),
+            ReturnType::Sequence(inner) => write!(f, "sequence of {inner}"),
             ReturnType::Tuple(types) => {
                 let inners = types.iter().map(|t| format!("{}", t)).join(", ");
                 write!(f, "tuple of ({inners})")
@@ -46,7 +50,15 @@ impl Display for ReturnType {
                 write!(f, "record of ({inners})")
             }
             ReturnType::Function(ty1, ty2) => {
-                write!(f, "function ({ty1} --> {ty2})")
+                write!(f, "function of ({ty1} --> {ty2})")
+            }
+            ReturnType::Relation(types) => {
+                let inners = types.iter().map(|t| format!("{}", t)).join(", ");
+                write!(f, "relation of ({inners})")
+            }
+            ReturnType::Variant(types) => {
+                let inners = types.iter().map(|t| format!("{}", t)).join(", ");
+                write!(f, "variant {{{inners}}}")
             }
             ReturnType::Unknown => write!(f, "?"),
         }

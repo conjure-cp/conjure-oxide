@@ -3,6 +3,7 @@ use super::util::{get_expr_tree, query_toplevel};
 use crate::diagnostics::source_map::SourceMap;
 use crate::errors::FatalParseError;
 use crate::expression::parse_expression;
+use crate::util::TypecheckingContext;
 use crate::util::node_is_expression;
 use conjure_cp_core::ast::{Expression, SymbolTablePtr};
 use std::collections::BTreeMap;
@@ -42,6 +43,8 @@ pub fn parse_exprs(
     );
     let mut ans = Vec::new();
     for expr in query_toplevel(&root, &node_is_expression) {
+        ctx.typechecking_context = TypecheckingContext::Unknown;
+        ctx.inner_typechecking_context = TypecheckingContext::Unknown;
         let Some(expr) = parse_expression(&mut ctx, expr)? else {
             continue;
         };

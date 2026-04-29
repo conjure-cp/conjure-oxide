@@ -62,7 +62,7 @@ WORKDIR /build
 COPY . .
 RUN git submodule update --init --recursive;
 
-RUN cargo build --release --features z3-bundled;
+RUN make build-release CARGO_FEATURES="--features z3-bundled"
 
 ###########################################################
 # 3) a container that contains conjure oxide and conjure.

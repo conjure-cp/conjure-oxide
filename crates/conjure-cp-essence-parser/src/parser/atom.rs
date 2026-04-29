@@ -1,14 +1,15 @@
 use crate::diagnostics::diagnostics_api::SymbolKind;
 use crate::diagnostics::source_map::{HoverInfo, span_with_hover};
 use crate::errors::{FatalParseError, RecoverableParseError};
-use crate::expression::{parse_binary_expression, parse_expression, parse_pareto_expression};
+use crate::expression::{parse_binary_expression, parse_expression};
 use crate::parser::ParseContext;
 use crate::parser::abstract_literal::parse_abstract;
 use crate::parser::comprehension::parse_comprehension;
+use crate::parser::dominance::parse_pareto_expression;
 use crate::util::{TypecheckingContext, named_children};
 use crate::{field, named_child};
 use conjure_cp_core::ast::{
-    Atom, DeclarationPtr, Expression, GroundDomain, Literal, Metadata, Moo, Name,
+    Atom, DeclarationKind, DeclarationPtr, Expression, GroundDomain, Literal, Metadata, Moo, Name,
 };
 use tree_sitter::Node;
 use ustr::Ustr;
@@ -113,6 +114,7 @@ fn parse_flatten(
     let Some(expr_node) = field!(recover, ctx, node, "expression") else {
         return Ok(None);
     };
+    // TODO: verify the atom is a matrix
     let Some(expr) = parse_atom(ctx, &expr_node)? else {
         return Ok(None);
     };
@@ -288,9 +290,22 @@ fn parse_variable(ctx: &mut ParseContext, node: &Node) -> Result<Option<Atom>, F
         };
 
         if let Some(decl) = lookup_result {
+            let symbol_kind = match &decl.kind().clone() as &DeclarationKind {
+                DeclarationKind::Find(_) => SymbolKind::FindVar,
+                DeclarationKind::Given(_) => SymbolKind::GivenVar,
+                DeclarationKind::ValueLetting(_, _) => SymbolKind::LettingVar,
+                DeclarationKind::TemporaryValueLetting(_) => SymbolKind::LettingVar,
+                DeclarationKind::DomainLetting(_) => SymbolKind::LettingVar,
+                DeclarationKind::Quantified(..) => SymbolKind::FindVar,
+                DeclarationKind::QuantifiedExpr(..) => SymbolKind::FindVar,
+                DeclarationKind::Field(_) => SymbolKind::Decimal,
+                &_ => todo!(),
+            };
+
             let hover = HoverInfo {
                 description: format!("Variable: {name}"),
-                kind: Some(SymbolKind::Decimal),
+                doc_key: None,
+                kind: Some(symbol_kind),
                 ty: decl.domain().map(|d| d.to_string()),
                 decl_span: ctx.lookup_decl_span(&name),
             };
@@ -342,6 +357,12 @@ fn typecheck_variable(
         TypecheckingContext::Boolean => "bool",
         TypecheckingContext::Arithmetic => "int",
         TypecheckingContext::Set => "set",
+        TypecheckingContext::SetOrMatrix => "set or matrix",
+        TypecheckingContext::MSet => "mset",
+        TypecheckingContext::Matrix => "matrix",
+        TypecheckingContext::Tuple => "tuple",
+        TypecheckingContext::Record => "record",
+        TypecheckingContext::Sequence => "sequence",
         TypecheckingContext::Unknown => return None, // shouldn't reach here
     };
 
@@ -355,11 +376,16 @@ fn typecheck_variable(
         GroundDomain::Tuple(_) => "tuple",
         GroundDomain::Record(_) => "record",
         GroundDomain::Function(_, _, _) => "function",
+        GroundDomain::Variant(_) => "variant",
+        GroundDomain::Relation(_, _) => "relation",
+        GroundDomain::Sequence(_, _) => "sequence",
         GroundDomain::Empty(_) => "empty",
     };
 
     // If types match, no error
-    if expected == actual {
+    if expected == actual
+        || (context == TypecheckingContext::SetOrMatrix && matches!(actual, "set" | "matrix"))
+    {
         return None;
     }
 
@@ -385,6 +411,7 @@ fn parse_constant(ctx: &mut ParseContext, node: &Node) -> Result<Option<Literal>
         "TRUE" => {
             let hover = HoverInfo {
                 description: format!("Boolean constant: {raw_value}"),
+                doc_key: None,
                 kind: None,
                 ty: None,
                 decl_span: None,
@@ -395,6 +422,7 @@ fn parse_constant(ctx: &mut ParseContext, node: &Node) -> Result<Option<Literal>
         "FALSE" => {
             let hover = HoverInfo {
                 description: format!("Boolean constant: {raw_value}"),
+                doc_key: None,
                 kind: None,
                 ty: None,
                 decl_span: None,
@@ -421,6 +449,12 @@ fn parse_constant(ctx: &mut ParseContext, node: &Node) -> Result<Option<Literal>
             TypecheckingContext::Boolean => "bool",
             TypecheckingContext::Arithmetic => "int",
             TypecheckingContext::Set => "set",
+            TypecheckingContext::SetOrMatrix => "set or matrix",
+            TypecheckingContext::MSet => "mset",
+            TypecheckingContext::Matrix => "matrix",
+            TypecheckingContext::Tuple => "tuple",
+            TypecheckingContext::Record => "record",
+            TypecheckingContext::Sequence => "sequence",
             TypecheckingContext::Unknown => "",
         };
 

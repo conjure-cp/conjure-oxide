@@ -1,8 +1,8 @@
 use crate::ast::domains::attrs::MSetAttr;
 use crate::ast::domains::attrs::SetAttr;
 use crate::ast::{
-    DeclarationKind, DomainOpError, Expression, FuncAttr, Literal, Metadata, Moo,
-    RecordEntryGround, Reference, Typeable,
+    DeclarationKind, DomainOpError, Expression, FieldEntryGround, FuncAttr, Literal, Metadata, Moo,
+    Reference, RelAttr, SequenceAttr, Typeable,
     domains::{
         GroundDomain,
         domain::{DomainPtr, Int},
@@ -133,6 +133,48 @@ impl TryInto<FuncAttr<Int>> for FuncAttr<IntVal> {
     }
 }
 
+impl From<RelAttr<Int>> for RelAttr<IntVal> {
+    fn from(value: RelAttr<Int>) -> Self {
+        RelAttr {
+            size: value.size.into(),
+            binary: value.binary,
+        }
+    }
+}
+
+impl TryInto<RelAttr<Int>> for RelAttr<IntVal> {
+    type Error = DomainOpError;
+
+    fn try_into(self) -> Result<RelAttr<Int>, Self::Error> {
+        let size: Range<Int> = self.size.try_into()?;
+        Ok(RelAttr {
+            size,
+            binary: self.binary,
+        })
+    }
+}
+
+impl From<SequenceAttr<Int>> for SequenceAttr<IntVal> {
+    fn from(value: SequenceAttr<Int>) -> Self {
+        SequenceAttr {
+            size: value.size.into(),
+            jectivity: value.jectivity,
+        }
+    }
+}
+
+impl TryInto<SequenceAttr<Int>> for SequenceAttr<IntVal> {
+    type Error = DomainOpError;
+
+    fn try_into(self) -> Result<SequenceAttr<Int>, Self::Error> {
+        let size: Range<Int> = self.size.try_into()?;
+        Ok(SequenceAttr {
+            size,
+            jectivity: self.jectivity,
+        })
+    }
+}
+
 impl Display for IntVal {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -164,7 +206,7 @@ impl IntVal {
                 ReturnType::Int => Some(IntVal::Reference(re.clone())),
                 _ => None,
             },
-            DeclarationKind::DomainLetting(_) | DeclarationKind::RecordField(_) => None,
+            DeclarationKind::DomainLetting(_) | DeclarationKind::Field(_) => None,
         }
     }
 
@@ -197,7 +239,7 @@ impl IntVal {
                 DeclarationKind::QuantifiedExpr(_) => None,
                 // Decision variables inside domains are unresolved until solving.
                 DeclarationKind::Find(_) => None,
-                DeclarationKind::DomainLetting(_) | DeclarationKind::RecordField(_) => bug!(
+                DeclarationKind::DomainLetting(_) | DeclarationKind::Field(_) => bug!(
                     "Expected integer expression, given, or letting inside int domain; Got: {re}"
                 ),
             },
@@ -279,6 +321,15 @@ impl SetAttr<IntVal> {
     }
 }
 
+impl SequenceAttr<IntVal> {
+    pub fn resolve(&self) -> Option<SequenceAttr<Int>> {
+        Some(SequenceAttr {
+            size: self.size.resolve()?,
+            jectivity: self.jectivity.clone(),
+        })
+    }
+}
+
 impl MSetAttr<IntVal> {
     pub fn resolve(&self) -> Option<MSetAttr<Int>> {
         Some(MSetAttr {
@@ -298,16 +349,25 @@ impl FuncAttr<IntVal> {
     }
 }
 
+impl RelAttr<IntVal> {
+    pub fn resolve(&self) -> Option<RelAttr<Int>> {
+        Some(RelAttr {
+            size: self.size.resolve()?,
+            binary: self.binary.clone(),
+        })
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Uniplate, Quine)]
 #[path_prefix(conjure_cp::ast)]
-pub struct RecordEntry {
+pub struct FieldEntry {
     pub name: Name,
     pub domain: DomainPtr,
 }
 
-impl RecordEntry {
-    pub fn resolve(self) -> Option<RecordEntryGround> {
-        Some(RecordEntryGround {
+impl FieldEntry {
+    pub fn resolve(self) -> Option<FieldEntryGround> {
+        Some(FieldEntryGround {
             name: self.name,
             domain: self.domain.resolve()?,
         })
@@ -320,7 +380,7 @@ impl RecordEntry {
 #[biplate(to=Reference)]
 #[biplate(to=IntVal)]
 #[biplate(to=DomainPtr)]
-#[biplate(to=RecordEntry)]
+#[biplate(to=FieldEntry)]
 pub enum UnresolvedDomain {
     Int(Vec<Range<IntVal>>),
     /// A set of elements drawn from the inner domain
@@ -330,13 +390,18 @@ pub enum UnresolvedDomain {
     Matrix(DomainPtr, Vec<DomainPtr>),
     /// A tuple of N elements, each with its own domain
     Tuple(Vec<DomainPtr>),
+    Sequence(SequenceAttr<IntVal>, DomainPtr),
     /// A reference to a domain letting
     #[polyquine_skip]
     Reference(Reference),
     /// A record
-    Record(Vec<RecordEntry>),
+    Record(Vec<FieldEntry>),
     /// A function with attributes, domain, and range
     Function(FuncAttr<IntVal>, DomainPtr, DomainPtr),
+    /// A variant domain with its domain options (reusing field entries)
+    Variant(Vec<FieldEntry>),
+    /// A relation as a set of tuples
+    Relation(RelAttr<IntVal>, Vec<DomainPtr>),
 }
 
 impl UnresolvedDomain {
@@ -361,6 +426,9 @@ impl UnresolvedDomain {
                     .collect::<Option<_>>()
                     .map(|idx| GroundDomain::Matrix(inner_gd, idx))
             }
+            UnresolvedDomain::Sequence(attr, inner) => {
+                Some(GroundDomain::Sequence(attr.resolve()?, inner.resolve()?))
+            }
             UnresolvedDomain::Tuple(inners) => inners
                 .iter()
                 .map(DomainPtr::resolve)
@@ -369,7 +437,7 @@ impl UnresolvedDomain {
             UnresolvedDomain::Record(entries) => entries
                 .iter()
                 .map(|f| {
-                    f.domain.resolve().map(|gd| RecordEntryGround {
+                    f.domain.resolve().map(|gd| FieldEntryGround {
                         name: f.name.clone(),
                         domain: gd,
                     })
@@ -392,6 +460,24 @@ impl UnresolvedDomain {
                     return Some(GroundDomain::Function(attr_gd, dom_gd, cdom_gd));
                 }
                 None
+            }
+            UnresolvedDomain::Variant(entries) => entries
+                .iter()
+                .map(|f| {
+                    f.domain.resolve().map(|gd| FieldEntryGround {
+                        name: f.name.clone(),
+                        domain: gd,
+                    })
+                })
+                .collect::<Option<_>>()
+                .map(GroundDomain::Variant),
+            UnresolvedDomain::Relation(attr, inners) => {
+                let resolved_attr = attr.resolve()?;
+                inners
+                    .iter()
+                    .map(DomainPtr::resolve)
+                    .collect::<Option<_>>()
+                    .map(|items| GroundDomain::Relation(resolved_attr, items))
             }
         }
     }
@@ -440,6 +526,16 @@ impl UnresolvedDomain {
             (UnresolvedDomain::Tuple(_), _) | (_, UnresolvedDomain::Tuple(_)) => {
                 Err(DomainOpError::WrongType)
             }
+            (UnresolvedDomain::Relation(_, in1s), UnresolvedDomain::Relation(_, in2s)) => {
+                let mut inners = Vec::new();
+                for (in1, in2) in in1s.iter().zip(in2s.iter()) {
+                    inners.push(in1.union(in2)?)
+                }
+                Ok(UnresolvedDomain::Relation(RelAttr::default(), inners))
+            }
+            (UnresolvedDomain::Relation(_, _), _) | (_, UnresolvedDomain::Relation(_, _)) => {
+                Err(DomainOpError::WrongType)
+            }
             // TODO: Could we support unions of reference domains symbolically?
             (UnresolvedDomain::Reference(_), _) | (_, UnresolvedDomain::Reference(_)) => {
                 Err(DomainOpError::NotGround)
@@ -454,12 +550,21 @@ impl UnresolvedDomain {
             (UnresolvedDomain::Function(_, _, _), _) | (_, UnresolvedDomain::Function(_, _, _)) => {
                 Err(DomainOpError::WrongType)
             }
+            #[allow(unreachable_patterns)]
+            (UnresolvedDomain::Variant(_), _) | (_, UnresolvedDomain::Variant(_)) => {
+                Err(DomainOpError::WrongType)
+            }
+            #[allow(unreachable_patterns)]
+            (UnresolvedDomain::Sequence(_, _), _) | (_, UnresolvedDomain::Sequence(_, _)) => {
+                Err(DomainOpError::WrongType)
+            }
         }
     }
 
     pub fn element_domain(&self) -> Option<DomainPtr> {
         match self {
             UnresolvedDomain::Set(_, inner_dom) => Some(inner_dom.clone()),
+            UnresolvedDomain::Sequence(_, inner_dom) => Some(inner_dom.clone()),
             UnresolvedDomain::Matrix(_, _) => {
                 todo!("Unwrap one dimension of the domain")
             }
@@ -475,6 +580,9 @@ impl Typeable for UnresolvedDomain {
             UnresolvedDomain::Int(_) => ReturnType::Int,
             UnresolvedDomain::Set(_attr, inner) => ReturnType::Set(Box::new(inner.return_type())),
             UnresolvedDomain::MSet(_attr, inner) => ReturnType::MSet(Box::new(inner.return_type())),
+            UnresolvedDomain::Sequence(_attr, inner) => {
+                ReturnType::Sequence(Box::new(inner.return_type()))
+            }
             UnresolvedDomain::Matrix(inner, _idx) => {
                 ReturnType::Matrix(Box::new(inner.return_type()))
             }
@@ -495,6 +603,20 @@ impl Typeable for UnresolvedDomain {
             UnresolvedDomain::Function(_, dom, cdom) => {
                 ReturnType::Function(Box::new(dom.return_type()), Box::new(cdom.return_type()))
             }
+            UnresolvedDomain::Variant(entries) => {
+                let mut entry_types = Vec::new();
+                for entry in entries {
+                    entry_types.push(entry.domain.return_type());
+                }
+                ReturnType::Variant(entry_types)
+            }
+            UnresolvedDomain::Relation(_, inners) => {
+                let mut inner_types = Vec::new();
+                for inner in inners {
+                    inner_types.push(inner.return_type());
+                }
+                ReturnType::Relation(inner_types)
+            }
         }
     }
 }
@@ -513,6 +635,9 @@ impl Display for UnresolvedDomain {
             }
             UnresolvedDomain::Set(attrs, inner_dom) => write!(f, "set {attrs} of {inner_dom}"),
             UnresolvedDomain::MSet(attrs, inner_dom) => write!(f, "mset {attrs} of {inner_dom}"),
+            UnresolvedDomain::Sequence(attrs, inner_dom) => {
+                write!(f, "sequence {attrs} of {inner_dom}")
+            }
             UnresolvedDomain::Matrix(value_domain, index_domains) => {
                 write!(
                     f,
@@ -521,26 +646,33 @@ impl Display for UnresolvedDomain {
                 )
             }
             UnresolvedDomain::Tuple(domains) => {
-                write!(
-                    f,
-                    "tuple of ({})",
-                    pretty_vec(&domains.iter().collect_vec())
-                )
+                write!(f, "tuple ({})", &domains.iter().join(","))
             }
             UnresolvedDomain::Record(entries) => {
                 write!(
                     f,
-                    "record of ({})",
-                    pretty_vec(
-                        &entries
-                            .iter()
-                            .map(|entry| format!("{}: {}", entry.name, entry.domain))
-                            .collect_vec()
-                    )
+                    "record {{{}}}",
+                    entries
+                        .iter()
+                        .map(|entry| format!("{}: {}", entry.name, entry.domain))
+                        .join(", ")
                 )
             }
             UnresolvedDomain::Function(attribute, domain, codomain) => {
                 write!(f, "function {} {} --> {} ", attribute, domain, codomain)
+            }
+            UnresolvedDomain::Variant(entries) => {
+                write!(
+                    f,
+                    "variant {{{}}}",
+                    entries
+                        .iter()
+                        .map(|entry| format!("{}: {}", entry.name, entry.domain))
+                        .join(", ")
+                )
+            }
+            UnresolvedDomain::Relation(attrs, domains) => {
+                write!(f, "relation {} of ({})", attrs, domains.iter().join(" * "))
             }
         }
     }
