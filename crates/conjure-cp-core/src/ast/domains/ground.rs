@@ -67,6 +67,8 @@ pub enum GroundDomain {
     Tuple(Vec<Moo<GroundDomain>>),
     /// A record
     Record(Vec<FieldEntryGround>),
+    /// A sequence of elements drawn from the inner domain
+    Sequence(SequenceAttr, Moo<GroundDomain>),
     /// A function with a domain and codomain
     Function(FuncAttr, Moo<GroundDomain>, Moo<GroundDomain>),
     /// A relation as a set of tuples
