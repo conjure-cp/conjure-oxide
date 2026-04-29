@@ -8,7 +8,7 @@ use super::{
     Atom, Domain, DomainPtr, Expression, GroundDomain, Metadata, Moo, Range, ReturnType, SetAttr,
     Typeable, domains::HasDomain, domains::Int, records::RecordValue,
 };
-use crate::ast::domains::MSetAttr;
+use crate::ast::domains::{MSetAttr, SequenceAttr};
 use crate::ast::pretty::pretty_vec;
 use crate::bug;
 use polyquine::Quine;
@@ -68,6 +68,8 @@ pub enum AbstractLiteral<T: AbstractLiteralValue> {
     // a tuple of literals
     Tuple(Vec<T>),
 
+    Sequence(Vec<T>),
+
     Record(Vec<RecordValue<T>>),
 
     Function(Vec<(T, T)>),
@@ -113,6 +115,27 @@ impl AbstractLiteral<Expression> {
                     .expect("taking the union of all item domains of a set literal should succeed");
 
                 Some(Domain::mset(MSetAttr::<Int>::default(), item_domain))
+            }
+
+            AbstractLiteral::Sequence(elems) => {
+                let item_domains: Vec<DomainPtr> = elems
+                    .iter()
+                    .map(|x| x.domain_of())
+                    .collect::<Option<Vec<DomainPtr>>>()?;
+
+                // Get the union of all domains in the sequence.
+                // i.e. if <(1..3), (1..3), (5), (8..9)> then seq dom is (1..3, 5, 8..9)
+                let mut item_domain_iter = item_domains.iter().cloned();
+                let first_item = item_domain_iter.next()?;
+                let item_domain = item_domains
+                    .iter()
+                    .try_fold(first_item, |x, y| x.union(y))
+                    .expect("taking the union of all item domains of a set literal should succeed");
+
+                Some(Domain::sequence(
+                    SequenceAttr::<Int>::default(),
+                    item_domain,
+                ))
             }
 
             AbstractLiteral::Matrix(items, _) => {
@@ -197,6 +220,22 @@ impl Typeable for AbstractLiteral<Expression> {
                 );
 
                 ReturnType::MSet(Box::new(item_type))
+            }
+            AbstractLiteral::Sequence(items) if items.is_empty() => {
+                ReturnType::Sequence(Box::new(ReturnType::Unknown))
+            }
+            AbstractLiteral::Sequence(items) => {
+                let item_type = items[0].return_type();
+
+                // if any items do not have a type, return none.
+                let item_types: Vec<ReturnType> = items.iter().map(|x| x.return_type()).collect();
+
+                assert!(
+                    item_types.iter().all(|x| x == &item_type),
+                    "all items in a sequence should have the same type"
+                );
+
+                ReturnType::Sequence(Box::new(item_type))
             }
             AbstractLiteral::Matrix(items, _) if items.is_empty() => {
                 ReturnType::Matrix(Box::new(ReturnType::Unknown))
@@ -341,6 +380,10 @@ where
                 let elems_str: String = elems.iter().map(|x| format!("{x}")).join(",");
                 write!(f, "({elems_str})")
             }
+            AbstractLiteral::Sequence(elems) => {
+                let elems_str: String = elems.iter().map(|x| format!("{x}")).join(",");
+                write!(f, "sequence({elems_str})")
+            }
             AbstractLiteral::Record(entries) => {
                 let entries_str: String = entries
                     .iter()
@@ -387,6 +430,13 @@ where
                 (
                     f1_tree,
                     Box::new(move |x| AbstractLiteral::Matrix(f1_ctx(x), index_domain.clone())),
+                )
+            }
+            AbstractLiteral::Sequence(vec) => {
+                let (f1_tree, f1_ctx) = <_ as Biplate<AbstractLiteral<T>>>::biplate(vec);
+                (
+                    f1_tree,
+                    Box::new(move |x| AbstractLiteral::Sequence(f1_ctx(x))),
                 )
             }
             AbstractLiteral::Tuple(elems) => {
@@ -484,6 +534,13 @@ where
                     (
                         f1_tree,
                         Box::new(move |x| AbstractLiteral::Matrix(f1_ctx(x), index_domain.clone())),
+                    )
+                }
+                AbstractLiteral::Sequence(vec) => {
+                    let (f1_tree, f1_ctx) = <_ as Biplate<To>>::biplate(vec);
+                    (
+                        f1_tree,
+                        Box::new(move |x| AbstractLiteral::Sequence(f1_ctx(x))),
                     )
                 }
                 AbstractLiteral::Tuple(elems) => {
@@ -672,6 +729,19 @@ impl AbstractLiteral<Expression> {
                 }
 
                 Some(AbstractLiteral::Matrix(literals, domain.resolve()?))
+            }
+            AbstractLiteral::Sequence(elements) => {
+                let literals = elements
+                    .into_iter()
+                    .map(|expr| match expr {
+                        Expression::Atomic(_, Atom::Literal(lit)) => Some(lit),
+                        Expression::AbstractLiteral(_, abslit) => {
+                            Some(Literal::AbstractLiteral(abslit.into_literals()?))
+                        }
+                        _ => None,
+                    })
+                    .collect::<Option<Vec<_>>>()?;
+                Some(AbstractLiteral::Sequence(literals))
             }
             AbstractLiteral::Tuple(items) => {
                 let mut literals = vec![];

@@ -828,6 +828,8 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
         Expr::ToRelation(_, _) => todo!(),
         Expr::RelationProj(_, _, _) => todo!(),
         Expr::Card(_, _) => todo!(),
+        Expr::Subsequence(_, _, _) => todo!(),
+        Expr::Substring(_, _, _) => todo!(),
         Expr::LexLt(_, _, _) => Err(RuleNotApplicable),
         Expr::LexLeq(_, _, _) => Err(RuleNotApplicable),
         Expr::LexGt(_, _, _) => Err(RuleNotApplicable),

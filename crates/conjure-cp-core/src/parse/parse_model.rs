@@ -15,7 +15,7 @@ use crate::ast::records::RecordValue;
 use crate::ast::{
     AbstractLiteral, Atom, BinaryAttr, DeclarationPtr, Domain, Expression, FuncAttr, IntVal,
     JectivityAttr, Literal, MSetAttr, Name, PartialityAttr, Range, RecordEntry, RelAttr,
-    ReturnType, SetAttr, SymbolTable, SymbolTablePtr,
+    ReturnType, SequenceAttr, SetAttr, SymbolTable, SymbolTablePtr,
 };
 use crate::ast::{DomainPtr, Metadata};
 use crate::context::Context;
@@ -299,6 +299,53 @@ fn parse_domain(
 
             Ok(Domain::matrix(value_domain, index_domains))
         }
+
+        "DomainSequence" => {
+            let dom = domain_value
+                .get(2)
+                .and_then(|v| v.as_object())
+                .expect("domain object exists");
+            let domain = dom
+                .iter()
+                .next()
+                .ok_or(Error::Parse("DomainSequence is an empty object".to_owned()))?;
+            let domain = parse_domain(domain.0.as_str(), domain.1, symbols)?;
+
+            // Parse Attributes
+            let attributes = domain_value
+                .get(1)
+                .and_then(|v| v.as_array())
+                .ok_or(error!("Sequence attributes is not a json array"))?;
+
+            let size = attributes
+                .first()
+                .and_then(|v| v.as_object())
+                .ok_or(error!("Sequence size attributes is not an object"))?;
+            let size = parse_size_attr(size, symbols)?;
+
+            let jectivity = attributes
+                .get(1)
+                .and_then(|v| v.as_str())
+                .ok_or(error!("jectivity is not a string"))?;
+            let jectivity = match jectivity {
+                "JectivityAttr_Injective" => Some(JectivityAttr::Injective),
+                "JectivityAttr_Surjective" => Some(JectivityAttr::Surjective),
+                "JectivityAttr_Bijective" => Some(JectivityAttr::Bijective),
+                "JectivityAttr_None" => Some(JectivityAttr::None),
+                _ => None,
+            };
+            let jectivity =
+                jectivity.ok_or(Error::Parse("Jectivity is an unknown type".to_owned()))?;
+
+            let attr: SequenceAttr<IntVal> = SequenceAttr { size, jectivity };
+            match attr.size {
+                Range::Unbounded | Range::UnboundedR(_) => Err(Error::Parse(
+                    "Sequence must have size or maxSize attribute".to_string(),
+                )),
+                _ => Ok(Domain::sequence(attr, domain)),
+            }
+        }
+
         "DomainTuple" => {
             let domain_value = domain_value
                 .as_array()
@@ -693,6 +740,8 @@ fn binary_operator(op_name: &str) -> Option<BinOp> {
         "MkOpPreImage" => Some(Expression::PreImage),
         "MkOpInverse" => Some(Expression::Inverse),
         "MkOpRestrict" => Some(Expression::Restrict),
+        "MkOpSubstring" => Some(Expression::Substring),
+        "MkOpSubsequence" => Some(Expression::Subsequence),
         _ => None,
     }
 }
@@ -807,6 +856,8 @@ pub fn parse_expression(obj: &JsonValue, scope: &SymbolTablePtr) -> Result<Expre
                 parse_abs_mset(&abslit["AbstractLiteral"]["AbsLitMSet"], scope)
             } else if abstract_literal.contains_key("AbsLitRelation") {
                 parse_abs_relation(&abslit["AbstractLiteral"]["AbsLitRelation"], scope)
+            } else if abstract_literal.contains_key("AbsLitSequence") {
+                parse_abs_sequence(&abslit["AbstractLiteral"]["AbsLitSequence"], scope)
             } else {
                 parse_abstract_matrix_as_expr(obj, scope)
             }
@@ -858,6 +909,21 @@ fn parse_abs_mset(abs_mset: &Value, scope: &SymbolTablePtr) -> Result<Expression
     Ok(Expression::AbstractLiteral(
         Metadata::new(),
         AbstractLiteral::MSet(expressions),
+    ))
+}
+
+fn parse_abs_sequence(abs_seq: &Value, scope: &SymbolTablePtr) -> Result<Expression> {
+    let values = abs_seq
+        .as_array()
+        .ok_or(error!("AbsLitSequence is not an array"))?;
+    let expressions = values
+        .iter()
+        .map(|values| parse_expression(values, scope))
+        .collect::<Result<Vec<_>>>()?;
+
+    Ok(Expression::AbstractLiteral(
+        Metadata::new(),
+        AbstractLiteral::Sequence(expressions),
     ))
 }
 
@@ -1478,6 +1544,8 @@ fn parse_constant(
                     return parse_abs_function(arr, scope);
                 } else if let Some(arr) = obj.get("AbsLitRelation") {
                     return parse_abs_relation(arr, scope);
+                } else if let Some(arr) = obj.get("AbsLitSequence") {
+                    return parse_abs_sequence(arr, scope);
                 }
             }
             Err(error!("Unhandled ConstantAbstract literal type"))
