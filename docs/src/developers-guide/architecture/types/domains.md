@@ -5,7 +5,7 @@ Domains are essentially some collection of values that some type can inherit.
 
 In the Essence language grammar, 'domain' is used both to describe high level 'types' (e.g. sets, matrices, sequences) and the collection inner atomic literals (i.e. booleans and integers). You can picture it in a recursive sense, where the atomic literals are the base case, and complex high-level types are domains composed of domains. 
 
-In the orginal language decription, found in the [Conjure Docs](https://conjure.readthedocs.io/en/latest/essence.html)
+In the original language description, found in the [Conjure Docs](https://conjure.readthedocs.io/en/latest/essence.html)
 ```
 Domain := "bool"
         | "int" list(Range, ",", "()")
@@ -48,4 +48,4 @@ The `Domain` enum (which must either be `Ground` or `Unresolved`) has it's value
 
 
 ## Attributes
-Domain attributes add a lot of the generality and power to Essence that simpler languages lack. In Essence Prime (a.k.a Essence'), if you wanted to capture the concept that some set has a variable size, you must have a large **fixed**-size collection wherein as the size varies, there are some slots that are tagged as out-of-bounds. In Essence, you can define a set domain `set (minSize 3, maxSize 5) ...` which handles this for you. At the moment, this gets translated as described above whenever transpiling down to a solver-specific language - but hopefully with this richer level of information, we would be able to make better inference and therefore have a better translation.
+Domain attributes add a lot of the generality and power to Essence that simpler languages lack. In Essence Prime (a.k.a Essence'), if you wanted to capture the concept that some set has a variable size, you must have a large **fixed**-size collection wherein as the size varies, there are some slots that are tagged as out-of-bounds. In Essence, you can define a set domain `set (minSize 3, maxSize 5) ...` which handles this for you. At the moment, this gets handled as described above, but hopefully with this richer level of information we would be able to make better inference and therefore have a better translation.
