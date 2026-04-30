@@ -19,7 +19,7 @@ $ Valid
 find foo: sequence of int(1..5)
 find bar: sequence (size 5, surjective) of int(1..5)
 find fizz: sequence (minSize 2, maxSize 7, injective) of int(1..10)
-find buzz: sequeunce (bijective) of int(1..5)
+find buzz: sequence (bijective) of int(1..5)
 
 $ Syntactically Invalid
 find biff: sequence (minSize 3, size 4) of int(2..7) $ Cardinality attribute cannot be single and not single

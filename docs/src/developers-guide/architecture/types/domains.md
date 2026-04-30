@@ -36,7 +36,7 @@ NameDomain := Name ":" Domain
 
 
 ## Domains in Essence and Conjure-Oxide
-Looking at `conjure-cp-core::ast::domains`, there is a `Domain` Enum, with variants `Ground` and `Unresolved`. These themselves are both Enums that can be any one of the many complex types or simple types like booleans, integers, and the empty domain. The variants also have values, with the complex types often containing attribute structs and some 'inner' domain from which the complex type pulls it's values. 
+Looking at `conjure-cp-core::ast::domains`, there is a `Domain` Enum, with variants `Ground` and `Unresolved`. These themselves are both Enums that can be any one of the many complex types or simple types like booleans, integers, and the empty domain. The types also have values, with the complex types often containing attribute structs and some 'inner' domain from which the complex type pulls it's values. 
 
 > When defining a Set type, it may have attributes and an inner domain. For example, the domain `set (size 2) of int(1..3)` could have valid values like `{1,2}`, `{1,3}`, `{2,3}`. The 'inner' domain is `int(1..3)`, from which the values that make up the set are pulled.
 
