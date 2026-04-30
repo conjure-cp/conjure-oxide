@@ -30,4 +30,4 @@ There are four operators which are defined on functions. These are represented a
 - `min(m)` - largest element in ordered multiset `m`
 - `freq(m,e)` - counts occurrences of element `e` in multiset `m`
 
-> As of 29th April 2026, `Min` and `Max` have been added as Expressions, but `Hist` and `Freq` have not.
+> As of 29th April 2026, `Min` and `Max` have been added as Expressions, but `Hist` and `Freq` have not. There is no support for rewriting rules or solving.

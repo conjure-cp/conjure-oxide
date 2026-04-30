@@ -31,3 +31,5 @@ There are two operators which are defined on sequences. These are represented as
 
 - `subsequence`: does the sequence `s` appear in the same order in `t` (e.g. `s=1,2,3` and `t=1,3` are subsequences)
 - `substring`: does the sequence `s` appear in the same order _and_ contiguously in `t` (e.g. `s=1,2` is a substring of `t=1,2,3` )
+
+> As of writing in April 2026, there is no support for rewriting rules or solving. 
