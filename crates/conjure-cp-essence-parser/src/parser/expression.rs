@@ -14,6 +14,12 @@ pub fn parse_expression(
     node: Node,
 ) -> Result<Option<Expression>, FatalParseError> {
     match node.kind() {
+        "indexable_expr" => {
+            let Some(inner) = named_child!(recover, ctx, &node) else {
+                return Ok(None);
+            };
+            parse_expression(ctx, inner)
+        }
         "atom" => parse_atom(ctx, &node),
         "bool_expr" => {
             if ctx.typechecking_context == TypecheckingContext::Arithmetic {
@@ -599,15 +605,7 @@ pub fn parse_binary_expression(
     expr
 }
 
-fn inferred_context_from_expression(expr: &Expression) -> TypecheckingContext {
-    // TODO: typechecking for index/slice expressions
-    if matches!(
-        expr,
-        Expression::UnsafeIndex(_, _, _) | Expression::UnsafeSlice(_, _, _)
-    ) {
-        return TypecheckingContext::Unknown;
-    }
-
+pub(crate) fn inferred_context_from_expression(expr: &Expression) -> TypecheckingContext {
     let Some(domain) = expr.domain_of() else {
         return TypecheckingContext::Unknown;
     };

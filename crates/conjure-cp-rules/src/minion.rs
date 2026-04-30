@@ -821,6 +821,21 @@ fn introduce_reifyimply_ineq_from_imply(expr: &Expr, _: &SymbolTable) -> Applica
 
     let x_atom: &Atom = x.as_ref().try_into().or(Err(RuleNotApplicable))?;
 
+    // When the RHS is a non-flat boolean equality, flatten/reify it first instead of wrapping the
+    // whole equality in a Minion reify-imply. On large models this avoids repeatedly carrying a
+    // bulky Eq node through later Minion rewrites.
+    if let Expr::Eq(_, lhs, rhs) = y.as_ref() {
+        let lhs_is_atom = TryInto::<&Atom>::try_into(lhs.as_ref()).is_ok();
+        let rhs_is_atom = TryInto::<&Atom>::try_into(rhs.as_ref()).is_ok();
+
+        if lhs.as_ref().return_type() == ReturnType::Bool
+            && rhs.as_ref().return_type() == ReturnType::Bool
+            && !(lhs_is_atom && rhs_is_atom)
+        {
+            return Err(RuleNotApplicable);
+        }
+    }
+
     // if both x and y are atoms,  x -> y ~> ineq(x,y,0)
     //
     // if only x is an atom, x -> y ~> reifyimply(y,x)

@@ -1,7 +1,9 @@
 use crate::diagnostics::diagnostics_api::SymbolKind;
 use crate::diagnostics::source_map::{HoverInfo, span_with_hover};
 use crate::errors::{FatalParseError, RecoverableParseError};
-use crate::expression::{parse_binary_expression, parse_expression};
+use crate::expression::{
+    inferred_context_from_expression, parse_binary_expression, parse_expression,
+};
 use crate::parser::ParseContext;
 use crate::parser::abstract_literal::parse_abstract;
 use crate::parser::comprehension::parse_comprehension;
@@ -200,25 +202,13 @@ fn parse_index_or_slice(
     ctx: &mut ParseContext,
     node: &Node,
 ) -> Result<Option<Expression>, FatalParseError> {
-    // add error and return early if we're in a set context, since indexing/slicing doesn't produce sets
-    if ctx.typechecking_context == TypecheckingContext::Set {
-        ctx.record_error(RecoverableParseError::new(
-            format!(
-                "Type error: {}\n\tExpected: set\n\tGot: index or slice",
-                ctx.source_code[node.start_byte()..node.end_byte()].trim()
-            ),
-            Some(node.range()),
-        ));
-        return Ok(None);
-    }
-
     // Save current context and temporarily set to Unknown for the collection
     let saved_context = ctx.typechecking_context;
     ctx.typechecking_context = TypecheckingContext::Unknown;
     let Some(collection_node) = field!(recover, ctx, node, "collection") else {
         return Ok(None);
     };
-    let Some(collection) = parse_atom(ctx, &collection_node)? else {
+    let Some(collection) = parse_expression(ctx, collection_node)? else {
         return Ok(None);
     };
     ctx.typechecking_context = saved_context;
@@ -232,22 +222,40 @@ fn parse_index_or_slice(
 
     let has_null_idx = indices.iter().any(|idx| idx.is_none());
     // TODO: We could check whether the slice/index is safe here
-    if has_null_idx {
+    let expr = if has_null_idx {
         // It's a slice
-        Ok(Some(Expression::UnsafeSlice(
-            Metadata::new(),
-            Moo::new(collection),
-            indices,
-        )))
+        Expression::UnsafeSlice(Metadata::new(), Moo::new(collection), indices)
     } else {
         // It's an index
         let idx_exprs: Vec<Expression> = indices.into_iter().map(|idx| idx.unwrap()).collect();
-        Ok(Some(Expression::UnsafeIndex(
-            Metadata::new(),
-            Moo::new(collection),
-            idx_exprs,
-        )))
+        Expression::UnsafeIndex(Metadata::new(), Moo::new(collection), idx_exprs)
+    };
+
+    let inferred_context = inferred_context_from_expression(&expr);
+    let is_compatible = matches!(
+        (saved_context, inferred_context),
+        (TypecheckingContext::Unknown, _)
+            | (_, TypecheckingContext::Unknown)
+            | (
+                TypecheckingContext::SetOrMatrix,
+                TypecheckingContext::Set | TypecheckingContext::Matrix
+            )
+    ) || saved_context == inferred_context;
+
+    if !is_compatible {
+        ctx.record_error(RecoverableParseError::new(
+            format!(
+                "Type error: {}\n\tExpected: {}\n\tGot: {}",
+                ctx.source_code[node.start_byte()..node.end_byte()].trim(),
+                context_name(saved_context),
+                context_name(inferred_context)
+            ),
+            Some(node.range()),
+        ));
+        return Ok(None);
     }
+
+    Ok(Some(expr))
 }
 
 fn parse_index(ctx: &mut ParseContext, node: &Node) -> Result<Option<Expression>, FatalParseError> {
@@ -476,6 +484,20 @@ fn parse_constant(ctx: &mut ParseContext, node: &Node) -> Result<Option<Literal>
         }
     }
     Ok(Some(lit))
+}
+
+fn context_name(context: TypecheckingContext) -> &'static str {
+    match context {
+        TypecheckingContext::Boolean => "bool",
+        TypecheckingContext::Arithmetic => "int",
+        TypecheckingContext::Set => "set",
+        TypecheckingContext::SetOrMatrix => "set or matrix",
+        TypecheckingContext::MSet => "mset",
+        TypecheckingContext::Matrix => "matrix",
+        TypecheckingContext::Tuple => "tuple",
+        TypecheckingContext::Record => "record",
+        TypecheckingContext::Unknown => "unknown",
+    }
 }
 
 pub(crate) fn parse_int(ctx: &mut ParseContext, node: &Node) -> Option<i32> {

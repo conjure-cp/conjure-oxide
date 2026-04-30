@@ -21,7 +21,7 @@ fn index_matrix_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
 
 fn index_matrix_to_atom_impl(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     // is this an indexing operation?
-    if let Expr::SafeIndex(_, subject, indices) = expr
+    if let Expr::SafeIndex(_, subject, indices) | Expr::UnsafeIndex(_, subject, indices) = expr
 
     // ensure that we are indexing a decision variable with the representation "matrix_to_atom"
     // selected for it.
@@ -69,7 +69,10 @@ fn index_matrix_to_atom_impl(expr: &Expr, symbols: &SymbolTable) -> ApplicationR
                 indices_as_lits.iter().join("_").into(),
             )));
 
-            let subject = repr.expression_down(symbols)?[&indices_as_name].clone();
+            let represented = repr.expression_down(symbols)?;
+            let Some(subject) = represented.get(&indices_as_name).cloned() else {
+                return Err(RuleNotApplicable);
+            };
             Ok(Reduction::pure(subject))
         } else {
             // indices are not constant -> flatten matrix and return [flattened_matrix][flattened_index_expr]

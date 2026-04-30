@@ -2969,6 +2969,27 @@
         }
       ]
     },
+    "indexable_expr": {
+      "type": "PREC",
+      "value": 25,
+      "content": {
+        "type": "CHOICE",
+        "members": [
+          {
+            "type": "SYMBOL",
+            "name": "atom"
+          },
+          {
+            "type": "SYMBOL",
+            "name": "sub_arith_expr"
+          },
+          {
+            "type": "SYMBOL",
+            "name": "sub_bool_expr"
+          }
+        ]
+      }
+    },
     "tuple": {
       "type": "PREC",
       "value": -5,
@@ -3638,54 +3659,37 @@
       ]
     },
     "index_or_slice": {
-      "type": "SEQ",
-      "members": [
-        {
-          "type": "FIELD",
-          "name": "collection",
-          "content": {
-            "type": "CHOICE",
-            "members": [
-              {
-                "type": "SYMBOL",
-                "name": "identifier"
-              },
-              {
-                "type": "SYMBOL",
-                "name": "tuple"
-              },
-              {
-                "type": "SYMBOL",
-                "name": "matrix"
-              },
-              {
-                "type": "SYMBOL",
-                "name": "record"
-              },
-              {
-                "type": "SYMBOL",
-                "name": "flatten"
-              }
-            ]
+      "type": "PREC",
+      "value": 25,
+      "content": {
+        "type": "SEQ",
+        "members": [
+          {
+            "type": "FIELD",
+            "name": "collection",
+            "content": {
+              "type": "SYMBOL",
+              "name": "indexable_expr"
+            }
+          },
+          {
+            "type": "STRING",
+            "value": "["
+          },
+          {
+            "type": "FIELD",
+            "name": "indices",
+            "content": {
+              "type": "SYMBOL",
+              "name": "indices"
+            }
+          },
+          {
+            "type": "STRING",
+            "value": "]"
           }
-        },
-        {
-          "type": "STRING",
-          "value": "["
-        },
-        {
-          "type": "FIELD",
-          "name": "indices",
-          "content": {
-            "type": "SYMBOL",
-            "name": "indices"
-          }
-        },
-        {
-          "type": "STRING",
-          "value": "]"
-        }
-      ]
+        ]
+      }
     },
     "set_operation": {
       "type": "PREC_LEFT",
@@ -4523,5 +4527,6 @@
   "precedences": [],
   "externals": [],
   "inline": [],
-  "supertypes": []
+  "supertypes": [],
+  "reserved": {}
 }

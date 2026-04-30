@@ -153,7 +153,7 @@ impl AbstractLiteral<Expression> {
 
                 let first_item = item_domain_iter.next()?;
 
-                let item_domain = item_domains
+                let mut item_domain = item_domains
                     .iter()
                     .try_fold(first_item, |x, y| x.union(y))
                     .expect(
@@ -171,6 +171,9 @@ impl AbstractLiteral<Expression> {
                     );
                     new_index_domain.push(idx);
                     e = elems[0].clone();
+                }
+                while let Some((inner_domain, _)) = item_domain.as_matrix() {
+                    item_domain = inner_domain;
                 }
                 Some(Domain::matrix(item_domain, new_index_domain))
             }

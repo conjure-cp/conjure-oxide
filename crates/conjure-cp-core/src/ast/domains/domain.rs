@@ -430,6 +430,10 @@ impl Domain {
         if let Some(UnresolvedDomain::Matrix(inner_dom, idx_doms)) = self.as_unresolved() {
             return Some((inner_dom.clone(), idx_doms.clone()));
         }
+        if let Some(UnresolvedDomain::Reference(reference)) = self.as_unresolved() {
+            let domain = reference.ptr.as_domain_letting()?;
+            return domain.as_ref().as_matrix();
+        }
         None
     }
 
@@ -561,6 +565,10 @@ impl Domain {
         if let Some(UnresolvedDomain::Tuple(inner_doms)) = self.as_unresolved() {
             return Some(inner_doms.clone());
         }
+        if let Some(UnresolvedDomain::Reference(reference)) = self.as_unresolved() {
+            let domain = reference.ptr.as_domain_letting()?;
+            return domain.as_ref().as_tuple();
+        }
         None
     }
 
@@ -602,6 +610,10 @@ impl Domain {
         }
         if let Some(UnresolvedDomain::Record(record_entries)) = self.as_unresolved() {
             return Some(record_entries.clone());
+        }
+        if let Some(UnresolvedDomain::Reference(reference)) = self.as_unresolved() {
+            let domain = reference.ptr.as_domain_letting()?;
+            return domain.as_ref().as_record();
         }
         None
     }

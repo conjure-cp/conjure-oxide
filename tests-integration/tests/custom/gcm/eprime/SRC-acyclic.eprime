@@ -23,7 +23,7 @@ find survivor1_ExplicitBoundedR2_Values_Occurrence: matrix indexed by [int(1..nb
 find rel2_RelationAsMatrix: matrix indexed by [int(1..n), int(1..n)] of bool
 find survivor2_ExplicitBoundedR3_Length: int(nbObservations)
 find survivor2_ExplicitBoundedR3_Values_Explicit: matrix indexed by [int(1..nbObservations), int(1)] of int(1..n)
-find score: int(0)
+find score: int(0..nbObservations)
 find path1_RelationAsMatrix: matrix indexed by [int(1..n), int(1..n)] of bool
 find path2_RelationAsMatrix: matrix indexed by [int(1..n), int(1..n)] of bool
 such that
@@ -80,7 +80,7 @@ such that
                         | y : int(1..n), row <= nbObservations]))
                   | q2 : int(1..n), row <= nbObservations])
              | row : int(1..nbObservations)]),
-    0 = sum([toInt(omitList_ExplicitBounded_Values[row]) | row : int(1..nbObservations)]),
+    score = sum([toInt(omitList_ExplicitBounded_Values[row]) | row : int(1..nbObservations)]),
     and([row <= nbObservations | row : int(1..nbObservations)]),
     and([rel1_RelationAsMatrix[q30_1, q30_2] -> path1_RelationAsMatrix[q30_1, q30_2]
              | q30_1 : int(1..n), q30_2 : int(1..n), q30_1 != q30_2]),
@@ -97,6 +97,27 @@ such that
     and([true | q17 : int(1..nbObservations)]),
     1 <= sum([sum([toInt(rel2_RelationAsMatrix[q23, q24]) | q24 : int(1..n)]) | q23 : int(1..n)]),
     and([!rel2_RelationAsMatrix[q20, q20] | q20 : int(1..n)])
+
+dominance relation
+    score < fromSolution(score)
+    \/
+    (score = fromSolution(score)
+     /\
+     and([fromSolution(rel1_RelationAsMatrix)[q101, q102] ->
+          rel1_RelationAsMatrix[q101, q102]
+              | q101 : int(1..n), q102 : int(1..n)])
+     /\
+     and([fromSolution(rel2_RelationAsMatrix)[q103, q104] ->
+          rel2_RelationAsMatrix[q103, q104]
+              | q103 : int(1..n), q104 : int(1..n)])
+     /\
+     (or([rel1_RelationAsMatrix[q105, q106] /\
+          !fromSolution(rel1_RelationAsMatrix)[q105, q106]
+              | q105 : int(1..n), q106 : int(1..n)])
+      \/
+      or([rel2_RelationAsMatrix[q107, q108] /\
+          !fromSolution(rel2_RelationAsMatrix)[q107, q108]
+              | q107 : int(1..n), q108 : int(1..n)])))
 
 $ Conjure's
 $ {"finds":
