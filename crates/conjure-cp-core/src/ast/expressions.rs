@@ -2073,7 +2073,7 @@ fn minus_operand_return_type(expr: &Expression) -> ReturnType {
                 DeclarationKind::Find(var) => var.return_type(),
                 DeclarationKind::Given(domain)
                 | DeclarationKind::DomainLetting(domain)
-                | DeclarationKind::RecordField(domain) => domain.return_type(),
+                | DeclarationKind::Field(domain) => domain.return_type(),
                 DeclarationKind::Quantified(inner) => inner.domain().return_type(),
                 DeclarationKind::QuantifiedExpr(inner)
                 | DeclarationKind::TemporaryValueLetting(inner)
