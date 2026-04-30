@@ -32,6 +32,7 @@ use super::abstract_comprehension::AbstractComprehension;
 use super::ac_operators::ACOperatorKind;
 use super::categories::{Category, CategoryOf};
 use super::comprehension::Comprehension;
+use super::declaration::DeclarationKind;
 use super::domains::HasDomain as _;
 use super::pretty::{pretty_expressions_as_top_level, pretty_vec};
 use super::records::FieldValue;
@@ -964,12 +965,25 @@ impl Expression {
 
                 Some(Domain::int(ranges))
             }
-            Expression::Minus(_, a, b) => a
-                .domain_of()?
-                .resolve()?
-                .apply_i32(|x, y| Some(x - y), b.domain_of()?.resolve()?.as_ref())
-                .map(DomainPtr::from)
-                .ok(),
+            Expression::Minus(_, a, b) => {
+                let a_resolved = a.domain_of()?.resolve()?;
+                let b_resolved = b.domain_of()?.resolve()?;
+
+                if matches!(a_resolved.as_ref(), GroundDomain::Int(_))
+                    && matches!(b_resolved.as_ref(), GroundDomain::Int(_))
+                {
+                    a_resolved
+                        .apply_i32(|x, y| Some(x - y), b_resolved.as_ref())
+                        .map(DomainPtr::from)
+                        .ok()
+                } else if matches!(a_resolved.as_ref(), GroundDomain::Set(_, _))
+                    && matches!(b_resolved.as_ref(), GroundDomain::Set(_, _))
+                {
+                    Some(DomainPtr::from(a_resolved))
+                } else {
+                    None
+                }
+            }
             Expression::FlatAllDiff(_, _) => Some(Domain::bool()),
             Expression::FlatMinusEq(_, _, _) => Some(Domain::bool()),
             Expression::FlatProductEq(_, _, _, _) => Some(Domain::bool()),
@@ -2055,6 +2069,26 @@ impl Display for Expression {
     }
 }
 
+fn minus_operand_return_type(expr: &Expression) -> ReturnType {
+    match expr {
+        Expression::Atomic(_, Atom::Reference(reference)) => {
+            let decl_kind = reference.ptr.kind().clone();
+            match decl_kind {
+                DeclarationKind::Find(var) => var.return_type(),
+                DeclarationKind::Given(domain)
+                | DeclarationKind::DomainLetting(domain)
+                | DeclarationKind::Field(domain) => domain.return_type(),
+                DeclarationKind::Quantified(inner) => inner.domain().return_type(),
+                DeclarationKind::QuantifiedExpr(inner)
+                | DeclarationKind::TemporaryValueLetting(inner)
+                // not sure if i should ever be looking at the domain ptr but seems to work
+                | DeclarationKind::ValueLetting(inner, _) => inner.return_type(),
+            }
+        }
+        _ => expr.return_type(),
+    }
+}
+
 impl Typeable for Expression {
     fn return_type(&self) -> ReturnType {
         match self {
@@ -2161,7 +2195,25 @@ impl Typeable for Expression {
             Expression::Factorial(_, _) => ReturnType::Int,
             Expression::UnsafePow(_, _, _) => ReturnType::Int,
             Expression::SafePow(_, _, _) => ReturnType::Int,
-            Expression::Minus(_, _, _) => ReturnType::Int,
+            Expression::Minus(_, a, b) => {
+                // rather than calling .return_type on a and b which sometimes errors on references that don't have domains
+                // use custom function that extracts return type from atomic references based on each declaration variant
+                let a_type = minus_operand_return_type(a);
+                let b_type = minus_operand_return_type(b);
+
+                if a_type == ReturnType::Int && b_type == ReturnType::Int {
+                    ReturnType::Int
+                } else if let ReturnType::Set(a_inner) = a_type
+                    && let ReturnType::Set(b_inner) = b_type
+                    && a_inner == b_inner
+                {
+                    ReturnType::Set(a_inner)
+                } else {
+                    bug!(
+                        "Invalid minus operation: operands are of different or invalid types for this operation"
+                    )
+                }
+            }
             Expression::FlatAbsEq(_, _, _) => ReturnType::Bool,
             Expression::FlatMinusEq(_, _, _) => ReturnType::Bool,
             Expression::FlatProductEq(_, _, _, _) => ReturnType::Bool,
