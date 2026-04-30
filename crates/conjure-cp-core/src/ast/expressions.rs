@@ -976,6 +976,10 @@ impl Expression {
                         .apply_i32(|x, y| Some(x - y), b_resolved.as_ref())
                         .map(DomainPtr::from)
                         .ok()
+                } else if matches!(a_resolved.as_ref(), GroundDomain::Set(_, _))
+                    && matches!(b_resolved.as_ref(), GroundDomain::Set(_, _))
+                {
+                    Some(DomainPtr::from(a_resolved))
                 } else {
                     None
                 }
