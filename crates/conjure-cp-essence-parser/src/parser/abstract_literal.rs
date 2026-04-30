@@ -108,7 +108,7 @@ fn parse_record(
         ctx.inner_typechecking_context = ctx.typechecking_context;
         ctx.typechecking_context = saved_ctx;
 
-        values.push(conjure_cp_core::ast::records::RecordValue { name, value });
+        values.push(conjure_cp_core::ast::records::FieldValue { name, value });
     }
     Ok(Some(AbstractLiteral::Record(values)))
 }
