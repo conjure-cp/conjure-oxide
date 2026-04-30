@@ -614,6 +614,10 @@ pub enum Expression {
     /// Alters the shape of relations by projection
     #[compatible(JsonInput)]
     RelationProj(Metadata, Moo<Expression>, Vec<Option<Expression>>),
+
+    /// Cardinality of a collection type
+    #[compatible(JsonInput)]
+    Card(Metadata, Moo<Expression>),
 }
 
 // for the given matrix literal, return a bounded domain from the min to max of applying op to each
@@ -1000,59 +1004,14 @@ impl Expression {
                 .ok(),
             Expression::Defined(_, function) => {
                 let (attrs, domain, codomain) = function.domain_of()?.as_function()?;
-
-                // Gets the size imposed by the size attribute
-                // The elements defined in the domain is the same as the size of the function itself
-                let size_size = attrs.resolve()?.size;
-
-                // Gets the size imposed by the partiality and jectivity attributes
-                let partiality = attrs.resolve()?.partiality;
-                let jectivity = attrs.resolve()?.jectivity;
-                let domain_length = domain.length_signed();
-                // We can only infer if the domain is ground and the length is known
-                let attr_size = match domain_length {
-                    Ok(len) => match partiality {
-                        PartialityAttr::Total => Some(Range::Single(len)),
-                        PartialityAttr::Partial => {
-                            // When partial we also need the codomain to be ground and known
-                            let codomain_length = codomain.length_signed();
-                            match codomain_length {
-                                Ok(co_len) => match jectivity {
-                                    JectivityAttr::Bijective => Some(Range::Single(co_len)),
-                                    JectivityAttr::Surjective => Some(Range::Bounded(co_len, len)),
-                                    JectivityAttr::Injective => {
-                                        Some(Range::Bounded(0, Ord::min(len, co_len)))
-                                    }
-                                    JectivityAttr::None => Some(Range::Bounded(0, len)),
-                                },
-                                Err(_) => None,
-                            }
-                        }
-                    },
-                    Err(_) => None,
-                };
-
-                // We combine the sizes:
-                // size_size relates to size constraints imposed by the size attributes of the function
-                // attr_size relates to size constraints imposed by the jectivity and partiality attributes.
-                //       This uses inference from the domain and codomain lengths.
-                // If the attributes clash the function is unsolveable, and an empty domain is returned
-                let size = match attr_size {
-                    Some(attr_size) => {
-                        let unsafe_range = Range::minimal(&[size_size, attr_size]);
-                        match unsafe_range {
-                            Ok(range) => range,
-                            // What should happen if this the functions attributes mean its unsolvable?
-                            Err(_) => {
-                                return Some(Domain::empty(ReturnType::Set(Box::new(
-                                    domain.return_type(),
-                                ))));
-                            }
-                        }
-                    }
-                    None => size_size,
-                };
-                Some(Domain::set(SetAttr::new(size), domain))
+                let size = Self::function_elements_size(attrs, &domain, &codomain);
+                if let Some(size) = size {
+                    Some(Domain::set(SetAttr::new(size), domain))
+                } else {
+                    Some(Domain::empty(ReturnType::Set(Box::new(
+                        domain.return_type(),
+                    ))))
+                }
             }
             Expression::Range(_, function) => {
                 let (attrs, domain, codomain) = function.domain_of()?.as_function()?;
@@ -1279,14 +1238,26 @@ impl Expression {
                 } else if let Some((attrs, dom)) = other.domain_of()?.as_mset() {
                     let set_attrs = SetAttr { size: attrs.size };
                     Some(Domain::set(set_attrs, dom))
-                } else if let Some((outer_dom, inner_doms)) = other.domain_of()?.as_matrix() {
+                } else if let Some((dom, dimensions)) = other.domain_of()?.as_matrix() {
                     // We combine all matrix domains into a tuple
-                    let mut doms = vec![outer_dom];
-                    doms.extend(inner_doms);
-                    Some(Domain::set(
-                        SetAttr::<IntVal>::default(),
-                        Domain::tuple(doms),
-                    ))
+                    let mut doms = vec![];
+                    for _ in dimensions {
+                        doms.push(dom.clone());
+                    }
+                    let doms_sizes: Result<Vec<i32>, _> =
+                        doms.iter().map(|x| x.length_signed()).collect();
+                    let attr = match doms_sizes {
+                        Ok(vals) => {
+                            if let Some(&size) = vals.iter().min() {
+                                SetAttr::new(Range::Single(size))
+                            } else {
+                                SetAttr::<i32>::default()
+                            }
+                        }
+                        // We do not know the ground dimensions yet so default is chosen
+                        Err(_) => SetAttr::<i32>::default(),
+                    };
+                    Some(Domain::set(attr, Domain::tuple(doms)))
                 } else {
                     bug!(
                         "Domain of {self} needed to be a function, relation, mset, or matrix for ToSet"
@@ -1341,6 +1312,130 @@ impl Expression {
                     .collect();
                 Some(Domain::relation(RelAttr::<IntVal>::default(), new_doms))
             }
+            Expression::Card(_, collection) => {
+                let domain = collection.domain_of()?;
+                if let Some((_, dimensions)) = domain.as_matrix() {
+                    let doms_ground: Result<Vec<i32>, _> =
+                        dimensions.iter().map(|x| x.length_signed()).collect();
+                    if let Ok(doms_ground) = doms_ground {
+                        let size: Range<i32> = Range::Single(doms_ground.iter().product());
+                        Some(Domain::int(vec![size]))
+                    } else {
+                        Some(Domain::int(vec![Range::<i32>::Unbounded]))
+                    }
+                } else if let Some((attr, dom)) = domain.as_set() {
+                    let attr_size = attr.resolve()?.size;
+                    if let Ok(length) = dom.length_signed() {
+                        let unsafe_range = Range::minimal(&[attr_size, Range::Bounded(0, length)]);
+                        match unsafe_range {
+                            Ok(range) => return Some(Domain::int(vec![range])),
+                            Err(_) => return None,
+                        }
+                    }
+                    // If the domain is not known we just need to go off of attributes
+                    Some(Domain::int(vec![attr_size]))
+                } else if let Some((attrs, dom)) = domain.as_mset() {
+                    let attr_size = attrs.resolve()?.size;
+                    let attr_occ_range = attrs.resolve()?.occurrence;
+                    // Gets maximum value of the occurrence
+                    let attr_occ = match attr_occ_range {
+                        Range::Single(x) => Some(x),
+                        Range::Unbounded | Range::UnboundedR(_) => None,
+                        Range::Bounded(_, x) => Some(x),
+                        Range::UnboundedL(x) => Some(x),
+                    };
+                    if let Some(occ) = attr_occ {
+                        if let Ok(length) = dom.length_signed() {
+                            let unsafe_range =
+                                Range::minimal(&[attr_size, Range::Bounded(0, length * occ)]);
+                            match unsafe_range {
+                                Ok(range) => Some(Domain::int(vec![range])),
+                                Err(_) => None,
+                            }
+                        } else {
+                            // If the domain is not known we just need to go off of attributes
+                            Some(Domain::int(vec![attr_size]))
+                        }
+                    } else {
+                        // If no occurrence is provided then it must have bounded size
+                        Some(Domain::int(vec![attr_size]))
+                    }
+                } else if let Some((attrs, doms)) = domain.as_relation() {
+                    // TODO: Further inference may be possible using the binary attributes
+
+                    let attr_size = attrs.resolve()?.size;
+                    // See if all domains are ground
+                    let doms_sizes: Result<Vec<i32>, _> =
+                        doms.iter().map(|x| x.length_signed()).collect();
+                    if let Ok(doms_sizes) = doms_sizes {
+                        let length = Range::Bounded(0, doms_sizes.iter().product());
+                        // Combine the attributes and the domain possibilities
+                        let unsafe_range = Range::minimal(&[attr_size, length]);
+                        match unsafe_range {
+                            Ok(range) => return Some(Domain::int(vec![range])),
+                            Err(_) => return None,
+                        }
+                    }
+                    // If the domain is not known we just need to go off of attributes
+                    Some(Domain::int(vec![attr_size]))
+                } else if let Some((attrs, dom, codom)) = domain.as_function() {
+                    let size = Self::function_elements_size(attrs, &dom, &codom);
+                    size.map(|size| Domain::int(vec![size]))
+                } else {
+                    bug!(
+                        "Domain of {self} needed to be a matrix, set, mset, relation, or function for cardinality"
+                    )
+                }
+            }
+        }
+    }
+
+    // Gets the number of domain elements mapped in a function. This is the cardinality and also the defined
+    fn function_elements_size(
+        attrs: FuncAttr<IntVal>,
+        domain: &DomainPtr,
+        codomain: &DomainPtr,
+    ) -> Option<Range> {
+        // Gets the size imposed by the size attribute
+        // The elements defined in the domain is the same as the size of the function itself
+        let size_size = attrs.resolve()?.size;
+        // Gets the size imposed by the partiality and jectivity attributes
+        let partiality = attrs.resolve()?.partiality;
+        let jectivity = attrs.resolve()?.jectivity;
+        let domain_length = domain.length_signed();
+        // We can only infer if the domain is ground and the length is known
+        let attr_size = match domain_length {
+            Ok(len) => match partiality {
+                PartialityAttr::Total => Some(Range::Single(len)),
+                PartialityAttr::Partial => {
+                    // When partial we also need the codomain to be ground and known
+                    let codomain_length = codomain.length_signed();
+                    match codomain_length {
+                        Ok(co_len) => match jectivity {
+                            JectivityAttr::Bijective => Some(Range::Single(co_len)),
+                            JectivityAttr::Surjective => Some(Range::Bounded(co_len, len)),
+                            JectivityAttr::Injective => {
+                                Some(Range::Bounded(0, Ord::min(len, co_len)))
+                            }
+                            JectivityAttr::None => Some(Range::Bounded(0, len)),
+                        },
+                        Err(_) => None,
+                    }
+                }
+            },
+            Err(_) => None,
+        };
+        // We combine the sizes:
+        // size_size relates to size constraints imposed by the size attributes of the function
+        // attr_size relates to size constraints imposed by the jectivity and partiality attributes.
+        //       This uses inference from the domain and codomain lengths.
+        // If the attributes clash the function is unsolveable, and an empty domain is returned
+        match attr_size {
+            Some(attr_size) => {
+                let unsafe_range = Range::minimal(&[size_size, attr_size]);
+                unsafe_range.ok()
+            }
+            None => Some(size_size),
         }
     }
 
@@ -1445,6 +1540,7 @@ impl Expression {
             ToMSet,
             ToRelation,
             RelationProj,
+            Card,
             Subsequence,
             Substring,
         )
@@ -1810,7 +1906,7 @@ impl Display for Expression {
             Expression::FromSolution(_, expr) => write!(f, "FromSolution({expr})"),
             Expression::Metavar(_, name) => write!(f, "&{name}"),
             Expression::Atomic(_, atom) => atom.fmt(f),
-            Expression::Abs(_, a) => write!(f, "|{a}|"),
+            Expression::Abs(_, a) | Expression::Card(_, a) => write!(f, "|{a}|"),
             Expression::Sum(_, e) => {
                 write!(f, "sum({e})")
             }
@@ -2301,6 +2397,7 @@ impl Typeable for Expression {
                     ),
                 }
             }
+            Expression::Card(..) => ReturnType::Int,
             Expression::Subsequence(_, _, _) => ReturnType::Bool,
             Expression::Substring(_, _, _) => ReturnType::Bool,
         }
@@ -2374,7 +2471,8 @@ impl Expression {
             | Expression::Range(_, m1)
             | Expression::ToSet(_, m1)
             | Expression::ToMSet(_, m1)
-            | Expression::ToRelation(_, m1) => {
+            | Expression::ToRelation(_, m1)
+            | Expression::Card(_, m1) => {
                 f(m1);
             }
 
@@ -2587,7 +2685,8 @@ impl CacheHashable for Expression {
             | Expression::Range(_, m1)
             | Expression::ToSet(_, m1)
             | Expression::ToMSet(_, m1)
-            | Expression::ToRelation(_, m1) => {
+            | Expression::ToRelation(_, m1)
+            | Expression::Card(_, m1) => {
                 m1.get_cached_hash().hash(&mut hasher);
             }
 

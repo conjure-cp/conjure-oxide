@@ -8,13 +8,14 @@ use serde_json::Value;
 use serde_json::Value as JsonValue;
 
 use crate::ast::Moo;
+use crate::ast::Typeable;
 use crate::ast::ac_operators::ACOperatorKind;
 use crate::ast::comprehension::ComprehensionBuilder;
 use crate::ast::records::FieldValue;
 use crate::ast::{
     AbstractLiteral, Atom, BinaryAttr, DeclarationPtr, Domain, Expression, FieldEntry, FuncAttr,
-    IntVal, JectivityAttr, Literal, MSetAttr, Name, PartialityAttr, Range, RelAttr, SequenceAttr,
-    SetAttr, SymbolTable, SymbolTablePtr,
+    IntVal, JectivityAttr, Literal, MSetAttr, Name, PartialityAttr, Range, RelAttr, ReturnType,
+    SequenceAttr, SetAttr, SymbolTable, SymbolTablePtr,
 };
 use crate::ast::{DomainPtr, Metadata};
 use crate::context::Context;
@@ -756,11 +757,26 @@ fn binary_operator(op_name: &str) -> Option<BinOp> {
     }
 }
 
-fn unary_operator(op_name: &str) -> Option<UnaryOp> {
+fn unary_operator(op_name: &str, inner: Option<&Expression>) -> Option<UnaryOp> {
     match op_name {
         "MkOpNot" => Some(Expression::Not),
         "MkOpNegate" => Some(Expression::Neg),
-        "MkOpTwoBars" => Some(Expression::Abs),
+        "MkOpTwoBars" => {
+            if let Some(inner) = inner {
+                match inner.return_type() {
+                    ReturnType::Int => Some(Expression::Abs),
+                    ReturnType::Matrix(_)
+                    | ReturnType::Set(_)
+                    | ReturnType::MSet(_)
+                    | ReturnType::Relation(_)
+                    | ReturnType::Function(_, _) => Some(Expression::Card),
+                    _ => None,
+                }
+            } else {
+                // Internal expression cannot be known yet, so we just have to assume
+                Some(Expression::Abs)
+            }
+        }
         "MkOpAnd" => Some(Expression::And),
         "MkOpSum" => Some(Expression::Sum),
         "MkOpProduct" => Some(Expression::Product),
@@ -805,7 +821,7 @@ pub fn parse_expression(obj: &JsonValue, scope: &SymbolTablePtr) -> Result<Expre
                 parse_to_set(op_obj, scope)
             } else if binary_operator(op_name).is_some() {
                 parse_bin_op(op_obj, scope)
-            } else if unary_operator(op_name).is_some() {
+            } else if unary_operator(op_name, None).is_some() {
                 parse_unary_op(op_obj, scope)
             } else {
                 Err(fail("Op.unknown"))
@@ -1422,7 +1438,6 @@ fn parse_unary_op(
         .iter()
         .next()
         .ok_or_else(|| fail("un_op.iter().next"))?;
-    let constructor = unary_operator(key.as_str()).ok_or_else(|| fail("unary_operator"))?;
 
     // unops are the main things that contain comprehensions
     //
@@ -1442,6 +1457,9 @@ fn parse_unary_op(
         _ => parse_expression(value, scope).map_err(|_| fail("value.parse_expression")),
     }
     .map_err(|_| fail("arg"))?;
+
+    let constructor =
+        unary_operator(key.as_str(), Some(&arg)).ok_or_else(|| fail("unary_operator"))?;
 
     Ok(constructor(Metadata::new(), Moo::new(arg)))
 }

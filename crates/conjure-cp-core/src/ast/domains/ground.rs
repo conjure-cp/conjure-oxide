@@ -349,8 +349,12 @@ impl GroundDomain {
                 }
                 Ok(ans)
             }
-            GroundDomain::Relation(_, _) => {
-                todo!("Length bound of relations is not yet support")
+            GroundDomain::Relation(_, domains) => {
+                // Cannot currently use attributes to better infer length because of i32 u64 mismatch
+                let dom_sizes_result: Result<Vec<u64>, DomainOpError> =
+                    domains.iter().map(|x| x.length()).collect();
+                let dom_sizes = dom_sizes_result?;
+                Ok(dom_sizes.iter().product())
             }
         }
     }
