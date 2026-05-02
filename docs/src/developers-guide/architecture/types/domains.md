@@ -1,7 +1,7 @@
 # Domains
 
 ## What are Domains and Types
-A **Domain** is the discrete and finite set of values that a variable or expression can take. A **Type** is a more general description about some collection. The simplest domains are **Concrete** domains: `empty`, `boolean`, `int(min..max)`. **Abstract** domains use some high-level types (such as a `Set`, `Matrix`, et cetera) to instantiate a domain where the objects of the domain contain more objects. These objects are called **Literals**; a literal is _one_ specific value taken from a domain.
+A **Domain** is the discrete and finite set of values that a variable or expression can take. A **Type** is a more general description about some collection. The simplest domains are **Concrete** domains: `empty`, `boolean`, `int(min..max)`. **Abstract** domains use some high-level types (such as a `Set`, `Matrix`, etc) to instantiate a domain where the objects of the domain contain more objects. These objects are called **Literals**; a literal is _one_ specific value taken from a domain.
 
 
 In the original language description, found in the [Conjure Docs](https://conjure.readthedocs.io/en/latest/essence.html)
