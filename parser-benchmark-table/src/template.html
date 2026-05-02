@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Parser Benchmark Table</title>
+  <style>
+    html, body { height: 100%; }
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .page {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding: 12px;
+      box-sizing: border-box;
+      gap: 8px;
+    }
+    .banner {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: #fff;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .table-wrap {
+      flex: 1;
+      overflow: auto;
+      min-height: 0;
+    }
+    table { border-collapse: collapse; width: 100%; table-layout: fixed; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: top; }
+    th { background: #f4f4f4; position: sticky; top: 0; z-index: 1; }
+    .pass { color: #0a7f2e; font-weight: 700; }
+    .fail { color: #b00020; font-weight: 700; }
+    .summary-row { height: 44px; cursor: pointer; }
+    .summary-row:hover { background: #fafafa; }
+    .summary-name {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .details-row { display: none; background: #fcfcfc; }
+    .details-block { margin: 0 0 10px 0; }
+    .details-title { font-weight: 700; margin: 0 0 4px 0; }
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 260px;
+      overflow: auto;
+      background: #f6f8fa;
+      border: 1px solid #e5e7eb;
+      padding: 8px;
+      border-radius: 6px;
+    }
+    .meta { margin: 0 0 8px 0; }
+    .parser-meta { font-size: 12px; color: #666; margin: 0 0 4px 0; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .banner h1 { margin: 0 0 4px 0; font-size: 26px; }
+    .banner p { margin: 0 0 4px 0; }
+    .controls { display: grid; grid-template-columns: repeat(5, minmax(140px, 1fr)); gap: 8px; margin: 8px 0 0 0; }
+    .control { display: flex; flex-direction: column; gap: 4px; }
+    .control label { font-size: 11px; color: #444; }
+    .control select, .control input {
+      padding: 6px 8px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+    .hidden-col { display: none; }
+  </style>
+  <script>
+    function toggleDetails(id) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.style.display = (el.style.display === 'table-row') ? 'none' : 'table-row';
+    }
+
+    function updateParserColumnVisibility(parserView) {
+      const showNative = parserView === 'both' || parserView === 'native';
+      const showVia = parserView === 'both' || parserView === 'via';
+
+      document.querySelectorAll('.col-native').forEach(el => {
+        el.classList.toggle('hidden-col', !showNative);
+      });
+      document.querySelectorAll('.col-via').forEach(el => {
+        el.classList.toggle('hidden-col', !showVia);
+      });
+      document.querySelectorAll('.detail-native').forEach(el => {
+        el.classList.toggle('hidden-col', !showNative);
+      });
+      document.querySelectorAll('.detail-via').forEach(el => {
+        el.classList.toggle('hidden-col', !showVia);
+      });
+    }
+
+    function statusForView(row, parserView) {
+      const native = row.dataset.nativeStatus || 'not-run';
+      const via = row.dataset.viaStatus || 'not-run';
+
+      if (parserView === 'native') return native;
+      if (parserView === 'via') return via;
+
+      const statuses = [native, via].filter(s => s !== 'not-run');
+      if (statuses.length === 0) return 'not-run';
+      if (statuses.includes('fail')) return 'fail';
+      return 'pass';
+    }
+
+    function applyFilters() {
+      const parserView = document.getElementById('filter-parser-view').value;
+      const statusFilter = document.getElementById('filter-status').value;
+      const repoFilter = document.getElementById('filter-repo').value;
+      const keyword = document.getElementById('filter-keyword').value.trim().toLowerCase();
+
+      updateParserColumnVisibility(parserView);
+
+      const rows = document.querySelectorAll('.summary-row');
+      rows.forEach(summaryRow => {
+        const detailId = summaryRow.dataset.detailId;
+        const detailRow = document.getElementById(detailId);
+        const rowRepo = summaryRow.dataset.repo || '';
+        const effectiveStatus = statusForView(summaryRow, parserView);
+
+        let visible = true;
+
+        if (repoFilter !== 'all' && rowRepo !== repoFilter) visible = false;
+
+        if (statusFilter !== 'all') {
+          if (statusFilter === 'pass' && effectiveStatus !== 'pass') visible = false;
+          if (statusFilter === 'fail' && effectiveStatus !== 'fail') visible = false;
+        }
+
+        if (keyword.length > 0) {
+          const keywordSources = [];
+          keywordSources.push((summaryRow.dataset.testName || '').toLowerCase());
+          keywordSources.push((summaryRow.dataset.primaryPath || '').toLowerCase());
+          keywordSources.push((summaryRow.dataset.companionPath || '').toLowerCase());
+
+          if (detailRow) {
+            detailRow.querySelectorAll('.input-content').forEach(el => {
+              keywordSources.push((el.textContent || '').toLowerCase());
+            });
+          }
+
+          const haystack = keywordSources.join('\n');
+          if (!haystack.includes(keyword)) visible = false;
+        }
+
+        summaryRow.style.display = visible ? 'table-row' : 'none';
+        if (detailRow && !visible) detailRow.style.display = 'none';
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('filter-parser-view').addEventListener('change', applyFilters);
+      document.getElementById('filter-status').addEventListener('change', applyFilters);
+      document.getElementById('filter-repo').addEventListener('change', applyFilters);
+      document.getElementById('filter-keyword').addEventListener('input', applyFilters);
+      applyFilters();
+    });
+  </script>
+</head>
+<body>
+  <div class="page">
+    <div class="banner">
+      <h1>Parser Benchmark Table</h1>
+      <p>Pass/fail rule: only fatal parse errors fail. Recoverable parse errors pass.</p>
+      <p>__RUN_INFO__</p>
+      <p>Total rows: __TOTAL__</p>
+
+      <div class="controls">
+        <div class="control">
+          <label for="filter-parser-view">Parser View</label>
+          <select id="filter-parser-view">
+            <option value="both">Both</option>
+            <option value="native">Native only</option>
+            <option value="via">Via-conjure only</option>
+          </select>
+        </div>
+        <div class="control">
+          <label for="filter-status">Status</label>
+          <select id="filter-status">
+            <option value="all">All</option>
+            <option value="pass">Pass only</option>
+            <option value="fail">Fail only</option>
+          </select>
+        </div>
+        <div class="control">
+          <label for="filter-repo">Repository</label>
+          <select id="filter-repo">
+            <option value="all">All</option>
+__REPO_OPTIONS__
+          </select>
+        </div>
+        <div class="control" style="grid-column: span 2;">
+          <label for="filter-keyword">Keyword Search (includes input file contents)</label>
+          <input id="filter-keyword" type="text" placeholder="e.g. allDiff, dominance, letting" />
+        </div>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Test</th>
+__HEADER_CELLS__
+          </tr>
+        </thead>
+        <tbody>
+__ROWS__
+        </tbody>
+      </table>
+    </div>
+  </div>
+</body>
+</html>
