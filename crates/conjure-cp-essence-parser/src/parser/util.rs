@@ -1,4 +1,5 @@
 use std::collections::BTreeMap;
+use std::sync::{Mutex, OnceLock};
 
 use tree_sitter::{Node, Parser, Tree};
 use tree_sitter_essence::LANGUAGE;
@@ -85,16 +86,14 @@ impl<'a> ParseContext<'a> {
         ty: Option<String>,
         decl_span: Option<u32>,
     ) {
-        if let Some(description) = get_documentation(doc_key) {
-            let hover = HoverInfo {
-                description,
-                kind: Some(kind),
-                ty,
-                decl_span,
-            };
-            span_with_hover(node, self.source_code, self.source_map, hover);
-        }
-        // If documentation is not found, do nothing (no fallback, no addition to source map)
+        let hover = HoverInfo {
+            description: String::new(),
+            doc_key: Some(normalise_documentation_key(doc_key)),
+            kind: Some(kind),
+            ty,
+            decl_span,
+        };
+        span_with_hover(node, self.source_code, self.source_map, hover);
     }
 }
 
@@ -199,9 +198,13 @@ pub fn get_metavars<'a>(node: &'a Node<'a>, src: &'a str) -> impl Iterator<Item 
 ///
 /// `name` is the name of the documentation file (without .md suffix). If the file is not found or an error occurs, returns None.
 pub fn get_documentation(name: &str) -> Option<String> {
-    let mut base = name.to_string();
-    if let Some(stripped) = base.strip_suffix(".md") {
-        base = stripped.to_string();
+    static DOCUMENTATION_CACHE: OnceLock<Mutex<BTreeMap<String, Option<String>>>> = OnceLock::new();
+
+    let base = normalise_documentation_key(name);
+    let cache = DOCUMENTATION_CACHE.get_or_init(|| Mutex::new(BTreeMap::new()));
+
+    if let Some(cached) = cache.lock().ok()?.get(&base).cloned() {
+        return cached;
     }
 
     // This url is for raw Markdown bytes
@@ -211,13 +214,21 @@ pub fn get_documentation(name: &str) -> Option<String> {
     let output = std::process::Command::new("curl")
         .args(["-fsSL", &url])
         .output()
-        .ok()?;
+        .ok();
 
-    if !output.status.success() {
-        return None;
+    let documentation = output
+        .filter(|output| output.status.success())
+        .and_then(|output| String::from_utf8(output.stdout).ok());
+
+    if let Ok(mut cache) = cache.lock() {
+        cache.insert(base, documentation.clone());
     }
 
-    String::from_utf8(output.stdout).ok()
+    documentation
+}
+
+fn normalise_documentation_key(name: &str) -> String {
+    name.strip_suffix(".md").unwrap_or(name).to_string()
 }
 
 mod test {
