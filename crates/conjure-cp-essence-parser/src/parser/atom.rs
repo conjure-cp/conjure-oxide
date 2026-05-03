@@ -298,12 +298,13 @@ fn parse_variable(ctx: &mut ParseContext, node: &Node) -> Result<Option<Atom>, F
                 DeclarationKind::DomainLetting(_) => SymbolKind::LettingVar,
                 DeclarationKind::Quantified(..) => SymbolKind::FindVar,
                 DeclarationKind::QuantifiedExpr(..) => SymbolKind::FindVar,
-                DeclarationKind::RecordField(_) => SymbolKind::Decimal,
+                DeclarationKind::Field(_) => SymbolKind::Decimal,
                 &_ => todo!(),
             };
 
             let hover = HoverInfo {
                 description: format!("Variable: {name}"),
+                doc_key: None,
                 kind: Some(symbol_kind),
                 ty: decl.domain().map(|d| d.to_string()),
                 decl_span: ctx.lookup_decl_span(&name),
@@ -361,6 +362,7 @@ fn typecheck_variable(
         TypecheckingContext::Matrix => "matrix",
         TypecheckingContext::Tuple => "tuple",
         TypecheckingContext::Record => "record",
+        TypecheckingContext::Sequence => "sequence",
         TypecheckingContext::Unknown => return None, // shouldn't reach here
     };
 
@@ -374,7 +376,9 @@ fn typecheck_variable(
         GroundDomain::Tuple(_) => "tuple",
         GroundDomain::Record(_) => "record",
         GroundDomain::Function(_, _, _) => "function",
+        GroundDomain::Variant(_) => "variant",
         GroundDomain::Relation(_, _) => "relation",
+        GroundDomain::Sequence(_, _) => "sequence",
         GroundDomain::Empty(_) => "empty",
     };
 
@@ -407,6 +411,7 @@ fn parse_constant(ctx: &mut ParseContext, node: &Node) -> Result<Option<Literal>
         "TRUE" => {
             let hover = HoverInfo {
                 description: format!("Boolean constant: {raw_value}"),
+                doc_key: None,
                 kind: None,
                 ty: None,
                 decl_span: None,
@@ -417,6 +422,7 @@ fn parse_constant(ctx: &mut ParseContext, node: &Node) -> Result<Option<Literal>
         "FALSE" => {
             let hover = HoverInfo {
                 description: format!("Boolean constant: {raw_value}"),
+                doc_key: None,
                 kind: None,
                 ty: None,
                 decl_span: None,
@@ -448,6 +454,7 @@ fn parse_constant(ctx: &mut ParseContext, node: &Node) -> Result<Option<Literal>
             TypecheckingContext::Matrix => "matrix",
             TypecheckingContext::Tuple => "tuple",
             TypecheckingContext::Record => "record",
+            TypecheckingContext::Sequence => "sequence",
             TypecheckingContext::Unknown => "",
         };
 

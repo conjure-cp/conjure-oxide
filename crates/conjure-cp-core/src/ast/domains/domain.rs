@@ -4,8 +4,8 @@ use super::range::Range;
 use super::unresolved::{IntVal, UnresolvedDomain};
 use crate::ast::domains::attrs::MSetAttr;
 use crate::ast::{
-    DeclarationPtr, DomainOpError, Expression, FuncAttr, Literal, Moo, RecordEntry,
-    RecordEntryGround, Reference, RelAttr, ReturnType, Typeable,
+    DeclarationPtr, DomainOpError, Expression, FieldEntry, FieldEntryGround, FuncAttr, Literal,
+    Moo, Reference, RelAttr, ReturnType, SequenceAttr, Typeable,
 };
 use itertools::Itertools;
 use polyquine::Quine;
@@ -67,7 +67,7 @@ impl From<UnresolvedDomain> for DomainPtr {
 #[biplate(to=UnresolvedDomain)]
 #[biplate(to=Expression)]
 #[biplate(to=Reference)]
-#[biplate(to=RecordEntry)]
+#[biplate(to=FieldEntry)]
 #[biplate(to=IntVal)]
 #[path_prefix(conjure_cp::ast)]
 pub enum Domain {
@@ -208,7 +208,7 @@ impl Domain {
     /// Create a new tuple domain with the given entries.
     /// If the entries are all ground, the variant will be [GroundDomain::Record].
     /// Otherwise, it will be [UnresolvedDomain::Record].
-    pub fn record(entries: Vec<RecordEntry>) -> DomainPtr {
+    pub fn record(entries: Vec<FieldEntry>) -> DomainPtr {
         if let Ok(entries_gds) = entries.iter().cloned().map(TryInto::try_into).try_collect() {
             return Moo::new(Domain::Ground(Moo::new(GroundDomain::Record(entries_gds))));
         }
@@ -248,7 +248,21 @@ impl Domain {
         ))))
     }
 
+    /// Create a new variant domain with the given entries.
+    /// If the entries are all ground, the variant will be [GroundDomain::Variant].
+    /// Otherwise, it will be [UnresolvedDomain::Variant].
+    pub fn variant(entries: Vec<FieldEntry>) -> DomainPtr {
+        if let Ok(entries_gds) = entries.iter().cloned().map(TryInto::try_into).try_collect() {
+            return Moo::new(Domain::Ground(Moo::new(GroundDomain::Variant(entries_gds))));
+        }
+        Moo::new(Domain::Unresolved(Moo::new(UnresolvedDomain::Variant(
+            entries,
+        ))))
+    }
+
     /// Create a new relation domain
+    /// If the entries are all ground, the variant will be [GroundDomain::Relation].
+    /// Otherwise, it will be [UnresolvedDomain::Relation].
     pub fn relation<T>(attrs: T, inner_doms: Vec<DomainPtr>) -> DomainPtr
     where
         T: Into<RelAttr<IntVal>> + TryInto<RelAttr<Int>> + Clone,
@@ -264,6 +278,25 @@ impl Domain {
         Moo::new(Domain::Unresolved(Moo::new(UnresolvedDomain::Relation(
             attrs.into(),
             inner_doms,
+        ))))
+    }
+
+    /// Create a new Sequence domain
+    pub fn sequence<T>(attr: T, inner_dom: DomainPtr) -> DomainPtr
+    where
+        T: Into<SequenceAttr<IntVal>> + TryInto<SequenceAttr<Int>> + Clone,
+    {
+        if let Domain::Ground(gd) = inner_dom.as_ref()
+            && let Ok(int_attr) = attr.clone().try_into()
+        {
+            return Moo::new(Domain::Ground(Moo::new(GroundDomain::Sequence(
+                int_attr,
+                gd.clone(),
+            ))));
+        }
+        Moo::new(Domain::Unresolved(Moo::new(UnresolvedDomain::Sequence(
+            attr.into(),
+            inner_dom,
         ))))
     }
 
@@ -563,7 +596,7 @@ impl Domain {
     }
 
     /// If this is a record domain, clone and return its entries.
-    pub fn as_record(&self) -> Option<Vec<RecordEntry>> {
+    pub fn as_record(&self) -> Option<Vec<FieldEntry>> {
         if let Some(GroundDomain::Record(record_entries)) = self.as_ground() {
             return Some(record_entries.iter().cloned().map(|r| r.into()).collect());
         }
@@ -574,7 +607,7 @@ impl Domain {
     }
 
     /// If this is a [GroundDomain::Record], get a mutable reference to its entries
-    pub fn as_record_ground(&self) -> Option<&Vec<RecordEntryGround>> {
+    pub fn as_record_ground(&self) -> Option<&Vec<FieldEntryGround>> {
         if let Some(GroundDomain::Record(entries)) = self.as_ground() {
             return Some(entries);
         }
@@ -583,9 +616,9 @@ impl Domain {
 
     /// If this is a record domain, get a mutable reference to its list of entries.
     /// The domain always becomes [UnresolvedDomain::Record] after this operation.
-    pub fn as_record_mut(&mut self) -> Option<&mut Vec<RecordEntry>> {
+    pub fn as_record_mut(&mut self) -> Option<&mut Vec<FieldEntry>> {
         if let Some(GroundDomain::Record(entries_gds)) = self.as_ground() {
-            let entries: Vec<RecordEntry> = entries_gds.iter().cloned().map(|r| r.into()).collect();
+            let entries: Vec<FieldEntry> = entries_gds.iter().cloned().map(|r| r.into()).collect();
             *self = Domain::Unresolved(Moo::new(UnresolvedDomain::Record(entries)));
         }
 
@@ -596,9 +629,37 @@ impl Domain {
     }
 
     /// If this is a [GroundDomain::Record], get a mutable reference to its entries
-    pub fn as_record_ground_mut(&mut self) -> Option<&mut Vec<RecordEntryGround>> {
+    pub fn as_record_ground_mut(&mut self) -> Option<&mut Vec<FieldEntryGround>> {
         if let Some(GroundDomain::Record(entries)) = self.as_ground_mut() {
             return Some(entries);
+        }
+        None
+    }
+
+    /// If this is a sequence domain, get its (attributes, domain)
+    pub fn as_sequence(&self) -> Option<(SequenceAttr<IntVal>, Moo<Domain>)> {
+        if let Some(GroundDomain::Sequence(attrs, dom)) = self.as_ground() {
+            return Some((attrs.clone().into(), dom.clone().into()));
+        }
+        if let Some(UnresolvedDomain::Sequence(attrs, dom)) = self.as_unresolved() {
+            return Some((attrs.clone(), dom.clone()));
+        }
+        None
+    }
+
+    /// If this is a function domain, convert it to unresolved and get mutable references to
+    /// its (attrs, domain, co-domain).
+    /// The domain always becomes [UnresolvedDomain::Function] after this operation.
+    pub fn as_sequence_mut(&mut self) -> Option<(&mut SequenceAttr<IntVal>, &mut Moo<Domain>)> {
+        if let Some(GroundDomain::Sequence(attrs, dom)) = self.as_ground() {
+            *self = Domain::Unresolved(Moo::new(UnresolvedDomain::Sequence(
+                attrs.clone().into(),
+                dom.clone().into(),
+            )));
+        }
+
+        if let Some(UnresolvedDomain::Sequence(attrs, dom)) = self.as_unresolved_mut() {
+            return Some((attrs, dom));
         }
         None
     }
@@ -662,6 +723,47 @@ impl Domain {
         None
     }
 
+    /// If this is a variant domain, clone and return its entries.
+    pub fn as_variant(&self) -> Option<Vec<FieldEntry>> {
+        if let Some(GroundDomain::Variant(entries)) = self.as_ground() {
+            return Some(entries.iter().cloned().map(|r| r.into()).collect());
+        }
+        if let Some(UnresolvedDomain::Variant(entries)) = self.as_unresolved() {
+            return Some(entries.clone());
+        }
+        None
+    }
+
+    /// If this is a [GroundDomain::Variant], get a mutable reference to its entries
+    pub fn as_variant_ground(&self) -> Option<&Vec<FieldEntryGround>> {
+        if let Some(GroundDomain::Variant(entries)) = self.as_ground() {
+            return Some(entries);
+        }
+        None
+    }
+
+    /// If this is a variant domain, get a mutable reference to its list of entries.
+    /// The domain always becomes [UnresolvedDomain::Variant] after this operation.
+    pub fn as_variant_mut(&mut self) -> Option<&mut Vec<FieldEntry>> {
+        if let Some(GroundDomain::Variant(entries_gds)) = self.as_ground() {
+            let entries: Vec<FieldEntry> = entries_gds.iter().cloned().map(|r| r.into()).collect();
+            *self = Domain::Unresolved(Moo::new(UnresolvedDomain::Variant(entries)));
+        }
+
+        if let Some(UnresolvedDomain::Variant(entries_gds)) = self.as_unresolved_mut() {
+            return Some(entries_gds);
+        }
+        None
+    }
+
+    /// If this is a [GroundDomain::Variant], get a mutable reference to its entries
+    pub fn as_variant_ground_mut(&mut self) -> Option<&mut Vec<FieldEntryGround>> {
+        if let Some(GroundDomain::Variant(entries)) = self.as_ground_mut() {
+            return Some(entries);
+        }
+        None
+    }
+
     /// If this is a relation domain, get its (attributes, [domains])
     pub fn as_relation(&self) -> Option<(RelAttr<IntVal>, Vec<Moo<Domain>>)> {
         if let Some(GroundDomain::Relation(attrs, doms)) = self.as_ground() {
@@ -701,7 +803,7 @@ impl Domain {
         None
     }
 
-    /// If this is a [GroundDomain::RElation], get mutable references to its (attrs, [domains])
+    /// If this is a [GroundDomain::Relation], get mutable references to its (attrs, [domains])
     pub fn as_relation_ground_mut(
         &mut self,
     ) -> Option<(&mut RelAttr, &mut Vec<Moo<GroundDomain>>)> {
@@ -925,11 +1027,11 @@ mod tests {
     fn test_length_record() {
         // 3 ways to pick rec.a, 2 ways to pick rec.b
         let t = Domain::record(vec![
-            RecordEntry {
+            FieldEntry {
                 name: Name::user("a"),
                 domain: domain_int!(1..3),
             },
-            RecordEntry {
+            FieldEntry {
                 name: Name::user("b"),
                 domain: Domain::bool(),
             },

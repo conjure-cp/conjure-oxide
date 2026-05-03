@@ -1,8 +1,8 @@
-use crate::ast::domains::MSetAttr;
+use crate::ast::domains::{MSetAttr, SequenceAttr};
 use crate::ast::pretty::pretty_vec;
 use crate::ast::{
-    AbstractLiteral, Domain, DomainOpError, FuncAttr, HasDomain, Literal, Moo, RecordEntry,
-    RelAttr, SetAttr, Typeable,
+    AbstractLiteral, Domain, DomainOpError, FieldEntry, FuncAttr, HasDomain, Literal, Moo, RelAttr,
+    SetAttr, Typeable,
     domains::{domain::Int, range::Range},
 };
 use crate::range;
@@ -19,26 +19,26 @@ use uniplate::Uniplate;
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Uniplate, Quine)]
 #[path_prefix(conjure_cp::ast)]
-pub struct RecordEntryGround {
+pub struct FieldEntryGround {
     pub name: Name,
     pub domain: Moo<GroundDomain>,
 }
 
-impl From<RecordEntryGround> for RecordEntry {
-    fn from(value: RecordEntryGround) -> Self {
-        RecordEntry {
+impl From<FieldEntryGround> for FieldEntry {
+    fn from(value: FieldEntryGround) -> Self {
+        FieldEntry {
             name: value.name,
             domain: value.domain.into(),
         }
     }
 }
 
-impl TryFrom<RecordEntry> for RecordEntryGround {
+impl TryFrom<FieldEntry> for FieldEntryGround {
     type Error = DomainOpError;
 
-    fn try_from(value: RecordEntry) -> Result<Self, Self::Error> {
+    fn try_from(value: FieldEntry) -> Result<Self, Self::Error> {
         match value.domain.as_ref() {
-            Domain::Ground(gd) => Ok(RecordEntryGround {
+            Domain::Ground(gd) => Ok(FieldEntryGround {
                 name: value.name,
                 domain: gd.clone(),
             }),
@@ -66,11 +66,15 @@ pub enum GroundDomain {
     /// A tuple of N elements, each with its own domain
     Tuple(Vec<Moo<GroundDomain>>),
     /// A record
-    Record(Vec<RecordEntryGround>),
+    Record(Vec<FieldEntryGround>),
+    /// A sequence of elements drawn from the inner domain
+    Sequence(SequenceAttr, Moo<GroundDomain>),
     /// A function with a domain and codomain
     Function(FuncAttr, Moo<GroundDomain>, Moo<GroundDomain>),
     /// A relation as a set of tuples
     Relation(RelAttr, Vec<Moo<GroundDomain>>),
+    /// A variant domain with its domain options (reusing field entries)
+    Variant(Vec<FieldEntryGround>),
 }
 
 impl GroundDomain {
@@ -111,6 +115,9 @@ impl GroundDomain {
             (GroundDomain::Matrix(_, _), _) | (_, GroundDomain::Matrix(_, _)) => {
                 Err(DomainOpError::WrongType)
             }
+            (GroundDomain::Sequence(_, _), _) | (_, GroundDomain::Sequence(_, _)) => {
+                Err(DomainOpError::WrongType)
+            }
             (GroundDomain::Tuple(in1s), GroundDomain::Tuple(in2s)) if in1s.len() == in2s.len() => {
                 let mut inners = Vec::new();
                 for (in1, in2) in zip(in1s, in2s) {
@@ -125,6 +132,11 @@ impl GroundDomain {
             #[allow(unreachable_patterns)]
             // Technically redundant but logically clearer to have both
             (GroundDomain::Record(_), _) | (_, GroundDomain::Record(_)) => {
+                Err(DomainOpError::WrongType)
+            }
+            #[allow(unreachable_patterns)]
+            // Technically redundant but logically clearer to have both
+            (GroundDomain::Variant(_), _) | (_, GroundDomain::Variant(_)) => {
                 Err(DomainOpError::WrongType)
             }
             #[allow(unreachable_patterns)]
@@ -294,6 +306,11 @@ impl GroundDomain {
                 }
                 Ok(ans)
             }
+            GroundDomain::Sequence(_, _) => {
+                // If jectivity is not set, the sequence can have any permutation.
+                //
+                todo!("Length bound currently not supported");
+            }
             GroundDomain::Tuple(domains) => {
                 let mut ans = 1u64;
                 for domain in domains {
@@ -322,6 +339,15 @@ impl GroundDomain {
             }
             GroundDomain::Function(_, _, _) => {
                 todo!("Length bound of functions is not yet supported")
+            }
+            GroundDomain::Variant(entries) => {
+                let mut ans = 1u64;
+                for entry in entries {
+                    let sz = entry.domain.length()?;
+                    // Only one field can be in the variant at once
+                    ans = ans.checked_add(sz).ok_or(DomainOpError::TooLarge)?;
+                }
+                Ok(ans)
             }
             GroundDomain::Relation(_, _) => {
                 todo!("Length bound of relations is not yet support")
@@ -377,6 +403,22 @@ impl GroundDomain {
 
                     for elem in lit_elems {
                         if !inner_domain.contains(elem)? {
+                            return Ok(false);
+                        }
+                    }
+                    Ok(true)
+                }
+                _ => Ok(false),
+            },
+            GroundDomain::Sequence(seq_attr, inner_dom) => match lit {
+                Literal::AbstractLiteral(AbstractLiteral::Sequence(elems)) => {
+                    let sz = elems.len().to_i32().ok_or(DomainOpError::TooLarge)?;
+                    if !seq_attr.size.contains(&sz) {
+                        return Ok(false);
+                    }
+
+                    for elem in elems {
+                        if !inner_dom.contains(elem)? {
                             return Ok(false);
                         }
                     }
@@ -476,6 +518,19 @@ impl GroundDomain {
                         }
                     }
                     Ok(true)
+                }
+                _ => Ok(false),
+            },
+            GroundDomain::Variant(entries) => match lit {
+                Literal::AbstractLiteral(AbstractLiteral::Variant(lit_entry)) => {
+                    for entry in entries {
+                        if entry.name == lit_entry.name
+                            && !(entry.domain.contains(&lit_entry.value)?)
+                        {
+                            return Ok(true);
+                        }
+                    }
+                    Ok(false)
                 }
                 _ => Ok(false),
             },
@@ -907,6 +962,24 @@ impl GroundDomain {
                 Ok(GroundDomain::Tuple(elem_domains))
             }
 
+            Literal::AbstractLiteral(AbstractLiteral::Sequence(_)) => {
+                let mut all_elems = vec![];
+
+                for lit in literals {
+                    let Literal::AbstractLiteral(AbstractLiteral::Sequence(elems)) = lit else {
+                        return Err(DomainOpError::WrongType);
+                    };
+
+                    all_elems.extend(elems.clone());
+                }
+                let elem_domain = GroundDomain::from_literal_vec(&all_elems)?;
+
+                Ok(GroundDomain::Sequence(
+                    SequenceAttr::default(),
+                    Moo::new(elem_domain),
+                ))
+            }
+
             Literal::AbstractLiteral(AbstractLiteral::Record(first_elems)) => {
                 let n_fields = first_elems.len();
                 let field_names = first_elems.iter().map(|x| x.name.clone()).collect_vec();
@@ -938,7 +1011,7 @@ impl GroundDomain {
 
                 Ok(GroundDomain::Record(
                     izip!(field_names, elem_domains)
-                        .map(|(name, domain)| RecordEntryGround { name, domain })
+                        .map(|(name, domain)| FieldEntryGround { name, domain })
                         .collect(),
                 ))
             }
@@ -968,6 +1041,9 @@ impl GroundDomain {
 
                 todo!();
             }
+            Literal::AbstractLiteral(AbstractLiteral::Variant(_)) => {
+                todo!();
+            }
             Literal::AbstractLiteral(AbstractLiteral::Relation(_)) => {
                 todo!();
             }
@@ -992,6 +1068,9 @@ impl Typeable for GroundDomain {
             GroundDomain::Int(_) => ReturnType::Int,
             GroundDomain::Set(_attr, inner) => ReturnType::Set(Box::new(inner.return_type())),
             GroundDomain::MSet(_attr, inner) => ReturnType::MSet(Box::new(inner.return_type())),
+            GroundDomain::Sequence(_attr, inner) => {
+                ReturnType::Sequence(Box::new(inner.return_type()))
+            }
             GroundDomain::Matrix(inner, _idx) => ReturnType::Matrix(Box::new(inner.return_type())),
             GroundDomain::Tuple(inners) => {
                 let mut inner_types = Vec::new();
@@ -1009,6 +1088,13 @@ impl Typeable for GroundDomain {
             }
             GroundDomain::Function(_, dom, cdom) => {
                 ReturnType::Function(Box::new(dom.return_type()), Box::new(cdom.return_type()))
+            }
+            GroundDomain::Variant(entries) => {
+                let mut entry_types = Vec::new();
+                for entry in entries {
+                    entry_types.push(entry.domain.return_type());
+                }
+                ReturnType::Record(entry_types)
             }
             GroundDomain::Relation(_, inners) => {
                 let mut inner_types = Vec::new();
@@ -1036,6 +1122,9 @@ impl Display for GroundDomain {
             }
             GroundDomain::Set(attrs, inner_dom) => write!(f, "set {attrs} of {inner_dom}"),
             GroundDomain::MSet(attrs, inner_dom) => write!(f, "mset {attrs} of {inner_dom}"),
+            GroundDomain::Sequence(attrs, inner_dom) => {
+                write!(f, "sequence {attrs} of {inner_dom}")
+            }
             GroundDomain::Matrix(value_domain, index_domains) => {
                 write!(
                     f,
@@ -1058,6 +1147,16 @@ impl Display for GroundDomain {
             }
             GroundDomain::Function(attribute, domain, codomain) => {
                 write!(f, "function {} {} --> {} ", attribute, domain, codomain)
+            }
+            GroundDomain::Variant(entries) => {
+                write!(
+                    f,
+                    "variant {{{}}}",
+                    entries
+                        .iter()
+                        .map(|entry| format!("{}: {}", entry.name, entry.domain))
+                        .join(", ")
+                )
             }
             GroundDomain::Relation(attrs, domains) => {
                 write!(f, "relation {} of ({})", attrs, domains.iter().join(" * "))
