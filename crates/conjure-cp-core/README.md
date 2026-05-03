@@ -18,7 +18,7 @@ conjure-cp-core = {git = "https://github.com/conjure-cp/conjure-oxide" }
 
 ### Documentation
 
-- User documentation: <https://conjure-cp.github.io/conjure-oxide/>
+- User documentation: <https://conjure-cp.github.io/conjure-oxide-reports/>
 - API Docs: <https://conjure-cp.github.io/conjure-oxide/docs/conjure_cp/>
 
 ### Licence
