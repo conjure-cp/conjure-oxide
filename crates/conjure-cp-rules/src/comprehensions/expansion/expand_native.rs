@@ -5,11 +5,15 @@ use conjure_cp::{
         comprehension::{Comprehension, ComprehensionQualifier},
         eval_constant,
     },
+    bug,
     solver::SolverError,
 };
 use uniplate::Biplate as _;
 
-use super::via_solver_common::{lift_machine_references_into_parent_scope, simplify_expression};
+use super::via_solver_common::{
+    lift_machine_references_into_parent_scope, simplify_expression,
+    strip_guarded_safe_index_conditions,
+};
 
 /// Expands the comprehension without calling an external solver.
 ///
@@ -38,6 +42,9 @@ fn expand_qualifiers(
         let child_symbols = comprehension.symbols().clone();
         let return_expression =
             concretise_resolved_reference_atoms(comprehension.return_expression.clone());
+        let Some(return_expression) = strip_guarded_safe_index_conditions(return_expression) else {
+            return Ok(());
+        };
         let return_expression = simplify_expression(return_expression);
         let return_expression = lift_machine_references_into_parent_scope(
             return_expression,
@@ -64,6 +71,11 @@ fn expand_qualifiers(
             if evaluate_guard(condition)? {
                 expand_qualifiers(comprehension, qualifier_index + 1, expanded, parent_symbols)?;
             }
+        }
+        ComprehensionQualifier::ExpressionGenerator { .. } => {
+            bug!(
+                "Comprehension expander should not be called on comprehensions containing ExpressionGenerator"
+            );
         }
     }
 

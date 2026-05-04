@@ -14,6 +14,7 @@ use super::{
     DeclarationPtr, Domain, DomainPtr, Expression, Model, Moo, Name, Range, SymbolTable,
     SymbolTablePtr, Typeable,
     ac_operators::ACOperatorKind,
+    categories::{Category, CategoryOf},
     serde::{AsId, PtrAsInner},
 };
 
@@ -23,6 +24,10 @@ use super::{
 #[biplate(to=Name)]
 #[biplate(to=DeclarationPtr)]
 pub enum ComprehensionQualifier {
+    ExpressionGenerator {
+        #[serde_as(as = "AsId")]
+        ptr: DeclarationPtr,
+    },
     Generator {
         #[serde_as(as = "AsId")]
         ptr: DeclarationPtr,
@@ -72,6 +77,7 @@ impl Comprehension {
         self.qualifiers
             .iter()
             .filter_map(|q| match q {
+                ComprehensionQualifier::ExpressionGenerator { ptr } => Some(ptr.name().clone()),
                 ComprehensionQualifier::Generator { ptr } => Some(ptr.name().clone()),
                 ComprehensionQualifier::Condition(_) => None,
             })
@@ -84,6 +90,7 @@ impl Comprehension {
             .filter_map(|q| match q {
                 ComprehensionQualifier::Condition(c) => Some(c.clone()),
                 ComprehensionQualifier::Generator { .. } => None,
+                ComprehensionQualifier::ExpressionGenerator { .. } => None,
             })
             .collect()
     }
@@ -113,7 +120,9 @@ impl Comprehension {
         model
     }
 
-    /// Adds a guard to the comprehension. Returns false if the guard does not only reference quantified variables.
+    /// Adds a guard to the comprehension.
+    ///
+    /// Returns false if the guard references non-quantified decision variables.
     pub fn add_quantified_guard(&mut self, guard: Expression) -> bool {
         if self.is_quantified_guard(&guard) {
             self.qualifiers
@@ -124,10 +133,10 @@ impl Comprehension {
         }
     }
 
-    /// True iff expr only references quantified variables.
+    /// True iff expr does not reference non-quantified decision variables.
     pub fn is_quantified_guard(&self, expr: &Expression) -> bool {
         let quantified: BTreeSet<Name> = self.quantified_vars().into_iter().collect();
-        is_quantified_guard(&quantified, expr)
+        is_quantified_guard(&self.symbols.read(), &quantified, expr)
     }
 }
 
@@ -146,6 +155,14 @@ impl Display for Comprehension {
                 ComprehensionQualifier::Generator { ptr } => {
                     let domain = ptr.domain().expect("generator declaration has domain");
                     format!("{} : {domain}", ptr.name())
+                }
+                ComprehensionQualifier::ExpressionGenerator { ptr } => {
+                    let name = ptr.name();
+                    if let Some(expr) = ptr.as_quantified_expr() {
+                        format!("{name} <- {expr}")
+                    } else {
+                        panic!("Oh nein! Dat is nicht gut!")
+                    }
                 }
                 ComprehensionQualifier::Condition(expr) => format!("{expr}"),
             })
@@ -210,19 +227,37 @@ impl ComprehensionBuilder {
         self
     }
 
+    pub fn expression_generator(mut self, name: Name, expr: Expression) -> Self {
+        assert!(!self.quantified_variables.contains(&name));
+
+        self.quantified_variables.insert(name.clone());
+
+        // insert into comprehension scope as a local quantified variable
+        let quantified_decl = DeclarationPtr::new_quantified_expr(name, expr);
+        self.symbols.write().insert(quantified_decl.clone());
+
+        self.qualifiers
+            .push(ComprehensionQualifier::ExpressionGenerator {
+                ptr: quantified_decl,
+            });
+
+        self
+    }
+
     /// Creates a comprehension with the given return expression.
     ///
     /// If this comprehension is inside an AC-operator, the kind of this operator should be passed
     /// in the `comprehension_kind` field.
     ///
-    /// If a comprehension kind is not given, comprehension guards containing decision variables
-    /// are invalid, and will cause a panic.
+    /// If a comprehension kind is not given, comprehension guards containing non-quantified
+    /// decision variables are invalid, and will cause a panic.
     pub fn with_return_value(
         self,
         mut expression: Expression,
         comprehension_kind: Option<ACOperatorKind>,
     ) -> Comprehension {
         let quantified_variables = self.quantified_variables;
+        let symbols = self.symbols.read();
 
         let mut qualifiers = Vec::new();
         let mut other_guards = Vec::new();
@@ -230,8 +265,9 @@ impl ComprehensionBuilder {
         for qualifier in self.qualifiers {
             match qualifier {
                 ComprehensionQualifier::Generator { .. } => qualifiers.push(qualifier),
+                ComprehensionQualifier::ExpressionGenerator { .. } => qualifiers.push(qualifier),
                 ComprehensionQualifier::Condition(condition) => {
-                    if is_quantified_guard(&quantified_variables, &condition) {
+                    if is_quantified_guard(&symbols, &quantified_variables, &condition) {
                         qualifiers.push(ComprehensionQualifier::Condition(condition));
                     } else {
                         other_guards.push(condition);
@@ -239,8 +275,9 @@ impl ComprehensionBuilder {
                 }
             }
         }
+        drop(symbols);
 
-        // handle guards that reference non-quantified variables
+        // handle guards that reference non-quantified decision variables
         if !other_guards.is_empty() {
             let comprehension_kind = comprehension_kind.expect(
                 "if any guards reference decision variables, a comprehension kind should be given",
@@ -280,10 +317,16 @@ impl ComprehensionBuilder {
     }
 }
 
-/// True iff the guard only references quantified variables.
-fn is_quantified_guard(quantified_variables: &BTreeSet<Name>, guard: &Expression) -> bool {
-    guard
-        .universe_bi()
-        .iter()
-        .all(|x| quantified_variables.contains(x))
+/// True iff the guard does not reference non-quantified decision variables.
+fn is_quantified_guard(
+    symbols: &SymbolTable,
+    quantified_variables: &BTreeSet<Name>,
+    guard: &Expression,
+) -> bool {
+    guard.universe_bi().iter().all(|name| {
+        quantified_variables.contains(name)
+            || symbols
+                .lookup(name)
+                .is_some_and(|decl| decl.category_of() != Category::Decision)
+    })
 }

@@ -15,12 +15,16 @@ members = [
     "crates/minion-sys",
     "crates/tree-sitter-essence",
     "crates/tree-morph",
+    "crates/tree-morph-macros",
     "crates/conjure-cp-lsp",
 
   # internal crates, not to be pushed to crates io
   "fuzz",
   "tests-integration"
 ]
+
+[profile.release]
+debug = true
 
 [workspace.dependencies]
 anyhow = "1.0.102"
@@ -31,7 +35,7 @@ derivative = "2.2.0"
 git-version = "0.3.9"
 glob = "0.3.2"
 humantime = "2.3.0"
-indexmap = "2.12.0"
+indexmap = {version = "2.2", features = ["serde"]}
 itertools = "0.14"
 linkme = "0.3.35"
 log = "0.4.29"
@@ -47,11 +51,11 @@ rayon = "1.8.0"
 regex = "1.12.3"
 rangemap = "1.5.1"
 rustsat = "0.7.5"
-rustsat-minisat = "0.7.5"
+rustsat-cadical = "0.7.5"
 schemars = "1.2.1"
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.149"
-serde_with = "3.17.0"
+serde_with = { version = "3.17.0", features = ["indexmap_2"] }
 static_assertions = "1.1.0"
 strum = "0.28.0"
 strum_macros = "0.28.0"
@@ -62,10 +66,11 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["ansi","env-filter","json",] }
 tree-sitter = "0.26.6"
 tree-sitter-haskell = "0.23.0"
-uniplate = "0.4.5"
+uniplate = "0.4.6"
 ustr = { version = "1.1.0", features = ["serde"] }
 versions = "7.0.0"
 walkdir = "2.5.0"
+mimalloc = "0.1.48"
 
 # Always use release profile options for z3 crate to minimise size
 [profile.dev.package.z3-sys]

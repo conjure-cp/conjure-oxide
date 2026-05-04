@@ -14,10 +14,12 @@ use test_config::TestConfig;
 fn main() -> io::Result<()> {
     println!("cargo:rerun-if-changed=tests/integration");
     println!("cargo:rerun-if-changed=tests/custom");
+    println!("cargo:rerun-if-changed=tests/roundtrip");
     println!("cargo:rerun-if-changed=tests/integration_test_template");
     println!("cargo:rerun-if-changed=tests/custom_test_template");
     println!("cargo:rerun-if-changed=tests/roundtrip_test_template");
     println!("cargo:rerun-if-changed=build.rs");
+    println!("cargo:rerun-if-env-changed=MAX_EXPECTED_TIME");
 
     let out_dir = var("OUT_DIR").map_err(io::Error::other)?; // wrapping in a std::io::Error to match main's error type
 
@@ -200,21 +202,45 @@ fn main() -> io::Result<()> {
 }
 
 fn read_config_or_default(path: &str) -> TestConfig {
-    let config_path = format!("{}/config.toml", path);
+    let config_path = format!("{path}/config.toml");
     if let Ok(contents) = std::fs::read_to_string(&config_path) {
-        toml::from_str(&contents).unwrap_or_default()
+        toml::from_str(&contents)
+            .unwrap_or_else(|err| panic!("failed to parse {config_path}: {err}"))
     } else {
         TestConfig::default()
     }
 }
 
-fn get_ignore_attr(cfg: &TestConfig) -> String {
+fn max_expected_time_limit() -> io::Result<Option<u64>> {
+    match std::env::var("MAX_EXPECTED_TIME") {
+        Ok(value) => value.parse::<u64>().map(Some).map_err(|err| {
+            io::Error::new(
+                io::ErrorKind::InvalidInput,
+                format!("invalid MAX_EXPECTED_TIME value '{value}': {err}"),
+            )
+        }),
+        Err(std::env::VarError::NotPresent) => Ok(None),
+        Err(err) => Err(io::Error::other(err)),
+    }
+}
+
+fn get_ignore_attr(cfg: &TestConfig, include_expected_time: bool) -> io::Result<String> {
     if cfg.skip {
-        String::from(
+        Ok(String::from(
             "#[ignore = \"this test has been disabled ('skip=true' in its config.toml)\"]\n",
-        )
+        ))
+    } else if include_expected_time
+        && let (Some(expected_time), Some(limit)) = (cfg.expected_time, max_expected_time_limit()?)
+    {
+        if expected_time > limit {
+            Ok(format!(
+                "#[ignore = \"this test declares 'expected-time={expected_time}' in its config.toml, which exceeds MAX_EXPECTED_TIME={limit}\"]\n",
+            ))
+        } else {
+            Ok(String::new())
+        }
     } else {
-        String::new()
+        Ok(String::new())
     }
 }
 
@@ -226,7 +252,7 @@ fn write_integration_test(
     // TODO: Consider supporting multiple Essence files?
     if essence_files.len() == 1 {
         let cfg = read_config_or_default(&path);
-        let ignore = get_ignore_attr(&cfg);
+        let ignore = get_ignore_attr(&cfg, true)?;
 
         write!(
             file,
@@ -244,11 +270,15 @@ fn write_integration_test(
 }
 
 fn write_custom_test(file: &mut File, path: String) -> io::Result<()> {
+    let cfg = read_config_or_default(&path);
+    let ignore = get_ignore_attr(&cfg, true)?;
+
     write!(
         file,
         include_str!("./tests/custom_test_template"),
         test_name = path.replace("./", "").replace(['/', '-'], "_"),
-        test_dir = path
+        test_dir = path,
+        ignore_attr = ignore
     )
 }
 
@@ -258,7 +288,7 @@ fn write_roundtrip_test(
     essence_file: (String, String),
 ) -> io::Result<()> {
     let cfg = read_config_or_default(&path);
-    let ignore = get_ignore_attr(&cfg);
+    let ignore = get_ignore_attr(&cfg, false)?;
 
     write!(
         file,

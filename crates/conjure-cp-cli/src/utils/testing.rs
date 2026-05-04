@@ -3,7 +3,7 @@ use std::fmt::Debug;
 use std::path::Path;
 use std::{io, mem, vec};
 
-use conjure_cp::ast::records::RecordValue;
+use conjure_cp::ast::records::FieldValue;
 use conjure_cp::ast::serde::ObjId;
 use conjure_cp::bug;
 use itertools::Itertools as _;
@@ -147,7 +147,7 @@ pub fn save_model_json(
     let generated_json_str = serialize_model(model)?;
     let generated_json_str = maybe_truncate_serialised_json(generated_json_str, test_stage);
     let filename = format!("{path}/{test_name}-{marker}.generated-{test_stage}.serialised.json");
-    println!("saving: {}", filename);
+    println!("saving: {filename}");
     File::create(&filename)?.write_all(generated_json_str.as_bytes())?;
     Ok(())
 }
@@ -176,7 +176,7 @@ pub fn save_stats_json(
 /// Reads a file into a `String`, providing a clearer error message that includes the file path.
 fn read_with_path(path: String) -> Result<String, std::io::Error> {
     std::fs::read_to_string(&path)
-        .map_err(|e| io::Error::new(e.kind(), format!("{} (path: {})", e, path)))
+        .map_err(|e| io::Error::new(e.kind(), format!("{e} (path: {path})")))
 }
 
 pub fn read_model_json(
@@ -206,7 +206,7 @@ pub fn read_model_json_prefix(
 ) -> Result<String, std::io::Error> {
     let marker = solver.as_str();
     let filename = format!("{path}/{test_name}-{marker}.{prefix}-{test_stage}.serialised.json");
-    println!("reading: {}", filename);
+    println!("reading: {filename}");
     read_first_n_lines(filename, max_lines)
 }
 
@@ -281,8 +281,8 @@ pub fn read_solutions_json(
     Ok(expected_solutions)
 }
 
-/// Reads a human-readable rule trace text file.
-pub fn read_human_rule_trace(
+/// Reads a default rule trace text file.
+pub fn read_default_rule_trace(
     path: &str,
     test_name: &str,
     prefix: &str,
@@ -377,14 +377,14 @@ pub fn normalize_solutions_for_comparison(
                                 let entries = entries
                                     .into_iter()
                                     .map(|x| {
-                                        let RecordValue { name, value } = x;
+                                        let FieldValue { name, value } = x;
                                         {
                                             let value = match value {
                                                 Literal::Bool(false) => Literal::Int(0),
                                                 Literal::Bool(true) => Literal::Int(1),
                                                 x => x,
                                             };
-                                            RecordValue { name, value }
+                                            FieldValue { name, value }
                                         }
                                     })
                                     .collect_vec();

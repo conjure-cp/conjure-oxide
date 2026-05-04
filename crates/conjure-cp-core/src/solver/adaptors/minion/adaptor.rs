@@ -1,16 +1,14 @@
 use regex::Regex;
-use std::collections::HashMap;
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{LazyLock, Mutex, OnceLock};
+use std::collections::{HashMap, HashSet};
+use std::sync::LazyLock;
 use ustr::Ustr;
 
 use minion_ast::Model as MinionModel;
 use minion_sys::ast as minion_ast;
-use minion_sys::error::MinionError;
-use minion_sys::{get_from_table, run_minion};
+use minion_sys::{RunOptions, ValueOrder, run_minion_with_options};
 
 use crate::Model as ConjureModel;
-use crate::ast::{self as conjure_ast, Name};
+use crate::ast::{self as conjure_ast, Expression, Name};
 use crate::settings::SolverFamily;
 use crate::solver::SolverCallback;
 use crate::solver::SolverMutCallback;
@@ -22,10 +20,13 @@ use crate::solver::SearchStatus::{Complete, Incomplete};
 use crate::solver::SolveSuccess;
 use crate::solver::SolverAdaptor;
 use crate::solver::SolverError;
-use crate::solver::SolverError::{OpNotImplemented, Runtime, RuntimeNotImplemented};
-use crate::solver::model_modifier::NotModifiable;
+use crate::solver::SolverError::OpNotImplemented;
 use crate::solver::private;
 
+use super::dominance_injection::{
+    add_dominance_constraints_for_solution, add_represented_decision_values,
+    minion_error_to_solver_error,
+};
 use super::parse_model::model_to_minion;
 
 /// A [SolverAdaptor] for interacting with Minion.
@@ -34,12 +35,28 @@ use super::parse_model::model_to_minion;
 pub struct Minion {
     __non_constructable: private::Internal,
     model: Option<MinionModel>,
+    value_order: Option<MinionValueOrder>,
+    dominance_expression: Option<Expression>,
+    dominance_model_template: Option<ConjureModel>,
 }
 
-static MINION_LOCK: Mutex<()> = Mutex::new(());
-static USER_CALLBACK: OnceLock<Mutex<SolverCallback>> = OnceLock::new();
-static ANY_SOLUTIONS: AtomicBool = AtomicBool::new(false);
-static USER_TERMINATED: AtomicBool = AtomicBool::new(false);
+/// Value-order override for Minion search.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MinionValueOrder {
+    Ascend,
+    Descend,
+    Random,
+}
+
+impl From<MinionValueOrder> for ValueOrder {
+    fn from(value: MinionValueOrder) -> Self {
+        match value {
+            MinionValueOrder::Ascend => ValueOrder::Ascend,
+            MinionValueOrder::Descend => ValueOrder::Descend,
+            MinionValueOrder::Random => ValueOrder::Random,
+        }
+    }
+}
 
 fn parse_name(minion_name: &str) -> Name {
     static MACHINE_NAME_RE: LazyLock<Regex> =
@@ -60,14 +77,9 @@ fn parse_name(minion_name: &str) -> Name {
     }
 }
 
-#[allow(clippy::unwrap_used)]
-fn minion_sys_callback(solutions: HashMap<minion_ast::VarName, minion_ast::Constant>) -> bool {
-    ANY_SOLUTIONS.store(true, Ordering::SeqCst);
-    let callback = USER_CALLBACK
-        .get_or_init(|| Mutex::new(Box::new(|x| true)))
-        .lock()
-        .unwrap();
-
+fn translate_solution(
+    solutions: HashMap<minion_ast::VarName, minion_ast::Constant>,
+) -> HashMap<conjure_ast::Name, conjure_ast::Literal> {
     let mut conjure_solutions: HashMap<conjure_ast::Name, conjure_ast::Literal> = HashMap::new();
     for (minion_name, minion_const) in solutions.into_iter() {
         let conjure_const = match minion_const {
@@ -79,13 +91,7 @@ fn minion_sys_callback(solutions: HashMap<minion_ast::VarName, minion_ast::Const
         let conjure_name = parse_name(&minion_name);
         conjure_solutions.insert(conjure_name, conjure_const);
     }
-
-    let continue_search = (**callback)(conjure_solutions);
-    if !continue_search {
-        USER_TERMINATED.store(true, Ordering::SeqCst);
-    }
-
-    continue_search
+    conjure_solutions
 }
 
 impl private::Sealed for Minion {}
@@ -95,6 +101,20 @@ impl Minion {
         Minion {
             __non_constructable: private::Internal,
             model: None,
+            value_order: None,
+            dominance_expression: None,
+            dominance_model_template: None,
+        }
+    }
+
+    /// Creates a Minion adaptor with an optional value-order override.
+    pub fn with_value_order(value_order: Option<MinionValueOrder>) -> Minion {
+        Minion {
+            __non_constructable: private::Internal,
+            model: None,
+            value_order,
+            dominance_expression: None,
+            dominance_model_template: None,
         }
     }
 }
@@ -106,49 +126,74 @@ impl Default for Minion {
 }
 
 impl SolverAdaptor for Minion {
-    #[allow(clippy::unwrap_used)]
     fn solve(
         &mut self,
         callback: SolverCallback,
         _: private::Internal,
     ) -> Result<SolveSuccess, SolverError> {
-        // our minion callback is global state, so single threading the adaptor as a whole is
-        // probably a good move...
-        #[allow(clippy::unwrap_used)]
-        let mut minion_lock = MINION_LOCK.lock().unwrap();
+        let mut any_solutions = false;
+        let mut user_terminated = false;
+        let dominance_expression = self.dominance_expression.clone();
+        let dominance_model_template = self.dominance_model_template.clone();
+        let mut midsearch_error: Option<SolverError> = None;
+        let base_model = self.model.as_ref().expect("STATE MACHINE ERR");
+        let mut known_var_names = base_model
+            .named_variables
+            .get_variable_order()
+            .into_iter()
+            .collect::<HashSet<_>>();
+        let mut next_midsearch_aux_var_id = 0usize;
+        let mut solution_ordinal = 0usize;
 
-        #[allow(clippy::unwrap_used)]
-        let mut user_callback = USER_CALLBACK
-            .get_or_init(|| Mutex::new(Box::new(|x| true)))
-            .lock()
-            .unwrap();
-        *user_callback = callback;
-        drop(user_callback); // release mutex. REQUIRED so that run_minion can use the
-        // user callback and not deadlock.
-
-        USER_TERMINATED.store(false, Ordering::SeqCst);
-        ANY_SOLUTIONS.store(false, Ordering::SeqCst);
-
-        run_minion(
+        let solver_ctx = run_minion_with_options(
             self.model.clone().expect("STATE MACHINE ERR"),
-            minion_sys_callback,
-        )
-        .map_err(|err| match err {
-            MinionError::RuntimeError(x) => Runtime(format!("{x:#?}")),
-            MinionError::Other(x) => Runtime(format!("{x:#?}")),
-            MinionError::NotImplemented(x) => RuntimeNotImplemented(x),
-            x => Runtime(format!("unknown minion_sys error: {x:#?}")),
-        })?;
+            Box::new(|solutions| {
+                any_solutions = true;
+                solution_ordinal += 1;
+                let mut conjure_solutions = translate_solution(solutions);
+                if let Some(model_template) = dominance_model_template.as_ref() {
+                    add_represented_decision_values(&mut conjure_solutions, model_template);
+                }
 
-        let status = if USER_TERMINATED.load(Ordering::SeqCst) {
+                let continue_search = callback(conjure_solutions.clone());
+                if !continue_search {
+                    user_terminated = true;
+                    return false;
+                }
+
+                if let Err(err) = add_dominance_constraints_for_solution(
+                    dominance_expression.as_ref(),
+                    dominance_model_template.as_ref(),
+                    &conjure_solutions,
+                    &mut known_var_names,
+                    &mut next_midsearch_aux_var_id,
+                    solution_ordinal,
+                ) {
+                    midsearch_error = Some(err);
+                    return false;
+                }
+
+                true
+            }),
+            RunOptions {
+                value_order: self.value_order.map(Into::into),
+            },
+        )
+        .map_err(minion_error_to_solver_error)?;
+
+        if let Some(err) = midsearch_error {
+            return Err(err);
+        }
+
+        let status = if user_terminated {
             Incomplete(UserTerminated)
-        } else if ANY_SOLUTIONS.load(Ordering::SeqCst) {
+        } else if any_solutions {
             Complete(HasSolutions)
         } else {
             Complete(NoSolutions)
         };
         Ok(SolveSuccess {
-            stats: get_solver_stats(),
+            stats: get_solver_stats(&solver_ctx),
             status,
         })
     }
@@ -162,6 +207,11 @@ impl SolverAdaptor for Minion {
     }
 
     fn load_model(&mut self, model: ConjureModel, _: private::Internal) -> Result<(), SolverError> {
+        self.dominance_expression = model.dominance.as_ref().map(|expr| match expr {
+            Expression::DominanceRelation(_, inner) => inner.as_ref().clone(),
+            _ => expr.clone(),
+        });
+        self.dominance_model_template = self.dominance_expression.as_ref().map(|_| model.clone());
         self.model = Some(model_to_minion(model)?);
         Ok(())
     }
@@ -184,9 +234,11 @@ impl SolverAdaptor for Minion {
 }
 
 #[allow(clippy::unwrap_used)]
-fn get_solver_stats() -> SolverStats {
+fn get_solver_stats(solver_ctx: &minion_sys::SolverContext) -> SolverStats {
     SolverStats {
-        nodes: get_from_table("Nodes".into()).map(|x| x.parse::<u64>().unwrap()),
+        nodes: solver_ctx
+            .get_from_table("Nodes".into())
+            .map(|x| x.parse::<u64>().unwrap()),
         ..Default::default()
     }
 }

@@ -416,8 +416,11 @@ impl Display for Model {
                 DeclarationKind::Quantified(inner) => {
                     writeln!(f, "quantified {name}: {}", inner.domain())?;
                 }
-                DeclarationKind::RecordField(_) => {
-                    writeln!(f)?;
+                DeclarationKind::QuantifiedExpr(expr) => {
+                    writeln!(f, "quantified expr {name} <- {}", expr)?;
+                }
+                DeclarationKind::Field(_) => {
+                    // We do not want to print anything, as it will be in the domains
                 }
             }
         }

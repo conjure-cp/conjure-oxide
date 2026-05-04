@@ -1,0 +1,43 @@
+Model before rewriting:
+
+find x: int(0..5)
+
+such that
+
+and([ and([ ((i <= j)) -> ((x <= (j - i))) | j : int(1..2) ]) | i : int(1..2) ])
+
+--
+
+Via-solver generator model before rewriting:
+
+find i: int(1..2)
+find j: int(1..2)
+
+--
+
+Model before rewriting:
+
+find i: int(1..2)
+find j: int(1..2)
+
+--
+
+Final model:
+
+find i: int(1..2)
+find j: int(1..2)
+
+such that
+
+true
+
+Final model:
+
+find x: int(0..5)
+
+such that
+
+FlatWeightedSumGeq([-1, 1],[1, 1],x),
+FlatWeightedSumGeq([-1, 1],[1, 2],x),
+FlatWeightedSumGeq([-1, 1],[2, 2],x)
+

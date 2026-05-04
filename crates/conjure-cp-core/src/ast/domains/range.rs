@@ -1,4 +1,4 @@
-use crate::ast::domains::Int;
+use crate::ast::{DomainOpError, domains::Int};
 use num_traits::Num;
 use polyquine::Quine;
 use serde::{Deserialize, Serialize};
@@ -113,6 +113,39 @@ impl<A: Ord + Clone> Range<A> {
             };
         }
         Range::new(lo.cloned(), hi.cloned())
+    }
+    /// Find the range such that:
+    /// - the lower bound is the maximum of the lower bounds
+    /// - the upper bound is the minimum of the upper bounds
+    /// - **ranges must not be disjoint**
+    ///
+    /// * `DomainopError::ConflictingArgs`: if given disjoint ranges; e.g. (2..4) (6..8)
+    pub fn minimal(rngs: &[Range<A>]) -> Result<Range<A>, DomainOpError> {
+        if rngs.is_empty() {
+            return Ok(Range::Unbounded);
+        }
+        let mut lo = rngs[0].low();
+        let mut hi = rngs[0].high();
+        for rng in rngs {
+            lo = match (lo, rng.low()) {
+                (Some(curr), Some(new)) => Some(curr.max(new)),
+                (None, Some(new)) => Some(new),
+                (Some(curr), None) => Some(curr),
+                _ => None,
+            };
+            hi = match (hi, rng.high()) {
+                (Some(curr), Some(new)) => Some(curr.min(new)),
+                (None, Some(new)) => Some(new),
+                (Some(curr), None) => Some(curr),
+                _ => None,
+            };
+            if let (Some(l), Some(h)) = (lo, hi)
+                && l > h
+            {
+                return Err(DomainOpError::ConflictingAttrs);
+            }
+        }
+        Ok(Range::new(lo.cloned(), hi.cloned()))
     }
 }
 

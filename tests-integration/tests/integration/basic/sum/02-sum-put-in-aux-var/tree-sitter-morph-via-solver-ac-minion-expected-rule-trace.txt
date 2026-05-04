@@ -1,0 +1,27 @@
+Model before rewriting:
+
+find x: int(3..4)
+find y: int(1..5)
+find z: int(2..5)
+find a: int(3..5)
+
+such that
+
+((sum([sum([x,y;int(1..)]),z;int(1..)]) / a) = 3)
+
+--
+
+Final model:
+
+find x: int(3..4)
+find y: int(1..5)
+find z: int(2..5)
+find a: int(3..5)
+find __0: int(6..14)
+
+such that
+
+DivEq(__0, a, 3),
+SumLeq([x, y, z], __0),
+SumGeq([x, y, z], __0)
+

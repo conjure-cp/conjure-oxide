@@ -28,7 +28,7 @@ use uniplate::{Biplate, Uniplate};
 /// Rewrite top-level `exists` comprehensions into constraints over fresh machine `find`s.
 ///
 /// `exists` is represented as `or([comprehension])`.
-#[register_rule(("Base", 2003))]
+#[register_rule("Base", 2003, [Root])]
 fn exists_quantified_to_finds(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Root(metadata, constraints) = expr else {
         return Err(RuleNotApplicable);
@@ -66,7 +66,7 @@ fn exists_quantified_to_finds(expr: &Expr, symbols: &SymbolTable) -> Application
 }
 
 /// Expand comprehensions using `--comprehension-expander native`.
-#[register_rule(("Base", 2000))]
+#[register_rule("Base", 2000, [Comprehension])]
 fn expand_comprehension_native(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     if comprehension_expander() != QuantifiedExpander::Native {
         return Err(RuleNotApplicable);
@@ -77,6 +77,13 @@ fn expand_comprehension_native(expr: &Expr, symbols: &SymbolTable) -> Applicatio
     };
 
     let comprehension = comprehension.as_ref().clone();
+
+    for qual in &comprehension.qualifiers {
+        if let ComprehensionQualifier::ExpressionGenerator { .. } = qual {
+            return Err(RuleNotApplicable);
+        }
+    }
+
     let mut symbols = symbols.clone();
     let results = expand_native(comprehension, &mut symbols)
         .unwrap_or_else(|e| bug!("native comprehension expansion failed: {e}"));
@@ -96,7 +103,7 @@ fn expand_comprehension_native(expr: &Expr, symbols: &SymbolTable) -> Applicatio
 ///    each solution.
 /// 7. Instantiate the original return expression under each quantified assignment.
 /// 8. Replace the comprehension by a matrix literal containing all instantiated return values.
-#[register_rule(("Base", 2000))]
+#[register_rule("Base", 2000, [Comprehension])]
 fn expand_comprehension_via_solver(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     if !matches!(
         comprehension_expander(),
@@ -110,6 +117,13 @@ fn expand_comprehension_via_solver(expr: &Expr, symbols: &SymbolTable) -> Applic
     };
 
     let comprehension = comprehension.as_ref().clone();
+
+    for qual in &comprehension.qualifiers {
+        if let ComprehensionQualifier::ExpressionGenerator { .. } = qual {
+            return Err(RuleNotApplicable);
+        }
+    }
+
     let results = expand_via_solver(comprehension)
         .unwrap_or_else(|e| bug!("via-solver comprehension expansion failed: {e}"));
     Ok(Reduction::with_symbols(
@@ -130,7 +144,7 @@ fn expand_comprehension_via_solver(expr: &Expr, symbols: &SymbolTable) -> Applic
 /// 5. Rewrite and solve the temporary model with Minion; keep only quantified assignments.
 /// 6. Instantiate the original return expression under those assignments.
 /// 7. Rebuild the same AC operator around the instantiated matrix literal.
-#[register_rule(("Base", 2002))]
+#[register_rule("Base", 2002)]
 fn expand_comprehension_via_solver_ac(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     if comprehension_expander() != QuantifiedExpander::ViaSolverAc {
         return Err(RuleNotApplicable);
@@ -146,6 +160,12 @@ fn expand_comprehension_via_solver_ac(expr: &Expr, symbols: &SymbolTable) -> App
     );
 
     let comprehension = as_single_comprehension(&expr.children()[0]).ok_or(RuleNotApplicable)?;
+
+    for qual in &comprehension.qualifiers {
+        if let ComprehensionQualifier::ExpressionGenerator { .. } = qual {
+            return Err(RuleNotApplicable);
+        }
+    }
 
     let results =
         expand_via_solver_ac(comprehension, ac_operator_kind).or(Err(RuleNotApplicable))?;
@@ -188,7 +208,7 @@ fn rewrite_exists_comprehension_to_constraints(
         let domain = decl.domain()?;
         let rewritten_domain =
             replace_declaration_ptrs_in_domain(domain, &replacements_by_id, &replacements_by_name);
-        let fresh_decl = symbols.gensym(&rewritten_domain);
+        let fresh_decl = symbols.gen_find(&rewritten_domain);
         replacements_by_id.insert(decl.id(), fresh_decl.clone());
         replacements_by_name.insert(decl.name().clone(), fresh_decl);
     }
@@ -341,6 +361,10 @@ fn rewrite_int_ranges_in_unresolved_domain(
                 );
             }
         }
+        UnresolvedDomain::Sequence(attr, inner) => {
+            rewrite_int_range(&mut attr.size, replacements_by_id, replacements_by_name);
+            rewrite_int_ranges_in_domain_ptr(inner, replacements_by_id, replacements_by_name);
+        }
         UnresolvedDomain::Reference(_) => {}
         UnresolvedDomain::Record(entries) => {
             for entry in entries {
@@ -355,6 +379,21 @@ fn rewrite_int_ranges_in_unresolved_domain(
             rewrite_int_range(&mut attr.size, replacements_by_id, replacements_by_name);
             rewrite_int_ranges_in_domain_ptr(domain, replacements_by_id, replacements_by_name);
             rewrite_int_ranges_in_domain_ptr(codomain, replacements_by_id, replacements_by_name);
+        }
+        UnresolvedDomain::Variant(entries) => {
+            for entry in entries {
+                rewrite_int_ranges_in_domain_ptr(
+                    &mut entry.domain,
+                    replacements_by_id,
+                    replacements_by_name,
+                );
+            }
+        }
+        UnresolvedDomain::Relation(attr, domains) => {
+            rewrite_int_range(&mut attr.size, replacements_by_id, replacements_by_name);
+            for domain in domains {
+                rewrite_int_ranges_in_domain_ptr(domain, replacements_by_id, replacements_by_name);
+            }
         }
     }
 }

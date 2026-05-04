@@ -2,10 +2,14 @@
 #![allow(unsafe_op_in_unsafe_fn)]
 
 use std::{
+    cell::Cell,
     collections::HashMap,
-    ffi::CString,
-    sync::Condvar,
-    sync::{Mutex, MutexGuard},
+    ffi::{CStr, CString, c_char, c_void},
+    ptr,
+    sync::{
+        LazyLock, Mutex,
+        atomic::{AtomicPtr, Ordering},
+    },
 };
 
 use anyhow::anyhow;
@@ -16,41 +20,34 @@ use crate::{
 };
 use crate::{
     ast::{Constant, Constraint, Model, Var, VarDomain, VarName},
-    error::{MinionError, RuntimeError},
+    error::{MinionError, check_minion_result},
     scoped_ptr::Scoped,
 };
 
-/// The callback function used to capture results from Minion as they are generated.
+/// The callback type used by [`run_minion`].
 ///
-/// This function is called by Minion whenever a solution is found. The input to this function is
-/// a`HashMap` of all named variables along with their value.
+/// Called by Minion whenever a solution is found. The input is
+/// a `HashMap` of all named variables along with their value.
 ///
-/// Callbacks should return `true` if search is to continue, `false` otherwise.
+/// Return `true` to continue searching, `false` to stop.
+///
+/// Since this is a boxed closure, it can capture state from its environment,
+/// eliminating the need for global or thread-local state in callers.
 ///
 /// # Examples
-///
-/// Consider using a global mutex (or other static variable) to use returned solutions elsewhere.
-///
-/// For example:
 ///
 /// ```
 ///   use minion_sys::ast::*;
 ///   use minion_sys::run_minion;
-///   use std::{
-///       collections::HashMap,
-///       sync::{Mutex, MutexGuard},
-///   };
+///   use std::collections::HashMap;
 ///
-///   // More elaborate data-structures are possible, but for sake of example store
-///   // a vector of solution sets.
-///   static ALL_SOLUTIONS: Mutex<Vec<HashMap<VarName,Constant>>>  = Mutex::new(vec![]);
-///   
-///   fn callback(solutions: HashMap<VarName,Constant>) -> bool {
-///       let mut guard = ALL_SOLUTIONS.lock().unwrap();
-///       guard.push(solutions);
+///   let mut all_solutions: Vec<HashMap<VarName,Constant>> = vec![];
+///
+///   let callback = Box::new(|solutions: HashMap<VarName,Constant>| -> bool {
+///       all_solutions.push(solutions);
 ///       true
-///   }
-///    
+///   });
+///
 ///   // Build and run the model.
 ///   let mut model = Model::new();
 ///
@@ -92,125 +89,272 @@ use crate::{
 /// # model.constraints.push(leq);
 /// # model.constraints.push(geq);
 /// # model.constraints.push(ineq);
-///  
-///   let res = run_minion(model, callback);
-///   res.expect("Error occurred");
 ///
-///   // Get solutions
-///   let guard = ALL_SOLUTIONS.lock().unwrap();
-///   let solution_set_1 = &(guard.get(0).unwrap());
+///   let _solver_ctx = run_minion(model, callback).expect("Error occurred");
 ///
+///   let solution_set_1 = &all_solutions[0];
 ///   let x1 = solution_set_1.get("x").unwrap();
 ///   let y1 = solution_set_1.get("y").unwrap();
 ///   let z1 = solution_set_1.get("z").unwrap();
 /// #
-/// # // TODO: this test would be better with an example with >1 solution.
-/// # assert_eq!(guard.len(),1);
+/// # assert_eq!(all_solutions.len(),1);
 /// # assert_eq!(*x1,Constant::Integer(1));
 /// # assert_eq!(*y1,Constant::Integer(2));
 /// # assert_eq!(*z1,Constant::Integer(1));
 /// ```
-pub type Callback = fn(solution_set: HashMap<VarName, Constant>) -> bool;
+pub type Callback<'a> = Box<dyn FnMut(HashMap<VarName, Constant>) -> bool + 'a>;
 
-// Use globals to pass things between run_minion and the callback function.
-// Minion is (currently) single threaded anyways so the Mutexs' don't matter.
+/// Value-order strategy for Minion branching.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ValueOrder {
+    Ascend,
+    Descend,
+    Random,
+}
 
-// the current callback function
-static CALLBACK: Mutex<Option<Callback>> = Mutex::new(None);
+/// Optional runtime controls for [`run_minion_with_options`].
+#[derive(Debug, Clone, Copy, Default)]
+pub struct RunOptions {
+    /// Override Minion value ordering.
+    ///
+    /// When unset, Minion keeps its default behaviour (or whatever was encoded
+    /// in the input model).
+    pub value_order: Option<ValueOrder>,
+}
 
-// the variables we want to return, and their ordering in the print matrix
-static PRINT_VARS: Mutex<Option<Vec<VarName>>> = Mutex::new(None);
+/// State passed through the C callback's `void* userdata` pointer.
+///
+/// This replaces the old thread-local approach — all callback state is now
+/// passed explicitly through the FFI userdata mechanism.
+struct CallbackState<'a> {
+    callback: Callback<'a>,
+    print_vars: Vec<VarName>,
+}
 
-static LOCK: (Mutex<bool>, Condvar) = (Mutex::new(false), Condvar::new());
+static CURRENT_INSTANCE: AtomicPtr<ffi::ProbSpec_CSPInstance> = AtomicPtr::new(ptr::null_mut());
+static CURRENT_CTX: AtomicPtr<ffi::MinionContext> = AtomicPtr::new(ptr::null_mut());
+static MINION_RUN_LOCK: LazyLock<Mutex<()>> = LazyLock::new(|| Mutex::new(()));
+thread_local! {
+    static INSIDE_MINION_CALLBACK: Cell<bool> = const { Cell::new(false) };
+}
 
-#[unsafe(no_mangle)]
-unsafe extern "C" fn run_callback() -> bool {
-    // get printvars from static PRINT_VARS if they exist.
-    // if not, return true and continue search.
+/// Opaque handle to a Minion solver context.
+///
+/// Holds solver state (including run statistics) after a solve completes.
+/// Query results (e.g. via [`SolverContext::get_from_table`]) before dropping.
+pub struct SolverContext {
+    ctx: *mut ffi::MinionContext,
+}
 
-    // Mutex poisoning is probably panic worthy.
-    #[allow(clippy::unwrap_used)]
-    let mut guard: MutexGuard<'_, Option<Vec<VarName>>> = PRINT_VARS.lock().unwrap();
+// Safety: MinionContext is an independent solver instance. It is safe to send
+// between threads as long as it is not used concurrently (which we ensure by
+// only accessing it through &mut self or after the solve completes).
+unsafe impl Send for SolverContext {}
 
-    if guard.is_none() {
+impl SolverContext {
+    /// Gets a value from Minion's TableOut (where it stores run statistics).
+    pub fn get_from_table(&self, key: String) -> Option<String> {
+        unsafe {
+            #[allow(clippy::expect_used)]
+            let c_string = CString::new(key).expect("");
+            let key_ptr = c_string.into_raw();
+            let val_ptr: *mut c_char = ffi::TableOut_get(self.ctx, key_ptr);
+
+            drop(CString::from_raw(key_ptr));
+
+            if val_ptr.is_null() {
+                None
+            } else {
+                #[allow(clippy::unwrap_used)]
+                let res = CStr::from_ptr(val_ptr).to_str().unwrap().to_owned();
+                libc::free(val_ptr as _);
+                Some(res)
+            }
+        }
+    }
+}
+
+impl Drop for SolverContext {
+    fn drop(&mut self) {
+        unsafe {
+            ffi::minion_freeContext(self.ctx);
+        }
+    }
+}
+
+/// The C callback passed to `runMinion`. Receives the active context and our
+/// `CallbackState` via the userdata pointer.
+unsafe extern "C" fn run_callback(ctx: *mut ffi::MinionContext, userdata: *mut c_void) -> bool {
+    // Safety: userdata is a pointer to our CallbackState, set by run_minion
+    // and valid for the duration of the runMinion call.
+    let state = unsafe { &mut *(userdata as *mut CallbackState<'_>) };
+
+    if state.print_vars.is_empty() {
         return true;
     }
 
-    let print_vars = match &mut *guard {
-        Some(x) => x,
-        None => unreachable!(),
-    };
-
-    if print_vars.is_empty() {
-        return true;
-    }
-
-    // build nice solutions view to be used by callback
+    // Build solutions HashMap by reading variable values from Minion.
     let mut solutions: HashMap<VarName, Constant> = HashMap::new();
-
-    for (i, var) in print_vars.iter().enumerate() {
-        let solution_int: i32 = ffi::printMatrix_getValue(i as _);
+    for (i, var) in state.print_vars.iter().enumerate() {
+        let solution_int: i32 = unsafe { ffi::printMatrix_getValue(ctx, i as _) };
         let solution: Constant = Constant::Integer(solution_int);
         solutions.insert(var.to_string(), solution);
     }
 
-    #[allow(clippy::unwrap_used)]
-    match *CALLBACK.lock().unwrap() {
-        None => true,
-        Some(func) => func(solutions),
-    }
+    INSIDE_MINION_CALLBACK.with(|flag| flag.set(true));
+    let continue_search = (state.callback)(solutions);
+    INSIDE_MINION_CALLBACK.with(|flag| flag.set(false));
+    continue_search
 }
 
 /// Run Minion on the given [Model].
 ///
 /// The given [callback](Callback) is ran whenever a new solution set is found.
-// Turn it into a warning for this function, cant unwarn it directly above callback wierdness
+///
+/// Returns a [`SolverContext`] on success, which can be used to query run
+/// statistics via [`SolverContext::get_from_table`].
 #[allow(clippy::unwrap_used)]
-pub fn run_minion(model: Model, callback: Callback) -> Result<(), MinionError> {
-    // Mutex poisoning is probably panic worthy.
-    *CALLBACK.lock().unwrap() = Some(callback);
+pub fn run_minion(model: Model, callback: Callback<'_>) -> Result<SolverContext, MinionError> {
+    run_minion_with_options(model, callback, RunOptions::default())
+}
 
-    let (lock, condvar) = &LOCK;
-    let mut _lock_guard = condvar
-        .wait_while(lock.lock().unwrap(), |locked| *locked)
-        .unwrap();
-
-    *_lock_guard = true;
+/// Like [`run_minion`], but allows configuring selected Minion runtime options.
+#[allow(clippy::unwrap_used)]
+pub fn run_minion_with_options(
+    model: Model,
+    callback: Callback<'_>,
+    options: RunOptions,
+) -> Result<SolverContext, MinionError> {
+    let _run_guard = MINION_RUN_LOCK.lock().unwrap();
+    let mut state = CallbackState {
+        callback,
+        print_vars: vec![],
+    };
 
     unsafe {
-        // TODO: something better than a manual spinlock
+        let ctx = ffi::minion_newContext();
         let search_opts = ffi::searchOptions_new();
         let search_method = ffi::searchMethod_new();
         let search_instance = ffi::instance_new();
+        CURRENT_INSTANCE.store(search_instance, Ordering::SeqCst);
+        CURRENT_CTX.store(ctx, Ordering::SeqCst);
 
-        convert_model_to_raw(search_instance, &model)?;
+        // Use Minion as a quiet library by default. Low-level FFI callers that
+        // want native solver output can opt out by configuring SearchOptions
+        // themselves instead of going through this wrapper.
+        (*search_opts).silent = true;
+        (*search_opts).print_solution = false;
+        if let Some(value_order) = options.value_order {
+            let value_order = match value_order {
+                ValueOrder::Ascend => ffi::ValOrderEnum_VALORDER_ASCEND,
+                ValueOrder::Descend => ffi::ValOrderEnum_VALORDER_DESCEND,
+                ValueOrder::Random => ffi::ValOrderEnum_VALORDER_RANDOM,
+            };
+            (*search_method).valorder = ffi::ValOrder {
+                type_: value_order,
+                bias: 0,
+            };
+        }
 
+        convert_model_to_raw(search_instance, &model, &mut state.print_vars)?;
+
+        let userdata = &mut state as *mut CallbackState<'_> as *mut c_void;
         let res = ffi::runMinion(
+            ctx,
             search_opts,
             search_method,
             search_instance,
             Some(run_callback),
+            userdata,
         );
 
         ffi::searchMethod_free(search_method);
         ffi::searchOptions_free(search_opts);
+        CURRENT_INSTANCE.store(ptr::null_mut(), Ordering::SeqCst);
+        CURRENT_CTX.store(ptr::null_mut(), Ordering::SeqCst);
         ffi::instance_free(search_instance);
 
-        *_lock_guard = false;
-        std::mem::drop(_lock_guard);
-
-        condvar.notify_one();
-
-        match res {
-            0 => Ok(()),
-            x => Err(MinionError::from(RuntimeError::from(x))),
+        match check_minion_result(res) {
+            Ok(()) => Ok(SolverContext { ctx }),
+            Err(e) => {
+                ffi::minion_freeContext(ctx);
+                Err(MinionError::from(e))
+            }
         }
     }
+}
+
+/// Adds a new auxiliary variable to the currently-running Minion instance.
+///
+/// This is intended for use from a solver callback while `run_minion` is active.
+pub fn add_aux_var_during_search(name: VarName, domain: VarDomain) -> Result<(), MinionError> {
+    let instance = CURRENT_INSTANCE.load(Ordering::SeqCst);
+    let ctx = CURRENT_CTX.load(Ordering::SeqCst);
+    let inside_callback = INSIDE_MINION_CALLBACK.with(|flag| flag.get());
+    if instance.is_null() || ctx.is_null() || !inside_callback {
+        return Err(MinionError::Other(anyhow!(
+            "cannot add a Minion variable outside an active callback"
+        )));
+    }
+
+    let c_str = CString::new(name.clone())
+        .map_err(|_| anyhow!("variable name {:?} contains a null character", name))?;
+
+    let (vartype_raw, domain_low, domain_high) = match domain {
+        VarDomain::Bound(a, b) => Ok((ffi::VariableType_VAR_BOUND, a, b)),
+        VarDomain::Discrete(a, b) => Ok((ffi::VariableType_VAR_DISCRETE, a, b)),
+        VarDomain::Bool => Ok((ffi::VariableType_VAR_BOOL, 0, 1)),
+        x => Err(MinionError::NotImplemented(format!("{x:?}"))),
+    }?;
+
+    unsafe {
+        check_minion_result(ffi::minion_newVarMidsearch(
+            ctx,
+            instance,
+            c_str.as_ptr() as *mut c_char,
+            vartype_raw,
+            domain_low,
+            domain_high,
+        ))?;
+    }
+
+    Ok(())
+}
+
+/// Adds a constraint to the currently-running Minion instance.
+///
+/// This is intended for use from a solver callback while `run_minion` is active.
+pub fn add_constraint_during_search(constraint: Constraint) -> Result<(), MinionError> {
+    let instance = CURRENT_INSTANCE.load(Ordering::SeqCst);
+    let ctx = CURRENT_CTX.load(Ordering::SeqCst);
+    let inside_callback = INSIDE_MINION_CALLBACK.with(|flag| flag.get());
+    if instance.is_null() || ctx.is_null() || !inside_callback {
+        return Err(MinionError::Other(anyhow!(
+            "cannot add a Minion constraint outside an active callback"
+        )));
+    }
+
+    unsafe {
+        let constraint_type = get_constraint_type(&constraint)?;
+        let raw_constraint = Scoped::new(ffi::constraint_new(constraint_type), |x| {
+            ffi::constraint_free(x as _)
+        });
+
+        constraint_add_args(instance, raw_constraint.ptr, &constraint)?;
+        check_minion_result(ffi::minion_addConstraintMidsearch(
+            ctx,
+            instance,
+            raw_constraint.ptr,
+        ))?;
+    }
+
+    Ok(())
 }
 
 unsafe fn convert_model_to_raw(
     instance: *mut ffi::ProbSpec_CSPInstance,
     model: &Model,
+    print_vars: &mut Vec<VarName>,
 ) -> Result<(), MinionError> {
     /*******************************/
     /*        Add variables        */
@@ -226,11 +370,6 @@ unsafe fn convert_model_to_raw(
      */
 
     let search_vars = Scoped::new(ffi::vec_var_new(), |x| ffi::vec_var_free(x as _));
-
-    // store variables and the order they will be returned inside rust for later use.
-    #[allow(clippy::unwrap_used)]
-    let mut print_vars_guard = PRINT_VARS.lock().unwrap();
-    *print_vars_guard = Some(vec![]);
 
     // initialise all variables, and add all variables to the print order
     for var_name in model.named_variables.get_variable_order() {
@@ -253,23 +392,22 @@ unsafe fn convert_model_to_raw(
             x => Err(MinionError::NotImplemented(format!("{x:?}"))),
         }?;
 
-        ffi::newVar_ffi(
+        check_minion_result(ffi::minion_newVar(
             instance,
-            c_str.as_ptr() as _,
+            c_str.as_ptr() as *mut c_char,
             vartype_raw,
             domain_low,
             domain_high,
-        );
+        ))?;
 
-        let var = ffi::getVarByName(instance, c_str.as_ptr() as _);
+        let var_result = ffi::minion_getVarByName(instance, c_str.as_ptr() as _);
+        check_minion_result(var_result.result)?;
+        let var = var_result.var;
 
         ffi::printMatrix_addVar(instance, var);
 
-        // add to the print vars stored in rust so to remember
-        // the order for callback function.
-
-        #[allow(clippy::unwrap_used)]
-        (*print_vars_guard).as_mut().unwrap().push(var_name.clone());
+        // Remember the order for the callback function.
+        print_vars.push(var_name.clone());
     }
 
     // only add search variables to search order
@@ -280,8 +418,9 @@ unsafe fn convert_model_to_raw(
                 search_var_name.clone()
             )
         })?;
-        let var = ffi::getVarByName(instance, c_str.as_ptr() as _);
-        ffi::vec_var_push_back(search_vars.ptr, var);
+        let var_result = ffi::minion_getVarByName(instance, c_str.as_ptr() as _);
+        check_minion_result(var_result.result)?;
+        ffi::vec_var_push_back(search_vars.ptr, var_result.var);
     }
 
     let search_order = Scoped::new(
@@ -561,13 +700,17 @@ unsafe fn constraint_add_args(
             read_list(i, r_constr, b)?;
             Ok(())
         }
+        Constraint::WatchVecNeq(a, b) => {
+            read_list(i, r_constr, a)?;
+            read_list(i, r_constr, b)?;
+            Ok(())
+        }
         //Constraint::LitSumGeq(_, _, _) => todo!(),
         //Constraint::Gcc(_, _, _) => todo!(),
         //Constraint::GccWeak(_, _, _) => todo!(),
         //Constraint::LexLeqRv(_, _) => todo!(),
         //Constraint::LexLeqQuick(_, _) => todo!(),
         //Constraint::LexLessQuick(_, _) => todo!(),
-        //Constraint::WatchVecNeq(_, _) => todo!(),
         //Constraint::WatchVecExistsLess(_, _) => todo!(),
         //Constraint::Hamming(_, _, _) => todo!(),
         //Constraint::NotHamming(_, _, _) => todo!(),
@@ -650,6 +793,27 @@ unsafe fn constraint_add_args(
 
 // DO NOT call manually - this assumes that all needed vars are already in the symbol table.
 // TODO not happy with this just assuming the name is in the symbol table
+/// Resolve an AST Var to a raw FFI Var.
+unsafe fn resolve_var(
+    instance: *mut ffi::ProbSpec_CSPInstance,
+    var: &Var,
+) -> Result<ffi::ProbSpec_Var, MinionError> {
+    match var {
+        Var::NameRef(name) => {
+            let c_str = CString::new(name.clone()).map_err(|_| {
+                anyhow!(
+                    "Variable name {:?} contains a null character.",
+                    name.clone()
+                )
+            })?;
+            let var_result = ffi::minion_getVarByName(instance, c_str.as_ptr() as _);
+            check_minion_result(var_result.result)?;
+            Ok(var_result.var)
+        }
+        Var::ConstantAsVar(n) => Ok(ffi::constantAsVar(*n)),
+    }
+}
+
 unsafe fn read_list(
     instance: *mut ffi::ProbSpec_CSPInstance,
     raw_constraint: *mut ffi::ProbSpec_ConstraintBlob,
@@ -657,19 +821,7 @@ unsafe fn read_list(
 ) -> Result<(), MinionError> {
     let raw_vars = Scoped::new(ffi::vec_var_new(), |x| ffi::vec_var_free(x as _));
     for var in vars {
-        let raw_var = match var {
-            Var::NameRef(name) => {
-                let c_str = CString::new(name.clone()).map_err(|_| {
-                    anyhow!(
-                        "Variable name {:?} contains a null character.",
-                        name.clone()
-                    )
-                })?;
-                ffi::getVarByName(instance, c_str.as_ptr() as _)
-            }
-            Var::ConstantAsVar(n) => ffi::constantAsVar(*n),
-        };
-
+        let raw_var = resolve_var(instance, var)?;
         ffi::vec_var_push_back(raw_vars.ptr, raw_var);
     }
 
@@ -684,19 +836,7 @@ unsafe fn read_var(
     var: &Var,
 ) -> Result<(), MinionError> {
     let raw_vars = Scoped::new(ffi::vec_var_new(), |x| ffi::vec_var_free(x as _));
-    let raw_var = match var {
-        Var::NameRef(name) => {
-            let c_str = CString::new(name.clone()).map_err(|_| {
-                anyhow!(
-                    "Variable name {:?} contains a null character.",
-                    name.clone()
-                )
-            })?;
-            ffi::getVarByName(instance, c_str.as_ptr() as _)
-        }
-        Var::ConstantAsVar(n) => ffi::constantAsVar(*n),
-    };
-
+    let raw_var = resolve_var(instance, var)?;
     ffi::vec_var_push_back(raw_vars.ptr, raw_var);
     ffi::constraint_addList(raw_constraint, raw_vars.ptr);
 
@@ -709,30 +849,8 @@ unsafe fn read_2_vars(
     var1: &Var,
     var2: &Var,
 ) -> Result<(), MinionError> {
-    let mut raw_var = match var1 {
-        Var::NameRef(name) => {
-            let c_str = CString::new(name.clone()).map_err(|_| {
-                anyhow!(
-                    "Variable name {:?} contains a null character.",
-                    name.clone()
-                )
-            })?;
-            ffi::getVarByName(instance, c_str.as_ptr() as _)
-        }
-        Var::ConstantAsVar(n) => ffi::constantAsVar(*n),
-    };
-    let mut raw_var2 = match var2 {
-        Var::NameRef(name) => {
-            let c_str = CString::new(name.clone()).map_err(|_| {
-                anyhow!(
-                    "Variable name {:?} contains a null character.",
-                    name.clone()
-                )
-            })?;
-            ffi::getVarByName(instance, c_str.as_ptr() as _)
-        }
-        Var::ConstantAsVar(n) => ffi::constantAsVar(*n),
-    };
+    let mut raw_var = resolve_var(instance, var1)?;
+    let mut raw_var2 = resolve_var(instance, var2)?;
     // todo: does this move or copy? I am confus!
     // TODO need to mkae the semantics of move vs copy / ownership clear in libminion!!
     // This shouldve leaked everywhere by now but i think libminion copies stuff??

@@ -2,7 +2,7 @@ use super::categories::{Category, CategoryOf};
 use super::name::Name;
 use super::serde::{DefaultWithId, HasId, IdPtr, ObjId, PtrAsInner};
 use super::{
-    DecisionVariable, DomainPtr, Expression, GroundDomain, HasDomain, Moo, RecordEntry, Reference,
+    DecisionVariable, DomainPtr, Expression, FieldEntry, GroundDomain, HasDomain, Moo, Reference,
     ReturnType, Typeable,
 };
 use parking_lot::{
@@ -187,6 +187,11 @@ impl DeclarationPtr {
         Some(DeclarationPtr::new(decl.name().clone(), kind))
     }
 
+    pub fn new_quantified_expr(name: Name, expr: Expression) -> DeclarationPtr {
+        let kind = DeclarationKind::QuantifiedExpr(expr);
+        DeclarationPtr::new(name, kind)
+    }
+
     /// Creates a new value letting declaration.
     ///
     /// # Examples
@@ -260,19 +265,19 @@ impl DeclarationPtr {
     /// # Examples
     ///
     /// ```
-    /// use conjure_cp_core::ast::{DeclarationPtr,Name,RecordEntry,Domain,Range};
+    /// use conjure_cp_core::ast::{DeclarationPtr,Name,FieldEntry,Domain,Range};
     ///
     /// // create declaration for field A in `find rec: record {A: int(0..1), B: int(0..2)}`
     ///
-    /// let field = RecordEntry {
+    /// let field = FieldEntry {
     ///     name: Name::User("n".into()),
     ///     domain: Domain::int(vec![Range::Bounded(1,5)])
     /// };
     ///
     /// let declaration = DeclarationPtr::new_record_field(field);
     /// ```
-    pub fn new_record_field(entry: RecordEntry) -> DeclarationPtr {
-        let kind = DeclarationKind::RecordField(entry.domain);
+    pub fn new_record_field(entry: FieldEntry) -> DeclarationPtr {
+        let kind = DeclarationKind::Field(entry.domain);
         DeclarationPtr::new(entry.name, kind)
     }
 
@@ -302,7 +307,8 @@ impl DeclarationPtr {
             DeclarationKind::DomainLetting(domain) => Some(domain.clone()),
             DeclarationKind::Given(domain) => Some(domain.clone()),
             DeclarationKind::Quantified(inner) => Some(inner.domain.clone()),
-            DeclarationKind::RecordField(domain) => Some(domain.clone()),
+            DeclarationKind::QuantifiedExpr(expr) => expr.domain_of(),
+            DeclarationKind::Field(domain) => Some(domain.clone()),
         }
     }
 
@@ -442,6 +448,30 @@ impl DeclarationPtr {
         .ok()
     }
 
+    /// This declaration as a quantified expression, if it is one.
+    pub fn as_quantified_expr(&self) -> Option<MappedRwLockReadGuard<'_, Expression>> {
+        RwLockReadGuard::try_map(self.read(), |x| {
+            if let DeclarationKind::QuantifiedExpr(expr) = &x.kind {
+                Some(expr)
+            } else {
+                None
+            }
+        })
+        .ok()
+    }
+
+    /// This declaration as a mutable quantified expression, if it is one.
+    pub fn as_quantified_expr_mut(&mut self) -> Option<MappedRwLockWriteGuard<'_, Expression>> {
+        RwLockWriteGuard::try_map(self.write(), |x| {
+            if let DeclarationKind::QuantifiedExpr(expr) = &mut x.kind {
+                Some(expr)
+            } else {
+                None
+            }
+        })
+        .ok()
+    }
+
     /// Changes the name in this declaration, returning the old one.
     ///
     /// # Examples
@@ -563,7 +593,8 @@ impl CategoryOf for DeclarationPtr {
             DeclarationKind::DomainLetting(_) => Category::Constant,
             DeclarationKind::Given(_) => Category::Parameter,
             DeclarationKind::Quantified(..) => Category::Quantified,
-            DeclarationKind::RecordField(_) => Category::Bottom,
+            DeclarationKind::QuantifiedExpr(..) => Category::Quantified,
+            DeclarationKind::Field(_) => Category::Bottom,
         }
     }
 }
@@ -597,7 +628,8 @@ impl Typeable for DeclarationPtr {
             DeclarationKind::DomainLetting(domain) => domain.return_type(),
             DeclarationKind::Given(domain) => domain.return_type(),
             DeclarationKind::Quantified(inner) => inner.domain.return_type(),
-            DeclarationKind::RecordField(domain) => domain.return_type(),
+            DeclarationKind::QuantifiedExpr(expr) => expr.return_type(),
+            DeclarationKind::Field(domain) => domain.return_type(),
         }
     }
 }
@@ -714,11 +746,11 @@ fn biplate_declaration_kind_references(
                 Box::new(move |x| DeclarationKind::DomainLetting(recons_domain(x))),
             )
         }
-        DeclarationKind::RecordField(domain) => {
+        DeclarationKind::Field(domain) => {
             let (tree, recons_domain) = biplate_domain_ptr_references(domain);
             (
                 tree,
-                Box::new(move |x| DeclarationKind::RecordField(recons_domain(x))),
+                Box::new(move |x| DeclarationKind::Field(recons_domain(x))),
             )
         }
         DeclarationKind::ValueLetting(expression, domain) => {
@@ -770,6 +802,13 @@ fn biplate_declaration_kind_references(
                     quantified2.generator = recons_generator(generator);
                     DeclarationKind::Quantified(quantified2)
                 }),
+            )
+        }
+        DeclarationKind::QuantifiedExpr(expr) => {
+            let (tree, recons_expr) = Biplate::<Reference>::biplate(&expr);
+            (
+                tree,
+                Box::new(move |x| DeclarationKind::QuantifiedExpr(recons_expr(x))),
             )
         }
     }
@@ -853,6 +892,7 @@ pub enum DeclarationKind {
     Find(DecisionVariable),
     Given(DomainPtr),
     Quantified(Quantified),
+    QuantifiedExpr(Expression),
 
     /// Carries an optional domain so instantiated `given`s can retain their declared domain.
     ValueLetting(Expression, Option<DomainPtr>),
@@ -863,9 +903,9 @@ pub enum DeclarationKind {
     /// Unlike `ValueLetting`, this is not intended to represent a user-visible top-level `letting`.
     TemporaryValueLetting(Expression),
 
-    /// A named field inside a record type.
+    /// A named field inside a record / variant type.
     /// e.g. A, B in record{A: int(0..1), B: int(0..2)}
-    RecordField(DomainPtr),
+    Field(DomainPtr),
 }
 
 #[serde_as]

@@ -6,6 +6,8 @@ EXTRA_CARGO_CHECK_FLAGS ?= -q
 # Use Cargo.lock to ensure local builds match CI dependency versions.
 # Override with `CARGO_LOCKED=` if you explicitly want to update the lockfile.
 CARGO_LOCKED ?= --locked
+# Extra feature flags to be passed to Cargo (e.g. --features z3-bundled).
+CARGO_FEATURES ?=
 CARGO_TARGET_DIR ?= target
 DEV_CONTAINER_IMAGE ?= conjure-oxide-dev
 DEV_CONTAINER_FILE ?= Dockerfile.dev
@@ -18,8 +20,8 @@ submodules:
 .PHONY: check
 ## Runs all hygiene checks. These are the same checks that occur in CI for PRs.
 check: submodules
-	RUSTFLAGS="-D warnings" cargo check $(EXTRA_CARGO_CHECK_FLAGS) $(CARGO_LOCKED) --workspace --all-targets
-	cargo clippy $(EXTRA_CARGO_CHECK_FLAGS) $(CARGO_LOCKED) -- -D warnings -A clippy::unwrap_used -A clippy::expect_used
+	RUSTFLAGS="-D warnings" cargo check $(EXTRA_CARGO_CHECK_FLAGS) $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace --all-targets
+	cargo clippy $(EXTRA_CARGO_CHECK_FLAGS) $(CARGO_LOCKED) $(CARGO_FEATURES) -- -D warnings -A clippy::unwrap_used -A clippy::expect_used
 	cargo fmt --check
 
 .PHONY: check-unused-deps
@@ -30,12 +32,12 @@ check-unused-deps: .installed-cargo-extensions.checkpoint
 .PHONY: build-release
 ## Builds the release conjure-oxide executable
 build-release: submodules
-	cargo build $(CARGO_LOCKED) --bin conjure-oxide --release
+	cargo build $(CARGO_LOCKED) $(CARGO_FEATURES) --bin conjure-oxide --release
 
 .PHONY: build-debug
 ## Builds the debug conjure-oxide executable
 build-debug: submodules
-	cargo build $(CARGO_LOCKED) --bin conjure-oxide
+	cargo build $(CARGO_LOCKED) $(CARGO_FEATURES) --bin conjure-oxide
 
 .PHONY: build
 ## Builds both release and debug conjure-oxide executables
@@ -51,7 +53,7 @@ install: build
 .PHONY: test
 ## Runs all tests
 test: submodules install
-	PATH="$$HOME/.cargo/bin:$$PATH" cargo test $(CARGO_LOCKED) --workspace
+	PATH="$$HOME/.cargo/bin:$$PATH" cargo test $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace
 
 .PHONY: test-coverage
 ## Runs all tests and produces a coverage report
@@ -61,24 +63,30 @@ test-coverage:
 .PHONY: test-accept
 ## Runs all tests in accept mode, then one more time in normal mode
 test-accept: install
-	PATH="$$HOME/.cargo/bin:$$PATH" ACCEPT=true cargo test $(CARGO_LOCKED) --workspace
-	PATH="$$HOME/.cargo/bin:$$PATH" cargo test $(CARGO_LOCKED) --workspace
+	PATH="$$HOME/.cargo/bin:$$PATH" ACCEPT=true cargo test $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace
+	PATH="$$HOME/.cargo/bin:$$PATH" cargo test $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace
+
+.PHONY: test-accept-times
+## Runs all tests in accept mode, updates the expected run times, then one more time in normal mode
+test-accept-times: install
+	PATH="$$HOME/.cargo/bin:$$PATH" ACCEPT=with-times cargo test $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace
+	PATH="$$HOME/.cargo/bin:$$PATH" cargo test $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace
 
 .PHONY: fix
 ## Tries to auto-fix hygiene issues reported by `make check`. 
 ## Fixes will not be applied if there are uncommitted changes: to always apply fixes, use `make fix-dirty`.
 fix:
 	cargo fmt --all
-	cargo fix $(CARGO_LOCKED)
-	cargo clippy -q $(CARGO_LOCKED) --fix
+	cargo fix $(CARGO_LOCKED) $(CARGO_FEATURES)
+	cargo clippy -q $(CARGO_LOCKED) $(CARGO_FEATURES) --fix
 
 .PHONY: fix-dirty
 ## Tries to auto-fix hygiene issues reported by `make check`. 
 ## Applies fixes even when there are uncommitted changes.
 fix-dirty:
 	cargo fmt --all
-	cargo fix $(CARGO_LOCKED) --allow-dirty --allow-staged
-	cargo clippy -q $(CARGO_LOCKED) --fix --allow-dirty --allow-staged
+	cargo fix $(CARGO_LOCKED) $(CARGO_FEATURES) --allow-dirty --allow-staged
+	cargo clippy -q $(CARGO_LOCKED) $(CARGO_FEATURES) --fix --allow-dirty --allow-staged
 
 
 .PHONY: build-container
