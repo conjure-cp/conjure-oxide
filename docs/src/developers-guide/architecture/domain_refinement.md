@@ -22,9 +22,12 @@ Currently all expressions contain the domain of the result of the expression. Th
 A final roadblock for this project is how to test it. In specific cases, where you know a refinement has occurred, you can use Conjure-Oxide Pretty’s new expression-domains option to view all domains in the model. However, for a more comprehensive testing you need a large number of test cases. One consideration was using a LLM to generate these cases. As of Dec-2025 the free AI models included in APIs were not capable of doing this at scale. 
 
 ## What Has Been Done So Far
+To aid with explainability and debugging while tightening the domains, an option has been added to Conjure-Oxide Pretty to print out the domains of all expressions as a trace. This can be accessed using `--output-format=expression-domains` and when combined with custom tests can effectively test the domain refinement.
+
 Before work on the consistency algorithm could have began it was important that the domain of expressions is actually fully-tightened. This will allow for maximum inference. As such, all work up to this point has been focused on tightening the domains returned from the `Expression::domain_of()` function.
 
 ### Set Operators
+The intersect and union set expressions have been tightened, such that both the domain and the set attributes which are returned are optimal.
 
 ### Function Operators
 The operators on functions have a lot of potential to be tightened due to them resulting in sets and functions. These operators include `defined`, `range`, `imageSet`, `preimage`, and `restrict`. For a function domain we can infer information from both its attributes and the length of its domain and codomain. 
@@ -40,9 +43,6 @@ Whilst these conditions are specific to defined as an operator, similarly logic 
 
 There is however, one currently known limitation, so the results are not always completely minimal. We cannot guarantee a domain is ground and the lengths are known, so there are specific cases where we could infer simple bounds based on domain size, but the added complexity is not worth it in individual parts of the code. In these cases, the size is left as UnboundedR. Instead of adding these extra checks, I propose a separate small project could be to add the inferred domain size of a function as size attributes to that function, when the domain lengths are first known as ground. This means we do not need to separately check the domain size every time.
 
-### Partition Operators
-There are 5 operators for Partitions, three return sets (`Parts`, `Party`, `Participants`) and two return booleans (`Together`, `Apart`). The current implementations of these may be improved upon, and have just been added as a part of supporting the Partition type.
-
 ### Sequence Operators
 There are 2 operators for Sequences (`Subsequence`, `Substring`), and booth return booleans. They are both of the form `s sub.. t`, where `s` must occur in `t`. You can conclude that either a `Subsequence` or `Substring` is definitively false if `s` is strictly larger than `t`, but as of writing this documentation there is no mechanism to 'restrict' the domain of a boolean to being strictly true or false.
 
@@ -55,7 +55,6 @@ s subsequence t
 - You can alter the attribute of `s` such that it has a maximum size of 4 (it cannot be longer than `t`)
 - You can alter the attributes of `t` such that it has a minimum size of 3 (it cannot be shorter than `s`)
 This was quickly attempted in [PR #1786](https://github.com/conjure-cp/conjure-oxide/pull/1786) just for experimentation, but was abandoned because there was not a clear way of mutating the state inside the `Moo` - after all, the Moo exists to stop that from happening. 
-
 
 ### Cardinality Operator
 One other operator which can be tightened is the cardinality operator. As opposed to returning an unbounded integer, we can make inferences on the maximum size of a type using its attributes and domain length. This inference is also limited by the domains being ground. When the domains are ground, we can get an exact length for matrices, and a tightened bound for the size of set, multisets, relations and functions using their attributes.
