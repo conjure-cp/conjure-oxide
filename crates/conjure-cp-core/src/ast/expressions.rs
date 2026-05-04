@@ -34,7 +34,7 @@ use super::categories::{Category, CategoryOf};
 use super::comprehension::Comprehension;
 use super::domains::HasDomain as _;
 use super::pretty::{pretty_expressions_as_top_level, pretty_vec};
-use super::records::RecordValue;
+use super::records::FieldValue;
 use super::sat_encoding::SATIntEncoding;
 use super::{
     AbstractLiteral, Atom, DeclarationPtr, Domain, DomainPtr, GroundDomain, IntVal, JectivityAttr,
@@ -84,8 +84,8 @@ static_assertions::assert_eq_size!([u8; 112], Expression);
 #[biplate(to=Metadata)]
 #[biplate(to=Name)]
 #[biplate(to=Option<Expression>)]
-#[biplate(to=RecordValue<Expression>)]
-#[biplate(to=RecordValue<Literal>)]
+#[biplate(to=FieldValue<Expression>)]
+#[biplate(to=FieldValue<Literal>)]
 #[biplate(to=Reference)]
 #[biplate(to=Model)]
 #[biplate(to=SymbolTable)]
@@ -248,6 +248,16 @@ pub enum Expression {
 
     #[compatible(JsonInput, SMT)]
     Lt(Metadata, Moo<Expression>, Moo<Expression>),
+
+    /// `s subsequence t` tests whether the list of values taken by s occurs in the same order
+    /// in the list of values taken by t
+    #[compatible(JsonInput)]
+    Subsequence(Metadata, Moo<Expression>, Moo<Expression>),
+
+    /// `s substring t` tests whether the list of values taken by s occurs in the same order
+    /// and contiguously in the list of values taken by t
+    #[compatible(JsonInput)]
+    Substring(Metadata, Moo<Expression>, Moo<Expression>),
 
     /// Division after preventing division by zero, usually with a bubble
     #[compatible(SMT)]
@@ -597,6 +607,11 @@ pub enum Expression {
     /// Low-level minion constraint. See Expression::LexLeq
     FlatLexLeq(Metadata, Vec<Atom>, Vec<Atom>),
 
+    /// To tell which field is used in a variant domain
+    #[compatible(JsonInput)]
+    Active(Metadata, Moo<Expression>, Moo<Expression>),
+
+    /// Alters the shape of relations by projection
     #[compatible(JsonInput)]
     RelationProj(Metadata, Moo<Expression>, Vec<Option<Expression>>),
 }
@@ -728,7 +743,7 @@ impl Expression {
             Expression::Metavar(_, _) => None,
             Expression::Comprehension(_, comprehension) => comprehension.domain_of(),
             Expression::AbstractComprehension(_, comprehension) => comprehension.domain_of(),
-            Expression::UnsafeIndex(_, matrix, _) | Expression::SafeIndex(_, matrix, _) => {
+            Expression::UnsafeIndex(_, matrix, index) | Expression::SafeIndex(_, matrix, index) => {
                 let dom = matrix.domain_of()?;
                 if let Some((elem_domain, _)) = dom.as_matrix() {
                     return Some(elem_domain);
@@ -741,11 +756,20 @@ impl Expression {
                     return None;
                 }
 
-                // may actually use the value in the future
-                #[allow(clippy::redundant_pattern_matching)]
-                if let Some(_) = dom.as_record() {
-                    // TODO: We can implement proper indexing for records
-                    return None;
+                if let Some(doms) = dom.as_variant().or(dom.as_record()) {
+                    let index_expr = index.first()?;
+                    return match index_expr {
+                        Expression::Atomic(_, atom) => {
+                            let decl = atom.clone().into_declaration();
+                            for inner_dom in doms {
+                                if *decl.name() == inner_dom.name {
+                                    return Some(inner_dom.domain);
+                                }
+                            }
+                            None
+                        }
+                        _ => None,
+                    };
                 }
 
                 bug!("subject of an index operation should support indexing")
@@ -1235,6 +1259,8 @@ impl Expression {
                 };
                 Some(Domain::function(new_attrs, new_dom, codom.clone()))
             }
+            Expression::Subsequence(_, _, _) => Some(Domain::bool()),
+            Expression::Substring(_, _, _) => Some(Domain::bool()),
             Expression::Inverse(..) => Some(Domain::bool()),
             Expression::LexLt(..) => Some(Domain::bool()),
             Expression::LexLeq(..) => Some(Domain::bool()),
@@ -1242,6 +1268,7 @@ impl Expression {
             Expression::LexGeq(..) => Some(Domain::bool()),
             Expression::FlatLexLt(..) => Some(Domain::bool()),
             Expression::FlatLexLeq(..) => Some(Domain::bool()),
+            Expression::Active(..) => Some(Domain::bool()),
             Expression::ToSet(_, other) => {
                 if let Some((attrs, dom, codom)) = other.domain_of()?.as_function() {
                     let set_attrs = SetAttr { size: attrs.size };
@@ -1413,10 +1440,13 @@ impl Expression {
             FlatLexLeq,
             NegativeTable,
             Table,
+            Active,
             ToSet,
             ToMSet,
             ToRelation,
             RelationProj,
+            Subsequence,
+            Substring,
         )
     }
 
@@ -1870,6 +1900,12 @@ impl Display for Expression {
             Expression::SafePow(_, box1, box2) => {
                 write!(f, "SafePow({}, {})", box1.clone(), box2.clone())
             }
+            Expression::Subsequence(_, s, t) => {
+                write!(f, "{} subsequence {}", s.clone(), t.clone())
+            }
+            Expression::Substring(_, s, t) => {
+                write!(f, "{} substring {}", s.clone(), t.clone())
+            }
             Expression::MinionDivEqUndefZero(_, box1, box2, box3) => {
                 write!(
                     f,
@@ -1996,6 +2032,9 @@ impl Display for Expression {
             Expression::FlatLexLeq(_, a, b) => {
                 write!(f, "FlatLexLeq({}, {})", pretty_vec(a), pretty_vec(b))
             }
+            Expression::Active(_, variant, field_name) => {
+                write!(f, "active({variant}, {field_name})")
+            }
             Expression::ToSet(_, other) => write!(f, "toSet({other})"),
             Expression::ToMSet(_, other) => write!(f, "toMSet({other})"),
             Expression::ToRelation(_, function) => write!(f, "toRelation({function})"),
@@ -2046,7 +2085,9 @@ impl Typeable for Expression {
                         elem_typ
                     }
                     // TODO: We can implement indexing for these eventually
-                    ReturnType::Record(_) | ReturnType::Tuple(_) => ReturnType::Unknown,
+                    ReturnType::Record(_) | ReturnType::Tuple(_) | ReturnType::Variant(_) => {
+                        ReturnType::Unknown
+                    }
                     _ => bug!(
                         "Invalid indexing operation: expected the operand to be a collection, got {self}: {subject_ty}"
                     ),
@@ -2194,6 +2235,7 @@ impl Typeable for Expression {
             Expression::LexGeq(..) => ReturnType::Bool,
             Expression::FlatLexLt(..) => ReturnType::Bool,
             Expression::FlatLexLeq(..) => ReturnType::Bool,
+            Expression::Active(..) => ReturnType::Bool,
             Expression::ToSet(_, other) => {
                 let subject = other.return_type();
                 match subject {
@@ -2259,6 +2301,8 @@ impl Typeable for Expression {
                     ),
                 }
             }
+            Expression::Subsequence(_, _, _) => ReturnType::Bool,
+            Expression::Substring(_, _, _) => ReturnType::Bool,
         }
     }
 }
@@ -2284,11 +2328,19 @@ impl Expression {
                         f(&r.value);
                     }
                 }
+                AbstractLiteral::Sequence(v) => {
+                    for expr in v {
+                        f(expr);
+                    }
+                }
                 AbstractLiteral::Function(vs) => {
                     for (a, b) in vs {
                         f(a);
                         f(b);
                     }
+                }
+                AbstractLiteral::Variant(v) => {
+                    f(&v.value);
                 }
                 AbstractLiteral::Relation(vs) => {
                     for exprs in vs {
@@ -2362,7 +2414,10 @@ impl Expression {
             | Expression::LexLt(_, m1, m2)
             | Expression::LexLeq(_, m1, m2)
             | Expression::LexGt(_, m1, m2)
-            | Expression::LexGeq(_, m1, m2) => {
+            | Expression::LexGeq(_, m1, m2)
+            | Expression::Active(_, m1, m2)
+            | Expression::Subsequence(_, m1, m2)
+            | Expression::Substring(_, m1, m2) => {
                 f(m1);
                 f(m2);
             }
@@ -2470,7 +2525,10 @@ impl CacheHashable for Expression {
         match self {
             // Special Case
             Expression::AbstractLiteral(_, alit) => match alit {
-                AbstractLiteral::Set(v) | AbstractLiteral::MSet(v) | AbstractLiteral::Tuple(v) => {
+                AbstractLiteral::Set(v)
+                | AbstractLiteral::MSet(v)
+                | AbstractLiteral::Tuple(v)
+                | AbstractLiteral::Sequence(v) => {
                     for expr in v {
                         expr.get_cached_hash().hash(&mut hasher);
                     }
@@ -2492,6 +2550,10 @@ impl CacheHashable for Expression {
                         a.get_cached_hash().hash(&mut hasher);
                         b.get_cached_hash().hash(&mut hasher);
                     }
+                }
+                AbstractLiteral::Variant(v) => {
+                    v.name.hash(&mut hasher);
+                    v.value.get_cached_hash().hash(&mut hasher);
                 }
                 AbstractLiteral::Relation(v) => {
                     for exprs in v {
@@ -2565,7 +2627,10 @@ impl CacheHashable for Expression {
             | Expression::LexLt(_, m1, m2)
             | Expression::LexLeq(_, m1, m2)
             | Expression::LexGt(_, m1, m2)
-            | Expression::LexGeq(_, m1, m2) => {
+            | Expression::LexGeq(_, m1, m2)
+            | Expression::Active(_, m1, m2)
+            | Expression::Subsequence(_, m1, m2)
+            | Expression::Substring(_, m1, m2) => {
                 m1.get_cached_hash().hash(&mut hasher);
                 m2.get_cached_hash().hash(&mut hasher);
             }

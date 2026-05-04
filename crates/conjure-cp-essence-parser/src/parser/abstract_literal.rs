@@ -41,6 +41,7 @@ fn typecheck_abstract_literal(ctx: &mut ParseContext, node: &Node) -> bool {
         TypecheckingContext::Matrix => "matrix",
         TypecheckingContext::Tuple => "tuple",
         TypecheckingContext::Record => "record",
+        TypecheckingContext::Sequence => "sequence",
         TypecheckingContext::Unknown => "unknown",
     };
 
@@ -107,7 +108,7 @@ fn parse_record(
         ctx.inner_typechecking_context = ctx.typechecking_context;
         ctx.typechecking_context = saved_ctx;
 
-        values.push(conjure_cp_core::ast::records::RecordValue { name, value });
+        values.push(conjure_cp_core::ast::records::FieldValue { name, value });
     }
     Ok(Some(AbstractLiteral::Record(values)))
 }
