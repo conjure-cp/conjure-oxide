@@ -459,11 +459,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             }?;
 
             let mut intervals = intervals.iter();
-            loop {
-                let Some(lower) = intervals.next() else {
-                    break;
-                };
-
+            while let Some(lower) = intervals.next() {
                 let Some(upper) = intervals.next() else {
                     break;
                 };
