@@ -350,15 +350,9 @@ fn generate_malformed_line_message(line: usize, source: &str) -> String {
         "given" => "a given declaration statement",
         "where" => "an instantiation condition",
         "minimising" | "maximising" => "an objective statement",
-        "such" => {
-            // Check for invalid constraint statement
-            if second == "that" {
-                "a constraint statement"
-            } else {
-                "a valid top-level statement"
-            }
-        }
-
+        // Check for invalid constraint statement
+        "such" if second == "that" => "a constraint statement",
+        "such" => "a valid top-level statement",
         _ => {
             // Default case for unrecognized starting tokens
             "a valid top-level statement"
