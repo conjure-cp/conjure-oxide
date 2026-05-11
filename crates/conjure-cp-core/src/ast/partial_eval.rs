@@ -792,6 +792,7 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
         Expr::UnsafePow(_, _, _) => Err(RuleNotApplicable),
         Expr::SafePow(_, _, _) => Err(RuleNotApplicable),
         Expr::Minus(_, _, _) => Err(RuleNotApplicable),
+        Expr::Card(_, _) => todo!(),
 
         // As these are in a low level solver form, I'm assuming that these have already been
         // simplified and partially evaluated.
