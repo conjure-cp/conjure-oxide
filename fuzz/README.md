@@ -5,7 +5,7 @@ A fuzz tester from the [cargo fuzz library](https://rust-fuzz.github.io/book/int
 ### Usage
 Copy Essence files from seeds to corpus before running fuzz tester ```cp fuzz/seeds/* fuzz/corpus/{testname}/```
 
-Run `cargo fuzz run {testname}`, for example: `cargo fuzz run error_detector`
+Run `cargo fuzz run {testname}`, for example: `cargo fuzz run detect_errors -max_len=4096 -timeout=5`
 
 Minimise found error test cases with `cargo fuzz tmin {testname} fuzz/artifacts/{testname}/crash-{crashID}`
 
