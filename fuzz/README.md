@@ -3,7 +3,9 @@
 A fuzz tester from the [cargo fuzz library](https://rust-fuzz.github.io/book/introduction.html) that invokes [libFuzzer](https://llvm.org/docs/LibFuzzer.html), for testing robustness of target functions in `conjure-oxide`.
 
 ### Usage
-Copy Essence files from seeds to corpus before running fuzz tester ```cp fuzz/seeds/* fuzz/corpus/{testname}/```
+Create directory for test corpus file ``` mkdir fuzz/corpus/{test_name}```
+
+Copy Essence files from codebase to corpus before running fuzz tester ```find . -name "*.essence" -type f -exec cp {} fuzz/corpus/{test_name}/ \;```
 
 Run `cargo fuzz run {testname}`, for example: `cargo fuzz run detect_errors -- -max_len=4096 -max_total_time=3600`
 
