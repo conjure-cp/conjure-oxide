@@ -5,11 +5,14 @@ A fuzz tester from the [cargo fuzz library](https://rust-fuzz.github.io/book/int
 ### Usage
 Copy Essence files from seeds to corpus before running fuzz tester ```cp fuzz/seeds/* fuzz/corpus/{testname}/```
 
-Run `cargo fuzz run {testname}`, for example: `cargo fuzz run detect_errors -max_len=4096 -timeout=5`
+Run `cargo fuzz run {testname}`, for example: `cargo fuzz run detect_errors -max_len=4096 -max_total_time=3600`
 
 Minimise found error test cases with `cargo fuzz tmin {testname} fuzz/artifacts/{testname}/crash-{crashID}`
 
-Specify test limit using `-runs={number of runs}` or `-max_total_time={time limit}` flags
+To make the fuzzer stop manually, use the following limits:
+- Total iterations: `-runs=N`
+- Time (seconds): `-max_total_time=N`
+- Maximum input length: `-max_len=N`
 
 ### Licence
 
