@@ -71,6 +71,7 @@
         - [Expression Rewriting, Rules and Rule Sets](developers-guide/architecture/sets/expression-rewriting-rules-rulesets.md)
     - [Types]()
         - [Creating Types](developers-guide/architecture/types/creating-types.md)
+        - [Domains](developers-guide/architecture/types/domains.md)
         - [Functions](developers-guide/architecture/types/functions.md)
         - [Multisets](developers-guide/architecture/types/multisets.md)
         - [Relations](developers-guide/architecture/types/relations.md)
