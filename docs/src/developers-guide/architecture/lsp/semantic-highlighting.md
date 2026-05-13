@@ -39,7 +39,7 @@ The current mappings are shown below:
 | ValueLetting<br>TemporaryValueLetting<br>DomainLetting | LettingVar  | variable                  | variable.other.constant.lettingVar |
 | Given                                                  | GivenVar    | string                    | string.other.givenVar              |
 
-Additionally, `find` variables are visually emphasised because they represent the variables the solver is attempting to solve for. An underline style is therefore hardcoded in `package.json` for tokens classified as `FindVar`.
+Additionally, `find` variables are visually emphasised because they represent the variables the solver is attempting to solve for. An underline style is therefore hard-coded in `package.json` for tokens classified as `FindVar`.
 
 ### LSP Semantic Highlighting Handler
 
