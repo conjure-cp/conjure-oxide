@@ -13,7 +13,6 @@ fn main() {
         &[format!("{}/proto", base_path)],
     ).expect("failed to compile cp_model.proto");
 
-    // Compilazione Bridge C++ (Integrazione Nativa)
     cxx_build::bridge(format!("{}/mod.rs", base_path))
             .file(format!("{}/wrapper.cpp", base_path))
             .include("/usr/include") 
