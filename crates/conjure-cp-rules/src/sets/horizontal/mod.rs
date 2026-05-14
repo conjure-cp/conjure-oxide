@@ -8,3 +8,4 @@ mod supset;
 mod supseteq;
 mod in_rule;
 mod union;
+mod intersect;
