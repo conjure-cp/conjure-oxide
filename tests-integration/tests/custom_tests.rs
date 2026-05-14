@@ -1,13 +1,20 @@
 use pretty_assertions::assert_eq;
 use std::borrow::Cow;
-use std::env;
+use std::collections::BTreeSet;
 use std::error::Error;
 use std::fs;
+use std::path::Path;
 use std::path::PathBuf;
 use std::process::Command;
+use std::time::Instant;
+use tests_integration::AcceptMode;
+use tests_integration::golden_files::assert_no_redundant_expected_files;
+use tests_integration::test_config::{round_expected_time, upsert_expected_time_config};
 
 pub fn custom_test(test_dir: &str) -> Result<(), Box<dyn Error>> {
-    let accept = env::var("ACCEPT").unwrap_or("false".to_string()) == "true";
+    let accept_mode = AcceptMode::from_env();
+    let accept = accept_mode.accepts_outputs();
+    let started_at = Instant::now();
 
     // Convert test directory to a PathBuf
     let test_path = PathBuf::from(test_dir);
@@ -28,7 +35,7 @@ pub fn custom_test(test_dir: &str) -> Result<(), Box<dyn Error>> {
     // Execute the test script in the correct directory
     let output = Command::new("sh")
         .arg("run.sh")
-        .current_dir(test_path)
+        .current_dir(&test_path)
         .output()?;
 
     // Convert captured output/error to string
@@ -37,8 +44,8 @@ pub fn custom_test(test_dir: &str) -> Result<(), Box<dyn Error>> {
 
     if accept {
         // Overwrite expected files
-        update_file(expected_output_path, actual_output)?;
-        update_file(expected_error_path, actual_error)?;
+        update_file(expected_output_path, &actual_output)?;
+        update_file(expected_error_path, &actual_error)?;
     } else {
         // Compare results
         let expected_output = if expected_output_path.exists() {
@@ -56,12 +63,20 @@ pub fn custom_test(test_dir: &str) -> Result<(), Box<dyn Error>> {
         assert_eq!(expected_output, actual_output, "Standard output mismatch");
     }
 
+    let allowed_expected_files = expected_custom_files_for_case(&actual_output, &actual_error);
+    assert_no_redundant_expected_files(Path::new(&test_path), &allowed_expected_files, None)?;
+
+    if accept_mode.records_expected_time() {
+        let expected_time = round_expected_time(started_at.elapsed());
+        upsert_expected_time_config(&test_path.join("config.toml"), expected_time)?;
+    }
+
     Ok(())
 }
 
 fn update_file(
     expected_file_path: PathBuf,
-    actual_output: Cow<'_, str>,
+    actual_output: &Cow<'_, str>,
 ) -> Result<(), Box<dyn Error>> {
     if expected_file_path.exists() {
         fs::remove_file(&expected_file_path)?;
@@ -71,6 +86,21 @@ fn update_file(
         fs::write(&expected_file_path, actual_output.as_bytes())?;
     }
     Ok(())
+}
+
+/// Returns the expected snapshot files for the observed custom test output.
+fn expected_custom_files_for_case(
+    stdout: &Cow<'_, str>,
+    stderr: &Cow<'_, str>,
+) -> BTreeSet<String> {
+    let mut expected_files = BTreeSet::new();
+    if !stdout.trim().is_empty() {
+        expected_files.insert("stdout.expected".to_string());
+    }
+    if !stderr.trim().is_empty() {
+        expected_files.insert("stderr.expected".to_string());
+    }
+    expected_files
 }
 
 #[test]

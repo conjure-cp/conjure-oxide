@@ -9,6 +9,7 @@ pub type SpanId = u32;
 #[derive(Debug, Clone)]
 pub struct HoverInfo {
     pub description: String,       // keyword description, type info...
+    pub doc_key: Option<String>,   // lazy-loaded docs/bits key for documentation hovers
     pub kind: Option<SymbolKind>,  // var, domain, function...
     pub ty: Option<String>,        // type info like int(0..10)
     pub decl_span: Option<SpanId>, // where declared (not sure that's doable)
@@ -53,9 +54,13 @@ pub fn alloc_span(
         hover_info,
     });
     // map byte offsets to span id (RangeMap handles lookup)
-    source_map
-        .by_byte
-        .insert(range.start_byte..range.end_byte, span_id);
+    // tree-sitter can generate zero-length ranges for missing tokens;
+    // avoid inserting empty ranges, which RangeMap rejects.
+    if range.start_byte < range.end_byte {
+        source_map
+            .by_byte
+            .insert(range.start_byte..range.end_byte, span_id);
+    }
     span_id
 }
 

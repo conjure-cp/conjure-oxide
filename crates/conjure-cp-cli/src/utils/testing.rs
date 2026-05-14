@@ -3,7 +3,7 @@ use std::fmt::Debug;
 use std::path::Path;
 use std::{io, mem, vec};
 
-use conjure_cp::ast::records::RecordValue;
+use conjure_cp::ast::records::FieldValue;
 use conjure_cp::ast::serde::ObjId;
 use conjure_cp::bug;
 use itertools::Itertools as _;
@@ -281,8 +281,8 @@ pub fn read_solutions_json(
     Ok(expected_solutions)
 }
 
-/// Reads a human-readable rule trace text file.
-pub fn read_human_rule_trace(
+/// Reads a default rule trace text file.
+pub fn read_default_rule_trace(
     path: &str,
     test_name: &str,
     prefix: &str,
@@ -377,14 +377,14 @@ pub fn normalize_solutions_for_comparison(
                                 let entries = entries
                                     .into_iter()
                                     .map(|x| {
-                                        let RecordValue { name, value } = x;
+                                        let FieldValue { name, value } = x;
                                         {
                                             let value = match value {
                                                 Literal::Bool(false) => Literal::Int(0),
                                                 Literal::Bool(true) => Literal::Int(1),
                                                 x => x,
                                             };
-                                            RecordValue { name, value }
+                                            FieldValue { name, value }
                                         }
                                     })
                                     .collect_vec();

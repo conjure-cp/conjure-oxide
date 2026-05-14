@@ -11,8 +11,8 @@ use std::collections::VecDeque;
 use uniplate::Uniplate;
 
 enum Command<T: Uniplate, M> {
-    Transform(Box<dyn FnOnce(T) -> T>),
-    MutMeta(Box<dyn FnOnce(&mut M)>),
+    Transform(Box<dyn FnOnce(T) -> T + Send>),
+    MutMeta(Box<dyn FnOnce(&mut M) + Send>),
 }
 
 /// A queue of commands (side-effects) to be applied after a successful rule application.
@@ -60,7 +60,7 @@ enum Command<T: Uniplate, M> {
 /// }
 ///
 /// // Start with the expression 'A' and a metadata value of 'false'
-/// let engine = EngineBuilder::new()
+/// let mut engine = EngineBuilder::new()
 ///     .add_rule_group(rule_fns![rule])
 ///     .build();
 /// let (result, meta) = engine.morph(Expr::A, false);
@@ -71,12 +71,14 @@ enum Command<T: Uniplate, M> {
 /// ```
 pub struct Commands<T: Uniplate, M> {
     commands: VecDeque<Command<T, M>>,
+    has_transform: bool,
 }
 
 impl<T: Uniplate, M> Commands<T, M> {
     pub(crate) fn new() -> Self {
         Self {
             commands: VecDeque::new(),
+            has_transform: false,
         }
     }
 
@@ -87,14 +89,15 @@ impl<T: Uniplate, M> Commands<T, M> {
     /// tree.
     ///
     /// Side-effects are applied in order of registration after the rule is applied.
-    pub fn transform(&mut self, f: Box<dyn FnOnce(T) -> T>) {
+    pub fn transform(&mut self, f: Box<dyn FnOnce(T) -> T + Send>) {
+        self.has_transform = true;
         self.commands.push_back(Command::Transform(f));
     }
 
     /// Updates the global metadata in-place via a mutable reference.
     ///
     /// Side-effects are applied in order of registration after the rule is applied.
-    pub fn mut_meta(&mut self, f: Box<dyn FnOnce(&mut M)>) {
+    pub fn mut_meta(&mut self, f: Box<dyn FnOnce(&mut M) + Send>) {
         self.commands.push_back(Command::MutMeta(f));
     }
 
@@ -116,5 +119,9 @@ impl<T: Uniplate, M> Commands<T, M> {
             }
         }
         (tree, transformed)
+    }
+
+    pub(crate) fn has_transform(&self) -> bool {
+        self.has_transform
     }
 }

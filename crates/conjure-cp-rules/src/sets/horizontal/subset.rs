@@ -7,7 +7,7 @@ use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, register_rule,
 };
 
-#[register_rule(("Base", 8700))]
+#[register_rule("Base", 8700, [Subset])]
 fn subset_to_subset_eq_neq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
         Expr::Subset(_, a, b)

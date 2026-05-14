@@ -338,6 +338,39 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             bin_op::<i32, i32>(|a, b| a - b * (a as f32 / b as f32).floor() as i32, a, b)
                 .map(Lit::Int)
         }
+        Expr::Substring(_, s, t) => match (s.as_ref(), t.as_ref()) {
+            (
+                Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Sequence(s)))),
+                Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Sequence(t)))),
+            ) => {
+                if s.len() > t.len() {
+                    return Some(Lit::Bool(false));
+                }
+
+                let found = t.windows(s.len()).any(|window| window == s.as_slice());
+                Some(Lit::Bool(found))
+            }
+            _ => None,
+        },
+        Expr::Subsequence(_, s, t) => match (s.as_ref(), t.as_ref()) {
+            (
+                Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Sequence(s)))),
+                Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Sequence(t)))),
+            ) => {
+                let mut i = 0;
+                let mut j = 0;
+
+                while i < s.len() && j < t.len() {
+                    if s[i] == t[j] {
+                        i += 1;
+                    }
+                    j += 1;
+                }
+
+                Some(Lit::Bool(i == s.len()))
+            }
+            _ => None,
+        },
         Expr::MinionDivEqUndefZero(_, a, b, c) => {
             // div always rounds down
             let a: i32 = a.try_into().ok()?;
@@ -426,11 +459,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             }?;
 
             let mut intervals = intervals.iter();
-            loop {
-                let Some(lower) = intervals.next() else {
-                    break;
-                };
-
+            while let Some(lower) = intervals.next() {
                 let Some(upper) = intervals.next() else {
                     break;
                 };
@@ -492,15 +521,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             _ => None,
         },
         Expr::Factorial(_, _) => None,
-        Expr::Minus(_, a, b) => {
-            let a: &Atom = a.try_into().ok()?;
-            let a: i32 = a.try_into().ok()?;
-
-            let b: &Atom = b.try_into().ok()?;
-            let b: i32 = b.try_into().ok()?;
-
-            Some(Lit::Int(a - b))
-        }
+        Expr::Minus(_, a, b) => bin_op::<i32, i32>(|a, b| a - b, a, b).map(Lit::Int),
         Expr::FlatMinusEq(_, a, b) => {
             let a: i32 = a.try_into().ok()?;
             let b: i32 = b.try_into().ok()?;
@@ -601,6 +622,17 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         Expr::PreImage(_, _, _) => todo!(),
         Expr::Inverse(_, _, _) => todo!(),
         Expr::Restrict(_, _, _) => todo!(),
+        Expr::Active(_, _, _) => todo!(),
+        Expr::ToSet(_, _) => todo!(),
+        Expr::ToMSet(_, _) => todo!(),
+        Expr::ToRelation(_, _) => todo!(),
+        Expr::RelationProj(_, _, _) => todo!(),
+        Expr::Apart(_, _, _) => todo!(),
+        Expr::Together(_, _, _) => todo!(),
+        Expr::Participants(_, _) => todo!(),
+        Expr::Party(_, _, _) => todo!(),
+        Expr::Parts(_, _) => todo!(),
+        Expr::Card(_, _) => todo!(),
         Expr::LexLt(_, a, b) => {
             let lt = vec_expr_pairs_op::<i32, _>(a, b, |pairs, (a_len, b_len)| {
                 pairs
@@ -817,7 +849,8 @@ fn eval_comprehension_qualifiers(
             }
         }
         ComprehensionQualifier::ExpressionGenerator { ptr } => {
-            let expr = ptr.as_quantified_expr()?;
+            // clone immediately so the read lock guard is dropped
+            let expr = ptr.as_quantified_expr()?.clone();
             let generator_values = generator_values_from_expr(&expr)?;
 
             for value in generator_values {

@@ -7,6 +7,7 @@ use conjure_cp::settings::{
     DEFAULT_MINION_DISCRETE_THRESHOLD, Parser as InputParser, QuantifiedExpander, Rewriter,
     SolverFamily,
 };
+use conjure_cp::solver::adaptors::MinionValueOrder;
 
 use crate::{pretty, solve, test_solve};
 
@@ -76,9 +77,23 @@ pub struct GlobalArgs {
     )]
     pub check_equally_applicable_rules: bool,
 
-    /// Output file for the human readable rule trace.
+    /// Output file for the default rule trace.
     #[arg(long, global = true, help_heading=LOGGING_HELP_HEADING)]
     pub rule_trace: Option<PathBuf>,
+
+    /// Output file for aggregated rule-application counts.
+    ///
+    /// The file is updated incrementally in the format:
+    /// `total_rule_applications: N`, followed by one line per rule.
+    #[arg(long, global = true, help_heading=LOGGING_HELP_HEADING)]
+    pub rule_trace_aggregates: Option<PathBuf>,
+
+    /// Continue rule trace generation during solver-time CDP rewrites.
+    ///
+    /// This is off by default, so follow-up dominance-blocking rewrites do not contribute to the
+    /// trace.
+    #[arg(long, default_value_t = false, global = true, help_heading=LOGGING_HELP_HEADING)]
+    pub rule_trace_cdp: bool,
 
     /// Output file for verbose rule-attempt trace in CSV format.
     ///
@@ -106,7 +121,7 @@ pub struct GlobalArgs {
 
     /// Which rewriter to use.
     ///
-    /// Possible values: `naive`, `morph`.
+    /// Possible values: `naive`, `morph`
     #[arg(long, default_value_t = Rewriter::Naive, value_parser = parse_rewriter, global = true, help_heading = CONFIGURATION_HELP_HEADING)]
     pub rewriter: Rewriter,
 
@@ -148,6 +163,18 @@ pub struct GlobalArgs {
         help_heading = CONFIGURATION_HELP_HEADING
     )]
     pub minion_discrete_threshold: usize,
+
+    /// Override Minion value ordering.
+    ///
+    /// Possible values: `ascend`, `descend`, `random`.
+    #[arg(
+        long,
+        value_name = "ORDER",
+        value_parser = parse_minion_value_order,
+        global = true,
+        help_heading = CONFIGURATION_HELP_HEADING
+    )]
+    pub minion_valorder: Option<MinionValueOrder>,
 
     /// Save a solver input file to <filename>.
     ///
@@ -200,7 +227,7 @@ fn parse_comprehension_expander(input: &str) -> Result<QuantifiedExpander, Strin
 }
 
 fn parse_rewriter(input: &str) -> Result<Rewriter, String> {
-    input.parse()
+    input.parse::<Rewriter>()
 }
 
 fn parse_solver_family(input: &str) -> Result<SolverFamily, String> {
@@ -209,4 +236,15 @@ fn parse_solver_family(input: &str) -> Result<SolverFamily, String> {
 
 fn parse_parser(input: &str) -> Result<InputParser, String> {
     input.parse()
+}
+
+fn parse_minion_value_order(input: &str) -> Result<MinionValueOrder, String> {
+    match input {
+        "ascend" => Ok(MinionValueOrder::Ascend),
+        "descend" => Ok(MinionValueOrder::Descend),
+        "random" => Ok(MinionValueOrder::Random),
+        other => Err(format!(
+            "unknown minion value order '{other}', expected one of: ascend, descend, random"
+        )),
+    }
 }

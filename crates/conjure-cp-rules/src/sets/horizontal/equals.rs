@@ -10,7 +10,7 @@ use conjure_cp::rule_engine::{
 
 use Expression::{And, Eq, SubsetEq};
 
-#[register_rule(("Base", 8800))]
+#[register_rule("Base", 8800, [Eq])]
 fn eq_to_subset_eq(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
     match expr {
         Eq(_, a, b)

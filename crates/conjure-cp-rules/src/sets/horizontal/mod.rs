@@ -1,7 +1,9 @@
 mod concat;
+mod difference;
 mod equals;
 mod neq;
 mod subset;
+mod subseteq;
 mod supset;
 mod supseteq;
 mod in_rule;

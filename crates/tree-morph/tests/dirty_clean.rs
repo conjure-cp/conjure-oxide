@@ -1,70 +1,67 @@
-use std::sync::atomic::Ordering;
+use std::collections::HashMap;
 
-use std::sync::atomic::AtomicUsize;
+use tracing::info;
+use tracing_subscriber;
 use tree_morph::prelude::*;
+use tree_morph_macros::named_rule;
 use uniplate::Uniplate;
-
-static GLOBAL_RULE_CHECKS: AtomicUsize = AtomicUsize::new(0);
 
 #[derive(Debug, Clone, PartialEq, Eq, Uniplate)]
 #[uniplate()]
 enum Expr {
     Add(Box<Expr>, Box<Expr>),
     Mul(Box<Expr>, Box<Expr>),
-    Sub(Box<Expr>, Box<Expr>),
     Val(i32),
 }
 
-fn rule_eval_add(_: &mut Commands<Expr, Meta>, expr: &Expr, _: &Meta) -> Option<Expr> {
+#[named_rule("Eval Add")]
+fn rule_eval_add(cmd: &mut Commands<Expr, Meta>, expr: &Expr, _: &Meta) -> Option<Expr> {
     match expr {
         Expr::Add(a, b) => match (a.as_ref(), b.as_ref()) {
-            (Expr::Val(x), Expr::Val(y)) => Some(Expr::Val(x + y)),
+            (Expr::Val(x), Expr::Val(y)) => {
+                cmd.mut_meta(Box::new(|m: &mut Meta| m.num_applications += 1));
+                Some(Expr::Val(x + y))
+            }
             _ => None,
         },
         _ => None,
     }
 }
 
-fn rule_eval_mul(_: &mut Commands<Expr, Meta>, expr: &Expr, _: &Meta) -> Option<Expr> {
+#[named_rule("Eval Mul")]
+fn rule_eval_mul(cmd: &mut Commands<Expr, Meta>, expr: &Expr, _: &Meta) -> Option<Expr> {
     match expr {
         Expr::Mul(a, b) => match (a.as_ref(), b.as_ref()) {
-            (Expr::Val(x), Expr::Val(y)) => Some(Expr::Val(x * y)),
+            (Expr::Val(x), Expr::Val(y)) => {
+                cmd.mut_meta(Box::new(|m: &mut Meta| m.num_applications += 1));
+                Some(Expr::Val(x * y))
+            }
             _ => None,
         },
         _ => None,
     }
 }
 
-enum MyRule {
-    EvalAdd,
-    EvalMul,
-}
-
+#[derive(Debug)]
 struct Meta {
     num_applications: u32,
-}
-
-impl Rule<Expr, Meta> for MyRule {
-    fn apply(&self, cmd: &mut Commands<Expr, Meta>, expr: &Expr, meta: &Meta) -> Option<Expr> {
-        cmd.mut_meta(Box::new(|m: &mut Meta| m.num_applications += 1)); // Only applied if successful
-        // THIS IS FOR TESTING ONLY
-        // Not meant to integrated into the main code.
-        GLOBAL_RULE_CHECKS.fetch_add(1, Ordering::Relaxed);
-        match self {
-            MyRule::EvalAdd => rule_eval_add(cmd, expr, meta),
-            MyRule::EvalMul => rule_eval_mul(cmd, expr, meta),
-        }
-    }
+    attempted: HashMap<String, usize>,
+    applicable: HashMap<String, usize>,
 }
 
 #[test]
 fn left_branch_clean() {
+    // Initialize tracing subscriber to see trace output
+    let _ = tracing_subscriber::fmt()
+        .with_max_level(tracing::Level::TRACE)
+        .try_init();
+
     // Top Level is +
     // Left Branch has two Nested Subtractions which do not have any rules
     // So atoms
-    // Right brigh has Mul and Add which DO have rules
+    // Right branch has Mul and Add which DO have rules
     let expr = Expr::Add(
-        Box::new(Expr::Sub(
+        Box::new(Expr::Add(
             Box::new(Expr::Val(1)),
             Box::new(Expr::Val(1)),
             // Box::new(Expr::Sub(Box::new(Expr::Val(1)), Box::new(Expr::Val(2)))),
@@ -75,18 +72,38 @@ fn left_branch_clean() {
 
     let meta = Meta {
         num_applications: 0,
+        attempted: HashMap::new(),
+        applicable: HashMap::new(),
     };
 
-    let engine = EngineBuilder::new()
-        .add_rule_group(vec![MyRule::EvalAdd, MyRule::EvalMul])
+    let mut engine = EngineBuilder::new()
+        .add_rule_group(vec![rule_eval_add, rule_eval_mul])
+        .add_before_rule(|_, meta, rule| {
+            meta.num_applications += 1;
+            let attempt = meta.attempted.entry(rule.name().to_owned()).or_insert(0);
+            *attempt += 1
+        })
+        .add_after_rule(|_, meta, rule, success| {
+            if success {
+                let attempt = meta.applicable.entry(rule.name().to_owned()).or_insert(0);
+                *attempt += 1
+            }
+        })
+        .add_after_apply(|_, _, rule| info!("FROM TESTING: APPLYING RULE '{}'", rule.name()))
         .build();
     let (expr, meta) = engine.morph(expr, meta);
 
-    println!("RAN TESTS");
-    println!("Number of applications: {}", meta.num_applications);
-    println!(
-        "Number of Rule Application Checks {}",
-        GLOBAL_RULE_CHECKS.load(Ordering::Relaxed)
-    );
+    for name in meta.attempted.keys() {
+        let attempted = *meta.attempted.get(name).unwrap();
+        let applicable = *meta.applicable.get(name).unwrap_or(&0);
+        println!(
+            "Rule: {}: {}/{} ({:.2}%)",
+            name,
+            applicable,
+            attempted,
+            applicable / attempted
+        )
+    }
+
     dbg!(expr);
 }

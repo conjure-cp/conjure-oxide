@@ -6,11 +6,11 @@ find z: int(-1..1)
 
 such that
 
-(x = UnsafeDiv(-(UnsafeDiv(y, z)), z))
+(x = (-((y / z)) / z))
 
 --
 
-UnsafeDiv(y, z), 
+(y / z), 
    ~~> div_to_bubble ([("Bubble", 6000)])
 {SafeDiv(y, z) @ (z != 0)}
 
@@ -22,32 +22,32 @@ UnsafeDiv(y, z),
 
 --
 
-UnsafeDiv({-(SafeDiv(y, z)) @ (z != 0)}, z), 
+({-(SafeDiv(y, z)) @ (z != 0)} / z), 
    ~~> bubble_up ([("Bubble", 8800)])
-{UnsafeDiv(-(SafeDiv(y, z)), z) @ (z != 0)}
+{(-(SafeDiv(y, z)) / z) @ (z != 0)}
 
 --
 
-(x = {UnsafeDiv(-(SafeDiv(y, z)), z) @ (z != 0)}), 
+(x = {(-(SafeDiv(y, z)) / z) @ (z != 0)}), 
    ~~> bubble_up ([("Bubble", 8800)])
-{(x = UnsafeDiv(-(SafeDiv(y, z)), z)) @ (z != 0)}
+{(x = (-(SafeDiv(y, z)) / z)) @ (z != 0)}
 
 --
 
-{(x = UnsafeDiv(-(SafeDiv(y, z)), z)) @ (z != 0)}, 
+{(x = (-(SafeDiv(y, z)) / z)) @ (z != 0)}, 
    ~~> expand_bubble ([("Bubble", 8900)])
-and([(x = UnsafeDiv(-(SafeDiv(y, z)), z)),(z != 0);int(1..)])
+and([(x = (-(SafeDiv(y, z)) / z)),(z != 0);int(1..)])
 
 --
 
-and([(x = UnsafeDiv(-(SafeDiv(y, z)), z)),(z != 0);int(1..)]), 
+and([(x = (-(SafeDiv(y, z)) / z)),(z != 0);int(1..)]), 
    ~~> constant_evaluator ([("Constant", 9001)])
-(x = UnsafeDiv(-(SafeDiv(y, z)), z)),
+(x = (-(SafeDiv(y, z)) / z)),
 (z != 0)
 
 --
 
-UnsafeDiv(-(SafeDiv(y, z)), z), 
+(-(SafeDiv(y, z)) / z), 
    ~~> div_to_bubble ([("Bubble", 6000)])
 {SafeDiv(-(SafeDiv(y, z)), z) @ (z != 0)}
 

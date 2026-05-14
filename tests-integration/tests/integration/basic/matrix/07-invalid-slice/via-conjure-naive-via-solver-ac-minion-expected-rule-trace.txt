@@ -42,30 +42,30 @@ new variables:
 
 a#matrix_to_atom[..,1], 
    ~~> slice_to_bubble ([("Bubble", 6000)])
-a#matrix_to_atom[..,1]
+SafeSlice(a#matrix_to_atom,[..,1])
 
 --
 
 a#matrix_to_atom[..,3], 
    ~~> slice_to_bubble ([("Bubble", 6000)])
-{a#matrix_to_atom[..,3] @ false}
+{SafeSlice(a#matrix_to_atom,[..,3]) @ false}
 
 --
 
-allDiff({a#matrix_to_atom[..,3] @ false}), 
+allDiff({SafeSlice(a#matrix_to_atom,[..,3]) @ false}), 
    ~~> bubble_up ([("Bubble", 8800)])
-{allDiff(a#matrix_to_atom[..,3]) @ false}
+{allDiff(SafeSlice(a#matrix_to_atom,[..,3])) @ false}
 
 --
 
-{allDiff(a#matrix_to_atom[..,3]) @ false}, 
+{allDiff(SafeSlice(a#matrix_to_atom,[..,3])) @ false}, 
    ~~> expand_bubble ([("Bubble", 8900)])
-and([allDiff(a#matrix_to_atom[..,3]),false;int(1..)])
+and([allDiff(SafeSlice(a#matrix_to_atom,[..,3])),false;int(1..)])
 
 --
 
-allDiff(a#matrix_to_atom[..,1]),
-and([allDiff(a#matrix_to_atom[..,3]),false;int(1..)]),
+allDiff(SafeSlice(a#matrix_to_atom,[..,1])),
+and([allDiff(SafeSlice(a#matrix_to_atom,[..,3])),false;int(1..)]),
 allDiff(a#matrix_to_atom[1,..]),
 allDiff(a#matrix_to_atom[2,..]),
 allDiff(a#matrix_to_atom[3,..]),

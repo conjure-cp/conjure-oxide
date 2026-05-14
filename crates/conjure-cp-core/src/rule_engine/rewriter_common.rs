@@ -8,6 +8,9 @@ use crate::ast::{
     DeclarationPtr, Expression, Model, Name, SymbolTable,
     pretty::{pretty_variable_declaration, pretty_vec},
 };
+use crate::settings::{
+    default_rule_trace_enabled, rule_trace_aggregates_enabled, rule_trace_enabled,
+};
 
 use itertools::Itertools;
 use serde_json::json;
@@ -66,83 +69,92 @@ pub fn log_rule_application(
         red.new_expression
     );
 
-    // empty if no top level constraints
-    let new_constraints_str = if !red.new_top.is_empty() {
-        let mut exprs: Vec<String> = vec![];
-        for expr in &red.new_top {
-            exprs.push(format!("  {expr}"));
-        }
-        let exprs = exprs.iter().join("\n");
-        format!("new constraints:\n{exprs}\n")
-    } else if !red.new_clauses.is_empty() {
-        let mut exprs: Vec<String> = vec![];
-        for clause in &red.new_clauses {
-            exprs.push(format!("  {clause}"));
-        }
-        let exprs = exprs.iter().join("\n");
-        format!("new clauses:\n{exprs}\n")
-    } else {
-        String::new()
-    };
-
-    let (new_variables_str, updated_variables_str) =
-        if let Some((before, after)) = variable_declaration_snapshots {
-            let mut new_variables = Vec::new();
-            let mut updated_variables = Vec::new();
-
-            for (name, declaration_after) in after {
-                match before.get(name) {
-                    None => new_variables.push(format!("  {declaration_after}")),
-                    Some(declaration_before) if declaration_before != declaration_after => {
-                        updated_variables
-                            .push(format!("  {declaration_before} ~~> {declaration_after}"));
-                    }
-                    _ => {}
-                }
+    if rule_trace_enabled() && default_rule_trace_enabled() {
+        let new_constraints_str = if !red.new_top.is_empty() {
+            let mut exprs: Vec<String> = vec![];
+            for expr in &red.new_top {
+                exprs.push(format!("  {expr}"));
             }
-
-            let new_variables_str = if new_variables.is_empty() {
-                String::new()
-            } else {
-                format!("new variables:\n{}\n", new_variables.join("\n"))
-            };
-
-            let updated_variables_str = if updated_variables.is_empty() {
-                String::new()
-            } else {
-                format!("\nupdated variables:\n{}\n", updated_variables.join("\n"))
-            };
-
-            (new_variables_str, updated_variables_str)
+            let exprs = exprs.iter().join("\n");
+            format!("new constraints:\n{exprs}\n")
+        } else if !red.new_clauses.is_empty() {
+            let mut exprs: Vec<String> = vec![];
+            for clause in &red.new_clauses {
+                exprs.push(format!("  {clause}"));
+            }
+            let exprs = exprs.iter().join("\n");
+            format!("new clauses:\n{exprs}\n")
         } else {
-            // empty if no new variables
-            let mut vars: Vec<String> = vec![];
-            for var_name in red.added_symbols(initial_symbols) {
-                #[allow(clippy::unwrap_used)]
-                vars.push(format!(
-                    "  {}",
-                    pretty_variable_declaration(&red.symbols, &var_name).unwrap()
-                ));
-            }
-            let new_variables_str = if vars.is_empty() {
-                String::new()
-            } else {
-                format!("new variables:\n{}\n", vars.join("\n"))
-            };
-            (new_variables_str, String::new())
+            String::new()
         };
 
-    trace!(
-        target: "rule_engine_human",
-        "{}, \n   ~~> {} ({:?})\n{}\n{}{}{}\n--\n",
-        initial_expression,
-        rule.name,
-        rule.rule_sets,
-        red.new_expression,
-        new_variables_str,
-        updated_variables_str,
-        new_constraints_str
-    );
+        let (new_variables_str, updated_variables_str) =
+            if let Some((before, after)) = variable_declaration_snapshots {
+                let mut new_variables = Vec::new();
+                let mut updated_variables = Vec::new();
+
+                for (name, declaration_after) in after {
+                    match before.get(name) {
+                        None => new_variables.push(format!("  {declaration_after}")),
+                        Some(declaration_before) if declaration_before != declaration_after => {
+                            updated_variables
+                                .push(format!("  {declaration_before} ~~> {declaration_after}"));
+                        }
+                        _ => {}
+                    }
+                }
+
+                let new_variables_str = if new_variables.is_empty() {
+                    String::new()
+                } else {
+                    format!("new variables:\n{}\n", new_variables.join("\n"))
+                };
+
+                let updated_variables_str = if updated_variables.is_empty() {
+                    String::new()
+                } else {
+                    format!("\nupdated variables:\n{}\n", updated_variables.join("\n"))
+                };
+
+                (new_variables_str, updated_variables_str)
+            } else {
+                // empty if no new variables
+                let mut vars: Vec<String> = vec![];
+                for var_name in red.added_symbols(initial_symbols) {
+                    #[allow(clippy::unwrap_used)]
+                    vars.push(format!(
+                        "  {}",
+                        pretty_variable_declaration(&red.symbols, &var_name).unwrap()
+                    ));
+                }
+                let new_variables_str = if vars.is_empty() {
+                    String::new()
+                } else {
+                    format!("new variables:\n{}\n", vars.join("\n"))
+                };
+                (new_variables_str, String::new())
+            };
+
+        trace!(
+            target: "rule_engine_rule_trace",
+            "{}, \n   ~~> {} ({:?})\n{}\n{}{}{}\n--\n",
+            initial_expression,
+            rule.name,
+            rule.rule_sets,
+            red.new_expression,
+            new_variables_str,
+            updated_variables_str,
+            new_constraints_str
+        );
+    }
+
+    if rule_trace_enabled() && rule_trace_aggregates_enabled() {
+        trace!(
+            target: "rule_engine_rule_trace_aggregates",
+            rule_name = rule.name,
+            "Applied rule"
+        );
+    }
 
     trace!(
         target: "rule_engine",

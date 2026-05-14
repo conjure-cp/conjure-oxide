@@ -7,16 +7,16 @@ use ApplicationError::{DomainError, RuleNotApplicable};
 
 use itertools::Itertools as _;
 
-#[register_rule(("Base", 9000))]
+#[register_rule("Base", 9000, [LexGt, LexGeq])]
 fn normalise_lex_gt_geq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
         Expr::LexGt(metadata, a, b) => Ok(Reduction::pure(Expr::LexLt(
-            metadata.clone_dirty(),
+            metadata.clone(),
             b.clone(),
             a.clone(),
         ))),
         Expr::LexGeq(metadata, a, b) => Ok(Reduction::pure(Expr::LexLeq(
-            metadata.clone_dirty(),
+            metadata.clone(),
             b.clone(),
             a.clone(),
         ))),
@@ -32,7 +32,7 @@ fn normalise_lex_gt_geq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// - [a,b,c,d] <=lex [e,f,g] <-> [a,b,c] <lex [d,e,f]
 /// - [a,b,c] <lex [d,e,f,g] <-> [a,b,c] <=lex [d,e,f]
 /// - Everything else stays the same, with the longer matrix being chopped off
-#[register_rule(("Minion", 2000))]
+#[register_rule("Minion", 2000, [LexLt, LexLeq])]
 fn flatten_lex_lt_leq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (a, b) = match expr {
         Expr::LexLt(_, a, b) | Expr::LexLeq(_, a, b) => (
@@ -90,7 +90,7 @@ fn flatten_lex_lt_leq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// If they are the same length, then the strictness of the comparison comes into effect.
 ///
 /// Must be applied before matrix_to_list since this enumerates over operand indices.
-#[register_rule(("Smt", 2001))]
+#[register_rule("Smt", 2001, [LexLt, LexLeq])]
 fn expand_lex_lt_leq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (a, b) = match expr {
         Expr::LexLt(_, a, b) | Expr::LexLeq(_, a, b) => (a, b),

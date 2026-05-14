@@ -5,7 +5,8 @@ use std::collections::HashSet;
 use tree_sitter::Node;
 
 /// Returns the absolute byte offset of the start of `row` in `source`.
-fn line_start_byte(source: &[u8], row: usize) -> usize {
+/// TODO: move to a separate module like utils, we don't want semantic tokens to depend on parser internals
+pub fn line_start_byte(source: &[u8], row: usize) -> usize {
     let mut current_row = 0usize;
     let mut line_start = 0usize;
     for (idx, b) in source.iter().enumerate() {
@@ -181,7 +182,7 @@ fn classify_missing_token(node: Node, source: &str) -> RecoverableParseError {
 
     let message = if let Some(parent) = node.parent() {
         match parent.kind() {
-            "letting_statement" => "Missing Expression or Domain".to_string(),
+            "letting_variable_declaration" => "Missing Expression or Domain".to_string(),
             _ => format!("Missing {}", user_friendly_token_name(node.kind(), false)),
         }
     } else {
@@ -229,20 +230,78 @@ fn classify_unexpected_token_error(node: Node, source_code: &str) -> Recoverable
 
 /// Determines if an error node represents a malformed line error.
 pub fn is_malformed_line_error(node: &tree_sitter::Node, source: &str) -> bool {
-    if node.start_position().column == 0 || error_node_out_of_range(node, source) {
-        return true;
-    }
     let parent = node.parent();
     let grandparent = parent.and_then(|n| n.parent());
     let root = grandparent.and_then(|n| n.parent());
 
-    if let (Some(parent), Some(grandparent), Some(root)) = (parent, grandparent, root) {
-        parent.kind() == "set_comparison"
-            && grandparent.kind() == "comparison_expr"
-            && root.kind() == "program"
-    } else {
-        false
+    if let (Some(parent), Some(grandparent), Some(root)) = (parent, grandparent, root)
+        && parent.kind() == "set_comparison"
+        && grandparent.kind() == "comparison_expr"
+        && root.kind() == "program"
+    {
+        return true;
     }
+
+    // check parent kinds to see if the error is a constraint continuation
+    let mut curr = node.parent();
+    while let Some(n) = curr {
+        let kind = n.kind();
+        if matches!(
+            kind,
+            "find_statement"
+                | "given_statement"
+                | "letting_statement"
+                | "dominance_relation"
+                | "bool_expr"
+                | "comparison_expr"
+                | "arithmetic_expr"
+                | "atom"
+        ) {
+            return false;
+        }
+        curr = n.parent();
+    }
+
+    // check for the first non-whitespace character on the line before the error node
+    let line = source.lines().nth(node.start_position().row).unwrap_or("");
+    let first_non_witespace = line
+        .as_bytes()
+        .iter()
+        .take_while(|b| b.is_ascii_whitespace())
+        .count();
+
+    // if the error node is before or at the first non-whitespace character, it's a malformed line error
+    // if the first non-whitespace character is after the error node, it could be a constraint continuation
+    if node.start_position().column <= first_non_witespace || error_node_out_of_range(node, source)
+    {
+        if first_non_witespace > 0 && is_constraint_continuation(source, node.start_position().row)
+        {
+            return false;
+        }
+        return true;
+    }
+    false
+}
+
+/// Checks if a line is a continuation of a constraint (i.e., it ends with a comma or has "such that" at the start).
+fn is_constraint_continuation(source: &str, row: usize) -> bool {
+    let lines: Vec<&str> = source.lines().collect();
+    if row == 0 {
+        return false;
+    }
+
+    let mut r = row;
+    while r > 0 {
+        r -= 1;
+        let line = lines.get(r).copied().unwrap_or("");
+        let line = line.split('$').next().unwrap_or("").trim_end();
+        if line.trim().is_empty() {
+            continue;
+        }
+        let lower = line.trim_start().to_ascii_lowercase();
+        return lower.starts_with("such that") || line.ends_with(',');
+    }
+    false
 }
 
 /// Coverts a token name into a more user-friendly format for error messages.
@@ -291,15 +350,9 @@ fn generate_malformed_line_message(line: usize, source: &str) -> String {
         "given" => "a given declaration statement",
         "where" => "an instantiation condition",
         "minimising" | "maximising" => "an objective statement",
-        "such" => {
-            // Check for invalid constraint statement
-            if second == "that" {
-                "a constraint statement"
-            } else {
-                "a valid top-level statement"
-            }
-        }
-
+        // Check for invalid constraint statement
+        "such" if second == "that" => "a constraint statement",
+        "such" => "a valid top-level statement",
         _ => {
             // Default case for unrecognized starting tokens
             "a valid top-level statement"

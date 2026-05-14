@@ -14,7 +14,7 @@ use uniplate::Uniplate;
 use crate::bottom_up_adaptor::as_bottom_up;
 
 /// Using the `matrix_to_atom`  representation rule, rewrite matrix indexing.
-#[register_rule(("Base", 5000))]
+#[register_rule("Base", 5000)]
 fn index_matrix_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     (as_bottom_up(index_matrix_to_atom_impl))(expr, symbols)
 }
@@ -247,7 +247,7 @@ fn index_matrix_to_atom_impl(expr: &Expr, symbols: &SymbolTable) -> ApplicationR
 }
 
 /// Using the `matrix_to_atom` representation rule, rewrite matrix slicing.
-#[register_rule(("Base", 2000))]
+#[register_rule("Base", 2000, [SafeSlice])]
 fn slice_matrix_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::SafeSlice(_, subject, indices) = expr else {
         return Err(RuleNotApplicable);
@@ -321,7 +321,7 @@ fn slice_matrix_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
 }
 
 /// Converts a reference to a 1d-matrix not contained within an indexing or slicing expression to its atoms.
-#[register_rule(("Base", 2000))]
+#[register_rule("Base", 2000)]
 fn matrix_ref_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     if let Expr::SafeSlice(_, _, _)
     | Expr::UnsafeSlice(_, _, _)

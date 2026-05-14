@@ -14,13 +14,13 @@ jobs:
     steps:
     - name: Create conjure-bot token
       id: bot-token
-      uses: actions/create-github-app-token@v2
+      uses: actions/create-github-app-token@v3
       with:
         app-id: ${{ secrets.CONJURE_BOT_ID }}
         private-key: ${{ secrets.CONJURE_BOT_PRIVATE_KEY }}
 
     - name: Assign issue to author
-      uses: actions/github-script@v8
+      uses: actions/github-script@v9
       with:
         github-token: ${{ steps.bot-token.outputs.token }}
         script: |

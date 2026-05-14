@@ -1,0 +1,53 @@
+Model before rewriting:
+
+letting DOM be domain int(1..3)
+find a: matrix indexed by [DOM] of DOM
+
+such that
+
+and([ (a[i] = i) | i : DOM ])
+
+--
+
+Model before rewriting:
+
+find i: DOM
+find __0: matrix indexed by [DOM] of DOM
+
+such that
+
+(true != (SafeIndex(__0,[i]) = i))
+
+--
+
+Final model:
+
+find i: DOM
+find __0: matrix indexed by [DOM] of DOM
+find __0#matrix_to_atom_1: int(1..3)
+find __0#matrix_to_atom_2: int(1..3)
+find __0#matrix_to_atom_3: int(1..3)
+find __1: bool
+find __2: int(1..3)
+
+such that
+
+(true != __1),
+Reify(__minion_element_one([__0#matrix_to_atom_1,__0#matrix_to_atom_2,__0#matrix_to_atom_3],__2,i), __1),
+SumLeq([0, i], __2),
+SumGeq([0, i], __2)
+
+Final model:
+
+letting DOM be domain int(1..3)
+find a: matrix indexed by [DOM] of DOM
+find a#matrix_to_atom_1: int(1..3)
+find a#matrix_to_atom_2: int(1..3)
+find a#matrix_to_atom_3: int(1..3)
+
+such that
+
+(a#matrix_to_atom_1 = 1),
+(a#matrix_to_atom_2 = 2),
+(a#matrix_to_atom_3 = 3)
+

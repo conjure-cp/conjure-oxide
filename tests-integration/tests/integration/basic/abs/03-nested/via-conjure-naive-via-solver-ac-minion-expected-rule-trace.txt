@@ -6,35 +6,35 @@ find z: int(-5..2)
 
 such that
 
-(sum([|(sum([UnsafeDiv(x, 2),y;int(1..2)]) - z)|,UnsafeDiv(|y|, 2);int(1..2)]) = 10)
+(sum([|(sum([(x / 2),y;int(1..2)]) - z)|,(|y| / 2);int(1..2)]) = 10)
 
 --
 
-(sum([UnsafeDiv(x, 2),y;int(1..2)]) - z), 
+(sum([(x / 2),y;int(1..2)]) - z), 
    ~~> minus_to_sum ([("Base", 8400)])
-sum([sum([UnsafeDiv(x, 2),y;int(1..2)]),-(z);int(1..)])
+sum([sum([(x / 2),y;int(1..2)]),-(z);int(1..)])
 
 --
 
-sum([sum([UnsafeDiv(x, 2),y;int(1..2)]),-(z);int(1..)]), 
+sum([sum([(x / 2),y;int(1..2)]),-(z);int(1..)]), 
    ~~> normalise_associative_commutative ([("Base", 8900)])
-sum([UnsafeDiv(x, 2),y,-(z);int(1..)])
+sum([(x / 2),y,-(z);int(1..)])
 
 --
 
-UnsafeDiv(x, 2), 
+(x / 2), 
    ~~> div_to_bubble ([("Bubble", 6000)])
 {SafeDiv(x, 2) @ (2 != 0)}
 
 --
 
-(sum([|sum([{SafeDiv(x, 2) @ (2 != 0)},y,-(z);int(1..)])|,UnsafeDiv(|y|, 2);int(1..2)]) = 10), 
+(sum([|sum([{SafeDiv(x, 2) @ (2 != 0)},y,-(z);int(1..)])|,(|y| / 2);int(1..2)]) = 10), 
    ~~> constant_evaluator ([("Constant", 9001)])
-(sum([|sum([SafeDiv(x, 2),y,-(z);int(1..)])|,UnsafeDiv(|y|, 2);int(1..2)]) = 10)
+(sum([|sum([SafeDiv(x, 2),y,-(z);int(1..)])|,(|y| / 2);int(1..2)]) = 10)
 
 --
 
-UnsafeDiv(|y|, 2), 
+(|y| / 2), 
    ~~> div_to_bubble ([("Bubble", 6000)])
 {SafeDiv(|y|, 2) @ (2 != 0)}
 

@@ -11,15 +11,16 @@ use std::{
 
 use anyhow::anyhow;
 use clap::ValueHint;
-use conjure_cp::defaults::DEFAULT_RULE_SETS;
 use conjure_cp::instantiate::instantiate_model;
 use conjure_cp::{
     Model,
     context::Context,
+    defaults::DEFAULT_RULE_SETS,
     rule_engine::{resolve_rule_sets, rewrite_morph, rewrite_naive},
     settings::{
         Rewriter, set_comprehension_expander, set_current_parser, set_current_rewriter,
-        set_current_solver_family, set_minion_discrete_threshold,
+        set_current_solver_family, set_default_rule_trace_enabled, set_minion_discrete_threshold,
+        set_rule_trace_aggregates_enabled, set_rule_trace_enabled, set_rule_trace_verbose_enabled,
     },
     solver::Solver,
 };
@@ -162,11 +163,21 @@ pub(crate) fn init_context(
     essence_file: PathBuf,
     param_file: Option<PathBuf>,
 ) -> anyhow::Result<Arc<RwLock<Context<'static>>>> {
+    let default_rule_trace_enabled = global_args.rule_trace.is_some();
+    let verbose_rule_trace_enabled = global_args.rule_trace_verbose.is_some();
+    let rule_trace_aggregates_enabled = global_args.rule_trace_aggregates.is_some();
+    let rule_trace_enabled =
+        default_rule_trace_enabled || verbose_rule_trace_enabled || rule_trace_aggregates_enabled;
+
     set_current_parser(global_args.parser);
     set_current_rewriter(global_args.rewriter);
     set_comprehension_expander(global_args.comprehension_expander);
     set_current_solver_family(global_args.solver);
     set_minion_discrete_threshold(global_args.minion_discrete_threshold);
+    set_rule_trace_enabled(rule_trace_enabled);
+    set_default_rule_trace_enabled(default_rule_trace_enabled);
+    set_rule_trace_verbose_enabled(verbose_rule_trace_enabled);
+    set_rule_trace_aggregates_enabled(rule_trace_aggregates_enabled);
 
     let target_family = global_args.solver;
     let mut extra_rule_sets: Vec<&str> = DEFAULT_RULE_SETS.to_vec();
@@ -228,7 +239,7 @@ pub(crate) fn init_solver(global_args: &GlobalArgs) -> Solver {
         .map(|timeout_ms| u64::try_from(timeout_ms).expect("Timeout too large"));
 
     match family {
-        SolverFamily::Minion => Solver::new(Minion::default()),
+        SolverFamily::Minion => Solver::new(Minion::with_value_order(global_args.minion_valorder)),
         SolverFamily::Sat(_) => Solver::new(Sat::default()),
         SolverFamily::Smt(theory_cfg) => Solver::new(Smt::new(timeout_ms, theory_cfg)),
     }
@@ -284,7 +295,8 @@ pub(crate) fn rewrite(
 ) -> anyhow::Result<Model> {
     tracing::info!("Initial model: \n{}\n", model);
 
-    set_current_rewriter(global_args.rewriter);
+    let rewriter = global_args.rewriter;
+    set_current_rewriter(rewriter);
 
     let comprehension_expander = global_args.comprehension_expander;
     set_comprehension_expander(comprehension_expander);
@@ -292,13 +304,14 @@ pub(crate) fn rewrite(
 
     let rule_sets = context.read().unwrap().rule_sets.clone();
 
-    let new_model = match global_args.rewriter {
-        Rewriter::Morph => {
-            tracing::info!("Rewriting the model using the morph rewriter");
+    let new_model = match rewriter {
+        Rewriter::Morph(config) => {
+            tracing::info!("Rewriting the model using the morph rewriter ({})", config);
             rewrite_morph(
                 model,
                 &rule_sets,
                 global_args.check_equally_applicable_rules,
+                config,
             )
         }
         Rewriter::Naive => {
@@ -337,6 +350,7 @@ fn run_solver(
         model,
         cmd_args.number_of_solutions.as_solver_limit(),
         &global_args.save_solver_input_file,
+        global_args.rule_trace_cdp,
     )?;
     tracing::info!(target: "file", "Solutions: {}", solutions_to_json(&solutions));
 
