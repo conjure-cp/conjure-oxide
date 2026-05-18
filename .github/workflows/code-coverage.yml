@@ -94,7 +94,14 @@ jobs:
       run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
 
     - name: Verify protoc installation
-      run: which protoc && protoc --version
+      run: |
+        if ! command -v protoc > /dev/null; then
+          echo "protoc not found"; exit 1;
+        fi
+        protoc --version
+
+    - name: Set PROTOC environment variable
+      run: echo "PROTOC=$(which protoc)" >> $GITHUB_ENV
 
     - name: Install rust
       run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
