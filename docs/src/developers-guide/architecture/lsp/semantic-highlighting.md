@@ -48,12 +48,12 @@ Additionally, `find` variables are visually emphasised because they represent th
 The semantic highlighting handler retrieves the `SourceMap` from cache and passes it to `encode_semantic_tokens()` to generate semantic tokens. These encoded tokens are then returned to the LSP server, which forwards them to the client. The client uses the semantic token classifications together with the active theme to determine how each token should be rendered.
 
 ## Expanding Semantic Highlighting
-To expand on the currrent semantic highlighting available, the files that will need to be changed are: `crates/conjure-cp-essence-parser/src/diagnostics/diagnostics_api.rs`, `crates/conjure-cp-essence-parser/src/diagnostics/semantic-tokens.rs`, `crates/conjure-cp-lsp/src/server.rs`, and `package.json`
+To expand on the current semantic highlighting available, the files that will need to be changed are: `crates/conjure-cp-essence-parser/src/diagnostics/diagnostics_api.rs`, `crates/conjure-cp-essence-parser/src/diagnostics/semantic-tokens.rs`, `crates/conjure-cp-lsp/src/server.rs`, and `package.json`
 
 1. In `diagnostics_api.rs`, add the new symbol kind to the `SymbolKind` enum.
 2. In `semantic_token.rs`, add a new constant variable for the new symbol kind and create a mapping from the symbol kind to a token in the `token_encoding()` function.
 3. In `server.rs`, add the new symbol kind to the server's `semantic_toke_provider`.
-4. In `package.json`, add the new symbol kind to the semantic token scopes to specify its styling in Textmate, and if it is a custom token, add a new field for it in the semantic token types
+4. In `package.json`, add the new symbol kind to the semantic token scopes to specify its styling in TextMate, and if it is a custom token, add a new field for it in the semantic token types
 
 ## Semantic Highlighting Customisation (VSCode)
 To customise semantic highlighting styles, open up `settings.json` in VSCode, and add the following code snippet if it does not exist in the file:
