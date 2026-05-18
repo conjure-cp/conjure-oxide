@@ -78,6 +78,12 @@ jobs:
         key: doccov--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.event.repository.updated_at }}
         restore-keys: doccov--${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}
 
+    - name: Install protoc
+      run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
+
+    - name: Set PROTOC environment variable
+      run: echo "PROTOC=$(which protoc)" >> $GITHUB_ENV
+
     - name: Install rust
       run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
 

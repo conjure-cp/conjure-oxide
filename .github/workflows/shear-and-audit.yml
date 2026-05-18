@@ -57,7 +57,13 @@ jobs:
       if: ${{ env.rust_release == 'nightly' }}
       run: echo "RUSTUP_TOOLCHAIN=nightly" >> $GITHUB_ENV
 
-    - name: rustup
+    - name: Install protoc
+      run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
+
+    - name: Set PROTOC environment variable
+      run: echo "PROTOC=$(which protoc)" >> $GITHUB_ENV
+
+    - name: Install rust
       run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
 
     - name: Install rustfmt for nightly
