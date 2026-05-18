@@ -42,6 +42,14 @@ impl Default for OrToolsCpSat {
 }
 
 impl SolverAdaptor for OrToolsCpSat {
+
+    fn load_model(&mut self, model: Model, _: private::Internal) -> Result<(), SolverError> {
+        let (cp_model, solution_vars) = model_to_cp_sat(model)?;
+        self.model = Some(cp_model);
+        self.solution_vars = solution_vars;
+        Ok(())
+    }
+
     fn solve(
         &mut self,
         callback: SolverCallback,
@@ -122,13 +130,6 @@ impl SolverAdaptor for OrToolsCpSat {
         Err(SolverError::OpNotSupported(
             "ortools-cpsat solve_mut".to_owned(),
         ))
-    }
-
-    fn load_model(&mut self, model: Model, _: private::Internal) -> Result<(), SolverError> {
-        let (cp_model, solution_vars) = model_to_cp_sat(model)?;
-        self.model = Some(cp_model);
-        self.solution_vars = solution_vars;
-        Ok(())
     }
 
     fn get_family(&self) -> SolverFamily {
