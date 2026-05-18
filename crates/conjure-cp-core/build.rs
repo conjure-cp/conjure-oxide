@@ -8,7 +8,9 @@ fn main() {
     println!("cargo:rerun-if-changed={}/wrapper.hpp", base_path);
     println!("cargo:rerun-if-changed={}/mod.rs", base_path);
 
-    prost_build::compile_protos(
+    let mut config = prost_build::Config::new();
+    config.protoc_executable(protobuf_src::protoc());
+    config.compile_protos(
         &[proto_file],
         &[format!("{}/proto", base_path)],
     ).expect("failed to compile cp_model.proto");
