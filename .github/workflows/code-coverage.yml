@@ -90,14 +90,17 @@ jobs:
         rm -rf target/debug/coverage
         rm -f target/debug/diff-cover.lcov target/debug/lcov.info
 
+    - name: Install protoc
+      run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
+
+    - name: Verify protoc installation
+      run: which protoc && protoc --version
+
     - name: Install rust
       run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
 
     - name: Install diff-cover
       run: python3 -m pip install --upgrade pip diff-cover
-
-    - name: Install protoc
-      run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
 
     - uses: ./.github/actions/install-conjure
       with:
