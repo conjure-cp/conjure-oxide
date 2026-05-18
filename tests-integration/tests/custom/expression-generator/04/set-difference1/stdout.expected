@@ -1,0 +1,259 @@
+{
+  "cnf_clauses": [],
+  "constraints": {
+    "Root": [
+      {
+        "etype": null
+      },
+      [
+        {
+          "Eq": [
+            {
+              "etype": null
+            },
+            {
+              "Sum": [
+                {
+                  "etype": null
+                },
+                {
+                  "Comprehension": [
+                    {
+                      "etype": null
+                    },
+                    {
+                      "qualifiers": [
+                        {
+                          "ExpressionGenerator": {
+                            "ptr": {
+                              "object_id": 4,
+                              "type_name": "DeclarationPtrInner"
+                            }
+                          }
+                        }
+                      ],
+                      "return_expression": {
+                        "Atomic": [
+                          {
+                            "etype": null
+                          },
+                          {
+                            "Reference": {
+                              "ptr": {
+                                "object_id": 4,
+                                "type_name": "DeclarationPtrInner"
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      "symbols": {
+                        "id": {
+                          "object_id": 3,
+                          "type_name": "SymbolTable"
+                        },
+                        "next_machine_name": 0,
+                        "parent": {
+                          "object_id": 0,
+                          "type_name": "SymbolTable"
+                        },
+                        "table": [
+                          [
+                            {
+                              "User": "i"
+                            },
+                            {
+                              "id": {
+                                "object_id": 4,
+                                "type_name": "DeclarationPtrInner"
+                              },
+                              "kind": {
+                                "QuantifiedExpr": {
+                                  "Minus": [
+                                    {
+                                      "etype": null
+                                    },
+                                    {
+                                      "Atomic": [
+                                        {
+                                          "etype": null
+                                        },
+                                        {
+                                          "Reference": {
+                                            "ptr": {
+                                              "object_id": 1,
+                                              "type_name": "DeclarationPtrInner"
+                                            }
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "Atomic": [
+                                        {
+                                          "etype": null
+                                        },
+                                        {
+                                          "Reference": {
+                                            "ptr": {
+                                              "object_id": 2,
+                                              "type_name": "DeclarationPtrInner"
+                                            }
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              },
+                              "name": {
+                                "User": "i"
+                              }
+                            }
+                          ]
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "Atomic": [
+                {
+                  "etype": null
+                },
+                {
+                  "Literal": {
+                    "Int": 2
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    ]
+  },
+  "dominance": null,
+  "search_order": null,
+  "symbols": {
+    "id": {
+      "object_id": 0,
+      "type_name": "SymbolTable"
+    },
+    "next_machine_name": 0,
+    "parent": null,
+    "table": [
+      [
+        {
+          "User": "x"
+        },
+        {
+          "id": {
+            "object_id": 1,
+            "type_name": "DeclarationPtrInner"
+          },
+          "kind": {
+            "Find": {
+              "domain": {
+                "Ground": {
+                  "Set": [
+                    {
+                      "size": "Unbounded"
+                    },
+                    {
+                      "Int": [
+                        {
+                          "Bounded": [
+                            1,
+                            5
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "name": {
+            "User": "x"
+          }
+        }
+      ],
+      [
+        {
+          "User": "y"
+        },
+        {
+          "id": {
+            "object_id": 2,
+            "type_name": "DeclarationPtrInner"
+          },
+          "kind": {
+            "Find": {
+              "domain": {
+                "Ground": {
+                  "Set": [
+                    {
+                      "size": "Unbounded"
+                    },
+                    {
+                      "Int": [
+                        {
+                          "Bounded": [
+                            1,
+                            6
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "name": {
+            "User": "y"
+          }
+        }
+      ]
+    ]
+  }
+}
+
+
+find x: set  of int(1..5)
+find y: set  of int(1..6)
+
+such that
+
+(sum([ i | i <- x, !(i in y) ]) = 2)
+
+Model before rewriting:
+
+find x: set  of int(1..5)
+find y: set  of int(1..6)
+
+such that
+
+(sum([ i | i <- (x - y) ]) = 2)
+
+--
+
+[ i | i <- (x - y) ], 
+   ~~> difference_set ([("Base", 8700)])
+[ i | i <- x, !(i in y) ]
+
+--
+
+Final model:
+
+find x: set  of int(1..5)
+find y: set  of int(1..6)
+
+such that
+
+(sum([ i | i <- x, !(i in y) ]) = 2)
+
