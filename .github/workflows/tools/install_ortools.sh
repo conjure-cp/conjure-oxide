@@ -5,13 +5,14 @@ set -e
 UBUNTU_VER=$(lsb_release -rs)
 echo "Detected Ubuntu version: ${UBUNTU_VER}"
 
+TAG="v9.11"
 VERSION="9.11.4210"
 
 if [ "${UBUNTU_VER}" = "24.04" ]; then
-    URL="https://github.com/google/or-tools/releases/download/v${VERSION}/or-tools_amd64_ubuntu-24.04_cpp_v${VERSION}.tar.gz"
+    URL="https://github.com/google/or-tools/releases/download/${TAG}/or-tools_amd64_ubuntu-24.04_cpp_v${VERSION}.tar.gz"
 else
     # Default to 22.04 as it is standard and most widely compatible
-    URL="https://github.com/google/or-tools/releases/download/v${VERSION}/or-tools_amd64_ubuntu-22.04_cpp_v${VERSION}.tar.gz"
+    URL="https://github.com/google/or-tools/releases/download/${TAG}/or-tools_amd64_ubuntu-22.04_cpp_v${VERSION}.tar.gz"
 fi
 
 echo "Downloading OR-Tools from ${URL}..."
