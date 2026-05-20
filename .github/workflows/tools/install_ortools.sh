@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+set -x
 
 # Detect Ubuntu version
 UBUNTU_VER=$(lsb_release -rs)
@@ -19,16 +20,21 @@ echo "Downloading OR-Tools from ${URL}..."
 wget -q "${URL}" -O ortools.tar.gz
 
 echo "Extracting..."
-tar -xzf ortools.tar.gz
-
-FOLDER=$(tar -tzf ortools.tar.gz | head -n 1 | cut -f1 -d"/")
-echo "Root folder in tarball is: ${FOLDER}"
+mkdir -p ortools_extracted
+tar -xzf ortools.tar.gz -C ortools_extracted --strip-components=1
 
 echo "Installing to /usr/local..."
-sudo cp -r "${FOLDER}/include"/* /usr/local/include/
-sudo cp -r "${FOLDER}/lib"/* /usr/local/lib/
+sudo cp -r ortools_extracted/include/* /usr/local/include/
+sudo cp -r ortools_extracted/lib/* /usr/local/lib/
 
 # Register libraries
 sudo ldconfig
 
-echo "OR-Tools C++ library installed successfully!"
+# Verify installation
+if [ -f "/usr/local/include/ortools/base/base_export.h" ]; then
+    echo "OR-Tools C++ library installed successfully!"
+else
+    echo "ERROR: base_export.h not found in /usr/local/include/ortools/base/"
+    ls -R /usr/local/include
+    exit 1
+fi

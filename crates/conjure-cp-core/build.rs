@@ -1,6 +1,21 @@
 fn main() {
+    println!("cargo::rustc-check-cfg=cfg(no_ortools)");
     let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").expect("missing CARGO_MANIFEST_DIR");
     let base_path = "src/solver/adaptors/ortools-cpsat";
+
+    // Auto-detect if OR-Tools is installed on the system
+    let has_ortools = std::path::Path::new("/usr/include/ortools/base/base_export.h").exists()
+        || std::path::Path::new("/usr/local/include/ortools/base/base_export.h").exists()
+        || std::env::var("ORTOOLS_PREFIX")
+            .map(|p| std::path::Path::new(&p).join("include/ortools/base/base_export.h").exists())
+            .unwrap_or(false);
+
+    if !has_ortools {
+        println!("cargo:warning=OR-Tools C++ library not found on the system. Compiling without OR-Tools support.");
+        println!("cargo:rustc-cfg=no_ortools");
+        return;
+    }
+
     let proto_file = format!("{}/proto/cp_model.proto", base_path);
 
     println!("cargo:rerun-if-changed={}", proto_file);
