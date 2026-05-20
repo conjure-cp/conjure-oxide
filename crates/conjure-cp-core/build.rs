@@ -40,6 +40,10 @@ fn main() {
             .flag_if_supported("-DABSL_LEGACY_THREAD_ANNOTATIONS")
             .compile("ortools-wrapper");
 
+    println!("cargo:rustc-link-search=native=/usr/local/lib");
+    if let Ok(prefix) = std::env::var("ORTOOLS_PREFIX") {
+        println!("cargo:rustc-link-search=native={}/lib", prefix);
+    }
     println!("cargo:rustc-link-lib=ortools");
     println!("cargo:rustc-link-lib=protobuf");
 }
