@@ -11,9 +11,9 @@ The Direct Encoding Summation rule encodes the summation of multiple direct-enco
 ### Key Characteristics
 
 - **Input**: One or more `SATInt` values with direct encoding.
-- **Output**: A single `SATInt` with direct encoding representing their sum
-- **Algorithm**: Pairwise summation using disjunctive normal form (DNF)
-- **Clause Growth**: Polynomial in bit-vector sizes and domain ranges
+- **Output**: A single `SATInt` with direct encoding representing their sum.
+- **Algorithm**: Pairwise summation using disjunctive normal form (DNF).
+- **Clause Growth**: Polynomial in bit-vector sizes and domain ranges.
 
 ## Pairwise Summation with DNF
 
@@ -51,22 +51,23 @@ let (mut operands, common_min, common_max) =
 
 This normalization:
 
-- Identifies the global minimum and maximum across all operands
-- **Pads each operand** with leading and trailing `false` bits to match this range
-- Ensures consistency when calculating AND operations between operands
+- Identifies the global minimum and maximum across all operands.
+- **Pads each operand** with leading and trailing `false` bits to match this range.
+- Ensures consistency when calculating AND operations between operands.
 
-**Example**: Summing integers with ranges `[1, 3]` and `[2, 5]`:
+**Example**: Summing integers with ranges `[1, 3]` and `[2, 5]`.
 
-- Common range becomes `[1, 5]`
-- First operand padded: `[true, original_bits, false]` (where false extends the range to 5)
-- Second operand padded: `[false, original_bits]` (where false extends the range to 1)
+- Common range becomes `[1, 5]`.
+- First operand padded: `[true, original_bits, false]` (where false extends the range to 5).
+- Second operand padded: `[false, original_bits]` (where false extends the range to 1).
 
 ## Domain Propagation
 
-The range of the output is determined by the possible minimum and maximum sums:
+The range of the output is determined by the possible lower and upper sums.
 
-new_min = acc_min + right_min
-new_max = acc_max + right_max
+Lower bound = accumulator lower bound + right operand lower bound.
+
+Upper bound = accumulator upper bound + right operand upper bound.
 
 After each pairwise addition iteration, the accumulator's range is updated to reflect the new possible values.
 

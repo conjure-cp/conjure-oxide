@@ -10,10 +10,10 @@ The Order Encoding Inequality rule encodes comparison operations (`<`, `>`, `<=`
 
 ### Key Characteristics
 
-- **Input**: Two `SATInt` values with order encoding (prefix-true representation)
-- **Output**: A boolean CNF expression
-- **Algorithm**: Prefix-OR based comparison
-- **Efficiency**: Linear in bit-vector size (no quadratic term like direct encoding)
+- **Input**: Two `SATInt` values with order encoding (prefix-true representation).
+- **Output**: A boolean CNF expression.
+- **Algorithm**: Prefix-OR based comparison.
+- **Efficiency**: Linear in bit-vector size (no quadratic term like direct encoding).
 
 ## Prefix-OR Comparison
 
@@ -21,11 +21,12 @@ Order encoding's prefix-true property enables a comparison based on prefix logic
 
 For x < y, exactly when there exists a position i where:
 
-- x becomes false at position i (meaning x < i)
-- AND y is true at position i (meaning y >= i)
+- x becomes false at position i (meaning x < i).
+- AND y is true at position i (meaning y >= i).
 
 In plain terms:
-x < y iff there exists an i such that (not x_i and y_i)
+
+- x < y if and only if there exists an i such that (not x_i and y_i).
 
 ### Algorithm Details
 
@@ -54,9 +55,9 @@ fn sat_order_lt(
 
 In order encoding:
 
-- Bit i is true iff the value is >= i
-- When `a_i` is false and `b_i` is true: we found a position where a < b
-- We OR all such positions because **any single position proves the inequality**
+- Bit i is true if and only if the value is >= i.
+- When `a_i` is false and `b_i` is true: we found a position where a < b.
+- We OR all such positions because **any single position proves the inequality**.
 
 ## Handling Multiple Comparison Operators
 
@@ -102,15 +103,15 @@ let [lhs_bits, rhs_bits] = binding.as_slice() else {
 
 Normalization:
 
-- Identifies the global minimum and maximum across both operands
-- **Pads with leading `true` bits** for positions below an operand's minimum (since those positions are definitely true)
-- **Pads with trailing `false` bits** for positions above an operand's maximum (since those positions are definitely false)
+- Identifies the global minimum and maximum across both operands.
+- **Pads with leading `true` bits** for positions below an operand's minimum (since those positions are definitely true).
+- **Pads with trailing `false` bits** for positions above an operand's maximum (since those positions are definitely false).
 
-**Example**: Comparing integers with ranges `[1, 3]` and `[2, 5]`:
+**Example**: Comparing integers with ranges `[1, 3]` and `[2, 5]`.
 
-- Common range: `[1, 5]`
-- First operand: `[true, original_bits, false]` (values < 1 are implicitly >= 1)
-- Second operand: `[false, original_bits]` (values < 2 are not >= 1)
+- Common range: `[1, 5]`.
+- First operand: `[true, original_bits, false]` (values < 1 are implicitly >= 1).
+- Second operand: `[false, original_bits]` (values < 2 are not >= 1).
 
 ## CNF Clause Generation
 
@@ -124,9 +125,9 @@ result = tseytin_or(&vec![result, current_term], clauses, symbols);
 
 Each operation creates auxiliary variables and CNF clauses:
 
-- `tseytin_not` adds one clause: x implies not y, and not y implies x
-- `tseytin_and` adds three clauses encoding y implies x1 and x2
-- `tseytin_or` adds three clauses encoding y is implied by x1 or x2
+- `tseytin_not` adds one clause: x implies not y, and not y implies x.
+- `tseytin_and` adds three clauses encoding y implies x1 and x2.
+- `tseytin_or` adds three clauses encoding y is implied by x1 or x2.
 
 ## Key Design Decisions
 
@@ -157,22 +158,22 @@ Given:
 Computing A < B requires normalized ranges [1, 4]:
 
 ```text
-A normalized: [true, A₂, A₃, A₄]    (A₁ is implicitly true)
-B normalized: [B₁, B₂, B₃, B₄]     (no change needed)
+A normalized: [true, A₂, A₃, A₄]    (A₁ is implicitly true).
+B normalized: [B₁, B₂, B₃, B₄]     (no change needed).
 
-A < B iff:
+A < B if and only if:
     (NOT A₁ AND B₁) OR
     (NOT A₂ AND B₂) OR
     (NOT A₃ AND B₃) OR
-    (NOT A₄ AND B₄)
+    (NOT A₄ AND B₄).
 ```
 
 Each OR and AND is converted to CNF via Tseytin, totalling approximately 12 clauses.
 
 ## Complexity Analysis
 
-**Time Complexity**: O(n) where n is the maximum bit-vector size
+**Time Complexity**: O(n) where n is the maximum bit-vector size.
 
-**Space Complexity**: O(n) auxiliary variables from O(n) Tseytin operations
+**Space Complexity**: O(n) auxiliary variables from O(n) Tseytin operations.
 
 **Clause Count**: Approximately 3n CNF clauses for one comparison.

@@ -10,18 +10,18 @@ The Direct Encoding Absolute Value rule encodes the absolute value operation on 
 
 ### Key Characteristics
 
-- **Input**: One `SATInt` value with direct encoding (one-hot representation)
-- **Output**: A single `SATInt` with direct encoding representing its absolute value
-- **Algorithm**: Bucketing strategy that groups input bits by their absolute value
-- **Clause Growth**: Linear in domain size (minimal overhead)
+- **Input**: One `SATInt` value with direct encoding (one-hot representation).
+- **Output**: A single `SATInt` with direct encoding representing its absolute value.
+- **Algorithm**: Bucketing strategy that groups input bits by their absolute value.
+- **Clause Growth**: Linear in domain size (minimal overhead).
 
 ## Bucketing by Absolute Value
 
 Instead of explicitly computing absolute value through arithmetic, this rule uses a **bucketing strategy** that groups input bits by the absolute value they produce:
 
-1. **Create buckets** - one for each possible output value
-2. **Populate buckets** - for each input value i, place its bit into the bucket corresponding to |i|
-3. **Generate output bits** - for each bucket, the output bit is the OR of all bits in that bucket
+1. **Create buckets** - one for each possible output value.
+2. **Populate buckets** - for each input value i, place its bit into the bucket corresponding to |i|.
+3. **Generate output bits** - for each bucket, the output bit is the OR of all bits in that bucket.
 
 This leverages the one-hot property: exactly one input bit is true, so exactly one bucket will have a true bit.
 
@@ -53,16 +53,16 @@ for bucket in buckets {
 ### Cases
 
 1. **Range includes 0** (e.g., `[-3, 5]`):
-    - Minimum output: 0 (from |0|)
-    - Maximum output: 5 (from |-3| or |5|, whichever is larger)
+    - Minimum output: 0 (from |0|).
+    - Maximum output: 5 (from |-3| or |5|, whichever is larger).
 
 2. **Range doesn't include 0** (e.g., `[2, 8]`):
-    - Minimum output: 2 (from |2|)
-    - Maximum output: 8 (from |8|)
+    - Minimum output: 2 (from |2|).
+    - Maximum output: 8 (from |8|).
 
 3. **Negative range** (e.g., `[-8, -2]`):
-    - Minimum output: 2 (from |-2|)
-    - Maximum output: 8 (from |-8|)
+    - Minimum output: 2 (from |-2|).
+    - Maximum output: 8 (from |-8|).
 
 ## CNF Clause Generation
 
@@ -78,27 +78,27 @@ let out_bit = match bucket.len() {
 
 The optimization **skips Tseytin OR for single-element buckets**, reducing auxiliary variables and clauses:
 
-- Empty bucket: Returns constant `false` (no clauses)
-- Single element: Returns the element directly (no auxiliary variable)
-- Multiple elements: Uses `tseytin_or` to create the disjunction
+- Empty bucket: Returns constant `false` (no clauses).
+- Single element: Returns the element directly (no auxiliary variable).
+- Multiple elements: Uses `tseytin_or` to create the disjunction.
 
 This is efficient because buckets typically have 0, 1, or 2 elements:
 
-- Buckets with 0 elements: Arise when the output range is sparse
-- Buckets with 1 element: When only one input value maps to that output
-- Buckets with 2 elements: When exactly two input values have the same absolute value (e.g., `-5` and `5`)
+- Buckets with 0 elements: Arise when the output range is sparse.
+- Buckets with 1 element: When only one input value maps to that output.
+- Buckets with 2 elements: When exactly two input values have the same absolute value (e.g., `-5` and `5`).
 
 ## Example: Absolute Value of Signed Integer
 
 Given:
 
-- Input: `X ∈ {-3, -2, -1, 0, 1, 2, 3}` (direct encoded as 7 one-hot bits)
-- Output: `|X| ∈ {0, 1, 2, 3}` (direct encoded as 4 one-hot bits)
+- Input: `X ∈ {-3, -2, -1, 0, 1, 2, 3}` (direct encoded as 7 one-hot bits).
+- Output: `|X| ∈ {0, 1, 2, 3}` (direct encoded as 4 one-hot bits).
 
 Bucket formation:
 
 | Output Value | Input Bits that Map Here |
-|---|---| ---|
+|---|---|
 | 0 | `X₀` (from |0| = 0) |
 | 1 | `X₋₁`, `X₁` (from |-1| = 1 and |1| = 1) |
 | 2 | `X₋₂`, `X₂` (from |-2| = 2 and |2| = 2) |
@@ -117,6 +117,6 @@ Clause count: 3 Tseytin ORs × 3 clauses each = 9 clauses total
 
 ## Complexity Analysis
 
-**Time Complexity**: O(n) where n is the input range size
+**Time Complexity**: O(n) where n is the input range size.
 
-**Space Complexity**: O(n) for output bits and auxiliary variables
+**Space Complexity**: O(n) for output bits and auxiliary variables.
