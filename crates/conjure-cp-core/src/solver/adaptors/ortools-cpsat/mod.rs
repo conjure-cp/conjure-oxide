@@ -32,6 +32,8 @@ impl crate::solver::private::Sealed for OrToolsCpSat {}
 
 #[cfg(no_ortools)]
 impl OrToolsCpSat {
+    pub const IS_AVAILABLE: bool = false;
+
     pub fn new() -> Self {
         Self {
             __non_constructable: crate::solver::private::Internal,

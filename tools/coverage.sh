@@ -2,6 +2,12 @@
 
 set -e
 
+# Install OR-Tools if running in CI and not already installed
+if [ "$GITHUB_ACTIONS" = "true" ] && [ ! -d "/usr/local/include/ortools" ]; then
+  echo "Installing Google OR-Tools for GitHub Actions coverage run..."
+  bash .github/workflows/tools/install_ortools.sh
+fi
+
 # coverage.sh
 echo_err () {
   echo "$@" 1>&2

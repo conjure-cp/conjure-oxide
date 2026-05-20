@@ -26,6 +26,8 @@ pub struct OrToolsCpSat {
 impl private::Sealed for OrToolsCpSat {}
 
 impl OrToolsCpSat {
+    pub const IS_AVAILABLE: bool = true;
+
     pub fn new() -> Self {
         Self {
             __non_constructable: private::Internal,
