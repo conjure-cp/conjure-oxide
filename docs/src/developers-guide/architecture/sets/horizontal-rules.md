@@ -1,272 +1,195 @@
 [//]: # (Author: lilian-contius)
 [//]: # (Last Updated: 22/04/2025)
 
-Introductory notes on the use of "<-" in generators, and the logic behind and() and or() comprehensions. Followed by horizontal set rules. These are representation-independent rules in conjure that are used to rewrite models. 
+Introductory notes on the use of "<-" in generators, and the logic behind and() and or() comprehensions. Followed by horizontal set rules. These are representation-independent rules in conjure-oxide that are used to rewrite models. 
 
 # Notes:
 
-* "<-" is called an expression projection
-  * it creates a generator called GenInExpr
+* "<-" is part of comprehension notation that defines an expression generator
   * the left hand side has the type of a member of the right hand side
   * It is used to loop over elements of a set, primarily within and() and or() comprehensions
-  * see [Expression Projection](https://conjure.readthedocs.io/en/latest/bits/keyword/expr_projection.html) for more information
 
 * and() - for-all quantifier
   * essentially a series of conjunctions (a ∧ b ∧ .. ∧ z)
   * states that the body of the contained comprehension must hold **for all** elements specified by the generators and conditions. 
 
-* or() - existence quantifier
+* or() - existential quantifier
   * essentially a series of disjunctions (a ∨ b ∨ .. ∨ z)
   * states that the body of the contained comprehension must hold **for at least one** element specified by the generators and conditions. 
 
-* example combining these three concepts:
-  * taken from the last section of this page (shown both before and after vertical rules are applied):
-```
-and([ or([ q5 = q4 | q5 <- A, or([ q6 = q5 | q6 <- B ]) ]) | q4 <- C ])
-and([C_Occurrence[q4] -> or([A_Occurrence[q5] ∧ B_Occurrence[q5] ∧ q5 = q4 | q5 : int(0..6)]) | q4 : int(0..6)])
-```
-this translates to: 
-```
-∀q4 ϵ C: ∃ q5 ϵ A∶(q5=q4) ∧ (∃ q6 ϵ B∶q6=q5 )
-```
 
 # Horizontal Rules
 
-## Set-Comprehension-Literal
+## eq_to_subset_eq (boolean)
 
-identifies set literal in model and converts to matrix literal containing the same elements of the same type as the set.
-
-1. takes in Comprehension containing a "body" and generators or conditions "gensOrConds"
-2. matches "gensOrConds" to a tuple containing the Generator "(pat,expr)", between two generators or conditions, "gocBefore" and "gocAfter"
-3. identifies generator containing pattern and expression, attempts to match expression to a set or multiset
-4. stores elements of set literal in a list of relevant type "tau"
-5. creates matrix literal of type "tau" containing same elements as set literal
-6. returns original comprehension with same body, gocBefore, gocAfter, middle Generator with same pattern but matrix literal replaces set literal 
-
-### Code:
-```haskell
-     theRule (Comprehension body gensOrConds) = do
-         (gocBefore, (pat, expr), gocAfter) <- matchFirst gensOrConds $ \ goc -> case goc of
-             Generator (GenInExpr pat@Single{} expr) -> return (pat, matchDefs [opToSet, opToMSet] expr)
-             Generator (GenInExpr pat@AbsPatSet{} expr) -> return (pat, matchDefs [opToSet, opToMSet] expr)
-             _ -> na "rule_Comprehension_Literal"
-         (TypeSet tau, elems) <- match setLiteral expr
-         let outLiteral = make matrixLiteral
-                             (TypeMatrix (TypeInt TagInt) tau)
-                             (DomainInt TagInt [RangeBounded 1 (fromInt (genericLength elems))])
-                             elems
-         return
-             ( "Comprehension on set literals"
-             , return $ Comprehension body
-                      $  gocBefore
-                      ++ [Generator (GenInExpr pat outLiteral)]
-                      ++ gocAfter
-             )
 ```
-
-### Example:
-* set-comprehension-literal rule appears within model: "letting A be {1,5,3}, find B : set of int(0..6), such that B subsetEq A"
-* here the body of the comprehension is "q3 = q2", the gensOrConds is the single Generator "q3 <- {1,3,5}"
-* the set literal expression {1,3,5} is replaced with the matrix literal [1,3,5; int(1..3)], the pattern "q3 <-" and the body are left unaffected.
-* context:
-  * q2 is a quantified variable in larger scope (Context #3) -- using Occurrence representation here, used to iterate over elements in B
-  * q3 is the quantified variable used to check that each q2 is an element from A = {1,3,5}
+A = B ~~> A subsetEq B /\ B subsetEq A
 ```
-Picking the first option: Question 1: [q3 = q2 | q3 <- {1, 3, 5}]
-                               Context #1: or([q3 = q2 | q3 <- {1, 3, 5}])
-                               Context #3: and([or([q3 = q2 | q3 <- {1, 3, 5}]) | q2 : int(0..6), B_Occurrence[q2]])
-     Answer 1: set-comprehension-literal: Comprehension on set literals
-               [q3 = q2 | q3 <- {1, 3, 5}]
-               ~~>
-               [q3 = q2 | q3 <- [1, 3, 5; int(1..3)]]
-```
-
-## Set-eq (boolean)
 
 rule for set equality, checks if two sets are equal, i.e. they contain the same elements
 
-1. identifies pattern: "x eq y"
-2. checks that x and y are sets
+1. identifies pattern: "x = y"
+2. checks that x and y have set return type
 3. translates equality into conjunction of two subset-equalities
-* i.e. "x eq y" becomes " "x subsetEq of y" AND "y subsetEq of x" ", using Set-subsetEq rule
+* i.e. "x = y" becomes " "x subsetEq y" AND "y subsetEq x"
 
 ### Code:
-```Haskell
-     theRule p = do
-         (x,y)     <- match opEq p
-         TypeSet{} <- typeOf x
-         TypeSet{} <- typeOf y
-         return
-             ( "Horizontal rule for set equality"
-             , return $ make opAnd $ fromList
-                 [ make opSubsetEq x y
-                 , make opSubsetEq y x
-                 ]
-             )
+```rust
+fn eq_to_subset_eq(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
+    match expr {
+        Eq(_, a, b)
+            if matches!(a.as_ref().return_type(), Set(_))
+                && matches!(b.as_ref().return_type(), Set(_)) =>
+        {
+            let expr1 = SubsetEq(Metadata::new(), a.clone(), b.clone());
+            let expr2 = SubsetEq(Metadata::new(), b.clone(), a.clone());
+            Ok(Reduction::pure(And(
+                Metadata::new(),
+                Moo::new(matrix_expr![expr1, expr2]),
+            )))
+        }
+        _ => Err(RuleNotApplicable),
+    }
+}
+
 ```
 
-### Example:
+## neq_not_eq_sets (boolean)
 ```
-Picking the first option: Question 1: A = B union C
-     Answer 1: set-eq: Horizontal rule for set equality
-               A = B union C ~~> A subsetEq B union C /\ B union C subsetEq A
+A != B ~~> !(A = B)
 ```
-
-## Set-neq (boolean)
 
 rule for set inequality
 
 1. identifies pattern: "x != y"
-2. checks that x and y are sets
-3. translates inequality to existence of an element that is either in x but not in y, or that is in y but not in x
-* i.e. "x != y" becomes "there exists i such that i in x and i not in y, or i in y and i not in x"
+2. checks that x and y have set return type
+3. translates inequality to "Not" expression wrapping an equality
+* i.e. "x != y" becomes "!(x = y)", which can then be rewritten using eq_to_subset_eq rule above.
 
 ### Code:
-```haskell
-     theRule [essence| &x != &y |] = do
-         TypeSet{} <- typeOf x
-         TypeSet{} <- typeOf y
-         return
-             ( "Horizontal rule for set dis-equality"
-             , do
-                  (iPat, i) <- quantifiedVar
-                  return [essence|
-                          (exists &iPat in &x . !(&i in &y))
-                          \/
-                          (exists &iPat in &y . !(&i in &x))
-                      |]
-             )
+```rust
+fn neq_not_eq_sets(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    match expr {
+        Expr::Neq(_, a, b)
+            if matches!(a.as_ref().return_type(), ReturnType::Set(_))
+                && matches!(b.as_ref().return_type(), ReturnType::Set(_)) =>
+        {
+            Ok(Reduction::pure(Expr::Not(
+                Metadata::new(),
+                Moo::new(Expr::Eq(Metadata::new(), b.clone(), a.clone())),
+            )))
+        }
+        _ => Err(RuleNotApplicable),
+    }
+}
 ```
 
-### Example: 
-* checking that the set A is not equal to set B
-* here q4 is the quantified variable, referred to as "i" above.
-* "exists" statement is translated using the existence quantifier or(), quantifying over q4 members of A.
-* The expression projection "<-" creates a generator, in which the lhs has the type of a member of the rhs. 
-This means the body of the or() comprehension must apply to at least one member (q4) of A (see [Notes](https://github.com/conjure-cp/conjure-oxide/wiki/Conjure-Horizontal-Set-Rules#notes)).
+## subseteq_set (boolean)
 ```
-Picking the first option: Question 1: A != B union C
-     Answer 1: set-neq: Horizontal rule for set dis-equality
-               A != B union C
-               ~~>
-               or([!(q4 in B union C) | q4 <- A]) \/
-               or([!(q4 in A) | q4 <- B union C])
+A subsetEq B ~~> and([i in B | i <- A])
 ```
-
-## Set-subsetEq (boolean)
 
 rule for subsetEq, checks if one set is contained in another, **they may be equal** 
 
 1. identifies pattern: "x subsetEq y"
-2. checks that x and y are sets
-3. translates x is subsetEq of y to all elements in x are in y 
+2. translates x is subsetEq of y to all elements in x are in y 
 * i.e. "x subsetEq y" becomes "for all i in x, i in y"
 
-### Code:
-```haskell
-     theRule p = do
-         (x,y)     <- match opSubsetEq p
-         TypeSet{} <- typeOf x
-         TypeSet{} <- typeOf y
-         return
-             ( "Horizontal rule for set subsetEq"
-             , do
-                  (iPat, i) <- quantifiedVar
-                  return [essence| forAll &iPat in &x . &i in &y |]
-             )
-```
+> NOTE: Although this rule is in the main branch, it is not implemented correctly and it will be fixed pending major changes to the rule engine.
 
-### Example: 
-* here q3 is the quantified variable, referred to as "i" above.
-* and() is the universal quantifier, quantifying over q3. and([q3 in B | q3 <- A]) translates to "for all q3 in A, q3 is in B"
-* The expression projection "<-" creates a generator, in which the lhs has the type of a member of the rhs. 
-This means the body of the and() comprehension must apply to all members (q3) of A. (see [Notes](https://github.com/conjure-cp/conjure-oxide/wiki/Conjure-Horizontal-Set-Rules#notes)).
+## subset_to_subset_eq_neq (boolean)
 ```
-Picking the first option: Question 1: A subsetEq B
-     Answer 1: set-subsetEq: Horizontal rule for set subsetEq
-               A subsetEq B ~~> and([q3 in B | q3 <- A])
+A subset B ~~> A subsetEq B /\ A != B
 ```
-
-## Set-subset (boolean)
 
 rule for subset, checks if one set is **strictly** contained in another, they cannot be equal
 
 1. identifies pattern: "a subset b"
 2. checks that a and b are sets
 3. translates a is subset of b to a is subsetEq of b, and a is not equal to b
-* i.e. "a subset b" becomes " "a subsetEq b" AND "a neq b" ", using rules Set-subsetEq and Set-neq
+* i.e. "a subset b" becomes " "a subsetEq b" AND "a neq b" "
 
 ### Code:
-```haskell 
-     theRule [essence| &a subset &b |] = do
-         TypeSet{} <- typeOf a
-         TypeSet{} <- typeOf b
-         return
-             ( "Horizontal rule for set subset"
-             , return [essence| &a subsetEq &b /\ &a != &b |]
-             )
-     theRule _ = na "rule_Subset"
+```rust 
+fn subset_to_subset_eq_neq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    match expr {
+        Expr::Subset(_, a, b)
+            if matches!(a.as_ref().return_type(), ReturnType::Set(_))
+                && matches!(b.as_ref().return_type(), ReturnType::Set(_)) =>
+        {
+            let expr1 = Expr::SubsetEq(Metadata::new(), a.clone(), b.clone());
+            let expr2 = Expr::Neq(Metadata::new(), a.clone(), b.clone());
+            Ok(Reduction::pure(Expr::And(
+                Metadata::new(),
+                Moo::new(matrix_expr![expr1, expr2]),
+            )))
+        }
+        _ => Err(RuleNotApplicable),
+    }
+}
 ```
 
-### Example:
+## supset_to_subset (boolean)
 ```
-Picking the first option: Question 1: A subset B
-     Answer 1: set-subset: Horizontal rule for set subset
-               A subset B ~~> A subsetEq B /\ A != B
+A supset B ~~> B subset A
 ```
 
-## Set-supset (boolean)
 rule for superset, checks if one set **strictly** contains another, they cannot be equal
 
 1. identifies pattern: "a supset b"
 2. checks that a and b are sets
-3. translates a is superset of b to b is subset of a, and applies subset rule.
+3. translates a is superset of b to b is subset of a
 
 ### Code:
-```haskell
-     theRule [essence| &a supset &b |] = do
-         TypeSet{} <- typeOf a
-         TypeSet{} <- typeOf b
-         return
-             ( "Horizontal rule for set supset"
-             , return [essence| &b subset &a |]
-             )
-     theRule _ = na "rule_Supset"
+```rust
+fn supset_to_subset(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    match expr {
+        Expr::Supset(_, a, b)
+            if matches!(a.as_ref().return_type(), ReturnType::Set(_))
+                && matches!(b.as_ref().return_type(), ReturnType::Set(_)) =>
+        {
+            Ok(Reduction::pure(Expr::Subset(
+                Metadata::new(),
+                b.clone(),
+                a.clone(),
+            )))
+        }
+        _ => Err(RuleNotApplicable),
+    }
+}
+
 ```
 
-### Example:
+## supset_eq_to_subset_eq (boolean)
 ```
-Picking the first option: Question 1: A supset B
-     Answer 1: set-supset: Horizontal rule for set supset
-               A supset B ~~> B subset A
+A supsetEq B ~~> B subsetEq A
 ```
-
-## Set-supsetEq (boolean)
 
 rule for supsetEq, checks if one set contains another, **they may be equal** 
 
 1. identifies pattern: "x supsetEq y"
 2. checks that x and y are sets
-3. translates x is supsetEq of y to y is subsetEq of x, and applies subsetEq rule.
+3. translates x is supsetEq of y to y is subsetEq of x
 
 ### Code:
-```haskell
-     theRule [essence| &a supsetEq &b |] = do
-         TypeSet{} <- typeOf a
-         TypeSet{} <- typeOf b
-         return
-             ( "Horizontal rule for set supsetEq"
-             , return [essence| &b subsetEq &a |]
-             )
-     theRule _ = na "rule_SupsetEq"
+```rust
+fn supset_eq_to_subset_eq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    match expr {
+        Expr::SupsetEq(_, a, b)
+            if matches!(a.as_ref().return_type(), ReturnType::Set(_))
+                && matches!(b.as_ref().return_type(), ReturnType::Set(_)) =>
+        {
+            Ok(Reduction::pure(Expr::SubsetEq(
+                Metadata::new(),
+                b.clone(),
+                a.clone(),
+            )))
+        }
+        _ => Err(RuleNotApplicable),
+    }
+}
 ```
 
-### Example: 
-```
-Picking the first option: Question 1: A supsetEq B
-     Answer 1: set-subsetEq: Horizontal rule for set supsetEq
-               A supsetEq B ~~> B subsetEq A
-```
 
 ## Set-intersect (describes a new set)
 
@@ -436,59 +359,6 @@ Picking the first option: Question 1: [q5 = q4 | q5 <- A - B]
                [q5 = q4 | q5 <- A - B] ~~> [q5 = q4 | q5 <- A, !(q5 in B)]
 ```
 
-## Set-max-min (int)
-rule for finding maximum and minimum of a set of integers
-* contains two sub-rules, one for max, one for min.
-* if set is literal, converts to list and finds max. 
-* otherwise creates quantified variable and uses max() operation in Essence.
-* minimum rule works analogously
-
-### Code:
-```haskell
-     theRule [essence| max(&s) |] = do
-         TypeSet (TypeInt _) <- typeOf s
-         return             
-             ( "Horizontal rule for set max"
-             , case () of
-                 _ | Just (_, xs) <- match setLiteral s, length xs > 0 -> return $ make opMax $ fromList xs
-                 _ -> do
-                     (iPat, i) <- quantifiedVar
-                     return [essence| max([&i | &iPat <- &s]) |]
-             )
-     theRule [essence| min(&s) |] = do
-         TypeSet (TypeInt _) <- typeOf s
-         return
-             ( "Horizontal rule for set min"
-             , case () of
-                 _ | Just (_, xs) <- match setLiteral s, length xs > 0 -> return $ make opMin $ fromList xs
-                 _ -> do
-                     (iPat, i) <- quantifiedVar
-                     return [essence| min([&i | &iPat <- &s]) |]
-             )
-     theRule _ = na "rule_MaxMin"
-```
-
-### Example:
-```
-Picking the first option: Question 1: max(A)
-                               Context #1: max(A) = max(B)
-     Answer 1: set-max-min: Horizontal rule for set max
-               max(A) ~~> max([q3 | q3 <- A])
-```
-### Set-literal example:
-```
-        letting A be {5, 6, 3}
-        find i: int(0..10)
-        such that i = min(A)
-        branching on [i]
-        such that
-        such that true(i)
-        
-Picking the first option: Question 1: min(A)
-                               Context #1: i = min(A)
-     Answer 1: full-evaluate: Full evaluator
-               min(A) ~~> 3
-```
 
 ## Set-in (boolean)
 
