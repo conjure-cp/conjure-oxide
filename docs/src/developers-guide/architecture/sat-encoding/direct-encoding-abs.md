@@ -56,7 +56,7 @@ for bucket in buckets {
     - Minimum output: 0 (from |0|).
     - Maximum output: 5 (from |-3| or |5|, whichever is larger).
 
-2. **Range doesn't include 0** (e.g., `[2, 8]`):
+2. **Positive Range** (e.g., `[2, 8]`):
     - Minimum output: 2 (from |2|).
     - Maximum output: 8 (from |8|).
 
@@ -76,7 +76,7 @@ let out_bit = match bucket.len() {
 };
 ```
 
-The optimization **skips Tseytin OR for single-element buckets**, reducing auxiliary variables and clauses:
+The optimisation **skips Tseytin OR for single-element buckets**, reducing auxiliary variables and clauses:
 
 - Empty bucket: Returns constant `false` (no clauses).
 - Single element: Returns the element directly (no auxiliary variable).

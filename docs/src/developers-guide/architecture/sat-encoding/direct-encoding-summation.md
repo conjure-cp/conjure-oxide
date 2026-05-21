@@ -23,7 +23,9 @@ Direct encoding summation uses a **disjunctive normal form** approach that lever
 
 For each possible output value k, the output bit is **true if and only if** there exists **any pair of input values** i and j that sum to k:
 
+```code
 output[k] = OR over all i + j = k of (input[i] AND input[j])
+```
 
 This is computed as a series of pairwise additions, where each iteration combines an accumulator with one additional input operand.
 
@@ -40,7 +42,7 @@ for each additional operand:
                     output[k] = output[k] OR (accum[i] AND operand[j])
 ```
 
-## Operand Normalization
+## Operand Normalisation
 
 Before summation, all input operands are **normalized to a common range** using `validate_direct_int_operands`:
 
@@ -82,23 +84,6 @@ sum_expr = tseytin_or(&vec![sum_expr, and_ab], &mut new_clauses, &mut new_symbol
 
 Each `tseytin_and` and `tseytin_or` creates new CNF clauses and auxiliary variables, converting the DNF structure into CNF form required by SAT solvers.
 
-## Key Design Decisions
-
-## Edge Case: Empty Sum
-
-When the sum list is empty (degenerate case), the result is the constant `0`:
-
-```rust
-if exprs.is_empty() {
-    return Ok(Reduction::pure(Expr::SATInt(
-        Metadata::new(),
-        SATIntEncoding::Direct,
-        Moo::new(into_matrix_expr!(vec![/* true bit for value 0 */])),
-        (0, 0),
-    )));
-}
-```
-
 ## Example: Summing Two Direct-Encoded Integers
 
 Given:
@@ -115,6 +100,21 @@ Out₄ = (A₂ AND B₂)                    // only 2+2=4
 ```
 
 Each OR and AND is converted to CNF via Tseytin transformation, adding auxiliary variables and clauses.
+
+## Edge Case: Empty Sum
+
+When the sum list is empty (degenerate case), the result is the constant `0`:
+
+```rust
+if exprs.is_empty() {
+    return Ok(Reduction::pure(Expr::SATInt(
+        Metadata::new(),
+        SATIntEncoding::Direct,
+        Moo::new(into_matrix_expr!(vec![/* true bit for value 0 */])),
+        (0, 0),
+    )));
+}
+```
 
 ## Complexity Analysis
 

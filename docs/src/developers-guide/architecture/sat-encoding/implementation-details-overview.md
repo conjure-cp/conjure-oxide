@@ -2,7 +2,7 @@
 
 ## Overview
 
-This section documents specific SAT encoding rule implementations, focusing on their unique design decisions and algorithmic approaches. Unlike the general [Creating Transformation Rules](./creating-transformation-rules.md) guide which covers the common structure and best practices for all rules, this section provides **in-depth analysis of individual rules** where implementation details significantly differ or warrant deeper explanation.
+This section documents specific SAT encoding rule implementations, focussing on their unique design decisions and algorithmic approaches. Unlike the general [Creating Transformation Rules](./creating-transformation-rules.md) guide which covers the common structure and best practices for all rules, this section provides **in-depth analysis of individual rules** where implementation details significantly differ or warrant deeper explanation.
 
 ## Why Separate Documentation?
 
