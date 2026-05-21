@@ -1,4 +1,4 @@
-# Domain Refinement
+# Domain Pruning
 ## The Project
 In Conjure-Oxide when we convert Essence-level domains into lower-level domains for the solver they can often be blown-up necessarily large, which negatively impacts solver performance.
 
@@ -11,18 +11,20 @@ such that b subset a
 <br>
 Instead of being treated as a set of maximum size 1000, we can deduce that `b` has a maximum size of 1.
 
-There is lot of domain refinement that can be done at an Essence level, making it a very interesting project. This has the potential to make measurable improvements to Conjure-Oxide in a way that goes beyond Conjure, and is the first step in an Essence-level solver.
+> Domain Pruning is the process of shrinking the domain of an expression, by inferring the tightest bounds placed on the domain by that expression. 
+
+There is lot of domain pruning that can be done at an Essence level, making it a very interesting project. This has the potential to make measurable improvements to Conjure-Oxide in a way that goes beyond Conjure, and is the first step in an Essence-level solver.
 
 ## How Would It Work
-To carry out domain refinement we suggest creating an arc-consistency-style algorithm. This can be run between parsing and rule rewriting, to infer the minimal domains of all variables before they are expanded. The algorithm would iterate over constraints, stored as expressions in Conjure-Oxide, and refine the internal variable’s domains. Not all constraints in Conjure-Oxide are binary, and so a form of generalised arc consistency might be necessary. Once the domains have been refined any constraints also containing the newly changed variable must be rechecked for further refinements.
+To calculate the tightest domains, we suggest creating an arc-consistency-style algorithm. This can be run between parsing and rule rewriting, to infer the minimal domains of all variables before they are expanded. The algorithm would iterate over constraints, stored as expressions in Conjure-Oxide, and refine the internal variable’s domains. Not all constraints in Conjure-Oxide are binary, and so a form of generalised arc consistency might be necessary. Once the domains have been refined any constraints also containing the newly changed variable must be rechecked.
 
 ## What Are The Current Roadblocks
 Currently all expressions contain the domain of the result of the expression. The first task and a current roadblock would be to propagate this expression domain to the internal variables involved. Conjure-Oxide does not currently use the expression domains in any way when it comes to rewriting.
 
-A final roadblock for this project is how to test it. In specific cases, where you know a refinement has occurred, you can use Conjure-Oxide Pretty’s new expression-domains option to view all domains in the model. However, for a more comprehensive testing you need a large number of test cases. One consideration was using a LLM to generate these cases. As of Dec-2025 the free AI models included in APIs were not capable of doing this at scale. 
+A final roadblock for this project is how to test it. In specific cases, where you know pruning has occurred, you can use Conjure-Oxide Pretty’s `expression-domains` option to view all domains in the model. However, for a more comprehensive testing you need a large number of test cases. One consideration was using a LLM to generate these cases. As of Dec-2025 the free AI models included in APIs were not capable of doing this at scale. 
 
 ## What Has Been Done So Far
-To aid with explainability and debugging while tightening the domains, an option has been added to Conjure-Oxide Pretty to print out the domains of all expressions as a trace. This can be accessed using `--output-format=expression-domains` and when combined with custom tests can effectively test the domain refinement.
+To aid with explainability and debugging while tightening the domains, an option has been added to Conjure-Oxide Pretty to print out the domains of all expressions as a trace. This can be accessed using `--output-format=expression-domains` and when combined with custom tests can effectively test the domain pruning.
 
 Before work on the consistency algorithm could have began it was important that the domain of expressions is actually fully-tightened. This will allow for maximum inference. As such, all work up to this point has been focused on tightening the domains returned from the `Expression::domain_of()` function.
 
