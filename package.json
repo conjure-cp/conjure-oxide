@@ -36,7 +36,68 @@
         "scopeName": "source.essence",
         "path": "tools/vscode-ext/syntaxes/essence.tmLanguage.json"
       }
-    ]
+    ],
+    "semanticTokenTypes": [
+      {
+        "id": "letting",
+        "description": "An Essence letting binding",
+        "superType": "keyword"
+      },
+      {
+        "id": "lettingVar",
+        "description": "An Essence letting variable",
+        "superType": "variable"
+      },
+      {
+        "id": "find",
+        "description": "An Essence find binding",
+        "superType": "keyword"
+      },
+      {
+        "id": "findVar",
+        "description": "An Essence decision variable",
+        "superType": "property"
+      },
+      {
+        "id": "domain",
+        "description": "An Essence domain",
+        "superType": "type"
+      },
+      {
+        "id": "given",
+        "description": "An Essence given binding",
+        "superType": "keyword"
+      },
+      {
+        "id": "givenVar",
+        "description": "An Essence given variable",
+        "superType": "string"
+      }
+    ],
+    "semanticTokenScopes": [{
+      "scopes": {
+        "number": ["constant.numeric"],
+        "function": ["entity.name.function"],
+        "variable": ["variable.other"],
+        "letting": ["keyword.letting"],
+        "find": ["keyword.find"],
+        "domain": ["entity.name.type.domain"],
+        "findVar": ["variable.other.property.findVar"],
+        "lettingVar": ["variable.other.constant.lettingVar"],
+        "given": ["keyword.given"],
+        "givenVar": ["string.other.givenVar"]
+      }
+    }],
+    "configurationDefaults": {
+      "editor.semanticHighlighting.enabled": true,
+      "editor.semanticTokenColorCustomizations": {
+        "rules": {
+          "findVar": {
+            "underline": true
+          }
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
