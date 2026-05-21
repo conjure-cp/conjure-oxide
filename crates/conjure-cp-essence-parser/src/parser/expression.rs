@@ -8,7 +8,6 @@ use crate::{child, field, named_child};
 use conjure_cp_core::ast::{Expression, GroundDomain, Metadata, Moo};
 use conjure_cp_core::{domain_int, matrix_expr, range};
 use tree_sitter::Node;
-use uniplate::Uniplate;
 
 pub fn parse_expression(
     ctx: &mut ParseContext,
