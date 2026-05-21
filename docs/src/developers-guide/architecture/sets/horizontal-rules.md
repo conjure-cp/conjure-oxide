@@ -318,54 +318,66 @@ fn union_set(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 ```
 
 
-## Set-difference (describes a new set)
+## difference_set (describes a new set)
+```
+[ return_expr | i <- A - B, qualifiers...] -> [ return_expr | i <- A, !(i in B), qualifiers...]
+```
 
-rule for set difference. defines that an element is in the difference of two sets when it is in the former but not in the latter. similar structure as comprehension literal rule, only used within generators or conditions 
+rule for set difference. defines that an element is in the difference of two sets when it is in the former but not in the latter.
 
-1. attempts to match generator to pattern and expression: pattern "_quantified variable_ <-" and expression with a modifier operator (if present) applied to a set/multiset/relation "s"
-2. attempts to match s to "x - y"
-3. checks x is a set, multiset, function, or relation
-4. returns comprehension with same body as original, same gocBefore, gocAfter. Generator is replaced by original generator applied only to x, with additional condition "i not in y"
+1. attempts to match expression generator that generates from a difference expression "x - y"
+2. replace the generator's expression with the first set "x"
+3. adds the condition that the relevant quantified variable must not be in the second set "y
 
 ### Code:
-```haskell
-     theRule (Comprehension body gensOrConds) = do
-         (gocBefore, (pat, iPat, expr), gocAfter) <- matchFirst gensOrConds $ \ goc -> case goc of
-             Generator (GenInExpr pat@(Single iPat) expr) -> return (pat, iPat, expr)
-             _ -> na "rule_Difference"
-         (mkModifier, s)    <- match opModifier expr
-         (x, y)             <- match opMinus s
-         tx                 <- typeOf x
-         case tx of
-             TypeSet{}      -> return ()
-             TypeMSet{}     -> return ()
-             TypeFunction{} -> return ()
-             TypeRelation{} -> return ()
-             _              -> failDoc "type incompatibility in difference operator"
-         let i = Reference iPat Nothing
-         return
-             ( "Horizontal rule for set difference"
-             , return $
-                 Comprehension body
-                     $  gocBefore
-                     ++ [ Generator (GenInExpr pat (mkModifier x))
-                        , Condition [essence| !(&i in &y) |]
-                        ]
-                     ++ gocAfter
-             )
-```
+```rust
+fn difference_set(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    match expr {
+        Expr::Comprehension(_, comp) => {
+            // find if any of the generators are generating from expressions
+            for qualifier in &comp.qualifiers {
+                if let ComprehensionQualifier::ExpressionGenerator { ptr } = qualifier {
+                    let gen_decl = ptr.clone();
 
-### Example: 
-* set-difference rule appears within model C = A - B, after applying set-equals, set-subsetEq, set-in
-* q4 is quantified in a former step, it is an element in C (Context #3)
-* see Context #1, q5 is quantified by or() - existence quantifier, translates to "there exists a q5 in A - B such that q5 equals q4"
-* translates "q5 <- A - B" to "q5 <- A, !(q5 in B)"
-```
-Picking the first option: Question 1: [q5 = q4 | q5 <- A - B]
-                               Context #1: or([q5 = q4 | q5 <- A - B])
-                               Context #3: and([or([q5 = q4 | q5 <- A - B]) | q4 : int(0..6), C_Occurrence[q4]])
-     Answer 1: set-difference: Horizontal rule for set difference
-               [q5 = q4 | q5 <- A - B] ~~> [q5 = q4 | q5 <- A, !(q5 in B)]
+                    // match on expression being of form A - B
+                    let Some((a, b)) = (match ptr.as_quantified_expr() {
+                        Some(expr_guard) => match &*expr_guard {
+                            Expr::Minus(_, a, b) => Some((a.clone(), b.clone())),
+                            _ => None,
+                        },
+                        None => None,
+                    }) else {
+                        continue;
+                    };
+
+                    // [ return_expr | i <- A, !(i in B), guards...]
+                    let (mut comprehension, a_ptr) =
+                        replace_expression_generator_source(comp.as_ref(), &gen_decl, a.into());
+
+                    // add the condition !(i in B)
+                    comprehension
+                        .qualifiers
+                        .push(ComprehensionQualifier::Condition(Expr::Not(
+                            Metadata::new(),
+                            Moo::new(Expr::In(
+                                Metadata::new(),
+                                Moo::new(Expr::Atomic(Metadata::new(), Atom::new_ref(a_ptr))),
+                                b,
+                            )),
+                        )));
+
+                    return Ok(Reduction::pure(Expr::Comprehension(
+                        Metadata::new(),
+                        comprehension.into(),
+                    )));
+                }
+            }
+
+            Err(RuleNotApplicable)
+        }
+        _ => Err(RuleNotApplicable),
+    }
+}
 ```
 
 
