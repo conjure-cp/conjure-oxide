@@ -1,7 +1,7 @@
 use crate::diagnostics::diagnostics_api::SymbolKind;
 use crate::diagnostics::source_map::{HoverInfo, span_with_hover};
 use crate::errors::{FatalParseError, RecoverableParseError};
-use crate::expression::{parse_binary_expression, parse_expression, parse_pareto_expression};
+use crate::expression::{parse_binary_expression, parse_expression};
 use crate::parser::ParseContext;
 use crate::parser::abstract_literal::parse_abstract;
 use crate::parser::comprehension::parse_comprehension;
