@@ -7,7 +7,7 @@ use crate::expression::parse_expression;
 use crate::parser::ParseContext;
 use crate::{RecoverableParseError, child};
 use conjure_cp_core::ast::{
-    DeclarationPtr, Domain, DomainPtr, IntVal, Moo, Name, Range, RecordEntry, Reference, SetAttr,
+    DeclarationPtr, Domain, DomainPtr, FieldEntry, IntVal, Moo, Name, Range, Reference, SetAttr,
 };
 use tree_sitter::Node;
 
@@ -60,6 +60,7 @@ pub fn parse_domain(
                 ctx.source_map,
                 HoverInfo {
                     description: format!("Domain reference: {name}"),
+                    doc_key: None,
                     kind: Some(SymbolKind::Variable),
                     ty: None,
                     decl_span: None, // could link to the declaration span if we wanted
@@ -319,7 +320,7 @@ fn parse_record_domain(
     ctx: &mut ParseContext,
     record_domain: Node,
 ) -> Result<Option<DomainPtr>, FatalParseError> {
-    let mut record_entries: Vec<RecordEntry> = Vec::new();
+    let mut record_entries: Vec<FieldEntry> = Vec::new();
     for record_entry in named_children(&record_domain) {
         let Some(name_node) = field!(recover, ctx, record_entry, "name") else {
             return Ok(None);
@@ -331,7 +332,7 @@ fn parse_record_domain(
         let Some(domain) = parse_domain(ctx, domain_node)? else {
             return Ok(None);
         };
-        record_entries.push(RecordEntry { name, domain });
+        record_entries.push(FieldEntry { name, domain });
     }
 
     // Adding record keyword to the source map with hover info from documentation

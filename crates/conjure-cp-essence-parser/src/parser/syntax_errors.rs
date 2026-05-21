@@ -5,7 +5,8 @@ use std::collections::HashSet;
 use tree_sitter::Node;
 
 /// Returns the absolute byte offset of the start of `row` in `source`.
-fn line_start_byte(source: &[u8], row: usize) -> usize {
+/// TODO: move to a separate module like utils, we don't want semantic tokens to depend on parser internals
+pub fn line_start_byte(source: &[u8], row: usize) -> usize {
     let mut current_row = 0usize;
     let mut line_start = 0usize;
     for (idx, b) in source.iter().enumerate() {
@@ -349,15 +350,9 @@ fn generate_malformed_line_message(line: usize, source: &str) -> String {
         "given" => "a given declaration statement",
         "where" => "an instantiation condition",
         "minimising" | "maximising" => "an objective statement",
-        "such" => {
-            // Check for invalid constraint statement
-            if second == "that" {
-                "a constraint statement"
-            } else {
-                "a valid top-level statement"
-            }
-        }
-
+        // Check for invalid constraint statement
+        "such" if second == "that" => "a constraint statement",
+        "such" => "a valid top-level statement",
         _ => {
             // Default case for unrecognized starting tokens
             "a valid top-level statement"

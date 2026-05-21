@@ -239,7 +239,7 @@ pub(crate) fn init_solver(global_args: &GlobalArgs) -> Solver {
         .map(|timeout_ms| u64::try_from(timeout_ms).expect("Timeout too large"));
 
     match family {
-        SolverFamily::Minion => Solver::new(Minion::default()),
+        SolverFamily::Minion => Solver::new(Minion::with_value_order(global_args.minion_valorder)),
         SolverFamily::Sat(_) => Solver::new(Sat::default()),
         SolverFamily::Smt(theory_cfg) => Solver::new(Smt::new(timeout_ms, theory_cfg)),
     }
