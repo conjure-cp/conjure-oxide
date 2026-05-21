@@ -5,7 +5,7 @@ use super::proto::{
 };
 use std::collections::HashMap;
 use crate::Model;
-use crate::ast::{Atom, Expression, GroundDomain, HasDomain, Literal, Name, Range};
+use crate::ast::{AbstractLiteral, Atom, Expression, GroundDomain, HasDomain, Literal, Name, Range};
 
 struct TranslationContext {
     var_mapping: HashMap<Name, i32>,
@@ -75,6 +75,38 @@ fn expr_to_linear(expr: &Expression, ctx: &TranslationContext) -> SolverResult<L
                 coeffs: vec![1],
                 offset: 0,
             })
+        }
+        Expression::Neg(_, inner) => {
+            let lin = expr_to_linear(inner, ctx)?;
+            Ok(LinearExpr {
+                vars: lin.vars,
+                coeffs: lin.coeffs.into_iter().map(|c| -c).collect(),
+                offset: -lin.offset,
+            })
+        }
+        Expression::Sum(_, inner) => {
+            match inner.as_ref() {
+                Expression::AbstractLiteral(_, AbstractLiteral::Matrix(elems, _)) => {
+                    let mut vars = Vec::new();
+                    let mut coeffs = Vec::new();
+                    let mut offset = 0;
+                    for elem in elems {
+                        let lin = expr_to_linear(elem, ctx)?;
+                        vars.extend(lin.vars);
+                        coeffs.extend(lin.coeffs);
+                        offset += lin.offset;
+                    }
+                    Ok(LinearExpr {
+                        vars,
+                        coeffs,
+                        offset,
+                    })
+                }
+                _ => Err(SolverError::ModelFeatureNotSupported(format!(
+                    "Unsupported sum argument in linear constraint: {:?}",
+                    inner
+                ))),
+            }
         }
         _ => Err(SolverError::ModelFeatureNotSupported(format!(
             "Unsupported expression in linear constraint: {expr:?}"

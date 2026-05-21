@@ -45,5 +45,12 @@ fn main() {
         println!("cargo:rustc-link-search=native={}/lib", prefix);
     }
     println!("cargo:rustc-link-lib=ortools");
+    
+    // Abseil dependencies required by inline templates in OR-Tools headers
+    println!("cargo:rustc-link-lib=absl_raw_hash_set");
+    println!("cargo:rustc-link-lib=absl_raw_logging_internal");
+    println!("cargo:rustc-link-lib=absl_log_internal_check_op");
+    println!("cargo:rustc-link-lib=absl_log_internal_message");
+    
     println!("cargo:rustc-link-lib=protobuf");
 }
