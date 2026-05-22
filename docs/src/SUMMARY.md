@@ -53,6 +53,7 @@
     - [LSP]()
         - [General Structure](developers-guide/architecture/lsp/general-structure.md)
         - [Diagnostics API](developers-guide/architecture/lsp/diagnostics-api.md)
+        - [Source Map](developers-guide/architecture/lsp/source-map.md)
         - [Syntax Errors](developers-guide/architecture/lsp/syntax-errors.md)
         - [Error Detection]()
             - [Error Classification](developers-guide/architecture/lsp/error-detection/error-classification.md)
