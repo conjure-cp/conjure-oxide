@@ -49,7 +49,7 @@
 - [Architecture]()
     - [Essence Parser](developers-guide/architecture/essence-parser/index.md)
         - [Error Detection]()
-            - [Semantic Errors](developers-guide/architecture/essence-parser/error-detection/semantic-errors.md)
+            <!-- - [Semantic Errors](developers-guide/architecture/essence-parser/error-detection/semantic-errors.md) -->
             - [Syntactic Errors](developers-guide/architecture/essence-parser/error-detection/syntactic-errors.md)
         - [ProTrace Module](developers-guide/architecture/essence-parser/protrace-module.md)
         - [TreeMorph Benchmarking](developers-guide/architecture/essence-parser/treemorph-benchmarking.md)
@@ -58,7 +58,7 @@
         - [Diagnostics API](developers-guide/architecture/lsp/diagnostics-api.md)
         - [Error Detection]()
             - [Error Classification](developers-guide/architecture/lsp/error-detection/error-classification.md)
-            <!-- - [Semantic Errors](developers-guide/architecture/lsp/error-detection/semantic-errors.md) -->
+            - [Semantic Errors](developers-guide/architecture/lsp/error-detection/semantic-errors.md)
             - [Syntactic Errors](developers-guide/architecture/lsp/error-detection/syntactic-errors.md)
         - [Server-Client Model](developers-guide/architecture/lsp/server-client-model.md)
         - [Tests](developers-guide/architecture/lsp/tests.md)
