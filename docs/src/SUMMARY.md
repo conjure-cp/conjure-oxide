@@ -56,7 +56,6 @@
     - [LSP]()
         - [General Structure](developers-guide/architecture/lsp/general-structure.md)
         - [Diagnostics API](developers-guide/architecture/lsp/diagnostics-api.md)
-        - [Syntax Errors](developers-guide/architecture/lsp/syntax-errors.md)
         - [Error Detection]()
             - [Error Classification](developers-guide/architecture/lsp/error-detection/error-classification.md)
             - [Semantic Errors](developers-guide/architecture/lsp/error-detection/semantic-errors.md)
