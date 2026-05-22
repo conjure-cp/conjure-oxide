@@ -1,8 +1,11 @@
 
-use conjure_cp::ast::comprehension::{Comprehension, ComprehensionQualifier};
-use conjure_cp::ast::{Atom, DeclarationPtr, Metadata};
+use std::thread::ScopedJoinHandle;
+
+use conjure_cp::ast::ac_operators::ACOperatorKind;
+use conjure_cp::ast::comprehension::{Comprehension, ComprehensionBuilder, ComprehensionQualifier};
+use conjure_cp::ast::{Atom, DeclarationPtr, Metadata, SymbolTablePtr};
 use conjure_cp::ast::{Expression as Expr, Moo, SymbolTable};
-use conjure_cp::into_matrix_expr;
+use conjure_cp::{bug, into_matrix_expr};
 use conjure_cp::rule_engine::Reduction;
 use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, register_rule,
@@ -10,21 +13,77 @@ use conjure_cp::rule_engine::{
 use uniplate::Biplate;
 
 // use Expression::{And, Eq, SubsetEq};
-// -- [return_expr | a in b, qualifiers....] ~~> [return_expr | ]
 
-// or([ a = i | i <- b ]) ... wait can;t this be rewritten as [ret_expr | i for i in a if i in b]
-// and also that there is a way to generate comprehension variables from an expression 
-#[register_rule(("Base", 9000))]
-fn rule_in_set(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+// A in B ~~> or([ a = i | i <- b ])
+#[register_rule("Base", 9000, [In])]
+fn rule_in_set(expr: &Expr, scope: &SymbolTable) -> ApplicationResult {
     // match expr onto a comprehension else fail
     match expr {
-        Expr::Comprehension(_, compr) => {
-            // need to sort oout how you want to extract the data and where to put it,
-            // prob need to create a new comprehension that 
+        Expr::In(_, a, b) => {
+            // copy scope to maintain the same symboltable
+            let scope_ptr = SymbolTablePtr::new();
+            *scope_ptr.write() = scope.clone();
+            let mut comp_builder = ComprehensionBuilder::new(scope_ptr);
+
+            //create a qualifier that generates from b
+
+            // this creates an internal representation for i which is reserved as a local variable to generator form
+            let quant_name = comp_builder
+                .generator_symboltable()
+                .write()
+                .clone()
+                .gen_sym();
+
+            // this creates an expression generator with the temporary variable (i) and the set as the one you're generating from (b)
+            comp_builder = comp_builder.expression_generator(quant_name.clone() , b.clone().into());
+
+            // get a ptr to the quantifier
+            let Some(quant_ptr) = comp_builder
+                .generator_symboltable()
+                .read()
+                .lookup_local(&quant_name)
+            else {
+                bug!("oh nein! there is no quantified variable ://")
+            }; 
+
+            // create a return expr a = i
+            let return_expr = Expr::Eq(
+                Metadata::new(),
+                Moo::new(Expr::Atomic(Metadata::new(), Atom::new_ref(quant_ptr))),
+                a.clone(),
+            );
+
+            let comp = comp_builder.with_return_value(return_expr, Some(ACOperatorKind::Or));
+
+            Ok(Reduction::pure(Expr::Or(
+                Metadata::new(),
+                Moo::new(Expr::Comprehension(Metadata::new(), Moo::new(comp))),
+            )))
         }
         _ => Err(RuleNotApplicable)
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // fn rule_in(expr: &Expression, symbol: &SymbolTable) -> ApplicationResult {
 //     match expr {

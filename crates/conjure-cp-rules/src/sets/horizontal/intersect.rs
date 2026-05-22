@@ -49,8 +49,6 @@ fn intersect(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                         continue;
                     };
                     
-                    //QUESTION: what is the purpose of not including b_ptr and then including it in the second one
-
                     // [return_expr | i <- A, (i in B)...]
                     let (comprehension1, a_ptr) = 
                         rewrite_intersect(comp.as_ref(), &gen_decl, a.into());
