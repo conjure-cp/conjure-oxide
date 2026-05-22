@@ -58,7 +58,7 @@
         - [Diagnostics API](developers-guide/architecture/lsp/diagnostics-api.md)
         - [Error Detection]()
             - [Error Classification](developers-guide/architecture/lsp/error-detection/error-classification.md)
-            - [Semantic Errors](developers-guide/architecture/lsp/error-detection/semantic-errors.md)
+            <!-- - [Semantic Errors](developers-guide/architecture/lsp/error-detection/semantic-errors.md) -->
             - [Syntactic Errors](developers-guide/architecture/lsp/error-detection/syntactic-errors.md)
         - [Server-Client Model](developers-guide/architecture/lsp/server-client-model.md)
         - [Tests](developers-guide/architecture/lsp/tests.md)
