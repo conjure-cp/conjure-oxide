@@ -65,6 +65,7 @@
         - [Rule Types](developers-guide/architecture/sat-encoding/rule-types.md)
         - [Creating Transformation Rules](developers-guide/architecture/sat-encoding/creating-transformation-rules.md)
         - [Booleans](developers-guide/architecture/sat-encoding/booleans.md)
+    - [Constraint Dominance Programming (CDP)](developers-guide/architecture/constraint-dominance-programming.md)
     - [Sets]()
         - [Vertical Rules](developers-guide/architecture/sets/vertical-rules.md)
         - [Horizontal Rules](developers-guide/architecture/sets/horizontal-rules.md)
