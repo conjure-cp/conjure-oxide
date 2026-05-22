@@ -53,6 +53,7 @@
         - [ProTrace Module](developers-guide/architecture/essence-parser/protrace-module.md)
         - [TreeMorph Benchmarking](developers-guide/architecture/essence-parser/treemorph-benchmarking.md)
     - [LSP]()
+        - [Error Detection](developers-guide/architecture/lsp/error-detection.md)
         - [General Structure](developers-guide/architecture/lsp/general-structure.md)
         - [Diagnostics API](developers-guide/architecture/lsp/diagnostics-api.md)
         - [Server-Client Model](developers-guide/architecture/lsp/server-client-model.md)

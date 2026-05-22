@@ -26,7 +26,7 @@ The function, `detect_errors(source, cst)` calls `parse_essence_with_context_and
 
 ## How the LSP publishes diagnostics
 
-The LSP (`crates/conjure-cp-lsp`) parses documents on `didOpen` and (debounced) `didChange` in `src/handlers/sync_event.rs`:
+The LSP (`crates/conjure-cp-lsp`) parses documents on `didOpen` and `didChange` in `src/handlers/sync_event.rs`:
 
 1. The LSP maintains a per-document cache containing the latest text, CST, AST (when available), `SourceMap`, and **the `Vec<RecoverableParseError>`** produced by parsing.
 2. On open/change it calls `parse_essence_with_context_and_map(...)` and stores the returned `errors` in the cache.
