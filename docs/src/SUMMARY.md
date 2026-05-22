@@ -68,7 +68,7 @@
     - [Rule Types](developers-guide/architecture/sat-encoding/rule-types.md)
     - [Creating Transformation Rules](developers-guide/architecture/sat-encoding/creating-transformation-rules.md)
     - [Booleans](developers-guide/architecture/sat-encoding/booleans.md)
-    - [Implementation Details and Design Motivations](developers-guide/architecture/sat-encoding/implementation-details-overview.md)
+    - [SAT Rule Implementation Patterns](developers-guide/architecture/sat-encoding/sat-generic-patterns.md)
     - [Direct Encoding SAT Summation](developers-guide/architecture/sat-encoding/direct-encoding-summation.md)
     - [Order Encoding Inequality](developers-guide/architecture/sat-encoding/order-encoding-inequality.md)
     - [Direct Encoding Absolute Value](developers-guide/architecture/sat-encoding/direct-encoding-abs.md)
