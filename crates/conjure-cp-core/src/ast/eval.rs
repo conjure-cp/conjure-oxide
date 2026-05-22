@@ -267,11 +267,10 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             vec_lit_op::<bool, bool>(|e| e.iter().any(|&e| e), es.as_ref()).map(Lit::Bool)
         }
         Expr::Imply(_, box1, box2) => {
-            let a: &Atom = (&**box1).try_into().ok()?;
-            let b: &Atom = (&**box2).try_into().ok()?;
-
-            let a: bool = a.try_into().ok()?;
-            let b: bool = b.try_into().ok()?;
+            let a_lit = eval_constant(box1.as_ref())?;
+            let b_lit = eval_constant(box2.as_ref())?;
+            let a: bool = (&a_lit).try_into().ok()?;
+            let b: bool = (&b_lit).try_into().ok()?;
 
             if a {
                 // true -> b ~> b

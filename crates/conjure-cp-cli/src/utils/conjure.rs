@@ -27,20 +27,147 @@ use uniplate::Uniplate;
 ///
 /// This is currently used to turn `0`/`1` solver outputs back into boolean
 /// literals before substituting them into dominance expressions.
-fn literal_for_reference_domain(
-    reference_domain: Option<GroundDomain>,
-    value: &Literal,
-) -> Option<Literal> {
-    if matches!(reference_domain, Some(GroundDomain::Bool)) {
-        return match value {
+fn coerce_literal_to_domain(domain: &GroundDomain, value: &Literal) -> Option<Literal> {
+    match domain {
+        GroundDomain::Bool => match value {
             Literal::Bool(x) => Some(Literal::Bool(*x)),
             Literal::Int(1) => Some(Literal::Bool(true)),
             Literal::Int(0) => Some(Literal::Bool(false)),
             _ => None,
-        };
+        },
+        GroundDomain::Matrix(_elem_domain, _idx_domains) => {
+            fn coerce_matrix_with_index_shape(
+                elem_domain: &GroundDomain,
+                idx_domains: &[conjure_cp::ast::Moo<GroundDomain>],
+                value: &Literal,
+            ) -> Option<Literal> {
+                let Literal::AbstractLiteral(conjure_cp::ast::AbstractLiteral::Matrix(items, _)) =
+                    value
+                else {
+                    return None;
+                };
+                let (head_idx, tail_idx) = idx_domains.split_first()?;
+
+                let coerced_items = if tail_idx.is_empty() {
+                    items
+                        .iter()
+                        .map(|item| coerce_literal_to_domain(elem_domain, item))
+                        .collect::<Option<Vec<_>>>()?
+                } else {
+                    items
+                        .iter()
+                        .map(|item| coerce_matrix_with_index_shape(elem_domain, tail_idx, item))
+                        .collect::<Option<Vec<_>>>()?
+                };
+
+                Some(Literal::AbstractLiteral(conjure_cp::ast::AbstractLiteral::Matrix(
+                    coerced_items,
+                    head_idx.clone(),
+                )))
+            }
+
+            let GroundDomain::Matrix(elem_domain, idx_domains) = domain else {
+                return None;
+            };
+
+            coerce_matrix_with_index_shape(elem_domain.as_ref(), idx_domains.as_slice(), value)
+        }
+        _ => Some(value.clone()),
+    }
+}
+
+fn literal_for_reference_domain(
+    reference_domain: Option<GroundDomain>,
+    value: &Literal,
+) -> Option<Literal> {
+    match reference_domain {
+        Some(domain) => coerce_literal_to_domain(&domain, value),
+        None => Some(value.clone()),
+    }
+}
+
+fn literal_int_value(lit: &Literal) -> Option<i32> {
+    match lit {
+        Literal::Int(i) => Some(*i),
+        _ => None,
+    }
+}
+
+fn synthesize_matrix_to_atom_literal(
+    base_name: &str,
+    elem_domain: &GroundDomain,
+    idx_domains: &[conjure_cp::ast::Moo<GroundDomain>],
+    prefix: &mut Vec<i32>,
+    solution: &BTreeMap<Name, Literal>,
+) -> Option<Literal> {
+    if idx_domains.is_empty() {
+        let suffix = prefix.iter().map(i32::to_string).collect_vec().join("_");
+        let key = Name::user(&format!("{base_name}_{suffix}"));
+        return solution.get(&key).cloned();
     }
 
-    Some(value.clone())
+    let (head_idx, tail_idx) = idx_domains.split_first()?;
+    let values = head_idx.values().ok()?;
+    let mut items = Vec::new();
+
+    for v in values {
+        let i = literal_int_value(&v)?;
+        prefix.push(i);
+        let item = if tail_idx.is_empty() {
+            let suffix = prefix.iter().map(i32::to_string).collect_vec().join("_");
+            let key = Name::user(&format!("{base_name}_{suffix}"));
+            solution.get(&key)?.clone()
+        } else {
+            synthesize_matrix_to_atom_literal(base_name, elem_domain, tail_idx, prefix, solution)?
+        };
+        prefix.pop();
+        items.push(item);
+    }
+
+    let _ = elem_domain;
+    Some(Literal::AbstractLiteral(
+        conjure_cp::ast::AbstractLiteral::Matrix(items, head_idx.clone()),
+    ))
+}
+
+fn lookup_solution_value(
+    name: &Name,
+    reference_domain: Option<&GroundDomain>,
+    solution: &BTreeMap<Name, Literal>,
+) -> Option<Literal> {
+    if let Some(v) = solution.get(name) {
+        return Some(v.clone());
+    }
+
+    match name {
+        Name::Represented(fields) => {
+            let (source_name, _, _) = fields.as_ref();
+            lookup_solution_value(source_name, reference_domain, solution)
+        }
+        Name::WithRepresentation(source_name, _) => {
+            lookup_solution_value(source_name, reference_domain, solution)
+        }
+        Name::User(s) => {
+            let s = s.as_str();
+            if s.contains("#matrix_to_atom")
+                && let Some(GroundDomain::Matrix(elem_domain, idx_domains)) = reference_domain
+            {
+                let mut prefix = Vec::new();
+                if let Some(v) = synthesize_matrix_to_atom_literal(
+                    s,
+                    elem_domain.as_ref(),
+                    idx_domains.as_slice(),
+                    &mut prefix,
+                    solution,
+                ) {
+                    return Some(v);
+                }
+            }
+            let (base, _) = s.split_once('#')?;
+            solution.get(&Name::user(base)).cloned()
+        }
+        Name::Machine(_) => None,
+    }
 }
 
 /// Replaces `fromSolution(x)` occurrences with the value of `x` from a previous solution.
@@ -55,12 +182,22 @@ fn substitute_from_solution(
             };
 
             let name = reference.name();
-            let value = previous_solution.get(&name)?;
             let reference_domain = reference.resolved_domain().map(|x| x.as_ref().clone());
-            let value = literal_for_reference_domain(reference_domain, value)?;
+            let value = match lookup_solution_value(&name, reference_domain.as_ref(), previous_solution) {
+                Some(v) => v,
+                None => {
+                    return Some(expr.clone());
+                }
+            };
+            let value = match literal_for_reference_domain(reference_domain, &value) {
+                Some(v) => v,
+                None => {
+                    return Some(expr.clone());
+                }
+            };
             Some(Expression::Atomic(Metadata::new(), Atom::Literal(value)))
         }
-        _ => Some(expr.clone()),
+        _ => None,
     }
 }
 
@@ -72,12 +209,12 @@ fn substitute_current_solution_refs(
     match expr {
         Expression::Atomic(_, Atom::Reference(reference)) => {
             let name = reference.name();
-            let value = candidate_solution.get(&name)?;
             let reference_domain = reference.resolved_domain().map(|x| x.as_ref().clone());
-            let value = literal_for_reference_domain(reference_domain, value)?;
+            let value = lookup_solution_value(&name, reference_domain.as_ref(), candidate_solution)?;
+            let value = literal_for_reference_domain(reference_domain, &value)?;
             Some(Expression::Atomic(Metadata::new(), Atom::Literal(value)))
         }
-        _ => Some(expr.clone()),
+        _ => None,
     }
 }
 
@@ -90,9 +227,22 @@ fn does_solution_dominate(
     candidate_solution: &BTreeMap<Name, Literal>,
     previous_solution: &BTreeMap<Name, Literal>,
 ) -> bool {
-    let expr = dominance_expression
+    let mut expr = dominance_expression
         .rewrite(&|e| substitute_from_solution(&e, previous_solution))
         .rewrite(&|e| substitute_current_solution_refs(&e, candidate_solution));
+
+    // Saturate constant-folding so quantified/indexed inner expressions reduce
+    // before we decide top-level dominance.
+    for _ in 0..16 {
+        let next = expr.rewrite(&|e| {
+            conjure_cp::ast::eval::eval_constant(&e)
+                .map(|lit| Expression::Atomic(Metadata::new(), Atom::Literal(lit)))
+        });
+        if next == expr {
+            break;
+        }
+        expr = next;
+    }
 
     matches!(
         conjure_cp::ast::eval::eval_constant(&expr),
@@ -227,16 +377,6 @@ pub fn get_solutions(
             })?;
             sol.insert(name.clone(), value);
         }
-
-        // Remove auxiliary variables since we've found the value of the
-        // variable they represent
-        *sol = sol
-            .clone()
-            .into_iter()
-            .filter(|(name, _)| {
-                !matches!(name, Name::Represented(_)) && !matches!(name, Name::Machine(_))
-            })
-            .collect();
     }
 
     sols.retain(|x| !x.is_empty());
@@ -249,6 +389,19 @@ pub fn get_solutions(
 
         *sols = pruned;
     }
+
+    for sol in sols.iter_mut() {
+        // Remove auxiliary variables since we've found the value of the
+        // variables they represent.
+        *sol = sol
+            .clone()
+            .into_iter()
+            .filter(|(name, _)| {
+                !matches!(name, Name::Represented(_)) && !matches!(name, Name::Machine(_))
+            })
+            .collect();
+    }
+    sols.retain(|x| !x.is_empty());
 
     Ok(sols.clone())
 }

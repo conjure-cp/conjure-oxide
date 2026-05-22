@@ -125,6 +125,12 @@ impl Default for Minion {
     }
 }
 
+fn minion_cdp_injection_disabled() -> bool {
+    std::env::var("CONJURE_MINION_DISABLE_CDP_INJECTION")
+        .ok()
+        .is_some_and(|v| matches!(v.as_str(), "1" | "true" | "TRUE" | "yes" | "YES"))
+}
+
 impl SolverAdaptor for Minion {
     fn solve(
         &mut self,
@@ -136,6 +142,7 @@ impl SolverAdaptor for Minion {
         let dominance_expression = self.dominance_expression.clone();
         let dominance_model_template = self.dominance_model_template.clone();
         let mut midsearch_error: Option<SolverError> = None;
+        let injection_disabled = minion_cdp_injection_disabled();
         let base_model = self.model.as_ref().expect("STATE MACHINE ERR");
         let mut known_var_names = base_model
             .named_variables
@@ -161,14 +168,16 @@ impl SolverAdaptor for Minion {
                     return false;
                 }
 
-                if let Err(err) = add_dominance_constraints_for_solution(
-                    dominance_expression.as_ref(),
-                    dominance_model_template.as_ref(),
-                    &conjure_solutions,
-                    &mut known_var_names,
-                    &mut next_midsearch_aux_var_id,
-                    solution_ordinal,
-                ) {
+                if !injection_disabled
+                    && let Err(err) = add_dominance_constraints_for_solution(
+                        dominance_expression.as_ref(),
+                        dominance_model_template.as_ref(),
+                        &conjure_solutions,
+                        &mut known_var_names,
+                        &mut next_midsearch_aux_var_id,
+                        solution_ordinal,
+                    )
+                {
                     midsearch_error = Some(err);
                     return false;
                 }
