@@ -357,8 +357,8 @@ fn abs_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 ///
 /// ```text
 /// -SATInt(a) ~> SATInt(b)
-///
-/// ```#[register_rule("SAT_Order", 9100, [Neg])]
+/// ```
+#[register_rule("SAT_Order", 9100, [Neg])]
 fn neg_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Neg(_, value) = expr else {
         return Err(RuleNotApplicable);
