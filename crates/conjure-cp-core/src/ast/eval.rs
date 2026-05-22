@@ -459,11 +459,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             }?;
 
             let mut intervals = intervals.iter();
-            loop {
-                let Some(lower) = intervals.next() else {
-                    break;
-                };
-
+            while let Some(lower) = intervals.next() {
                 let Some(upper) = intervals.next() else {
                     break;
                 };
@@ -626,10 +622,17 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         Expr::PreImage(_, _, _) => todo!(),
         Expr::Inverse(_, _, _) => todo!(),
         Expr::Restrict(_, _, _) => todo!(),
+        Expr::Active(_, _, _) => todo!(),
         Expr::ToSet(_, _) => todo!(),
         Expr::ToMSet(_, _) => todo!(),
         Expr::ToRelation(_, _) => todo!(),
         Expr::RelationProj(_, _, _) => todo!(),
+        Expr::Apart(_, _, _) => todo!(),
+        Expr::Together(_, _, _) => todo!(),
+        Expr::Participants(_, _) => todo!(),
+        Expr::Party(_, _, _) => todo!(),
+        Expr::Parts(_, _) => todo!(),
+        Expr::Card(_, _) => todo!(),
         Expr::LexLt(_, a, b) => {
             let lt = vec_expr_pairs_op::<i32, _>(a, b, |pairs, (a_len, b_len)| {
                 pairs

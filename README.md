@@ -3,7 +3,10 @@
 This repository contains the in-progress Conjure Oxide constraints modelling
 tool and its dependencies. 
 
-<https://conjure-cp.github.io/conjure-oxide/>
+<https://github.com/conjure-cp/conjure-oxide>
+
+
+The documentation and Conjure Oxide reports can be found at <https://conjure-cp.github.io/conjure-oxide-reports/>. 
 
 ## Installation
 
@@ -25,10 +28,12 @@ ensure `~/.cargo/bin` is in your `PATH`. `make test` prepends `~/.cargo/bin`
 automatically. If you prefer Cargo directly, use `cargo install --path
 crates/conjure-cp-cli`.
 
+For more information about installation, visit our [documentation installation page](https://conjure-cp.github.io/conjure-oxide-reports/main/book/getting_started/installation.html).
+
 ## Repository Structure
 
 This repository holds the source-code for both `conjure-oxide` itself, and
-various related projects.
+various related projects. 
 
 ### `conjure-oxide` crates
 

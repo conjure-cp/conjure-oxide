@@ -191,6 +191,58 @@ impl<A: Display> Display for SequenceAttr<A> {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
+#[path_prefix(conjure_cp::ast)]
+pub struct PartitionAttr<A = Int> {
+    pub num_parts: Range<A>, // i.e. how many parts there are in the partition
+    pub part_len: Range<A>,  // i.e. the size of each constitutent part
+    pub is_regular: bool,
+}
+
+impl<A: Display> Display for PartitionAttr<A> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let num_parts_str = match &self.num_parts {
+            Range::Single(x) => format!("numParts {x}"),
+            Range::Bounded(l, r) => format!("minNumParts {l}, maxNumParts {r}"),
+            Range::UnboundedL(r) => format!("maxNumParts {r}"),
+            Range::UnboundedR(l) => format!("minNumParts {l}"),
+            Range::Unbounded => "".to_string(),
+        };
+
+        let part_len_str = match &self.part_len {
+            Range::Single(x) => format!("partSize {x}"),
+            Range::Bounded(l, r) => format!("minPartSize {l} , maxPartSize {r}"),
+            Range::UnboundedL(r) => format!("maxPartSize {r}"),
+            Range::UnboundedR(l) => format!("minPartSize {l}"),
+            Range::Unbounded => "".to_string(),
+        };
+
+        let regular_str = match &self.is_regular {
+            true => "regular".to_string(),
+            false => String::new(),
+        };
+
+        let mut strs = [num_parts_str, part_len_str, regular_str]
+            .iter()
+            .filter(|s| !s.is_empty())
+            .join(", ");
+        if !strs.is_empty() {
+            strs = format!("({})", strs);
+        }
+        write!(f, "{strs}")
+    }
+}
+
+impl<A> Default for PartitionAttr<A> {
+    fn default() -> Self {
+        PartitionAttr {
+            num_parts: Range::Unbounded,
+            part_len: Range::Unbounded,
+            is_regular: false,
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
 pub enum PartialityAttr {
     Total,
     Partial,

@@ -1,8 +1,9 @@
+use crate::ast::domains::attrs::PartitionAttr;
 use crate::ast::domains::{MSetAttr, SequenceAttr};
 use crate::ast::pretty::pretty_vec;
 use crate::ast::{
-    AbstractLiteral, Domain, DomainOpError, FuncAttr, HasDomain, Literal, Moo, RecordEntry,
-    RelAttr, SetAttr, Typeable,
+    AbstractLiteral, Domain, DomainOpError, FieldEntry, FuncAttr, HasDomain, Literal, Moo, RelAttr,
+    SetAttr, Typeable,
     domains::{domain::Int, range::Range},
 };
 use crate::range;
@@ -19,26 +20,26 @@ use uniplate::Uniplate;
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Uniplate, Quine)]
 #[path_prefix(conjure_cp::ast)]
-pub struct RecordEntryGround {
+pub struct FieldEntryGround {
     pub name: Name,
     pub domain: Moo<GroundDomain>,
 }
 
-impl From<RecordEntryGround> for RecordEntry {
-    fn from(value: RecordEntryGround) -> Self {
-        RecordEntry {
+impl From<FieldEntryGround> for FieldEntry {
+    fn from(value: FieldEntryGround) -> Self {
+        FieldEntry {
             name: value.name,
             domain: value.domain.into(),
         }
     }
 }
 
-impl TryFrom<RecordEntry> for RecordEntryGround {
+impl TryFrom<FieldEntry> for FieldEntryGround {
     type Error = DomainOpError;
 
-    fn try_from(value: RecordEntry) -> Result<Self, Self::Error> {
+    fn try_from(value: FieldEntry) -> Result<Self, Self::Error> {
         match value.domain.as_ref() {
-            Domain::Ground(gd) => Ok(RecordEntryGround {
+            Domain::Ground(gd) => Ok(FieldEntryGround {
                 name: value.name,
                 domain: gd.clone(),
             }),
@@ -66,13 +67,17 @@ pub enum GroundDomain {
     /// A tuple of N elements, each with its own domain
     Tuple(Vec<Moo<GroundDomain>>),
     /// A record
-    Record(Vec<RecordEntryGround>),
+    Record(Vec<FieldEntryGround>),
+    /// A Partition
+    Partition(PartitionAttr, Moo<GroundDomain>),
     /// A sequence of elements drawn from the inner domain
     Sequence(SequenceAttr, Moo<GroundDomain>),
     /// A function with a domain and codomain
     Function(FuncAttr, Moo<GroundDomain>, Moo<GroundDomain>),
     /// A relation as a set of tuples
     Relation(RelAttr, Vec<Moo<GroundDomain>>),
+    /// A variant domain with its domain options (reusing field entries)
+    Variant(Vec<FieldEntryGround>),
 }
 
 impl GroundDomain {
@@ -134,6 +139,11 @@ impl GroundDomain {
             }
             #[allow(unreachable_patterns)]
             // Technically redundant but logically clearer to have both
+            (GroundDomain::Variant(_), _) | (_, GroundDomain::Variant(_)) => {
+                Err(DomainOpError::WrongType)
+            }
+            #[allow(unreachable_patterns)]
+            // Technically redundant but logically clearer to have both
             (GroundDomain::Function(_, _, _), _) | (_, GroundDomain::Function(_, _, _)) => {
                 Err(DomainOpError::WrongType)
             }
@@ -145,6 +155,10 @@ impl GroundDomain {
                 Ok(GroundDomain::Tuple(inners))
             }
             (GroundDomain::Relation(_, _), _) | (_, GroundDomain::Relation(_, _)) => {
+                Err(DomainOpError::WrongType)
+            }
+            #[allow(unreachable_patterns)]
+            (GroundDomain::Partition(_, _), _) | (_, GroundDomain::Partition(_, _)) => {
                 Err(DomainOpError::WrongType)
             }
         }
@@ -333,8 +347,24 @@ impl GroundDomain {
             GroundDomain::Function(_, _, _) => {
                 todo!("Length bound of functions is not yet supported")
             }
-            GroundDomain::Relation(_, _) => {
-                todo!("Length bound of relations is not yet support")
+            GroundDomain::Variant(entries) => {
+                let mut ans = 1u64;
+                for entry in entries {
+                    let sz = entry.domain.length()?;
+                    // Only one field can be in the variant at once
+                    ans = ans.checked_add(sz).ok_or(DomainOpError::TooLarge)?;
+                }
+                Ok(ans)
+            }
+            GroundDomain::Relation(_, domains) => {
+                // Cannot currently use attributes to better infer length because of i32 u64 mismatch
+                let dom_sizes_result: Result<Vec<u64>, DomainOpError> =
+                    domains.iter().map(|x| x.length()).collect();
+                let dom_sizes = dom_sizes_result?;
+                Ok(dom_sizes.iter().product())
+            }
+            GroundDomain::Partition(_, _) => {
+                todo!("Length bound of Partitions is not yet supported")
             }
         }
     }
@@ -505,6 +535,19 @@ impl GroundDomain {
                 }
                 _ => Ok(false),
             },
+            GroundDomain::Variant(entries) => match lit {
+                Literal::AbstractLiteral(AbstractLiteral::Variant(lit_entry)) => {
+                    for entry in entries {
+                        if entry.name == lit_entry.name
+                            && !(entry.domain.contains(&lit_entry.value)?)
+                        {
+                            return Ok(true);
+                        }
+                    }
+                    Ok(false)
+                }
+                _ => Ok(false),
+            },
             GroundDomain::Relation(rel_attr, inner_domains) => match lit {
                 Literal::AbstractLiteral(AbstractLiteral::Relation(lit_elems)) => {
                     // check if the literal's size is allowed by the attributes
@@ -521,6 +564,40 @@ impl GroundDomain {
                                 }
                             }
                         } else {
+                            return Ok(false);
+                        }
+                    }
+                    Ok(true)
+                }
+                _ => Ok(false),
+            },
+            GroundDomain::Partition(attr, dom) => match lit {
+                Literal::AbstractLiteral(AbstractLiteral::Partition(lit_elems)) => {
+                    // let sz = lit_elems.len().to_i32().ok_or(DomainOpError::TooLarge)?;
+                    let sz: i32 = lit_elems
+                        .iter()
+                        .flatten()
+                        .count()
+                        .to_i32()
+                        .ok_or(DomainOpError::TooLarge)?;
+
+                    let min: Option<i32> = match (attr.num_parts.low(), attr.part_len.low()) {
+                        (Some(x), Some(y)) => Some(x * y),
+                        _ => None,
+                    };
+
+                    let max: Option<i32> = match (attr.num_parts.high(), attr.part_len.high()) {
+                        (Some(x), Some(y)) => Some(x * y),
+                        _ => None,
+                    };
+
+                    let rng = Range::new(min, max);
+                    if rng.contains(&sz) {
+                        return Ok(false);
+                    }
+
+                    for elem in lit_elems.iter().flatten() {
+                        if !dom.contains(elem)? {
                             return Ok(false);
                         }
                     }
@@ -850,6 +927,9 @@ impl GroundDomain {
                     Moo::new(elem_domain),
                 ))
             }
+            Literal::AbstractLiteral(AbstractLiteral::Partition(_)) => {
+                todo!("Need to figure out how this is going to work")
+            }
             l @ Literal::AbstractLiteral(AbstractLiteral::Matrix(_, _)) => {
                 let mut first_index_domain = vec![];
                 // flatten index domains of n-d matrix into list
@@ -982,7 +1062,7 @@ impl GroundDomain {
 
                 Ok(GroundDomain::Record(
                     izip!(field_names, elem_domains)
-                        .map(|(name, domain)| RecordEntryGround { name, domain })
+                        .map(|(name, domain)| FieldEntryGround { name, domain })
                         .collect(),
                 ))
             }
@@ -1010,6 +1090,9 @@ impl GroundDomain {
                     }
                 }
 
+                todo!();
+            }
+            Literal::AbstractLiteral(AbstractLiteral::Variant(_)) => {
                 todo!();
             }
             Literal::AbstractLiteral(AbstractLiteral::Relation(_)) => {
@@ -1057,6 +1140,13 @@ impl Typeable for GroundDomain {
             GroundDomain::Function(_, dom, cdom) => {
                 ReturnType::Function(Box::new(dom.return_type()), Box::new(cdom.return_type()))
             }
+            GroundDomain::Variant(entries) => {
+                let mut entry_types = Vec::new();
+                for entry in entries {
+                    entry_types.push(entry.domain.return_type());
+                }
+                ReturnType::Record(entry_types)
+            }
             GroundDomain::Relation(_, inners) => {
                 let mut inner_types = Vec::new();
                 for inner in inners {
@@ -1064,6 +1154,7 @@ impl Typeable for GroundDomain {
                 }
                 ReturnType::Relation(inner_types)
             }
+            GroundDomain::Partition(_, inner) => ReturnType::Set(Box::new(inner.return_type())),
         }
     }
 }
@@ -1109,8 +1200,21 @@ impl Display for GroundDomain {
             GroundDomain::Function(attribute, domain, codomain) => {
                 write!(f, "function {} {} --> {} ", attribute, domain, codomain)
             }
+            GroundDomain::Variant(entries) => {
+                write!(
+                    f,
+                    "variant {{{}}}",
+                    entries
+                        .iter()
+                        .map(|entry| format!("{}: {}", entry.name, entry.domain))
+                        .join(", ")
+                )
+            }
             GroundDomain::Relation(attrs, domains) => {
                 write!(f, "relation {} of ({})", attrs, domains.iter().join(" * "))
+            }
+            GroundDomain::Partition(attrs, inner) => {
+                write!(f, "partition {attrs} from {inner}")
             }
         }
     }

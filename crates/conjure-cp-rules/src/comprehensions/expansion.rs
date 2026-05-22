@@ -361,6 +361,15 @@ fn rewrite_int_ranges_in_unresolved_domain(
                 );
             }
         }
+        UnresolvedDomain::Partition(attr, inner) => {
+            rewrite_int_range(
+                &mut attr.num_parts,
+                replacements_by_id,
+                replacements_by_name,
+            );
+            rewrite_int_range(&mut attr.part_len, replacements_by_id, replacements_by_name);
+            rewrite_int_ranges_in_domain_ptr(inner, replacements_by_id, replacements_by_name);
+        }
         UnresolvedDomain::Sequence(attr, inner) => {
             rewrite_int_range(&mut attr.size, replacements_by_id, replacements_by_name);
             rewrite_int_ranges_in_domain_ptr(inner, replacements_by_id, replacements_by_name);
@@ -379,6 +388,15 @@ fn rewrite_int_ranges_in_unresolved_domain(
             rewrite_int_range(&mut attr.size, replacements_by_id, replacements_by_name);
             rewrite_int_ranges_in_domain_ptr(domain, replacements_by_id, replacements_by_name);
             rewrite_int_ranges_in_domain_ptr(codomain, replacements_by_id, replacements_by_name);
+        }
+        UnresolvedDomain::Variant(entries) => {
+            for entry in entries {
+                rewrite_int_ranges_in_domain_ptr(
+                    &mut entry.domain,
+                    replacements_by_id,
+                    replacements_by_name,
+                );
+            }
         }
         UnresolvedDomain::Relation(attr, domains) => {
             rewrite_int_range(&mut attr.size, replacements_by_id, replacements_by_name);
