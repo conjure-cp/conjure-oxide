@@ -10,6 +10,7 @@ use super::util::named_children;
 use crate::diagnostics::diagnostics_api::SymbolKind;
 use crate::diagnostics::source_map::{HoverInfo, span_with_hover};
 use crate::errors::{FatalParseError, RecoverableParseError};
+use crate::parser::keyword_checks::is_keyword_identifier;
 use conjure_cp_core::ast::{DomainPtr, Name};
 
 pub fn parse_find_statement(
@@ -89,6 +90,14 @@ pub fn parse_declaration_statement(
         }
         let variable_name = &ctx.source_code[start..end];
         let name = Name::user(variable_name);
+
+        if is_keyword_identifier(variable_name) {
+            ctx.errors.push(RecoverableParseError::new(
+                format!("Keyword '{variable_name}' used as identifier"),
+                Some(variable.range()),
+            ));
+            continue;
+        }
 
         // Check for duplicate within the same statement
         if vars.contains_key(&name) {

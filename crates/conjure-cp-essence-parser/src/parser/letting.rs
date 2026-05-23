@@ -5,6 +5,7 @@ use tree_sitter::Node;
 
 use super::ParseContext;
 use super::domain::parse_domain;
+use super::keyword_checks::is_keyword_identifier;
 use super::util::named_children;
 use crate::diagnostics::diagnostics_api::SymbolKind;
 use crate::diagnostics::source_map::{HoverInfo, span_with_hover};
@@ -44,6 +45,14 @@ pub fn parse_letting_statement(
         };
         for variable in named_children(&variable_list) {
             let variable_name = &ctx.source_code[variable.start_byte()..variable.end_byte()];
+
+            if is_keyword_identifier(variable_name) {
+                ctx.errors.push(RecoverableParseError::new(
+                    format!("Keyword '{variable_name}' used as identifier"),
+                    Some(variable.range()),
+                ));
+                continue;
+            }
 
             // Check for duplicate within the same statement
             if temp_symbols.contains(variable_name) {
