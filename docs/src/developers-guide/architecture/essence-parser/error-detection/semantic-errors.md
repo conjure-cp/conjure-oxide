@@ -91,7 +91,7 @@ Checks occur in multiple places:
 - Constant parsing checks literal kind against current outer context.
 - Abstract literal parsing checks the container kind itself (`set`, `matrix`, `tuple`, `record`) against outer context. Before parsing the inner elements, the inner context is promoted to the outer/main context.
 
-### Type Checking Examples
+### Type Checking Example
 Erroneous input (`bool_in_arith_list.essence`):
 
 ```Essence
