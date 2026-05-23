@@ -582,7 +582,7 @@ fn sat_direct_toint(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         Expr::Not(Metadata::new(), Moo::new(r_0.clone())),
         Expr::Not(Metadata::new(), Moo::new(b.clone())),
     ]));
-    new_clauses.push(CnfClause::new(vec![b.clone(), r_0.clone()]));
+    new_clauses.push(CnfClause::new(vec![b, r_0.clone()]));
 
     let result_bits = vec![r_0, r_1];
 
