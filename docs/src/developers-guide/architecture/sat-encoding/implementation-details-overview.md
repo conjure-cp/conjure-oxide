@@ -1,1 +1,0 @@
-# SAT Rule Implementation Patterns
