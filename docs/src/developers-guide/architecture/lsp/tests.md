@@ -12,21 +12,21 @@ There are two types of error when trying to diagnose a given Essence file, which
 - **Syntactic errors** are errors that stem from the tokens in the Essence file not being in the correct syntax when given into the parser. 
 - **Semantic errors** are errors that may pass the syntactic error checking (i.e. the file lines have the correct syntax), but ultimately is unable to be parsed due to errors relating to the entire context of the file. 
 
-To be able to accurately diagnose the Essence files for errors, tests cases have been written for situations that [Diagnostics API](diagnostics-api.md) and [Native parser](../essence-parser/index.md) might encounter during diagnosing and parsing, referencing the [Essence Error Classification](error-detection/error-classification.md)).
+To be able to accurately diagnose the Essence files for errors, tests cases have been written for situations that [Diagnostics API](diagnostics-api.md) and [Tree-Sitter parser](../essence-parser/index.md) might encounter during diagnosing and parsing, referencing the [Essence Error Detection](../essence-parser/error-detection/error-detection.md).
 
 ## Testing
 ### Parser
 <!-- TODO: Roundtrip testing does not exist -- waiting on an update from LSP team -->
-Test cases that test the coverage of the Native parser use [Roundtrip testing](../../testing/roundtrip-testing.md). The `syntax-error` and `semantic-error` test directories exist in the `test-integration` crate as child directories of `roundtrip\native-errors`. Furthermore, `config.toml` sets only the Native parser to be used when testing test cases.
+Test cases that test the coverage of the Native parser use [Roundtrip testing](../../testing/roundtrip-testing.md). The `syntax-error` and `semantic-error` test directories exist in the `test-integration` crate as child directories of `roundtrip\invalid`. Furthermore, `config.toml` sets only the Native parser to be used when testing test cases.
 
 These test cases will run alongside all the integration tests in the `tests-integration` crate, which can be done by using:
 ```bash
 cargo test
 ```
 
-Alternatively, to run only the Roundtrip tests, use the command:
+Alternatively, to run only the Roundtrip tests for invalid input, use the command:
 ```bash
-cargo test tests_roundtrip
+cargo test tests-integration --test roundtrip_tests tests_roundtrip_invalid
 ```
 
 ### Diagnostics API
@@ -40,7 +40,7 @@ Or, to run the test files individually, use the command:
 cargo test -p conjure-cp-essence-parser --test {file_name}
 ```
 
-The sections below will categorise all test cases into one of the categories based on the error classification, with an explanation of the purpose of each test case.
+<!-- The sections below will categorise all test cases into one of the categories based on the error classification, with an explanation of the purpose of each test case.
 
 ### Native parser error tests
 | Test name                 | Error category        | Input essence                                                                                 | Purpose                                                                                            |
@@ -106,4 +106,4 @@ The sections below will categorise all test cases into one of the categories bas
 | `duplicate_declaration_of_variable`               | Semantic error: Redefined variable                             | find x: int(1..10)<br>find x: int(2..3)                                                       | To make sure that redefining a variable will raise an error                                        |
 | `extra_comma_in_variable_list`                    | Semantic error: Unexpected token                               | find x,: int(1..10)                                                                           | To make sure that having an extra comma in the variable list is not allowed                        |
 
-*Note: currently all semantic tests are set to be ignored, as they have not been implemented yet. Once they have been implemented, the `#[ignore]` will be removed.*
+*Note: currently all semantic tests are set to be ignored, as they have not been implemented yet. Once they have been implemented, the `#[ignore]` will be removed.* -->
