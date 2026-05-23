@@ -8,13 +8,15 @@ use serde_json::Value;
 use serde_json::Value as JsonValue;
 
 use crate::ast::Moo;
+use crate::ast::PartitionAttr;
+use crate::ast::Typeable;
 use crate::ast::ac_operators::ACOperatorKind;
 use crate::ast::comprehension::ComprehensionBuilder;
 use crate::ast::records::FieldValue;
 use crate::ast::{
     AbstractLiteral, Atom, BinaryAttr, DeclarationPtr, Domain, Expression, FieldEntry, FuncAttr,
-    IntVal, JectivityAttr, Literal, MSetAttr, Name, PartialityAttr, Range, RelAttr, SequenceAttr,
-    SetAttr, SymbolTable, SymbolTablePtr,
+    IntVal, JectivityAttr, Literal, MSetAttr, Name, PartialityAttr, Range, RelAttr, ReturnType,
+    SequenceAttr, SetAttr, SymbolTable, SymbolTablePtr,
 };
 use crate::ast::{DomainPtr, Metadata};
 use crate::context::Context;
@@ -252,7 +254,44 @@ fn parse_domain(
             let attr: MSetAttr<IntVal> = MSetAttr { size, occurrence };
             Ok(Domain::mset(attr, domain))
         }
+        "DomainPartition" => {
+            let dom = domain_value
+                .get(2)
+                .and_then(|v| v.as_object())
+                .expect("domain object exists");
+            let domain = dom.iter().next().ok_or(Error::Parse(
+                "DomainPartition is an empty object".to_owned(),
+            ))?;
+            let domain = parse_domain(domain.0.as_str(), domain.1, symbols)?;
 
+            let attributes = domain_value
+                .get(1)
+                .and_then(|v| v.as_object())
+                .ok_or(error!("Partition attributes is not an object"))?;
+
+            let mut num_parts = Range::Unbounded;
+            let mut part_len = Range::Unbounded;
+            let mut is_regular = false;
+
+            if let Some(val) = attributes.get("partsNum") {
+                let attr_map = val.as_object().expect("numParts should be an object");
+                num_parts = parse_size_attr(attr_map, symbols)?;
+            }
+            if let Some(val) = attributes.get("partsSize") {
+                let attr_map = val.as_object().expect("partsSize should be an object");
+                part_len = parse_size_attr(attr_map, symbols)?;
+            }
+            if let Some(val) = attributes.get("isRegular").and_then(|v| v.as_bool()) {
+                is_regular = val;
+            }
+
+            let attr: PartitionAttr<IntVal> = PartitionAttr {
+                num_parts,
+                part_len,
+                is_regular,
+            };
+            Ok(Domain::partition(attr, domain))
+        }
         "DomainMatrix" => {
             let domain_value = domain_value
                 .as_array()
@@ -749,6 +788,9 @@ fn binary_operator(op_name: &str) -> Option<BinOp> {
         "MkOpPreImage" => Some(Expression::PreImage),
         "MkOpInverse" => Some(Expression::Inverse),
         "MkOpRestrict" => Some(Expression::Restrict),
+        "MkOpApart" => Some(Expression::Apart),
+        "MkOpTogether" => Some(Expression::Together),
+        "MkOpParty" => Some(Expression::Party),
         "MkOpActive" => Some(Expression::Active),
         "MkOpSubstring" => Some(Expression::Substring),
         "MkOpSubsequence" => Some(Expression::Subsequence),
@@ -756,11 +798,26 @@ fn binary_operator(op_name: &str) -> Option<BinOp> {
     }
 }
 
-fn unary_operator(op_name: &str) -> Option<UnaryOp> {
+fn unary_operator(op_name: &str, inner: Option<&Expression>) -> Option<UnaryOp> {
     match op_name {
         "MkOpNot" => Some(Expression::Not),
         "MkOpNegate" => Some(Expression::Neg),
-        "MkOpTwoBars" => Some(Expression::Abs),
+        "MkOpTwoBars" => {
+            if let Some(inner) = inner {
+                match inner.return_type() {
+                    ReturnType::Int => Some(Expression::Abs),
+                    ReturnType::Matrix(_)
+                    | ReturnType::Set(_)
+                    | ReturnType::MSet(_)
+                    | ReturnType::Relation(_)
+                    | ReturnType::Function(_, _) => Some(Expression::Card),
+                    _ => None,
+                }
+            } else {
+                // Internal expression cannot be known yet, so we just have to assume
+                Some(Expression::Abs)
+            }
+        }
         "MkOpAnd" => Some(Expression::And),
         "MkOpSum" => Some(Expression::Sum),
         "MkOpProduct" => Some(Expression::Product),
@@ -774,6 +831,8 @@ fn unary_operator(op_name: &str) -> Option<UnaryOp> {
         "MkOpFactorial" => Some(Expression::Factorial),
         "MkOpToMSet" => Some(Expression::ToMSet),
         "MkOpToRelation" => Some(Expression::ToRelation),
+        "MkOpParticipants" => Some(Expression::Participants),
+        "MkOpParts" => Some(Expression::Parts),
         _ => None,
     }
 }
@@ -805,7 +864,7 @@ pub fn parse_expression(obj: &JsonValue, scope: &SymbolTablePtr) -> Result<Expre
                 parse_to_set(op_obj, scope)
             } else if binary_operator(op_name).is_some() {
                 parse_bin_op(op_obj, scope)
-            } else if unary_operator(op_name).is_some() {
+            } else if unary_operator(op_name, None).is_some() {
                 parse_unary_op(op_obj, scope)
             } else {
                 Err(fail("Op.unknown"))
@@ -871,6 +930,8 @@ pub fn parse_expression(obj: &JsonValue, scope: &SymbolTablePtr) -> Result<Expre
                 parse_abs_variant(&abslit["AbstractLiteral"]["AbsLitVariant"], scope)
             } else if abstract_literal.contains_key("AbsLitRelation") {
                 parse_abs_relation(&abslit["AbstractLiteral"]["AbsLitRelation"], scope)
+            } else if abstract_literal.contains_key("AbstractLiteralPartition") {
+                parse_abs_partition(&abslit["AbstractLiteral"]["AbsLitPartition"], scope)
             } else if abstract_literal.contains_key("AbsLitSequence") {
                 parse_abs_sequence(&abslit["AbstractLiteral"]["AbsLitSequence"], scope)
             } else {
@@ -924,6 +985,32 @@ fn parse_abs_mset(abs_mset: &Value, scope: &SymbolTablePtr) -> Result<Expression
     Ok(Expression::AbstractLiteral(
         Metadata::new(),
         AbstractLiteral::MSet(expressions),
+    ))
+}
+
+fn parse_abs_partition(abs_partition: &Value, scope: &SymbolTablePtr) -> Result<Expression> {
+    let parts = abs_partition
+        .as_array()
+        .ok_or(error!("AbsLitPartition is not an array"))?;
+
+    let mut partition: Vec<Vec<_>> = Vec::new();
+
+    for part in parts {
+        let vals = part
+            .as_array()
+            .ok_or(error!("Part in AbsLitPartition is not an array"))?;
+
+        let exprs = vals
+            .iter()
+            .map(|values| parse_expression(values, scope))
+            .collect::<Result<Vec<_>>>()?;
+
+        partition.push(exprs);
+    }
+
+    Ok(Expression::AbstractLiteral(
+        Metadata::new(),
+        AbstractLiteral::Partition(partition),
     ))
 }
 
@@ -1422,7 +1509,6 @@ fn parse_unary_op(
         .iter()
         .next()
         .ok_or_else(|| fail("un_op.iter().next"))?;
-    let constructor = unary_operator(key.as_str()).ok_or_else(|| fail("unary_operator"))?;
 
     // unops are the main things that contain comprehensions
     //
@@ -1442,6 +1528,9 @@ fn parse_unary_op(
         _ => parse_expression(value, scope).map_err(|_| fail("value.parse_expression")),
     }
     .map_err(|_| fail("arg"))?;
+
+    let constructor =
+        unary_operator(key.as_str(), Some(&arg)).ok_or_else(|| fail("unary_operator"))?;
 
     Ok(constructor(Metadata::new(), Moo::new(arg)))
 }
@@ -1575,6 +1664,8 @@ fn parse_constant(
                     return parse_abs_tuple(arr, scope);
                 } else if let Some(arr) = obj.get("AbsLitRecord") {
                     return parse_abs_record(arr, scope);
+                } else if let Some(arr) = obj.get("AbsLitPartition") {
+                    return parse_abs_partition(arr, scope);
                 } else if let Some(arr) = obj.get("AbsLitFunction") {
                     return parse_abs_function(arr, scope);
                 } else if let Some(arr) = obj.get("AbsLitVariant") {
