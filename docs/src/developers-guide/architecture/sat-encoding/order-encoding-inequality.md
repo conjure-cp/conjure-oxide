@@ -3,7 +3,7 @@
 ## Overview
 
 ```text
-SATInt(a) </>/<=/>= SATInt(b) ~> Bool
+SATInt(a) < / > / <= / >= SATInt(b) ~> Bool
 ```
 
 The Order Encoding Inequality rule encodes comparison operations (`<`, `>`, `<=`, `>=`) between two order-encoded integers into boolean CNF expressions. Order encoding represents an integer using a **prefix-true bit vector** where position i is true if the integer's value is >= i.
