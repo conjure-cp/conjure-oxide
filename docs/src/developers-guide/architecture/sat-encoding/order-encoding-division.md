@@ -2,6 +2,8 @@
 
 ## Overview
 
+Ongoing work in [#1775](https://github.com/conjure-cp/conjure-oxide/pull/1775/changes#diff-9bedf2e9d7c33b08fce00ef157ab3f72197bd811e0f482045aaa3efe7aaf4441R243-R358)
+
 ```text
 SafeDiv(SATInt(a), SATInt(b)) ~> SATInt(c)
 ```
