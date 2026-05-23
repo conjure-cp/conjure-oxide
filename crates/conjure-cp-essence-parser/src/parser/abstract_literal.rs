@@ -85,6 +85,7 @@ fn parse_record(
     node: &Node,
 ) -> Result<Option<AbstractLiteral<Expression>>, FatalParseError> {
     let mut values = Vec::new();
+    let mut had_error = false;
     for child in node.children_by_field_name("name_value_pair", &mut node.walk()) {
         let Some(name_node) = field!(recover, ctx, child, "name") else {
             return Ok(None);
@@ -102,7 +103,10 @@ fn parse_record(
         ctx.inner_typechecking_context = TypecheckingContext::Unknown;
 
         let Some(value) = parse_expression(ctx, value_node)? else {
-            return Ok(None);
+            had_error = true;
+            ctx.typechecking_context = saved_ctx;
+            ctx.inner_typechecking_context = TypecheckingContext::Unknown;
+            continue; // continue parsing other elements
         };
 
         // Reset contexts
@@ -111,7 +115,12 @@ fn parse_record(
 
         values.push(conjure_cp_core::ast::records::FieldValue { name, value });
     }
-    Ok(Some(AbstractLiteral::Record(values)))
+
+    if had_error {
+        Ok(None)
+    } else {
+        Ok(Some(AbstractLiteral::Record(values)))
+    }
 }
 
 fn parse_tuple(
@@ -123,22 +132,26 @@ fn parse_tuple(
     let saved_inner_ctx = ctx.inner_typechecking_context;
 
     let mut elements = Vec::new();
+    let mut had_error = false;
     for child in named_children(node) {
         // Parse elements with inner typechecking context
         ctx.typechecking_context = saved_inner_ctx;
         ctx.inner_typechecking_context = TypecheckingContext::Unknown;
 
         let Some(expr) = parse_expression(ctx, child)? else {
-            ctx.typechecking_context = saved_ctx;
-            ctx.inner_typechecking_context = saved_inner_ctx;
-            return Ok(None);
+            had_error = true;
+            continue;
         };
         elements.push(expr);
     }
 
     ctx.typechecking_context = saved_ctx;
     ctx.inner_typechecking_context = saved_inner_ctx;
-    Ok(Some(AbstractLiteral::Tuple(elements)))
+    if had_error {
+        Ok(None)
+    } else {
+        Ok(Some(AbstractLiteral::Tuple(elements)))
+    }
 }
 
 fn parse_matrix(
@@ -151,6 +164,7 @@ fn parse_matrix(
 
     let mut elements = vec![];
     let mut domain: Option<DomainPtr> = None;
+    let mut had_error = false;
     for child in named_children(node) {
         if child.kind() == "arithmetic_expr"
             || child.kind() == "bool_expr"
@@ -162,9 +176,8 @@ fn parse_matrix(
             ctx.inner_typechecking_context = TypecheckingContext::Unknown;
 
             let Some(expr) = parse_expression(ctx, child)? else {
-                ctx.typechecking_context = saved_ctx;
-                ctx.inner_typechecking_context = saved_inner_ctx;
-                return Ok(None);
+                had_error = true;
+                continue;
             };
             elements.push(expr);
         } else {
@@ -172,9 +185,8 @@ fn parse_matrix(
             ctx.typechecking_context = TypecheckingContext::Unknown;
 
             let Some(parsed_domain) = parse_domain(ctx, child)? else {
-                ctx.typechecking_context = saved_ctx;
-                ctx.inner_typechecking_context = saved_inner_ctx;
-                return Ok(None);
+                had_error = true;
+                continue;
             };
             domain = Some(parsed_domain);
         }
@@ -186,7 +198,11 @@ fn parse_matrix(
 
     ctx.typechecking_context = saved_ctx;
     ctx.inner_typechecking_context = saved_inner_ctx;
-    Ok(Some(AbstractLiteral::Matrix(elements, domain.unwrap())))
+    if had_error {
+        Ok(None)
+    } else {
+        Ok(Some(AbstractLiteral::Matrix(elements, domain.unwrap())))
+    }
 }
 
 fn parse_set_literal(
@@ -198,20 +214,24 @@ fn parse_set_literal(
     let saved_inner_ctx = ctx.inner_typechecking_context;
 
     let mut elements = Vec::new();
+    let mut had_error = false;
     for child in named_children(node) {
         // Parse elements with inner typechecking context
         ctx.typechecking_context = saved_inner_ctx;
         ctx.inner_typechecking_context = TypecheckingContext::Unknown;
 
         let Some(expr) = parse_expression(ctx, child)? else {
-            ctx.typechecking_context = saved_ctx;
-            ctx.inner_typechecking_context = saved_inner_ctx;
-            return Ok(None);
+            had_error = true;
+            continue;
         };
         elements.push(expr);
     }
 
     ctx.typechecking_context = saved_ctx;
     ctx.inner_typechecking_context = saved_inner_ctx;
-    Ok(Some(AbstractLiteral::Set(elements)))
+    if had_error {
+        Ok(None)
+    } else {
+        Ok(Some(AbstractLiteral::Set(elements)))
+    }
 }
