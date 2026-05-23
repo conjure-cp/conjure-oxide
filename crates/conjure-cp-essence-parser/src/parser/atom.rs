@@ -9,7 +9,7 @@ use crate::parser::dominance::parse_pareto_expression;
 use crate::util::{TypecheckingContext, named_children};
 use crate::{field, named_child};
 use conjure_cp_core::ast::{
-    Atom, DeclarationPtr, Expression, GroundDomain, Literal, Metadata, Moo, Name,
+    Atom, DeclarationKind, DeclarationPtr, Expression, GroundDomain, Literal, Metadata, Moo, Name,
 };
 use tree_sitter::Node;
 use ustr::Ustr;
@@ -290,9 +290,22 @@ fn parse_variable(ctx: &mut ParseContext, node: &Node) -> Result<Option<Atom>, F
         };
 
         if let Some(decl) = lookup_result {
+            let symbol_kind = match &decl.kind().clone() as &DeclarationKind {
+                DeclarationKind::Find(_) => SymbolKind::FindVar,
+                DeclarationKind::Given(_) => SymbolKind::GivenVar,
+                DeclarationKind::ValueLetting(_, _) => SymbolKind::LettingVar,
+                DeclarationKind::TemporaryValueLetting(_) => SymbolKind::LettingVar,
+                DeclarationKind::DomainLetting(_) => SymbolKind::LettingVar,
+                DeclarationKind::Quantified(..) => SymbolKind::FindVar,
+                DeclarationKind::QuantifiedExpr(..) => SymbolKind::FindVar,
+                DeclarationKind::Field(_) => SymbolKind::Decimal,
+                &_ => todo!(),
+            };
+
             let hover = HoverInfo {
                 description: format!("Variable: {name}"),
-                kind: Some(SymbolKind::Decimal),
+                doc_key: None,
+                kind: Some(symbol_kind),
                 ty: decl.domain().map(|d| d.to_string()),
                 decl_span: ctx.lookup_decl_span(&name),
             };
@@ -349,6 +362,8 @@ fn typecheck_variable(
         TypecheckingContext::Matrix => "matrix",
         TypecheckingContext::Tuple => "tuple",
         TypecheckingContext::Record => "record",
+        TypecheckingContext::Partition => "partition",
+        TypecheckingContext::Sequence => "sequence",
         TypecheckingContext::Unknown => return None, // shouldn't reach here
     };
 
@@ -362,6 +377,10 @@ fn typecheck_variable(
         GroundDomain::Tuple(_) => "tuple",
         GroundDomain::Record(_) => "record",
         GroundDomain::Function(_, _, _) => "function",
+        GroundDomain::Variant(_) => "variant",
+        GroundDomain::Relation(_, _) => "relation",
+        GroundDomain::Partition(_, _) => "partition",
+        GroundDomain::Sequence(_, _) => "sequence",
         GroundDomain::Empty(_) => "empty",
     };
 
@@ -394,6 +413,7 @@ fn parse_constant(ctx: &mut ParseContext, node: &Node) -> Result<Option<Literal>
         "TRUE" => {
             let hover = HoverInfo {
                 description: format!("Boolean constant: {raw_value}"),
+                doc_key: None,
                 kind: None,
                 ty: None,
                 decl_span: None,
@@ -404,6 +424,7 @@ fn parse_constant(ctx: &mut ParseContext, node: &Node) -> Result<Option<Literal>
         "FALSE" => {
             let hover = HoverInfo {
                 description: format!("Boolean constant: {raw_value}"),
+                doc_key: None,
                 kind: None,
                 ty: None,
                 decl_span: None,
@@ -435,6 +456,8 @@ fn parse_constant(ctx: &mut ParseContext, node: &Node) -> Result<Option<Literal>
             TypecheckingContext::Matrix => "matrix",
             TypecheckingContext::Tuple => "tuple",
             TypecheckingContext::Record => "record",
+            TypecheckingContext::Partition => "partition",
+            TypecheckingContext::Sequence => "sequence",
             TypecheckingContext::Unknown => "",
         };
 
