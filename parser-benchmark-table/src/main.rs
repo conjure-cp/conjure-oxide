@@ -8,60 +8,53 @@ use crate::html::{build_html, derive_test_name};
 use crate::model::{DEFAULT_OUTPUT_HTML, ParserSelection, RepoSelection, RowResult};
 
 use crate::parser_exec::{read_input_file, run_parser_on_group, summarize_results};
+use clap::{Parser, ValueEnum};
 use std::fs;
 use std::path::PathBuf;
 
+#[derive(Parser, Debug)]
+#[command(
+    name = "parser-benchmark-table",
+    about = "Benchmark Essence parsers and generate a report"
+)]
+struct Cli {
+    #[arg(long, value_enum)]
+    parser: Option<ParserArg>,
+
+    #[arg(long, value_enum, value_delimiter = ',')]
+    repos: Option<Vec<RepoArg>>,
+
+    #[arg(long, default_value = DEFAULT_OUTPUT_HTML)]
+    output_html: PathBuf,
+}
+
+#[derive(Clone, Copy, Debug, ValueEnum)]
+enum ParserArg {
+    Native,
+    #[value(name = "via-conjure")]
+    ViaConjure,
+}
+
+#[derive(Clone, Copy, Debug, ValueEnum)]
+enum RepoArg {
+    #[value(name = "conjure-oxide")]
+    ConjureOxide,
+    Conjure,
+    #[value(name = "essencecatalog")]
+    EssenceCatalog,
+}
+
 fn main() {
-    // Set config values to default values
-    let output_file = DEFAULT_OUTPUT_HTML.to_string();
-    let mut parser_selection = ParserSelection::Both;
-    let mut repo_selection = RepoSelection {
-        conjure_oxide: true,
-        conjure: true,
-        essence_catalog: true,
+    let cli = Cli::parse();
+
+    let parser_selection = match cli.parser {
+        Some(ParserArg::Native) => ParserSelection::NativeOnly,
+        Some(ParserArg::ViaConjure) => ParserSelection::ViaConjureOnly,
+        None => ParserSelection::Both,
     };
 
-    // Update config values based on command line arguments
-    let mut args = std::env::args().skip(1);
-    while let Some(arg) = args.next() {
-        match arg.as_str() {
-            "--parser" => {
-                let Some(value) = args.next() else {
-                    eprintln!("--parser requires one of: native, via-conjure");
-                    std::process::exit(2);
-                };
-                parser_selection = match value.as_str() {
-                    "native" => ParserSelection::NativeOnly,
-                    "via-conjure" => ParserSelection::ViaConjureOnly,
-                    _ => {
-                        eprintln!(
-                            "Unknown --parser value '{}'. Use: native, via-conjure",
-                            value
-                        );
-                        std::process::exit(2);
-                    }
-                };
-            }
-            "--repos" => {
-                let Some(value) = args.next() else {
-                    eprintln!(
-                        "--repos requires a comma list of repositories to include: conjure-oxide,conjure,essencecatalog"
-                    );
-                    std::process::exit(2);
-                };
-                repo_selection = parse_repo_selection(&value);
-            }
-            "--help" | "-h" => {
-                print_usage();
-                std::process::exit(0);
-            }
-            _ => {
-                eprintln!("Unknown argument: {}", arg);
-                print_usage();
-                std::process::exit(2);
-            }
-        }
-    }
+    let repo_selection = repo_selection_from_cli(cli.repos.as_deref());
+    let output_file = cli.output_html;
 
     // Discover input groups by scanning the selected repositories
     let groups = discover_input_groups(parser_selection, repo_selection);
@@ -184,33 +177,29 @@ fn print_progress(done: usize, total: usize) {
     let _ = std::io::Write::flush(&mut std::io::stdout());
 }
 
-fn parse_repo_selection(value: &str) -> RepoSelection {
-    let mut selection = RepoSelection {
-        conjure_oxide: false,
-        conjure: false,
-        essence_catalog: false,
-    };
+fn repo_selection_from_cli(repos: Option<&[RepoArg]>) -> RepoSelection {
+    match repos {
+        None => RepoSelection {
+            conjure_oxide: true,
+            conjure: true,
+            essence_catalog: true,
+        },
+        Some(repos) => {
+            let mut selection = RepoSelection {
+                conjure_oxide: false,
+                conjure: false,
+                essence_catalog: false,
+            };
 
-    for token in value.split(',').map(|s| s.trim().to_ascii_lowercase()) {
-        match token.as_str() {
-            "conjure-oxide" => selection.conjure_oxide = true,
-            "conjure" => selection.conjure = true,
-            "essencecatalog" => selection.essence_catalog = true,
-            other => {
-                eprintln!(
-                    "Unknown repo '{}' in --repos. Options: conjure-oxide, conjure, essencecatalog",
-                    other
-                );
-                std::process::exit(2);
+            for repo in repos {
+                match repo {
+                    RepoArg::ConjureOxide => selection.conjure_oxide = true,
+                    RepoArg::Conjure => selection.conjure = true,
+                    RepoArg::EssenceCatalog => selection.essence_catalog = true,
+                }
             }
+
+            selection
         }
     }
-
-    selection
-}
-
-fn print_usage() {
-    println!("Usage: parser-benchmark [--parser native|via-conjure] [--repos LIST]");
-    println!("  --parser MODE    Which parser(s) to run: native, via-conjure");
-    println!("  --repos LIST     Comma list: conjure-oxide,conjure,essencecatalog");
 }

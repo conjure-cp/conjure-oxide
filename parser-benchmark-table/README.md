@@ -20,7 +20,8 @@ If `Conjure` or `EssenceCatalog` are selected, their repositories are cloned/pul
 
 ## Output
 
-- HTML report path: `parser-benchmark-table/parser_benchmark_table.html`
+- By default, the HTML report is written to `parser-benchmark-table/parser_benchmark_table.html`
+- Use `--output-html <path>` to write it somewhere else
 
 To view the HTML output:
 
@@ -36,14 +37,8 @@ Run from the repository root:
 cargo run -p parser-benchmark-table
 ```
 
-### Options
+For the full CLI and flag descriptions, run:
 
-- `--parser native|via-conjure`
-  - `native`: run only native parser
-  - `via-conjure`: run only via-conjure parser
-  - if omitted, both parsers run
-
-- `--repos conjure-oxide,conjure,essencecatalog`
-  - comma-separated list of repositories to include
-  - if omitted, all three are included
-
+```bash
+cargo run -p parser-benchmark-table -- --help
+```
