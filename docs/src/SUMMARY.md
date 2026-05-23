@@ -50,6 +50,8 @@
     - [Essence Parser](developers-guide/architecture/essence-parser/index.md)
         - [Error Detection]()
             - [Syntactic Errors](developers-guide/architecture/essence-parser/error-detection/syntactic-errors.md)
+            - [Semantic Errors](developers-guide/architecture/essence-parser/error-detection/semantic-errors.md)
+            - [Error Detection](developers-guide/architecture/essence-parser/error-detection/error-detection.md)
         - [ProTrace Module](developers-guide/architecture/essence-parser/protrace-module.md)
         - [TreeMorph Benchmarking](developers-guide/architecture/essence-parser/treemorph-benchmarking.md)
     - [LSP]()
