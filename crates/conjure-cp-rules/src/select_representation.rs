@@ -187,6 +187,7 @@ fn domain_needs_representation(domain: &GroundDomain) -> bool {
         | GroundDomain::Record(_)
         | GroundDomain::Sequence(_, _)
         | GroundDomain::Function(_, _, _)
+        | GroundDomain::Partition(_, _)
         | GroundDomain::Variant(_) => true,
         GroundDomain::Relation(_, _) => true,
         GroundDomain::Empty(_) => false,

@@ -2,7 +2,7 @@ use super::attrs::SetAttr;
 use super::ground::GroundDomain;
 use super::range::Range;
 use super::unresolved::{IntVal, UnresolvedDomain};
-use crate::ast::domains::attrs::MSetAttr;
+use crate::ast::domains::attrs::{MSetAttr, PartitionAttr};
 use crate::ast::{
     DeclarationPtr, DomainOpError, Expression, FieldEntry, FieldEntryGround, FuncAttr, Literal,
     Moo, Reference, RelAttr, ReturnType, SequenceAttr, Typeable,
@@ -222,6 +222,25 @@ impl Domain {
         let _ = ptr.as_domain_letting()?;
         Some(Moo::new(Domain::Unresolved(Moo::new(
             UnresolvedDomain::Reference(Reference::new(ptr)),
+        ))))
+    }
+
+    /// Create a new multiset domain with the given element domain and attributes
+    pub fn partition<T>(attr: T, inner_dom: DomainPtr) -> DomainPtr
+    where
+        T: Into<PartitionAttr<IntVal>> + TryInto<PartitionAttr<Int>> + Clone,
+    {
+        if let Domain::Ground(gd) = inner_dom.as_ref()
+            && let Ok(int_attr) = attr.clone().try_into()
+        {
+            return Moo::new(Domain::Ground(Moo::new(GroundDomain::Partition(
+                int_attr,
+                gd.clone(),
+            ))));
+        }
+        Moo::new(Domain::Unresolved(Moo::new(UnresolvedDomain::Partition(
+            attr.into(),
+            inner_dom,
         ))))
     }
 
@@ -719,6 +738,50 @@ impl Domain {
     )> {
         if let Some(GroundDomain::Function(attrs, dom, codom)) = self.as_ground_mut() {
             return Some((attrs, dom, codom));
+        }
+        None
+    }
+
+    /// If this is a partition domain, get its (attributes, domain)
+    pub fn as_partition(&self) -> Option<(PartitionAttr<IntVal>, Moo<Domain>)> {
+        if let Some(GroundDomain::Partition(attrs, doms)) = self.as_ground() {
+            return Some((attrs.clone().into(), doms.clone().into()));
+        }
+        if let Some(UnresolvedDomain::Partition(attrs, doms)) = self.as_unresolved() {
+            return Some((attrs.clone(), doms.clone()));
+        }
+        None
+    }
+
+    /// If this is a partition domain, get mutable reference to its attributes and element domain.
+    /// The domain always becomes [UnresolvedDomain::Partition] after this operation.
+    pub fn as_partition_mut(&mut self) -> Option<(&mut PartitionAttr<IntVal>, &mut DomainPtr)> {
+        if let Some(GroundDomain::Partition(attr_gd, inner_dom_gd)) = self.as_ground() {
+            let attr: PartitionAttr<IntVal> = attr_gd.clone().into();
+            let inner_dom = inner_dom_gd.clone().into();
+            *self = Domain::Unresolved(Moo::new(UnresolvedDomain::Partition(attr, inner_dom)));
+        }
+
+        if let Some(UnresolvedDomain::Partition(attr, inner_dom)) = self.as_unresolved_mut() {
+            return Some((attr, inner_dom));
+        }
+        None
+    }
+
+    /// If this is a [GroundDomain::Partition], get immutable references to its attributes and inner domain
+    pub fn as_partition_ground(&self) -> Option<(&PartitionAttr<Int>, &Moo<GroundDomain>)> {
+        if let Some(GroundDomain::Partition(attr, inner_dom)) = self.as_ground() {
+            return Some((attr, inner_dom));
+        }
+        None
+    }
+
+    /// If this is a [GroundDomain::Partition], get mutable references to its attributes and inner domain
+    pub fn as_partition_ground_mut(
+        &mut self,
+    ) -> Option<(&mut PartitionAttr<Int>, &mut Moo<GroundDomain>)> {
+        if let Some(GroundDomain::Partition(attr, inner_dom)) = self.as_ground_mut() {
+            return Some((attr, inner_dom));
         }
         None
     }

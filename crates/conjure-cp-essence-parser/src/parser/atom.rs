@@ -362,6 +362,7 @@ fn typecheck_variable(
         TypecheckingContext::Matrix => "matrix",
         TypecheckingContext::Tuple => "tuple",
         TypecheckingContext::Record => "record",
+        TypecheckingContext::Partition => "partition",
         TypecheckingContext::Sequence => "sequence",
         TypecheckingContext::Unknown => return None, // shouldn't reach here
     };
@@ -378,6 +379,7 @@ fn typecheck_variable(
         GroundDomain::Function(_, _, _) => "function",
         GroundDomain::Variant(_) => "variant",
         GroundDomain::Relation(_, _) => "relation",
+        GroundDomain::Partition(_, _) => "partition",
         GroundDomain::Sequence(_, _) => "sequence",
         GroundDomain::Empty(_) => "empty",
     };
@@ -454,6 +456,7 @@ fn parse_constant(ctx: &mut ParseContext, node: &Node) -> Result<Option<Literal>
             TypecheckingContext::Matrix => "matrix",
             TypecheckingContext::Tuple => "tuple",
             TypecheckingContext::Record => "record",
+            TypecheckingContext::Partition => "partition",
             TypecheckingContext::Sequence => "sequence",
             TypecheckingContext::Unknown => "",
         };
