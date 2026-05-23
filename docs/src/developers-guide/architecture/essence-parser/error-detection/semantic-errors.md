@@ -52,8 +52,8 @@ find x, x : int
 - A similar check exists for identifiers declared in previous statements. If a variable with the same name already exists in the `SymbolTable`, an error is returned, including the line number of the previous declaration.
 - Once the domain is parsed, all identifiers in the `vars` vector are added to the   `SymbolTable` of the model with the domain
 
-## Typechecking
-Typechecking uses two context values stored in `ParseContext`:
+## Type Checking
+Type checking uses two context values stored in `ParseContext`:
 
 - `typechecking_context`: the expected type of the current expression node itself.
 - `inner_typechecking_context`: the expected type of elements inside a collection-like expression (for elements of a set/matrix/tuple/comprehension return value).
@@ -61,7 +61,7 @@ Typechecking uses two context values stored in `ParseContext`:
 If a mismatch is found, a recoverable type error is recorded and that branch returns `Ok(None)`.
 
 ### When Contexts Are Set
-Typechecking only occurs during expression parsing. For each top-level constraint, the parser sets `typechecking_context = Boolean` before parsing the constraint expression.
+Type checking only occurs during expression parsing. For each top-level constraint, the parser sets `typechecking_context = Boolean` before parsing the constraint expression.
 
 Inside expression parsing:
 - Boolean-expression entry sets outer context to `Boolean`.
@@ -80,7 +80,7 @@ Checks occur in multiple places:
 - Constant parsing checks literal kind against current outer context.
 - Abstract literal parsing checks the container kind itself (`set`, `matrix`, `tuple`, `record`) against outer context. Before parsing the inner elements, the inner context is promoted to the outer/main context.
 
-### Typechecking Examples
+### Type Checking Examples
 Erroneous input (`bool_in_arith_list.essence`):
 
 ```Essence
@@ -89,7 +89,7 @@ find x: int(1..10)
 such that sum([1, 2, b, 4]) = x
 ```
 
-The typechecking error is detected as follows:
+The type checking error is detected as follows:
 - Variables `b` and `x` are added to the `SymbolTable` with their respective domains without error
 - Before parsing the constraint `sum([1, 2, b, 4]) = x`, the context is `Boolean` because it is the top level constraint. This is a comparison expression (boolean), so there is no error.
     - While parsing `sum([1, 2, b, 4])`, the outer context is set to `SetOrMatrix` because it is an aggregate expression. The inner context is set to `Arithmetic` because the operator is `sum`. 

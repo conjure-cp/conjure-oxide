@@ -34,7 +34,7 @@ Syntactic errors are grammar-level failures: the source does not match grammar r
 These are detected first by checking whether the root node has an error,which checks the entire tree. If a syntactic error exists, the CST is passed to a `detect_syntactic_errors` function which adds all syntactic errors to the errors vector. If syntactic errors exist, no semantic errors will be added to the vector (but parsing of the CST still continues for LSP source map purposes).
 
 ## Semantic Errors
-Semantic errors are logically invalid constructs that may still parse into valid CSTs (for example declaration/type/context errors).
+Semantic errors are logically invalid constructs that may still parse into a valid CST (for example declaration/type/context errors).
 
 These are detected during parser traversal/conversion while building model structures.
 
