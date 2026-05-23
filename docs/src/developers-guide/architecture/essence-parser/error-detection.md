@@ -59,7 +59,7 @@ At a high level in `parse_essence_with_context_and_map`:
 # Semantic Error Detection
 The parser does not run a separate "semantic pass" but rather semantic error checking is integrated directly into the normal parse traversal, often with if/then blocks. This is because these errors are not detectable from the CST alone and require the partially-built model for context.
 
-When a semantic error is found, it is added to the `errors` vector of `RecoverableParseError`s stored in the shared `ParseContext` object. If the error was found in an expression, the function may return early by returning `Ok(None)` (or equivalent), which in turn causes the caller function to return early as well and so on until the top-level statement. This skips the erroneous subtree and parsing continues on the next unaffected branch. For other top-level statement types (and some expression errors), parsing may continue after an error is found, depending on the error type.
+When a semantic error is found, it is added to the shared `errors` vector in `ParseContext`. The parser then either returns `Ok(None)` for that branch or keeps scanning sibling items if the error is local to one element. In practice, branch-level expression errors stop that subtree, while statement-level parsers can often continue so they can report more recoverable errors in the same input.
 
 Most parser helpers return `Result<Option<T>, FatalParseError>`.
 
@@ -156,5 +156,6 @@ The typechecking error is detected as follows:
         - `[1, 2, b, 4]` is a matrix so there is no error.
         - While parsing each element, the outer context is now `Arithmetic` (former inner context).
             - `1` and `2` are both integers so no error
-                - `b` is looked up in the `SymbolTable` and the domain is `bool` so an error is added
+            - `b` is looked up in the `SymbolTable` and the domain is `bool` so an error is added
+            - `4` is an integer so no error
     - The right operand `x`'s domain in the `SymbolTable` is `int(1..10)` so there is no error
