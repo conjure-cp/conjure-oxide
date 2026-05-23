@@ -92,6 +92,7 @@
   - [Roundtrip Testing](developers-guide/testing/roundtrip-testing.md)
   - [Writing Custom Tests](developers-guide/testing/writing-custom-tests.md)
   - [Code Coverage](developers-guide/testing/code-coverage.md)
+  - [Conjure-Oxide-Tester](developers-guide/testing/conjure-oxide-tester.md)
 
 # Nuggets
 
