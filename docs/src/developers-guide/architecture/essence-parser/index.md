@@ -1,5 +1,5 @@
 [//]: # (Author: Leia McAlister-Young)
-[//]: # (Last Updated: 10/03/2026)
+[//]: # (Last Updated: 20/05/2026)
 
 # Overview
 The parser converts incoming Essence programs to Conjure Oxide to the [Model Object](https://conjure-cp.github.io/conjure-oxide/docs/conjure_core/ast/struct.Model.html) that the rule engine takes in. The relevant parts of the Model object are the SymbolTable and Expression objects. The symbol table is essentially a list of the variables and their corresponding domains. The Expression object is a recursive object that hold all the constraints of the problem, nested into one object. The parser has two main parts. The first the `tree-sitter-essence` crate, which is a general Essence parser using the library tree-sitter. The second part is the `conjure_essence_parser` crate which is Rust code that uses the grammar to parse Essence programs and convert them into the above-mentioned Model object.
@@ -8,10 +8,10 @@ The parser converts incoming Essence programs to Conjure Oxide to the [Model Obj
 [Tree-sitter](https://tree-sitter.github.io/tree-sitter/) is a parsing library that creates concrete syntax trees from programs in various languages. It contains many languages already, but Essence is unfortunately not one of them. Therefore, this crate contains a JavaScript grammar for Essence, which tree-sitter uses to create a parser. The parser is not specific to Conjure Oxide as the grammar merely describes the general Essence language, but it is used in Conjure Oxide and currently covers only parts of the Essence language that Conjure Oxide deals with and has tests written for. Therefore, it is not extensive and relatively simple in structure. 
 
 ## General Structure
-At the top level, there can be either find statements, letting statements, and constraint statements. Find statements consist of the keyword `find`, one or more variables, and then a domain of either type boolean or integer. Letting statements have the keyword `letting`, one or more variables, and an expression or domain to assign to those variables. Constraints contain the keyword `such that` and one or more logical or numerical expressions which include variables and constants. 
+At the top level, there can be either find statements, letting statements, given statements, and constraint statements. There are alsolanguage declarations/comments, which are treated as metadata/extras rather than model constraints. Find statements consist of the keyword `find`, one or more variables, and then a domain of either type boolean or integer. Letting statements have the keyword `letting`, one or more variables, and an expression or domain to assign to those variables. Given statements contain the `given` keyword followed by  known input parameters and their domains. Constraints contain the keyword `such that` and one or more logical or numerical expressions which include variables and constants. 
 
 ## Expression Hierarchy 
-Expressions in the grammar are broken down into boolean expressions, comparison expressions, and arithmetic expressions. This separation helps enforce semantic constraints inherent to the language. For example, expressions like `x + 3 = y` are allowed because an arithmetic expression is permitted on either side of a comparison, but chained comparisons like `x = y = 3` are disallowed, since a comparison expression cannot itself contain another comparison expression as an operand. This also helps ensure the top-most expression in a constraint evaluates to a boolean (so `such that x + 3` wouldn't be valid). There are also `atom` expressions such as constants, identifiers, and structured values (tuples, matrices, or slices), which are allowed as operands to most expressions since they might be booleans. This does mean, however, that a constraint like `such that y` would be valid even though `y` might be an integer. Quantifier expressions are also separated into boolean and arithmetic quantifiers for this reason (so `such that allDif{[a, b]}` is valid but `such that min{[a,b]}` isn't).
+Expressions in the grammar are broken down into boolean expressions, comparison expressions, arithmetic expressions, and atoms. Atoms are the base expression layer (for example constants, identifiers, and structured values such as tuples, matrices, records, comprehensions, and indexing/slicing), and they are reused as operands by the higher-level expression families. This separation helps enforce semantic constraints inherent to the language. For example, expressions like `x + 3 = y` are allowed because an arithmetic expression is permitted on either side of a comparison, but chained comparisons like `x = y = 3` are disallowed, since a comparison expression cannot itself contain another comparison expression as an operand. This also helps ensure the top-most expression in a constraint evaluates to a boolean (so `such that x + 3` wouldn't be valid). There are also `atom` expressions such as constants, identifiers, and structured values (tuples, matrices, or slices), which are allowed as operands to most expressions since they might be booleans. This does mean, however, that a constraint like `such that y` would be valid even though `y` might be an integer. Quantifier expressions are also separated into boolean and arithmetic quantifiers for this reason (so `such that allDif{[a, b]}` is valid but `such that min{[a,b]}` isn't).
 
 The precedence levels throughout the grammar are based on the Essence prime operator precedence table found in Appendix B of the [Savile Row Manual](https://arxiv.org/pdf/2201.03472). This is important to ensure that nested or complicated expressions such as `(2*x) + (3*y) = 12` are parsed in the correct order, as this will determine the structure of the Expression object in the Model.
 
@@ -43,6 +43,9 @@ The top level nodes (children of the root node), are either extras (comments or 
 
 In general, `kind()` is used to determine which rule a node represents and the corresponding function or logic is then applied to that node. Child nodes are found using their field names or indexes and the `named_children()` function is used to iterate over the named child nodes of a node. The function `child_expr` returns the Expression parsed from the first named child of the given node. 
 
+### ParseContext
+The parser now uses a `ParseContext` struct to pass shared state through parsing functions. It stores the source code, root node, symbol information, collected recoverable errors, source map/declaration span data, and typechecking context values. This keeps parsing helpers consistent and avoids threading many separate parameters through each function.
+
 ### Extracting from the source code (identifiers and constants)
 The tree-sitter nodes have a start and end byte indicating where the node corresponds to in the source code. For variable identifiers, constants, and operators, these bytes are necessary to extract the actual values from the source code. 
 
@@ -66,7 +69,7 @@ let op_type = &source_code[op.start_byte()..op.end_byte()];
 Find and letting statements are parsed relatively intuitively. For find statements, the list of variables is iterated over and each is added to a hash map as the key. Then, the domain is parsed and added as the value for each variable it applies to. Once all variables and domains are parsed, the hash map is returned and the caller function iterates over it and adds each pair to the `SymbolTable`. For letting statements, a new `SymbolTable` is created. The variables are again iterated over and added to the table. Letting statements can either specify a domain or an expression for the variables so the type of node is checked and either parsed as an expression or domain before being added to the table. The `SymbolTable` is returned and the caller function adds it to the existing `SymbolTable` of the `Model`.
 
 ## Constraints
-Adding constraints to the overall constraints `Expression` requires nesting `Expression` objects in a consistent and clear manner. Each constraint is parsed using the `parse_expression` function, which returns an `Expression` object, and is then added to the model using the `add_constraints` function. The `parse_expression` function takes a node as a parameter and is recursive. It matches the node to its 'kind', recursively parses the children of the node, then returns an `Expression` object that correctly packages up the expressions returned from the parsing of the children nodes. 
+Adding constraints to the overall constraints `Expression` requires nesting `Expression` objects in a consistent and clear manner. Each constraint is parsed using `parse_expression`, which is the main entry point, and is then added to the model. `parse_expression` dispatches by node kind to more specific parsing functions (for example `parse_comparison_expression`, `parse_boolean_expression`, `parse_arithmetic_expression`, and `parse_atom`). Recursion still happens through these functions, but when a child node kind is already known (for example an atom child), the parser can directly call the more specific function instead of always routing through the generic entry path.
 
 This structure allows for easy addition of more complex constraints as the grammar evolves. As more rules are added to the grammar, the corresponding code block must be added to the match statement in the `parse_expression` function.
 
@@ -79,22 +82,33 @@ comparison_expr: $ => prec(0, prec.left(seq(
       field("right", choice($.boolean_expr, $.arithmetic_expr))
     ))),
 ```
-In the parse_expression function, the left expression is parsed using the `child_expr` function. The returned Expression would represent the variable `x` and be saved as `expr1`. The operator is extracted from the source code and saved as `op_type`. The right expression node is then found using its field name 'right' and parsed. The returned Expression would represent the integer `3` and be saved as `expr2`.
+In `parse_expression`, this node is first dispatched to `parse_comparison_expression` and then `parse_binary_expression` because of its kind. From there, the operator is extracted from the source code, and the left and right child expressions are parsed:
 
 ```Rust
-let expr1 = child_expr(constraint, source_code, root)?;
-            let op = constraint.child_by_field_name("operator").ok_or(format!(
-                "Missing operator in expression {}",
-                constraint.kind()
-            ))?;
-            let op_type = &source_code[op.start_byte()..op.end_byte()];
-            let expr2_node = constraint.child_by_field_name("right").ok_or(format!(
-                "Missing second operand in expression {}",
-                constraint.kind()
-            ))?;
-            let expr2 = parse_expression(expr2_node, source_code, root)?;
+    let Some(op_node) = field!(recover, ctx, node, "operator") else {
+        return Ok(None);
+    };
+    let op_str = &ctx.source_code[op_node.start_byte()..op_node.end_byte()];
 
-            match op_type {...}
+    ...
+
+    // parse left operand
+    let Some(left_node) = field!(recover, ctx, node, "left") else {
+        return Ok(None);
+    };
+    let Some(left) = parse_expression(ctx, left_node)? else {
+        return Ok(None);
+    };
+
+    ...
+
+    // parse right operand
+    let Some(right_node) = field!(recover, ctx, node, "right") else {
+        return Ok(None);
+    };
+    let Some(right) = parse_expression(ctx, right_node)? else {
+        return Ok(None);
+    };
 ```
 
 Depending on the operator type (in this case `=`), the left and right expressions are added to an Expression of the relevant type (in this case `Eq`), which is returned.
@@ -102,7 +116,7 @@ Depending on the operator type (in this case `=`), the left and right expression
 ```Rust
 "=" => Ok(Expression::Eq(
                     Metadata::new(),
-                    Box::new(expr1),
-                    Box::new(expr2),
+                    Box::new(left),
+                    Box::new(right),
                 )),
 ```
