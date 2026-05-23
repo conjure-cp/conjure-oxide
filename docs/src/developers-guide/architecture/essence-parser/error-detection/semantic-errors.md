@@ -52,13 +52,6 @@ find x, x : int
 - A similar check exists for identifiers declared in previous statements. If a variable with the same name already exists in the `SymbolTable`, an error is returned, including the line number of the previous declaration.
 - Once the domain is parsed, all identifiers in the `vars` vector are added to the   `SymbolTable` of the model with the domain
 
-## Special Case: Keyword-as-Identifier Check
-Most semantic checks happen during normal statement/expression parsing, but keyword-as-identifier is handled separately at the start of model parsing.
-
-`parse_essence_with_context_and_map` calls `keyword_as_identifier(...)` before top-level statement dispatch. That function scans identifiers against a reserved-keyword set and emits recoverable semantic errors immediately.
-
-So this check is part of semantic detection, but it is not implemented as a normal per-statement parse helper. This is because it was implemented first. It may be possible to integrate it into the normal parsing flow.
-
 ## Typechecking
 Typechecking uses two context values stored in `ParseContext`:
 
