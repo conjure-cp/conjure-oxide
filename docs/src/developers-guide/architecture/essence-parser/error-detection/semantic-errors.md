@@ -14,6 +14,8 @@ Most parser helpers return `Result<Option<T>, FatalParseError>`.
 - `Ok(Some(value))` means this branch parsed successfully.
 - `Ok(None)` means recoverable failure in this branch.
 
+The [roundtrip/invalid/semantic test directory](https://github.com/conjure-cp/conjure-oxide/tree/main/tests-integration/tests/roundtrip/invalid/semantic) contains various semantic error cases and their expected outputs.
+
 ## Example: Duplicate Variable Declarations
 Duplicate declaration checks are a good example of semantic detection during traversal. 
 
@@ -51,6 +53,15 @@ find x, x : int
 
 - A similar check exists for identifiers declared in previous statements. If a variable with the same name already exists in the `SymbolTable`, an error is returned, including the line number of the previous declaration.
 - Once the domain is parsed, all identifiers in the `vars` vector are added to the   `SymbolTable` of the model with the domain
+
+Error produced: 
+    ```
+    tests/roundtrip/invalid/semantic/duplicate_var_declaration/01/duplicate_var_declaration_01.essence:1:9:
+    |
+    1 | find x, x : int
+    |         ^
+    Variable 'x' is already declared in this find statement
+    ```
 
 ## Type Checking
 Type checking uses two context values stored in `ParseContext`:
@@ -99,3 +110,14 @@ The type checking error is detected as follows:
             - `b` is looked up in the `SymbolTable` and the domain is `bool` so an error is added
             - `4` is an integer so no error
     - The right operand `x`'s domain in the `SymbolTable` is `int(1..10)` so there is no error
+
+Error produced: 
+    ```
+    tests/roundtrip/invalid/semantic/typecheck/bool_in_arith_list/bool_in_arith_list.essence:3:22:
+    |
+    3 | such that sum([1, 2, b, 4]) = x
+    |                      ^
+    Type error: b
+        Expected: int
+        Got: bool
+    ```
