@@ -535,10 +535,10 @@ fn abs_value_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
 }
 
 /// Converts toint of a boolean to a direct SATInt
-/// 
+///
 /// ```text
 /// toInt(bool) ~> SATInt
-/// 
+///
 /// ```
 #[register_rule("SAT_Direct", 4600)]
 fn sat_direct_toint(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
@@ -552,13 +552,13 @@ fn sat_direct_toint(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let decl_0 = new_symbols.gen_find(&conjure_cp::ast::Domain::bool());
     let r_0 = Expr::Atomic(
         Metadata::new(),
-        Atom::Reference(conjure_cp::ast::Reference::new(decl_0))
+        Atom::Reference(conjure_cp::ast::Reference::new(decl_0)),
     );
 
     let decl_1 = new_symbols.gen_find(&conjure_cp::ast::Domain::bool());
     let r_1 = Expr::Atomic(
         Metadata::new(),
-        Atom::Reference(conjure_cp::ast::Reference::new(decl_1))
+        Atom::Reference(conjure_cp::ast::Reference::new(decl_1)),
     );
 
     let b = moo_bool.as_ref().clone();
