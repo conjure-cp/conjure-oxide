@@ -51,7 +51,7 @@ pub fn parse_letting_statement(
                     format!("Keyword '{variable_name}' used as identifier"),
                     Some(variable.range()),
                 ));
-                continue;
+                // still add variable to symbol table to avoid follow-up errors
             }
 
             // Check for duplicate within the same statement
