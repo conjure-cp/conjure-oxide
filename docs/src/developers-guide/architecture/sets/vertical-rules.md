@@ -92,7 +92,7 @@ Picking the first option: Question 1: q3 in B
 
 ### Original Essence Model:
 
-```
+```essence
 find A,B,C : set of int(0..6)  
 such that C = A intersect B
 ```
@@ -196,7 +196,7 @@ Picking the first option: Question 1: [or([A_Occurrence[q5] /\ B_Occurrence[q5] 
 
 ### Final Rewritten Model:
 
-```
+```essence
 find A_Occurrence: matrix indexed by [int(0..6)] of bool
     find B_Occurrence: matrix indexed by [int(0..6)] of bool
     find C_Occurrence: matrix indexed by [int(0..6)] of bool
