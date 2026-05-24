@@ -47,7 +47,7 @@ dominance relation
     pareto(minimising x, maximising y)
 ```
 
-Here, "pareto" refers to [**Pareto efficiency / Pareto optimality**](https://en.wikipedia.org/wiki/Pareto_efficiency) in multi-objective optimisation (not the "80/20 rule").
+Here, the `pareto(...)` keyword refers to [**Pareto efficiency / Pareto optimality**](https://en.wikipedia.org/wiki/Pareto_efficiency) in multi-objective optimisation (not the "80/20 rule").
 
 Each item declares a component and direction:
 
