@@ -1,14 +1,19 @@
 [//]: # (Author: Nicholas Davidson)
-[//]: # (Last Updated: 10/02/2026)
+[//]: # (Last Updated: 25/05/2026)
 
 # Testing
 ## Types of Tests
-Conjure-Oxide currently has four forms of tests:
-- Integration tests
+
+Conjure-Oxide currently has four forms of internal tests:
+- [Integration tests](integration-testing.md)
 - [Custom tests](writing-custom-tests.md)
 - [Roundtrip tests](roundtrip-testing.md)
 - A small number of unit tests
+
+Additionally, the project has infrastructure for [black-box-testing](bb-test.md) using a tool suite that runs tests in parallel and gathers data using GNU Parallel.
+
 ## Test generation
+
 The test generation occurs in the file `./tests_integration/build.rs`. This generates the integration, custom and roundtrip tests all in a similar manner.
 
 For each test framework we define a base directory for all these tests:
