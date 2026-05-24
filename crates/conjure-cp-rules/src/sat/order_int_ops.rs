@@ -10,6 +10,8 @@ use conjure_cp::ast::Metadata;
 use conjure_cp::ast::Moo;
 use conjure_cp::into_matrix_expr;
 
+use conjure_cp::ast::CnfClause;
+
 /// This function confirms that all of the input expressions are order SATInts, and returns vectors for each input of their bits
 /// This function also normalizes order SATInt operands to a common value range.
 pub fn validate_order_int_operands(
@@ -234,4 +236,63 @@ fn ineq_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     }
 
     Ok(Reduction::cnf(output, new_clauses, new_symbols))
+}
+
+/// Converts toint of a boolean to an order SATInt
+///
+/// ```text
+/// toInt(bool) ~> SATInt
+///
+/// ```
+#[register_rule("SAT_Order", 4600)]
+fn sat_order_toint(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    let Expr::ToInt(_, moo_bool) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let mut new_symbols = symbols.clone();
+    let mut new_clauses = vec![];
+
+    let decl = new_symbols.gen_find(&conjure_cp::ast::Domain::bool());
+    let r_0 = Expr::Atomic(
+        Metadata::new(),
+        Atom::Reference(conjure_cp::ast::Reference::new(decl)),
+    );
+
+    let b = moo_bool.as_ref().clone();
+
+    // r_0 <-> b
+    // (r_0 -> b): [¬r_0, b]
+    // (b -> r_0): [¬b, r_0]
+    new_clauses.push(CnfClause::new(vec![
+        Expr::Not(Metadata::new(), Moo::new(r_0.clone())),
+        b.clone(),
+    ]));
+    new_clauses.push(CnfClause::new(vec![
+        Expr::Not(Metadata::new(), Moo::new(b.clone())),
+        r_0.clone(),
+    ]));
+
+    // let mut result_bits = vec![];
+    let result_bits = vec![
+        Expr::Atomic(
+            Metadata::new(),
+            Atom::Literal(Literal::Bool(true)),
+        ),
+        r_0
+    ];
+    // result_bits.push(Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(true))));
+    // result_bits.push(r_0);
+
+
+    Ok(Reduction::cnf(
+        Expr::SATInt(
+            Metadata::new(),
+            SATIntEncoding::Order,
+            Moo::new(into_matrix_expr!(result_bits)),
+            (0, 1),
+        ),
+        new_clauses,
+        new_symbols,
+    ))
 }
