@@ -16,12 +16,12 @@ crates/conjure-cp-essence-parser/src/diagnostics/
 └─ error_detection/
   ├─ mod.rs
   ├─ semantic_errors.rs         # AST-based semantic detection: maps parse errors to Diagnostics
-  └─ syntactic_errors.rs        # tree-sitter traversal: maps erronous parse tree patterns to Diagnostics
+  └─ syntactic_errors.rs        # tree-sitter traversal: maps erroneous parse tree patterns to Diagnostics
 ```
 
 ### Key Functions
 
-- `get_diagnostics(source: &str, cst: &Tree) -> Vec<Diagnostic)` serves as the main entrypoint. That's the function you would call for error detection and underlining. It uses `collect_errors` to call `parse_essence_with_context_and_map`. The latter runs syntactic error detection in case of an erronous CST and otherwise collects syntactic errors during parsing. In either case, all errors are aggregted into a single vector of `Diagnostic`s.
+- `get_diagnostics(source: &str, cst: &Tree) -> Vec<Diagnostic)` serves as the main entrypoint. That's the function you would call for error detection and underlining. It uses `collect_errors` to call `parse_essence_with_context_and_map`. The latter runs syntactic error detection in case of an erroneous CST and otherwise collects syntactic errors during parsing. In either case, all errors are aggregated into a single vector of `Diagnostic`s.
 
 - `detect_syntactic_errors(source: &str) -> Vec<Diagnostic)` Is called by the parser when there are errors in the CST. It parses with tree-sitter and walks the CST using DFS with early retract on error/missing/zero-length nodes to avoid duplicates. More information on that in [error detection docs](../essence-parser/error-detection/error-detection.md).
 
