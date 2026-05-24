@@ -1,59 +1,11 @@
 # Testing in Conjure Oxide
 
-## Rust Testing Harness
-
-The `cargo` CLI tool contains several rust utilities[^1], which are used to interact with the Rust Testing Harness. While the harness on its own is a fully usable testing script that provides support for unit tests and integration tests. It also has the benefit of being able to implement customised functionality using a build script. This means that functionality can be added to the harness[^2], without having to provide a custom entry point[^3].
-
-Integration tests in Rust are run using `cargo test`. When `cargo test` is run, each of the files in the integration testing interface get compiled as a separate package. This then leads to a number of tests that can be run either all together or one-at-a-time. For large projects like Conjure Oxide, this allows for continuous integration.
-
-## The Conjure Oxide Testing Setup
-
-Conjure Oxide uses a middle-ground testing setup, which is necessary because the project contains multiple packages, which are used as internal APIs in conjure oxide. One of the packages that is maintained internally is the 'tests-integration' package, used for testing the conjure-oxide tool. The package uses the conjure-oxide tool as a dependency, and uses it to run testing input files. This allows the use of the rust testing harness to run custom code without having to rewrite the harness and deal with all the complications that come with defining custom entry points. 
-
-This works because of the build system in cargo, which works by looking for a 'build script'[^4] and running it just before compiling the crate. The 'tests-integration' crate's structure looks like this: 
-
-```
-         .
-        ├──  build.rs
-        ├──  Cargo.toml
-        ├── 󰂺 README.md
-        ├── 󰣞 src
-        │   ├──  lib.rs
-        │   └──  test_config.rs
-        └──  tests
-            ├──  custom
-            ├── 󰡯 custom_test_template
-            ├──  custom_tests.rs
-            ├──  integration
-            ├── 󰡯 integration_test_template
-            ├──  integration_tests.rs
-            ├──  parser_tests
-            ├──  roundtrip
-            ├── 󰡯 roundtrip_test_template
-            └──  roundtrip_tests.rs
-```
-
-This means, however, that the build script cannot use any of the code in the other integration testing files, as it cannot rely on the crate it is used to build. To circumvent this, the integration tester uses a few different tricks. It is actually built as an entirely separate crate which the `cargo test` utility uses to run tests. It uses a collection of macros to build the crate in an order which is different from the default, so that the testing utility tool runs all of the testing code. The testing code calls different members of the internal API in order to run tests in a step-by-step manner.
-
-With the current setup, when the build script is run, it then executes every other testing utility. This includes the following scripts: 
 
 ### Integration Test
 
 The Integration Test setup takes one essence file and checks that every step of solving works correctly by comparing the output of each step with files that contain previously prepared 'outputs', which have been verified for correctness. It checks the parsed output, the application of rules in the rule engine and the solutions, thus verifying each of the steps of the solution process.
 
 New Integration Tests should be added whenever additions are made to the AST, more solver support, new solving features, new representations etc. 
-
-### Custom Tests
-
-Custom tests work by running a shell script (generally, this uses a release-compiled binary of conjure oxide), and then comparing the standard out and standard err streams to a statically stored expected output, which has also been generated and checked for correctness. The custom tests are generally used to check things other than the solving process. For example, it is used to check pretty printing, error presentation (for unsupported models), logging behaviour, intended failure testing and so on. 
-
-New Custom Tests should be added whenever new features are added to the tool which do not involve changes being made to the solution generation. This does not include changes to the parser, rule engine, rulesets or solver. However, it does include changes like new flags, new logging features, changes to the file interaction, additions to the API etc. 
-
-### Roundtrip Tests
-
-Roundtrip Tests are used to ensure that valid files passed to conjure oxide will actually complete a full 'roundtrip'; that is, to check that they go through each step in the solving 'pipeline' and that each step behaves as expected. 
-
-Each of the above testing frameworks are documented much more rigorously in their own sections. They are also mentioned and referenced extensively elsewhere in this book. 
 
 ## The Black-Box Testing Setup
 
@@ -95,6 +47,42 @@ python -m pip install uv pandas textual ty
 
 Edit `settings.json` to add or modify runners and change the configuration with which to run `runsolver`.
 
+### Using Different Solver Configurations: 
+
+The `runner_commands` header in the settings allows for the addition of a commands to benchmark. The underlying system does not try to parse these commands and simply runs them in a shell process, which means these commands can be anything that can be run on the command line. For example, it can be as simple as the following configuration:
+```json
+"runner_commands": {
+    "conjure": "conjure solve",
+    "conjure_sat": "conjure solve --solver cadical",
+    "oxide_main_sat": "conjure-oxide solve -s sat",
+  },
+```
+which provides 'runners' for different solvers: plain conjure, conjure with some flags and conjure-oxide with some flags.
+
+Another useful example is the following setup:
+```json
+"runner_commands": {
+    "naive": "conjure-oxide solve --rewriter naive",
+    "morph": "conjure-oxide solve --rewriter morph",
+  },
+```
+which provides 'runners' that both use the same solver (default is minion) but use different rewriters.
+
+It can also be as complicated as this configuration:
+```json
+  "runner_commands": {
+    "main": "conjure-oxide solve",
+    "foo": "conjure-oxide_branch-foo solve",
+    "hash_bf144c": "conjure-oxide_headless-bf144c solve"
+  },
+```
+All three configurations are using conjure-oxide with all default options. However, they use executables compiled from different checkouts on the git repository:
+- `main` provides the most up-to-date stable version
+- `foo`  is the version of conjure-oxide that lives on the branch called `foo`
+- `hash_bf144c` provides the version in the headless state, when the repository is at the state which it was in during the commit with hash "bf144c". 
+
+This would need some extra setup aside from simply adding the commands into the settings.json file. The user would also need to make sure that they have switched to these branches, compiled conjure-oxide _on those branches_ and stored the executables in their `$PATH` with the appropriate names, which can then be used in the `"runner_commands"` json object.  
+
 ### Running Tools
 
 - **setup.py**: Re-initialise the database at the path from the configuration. To (re)create the Database used by the runner, run `python3 src/setup.py`. This script will prompt for confirmation and will wipe the existing database if confirmed. If no database exists, it will create one.
@@ -124,6 +112,40 @@ Disable clauses collection
 ```
 
 `run_tests.sh` finds all `.essence` files under `models/`, filters them by an optional operand string, and runs them in parallel using the runner commands from `settings.json`. Results and failures are written to the configured SQLite DB. If a run exits non-zero, its runtime is recorded as `-1.0` and the error is logged to the `failures` table.
+
+## Using the Container
+
+For unfamiliar operating systems or machines, it is best to run the testing setup inside a Docker/Podman container, as it will circumvent the need for administrator permissions and so on. For this purpose, a containerfile has been provided in the `conjure-oxide-tester` repository which provides much of the support that is needed for this application.
+
+Podman is used for the purposes of these instructions. However, docker syntax is identical to podman. On many machines, docker even aliases down to podman. 
+ 
+### Build An Image
+
+From the root directory of `conjure-oxide-tester`, build a podman image with a name that can then be referenced later on. The `-t` flag allows the container to be named by the user:
+
+```bash
+podman build -t test-container .
+```
+ 
+### Create a Directory on The Host
+ 
+This is where the database will live after the container is gone:
+ 
+```bash
+mkdir ~/my-container-output
+```
+ 
+### Run the Container with a Bind Mount
+ 
+When a container is removed, everything written inside it is lost, unless a directory on the host machine is mounted to the container at run time. The `-v` flag allows some external directory on the host to be mounted into the container:
+ 
+```bash
+podman run -it --rm -v ~/my-container-output:/output my-image
+```
+
+Now, inside the container, make sure that the "outfile" in settings.json is set to somewhere inside the /output directory in the container.
+
+After this intial setup step, each of the tools can be used in the usual manner from within the container. 
 
 ---
 
