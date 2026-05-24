@@ -51,19 +51,79 @@ New Custom Tests should be added whenever new features are added to the tool whi
 
 ### Roundtrip Tests
 
-TODO ASK NICK AND CALLUM
+Roundtrip Tests are used to ensure that valid files passed to conjure oxide will actually complete a full 'roundtrip'; that is, to check that they go through each step in the solving 'pipeline' and that each step behaves as expected. 
 
-TODO: ASK FELIX AND GEORGII FOR HELP
+Each of the above testing frameworks are documented much more rigorously in their own sections. They are also mentioned and referenced extensively elsewhere in this book. 
 
-## The Production Testing Setup
+## The Black-Box Testing Setup
 
-So far, production testing of the compiled conjure oxide tool has been done using the GNU Parallel command line tool, and in certain cases using python scripts. GNU Parallel is a useful command line tool which, true to its name, can be used to run commands in parallel. In addition to this, the command can also be used to actually put together the commands which are built. For a full explanation of the tool's many useful features, check out the (incredibly comprehensive) documentation for the tool on GNU's webpage. 
+So far, testing of the compiled conjure oxide tool (also sometimes called Black-Box Testing[^5]) has been done using the GNU Parallel command line tool, and in certain cases using python or bash scripts. For a full explanation of the tool's many useful features, take a look at the (incredibly comprehensive) documentation for the tool on GNU's webpage. 
 
-The Conjure Oxide production testing setup uses GNU parallel with a layer of abstraction built in python which records the time comparisons in CSV. 
+For the purposes of this chapter, it is important to know that GNU Parallel is a useful command line tool which, true to its name, is used to run commands in parallel. In addition to this, the tool can put together the commands which are to be run, using what is essentially a cartesian product of lists which are passed to it as arguments. It can also manage per-process runtime, memory allocation, process usage and so on, using command line flags. 
 
-## Using Each Tester
+The Conjure Oxide testing setup (in the conjure-cp/conjure-oxide-tester repository) uses GNU parallel with a layer of abstraction built in python which records the time comparisons into a database. The Repository also includes tools that allow some rudimentary examination and visualisation of the runtime data that has been collected and placed in the output database. 
 
-Adding 
+## Using the Tester and Associated Tools
+
+### Prerequisites
+
+- Python 3.14+ (project pyproject.toml requires >=3.14).
+- GNU Parallel (cli: `parallel`) for `runner/run_tests.sh`
+- SQLite3 (for the results Database)
+- runsolver: used to manage an environment for the solver tool. This tool is the standard in SAT solver competitions, and other such applications
+- Optional, but highly recommended: `uv` for a project manager and `ty` for a type checker (used by some workflows)
+- In case `uv` is not used, look at pyproject.toml for an up-to-date list of the python dependencies. Install each of these using pip _inside_ the virtual environment (for various reasons, your linux distro may not allow system-wide installation).
+
+Create and activate a virtual environment, then install these dependencies using the following commands:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install uv pandas textual ty
+```
+
+### Configuration
+
+- `settings.json` contains runner command mappings and the output DB path. Example keys:
+	- `runner_commands`: internal JSON object whose keys are the names of the 'runners' and values are the command with which those 'runner names' are associated. You can use this to effectively define a short alias for a long command. The command can be pretty much whatever you need it to be, including flags and so on. 
+	- `outfile`: relative path to the SQLite Database, where all of the data that is collected by `timer.py`.
+    - `runsolver_cfg`: internal JSON object which takes in the resource configuration to allocate internally to the `runsolver` tool.
+        - `memory`: The used memory allocation allowed per solver. 
+        - `walltime`: The used maximum runtime per solver, the process will terminate after this amount of time.
+        - `cpus`: The used CPUs allocated per solver 
+
+Edit `settings.json` to add or modify runners and change the configuration with which to run `runsolver`.
+
+### Running Tools
+
+- **setup.py**: Re-initialise the database at the path from the configuration. To (re)create the Database used by the runner, run `python3 src/setup.py`. This script will prompt for confirmation and will wipe the existing database if confirmed. If no database exists, it will create one.
+- **show.py**: This will print out the database in the form of a database. By itself, this is not very useful but it is good to know the status of your data collection run.
+- **timer.py**: This tool will take a runner name and an essence file as CLI arguments. It will then use the runner passed in to generate a solution for the file passed in a record a bunch of information, including the runtime and the number of clauses and so on. 
+- **view.py**: This is a TUI tool to look through the result stored in the database at the path in the `settings.json` file. It uses the `textual` package.
+
+
+### Running the Convenience Script
+
+The main runner script is `runner/run_tests.sh`.
+
+Usage examples:
+
+Run with a single runner defined in settings.json
+```bash
+./runner/run_tests.sh oxide_main_minion
+```
+Run with a runner and filter models that contain 'max'
+```bash
+./runner/run_tests.sh oxide_main_sat max
+```
+
+Disable clauses collection
+```bash
+./runner/run_tests.sh --no-closures oxide_main_sat
+```
+
+`run_tests.sh` finds all `.essence` files under `models/`, filters them by an optional operand string, and runs them in parallel using the runner commands from `settings.json`. Results and failures are written to the configured SQLite DB. If a run exits non-zero, its runtime is recorded as `-1.0` and the error is logged to the `failures` table.
 
 ---
 
@@ -71,3 +131,4 @@ Adding
 [^2]: Primarily, this added functionality uses integration testing, which uses the external interface of the crate. Check out the page in Rust Book here. 
 [^3]: This refers to Rust's provided advanced testing, which is not used by conjure oxide as of now
 [^4]: which is a file name 'build.rs' in the root directory of the crate.
+[^5]: 'Black-Box Testing' is a model of testing in Software Engineering, which refers to tests which are made in a way that presumes no knowledge of the system being tested. 
