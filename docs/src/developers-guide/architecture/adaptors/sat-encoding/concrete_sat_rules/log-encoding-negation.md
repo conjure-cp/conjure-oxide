@@ -6,5 +6,4 @@
 -SATInt(a) ~> SATInt(b)
 ```
 
-## Rule Method
-TODO
+Negating a 2s complement integer is very simple by design, negative a log integer just means inverting all bits and adding 1.
