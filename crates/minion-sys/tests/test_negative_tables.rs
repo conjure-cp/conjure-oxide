@@ -1,11 +1,7 @@
 // There are three letter x, y, and z, which are each integers between 0 and 1 inclusive, where its binary and accepts every binary triple except all zeros and all ones
 
-use std::collections::HashMap;
-use std::sync::Mutex;
-
-use minion_sys::ast::{Constant, Constraint, Model, Var, VarDomain, VarName};
+use minion_sys::ast::{Constant, Constraint, Model, Var, VarDomain};
 use minion_sys::error::MinionError;
-use minion_sys::get_from_table;
 
 #[test]
 #[allow(clippy::panic_in_result_fn)]
@@ -48,21 +44,17 @@ fn test_negative_table_constraint() -> Result<(), MinionError> {
         .push(Constraint::NegativeTable(vars, forbidden_table_data));
 
     // Runs the solver via the Minion interface
-    minion_sys::run_minion(model, callback)?;
+    let mut sols_counter = 0u32;
+    let solver_ctx = minion_sys::run_minion(
+        model,
+        Box::new(|_| {
+            sols_counter += 1;
+            true
+        }),
+    )?;
 
-    // Asserts that we found exactly 3 solutions (one for each row in the table)
-    let guard = SOLS_COUNTER.lock().unwrap();
-    assert_eq!(*guard, 6);
-    assert_ne!(get_from_table("Nodes".into()), None);
+    // Asserts that we found exactly 6 solutions
+    assert_eq!(sols_counter, 6);
+    assert_ne!(solver_ctx.get_from_table("Nodes".into()), None);
     Ok(())
-}
-
-// Global thread safe counter to store the number of solutions found
-static SOLS_COUNTER: Mutex<u32> = Mutex::new(0);
-// Callback function increments the counter for every solution
-fn callback(_: HashMap<VarName, Constant>) -> bool {
-    #[allow(clippy::unwrap_used)]
-    let mut guard = SOLS_COUNTER.lock().unwrap();
-    *guard += 1;
-    true
 }

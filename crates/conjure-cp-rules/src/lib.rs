@@ -22,7 +22,6 @@ mod tuple;
 mod utils;
 mod variables_in_domains;
 
-#[cfg(feature = "smt")]
 mod smt;
 
 /// Denotes a block of code as extra, optional checks for a rule. Primarily, these are checks that

@@ -19,7 +19,7 @@ register_rule_set!("SmtUnwrapAllDiff", ("Base"), |f: &SolverFamily| matches!(
     })
 ));
 
-#[register_rule(("SmtUnwrapAllDiff", 1000))]
+#[register_rule("SmtUnwrapAllDiff", 1000)]
 fn unwrap_alldiff(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::AllDiff(_, m) = expr else {
         return Err(RuleNotApplicable);

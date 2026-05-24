@@ -1,9 +1,9 @@
 Model before rewriting:
 
-find a: bool
 find x: int(1..5)
 find y: int(1..5)
 find z: int(1..5)
+find a: bool
 
 such that
 
@@ -139,6 +139,34 @@ new constraints:
 
 --
 
+Ineq(__0, 40, 0),
+Reify(__flat_alldiff([x, y, z]), a),
+Ineq(y, z, 0),
+Ineq(x, y, 0),
+SumLeq([25, __1, x, y], __0),
+SumGeq([25, __1, x, y], __0),
+__1 =aux __2,
+(__2 <= sum([z,y;int(1..2)])),
+(__2 <= sum([y,x;int(1..2)])),
+(__2 <= sum([z,x,5;int(1..2)])),
+(__2 <= 50),
+or([(__2 = sum([z,y;int(1..2)])),(__2 = sum([y,x;int(1..2)])),(__2 = sum([z,x,5;int(1..2)])),(__2 = 50);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+Ineq(__0, 40, 0),
+Reify(__flat_alldiff([x, y, z]), a),
+Ineq(y, z, 0),
+Ineq(x, y, 0),
+SumLeq([25, __1, x, y], __0),
+SumGeq([25, __1, x, y], __0),
+__1 =aux __2,
+(__2 <= sum([z,y;int(1..2)])),
+(__2 <= sum([y,x;int(1..2)])),
+(__2 <= sum([z,x,5;int(1..2)])),
+(__2 <= 50),
+or([(__2 = sum([z,y;int(1..2)])),(__2 = sum([y,x;int(1..2)])),(__2 = sum([z,x,5;int(1..2)]));int(1..)])
+
+--
+
 (__2 <= sum([z,y;int(1..2)])), 
    ~~> flatten_generic ([("Minion", 4200)])
 (__2 <= __3)
@@ -205,9 +233,9 @@ and([SumLeq([y, z], __2),SumGeq([y, z], __2);int(1..)])
 
 --
 
-or([and([SumLeq([y, z], __2),SumGeq([y, z], __2);int(1..)]),(__2 = sum([y,x;int(1..2)])),(__2 = sum([z,x,5;int(1..2)])),(__2 = 50);int(1..)]), 
+or([and([SumLeq([y, z], __2),SumGeq([y, z], __2);int(1..)]),(__2 = sum([y,x;int(1..2)])),(__2 = sum([z,x,5;int(1..2)]));int(1..)]), 
    ~~> distribute_or_over_and ([("Base", 8400)])
-and([or([(__2 = sum([y,x;int(1..2)])),(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumLeq([y, z], __2);int(1..)]),or([(__2 = sum([y,x;int(1..2)])),(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumGeq([y, z], __2);int(1..)]);int(1..)])
+and([or([(__2 = sum([y,x;int(1..2)])),(__2 = sum([z,x,5;int(1..2)])),SumLeq([y, z], __2);int(1..)]),or([(__2 = sum([y,x;int(1..2)])),(__2 = sum([z,x,5;int(1..2)])),SumGeq([y, z], __2);int(1..)]);int(1..)])
 
 --
 
@@ -222,7 +250,7 @@ Ineq(__2, __3, 0),
 Ineq(__2, __4, 0),
 Ineq(__2, __5, 0),
 Ineq(__2, 50, 0),
-and([or([(__2 = sum([y,x;int(1..2)])),(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumLeq([y, z], __2);int(1..)]),or([(__2 = sum([y,x;int(1..2)])),(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumGeq([y, z], __2);int(1..)]);int(1..)]),
+and([or([(__2 = sum([y,x;int(1..2)])),(__2 = sum([z,x,5;int(1..2)])),SumLeq([y, z], __2);int(1..)]),or([(__2 = sum([y,x;int(1..2)])),(__2 = sum([z,x,5;int(1..2)])),SumGeq([y, z], __2);int(1..)]);int(1..)]),
 __3 =aux sum([z,y;int(1..2)]),
 __4 =aux sum([y,x;int(1..2)]),
 __5 =aux sum([z,x,5;int(1..2)]), 
@@ -238,8 +266,8 @@ Ineq(__2, __3, 0),
 Ineq(__2, __4, 0),
 Ineq(__2, __5, 0),
 Ineq(__2, 50, 0),
-or([(__2 = sum([y,x;int(1..2)])),(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumLeq([y, z], __2);int(1..)]),
-or([(__2 = sum([y,x;int(1..2)])),(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumGeq([y, z], __2);int(1..)]),
+or([(__2 = sum([y,x;int(1..2)])),(__2 = sum([z,x,5;int(1..2)])),SumLeq([y, z], __2);int(1..)]),
+or([(__2 = sum([y,x;int(1..2)])),(__2 = sum([z,x,5;int(1..2)])),SumGeq([y, z], __2);int(1..)]),
 __3 =aux sum([z,y;int(1..2)]),
 __4 =aux sum([y,x;int(1..2)]),
 __5 =aux sum([z,x,5;int(1..2)])
@@ -258,9 +286,9 @@ and([SumLeq([x, y], __2),SumGeq([x, y], __2);int(1..)])
 
 --
 
-or([and([SumLeq([x, y], __2),SumGeq([x, y], __2);int(1..)]),(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumLeq([y, z], __2);int(1..)]), 
+or([and([SumLeq([x, y], __2),SumGeq([x, y], __2);int(1..)]),(__2 = sum([z,x,5;int(1..2)])),SumLeq([y, z], __2);int(1..)]), 
    ~~> distribute_or_over_and ([("Base", 8400)])
-and([or([(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumLeq([y, z], __2),SumLeq([x, y], __2);int(1..)]),or([(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumLeq([y, z], __2),SumGeq([x, y], __2);int(1..)]);int(1..)])
+and([or([(__2 = sum([z,x,5;int(1..2)])),SumLeq([y, z], __2),SumLeq([x, y], __2);int(1..)]),or([(__2 = sum([z,x,5;int(1..2)])),SumLeq([y, z], __2),SumGeq([x, y], __2);int(1..)]);int(1..)])
 
 --
 
@@ -275,8 +303,8 @@ Ineq(__2, __3, 0),
 Ineq(__2, __4, 0),
 Ineq(__2, __5, 0),
 Ineq(__2, 50, 0),
-and([or([(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumLeq([y, z], __2),SumLeq([x, y], __2);int(1..)]),or([(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumLeq([y, z], __2),SumGeq([x, y], __2);int(1..)]);int(1..)]),
-or([(__2 = sum([y,x;int(1..2)])),(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumGeq([y, z], __2);int(1..)]),
+and([or([(__2 = sum([z,x,5;int(1..2)])),SumLeq([y, z], __2),SumLeq([x, y], __2);int(1..)]),or([(__2 = sum([z,x,5;int(1..2)])),SumLeq([y, z], __2),SumGeq([x, y], __2);int(1..)]);int(1..)]),
+or([(__2 = sum([y,x;int(1..2)])),(__2 = sum([z,x,5;int(1..2)])),SumGeq([y, z], __2);int(1..)]),
 __3 =aux sum([z,y;int(1..2)]),
 __4 =aux sum([y,x;int(1..2)]),
 __5 =aux sum([z,x,5;int(1..2)]), 
@@ -292,9 +320,9 @@ Ineq(__2, __3, 0),
 Ineq(__2, __4, 0),
 Ineq(__2, __5, 0),
 Ineq(__2, 50, 0),
-or([(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumLeq([y, z], __2),SumLeq([x, y], __2);int(1..)]),
-or([(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumLeq([y, z], __2),SumGeq([x, y], __2);int(1..)]),
-or([(__2 = sum([y,x;int(1..2)])),(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumGeq([y, z], __2);int(1..)]),
+or([(__2 = sum([z,x,5;int(1..2)])),SumLeq([y, z], __2),SumLeq([x, y], __2);int(1..)]),
+or([(__2 = sum([z,x,5;int(1..2)])),SumLeq([y, z], __2),SumGeq([x, y], __2);int(1..)]),
+or([(__2 = sum([y,x;int(1..2)])),(__2 = sum([z,x,5;int(1..2)])),SumGeq([y, z], __2);int(1..)]),
 __3 =aux sum([z,y;int(1..2)]),
 __4 =aux sum([y,x;int(1..2)]),
 __5 =aux sum([z,x,5;int(1..2)])
@@ -313,9 +341,9 @@ and([SumLeq([5, x, z], __2),SumGeq([5, x, z], __2);int(1..)])
 
 --
 
-or([and([SumLeq([5, x, z], __2),SumGeq([5, x, z], __2);int(1..)]),(__2 = 50),SumLeq([y, z], __2),SumLeq([x, y], __2);int(1..)]), 
+or([and([SumLeq([5, x, z], __2),SumGeq([5, x, z], __2);int(1..)]),SumLeq([y, z], __2),SumLeq([x, y], __2);int(1..)]), 
    ~~> distribute_or_over_and ([("Base", 8400)])
-and([or([(__2 = 50),SumLeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),or([(__2 = 50),SumLeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]);int(1..)])
+and([or([SumLeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),or([SumLeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]);int(1..)])
 
 --
 
@@ -330,9 +358,9 @@ Ineq(__2, __3, 0),
 Ineq(__2, __4, 0),
 Ineq(__2, __5, 0),
 Ineq(__2, 50, 0),
-and([or([(__2 = 50),SumLeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),or([(__2 = 50),SumLeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]);int(1..)]),
-or([(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumLeq([y, z], __2),SumGeq([x, y], __2);int(1..)]),
-or([(__2 = sum([y,x;int(1..2)])),(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumGeq([y, z], __2);int(1..)]),
+and([or([SumLeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),or([SumLeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]);int(1..)]),
+or([(__2 = sum([z,x,5;int(1..2)])),SumLeq([y, z], __2),SumGeq([x, y], __2);int(1..)]),
+or([(__2 = sum([y,x;int(1..2)])),(__2 = sum([z,x,5;int(1..2)])),SumGeq([y, z], __2);int(1..)]),
 __3 =aux sum([z,y;int(1..2)]),
 __4 =aux sum([y,x;int(1..2)]),
 __5 =aux sum([z,x,5;int(1..2)]), 
@@ -348,10 +376,10 @@ Ineq(__2, __3, 0),
 Ineq(__2, __4, 0),
 Ineq(__2, __5, 0),
 Ineq(__2, 50, 0),
-or([(__2 = 50),SumLeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumLeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
-or([(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumLeq([y, z], __2),SumGeq([x, y], __2);int(1..)]),
-or([(__2 = sum([y,x;int(1..2)])),(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumGeq([y, z], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
+or([(__2 = sum([z,x,5;int(1..2)])),SumLeq([y, z], __2),SumGeq([x, y], __2);int(1..)]),
+or([(__2 = sum([y,x;int(1..2)])),(__2 = sum([z,x,5;int(1..2)])),SumGeq([y, z], __2);int(1..)]),
 __3 =aux sum([z,y;int(1..2)]),
 __4 =aux sum([y,x;int(1..2)]),
 __5 =aux sum([z,x,5;int(1..2)])
@@ -370,9 +398,9 @@ and([SumLeq([5, x, z], __2),SumGeq([5, x, z], __2);int(1..)])
 
 --
 
-or([and([SumLeq([5, x, z], __2),SumGeq([5, x, z], __2);int(1..)]),(__2 = 50),SumLeq([y, z], __2),SumGeq([x, y], __2);int(1..)]), 
+or([and([SumLeq([5, x, z], __2),SumGeq([5, x, z], __2);int(1..)]),SumLeq([y, z], __2),SumGeq([x, y], __2);int(1..)]), 
    ~~> distribute_or_over_and ([("Base", 8400)])
-and([or([(__2 = 50),SumLeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),or([(__2 = 50),SumLeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]);int(1..)])
+and([or([SumLeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),or([SumLeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]);int(1..)])
 
 --
 
@@ -387,10 +415,10 @@ Ineq(__2, __3, 0),
 Ineq(__2, __4, 0),
 Ineq(__2, __5, 0),
 Ineq(__2, 50, 0),
-or([(__2 = 50),SumLeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumLeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
-and([or([(__2 = 50),SumLeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),or([(__2 = 50),SumLeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]);int(1..)]),
-or([(__2 = sum([y,x;int(1..2)])),(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumGeq([y, z], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
+and([or([SumLeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),or([SumLeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]);int(1..)]),
+or([(__2 = sum([y,x;int(1..2)])),(__2 = sum([z,x,5;int(1..2)])),SumGeq([y, z], __2);int(1..)]),
 __3 =aux sum([z,y;int(1..2)]),
 __4 =aux sum([y,x;int(1..2)]),
 __5 =aux sum([z,x,5;int(1..2)]), 
@@ -406,11 +434,11 @@ Ineq(__2, __3, 0),
 Ineq(__2, __4, 0),
 Ineq(__2, __5, 0),
 Ineq(__2, 50, 0),
-or([(__2 = 50),SumLeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumLeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumLeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumLeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
-or([(__2 = sum([y,x;int(1..2)])),(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumGeq([y, z], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
+or([(__2 = sum([y,x;int(1..2)])),(__2 = sum([z,x,5;int(1..2)])),SumGeq([y, z], __2);int(1..)]),
 __3 =aux sum([z,y;int(1..2)]),
 __4 =aux sum([y,x;int(1..2)]),
 __5 =aux sum([z,x,5;int(1..2)])
@@ -429,9 +457,9 @@ and([SumLeq([x, y], __2),SumGeq([x, y], __2);int(1..)])
 
 --
 
-or([and([SumLeq([x, y], __2),SumGeq([x, y], __2);int(1..)]),(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumGeq([y, z], __2);int(1..)]), 
+or([and([SumLeq([x, y], __2),SumGeq([x, y], __2);int(1..)]),(__2 = sum([z,x,5;int(1..2)])),SumGeq([y, z], __2);int(1..)]), 
    ~~> distribute_or_over_and ([("Base", 8400)])
-and([or([(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumGeq([y, z], __2),SumLeq([x, y], __2);int(1..)]),or([(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumGeq([y, z], __2),SumGeq([x, y], __2);int(1..)]);int(1..)])
+and([or([(__2 = sum([z,x,5;int(1..2)])),SumGeq([y, z], __2),SumLeq([x, y], __2);int(1..)]),or([(__2 = sum([z,x,5;int(1..2)])),SumGeq([y, z], __2),SumGeq([x, y], __2);int(1..)]);int(1..)])
 
 --
 
@@ -446,11 +474,11 @@ Ineq(__2, __3, 0),
 Ineq(__2, __4, 0),
 Ineq(__2, __5, 0),
 Ineq(__2, 50, 0),
-or([(__2 = 50),SumLeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumLeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumLeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumLeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
-and([or([(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumGeq([y, z], __2),SumLeq([x, y], __2);int(1..)]),or([(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumGeq([y, z], __2),SumGeq([x, y], __2);int(1..)]);int(1..)]),
+or([SumLeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
+and([or([(__2 = sum([z,x,5;int(1..2)])),SumGeq([y, z], __2),SumLeq([x, y], __2);int(1..)]),or([(__2 = sum([z,x,5;int(1..2)])),SumGeq([y, z], __2),SumGeq([x, y], __2);int(1..)]);int(1..)]),
 __3 =aux sum([z,y;int(1..2)]),
 __4 =aux sum([y,x;int(1..2)]),
 __5 =aux sum([z,x,5;int(1..2)]), 
@@ -466,12 +494,12 @@ Ineq(__2, __3, 0),
 Ineq(__2, __4, 0),
 Ineq(__2, __5, 0),
 Ineq(__2, 50, 0),
-or([(__2 = 50),SumLeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumLeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumLeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumLeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
-or([(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumGeq([y, z], __2),SumLeq([x, y], __2);int(1..)]),
-or([(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumGeq([y, z], __2),SumGeq([x, y], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
+or([(__2 = sum([z,x,5;int(1..2)])),SumGeq([y, z], __2),SumLeq([x, y], __2);int(1..)]),
+or([(__2 = sum([z,x,5;int(1..2)])),SumGeq([y, z], __2),SumGeq([x, y], __2);int(1..)]),
 __3 =aux sum([z,y;int(1..2)]),
 __4 =aux sum([y,x;int(1..2)]),
 __5 =aux sum([z,x,5;int(1..2)])
@@ -490,9 +518,9 @@ and([SumLeq([5, x, z], __2),SumGeq([5, x, z], __2);int(1..)])
 
 --
 
-or([and([SumLeq([5, x, z], __2),SumGeq([5, x, z], __2);int(1..)]),(__2 = 50),SumGeq([y, z], __2),SumLeq([x, y], __2);int(1..)]), 
+or([and([SumLeq([5, x, z], __2),SumGeq([5, x, z], __2);int(1..)]),SumGeq([y, z], __2),SumLeq([x, y], __2);int(1..)]), 
    ~~> distribute_or_over_and ([("Base", 8400)])
-and([or([(__2 = 50),SumGeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),or([(__2 = 50),SumGeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]);int(1..)])
+and([or([SumGeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),or([SumGeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]);int(1..)])
 
 --
 
@@ -507,12 +535,12 @@ Ineq(__2, __3, 0),
 Ineq(__2, __4, 0),
 Ineq(__2, __5, 0),
 Ineq(__2, 50, 0),
-or([(__2 = 50),SumLeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumLeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumLeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumLeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
-and([or([(__2 = 50),SumGeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),or([(__2 = 50),SumGeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]);int(1..)]),
-or([(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumGeq([y, z], __2),SumGeq([x, y], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
+and([or([SumGeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),or([SumGeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]);int(1..)]),
+or([(__2 = sum([z,x,5;int(1..2)])),SumGeq([y, z], __2),SumGeq([x, y], __2);int(1..)]),
 __3 =aux sum([z,y;int(1..2)]),
 __4 =aux sum([y,x;int(1..2)]),
 __5 =aux sum([z,x,5;int(1..2)]), 
@@ -528,13 +556,13 @@ Ineq(__2, __3, 0),
 Ineq(__2, __4, 0),
 Ineq(__2, __5, 0),
 Ineq(__2, 50, 0),
-or([(__2 = 50),SumLeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumLeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumLeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumLeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumGeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumGeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
-or([(__2 = sum([z,x,5;int(1..2)])),(__2 = 50),SumGeq([y, z], __2),SumGeq([x, y], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
+or([SumGeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
+or([SumGeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
+or([(__2 = sum([z,x,5;int(1..2)])),SumGeq([y, z], __2),SumGeq([x, y], __2);int(1..)]),
 __3 =aux sum([z,y;int(1..2)]),
 __4 =aux sum([y,x;int(1..2)]),
 __5 =aux sum([z,x,5;int(1..2)])
@@ -553,9 +581,9 @@ and([SumLeq([5, x, z], __2),SumGeq([5, x, z], __2);int(1..)])
 
 --
 
-or([and([SumLeq([5, x, z], __2),SumGeq([5, x, z], __2);int(1..)]),(__2 = 50),SumGeq([y, z], __2),SumGeq([x, y], __2);int(1..)]), 
+or([and([SumLeq([5, x, z], __2),SumGeq([5, x, z], __2);int(1..)]),SumGeq([y, z], __2),SumGeq([x, y], __2);int(1..)]), 
    ~~> distribute_or_over_and ([("Base", 8400)])
-and([or([(__2 = 50),SumGeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),or([(__2 = 50),SumGeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]);int(1..)])
+and([or([SumGeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),or([SumGeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]);int(1..)])
 
 --
 
@@ -570,13 +598,13 @@ Ineq(__2, __3, 0),
 Ineq(__2, __4, 0),
 Ineq(__2, __5, 0),
 Ineq(__2, 50, 0),
-or([(__2 = 50),SumLeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumLeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumLeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumLeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumGeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumGeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
-and([or([(__2 = 50),SumGeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),or([(__2 = 50),SumGeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]);int(1..)]),
+or([SumLeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
+or([SumGeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
+or([SumGeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
+and([or([SumGeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),or([SumGeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]);int(1..)]),
 __3 =aux sum([z,y;int(1..2)]),
 __4 =aux sum([y,x;int(1..2)]),
 __5 =aux sum([z,x,5;int(1..2)]), 
@@ -592,14 +620,14 @@ Ineq(__2, __3, 0),
 Ineq(__2, __4, 0),
 Ineq(__2, __5, 0),
 Ineq(__2, 50, 0),
-or([(__2 = 50),SumLeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumLeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumLeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumLeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumGeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumGeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumGeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumGeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
+or([SumGeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
+or([SumGeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
+or([SumGeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
+or([SumGeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
 __3 =aux sum([z,y;int(1..2)]),
 __4 =aux sum([y,x;int(1..2)]),
 __5 =aux sum([z,x,5;int(1..2)])
@@ -629,14 +657,14 @@ Ineq(__2, __3, 0),
 Ineq(__2, __4, 0),
 Ineq(__2, __5, 0),
 Ineq(__2, 50, 0),
-or([(__2 = 50),SumLeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumLeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumLeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumLeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumGeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumGeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumGeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumGeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
+or([SumGeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
+or([SumGeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
+or([SumGeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
+or([SumGeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
 and([SumLeq([y, z], __3),SumGeq([y, z], __3);int(1..)]),
 __4 =aux sum([y,x;int(1..2)]),
 __5 =aux sum([z,x,5;int(1..2)]), 
@@ -652,14 +680,14 @@ Ineq(__2, __3, 0),
 Ineq(__2, __4, 0),
 Ineq(__2, __5, 0),
 Ineq(__2, 50, 0),
-or([(__2 = 50),SumLeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumLeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumLeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumLeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumGeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumGeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumGeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumGeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
+or([SumGeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
+or([SumGeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
+or([SumGeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
+or([SumGeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
 SumLeq([y, z], __3),
 SumGeq([y, z], __3),
 __4 =aux sum([y,x;int(1..2)]),
@@ -690,14 +718,14 @@ Ineq(__2, __3, 0),
 Ineq(__2, __4, 0),
 Ineq(__2, __5, 0),
 Ineq(__2, 50, 0),
-or([(__2 = 50),SumLeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumLeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumLeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumLeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumGeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumGeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumGeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumGeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
+or([SumGeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
+or([SumGeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
+or([SumGeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
+or([SumGeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
 SumLeq([y, z], __3),
 SumGeq([y, z], __3),
 and([SumLeq([x, y], __4),SumGeq([x, y], __4);int(1..)]),
@@ -714,14 +742,14 @@ Ineq(__2, __3, 0),
 Ineq(__2, __4, 0),
 Ineq(__2, __5, 0),
 Ineq(__2, 50, 0),
-or([(__2 = 50),SumLeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumLeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumLeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumLeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumGeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumGeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumGeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumGeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
+or([SumGeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
+or([SumGeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
+or([SumGeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
+or([SumGeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
 SumLeq([y, z], __3),
 SumGeq([y, z], __3),
 SumLeq([x, y], __4),
@@ -753,14 +781,14 @@ Ineq(__2, __3, 0),
 Ineq(__2, __4, 0),
 Ineq(__2, __5, 0),
 Ineq(__2, 50, 0),
-or([(__2 = 50),SumLeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumLeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumLeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumLeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumGeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumGeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumGeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumGeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
+or([SumGeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
+or([SumGeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
+or([SumGeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
+or([SumGeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
 SumLeq([y, z], __3),
 SumGeq([y, z], __3),
 SumLeq([x, y], __4),
@@ -778,14 +806,14 @@ Ineq(__2, __3, 0),
 Ineq(__2, __4, 0),
 Ineq(__2, __5, 0),
 Ineq(__2, 50, 0),
-or([(__2 = 50),SumLeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumLeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumLeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumLeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumGeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumGeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumGeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumGeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
+or([SumGeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
+or([SumGeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
+or([SumGeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
+or([SumGeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
 SumLeq([y, z], __3),
 SumGeq([y, z], __3),
 SumLeq([x, y], __4),
@@ -797,10 +825,10 @@ SumGeq([5, x, z], __5)
 
 Final model:
 
-find a: bool
 find x: int(1..5)
 find y: int(1..5)
 find z: int(1..5)
+find a: bool
 find __0: int(29..45)
 find __1: int(2..10)
 find __2: int(2..10)
@@ -821,14 +849,14 @@ Ineq(__2, __3, 0),
 Ineq(__2, __4, 0),
 Ineq(__2, __5, 0),
 Ineq(__2, 50, 0),
-or([(__2 = 50),SumLeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumLeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumLeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumLeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumGeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumGeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumGeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
-or([(__2 = 50),SumGeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
+or([SumLeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
+or([SumGeq([y, z], __2),SumLeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
+or([SumGeq([y, z], __2),SumLeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
+or([SumGeq([y, z], __2),SumGeq([x, y], __2),SumLeq([5, x, z], __2);int(1..)]),
+or([SumGeq([y, z], __2),SumGeq([x, y], __2),SumGeq([5, x, z], __2);int(1..)]),
 SumLeq([y, z], __3),
 SumGeq([y, z], __3),
 SumLeq([x, y], __4),

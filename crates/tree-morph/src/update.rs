@@ -28,4 +28,8 @@ where
     pub fn new_subtree(&self) -> &T {
         &self.new_subtree
     }
+
+    pub(crate) fn has_transform(&self) -> bool {
+        self.commands.has_transform()
+    }
 }

@@ -1,3 +1,6 @@
+// Required by conjure-cp-core macros used in this crate.
+use defile as _;
+
 pub mod diagnostics;
 pub mod errors;
 pub mod parser;

@@ -14,11 +14,9 @@ use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 use uniplate::Biplate;
 
-#[cfg(feature = "smt")]
 use conjure_cp::solver::adaptors::smt::{MatrixTheory, TheoryConfig};
 
 register_rule_set!("Representations", ("Base"), |f: &SolverFamily| {
-    #[cfg(feature = "smt")]
     if matches!(
         f,
         SolverFamily::Smt(TheoryConfig {
@@ -34,7 +32,7 @@ register_rule_set!("Representations", ("Base"), |f: &SolverFamily| {
 // special case rule to select representations for matrices in one go.
 //
 // we know that they only have one possible representation, so this rule adds a representation for all matrices in the model.
-#[register_rule(("Representations", 8001))]
+#[register_rule("Representations", 8001, [Root])]
 fn select_representation_matrix(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Root(_, _) = expr else {
         return Err(RuleNotApplicable);
@@ -111,7 +109,7 @@ fn select_representation_matrix(expr: &Expr, symbols: &SymbolTable) -> Applicati
     }
 }
 
-#[register_rule(("Representations", 8000))]
+#[register_rule("Representations", 8000, [Atomic])]
 fn select_representation(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     // thing we are representing must be a reference
     let Expr::Atomic(_, Atom::Reference(decl)) = expr else {
@@ -166,16 +164,15 @@ fn select_representation(expr: &Expr, symbols: &SymbolTable) -> ApplicationResul
 
 /// Returns whether `name` needs representing.
 ///
-/// # Panics
-///
-///   + If `name` is not in `symbols`.
 fn needs_representation(name: &Name, symbols: &SymbolTable) -> bool {
     // if name already has a representation, false
     if let Name::Represented(_) = name {
         return false;
     }
     // might be more logic here in the future?
-    domain_needs_representation(&symbols.resolve_domain(name).unwrap())
+    symbols
+        .resolve_domain(name)
+        .is_some_and(|domain| domain_needs_representation(domain.as_ref()))
 }
 
 /// Returns whether `domain` needs representing.
@@ -188,7 +185,11 @@ fn domain_needs_representation(domain: &GroundDomain) -> bool {
         | GroundDomain::MSet(_, _)
         | GroundDomain::Tuple(_)
         | GroundDomain::Record(_)
-        | GroundDomain::Function(_, _, _) => true,
+        | GroundDomain::Sequence(_, _)
+        | GroundDomain::Function(_, _, _)
+        | GroundDomain::Partition(_, _)
+        | GroundDomain::Variant(_) => true,
+        GroundDomain::Relation(_, _) => true,
         GroundDomain::Empty(_) => false,
     }
 }
@@ -198,16 +199,13 @@ fn domain_needs_representation(domain: &GroundDomain) -> bool {
 ///
 /// Returns None if there is no valid representation for `name`.
 ///
-/// # Panics
-///
-///   + If `name` is not in `symbols`.
 fn get_or_create_representation(
     name: &Name,
     symbols: &mut SymbolTable,
 ) -> Option<Vec<Box<dyn Representation>>> {
     // TODO: pick representations recursively for nested abstract domains: e.g. sets in sets.
 
-    let dom = symbols.resolve_domain(name).unwrap();
+    let dom = symbols.resolve_domain(name)?;
     match dom.as_ref() {
         GroundDomain::Set(_, _) => None, // has no representations yet!
         GroundDomain::Tuple(elem_domains) => {

@@ -14,11 +14,12 @@ The following extra dependencies are required:
 **Ensure that Conjure is placed early in your PATH to avoid conflicts with
 ImageMagick's conjure command!**
 
-Run `cargo install conjure-cp-cli` to install `conjure-oxide`.
+Run `cargo install conjure-cp-cli` to install `conjure-oxide`, and ensure
+`~/.cargo/bin` is in your `PATH`.
 
 ### Documentation
 
-<https://conjure-cp.github.io/conjure-oxide/>
+<https://conjure-cp.github.io/conjure-oxide-reports/>
 
 ### Licence
 

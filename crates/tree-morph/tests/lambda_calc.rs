@@ -108,7 +108,7 @@ fn transform_beta_reduce(cmd: &mut Commands<Expr, u32>, expr: &Expr, _: &u32) ->
 }
 
 fn reduce_all(expr: Expr) -> (Expr, u32) {
-    let engine = EngineBuilder::new()
+    let mut engine = EngineBuilder::new()
         .add_rule(transform_beta_reduce as RuleFn<_, _>)
         .build();
     engine.morph(expr, 0)

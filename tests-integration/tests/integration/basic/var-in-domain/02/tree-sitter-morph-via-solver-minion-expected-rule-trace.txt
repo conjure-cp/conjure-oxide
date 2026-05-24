@@ -1,0 +1,21 @@
+Model before rewriting:
+
+find x: int(2..3, 5..8)
+find y: int(1..2, 4..6)
+find z: int(x..3, y..10)
+
+--
+
+Final model:
+
+find x: int(2..3, 5..8)
+find y: int(1..2, 4..6)
+find z: int(1..10)
+
+such that
+
+or([Ineq(x, z, 0),Ineq(y, z, 0);int(1..)]),
+or([Ineq(x, z, 0),Ineq(z, 10, 0);int(1..)]),
+or([Ineq(z, 3, 0),Ineq(y, z, 0);int(1..)]),
+or([Ineq(z, 3, 0),Ineq(z, 10, 0);int(1..)])
+

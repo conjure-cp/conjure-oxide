@@ -3,23 +3,29 @@ use tower_lsp::{
     LanguageServer,
     LspService,
     Server,
-    jsonrpc::Result, //add Error if needed later, currently unused
+    jsonrpc::Result, //add error in future if needed
     lsp_types::*,
 };
 
-use std::collections::HashMap;
-use std::sync::Arc;
-use tokio::sync::RwLock;
+use tower_lsp::lsp_types::{
+    SemanticTokenModifier, SemanticTokenType, SemanticTokensLegend, SemanticTokensOptions,
+    SemanticTokensServerCapabilities, ServerCapabilities,
+};
+
+use crate::handlers::cache::{CacheCont, create_cache};
+
+use moka::future::Cache;
 
 #[derive(Debug)]
 pub struct Backend {
     pub client: Client,
-    pub documents: Arc<RwLock<HashMap<String, String>>>, //caching document
+    //cache is a member of backend and therefore can be accessed from within backend
+    pub lsp_cache: Cache<Url, CacheCont>,
 }
 
 impl Backend {
-    pub fn new(client: Client, documents: Arc<RwLock<HashMap<String, String>>>) -> Self {
-        Backend { client, documents }
+    pub fn new(client: Client, lsp_cache: Cache<Url, CacheCont>) -> Self {
+        Backend { client, lsp_cache } //add cache here
     }
 }
 
@@ -39,14 +45,44 @@ impl LanguageServer for Backend {
                 text_document_sync: Some(TextDocumentSyncCapability::Options(
                     TextDocumentSyncOptions {
                         open_close: Some(true),
-                        change: Some(TextDocumentSyncKind::FULL),
+                        // sends only the change and the range of the change
+                        change: Some(TextDocumentSyncKind::INCREMENTAL),
                         save: Some(TextDocumentSyncSaveOptions::SaveOptions(SaveOptions {
                             include_text: Some(true),
                         })),
                         ..Default::default()
                     },
                 )),
-                // hover_provider: Some(HoverProviderCapability::Simple(true)),
+                // provides semantic highlighting
+                semantic_tokens_provider: Some(
+                    SemanticTokensServerCapabilities::SemanticTokensOptions(
+                        SemanticTokensOptions {
+                            legend: SemanticTokensLegend {
+                                token_types: vec![
+                                    SemanticTokenType::NUMBER,
+                                    SemanticTokenType::FUNCTION,
+                                    SemanticTokenType::VARIABLE,
+                                    SemanticTokenType::new("letting"),
+                                    SemanticTokenType::new("find"),
+                                    SemanticTokenType::new("domain"),
+                                    SemanticTokenType::new("lettingVar"),
+                                    SemanticTokenType::new("findVar"),
+                                    SemanticTokenType::new("given"),
+                                    SemanticTokenType::new("givenVar"),
+                                ],
+                                token_modifiers: vec![
+                                    SemanticTokenModifier::DECLARATION,
+                                    SemanticTokenModifier::READONLY,
+                                ],
+                            },
+                            full: Some(SemanticTokensFullOptions::Bool(true)),
+                            range: None,
+                            work_done_progress_options: Default::default(),
+                        },
+                    ),
+                ),
+                //provides some simple hovering
+                hover_provider: Some(HoverProviderCapability::Simple(true)),
                 ..ServerCapabilities::default()
             },
         })
@@ -60,15 +96,36 @@ impl LanguageServer for Backend {
     async fn shutdown(&self) -> Result<()> {
         Ok(())
     }
-    // underline errors on file open
+    //set up synchronising handlers
     async fn did_open(&self, params: DidOpenTextDocumentParams) {
+        self.client.log_message(MessageType::INFO, "opened").await;
         self.handle_did_open(params).await;
     }
     async fn did_save(&self, params: DidSaveTextDocumentParams) {
+        self.client.log_message(MessageType::INFO, "saved").await;
+
         self.handle_did_save(params).await;
     }
     async fn did_change(&self, params: DidChangeTextDocumentParams) {
+        self.client.log_message(MessageType::INFO, "changed").await;
+
         self.handle_did_change(params).await;
+    }
+    //set up hover handler
+    async fn hover(&self, params: HoverParams) -> Result<Option<Hover>> {
+        self.client.log_message(MessageType::INFO, "hovering").await;
+        self.handle_hovering(params).await
+    }
+
+    // set up semantic highlighting
+    async fn semantic_tokens_full(
+        &self,
+        params: SemanticTokensParams,
+    ) -> Result<Option<SemanticTokensResult>> {
+        self.client
+            .log_message(MessageType::INFO, "semantic highlighting")
+            .await;
+        self.handle_semantic_highlighting(params).await
     }
 }
 
@@ -76,10 +133,12 @@ impl LanguageServer for Backend {
 pub async fn main() {
     let stdin = tokio::io::stdin();
     let stdout = tokio::io::stdout();
-    let documents = Arc::new(RwLock::new(HashMap::new()));
 
-    let (service, socket) =
-        LspService::build(|client| Backend::new(client, Arc::clone(&documents))).finish();
+    //make a new cache
+    let lsp_cache = create_cache().await;
+
+    //set cache into service when built
+    let (service, socket) = LspService::build(|client| Backend::new(client, lsp_cache)).finish();
 
     Server::new(stdin, stdout, socket).serve(service).await;
 }

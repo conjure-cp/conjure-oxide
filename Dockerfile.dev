@@ -1,0 +1,44 @@
+# Developer container image for conjure-oxide.
+
+FROM --platform=$TARGETPLATFORM ghcr.io/conjure-cp/conjure:v2.6.0 AS conjure
+
+FROM --platform=$TARGETPLATFORM ubuntu:24.04 AS dev
+ARG TARGETPLATFORM
+
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+      ca-certificates \
+      curl \
+      git \
+      make \
+      cmake \
+      build-essential \
+      pkg-config \
+      python3 \
+      nodejs \
+      npm \
+      zip \
+      xz-utils \
+      wget \
+      clang \
+      libclang-dev \
+      llvm \
+      libssl-dev \
+      z3 \
+      libz3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Rust toolchain (pinned to rust-toolchain.toml)
+ARG RUST_TOOLCHAIN=1.93.1
+ENV RUSTUP_HOME=/usr/local/rustup
+ENV CARGO_HOME=/usr/local/cargo
+ENV PATH="/usr/local/cargo/bin:/opt/conjure:${PATH}"
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --no-modify-path --profile minimal \
+    && rustup toolchain install "${RUST_TOOLCHAIN}" -c cargo -c rustfmt -c clippy \
+    && rustup default "${RUST_TOOLCHAIN}" \
+    # Allow non-root users (e.g. --userns=keep-id) to execute the toolchain
+    && chmod -R a+rX "${RUSTUP_HOME}" "${CARGO_HOME}"
+
+# Copy pinned Conjure runtime (layout matches conjure image)
+COPY --from=conjure /opt/conjure /opt/conjure
+
+WORKDIR /work

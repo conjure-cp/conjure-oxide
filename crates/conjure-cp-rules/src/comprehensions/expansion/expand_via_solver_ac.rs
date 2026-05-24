@@ -190,7 +190,7 @@ fn add_return_expression_to_generator_model(
         if !has_eligible_child && can_be_dummy_var {
             // introduce dummy var and continue
             let dummy_domain = focus.domain_of().unwrap();
-            let dummy_decl = symtab.gensym(&dummy_domain);
+            let dummy_decl = symtab.gen_find(&dummy_domain);
             *focus = Expression::Atomic(
                 Metadata::new(),
                 Atom::Reference(conjure_cp::ast::Reference::new(dummy_decl)),
@@ -222,7 +222,7 @@ fn add_return_expression_to_generator_model(
                     //
                     // introduce dummy var and continue
                     let dummy_domain = focus.domain_of().unwrap();
-                    let dummy_decl = symtab.gensym(&dummy_domain);
+                    let dummy_decl = symtab.gen_find(&dummy_domain);
                     *focus = Expression::Atomic(
                         Metadata::new(),
                         Atom::Reference(conjure_cp::ast::Reference::new(dummy_decl)),
@@ -253,7 +253,7 @@ fn add_return_expression_to_generator_model(
         else if has_eligible_child && !has_quantified_vars {
             // introduce dummy var and continue
             let dummy_domain = focus.domain_of().unwrap();
-            let dummy_decl = symtab.gensym(&dummy_domain);
+            let dummy_decl = symtab.gen_find(&dummy_domain);
             *focus = Expression::Atomic(
                 Metadata::new(),
                 Atom::Reference(conjure_cp::ast::Reference::new(dummy_decl)),
@@ -354,7 +354,7 @@ fn localise_non_local_references_shallow(expr: Expression, symtab: &mut SymbolTa
                 let domain = decl.domain().unwrap_or_else(|| {
                     panic!("non-local reference '{}' has no domain", decl.name())
                 });
-                symtab.borrow_mut().gensym(&domain)
+                symtab.borrow_mut().gen_find(&domain)
             };
             dummy_vars_by_decl_id
                 .borrow_mut()

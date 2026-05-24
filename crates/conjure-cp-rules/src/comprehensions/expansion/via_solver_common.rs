@@ -10,10 +10,13 @@ use conjure_cp::{
         serde::{HasId as _, ObjId},
     },
     context::Context,
-    rule_engine::{RuleSet, rewrite_morph, rewrite_naive},
+    rule_engine::{
+        RuleSet,
+        rewrite_model_with_configured_rewriter as rewrite_model_with_configured_rewriter_core,
+    },
     settings::Rewriter,
 };
-use uniplate::Biplate as _;
+use uniplate::{Biplate as _, Uniplate as _};
 
 /// Configures a temporary model for solver-based comprehension expansion.
 pub(super) fn with_temporary_model(model: Model, search_order: Option<Vec<Name>>) -> Model {
@@ -29,10 +32,7 @@ pub(super) fn rewrite_model_with_configured_rewriter<'a>(
     rule_sets: &Vec<&'a RuleSet<'a>>,
     configured_rewriter: Rewriter,
 ) -> Model {
-    match configured_rewriter {
-        Rewriter::Morph => rewrite_morph(model, rule_sets, false),
-        Rewriter::Naive => rewrite_naive(&model, rule_sets, false).unwrap(),
-    }
+    rewrite_model_with_configured_rewriter_core(model, rule_sets, configured_rewriter).unwrap()
 }
 
 /// Instantiates rewritten return expressions with quantified assignments.
@@ -60,6 +60,10 @@ pub(super) fn instantiate_return_expressions_from_values(
         let _temp_value_bindings =
             temporarily_bind_quantified_vars_to_values(&child_symtab, &return_expression, &value);
         return_expression = concretise_resolved_reference_atoms(return_expression);
+        let Some(mut return_expression) = strip_guarded_safe_index_conditions(return_expression)
+        else {
+            continue;
+        };
         return_expression = simplify_expression(return_expression);
 
         return_expressions.push(return_expression);
@@ -98,6 +102,85 @@ pub(super) fn simplify_expression(mut expr: Expression) -> Expression {
     expr
 }
 
+/// Strips internal `InDomain` guards that were introduced by bubbling a boolean `SafeIndex`
+/// inside a comprehension return expression.
+///
+/// When a source comprehension already has a guard that filters out dummy/out-of-domain values,
+/// earlier rewrites can turn that filter into a conjunction like
+/// `and([SafeIndex(...), __inDomain(index, domain)])`. If we instantiate that directly, a
+/// false `__inDomain` becomes a literal `false` element, which changes the comprehension from
+/// "skip this element" to "include false".
+///
+/// We recover the original filtering behaviour only for this narrow internal pattern:
+/// a top-level conjunction with exactly one non-guard term and one or more `InDomain` guards
+/// that constrain indices used by that term. If any such guard is false after instantiation,
+/// the element is skipped entirely.
+pub(super) fn strip_guarded_safe_index_conditions(expr: Expression) -> Option<Expression> {
+    let mut conjuncts = Vec::new();
+    collect_top_level_and_terms(expr.clone(), &mut conjuncts);
+
+    if conjuncts.len() == 1 && conjuncts[0] == expr {
+        return Some(expr);
+    }
+
+    let (guards, mut non_guards): (Vec<_>, Vec<_>) =
+        conjuncts.into_iter().partition(is_indomain_guard);
+
+    if guards.is_empty() || non_guards.len() != 1 {
+        return Some(expr);
+    }
+
+    let guarded_term = non_guards.pop().expect("length checked above");
+
+    if !guards
+        .iter()
+        .all(|guard| guard_targets_safe_index_index(guard, &guarded_term))
+    {
+        return Some(expr);
+    }
+
+    for guard in &guards {
+        let simplified_guard = simplify_expression(guard.clone());
+        match eval_constant(&simplified_guard) {
+            Some(Literal::Bool(true)) => {}
+            Some(Literal::Bool(false)) => return None,
+            _ => return Some(expr),
+        }
+    }
+
+    Some(guarded_term)
+}
+
+fn collect_top_level_and_terms(expr: Expression, out: &mut Vec<Expression>) {
+    if let Expression::And(_, ref children) = expr
+        && let Some(children) = children.as_ref().clone().unwrap_list()
+    {
+        for child in children {
+            collect_top_level_and_terms(child, out);
+        }
+    } else {
+        out.push(expr);
+    }
+}
+
+fn is_indomain_guard(expr: &Expression) -> bool {
+    matches!(expr, Expression::InDomain(_, _, _))
+}
+
+fn guard_targets_safe_index_index(guard: &Expression, expr: &Expression) -> bool {
+    let Expression::InDomain(_, guarded_index, _) = guard else {
+        return false;
+    };
+
+    expr.universe().into_iter().any(|subexpr| {
+        let Expression::SafeIndex(_, _, indices) = subexpr else {
+            return false;
+        };
+
+        indices.iter().any(|index| index == guarded_index.as_ref())
+    })
+}
+
 fn concretise_resolved_reference_atoms(expr: Expression) -> Expression {
     expr.transform_bi(&|atom: Atom| match atom {
         Atom::Reference(reference) => reference
@@ -128,7 +211,7 @@ pub(super) fn lift_machine_references_into_parent_scope(
         }
 
         let id = decl.id();
-        let new_decl = parent_symtab.gensym(&decl.domain().unwrap());
+        let new_decl = parent_symtab.gen_find(&decl.domain().unwrap());
         machine_name_translations.insert(id, new_decl);
     }
 

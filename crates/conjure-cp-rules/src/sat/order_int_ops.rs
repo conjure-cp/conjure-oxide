@@ -97,7 +97,7 @@ fn sat_order_lt(
 ///  SATInt([true;int(1..), (3, 3)])
 ///
 /// ```
-#[register_rule(("SAT_Order", 9500))]
+#[register_rule("SAT_Order", 9500, [Atomic])]
 fn literal_sat_order_int(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let value = {
         if let Expr::Atomic(_, Atom::Literal(Literal::Int(value))) = expr {
@@ -118,32 +118,22 @@ fn literal_sat_order_int(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     )))
 }
 
-/// Converts a = expression between two order SATInts to a boolean expression in cnf
-///
-/// ```text
-/// SATInt(a) = SATInt(b) ~> Bool
-/// ```
-#[register_rule(("SAT_Order", 9100))]
-fn eq_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
-    let Expr::Eq(_, lhs, rhs) = expr else {
-        return Err(RuleNotApplicable);
-    };
-
-    let (binding, _, _) =
-        validate_order_int_operands(vec![lhs.as_ref().clone(), rhs.as_ref().clone()])?;
-    let [lhs_bits, rhs_bits] = binding.as_slice() else {
-        return Err(RuleNotApplicable);
-    };
-
+/// Builds CNF for equality between two order SATInt bit-vectors.
+/// This function is used by both eq and neq rules, with the output negated for neq.
+/// Returns (expr, clauses, symbols).
+fn sat_order_eq_expr(
+    lhs_bits: &[Expr],
+    rhs_bits: &[Expr],
+    symbols: &SymbolTable,
+) -> (Expr, Vec<conjure_cp::ast::CnfClause>, SymbolTable) {
     let bit_count = lhs_bits.len();
 
     let mut output = true.into();
     let mut new_symbols = symbols.clone();
     let mut new_clauses = vec![];
-    let mut comparison;
 
     for i in 0..bit_count {
-        comparison = tseytin_iff(
+        let comparison = tseytin_iff(
             lhs_bits[i].clone(),
             rhs_bits[i].clone(),
             &mut new_clauses,
@@ -156,6 +146,49 @@ fn eq_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         );
     }
 
+    (output, new_clauses, new_symbols)
+}
+
+/// Converts a = expression between two order SATInts to a boolean expression in cnf
+///
+/// ```text
+/// SATInt(a) = SATInt(b) ~> Bool
+/// ```
+#[register_rule("SAT_Order", 9100, [Eq])]
+fn eq_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    let Expr::Eq(_, lhs, rhs) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let (binding, _, _) =
+        validate_order_int_operands(vec![lhs.as_ref().clone(), rhs.as_ref().clone()])?;
+    let [lhs_bits, rhs_bits] = binding.as_slice() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let (output, new_clauses, new_symbols) = sat_order_eq_expr(lhs_bits, rhs_bits, symbols);
+
+    Ok(Reduction::cnf(output, new_clauses, new_symbols))
+}
+
+/// Converts a != expression between two order SATInts to a boolean expression in cnf
+#[register_rule("SAT_Order", 9100, [Neq])]
+fn neq_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    let Expr::Neq(_, lhs, rhs) = expr else {
+        return Err(RuleNotApplicable);
+    }; // considered covered
+
+    let (binding, _, _) =
+        validate_order_int_operands(vec![lhs.as_ref().clone(), rhs.as_ref().clone()])?;
+    let [lhs_bits, rhs_bits] = binding.as_slice() else {
+        return Err(RuleNotApplicable); // consider covered
+    };
+
+    let (mut output, mut new_clauses, mut new_symbols) =
+        sat_order_eq_expr(lhs_bits, rhs_bits, symbols);
+
+    output = tseytin_not(output, &mut new_clauses, &mut new_symbols);
+
     Ok(Reduction::cnf(output, new_clauses, new_symbols))
 }
 
@@ -166,7 +199,7 @@ fn eq_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 ///
 /// ```
 /// Note: < and <= are rewritten by swapping operands to reuse lt logic.
-#[register_rule(("SAT_Order", 9100))]
+#[register_rule("SAT_Order", 9100, [Lt, Gt, Leq, Geq])]
 fn ineq_sat_order(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let (lhs, rhs, negate) = match expr {
         // A < B -> sat_order_lt(A, B)

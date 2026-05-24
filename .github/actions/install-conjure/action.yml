@@ -4,39 +4,39 @@ inputs:
   version:
     description: "The version of conjure to install."
     required: false
-    default: "2.5.1"
+    default: "2.6.0"
   os_arch:
-    description: 'The OS / Architecture to use. Supported values are ["linux","macos-arm","macos-intel"]'
+    description: 'The OS / Architecture to use. Supported values are ["linux", "macos", "macos-intel"]'
     required: true
 
 runs:
   using: composite
   steps:
-    - run: |
-        echo "Adding conjure to path."
-        # this prepends to path (so imagemagick doesn't interfere!), and does not take effect until the next step runs.
-        echo "${HOME}/conjure/conjure-v${{ inputs.version }}-${{ inputs.os_arch }}-with-solvers/" >> "${GITHUB_PATH}"
-      shell: bash
+  - run: |
+      echo "Adding conjure to path."
+      # this prepends to path (so imagemagick doesn't interfere!), and does not take effect until the next step runs.
+      echo "${HOME}/conjure/conjure-v${{ inputs.version }}-${{ inputs.os_arch }}-with-solvers/" >> "${GITHUB_PATH}"
+    shell: bash
 
-    - run: |
-        if conjure --version | grep -iq conjure ; then
-          echo "Found conjure, not fetching again."
-        else
-          mkdir -p "${HOME}/conjure"
-          cd "${HOME}/conjure"
+  - run: |
+      if [[ $(conjure --version | head -n2 | tail -n1) != "Conjure v${{ inputs.version }}"* ]]; then
+        mkdir -p "${HOME}/conjure"
+        cd "${HOME}/conjure"
 
-          echo "Downloading conjure."
-          rm -rf conjure-v${{ inputs.version }}-${{ inputs.os_arch }}-with-solvers*
-          wget https://github.com/conjure-cp/conjure/releases/download/v${{ inputs.version }}/conjure-v${{ inputs.version }}-${{ inputs.os_arch }}-with-solvers.zip
-          unzip conjure-v${{ inputs.version }}-${{ inputs.os_arch }}-with-solvers.zip
-        fi
-      shell: bash
+        echo "Downloading conjure."
+        rm -rf conjure-v${{ inputs.version }}-${{ inputs.os_arch }}-with-solvers*
+        wget https://github.com/conjure-cp/conjure/releases/download/v${{ inputs.version }}/conjure-v${{ inputs.version }}-${{ inputs.os_arch }}-with-solvers.zip
+        unzip conjure-v${{ inputs.version }}-${{ inputs.os_arch }}-with-solvers.zip
+      else
+        echo "Found conjure v${{ inputs.version }}, not fetching again."
+      fi
+    shell: bash
 
-    - name: Check that conjure is installed correctly
-      run: |
-        if [ "$(conjure --version | head -n2 | tail -n1)" != "Release version ${{ inputs.version }}" ]; then
-          echo "Correct conjure not found in path."
-          conjure --version
-          exit 1
-        fi
-      shell: bash
+  - name: Check that conjure is installed correctly
+    run: |
+      if [[ $(conjure --version | head -n2 | tail -n1) != "Conjure v${{ inputs.version }}"* ]]; then
+        echo "Correct conjure not found in path."
+        conjure --version
+        exit 1
+      fi
+    shell: bash

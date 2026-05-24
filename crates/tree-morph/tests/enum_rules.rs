@@ -31,6 +31,7 @@ fn rule_eval_mul(_: &mut Commands<Expr, Meta>, expr: &Expr, _: &Meta) -> Option<
     }
 }
 
+#[derive(Clone)]
 enum MyRule {
     EvalAdd,
     EvalMul,
@@ -45,6 +46,8 @@ impl Rule<Expr, Meta> for MyRule {
         }
     }
 }
+
+#[derive(Debug)]
 struct Meta {
     num_applications: u32,
 }
@@ -56,7 +59,7 @@ fn single_var() {
         num_applications: 0,
     };
 
-    let engine = EngineBuilder::new()
+    let mut engine = EngineBuilder::new()
         .add_rule_group(vec![MyRule::EvalAdd, MyRule::EvalMul])
         .build();
     let (expr, meta) = engine.morph(expr, meta);
@@ -72,7 +75,7 @@ fn add_zero() {
         num_applications: 0,
     };
 
-    let engine = EngineBuilder::new()
+    let mut engine = EngineBuilder::new()
         .add_rule_group(vec![MyRule::EvalAdd, MyRule::EvalMul])
         .build();
     let (expr, meta) = engine.morph(expr, meta);
@@ -88,7 +91,7 @@ fn mul_one() {
         num_applications: 0,
     };
 
-    let engine = EngineBuilder::new()
+    let mut engine = EngineBuilder::new()
         .add_rule_group(vec![MyRule::EvalAdd, MyRule::EvalMul])
         .build();
     let (expr, meta) = engine.morph(expr, meta);
@@ -104,7 +107,7 @@ fn eval_add() {
         num_applications: 0,
     };
 
-    let engine = EngineBuilder::new()
+    let mut engine = EngineBuilder::new()
         .add_rule_group(vec![MyRule::EvalAdd, MyRule::EvalMul])
         .build();
     let (expr, meta) = engine.morph(expr, meta);
@@ -123,7 +126,7 @@ fn eval_nested() {
         num_applications: 0,
     };
 
-    let engine = EngineBuilder::new()
+    let mut engine = EngineBuilder::new()
         .add_rule_group(vec![MyRule::EvalAdd, MyRule::EvalMul])
         .build();
     let (expr, meta) = engine.morph(expr, meta);

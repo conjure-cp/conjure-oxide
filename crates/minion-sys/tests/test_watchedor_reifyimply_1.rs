@@ -18,12 +18,8 @@
 //! **EOF**
 //! ```
 
-use std::collections::HashMap;
-use std::sync::Mutex;
-
-use minion_sys::ast::{Constant, Constraint, Model, Var, VarDomain, VarName};
+use minion_sys::ast::{Constant, Constraint, Model, Var, VarDomain};
 use minion_sys::error::MinionError;
-use minion_sys::get_from_table;
 #[test]
 #[allow(clippy::panic_in_result_fn)]
 fn test_watchedor_reifyimply_1() -> Result<(), MinionError> {
@@ -46,18 +42,16 @@ fn test_watchedor_reifyimply_1() -> Result<(), MinionError> {
         Var::NameRef(String::from("c")),
     ));
 
-    minion_sys::run_minion(model, callback)?;
+    let mut sols_counter = 0i32;
+    let solver_ctx = minion_sys::run_minion(
+        model,
+        Box::new(|_| {
+            sols_counter += 1;
+            true
+        }),
+    )?;
 
-    let guard = SOLS_COUNTER.lock().unwrap();
-    assert_eq!(*guard, 7);
-    assert_ne!(get_from_table("Nodes".into()), None);
+    assert_eq!(sols_counter, 7);
+    assert_ne!(solver_ctx.get_from_table("Nodes".into()), None);
     Ok(())
-}
-
-static SOLS_COUNTER: Mutex<i32> = Mutex::new(0);
-fn callback(_: HashMap<VarName, Constant>) -> bool {
-    #[allow(clippy::unwrap_used)]
-    let mut guard = SOLS_COUNTER.lock().unwrap();
-    *guard += 1;
-    true
 }

@@ -44,10 +44,10 @@ impl<A> Default for SetAttr<A> {
 impl<A: Display> Display for SetAttr<A> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self.size {
-            Range::Single(x) => write!(f, "(size({x}))"),
-            Range::Bounded(l, r) => write!(f, "(minSize({l}), maxSize({r}))"),
-            Range::UnboundedL(r) => write!(f, "(maxSize({r}))"),
-            Range::UnboundedR(l) => write!(f, "(minSize({l}))"),
+            Range::Single(x) => write!(f, "(size {x})"),
+            Range::Bounded(l, r) => write!(f, "(minSize {l}, maxSize {r})"),
+            Range::UnboundedL(r) => write!(f, "(maxSize {r})"),
+            Range::UnboundedR(l) => write!(f, "(minSize {l})"),
             Range::Unbounded => write!(f, ""),
         }
     }
@@ -155,6 +155,94 @@ impl<A: Display> Display for FuncAttr<A> {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
+#[path_prefix(conjure_cp::ast)]
+pub struct SequenceAttr<A = Int> {
+    pub size: Range<A>,
+    pub jectivity: JectivityAttr,
+}
+
+impl<A> Default for SequenceAttr<A> {
+    fn default() -> Self {
+        SequenceAttr {
+            size: Range::Unbounded,
+            jectivity: JectivityAttr::None,
+        }
+    }
+}
+
+impl<A: Display> Display for SequenceAttr<A> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let size_str = match &self.size {
+            Range::Single(x) => format!("size {x}"),
+            Range::Bounded(l, r) => format!("minSize {l}, maxSize {r}"),
+            Range::UnboundedL(r) => format!("maxSize {r}"),
+            Range::UnboundedR(l) => format!("minSize {l}"),
+            Range::Unbounded => "".to_string(),
+        };
+        let mut strs = [size_str, self.jectivity.to_string()]
+            .iter()
+            .filter(|s| !s.is_empty())
+            .join(", ");
+        if !strs.is_empty() {
+            strs = format!("({})", strs);
+        }
+        write!(f, "{strs}")
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
+#[path_prefix(conjure_cp::ast)]
+pub struct PartitionAttr<A = Int> {
+    pub num_parts: Range<A>, // i.e. how many parts there are in the partition
+    pub part_len: Range<A>,  // i.e. the size of each constitutent part
+    pub is_regular: bool,
+}
+
+impl<A: Display> Display for PartitionAttr<A> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let num_parts_str = match &self.num_parts {
+            Range::Single(x) => format!("numParts {x}"),
+            Range::Bounded(l, r) => format!("minNumParts {l}, maxNumParts {r}"),
+            Range::UnboundedL(r) => format!("maxNumParts {r}"),
+            Range::UnboundedR(l) => format!("minNumParts {l}"),
+            Range::Unbounded => "".to_string(),
+        };
+
+        let part_len_str = match &self.part_len {
+            Range::Single(x) => format!("partSize {x}"),
+            Range::Bounded(l, r) => format!("minPartSize {l} , maxPartSize {r}"),
+            Range::UnboundedL(r) => format!("maxPartSize {r}"),
+            Range::UnboundedR(l) => format!("minPartSize {l}"),
+            Range::Unbounded => "".to_string(),
+        };
+
+        let regular_str = match &self.is_regular {
+            true => "regular".to_string(),
+            false => String::new(),
+        };
+
+        let mut strs = [num_parts_str, part_len_str, regular_str]
+            .iter()
+            .filter(|s| !s.is_empty())
+            .join(", ");
+        if !strs.is_empty() {
+            strs = format!("({})", strs);
+        }
+        write!(f, "{strs}")
+    }
+}
+
+impl<A> Default for PartitionAttr<A> {
+    fn default() -> Self {
+        PartitionAttr {
+            num_parts: Range::Unbounded,
+            part_len: Range::Unbounded,
+            is_regular: false,
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
 pub enum PartialityAttr {
     Total,
     Partial,
@@ -184,6 +272,79 @@ impl Display for JectivityAttr {
             JectivityAttr::Injective => write!(f, "injective"),
             JectivityAttr::Surjective => write!(f, "surjective"),
             JectivityAttr::Bijective => write!(f, "bijective"),
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
+#[path_prefix(conjure_cp::ast)]
+pub struct RelAttr<A = Int> {
+    pub size: Range<A>,
+    pub binary: Vec<BinaryAttr>,
+}
+
+impl<A> Default for RelAttr<A> {
+    fn default() -> Self {
+        RelAttr {
+            size: Range::Unbounded,
+            binary: Vec::new(),
+        }
+    }
+}
+
+impl<A: Display> Display for RelAttr<A> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let size_str = match &self.size {
+            Range::Single(x) => format!("size {x}"),
+            Range::Bounded(l, r) => format!("minSize {l}, maxSize {r}"),
+            Range::UnboundedL(r) => format!("maxSize {r}"),
+            Range::UnboundedR(l) => format!("minSize {l}"),
+            Range::Unbounded => "".to_string(),
+        };
+        let mut strs = [size_str, self.binary.iter().join(", ")]
+            .iter()
+            .filter(|s| !s.is_empty())
+            .join(", ");
+        if !strs.is_empty() {
+            strs = format!("({})", strs);
+        }
+        write!(f, "{strs}")
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
+pub enum BinaryAttr {
+    Reflexive,
+    Irreflexive,
+    Coreflexive,
+    Symmetric,
+    AntiSymmetric,
+    ASymmetric,
+    Transitive,
+    Total,
+    Connex,
+    Euclidean,
+    Serial,
+    Equivalence,
+    PartialOrder,
+}
+
+impl Display for BinaryAttr {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            BinaryAttr::Reflexive => write!(f, "reflexive"),
+            BinaryAttr::Irreflexive => write!(f, "irreflexive"),
+            BinaryAttr::Coreflexive => write!(f, "coreflexive"),
+            BinaryAttr::Symmetric => write!(f, "symmetric"),
+            BinaryAttr::AntiSymmetric => write!(f, "antiSymmetric"),
+            BinaryAttr::ASymmetric => write!(f, "aSymmetric"),
+            BinaryAttr::Transitive => write!(f, "transitive"),
+            BinaryAttr::Total => write!(f, "total"),
+            BinaryAttr::Connex => write!(f, "connex"),
+            BinaryAttr::Euclidean => write!(f, "Euclidean"),
+            BinaryAttr::Serial => write!(f, "serial"),
+            BinaryAttr::Equivalence => write!(f, "equivalence"),
+            BinaryAttr::PartialOrder => write!(f, "partialOrder"),
         }
     }
 }

@@ -1,5 +1,9 @@
 #![allow(dead_code)]
-use crate::ast::{AbstractLiteral, Atom, Expression as Expr, Literal as Lit, Metadata, matrix};
+use crate::ast::{
+    AbstractLiteral, Atom, DeclarationKind, Expression as Expr, Literal as Lit, Metadata,
+    comprehension::{Comprehension, ComprehensionQualifier},
+    matrix,
+};
 use crate::into_matrix;
 use itertools::{Itertools as _, izip};
 use std::cmp::Ordering as CmpOrdering;
@@ -130,7 +134,9 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         Expr::Atomic(_, Atom::Literal(c)) => Some(c.clone()),
         Expr::Atomic(_, Atom::Reference(reference)) => reference.resolve_constant(),
         Expr::AbstractLiteral(_, a) => Some(Lit::AbstractLiteral(a.clone().into_literals()?)),
-        Expr::Comprehension(_, _) => None,
+        Expr::Comprehension(_, comprehension) => {
+            eval_constant_comprehension(comprehension.as_ref())
+        }
         Expr::AbstractComprehension(_, _) => None,
         Expr::UnsafeIndex(_, subject, indices) | Expr::SafeIndex(_, subject, indices) => {
             let subject: Lit = eval_constant(subject.as_ref())?;
@@ -248,6 +254,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             vec_lit_op::<bool, bool>(|e| e.iter().all(|&e| e), e.as_ref()).map(Lit::Bool)
         }
         Expr::Table(_, _, _) => None,
+        Expr::NegativeTable(_, _, _) => None,
         Expr::Root(_, _) => None,
         Expr::Or(_, es) => {
             // possibly cheating; definitely should be in partial eval instead
@@ -331,6 +338,39 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             bin_op::<i32, i32>(|a, b| a - b * (a as f32 / b as f32).floor() as i32, a, b)
                 .map(Lit::Int)
         }
+        Expr::Substring(_, s, t) => match (s.as_ref(), t.as_ref()) {
+            (
+                Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Sequence(s)))),
+                Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Sequence(t)))),
+            ) => {
+                if s.len() > t.len() {
+                    return Some(Lit::Bool(false));
+                }
+
+                let found = t.windows(s.len()).any(|window| window == s.as_slice());
+                Some(Lit::Bool(found))
+            }
+            _ => None,
+        },
+        Expr::Subsequence(_, s, t) => match (s.as_ref(), t.as_ref()) {
+            (
+                Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Sequence(s)))),
+                Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Sequence(t)))),
+            ) => {
+                let mut i = 0;
+                let mut j = 0;
+
+                while i < s.len() && j < t.len() {
+                    if s[i] == t[j] {
+                        i += 1;
+                    }
+                    j += 1;
+                }
+
+                Some(Lit::Bool(i == s.len()))
+            }
+            _ => None,
+        },
         Expr::MinionDivEqUndefZero(_, a, b, c) => {
             // div always rounds down
             let a: i32 = a.try_into().ok()?;
@@ -419,11 +459,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             }?;
 
             let mut intervals = intervals.iter();
-            loop {
-                let Some(lower) = intervals.next() else {
-                    break;
-                };
-
+            while let Some(lower) = intervals.next() {
                 let Some(upper) = intervals.next() else {
                     break;
                 };
@@ -480,20 +516,12 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         }
         Expr::FlatWatchedLiteral(_, _, _) => None,
         Expr::AuxDeclaration(_, _, _) => None,
-        Expr::Neg(_, a) => {
-            let a: &Atom = a.try_into().ok()?;
-            let a: i32 = a.try_into().ok()?;
-            Some(Lit::Int(-a))
-        }
-        Expr::Minus(_, a, b) => {
-            let a: &Atom = a.try_into().ok()?;
-            let a: i32 = a.try_into().ok()?;
-
-            let b: &Atom = b.try_into().ok()?;
-            let b: i32 = b.try_into().ok()?;
-
-            Some(Lit::Int(a - b))
-        }
+        Expr::Neg(_, a) => match eval_constant(a.as_ref())? {
+            Lit::Int(a) => Some(Lit::Int(-a)),
+            _ => None,
+        },
+        Expr::Factorial(_, _) => None,
+        Expr::Minus(_, a, b) => bin_op::<i32, i32>(|a, b| a - b, a, b).map(Lit::Int),
         Expr::FlatMinusEq(_, a, b) => {
             let a: i32 = a.try_into().ok()?;
             let b: i32 = b.try_into().ok()?;
@@ -565,7 +593,16 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                 _ => None,
             }
         }
-        Expr::SATInt(..) => None,
+        Expr::SATInt(_, _, _, _) => {
+            // TODO: If this SATInt is composed of literals, we should evaluate it back to an
+            // integer literal.
+            //
+            // This is important because `is_all_constant` currently returns true for SATInts
+            // containing no references. If we don't evaluate them here, bubble rules will skip
+            // them (thinking they'll be constant-folded later), but they'll actually reach
+            // the solver adaptors as un-encoded unsafe operations, causing panics.
+            None
+        }
         Expr::PairwiseSum(_, a, b) => {
             match (eval_constant(a.as_ref())?, eval_constant(b.as_ref())?) {
                 (Lit::Int(a_int), Lit::Int(b_int)) => Some(Lit::Int(a_int + b_int)),
@@ -585,6 +622,17 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         Expr::PreImage(_, _, _) => todo!(),
         Expr::Inverse(_, _, _) => todo!(),
         Expr::Restrict(_, _, _) => todo!(),
+        Expr::Active(_, _, _) => todo!(),
+        Expr::ToSet(_, _) => todo!(),
+        Expr::ToMSet(_, _) => todo!(),
+        Expr::ToRelation(_, _) => todo!(),
+        Expr::RelationProj(_, _, _) => todo!(),
+        Expr::Apart(_, _, _) => todo!(),
+        Expr::Together(_, _, _) => todo!(),
+        Expr::Participants(_, _) => todo!(),
+        Expr::Party(_, _, _) => todo!(),
+        Expr::Parts(_, _) => todo!(),
+        Expr::Card(_, _) => todo!(),
         Expr::LexLt(_, a, b) => {
             let lt = vec_expr_pairs_op::<i32, _>(a, b, |pairs, (a_len, b_len)| {
                 pairs
@@ -684,11 +732,7 @@ pub fn vec_lit_op<T, A>(f: fn(Vec<T>) -> A, a: &Expr) -> Option<A>
 where
     T: TryFrom<Lit>,
 {
-    // we don't care about preserving indices here, as we will be getting rid of the vector
-    // anyways!
-    let a = a.clone().unwrap_matrix_unchecked()?.0;
-    let a = a.iter().map(unwrap_expr).collect::<Option<Vec<T>>>()?;
-    Some(f(a))
+    Some(f(eval_list_items(a)?))
 }
 
 type PairsCallback<T, A> = fn(Vec<(T, T)>, (usize, usize)) -> A;
@@ -732,10 +776,7 @@ pub fn opt_vec_lit_op<T, A>(f: fn(Vec<T>) -> Option<A>, a: &Expr) -> Option<A>
 where
     T: TryFrom<Lit>,
 {
-    let a = a.clone().unwrap_list()?;
-    // FIXME: deal with explicit matrix domains
-    let a = a.iter().map(unwrap_expr).collect::<Option<Vec<T>>>()?;
-    f(a)
+    f(eval_list_items(a)?)
 }
 
 #[allow(dead_code)]
@@ -751,4 +792,121 @@ where
 pub fn unwrap_expr<T: TryFrom<Lit>>(expr: &Expr) -> Option<T> {
     let c = eval_constant(expr)?;
     TryInto::<T>::try_into(c).ok()
+}
+
+fn eval_list_items<T>(expr: &Expr) -> Option<Vec<T>>
+where
+    T: TryFrom<Lit>,
+{
+    if let Some(items) = expr
+        .clone()
+        .unwrap_matrix_unchecked()
+        .map(|(items, _)| items)
+    {
+        return items.iter().map(unwrap_expr).collect();
+    }
+
+    let Lit::AbstractLiteral(list) = eval_constant(expr)? else {
+        return None;
+    };
+
+    let items = list.unwrap_list()?;
+    items
+        .iter()
+        .cloned()
+        .map(TryInto::try_into)
+        .collect::<Result<Vec<_>, _>>()
+        .ok()
+}
+
+fn eval_constant_comprehension(comprehension: &Comprehension) -> Option<Lit> {
+    let mut values = Vec::new();
+    eval_comprehension_qualifiers(comprehension, 0, &mut values)?;
+    Some(Lit::AbstractLiteral(
+        AbstractLiteral::matrix_implied_indices(values),
+    ))
+}
+
+fn eval_comprehension_qualifiers(
+    comprehension: &Comprehension,
+    qualifier_index: usize,
+    values: &mut Vec<Lit>,
+) -> Option<()> {
+    if qualifier_index == comprehension.qualifiers.len() {
+        values.push(eval_constant(&comprehension.return_expression)?);
+        return Some(());
+    }
+
+    match &comprehension.qualifiers[qualifier_index] {
+        ComprehensionQualifier::Generator { ptr } => {
+            let domain = ptr.domain()?;
+            let generator_values = domain.resolve()?.values().ok()?.collect_vec();
+
+            for value in generator_values {
+                with_temporary_quantified_binding(ptr, &value, || {
+                    eval_comprehension_qualifiers(comprehension, qualifier_index + 1, values)
+                })?;
+            }
+        }
+        ComprehensionQualifier::ExpressionGenerator { ptr } => {
+            // clone immediately so the read lock guard is dropped
+            let expr = ptr.as_quantified_expr()?.clone();
+            let generator_values = generator_values_from_expr(&expr)?;
+
+            for value in generator_values {
+                with_temporary_quantified_binding(ptr, &value, || {
+                    eval_comprehension_qualifiers(comprehension, qualifier_index + 1, values)
+                })?;
+            }
+        }
+        ComprehensionQualifier::Condition(condition) => match eval_constant(condition)? {
+            Lit::Bool(true) => {
+                eval_comprehension_qualifiers(comprehension, qualifier_index + 1, values)?
+            }
+            Lit::Bool(false) => {}
+            _ => return None,
+        },
+    }
+
+    Some(())
+}
+
+fn generator_values_from_expr(expr: &Expr) -> Option<Vec<Lit>> {
+    match eval_constant(expr)? {
+        Lit::AbstractLiteral(AbstractLiteral::Set(values))
+        | Lit::AbstractLiteral(AbstractLiteral::MSet(values))
+        | Lit::AbstractLiteral(AbstractLiteral::Tuple(values)) => Some(values),
+        Lit::AbstractLiteral(list) => list.unwrap_list().cloned(),
+        _ => None,
+    }
+}
+
+fn with_temporary_quantified_binding<T>(
+    quantified: &crate::ast::DeclarationPtr,
+    value: &Lit,
+    f: impl FnOnce() -> Option<T>,
+) -> Option<T> {
+    let mut targets = vec![quantified.clone()];
+    if let DeclarationKind::Quantified(inner) = &*quantified.kind()
+        && let Some(generator) = inner.generator()
+    {
+        targets.push(generator.clone());
+    }
+
+    let mut originals = Vec::with_capacity(targets.len());
+    for mut target in targets {
+        let old_kind = target.replace_kind(DeclarationKind::TemporaryValueLetting(Expr::Atomic(
+            Metadata::new(),
+            Atom::Literal(value.clone()),
+        )));
+        originals.push((target, old_kind));
+    }
+
+    let result = f();
+
+    for (mut target, old_kind) in originals.into_iter().rev() {
+        let _ = target.replace_kind(old_kind);
+    }
+
+    result
 }

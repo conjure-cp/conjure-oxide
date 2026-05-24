@@ -1,9 +1,11 @@
 #![doc = include_str!("docs/lib.md")]
 #![warn(missing_docs)]
 
+pub mod cache;
 pub mod commands;
 pub mod engine;
 pub mod engine_builder;
+pub mod engine_zipper;
 mod events;
 pub mod helpers;
 pub mod rule;
@@ -15,7 +17,7 @@ pub mod prelude {
     pub use crate::engine::Engine;
     pub use crate::engine_builder::EngineBuilder;
     pub use crate::helpers::select_first;
-    pub use crate::rule::{Rule, RuleFn};
+    pub use crate::rule::{NamedRule, Rule, RuleFn};
     pub use crate::rule_fns;
     pub use crate::update::Update;
 }

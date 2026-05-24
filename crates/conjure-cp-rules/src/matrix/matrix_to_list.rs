@@ -29,7 +29,7 @@ use uniplate::Uniplate;
 /// Because of condition 4, and this rules low priority, this rule will not run post-flattening, so
 /// matrices that do not need to be converted to lists in order to get them ready for Minion will
 /// be left alone.
-#[register_rule(("Base", 2000))]
+#[register_rule("Base", 2000)]
 fn matrix_to_list(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // match on the parent: do not apply this rule to things descended from abstract literal, or
     // special language constructs like bubble.

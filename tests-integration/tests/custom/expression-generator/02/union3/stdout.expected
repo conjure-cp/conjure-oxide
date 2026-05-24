@@ -1,0 +1,51 @@
+find a: set  of int(1..4)
+find b: set  of int(1..4)
+find c: set  of int(1..4)
+find d: set  of int(1..4)
+
+such that
+
+(sum(flatten([flatten([[ sum([i,j;int(1..2)]) | i <- a, j <- c ],[ sum([i,j;int(1..2)]) | i <- a, j <- d, !(j in c) ];int(1..)]),flatten([[ sum([i,j;int(1..2)]) | i <- b, j <- c, !(i in a) ],[ sum([i,j;int(1..2)]) | i <- b, j <- d, !(i in a), !(j in c) ];int(1..)]);int(1..)])) = 10)
+
+Model before rewriting:
+
+find a: set  of int(1..4)
+find b: set  of int(1..4)
+find c: set  of int(1..4)
+find d: set  of int(1..4)
+
+such that
+
+(sum([ sum([i,j;int(1..2)]) | i <- (a union b), j <- (c union d) ]) = 10)
+
+--
+
+[ sum([i,j;int(1..2)]) | i <- (a union b), j <- (c union d) ], 
+   ~~> union_set ([("Base", 8700)])
+flatten([[ sum([i,j;int(1..2)]) | i <- a, j <- (c union d) ],[ sum([i,j;int(1..2)]) | i <- b, j <- (c union d), !(i in a) ];int(1..)])
+
+--
+
+[ sum([i,j;int(1..2)]) | i <- a, j <- (c union d) ], 
+   ~~> union_set ([("Base", 8700)])
+flatten([[ sum([i,j;int(1..2)]) | i <- a, j <- c ],[ sum([i,j;int(1..2)]) | i <- a, j <- d, !(j in c) ];int(1..)])
+
+--
+
+[ sum([i,j;int(1..2)]) | i <- b, j <- (c union d), !(i in a) ], 
+   ~~> union_set ([("Base", 8700)])
+flatten([[ sum([i,j;int(1..2)]) | i <- b, j <- c, !(i in a) ],[ sum([i,j;int(1..2)]) | i <- b, j <- d, !(i in a), !(j in c) ];int(1..)])
+
+--
+
+Final model:
+
+find a: set  of int(1..4)
+find b: set  of int(1..4)
+find c: set  of int(1..4)
+find d: set  of int(1..4)
+
+such that
+
+(sum(flatten([flatten([[ sum([i,j;int(1..2)]) | i <- a, j <- c ],[ sum([i,j;int(1..2)]) | i <- a, j <- d, !(j in c) ];int(1..)]),flatten([[ sum([i,j;int(1..2)]) | i <- b, j <- c, !(i in a) ],[ sum([i,j;int(1..2)]) | i <- b, j <- d, !(i in a), !(j in c) ];int(1..)]);int(1..)])) = 10)
+

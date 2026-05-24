@@ -1,0 +1,116 @@
+Model before rewriting:
+
+find m: matrix indexed by [int(1..2)] of int(1..2)
+find m2: matrix indexed by [int(1..2)] of int(1..2)
+
+such that
+
+(m <=lex m2),
+(m >=lex m2)
+
+--
+
+(m >=lex m2), 
+   ~~> normalise_lex_gt_geq ([("Base", 9000)])
+(m2 <=lex m)
+
+--
+
+(m <=lex m2), 
+   ~~> expand_lex_lt_leq ([("Smt", 2001)])
+or([(SafeIndex(m,[1]) < SafeIndex(m2,[1])),and([(SafeIndex(m,[1]) = SafeIndex(m2,[1])),or([(SafeIndex(m,[2]) < SafeIndex(m2,[2])),and([(SafeIndex(m,[2]) = SafeIndex(m2,[2])),true;int(1..)]);int(1..)]);int(1..)]);int(1..)])
+
+--
+
+or([(SafeIndex(m,[1]) < SafeIndex(m2,[1])),and([(SafeIndex(m,[1]) = SafeIndex(m2,[1])),or([(SafeIndex(m,[2]) < SafeIndex(m2,[2])),and([(SafeIndex(m,[2]) = SafeIndex(m2,[2])),true;int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+(m2 <=lex m), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+or([(SafeIndex(m,[1]) < SafeIndex(m2,[1])),and([(SafeIndex(m,[1]) = SafeIndex(m2,[1])),or([(SafeIndex(m,[2]) < SafeIndex(m2,[2])),and([(SafeIndex(m,[2]) = SafeIndex(m2,[2]));int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+(m2 <=lex m)
+
+--
+
+and([(SafeIndex(m,[2]) = SafeIndex(m2,[2]));int(1..)]), 
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+(SafeIndex(m,[2]) = SafeIndex(m2,[2]))
+
+--
+
+or([(SafeIndex(m,[1]) < SafeIndex(m2,[1])),and([(SafeIndex(m,[1]) = SafeIndex(m2,[1])),or([(SafeIndex(m,[2]) < SafeIndex(m2,[2])),(SafeIndex(m,[2]) = SafeIndex(m2,[2]));int(1..)]);int(1..)]);int(1..)]), 
+   ~~> distribute_or_over_and ([("Base", 8400)])
+and([or([(SafeIndex(m,[1]) < SafeIndex(m2,[1])),(SafeIndex(m,[1]) = SafeIndex(m2,[1]));int(1..)]),or([(SafeIndex(m,[1]) < SafeIndex(m2,[1])),or([(SafeIndex(m,[2]) < SafeIndex(m2,[2])),(SafeIndex(m,[2]) = SafeIndex(m2,[2]));int(1..)]);int(1..)]);int(1..)])
+
+--
+
+and([or([(SafeIndex(m,[1]) < SafeIndex(m2,[1])),(SafeIndex(m,[1]) = SafeIndex(m2,[1]));int(1..)]),or([(SafeIndex(m,[1]) < SafeIndex(m2,[1])),or([(SafeIndex(m,[2]) < SafeIndex(m2,[2])),(SafeIndex(m,[2]) = SafeIndex(m2,[2]));int(1..)]);int(1..)]);int(1..)]),
+(m2 <=lex m), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+or([(SafeIndex(m,[1]) < SafeIndex(m2,[1])),(SafeIndex(m,[1]) = SafeIndex(m2,[1]));int(1..)]),
+or([(SafeIndex(m,[1]) < SafeIndex(m2,[1])),or([(SafeIndex(m,[2]) < SafeIndex(m2,[2])),(SafeIndex(m,[2]) = SafeIndex(m2,[2]));int(1..)]);int(1..)]),
+(m2 <=lex m)
+
+--
+
+or([(SafeIndex(m,[1]) < SafeIndex(m2,[1])),or([(SafeIndex(m,[2]) < SafeIndex(m2,[2])),(SafeIndex(m,[2]) = SafeIndex(m2,[2]));int(1..)]);int(1..)]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+or([(SafeIndex(m,[1]) < SafeIndex(m2,[1])),(SafeIndex(m,[2]) < SafeIndex(m2,[2])),(SafeIndex(m,[2]) = SafeIndex(m2,[2]));int(1..)])
+
+--
+
+(m2 <=lex m), 
+   ~~> expand_lex_lt_leq ([("Smt", 2001)])
+or([(SafeIndex(m2,[1]) < SafeIndex(m,[1])),and([(SafeIndex(m2,[1]) = SafeIndex(m,[1])),or([(SafeIndex(m2,[2]) < SafeIndex(m,[2])),and([(SafeIndex(m2,[2]) = SafeIndex(m,[2])),true;int(1..)]);int(1..)]);int(1..)]);int(1..)])
+
+--
+
+or([(SafeIndex(m,[1]) < SafeIndex(m2,[1])),(SafeIndex(m,[1]) = SafeIndex(m2,[1]));int(1..)]),
+or([(SafeIndex(m,[1]) < SafeIndex(m2,[1])),(SafeIndex(m,[2]) < SafeIndex(m2,[2])),(SafeIndex(m,[2]) = SafeIndex(m2,[2]));int(1..)]),
+or([(SafeIndex(m2,[1]) < SafeIndex(m,[1])),and([(SafeIndex(m2,[1]) = SafeIndex(m,[1])),or([(SafeIndex(m2,[2]) < SafeIndex(m,[2])),and([(SafeIndex(m2,[2]) = SafeIndex(m,[2])),true;int(1..)]);int(1..)]);int(1..)]);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+or([(SafeIndex(m,[1]) < SafeIndex(m2,[1])),(SafeIndex(m,[1]) = SafeIndex(m2,[1]));int(1..)]),
+or([(SafeIndex(m,[1]) < SafeIndex(m2,[1])),(SafeIndex(m,[2]) < SafeIndex(m2,[2])),(SafeIndex(m,[2]) = SafeIndex(m2,[2]));int(1..)]),
+or([(SafeIndex(m2,[1]) < SafeIndex(m,[1])),and([(SafeIndex(m2,[1]) = SafeIndex(m,[1])),or([(SafeIndex(m2,[2]) < SafeIndex(m,[2])),and([(SafeIndex(m2,[2]) = SafeIndex(m,[2]));int(1..)]);int(1..)]);int(1..)]);int(1..)])
+
+--
+
+and([(SafeIndex(m2,[2]) = SafeIndex(m,[2]));int(1..)]), 
+   ~~> remove_unit_vector_and ([("Base", 8800)])
+(SafeIndex(m2,[2]) = SafeIndex(m,[2]))
+
+--
+
+or([(SafeIndex(m2,[1]) < SafeIndex(m,[1])),and([(SafeIndex(m2,[1]) = SafeIndex(m,[1])),or([(SafeIndex(m2,[2]) < SafeIndex(m,[2])),(SafeIndex(m2,[2]) = SafeIndex(m,[2]));int(1..)]);int(1..)]);int(1..)]), 
+   ~~> distribute_or_over_and ([("Base", 8400)])
+and([or([(SafeIndex(m2,[1]) < SafeIndex(m,[1])),(SafeIndex(m2,[1]) = SafeIndex(m,[1]));int(1..)]),or([(SafeIndex(m2,[1]) < SafeIndex(m,[1])),or([(SafeIndex(m2,[2]) < SafeIndex(m,[2])),(SafeIndex(m2,[2]) = SafeIndex(m,[2]));int(1..)]);int(1..)]);int(1..)])
+
+--
+
+or([(SafeIndex(m,[1]) < SafeIndex(m2,[1])),(SafeIndex(m,[1]) = SafeIndex(m2,[1]));int(1..)]),
+or([(SafeIndex(m,[1]) < SafeIndex(m2,[1])),(SafeIndex(m,[2]) < SafeIndex(m2,[2])),(SafeIndex(m,[2]) = SafeIndex(m2,[2]));int(1..)]),
+and([or([(SafeIndex(m2,[1]) < SafeIndex(m,[1])),(SafeIndex(m2,[1]) = SafeIndex(m,[1]));int(1..)]),or([(SafeIndex(m2,[1]) < SafeIndex(m,[1])),or([(SafeIndex(m2,[2]) < SafeIndex(m,[2])),(SafeIndex(m2,[2]) = SafeIndex(m,[2]));int(1..)]);int(1..)]);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+or([(SafeIndex(m,[1]) < SafeIndex(m2,[1])),(SafeIndex(m,[1]) = SafeIndex(m2,[1]));int(1..)]),
+or([(SafeIndex(m,[1]) < SafeIndex(m2,[1])),(SafeIndex(m,[2]) < SafeIndex(m2,[2])),(SafeIndex(m,[2]) = SafeIndex(m2,[2]));int(1..)]),
+or([(SafeIndex(m2,[1]) < SafeIndex(m,[1])),(SafeIndex(m2,[1]) = SafeIndex(m,[1]));int(1..)]),
+or([(SafeIndex(m2,[1]) < SafeIndex(m,[1])),or([(SafeIndex(m2,[2]) < SafeIndex(m,[2])),(SafeIndex(m2,[2]) = SafeIndex(m,[2]));int(1..)]);int(1..)])
+
+--
+
+or([(SafeIndex(m2,[1]) < SafeIndex(m,[1])),or([(SafeIndex(m2,[2]) < SafeIndex(m,[2])),(SafeIndex(m2,[2]) = SafeIndex(m,[2]));int(1..)]);int(1..)]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+or([(SafeIndex(m2,[1]) < SafeIndex(m,[1])),(SafeIndex(m2,[2]) < SafeIndex(m,[2])),(SafeIndex(m2,[2]) = SafeIndex(m,[2]));int(1..)])
+
+--
+
+Final model:
+
+find m: matrix indexed by [int(1..2)] of int(1..2)
+find m2: matrix indexed by [int(1..2)] of int(1..2)
+
+such that
+
+or([(SafeIndex(m,[1]) < SafeIndex(m2,[1])),(SafeIndex(m,[1]) = SafeIndex(m2,[1]));int(1..)]),
+or([(SafeIndex(m,[1]) < SafeIndex(m2,[1])),(SafeIndex(m,[2]) < SafeIndex(m2,[2])),(SafeIndex(m,[2]) = SafeIndex(m2,[2]));int(1..)]),
+or([(SafeIndex(m2,[1]) < SafeIndex(m,[1])),(SafeIndex(m2,[1]) = SafeIndex(m,[1]));int(1..)]),
+or([(SafeIndex(m2,[1]) < SafeIndex(m,[1])),(SafeIndex(m2,[2]) < SafeIndex(m,[2])),(SafeIndex(m2,[2]) = SafeIndex(m,[2]));int(1..)])
+

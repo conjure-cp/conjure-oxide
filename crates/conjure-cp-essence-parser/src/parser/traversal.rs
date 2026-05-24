@@ -92,7 +92,7 @@ impl<'a> Iterator for WalkBFS<'a> {
 
 #[cfg(test)]
 mod test {
-    use super::super::util::get_tree;
+    use super::super::util::{get_expr_tree, get_tree};
     use super::*;
 
     #[test]
@@ -123,12 +123,13 @@ mod test {
 
     #[test]
     pub fn test_dfs_retract() {
-        let (tree, _) = get_tree("(x / 42) > (5 + y)").unwrap();
+        let (tree, _) = get_expr_tree("(x / 42) > (5 + y)").unwrap();
         let root = tree.root_node();
         let mut iter = WalkDFS::with_retract(&root, &|n: &Node<'_>| n.kind() == "arithmetic_expr")
             .filter(|n| n.is_named());
         assert_eq!(iter.next().unwrap().kind(), "program");
         assert_eq!(iter.next().unwrap().kind(), "comparison_expr");
+        assert_eq!(iter.next().unwrap().kind(), "arithmetic_comparison"); // intermediate node for > comparison
         assert_eq!(iter.next().unwrap().kind(), "arithmetic_expr"); // first branch ("x / 42"). Don't descend into subexpressions.
         assert_eq!(iter.next().unwrap().kind(), "arithmetic_expr"); // second branch ("5 + y"). Don't descend into subexpressions.
     }

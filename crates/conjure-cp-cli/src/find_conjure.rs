@@ -1,7 +1,7 @@
 use anyhow::{Result, anyhow, bail};
 use versions::Versioning;
 
-const CONJURE_MIN_VERSION: &str = "2.5.1";
+const CONJURE_MIN_VERSION: &str = "2.6.0";
 const CORRECT_FIRST_LINE: &str = "Conjure: The Automated Constraint Modelling Tool";
 
 /// Checks if the conjure executable is present in PATH and if it is the correct version.
@@ -32,23 +32,19 @@ pub fn conjure_executable() -> Result<()> {
             bail!("The correct Conjure executable is not present in PATH.")
         }
     }
+
     let version_line = stdout
         .lines()
         .nth(1)
         .ok_or(anyhow!("Could not read Conjure's stdout"))?;
-
-    let version = match version_line.strip_prefix("Release version ") {
-        Some(v) => Ok(v),
-        None => match version_line.strip_prefix("Conjure v") {
-            // New format: Conjure v2.5.1 (Repository version ...)
-            Some(v) => v.split_whitespace().next().ok_or(anyhow!(
-                "Could not read Conjure's version from: {version_line}"
-            )),
-            None => Err(anyhow!(
-                "Could not read Conjure's version from: {version_line}"
-            )),
-        },
-    }?;
+    let version_and_repo = version_line.strip_prefix("Conjure v").ok_or(anyhow!(
+        "Could not read Conjure's version from: {version_line}"
+    ))?;
+    let (version, _) = version_and_repo
+        .split_once(" (Repository version ")
+        .ok_or(anyhow!(
+            "Could not read Conjure's version from: {version_line}"
+        ))?;
 
     if Versioning::new(version) < Versioning::new(CONJURE_MIN_VERSION) {
         bail!("Conjure version is too old (< {CONJURE_MIN_VERSION}): {version}");

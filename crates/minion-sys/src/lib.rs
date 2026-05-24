@@ -29,18 +29,15 @@
 //! use minion_sys::ast::*;
 //! use minion_sys::run_minion;
 //! use std::collections::HashMap;
-//! use std::sync::Mutex;
 //!
-//! // Get solutions out of Minion.
-//! // See the documentation for Callback for details.
+//! // Collect solutions using a closure — no globals needed.
+//! let mut all_solutions: Vec<HashMap<VarName,Constant>> = vec![];
 //!
-//! static ALL_SOLUTIONS: Mutex<Vec<HashMap<VarName,Constant>>>  = Mutex::new(vec![]);
-//!
-//! fn callback(solutions: HashMap<VarName,Constant>) -> bool {
-//!     let mut guard = ALL_SOLUTIONS.lock().unwrap();
-//!     guard.push(solutions);
-//!     true
-//! }
+//! let callback: Box<dyn FnMut(HashMap<VarName,Constant>) -> bool> =
+//!     Box::new(|solutions| {
+//!         all_solutions.push(solutions);
+//!         true
+//!     });
 //!
 //! // Build and run the model.
 //! let mut model = Model::new();
@@ -82,18 +79,14 @@
 //! model.constraints.push(geq);
 //! model.constraints.push(ineq);
 //!
-//! let res = run_minion(model, callback);
-//! res.expect("Error occurred");
+//! let _solver_ctx = run_minion(model, callback).expect("Error occurred");
 //!
-//! // Get solutions
-//! let guard = ALL_SOLUTIONS.lock().unwrap();
-//! let solution_set_1 = &(guard.get(0).unwrap());
-//!
+//! let solution_set_1 = &all_solutions[0];
 //! let x1 = solution_set_1.get("x").unwrap();
 //! let y1 = solution_set_1.get("y").unwrap();
 //! let z1 = solution_set_1.get("z").unwrap();
 //!
-//! assert_eq!(guard.len(),1);
+//! assert_eq!(all_solutions.len(),1);
 //! assert_eq!(*x1,Constant::Integer(1));
 //! assert_eq!(*y1,Constant::Integer(2));
 //! assert_eq!(*z1,Constant::Integer(1));
@@ -114,8 +107,5 @@ pub mod ast;
 mod run;
 
 mod scoped_ptr;
-
-mod wrappers;
-pub use wrappers::*;
 
 pub mod print;
