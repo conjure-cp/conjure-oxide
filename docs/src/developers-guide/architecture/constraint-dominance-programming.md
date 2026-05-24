@@ -47,6 +47,8 @@ dominance relation
     pareto(minimising x, maximising y)
 ```
 
+Here, "pareto" refers to [**Pareto efficiency / Pareto optimality**](https://en.wikipedia.org/wiki/Pareto_efficiency) in multi-objective optimisation (not the "80/20 rule").
+
 Each item declares a component and direction:
 
 - `minimising expr`
@@ -102,6 +104,7 @@ This rewritten expression is then fed back to the backend during the same solve 
 ## Backend-Specific CDP Implementation
 
 ### SAT (`rustsat` / CaDiCaL)
+- [CaDiCaL](https://github.com/arminbiere/cadical) is the underlying SAT solver used by the RustSAT-backed adaptor.
 - Rewrites the dominance block into CNF through the normal rewrite pipeline.
 - Adds resulting clauses incrementally to the SAT solver.
 - Extends SAT variable mapping when dominance clauses introduce new references.
