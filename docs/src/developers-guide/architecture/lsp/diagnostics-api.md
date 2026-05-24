@@ -1,5 +1,5 @@
 [//]: # (Author: Anastasia Martinson)
-[//]: # (Last Updated: 18/12/2025)
+[//]: # (Last Updated: 22/05/2026)
 
 # Diagnostics API for LSP Server
 
@@ -21,11 +21,9 @@ crates/conjure-cp-essence-parser/src/diagnostics/
 
 ### Key Functions
 
-- `get_diagnostics(source: &str) -> Vec<Diagnostic)` serves as the main entrypoint. It aggregates `detect_semantic_errors(source)` and `detect_syntactic_errors(source)` into a single diagnostics vector, returning a combined, deduplicated-by-call vector of `Diagnostic`s. That's the function you would call for error detection and underlining.
+- `get_diagnostics(source: &str, cst: &Tree) -> Vec<Diagnostic)` serves as the main entrypoint. That's the function you would call for error detection and underlining. It uses `collect_errors` to call `parse_essence_with_context_and_map`. The latter runs syntactic error detection in case of an erronous CST and otherwise collects syntactic errors during parsing. In either case, all errors are aggregted into a single vector of `Diagnostic`s.
 
-- `detect_syntactic_errors(source: &str) -> Vec<Diagnostic)` Parses with tree-sitter and walks the CST using DFS with early retract on error/missing/zero-length nodes to avoid duplicates. More information on that in [error detection docs](error-detection/error-classification.md).
-
-- `detect_semantic_errors(source: &str) -> Vec<Diagnostic)` Runs `parse_essence_with_context` and, on `Err(EssenceParseError)`, maps the error into a `Diagnostic` using `error_to_diagnostic`. More information on that in [error detection docs](error-detection/error-classification.md).
+- `detect_syntactic_errors(source: &str) -> Vec<Diagnostic)` Is called by the parser when there are errors in the CST. It parses with tree-sitter and walks the CST using DFS with early retract on error/missing/zero-length nodes to avoid duplicates. More information on that in [error detection docs](error-detection/error-classification.md).
 
 - Helpers (for debugging and/or testing):
   - `print_all_error_nodes(source: &str)`: prints all tree-sitter error/missing nodes with spans.
@@ -42,21 +40,24 @@ crates/conjure-cp-essence-parser/src/diagnostics/
   - `message`: human-readable description / error message
   - `source`: static string identifying which part of the API the diagnostic comes from (e.g., `syntactic-error-detector`)
 
- Example of serialized diagnostic:
+Example of serialized diagnostic:
 
- ```json
- {
-  "range": {"start": {"line": 0, "character": 0}, "end": {"line": 0, "character": 5}},
+```json
+{
+  "range": {
+    "start": { "line": 0, "character": 0 },
+    "end": { "line": 0, "character": 5 }
+  },
   "severity": 1,
   "message": "some error message.",
   "source": "syntactic-error-detector"
- }
- ```
+}
+```
 
 - `SymbolKind` and `DocumentSymbol`:
   - Intended for document highlighting; currently enumerates a few kinds (e.g., `Integer`, `Decimal`, `Function`, `Letting`, `Find`). To be extended in the near future.
   - `DocumentSymbol { name, detail?, kind, range, children? }`
-  `DocumentSymbol` and `SymbolKind` exist to support semantic highlighting; As of now, these are scaffolded and will be extended across the Essence grammar later on.
+    `DocumentSymbol` and `SymbolKind` exist to support semantic highlighting; As of now, these are scaffolded and will be extended across the Essence grammar later on.
 
 ## Direction for Use
 
