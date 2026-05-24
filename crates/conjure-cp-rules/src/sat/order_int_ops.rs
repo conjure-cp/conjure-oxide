@@ -269,7 +269,7 @@ fn sat_order_toint(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         b.clone(),
     ]));
     new_clauses.push(CnfClause::new(vec![
-        Expr::Not(Metadata::new(), Moo::new(b.clone())),
+        Expr::Not(Metadata::new(), Moo::new(b)),
         r_0.clone(),
     ]));
 
