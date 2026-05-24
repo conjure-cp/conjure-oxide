@@ -17,6 +17,7 @@
 - [Essence Guide]()
 - [Command Line Guide]()
     - [Logging](users-guide/command-line-guide/logging.md)
+    - [Problem and Parameter Files](users-guide/command-line-guide/problem-and-parameter-files.md)
 - [Common Problems]()
 
 # Contributor's Guide
