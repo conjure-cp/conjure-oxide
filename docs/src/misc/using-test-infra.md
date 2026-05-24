@@ -2,13 +2,13 @@
 
 ## Rust Testing Harness
 
-The `cargo` CLI tool contains several rust utilities[^1], which are used to interact with the Rust Testing Harness. While the harness on its own is a fully usable testing script that provides support for unit tests and integration tests. It also has the benefit of being able to implement customised functionality using a build script. This means that functionality can be added to the harnesss[^2], without having to provide a custom entry point[^3].
+The `cargo` CLI tool contains several rust utilities[^1], which are used to interact with the Rust Testing Harness. While the harness on its own is a fully usable testing script that provides support for unit tests and integration tests. It also has the benefit of being able to implement customised functionality using a build script. This means that functionality can be added to the harness[^2], without having to provide a custom entry point[^3].
 
 Integration tests in Rust are run using `cargo test`. When `cargo test` is run, each of the files in the integration testing interface get compiled as a separate package. This then leads to a number of tests that can be run either all together or one-at-a-time. For large projects like Conjure Oxide, this allows for continuous integration.
 
 ## The Conjure Oxide Testing Setup
 
-Conjure Oxide uses a middle-ground testing setup, which is necessary because the project contains multiple packages, which are used as internal APIs in conjure oxide. One of the packages that is maintained internally is the 'tests-integration' package, used for testing the conjure-oxide tool. The package uses the conjure-oxide tool as a dependecy, and uses it to run testing input files. This allows the use of the rust testing harness to run custom code without having to rewrite the harness and deal with all the complications that come with defining custom entry points. 
+Conjure Oxide uses a middle-ground testing setup, which is necessary because the project contains multiple packages, which are used as internal APIs in conjure oxide. One of the packages that is maintained internally is the 'tests-integration' package, used for testing the conjure-oxide tool. The package uses the conjure-oxide tool as a dependency, and uses it to run testing input files. This allows the use of the rust testing harness to run custom code without having to rewrite the harness and deal with all the complications that come with defining custom entry points. 
 
 This works because of the build system in cargo, which works by looking for a 'build script'[^4] and running it just before compiling the crate. The 'tests-integration' crate's structure looks like this: 
 
@@ -33,7 +33,7 @@ This works because of the build system in cargo, which works by looking for a 'b
             └──  roundtrip_tests.rs
 ```
 
-This means, however, that the build script cannot use any of the code in the other integration testing files, as it cannot rely on the crate it is used to build. To circumvent this, the integration tester uses a few different tricks. It is actually built as an entirely separate crate which the `cargo test` utility uses to run tests. It uses a colletion of macros to build the crate in an order which is different from the default, so that the testing utility tool runs all of the testing code. The testing code calls different members of the internal API in order to run tests in a step-by-step manner.
+This means, however, that the build script cannot use any of the code in the other integration testing files, as it cannot rely on the crate it is used to build. To circumvent this, the integration tester uses a few different tricks. It is actually built as an entirely separate crate which the `cargo test` utility uses to run tests. It uses a collection of macros to build the crate in an order which is different from the default, so that the testing utility tool runs all of the testing code. The testing code calls different members of the internal API in order to run tests in a step-by-step manner.
 
 With the current setup, when the build script is run, it then executes every other testing utility. This includes the following scripts: 
 
@@ -68,11 +68,11 @@ The Conjure Oxide testing setup (in the conjure-cp/conjure-oxide-tester reposito
 ### Prerequisites
 
 - Python 3.14+ (project pyproject.toml requires >=3.14).
-- GNU Parallel (cli: `parallel`) for `runner/run_tests.sh`
+- GNU Parallel (command line: `parallel`) for `runner/run_tests.sh`
 - SQLite3 (for the results Database)
 - runsolver: used to manage an environment for the solver tool. This tool is the standard in SAT solver competitions, and other such applications
 - Optional, but highly recommended: `uv` for a project manager and `ty` for a type checker (used by some workflows)
-- In case `uv` is not used, look at pyproject.toml for an up-to-date list of the python dependencies. Install each of these using pip _inside_ the virtual environment (for various reasons, your linux distro may not allow system-wide installation).
+- In case `uv` is not used, look at pyproject.toml for an up-to-date list of the python dependencies. Install each of these using pip _inside_ the virtual environment (for various reasons, your linux distribution may not allow system-wide installation).
 
 Create and activate a virtual environment, then install these dependencies using the following commands:
 
@@ -91,7 +91,7 @@ python -m pip install uv pandas textual ty
     - `runsolver_cfg`: internal JSON object which takes in the resource configuration to allocate internally to the `runsolver` tool.
         - `memory`: The used memory allocation allowed per solver. 
         - `walltime`: The used maximum runtime per solver, the process will terminate after this amount of time.
-        - `cpus`: The used CPUs allocated per solver 
+        - `cpus`: The CPUs allocated per solver 
 
 Edit `settings.json` to add or modify runners and change the configuration with which to run `runsolver`.
 
