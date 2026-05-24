@@ -16,6 +16,9 @@ Most parser helpers return `Result<Option<T>, FatalParseError>`.
 
 The [roundtrip/invalid/semantic test directory](https://github.com/conjure-cp/conjure-oxide/tree/main/tests-integration/tests/roundtrip/invalid/semantic) contains various semantic error cases and their expected outputs.
 
+## Note: Keywords as Identifiers
+The parser's reserved/keyword list is maintained in `crates/conjure-cp-essence-parser/src/parser/keyword_checks.rs`. When new language keywords are added, update that file so the parser and documentation remain consistent.
+
 ## Example: Duplicate Variable Declarations
 Duplicate declaration checks are a good example of semantic detection during traversal. 
 
