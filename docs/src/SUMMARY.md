@@ -64,7 +64,7 @@
       - [Syntactic Errors](developers-guide/architecture/lsp/error-detection/syntactic-errors.md)
     - [Server-Client Model](developers-guide/architecture/lsp/server-client-model.md)
     - [Tests](developers-guide/architecture/lsp/tests.md)
-  - [Adaptors](developers-guide/architecture/adaptors/adaptor.md)
+  - [Adaptors]()
     - [Overview](developers-guide/architecture/adaptors/adaptor.md)
     - [Min/Max](developers-guide/architecture/adaptors/min-max.md)
     - [SAT](developers-guide/architecture/adaptors/sat-encoding/overview.md)
