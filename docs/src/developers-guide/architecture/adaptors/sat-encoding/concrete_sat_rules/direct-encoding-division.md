@@ -6,10 +6,6 @@
 SafeDiv(SATInt(a), SATInt(b)) ~> SATInt(c)
 ```
 
-The Direct Encoding Division rule encodes the integer division (specifically `SafeDiv`, where division by zero yields zero) of two direct-encoded integers into a new direct-encoded integer.
-
-The generic techniques are described in [SAT Rule Implementation Patterns](./sat-generic-patterns.md), and the exact current implementation lives in `crates/conjure-cp-rules/src/sat/direct_int_ops.rs` (`safediv_sat_direct`).
-
 ## What this rule does
 
 - Calculates the exact minimum and maximum possible quotient values to tightly bound the output domain.

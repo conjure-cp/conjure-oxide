@@ -6,10 +6,6 @@
 SATInt(a) < / > / <= / >= SATInt(b) ~> Bool
 ```
 
-The Order Encoding Inequality rule encodes comparison operations (`<`, `>`, `<=`, `>=`) between two order-encoded integers into boolean CNF expressions. Order encoding represents an integer using a **prefix-true bit vector** where position i is true if the integer's value is >= i.
-
-This page keeps only the rule shape. The generic techniques are described in [SAT Rule Implementation Patterns](./sat-generic-patterns.md), and the current code lives in `crates/conjure-cp-rules/src/sat/order_int_ops.rs` (`validate_order_int_operands`, `sat_order_lt`, `ineq_sat_order`).
-
 ## What this rule does
 
 - Normalises both operands to a shared range before comparing them.

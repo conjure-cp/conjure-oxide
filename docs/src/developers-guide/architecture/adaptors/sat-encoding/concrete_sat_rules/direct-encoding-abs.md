@@ -6,10 +6,6 @@
 |SATInt(a)| ~> SATInt(b)
 ```
 
-The Direct Encoding Absolute Value rule encodes the absolute value operation on a direct-encoded integer into another direct-encoded integer.
-
-This page is intentionally concise. The generic technique is described in [SAT Rule Implementation Patterns](./sat-generic-patterns.md), and the current implementation lives in `crates/conjure-cp-rules/src/sat/direct_int_ops.rs` (`abs_value_sat_direct`).
-
 ## What this rule does
 
 - Groups the one-hot input bits into buckets by `|value|`.

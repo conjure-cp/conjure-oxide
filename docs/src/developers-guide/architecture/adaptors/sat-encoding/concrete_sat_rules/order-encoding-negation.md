@@ -6,10 +6,6 @@
 -SATInt(a) ~> SATInt(b)
 ```
 
-The order encoding negation rule converts a negated expression for a SATInt to a new SATInt.
-
-The generic techniques are described in [SAT Rule Implementation Patterns](./sat-generic-patterns.md), and the exact current implementation lives in `crates/conjure-cp-rules/src/sat/order_int_ops.rs` (`neg_sat_order`).
-
 ## Rule Method
 - Computes the new domain for the resultant value (the old min and old max both get negated).
 - Creates a new output bitvector initially containing a single `true` bit (add padding to the front).

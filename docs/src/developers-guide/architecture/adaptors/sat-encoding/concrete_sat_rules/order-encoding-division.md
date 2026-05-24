@@ -8,10 +8,6 @@ Ongoing work in [#1775](https://github.com/conjure-cp/conjure-oxide/pull/1775/ch
 SafeDiv(SATInt(a), SATInt(b)) ~> SATInt(c)
 ```
 
-This rule closely mirrors the [Direct Encoding Division](./direct-encoding-division.md) by relying on a 2D lookup table strategy, but it requires some additional manipulations.
-
-The generic techniques are described in [SAT Rule Implementation Patterns](./sat-generic-patterns.md), and the current implementation lives in `crates/conjure-cp-rules/src/sat/order_int_ops.rs` (`safediv_sat_order`).
-
 ## What's new compared to Direct Encoding?
 
 Because order encoding represents values using a cascade of `true` bits (`N >= i`), we cannot isolate a specific value simply by checking one bit. We must ensure the boundary between `true` and `false` happens exactly where the integer value would be.
