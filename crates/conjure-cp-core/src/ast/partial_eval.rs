@@ -792,6 +792,7 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
         Expr::UnsafePow(_, _, _) => Err(RuleNotApplicable),
         Expr::SafePow(_, _, _) => Err(RuleNotApplicable),
         Expr::Minus(_, _, _) => Err(RuleNotApplicable),
+        Expr::Card(_, _) => todo!(),
 
         // As these are in a low level solver form, I'm assuming that these have already been
         // simplified and partially evaluated.
@@ -816,6 +817,7 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
         Expr::SATInt(_, _, _, _) => Err(RuleNotApplicable),
         Expr::PairwiseSum(_, _, _) => Err(RuleNotApplicable),
         Expr::PairwiseProduct(_, _, _) => Err(RuleNotApplicable),
+        Expr::Active(_, _, _) => todo!(),
         Expr::Defined(_, _) => todo!(),
         Expr::Range(_, _) => todo!(),
         Expr::Image(_, _, _) => todo!(),
@@ -827,6 +829,13 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
         Expr::ToMSet(_, _) => todo!(),
         Expr::ToRelation(_, _) => todo!(),
         Expr::RelationProj(_, _, _) => todo!(),
+        Expr::Apart(_, _, _) => todo!(),
+        Expr::Together(_, _, _) => todo!(),
+        Expr::Participants(_, _) => todo!(),
+        Expr::Party(_, _, _) => todo!(),
+        Expr::Parts(_, _) => todo!(),
+        Expr::Subsequence(_, _, _) => todo!(),
+        Expr::Substring(_, _, _) => todo!(),
         Expr::LexLt(_, _, _) => Err(RuleNotApplicable),
         Expr::LexLeq(_, _, _) => Err(RuleNotApplicable),
         Expr::LexGt(_, _, _) => Err(RuleNotApplicable),

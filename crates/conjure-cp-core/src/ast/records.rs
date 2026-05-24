@@ -9,7 +9,7 @@ use uniplate::{Biplate, Uniplate};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Hash, Quine)]
 #[path_prefix(conjure_cp::ast)]
-pub struct RecordValue<T: AbstractLiteralValue> {
+pub struct FieldValue<T: AbstractLiteralValue> {
     pub name: Name,
     pub value: T,
 }
@@ -18,29 +18,29 @@ pub struct RecordValue<T: AbstractLiteralValue> {
 
 // derive macro doesn't work as this has a generic type (for the same reasons as AbstractLiteral) ~nd60
 
-impl<T> Uniplate for RecordValue<T>
+impl<T> Uniplate for FieldValue<T>
 where
     T: AbstractLiteralValue,
 {
     fn uniplate(
         &self,
     ) -> (
-        ::uniplate::Tree<RecordValue<T>>,
-        Box<dyn Fn(::uniplate::Tree<RecordValue<T>>) -> RecordValue<T>>,
+        ::uniplate::Tree<FieldValue<T>>,
+        Box<dyn Fn(::uniplate::Tree<FieldValue<T>>) -> FieldValue<T>>,
     ) {
         let _name_copy = self.name.clone();
-        let (tree_value, ctx_value) = <T as Biplate<RecordValue<T>>>::biplate(&self.value);
+        let (tree_value, ctx_value) = <T as Biplate<FieldValue<T>>>::biplate(&self.value);
         let children = ::uniplate::Tree::Many(::std::collections::VecDeque::from([
             tree_value,
             ::uniplate::Tree::Zero,
         ]));
-        let ctx = Box::new(move |x: ::uniplate::Tree<RecordValue<T>>| {
+        let ctx = Box::new(move |x: ::uniplate::Tree<FieldValue<T>>| {
             let ::uniplate::Tree::Many(xs) = x else {
                 panic!()
             };
             let tree_value = xs[0].clone();
             let value = ctx_value(tree_value);
-            RecordValue {
+            FieldValue {
                 name: _name_copy.clone(),
                 value,
             }
@@ -51,7 +51,7 @@ where
 
 // want to be able to go anywhere U can go
 // (I'll follow U wherever U will go)
-impl<To, U> Biplate<To> for RecordValue<U>
+impl<To, U> Biplate<To> for FieldValue<U>
 where
     U: AbstractLiteralValue + Biplate<To>,
     To: Uniplate,
@@ -59,26 +59,26 @@ where
     fn biplate(&self) -> (uniplate::Tree<To>, Box<dyn Fn(uniplate::Tree<To>) -> Self>) {
         use uniplate::Tree;
 
-        if std::any::TypeId::of::<To>() == std::any::TypeId::of::<RecordValue<U>>() {
+        if std::any::TypeId::of::<To>() == std::any::TypeId::of::<FieldValue<U>>() {
             // To ==From => return One(self)
 
             unsafe {
                 // SAFETY: asserted the type equality above
-                let self_to = std::mem::transmute::<&RecordValue<U>, &To>(self).clone();
+                let self_to = std::mem::transmute::<&FieldValue<U>, &To>(self).clone();
                 let tree = Tree::One(self_to);
                 let ctx = Box::new(move |x| {
                     let Tree::One(x) = x else {
                         panic!();
                     };
 
-                    std::mem::transmute::<&To, &RecordValue<U>>(&x).clone()
+                    std::mem::transmute::<&To, &FieldValue<U>>(&x).clone()
                 });
 
                 (tree, ctx)
             }
         } else if std::any::TypeId::of::<To>() == std::any::TypeId::of::<Name>() {
             // return name field, as well as any names inside the value
-            let self2: RecordValue<U> = self.clone();
+            let self2: FieldValue<U> = self.clone();
             let f_name: Name = self2.name;
             let f_val: U = self2.value;
 
@@ -108,7 +108,7 @@ where
                     let value = ctx_val(tree_val);
 
                     // reconstruct things
-                    RecordValue { name, value }
+                    FieldValue { name, value }
                 });
 
                 (tree, ctx)
@@ -116,7 +116,7 @@ where
         } else {
             // walk into To ignoring name field, as Name can only biplate into Name
 
-            let self2: RecordValue<U> = self.clone();
+            let self2: FieldValue<U> = self.clone();
             let f_name: Name = self2.name;
             let f_val: U = self2.value;
 
@@ -133,7 +133,7 @@ where
                 let tree_val = xs[0].clone();
 
                 // reconstruct things
-                RecordValue {
+                FieldValue {
                     name: f_name.clone(),
                     value: ctx_val(tree_val),
                 }
