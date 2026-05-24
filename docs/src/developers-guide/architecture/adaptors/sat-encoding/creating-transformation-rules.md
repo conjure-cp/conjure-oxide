@@ -12,7 +12,7 @@ Regardless of which encoding type is being used, a SAT transformation rule shoul
 2. **Extract raw data** - Extract operand bit vectors and ranges (especially for integer operations).
 3. **Normalise operands** - Most integer rules should pad bit-vectors to a shared range so later zips or index lookups are safe.
 4. **Create the new expression with CNF clauses** - Use dedicated `tseytin_...` functions to construct boolean expressions. These functions directly generate CNF clauses and manage auxiliary variables, significantly reducing the rule applications needed for solver-ready input. For the logic behind boolean-to-CNF conversion, refer to the next chapter: [Booleans](booleans.md).
-5. **Domain propagation (Integers only)** - Update the range of the returned `SATInt` to reflect the new interval.
+5. **Domain propagation (Integers only)** - Update the range of the returned `SATInt` to reflect the new interval. The bit-width of the `SATInt` should also be updated for the new range.
 6. **Return the result** - Use `Reduction::cnf(..)` to return the created expression along with the new CNF clauses and symbol table.
 
 ## Example - negation of log integers
