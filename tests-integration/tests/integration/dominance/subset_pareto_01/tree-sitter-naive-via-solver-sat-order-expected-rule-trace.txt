@@ -22,8 +22,20 @@ or([a,b,c;int(1..)])
 
 --
 
+!(and([a,d;int(1..)])), 
+   ~~> distribute_not_over_and ([("Base", 8400)])
+or([!(a),!(d);int(1..)])
+
+--
+
+!(and([b,e;int(1..)])), 
+   ~~> distribute_not_over_and ([("Base", 8400)])
+or([!(b),!(e);int(1..)])
+
+--
+
 or([a,b,c;int(1..)]), 
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+   ~~> apply_tseytin_and_or ([("SAT", 4400)])
 __0
 new variables:
   find __0: bool
@@ -36,7 +48,7 @@ new clauses:
 --
 
 or([b,d;int(1..)]), 
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+   ~~> apply_tseytin_and_or ([("SAT", 4400)])
 __1
 new variables:
   find __1: bool
@@ -48,7 +60,7 @@ new clauses:
 --
 
 or([c,e;int(1..)]), 
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+   ~~> apply_tseytin_and_or ([("SAT", 4400)])
 __2
 new variables:
   find __2: bool
@@ -59,62 +71,84 @@ new clauses:
 
 --
 
-and([a,d;int(1..)]), 
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+!(a), 
+   ~~> apply_tseytin_not ([("SAT", 4400)])
 __3
 new variables:
   find __3: bool
 new clauses:
-  (¬__3 \/ a)
-  (¬__3 \/ d)
-  (__3 \/ ¬a \/ ¬d)
+  (¬a \/ ¬__3)
+  (a \/ __3)
 
 --
 
-!(__3), 
-   ~~> apply_tseytin_not ([("SAT", 9005)])
+!(d), 
+   ~~> apply_tseytin_not ([("SAT", 4400)])
 __4
 new variables:
   find __4: bool
 new clauses:
-  (¬__3 \/ ¬__4)
-  (__3 \/ __4)
+  (¬d \/ ¬__4)
+  (d \/ __4)
 
 --
 
-and([b,e;int(1..)]), 
-   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+or([__3,__4;int(1..)]), 
+   ~~> apply_tseytin_and_or ([("SAT", 4400)])
 __5
 new variables:
   find __5: bool
 new clauses:
-  (¬__5 \/ b)
-  (¬__5 \/ e)
-  (__5 \/ ¬b \/ ¬e)
+  (¬__3 \/ __5)
+  (¬__4 \/ __5)
+  (¬__5 \/ __3 \/ __4)
 
 --
 
-!(__5), 
-   ~~> apply_tseytin_not ([("SAT", 9005)])
+!(b), 
+   ~~> apply_tseytin_not ([("SAT", 4400)])
 __6
 new variables:
   find __6: bool
 new clauses:
-  (¬__5 \/ ¬__6)
-  (__5 \/ __6)
+  (¬b \/ ¬__6)
+  (b \/ __6)
+
+--
+
+!(e), 
+   ~~> apply_tseytin_not ([("SAT", 4400)])
+__7
+new variables:
+  find __7: bool
+new clauses:
+  (¬e \/ ¬__7)
+  (e \/ __7)
+
+--
+
+or([__6,__7;int(1..)]), 
+   ~~> apply_tseytin_and_or ([("SAT", 4400)])
+__8
+new variables:
+  find __8: bool
+new clauses:
+  (¬__6 \/ __8)
+  (¬__7 \/ __8)
+  (¬__8 \/ __6 \/ __7)
 
 --
 
 __0,
 __1,
 __2,
-__4,
-__6, 
-   ~~> remove_single_atom ([("SAT", 8400)])
+__5,
+__8, 
+   ~~> remove_single_atom ([("SAT", 4300)])
 __1,
 __2,
-__4,
-__6
+__5,
+__8
 new clauses:
   (__0)
 
@@ -122,42 +156,42 @@ new clauses:
 
 __1,
 __2,
-__4,
-__6, 
-   ~~> remove_single_atom ([("SAT", 8400)])
+__5,
+__8, 
+   ~~> remove_single_atom ([("SAT", 4300)])
 __2,
-__4,
-__6
+__5,
+__8
 new clauses:
   (__1)
 
 --
 
 __2,
-__4,
-__6, 
-   ~~> remove_single_atom ([("SAT", 8400)])
-__4,
-__6
+__5,
+__8, 
+   ~~> remove_single_atom ([("SAT", 4300)])
+__5,
+__8
 new clauses:
   (__2)
 
 --
 
-__4,
-__6, 
-   ~~> remove_single_atom ([("SAT", 8400)])
-__6
+__5,
+__8, 
+   ~~> remove_single_atom ([("SAT", 4300)])
+__8
 new clauses:
-  (__4)
+  (__5)
 
 --
 
-__6, 
-   ~~> remove_single_atom ([("SAT", 8400)])
+__8, 
+   ~~> remove_single_atom ([("SAT", 4300)])
 true
 new clauses:
-  (__6)
+  (__8)
 
 --
 
@@ -175,6 +209,8 @@ find __3: bool
 find __4: bool
 find __5: bool
 find __6: bool
+find __7: bool
+find __8: bool
 
 such that
 
@@ -192,19 +228,23 @@ clauses:
 (¬c \/ __2),
 (¬e \/ __2),
 (¬__2 \/ c \/ e),
-(¬__3 \/ a),
-(¬__3 \/ d),
-(__3 \/ ¬a \/ ¬d),
-(¬__3 \/ ¬__4),
-(__3 \/ __4),
-(¬__5 \/ b),
-(¬__5 \/ e),
-(__5 \/ ¬b \/ ¬e),
-(¬__5 \/ ¬__6),
-(__5 \/ __6),
+(¬a \/ ¬__3),
+(a \/ __3),
+(¬d \/ ¬__4),
+(d \/ __4),
+(¬__3 \/ __5),
+(¬__4 \/ __5),
+(¬__5 \/ __3 \/ __4),
+(¬b \/ ¬__6),
+(b \/ __6),
+(¬e \/ ¬__7),
+(e \/ __7),
+(¬__6 \/ __8),
+(¬__7 \/ __8),
+(¬__8 \/ __6 \/ __7),
 (__0),
 (__1),
 (__2),
-(__4),
-(__6)
+(__5),
+(__8)
 
