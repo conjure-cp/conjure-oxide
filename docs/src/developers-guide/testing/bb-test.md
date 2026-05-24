@@ -149,8 +149,5 @@ After this intial setup step, each of the tools can be used in the usual manner 
 
 ---
 
-[^1]: Check out the Rust Book's documentation.
-[^2]: Primarily, this added functionality uses integration testing, which uses the external interface of the crate. Check out the page in Rust Book here. 
-[^3]: This refers to Rust's provided advanced testing, which is not used by conjure oxide as of now
-[^4]: which is a file name 'build.rs' in the root directory of the crate.
+
 [^5]: 'Black-Box Testing' is a model of testing in Software Engineering, which refers to tests which are made in a way that presumes no knowledge of the system being tested. 

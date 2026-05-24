@@ -1,7 +1,9 @@
 [//]: # (Author: Shikhar Srivastava)
 [//]: # (Last Updated: 25/05/2026)
 
-# Overview
+# Underlying Testing Infrastructure
+
+## Overview
 
 This section contains a technical description of the testing infrastructure used by the Conjure Oxide Project to run all of the tests which have been described so far. It is useful for developers who intend to rework this system, add to it, or even replace it entirely. 
 
@@ -13,7 +15,7 @@ However, the harness also introduces certain limitation that one must work withi
 
 The `cargo` CLI tool contains several rust utilities[^1], which are used to interact with the Rust Testing Harness. The harness on its own is a fully usable testing system that provides support for unit tests and integration tests. It also has the benefit of being able to implement custom functionality using a build script. This means that features can be added to the harness[^2], without having to provide a custom entry point[^3].
 
-Integration tests in Rust are run using `cargo test`. When `cargo test` is run, the tests in each package are run, unless a specific package is specified with the `-p | --package` flag. This then leads to a number of tests that can be run either all together or one-at-a-time. For large projects like Conjure Oxide, this allows for continuous integration.
+Integration tests in Rust are run using `cargo test`. When `cargo test` is run, the tests in each package are run, unless a specific package is specified with the `-p | --package` flag. This then leads to a number of tests that can be run either all together or one-at-time. For large projects like Conjure Oxide, this allows for continuous integration.
 
 ## The Conjure Oxide Testing Setup
 
@@ -24,26 +26,34 @@ This is a neat system which allows us to use the rust testing harness to run our
 This works because of the build system in cargo, which works by looking for a 'build script'[^4] and running it just before compiling the crate. The 'tests-integration' crate's structure looks like this: 
 
 ```
-         .
-        ├──  build.rs
-        ├──  Cargo.toml
-        ├── 󰂺 README.md
-        ├── 󰣞 src
-        │   ├──  lib.rs
-        │   └──  test_config.rs
-        └──  tests
-            ├──  custom
-            ├── 󰡯 custom_test_template
-            ├──  custom_tests.rs
-            ├──  integration
-            ├── 󰡯 integration_test_template
-            ├──  integration_tests.rs
-            ├──  parser_tests
-            ├──  roundtrip
-            ├── 󰡯 roundtrip_test_template
-            └──  roundtrip_tests.rs
+        .
+        ├── build.rs
+        ├── Cargo.toml
+        ├── README.md
+        ├── src
+        │   ├── lib.rs
+        │   └── test_config.rs
+        └── tests
+            ├── custom
+            ├── custom_test_template
+            ├── custom_tests.rs
+            ├── integration
+            ├── integration_test_template
+            ├── integration_tests.rs
+            ├── parser_tests
+            ├── roundtrip
+            ├── roundtrip_test_template
+            └── roundtrip_tests.rs
 ```
 
 one limitation that should be kept in mind is that the build script is compiled and run before the compilation of any code in the crate. This means that when the build script is run, it cannot link in any of the libraries or functions within the `tests-integration` crate. It therefore cannot use any of the code in the other integration testing files, as it cannot rely on the crate which it is being used to compile. 
 
-To circumvent this, the testing system uses a few different tricks. As mentioned previously, it is actually built as an entirely separate crate which the `cargo test` utility can use to run tests. The build script for this crate uses a collection of macros to fetch tests and generate new code - one file for each of the tests specified in the custom-, roundtrip- and integration-tests directories. When cargo moves on to building and running the code within the crate, it discovers these newly generated files, compiles them and runs them. It will treat each individual file as a single test, and provide information for these tests' runtimes and exit status (pass/fail). 
+To circumvent this, the testing system uses a few different tricks. As mentioned previously, it is actually built as an entirely separate crate which the `cargo test` utility can use to run tests. The build script for this crate uses a collection of macros to fetch tests and generate new code[^5] - one file for each of the tests specified in the custom-, roundtrip- and integration-tests directories. When cargo moves on to building and running the code within the crate, it discovers these newly generated files, compiles them and runs them. It will treat each individual file as a single test, and provide information for these tests' runtimes and exit status (pass/fail).  
+
+---
+
+[^1]: Check out the Rust Book's documentation.
+[^2]: Primarily, this added functionality uses integration testing, which uses the external interface of the crate. Check out the page in Rust Book here. 
+[^3]: This refers to Rust's provided advanced testing, which is not used by conjure oxide as of now
+[^4]: which is a file name 'build.rs' in the root directory of the crate.
+[^5]: The test generation process referenced here has already been described in the [Test Generation](index.md) section.

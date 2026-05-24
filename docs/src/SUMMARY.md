@@ -80,9 +80,12 @@
         - [Sequences](developers-guide/architecture/types/sequences.md)
 - [Testing](developers-guide/testing/index.md)
     - [The Ideal Scenario](developers-guide/testing/the-ideal-scenario.md)
+    - [Integration Testing](developers-guide/testing/integration-testing.md)
     - [Roundtrip Testing](developers-guide/testing/roundtrip-testing.md)
     - [Writing Custom Tests](developers-guide/testing/writing-custom-tests.md)
-    - [Code Coverage](developers-guide/testing/code-coverage.md) 
+    - [Code Coverage](developers-guide/testing/code-coverage.md)
+    - [Black-Box Testing](developers-guide/testing/bb-test.md) 
+    - [Underlying Test Infrastructure](developers-guide/testing/underlying-infra.md)
 
 # Nuggets
 - [What Are Nuggets](nuggets/what-are-nuggets.md)
