@@ -68,7 +68,6 @@
     - [Overview](developers-guide/architecture/adaptors/adaptor.md)
     - [Min/Max](developers-guide/architecture/adaptors/min-max.md)
     - [SAT](developers-guide/architecture/adaptors/sat-encoding/overview.md)
-      - [Overview](developers-guide/architecture/adaptors/sat-encoding/overview.md)
       - [SAT Adaptor](developers-guide/architecture/adaptors/sat-encoding/sat-adaptor.md)
       - [Encoding Types](developers-guide/architecture/adaptors/sat-encoding/encoding-types.md)
       - [Creating Transformation Rules](developers-guide/architecture/adaptors/sat-encoding/creating-transformation-rules.md)

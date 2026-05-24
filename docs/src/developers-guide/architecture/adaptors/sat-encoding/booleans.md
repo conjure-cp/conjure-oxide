@@ -10,15 +10,15 @@ In CNF:
 
 $$(\lnot A \lor \lnot B \lor C \lor \lnot D) \land (E)$$
 
-The simplest approach to this conversion is by repeatedly applying rules (De Morgan's, double negation, distributivity, etc) until the expression is in CNF. This works well for smaller expressions but slows down massively when dealing with larger expressions (like the once generated when dealing with integers). To solve this, we use Tseytin transformations (see <https://en.wikipedia.org/wiki/Tseytin_transformation>).
+The simplest approach to this conversion is by repeatedly applying rules (De Morgan's, double negation, distributivity, etc) until the expression is in CNF. This works well for smaller expressions but slows down massively when dealing with larger expressions (like the ones generated when dealing with integers). To solve this, we use Tseytin transformations (see <https://en.wikipedia.org/wiki/Tseytin_transformation>).
 
-Boolean expressions are encoded via Tseytin transformations. 
+Boolean expressions are encoded via Tseytin transformations.
 
 ### Tseytin Transfomations
 
-These transformations allow us to convert an operation straight into CNF by introducing new auxiliary variables. This method makes rule applications significantly faster but with the downside of producing longer CNF with more variables to solve for. Modern SAT solvers, however, are very efficient and this extra performance cost is negligible compared to the time saved in conversion.
+These transformations allow us to convert an operation straight into CNF by introducing new auxiliary variables. This method makes rule applications significantly faster but with the downside of producing longer CNF with more variables to give to the solver. Modern SAT solvers, however, are very efficient and this extra performance cost is negligible compared to the time saved in conversion.
 
-The idea is that for a given boolean expression, an auxillary variable is created for each subexpression which is then substituted back into the main expression. 
+The idea is that for a given boolean expression, an auxillary variable is created for each subexpression which is then substituted back into the main expression.
 
 #### Example
 
@@ -28,7 +28,7 @@ Takes the following expression $\phi$:
 \phi := ((p\lor q) \land r) \rightarrow (\neg s)
 ```
 
-Only subexpressions of literals can be encoded so we must look at the inner-most subexpressions, $((p\lor q)$ and $(\neg s))$, first: 
+Only subexpressions of literals can be encoded so we must look at the inner-most subexpressions, $((p\lor q)$ and $(\neg s))$, first:
 
 $$
 \begin{align}
