@@ -5,7 +5,7 @@ use ustr::Ustr;
 
 use minion_ast::Model as MinionModel;
 use minion_sys::ast as minion_ast;
-use minion_sys::run_minion;
+use minion_sys::{RunOptions, ValueOrder, run_minion_with_options};
 
 use crate::Model as ConjureModel;
 use crate::ast::{self as conjure_ast, Expression, Name};
@@ -35,8 +35,27 @@ use super::parse_model::model_to_minion;
 pub struct Minion {
     __non_constructable: private::Internal,
     model: Option<MinionModel>,
+    value_order: Option<MinionValueOrder>,
     dominance_expression: Option<Expression>,
     dominance_model_template: Option<ConjureModel>,
+}
+
+/// Value-order override for Minion search.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MinionValueOrder {
+    Ascend,
+    Descend,
+    Random,
+}
+
+impl From<MinionValueOrder> for ValueOrder {
+    fn from(value: MinionValueOrder) -> Self {
+        match value {
+            MinionValueOrder::Ascend => ValueOrder::Ascend,
+            MinionValueOrder::Descend => ValueOrder::Descend,
+            MinionValueOrder::Random => ValueOrder::Random,
+        }
+    }
 }
 
 fn parse_name(minion_name: &str) -> Name {
@@ -82,6 +101,18 @@ impl Minion {
         Minion {
             __non_constructable: private::Internal,
             model: None,
+            value_order: None,
+            dominance_expression: None,
+            dominance_model_template: None,
+        }
+    }
+
+    /// Creates a Minion adaptor with an optional value-order override.
+    pub fn with_value_order(value_order: Option<MinionValueOrder>) -> Minion {
+        Minion {
+            __non_constructable: private::Internal,
+            model: None,
+            value_order,
             dominance_expression: None,
             dominance_model_template: None,
         }
@@ -114,7 +145,7 @@ impl SolverAdaptor for Minion {
         let mut next_midsearch_aux_var_id = 0usize;
         let mut solution_ordinal = 0usize;
 
-        let solver_ctx = run_minion(
+        let solver_ctx = run_minion_with_options(
             self.model.clone().expect("STATE MACHINE ERR"),
             Box::new(|solutions| {
                 any_solutions = true;
@@ -144,6 +175,9 @@ impl SolverAdaptor for Minion {
 
                 true
             }),
+            RunOptions {
+                value_order: self.value_order.map(Into::into),
+            },
         )
         .map_err(minion_error_to_solver_error)?;
 

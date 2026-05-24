@@ -1,5 +1,6 @@
 use crate::handlers::sync_event::position_to_byte;
 use crate::server::Backend;
+use conjure_cp_essence_parser::util::get_documentation;
 use tower_lsp::{jsonrpc::Error, lsp_types::*};
 
 impl Backend {
@@ -37,12 +38,22 @@ impl Backend {
 
         let hover_byte = position_to_byte(&cache_conts.contents, position);
 
-        let info = match source_map.hover_info_at_byte(hover_byte) {
+        let mut info = match source_map.hover_info_at_byte(hover_byte) {
             Some(info) => info.clone(),
             None => {
                 return Ok(None);
             }
         };
+        if let Some(doc_key) = info.doc_key.clone() {
+            let description = tokio::task::spawn_blocking(move || get_documentation(&doc_key))
+                .await
+                .ok()
+                .flatten();
+            let Some(description) = description else {
+                return Ok(None);
+            };
+            info.description = description;
+        }
         self.client
             .log_message(MessageType::INFO, info.description.clone())
             .await;

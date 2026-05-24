@@ -104,6 +104,24 @@ use crate::{
 /// ```
 pub type Callback<'a> = Box<dyn FnMut(HashMap<VarName, Constant>) -> bool + 'a>;
 
+/// Value-order strategy for Minion branching.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ValueOrder {
+    Ascend,
+    Descend,
+    Random,
+}
+
+/// Optional runtime controls for [`run_minion_with_options`].
+#[derive(Debug, Clone, Copy, Default)]
+pub struct RunOptions {
+    /// Override Minion value ordering.
+    ///
+    /// When unset, Minion keeps its default behaviour (or whatever was encoded
+    /// in the input model).
+    pub value_order: Option<ValueOrder>,
+}
+
 /// State passed through the C callback's `void* userdata` pointer.
 ///
 /// This replaces the old thread-local approach — all callback state is now
@@ -197,6 +215,16 @@ unsafe extern "C" fn run_callback(ctx: *mut ffi::MinionContext, userdata: *mut c
 /// statistics via [`SolverContext::get_from_table`].
 #[allow(clippy::unwrap_used)]
 pub fn run_minion(model: Model, callback: Callback<'_>) -> Result<SolverContext, MinionError> {
+    run_minion_with_options(model, callback, RunOptions::default())
+}
+
+/// Like [`run_minion`], but allows configuring selected Minion runtime options.
+#[allow(clippy::unwrap_used)]
+pub fn run_minion_with_options(
+    model: Model,
+    callback: Callback<'_>,
+    options: RunOptions,
+) -> Result<SolverContext, MinionError> {
     let _run_guard = MINION_RUN_LOCK.lock().unwrap();
     let mut state = CallbackState {
         callback,
@@ -216,6 +244,17 @@ pub fn run_minion(model: Model, callback: Callback<'_>) -> Result<SolverContext,
         // themselves instead of going through this wrapper.
         (*search_opts).silent = true;
         (*search_opts).print_solution = false;
+        if let Some(value_order) = options.value_order {
+            let value_order = match value_order {
+                ValueOrder::Ascend => ffi::ValOrderEnum_VALORDER_ASCEND,
+                ValueOrder::Descend => ffi::ValOrderEnum_VALORDER_DESCEND,
+                ValueOrder::Random => ffi::ValOrderEnum_VALORDER_RANDOM,
+            };
+            (*search_method).valorder = ffi::ValOrder {
+                type_: value_order,
+                bias: 0,
+            };
+        }
 
         convert_model_to_raw(search_instance, &model, &mut state.print_vars)?;
 

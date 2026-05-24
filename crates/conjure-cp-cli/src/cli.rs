@@ -7,6 +7,7 @@ use conjure_cp::settings::{
     DEFAULT_MINION_DISCRETE_THRESHOLD, Parser as InputParser, QuantifiedExpander, Rewriter,
     SolverFamily,
 };
+use conjure_cp::solver::adaptors::MinionValueOrder;
 
 use crate::{pretty, solve, test_solve};
 
@@ -163,6 +164,18 @@ pub struct GlobalArgs {
     )]
     pub minion_discrete_threshold: usize,
 
+    /// Override Minion value ordering.
+    ///
+    /// Possible values: `ascend`, `descend`, `random`.
+    #[arg(
+        long,
+        value_name = "ORDER",
+        value_parser = parse_minion_value_order,
+        global = true,
+        help_heading = CONFIGURATION_HELP_HEADING
+    )]
+    pub minion_valorder: Option<MinionValueOrder>,
+
     /// Save a solver input file to <filename>.
     ///
     /// This input file will be in a format compatible by the command-line
@@ -223,4 +236,15 @@ fn parse_solver_family(input: &str) -> Result<SolverFamily, String> {
 
 fn parse_parser(input: &str) -> Result<InputParser, String> {
     input.parse()
+}
+
+fn parse_minion_value_order(input: &str) -> Result<MinionValueOrder, String> {
+    match input {
+        "ascend" => Ok(MinionValueOrder::Ascend),
+        "descend" => Ok(MinionValueOrder::Descend),
+        "random" => Ok(MinionValueOrder::Random),
+        other => Err(format!(
+            "unknown minion value order '{other}', expected one of: ascend, descend, random"
+        )),
+    }
 }

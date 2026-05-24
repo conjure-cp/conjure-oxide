@@ -7,7 +7,7 @@ use super::{
     AbstractLiteral, DeclarationPtr, DomainPtr, Expression, Literal, Moo, Name,
     categories::{Category, CategoryOf},
     domains::HasDomain,
-    records::RecordValue,
+    records::FieldValue,
 };
 use derivative::Derivative;
 use parking_lot::MappedRwLockReadGuard;
@@ -21,7 +21,7 @@ use serde::{Deserialize, Serialize};
 #[biplate(to=Literal)]
 #[biplate(to=Expression)]
 #[biplate(to=AbstractLiteral<Literal>)]
-#[biplate(to=RecordValue<Literal>)]
+#[biplate(to=FieldValue<Literal>)]
 #[biplate(to=DeclarationPtr)]
 #[biplate(to=Name)]
 #[biplate(to=super::Reference)]

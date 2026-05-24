@@ -9,6 +9,7 @@ pub type SpanId = u32;
 #[derive(Debug, Clone)]
 pub struct HoverInfo {
     pub description: String,       // keyword description, type info...
+    pub doc_key: Option<String>,   // lazy-loaded docs/bits key for documentation hovers
     pub kind: Option<SymbolKind>,  // var, domain, function...
     pub ty: Option<String>,        // type info like int(0..10)
     pub decl_span: Option<SpanId>, // where declared (not sure that's doable)

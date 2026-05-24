@@ -4,7 +4,7 @@ pub mod minion;
 pub mod rustsat;
 
 #[doc(inline)]
-pub use minion::Minion;
+pub use minion::{Minion, MinionValueOrder};
 
 #[doc(inline)]
 pub use rustsat::Sat;

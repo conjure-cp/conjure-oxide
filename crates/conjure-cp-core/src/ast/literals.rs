@@ -5,10 +5,10 @@ use std::hash::Hash;
 use ustr::Ustr;
 
 use super::{
-    Atom, Domain, DomainPtr, Expression, GroundDomain, Metadata, Moo, Range, ReturnType, SetAttr,
-    Typeable, domains::HasDomain, domains::Int, records::RecordValue,
+    Atom, Domain, DomainPtr, Expression, GroundDomain, Metadata, Moo, PartitionAttr, Range,
+    ReturnType, SetAttr, Typeable, domains::HasDomain, domains::Int, records::FieldValue,
 };
-use crate::ast::domains::MSetAttr;
+use crate::ast::domains::{MSetAttr, SequenceAttr};
 use crate::ast::enumerated::EnumVariant;
 use crate::ast::pretty::pretty_vec;
 use crate::bug;
@@ -20,8 +20,8 @@ use uniplate::{Biplate, Tree, Uniplate};
 #[biplate(to=Atom)]
 #[biplate(to=AbstractLiteral<Literal>)]
 #[biplate(to=AbstractLiteral<Expression>)]
-#[biplate(to=RecordValue<Literal>)]
-#[biplate(to=RecordValue<Expression>)]
+#[biplate(to=FieldValue<Literal>)]
+#[biplate(to=FieldValue<Expression>)]
 #[biplate(to=Expression)]
 #[path_prefix(conjure_cp::ast)]
 /// A literal value, equivalent to constants in Conjure.
@@ -49,7 +49,7 @@ impl HasDomain for Literal {
 
 // make possible values of an AbstractLiteral a closed world to make the trait bounds more sane (particularly in Uniplate instances!!)
 pub trait AbstractLiteralValue:
-    Clone + Eq + PartialEq + Display + Uniplate + Biplate<RecordValue<Self>> + 'static
+    Clone + Eq + PartialEq + Display + Uniplate + Biplate<FieldValue<Self>> + 'static
 {
     type Dom: Clone + Eq + PartialEq + Display + Quine + From<GroundDomain> + Into<DomainPtr>;
 }
@@ -73,10 +73,17 @@ pub enum AbstractLiteral<T: AbstractLiteralValue> {
     // a tuple of literals
     Tuple(Vec<T>),
 
-    Record(Vec<RecordValue<T>>),
+    Record(Vec<FieldValue<T>>),
+
+    Sequence(Vec<T>),
 
     Function(Vec<(T, T)>),
 
+    // Variants only contain one of their name-domain pairs
+    Variant(Moo<FieldValue<T>>),
+
+    // A list of partitions, each part has a set of values
+    Partition(Vec<Vec<T>>),
     Relation(Vec<Vec<T>>),
 }
 
@@ -120,6 +127,51 @@ impl AbstractLiteral<Expression> {
                 Some(Domain::mset(MSetAttr::<Int>::default(), item_domain))
             }
 
+            AbstractLiteral::Sequence(elems) => {
+                let item_domains: Vec<DomainPtr> = elems
+                    .iter()
+                    .map(|x| x.domain_of())
+                    .collect::<Option<Vec<DomainPtr>>>()?;
+
+                // Get the union of all domains in the sequence.
+                // i.e. if <(1..3), (1..3), (5), (8..9)> then seq dom is (1..3, 5, 8..9)
+                let mut item_domain_iter = item_domains.iter().cloned();
+                let first_item = item_domain_iter.next()?;
+                let item_domain = item_domains
+                    .iter()
+                    .try_fold(first_item, |x, y| x.union(y))
+                    .expect("taking the union of all item domains of a set literal should succeed");
+
+                Some(Domain::sequence(
+                    SequenceAttr::<Int>::default(),
+                    item_domain,
+                ))
+            }
+
+            AbstractLiteral::Partition(items) => {
+                // Flatten the Vec<Vec< into a single vec
+                // ensure that all elemes in each part have a domain, or return None
+
+                let item_domains: Vec<DomainPtr> = items
+                    .iter()
+                    .flatten()
+                    .map(|x| x.domain_of())
+                    .collect::<Option<Vec<DomainPtr>>>()?;
+
+                // union all item domains together
+                let mut item_domain_iter = item_domains.iter().cloned();
+                let first_item = item_domain_iter.next()?;
+                let item_domain = item_domains
+                    .iter()
+                    .try_fold(first_item, |x, y| x.union(y))
+                    .expect("taking the union of all item domains of a partition literal should succeed");
+
+                Some(Domain::partition(
+                    PartitionAttr::<Int>::default(),
+                    item_domain,
+                ))
+            }
+
             AbstractLiteral::Matrix(items, _) => {
                 // ensure that all items have a domain, or return None
                 let item_domains = items
@@ -156,6 +208,7 @@ impl AbstractLiteral<Expression> {
             AbstractLiteral::Tuple(_) => None,
             AbstractLiteral::Record(_) => None,
             AbstractLiteral::Function(_) => None,
+            AbstractLiteral::Variant(_) => None,
             AbstractLiteral::Relation(_) => None,
         }
     }
@@ -202,6 +255,39 @@ impl Typeable for AbstractLiteral<Expression> {
                 );
 
                 ReturnType::MSet(Box::new(item_type))
+            }
+            AbstractLiteral::Sequence(items) if items.is_empty() => {
+                ReturnType::Sequence(Box::new(ReturnType::Unknown))
+            }
+            AbstractLiteral::Sequence(items) => {
+                let item_type = items[0].return_type();
+
+                // if any items do not have a type, return none.
+                let item_types: Vec<ReturnType> = items.iter().map(|x| x.return_type()).collect();
+
+                assert!(
+                    item_types.iter().all(|x| x == &item_type),
+                    "all items in a sequence should have the same type"
+                );
+
+                ReturnType::Sequence(Box::new(item_type))
+            }
+            AbstractLiteral::Partition(items) if items.is_empty() || items[0].is_empty() => {
+                ReturnType::Partition(Box::new(ReturnType::Unknown))
+            }
+            AbstractLiteral::Partition(items) => {
+                let item_type = items[0][0].return_type();
+
+                // if any items do not have a type, return none.
+                let item_types: Vec<ReturnType> =
+                    items.iter().flatten().map(|x| x.return_type()).collect();
+
+                assert!(
+                    item_types.iter().all(|x| x == &item_type),
+                    "all items in every part of a partition should have the same type"
+                );
+
+                ReturnType::Partition(Box::new(item_type))
             }
             AbstractLiteral::Matrix(items, _) if items.is_empty() => {
                 ReturnType::Matrix(Box::new(ReturnType::Unknown))
@@ -260,6 +346,10 @@ impl Typeable for AbstractLiteral<Expression> {
                 }
 
                 ReturnType::Function(Box::new(t1), Box::new(t2))
+            }
+            AbstractLiteral::Variant(item) => {
+                // Variants hold multiple possible types. In the case of a literal we know which type it chose
+                ReturnType::Variant(vec![item.value.return_type()])
             }
             AbstractLiteral::Relation(items) => {
                 if items.is_empty() {
@@ -346,12 +436,27 @@ where
                 let elems_str: String = elems.iter().map(|x| format!("{x}")).join(",");
                 write!(f, "({elems_str})")
             }
+            AbstractLiteral::Sequence(elems) => {
+                let elems_str: String = elems.iter().map(|x| format!("{x}")).join(",");
+                write!(f, "sequence({elems_str})")
+            }
+            AbstractLiteral::Partition(parts) => {
+                let elems_str: String = parts
+                    .iter()
+                    .map(|inner| {
+                        let elems_str = inner.iter().map(|x| format!("{x}")).join(",");
+                        format!("{{{}}}", elems_str)
+                    })
+                    .join(", ");
+
+                write!(f, "partition({elems_str})")
+            }
             AbstractLiteral::Record(entries) => {
                 let entries_str: String = entries
                     .iter()
-                    .map(|entry| format!("{}: {}", entry.name, entry.value))
+                    .map(|entry| format!("{} = {}", entry.name, entry.value))
                     .join(",");
-                write!(f, "{{{entries_str}}}")
+                write!(f, "record {{{entries_str}}}")
             }
             AbstractLiteral::Function(entries) => {
                 let entries_str: String = entries
@@ -359,6 +464,9 @@ where
                     .map(|entry| format!("{} --> {}", entry.0, entry.1))
                     .join(",");
                 write!(f, "function({entries_str})")
+            }
+            AbstractLiteral::Variant(entry) => {
+                write!(f, "variant{{{} = {}}}", entry.name, entry.value)
             }
             AbstractLiteral::Relation(elems) => {
                 let elems_str: String = elems
@@ -392,6 +500,13 @@ where
                 (
                     f1_tree,
                     Box::new(move |x| AbstractLiteral::Matrix(f1_ctx(x), index_domain.clone())),
+                )
+            }
+            AbstractLiteral::Sequence(vec) => {
+                let (f1_tree, f1_ctx) = <_ as Biplate<AbstractLiteral<T>>>::biplate(vec);
+                (
+                    f1_tree,
+                    Box::new(move |x| AbstractLiteral::Sequence(f1_ctx(x))),
                 )
             }
             AbstractLiteral::Tuple(elems) => {
@@ -437,11 +552,25 @@ where
                     }),
                 )
             }
+            AbstractLiteral::Variant(entries) => {
+                let (f1_tree, f1_ctx) = <_ as Biplate<AbstractLiteral<T>>>::biplate(entries);
+                (
+                    f1_tree,
+                    Box::new(move |x| AbstractLiteral::Variant(f1_ctx(x))),
+                )
+            }
             AbstractLiteral::Relation(elems) => {
                 let (f1_tree, f1_ctx) = <_ as Biplate<AbstractLiteral<T>>>::biplate(elems);
                 (
                     f1_tree,
                     Box::new(move |x| AbstractLiteral::Relation(f1_ctx(x))),
+                )
+            }
+            AbstractLiteral::Partition(elems) => {
+                let (f1_tree, f1_ctx) = <_ as Biplate<AbstractLiteral<T>>>::biplate(elems);
+                (
+                    f1_tree,
+                    Box::new(move |x| AbstractLiteral::Partition(f1_ctx(x))),
                 )
             }
         }
@@ -452,7 +581,7 @@ impl<U, To> Biplate<To> for AbstractLiteral<U>
 where
     To: Uniplate,
     U: AbstractLiteralValue + Biplate<AbstractLiteral<U>> + Biplate<To>,
-    RecordValue<U>: Biplate<AbstractLiteral<U>> + Biplate<To>,
+    FieldValue<U>: Biplate<AbstractLiteral<U>> + Biplate<To>,
 {
     fn biplate(&self) -> (Tree<To>, Box<dyn Fn(Tree<To>) -> Self>) {
         if std::any::TypeId::of::<To>() == std::any::TypeId::of::<AbstractLiteral<U>>() {
@@ -489,6 +618,13 @@ where
                     (
                         f1_tree,
                         Box::new(move |x| AbstractLiteral::Matrix(f1_ctx(x), index_domain.clone())),
+                    )
+                }
+                AbstractLiteral::Sequence(vec) => {
+                    let (f1_tree, f1_ctx) = <_ as Biplate<To>>::biplate(vec);
+                    (
+                        f1_tree,
+                        Box::new(move |x| AbstractLiteral::Sequence(f1_ctx(x))),
                     )
                 }
                 AbstractLiteral::Tuple(elems) => {
@@ -533,11 +669,25 @@ where
                         }),
                     )
                 }
+                AbstractLiteral::Variant(entries) => {
+                    let (f1_tree, f1_ctx) = <_ as Biplate<To>>::biplate(entries);
+                    (
+                        f1_tree,
+                        Box::new(move |x| AbstractLiteral::Variant(f1_ctx(x))),
+                    )
+                }
                 AbstractLiteral::Relation(elems) => {
                     let (f1_tree, f1_ctx) = <_ as Biplate<To>>::biplate(elems);
                     (
                         f1_tree,
                         Box::new(move |x| AbstractLiteral::Relation(f1_ctx(x))),
+                    )
+                }
+                AbstractLiteral::Partition(elems) => {
+                    let (f1_tree, f1_ctx) = <_ as Biplate<To>>::biplate(elems);
+                    (
+                        f1_tree,
+                        Box::new(move |x| AbstractLiteral::Partition(f1_ctx(x))),
                     )
                 }
             }
@@ -685,6 +835,28 @@ impl AbstractLiteral<Expression> {
                     .collect::<Option<Vec<_>>>()?;
                 Some(AbstractLiteral::MSet(literals))
             }
+            AbstractLiteral::Partition(elems) => {
+                // want to ascertain if every elem in Vec<Vec<Expr>> is a literal. If any are not, return none
+                // otherwise confirm it is an abslit<lit>
+                let mut partition: Vec<Vec<_>> = Vec::new();
+
+                for part in elems {
+                    let literals = part
+                        .into_iter()
+                        .map(|expr| match expr {
+                            Expression::Atomic(_, Atom::Literal(lit)) => Some(lit),
+                            Expression::AbstractLiteral(_, abslit) => {
+                                Some(Literal::AbstractLiteral(abslit.into_literals()?))
+                            }
+                            _ => None,
+                        })
+                        .collect::<Option<Vec<_>>>()?;
+
+                    partition.push(literals);
+                }
+
+                Some(AbstractLiteral::Partition(partition))
+            }
             AbstractLiteral::Matrix(items, domain) => {
                 let mut literals = vec![];
                 for item in items {
@@ -699,6 +871,19 @@ impl AbstractLiteral<Expression> {
                 }
 
                 Some(AbstractLiteral::Matrix(literals, domain.resolve()?))
+            }
+            AbstractLiteral::Sequence(elements) => {
+                let literals = elements
+                    .into_iter()
+                    .map(|expr| match expr {
+                        Expression::Atomic(_, Atom::Literal(lit)) => Some(lit),
+                        Expression::AbstractLiteral(_, abslit) => {
+                            Some(Literal::AbstractLiteral(abslit.into_literals()?))
+                        }
+                        _ => None,
+                    })
+                    .collect::<Option<Vec<_>>>()?;
+                Some(AbstractLiteral::Sequence(literals))
             }
             AbstractLiteral::Tuple(items) => {
                 let mut literals = vec![];
@@ -731,7 +916,7 @@ impl AbstractLiteral<Expression> {
                 Some(AbstractLiteral::Record(
                     literals
                         .into_iter()
-                        .map(|(name, literal)| RecordValue {
+                        .map(|(name, literal)| FieldValue {
                             name,
                             value: literal,
                         })
@@ -739,6 +924,19 @@ impl AbstractLiteral<Expression> {
                 ))
             }
             AbstractLiteral::Function(_) => todo!("Implement into_literals for functions"),
+            AbstractLiteral::Variant(entry) => {
+                let literal = match entry.value.clone() {
+                    Expression::Atomic(_, Atom::Literal(lit)) => Some(lit),
+                    Expression::AbstractLiteral(_, abslit) => {
+                        Some(Literal::AbstractLiteral(abslit.into_literals()?))
+                    }
+                    _ => None,
+                }?;
+                Some(AbstractLiteral::Variant(Moo::new(FieldValue {
+                    name: entry.name.clone(),
+                    value: literal,
+                })))
+            }
             AbstractLiteral::Relation(_) => todo!("Implement into_literals for relations"),
         }
     }
