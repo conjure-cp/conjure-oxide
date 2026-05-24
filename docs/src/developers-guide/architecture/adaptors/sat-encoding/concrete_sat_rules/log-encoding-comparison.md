@@ -29,8 +29,8 @@ $A < B$ is equivalent to $B > A$ so we only need to encode $>$ and $\geq$, and t
 
 $$
 \begin{align}
-(x > y) &\equiv x \land \neg y \\
-(x \geq y) &\equiv y \Rightarrow x
+(x > y) \equiv x \land \neg y \\
+(x \geq y) \equiv y \Rightarrow x
 \end{align}
 $$
 
