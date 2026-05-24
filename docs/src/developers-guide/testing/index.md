@@ -5,7 +5,7 @@
 ## Types of Tests
 
 Conjure-Oxide currently has four forms of internal tests:
-- Integration tests
+- [Integration tests](integration-testing.md)
 - [Custom tests](writing-custom-tests.md)
 - [Roundtrip tests](roundtrip-testing.md)
 - A small number of unit tests
