@@ -58,7 +58,7 @@ conjure-oxide solve \
 
 If a problem file contains parameters that are not assigned in the parameter file, or the assigned value is not of the correct domain, Conjure Oxide will not be able to solve, and will report an error.
 
-## `.param` vs `.essence` file types solve
+## File Types (`.param` vs `.essence`)
 
 Currently, in order to parse files containing `given` statements, Conjure Oxide must invoke the legacy Conjure program, which makes a distinction between `.param` files and `.essence` files for performance reasons.
 
