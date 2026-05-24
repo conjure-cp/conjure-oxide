@@ -56,3 +56,16 @@ fn cnf_int_neg(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     ))
 }
 ```
+
+### Assigning Rule Priorities
+Following the general conventions for rule priorities, SAT specific rules should have priorities at the 4000 level. As rules are applied in priority order (high to low), the following convention has been developed that roughly follows the expected order of rule application.
+
+| Rule Type                           | Priority | Description |
+|-------------------------------------|----------|---------|
+| Integer Decision Variable -> SATInt | 4800     | These are the rules that create the SATInt expressions that the other rules can understand. |
+| SATInt -> SATInt                    | 4700     | These are rules that represent standard integer-to-integer operations; summation, abs, pow, etc. |
+| SATInt -> Boolean                   | 4600     | These are rules that produce a boolean from integer inputs; equality, comparison, all-different, etc.|
+| Literal -> SATInt                   | 4500     | These are the rules that convert literals integer to SATInts, they should be applied last to allow for other rules to perform optimisations, for example multiplying by a known constant requires significantly less clauses and auxillary variables then treating the literal as an unkown integer. |
+| Boolean -> Boolean                  | 4400     | These are the rules for boolean-to-boolean operations; and, or, not, xor, etc. |
+| Boolean -> Nothing                  | 4300     | These are rules that take booleans and fully remove them from the constraints, this occurs when an expression if fully represented in the clauses. |
+
