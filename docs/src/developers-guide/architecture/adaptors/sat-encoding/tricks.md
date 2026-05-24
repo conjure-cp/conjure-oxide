@@ -14,7 +14,7 @@ Instead of implementing separate logic for `<`, `>`, `<=`, and `>=`, we can impl
 Currently, in direct encoding, we use the **bucket method** for operations that map multiple input values to the same output (e.g., absolute value or squaring).
 
 *   **Logic:** For each output value $k$ in the new domain, we identify all input values $v$ where $f(v) = k$. We then create an output bit $B_k$ by calculating the disjunction (OR) of all input indicator bits $I_v$ that fall into that "bucket". 
-![diagram](png_sat_assets/bucket_technique.png)
+![diagram](../png_adaptor_assets/bucket_technique.png)
 *   **Example:** For `abs(x)`, the output bit for value `5` is the result of `input_bit(-5) OR input_bit(5)`.
 
 ## Static Outcome Construction (Order-Encoded Division)
