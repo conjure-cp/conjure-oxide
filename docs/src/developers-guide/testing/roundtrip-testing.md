@@ -39,9 +39,9 @@ Error output tests are located in `./tests-integration/tests/roundtrip/invalid`,
 
 Test directories may contain a `notes.txt` file documenting known differences between the error outputs of the legacy and tree-sitter parsers, or noting missing error detection functionality. Essence files that currently produce incorrect error outputs for both parsers are labelled `input.disabled`.
 
-## Param Files 
-Roundtrip tests treat `.param` files as an optional “instantiate” step that runs after the main model parses. For each test directory, the program looks for a .param file and, if present, parses it with the same parser + shared `Context` as the `.essence` input. If both parses succeed, it instantiates the problem model with the param model with [`instantiate_model`](https://github.com/conjure-cp/conjure-oxide/blob/main/crates/conjure-cp-core/src/instantiate.rs). 
-If anything fails (problem parse, param parse, or instantiation), the test records an error and follows the error output path. 
+## Parameter Files Handling
+Roundtrip tests treat `.param` files as an optional “instantiate” step that runs after the main model parses. For each test directory, the program looks for a `.param` file and, if present, parses it with the same parser + shared `Context` as the `.essence` input. If both parses succeed, it instantiates the problem model with the parameter model with [`instantiate_model`](https://github.com/conjure-cp/conjure-oxide/blob/main/crates/conjure-cp-core/src/instantiate.rs). 
+If anything fails (problem parse, `.param` parse, or instantiation), the test records an error and follows the error output path. 
 
 
 ## Creating a New Roundtrip Test
