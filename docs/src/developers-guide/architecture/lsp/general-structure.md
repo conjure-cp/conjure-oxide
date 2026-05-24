@@ -85,12 +85,12 @@ The LanguageServer trait defined by tower-lsp is the interface through which our
 
 As established above, during the initialise handshake, the capabilities of the server are laid out. In the current implementation, the server advertises `text_document_sync` (INCREMENTAL), `hover_provider`, and `semantic_tokens_provider`. It is worth noting that in the capabilities, the `text_document_sync` is set to `INCREMENTAL` to ensure that each trigger event causes the client to pass only the modified content of the file, and the range (except for the first call, where the file is passed in its entirety). This is not the default case.
 
-There are currently eight core methods handled in the `LanguageServer` impl: `initialize`, `initialized`, `shutdown`, `did_open`, `did_save`, `did_change`, `hover`, and `semantic_tokens_full`. Sync handlers live in `handlers/sync_event.rs`; hover in `handlers/hovering.rs`; semantic highlighting in `handlers/semantic_highlighting.rs`.
+There are currently eight core methods handled in the `LanguageServer` implementation: `initialize`, `initialized`, `shutdown`, `did_open`, `did_save`, `did_change`, `hover`, and `semantic_tokens_full`. Sync handlers live in `handlers/sync_event.rs`; hover in `handlers/hovering.rs`; semantic highlighting in `handlers/semantic_highlighting.rs`.
 
 #### Cache
 This LSP uses a library called [Moka](https://github.com/moka-rs/moka) in order to implement caching. The reason that caching has been added is to reduce the time required to load longer files, especially if they are being reused, as this means that they can simply be recovered from the cache. The cache is also used alongside the incremental updates. Modifying the cache occurs within `sync_event`, but the cache is defined and instantiated in `handlers/cache.rs`. The cache itself is made up of a series of `CacheCont`s, which store a given files sourcemap, AST, CST, errors, contents, and versioned index. The cache has `max_capacity(10_000)`, a time to live of 30 minutes, and a time to idle of 5 minutes. The cache uses the uri (uniform resource identifier) of a file as its key, as this is unique to a file. This means that if a file changes location in the file tree (and therefore its URI changes), it will have to be re-entered into the cache, and the previous copy will time out of TTL/TTI and will be evicted.
 
-#### sync_event
+#### `sync_event`
 These are split from the main `server.rs` primarily for readability, and to prevent the main body of the server from becoming bloated. Rust allows a struct to have it's `impl` split over multiple files, so this file also simply implements functionality to the Backend struct.
 
 **handle_did_open**
@@ -100,7 +100,7 @@ This is the handler for the did_open event. On open, the cache is queried by the
 `did_save` currently only logs the save event. Diagnostics are intentionally driven by `did_change` to avoid races with in-flight parse updates.
 
 **handle_did_change**
-When changing a file, the `INCREMENTAL` sync setting provides range-based edits. The handler applies edits to cached text, updates the CST incrementally via tree-sitter `InputEdit`, updates/invalidates affected source-map spans, then stores provisional cache state immediately. Parsing and diagnostics publication are then run in a short debounced background task with version checks to drop stale updates.
+When changing a file, the `INCREMENTAL` sync setting provides range-based edits. The handler applies edits to cached text, updates the CST incrementally via tree-sitter `InputEdit`, updates/invalidates affected source-map spans, then stores provisional cache state immediately. Parsing and diagnostics publication are then run in a short buffered background task with version checks to drop stale updates.
 
 Diagnostics are published by mapping cached `RecoverableParseError`s through `error_to_diagnostic`, converting parser diagnostics to `tower-lsp` diagnostics via `convert_diagnostics`, and calling `publish_diagnostics` on the client. Publishing a new set replaces the previous diagnostics for that document.
 
