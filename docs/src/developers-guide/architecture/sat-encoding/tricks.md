@@ -26,10 +26,9 @@ Instead of dynamically scanning for the boundary, the code uses adjacent bits to
 For operations involving multiple operands like `sum(...)`, implementing a single massive circuit is difficult.
 
 *   **Logic:** Accumulate the result pairwise. Start with the first operand as the "accumulator," then for each subsequent operand, perform a pairwise "addition" where every possible sum $k = i + j$ is represented as an OR of ANDs.
-*   **Seen in:** `direct_int_ops.rs` (`add_sat_direct`).
 
 ## Common-Range Normalisation (Zero/Sign Padding)
 To simplify rule logic (especially zips and index lookups), we normalize all operands to a shared range before processing.
 
 *   **Logic:** Calculate a global min/max across all operands. Pad Direct-encoded integers with `false` bits and Order-encoded integers with `true` (prefix) or `false` (postfix) bits to ensure all bit-vectors have the same length and align to the same values.
-*   **Seen in:** `validate_order_int_operands`, `validate_direct_int_operands`.
+
