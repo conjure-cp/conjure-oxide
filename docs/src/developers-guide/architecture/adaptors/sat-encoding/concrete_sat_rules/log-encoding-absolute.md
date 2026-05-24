@@ -7,4 +7,5 @@
 ```
 
 ## Rule Method
-TODO
+- Create a negated copy of the input
+- Select between the original and negated input using the input's sign bit to select
