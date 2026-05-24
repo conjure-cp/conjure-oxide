@@ -275,7 +275,7 @@ fn sat_order_toint(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
     let result_bits = vec![
         Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(true))),
-        r_0
+        r_0,
     ];
 
     Ok(Reduction::cnf(
