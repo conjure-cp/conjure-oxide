@@ -273,7 +273,6 @@ fn sat_order_toint(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         r_0.clone(),
     ]));
 
-    // let mut result_bits = vec![];
     let result_bits = vec![
         Expr::Atomic(
             Metadata::new(),
@@ -281,9 +280,6 @@ fn sat_order_toint(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         ),
         r_0
     ];
-    // result_bits.push(Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(true))));
-    // result_bits.push(r_0);
-
 
     Ok(Reduction::cnf(
         Expr::SATInt(
