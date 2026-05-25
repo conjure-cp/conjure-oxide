@@ -248,7 +248,10 @@ fn parse_int_domain(
                 }
 
                 for i in 0..domain_component.child_count() {
-                    let Some(child) = domain_component.child(i) else {
+                    let Some(i_u32) = u32::try_from(i).ok() else {
+                        continue;
+                    };
+                    let Some(child) = domain_component.child(i_u32) else {
                         continue;
                     };
                     if child.kind() == ".." {
