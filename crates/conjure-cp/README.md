@@ -15,11 +15,11 @@ Add `conjure-cp` to your `Cargo.toml` file:
 conjure-cp = {git = "https://github.com/conjure-cp/conjure-oxide" }
 ```
 
-You will also need to install some rulesets; e.g [conjure-cp-rules](https://github.com/conjure-cp/conjure-oxide/tree/main/crates/conjure-cp-rules).
+You will also need to install some rulesets, e.g [conjure-cp-rules](https://github.com/conjure-cp/conjure-oxide/tree/main/crates/conjure-cp-rules).
 
 ### Documentation
 
-- User documentation: <https://conjure-cp.github.io/conjure-oxide/>
+- User documentation: <https://conjure-cp.github.io/conjure-oxide-reports/>
 - API Docs: <https://conjure-cp.github.io/conjure-oxide/docs/conjure_cp/>
 
 ### Licence
