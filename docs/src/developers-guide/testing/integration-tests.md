@@ -29,6 +29,29 @@ Run the full test suite with:
 cargo test
 ``` 
 
+## Running Specific Tests
+
+They are run through the 'conjure-oxide solve' command followed by a filename, like the following:
+```bash
+conjure-oxide solve input_file.essence
+```
+
+There are example Essence models and their expected solutions under `tests-integration/tests/integration`.
+
+### Essence Files
+
+Essence is the modelling language. The tests verify that a high level problem specification correctly produces the expected result after being translated to Essence' and solved.
+
+### Running without SMT support
+
+All z3/SMT-related code is behind the `smt` feature flag, which is enabled by default. Disabling it compiles out all SMT code and rules, which speeds up local development by skipping the slow `z3-sys` rebuild. 
+Integration tests that use SMT will still appear in the suite but will be explicitly skipped.
+
+To run without SMT support:
+```bash
+cargo test --workspace --no-default-features
+```
+
 ## Updating Expected Outputs with `ACCEPT=true`
 
 If you expect the rewritten AST to change (e.g. after a refactor), or are creating a new test, run:
@@ -43,16 +66,3 @@ Instead of comparing against the existing output files, the harness will:
 3. Compare the solutions. If they match, overwrite the stored AST and solution files with the new output.
 
 This allows expected outputs to be updated while still guarding correctness by validating against old Conjure.
-
-## Running Specific Tests
-
-They are run through the 'conjure-oxide solve' command followed by a filename, like the following:
-```bash
-conjure-oxide solve input_file.essence
-```
-
-There are example Essence models and their expected solutions under `tests-integration/tests/integration`.
-
-### Essence Files
-
-Essence is the modelling language. The tests verify that a high level problem specification correctly produces the expected result after being translated to Essence' and solved.
