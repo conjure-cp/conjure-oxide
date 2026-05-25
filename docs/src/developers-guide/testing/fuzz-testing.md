@@ -4,7 +4,7 @@
 # Fuzz testing
 
 ## Overview
-Fuzz testing is an automated test generation suite that generates new Essence input based on a given set of Essence input files, using the built in [`cargo-fuzz` library](https://rust-fuzz.github.io/book/cargo-fuzz.html) of Rust that invokes `libFuzzer`. The goal of fuzz testing is to improve robustness and safety of functions to ensure that edge cases and crash inducing inputs are discovered.
+Fuzz testing is an automated test generation suite that generates new Essence input based on a given set of Essence input files (see [How it works](#how-it-works)), using the built in [`cargo-fuzz` library](https://rust-fuzz.github.io/book/cargo-fuzz.html) of Rust that invokes `libFuzzer`. The goal of fuzz testing is to improve robustness and safety of functions to ensure that edge cases and crash inducing inputs are discovered.
 
 ## Structure
 ```bash
