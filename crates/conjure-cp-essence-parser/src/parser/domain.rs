@@ -197,7 +197,13 @@ fn parse_int_domain(
                         return Ok(None);
                     }
                 }
-                ctx.add_span_and_doc_hover(&domain_component, "range", SymbolKind::Domain, None, None);
+                ctx.add_span_and_doc_hover(
+                    &domain_component,
+                    "range",
+                    SymbolKind::Domain,
+                    None,
+                    None,
+                );
 
                 for i in 0..domain_component.child_count() {
                     let Some(i_u32) = u32::try_from(i).ok() else {

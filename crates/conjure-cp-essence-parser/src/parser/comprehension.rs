@@ -1,5 +1,5 @@
-use crate::diagnostics::diagnostics_api::SymbolKind;
 use crate::RecoverableParseError;
+use crate::diagnostics::diagnostics_api::SymbolKind;
 use crate::errors::FatalParseError;
 use crate::expression::parse_expression;
 use crate::field;
