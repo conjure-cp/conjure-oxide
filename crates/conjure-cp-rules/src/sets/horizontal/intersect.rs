@@ -1,16 +1,17 @@
 use conjure_cp::ast::Moo;
 use conjure_cp::ast::Metadata;
-use conjure_cp::ast::abstract_comprehension::AbstractComprehensionBuilder;
-use conjure_cp::ast::{Expression, ReturnType::Set, SymbolTable, Typeable};
-use conjure_cp::matrix_expr;
+use conjure_cp::ast::comprehension::{Comprehension, ComprehensionBuilder, ComprehensionQualifier};
+use conjure_cp::ast::{Expression as Expr, ReturnType::Set,  DeclarationPtr, SymbolTable, Typeable, SymbolTablePtr};
+use conjure_cp::ast::{Atom};
+// use conjure_cp::matrix_expr;
 use conjure_cp::rule_engine::Reduction;
 use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, register_rule,
 };
-use tracing::instrument::WithSubscriber;
+// use tracing::instrument::WithSubscriber;
 use uniplate::Biplate;
 
-use Expression::{And, Eq, SubsetEq};
+use Expr::{And, Eq, SubsetEq};
 // [return_expr | A intersect B, qualifiers] ~~> [return_expr | i <- A, i in B, qualifiers]
 #[register_rule("Base", 8700, [Comprehension])]
 fn intersect(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
@@ -20,7 +21,7 @@ fn intersect(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             for qualifier in &comp.qualifiers {
                 if let ComprehensionQualifier::ExpressionGenerator { ptr } = qualifier {
                     // clone the pointer to the qualifier that is an expression generator 
-                    let gen_decl = ptr.clone;
+                    let gen_decl = ptr.clone();
                     
                     // match on qualifiers of form "A intersect B"
                     let Some((a, b)) = (match ptr.as_quantified_expr() {
@@ -34,7 +35,7 @@ fn intersect(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                     };
                     
                     // [return_expr | i <- A, ...]
-                    let (comprehension1, a_ptr) = 
+                    let (mut comprehension1, a_ptr) = 
                         rewrite_intersect(comp.as_ref(), &gen_decl, a.into());
 
                     // add condition (i in B) to make [return_expr | i <- A, i in B, ...]
@@ -56,7 +57,7 @@ fn intersect(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             Err(RuleNotApplicable)
         }
         // if expr does not match a comprehension then throw err
-        _ => Err(Rule)
+        _ => Err(RuleNotApplicable)
     }
 }
 
@@ -73,7 +74,7 @@ fn rewrite_intersect (
         DeclarationPtr::new_quantified_expr(gen_decl.name().clone(), replacement_expr);
     let mut comprehension = comp.clone();
 
-    comprehension.symbols() = symbols.detach();
+    comprehension.symbols = comprehension.symbols.detach();
 
     comprehension.return_expression = 
         comprehension
@@ -101,17 +102,18 @@ fn rewrite_intersect (
             .collect();
 
     comprehension
-            .symbols()
+            .symbols
             .write()
             .update_insert(replacement_ptr.clone());
     
     // update qualifiers 
     for qualifier in &comprehension.qualifiers {
         match qualifier  {
-            Comprehension::ExpressionGenerator { ptr}
+            ComprehensionQualifier::ExpressionGenerator { ptr}
             | ComprehensionQualifier::Generator { ptr } => {
-                comprehension.sumbols.write().update_insert(ptr.clone());
+                comprehension.symbols.write().update_insert(ptr.clone());
             }
+            ComprehensionQualifier::Condition(_) => {}
         }
     }
     
