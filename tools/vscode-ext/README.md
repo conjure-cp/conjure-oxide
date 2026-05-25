@@ -16,13 +16,20 @@ An Essence Language Server Protocol (LSP) extension for VS Code, built on the Co
 This extension launches the `conjure-oxide` language server process.
 
 Current implementation detail:
-- the server binary is expected at `target/release/conjure-oxide` relative to this repository layout,
-- and is started with `conjure-oxide server-lsp`.
+- if a local binary exists at `target/release/conjure-oxide` (relative to this repository layout), it is used;
+- otherwise it falls back to `conjure-oxide` from your `PATH`.
 
-So before using it, build Conjure Oxide in release mode:
+To use the `PATH` fallback, install `conjure-oxide` and ensure it is available on your `PATH`.
+From this repository, one option is:
 
 ```bash
-cargo build --release
+cargo install --path crates/conjure-cp-cli
+```
+
+You can verify installation with:
+
+```bash
+conjure-oxide --help
 ```
 
 ## Development
