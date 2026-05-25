@@ -1,7 +1,7 @@
 [//]: # (Author: lilian-contius, edward lowe, ksenia baatz)
 [//]: # (Last Updated: 25/05/2025)
 
-This page is a collection explaining how the horizontal set rules are implemented in conjure-oxide. Since not all of these rules are implemented, sections of this documentation contain their haskell equivalents that were used in conjure. 
+This page is a collection explaining how the horizontal set rules are implemented in conjure-oxide. Since not all of these rules are implemented, sections of this documentation contain their haskell equivalents that were used in conjure to illustrate the motivation and strategies for how these rules could be implemented.
 
 Introductory notes on the use of "<-" in generators, and the logic behind and() and or() comprehensions. Followed by horizontal set rules. These are representation-independent rules in conjure-oxide that are used to rewrite models. 
 
@@ -384,7 +384,7 @@ A in B ~~> or([ a = i | i <- b ])
 rule for set membership, checks whether something is an element of a set. Conjure-oxide's implementation of this rule is currently in a draft pr (#1203).  It functions by:
 1. matching on the pattern "x in s"
 2. checking they are sets
-3. creating and joining a new comprehension that r
+3. creating and joining a new comprehension that returns elements of 'b' that are equal to elements in set 'a', effectively, "a in b"
 
 Until this rule is implemented on the main branch, this is an example of how the previous rule functioned in conjure. 
 1. identifies pattern: "x in s"
