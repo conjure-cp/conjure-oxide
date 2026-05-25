@@ -1,5 +1,5 @@
-[//]: # (Author: Leia McAlister-Young)
-[//]: # (Last Updated: 20/05/2026)
+[//]: # (Author: Leia McAlister-Young, Anastasia Martinson)
+[//]: # (Last Updated: 25.05.2026)
 
 # Overview
 This page describes how error detection currently works in the `conjure-cp-essence-parser` crate at a high level.
@@ -31,7 +31,7 @@ This wrapper abstracts the nature of the error(s) from the caller of the parser 
 ## Syntactic Errors
 Syntactic errors are grammar-level failures: the source does not match grammar rules and tree-sitter recovery produces `ERROR` or `MISSING` nodes in the CST.
 
-These are detected first by checking whether the root node has an error,which checks the entire tree. If a syntactic error exists, the CST is passed to a `detect_syntactic_errors` function which adds all syntactic errors to the errors vector. If syntactic errors exist, no semantic errors will be added to the vector (but parsing of the CST still continues for LSP source map purposes).
+These are detected first by checking whether the root node has an error, which checks the entire tree. If a syntactic error exists, the CST is passed to a `detect_syntactic_errors` function which adds all syntactic errors to the errors vector. If syntactic errors exist, no semantic errors will be added to the vector (but parsing of the CST still continues for LSP source map purposes).
 
 ## Semantic Errors
 Semantic errors are logically invalid constructs that may still parse into a valid CST (for example declaration/type/context errors).
@@ -39,6 +39,7 @@ Semantic errors are logically invalid constructs that may still parse into a val
 These are detected during parser traversal/conversion while building model structures.
 
 # Detection Flow (parse_model.rs)
+
 At a high level in `parse_essence_with_context_and_map`:
 
 1. Build or reuse a tree-sitter parse tree.
@@ -51,7 +52,7 @@ At a high level in `parse_essence_with_context_and_map`:
     - Traversal and model building continues with the aim of finding any more semantic errors (but the model won't be returned)
 6. Final return is either:
    - fatal error, or
-   - recoverable error package, or
-   - successful model.
+   - `None` for model and a SourceMap, when recording recoverable parse errors, or
+   - successful model and SourceMap, when no error ocurred
 
-
+> This recoverable approach was implemented so that source map is available on all non-fatal paths.
