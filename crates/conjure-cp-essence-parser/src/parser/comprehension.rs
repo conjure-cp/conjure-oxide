@@ -1,5 +1,4 @@
 use crate::diagnostics::diagnostics_api::SymbolKind;
-use crate::diagnostics::source_map::{HoverInfo, span_with_hover};
 use crate::RecoverableParseError;
 use crate::errors::FatalParseError;
 use crate::expression::parse_expression;
@@ -227,26 +226,13 @@ pub fn parse_quantifier_or_aggregate_expr(
         }
     };
 
-    let description = match operator_str {
-        "forAll" => "Universal quantifier keyword",
-        "exists" => "Existential quantifier keyword",
-        "sum" => "Aggregate keyword: sum",
-        "min" => "Aggregate keyword: min",
-        "max" => "Aggregate keyword: max",
-        _ => "Quantifier/aggregate keyword",
-    };
-    span_with_hover(
-        &operator_node,
-        ctx.source_code,
-        ctx.source_map,
-        HoverInfo {
-            description: description.to_string(),
-            doc_key: None,
-            kind: Some(SymbolKind::Function),
-            ty: None,
-            decl_span: None,
-        },
-    );
+    if let Some(doc_key) = match operator_str {
+        "min" => Some("min"),
+        "max" => Some("max"),
+        _ => None,
+    } {
+        ctx.add_span_and_doc_hover(&operator_node, doc_key, SymbolKind::Function, None, None);
+    }
 
     // Add variables as generators
     if let Some(dom) = domain {

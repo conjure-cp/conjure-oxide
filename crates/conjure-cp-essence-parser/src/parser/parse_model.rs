@@ -14,13 +14,12 @@ use super::dominance::parse_dominance_relation;
 use super::find::{parse_find_statement, parse_given_statement};
 use super::letting::parse_letting_statement;
 use super::util::{TypecheckingContext, get_tree};
-use crate::diagnostics::diagnostics_api::SymbolKind;
-use crate::diagnostics::source_map::{HoverInfo, SourceMap, span_with_hover};
+use crate::diagnostics::source_map::SourceMap;
 use crate::errors::{FatalParseError, ParseErrorCollection, RecoverableParseError};
 use crate::expression::parse_expression;
 use crate::parser::keyword_checks::keyword_as_identifier;
 use crate::syntax_errors::detect_syntactic_errors;
-use tree_sitter::{Node, Tree};
+use tree_sitter::Tree;
 
 /// Parse an Essence file into a Model using the tree-sitter parser.
 pub fn parse_essence_file_native(
@@ -149,7 +148,6 @@ pub fn parse_essence_with_context_and_map(
                 }
             }
             "bool_expr" | "atom" | "comparison_expr" => {
-                maybe_add_such_that_hover(&mut ctx, &statement);
                 ctx.typechecking_context = TypecheckingContext::Boolean;
                 let Some(expr) = parse_expression(&mut ctx, statement)? else {
                     continue;
@@ -192,31 +190,6 @@ pub fn parse_essence_with_context_and_map(
     }
     // otherwise return the model
     Ok((Some(model), source_map))
-}
-
-fn maybe_add_such_that_hover(ctx: &mut ParseContext, statement: &Node) {
-    let mut prev = statement.prev_sibling();
-    while let Some(node) = prev {
-        match node.kind() {
-            "," => prev = node.prev_sibling(),
-            "such that" => {
-                span_with_hover(
-                    &node,
-                    ctx.source_code,
-                    ctx.source_map,
-                    HoverInfo {
-                        description: "Constraint block keyword: such that".to_string(),
-                        doc_key: None,
-                        kind: Some(SymbolKind::Function),
-                        ty: None,
-                        decl_span: None,
-                    },
-                );
-                return;
-            }
-            _ => return,
-        }
-    }
 }
 
 pub fn parse_essence(src: &str) -> Result<(Model, SourceMap), Box<ParseErrorCollection>> {
