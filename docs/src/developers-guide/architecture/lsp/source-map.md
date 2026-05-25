@@ -9,7 +9,7 @@ The source map connects locations in an Essence source file to metadata discover
 
 The LSP uses the source map for position-based editor features:
 
-- hover information (e.g., description of the keword at that position)
+- hover information (e.g., description of the keyword at that position)
 - declaration site and reference metadata
   - i.e., if we're referencing an already declared variable, we want to know where in the file it was declared (to then have the ability to visit the definition), and what type it is (to be able to highlight different types of variables differently throughout the code).
 - semantic token generation (more in [Semantic Highlighting](semantic-highlighting.md))
