@@ -1,5 +1,7 @@
-[//]: # (Author: lilian-contius)
-[//]: # (Last Updated: 22/04/2025)
+[//]: # (Author: lilian-contius, edward lowe, ksenia baatz)
+[//]: # (Last Updated: 25/05/2025)
+
+This page is a collection explaining how the horizontal set rules are implemented in conjure-oxide. Since not all of these rules are implemented, sections of this documentation contain their haskell equivalents that were used in conjure. 
 
 Introductory notes on the use of "<-" in generators, and the logic behind and() and or() comprehensions. Followed by horizontal set rules. These are representation-independent rules in conjure-oxide that are used to rewrite models. 
 
@@ -192,9 +194,15 @@ fn supset_eq_to_subset_eq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
 
 ## Set-intersect (describes a new set)
+```
+[return_expr| A intersect B, ... ] ~~> [return_expr| i in A, i <- B, ...] 
+```
 
-rule for set intersection. defines that an element is in the intersection of two sets when it is in both sets. similar structure as comprehension literal rule, only used within generators or conditions
+Rule for set intersection, restricts elements to those that are in the intersection of both sets, ie. those elements present in both sets. The rust version of this rule for conjure-oxide is currently a draft-pr (#1203). The rust version function by:
+1. matches on the pattern "a intersect b"
+2. creates a new comprehension that contains any additional qualifiers but replaces the pattern with the appropriate generators and conditions 
 
+The version of this rule implemented in conjure was written in Haskell and can be seen below.
 1. attempts to match generator to pattern and expression: pattern "_quantified variable_ <-" and expression with a modifier operator (if present) applied to a set/multiset/relation "s"
 2. attempts to match s to "x intersect y"
 3. checks x is a set, multiset, function, or relation
@@ -230,18 +238,6 @@ theRule (Comprehension body gensOrConds) = do
              )
 ```
 
-### Example: 
-* set-intersect rule appears within model C = A intersect B, after applying set-equals, set-subsetEq, set-in
-* q4 is quantified in a former step, it is an element in C
-* see Context #1, q5 is quantified by or() - existence quantifier, translates to "there exists a q5 in A intersect B such that q5 equals q4"
-* translates "q5 <- A intersect B" to "q5 <- A, q5 in B", i.e. body of or() comprehension must apply to at least one member (q5) of A, with the additional condition that q5 must be in B.
-```
-Picking the first option: Question 1: [q5 = q4 | q5 <- A intersect B]
-                               Context #1: or([q5 = q4 | q5 <- A intersect B])
-                               ...
-     Answer 1: set-intersect: Horizontal rule for set intersection
-               [q5 = q4 | q5 <- A intersect B] ~~> [q5 = q4 | q5 <- A, q5 in B]
-```
 
 ## union_set (describes a new set)
 ```
@@ -383,8 +379,14 @@ fn difference_set(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
 ## Set-in (boolean)
 
-rule for set membership, checks whether something is an element of a set
+A in B ~~> or([ a = i | i <- b ])
 
+rule for set membership, checks whether something is an element of a set. Conjure-oxide's implementation of this rule is currently in a draft pr (#1203).  It functions by:
+1. matching on the pattern "x in s"
+2. checking they are sets
+3. creating and joining a new comprehension that r
+
+Until this rule is implemented on the main branch, this is an example of how the previous rule functioned in conjure. 
 1. identifies pattern: "x in s"
 2. checks s is a set
 3. introduces quantified variable to go through set s and check whether any of its elements equal x
@@ -406,16 +408,6 @@ rule for set membership, checks whether something is an element of a set
                   (iPat, i) <- quantifiedVar
                   return [essence| exists &iPat in &s . &i = &x |]
              )
-```
-
-### Example: 
-* here we are checking for membership of q4 in B union C
-* q4 is a quantified variable in larger context
-* q5 is the quantified variable introduced by the set-in rule.
-```
-Picking the first option: Question 1: q4 in B union C
-     Answer 1: set-in: Horizontal rule for set-in.
-               q4 in B union C ~~> or([q5 = q4 | q5 <- B union C])
 ```
 
 ## Set-card (int)
