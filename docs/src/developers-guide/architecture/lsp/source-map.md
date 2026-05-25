@@ -12,7 +12,7 @@ The LSP uses the source map for position-based editor features:
 - hover information (e.g., description of the keword at that position)
 - declaration site and reference metadata
   - i.e., if we're referencing an already declared variable, we want to know where in the file it was declared (to then have the ability to visit the definition), and what type it is (to be able to highlight different types of variables differently throughout the code).
-- semantic token generation (more in semantic_tokens.md)
+- semantic token generation (more in [Semantic_Highlighting](semantic-highlighting.md))
   - used for semantic highlighting
 - keeping hover and highlighting available even when the full AST cannot be built (more in recoverable_parsing.md)
 
