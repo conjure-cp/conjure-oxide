@@ -1,9 +1,4 @@
-// #[register_rule(())]
-//in rule
-
-
 use conjure_cp::ast::Moo;
-// Equals rule for sets
 use conjure_cp::ast::Metadata;
 use conjure_cp::ast::abstract_comprehension::AbstractComprehensionBuilder;
 use conjure_cp::ast::{Expression, ReturnType::Set, SymbolTable, Typeable};
@@ -16,7 +11,6 @@ use tracing::instrument::WithSubscriber;
 use uniplate::Biplate;
 
 use Expression::{And, Eq, SubsetEq};
-// -- a intersect b ~~> or([ x = i | i <- b , i in a])
 // [return_expr | A intersect B, qualifiers] ~~> [return_expr | i <- A, i in B, qualifiers]
 #[register_rule("Base", 8700, [Comprehension])]
 fn intersect(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
@@ -29,7 +23,6 @@ fn intersect(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                     let gen_decl = ptr.clone;
                     
                     // match on qualifiers of form "A intersect B"
-                    // create a
                     let Some((a, b)) = (match ptr.as_quantified_expr() {
                         Some(expr_guard) => match &*expr_guard {
                             Expr::Intersect(_, a, b) => Some((a.clone(), b.clone())),
@@ -69,7 +62,7 @@ fn intersect(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
 
 
-
+//creates a copy of the comprehension with the modified conditions, effectively rewriting the previous comprehension
 fn rewrite_intersect (
     comp: &Comprehension,
     gen_decl: &DeclarationPtr,
