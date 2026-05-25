@@ -5,12 +5,12 @@
 The parser converts incoming Essence programs to Conjure Oxide to the [Model Object](https://conjure-cp.github.io/conjure-oxide/docs/conjure_core/ast/struct.Model.html) that the rule engine takes in. The relevant parts of the Model object are the SymbolTable and Expression objects. The symbol table is essentially a list of the variables and their corresponding domains. The Expression object is a recursive object that hold all the constraints of the problem, nested into one object. The parser has two main parts. The first the `tree-sitter-essence` crate, which is a general Essence parser using the library tree-sitter. The second part is the `conjure_essence_parser` crate which is Rust code that uses the grammar to parse Essence programs and convert them into the above-mentioned Model object.
 
 # Tree Sitter Grammar
-[Tree-sitter](https://tree-sitter.github.io/tree-sitter/) is a parsing library that creates concrete syntax trees from programs in various languages. It contains many languages already, but Essence is unfortunately not one of them. Therefore, this crate contains a JavaScript grammar for Essence, which tree-sitter uses to create a parser. The parser is not specific to Conjure Oxide as the grammar merely describes the general Essence language, but it is used in Conjure Oxide and currently covers only parts of the Essence language that Conjure Oxide deals with and has tests written for. Therefore, it is not extensive and relatively simple in structure. 
+[Tree-sitter](https://tree-sitter.github.io/tree-sitter/) is a parsing library that creates concrete syntax trees from programs in various languages. It contains many languages already, but Essence is unfortunately not one of them. Therefore, this crate contains a JavaScript grammar for Essence, which tree-sitter uses to create a parser. The parser is not specific to Conjure Oxide as the grammar merely describes the general Essence language, but it is used in Conjure Oxide and currently covers only parts of the Essence language that Conjure Oxide deals with and has tests written for. Therefore, it is not extensive and relatively simple in structure.
 
 ## General Structure
-At the top level, there can be either find statements, letting statements, given statements, and constraint statements. There are also language declarations/comments, which are treated as metadata/extras rather than model constraints. Find statements consist of the keyword `find`, one or more variables, and then a domain of either type boolean or integer. Letting statements have the keyword `letting`, one or more variables, and an expression or domain to assign to those variables. Given statements contain the `given` keyword followed by  known input parameters and their domains. Constraints contain the keyword `such that` and one or more logical or numerical expressions which include variables and constants. 
+At the top level, there can be either find statements, letting statements, given statements, and constraint statements. There are also language declarations/comments, which are treated as metadata/extras rather than model constraints. Find statements consist of the keyword `find`, one or more variables, and then a domain of either type boolean or integer. Letting statements have the keyword `letting`, one or more variables, and an expression or domain to assign to those variables. Given statements contain the `given` keyword followed by  known input parameters and their domains. Constraints contain the keyword `such that` and one or more logical or numerical expressions which include variables and constants.
 
-## Expression Hierarchy 
+## Expression Hierarchy
 Expressions in the grammar are broken down into boolean expressions, comparison expressions, arithmetic expressions, and atoms. Atoms are the base expression layer (for example constants, identifiers, and structured values such as tuples, matrices, records, comprehensions, and indexing/slicing), and they are reused as operands by the higher-level expression families. This separation helps enforce semantic constraints inherent to the language. For example, expressions like `x + 3 = y` are allowed because an arithmetic expression is permitted on either side of a comparison, but chained comparisons like `x = y = 3` are disallowed, since a comparison expression cannot itself contain another comparison expression as an operand. This also helps ensure the top-most expression in a constraint evaluates to a boolean (so `such that x + 3` wouldn't be valid). There are also `atom` expressions such as constants, identifiers, and structured values (tuples, matrices, or slices), which are allowed as operands to most expressions since they might be booleans. This does mean, however, that a constraint like `such that y` would be valid even though `y` might be an integer. Quantifier expressions are also separated into boolean and arithmetic quantifiers for this reason (so `such that allDif{[a, b]}` is valid but `such that min{[a,b]}` isn't).
 
 The precedence levels throughout the grammar are based on the Essence prime operator precedence table found in Appendix B of the [Savile Row Manual](https://arxiv.org/pdf/2201.03472). This is important to ensure that nested or complicated expressions such as `(2*x) + (3*y) = 12` are parsed in the correct order, as this will determine the structure of the Expression object in the Model.
@@ -27,27 +27,27 @@ The generated `src/` directory is kept because:
 These files may cause merge conflicts but they are easily resolved by simply running `tree-sitter generate` again and committing that result. The only file that ever has to be manually changed or reviewed is `grammar.js`. `grammar.js` changes should never be committed without also running `tree-sitter generate` and committing the generated files.
 
 # Rust Parser
-This is the second part of the parser and is contained in the [conjure_essence_parser](https://conjure-cp.github.io/conjure-oxide/docs/conjure_essence_parser/index.html) crate. The primary function is `parse_essence_file_native`, shown below, which takes in the path to the input and the context and returns the Model or an error. 
+This is the second part of the parser and is contained in the [conjure_essence_parser](https://conjure-cp.github.io/conjure-oxide/docs/conjure_essence_parser/index.html) crate. The primary function is `parse_essence_file_native`, shown below, which takes in the path to the input and the context and returns the Model or an error.
 
 ```Rust
 pub fn parse_essence_file_native(
     path: &str,
     context: Arc<RwLock<Context<'static>>>,
-) -> Result<Model, EssenceParseError> {...}
+) -> Result<Model, Box<ParseErrorCollection>> {...}
 ```
 
-Within that function, the source code is read from the input and the tree-sitter grammar is used to parse that code and produce a parse tree. From there, a Model object is created and the `SymbolTable` and `Expression` fields are populated by traversing and extracting information from the parse tree. 
+Within that function, the source code is read from the input and the tree-sitter grammar is used to parse that code and produce a parse tree. From there, a Model object is created and the `SymbolTable` and `Expression` fields are populated by traversing and extracting information from the parse tree.
 
 ## General Structure and utils
-The top level nodes (children of the root node), are either extras (comments or language labels), find statements, letting statements, or constraints. Find and letting statements provide info that is added to the SymbolTable while constraints are added to the Expression. 
+The top level nodes (children of the root node), are either extras (comments or language labels), find statements, letting statements, or constraints. Find and letting statements provide info that is added to the SymbolTable while constraints are added to the Expression.
 
-In general, `kind()` is used to determine which rule a node represents and the corresponding function or logic is then applied to that node. Child nodes are found using their field names or indexes and the `named_children()` function is used to iterate over the named child nodes of a node. The function `child_expr` returns the Expression parsed from the first named child of the given node. 
+In general, `kind()` is used to determine which rule a node represents and the corresponding function or logic is then applied to that node. Child nodes are found using their field names or indexes and the `named_children()` function is used to iterate over the named child nodes of a node. The function `child_expr` returns the Expression parsed from the first named child of the given node.
 
 ### ParseContext
 The parser now uses a `ParseContext` struct to pass shared state through parsing functions. It stores the source code, root node, symbol information, collected recoverable errors, source map/declaration span data, and type checking context values. This keeps parsing helpers consistent and avoids threading many separate parameters through each function.
 
 ### Extracting from the source code (identifiers and constants)
-The tree-sitter nodes have a start and end byte indicating where the node corresponds to in the source code. For variable identifiers, constants, and operators, these bytes are necessary to extract the actual values from the source code. 
+The tree-sitter nodes have a start and end byte indicating where the node corresponds to in the source code. For variable identifiers, constants, and operators, these bytes are necessary to extract the actual values from the source code.
 
 For example, the following code appears in the `parse_find_statement` function and is used to extract the specific variable name from the source code, which is represented simply by a tree-sitter node (named `variable` in this case).
 
@@ -77,7 +77,7 @@ This structure allows for easy addition of more complex constraints as the gramm
 The constraint `x = 3` would be represented by a `comparison_expr` node, which is defined in the grammar as:
 ```Javascript
 comparison_expr: $ => prec(0, prec.left(seq(
-      field("left", choice($.boolean_expr, $.arithmetic_expr)), 
+      field("left", choice($.boolean_expr, $.arithmetic_expr)),
       field("operator", $.comparative_op),
       field("right", choice($.boolean_expr, $.arithmetic_expr))
     ))),
