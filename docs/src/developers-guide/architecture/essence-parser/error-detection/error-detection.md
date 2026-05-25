@@ -53,6 +53,6 @@ At a high level in `parse_essence_with_context_and_map`:
 6. Final return is either:
    - fatal error, or
    - `None` for model and a SourceMap, when recording recoverable parse errors, or
-   - successful model and SourceMap, when no error ocurred
+   - successful model and SourceMap, when no error occurred
 
 > This recoverable approach was implemented so that source map is available on all non-fatal paths.
