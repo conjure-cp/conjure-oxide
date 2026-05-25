@@ -35,11 +35,11 @@ Most editor themes do not provide dedicated styles for Essence variables. To vis
 
 The current mappings are shown below:
 
-| Declaration kind(s)                                    | Symbol kind | Semantic token classifier | Fallback TextMate grammar          |
-| ------------------------------------------------------ | ----------- | ------------------------- | ---------------------------------- |
-| Find                                                   | FindVar     | property                  | variable.other.property.findVar    |
-| ValueLetting<br>TemporaryValueLetting<br>DomainLetting | LettingVar  | variable                  | variable.other.constant.lettingVar |
-| Given                                                  | GivenVar    | string                    | string.other.givenVar              |
+| Declaration kind(s) | Symbol kind | Semantic token classifier | Fallback TextMate grammar          |
+| ------------------- | ----------- | ------------------------- | ---------------------------------- |
+| Find                | FindVar     | property                  | variable.other.property.findVar    |
+| ValueLetting<br>TemporaryValueLetting<br>DomainLetting | LettingVar | variable | variable.other.constant.lettingVar |
+| Given               | GivenVar    | string                    | string.other.givenVar              |
 
 Additionally, `find` variables are visually emphasised because they represent the variables the solver is attempting to solve for. An underline style is therefore hard-coded in `package.json` for tokens classified as `FindVar`.
 
@@ -52,7 +52,7 @@ To expand on the current semantic highlighting available, the files that will ne
 
 1. In `diagnostics_api.rs`, add the new symbol kind to the `SymbolKind` enum.
 2. In `semantic_token.rs`, add a new constant variable for the new symbol kind and create a mapping from the symbol kind to a token in the `token_encoding()` function.
-3. In `server.rs`, add the new symbol kind to the server's `semantic_toke_provider`.
+3. In `server.rs`, add the new symbol kind to the server's `semantic_token_provider`.
 4. In `package.json`, add the new symbol kind to the semantic token scopes to specify its styling in TextMate, and if it is a custom token, add a new field for it in the semantic token types
 
 ## Semantic Highlighting Customisation (VSCode)
