@@ -58,7 +58,7 @@
         - [Error Detection](developers-guide/architecture/lsp/error-detection.md)
         - [General Structure](developers-guide/architecture/lsp/general-structure.md)
         - [Diagnostics API](developers-guide/architecture/lsp/diagnostics-api.md)
-        - [Server-Client Model](developers-guide/architecture/lsp/server-client-model.md)
+
         - [Tests](developers-guide/architecture/lsp/tests.md)
     - [SAT]()
         - [Encoding Types](developers-guide/architecture/sat-encoding/encoding-types.md)
