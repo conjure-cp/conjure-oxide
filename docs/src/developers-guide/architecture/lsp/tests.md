@@ -5,7 +5,7 @@ last updated: 24-05-2026
 
 # LSP Error Testing
 ## Introduction
-Conjure Oxide includes a server that uses a Language Server Protocol (LSP) to check Essence files for errors before the file is parsed. The LSP server communicates with the Diagnostics API to check for errors, and it will return the error message along with the range of where the error occurred in the given Essence file. The server will then use the diagnosis to perform error underlining, and syntax and semantic highlighting (more details in [LSP Documentation](server-client-model.md) and [Diagnostics API documentation](diagnostics-api.md)). 
+Conjure Oxide includes a server that uses a Language Server Protocol (LSP) to check Essence files for errors before the file is parsed. The LSP server communicates with the Diagnostics API to check for errors, and it will return the error message along with the range of where the error occurred in the given Essence file. The server will then use the diagnosis to perform error underlining, and syntax and semantic highlighting (more details in [LSP Documentation](general-structure.md) and [Diagnostics API documentation](diagnostics-api.md)). 
 
 There are two types of error when trying to diagnose a given Essence file, which are **syntactic** and **semantic errors**:
 
