@@ -133,6 +133,19 @@ fn parse_int_domain(
                     return Ok(None);
                 };
 
+                span_with_hover(
+                    &domain_component,
+                    ctx.source_code,
+                    ctx.source_map,
+                    HoverInfo {
+                        description: "Single integer domain value".to_string(),
+                        doc_key: None,
+                        kind: Some(SymbolKind::Domain),
+                        ty: None,
+                        decl_span: None,
+                    },
+                );
+
                 if !matches!(int_val, IntVal::Const(_)) {
                     all_resolved = false;
                 }
@@ -174,18 +187,54 @@ fn parse_int_domain(
                         } else {
                             all_resolved = false;
                         }
+                        span_with_hover(
+                            &domain_component,
+                            ctx.source_code,
+                            ctx.source_map,
+                            HoverInfo {
+                                description: "Bounded integer range".to_string(),
+                                doc_key: None,
+                                kind: Some(SymbolKind::Domain),
+                                ty: None,
+                                decl_span: None,
+                            },
+                        );
                         ranges_unresolved.push(Range::Bounded(lower, upper));
                     }
                     (Some(lower), None) => {
                         if !matches!(lower, IntVal::Const(_)) {
                             all_resolved = false;
                         }
+                        span_with_hover(
+                            &domain_component,
+                            ctx.source_code,
+                            ctx.source_map,
+                            HoverInfo {
+                                description: "Lower-bounded integer range".to_string(),
+                                doc_key: None,
+                                kind: Some(SymbolKind::Domain),
+                                ty: None,
+                                decl_span: None,
+                            },
+                        );
                         ranges_unresolved.push(Range::UnboundedR(lower));
                     }
                     (None, Some(upper)) => {
                         if !matches!(upper, IntVal::Const(_)) {
                             all_resolved = false;
                         }
+                        span_with_hover(
+                            &domain_component,
+                            ctx.source_code,
+                            ctx.source_map,
+                            HoverInfo {
+                                description: "Upper-bounded integer range".to_string(),
+                                doc_key: None,
+                                kind: Some(SymbolKind::Domain),
+                                ty: None,
+                                decl_span: None,
+                            },
+                        );
                         ranges_unresolved.push(Range::UnboundedL(upper));
                     }
                     _ => {
@@ -195,6 +244,27 @@ fn parse_int_domain(
                             Some(domain_component.range()),
                         ));
                         return Ok(None);
+                    }
+                }
+
+                for i in 0..domain_component.child_count() {
+                    let Some(child) = domain_component.child(i) else {
+                        continue;
+                    };
+                    if child.kind() == ".." {
+                        span_with_hover(
+                            &child,
+                            ctx.source_code,
+                            ctx.source_map,
+                            HoverInfo {
+                                description: "Integer range separator".to_string(),
+                                doc_key: None,
+                                kind: Some(SymbolKind::Domain),
+                                ty: None,
+                                decl_span: None,
+                            },
+                        );
+                        break;
                     }
                 }
             }
@@ -243,6 +313,18 @@ fn parse_int_val(ctx: &mut ParseContext, node: Node) -> Result<Option<IntVal>, F
     if node.kind() == "atom" {
         let text = &ctx.source_code[node.start_byte()..node.end_byte()];
         if let Ok(integer) = text.parse::<i32>() {
+            span_with_hover(
+                &node,
+                ctx.source_code,
+                ctx.source_map,
+                HoverInfo {
+                    description: format!("Integer domain bound: {integer}"),
+                    doc_key: None,
+                    kind: Some(SymbolKind::Integer),
+                    ty: None,
+                    decl_span: None,
+                },
+            );
             return Ok(Some(IntVal::Const(integer)));
         }
         // Otherwise, check if it's an identifier reference
@@ -277,7 +359,26 @@ fn parse_tuple_domain(
         && first.kind() == "tuple"
     {
         // Adding tuple to the source map with hover info from documentation
-        ctx.add_span_and_doc_hover(&first, "L_tuple", SymbolKind::Domain, None, None);
+        ctx.add_span_and_doc_hover(
+            &first,
+            "L_tuple",
+            SymbolKind::Domain,
+            Some(format!("arity: {}", domains.len())),
+            None,
+        );
+    } else {
+        span_with_hover(
+            &tuple_domain,
+            ctx.source_code,
+            ctx.source_map,
+            HoverInfo {
+                description: "Tuple domain".to_string(),
+                doc_key: None,
+                kind: Some(SymbolKind::Domain),
+                ty: Some(format!("arity: {}", domains.len())),
+                decl_span: None,
+            },
+        );
     }
 
     Ok(Some(Domain::tuple(domains)))
@@ -310,8 +411,36 @@ fn parse_matrix_domain(
         &matrix_keyword_node,
         "matrix",
         SymbolKind::Domain,
+        Some(format!(
+            "index domains: {}, value domain: {}",
+            domains.len(),
+            value_domain
+        )),
         None,
-        None,
+    );
+    span_with_hover(
+        &index_domain_list,
+        ctx.source_code,
+        ctx.source_map,
+        HoverInfo {
+            description: "Matrix index domain list".to_string(),
+            doc_key: None,
+            kind: Some(SymbolKind::Domain),
+            ty: Some(format!("dimensions: {}", domains.len())),
+            decl_span: None,
+        },
+    );
+    span_with_hover(
+        &value_domain_node,
+        ctx.source_code,
+        ctx.source_map,
+        HoverInfo {
+            description: "Matrix value domain".to_string(),
+            doc_key: None,
+            kind: Some(SymbolKind::Domain),
+            ty: Some(value_domain.to_string()),
+            decl_span: None,
+        },
     );
     Ok(Some(Domain::matrix(value_domain, domains)))
 }
@@ -326,6 +455,18 @@ fn parse_record_domain(
             return Ok(None);
         };
         let name = Name::user(&ctx.source_code[name_node.start_byte()..name_node.end_byte()]);
+        span_with_hover(
+            &name_node,
+            ctx.source_code,
+            ctx.source_map,
+            HoverInfo {
+                description: format!("Record field: {}", name),
+                doc_key: None,
+                kind: Some(SymbolKind::Variable),
+                ty: None,
+                decl_span: None,
+            },
+        );
         let Some(domain_node) = field!(recover, ctx, record_entry, "domain") else {
             return Ok(None);
         };
@@ -341,7 +482,14 @@ fn parse_record_domain(
         &record_keyword_node,
         "L_record",
         SymbolKind::Domain,
-        None,
+        Some(format!(
+            "fields: {}",
+            record_entries
+                .iter()
+                .map(|entry| entry.name.to_string())
+                .collect::<Vec<_>>()
+                .join(", ")
+        )),
         None,
     );
     Ok(Some(Domain::record(record_entries)))
@@ -391,6 +539,22 @@ pub fn parse_set_domain(
                     };
                     set_attribute = Some(SetAttr::new_max_size(max_val));
                 }
+
+                span_with_hover(
+                    &child,
+                    ctx.source_code,
+                    ctx.source_map,
+                    HoverInfo {
+                        description: "Set domain attributes".to_string(),
+                        doc_key: None,
+                        kind: Some(SymbolKind::Domain),
+                        ty: set_attribute.as_ref().and_then(|attr| {
+                            let txt = attr.to_string();
+                            if txt.is_empty() { None } else { Some(txt) }
+                        }),
+                        decl_span: None,
+                    },
+                );
             }
             "domain" => {
                 let Some(parsed_domain) = parse_domain(ctx, child)? else {
@@ -412,7 +576,20 @@ pub fn parse_set_domain(
         // Adding set to the source map with hover info from documentation
         let set_keyword_node = child!(set_domain, 0, "set");
         // No documentation available for set domain, using fallback description
-        ctx.add_span_and_doc_hover(&set_keyword_node, "set", SymbolKind::Domain, None, None);
+        let set_attr = set_attribute.clone().unwrap_or_default();
+        let set_attr_txt = set_attr.to_string();
+        let details = if set_attr_txt.is_empty() {
+            format!("value domain: {}", domain)
+        } else {
+            format!("attributes: {set_attr_txt}; value domain: {}", domain)
+        };
+        ctx.add_span_and_doc_hover(
+            &set_keyword_node,
+            "set",
+            SymbolKind::Domain,
+            Some(details),
+            None,
+        );
         Ok(Some(Domain::set(set_attribute.unwrap_or_default(), domain)))
     } else {
         ctx.record_error(RecoverableParseError::new(
