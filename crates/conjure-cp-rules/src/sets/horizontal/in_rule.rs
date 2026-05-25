@@ -13,7 +13,6 @@ use conjure_cp::rule_engine::{
 use uniplate::Biplate;
 
 // use Expression::{And, Eq, SubsetEq};
-
 // A in B ~~> or([ a = i | i <- b ])
 #[register_rule("Base", 9000, [In])]
 fn rule_in_set(expr: &Expr, scope: &SymbolTable) -> ApplicationResult {
@@ -43,7 +42,7 @@ fn rule_in_set(expr: &Expr, scope: &SymbolTable) -> ApplicationResult {
                 .read()
                 .lookup_local(&quant_name)
             else {
-                bug!("oh nein! there is no quantified variable ://")
+                bug!("there is no quantified variable ://")
             }; 
 
             // create a return expr a = i

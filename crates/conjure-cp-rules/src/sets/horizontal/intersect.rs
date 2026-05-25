@@ -12,15 +12,6 @@ use conjure_cp::rule_engine::Reduction;
 use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, register_rule,
 };
-
-use conjure_cp::ast::comprehension::{self, Comprehension, ComprehensionQualifier};
-use conjure_cp::ast::{Atom, DeclarationPtr, Metadata};
-use conjure_cp::ast::{Expression as Expr, Moo, SymbolTable};
-use conjure_cp::into_matrix_expr;
-use conjure_cp::rule_engine::{Reduction, Rule};
-use conjure_cp::rule_engine::{
-    ApplicationError::RuleNotApplicable, ApplicationResult, register_rule,
-};
 use tracing::instrument::WithSubscriber;
 use uniplate::Biplate;
 
@@ -37,8 +28,8 @@ fn intersect(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                     // clone the pointer to the qualifier that is an expression generator 
                     let gen_decl = ptr.clone;
                     
-                    // match on qualifiers of form A intersect B
-                    // Assign clones of the sets to a and b
+                    // match on qualifiers of form "A intersect B"
+                    // create a
                     let Some((a, b)) = (match ptr.as_quantified_expr() {
                         Some(expr_guard) => match &*expr_guard {
                             Expr::Intersect(_, a, b) => Some((a.clone(), b.clone())),
@@ -49,11 +40,11 @@ fn intersect(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                         continue;
                     };
                     
-                    // [return_expr | i <- A, (i in B)...]
+                    // [return_expr | i <- A, ...]
                     let (comprehension1, a_ptr) = 
                         rewrite_intersect(comp.as_ref(), &gen_decl, a.into());
 
-                    // add condition (i in B)
+                    // add condition (i in B) to make [return_expr | i <- A, i in B, ...]
                     comprehension1
                         .qualifiers
                         .push(ComprehensionQualifier::Condition((Expr::In(
