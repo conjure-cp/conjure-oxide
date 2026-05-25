@@ -1,5 +1,5 @@
 [//]: # (Author: Soph Morgulchik)
-[//]: # (Last Updated: 21/12/2025)
+[//]: # (Last Updated: 23/12/2025)
 
 # Syntactic Errors Detection
 
@@ -104,14 +104,14 @@ The malformed-line message is built by taking the trimmed text of the offending 
 **Malformed line categories**  
 Based on the line’s opening tokens, the function reports one of the following expected statement types:
 
-- Starts with `find` → expects **a find declaration statement**
-- Starts with `letting` → expects **a letting declaration statement**
-- Starts with `given` → expects **a given declaration statement**
-- Starts with `where` → expects **an instantiation condition**
+- Starts with `find` -> expects **a find declaration statement**
+- Starts with `letting` -> expects **a letting declaration statement**
+- Starts with `given` -> expects **a given declaration statement**
+- Starts with `where` -> expects **an instantiation condition**
 - Starts with `minimising` or `maximising` → expects **an objective statement**
-- Starts with `such that` → expects **a constraint statement**
-- Starts with `such` (but not followed by `that`) → expects **a valid top-level statement**
-- Any other opening token → expects **a valid top-level statement**
+- Starts with `such that` -> expects **a constraint statement**
+- Starts with `such` (but not followed by `that`) -> expects **a valid top-level statement**
+- Any other opening token -> expects **a valid top-level statement**
 
 
 ## How To Test
@@ -124,6 +124,8 @@ cargo test -p tests-integration --test roundtrip_tests tests_roundtrip_invalid_s
 ```
 
 ## Examples
+
+All test cases can be found in the [roundtrip/invalid/syntax test directory](https://github.com/conjure-cp/conjure-oxide/tree/main/tests-integration/tests/roundtrip/invalid/syntax)
 
 ### Example: Missing Closing Bracket
 
