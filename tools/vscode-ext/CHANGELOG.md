@@ -2,6 +2,9 @@
 
 All notable changes to this extension will be documented in this file.
 
+## 0.1.5
+- Better error messages for when the language server fails to find `conjure-oxide`
+
 ## 0.1.4
 
 - Added semantic token contributions to the published manifest:

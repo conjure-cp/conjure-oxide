@@ -17,6 +17,13 @@ function tryStartLanguageServer(context) {
     output.appendLine('Starting language server...');
     const command = resolveServerCommand(context);
     const cwd = resolveServerCwd(context);
+    if (!path.isAbsolute(command) && !command.includes(path.sep) && !isCommandOnPath(command)) {
+        const message = `Conjure-Oxide Language Server: '${command}' not found. Set '${SERVER_CONFIG_SECTION}.${SERVER_PATH_CONFIG_KEY}' to an absolute binary path, or add '${command}' to PATH.`;
+        output.appendLine(message);
+        output.show(true);
+        vscode_1.window.showErrorMessage(message);
+        return;
+    }
     let serveroptions = {
         command,
         args: ["server-lsp"],
@@ -83,4 +90,20 @@ function resolveServerCwd(context) {
         return storagePath;
     }
     return undefined;
+}
+function isCommandOnPath(command) {
+    const pathEnv = process.env.PATH;
+    if (!pathEnv) {
+        return false;
+    }
+    for (const dir of pathEnv.split(path.delimiter)) {
+        if (!dir) {
+            continue;
+        }
+        const candidate = path.join(dir, command);
+        if (fs.existsSync(candidate)) {
+            return true;
+        }
+    }
+    return false;
 }
