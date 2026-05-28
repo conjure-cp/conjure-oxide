@@ -78,6 +78,7 @@
         - [Partitions](developers-guide/architecture/types/partitions.md)
         - [Variants](developers-guide/architecture/types/variants.md)
         - [Sequences](developers-guide/architecture/types/sequences.md)
+    - [Domain Pruning](developers-guide/architecture/domain_pruning.md)
 - [Testing](developers-guide/testing/index.md)
     - [The Ideal Scenario](developers-guide/testing/the-ideal-scenario.md)
     - [Roundtrip Testing](developers-guide/testing/roundtrip-testing.md)
