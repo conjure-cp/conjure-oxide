@@ -54,6 +54,7 @@
         - [General Structure](developers-guide/architecture/lsp/general-structure.md)
         - [Diagnostics API](developers-guide/architecture/lsp/diagnostics-api.md)
         - [Syntax Errors](developers-guide/architecture/lsp/syntax-errors.md)
+        - [Semantic Highlighting](developers-guide/architecture/lsp/semantic-highlighting.md)
         - [Error Detection]()
             - [Error Classification](developers-guide/architecture/lsp/error-detection/error-classification.md)
             - [Semantic Errors](developers-guide/architecture/lsp/error-detection/semantic-errors.md)
@@ -78,6 +79,7 @@
         - [Partitions](developers-guide/architecture/types/partitions.md)
         - [Variants](developers-guide/architecture/types/variants.md)
         - [Sequences](developers-guide/architecture/types/sequences.md)
+    - [Domain Pruning](developers-guide/architecture/domain_pruning.md)
 - [Testing](developers-guide/testing/index.md)
     - [The Ideal Scenario](developers-guide/testing/the-ideal-scenario.md)
     - [Roundtrip Testing](developers-guide/testing/roundtrip-testing.md)
@@ -89,3 +91,8 @@
 - [2024-09: Semantics of Rewriting Expressions with Side-Effects](nuggets/2024-09.md)
 - [2024-03: Implementing Uniplates and Biplates with Structure Preserving Trees](nuggets/2024-03.md)
 - [2023-11: High-Level Plan](nuggets/2023-11.md)
+
+# Team reflections
+- [Overview](team-reflections/overview.md)
+  - [2025-2026]()
+    - [SAT team reflection](team-reflections/2025-2026/sat-team.md)
