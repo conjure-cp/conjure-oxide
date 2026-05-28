@@ -21,7 +21,7 @@ Introductory notes on the use of "<-" in generators, and the logic behind and() 
 
 * example combining these three concepts:
   * taken from the last section of this page (shown both before and after vertical rules are applied):
-```
+```essence
 and([ or([ q5 = q4 | q5 <- A, or([ q6 = q5 | q6 <- B ]) ]) | q4 <- C ])
 and([C_Occurrence[q4] -> or([A_Occurrence[q5] ∧ B_Occurrence[q5] ∧ q5 = q4 | q5 : int(0..6)]) | q4 : int(0..6)])
 ```
@@ -476,7 +476,7 @@ Picking the first option: Question 1: max(A)
                max(A) ~~> max([q3 | q3 <- A])
 ```
 ### Set-literal example:
-```
+```essence
         letting A be {5, 6, 3}
         find i: int(0..10)
         such that i = min(A)
