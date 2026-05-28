@@ -8,6 +8,12 @@
 Terminology used in this document: 
  * A *workflow* contains multiple independently ran *tasks*. Each task runs a series of *steps*. Steps can call predefined *actions*, or run shell commands.
 
+## I want to skip CI tests
+
+Adding `[skip ci]` to a commit message prevents CI tests from being triggered for that commit.
+
+This is useful when pushing unfinished work, for example, to document what isn't working yet or to ask for help on a draft. 
+
 ## I want to have a step output multilined / complex text
 
 ```yml
