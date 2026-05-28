@@ -82,6 +82,7 @@
     - [The Ideal Scenario](developers-guide/testing/the-ideal-scenario.md)
     - [Roundtrip Testing](developers-guide/testing/roundtrip-testing.md)
     - [Writing Custom Tests](developers-guide/testing/writing-custom-tests.md)
+    - [Fuzz Testing](developers-guide/testing/fuzz-testing.md)
     - [Code Coverage](developers-guide/testing/code-coverage.md) 
 
 # Nuggets
