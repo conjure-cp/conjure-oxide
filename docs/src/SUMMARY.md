@@ -119,7 +119,7 @@
       - [Tests](developers-guide/architecture/lsp/tests.md)
     - [SAT]()
       - [Encoding Types](developers-guide/architecture/adaptors/sat-encoding/encoding-types.md)
-      - [Rule Types](developers-guide/architecture/adaptors/sat-encoding/rule-types.md)
+      - [Rule Types](developers-guide/architecture/rule-types.md)
       - [Creating Transformation Rules](developers-guide/architecture/adaptors/sat-encoding/creating-transformation-rules.md)
       - [Booleans](developers-guide/architecture/adaptors/sat-encoding/booleans.md)
     - [Sets]()
