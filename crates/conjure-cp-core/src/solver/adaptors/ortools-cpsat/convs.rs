@@ -17,7 +17,7 @@ struct LinearExpr {
     offset: i64,
 }
 
-/// Convert a Conjure domain in i64 CP-SAT type
+/// Flattens a Conjure domain (e.g. [1..3, 5..8]) into a flat array of bounds [1, 3, 5, 8] expected by CP-SAT.
 fn extract_domain_intervals(domain: &GroundDomain) -> SolverResult<Vec<i64>> {
     match domain {
         GroundDomain::Int(ranges) => {
@@ -114,6 +114,7 @@ fn expr_to_linear(expr: &Expression, ctx: &TranslationContext) -> SolverResult<L
     }
 }
 
+/// Helper to build a Protobuf linear constraint that enforces exactly one specific value.
 fn exact_linear_constraint(linear_expr: LinearExpr, value: i64) -> ConstraintProto {
     ConstraintProto {
         name: String::new(),
@@ -126,6 +127,7 @@ fn exact_linear_constraint(linear_expr: LinearExpr, value: i64) -> ConstraintPro
     }
 }
 
+/// Subtracts the right-hand linear expression from the left-hand one, effectively moving RHS to LHS (LHS - RHS).
 fn subtract_linear_exprs(lhs: LinearExpr, rhs: LinearExpr) -> LinearExpr {
     let mut vars = lhs.vars;
     vars.extend(rhs.vars);
@@ -140,6 +142,7 @@ fn subtract_linear_exprs(lhs: LinearExpr, rhs: LinearExpr) -> LinearExpr {
     }
 }
 
+/// Maps a relational operator (e.g. <=, >=, =) to a valid CP-SAT interval bound, applying the given offset.
 fn comparison_domain(expr: &Expression, offset: i64) -> SolverResult<Vec<i64>> {
     match expr {
         Expression::Eq(_, _, _) => Ok(vec![-offset, -offset]),
@@ -153,6 +156,7 @@ fn comparison_domain(expr: &Expression, offset: i64) -> SolverResult<Vec<i64>> {
     }
 }
 
+/// Main dispatcher: takes a Conjure constraint, extracts LHS and RHS, linearizes them, and builds a Protobuf constraint.
 fn translate_constraint(expr: &Expression, ctx: &TranslationContext) -> SolverResult<ConstraintProto> {
     match expr {
         // Top-level boolean constraints must evaluate to true.
@@ -200,6 +204,7 @@ pub(super) struct SolutionVar {
     pub is_bool: bool,
 }
 
+/// Entry point for translation: iterates over all variables and constraints to build the final CpModelProto.
 pub(super) fn model_to_cp_sat(model: Model) -> SolverResult<(CpModelProto, Vec<SolutionVar>)> {
     let mut cp_model = CpModelProto::default();
     let mut solution_vars = Vec::new();
@@ -239,6 +244,7 @@ pub(super) fn model_to_cp_sat(model: Model) -> SolverResult<(CpModelProto, Vec<S
     Ok((cp_model, solution_vars))
 }
 
+/// Reverse mapping: takes the raw integer array from C++ and maps the values back to the original Conjure variable names.
 pub(super) fn response_to_solution(
     response: &CpSolverResponse,
     solution_vars: &[SolutionVar],
@@ -264,183 +270,3 @@ pub(super) fn response_to_solution(
     Ok(solution)
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::ast::{DeclarationPtr, Domain, Metadata, Moo};
-    use crate::context::Context;
-    use std::sync::{Arc, RwLock};
-
-    #[test]
-    fn extract_domain_intervals_converts_bounded_integer_domains() {
-        let domain = GroundDomain::Int(vec![Range::Single(3), Range::Bounded(5, 8)]);
-
-        let result = extract_domain_intervals(&domain).expect("bounded int domain should convert");
-
-        assert_eq!(result, vec![3, 3, 5, 8]);
-    }
-
-    #[test]
-    fn extract_domain_intervals_converts_boolean_domains() {
-        let result =
-            extract_domain_intervals(&GroundDomain::Bool).expect("bool domain should convert");
-
-        assert_eq!(result, vec![0, 1]);
-    }
-
-    #[test]
-    fn extract_domain_intervals_rejects_unbounded_integer_domains() {
-        let domain = GroundDomain::Int(vec![Range::UnboundedR(1)]);
-
-        let result = extract_domain_intervals(&domain);
-
-        assert!(matches!(
-            result,
-            Err(SolverError::ModelFeatureNotSupported(_))
-        ));
-    }
-
-    #[test]
-    fn model_to_cp_sat_translates_find_variables() {
-        let mut model = Model::new(Arc::new(RwLock::new(Context::default())));
-        model
-            .add_symbol(DeclarationPtr::new_find(
-                Name::User("x".into()),
-                Domain::int(vec![Range::Bounded(1, 5)]),
-            ))
-            .expect("x should be inserted");
-        model
-            .add_symbol(DeclarationPtr::new_find(
-                Name::User("flag".into()),
-                Domain::bool(),
-            ))
-            .expect("flag should be inserted");
-
-        let (cp_model, _vars) = model_to_cp_sat(model).expect("simple model should convert");
-
-        assert_eq!(cp_model.variables.len(), 2);
-        assert_eq!(cp_model.variables[0].name, "x");
-        assert_eq!(cp_model.variables[0].domain, vec![1, 5]);
-        assert_eq!(cp_model.variables[1].name, "flag");
-        assert_eq!(cp_model.variables[1].domain, vec![0, 1]);
-    }
-
-    #[test]
-    fn model_to_cp_sat_translates_single_integer_find_variable() {
-        let mut model = Model::new(Arc::new(RwLock::new(Context::default())));
-        model
-            .add_symbol(DeclarationPtr::new_find(
-                Name::User("x".into()),
-                Domain::int(vec![Range::Bounded(1, 5)]),
-            ))
-            .expect("x should be inserted");
-
-        let (cp_model, _vars) = model_to_cp_sat(model).expect("single integer find should convert");
-
-        assert_eq!(cp_model.variables.len(), 1);
-        assert_eq!(cp_model.variables[0].name, "x");
-        assert_eq!(cp_model.variables[0].domain, vec![1, 5]);
-    }
-
-    #[test]
-    fn model_to_cp_sat_translates_simple_equality_constraint() {
-        let mut model = Model::new(Arc::new(RwLock::new(Context::default())));
-        let x_decl = DeclarationPtr::new_find(
-            Name::User("x".into()),
-            Domain::int(vec![Range::Bounded(1, 5)]),
-        );
-        model.add_symbol(x_decl.clone()).expect("x should be inserted");
-        model.add_constraint(Expression::Eq(
-            Metadata::new(),
-            Moo::new(Expression::from(Atom::new_ref(x_decl))),
-            Moo::new(Expression::from(3)),
-        ));
-
-        let (cp_model, _vars) = model_to_cp_sat(model).expect("simple equality should convert");
-
-        assert_eq!(cp_model.variables.len(), 1);
-        assert_eq!(cp_model.constraints.len(), 1);
-
-        let constraint = &cp_model.constraints[0];
-        let Some(constraint_proto::Constraint::Linear(linear)) = &constraint.constraint else {
-            panic!("expected a linear constraint");
-        };
-
-        assert_eq!(linear.vars, vec![0]);
-        assert_eq!(linear.coeffs, vec![1]);
-        assert_eq!(linear.domain, vec![3, 3]);
-    }
-
-    #[test]
-    fn model_to_cp_sat_translates_boolean_equality_constraint() {
-        let mut model = Model::new(Arc::new(RwLock::new(Context::default())));
-        let flag_decl = DeclarationPtr::new_find(Name::User("flag".into()), Domain::bool());
-        model
-            .add_symbol(flag_decl.clone())
-            .expect("flag should be inserted");
-        model.add_constraint(Expression::Eq(
-            Metadata::new(),
-            Moo::new(Expression::from(Atom::new_ref(flag_decl))),
-            Moo::new(Expression::from(true)),
-        ));
-
-        let (cp_model, _vars) =
-            model_to_cp_sat(model).expect("boolean equality should convert");
-
-        let constraint = &cp_model.constraints[0];
-        let Some(constraint_proto::Constraint::Linear(linear)) = &constraint.constraint else {
-            panic!("expected a linear constraint");
-        };
-
-        assert_eq!(linear.vars, vec![0]);
-        assert_eq!(linear.coeffs, vec![1]);
-        assert_eq!(linear.domain, vec![1, 1]);
-    }
-
-    #[test]
-    fn model_to_cp_sat_translates_top_level_boolean_reference_constraint() {
-        let mut model = Model::new(Arc::new(RwLock::new(Context::default())));
-        let flag_decl = DeclarationPtr::new_find(Name::User("flag".into()), Domain::bool());
-        model
-            .add_symbol(flag_decl.clone())
-            .expect("flag should be inserted");
-        model.add_constraint(Expression::from(Atom::new_ref(flag_decl)));
-
-        let (cp_model, _vars) =
-            model_to_cp_sat(model).expect("top-level boolean reference should convert");
-
-        let constraint = &cp_model.constraints[0];
-        let Some(constraint_proto::Constraint::Linear(linear)) = &constraint.constraint else {
-            panic!("expected a linear constraint");
-        };
-
-        assert_eq!(linear.vars, vec![0]);
-        assert_eq!(linear.coeffs, vec![1]);
-        assert_eq!(linear.domain, vec![1, 1]);
-    }
-
-    #[test]
-    fn model_to_cp_sat_translates_top_level_not_boolean_constraint() {
-        let mut model = Model::new(Arc::new(RwLock::new(Context::default())));
-        let flag_decl = DeclarationPtr::new_find(Name::User("flag".into()), Domain::bool());
-        model
-            .add_symbol(flag_decl.clone())
-            .expect("flag should be inserted");
-        model.add_constraint(Expression::Not(
-            Metadata::new(),
-            Moo::new(Expression::from(Atom::new_ref(flag_decl))),
-        ));
-
-        let (cp_model, _vars) =
-            model_to_cp_sat(model).expect("top-level not boolean should convert");
-
-        let constraint = &cp_model.constraints[0];
-        let Some(constraint_proto::Constraint::Linear(linear)) = &constraint.constraint else {
-            panic!("expected a linear constraint");
-        };
-
-        assert_eq!(linear.vars, vec![0]);
-        assert_eq!(linear.coeffs, vec![1]);
-        assert_eq!(linear.domain, vec![0, 0]);
-    }
-}

@@ -1,8 +1,6 @@
-#!/bin/bash
 set -e
 set -x
 
-# Detect Ubuntu version
 UBUNTU_VER=$(lsb_release -rs)
 echo "Detected Ubuntu version: ${UBUNTU_VER}"
 
@@ -30,7 +28,6 @@ sudo cp -r ortools_extracted/lib/* /usr/local/lib/
 # Register libraries
 sudo ldconfig
 
-# Verify installation
 if [ -f "/usr/local/include/ortools/base/base_export.h" ]; then
     echo "OR-Tools C++ library installed successfully!"
 else

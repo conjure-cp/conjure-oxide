@@ -91,20 +91,20 @@ jobs:
         rm -f target/debug/diff-cover.lcov target/debug/lcov.info
 
     - name: Install protoc
-      run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
-
-    - name: Verify protoc installation
-      run: |
-        if ! command -v protoc > /dev/null; then
-          echo "protoc not found"; exit 1;
-        fi
-        protoc --version
+      uses: arduino/setup-protoc@v3
+      with:
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Set PROTOC environment variable
       run: echo "PROTOC=$(which protoc)" >> $GITHUB_ENV
 
-    - name: Install OR-Tools
+    - name: Install OR-Tools (Ubuntu)
+      if: runner.os == 'Linux'
       run: .github/workflows/tools/install_ortools.sh
+
+    - name: Install OR-Tools (macOS)
+      if: runner.os == 'macOS'
+      run: brew install or-tools
 
     - name: Install rust
       run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}

@@ -239,16 +239,21 @@ jobs:
         submodules: recursive
         fetch-depth: 0
 
-    - name: Install protoc (Ubuntu)
-      if: ${{ matrix.os == 'ubuntu-latest' }}
-      run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
-
-    - name: Install protoc (macOS)
-      if: ${{ matrix.os == 'macos-latest' }}
-      run: brew install protobuf
+    - name: Install protoc
+      uses: arduino/setup-protoc@v3
+      with:
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Set PROTOC environment variable
       run: echo "PROTOC=$(which protoc)" >> $GITHUB_ENV
+
+    - name: Install OR-Tools (Ubuntu)
+      if: runner.os == 'Linux'
+      run: .github/workflows/tools/install_ortools.sh
+
+    - name: Install OR-Tools (macOS)
+      if: runner.os == 'macOS'
+      run: brew install or-tools
 
     - name: Install rust
       run: rustup update stable && rustup default stable
