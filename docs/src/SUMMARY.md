@@ -91,3 +91,8 @@
 - [2024-09: Semantics of Rewriting Expressions with Side-Effects](nuggets/2024-09.md)
 - [2024-03: Implementing Uniplates and Biplates with Structure Preserving Trees](nuggets/2024-03.md)
 - [2023-11: High-Level Plan](nuggets/2023-11.md)
+
+# Team reflections
+- [Overview](team-reflections/overview.md)
+  - [2025-2026]()
+    - [SAT team reflection](team-reflections/2025-2026/sat-team.md)
