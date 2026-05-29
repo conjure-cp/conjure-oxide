@@ -369,6 +369,13 @@ impl GroundDomain {
         }
     }
 
+    /// Get size of this domain as a [usize]
+    pub fn len_usize(&self) -> Result<usize, DomainOpError> {
+        self.length()?
+            .try_into()
+            .map_err(|_| DomainOpError::TooLarge)
+    }
+
     pub fn contains(&self, lit: &Literal) -> Result<bool, DomainOpError> {
         // not adding a generic wildcard condition for all domains, so that this gives a compile
         // error when a domain is added.

@@ -121,7 +121,7 @@ impl Representation for MatrixToAtom {
             return Err(RuleNotApplicable);
         }
 
-        Ok(izip!(self.names(), matrix::flatten(matrix)).collect())
+        Ok(izip!(self.names(), matrix::flatten_owned(matrix)).collect())
     }
 
     fn value_up(&self, values: &BTreeMap<Name, Literal>) -> Result<Literal, ApplicationError> {

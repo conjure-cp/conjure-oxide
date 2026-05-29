@@ -1,6 +1,6 @@
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
-use std::fmt::{Display, Formatter};
+use std::fmt::{Debug, Display, Formatter};
 use std::hash::Hash;
 use ustr::Ustr;
 
@@ -46,7 +46,14 @@ impl HasDomain for Literal {
 pub trait AbstractLiteralValue:
     Clone + Eq + PartialEq + Display + Uniplate + Biplate<FieldValue<Self>> + 'static
 {
-    type Dom: Clone + Eq + PartialEq + Display + Quine + From<GroundDomain> + Into<DomainPtr>;
+    type Dom: Clone
+        + Eq
+        + PartialEq
+        + Debug
+        + Display
+        + Quine
+        + From<GroundDomain>
+        + Into<DomainPtr>;
 }
 impl AbstractLiteralValue for Expression {
     type Dom = DomainPtr;
@@ -777,6 +784,12 @@ impl From<Literal> for Ustr {
     }
 }
 
+impl From<AbstractLiteral<Literal>> for Literal {
+    fn from(literal: AbstractLiteral<Literal>) -> Self {
+        Literal::AbstractLiteral(literal)
+    }
+}
+
 impl AbstractLiteral<Expression> {
     /// If all the elements are literals, returns this as an AbstractLiteral<Literal>.
     /// Otherwise, returns `None`.
@@ -930,6 +943,7 @@ impl Display for Literal {
 mod tests {
 
     use super::*;
+    use crate::ast::matrix::{flatten, partial_flatten, shape_of};
     use crate::{domain_int_ground, into_matrix, matrix, matrix_lit, range};
     use uniplate::Uniplate;
 
@@ -957,6 +971,39 @@ mod tests {
     }
 
     #[test]
+    fn matrix_flatten() {
+        let tensor: AbstractLiteral<Literal> = matrix![
+            [
+                // batch 1
+                [1, 2, 3, 4],
+                [5, 6, 7, 8],
+                [9, 10, 11, 12]
+            ],
+            [
+                // batch 2
+                [13, 14, 15, 16],
+                [17, 18, 19, 20],
+                [21, 22, 23, 24]
+            ]
+        ];
+
+        let actual_elems: Vec<Literal> = flatten(&tensor).cloned().collect();
+        let expected_elems = (1..25).map(Literal::from).collect::<Vec<_>>();
+        assert_eq!(actual_elems, expected_elems);
+    }
+
+    #[test]
+    fn matrix_domain_1d() {
+        let matrix = matrix_lit![10, 11, 12, 13; domain_int_ground!(1..4)];
+        let dom = matrix.domain_of();
+
+        let (inner_dom, idx_doms) = dom.as_matrix_ground().expect("must be ground matrix");
+        assert_eq!(inner_dom, &domain_int_ground!(10..13));
+        assert_eq!(idx_doms.len(), 1);
+        assert_eq!(&idx_doms[0], &domain_int_ground!(1..4));
+    }
+
+    #[test]
     fn matrix_domain_2d() {
         let matrix = matrix_lit![
             [1, 2, 3, 4],
@@ -973,5 +1020,72 @@ mod tests {
         assert_eq!(idx_doms.len(), 2);
         assert_eq!(&idx_doms[0], &domain_int_ground!(1..2));
         assert_eq!(&idx_doms[1], &domain_int_ground!(1..4));
+    }
+
+    #[test]
+    fn matrix_shape_3d() {
+        let tensor: AbstractLiteral<Literal> = matrix![
+            [
+                [1, 2, 3, 4],
+                [5, 6, 7, 8],
+                [9, 10, 11, 12]
+            ],
+            [
+                [13, 14, 15, 16],
+                [17, 18, 19, 20],
+                [21, 22, 23, 24]
+            ];
+            [
+                domain_int_ground!(1..2),
+                domain_int_ground!(1..3),
+                domain_int_ground!(1..4)
+            ]
+        ];
+        let shape = shape_of(&tensor).expect("shape_of to work on a 3D matrix");
+
+        assert_eq!(shape.size, 24);
+        assert_eq!(shape.dims, vec![2, 3, 4]);
+        assert_eq!(shape.strides, vec![12, 4, 1]);
+        assert_eq!(
+            shape.idx_doms,
+            vec![
+                domain_int_ground!(1..2),
+                domain_int_ground!(1..3),
+                domain_int_ground!(1..4)
+            ]
+        );
+    }
+
+    #[test]
+    fn matrix_partial_flatten() {
+        let tensor: AbstractLiteral<Literal> = matrix![
+            [
+                // batch 1
+                [1, 2, 3, 4],
+                [5, 6, 7, 8],
+                [9, 10, 11, 12]
+            ],
+            [
+                // batch 2
+                [13, 14, 15, 16],
+                [17, 18, 19, 20],
+                [21, 22, 23, 24]
+            ]
+        ];
+        assert_eq!(partial_flatten(0, tensor.clone()), tensor);
+
+        let expected_flatten_1: AbstractLiteral<Literal> = matrix![
+            [1, 2, 3, 4],
+            [5, 6, 7, 8],
+            [9, 10, 11, 12],
+            [13, 14, 15, 16],
+            [17, 18, 19, 20],
+            [21, 22, 23, 24]
+        ];
+        assert_eq!(partial_flatten(1, tensor.clone()), expected_flatten_1);
+
+        let expected_flatten_2 =
+            AbstractLiteral::matrix_implied_indices((1..25).map(Literal::from).collect());
+        assert_eq!(partial_flatten(2, tensor), expected_flatten_2);
     }
 }
