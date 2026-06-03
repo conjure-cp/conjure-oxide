@@ -92,6 +92,7 @@
         - [Order Encoding Inequality](developers-guide/architecture/adaptors/sat-encoding/concrete_sat_rules/order-encoding-inequality.md)
         - [Order Encoding Negation](developers-guide/architecture/adaptors/sat-encoding/concrete_sat_rules/order-encoding-negation.md)
         - [Order Encoding toInt](developers-guide/architecture/adaptors/sat-encoding/concrete_sat_rules/order-encoding-toInt.md)
+  - [Constraint Dominance Programming (CDP)](developers-guide/architecture/constraint-dominance-programming.md)
   - [Sets]()
     - [Vertical Rules](developers-guide/architecture/sets/vertical-rules.md)
     - [Horizontal Rules](developers-guide/architecture/sets/horizontal-rules.md)
