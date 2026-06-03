@@ -52,6 +52,7 @@
         - [TreeMorph Benchmarking](developers-guide/architecture/essence-parser/treemorph-benchmarking.md)
     - [LSP]()
         - [General Structure](developers-guide/architecture/lsp/general-structure.md)
+        - [Demo](developers-guide/architecture/lsp/demo.md)
         - [Diagnostics API](developers-guide/architecture/lsp/diagnostics-api.md)
         - [Syntax Errors](developers-guide/architecture/lsp/syntax-errors.md)
         - [Semantic Highlighting](developers-guide/architecture/lsp/semantic-highlighting.md)
