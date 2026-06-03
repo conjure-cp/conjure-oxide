@@ -1,0 +1,26 @@
+Model before rewriting:
+
+find a: int(1..20)
+find b: int(1..20)
+
+such that
+
+(sum([a,b;int(1..2)]) = 30)
+
+--
+
+sum([a,b;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)])
+sum([a,b;int(1..)])
+
+--
+
+Final model:
+
+find a: int(1..20)
+find b: int(1..20)
+
+such that
+
+(sum([a,b;int(1..)]) = 30)
+

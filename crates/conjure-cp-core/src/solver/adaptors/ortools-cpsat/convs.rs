@@ -5,12 +5,13 @@ use super::proto::{
 };
 use std::collections::HashMap;
 use crate::Model;
-use crate::ast::{AbstractLiteral, Atom, Expression, GroundDomain, HasDomain, Literal, Name, Range};
+use crate::ast::{AbstractLiteral, Atom, Expression, GroundDomain, HasDomain, Literal, Metadata, Name, Range};
 
 struct TranslationContext {
     var_mapping: HashMap<Name, i32>,
 }
 
+#[derive(Clone)]
 struct LinearExpr {
     vars: Vec<i32>,
     coeffs: Vec<i64>,
@@ -170,12 +171,89 @@ fn translate_constraint(expr: &Expression, ctx: &TranslationContext) -> SolverRe
         _ => {}
     }
 
-    let (lhs, rhs) = match expr {
-        Expression::Eq(_, lhs, rhs)
-        | Expression::Leq(_, lhs, rhs)
-        | Expression::Geq(_, lhs, rhs)
-        | Expression::Lt(_, lhs, rhs)
-        | Expression::Gt(_, lhs, rhs) => (lhs.as_ref(), rhs.as_ref()),
+    let (lhs_expr, rhs_expr, domain_func): (LinearExpr, LinearExpr, Box<dyn Fn(i64) -> SolverResult<Vec<i64>>>) = match expr {
+        Expression::Eq(_, lhs, rhs) => (
+            expr_to_linear(lhs.as_ref(), ctx)?,
+            expr_to_linear(rhs.as_ref(), ctx)?,
+            Box::new(|offset| Ok(vec![-offset, -offset])),
+        ),
+        Expression::Leq(_, lhs, rhs) => (
+            expr_to_linear(lhs.as_ref(), ctx)?,
+            expr_to_linear(rhs.as_ref(), ctx)?,
+            Box::new(|offset| Ok(vec![i64::MIN, -offset])),
+        ),
+        Expression::Geq(_, lhs, rhs) => (
+            expr_to_linear(lhs.as_ref(), ctx)?,
+            expr_to_linear(rhs.as_ref(), ctx)?,
+            Box::new(|offset| Ok(vec![-offset, i64::MAX])),
+        ),
+        Expression::Lt(_, lhs, rhs) => (
+            expr_to_linear(lhs.as_ref(), ctx)?,
+            expr_to_linear(rhs.as_ref(), ctx)?,
+            Box::new(|offset| Ok(vec![i64::MIN, -offset - 1])),
+        ),
+        Expression::Gt(_, lhs, rhs) => (
+            expr_to_linear(lhs.as_ref(), ctx)?,
+            expr_to_linear(rhs.as_ref(), ctx)?,
+            Box::new(|offset| Ok(vec![-offset + 1, i64::MAX])),
+        ),
+        Expression::FlatSumLeq(_, vars, total) => {
+            let mut lhs_linear = LinearExpr { vars: vec![], coeffs: vec![], offset: 0 };
+            for var in vars {
+                let var_linear = expr_to_linear(&Expression::Atomic(Metadata::default(), var.clone()), ctx)?;
+                lhs_linear.vars.extend(var_linear.vars);
+                lhs_linear.coeffs.extend(var_linear.coeffs);
+                lhs_linear.offset += var_linear.offset;
+            }
+            let rhs_linear = expr_to_linear(&Expression::Atomic(Metadata::default(), total.clone()), ctx)?;
+            (lhs_linear, rhs_linear, Box::new(|offset| Ok(vec![i64::MIN, -offset])))
+        },
+        Expression::FlatSumGeq(_, vars, total) => {
+            let mut lhs_linear = LinearExpr { vars: vec![], coeffs: vec![], offset: 0 };
+            for var in vars {
+                let var_linear = expr_to_linear(&Expression::Atomic(Metadata::default(), var.clone()), ctx)?;
+                lhs_linear.vars.extend(var_linear.vars);
+                lhs_linear.coeffs.extend(var_linear.coeffs);
+                lhs_linear.offset += var_linear.offset;
+            }
+            let rhs_linear = expr_to_linear(&Expression::Atomic(Metadata::default(), total.clone()), ctx)?;
+            (lhs_linear, rhs_linear, Box::new(|offset| Ok(vec![-offset, i64::MAX])))
+        },
+        Expression::FlatAbsEq(_, a, b) => {
+            // a = |b| 
+            // In CP-SAT, LinMax(target=a, exprs=[b, -b])
+            let a_expr = expr_to_linear(&Expression::Atomic(Metadata::default(), a.as_ref().clone()), ctx)?;
+            let b_expr = expr_to_linear(&Expression::Atomic(Metadata::default(), b.as_ref().clone()), ctx)?;
+            
+            let mut minus_b_expr = b_expr.clone();
+            for c in &mut minus_b_expr.coeffs { *c = -*c; }
+            minus_b_expr.offset = -minus_b_expr.offset;
+
+            use super::proto::{LinearExpressionProto, LinearArgumentProto};
+            return Ok(ConstraintProto {
+                name: String::new(),
+                enforcement_literal: vec![],
+                constraint: Some(constraint_proto::Constraint::LinMax(LinearArgumentProto {
+                    target: Some(LinearExpressionProto {
+                        vars: a_expr.vars,
+                        coeffs: a_expr.coeffs,
+                        offset: a_expr.offset,
+                    }),
+                    exprs: vec![
+                        LinearExpressionProto {
+                            vars: b_expr.vars,
+                            coeffs: b_expr.coeffs,
+                            offset: b_expr.offset,
+                        },
+                        LinearExpressionProto {
+                            vars: minus_b_expr.vars,
+                            coeffs: minus_b_expr.coeffs,
+                            offset: minus_b_expr.offset,
+                        },
+                    ]
+                }))
+            });
+        },
         _ => {
             return Err(SolverError::ModelFeatureNotSupported(format!(
                 "Unsupported top-level constraint: {expr:?}"
@@ -183,8 +261,8 @@ fn translate_constraint(expr: &Expression, ctx: &TranslationContext) -> SolverRe
         }
     };
 
-    let linear_expr = subtract_linear_exprs(expr_to_linear(lhs, ctx)?, expr_to_linear(rhs, ctx)?);
-    let domain = comparison_domain(expr, linear_expr.offset)?;
+    let linear_expr = subtract_linear_exprs(lhs_expr, rhs_expr);
+    let domain = domain_func(linear_expr.offset)?;
 
     Ok(ConstraintProto {
         name: String::new(),

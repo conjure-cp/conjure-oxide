@@ -1,3 +1,6 @@
+# Installation script because it doesn't exist an official package of OR-Tools for Ubuntu
+# and Or-tools depends on abseil (google framework) and protobuf.
+
 set -e
 set -x
 

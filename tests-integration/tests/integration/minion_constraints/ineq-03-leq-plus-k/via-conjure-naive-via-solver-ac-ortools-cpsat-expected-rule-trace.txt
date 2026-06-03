@@ -1,0 +1,26 @@
+Model before rewriting:
+
+find x: int(1..3)
+find y: int(1..3)
+
+such that
+
+(x <= sum([y,2;int(1..2)]))
+
+--
+
+sum([y,2;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)])
+sum([y,2;int(1..)])
+
+--
+
+Final model:
+
+find x: int(1..3)
+find y: int(1..3)
+
+such that
+
+(x <= sum([y,2;int(1..)]))
+
