@@ -120,7 +120,7 @@ cargo +nightly build --workspace
 ln -sf conjure-oxide "${TARGET_DIR}/debug/conjure-oxide-debug"
 
 echo_err "info: running tests"
-cargo +nightly test --workspace
+cargo +nightly test --workspace -- --test-threads=2
 
 echo_err "info: generating coverage reports"
 grcov "${TARGET_DIR}/coverage" -s . --binary-path ./target/debug -t html\
