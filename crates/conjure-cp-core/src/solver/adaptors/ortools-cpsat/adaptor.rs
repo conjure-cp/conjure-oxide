@@ -78,7 +78,7 @@ let mut offset = 0;
             if offset + 4 > bytes.len() {
                 break;
             }
-            let len = u32::from_le_bytes(bytes[offset..offset + 4].try_into().unwrap()) as usize;
+            let len = u32::from_be_bytes(bytes[offset..offset + 4].try_into().unwrap()) as usize;
             offset += 4;
             
             if len > 500_000_000 { 
