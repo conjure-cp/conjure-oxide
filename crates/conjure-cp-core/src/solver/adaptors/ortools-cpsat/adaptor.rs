@@ -70,17 +70,26 @@ impl SolverAdaptor for OrToolsCpSat {
             ));
         }
 
-        let mut offset = 0;
+let mut offset = 0;
         let mut responses = Vec::new();
         let bytes = response_bytes.as_slice();
+        
         while offset < bytes.len() {
             if offset + 4 > bytes.len() {
                 break;
             }
             let len = u32::from_le_bytes(bytes[offset..offset + 4].try_into().unwrap()) as usize;
             offset += 4;
+            
+            if len > 500_000_000 { 
+                return Err(SolverError::Runtime(format!(
+                    "FATAL: OR-Tools response declared an impossible length ({} bytes) at offset {}. Corrupted stream.", 
+                    len, offset - 4
+                )));
+            }
+
             if offset + len > bytes.len() {
-                break;
+                break; 
             }
             let slice = &bytes[offset..offset + len];
             responses.push(CpSolverResponse::decode(slice).map_err(|err| {
