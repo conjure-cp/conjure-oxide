@@ -533,3 +533,67 @@ fn abs_value_sat_direct(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
 
     Ok(Reduction::cnf(abs_int, new_clauses, new_symbols))
 }
+
+/// Converts toint of a boolean to a direct SATInt
+///
+/// ```text
+/// toInt(bool) ~> SATInt
+///
+/// ```
+#[register_rule("SAT_Direct", 4600)]
+fn sat_direct_toint(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    let Expr::ToInt(_, moo_bool) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let mut new_symbols = symbols.clone();
+    let mut new_clauses = vec![];
+
+    let decl_0 = new_symbols.gen_find(&conjure_cp::ast::Domain::bool());
+    let r_0 = Expr::Atomic(
+        Metadata::new(),
+        Atom::Reference(conjure_cp::ast::Reference::new(decl_0)),
+    );
+
+    let decl_1 = new_symbols.gen_find(&conjure_cp::ast::Domain::bool());
+    let r_1 = Expr::Atomic(
+        Metadata::new(),
+        Atom::Reference(conjure_cp::ast::Reference::new(decl_1)),
+    );
+
+    let b = moo_bool.as_ref().clone();
+
+    // r_1 <-> b
+    // (r_1 -> b): [¬r_1, b]
+    // (b -> r_1): [¬b, r_1]
+    new_clauses.push(CnfClause::new(vec![
+        Expr::Not(Metadata::new(), Moo::new(r_1.clone())),
+        b.clone(),
+    ]));
+    new_clauses.push(CnfClause::new(vec![
+        Expr::Not(Metadata::new(), Moo::new(b.clone())),
+        r_1.clone(),
+    ]));
+
+    // r_0 <-> ¬b
+    // (r_0 -> ¬b): [¬r_0, ¬b]
+    // (¬b -> r_0): [b, r_0]
+    new_clauses.push(CnfClause::new(vec![
+        Expr::Not(Metadata::new(), Moo::new(r_0.clone())),
+        Expr::Not(Metadata::new(), Moo::new(b.clone())),
+    ]));
+    new_clauses.push(CnfClause::new(vec![b, r_0.clone()]));
+
+    let result_bits = vec![r_0, r_1];
+
+    Ok(Reduction::cnf(
+        Expr::SATInt(
+            Metadata::new(),
+            SATIntEncoding::Direct,
+            Moo::new(into_matrix_expr!(result_bits)),
+            (0, 1),
+        ),
+        new_clauses,
+        new_symbols,
+    ))
+}
