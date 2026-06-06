@@ -9,7 +9,7 @@ use syn::{
 };
 
 struct RegisterRuleArgs {
-    rule_set: LitStr,
+    rule_sets: Vec<LitStr>,
     priority: LitInt,
     /// Expression variant names this rule applies to (e.g. `Add`, `Sub`).
     /// Empty means applicable to all variants (universal rule).
@@ -20,13 +20,30 @@ impl Parse for RegisterRuleArgs {
     fn parse(input: ParseStream) -> Result<Self> {
         if input.is_empty() {
             return Ok(RegisterRuleArgs {
-                rule_set: LitStr::new("", Span::call_site()),
+                rule_sets: Vec::new(),
                 priority: LitInt::new("0", Span::call_site()),
                 applicable_variants: Vec::new(),
             });
         }
 
-        let rule_set: LitStr = input.parse()?;
+        let rule_sets = if input.peek(syn::token::Bracket) {
+            let content;
+            bracketed!(content in input);
+
+            let mut rule_sets = Vec::new();
+            while !content.is_empty() {
+                let rule_set: LitStr = content.parse()?;
+                rule_sets.push(rule_set);
+                if content.is_empty() {
+                    break;
+                }
+                let _: Comma = content.parse()?;
+            }
+            rule_sets
+        } else {
+            vec![input.parse()?]
+        };
+
         let _: Comma = input.parse()?;
         let priority: LitInt = input.parse()?;
 
@@ -47,7 +64,7 @@ impl Parse for RegisterRuleArgs {
         }
 
         Ok(RegisterRuleArgs {
-            rule_set,
+            rule_sets,
             priority,
             applicable_variants,
         })
@@ -64,12 +81,12 @@ pub fn register_rule(arg_tokens: TokenStream, item: TokenStream) -> TokenStream 
 
     let args = parse_macro_input!(arg_tokens as RegisterRuleArgs);
 
-    let rule_sets_token = if args.rule_set.value().is_empty() {
+    let rule_sets_token = if args.rule_sets.is_empty() {
         quote! { &[] }
     } else {
-        let rule_set_name = &args.rule_set;
+        let rule_sets = &args.rule_sets;
         let priority = &args.priority;
-        quote! { &[(#rule_set_name, #priority as u16)] }
+        quote! { &[#((#rule_sets, #priority as u16)),*] }
     };
 
     let applicable_to = if args.applicable_variants.is_empty() {

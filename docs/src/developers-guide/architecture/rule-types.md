@@ -1,4 +1,4 @@
-## Rule Sets
+## Representation Rules and Transformation Rules
 
 While developing rule-based transformations for conjure oxide, it is useful to understand the structure of the rulesets and the *types* of rules that can be used in conjure oxide. Let us first look at how rules actually function, not programmatically, but in an abstract sense. An understanding of (and some experience of) functional programming is incredibly helpful[^1]. Also useful is an understanding of the idea behind graph machines[^2] and an understanding of the difference between function results and side effects[^3].
 
