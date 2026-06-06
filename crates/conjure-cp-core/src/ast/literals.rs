@@ -930,7 +930,7 @@ impl Display for Literal {
 mod tests {
 
     use super::*;
-    use crate::{into_matrix, matrix};
+    use crate::{domain_int_ground, into_matrix, matrix, matrix_lit, range};
     use uniplate::Uniplate;
 
     #[test]
@@ -954,5 +954,24 @@ mod tests {
             });
 
         assert_eq!(actual_index_domains, expected_index_domains);
+    }
+
+    #[test]
+    fn matrix_domain_2d() {
+        let matrix = matrix_lit![
+            [1, 2, 3, 4],
+            [5, 6, 7, 8];
+            [
+                domain_int_ground!(1..2),
+                domain_int_ground!(1..4)
+            ]
+        ];
+        let dom = matrix.domain_of();
+
+        let (inner_dom, idx_doms) = dom.as_matrix_ground().expect("must be ground matrix");
+        assert_eq!(inner_dom, &domain_int_ground!(1..8));
+        assert_eq!(idx_doms.len(), 2);
+        assert_eq!(&idx_doms[0], &domain_int_ground!(1..2));
+        assert_eq!(&idx_doms[1], &domain_int_ground!(1..4));
     }
 }
