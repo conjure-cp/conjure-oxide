@@ -1,4 +1,4 @@
-# Logging 
+# Logging
 
 **This document is a work in progress - for a full list of logging options,
 see Conjure Oxide's `--help` output.**
@@ -22,23 +22,22 @@ contents, and formatting of, Conjure Oxide's `stderr` output:
 Different log levels provide different information about the rules applied to
 the model:
 
-+ `INFO` provides information on the rules that were applied to the model. 
++ `INFO` provides information on the rules that were applied to the model.
 
 + `TRACE` additionally prints the rules that were attempted and why they were
-  not applicable. 
-
+  not applicable.
 
 To see TRACE logs in a pretty format (mainly useful for
 debugging):
 
 ```sh
-$ RUST_LOG=trace conjure-oxide solve --verbose <model>
+RUST_LOG=trace conjure-oxide solve --verbose <model>
 ```
 
 Or, using cargo:
 
 ```sh
-$ RUST_LOG=trace cargo run -- solve --verbose <model>
+RUST_LOG=trace cargo run -- solve --verbose <model>
 ```
 
 ### Example: Tracing SAT Solver Rules
@@ -49,11 +48,14 @@ When working with the SAT solver, you can trace the complete transformation pipe
 RUST_LOG=TRACE cargo run -- solve --solver sat my_problem.essence --verbose
 ```
 
-This will show: 
-- Integer-to-boolean conversions
-- Operation transformations 
-- Tseytin transformations
-- All rules that were tried and applied
+This will show:
+
++ Integer-to-boolean conversions
++ Operation transformations
++ Tseytin transformations
++ All rules that were tried and applied
+
+> This also applies for the other possible SAT solver encodings such as `sat-direct`, `sat-log` and `sat-order`.
 
 For more detailed testing output (including JSON traces and rewritten models), run specific tests:
 
