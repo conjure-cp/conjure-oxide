@@ -623,11 +623,17 @@ fn inferred_context_from_expression(expr: &Expression) -> TypecheckingContext {
         GroundDomain::Matrix(_, _) => TypecheckingContext::Matrix,
         GroundDomain::Tuple(_) => TypecheckingContext::Tuple,
         GroundDomain::Record(_) => TypecheckingContext::Record,
+        GroundDomain::Function(_, _, _)
+        | GroundDomain::Relation(_, _)
+        | GroundDomain::Empty(_)
+        | GroundDomain::EnumeratedType(_, _)
+        | GroundDomain::UnnamedType(_) => TypecheckingContext::Unknown,
         GroundDomain::Partition(_, _) => TypecheckingContext::Partition,
         GroundDomain::Sequence(_, _) => TypecheckingContext::Sequence,
         GroundDomain::Function(_, _, _)
         | GroundDomain::Variant(_)
         | GroundDomain::Relation(_, _)
         | GroundDomain::Empty(_) => TypecheckingContext::Unknown,
+>>>>>>> main
     }
 }

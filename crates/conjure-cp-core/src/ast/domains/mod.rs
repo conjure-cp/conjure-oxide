@@ -13,4 +13,4 @@ pub use domain::{Domain, DomainPtr, HasDomain, Int};
 pub use error::DomainOpError;
 pub use ground::{FieldEntryGround, GroundDomain};
 pub use range::Range;
-pub use unresolved::{FieldEntry, IntVal, UnresolvedDomain};
+pub use unresolved::{EnumVariantVal, FieldEntry, IntVal, UnresolvedDomain};

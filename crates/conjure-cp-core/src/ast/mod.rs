@@ -7,6 +7,7 @@ mod cnf_clause;
 pub mod comprehension;
 pub mod declaration;
 mod domains;
+pub mod enumerated;
 pub mod eval;
 mod expressions;
 mod literals;
@@ -30,9 +31,9 @@ pub use atom::Atom;
 pub use cnf_clause::CnfClause;
 pub use declaration::{DeclarationKind, DeclarationPtr};
 pub use domains::{
-    BinaryAttr, Domain, DomainOpError, DomainPtr, FieldEntry, FieldEntryGround, FuncAttr,
-    GroundDomain, HasDomain, IntVal, JectivityAttr, MSetAttr, PartialityAttr, PartitionAttr, Range,
-    RelAttr, SequenceAttr, SetAttr, UnresolvedDomain,
+    BinaryAttr, Domain, DomainOpError, DomainPtr, EnumVariantVal, FieldEntry, FieldEntryGround,
+    FuncAttr, GroundDomain, HasDomain, IntVal, JectivityAttr, MSetAttr, PartialityAttr,
+    PartitionAttr, Range, RelAttr, SetAttr, UnresolvedDomain,
 };
 pub use eval::eval_constant;
 pub use expressions::{Expression, discriminant_from_value, print_hash_stats};

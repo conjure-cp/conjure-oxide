@@ -3,6 +3,8 @@ use super::ground::GroundDomain;
 use super::range::Range;
 use super::unresolved::{IntVal, UnresolvedDomain};
 use crate::ast::domains::attrs::{MSetAttr, PartitionAttr};
+use crate::ast::domains::unresolved::EnumVariantVal;
+use crate::ast::enumerated::EnumeratedType;
 use crate::ast::{
     DeclarationPtr, DomainOpError, Expression, FieldEntry, FieldEntryGround, FuncAttr, Literal,
     Moo, Reference, RelAttr, ReturnType, SequenceAttr, Typeable,
@@ -317,6 +319,20 @@ impl Domain {
             attr.into(),
             inner_dom,
         ))))
+    }
+
+    /// Create a new enumerated type domain
+    pub fn enumerated_ground(ty: Moo<EnumeratedType>, ranges: Vec<Range<u32>>) -> DomainPtr {
+        Moo::new(Domain::Ground(Moo::new(GroundDomain::EnumeratedType(
+            ty, ranges,
+        ))))
+    }
+
+    /// Create a new enumerated type domain
+    pub fn enumerated(ty: Moo<EnumeratedType>, ranges: Vec<Range<EnumVariantVal>>) -> DomainPtr {
+        Moo::new(Domain::Unresolved(Moo::new(
+            UnresolvedDomain::EnumeratedType(ty, ranges),
+        )))
     }
 
     /// If this domain is ground, return a [Moo] to the underlying [GroundDomain].

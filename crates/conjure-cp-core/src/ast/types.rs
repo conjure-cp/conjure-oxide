@@ -3,6 +3,8 @@ use polyquine::Quine;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 
+use crate::ast::{Moo, enumerated::EnumeratedType, pretty::pretty_vec};
+
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, Hash, Quine)]
 pub enum ReturnType {
     Int,
@@ -17,6 +19,8 @@ pub enum ReturnType {
     Variant(Vec<ReturnType>),
     Relation(Vec<ReturnType>),
     Partition(Box<ReturnType>),
+    EnumeratedType(Moo<EnumeratedType>),
+    UnnamedType,
 
     /// An unknown type
     ///
@@ -63,6 +67,8 @@ impl Display for ReturnType {
                 write!(f, "variant {{{inners}}}")
             }
             ReturnType::Unknown => write!(f, "?"),
+            ReturnType::EnumeratedType(et) => write!(f, "{}", et),
+            ReturnType::UnnamedType => write!(f, "unnamed type"),
         }
     }
 }

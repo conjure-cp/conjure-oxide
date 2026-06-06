@@ -422,6 +422,8 @@ impl Display for Model {
                 DeclarationKind::Field(_) => {
                     // We do not want to print anything, as it will be in the domains
                 }
+                DeclarationKind::EnumeratedType(_) => todo!(),
+                DeclarationKind::UnnamedType(_) => todo!(),
             }
         }
 

@@ -382,6 +382,8 @@ fn typecheck_variable(
         GroundDomain::Partition(_, _) => "partition",
         GroundDomain::Sequence(_, _) => "sequence",
         GroundDomain::Empty(_) => "empty",
+        GroundDomain::EnumeratedType(_, _) => "enum",
+        GroundDomain::UnnamedType(_) => "unnamed",
     };
 
     // If types match, no error
@@ -464,6 +466,7 @@ fn parse_constant(ctx: &mut ParseContext, node: &Node) -> Result<Option<Literal>
         let actual = match &lit {
             Literal::Bool(_) => "bool",
             Literal::Int(_) => "int",
+            Literal::EnumVariant(_) => todo!(),
             Literal::AbstractLiteral(_) => return Ok(None), // Abstract literals aren't type-checked here
         };
 
