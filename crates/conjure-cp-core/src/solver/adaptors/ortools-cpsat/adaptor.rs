@@ -54,7 +54,7 @@ impl SolverAdaptor for OrToolsCpSat {
 
     fn solve(
         &mut self,
-        callback: SolverCallback,
+        mut callback: SolverCallback,
         _: private::Internal,
     ) -> Result<SolveSuccess, SolverError> {
         let model = self
@@ -63,43 +63,52 @@ impl SolverAdaptor for OrToolsCpSat {
             .ok_or_else(|| SolverError::Runtime("No OR-Tools model loaded".to_owned()))?;
 
         let model_bytes = model.encode_to_vec();
-        let response_bytes = ffi::solve_wrapper(&model_bytes);
+
+        let mut rust_error = None;
+        let mut user_terminated = false;
+        let mut num_solutions = 0;
+
+        let mut cb = |response_proto: &[u8]| -> bool {
+            let response = match CpSolverResponse::decode(response_proto) {
+                Ok(r) => r,
+                Err(e) => {
+                    rust_error = Some(SolverError::Runtime(format!("Failed to decode OR-Tools response: {}", e)));
+                    return false;
+                }
+            };
+            
+            let solution = match response_to_solution(&response, &self.solution_vars) {
+                Ok(s) => s,
+                Err(e) => {
+                    rust_error = Some(e);
+                    return false;
+                }
+            };
+            
+            num_solutions += 1;
+            let continue_search = callback(solution);
+            if !continue_search {
+                user_terminated = true;
+            }
+            continue_search
+        };
+
+        let mut cb_dyn: &mut dyn FnMut(&[u8]) -> bool = &mut cb;
+        let callback_ptr = &mut cb_dyn as *mut &mut dyn FnMut(&[u8]) -> bool as usize;
+
+        let response_bytes = unsafe { ffi::solve_wrapper(&model_bytes, callback_ptr) };
         if response_bytes.is_empty() {
             return Err(SolverError::Runtime(
                 "OR-Tools wrapper returned an empty response".to_owned(),
             ));
         }
 
-let mut offset = 0;
-        let mut responses = Vec::new();
-        let bytes = response_bytes.as_slice();
-        
-        while offset < bytes.len() {
-            if offset + 4 > bytes.len() {
-                break;
-            }
-            let len = u32::from_le_bytes(bytes[offset..offset + 4].try_into().unwrap()) as usize;
-            offset += 4;
-            
-            if len > 100_000_000 { 
-                return Err(SolverError::Runtime(format!(
-                    "FATAL: OR-Tools response declared an impossible length ({} bytes) at offset {}. Corrupted stream.", 
-                    len, offset - 4
-                )));
-            }
-
-            if offset + len > bytes.len() {
-                break; 
-            }
-            let slice = &bytes[offset..offset + len];
-            responses.push(CpSolverResponse::decode(slice).map_err(|err| {
-                SolverError::Runtime(format!("Failed to decode OR-Tools response: {err}"))
-            })?);
-            offset += len;
+        if let Some(err) = rust_error {
+            return Err(err);
         }
 
-        let final_response = responses.pop().ok_or_else(|| {
-            SolverError::Runtime("No final response from OR-Tools".to_owned())
+        let final_response = CpSolverResponse::decode(response_bytes.as_slice()).map_err(|err| {
+            SolverError::Runtime(format!("Failed to decode final OR-Tools response: {err}"))
         })?;
 
         let status = CpSolverStatus::try_from(final_response.status).map_err(|_| {
@@ -117,27 +126,33 @@ let mut offset = 0;
             ..Default::default()
         };
 
+        if user_terminated {
+            return Ok(SolveSuccess {
+                stats,
+                status: Incomplete(SearchIncomplete::UserTerminated),
+            });
+        }
+
         match status {
             CpSolverStatus::Optimal | CpSolverStatus::Feasible => {
-                for response in responses {
-                    let solution = response_to_solution(&response, &self.solution_vars)?;
-                    if !callback(solution) {
-                        return Ok(SolveSuccess {
-                            stats,
-                            status: Incomplete(SearchIncomplete::UserTerminated),
-                        });
-                    }
-                }
-
                 Ok(SolveSuccess {
                     stats,
                     status: Complete(HasSolutions),
                 })
             }
-            CpSolverStatus::Infeasible => Ok(SolveSuccess {
-                stats,
-                status: Complete(NoSolutions),
-            }),
+            CpSolverStatus::Infeasible => {
+                if num_solutions > 0 {
+                    Ok(SolveSuccess {
+                        stats,
+                        status: Complete(HasSolutions),
+                    })
+                } else {
+                    Ok(SolveSuccess {
+                        stats,
+                        status: Complete(NoSolutions),
+                    })
+                }
+            }
             CpSolverStatus::ModelInvalid => Err(SolverError::ModelInvalid(
                 if final_response.solution_info.is_empty() {
                     "OR-Tools reported MODEL_INVALID".to_owned()

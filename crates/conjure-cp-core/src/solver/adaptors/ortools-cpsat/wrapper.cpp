@@ -8,9 +8,11 @@
 #include "ortools/sat/model.h"
 #include "ortools/sat/sat_parameters.pb.h"
 
-#include <vector>
+#include "ortools/util/time_limit.h"
+#include <atomic>
+#include "conjure-cp-core/src/solver/adaptors/ortools-cpsat/mod.rs.h" // For invoke_callback
 
-rust::Vec<uint8_t> solve_wrapper(rust::Slice<const uint8_t> model_proto_bytes) {
+rust::Vec<uint8_t> solve_wrapper(rust::Slice<const uint8_t> model_proto_bytes, size_t callback_ptr) {
     using namespace operations_research;
     using namespace operations_research::sat;
 
@@ -23,36 +25,29 @@ rust::Vec<uint8_t> solve_wrapper(rust::Slice<const uint8_t> model_proto_bytes) {
     sat::Model model;
     sat::SatParameters parameters;
     parameters.set_enumerate_all_solutions(true);
+    // Keep a reasonable memory limit just in case
     parameters.set_max_memory_in_mb(1024);
     model.Add(NewSatParameters(parameters));
 
-    std::vector<sat::CpSolverResponse> all_responses;
+    std::atomic<bool> stopped(false);
+    model.GetOrCreate<TimeLimit>()->RegisterExternalBooleanAsLimit(&stopped);
 
     model.Add(NewFeasibleSolutionObserver([&](const sat::CpSolverResponse& r) {
-        all_responses.push_back(r);
+        std::vector<uint8_t> serialized(r.ByteSizeLong());
+        if (r.SerializeToArray(serialized.data(), serialized.size())) {
+            rust::Slice<const uint8_t> slice(serialized.data(), serialized.size());
+            if (!invoke_callback(callback_ptr, slice)) {
+                stopped = true;
+            }
+        }
     }));
 
     const sat::CpSolverResponse final_response = sat::SolveCpModel(model_proto, &model);
-    all_responses.push_back(final_response);
 
     rust::Vec<uint8_t> output;
-    
-    size_t total_size = 0;
-    for (const auto& response : all_responses) {
-        total_size += 4 + response.ByteSizeLong();
-    }
-    output.reserve(total_size);
-
-    for (const auto& response : all_responses) {
-        std::vector<uint8_t> serialized(response.ByteSizeLong());
-        if (!response.SerializeToArray(serialized.data(), serialized.size())) {
-            continue;
-        }
-        uint32_t len = serialized.size();
-        output.push_back(len & 0xFF);
-        output.push_back((len >> 8) & 0xFF);
-        output.push_back((len >> 16) & 0xFF);
-        output.push_back((len >> 24) & 0xFF);
+    std::vector<uint8_t> serialized(final_response.ByteSizeLong());
+    if (final_response.SerializeToArray(serialized.data(), serialized.size())) {
+        output.reserve(serialized.size());
         for (uint8_t byte : serialized) {
             output.push_back(byte);
         }
