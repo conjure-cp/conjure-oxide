@@ -30,11 +30,11 @@ mkdir -p "$OUT_DIR/build"
 cd "$OUT_DIR/build"
 
 if [[ ${DEBUG_MINION-default} != "default" ]]; then
-  python3 "$SCRIPT_DIR/vendor/configure.py" --lib --quick --debug
+  python3 "$SCRIPT_DIR/vendor/configure.py" --quick --debug
 else
-  python3 "$SCRIPT_DIR/vendor/configure.py" --lib --quick
+  python3 "$SCRIPT_DIR/vendor/configure.py" --quick
 fi
 
 echo "------ BUILD STEP ------"
 cd "$OUT_DIR/build"
-make
+make libminion.a
