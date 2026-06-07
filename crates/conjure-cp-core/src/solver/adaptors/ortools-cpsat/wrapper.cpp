@@ -23,6 +23,7 @@ rust::Vec<uint8_t> solve_wrapper(rust::Slice<const uint8_t> model_proto_bytes) {
     sat::Model model;
     sat::SatParameters parameters;
     parameters.set_enumerate_all_solutions(true);
+    parameters.set_max_memory_in_mb(1024);
     model.Add(NewSatParameters(parameters));
 
     std::vector<sat::CpSolverResponse> all_responses;
@@ -35,6 +36,13 @@ rust::Vec<uint8_t> solve_wrapper(rust::Slice<const uint8_t> model_proto_bytes) {
     all_responses.push_back(final_response);
 
     rust::Vec<uint8_t> output;
+    
+    size_t total_size = 0;
+    for (const auto& response : all_responses) {
+        total_size += 4 + response.ByteSizeLong();
+    }
+    output.reserve(total_size);
+
     for (const auto& response : all_responses) {
         std::vector<uint8_t> serialized(response.ByteSizeLong());
         if (!response.SerializeToArray(serialized.data(), serialized.size())) {
