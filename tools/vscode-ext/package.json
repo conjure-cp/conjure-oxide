@@ -1,16 +1,142 @@
 {
-    "name": "conjure-oxide-vscode",
-    "displayName": "conjure-oxide-vscode",
+    "name": "essence-lsp",
+    "displayName": "Essence LSP",
     "publisher": "conjure-oxide",
     "main": "./out/extension.js",
+    "icon": "logo.png",
+    "activationEvents": [
+        "onLanguage:essence",
+        "onLanguage:eprime"
+    ],
+    "contributes": {
+        "languages": [
+            {
+                "id": "essence",
+                "aliases": [
+                    "Essence",
+                    "essence"
+                ],
+                "extensions": [
+                    ".essence",
+                    ".eprime"
+                ],
+                "configuration": "./language-configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "essence",
+                "scopeName": "source.essence",
+                "path": "./syntaxes/essence.tmLanguage.json"
+            }
+        ],
+        "semanticTokenTypes": [
+            {
+                "id": "letting",
+                "description": "An Essence letting binding",
+                "superType": "keyword"
+            },
+            {
+                "id": "lettingVar",
+                "description": "An Essence letting variable",
+                "superType": "variable"
+            },
+            {
+                "id": "find",
+                "description": "An Essence find binding",
+                "superType": "keyword"
+            },
+            {
+                "id": "findVar",
+                "description": "An Essence decision variable",
+                "superType": "property"
+            },
+            {
+                "id": "domain",
+                "description": "An Essence domain",
+                "superType": "type"
+            },
+            {
+                "id": "given",
+                "description": "An Essence given binding",
+                "superType": "keyword"
+            },
+            {
+                "id": "givenVar",
+                "description": "An Essence given variable",
+                "superType": "string"
+            }
+        ],
+        "semanticTokenScopes": [
+            {
+                "scopes": {
+                    "number": [
+                        "constant.numeric"
+                    ],
+                    "function": [
+                        "entity.name.function"
+                    ],
+                    "variable": [
+                        "variable.other"
+                    ],
+                    "letting": [
+                        "keyword.letting"
+                    ],
+                    "find": [
+                        "keyword.find"
+                    ],
+                    "domain": [
+                        "entity.name.type.domain"
+                    ],
+                    "findVar": [
+                        "variable.other.property.findVar"
+                    ],
+                    "lettingVar": [
+                        "variable.other.constant.lettingVar"
+                    ],
+                    "given": [
+                        "keyword.given"
+                    ],
+                    "givenVar": [
+                        "string.other.givenVar"
+                    ]
+                }
+            }
+        ],
+        "configurationDefaults": {
+            "editor.semanticHighlighting.enabled": true,
+            "editor.semanticTokenColorCustomizations": {
+                "rules": {
+                    "findVar": {
+                        "underline": true
+                    }
+                }
+            }
+        },
+        "configuration": {
+            "title": "Conjure-Oxide",
+            "properties": {
+                "conjureOxide.serverPath": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Absolute path to the conjure-oxide executable used for LSP. If empty, the extension searches workspace target/release first, then extension-bundled binary, then PATH."
+                }
+            }
+        }
+    },
     "repository": {
         "type": "git",
         "url": "https://github.com/conjure-cp/conjure-oxide/tree/main/tools/vscode-ext"
     },
+    "bugs": {
+        "url": "https://github.com/conjure-cp/conjure-oxide/issues"
+    },
+    "homepage": "https://github.com/conjure-cp/conjure-oxide/tree/main/tools/vscode-ext",
+    "license": "MPL-2.0",
     "description": "VS Code extension for Conjure-Oxide",
-    "version": "0.1.0",
+    "version": "0.1.5",
     "engines": {
-        "vscode": "^1.22.0"
+        "vscode": "^1.110.0"
     },
     "categories": [
         "Programming Languages"
