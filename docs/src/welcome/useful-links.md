@@ -27,5 +27,5 @@ Code coverage reports can be found [here](https://conjure-cp.github.io/conjure-o
 
 ## Miscellaneous
 
-+ [Essence feature usage stats](https://conjure-cp.github.io/conjure-oxide/tools/essence-feature-usage-stats/)
++ [Essence feature usage stats](https://conjure-cp.github.io/benchmarking/essence-feature-usage-stats/)
 + [Conjure blocks](https://conjure-cp.github.io/conjure-blocks/)
