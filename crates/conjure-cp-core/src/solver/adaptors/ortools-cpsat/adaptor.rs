@@ -69,6 +69,10 @@ impl SolverAdaptor for OrToolsCpSat {
         let mut num_solutions = 0;
 
         let mut cb = |response_proto: &[u8]| -> bool {
+            if user_terminated {
+                return false;
+            }
+
             let response = match CpSolverResponse::decode(response_proto) {
                 Ok(r) => r,
                 Err(e) => {
