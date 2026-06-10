@@ -116,9 +116,10 @@ install-cargo-extensions: .installed-cargo-extensions.checkpoint
 	touch .installed-cargo-extensions.checkpoint
 
 test-clean:
-	cd tests-integration/tests/integration/; find -type f -path '**generated**' -delete
-	cd tests-integration/tests/integration/; find -type f -path '**expected**' -delete
-	cd tests-integration/tests/integration/; find -type f -path '**stats**' -delete
+	# FIXME: This might not work I think? recheck what this is doing
+	cd tests/tests/integration/; find -type f -path '**generated**' -delete
+	cd tests/tests/integration/; find -type f -path '**expected**' -delete
+	cd tests/tests/integration/; find -type f -path '**stats**' -delete
 
 .PHONY: help
 ## Shows this help text
