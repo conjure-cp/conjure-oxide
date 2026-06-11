@@ -237,7 +237,7 @@ impl IntVal {
                 ReturnType::Int => Some(IntVal::Reference(re.clone())),
                 _ => None,
             },
-            DeclarationKind::DomainLetting(_) | DeclarationKind::Field(_) => None,
+            DeclarationKind::DomainLetting(_) => None,
         }
     }
 
@@ -270,7 +270,7 @@ impl IntVal {
                 DeclarationKind::QuantifiedExpr(_) => None,
                 // Decision variables inside domains are unresolved until solving.
                 DeclarationKind::Find(_) => None,
-                DeclarationKind::DomainLetting(_) | DeclarationKind::Field(_) => bug!(
+                DeclarationKind::DomainLetting(_) => bug!(
                     "Expected integer expression, given, or letting inside int domain; Got: {re}"
                 ),
             },

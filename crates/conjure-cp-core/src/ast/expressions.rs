@@ -127,6 +127,16 @@ pub enum Expression {
 
     Atomic(Metadata, Atom),
 
+    /// Asserts that the given variant of a variant expression is in use.
+    /// See also: [GroundDomain::Variant]
+    #[compatible(JsonInput)]
+    Active(Metadata, Moo<Expression>, Name),
+
+    /// Indexing into a record expression, e.g `{foo = 1, bar = true}[foo]`
+    /// See also: [GroundDomain::Record]
+    #[compatible(JsonInput)]
+    RecordField(Metadata, Moo<Expression>, Name),
+
     /// A matrix index.
     ///
     /// Defined iff the indices are within their respective index domains.
@@ -636,10 +646,6 @@ pub enum Expression {
     /// Low-level minion constraint. See Expression::LexLeq
     FlatLexLeq(Metadata, Vec<Atom>, Vec<Atom>),
 
-    /// To tell which field is used in a variant domain
-    #[compatible(JsonInput)]
-    Active(Metadata, Moo<Expression>, Moo<Expression>),
-
     /// Alters the shape of relations by projection
     #[compatible(JsonInput)]
     RelationProj(Metadata, Moo<Expression>, Vec<Option<Expression>>),
@@ -776,6 +782,15 @@ impl Expression {
             Expression::Metavar(_, _) => None,
             Expression::Comprehension(_, comprehension) => comprehension.domain_of(),
             Expression::AbstractComprehension(_, comprehension) => comprehension.domain_of(),
+            Expression::RecordField(_, rec, field_name) => {
+                let rec_ents = rec.domain_of()?.as_record()?;
+                for ent in rec_ents {
+                    if ent.name.eq(field_name) {
+                        return Some(ent.value);
+                    }
+                }
+                None
+            }
             Expression::UnsafeIndex(_, matrix, index) | Expression::SafeIndex(_, matrix, index) => {
                 let dom = matrix.domain_of()?;
                 if let Some((elem_domain, _)) = dom.as_matrix() {
@@ -805,7 +820,9 @@ impl Expression {
                     };
                 }
 
-                bug!("subject of an index operation should support indexing")
+                bug!(
+                    "subject of an index operation should support indexing, but got {matrix}: {dom}"
+                )
             }
             Expression::UnsafeSlice(_, matrix, indices)
             | Expression::SafeSlice(_, matrix, indices) => {
@@ -1562,6 +1579,7 @@ impl Expression {
             FromSolution,
             Metavar,
             Atomic,
+            RecordField,
             UnsafeIndex,
             SafeIndex,
             UnsafeSlice,
@@ -1988,6 +2006,9 @@ impl Display for Expression {
             Expression::Comprehension(_, c) => c.fmt(f),
             Expression::AbstractComprehension(_, c) => c.fmt(f),
             Expression::UnsafeIndex(_, e1, e2) => write!(f, "{e1}{}", pretty_vec(e2)),
+            Expression::RecordField(_, r, fld) => {
+                write!(f, "{r}[{fld}]")
+            }
             Expression::SafeIndex(_, e1, e2) => write!(f, "SafeIndex({e1},{})", pretty_vec(e2)),
             Expression::UnsafeSlice(_, e1, es) => {
                 let args = es
@@ -2288,8 +2309,7 @@ fn minus_operand_return_type(expr: &Expression) -> ReturnType {
             match decl_kind {
                 DeclarationKind::Find(var) => var.return_type(),
                 DeclarationKind::Given(domain)
-                | DeclarationKind::DomainLetting(domain)
-                | DeclarationKind::Field(domain) => domain.return_type(),
+                | DeclarationKind::DomainLetting(domain) => domain.return_type(),
                 DeclarationKind::Quantified(inner) => inner.domain().return_type(),
                 DeclarationKind::QuantifiedExpr(inner)
                 | DeclarationKind::TemporaryValueLetting(inner)
@@ -2314,6 +2334,16 @@ impl Typeable for Expression {
             Expression::Subset(_, _, _) => ReturnType::Bool,
             Expression::SubsetEq(_, _, _) => ReturnType::Bool,
             Expression::AbstractLiteral(_, lit) => lit.return_type(),
+            Expression::RecordField(_, rec, field_name) => {
+                if let ReturnType::Record(ents) = rec.return_type() {
+                    for Field { name, value } in ents {
+                        if name.eq(field_name) {
+                            return value;
+                        }
+                    }
+                }
+                ReturnType::Unknown
+            }
             Expression::UnsafeIndex(_, subject, idx) | Expression::SafeIndex(_, subject, idx) => {
                 let subject_ty = subject.return_type();
                 match subject_ty {
@@ -2658,7 +2688,9 @@ impl Expression {
             | Expression::ToSet(_, m1)
             | Expression::ToMSet(_, m1)
             | Expression::ToRelation(_, m1)
-            | Expression::Card(_, m1) => {
+            | Expression::Card(_, m1)
+            | Expression::RecordField(_, m1, _)
+            | Expression::Active(_, m1, _) => {
                 f(m1);
             }
 
@@ -2702,7 +2734,6 @@ impl Expression {
             | Expression::LexLeq(_, m1, m2)
             | Expression::LexGt(_, m1, m2)
             | Expression::LexGeq(_, m1, m2)
-            | Expression::Active(_, m1, m2)
             | Expression::Subsequence(_, m1, m2)
             | Expression::Substring(_, m1, m2) => {
                 f(m1);
@@ -2928,7 +2959,6 @@ impl CacheHashable for Expression {
             | Expression::LexLeq(_, m1, m2)
             | Expression::LexGt(_, m1, m2)
             | Expression::LexGeq(_, m1, m2)
-            | Expression::Active(_, m1, m2)
             | Expression::Subsequence(_, m1, m2)
             | Expression::Substring(_, m1, m2) => {
                 m1.get_cached_hash().hash(&mut hasher);
@@ -2953,6 +2983,12 @@ impl CacheHashable for Expression {
                         None => 0u64.hash(&mut hasher),
                     }
                 }
+            }
+
+            // Moo<Expression> + Name
+            Expression::RecordField(_, m, n) | Expression::Active(_, m, n) => {
+                m.get_cached_hash().hash(&mut hasher);
+                n.hash(&mut hasher);
             }
 
             // Moo<Expression> + DomainPtr

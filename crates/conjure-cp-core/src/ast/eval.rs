@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 use crate::ast::{
-    AbstractLiteral, Atom, DeclarationKind, Expression as Expr, Literal as Lit, Metadata,
+    AbstractLiteral, Atom, DeclarationKind, Expression as Expr, Field, Literal as Lit, Metadata,
     comprehension::{Comprehension, ComprehensionQualifier},
     matrix,
 };
@@ -138,6 +138,20 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             eval_constant_comprehension(comprehension.as_ref())
         }
         Expr::AbstractComprehension(_, _) => None,
+        Expr::RecordField(_, rec, fld_name) => {
+            if let Expr::Atomic(
+                _,
+                Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Record(ents))),
+            ) = rec.as_ref()
+            {
+                for Field { name, value } in ents {
+                    if name.eq(fld_name) {
+                        return Some(value.clone());
+                    }
+                }
+            }
+            None
+        }
         Expr::UnsafeIndex(_, subject, indices) | Expr::SafeIndex(_, subject, indices) => {
             let subject: Lit = eval_constant(subject.as_ref())?;
             let indices: Vec<Lit> = indices
