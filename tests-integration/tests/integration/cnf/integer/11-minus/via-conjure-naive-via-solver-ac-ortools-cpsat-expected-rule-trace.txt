@@ -1,0 +1,26 @@
+Model before rewriting:
+
+find a: int(1..10)
+find b: int(1..10)
+
+such that
+
+((a - b) = 4)
+
+--
+
+(a - b), 
+   ~~> minus_to_sum ([("Base", 8400)])
+sum([a,-(b);int(1..)])
+
+--
+
+Final model:
+
+find a: int(1..10)
+find b: int(1..10)
+
+such that
+
+(sum([a,-(b);int(1..)]) = 4)
+

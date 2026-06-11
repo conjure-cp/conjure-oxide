@@ -1,0 +1,22 @@
+Model before rewriting:
+
+find x: int(1..2)
+
+such that
+
+or([ or([ (x = sum([i,j;int(1..)])) | j : int(((i - 1))..(sum([i,1;int(1..)]))) ]) | i : int(1..3) ])
+
+--
+
+Final model:
+
+find x: int(1..2)
+find __0: int(1..3)
+find __1: int(0..4)
+
+such that
+
+(x = sum([__0,__1;int(1..)])),
+(__1 >= sum([__0,-1;int(1..)])),
+(__1 <= sum([__0,1;int(1..)]))
+

@@ -1,0 +1,46 @@
+Model before rewriting:
+
+find a: int(5..8)
+find b: int(5..8)
+find c: int(9..17)
+find d: int(-2..1)
+find e: int(7..9)
+
+such that
+
+(sum([a,b;int(1..2)]) = c),
+(sum([sum([c,d;int(1..2)]),e;int(1..2)]) > 16)
+
+--
+
+sum([sum([c,d;int(1..2)]),e;int(1..2)]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+sum([c,d,e;int(1..2)])
+
+--
+
+sum([a,b;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)])
+sum([a,b;int(1..)])
+
+--
+
+sum([c,d,e;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)])
+sum([c,d,e;int(1..)])
+
+--
+
+Final model:
+
+find a: int(5..8)
+find b: int(5..8)
+find c: int(9..17)
+find d: int(-2..1)
+find e: int(7..9)
+
+such that
+
+(sum([a,b;int(1..)]) = c),
+(sum([c,d,e;int(1..)]) > 16)
+

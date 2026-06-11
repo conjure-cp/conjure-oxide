@@ -1,0 +1,76 @@
+Model before rewriting:
+
+find x: int(5..7)
+find y: int(0..3)
+find z: int(0..4)
+
+such that
+
+!((x % y % z = 3))
+
+--
+
+y % z, 
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(y,z) @ (z != 0)}
+
+--
+
+x % {SafeMod(y,z) @ (z != 0)}, 
+   ~~> bubble_up ([("Bubble", 8800)])
+{x % SafeMod(y,z) @ (z != 0)}
+
+--
+
+({x % SafeMod(y,z) @ (z != 0)} = 3), 
+   ~~> bubble_up ([("Bubble", 8800)])
+{(x % SafeMod(y,z) = 3) @ (z != 0)}
+
+--
+
+{(x % SafeMod(y,z) = 3) @ (z != 0)}, 
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([(x % SafeMod(y,z) = 3),(z != 0);int(1..)])
+
+--
+
+x % SafeMod(y,z), 
+   ~~> mod_to_bubble ([("Bubble", 6000)])
+{SafeMod(x,SafeMod(y,z)) @ (SafeMod(y,z) != 0)}
+
+--
+
+({SafeMod(x,SafeMod(y,z)) @ (SafeMod(y,z) != 0)} = 3), 
+   ~~> bubble_up ([("Bubble", 8800)])
+{(SafeMod(x,SafeMod(y,z)) = 3) @ (SafeMod(y,z) != 0)}
+
+--
+
+!(and([{(SafeMod(x,SafeMod(y,z)) = 3) @ (SafeMod(y,z) != 0)},(z != 0);int(1..)])), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+!(and([{false @ (SafeMod(y,z) != 0)},(z != 0);int(1..)]))
+
+--
+
+{false @ (SafeMod(y,z) != 0)}, 
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([false,(SafeMod(y,z) != 0);int(1..)])
+
+--
+
+!(and([and([false,(SafeMod(y,z) != 0);int(1..)]),(z != 0);int(1..)])), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+true
+
+--
+
+Final model:
+
+find x: int(5..7)
+find y: int(0..3)
+find z: int(0..4)
+
+such that
+
+true
+

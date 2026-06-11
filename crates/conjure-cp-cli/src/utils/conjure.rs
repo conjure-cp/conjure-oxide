@@ -171,7 +171,7 @@ pub fn get_solutions(
                 let mut sols_left = sols_left.lock().unwrap();
                 *sols_left -= 1;
 
-                *sols_left != 0
+                *sols_left > 0
             }))
             .map_err(|err| anyhow::anyhow!("solver failed while collecting solutions: {err}"))?
     } else {

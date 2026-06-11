@@ -378,6 +378,7 @@ pub enum SolverFamily {
     Minion,
     Sat(SatEncoding),
     Smt(TheoryConfig),
+    OrToolsCpSat,
 }
 
 thread_local! {
@@ -484,6 +485,7 @@ impl FromStr for SolverFamily {
             "sat-direct" => Ok(SolverFamily::Sat(SatEncoding::Direct)),
             "sat-order" => Ok(SolverFamily::Sat(SatEncoding::Order)),
             "smt" => Ok(SolverFamily::Smt(TheoryConfig::default())),
+            "ortools-cpsat" => Ok(SolverFamily::OrToolsCpSat),
             other => {
                 // allow forms like `smt-bv-atomic` or `smt-lia-arrays`
                 if other.starts_with("smt-") {
@@ -515,7 +517,7 @@ impl FromStr for SolverFamily {
                     }));
                 }
                 Err(format!(
-                    "unknown solver family '{other}', expected one of: minion, sat-log, sat-direct, sat-order, smt[(bv|lia)-(arrays|atomic)][-nodiscrete]"
+                    "unknown solver family '{other}', expected one of: minion, sat-log, sat-direct, sat-order, smt[(bv|lia)-(arrays|atomic)][-nodiscrete], ortools-cpsat"
                 ))
             }
         }
@@ -528,6 +530,7 @@ impl SolverFamily {
             SolverFamily::Minion => "minion".to_owned(),
             SolverFamily::Sat(encoding) => format!("sat-{}", encoding.as_str()),
             SolverFamily::Smt(theory_config) => format!("smt-{}", theory_config.as_str()),
+            SolverFamily::OrToolsCpSat => "ortools-cpsat".to_owned(),
         }
     }
 }

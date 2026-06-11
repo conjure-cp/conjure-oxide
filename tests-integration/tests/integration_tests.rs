@@ -276,8 +276,8 @@ fn integration_test_inner(
     let solver = match solver_fam {
         SolverFamily::Minion => Solver::new(Minion::default()),
         SolverFamily::Sat(_) => Solver::new(Sat::default()),
-
         SolverFamily::Smt(_) => Solver::new(Smt::default()),
+        SolverFamily::OrToolsCpSat => Solver::new(OrToolsCpSat::default()),
     };
 
     let solutions = {

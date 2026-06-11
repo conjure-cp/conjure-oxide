@@ -50,13 +50,19 @@ pub fn get_example_model(filename: &str) -> Result<Model, anyhow::Error> {
     // let path = PathBuf::from(format!("../tests/integration/basic/comprehension{}.essence", filename));
     let mut cmd = std::process::Command::new("conjure");
     let output = cmd
+        .current_dir(essence_path.parent().unwrap())
         .arg("pretty")
         .arg("--output-format=astjson")
-        .arg(essence_path)
+        .arg(essence_path.file_name().unwrap())
         .output()?;
 
     // convert Conjure's stdout from bytes to string
     let astjson = String::from_utf8(output.stdout)?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(anyhow::anyhow!("conjure command failed: {}", stderr));
+    }
 
     //println!("ASTJSON: {}", astjson);
 
@@ -92,13 +98,19 @@ pub fn get_example_model_by_path(filepath: &str) -> Result<Model, anyhow::Error>
     // Command execution using 'conjure' CLI tool with provided path
     let mut cmd = std::process::Command::new("conjure");
     let output = cmd
+        .current_dir(essence_path.parent().unwrap())
         .arg("pretty")
         .arg("--output-format=astjson")
-        .arg(&essence_path)
+        .arg(essence_path.file_name().unwrap())
         .output()?;
 
     // convert Conjure's stdout from bytes to string
     let astjson = String::from_utf8(output.stdout)?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(anyhow::anyhow!("conjure command failed: {}", stderr));
+    }
 
     // println!("ASTJSON: {}", astjson);
 

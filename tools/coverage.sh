@@ -2,6 +2,12 @@
 
 set -e
 
+# Install OR-Tools if running in CI and not already installed
+if [ "$GITHUB_ACTIONS" = "true" ] && [ ! -d "/usr/local/include/ortools" ]; then
+  echo "Installing Google OR-Tools for GitHub Actions coverage run..."
+  bash .github/workflows/tools/install_ortools.sh
+fi
+
 # coverage.sh
 echo_err () {
   echo "$@" 1>&2
@@ -114,7 +120,7 @@ cargo +nightly build --workspace
 ln -sf conjure-oxide "${TARGET_DIR}/debug/conjure-oxide-debug"
 
 echo_err "info: running tests"
-cargo +nightly test --workspace
+cargo +nightly test --workspace -- --test-threads=2
 
 echo_err "info: generating coverage reports"
 grcov "${TARGET_DIR}/coverage" -s . --binary-path ./target/debug -t html\

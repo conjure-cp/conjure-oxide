@@ -73,6 +73,7 @@ uniplate = "0.4.6"
 ustr = { version = "1.1.0", features = ["serde"] }
 versions = "7.0.0"
 walkdir = "2.5.0"
+z3 = { git = "https://github.com/prove-rs/z3.rs", rev = "z3-v0.19.1", default-features = false, features = ["bundled"] }
 
 # Always use release profile options for z3 crate to minimise size
 [profile.dev.package.z3-sys]
@@ -101,6 +102,9 @@ collection_is_never_read = "warn"
 enum_glob_use = "warn"            # do not allow `use Enum::*`
 implicit_clone = "warn"           # use .clone() instead of .to_owned()
 redundant_clone = "warn"          # this is a nursery lint, so might give false-negatives.
+
+[workspace.lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(no_ortools)'] }
 
 [profile.profiling]
 inherits = "release"
