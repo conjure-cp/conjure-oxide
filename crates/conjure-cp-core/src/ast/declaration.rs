@@ -2,7 +2,7 @@ use super::categories::{Category, CategoryOf};
 use super::name::Name;
 use super::serde::{DefaultWithId, HasId, IdPtr, ObjId, PtrAsInner};
 use super::{
-    DecisionVariable, DomainPtr, Expression, FieldEntry, GroundDomain, HasDomain, Moo, Reference,
+    DecisionVariable, DomainPtr, Expression, Field, GroundDomain, HasDomain, Moo, Reference,
     ReturnType, Typeable,
 };
 use parking_lot::{
@@ -265,19 +265,19 @@ impl DeclarationPtr {
     /// # Examples
     ///
     /// ```
-    /// use conjure_cp_core::ast::{DeclarationPtr,Name,FieldEntry,Domain,Range};
+    /// use conjure_cp_core::ast::{DeclarationPtr,Name,Field,Domain,Range};
     ///
     /// // create declaration for field A in `find rec: record {A: int(0..1), B: int(0..2)}`
     ///
-    /// let field = FieldEntry {
+    /// let field = Field {
     ///     name: Name::User("n".into()),
-    ///     domain: Domain::int(vec![Range::Bounded(1,5)])
+    ///     value: Domain::int(vec![Range::Bounded(1,5)])
     /// };
     ///
     /// let declaration = DeclarationPtr::new_record_field(field);
     /// ```
-    pub fn new_record_field(entry: FieldEntry) -> DeclarationPtr {
-        let kind = DeclarationKind::Field(entry.domain);
+    pub fn new_record_field(entry: Field<DomainPtr>) -> DeclarationPtr {
+        let kind = DeclarationKind::Field(entry.value);
         DeclarationPtr::new(entry.name, kind)
     }
 

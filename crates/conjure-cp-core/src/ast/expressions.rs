@@ -35,7 +35,7 @@ use super::comprehension::Comprehension;
 use super::declaration::DeclarationKind;
 use super::domains::HasDomain as _;
 use super::pretty::{pretty_expressions_as_top_level, pretty_vec};
-use super::records::FieldValue;
+use super::records::Field;
 use super::sat_encoding::SATIntEncoding;
 use super::{
     AbstractLiteral, Atom, DeclarationPtr, Domain, DomainPtr, GroundDomain, IntVal, JectivityAttr,
@@ -85,8 +85,8 @@ static_assertions::assert_eq_size!([u8; 112], Expression);
 #[biplate(to=Metadata)]
 #[biplate(to=Name)]
 #[biplate(to=Option<Expression>)]
-#[biplate(to=FieldValue<Expression>)]
-#[biplate(to=FieldValue<Literal>)]
+#[biplate(to=Field<Expression>)]
+#[biplate(to=Field<Literal>)]
 #[biplate(to=Reference)]
 #[biplate(to=Model)]
 #[biplate(to=SymbolTable)]
@@ -796,7 +796,7 @@ impl Expression {
                             let decl = atom.clone().into_declaration();
                             for inner_dom in doms {
                                 if *decl.name() == inner_dom.name {
-                                    return Some(inner_dom.domain);
+                                    return Some(inner_dom.value);
                                 }
                             }
                             None

@@ -12,10 +12,10 @@ use crate::ast::PartitionAttr;
 use crate::ast::Typeable;
 use crate::ast::ac_operators::ACOperatorKind;
 use crate::ast::comprehension::ComprehensionBuilder;
-use crate::ast::records::FieldValue;
+use crate::ast::records::Field;
 use crate::ast::{
-    AbstractLiteral, Atom, BinaryAttr, DeclarationPtr, Domain, Expression, FieldEntry, FuncAttr,
-    IntVal, JectivityAttr, Literal, MSetAttr, Name, PartialityAttr, Range, RelAttr, ReturnType,
+    AbstractLiteral, Atom, BinaryAttr, DeclarationPtr, Domain, Expression, FuncAttr, IntVal,
+    JectivityAttr, Literal, MSetAttr, Name, PartialityAttr, Range, RelAttr, ReturnType,
     SequenceAttr, SetAttr, SymbolTable, SymbolTablePtr,
 };
 use crate::ast::{DomainPtr, Metadata};
@@ -436,9 +436,10 @@ fn parse_domain(
                     .next()
                     .ok_or(error!("FindOrGiven[2] is an empty object"))?;
 
-                let domain = parse_domain(domain.0, domain.1, symbols)?;
-
-                let rec = FieldEntry { name, domain };
+                let rec = Field {
+                    name,
+                    value: parse_domain(domain.0, domain.1, symbols)?,
+                };
 
                 entries.push(rec);
             }
@@ -1064,7 +1065,7 @@ fn parse_abs_record(abs_record: &Value, scope: &SymbolTablePtr) -> Result<Expres
         let value = parse_expression(&entry[1], scope)?;
 
         let name = Name::User(Ustr::from(name));
-        let rec_entry = FieldValue {
+        let rec_entry = Field {
             name: name.clone(),
             value,
         };
@@ -1091,7 +1092,7 @@ fn parse_abs_variant(abs_variant: &Value, scope: &SymbolTablePtr) -> Result<Expr
     let value = parse_expression(&entry[2], scope)?;
 
     let name = Name::User(Ustr::from(name));
-    let rec_entry = FieldValue { name, value };
+    let rec_entry = Field { name, value };
 
     Ok(Expression::AbstractLiteral(
         Metadata::new(),

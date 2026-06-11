@@ -1,3 +1,4 @@
+use funcmap::FuncMap;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Display, Formatter};
@@ -6,7 +7,7 @@ use ustr::Ustr;
 
 use super::{
     Atom, Domain, DomainPtr, Expression, GroundDomain, Metadata, Moo, PartitionAttr, Range,
-    ReturnType, SetAttr, Typeable, domains::HasDomain, domains::Int, records::FieldValue,
+    ReturnType, SetAttr, Typeable, domains::HasDomain, domains::Int, records::Field,
 };
 use crate::ast::domains::{MSetAttr, SequenceAttr};
 use crate::ast::pretty::pretty_vec;
@@ -19,8 +20,8 @@ use uniplate::{Biplate, Tree, Uniplate};
 #[biplate(to=Atom)]
 #[biplate(to=AbstractLiteral<Literal>)]
 #[biplate(to=AbstractLiteral<Expression>)]
-#[biplate(to=FieldValue<Literal>)]
-#[biplate(to=FieldValue<Expression>)]
+#[biplate(to=Field<Literal>)]
+#[biplate(to=Field<Expression>)]
 #[biplate(to=Expression)]
 #[path_prefix(conjure_cp::ast)]
 /// A literal value, equivalent to constants in Conjure.
@@ -44,7 +45,7 @@ impl HasDomain for Literal {
 
 // make possible values of an AbstractLiteral a closed world to make the trait bounds more sane (particularly in Uniplate instances!!)
 pub trait AbstractLiteralValue:
-    Clone + Eq + PartialEq + Display + Uniplate + Biplate<FieldValue<Self>> + 'static
+    Clone + Eq + PartialEq + Display + Uniplate + Biplate<Field<Self>> + 'static
 {
     type Dom: Clone
         + Eq
@@ -75,14 +76,14 @@ pub enum AbstractLiteral<T: AbstractLiteralValue> {
     // a tuple of literals
     Tuple(Vec<T>),
 
-    Record(Vec<FieldValue<T>>),
+    Record(Vec<Field<T>>),
 
     Sequence(Vec<T>),
 
     Function(Vec<(T, T)>),
 
     // Variants only contain one of their name-domain pairs
-    Variant(Moo<FieldValue<T>>),
+    Variant(Moo<Field<T>>),
 
     // A list of partitions, each part has a set of values
     Partition(Vec<Vec<T>>),
@@ -322,7 +323,7 @@ impl Typeable for AbstractLiteral<Expression> {
             AbstractLiteral::Record(items) => {
                 let mut item_types = vec![];
                 for item in items {
-                    item_types.push(item.value.return_type());
+                    item_types.push(item.clone().func_map(|x| x.return_type()));
                 }
                 ReturnType::Record(item_types)
             }
@@ -351,7 +352,7 @@ impl Typeable for AbstractLiteral<Expression> {
             }
             AbstractLiteral::Variant(item) => {
                 // Variants hold multiple possible types. In the case of a literal we know which type it chose
-                ReturnType::Variant(vec![item.value.return_type()])
+                ReturnType::Variant(vec![item.as_ref().clone().func_map(|x| x.return_type())])
             }
             AbstractLiteral::Relation(items) => {
                 if items.is_empty() {
@@ -583,7 +584,7 @@ impl<U, To> Biplate<To> for AbstractLiteral<U>
 where
     To: Uniplate,
     U: AbstractLiteralValue + Biplate<AbstractLiteral<U>> + Biplate<To>,
-    FieldValue<U>: Biplate<AbstractLiteral<U>> + Biplate<To>,
+    Field<U>: Biplate<AbstractLiteral<U>> + Biplate<To>,
 {
     fn biplate(&self) -> (Tree<To>, Box<dyn Fn(Tree<To>) -> Self>) {
         if std::any::TypeId::of::<To>() == std::any::TypeId::of::<AbstractLiteral<U>>() {
@@ -902,7 +903,7 @@ impl AbstractLiteral<Expression> {
                 Some(AbstractLiteral::Record(
                     literals
                         .into_iter()
-                        .map(|(name, literal)| FieldValue {
+                        .map(|(name, literal)| Field {
                             name,
                             value: literal,
                         })
@@ -918,7 +919,7 @@ impl AbstractLiteral<Expression> {
                     }
                     _ => None,
                 }?;
-                Some(AbstractLiteral::Variant(Moo::new(FieldValue {
+                Some(AbstractLiteral::Variant(Moo::new(Field {
                     name: entry.name.clone(),
                     value: literal,
                 })))
