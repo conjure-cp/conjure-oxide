@@ -2,13 +2,13 @@ use crate::ast::domains::attrs::PartitionAttr;
 use crate::ast::domains::{MSetAttr, SequenceAttr};
 use crate::ast::pretty::pretty_vec;
 use crate::ast::{
-    AbstractLiteral, Domain, DomainOpError, FieldEntry, FuncAttr, HasDomain, Literal, Moo, RelAttr,
-    SetAttr, Typeable,
+    AbstractLiteral, DomainOpError, FuncAttr, HasDomain, Literal, Moo, RelAttr, SetAttr, Typeable,
     domains::{domain::Int, range::Range},
+    records::Field,
 };
 use crate::range;
 use crate::utils::count_combinations;
-use conjure_cp_core::ast::{Name, ReturnType};
+use conjure_cp_core::ast::ReturnType;
 use itertools::{Itertools, izip};
 use num_traits::ToPrimitive;
 use polyquine::Quine;
@@ -18,35 +18,7 @@ use std::fmt::{Display, Formatter};
 use std::iter::zip;
 use uniplate::Uniplate;
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Uniplate, Quine)]
-#[path_prefix(conjure_cp::ast)]
-pub struct FieldEntryGround {
-    pub name: Name,
-    pub domain: Moo<GroundDomain>,
-}
-
-impl From<FieldEntryGround> for FieldEntry {
-    fn from(value: FieldEntryGround) -> Self {
-        FieldEntry {
-            name: value.name,
-            domain: value.domain.into(),
-        }
-    }
-}
-
-impl TryFrom<FieldEntry> for FieldEntryGround {
-    type Error = DomainOpError;
-
-    fn try_from(value: FieldEntry) -> Result<Self, Self::Error> {
-        match value.domain.as_ref() {
-            Domain::Ground(gd) => Ok(FieldEntryGround {
-                name: value.name,
-                domain: gd.clone(),
-            }),
-            Domain::Unresolved(_) => Err(DomainOpError::NotGround),
-        }
-    }
-}
+pub(super) type FieldGround = Field<Moo<GroundDomain>>;
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine, Uniplate)]
 #[path_prefix(conjure_cp::ast)]
@@ -67,7 +39,7 @@ pub enum GroundDomain {
     /// A tuple of N elements, each with its own domain
     Tuple(Vec<Moo<GroundDomain>>),
     /// A record
-    Record(Vec<FieldEntryGround>),
+    Record(Vec<FieldGround>),
     /// A Partition
     Partition(PartitionAttr, Moo<GroundDomain>),
     /// A sequence of elements drawn from the inner domain
@@ -77,7 +49,7 @@ pub enum GroundDomain {
     /// A relation as a set of tuples
     Relation(RelAttr, Vec<Moo<GroundDomain>>),
     /// A variant domain with its domain options (reusing field entries)
-    Variant(Vec<FieldEntryGround>),
+    Variant(Vec<FieldGround>),
 }
 
 impl GroundDomain {
@@ -331,7 +303,7 @@ impl GroundDomain {
                 // A record is just a named tuple
                 let mut ans = 1u64;
                 for entry in entries {
-                    let sz = entry.domain.length()?;
+                    let sz = entry.value.length()?;
                     ans = ans.checked_mul(sz).ok_or(DomainOpError::TooLarge)?;
                 }
                 Ok(ans)
@@ -350,7 +322,7 @@ impl GroundDomain {
             GroundDomain::Variant(entries) => {
                 let mut ans = 1u64;
                 for entry in entries {
-                    let sz = entry.domain.length()?;
+                    let sz = entry.value.length()?;
                     // Only one field can be in the variant at once
                     ans = ans.checked_add(sz).ok_or(DomainOpError::TooLarge)?;
                 }
@@ -513,7 +485,7 @@ impl GroundDomain {
 
                     for (entry, lit_entry) in itertools::izip!(entries, lit_entries) {
                         if entry.name != lit_entry.name
-                            || !(entry.domain.contains(&lit_entry.value)?)
+                            || !(entry.value.contains(&lit_entry.value)?)
                         {
                             return Ok(false);
                         }
@@ -546,7 +518,7 @@ impl GroundDomain {
                 Literal::AbstractLiteral(AbstractLiteral::Variant(lit_entry)) => {
                     for entry in entries {
                         if entry.name == lit_entry.name
-                            && !(entry.domain.contains(&lit_entry.value)?)
+                            && !(entry.value.contains(&lit_entry.value)?)
                         {
                             return Ok(true);
                         }
@@ -1069,7 +1041,7 @@ impl GroundDomain {
 
                 Ok(GroundDomain::Record(
                     izip!(field_names, elem_domains)
-                        .map(|(name, domain)| FieldEntryGround { name, domain })
+                        .map(|(name, value)| FieldGround { name, value })
                         .collect(),
                 ))
             }
@@ -1140,7 +1112,7 @@ impl Typeable for GroundDomain {
             GroundDomain::Record(entries) => {
                 let mut entry_types = Vec::new();
                 for entry in entries {
-                    entry_types.push(entry.domain.return_type());
+                    entry_types.push(entry.value.return_type());
                 }
                 ReturnType::Record(entry_types)
             }
@@ -1150,7 +1122,7 @@ impl Typeable for GroundDomain {
             GroundDomain::Variant(entries) => {
                 let mut entry_types = Vec::new();
                 for entry in entries {
-                    entry_types.push(entry.domain.return_type());
+                    entry_types.push(entry.value.return_type());
                 }
                 ReturnType::Record(entry_types)
             }
@@ -1200,7 +1172,7 @@ impl Display for GroundDomain {
                     "record {{{}}}",
                     entries
                         .iter()
-                        .map(|entry| format!("{}: {}", entry.name, entry.domain))
+                        .map(|entry| format!("{}: {}", entry.name, entry.value))
                         .join(", ")
                 )
             }
@@ -1213,7 +1185,7 @@ impl Display for GroundDomain {
                     "variant {{{}}}",
                     entries
                         .iter()
-                        .map(|entry| format!("{}: {}", entry.name, entry.domain))
+                        .map(|entry| format!("{}: {}", entry.name, entry.value))
                         .join(", ")
                 )
             }
