@@ -1,15 +1,25 @@
 use std::env::var;
+use std::fs;
 use std::fs::{File, read_dir};
 use std::io::{self, Write};
 use std::path::Path;
+use std::sync::Arc;
+
+use std::collections::{BTreeMap, BTreeSet};
+use std::error::Error;
+use std::time::Instant;
 
 use walkdir::WalkDir;
 
-// Include the TestConfig module directly so it can be used in build.rs
+// Include the TestConfig and RunCase modules directly so it can be used in build.rs
 // (build.rs cannot depend on the crate it's building)
 #[path = "src/test_config.rs"]
 mod test_config;
 use test_config::TestConfig;
+
+#[path = "src/runcase.rs"]
+mod runcase;
+use runcase::RunCase;
 
 fn main() -> io::Result<()> {
     println!("cargo:rerun-if-changed=tests/integration");
@@ -56,7 +66,8 @@ fn main() -> io::Result<()> {
                 .collect();
 
             let essence_files: Vec<(String, String)> = std::iter::zip(stems, exts).collect();
-            write_integration_test(&mut f, subdir.path().display().to_string(), essence_files)?;
+            setup_integration_tests(&mut f, subdir.path().display().to_string(), essence_files)?;
+            // write_integration_test(&mut f, subdir.path().display().to_string(), essence_files)?;
         }
     }
 
@@ -244,29 +255,77 @@ fn get_ignore_attr(cfg: &TestConfig, include_expected_time: bool) -> io::Result<
     }
 }
 
-fn write_integration_test(
-    file: &mut File,
+fn setup_integration_tests(
+    arg_file: &mut File,
     path: String,
     essence_files: Vec<(String, String)>,
 ) -> io::Result<()> {
-    // TODO: Consider supporting multiple Essence files?
-    if essence_files.len() == 1 {
-        let cfg = read_config_or_default(&path);
-        let ignore = get_ignore_attr(&cfg, true)?;
-
-        write!(
-            file,
-            include_str!("./tests/integration_test_template"),
-            // TODO: better sanitisation of paths to function names
-            test_name = path.replace("./", "").replace(['/', '-'], "_"),
-            test_dir = path,
-            essence_file = essence_files[0].0,
-            ext = essence_files[0].1,
-            ignore_attr = ignore
-        )
-    } else {
-        Ok(())
+    if essence_files.len() != 1 {
+        return Ok(());
     }
+
+    let config: TestConfig =
+        if let Ok(config_contents) = fs::read_to_string(format!("{path}/config.toml")) {
+            toml::from_str(&config_contents).unwrap()
+        } else {
+            Default::default()
+        };
+
+    let parsers = config
+        .configured_parsers()
+        .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?;
+    let rewriters = config
+        .configured_rewriters()
+        .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?;
+    let comprehension_expanders = config
+        .configured_comprehension_expanders()
+        .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?;
+    let solvers = config
+        .configured_solvers()
+        .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?;
+
+    for parser in parsers.iter().copied() {
+        for rewriter in rewriters.clone() {
+            for comprehension_expander in comprehension_expanders.clone() {
+                for solver in solvers.clone() {
+                    let case_name =
+                        runcase::run_case_name(parser, rewriter, comprehension_expander);
+                    let run_case = RunCase {
+                        parser,
+                        rewriter,
+                        comprehension_expander,
+                        solver,
+                        case_name: case_name.as_str(),
+                    };
+                    write_integration_test(arg_file, &path, &essence_files, run_case)?;
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+fn write_integration_test(
+    file: &mut File,
+    path: &String,
+    essence_files: &Vec<(String, String)>,
+    runcase: RunCase,
+) -> io::Result<()> {
+    let file_name = &essence_files[0].0;
+    let ext = &essence_files[0].1;
+    let cfg = read_config_or_default(path);
+    let ignore = get_ignore_attr(&cfg, true)?;
+
+    write!(
+        file,
+        include_str!("./tests/integration_test_template"),
+        test_name = path.replace("./", "").replace(['/', '-'], "_"),
+        test_dir = path,
+        essence_file = file_name,
+        ext = ext,
+        ignore_attr = ignore,
+        run_case = runcase
+    )
 }
 
 fn write_custom_test(file: &mut File, path: String) -> io::Result<()> {

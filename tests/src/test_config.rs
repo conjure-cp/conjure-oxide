@@ -101,26 +101,26 @@ pub fn upsert_expected_time_config(path: &Path, expected_time: u64) -> io::Resul
 #[serde(deny_unknown_fields)]
 pub struct TestConfig {
     #[serde(
-        default,
+        // default,
         rename = "parser",
         deserialize_with = "deserialize_string_or_vec"
     )]
     pub parser: Vec<String>, // Stage 1a: list of parsers (tree-sitter or via-conjure)
 
     #[serde(
-        default,
+        // default,
         rename = "rewriter",
         deserialize_with = "deserialize_string_or_vec"
     )]
     pub rewriter: Vec<String>,
     #[serde(
-        default,
+        // default,
         rename = "comprehension-expander",
         deserialize_with = "deserialize_string_or_vec"
     )]
     pub comprehension_expander: Vec<String>,
     #[serde(
-        default,
+        // default,
         rename = "solver",
         deserialize_with = "deserialize_string_or_vec"
     )]
@@ -139,7 +139,7 @@ pub struct TestConfig {
     pub skip: bool,
 
     #[serde(
-        default,
+    //     default,
         rename = "expected-time",
         deserialize_with = "deserialise_expected_time"
     )]

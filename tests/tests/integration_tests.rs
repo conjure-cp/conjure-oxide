@@ -36,35 +36,18 @@ use conjure_cp_cli::utils::testing::{read_solutions_json, save_solutions_json};
 use conjure_cp_rules;
 use pretty_assertions::assert_eq;
 use tests::AcceptMode;
+use tests::RunCase;
 use tests::TestConfig;
 use tests::golden_files::assert_no_redundant_expected_files;
+use tests::runcase::run_case_label;
 use tests::test_config::{round_expected_time, upsert_expected_time_config};
 
-#[derive(Clone, Copy, Debug)]
-struct RunCase<'a> {
-    parser: Parser,
-    rewriter: Rewriter,
-    comprehension_expander: QuantifiedExpander,
-    solver: SolverFamily,
-    case_name: &'a str,
-}
-
-fn run_case_label(
+fn integration_test(
     path: &str,
     essence_base: &str,
     extension: &str,
-    run_case: RunCase<'_>,
-) -> String {
-    format!(
-        "test_dir={path}, model={essence_base}.{extension}, parser={}, rewriter={}, comprehension_expander={}, solver={}",
-        run_case.parser,
-        run_case.rewriter,
-        run_case.comprehension_expander,
-        run_case.solver.as_str()
-    )
-}
-
-fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(), Box<dyn Error>> {
+    run_case: RunCase,
+) -> Result<(), Box<dyn Error>> {
     let accept_mode = AcceptMode::from_env();
     let accept = accept_mode.accepts_outputs();
     let started_at = Instant::now();
