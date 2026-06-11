@@ -29,15 +29,11 @@ use uniplate::Uniplate;
 
 use ApplicationError::RuleNotApplicable;
 
-register_rule_set!("FlatShared", ("Base"), |f: &SolverFamily| {
-    matches!(f, SolverFamily::Minion | SolverFamily::OrToolsCpSat)
-});
-
-register_rule_set!("Minion", ("FlatShared"), |f: &SolverFamily| {
+register_rule_set!("Minion", ("Base"), |f: &SolverFamily| {
     matches!(f, SolverFamily::Minion)
 });
 
-register_rule_set!("OrToolsCpSat", ("FlatShared"), |f: &SolverFamily| {
+register_rule_set!("OrToolsCpSat", ("Base"), |f: &SolverFamily| {
     matches!(f, SolverFamily::OrToolsCpSat)
 });
 
@@ -229,7 +225,7 @@ fn introduce_producteq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
 ///
 /// Cases 6 and 7 could potentially be a normalising rule `-e ~> -1*e`. However, I think that we
 /// should only turn negations into a product when they are inside a sum, not all the time.
-#[register_rule("FlatShared", 4600, [Leq, Geq, Eq, AuxDeclaration])]
+#[register_rule(["Minion", "OrToolsCpSat"], 4600, [Leq, Geq, Eq, AuxDeclaration])]
 fn introduce_weighted_sumleq_sumgeq(expr: &Expr, symtab: &SymbolTable) -> ApplicationResult {
     // Keep track of which type of (in)equality was in the input, and use this to decide what
     // constraints to make at the end
@@ -650,7 +646,7 @@ fn introduce_modeq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     )))
 }
 
-#[register_rule("FlatShared", 4400, [Eq, AuxDeclaration])]
+#[register_rule(["Minion", "OrToolsCpSat"], 4400, [Eq, AuxDeclaration])]
 fn introduce_abseq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (x, abs_y): (Atom, Expr) = match expr.clone() {
         Expr::Eq(_, a, b) => {

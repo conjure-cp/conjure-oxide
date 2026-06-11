@@ -64,19 +64,19 @@ impl SolverAdaptor for OrToolsCpSat {
 
         let model_bytes = model.encode_to_vec();
 
-        let mut rust_error = None;
-        let mut user_terminated = false;
-        let mut num_solutions = 0;
+        let rust_error = std::sync::Mutex::new(None);
+        let user_terminated = std::sync::atomic::AtomicBool::new(false);
+        let num_solutions = std::sync::atomic::AtomicUsize::new(0);
 
-        let mut cb = |response_proto: &[u8]| -> bool {
-            if user_terminated {
+        let cb = |response_proto: &[u8]| -> bool {
+            if user_terminated.load(std::sync::atomic::Ordering::Relaxed) {
                 return false;
             }
 
             let response = match CpSolverResponse::decode(response_proto) {
                 Ok(r) => r,
                 Err(e) => {
-                    rust_error = Some(SolverError::Runtime(format!("Failed to decode OR-Tools response: {}", e)));
+                    *rust_error.lock().unwrap() = Some(SolverError::Runtime(format!("Failed to decode OR-Tools response: {}", e)));
                     return false;
                 }
             };
@@ -84,21 +84,21 @@ impl SolverAdaptor for OrToolsCpSat {
             let solution = match response_to_solution(&response, &self.solution_vars) {
                 Ok(s) => s,
                 Err(e) => {
-                    rust_error = Some(e);
+                    *rust_error.lock().unwrap() = Some(e);
                     return false;
                 }
             };
             
-            num_solutions += 1;
+            num_solutions.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
             let continue_search = callback(solution);
             if !continue_search {
-                user_terminated = true;
+                user_terminated.store(true, std::sync::atomic::Ordering::Relaxed);
             }
             continue_search
         };
 
-        let mut cb_dyn: &mut dyn FnMut(&[u8]) -> bool = &mut cb;
-        let callback_ptr = &mut cb_dyn as *mut &mut dyn FnMut(&[u8]) -> bool as usize;
+        let cb_dyn: &dyn Fn(&[u8]) -> bool = &cb;
+        let callback_ptr = &cb_dyn as *const &dyn Fn(&[u8]) -> bool as usize;
 
         let response_bytes = unsafe { ffi::solve_wrapper(&model_bytes, callback_ptr) };
         if response_bytes.is_empty() {
@@ -107,7 +107,7 @@ impl SolverAdaptor for OrToolsCpSat {
             ));
         }
 
-        if let Some(err) = rust_error {
+        if let Some(err) = rust_error.into_inner().unwrap() {
             return Err(err);
         }
 
@@ -130,7 +130,7 @@ impl SolverAdaptor for OrToolsCpSat {
             ..Default::default()
         };
 
-        if user_terminated {
+        if user_terminated.into_inner() {
             return Ok(SolveSuccess {
                 stats,
                 status: Incomplete(SearchIncomplete::UserTerminated),
@@ -145,7 +145,7 @@ impl SolverAdaptor for OrToolsCpSat {
                 })
             }
             CpSolverStatus::Infeasible => {
-                if num_solutions > 0 {
+                if num_solutions.into_inner() > 0 {
                     Ok(SolveSuccess {
                         stats,
                         status: Complete(HasSolutions),

@@ -27,7 +27,7 @@ mod ffi {
 #[cfg(not(no_ortools))]
 unsafe fn invoke_callback(callback_ptr: usize, response_proto: &[u8]) -> bool {
     unsafe {
-        let cb = &mut *(callback_ptr as *mut &mut dyn FnMut(&[u8]) -> bool);
+        let cb = &*(callback_ptr as *const &dyn Fn(&[u8]) -> bool);
         cb(response_proto)
     }
 }

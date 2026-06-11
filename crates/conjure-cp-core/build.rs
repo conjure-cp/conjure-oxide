@@ -32,8 +32,8 @@ fn main() {
 
     cxx_build::bridge(format!("{}/mod.rs", base_path))
             .file(format!("{}/wrapper.cpp", base_path))
-            .include("/usr/include") 
             .include("/usr/local/include") 
+            .include("/usr/include") 
             .include(&manifest_dir)
             .flag_if_supported("-std=c++17")
             .flag_if_supported("-fexceptions") 
