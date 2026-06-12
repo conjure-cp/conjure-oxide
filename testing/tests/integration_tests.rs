@@ -39,9 +39,7 @@ use std::str::FromStr;
 use testing::AcceptMode;
 use testing::RunCase;
 use testing::TestConfig;
-use testing::runcase::*;
 
-// use testing::runcase::run_case_label;
 use testing::test_config::{round_expected_time, upsert_expected_time_config};
 
 fn integration_test(

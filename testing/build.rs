@@ -12,11 +12,8 @@ use walkdir::WalkDir;
 // (build.rs cannot depend on the crate it's building)
 #[path = "src/test_config.rs"]
 mod test_config;
+use test_config::RunCase;
 use test_config::TestConfig;
-
-#[path = "src/runcase.rs"]
-mod runcase;
-use runcase::RunCase;
 
 fn main() -> io::Result<()> {
     println!("cargo:rerun-if-changed=tests/integration");
