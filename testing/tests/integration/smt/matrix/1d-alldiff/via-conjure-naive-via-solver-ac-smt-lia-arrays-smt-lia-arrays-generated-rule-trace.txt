@@ -1,0 +1,72 @@
+Model before rewriting:
+
+find a: matrix indexed by [int(1..3)] of int(1..3)
+
+such that
+
+allDiff(a),
+allDiff(a[..]),
+(a[1] <= a[2]),
+(a[2] <= a[3])
+
+--
+
+a[..], 
+   ~~> slice_to_bubble ([("Bubble", 6000)])
+SafeSlice(a,[..])
+
+--
+
+a[1], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a,[1])
+
+--
+
+a[2], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a,[2])
+
+--
+
+a[2], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a,[2])
+
+--
+
+a[3], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a,[3])
+
+--
+
+SafeSlice(a,[..]), 
+   ~~> flatten_matrix_slice ([("Smt", 1000)])
+[SafeIndex(a,[1]),SafeIndex(a,[2]),SafeIndex(a,[3]);int(1..)]
+
+--
+
+allDiff(a), 
+   ~~> matrix_ref_to_slice ([("Smt", 999)])
+allDiff(SafeSlice(a,[..]))
+
+--
+
+SafeSlice(a,[..]), 
+   ~~> flatten_matrix_slice ([("Smt", 1000)])
+[SafeIndex(a,[1]),SafeIndex(a,[2]),SafeIndex(a,[3]);int(1..)]
+
+--
+
+Final model:
+
+find a: matrix indexed by [int(1..3)] of int(1..3)
+
+such that
+
+allDiff([SafeIndex(a,[1]),SafeIndex(a,[2]),SafeIndex(a,[3]);int(1..)]),
+allDiff([SafeIndex(a,[1]),SafeIndex(a,[2]),SafeIndex(a,[3]);int(1..)]),
+(SafeIndex(a,[1]) <= SafeIndex(a,[2])),
+(SafeIndex(a,[2]) <= SafeIndex(a,[3]))
+

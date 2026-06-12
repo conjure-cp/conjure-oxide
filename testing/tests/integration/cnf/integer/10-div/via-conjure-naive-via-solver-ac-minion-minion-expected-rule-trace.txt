@@ -1,0 +1,40 @@
+Model before rewriting:
+
+find a: int(1..10)
+find b: int(1..10)
+find c: int(-100..100)
+
+such that
+
+((a / b) = c)
+
+--
+
+(a / b), 
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(a, b) @ (b != 0)}
+
+--
+
+({SafeDiv(a, b) @ (b != 0)} = c), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(SafeDiv(a, b) = c)
+
+--
+
+(SafeDiv(a, b) = c), 
+   ~~> introduce_diveq ([("Minion", 4200)])
+DivEq(a, b, c)
+
+--
+
+Final model:
+
+find a: int(1..10)
+find b: int(1..10)
+find c: int(-100..100)
+
+such that
+
+DivEq(a, b, c)
+

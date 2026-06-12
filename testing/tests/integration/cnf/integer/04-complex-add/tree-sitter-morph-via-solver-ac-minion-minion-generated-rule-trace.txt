@@ -1,0 +1,29 @@
+Model before rewriting:
+
+find a: int(5..8)
+find b: int(5..8)
+find c: int(9..17)
+find d: int(-2..1)
+find e: int(7..9)
+
+such that
+
+(sum([a,b;int(1..)]) = c),
+(sum([sum([c,d;int(1..)]),e;int(1..)]) > 16)
+
+--
+
+Final model:
+
+find a: int(5..8)
+find b: int(5..8)
+find c: int(9..17)
+find d: int(-2..1)
+find e: int(7..9)
+
+such that
+
+SumLeq([a, b], c),
+SumGeq([a, b], c),
+SumGeq([-1, c, d, e], 16)
+

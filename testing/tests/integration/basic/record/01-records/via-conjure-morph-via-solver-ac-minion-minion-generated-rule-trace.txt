@@ -1,0 +1,38 @@
+Model before rewriting:
+
+letting R be domain record {a: bool, b: int(0..9)}
+find x: R
+find y: R
+find z: R
+
+such that
+
+(x[a] = true),
+(x[b] = 3),
+(y = record {a = false,b = 4}),
+(y = z)
+
+--
+
+Final model:
+
+letting R be domain record {a: bool, b: int(0..9)}
+find x: R
+find y: R
+find z: R
+find x#record_to_atom_1: bool
+find x#record_to_atom_2: int(0..9)
+find y#record_to_atom_1: bool
+find y#record_to_atom_2: int(0..9)
+find z#record_to_atom_1: bool
+find z#record_to_atom_2: int(0..9)
+
+such that
+
+Reify(true, x#record_to_atom_1),
+(x#record_to_atom_2 = 3),
+Reify(false, y#record_to_atom_1),
+(y#record_to_atom_2 = 4),
+Reify(z#record_to_atom_1, y#record_to_atom_1),
+(y#record_to_atom_2 = z#record_to_atom_2)
+

@@ -1,0 +1,92 @@
+Model before rewriting:
+
+find m: matrix indexed by [int(1..5)] of int(1..5)
+find n: matrix indexed by [int(1..5)] of int(1..5)
+
+such that
+
+and([ (n[i] = (6 - i)) | i : int(1..5) ]),
+and([ ((n[i] < 5)) -> ((m[i] = i)) | i : int(1..5), (i < 4) ])
+
+--
+
+Via-solver generator model before rewriting:
+
+find i: int(1..5)
+
+--
+
+Model before rewriting:
+
+find i: int(1..5)
+
+--
+
+Final model:
+
+find i: int(1..5)
+
+such that
+
+true
+
+Via-solver generator model before rewriting:
+
+find i: int(1..5)
+
+such that
+
+Ineq(i, 3, 0)
+
+--
+
+Model before rewriting:
+
+find i: int(1..5)
+
+such that
+
+Ineq(i, 3, 0)
+
+--
+
+Final model:
+
+find i: int(1..5)
+
+such that
+
+Ineq(i, 3, 0)
+
+Final model:
+
+find m: matrix indexed by [int(1..5)] of int(1..5)
+find n: matrix indexed by [int(1..5)] of int(1..5)
+find m#matrix_to_atom_1: int(1..5)
+find m#matrix_to_atom_2: int(1..5)
+find m#matrix_to_atom_3: int(1..5)
+find m#matrix_to_atom_4: int(1..5)
+find m#matrix_to_atom_5: int(1..5)
+find n#matrix_to_atom_1: int(1..5)
+find n#matrix_to_atom_2: int(1..5)
+find n#matrix_to_atom_3: int(1..5)
+find n#matrix_to_atom_4: int(1..5)
+find n#matrix_to_atom_5: int(1..5)
+find __0: bool
+find __1: bool
+find __2: bool
+
+such that
+
+(n#matrix_to_atom_1 = 5),
+(n#matrix_to_atom_2 = 4),
+(n#matrix_to_atom_3 = 3),
+(n#matrix_to_atom_4 = 2),
+(n#matrix_to_atom_5 = 1),
+ReifyImply((m#matrix_to_atom_1 = 1), __0),
+ReifyImply((m#matrix_to_atom_2 = 2), __1),
+ReifyImply((m#matrix_to_atom_3 = 3), __2),
+Reify(Ineq(n#matrix_to_atom_1, 4, 0), __0),
+Reify(Ineq(n#matrix_to_atom_2, 4, 0), __1),
+Reify(Ineq(n#matrix_to_atom_3, 4, 0), __2)
+

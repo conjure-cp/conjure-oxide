@@ -32,6 +32,6 @@ The parser used for the test can be specified in a config.TOML in the test direc
 Both parsers will be used by default for each test unless specified and will use separate generated and expected files as this may be different per parser.
 
 ## Creating a New Roundtrip Test
-To create a new roundtrip test you must create a new directory under `./tests-integration/tests/roundtrip/`.
+To create a new roundtrip test you must create a new directory under `./testing/tests/roundtrip/`.
 Any directories within here than contain a singular `.essence` or `.eprime` file will be treated as a test.
 After creating the Essence or Essence' file for your test you should run the test suite with `ACCEPT=true` to generate the expected files.
