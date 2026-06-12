@@ -1,0 +1,203 @@
+Model before rewriting:
+
+find a: bool
+find b: bool
+find c: bool
+
+such that
+
+and([and([and([or([a,b;int(1..)]),or([!(a),b;int(1..)]);int(1..)]),or([a,!(b);int(1..)]);int(1..)]),or([!(c),c;int(1..)]);int(1..)])
+
+--
+
+!(a), 
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__0
+new variables:
+  find __0: bool
+new clauses:
+  (¬a \/ ¬__0)
+  (a \/ __0)
+
+--
+
+!(b), 
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__1
+new variables:
+  find __1: bool
+new clauses:
+  (¬b \/ ¬__1)
+  (b \/ __1)
+
+--
+
+!(c), 
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__2
+new variables:
+  find __2: bool
+new clauses:
+  (¬c \/ ¬__2)
+  (c \/ __2)
+
+--
+
+and([and([and([or([a,b;int(1..)]),or([__0,b;int(1..)]);int(1..)]),or([a,__1;int(1..)]);int(1..)]),or([__2,c;int(1..)]);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+and([and([or([a,b;int(1..)]),or([__0,b;int(1..)]);int(1..)]),or([a,__1;int(1..)]);int(1..)]),
+or([__2,c;int(1..)])
+
+--
+
+and([and([or([a,b;int(1..)]),or([__0,b;int(1..)]);int(1..)]),or([a,__1;int(1..)]);int(1..)]),
+or([__2,c;int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+and([or([a,b;int(1..)]),or([__0,b;int(1..)]);int(1..)]),
+or([a,__1;int(1..)]),
+or([__2,c;int(1..)])
+
+--
+
+and([or([a,b;int(1..)]),or([__0,b;int(1..)]);int(1..)]),
+or([a,__1;int(1..)]),
+or([__2,c;int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+or([a,b;int(1..)]),
+or([__0,b;int(1..)]),
+or([a,__1;int(1..)]),
+or([__2,c;int(1..)])
+
+--
+
+or([a,b;int(1..)]), 
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__3
+new variables:
+  find __3: bool
+new clauses:
+  (¬a \/ __3)
+  (¬b \/ __3)
+  (¬__3 \/ a \/ b)
+
+--
+
+or([__0,b;int(1..)]), 
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__4
+new variables:
+  find __4: bool
+new clauses:
+  (¬__0 \/ __4)
+  (¬b \/ __4)
+  (¬__4 \/ __0 \/ b)
+
+--
+
+or([a,__1;int(1..)]), 
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__5
+new variables:
+  find __5: bool
+new clauses:
+  (¬a \/ __5)
+  (¬__1 \/ __5)
+  (¬__5 \/ a \/ __1)
+
+--
+
+or([__2,c;int(1..)]), 
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__6
+new variables:
+  find __6: bool
+new clauses:
+  (¬__2 \/ __6)
+  (¬c \/ __6)
+  (¬__6 \/ __2 \/ c)
+
+--
+
+__3,
+__4,
+__5,
+__6, 
+   ~~> remove_single_atom ([("SAT", 8400)])
+__4,
+__5,
+__6
+new clauses:
+  (__3)
+
+--
+
+__4,
+__5,
+__6, 
+   ~~> remove_single_atom ([("SAT", 8400)])
+__5,
+__6
+new clauses:
+  (__4)
+
+--
+
+__5,
+__6, 
+   ~~> remove_single_atom ([("SAT", 8400)])
+__6
+new clauses:
+  (__5)
+
+--
+
+__6, 
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new clauses:
+  (__6)
+
+--
+
+Final model:
+
+find a: bool
+find b: bool
+find c: bool
+find __0: bool
+find __1: bool
+find __2: bool
+find __3: bool
+find __4: bool
+find __5: bool
+find __6: bool
+
+such that
+
+true
+
+clauses:
+
+(¬a \/ ¬__0),
+(a \/ __0),
+(¬b \/ ¬__1),
+(b \/ __1),
+(¬c \/ ¬__2),
+(c \/ __2),
+(¬a \/ __3),
+(¬b \/ __3),
+(¬__3 \/ a \/ b),
+(¬__0 \/ __4),
+(¬b \/ __4),
+(¬__4 \/ __0 \/ b),
+(¬a \/ __5),
+(¬__1 \/ __5),
+(¬__5 \/ a \/ __1),
+(¬__2 \/ __6),
+(¬c \/ __6),
+(¬__6 \/ __2 \/ c),
+(__3),
+(__4),
+(__5),
+(__6)
+

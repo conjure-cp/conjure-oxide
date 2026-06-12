@@ -1,0 +1,70 @@
+Model before rewriting:
+
+find a: bool
+find b: bool
+find c: bool
+
+such that
+
+and([and([and([or([a,b;int(1..)]),or([!(a),b;int(1..)]);int(1..)]),or([a,!(b);int(1..)]);int(1..)]),or([!(c),c;int(1..)]);int(1..)])
+
+--
+
+and([and([and([or([a,b;int(1..)]),or([!(a),b;int(1..)]);int(1..)]),or([a,!(b);int(1..)]);int(1..)]),or([!(c),c;int(1..)]);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+and([and([or([a,b;int(1..)]),or([!(a),b;int(1..)]);int(1..)]),or([a,!(b);int(1..)]);int(1..)]),
+or([!(c),c;int(1..)])
+
+--
+
+and([and([or([a,b;int(1..)]),or([!(a),b;int(1..)]);int(1..)]),or([a,!(b);int(1..)]);int(1..)]),
+or([!(c),c;int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+and([or([a,b;int(1..)]),or([!(a),b;int(1..)]);int(1..)]),
+or([a,!(b);int(1..)]),
+or([!(c),c;int(1..)])
+
+--
+
+and([or([a,b;int(1..)]),or([!(a),b;int(1..)]);int(1..)]),
+or([a,!(b);int(1..)]),
+or([!(c),c;int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+or([a,b;int(1..)]),
+or([!(a),b;int(1..)]),
+or([a,!(b);int(1..)]),
+or([!(c),c;int(1..)])
+
+--
+
+!(a), 
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(a,false)
+
+--
+
+!(b), 
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(b,false)
+
+--
+
+!(c), 
+   ~~> not_literal_to_wliteral ([("Minion", 4100)])
+WatchedLiteral(c,false)
+
+--
+
+Final model:
+
+find a: bool
+find b: bool
+find c: bool
+
+such that
+
+or([a,b;int(1..)]),
+or([WatchedLiteral(a,false),b;int(1..)]),
+or([a,WatchedLiteral(b,false);int(1..)]),
+or([WatchedLiteral(c,false),c;int(1..)])
+
