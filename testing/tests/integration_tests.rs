@@ -39,8 +39,9 @@ use std::str::FromStr;
 use testing::AcceptMode;
 use testing::RunCase;
 use testing::TestConfig;
+use testing::runcase::*;
 
-use testing::runcase::run_case_label;
+// use testing::runcase::run_case_label;
 use testing::test_config::{round_expected_time, upsert_expected_time_config};
 
 fn integration_test(
@@ -59,7 +60,7 @@ fn integration_test(
     let rewriter = runcase.rewriter;
     let comprehension_expander = runcase.comprehension_expander;
     let solver = runcase.solver;
-    let case_name = run_case_name(parser, rewriter, comprehension_expander);
+    let case_name = runcase.run_case_label();
 
     if accept {
         clean_test_dir_for_accept(path, &case_name, solver)?;
@@ -112,7 +113,8 @@ fn integration_test(
                 })),
         ),
     ) as Arc<dyn tracing::Subscriber + Send + Sync>;
-    let run_label = run_case_label(path, essence_base, extension, &runcase);
+    // let run_label = run_case_label(path, essence_base, extension, &runcase);
+    let run_label = case_name;
     eprintln!("[integration] running {run_label}");
     let default_rule_trace_enabled = matches!(rewriter, Rewriter::Naive);
     set_rule_trace_enabled(true);
@@ -186,7 +188,7 @@ fn integration_test_inner(
     let rewriter = run_case.rewriter;
     let comprehension_expander = run_case.comprehension_expander;
     let solver_fam = run_case.solver;
-    let case_name = run_case.case_name;
+    let case_name = run_case.run_case_label();
 
     let context: Arc<RwLock<Context<'static>>> = Default::default();
 
@@ -291,14 +293,6 @@ fn integration_test_inner(
     save_stats_json(context, path, &case_name, solver_fam)?;
 
     Ok(())
-}
-
-fn run_case_name(
-    parser: Parser,
-    rewriter: Rewriter,
-    comprehension_expander: QuantifiedExpander,
-) -> String {
-    format!("{parser}-{rewriter}-{comprehension_expander}")
 }
 
 fn clean_test_dir_for_accept(

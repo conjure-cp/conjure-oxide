@@ -290,14 +290,12 @@ fn setup_integration_tests(
         for rewriter in rewriters.clone() {
             for comprehension_expander in comprehension_expanders.clone() {
                 for solver in solvers.clone() {
-                    let case_name =
-                        runcase::run_case_name(parser, rewriter, comprehension_expander);
+                    let _case_name = "meow";
                     let run_case = RunCase {
                         parser,
                         rewriter,
                         comprehension_expander,
                         solver,
-                        case_name,
                     };
                     write_integration_test(arg_file, &path, &essence_files, run_case)?;
                 }
@@ -319,7 +317,7 @@ fn write_integration_test(
     let ignore = get_ignore_attr(&cfg, true)?;
 
     let base_name = path.replace("./", "").replace(['/', '-'], "_");
-    let case_suffix = format!("{}_{}", runcase.case_name, runcase.solver.as_str());
+    let case_suffix = format!("{}_{}", runcase.run_case_label(), runcase.solver.as_str());
     let test_name = format!("{}_{}", base_name, case_suffix.replace('-', "_"));
 
     write!(

@@ -9,7 +9,6 @@ pub struct RunCase {
     pub rewriter: Rewriter,
     pub comprehension_expander: QuantifiedExpander,
     pub solver: SolverFamily,
-    pub case_name: String,
 }
 
 impl fmt::Display for RunCase {
@@ -55,39 +54,26 @@ impl FromStr for RunCase {
         let comprehension_expander = comprehension_expander
             .ok_or_else(|| format!("missing 'comprehension_expander' in '{s}'"))?;
         let solver = solver.ok_or_else(|| format!("missing 'solver' in '{s}'"))?;
-        let case_name = run_case_name(parser, rewriter, comprehension_expander);
 
         Ok(RunCase {
             parser,
             rewriter,
             comprehension_expander,
             solver,
-            case_name,
         })
     }
 }
 
-pub fn run_case_label(
-    path: &str,
-    essence_base: &str,
-    extension: &str,
-    run_case: &RunCase,
-) -> String {
-    format!(
-        "test_dir={path}, model={essence_base}.{extension}, parser={}, rewriter={}, comprehension_expander={}, solver={}",
-        run_case.parser,
-        run_case.rewriter,
-        run_case.comprehension_expander,
-        run_case.solver.as_str()
-    )
-}
-
-pub fn run_case_name(
-    parser: Parser,
-    rewriter: Rewriter,
-    comprehension_expander: QuantifiedExpander,
-) -> String {
-    format!("{parser}-{rewriter}-{comprehension_expander}")
+impl RunCase {
+    pub fn run_case_label(self: &RunCase) -> String {
+        format!(
+            "{}-{}-{}-{}",
+            self.parser,
+            self.rewriter,
+            self.comprehension_expander,
+            self.solver.as_str()
+        )
+    }
 }
 
 /// Returns the expected snapshot files for an executed integration run case.
