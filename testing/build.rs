@@ -3,11 +3,8 @@ use std::fs;
 use std::fs::{File, read_dir};
 use std::io::{self, Write};
 use std::path::Path;
-use std::sync::Arc;
 
-use std::collections::{BTreeMap, BTreeSet, HashSet};
-use std::error::Error;
-use std::time::Instant;
+use std::collections::HashSet;
 
 use walkdir::WalkDir;
 
@@ -313,7 +310,7 @@ fn setup_integration_tests(
 fn write_integration_test(
     file: &mut File,
     path: &String,
-    essence_files: &Vec<(String, String)>,
+    essence_files: &[(String, String)],
     runcase: RunCase,
 ) -> io::Result<()> {
     let file_name = &essence_files[0].0;
