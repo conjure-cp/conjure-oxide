@@ -1,0 +1,30 @@
+Model before rewriting:
+
+find check: bool
+
+such that
+
+(check = or([ and([(p > 2),(p < 4);int(1..2)]) | p : int(1..5) ]))
+
+--
+
+(check = or([ and([(p > 2),(p < 4);int(1..2)]) | p : int(1..5) ])), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(check = true)
+
+--
+
+(check = true), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(true, check)
+
+--
+
+Final model:
+
+find check: bool
+
+such that
+
+Reify(true, check)
+

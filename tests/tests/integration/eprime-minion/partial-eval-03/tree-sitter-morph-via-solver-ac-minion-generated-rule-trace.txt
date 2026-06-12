@@ -1,0 +1,45 @@
+Model before rewriting:
+
+find x: int(1..5)
+find y: int(1..5)
+find z: int(1..5)
+find a: bool
+
+such that
+
+(sum([sum([sum([sum([20,x;int(1..)]),5;int(1..)]),y;int(1..)]),min([sum([z,y;int(1..)]),sum([y,x;int(1..)]),sum([sum([z,x;int(1..)]),5;int(1..)]),50;int(1..4)]);int(1..)]) <= 40),
+(a = allDiff([x,y,z;int(1..3)])),
+(y <= z),
+(x <= y)
+
+--
+
+Final model:
+
+find x: int(1..5)
+find y: int(1..5)
+find z: int(1..5)
+find a: bool
+find __0: int(2..10)
+find __1: int(2..10)
+
+such that
+
+SumLeq([25, __0, x, y], 40),
+Reify(__flat_alldiff([x, y, z]), a),
+Ineq(y, z, 0),
+Ineq(x, y, 0),
+__0 =aux __1,
+SumGeq([y, z], __1),
+SumGeq([x, y], __1),
+SumGeq([5, x, z], __1),
+Ineq(__1, 50, 0),
+or([SumLeq([y, z], __1),SumLeq([x, y], __1),SumLeq([5, x, z], __1);int(1..)]),
+or([SumLeq([y, z], __1),SumLeq([x, y], __1),SumGeq([5, x, z], __1);int(1..)]),
+or([SumLeq([y, z], __1),SumGeq([x, y], __1),SumLeq([5, x, z], __1);int(1..)]),
+or([SumLeq([y, z], __1),SumGeq([x, y], __1),SumGeq([5, x, z], __1);int(1..)]),
+or([SumGeq([y, z], __1),SumLeq([x, y], __1),SumLeq([5, x, z], __1);int(1..)]),
+or([SumGeq([y, z], __1),SumLeq([x, y], __1),SumGeq([5, x, z], __1);int(1..)]),
+or([SumGeq([y, z], __1),SumGeq([x, y], __1),SumLeq([5, x, z], __1);int(1..)]),
+or([SumGeq([y, z], __1),SumGeq([x, y], __1),SumGeq([5, x, z], __1);int(1..)])
+

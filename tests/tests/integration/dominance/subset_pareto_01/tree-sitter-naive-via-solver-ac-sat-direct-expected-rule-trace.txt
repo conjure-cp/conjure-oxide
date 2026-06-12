@@ -1,0 +1,210 @@
+Model before rewriting:
+
+find a: bool
+find b: bool
+find c: bool
+find d: bool
+find e: bool
+
+such that
+
+or([or([a,b;int(1..)]),c;int(1..)]),
+or([b,d;int(1..)]),
+or([c,e;int(1..)]),
+!(and([a,d;int(1..)])),
+!(and([b,e;int(1..)]))
+
+--
+
+or([or([a,b;int(1..)]),c;int(1..)]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+or([a,b,c;int(1..)])
+
+--
+
+or([a,b,c;int(1..)]), 
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__0
+new variables:
+  find __0: bool
+new clauses:
+  (¬a \/ __0)
+  (¬b \/ __0)
+  (¬c \/ __0)
+  (¬__0 \/ a \/ b \/ c)
+
+--
+
+or([b,d;int(1..)]), 
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__1
+new variables:
+  find __1: bool
+new clauses:
+  (¬b \/ __1)
+  (¬d \/ __1)
+  (¬__1 \/ b \/ d)
+
+--
+
+or([c,e;int(1..)]), 
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__2
+new variables:
+  find __2: bool
+new clauses:
+  (¬c \/ __2)
+  (¬e \/ __2)
+  (¬__2 \/ c \/ e)
+
+--
+
+and([a,d;int(1..)]), 
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__3
+new variables:
+  find __3: bool
+new clauses:
+  (¬__3 \/ a)
+  (¬__3 \/ d)
+  (__3 \/ ¬a \/ ¬d)
+
+--
+
+!(__3), 
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__4
+new variables:
+  find __4: bool
+new clauses:
+  (¬__3 \/ ¬__4)
+  (__3 \/ __4)
+
+--
+
+and([b,e;int(1..)]), 
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__5
+new variables:
+  find __5: bool
+new clauses:
+  (¬__5 \/ b)
+  (¬__5 \/ e)
+  (__5 \/ ¬b \/ ¬e)
+
+--
+
+!(__5), 
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__6
+new variables:
+  find __6: bool
+new clauses:
+  (¬__5 \/ ¬__6)
+  (__5 \/ __6)
+
+--
+
+__0,
+__1,
+__2,
+__4,
+__6, 
+   ~~> remove_single_atom ([("SAT", 8400)])
+__1,
+__2,
+__4,
+__6
+new clauses:
+  (__0)
+
+--
+
+__1,
+__2,
+__4,
+__6, 
+   ~~> remove_single_atom ([("SAT", 8400)])
+__2,
+__4,
+__6
+new clauses:
+  (__1)
+
+--
+
+__2,
+__4,
+__6, 
+   ~~> remove_single_atom ([("SAT", 8400)])
+__4,
+__6
+new clauses:
+  (__2)
+
+--
+
+__4,
+__6, 
+   ~~> remove_single_atom ([("SAT", 8400)])
+__6
+new clauses:
+  (__4)
+
+--
+
+__6, 
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new clauses:
+  (__6)
+
+--
+
+Final model:
+
+find a: bool
+find b: bool
+find c: bool
+find d: bool
+find e: bool
+find __0: bool
+find __1: bool
+find __2: bool
+find __3: bool
+find __4: bool
+find __5: bool
+find __6: bool
+
+such that
+
+true
+
+clauses:
+
+(¬a \/ __0),
+(¬b \/ __0),
+(¬c \/ __0),
+(¬__0 \/ a \/ b \/ c),
+(¬b \/ __1),
+(¬d \/ __1),
+(¬__1 \/ b \/ d),
+(¬c \/ __2),
+(¬e \/ __2),
+(¬__2 \/ c \/ e),
+(¬__3 \/ a),
+(¬__3 \/ d),
+(__3 \/ ¬a \/ ¬d),
+(¬__3 \/ ¬__4),
+(__3 \/ __4),
+(¬__5 \/ b),
+(¬__5 \/ e),
+(__5 \/ ¬b \/ ¬e),
+(¬__5 \/ ¬__6),
+(__5 \/ __6),
+(__0),
+(__1),
+(__2),
+(__4),
+(__6)
+

@@ -1,0 +1,30 @@
+Model before rewriting:
+
+find x: bool
+
+such that
+
+(x = allDiff([ x | x : int(1..10), (x % 2 = 0) ]))
+
+--
+
+(x = allDiff([ x | x : int(1..10), (x % 2 = 0) ])), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(x = true)
+
+--
+
+(x = true), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(true, x)
+
+--
+
+Final model:
+
+find x: bool
+
+such that
+
+Reify(true, x)
+

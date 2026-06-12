@@ -1,0 +1,27 @@
+Model before rewriting:
+
+find x: int(1..3)
+find y: int(-1..1)
+find z: int(-1..1)
+find a: int(-1..1)
+find b: int(-1..1)
+
+such that
+
+(x = sum([sum([-(y),-((sum([z,1;int(1..)]) - a));int(1..)]),b;int(1..)]))
+
+--
+
+Final model:
+
+find x: int(1..3)
+find y: int(-1..1)
+find z: int(-1..1)
+find a: int(-1..1)
+find b: int(-1..1)
+
+such that
+
+FlatWeightedSumLeq([1, 1, 1, -1, -1],[-1, a, b, y, z],x),
+FlatWeightedSumGeq([1, 1, 1, -1, -1],[-1, a, b, y, z],x)
+

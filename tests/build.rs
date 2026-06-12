@@ -5,7 +5,7 @@ use std::io::{self, Write};
 use std::path::Path;
 use std::sync::Arc;
 
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::{BTreeMap, BTreeSet, HashSet};
 use std::error::Error;
 use std::time::Instant;
 
@@ -280,9 +280,14 @@ fn setup_integration_tests(
     let comprehension_expanders = config
         .configured_comprehension_expanders()
         .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?;
-    let solvers = config
-        .configured_solvers()
-        .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?;
+    let solvers = {
+        let seen = config
+            .configured_solvers()
+            .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?
+            .into_iter()
+            .collect::<HashSet<_>>();
+        seen.into_iter().collect::<Vec<_>>()
+    };
 
     for parser in parsers.iter().copied() {
         for rewriter in rewriters.clone() {
@@ -295,7 +300,7 @@ fn setup_integration_tests(
                         rewriter,
                         comprehension_expander,
                         solver,
-                        case_name: case_name.as_str(),
+                        case_name,
                     };
                     write_integration_test(arg_file, &path, &essence_files, run_case)?;
                 }
@@ -316,15 +321,19 @@ fn write_integration_test(
     let cfg = read_config_or_default(path);
     let ignore = get_ignore_attr(&cfg, true)?;
 
+    let base_name = path.replace("./", "").replace(['/', '-'], "_");
+    let case_suffix = format!("{}_{}", runcase.case_name, runcase.solver.as_str());
+    let test_name = format!("{}_{}", base_name, case_suffix.replace('-', "_"));
+
     write!(
         file,
         include_str!("./tests/integration_test_template"),
-        test_name = path.replace("./", "").replace(['/', '-'], "_"),
+        test_name = test_name,
         test_dir = path,
         essence_file = file_name,
         ext = ext,
         ignore_attr = ignore,
-        run_case = runcase
+        runcase = runcase
     )
 }
 

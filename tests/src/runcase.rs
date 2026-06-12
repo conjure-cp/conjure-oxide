@@ -1,17 +1,18 @@
 use conjure_cp::settings::{Parser, QuantifiedExpander, Rewriter, SolverFamily};
 use std::collections::BTreeSet;
 use std::fmt;
+use std::str::FromStr;
 
-#[derive(Clone, Copy, Debug)]
-pub struct RunCase<'a> {
+#[derive(Clone, Debug)]
+pub struct RunCase {
     pub parser: Parser,
     pub rewriter: Rewriter,
     pub comprehension_expander: QuantifiedExpander,
     pub solver: SolverFamily,
-    pub case_name: &'a str,
+    pub case_name: String,
 }
 
-impl fmt::Display for RunCase<'_> {
+impl fmt::Display for RunCase {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
@@ -24,11 +25,53 @@ impl fmt::Display for RunCase<'_> {
     }
 }
 
+impl FromStr for RunCase {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let s = s.trim();
+        let mut parser = None;
+        let mut rewriter = None;
+        let mut comprehension_expander = None;
+        let mut solver = None;
+
+        for part in s.split(", ") {
+            let (key, value) = part.split_once('=').ok_or_else(|| {
+                format!("invalid RunCase format: expected 'key=value', got '{part}'")
+            })?;
+            match key {
+                "parser" => parser = Some(value.parse::<Parser>()?),
+                "rewriter" => rewriter = Some(value.parse::<Rewriter>()?),
+                "comprehension_expander" => {
+                    comprehension_expander = Some(value.parse::<QuantifiedExpander>()?);
+                }
+                "solver" => solver = Some(value.parse::<SolverFamily>()?),
+                other => return Err(format!("unknown RunCase key '{other}'")),
+            }
+        }
+
+        let parser = parser.ok_or_else(|| format!("missing 'parser' in '{s}'"))?;
+        let rewriter = rewriter.ok_or_else(|| format!("missing 'rewriter' in '{s}'"))?;
+        let comprehension_expander = comprehension_expander
+            .ok_or_else(|| format!("missing 'comprehension_expander' in '{s}'"))?;
+        let solver = solver.ok_or_else(|| format!("missing 'solver' in '{s}'"))?;
+        let case_name = run_case_name(parser, rewriter, comprehension_expander);
+
+        Ok(RunCase {
+            parser,
+            rewriter,
+            comprehension_expander,
+            solver,
+            case_name,
+        })
+    }
+}
+
 pub fn run_case_label(
     path: &str,
     essence_base: &str,
     extension: &str,
-    run_case: RunCase<'_>,
+    run_case: &RunCase,
 ) -> String {
     format!(
         "test_dir={path}, model={essence_base}.{extension}, parser={}, rewriter={}, comprehension_expander={}, solver={}",
