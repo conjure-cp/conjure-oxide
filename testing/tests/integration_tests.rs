@@ -23,10 +23,10 @@ use conjure_cp::context::Context;
 use conjure_cp::parse::tree_sitter::parse_essence_file;
 use conjure_cp::rule_engine::resolve_rule_sets;
 use conjure_cp::settings::{
-    Parser, QuantifiedExpander, Rewriter, SolverFamily, set_comprehension_expander,
-    set_current_parser, set_current_rewriter, set_current_solver_family,
-    set_default_rule_trace_enabled, set_minion_discrete_threshold,
-    set_rule_trace_aggregates_enabled, set_rule_trace_enabled, set_rule_trace_verbose_enabled,
+    Parser, Rewriter, SolverFamily, set_comprehension_expander, set_current_parser,
+    set_current_rewriter, set_current_solver_family, set_default_rule_trace_enabled,
+    set_minion_discrete_threshold, set_rule_trace_aggregates_enabled, set_rule_trace_enabled,
+    set_rule_trace_verbose_enabled,
 };
 use conjure_cp_cli::utils::conjure::solutions_to_json;
 use conjure_cp_cli::utils::conjure::{get_solutions, get_solutions_from_conjure};
@@ -54,9 +54,7 @@ fn integration_test(
     let accept = accept_mode.accepts_outputs();
     let started_at = Instant::now();
 
-    let parser = runcase.parser;
     let rewriter = runcase.rewriter;
-    let comprehension_expander = runcase.comprehension_expander;
     let solver = runcase.solver;
     let case_name = runcase.run_case_label();
 
