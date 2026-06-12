@@ -134,6 +134,6 @@ In addition to core CDP support, related Minion work included:
 ## Testing Coverage
 CDP behaviour is exercised in integration tests under:
 
-- `tests-integration/tests/integration/dominance/`
+- `testing/tests/integration/dominance/`
 
 These include both explicit dominance formulas and `pareto(...)` syntax, across integer and boolean cases, and across multiple solver families.

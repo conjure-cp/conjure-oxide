@@ -103,7 +103,7 @@ GRCOV_IGNORE_FLAGS=(
   '--ignore'
   '**/build.rs'
   '--ignore'
-  'tests-integration/tests/generated_tests.rs'
+  'testing/tests/generated_tests.rs'
 )
 
 echo_err "info: building"
