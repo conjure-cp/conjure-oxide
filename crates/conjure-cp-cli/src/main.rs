@@ -243,7 +243,7 @@ mod tests {
 
     #[test]
     fn test_get_example_model_by_filepath() {
-        let filepath = "../../tests/tests/integration/xyz/input.essence";
+        let filepath = "../../testing/tests/integration/xyz/input.essence";
         get_example_model_by_path(filepath).unwrap();
     }
 

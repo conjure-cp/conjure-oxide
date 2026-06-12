@@ -36,12 +36,12 @@ use conjure_cp_cli::utils::testing::{read_solutions_json, save_solutions_json};
 use conjure_cp_rules;
 use pretty_assertions::assert_eq;
 use std::str::FromStr;
-use tests::AcceptMode;
-use tests::RunCase;
-use tests::TestConfig;
+use testing::AcceptMode;
+use testing::RunCase;
+use testing::TestConfig;
 
-use tests::runcase::run_case_label;
-use tests::test_config::{round_expected_time, upsert_expected_time_config};
+use testing::runcase::run_case_label;
+use testing::test_config::{round_expected_time, upsert_expected_time_config};
 
 fn integration_test(
     path: &str,
