@@ -1,0 +1,43 @@
+Model before rewriting:
+
+find x: int(1..10)
+letting m be 5
+
+such that
+
+and([ (sum([x,i;int(1..2)]) = 10) | i : int(((m - 1))..10) ]),
+and([ (sum([x,i;int(1..2)]) = 10) | i : int((sum([1,m;int(1..2)]))..10) ])
+
+--
+
+Model before rewriting:
+
+find i: int(((m - 1))..10)
+find __0: int(1..10)
+
+such that
+
+(true != (sum([__0,i;int(1..2)]) = 10))
+
+--
+
+Final model:
+
+find i: int(((m - 1))..10)
+find __0: int(1..10)
+find __1: bool
+
+such that
+
+(true != __1),
+Reify(and([SumLeq([__0, i], 10),SumGeq([__0, i], 10);int(1..)]), __1)
+
+Final model:
+
+find x: int(1..10)
+letting m be 5
+
+such that
+
+false
+

@@ -113,7 +113,6 @@ fn integration_test(
                 })),
         ),
     ) as Arc<dyn tracing::Subscriber + Send + Sync>;
-    // let run_label = run_case_label(path, essence_base, extension, &runcase);
     let run_label = case_name;
     eprintln!("[integration] running {run_label}");
     let default_rule_trace_enabled = matches!(rewriter, Rewriter::Naive);

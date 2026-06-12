@@ -1,0 +1,52 @@
+Model before rewriting:
+
+find a: matrix indexed by [int(1..2)] of int(1..2)
+find b: matrix indexed by [int(1..2)] of int(1..2)
+
+such that
+
+(a <lex b)
+
+--
+
+(a <lex b), 
+   ~~> expand_lex_lt_leq ([("Smt", 2001)])
+or([(SafeIndex(a,[1]) < SafeIndex(b,[1])),and([(SafeIndex(a,[1]) = SafeIndex(b,[1])),or([(SafeIndex(a,[2]) < SafeIndex(b,[2])),and([(SafeIndex(a,[2]) = SafeIndex(b,[2])),false;int(1..)]);int(1..)]);int(1..)]);int(1..)])
+
+--
+
+or([(SafeIndex(a,[1]) < SafeIndex(b,[1])),and([(SafeIndex(a,[1]) = SafeIndex(b,[1])),or([(SafeIndex(a,[2]) < SafeIndex(b,[2])),and([(SafeIndex(a,[2]) = SafeIndex(b,[2])),false;int(1..)]);int(1..)]);int(1..)]);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+or([(SafeIndex(a,[1]) < SafeIndex(b,[1])),and([(SafeIndex(a,[1]) = SafeIndex(b,[1])),or([(SafeIndex(a,[2]) < SafeIndex(b,[2]));int(1..)]);int(1..)]);int(1..)])
+
+--
+
+or([(SafeIndex(a,[2]) < SafeIndex(b,[2]));int(1..)]), 
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+(SafeIndex(a,[2]) < SafeIndex(b,[2]))
+
+--
+
+or([(SafeIndex(a,[1]) < SafeIndex(b,[1])),and([(SafeIndex(a,[1]) = SafeIndex(b,[1])),(SafeIndex(a,[2]) < SafeIndex(b,[2]));int(1..)]);int(1..)]), 
+   ~~> distribute_or_over_and ([("Base", 8400)])
+and([or([(SafeIndex(a,[1]) < SafeIndex(b,[1])),(SafeIndex(a,[1]) = SafeIndex(b,[1]));int(1..)]),or([(SafeIndex(a,[1]) < SafeIndex(b,[1])),(SafeIndex(a,[2]) < SafeIndex(b,[2]));int(1..)]);int(1..)])
+
+--
+
+and([or([(SafeIndex(a,[1]) < SafeIndex(b,[1])),(SafeIndex(a,[1]) = SafeIndex(b,[1]));int(1..)]),or([(SafeIndex(a,[1]) < SafeIndex(b,[1])),(SafeIndex(a,[2]) < SafeIndex(b,[2]));int(1..)]);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+or([(SafeIndex(a,[1]) < SafeIndex(b,[1])),(SafeIndex(a,[1]) = SafeIndex(b,[1]));int(1..)]),
+or([(SafeIndex(a,[1]) < SafeIndex(b,[1])),(SafeIndex(a,[2]) < SafeIndex(b,[2]));int(1..)])
+
+--
+
+Final model:
+
+find a: matrix indexed by [int(1..2)] of int(1..2)
+find b: matrix indexed by [int(1..2)] of int(1..2)
+
+such that
+
+or([(SafeIndex(a,[1]) < SafeIndex(b,[1])),(SafeIndex(a,[1]) = SafeIndex(b,[1]));int(1..)]),
+or([(SafeIndex(a,[1]) < SafeIndex(b,[1])),(SafeIndex(a,[2]) < SafeIndex(b,[2]));int(1..)])
+

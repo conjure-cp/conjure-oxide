@@ -1,0 +1,30 @@
+Model before rewriting:
+
+find y: bool
+
+such that
+
+(y = and([ (product([j,j;int(1..2)]) >= j) | j : int(0..3) ]))
+
+--
+
+(y = and([ (product([j,j;int(1..2)]) >= j) | j : int(0..3) ])), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(y = true)
+
+--
+
+(y = true), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(true, y)
+
+--
+
+Final model:
+
+find y: bool
+
+such that
+
+Reify(true, y)
+
