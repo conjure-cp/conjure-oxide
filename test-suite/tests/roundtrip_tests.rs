@@ -13,9 +13,9 @@ use std::fs;
 use std::path::Path;
 use std::sync::Arc;
 use std::sync::RwLock;
-use tests_integration::AcceptMode;
-use tests_integration::TestConfig;
-use tests_integration::golden_files::assert_no_redundant_expected_files;
+use test_suite::AcceptMode;
+use test_suite::TestConfig;
+use test_suite::golden_files::assert_no_redundant_expected_files;
 
 use std::io::Write;
 

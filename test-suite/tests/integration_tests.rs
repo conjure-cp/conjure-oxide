@@ -35,10 +35,10 @@ use conjure_cp_cli::utils::testing::{read_solutions_json, save_solutions_json};
 #[allow(clippy::single_component_path_imports, unused_imports)]
 use conjure_cp_rules;
 use pretty_assertions::assert_eq;
-use tests_integration::AcceptMode;
-use tests_integration::TestConfig;
-use tests_integration::golden_files::assert_no_redundant_expected_files;
-use tests_integration::test_config::{round_expected_time, upsert_expected_time_config};
+use test_suite::AcceptMode;
+use test_suite::TestConfig;
+use test_suite::golden_files::assert_no_redundant_expected_files;
+use test_suite::test_config::{round_expected_time, upsert_expected_time_config};
 
 #[derive(Clone, Copy, Debug)]
 struct RunCase<'a> {
