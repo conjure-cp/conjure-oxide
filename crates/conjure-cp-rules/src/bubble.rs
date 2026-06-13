@@ -9,9 +9,9 @@ use conjure_cp::{
         ApplicationResult, Reduction, register_rule, register_rule_set,
     },
 };
-use uniplate::{Biplate, Uniplate};
+use uniplate::Biplate;
 
-use super::utils::is_all_constant;
+use super::utils::{is_all_constant, rewrite_children};
 
 register_rule_set!("Bubble", ("Base"));
 
@@ -64,24 +64,22 @@ fn bubble_up(expr: &Expression, syms: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let mut sub = expr.children();
     let mut bubbled_conditions = vec![];
-    for e in sub.iter_mut() {
-        if let Expression::Bubble(_, a, b) = e
-            && a.return_type() != ReturnType::Bool
-        {
-            let a = Moo::unwrap_or_clone(Moo::clone(a));
-            let b = Moo::unwrap_or_clone(Moo::clone(b));
+    let (new_inner, num_changed) = rewrite_children(expr, |child| match child {
+        Expression::Bubble(_, a, b) if a.return_type() != ReturnType::Bool => {
+            let a = Moo::unwrap_or_clone(a);
+            let b = Moo::unwrap_or_clone(b);
             bubbled_conditions.push(b);
-            *e = a;
+            (a, true)
         }
-    }
-    if bubbled_conditions.is_empty() {
+        child => (child, false),
+    });
+    if num_changed == 0 {
         Err(ApplicationError::RuleNotApplicable)
     } else if bubbled_conditions.len() == 1 {
         let new_expr = Expression::Bubble(
             Metadata::new(),
-            Moo::new(expr.with_children(sub)),
+            Moo::new(new_inner),
             Moo::new(bubbled_conditions[0].clone()),
         );
 
@@ -89,7 +87,7 @@ fn bubble_up(expr: &Expression, syms: &SymbolTable) -> ApplicationResult {
     } else {
         Ok(Reduction::pure(Expression::Bubble(
             Metadata::new(),
-            Moo::new(expr.with_children(sub)),
+            Moo::new(new_inner),
             Moo::new(Expression::And(
                 Metadata::new(),
                 Moo::new(into_matrix_expr![bubbled_conditions]),
