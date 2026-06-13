@@ -2,7 +2,7 @@ use conjure_cp::defaults::DEFAULT_RULE_SETS;
 /// This example shows how to run a basic model top to bottom with Minion, with a focus on
 /// demonstrating how the solver interface works.
 ///
-/// The model is `tests-integration/tests/integration/basic/div/05/div-05.essence`
+/// The model is `test-suite/tests/integration/basic/div/05/div-05.essence`
 use conjure_cp::{
     ast::{Literal, Name},
     rule_engine::rewrite_naive,
