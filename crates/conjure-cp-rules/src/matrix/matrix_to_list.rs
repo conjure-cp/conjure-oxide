@@ -48,7 +48,7 @@ fn matrix_to_list(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
     let (new_expr, num_changed) = rewrite_children(expr, |child| {
         // already a list => no change
-        if child.clone().unwrap_list().is_some() {
+        if child.unwrap_list().is_some() {
             return (child, false);
         }
 
