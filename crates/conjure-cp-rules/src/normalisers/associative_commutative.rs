@@ -1,13 +1,12 @@
 //! Generic normalising rules for associative-commutative operators.
 
-use std::collections::VecDeque;
 use std::mem::Discriminant;
 
+use crate::utils::{single_vec_child, with_single_vec_child};
 use conjure_cp::ast::{Expression as Expr, SymbolTable};
 use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
 };
-use uniplate::Biplate;
 
 /// Normalises associative_commutative operations.
 ///
@@ -34,15 +33,9 @@ fn normalise_associative_commutative(expr: &Expr, _: &SymbolTable) -> Applicatio
             return vec![expr];
         }
 
-        let child_vecs: VecDeque<Vec<Expr>> = expr.children_bi();
-
-        // empty expression
-        if child_vecs.is_empty() {
+        let Some(children) = single_vec_child(&expr) else {
             return vec![expr];
-        }
-
-        // go deeper
-        let children = child_vecs[0].clone();
+        };
         let old_len = children.len();
 
         let new_children = children
@@ -56,8 +49,7 @@ fn normalise_associative_commutative(expr: &Expr, _: &SymbolTable) -> Applicatio
         new_children
     }
 
-    let child_vecs: VecDeque<Vec<Expr>> = expr.children_bi();
-    if child_vecs.is_empty() {
+    if single_vec_child(expr).is_none() {
         return Err(RuleNotApplicable);
     }
 
@@ -68,7 +60,7 @@ fn normalise_associative_commutative(expr: &Expr, _: &SymbolTable) -> Applicatio
         return Err(RuleNotApplicable);
     }
 
-    let new_expr = expr.with_children_bi(vec![new_children].into());
+    let new_expr = with_single_vec_child(expr, new_children);
 
     Ok(Reduction::pure(new_expr))
 }

@@ -2,12 +2,11 @@
 /*        Rules for translating to Minion-supported constraints         */
 /************************************************************************/
 
-use std::collections::VecDeque;
 use std::{collections::HashMap, convert::TryInto};
 
 use crate::{
     extra_check,
-    utils::{is_flat, to_aux_var},
+    utils::{is_flat, rewrite_children, to_aux_var},
 };
 use conjure_cp::ast::Moo;
 use conjure_cp::ast::categories::Category;
@@ -24,10 +23,8 @@ use conjure_cp::{
     settings::SolverFamily,
 };
 
-use itertools::Itertools;
-use uniplate::Uniplate;
-
 use ApplicationError::RuleNotApplicable;
+use itertools::Itertools;
 
 register_rule_set!("Minion", ("Base"), |f: &SolverFamily| {
     matches!(f, SolverFamily::Minion)
@@ -577,9 +574,11 @@ fn introduce_diveq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     }
 
-    let children: VecDeque<Expr> = div.as_ref().children();
-    let a: &Atom = (&children[0]).try_into().or(Err(RuleNotApplicable))?;
-    let b: &Atom = (&children[1]).try_into().or(Err(RuleNotApplicable))?;
+    let Expr::SafeDiv(_, a, b) = div.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
+    let a: &Atom = a.as_ref().try_into().or(Err(RuleNotApplicable))?;
+    let b: &Atom = b.as_ref().try_into().or(Err(RuleNotApplicable))?;
 
     Ok(Reduction::pure(Expr::MinionDivEqUndefZero(
         meta,
@@ -628,9 +627,11 @@ fn introduce_modeq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     }
 
-    let children: VecDeque<Expr> = div.as_ref().children();
-    let a: &Atom = (&children[0]).try_into().or(Err(RuleNotApplicable))?;
-    let b: &Atom = (&children[1]).try_into().or(Err(RuleNotApplicable))?;
+    let Expr::SafeMod(_, a, b) = div.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
+    let a: &Atom = a.as_ref().try_into().or(Err(RuleNotApplicable))?;
+    let b: &Atom = b.as_ref().try_into().or(Err(RuleNotApplicable))?;
 
     Ok(Reduction::pure(Expr::MinionModuloEqUndefZero(
         meta,
@@ -1001,26 +1002,22 @@ fn flatten_generic(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     }
 
-    let mut children = expr.children();
-
     let mut symbols = symbols.clone();
-    let mut num_changed = 0;
     let mut new_tops: Vec<Expr> = vec![];
 
-    for child in children.iter_mut() {
-        if let Some(aux_var_info) = to_aux_var(child, &symbols) {
+    let (expr, num_changed) = rewrite_children(expr, |child| {
+        if let Some(aux_var_info) = to_aux_var(&child, &symbols) {
             symbols = aux_var_info.symbols();
             new_tops.push(aux_var_info.top_level_expr());
-            *child = aux_var_info.as_expr();
-            num_changed += 1;
+            (aux_var_info.as_expr(), true)
+        } else {
+            (child, false)
         }
-    }
+    });
 
     if num_changed == 0 {
         return Err(RuleNotApplicable);
     }
-
-    let expr = expr.with_children(children);
 
     Ok(Reduction::new(expr, new_tops, symbols))
 }
@@ -1031,29 +1028,23 @@ fn flatten_eq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     }
 
-    let children = expr.children();
-    debug_assert_eq!(children.len(), 2);
-
-    let mut new_children = VecDeque::new();
     let mut symbols = symbols.clone();
-    let mut num_changed = 0;
     let mut new_tops: Vec<Expr> = vec![];
 
-    for child in children {
+    let (expr, num_changed) = rewrite_children(expr, |child| {
         if let Some(aux_var_info) = to_aux_var(&child, &symbols) {
             symbols = aux_var_info.symbols();
             new_tops.push(aux_var_info.top_level_expr());
-            new_children.push_back(aux_var_info.as_expr());
-            num_changed += 1;
+            (aux_var_info.as_expr(), true)
+        } else {
+            (child, false)
         }
-    }
+    });
 
     // eq: both sides have to be non flat for the rule to be applicable!
     if num_changed != 2 {
         return Err(RuleNotApplicable);
     }
-
-    let expr = expr.with_children(new_children);
 
     Ok(Reduction::new(expr, new_tops, symbols))
 }
@@ -1139,14 +1130,11 @@ fn flatten_matrix_literal(expr: &Expr, symtab: &SymbolTable) -> ApplicationResul
         return Err(RuleNotApplicable);
     }
 
-    // flatten any children that are matrix literals
-    let mut children = expr.children();
-
-    let mut has_changed = false;
     let mut symbols = symtab.clone();
     let mut top_level_exprs = vec![];
 
-    for child in children.iter_mut() {
+    // flatten any children that are matrix literals
+    let (expr, num_changed) = rewrite_children(expr, |child| {
         // is this a matrix literal?
         //
         // as we arn't changing the number of arguments in the matrix, we can apply this to all
@@ -1155,8 +1143,10 @@ fn flatten_matrix_literal(expr: &Expr, symtab: &SymbolTable) -> ApplicationResul
         // this also means that this rule works with n-d matrices -- the inner dimensions of n-d
         // matrices cant be turned into lists, as described the docstring for matrix_to_list.
         let Some((mut es, index_domain)) = child.clone().unwrap_matrix_unchecked() else {
-            continue;
+            return (child, false);
         };
+
+        let mut child_changed = false;
 
         // flatten expressions
         for e in es.iter_mut() {
@@ -1164,7 +1154,7 @@ fn flatten_matrix_literal(expr: &Expr, symtab: &SymbolTable) -> ApplicationResul
                 *e = aux_info.as_expr();
                 top_level_exprs.push(aux_info.top_level_expr());
                 symbols = aux_info.symbols();
-                has_changed = true;
+                child_changed = true;
             } else if let Expr::SafeIndex(_, subject, _) = e
                 && !matches!(**subject, Expr::Atomic(_, Atom::Reference(_)))
             {
@@ -1205,19 +1195,15 @@ fn flatten_matrix_literal(expr: &Expr, symtab: &SymbolTable) -> ApplicationResul
 
                 *e = Expr::Atomic(Metadata::new(), Atom::Reference(Reference::new(decl)));
 
-                has_changed = true;
+                child_changed = true;
             }
         }
 
-        *child = into_matrix_expr!(es;index_domain);
-    }
+        (into_matrix_expr!(es;index_domain), child_changed)
+    });
 
-    if has_changed {
-        Ok(Reduction::new(
-            expr.with_children(children),
-            top_level_exprs,
-            symbols,
-        ))
+    if num_changed != 0 {
+        Ok(Reduction::new(expr, top_level_exprs, symbols))
     } else {
         Err(RuleNotApplicable)
     }

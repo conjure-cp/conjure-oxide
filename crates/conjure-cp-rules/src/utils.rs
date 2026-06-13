@@ -1,3 +1,5 @@
+use std::collections::VecDeque;
+
 use conjure_cp::ast::{
     AbstractLiteral, Atom, DeclarationPtr, Expression as Expr, Literal, Metadata, Moo, Name,
     SymbolTable,
@@ -24,12 +26,45 @@ pub fn is_literal(expr: &Expr) -> bool {
 
 /// True if `expr` is flat; i.e. it only contains atoms.
 pub fn is_flat(expr: &Expr) -> bool {
-    for e in expr.children() {
-        if !is_atom(&e) {
-            return false;
-        }
+    expr.children().iter().all(is_atom)
+}
+
+/// Rewrites the direct expression children of `expr`, preserving the number of children.
+///
+/// Returns the rebuilt expression and the number of children marked as changed by `rewrite`.
+pub fn rewrite_children(
+    expr: &Expr,
+    mut rewrite: impl FnMut(Expr) -> (Expr, bool),
+) -> (Expr, usize) {
+    let mut num_changed = 0;
+    let children: VecDeque<Expr> = expr
+        .children()
+        .into_iter()
+        .map(|child| {
+            let (new_child, changed) = rewrite(child);
+            if changed {
+                num_changed += 1;
+            }
+            new_child
+        })
+        .collect();
+
+    (expr.with_children(children), num_changed)
+}
+
+/// Returns the only direct `Vec<Expr>` child of `expr`, if it has exactly one.
+pub fn single_vec_child(expr: &Expr) -> Option<Vec<Expr>> {
+    let mut child_vecs: VecDeque<Vec<Expr>> = expr.children_bi();
+    if child_vecs.len() == 1 {
+        child_vecs.pop_front()
+    } else {
+        None
     }
-    true
+}
+
+/// Rebuilds `expr` with a replacement for its only direct `Vec<Expr>` child.
+pub fn with_single_vec_child(expr: &Expr, child: Vec<Expr>) -> Expr {
+    expr.with_children_bi(VecDeque::from([child]))
 }
 
 /// Returns the arity of a tuple constant expression, if this expression is one.
@@ -59,16 +94,10 @@ pub fn constant_record_names(expr: &Expr) -> Option<Vec<Name>> {
 
 /// True if the entire AST is constants.
 pub fn is_all_constant(expression: &Expr) -> bool {
-    for atom in expression.universe_bi() {
-        match atom {
-            Atom::Literal(_) => {}
-            _ => {
-                return false;
-            }
-        }
-    }
-
-    true
+    expression
+        .universe_bi()
+        .into_iter()
+        .all(|atom| matches!(atom, Atom::Literal(_)))
 }
 
 /// Converts a vector of expressions to a vector of atoms.
