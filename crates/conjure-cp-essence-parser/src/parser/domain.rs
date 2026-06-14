@@ -197,6 +197,26 @@ fn parse_int_domain(
                         return Ok(None);
                     }
                 }
+                ctx.add_span_and_doc_hover(
+                    &domain_component,
+                    "range",
+                    SymbolKind::Domain,
+                    None,
+                    None,
+                );
+
+                for i in 0..domain_component.child_count() {
+                    let Some(i_u32) = u32::try_from(i).ok() else {
+                        continue;
+                    };
+                    let Some(child) = domain_component.child(i_u32) else {
+                        continue;
+                    };
+                    if child.kind() == ".." {
+                        ctx.add_span_and_doc_hover(&child, "range", SymbolKind::Domain, None, None);
+                        break;
+                    }
+                }
             }
             _ => {
                 ctx.record_error(RecoverableParseError::new(
@@ -277,7 +297,21 @@ fn parse_tuple_domain(
         && first.kind() == "tuple"
     {
         // Adding tuple to the source map with hover info from documentation
-        ctx.add_span_and_doc_hover(&first, "L_tuple", SymbolKind::Domain, None, None);
+        ctx.add_span_and_doc_hover(
+            &first,
+            "L_tuple",
+            SymbolKind::Domain,
+            Some(format!("arity: {}", domains.len())),
+            None,
+        );
+    } else {
+        ctx.add_span_and_doc_hover(
+            &tuple_domain,
+            "L_tuple",
+            SymbolKind::Domain,
+            Some(format!("arity: {}", domains.len())),
+            None,
+        );
     }
 
     Ok(Some(Domain::tuple(domains)))
@@ -310,7 +344,11 @@ fn parse_matrix_domain(
         &matrix_keyword_node,
         "matrix",
         SymbolKind::Domain,
-        None,
+        Some(format!(
+            "index domains: {}, value domain: {}",
+            domains.len(),
+            value_domain
+        )),
         None,
     );
     Ok(Some(Domain::matrix(value_domain, domains)))
@@ -341,7 +379,14 @@ fn parse_record_domain(
         &record_keyword_node,
         "L_record",
         SymbolKind::Domain,
-        None,
+        Some(format!(
+            "fields: {}",
+            record_entries
+                .iter()
+                .map(|entry| entry.name.to_string())
+                .collect::<Vec<_>>()
+                .join(", ")
+        )),
         None,
     );
     Ok(Some(Domain::record(record_entries)))
@@ -391,6 +436,24 @@ pub fn parse_set_domain(
                     };
                     set_attribute = Some(SetAttr::new_max_size(max_val));
                 }
+
+                for i in 0..child.child_count() {
+                    let Some(i_u32) = u32::try_from(i).ok() else {
+                        continue;
+                    };
+                    let Some(attr_node) = child.child(i_u32) else {
+                        continue;
+                    };
+                    let Some(doc_key) = (match attr_node.kind() {
+                        "size" => Some("L_size"),
+                        "minSize" => Some("L_minSize"),
+                        "maxSize" => Some("L_maxSize"),
+                        _ => None,
+                    }) else {
+                        continue;
+                    };
+                    ctx.add_span_and_doc_hover(&attr_node, doc_key, SymbolKind::Domain, None, None);
+                }
             }
             "domain" => {
                 let Some(parsed_domain) = parse_domain(ctx, child)? else {
@@ -409,10 +472,6 @@ pub fn parse_set_domain(
     }
 
     if let Some(domain) = value_domain {
-        // Adding set to the source map with hover info from documentation
-        let set_keyword_node = child!(set_domain, 0, "set");
-        // No documentation available for set domain, using fallback description
-        ctx.add_span_and_doc_hover(&set_keyword_node, "set", SymbolKind::Domain, None, None);
         Ok(Some(Domain::set(set_attribute.unwrap_or_default(), domain)))
     } else {
         ctx.record_error(RecoverableParseError::new(
