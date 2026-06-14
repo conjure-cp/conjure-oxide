@@ -1,0 +1,166 @@
+Model before rewriting:
+
+find a: bool
+find b: bool
+find c: bool
+
+such that
+
+and([and([and([or([a,b;int(1..2)]),or([!(a),b;int(1..2)]);int(1..2)]),or([a,!(b);int(1..2)]);int(1..2)]),or([!(c),c;int(1..2)]);int(1..2)])
+
+--
+
+!(a), 
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__0
+new variables:
+  find __0: bool
+new clauses:
+  (¬a \/ ¬__0)
+  (a \/ __0)
+
+--
+
+!(b), 
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__1
+new variables:
+  find __1: bool
+new clauses:
+  (¬b \/ ¬__1)
+  (b \/ __1)
+
+--
+
+!(c), 
+   ~~> apply_tseytin_not ([("SAT", 9005)])
+__2
+new variables:
+  find __2: bool
+new clauses:
+  (¬c \/ ¬__2)
+  (c \/ __2)
+
+--
+
+and([and([and([or([a,b;int(1..2)]),or([__0,b;int(1..2)]);int(1..2)]),or([a,__1;int(1..2)]);int(1..2)]),or([__2,c;int(1..2)]);int(1..2)]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([or([a,b;int(1..2)]),or([__0,b;int(1..2)]),or([a,__1;int(1..2)]),or([__2,c;int(1..2)]);int(1..2)])
+
+--
+
+or([a,b;int(1..2)]), 
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__3
+new variables:
+  find __3: bool
+new clauses:
+  (¬a \/ __3)
+  (¬b \/ __3)
+  (¬__3 \/ a \/ b)
+
+--
+
+or([__0,b;int(1..2)]), 
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__4
+new variables:
+  find __4: bool
+new clauses:
+  (¬__0 \/ __4)
+  (¬b \/ __4)
+  (¬__4 \/ __0 \/ b)
+
+--
+
+or([a,__1;int(1..2)]), 
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__5
+new variables:
+  find __5: bool
+new clauses:
+  (¬a \/ __5)
+  (¬__1 \/ __5)
+  (¬__5 \/ a \/ __1)
+
+--
+
+or([__2,c;int(1..2)]), 
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__6
+new variables:
+  find __6: bool
+new clauses:
+  (¬__2 \/ __6)
+  (¬c \/ __6)
+  (¬__6 \/ __2 \/ c)
+
+--
+
+and([__3,__4,__5,__6;int(1..2)]), 
+   ~~> apply_tseytin_and_or ([("SAT", 8500)])
+__7
+new variables:
+  find __7: bool
+new clauses:
+  (¬__7 \/ __3)
+  (¬__7 \/ __4)
+  (¬__7 \/ __5)
+  (¬__7 \/ __6)
+  (__7 \/ ¬__3 \/ ¬__4 \/ ¬__5 \/ ¬__6)
+
+--
+
+__7, 
+   ~~> remove_single_atom ([("SAT", 8400)])
+true
+new clauses:
+  (__7)
+
+--
+
+Final model:
+
+find a: bool
+find b: bool
+find c: bool
+find __0: bool
+find __1: bool
+find __2: bool
+find __3: bool
+find __4: bool
+find __5: bool
+find __6: bool
+find __7: bool
+
+such that
+
+true
+
+clauses:
+
+(¬a \/ ¬__0),
+(a \/ __0),
+(¬b \/ ¬__1),
+(b \/ __1),
+(¬c \/ ¬__2),
+(c \/ __2),
+(¬a \/ __3),
+(¬b \/ __3),
+(¬__3 \/ a \/ b),
+(¬__0 \/ __4),
+(¬b \/ __4),
+(¬__4 \/ __0 \/ b),
+(¬a \/ __5),
+(¬__1 \/ __5),
+(¬__5 \/ a \/ __1),
+(¬__2 \/ __6),
+(¬c \/ __6),
+(¬__6 \/ __2 \/ c),
+(¬__7 \/ __3),
+(¬__7 \/ __4),
+(¬__7 \/ __5),
+(¬__7 \/ __6),
+(__7 \/ ¬__3 \/ ¬__4 \/ ¬__5 \/ ¬__6),
+(__7)
+
