@@ -36,10 +36,10 @@ use conjure_cp_cli::utils::testing::{read_solutions_json, save_solutions_json};
 use conjure_cp_rules;
 use pretty_assertions::assert_eq;
 use std::str::FromStr;
-use test-suite::AcceptMode;
-use test-suite::RunCase;
-use test-suite::TestConfig;
-use test-suite::test_config::{round_expected_time, upsert_expected_time_config};
+use test_suite::AcceptMode;
+use test_suite::RunCase;
+use test_suite::TestConfig;
+use test_suite::test_config::{round_expected_time, upsert_expected_time_config};
 
 fn integration_test(
     path: &str,
