@@ -27,7 +27,11 @@ done
 cargo locate-project &>/dev/null || { echo_err "Cannot find a rust project"; usage; exit 1; }
 
 PROJECT_ROOT=$(dirname $(cargo locate-project | jq -r .root 2> /dev/null))
+<<<<<<< HEAD
 cd "$PROJECT_ROOT/testing/"
+=======
+cd "$PROJECT_ROOT/test-suite/"
+>>>>>>> origin/main
 
 TMP=$(mktemp)
 cargo +nightly test --test generated_tests -- --format=json -Z unstable-options 2>/dev/null | jq -s '.[] | select(.type | contains("test"))?' > "$TMP"

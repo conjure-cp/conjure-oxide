@@ -1,0 +1,30 @@
+Model before rewriting:
+
+find x: int(1, 10, 20, 30, 40, 50)
+
+such that
+
+(x > 10)
+
+--
+
+(x > 10), 
+   ~~> gt_to_geq ([("Minion", 8400)])
+(sum([x,-1;int(1..)]) >= 10)
+
+--
+
+(sum([x,-1;int(1..)]) >= 10), 
+   ~~> y_plus_k_geq_x_to_ineq ([("Minion", 4800)])
+Ineq(10, x, -1)
+
+--
+
+Final model:
+
+find x: int(1, 10, 20, 30, 40, 50)
+
+such that
+
+Ineq(10, x, -1)
+

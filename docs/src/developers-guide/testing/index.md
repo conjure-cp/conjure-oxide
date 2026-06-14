@@ -9,12 +9,12 @@ Conjure-Oxide currently has four forms of tests:
 - [Roundtrip tests](roundtrip-testing.md)
 - A small number of unit tests
 ## Test generation
-The test generation occurs in the file `./tests/build.rs`. This generates the integration, custom and roundtrip tests all in a similar manner.
+The test generation occurs in the file `./test-suite/build.rs`. This generates the integration, custom and roundtrip tests all in a similar manner.
 
 For each test framework we define a base directory for all these tests:
-- `./tests/tests/integration`
-- `./tests/tests/custom`
-- `./tests/tests/roundtrip`
+- `./test-suite/tests/integration`
+- `./test-suite/tests/custom`
+- `./test-suite/tests/roundtrip`
 
 Any sub-directory of these defined directories containing the necessary files to make a test, will be considered a test.
 - For integration and roundtrip tests this is containing a singular file with a `.essence` or `.eprime` extension.

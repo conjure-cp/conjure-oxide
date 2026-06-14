@@ -1,11 +1,9 @@
-use std::collections::VecDeque;
-
+use crate::utils::rewrite_children;
 use conjure_cp::ast::{Domain, Expression as Expr, IntVal, Range, SymbolTable};
 use conjure_cp::into_matrix_expr;
 use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
 };
-use uniplate::Uniplate;
 
 /// Converts a matrix to a list if possible.
 ///
@@ -48,40 +46,33 @@ fn matrix_to_list(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     }
 
-    let mut new_children = VecDeque::new();
-    let mut any_changes = false;
-    for child in expr.children() {
+    let (new_expr, num_changed) = rewrite_children(expr, |child| {
         // already a list => no change
-        if child.clone().unwrap_list().is_some() {
-            new_children.push_back(child);
-            continue;
+        if child.unwrap_list().is_some() {
+            return (child, false);
         }
 
         // not a matrix => no change
         let Some((elems, domain)) = child.clone().unwrap_matrix_unchecked() else {
-            new_children.push_back(child);
-            continue;
+            return (child, false);
         };
 
         let Some(ranges) = domain.as_int() else {
-            new_children.push_back(child);
-            continue;
+            return (child, false);
         };
 
         // must be domain int(1..n)
         let [Range::Bounded(IntVal::Const(1), _)] = ranges[..] else {
-            new_children.push_back(child);
-            continue;
+            return (child, false);
         };
 
-        any_changes = true;
-        new_children
-            .push_back(into_matrix_expr![elems;Domain::int_ground(vec![Range::UnboundedR(1)])]);
-    }
+        (
+            into_matrix_expr![elems;Domain::int_ground(vec![Range::UnboundedR(1)])],
+            true,
+        )
+    });
 
-    let new_expr = expr.with_children(new_children);
-
-    if any_changes {
+    if num_changed != 0 {
         Ok(Reduction::pure(new_expr))
     } else {
         Err(RuleNotApplicable)

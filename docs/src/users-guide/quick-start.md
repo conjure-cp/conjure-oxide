@@ -13,7 +13,7 @@ find y : int(2..5)
 such that x > y
 ```
 
-If you are curious about more complex models, you can check out the models that we use to test Conjure Oxide, available in the `testing/tests/integration` directory of the repository.
+If you are curious about more complex models, you can check out the models that we use to test Conjure Oxide, available in the `test-suite/tests/integration` directory of the repository.
 
 ## Running with Different Solvers
 

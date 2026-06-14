@@ -1,0 +1,30 @@
+Model before rewriting:
+
+find a: int(2..8)
+find b: int(2..8)
+
+such that
+
+(a = 6),
+(b = |a|),
+(b = 6)
+
+--
+
+(b = |a|), 
+   ~~> introduce_abseq ([("Minion", 4400)])
+AbsEq(b,a)
+
+--
+
+Final model:
+
+find a: int(2..8)
+find b: int(2..8)
+
+such that
+
+(a = 6),
+AbsEq(b,a),
+(b = 6)
+

@@ -26,6 +26,7 @@
 //!    weightedsumgeq and weightedsumleq constraints. A negated number is just a number
 //!    with a coefficient of -1.
 
+use crate::utils::{single_vec_child, with_single_vec_child};
 use conjure_cp::essence_expr;
 use conjure_cp::{
     ast::Metadata,
@@ -35,8 +36,6 @@ use conjure_cp::{
         ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
     },
 };
-use std::collections::VecDeque;
-use uniplate::{Biplate, Uniplate as _};
 
 /// Eliminates double negation
 ///
@@ -46,10 +45,10 @@ use uniplate::{Biplate, Uniplate as _};
 #[register_rule("Base", 8400, [Neg])]
 fn elmininate_double_negation(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
-        Expr::Neg(_, a) if matches!(**a, Expr::Neg(_, _)) => {
-            let first_child: Expr = a.as_ref().children()[0].clone();
-            Ok(Reduction::pure(first_child))
-        }
+        Expr::Neg(_, a) => match a.as_ref() {
+            Expr::Neg(_, inner) => Ok(Reduction::pure(Moo::unwrap_or_clone(inner.clone()))),
+            _ => Err(RuleNotApplicable),
+        },
         _ => Err(RuleNotApplicable),
     }
 }
@@ -66,18 +65,14 @@ fn distribute_negation_over_sum(expr: &Expr, _: &SymbolTable) -> ApplicationResu
         _ => Err(RuleNotApplicable),
     }?;
 
-    let mut child_vecs: VecDeque<Vec<Expr>> = inner_expr.children_bi();
-
-    if child_vecs.is_empty() {
-        return Err(RuleNotApplicable);
-    }
-
-    for child in child_vecs[0].iter_mut() {
+    let mut children = single_vec_child(inner_expr.as_ref()).ok_or(RuleNotApplicable)?;
+    for child in children.iter_mut() {
         *child = essence_expr!(-&child);
     }
 
-    Ok(Reduction::pure(Moo::unwrap_or_clone(
-        inner_expr.with_children_bi(child_vecs),
+    Ok(Reduction::pure(with_single_vec_child(
+        inner_expr.as_ref(),
+        children,
     )))
 }
 
