@@ -54,7 +54,7 @@ The following crates define the `conjure-oxide` system:
   the integration tester.
 - [`conjure-cp-rules`](./crates/conjure-cp-rules) defines the default rewrite
   rules used by `conjure-oxide`.
-- [`testing`](./testing) is an internal crate containing
+- [`test-suite`](./test-suite) is an internal crate containing
   integration tests for `conjure-oxide`.
 - [`conjure-cp-lsp`](./crates/conjure-cp-lsp/) implements the language server
   for use in a VSCode extension (as outlined in Language Server Protocol) for

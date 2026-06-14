@@ -1,4 +1,4 @@
-## `testing`
+## `test-suite`
 
 Integration tests for `conjure-oxide`
 
