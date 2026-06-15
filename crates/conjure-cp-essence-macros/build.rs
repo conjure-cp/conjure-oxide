@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 fn main() {
-    // paths to search for Z3 dylib 
+    // paths to search for Z3 dylib
     let candidates: Vec<PathBuf> = [
         // macOS
         "/opt/homebrew/lib",
@@ -11,7 +11,10 @@ fn main() {
         "/usr/lib64",
         "/lib",
         "/lib64",
-    ].into_iter().map(PathBuf::from).collect();
+    ]
+    .into_iter()
+    .map(PathBuf::from)
+    .collect();
 
     let mut valid_paths = Vec::new();
 
@@ -19,8 +22,9 @@ fn main() {
     for dir in candidates {
         if dir.join("libz3.dylib").exists()
             || dir.join("libz3.so").exists()
-            || dir.join("libz3.a").exists() {
-                valid_paths.push(dir);
+            || dir.join("libz3.a").exists()
+        {
+            valid_paths.push(dir);
         }
     }
     // if all else failed, maybe it is local?
@@ -32,6 +36,4 @@ fn main() {
             println!("cargo:rustc-link-search=native={}", p);
         }
     }
-
 }
-
