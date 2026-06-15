@@ -39,6 +39,9 @@ then
   exit 1
 fi
 
+# Allow the script to be invoked from any working directory.
+cd "$(dirname "${BASH_SOURCE[0]}")/.."
+
 # Setup - enter rust project
 cargo locate-project &>/dev/null || { echo_err "Cannot find a rust project"; usage; exit 1; }
 
