@@ -15,6 +15,7 @@ The documentation and Conjure Oxide reports can be found at <https://conjure-cp.
 The following dependencies are required:
 
 * [Conjure](https://github.com/conjure-cp/conjure) (including solvers)
+* Google OR-Tools (required for the CP-SAT solver backend)
 * Clang 
 * Libclang
 * Cmake
@@ -22,6 +23,12 @@ The following dependencies are required:
 
 **Ensure that Conjure is placed early in your PATH to avoid conflicts with
 ImageMagick's conjure command!**
+
+Before compiling, you need to set up OR-Tools by running the included setup script:
+```bash
+./tools/setup_ortools.sh
+```
+
 
 Run `make install` to build and install `conjure-oxide` to `~/.cargo/bin`, and
 ensure `~/.cargo/bin` is in your `PATH`. `make test` prepends `~/.cargo/bin`

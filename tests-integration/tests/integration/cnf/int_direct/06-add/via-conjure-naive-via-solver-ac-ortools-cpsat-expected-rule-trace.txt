@@ -16,6 +16,19 @@ sum([a,b;int(1..)])
 
 --
 
+(sum([a,b;int(1..)]) = c), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+and([SumLeq([a, b], c),SumGeq([a, b], c);int(1..)])
+
+--
+
+and([SumLeq([a, b], c),SumGeq([a, b], c);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+SumLeq([a, b], c),
+SumGeq([a, b], c)
+
+--
+
 Final model:
 
 find a: int(-10..10)
@@ -24,5 +37,6 @@ find c: int(-20..20)
 
 such that
 
-(sum([a,b;int(1..)]) = c)
+SumLeq([a, b], c),
+SumGeq([a, b], c)
 

@@ -23,6 +23,16 @@ fn main() -> io::Result<()> {
 
     let out_dir = var("OUT_DIR").map_err(io::Error::other)?; // wrapping in a std::io::Error to match main's error type
 
+    let manifest_dir = var("CARGO_MANIFEST_DIR").map_err(io::Error::other)?;
+    let local_ortools_prefix = Path::new(&manifest_dir).join("../.ortools");
+    if local_ortools_prefix.exists() {
+        let lib_path = local_ortools_prefix.join("lib");
+        println!("cargo:rustc-link-arg=-Wl,-rpath,{}", lib_path.display());
+    } else if let Ok(prefix) = var("ORTOOLS_PREFIX") {
+        let lib_path = Path::new(&prefix).join("lib");
+        println!("cargo:rustc-link-arg=-Wl,-rpath,{}", lib_path.display());
+    }
+
     // Integration Tests
     let dest = Path::new(&out_dir).join("gen_tests.rs");
     let mut f = File::create(dest)?;

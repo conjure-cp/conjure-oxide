@@ -65,13 +65,8 @@ jobs:
     - name: Set PROTOC environment variable
       run: echo "PROTOC=$(which protoc)" >> $GITHUB_ENV
 
-    - name: Install OR-Tools (Ubuntu)
-      if: runner.os == 'Linux'
-      run: .github/workflows/tools/install_ortools.sh
-
-    - name: Install OR-Tools (macOS)
-      if: runner.os == 'macOS'
-      run: brew install or-tools
+    - name: Install OR-Tools
+      run: ./tools/setup_ortools.sh
 
     - name: Install rust
       run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}

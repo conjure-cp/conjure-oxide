@@ -1,20 +1,12 @@
 #![allow(unused)]
 
-use conjure_cp::settings::{Parser, QuantifiedExpander, Rewriter, SolverFamily};
+// Removed conjure_cp::settings import to avoid build-dependency
 use serde::Deserialize;
 use std::fs;
 use std::io;
 use std::path::Path;
-use std::str::FromStr;
 use std::time::Duration;
 use toml_edit::{DocumentMut, value};
-
-fn parse_values<T>(values: &[String]) -> Result<Vec<T>, String>
-where
-    T: FromStr<Err = String>,
-{
-    values.iter().map(|value| value.parse()).collect()
-}
 
 fn deserialize_string_or_vec<'de, D>(deserializer: D) -> Result<Vec<String>, D::Error>
 where
@@ -38,7 +30,7 @@ fn default_true() -> bool {
 }
 
 fn default_minion_discrete_threshold() -> usize {
-    conjure_cp::settings::DEFAULT_MINION_DISCRETE_THRESHOLD
+    20 // Hardcoded to avoid conjure_cp dependency, matches DEFAULT_MINION_DISCRETE_THRESHOLD
 }
 
 fn deserialise_expected_time<'de, D>(deserializer: D) -> Result<Option<u64>, D::Error>
@@ -176,6 +168,7 @@ impl Default for TestConfig {
                         "smt-bv-arrays-nodiscrete".to_string(),
                         "smt-bv-atomic".to_string(),
                         "smt-bv-atomic-nodiscrete".to_string(),
+                        "ortools-cpsat".to_string(),
                     ]);
                 }
                 solvers
@@ -187,30 +180,30 @@ impl Default for TestConfig {
 }
 
 impl TestConfig {
-    pub fn configured_parsers(&self) -> Result<Vec<Parser>, String> {
-        parse_values(&self.parser)
+    pub fn configured_parsers(&self) -> Result<Vec<String>, String> {
+        Ok(self.parser.clone())
     }
 
-    pub fn configured_rewriters(&self) -> Result<Vec<Rewriter>, String> {
+    pub fn configured_rewriters(&self) -> Result<Vec<String>, String> {
         if self.rewriter.is_empty() {
             return Err("setting 'rewriter' has no values".to_string());
         }
 
-        parse_values(&self.rewriter)
+        Ok(self.rewriter.clone())
     }
 
-    pub fn configured_comprehension_expanders(&self) -> Result<Vec<QuantifiedExpander>, String> {
+    pub fn configured_comprehension_expanders(&self) -> Result<Vec<String>, String> {
         let values = if self.comprehension_expander.is_empty() {
             vec!["native".to_string()]
         } else {
             self.comprehension_expander.clone()
         };
 
-        parse_values(&values)
+        Ok(values)
     }
 
-    pub fn configured_solvers(&self) -> Result<Vec<SolverFamily>, String> {
-        parse_values(&self.solver)
+    pub fn configured_solvers(&self) -> Result<Vec<String>, String> {
+        Ok(self.solver.clone())
     }
 
     pub fn uses_smt_solver(&self) -> bool {

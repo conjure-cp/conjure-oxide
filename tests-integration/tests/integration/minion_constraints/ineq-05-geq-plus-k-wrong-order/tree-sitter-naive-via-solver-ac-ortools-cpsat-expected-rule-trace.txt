@@ -24,6 +24,18 @@ sum([y,-(1);int(1..)])
 
 --
 
+(sum([y,-1;int(1..)]) >= x), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, y], x)
+
+--
+
+(sum([-1,y;int(1..)]) >= x), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([-1, y], x)
+
+--
+
 Final model:
 
 find x: int(1..4)
@@ -31,6 +43,6 @@ find y: int(1..4)
 
 such that
 
-(sum([y,-1;int(1..)]) >= x),
-(sum([-1,y;int(1..)]) >= x)
+SumGeq([-1, y], x),
+SumGeq([-1, y], x)
 

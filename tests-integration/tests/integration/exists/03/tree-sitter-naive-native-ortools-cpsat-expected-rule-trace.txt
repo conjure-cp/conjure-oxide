@@ -59,6 +59,35 @@ sum([__0,-(1);int(1..)])
 
 --
 
+(x = sum([__0,__1;int(1..)])), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+and([SumLeq([__0, __1], x),SumGeq([__0, __1], x);int(1..)])
+
+--
+
+and([SumLeq([__0, __1], x),SumGeq([__0, __1], x);int(1..)]),
+(__1 >= sum([__0,-1;int(1..)])),
+(__1 <= sum([__0,1;int(1..)])), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+SumLeq([__0, __1], x),
+SumGeq([__0, __1], x),
+(__1 >= sum([__0,-1;int(1..)])),
+(__1 <= sum([__0,1;int(1..)]))
+
+--
+
+(__1 >= sum([__0,-1;int(1..)])), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumLeq([-1, __0], __1)
+
+--
+
+(__1 <= sum([__0,1;int(1..)])), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600), ("OrToolsCpSat", 4600)])
+SumGeq([1, __0], __1)
+
+--
+
 Final model:
 
 find x: int(1..2)
@@ -67,7 +96,8 @@ find __1: int(0..4)
 
 such that
 
-(x = sum([__0,__1;int(1..)])),
-(__1 >= sum([__0,-1;int(1..)])),
-(__1 <= sum([__0,1;int(1..)]))
+SumLeq([__0, __1], x),
+SumGeq([__0, __1], x),
+SumLeq([-1, __0], __1),
+SumGeq([1, __0], __1)
 

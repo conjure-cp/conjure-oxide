@@ -3,8 +3,12 @@ fn main() {
     let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").expect("missing CARGO_MANIFEST_DIR");
     let base_path = "src/solver/adaptors/ortools-cpsat";
 
+    let local_ortools_prefix = std::path::Path::new(&manifest_dir).join("../../.ortools");
+    let has_local_ortools = local_ortools_prefix.join("include/ortools/base/base_export.h").exists();
+
     // Auto-detect if OR-Tools is installed on the system
-    let has_ortools = std::path::Path::new("/usr/include/ortools/base/base_export.h").exists()
+    let has_ortools = has_local_ortools
+        || std::path::Path::new("/usr/include/ortools/base/base_export.h").exists()
         || std::path::Path::new("/usr/local/include/ortools/base/base_export.h").exists()
         || std::env::var("ORTOOLS_PREFIX")
             .map(|p| std::path::Path::new(&p).join("include/ortools/base/base_export.h").exists())
@@ -30,19 +34,35 @@ fn main() {
         &[format!("{}/proto", base_path)],
     ).expect("failed to compile cp_model.proto");
 
-    cxx_build::bridge(format!("{}/mod.rs", base_path))
-            .file(format!("{}/wrapper.cpp", base_path))
+    let mut builder = cxx_build::bridge(format!("{}/mod.rs", base_path));
+    builder.file(format!("{}/wrapper.cpp", base_path))
             .include("/usr/local/include") 
             .include("/usr/include") 
             .include(&manifest_dir)
+            .define("NDEBUG", None)
             .flag_if_supported("-std=c++17")
             .flag_if_supported("-fexceptions") 
-            .flag_if_supported("-DABSL_LEGACY_THREAD_ANNOTATIONS")
-            .compile("ortools-wrapper");
+            .flag_if_supported("-DABSL_LEGACY_THREAD_ANNOTATIONS");
+
+    if has_local_ortools {
+        builder.include(local_ortools_prefix.join("include"));
+    }
+    if let Ok(prefix) = std::env::var("ORTOOLS_PREFIX") {
+        builder.include(std::path::Path::new(&prefix).join("include"));
+    }
+
+    builder.compile("ortools-wrapper");
 
     println!("cargo:rustc-link-search=native=/usr/local/lib");
+    if has_local_ortools {
+        let lib_path = local_ortools_prefix.join("lib");
+        println!("cargo:rustc-link-search=native={}", lib_path.display());
+        println!("cargo:rustc-link-arg=-Wl,-rpath,{}", lib_path.display());
+    }
     if let Ok(prefix) = std::env::var("ORTOOLS_PREFIX") {
-        println!("cargo:rustc-link-search=native={}/lib", prefix);
+        let lib_path = std::path::Path::new(&prefix).join("lib");
+        println!("cargo:rustc-link-search=native={}", lib_path.display());
+        println!("cargo:rustc-link-arg=-Wl,-rpath,{}", lib_path.display());
     }
     println!("cargo:rustc-link-lib=ortools");
     

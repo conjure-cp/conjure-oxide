@@ -85,18 +85,30 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
     let validate_with_conjure = config.validate_with_conjure;
     let minion_discrete_threshold = config.minion_discrete_threshold;
 
-    let parsers = config
+    let parsers: Vec<Parser> = config
         .configured_parsers()
-        .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?;
-    let rewriters = config
+        .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?
+        .iter()
+        .map(|s| s.parse().unwrap())
+        .collect();
+    let rewriters: Vec<Rewriter> = config
         .configured_rewriters()
-        .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?;
-    let comprehension_expanders = config
+        .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?
+        .iter()
+        .map(|s| s.parse().unwrap())
+        .collect();
+    let comprehension_expanders: Vec<QuantifiedExpander> = config
         .configured_comprehension_expanders()
-        .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?;
-    let solvers = config
+        .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?
+        .iter()
+        .map(|s| s.parse().unwrap())
+        .collect();
+    let solvers: Vec<SolverFamily> = config
         .configured_solvers()
-        .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?;
+        .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?
+        .iter()
+        .map(|s| s.parse().unwrap())
+        .collect();
 
     // Conjure output depends only on the input model, so cache it once per test case.
     let model_path = format!("{path}/{essence_base}.{extension}");

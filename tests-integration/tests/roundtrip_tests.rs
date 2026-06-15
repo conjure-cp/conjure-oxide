@@ -44,9 +44,12 @@ fn roundtrip_test(path: &str, filename: &str, extension: &str) -> Result<(), Box
         clean_test_dir_for_accept(path)?;
     }
 
-    let parsers = file_config
+    let parsers: Vec<Parser> = file_config
         .configured_parsers()
-        .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?;
+        .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?
+        .iter()
+        .map(|s| s.parse().unwrap())
+        .collect();
     let mut allowed_expected_files = BTreeSet::new();
 
     for parser in parsers {

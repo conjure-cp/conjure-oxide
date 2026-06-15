@@ -1,6 +1,10 @@
 # Make this Makefile auto-documenting
 include tools/show-help-minified.make
 
+# Ensure local OR-Tools libraries are found by the rust compiler for proc-macros
+export LD_LIBRARY_PATH := $(PWD)/.ortools/lib:$(LD_LIBRARY_PATH)
+export DYLD_LIBRARY_PATH := $(PWD)/.ortools/lib:$(DYLD_LIBRARY_PATH)
+
 # Extra flags to be passed to `cargo check` (default: -q).
 EXTRA_CARGO_CHECK_FLAGS ?= -q
 # Use Cargo.lock to ensure local builds match CI dependency versions.
@@ -17,9 +21,14 @@ DEV_CONTAINER_FILE ?= Dockerfile.dev
 submodules:
 	git submodule update --init --recursive -- crates/minion-sys/vendor
 
+.PHONY: setup-deps
+## Initialises submodules and downloads external dependencies (e.g. OR-Tools)
+setup-deps: submodules
+	./tools/setup_ortools.sh
+
 .PHONY: check
 ## Runs all hygiene checks. These are the same checks that occur in CI for PRs.
-check: submodules
+check: setup-deps
 	RUSTFLAGS="-D warnings" cargo check $(EXTRA_CARGO_CHECK_FLAGS) $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace --all-targets
 	cargo clippy $(EXTRA_CARGO_CHECK_FLAGS) $(CARGO_LOCKED) $(CARGO_FEATURES) -- -D warnings -A clippy::unwrap_used -A clippy::expect_used
 	cargo fmt --check
@@ -31,12 +40,12 @@ check-unused-deps: .installed-cargo-extensions.checkpoint
 
 .PHONY: build-release
 ## Builds the release conjure-oxide executable
-build-release: submodules
+build-release: setup-deps
 	cargo build $(CARGO_LOCKED) $(CARGO_FEATURES) --bin conjure-oxide --release
 
 .PHONY: build-debug
 ## Builds the debug conjure-oxide executable
-build-debug: submodules
+build-debug: setup-deps
 	cargo build $(CARGO_LOCKED) $(CARGO_FEATURES) --bin conjure-oxide
 
 .PHONY: build
@@ -52,7 +61,7 @@ install: build
 
 .PHONY: test
 ## Runs all tests
-test: submodules install
+test: setup-deps install
 	PATH="$$HOME/.cargo/bin:$$PATH" cargo test $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace
 
 .PHONY: test-coverage
