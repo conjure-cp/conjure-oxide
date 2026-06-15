@@ -179,9 +179,13 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
     assert_no_redundant_expected_files(Path::new(path), &allowed_expected_files, None)?;
 
     if accept_mode.records_expected_time() {
-        let expected_time = round_expected_time(started_at.elapsed());
+        let observed_expected_time = round_expected_time(started_at.elapsed());
         let config_path = Path::new(path).join("config.toml");
-        upsert_expected_time_config(&config_path, expected_time)?;
+        if let Some(expected_time) =
+            accept_mode.expected_time_to_record(config.expected_time, observed_expected_time)
+        {
+            upsert_expected_time_config(&config_path, expected_time)?;
+        }
     }
 
     Ok(())

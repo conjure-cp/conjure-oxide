@@ -66,10 +66,16 @@ test-accept: install
 	PATH="$$HOME/.cargo/bin:$$PATH" ACCEPT=true cargo test $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace
 	PATH="$$HOME/.cargo/bin:$$PATH" cargo test $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace
 
-.PHONY: test-accept-times
-## Runs all tests in accept mode, updates the expected run times, then one more time in normal mode
-test-accept-times: install
-	PATH="$$HOME/.cargo/bin:$$PATH" ACCEPT=with-times cargo test $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace
+.PHONY: test-accept-with-slower-times
+## Runs all tests in accept mode, only increases expected run times, then one more time in normal mode
+test-accept-with-slower-times: install
+	PATH="$$HOME/.cargo/bin:$$PATH" ACCEPT=with-slower-times cargo test $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace
+	PATH="$$HOME/.cargo/bin:$$PATH" cargo test $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace
+
+.PHONY: test-accept-with-exact-times
+## Runs all tests in accept mode, updates expected run times exactly, then one more time in normal mode
+test-accept-with-exact-times: install
+	PATH="$$HOME/.cargo/bin:$$PATH" ACCEPT=with-exact-times cargo test $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace
 	PATH="$$HOME/.cargo/bin:$$PATH" cargo test $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace
 
 .PHONY: fix

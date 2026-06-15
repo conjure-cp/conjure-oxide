@@ -40,6 +40,11 @@ Instead of comparing against the existing JSON files, the test harness will:
 
 `ACCEPT=true` lets you update expected outputs, while still guarding correctness by checking against old Conjure.
 
+To update `expected-time` entries, use `make test-accept-with-slower-times`. This only
+writes a new time when the rounded runtime is slower than the current value, so speedups
+remain visible as diffs. Use `make test-accept-with-exact-times` to overwrite times with
+the current observed runtime.
+
 ### Licence
 
 This project is licenced under the [Mozilla Public Licence
