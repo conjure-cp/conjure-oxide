@@ -5,11 +5,7 @@ set -euo pipefail
 cargo metadata --format-version=1 --no-deps | jq -r '
   [
     .packages[]
-<<<<<<< HEAD
-    | select(.name != "testing")
-=======
     | select(.name != "test-suite")
->>>>>>> origin/main
     | {
         name: .name,
         has_lib: any(.targets[]; (.kind | index("lib")) or (.kind | index("proc-macro"))),
