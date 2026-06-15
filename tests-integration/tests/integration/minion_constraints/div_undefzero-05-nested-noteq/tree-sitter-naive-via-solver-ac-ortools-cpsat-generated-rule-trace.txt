@@ -1,0 +1,94 @@
+Model before rewriting:
+
+find x: int(5..20)
+find y: int(0..5)
+find z: int(0..6)
+
+such that
+
+!(((x / (y / z)) = 10))
+
+--
+
+(y / z), 
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(y, z) @ (z != 0)}
+
+--
+
+(x / {SafeDiv(y, z) @ (z != 0)}), 
+   ~~> bubble_up ([("Bubble", 8800)])
+{(x / SafeDiv(y, z)) @ (z != 0)}
+
+--
+
+({(x / SafeDiv(y, z)) @ (z != 0)} = 10), 
+   ~~> bubble_up ([("Bubble", 8800)])
+{((x / SafeDiv(y, z)) = 10) @ (z != 0)}
+
+--
+
+{((x / SafeDiv(y, z)) = 10) @ (z != 0)}, 
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([((x / SafeDiv(y, z)) = 10),(z != 0);int(1..)])
+
+--
+
+(x / SafeDiv(y, z)), 
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(x, SafeDiv(y, z)) @ (SafeDiv(y, z) != 0)}
+
+--
+
+({SafeDiv(x, SafeDiv(y, z)) @ (SafeDiv(y, z) != 0)} = 10), 
+   ~~> bubble_up ([("Bubble", 8800)])
+{(SafeDiv(x, SafeDiv(y, z)) = 10) @ (SafeDiv(y, z) != 0)}
+
+--
+
+{(SafeDiv(x, SafeDiv(y, z)) = 10) @ (SafeDiv(y, z) != 0)}, 
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([(SafeDiv(x, SafeDiv(y, z)) = 10),(SafeDiv(y, z) != 0);int(1..)])
+
+--
+
+and([and([(SafeDiv(x, SafeDiv(y, z)) = 10),(SafeDiv(y, z) != 0);int(1..)]),(z != 0);int(1..)]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+and([(SafeDiv(x, SafeDiv(y, z)) = 10),(SafeDiv(y, z) != 0),(z != 0);int(1..)])
+
+--
+
+!(and([(SafeDiv(x, SafeDiv(y, z)) = 10),(SafeDiv(y, z) != 0),(z != 0);int(1..)])), 
+   ~~> distribute_not_over_and ([("Base", 8400)])
+or([!((SafeDiv(x, SafeDiv(y, z)) = 10)),!((SafeDiv(y, z) != 0)),!((z != 0));int(1..)])
+
+--
+
+!((SafeDiv(x, SafeDiv(y, z)) = 10)), 
+   ~~> negated_eq_to_neq ([("Base", 8800)])
+(SafeDiv(x, SafeDiv(y, z)) != 10)
+
+--
+
+!((SafeDiv(y, z) != 0)), 
+   ~~> negated_neq_to_eq ([("Base", 8800)])
+(SafeDiv(y, z) = 0)
+
+--
+
+!((z != 0)), 
+   ~~> negated_neq_to_eq ([("Base", 8800)])
+(z = 0)
+
+--
+
+Final model:
+
+find x: int(5..20)
+find y: int(0..5)
+find z: int(0..6)
+
+such that
+
+or([(SafeDiv(x, SafeDiv(y, z)) != 10),(SafeDiv(y, z) = 0),(z = 0);int(1..)])
+

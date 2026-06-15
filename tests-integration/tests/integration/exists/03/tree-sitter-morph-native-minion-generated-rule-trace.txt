@@ -1,0 +1,23 @@
+Model before rewriting:
+
+find x: int(1..2)
+
+such that
+
+or([ or([ (x = sum([i,j;int(1..)])) | j : int(((i - 1))..(sum([i,1;int(1..)]))) ]) | i : int(1..3) ])
+
+--
+
+Final model:
+
+find x: int(1..2)
+find __0: int(1..3)
+find __1: int(0..4)
+
+such that
+
+SumLeq([__0, __1], x),
+SumGeq([__0, __1], x),
+SumLeq([-1, __0], __1),
+SumGeq([1, __0], __1)
+

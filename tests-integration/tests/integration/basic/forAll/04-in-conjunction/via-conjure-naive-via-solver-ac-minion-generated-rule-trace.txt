@@ -1,0 +1,46 @@
+Model before rewriting:
+
+find a: bool
+find b: bool
+
+such that
+
+and([a,(b = and([ (k <= 5) | k : int(1..2) ]));int(1..2)])
+
+--
+
+and([a,(b = and([ (k <= 5) | k : int(1..2) ]));int(1..2)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+and([a,(b = true);int(1..2)])
+
+--
+
+(b = true), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(true, b)
+
+--
+
+and([a,Reify(true, b);int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)])
+and([a,Reify(true, b);int(1..)])
+
+--
+
+and([a,Reify(true, b);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+a,
+Reify(true, b)
+
+--
+
+Final model:
+
+find a: bool
+find b: bool
+
+such that
+
+a,
+Reify(true, b)
+

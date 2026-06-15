@@ -9,7 +9,7 @@ on:
   pull_request_target:
     paths:
     - crates/**
-    - tests-integration/**
+    - test-suite/**
     - tools/ci/generate-doc-coverage-summary-md.bash
     - tools/ci/generate-doc-coverage-report-md.bash
     - tools/ci/list-doc-coverage-targets.bash
@@ -18,7 +18,7 @@ on:
     - main
     paths:
     - crates/**
-    - tests-integration/**
+    - test-suite/**
     - tools/ci/generate-doc-coverage-summary-md.bash
     - tools/ci/generate-doc-coverage-report-md.bash
     - tools/ci/list-doc-coverage-targets.bash
@@ -27,6 +27,9 @@ on:
     - .github/workflows/rustdoc.yml
   workflow_dispatch:
 
+concurrency:
+  group: conjure-oxide-reports-deploy
+  cancel-in-progress: false
 
 env:
   os: ubuntu-latest

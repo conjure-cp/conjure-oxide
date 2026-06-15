@@ -1,0 +1,34 @@
+Model before rewriting:
+
+find a: matrix indexed by [int(1..2)] of int(1..2)
+find b: matrix indexed by [int(1..2)] of int(1..2)
+
+such that
+
+(a >=lex b),
+(a[1] = 1)
+
+--
+
+(a >=lex b), 
+   ~~> normalise_lex_gt_geq ([("Base", 9000)])
+(b <=lex a)
+
+--
+
+a[1], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a,[1])
+
+--
+
+Final model:
+
+find a: matrix indexed by [int(1..2)] of int(1..2)
+find b: matrix indexed by [int(1..2)] of int(1..2)
+
+such that
+
+(b <=lex a),
+(SafeIndex(a,[1]) = 1)
+

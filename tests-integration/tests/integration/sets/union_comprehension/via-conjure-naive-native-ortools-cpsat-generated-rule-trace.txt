@@ -1,0 +1,26 @@
+Model before rewriting:
+
+find a: set  of int(1..3)
+find b: set  of int(5..10)
+
+such that
+
+(sum([ product([i,2;int(1..2)]) | i <- (a union b) ]) = 20)
+
+--
+
+[ product([i,2;int(1..2)]) | i <- (a union b) ], 
+   ~~> union_set ([("Base", 8700)])
+flatten([[ product([i,2;int(1..2)]) | i <- a ],[ product([i,2;int(1..2)]) | i <- b, !(i in a) ];int(1..)])
+
+--
+
+Final model:
+
+find a: set  of int(1..3)
+find b: set  of int(5..10)
+
+such that
+
+(sum(flatten([[ product([i,2;int(1..2)]) | i <- a ],[ product([i,2;int(1..2)]) | i <- b, !(i in a) ];int(1..)])) = 20)
+

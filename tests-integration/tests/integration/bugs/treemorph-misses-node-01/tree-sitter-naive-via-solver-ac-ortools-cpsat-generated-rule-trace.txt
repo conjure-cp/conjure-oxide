@@ -1,0 +1,64 @@
+Model before rewriting:
+
+find c: int(1..5)
+find a: int(1..75)
+find b: int(1..75)
+
+such that
+
+((c ** 2) = sum([(a ** 2),(b ** 2);int(1..2)]))
+
+--
+
+(c ** 2), 
+   ~~> pow_to_bubble ([("Bubble", 6000)])
+{SafePow(c, 2) @ and([or([(c != 0),(2 != 0);int(1..)]),(2 >= 0);int(1..)])}
+
+--
+
+({SafePow(c, 2) @ and([or([(c != 0),(2 != 0);int(1..)]),(2 >= 0);int(1..)])} = sum([(a ** 2),(b ** 2);int(1..2)])), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(SafePow(c, 2) = sum([(a ** 2),(b ** 2);int(1..2)]))
+
+--
+
+(a ** 2), 
+   ~~> pow_to_bubble ([("Bubble", 6000)])
+{SafePow(a, 2) @ and([or([(a != 0),(2 != 0);int(1..)]),(2 >= 0);int(1..)])}
+
+--
+
+(SafePow(c, 2) = sum([{SafePow(a, 2) @ and([or([(a != 0),(2 != 0);int(1..)]),(2 >= 0);int(1..)])},(b ** 2);int(1..2)])), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(SafePow(c, 2) = sum([SafePow(a, 2),(b ** 2);int(1..2)]))
+
+--
+
+(b ** 2), 
+   ~~> pow_to_bubble ([("Bubble", 6000)])
+{SafePow(b, 2) @ and([or([(b != 0),(2 != 0);int(1..)]),(2 >= 0);int(1..)])}
+
+--
+
+(SafePow(c, 2) = sum([SafePow(a, 2),{SafePow(b, 2) @ and([or([(b != 0),(2 != 0);int(1..)]),(2 >= 0);int(1..)])};int(1..2)])), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(SafePow(c, 2) = sum([SafePow(a, 2),SafePow(b, 2);int(1..2)]))
+
+--
+
+sum([SafePow(a, 2),SafePow(b, 2);int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)])
+sum([SafePow(a, 2),SafePow(b, 2);int(1..)])
+
+--
+
+Final model:
+
+find c: int(1..5)
+find a: int(1..75)
+find b: int(1..75)
+
+such that
+
+(SafePow(c, 2) = sum([SafePow(a, 2),SafePow(b, 2);int(1..)]))
+

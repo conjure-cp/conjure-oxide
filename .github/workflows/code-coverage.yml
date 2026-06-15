@@ -9,20 +9,23 @@ on:
   pull_request_target:
     paths:
     - crates/**
-    - tests-integration/**
+    - test-suite/**
     - tools/coverage.sh
   push:
     branches:
     - main
     paths:
     - crates/**
-    - tests-integration/**
+    - test-suite/**
     - tools/coverage.sh
     - .github/workflows/code-coverage.yml
     - .github/workflows/doc-coverage.yml
     - .github/workflows/rustdoc.yml
   workflow_dispatch:
 
+concurrency:
+  group: conjure-oxide-reports-deploy
+  cancel-in-progress: false
 
 env:
   os: ubuntu-latest

@@ -1,0 +1,44 @@
+Model before rewriting:
+
+find a: int(-1..2)
+find b: int(-1..2)
+find c: int(1..2)
+find m: matrix indexed by [int(1..2)] of int(1..2)
+find z: bool
+
+such that
+
+(z) <-> ((m[sum([a,b;int(1..)])] = c))
+
+--
+
+m[sum([a,b;int(1..)])], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{SafeIndex(m,[sum([a,b;int(1..)])]) @ __inDomain(sum([a,b;int(1..)]),int(1..2))}
+
+--
+
+({SafeIndex(m,[sum([a,b;int(1..)])]) @ __inDomain(sum([a,b;int(1..)]),int(1..2))} = c), 
+   ~~> bubble_up ([("Bubble", 8800)])
+{(SafeIndex(m,[sum([a,b;int(1..)])]) = c) @ __inDomain(sum([a,b;int(1..)]),int(1..2))}
+
+--
+
+{(SafeIndex(m,[sum([a,b;int(1..)])]) = c) @ __inDomain(sum([a,b;int(1..)]),int(1..2))}, 
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([(SafeIndex(m,[sum([a,b;int(1..)])]) = c),__inDomain(sum([a,b;int(1..)]),int(1..2));int(1..)])
+
+--
+
+Final model:
+
+find a: int(-1..2)
+find b: int(-1..2)
+find c: int(1..2)
+find m: matrix indexed by [int(1..2)] of int(1..2)
+find z: bool
+
+such that
+
+(z) <-> (and([(SafeIndex(m,[sum([a,b;int(1..)])]) = c),__inDomain(sum([a,b;int(1..)]),int(1..2));int(1..)]))
+

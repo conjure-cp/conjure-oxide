@@ -1,0 +1,48 @@
+Model before rewriting:
+
+find x: int(1..5)
+find y: int(0..2)
+find z: int(1..2)
+
+such that
+
+((x / y) = z)
+
+--
+
+(x / y), 
+   ~~> div_to_bubble ([("Bubble", 6000)])
+{SafeDiv(x, y) @ (y != 0)}
+
+--
+
+({SafeDiv(x, y) @ (y != 0)} = z), 
+   ~~> bubble_up ([("Bubble", 8800)])
+{(SafeDiv(x, y) = z) @ (y != 0)}
+
+--
+
+{(SafeDiv(x, y) = z) @ (y != 0)}, 
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([(SafeDiv(x, y) = z),(y != 0);int(1..)])
+
+--
+
+and([(SafeDiv(x, y) = z),(y != 0);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(SafeDiv(x, y) = z),
+(y != 0)
+
+--
+
+Final model:
+
+find x: int(1..5)
+find y: int(0..2)
+find z: int(1..2)
+
+such that
+
+(SafeDiv(x, y) = z),
+(y != 0)
+

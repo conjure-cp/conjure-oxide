@@ -16,8 +16,8 @@
 
 set -euo pipefail
 
-ROOT="tests-integration/tests"
-ALLOWED_PATHS_DESC="tests-integration/tests/{integration,roundtrip}"
+ROOT="test-suite/tests"
+ALLOWED_PATHS_DESC="test-suite/tests/{integration,roundtrip}"
 
 usage() {
   cat <<'EOF'
@@ -29,8 +29,8 @@ Input:
     - test names, e.g. tests_integration_basic_div_04
     - globbed test names, e.g. tests_integration_cnf*
     - paths (absolute or relative to repo root), e.g.
-      ./tests-integration/tests/integration/basic/comprehension-01-1
-  Paths outside <repo root>/tests-integration/tests/{integration,roundtrip} are ignored.
+      ./test-suite/tests/integration/basic/comprehension-01-1
+  Paths outside <repo root>/test-suite/tests/{integration,roundtrip} are ignored.
   If no input is given, your default editor will be opened so you can type in the paths;
   This behaviour is disabled when the script is not ran interactively (e.g input is piped from another command)
 
