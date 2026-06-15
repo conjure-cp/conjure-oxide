@@ -11,6 +11,10 @@ CARGO_FEATURES ?=
 CARGO_TARGET_DIR ?= target
 DEV_CONTAINER_IMAGE ?= conjure-oxide-dev
 DEV_CONTAINER_FILE ?= Dockerfile.dev
+CARGO_TEST_WORKSPACE = cargo test $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace
+# Golden files follow the test-suite convention of `.expected` or `-expected-` in the file name.
+# This intentionally ignores config.toml, including expected-time-only changes.
+RUN_NON_ACCEPTING_TESTS_IF_GOLDEN_FILES_CHANGED = if test -n "$$(git status --porcelain -- ':(glob)**/*.expected*' ':(glob)**/*-expected-*')"; then echo "Golden files changed; running tests without ACCEPT"; PATH="$$HOME/.cargo/bin:$$PATH" $(CARGO_TEST_WORKSPACE); else echo "No golden files changed; skipping non-accepting test run"; fi
 
 .PHONY: submodules
 ## Initialises git submodules needed for builds
@@ -53,7 +57,7 @@ install: build
 .PHONY: test
 ## Runs all tests
 test: submodules install
-	PATH="$$HOME/.cargo/bin:$$PATH" cargo test $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace
+	PATH="$$HOME/.cargo/bin:$$PATH" $(CARGO_TEST_WORKSPACE)
 
 .PHONY: test-coverage
 ## Runs all tests and produces a coverage report
@@ -61,22 +65,22 @@ test-coverage:
 	./tools/coverage.sh
 
 .PHONY: test-accept
-## Runs all tests in accept mode, then one more time in normal mode
+## Runs all tests in accept mode, then in normal mode if golden files changed
 test-accept: install
-	PATH="$$HOME/.cargo/bin:$$PATH" ACCEPT=true cargo test $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace
-	PATH="$$HOME/.cargo/bin:$$PATH" cargo test $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace
+	PATH="$$HOME/.cargo/bin:$$PATH" ACCEPT=true $(CARGO_TEST_WORKSPACE)
+	@$(RUN_NON_ACCEPTING_TESTS_IF_GOLDEN_FILES_CHANGED)
 
 .PHONY: test-accept-with-slower-times
-## Runs all tests in accept mode, only increases expected run times, then one more time in normal mode
+## Runs all tests in accept mode, only increases expected run times, then in normal mode if golden files changed
 test-accept-with-slower-times: install
-	PATH="$$HOME/.cargo/bin:$$PATH" ACCEPT=with-slower-times cargo test $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace
-	PATH="$$HOME/.cargo/bin:$$PATH" cargo test $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace
+	PATH="$$HOME/.cargo/bin:$$PATH" ACCEPT=with-slower-times $(CARGO_TEST_WORKSPACE)
+	@$(RUN_NON_ACCEPTING_TESTS_IF_GOLDEN_FILES_CHANGED)
 
 .PHONY: test-accept-with-exact-times
-## Runs all tests in accept mode, updates expected run times exactly, then one more time in normal mode
+## Runs all tests in accept mode, updates expected run times exactly, then in normal mode if golden files changed
 test-accept-with-exact-times: install
-	PATH="$$HOME/.cargo/bin:$$PATH" ACCEPT=with-exact-times cargo test $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace
-	PATH="$$HOME/.cargo/bin:$$PATH" cargo test $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace
+	PATH="$$HOME/.cargo/bin:$$PATH" ACCEPT=with-exact-times $(CARGO_TEST_WORKSPACE)
+	@$(RUN_NON_ACCEPTING_TESTS_IF_GOLDEN_FILES_CHANGED)
 
 .PHONY: fix
 ## Tries to auto-fix hygiene issues reported by `make check`. 
