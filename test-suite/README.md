@@ -1,4 +1,4 @@
-## `tests-integration`
+## `test-suite`
 
 Integration tests for `conjure-oxide`
 
@@ -16,7 +16,7 @@ Each test runs `conjure-oxide` on an `input.essence` file and checks that the re
 
 ### Creating a new test
 
-1. Create a new directory under `tests-integration/tests/integration/<folder>`.
+1. Create a new directory under `test-suite/tests/integration/<folder>`.
 2. Add your `input.essence` file and (optionally) a `config.toml` to configure the solver.
 3. Run the following to generate the expected solution and JSON files:
 

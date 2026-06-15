@@ -153,13 +153,17 @@ fn expand_comprehension_via_solver_ac(expr: &Expr, symbols: &SymbolTable) -> App
     // Is this an ac expression?
     let ac_operator_kind = expr.to_ac_operator_kind().ok_or(RuleNotApplicable)?;
 
+    let children = expr.children();
     debug_assert_eq!(
-        expr.children().len(),
+        children.len(),
         1,
         "AC expressions should have exactly one child."
     );
 
-    let comprehension = as_single_comprehension(&expr.children()[0]).ok_or(RuleNotApplicable)?;
+    let comprehension = children
+        .front()
+        .and_then(as_single_comprehension)
+        .ok_or(RuleNotApplicable)?;
 
     for qual in &comprehension.qualifiers {
         if let ComprehensionQualifier::ExpressionGenerator { .. } = qual {
