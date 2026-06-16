@@ -1,0 +1,36 @@
+Model before rewriting:
+
+find t: bool
+find x: bool
+find y: bool
+find z: bool
+
+such that
+
+or([or([t,(z = x);int(1..)]),y;int(1..)])
+
+--
+
+or([or([t,(z = x);int(1..)]),y;int(1..)]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)])
+or([t,(z = x),y;int(1..)])
+
+--
+
+(z = x), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(x, z)
+
+--
+
+Final model:
+
+find t: bool
+find x: bool
+find y: bool
+find z: bool
+
+such that
+
+or([t,Reify(x, z),y;int(1..)])
+
