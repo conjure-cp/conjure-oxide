@@ -254,6 +254,112 @@ fn translate_constraint(expr: &Expression, ctx: &TranslationContext) -> SolverRe
                 }))
             });
         },
+        Expression::FlatAllDiff(_, vars) => {
+            use super::proto::AllDifferentConstraintProto;
+            let mut exprs = Vec::new();
+            for var in vars {
+                let var_expr = expr_to_linear(&Expression::Atomic(Metadata::default(), var.clone()), ctx)?;
+                exprs.push(super::proto::LinearExpressionProto {
+                    vars: var_expr.vars,
+                    coeffs: var_expr.coeffs,
+                    offset: var_expr.offset,
+                });
+            }
+            return Ok(ConstraintProto {
+                name: String::new(),
+                enforcement_literal: vec![],
+                constraint: Some(constraint_proto::Constraint::AllDiff(AllDifferentConstraintProto {
+                    exprs,
+                })),
+            });
+        },
+        Expression::MinionDivEqUndefZero(_, a, b, target) => {
+            use super::proto::{LinearArgumentProto, LinearExpressionProto};
+            let a_expr = expr_to_linear(&Expression::Atomic(Metadata::default(), a.as_ref().clone()), ctx)?;
+            let b_expr = expr_to_linear(&Expression::Atomic(Metadata::default(), b.as_ref().clone()), ctx)?;
+            let target_expr = expr_to_linear(&Expression::Atomic(Metadata::default(), target.as_ref().clone()), ctx)?;
+            return Ok(ConstraintProto {
+                name: String::new(),
+                enforcement_literal: vec![],
+                constraint: Some(constraint_proto::Constraint::IntDiv(LinearArgumentProto {
+                    target: Some(LinearExpressionProto {
+                        vars: target_expr.vars,
+                        coeffs: target_expr.coeffs,
+                        offset: target_expr.offset,
+                    }),
+                    exprs: vec![
+                        LinearExpressionProto {
+                            vars: a_expr.vars,
+                            coeffs: a_expr.coeffs,
+                            offset: a_expr.offset,
+                        },
+                        LinearExpressionProto {
+                            vars: b_expr.vars,
+                            coeffs: b_expr.coeffs,
+                            offset: b_expr.offset,
+                        },
+                    ],
+                })),
+            });
+        },
+        Expression::MinionModuloEqUndefZero(_, a, b, target) => {
+            use super::proto::{LinearArgumentProto, LinearExpressionProto};
+            let a_expr = expr_to_linear(&Expression::Atomic(Metadata::default(), a.as_ref().clone()), ctx)?;
+            let b_expr = expr_to_linear(&Expression::Atomic(Metadata::default(), b.as_ref().clone()), ctx)?;
+            let target_expr = expr_to_linear(&Expression::Atomic(Metadata::default(), target.as_ref().clone()), ctx)?;
+            return Ok(ConstraintProto {
+                name: String::new(),
+                enforcement_literal: vec![],
+                constraint: Some(constraint_proto::Constraint::IntMod(LinearArgumentProto {
+                    target: Some(LinearExpressionProto {
+                        vars: target_expr.vars,
+                        coeffs: target_expr.coeffs,
+                        offset: target_expr.offset,
+                    }),
+                    exprs: vec![
+                        LinearExpressionProto {
+                            vars: a_expr.vars,
+                            coeffs: a_expr.coeffs,
+                            offset: a_expr.offset,
+                        },
+                        LinearExpressionProto {
+                            vars: b_expr.vars,
+                            coeffs: b_expr.coeffs,
+                            offset: b_expr.offset,
+                        },
+                    ],
+                })),
+            });
+        },
+        Expression::FlatProductEq(_, a, b, target) => {
+            use super::proto::{LinearArgumentProto, LinearExpressionProto};
+            let a_expr = expr_to_linear(&Expression::Atomic(Metadata::default(), a.as_ref().clone()), ctx)?;
+            let b_expr = expr_to_linear(&Expression::Atomic(Metadata::default(), b.as_ref().clone()), ctx)?;
+            let target_expr = expr_to_linear(&Expression::Atomic(Metadata::default(), target.as_ref().clone()), ctx)?;
+            return Ok(ConstraintProto {
+                name: String::new(),
+                enforcement_literal: vec![],
+                constraint: Some(constraint_proto::Constraint::IntProd(LinearArgumentProto {
+                    target: Some(LinearExpressionProto {
+                        vars: target_expr.vars,
+                        coeffs: target_expr.coeffs,
+                        offset: target_expr.offset,
+                    }),
+                    exprs: vec![
+                        LinearExpressionProto {
+                            vars: a_expr.vars,
+                            coeffs: a_expr.coeffs,
+                            offset: a_expr.offset,
+                        },
+                        LinearExpressionProto {
+                            vars: b_expr.vars,
+                            coeffs: b_expr.coeffs,
+                            offset: b_expr.offset,
+                        },
+                    ],
+                })),
+            });
+        },
         _ => {
             return Err(SolverError::ModelFeatureNotSupported(format!(
                 "Unsupported top-level constraint: {expr:?}"

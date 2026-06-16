@@ -60,7 +60,7 @@ fn inline_constant_matrix_subject_for_minion(expr: &Expr, _: &SymbolTable) -> Ap
     )))
 }
 
-#[register_rule("Minion", 4200, [Eq, AuxDeclaration])]
+#[register_rule(["Minion", "OrToolsCpSat"], 4200, [Eq, AuxDeclaration])]
 fn introduce_producteq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     // product = val
     let val: Atom;
@@ -540,7 +540,7 @@ fn flatten_expression_to_atom(
     Ok(aux_var_info.as_atom())
 }
 
-#[register_rule("Minion", 4200, [Eq, AuxDeclaration])]
+#[register_rule(["Minion", "OrToolsCpSat"], 4200, [Eq, AuxDeclaration])]
 fn introduce_diveq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // div = val
     let val: Atom;
@@ -594,7 +594,7 @@ fn introduce_diveq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     )))
 }
 
-#[register_rule("Minion", 4200, [Eq, AuxDeclaration])]
+#[register_rule(["Minion", "OrToolsCpSat"], 4200, [Eq, AuxDeclaration])]
 fn introduce_modeq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // div = val
     let val: Atom;
@@ -724,7 +724,7 @@ fn introduce_poweq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 }
 
 /// Introduces a `FlatAlldiff` constraint from an `AllDiff`
-#[register_rule("Minion", 4200, [AllDiff])]
+#[register_rule(["Minion", "OrToolsCpSat"], 4200, [AllDiff])]
 fn introduce_flat_alldiff(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::AllDiff(_, es) = expr else {
         return Err(RuleNotApplicable);
