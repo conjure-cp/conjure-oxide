@@ -4,17 +4,18 @@ use git_version as _;
 use conjure_cp::defaults::DEFAULT_RULE_SETS;
 use conjure_cp::parse::tree_sitter::parse_essence_file_native;
 use conjure_cp::rule_engine::{rewrite_morph, rewrite_naive};
-use conjure_cp::solver::Solver;
 use conjure_cp::solver::adaptors::*;
+use conjure_cp::solver::Solver;
 use conjure_cp_cli::utils::testing::{normalize_solutions_for_comparison, read_default_rule_trace};
 use std::collections::{BTreeMap, BTreeSet};
 use std::error::Error;
 use std::fs;
 use std::fs::File;
+use std::io::Read;
 use std::path::Path;
 use std::process::{Child, Command, Stdio};
 use std::time::{Duration, Instant};
-use tracing_subscriber::{Layer, filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt};
+use tracing_subscriber::{filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt, Layer};
 
 #[cfg(unix)]
 use std::os::unix::process::CommandExt;
@@ -26,10 +27,10 @@ use conjure_cp::context::Context;
 use conjure_cp::parse::tree_sitter::parse_essence_file;
 use conjure_cp::rule_engine::resolve_rule_sets;
 use conjure_cp::settings::{
-    Parser, QuantifiedExpander, Rewriter, SolverFamily, set_comprehension_expander,
-    set_current_parser, set_current_rewriter, set_current_solver_family,
-    set_default_rule_trace_enabled, set_minion_discrete_threshold,
+    set_comprehension_expander, set_current_parser, set_current_rewriter,
+    set_current_solver_family, set_default_rule_trace_enabled, set_minion_discrete_threshold,
     set_rule_trace_aggregates_enabled, set_rule_trace_enabled, set_rule_trace_verbose_enabled,
+    Parser, QuantifiedExpander, Rewriter, SolverFamily,
 };
 use conjure_cp_cli::utils::conjure::solutions_to_json;
 use conjure_cp_cli::utils::conjure::{get_solutions, get_solutions_from_conjure_with_stats};
@@ -38,13 +39,13 @@ use conjure_cp_cli::utils::testing::{read_solutions_json, save_solutions_json};
 #[allow(clippy::single_component_path_imports, unused_imports)]
 use conjure_cp_rules;
 use pretty_assertions::assert_eq;
-use test_suite::AcceptMode;
-use test_suite::TestConfig;
 use test_suite::golden_files::assert_no_redundant_expected_files;
 use test_suite::test_config::{
-    RecordedRunStats, round_expected_time, upsert_expected_time_config,
-    upsert_recorded_run_stats_config, upsert_status_config, upsert_tool_status_config,
+    round_expected_time, upsert_expected_time_config, upsert_recorded_run_stats_config,
+    upsert_status_config, upsert_tool_status_config, RecordedRunStats,
 };
+use test_suite::AcceptMode;
+use test_suite::TestConfig;
 
 #[derive(Clone, Copy, Debug)]
 struct RunCase<'a> {
@@ -88,14 +89,17 @@ where
     command
         .arg(test_name)
         .arg("--exact")
-        .arg("--nocapture")
         .env("CONJURE_OXIDE_TEST_TIMEOUT_CHILD", "1")
-        .stdin(Stdio::null());
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
 
     #[cfg(unix)]
     command.process_group(0);
 
     let mut child = command.spawn()?;
+    let stdout = child_output_reader(child.stdout.take());
+    let stderr = child_output_reader(child.stderr.take());
     let started_at = Instant::now();
 
     loop {
@@ -104,11 +108,15 @@ where
                 return Ok(());
             }
 
-            return Err(format!("timed child test {test_name} failed with {status}").into());
+            let child_output = format_child_output(stdout, stderr);
+            return Err(
+                format!("timed child test {test_name} failed with {status}{child_output}").into(),
+            );
         }
 
         if started_at.elapsed() >= timeout {
             terminate_timed_child(&mut child)?;
+            let child_output = format_child_output(stdout, stderr);
             if AcceptMode::from_env().accepts_outputs() {
                 upsert_status_config(
                     &Path::new(test_dir).join("config.toml"),
@@ -116,14 +124,63 @@ where
                 )?;
             }
             return Err(format!(
-                "test {test_name} exceeded TEST_CASE_TIMEOUT={}s",
-                timeout.as_secs()
+                "test {test_name} exceeded TEST_CASE_TIMEOUT={}s{child_output}",
+                timeout.as_secs(),
             )
             .into());
         }
 
         std::thread::sleep(Duration::from_millis(100));
     }
+}
+
+/// Starts a background reader for a piped child-process stream.
+fn child_output_reader(
+    output: Option<impl Read + Send + 'static>,
+) -> Option<std::thread::JoinHandle<Vec<u8>>> {
+    output.map(|mut output| {
+        std::thread::spawn(move || {
+            let mut buffer = Vec::new();
+            let _ = output.read_to_end(&mut buffer);
+            buffer
+        })
+    })
+}
+
+/// Formats captured child-process output for failure reports.
+fn format_child_output(
+    stdout: Option<std::thread::JoinHandle<Vec<u8>>>,
+    stderr: Option<std::thread::JoinHandle<Vec<u8>>>,
+) -> String {
+    let stdout = join_child_output(stdout);
+    let stderr = join_child_output(stderr);
+    let stdout = cleaned_child_output(&stdout);
+    let stderr = cleaned_child_output(&stderr);
+
+    match (stdout.is_empty(), stderr.is_empty()) {
+        (true, true) => String::new(),
+        (false, true) => format!("\n\nchild stdout:\n{stdout}"),
+        (true, false) => format!("\n\nchild stderr:\n{stderr}"),
+        (false, false) => format!("\n\nchild stdout:\n{stdout}\n\nchild stderr:\n{stderr}"),
+    }
+}
+
+/// Collects bytes read by a child-output reader thread.
+fn join_child_output(handle: Option<std::thread::JoinHandle<Vec<u8>>>) -> Vec<u8> {
+    handle
+        .and_then(|handle| handle.join().ok())
+        .unwrap_or_default()
+}
+
+/// Removes noisy libtest status lines from captured child-process output.
+fn cleaned_child_output(output: &[u8]) -> String {
+    String::from_utf8_lossy(output)
+        .lines()
+        .filter(|line| line.trim() != "running 1 test")
+        .collect::<Vec<_>>()
+        .join("\n")
+        .trim()
+        .to_owned()
 }
 
 #[cfg(unix)]
