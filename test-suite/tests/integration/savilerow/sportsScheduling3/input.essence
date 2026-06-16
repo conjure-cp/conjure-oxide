@@ -13,14 +13,14 @@ find       game : matrix indexed by [ WEEKS, PERIODS ] of GAMES
 such that  
            $ All teams play once a week
            forAll w : WEEKS .
-             alldifferent(flatten(schedule[w,..,..])),
+             allDiff(flatten(schedule[w,..,..])),
    
            $ Every team plays at most twice in the same period
            forAll p : PERIODS .
              atmost(flatten(schedule[..,p,..]), [2,2,2,2], [1, 2, 3, 4]),
 
            $ Distinct games via alldiff on game array
-           alldifferent(flatten(game)),    $ This should translate soon
+           allDiff(flatten(game)),    $ This should translate soon
 
            $ Channelling between schedule and game
            $ (assumes home/away symmetry broken)
