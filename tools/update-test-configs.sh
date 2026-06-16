@@ -79,6 +79,12 @@ err() {
   exit 1
 }
 
+ensure_trailing_newline() {
+  local file="$1"
+  [[ -s "$file" ]] || return 0
+  [[ "$(tail -c 1 "$file" | xxd -p)" == "0a" ]] || printf '\n' >>"$file"
+}
+
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 REPO_ROOT="$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel 2>/dev/null || true)"
 [[ -n "$REPO_ROOT" ]] || err "Could not determine repository root from: $SCRIPT_DIR"
@@ -649,6 +655,7 @@ for t in "${test_names[@]}"; do
       [[ -n "$baseline_tmp" ]] && rm -f "$baseline_tmp"
     else
       mv "$work_file" "$config_path"
+      ensure_trailing_newline "$config_path"
       if [[ "$created_missing_config" -eq 1 ]]; then
         echo "Created: $config_path"
       else
