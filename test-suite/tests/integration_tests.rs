@@ -234,7 +234,6 @@ fn integration_test_inner_with_status(
     // Conjure output depends only on the input model, so cache it once per test case.
     let model_path = format!("{path}/{essence_base}.{extension}");
     let conjure_solutions = if accept && validate_with_conjure {
-        eprintln!("[integration] loading Conjure reference solutions for {model_path}");
         let conjure_run = get_solutions_from_conjure_with_stats(
             &model_path,
             None,
@@ -249,9 +248,6 @@ fn integration_test_inner_with_status(
 
         Some((Arc::new(conjure_run.solutions), conjure_run.timings))
     } else {
-        if accept && !validate_with_conjure {
-            eprintln!("[integration] skipping Conjure validation for {model_path}");
-        }
         None
     };
     let conjure_solution_values = conjure_solutions
@@ -293,7 +289,6 @@ fn integration_test_inner_with_status(
                     )
                         as Arc<dyn tracing::Subscriber + Send + Sync>;
                     let run_label = run_case_label(path, essence_base, extension, run_case);
-                    eprintln!("[integration] running {run_label}");
                     let default_rule_trace_enabled = matches!(rewriter, Rewriter::Naive);
                     set_rule_trace_enabled(true);
                     set_default_rule_trace_enabled(default_rule_trace_enabled);
