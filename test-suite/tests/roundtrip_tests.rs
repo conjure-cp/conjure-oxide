@@ -32,7 +32,7 @@ fn roundtrip_test(path: &str, filename: &str, extension: &str) -> Result<(), Box
             Default::default()
         };
 
-    let param_file = std::fs::read_dir(path).ok().and_then(|entries| {
+    let param_file = fs::read_dir(path).ok().and_then(|entries| {
         entries
             .filter_map(|entry| entry.ok())
             .find(|entry| entry.path().extension().is_some_and(|ext| ext == "param"))

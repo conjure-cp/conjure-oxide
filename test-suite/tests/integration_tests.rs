@@ -181,6 +181,15 @@ fn run_case_label(
     )
 }
 
+fn param_file_in_test_dir(path: &str) -> Option<String> {
+    fs::read_dir(path).ok().and_then(|entries| {
+        entries
+            .filter_map(|entry| entry.ok())
+            .find(|entry| entry.path().extension().is_some_and(|ext| ext == "param"))
+            .map(|entry| entry.path().to_string_lossy().to_string())
+    })
+}
+
 fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(), Box<dyn Error>> {
     let result = integration_test_inner_with_status(path, essence_base, extension);
 
@@ -233,11 +242,12 @@ fn integration_test_inner_with_status(
 
     // Conjure output depends only on the input model, so cache it once per test case.
     let model_path = format!("{path}/{essence_base}.{extension}");
+    let param_file = param_file_in_test_dir(path);
     let config_path = Path::new(path).join("config.toml");
     let conjure_solutions = if accept && validate_with_conjure {
         let conjure_run = match get_solutions_from_conjure_with_stats(
             &model_path,
-            None,
+            param_file.as_deref(),
             Default::default(),
             number_of_solutions,
         ) {
@@ -563,7 +573,10 @@ fn clean_test_dir_for_accept(
         let file_name = file_name.to_string_lossy();
         let entry_path = entry.path();
 
-        if file_name == input_filename || file_name == "config.toml" {
+        if file_name == input_filename
+            || file_name == "config.toml"
+            || entry_path.extension().is_some_and(|ext| ext == "param")
+        {
             continue;
         }
 
