@@ -38,19 +38,19 @@ find tickTackToe : matrix indexed by [STEPS0, LENGTH, LENGTH] of FIELD_STATUS
 such that 
 
 $ initial state
-forall i,j : LENGTH . 
+forAll i,j : LENGTH . 
   tickTackToe[0,i,j] = EMPTY,
 
 
 $ either nothing changes
-(forall step : STEPS1 .
+(forAll step : STEPS1 .
    ( sum row, col : LENGTH . tickTackToe[step-1,row,col] ) 
   =
    ( sum row, col : LENGTH . tickTackToe[step,row,col] )
 )
 \/
 $ or there is just one change
-( forall step : STEPS1 .
+( forAll step : STEPS1 .
    ( sum row, col : LENGTH . tickTackToe[step-1,row,col] ) 
      - ((step % 2) + 1 ) 
  =
@@ -60,7 +60,7 @@ $ or there is just one change
 
 
 $ there must be as many black as white in each even step
-forall step : STEPS0 . 
+forAll step : STEPS0 . 
     (step % 2 = 0) ->
         ( (sum row, col : LENGTH . (tickTackToe[step,row,col] = BLACK))
            = 
@@ -70,7 +70,7 @@ forall step : STEPS0 .
 
 
 $ if a field is empty, it may be occupied in the next step
-forall step :  STEPS1 .
+forAll step :  STEPS1 .
    ( exists row, col : LENGTH . 
         $ there is an empty field that
         (tickTackToe[step-1,row,col] = EMPTY ) 
@@ -79,7 +79,7 @@ forall step :  STEPS1 .
         (tickTackToe[step,row,col] = (step % 2)+1 ) $ black has even moves, white has odd moves
       /\ 
         $ and no other field changes
-        forall i,j : LENGTH . 
+        forAll i,j : LENGTH . 
              ((i != row) /\ (j!=col)) ->
                  (tickTackToe[step,i,j] = tickTackToe[step-1,i,j])
    ),
@@ -88,8 +88,8 @@ forall step :  STEPS1 .
 
 $ if a player already took the field, then it belongs
 $ to the player forever
-forall step : STEPS1 . 
-   forall row, col : LENGTH .
+forAll step : STEPS1 . 
+   forAll row, col : LENGTH .
        (tickTackToe[step-1,row,col] != EMPTY ) ->
           (tickTackToe[step,row,col] = tickTackToe[step-1,row,col]),
 
@@ -97,18 +97,18 @@ forall step : STEPS1 .
 $ goal state: WINNER wins
 $ three in a row
 ( exists row : LENGTH . 
-   forall col : LENGTH . 
+   forAll col : LENGTH . 
       (tickTackToe[steps, row,col] = WINNER)
 )
 \/
 $ three in a column
 (exists col : LENGTH . 
-   forall row : LENGTH . 
+   forAll row : LENGTH . 
       (tickTackToe[steps, row,col] = WINNER)
 )
 \/
 $ three in the main diagonal
-(forall i : LENGTH . 
+(forAll i : LENGTH . 
    tickTackToe[steps,i,i] = WINNER
 )
 \/
@@ -121,13 +121,13 @@ $ three in the other diagonal
 
 $ and LOOSER has not won
 $ no three in a row
-( forall row : LENGTH . 
+( forAll row : LENGTH . 
    exists col : LENGTH . 
       (tickTackToe[steps, row,col] != LOOSER)
 )
 \/
 $ no three in a column
-(forall col : LENGTH . 
+(forAll col : LENGTH . 
    exists row : LENGTH . 
       (tickTackToe[steps, row,col] != LOOSER)
 )

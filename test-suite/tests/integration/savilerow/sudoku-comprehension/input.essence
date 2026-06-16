@@ -11,18 +11,18 @@ find      field: matrix indexed by [RANGE, RANGE] of RANGE
 
 such that
   $ all rows have to be different
-  forall row : RANGE .
+  forAll row : RANGE .
        allDiff(field[row,..]),
 
   $ all columns have to be different
-  forall col : RANGE .
+  forAll col : RANGE .
       allDiff(field[..,col]),	 
 
   $ all subsize x subsize blocks have to be different
-  forall i,j : int(0..subsize-1) .
+  forAll i,j : int(0..subsize-1) .
       allDiff([ field[k,l]  | k : int(i*subsize .. (i+1)*subsize-1), l : int(j*subsize..(j+1)*subsize-1)]),
 
   $ we have to set some initial values
-  forall row,col : RANGE . 
+  forAll row,col : RANGE . 
        (values[row,col] > 0) ->
                (field[row,col] = values[row,col]-1)

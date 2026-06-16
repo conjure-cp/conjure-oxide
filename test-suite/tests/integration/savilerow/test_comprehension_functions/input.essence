@@ -18,8 +18,8 @@ find Roster :  matrix indexed by [DAY,NURSE] of SHIFT
 such that
 
 $ we need enough nurses to match the demand
-forall d : DAY . 
-    forall s : SHIFT . 
+forAll d : DAY . 
+    forAll s : SHIFT . 
         (sum n : NURSE . 
 	Roster[d,n]=s) >= Demand[d,s],
 
@@ -38,13 +38,13 @@ and([  sum([ Roster[d,n] = s | n : NURSE ])<n_nurses/2  | d : DAY, s : SHIFT ]),
 
 $ if a nurse works overnight, the next day she either gets the day off 
 $ or another night shift
-forall n : NURSE . 
-   forall d : DAY . 
+forAll n : NURSE . 
+   forAll d : DAY . 
    (Roster[d,n] = overnight) -> 
        ((Roster[(d+1)%7,n] = overnight) \/ (Roster[(d+1)%7,n] = dayoff)),
 
 
 $ the number of night shifts has to be less than the number of morning shifts
-forall n : NURSE . 
+forAll n : NURSE . 
    ( sum d : DAY . Roster[d,n] = overnight) <= 
    ( sum d : DAY . Roster[d,n] = morning)  

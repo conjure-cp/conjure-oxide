@@ -15,29 +15,29 @@ $find quasiGroupColumns : matrix indexed by [nDomain, nDomain] of nDomain
 such that 
      
      $ assign the "reflected" quasigroup to qGColumns to access its columns
-   $  forall row,col : nDomain .
+   $  forAll row,col : nDomain .
      $    quasiGroupColumns[col,row] = quasiGroup[row,col],
 
      $ All rows have to be different
-     forall row : nDomain . 
+     forAll row : nDomain . 
           alldifferent(quasiGroup[row,..]),
 
      $ all values in the diagonals
-     forall i : nDomain . 
+     forAll i : nDomain . 
           (quasiGroup[i,i] = i), 
 
      $ All columns have to be different	       
-     forall col : nDomain . 
+     forAll col : nDomain . 
           alldifferent(quasiGroup[..,col]),
 
 
      $ this strange constraint
      $ corresponds to:
      $ quasiGroup[i, quasiGroup[j,i]] = quasiGroup[quasiGroup[j,i], j]	
-     forall i : nDomain .
-          forall j : nDomain .	
+     forAll i : nDomain .
+          forAll j : nDomain .	
               quasiGroup[i, quasiGroup[j,i]] = quasiGroup[quasiGroup[j,i],j],
 
      $ some implied? constraints		
-     forall i : nDomain .
+     forAll i : nDomain .
            quasiGroup[i,n-1] + 2 >= i

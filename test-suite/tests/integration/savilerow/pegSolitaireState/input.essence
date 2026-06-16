@@ -121,7 +121,7 @@ such that
 $ ----------------------------------------------------------------
 $ initial state: all fields are occupied but the one in the centre
 
-forall i : FIELDS .
+forAll i : FIELDS .
     (i != startField) ->
         (bState[0,i] = true),
  
@@ -144,7 +144,7 @@ $ 10:6->18  20: 10->12   30: 13->11   40: 17->15   50: 22->24    60: 25->27    7
 $ ----------------------------------------------------------------
 $ goal state : only one field is occupied
 
-forall step : STEPS . 
+forAll step : STEPS . 
    noFields-step-1 = (sum i : FIELDS . bState[step,i]),  $= noFields-step-1, $30,   $1, 
 
 
@@ -163,18 +163,18 @@ $ ),
 $ ----------------------------------------------------------------
 $ legal transitions
 
-forall step : int(0..noSteps-1) .
-      forall f : FIELDS .
+forAll step : int(0..noSteps-1) .
+      forAll f : FIELDS .
 
       (bState[step, f] = bState[step+1,f]) <->
 
-      (forall f1 : FIELDS .
+      (forAll f1 : FIELDS .
          $ (f != f1) ->
 
           ( (moves[step] != transitionNumber[f,f1]) /\
             (moves[step] != transitionNumber[f1,f]) /\
 
-            forall f2 : FIELDS .
+            forAll f2 : FIELDS .
       
            $ (f1 != f2) ->
        
@@ -194,8 +194,8 @@ forall step : int(0..noSteps-1) .
 
 
 
-forall step : int(0..noSteps-1) .
-    forall f : FIELDS .
+forAll step : int(0..noSteps-1) .
+    forAll f : FIELDS .
     
         $ 0 -> 1
         (bState[step,f] < bState[step+1,f]) <->
@@ -205,8 +205,8 @@ forall step : int(0..noSteps-1) .
             (moves[step] = transitionNumber[f1,f]),   
 
 
-forall step : int(0..noSteps-1) .
-    forall f : FIELDS .
+forAll step : int(0..noSteps-1) .
+    forAll f : FIELDS .
     
         $ 1 peg -> 0 pegs
         (bState[step,f] > bState[step+1,f]) <->

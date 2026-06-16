@@ -14,35 +14,35 @@ find qgDiagonal : matrix indexed by [nDomain] of nDomain
 
 such that 
      $ accessor for diagonal
-     forall i : nDomain .
+     forAll i : nDomain .
          qgDiagonal[i] = quasiGroup[i,i],
 
      $ All rows have to be different
-     forall row : nDomain . 
+     forAll row : nDomain . 
           alldifferent(quasiGroup[row,..]),
 
      $ All columns have to be different	       
-     forall col : nDomain . 
+     forAll col : nDomain . 
           alldifferent(quasiGroup[..,col]),
 
      $ (j*i)*(i*j) = i
-     forall i : nDomain .
-          forall j : nDomain .	
+     forAll i : nDomain .
+          forAll j : nDomain .	
 	        quasiGroup[quasiGroup[j,i],quasiGroup[i,j]] = i,
 
      $ Implied (from Colton,Miguel 01)
      $ All-diff diagonal
      alldifferent(qgDiagonal),
      $ anti-Abelian
-     forall i : nDomain .
-       forall j : nDomain .
+     forAll i : nDomain .
+       forAll j : nDomain .
          (i != j) ->
          (quasiGroup[i,j] != quasiGroup[j,i]),
      $ if (i*i)=j then (j*j) = i
-     forall i : nDomain .
-       forall j : nDomain .
+     forAll i : nDomain .
+       forAll j : nDomain .
          (quasiGroup[i,i]=j) -> (quasiGroup[j,j]=i),
 
      $ Symmetry-breaking constraints	
-     forall i : nDomain .
+     forAll i : nDomain .
            quasiGroup[i,n-1] + 2 >= i

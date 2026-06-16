@@ -50,14 +50,14 @@ alldifferent(blackHole),
 
 
 $ allowed pairs
-$forall step : STEPS1 . 
+$forAll step : STEPS1 . 
 $  exists suit : SUITS . 
 $     ( (blackHole[step] = (blackHole[step-1]%13)-1 + 13*suit) \/ 
 $       (blackHole[step] = (blackHole[step-1]%13)+1 + 13*suit)
 $     ),
 
 
-forall step : STEPS1 . 
+forAll step : STEPS1 . 
    table([blackHole[step-1],blackHole[step]], 
      [  [0,1], [0,14], [0,27], [0,40], [0,-1], [0,12], [0,25], [0,38], 
         [1,2], [1,15], [1,28], [1,41], [1,0], [1,13], [1,26], [1,39], 
@@ -116,27 +116,27 @@ forall step : STEPS1 .
 
 
 $ precedence constraint
-   forall card : int(0..50) . 
+   forAll card : int(0..50) . 
        (card % 3 != 2) ->
           (cardSequence[initialStacks[card]] < cardSequence[initialStacks[card+1]]),
 
 
 $ channelling constraint
-forall step : STEPS . 
-  forall card : CARDS . 
+forAll step : STEPS . 
+  forAll card : CARDS . 
      (blackHole[step] = card) <-> (cardSequence[card] = step),
 
 
 
 $ height constraint 
-$forall stack : int(0..16) . 
-$   forall card : int(0..2) . 
+$forAll stack : int(0..16) . 
+$   forAll card : int(0..2) . 
 $       height[initialStacks[stack*3+card]] = (card+1)%4,
    
 
 $ Barbara's constraint or what I interpreted from it
 $ if we have the choice between 2 cards of the same rank, pick the one with higher height
-$forall card1,card2 : CARDS_NO_ACE .
+$forAll card1,card2 : CARDS_NO_ACE .
     $ 2 cards of the same rank but different suits 
 $    ((card1 % 13 = card2 % 13) /\ (card1 != card2)) -> 
        $ the card that is on top of a pile should be picked first 
@@ -149,7 +149,7 @@ $ conditional symmetry breaking
 
 $ if two cards of the same rank are on the bottom of a stack then take the smaller one
 $ CASE A of Barbara's model
-forall stack1, stack2 : int(0..16) . 
+forAll stack1, stack2 : int(0..16) . 
       ( (stack1 < stack2) /\  $ the 3rd cards have the same rank
         (initialStacks[stack1*3+2] % 13 = initialStacks[stack2*3+2] % 13)
       ) -> 
@@ -163,7 +163,7 @@ forall stack1, stack2 : int(0..16) .
 
 $ if two cards of the same rank are on top of a stack
 $ CASE B of Barbara's model
-forall stack1, stack2 : int(0..16) . 
+forAll stack1, stack2 : int(0..16) . 
       ( (stack1 < stack2) /\  $ the 1st cards have the same rank
         (initialStacks[stack1*3] % 13 = initialStacks[stack2*3] % 13)
       ) -> 
@@ -177,7 +177,7 @@ forall stack1, stack2 : int(0..16) .
 
 $ 2 cards are in the middle 
 $ CASE C of Barbara's model
-forall stack1, stack2 : int(0..16) . 
+forAll stack1, stack2 : int(0..16) . 
     ( (stack1 < stack2)  /\  $ different stacks and cards in the midle are of the same rank
             (initialStacks[stack1*3+1] % 13 = initialStacks[stack2*3+1] % 13) 
     ) -> 
@@ -191,7 +191,7 @@ forall stack1, stack2 : int(0..16) .
 
 $ if two cards have the same rank and one is on top and the other the last of a stack take the top one first
 $ CASE D in Barbara's model
-forall stack1, stack2 : int(0..16) . 
+forAll stack1, stack2 : int(0..16) . 
     ( (stack1 != stack2)  /\  $ different stacks and cards on top of stack1 and bottom of stack2 are of the same rank
             (initialStacks[stack1*3] % 13 = initialStacks[stack2*3+2] % 13) 
     ) -> 
@@ -201,7 +201,7 @@ forall stack1, stack2 : int(0..16) .
 $ ADDs more SEARCH for instance 106
 $ one card on top, the other in the middle
 $ CASE E in barbara's model
-forall stack1, stack2 : int(0..16) . 
+forAll stack1, stack2 : int(0..16) . 
     ( (stack1 != stack2)  /\  $ different stacks and cards on top of stack1 and middle of stack2 are of the same rank
             (initialStacks[stack1*3] % 13 = initialStacks[stack2*3+1] % 13) 
     ) -> 
@@ -215,7 +215,7 @@ forall stack1, stack2 : int(0..16) .
 
 $ one card in middle, other on bottom
 $ CASE F in barbara's model
-forall stack1, stack2 : int(0..16) . 
+forAll stack1, stack2 : int(0..16) . 
     ( (stack1 != stack2)  /\ 
             (initialStacks[stack1*3+1] % 13 = initialStacks[stack2*3+2] % 13) 
     ) -> 

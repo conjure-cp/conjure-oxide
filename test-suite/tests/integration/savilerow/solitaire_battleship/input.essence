@@ -65,11 +65,11 @@ such that
 
     $ simple calculation of cells occupied by types
 
-forall i : int(0..LARGEST) .  (zero_to_n[i] = i),
+forAll i : int(0..LARGEST) .  (zero_to_n[i] = i),
 
 
 $ what's wrong with this line? 
-     forall i : int(1..LARGEST) . 
+     forAll i : int(1..LARGEST) . 
         (num_occupied_by_types[i] = i*num_types[i]),
 
 
@@ -81,38 +81,38 @@ $ what's wrong with this line?
 
 
     $ amount of occupied sqares in each row
-    forall row : ROW_RANGE .
+    forAll row : ROW_RANGE .
         (sum  col: COL_RANGE .
             sij[row,col]) = row_tallies[row], 
 
     $ amount of occupied sqares in each column
-    forall col : COL_RANGE .
+    forAll col : COL_RANGE .
        (sum row : ROW_RANGE .
             sij[row,col]) = column_tallies[col],
 
     $ if we have a water hint, then the square is empty	    
-    forall col: COL_RANGE .
-      forall row : ROW_RANGE .
+    forAll col: COL_RANGE .
+      forAll row : ROW_RANGE .
        (hint[row,col] = 0) ->
           (sij[row,col] = 0),
 
     $ definition of sij and linkage to agrid 
 
-    forall row: ROW_RANGE_PLUS .  
+    forAll row: ROW_RANGE_PLUS .  
         (sij[row,0] = 0) /\ (sij[row,width+1] = 0), 
 
-    forall col: COL_RANGE_PLUS .  
+    forAll col: COL_RANGE_PLUS .  
         (sij[0,col] = 0) /\ (sij[height+1,col] = 0),
  
-    forall col : COL_RANGE .
-	forall row : ROW_RANGE . 
+    forAll col : COL_RANGE .
+	forAll row : ROW_RANGE . 
 	   (sij[row,col] = (agrid[row,col] != 0)),
 
 
     $ all squares diagonally adjacent to any occupied square are empty
 
-    forall col : COL_RANGE .
-	forall row : ROW_RANGE . 
+    forAll col : COL_RANGE .
+	forAll row : ROW_RANGE . 
 	   (sij[row,col] = 1) ->
                ((sij[row-1,col-1] = 0) /\
 		(sij[row-1,col+1] = 0) /\
@@ -124,18 +124,18 @@ $ what's wrong with this line?
  
     $ linkage of rijk to sij
     forAll col : COL_RANGE .
-	forall row : ROW_RANGE .  
+	forAll row : ROW_RANGE .  
            ((rijk[row,col,1] = 1) <-> (sij[row,col] = 1 /\ sij[row,col+1]=1)), 
     
-    forall col : COL_RANGE .
+    forAll col : COL_RANGE .
 	forAll row : ROW_RANGE . 
-	    forall k : int(2..LARGEST-1) .
+	    forAll k : int(2..LARGEST-1) .
                  (((col+k) <= width) -> 
 		   	((rijk[row,col,k] = 1) <-> ((rijk[row,col,k-1] =1) /\ sij[row,col+k]=1))),
 		   	
-    forall col : COL_RANGE .
+    forAll col : COL_RANGE .
 	forAll row : ROW_RANGE . 
-	    forall k : int(2..LARGEST-1) . 
+	    forAll k : int(2..LARGEST-1) . 
                  ((col + k > width) -> (rijk[row,col,k] = 0)),
 
 
@@ -145,55 +145,55 @@ $ what's wrong with this line?
             ((lijk[row,col,1] = 1) <-> (sij[row,col] = 1 /\ sij[row,col-1]=1))),
     
     
-    forall col : COL_RANGE .
-	forall row : ROW_RANGE . 
-        forall k : int(2..LARGEST-1) .
+    forAll col : COL_RANGE .
+	forAll row : ROW_RANGE . 
+        forAll k : int(2..LARGEST-1) .
          (((col-k) > 0) -> 
 		   	((lijk[row,col,k] = 1) <-> ((lijk[row,col,k-1] =1) /\ sij[row,col-k]=1))),
     
-    forall col : COL_RANGE .
-	forall row : ROW_RANGE . 
-        forall k : int(2..LARGEST-1) .
+    forAll col : COL_RANGE .
+	forAll row : ROW_RANGE . 
+        forAll k : int(2..LARGEST-1) .
                  ((col-k <= 0) -> (lijk[row,col,k] = 0)),
 
     $ linkage of dijk to sij
-    forall col : COL_RANGE .
-	forall row : ROW_RANGE .  (
+    forAll col : COL_RANGE .
+	forAll row : ROW_RANGE .  (
             ((dijk[row,col,1] = 1) <-> (sij[row,col] = 1 /\ sij[row+1,col]=1))),
     
-    forall col : COL_RANGE .
-	forall row : ROW_RANGE .  
-         forall k : int(2..LARGEST-1) .  
+    forAll col : COL_RANGE .
+	forAll row : ROW_RANGE .  
+         forAll k : int(2..LARGEST-1) .  
 		(((row+k) <= height) -> 
 		   	((dijk[row,col,k] = 1) <-> ((dijk[row,col,k-1] =1) /\ sij[row+k,col]=1))),
 
-    forall col : COL_RANGE .
-	forall row : ROW_RANGE .  (
-         (forall k : int(2..LARGEST-1) .  (
+    forAll col : COL_RANGE .
+	forAll row : ROW_RANGE .  (
+         (forAll k : int(2..LARGEST-1) .  (
                  ((row+k > height) -> (dijk[row,col,k] = 0)) ))),
                  
     $ linkage of uijk to sij
     
-    forall col : COL_RANGE .
-	forall row : ROW_RANGE .  
+    forAll col : COL_RANGE .
+	forAll row : ROW_RANGE .  
             ((uijk[row,col,1] = 1) <-> (sij[row,col] = 1 /\ sij[row-1,col]=1)),
             
-    forall col : COL_RANGE .
-	forall row : ROW_RANGE .  
-	     forall k : int(2..LARGEST-1) .
+    forAll col : COL_RANGE .
+	forAll row : ROW_RANGE .  
+	     forAll k : int(2..LARGEST-1) .
 		(((row-k) > 0 ) -> 
 		   	((uijk[row,col,k] = 1) <-> ((uijk[row,col,k-1] =1) /\ sij[row-k,col]=1))),
 
-    forall col : COL_RANGE .
-	forall row : ROW_RANGE .  (
-	     (forall k : int(2..LARGEST-1) .  (
+    forAll col : COL_RANGE .
+	forAll row : ROW_RANGE .  (
+	     (forAll k : int(2..LARGEST-1) .  (
                  ((row - k <= 0) -> (uijk[row,col,k] = 0)) ))),
 
 
     $ linkage of u/d/r/l to agrid
 
-     forall col : COL_RANGE . 
-	forall row : ROW_RANGE .  
+     forAll col : COL_RANGE . 
+	forAll row : ROW_RANGE .  
 	    (sij[row,col] = 1) ->
 		(agrid[row,col] = 1 +  (sum i : int(1..LARGEST-1) . rijk[row,col,i] ) + 
 					(sum j : int(1..LARGEST-1) . lijk[row,col,j] ) + 
@@ -205,26 +205,26 @@ $ reminder:
 $ hint status: 0:water,  1:circle, 2:middle, 3:top,
 $                4:bottom, 5:right,  6:left, 7:no hint
 
-     forall row : ROW_RANGE .
-       forall col : COL_RANGE .
+     forAll row : ROW_RANGE .
+       forAll col : COL_RANGE .
          (hint[row,col] = 0) ->          $hint 0:water
  	    agrid[row,col] = 0,
 
-    forall row : ROW_RANGE .
-      forall col: COL_RANGE .
+    forAll row : ROW_RANGE .
+      forAll col: COL_RANGE .
          (hint[row,col] = 1) ->          $hint 1:circle
 	    agrid[row,col] = 1,
 
-     forall row : ROW_RANGE .
-       forall col: COL_RANGE .
+     forAll row : ROW_RANGE .
+       forAll col: COL_RANGE .
          (hint[row,col] = 2) ->          $hint 2:middle
 	    (agrid[row,col] >= 3 /\
                ( (sij[row-1,col]=0 /\ sij[row+1,col]=0 /\ sij[row,col-1]=1 /\ sij[row,col+1]=1 ) 
                  \/
                  (sij[row-1,col]=1 /\ sij[row+1,col]=1 /\ sij[row,col-1]=0 /\ sij[row,col+1]=0 ) )),
 
-     forall row : ROW_RANGE .
-       forall col: COL_RANGE .
+     forAll row : ROW_RANGE .
+       forAll col: COL_RANGE .
          (hint[row,col] = 3) ->          $hint 3:top
 	    (agrid[row,col] >= 2 
  /\
@@ -232,21 +232,21 @@ $                4:bottom, 5:right,  6:left, 7:no hint
 		 sij[row+1,col]=1 /\ sij[row-1,col]=0
 ),
 
-     forall row : ROW_RANGE .
-       forall col: COL_RANGE .
+     forAll row : ROW_RANGE .
+       forAll col: COL_RANGE .
          (hint[row,col] = 4) ->          $hint 4:bottom
 	    (agrid[row,col] >= 2 /\
 		 sij[row-1,col] = 1 /\ sij[row+1,col]=0 /\ sij[row,col+1]=0 /\ sij[row,col-1]=0),
         
 
-     forall row : ROW_RANGE .
-       forall col: COL_RANGE .
+     forAll row : ROW_RANGE .
+       forAll col: COL_RANGE .
          (hint[row,col] = 5) ->          $hint 5:right
 	    (agrid[row,col] >= 2 /\
 		 sij[row,col-1] = 1 /\ sij[row,col+1]=0 /\ sij[row-1,col]=0 /\ sij[row+1,col]=0),
 
-     forall row : ROW_RANGE .
-       forall col: COL_RANGE .
+     forAll row : ROW_RANGE .
+       forAll col: COL_RANGE .
          (hint[row,col] = 6) ->          $hint 6:left
 	    (agrid[row,col] >= 2 /\
 		 sij[row,col+1] = 1 /\ sij[row,col-1]=0 /\ sij[row-1,col]=0 /\ sij[row+1,col]=0),

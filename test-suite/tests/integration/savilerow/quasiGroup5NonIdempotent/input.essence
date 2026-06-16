@@ -15,23 +15,23 @@ find quasiGroup : matrix indexed by [nDomain, nDomain] of nDomain
 such that 
      
      $ All rows have to be different
-     forall row : nDomain . 
+     forAll row : nDomain . 
           alldifferent(quasiGroup[row,..]),
 
      $ All columns have to be different	       
-     forall col : nDomain . 
+     forAll col : nDomain . 
           alldifferent(quasiGroup[..,col]),
 
      $ ((i*j)*j)*j = a
-     forall i : nDomain .
-          forall j : nDomain .	
+     forAll i : nDomain .
+          forAll j : nDomain .	
 	        quasiGroup[quasiGroup[quasiGroup[i,j],j],j] = i,
 
      $ Implied (from Colton,Miguel 01)
-     forall i : nDomain .
-       forall j : nDomain .
+     forAll i : nDomain .
+       forAll j : nDomain .
          (quasiGroup[i,j]=i) <-> (quasiGroup[j,i]=i),
 
      $ Symmetry-breaking constraints	
-     forall i : nDomain .
+     forAll i : nDomain .
            quasiGroup[i,n-1] + 2 >= i

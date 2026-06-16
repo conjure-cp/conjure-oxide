@@ -12,11 +12,11 @@ find       game : matrix indexed by [ WEEKS, PERIODS ] of GAMES
 
 such that  
            $ All teams play once a week
-           forall w : WEEKS .
+           forAll w : WEEKS .
              alldifferent(flatten(schedule[w,..,..])),
    
            $ Every team plays at most twice in the same period
-           forall p : PERIODS .
+           forAll p : PERIODS .
              atmost(flatten(schedule[..,p,..]), [2,2,2,2], [1, 2, 3, 4]),
 
            $ Distinct games via alldiff on game array
@@ -24,21 +24,21 @@ such that
 
            $ Channelling between schedule and game
            $ (assumes home/away symmetry broken)
-           forall w : WEEKS .
-             forall p : PERIODS .
+           forAll w : WEEKS .
+             forAll p : PERIODS .
                table([schedule[w,p,1], schedule[w,p,2], game[w,p]],
                      values),
 
            $ Symmetry breaking: home < away
-           forall w : WEEKS .
-             forall p : PERIODS .
+           forAll w : WEEKS .
+             forAll p : PERIODS .
                schedule[w,p,1] < schedule[w,p,2],
 
            $ Symmetry breaking: weeks
-           forall w : int(1..n-2) .
+           forAll w : int(1..n-2) .
              flatten(schedule[w+1,..,..]) >=lex flatten(schedule[w,..,..]),
 
            $ Symmetry breaking: periods
-           forall p : int(1..n/2-1) .
+           forAll p : int(1..n/2-1) .
              flatten(schedule[..,p+1,..]) >=lex flatten(schedule[..,p,..])
              

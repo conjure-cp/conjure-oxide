@@ -14,22 +14,22 @@ find quasiGroup : matrix indexed by [nDomain, nDomain] of nDomain
 such that 
      
      $ All rows have to be different
-     forall row : nDomain . 
+     forAll row : nDomain . 
           alldifferent(quasiGroup[row,..]),
 
      $ All columns have to be different	       
-     forall col : nDomain . 
+     forAll col : nDomain . 
           alldifferent(quasiGroup[..,col]),
 
 
-     forall i : nDomain .
-          forall j : nDomain .	
+     forAll i : nDomain .
+          forAll j : nDomain .	
 	        quasiGroup[i, quasiGroup[i,j]] = quasiGroup[quasiGroup[i,j],j],
 
      $ Implied constraint: Idempotency
-     forall i : nDomain . 
+     forAll i : nDomain . 
           (quasiGroup[i,i] = i), 
 
      $ Symmetry-breaking constraints	
-     forall i : nDomain .
+     forAll i : nDomain .
            quasiGroup[i,n-1] + 2 >= i
