@@ -279,8 +279,7 @@ fn setup_integration_tests(
             .configured_solvers()
             .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?
             .into_iter()
-            .collect::<HashSet<_>>();
-        seen.into_iter().collect::<Vec<_>>()
+            .collect::<Vec<_>>();
     };
 
     for parser in parsers.iter().copied() {
