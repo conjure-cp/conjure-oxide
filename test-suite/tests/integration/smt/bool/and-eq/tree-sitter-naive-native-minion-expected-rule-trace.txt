@@ -1,0 +1,56 @@
+Model before rewriting:
+
+find x: bool
+find y: bool
+find z: bool
+
+such that
+
+(and([x,y;int(1..)]) = and([y,z;int(1..)]))
+
+--
+
+(and([x,y;int(1..)]) = and([y,z;int(1..)])), 
+   ~~> flatten_eq ([("Minion", 4200)])
+(__0 = __1)
+new variables:
+  find __0: bool
+  find __1: bool
+new constraints:
+  __0 =aux and([x,y;int(1..)])
+  __1 =aux and([y,z;int(1..)])
+
+--
+
+(__0 = __1), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(__1, __0)
+
+--
+
+__0 =aux and([x,y;int(1..)]), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([x,y;int(1..)]), __0)
+
+--
+
+__1 =aux and([y,z;int(1..)]), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(and([y,z;int(1..)]), __1)
+
+--
+
+Final model:
+
+find x: bool
+find y: bool
+find z: bool
+find __0: bool
+find __1: bool
+
+such that
+
+Reify(__1, __0),
+Reify(and([x,y;int(1..)]), __0),
+Reify(and([y,z;int(1..)]), __1)
+
