@@ -128,6 +128,8 @@ fn integration_test(
     })
     .map_err(|err| std::io::Error::other(format!("{run_label}: {err}")))?;
 
+    assert_no_redundant_expected_files(Path::new(path), &allowed_expected_files, None)?;
+
     if accept_mode.records_expected_time() {
         let observed_expected_time = round_expected_time(started_at.elapsed());
         let config_path = Path::new(path).join("config.toml");
