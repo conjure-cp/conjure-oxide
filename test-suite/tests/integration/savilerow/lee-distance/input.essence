@@ -1,0 +1,31 @@
+$ Lee distance
+$
+$ Find if there are 'm' lists of length 'n' whose distance under
+$ the Lee metric is at least 'lim'.
+$
+$ The lee distance is defined pointwise on arrays, and is defined
+$ on two integers x and y as min(|x-y|, 4-|x-y|)
+
+language ESSENCE' 1.0
+
+given n : int
+given m : int
+given lim : int
+
+find S : matrix indexed by [int(1..m), int(1..n)] of int(1..4)
+
+such that 
+
+forall i : int(1..m).
+  forall j : int(i+1..m). (
+    makeTable((sum k : int(1..n). min(|S[i,k]-S[j,k]|, 4 - |S[i,k]-S[j,k]|)) >= lim)
+    ),
+
+$ symmetry breaking
+
+forall i : int(1..m-1).
+  S[i,..] <=lex S[i+1,..],
+  
+forall i : int(1..n-1).
+  S[..,i] <=lex S[..,i+1]
+  

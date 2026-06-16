@@ -1,0 +1,29 @@
+language ESSENCE' 1.0
+
+given v: int(1..)
+given b: int(1..)
+given r: int(1..)
+where r <= b
+letting rv be r * v
+letting rvmodb be rv % b
+letting floorrv be rv / b
+letting ceilrv be rv / b + toInt(rv % b != 0)
+letting num be ceilrv * ceilrv * rvmodb + floorrv * floorrv * (b - rvmodb) - rv
+letting denom be v * (v - 1)
+letting lb_lambda be num / denom + toInt(num % denom != 0)
+
+find opd: matrix indexed by [int(1..v), int(1..b)] of bool
+
+find lambda: int(lb_lambda..b)
+minimising lambda
+
+such that
+    and([sum([ opd[q4, q6] * opd[q5, q6] | q6 : int(1..b)]) <= lambda
+             | q4 : int(1..v), q5 : int(1..v), q5 > q4]),
+    
+    $ Symmetry breaking
+    and([opd[q1, ..] <=lex opd[q1 + 1, ..] | q1 : int(1..v - 1)]),
+    and([opd[.., q1] <=lex opd[.., q1+1] | q1 : int(1..b - 1)]),
+    
+    $ row sum
+    and([r = sum([ opd[q2, q3] | q3 : int(1..b)]) | q2 : int(1..v)])
