@@ -12,7 +12,8 @@ use std::error::Error;
 use std::fs;
 use std::fs::File;
 use std::path::Path;
-use std::time::Instant;
+use std::process::{Command, Stdio};
+use std::time::{Duration, Instant};
 use tracing_subscriber::{Layer, filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt};
 
 use std::sync::Arc;
@@ -62,6 +63,63 @@ impl RunTimings {
     fn add(&mut self, other: Self) {
         self.translation_time_s += other.translation_time_s;
         self.solve_time_s += other.solve_time_s;
+    }
+}
+
+fn run_integration_test_with_timeout<F>(test_name: &str, run_test: F) -> Result<(), Box<dyn Error>>
+where
+    F: FnOnce() -> Result<(), Box<dyn Error>>,
+{
+    let Some(timeout) = test_case_timeout()? else {
+        return run_test();
+    };
+
+    if std::env::var_os("CONJURE_OXIDE_TEST_TIMEOUT_CHILD").is_some() {
+        return run_test();
+    }
+
+    let mut child = Command::new(std::env::current_exe()?)
+        .arg(test_name)
+        .arg("--exact")
+        .arg("--nocapture")
+        .env("CONJURE_OXIDE_TEST_TIMEOUT_CHILD", "1")
+        .stdin(Stdio::null())
+        .spawn()?;
+    let started_at = Instant::now();
+
+    loop {
+        if let Some(status) = child.try_wait()? {
+            if status.success() {
+                return Ok(());
+            }
+
+            return Err(format!("timed child test {test_name} failed with {status}").into());
+        }
+
+        if started_at.elapsed() >= timeout {
+            child.kill()?;
+            let _ = child.wait();
+            return Err(format!(
+                "test {test_name} exceeded TEST_CASE_TIMEOUT={}s",
+                timeout.as_secs()
+            )
+            .into());
+        }
+
+        std::thread::sleep(Duration::from_millis(100));
+    }
+}
+
+fn test_case_timeout() -> Result<Option<Duration>, Box<dyn Error>> {
+    match std::env::var("TEST_CASE_TIMEOUT") {
+        Ok(value) => {
+            let seconds = value.parse::<u64>().map_err(|err| {
+                format!("invalid TEST_CASE_TIMEOUT value '{value}', expected seconds: {err}")
+            })?;
+            Ok(Some(Duration::from_secs(seconds)))
+        }
+        Err(std::env::VarError::NotPresent) => Ok(None),
+        Err(err) => Err(Box::new(err)),
     }
 }
 
