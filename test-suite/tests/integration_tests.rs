@@ -223,7 +223,7 @@ fn integration_test_inner_with_status(
 
     let config = file_config;
 
-    let validate_with_conjure = config.validate_with_conjure;
+    let skip_conjure_validation = config.should_skip_conjure_validation();
     let minion_discrete_threshold = config.minion_discrete_threshold;
     let number_of_solutions = config.number_of_solutions.as_solver_limit();
 
@@ -244,7 +244,7 @@ fn integration_test_inner_with_status(
     let model_path = format!("{path}/{essence_base}.{extension}");
     let param_file = param_file_in_test_dir(path);
     let config_path = Path::new(path).join("config.toml");
-    let conjure_solutions = if accept && validate_with_conjure {
+    let conjure_solutions = if accept && !skip_conjure_validation {
         let conjure_run = match get_solutions_from_conjure_with_stats(
             &model_path,
             param_file.as_deref(),
@@ -356,7 +356,7 @@ fn integration_test_inner_with_status(
         }
     }
 
-    if accept && validate_with_conjure {
+    if accept && !skip_conjure_validation {
         if let Some(conjure_timings) = conjure_timings {
             upsert_recorded_run_stats_config(
                 &config_path,

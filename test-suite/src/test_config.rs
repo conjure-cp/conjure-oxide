@@ -63,8 +63,8 @@ where
     })
 }
 
-fn default_true() -> bool {
-    true
+fn default_skip_conjure_validation() -> String {
+    String::new()
 }
 
 fn default_minion_discrete_threshold() -> usize {
@@ -364,8 +364,8 @@ pub struct TestConfig {
     )]
     pub minion_discrete_threshold: usize,
 
-    #[serde(default = "default_true", rename = "validate-with-conjure")]
-    pub validate_with_conjure: bool,
+    #[serde(default = "default_skip_conjure_validation", rename = "skip-conjure-validation")]
+    pub skip_conjure_validation: String,
 
     #[serde(
         default = "default_number_of_solutions",
@@ -424,7 +424,7 @@ impl Default for TestConfig {
                 solvers
             },
             minion_discrete_threshold: default_minion_discrete_threshold(),
-            validate_with_conjure: true,
+            skip_conjure_validation: String::new(),
             number_of_solutions: NumberOfSolutions::All,
             status: None,
             stats: TestStats::default(),
@@ -433,6 +433,11 @@ impl Default for TestConfig {
 }
 
 impl TestConfig {
+    /// Empty `skip-conjure-validation` runs Conjure reference validation during accept.
+    pub fn should_skip_conjure_validation(&self) -> bool {
+        !self.skip_conjure_validation.is_empty()
+    }
+
     pub fn configured_parsers(&self) -> Result<Vec<Parser>, String> {
         parse_values(&self.parser)
     }
