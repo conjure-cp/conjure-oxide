@@ -101,6 +101,33 @@ People *love* thorough bug reports. I'm not even kidding.
 - Run `cargo fmt` in the project directory to automatically format code
 - Use `cargo clippy` to lint the code and identify any common issues
 
+## House Style
+
+These conventions are more specific than the general coding style above.
+
+### Language
+
+- Use British spelling in prose, comments, rustdocs, commit messages, and user-facing text.
+- Keep comments and rustdocs brief. Explain intent or behaviour, not obvious syntax.
+- Use ASCII unless the surrounding file already uses another character set or the text needs it.
+
+### Rust Code
+
+- Document all top-level public functions, structs, enums, and type aliases with brief rustdocs.
+- Document public fields and enum variants when their meaning is not completely obvious.
+
+### Test Runs
+
+- Use `TEST_CASE_TIMEOUT=N` to set a per-test timeout for integration tests.
+- When recording artefacts from a timeout-bounded run, mention the timeout value explicitly.
+
+### Commits
+
+- Never commit code changes and test artefact/config updates in the same commit.
+- Commit code and harness changes first, with a normal semantic commit message.
+- Commit generated or recorded test updates separately.
+- Clearly mark test artefact commits with `[test file updates]` in the commit message.
+
 ## License
 By contributing, you agree that your contributions will be licensed under its Mozilla Public License.
 
