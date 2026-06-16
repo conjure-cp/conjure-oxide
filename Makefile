@@ -27,6 +27,7 @@ check: submodules
 	RUSTFLAGS="-D warnings" cargo check $(EXTRA_CARGO_CHECK_FLAGS) $(CARGO_LOCKED) $(CARGO_FEATURES) --workspace --all-targets
 	cargo clippy $(EXTRA_CARGO_CHECK_FLAGS) $(CARGO_LOCKED) $(CARGO_FEATURES) -- -D warnings -A clippy::unwrap_used -A clippy::expect_used
 	cargo fmt --check
+	./tools/trailing-newlines.sh
 
 .PHONY: check-unused-deps
 ## Check for unused dependencies using `cargo shear`
@@ -89,6 +90,7 @@ fix:
 	cargo fmt --all
 	cargo fix $(CARGO_LOCKED) $(CARGO_FEATURES)
 	cargo clippy -q $(CARGO_LOCKED) $(CARGO_FEATURES) --fix
+	./tools/trailing-newlines.sh --fix
 
 .PHONY: fix-dirty
 ## Tries to auto-fix hygiene issues reported by `make check`. 
@@ -97,6 +99,7 @@ fix-dirty:
 	cargo fmt --all
 	cargo fix $(CARGO_LOCKED) $(CARGO_FEATURES) --allow-dirty --allow-staged
 	cargo clippy -q $(CARGO_LOCKED) $(CARGO_FEATURES) --fix --allow-dirty --allow-staged
+	./tools/trailing-newlines.sh --fix
 
 
 .PHONY: build-container
