@@ -35,7 +35,7 @@ find rings : matrix indexed by [int(1..r),int(1..n)] of bool
 
 minimising sum ring : int(1..r) . 
            sum client : int(1..n) . 
-              rings[ring,client]
+              toInt(rings[ring,client])
 
 such that
 
@@ -47,10 +47,10 @@ such that
                              $ entries in 'demand'
       ((demand[client1,client2] = 1) ->
            exists ring : int(1..r) .
-                 rings[ring,client1] + rings[ring, client2] >= 2) ,
+                 toInt(rings[ring,client1]) + toInt(rings[ring, client2]) >= 2) ,
 
   
    $ capacity of each ring must not be exceeded     
    forAll ring : int(1..r) .
         (sum client : int(1..n) . 
-              rings[ring, client]) <= capacity_nodes[ring] 
+              toInt(rings[ring, client])) <= capacity_nodes[ring] 

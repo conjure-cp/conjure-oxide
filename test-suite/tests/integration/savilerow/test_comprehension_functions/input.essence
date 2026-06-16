@@ -21,7 +21,7 @@ $ we need enough nurses to match the demand
 forAll d : DAY . 
     forAll s : SHIFT . 
         (sum n : NURSE . 
-	Roster[d,n]=s) >= Demand[d,s],
+	toInt(Roster[d,n]=s)) >= Demand[d,s],
 
 $ once week, a nurse may take at least one day off
 and([ or([ Roster[d,n] = dayoff   |  d : DAY ])  |  n : NURSE ]),
@@ -31,10 +31,10 @@ $ once week, a nurse has to take at least one night shift
 and([ or([ Roster[d,n] = overnight   |  d : DAY ])  |  n : NURSE ]), 
 
 $ every nurse should do <=4 morning shifts per week
-and([ sum([ Roster[d,n] = morning   |  d : DAY ])<=4  |  n : NURSE ]), 
+and([ sum([ toInt(Roster[d,n] = morning)   |  d : DAY ])<=4  |  n : NURSE ]), 
 
 $ at each shift, there should be less than half the staff working
-and([  sum([ Roster[d,n] = s | n : NURSE ])<n_nurses/2  | d : DAY, s : SHIFT ]),
+and([  sum([ toInt(Roster[d,n] = s) | n : NURSE ])<n_nurses/2  | d : DAY, s : SHIFT ]),
 
 $ if a nurse works overnight, the next day she either gets the day off 
 $ or another night shift
@@ -46,5 +46,5 @@ forAll n : NURSE .
 
 $ the number of night shifts has to be less than the number of morning shifts
 forAll n : NURSE . 
-   ( sum d : DAY . Roster[d,n] = overnight) <= 
-   ( sum d : DAY . Roster[d,n] = morning)  
+   ( sum d : DAY . toInt(Roster[d,n] = overnight)) <= 
+   ( sum d : DAY . toInt(Roster[d,n] = morning))  

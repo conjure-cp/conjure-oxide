@@ -26,7 +26,7 @@ $ The first constraint: determinant of M = 1 or -1.
 
 sum([
     $  calculate the sign of perm from the number of inversions. 
-    ( (-1) ** sum([ perm[idx1]>perm[idx2] 
+    ( (-1) ** sum([ toInt(perm[idx1]>perm[idx2]) 
                   | idx1 : RANGE, idx2 : RANGE, idx1<idx2 ]) )*   
     product([ M[j, perm[j]] | j : RANGE ])
 | perm : matrix indexed by [RANGE] of RANGE, allDiff(perm)]) = det,
@@ -35,7 +35,7 @@ $ second constraint: square each entry of the matrix. Determinant of square matr
 
 sum([
     $  calculate the sign of perm from the number of inversions. 
-    ( (-1) ** sum([ perm[idx1]>perm[idx2] 
+    ( (-1) ** sum([ toInt(perm[idx1]>perm[idx2]) 
                   | idx1 : RANGE, idx2 : RANGE, idx1<idx2 ]) )*   
     product([ M[j, perm[j]]*M[j, perm[j]] | j : RANGE ])
 | perm : matrix indexed by [RANGE] of RANGE, allDiff(perm)]) = squaredet,

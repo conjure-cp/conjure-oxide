@@ -1,0 +1,30 @@
+Model before rewriting:
+
+find x: int(0..100)
+
+such that
+
+(x = sum([ toInt(and([or([ and([v__0[v__1],(v__1 = 2);int(1..)]) | v__1 : int(1..5) ]),or([ and([v__0[v__1],(v__1 = 3);int(1..)]) | v__1 : int(1..5) ]);int(1..)])) | v__0 : matrix indexed by [int(1..5)] of bool ]))
+
+--
+
+[ toInt(and([or([ and([v__0[v__1],(v__1 = 2);int(1..)]) | v__1 : int(1..5) ]),or([ and([v__0[v__1],(v__1 = 3);int(1..)]) | v__1 : int(1..5) ]);int(1..)])) | v__0 : matrix indexed by [int(1..5)] of bool ], 
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0;int(1..)]
+
+--
+
+(x = sum([1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0;int(1..)])), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(x = 8)
+
+--
+
+Final model:
+
+find x: int(0..100)
+
+such that
+
+(x = 8)
+

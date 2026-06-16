@@ -18,7 +18,7 @@ find lambda: int(lb_lambda..b)
 minimising lambda
 
 such that
-    and([sum([ opd[q4, q6] * opd[q5, q6] | q6 : int(1..b)]) <= lambda
+    and([sum([ toInt(opd[q4, q6]) * toInt(opd[q5, q6]) | q6 : int(1..b)]) <= lambda
              | q4 : int(1..v), q5 : int(1..v), q5 > q4]),
     
     $ Symmetry breaking
@@ -26,4 +26,4 @@ such that
     and([opd[.., q1] <=lex opd[.., q1+1] | q1 : int(1..b - 1)]),
     
     $ row sum
-    and([r = sum([ opd[q2, q3] | q3 : int(1..b)]) | q2 : int(1..v)])
+    and([r = sum([ toInt(opd[q2, q3]) | q3 : int(1..b)]) | q2 : int(1..v)])
