@@ -12,10 +12,12 @@ use std::error::Error;
 use std::fs;
 use std::fs::File;
 use std::path::Path;
-use std::process::{Command, Stdio};
+use std::process::{Child, Command, Stdio};
 use std::time::{Duration, Instant};
 use tracing_subscriber::{Layer, filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt};
 
+#[cfg(unix)]
+use std::os::unix::process::CommandExt;
 use std::sync::Arc;
 use std::sync::RwLock;
 
@@ -82,13 +84,18 @@ where
         return run_test();
     }
 
-    let mut child = Command::new(std::env::current_exe()?)
+    let mut command = Command::new(std::env::current_exe()?);
+    command
         .arg(test_name)
         .arg("--exact")
         .arg("--nocapture")
         .env("CONJURE_OXIDE_TEST_TIMEOUT_CHILD", "1")
-        .stdin(Stdio::null())
-        .spawn()?;
+        .stdin(Stdio::null());
+
+    #[cfg(unix)]
+    command.process_group(0);
+
+    let mut child = command.spawn()?;
     let started_at = Instant::now();
 
     loop {
@@ -101,8 +108,7 @@ where
         }
 
         if started_at.elapsed() >= timeout {
-            child.kill()?;
-            let _ = child.wait();
+            terminate_timed_child(&mut child)?;
             if AcceptMode::from_env().accepts_outputs() {
                 upsert_status_config(
                     &Path::new(test_dir).join("config.toml"),
@@ -118,6 +124,33 @@ where
 
         std::thread::sleep(Duration::from_millis(100));
     }
+}
+
+#[cfg(unix)]
+fn terminate_timed_child(child: &mut Child) -> Result<(), Box<dyn Error>> {
+    let process_group = format!("-{}", child.id());
+    let _ = Command::new("kill")
+        .arg("-TERM")
+        .arg(&process_group)
+        .status();
+
+    std::thread::sleep(Duration::from_millis(500));
+    if child.try_wait()?.is_none() {
+        let _ = Command::new("kill")
+            .arg("-KILL")
+            .arg(&process_group)
+            .status();
+    }
+
+    let _ = child.wait();
+    Ok(())
+}
+
+#[cfg(not(unix))]
+fn terminate_timed_child(child: &mut Child) -> Result<(), Box<dyn Error>> {
+    child.kill()?;
+    let _ = child.wait();
+    Ok(())
 }
 
 fn test_case_timeout() -> Result<Option<Duration>, Box<dyn Error>> {
