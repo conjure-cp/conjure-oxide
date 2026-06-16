@@ -43,7 +43,7 @@ use test_suite::TestConfig;
 use test_suite::golden_files::assert_no_redundant_expected_files;
 use test_suite::test_config::{
     RecordedRunStats, round_expected_time, upsert_expected_time_config,
-    upsert_recorded_run_stats_config, upsert_status_config,
+    upsert_recorded_run_stats_config, upsert_status_config, upsert_tool_status_config,
 };
 
 #[derive(Clone, Copy, Debug)]
@@ -233,18 +233,26 @@ fn integration_test_inner_with_status(
 
     // Conjure output depends only on the input model, so cache it once per test case.
     let model_path = format!("{path}/{essence_base}.{extension}");
+    let config_path = Path::new(path).join("config.toml");
     let conjure_solutions = if accept && validate_with_conjure {
-        let conjure_run = get_solutions_from_conjure_with_stats(
+        let conjure_run = match get_solutions_from_conjure_with_stats(
             &model_path,
             None,
             Default::default(),
             number_of_solutions,
-        )
-        .map_err(|err| {
-            std::io::Error::other(format!(
-                "failed to fetch Conjure reference solutions for {model_path}: {err}"
-            ))
-        })?;
+        ) {
+            Ok(conjure_run) => {
+                upsert_tool_status_config(&config_path, "conjure", "ok")?;
+                conjure_run
+            }
+            Err(err) => {
+                upsert_tool_status_config(&config_path, "conjure", "fail")?;
+                return Err(std::io::Error::other(format!(
+                    "failed to fetch Conjure reference solutions for {model_path}: {err}"
+                ))
+                .into());
+            }
+        };
 
         Some((Arc::new(conjure_run.solutions), conjure_run.timings))
     } else {
@@ -257,71 +265,80 @@ fn integration_test_inner_with_status(
     let mut allowed_expected_files = BTreeSet::new();
     let mut oxide_timings = RunTimings::default();
 
-    for parser in parsers.iter().copied() {
-        for rewriter in rewriters.clone() {
-            for comprehension_expander in comprehension_expanders.clone() {
-                for solver in solvers.clone() {
-                    let case_name = run_case_name(parser, rewriter, comprehension_expander);
-                    let run_case = RunCase {
-                        parser,
-                        rewriter,
-                        comprehension_expander,
-                        solver,
-                        case_name: case_name.as_str(),
-                    };
-                    let file = File::create(format!(
-                        "{path}/{}-{}-generated-rule-trace.txt",
-                        run_case.case_name,
-                        run_case.solver.as_str()
-                    ))?;
-                    let subscriber = Arc::new(
-                        tracing_subscriber::registry().with(
-                            fmt::layer()
-                                .with_writer(file)
-                                .with_level(false)
-                                .without_time()
-                                .with_target(false)
-                                .with_filter(EnvFilter::new("rule_engine_rule_trace=trace"))
-                                .with_filter(FilterFn::new(|meta| {
-                                    meta.target() == "rule_engine_rule_trace"
-                                })),
-                        ),
-                    )
-                        as Arc<dyn tracing::Subscriber + Send + Sync>;
-                    let run_label = run_case_label(path, essence_base, extension, run_case);
-                    let default_rule_trace_enabled = matches!(rewriter, Rewriter::Naive);
-                    set_rule_trace_enabled(true);
-                    set_default_rule_trace_enabled(default_rule_trace_enabled);
-                    set_rule_trace_verbose_enabled(false);
-                    set_rule_trace_aggregates_enabled(false);
-                    let run_timings = tracing::subscriber::with_default(subscriber, || {
-                        integration_test_inner(
-                            path,
-                            essence_base,
-                            extension,
-                            run_case,
-                            minion_discrete_threshold,
-                            number_of_solutions,
-                            conjure_solution_values.clone(),
-                            accept,
+    let oxide_result = (|| -> Result<(), Box<dyn Error>> {
+        for parser in parsers.iter().copied() {
+            for rewriter in rewriters.clone() {
+                for comprehension_expander in comprehension_expanders.clone() {
+                    for solver in solvers.clone() {
+                        let case_name = run_case_name(parser, rewriter, comprehension_expander);
+                        let run_case = RunCase {
+                            parser,
+                            rewriter,
+                            comprehension_expander,
+                            solver,
+                            case_name: case_name.as_str(),
+                        };
+                        let file = File::create(format!(
+                            "{path}/{}-{}-generated-rule-trace.txt",
+                            run_case.case_name,
+                            run_case.solver.as_str()
+                        ))?;
+                        let subscriber = Arc::new(
+                            tracing_subscriber::registry().with(
+                                fmt::layer()
+                                    .with_writer(file)
+                                    .with_level(false)
+                                    .without_time()
+                                    .with_target(false)
+                                    .with_filter(EnvFilter::new("rule_engine_rule_trace=trace"))
+                                    .with_filter(FilterFn::new(|meta| {
+                                        meta.target() == "rule_engine_rule_trace"
+                                    })),
+                            ),
                         )
-                    })
-                    .map_err(|err| std::io::Error::other(format!("{run_label}: {err}")))?;
-                    oxide_timings.add(run_timings);
-                    allowed_expected_files.extend(expected_integration_files_for_case(
-                        run_case.case_name,
-                        solver,
-                    ));
+                            as Arc<dyn tracing::Subscriber + Send + Sync>;
+                        let run_label = run_case_label(path, essence_base, extension, run_case);
+                        let default_rule_trace_enabled = matches!(rewriter, Rewriter::Naive);
+                        set_rule_trace_enabled(true);
+                        set_default_rule_trace_enabled(default_rule_trace_enabled);
+                        set_rule_trace_verbose_enabled(false);
+                        set_rule_trace_aggregates_enabled(false);
+                        let run_timings = tracing::subscriber::with_default(subscriber, || {
+                            integration_test_inner(
+                                path,
+                                essence_base,
+                                extension,
+                                run_case,
+                                minion_discrete_threshold,
+                                number_of_solutions,
+                                conjure_solution_values.clone(),
+                                accept,
+                            )
+                        })
+                        .map_err(|err| std::io::Error::other(format!("{run_label}: {err}")))?;
+                        oxide_timings.add(run_timings);
+                        allowed_expected_files.extend(expected_integration_files_for_case(
+                            run_case.case_name,
+                            solver,
+                        ));
+                    }
                 }
             }
         }
+
+        assert_no_redundant_expected_files(Path::new(path), &allowed_expected_files, None)?;
+        Ok(())
+    })();
+
+    if accept {
+        let oxide_status = if oxide_result.is_ok() { "ok" } else { "fail" };
+        upsert_tool_status_config(&config_path, "oxide", oxide_status)?;
     }
 
-    assert_no_redundant_expected_files(Path::new(path), &allowed_expected_files, None)?;
+    oxide_result?;
 
     if accept_mode.records_expected_time() {
         let observed_expected_time = round_expected_time(started_at.elapsed());
-        let config_path = Path::new(path).join("config.toml");
         if let Some(expected_time) =
             accept_mode.expected_time_to_record(config.expected_time, observed_expected_time)
         {
@@ -331,7 +348,6 @@ fn integration_test_inner_with_status(
 
     if accept && validate_with_conjure {
         if let Some(conjure_timings) = conjure_timings {
-            let config_path = Path::new(path).join("config.toml");
             upsert_recorded_run_stats_config(
                 &config_path,
                 RecordedRunStats {

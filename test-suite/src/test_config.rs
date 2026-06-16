@@ -187,13 +187,51 @@ pub fn upsert_status_config(path: &Path, status: &str) -> io::Result<()> {
     fs::write(path, new_contents)
 }
 
+/// Inserts or updates the latest observed status for one part of an integration test.
+pub fn upsert_tool_status_config(path: &Path, tool: &str, status: &str) -> io::Result<()> {
+    let mut document = if path.exists() {
+        let contents = fs::read_to_string(path)?;
+        if contents.trim().is_empty() {
+            DocumentMut::new()
+        } else {
+            contents
+                .parse::<DocumentMut>()
+                .map_err(|err| io::Error::new(io::ErrorKind::InvalidData, err))?
+        }
+    } else {
+        DocumentMut::new()
+    };
+
+    if !document["stats"].is_table() {
+        document["stats"] = Item::Table(Table::new());
+    }
+    if !document["stats"][tool].is_table() {
+        document["stats"][tool] = Item::Table(Table::new());
+    }
+    document["stats"][tool]["status"] = value(status);
+
+    let mut new_contents = document.to_string();
+    if !new_contents.ends_with('\n') {
+        new_contents.push('\n');
+    }
+
+    fs::write(path, new_contents)
+}
+
+/// Timing measurements recorded from one accepted integration test run.
 #[derive(Clone, Copy, Debug)]
 pub struct RecordedRunStats {
+    /// Time spent translating the model through conjure-oxide, in seconds.
     pub oxide_translation_time: f64,
+    /// Time spent solving through conjure-oxide's configured solver, in seconds.
     pub oxide_solve_time: f64,
+    /// Total Conjure plus Savile Row translation time, in seconds.
     pub conjure_translation_time: f64,
+    /// Time spent by Conjure before Savile Row is invoked, in seconds.
     pub conjure_driver_translation_time: f64,
+    /// Time spent by Savile Row during reference translation, in seconds.
     pub savilerow_translation_time: f64,
+    /// Time spent solving the Conjure plus Savile Row reference model, in seconds.
     pub conjure_solve_time: f64,
 }
 
@@ -212,12 +250,18 @@ pub fn upsert_recorded_run_stats_config(path: &Path, stats: RecordedRunStats) ->
         DocumentMut::new()
     };
 
-    document["stats"] = Item::Table(Table::new());
-    document["stats"]["oxide"] = Item::Table(Table::new());
+    if !document["stats"].is_table() {
+        document["stats"] = Item::Table(Table::new());
+    }
+    if !document["stats"]["oxide"].is_table() {
+        document["stats"]["oxide"] = Item::Table(Table::new());
+    }
     document["stats"]["oxide"]["translation-time"] = value(stats.oxide_translation_time);
     document["stats"]["oxide"]["solve-time"] = value(stats.oxide_solve_time);
 
-    document["stats"]["conjure"] = Item::Table(Table::new());
+    if !document["stats"]["conjure"].is_table() {
+        document["stats"]["conjure"] = Item::Table(Table::new());
+    }
     document["stats"]["conjure"]["translation-time"] = value(stats.conjure_translation_time);
     document["stats"]["conjure"]["conjure-translation-time"] =
         value(stats.conjure_driver_translation_time);
@@ -233,38 +277,53 @@ pub fn upsert_recorded_run_stats_config(path: &Path, stats: RecordedRunStats) ->
     fs::write(path, new_contents)
 }
 
+/// Recorded integration-run metadata grouped by implementation.
 #[derive(Deserialize, Debug, Default)]
 #[serde(default)]
 #[serde(deny_unknown_fields)]
 pub struct TestStats {
+    /// Metadata recorded for conjure-oxide.
     pub oxide: RecordedToolStats,
+    /// Metadata recorded for the Conjure plus Savile Row reference run.
     pub conjure: RecordedToolStats,
 }
 
+/// Recorded status and timings for one implementation in a test config.
 #[derive(Deserialize, Debug, Default)]
 #[serde(default)]
 #[serde(deny_unknown_fields)]
 pub struct RecordedToolStats {
+    /// Latest observed status, such as `ok`, `fail`, or `timeout(N)`.
+    pub status: Option<String>,
+
+    /// Translation time in seconds.
     #[serde(rename = "translation-time")]
     pub translation_time: Option<f64>,
 
+    /// Solver time in seconds.
     #[serde(rename = "solve-time")]
     pub solve_time: Option<f64>,
 
+    /// Conjure-only translation time in seconds, when available.
     #[serde(rename = "conjure-translation-time")]
     pub conjure_translation_time: Option<f64>,
 
+    /// Savile Row translation time in seconds, when available.
     #[serde(rename = "savilerow-translation-time")]
     pub savilerow_translation_time: Option<f64>,
 }
 
+/// Solution search limit requested by an integration test.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum NumberOfSolutions {
+    /// Search for every solution.
     All,
+    /// Stop after the given number of solutions.
     Limit(i32),
 }
 
 impl NumberOfSolutions {
+    /// Converts the config value into the solver API limit, where `0` means all solutions.
     pub fn as_solver_limit(self) -> i32 {
         match self {
             Self::All => 0,
