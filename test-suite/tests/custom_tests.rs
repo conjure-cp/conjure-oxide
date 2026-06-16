@@ -8,6 +8,7 @@ use std::path::PathBuf;
 use std::process::Command;
 use std::time::Instant;
 use test_suite::AcceptMode;
+use test_suite::text_files::write_text_with_trailing_newline;
 use test_suite::TestConfig;
 use test_suite::golden_files::assert_no_redundant_expected_files;
 use test_suite::test_config::{round_expected_time, upsert_expected_time_config};
@@ -93,8 +94,7 @@ fn update_file(
         fs::remove_file(&expected_file_path)?;
     }
     if !actual_output.trim().is_empty() {
-        fs::File::create(&expected_file_path)?;
-        fs::write(&expected_file_path, actual_output.as_bytes())?;
+        write_text_with_trailing_newline(&expected_file_path, &actual_output)?;
     }
     Ok(())
 }

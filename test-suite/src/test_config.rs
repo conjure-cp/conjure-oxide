@@ -11,6 +11,12 @@ use std::str::FromStr;
 use std::time::Duration;
 use toml_edit::{DocumentMut, Item, Table, value};
 
+use crate::text_files::write_text_with_trailing_newline;
+
+fn write_toml_document(path: &Path, document: &DocumentMut) -> io::Result<()> {
+    write_text_with_trailing_newline(path, &document.to_string())
+}
+
 fn parse_values<T>(values: &[String]) -> Result<Vec<T>, String>
 where
     T: FromStr<Err = String>,
@@ -154,12 +160,7 @@ pub fn upsert_expected_time_config(path: &Path, expected_time: u64) -> io::Resul
 
     document["expected-time"] = value(expected_time);
 
-    let mut new_contents = document.to_string();
-    if !new_contents.ends_with('\n') {
-        new_contents.push('\n');
-    }
-
-    fs::write(path, new_contents)
+    write_toml_document(path, &document)
 }
 
 /// Inserts or updates the latest observed integration status in a test `config.toml`.
@@ -179,12 +180,7 @@ pub fn upsert_status_config(path: &Path, status: &str) -> io::Result<()> {
 
     document["status"] = value(status);
 
-    let mut new_contents = document.to_string();
-    if !new_contents.ends_with('\n') {
-        new_contents.push('\n');
-    }
-
-    fs::write(path, new_contents)
+    write_toml_document(path, &document)
 }
 
 /// Inserts or updates the latest observed status for one part of an integration test.
@@ -210,12 +206,7 @@ pub fn upsert_tool_status_config(path: &Path, tool: &str, status: &str) -> io::R
     }
     document["stats"][tool]["status"] = value(status);
 
-    let mut new_contents = document.to_string();
-    if !new_contents.ends_with('\n') {
-        new_contents.push('\n');
-    }
-
-    fs::write(path, new_contents)
+    write_toml_document(path, &document)
 }
 
 /// Timing measurements recorded from one accepted integration test run.
@@ -269,12 +260,7 @@ pub fn upsert_recorded_run_stats_config(path: &Path, stats: RecordedRunStats) ->
         value(stats.savilerow_translation_time);
     document["stats"]["conjure"]["solve-time"] = value(stats.conjure_solve_time);
 
-    let mut new_contents = document.to_string();
-    if !new_contents.ends_with('\n') {
-        new_contents.push('\n');
-    }
-
-    fs::write(path, new_contents)
+    write_toml_document(path, &document)
 }
 
 /// Recorded integration-run metadata grouped by implementation.

@@ -16,8 +16,7 @@ use std::sync::RwLock;
 use test_suite::AcceptMode;
 use test_suite::TestConfig;
 use test_suite::golden_files::assert_no_redundant_expected_files;
-
-use std::io::Write;
+use test_suite::text_files::write_text_with_trailing_newline;
 
 /// Parser function used by roundtrip tests.
 type ParseFn = fn(&str, Arc<RwLock<Context<'static>>>) -> Result<Model, Box<ParseErrorCollection>>;
@@ -275,9 +274,9 @@ fn save_roundtrip_model_json(
     file_type: &str,
 ) -> Result<(), std::io::Error> {
     let serialised = serialize_model(model).map_err(std::io::Error::other)?;
-    fs::write(
-        roundtrip_model_json_path(path, case_name, file_type),
-        serialised,
+    write_text_with_trailing_newline(
+        &roundtrip_model_json_path(path, case_name, file_type),
+        &serialised,
     )?;
     Ok(())
 }
@@ -305,8 +304,7 @@ fn save_essence(
     file_type: &str,
 ) -> Result<(), std::io::Error> {
     let filename = roundtrip_essence_path(path, test_name, file_type);
-    let mut file = fs::File::create(&filename)?;
-    write!(file, "{model}")?;
+    write_text_with_trailing_newline(Path::new(&filename), &format!("{model}"))?;
     Ok(())
 }
 
@@ -318,8 +316,7 @@ fn save_parse_error(
     file_type: &str,
 ) -> Result<(), std::io::Error> {
     let filename = roundtrip_error_path(path, test_name, file_type);
-    let mut file = fs::File::create(&filename)?;
-    write!(file, "{error}")?;
+    write_text_with_trailing_newline(Path::new(&filename), &format!("{error}"))?;
     Ok(())
 }
 
