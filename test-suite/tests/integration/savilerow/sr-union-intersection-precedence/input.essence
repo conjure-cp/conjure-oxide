@@ -1,0 +1,19 @@
+language ESSENCE' 1.0
+
+$ check union and intersection -- intersection evaluated first.
+$ should be {3..5,6}  
+$ left-to right would be {6}
+$ union first would be {6}
+
+find x : int(1..9) intersect int(3..5) union int(2,6) intersect int(1,6)
+
+$ check union and setdifference -- should be same precedence.
+$ should be left-first {2,7,8,9}
+$ if union were higher, {7,8,9}
+$ if setminus were higher, 1,2,6,7,8,9
+find y : int(1..9) - int(3..5) union int(2,6) - int(1,6)
+
+such that
+    forall i : int(3..5) union int(7..9) .( x < y /\ y+i > x )
+    
+    

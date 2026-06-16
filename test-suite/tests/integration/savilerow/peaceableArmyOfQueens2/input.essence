@@ -1,0 +1,104 @@
+$ Peaceable Army of queens
+$
+$ Place 2 equally-sized armies of queens (white and black)
+$ on a chess board without attacking each other
+$ Maximise the size of the armies.
+$
+$ 'occurrence' representation 
+$
+$ This is the model with s_i1j1 = 2  -> s_i2j2 != 1
+$                        s_i1j1 = 1  -> s_i2j2 != 2
+
+$ and which is not as good as the model with (without !=)
+$                        s_i1j1 = 2  -> s_i2j2 = 0 || s_i2j2 = 2
+$                        s_i1j1 = 1  -> s_i2j2 < 2
+
+
+language ESSENCE' 1.0
+
+
+
+$ board width
+given        n : int
+letting      N be domain int(1..n)
+
+
+$ 0: empty field, 1:white queen, 2: black queen
+find        board : matrix indexed by [N,N] of int(0..2)
+find        amountOfQueens : int(1..(n*n)/2)     
+
+
+maximising   amountOfQueens
+
+
+such that
+
+   
+   $ we have the same amount of white as black queens
+   (sum row : N .
+       (sum col : N .
+          (board[row,col] = 1))) = amountOfQueens,
+
+   (sum row : N .
+       (sum col : N . 
+           (board[row,col] = 2))) = amountOfQueens,
+
+
+   $ if we have a white queen at position row and column
+   $ there is no field on the same row/column/diagonal
+   $ that holds a black queen
+   forAll row,col : N . 
+      (board[row, col] = 1) ->
+            (forAll i : N .
+               ((i != row) ->
+                  (board[i,col] != 2))
+               /\
+               ((i!=col) ->
+                  (board[row,i] != 2))
+	       /\ 
+               (((row+i <= n) /\ (col+i <= n)) ->
+                (board[row+i,col+i] != 2)	  
+		)  
+	       /\ 
+               (((row-i > 0) /\ (col-i > 0)) ->
+                (board[row-i,col-i] != 2)	  
+		)  
+	       /\ 
+               (((row+i <= n) /\ (col-i > 0)) ->
+                (board[row+i,col-i] != 2)	  
+		)  
+	       /\ 
+               (((row-i > 0) /\ (col+i <= n)) ->
+                (board[row-i,col+i] != 2)	  
+		)),
+
+   $ if we have a black queen at position row and column
+   $ there is no field on the same row/column/diagonal
+   $ that holds a white queen
+
+   forAll row,col : N . 
+      (board[row, col] = 2) ->
+            (forAll j : N .
+               ((j != row) ->
+                  (board[j,col] !=  1) )
+               /\
+               ((j!=col) ->
+                  (board[row,j] != 1))
+	       /\ 
+               (((row+j <= n) /\ (col+j <= n)) ->
+                         (board[row+j,col+j] != 1))	  
+		  
+	       /\ 
+               (((row-j > 0) /\ (col-j > 0)) ->
+                   (board[row-j,col-j] != 1))	    
+	       /\ 
+               (((row+j <= n) /\ (col-j > 0)) ->
+                   (board[row+j,col-j] != 1) )	   
+		  
+	       /\ 
+               (((row-j > 0) /\ (col+j <= n)) ->
+                     (board[row-j,col+j] != 1)) 	  
+            )  
+
+
+

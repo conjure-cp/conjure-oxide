@@ -1,0 +1,64 @@
+language ESSENCE' 1.0
+
+$ Knight's tour Basic Model
+$
+$ the steps are collected as a sequence of fields,
+$ where the fields on the board are enumerated as 
+$ follows:
+
+$ 0     1     2    ..  n-1
+$ n    n+1   n+2   ..  2n-1
+$ 2n    ..             3n-1 
+$ ..
+$ n*(n-1)   ..       (n*n)-1
+
+
+$ we can compute the value of each field  
+$ as follows: (modulo n) gives the column and 
+$ (div n) returns the row; we get the value with:
+$ column + row * n
+$ The column-values range from (0..n-1) and
+$ the row values range from (0..n-1).
+$
+$ by Andrea Rendl
+$ following the model from Gecode (which quotes Gert Smolka)
+
+
+given n: int
+given startCol,startRow : int(0..n-1)
+given tourLength : int(1..n*n)
+
+letting FIELDS be domain int(0..n*n-1)
+letting KNIGHTS be domain int(0..tourLength-1)
+find tour : matrix indexed by [KNIGHTS] of FIELDS
+
+
+such that
+
+alldifferent(tour),
+
+$ starting point
+tour[0] = startCol + (startRow)*n,
+
+$ legal moves
+forall i : int(0..tourLength-2) .
+       (   (  ( |tour[i]%(n)  - tour[i+1]%(n)| = 1) /\
+              ( |tour[i]/(n)  - tour[i+1]/(n)| = 2) 
+            )
+         \/
+           (  ( |tour[i]%(n)  - tour[i+1]%(n)| = 2) /\
+              ( |tour[i]/(n)  - tour[i+1]/(n)| = 1) 
+           )
+       ) $,
+   
+$ make it a tour
+$    (     (  ( |tour[0]%(n)  - tour[tourLength-1]%(n)| = 1) /\
+$             ( |tour[0]/(n)  - tour[tourLength-1]/(n)| = 2) 
+$           )
+$         \/
+$           (  ( |tour[0]%(n)  - tour[tourLength-1]%(n)| = 2) /\             	 
+$              ( |tour[0]/(n)  - tour[tourLength-1]/(n)| = 1) 
+$           )
+$     )
+ 
+

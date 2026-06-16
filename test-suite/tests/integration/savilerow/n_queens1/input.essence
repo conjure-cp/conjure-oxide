@@ -1,0 +1,43 @@
+$ n-queens problem
+$
+$ Place n queens on a nxn chessboard
+$ without attacking each other
+$
+$ This model introduces a far smaller
+$ amount of auxiliary variables
+$
+language ESSENCE' 1.0
+given      n : int(1..1000)
+letting    AMOUNT_QUEENS be domain int(0..n-1)
+find       q1: matrix indexed by [ AMOUNT_QUEENS ] of AMOUNT_QUEENS
+find       q2: matrix indexed by [ AMOUNT_QUEENS ] of int(-(n-1)..n-1)
+find       q3: matrix indexed by [ AMOUNT_QUEENS ] of int(0..(n-1)*2)
+such that  alldifferent(q1), 
+           alldifferent(q2), 
+           alldifferent(q3),
+           q1[0] = 0,  $ putting first queen on the 0th column 
+           q2[0] = 0,
+           q3[0] = 0,
+
+         $ diagonals
+           forall i : AMOUNT_QUEENS . 
+                (q1[i] >= q2[i] + i)
+                /\
+                (q2[i] >=  q1[i] - i)
+                /\
+                (q3[i] >= q1[i] + i)
+                /\
+                (q1[i] >=  q3[i] - i),
+
+         $ setting bounds of matrix q2  
+           forall i : AMOUNT_QUEENS .
+               (q2[i] <= (n-1) - i) $ upper Bound
+               /\
+               (q2[i] >= -i),    $ lower Bound
+
+         $ setting bounds for matrix q3  
+           forall i : AMOUNT_QUEENS .
+               (q3[i] <= i+(n-1))  $ upper bound
+                /\
+               (q3[i] >= i)        $ lower bound
+

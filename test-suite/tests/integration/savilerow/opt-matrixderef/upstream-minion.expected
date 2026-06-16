@@ -1,0 +1,24 @@
+MINION 3
+**VARIABLES**
+DISCRETE x #
+{1..3}
+DISCRETE ruler_00000 #
+{0..9}
+DISCRETE ruler_00001 #
+{0..9}
+DISCRETE ruler_00002 #
+{0..9}
+DISCRETE aux0 #ruler[(-1 + x)]
+{0..9}
+DISCRETE aux1 #(-1 + x)
+{0..2}
+**SEARCH**
+PRINT[[x],[ruler_00000],[ruler_00001],[ruler_00002],[aux0]]
+MINIMISING aux0
+VARORDER STATIC [x,ruler_00000,ruler_00001,ruler_00002]
+VARORDER AUX [aux0,aux1]
+**CONSTRAINTS**
+watchelement([ruler_00000, ruler_00001, ruler_00002], aux1, aux0)
+sumleq([-1,x],aux1)
+sumgeq([-1,x],aux1)
+**EOF**

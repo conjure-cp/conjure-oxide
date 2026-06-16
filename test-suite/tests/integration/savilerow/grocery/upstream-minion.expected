@@ -1,0 +1,34 @@
+MINION 3
+**VARIABLES**
+DISCRETE item1 #
+{0..711}
+DISCRETE item2 #
+{0..711}
+DISCRETE item3 #
+{0..711}
+DISCRETE item4 #
+{0..711}
+DISCRETE aux0 #(item1 + item2 + item3 + item4)
+{0..2844}
+BOUND aux1 #(item1 * item2)
+{0..505521}
+BOUND aux2 #(aux1 * item3)
+{0..359425431}
+BOUND aux3 #(aux2 * item4)
+{0..255551481441}
+**SEARCH**
+PRINT[[item1],[item2],[item3],[item4]]
+VARORDER STATIC [item1, item2, item3, item4]
+VARORDER AUX [item1,item2,item3,item4,aux0,aux1,aux2,aux3]
+**CONSTRAINTS**
+product(item1, item2, aux1)
+product(aux1, item3, aux2)
+product(aux2, item4, aux3)
+w-literal(aux0,711)
+eq(aux3,711000000)
+ineq(item2, item1, 0)
+ineq(item3, item2, 0)
+ineq(item4, item3, 0)
+sumleq([item1,item2,item3,item4],aux0)
+sumgeq([item1,item2,item3,item4],aux0)
+**EOF**

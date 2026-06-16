@@ -1,0 +1,41 @@
+language ESSENCE' 1.0
+$ Futoshiki puzzle solver, by Andras Salamon
+$ see http://en.wikipedia.org/wiki/Futoshiki
+$ the instance is specified in the parameter file
+
+letting   SIZE   be 5
+letting   VALUES be domain int( 0..SIZE )
+letting   RANGE  be domain int( 1..SIZE )
+
+$ index of last lt entry
+given     lastdx : int( 1..((2*SIZE*(SIZE-1)-1)) )
+
+letting   NUMQD  be domain int( 0..lastdx )
+
+$ the numeric values specified in the puzzle
+given     values : matrix indexed by [RANGE,RANGE] of VALUES
+
+
+$ list of < relations in the problem
+given     lt     : matrix indexed by [NUMQD, int(0..3)] of RANGE
+
+find      field  : matrix indexed by [RANGE, RANGE] of RANGE
+
+such that
+$ all rows have to be different
+    forall row : RANGE .
+	alldifferent(field[row,..]),
+
+$ all columns have to be different
+    forall col : RANGE .
+	alldifferent(field[..,col]),	 
+
+$ all < constraints are satisfied
+    forall i : NUMQD .
+	( field[ lt[i,0], lt[i,1] ] < field[ lt[i,2], lt[i,3] ] ),
+
+$ set initial values
+    forall row,col : RANGE . 
+	( values[row,col] > 0) =>
+	    (field[row,col] = values[row,col] )
+

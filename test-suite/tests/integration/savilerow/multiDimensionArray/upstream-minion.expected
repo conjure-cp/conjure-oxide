@@ -1,0 +1,46 @@
+MINION 3
+
+**VARIABLES**
+
+DISCRETE m[3,3,3,3,3,3,4] {1..10}
+DISCRETE a {-3..5}
+DISCRETE b {0..3}
+DISCRETE c {-1..5}
+DISCRETE d {1..9}
+
+DISCRETE idx {0..10000}
+
+DISCRETE aux1 {0..2}
+DISCRETE aux2 {0..2}
+DISCRETE aux3 {0..2}
+DISCRETE aux4 {0..3}
+
+**CONSTRAINTS**
+
+
+
+
+
+sumleq([a,-1],aux1)
+sumgeq([a,-1],aux1)
+
+sumleq([b,-2],aux2)
+sumgeq([b,-2],aux2)
+
+sumleq([c,-1],aux3)
+sumgeq([c,-1],aux3)
+
+sumleq([d,2],aux4)
+sumgeq([d,2],aux4)
+
+# 1(d+2) + 4(0) + 12(c-1) + 36(b-2) + 108(0)+ 324(2) + 972(a-1)
+
+weightedsumleq([1,4,12,36,108,324,972], [aux4,0,aux3,aux2,0,2,aux1], idx)
+weightedsumgeq([1,4,12,36,108,324,972], [aux4,0,aux3,aux2,0,2,aux1], idx)
+watchelement(m,idx,5)
+
+
+**SEARCH**
+PRINT [m,[a],[b],[c],[d]]
+
+**EOF**

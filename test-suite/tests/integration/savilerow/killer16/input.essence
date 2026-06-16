@@ -1,0 +1,69 @@
+language ESSENCE' 1.0
+$ Killer Sudoku puzzle solver, by Andras Salamon
+$ see http://en.wikipedia.org/wiki/Killer_sudoku
+$ the instance is specified in the parameter file
+
+letting   SIZE   be 16
+
+$ index of last cage entry
+given     lastdx : int( 1..((2*SIZE*(SIZE-1)-1)) )
+
+letting   NUMQD  be domain int( 0..lastdx )
+letting   RANGE  be domain int( 1..SIZE )
+
+$ list of cage constraints in the problem
+given     cage   : matrix indexed by [NUMQD, int(0..10)] of int(0..100)
+
+find      field  : matrix indexed by [RANGE, RANGE] of RANGE
+
+such that
+$ all rows have to be different
+forAll row : RANGE .
+	allDiff(field[row,..]),
+
+$ all columns have to be different
+forAll col : RANGE .
+	allDiff(field[..,col]),
+
+$ all blocks have to be different
+forAll i,j : int(0..3) .
+    allDiff( [ field[row, col] | row : int(i*4+1..(i*4)+4), col : int(j*4+1..(j*4)+4) ] ),
+
+$ all cage constraints are satisfied
+$ Including the 'no duplicates within cage' rule. 
+$ handle each arity separately due to lack of variable length lists
+forAll i : NUMQD .
+    ( ( cage[i,9] != 0 ) /\
+	    ( cage[i,0] = field[ cage[i,1], cage[i,2] ]
+		+ field[ cage[i,3], cage[i,4] ]
+		+ field[ cage[i,5], cage[i,6] ]
+		+ field[ cage[i,7], cage[i,8] ]
+		+ field[ cage[i,9], cage[i,10] ]
+	    ) /\
+	    allDiff([field[ cage[i,1], cage[i,2]], field[ cage[i,3], cage[i,4] ], field[ cage[i,5], cage[i,6] ], field[ cage[i,7], cage[i,8] ], field[ cage[i,9], cage[i,10] ]])
+	) \/
+	( ( cage[i,9] = 0 ) /\ ( cage[i,7] != 0 ) /\
+	    ( cage[i,0] = field[ cage[i,1], cage[i,2] ]
+		+ field[ cage[i,3], cage[i,4] ]
+		+ field[ cage[i,5], cage[i,6] ]
+		+ field[ cage[i,7], cage[i,8] ]
+	    ) /\
+	    allDiff([field[ cage[i,1], cage[i,2]], field[ cage[i,3], cage[i,4] ], field[ cage[i,5], cage[i,6] ], field[ cage[i,7], cage[i,8] ]])
+	) \/
+	( ( cage[i,7] = 0 ) /\ ( cage[i,5] != 0 ) /\
+	    ( cage[i,0] = field[ cage[i,1], cage[i,2] ]
+		+ field[ cage[i,3], cage[i,4] ]
+		+ field[ cage[i,5], cage[i,6] ]
+	    ) /\
+	    allDiff([field[ cage[i,1], cage[i,2] ], field[ cage[i,3], cage[i,4] ], field[ cage[i,5], cage[i,6] ] ])
+	) \/
+	( ( cage[i,5] = 0 ) /\ ( cage[i,3] != 0 ) /\
+	    ( cage[i,0] = field[ cage[i,1], cage[i,2] ]
+		+ field[ cage[i,3], cage[i,4] ]
+	    ) /\
+	    allDiff([field[ cage[i,1], cage[i,2] ], field[ cage[i,3], cage[i,4] ]])
+	) \/
+	( ( cage[i,3] = 0 ) /\
+	    ( cage[i,0] = field[ cage[i,1], cage[i,2] ] )
+	)
+

@@ -1,0 +1,50 @@
+language ESSENCE' 1.0
+
+given n_nurses : int(1..)
+
+letting NURSE be domain int(1..n_nurses)
+letting DAY be domain int(0..6)
+letting SHIFT be domain int(0..3)
+
+$ shift: 0:morning,  1:afternoon, 2:overnight, 3:dayoff
+letting morning be 0
+letting afternoon be 1
+letting overnight be 2
+letting dayoff be 3
+
+given Demand : matrix indexed by [DAY,SHIFT] of int(0..n_nurses)
+find Roster :  matrix indexed by [DAY,NURSE] of SHIFT
+
+such that
+
+$ we need enough nurses to match the demand
+forall d : DAY . 
+    forall s : SHIFT . 
+        (sum n : NURSE . 
+	Roster[d,n]=s) >= Demand[d,s],
+
+$ once week, a nurse may take at least one day off
+and([ or([ Roster[d,n] = dayoff   |  d : DAY ])  |  n : NURSE ]),
+
+
+$ once week, a nurse has to take at least one night shift
+and([ or([ Roster[d,n] = overnight   |  d : DAY ])  |  n : NURSE ]), 
+
+$ every nurse should do <=4 morning shifts per week
+and([ sum([ Roster[d,n] = morning   |  d : DAY ])<=4  |  n : NURSE ]), 
+
+$ at each shift, there should be less than half the staff working
+and([  sum([ Roster[d,n] = s | n : NURSE ])<n_nurses/2  | d : DAY, s : SHIFT ]),
+
+$ if a nurse works overnight, the next day she either gets the day off 
+$ or another night shift
+forall n : NURSE . 
+   forall d : DAY . 
+   (Roster[d,n] = overnight) => 
+       ((Roster[(d+1)%7,n] = overnight) \/ (Roster[(d+1)%7,n] = dayoff)),
+
+
+$ the number of night shifts has to be less than the number of morning shifts
+forall n : NURSE . 
+   ( sum d : DAY . Roster[d,n] = overnight) <= 
+   ( sum d : DAY . Roster[d,n] = morning)  

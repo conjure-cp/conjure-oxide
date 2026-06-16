@@ -1,0 +1,17 @@
+language ESSENCE' 1.0
+
+given nItems: int(1..)
+given capacity: int(1..)
+given weights:
+        matrix indexed by [int(1..nItems)] of int(1..)
+given values:
+        matrix indexed by [int(1..nItems)] of int(1..)
+find packed:
+        matrix indexed by [int(1..nItems)] of bool
+maximising sum i : int(1..nItems)
+               . packed[i] * values[i]
+such that
+    (sum i : int(1..nItems)
+         . packed[i] * weights[i])
+    <=
+    capacity

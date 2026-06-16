@@ -1,0 +1,54 @@
+MINION 3
+**VARIABLES**
+DISCRETE bibd_00000_00000 #
+{0..1}
+DISCRETE bibd_00000_00001 #
+{0..1}
+DISCRETE bibd_00000_00002 #
+{0..1}
+DISCRETE bibd_00001_00000 #
+{0..1}
+DISCRETE bibd_00001_00001 #
+{0..1}
+DISCRETE bibd_00001_00002 #
+{0..1}
+DISCRETE bibd_00002_00000 #
+{0..1}
+DISCRETE bibd_00002_00001 #
+{0..1}
+DISCRETE bibd_00002_00002 #
+{0..1}
+DISCRETE x #
+{-5..5}
+DISCRETE y #
+{-5..5}
+BOOL aux0 #CSE: 2 occurrences of: Element([bibd_00000_00000, bibd_00000_00001, bibd_00000_00002, bibd_00001_00000, bibd_00001_00001, bibd_00001_00002, bibd_00002_00000, bibd_00002_00001, bibd_00002_00002], (-4 + 3*x + y))
+DISCRETE aux1 #CSE: 2 occurrences of: (-1 + x)
+{-6..4}
+DISCRETE aux2 #CSE: 2 occurrences of: (-1 + y)
+{-6..4}
+DISCRETE aux3 #(-4 + 3*x + y)
+{-24..16}
+DISCRETE aux4 #(-4 + 4*aux0)
+{-4..0}
+**SEARCH**
+PRINT[[bibd_00000_00000],[bibd_00000_00001],[bibd_00000_00002],[bibd_00001_00000],[bibd_00001_00001],[bibd_00001_00002],[bibd_00002_00000],[bibd_00002_00001],[bibd_00002_00002],[x],[y]]
+VARORDER STATIC [bibd_00000_00000,bibd_00000_00001,bibd_00000_00002,bibd_00001_00000,bibd_00001_00001,bibd_00001_00002,bibd_00002_00000,bibd_00002_00001,bibd_00002_00002,x,y]
+VARORDER AUX [aux0,aux1,aux2,aux3,aux4]
+**CONSTRAINTS**
+watchelement([bibd_00000_00000, bibd_00000_00001, bibd_00000_00002, bibd_00001_00000, bibd_00001_00001, bibd_00001_00002, bibd_00002_00000, bibd_00002_00001, bibd_00002_00002], aux3, aux0)
+sumgeq([-1,aux0],0)
+ineq(0, aux2, 0)
+ineq(aux1, 2, 0)
+ineq(aux2, 2, 0)
+ineq(0, aux1, 0)
+watchelement([bibd_00000_00000, bibd_00000_00001, bibd_00000_00002, bibd_00001_00000, bibd_00001_00001, bibd_00001_00002, bibd_00002_00000, bibd_00002_00001, bibd_00002_00002], aux4, 1)
+weightedsumleq([1,3,1],[-4,x,y],aux3)
+weightedsumgeq([1,3,1],[-4,x,y],aux3)
+weightedsumleq([1,4],[-4,aux0],aux4)
+weightedsumgeq([1,4],[-4,aux0],aux4)
+sumleq([-1,x],aux1)
+sumgeq([-1,x],aux1)
+sumleq([-1,y],aux2)
+sumgeq([-1,y],aux2)
+**EOF**

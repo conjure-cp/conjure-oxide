@@ -1,0 +1,40 @@
+$  Diet problem in Essence'
+$  Standard Operations Research example.
+$
+$ Compare with the following models:
+$ * MiniZinc: http://www.hakank.org/minizinc/diet1.mzn
+$ * Choco: http://www.hakank.org/choco/Diet.java
+$ * Comet: <a href="/comet/diet.co">diet.co
+$ * ECLiPSE: <a href="/eclipse/diet.ecl">diet.ecl
+$ * Gecode: <a href="/gecode/diet.cpp">diet.cpp
+$ * Gecode/R: <a href="/gecode_r/diet.rb">diet.rb
+$ * JaCoP: <a href="/JaCoP/Diet.java">Diet.java
+$
+$ Model created by Hakan Kjellerstrand, hakank@bonetmail.com
+$ See also Hakan's Essence'/Tailor page: http://www.hakank.org/minion_tailor
+
+language ESSENCE' 1.0
+
+given n : int
+given p : int
+given price      : matrix indexed by [int(1..p)] of int(1..100)
+given tlimits    : matrix indexed by [int(1..p)] of int(1..1000)
+given calories   : matrix indexed by [int(1..n)] of int(1..1000)
+given chocolate : matrix indexed by [int(1..n)] of int(0..100)
+given sugar      : matrix indexed by [int(1..n)] of int(1..100)
+given fat        : matrix indexed by [int(1..n)] of int(1..100)
+
+find x : matrix indexed by [int(1..p)] of int(0..1000)
+find cost : int(0..10000)
+
+minimising cost
+
+such that
+   cost = (sum i : int(1..p) . x[i]*price[i]),
+   (sum i : int(1..n) . x[i]*calories[i])  >=  tlimits[1],
+   (sum i : int(1..n) . x[i]*chocolate[i]) >=  tlimits[2],
+   (sum i : int(1..n) . x[i]*sugar[i])     >=  tlimits[3],
+   (sum i : int(1..n) . x[i]*fat[i])       >=  tlimits[4]
+
+
+

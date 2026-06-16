@@ -1,0 +1,48 @@
+language ESSENCE' 1.0
+
+$ Molnar's problem. Find a matrix M such that the determinant is equal to 1, 
+$ and the determinant of the matrix obtained by squaring every element of M is 
+$ either 1 or -1.  Entries in M are not allowed to be 1 or -1. 
+
+$ The size of the square matrix
+given k : int(1..)
+given dommax :int(1..)
+
+letting RANGE be domain int(0..k-1)
+
+find M : matrix indexed by [RANGE, RANGE] of int(-dommax..-2,0,2..dommax)
+
+find det : int(-1,1)    $ determinant of M.  Allow determinant to be -1 or 1, 
+$  then once solution is obtained if the determinant is -1 then swap any pair of
+$ rows or columns to make determinant 1. 
+
+find squaredet : int(-1,1)  $  determinant of the matrix of squares is either -1 or 1. 
+
+such that
+
+$ straightforward determinant by Leibniz formula.
+
+$ The first constraint: determinant of M = 1 or -1. 
+
+sum([
+    $  calculate the sign of perm from the number of inversions. 
+    ( (-1) ** sum([ perm[idx1]>perm[idx2] 
+                  | idx1 : RANGE, idx2 : RANGE, idx1<idx2 ]) )*   
+    product([ M[j, perm[j]] | j : RANGE ])
+| perm : matrix indexed by [RANGE] of RANGE, allDiff(perm)]) = det,
+
+$ second constraint: square each entry of the matrix. Determinant of square matrix =1 or -1.
+
+sum([
+    $  calculate the sign of perm from the number of inversions. 
+    ( (-1) ** sum([ perm[idx1]>perm[idx2] 
+                  | idx1 : RANGE, idx2 : RANGE, idx1<idx2 ]) )*   
+    product([ M[j, perm[j]]*M[j, perm[j]] | j : RANGE ])
+| perm : matrix indexed by [RANGE] of RANGE, allDiff(perm)]) = squaredet,
+
+$ Break symmetry.
+forAll i : int(0..k-2).  M[i,..] <=lex M[i+1,..],
+forAll i : int(0..k-2).  M[..,i] <=lex M[..,i+1],
+
+true
+

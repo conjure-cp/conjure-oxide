@@ -1,0 +1,23 @@
+MINION 3
+**VARIABLES**
+DISCRETE y #
+{-5..5}
+DISCRETE z_00000 #
+{0..10}
+DISCRETE z_00001 #
+{0..10}
+DISCRETE z_00002 #
+{0..10}
+DISCRETE z_00003 #
+{0..10}
+BOOL q #
+DISCRETE aux0 #CSE: 2 occurrences of: Mapping({2=0, 4=1, 6=2, 8=3}, y)
+{0..4}
+**SEARCH**
+PRINT[[y],[z_00000],[z_00001],[z_00002],[z_00003],[q]]
+VARORDER STATIC [y,z_00000,z_00001,z_00002,z_00003,q]
+VARORDER AUX [aux0]
+**CONSTRAINTS**
+lighttable([y,aux0],{<-5,4>, <-4,4>, <-3,4>, <-2,4>, <-1,4>, <0,4>, <1,4>, <2,0>, <3,4>, <4,1>, <5,4>})
+reify(watched-and({ineq(aux0, 3, 0),watchelement([z_00000, z_00001, z_00002, z_00003], aux0, 1)}), q)
+**EOF**

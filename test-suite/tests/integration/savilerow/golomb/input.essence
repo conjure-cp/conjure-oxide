@@ -1,0 +1,29 @@
+$ Golomb Ruler 
+$
+$ Basic Problem Model using Quaternary constraints
+$ (Smith et al 'Modelling the Golomb Ruler Problem')
+$
+$ by Andrea Rendl
+
+language ESSENCE' 1.0
+
+given ticks : int
+letting TICKS  be domain int(1..ticks)
+
+find ruler : matrix indexed by [TICKS] of int(0..ticks**2)
+
+minimising ruler[ticks]
+
+such that
+
+  $ monotonicity
+  forall i,j : TICKS .
+     ((i< j) /\ (j <= ticks)) =>
+      (ruler[i] < ruler[j]),
+
+  $ distinction 
+  forall i,j,k,l : TICKS .
+       ((i < j) /\ (k < l) /\ (j != l)) => 
+             (ruler[j] - ruler[i] != ruler[l] - ruler[k])
+
+

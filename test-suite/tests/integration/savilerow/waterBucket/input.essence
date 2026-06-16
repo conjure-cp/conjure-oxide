@@ -1,0 +1,105 @@
+language ESSENCE' 1.0
+
+$ CSP lib problem 18
+$ http://www.cs.st-andrews.ac.uk/~ianm/CSPLib/prob/prob018/index.html
+$
+$ Problem description:
+$ You are given an 8 pint bucket of water, and two empty buckets
+$ which can contain 5 and 3 pints respectively. You are required 
+$ to divide the water into two by pouring water between buckets 
+$ (that is, to end up with 4 pints in the 8 pint bucket, and 4 
+$ pints in the 5 pint bucket). What is the minimum number of 
+$ transfers of water between buckets? 
+$
+$ This is a more general problem model, where the 3 buckets can have  
+$ arbitrary sizes. Bucket A is the largest, followed by 
+$ bucket B and bucket C. In the initial state, bucket A is full 
+$ and B and C are empty. In the goal state, bucket A and bucket B
+$ both contain the half amount of liquid that fits into A (and 
+$ C contains 0 or 1 unit, depending on if A's size is an even or
+$ odd number). 
+$
+$ modelled by Andrea Rendl 
+
+given steps : int
+given SIZE_A : int
+given SIZE_B : int
+given SIZE_C : int
+
+letting STEPS be domain int(0..steps)
+letting STEPS1 be domain int(1..steps)
+
+$ our 3 buckets
+find bucketA : matrix indexed by [ STEPS ] of int(0..SIZE_A)
+find bucketB : matrix indexed by [ STEPS ] of int(0..SIZE_B)
+find bucketC : matrix indexed by [ STEPS ] of int(0..SIZE_C)
+
+such that 
+$ sizes of buckets should be decreasing
+SIZE_A > SIZE_B,
+SIZE_B > SIZE_C,
+
+$ initial state
+bucketA[0] = 0,       $ bucket A is empty
+bucketB[0] = SIZE_B,  $ other two buckets are full
+bucketC[0] = SIZE_C,
+
+$ goal state 
+bucketA[steps] = (SIZE_B + SIZE_C)/2,
+bucketB[steps] = (SIZE_B + SIZE_C)/2,
+bucketC[steps] <= 1,
+
+$ we don't throw any water away at any step
+forall step : STEPS .
+   bucketC[step] + bucketB[step] + bucketA[step] = SIZE_B + SIZE_C,
+
+$ legal moves: 
+forall step : STEPS1 . 
+$ pouring from bucketA->bucketB
+  ( ( (bucketA[step-1] > 0) /\ (bucketB[step-1] < SIZE_B)) /\
+ 
+        ( (bucketB[step] = min(SIZE_B,bucketA[step-1]+bucketB[step-1])) /\
+          (bucketA[step] = bucketA[step-1]-bucketB[step]+bucketB[step-1])
+        )
+  )
+
+\/
+$ pouring from bucketA->bucketC
+  ( ( (bucketA[step-1] > 0) /\ (bucketC[step-1] < SIZE_C)) /\
+ 
+        ( (bucketC[step] = min(SIZE_C,bucketA[step-1]+bucketC[step-1])) /\
+          (bucketA[step] = bucketA[step-1]-bucketC[step]+bucketC[step-1])
+        )
+  )
+\/
+$ pouring from bucketB->bucketA
+ (  ((bucketB[step-1] > 0) /\ (bucketA[step-1] < SIZE_A) ) /\
+ 
+        ( (bucketA[step] = min(SIZE_A,bucketA[step-1] + bucketB[step-1]) ) /\
+          (bucketB[step] = bucketB[step-1] - bucketA[step]+bucketA[step-1])
+        )
+ )
+\/
+$ pouring from bucketB->bucketC
+  (  ((bucketB[step-1] > 0) /\ (bucketC[step-1] < SIZE_C))  /\
+ 
+        ( (bucketC[step] = min(SIZE_C,bucketB[step-1]+bucketC[step-1]) ) /\
+          (bucketB[step] = bucketB[step-1] - bucketC[step]+bucketC[step-1])
+        )
+  )
+\/
+$ pouring from bucketC->bucketA
+   (  ( (bucketC[step-1] > 0) /\ (bucketA[step-1] < SIZE_A))  /\
+ 
+        ( (bucketA[step] = min(SIZE_A,bucketA[step-1] + bucketC[step-1]) ) /\
+          (bucketC[step] = bucketC[step-1] - bucketA[step]+bucketA[step-1])
+        )
+   )
+\/
+$ pouring from bucketC->bucketB
+   ( ( (bucketC[step-1] > 0) /\ (bucketB[step-1] < SIZE_B))  /\
+ 
+        ( (bucketB[step] = min(SIZE_B,bucketB[step-1] + bucketC[step-1]) ) /\
+          (bucketC[step] = bucketC[step-1] - bucketB[step] +bucketB[step-1])
+        )
+   )

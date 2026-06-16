@@ -1,0 +1,56 @@
+MINION 3
+# CSETopLevel_number = 0
+# CSETopLevel_eliminated_expressions = 0
+# CSETopLevel_total_size = 0
+# CSE_number = 1
+# CSE_eliminated_expressions = 2
+# CSE_total_size = 7
+**VARIABLES**
+DISCRETE letters_00000 #
+{0..9}
+DISCRETE letters_00001 #
+{0..9}
+DISCRETE letters_00002 #
+{0..9}
+DISCRETE letters_00003 #
+{0..9}
+DISCRETE letters_00004 #
+{0..9}
+DISCRETE letters_00005 #
+{0..9}
+DISCRETE word1Sum #
+{1..1000}
+DISCRETE word2Sum #
+{1..10000}
+DISCRETE word3Sum #
+{1..100000}
+DISCRETE aux0 #CSE: 2 occurrences of: (letters_00000 + letters_00001 + letters_00002 + letters_00003 + letters_00004 + letters_00005)
+{0..54}
+ALIAS word1[3]=[1, 2, 3]
+ALIAS word2[4]=[3, 4, 2, 3]
+ALIAS word3[5]=[2, 5, 5, 6, 1]
+**SEARCH**
+PRINT[[letters_00000],[letters_00001],[letters_00002],[letters_00003],[letters_00004],[letters_00005],[word1Sum],[word2Sum],[word3Sum]]
+VARORDER STATIC [letters_00000,letters_00001,letters_00002,letters_00003,letters_00004,letters_00005,word1Sum,word2Sum,word3Sum]
+VARORDER AUX [aux0]
+**CONSTRAINTS**
+diseq(letters_00000,0)
+ineq(1, letters_00000, 0)
+diseq(letters_00002,0)
+ineq(1, letters_00002, 0)
+diseq(letters_00001,0)
+ineq(1, letters_00001, 0)
+gacalldiff([letters_00000, letters_00001, letters_00002, letters_00003, letters_00004, letters_00005])
+ineq(15, aux0, 0)
+ineq(aux0, 39, 0)
+sumleq([letters_00000,letters_00001,letters_00002,letters_00003,letters_00004,letters_00005],aux0)
+sumgeq([letters_00000,letters_00001,letters_00002,letters_00003,letters_00004,letters_00005],aux0)
+weightedsumleq([100,10,1],[letters_00000,letters_00001,letters_00002],word1Sum)
+weightedsumgeq([100,10,1],[letters_00000,letters_00001,letters_00002],word1Sum)
+weightedsumleq([10,1001,100],[letters_00001,letters_00002,letters_00003],word2Sum)
+weightedsumgeq([10,1001,100],[letters_00001,letters_00002,letters_00003],word2Sum)
+weightedsumleq([1,10000,1100,10],[letters_00000,letters_00001,letters_00004,letters_00005],word3Sum)
+weightedsumgeq([1,10000,1100,10],[letters_00000,letters_00001,letters_00004,letters_00005],word3Sum)
+sumleq([word1Sum,word2Sum],word3Sum)
+sumgeq([word1Sum,word2Sum],word3Sum)
+**EOF**

@@ -1,0 +1,92 @@
+MINION 3
+**VARIABLES**
+DISCRETE colouring_00000 #
+{1..3}
+DISCRETE colouring_00001 #
+{1..3}
+DISCRETE colouring_00002 #
+{1..3}
+DISCRETE colouring_00003 #
+{1..3}
+DISCRETE colouring_00004 #
+{1..3}
+BOOL usedColours_00000 #
+BOOL usedColours_00001 #
+BOOL usedColours_00002 #
+DISCRETE aux0 #(usedColours[0] + usedColours[1] + usedColours[2])
+{0..3}
+BOOL aux1 #(colouring[0]=1)
+BOOL aux2 #(colouring[0]=2)
+BOOL aux3 #(colouring[0]=3)
+BOOL aux4 #(colouring[1]=1)
+BOOL aux5 #(colouring[1]=2)
+BOOL aux6 #(colouring[1]=3)
+BOOL aux7 #(colouring[2]=1)
+BOOL aux8 #(colouring[2]=2)
+BOOL aux9 #(colouring[2]=3)
+BOOL aux10 #(colouring[3]=1)
+BOOL aux11 #(colouring[3]=2)
+BOOL aux12 #(colouring[3]=3)
+BOOL aux13 #(colouring[4]=1)
+BOOL aux14 #(colouring[4]=2)
+BOOL aux15 #(colouring[4]=3)
+**TUPLELIST**
+edges 5 5
+0 1 0 1 0 
+1 0 1 0 1 
+0 1 0 1 1 
+1 0 1 0 0 
+0 1 1 0 0 
+**VARIABLES**
+ALIAS edges[5,5]=[[0, 1, 0, 1, 0], [1, 0, 1, 0, 1], [0, 1, 0, 1, 1], [1, 0, 1, 0, 0], [0, 1, 1, 0, 0]]
+**SEARCH**
+PRINT[[colouring_00000],[colouring_00001],[colouring_00002],[colouring_00003],[colouring_00004],[usedColours_00000],[usedColours_00001],[usedColours_00002],[aux0]]
+MINIMISING aux0
+VARORDER STATIC [colouring_00000,colouring_00001,colouring_00002,colouring_00003,colouring_00004,usedColours_00000,usedColours_00001,usedColours_00002]
+VARORDER AUX [aux0,aux1,aux2,aux3,aux4,aux5,aux6,aux7,aux8,aux9,aux10,aux11,aux12,aux13,aux14,aux15]
+**CONSTRAINTS**
+reify(w-literal(colouring_00000,1), aux1)
+reify(w-literal(colouring_00000,2), aux2)
+reify(w-literal(colouring_00000,3), aux3)
+reify(w-literal(colouring_00001,1), aux4)
+reify(w-literal(colouring_00001,2), aux5)
+reify(w-literal(colouring_00001,3), aux6)
+reify(w-literal(colouring_00002,1), aux7)
+reify(w-literal(colouring_00002,2), aux8)
+reify(w-literal(colouring_00002,3), aux9)
+reify(w-literal(colouring_00003,1), aux10)
+reify(w-literal(colouring_00003,2), aux11)
+reify(w-literal(colouring_00003,3), aux12)
+reify(w-literal(colouring_00004,1), aux13)
+reify(w-literal(colouring_00004,2), aux14)
+reify(w-literal(colouring_00004,3), aux15)
+diseq(colouring_00000,colouring_00001)
+diseq(colouring_00000,colouring_00003)
+diseq(colouring_00001,colouring_00000)
+diseq(colouring_00001,colouring_00002)
+diseq(colouring_00001,colouring_00004)
+diseq(colouring_00002,colouring_00001)
+diseq(colouring_00002,colouring_00003)
+diseq(colouring_00002,colouring_00004)
+diseq(colouring_00003,colouring_00000)
+diseq(colouring_00003,colouring_00002)
+diseq(colouring_00004,colouring_00001)
+diseq(colouring_00004,colouring_00002)
+ineq(aux1, usedColours_00000, 0)
+ineq(aux2, usedColours_00001, 0)
+ineq(aux3, usedColours_00002, 0)
+ineq(aux4, usedColours_00000, 0)
+ineq(aux5, usedColours_00001, 0)
+ineq(aux6, usedColours_00002, 0)
+ineq(aux7, usedColours_00000, 0)
+ineq(aux8, usedColours_00001, 0)
+ineq(aux9, usedColours_00002, 0)
+ineq(aux10, usedColours_00000, 0)
+ineq(aux11, usedColours_00001, 0)
+ineq(aux12, usedColours_00002, 0)
+ineq(aux13, usedColours_00000, 0)
+ineq(aux14, usedColours_00001, 0)
+ineq(aux15, usedColours_00002, 0)
+sumleq([usedColours_00000,usedColours_00001,usedColours_00002],aux0)
+sumgeq([usedColours_00000,usedColours_00001,usedColours_00002],aux0)
+**EOF**

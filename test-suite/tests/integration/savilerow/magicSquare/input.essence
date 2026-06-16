@@ -1,0 +1,60 @@
+$ Magic Square problem 
+$ (CSPlib Problem 19)
+$  http://www.cs.st-andrews.ac.uk/~ianm/CSPLib/prob/prob019/
+$
+$  An order n magic square is a n by n matrix containing the numbers 1 to 
+$  n^2, with each row, column and main diagonal equal the same sum.
+$
+$ modelled by Andrea Rendl
+
+language ESSENCE' 1.0
+
+given n : int
+letting N be domain int(1..n)
+letting theSum be (n*(n*n+1))/2
+
+find magicSquare : matrix indexed by [N,N] of int(1..n*n)
+
+such that 
+
+alldifferent(flatten(magicSquare)),
+
+$ upper bound for the sum
+theSum < (n*n*n - ( sum i : int(1..n-1).  i)),
+
+$ the lower bound for the sum
+theSum > ( sum i : int(1..n).  i), 
+
+$ the sum over all columns
+forall row : N .
+   ( sum col : N .
+       magicSquare[row,col] ) = theSum,
+
+
+$ the sum over all rows
+forall col : N .
+   ( sum row : N .
+       magicSquare[row,col] ) = theSum,
+
+
+$ main diagonal
+(sum i : N . magicSquare[i,i]) = theSum 
+
+
+$ for adding symmetry breaking, remove the 
+$ comments from below.
+$ ,
+
+$ symmetry breaking: the rows
+$forall row : int(1..n-1) .
+$    magicSquare[row,..] <lex magicSquare[row+1,..],
+
+
+$ symmetry breaking: the cols
+$forall col : int(1..n-1) .
+$    magicSquare[..,col] <lex magicSquare[..,col+1]
+
+
+
+
+   

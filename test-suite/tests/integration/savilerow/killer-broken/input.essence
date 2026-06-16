@@ -1,0 +1,60 @@
+language ESSENCE' 1.0
+$ Killer Sudoku puzzle solver, by Andras Salamon
+$ see http://en.wikipedia.org/wiki/Killer_sudoku
+$ the instance is specified in the parameter file
+
+$fail
+$ fails because lastdx not defined.
+
+letting   SIZE   be 9
+letting   NUMQD  be domain int( 0..lastdx )
+letting   RANGE  be domain int( 1..SIZE )
+letting   VALUES be domain int( 0..SIZE )
+$ index of last lt entry
+given     lastdx : int( 1..((2*SIZE*(SIZE-1)-1)) )
+$ list of cage constraints in the problem
+given     cage   : matrix indexed by [NUMQD, int(0..8)] of VALUES
+
+find      field  : matrix indexed by [RANGE, RANGE] of RANGE
+
+such that
+$ all rows have to be different
+    forall row : RANGE .
+	alldifferent(field[row,..]),
+
+$ all columns have to be different
+    forall col : RANGE .
+	alldifferent(field[..,col]),	 
+
+$ all blocks have to be different
+    forall i,j : int(0..2) . 
+	forall col1,col2,row1,row2 : int(1..3) .
+	    ((col1 != col2) /\ (row1 != row2)) => 
+		(field[row1+(i*3), col1+(j*3)] 
+		    != field[row2+(i*3), col2+(j*3)]),
+
+$ all cage constraints are satisfied
+$ handle each arity separately due to lack of variable length lists
+    forall i : NUMQD .
+	( ( cage[i,7] != 0 ) /\
+	    ( cage[i,0] = field[ cage[i,1], cage[i,2] ]
+		+ field[ cage[i,3], cage[i,4] ]
+		+ field[ cage[i,5], cage[i,6] ]
+		+ field[ cage[i,7], cage[i,8] ]
+	    )
+	) \/
+	( ( cage[i,7] = 0 ) /\ ( cage[i,5] != 0 ) /\
+	    ( cage[i,0] = field[ cage[i,1], cage[i,2] ]
+		+ field[ cage[i,3], cage[i,4] ]
+		+ field[ cage[i,5], cage[i,6] ]
+	    )
+	) \/
+	( ( cage[i,5] = 0 ) /\ ( cage[i,3] != 0 ) /\
+	    ( cage[i,0] = field[ cage[i,1], cage[i,2] ]
+		+ field[ cage[i,3], cage[i,4] ]
+	    )
+	) \/
+	( ( cage[i,3] = 0 ) /\
+	    ( cage[i,0] = field[ cage[i,1], cage[i,2] ] )
+	)
+

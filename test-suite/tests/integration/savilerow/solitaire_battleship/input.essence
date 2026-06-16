@@ -1,0 +1,255 @@
+$ Solitaire Battleship $ $ Popular 2-players game reduced to 1 player:
+$ Find the battleship, the 2 cruisers, 3 destroyers
+$ and 4 submarines on an 10x10 grid, given some hints
+$ for their locations.
+$ 
+$ Will generalise to nxm grid, but and size of largest ship, and numbers of each type
+$
+
+
+language ESSENCE' 1.0
+
+given width : int
+given height : int
+
+letting   ROW_RANGE     be domain int(1..height)
+letting   COL_RANGE     be domain int(1..width)
+
+letting ROW_RANGE_PLUS be domain int(0..height+1)
+letting COL_RANGE_PLUS be domain int(0..width+1)
+
+$ LARGEST is max size of ship (e.g. battleship = 4) for now hardwired, not given
+
+
+given LARGEST : int
+letting   SQUARE_STATUS be domain int (0..LARGEST)
+
+$ 0 = unoccupied
+$ i = length of ship 
+$     1 = submarine
+$     2 = destroyer
+$     3 = cruiser
+$     4 = battleship
+
+
+letting   HINT_STATUS  be domain int(0..7)
+
+$ hint status: 0:water,  1:circle, 2:middle, 3:top,
+$                4:bottom, 5:right,  6:left, 7:no hint
+         
+
+$ num types gives number of each type of ship
+$ e.g. [4,3,2,1] = 4 submarine, 3 destroyers, 2 cruisers, 1 battleship
+
+
+
+$ the amount of occupied squares for each column/row
+
+given zero_to_n : matrix indexed by [int(0..LARGEST)] of int(0..LARGEST)
+given num_types: matrix indexed by [int(1..LARGEST)] of int(0..height*width)
+given   column_tallies: matrix indexed by [COL_RANGE] of int(0..height)
+given   row_tallies:    matrix indexed by [ROW_RANGE] of int(0..width)
+given   hint :         matrix indexed by [ROW_RANGE, COL_RANGE] of HINT_STATUS
+
+find    agrid  :         matrix indexed by [ROW_RANGE, COL_RANGE] of SQUARE_STATUS
+
+find    dijk : matrix indexed by [ROW_RANGE, COL_RANGE, int(1..LARGEST-1)] of bool 
+find    lijk : matrix indexed by [ROW_RANGE, COL_RANGE, int(1..LARGEST-1)] of bool 
+find   num_occupied_by_types: matrix indexed by [int(0..LARGEST)] of int(0..height*width)
+find    rijk : matrix indexed by [ROW_RANGE, COL_RANGE, int(1..LARGEST-1)] of bool 
+find    sij  :         matrix indexed by [ROW_RANGE_PLUS, COL_RANGE_PLUS] of bool
+find    uijk : matrix indexed by [ROW_RANGE, COL_RANGE, int(1..LARGEST-1)] of bool 
+
+
+such that
+
+    $ simple calculation of cells occupied by types
+
+forall i : int(0..LARGEST) .  (zero_to_n[i] = i),
+
+
+$ what's wrong with this line? 
+     forall i : int(1..LARGEST) . 
+        (num_occupied_by_types[i] = i*num_types[i]),
+
+
+
+        (num_occupied_by_types[0] = 
+		height*width - (sum i : int(1..LARGEST) . num_occupied_by_types[i])),
+
+    gcc(flatten(agrid),zero_to_n,num_occupied_by_types),
+
+
+    $ amount of occupied sqares in each row
+    forall row : ROW_RANGE .
+        (sum  col: COL_RANGE .
+            sij[row,col]) = row_tallies[row], 
+
+    $ amount of occupied sqares in each column
+    forall col : COL_RANGE .
+       (sum row : ROW_RANGE .
+            sij[row,col]) = column_tallies[col],
+
+    $ if we have a water hint, then the square is empty	    
+    forall col: COL_RANGE .
+      forall row : ROW_RANGE .
+       (hint[row,col] = 0) ->
+          (sij[row,col] = 0),
+
+    $ definition of sij and linkage to agrid 
+
+    forall row: ROW_RANGE_PLUS .  
+        (sij[row,0] = 0) /\ (sij[row,width+1] = 0), 
+
+    forall col: COL_RANGE_PLUS .  
+        (sij[0,col] = 0) /\ (sij[height+1,col] = 0),
+ 
+    forall col : COL_RANGE .
+	forall row : ROW_RANGE . 
+	   (sij[row,col] = (agrid[row,col] != 0)),
+
+
+    $ all squares diagonally adjacent to any occupied square are empty
+
+    forall col : COL_RANGE .
+	forall row : ROW_RANGE . 
+	   (sij[row,col] = 1) ->
+               ((sij[row-1,col-1] = 0) /\
+		(sij[row-1,col+1] = 0) /\
+		(sij[row+1,col-1] = 0) /\
+		(sij[row+1,col+1] = 0) ), 
+
+
+
+ 
+    $ linkage of rijk to sij
+    forAll col : COL_RANGE .
+	forall row : ROW_RANGE .  
+           ((rijk[row,col,1] = 1) <-> (sij[row,col] = 1 /\ sij[row,col+1]=1)), 
+    
+    forall col : COL_RANGE .
+	forAll row : ROW_RANGE . 
+	    forall k : int(2..LARGEST-1) .
+                 (((col+k) <= width) => 
+		   	((rijk[row,col,k] = 1) <-> ((rijk[row,col,k-1] =1) /\ sij[row,col+k]=1))),
+		   	
+    forall col : COL_RANGE .
+	forAll row : ROW_RANGE . 
+	    forall k : int(2..LARGEST-1) . 
+                 ((col + k > width) -> (rijk[row,col,k] = 0)),
+
+
+    $ linkage of lijk to sij
+    forAll col : COL_RANGE .
+	forAll row : ROW_RANGE .  (
+            ((lijk[row,col,1] = 1) <-> (sij[row,col] = 1 /\ sij[row,col-1]=1))),
+    
+    
+    forall col : COL_RANGE .
+	forall row : ROW_RANGE . 
+        forall k : int(2..LARGEST-1) .
+         (((col-k) > 0) => 
+		   	((lijk[row,col,k] = 1) <=> ((lijk[row,col,k-1] =1) /\ sij[row,col-k]=1))),
+    
+    forall col : COL_RANGE .
+	forall row : ROW_RANGE . 
+        forall k : int(2..LARGEST-1) .
+                 ((col-k <= 0) => (lijk[row,col,k] = 0)),
+
+    $ linkage of dijk to sij
+    forall col : COL_RANGE .
+	forall row : ROW_RANGE .  (
+            ((dijk[row,col,1] = 1) <=> (sij[row,col] = 1 /\ sij[row+1,col]=1))),
+    
+    forall col : COL_RANGE .
+	forall row : ROW_RANGE .  
+         forall k : int(2..LARGEST-1) .  
+		(((row+k) <= height) => 
+		   	((dijk[row,col,k] = 1) <=> ((dijk[row,col,k-1] =1) /\ sij[row+k,col]=1))),
+
+    forall col : COL_RANGE .
+	forall row : ROW_RANGE .  (
+         (forall k : int(2..LARGEST-1) .  (
+                 ((row+k > height) => (dijk[row,col,k] = 0)) ))),
+                 
+    $ linkage of uijk to sij
+    
+    forall col : COL_RANGE .
+	forall row : ROW_RANGE .  
+            ((uijk[row,col,1] = 1) <=> (sij[row,col] = 1 /\ sij[row-1,col]=1)),
+            
+    forall col : COL_RANGE .
+	forall row : ROW_RANGE .  
+	     forall k : int(2..LARGEST-1) .
+		(((row-k) > 0 ) => 
+		   	((uijk[row,col,k] = 1) <=> ((uijk[row,col,k-1] =1) /\ sij[row-k,col]=1))),
+
+    forall col : COL_RANGE .
+	forall row : ROW_RANGE .  (
+	     (forall k : int(2..LARGEST-1) .  (
+                 ((row - k <= 0) => (uijk[row,col,k] = 0)) ))),
+
+
+    $ linkage of u/d/r/l to agrid
+
+     forall col : COL_RANGE . 
+	forall row : ROW_RANGE .  
+	    (sij[row,col] = 1) =>
+		(agrid[row,col] = 1 +  (sum i : int(1..LARGEST-1) . rijk[row,col,i] ) + 
+					(sum j : int(1..LARGEST-1) . lijk[row,col,j] ) + 
+					(sum k : int(1..LARGEST-1) . uijk[row,col,k] ) + 
+					(sum l : int(1..LARGEST-1) . dijk[row,col,l])) ,
+
+       
+$ reminder: 
+$ hint status: 0:water,  1:circle, 2:middle, 3:top,
+$                4:bottom, 5:right,  6:left, 7:no hint
+
+     forall row : ROW_RANGE .
+       forall col : COL_RANGE .
+         (hint[row,col] = 0) =>          $hint 0:water
+ 	    agrid[row,col] = 0,
+
+    forall row : ROW_RANGE .
+      forall col: COL_RANGE .
+         (hint[row,col] = 1) =>          $hint 1:circle
+	    agrid[row,col] = 1,
+
+     forall row : ROW_RANGE .
+       forall col: COL_RANGE .
+         (hint[row,col] = 2) =>          $hint 2:middle
+	    (agrid[row,col] >= 3 /\
+               ( (sij[row-1,col]=0 /\ sij[row+1,col]=0 /\ sij[row,col-1]=1 /\ sij[row,col+1]=1 ) 
+                 \/
+                 (sij[row-1,col]=1 /\ sij[row+1,col]=1 /\ sij[row,col-1]=0 /\ sij[row,col+1]=0 ) )),
+
+     forall row : ROW_RANGE .
+       forall col: COL_RANGE .
+         (hint[row,col] = 3) =>          $hint 3:top
+	    (agrid[row,col] >= 2 
+ /\
+		 sij[row,col+1] = 0 /\ sij[row,col-1]=0 /\ 
+		 sij[row+1,col]=1 /\ sij[row-1,col]=0
+),
+
+     forall row : ROW_RANGE .
+       forall col: COL_RANGE .
+         (hint[row,col] = 4) =>          $hint 4:bottom
+	    (agrid[row,col] >= 2 /\
+		 sij[row-1,col] = 1 /\ sij[row+1,col]=0 /\ sij[row,col+1]=0 /\ sij[row,col-1]=0),
+        
+
+     forall row : ROW_RANGE .
+       forall col: COL_RANGE .
+         (hint[row,col] = 5) =>          $hint 5:right
+	    (agrid[row,col] >= 2 /\
+		 sij[row,col-1] = 1 /\ sij[row,col+1]=0 /\ sij[row-1,col]=0 /\ sij[row+1,col]=0),
+
+     forall row : ROW_RANGE .
+       forall col: COL_RANGE .
+         (hint[row,col] = 6) =>          $hint 6:left
+	    (agrid[row,col] >= 2 /\
+		 sij[row,col+1] = 1 /\ sij[row,col-1]=0 /\ sij[row-1,col]=0 /\ sij[row+1,col]=0),
+
+
+true

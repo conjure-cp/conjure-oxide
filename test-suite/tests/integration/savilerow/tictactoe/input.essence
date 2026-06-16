@@ -1,0 +1,144 @@
+$ The Game Tic Tac Toe
+$
+$   o| o| x 
+$  -------- 
+$    | x|
+$  --------
+$   x| o| 
+$
+$ Two player game where each player consecutevly
+$ marks a space with a circle o  or and x.
+$
+$ The black player starts and we want black to win.
+$
+$ modelled by Andrea Rendl
+
+language ESSENCE' 1.0
+
+$ in how many steps do we want to win the game
+given steps : int
+
+letting EMPTY be 2
+letting WHITE be 1
+letting BLACK be 0
+
+given WINNER : int(0..1) $ black or white
+letting LOOSER be (WINNER + 1) % 2 $ the opposite of WINNER
+
+letting STEPS0 be domain int(0..steps)
+letting STEPS1 be domain int(1..steps)
+letting LENGTH be domain int(1..3)
+$ either empty, white or black
+letting FIELD_STATUS be domain int(0..2)
+
+
+find tickTackToe : matrix indexed by [STEPS0, LENGTH, LENGTH] of FIELD_STATUS
+
+
+such that 
+
+$ initial state
+forall i,j : LENGTH . 
+  tickTackToe[0,i,j] = EMPTY,
+
+
+$ either nothing changes
+(forall step : STEPS1 .
+   ( sum row, col : LENGTH . tickTackToe[step-1,row,col] ) 
+  =
+   ( sum row, col : LENGTH . tickTackToe[step,row,col] )
+)
+\/
+$ or there is just one change
+( forall step : STEPS1 .
+   ( sum row, col : LENGTH . tickTackToe[step-1,row,col] ) 
+     - ((step % 2) + 1 ) 
+ =
+   ( sum row, col : LENGTH . tickTackToe[step,row,col] )
+),
+
+
+
+$ there must be as many black as white in each even step
+forall step : STEPS0 . 
+    (step % 2 = 0) =>
+        ( (sum row, col : LENGTH . (tickTackToe[step,row,col] = BLACK))
+           = 
+          (sum row, col : LENGTH . (tickTackToe[step,row,col] = WHITE))  
+               ),
+
+
+
+$ if a field is empty, it may be occupied in the next step
+forall step :  STEPS1 .
+   ( exists row, col : LENGTH . 
+        $ there is an empty field that
+        (tickTackToe[step-1,row,col] = EMPTY ) 
+      /\
+        $ the player whose turn it is occupies
+        (tickTackToe[step,row,col] = (step % 2)+1 ) $ black has even moves, white has odd moves
+      /\ 
+        $ and no other field changes
+        forall i,j : LENGTH . 
+             ((i != row) /\ (j!=col)) =>
+                 (tickTackToe[step,i,j] = tickTackToe[step-1,i,j])
+   ),
+         
+                                                                           
+
+$ if a player already took the field, then it belongs
+$ to the player forever
+forall step : STEPS1 . 
+   forall row, col : LENGTH .
+       (tickTackToe[step-1,row,col] != EMPTY ) =>
+          (tickTackToe[step,row,col] = tickTackToe[step-1,row,col]),
+
+ 
+$ goal state: WINNER wins
+$ three in a row
+( exists row : LENGTH . 
+   forall col : LENGTH . 
+      (tickTackToe[steps, row,col] = WINNER)
+)
+\/
+$ three in a column
+(exists col : LENGTH . 
+   forall row : LENGTH . 
+      (tickTackToe[steps, row,col] = WINNER)
+)
+\/
+$ three in the main diagonal
+(forall i : LENGTH . 
+   tickTackToe[steps,i,i] = WINNER
+)
+\/
+$ three in the other diagonal
+( (tickTackToe[steps,1,3] = WINNER) /\ 
+  (tickTackToe[steps,2,2] = WINNER) /\ 
+ (tickTackToe[steps,3,1] = WINNER)
+),
+
+
+$ and LOOSER has not won
+$ no three in a row
+( forall row : LENGTH . 
+   exists col : LENGTH . 
+      (tickTackToe[steps, row,col] != LOOSER)
+)
+\/
+$ no three in a column
+(forall col : LENGTH . 
+   exists row : LENGTH . 
+      (tickTackToe[steps, row,col] != LOOSER)
+)
+\/
+$ three in the main diagonal
+(exists i : LENGTH . 
+   tickTackToe[steps,i,i] != LOOSER
+)
+\/
+$ three in the other diagonal
+( (tickTackToe[steps,1,3] != LOOSER) \/ 
+  (tickTackToe[steps,2,2] != LOOSER) \/ 
+ (tickTackToe[steps,3,1] != LOOSER)
+)

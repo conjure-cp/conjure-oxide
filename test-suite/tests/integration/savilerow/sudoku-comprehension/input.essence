@@ -1,0 +1,30 @@
+language ESSENCE' 1.0
+given size :int     $ size of the square
+
+given subsize :int   $ size of the subsquares
+
+letting   RANGE be domain int(0..size-1)
+
+given     values : matrix indexed by [RANGE,RANGE] of int(0..size)
+
+find      field: matrix indexed by [RANGE, RANGE] of RANGE
+
+such that
+  $ all rows have to be different
+  forall row : RANGE .
+       allDiff(field[row,..]),
+
+  $ all columns have to be different
+  forall col : RANGE .
+      allDiff(field[..,col]),	 
+
+  $ all subsize x subsize blocks have to be different
+  forall i,j : int(0..subsize-1) .
+      allDiff([ field[k,l]  | k : int(i*subsize .. (i+1)*subsize-1), l : int(j*subsize..(j+1)*subsize-1)]),
+
+  $ we have to set some initial values
+  forall row,col : RANGE . 
+       (values[row,col] > 0) =>
+               (field[row,col] = values[row,col]-1)
+
+

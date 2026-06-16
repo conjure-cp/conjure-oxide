@@ -1,0 +1,59 @@
+$ The SONET problem
+$
+$ The SONET problem is a network design problem: set up a network between
+$ n nodes, where only certain nodes require a connection.
+$ Nodes are connected by putting them on a ring, where all nodes
+$ on a ring can communicate. Putting a node on a ring requires a so-called
+$ ADM, and each ring has a capacity of nodes, i.e. ADMs. There is a certain 
+$ amount of rings, r, that is available. The objective is to set up a network
+$ by using a minimal amount of ADMs.
+$
+$ This version adds symmetry breaking and removes capacities per ring,
+$ replacing that with one capacity parameter 'r' applied to all rings. 
+$ This follows the paper by Smith (Section 3):
+$ Smith, B.M.: Symmetry and search in a network design problem. In: Bartak, R., Milano,
+$ M. (eds.) CPAIOR. Lecture Notes in Computer Science, vol. 3524, pp. 336–350. Springer
+$ (2005)
+
+language ESSENCE' 1.0
+
+given m : int(1..)  $ upper bound for number of rings
+given n : int(1..)  $ number of nodes
+given r : int(1..)  $ maximum number of nodes per ring. 
+
+$ we have double entries here because of the symmetric structure!
+given demand : matrix indexed by [int(1..n),int(1..n)] of int(0..1)
+
+where forAll i : int(1..n) . forAll j : int(1..n) . ((i>=j) -> (demand[i,j]=0))
+
+find rings : matrix indexed by [int(1..m),int(1..n)] of bool
+
+
+minimising sum ring : int(1..m) . 
+           sum client : int(1..n) . 
+              rings[ring,client]
+
+such that
+
+
+   $ if there is a demand between 2 nodes, then there has to exist 
+   $ a ring, on which they are both installed
+
+   forAll client1,client2 : int(1..n) .
+      ((client1 < client2) -> 
+      ((demand[client1,client2] = 1) ->
+           exists ring : int(1..m) .
+                 rings[ring,client1] + rings[ring, client2] >= 2) ),
+
+  
+   $ capacity of each ring must not be exceeded     
+   forAll ring : int(1..m) .
+        (sum client : int(1..n) . 
+              rings[ring, client]) <= r,
+
+   $ sym breaking for rings of equal capacity.
+   true -> 
+   (forAll ring1 : int(1..m-1) .
+       rings[ring1,..] <=lex rings[ring1+1,..]
+   )
+

@@ -1,0 +1,42 @@
+MINION 3
+# CSETopLevel_number = 0
+# CSETopLevel_eliminated_expressions = 0
+# CSETopLevel_total_size = 0
+# CSE_active_number = 0
+# CSE_active_eliminated_expressions = 0
+# CSE_active_total_size = 0
+**VARIABLES**
+DISCRETE x_00001 #
+{1..5}
+**CONSTRAINTS**
+w-inintervalset(x_00001, [1,1,3,5])
+**VARIABLES**
+DISCRETE x_00002 #
+{1..5}
+DISCRETE x_00003 #
+{1..5}
+DISCRETE x_00004 #
+{1..5}
+DISCRETE x_00005 #
+{1..5}
+DISCRETE aux0 #ElementOne([2, 1, 3, 4, 5], x_00001)
+{2..5}
+DISCRETE aux1 #ElementOne([2, 1, 3, 4, 5], x_00002)
+{1..5}
+DISCRETE aux2 #ElementOne([2, 1, 3, 4, 5], x_00003)
+{1..5}
+DISCRETE aux3 #ElementOne([2, 1, 3, 4, 5], x_00004)
+{1..5}
+DISCRETE aux4 #ElementOne([2, 1, 3, 4, 5], x_00005)
+{1..5}
+**SEARCH**
+PRINT[[x_00001],[x_00002],[x_00003],[x_00004],[x_00005]]
+VARORDER STATIC [x_00001, x_00002, x_00003, x_00004, x_00005]
+**CONSTRAINTS**
+watchelement_one([2, 1, 3, 4, 5], x_00001, aux0)
+watchelement_one([2, 1, 3, 4, 5], x_00002, aux1)
+watchelement_one([2, 1, 3, 4, 5], x_00003, aux2)
+watchelement_one([2, 1, 3, 4, 5], x_00004, aux3)
+watchelement_one([2, 1, 3, 4, 5], x_00005, aux4)
+lexless([x_00001, x_00002, x_00003, x_00004, x_00005],[aux0, aux1, aux2, aux3, aux4])
+**EOF**

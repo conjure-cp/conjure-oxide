@@ -1,0 +1,75 @@
+MINION 3
+# CSETopLevel_number = 0
+# CSETopLevel_eliminated_expressions = 0
+# CSETopLevel_total_size = 0
+# CSE_active_number = 3
+# CSE_active_eliminated_expressions = 6
+# CSE_active_total_size = 9
+**VARIABLES**
+DISCRETE setSize #
+{2..5}
+DISCRETE setValues_00000 #
+{1..4}
+DISCRETE setValues_00001 #
+{2..5}
+DISCRETE setValues_00002 #
+{0..5}
+DISCRETE setValues_00003 #
+{0..5}
+DISCRETE setValues_00004 #
+{0..5}
+DISCRETE setWeight #
+{3..15}
+BOOL aux0 #Active-CSE: 2 occurrences of this expression or equivalent: (4<=setSize)
+BOOL aux1 #Active-CSE: 2 occurrences of this expression or equivalent: (5<=setSize)
+BOOL aux2 #Active-CSE: 2 occurrences of this expression or equivalent: (3<=setSize)
+DISCRETE aux3 #SafeElement([0, 1, 2, 3, 4, 5], setValues_00002)
+{0..5}
+DISCRETE aux4 #(aux2 * aux3)
+{0..5}
+DISCRETE aux5 #SafeElement([0, 1, 2, 3, 4, 5], setValues_00003)
+{0..5}
+DISCRETE aux6 #(aux0 * aux5)
+{0..5}
+DISCRETE aux7 #SafeElement([0, 1, 2, 3, 4, 5], setValues_00004)
+{0..5}
+DISCRETE aux8 #(aux1 * aux7)
+{0..5}
+DISCRETE aux9 #SafeElement([0, 1, 2, 3, 4], setValues_00000)
+{0..4}
+DISCRETE aux10 #SafeElement([0, 1, 2, 3, 4, 5], setValues_00001)
+{0..5}
+BOOL aux12 #(2<setSize)
+BOOL aux14 #(3<setSize)
+BOOL aux16 #(4<setSize)
+**VARIABLES**
+ALIAS weights[6]=[0, 1, 2, 3, 4, 5]
+**SEARCH**
+PRINT[[setSize],[setValues_00000],[setValues_00001],[setValues_00002],[setValues_00003],[setValues_00004],[setWeight]]
+VARORDER STATIC [setSize, setValues_00000, setValues_00001, setValues_00002, setValues_00003, setValues_00004, setWeight]
+VARORDER AUX [setSize,setValues_00000,setValues_00001,setValues_00002,setValues_00003,setValues_00004,setWeight,aux0,aux1,aux2,aux3,aux4,aux5,aux6,aux7,aux8,aux9,aux10,aux12,aux14,aux16]
+**CONSTRAINTS**
+watchelement_undefzero([0, 1, 2, 3, 4, 5], setValues_00002, aux3)
+product(aux2, aux3, aux4)
+watchelement_undefzero([0, 1, 2, 3, 4, 5], setValues_00003, aux5)
+product(aux0, aux5, aux6)
+watchelement_undefzero([0, 1, 2, 3, 4, 5], setValues_00004, aux7)
+product(aux1, aux7, aux8)
+watchelement_undefzero([0, 1, 2, 3, 4], setValues_00000, aux9)
+watchelement_undefzero([0, 1, 2, 3, 4, 5], setValues_00001, aux10)
+reify(w-literal(setValues_00004,0), !aux1)
+reify(ineq(2, setSize, -1), aux12)
+reify(w-literal(setValues_00002,0), !aux2)
+reify(ineq(3, setSize, -1), aux14)
+reify(w-literal(setValues_00003,0), !aux0)
+reify(ineq(4, setSize, -1), aux16)
+reify(ineq(4, setSize, 0), aux0)
+reify(ineq(5, setSize, 0), aux1)
+reify(ineq(3, setSize, 0), aux2)
+ineq(setValues_00000, setValues_00001, -1)
+reifyimply(ineq(setValues_00001, setValues_00002, -1), aux12)
+reifyimply(ineq(setValues_00002, setValues_00003, -1), aux14)
+reifyimply(ineq(setValues_00003, setValues_00004, -1), aux16)
+sumleq([aux4,aux6,aux8,aux9,aux10],setWeight)
+sumgeq([aux4,aux6,aux8,aux9,aux10],setWeight)
+**EOF**

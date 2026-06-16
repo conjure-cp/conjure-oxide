@@ -1,0 +1,44 @@
+$ Sports Scheduling
+language ESSENCE' 1.0
+given      n : int
+given values: matrix indexed by [int(1..6), int(1..3)] of int(1..6)
+letting    TEAMS be domain int(1..n)
+letting    GAMES be domain int(1..(n*(n-1))/2)
+letting    WEEKS be domain int(1..n-1)
+letting    PERIODS be domain int(1..n/2)
+letting    HOMEAWAY be domain int(1..2)
+find       schedule: matrix indexed by [ WEEKS, PERIODS, HOMEAWAY ] of TEAMS
+find       game : matrix indexed by [ WEEKS, PERIODS ] of GAMES
+
+such that  
+           $ All teams play once a week
+           forall w : WEEKS .
+             alldifferent(flatten(schedule[w,..,..])),
+   
+           $ Every team plays at most twice in the same period
+           forall p : PERIODS .
+             atmost(flatten(schedule[..,p,..]), [2,2,2,2], [1, 2, 3, 4]),
+
+           $ Distinct games via alldiff on game array
+           alldifferent(flatten(game)),    $ This should translate soon
+
+           $ Channelling between schedule and game
+           $ (assumes home/away symmetry broken)
+           forall w : WEEKS .
+             forall p : PERIODS .
+               table([schedule[w,p,1], schedule[w,p,2], game[w,p]],
+                     values),
+
+           $ Symmetry breaking: home < away
+           forall w : WEEKS .
+             forall p : PERIODS .
+               schedule[w,p,1] < schedule[w,p,2],
+
+           $ Symmetry breaking: weeks
+           forall w : int(1..n-2) .
+             flatten(schedule[w+1,..,..]) >=lex flatten(schedule[w,..,..]),
+
+           $ Symmetry breaking: periods
+           forall p : int(1..n/2-1) .
+             flatten(schedule[..,p+1,..]) >=lex flatten(schedule[..,p,..])
+             

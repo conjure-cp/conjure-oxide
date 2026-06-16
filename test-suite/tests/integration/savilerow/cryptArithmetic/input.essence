@@ -1,0 +1,36 @@
+$ General cryptarithmetic problems of the form:
+$
+$   WORD1 + WORD2 = WORD3
+
+language ESSENCE' 1.0
+
+$ Total number of letters in the puzzle
+given noLetters : int
+
+$ Three matrices specify the words to be found - do we need separate word lengths?
+
+given word1 : matrix indexed by [int(1..word1Length)] of int(1..noLetters)
+
+given word2 : matrix indexed by [int(1..word2Length)] of int(1..noLetters)
+
+given word3 : matrix indexed by [int(1..word3Length)] of int(1..noLetters)
+
+find letters : matrix indexed by [int(1..noLetters)] of int(0..9)
+find word1Sum : int(1..10**word1Length)
+find word2Sum : int(1..10**word2Length)
+find word3Sum : int(1..10**word3Length)
+
+such that
+
+letters[word1[1]] != 0,
+letters[word2[1]] != 0,
+letters[word3[1]] != 0,
+
+$ wrong way around
+word1Sum = sum i : int (1..word1Length) . letters[word1[i]] * 10**(word1Length-i),
+word2Sum = sum i : int (1..word2Length) . letters[word2[i]] * 10**(word2Length-i),
+word3Sum = sum i : int (1..word3Length) . letters[word3[i]] * 10**(word3Length-i),
+
+word1Sum + word2Sum = word3Sum,
+
+allDiff(letters)

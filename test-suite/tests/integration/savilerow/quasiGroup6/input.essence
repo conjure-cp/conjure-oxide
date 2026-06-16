@@ -1,0 +1,35 @@
+$ The quasiGroup existence problem (CSP lib problem 3)
+$
+$ An m order quasigroup  is an mxm multiplication table of integers 1..m, 
+$ where each element occurrs exactly once in each row and column and certain 
+$ multiplication axioms hold (in this case, we want axiom 6 to hold). 
+$
+
+language ESSENCE' 1.0
+given n : int(1..1000)
+letting nDomain be domain int(0..n-1)
+
+find quasiGroup : matrix indexed by [nDomain, nDomain] of nDomain
+
+such that 
+     
+     $ All rows have to be different
+     forall row : nDomain . 
+          alldifferent(quasiGroup[row,..]),
+
+     $ All columns have to be different	       
+     forall col : nDomain . 
+          alldifferent(quasiGroup[..,col]),
+
+
+     forall i : nDomain .
+          forall j : nDomain .	
+	        quasiGroup[i, quasiGroup[i,j]] = quasiGroup[quasiGroup[i,j],j],
+
+     $ Implied constraint: Idempotency
+     forall i : nDomain . 
+          (quasiGroup[i,i] = i), 
+
+     $ Symmetry-breaking constraints	
+     forall i : nDomain .
+           quasiGroup[i,n-1] + 2 >= i

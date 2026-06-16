@@ -1,0 +1,52 @@
+$ The Balanced Imcomplete Block Design(BIBD) problem 
+$
+$ Assign v objects to b blocks such that such that each block
+$ contains k different objects, each object occurrs in exactly 
+$ r different blocks and every 2 distinct objects occurr in 
+$ exactly l blocks.
+$
+$ We represent the problem by a vxb matrix of booleans, where 
+$ matrix[i,j] equals 1(true) iff object i has been assign to 
+$ block j. The matrix 'columns' has the same elements as the 
+$ problem matrix 'bibd', just with the columns switched to rows
+$ in order to apply the lex constraint on each column of 'bibd'.
+$
+language ESSENCE' 1.0
+given v, k, l : int
+
+letting b be (l*v*(v-1))/(k*(k-1))
+letting r be (l*(v-1))/(k-1)
+
+find  bibd: matrix indexed by [int(1..v), int(1..b)] of bool
+
+
+such that
+  $ each block contains k different objects 
+  forAll block : int(1..b) .
+    (sum object : int(1..v).  bibd[object, block]) =  k,
+
+  $ each object occurs in r blocks
+  forAll object : int(1..v) .
+    (sum block : int(1..b). bibd[object, block]) = r ,
+
+  $ two different objects occurr in a block exactly l times
+  forAll object1 : int(1..v) .
+    forAll object2 : int(1..v) .
+      (object1 < object2) ->  
+      ((sum block : int(1..b). 
+             bibd[object1,block] * bibd[object2, block]) = l),
+
+  $ Extra constraints from Frisch, et al.
+  forAll obj : int(3..v).
+    ((sum block : int(1..b-r) . bibd[obj, block])=r-l) 
+    /\ ((sum block : int(b-r+1..b) . bibd[obj, block])=l)
+    /\ ((sum block : int(1..b-2*r+l,b-r+1..b-l) . bibd[obj, block])=r-l) 
+    /\ ((sum block : int(b-2*r+l+1..b-r,b-l+1..b) . bibd[obj, block])=l),
+  
+  $ Some symmetry breaking constraints
+  forAll row: int(1..v-1) .
+        bibd[row,..] <=lex bibd[row+1,..],
+
+  forAll col: int(1..b-1) .
+       bibd[..,col] <=lex bibd[..,col+1]
+

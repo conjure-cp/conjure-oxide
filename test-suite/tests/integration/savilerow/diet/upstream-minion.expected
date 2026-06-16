@@ -1,0 +1,31 @@
+MINION 3
+**VARIABLES**
+DISCRETE x_00000 #
+{0..1000}
+DISCRETE x_00001 #
+{0..1000}
+DISCRETE x_00002 #
+{0..1000}
+DISCRETE x_00003 #
+{0..1000}
+DISCRETE cost #
+{0..10000}
+ALIAS price[4]=[50, 20, 30, 80]
+ALIAS tlimits[4]=[500, 6, 10, 8]
+ALIAS calories[4]=[400, 200, 150, 500]
+ALIAS chocolate[4]=[3, 2, 0, 0]
+ALIAS sugar[4]=[2, 2, 4, 4]
+ALIAS fat[4]=[2, 4, 1, 5]
+**SEARCH**
+PRINT[[x_00000],[x_00001],[x_00002],[x_00003],[cost],[cost]]
+MINIMISING cost
+VARORDER STATIC [x_00000,x_00001,x_00002,x_00003,cost]
+VARORDER AUX []
+**CONSTRAINTS**
+weightedsumgeq([2,4,1,5],[x_00000,x_00001,x_00002,x_00003],8)
+weightedsumgeq([2,2,4,4],[x_00000,x_00001,x_00002,x_00003],10)
+weightedsumgeq([3,2],[x_00000,x_00001],6)
+weightedsumgeq([400,200,150,500],[x_00000,x_00001,x_00002,x_00003],500)
+weightedsumleq([50,20,30,80],[x_00000,x_00001,x_00002,x_00003],cost)
+weightedsumgeq([50,20,30,80],[x_00000,x_00001,x_00002,x_00003],cost)
+**EOF**
