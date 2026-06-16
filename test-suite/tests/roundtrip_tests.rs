@@ -275,7 +275,7 @@ fn save_roundtrip_model_json(
 ) -> Result<(), std::io::Error> {
     let serialised = serialize_model(model).map_err(std::io::Error::other)?;
     write_text_with_trailing_newline(
-        &roundtrip_model_json_path(path, case_name, file_type),
+        Path::new(&roundtrip_model_json_path(path, case_name, file_type)),
         &serialised,
     )?;
     Ok(())
