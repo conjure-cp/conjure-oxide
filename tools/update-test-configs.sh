@@ -49,9 +49,9 @@ Options:
       For regex, prefix with re:, e.g.
       "re:^# TODO\(repr\):"
 
-  --skip [true|false]
-      true    - ensure "skip = true" exists  (default)
-      false   - remove any "skip = ..." line
+  --skip [REASON|false]
+      REASON  - set skip = "REASON" (non-empty string giving why the test is ignored)
+      false   - remove any skip = ... line
       omitted - do not touch skip
 
   --create-if-empty
@@ -125,22 +125,24 @@ prepend_comment() {
   mv "$tmp" "$file"
 }
 
-set_skip_true() {
+set_skip_reason() {
   local file="$1"
+  local reason="$2"
+  [[ -n "$reason" ]] || err "skip reason must be non-empty"
   local tmp
   tmp="$(mktemp)"
-  awk '
-    BEGIN { done=0 }
+  SKIP_REASON="$reason" awk '
+    BEGIN { reason = ENVIRON["SKIP_REASON"]; gsub(/\\/, "\\\\", reason); gsub(/"/, "\\\"", reason); done = 0 }
     /^[[:space:]]*skip[[:space:]]*=/ {
       if (!done) {
-        print "skip = true"
-        done=1
+        printf "skip = \"%s\"\n", reason
+        done = 1
       }
       next
     }
     { print }
     END {
-      if (!done) print "skip = true"
+      if (!done) printf "skip = \"%s\"\n", reason
     }
   ' "$file" > "$tmp"
   mv "$tmp" "$file"
@@ -458,14 +460,16 @@ while [[ $# -gt 0 ]]; do
       shift 2
       ;;
     --skip)
-      # Optional value: --skip => true, --skip false => false
       if [[ $# -ge 2 && "$2" != --* ]]; then
-        skip_opt="$(printf '%s' "$2" | tr '[:upper:]' '[:lower:]')"
-        [[ "$skip_opt" == "true" || "$skip_opt" == "false" ]] || err "--skip must be true or false"
+        skip_opt="$2"
+        if [[ "$(printf '%s' "$skip_opt" | tr '[:upper:]' '[:lower:]')" == "false" ]]; then
+          skip_opt="false"
+        elif [[ -z "$skip_opt" ]]; then
+          err "--skip requires a non-empty reason string, or false to clear"
+        fi
         shift 2
       else
-        skip_opt="true"
-        shift
+        err "--skip requires a reason string, or false to clear"
       fi
       ;;
     --create-if-empty)
@@ -603,10 +607,10 @@ for t in "${test_names[@]}"; do
     fi
 
     if [[ -n "$skip_opt" ]]; then
-      if [[ "$skip_opt" == "true" ]]; then
-        set_skip_true "$work_file"
-      else
+      if [[ "$skip_opt" == "false" ]]; then
         set_skip_false "$work_file"
+      else
+        set_skip_reason "$work_file" "$skip_opt"
       fi
     fi
 

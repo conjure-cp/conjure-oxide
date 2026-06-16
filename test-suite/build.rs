@@ -226,10 +226,15 @@ fn max_expected_time_limit() -> io::Result<Option<u64>> {
     }
 }
 
+fn escape_ignore_reason(reason: &str) -> String {
+    reason.replace('\\', "\\\\").replace('"', "\\\"")
+}
+
 fn get_ignore_attr(cfg: &TestConfig, include_expected_time: bool) -> io::Result<String> {
-    if cfg.skip {
-        Ok(String::from(
-            "#[ignore = \"this test has been disabled ('skip=true' in its config.toml)\"]\n",
+    if let Some(reason) = cfg.skip_reason() {
+        Ok(format!(
+            "#[ignore = \"{}\"]\n",
+            escape_ignore_reason(reason)
         ))
     } else if include_expected_time
         && let (Some(expected_time), Some(limit)) = (cfg.expected_time, max_expected_time_limit()?)

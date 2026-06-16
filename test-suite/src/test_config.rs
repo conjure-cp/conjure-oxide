@@ -67,6 +67,10 @@ fn default_skip_conjure_validation() -> String {
     String::new()
 }
 
+fn default_skip() -> String {
+    String::new()
+}
+
 fn default_minion_discrete_threshold() -> usize {
     conjure_cp::settings::DEFAULT_MINION_DISCRETE_THRESHOLD
 }
@@ -376,8 +380,9 @@ pub struct TestConfig {
 
     pub status: Option<String>,
 
-    // Generate this test but do not run it
-    pub skip: bool,
+    /// Empty `skip` runs the test; a non-empty string ignores it and records why.
+    #[serde(default = "default_skip")]
+    pub skip: String,
 
     #[serde(
         default,
@@ -392,7 +397,7 @@ pub struct TestConfig {
 impl Default for TestConfig {
     fn default() -> Self {
         Self {
-            skip: false,
+            skip: String::new(),
             expected_time: None,
             parser: vec!["tree-sitter".to_string(), "via-conjure".to_string()],
             rewriter: vec!["naive".to_string()],
@@ -436,6 +441,19 @@ impl TestConfig {
     /// Empty `skip-conjure-validation` runs Conjure reference validation during accept.
     pub fn should_skip_conjure_validation(&self) -> bool {
         !self.skip_conjure_validation.is_empty()
+    }
+
+    /// Empty `skip` runs the test; a non-empty string ignores it.
+    pub fn should_skip(&self) -> bool {
+        !self.skip.is_empty()
+    }
+
+    pub fn skip_reason(&self) -> Option<&str> {
+        if self.skip.is_empty() {
+            None
+        } else {
+            Some(self.skip.as_str())
+        }
     }
 
     pub fn configured_parsers(&self) -> Result<Vec<Parser>, String> {

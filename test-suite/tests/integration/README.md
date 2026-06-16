@@ -2,7 +2,7 @@
 
 Each subdirectory with exactly one `.essence` file and a `config.toml` is an integration test case. The harness discovers them under `test-suite/tests/integration/`.
 
-The `config.toml` file is used for selecting parser(s), rewriter(s), comprehension expander(s), and solver(s). There are additional flags, like `skip-conjure-validation` (omit or set to an empty string to validate against Conjure during accept; a non-empty string skips validation and records why), see `test-suite/src/test_config.rs` for a full list.
+The `config.toml` file is used for selecting parser(s), rewriter(s), comprehension expander(s), and solver(s). There are additional flags, like `skip` (omit or set to an empty string to run the test; a non-empty string ignores it and records why) and `skip-conjure-validation` (omit or set to an empty string to validate against Conjure during accept; a non-empty string skips validation and records why), see `test-suite/src/test_config.rs` for a full list.
 
 ## Top-level layout
 
