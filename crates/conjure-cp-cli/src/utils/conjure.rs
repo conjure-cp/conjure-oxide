@@ -1,4 +1,5 @@
 use std::collections::BTreeMap;
+use std::fs;
 use std::path::PathBuf;
 use std::string::ToString;
 use std::sync::{Arc, Mutex, RwLock};
@@ -22,6 +23,20 @@ use glob::glob;
 
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use uniplate::Uniplate;
+
+#[derive(Clone, Copy, Debug, Default)]
+pub struct ConjureRunTimings {
+    pub translation_time_s: f64,
+    pub conjure_translation_time_s: f64,
+    pub savilerow_translation_time_s: f64,
+    pub solve_time_s: f64,
+}
+
+#[derive(Debug)]
+pub struct ConjureSolutions {
+    pub solutions: Vec<BTreeMap<Name, Literal>>,
+    pub timings: Option<ConjureRunTimings>,
+}
 
 /// Coerces a literal into the type expected by a reference domain when possible.
 ///
@@ -259,6 +274,15 @@ pub fn get_solutions_from_conjure(
     param_file: Option<&str>,
     context: Arc<RwLock<Context<'static>>>,
 ) -> Result<Vec<BTreeMap<Name, Literal>>, anyhow::Error> {
+    Ok(get_solutions_from_conjure_with_stats(essence_file, param_file, context)?.solutions)
+}
+
+#[allow(clippy::unwrap_used)]
+pub fn get_solutions_from_conjure_with_stats(
+    essence_file: &str,
+    param_file: Option<&str>,
+    context: Arc<RwLock<Context<'static>>>,
+) -> Result<ConjureSolutions, anyhow::Error> {
     let tmp_dir = tempdir()?;
 
     let mut cmd = std::process::Command::new("conjure");
@@ -314,10 +338,60 @@ pub fn get_solutions_from_conjure(
         })
         .collect();
 
-    Ok(solutions_set
-        .into_iter()
-        .filter(|x| !x.is_empty())
-        .collect())
+    let timings = read_conjure_timings(tmp_dir.path())?;
+
+    Ok(ConjureSolutions {
+        solutions: solutions_set
+            .into_iter()
+            .filter(|x| !x.is_empty())
+            .collect(),
+        timings,
+    })
+}
+
+fn read_conjure_timings(
+    path: &std::path::Path,
+) -> Result<Option<ConjureRunTimings>, anyhow::Error> {
+    let stats_files: Vec<_> = glob(&format!("{}/*.stats.json", path.display()))?.collect();
+    if stats_files.is_empty() {
+        return Ok(None);
+    }
+
+    let mut timings = ConjureRunTimings::default();
+    for stats_file in stats_files {
+        let stats_file = stats_file?;
+        let stats: JsonValue = serde_json::from_str(&fs::read_to_string(&stats_file)?)?;
+        let total_time = stats
+            .get("totalTime")
+            .and_then(JsonValue::as_f64)
+            .unwrap_or_default();
+        let savilerow_total_time = stats
+            .pointer("/savilerowInfo/SavileRowTotalTime")
+            .and_then(JsonValue::as_str)
+            .and_then(|value| value.parse::<f64>().ok())
+            .unwrap_or_default();
+        let solve_time = stats
+            .pointer("/savilerowInfo/SolverTotalTime")
+            .and_then(JsonValue::as_str)
+            .and_then(|value| value.parse::<f64>().ok())
+            .or_else(|| {
+                stats
+                    .pointer("/savilerowInfo/SolverSolveTime")
+                    .and_then(JsonValue::as_str)
+                    .and_then(|value| value.parse::<f64>().ok())
+            })
+            .unwrap_or_default();
+
+        let conjure_translation_time = (total_time - savilerow_total_time).max(0.0);
+        let savilerow_translation_time = (savilerow_total_time - solve_time).max(0.0);
+
+        timings.conjure_translation_time_s += conjure_translation_time;
+        timings.savilerow_translation_time_s += savilerow_translation_time;
+        timings.translation_time_s += conjure_translation_time + savilerow_translation_time;
+        timings.solve_time_s += solve_time;
+    }
+
+    Ok(Some(timings))
 }
 
 pub fn solutions_to_json(solutions: &Vec<BTreeMap<Name, Literal>>) -> JsonValue {

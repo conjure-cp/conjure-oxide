@@ -96,6 +96,73 @@ pub fn upsert_expected_time_config(path: &Path, expected_time: u64) -> io::Resul
     fs::write(path, new_contents)
 }
 
+#[derive(Clone, Copy, Debug)]
+pub struct RecordedRunStats {
+    pub oxide_translation_time: f64,
+    pub oxide_solve_time: f64,
+    pub conjure_translation_time: f64,
+    pub conjure_driver_translation_time: f64,
+    pub savilerow_translation_time: f64,
+    pub conjure_solve_time: f64,
+}
+
+/// Inserts or updates the recorded timing stats in a test `config.toml`.
+pub fn upsert_recorded_run_stats_config(path: &Path, stats: RecordedRunStats) -> io::Result<()> {
+    let mut document = if path.exists() {
+        let contents = fs::read_to_string(path)?;
+        if contents.trim().is_empty() {
+            DocumentMut::new()
+        } else {
+            contents
+                .parse::<DocumentMut>()
+                .map_err(|err| io::Error::new(io::ErrorKind::InvalidData, err))?
+        }
+    } else {
+        DocumentMut::new()
+    };
+
+    document["stats"]["oxide"]["translation-time"] = value(stats.oxide_translation_time);
+    document["stats"]["oxide"]["solve-time"] = value(stats.oxide_solve_time);
+    document["stats"]["conjure"]["translation-time"] = value(stats.conjure_translation_time);
+    document["stats"]["conjure"]["conjure-translation-time"] =
+        value(stats.conjure_driver_translation_time);
+    document["stats"]["conjure"]["savilerow-translation-time"] =
+        value(stats.savilerow_translation_time);
+    document["stats"]["conjure"]["solve-time"] = value(stats.conjure_solve_time);
+
+    let mut new_contents = document.to_string();
+    if !new_contents.ends_with('\n') {
+        new_contents.push('\n');
+    }
+
+    fs::write(path, new_contents)
+}
+
+#[derive(Deserialize, Debug, Default)]
+#[serde(default)]
+#[serde(deny_unknown_fields)]
+pub struct TestStats {
+    pub oxide: RecordedToolStats,
+    pub conjure: RecordedToolStats,
+}
+
+#[derive(Deserialize, Debug, Default)]
+#[serde(default)]
+#[serde(deny_unknown_fields)]
+pub struct RecordedToolStats {
+    #[serde(rename = "translation-time")]
+    pub translation_time: Option<f64>,
+
+    #[serde(rename = "solve-time")]
+    pub solve_time: Option<f64>,
+
+    #[serde(rename = "conjure-translation-time")]
+    pub conjure_translation_time: Option<f64>,
+
+    #[serde(rename = "savilerow-translation-time")]
+    pub savilerow_translation_time: Option<f64>,
+}
+
 #[derive(Deserialize, Debug)]
 #[serde(default)]
 #[serde(deny_unknown_fields)]
@@ -144,6 +211,8 @@ pub struct TestConfig {
         deserialize_with = "deserialise_expected_time"
     )]
     pub expected_time: Option<u64>,
+
+    pub stats: TestStats,
 }
 
 impl Default for TestConfig {
@@ -182,6 +251,7 @@ impl Default for TestConfig {
             },
             minion_discrete_threshold: default_minion_discrete_threshold(),
             validate_with_conjure: true,
+            stats: TestStats::default(),
         }
     }
 }

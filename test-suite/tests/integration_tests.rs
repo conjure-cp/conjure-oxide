@@ -29,7 +29,7 @@ use conjure_cp::settings::{
     set_rule_trace_aggregates_enabled, set_rule_trace_enabled, set_rule_trace_verbose_enabled,
 };
 use conjure_cp_cli::utils::conjure::solutions_to_json;
-use conjure_cp_cli::utils::conjure::{get_solutions, get_solutions_from_conjure};
+use conjure_cp_cli::utils::conjure::{get_solutions, get_solutions_from_conjure_with_stats};
 use conjure_cp_cli::utils::testing::save_stats_json;
 use conjure_cp_cli::utils::testing::{read_solutions_json, save_solutions_json};
 #[allow(clippy::single_component_path_imports, unused_imports)]
@@ -38,7 +38,10 @@ use pretty_assertions::assert_eq;
 use test_suite::AcceptMode;
 use test_suite::TestConfig;
 use test_suite::golden_files::assert_no_redundant_expected_files;
-use test_suite::test_config::{round_expected_time, upsert_expected_time_config};
+use test_suite::test_config::{
+    RecordedRunStats, round_expected_time, upsert_expected_time_config,
+    upsert_recorded_run_stats_config,
+};
 
 #[derive(Clone, Copy, Debug)]
 struct RunCase<'a> {
@@ -47,6 +50,19 @@ struct RunCase<'a> {
     comprehension_expander: QuantifiedExpander,
     solver: SolverFamily,
     case_name: &'a str,
+}
+
+#[derive(Clone, Copy, Debug, Default)]
+struct RunTimings {
+    translation_time_s: f64,
+    solve_time_s: f64,
+}
+
+impl RunTimings {
+    fn add(&mut self, other: Self) {
+        self.translation_time_s += other.translation_time_s;
+        self.solve_time_s += other.solve_time_s;
+    }
 }
 
 fn run_case_label(
@@ -102,20 +118,28 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
     let model_path = format!("{path}/{essence_base}.{extension}");
     let conjure_solutions = if accept && validate_with_conjure {
         eprintln!("[integration] loading Conjure reference solutions for {model_path}");
-        Some(Arc::new(
-            get_solutions_from_conjure(&model_path, None, Default::default()).map_err(|err| {
-                std::io::Error::other(format!(
-                    "failed to fetch Conjure reference solutions for {model_path}: {err}"
-                ))
-            })?,
-        ))
+        let conjure_run =
+            get_solutions_from_conjure_with_stats(&model_path, None, Default::default()).map_err(
+                |err| {
+                    std::io::Error::other(format!(
+                        "failed to fetch Conjure reference solutions for {model_path}: {err}"
+                    ))
+                },
+            )?;
+
+        Some((Arc::new(conjure_run.solutions), conjure_run.timings))
     } else {
         if accept && !validate_with_conjure {
             eprintln!("[integration] skipping Conjure validation for {model_path}");
         }
         None
     };
+    let conjure_solution_values = conjure_solutions
+        .as_ref()
+        .map(|(solutions, _)| Arc::clone(solutions));
+    let conjure_timings = conjure_solutions.and_then(|(_, timings)| timings);
     let mut allowed_expected_files = BTreeSet::new();
+    let mut oxide_timings = RunTimings::default();
 
     for parser in parsers.iter().copied() {
         for rewriter in rewriters.clone() {
@@ -155,18 +179,19 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
                     set_default_rule_trace_enabled(default_rule_trace_enabled);
                     set_rule_trace_verbose_enabled(false);
                     set_rule_trace_aggregates_enabled(false);
-                    tracing::subscriber::with_default(subscriber, || {
+                    let run_timings = tracing::subscriber::with_default(subscriber, || {
                         integration_test_inner(
                             path,
                             essence_base,
                             extension,
                             run_case,
                             minion_discrete_threshold,
-                            conjure_solutions.clone(),
+                            conjure_solution_values.clone(),
                             accept,
                         )
                     })
                     .map_err(|err| std::io::Error::other(format!("{run_label}: {err}")))?;
+                    oxide_timings.add(run_timings);
                     allowed_expected_files.extend(expected_integration_files_for_case(
                         run_case.case_name,
                         solver,
@@ -185,6 +210,23 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
             accept_mode.expected_time_to_record(config.expected_time, observed_expected_time)
         {
             upsert_expected_time_config(&config_path, expected_time)?;
+        }
+    }
+
+    if accept && validate_with_conjure {
+        if let Some(conjure_timings) = conjure_timings {
+            let config_path = Path::new(path).join("config.toml");
+            upsert_recorded_run_stats_config(
+                &config_path,
+                RecordedRunStats {
+                    oxide_translation_time: oxide_timings.translation_time_s,
+                    oxide_solve_time: oxide_timings.solve_time_s,
+                    conjure_translation_time: conjure_timings.translation_time_s,
+                    conjure_driver_translation_time: conjure_timings.conjure_translation_time_s,
+                    savilerow_translation_time: conjure_timings.savilerow_translation_time_s,
+                    conjure_solve_time: conjure_timings.solve_time_s,
+                },
+            )?;
         }
     }
 
@@ -231,7 +273,7 @@ fn integration_test_inner(
     minion_discrete_threshold: usize,
     conjure_solutions: Option<Arc<Vec<BTreeMap<Name, Literal>>>>,
     accept: bool,
-) -> Result<(), Box<dyn Error>> {
+) -> Result<RunTimings, Box<dyn Error>> {
     let parser = run_case.parser;
     let rewriter = run_case.rewriter;
     let comprehension_expander = run_case.comprehension_expander;
@@ -248,6 +290,8 @@ fn integration_test_inner(
 
     // File path
     let file_path = format!("{path}/{essence_base}.{extension}");
+
+    let translation_started_at = Instant::now();
 
     // Stage 1a/1b: Parse the model using the selected parser.
     let parsed_model = match parser {
@@ -276,6 +320,8 @@ fn integration_test_inner(
         Rewriter::Naive => rewrite_naive(&model, &rule_sets, false)?,
         Rewriter::Morph(config) => rewrite_morph(model, &rule_sets, false, config),
     };
+    let translation_time_s = translation_started_at.elapsed().as_secs_f64();
+
     let solver_input_file = None;
     let solver = match solver_fam {
         SolverFamily::Minion => Solver::new(Minion::default()),
@@ -284,11 +330,13 @@ fn integration_test_inner(
         SolverFamily::Smt(_) => Solver::new(Smt::default()),
     };
 
+    let solver_started_at = Instant::now();
     let solutions = {
         let solved = get_solutions(solver, rewritten_model, 0, &solver_input_file, false)?;
         save_solutions_json(&solved, path, case_name, solver_fam)?;
         solved
     };
+    let solve_time_s = solver_started_at.elapsed().as_secs_f64();
 
     // Stage 3b: Check solutions against Conjure when accept mode is enabled and validation is enabled.
     if accept && conjure_solutions.is_some() {
@@ -340,7 +388,10 @@ fn integration_test_inner(
 
     save_stats_json(context, path, case_name, solver_fam)?;
 
-    Ok(())
+    Ok(RunTimings {
+        translation_time_s,
+        solve_time_s,
+    })
 }
 
 fn run_case_name(
