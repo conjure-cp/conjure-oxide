@@ -130,7 +130,7 @@ $ what's wrong with this line?
     forall col : COL_RANGE .
 	forAll row : ROW_RANGE . 
 	    forall k : int(2..LARGEST-1) .
-                 (((col+k) <= width) => 
+                 (((col+k) <= width) -> 
 		   	((rijk[row,col,k] = 1) <-> ((rijk[row,col,k-1] =1) /\ sij[row,col+k]=1))),
 		   	
     forall col : COL_RANGE .
@@ -148,53 +148,53 @@ $ what's wrong with this line?
     forall col : COL_RANGE .
 	forall row : ROW_RANGE . 
         forall k : int(2..LARGEST-1) .
-         (((col-k) > 0) => 
-		   	((lijk[row,col,k] = 1) <=> ((lijk[row,col,k-1] =1) /\ sij[row,col-k]=1))),
+         (((col-k) > 0) -> 
+		   	((lijk[row,col,k] = 1) <-> ((lijk[row,col,k-1] =1) /\ sij[row,col-k]=1))),
     
     forall col : COL_RANGE .
 	forall row : ROW_RANGE . 
         forall k : int(2..LARGEST-1) .
-                 ((col-k <= 0) => (lijk[row,col,k] = 0)),
+                 ((col-k <= 0) -> (lijk[row,col,k] = 0)),
 
     $ linkage of dijk to sij
     forall col : COL_RANGE .
 	forall row : ROW_RANGE .  (
-            ((dijk[row,col,1] = 1) <=> (sij[row,col] = 1 /\ sij[row+1,col]=1))),
+            ((dijk[row,col,1] = 1) <-> (sij[row,col] = 1 /\ sij[row+1,col]=1))),
     
     forall col : COL_RANGE .
 	forall row : ROW_RANGE .  
          forall k : int(2..LARGEST-1) .  
-		(((row+k) <= height) => 
-		   	((dijk[row,col,k] = 1) <=> ((dijk[row,col,k-1] =1) /\ sij[row+k,col]=1))),
+		(((row+k) <= height) -> 
+		   	((dijk[row,col,k] = 1) <-> ((dijk[row,col,k-1] =1) /\ sij[row+k,col]=1))),
 
     forall col : COL_RANGE .
 	forall row : ROW_RANGE .  (
          (forall k : int(2..LARGEST-1) .  (
-                 ((row+k > height) => (dijk[row,col,k] = 0)) ))),
+                 ((row+k > height) -> (dijk[row,col,k] = 0)) ))),
                  
     $ linkage of uijk to sij
     
     forall col : COL_RANGE .
 	forall row : ROW_RANGE .  
-            ((uijk[row,col,1] = 1) <=> (sij[row,col] = 1 /\ sij[row-1,col]=1)),
+            ((uijk[row,col,1] = 1) <-> (sij[row,col] = 1 /\ sij[row-1,col]=1)),
             
     forall col : COL_RANGE .
 	forall row : ROW_RANGE .  
 	     forall k : int(2..LARGEST-1) .
-		(((row-k) > 0 ) => 
-		   	((uijk[row,col,k] = 1) <=> ((uijk[row,col,k-1] =1) /\ sij[row-k,col]=1))),
+		(((row-k) > 0 ) -> 
+		   	((uijk[row,col,k] = 1) <-> ((uijk[row,col,k-1] =1) /\ sij[row-k,col]=1))),
 
     forall col : COL_RANGE .
 	forall row : ROW_RANGE .  (
 	     (forall k : int(2..LARGEST-1) .  (
-                 ((row - k <= 0) => (uijk[row,col,k] = 0)) ))),
+                 ((row - k <= 0) -> (uijk[row,col,k] = 0)) ))),
 
 
     $ linkage of u/d/r/l to agrid
 
      forall col : COL_RANGE . 
 	forall row : ROW_RANGE .  
-	    (sij[row,col] = 1) =>
+	    (sij[row,col] = 1) ->
 		(agrid[row,col] = 1 +  (sum i : int(1..LARGEST-1) . rijk[row,col,i] ) + 
 					(sum j : int(1..LARGEST-1) . lijk[row,col,j] ) + 
 					(sum k : int(1..LARGEST-1) . uijk[row,col,k] ) + 
@@ -207,17 +207,17 @@ $                4:bottom, 5:right,  6:left, 7:no hint
 
      forall row : ROW_RANGE .
        forall col : COL_RANGE .
-         (hint[row,col] = 0) =>          $hint 0:water
+         (hint[row,col] = 0) ->          $hint 0:water
  	    agrid[row,col] = 0,
 
     forall row : ROW_RANGE .
       forall col: COL_RANGE .
-         (hint[row,col] = 1) =>          $hint 1:circle
+         (hint[row,col] = 1) ->          $hint 1:circle
 	    agrid[row,col] = 1,
 
      forall row : ROW_RANGE .
        forall col: COL_RANGE .
-         (hint[row,col] = 2) =>          $hint 2:middle
+         (hint[row,col] = 2) ->          $hint 2:middle
 	    (agrid[row,col] >= 3 /\
                ( (sij[row-1,col]=0 /\ sij[row+1,col]=0 /\ sij[row,col-1]=1 /\ sij[row,col+1]=1 ) 
                  \/
@@ -225,7 +225,7 @@ $                4:bottom, 5:right,  6:left, 7:no hint
 
      forall row : ROW_RANGE .
        forall col: COL_RANGE .
-         (hint[row,col] = 3) =>          $hint 3:top
+         (hint[row,col] = 3) ->          $hint 3:top
 	    (agrid[row,col] >= 2 
  /\
 		 sij[row,col+1] = 0 /\ sij[row,col-1]=0 /\ 
@@ -234,20 +234,20 @@ $                4:bottom, 5:right,  6:left, 7:no hint
 
      forall row : ROW_RANGE .
        forall col: COL_RANGE .
-         (hint[row,col] = 4) =>          $hint 4:bottom
+         (hint[row,col] = 4) ->          $hint 4:bottom
 	    (agrid[row,col] >= 2 /\
 		 sij[row-1,col] = 1 /\ sij[row+1,col]=0 /\ sij[row,col+1]=0 /\ sij[row,col-1]=0),
         
 
      forall row : ROW_RANGE .
        forall col: COL_RANGE .
-         (hint[row,col] = 5) =>          $hint 5:right
+         (hint[row,col] = 5) ->          $hint 5:right
 	    (agrid[row,col] >= 2 /\
 		 sij[row,col-1] = 1 /\ sij[row,col+1]=0 /\ sij[row-1,col]=0 /\ sij[row+1,col]=0),
 
      forall row : ROW_RANGE .
        forall col: COL_RANGE .
-         (hint[row,col] = 6) =>          $hint 6:left
+         (hint[row,col] = 6) ->          $hint 6:left
 	    (agrid[row,col] >= 2 /\
 		 sij[row,col+1] = 1 /\ sij[row,col-1]=0 /\ sij[row-1,col]=0 /\ sij[row+1,col]=0),
 

@@ -117,14 +117,14 @@ forall step : STEPS1 .
 
 $ precedence constraint
    forall card : int(0..50) . 
-       (card % 3 != 2) =>
+       (card % 3 != 2) ->
           (cardSequence[initialStacks[card]] < cardSequence[initialStacks[card+1]]),
 
 
 $ channelling constraint
 forall step : STEPS . 
   forall card : CARDS . 
-     (blackHole[step] = card) <=> (cardSequence[card] = step),
+     (blackHole[step] = card) <-> (cardSequence[card] = step),
 
 
 
@@ -138,9 +138,9 @@ $ Barbara's constraint or what I interpreted from it
 $ if we have the choice between 2 cards of the same rank, pick the one with higher height
 $forall card1,card2 : CARDS_NO_ACE .
     $ 2 cards of the same rank but different suits 
-$    ((card1 % 13 = card2 % 13) /\ (card1 != card2)) => 
+$    ((card1 % 13 = card2 % 13) /\ (card1 != card2)) -> 
        $ the card that is on top of a pile should be picked first 
-$        ((height[card1] > height[card2]) => (cardSequence[card1] > cardSequence[card2])),
+$        ((height[card1] > height[card2]) -> (cardSequence[card1] > cardSequence[card2])),
 
 
 
@@ -152,11 +152,11 @@ $ CASE A of Barbara's model
 forall stack1, stack2 : int(0..16) . 
       ( (stack1 < stack2) /\  $ the 3rd cards have the same rank
         (initialStacks[stack1*3+2] % 13 = initialStacks[stack2*3+2] % 13)
-      ) => 
+      ) -> 
 
-             $ y[cover[c1] < y[c2]   =>  y[c1] < y[c2]
+             $ y[cover[c1] < y[c2]   ->  y[c1] < y[c2]
         (   (cardSequence[initialStacks[stack1*3+1]] < cardSequence[initialStacks[stack2*3+2]] 
-                 ) => 
+                 ) -> 
             (cardSequence[initialStacks[stack1*3+2]] < cardSequence[initialStacks[stack2*3+2]])   
         ),
 
@@ -166,11 +166,11 @@ $ CASE B of Barbara's model
 forall stack1, stack2 : int(0..16) . 
       ( (stack1 < stack2) /\  $ the 1st cards have the same rank
         (initialStacks[stack1*3] % 13 = initialStacks[stack2*3] % 13)
-      ) => 
+      ) -> 
 
-             $ y[c1] < y[coveredby[c2]]  =>  y[c1] < y[c2]
+             $ y[c1] < y[coveredby[c2]]  ->  y[c1] < y[c2]
         (  ( cardSequence[initialStacks[stack1*3]] < cardSequence[initialStacks[stack2*3+1]]  
-                 ) => 
+                 ) -> 
              ( cardSequence[initialStacks[stack1*3]] < cardSequence[initialStacks[stack2*3]] )
            
         ),
@@ -180,11 +180,11 @@ $ CASE C of Barbara's model
 forall stack1, stack2 : int(0..16) . 
     ( (stack1 < stack2)  /\  $ different stacks and cards in the midle are of the same rank
             (initialStacks[stack1*3+1] % 13 = initialStacks[stack2*3+1] % 13) 
-    ) => 
-       $ (y[c1] < y[coveredby[c2]  &&  y[cover[c1]] < y[c2] )  =>  y[c1] < y[c2]
+    ) -> 
+       $ (y[c1] < y[coveredby[c2]  &&  y[cover[c1]] < y[c2] )  ->  y[c1] < y[c2]
     ( ( (cardSequence[initialStacks[stack1*3+1]] < cardSequence[initialStacks[stack2*3+2]]) /\
         (cardSequence[initialStacks[stack1*3]] < cardSequence[initialStacks[stack2*3+1]])
-      )  =>
+      )  ->
          ( cardSequence[initialStacks[stack1*3+1]] < cardSequence[initialStacks[stack2*3+1]])
     ),
 
@@ -194,7 +194,7 @@ $ CASE D in Barbara's model
 forall stack1, stack2 : int(0..16) . 
     ( (stack1 != stack2)  /\  $ different stacks and cards on top of stack1 and bottom of stack2 are of the same rank
             (initialStacks[stack1*3] % 13 = initialStacks[stack2*3+2] % 13) 
-    ) => 
+    ) -> 
         ( cardSequence[initialStacks[stack1*3]] < cardSequence[initialStacks[stack2*3+2]]),
 
 
@@ -204,11 +204,11 @@ $ CASE E in barbara's model
 forall stack1, stack2 : int(0..16) . 
     ( (stack1 != stack2)  /\  $ different stacks and cards on top of stack1 and middle of stack2 are of the same rank
             (initialStacks[stack1*3] % 13 = initialStacks[stack2*3+1] % 13) 
-    ) => 
-       (   $ y[c1] < y[coveredby[c2] && y[c2] < y[coveredby[c1]]  => y[c1] < y[c2]
+    ) -> 
+       (   $ y[c1] < y[coveredby[c2] && y[c2] < y[coveredby[c1]]  -> y[c1] < y[c2]
          ( (cardSequence[initialStacks[stack1*3]] < cardSequence[initialStacks[stack2*3+2]] ) /\
            (cardSequence[initialStacks[stack2*3+1]] < cardSequence[initialStacks[stack1*3+1]] )
-         ) =>
+         ) ->
           ( cardSequence[initialStacks[stack1*3]] < cardSequence[initialStacks[stack2*3+1]])
       ),
 
@@ -218,10 +218,10 @@ $ CASE F in barbara's model
 forall stack1, stack2 : int(0..16) . 
     ( (stack1 != stack2)  /\ 
             (initialStacks[stack1*3+1] % 13 = initialStacks[stack2*3+2] % 13) 
-    ) => 
-       (   $ y[cover[c1]] < y[c2] && y[cover[c2]] < y[c1]  => y[c1] < y[c2]
+    ) -> 
+       (   $ y[cover[c1]] < y[c2] && y[cover[c2]] < y[c1]  -> y[c1] < y[c2]
          ( (cardSequence[initialStacks[stack1*3]] < cardSequence[initialStacks[stack2*3+2]] ) /\
            (cardSequence[initialStacks[stack2*3+1]] < cardSequence[initialStacks[stack1*3+1]] )
-         ) =>
+         ) ->
           ( cardSequence[initialStacks[stack1*3+1]] < cardSequence[initialStacks[stack2*3+2]])
       )

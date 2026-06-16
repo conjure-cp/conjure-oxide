@@ -40,45 +40,45 @@ such that
 
   $ for all rows
   forall row,col1,col2 : N .
-     (col1 < col2) => 
+     (col1 < col2) -> 
        (board[row,col1] + board[row,col2] != 3),
 
 
   $ for all cols
   forall col, row1, row2 : N .
-     (row1 < row2) => 
+     (row1 < row2) -> 
        (board[row1,col] + board[row2,col] != 3),
 
  $ for all diagonals 
    forall i,col1,col2,row1,row2 : N .
 
       $ South-West diagonal
-     (((row1 + i <= n) /\ (col1 + i <= n)) =>
-             (((row1 + i = row2) /\ (col1 + i = col2)) =>  
+     (((row1 + i <= n) /\ (col1 + i <= n)) ->
+             (((row1 + i = row2) /\ (col1 + i = col2)) ->  
                    (board[row1,col1] + board[row2,col2] != 3)  
              ))
  
      /\
       
       $ South-East diagonal
-     (((row1 + i <= n) /\ (col1 - i > 0)) =>
-             (((row1 + i = row2) /\ (col1 - i = col2)) =>  
+     (((row1 + i <= n) /\ (col1 - i > 0)) ->
+             (((row1 + i = row2) /\ (col1 - i = col2)) ->  
                    (board[row1,col1] + board[row2,col2] != 3)  
               ))
 
      /\
 
       $ North-East diagonal
-     (((row1 - i > 0) /\ (col1 - i > 0)) =>
-             (((row1 - i = row2) /\ (col1 - i = col2)) =>  
+     (((row1 - i > 0) /\ (col1 - i > 0)) ->
+             (((row1 - i = row2) /\ (col1 - i = col2)) ->  
                    (board[row1,col1] + board[row2,col2] != 3)  
               ))
 
      /\
 
       $ North-West diagonal
-     (((row1 - i > 0) /\ (col1 + i <= n)) =>
-             (((row1 - i = row2) /\ (col1 + i = col2)) =>  
+     (((row1 - i > 0) /\ (col1 + i <= n)) ->
+             (((row1 - i = row2) /\ (col1 + i = col2)) ->  
                    (board[row1,col1] + board[row2,col2] != 3)  
               ))
 

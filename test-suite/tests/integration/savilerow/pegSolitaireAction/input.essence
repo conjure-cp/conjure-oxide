@@ -118,7 +118,7 @@ $ ----------------------------------------------------------------
 $ initial state: all fields are occupied but the one in the centre
 
 forall i : FIELDS .
-    (i != startField) =>
+    (i != startField) ->
         (bState[0,i] = true),
  
 bState[0,startField] = false,
@@ -164,10 +164,10 @@ forall step : int(0..noSteps-1) .
 
           $ if there exists a legal transition from f1 to f2
           ((transitionNumber[f1,f2] != 0)
-            /\ (f1 != f2)) =>
+            /\ (f1 != f2)) ->
 
                $ and we make that transition, the following holds..
-              (  (moves[step] = transitionNumber[f1,f2]) <=>
+              (  (moves[step] = transitionNumber[f1,f2]) <->
                    
                      $ effect and precondition
 	           ( (bState[step, f1] > bState[step+1,f1]) /\ 
@@ -181,7 +181,7 @@ forall step : int(0..noSteps-1) .
                           ( (field != f1) /\
 			    (field != transitionStep[transitionNumber[f1,f2],2]) /\
                             (field != f2)
-                          ) =>   
+                          ) ->   
                              (bState[step,field] = bState[step+1,field])
                     )  
               )

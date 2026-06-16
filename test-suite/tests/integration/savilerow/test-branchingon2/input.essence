@@ -63,7 +63,7 @@ $ ---- When a cell is EMPTY, it stays EMPTY ----
 forall step : STEPSFROM1 .
   forall gRow : GRIDROWS .
     forall gCol : GRIDCOLS .
-      (grid[step-1,gRow,gCol] = 0) =>
+      (grid[step-1,gRow,gCol] = 0) ->
       (grid[step,gRow,gCol] = 0),
 
 
@@ -79,7 +79,7 @@ forall step : STEPSFROM1 .
         (grid[step-1,shotRow,rowBlock] = EMPTY)
       )
     )
-  ) =>
+  ) ->
   (hand[step-1] = hand[step]),
 
 
@@ -89,7 +89,7 @@ forall step : STEPSFROM1 .
     ((exists underRow : int(gRow+1..gridHeight) .
         (underRow = fpRow[step]) /\
         (grid[step-1,underRow,1] != hand[step-1]))) 
-    =>
+    ->
     (grid[step,gRow,1] = grid[step-1,gRow,1]),
 
 
@@ -101,7 +101,7 @@ forall step : STEPSFROM1 .
        (exists blockLeft : int(1..gCol-1) . 
         ((grid[step-1, gRow, blockLeft] != EMPTY) /\ 
          (grid[step-1, gRow, blockLeft] != hand[step-1])))) 
-      =>
+      ->
       (grid[step, gRow, gCol] = grid[step-1,gRow,gCol]),
 
 
@@ -109,7 +109,7 @@ $ ----- Unaffected: Fired along row above ----
 forall step : STEPSFROM1 .
   forall gRow : GRIDROWS .
     forall gCol : GRIDCOLS .
-      ((fpRow[step] != 0) /\ (fpRow[step] < gRow)) => 
+      ((fpRow[step] != 0) /\ (fpRow[step] < gRow)) -> 
       (grid[step, gRow, gCol] = grid[step-1,gRow,gCol]),
 
 
@@ -120,7 +120,7 @@ forall step : STEPSFROM1 .
       ((fpRow[step] = gRow) /\
        (grid[step-1,gRow,gCol] != hand[step-1]) /\
        (forall blockLeft : int(1..gCol-1) . (grid[step-1,gRow,blockLeft] = EMPTY))) 
-      =>
+      ->
       (grid[step,gRow,gCol] = grid[step-1,gRow,gCol]),
 
 $ ----- Unaffected: Fired beneath this row, not far enough to cause fall: Other cols ----
@@ -132,7 +132,7 @@ forall step : STEPSFROM1 .
          (exists blockLeft : int(1..gCol) . 
             ((grid[step-1,underRow,blockLeft] != EMPTY) /\
              (grid[step-1,underRow,blockLeft] != hand[step-1]))))
-      =>
+      ->
       (grid[step,gRow,gCol] = grid[step-1,gRow,gCol]),
 
 $ ----- Unaffected: Fired down this column, but something in way ----
@@ -143,7 +143,7 @@ forall step : STEPSFROM1 .
        (exists blockAbove : int(1..gRow-1) .
           ((grid[step-1,blockAbove,gCol] != EMPTY) /\ 
            (grid[step-1,blockAbove,gCol] != hand[step-1])))) 
-      =>
+      ->
       (grid[step,gRow,gCol] = grid[step-1,gRow,gCol]),
 
 
@@ -151,7 +151,7 @@ $ ----- Unaffected: Fired down a different column ----
 forall step : STEPSFROM1 .
   forall gRow : GRIDROWS .
     forall gCol : GRIDCOLS .
-      ((fpCol[step] != 0) /\ (fpCol[step] != gCol)) =>
+      ((fpCol[step] != 0) /\ (fpCol[step] != gCol)) ->
       (grid[step,gRow,gCol] = grid[step-1,gRow,gCol]),
 
 
@@ -161,8 +161,8 @@ forall step : STEPSFROM1 .
     forall gCol : GRIDCOLS .
       ((fpCol[step] = gCol) /\
        (grid[step-1,gRow,gCol] != hand[step-1]) /\
-       ((gRow > 1) => (grid[step-1,gRow-1,gCol] = EMPTY))) 
-      =>
+       ((gRow > 1) -> (grid[step-1,gRow-1,gCol] = EMPTY))) 
+      ->
       (grid[step,gRow,gCol] = grid[step-1,gRow,gCol]),
 
 $ %%%%%%%%% Moves that leave the hand unaffected %%%%%%%%%
@@ -179,7 +179,7 @@ forall step : STEPSFROM1 .
        forall blockLeft : int(1..exposedBlock-1) . grid[step-1,shotRow,blockLeft] = 0
      )
     )
-  ) =>
+  ) ->
   (hand[step-1] = hand[step]),
 
 $ ---- Hand unaffected: Fired down col into block of diff colour ---
@@ -195,7 +195,7 @@ forall step : STEPSFROM1 .
        forall blockAbove : int(1..exposedBlock-1) . grid[step-1,blockAbove,shotCol] = 0
      )
     )
-  ) =>
+  ) ->
   (hand[step-1] = hand[step]),
 
 $ ---- Hand unaffected: Fired down col, hitting wall ----
@@ -210,7 +210,7 @@ forall step : STEPSFROM1 .
         (grid[step-1,colBlock,shotCol] = EMPTY)
       )
     )
-  ) =>
+  ) ->
   (hand[step-1] = hand[step]),
 
 $ %%%%%%%%% Cells becoming empty %%%%%%%%%
@@ -227,7 +227,7 @@ forall step : STEPSFROM1 .
         ((grid[step-1,blockAbove,gCol] = hand[step-1]) \/
          (grid[step-1,blockAbove,gCol] = EMPTY))
        )
-      ) =>
+      ) ->
       (grid[step,gRow,gCol] = EMPTY),
 
 $ ---- Empty: Deleted by shot along row
@@ -239,13 +239,13 @@ forall step : STEPSFROM1 .
        $ right row
        (fpRow[step] = gRow) /\
        $ no block above
-       ((gRow > 1) => (grid[step-1,gRow-1,gCol] = EMPTY)) /\
+       ((gRow > 1) -> (grid[step-1,gRow-1,gCol] = EMPTY)) /\
        $ nothing blocking way
        (forall blockLeft : int(1..gCol-1) .
         ((grid[step-1,gRow,blockLeft] = hand[step-1]) \/
          (grid[step-1,gRow,blockLeft] = EMPTY))
        )
-      ) =>
+      ) ->
       (grid[step,gRow,gCol] = EMPTY),
 
 $ ---- Empty: Fall from this cell to become empty: top row
@@ -257,7 +257,7 @@ forall step : STEPSFROM1 .
         (forall delBlock : int(1..gCol) . 
          ((grid[step-1,delRow,delBlock] = hand[step-1]) \/
           (grid[step-1,delRow,delBlock] = EMPTY))))
-    ) =>
+    ) ->
     (grid[step,1,gCol] = EMPTY),
 
 $ ---- Empty: Fall from this cell to become empty: remaining rows
@@ -272,7 +272,7 @@ forall step : STEPSFROM1 .
          (forall delBlock : int(1..gCol) . 
           ((grid[step-1,delRow,delBlock] = hand[step-1]) \/
            (grid[step-1,delRow,delBlock] = EMPTY)))))
-      ) =>
+      ) ->
       (grid[step,gRow,gCol] = EMPTY),
 
 $ %%%%%%%%% Cells change colour %%%%%%%%%
@@ -299,7 +299,7 @@ forall step : STEPSFROM1 .
          (exists rowsAbove : int(1..gRow-1) . (grid[step-1,rowsAbove,gCol] = hand[step-1]))
         )
        )
-      ) =>
+      ) ->
       ((hand[step] = grid[step-1,gRow,gCol]) /\
        (hand[step-1] = grid[step,gRow,gCol])),
 
@@ -315,5 +315,5 @@ forall step : STEPSFROM1 .
          (forall delBlock : int(1..gCol) . 
           ((grid[step-1,delRow,delBlock] = hand[step-1]) \/
            (grid[step-1,delRow,delBlock] = EMPTY)))))
-      ) =>
+      ) ->
       (grid[step,gRow,gCol] = grid[step-1,gRow-1,gCol])    

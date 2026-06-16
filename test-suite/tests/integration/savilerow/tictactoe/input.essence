@@ -61,7 +61,7 @@ $ or there is just one change
 
 $ there must be as many black as white in each even step
 forall step : STEPS0 . 
-    (step % 2 = 0) =>
+    (step % 2 = 0) ->
         ( (sum row, col : LENGTH . (tickTackToe[step,row,col] = BLACK))
            = 
           (sum row, col : LENGTH . (tickTackToe[step,row,col] = WHITE))  
@@ -80,7 +80,7 @@ forall step :  STEPS1 .
       /\ 
         $ and no other field changes
         forall i,j : LENGTH . 
-             ((i != row) /\ (j!=col)) =>
+             ((i != row) /\ (j!=col)) ->
                  (tickTackToe[step,i,j] = tickTackToe[step-1,i,j])
    ),
          
@@ -90,7 +90,7 @@ $ if a player already took the field, then it belongs
 $ to the player forever
 forall step : STEPS1 . 
    forall row, col : LENGTH .
-       (tickTackToe[step-1,row,col] != EMPTY ) =>
+       (tickTackToe[step-1,row,col] != EMPTY ) ->
           (tickTackToe[step,row,col] = tickTackToe[step-1,row,col]),
 
  
