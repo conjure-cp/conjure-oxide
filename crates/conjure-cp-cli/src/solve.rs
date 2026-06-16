@@ -32,6 +32,7 @@ use conjure_cp_cli::find_conjure::conjure_executable;
 use conjure_cp_cli::utils::conjure::{get_solutions, solutions_to_json};
 use serde_json::to_string_pretty;
 
+use conjure_cp_cli::utils::text_files::write_text_with_trailing_newline;
 use crate::cli::{GlobalArgs, LOGGING_HELP_HEADING};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -152,7 +153,7 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
         let context_obj = context.read().unwrap().clone();
         let generated_json = &serde_json::to_value(context_obj)?;
         let pretty_json = serde_json::to_string_pretty(&generated_json)?;
-        File::create(path)?.write_all(pretty_json.as_bytes())?;
+        write_text_with_trailing_newline(path, &pretty_json)?;
     }
     Ok(())
 }
