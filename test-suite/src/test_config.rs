@@ -17,6 +17,28 @@ fn write_toml_document(path: &Path, document: &DocumentMut) -> io::Result<()> {
     write_text_with_trailing_newline(path, &document.to_string())
 }
 
+// toml_edit's Index impl panics on missing keys, so use .get() before creating tables.
+fn ensure_table(document: &mut DocumentMut, key: &str) {
+    if document.get(key).is_some_and(|item| item.is_table()) {
+        return;
+    }
+    document[key] = Item::Table(Table::new());
+}
+
+fn ensure_nested_table(document: &mut DocumentMut, keys: &[&str]) {
+    let (head, tail) = keys.split_first().expect("table path must not be empty");
+    ensure_table(document, head);
+    let mut table = document[head].as_table_mut().expect("table exists");
+    for key in tail {
+        if table.get(*key).is_some_and(|item| item.is_table()) {
+            table = table[key].as_table_mut().expect("table exists");
+            continue;
+        }
+        table[*key] = Item::Table(Table::new());
+        table = table[key].as_table_mut().expect("table exists");
+    }
+}
+
 fn parse_values<T>(values: &[String]) -> Result<Vec<T>, String>
 where
     T: FromStr<Err = String>,
@@ -198,12 +220,7 @@ pub fn upsert_tool_status_config(path: &Path, tool: &str, status: &str) -> io::R
         DocumentMut::new()
     };
 
-    if !document["stats"].is_table() {
-        document["stats"] = Item::Table(Table::new());
-    }
-    if !document["stats"][tool].is_table() {
-        document["stats"][tool] = Item::Table(Table::new());
-    }
+    ensure_nested_table(&mut document, &["stats", tool]);
     document["stats"][tool]["status"] = value(status);
 
     write_toml_document(path, &document)
@@ -241,18 +258,11 @@ pub fn upsert_recorded_run_stats_config(path: &Path, stats: RecordedRunStats) ->
         DocumentMut::new()
     };
 
-    if !document["stats"].is_table() {
-        document["stats"] = Item::Table(Table::new());
-    }
-    if !document["stats"]["oxide"].is_table() {
-        document["stats"]["oxide"] = Item::Table(Table::new());
-    }
+    ensure_nested_table(&mut document, &["stats", "oxide"]);
     document["stats"]["oxide"]["translation-time"] = value(stats.oxide_translation_time);
     document["stats"]["oxide"]["solve-time"] = value(stats.oxide_solve_time);
 
-    if !document["stats"]["conjure"].is_table() {
-        document["stats"]["conjure"] = Item::Table(Table::new());
-    }
+    ensure_nested_table(&mut document, &["stats", "conjure"]);
     document["stats"]["conjure"]["translation-time"] = value(stats.conjure_translation_time);
     document["stats"]["conjure"]["conjure-translation-time"] =
         value(stats.conjure_driver_translation_time);
