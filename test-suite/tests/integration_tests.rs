@@ -41,7 +41,7 @@ use test_suite::TestConfig;
 use test_suite::golden_files::assert_no_redundant_expected_files;
 use test_suite::test_config::{
     RecordedRunStats, round_expected_time, upsert_expected_time_config,
-    upsert_recorded_run_stats_config,
+    upsert_recorded_run_stats_config, upsert_status_config,
 };
 
 #[derive(Clone, Copy, Debug)]
@@ -66,7 +66,11 @@ impl RunTimings {
     }
 }
 
-fn run_integration_test_with_timeout<F>(test_name: &str, run_test: F) -> Result<(), Box<dyn Error>>
+fn run_integration_test_with_timeout<F>(
+    test_name: &str,
+    test_dir: &str,
+    run_test: F,
+) -> Result<(), Box<dyn Error>>
 where
     F: FnOnce() -> Result<(), Box<dyn Error>>,
 {
@@ -99,6 +103,12 @@ where
         if started_at.elapsed() >= timeout {
             child.kill()?;
             let _ = child.wait();
+            if AcceptMode::from_env().accepts_outputs() {
+                upsert_status_config(
+                    &Path::new(test_dir).join("config.toml"),
+                    &format!("timeout({})", timeout.as_secs()),
+                )?;
+            }
             return Err(format!(
                 "test {test_name} exceeded TEST_CASE_TIMEOUT={}s",
                 timeout.as_secs()
@@ -139,6 +149,21 @@ fn run_case_label(
 }
 
 fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(), Box<dyn Error>> {
+    let result = integration_test_inner_with_status(path, essence_base, extension);
+
+    if AcceptMode::from_env().accepts_outputs() {
+        let status = if result.is_ok() { "ok" } else { "fail" };
+        upsert_status_config(&Path::new(path).join("config.toml"), status)?;
+    }
+
+    result
+}
+
+fn integration_test_inner_with_status(
+    path: &str,
+    essence_base: &str,
+    extension: &str,
+) -> Result<(), Box<dyn Error>> {
     let accept_mode = AcceptMode::from_env();
     let accept = accept_mode.accepts_outputs();
     let started_at = Instant::now();

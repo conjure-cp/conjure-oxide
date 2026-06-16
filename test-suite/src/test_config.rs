@@ -9,7 +9,7 @@ use std::io;
 use std::path::Path;
 use std::str::FromStr;
 use std::time::Duration;
-use toml_edit::{DocumentMut, value};
+use toml_edit::{DocumentMut, Item, Table, value};
 
 fn parse_values<T>(values: &[String]) -> Result<Vec<T>, String>
 where
@@ -162,6 +162,31 @@ pub fn upsert_expected_time_config(path: &Path, expected_time: u64) -> io::Resul
     fs::write(path, new_contents)
 }
 
+/// Inserts or updates the latest observed integration status in a test `config.toml`.
+pub fn upsert_status_config(path: &Path, status: &str) -> io::Result<()> {
+    let mut document = if path.exists() {
+        let contents = fs::read_to_string(path)?;
+        if contents.trim().is_empty() {
+            DocumentMut::new()
+        } else {
+            contents
+                .parse::<DocumentMut>()
+                .map_err(|err| io::Error::new(io::ErrorKind::InvalidData, err))?
+        }
+    } else {
+        DocumentMut::new()
+    };
+
+    document["status"] = value(status);
+
+    let mut new_contents = document.to_string();
+    if !new_contents.ends_with('\n') {
+        new_contents.push('\n');
+    }
+
+    fs::write(path, new_contents)
+}
+
 #[derive(Clone, Copy, Debug)]
 pub struct RecordedRunStats {
     pub oxide_translation_time: f64,
@@ -187,8 +212,12 @@ pub fn upsert_recorded_run_stats_config(path: &Path, stats: RecordedRunStats) ->
         DocumentMut::new()
     };
 
+    document["stats"] = Item::Table(Table::new());
+    document["stats"]["oxide"] = Item::Table(Table::new());
     document["stats"]["oxide"]["translation-time"] = value(stats.oxide_translation_time);
     document["stats"]["oxide"]["solve-time"] = value(stats.oxide_solve_time);
+
+    document["stats"]["conjure"] = Item::Table(Table::new());
     document["stats"]["conjure"]["translation-time"] = value(stats.conjure_translation_time);
     document["stats"]["conjure"]["conjure-translation-time"] =
         value(stats.conjure_driver_translation_time);
@@ -290,6 +319,8 @@ pub struct TestConfig {
     )]
     pub number_of_solutions: NumberOfSolutions,
 
+    pub status: Option<String>,
+
     // Generate this test but do not run it
     pub skip: bool,
 
@@ -340,6 +371,7 @@ impl Default for TestConfig {
             minion_discrete_threshold: default_minion_discrete_threshold(),
             validate_with_conjure: true,
             number_of_solutions: NumberOfSolutions::All,
+            status: None,
             stats: TestStats::default(),
         }
     }
