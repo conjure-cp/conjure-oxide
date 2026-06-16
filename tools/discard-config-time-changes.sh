@@ -43,15 +43,19 @@ done
 
 file_ends_with_newline() {
   local file="$1"
-  [[ -s "$file" ]] || return 0
-  [[ "$(tail -c 1 "$file")" == $'\n' ]]
+  [[ ! -s "$file" ]] && return 0
+  [[ "$(tail -c 1 "$file" | xxd -p)" == "0a" ]]
+}
+
+ensure_trailing_newline() {
+  local file="$1"
+  file_ends_with_newline "$file" || printf '\n' >>"$file"
 }
 
 restore_time_fields() {
   local head_file="$1"
   local work_file="$2"
   local out_file="$3"
-  local preserve_final_newline="$4"
 
   awk -v headpath="$head_file" '
     function trim(s) {
@@ -112,9 +116,7 @@ restore_time_fields() {
     }
   ' "$work_file" > "$out_file"
 
-  if [[ "$preserve_final_newline" == false ]]; then
-    perl -i -pe 'chomp if eof' "$out_file"
-  fi
+  ensure_trailing_newline "$out_file"
 }
 
 cd "$REPO_ROOT"
@@ -147,9 +149,7 @@ while IFS= read -r rel || [[ -n "$rel" ]]; do
   trap 'rm -f "$head_tmp" "$out_tmp"' RETURN
 
   git show "HEAD:$rel" > "$head_tmp"
-  preserve_final_newline=true
-  file_ends_with_newline "$rel" || preserve_final_newline=false
-  restore_time_fields "$head_tmp" "$rel" "$out_tmp" "$preserve_final_newline"
+  restore_time_fields "$head_tmp" "$rel" "$out_tmp"
 
   if cmp -s "$rel" "$out_tmp"; then
     ((skipped+=1))
