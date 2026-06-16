@@ -12,6 +12,7 @@ mod constant_eval;
 mod lex;
 mod matrix;
 mod minion;
+mod ortools;
 mod normalisers;
 mod records;
 mod representation;

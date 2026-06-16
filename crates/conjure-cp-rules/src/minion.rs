@@ -30,9 +30,6 @@ register_rule_set!("Minion", ("Base"), |f: &SolverFamily| {
     matches!(f, SolverFamily::Minion)
 });
 
-register_rule_set!("OrToolsCpSat", ("Base"), |f: &SolverFamily| {
-    matches!(f, SolverFamily::OrToolsCpSat)
-});
 
 
 
@@ -988,7 +985,7 @@ fn flatten_imply(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     ))
 }
 
-#[register_rule("Minion", 4200, [SafeDiv, Neq, SafeMod, SafePow, Leq, Geq, Abs, Neg, Not, SafeIndex, InDomain, ToInt])]
+#[register_rule(["Minion", "OrToolsCpSat"], 4200, [SafeDiv, Neq, SafeMod, SafePow, Leq, Geq, Abs, Neg, Not, SafeIndex, InDomain, ToInt])]
 fn flatten_generic(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     if !matches!(
         expr,
@@ -1028,7 +1025,7 @@ fn flatten_generic(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     Ok(Reduction::new(expr, new_tops, symbols))
 }
 
-#[register_rule("Minion", 4200, [Eq])]
+#[register_rule(["Minion", "OrToolsCpSat"], 4200, [Eq])]
 fn flatten_eq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     if !matches!(expr, Expr::Eq(_, _, _)) {
         return Err(RuleNotApplicable);
@@ -1062,7 +1059,7 @@ fn flatten_eq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 /// ```plain
 /// product([|x|,y,z]) ~~> product([aux1,y,z]), aux1=|x|
 /// ```
-#[register_rule("Minion", 4200, [Product])]
+#[register_rule(["Minion", "OrToolsCpSat"], 4200, [Product])]
 fn flatten_product(expr: &Expr, symtab: &SymbolTable) -> ApplicationResult {
     // product cannot use flatten_generic as we don't want to put the immediate child in an aux
     // var, as that is the matrix literal. Instead we want to put the children of the matrix
@@ -1125,7 +1122,7 @@ fn flatten_product(expr: &Expr, symtab: &SymbolTable) -> ApplicationResult {
 /// __0 =aux e/2,
 /// __1 =aux f*5
 /// ```
-#[register_rule("Minion", 1000)] // this should be a lower priority than matrix to list
+#[register_rule(["Minion", "OrToolsCpSat"], 1000)] // this should be a lower priority than matrix to list
 fn flatten_matrix_literal(expr: &Expr, symtab: &SymbolTable) -> ApplicationResult {
     // do not flatten matrix literals inside sum, or, and, product as these expressions either do
     // their own flattening, or do not need flat expressions.
@@ -1460,3 +1457,4 @@ fn iff_to_eq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         y.clone(),
     )))
 }
+

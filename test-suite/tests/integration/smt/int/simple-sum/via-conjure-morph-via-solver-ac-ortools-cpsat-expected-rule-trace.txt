@@ -1,0 +1,24 @@
+Model before rewriting:
+
+find x: int(1..10)
+find y: int(1..10)
+
+such that
+
+(sum([x,y;int(1..2)]) = 9),
+(sum([x,x;int(1..2)]) = y)
+
+--
+
+Final model:
+
+find x: int(1..10)
+find y: int(1..10)
+
+such that
+
+SumLeq([x, y], 9),
+SumGeq([x, y], 9),
+FlatWeightedSumLeq([2],[x],y),
+FlatWeightedSumGeq([2],[x],y)
+

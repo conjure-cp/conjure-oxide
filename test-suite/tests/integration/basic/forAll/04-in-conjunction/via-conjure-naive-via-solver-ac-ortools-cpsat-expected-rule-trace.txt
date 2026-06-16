@@ -16,15 +16,27 @@ and([a,(b = true);int(1..2)])
 --
 
 and([a,(b = true);int(1..2)]), 
-   ~~> matrix_to_list ([("Base", 2000)])
-and([a,(b = true);int(1..)])
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+and([a,__0;int(1..2)])
+new variables:
+  find __0: bool
+new constraints:
+  __0 =aux (b = true)
 
 --
 
-and([a,(b = true);int(1..)]), 
+and([a,__0;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)])
+and([a,__0;int(1..)])
+
+--
+
+and([a,__0;int(1..)]),
+__0 =aux (b = true), 
    ~~> constant_evaluator ([("Constant", 9001)])
 a,
-(b = true)
+__0,
+__0 =aux (b = true)
 
 --
 
@@ -32,9 +44,11 @@ Final model:
 
 find a: bool
 find b: bool
+find __0: bool
 
 such that
 
 a,
-(b = true)
+__0,
+__0 =aux (b = true)
 

@@ -1,0 +1,49 @@
+Model before rewriting:
+
+find x: int(1..2)
+find y: int(1..2)
+find z: int(1..2)
+
+such that
+
+(max([x,y,z;int(1..3)]) = 2),
+(min([x,y,z;int(1..3)]) = 1),
+and([(x <= y),(y <= z);int(1..)])
+
+--
+
+Final model:
+
+find x: int(1..2)
+find y: int(1..2)
+find z: int(1..2)
+find __0: int(1..2)
+find __1: bool
+find __2: bool
+find __3: bool
+find __4: int(1..2)
+find __5: bool
+find __6: bool
+find __7: bool
+
+such that
+
+(__0 = 2),
+(__4 = 1),
+(x <= y),
+(y <= z),
+(__0 >= x),
+(__0 >= y),
+(__0 >= z),
+or([__1,__2,__3;int(1..)]),
+__1 =aux (__0 = x),
+__2 =aux (__0 = y),
+__3 =aux (__0 = z),
+(__4 <= x),
+(__4 <= y),
+(__4 <= z),
+or([__5,__6,__7;int(1..)]),
+__5 =aux (__4 = x),
+__6 =aux (__4 = y),
+__7 =aux (__4 = z)
+

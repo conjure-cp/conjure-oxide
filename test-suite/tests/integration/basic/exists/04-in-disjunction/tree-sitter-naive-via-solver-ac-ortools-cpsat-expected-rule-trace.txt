@@ -1,0 +1,38 @@
+Model before rewriting:
+
+find a: bool
+find b: bool
+
+such that
+
+or([a,(b = or([ (product([m,m;int(1..)]) = 4) | m : int(0..3) ]));int(1..)])
+
+--
+
+or([a,(b = or([ (product([m,m;int(1..)]) = 4) | m : int(0..3) ]));int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+or([a,(b = true);int(1..)])
+
+--
+
+or([a,(b = true);int(1..)]), 
+   ~~> flatten_logical ([("OrToolsCpSat", 4200)])
+or([a,__0;int(1..)])
+new variables:
+  find __0: bool
+new constraints:
+  __0 =aux (b = true)
+
+--
+
+Final model:
+
+find a: bool
+find b: bool
+find __0: bool
+
+such that
+
+or([a,__0;int(1..)]),
+__0 =aux (b = true)
+
