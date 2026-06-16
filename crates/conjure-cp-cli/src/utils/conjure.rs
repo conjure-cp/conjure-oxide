@@ -274,7 +274,7 @@ pub fn get_solutions_from_conjure(
     param_file: Option<&str>,
     context: Arc<RwLock<Context<'static>>>,
 ) -> Result<Vec<BTreeMap<Name, Literal>>, anyhow::Error> {
-    Ok(get_solutions_from_conjure_with_stats(essence_file, param_file, context)?.solutions)
+    Ok(get_solutions_from_conjure_with_stats(essence_file, param_file, context, 0)?.solutions)
 }
 
 #[allow(clippy::unwrap_used)]
@@ -282,13 +282,19 @@ pub fn get_solutions_from_conjure_with_stats(
     essence_file: &str,
     param_file: Option<&str>,
     context: Arc<RwLock<Context<'static>>>,
+    number_of_solutions: i32,
 ) -> Result<ConjureSolutions, anyhow::Error> {
     let tmp_dir = tempdir()?;
 
     let mut cmd = std::process::Command::new("conjure");
+    let number_of_solutions_arg = if number_of_solutions == 0 {
+        "all".to_string()
+    } else {
+        number_of_solutions.to_string()
+    };
 
     cmd.arg("solve")
-        .arg("--number-of-solutions=all")
+        .arg(format!("--number-of-solutions={number_of_solutions_arg}"))
         .arg("--copy-solutions=no")
         .arg("-o")
         .arg(tmp_dir.path())

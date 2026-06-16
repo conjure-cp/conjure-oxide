@@ -158,6 +158,7 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
 
     let validate_with_conjure = config.validate_with_conjure;
     let minion_discrete_threshold = config.minion_discrete_threshold;
+    let number_of_solutions = config.number_of_solutions.as_solver_limit();
 
     let parsers = config
         .configured_parsers()
@@ -176,14 +177,17 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
     let model_path = format!("{path}/{essence_base}.{extension}");
     let conjure_solutions = if accept && validate_with_conjure {
         eprintln!("[integration] loading Conjure reference solutions for {model_path}");
-        let conjure_run =
-            get_solutions_from_conjure_with_stats(&model_path, None, Default::default()).map_err(
-                |err| {
-                    std::io::Error::other(format!(
-                        "failed to fetch Conjure reference solutions for {model_path}: {err}"
-                    ))
-                },
-            )?;
+        let conjure_run = get_solutions_from_conjure_with_stats(
+            &model_path,
+            None,
+            Default::default(),
+            number_of_solutions,
+        )
+        .map_err(|err| {
+            std::io::Error::other(format!(
+                "failed to fetch Conjure reference solutions for {model_path}: {err}"
+            ))
+        })?;
 
         Some((Arc::new(conjure_run.solutions), conjure_run.timings))
     } else {
@@ -244,6 +248,7 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
                             extension,
                             run_case,
                             minion_discrete_threshold,
+                            number_of_solutions,
                             conjure_solution_values.clone(),
                             accept,
                         )
@@ -329,6 +334,7 @@ fn integration_test_inner(
     extension: &str,
     run_case: RunCase<'_>,
     minion_discrete_threshold: usize,
+    number_of_solutions: i32,
     conjure_solutions: Option<Arc<Vec<BTreeMap<Name, Literal>>>>,
     accept: bool,
 ) -> Result<RunTimings, Box<dyn Error>> {
@@ -390,7 +396,13 @@ fn integration_test_inner(
 
     let solver_started_at = Instant::now();
     let solutions = {
-        let solved = get_solutions(solver, rewritten_model, 0, &solver_input_file, false)?;
+        let solved = get_solutions(
+            solver,
+            rewritten_model,
+            number_of_solutions,
+            &solver_input_file,
+            false,
+        )?;
         save_solutions_json(&solved, path, case_name, solver_fam)?;
         solved
     };

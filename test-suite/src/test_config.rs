@@ -2,6 +2,8 @@
 
 use conjure_cp::settings::{Parser, QuantifiedExpander, Rewriter, SolverFamily};
 use serde::Deserialize;
+use serde::de::{self, Visitor};
+use std::fmt;
 use std::fs;
 use std::io;
 use std::path::Path;
@@ -46,6 +48,70 @@ where
     D: serde::Deserializer<'de>,
 {
     Option::<u64>::deserialize(deserializer)
+}
+
+fn default_number_of_solutions() -> NumberOfSolutions {
+    NumberOfSolutions::All
+}
+
+fn deserialise_number_of_solutions<'de, D>(deserializer: D) -> Result<NumberOfSolutions, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    deserializer.deserialize_any(NumberOfSolutionsVisitor)
+}
+
+struct NumberOfSolutionsVisitor;
+
+impl<'de> Visitor<'de> for NumberOfSolutionsVisitor {
+    type Value = NumberOfSolutions;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter.write_str("a positive integer or the string \"all\"")
+    }
+
+    fn visit_u64<E>(self, value: u64) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        let value = i32::try_from(value).map_err(|err| {
+            E::custom(format!(
+                "number-of-solutions is too large for the solver limit: {err}"
+            ))
+        })?;
+
+        if value == 0 {
+            return Err(E::custom(
+                "number-of-solutions must be positive, or the string \"all\"",
+            ));
+        }
+
+        Ok(NumberOfSolutions::Limit(value))
+    }
+
+    fn visit_i64<E>(self, value: i64) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        let value = u64::try_from(value).map_err(|_| {
+            E::custom("number-of-solutions must be positive, or the string \"all\"")
+        })?;
+
+        self.visit_u64(value)
+    }
+
+    fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        if value == "all" {
+            Ok(NumberOfSolutions::All)
+        } else {
+            Err(E::custom(format!(
+                "invalid number-of-solutions value '{value}', expected a positive integer or \"all\""
+            )))
+        }
+    }
 }
 
 /// Rounds an observed runtime into the coarse `expected-time` buckets used by test configs,
@@ -163,6 +229,21 @@ pub struct RecordedToolStats {
     pub savilerow_translation_time: Option<f64>,
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum NumberOfSolutions {
+    All,
+    Limit(i32),
+}
+
+impl NumberOfSolutions {
+    pub fn as_solver_limit(self) -> i32 {
+        match self {
+            Self::All => 0,
+            Self::Limit(limit) => limit,
+        }
+    }
+}
+
 #[derive(Deserialize, Debug)]
 #[serde(default)]
 #[serde(deny_unknown_fields)]
@@ -201,6 +282,13 @@ pub struct TestConfig {
 
     #[serde(default = "default_true", rename = "validate-with-conjure")]
     pub validate_with_conjure: bool,
+
+    #[serde(
+        default = "default_number_of_solutions",
+        rename = "number-of-solutions",
+        deserialize_with = "deserialise_number_of_solutions"
+    )]
+    pub number_of_solutions: NumberOfSolutions,
 
     // Generate this test but do not run it
     pub skip: bool,
@@ -251,6 +339,7 @@ impl Default for TestConfig {
             },
             minion_discrete_threshold: default_minion_discrete_threshold(),
             validate_with_conjure: true,
+            number_of_solutions: NumberOfSolutions::All,
             stats: TestStats::default(),
         }
     }
