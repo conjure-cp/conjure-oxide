@@ -129,9 +129,13 @@ fn integration_test(
     .map_err(|err| std::io::Error::other(format!("{run_label}: {err}")))?;
 
     if accept_mode.records_expected_time() {
-        let expected_time = round_expected_time(started_at.elapsed());
+        let observed_expected_time = round_expected_time(started_at.elapsed());
         let config_path = Path::new(path).join("config.toml");
-        upsert_expected_time_config(&config_path, expected_time)?;
+        if let Some(expected_time) =
+            accept_mode.expected_time_to_record(config.expected_time, observed_expected_time)
+        {
+            upsert_expected_time_config(&config_path, expected_time)?;
+        }
     }
 
     Ok(())
