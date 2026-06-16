@@ -1,0 +1,54 @@
+Model before rewriting:
+
+find t: bool
+find x: bool
+find y: bool
+find z: bool
+
+such that
+
+((t) <-> ((z = x))) <-> (y)
+
+--
+
+((t) <-> ((z = x))) <-> (y), 
+   ~~> iff_to_eq ([("Minion", 4400)])
+((t) <-> ((z = x)) = y)
+
+--
+
+((t) <-> ((z = x)) = y), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify((t) <-> ((z = x)), y)
+
+--
+
+(t) <-> ((z = x)), 
+   ~~> iff_to_eq ([("Minion", 4400)])
+(t = (z = x))
+
+--
+
+(t = (z = x)), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify((z = x), t)
+
+--
+
+(z = x), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(x, z)
+
+--
+
+Final model:
+
+find t: bool
+find x: bool
+find y: bool
+find z: bool
+
+such that
+
+Reify(Reify(Reify(x, z), t), y)
+

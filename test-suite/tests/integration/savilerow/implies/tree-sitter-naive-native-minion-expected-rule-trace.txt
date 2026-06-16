@@ -1,0 +1,60 @@
+Model before rewriting:
+
+find t: bool
+find x: bool
+find y: bool
+find z: bool
+
+such that
+
+((t) -> ((z = x))) -> (y)
+
+--
+
+(t) -> ((z = x)), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+ReifyImply((z = x), t)
+
+--
+
+(z = x), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(x, z)
+
+--
+
+(ReifyImply(Reify(x, z), t)) -> (y), 
+   ~~> flatten_imply ([("Minion", 4200)])
+(__0) -> (y)
+new variables:
+  find __0: bool
+new constraints:
+  __0 =aux ReifyImply(Reify(x, z), t)
+
+--
+
+(__0) -> (y), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+Ineq(__0, y, 0)
+
+--
+
+__0 =aux ReifyImply(Reify(x, z), t), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(ReifyImply(Reify(x, z), t), __0)
+
+--
+
+Final model:
+
+find t: bool
+find x: bool
+find y: bool
+find z: bool
+find __0: bool
+
+such that
+
+Ineq(__0, y, 0),
+Reify(ReifyImply(Reify(x, z), t), __0)
+

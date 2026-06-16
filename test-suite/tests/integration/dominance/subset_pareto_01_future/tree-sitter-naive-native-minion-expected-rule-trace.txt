@@ -1,0 +1,469 @@
+Model before rewriting:
+
+letting n be 4
+letting cost be [3,2,4,6;int(1..4)]
+letting carbon be [1,4,2,5;int(1..4)]
+find selected: matrix indexed by [int(1..n)] of bool
+find total_cost: int(0..20)
+find total_carbon: int(0..20)
+
+such that
+
+(sum([ toInt(selected[i]) | i : int(1..n) ]) = 1),
+(total_cost = sum([ (selected[i]) -> (cost[i]) | i : int(1..n) ])),
+(total_carbon = sum([ (selected[i]) -> (carbon[i]) | i : int(1..n) ]))
+
+--
+
+(sum([ toInt(selected[i]) | i : int(1..n) ]) = 1),
+(total_cost = sum([ (selected[i]) -> (cost[i]) | i : int(1..n) ])),
+(total_carbon = sum([ (selected[i]) -> (carbon[i]) | i : int(1..n) ])), 
+   ~~> select_representation_matrix ([("Representations", 8001)])
+(sum([ toInt(selected[i]) | i : int(1..n) ]) = 1),
+(total_cost = sum([ (selected[i]) -> (cost[i]) | i : int(1..n) ])),
+(total_carbon = sum([ (selected[i]) -> (carbon[i]) | i : int(1..n) ]))
+new variables:
+  find selected#matrix_to_atom_1: bool
+  find selected#matrix_to_atom_2: bool
+  find selected#matrix_to_atom_3: bool
+  find selected#matrix_to_atom_4: bool
+
+--
+
+[ toInt(selected[i]) | i : int(1..n) ], 
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[toInt(selected[1]),toInt(selected[2]),toInt(selected[3]),toInt(selected[4]);int(1..)]
+
+--
+
+(sum([toInt(selected#matrix_to_atom[1]),toInt(selected#matrix_to_atom[2]),toInt(selected#matrix_to_atom[3]),toInt(selected#matrix_to_atom[4]);int(1..)]) = 1),
+(total_cost = sum([ (selected#matrix_to_atom[i]) -> (cost[i]) | i : int(1..n) ])),
+(total_carbon = sum([ (selected#matrix_to_atom[i]) -> (carbon[i]) | i : int(1..n) ])), 
+   ~~> select_representation_matrix ([("Representations", 8001)])
+(sum([toInt(selected#matrix_to_atom[1]),toInt(selected#matrix_to_atom[2]),toInt(selected#matrix_to_atom[3]),toInt(selected#matrix_to_atom[4]);int(1..)]) = 1),
+(total_cost = sum([ (selected#matrix_to_atom[i]) -> (cost[i]) | i : int(1..n) ])),
+(total_carbon = sum([ (selected#matrix_to_atom[i]) -> (carbon[i]) | i : int(1..n) ]))
+
+--
+
+selected#matrix_to_atom[1], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(selected#matrix_to_atom,[1])
+
+--
+
+selected#matrix_to_atom[2], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(selected#matrix_to_atom,[2])
+
+--
+
+selected#matrix_to_atom[3], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(selected#matrix_to_atom,[3])
+
+--
+
+selected#matrix_to_atom[4], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(selected#matrix_to_atom,[4])
+
+--
+
+(sum([toInt(SafeIndex(selected#matrix_to_atom,[1])),toInt(SafeIndex(selected#matrix_to_atom,[2])),toInt(SafeIndex(selected#matrix_to_atom,[3])),toInt(SafeIndex(selected#matrix_to_atom,[4]));int(1..)]) = 1),
+(total_cost = sum([ (selected#matrix_to_atom[i]) -> (cost[i]) | i : int(1..n) ])),
+(total_carbon = sum([ (selected#matrix_to_atom[i]) -> (carbon[i]) | i : int(1..n) ])), 
+   ~~> index_matrix_to_atom ([("Base", 5000)])
+(sum([toInt(selected#matrix_to_atom_1),toInt(selected#matrix_to_atom_2),toInt(selected#matrix_to_atom_3),toInt(selected#matrix_to_atom_4);int(1..)]) = 1),
+(total_cost = sum([ (selected#matrix_to_atom[i]) -> (cost[i]) | i : int(1..n) ])),
+(total_carbon = sum([ (selected#matrix_to_atom[i]) -> (carbon[i]) | i : int(1..n) ]))
+
+--
+
+(sum([toInt(selected#matrix_to_atom_1),toInt(selected#matrix_to_atom_2),toInt(selected#matrix_to_atom_3),toInt(selected#matrix_to_atom_4);int(1..)]) = 1), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([__0, __1, __2, __3], 1),SumGeq([__0, __1, __2, __3], 1);int(1..)])
+new variables:
+  find __0: int(0..1)
+  find __1: int(0..1)
+  find __2: int(0..1)
+  find __3: int(0..1)
+new constraints:
+  __0 =aux toInt(selected#matrix_to_atom_1)
+  __1 =aux toInt(selected#matrix_to_atom_2)
+  __2 =aux toInt(selected#matrix_to_atom_3)
+  __3 =aux toInt(selected#matrix_to_atom_4)
+
+--
+
+and([SumLeq([__0, __1, __2, __3], 1),SumGeq([__0, __1, __2, __3], 1);int(1..)]),
+(total_cost = sum([ (selected#matrix_to_atom[i]) -> (cost[i]) | i : int(1..n) ])),
+(total_carbon = sum([ (selected#matrix_to_atom[i]) -> (carbon[i]) | i : int(1..n) ])),
+__0 =aux toInt(selected#matrix_to_atom_1),
+__1 =aux toInt(selected#matrix_to_atom_2),
+__2 =aux toInt(selected#matrix_to_atom_3),
+__3 =aux toInt(selected#matrix_to_atom_4), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+SumLeq([__0, __1, __2, __3], 1),
+SumGeq([__0, __1, __2, __3], 1),
+(total_cost = sum([ (selected#matrix_to_atom[i]) -> (cost[i]) | i : int(1..n) ])),
+(total_carbon = sum([ (selected#matrix_to_atom[i]) -> (carbon[i]) | i : int(1..n) ])),
+__0 =aux toInt(selected#matrix_to_atom_1),
+__1 =aux toInt(selected#matrix_to_atom_2),
+__2 =aux toInt(selected#matrix_to_atom_3),
+__3 =aux toInt(selected#matrix_to_atom_4)
+
+--
+
+[ (selected#matrix_to_atom[i]) -> (cost[i]) | i : int(1..n) ], 
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[(selected#matrix_to_atom[1]) -> (3),(selected#matrix_to_atom[2]) -> (2),(selected#matrix_to_atom[3]) -> (4),(selected#matrix_to_atom[4]) -> (6);int(1..)]
+
+--
+
+selected#matrix_to_atom[1], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(selected#matrix_to_atom,[1])
+
+--
+
+selected#matrix_to_atom[2], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(selected#matrix_to_atom,[2])
+
+--
+
+selected#matrix_to_atom[3], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(selected#matrix_to_atom,[3])
+
+--
+
+selected#matrix_to_atom[4], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(selected#matrix_to_atom,[4])
+
+--
+
+SumLeq([__0, __1, __2, __3], 1),
+SumGeq([__0, __1, __2, __3], 1),
+(total_cost = sum([(SafeIndex(selected#matrix_to_atom,[1])) -> (3),(SafeIndex(selected#matrix_to_atom,[2])) -> (2),(SafeIndex(selected#matrix_to_atom,[3])) -> (4),(SafeIndex(selected#matrix_to_atom,[4])) -> (6);int(1..)])),
+(total_carbon = sum([ (selected#matrix_to_atom[i]) -> (carbon[i]) | i : int(1..n) ])),
+__0 =aux toInt(selected#matrix_to_atom_1),
+__1 =aux toInt(selected#matrix_to_atom_2),
+__2 =aux toInt(selected#matrix_to_atom_3),
+__3 =aux toInt(selected#matrix_to_atom_4), 
+   ~~> index_matrix_to_atom ([("Base", 5000)])
+SumLeq([__0, __1, __2, __3], 1),
+SumGeq([__0, __1, __2, __3], 1),
+(total_cost = sum([(selected#matrix_to_atom_1) -> (3),(selected#matrix_to_atom_2) -> (2),(selected#matrix_to_atom_3) -> (4),(selected#matrix_to_atom_4) -> (6);int(1..)])),
+(total_carbon = sum([ (selected#matrix_to_atom[i]) -> (carbon[i]) | i : int(1..n) ])),
+__0 =aux toInt(selected#matrix_to_atom_1),
+__1 =aux toInt(selected#matrix_to_atom_2),
+__2 =aux toInt(selected#matrix_to_atom_3),
+__3 =aux toInt(selected#matrix_to_atom_4)
+
+--
+
+(total_cost = sum([(selected#matrix_to_atom_1) -> (3),(selected#matrix_to_atom_2) -> (2),(selected#matrix_to_atom_3) -> (4),(selected#matrix_to_atom_4) -> (6);int(1..)])), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([__4, __5, __6, __7], total_cost),SumGeq([__4, __5, __6, __7], total_cost);int(1..)])
+new variables:
+  find __4: bool
+  find __5: bool
+  find __6: bool
+  find __7: bool
+new constraints:
+  __4 =aux (selected#matrix_to_atom_1) -> (3)
+  __5 =aux (selected#matrix_to_atom_2) -> (2)
+  __6 =aux (selected#matrix_to_atom_3) -> (4)
+  __7 =aux (selected#matrix_to_atom_4) -> (6)
+
+--
+
+SumLeq([__0, __1, __2, __3], 1),
+SumGeq([__0, __1, __2, __3], 1),
+and([SumLeq([__4, __5, __6, __7], total_cost),SumGeq([__4, __5, __6, __7], total_cost);int(1..)]),
+(total_carbon = sum([ (selected#matrix_to_atom[i]) -> (carbon[i]) | i : int(1..n) ])),
+__0 =aux toInt(selected#matrix_to_atom_1),
+__1 =aux toInt(selected#matrix_to_atom_2),
+__2 =aux toInt(selected#matrix_to_atom_3),
+__3 =aux toInt(selected#matrix_to_atom_4),
+__4 =aux (selected#matrix_to_atom_1) -> (3),
+__5 =aux (selected#matrix_to_atom_2) -> (2),
+__6 =aux (selected#matrix_to_atom_3) -> (4),
+__7 =aux (selected#matrix_to_atom_4) -> (6), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+SumLeq([__0, __1, __2, __3], 1),
+SumGeq([__0, __1, __2, __3], 1),
+SumLeq([__4, __5, __6, __7], total_cost),
+SumGeq([__4, __5, __6, __7], total_cost),
+(total_carbon = sum([ (selected#matrix_to_atom[i]) -> (carbon[i]) | i : int(1..n) ])),
+__0 =aux toInt(selected#matrix_to_atom_1),
+__1 =aux toInt(selected#matrix_to_atom_2),
+__2 =aux toInt(selected#matrix_to_atom_3),
+__3 =aux toInt(selected#matrix_to_atom_4),
+__4 =aux (selected#matrix_to_atom_1) -> (3),
+__5 =aux (selected#matrix_to_atom_2) -> (2),
+__6 =aux (selected#matrix_to_atom_3) -> (4),
+__7 =aux (selected#matrix_to_atom_4) -> (6)
+
+--
+
+__4 =aux (selected#matrix_to_atom_1) -> (3), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify((selected#matrix_to_atom_1) -> (3), __4)
+
+--
+
+(selected#matrix_to_atom_1) -> (3), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+Ineq(selected#matrix_to_atom_1, 3, 0)
+
+--
+
+__5 =aux (selected#matrix_to_atom_2) -> (2), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify((selected#matrix_to_atom_2) -> (2), __5)
+
+--
+
+(selected#matrix_to_atom_2) -> (2), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+Ineq(selected#matrix_to_atom_2, 2, 0)
+
+--
+
+__6 =aux (selected#matrix_to_atom_3) -> (4), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify((selected#matrix_to_atom_3) -> (4), __6)
+
+--
+
+(selected#matrix_to_atom_3) -> (4), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+Ineq(selected#matrix_to_atom_3, 4, 0)
+
+--
+
+__7 =aux (selected#matrix_to_atom_4) -> (6), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify((selected#matrix_to_atom_4) -> (6), __7)
+
+--
+
+(selected#matrix_to_atom_4) -> (6), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+Ineq(selected#matrix_to_atom_4, 6, 0)
+
+--
+
+[ (selected#matrix_to_atom[i]) -> (carbon[i]) | i : int(1..n) ], 
+   ~~> expand_comprehension_native ([("Base", 2000)])
+[(selected#matrix_to_atom[1]) -> (1),(selected#matrix_to_atom[2]) -> (4),(selected#matrix_to_atom[3]) -> (2),(selected#matrix_to_atom[4]) -> (5);int(1..)]
+
+--
+
+selected#matrix_to_atom[1], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(selected#matrix_to_atom,[1])
+
+--
+
+selected#matrix_to_atom[2], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(selected#matrix_to_atom,[2])
+
+--
+
+selected#matrix_to_atom[3], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(selected#matrix_to_atom,[3])
+
+--
+
+selected#matrix_to_atom[4], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(selected#matrix_to_atom,[4])
+
+--
+
+SumLeq([__0, __1, __2, __3], 1),
+SumGeq([__0, __1, __2, __3], 1),
+SumLeq([__4, __5, __6, __7], total_cost),
+SumGeq([__4, __5, __6, __7], total_cost),
+(total_carbon = sum([(SafeIndex(selected#matrix_to_atom,[1])) -> (1),(SafeIndex(selected#matrix_to_atom,[2])) -> (4),(SafeIndex(selected#matrix_to_atom,[3])) -> (2),(SafeIndex(selected#matrix_to_atom,[4])) -> (5);int(1..)])),
+__0 =aux toInt(selected#matrix_to_atom_1),
+__1 =aux toInt(selected#matrix_to_atom_2),
+__2 =aux toInt(selected#matrix_to_atom_3),
+__3 =aux toInt(selected#matrix_to_atom_4),
+Reify(Ineq(selected#matrix_to_atom_1, 3, 0), __4),
+Reify(Ineq(selected#matrix_to_atom_2, 2, 0), __5),
+Reify(Ineq(selected#matrix_to_atom_3, 4, 0), __6),
+Reify(Ineq(selected#matrix_to_atom_4, 6, 0), __7), 
+   ~~> index_matrix_to_atom ([("Base", 5000)])
+SumLeq([__0, __1, __2, __3], 1),
+SumGeq([__0, __1, __2, __3], 1),
+SumLeq([__4, __5, __6, __7], total_cost),
+SumGeq([__4, __5, __6, __7], total_cost),
+(total_carbon = sum([(selected#matrix_to_atom_1) -> (1),(selected#matrix_to_atom_2) -> (4),(selected#matrix_to_atom_3) -> (2),(selected#matrix_to_atom_4) -> (5);int(1..)])),
+__0 =aux toInt(selected#matrix_to_atom_1),
+__1 =aux toInt(selected#matrix_to_atom_2),
+__2 =aux toInt(selected#matrix_to_atom_3),
+__3 =aux toInt(selected#matrix_to_atom_4),
+Reify(Ineq(selected#matrix_to_atom_1, 3, 0), __4),
+Reify(Ineq(selected#matrix_to_atom_2, 2, 0), __5),
+Reify(Ineq(selected#matrix_to_atom_3, 4, 0), __6),
+Reify(Ineq(selected#matrix_to_atom_4, 6, 0), __7)
+
+--
+
+(total_carbon = sum([(selected#matrix_to_atom_1) -> (1),(selected#matrix_to_atom_2) -> (4),(selected#matrix_to_atom_3) -> (2),(selected#matrix_to_atom_4) -> (5);int(1..)])), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
+and([SumLeq([__10, __11, __8, __9], total_carbon),SumGeq([__10, __11, __8, __9], total_carbon);int(1..)])
+new variables:
+  find __8: bool
+  find __9: bool
+  find __10: bool
+  find __11: bool
+new constraints:
+  __8 =aux (selected#matrix_to_atom_1) -> (1)
+  __9 =aux (selected#matrix_to_atom_2) -> (4)
+  __10 =aux (selected#matrix_to_atom_3) -> (2)
+  __11 =aux (selected#matrix_to_atom_4) -> (5)
+
+--
+
+SumLeq([__0, __1, __2, __3], 1),
+SumGeq([__0, __1, __2, __3], 1),
+SumLeq([__4, __5, __6, __7], total_cost),
+SumGeq([__4, __5, __6, __7], total_cost),
+and([SumLeq([__10, __11, __8, __9], total_carbon),SumGeq([__10, __11, __8, __9], total_carbon);int(1..)]),
+__0 =aux toInt(selected#matrix_to_atom_1),
+__1 =aux toInt(selected#matrix_to_atom_2),
+__2 =aux toInt(selected#matrix_to_atom_3),
+__3 =aux toInt(selected#matrix_to_atom_4),
+Reify(Ineq(selected#matrix_to_atom_1, 3, 0), __4),
+Reify(Ineq(selected#matrix_to_atom_2, 2, 0), __5),
+Reify(Ineq(selected#matrix_to_atom_3, 4, 0), __6),
+Reify(Ineq(selected#matrix_to_atom_4, 6, 0), __7),
+__8 =aux (selected#matrix_to_atom_1) -> (1),
+__9 =aux (selected#matrix_to_atom_2) -> (4),
+__10 =aux (selected#matrix_to_atom_3) -> (2),
+__11 =aux (selected#matrix_to_atom_4) -> (5), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+SumLeq([__0, __1, __2, __3], 1),
+SumGeq([__0, __1, __2, __3], 1),
+SumLeq([__4, __5, __6, __7], total_cost),
+SumGeq([__4, __5, __6, __7], total_cost),
+SumLeq([__10, __11, __8, __9], total_carbon),
+SumGeq([__10, __11, __8, __9], total_carbon),
+__0 =aux toInt(selected#matrix_to_atom_1),
+__1 =aux toInt(selected#matrix_to_atom_2),
+__2 =aux toInt(selected#matrix_to_atom_3),
+__3 =aux toInt(selected#matrix_to_atom_4),
+Reify(Ineq(selected#matrix_to_atom_1, 3, 0), __4),
+Reify(Ineq(selected#matrix_to_atom_2, 2, 0), __5),
+Reify(Ineq(selected#matrix_to_atom_3, 4, 0), __6),
+Reify(Ineq(selected#matrix_to_atom_4, 6, 0), __7),
+__8 =aux (selected#matrix_to_atom_1) -> (1),
+__9 =aux (selected#matrix_to_atom_2) -> (4),
+__10 =aux (selected#matrix_to_atom_3) -> (2),
+__11 =aux (selected#matrix_to_atom_4) -> (5)
+
+--
+
+__8 =aux (selected#matrix_to_atom_1) -> (1), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify((selected#matrix_to_atom_1) -> (1), __8)
+
+--
+
+(selected#matrix_to_atom_1) -> (1), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+Ineq(selected#matrix_to_atom_1, 1, 0)
+
+--
+
+__9 =aux (selected#matrix_to_atom_2) -> (4), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify((selected#matrix_to_atom_2) -> (4), __9)
+
+--
+
+(selected#matrix_to_atom_2) -> (4), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+Ineq(selected#matrix_to_atom_2, 4, 0)
+
+--
+
+__10 =aux (selected#matrix_to_atom_3) -> (2), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify((selected#matrix_to_atom_3) -> (2), __10)
+
+--
+
+(selected#matrix_to_atom_3) -> (2), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+Ineq(selected#matrix_to_atom_3, 2, 0)
+
+--
+
+__11 =aux (selected#matrix_to_atom_4) -> (5), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify((selected#matrix_to_atom_4) -> (5), __11)
+
+--
+
+(selected#matrix_to_atom_4) -> (5), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
+Ineq(selected#matrix_to_atom_4, 5, 0)
+
+--
+
+Final model:
+
+letting n be 4
+letting cost be [3,2,4,6;int(1..4)]
+letting carbon be [1,4,2,5;int(1..4)]
+find selected: matrix indexed by [int(1..n)] of bool
+find total_cost: int(0..20)
+find total_carbon: int(0..20)
+find selected#matrix_to_atom_1: bool
+find selected#matrix_to_atom_2: bool
+find selected#matrix_to_atom_3: bool
+find selected#matrix_to_atom_4: bool
+find __0: int(0..1)
+find __1: int(0..1)
+find __2: int(0..1)
+find __3: int(0..1)
+find __4: bool
+find __5: bool
+find __6: bool
+find __7: bool
+find __8: bool
+find __9: bool
+find __10: bool
+find __11: bool
+
+such that
+
+SumLeq([__0, __1, __2, __3], 1),
+SumGeq([__0, __1, __2, __3], 1),
+SumLeq([__4, __5, __6, __7], total_cost),
+SumGeq([__4, __5, __6, __7], total_cost),
+SumLeq([__10, __11, __8, __9], total_carbon),
+SumGeq([__10, __11, __8, __9], total_carbon),
+__0 =aux toInt(selected#matrix_to_atom_1),
+__1 =aux toInt(selected#matrix_to_atom_2),
+__2 =aux toInt(selected#matrix_to_atom_3),
+__3 =aux toInt(selected#matrix_to_atom_4),
+Reify(Ineq(selected#matrix_to_atom_1, 3, 0), __4),
+Reify(Ineq(selected#matrix_to_atom_2, 2, 0), __5),
+Reify(Ineq(selected#matrix_to_atom_3, 4, 0), __6),
+Reify(Ineq(selected#matrix_to_atom_4, 6, 0), __7),
+Reify(Ineq(selected#matrix_to_atom_1, 1, 0), __8),
+Reify(Ineq(selected#matrix_to_atom_2, 4, 0), __9),
+Reify(Ineq(selected#matrix_to_atom_3, 2, 0), __10),
+Reify(Ineq(selected#matrix_to_atom_4, 5, 0), __11)
+
