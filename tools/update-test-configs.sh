@@ -29,7 +29,7 @@ Input:
     - test names, e.g. tests_integration_basic_div_04
     - globbed test names, e.g. tests_integration_cnf*
     - paths (absolute or relative to repo root), e.g.
-      ./test-suite/tests/integration/basic/comprehension-01-1
+      ./test-suite/tests/integration/basic/comprehension/set-fixed-size-sum
   Paths outside <repo root>/test-suite/tests/{integration,roundtrip} are ignored.
   If no input is given, your default editor will be opened so you can type in the paths;
   This behaviour is disabled when the script is not ran interactively (e.g input is piped from another command)
