@@ -2,6 +2,7 @@ use crate::{
     Model,
     ast::{Expression, discriminant_from_value},
     bug,
+    objective::introduce_objective_auxiliary,
     settings::{
         MorphCachingStrategy, MorphConfig, Rewriter, rule_trace_enabled, set_current_rewriter,
     },
@@ -55,6 +56,8 @@ pub fn rewrite_morph<'a>(
     config: MorphConfig,
 ) -> Model {
     set_current_rewriter(Rewriter::Morph(config));
+
+    model = introduce_objective_auxiliary(model);
 
     if rule_trace_enabled() {
         trace!(

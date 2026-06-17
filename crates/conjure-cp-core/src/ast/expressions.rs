@@ -31,7 +31,7 @@ use crate::bug;
 use super::abstract_comprehension::AbstractComprehension;
 use super::ac_operators::ACOperatorKind;
 use super::categories::{Category, CategoryOf};
-use super::comprehension::Comprehension;
+use super::comprehension::{Comprehension, ComprehensionQualifier};
 use super::declaration::DeclarationKind;
 use super::domains::HasDomain as _;
 use super::pretty::{pretty_expressions_as_top_level, pretty_vec};
@@ -661,8 +661,6 @@ fn bounded_i32_domain_for_matrix_literal_monotonic(
 ) -> Option<DomainPtr> {
     // only care about the elements, not the indices
     let (mut exprs, _) = e.clone().unwrap_matrix_unchecked()?;
-
-    // fold each element's domain into one using op.
     //
     // here, I assume that op is monotone. This means that the bounds of op([a1,a2],[b1,b2])  for
     // the ranges [a1,a2], [b1,b2] will be
@@ -753,6 +751,60 @@ fn range_vec_bounds_i32(ranges: &Vec<Range<i32>>) -> Option<(i32, i32)> {
     Some((min, max))
 }
 
+/// Integer domain bounds for [`Expression::Sum`] over a comprehension.
+fn sum_domain_for_comprehension(expr: &Expression) -> Option<DomainPtr> {
+    let Expression::Comprehension(_, comp) = expr else {
+        return None;
+    };
+    let comp = comp.as_ref();
+    let resolved = comp.return_expression.domain_of()?.resolve()?;
+    let GroundDomain::Int(return_ranges) = resolved.as_ref() else {
+        return None;
+    };
+    let (term_min, term_max) = range_vec_bounds_i32(return_ranges)?;
+
+    let mut term_count = 1i64;
+    for qual in &comp.qualifiers {
+        match qual {
+            ComprehensionQualifier::Generator { ptr } => {
+                let count = ptr.domain()?.resolve()?.length().ok()?;
+                term_count = term_count.saturating_mul(count as i64);
+                if term_count > i32::MAX as i64 {
+                    return None;
+                }
+            }
+            ComprehensionQualifier::Condition(_)
+            | ComprehensionQualifier::ExpressionGenerator { .. } => {
+                return None;
+            }
+        }
+    }
+
+    if term_count == 0 {
+        return Some(Domain::int(vec![Range::Single(0)]));
+    }
+
+    let n = term_count as i32;
+    let sum_min = n.saturating_mul(term_min);
+    let sum_max = n.saturating_mul(term_max);
+    if sum_min == sum_max {
+        Some(Domain::int(vec![Range::Single(sum_min)]))
+    } else {
+        Some(Domain::int(vec![Range::Bounded(sum_min, sum_max)]))
+    }
+}
+
+fn sum_domain_of_child(child: &Expression) -> Option<DomainPtr> {
+    sum_domain_for_comprehension(child).or_else(|| {
+        let (elements, _) = child.clone().unwrap_matrix_unchecked()?;
+        if elements.len() == 1 {
+            sum_domain_for_comprehension(&elements[0])
+        } else {
+            None
+        }
+    })
+}
+
 impl Expression {
     /// Returns the possible values of the expression, recursing to leaf expressions
     pub fn domain_of(&self) -> Option<DomainPtr> {
@@ -828,9 +880,9 @@ impl Expression {
             }
             Expression::InDomain(_, _, _) => Some(Domain::bool()),
             Expression::Atomic(_, atom) => Some(atom.domain_of()),
-            Expression::Sum(_, e) => {
+            Expression::Sum(_, e) => sum_domain_of_child(e).or_else(|| {
                 bounded_i32_domain_for_matrix_literal_monotonic(e, |x, y| Some(x + y))
-            }
+            }),
             Expression::Product(_, e) => {
                 bounded_i32_domain_for_matrix_literal_monotonic(e, |x, y| Some(x * y))
             }

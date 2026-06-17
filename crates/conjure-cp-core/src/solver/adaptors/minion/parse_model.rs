@@ -1,7 +1,7 @@
 //! Parse / `load_model` step of running Minion.
 
 use crate::Model as ConjureModel;
-use crate::ast::{self as conjure_ast, HasDomain, Moo, Range};
+use crate::ast::{self as conjure_ast, Atom, Expression, HasDomain, Moo, Name, OptimiseDirection, Range};
 use crate::settings::{SolverFamily, minion_discrete_threshold};
 use crate::solver::SolverError::{
     ModelFeatureNotImplemented, ModelFeatureNotSupported, ModelInvalid,
@@ -12,7 +12,7 @@ use crate::stats::SolverStats;
 use itertools::Itertools as _;
 use minion_ast::Model as MinionModel;
 use minion_sys::ast as minion_ast;
-use minion_sys::ast::{Constant, Constraint, Var};
+use minion_sys::ast::{Constant, Constraint, Optimisation, Var};
 use minion_sys::error::MinionError;
 use std::cell::Ref;
 use std::cell::RefCell;
@@ -23,11 +23,38 @@ use uniplate::{Biplate, Uniplate};
 
 /// Converts a conjure-oxide model to a `minion_sys` model.
 pub fn model_to_minion(model: ConjureModel) -> Result<MinionModel, SolverError> {
+    let optimisation = resolve_optimisation(&model)?;
     let mut minion_model = MinionModel::new();
+    minion_model.optimisation = optimisation;
     let table_vars = collect_table_variables(&model);
     load_symbol_table(&model, &table_vars, &mut minion_model)?;
     load_constraints(&model, &mut minion_model)?;
     Ok(minion_model)
+}
+
+fn resolve_optimisation(model: &ConjureModel) -> Result<Option<Optimisation>, SolverError> {
+    let Some(objective) = model.objective.clone() else {
+        return Ok(None);
+    };
+
+    let minimising = matches!(objective.direction, OptimiseDirection::Minimising);
+    let optimise_name = match &objective.expression {
+        Expression::Atomic(_, Atom::Reference(reference))
+            if reference.ptr.as_find().is_some() =>
+        {
+            reference.name().clone()
+        }
+        expr => {
+            return Err(ModelInvalid(format!(
+                "objective expression must be a decision variable reference after normalisation, got {expr}"
+            )));
+        }
+    };
+
+    Ok(Some(Optimisation {
+        minimising,
+        var: name_to_string(optimise_name),
+    }))
 }
 
 /// Loads the symbol table into `minion_model`.

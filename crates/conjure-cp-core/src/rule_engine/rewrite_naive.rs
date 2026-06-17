@@ -3,6 +3,7 @@ use crate::{
     Model,
     ast::Expression as Expr,
     bug,
+    objective::introduce_objective_auxiliary,
     rule_engine::{
         get_rules_grouped,
         rewriter_common::{
@@ -46,7 +47,7 @@ pub fn rewrite_naive<'a>(
         .into_iter()
         .collect_vec();
 
-    let mut model = model.clone();
+    let mut model = introduce_objective_auxiliary(model.clone());
     let mut done_something = true;
 
     let mut rewriter_stats = RewriterStats::new();

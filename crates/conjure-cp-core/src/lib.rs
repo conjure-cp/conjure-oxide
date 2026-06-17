@@ -13,6 +13,7 @@ mod bug;
 pub mod context;
 pub mod error;
 pub mod instantiate;
+pub mod objective;
 pub mod parse;
 pub mod representation;
 pub mod rule_engine;

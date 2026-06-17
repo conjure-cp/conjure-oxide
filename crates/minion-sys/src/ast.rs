@@ -14,6 +14,14 @@ pub type TwoVars = (Var, Var);
 pub struct Model {
     pub named_variables: SymbolTable,
     pub constraints: Vec<Constraint>,
+    pub optimisation: Option<Optimisation>,
+}
+
+/// A single-variable optimisation goal for Minion.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Optimisation {
+    pub minimising: bool,
+    pub var: VarName,
 }
 
 impl Model {
@@ -22,6 +30,7 @@ impl Model {
         Model {
             named_variables: SymbolTable::new(),
             constraints: Vec::new(),
+            optimisation: None,
         }
     }
 }
