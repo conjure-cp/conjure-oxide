@@ -22,8 +22,9 @@ use std::os::unix::process::CommandExt;
 use std::sync::Arc;
 use std::sync::RwLock;
 
-use conjure_cp::ast::{Literal, Name};
+use conjure_cp::ast::{Literal, Model, Name};
 use conjure_cp::context::Context;
+use conjure_cp::instantiate::instantiate_model;
 use conjure_cp::parse::tree_sitter::parse_essence_file;
 use conjure_cp::rule_engine::resolve_rule_sets;
 use conjure_cp::settings::{
@@ -556,20 +557,17 @@ fn integration_test_inner(
     set_current_solver_family(solver_fam);
     set_minion_discrete_threshold(minion_discrete_threshold);
 
-    // File path
-    let file_path = format!("{path}/{essence_base}.{extension}");
-
     let translation_started_at = Instant::now();
 
-    // Stage 1a/1b: Parse the model using the selected parser.
-    let parsed_model = match parser {
-        Parser::TreeSitter => {
-            let mut ctx = context.as_ref().write().unwrap();
-            ctx.essence_file_name = Some(format!("{path}/{essence_base}.{extension}"));
-            parse_essence_file_native(&file_path, context.clone())?
-        }
-        Parser::ViaConjure => parse_essence_file(&file_path, context.clone())?,
-    };
+    // Stage 1a/1b: Parse the problem model and apply an optional param file.
+    let parsed_model = parse_unified_problem_model(
+        path,
+        essence_base,
+        extension,
+        parser,
+        param_file_in_test_dir(path).as_deref(),
+        context.clone(),
+    )?;
     // Stage 2a: Rewrite the model using the rule engine
     let mut extra_rules = vec![];
 
@@ -801,6 +799,39 @@ fn capture_conjure_reference(
     Ok(())
 }
 
+fn parse_unified_problem_model(
+    path: &str,
+    essence_base: &str,
+    extension: &str,
+    parser: Parser,
+    param_file: Option<&str>,
+    context: Arc<RwLock<Context<'static>>>,
+) -> Result<Model, Box<dyn Error>> {
+    let file_path = format!("{path}/{essence_base}.{extension}");
+
+    {
+        let mut ctx = context.as_ref().write().unwrap();
+        ctx.essence_file_name = Some(file_path.clone());
+        ctx.param_file_name = param_file.map(str::to_string);
+    }
+
+    let problem_model = match parser {
+        Parser::TreeSitter => parse_essence_file_native(&file_path, context.clone())?,
+        Parser::ViaConjure => parse_essence_file(&file_path, context.clone())?,
+    };
+
+    let Some(param_path) = param_file else {
+        return Ok(problem_model);
+    };
+
+    let param_model = match parser {
+        Parser::TreeSitter => parse_essence_file_native(param_path, context)?,
+        Parser::ViaConjure => parse_essence_file(param_path, context)?,
+    };
+
+    Ok(instantiate_model(problem_model, param_model)?)
+}
+
 fn essence_file_in_test_dir(test_dir: &str) -> Option<(String, String)> {
     fs::read_dir(test_dir).ok().and_then(|entries| {
         entries.filter_map(Result::ok).find_map(|entry| {
@@ -855,15 +886,14 @@ fn try_capture_oxide_minion(
     set_current_solver_family(run_case.solver);
     set_minion_discrete_threshold(minion_discrete_threshold);
 
-    let file_path = format!("{path}/{essence_base}.{extension}");
-    let parsed_model = match run_case.parser {
-        Parser::TreeSitter => {
-            let mut ctx = context.as_ref().write().unwrap();
-            ctx.essence_file_name = Some(format!("{path}/{essence_base}.{extension}"));
-            parse_essence_file_native(&file_path, context.clone())?
-        }
-        Parser::ViaConjure => parse_essence_file(&file_path, context.clone())?,
-    };
+    let parsed_model = parse_unified_problem_model(
+        path,
+        essence_base,
+        extension,
+        run_case.parser,
+        param_file_in_test_dir(path).as_deref(),
+        context.clone(),
+    )?;
 
     let mut extra_rules = vec![];
     if let SolverFamily::Sat(sat_encoding) = run_case.solver {
