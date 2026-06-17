@@ -16,7 +16,7 @@ use uniplate::{Biplate, Tree, Uniplate};
 
 use super::serde::{HasId, ObjId, PtrAsInner};
 use super::{
-    Atom, CnfClause, DeclarationPtr, Expression, Literal, Metadata, Moo, Name, ReturnType,
+    Atom, CnfClause, DeclarationPtr, Expression, Literal, Metadata, Moo, Name, Objective, ReturnType,
     SymbolTable, SymbolTablePtr, Typeable,
     comprehension::Comprehension,
     declaration::DeclarationKind,
@@ -38,6 +38,7 @@ pub struct Model {
 
     pub search_order: Option<Vec<Name>>,
     pub dominance: Option<Expression>,
+    pub objective: Option<Objective>,
 
     #[serde(skip, default = "default_context")]
     #[derivative(PartialEq = "ignore")]
@@ -56,6 +57,7 @@ impl Model {
             cnf_clauses: Vec::new(),
             search_order: None,
             dominance: None,
+            objective: None,
             context,
         }
     }
@@ -206,6 +208,9 @@ impl Model {
         if let Some(dominance) = &self.dominance {
             exprs.push_back(dominance.clone());
         }
+        if let Some(objective) = &self.objective {
+            exprs.push_back(objective.expression.clone());
+        }
 
         for symbol_table in Biplate::<SymbolTablePtr>::universe_bi(&exprs) {
             visit_symbol_table(symbol_table, &mut id_list);
@@ -249,6 +254,7 @@ impl Hash for Model {
         self.cnf_clauses.hash(state);
         self.search_order.hash(state);
         self.dominance.hash(state);
+        self.objective.hash(state);
     }
 }
 
@@ -271,19 +277,27 @@ impl Biplate<Expression> for Model {
             None => Tree::Zero,
         };
 
+        let obj_tree = match &self.objective {
+            Some(objective) => Tree::One(objective.expression.clone()),
+            None => Tree::Zero,
+        };
+
         let tree = Tree::Many(VecDeque::from([
             Tree::One(self.root().clone()),
             symtab_tree,
             dom_tree,
+            obj_tree,
         ]));
+
+        let obj_direction = self.objective.as_ref().map(|objective| objective.direction);
 
         let self2 = self.clone();
         let ctx = Box::new(move |x| {
             let Tree::Many(xs) = x else {
-                panic!("Expected a tree with three children");
+                panic!("Expected a tree with four children");
             };
-            if xs.len() != 3 {
-                panic!("Expected a tree with three children");
+            if xs.len() != 4 {
+                panic!("Expected a tree with four children");
             }
 
             let Tree::One(root) = xs[0].clone() else {
@@ -296,6 +310,11 @@ impl Biplate<Expression> for Model {
                 Tree::Zero => None,
                 _ => panic!("Expected dominance tree"),
             };
+            let objective_expr = match xs[3].clone() {
+                Tree::One(expr) => Some(expr),
+                Tree::Zero => None,
+                _ => panic!("Expected objective tree"),
+            };
 
             let mut self3 = self2.clone();
 
@@ -306,6 +325,13 @@ impl Biplate<Expression> for Model {
             *self3.root_mut_unchecked() = root;
             *self3.symbols_mut() = symtab;
             self3.dominance = dominance;
+            self3.objective = match (obj_direction, objective_expr) {
+                (Some(direction), Some(expression)) => Some(Objective {
+                    direction,
+                    expression,
+                }),
+                _ => None,
+            };
 
             self3
         });
@@ -451,6 +477,7 @@ pub struct SerdeModel {
     cnf_clauses: Vec<CnfClause>,
     search_order: Option<Vec<Name>>,
     dominance: Option<Expression>,
+    objective: Option<Objective>,
 }
 
 impl SerdeModel {
@@ -464,6 +491,9 @@ impl SerdeModel {
         let mut exprs: VecDeque<Expression> = self.constraints.universe_bi();
         if let Some(dominance) = &self.dominance {
             exprs.push_back(dominance.clone());
+        }
+        if let Some(objective) = &self.objective {
+            exprs.push_back(objective.expression.clone());
         }
 
         // Some expressions (e.g. abstract comprehensions) contain additional symbol tables.
@@ -508,6 +538,7 @@ impl SerdeModel {
             cnf_clauses: self.cnf_clauses,
             search_order: self.search_order,
             dominance: self.dominance,
+            objective: self.objective,
             context,
         })
     }
@@ -521,6 +552,7 @@ impl From<Model> for SerdeModel {
             cnf_clauses: val.cnf_clauses,
             search_order: val.search_order,
             dominance: val.dominance,
+            objective: val.objective,
         }
     }
 }
@@ -533,6 +565,7 @@ impl Display for SerdeModel {
             cnf_clauses: self.cnf_clauses.clone(),
             search_order: self.search_order.clone(),
             dominance: self.dominance.clone(),
+            objective: self.objective.clone(),
             context: default_context(),
         };
         std::fmt::Display::fmt(&model, f)
@@ -548,6 +581,7 @@ impl SerdeModel {
             cnf_clauses: self.cnf_clauses.clone(),
             search_order: self.search_order.clone(),
             dominance: self.dominance.clone(),
+            objective: self.objective.clone(),
             context: default_context(),
         };
         model.collect_stable_id_mapping()

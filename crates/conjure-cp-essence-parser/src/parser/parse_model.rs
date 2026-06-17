@@ -13,6 +13,7 @@ use super::ParseContext;
 use super::dominance::parse_dominance_relation;
 use super::find::{parse_find_statement, parse_given_statement};
 use super::letting::parse_letting_statement;
+use super::objective::parse_objective_statement;
 use super::util::{TypecheckingContext, get_tree};
 use crate::diagnostics::source_map::SourceMap;
 use crate::errors::{FatalParseError, ParseErrorCollection, RecoverableParseError};
@@ -171,6 +172,19 @@ pub fn parse_essence_with_context_and_map(
                 }
                 model.dominance = Some(dominance);
             }
+            "objective_statement" => {
+                let Some(objective) = parse_objective_statement(&mut ctx, &statement)? else {
+                    continue;
+                };
+                if model.objective.is_some() {
+                    ctx.record_error(RecoverableParseError::new(
+                        "Duplicate objective statement".to_string(),
+                        None,
+                    ));
+                    continue;
+                }
+                model.objective = Some(objective);
+            }
             _ => {
                 ctx.record_error(RecoverableParseError::new(
                     format!("Unexpected top-level statement: {}", statement.kind()),
@@ -292,6 +306,29 @@ mod test {
                 domain_int!(-2..0)
             )
         )
+    }
+
+    #[test]
+    pub fn test_parse_objective_statement() {
+        let src = "
+        find cost : int(0..10)
+        minimising cost
+        such that cost = 5
+        ";
+
+        let (model, _source_map) = parse_essence(src).unwrap();
+        assert!(matches!(
+            model.objective.as_ref().unwrap().direction,
+            conjure_cp_core::ast::OptimiseDirection::Minimising
+        ));
+
+        let st = model.symbols();
+        let objective = model.objective.as_ref().unwrap();
+        let cost = st.lookup(&Name::user("cost")).unwrap();
+        assert_eq!(
+            objective.expression,
+            Expression::Atomic(Metadata::new(), Atom::new_ref(cost))
+        );
     }
 
     #[test]

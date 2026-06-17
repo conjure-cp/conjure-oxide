@@ -8,6 +8,7 @@ pub mod find;
 pub mod keyword_checks;
 pub mod letting;
 mod macros;
+mod objective;
 pub mod parse_exprs;
 pub mod parse_literal;
 pub mod parse_model;

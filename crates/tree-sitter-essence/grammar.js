@@ -28,6 +28,7 @@ module.exports = grammar ({
         commaSep1(choice(field("bool_expr", $.bool_expr), field("atom", $.atom), field("comparison_expr", $.comparison_expr))), 
       ),
       field("letting_statement", $.letting_statement),
+      field("objective_statement", $.objective_statement),
       field("dominance_relation", $.dominance_relation),
     )),
 
@@ -536,6 +537,11 @@ module.exports = grammar ({
     pareto_items: $ => commaSep1($.pareto_item),
 
     pareto_item: $ => seq(
+      field("direction", choice("minimising", "maximising")),
+      field("expression", choice($.bool_expr, $.comparison_expr, $.arithmetic_expr, $.atom))
+    ),
+
+    objective_statement: $ => seq(
       field("direction", choice("minimising", "maximising")),
       field("expression", choice($.bool_expr, $.comparison_expr, $.arithmetic_expr, $.atom))
     ),
