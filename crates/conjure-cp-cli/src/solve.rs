@@ -100,6 +100,11 @@ pub struct Args {
     /// Save solutions to the given JSON file
     #[arg(long, short = 'o', value_hint = ValueHint::FilePath,help_heading=LOGGING_HELP_HEADING)]
     pub output: Option<PathBuf>,
+
+    /// When optimising, retain every improving solution Minion reports instead of only the last
+    /// one.
+    #[arg(long, default_value_t = false)]
+    pub keep_intermediate_solutions: bool,
 }
 
 pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::Result<()> {
@@ -350,6 +355,7 @@ fn run_solver(
         solver,
         model,
         cmd_args.number_of_solutions.as_solver_limit(),
+        cmd_args.keep_intermediate_solutions,
         &global_args.save_solver_input_file,
         global_args.rule_trace_cdp,
     )?;

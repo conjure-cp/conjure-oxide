@@ -312,6 +312,7 @@ fn integration_test_inner_with_status(
     let skip_conjure_validation = config.should_skip_conjure_validation();
     let minion_discrete_threshold = config.minion_discrete_threshold;
     let number_of_solutions = config.number_of_solutions.as_solver_limit();
+    let keep_intermediate_solutions = config.keep_intermediate_solutions;
 
     let parsers = config
         .configured_parsers()
@@ -423,6 +424,7 @@ fn integration_test_inner_with_status(
                                 run_case,
                                 minion_discrete_threshold,
                                 number_of_solutions,
+                                keep_intermediate_solutions,
                                 conjure_solution_values.clone(),
                                 accept,
                             )
@@ -540,6 +542,7 @@ fn integration_test_inner(
     run_case: RunCase<'_>,
     minion_discrete_threshold: usize,
     number_of_solutions: i32,
+    keep_intermediate_solutions: bool,
     conjure_solutions: Option<Arc<Vec<BTreeMap<Name, Literal>>>>,
     accept: bool,
 ) -> Result<RunTimings, Box<dyn Error>> {
@@ -602,6 +605,7 @@ fn integration_test_inner(
             solver,
             rewritten_model,
             number_of_solutions,
+            keep_intermediate_solutions,
             &solver_input_file,
             false,
         )?;

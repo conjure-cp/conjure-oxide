@@ -86,6 +86,10 @@ fn default_number_of_solutions() -> NumberOfSolutions {
     NumberOfSolutions::All
 }
 
+fn default_keep_intermediate_solutions() -> bool {
+    false
+}
+
 fn deserialise_number_of_solutions<'de, D>(deserializer: D) -> Result<NumberOfSolutions, D::Error>
 where
     D: serde::Deserializer<'de>,
@@ -378,6 +382,12 @@ pub struct TestConfig {
     )]
     pub number_of_solutions: NumberOfSolutions,
 
+    #[serde(
+        default = "default_keep_intermediate_solutions",
+        rename = "keep-intermediate-solutions"
+    )]
+    pub keep_intermediate_solutions: bool,
+
     pub status: Option<String>,
 
     /// Empty `skip` runs the test; a non-empty string ignores it and records why.
@@ -431,6 +441,7 @@ impl Default for TestConfig {
             minion_discrete_threshold: default_minion_discrete_threshold(),
             skip_conjure_validation: String::new(),
             number_of_solutions: NumberOfSolutions::All,
+            keep_intermediate_solutions: false,
             status: None,
             stats: TestStats::default(),
         }

@@ -137,14 +137,36 @@ fn retroactively_prune_dominated(
         .collect()
 }
 
+fn validate_solution_collection_options(
+    model: &Model,
+    num_sols: i32,
+) -> Result<(), anyhow::Error> {
+    if model.objective.is_some() && num_sols != 1 {
+        let got = if num_sols == 0 {
+            "all".to_string()
+        } else {
+            num_sols.to_string()
+        };
+        return Err(anyhow::anyhow!(
+            "optimisation problems require number-of-solutions=1 (got {got})"
+        ));
+    }
+    Ok(())
+}
+
 pub fn get_solutions(
     solver: Solver,
     model: Model,
     num_sols: i32,
+    keep_intermediate_solutions: bool,
     solver_input_file: &Option<PathBuf>,
     rule_trace_cdp: bool,
 ) -> Result<Vec<BTreeMap<Name, Literal>>, anyhow::Error> {
     set_rule_trace_enabled(rule_trace_cdp && configured_rule_trace_enabled());
+
+    validate_solution_collection_options(&model, num_sols)?;
+
+    let is_optimisation = model.objective.is_some();
 
     let dominance_expression = model.dominance.as_ref().map(|expr| match expr {
         Expression::DominanceRelation(_, inner) => inner.as_ref().clone(),
@@ -175,14 +197,28 @@ pub fn get_solutions(
     let all_solutions_ref = Arc::new(Mutex::<Vec<BTreeMap<Name, Literal>>>::new(vec![]));
     let all_solutions_ref_2 = all_solutions_ref.clone();
 
-    let solver = if num_sols > 0 {
+    let solver = if is_optimisation {
+        solver
+            .solve(Box::new(move |sols| {
+                let mut all_solutions = (*all_solutions_ref_2).lock().unwrap();
+                let solution = sols.into_iter().collect();
+                if keep_intermediate_solutions {
+                    all_solutions.push(solution);
+                } else {
+                    all_solutions.clear();
+                    all_solutions.push(solution);
+                }
+                true
+            }))
+            .map_err(|err| anyhow::anyhow!("solver failed while collecting solutions: {err}"))?
+    } else if num_sols > 0 {
         // Get num_sols solutions
         let sols_left = Mutex::new(num_sols);
 
         solver
             .solve(Box::new(move |sols| {
                 let mut all_solutions = (*all_solutions_ref_2).lock().unwrap();
-                (*all_solutions).push(sols.into_iter().collect());
+                all_solutions.push(sols.into_iter().collect());
                 let mut sols_left = sols_left.lock().unwrap();
                 *sols_left -= 1;
 
@@ -194,7 +230,7 @@ pub fn get_solutions(
         solver
             .solve(Box::new(move |sols| {
                 let mut all_solutions = (*all_solutions_ref_2).lock().unwrap();
-                (*all_solutions).push(sols.into_iter().collect());
+                all_solutions.push(sols.into_iter().collect());
                 true
             }))
             .map_err(|err| anyhow::anyhow!("solver failed while collecting solutions: {err}"))?
