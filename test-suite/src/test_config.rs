@@ -2,6 +2,7 @@
 
 use conjure_cp::settings::{Parser, QuantifiedExpander, Rewriter, SolverFamily};
 use serde::Deserialize;
+use std::collections::BTreeSet;
 use std::fs;
 use std::io;
 use std::path::Path;
@@ -292,5 +293,17 @@ impl RunCase {
             self.comprehension_expander,
             self.solver.as_str()
         )
+    }
+
+    /// Returns the expected snapshot files for an executed integration run case.
+    pub fn expected_integration_files_for_case(self: &RunCase) -> BTreeSet<String> {
+        let case_name = self.run_case_label();
+        let solver_name = self.solver.as_str();
+        BTreeSet::from([
+            format!("{case_name}.expected-solutions.json"),
+            // expected files are named: format!("{path}/{test_name}.expected-{stage}.{extension}") (from the generator in `integration_tests.rs`)
+            // test_name = runcase.run_case_label()
+            format!("{case_name}-expected-rule-trace.txt"),
+        ])
     }
 }

@@ -39,6 +39,7 @@ use std::str::FromStr;
 use test_suite::AcceptMode;
 use test_suite::RunCase;
 use test_suite::TestConfig;
+use test_suite::golden_files::*;
 use test_suite::test_config::{round_expected_time, upsert_expected_time_config};
 
 fn integration_test(
@@ -128,6 +129,7 @@ fn integration_test(
     })
     .map_err(|err| std::io::Error::other(format!("{run_label}: {err}")))?;
 
+    let allowed_expected_files = runcase.expected_integration_files_for_case();
     assert_no_redundant_expected_files(Path::new(path), &allowed_expected_files, None)?;
 
     if accept_mode.records_expected_time() {
@@ -344,11 +346,15 @@ fn copy_generated_to_expected(
     extension: &str,
     solver: SolverFamily,
 ) -> Result<(), std::io::Error> {
-    let marker = solver.as_str();
+    // let marker = solver.as_str();
 
+    // std::fs::copy(
+    //     format!("{path}/{test_name}-{marker}.generated-{stage}.{extension}"),
+    //     format!("{path}/{test_name}-{marker}.expected-{stage}.{extension}"),
+    // )?;
     std::fs::copy(
-        format!("{path}/{test_name}-{marker}.generated-{stage}.{extension}"),
-        format!("{path}/{test_name}-{marker}.expected-{stage}.{extension}"),
+        format!("{path}/{test_name}.generated-{stage}.{extension}"),
+        format!("{path}/{test_name}.expected-{stage}.{extension}"),
     )?;
     Ok(())
 }

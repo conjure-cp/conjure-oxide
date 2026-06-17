@@ -274,13 +274,13 @@ fn setup_integration_tests(
     let comprehension_expanders = config
         .configured_comprehension_expanders()
         .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?;
-    let solvers = {
-        let seen = config
-            .configured_solvers()
-            .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?
-            .into_iter()
-            .collect::<Vec<_>>();
-    };
+    let solvers = config
+        .configured_solvers()
+        .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?
+        .into_iter()
+        .collect::<HashSet<_>>()
+        .into_iter()
+        .collect::<Vec<_>>();
 
     for parser in parsers.iter().copied() {
         for rewriter in rewriters.clone() {
