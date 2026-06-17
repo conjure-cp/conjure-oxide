@@ -8,7 +8,7 @@
 # Usage:
 #   ./tools/discard-config-time-changes.sh              # modified config.toml only
 #   ./tools/discard-config-time-changes.sh --all      # every tracked config.toml
-#                     (skips files whose top-level status differs from HEAD)
+#                     (skips files whose top-level status changed to ok)
 #   ./tools/discard-config-time-changes.sh --dry-run  # show what would change
 #
 set -euo pipefail
@@ -28,7 +28,7 @@ to their values in HEAD. Other lines in each config.toml are left unchanged.
 
 Options:
   --all       Process every tracked config.toml (default: only modified files).
-              Skips a file when its top-level status= differs from HEAD.
+              Skips a file when its top-level status= changed to ok since HEAD.
   --dry-run   Print paths and diffs; do not write files
   -h, --help  Show this help
 EOF
@@ -176,8 +176,8 @@ while IFS= read -r rel || [[ -n "$rel" ]]; do
   if [[ "$all_files" == true ]]; then
     head_status="$(top_level_status "$head_tmp")"
     work_status="$(top_level_status "$rel")"
-    if [[ "$head_status" != "$work_status" ]]; then
-      echo "SKIP (status changed: '${head_status:-<none>}' -> '${work_status:-<none>}'): $rel" >&2
+    if [[ "$work_status" == "ok" && "$head_status" != "ok" ]]; then
+      echo "SKIP (status changed to ok: '${head_status:-<none>}' -> '${work_status}'): $rel" >&2
       ((skipped+=1))
       rm -f "$head_tmp" "$out_tmp"
       trap - RETURN
