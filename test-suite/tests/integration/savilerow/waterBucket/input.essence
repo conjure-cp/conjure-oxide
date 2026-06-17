@@ -58,7 +58,7 @@ forAll step : STEPS1 .
 $ pouring from bucketA->bucketB
   ( ( (bucketA[step-1] > 0) /\ (bucketB[step-1] < SIZE_B)) /\
  
-        ( (bucketB[step] = min(SIZE_B,bucketA[step-1]+bucketB[step-1])) /\
+        ( (bucketB[step] = min([SIZE_B,bucketA[step-1]+bucketB[step-1]])) /\
           (bucketA[step] = bucketA[step-1]-bucketB[step]+bucketB[step-1])
         )
   )
@@ -67,7 +67,7 @@ $ pouring from bucketA->bucketB
 $ pouring from bucketA->bucketC
   ( ( (bucketA[step-1] > 0) /\ (bucketC[step-1] < SIZE_C)) /\
  
-        ( (bucketC[step] = min(SIZE_C,bucketA[step-1]+bucketC[step-1])) /\
+        ( (bucketC[step] = min([SIZE_C,bucketA[step-1]+bucketC[step-1]])) /\
           (bucketA[step] = bucketA[step-1]-bucketC[step]+bucketC[step-1])
         )
   )
@@ -75,7 +75,7 @@ $ pouring from bucketA->bucketC
 $ pouring from bucketB->bucketA
  (  ((bucketB[step-1] > 0) /\ (bucketA[step-1] < SIZE_A) ) /\
  
-        ( (bucketA[step] = min(SIZE_A,bucketA[step-1] + bucketB[step-1]) ) /\
+        ( (bucketA[step] = min([SIZE_A,bucketA[step-1] + bucketB[step-1]]) ) /\
           (bucketB[step] = bucketB[step-1] - bucketA[step]+bucketA[step-1])
         )
  )
@@ -83,7 +83,7 @@ $ pouring from bucketB->bucketA
 $ pouring from bucketB->bucketC
   (  ((bucketB[step-1] > 0) /\ (bucketC[step-1] < SIZE_C))  /\
  
-        ( (bucketC[step] = min(SIZE_C,bucketB[step-1]+bucketC[step-1]) ) /\
+        ( (bucketC[step] = min([SIZE_C,bucketB[step-1]+bucketC[step-1]]) ) /\
           (bucketB[step] = bucketB[step-1] - bucketC[step]+bucketC[step-1])
         )
   )
@@ -91,7 +91,7 @@ $ pouring from bucketB->bucketC
 $ pouring from bucketC->bucketA
    (  ( (bucketC[step-1] > 0) /\ (bucketA[step-1] < SIZE_A))  /\
  
-        ( (bucketA[step] = min(SIZE_A,bucketA[step-1] + bucketC[step-1]) ) /\
+        ( (bucketA[step] = min([SIZE_A,bucketA[step-1] + bucketC[step-1]]) ) /\
           (bucketC[step] = bucketC[step-1] - bucketA[step]+bucketA[step-1])
         )
    )
@@ -99,7 +99,7 @@ $ pouring from bucketC->bucketA
 $ pouring from bucketC->bucketB
    ( ( (bucketC[step-1] > 0) /\ (bucketB[step-1] < SIZE_B))  /\
  
-        ( (bucketB[step] = min(SIZE_B,bucketB[step-1] + bucketC[step-1]) ) /\
+        ( (bucketB[step] = min([SIZE_B,bucketB[step-1] + bucketC[step-1]]) ) /\
           (bucketC[step] = bucketC[step-1] - bucketB[step] +bucketB[step-1])
         )
    )
