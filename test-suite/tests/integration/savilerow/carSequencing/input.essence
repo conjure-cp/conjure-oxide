@@ -24,12 +24,12 @@ such that
 forAll option : int(1..numoptions) . 
     forAll windowStart : int(1..numcars-windowSize[option]+1) . 
         (sum pos : int(windowStart..windowStart+windowSize[option]-1) . 
-            toInt(seq[pos] in toSet([ class | class : int(1..numclasses), optionsRequired[class, option]=1])) 
+            toInt(or([ class = seq[pos] | class : int(1..numclasses), optionsRequired[class, option]=1]))
         )<=optMax[option],
 
 forAll option : int(1..numoptions) . 
     (sum pos : int(1..numcars) . 
-        toInt(seq[pos] in toSet([ class | class : int(1..numclasses), optionsRequired[class, option]=1])) 
+        toInt(or([ class = seq[pos] | class : int(1..numclasses), optionsRequired[class, option]=1]))
     )=
     (
         sum class : int(1..numclasses) . optionsRequired[class, option]*numberPerClass[class]
