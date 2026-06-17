@@ -33,9 +33,15 @@ use conjure_cp::settings::{
     Parser, QuantifiedExpander, Rewriter, SolverFamily,
 };
 use conjure_cp_cli::utils::conjure::solutions_to_json;
-use conjure_cp_cli::utils::conjure::{get_solutions, get_solutions_from_conjure_with_stats};
+use conjure_cp_cli::utils::conjure::{
+    get_solutions, get_solutions_from_conjure_with_stats, ConjureSolveCaptureOptions,
+};
 use conjure_cp_cli::utils::testing::save_stats_json;
 use conjure_cp_cli::utils::testing::{read_solutions_json, save_solutions_json};
+use test_suite::diagnostics::{
+    clear_diagnostics, conjure_artifacts_dir, copy_file_if_exists, oxide_artifacts_dir,
+    write_failure_record, write_oxide_failure_text, FailureRecord, DIAGNOSTICS_DIR,
+};
 #[allow(clippy::single_component_path_imports, unused_imports)]
 use conjure_cp_rules;
 use pretty_assertions::assert_eq;
@@ -93,6 +99,7 @@ where
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
+    pass_integration_test_env(&mut command);
 
     #[cfg(unix)]
     command.process_group(0);
@@ -117,12 +124,21 @@ where
         if started_at.elapsed() >= timeout {
             terminate_timed_child(&mut child)?;
             let child_output = format_child_output(stdout, stderr);
-            if AcceptMode::from_env().accepts_outputs() {
-                upsert_status_config(
-                    &Path::new(test_dir).join("config.toml"),
-                    &format!("timeout({})", timeout.as_secs()),
-                )?;
-            }
+            upsert_status_config(
+                &Path::new(test_dir).join("config.toml"),
+                &format!("timeout({})", timeout.as_secs()),
+            )?;
+            let _ = write_failure_record(
+                Path::new(test_dir),
+                &FailureRecord {
+                    stage: "timeout".to_string(),
+                    message: format!(
+                        "test {test_name} exceeded TEST_CASE_TIMEOUT={}s{child_output}",
+                        timeout.as_secs()
+                    ),
+                    run_label: None,
+                },
+            );
             return Err(format!(
                 "test {test_name} exceeded TEST_CASE_TIMEOUT={}s{child_output}",
                 timeout.as_secs(),
@@ -223,6 +239,14 @@ fn test_case_timeout() -> Result<Option<Duration>, Box<dyn Error>> {
     }
 }
 
+fn pass_integration_test_env(command: &mut Command) {
+    for key in ["TEST_CASE_TIMEOUT", "ACCEPT", "MAX_EXPECTED_TIME"] {
+        if let Ok(value) = std::env::var(key) {
+            command.env(key, value);
+        }
+    }
+}
+
 fn run_case_label(
     path: &str,
     essence_base: &str,
@@ -249,6 +273,10 @@ fn param_file_in_test_dir(path: &str) -> Option<String> {
 
 fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(), Box<dyn Error>> {
     let result = integration_test_inner_with_status(path, essence_base, extension);
+
+    if result.is_ok() {
+        let _ = clear_diagnostics(Path::new(path));
+    }
 
     if AcceptMode::from_env().accepts_outputs() {
         let status = if result.is_ok() { "ok" } else { "fail" };
@@ -301,19 +329,35 @@ fn integration_test_inner_with_status(
     let model_path = format!("{path}/{essence_base}.{extension}");
     let param_file = param_file_in_test_dir(path);
     let config_path = Path::new(path).join("config.toml");
+    let mut conjure_captured = false;
     let conjure_solutions = if accept && !skip_conjure_validation {
         let conjure_run = match get_solutions_from_conjure_with_stats(
             &model_path,
             param_file.as_deref(),
             Default::default(),
             number_of_solutions,
+            ConjureSolveCaptureOptions {
+                artifact_dir: Some(conjure_artifacts_dir(Path::new(path))),
+                savilerow_options: Some("-O0".to_string()),
+            },
         ) {
             Ok(conjure_run) => {
+                conjure_captured = true;
                 upsert_tool_status_config(&config_path, "conjure", "ok")?;
                 conjure_run
             }
             Err(err) => {
                 upsert_tool_status_config(&config_path, "conjure", "fail")?;
+                record_integration_failure(
+                    path,
+                    FailureRecord {
+                        stage: "conjure".to_string(),
+                        message: err.to_string(),
+                        run_label: None,
+                    },
+                    number_of_solutions,
+                    false,
+                );
                 return Err(std::io::Error::other(format!(
                     "failed to fetch Conjure reference solutions for {model_path}: {err}"
                 ))
@@ -382,7 +426,18 @@ fn integration_test_inner_with_status(
                                 accept,
                             )
                         })
-                        .map_err(|err| std::io::Error::other(format!("{run_label}: {err}")))?;
+                        .map_err(|err| {
+                            let message = format!("{run_label}: {err}");
+                            copy_oxide_run_artifacts(path, run_case, &message);
+                            let _ = try_capture_oxide_minion(
+                                path,
+                                essence_base,
+                                extension,
+                                run_case,
+                                minion_discrete_threshold,
+                            );
+                            std::io::Error::other(message)
+                        })?;
                         oxide_timings.add(run_timings);
                         allowed_expected_files.extend(expected_integration_files_for_case(
                             run_case.case_name,
@@ -400,6 +455,19 @@ fn integration_test_inner_with_status(
     if accept {
         let oxide_status = if oxide_result.is_ok() { "ok" } else { "fail" };
         upsert_tool_status_config(&config_path, "oxide", oxide_status)?;
+    }
+
+    if let Err(err) = &oxide_result {
+        record_integration_failure(
+            path,
+            FailureRecord {
+                stage: "oxide".to_string(),
+                message: err.to_string(),
+                run_label: None,
+            },
+            number_of_solutions,
+            conjure_captured,
+        );
     }
 
     oxide_result?;
@@ -632,6 +700,7 @@ fn clean_test_dir_for_accept(
 
         if file_name == input_filename
             || file_name == "config.toml"
+            || file_name == DIAGNOSTICS_DIR
             || entry_path.extension().is_some_and(|ext| ext == "param")
         {
             continue;
@@ -674,6 +743,150 @@ fn copy_generated_to_expected(
         format!("{path}/{test_name}-{marker}.generated-{stage}.{extension}"),
         format!("{path}/{test_name}-{marker}.expected-{stage}.{extension}"),
     )?;
+    Ok(())
+}
+
+fn number_of_solutions_for_test_dir(test_dir: &str) -> i32 {
+    let config_path = Path::new(test_dir).join("config.toml");
+    if let Ok(contents) = fs::read_to_string(config_path) {
+        if let Ok(config) = toml::from_str::<TestConfig>(&contents) {
+            return config.number_of_solutions.as_solver_limit();
+        }
+    }
+    0
+}
+
+fn record_integration_failure(
+    test_dir: &str,
+    record: FailureRecord,
+    number_of_solutions: i32,
+    conjure_captured: bool,
+) {
+    let Some((essence_base, extension)) = essence_file_in_test_dir(test_dir) else {
+        return;
+    };
+    let model_path = format!("{test_dir}/{essence_base}.{extension}");
+    let param_file = param_file_in_test_dir(test_dir);
+    let test_path = Path::new(test_dir);
+    let _ = write_failure_record(test_path, &record);
+    if !conjure_captured {
+        let _ = capture_conjure_reference(
+            test_path,
+            &model_path,
+            param_file.as_deref(),
+            number_of_solutions,
+        );
+    }
+}
+
+fn capture_conjure_reference(
+    test_dir: &Path,
+    model_path: &str,
+    param_file: Option<&str>,
+    number_of_solutions: i32,
+) -> Result<(), Box<dyn Error>> {
+    let out_dir = conjure_artifacts_dir(test_dir);
+    fs::create_dir_all(&out_dir)?;
+    let context: Arc<RwLock<Context<'static>>> = Default::default();
+    get_solutions_from_conjure_with_stats(
+        model_path,
+        param_file,
+        context,
+        number_of_solutions,
+        ConjureSolveCaptureOptions {
+            artifact_dir: Some(out_dir),
+            savilerow_options: Some("-O0".to_string()),
+        },
+    )?;
+    Ok(())
+}
+
+fn essence_file_in_test_dir(test_dir: &str) -> Option<(String, String)> {
+    fs::read_dir(test_dir).ok().and_then(|entries| {
+        entries.filter_map(Result::ok).find_map(|entry| {
+            let path = entry.path();
+            let extension = path.extension()?.to_str()?;
+            if extension != "essence" {
+                return None;
+            }
+            let name = path.file_name()?.to_str()?;
+            if name.contains(".disabled") {
+                return None;
+            }
+            Some((
+                path.file_stem()?.to_str()?.to_string(),
+                extension.to_string(),
+            ))
+        })
+    })
+}
+
+fn copy_oxide_run_artifacts(path: &str, run_case: RunCase<'_>, message: &str) {
+    let test_dir = Path::new(path);
+    let _ = write_oxide_failure_text(test_dir, run_case.case_name, message);
+    let solver = run_case.solver.as_str();
+    let case_name = run_case.case_name;
+    let oxide_dir = oxide_artifacts_dir(test_dir);
+    let _ = copy_file_if_exists(
+        &test_dir.join(format!("{case_name}-{solver}-generated-rule-trace.txt")),
+        &oxide_dir.join(format!("{case_name}-{solver}-generated-rule-trace.txt")),
+    );
+    let _ = copy_file_if_exists(
+        &test_dir.join(format!("{case_name}-{solver}.generated-solutions.json")),
+        &oxide_dir.join(format!("{case_name}-{solver}.generated-solutions.json")),
+    );
+}
+
+fn try_capture_oxide_minion(
+    path: &str,
+    essence_base: &str,
+    extension: &str,
+    run_case: RunCase<'_>,
+    minion_discrete_threshold: usize,
+) -> Result<(), Box<dyn Error>> {
+    if !matches!(run_case.solver, SolverFamily::Minion) {
+        return Ok(());
+    }
+
+    let context: Arc<RwLock<Context<'static>>> = Default::default();
+    set_current_parser(run_case.parser);
+    set_current_rewriter(run_case.rewriter);
+    set_comprehension_expander(run_case.comprehension_expander);
+    set_current_solver_family(run_case.solver);
+    set_minion_discrete_threshold(minion_discrete_threshold);
+
+    let file_path = format!("{path}/{essence_base}.{extension}");
+    let parsed_model = match run_case.parser {
+        Parser::TreeSitter => {
+            let mut ctx = context.as_ref().write().unwrap();
+            ctx.essence_file_name = Some(format!("{path}/{essence_base}.{extension}"));
+            parse_essence_file_native(&file_path, context.clone())?
+        }
+        Parser::ViaConjure => parse_essence_file(&file_path, context.clone())?,
+    };
+
+    let mut extra_rules = vec![];
+    if let SolverFamily::Sat(sat_encoding) = run_case.solver {
+        extra_rules.push(sat_encoding.as_rule_set());
+    }
+    let mut rules_to_load = DEFAULT_RULE_SETS.to_vec();
+    rules_to_load.extend(extra_rules);
+    let rule_sets = resolve_rule_sets(run_case.solver, &rules_to_load)?;
+
+    let rewritten_model = match run_case.rewriter {
+        Rewriter::Naive => rewrite_naive(&parsed_model, &rule_sets, false)?,
+        Rewriter::Morph(config) => rewrite_morph(parsed_model, &rule_sets, false, config),
+    };
+
+    let minion_path = oxide_artifacts_dir(Path::new(path)).join(
+        format!("{}-{}.minion", run_case.case_name, run_case.solver.as_str()),
+    );
+    if let Some(parent) = minion_path.parent() {
+        fs::create_dir_all(parent)?;
+    }
+    let solver = Solver::new(Minion::default()).load_model(rewritten_model)?;
+    let mut file: Box<dyn std::io::Write> = Box::new(File::create(&minion_path)?);
+    solver.write_solver_input_file(&mut file)?;
     Ok(())
 }
 

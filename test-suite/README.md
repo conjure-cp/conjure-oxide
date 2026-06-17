@@ -40,6 +40,12 @@ Instead of comparing against the existing JSON files, the test harness will:
 
 `ACCEPT=true` lets you update expected outputs, while still guarding correctness by checking against old Conjure.
 
+When a test fails, the harness writes debugging artifacts under `diagnostics/` in that
+test's directory (gitignored): `failure.json`, Conjure/Savile Row `conjure/*.eprime-minion`,
+and oxide generated traces / Minion snapshots when available. Diagnostics are captured as
+each stage runs; on timeout the partial snapshot is kept and `config.toml` is set to
+`timeout(N)`.
+
 To update `expected-time` entries, use `make test-accept-with-slower-times`. This only
 writes a new time when the rounded runtime is slower than the current value, so speedups
 remain visible as diffs. Use `make test-accept-with-exact-times` to overwrite times with

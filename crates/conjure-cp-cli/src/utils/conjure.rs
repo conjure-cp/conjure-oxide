@@ -268,13 +268,30 @@ pub fn get_solutions(
     Ok(sols.clone())
 }
 
+#[derive(Clone, Debug, Default)]
+pub struct ConjureSolveCaptureOptions {
+    /// When set, `conjure solve -o` writes models and Minion files here instead of a temp dir.
+    pub artifact_dir: Option<PathBuf>,
+    /// Passed to `conjure solve --savilerow-options` (e.g. `-O0`).
+    pub savilerow_options: Option<String>,
+}
+
 #[allow(clippy::unwrap_used)]
 pub fn get_solutions_from_conjure(
     essence_file: &str,
     param_file: Option<&str>,
     context: Arc<RwLock<Context<'static>>>,
 ) -> Result<Vec<BTreeMap<Name, Literal>>, anyhow::Error> {
-    Ok(get_solutions_from_conjure_with_stats(essence_file, param_file, context, 0)?.solutions)
+    Ok(
+        get_solutions_from_conjure_with_stats(
+            essence_file,
+            param_file,
+            context,
+            0,
+            ConjureSolveCaptureOptions::default(),
+        )?
+        .solutions,
+    )
 }
 
 #[allow(clippy::unwrap_used)]
@@ -283,8 +300,29 @@ pub fn get_solutions_from_conjure_with_stats(
     param_file: Option<&str>,
     context: Arc<RwLock<Context<'static>>>,
     number_of_solutions: i32,
+    capture_options: ConjureSolveCaptureOptions,
 ) -> Result<ConjureSolutions, anyhow::Error> {
-    let tmp_dir = tempdir()?;
+    enum ConjureOutputDir {
+        Temp(tempfile::TempDir),
+        Fixed(PathBuf),
+    }
+
+    impl ConjureOutputDir {
+        fn path(&self) -> &std::path::Path {
+            match self {
+                Self::Temp(dir) => dir.path(),
+                Self::Fixed(path) => path,
+            }
+        }
+    }
+
+    let output_dir = match &capture_options.artifact_dir {
+        Some(path) => {
+            fs::create_dir_all(path)?;
+            ConjureOutputDir::Fixed(path.clone())
+        }
+        None => ConjureOutputDir::Temp(tempdir()?),
+    };
 
     let mut cmd = std::process::Command::new("conjure");
     let number_of_solutions_arg = if number_of_solutions == 0 {
@@ -297,8 +335,13 @@ pub fn get_solutions_from_conjure_with_stats(
         .arg(format!("--number-of-solutions={number_of_solutions_arg}"))
         .arg("--copy-solutions=no")
         .arg("-o")
-        .arg(tmp_dir.path())
-        .arg(essence_file);
+        .arg(output_dir.path());
+
+    if let Some(options) = &capture_options.savilerow_options {
+        cmd.arg(format!("--savilerow-options={options}"));
+    }
+
+    cmd.arg(essence_file);
 
     if let Some(file) = param_file {
         cmd.arg(file);
@@ -316,7 +359,7 @@ pub fn get_solutions_from_conjure_with_stats(
     }
 
     let solutions_files: Vec<_> =
-        glob(&format!("{}/*.solution", tmp_dir.path().display()))?.collect();
+        glob(&format!("{}/*.solution", output_dir.path().display()))?.collect();
 
     let solutions_set: Vec<_> = solutions_files
         .par_iter()
@@ -344,7 +387,7 @@ pub fn get_solutions_from_conjure_with_stats(
         })
         .collect();
 
-    let timings = read_conjure_timings(tmp_dir.path())?;
+    let timings = read_conjure_timings(output_dir.path())?;
 
     Ok(ConjureSolutions {
         solutions: solutions_set
