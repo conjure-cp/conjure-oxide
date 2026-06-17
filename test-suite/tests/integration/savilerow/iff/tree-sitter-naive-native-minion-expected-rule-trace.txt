@@ -7,37 +7,61 @@ find z: bool
 
 such that
 
-((t) <-> ((z = x))) <-> (y)
+((t) <-> (z) = (x) <-> (y))
 
 --
 
-((t) <-> ((z = x))) <-> (y), 
+(t) <-> (z), 
    ~~> iff_to_eq ([("Minion", 4400)])
-((t) <-> ((z = x)) = y)
+(t = z)
 
 --
 
-((t) <-> ((z = x)) = y), 
+(t = z), 
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify((t) <-> ((z = x)), y)
+Reify(z, t)
 
 --
 
-(t) <-> ((z = x)), 
+(x) <-> (y), 
    ~~> iff_to_eq ([("Minion", 4400)])
-(t = (z = x))
+(x = y)
 
 --
 
-(t = (z = x)), 
+(x = y), 
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify((z = x), t)
+Reify(y, x)
 
 --
 
-(z = x), 
+(Reify(z, t) = Reify(y, x)), 
+   ~~> flatten_eq ([("Minion", 4200)])
+(__0 = __1)
+new variables:
+  find __0: bool
+  find __1: bool
+new constraints:
+  __0 =aux Reify(z, t)
+  __1 =aux Reify(y, x)
+
+--
+
+(__0 = __1), 
    ~~> bool_eq_to_reify ([("Minion", 4400)])
-Reify(x, z)
+Reify(__1, __0)
+
+--
+
+__0 =aux Reify(z, t), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(Reify(z, t), __0)
+
+--
+
+__1 =aux Reify(y, x), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)])
+Reify(Reify(y, x), __1)
 
 --
 
@@ -47,8 +71,12 @@ find t: bool
 find x: bool
 find y: bool
 find z: bool
+find __0: bool
+find __1: bool
 
 such that
 
-Reify(Reify(Reify(x, z), t), y)
+Reify(__1, __0),
+Reify(Reify(z, t), __0),
+Reify(Reify(y, x), __1)
 
