@@ -748,16 +748,6 @@ fn copy_generated_to_expected(
     Ok(())
 }
 
-fn number_of_solutions_for_test_dir(test_dir: &str) -> i32 {
-    let config_path = Path::new(test_dir).join("config.toml");
-    if let Ok(contents) = fs::read_to_string(config_path) {
-        if let Ok(config) = toml::from_str::<TestConfig>(&contents) {
-            return config.number_of_solutions.as_solver_limit();
-        }
-    }
-    0
-}
-
 fn record_integration_failure(
     test_dir: &str,
     record: FailureRecord,
