@@ -11,20 +11,20 @@ find field: matrix indexed by [RANGE, RANGE] of RANGE
 
 such that
 
-and([ allDiff(field[row,..]) | row : RANGE ]),
-and([ allDiff(field[..,col]) | col : RANGE ]),
+and([ allDifferent(field[row,..]) | row : RANGE ]),
+and([ allDifferent(field[..,col]) | col : RANGE ]),
 and([ (field[lt[i, 0], lt[i, 1]] < field[lt[i, 2], lt[i, 3]]) | i : NUMQD ]),
 and([ ((values[row, col] > 0)) -> ((field[row, col] = values[row, col])) | row : RANGE, col : RANGE ])
 
 --
 
-and([ allDiff(field[row,..]) | row : RANGE ]),
-and([ allDiff(field[..,col]) | col : RANGE ]),
+and([ allDifferent(field[row,..]) | row : RANGE ]),
+and([ allDifferent(field[..,col]) | col : RANGE ]),
 and([ (field[lt[i, 0], lt[i, 1]] < field[lt[i, 2], lt[i, 3]]) | i : NUMQD ]),
 and([ ((values[row, col] > 0)) -> ((field[row, col] = values[row, col])) | row : RANGE, col : RANGE ]), 
    ~~> select_representation_matrix ([("Representations", 8001)])
-and([ allDiff(field[row,..]) | row : RANGE ]),
-and([ allDiff(field[..,col]) | col : RANGE ]),
+and([ allDifferent(field[row,..]) | row : RANGE ]),
+and([ allDifferent(field[..,col]) | col : RANGE ]),
 and([ (field[lt[i, 0], lt[i, 1]] < field[lt[i, 2], lt[i, 3]]) | i : NUMQD ]),
 and([ ((values[row, col] > 0)) -> ((field[row, col] = values[row, col])) | row : RANGE, col : RANGE ])
 new variables:
@@ -56,43 +56,43 @@ new variables:
 
 --
 
-[ allDiff(field[row,..]) | row : RANGE ], 
+[ allDifferent(field[row,..]) | row : RANGE ], 
    ~~> expand_comprehension_native ([("Base", 2000)])
-[allDiff(field[1,..]),allDiff(field[2,..]),allDiff(field[3,..]),allDiff(field[4,..]),allDiff(field[5,..]);int(1..)]
+[allDifferent(field[1,..]),allDifferent(field[2,..]),allDifferent(field[3,..]),allDifferent(field[4,..]),allDifferent(field[5,..]);int(1..)]
 
 --
 
-and([allDiff(field[1,..]),allDiff(field[2,..]),allDiff(field[3,..]),allDiff(field[4,..]),allDiff(field[5,..]);int(1..)]),
-and([ allDiff(field[..,col]) | col : RANGE ]),
+and([allDifferent(field[1,..]),allDifferent(field[2,..]),allDifferent(field[3,..]),allDifferent(field[4,..]),allDifferent(field[5,..]);int(1..)]),
+and([ allDifferent(field[..,col]) | col : RANGE ]),
 and([ (field[lt[i, 0], lt[i, 1]] < field[lt[i, 2], lt[i, 3]]) | i : NUMQD ]),
 and([ ((values[row, col] > 0)) -> ((field[row, col] = values[row, col])) | row : RANGE, col : RANGE ]), 
    ~~> constant_evaluator ([("Constant", 9001)])
-allDiff(field[1,..]),
-allDiff(field[2,..]),
-allDiff(field[3,..]),
-allDiff(field[4,..]),
-allDiff(field[5,..]),
-and([ allDiff(field[..,col]) | col : RANGE ]),
+allDifferent(field[1,..]),
+allDifferent(field[2,..]),
+allDifferent(field[3,..]),
+allDifferent(field[4,..]),
+allDifferent(field[5,..]),
+and([ allDifferent(field[..,col]) | col : RANGE ]),
 and([ (field[lt[i, 0], lt[i, 1]] < field[lt[i, 2], lt[i, 3]]) | i : NUMQD ]),
 and([ ((values[row, col] > 0)) -> ((field[row, col] = values[row, col])) | row : RANGE, col : RANGE ])
 
 --
 
-allDiff(field#matrix_to_atom[1,..]),
-allDiff(field#matrix_to_atom[2,..]),
-allDiff(field#matrix_to_atom[3,..]),
-allDiff(field#matrix_to_atom[4,..]),
-allDiff(field#matrix_to_atom[5,..]),
-and([ allDiff(field#matrix_to_atom[..,col]) | col : RANGE ]),
+allDifferent(field#matrix_to_atom[1,..]),
+allDifferent(field#matrix_to_atom[2,..]),
+allDifferent(field#matrix_to_atom[3,..]),
+allDifferent(field#matrix_to_atom[4,..]),
+allDifferent(field#matrix_to_atom[5,..]),
+and([ allDifferent(field#matrix_to_atom[..,col]) | col : RANGE ]),
 and([ (field#matrix_to_atom[lt[i, 0], lt[i, 1]] < field#matrix_to_atom[lt[i, 2], lt[i, 3]]) | i : NUMQD ]),
 and([ ((values[row, col] > 0)) -> ((field#matrix_to_atom[row, col] = values[row, col])) | row : RANGE, col : RANGE ]), 
    ~~> select_representation_matrix ([("Representations", 8001)])
-allDiff(field#matrix_to_atom[1,..]),
-allDiff(field#matrix_to_atom[2,..]),
-allDiff(field#matrix_to_atom[3,..]),
-allDiff(field#matrix_to_atom[4,..]),
-allDiff(field#matrix_to_atom[5,..]),
-and([ allDiff(field#matrix_to_atom[..,col]) | col : RANGE ]),
+allDifferent(field#matrix_to_atom[1,..]),
+allDifferent(field#matrix_to_atom[2,..]),
+allDifferent(field#matrix_to_atom[3,..]),
+allDifferent(field#matrix_to_atom[4,..]),
+allDifferent(field#matrix_to_atom[5,..]),
+and([ allDifferent(field#matrix_to_atom[..,col]) | col : RANGE ]),
 and([ (field#matrix_to_atom[lt[i, 0], lt[i, 1]] < field#matrix_to_atom[lt[i, 2], lt[i, 3]]) | i : NUMQD ]),
 and([ ((values[row, col] > 0)) -> ((field#matrix_to_atom[row, col] = values[row, col])) | row : RANGE, col : RANGE ])
 
@@ -134,7 +134,7 @@ SafeSlice(field#matrix_to_atom,[1,..]),
 
 --
 
-allDiff([field#matrix_to_atom_1_1,field#matrix_to_atom_1_2,field#matrix_to_atom_1_3,field#matrix_to_atom_1_4,field#matrix_to_atom_1_5;int(1..)]), 
+allDifferent([field#matrix_to_atom_1_1,field#matrix_to_atom_1_2,field#matrix_to_atom_1_3,field#matrix_to_atom_1_4,field#matrix_to_atom_1_5;int(1..)]), 
    ~~> introduce_flat_alldiff ([("Minion", 4200)])
 __flat_alldiff([field#matrix_to_atom_1_1, field#matrix_to_atom_1_2, field#matrix_to_atom_1_3, field#matrix_to_atom_1_4, field#matrix_to_atom_1_5])
 
@@ -146,7 +146,7 @@ SafeSlice(field#matrix_to_atom,[2,..]),
 
 --
 
-allDiff([field#matrix_to_atom_2_1,field#matrix_to_atom_2_2,field#matrix_to_atom_2_3,field#matrix_to_atom_2_4,field#matrix_to_atom_2_5;int(1..)]), 
+allDifferent([field#matrix_to_atom_2_1,field#matrix_to_atom_2_2,field#matrix_to_atom_2_3,field#matrix_to_atom_2_4,field#matrix_to_atom_2_5;int(1..)]), 
    ~~> introduce_flat_alldiff ([("Minion", 4200)])
 __flat_alldiff([field#matrix_to_atom_2_1, field#matrix_to_atom_2_2, field#matrix_to_atom_2_3, field#matrix_to_atom_2_4, field#matrix_to_atom_2_5])
 
@@ -158,7 +158,7 @@ SafeSlice(field#matrix_to_atom,[3,..]),
 
 --
 
-allDiff([field#matrix_to_atom_3_1,field#matrix_to_atom_3_2,field#matrix_to_atom_3_3,field#matrix_to_atom_3_4,field#matrix_to_atom_3_5;int(1..)]), 
+allDifferent([field#matrix_to_atom_3_1,field#matrix_to_atom_3_2,field#matrix_to_atom_3_3,field#matrix_to_atom_3_4,field#matrix_to_atom_3_5;int(1..)]), 
    ~~> introduce_flat_alldiff ([("Minion", 4200)])
 __flat_alldiff([field#matrix_to_atom_3_1, field#matrix_to_atom_3_2, field#matrix_to_atom_3_3, field#matrix_to_atom_3_4, field#matrix_to_atom_3_5])
 
@@ -170,7 +170,7 @@ SafeSlice(field#matrix_to_atom,[4,..]),
 
 --
 
-allDiff([field#matrix_to_atom_4_1,field#matrix_to_atom_4_2,field#matrix_to_atom_4_3,field#matrix_to_atom_4_4,field#matrix_to_atom_4_5;int(1..)]), 
+allDifferent([field#matrix_to_atom_4_1,field#matrix_to_atom_4_2,field#matrix_to_atom_4_3,field#matrix_to_atom_4_4,field#matrix_to_atom_4_5;int(1..)]), 
    ~~> introduce_flat_alldiff ([("Minion", 4200)])
 __flat_alldiff([field#matrix_to_atom_4_1, field#matrix_to_atom_4_2, field#matrix_to_atom_4_3, field#matrix_to_atom_4_4, field#matrix_to_atom_4_5])
 
@@ -182,15 +182,15 @@ SafeSlice(field#matrix_to_atom,[5,..]),
 
 --
 
-allDiff([field#matrix_to_atom_5_1,field#matrix_to_atom_5_2,field#matrix_to_atom_5_3,field#matrix_to_atom_5_4,field#matrix_to_atom_5_5;int(1..)]), 
+allDifferent([field#matrix_to_atom_5_1,field#matrix_to_atom_5_2,field#matrix_to_atom_5_3,field#matrix_to_atom_5_4,field#matrix_to_atom_5_5;int(1..)]), 
    ~~> introduce_flat_alldiff ([("Minion", 4200)])
 __flat_alldiff([field#matrix_to_atom_5_1, field#matrix_to_atom_5_2, field#matrix_to_atom_5_3, field#matrix_to_atom_5_4, field#matrix_to_atom_5_5])
 
 --
 
-[ allDiff(field#matrix_to_atom[..,col]) | col : RANGE ], 
+[ allDifferent(field#matrix_to_atom[..,col]) | col : RANGE ], 
    ~~> expand_comprehension_native ([("Base", 2000)])
-[allDiff(field#matrix_to_atom[..,1]),allDiff(field#matrix_to_atom[..,2]),allDiff(field#matrix_to_atom[..,3]),allDiff(field#matrix_to_atom[..,4]),allDiff(field#matrix_to_atom[..,5]);int(1..)]
+[allDifferent(field#matrix_to_atom[..,1]),allDifferent(field#matrix_to_atom[..,2]),allDifferent(field#matrix_to_atom[..,3]),allDifferent(field#matrix_to_atom[..,4]),allDifferent(field#matrix_to_atom[..,5]);int(1..)]
 
 --
 
@@ -199,7 +199,7 @@ __flat_alldiff([field#matrix_to_atom_2_1, field#matrix_to_atom_2_2, field#matrix
 __flat_alldiff([field#matrix_to_atom_3_1, field#matrix_to_atom_3_2, field#matrix_to_atom_3_3, field#matrix_to_atom_3_4, field#matrix_to_atom_3_5]),
 __flat_alldiff([field#matrix_to_atom_4_1, field#matrix_to_atom_4_2, field#matrix_to_atom_4_3, field#matrix_to_atom_4_4, field#matrix_to_atom_4_5]),
 __flat_alldiff([field#matrix_to_atom_5_1, field#matrix_to_atom_5_2, field#matrix_to_atom_5_3, field#matrix_to_atom_5_4, field#matrix_to_atom_5_5]),
-and([allDiff(field#matrix_to_atom[..,1]),allDiff(field#matrix_to_atom[..,2]),allDiff(field#matrix_to_atom[..,3]),allDiff(field#matrix_to_atom[..,4]),allDiff(field#matrix_to_atom[..,5]);int(1..)]),
+and([allDifferent(field#matrix_to_atom[..,1]),allDifferent(field#matrix_to_atom[..,2]),allDifferent(field#matrix_to_atom[..,3]),allDifferent(field#matrix_to_atom[..,4]),allDifferent(field#matrix_to_atom[..,5]);int(1..)]),
 and([ (field#matrix_to_atom[lt[i, 0], lt[i, 1]] < field#matrix_to_atom[lt[i, 2], lt[i, 3]]) | i : NUMQD ]),
 and([ ((values[row, col] > 0)) -> ((field#matrix_to_atom[row, col] = values[row, col])) | row : RANGE, col : RANGE ]), 
    ~~> constant_evaluator ([("Constant", 9001)])
@@ -208,11 +208,11 @@ __flat_alldiff([field#matrix_to_atom_2_1, field#matrix_to_atom_2_2, field#matrix
 __flat_alldiff([field#matrix_to_atom_3_1, field#matrix_to_atom_3_2, field#matrix_to_atom_3_3, field#matrix_to_atom_3_4, field#matrix_to_atom_3_5]),
 __flat_alldiff([field#matrix_to_atom_4_1, field#matrix_to_atom_4_2, field#matrix_to_atom_4_3, field#matrix_to_atom_4_4, field#matrix_to_atom_4_5]),
 __flat_alldiff([field#matrix_to_atom_5_1, field#matrix_to_atom_5_2, field#matrix_to_atom_5_3, field#matrix_to_atom_5_4, field#matrix_to_atom_5_5]),
-allDiff(field#matrix_to_atom[..,1]),
-allDiff(field#matrix_to_atom[..,2]),
-allDiff(field#matrix_to_atom[..,3]),
-allDiff(field#matrix_to_atom[..,4]),
-allDiff(field#matrix_to_atom[..,5]),
+allDifferent(field#matrix_to_atom[..,1]),
+allDifferent(field#matrix_to_atom[..,2]),
+allDifferent(field#matrix_to_atom[..,3]),
+allDifferent(field#matrix_to_atom[..,4]),
+allDifferent(field#matrix_to_atom[..,5]),
 and([ (field#matrix_to_atom[lt[i, 0], lt[i, 1]] < field#matrix_to_atom[lt[i, 2], lt[i, 3]]) | i : NUMQD ]),
 and([ ((values[row, col] > 0)) -> ((field#matrix_to_atom[row, col] = values[row, col])) | row : RANGE, col : RANGE ])
 
@@ -254,7 +254,7 @@ SafeSlice(field#matrix_to_atom,[..,1]),
 
 --
 
-allDiff([field#matrix_to_atom_1_1,field#matrix_to_atom_2_1,field#matrix_to_atom_3_1,field#matrix_to_atom_4_1,field#matrix_to_atom_5_1;int(1..)]), 
+allDifferent([field#matrix_to_atom_1_1,field#matrix_to_atom_2_1,field#matrix_to_atom_3_1,field#matrix_to_atom_4_1,field#matrix_to_atom_5_1;int(1..)]), 
    ~~> introduce_flat_alldiff ([("Minion", 4200)])
 __flat_alldiff([field#matrix_to_atom_1_1, field#matrix_to_atom_2_1, field#matrix_to_atom_3_1, field#matrix_to_atom_4_1, field#matrix_to_atom_5_1])
 
@@ -266,7 +266,7 @@ SafeSlice(field#matrix_to_atom,[..,2]),
 
 --
 
-allDiff([field#matrix_to_atom_1_2,field#matrix_to_atom_2_2,field#matrix_to_atom_3_2,field#matrix_to_atom_4_2,field#matrix_to_atom_5_2;int(1..)]), 
+allDifferent([field#matrix_to_atom_1_2,field#matrix_to_atom_2_2,field#matrix_to_atom_3_2,field#matrix_to_atom_4_2,field#matrix_to_atom_5_2;int(1..)]), 
    ~~> introduce_flat_alldiff ([("Minion", 4200)])
 __flat_alldiff([field#matrix_to_atom_1_2, field#matrix_to_atom_2_2, field#matrix_to_atom_3_2, field#matrix_to_atom_4_2, field#matrix_to_atom_5_2])
 
@@ -278,7 +278,7 @@ SafeSlice(field#matrix_to_atom,[..,3]),
 
 --
 
-allDiff([field#matrix_to_atom_1_3,field#matrix_to_atom_2_3,field#matrix_to_atom_3_3,field#matrix_to_atom_4_3,field#matrix_to_atom_5_3;int(1..)]), 
+allDifferent([field#matrix_to_atom_1_3,field#matrix_to_atom_2_3,field#matrix_to_atom_3_3,field#matrix_to_atom_4_3,field#matrix_to_atom_5_3;int(1..)]), 
    ~~> introduce_flat_alldiff ([("Minion", 4200)])
 __flat_alldiff([field#matrix_to_atom_1_3, field#matrix_to_atom_2_3, field#matrix_to_atom_3_3, field#matrix_to_atom_4_3, field#matrix_to_atom_5_3])
 
@@ -290,7 +290,7 @@ SafeSlice(field#matrix_to_atom,[..,4]),
 
 --
 
-allDiff([field#matrix_to_atom_1_4,field#matrix_to_atom_2_4,field#matrix_to_atom_3_4,field#matrix_to_atom_4_4,field#matrix_to_atom_5_4;int(1..)]), 
+allDifferent([field#matrix_to_atom_1_4,field#matrix_to_atom_2_4,field#matrix_to_atom_3_4,field#matrix_to_atom_4_4,field#matrix_to_atom_5_4;int(1..)]), 
    ~~> introduce_flat_alldiff ([("Minion", 4200)])
 __flat_alldiff([field#matrix_to_atom_1_4, field#matrix_to_atom_2_4, field#matrix_to_atom_3_4, field#matrix_to_atom_4_4, field#matrix_to_atom_5_4])
 
@@ -302,7 +302,7 @@ SafeSlice(field#matrix_to_atom,[..,5]),
 
 --
 
-allDiff([field#matrix_to_atom_1_5,field#matrix_to_atom_2_5,field#matrix_to_atom_3_5,field#matrix_to_atom_4_5,field#matrix_to_atom_5_5;int(1..)]), 
+allDifferent([field#matrix_to_atom_1_5,field#matrix_to_atom_2_5,field#matrix_to_atom_3_5,field#matrix_to_atom_4_5,field#matrix_to_atom_5_5;int(1..)]), 
    ~~> introduce_flat_alldiff ([("Minion", 4200)])
 __flat_alldiff([field#matrix_to_atom_1_5, field#matrix_to_atom_2_5, field#matrix_to_atom_3_5, field#matrix_to_atom_4_5, field#matrix_to_atom_5_5])
 

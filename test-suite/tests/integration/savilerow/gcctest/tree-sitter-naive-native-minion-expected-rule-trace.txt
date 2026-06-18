@@ -5,29 +5,29 @@ letting v be [2,4,5,6,7;int(1..5)]
 
 such that
 
-gcc(m, [1,2,3,4,5,6,7,8,9,10;int(1..10)], m),
-gcc(m, [1,2,3;int(1..3)], [2,2,2;int(1..3)]),
-((m[1] = 5)) -> (or([gcc(m, v, [2,2,2,2,2;int(1..5)]),gcc(m, [1,2,3;int(1..3)], [2,2,2;int(1..3)]);int(1..)]))
+globalCardinality(m, [1,2,3,4,5,6,7,8,9,10;int(1..10)], m),
+globalCardinality(m, [1,2,3;int(1..3)], [2,2,2;int(1..3)]),
+((m[1] = 5)) -> (or([globalCardinality(m, v, [2,2,2,2,2;int(1..5)]),globalCardinality(m, [1,2,3;int(1..3)], [2,2,2;int(1..3)]);int(1..)]))
 
 --
 
-gcc(m, [1,2,3,4,5,6,7,8,9,10;int(1..10)], m),
-gcc(m, [1,2,3;int(1..3)], [2,2,2;int(1..3)]),
-((m[1] = 5)) -> (or([gcc(m, v, [2,2,2,2,2;int(1..5)]),gcc(m, [1,2,3;int(1..3)], [2,2,2;int(1..3)]);int(1..)])), 
+globalCardinality(m, [1,2,3,4,5,6,7,8,9,10;int(1..10)], m),
+globalCardinality(m, [1,2,3;int(1..3)], [2,2,2;int(1..3)]),
+((m[1] = 5)) -> (or([globalCardinality(m, v, [2,2,2,2,2;int(1..5)]),globalCardinality(m, [1,2,3;int(1..3)], [2,2,2;int(1..3)]);int(1..)])), 
    ~~> constant_evaluator ([("Constant", 9001)])
-gcc(m, [1,2,3,4,5,6,7,8,9,10;int(1..10)], m),
-gcc(m, [1,2,3;int(1..3)], [2,2,2;int(1..3)]),
-((m[1] = 5)) -> (or([gcc(m, v, [2,2,2,2,2;int(1..5)]),gcc(m, [1,2,3;int(1..3)], [2,2,2;int(1..3)]);int(1..)]))
+globalCardinality(m, [1,2,3,4,5,6,7,8,9,10;int(1..10)], m),
+globalCardinality(m, [1,2,3;int(1..3)], [2,2,2;int(1..3)]),
+((m[1] = 5)) -> (or([globalCardinality(m, v, [2,2,2,2,2;int(1..5)]),globalCardinality(m, [1,2,3;int(1..3)], [2,2,2;int(1..3)]);int(1..)]))
 
 --
 
-gcc(m#matrix_to_atom, [1,2,3,4,5,6,7,8,9,10;int(1..10)], m#matrix_to_atom),
-gcc(m#matrix_to_atom, [1,2,3;int(1..3)], [2,2,2;int(1..3)]),
-((m#matrix_to_atom[1] = 5)) -> (or([gcc(m#matrix_to_atom, v, [2,2,2,2,2;int(1..5)]),gcc(m#matrix_to_atom, [1,2,3;int(1..3)], [2,2,2;int(1..3)]);int(1..)])), 
+globalCardinality(m#matrix_to_atom, [1,2,3,4,5,6,7,8,9,10;int(1..10)], m#matrix_to_atom),
+globalCardinality(m#matrix_to_atom, [1,2,3;int(1..3)], [2,2,2;int(1..3)]),
+((m#matrix_to_atom[1] = 5)) -> (or([globalCardinality(m#matrix_to_atom, v, [2,2,2,2,2;int(1..5)]),globalCardinality(m#matrix_to_atom, [1,2,3;int(1..3)], [2,2,2;int(1..3)]);int(1..)])), 
    ~~> select_representation_matrix ([("Representations", 8001)])
-gcc(m#matrix_to_atom, [1,2,3,4,5,6,7,8,9,10;int(1..10)], m#matrix_to_atom),
-gcc(m#matrix_to_atom, [1,2,3;int(1..3)], [2,2,2;int(1..3)]),
-((m#matrix_to_atom[1] = 5)) -> (or([gcc(m#matrix_to_atom, v, [2,2,2,2,2;int(1..5)]),gcc(m#matrix_to_atom, [1,2,3;int(1..3)], [2,2,2;int(1..3)]);int(1..)]))
+globalCardinality(m#matrix_to_atom, [1,2,3,4,5,6,7,8,9,10;int(1..10)], m#matrix_to_atom),
+globalCardinality(m#matrix_to_atom, [1,2,3;int(1..3)], [2,2,2;int(1..3)]),
+((m#matrix_to_atom[1] = 5)) -> (or([globalCardinality(m#matrix_to_atom, v, [2,2,2,2,2;int(1..5)]),globalCardinality(m#matrix_to_atom, [1,2,3;int(1..3)], [2,2,2;int(1..3)]);int(1..)]))
 new variables:
   find m#matrix_to_atom_1: int(1..10)
   find m#matrix_to_atom_10: int(1..10)
@@ -48,19 +48,19 @@ SafeIndex(m#matrix_to_atom,[1])
 
 --
 
-gcc(m#matrix_to_atom, [1,2,3,4,5,6,7,8,9,10;int(1..10)], m#matrix_to_atom),
-gcc(m#matrix_to_atom, [1,2,3;int(1..3)], [2,2,2;int(1..3)]),
-((SafeIndex(m#matrix_to_atom,[1]) = 5)) -> (or([gcc(m#matrix_to_atom, v, [2,2,2,2,2;int(1..5)]),gcc(m#matrix_to_atom, [1,2,3;int(1..3)], [2,2,2;int(1..3)]);int(1..)])), 
+globalCardinality(m#matrix_to_atom, [1,2,3,4,5,6,7,8,9,10;int(1..10)], m#matrix_to_atom),
+globalCardinality(m#matrix_to_atom, [1,2,3;int(1..3)], [2,2,2;int(1..3)]),
+((SafeIndex(m#matrix_to_atom,[1]) = 5)) -> (or([globalCardinality(m#matrix_to_atom, v, [2,2,2,2,2;int(1..5)]),globalCardinality(m#matrix_to_atom, [1,2,3;int(1..3)], [2,2,2;int(1..3)]);int(1..)])), 
    ~~> index_matrix_to_atom ([("Base", 5000)])
-gcc(m#matrix_to_atom, [1,2,3,4,5,6,7,8,9,10;int(1..10)], m#matrix_to_atom),
-gcc(m#matrix_to_atom, [1,2,3;int(1..3)], [2,2,2;int(1..3)]),
-((m#matrix_to_atom_1 = 5)) -> (or([gcc(m#matrix_to_atom, v, [2,2,2,2,2;int(1..5)]),gcc(m#matrix_to_atom, [1,2,3;int(1..3)], [2,2,2;int(1..3)]);int(1..)]))
+globalCardinality(m#matrix_to_atom, [1,2,3,4,5,6,7,8,9,10;int(1..10)], m#matrix_to_atom),
+globalCardinality(m#matrix_to_atom, [1,2,3;int(1..3)], [2,2,2;int(1..3)]),
+((m#matrix_to_atom_1 = 5)) -> (or([globalCardinality(m#matrix_to_atom, v, [2,2,2,2,2;int(1..5)]),globalCardinality(m#matrix_to_atom, [1,2,3;int(1..3)], [2,2,2;int(1..3)]);int(1..)]))
 
 --
 
-((m#matrix_to_atom_1 = 5)) -> (or([gcc(m#matrix_to_atom, v, [2,2,2,2,2;int(1..5)]),gcc(m#matrix_to_atom, [1,2,3;int(1..3)], [2,2,2;int(1..3)]);int(1..)])), 
+((m#matrix_to_atom_1 = 5)) -> (or([globalCardinality(m#matrix_to_atom, v, [2,2,2,2,2;int(1..5)]),globalCardinality(m#matrix_to_atom, [1,2,3;int(1..3)], [2,2,2;int(1..3)]);int(1..)])), 
    ~~> flatten_imply ([("Minion", 4200)])
-(__0) -> (or([gcc(m#matrix_to_atom, v, [2,2,2,2,2;int(1..5)]),gcc(m#matrix_to_atom, [1,2,3;int(1..3)], [2,2,2;int(1..3)]);int(1..)]))
+(__0) -> (or([globalCardinality(m#matrix_to_atom, v, [2,2,2,2,2;int(1..5)]),globalCardinality(m#matrix_to_atom, [1,2,3;int(1..3)], [2,2,2;int(1..3)]);int(1..)]))
 new variables:
   find __0: bool
 new constraints:
@@ -68,9 +68,9 @@ new constraints:
 
 --
 
-(__0) -> (or([gcc(m#matrix_to_atom, v, [2,2,2,2,2;int(1..5)]),gcc(m#matrix_to_atom, [1,2,3;int(1..3)], [2,2,2;int(1..3)]);int(1..)])), 
+(__0) -> (or([globalCardinality(m#matrix_to_atom, v, [2,2,2,2,2;int(1..5)]),globalCardinality(m#matrix_to_atom, [1,2,3;int(1..3)], [2,2,2;int(1..3)]);int(1..)])), 
    ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
-ReifyImply(or([gcc(m#matrix_to_atom, v, [2,2,2,2,2;int(1..5)]),gcc(m#matrix_to_atom, [1,2,3;int(1..3)], [2,2,2;int(1..3)]);int(1..)]), __0)
+ReifyImply(or([globalCardinality(m#matrix_to_atom, v, [2,2,2,2,2;int(1..5)]),globalCardinality(m#matrix_to_atom, [1,2,3;int(1..3)], [2,2,2;int(1..3)]);int(1..)]), __0)
 
 --
 
@@ -80,104 +80,104 @@ Reify((m#matrix_to_atom_1 = 5), __0)
 
 --
 
-gcc(m#matrix_to_atom, [1,2,3,4,5,6,7,8,9,10;int(1..10)], m#matrix_to_atom), 
+globalCardinality(m#matrix_to_atom, [1,2,3,4,5,6,7,8,9,10;int(1..10)], m#matrix_to_atom), 
    ~~> matrix_ref_to_atom ([("Base", 2000)])
-gcc([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3,4,5,6,7,8,9,10;int(1..10)], m#matrix_to_atom)
+globalCardinality([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3,4,5,6,7,8,9,10;int(1..10)], m#matrix_to_atom)
 
 --
 
-gcc([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3,4,5,6,7,8,9,10;int(1..10)], m#matrix_to_atom), 
+globalCardinality([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3,4,5,6,7,8,9,10;int(1..10)], m#matrix_to_atom), 
    ~~> matrix_ref_to_atom ([("Base", 2000)])
-gcc([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3,4,5,6,7,8,9,10;int(1..10)], [m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)])
+globalCardinality([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3,4,5,6,7,8,9,10;int(1..10)], [m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)])
 
 --
 
-gcc([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3,4,5,6,7,8,9,10;int(1..10)], [m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)]), 
+globalCardinality([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3,4,5,6,7,8,9,10;int(1..10)], [m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)]), 
    ~~> matrix_to_list ([("Base", 2000)])
-gcc([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3,4,5,6,7,8,9,10;int(1..)], [m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)])
+globalCardinality([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3,4,5,6,7,8,9,10;int(1..)], [m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)])
 
 --
 
-gcc([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3,4,5,6,7,8,9,10;int(1..)], [m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)]),
-gcc(m#matrix_to_atom, [1,2,3;int(1..3)], [2,2,2;int(1..3)]),
-ReifyImply(or([gcc(m#matrix_to_atom, v, [2,2,2,2,2;int(1..5)]),gcc(m#matrix_to_atom, [1,2,3;int(1..3)], [2,2,2;int(1..3)]);int(1..)]), __0),
+globalCardinality([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3,4,5,6,7,8,9,10;int(1..)], [m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)]),
+globalCardinality(m#matrix_to_atom, [1,2,3;int(1..3)], [2,2,2;int(1..3)]),
+ReifyImply(or([globalCardinality(m#matrix_to_atom, v, [2,2,2,2,2;int(1..5)]),globalCardinality(m#matrix_to_atom, [1,2,3;int(1..3)], [2,2,2;int(1..3)]);int(1..)]), __0),
 Reify((m#matrix_to_atom_1 = 5), __0), 
    ~~> constant_evaluator ([("Constant", 9001)])
-gcc([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3,4,5,6,7,8,9,10;int(1..)], [m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)]),
-gcc(m#matrix_to_atom, [1,2,3;int(1..3)], [2,2,2;int(1..3)]),
-ReifyImply(or([gcc(m#matrix_to_atom, v, [2,2,2,2,2;int(1..5)]),gcc(m#matrix_to_atom, [1,2,3;int(1..3)], [2,2,2;int(1..3)]);int(1..)]), __0),
+globalCardinality([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3,4,5,6,7,8,9,10;int(1..)], [m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)]),
+globalCardinality(m#matrix_to_atom, [1,2,3;int(1..3)], [2,2,2;int(1..3)]),
+ReifyImply(or([globalCardinality(m#matrix_to_atom, v, [2,2,2,2,2;int(1..5)]),globalCardinality(m#matrix_to_atom, [1,2,3;int(1..3)], [2,2,2;int(1..3)]);int(1..)]), __0),
 Reify((m#matrix_to_atom_1 = 5), __0)
 
 --
 
-gcc(m#matrix_to_atom, [1,2,3;int(1..3)], [2,2,2;int(1..3)]), 
+globalCardinality(m#matrix_to_atom, [1,2,3;int(1..3)], [2,2,2;int(1..3)]), 
    ~~> matrix_ref_to_atom ([("Base", 2000)])
-gcc([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3;int(1..3)], [2,2,2;int(1..3)])
+globalCardinality([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3;int(1..3)], [2,2,2;int(1..3)])
 
 --
 
-gcc([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3;int(1..3)], [2,2,2;int(1..3)]), 
+globalCardinality([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3;int(1..3)], [2,2,2;int(1..3)]), 
    ~~> matrix_to_list ([("Base", 2000)])
-gcc([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3;int(1..)], [2,2,2;int(1..)])
+globalCardinality([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3;int(1..)], [2,2,2;int(1..)])
 
 --
 
-gcc([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3,4,5,6,7,8,9,10;int(1..)], [m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)]),
-gcc([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3;int(1..)], [2,2,2;int(1..)]),
-ReifyImply(or([gcc(m#matrix_to_atom, v, [2,2,2,2,2;int(1..5)]),gcc(m#matrix_to_atom, [1,2,3;int(1..3)], [2,2,2;int(1..3)]);int(1..)]), __0),
+globalCardinality([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3,4,5,6,7,8,9,10;int(1..)], [m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)]),
+globalCardinality([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3;int(1..)], [2,2,2;int(1..)]),
+ReifyImply(or([globalCardinality(m#matrix_to_atom, v, [2,2,2,2,2;int(1..5)]),globalCardinality(m#matrix_to_atom, [1,2,3;int(1..3)], [2,2,2;int(1..3)]);int(1..)]), __0),
 Reify((m#matrix_to_atom_1 = 5), __0), 
    ~~> constant_evaluator ([("Constant", 9001)])
-gcc([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3,4,5,6,7,8,9,10;int(1..)], [m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)]),
-gcc([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3;int(1..)], [2,2,2;int(1..)]),
-ReifyImply(or([gcc(m#matrix_to_atom, v, [2,2,2,2,2;int(1..5)]),gcc(m#matrix_to_atom, [1,2,3;int(1..3)], [2,2,2;int(1..3)]);int(1..)]), __0),
+globalCardinality([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3,4,5,6,7,8,9,10;int(1..)], [m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)]),
+globalCardinality([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3;int(1..)], [2,2,2;int(1..)]),
+ReifyImply(or([globalCardinality(m#matrix_to_atom, v, [2,2,2,2,2;int(1..5)]),globalCardinality(m#matrix_to_atom, [1,2,3;int(1..3)], [2,2,2;int(1..3)]);int(1..)]), __0),
 Reify((m#matrix_to_atom_1 = 5), __0)
 
 --
 
-gcc(m#matrix_to_atom, v, [2,2,2,2,2;int(1..5)]), 
+globalCardinality(m#matrix_to_atom, v, [2,2,2,2,2;int(1..5)]), 
    ~~> matrix_ref_to_atom ([("Base", 2000)])
-gcc([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], v, [2,2,2,2,2;int(1..5)])
+globalCardinality([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], v, [2,2,2,2,2;int(1..5)])
 
 --
 
-gcc([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], v, [2,2,2,2,2;int(1..5)]), 
+globalCardinality([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], v, [2,2,2,2,2;int(1..5)]), 
    ~~> matrix_to_list ([("Base", 2000)])
-gcc([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], v, [2,2,2,2,2;int(1..)])
+globalCardinality([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], v, [2,2,2,2,2;int(1..)])
 
 --
 
-gcc([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3,4,5,6,7,8,9,10;int(1..)], [m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)]),
-gcc([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3;int(1..)], [2,2,2;int(1..)]),
-ReifyImply(or([gcc([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], v, [2,2,2,2,2;int(1..)]),gcc(m#matrix_to_atom, [1,2,3;int(1..3)], [2,2,2;int(1..3)]);int(1..)]), __0),
+globalCardinality([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3,4,5,6,7,8,9,10;int(1..)], [m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)]),
+globalCardinality([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3;int(1..)], [2,2,2;int(1..)]),
+ReifyImply(or([globalCardinality([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], v, [2,2,2,2,2;int(1..)]),globalCardinality(m#matrix_to_atom, [1,2,3;int(1..3)], [2,2,2;int(1..3)]);int(1..)]), __0),
 Reify((m#matrix_to_atom_1 = 5), __0), 
    ~~> constant_evaluator ([("Constant", 9001)])
-gcc([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3,4,5,6,7,8,9,10;int(1..)], [m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)]),
-gcc([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3;int(1..)], [2,2,2;int(1..)]),
-ReifyImply(or([gcc([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], v, [2,2,2,2,2;int(1..)]),gcc(m#matrix_to_atom, [1,2,3;int(1..3)], [2,2,2;int(1..3)]);int(1..)]), __0),
+globalCardinality([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3,4,5,6,7,8,9,10;int(1..)], [m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)]),
+globalCardinality([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3;int(1..)], [2,2,2;int(1..)]),
+ReifyImply(or([globalCardinality([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], v, [2,2,2,2,2;int(1..)]),globalCardinality(m#matrix_to_atom, [1,2,3;int(1..3)], [2,2,2;int(1..3)]);int(1..)]), __0),
 Reify((m#matrix_to_atom_1 = 5), __0)
 
 --
 
-gcc(m#matrix_to_atom, [1,2,3;int(1..3)], [2,2,2;int(1..3)]), 
+globalCardinality(m#matrix_to_atom, [1,2,3;int(1..3)], [2,2,2;int(1..3)]), 
    ~~> matrix_ref_to_atom ([("Base", 2000)])
-gcc([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3;int(1..3)], [2,2,2;int(1..3)])
+globalCardinality([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3;int(1..3)], [2,2,2;int(1..3)])
 
 --
 
-gcc([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3;int(1..3)], [2,2,2;int(1..3)]), 
+globalCardinality([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3;int(1..3)], [2,2,2;int(1..3)]), 
    ~~> matrix_to_list ([("Base", 2000)])
-gcc([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3;int(1..)], [2,2,2;int(1..)])
+globalCardinality([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3;int(1..)], [2,2,2;int(1..)])
 
 --
 
-gcc([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3,4,5,6,7,8,9,10;int(1..)], [m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)]),
-gcc([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3;int(1..)], [2,2,2;int(1..)]),
-ReifyImply(or([gcc([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], v, [2,2,2,2,2;int(1..)]),gcc([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3;int(1..)], [2,2,2;int(1..)]);int(1..)]), __0),
+globalCardinality([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3,4,5,6,7,8,9,10;int(1..)], [m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)]),
+globalCardinality([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3;int(1..)], [2,2,2;int(1..)]),
+ReifyImply(or([globalCardinality([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], v, [2,2,2,2,2;int(1..)]),globalCardinality([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3;int(1..)], [2,2,2;int(1..)]);int(1..)]), __0),
 Reify((m#matrix_to_atom_1 = 5), __0), 
    ~~> constant_evaluator ([("Constant", 9001)])
-gcc([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3,4,5,6,7,8,9,10;int(1..)], [m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)]),
-gcc([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3;int(1..)], [2,2,2;int(1..)]),
-ReifyImply(or([gcc([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], v, [2,2,2,2,2;int(1..)]),gcc([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3;int(1..)], [2,2,2;int(1..)]);int(1..)]), __0),
+globalCardinality([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3,4,5,6,7,8,9,10;int(1..)], [m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)]),
+globalCardinality([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3;int(1..)], [2,2,2;int(1..)]),
+ReifyImply(or([globalCardinality([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], v, [2,2,2,2,2;int(1..)]),globalCardinality([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3;int(1..)], [2,2,2;int(1..)]);int(1..)]), __0),
 Reify((m#matrix_to_atom_1 = 5), __0)
 
 --
@@ -200,8 +200,8 @@ find __0: bool
 
 such that
 
-gcc([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3,4,5,6,7,8,9,10;int(1..)], [m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)]),
-gcc([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3;int(1..)], [2,2,2;int(1..)]),
-ReifyImply(or([gcc([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], v, [2,2,2,2,2;int(1..)]),gcc([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3;int(1..)], [2,2,2;int(1..)]);int(1..)]), __0),
+globalCardinality([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3,4,5,6,7,8,9,10;int(1..)], [m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)]),
+globalCardinality([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3;int(1..)], [2,2,2;int(1..)]),
+ReifyImply(or([globalCardinality([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], v, [2,2,2,2,2;int(1..)]),globalCardinality([m#matrix_to_atom_1,m#matrix_to_atom_2,m#matrix_to_atom_3,m#matrix_to_atom_4,m#matrix_to_atom_5,m#matrix_to_atom_6,m#matrix_to_atom_7,m#matrix_to_atom_8,m#matrix_to_atom_9,m#matrix_to_atom_10;int(1..)], [1,2,3;int(1..)], [2,2,2;int(1..)]);int(1..)]), __0),
 Reify((m#matrix_to_atom_1 = 5), __0)
 

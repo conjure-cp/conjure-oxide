@@ -4,20 +4,20 @@ find a: matrix indexed by [int(1..3)] of int(1..3)
 
 such that
 
-allDiff(a),
-allDiff(a[..]),
+allDifferent(a),
+allDifferent(a[..]),
 (a[1] <= a[2]),
 (a[2] <= a[3])
 
 --
 
-allDiff(a#matrix_to_atom),
-allDiff(a#matrix_to_atom[..]),
+allDifferent(a#matrix_to_atom),
+allDifferent(a#matrix_to_atom[..]),
 (a#matrix_to_atom[1] <= a#matrix_to_atom[2]),
 (a#matrix_to_atom[2] <= a#matrix_to_atom[3]), 
    ~~> select_representation_matrix ([("Representations", 8001)])
-allDiff(a#matrix_to_atom),
-allDiff(a#matrix_to_atom[..]),
+allDifferent(a#matrix_to_atom),
+allDifferent(a#matrix_to_atom[..]),
 (a#matrix_to_atom[1] <= a#matrix_to_atom[2]),
 (a#matrix_to_atom[2] <= a#matrix_to_atom[3])
 new variables:
@@ -57,13 +57,13 @@ SafeIndex(a#matrix_to_atom,[3])
 
 --
 
-allDiff(a#matrix_to_atom),
-allDiff(SafeSlice(a#matrix_to_atom,[..])),
+allDifferent(a#matrix_to_atom),
+allDifferent(SafeSlice(a#matrix_to_atom,[..])),
 (SafeIndex(a#matrix_to_atom,[1]) <= SafeIndex(a#matrix_to_atom,[2])),
 (SafeIndex(a#matrix_to_atom,[2]) <= SafeIndex(a#matrix_to_atom,[3])), 
    ~~> index_matrix_to_atom ([("Base", 5000)])
-allDiff(a#matrix_to_atom),
-allDiff(SafeSlice(a#matrix_to_atom,[..])),
+allDifferent(a#matrix_to_atom),
+allDifferent(SafeSlice(a#matrix_to_atom,[..])),
 (a#matrix_to_atom_1 <= a#matrix_to_atom_2),
 (a#matrix_to_atom_2 <= a#matrix_to_atom_3)
 
@@ -81,13 +81,13 @@ Ineq(a#matrix_to_atom_2, a#matrix_to_atom_3, 0)
 
 --
 
-allDiff(a#matrix_to_atom), 
+allDifferent(a#matrix_to_atom), 
    ~~> matrix_ref_to_atom ([("Base", 2000)])
-allDiff([a#matrix_to_atom_1,a#matrix_to_atom_2,a#matrix_to_atom_3;int(1..)])
+allDifferent([a#matrix_to_atom_1,a#matrix_to_atom_2,a#matrix_to_atom_3;int(1..)])
 
 --
 
-allDiff([a#matrix_to_atom_1,a#matrix_to_atom_2,a#matrix_to_atom_3;int(1..)]), 
+allDifferent([a#matrix_to_atom_1,a#matrix_to_atom_2,a#matrix_to_atom_3;int(1..)]), 
    ~~> introduce_flat_alldiff ([("Minion", 4200)])
 __flat_alldiff([a#matrix_to_atom_1, a#matrix_to_atom_2, a#matrix_to_atom_3])
 
@@ -99,7 +99,7 @@ SafeSlice(a#matrix_to_atom,[..]),
 
 --
 
-allDiff([a#matrix_to_atom_1,a#matrix_to_atom_2,a#matrix_to_atom_3;int(1..)]), 
+allDifferent([a#matrix_to_atom_1,a#matrix_to_atom_2,a#matrix_to_atom_3;int(1..)]), 
    ~~> introduce_flat_alldiff ([("Minion", 4200)])
 __flat_alldiff([a#matrix_to_atom_1, a#matrix_to_atom_2, a#matrix_to_atom_3])
 
