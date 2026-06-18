@@ -1,4 +1,5 @@
 mod bubble;
+mod comparison;
 mod flatten;
 mod indexed_flatten;
 mod matrix_to_list;
