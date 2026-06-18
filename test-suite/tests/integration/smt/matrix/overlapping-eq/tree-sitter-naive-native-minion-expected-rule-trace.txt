@@ -1,0 +1,81 @@
+Model before rewriting:
+
+find a: matrix indexed by [int(2..4)] of int(1..3)
+find b: matrix indexed by [int(1..3)] of int(1..3)
+
+such that
+
+(a = b)
+
+--
+
+(a#matrix_to_atom = b#matrix_to_atom), 
+   ~~> select_representation_matrix ([("Representations", 8001)])
+(a#matrix_to_atom = b#matrix_to_atom)
+new variables:
+  find a#matrix_to_atom_2: int(1..3)
+  find a#matrix_to_atom_3: int(1..3)
+  find a#matrix_to_atom_4: int(1..3)
+  find b#matrix_to_atom_1: int(1..3)
+  find b#matrix_to_atom_2: int(1..3)
+  find b#matrix_to_atom_3: int(1..3)
+
+--
+
+(a#matrix_to_atom = b#matrix_to_atom), 
+   ~~> flatten_matrix_eq_neq ([("Base", 3000)])
+and([(a#matrix_to_atom[1] = b#matrix_to_atom[1]),(a#matrix_to_atom[2] = b#matrix_to_atom[2]),(a#matrix_to_atom[3] = b#matrix_to_atom[3]),(a#matrix_to_atom[4] = b#matrix_to_atom[4]);int(1..)])
+
+--
+
+and([(a#matrix_to_atom[1] = b#matrix_to_atom[1]),(a#matrix_to_atom[2] = b#matrix_to_atom[2]),(a#matrix_to_atom[3] = b#matrix_to_atom[3]),(a#matrix_to_atom[4] = b#matrix_to_atom[4]);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+(a#matrix_to_atom[1] = b#matrix_to_atom[1]),
+(a#matrix_to_atom[2] = b#matrix_to_atom[2]),
+(a#matrix_to_atom[3] = b#matrix_to_atom[3]),
+(a#matrix_to_atom[4] = b#matrix_to_atom[4])
+
+--
+
+a#matrix_to_atom[1], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{SafeIndex(a#matrix_to_atom,[1]) @ false}
+
+--
+
+({SafeIndex(a#matrix_to_atom,[1]) @ false} = b#matrix_to_atom[1]), 
+   ~~> bubble_up ([("Bubble", 8800)])
+{(SafeIndex(a#matrix_to_atom,[1]) = b#matrix_to_atom[1]) @ false}
+
+--
+
+{(SafeIndex(a#matrix_to_atom,[1]) = b#matrix_to_atom[1]) @ false}, 
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([(SafeIndex(a#matrix_to_atom,[1]) = b#matrix_to_atom[1]),false;int(1..)])
+
+--
+
+and([(SafeIndex(a#matrix_to_atom,[1]) = b#matrix_to_atom[1]),false;int(1..)]),
+(a#matrix_to_atom[2] = b#matrix_to_atom[2]),
+(a#matrix_to_atom[3] = b#matrix_to_atom[3]),
+(a#matrix_to_atom[4] = b#matrix_to_atom[4]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+false
+
+--
+
+Final model:
+
+find a: matrix indexed by [int(2..4)] of int(1..3)
+find b: matrix indexed by [int(1..3)] of int(1..3)
+find a#matrix_to_atom_2: int(1..3)
+find a#matrix_to_atom_3: int(1..3)
+find a#matrix_to_atom_4: int(1..3)
+find b#matrix_to_atom_1: int(1..3)
+find b#matrix_to_atom_2: int(1..3)
+find b#matrix_to_atom_3: int(1..3)
+
+such that
+
+false
+

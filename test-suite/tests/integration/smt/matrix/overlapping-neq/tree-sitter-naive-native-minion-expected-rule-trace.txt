@@ -1,0 +1,119 @@
+Model before rewriting:
+
+find a: matrix indexed by [int(2..3)] of int(1..2)
+find b: matrix indexed by [int(1..2)] of int(1..2)
+
+such that
+
+(a != b)
+
+--
+
+(a#matrix_to_atom != b#matrix_to_atom), 
+   ~~> select_representation_matrix ([("Representations", 8001)])
+(a#matrix_to_atom != b#matrix_to_atom)
+new variables:
+  find a#matrix_to_atom_2: int(1..2)
+  find a#matrix_to_atom_3: int(1..2)
+  find b#matrix_to_atom_1: int(1..2)
+  find b#matrix_to_atom_2: int(1..2)
+
+--
+
+(a#matrix_to_atom != b#matrix_to_atom), 
+   ~~> flatten_matrix_eq_neq ([("Base", 3000)])
+or([(a#matrix_to_atom[1] != b#matrix_to_atom[1]),(a#matrix_to_atom[2] != b#matrix_to_atom[2]),(a#matrix_to_atom[3] != b#matrix_to_atom[3]);int(1..)])
+
+--
+
+a#matrix_to_atom[1], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{SafeIndex(a#matrix_to_atom,[1]) @ false}
+
+--
+
+({SafeIndex(a#matrix_to_atom,[1]) @ false} != b#matrix_to_atom[1]), 
+   ~~> bubble_up ([("Bubble", 8800)])
+{(SafeIndex(a#matrix_to_atom,[1]) != b#matrix_to_atom[1]) @ false}
+
+--
+
+{(SafeIndex(a#matrix_to_atom,[1]) != b#matrix_to_atom[1]) @ false}, 
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([(SafeIndex(a#matrix_to_atom,[1]) != b#matrix_to_atom[1]),false;int(1..)])
+
+--
+
+or([and([(SafeIndex(a#matrix_to_atom,[1]) != b#matrix_to_atom[1]),false;int(1..)]),(a#matrix_to_atom[2] != b#matrix_to_atom[2]),(a#matrix_to_atom[3] != b#matrix_to_atom[3]);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+or([(a#matrix_to_atom[2] != b#matrix_to_atom[2]),(a#matrix_to_atom[3] != b#matrix_to_atom[3]);int(1..)])
+
+--
+
+a#matrix_to_atom[2], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a#matrix_to_atom,[2])
+
+--
+
+b#matrix_to_atom[2], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(b#matrix_to_atom,[2])
+
+--
+
+a#matrix_to_atom[3], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+SafeIndex(a#matrix_to_atom,[3])
+
+--
+
+b#matrix_to_atom[3], 
+   ~~> index_to_bubble ([("Bubble", 6000)])
+{SafeIndex(b#matrix_to_atom,[3]) @ false}
+
+--
+
+(SafeIndex(a#matrix_to_atom,[3]) != {SafeIndex(b#matrix_to_atom,[3]) @ false}), 
+   ~~> bubble_up ([("Bubble", 8800)])
+{(SafeIndex(a#matrix_to_atom,[3]) != SafeIndex(b#matrix_to_atom,[3])) @ false}
+
+--
+
+{(SafeIndex(a#matrix_to_atom,[3]) != SafeIndex(b#matrix_to_atom,[3])) @ false}, 
+   ~~> expand_bubble ([("Bubble", 8900)])
+and([(SafeIndex(a#matrix_to_atom,[3]) != SafeIndex(b#matrix_to_atom,[3])),false;int(1..)])
+
+--
+
+or([(SafeIndex(a#matrix_to_atom,[2]) != SafeIndex(b#matrix_to_atom,[2])),and([(SafeIndex(a#matrix_to_atom,[3]) != SafeIndex(b#matrix_to_atom,[3])),false;int(1..)]);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)])
+or([(SafeIndex(a#matrix_to_atom,[2]) != SafeIndex(b#matrix_to_atom,[2]));int(1..)])
+
+--
+
+or([(SafeIndex(a#matrix_to_atom,[2]) != SafeIndex(b#matrix_to_atom,[2]));int(1..)]), 
+   ~~> remove_unit_vector_or ([("Base", 8800)])
+(SafeIndex(a#matrix_to_atom,[2]) != SafeIndex(b#matrix_to_atom,[2]))
+
+--
+
+(SafeIndex(a#matrix_to_atom,[2]) != SafeIndex(b#matrix_to_atom,[2])), 
+   ~~> index_matrix_to_atom ([("Base", 5000)])
+(a#matrix_to_atom_2 != b#matrix_to_atom_2)
+
+--
+
+Final model:
+
+find a: matrix indexed by [int(2..3)] of int(1..2)
+find b: matrix indexed by [int(1..2)] of int(1..2)
+find a#matrix_to_atom_2: int(1..2)
+find a#matrix_to_atom_3: int(1..2)
+find b#matrix_to_atom_1: int(1..2)
+find b#matrix_to_atom_2: int(1..2)
+
+such that
+
+(a#matrix_to_atom_2 != b#matrix_to_atom_2)
+
