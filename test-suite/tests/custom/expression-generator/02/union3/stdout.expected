@@ -2,10 +2,18 @@ find a: set  of int(1..4)
 find b: set  of int(1..4)
 find c: set  of int(1..4)
 find d: set  of int(1..4)
+find __0: matrix indexed by [int(1..)] of int(2..8)
+find __1: matrix indexed by [int(1..)] of int(2..8)
+find __2: matrix indexed by [int(1..)] of int(2..8)
+find __3: matrix indexed by [int(1..)] of int(2..8)
 
 such that
 
-(sum(flatten([flatten([[ sum([i,j;int(1..2)]) | i <- a, j <- c ],[ sum([i,j;int(1..2)]) | i <- a, j <- d, !(j in c) ];int(1..)]),flatten([[ sum([i,j;int(1..2)]) | i <- b, j <- c, !(i in a) ],[ sum([i,j;int(1..2)]) | i <- b, j <- d, !(i in a), !(j in c) ];int(1..)]);int(1..)])) = 10)
+(sum(flatten([flatten([__0,__1;int(1..)]),flatten([__2,__3;int(1..)]);int(1..)])) = 10),
+__0 =aux [ sum([i,j;int(1..2)]) | i <- a, j <- c ],
+__1 =aux [ sum([i,j;int(1..2)]) | i <- a, j <- d, !(j in c) ],
+__2 =aux [ sum([i,j;int(1..2)]) | i <- b, j <- c, !(i in a) ],
+__3 =aux [ sum([i,j;int(1..2)]) | i <- b, j <- d, !(i in a), !(j in c) ]
 
 Model before rewriting:
 
@@ -38,14 +46,46 @@ flatten([[ sum([i,j;int(1..2)]) | i <- b, j <- c, !(i in a) ],[ sum([i,j;int(1..
 
 --
 
+flatten([[ sum([i,j;int(1..2)]) | i <- a, j <- c ],[ sum([i,j;int(1..2)]) | i <- a, j <- d, !(j in c) ];int(1..)]), 
+   ~~> flatten_matrix_literal ([("Minion", 1000)])
+flatten([__0,__1;int(1..)])
+new variables:
+  find __0: matrix indexed by [int(1..)] of int(2..8)
+  find __1: matrix indexed by [int(1..)] of int(2..8)
+new constraints:
+  __0 =aux [ sum([i,j;int(1..2)]) | i <- a, j <- c ]
+  __1 =aux [ sum([i,j;int(1..2)]) | i <- a, j <- d, !(j in c) ]
+
+--
+
+flatten([[ sum([i,j;int(1..2)]) | i <- b, j <- c, !(i in a) ],[ sum([i,j;int(1..2)]) | i <- b, j <- d, !(i in a), !(j in c) ];int(1..)]), 
+   ~~> flatten_matrix_literal ([("Minion", 1000)])
+flatten([__2,__3;int(1..)])
+new variables:
+  find __2: matrix indexed by [int(1..)] of int(2..8)
+  find __3: matrix indexed by [int(1..)] of int(2..8)
+new constraints:
+  __2 =aux [ sum([i,j;int(1..2)]) | i <- b, j <- c, !(i in a) ]
+  __3 =aux [ sum([i,j;int(1..2)]) | i <- b, j <- d, !(i in a), !(j in c) ]
+
+--
+
 Final model:
 
 find a: set  of int(1..4)
 find b: set  of int(1..4)
 find c: set  of int(1..4)
 find d: set  of int(1..4)
+find __0: matrix indexed by [int(1..)] of int(2..8)
+find __1: matrix indexed by [int(1..)] of int(2..8)
+find __2: matrix indexed by [int(1..)] of int(2..8)
+find __3: matrix indexed by [int(1..)] of int(2..8)
 
 such that
 
-(sum(flatten([flatten([[ sum([i,j;int(1..2)]) | i <- a, j <- c ],[ sum([i,j;int(1..2)]) | i <- a, j <- d, !(j in c) ];int(1..)]),flatten([[ sum([i,j;int(1..2)]) | i <- b, j <- c, !(i in a) ],[ sum([i,j;int(1..2)]) | i <- b, j <- d, !(i in a), !(j in c) ];int(1..)]);int(1..)])) = 10)
+(sum(flatten([flatten([__0,__1;int(1..)]),flatten([__2,__3;int(1..)]);int(1..)])) = 10),
+__0 =aux [ sum([i,j;int(1..2)]) | i <- a, j <- c ],
+__1 =aux [ sum([i,j;int(1..2)]) | i <- a, j <- d, !(j in c) ],
+__2 =aux [ sum([i,j;int(1..2)]) | i <- b, j <- c, !(i in a) ],
+__3 =aux [ sum([i,j;int(1..2)]) | i <- b, j <- d, !(i in a), !(j in c) ]
 
