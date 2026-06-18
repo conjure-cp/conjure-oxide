@@ -255,6 +255,9 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         }
         Expr::Table(_, _, _) => None,
         Expr::NegativeTable(_, _, _) => None,
+        Expr::AtLeast(_, _, _, _) => None,
+        Expr::AtMost(_, _, _, _) => None,
+        Expr::Gcc(_, _, _, _) => None,
         Expr::Root(_, _) => None,
         Expr::Or(_, es) => {
             // possibly cheating; definitely should be in partial eval instead

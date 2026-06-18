@@ -288,7 +288,8 @@ module.exports = grammar ({
       $.lex_comparison,
       $.equality_comparison,
       $.set_comparison,
-      $.all_diff_comparison
+      $.all_diff_comparison,
+      $.global_cardinality_comparison
     )),
 
     // Arithmetic comparisons: require arithmetic operands, return boolean
@@ -323,6 +324,17 @@ module.exports = grammar ({
       field("operator", "allDiff"),
       "(",
       field("arg", choice($.bool_expr, $.arithmetic_expr, $.atom)),
+      ")"
+    )),
+
+    global_cardinality_comparison: $ => prec(-10, seq(
+      field("operator", choice("atleast", "atmost", "gcc")),
+      "(",
+      field("variables", choice($.arithmetic_expr, $.atom)),
+      ",",
+      field("arg2", choice($.arithmetic_expr, $.atom)),
+      ",",
+      field("arg3", choice($.arithmetic_expr, $.atom)),
       ")"
     )),
 

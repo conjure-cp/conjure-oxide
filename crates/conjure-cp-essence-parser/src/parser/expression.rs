@@ -65,6 +65,16 @@ pub fn parse_expression(
             ctx.typechecking_context = TypecheckingContext::Matrix;
             parse_all_diff_comparison(ctx, &node)
         }
+        "global_cardinality_comparison" => {
+            if ctx.typechecking_context == TypecheckingContext::Arithmetic {
+                ctx.record_error(RecoverableParseError::new(
+                    format!("Type error: {}\n\tExepected: arithmetic expression\n\tFound: comparison expression", &ctx.source_code[node.start_byte()..node.end_byte()]),
+                    Some(node.range()),
+                ));
+                return Ok(None);
+            }
+            parse_global_cardinality_comparison(ctx, &node)
+        }
         _ => {
             ctx.record_error(RecoverableParseError::new(
                 format!("Unexpected expression type: '{}'", node.kind()),
@@ -149,6 +159,7 @@ fn parse_comparison_expression(
             ctx.typechecking_context = TypecheckingContext::Matrix;
             parse_all_diff_comparison(ctx, &inner)
         }
+        "global_cardinality_comparison" => parse_global_cardinality_comparison(ctx, &inner),
         _ => {
             ctx.record_error(RecoverableParseError::new(
                 format!("Expected comparison expression, found '{}'", inner.kind()),
@@ -258,6 +269,79 @@ fn parse_all_diff_comparison(
         None,
     );
     Ok(Some(Expression::AllDiff(Metadata::new(), Moo::new(inner))))
+}
+
+fn parse_global_cardinality_comparison(
+    ctx: &mut ParseContext,
+    node: &Node,
+) -> Result<Option<Expression>, FatalParseError> {
+    let Some(operator_node) = field!(recover, ctx, node, "operator") else {
+        return Ok(None);
+    };
+    let operator_str =
+        ctx.source_code[operator_node.start_byte()..operator_node.end_byte()].to_string();
+
+    let Some(variables_node) = field!(recover, ctx, node, "variables") else {
+        return Ok(None);
+    };
+    let Some(arg2_node) = field!(recover, ctx, node, "arg2") else {
+        return Ok(None);
+    };
+    let Some(arg3_node) = field!(recover, ctx, node, "arg3") else {
+        return Ok(None);
+    };
+
+    let saved_context = ctx.typechecking_context;
+    ctx.typechecking_context = TypecheckingContext::Unknown;
+    let Some(variables) = parse_expression(ctx, variables_node)? else {
+        ctx.typechecking_context = saved_context;
+        return Ok(None);
+    };
+    let Some(arg2) = parse_expression(ctx, arg2_node)? else {
+        ctx.typechecking_context = saved_context;
+        return Ok(None);
+    };
+    let Some(arg3) = parse_expression(ctx, arg3_node)? else {
+        ctx.typechecking_context = saved_context;
+        return Ok(None);
+    };
+    ctx.typechecking_context = saved_context;
+
+    ctx.add_span_and_doc_hover(
+        &operator_node,
+        &operator_str,
+        SymbolKind::Function,
+        None,
+        None,
+    );
+
+    match operator_str.as_str() {
+        "atleast" => Ok(Some(Expression::AtLeast(
+            Metadata::new(),
+            Moo::new(variables),
+            Moo::new(arg2),
+            Moo::new(arg3),
+        ))),
+        "atmost" => Ok(Some(Expression::AtMost(
+            Metadata::new(),
+            Moo::new(variables),
+            Moo::new(arg2),
+            Moo::new(arg3),
+        ))),
+        "gcc" => Ok(Some(Expression::Gcc(
+            Metadata::new(),
+            Moo::new(variables),
+            Moo::new(arg2),
+            Moo::new(arg3),
+        ))),
+        _ => {
+            ctx.record_error(RecoverableParseError::new(
+                format!("Invalid operator: '{operator_str}'"),
+                Some(operator_node.range()),
+            ));
+            Ok(None)
+        }
+    }
 }
 
 fn parse_unary_expression(

@@ -719,8 +719,12 @@ unsafe fn constraint_add_args(
             Ok(())
         }
         //Constraint::LitSumGeq(_, _, _) => todo!(),
-        //Constraint::Gcc(_, _, _) => todo!(),
-        //Constraint::GccWeak(_, _, _) => todo!(),
+        Constraint::Gcc(vars, values, counts) | Constraint::GccWeak(vars, values, counts) => {
+            read_list(i, r_constr, vars)?;
+            read_constant_list(r_constr, values)?;
+            read_list(i, r_constr, counts)?;
+            Ok(())
+        }
         //Constraint::LexLeqRv(_, _) => todo!(),
         //Constraint::LexLeqQuick(_, _) => todo!(),
         //Constraint::LexLessQuick(_, _) => todo!(),

@@ -332,6 +332,26 @@ pub enum Expression {
     /// forbidden rows.
     #[compatible(JsonInput)]
     NegativeTable(Metadata, Moo<Expression>, Moo<Expression>),
+
+    /// `atleast(vars, counts, values)`
+    ///
+    /// For each `values[i]`, requires at least `counts[i]` occurrences in `vars`.
+    #[compatible(JsonInput)]
+    AtLeast(Metadata, Moo<Expression>, Moo<Expression>, Moo<Expression>),
+
+    /// `atmost(vars, counts, values)`
+    ///
+    /// For each `values[i]`, requires at most `counts[i]` occurrences in `vars`.
+    #[compatible(JsonInput)]
+    AtMost(Metadata, Moo<Expression>, Moo<Expression>, Moo<Expression>),
+
+    /// `gcc(vars, values, counts)`
+    ///
+    /// Global cardinality constraint. For each `values[i]`, requires exactly `counts[i]`
+    /// occurrences in `vars`.
+    #[compatible(JsonInput)]
+    Gcc(Metadata, Moo<Expression>, Moo<Expression>, Moo<Expression>),
+
     /// Binary subtraction operator
     ///
     /// This is a parser-level construct, and is immediately normalised to `Sum([a,-b])`.
@@ -659,6 +679,10 @@ fn bounded_i32_domain_for_matrix_literal_monotonic(
     e: &Expression,
     op: fn(i32, i32) -> Option<i32>,
 ) -> Option<DomainPtr> {
+    if matches!(e, Expression::Atomic(_, Atom::Reference(_))) {
+        return None;
+    }
+
     // only care about the elements, not the indices
     let (mut exprs, _) = e.clone().unwrap_matrix_unchecked()?;
     //
@@ -796,6 +820,10 @@ fn sum_domain_for_comprehension(expr: &Expression) -> Option<DomainPtr> {
 
 fn sum_domain_of_child(child: &Expression) -> Option<DomainPtr> {
     sum_domain_for_comprehension(child).or_else(|| {
+        if matches!(child, Expression::Atomic(_, Atom::Reference(_))) {
+            return None;
+        }
+
         let (elements, _) = child.clone().unwrap_matrix_unchecked()?;
         if elements.len() == 1 {
             sum_domain_for_comprehension(&elements[0])
@@ -880,9 +908,8 @@ impl Expression {
             }
             Expression::InDomain(_, _, _) => Some(Domain::bool()),
             Expression::Atomic(_, atom) => Some(atom.domain_of()),
-            Expression::Sum(_, e) => sum_domain_of_child(e).or_else(|| {
-                bounded_i32_domain_for_matrix_literal_monotonic(e, |x, y| Some(x + y))
-            }),
+            Expression::Sum(_, e) => sum_domain_of_child(e)
+                .or_else(|| bounded_i32_domain_for_matrix_literal_monotonic(e, |x, y| Some(x + y))),
             Expression::Product(_, e) => {
                 bounded_i32_domain_for_matrix_literal_monotonic(e, |x, y| Some(x * y))
             }
@@ -1026,6 +1053,9 @@ impl Expression {
             Expression::AllDiff(_, _) => Some(Domain::bool()),
             Expression::Table(_, _, _) => Some(Domain::bool()),
             Expression::NegativeTable(_, _, _) => Some(Domain::bool()),
+            Expression::AtLeast(_, _, _, _) => Some(Domain::bool()),
+            Expression::AtMost(_, _, _, _) => Some(Domain::bool()),
+            Expression::Gcc(_, _, _, _) => Some(Domain::bool()),
             Expression::FlatWatchedLiteral(_, _, _) => Some(Domain::bool()),
             Expression::MinionReify(_, _, _) => Some(Domain::bool()),
             Expression::MinionReifyImply(_, _, _) => Some(Domain::bool()),
@@ -1696,6 +1726,9 @@ impl Expression {
             FlatLexLeq,
             NegativeTable,
             Table,
+            AtLeast,
+            AtMost,
+            Gcc,
             Active,
             ToSet,
             ToMSet,
@@ -1821,6 +1854,9 @@ impl Expression {
                     .collect_vec(),
                 domain.into(),
             )),
+            Expression::Atomic(_, Atom::Reference(reference)) => {
+                reference.resolve_expression()?.unwrap_matrix_unchecked()
+            }
 
             _ => None,
         }
@@ -2163,6 +2199,15 @@ impl Display for Expression {
             Expression::NegativeTable(_, tuple_expr, rows_expr) => {
                 write!(f, "negativeTable({tuple_expr}, {rows_expr})")
             }
+            Expression::AtLeast(_, vars, counts, values) => {
+                write!(f, "atleast({vars}, {counts}, {values})")
+            }
+            Expression::AtMost(_, vars, counts, values) => {
+                write!(f, "atmost({vars}, {counts}, {values})")
+            }
+            Expression::Gcc(_, vars, values, counts) => {
+                write!(f, "gcc({vars}, {values}, {counts})")
+            }
             Expression::Bubble(_, box1, box2) => {
                 write!(f, "{{{} @ {}}}", box1.clone(), box2.clone())
             }
@@ -2453,6 +2498,9 @@ impl Typeable for Expression {
             Expression::AllDiff(_, _) => ReturnType::Bool,
             Expression::Table(_, _, _) => ReturnType::Bool,
             Expression::NegativeTable(_, _, _) => ReturnType::Bool,
+            Expression::AtLeast(_, _, _, _) => ReturnType::Bool,
+            Expression::AtMost(_, _, _, _) => ReturnType::Bool,
+            Expression::Gcc(_, _, _, _) => ReturnType::Bool,
             Expression::Bubble(_, inner, _) => inner.return_type(),
             Expression::FlatWatchedLiteral(_, _, _) => ReturnType::Bool,
             Expression::MinionReify(_, _, _) => ReturnType::Bool,
@@ -2778,6 +2826,15 @@ impl Expression {
                 }
             }
 
+            // Moo<Expression> + Moo<Expression> + Moo<Expression>
+            Expression::AtLeast(_, m1, m2, m3)
+            | Expression::AtMost(_, m1, m2, m3)
+            | Expression::Gcc(_, m1, m2, m3) => {
+                f(m1);
+                f(m2);
+                f(m3);
+            }
+
             // Moo<Expression> + DomainPtr
             Expression::InDomain(_, m, _) => {
                 f(m);
@@ -3005,6 +3062,15 @@ impl CacheHashable for Expression {
                         None => 0u64.hash(&mut hasher),
                     }
                 }
+            }
+
+            // Moo<Expression> + Moo<Expression> + Moo<Expression>
+            Expression::AtLeast(_, m1, m2, m3)
+            | Expression::AtMost(_, m1, m2, m3)
+            | Expression::Gcc(_, m1, m2, m3) => {
+                m1.get_cached_hash().hash(&mut hasher);
+                m2.get_cached_hash().hash(&mut hasher);
+                m3.get_cached_hash().hash(&mut hasher);
             }
 
             // Moo<Expression> + DomainPtr
