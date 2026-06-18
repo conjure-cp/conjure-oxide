@@ -261,7 +261,7 @@ module.exports = grammar ({
         seq(":", field("domain", $.domain))
       ),
       ".",
-      field("expression", choice($.bool_expr, $.comparison_expr))
+      field("expression", choice($.bool_expr, $.comparison_expr, $.atom))
     )),
 
     aggregate_expr: $ => prec(-5, seq(
@@ -289,6 +289,7 @@ module.exports = grammar ({
       $.equality_comparison,
       $.set_comparison,
       $.all_diff_comparison,
+      $.all_different_except_comparison,
       $.global_cardinality_comparison
     )),
 
@@ -308,9 +309,9 @@ module.exports = grammar ({
 
     // Equality comparisons: work on any type, return boolean
     equality_comparison: $ => prec.left(seq(
-      field("left", choice($.bool_expr, $.arithmetic_expr, $.all_diff_comparison, $.atom)),
+      field("left", choice($.bool_expr, $.arithmetic_expr, $.all_diff_comparison, $.all_different_except_comparison, $.atom)),
       field("operator", choice("=", "!=")),
-      field("right", choice($.bool_expr, $.arithmetic_expr, $.all_diff_comparison, $.atom))
+      field("right", choice($.bool_expr, $.arithmetic_expr, $.all_diff_comparison, $.all_different_except_comparison, $.atom))
     )),
 
     // Set comparisons: require set operands, return boolean
@@ -321,14 +322,35 @@ module.exports = grammar ({
     ),
 
     all_diff_comparison: $ => prec(-10, seq(
-      field("operator", "allDiff"),
+      field("operator", choice("allDifferent", "allDiff")),
       "(",
       field("arg", choice($.bool_expr, $.arithmetic_expr, $.atom)),
       ")"
     )),
 
+    all_different_except_comparison: $ => prec(-10, seq(
+      field("operator", choice(
+        "allDifferentExcept",
+        "alldifferent_except",
+        "alldiff_except",
+        "allDiffExcept"
+      )),
+      "(",
+      field("matrix", choice($.matrix, $.identifier, $.index_or_slice, $.flatten, $.bool_expr, $.arithmetic_expr)),
+      ",",
+      field("except", choice($.identifier, $.constant, $.index_or_slice, $.sub_arith_expr, $.negative_expr, $.arithmetic_expr)),
+      ")"
+    )),
+
     global_cardinality_comparison: $ => prec(-10, seq(
-      field("operator", choice("atleast", "atmost", "gcc")),
+      field("operator", choice(
+        "globalCardinality",
+        "atLeast",
+        "atMost",
+        "atleast",
+        "atmost",
+        "gcc"
+      )),
       "(",
       field("variables", choice($.arithmetic_expr, $.atom)),
       ",",
@@ -367,6 +389,7 @@ module.exports = grammar ({
       field("set_literal", $.set_literal),
       field("set_operation", $.set_operation),
       field("flatten", $.flatten),
+      field("element_id", $.element_id),
       field("table", $.table),
       field("negative_table", $.negative_table),
       field("pareto_expression", $.pareto_expression)
@@ -477,21 +500,30 @@ module.exports = grammar ({
       ")"
     ),
 
+    element_id: $ => seq(
+      "elementId",
+      "(",
+      field("matrix", choice($.matrix, $.identifier, $.index_or_slice, $.flatten)),
+      ",",
+      field("value", choice($.identifier, $.index_or_slice, $.constant, $.sub_arith_expr, $.negative_expr, $.abs_value, $.factorial_expr)),
+      ")"
+    ),
+
     table: $ => seq(
       "table",
       "(",
-      field("variables", $.matrix),
+      field("variables", choice($.matrix, $.identifier, $.index_or_slice, $.flatten)),
       ",",
-      field("rows", $.matrix),
+      field("rows", choice($.matrix, $.identifier, $.index_or_slice, $.flatten)),
       ")"
     ),
 
     negative_table: $ => seq(
-      "negativeTable",
+      choice("negativeTable", "negative_table"),
       "(",
-      field("variables", $.matrix),
+      field("variables", choice($.matrix, $.identifier, $.index_or_slice, $.flatten)),
       ",",
-      field("rows", $.matrix),
+      field("rows", choice($.matrix, $.identifier, $.index_or_slice, $.flatten)),
       ")"
     ),
 

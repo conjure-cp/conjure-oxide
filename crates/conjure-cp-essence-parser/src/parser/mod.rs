@@ -5,6 +5,7 @@ pub mod domain;
 mod dominance;
 pub mod expression;
 pub mod find;
+mod global_constraints;
 pub mod keyword_checks;
 pub mod letting;
 mod macros;

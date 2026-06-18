@@ -6,6 +6,7 @@ use crate::parser::ParseContext;
 use crate::parser::abstract_literal::parse_abstract;
 use crate::parser::comprehension::parse_comprehension;
 use crate::parser::dominance::parse_pareto_expression;
+use crate::parser::global_constraints::ELEMENT_ID;
 use crate::util::{TypecheckingContext, named_children};
 use crate::{field, named_child};
 use conjure_cp_core::ast::{
@@ -79,6 +80,7 @@ pub fn parse_atom(
             Ok(Some(Expression::AbstractLiteral(Metadata::new(), abs)))
         }
         "flatten" => parse_flatten(ctx, node),
+        "element_id" => parse_element_id(ctx, node),
         "table" | "negative_table" => parse_table(ctx, node),
         "index_or_slice" => parse_index_or_slice(ctx, node),
         // for now, assume is binary since powerset isn't implemented
@@ -159,14 +161,14 @@ fn parse_table(ctx: &mut ParseContext, node: &Node) -> Result<Option<Expression>
     let Some(variables_node) = field!(recover, ctx, node, "variables") else {
         return Ok(None);
     };
-    let Some(variables) = parse_atom(ctx, &variables_node)? else {
+    let Some(variables) = parse_table_operand(ctx, &variables_node)? else {
         return Ok(None);
     };
 
     let Some(rows_node) = field!(recover, ctx, node, "rows") else {
         return Ok(None);
     };
-    let Some(rows) = parse_atom(ctx, &rows_node)? else {
+    let Some(rows) = parse_table_operand(ctx, &rows_node)? else {
         return Ok(None);
     };
 
@@ -194,6 +196,69 @@ fn parse_table(ctx: &mut ParseContext, node: &Node) -> Result<Option<Expression>
             Ok(None)
         }
     }
+}
+
+pub fn parse_table_operand(
+    ctx: &mut ParseContext,
+    node: &Node,
+) -> Result<Option<Expression>, FatalParseError> {
+    match node.kind() {
+        "identifier" | "constant" | "matrix" | "index_or_slice" | "flatten" => {
+            parse_atom(ctx, node)
+        }
+        "sub_arith_expr" | "negative_expr" | "abs_value" | "factorial_expr" | "arithmetic_expr"
+        | "product_expr" | "sum_expr" | "exponent" | "bool_expr" | "comparison_expr" => {
+            parse_expression(ctx, *node)
+        }
+        _ => parse_expression(ctx, *node),
+    }
+}
+
+fn parse_element_id(
+    ctx: &mut ParseContext,
+    node: &Node,
+) -> Result<Option<Expression>, FatalParseError> {
+    if ctx.typechecking_context == TypecheckingContext::Set {
+        ctx.record_error(RecoverableParseError::new(
+            format!(
+                "Type error: {}\n\tExpected: set\n\tGot: elementId",
+                ctx.source_code[node.start_byte()..node.end_byte()].trim()
+            ),
+            Some(node.range()),
+        ));
+        return Ok(None);
+    }
+
+    let saved_context = ctx.typechecking_context;
+    ctx.typechecking_context = TypecheckingContext::Unknown;
+
+    let Some(matrix_node) = field!(recover, ctx, node, "matrix") else {
+        return Ok(None);
+    };
+    let Some(matrix) = parse_table_operand(ctx, &matrix_node)? else {
+        ctx.typechecking_context = saved_context;
+        return Ok(None);
+    };
+
+    let Some(value_node) = field!(recover, ctx, node, "value") else {
+        ctx.typechecking_context = saved_context;
+        return Ok(None);
+    };
+    let Some(value) = parse_table_operand(ctx, &value_node)? else {
+        ctx.typechecking_context = saved_context;
+        return Ok(None);
+    };
+
+    ctx.typechecking_context = saved_context;
+
+    let operator_node = node.child(0).unwrap();
+    ctx.add_span_and_doc_hover(&operator_node, ELEMENT_ID, SymbolKind::Function, None, None);
+
+    Ok(Some(Expression::ElementId(
+        Metadata::new(),
+        Moo::new(matrix),
+        Moo::new(value),
+    )))
 }
 
 fn parse_index_or_slice(

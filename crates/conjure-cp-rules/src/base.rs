@@ -52,9 +52,12 @@ fn remove_empty_expression(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             | Expr::Min(_, _)
             | Expr::Max(_, _)
             | Expr::AllDiff(_, _)
+            | Expr::AllDifferentExcept(_, _, _)
+            | Expr::ElementId(_, _, _)
             | Expr::AtLeast(_, _, _, _)
             | Expr::AtMost(_, _, _, _)
             | Expr::Gcc(_, _, _, _)
+            | Expr::GccWeak(_, _, _, _)
             | Expr::FlatAllDiff(_, _)
             | Expr::AbstractLiteral(_, _)
     ) {

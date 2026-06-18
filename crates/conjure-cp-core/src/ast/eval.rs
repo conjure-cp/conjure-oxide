@@ -257,7 +257,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         Expr::NegativeTable(_, _, _) => None,
         Expr::AtLeast(_, _, _, _) => None,
         Expr::AtMost(_, _, _, _) => None,
-        Expr::Gcc(_, _, _, _) => None,
+        Expr::Gcc(_, _, _, _) | Expr::GccWeak(_, _, _, _) => None,
         Expr::Root(_, _) => None,
         Expr::Or(_, es) => {
             // possibly cheating; definitely should be in partial eval instead
@@ -692,6 +692,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             })?;
             Some(lt.into())
         }
+        Expr::AllDifferentExcept(_, _, _) | Expr::ElementId(_, _, _) => None,
     }
 }
 

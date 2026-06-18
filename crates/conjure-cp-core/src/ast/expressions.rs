@@ -315,9 +315,16 @@ pub enum Expression {
     /// where M is a matrix and n is an optional integer argument indicating depth of flattening
     Flatten(Metadata, Option<Moo<Expression>>, Moo<Expression>),
 
-    /// `allDiff(<vec_expr>)`
+    /// `allDifferent(<vec_expr>)`
     #[compatible(JsonInput)]
     AllDiff(Metadata, Moo<Expression>),
+
+    /// `allDifferentExcept(<matrix>, <except>)`
+    #[compatible(JsonInput)]
+    AllDifferentExcept(Metadata, Moo<Expression>, Moo<Expression>),
+
+    /// `elementId(<matrix>, <value>)` — 1-based index of value in matrix
+    ElementId(Metadata, Moo<Expression>, Moo<Expression>),
 
     /// `table([x1, x2, ...], [[r11, r12, ...], [r21, r22, ...], ...])`
     ///
@@ -351,6 +358,10 @@ pub enum Expression {
     /// occurrences in `vars`.
     #[compatible(JsonInput)]
     Gcc(Metadata, Moo<Expression>, Moo<Expression>, Moo<Expression>),
+
+    /// Minion `gccweak(vars, values, counts)` — weaker propagation variant of `gcc`.
+    #[compatible(Minion)]
+    GccWeak(Metadata, Moo<Expression>, Moo<Expression>, Moo<Expression>),
 
     /// Binary subtraction operator
     ///
@@ -1043,11 +1054,21 @@ impl Expression {
                 None
             }
             Expression::AllDiff(_, _) => Some(Domain::bool()),
+            Expression::AllDifferentExcept(_, _, _) => Some(Domain::bool()),
+            Expression::ElementId(_, matrix, _) => {
+                let dom = matrix.domain_of()?.resolve()?;
+                let idx_doms = match dom.as_ref() {
+                    GroundDomain::Matrix(_, idx) => idx,
+                    _ => return None,
+                };
+                let num_elems = matrix::num_elements(idx_doms).ok()? as i32;
+                Some(Domain::int(vec![Range::Bounded(1, num_elems)]))
+            }
             Expression::Table(_, _, _) => Some(Domain::bool()),
             Expression::NegativeTable(_, _, _) => Some(Domain::bool()),
             Expression::AtLeast(_, _, _, _) => Some(Domain::bool()),
             Expression::AtMost(_, _, _, _) => Some(Domain::bool()),
-            Expression::Gcc(_, _, _, _) => Some(Domain::bool()),
+            Expression::Gcc(_, _, _, _) | Expression::GccWeak(_, _, _, _) => Some(Domain::bool()),
             Expression::FlatWatchedLiteral(_, _, _) => Some(Domain::bool()),
             Expression::MinionReify(_, _, _) => Some(Domain::bool()),
             Expression::MinionReifyImply(_, _, _) => Some(Domain::bool()),
@@ -1681,6 +1702,8 @@ impl Expression {
             SafePow,
             Flatten,
             AllDiff,
+            AllDifferentExcept,
+            ElementId,
             Minus,
             Factorial,
             FlatAbsEq,
@@ -1721,6 +1744,7 @@ impl Expression {
             AtLeast,
             AtMost,
             Gcc,
+            GccWeak,
             Active,
             ToSet,
             ToMSet,
@@ -2180,7 +2204,13 @@ impl Display for Expression {
                 }
             }
             Expression::AllDiff(_, e) => {
-                write!(f, "allDiff({e})")
+                write!(f, "allDifferent({e})")
+            }
+            Expression::AllDifferentExcept(_, matrix, except) => {
+                write!(f, "allDifferentExcept({matrix}, {except})")
+            }
+            Expression::ElementId(_, matrix, value) => {
+                write!(f, "elementId({matrix}, {value})")
             }
             Expression::Table(_, tuple_expr, rows_expr) => {
                 write!(f, "table({tuple_expr}, {rows_expr})")
@@ -2189,13 +2219,16 @@ impl Display for Expression {
                 write!(f, "negativeTable({tuple_expr}, {rows_expr})")
             }
             Expression::AtLeast(_, vars, counts, values) => {
-                write!(f, "atleast({vars}, {counts}, {values})")
+                write!(f, "atLeast({vars}, {counts}, {values})")
             }
             Expression::AtMost(_, vars, counts, values) => {
-                write!(f, "atmost({vars}, {counts}, {values})")
+                write!(f, "atMost({vars}, {counts}, {values})")
             }
             Expression::Gcc(_, vars, values, counts) => {
-                write!(f, "gcc({vars}, {values}, {counts})")
+                write!(f, "globalCardinality({vars}, {values}, {counts})")
+            }
+            Expression::GccWeak(_, vars, values, counts) => {
+                write!(f, "gccweak({vars}, {values}, {counts})")
             }
             Expression::Bubble(_, box1, box2) => {
                 write!(f, "{{{} @ {}}}", box1.clone(), box2.clone())
@@ -2485,11 +2518,13 @@ impl Typeable for Expression {
                 }
             }
             Expression::AllDiff(_, _) => ReturnType::Bool,
+            Expression::AllDifferentExcept(_, _, _) => ReturnType::Bool,
+            Expression::ElementId(_, _, _) => ReturnType::Int,
             Expression::Table(_, _, _) => ReturnType::Bool,
             Expression::NegativeTable(_, _, _) => ReturnType::Bool,
             Expression::AtLeast(_, _, _, _) => ReturnType::Bool,
             Expression::AtMost(_, _, _, _) => ReturnType::Bool,
-            Expression::Gcc(_, _, _, _) => ReturnType::Bool,
+            Expression::Gcc(_, _, _, _) | Expression::GccWeak(_, _, _, _) => ReturnType::Bool,
             Expression::Bubble(_, inner, _) => inner.return_type(),
             Expression::FlatWatchedLiteral(_, _, _) => ReturnType::Bool,
             Expression::MinionReify(_, _, _) => ReturnType::Bool,
@@ -2818,10 +2853,17 @@ impl Expression {
             // Moo<Expression> + Moo<Expression> + Moo<Expression>
             Expression::AtLeast(_, m1, m2, m3)
             | Expression::AtMost(_, m1, m2, m3)
-            | Expression::Gcc(_, m1, m2, m3) => {
+            | Expression::Gcc(_, m1, m2, m3)
+            | Expression::GccWeak(_, m1, m2, m3) => {
                 f(m1);
                 f(m2);
                 f(m3);
+            }
+
+            // Moo<Expression> + Moo<Expression> (two-arg globals)
+            Expression::AllDifferentExcept(_, m1, m2) | Expression::ElementId(_, m1, m2) => {
+                f(m1);
+                f(m2);
             }
 
             // Moo<Expression> + DomainPtr
@@ -3056,10 +3098,17 @@ impl CacheHashable for Expression {
             // Moo<Expression> + Moo<Expression> + Moo<Expression>
             Expression::AtLeast(_, m1, m2, m3)
             | Expression::AtMost(_, m1, m2, m3)
-            | Expression::Gcc(_, m1, m2, m3) => {
+            | Expression::Gcc(_, m1, m2, m3)
+            | Expression::GccWeak(_, m1, m2, m3) => {
                 m1.get_cached_hash().hash(&mut hasher);
                 m2.get_cached_hash().hash(&mut hasher);
                 m3.get_cached_hash().hash(&mut hasher);
+            }
+
+            // Moo<Expression> + Moo<Expression> (two-arg globals)
+            Expression::AllDifferentExcept(_, m1, m2) | Expression::ElementId(_, m1, m2) => {
+                m1.get_cached_hash().hash(&mut hasher);
+                m2.get_cached_hash().hash(&mut hasher);
             }
 
             // Moo<Expression> + DomainPtr

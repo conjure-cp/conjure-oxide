@@ -2185,6 +2185,10 @@
                 {
                   "type": "SYMBOL",
                   "name": "comparison_expr"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "atom"
                 }
               ]
             }
@@ -2409,6 +2413,10 @@
           },
           {
             "type": "SYMBOL",
+            "name": "all_different_except_comparison"
+          },
+          {
+            "type": "SYMBOL",
             "name": "global_cardinality_comparison"
           }
         ]
@@ -2558,6 +2566,10 @@
                 },
                 {
                   "type": "SYMBOL",
+                  "name": "all_different_except_comparison"
+                },
+                {
+                  "type": "SYMBOL",
                   "name": "atom"
                 }
               ]
@@ -2597,6 +2609,10 @@
                 {
                   "type": "SYMBOL",
                   "name": "all_diff_comparison"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "all_different_except_comparison"
                 },
                 {
                   "type": "SYMBOL",
@@ -2668,8 +2684,17 @@
             "type": "FIELD",
             "name": "operator",
             "content": {
-              "type": "STRING",
-              "value": "allDiff"
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "STRING",
+                  "value": "allDifferent"
+                },
+                {
+                  "type": "STRING",
+                  "value": "allDiff"
+                }
+              ]
             }
           },
           {
@@ -2704,6 +2729,118 @@
         ]
       }
     },
+    "all_different_except_comparison": {
+      "type": "PREC",
+      "value": -10,
+      "content": {
+        "type": "SEQ",
+        "members": [
+          {
+            "type": "FIELD",
+            "name": "operator",
+            "content": {
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "STRING",
+                  "value": "allDifferentExcept"
+                },
+                {
+                  "type": "STRING",
+                  "value": "alldifferent_except"
+                },
+                {
+                  "type": "STRING",
+                  "value": "alldiff_except"
+                },
+                {
+                  "type": "STRING",
+                  "value": "allDiffExcept"
+                }
+              ]
+            }
+          },
+          {
+            "type": "STRING",
+            "value": "("
+          },
+          {
+            "type": "FIELD",
+            "name": "matrix",
+            "content": {
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "SYMBOL",
+                  "name": "matrix"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "identifier"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "index_or_slice"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "flatten"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "bool_expr"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "arithmetic_expr"
+                }
+              ]
+            }
+          },
+          {
+            "type": "STRING",
+            "value": ","
+          },
+          {
+            "type": "FIELD",
+            "name": "except",
+            "content": {
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "SYMBOL",
+                  "name": "identifier"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "constant"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "index_or_slice"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "sub_arith_expr"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "negative_expr"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "arithmetic_expr"
+                }
+              ]
+            }
+          },
+          {
+            "type": "STRING",
+            "value": ")"
+          }
+        ]
+      }
+    },
     "global_cardinality_comparison": {
       "type": "PREC",
       "value": -10,
@@ -2716,6 +2853,18 @@
             "content": {
               "type": "CHOICE",
               "members": [
+                {
+                  "type": "STRING",
+                  "value": "globalCardinality"
+                },
+                {
+                  "type": "STRING",
+                  "value": "atLeast"
+                },
+                {
+                  "type": "STRING",
+                  "value": "atMost"
+                },
                 {
                   "type": "STRING",
                   "value": "atleast"
@@ -3028,6 +3177,14 @@
             "content": {
               "type": "SYMBOL",
               "name": "flatten"
+            }
+          },
+          {
+            "type": "FIELD",
+            "name": "element_id",
+            "content": {
+              "type": "SYMBOL",
+              "name": "element_id"
             }
           },
           {
@@ -3888,6 +4045,89 @@
         }
       ]
     },
+    "element_id": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "elementId"
+        },
+        {
+          "type": "STRING",
+          "value": "("
+        },
+        {
+          "type": "FIELD",
+          "name": "matrix",
+          "content": {
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "matrix"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "identifier"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "index_or_slice"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "flatten"
+              }
+            ]
+          }
+        },
+        {
+          "type": "STRING",
+          "value": ","
+        },
+        {
+          "type": "FIELD",
+          "name": "value",
+          "content": {
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "identifier"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "index_or_slice"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "constant"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "sub_arith_expr"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "negative_expr"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "abs_value"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "factorial_expr"
+              }
+            ]
+          }
+        },
+        {
+          "type": "STRING",
+          "value": ")"
+        }
+      ]
+    },
     "table": {
       "type": "SEQ",
       "members": [
@@ -3903,8 +4143,25 @@
           "type": "FIELD",
           "name": "variables",
           "content": {
-            "type": "SYMBOL",
-            "name": "matrix"
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "matrix"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "identifier"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "index_or_slice"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "flatten"
+              }
+            ]
           }
         },
         {
@@ -3915,8 +4172,25 @@
           "type": "FIELD",
           "name": "rows",
           "content": {
-            "type": "SYMBOL",
-            "name": "matrix"
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "matrix"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "identifier"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "index_or_slice"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "flatten"
+              }
+            ]
           }
         },
         {
@@ -3929,8 +4203,17 @@
       "type": "SEQ",
       "members": [
         {
-          "type": "STRING",
-          "value": "negativeTable"
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "STRING",
+              "value": "negativeTable"
+            },
+            {
+              "type": "STRING",
+              "value": "negative_table"
+            }
+          ]
         },
         {
           "type": "STRING",
@@ -3940,8 +4223,25 @@
           "type": "FIELD",
           "name": "variables",
           "content": {
-            "type": "SYMBOL",
-            "name": "matrix"
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "matrix"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "identifier"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "index_or_slice"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "flatten"
+              }
+            ]
           }
         },
         {
@@ -3952,8 +4252,25 @@
           "type": "FIELD",
           "name": "rows",
           "content": {
-            "type": "SYMBOL",
-            "name": "matrix"
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "matrix"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "identifier"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "index_or_slice"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "flatten"
+              }
+            ]
           }
         },
         {

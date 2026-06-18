@@ -8,8 +8,8 @@ use crate::{
     extra_check,
     utils::{is_flat, rewrite_children, to_aux_var},
 };
-use conjure_cp::ast::Moo;
 use conjure_cp::ast::categories::Category;
+use conjure_cp::ast::{Domain, GroundDomain, Moo, eval_constant};
 use conjure_cp::{
     ast::Metadata,
     ast::{
@@ -735,6 +735,123 @@ fn introduce_flat_alldiff(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         .process_results(|iter| iter.collect_vec())?;
 
     Ok(Reduction::pure(Expr::FlatAllDiff(Metadata::new(), atoms)))
+}
+
+/// Lowers `allDifferentExcept` to Minion's `gccweak`, matching Savile Row.
+#[register_rule("Minion", 4100, [AllDifferentExcept])]
+fn alldifferent_except_to_gccweak(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    let Expr::AllDifferentExcept(_, matrix, except) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let es = (**matrix).clone().unwrap_list().ok_or(RuleNotApplicable)?;
+    if es.is_empty() {
+        return Err(RuleNotApplicable);
+    }
+
+    let Lit::Int(except_val) = eval_constant(except.as_ref()).ok_or(RuleNotApplicable)? else {
+        return Err(RuleNotApplicable);
+    };
+
+    let domain = es[0]
+        .domain_of()
+        .ok_or(RuleNotApplicable)?
+        .resolve()
+        .ok_or(RuleNotApplicable)?;
+    let GroundDomain::Int(_) = domain.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
+    let values: Vec<i32> = domain
+        .values()
+        .map_err(|_| RuleNotApplicable)?
+        .filter_map(|v| match v {
+            Lit::Int(i) if i != except_val => Some(i),
+            _ => None,
+        })
+        .collect();
+
+    let mut symbols = symbols.clone();
+    let mut count_exprs = vec![];
+    for _ in &values {
+        let decl = symbols.gen_find(&Domain::bool());
+        count_exprs.push(Expr::Atomic(
+            Metadata::new(),
+            Atom::Reference(Reference::new(decl)),
+        ));
+    }
+
+    let value_exprs = values
+        .iter()
+        .map(|v| Expr::Atomic(Metadata::new(), Atom::Literal(Lit::Int(*v))))
+        .collect_vec();
+
+    Ok(Reduction::new(
+        Expr::GccWeak(
+            Metadata::new(),
+            Moo::new(into_matrix_expr![es]),
+            Moo::new(into_matrix_expr![value_exprs]),
+            Moo::new(into_matrix_expr![count_exprs]),
+        ),
+        vec![],
+        symbols,
+    ))
+}
+
+/// Introduces `MinionElementOne` from an auxiliary variable bound to `elementId`.
+#[register_rule("Minion", 4400, [AuxDeclaration])]
+fn introduce_element_id_from_aux_decl(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    let Expr::AuxDeclaration(_, reference, inner) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Expr::ElementId(_, matrix, value) = inner.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Some(list) = Moo::unwrap_or_clone(matrix.clone()).unwrap_list() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let mut atom_list = vec![];
+    for elem in list {
+        let Expr::Atomic(_, elem) = elem else {
+            return Err(RuleNotApplicable);
+        };
+        atom_list.push(elem);
+    }
+
+    let value_atom: Atom = (**value).clone().try_into().or(Err(RuleNotApplicable))?;
+
+    Ok(Reduction::pure(Expr::MinionElementOne(
+        Metadata::new(),
+        atom_list,
+        Moo::new(Atom::Reference(reference.clone())),
+        Moo::new(value_atom),
+    )))
+}
+
+/// Introduces an auxiliary variable for `elementId` used as a matrix index.
+#[register_rule("Minion", 4300, [SafeIndex])]
+fn flatten_element_id_index(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    let Expr::SafeIndex(meta, subject, indices) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    if indices.len() != 1 {
+        return Err(RuleNotApplicable);
+    }
+
+    let Expr::ElementId(_, _, _) = indices[0].clone() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let aux_var_info = to_aux_var(&indices[0], symbols).ok_or(RuleNotApplicable)?;
+
+    Ok(Reduction::new(
+        Expr::SafeIndex(meta.clone(), subject.clone(), vec![aux_var_info.as_expr()]),
+        vec![aux_var_info.top_level_expr()],
+        aux_var_info.symbols(),
+    ))
 }
 
 /// Introduces a Minion `MinusEq` constraint from `x = -y`, where x and y are atoms.

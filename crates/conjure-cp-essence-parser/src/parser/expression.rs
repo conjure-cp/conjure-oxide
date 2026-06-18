@@ -1,8 +1,13 @@
 use crate::diagnostics::diagnostics_api::SymbolKind;
 use crate::errors::{FatalParseError, RecoverableParseError};
 use crate::parser::ParseContext;
-use crate::parser::atom::parse_atom;
+use crate::parser::atom::{parse_atom, parse_table_operand};
 use crate::parser::comprehension::parse_quantifier_or_aggregate_expr;
+use crate::parser::global_constraints::{
+    ALL_DIFFERENT, ALL_DIFFERENT_EXCEPT, AT_LEAST, AT_MOST, GLOBAL_CARDINALITY,
+    is_all_different_except_operator, is_all_different_operator, is_at_least_operator,
+    is_at_most_operator, is_global_cardinality_operator,
+};
 use crate::util::TypecheckingContext;
 use crate::{child, field, named_child};
 use conjure_cp_core::ast::{Expression, GroundDomain, Metadata, Moo};
@@ -64,6 +69,17 @@ pub fn parse_expression(
             }
             ctx.typechecking_context = TypecheckingContext::Matrix;
             parse_all_diff_comparison(ctx, &node)
+        }
+        "all_different_except_comparison" => {
+            if ctx.typechecking_context == TypecheckingContext::Arithmetic {
+                ctx.record_error(RecoverableParseError::new(
+                    format!("Type error: {}\n\tExepected: arithmetic expression\n\tFound: comparison expression", &ctx.source_code[node.start_byte()..node.end_byte()]),
+                    Some(node.range()),
+                ));
+                return Ok(None);
+            }
+            ctx.typechecking_context = TypecheckingContext::Matrix;
+            parse_all_different_except_comparison(ctx, &node)
         }
         "global_cardinality_comparison" => {
             if ctx.typechecking_context == TypecheckingContext::Arithmetic {
@@ -158,6 +174,10 @@ fn parse_comparison_expression(
         "all_diff_comparison" => {
             ctx.typechecking_context = TypecheckingContext::Matrix;
             parse_all_diff_comparison(ctx, &inner)
+        }
+        "all_different_except_comparison" => {
+            ctx.typechecking_context = TypecheckingContext::Matrix;
+            parse_all_different_except_comparison(ctx, &inner)
         }
         "global_cardinality_comparison" => parse_global_cardinality_comparison(ctx, &inner),
         _ => {
@@ -260,15 +280,77 @@ fn parse_all_diff_comparison(
         return Ok(None);
     };
 
-    let all_diff_keyword_node = child!(node, 0, "allDiff");
+    let operator_node = node
+        .child_by_field_name("operator")
+        .unwrap_or_else(|| node.child(0).unwrap());
+    let operator_str =
+        ctx.source_code[operator_node.start_byte()..operator_node.end_byte()].to_string();
+    if !is_all_different_operator(&operator_str) {
+        ctx.record_error(RecoverableParseError::new(
+            format!("Invalid operator: '{operator_str}'"),
+            Some(operator_node.range()),
+        ));
+        return Ok(None);
+    }
+
     ctx.add_span_and_doc_hover(
-        &all_diff_keyword_node,
-        "allDiff",
+        &operator_node,
+        ALL_DIFFERENT,
         SymbolKind::Function,
         None,
         None,
     );
     Ok(Some(Expression::AllDiff(Metadata::new(), Moo::new(inner))))
+}
+
+fn parse_all_different_except_comparison(
+    ctx: &mut ParseContext,
+    node: &Node,
+) -> Result<Option<Expression>, FatalParseError> {
+    let operator_node = node
+        .child_by_field_name("operator")
+        .unwrap_or_else(|| node.child(0).unwrap());
+    let operator_str =
+        ctx.source_code[operator_node.start_byte()..operator_node.end_byte()].to_string();
+    if !is_all_different_except_operator(&operator_str) {
+        ctx.record_error(RecoverableParseError::new(
+            format!("Invalid operator: '{operator_str}'"),
+            Some(operator_node.range()),
+        ));
+        return Ok(None);
+    }
+
+    let Some(matrix_node) = field!(recover, ctx, node, "matrix") else {
+        return Ok(None);
+    };
+    let Some(except_node) = field!(recover, ctx, node, "except") else {
+        return Ok(None);
+    };
+
+    let saved_context = ctx.typechecking_context;
+    ctx.typechecking_context = TypecheckingContext::Unknown;
+    let Some(matrix) = parse_table_operand(ctx, &matrix_node)? else {
+        ctx.typechecking_context = saved_context;
+        return Ok(None);
+    };
+    let Some(except) = parse_table_operand(ctx, &except_node)? else {
+        ctx.typechecking_context = saved_context;
+        return Ok(None);
+    };
+    ctx.typechecking_context = saved_context;
+
+    ctx.add_span_and_doc_hover(
+        &operator_node,
+        ALL_DIFFERENT_EXCEPT,
+        SymbolKind::Function,
+        None,
+        None,
+    );
+    Ok(Some(Expression::AllDifferentExcept(
+        Metadata::new(),
+        Moo::new(matrix),
+        Moo::new(except),
+    )))
 }
 
 fn parse_global_cardinality_comparison(
@@ -309,26 +391,30 @@ fn parse_global_cardinality_comparison(
 
     ctx.add_span_and_doc_hover(
         &operator_node,
-        &operator_str,
+        match operator_str.as_str() {
+            op if is_at_least_operator(op) => AT_LEAST,
+            op if is_at_most_operator(op) => AT_MOST,
+            _ => GLOBAL_CARDINALITY,
+        },
         SymbolKind::Function,
         None,
         None,
     );
 
     match operator_str.as_str() {
-        "atleast" => Ok(Some(Expression::AtLeast(
+        op if is_at_least_operator(op) => Ok(Some(Expression::AtLeast(
             Metadata::new(),
             Moo::new(variables),
             Moo::new(arg2),
             Moo::new(arg3),
         ))),
-        "atmost" => Ok(Some(Expression::AtMost(
+        op if is_at_most_operator(op) => Ok(Some(Expression::AtMost(
             Metadata::new(),
             Moo::new(variables),
             Moo::new(arg2),
             Moo::new(arg3),
         ))),
-        "gcc" => Ok(Some(Expression::Gcc(
+        op if is_global_cardinality_operator(op) => Ok(Some(Expression::Gcc(
             Metadata::new(),
             Moo::new(variables),
             Moo::new(arg2),

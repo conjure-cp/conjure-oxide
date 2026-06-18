@@ -226,7 +226,7 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
         Expr::NegativeTable(_, _, _) => Err(RuleNotApplicable),
         Expr::AtLeast(_, _, _, _) => Err(RuleNotApplicable),
         Expr::AtMost(_, _, _, _) => Err(RuleNotApplicable),
-        Expr::Gcc(_, _, _, _) => Err(RuleNotApplicable),
+        Expr::Gcc(_, _, _, _) | Expr::GccWeak(_, _, _, _) => Err(RuleNotApplicable),
         Expr::SafeIndex(_, subject, indices) => {
             // partially evaluate matrix literals indexed by a constant.
 
@@ -845,6 +845,7 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
         Expr::LexGeq(_, _, _) => Err(RuleNotApplicable),
         Expr::FlatLexLt(_, _, _) => Err(RuleNotApplicable),
         Expr::FlatLexLeq(_, _, _) => Err(RuleNotApplicable),
+        Expr::AllDifferentExcept(_, _, _) | Expr::ElementId(_, _, _) => Err(RuleNotApplicable),
     }
 }
 
