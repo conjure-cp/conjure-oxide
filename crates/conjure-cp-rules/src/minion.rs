@@ -2,7 +2,10 @@
 /*        Rules for translating to Minion-supported constraints         */
 /************************************************************************/
 
-use std::{collections::HashMap, convert::TryInto};
+use std::{
+    collections::{HashMap, HashSet},
+    convert::TryInto,
+};
 
 use crate::{
     extra_check,
@@ -13,8 +16,8 @@ use conjure_cp::ast::{Domain, GroundDomain, Moo, eval_constant};
 use conjure_cp::{
     ast::Metadata,
     ast::{
-        AbstractLiteral, Atom, Expression as Expr, Literal as Lit, Range, Reference, ReturnType,
-        SymbolTable, Typeable,
+        AbstractLiteral, Atom, Expression as Expr, Literal as Lit, Name, Range, Reference,
+        ReturnType, SymbolTable, Typeable,
     },
     into_matrix_expr, matrix_expr,
     rule_engine::{
@@ -808,26 +811,160 @@ fn introduce_element_id_from_aux_decl(expr: &Expr, _: &SymbolTable) -> Applicati
         return Err(RuleNotApplicable);
     };
 
-    let Some(list) = Moo::unwrap_or_clone(matrix.clone()).unwrap_list() else {
-        return Err(RuleNotApplicable);
-    };
+    let matrix_expr = Moo::unwrap_or_clone(matrix.clone());
+    let value_expr = (**value).clone();
+    let value_atom: Atom = value_expr.clone().try_into().or(Err(RuleNotApplicable))?;
 
-    let mut atom_list = vec![];
-    for elem in list {
-        let Expr::Atomic(_, elem) = elem else {
-            return Err(RuleNotApplicable);
-        };
-        atom_list.push(elem);
+    if let Some(list) = matrix_expr.clone().unwrap_list() {
+        let mut atom_list = vec![];
+        for elem in list {
+            let Expr::Atomic(_, elem) = elem else {
+                return Err(RuleNotApplicable);
+            };
+            atom_list.push(elem);
+        }
+
+        let atom_list =
+            pad_represented_element_id_list(atom_list.clone(), reference).unwrap_or(atom_list);
+
+        return Ok(Reduction::pure(Expr::MinionElementOne(
+            Metadata::new(),
+            atom_list,
+            Moo::new(Atom::Reference(reference.clone())),
+            Moo::new(value_atom),
+        )));
     }
 
-    let value_atom: Atom = (**value).clone().try_into().or(Err(RuleNotApplicable))?;
+    let atom_list = indexed_element_id_inverse_lookup(&matrix_expr, &value_expr)?;
 
     Ok(Reduction::pure(Expr::MinionElementOne(
         Metadata::new(),
         atom_list,
-        Moo::new(Atom::Reference(reference.clone())),
         Moo::new(value_atom),
+        Moo::new(Atom::Reference(reference.clone())),
     )))
+}
+
+fn indexed_element_id_inverse_lookup(
+    matrix_expr: &Expr,
+    value_expr: &Expr,
+) -> Result<Vec<Atom>, ApplicationError> {
+    let (elems, index_domain) =
+        indexed_element_id_literal_parts(matrix_expr).ok_or(RuleNotApplicable)?;
+    let GroundDomain::Int(index_ranges) = index_domain.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
+    let index_values = Range::values(index_ranges)
+        .ok_or(RuleNotApplicable)?
+        .collect_vec();
+
+    if index_values.len() != elems.len() {
+        return Err(RuleNotApplicable);
+    }
+
+    let value_domain = value_expr.domain_of().ok_or(RuleNotApplicable)?;
+    let value_domain = value_domain.resolve().ok_or(RuleNotApplicable)?;
+    let GroundDomain::Int(value_ranges) = value_domain.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
+    let value_values = Range::values(value_ranges)
+        .ok_or(RuleNotApplicable)?
+        .collect_vec();
+    let max_value = value_values
+        .iter()
+        .copied()
+        .max()
+        .ok_or(RuleNotApplicable)?;
+    if value_values.iter().any(|value| *value < 1) {
+        return Err(RuleNotApplicable);
+    }
+
+    let mut lookup: Vec<i32> = (1..=max_value).collect();
+    let mut seen_elements = HashSet::new();
+    for (index, elem) in index_values.into_iter().zip(elems) {
+        if elem < 1 || elem > max_value || !seen_elements.insert(elem) {
+            return Err(RuleNotApplicable);
+        }
+        lookup[(elem - 1) as usize] = index;
+    }
+
+    Ok(lookup
+        .into_iter()
+        .map(|value| Atom::Literal(Lit::Int(value)))
+        .collect())
+}
+
+fn pad_represented_element_id_list(atom_list: Vec<Atom>, result: &Reference) -> Option<Vec<Atom>> {
+    let result_domain = result.domain()?.resolve()?;
+    let GroundDomain::Int(result_ranges) = result_domain.as_ref() else {
+        return None;
+    };
+    let result_values = Range::values(result_ranges)?.collect_vec();
+    let max_result = result_values.iter().copied().max()?;
+    if max_result <= atom_list.len() as i32 {
+        return None;
+    }
+
+    let mut padded: Vec<Atom> = (1..=max_result)
+        .map(|value| Lit::Int(value).into())
+        .collect();
+    let mut changed = false;
+    for atom in atom_list {
+        let position = represented_matrix_to_atom_index(&atom)?;
+        if !(1..=max_result).contains(&position) {
+            return None;
+        }
+        padded[(position - 1) as usize] = atom;
+        changed = true;
+    }
+
+    changed.then_some(padded)
+}
+
+fn represented_matrix_to_atom_index(atom: &Atom) -> Option<i32> {
+    let Atom::Reference(reference) = atom else {
+        return None;
+    };
+    let name = reference.name();
+    let Name::Represented(fields) = &*name else {
+        return None;
+    };
+    let (_, rule, suffix) = fields.as_ref();
+    if rule.as_str() != "matrix_to_atom" {
+        return None;
+    }
+    suffix.as_str().parse().ok()
+}
+
+fn indexed_element_id_literal_parts(matrix_expr: &Expr) -> Option<(Vec<i32>, Moo<GroundDomain>)> {
+    match matrix_expr {
+        Expr::AbstractLiteral(_, AbstractLiteral::Matrix(elems, index_domain)) => Some((
+            elems.iter().map(expr_int_literal).collect::<Option<_>>()?,
+            index_domain.resolve()?,
+        )),
+        Expr::Atomic(
+            _,
+            Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Matrix(elems, index_domain))),
+        ) => Some((
+            elems.iter().map(lit_int).collect::<Option<_>>()?,
+            index_domain.clone(),
+        )),
+        _ => None,
+    }
+}
+
+fn expr_int_literal(expr: &Expr) -> Option<i32> {
+    match expr {
+        Expr::Atomic(_, Atom::Literal(lit)) => lit_int(lit),
+        _ => None,
+    }
+}
+
+fn lit_int(lit: &Lit) -> Option<i32> {
+    match lit {
+        Lit::Int(value) => Some(*value),
+        _ => None,
+    }
 }
 
 /// Introduces an auxiliary variable for `elementId` used as a matrix index.

@@ -1055,14 +1055,27 @@ impl Expression {
             }
             Expression::AllDiff(_, _) => Some(Domain::bool()),
             Expression::AllDifferentExcept(_, _, _) => Some(Domain::bool()),
-            Expression::ElementId(_, matrix, _) => {
+            Expression::ElementId(_, matrix, value) => {
                 let dom = matrix.domain_of()?.resolve()?;
                 let idx_doms = match dom.as_ref() {
                     GroundDomain::Matrix(_, idx) => idx,
                     _ => return None,
                 };
-                let num_elems = matrix::num_elements(idx_doms).ok()? as i32;
-                Some(Domain::int(vec![Range::Bounded(1, num_elems)]))
+                if let [idx_dom] = idx_doms.as_slice() {
+                    let index_domain = Domain::Ground(idx_dom.clone());
+                    if matrix.as_ref().unwrap_list().is_some() {
+                        Some(Moo::new(index_domain))
+                    } else {
+                        value
+                            .domain_of()
+                            .and_then(|value_domain| index_domain.union(&value_domain).ok())
+                            .map(Moo::new)
+                            .or_else(|| Some(Moo::new(index_domain)))
+                    }
+                } else {
+                    let num_elems = matrix::num_elements(idx_doms).ok()? as i32;
+                    Some(Domain::int(vec![Range::Bounded(1, num_elems)]))
+                }
             }
             Expression::Table(_, _, _) => Some(Domain::bool()),
             Expression::NegativeTable(_, _, _) => Some(Domain::bool()),
