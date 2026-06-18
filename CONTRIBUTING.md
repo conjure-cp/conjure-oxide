@@ -118,8 +118,9 @@ These conventions are more specific than the general coding style above.
 
 ### Test Runs
 
+- Use `MAX_EXPECTED_TIME=N` to only run test cases that are expected to take up to `N` seconds.
 - Use `TEST_CASE_TIMEOUT=N` to set a per-test timeout for integration tests.
-- When recording artefacts from a timeout-bounded run, mention the timeout value explicitly.
+- When recording artefacts from a timeout-bounded run, record the timeout value explicitly in the relevant `config.toml` file.
 
 ### Commits
 
