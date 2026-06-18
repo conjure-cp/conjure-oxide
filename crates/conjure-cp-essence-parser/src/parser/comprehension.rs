@@ -16,10 +16,11 @@ fn parse_collection_expression(
     collection_node: Node,
 ) -> Result<Option<Expression>, FatalParseError> {
     match collection_node.kind() {
-        "arithmetic_expr" | "bool_expr" | "comparison_expr" => parse_expression(ctx, collection_node),
-        "atom" | "matrix" | "set_literal" | "tuple" | "record" | "identifier" | "index_or_slice" => {
-            parse_atom(ctx, &collection_node)
+        "arithmetic_expr" | "bool_expr" | "comparison_expr" => {
+            parse_expression(ctx, collection_node)
         }
+        "atom" | "matrix" | "set_literal" | "tuple" | "record" | "identifier"
+        | "index_or_slice" => parse_atom(ctx, &collection_node),
         _ => {
             ctx.record_error(RecoverableParseError::new(
                 format!("Unexpected collection type: '{}'", collection_node.kind()),
@@ -54,7 +55,9 @@ fn parse_generator(
         let mut collection_ctx = ctx.with_new_symbols(Some(builder.generator_symboltable()));
         collection_ctx.typechecking_context = TypecheckingContext::Unknown;
         collection_ctx.inner_typechecking_context = TypecheckingContext::Unknown;
-        let Some(collection_expr) = parse_collection_expression(&mut collection_ctx, collection_node)? else {
+        let Some(collection_expr) =
+            parse_collection_expression(&mut collection_ctx, collection_node)?
+        else {
             return Ok(None);
         };
         return Ok(Some(
@@ -101,7 +104,8 @@ fn add_quantifier_generators_from_collection(
     let mut collection_ctx = ctx.with_new_symbols(Some(builder.generator_symboltable()));
     collection_ctx.typechecking_context = TypecheckingContext::Unknown;
     collection_ctx.inner_typechecking_context = TypecheckingContext::Unknown;
-    let Some(collection_expr) = parse_collection_expression(&mut collection_ctx, collection_node)? else {
+    let Some(collection_expr) = parse_collection_expression(&mut collection_ctx, collection_node)?
+    else {
         return Ok(None);
     };
 
@@ -299,12 +303,9 @@ pub fn parse_quantifier_or_aggregate_expr(
             builder = builder.generator(decl);
         }
     } else if let Some(collection_node) = collection_node {
-        let Some(updated_builder) = add_quantifier_generators_from_collection(
-            ctx,
-            builder,
-            &variables,
-            collection_node,
-        )? else {
+        let Some(updated_builder) =
+            add_quantifier_generators_from_collection(ctx, builder, &variables, collection_node)?
+        else {
             return Ok(None);
         };
         builder = updated_builder;

@@ -8,10 +8,10 @@ use std::path::PathBuf;
 use std::process::Command;
 use std::time::Instant;
 use test_suite::AcceptMode;
-use test_suite::text_files::write_text_with_trailing_newline;
 use test_suite::TestConfig;
 use test_suite::golden_files::assert_no_redundant_expected_files;
 use test_suite::test_config::{round_expected_time, upsert_expected_time_config};
+use test_suite::text_files::write_text_with_trailing_newline;
 
 pub fn custom_test(test_dir: &str) -> Result<(), Box<dyn Error>> {
     let accept_mode = AcceptMode::from_env();

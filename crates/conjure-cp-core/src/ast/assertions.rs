@@ -172,7 +172,9 @@ fn collect_reachable_symbol_tables(model: &Model) -> Vec<SymbolTablePtr> {
     }
 
     if let Some(objective) = &model.objective {
-        pending_tables.extend(Biplate::<SymbolTablePtr>::universe_bi(&objective.expression));
+        pending_tables.extend(Biplate::<SymbolTablePtr>::universe_bi(
+            &objective.expression,
+        ));
     }
 
     for clause in model.clauses() {

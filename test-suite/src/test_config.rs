@@ -30,7 +30,7 @@ fn ensure_nested_table(document: &mut DocumentMut, keys: &[&str]) {
     ensure_table(document, head);
     let mut table = document[head].as_table_mut().expect("table exists");
     for key in tail {
-        if table.get(*key).is_some_and(|item| item.is_table()) {
+        if table.get(key).is_some_and(|item| item.is_table()) {
             table = table[key].as_table_mut().expect("table exists");
             continue;
         }
@@ -372,7 +372,10 @@ pub struct TestConfig {
     )]
     pub minion_discrete_threshold: usize,
 
-    #[serde(default = "default_skip_conjure_validation", rename = "skip-conjure-validation")]
+    #[serde(
+        default = "default_skip_conjure_validation",
+        rename = "skip-conjure-validation"
+    )]
     pub skip_conjure_validation: String,
 
     #[serde(

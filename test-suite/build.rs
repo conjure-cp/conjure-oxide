@@ -7,10 +7,10 @@ use walkdir::WalkDir;
 
 // Include the TestConfig module directly so it can be used in build.rs
 // (build.rs cannot depend on the crate it's building)
-#[path = "src/text_files.rs"]
-mod text_files;
 #[path = "src/test_config.rs"]
 mod test_config;
+#[path = "src/text_files.rs"]
+mod text_files;
 use test_config::TestConfig;
 
 fn main() -> io::Result<()> {

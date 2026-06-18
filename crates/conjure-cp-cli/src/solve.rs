@@ -32,8 +32,8 @@ use conjure_cp_cli::find_conjure::conjure_executable;
 use conjure_cp_cli::utils::conjure::{get_solutions, solutions_to_json};
 use serde_json::to_string_pretty;
 
-use conjure_cp_cli::utils::text_files::write_text_with_trailing_newline;
 use crate::cli::{GlobalArgs, LOGGING_HELP_HEADING};
+use conjure_cp_cli::utils::text_files::write_text_with_trailing_newline;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum NumberOfSolutions {

@@ -16,8 +16,8 @@ use uniplate::{Biplate, Tree, Uniplate};
 
 use super::serde::{HasId, ObjId, PtrAsInner};
 use super::{
-    Atom, CnfClause, DeclarationPtr, Expression, Literal, Metadata, Moo, Name, Objective, ReturnType,
-    SymbolTable, SymbolTablePtr, Typeable,
+    Atom, CnfClause, DeclarationPtr, Expression, Literal, Metadata, Moo, Name, Objective,
+    ReturnType, SymbolTable, SymbolTablePtr, Typeable,
     comprehension::Comprehension,
     declaration::DeclarationKind,
     pretty::{

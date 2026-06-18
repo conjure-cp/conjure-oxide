@@ -27,11 +27,8 @@ pub fn introduce_objective_auxiliary(mut model: Model) -> Model {
     let mut symbols = model.symbols().clone();
     let decl = symbols.gen_find(&domain);
     let aux_reference = Expression::Atomic(Metadata::new(), Atom::new_ref(decl.clone()));
-    let aux_constraint = Expression::AuxDeclaration(
-        Metadata::new(),
-        Reference::new(decl),
-        Moo::new(expr),
-    );
+    let aux_constraint =
+        Expression::AuxDeclaration(Metadata::new(), Reference::new(decl), Moo::new(expr));
 
     model.symbols_mut().extend(symbols);
     model.add_constraint(aux_constraint);

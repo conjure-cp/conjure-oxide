@@ -137,10 +137,7 @@ fn retroactively_prune_dominated(
         .collect()
 }
 
-fn validate_solution_collection_options(
-    model: &Model,
-    num_sols: i32,
-) -> Result<(), anyhow::Error> {
+fn validate_solution_collection_options(model: &Model, num_sols: i32) -> Result<(), anyhow::Error> {
     if model.objective.is_some() && num_sols != 1 {
         let got = if num_sols == 0 {
             "all".to_string()
@@ -318,16 +315,14 @@ pub fn get_solutions_from_conjure(
     param_file: Option<&str>,
     context: Arc<RwLock<Context<'static>>>,
 ) -> Result<Vec<BTreeMap<Name, Literal>>, anyhow::Error> {
-    Ok(
-        get_solutions_from_conjure_with_stats(
-            essence_file,
-            param_file,
-            context,
-            0,
-            ConjureSolveCaptureOptions::default(),
-        )?
-        .solutions,
-    )
+    Ok(get_solutions_from_conjure_with_stats(
+        essence_file,
+        param_file,
+        context,
+        0,
+        ConjureSolveCaptureOptions::default(),
+    )?
+    .solutions)
 }
 
 #[allow(clippy::unwrap_used)]
