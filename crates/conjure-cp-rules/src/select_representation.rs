@@ -48,6 +48,13 @@ fn select_representation_matrix(expr: &Expr, symbols: &SymbolTable) -> Applicati
             return None;
         };
 
+        // `matrix_to_atom` can only be initialised for finite matrix domains.
+        // Expression-generator rewrites can introduce temporary matrices like
+        // `matrix indexed by [int(1..)] of ...`, which should be left alone here.
+        if !resolved_domain.is_finite() {
+            return None;
+        }
+
         // TODO: loosen these requirements once we are able to
         if !matches!(valdom.as_ref(), GroundDomain::Bool | GroundDomain::Int(_)) {
             return None;
@@ -73,14 +80,17 @@ fn select_representation_matrix(expr: &Expr, symbols: &SymbolTable) -> Applicati
         // If this var has no represnetation yet, the below call to get_or_add will modify the
         // symbol table by adding the representation and represented variable declarations to the
         // symbol table.
-        if symbols.representations_for(&name).unwrap().is_empty() {
+        let Some(existing_reprs) = symbols.representations_for(&name) else {
+            continue;
+        };
+        if existing_reprs.is_empty() {
             has_changed.store(true, Ordering::Relaxed);
         }
 
         // (creates the represented variables as a side effect)
-        let _ = symbols
-            .get_or_add_representation(&name, &["matrix_to_atom"])
-            .unwrap();
+        let Some(_) = symbols.get_or_add_representation(&name, &["matrix_to_atom"]) else {
+            continue;
+        };
 
         let old_name = name.clone();
         let new_name =
