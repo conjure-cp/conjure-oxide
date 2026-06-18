@@ -7,7 +7,8 @@ use conjure_cp::rule_engine::{rewrite_morph, rewrite_naive};
 use conjure_cp::solver::adaptors::*;
 use conjure_cp::solver::Solver;
 use conjure_cp_cli::utils::testing::{
-    DEFAULT_RULE_TRACE_LINE_LIMIT, normalize_solutions_for_comparison, read_default_rule_trace,
+    DEFAULT_TEXT_SNAPSHOT_CHARACTER_LIMIT, normalize_solutions_for_comparison,
+    read_default_rule_trace, truncate_to_first_chars,
 };
 use std::collections::{BTreeMap, BTreeSet};
 use std::error::Error;
@@ -731,18 +732,13 @@ fn copy_human_trace_generated_to_expected(
     let generated_path = format!("{path}/{test_name}-{solver_name}-generated-rule-trace.txt");
     let expected_path = format!("{path}/{test_name}-{solver_name}-expected-rule-trace.txt");
     let generated_trace = fs::read_to_string(generated_path)?;
-    if generated_trace.lines().take(DEFAULT_RULE_TRACE_LINE_LIMIT + 1).count()
-        <= DEFAULT_RULE_TRACE_LINE_LIMIT
-    {
+    if generated_trace.chars().count() <= DEFAULT_TEXT_SNAPSHOT_CHARACTER_LIMIT {
         fs::write(expected_path, generated_trace)?;
         return Ok(());
     }
 
-    let expected_trace = generated_trace
-        .lines()
-        .take(DEFAULT_RULE_TRACE_LINE_LIMIT)
-        .collect::<Vec<_>>()
-        .join("\n");
+    let expected_trace =
+        truncate_to_first_chars(&generated_trace, DEFAULT_TEXT_SNAPSHOT_CHARACTER_LIMIT);
     write_text_with_trailing_newline(Path::new(&expected_path), &expected_trace)?;
     Ok(())
 }

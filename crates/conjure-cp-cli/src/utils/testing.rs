@@ -31,8 +31,8 @@ use conjure_cp::settings::SolverFamily;
 /// Limit how many lines of the rewrite serialisation we persist/compare in integration tests.
 pub const REWRITE_SERIALISED_JSON_MAX_LINES: usize = 1000;
 
-/// Limit how many default rule trace lines we persist/compare in integration tests.
-pub const DEFAULT_RULE_TRACE_LINE_LIMIT: usize = 10_000;
+/// Limit how many characters we persist/compare for large text snapshots.
+pub const DEFAULT_TEXT_SNAPSHOT_CHARACTER_LIMIT: usize = 1_000_000;
 
 /// Converts a SerdeModel to JSON with stable IDs.
 ///
@@ -293,16 +293,13 @@ pub fn read_default_rule_trace(
     test_name: &str,
     prefix: &str,
     solver: &SolverFamily,
-) -> Result<Vec<String>, std::io::Error> {
+) -> Result<String, std::io::Error> {
     let solver_name = solver.as_str();
     let filename = format!("{path}/{test_name}-{solver_name}-{prefix}-rule-trace.txt");
-    let rules_trace: Vec<String> = read_with_path(filename)?
-        .lines()
-        .take(DEFAULT_RULE_TRACE_LINE_LIMIT)
-        .map(String::from)
-        .collect();
-
-    Ok(rules_trace)
+    Ok(truncate_to_first_chars(
+        &read_with_path(filename)?,
+        DEFAULT_TEXT_SNAPSHOT_CHARACTER_LIMIT,
+    ))
 }
 
 #[doc(hidden)]
@@ -445,6 +442,13 @@ fn maybe_truncate_serialised_json(serialised: String, test_stage: &str) -> Strin
 
 fn truncate_to_first_lines(content: &str, max_lines: usize) -> String {
     content.lines().take(max_lines).join("\n")
+}
+
+pub fn truncate_to_first_chars(content: &str, max_chars: usize) -> String {
+    match content.char_indices().nth(max_chars) {
+        Some((idx, _)) => content[..idx].to_owned(),
+        None => content.to_owned(),
+    }
 }
 
 fn read_first_n_lines<P: AsRef<Path>>(filename: P, n: usize) -> io::Result<String> {
