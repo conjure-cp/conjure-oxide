@@ -679,10 +679,6 @@ fn bounded_i32_domain_for_matrix_literal_monotonic(
     e: &Expression,
     op: fn(i32, i32) -> Option<i32>,
 ) -> Option<DomainPtr> {
-    if matches!(e, Expression::Atomic(_, Atom::Reference(_))) {
-        return None;
-    }
-
     // only care about the elements, not the indices
     let (mut exprs, _) = e.clone().unwrap_matrix_unchecked()?;
     //
@@ -820,10 +816,6 @@ fn sum_domain_for_comprehension(expr: &Expression) -> Option<DomainPtr> {
 
 fn sum_domain_of_child(child: &Expression) -> Option<DomainPtr> {
     sum_domain_for_comprehension(child).or_else(|| {
-        if matches!(child, Expression::Atomic(_, Atom::Reference(_))) {
-            return None;
-        }
-
         let (elements, _) = child.clone().unwrap_matrix_unchecked()?;
         if elements.len() == 1 {
             sum_domain_for_comprehension(&elements[0])
@@ -1854,9 +1846,6 @@ impl Expression {
                     .collect_vec(),
                 domain.into(),
             )),
-            Expression::Atomic(_, Atom::Reference(reference)) => {
-                reference.resolve_expression()?.unwrap_matrix_unchecked()
-            }
 
             _ => None,
         }

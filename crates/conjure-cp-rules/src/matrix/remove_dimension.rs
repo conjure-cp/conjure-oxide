@@ -1,4 +1,4 @@
-use conjure_cp::ast::{Atom, Metadata};
+use conjure_cp::ast::Metadata;
 use conjure_cp::ast::{Expression as Expr, Moo, SymbolTable};
 use conjure_cp::into_matrix_expr;
 use conjure_cp::rule_engine::{
@@ -20,10 +20,6 @@ fn remove_dimension_from_matrix_indexing(expr: &Expr, _: &SymbolTable) -> Applic
     if indices.len() < 2 {
         return Err(RuleNotApplicable);
     };
-
-    if matches!(&*subject, Expr::Atomic(_, Atom::Reference(_))) {
-        return Err(RuleNotApplicable);
-    }
 
     // the indicies to use in the replacement expression.
     let outer_indices = vec![indices.remove(0)];

@@ -1,5 +1,5 @@
 use crate::utils::rewrite_children;
-use conjure_cp::ast::{Atom, Domain, Expression as Expr, IntVal, Range, SymbolTable};
+use conjure_cp::ast::{Domain, Expression as Expr, IntVal, Range, SymbolTable};
 use conjure_cp::into_matrix_expr;
 use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
@@ -49,11 +49,6 @@ fn matrix_to_list(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (new_expr, num_changed) = rewrite_children(expr, |child| {
         // already a list => no change
         if child.unwrap_list().is_some() {
-            return (child, false);
-        }
-
-        // Do not replace references to value lettings with their literal values.
-        if matches!(child, Expr::Atomic(_, Atom::Reference(_))) {
             return (child, false);
         }
 

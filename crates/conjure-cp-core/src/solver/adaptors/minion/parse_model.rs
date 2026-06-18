@@ -698,11 +698,7 @@ fn parse_expr_matrix_vars(
     constraint_name: &str,
     argument_name: &str,
 ) -> Result<Vec<minion_ast::Var>, SolverError> {
-    let (elems, _) = expr.unwrap_matrix_unchecked().ok_or_else(|| {
-        ModelInvalid(format!(
-            "{constraint_name} {argument_name} argument is not a matrix"
-        ))
-    })?;
+    let (elems, _) = materialise_matrix_unchecked(expr, constraint_name, argument_name)?;
 
     elems.into_iter().map(parse_atomic_expr).collect()
 }
@@ -712,11 +708,7 @@ fn parse_expr_matrix_constants(
     constraint_name: &str,
     argument_name: &str,
 ) -> Result<Vec<minion_ast::Constant>, SolverError> {
-    let (elems, _) = expr.unwrap_matrix_unchecked().ok_or_else(|| {
-        ModelInvalid(format!(
-            "{constraint_name} {argument_name} argument is not a matrix"
-        ))
-    })?;
+    let (elems, _) = materialise_matrix_unchecked(expr, constraint_name, argument_name)?;
 
     elems
         .into_iter()
@@ -730,6 +722,25 @@ fn parse_expr_matrix_constants(
                 .and_then(parse_literal)
         })
         .collect()
+}
+
+fn materialise_matrix_unchecked(
+    expr: conjure_ast::Expression,
+    constraint_name: &str,
+    argument_name: &str,
+) -> Result<(Vec<conjure_ast::Expression>, conjure_ast::DomainPtr), SolverError> {
+    let resolved_expr = match expr {
+        conjure_ast::Expression::Atomic(_, conjure_ast::Atom::Reference(reference)) => reference
+            .resolve_expression()
+            .unwrap_or_else(|| reference.into()),
+        expr => expr,
+    };
+
+    resolved_expr.unwrap_matrix_unchecked().ok_or_else(|| {
+        ModelInvalid(format!(
+            "{constraint_name} {argument_name} argument is not a matrix"
+        ))
+    })
 }
 
 fn var_as_constant(
