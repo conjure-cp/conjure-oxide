@@ -19,7 +19,7 @@ pub fn parse_expression(
     node: Node,
 ) -> Result<Option<Expression>, FatalParseError> {
     match node.kind() {
-        "atom" => parse_atom(ctx, &node),
+        "atom" | "table" | "negative_table" => parse_atom(ctx, &node),
         "bool_expr" => {
             if ctx.typechecking_context == TypecheckingContext::Arithmetic {
                 ctx.record_error(RecoverableParseError::new(
@@ -200,7 +200,7 @@ fn parse_boolean_expression(
         return Ok(None);
     };
     match inner.kind() {
-        "atom" => parse_atom(ctx, &inner),
+        "atom" | "table" | "negative_table" => parse_atom(ctx, &inner),
         "not_expr" | "sub_bool_expr" => parse_unary_expression(ctx, &inner),
         "and_expr" | "or_expr" | "implication" | "iff_expr" => parse_binary_expression(ctx, &inner),
         "list_combining_expr_bool" => {

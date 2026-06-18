@@ -309,6 +309,30 @@ mod test {
     }
 
     #[test]
+    pub fn test_parse_table_in_quantifier() {
+        let src = "
+        find x, y, z : int(1..3)
+        such that forAll i : int(1..1) . table([x,y,z], [[1,2,3]])
+        ";
+
+        let (model, _source_map) = parse_essence(src).unwrap();
+        let constraints = model.constraints();
+        assert_eq!(constraints.len(), 1);
+
+        let Expression::And(_, comprehension_expr) = &constraints[0] else {
+            panic!("expected forAll to parse as an And over a comprehension");
+        };
+        let Expression::Comprehension(_, comprehension) = comprehension_expr.as_ref() else {
+            panic!("expected forAll body to be a comprehension");
+        };
+
+        assert!(matches!(
+            comprehension.return_expression,
+            Expression::Table(_, _, _)
+        ));
+    }
+
+    #[test]
     pub fn test_parse_objective_statement() {
         let src = "
         find cost : int(0..10)
