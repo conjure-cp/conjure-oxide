@@ -126,9 +126,9 @@ These conventions are more specific than the general coding style above.
 
 - Never commit code changes and test artefact/config updates in the same commit.
 - Commit code and harness changes first, with a normal semantic commit message.
-- Commit generated or recorded test updates separately.
-- Start test artefact commits with `[test file updates]`, without a semantic prefix
-  such as `test:`.
+- Commit generated or recorded test updates separately, using
+  `chore(test-suite): ...` in the subject line.
+- Reserve `test(test-suite):` for changes to test code or harness logic.
 
 ## License
 By contributing, you agree that your contributions will be licensed under its Mozilla Public License.
