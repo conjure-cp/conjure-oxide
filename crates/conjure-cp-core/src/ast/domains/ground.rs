@@ -1112,7 +1112,7 @@ impl GroundDomain {
         match self {
             GroundDomain::Set(_, inner) => Some(inner.clone()),
             GroundDomain::MSet(_, inner) => Some(inner.clone()),
-            GroundDomain::Matrix(_, _) => todo!("Unwrap one dimension of the domain"),
+            GroundDomain::Matrix(inner, _) => Some(inner.clone()),
             _ => None,
         }
     }

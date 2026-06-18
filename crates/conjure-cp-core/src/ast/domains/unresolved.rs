@@ -610,9 +610,7 @@ impl UnresolvedDomain {
         match self {
             UnresolvedDomain::Set(_, inner_dom) => Some(inner_dom.clone()),
             UnresolvedDomain::Sequence(_, inner_dom) => Some(inner_dom.clone()),
-            UnresolvedDomain::Matrix(_, _) => {
-                todo!("Unwrap one dimension of the domain")
-            }
+            UnresolvedDomain::Matrix(inner, _) => Some(inner.clone()),
             _ => None,
         }
     }

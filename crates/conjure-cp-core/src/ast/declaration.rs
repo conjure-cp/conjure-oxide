@@ -307,7 +307,7 @@ impl DeclarationPtr {
             DeclarationKind::DomainLetting(domain) => Some(domain.clone()),
             DeclarationKind::Given(domain) => Some(domain.clone()),
             DeclarationKind::Quantified(inner) => Some(inner.domain.clone()),
-            DeclarationKind::QuantifiedExpr(expr) => expr.domain_of(),
+            DeclarationKind::QuantifiedExpr(expr) => expr.domain_of()?.element_domain(),
             DeclarationKind::Field(domain) => Some(domain.clone()),
         }
     }
