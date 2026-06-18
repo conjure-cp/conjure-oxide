@@ -1,12 +1,12 @@
-use conjure_cp::Model;
 use conjure_cp::context::Context;
 use conjure_cp::instantiate::instantiate_model;
 use conjure_cp::parse::tree_sitter::errors::InstantiateModelError;
 use conjure_cp::parse::tree_sitter::errors::ParseErrorCollection;
 use conjure_cp::parse::tree_sitter::{parse_essence_file, parse_essence_file_native};
 use conjure_cp::settings::Parser;
+use conjure_cp::Model;
 use conjure_cp_cli::utils::testing::{
-    DEFAULT_TEXT_SNAPSHOT_CHARACTER_LIMIT, serialize_model, truncate_to_first_chars,
+    serialize_model, truncate_to_first_chars, DEFAULT_TEXT_SNAPSHOT_CHARACTER_LIMIT,
 };
 use std::collections::BTreeSet;
 use std::error::Error;
@@ -14,10 +14,10 @@ use std::fs;
 use std::path::Path;
 use std::sync::Arc;
 use std::sync::RwLock;
-use test_suite::AcceptMode;
-use test_suite::TestConfig;
 use test_suite::golden_files::assert_no_redundant_expected_files;
 use test_suite::text_files::write_text_with_trailing_newline;
+use test_suite::AcceptMode;
+use test_suite::TestConfig;
 
 /// Parser function used by roundtrip tests.
 type ParseFn = fn(&str, Arc<RwLock<Context<'static>>>) -> Result<Model, Box<ParseErrorCollection>>;

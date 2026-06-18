@@ -7,8 +7,8 @@ use conjure_cp::rule_engine::{rewrite_morph, rewrite_naive};
 use conjure_cp::solver::adaptors::*;
 use conjure_cp::solver::Solver;
 use conjure_cp_cli::utils::testing::{
-    DEFAULT_TEXT_SNAPSHOT_CHARACTER_LIMIT, normalize_solutions_for_comparison,
-    read_default_rule_trace, truncate_to_first_chars,
+    normalize_solutions_for_comparison, read_default_rule_trace, truncate_to_first_chars,
+    DEFAULT_TEXT_SNAPSHOT_CHARACTER_LIMIT,
 };
 use std::collections::{BTreeMap, BTreeSet};
 use std::error::Error;
@@ -42,13 +42,13 @@ use conjure_cp_cli::utils::conjure::{
 };
 use conjure_cp_cli::utils::testing::save_stats_json;
 use conjure_cp_cli::utils::testing::{read_solutions_json, save_solutions_json};
+#[allow(clippy::single_component_path_imports, unused_imports)]
+use conjure_cp_rules;
+use pretty_assertions::assert_eq;
 use test_suite::diagnostics::{
     clear_diagnostics, conjure_artifacts_dir, copy_file_if_exists, oxide_artifacts_dir,
     write_failure_record, write_oxide_failure_text, FailureRecord, DIAGNOSTICS_DIR,
 };
-#[allow(clippy::single_component_path_imports, unused_imports)]
-use conjure_cp_rules;
-use pretty_assertions::assert_eq;
 use test_suite::golden_files::assert_no_redundant_expected_files;
 use test_suite::test_config::{
     round_expected_time, upsert_expected_time_config, upsert_recorded_run_stats_config,
@@ -913,9 +913,11 @@ fn try_capture_oxide_minion(
         Rewriter::Morph(config) => rewrite_morph(parsed_model, &rule_sets, false, config),
     };
 
-    let minion_path = oxide_artifacts_dir(Path::new(path)).join(
-        format!("{}-{}.minion", run_case.case_name, run_case.solver.as_str()),
-    );
+    let minion_path = oxide_artifacts_dir(Path::new(path)).join(format!(
+        "{}-{}.minion",
+        run_case.case_name,
+        run_case.solver.as_str()
+    ));
     if let Some(parent) = minion_path.parent() {
         fs::create_dir_all(parent)?;
     }
