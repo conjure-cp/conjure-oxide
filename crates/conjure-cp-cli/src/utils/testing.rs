@@ -31,6 +31,9 @@ use conjure_cp::settings::SolverFamily;
 /// Limit how many lines of the rewrite serialisation we persist/compare in integration tests.
 pub const REWRITE_SERIALISED_JSON_MAX_LINES: usize = 1000;
 
+/// Limit how many default rule trace lines we persist/compare in integration tests.
+pub const DEFAULT_RULE_TRACE_LINE_LIMIT: usize = 10_000;
+
 /// Converts a SerdeModel to JSON with stable IDs.
 ///
 /// This ensures that the same model structure always produces the same IDs,
@@ -295,6 +298,7 @@ pub fn read_default_rule_trace(
     let filename = format!("{path}/{test_name}-{solver_name}-{prefix}-rule-trace.txt");
     let rules_trace: Vec<String> = read_with_path(filename)?
         .lines()
+        .take(DEFAULT_RULE_TRACE_LINE_LIMIT)
         .map(String::from)
         .collect();
 

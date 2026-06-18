@@ -6,7 +6,9 @@ use conjure_cp::parse::tree_sitter::parse_essence_file_native;
 use conjure_cp::rule_engine::{rewrite_morph, rewrite_naive};
 use conjure_cp::solver::adaptors::*;
 use conjure_cp::solver::Solver;
-use conjure_cp_cli::utils::testing::{normalize_solutions_for_comparison, read_default_rule_trace};
+use conjure_cp_cli::utils::testing::{
+    DEFAULT_RULE_TRACE_LINE_LIMIT, normalize_solutions_for_comparison, read_default_rule_trace,
+};
 use std::collections::{BTreeMap, BTreeSet};
 use std::error::Error;
 use std::fs;
@@ -51,6 +53,7 @@ use test_suite::test_config::{
     round_expected_time, upsert_expected_time_config, upsert_recorded_run_stats_config,
     upsert_status_config, upsert_tool_status_config, RecordedRunStats,
 };
+use test_suite::text_files::write_text_with_trailing_newline;
 use test_suite::AcceptMode;
 use test_suite::TestConfig;
 
@@ -725,10 +728,22 @@ fn copy_human_trace_generated_to_expected(
 ) -> Result<(), std::io::Error> {
     let solver_name = solver.as_str();
 
-    std::fs::copy(
-        format!("{path}/{test_name}-{solver_name}-generated-rule-trace.txt"),
-        format!("{path}/{test_name}-{solver_name}-expected-rule-trace.txt"),
-    )?;
+    let generated_path = format!("{path}/{test_name}-{solver_name}-generated-rule-trace.txt");
+    let expected_path = format!("{path}/{test_name}-{solver_name}-expected-rule-trace.txt");
+    let generated_trace = fs::read_to_string(generated_path)?;
+    if generated_trace.lines().take(DEFAULT_RULE_TRACE_LINE_LIMIT + 1).count()
+        <= DEFAULT_RULE_TRACE_LINE_LIMIT
+    {
+        fs::write(expected_path, generated_trace)?;
+        return Ok(());
+    }
+
+    let expected_trace = generated_trace
+        .lines()
+        .take(DEFAULT_RULE_TRACE_LINE_LIMIT)
+        .collect::<Vec<_>>()
+        .join("\n");
+    write_text_with_trailing_newline(Path::new(&expected_path), &expected_trace)?;
     Ok(())
 }
 
