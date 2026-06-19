@@ -57,6 +57,54 @@ fn inline_constant_matrix_subject_for_minion(expr: &Expr, _: &SymbolTable) -> Ap
     )))
 }
 
+fn materialise_matrix_operand(expr: &Expr) -> Option<Expr> {
+    if expr.clone().unwrap_matrix_unchecked().is_some() {
+        return None;
+    }
+
+    let Expr::Atomic(_, Atom::Reference(reference)) = expr else {
+        return None;
+    };
+
+    if let Some(resolved) = reference.resolve_expression() {
+        if resolved.clone().unwrap_matrix_unchecked().is_some() {
+            return Some(resolved);
+        }
+    }
+
+    if let Some(lit @ Lit::AbstractLiteral(AbstractLiteral::Matrix(_, _))) =
+        reference.resolve_constant()
+    {
+        return Some(Expr::Atomic(Metadata::new(), Atom::Literal(lit)));
+    }
+
+    None
+}
+
+/// Expands value-letting references used as the row matrix in table constraints.
+#[register_rule("Minion", 4050, [Table, NegativeTable])]
+fn inline_table_row_matrix(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    match expr {
+        Expr::Table(meta, tuple, rows) => {
+            let new_rows = materialise_matrix_operand(rows).ok_or(RuleNotApplicable)?;
+            Ok(Reduction::pure(Expr::Table(
+                meta.clone(),
+                tuple.clone(),
+                Moo::new(new_rows),
+            )))
+        }
+        Expr::NegativeTable(meta, tuple, rows) => {
+            let new_rows = materialise_matrix_operand(rows).ok_or(RuleNotApplicable)?;
+            Ok(Reduction::pure(Expr::NegativeTable(
+                meta.clone(),
+                tuple.clone(),
+                Moo::new(new_rows),
+            )))
+        }
+        _ => Err(RuleNotApplicable),
+    }
+}
+
 #[register_rule("Minion", 4200, [Eq, AuxDeclaration])]
 fn introduce_producteq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     // product = val

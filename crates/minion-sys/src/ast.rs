@@ -2,7 +2,7 @@
 
 use std::{collections::HashMap, fmt::Display};
 
-use crate::print::{print_const_array, print_constraint_array, print_var_array};
+use crate::print::{print_const_array, print_constraint_array, print_tuple_array, print_var_array};
 
 pub type VarName = String;
 pub type Tuple = Vec<Constant>;
@@ -268,10 +268,25 @@ impl Display for Constraint {
             Constraint::FrameUpdate(vars, vars1, vars2, vars3, constant) => {
                 todo!("don't know how to print frame update...")
             }
-            Constraint::NegativeTable(_, _)
-            | Constraint::Table(_, _)
-            | Constraint::GacSchema(_, _)
-            | Constraint::LightTable(_, _)
+            Constraint::Table(vars, tuples) => write!(
+                f,
+                "table({},{})",
+                print_var_array(vars),
+                print_tuple_array(tuples)
+            ),
+            Constraint::NegativeTable(vars, tuples) => write!(
+                f,
+                "negativetable({},{})",
+                print_var_array(vars),
+                print_tuple_array(tuples)
+            ),
+            Constraint::LightTable(vars, tuples) => write!(
+                f,
+                "lighttable({},{})",
+                print_var_array(vars),
+                print_tuple_array(tuples)
+            ),
+            Constraint::GacSchema(_, _)
             | Constraint::Mddc(_, _)
             | Constraint::Str2Plus(_, _)
             | Constraint::NegativeMddc(_, _) => {

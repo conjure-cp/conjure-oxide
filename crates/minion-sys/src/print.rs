@@ -3,7 +3,7 @@
 
 use std::io::Write;
 
-use crate::ast::{Constant, Constraint, Model, Optimisation, Var, VarName};
+use crate::ast::{Constant, Constraint, Model, Optimisation, Tuple, Var, VarName};
 
 /// Writes a complete Minion file for this model to `writer`.
 pub fn write_minion_file(writer: &mut impl Write, model: &Model) -> Result<(), std::io::Error> {
@@ -101,6 +101,11 @@ pub(crate) fn print_var_array(array: &[Var]) -> String {
     let string_array: Vec<String> = array.iter().map(|x| format!("{x}")).collect();
     let string = string_array.join(",");
     format!("[{string}]")
+}
+
+pub(crate) fn print_tuple_array(array: &[Tuple]) -> String {
+    let string_array: Vec<String> = array.iter().map(|t| print_const_array(t)).collect();
+    format!("[{}]", string_array.join(","))
 }
 
 pub(crate) fn print_constraint_array(array: &[Constraint]) -> String {
