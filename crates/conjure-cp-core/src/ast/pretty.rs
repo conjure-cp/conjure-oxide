@@ -9,22 +9,6 @@ use super::{CnfClause, Expression, Name, SymbolTable};
 use crate::ast::domains::HasDomain;
 use itertools::Itertools;
 
-/// Pretty prints a single top-level `such that` constraint.
-///
-/// Relation expressions are printed without the extra parentheses used by [`Display`], so they
-/// match Essence syntax rather than looking like operands of `and(...)`.
-pub fn pretty_expression_as_top_level(expr: &Expression) -> String {
-    match expr {
-        Expression::Eq(_, a, b) => format!("{a} = {b}"),
-        Expression::Neq(_, a, b) => format!("{a} != {b}"),
-        Expression::Geq(_, a, b) => format!("{a} >= {b}"),
-        Expression::Leq(_, a, b) => format!("{a} <= {b}"),
-        Expression::Gt(_, a, b) => format!("{a} > {b}"),
-        Expression::Lt(_, a, b) => format!("{a} < {b}"),
-        _ => format!("{expr}"),
-    }
-}
-
 /// Pretty prints a `Vec<Expression>` as if it were a top level constraint list in a `such that`.
 ///
 /// Each expression is printed on its own line.
@@ -35,11 +19,10 @@ pub fn pretty_expression_as_top_level(expr: &Expression) -> String {
 /// B
 /// C
 /// ```
+///
+/// Each `Expression` is printed using its underlying `Display` implementation.
 pub fn pretty_expressions_as_top_level(expressions: &[Expression]) -> String {
-    expressions
-        .iter()
-        .map(pretty_expression_as_top_level)
-        .join("\n")
+    expressions.iter().map(|x| format!("{x}")).join("\n")
 }
 
 /// Pretty prints a `Vec<CnfClause>` as a list of clauses as disjunctions

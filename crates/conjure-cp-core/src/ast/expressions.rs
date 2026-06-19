@@ -2177,22 +2177,22 @@ impl Display for Expression {
                 write!(f, "({box1}) <-> ({box2})")
             }
             Expression::Eq(_, box1, box2) => {
-                write!(f, "({} = {})", box1.clone(), box2.clone())
+                write!(f, "{box1} = {box2}")
             }
             Expression::Neq(_, box1, box2) => {
-                write!(f, "({} != {})", box1.clone(), box2.clone())
+                write!(f, "{box1} != {box2}")
             }
             Expression::Geq(_, box1, box2) => {
-                write!(f, "({} >= {})", box1.clone(), box2.clone())
+                write!(f, "{box1} >= {box2}")
             }
             Expression::Leq(_, box1, box2) => {
-                write!(f, "({} <= {})", box1.clone(), box2.clone())
+                write!(f, "{box1} <= {box2}")
             }
             Expression::Gt(_, box1, box2) => {
-                write!(f, "({} > {})", box1.clone(), box2.clone())
+                write!(f, "{box1} > {box2}")
             }
             Expression::Lt(_, box1, box2) => {
-                write!(f, "({} < {})", box1.clone(), box2.clone())
+                write!(f, "{box1} < {box2}")
             }
             Expression::Apart(_, list, partition) => {
                 write!(f, "apart({list}, {partition})")
