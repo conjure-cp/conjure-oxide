@@ -444,16 +444,6 @@ fn parse_domain(
                 entries.push(rec);
             }
 
-            // add fields to symbol table
-            for decl in entries
-                .iter()
-                .cloned()
-                .map(DeclarationPtr::new_record_field)
-            {
-                symbols.insert(decl).ok_or(error!(
-                    "record field should not already be in the symbol table"
-                ))?;
-            }
             if is_record {
                 Ok(Domain::record(entries))
             } else {
@@ -792,7 +782,6 @@ fn binary_operator(op_name: &str) -> Option<BinOp> {
         "MkOpApart" => Some(Expression::Apart),
         "MkOpTogether" => Some(Expression::Together),
         "MkOpParty" => Some(Expression::Party),
-        "MkOpActive" => Some(Expression::Active),
         "MkOpSubstring" => Some(Expression::Substring),
         "MkOpSubsequence" => Some(Expression::Subsequence),
         _ => None,
@@ -838,6 +827,31 @@ fn unary_operator(op_name: &str, inner: Option<&Expression>) -> Option<UnaryOp> 
     }
 }
 
+fn parse_reference_name(obj: &JsonValue) -> Result<Name> {
+    // { Name: "x" } directly
+    if let Some(name) = obj.get("Name").and_then(|x| x.as_str()) {
+        return Ok(Name::User(Ustr::from(name)));
+    }
+
+    // {
+    //   Reference: [
+    //     { Name: "x" }
+    //   ]
+    // }
+    let ref_arr = obj["Reference"]
+        .as_array()
+        .ok_or_else(|| error!("Reference.as_array"))?;
+    let ref_obj = ref_arr
+        .first()
+        .and_then(|x| x.as_object())
+        .ok_or_else(|| error!("Reference[0].as_object"))?;
+    let name = ref_obj
+        .get("Name")
+        .and_then(|x| x.as_str())
+        .ok_or_else(|| error!("Reference[0].Name.as_str"))?;
+    Ok(Name::User(Ustr::from(name)))
+}
+
 pub fn parse_expression(obj: &JsonValue, scope: &SymbolTablePtr) -> Result<Expression> {
     let fail = |stage: &str| -> Error {
         Error::Parse(format!(
@@ -859,6 +873,8 @@ pub fn parse_expression(obj: &JsonValue, scope: &SymbolTablePtr) -> Result<Expre
                 parse_table_op(op_obj, scope)
             } else if op_obj.contains_key("MkOpIndexing") || op_obj.contains_key("MkOpSlicing") {
                 parse_indexing_slicing_op(op_obj, scope)
+            } else if op_obj.contains_key("MkOpActive") {
+                parse_active_op(op_obj, scope)
             } else if op_obj.contains_key("MkOpRelationProj") {
                 parse_relation_projection(op_obj, scope)
             } else if op_obj.contains_key("MkOpToSet") {
@@ -875,18 +891,7 @@ pub fn parse_expression(obj: &JsonValue, scope: &SymbolTablePtr) -> Result<Expre
             parse_comprehension(comprehension, scope.clone(), None)
         }
         Value::Object(refe) if refe.contains_key("Reference") => {
-            let ref_arr = refe["Reference"]
-                .as_array()
-                .ok_or_else(|| fail("Reference.as_array"))?;
-            let ref_obj = ref_arr
-                .first()
-                .and_then(|x| x.as_object())
-                .ok_or_else(|| fail("Reference[0].as_object"))?;
-            let name = ref_obj
-                .get("Name")
-                .and_then(|x| x.as_str())
-                .ok_or_else(|| fail("Reference[0].Name.as_str"))?;
-            let user_name = Name::User(Ustr::from(name));
+            let user_name = parse_reference_name(obj)?;
 
             let declaration: DeclarationPtr = scope
                 .read()
@@ -1325,6 +1330,55 @@ fn parse_table_op(
     ))
 }
 
+/// If LHS is a record/variant and RHS is a field name,
+/// returns Ok(Some(record_expr, field_name)).
+/// If LHS is any other type, return Ok(None).
+fn parse_record_field(
+    op_args: &[Value],
+    scope: &SymbolTablePtr,
+) -> Result<Option<(Expression, Name)>> {
+    if op_args.len() != 2 {
+        return Err(error!("Expected 2 arguments to record indexing operation"));
+    }
+
+    let lhs = parse_expression(&op_args[0], scope)?;
+    match lhs.return_type() {
+        // If indexing into a record, parse string field name
+        // and check that such a field exists
+        ReturnType::Record(ents) | ReturnType::Variant(ents) => {
+            let field_name = parse_reference_name(&op_args[1])?;
+            let has_name = ents.iter().any(|x| x.name.eq(&field_name));
+            if !has_name {
+                return Err(error!(format!(
+                    "Unknown field `{field_name}` in record `{lhs}`"
+                )));
+            }
+            Ok(Some((lhs, field_name)))
+        }
+        _ => Ok(None),
+    }
+}
+
+fn parse_active_op(
+    op: &serde_json::Map<String, Value>,
+    scope: &SymbolTablePtr,
+) -> Result<Expression> {
+    // we know there is a single key value pair in this object
+    // extract the value, ignore the key
+    let (_, value) = op
+        .into_iter()
+        .next()
+        .ok_or(error!("MkOpActive op object is empty"))?;
+
+    let Value::Array(op_args) = &value else {
+        return Err(error!("MkOpActive op array is not an array"));
+    };
+    let Some((lhs, rhs)) = parse_record_field(op_args, scope)? else {
+        return Err(error!("MkOpActive op expected record or variant"));
+    };
+    Ok(Expression::Active(Metadata::new(), Moo::new(lhs), rhs))
+}
+
 fn parse_indexing_slicing_op(
     op: &serde_json::Map<String, Value>,
     scope: &SymbolTablePtr,
@@ -1355,7 +1409,15 @@ fn parse_indexing_slicing_op(
             match &value {
                 Value::Array(op_args) if op_args.len() == 2 => {
                     target = parse_expression(&op_args[0], scope)?;
-                    indices.push(Some(parse_expression(&op_args[1], scope)?));
+
+                    match parse_record_field(op_args, scope)? {
+                        // For record indexing, generate nested RecordField exprs
+                        Some((lhs, rhs)) => {
+                            target = Expression::RecordField(Metadata::new(), Moo::new(lhs), rhs)
+                        }
+                        // Append any other indices to the flat list as normal
+                        _ => indices.push(Some(parse_expression(&op_args[1], scope)?)),
+                    }
                 }
                 _ => return Err(error!("Unknown object inside MkOpIndexing")),
             };
@@ -1365,6 +1427,7 @@ fn parse_indexing_slicing_op(
             all_known = false;
             match &value {
                 Value::Array(op_args) if op_args.len() == 3 => {
+                    // NB: records can't be sliced into so no need to check!
                     target = parse_expression(&op_args[0], scope)?;
                     indices.push(None);
                 }
@@ -1393,6 +1456,11 @@ fn parse_indexing_slicing_op(
                 break;
             }
         }
+    }
+
+    // If we had a record field and no other indices, the list will be empty
+    if indices.is_empty() {
+        return Ok(target);
     }
 
     indices.reverse();
@@ -1706,5 +1774,58 @@ fn parse_constant(
             Err(error!(format!("Unhandled parse_constant {constant:#?}")))
         }
         otherwise => Err(error!(format!("Unhandled parse_constant {otherwise:#?}"))),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::ast::HasDomain;
+    use serde_json::json;
+
+    #[test]
+    fn parses_record_index() {
+        let scope = SymbolTablePtr::new();
+        scope.write().insert(DeclarationPtr::new_find(
+            Name::user("x"),
+            Domain::record(vec![Field {
+                name: Name::user("a"),
+                value: Domain::bool(),
+            }]),
+        ));
+
+        let value = json!({
+            "Op": {
+                "MkOpIndexing": [
+                    {
+                        "Reference": [
+                            {
+                                "Name": "x"
+                            },
+                            null
+                        ]
+                    },
+                    {
+                        "Reference": [
+                            {
+                                "Name": "a"
+                            },
+                            null
+                        ]
+                    }
+                ]
+            }
+        });
+
+        let expr = parse_expression(&value, &scope).expect("record index should parse");
+        let Expression::RecordField(_, rec_expr, field_name) = expr else {
+            panic!("expected record field access");
+        };
+        let Expression::Atomic(_, Atom::Reference(re)) = rec_expr.as_ref() else {
+            panic!("expected LHS to be a record reference");
+        };
+        assert_eq!(re.name().clone(), Name::user("x"));
+        assert!(re.domain_of().as_record().is_some());
+        assert_eq!(field_name, Name::user("a"));
     }
 }
