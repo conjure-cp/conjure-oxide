@@ -3,6 +3,7 @@ use crate::errors::{FatalParseError, RecoverableParseError};
 use crate::parser::ParseContext;
 use crate::parser::atom::{parse_atom, parse_table_operand};
 use crate::parser::comprehension::parse_quantifier_or_aggregate_expr;
+use crate::parser::domain::parse_domain;
 use crate::parser::global_constraints::{
     ALL_DIFFERENT, ALL_DIFFERENT_EXCEPT, AT_LEAST, AT_MOST, GLOBAL_CARDINALITY,
     is_all_different_except_operator, is_all_different_operator, is_at_least_operator,
@@ -11,7 +12,7 @@ use crate::parser::global_constraints::{
 use crate::util::TypecheckingContext;
 use crate::{child, field, named_child};
 use conjure_cp_core::ast::ac_operators::ACOperatorKind;
-use conjure_cp_core::ast::{Expression, GroundDomain, Metadata, Moo};
+use conjure_cp_core::ast::{Expression, GroundDomain, Metadata, Moo, Typeable};
 use conjure_cp_core::{domain_int, matrix_expr, range};
 use tree_sitter::Node;
 
@@ -20,7 +21,7 @@ pub fn parse_expression(
     node: Node,
 ) -> Result<Option<Expression>, FatalParseError> {
     match node.kind() {
-        "atom" | "table" | "negative_table" => parse_atom(ctx, &node),
+        "atom" | "primary_atom" | "table" | "negative_table" => parse_atom(ctx, &node),
         "bool_expr" => {
             if ctx.typechecking_context == TypecheckingContext::Arithmetic {
                 ctx.record_error(RecoverableParseError::new(
@@ -91,6 +92,9 @@ pub fn parse_expression(
                 return Ok(None);
             }
             parse_global_cardinality_comparison(ctx, &node)
+        }
+        "annotation_expr" | "type_annotation" | "domain_annotation" => {
+            parse_annotation_expression(ctx, &node)
         }
         _ => {
             ctx.record_error(RecoverableParseError::new(
@@ -771,6 +775,110 @@ pub fn parse_binary_expression(
     }
 
     expr
+}
+
+pub fn parse_annotation_expression(
+    ctx: &mut ParseContext,
+    node: &Node,
+) -> Result<Option<Expression>, FatalParseError> {
+    let annotation_node = if node.kind() == "annotation_expr" {
+        let Some(inner) = named_child!(recover, ctx, node) else {
+            return Ok(None);
+        };
+        inner
+    } else {
+        *node
+    };
+
+    let Some(left_node) = field!(recover, ctx, &annotation_node, "left") else {
+        return Ok(None);
+    };
+    let left_node = if left_node.kind() == "annotation_subject" {
+        let Some(inner) = named_child!(recover, ctx, &left_node) else {
+            return Ok(None);
+        };
+        inner
+    } else {
+        left_node
+    };
+    let left_node = match left_node.kind() {
+        "sub_arith_expr" | "sub_bool_expr" | "sub_atom_expr" => {
+            let Some(inner) = field!(recover, ctx, &left_node, "expression") else {
+                return Ok(None);
+            };
+            inner
+        }
+        _ => left_node,
+    };
+    let saved_context = ctx.typechecking_context;
+    ctx.typechecking_context = TypecheckingContext::Unknown;
+    let left = match left_node.kind() {
+        "constant" | "identifier" | "metavar" => parse_atom(ctx, &left_node)?,
+        _ => parse_expression(ctx, left_node)?,
+    };
+    let Some(left) = left else {
+        ctx.typechecking_context = saved_context;
+        return Ok(None);
+    };
+    ctx.typechecking_context = saved_context;
+
+    let Some(operator_node) = field!(recover, ctx, &annotation_node, "operator") else {
+        return Ok(None);
+    };
+    let operator_str = &ctx.source_code[operator_node.start_byte()..operator_node.end_byte()];
+
+    match annotation_node.kind() {
+        "type_annotation" => {
+            let Some(type_node) = field!(recover, ctx, &annotation_node, "type") else {
+                return Ok(None);
+            };
+            let Some(domain) = parse_domain(ctx, type_node)? else {
+                return Ok(None);
+            };
+            ctx.add_span_and_doc_hover(
+                &operator_node,
+                operator_str,
+                SymbolKind::Function,
+                None,
+                None,
+            );
+            Ok(Some(Expression::TypeAnnotation(
+                Metadata::new(),
+                Moo::new(left),
+                domain.return_type(),
+            )))
+        }
+        "domain_annotation" => {
+            let Some(domain_node) = field!(recover, ctx, &annotation_node, "domain") else {
+                return Ok(None);
+            };
+            let Some(domain) = parse_domain(ctx, domain_node)? else {
+                return Ok(None);
+            };
+            ctx.add_span_and_doc_hover(
+                &operator_node,
+                operator_str,
+                SymbolKind::Function,
+                None,
+                None,
+            );
+            Ok(Some(Expression::DomainAnnotation(
+                Metadata::new(),
+                Moo::new(left),
+                domain,
+            )))
+        }
+        _ => {
+            ctx.record_error(RecoverableParseError::new(
+                format!(
+                    "Unrecognised annotation expression: '{}'",
+                    annotation_node.kind()
+                ),
+                Some(annotation_node.range()),
+            ));
+            Ok(None)
+        }
+    }
 }
 
 fn inferred_context_from_expression(expr: &Expression) -> TypecheckingContext {

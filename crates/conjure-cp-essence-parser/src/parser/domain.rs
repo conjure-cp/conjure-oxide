@@ -19,7 +19,7 @@ pub fn parse_domain(
     domain: Node,
 ) -> Result<Option<DomainPtr>, FatalParseError> {
     match domain.kind() {
-        "domain" => {
+        "domain" | "annotation_domain" => {
             let inner = match domain.child(0) {
                 Some(node) => node,
                 None => {
@@ -36,7 +36,7 @@ pub fn parse_domain(
             ctx.add_span_and_doc_hover(&domain, "L_bool", SymbolKind::Domain, None, None);
             Ok(Some(Domain::bool()))
         }
-        "int_domain" => parse_int_domain(ctx, domain),
+        "int_domain" | "annotation_int_domain" => parse_int_domain(ctx, domain),
         "identifier" => {
             let Some(decl) = get_declaration_ptr_from_identifier(ctx, domain)? else {
                 return Ok(None);
@@ -68,10 +68,10 @@ pub fn parse_domain(
             );
             Ok(Some(dom))
         }
-        "tuple_domain" => parse_tuple_domain(ctx, domain),
-        "matrix_domain" => parse_matrix_domain(ctx, domain),
-        "record_domain" => parse_record_domain(ctx, domain),
-        "set_domain" => parse_set_domain(ctx, domain),
+        "tuple_domain" | "annotation_tuple_domain" => parse_tuple_domain(ctx, domain),
+        "matrix_domain" | "annotation_matrix_domain" => parse_matrix_domain(ctx, domain),
+        "record_domain" | "annotation_record_domain" => parse_record_domain(ctx, domain),
+        "set_domain" | "annotation_set_domain" => parse_set_domain(ctx, domain),
         _ => {
             ctx.record_error(RecoverableParseError::new(
                 format!("{} is not a supported domain type", domain.kind()),
@@ -128,7 +128,7 @@ fn parse_int_domain(
 
     for domain_component in named_children(&range_list) {
         match domain_component.kind() {
-            "atom" | "arithmetic_expr" => {
+            "atom" | "arithmetic_expr" | "integer" | "identifier" => {
                 let Some(int_val) = parse_int_val(ctx, domain_component)? else {
                     return Ok(None);
                 };
@@ -138,7 +138,7 @@ fn parse_int_domain(
                 }
                 ranges_unresolved.push(Range::Single(int_val));
             }
-            "int_range" => {
+            "int_range" | "annotation_int_range" => {
                 let lower_bound = match domain_component.child_by_field_name("lower") {
                     Some(node) => {
                         match parse_int_val(ctx, node)? {
@@ -240,7 +240,7 @@ fn parse_int_domain(
 // Handles constants, references, and arbitrary expressions
 fn parse_int_val(ctx: &mut ParseContext, node: Node) -> Result<Option<IntVal>, FatalParseError> {
     // For atoms, try to parse as a constant integer first
-    if node.kind() == "atom" {
+    if matches!(node.kind(), "atom" | "integer" | "identifier") {
         let text = &ctx.source_code[node.start_byte()..node.end_byte()];
         if let Ok(integer) = text.parse::<i32>() {
             return Ok(Some(IntVal::Const(integer)));

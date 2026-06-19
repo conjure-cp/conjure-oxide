@@ -1,7 +1,7 @@
 use crate::diagnostics::diagnostics_api::SymbolKind;
 use crate::diagnostics::source_map::{HoverInfo, span_with_hover};
 use crate::errors::{FatalParseError, RecoverableParseError};
-use crate::expression::{parse_binary_expression, parse_expression};
+use crate::expression::{parse_annotation_expression, parse_binary_expression, parse_expression};
 use crate::parser::ParseContext;
 use crate::parser::abstract_literal::parse_abstract;
 use crate::parser::comprehension::parse_comprehension;
@@ -20,7 +20,7 @@ pub fn parse_atom(
     node: &Node,
 ) -> Result<Option<Expression>, FatalParseError> {
     match node.kind() {
-        "atom" | "sub_atom_expr" => {
+        "atom" | "primary_atom" | "sub_atom_expr" => {
             let Some(inner) = named_child!(recover, ctx, node) else {
                 return Ok(None);
             };
@@ -83,6 +83,7 @@ pub fn parse_atom(
         "element_id" => parse_element_id(ctx, node),
         "table" | "negative_table" => parse_table(ctx, node),
         "index_or_slice" => parse_index_or_slice(ctx, node),
+        "annotation_expr" => parse_annotation_expression(ctx, node),
         // for now, assume is binary since powerset isn't implemented
         // TODO: add powerset support under "set_operation"
         "set_operation" => parse_binary_expression(ctx, node),
