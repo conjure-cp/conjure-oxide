@@ -206,8 +206,8 @@ pub fn parse_comprehension(
         return Ok(None);
     };
 
-    // Build the comprehension with the return expression and default ACOperatorKind::And
-    let comprehension = builder.with_return_value(return_expr, Some(ACOperatorKind::And));
+    // Build the comprehension with the return expression
+    let comprehension = builder.with_return_value(return_expr);
 
     Ok(Some(Expression::Comprehension(
         Metadata::new(),
@@ -327,7 +327,8 @@ pub fn parse_quantifier_or_aggregate_expr(
     };
 
     // Build the comprehension
-    let comprehension = builder.with_return_value(expression, Some(ac_operator_kind));
+    let mut comprehension = builder.with_return_value(expression);
+    comprehension.skip_operator = Some(ac_operator_kind);
     let wrapped_comprehension = Expression::Comprehension(Metadata::new(), Moo::new(comprehension));
 
     // Wrap in the appropriate expression type

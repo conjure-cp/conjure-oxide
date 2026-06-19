@@ -14,6 +14,7 @@ use conjure_cp::{
         DeclarationPtr, Domain, DomainPtr, Expression as Expr, IntVal, Moo, Name, Range, Reference,
         SymbolTable, UnresolvedDomain,
         comprehension::{Comprehension, ComprehensionQualifier},
+        eval_constant,
         serde::{HasId, ObjId},
     },
     bug, into_matrix_expr,
@@ -24,6 +25,8 @@ use conjure_cp::{
 };
 use std::collections::HashMap;
 use uniplate::{Biplate, Uniplate};
+
+use via_solver_common::simplify_expression;
 
 /// Rewrite top-level `exists` comprehensions into constraints over fresh machine `find`s.
 ///
@@ -65,6 +68,54 @@ fn exists_quantified_to_finds(expr: &Expr, symbols: &SymbolTable) -> Application
     }
 }
 
+/// Expand comprehensions inside AC operators using `--comprehension-expander native`.
+///
+/// Guarded comprehensions with symbolic guards are expanded here (not by
+/// [`expand_comprehension_native`]) so matrix representation can run first.
+/// Skip semantics come from [`Comprehension::skip_operator`].
+#[register_rule("Base", 1999)]
+fn expand_ac_comprehension_native(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    if comprehension_expander() != QuantifiedExpander::Native {
+        return Err(RuleNotApplicable);
+    }
+
+    let ac_operator_kind = expr.to_ac_operator_kind().ok_or(RuleNotApplicable)?;
+    let children = expr.children();
+    debug_assert_eq!(
+        children.len(),
+        1,
+        "AC expressions should have exactly one child."
+    );
+
+    let comprehension = children
+        .front()
+        .and_then(as_single_comprehension)
+        .ok_or(RuleNotApplicable)?;
+
+    if comprehension.skip_operator.is_none() {
+        return Err(RuleNotApplicable);
+    }
+
+    if !comprehension_has_symbolic_guards(&comprehension) {
+        return Err(RuleNotApplicable);
+    }
+
+    for qual in &comprehension.qualifiers {
+        if let ComprehensionQualifier::ExpressionGenerator { .. } = qual {
+            return Err(RuleNotApplicable);
+        }
+    }
+
+    let mut symbols = symbols.clone();
+    let results = expand_native(comprehension, &mut symbols)
+        .unwrap_or_else(|e| bug!("native AC comprehension expansion failed: {e}"));
+
+    Ok(Reduction::with_symbols(
+        ac_operator_kind.as_expression(into_matrix_expr!(results)),
+        symbols,
+    ))
+}
+
 /// Expand comprehensions using `--comprehension-expander native`.
 #[register_rule("Base", 2000, [Comprehension])]
 fn expand_comprehension_native(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
@@ -82,6 +133,10 @@ fn expand_comprehension_native(expr: &Expr, symbols: &SymbolTable) -> Applicatio
         if let ComprehensionQualifier::ExpressionGenerator { .. } = qual {
             return Err(RuleNotApplicable);
         }
+    }
+
+    if comprehension_has_symbolic_guards(&comprehension) {
+        return Err(RuleNotApplicable);
     }
 
     let mut symbols = symbols.clone();
@@ -197,6 +252,15 @@ fn as_exists_comprehension(expr: &Expr) -> Option<Comprehension> {
     };
 
     as_single_comprehension(or_child.as_ref())
+}
+
+fn comprehension_has_symbolic_guards(comprehension: &Comprehension) -> bool {
+    comprehension.qualifiers.iter().any(|qualifier| {
+        let ComprehensionQualifier::Condition(condition) = qualifier else {
+            return false;
+        };
+        eval_constant(&simplify_expression(condition.clone())).is_none()
+    })
 }
 
 fn rewrite_exists_comprehension_to_constraints(

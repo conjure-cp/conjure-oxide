@@ -2,6 +2,7 @@ use conjure_cp::{
     ast::{
         Atom, DeclarationKind, DeclarationPtr, DomainPtr, Expression, Literal, Metadata, Name,
         SymbolTable,
+        ac_operators::ACOperatorKind,
         comprehension::{Comprehension, ComprehensionQualifier},
         eval_constant,
     },
@@ -17,26 +18,31 @@ use super::via_solver_common::{
 
 /// Expands the comprehension without calling an external solver.
 ///
-/// Algorithm:
-/// 1. Recurse qualifiers left-to-right.
-/// 2. For each generator value, temporarily bind the quantified declaration to a
-///    `TemporaryValueLetting` and recurse.
-/// 3. For each condition, evaluate and recurse only if true.
-/// 4. At the leaf, evaluate the return expression under the active bindings.
+/// Symbolic guards are deferred until the return expression is reached, then applied using
+/// [`Comprehension::skip_operator`]'s skip semantics.
 pub fn expand_native(
     comprehension: Comprehension,
     parent_symbols: &mut SymbolTable,
 ) -> Result<Vec<Expression>, SolverError> {
     let mut expanded = Vec::new();
-    expand_qualifiers(&comprehension, 0, &mut expanded, parent_symbols)?;
+    expand_qualifiers(
+        &comprehension,
+        0,
+        &[],
+        &mut expanded,
+        parent_symbols,
+        comprehension.skip_operator,
+    )?;
     Ok(expanded)
 }
 
 fn expand_qualifiers(
     comprehension: &Comprehension,
     qualifier_index: usize,
+    active_guards: &[Expression],
     expanded: &mut Vec<Expression>,
     parent_symbols: &mut SymbolTable,
+    ac_operator: Option<ACOperatorKind>,
 ) -> Result<(), SolverError> {
     if qualifier_index == comprehension.qualifiers.len() {
         let child_symbols = comprehension.symbols().clone();
@@ -51,6 +57,8 @@ fn expand_qualifiers(
             &child_symbols,
             parent_symbols,
         );
+        let return_expression =
+            apply_active_guards(return_expression, active_guards, ac_operator)?;
         expanded.push(return_expression);
         return Ok(());
     }
@@ -63,13 +71,40 @@ fn expand_qualifiers(
 
             for literal in values {
                 with_temporary_quantified_binding(ptr, &literal, || {
-                    expand_qualifiers(comprehension, qualifier_index + 1, expanded, parent_symbols)
+                    expand_qualifiers(
+                        comprehension,
+                        qualifier_index + 1,
+                        active_guards,
+                        expanded,
+                        parent_symbols,
+                        ac_operator,
+                    )
                 })?;
             }
         }
         ComprehensionQualifier::Condition(condition) => {
-            if evaluate_guard(condition)? {
-                expand_qualifiers(comprehension, qualifier_index + 1, expanded, parent_symbols)?;
+            match evaluate_bool_guard(condition)? {
+                Some(true) => expand_qualifiers(
+                    comprehension,
+                    qualifier_index + 1,
+                    active_guards,
+                    expanded,
+                    parent_symbols,
+                    ac_operator,
+                )?,
+                Some(false) => {}
+                None => {
+                    let mut guards = active_guards.to_vec();
+                    guards.push(condition.clone());
+                    expand_qualifiers(
+                        comprehension,
+                        qualifier_index + 1,
+                        &guards,
+                        expanded,
+                        parent_symbols,
+                        ac_operator,
+                    )?;
+                }
             }
         }
         ComprehensionQualifier::ExpressionGenerator { .. } => {
@@ -80,6 +115,30 @@ fn expand_qualifiers(
     }
 
     Ok(())
+}
+
+fn apply_active_guards(
+    mut expression: Expression,
+    guards: &[Expression],
+    ac_operator: Option<ACOperatorKind>,
+) -> Result<Expression, SolverError> {
+    if guards.is_empty() {
+        return Ok(expression);
+    }
+
+    let Some(ac_operator) = ac_operator else {
+        return Err(SolverError::ModelInvalid(format!(
+            "comprehension has symbolic guards but no AC operator context for native expansion: {guards:?}"
+        )));
+    };
+
+    for guard in guards.iter().rev() {
+        let guard = concretise_resolved_reference_atoms(guard.clone());
+        let guard = simplify_expression(guard);
+        expression = ac_operator.make_skip_operation(guard, expression);
+    }
+
+    Ok(expression)
 }
 
 fn resolve_generator_values(name: &Name, domain: &DomainPtr) -> Result<Vec<Literal>, SolverError> {
@@ -125,16 +184,15 @@ fn with_temporary_quantified_binding<T>(
     result
 }
 
-fn evaluate_guard(guard: &Expression) -> Result<bool, SolverError> {
+/// Returns `Ok(Some(bool))` for constant guards, `Ok(None)` for symbolic guards.
+fn evaluate_bool_guard(guard: &Expression) -> Result<Option<bool>, SolverError> {
     let simplified = simplify_expression(guard.clone());
     match eval_constant(&simplified) {
-        Some(Literal::Bool(value)) => Ok(value),
+        Some(Literal::Bool(value)) => Ok(Some(value)),
         Some(other) => Err(SolverError::ModelInvalid(format!(
             "native comprehension guard must evaluate to Bool, got {other}: {guard}"
         ))),
-        None => Err(SolverError::ModelInvalid(format!(
-            "native comprehension expansion could not evaluate guard: {guard}"
-        ))),
+        None => Ok(None),
     }
 }
 

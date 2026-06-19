@@ -39,7 +39,8 @@ fn subseteq_set(expr: &Expr, scope: &SymbolTable) -> ApplicationResult {
                 b.clone(),
             );
 
-            let comp = comp_builder.with_return_value(return_expr, Some(ACOperatorKind::And));
+            let mut comp = comp_builder.with_return_value(return_expr);
+            comp.skip_operator = Some(ACOperatorKind::And);
 
             Ok(Reduction::pure(Expr::And(
                 Metadata::new(),

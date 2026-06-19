@@ -10,6 +10,7 @@ use crate::parser::global_constraints::{
 };
 use crate::util::TypecheckingContext;
 use crate::{child, field, named_child};
+use conjure_cp_core::ast::ac_operators::ACOperatorKind;
 use conjure_cp_core::ast::{Expression, GroundDomain, Metadata, Moo};
 use conjure_cp_core::{domain_int, matrix_expr, range};
 use tree_sitter::Node;
@@ -239,6 +240,9 @@ fn parse_list_combining_expression(
     let Some(inner) = parse_atom(ctx, &arg_node)? else {
         return Ok(None);
     };
+
+    let skip_operator = list_combining_skip_operator(operator_str);
+    let inner = set_comprehension_skip_operator(inner, skip_operator);
 
     let expr = match operator_str {
         "and" => Ok(Some(Expression::And(Metadata::new(), Moo::new(inner)))),
@@ -799,5 +803,31 @@ fn inferred_context_from_expression(expr: &Expression) -> TypecheckingContext {
         | GroundDomain::Variant(_)
         | GroundDomain::Relation(_, _)
         | GroundDomain::Empty(_) => TypecheckingContext::Unknown,
+    }
+}
+
+fn list_combining_skip_operator(operator_str: &str) -> Option<ACOperatorKind> {
+    match operator_str {
+        "and" => Some(ACOperatorKind::And),
+        "or" => Some(ACOperatorKind::Or),
+        "sum" | "min" | "max" => Some(ACOperatorKind::Sum),
+        "product" => Some(ACOperatorKind::Product),
+        _ => None,
+    }
+}
+
+fn set_comprehension_skip_operator(
+    inner: Expression,
+    skip_operator: Option<ACOperatorKind>,
+) -> Expression {
+    let Expression::Comprehension(meta, comprehension) = inner else {
+        return inner;
+    };
+    if let Some(skip_operator) = skip_operator {
+        let mut comprehension = Moo::unwrap_or_clone(comprehension);
+        comprehension.skip_operator = Some(skip_operator);
+        Expression::Comprehension(meta, Moo::new(comprehension))
+    } else {
+        Expression::Comprehension(meta, comprehension)
     }
 }
