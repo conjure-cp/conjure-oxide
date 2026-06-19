@@ -52,6 +52,10 @@ remain visible as diffs. Use `make test-accept-with-exact-times` to overwrite ti
 the current observed runtime. The exact-times target also writes a Git-diff-based timing
 comparison CSV to `target/accept-times-diff.csv`.
 
+For timing-only runs where rule trace generation overhead is unwanted, set
+`CONJURE_OXIDE_TEST_DISABLE_TRACING=1`. This skips integration-test rule trace file
+generation and rule trace snapshot validation; solution checks and timing recording still run.
+
 ### Licence
 
 This project is licenced under the [Mozilla Public Licence

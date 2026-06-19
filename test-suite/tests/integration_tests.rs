@@ -58,6 +58,8 @@ use test_suite::test_config::{
 };
 use test_suite::text_files::write_text_with_trailing_newline;
 
+const DISABLE_TRACING_ENV: &str = "CONJURE_OXIDE_TEST_DISABLE_TRACING";
+
 #[derive(Clone, Copy, Debug)]
 struct RunCase<'a> {
     parser: Parser,
@@ -245,10 +247,23 @@ fn test_case_timeout() -> Result<Option<Duration>, Box<dyn Error>> {
 }
 
 fn pass_integration_test_env(command: &mut Command) {
-    for key in ["TEST_CASE_TIMEOUT", "ACCEPT", "MAX_EXPECTED_TIME"] {
+    for key in [
+        "TEST_CASE_TIMEOUT",
+        "ACCEPT",
+        "MAX_EXPECTED_TIME",
+        DISABLE_TRACING_ENV,
+    ] {
         if let Ok(value) = std::env::var(key) {
             command.env(key, value);
         }
+    }
+}
+
+fn test_tracing_disabled() -> bool {
+    match std::env::var(DISABLE_TRACING_ENV) {
+        Ok(value) => !matches!(value.as_str(), "" | "0" | "false" | "False" | "FALSE"),
+        Err(std::env::VarError::NotPresent) => false,
+        Err(std::env::VarError::NotUnicode(_)) => true,
     }
 }
 
@@ -381,6 +396,7 @@ fn integration_test_inner_with_status(
     let conjure_timings = conjure_solutions.and_then(|(_, timings)| timings);
     let mut allowed_expected_files = BTreeSet::new();
     let mut oxide_timings = RunTimings::default();
+    let rule_trace_snapshots_enabled = !test_tracing_disabled();
 
     let oxide_result = (|| -> Result<(), Box<dyn Error>> {
         for parser in parsers.iter().copied() {
@@ -395,32 +411,15 @@ fn integration_test_inner_with_status(
                             solver,
                             case_name: case_name.as_str(),
                         };
-                        let file = File::create(format!(
-                            "{path}/{}-{}-generated-rule-trace.txt",
-                            run_case.case_name,
-                            run_case.solver.as_str()
-                        ))?;
-                        let subscriber = Arc::new(
-                            tracing_subscriber::registry().with(
-                                fmt::layer()
-                                    .with_writer(file)
-                                    .with_level(false)
-                                    .without_time()
-                                    .with_target(false)
-                                    .with_filter(EnvFilter::new("rule_engine_rule_trace=trace"))
-                                    .with_filter(FilterFn::new(|meta| {
-                                        meta.target() == "rule_engine_rule_trace"
-                                    })),
-                            ),
-                        )
-                            as Arc<dyn tracing::Subscriber + Send + Sync>;
                         let run_label = run_case_label(path, essence_base, extension, run_case);
                         let default_rule_trace_enabled = matches!(rewriter, Rewriter::Naive);
-                        set_rule_trace_enabled(true);
-                        set_default_rule_trace_enabled(default_rule_trace_enabled);
+                        set_rule_trace_enabled(rule_trace_snapshots_enabled);
+                        set_default_rule_trace_enabled(
+                            rule_trace_snapshots_enabled && default_rule_trace_enabled,
+                        );
                         set_rule_trace_verbose_enabled(false);
                         set_rule_trace_aggregates_enabled(false);
-                        let run_timings = tracing::subscriber::with_default(subscriber, || {
+                        let run_test = || {
                             integration_test_inner(
                                 path,
                                 essence_base,
@@ -431,8 +430,33 @@ fn integration_test_inner_with_status(
                                 keep_intermediate_solutions,
                                 conjure_solution_values.clone(),
                                 accept,
+                                rule_trace_snapshots_enabled,
                             )
-                        })
+                        };
+                        let run_timings = if rule_trace_snapshots_enabled {
+                            let file = File::create(format!(
+                                "{path}/{}-{}-generated-rule-trace.txt",
+                                run_case.case_name,
+                                run_case.solver.as_str()
+                            ))?;
+                            let subscriber = Arc::new(
+                                tracing_subscriber::registry().with(
+                                    fmt::layer()
+                                        .with_writer(file)
+                                        .with_level(false)
+                                        .without_time()
+                                        .with_target(false)
+                                        .with_filter(EnvFilter::new("rule_engine_rule_trace=trace"))
+                                        .with_filter(FilterFn::new(|meta| {
+                                            meta.target() == "rule_engine_rule_trace"
+                                        })),
+                                ),
+                            )
+                                as Arc<dyn tracing::Subscriber + Send + Sync>;
+                            tracing::subscriber::with_default(subscriber, run_test)
+                        } else {
+                            run_test()
+                        }
                         .map_err(|err| {
                             let message = format!("{run_label}: {err}");
                             copy_oxide_run_artifacts(path, run_case, &message);
@@ -513,6 +537,9 @@ fn integration_test_inner_with_status(
 /// 3. Solving the model using the Minion solver and validating the solutions.
 /// 4. Comparing generated rule traces with expected outputs.
 ///
+/// Set `CONJURE_OXIDE_TEST_DISABLE_TRACING=1` to skip rule trace generation and validation during
+/// timing runs.
+///
 /// This function operates in multiple stages:
 ///
 /// - **Parsing Stage**
@@ -549,6 +576,7 @@ fn integration_test_inner(
     keep_intermediate_solutions: bool,
     conjure_solutions: Option<Arc<Vec<BTreeMap<Name, Literal>>>>,
     accept: bool,
+    rule_trace_snapshots_enabled: bool,
 ) -> Result<RunTimings, Box<dyn Error>> {
     let parser = run_case.parser;
     let rewriter = run_case.rewriter;
@@ -644,7 +672,9 @@ fn integration_test_inner(
         // Always overwrite these ones. Unlike the rest, we don't need to selectively do these
         // based on the test results, so they don't get done later.
         copy_generated_to_expected(path, case_name, "solutions", "json", solver_fam)?;
-        copy_human_trace_generated_to_expected(path, case_name, solver_fam)?;
+        if rule_trace_snapshots_enabled {
+            copy_human_trace_generated_to_expected(path, case_name, solver_fam)?;
+        }
     }
 
     // Check Stage 3a (solutions)
@@ -653,16 +683,18 @@ fn integration_test_inner(
     assert_eq!(username_solutions_json, expected_solutions_json);
 
     // TODO: Implement rule trace validation for morph
-    match rewriter {
-        Rewriter::Morph(_) => {}
-        Rewriter::Naive => {
-            let generated = read_default_rule_trace(path, case_name, "generated", &solver_fam)?;
-            let expected = read_default_rule_trace(path, case_name, "expected", &solver_fam)?;
+    if rule_trace_snapshots_enabled {
+        match rewriter {
+            Rewriter::Morph(_) => {}
+            Rewriter::Naive => {
+                let generated = read_default_rule_trace(path, case_name, "generated", &solver_fam)?;
+                let expected = read_default_rule_trace(path, case_name, "expected", &solver_fam)?;
 
-            assert_eq!(
-                expected, generated,
-                "Generated rule trace does not match the expected trace!"
-            );
+                assert_eq!(
+                    expected, generated,
+                    "Generated rule trace does not match the expected trace!"
+                );
+            }
         }
     }
 
