@@ -181,23 +181,43 @@ pub fn to_aux_var(expr: &Expr, symbols: &SymbolTable) -> Option<ToAuxVarOutput> 
             && categories.contains(&Category::Decision)
             && categories.contains(&Category::Constant))
     {
-        if cfg!(debug_assertions) {
-            trace!(
-                why = "expression has sub-expressions that are not in the decision category",
-                "to_aux_var() failed"
-            );
+        if let Expr::ElementId(_, _, value) = expr {
+            let value_categories = value.universe_categories();
+            if !(value_categories.len() == 1 && value_categories.contains(&Category::Decision)
+                || value_categories.len() == 2
+                    && value_categories.contains(&Category::Decision)
+                    && value_categories.contains(&Category::Constant))
+            {
+                if cfg!(debug_assertions) {
+                    trace!(
+                        why = "expression has sub-expressions that are not in the decision category",
+                        "to_aux_var() failed"
+                    );
+                }
+                return None;
+            }
+        } else {
+            if cfg!(debug_assertions) {
+                trace!(
+                    why = "expression has sub-expressions that are not in the decision category",
+                    "to_aux_var() failed"
+                );
+            }
+            return None;
         }
-        return None;
     }
 
     // Avoid introducing auxvars for generic matrix indexing (can create many redundant auxvars
     // before comprehension expansion). However, keep list indexing eligible so Minion lowering
     // can introduce `element` constraints in non-equality contexts.
     if let Expr::SafeIndex(_, subject, indices) = expr {
+        let index_has_element_id = indices
+            .iter()
+            .any(|index| matches!(index, Expr::ElementId(..)));
         let can_lower_via_element = subject.clone().unwrap_list().is_some()
             && indices.iter().all(|i| matches!(i, Expr::Atomic(_, _)));
 
-        if !can_lower_via_element {
+        if !can_lower_via_element && !index_has_element_id {
             if cfg!(debug_assertions) {
                 trace!(expr=%expr, why = "matrix indexing is not element-lowerable", "to_aux_var() failed");
             }

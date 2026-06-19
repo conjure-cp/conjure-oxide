@@ -9,6 +9,7 @@ use std::{
 
 use crate::{
     extra_check,
+    matrix::try_index_matrix_to_atom,
     utils::{is_flat, rewrite_children, to_aux_var},
 };
 use conjure_cp::ast::categories::Category;
@@ -1015,6 +1016,32 @@ fn lit_int(lit: &Lit) -> Option<i32> {
     }
 }
 
+fn fold_constant_element_id_to_index(element_id: &Expr) -> Option<Expr> {
+    let Expr::ElementId(_, matrix, value) = element_id else {
+        return None;
+    };
+    let search_value = expr_int_literal(value.as_ref())?;
+    let (elems, index_domain) = indexed_element_id_literal_parts(matrix.as_ref())?;
+    let GroundDomain::Int(index_ranges) = index_domain.as_ref() else {
+        return None;
+    };
+    let index_values = Range::values(index_ranges)?.collect_vec();
+    if elems.len() != index_values.len() {
+        return None;
+    }
+
+    for (elem, index) in elems.into_iter().zip(index_values) {
+        if elem == search_value {
+            return Some(Expr::Atomic(
+                Metadata::new(),
+                Atom::Literal(Lit::Int(index)),
+            ));
+        }
+    }
+
+    None
+}
+
 /// Introduces an auxiliary variable for `elementId` used as a matrix index.
 #[register_rule("Minion", 4300, [SafeIndex])]
 fn flatten_element_id_index(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
@@ -1029,6 +1056,14 @@ fn flatten_element_id_index(expr: &Expr, symbols: &SymbolTable) -> ApplicationRe
     let Expr::ElementId(_, _, _) = indices[0].clone() else {
         return Err(RuleNotApplicable);
     };
+
+    if let Some(index) = fold_constant_element_id_to_index(&indices[0]) {
+        return Ok(Reduction::pure(Expr::SafeIndex(
+            meta.clone(),
+            subject.clone(),
+            vec![index],
+        )));
+    }
 
     let aux_var_info = to_aux_var(&indices[0], symbols).ok_or(RuleNotApplicable)?;
 
@@ -1141,6 +1176,107 @@ fn introduce_reifyimply_ineq_from_imply(expr: &Expr, _: &SymbolTable) -> Applica
             x_atom.clone(),
         )))
     }
+}
+
+/// Constant-folds `__inDomain(elementId(...), domain)` when the elementId result domain is
+/// already contained in `domain`.
+#[register_rule("Minion", 4350, [InDomain])]
+fn constant_fold_indomain_element_id(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    let Expr::InDomain(_, e, domain) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Expr::ElementId(..) = e.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let expr_domain = e
+        .domain_of()
+        .ok_or(RuleNotApplicable)?
+        .resolve()
+        .ok_or(RuleNotApplicable)?;
+    let domain = domain.resolve().ok_or(RuleNotApplicable)?;
+    let intersection = expr_domain
+        .intersect(&domain)
+        .map_err(|_| RuleNotApplicable)?;
+
+    let GroundDomain::Int(expr_ranges) = expr_domain.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
+    let GroundDomain::Int(inter_ranges) = &intersection else {
+        return Err(RuleNotApplicable);
+    };
+
+    if inter_ranges == expr_ranges {
+        return Ok(Reduction::pure(true.into()));
+    }
+
+    if let Ok(values) = intersection.values_i32()
+        && values.is_empty()
+    {
+        return Ok(Reduction::pure(false.into()));
+    }
+
+    Err(RuleNotApplicable)
+}
+
+/// Resolves `__n =aux matrix[index]` when `index` is a constant `elementId` lookup.
+#[register_rule("Minion", 4450, [AuxDeclaration])]
+fn resolve_safeindex_element_id_aux(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    let Expr::AuxDeclaration(meta, reference, inner) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Expr::SafeIndex(index_meta, subject, indices) = inner.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
+
+    if indices.len() != 1 {
+        return Err(RuleNotApplicable);
+    }
+
+    let index = fold_constant_element_id_to_index(&indices[0]).ok_or(RuleNotApplicable)?;
+    let safeindex = Expr::SafeIndex(index_meta.clone(), subject.clone(), vec![index]);
+    let Reduction { new_expression, .. } = try_index_matrix_to_atom(&safeindex, symbols)?;
+
+    Ok(Reduction::pure(Expr::Eq(
+        meta.clone(),
+        Moo::new(Expr::Atomic(Metadata::new(), Atom::Reference(reference.clone()))),
+        Moo::new(new_expression),
+    )))
+}
+
+/// Drops `__n =aux matrix[elementId(..., k)]` when `k` is constant and not in the matrix.
+///
+/// The auxiliary variable remains declared for use in lex constraints, but is not linked to an
+/// invalid index lookup.
+#[register_rule("Minion", 4450, [AuxDeclaration])]
+fn drop_invalid_constant_element_id_safeindex_aux(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    let Expr::AuxDeclaration(_, _, inner) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Expr::SafeIndex(_, _, indices) = inner.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
+
+    if indices.len() != 1 {
+        return Err(RuleNotApplicable);
+    }
+
+    let Expr::ElementId(_, _, value) = &indices[0] else {
+        return Err(RuleNotApplicable);
+    };
+
+    if fold_constant_element_id_to_index(&indices[0]).is_some() {
+        return Err(RuleNotApplicable);
+    }
+
+    if expr_int_literal(value.as_ref()).is_none() {
+        return Err(RuleNotApplicable);
+    }
+
+    Ok(Reduction::pure(true.into()))
 }
 
 /// Converts `__inDomain(a,domain) to w-inintervalset.
@@ -1457,9 +1593,14 @@ fn flatten_matrix_literal(expr: &Expr, symtab: &SymbolTable) -> ApplicationResul
                 top_level_exprs.push(aux_info.top_level_expr());
                 symbols = aux_info.symbols();
                 child_changed = true;
-            } else if let Expr::SafeIndex(_, subject, _) = e
-                && !matches!(**subject, Expr::Atomic(_, Atom::Reference(_)))
-            {
+            } else if let Expr::SafeIndex(_, subject, indices) = e {
+                let index_has_element_id = indices
+                    .iter()
+                    .any(|index| matches!(index, Expr::ElementId(..)));
+                let subject_is_ref = matches!(**subject, Expr::Atomic(_, Atom::Reference(_)));
+                if !(index_has_element_id || !subject_is_ref) {
+                    continue;
+                }
                 // we dont normally flatten indexing expressions, but we want to do it if they are
                 // inside a matrix list.
                 //

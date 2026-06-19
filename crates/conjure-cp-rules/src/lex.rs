@@ -1,10 +1,11 @@
 use conjure_cp::ast::matrix::safe_index_optimised;
-use conjure_cp::ast::{Atom, Expression as Expr, Literal, Metadata, Moo, SymbolTable};
+use conjure_cp::ast::{Atom, Expression as Expr, IntVal, Literal, Metadata, Moo, Range, SymbolTable};
 use conjure_cp::essence_expr;
 use conjure_cp::rule_engine::{ApplicationError, ApplicationResult, Reduction, register_rule};
 
 use ApplicationError::{DomainError, RuleNotApplicable};
 
+use crate::utils::to_aux_var;
 use itertools::Itertools as _;
 
 #[register_rule("Base", 9000, [LexGt, LexGeq])]
@@ -32,28 +33,61 @@ fn normalise_lex_gt_geq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// - [a,b,c,d] <=lex [e,f,g] <-> [a,b,c] <lex [d,e,f]
 /// - [a,b,c] <lex [d,e,f,g] <-> [a,b,c] <=lex [d,e,f]
 /// - Everything else stays the same, with the longer matrix being chopped off
+fn lex_operand_elements(expr: &Expr) -> Result<Vec<Expr>, ApplicationError> {
+    if let Some(elems) = expr.unwrap_list() {
+        return Ok(elems);
+    }
+
+    let Some((elems, domain)) = expr.clone().unwrap_matrix_unchecked() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Some(ranges) = domain.as_int() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let [Range::Bounded(IntVal::Const(1), _)] = ranges[..] else {
+        return Err(RuleNotApplicable);
+    };
+
+    Ok(elems)
+}
+
+fn lex_operand_to_atoms(
+    operand: &Moo<Expr>,
+    symbols: &mut SymbolTable,
+    tops: &mut Vec<Expr>,
+) -> Result<Vec<Atom>, ApplicationError> {
+    let elems = lex_operand_elements(operand.as_ref())?;
+    let mut atoms = Vec::with_capacity(elems.len());
+
+    for elem in elems {
+        if let Ok(atom) = elem.clone().try_into() {
+            atoms.push(atom);
+        } else if let Some(aux) = to_aux_var(&elem, symbols) {
+            *symbols = aux.symbols();
+            tops.push(aux.top_level_expr());
+            atoms.push(aux.as_atom());
+        } else {
+            return Err(RuleNotApplicable);
+        }
+    }
+
+    Ok(atoms)
+}
+
 #[register_rule("Minion", 2000, [LexLt, LexLeq])]
-fn flatten_lex_lt_leq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+fn flatten_lex_lt_leq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let (a, b) = match expr {
-        Expr::LexLt(_, a, b) | Expr::LexLeq(_, a, b) => (
-            Moo::unwrap_or_clone(a.clone())
-                .unwrap_list()
-                .ok_or(RuleNotApplicable)?,
-            Moo::unwrap_or_clone(b.clone())
-                .unwrap_list()
-                .ok_or(RuleNotApplicable)?,
-        ),
+        Expr::LexLt(_, a, b) | Expr::LexLeq(_, a, b) => (a, b),
         _ => return Err(RuleNotApplicable),
     };
 
-    let mut atoms_a: Vec<Atom> = a
-        .into_iter()
-        .map(|e| e.try_into().map_err(|_| RuleNotApplicable))
-        .collect::<Result<Vec<_>, ApplicationError>>()?;
-    let mut atoms_b: Vec<Atom> = b
-        .into_iter()
-        .map(|e| e.try_into().map_err(|_| RuleNotApplicable))
-        .collect::<Result<Vec<_>, ApplicationError>>()?;
+    let mut symbols = symbols.clone();
+    let mut tops = vec![];
+
+    let mut atoms_a = lex_operand_to_atoms(a, &mut symbols, &mut tops)?;
+    let mut atoms_b = lex_operand_to_atoms(b, &mut symbols, &mut tops)?;
 
     let new_expr = if atoms_a.len() == atoms_b.len() {
         // Same length, keep the same comparator
@@ -78,7 +112,11 @@ fn flatten_lex_lt_leq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         }
     };
 
-    Ok(Reduction::pure(new_expr))
+    if tops.is_empty() {
+        Ok(Reduction::pure(new_expr))
+    } else {
+        Ok(Reduction::new(new_expr, tops, symbols))
+    }
 }
 
 /// Expand lexicographical lt/leq into a "recursive or" form
