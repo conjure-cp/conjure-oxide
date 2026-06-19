@@ -51,6 +51,14 @@
                           "type": "SYMBOL",
                           "name": "arithmetic_expr"
                         }
+                      },
+                      {
+                        "type": "FIELD",
+                        "name": "annotation_expr",
+                        "content": {
+                          "type": "SYMBOL",
+                          "name": "annotation_expr"
+                        }
                       }
                     ]
                   },
@@ -99,6 +107,14 @@
                                   "content": {
                                     "type": "SYMBOL",
                                     "name": "arithmetic_expr"
+                                  }
+                                },
+                                {
+                                  "type": "FIELD",
+                                  "name": "annotation_expr",
+                                  "content": {
+                                    "type": "SYMBOL",
+                                    "name": "annotation_expr"
                                   }
                                 }
                               ]
@@ -2440,6 +2456,10 @@
                 },
                 {
                   "type": "SYMBOL",
+                  "name": "annotation_expr"
+                },
+                {
+                  "type": "SYMBOL",
                   "name": "atom"
                 }
               ]
@@ -2479,6 +2499,10 @@
                 {
                   "type": "SYMBOL",
                   "name": "arithmetic_expr"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "annotation_expr"
                 },
                 {
                   "type": "SYMBOL",
@@ -2570,6 +2594,10 @@
                 },
                 {
                   "type": "SYMBOL",
+                  "name": "annotation_expr"
+                },
+                {
+                  "type": "SYMBOL",
                   "name": "atom"
                 }
               ]
@@ -2613,6 +2641,10 @@
                 {
                   "type": "SYMBOL",
                   "name": "all_different_except_comparison"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "annotation_expr"
                 },
                 {
                   "type": "SYMBOL",
@@ -3685,90 +3717,94 @@
       }
     },
     "generator": {
-      "type": "CHOICE",
-      "members": [
-        {
-          "type": "SEQ",
-          "members": [
-            {
-              "type": "FIELD",
-              "name": "variable",
-              "content": {
-                "type": "CHOICE",
-                "members": [
-                  {
-                    "type": "SYMBOL",
-                    "name": "identifier"
-                  },
-                  {
-                    "type": "SYMBOL",
-                    "name": "tuple"
-                  }
-                ]
+      "type": "PREC",
+      "value": 30,
+      "content": {
+        "type": "CHOICE",
+        "members": [
+          {
+            "type": "SEQ",
+            "members": [
+              {
+                "type": "FIELD",
+                "name": "variable",
+                "content": {
+                  "type": "CHOICE",
+                  "members": [
+                    {
+                      "type": "SYMBOL",
+                      "name": "identifier"
+                    },
+                    {
+                      "type": "SYMBOL",
+                      "name": "tuple"
+                    }
+                  ]
+                }
+              },
+              {
+                "type": "STRING",
+                "value": ":"
+              },
+              {
+                "type": "FIELD",
+                "name": "domain",
+                "content": {
+                  "type": "SYMBOL",
+                  "name": "domain"
+                }
               }
-            },
-            {
-              "type": "STRING",
-              "value": ":"
-            },
-            {
-              "type": "FIELD",
-              "name": "domain",
-              "content": {
-                "type": "SYMBOL",
-                "name": "domain"
+            ]
+          },
+          {
+            "type": "SEQ",
+            "members": [
+              {
+                "type": "FIELD",
+                "name": "variable",
+                "content": {
+                  "type": "CHOICE",
+                  "members": [
+                    {
+                      "type": "SYMBOL",
+                      "name": "identifier"
+                    },
+                    {
+                      "type": "SYMBOL",
+                      "name": "tuple"
+                    }
+                  ]
+                }
+              },
+              {
+                "type": "STRING",
+                "value": "<-"
+              },
+              {
+                "type": "FIELD",
+                "name": "collection",
+                "content": {
+                  "type": "CHOICE",
+                  "members": [
+                    {
+                      "type": "SYMBOL",
+                      "name": "arithmetic_expr"
+                    },
+                    {
+                      "type": "SYMBOL",
+                      "name": "identifier"
+                    },
+                    {
+                      "type": "SYMBOL",
+                      "name": "matrix"
+                    }
+                  ]
+                }
               }
-            }
-          ]
-        },
-        {
-          "type": "SEQ",
-          "members": [
-            {
-              "type": "FIELD",
-              "name": "variable",
-              "content": {
-                "type": "CHOICE",
-                "members": [
-                  {
-                    "type": "SYMBOL",
-                    "name": "identifier"
-                  },
-                  {
-                    "type": "SYMBOL",
-                    "name": "tuple"
-                  }
-                ]
-              }
-            },
-            {
-              "type": "STRING",
-              "value": "<-"
-            },
-            {
-              "type": "FIELD",
-              "name": "collection",
-              "content": {
-                "type": "CHOICE",
-                "members": [
-                  {
-                    "type": "SYMBOL",
-                    "name": "arithmetic_expr"
-                  },
-                  {
-                    "type": "SYMBOL",
-                    "name": "identifier"
-                  },
-                  {
-                    "type": "SYMBOL",
-                    "name": "matrix"
-                  }
-                ]
-              }
-            }
-          ]
-        }
-      ]
+            ]
+          }
+        ]
+      }
     },
     "condition": {
       "type": "FIELD",
@@ -3994,6 +4030,761 @@
           }
         ]
       }
+    },
+    "annotation_expr": {
+      "type": "PREC",
+      "value": 25,
+      "content": {
+        "type": "CHOICE",
+        "members": [
+          {
+            "type": "SYMBOL",
+            "name": "type_annotation"
+          },
+          {
+            "type": "SYMBOL",
+            "name": "domain_annotation"
+          }
+        ]
+      }
+    },
+    "type_annotation": {
+      "type": "PREC",
+      "value": 25,
+      "content": {
+        "type": "SEQ",
+        "members": [
+          {
+            "type": "FIELD",
+            "name": "left",
+            "content": {
+              "type": "SYMBOL",
+              "name": "annotation_subject"
+            }
+          },
+          {
+            "type": "FIELD",
+            "name": "operator",
+            "content": {
+              "type": "TOKEN",
+              "content": {
+                "type": "STRING",
+                "value": "::"
+              }
+            }
+          },
+          {
+            "type": "FIELD",
+            "name": "type",
+            "content": {
+              "type": "SYMBOL",
+              "name": "annotation_domain"
+            }
+          }
+        ]
+      }
+    },
+    "domain_annotation": {
+      "type": "PREC",
+      "value": 25,
+      "content": {
+        "type": "SEQ",
+        "members": [
+          {
+            "type": "FIELD",
+            "name": "left",
+            "content": {
+              "type": "SYMBOL",
+              "name": "annotation_subject"
+            }
+          },
+          {
+            "type": "FIELD",
+            "name": "operator",
+            "content": {
+              "type": "TOKEN",
+              "content": {
+                "type": "STRING",
+                "value": ":"
+              }
+            }
+          },
+          {
+            "type": "FIELD",
+            "name": "domain",
+            "content": {
+              "type": "SYMBOL",
+              "name": "annotation_domain"
+            }
+          }
+        ]
+      }
+    },
+    "annotation_subject": {
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "SYMBOL",
+          "name": "sub_arith_expr"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "sub_bool_expr"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "sub_atom_expr"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "constant"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "identifier"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "metavar"
+        }
+      ]
+    },
+    "annotation_domain": {
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "FIELD",
+          "name": "bool_domain",
+          "content": {
+            "type": "SYMBOL",
+            "name": "bool_domain"
+          }
+        },
+        {
+          "type": "FIELD",
+          "name": "int_domain",
+          "content": {
+            "type": "SYMBOL",
+            "name": "annotation_int_domain"
+          }
+        },
+        {
+          "type": "FIELD",
+          "name": "variable_domain",
+          "content": {
+            "type": "SYMBOL",
+            "name": "identifier"
+          }
+        },
+        {
+          "type": "FIELD",
+          "name": "tuple_domain",
+          "content": {
+            "type": "SYMBOL",
+            "name": "annotation_tuple_domain"
+          }
+        },
+        {
+          "type": "FIELD",
+          "name": "matrix_domain",
+          "content": {
+            "type": "SYMBOL",
+            "name": "annotation_matrix_domain"
+          }
+        },
+        {
+          "type": "FIELD",
+          "name": "record_domain",
+          "content": {
+            "type": "SYMBOL",
+            "name": "annotation_record_domain"
+          }
+        },
+        {
+          "type": "FIELD",
+          "name": "set_domain",
+          "content": {
+            "type": "SYMBOL",
+            "name": "annotation_set_domain"
+          }
+        }
+      ]
+    },
+    "annotation_int_domain": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "int"
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "SEQ",
+              "members": [
+                {
+                  "type": "STRING",
+                  "value": "("
+                },
+                {
+                  "type": "FIELD",
+                  "name": "ranges",
+                  "content": {
+                    "type": "SYMBOL",
+                    "name": "annotation_range_list"
+                  }
+                },
+                {
+                  "type": "STRING",
+                  "value": ")"
+                }
+              ]
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
+        }
+      ]
+    },
+    "annotation_range_list": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "SYMBOL",
+              "name": "annotation_int_range"
+            },
+            {
+              "type": "SYMBOL",
+              "name": "integer"
+            },
+            {
+              "type": "SYMBOL",
+              "name": "identifier"
+            }
+          ]
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "REPEAT",
+              "content": {
+                "type": "SEQ",
+                "members": [
+                  {
+                    "type": "STRING",
+                    "value": ","
+                  },
+                  {
+                    "type": "CHOICE",
+                    "members": [
+                      {
+                        "type": "SYMBOL",
+                        "name": "annotation_int_range"
+                      },
+                      {
+                        "type": "SYMBOL",
+                        "name": "integer"
+                      },
+                      {
+                        "type": "SYMBOL",
+                        "name": "identifier"
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "STRING",
+              "value": ","
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
+        }
+      ]
+    },
+    "annotation_int_range": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "FIELD",
+              "name": "lower",
+              "content": {
+                "type": "CHOICE",
+                "members": [
+                  {
+                    "type": "SYMBOL",
+                    "name": "integer"
+                  },
+                  {
+                    "type": "SYMBOL",
+                    "name": "identifier"
+                  }
+                ]
+              }
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
+        },
+        {
+          "type": "STRING",
+          "value": ".."
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "FIELD",
+              "name": "upper",
+              "content": {
+                "type": "CHOICE",
+                "members": [
+                  {
+                    "type": "SYMBOL",
+                    "name": "integer"
+                  },
+                  {
+                    "type": "SYMBOL",
+                    "name": "identifier"
+                  }
+                ]
+              }
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
+        }
+      ]
+    },
+    "annotation_tuple_domain": {
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "STRING",
+              "value": "tuple"
+            },
+            {
+              "type": "STRING",
+              "value": "("
+            },
+            {
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "SEQ",
+                  "members": [
+                    {
+                      "type": "SYMBOL",
+                      "name": "annotation_domain"
+                    },
+                    {
+                      "type": "CHOICE",
+                      "members": [
+                        {
+                          "type": "REPEAT",
+                          "content": {
+                            "type": "SEQ",
+                            "members": [
+                              {
+                                "type": "STRING",
+                                "value": ","
+                              },
+                              {
+                                "type": "SYMBOL",
+                                "name": "annotation_domain"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "type": "BLANK"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "CHOICE",
+                      "members": [
+                        {
+                          "type": "STRING",
+                          "value": ","
+                        },
+                        {
+                          "type": "BLANK"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "BLANK"
+                }
+              ]
+            },
+            {
+              "type": "STRING",
+              "value": ")"
+            }
+          ]
+        },
+        {
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "STRING",
+              "value": "("
+            },
+            {
+              "type": "SYMBOL",
+              "name": "annotation_domain"
+            },
+            {
+              "type": "STRING",
+              "value": ","
+            },
+            {
+              "type": "SEQ",
+              "members": [
+                {
+                  "type": "SYMBOL",
+                  "name": "annotation_domain"
+                },
+                {
+                  "type": "CHOICE",
+                  "members": [
+                    {
+                      "type": "REPEAT",
+                      "content": {
+                        "type": "SEQ",
+                        "members": [
+                          {
+                            "type": "STRING",
+                            "value": ","
+                          },
+                          {
+                            "type": "SYMBOL",
+                            "name": "annotation_domain"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "type": "BLANK"
+                    }
+                  ]
+                },
+                {
+                  "type": "CHOICE",
+                  "members": [
+                    {
+                      "type": "STRING",
+                      "value": ","
+                    },
+                    {
+                      "type": "BLANK"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "STRING",
+              "value": ")"
+            }
+          ]
+        }
+      ]
+    },
+    "annotation_matrix_domain": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "matrix"
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "STRING",
+              "value": "indexed"
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "STRING",
+              "value": "by"
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "STRING",
+              "value": "indexed"
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "STRING",
+              "value": "by"
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
+        },
+        {
+          "type": "STRING",
+          "value": "["
+        },
+        {
+          "type": "FIELD",
+          "name": "index_domain_list",
+          "content": {
+            "type": "SEQ",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "annotation_domain"
+              },
+              {
+                "type": "CHOICE",
+                "members": [
+                  {
+                    "type": "REPEAT",
+                    "content": {
+                      "type": "SEQ",
+                      "members": [
+                        {
+                          "type": "STRING",
+                          "value": ","
+                        },
+                        {
+                          "type": "SYMBOL",
+                          "name": "annotation_domain"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "type": "BLANK"
+                  }
+                ]
+              },
+              {
+                "type": "CHOICE",
+                "members": [
+                  {
+                    "type": "STRING",
+                    "value": ","
+                  },
+                  {
+                    "type": "BLANK"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "type": "STRING",
+          "value": "]"
+        },
+        {
+          "type": "STRING",
+          "value": "of"
+        },
+        {
+          "type": "FIELD",
+          "name": "value_domain",
+          "content": {
+            "type": "SYMBOL",
+            "name": "annotation_domain"
+          }
+        }
+      ]
+    },
+    "annotation_record_domain": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "record"
+        },
+        {
+          "type": "STRING",
+          "value": "{"
+        },
+        {
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "FIELD",
+              "name": "name_domain_pair",
+              "content": {
+                "type": "SYMBOL",
+                "name": "annotation_name_domain_pair"
+              }
+            },
+            {
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "REPEAT",
+                  "content": {
+                    "type": "SEQ",
+                    "members": [
+                      {
+                        "type": "STRING",
+                        "value": ","
+                      },
+                      {
+                        "type": "FIELD",
+                        "name": "name_domain_pair",
+                        "content": {
+                          "type": "SYMBOL",
+                          "name": "annotation_name_domain_pair"
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "type": "BLANK"
+                }
+              ]
+            },
+            {
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "STRING",
+                  "value": ","
+                },
+                {
+                  "type": "BLANK"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "STRING",
+          "value": "}"
+        }
+      ]
+    },
+    "annotation_name_domain_pair": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "FIELD",
+          "name": "name",
+          "content": {
+            "type": "SYMBOL",
+            "name": "identifier"
+          }
+        },
+        {
+          "type": "STRING",
+          "value": ":"
+        },
+        {
+          "type": "FIELD",
+          "name": "domain",
+          "content": {
+            "type": "SYMBOL",
+            "name": "annotation_domain"
+          }
+        }
+      ]
+    },
+    "annotation_set_domain": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "set"
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "SEQ",
+              "members": [
+                {
+                  "type": "STRING",
+                  "value": "("
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "set_attributes"
+                },
+                {
+                  "type": "STRING",
+                  "value": ")"
+                }
+              ]
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
+        },
+        {
+          "type": "STRING",
+          "value": "of"
+        },
+        {
+          "type": "FIELD",
+          "name": "value_domain",
+          "content": {
+            "type": "SYMBOL",
+            "name": "annotation_domain"
+          }
+        }
+      ]
     },
     "flatten": {
       "type": "SEQ",
@@ -4559,6 +5350,10 @@
                   },
                   {
                     "type": "SYMBOL",
+                    "name": "annotation_expr"
+                  },
+                  {
+                    "type": "SYMBOL",
                     "name": "atom"
                   }
                 ]
@@ -4581,6 +5376,10 @@
                   {
                     "type": "SYMBOL",
                     "name": "arithmetic_expr"
+                  },
+                  {
+                    "type": "SYMBOL",
+                    "name": "annotation_expr"
                   },
                   {
                     "type": "SYMBOL",
@@ -4614,6 +5413,10 @@
                   },
                   {
                     "type": "SYMBOL",
+                    "name": "annotation_expr"
+                  },
+                  {
+                    "type": "SYMBOL",
                     "name": "atom"
                   }
                 ]
@@ -4636,6 +5439,10 @@
                   {
                     "type": "SYMBOL",
                     "name": "arithmetic_expr"
+                  },
+                  {
+                    "type": "SYMBOL",
+                    "name": "annotation_expr"
                   },
                   {
                     "type": "SYMBOL",
@@ -4686,6 +5493,10 @@
                   },
                   {
                     "type": "SYMBOL",
+                    "name": "annotation_expr"
+                  },
+                  {
+                    "type": "SYMBOL",
                     "name": "atom"
                   }
                 ]
@@ -4708,6 +5519,10 @@
                   {
                     "type": "SYMBOL",
                     "name": "arithmetic_expr"
+                  },
+                  {
+                    "type": "SYMBOL",
+                    "name": "annotation_expr"
                   },
                   {
                     "type": "SYMBOL",
