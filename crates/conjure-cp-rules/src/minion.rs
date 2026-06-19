@@ -12,7 +12,7 @@ use crate::{
     matrix::try_index_matrix_to_atom,
     utils::{is_flat, rewrite_children, to_aux_var},
 };
-use conjure_cp::ast::categories::Category;
+use conjure_cp::ast::categories::{Category, CategoryOf};
 use conjure_cp::ast::{Domain, GroundDomain, Moo, eval_constant};
 use conjure_cp::{
     ast::Metadata,
@@ -471,6 +471,82 @@ fn introduce_weighted_sumleq_sumgeq(expr: &Expr, symtab: &SymbolTable) -> Applic
 ///   literal, and that matrix literal is not a list.
 ///
 ///
+fn try_eval_i32_coeff(expr: &Expr) -> Option<i32> {
+    if let Expr::Atomic(_, Atom::Literal(Lit::Int(coeff))) = expr {
+        return Some(*coeff);
+    }
+    eval_constant(expr).and_then(|lit| match lit {
+        Lit::Int(coeff) => Some(coeff),
+        _ => None,
+    })
+}
+
+fn flatten_weighted_sum_product_factor(
+    expr: Expr,
+    symtab: &mut SymbolTable,
+    top_level_exprs: &mut Vec<Expr>,
+) -> Result<Atom, ApplicationError> {
+    if let Expr::Atomic(_, atom) = &expr {
+        return Ok(atom.clone());
+    }
+
+    // Parameter or constant matrix lookups can appear as coefficients inside sums.
+    if let Expr::SafeIndex(_, subject, indices) = &expr {
+        let indices_are_atomic = indices
+            .iter()
+            .all(|index| matches!(index, Expr::Atomic(_, _)));
+        if indices_are_atomic {
+            if let Expr::Atomic(_, Atom::Reference(reference)) = subject.as_ref() {
+                if matches!(
+                    reference.category_of(),
+                    Category::Parameter | Category::Constant
+                ) {
+                    let domain = expr.domain_of().ok_or(RuleNotApplicable)?;
+                    let decl = symtab.gen_find(&domain);
+                    top_level_exprs.push(Expr::AuxDeclaration(
+                        Metadata::new(),
+                        Reference::new(decl.clone()),
+                        Moo::new(expr),
+                    ));
+                    return Ok(Atom::Reference(Reference::new(decl)));
+                }
+            }
+        }
+    }
+
+    flatten_expression_to_atom(expr, symtab, top_level_exprs)
+}
+
+fn flatten_weighted_sum_binary_product(
+    a: Expr,
+    b: Expr,
+    symtab: &mut SymbolTable,
+    top_level_exprs: &mut Vec<Expr>,
+) -> Result<Atom, ApplicationError> {
+    let a_atom = flatten_weighted_sum_product_factor(a, symtab, top_level_exprs)?;
+    let b_atom = flatten_weighted_sum_product_factor(b, symtab, top_level_exprs)?;
+
+    let product = Expr::Product(
+        Metadata::new(),
+        Moo::new(matrix_expr![
+            Expr::Atomic(Metadata::new(), a_atom.clone()),
+            Expr::Atomic(Metadata::new(), b_atom.clone()),
+        ]),
+    );
+    let domain = product.domain_of().ok_or(RuleNotApplicable)?;
+    let decl = symtab.gen_find(&domain);
+    let aux = Atom::Reference(Reference::new(decl.clone()));
+
+    top_level_exprs.push(Expr::FlatProductEq(
+        Metadata::new(),
+        Moo::new(a_atom),
+        Moo::new(b_atom),
+        Moo::new(aux.clone()),
+    ));
+
+    Ok(aux)
+}
+
 fn flatten_weighted_sum_term(
     term: Expr,
     symtab: &mut SymbolTable,
@@ -498,18 +574,6 @@ fn flatten_weighted_sum_term(
                 // coefficients of 0 should be ignored by the caller.
                 [] => Ok((0, Atom::Literal(Lit::Int(0)))),
 
-                // product([4,y]) ~~> (4,y)
-                [Expr::Atomic(_, Atom::Literal(Lit::Int(coeff))), e] => Ok((
-                    *coeff,
-                    flatten_expression_to_atom(e.clone(), symtab, top_level_exprs)?,
-                )),
-
-                // product([y,4]) ~~> (y,4)
-                [e, Expr::Atomic(_, Atom::Literal(Lit::Int(coeff)))] => Ok((
-                    *coeff,
-                    flatten_expression_to_atom(e.clone(), symtab, top_level_exprs)?,
-                )),
-
                 // assume the coefficients have been placed at the front by normalisation rules
 
                 // product[1,x,y,...] ~> return (coeff,product([x,y,...]))
@@ -528,8 +592,32 @@ fn flatten_weighted_sum_term(
                     ))
                 }
 
-                // no coefficient:
-                // product([x,y,z]) ~~> (1,product([x,y,z])
+                // product([c,y]) or product([y,c]) when one factor is a constant coefficient
+                [a, b] => {
+                    if let Some(coeff) = try_eval_i32_coeff(a) {
+                        Ok((
+                            coeff,
+                            flatten_expression_to_atom(b.clone(), symtab, top_level_exprs)?,
+                        ))
+                    } else if let Some(coeff) = try_eval_i32_coeff(b) {
+                        Ok((
+                            coeff,
+                            flatten_expression_to_atom(a.clone(), symtab, top_level_exprs)?,
+                        ))
+                    } else {
+                        Ok((
+                            1,
+                            flatten_weighted_sum_binary_product(
+                                a.clone(),
+                                b.clone(),
+                                symtab,
+                                top_level_exprs,
+                            )?,
+                        ))
+                    }
+                }
+
+                // product([x,y,z,...]) ~~> (1,product([x,y,z,...]))
                 _ => {
                     let product =
                         Expr::Product(Metadata::new(), Moo::new(into_matrix_expr!(factors)));
@@ -776,7 +864,12 @@ fn introduce_flat_alldiff(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let es = (**es).clone().unwrap_list().ok_or(RuleNotApplicable)?;
+    let matrix_expr = match es.as_ref() {
+        Expr::Flatten(_, None, m) => Moo::unwrap_or_clone(m.clone()),
+        _ => Moo::unwrap_or_clone(es.clone()),
+    };
+
+    let es = matrix_expr.unwrap_list().ok_or(RuleNotApplicable)?;
 
     let atoms = es
         .into_iter()
@@ -787,6 +880,65 @@ fn introduce_flat_alldiff(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         .process_results(|iter| iter.collect_vec())?;
 
     Ok(Reduction::pure(Expr::FlatAllDiff(Metadata::new(), atoms)))
+}
+
+fn unwrap_flatten_operand(operand: &Moo<Expr>) -> Option<Moo<Expr>> {
+    match operand.as_ref() {
+        Expr::Flatten(_, None, inner) => Some(inner.clone()),
+        _ => None,
+    }
+}
+
+/// Unwraps `flatten(m)` operands in global cardinality constraints.
+#[register_rule("Minion", 4050, [AtMost, AtLeast, Gcc, GccWeak])]
+fn unwrap_flatten_in_global_cardinality(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    match expr {
+        Expr::AtMost(meta, vars, counts, values) => {
+            let Some(vars) = unwrap_flatten_operand(vars) else {
+                return Err(RuleNotApplicable);
+            };
+            Ok(Reduction::pure(Expr::AtMost(
+                meta.clone(),
+                vars,
+                counts.clone(),
+                values.clone(),
+            )))
+        }
+        Expr::AtLeast(meta, vars, counts, values) => {
+            let Some(vars) = unwrap_flatten_operand(vars) else {
+                return Err(RuleNotApplicable);
+            };
+            Ok(Reduction::pure(Expr::AtLeast(
+                meta.clone(),
+                vars,
+                counts.clone(),
+                values.clone(),
+            )))
+        }
+        Expr::Gcc(meta, vars, values, counts) => {
+            let Some(vars) = unwrap_flatten_operand(vars) else {
+                return Err(RuleNotApplicable);
+            };
+            Ok(Reduction::pure(Expr::Gcc(
+                meta.clone(),
+                vars,
+                values.clone(),
+                counts.clone(),
+            )))
+        }
+        Expr::GccWeak(meta, vars, values, counts) => {
+            let Some(vars) = unwrap_flatten_operand(vars) else {
+                return Err(RuleNotApplicable);
+            };
+            Ok(Reduction::pure(Expr::GccWeak(
+                meta.clone(),
+                vars,
+                values.clone(),
+                counts.clone(),
+            )))
+        }
+        _ => Err(RuleNotApplicable),
+    }
 }
 
 /// Lowers `allDifferentExcept` to Minion's `gccweak`, matching Savile Row.
