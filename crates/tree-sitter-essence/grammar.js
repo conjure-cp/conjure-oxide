@@ -421,7 +421,7 @@ module.exports = grammar ({
       optional(field("elements", commaSep1(choice($.bool_expr, $.arithmetic_expr, $.comparison_expr, $.atom)))),
       optional(seq(
         ";",
-        field("domain", choice($.int_domain, $.bool_domain))
+        field("domain", choice($.int_domain, $.bool_domain, $.identifier))
       )),
       "]"
     ),

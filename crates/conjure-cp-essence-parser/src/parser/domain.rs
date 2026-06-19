@@ -5,6 +5,7 @@ use crate::diagnostics::source_map::{HoverInfo, span_with_hover};
 use crate::errors::FatalParseError;
 use crate::expression::parse_expression;
 use crate::parser::ParseContext;
+use crate::util::TypecheckingContext;
 use crate::{RecoverableParseError, child};
 use conjure_cp_core::ast::{
     DeclarationPtr, Domain, DomainPtr, FieldEntry, IntVal, Moo, Name, Range, Reference, SetAttr,
@@ -239,22 +240,30 @@ fn parse_int_domain(
 // Helper function to parse a node into an IntVal
 // Handles constants, references, and arbitrary expressions
 fn parse_int_val(ctx: &mut ParseContext, node: Node) -> Result<Option<IntVal>, FatalParseError> {
-    // For atoms, try to parse as a constant integer first
-    if matches!(node.kind(), "atom" | "integer" | "identifier") {
+    if matches!(node.kind(), "atom" | "integer") {
         let text = &ctx.source_code[node.start_byte()..node.end_byte()];
         if let Ok(integer) = text.parse::<i32>() {
             return Ok(Some(IntVal::Const(integer)));
         }
-        // Otherwise, check if it's an identifier reference
+    }
+
+    if node.kind() == "identifier" {
         let Some(decl) = get_declaration_ptr_from_identifier(ctx, node)? else {
-            // If identifier isn't defined, its a semantic error
+            // If identifier isn't defined, it's a semantic error.
             return Ok(None);
         };
         return Ok(Some(IntVal::Reference(Reference::new(decl))));
     }
 
-    // For anything else, parse as an expression
-    let Some(expr) = parse_expression(ctx, node)? else {
+    let saved_context = ctx.typechecking_context;
+    let saved_inner_context = ctx.inner_typechecking_context;
+    ctx.typechecking_context = TypecheckingContext::Arithmetic;
+    ctx.inner_typechecking_context = TypecheckingContext::Arithmetic;
+    let expr = parse_expression(ctx, node)?;
+    ctx.typechecking_context = saved_context;
+    ctx.inner_typechecking_context = saved_inner_context;
+
+    let Some(expr) = expr else {
         return Ok(None);
     };
     Ok(Some(IntVal::Expr(Moo::new(expr))))
