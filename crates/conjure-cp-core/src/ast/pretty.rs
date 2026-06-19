@@ -11,18 +11,18 @@ use itertools::Itertools;
 
 /// Pretty prints a `Vec<Expression>` as if it were a top level constraint list in a `such that`.
 ///
-/// Each expression is printed on its own line.
+/// Each expression is printed on a new line, and expressions are delimited by commas.
 ///
 /// For some input expressions A,B,C:
 /// ```text
-/// A
-/// B
+/// A,
+/// B,
 /// C
 /// ```
 ///
 /// Each `Expression` is printed using its underlying `Display` implementation.
 pub fn pretty_expressions_as_top_level(expressions: &[Expression]) -> String {
-    expressions.iter().map(|x| format!("{x}")).join("\n")
+    expressions.iter().map(|x| format!("{x}")).join(",\n")
 }
 
 /// Pretty prints a `Vec<CnfClause>` as a list of clauses as disjunctions
