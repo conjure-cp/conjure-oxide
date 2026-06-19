@@ -110,6 +110,30 @@ SafeIndex(x#matrix_to_atom,[2])
 
 --
 
+([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([2,1;int(1, 2)], x#matrix_to_atom_1),elementId([2,1;int(1, 2)], x#matrix_to_atom_2);int(1..)]), 
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__0, __1])
+new variables:
+  find __0: int(1..5)
+  find __1: int(1..5)
+new constraints:
+  __0 =aux elementId([2,1;int(1, 2)], x#matrix_to_atom_1)
+  __1 =aux elementId([2,1;int(1, 2)], x#matrix_to_atom_2)
+
+--
+
+__0 =aux elementId([2,1;int(1, 2)], x#matrix_to_atom_1), 
+   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
+__minion_element_one([2,1,3,4,5],x#matrix_to_atom_1,__0)
+
+--
+
+__1 =aux elementId([2,1;int(1, 2)], x#matrix_to_atom_2), 
+   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
+__minion_element_one([2,1,3,4,5],x#matrix_to_atom_2,__1)
+
+--
+
 (x#matrix_to_atom <=lex [ elementId([3,1;int(1, 3)], x#matrix_to_atom[k]) | k : int(1..2) ]), 
    ~~> matrix_ref_to_atom ([("Base", 2000)])
 ([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [ elementId([3,1;int(1, 3)], x#matrix_to_atom[k]) | k : int(1..2) ])
@@ -134,7 +158,7 @@ SafeIndex(x#matrix_to_atom,[2])
 
 --
 
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([2,1;int(1, 2)], x#matrix_to_atom_1),elementId([2,1;int(1, 2)], x#matrix_to_atom_2);int(1..)]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__0, __1]),
 ([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([3,1;int(1, 3)], SafeIndex(x#matrix_to_atom,[1])),elementId([3,1;int(1, 3)], SafeIndex(x#matrix_to_atom,[2]));int(1..)]),
 (x#matrix_to_atom <=lex [ elementId([4,1;int(1, 4)], x#matrix_to_atom[k]) | k : int(1..2) ]),
 (x#matrix_to_atom <=lex [ elementId([5,1;int(1, 5)], x#matrix_to_atom[k]) | k : int(1..2) ]),
@@ -143,9 +167,11 @@ SafeIndex(x#matrix_to_atom,[2])
 (x#matrix_to_atom <=lex [ elementId([5,2;int(2, 5)], x#matrix_to_atom[k]) | k : int(1..2) ]),
 (x#matrix_to_atom <=lex [ elementId([4,3;int(3, 4)], x#matrix_to_atom[k]) | k : int(1..2) ]),
 (x#matrix_to_atom <=lex [ elementId([5,3;int(3, 5)], x#matrix_to_atom[k]) | k : int(1..2) ]),
-(x#matrix_to_atom <=lex [ elementId([5,4;int(4, 5)], x#matrix_to_atom[k]) | k : int(1..2) ]), 
+(x#matrix_to_atom <=lex [ elementId([5,4;int(4, 5)], x#matrix_to_atom[k]) | k : int(1..2) ]),
+__minion_element_one([2,1,3,4,5],x#matrix_to_atom_1,__0),
+__minion_element_one([2,1,3,4,5],x#matrix_to_atom_2,__1), 
    ~~> index_matrix_to_atom ([("Base", 5000)])
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([2,1;int(1, 2)], x#matrix_to_atom_1),elementId([2,1;int(1, 2)], x#matrix_to_atom_2);int(1..)]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__0, __1]),
 ([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([3,1;int(1, 3)], x#matrix_to_atom_1),elementId([3,1;int(1, 3)], x#matrix_to_atom_2);int(1..)]),
 (x#matrix_to_atom <=lex [ elementId([4,1;int(1, 4)], x#matrix_to_atom[k]) | k : int(1..2) ]),
 (x#matrix_to_atom <=lex [ elementId([5,1;int(1, 5)], x#matrix_to_atom[k]) | k : int(1..2) ]),
@@ -154,7 +180,33 @@ SafeIndex(x#matrix_to_atom,[2])
 (x#matrix_to_atom <=lex [ elementId([5,2;int(2, 5)], x#matrix_to_atom[k]) | k : int(1..2) ]),
 (x#matrix_to_atom <=lex [ elementId([4,3;int(3, 4)], x#matrix_to_atom[k]) | k : int(1..2) ]),
 (x#matrix_to_atom <=lex [ elementId([5,3;int(3, 5)], x#matrix_to_atom[k]) | k : int(1..2) ]),
-(x#matrix_to_atom <=lex [ elementId([5,4;int(4, 5)], x#matrix_to_atom[k]) | k : int(1..2) ])
+(x#matrix_to_atom <=lex [ elementId([5,4;int(4, 5)], x#matrix_to_atom[k]) | k : int(1..2) ]),
+__minion_element_one([2,1,3,4,5],x#matrix_to_atom_1,__0),
+__minion_element_one([2,1,3,4,5],x#matrix_to_atom_2,__1)
+
+--
+
+([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([3,1;int(1, 3)], x#matrix_to_atom_1),elementId([3,1;int(1, 3)], x#matrix_to_atom_2);int(1..)]), 
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__2, __3])
+new variables:
+  find __2: int(1..5)
+  find __3: int(1..5)
+new constraints:
+  __2 =aux elementId([3,1;int(1, 3)], x#matrix_to_atom_1)
+  __3 =aux elementId([3,1;int(1, 3)], x#matrix_to_atom_2)
+
+--
+
+__2 =aux elementId([3,1;int(1, 3)], x#matrix_to_atom_1), 
+   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
+__minion_element_one([3,2,1,4,5],x#matrix_to_atom_1,__2)
+
+--
+
+__3 =aux elementId([3,1;int(1, 3)], x#matrix_to_atom_2), 
+   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
+__minion_element_one([3,2,1,4,5],x#matrix_to_atom_2,__3)
 
 --
 
@@ -182,8 +234,8 @@ SafeIndex(x#matrix_to_atom,[2])
 
 --
 
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([2,1;int(1, 2)], x#matrix_to_atom_1),elementId([2,1;int(1, 2)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([3,1;int(1, 3)], x#matrix_to_atom_1),elementId([3,1;int(1, 3)], x#matrix_to_atom_2);int(1..)]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__0, __1]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__2, __3]),
 ([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([4,1;int(1, 4)], SafeIndex(x#matrix_to_atom,[1])),elementId([4,1;int(1, 4)], SafeIndex(x#matrix_to_atom,[2]));int(1..)]),
 (x#matrix_to_atom <=lex [ elementId([5,1;int(1, 5)], x#matrix_to_atom[k]) | k : int(1..2) ]),
 (x#matrix_to_atom <=lex [ elementId([3,2;int(2, 3)], x#matrix_to_atom[k]) | k : int(1..2) ]),
@@ -191,10 +243,14 @@ SafeIndex(x#matrix_to_atom,[2])
 (x#matrix_to_atom <=lex [ elementId([5,2;int(2, 5)], x#matrix_to_atom[k]) | k : int(1..2) ]),
 (x#matrix_to_atom <=lex [ elementId([4,3;int(3, 4)], x#matrix_to_atom[k]) | k : int(1..2) ]),
 (x#matrix_to_atom <=lex [ elementId([5,3;int(3, 5)], x#matrix_to_atom[k]) | k : int(1..2) ]),
-(x#matrix_to_atom <=lex [ elementId([5,4;int(4, 5)], x#matrix_to_atom[k]) | k : int(1..2) ]), 
+(x#matrix_to_atom <=lex [ elementId([5,4;int(4, 5)], x#matrix_to_atom[k]) | k : int(1..2) ]),
+__minion_element_one([2,1,3,4,5],x#matrix_to_atom_1,__0),
+__minion_element_one([2,1,3,4,5],x#matrix_to_atom_2,__1),
+__minion_element_one([3,2,1,4,5],x#matrix_to_atom_1,__2),
+__minion_element_one([3,2,1,4,5],x#matrix_to_atom_2,__3), 
    ~~> index_matrix_to_atom ([("Base", 5000)])
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([2,1;int(1, 2)], x#matrix_to_atom_1),elementId([2,1;int(1, 2)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([3,1;int(1, 3)], x#matrix_to_atom_1),elementId([3,1;int(1, 3)], x#matrix_to_atom_2);int(1..)]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__0, __1]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__2, __3]),
 ([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([4,1;int(1, 4)], x#matrix_to_atom_1),elementId([4,1;int(1, 4)], x#matrix_to_atom_2);int(1..)]),
 (x#matrix_to_atom <=lex [ elementId([5,1;int(1, 5)], x#matrix_to_atom[k]) | k : int(1..2) ]),
 (x#matrix_to_atom <=lex [ elementId([3,2;int(2, 3)], x#matrix_to_atom[k]) | k : int(1..2) ]),
@@ -202,7 +258,35 @@ SafeIndex(x#matrix_to_atom,[2])
 (x#matrix_to_atom <=lex [ elementId([5,2;int(2, 5)], x#matrix_to_atom[k]) | k : int(1..2) ]),
 (x#matrix_to_atom <=lex [ elementId([4,3;int(3, 4)], x#matrix_to_atom[k]) | k : int(1..2) ]),
 (x#matrix_to_atom <=lex [ elementId([5,3;int(3, 5)], x#matrix_to_atom[k]) | k : int(1..2) ]),
-(x#matrix_to_atom <=lex [ elementId([5,4;int(4, 5)], x#matrix_to_atom[k]) | k : int(1..2) ])
+(x#matrix_to_atom <=lex [ elementId([5,4;int(4, 5)], x#matrix_to_atom[k]) | k : int(1..2) ]),
+__minion_element_one([2,1,3,4,5],x#matrix_to_atom_1,__0),
+__minion_element_one([2,1,3,4,5],x#matrix_to_atom_2,__1),
+__minion_element_one([3,2,1,4,5],x#matrix_to_atom_1,__2),
+__minion_element_one([3,2,1,4,5],x#matrix_to_atom_2,__3)
+
+--
+
+([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([4,1;int(1, 4)], x#matrix_to_atom_1),elementId([4,1;int(1, 4)], x#matrix_to_atom_2);int(1..)]), 
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__4, __5])
+new variables:
+  find __4: int(1..5)
+  find __5: int(1..5)
+new constraints:
+  __4 =aux elementId([4,1;int(1, 4)], x#matrix_to_atom_1)
+  __5 =aux elementId([4,1;int(1, 4)], x#matrix_to_atom_2)
+
+--
+
+__4 =aux elementId([4,1;int(1, 4)], x#matrix_to_atom_1), 
+   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
+__minion_element_one([4,2,3,1,5],x#matrix_to_atom_1,__4)
+
+--
+
+__5 =aux elementId([4,1;int(1, 4)], x#matrix_to_atom_2), 
+   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
+__minion_element_one([4,2,3,1,5],x#matrix_to_atom_2,__5)
 
 --
 
@@ -230,27 +314,63 @@ SafeIndex(x#matrix_to_atom,[2])
 
 --
 
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([2,1;int(1, 2)], x#matrix_to_atom_1),elementId([2,1;int(1, 2)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([3,1;int(1, 3)], x#matrix_to_atom_1),elementId([3,1;int(1, 3)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([4,1;int(1, 4)], x#matrix_to_atom_1),elementId([4,1;int(1, 4)], x#matrix_to_atom_2);int(1..)]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__0, __1]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__2, __3]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__4, __5]),
 ([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([5,1;int(1, 5)], SafeIndex(x#matrix_to_atom,[1])),elementId([5,1;int(1, 5)], SafeIndex(x#matrix_to_atom,[2]));int(1..)]),
 (x#matrix_to_atom <=lex [ elementId([3,2;int(2, 3)], x#matrix_to_atom[k]) | k : int(1..2) ]),
 (x#matrix_to_atom <=lex [ elementId([4,2;int(2, 4)], x#matrix_to_atom[k]) | k : int(1..2) ]),
 (x#matrix_to_atom <=lex [ elementId([5,2;int(2, 5)], x#matrix_to_atom[k]) | k : int(1..2) ]),
 (x#matrix_to_atom <=lex [ elementId([4,3;int(3, 4)], x#matrix_to_atom[k]) | k : int(1..2) ]),
 (x#matrix_to_atom <=lex [ elementId([5,3;int(3, 5)], x#matrix_to_atom[k]) | k : int(1..2) ]),
-(x#matrix_to_atom <=lex [ elementId([5,4;int(4, 5)], x#matrix_to_atom[k]) | k : int(1..2) ]), 
+(x#matrix_to_atom <=lex [ elementId([5,4;int(4, 5)], x#matrix_to_atom[k]) | k : int(1..2) ]),
+__minion_element_one([2,1,3,4,5],x#matrix_to_atom_1,__0),
+__minion_element_one([2,1,3,4,5],x#matrix_to_atom_2,__1),
+__minion_element_one([3,2,1,4,5],x#matrix_to_atom_1,__2),
+__minion_element_one([3,2,1,4,5],x#matrix_to_atom_2,__3),
+__minion_element_one([4,2,3,1,5],x#matrix_to_atom_1,__4),
+__minion_element_one([4,2,3,1,5],x#matrix_to_atom_2,__5), 
    ~~> index_matrix_to_atom ([("Base", 5000)])
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([2,1;int(1, 2)], x#matrix_to_atom_1),elementId([2,1;int(1, 2)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([3,1;int(1, 3)], x#matrix_to_atom_1),elementId([3,1;int(1, 3)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([4,1;int(1, 4)], x#matrix_to_atom_1),elementId([4,1;int(1, 4)], x#matrix_to_atom_2);int(1..)]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__0, __1]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__2, __3]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__4, __5]),
 ([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([5,1;int(1, 5)], x#matrix_to_atom_1),elementId([5,1;int(1, 5)], x#matrix_to_atom_2);int(1..)]),
 (x#matrix_to_atom <=lex [ elementId([3,2;int(2, 3)], x#matrix_to_atom[k]) | k : int(1..2) ]),
 (x#matrix_to_atom <=lex [ elementId([4,2;int(2, 4)], x#matrix_to_atom[k]) | k : int(1..2) ]),
 (x#matrix_to_atom <=lex [ elementId([5,2;int(2, 5)], x#matrix_to_atom[k]) | k : int(1..2) ]),
 (x#matrix_to_atom <=lex [ elementId([4,3;int(3, 4)], x#matrix_to_atom[k]) | k : int(1..2) ]),
 (x#matrix_to_atom <=lex [ elementId([5,3;int(3, 5)], x#matrix_to_atom[k]) | k : int(1..2) ]),
-(x#matrix_to_atom <=lex [ elementId([5,4;int(4, 5)], x#matrix_to_atom[k]) | k : int(1..2) ])
+(x#matrix_to_atom <=lex [ elementId([5,4;int(4, 5)], x#matrix_to_atom[k]) | k : int(1..2) ]),
+__minion_element_one([2,1,3,4,5],x#matrix_to_atom_1,__0),
+__minion_element_one([2,1,3,4,5],x#matrix_to_atom_2,__1),
+__minion_element_one([3,2,1,4,5],x#matrix_to_atom_1,__2),
+__minion_element_one([3,2,1,4,5],x#matrix_to_atom_2,__3),
+__minion_element_one([4,2,3,1,5],x#matrix_to_atom_1,__4),
+__minion_element_one([4,2,3,1,5],x#matrix_to_atom_2,__5)
+
+--
+
+([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([5,1;int(1, 5)], x#matrix_to_atom_1),elementId([5,1;int(1, 5)], x#matrix_to_atom_2);int(1..)]), 
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__6, __7])
+new variables:
+  find __6: int(1..5)
+  find __7: int(1..5)
+new constraints:
+  __6 =aux elementId([5,1;int(1, 5)], x#matrix_to_atom_1)
+  __7 =aux elementId([5,1;int(1, 5)], x#matrix_to_atom_2)
+
+--
+
+__6 =aux elementId([5,1;int(1, 5)], x#matrix_to_atom_1), 
+   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
+__minion_element_one([5,2,3,4,1],x#matrix_to_atom_1,__6)
+
+--
+
+__7 =aux elementId([5,1;int(1, 5)], x#matrix_to_atom_2), 
+   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
+__minion_element_one([5,2,3,4,1],x#matrix_to_atom_2,__7)
 
 --
 
@@ -278,27 +398,67 @@ SafeIndex(x#matrix_to_atom,[2])
 
 --
 
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([2,1;int(1, 2)], x#matrix_to_atom_1),elementId([2,1;int(1, 2)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([3,1;int(1, 3)], x#matrix_to_atom_1),elementId([3,1;int(1, 3)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([4,1;int(1, 4)], x#matrix_to_atom_1),elementId([4,1;int(1, 4)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([5,1;int(1, 5)], x#matrix_to_atom_1),elementId([5,1;int(1, 5)], x#matrix_to_atom_2);int(1..)]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__0, __1]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__2, __3]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__4, __5]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__6, __7]),
 ([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([3,2;int(2, 3)], SafeIndex(x#matrix_to_atom,[1])),elementId([3,2;int(2, 3)], SafeIndex(x#matrix_to_atom,[2]));int(1..)]),
 (x#matrix_to_atom <=lex [ elementId([4,2;int(2, 4)], x#matrix_to_atom[k]) | k : int(1..2) ]),
 (x#matrix_to_atom <=lex [ elementId([5,2;int(2, 5)], x#matrix_to_atom[k]) | k : int(1..2) ]),
 (x#matrix_to_atom <=lex [ elementId([4,3;int(3, 4)], x#matrix_to_atom[k]) | k : int(1..2) ]),
 (x#matrix_to_atom <=lex [ elementId([5,3;int(3, 5)], x#matrix_to_atom[k]) | k : int(1..2) ]),
-(x#matrix_to_atom <=lex [ elementId([5,4;int(4, 5)], x#matrix_to_atom[k]) | k : int(1..2) ]), 
+(x#matrix_to_atom <=lex [ elementId([5,4;int(4, 5)], x#matrix_to_atom[k]) | k : int(1..2) ]),
+__minion_element_one([2,1,3,4,5],x#matrix_to_atom_1,__0),
+__minion_element_one([2,1,3,4,5],x#matrix_to_atom_2,__1),
+__minion_element_one([3,2,1,4,5],x#matrix_to_atom_1,__2),
+__minion_element_one([3,2,1,4,5],x#matrix_to_atom_2,__3),
+__minion_element_one([4,2,3,1,5],x#matrix_to_atom_1,__4),
+__minion_element_one([4,2,3,1,5],x#matrix_to_atom_2,__5),
+__minion_element_one([5,2,3,4,1],x#matrix_to_atom_1,__6),
+__minion_element_one([5,2,3,4,1],x#matrix_to_atom_2,__7), 
    ~~> index_matrix_to_atom ([("Base", 5000)])
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([2,1;int(1, 2)], x#matrix_to_atom_1),elementId([2,1;int(1, 2)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([3,1;int(1, 3)], x#matrix_to_atom_1),elementId([3,1;int(1, 3)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([4,1;int(1, 4)], x#matrix_to_atom_1),elementId([4,1;int(1, 4)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([5,1;int(1, 5)], x#matrix_to_atom_1),elementId([5,1;int(1, 5)], x#matrix_to_atom_2);int(1..)]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__0, __1]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__2, __3]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__4, __5]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__6, __7]),
 ([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([3,2;int(2, 3)], x#matrix_to_atom_1),elementId([3,2;int(2, 3)], x#matrix_to_atom_2);int(1..)]),
 (x#matrix_to_atom <=lex [ elementId([4,2;int(2, 4)], x#matrix_to_atom[k]) | k : int(1..2) ]),
 (x#matrix_to_atom <=lex [ elementId([5,2;int(2, 5)], x#matrix_to_atom[k]) | k : int(1..2) ]),
 (x#matrix_to_atom <=lex [ elementId([4,3;int(3, 4)], x#matrix_to_atom[k]) | k : int(1..2) ]),
 (x#matrix_to_atom <=lex [ elementId([5,3;int(3, 5)], x#matrix_to_atom[k]) | k : int(1..2) ]),
-(x#matrix_to_atom <=lex [ elementId([5,4;int(4, 5)], x#matrix_to_atom[k]) | k : int(1..2) ])
+(x#matrix_to_atom <=lex [ elementId([5,4;int(4, 5)], x#matrix_to_atom[k]) | k : int(1..2) ]),
+__minion_element_one([2,1,3,4,5],x#matrix_to_atom_1,__0),
+__minion_element_one([2,1,3,4,5],x#matrix_to_atom_2,__1),
+__minion_element_one([3,2,1,4,5],x#matrix_to_atom_1,__2),
+__minion_element_one([3,2,1,4,5],x#matrix_to_atom_2,__3),
+__minion_element_one([4,2,3,1,5],x#matrix_to_atom_1,__4),
+__minion_element_one([4,2,3,1,5],x#matrix_to_atom_2,__5),
+__minion_element_one([5,2,3,4,1],x#matrix_to_atom_1,__6),
+__minion_element_one([5,2,3,4,1],x#matrix_to_atom_2,__7)
+
+--
+
+([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([3,2;int(2, 3)], x#matrix_to_atom_1),elementId([3,2;int(2, 3)], x#matrix_to_atom_2);int(1..)]), 
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__8, __9])
+new variables:
+  find __8: int(1..5)
+  find __9: int(1..5)
+new constraints:
+  __8 =aux elementId([3,2;int(2, 3)], x#matrix_to_atom_1)
+  __9 =aux elementId([3,2;int(2, 3)], x#matrix_to_atom_2)
+
+--
+
+__8 =aux elementId([3,2;int(2, 3)], x#matrix_to_atom_1), 
+   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
+__minion_element_one([1,3,2,4,5],x#matrix_to_atom_1,__8)
+
+--
+
+__9 =aux elementId([3,2;int(2, 3)], x#matrix_to_atom_2), 
+   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
+__minion_element_one([1,3,2,4,5],x#matrix_to_atom_2,__9)
 
 --
 
@@ -326,27 +486,71 @@ SafeIndex(x#matrix_to_atom,[2])
 
 --
 
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([2,1;int(1, 2)], x#matrix_to_atom_1),elementId([2,1;int(1, 2)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([3,1;int(1, 3)], x#matrix_to_atom_1),elementId([3,1;int(1, 3)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([4,1;int(1, 4)], x#matrix_to_atom_1),elementId([4,1;int(1, 4)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([5,1;int(1, 5)], x#matrix_to_atom_1),elementId([5,1;int(1, 5)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([3,2;int(2, 3)], x#matrix_to_atom_1),elementId([3,2;int(2, 3)], x#matrix_to_atom_2);int(1..)]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__0, __1]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__2, __3]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__4, __5]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__6, __7]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__8, __9]),
 ([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([4,2;int(2, 4)], SafeIndex(x#matrix_to_atom,[1])),elementId([4,2;int(2, 4)], SafeIndex(x#matrix_to_atom,[2]));int(1..)]),
 (x#matrix_to_atom <=lex [ elementId([5,2;int(2, 5)], x#matrix_to_atom[k]) | k : int(1..2) ]),
 (x#matrix_to_atom <=lex [ elementId([4,3;int(3, 4)], x#matrix_to_atom[k]) | k : int(1..2) ]),
 (x#matrix_to_atom <=lex [ elementId([5,3;int(3, 5)], x#matrix_to_atom[k]) | k : int(1..2) ]),
-(x#matrix_to_atom <=lex [ elementId([5,4;int(4, 5)], x#matrix_to_atom[k]) | k : int(1..2) ]), 
+(x#matrix_to_atom <=lex [ elementId([5,4;int(4, 5)], x#matrix_to_atom[k]) | k : int(1..2) ]),
+__minion_element_one([2,1,3,4,5],x#matrix_to_atom_1,__0),
+__minion_element_one([2,1,3,4,5],x#matrix_to_atom_2,__1),
+__minion_element_one([3,2,1,4,5],x#matrix_to_atom_1,__2),
+__minion_element_one([3,2,1,4,5],x#matrix_to_atom_2,__3),
+__minion_element_one([4,2,3,1,5],x#matrix_to_atom_1,__4),
+__minion_element_one([4,2,3,1,5],x#matrix_to_atom_2,__5),
+__minion_element_one([5,2,3,4,1],x#matrix_to_atom_1,__6),
+__minion_element_one([5,2,3,4,1],x#matrix_to_atom_2,__7),
+__minion_element_one([1,3,2,4,5],x#matrix_to_atom_1,__8),
+__minion_element_one([1,3,2,4,5],x#matrix_to_atom_2,__9), 
    ~~> index_matrix_to_atom ([("Base", 5000)])
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([2,1;int(1, 2)], x#matrix_to_atom_1),elementId([2,1;int(1, 2)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([3,1;int(1, 3)], x#matrix_to_atom_1),elementId([3,1;int(1, 3)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([4,1;int(1, 4)], x#matrix_to_atom_1),elementId([4,1;int(1, 4)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([5,1;int(1, 5)], x#matrix_to_atom_1),elementId([5,1;int(1, 5)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([3,2;int(2, 3)], x#matrix_to_atom_1),elementId([3,2;int(2, 3)], x#matrix_to_atom_2);int(1..)]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__0, __1]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__2, __3]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__4, __5]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__6, __7]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__8, __9]),
 ([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([4,2;int(2, 4)], x#matrix_to_atom_1),elementId([4,2;int(2, 4)], x#matrix_to_atom_2);int(1..)]),
 (x#matrix_to_atom <=lex [ elementId([5,2;int(2, 5)], x#matrix_to_atom[k]) | k : int(1..2) ]),
 (x#matrix_to_atom <=lex [ elementId([4,3;int(3, 4)], x#matrix_to_atom[k]) | k : int(1..2) ]),
 (x#matrix_to_atom <=lex [ elementId([5,3;int(3, 5)], x#matrix_to_atom[k]) | k : int(1..2) ]),
-(x#matrix_to_atom <=lex [ elementId([5,4;int(4, 5)], x#matrix_to_atom[k]) | k : int(1..2) ])
+(x#matrix_to_atom <=lex [ elementId([5,4;int(4, 5)], x#matrix_to_atom[k]) | k : int(1..2) ]),
+__minion_element_one([2,1,3,4,5],x#matrix_to_atom_1,__0),
+__minion_element_one([2,1,3,4,5],x#matrix_to_atom_2,__1),
+__minion_element_one([3,2,1,4,5],x#matrix_to_atom_1,__2),
+__minion_element_one([3,2,1,4,5],x#matrix_to_atom_2,__3),
+__minion_element_one([4,2,3,1,5],x#matrix_to_atom_1,__4),
+__minion_element_one([4,2,3,1,5],x#matrix_to_atom_2,__5),
+__minion_element_one([5,2,3,4,1],x#matrix_to_atom_1,__6),
+__minion_element_one([5,2,3,4,1],x#matrix_to_atom_2,__7),
+__minion_element_one([1,3,2,4,5],x#matrix_to_atom_1,__8),
+__minion_element_one([1,3,2,4,5],x#matrix_to_atom_2,__9)
+
+--
+
+([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([4,2;int(2, 4)], x#matrix_to_atom_1),elementId([4,2;int(2, 4)], x#matrix_to_atom_2);int(1..)]), 
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__10, __11])
+new variables:
+  find __10: int(1..5)
+  find __11: int(1..5)
+new constraints:
+  __10 =aux elementId([4,2;int(2, 4)], x#matrix_to_atom_1)
+  __11 =aux elementId([4,2;int(2, 4)], x#matrix_to_atom_2)
+
+--
+
+__10 =aux elementId([4,2;int(2, 4)], x#matrix_to_atom_1), 
+   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
+__minion_element_one([1,4,3,2,5],x#matrix_to_atom_1,__10)
+
+--
+
+__11 =aux elementId([4,2;int(2, 4)], x#matrix_to_atom_2), 
+   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
+__minion_element_one([1,4,3,2,5],x#matrix_to_atom_2,__11)
 
 --
 
@@ -374,27 +578,75 @@ SafeIndex(x#matrix_to_atom,[2])
 
 --
 
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([2,1;int(1, 2)], x#matrix_to_atom_1),elementId([2,1;int(1, 2)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([3,1;int(1, 3)], x#matrix_to_atom_1),elementId([3,1;int(1, 3)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([4,1;int(1, 4)], x#matrix_to_atom_1),elementId([4,1;int(1, 4)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([5,1;int(1, 5)], x#matrix_to_atom_1),elementId([5,1;int(1, 5)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([3,2;int(2, 3)], x#matrix_to_atom_1),elementId([3,2;int(2, 3)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([4,2;int(2, 4)], x#matrix_to_atom_1),elementId([4,2;int(2, 4)], x#matrix_to_atom_2);int(1..)]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__0, __1]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__2, __3]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__4, __5]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__6, __7]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__8, __9]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__10, __11]),
 ([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([5,2;int(2, 5)], SafeIndex(x#matrix_to_atom,[1])),elementId([5,2;int(2, 5)], SafeIndex(x#matrix_to_atom,[2]));int(1..)]),
 (x#matrix_to_atom <=lex [ elementId([4,3;int(3, 4)], x#matrix_to_atom[k]) | k : int(1..2) ]),
 (x#matrix_to_atom <=lex [ elementId([5,3;int(3, 5)], x#matrix_to_atom[k]) | k : int(1..2) ]),
-(x#matrix_to_atom <=lex [ elementId([5,4;int(4, 5)], x#matrix_to_atom[k]) | k : int(1..2) ]), 
+(x#matrix_to_atom <=lex [ elementId([5,4;int(4, 5)], x#matrix_to_atom[k]) | k : int(1..2) ]),
+__minion_element_one([2,1,3,4,5],x#matrix_to_atom_1,__0),
+__minion_element_one([2,1,3,4,5],x#matrix_to_atom_2,__1),
+__minion_element_one([3,2,1,4,5],x#matrix_to_atom_1,__2),
+__minion_element_one([3,2,1,4,5],x#matrix_to_atom_2,__3),
+__minion_element_one([4,2,3,1,5],x#matrix_to_atom_1,__4),
+__minion_element_one([4,2,3,1,5],x#matrix_to_atom_2,__5),
+__minion_element_one([5,2,3,4,1],x#matrix_to_atom_1,__6),
+__minion_element_one([5,2,3,4,1],x#matrix_to_atom_2,__7),
+__minion_element_one([1,3,2,4,5],x#matrix_to_atom_1,__8),
+__minion_element_one([1,3,2,4,5],x#matrix_to_atom_2,__9),
+__minion_element_one([1,4,3,2,5],x#matrix_to_atom_1,__10),
+__minion_element_one([1,4,3,2,5],x#matrix_to_atom_2,__11), 
    ~~> index_matrix_to_atom ([("Base", 5000)])
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([2,1;int(1, 2)], x#matrix_to_atom_1),elementId([2,1;int(1, 2)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([3,1;int(1, 3)], x#matrix_to_atom_1),elementId([3,1;int(1, 3)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([4,1;int(1, 4)], x#matrix_to_atom_1),elementId([4,1;int(1, 4)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([5,1;int(1, 5)], x#matrix_to_atom_1),elementId([5,1;int(1, 5)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([3,2;int(2, 3)], x#matrix_to_atom_1),elementId([3,2;int(2, 3)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([4,2;int(2, 4)], x#matrix_to_atom_1),elementId([4,2;int(2, 4)], x#matrix_to_atom_2);int(1..)]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__0, __1]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__2, __3]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__4, __5]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__6, __7]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__8, __9]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__10, __11]),
 ([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([5,2;int(2, 5)], x#matrix_to_atom_1),elementId([5,2;int(2, 5)], x#matrix_to_atom_2);int(1..)]),
 (x#matrix_to_atom <=lex [ elementId([4,3;int(3, 4)], x#matrix_to_atom[k]) | k : int(1..2) ]),
 (x#matrix_to_atom <=lex [ elementId([5,3;int(3, 5)], x#matrix_to_atom[k]) | k : int(1..2) ]),
-(x#matrix_to_atom <=lex [ elementId([5,4;int(4, 5)], x#matrix_to_atom[k]) | k : int(1..2) ])
+(x#matrix_to_atom <=lex [ elementId([5,4;int(4, 5)], x#matrix_to_atom[k]) | k : int(1..2) ]),
+__minion_element_one([2,1,3,4,5],x#matrix_to_atom_1,__0),
+__minion_element_one([2,1,3,4,5],x#matrix_to_atom_2,__1),
+__minion_element_one([3,2,1,4,5],x#matrix_to_atom_1,__2),
+__minion_element_one([3,2,1,4,5],x#matrix_to_atom_2,__3),
+__minion_element_one([4,2,3,1,5],x#matrix_to_atom_1,__4),
+__minion_element_one([4,2,3,1,5],x#matrix_to_atom_2,__5),
+__minion_element_one([5,2,3,4,1],x#matrix_to_atom_1,__6),
+__minion_element_one([5,2,3,4,1],x#matrix_to_atom_2,__7),
+__minion_element_one([1,3,2,4,5],x#matrix_to_atom_1,__8),
+__minion_element_one([1,3,2,4,5],x#matrix_to_atom_2,__9),
+__minion_element_one([1,4,3,2,5],x#matrix_to_atom_1,__10),
+__minion_element_one([1,4,3,2,5],x#matrix_to_atom_2,__11)
+
+--
+
+([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([5,2;int(2, 5)], x#matrix_to_atom_1),elementId([5,2;int(2, 5)], x#matrix_to_atom_2);int(1..)]), 
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__12, __13])
+new variables:
+  find __12: int(1..5)
+  find __13: int(1..5)
+new constraints:
+  __12 =aux elementId([5,2;int(2, 5)], x#matrix_to_atom_1)
+  __13 =aux elementId([5,2;int(2, 5)], x#matrix_to_atom_2)
+
+--
+
+__12 =aux elementId([5,2;int(2, 5)], x#matrix_to_atom_1), 
+   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
+__minion_element_one([1,5,3,4,2],x#matrix_to_atom_1,__12)
+
+--
+
+__13 =aux elementId([5,2;int(2, 5)], x#matrix_to_atom_2), 
+   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
+__minion_element_one([1,5,3,4,2],x#matrix_to_atom_2,__13)
 
 --
 
@@ -422,27 +674,79 @@ SafeIndex(x#matrix_to_atom,[2])
 
 --
 
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([2,1;int(1, 2)], x#matrix_to_atom_1),elementId([2,1;int(1, 2)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([3,1;int(1, 3)], x#matrix_to_atom_1),elementId([3,1;int(1, 3)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([4,1;int(1, 4)], x#matrix_to_atom_1),elementId([4,1;int(1, 4)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([5,1;int(1, 5)], x#matrix_to_atom_1),elementId([5,1;int(1, 5)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([3,2;int(2, 3)], x#matrix_to_atom_1),elementId([3,2;int(2, 3)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([4,2;int(2, 4)], x#matrix_to_atom_1),elementId([4,2;int(2, 4)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([5,2;int(2, 5)], x#matrix_to_atom_1),elementId([5,2;int(2, 5)], x#matrix_to_atom_2);int(1..)]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__0, __1]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__2, __3]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__4, __5]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__6, __7]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__8, __9]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__10, __11]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__12, __13]),
 ([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([4,3;int(3, 4)], SafeIndex(x#matrix_to_atom,[1])),elementId([4,3;int(3, 4)], SafeIndex(x#matrix_to_atom,[2]));int(1..)]),
 (x#matrix_to_atom <=lex [ elementId([5,3;int(3, 5)], x#matrix_to_atom[k]) | k : int(1..2) ]),
-(x#matrix_to_atom <=lex [ elementId([5,4;int(4, 5)], x#matrix_to_atom[k]) | k : int(1..2) ]), 
+(x#matrix_to_atom <=lex [ elementId([5,4;int(4, 5)], x#matrix_to_atom[k]) | k : int(1..2) ]),
+__minion_element_one([2,1,3,4,5],x#matrix_to_atom_1,__0),
+__minion_element_one([2,1,3,4,5],x#matrix_to_atom_2,__1),
+__minion_element_one([3,2,1,4,5],x#matrix_to_atom_1,__2),
+__minion_element_one([3,2,1,4,5],x#matrix_to_atom_2,__3),
+__minion_element_one([4,2,3,1,5],x#matrix_to_atom_1,__4),
+__minion_element_one([4,2,3,1,5],x#matrix_to_atom_2,__5),
+__minion_element_one([5,2,3,4,1],x#matrix_to_atom_1,__6),
+__minion_element_one([5,2,3,4,1],x#matrix_to_atom_2,__7),
+__minion_element_one([1,3,2,4,5],x#matrix_to_atom_1,__8),
+__minion_element_one([1,3,2,4,5],x#matrix_to_atom_2,__9),
+__minion_element_one([1,4,3,2,5],x#matrix_to_atom_1,__10),
+__minion_element_one([1,4,3,2,5],x#matrix_to_atom_2,__11),
+__minion_element_one([1,5,3,4,2],x#matrix_to_atom_1,__12),
+__minion_element_one([1,5,3,4,2],x#matrix_to_atom_2,__13), 
    ~~> index_matrix_to_atom ([("Base", 5000)])
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([2,1;int(1, 2)], x#matrix_to_atom_1),elementId([2,1;int(1, 2)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([3,1;int(1, 3)], x#matrix_to_atom_1),elementId([3,1;int(1, 3)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([4,1;int(1, 4)], x#matrix_to_atom_1),elementId([4,1;int(1, 4)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([5,1;int(1, 5)], x#matrix_to_atom_1),elementId([5,1;int(1, 5)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([3,2;int(2, 3)], x#matrix_to_atom_1),elementId([3,2;int(2, 3)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([4,2;int(2, 4)], x#matrix_to_atom_1),elementId([4,2;int(2, 4)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([5,2;int(2, 5)], x#matrix_to_atom_1),elementId([5,2;int(2, 5)], x#matrix_to_atom_2);int(1..)]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__0, __1]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__2, __3]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__4, __5]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__6, __7]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__8, __9]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__10, __11]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__12, __13]),
 ([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([4,3;int(3, 4)], x#matrix_to_atom_1),elementId([4,3;int(3, 4)], x#matrix_to_atom_2);int(1..)]),
 (x#matrix_to_atom <=lex [ elementId([5,3;int(3, 5)], x#matrix_to_atom[k]) | k : int(1..2) ]),
-(x#matrix_to_atom <=lex [ elementId([5,4;int(4, 5)], x#matrix_to_atom[k]) | k : int(1..2) ])
+(x#matrix_to_atom <=lex [ elementId([5,4;int(4, 5)], x#matrix_to_atom[k]) | k : int(1..2) ]),
+__minion_element_one([2,1,3,4,5],x#matrix_to_atom_1,__0),
+__minion_element_one([2,1,3,4,5],x#matrix_to_atom_2,__1),
+__minion_element_one([3,2,1,4,5],x#matrix_to_atom_1,__2),
+__minion_element_one([3,2,1,4,5],x#matrix_to_atom_2,__3),
+__minion_element_one([4,2,3,1,5],x#matrix_to_atom_1,__4),
+__minion_element_one([4,2,3,1,5],x#matrix_to_atom_2,__5),
+__minion_element_one([5,2,3,4,1],x#matrix_to_atom_1,__6),
+__minion_element_one([5,2,3,4,1],x#matrix_to_atom_2,__7),
+__minion_element_one([1,3,2,4,5],x#matrix_to_atom_1,__8),
+__minion_element_one([1,3,2,4,5],x#matrix_to_atom_2,__9),
+__minion_element_one([1,4,3,2,5],x#matrix_to_atom_1,__10),
+__minion_element_one([1,4,3,2,5],x#matrix_to_atom_2,__11),
+__minion_element_one([1,5,3,4,2],x#matrix_to_atom_1,__12),
+__minion_element_one([1,5,3,4,2],x#matrix_to_atom_2,__13)
+
+--
+
+([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([4,3;int(3, 4)], x#matrix_to_atom_1),elementId([4,3;int(3, 4)], x#matrix_to_atom_2);int(1..)]), 
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__14, __15])
+new variables:
+  find __14: int(1..5)
+  find __15: int(1..5)
+new constraints:
+  __14 =aux elementId([4,3;int(3, 4)], x#matrix_to_atom_1)
+  __15 =aux elementId([4,3;int(3, 4)], x#matrix_to_atom_2)
+
+--
+
+__14 =aux elementId([4,3;int(3, 4)], x#matrix_to_atom_1), 
+   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
+__minion_element_one([1,2,4,3,5],x#matrix_to_atom_1,__14)
+
+--
+
+__15 =aux elementId([4,3;int(3, 4)], x#matrix_to_atom_2), 
+   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
+__minion_element_one([1,2,4,3,5],x#matrix_to_atom_2,__15)
 
 --
 
@@ -470,27 +774,83 @@ SafeIndex(x#matrix_to_atom,[2])
 
 --
 
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([2,1;int(1, 2)], x#matrix_to_atom_1),elementId([2,1;int(1, 2)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([3,1;int(1, 3)], x#matrix_to_atom_1),elementId([3,1;int(1, 3)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([4,1;int(1, 4)], x#matrix_to_atom_1),elementId([4,1;int(1, 4)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([5,1;int(1, 5)], x#matrix_to_atom_1),elementId([5,1;int(1, 5)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([3,2;int(2, 3)], x#matrix_to_atom_1),elementId([3,2;int(2, 3)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([4,2;int(2, 4)], x#matrix_to_atom_1),elementId([4,2;int(2, 4)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([5,2;int(2, 5)], x#matrix_to_atom_1),elementId([5,2;int(2, 5)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([4,3;int(3, 4)], x#matrix_to_atom_1),elementId([4,3;int(3, 4)], x#matrix_to_atom_2);int(1..)]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__0, __1]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__2, __3]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__4, __5]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__6, __7]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__8, __9]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__10, __11]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__12, __13]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__14, __15]),
 ([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([5,3;int(3, 5)], SafeIndex(x#matrix_to_atom,[1])),elementId([5,3;int(3, 5)], SafeIndex(x#matrix_to_atom,[2]));int(1..)]),
-(x#matrix_to_atom <=lex [ elementId([5,4;int(4, 5)], x#matrix_to_atom[k]) | k : int(1..2) ]), 
+(x#matrix_to_atom <=lex [ elementId([5,4;int(4, 5)], x#matrix_to_atom[k]) | k : int(1..2) ]),
+__minion_element_one([2,1,3,4,5],x#matrix_to_atom_1,__0),
+__minion_element_one([2,1,3,4,5],x#matrix_to_atom_2,__1),
+__minion_element_one([3,2,1,4,5],x#matrix_to_atom_1,__2),
+__minion_element_one([3,2,1,4,5],x#matrix_to_atom_2,__3),
+__minion_element_one([4,2,3,1,5],x#matrix_to_atom_1,__4),
+__minion_element_one([4,2,3,1,5],x#matrix_to_atom_2,__5),
+__minion_element_one([5,2,3,4,1],x#matrix_to_atom_1,__6),
+__minion_element_one([5,2,3,4,1],x#matrix_to_atom_2,__7),
+__minion_element_one([1,3,2,4,5],x#matrix_to_atom_1,__8),
+__minion_element_one([1,3,2,4,5],x#matrix_to_atom_2,__9),
+__minion_element_one([1,4,3,2,5],x#matrix_to_atom_1,__10),
+__minion_element_one([1,4,3,2,5],x#matrix_to_atom_2,__11),
+__minion_element_one([1,5,3,4,2],x#matrix_to_atom_1,__12),
+__minion_element_one([1,5,3,4,2],x#matrix_to_atom_2,__13),
+__minion_element_one([1,2,4,3,5],x#matrix_to_atom_1,__14),
+__minion_element_one([1,2,4,3,5],x#matrix_to_atom_2,__15), 
    ~~> index_matrix_to_atom ([("Base", 5000)])
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([2,1;int(1, 2)], x#matrix_to_atom_1),elementId([2,1;int(1, 2)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([3,1;int(1, 3)], x#matrix_to_atom_1),elementId([3,1;int(1, 3)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([4,1;int(1, 4)], x#matrix_to_atom_1),elementId([4,1;int(1, 4)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([5,1;int(1, 5)], x#matrix_to_atom_1),elementId([5,1;int(1, 5)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([3,2;int(2, 3)], x#matrix_to_atom_1),elementId([3,2;int(2, 3)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([4,2;int(2, 4)], x#matrix_to_atom_1),elementId([4,2;int(2, 4)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([5,2;int(2, 5)], x#matrix_to_atom_1),elementId([5,2;int(2, 5)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([4,3;int(3, 4)], x#matrix_to_atom_1),elementId([4,3;int(3, 4)], x#matrix_to_atom_2);int(1..)]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__0, __1]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__2, __3]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__4, __5]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__6, __7]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__8, __9]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__10, __11]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__12, __13]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__14, __15]),
 ([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([5,3;int(3, 5)], x#matrix_to_atom_1),elementId([5,3;int(3, 5)], x#matrix_to_atom_2);int(1..)]),
-(x#matrix_to_atom <=lex [ elementId([5,4;int(4, 5)], x#matrix_to_atom[k]) | k : int(1..2) ])
+(x#matrix_to_atom <=lex [ elementId([5,4;int(4, 5)], x#matrix_to_atom[k]) | k : int(1..2) ]),
+__minion_element_one([2,1,3,4,5],x#matrix_to_atom_1,__0),
+__minion_element_one([2,1,3,4,5],x#matrix_to_atom_2,__1),
+__minion_element_one([3,2,1,4,5],x#matrix_to_atom_1,__2),
+__minion_element_one([3,2,1,4,5],x#matrix_to_atom_2,__3),
+__minion_element_one([4,2,3,1,5],x#matrix_to_atom_1,__4),
+__minion_element_one([4,2,3,1,5],x#matrix_to_atom_2,__5),
+__minion_element_one([5,2,3,4,1],x#matrix_to_atom_1,__6),
+__minion_element_one([5,2,3,4,1],x#matrix_to_atom_2,__7),
+__minion_element_one([1,3,2,4,5],x#matrix_to_atom_1,__8),
+__minion_element_one([1,3,2,4,5],x#matrix_to_atom_2,__9),
+__minion_element_one([1,4,3,2,5],x#matrix_to_atom_1,__10),
+__minion_element_one([1,4,3,2,5],x#matrix_to_atom_2,__11),
+__minion_element_one([1,5,3,4,2],x#matrix_to_atom_1,__12),
+__minion_element_one([1,5,3,4,2],x#matrix_to_atom_2,__13),
+__minion_element_one([1,2,4,3,5],x#matrix_to_atom_1,__14),
+__minion_element_one([1,2,4,3,5],x#matrix_to_atom_2,__15)
+
+--
+
+([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([5,3;int(3, 5)], x#matrix_to_atom_1),elementId([5,3;int(3, 5)], x#matrix_to_atom_2);int(1..)]), 
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__16, __17])
+new variables:
+  find __16: int(1..5)
+  find __17: int(1..5)
+new constraints:
+  __16 =aux elementId([5,3;int(3, 5)], x#matrix_to_atom_1)
+  __17 =aux elementId([5,3;int(3, 5)], x#matrix_to_atom_2)
+
+--
+
+__16 =aux elementId([5,3;int(3, 5)], x#matrix_to_atom_1), 
+   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
+__minion_element_one([1,2,5,4,3],x#matrix_to_atom_1,__16)
+
+--
+
+__17 =aux elementId([5,3;int(3, 5)], x#matrix_to_atom_2), 
+   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
+__minion_element_one([1,2,5,4,3],x#matrix_to_atom_2,__17)
 
 --
 
@@ -518,303 +878,69 @@ SafeIndex(x#matrix_to_atom,[2])
 
 --
 
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([2,1;int(1, 2)], x#matrix_to_atom_1),elementId([2,1;int(1, 2)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([3,1;int(1, 3)], x#matrix_to_atom_1),elementId([3,1;int(1, 3)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([4,1;int(1, 4)], x#matrix_to_atom_1),elementId([4,1;int(1, 4)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([5,1;int(1, 5)], x#matrix_to_atom_1),elementId([5,1;int(1, 5)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([3,2;int(2, 3)], x#matrix_to_atom_1),elementId([3,2;int(2, 3)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([4,2;int(2, 4)], x#matrix_to_atom_1),elementId([4,2;int(2, 4)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([5,2;int(2, 5)], x#matrix_to_atom_1),elementId([5,2;int(2, 5)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([4,3;int(3, 4)], x#matrix_to_atom_1),elementId([4,3;int(3, 4)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([5,3;int(3, 5)], x#matrix_to_atom_1),elementId([5,3;int(3, 5)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([5,4;int(4, 5)], SafeIndex(x#matrix_to_atom,[1])),elementId([5,4;int(4, 5)], SafeIndex(x#matrix_to_atom,[2]));int(1..)]), 
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__0, __1]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__2, __3]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__4, __5]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__6, __7]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__8, __9]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__10, __11]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__12, __13]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__14, __15]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__16, __17]),
+([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([5,4;int(4, 5)], SafeIndex(x#matrix_to_atom,[1])),elementId([5,4;int(4, 5)], SafeIndex(x#matrix_to_atom,[2]));int(1..)]),
+__minion_element_one([2,1,3,4,5],x#matrix_to_atom_1,__0),
+__minion_element_one([2,1,3,4,5],x#matrix_to_atom_2,__1),
+__minion_element_one([3,2,1,4,5],x#matrix_to_atom_1,__2),
+__minion_element_one([3,2,1,4,5],x#matrix_to_atom_2,__3),
+__minion_element_one([4,2,3,1,5],x#matrix_to_atom_1,__4),
+__minion_element_one([4,2,3,1,5],x#matrix_to_atom_2,__5),
+__minion_element_one([5,2,3,4,1],x#matrix_to_atom_1,__6),
+__minion_element_one([5,2,3,4,1],x#matrix_to_atom_2,__7),
+__minion_element_one([1,3,2,4,5],x#matrix_to_atom_1,__8),
+__minion_element_one([1,3,2,4,5],x#matrix_to_atom_2,__9),
+__minion_element_one([1,4,3,2,5],x#matrix_to_atom_1,__10),
+__minion_element_one([1,4,3,2,5],x#matrix_to_atom_2,__11),
+__minion_element_one([1,5,3,4,2],x#matrix_to_atom_1,__12),
+__minion_element_one([1,5,3,4,2],x#matrix_to_atom_2,__13),
+__minion_element_one([1,2,4,3,5],x#matrix_to_atom_1,__14),
+__minion_element_one([1,2,4,3,5],x#matrix_to_atom_2,__15),
+__minion_element_one([1,2,5,4,3],x#matrix_to_atom_1,__16),
+__minion_element_one([1,2,5,4,3],x#matrix_to_atom_2,__17), 
    ~~> index_matrix_to_atom ([("Base", 5000)])
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([2,1;int(1, 2)], x#matrix_to_atom_1),elementId([2,1;int(1, 2)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([3,1;int(1, 3)], x#matrix_to_atom_1),elementId([3,1;int(1, 3)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([4,1;int(1, 4)], x#matrix_to_atom_1),elementId([4,1;int(1, 4)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([5,1;int(1, 5)], x#matrix_to_atom_1),elementId([5,1;int(1, 5)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([3,2;int(2, 3)], x#matrix_to_atom_1),elementId([3,2;int(2, 3)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([4,2;int(2, 4)], x#matrix_to_atom_1),elementId([4,2;int(2, 4)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([5,2;int(2, 5)], x#matrix_to_atom_1),elementId([5,2;int(2, 5)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([4,3;int(3, 4)], x#matrix_to_atom_1),elementId([4,3;int(3, 4)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([5,3;int(3, 5)], x#matrix_to_atom_1),elementId([5,3;int(3, 5)], x#matrix_to_atom_2);int(1..)]),
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([5,4;int(4, 5)], x#matrix_to_atom_1),elementId([5,4;int(4, 5)], x#matrix_to_atom_2);int(1..)])
-
---
-
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([2,1;int(1, 2)], x#matrix_to_atom_1),elementId([2,1;int(1, 2)], x#matrix_to_atom_2);int(1..)]), 
-   ~~> flatten_matrix_literal ([("Minion", 1000)])
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [__0,__1;int(1..)])
-new variables:
-  find __0: int(1..5)
-  find __1: int(1..5)
-new constraints:
-  __0 =aux elementId([2,1;int(1, 2)], x#matrix_to_atom_1)
-  __1 =aux elementId([2,1;int(1, 2)], x#matrix_to_atom_2)
-
---
-
-__0 =aux elementId([2,1;int(1, 2)], x#matrix_to_atom_1), 
-   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
-__minion_element_one([2,1,3,4,5],x#matrix_to_atom_1,__0)
-
---
-
-__1 =aux elementId([2,1;int(1, 2)], x#matrix_to_atom_2), 
-   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
-__minion_element_one([2,1,3,4,5],x#matrix_to_atom_2,__1)
-
---
-
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [__0,__1;int(1..)]), 
-   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
-FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__0, __1])
-
---
-
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([3,1;int(1, 3)], x#matrix_to_atom_1),elementId([3,1;int(1, 3)], x#matrix_to_atom_2);int(1..)]), 
-   ~~> flatten_matrix_literal ([("Minion", 1000)])
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [__2,__3;int(1..)])
-new variables:
-  find __2: int(1..5)
-  find __3: int(1..5)
-new constraints:
-  __2 =aux elementId([3,1;int(1, 3)], x#matrix_to_atom_1)
-  __3 =aux elementId([3,1;int(1, 3)], x#matrix_to_atom_2)
-
---
-
-__2 =aux elementId([3,1;int(1, 3)], x#matrix_to_atom_1), 
-   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
-__minion_element_one([3,2,1,4,5],x#matrix_to_atom_1,__2)
-
---
-
-__3 =aux elementId([3,1;int(1, 3)], x#matrix_to_atom_2), 
-   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
-__minion_element_one([3,2,1,4,5],x#matrix_to_atom_2,__3)
-
---
-
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [__2,__3;int(1..)]), 
-   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
-FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__2, __3])
-
---
-
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([4,1;int(1, 4)], x#matrix_to_atom_1),elementId([4,1;int(1, 4)], x#matrix_to_atom_2);int(1..)]), 
-   ~~> flatten_matrix_literal ([("Minion", 1000)])
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [__4,__5;int(1..)])
-new variables:
-  find __4: int(1..5)
-  find __5: int(1..5)
-new constraints:
-  __4 =aux elementId([4,1;int(1, 4)], x#matrix_to_atom_1)
-  __5 =aux elementId([4,1;int(1, 4)], x#matrix_to_atom_2)
-
---
-
-__4 =aux elementId([4,1;int(1, 4)], x#matrix_to_atom_1), 
-   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
-__minion_element_one([4,2,3,1,5],x#matrix_to_atom_1,__4)
-
---
-
-__5 =aux elementId([4,1;int(1, 4)], x#matrix_to_atom_2), 
-   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
-__minion_element_one([4,2,3,1,5],x#matrix_to_atom_2,__5)
-
---
-
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [__4,__5;int(1..)]), 
-   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
-FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__4, __5])
-
---
-
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([5,1;int(1, 5)], x#matrix_to_atom_1),elementId([5,1;int(1, 5)], x#matrix_to_atom_2);int(1..)]), 
-   ~~> flatten_matrix_literal ([("Minion", 1000)])
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [__6,__7;int(1..)])
-new variables:
-  find __6: int(1..5)
-  find __7: int(1..5)
-new constraints:
-  __6 =aux elementId([5,1;int(1, 5)], x#matrix_to_atom_1)
-  __7 =aux elementId([5,1;int(1, 5)], x#matrix_to_atom_2)
-
---
-
-__6 =aux elementId([5,1;int(1, 5)], x#matrix_to_atom_1), 
-   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
-__minion_element_one([5,2,3,4,1],x#matrix_to_atom_1,__6)
-
---
-
-__7 =aux elementId([5,1;int(1, 5)], x#matrix_to_atom_2), 
-   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
-__minion_element_one([5,2,3,4,1],x#matrix_to_atom_2,__7)
-
---
-
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [__6,__7;int(1..)]), 
-   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
-FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__6, __7])
-
---
-
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([3,2;int(2, 3)], x#matrix_to_atom_1),elementId([3,2;int(2, 3)], x#matrix_to_atom_2);int(1..)]), 
-   ~~> flatten_matrix_literal ([("Minion", 1000)])
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [__8,__9;int(1..)])
-new variables:
-  find __8: int(1..5)
-  find __9: int(1..5)
-new constraints:
-  __8 =aux elementId([3,2;int(2, 3)], x#matrix_to_atom_1)
-  __9 =aux elementId([3,2;int(2, 3)], x#matrix_to_atom_2)
-
---
-
-__8 =aux elementId([3,2;int(2, 3)], x#matrix_to_atom_1), 
-   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
-__minion_element_one([1,3,2,4,5],x#matrix_to_atom_1,__8)
-
---
-
-__9 =aux elementId([3,2;int(2, 3)], x#matrix_to_atom_2), 
-   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
-__minion_element_one([1,3,2,4,5],x#matrix_to_atom_2,__9)
-
---
-
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [__8,__9;int(1..)]), 
-   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
-FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__8, __9])
-
---
-
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([4,2;int(2, 4)], x#matrix_to_atom_1),elementId([4,2;int(2, 4)], x#matrix_to_atom_2);int(1..)]), 
-   ~~> flatten_matrix_literal ([("Minion", 1000)])
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [__10,__11;int(1..)])
-new variables:
-  find __10: int(1..5)
-  find __11: int(1..5)
-new constraints:
-  __10 =aux elementId([4,2;int(2, 4)], x#matrix_to_atom_1)
-  __11 =aux elementId([4,2;int(2, 4)], x#matrix_to_atom_2)
-
---
-
-__10 =aux elementId([4,2;int(2, 4)], x#matrix_to_atom_1), 
-   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
-__minion_element_one([1,4,3,2,5],x#matrix_to_atom_1,__10)
-
---
-
-__11 =aux elementId([4,2;int(2, 4)], x#matrix_to_atom_2), 
-   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
-__minion_element_one([1,4,3,2,5],x#matrix_to_atom_2,__11)
-
---
-
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [__10,__11;int(1..)]), 
-   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
-FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__10, __11])
-
---
-
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([5,2;int(2, 5)], x#matrix_to_atom_1),elementId([5,2;int(2, 5)], x#matrix_to_atom_2);int(1..)]), 
-   ~~> flatten_matrix_literal ([("Minion", 1000)])
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [__12,__13;int(1..)])
-new variables:
-  find __12: int(1..5)
-  find __13: int(1..5)
-new constraints:
-  __12 =aux elementId([5,2;int(2, 5)], x#matrix_to_atom_1)
-  __13 =aux elementId([5,2;int(2, 5)], x#matrix_to_atom_2)
-
---
-
-__12 =aux elementId([5,2;int(2, 5)], x#matrix_to_atom_1), 
-   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
-__minion_element_one([1,5,3,4,2],x#matrix_to_atom_1,__12)
-
---
-
-__13 =aux elementId([5,2;int(2, 5)], x#matrix_to_atom_2), 
-   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
-__minion_element_one([1,5,3,4,2],x#matrix_to_atom_2,__13)
-
---
-
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [__12,__13;int(1..)]), 
-   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
-FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__12, __13])
-
---
-
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([4,3;int(3, 4)], x#matrix_to_atom_1),elementId([4,3;int(3, 4)], x#matrix_to_atom_2);int(1..)]), 
-   ~~> flatten_matrix_literal ([("Minion", 1000)])
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [__14,__15;int(1..)])
-new variables:
-  find __14: int(1..5)
-  find __15: int(1..5)
-new constraints:
-  __14 =aux elementId([4,3;int(3, 4)], x#matrix_to_atom_1)
-  __15 =aux elementId([4,3;int(3, 4)], x#matrix_to_atom_2)
-
---
-
-__14 =aux elementId([4,3;int(3, 4)], x#matrix_to_atom_1), 
-   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
-__minion_element_one([1,2,4,3,5],x#matrix_to_atom_1,__14)
-
---
-
-__15 =aux elementId([4,3;int(3, 4)], x#matrix_to_atom_2), 
-   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
-__minion_element_one([1,2,4,3,5],x#matrix_to_atom_2,__15)
-
---
-
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [__14,__15;int(1..)]), 
-   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
-FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__14, __15])
-
---
-
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([5,3;int(3, 5)], x#matrix_to_atom_1),elementId([5,3;int(3, 5)], x#matrix_to_atom_2);int(1..)]), 
-   ~~> flatten_matrix_literal ([("Minion", 1000)])
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [__16,__17;int(1..)])
-new variables:
-  find __16: int(1..5)
-  find __17: int(1..5)
-new constraints:
-  __16 =aux elementId([5,3;int(3, 5)], x#matrix_to_atom_1)
-  __17 =aux elementId([5,3;int(3, 5)], x#matrix_to_atom_2)
-
---
-
-__16 =aux elementId([5,3;int(3, 5)], x#matrix_to_atom_1), 
-   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
-__minion_element_one([1,2,5,4,3],x#matrix_to_atom_1,__16)
-
---
-
-__17 =aux elementId([5,3;int(3, 5)], x#matrix_to_atom_2), 
-   ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__0, __1]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__2, __3]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__4, __5]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__6, __7]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__8, __9]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__10, __11]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__12, __13]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__14, __15]),
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__16, __17]),
+([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([5,4;int(4, 5)], x#matrix_to_atom_1),elementId([5,4;int(4, 5)], x#matrix_to_atom_2);int(1..)]),
+__minion_element_one([2,1,3,4,5],x#matrix_to_atom_1,__0),
+__minion_element_one([2,1,3,4,5],x#matrix_to_atom_2,__1),
+__minion_element_one([3,2,1,4,5],x#matrix_to_atom_1,__2),
+__minion_element_one([3,2,1,4,5],x#matrix_to_atom_2,__3),
+__minion_element_one([4,2,3,1,5],x#matrix_to_atom_1,__4),
+__minion_element_one([4,2,3,1,5],x#matrix_to_atom_2,__5),
+__minion_element_one([5,2,3,4,1],x#matrix_to_atom_1,__6),
+__minion_element_one([5,2,3,4,1],x#matrix_to_atom_2,__7),
+__minion_element_one([1,3,2,4,5],x#matrix_to_atom_1,__8),
+__minion_element_one([1,3,2,4,5],x#matrix_to_atom_2,__9),
+__minion_element_one([1,4,3,2,5],x#matrix_to_atom_1,__10),
+__minion_element_one([1,4,3,2,5],x#matrix_to_atom_2,__11),
+__minion_element_one([1,5,3,4,2],x#matrix_to_atom_1,__12),
+__minion_element_one([1,5,3,4,2],x#matrix_to_atom_2,__13),
+__minion_element_one([1,2,4,3,5],x#matrix_to_atom_1,__14),
+__minion_element_one([1,2,4,3,5],x#matrix_to_atom_2,__15),
+__minion_element_one([1,2,5,4,3],x#matrix_to_atom_1,__16),
 __minion_element_one([1,2,5,4,3],x#matrix_to_atom_2,__17)
 
 --
 
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [__16,__17;int(1..)]), 
-   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
-FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__16, __17])
-
---
-
 ([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [elementId([5,4;int(4, 5)], x#matrix_to_atom_1),elementId([5,4;int(4, 5)], x#matrix_to_atom_2);int(1..)]), 
-   ~~> flatten_matrix_literal ([("Minion", 1000)])
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [__18,__19;int(1..)])
+   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
+FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__18, __19])
 new variables:
   find __18: int(1..5)
   find __19: int(1..5)
@@ -833,12 +959,6 @@ __minion_element_one([1,2,3,5,4],x#matrix_to_atom_1,__18)
 __19 =aux elementId([5,4;int(4, 5)], x#matrix_to_atom_2), 
    ~~> introduce_element_id_from_aux_decl ([("Minion", 4400)])
 __minion_element_one([1,2,3,5,4],x#matrix_to_atom_2,__19)
-
---
-
-([x#matrix_to_atom_1,x#matrix_to_atom_2;int(1..)] <=lex [__18,__19;int(1..)]), 
-   ~~> flatten_lex_lt_leq ([("Minion", 2000)])
-FlatLexLeq([x#matrix_to_atom_1, x#matrix_to_atom_2], [__18, __19])
 
 --
 
