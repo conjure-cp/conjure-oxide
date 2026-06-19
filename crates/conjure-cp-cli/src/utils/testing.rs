@@ -13,6 +13,7 @@ use std::io::{BufRead, BufReader};
 use std::sync::{Arc, RwLock};
 use uniplate::Uniplate;
 
+use conjure_cp::ast::pretty::pretty_expression_domain_annotation;
 use conjure_cp::ast::{AbstractLiteral, Expression, GroundDomain, Moo, SerdeModel};
 use conjure_cp::context::Context;
 use serde_json::{Error as JsonError, Value as JsonValue};
@@ -133,7 +134,8 @@ fn serialize_domains_expr(expr: &Expression, depth: usize, output: &mut String) 
         .map(|domain| domain.to_string())
         .unwrap_or_else(|| "<unknown>".to_owned());
     output.push_str(&" ".repeat(depth));
-    output.push_str(&format!("{expr} :: {domain}\n"));
+    output.push_str(&pretty_expression_domain_annotation(expr, domain));
+    output.push('\n');
 
     for child in expr.children() {
         serialize_domains_expr(&child, depth + 1, output);
