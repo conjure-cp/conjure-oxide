@@ -1064,7 +1064,8 @@ impl Expression {
                 if let [idx_dom] = idx_doms.as_slice() {
                     let index_domain = Domain::Ground(idx_dom.clone());
                     if matrix.as_ref().unwrap_list().is_some() {
-                        if let Some((elems, _)) = matrix.as_ref().clone().unwrap_matrix_unchecked() {
+                        if let Some((elems, _)) = matrix.as_ref().clone().unwrap_matrix_unchecked()
+                        {
                             let n = elems.len();
                             if n > 0 {
                                 return Some(Domain::int(vec![Range::Bounded(1, n as i32)]));
@@ -1076,9 +1077,7 @@ impl Expression {
                         if value_categories.contains(&Category::Decision) {
                             value
                                 .domain_of()
-                                .and_then(|value_domain| {
-                                    index_domain.union(&value_domain).ok()
-                                })
+                                .and_then(|value_domain| index_domain.union(&value_domain).ok())
                                 .map(Moo::new)
                                 .or_else(|| Some(Moo::new(index_domain)))
                         } else {

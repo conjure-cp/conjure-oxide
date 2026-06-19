@@ -190,7 +190,8 @@ pub fn to_aux_var(expr: &Expr, symbols: &SymbolTable) -> Option<ToAuxVarOutput> 
             {
                 if cfg!(debug_assertions) {
                     trace!(
-                        why = "expression has sub-expressions that are not in the decision category",
+                        why =
+                            "expression has sub-expressions that are not in the decision category",
                         "to_aux_var() failed"
                     );
                 }

@@ -67,10 +67,10 @@ fn materialise_matrix_operand(expr: &Expr) -> Option<Expr> {
         return None;
     };
 
-    if let Some(resolved) = reference.resolve_expression() {
-        if resolved.clone().unwrap_matrix_unchecked().is_some() {
-            return Some(resolved);
-        }
+    if let Some(resolved) = reference.resolve_expression()
+        && resolved.clone().unwrap_matrix_unchecked().is_some()
+    {
+        return Some(resolved);
     }
 
     if let Some(lit @ Lit::AbstractLiteral(AbstractLiteral::Matrix(_, _))) =
@@ -495,22 +495,21 @@ fn flatten_weighted_sum_product_factor(
         let indices_are_atomic = indices
             .iter()
             .all(|index| matches!(index, Expr::Atomic(_, _)));
-        if indices_are_atomic {
-            if let Expr::Atomic(_, Atom::Reference(reference)) = subject.as_ref() {
-                if matches!(
-                    reference.category_of(),
-                    Category::Parameter | Category::Constant
-                ) {
-                    let domain = expr.domain_of().ok_or(RuleNotApplicable)?;
-                    let decl = symtab.gen_find(&domain);
-                    top_level_exprs.push(Expr::AuxDeclaration(
-                        Metadata::new(),
-                        Reference::new(decl.clone()),
-                        Moo::new(expr),
-                    ));
-                    return Ok(Atom::Reference(Reference::new(decl)));
-                }
-            }
+        if indices_are_atomic
+            && let Expr::Atomic(_, Atom::Reference(reference)) = subject.as_ref()
+            && matches!(
+                reference.category_of(),
+                Category::Parameter | Category::Constant
+            )
+        {
+            let domain = expr.domain_of().ok_or(RuleNotApplicable)?;
+            let decl = symtab.gen_find(&domain);
+            top_level_exprs.push(Expr::AuxDeclaration(
+                Metadata::new(),
+                Reference::new(decl.clone()),
+                Moo::new(expr),
+            ));
+            return Ok(Atom::Reference(Reference::new(decl)));
         }
     }
 
@@ -535,7 +534,7 @@ fn flatten_weighted_sum_binary_product(
     );
     let domain = product.domain_of().ok_or(RuleNotApplicable)?;
     let decl = symtab.gen_find(&domain);
-    let aux = Atom::Reference(Reference::new(decl.clone()));
+    let aux = Atom::Reference(Reference::new(decl));
 
     top_level_exprs.push(Expr::FlatProductEq(
         Metadata::new(),
@@ -1016,7 +1015,7 @@ fn introduce_element_id_from_aux_decl(expr: &Expr, _: &SymbolTable) -> Applicati
     let value_expr = (**value).clone();
     let value_atom: Atom = value_expr.clone().try_into().or(Err(RuleNotApplicable))?;
 
-    if let Some(list) = matrix_expr.clone().unwrap_list() {
+    if let Some(list) = matrix_expr.unwrap_list() {
         let mut atom_list = vec![];
         for elem in list {
             let Expr::Atomic(_, elem) = elem else {
@@ -1393,7 +1392,10 @@ fn resolve_safeindex_element_id_aux(expr: &Expr, symbols: &SymbolTable) -> Appli
 
     Ok(Reduction::pure(Expr::Eq(
         meta.clone(),
-        Moo::new(Expr::Atomic(Metadata::new(), Atom::Reference(reference.clone()))),
+        Moo::new(Expr::Atomic(
+            Metadata::new(),
+            Atom::Reference(reference.clone()),
+        )),
         Moo::new(new_expression),
     )))
 }
@@ -1403,7 +1405,10 @@ fn resolve_safeindex_element_id_aux(expr: &Expr, symbols: &SymbolTable) -> Appli
 /// The auxiliary variable remains declared for use in lex constraints, but is not linked to an
 /// invalid index lookup.
 #[register_rule("Minion", 4450, [AuxDeclaration])]
-fn drop_invalid_constant_element_id_safeindex_aux(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+fn drop_invalid_constant_element_id_safeindex_aux(
+    expr: &Expr,
+    _: &SymbolTable,
+) -> ApplicationResult {
     let Expr::AuxDeclaration(_, _, inner) = expr else {
         return Err(RuleNotApplicable);
     };
@@ -1750,7 +1755,7 @@ fn flatten_matrix_literal(expr: &Expr, symtab: &SymbolTable) -> ApplicationResul
                     .iter()
                     .any(|index| matches!(index, Expr::ElementId(..)));
                 let subject_is_ref = matches!(**subject, Expr::Atomic(_, Atom::Reference(_)));
-                if !(index_has_element_id || !subject_is_ref) {
+                if !index_has_element_id && subject_is_ref {
                     continue;
                 }
                 // we dont normally flatten indexing expressions, but we want to do it if they are

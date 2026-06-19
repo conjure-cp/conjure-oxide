@@ -10,8 +10,8 @@ use serde_with::serde_as;
 use uniplate::{Biplate, Uniplate};
 
 use super::{
-    DeclarationPtr, Domain, DomainPtr, Expression, Model, Name, Range, SymbolTable,
-    SymbolTablePtr, Typeable,
+    DeclarationPtr, Domain, DomainPtr, Expression, Model, Name, Range, SymbolTable, SymbolTablePtr,
+    Typeable,
     ac_operators::ACOperatorKind,
     categories::{Category, CategoryOf},
     serde::{AsId, PtrAsInner},

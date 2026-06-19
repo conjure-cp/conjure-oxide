@@ -19,10 +19,7 @@ fn index_matrix_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
     (as_bottom_up(index_matrix_to_atom_impl))(expr, symbols)
 }
 
-pub(crate) fn try_index_matrix_to_atom(
-    expr: &Expr,
-    symbols: &SymbolTable,
-) -> ApplicationResult {
+pub(crate) fn try_index_matrix_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     index_matrix_to_atom_impl(expr, symbols)
 }
 

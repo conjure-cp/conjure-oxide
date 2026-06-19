@@ -1,5 +1,7 @@
 use conjure_cp::ast::matrix::safe_index_optimised;
-use conjure_cp::ast::{Atom, Expression as Expr, IntVal, Literal, Metadata, Moo, Range, SymbolTable};
+use conjure_cp::ast::{
+    Atom, Expression as Expr, IntVal, Literal, Metadata, Moo, Range, SymbolTable,
+};
 use conjure_cp::essence_expr;
 use conjure_cp::rule_engine::{ApplicationError, ApplicationResult, Reduction, register_rule};
 
