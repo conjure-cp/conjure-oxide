@@ -1,4 +1,4 @@
-use std::collections::{HashSet, VecDeque};
+use std::collections::{BTreeSet, HashSet, VecDeque};
 use std::fmt::{Display, Formatter};
 use std::hash::{DefaultHasher, Hash, Hasher};
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -34,6 +34,7 @@ use super::categories::{Category, CategoryOf};
 use super::comprehension::{Comprehension, ComprehensionQualifier};
 use super::declaration::DeclarationKind;
 use super::domains::HasDomain as _;
+use super::eval::factorial_i32;
 use super::pretty::{pretty_expression_domain_annotation, pretty_expression_type_annotation};
 use super::pretty::{pretty_expressions_as_top_level, pretty_vec};
 use super::records::FieldValue;
@@ -1032,7 +1033,19 @@ impl Expression {
             Expression::Leq(_, _, _) => Some(Domain::bool()),
             Expression::Gt(_, _, _) => Some(Domain::bool()),
             Expression::Lt(_, _, _) => Some(Domain::bool()),
-            Expression::Factorial(_, _) => None, // not implemented
+            Expression::Factorial(_, a) => {
+                let dom = a.domain_of()?.resolve()?;
+                let GroundDomain::Int(_) = dom.as_ref() else {
+                    return None;
+                };
+                let values = dom.values_i32().ok()?;
+                let values = values
+                    .into_iter()
+                    .map(factorial_i32)
+                    .collect::<Option<BTreeSet<_>>>()?;
+
+                Some(DomainPtr::from(GroundDomain::from_set_i32(&values)))
+            }
             Expression::FlatAbsEq(_, _, _) => Some(Domain::bool()),
             Expression::FlatSumGeq(_, _, _) => Some(Domain::bool()),
             Expression::FlatSumLeq(_, _, _) => Some(Domain::bool()),

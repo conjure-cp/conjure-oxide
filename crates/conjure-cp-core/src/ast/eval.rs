@@ -9,6 +9,14 @@ use itertools::{Itertools as _, izip};
 use std::cmp::Ordering as CmpOrdering;
 use std::collections::HashSet;
 
+pub(crate) fn factorial_i32(n: i32) -> Option<i32> {
+    if n < 0 {
+        return None;
+    }
+
+    (1..=n).try_fold(1_i32, i32::checked_mul)
+}
+
 /// Simplify an expression to a constant if possible
 /// Returns:
 /// `None` if the expression cannot be simplified to a constant (e.g. if it contains a variable)
@@ -526,7 +534,10 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             Lit::Int(a) => Some(Lit::Int(-a)),
             _ => None,
         },
-        Expr::Factorial(_, _) => None,
+        Expr::Factorial(_, a) => match eval_constant(a.as_ref())? {
+            Lit::Int(a) => factorial_i32(a).map(Lit::Int),
+            _ => None,
+        },
         Expr::Minus(_, a, b) => bin_op::<i32, i32>(|a, b| a - b, a, b).map(Lit::Int),
         Expr::FlatMinusEq(_, a, b) => {
             let a: i32 = a.try_into().ok()?;
