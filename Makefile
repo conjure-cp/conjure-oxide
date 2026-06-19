@@ -79,7 +79,11 @@ test-accept-with-slower-times: install
 .PHONY: test-accept-with-exact-times
 ## Runs all tests in accept mode, updates expected run times exactly, then in normal mode if golden files changed
 test-accept-with-exact-times: install
-	PATH="$$HOME/.cargo/bin:$$PATH" ACCEPT=with-exact-times $(CARGO_TEST_WORKSPACE)
+	@status=0; report_status=0; \
+	PATH="$$HOME/.cargo/bin:$$PATH" ACCEPT=with-exact-times $(CARGO_TEST_WORKSPACE) || status=$$?; \
+	python3 tools/accept-times-diff-report.py --output target/accept-times-diff.csv || report_status=$$?; \
+	if test $$report_status -ne 0; then exit $$report_status; fi; \
+	exit $$status
 	@$(RUN_NON_ACCEPTING_TESTS_IF_GOLDEN_FILES_CHANGED)
 
 .PHONY: fix

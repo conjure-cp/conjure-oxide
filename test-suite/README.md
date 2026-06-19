@@ -49,7 +49,8 @@ each stage runs; on timeout the partial snapshot is kept and `config.toml` is se
 To update `expected-time` entries, use `make test-accept-with-slower-times`. This only
 writes a new time when the rounded runtime is slower than the current value, so speedups
 remain visible as diffs. Use `make test-accept-with-exact-times` to overwrite times with
-the current observed runtime.
+the current observed runtime. The exact-times target also writes a Git-diff-based timing
+comparison CSV to `target/accept-times-diff.csv`.
 
 ### Licence
 
