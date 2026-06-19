@@ -284,37 +284,45 @@ fn slice_matrix_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
     };
 
     let mut indices_as_lits: Vec<Option<Literal>> = vec![];
-    let mut hole_dim: i32 = -1;
-    for (i, index) in indices.iter().enumerate() {
+    for index in indices {
         match index {
             Some(e) => {
                 let lit = e.clone().into_literal().ok_or(RuleNotApplicable)?;
-                indices_as_lits.push(Some(lit.clone()));
+                indices_as_lits.push(Some(lit));
             }
-            None => {
-                indices_as_lits.push(None);
-                assert_eq!(hole_dim, -1);
-                hole_dim = i as _;
-            }
+            None => indices_as_lits.push(None),
         }
     }
 
-    assert_ne!(hole_dim, -1);
+    let hole_dims: Vec<usize> = indices_as_lits
+        .iter()
+        .enumerate()
+        .filter_map(|(i, index)| index.is_none().then_some(i))
+        .collect();
+
+    if hole_dims.is_empty() {
+        return Err(RuleNotApplicable);
+    }
+
+    let hole_index_domains: Vec<_> = hole_dims
+        .iter()
+        .map(|&dim| index_domains[dim].clone())
+        .collect();
 
     let repr_values = repr.expression_down(symbols)?;
 
-    let slice = index_domains[hole_dim as usize]
-        .values()
-        .expect("index domain should be finite and enumerable")
-        .map(|i| {
-            let mut indices_as_lits = indices_as_lits.clone();
-            indices_as_lits[hole_dim as usize] = Some(i);
+    let slice = matrix::enumerate_indices(hole_index_domains)
+        .map(|hole_values| {
+            let mut full_indices = indices_as_lits.clone();
+            for (&dim, value) in hole_dims.iter().zip(hole_values) {
+                full_indices[dim] = Some(value);
+            }
             let name = Name::Represented(Box::new((
                 name.as_ref().clone(),
                 "matrix_to_atom".into(),
-                indices_as_lits
+                full_indices
                     .into_iter()
-                    .map(|x| x.unwrap())
+                    .map(|index| index.expect("all slice holes should be filled"))
                     .join("_")
                     .into(),
             )));
