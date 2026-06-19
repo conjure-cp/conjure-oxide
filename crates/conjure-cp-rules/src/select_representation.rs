@@ -221,7 +221,7 @@ fn get_or_create_representation(
         GroundDomain::Record(entries) => {
             if entries
                 .iter()
-                .any(|entry| domain_needs_representation(&entry.domain))
+                .any(|entry| domain_needs_representation(&entry.value))
             {
                 bug!("representing nested abstract domains is not implemented");
             }

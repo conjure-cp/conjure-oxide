@@ -1,4 +1,4 @@
-use conjure_cp::ast::{DeclarationPtr, DomainPtr, GroundDomain, Moo, records::FieldValue};
+use conjure_cp::ast::{DeclarationPtr, DomainPtr, GroundDomain, Moo, records::Field};
 use itertools::Itertools;
 
 use super::prelude::*;
@@ -55,7 +55,7 @@ impl Representation for RecordToAtom {
             src_var: name.clone(),
             entry_names: entries.iter().map(|entry| entry.name.clone()).collect(),
             indices,
-            elem_domain: entries.iter().map(|entry| entry.domain.clone()).collect(),
+            elem_domain: entries.iter().map(|entry| entry.value.clone()).collect(),
         })
     }
 
@@ -108,7 +108,7 @@ impl Representation for RecordToAtom {
                 return Err(ApplicationError::RuleNotApplicable);
             }
             let idx = idx - 1;
-            record.push(FieldValue {
+            record.push(Field {
                 name: self.entry_names[idx].clone(),
                 value: value.clone(),
             });
