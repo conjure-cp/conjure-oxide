@@ -137,7 +137,7 @@ pub fn log_rule_application(
 
         trace!(
             target: "rule_engine_rule_trace",
-            "{}, \n   ~~> {} ({:?})\n{}\n{}{}{}\n--\n",
+            "{}\n   ~~> {} ({:?})\n{}\n{}{}{}\n--\n",
             initial_expression,
             rule.name,
             rule.rule_sets,
