@@ -34,6 +34,11 @@ fn normalise_lex_gt_geq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// - [a,b,c] <lex [d,e,f,g] <-> [a,b,c] <=lex [d,e,f]
 /// - Everything else stays the same, with the longer matrix being chopped off
 fn lex_operand_elements(expr: &Expr) -> Result<Vec<Expr>, ApplicationError> {
+    let expr = match expr {
+        Expr::Flatten(_, None, inner) => inner.as_ref(),
+        other => other,
+    };
+
     if let Some(elems) = expr.unwrap_list() {
         return Ok(elems);
     }
