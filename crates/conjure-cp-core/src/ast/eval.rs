@@ -15,6 +15,9 @@ use std::collections::HashSet;
 /// `Some(Const)` if the expression can be simplified to a constant
 pub fn eval_constant(expr: &Expr) -> Option<Lit> {
     match expr {
+        Expr::TypeAnnotation(_, expr, _) | Expr::DomainAnnotation(_, expr, _) => {
+            eval_constant(expr)
+        }
         Expr::Supset(_, a, b) => match (a.as_ref(), b.as_ref()) {
             (
                 Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Set(a)))),

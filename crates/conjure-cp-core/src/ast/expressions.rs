@@ -34,6 +34,7 @@ use super::categories::{Category, CategoryOf};
 use super::comprehension::{Comprehension, ComprehensionQualifier};
 use super::declaration::DeclarationKind;
 use super::domains::HasDomain as _;
+use super::pretty::{pretty_expression_domain_annotation, pretty_expression_type_annotation};
 use super::pretty::{pretty_expressions_as_top_level, pretty_vec};
 use super::records::FieldValue;
 use super::sat_encoding::SATIntEncoding;
@@ -126,6 +127,12 @@ pub enum Expression {
     Metavar(Metadata, Ustr),
 
     Atomic(Metadata, Atom),
+
+    /// Type annotation expression: `expr : type`.
+    TypeAnnotation(Metadata, Moo<Expression>, ReturnType),
+
+    /// Domain annotation expression: `expr :: domain`.
+    DomainAnnotation(Metadata, Moo<Expression>, DomainPtr),
 
     /// A matrix index.
     ///
@@ -911,6 +918,8 @@ impl Expression {
             }
             Expression::InDomain(_, _, _) => Some(Domain::bool()),
             Expression::Atomic(_, atom) => Some(atom.domain_of()),
+            Expression::TypeAnnotation(_, expr, _) => expr.domain_of(),
+            Expression::DomainAnnotation(_, _, domain) => Some(domain.clone()),
             Expression::Sum(_, e) => sum_domain_of_child(e)
                 .or_else(|| bounded_i32_domain_for_matrix_literal_monotonic(e, |x, y| Some(x + y))),
             Expression::Product(_, e) => {
@@ -1679,6 +1688,8 @@ impl Expression {
             Comprehension,
             AbstractComprehension,
             DominanceRelation,
+            TypeAnnotation,
+            DomainAnnotation,
             FromSolution,
             Metavar,
             Atomic,
@@ -2147,6 +2158,12 @@ impl Display for Expression {
             Expression::FromSolution(_, expr) => write!(f, "FromSolution({expr})"),
             Expression::Metavar(_, name) => write!(f, "&{name}"),
             Expression::Atomic(_, atom) => atom.fmt(f),
+            Expression::TypeAnnotation(_, expr, ty) => {
+                write!(f, "{}", pretty_expression_type_annotation(expr, ty))
+            }
+            Expression::DomainAnnotation(_, expr, domain) => {
+                write!(f, "{}", pretty_expression_domain_annotation(expr, domain))
+            }
             Expression::Abs(_, a) | Expression::Card(_, a) => write!(f, "|{a}|"),
             Expression::Sum(_, e) => {
                 write!(f, "sum({e})")
@@ -2494,6 +2511,8 @@ impl Typeable for Expression {
             Expression::FromSolution(_, expr) => expr.return_type(),
             Expression::Metavar(_, _) => ReturnType::Unknown,
             Expression::Atomic(_, atom) => atom.return_type(),
+            Expression::TypeAnnotation(_, _, ty) => ty.clone(),
+            Expression::DomainAnnotation(_, _, domain) => domain.return_type(),
             Expression::Abs(_, _) => ReturnType::Int,
             Expression::Sum(_, _) => ReturnType::Int,
             Expression::Product(_, _) => ReturnType::Int,
@@ -2788,6 +2807,8 @@ impl Expression {
 
             // Moo<Expression>
             Expression::DominanceRelation(_, m1)
+            | Expression::TypeAnnotation(_, m1, _)
+            | Expression::DomainAnnotation(_, m1, _)
             | Expression::ToInt(_, m1)
             | Expression::Abs(_, m1)
             | Expression::Sum(_, m1)
@@ -3051,6 +3072,14 @@ impl CacheHashable for Expression {
             | Expression::ToRelation(_, m1)
             | Expression::Card(_, m1) => {
                 m1.get_cached_hash().hash(&mut hasher);
+            }
+            Expression::TypeAnnotation(_, m1, ty) => {
+                m1.get_cached_hash().hash(&mut hasher);
+                ty.hash(&mut hasher);
+            }
+            Expression::DomainAnnotation(_, m1, domain) => {
+                m1.get_cached_hash().hash(&mut hasher);
+                domain.hash(&mut hasher);
             }
 
             // Moo<Expression> + Moo<Expression>

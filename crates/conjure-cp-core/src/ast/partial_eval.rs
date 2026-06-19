@@ -218,6 +218,8 @@ pub fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
         Expr::Comprehension(_, _) => Err(RuleNotApplicable),
         Expr::AbstractComprehension(_, _) => Err(RuleNotApplicable),
         Expr::DominanceRelation(_, _) => Err(RuleNotApplicable),
+        Expr::TypeAnnotation(_, _, _) => Err(RuleNotApplicable),
+        Expr::DomainAnnotation(_, _, _) => Err(RuleNotApplicable),
         Expr::FromSolution(_, _) => Err(RuleNotApplicable),
         Expr::Metavar(_, _) => Err(RuleNotApplicable),
         Expr::UnsafeIndex(_, _, _) => Err(RuleNotApplicable),
