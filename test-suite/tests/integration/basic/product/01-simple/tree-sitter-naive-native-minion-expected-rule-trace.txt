@@ -6,31 +6,31 @@ find z: int(2..4)
 
 such that
 
-(product([product([x,y;int(1..)]),z;int(1..)]) < 15)
+product([product([x,y;int(1..)]),z;int(1..)]) < 15
 
 --
 
-product([product([x,y;int(1..)]),z;int(1..)]), 
+product([product([x,y;int(1..)]),z;int(1..)])
    ~~> normalise_associative_commutative ([("Base", 8900)])
 product([x,y,z;int(1..)])
 
 --
 
-(product([x,y,z;int(1..)]) < 15), 
+product([x,y,z;int(1..)]) < 15
    ~~> lt_to_leq ([("Minion", 8400)])
-(product([x,y,z;int(1..)]) <= sum([15,-1;int(1..)]))
+product([x,y,z;int(1..)]) <= sum([15,-1;int(1..)])
 
 --
 
-(product([x,y,z;int(1..)]) <= sum([15,-1;int(1..)])), 
+product([x,y,z;int(1..)]) <= sum([15,-1;int(1..)])
    ~~> constant_evaluator ([("Constant", 9001)])
-(product([x,y,z;int(1..)]) <= 14)
+product([x,y,z;int(1..)]) <= 14
 
 --
 
-(product([x,y,z;int(1..)]) <= 14), 
+product([x,y,z;int(1..)]) <= 14
    ~~> flatten_generic ([("Minion", 4200)])
-(__0 <= 14)
+__0 <= 14
 new variables:
   find __0: int(8..64)
 new constraints:
@@ -38,7 +38,7 @@ new constraints:
 
 --
 
-__0 =aux product([x,y,z;int(1..)]), 
+__0 =aux product([x,y,z;int(1..)])
    ~~> introduce_producteq ([("Minion", 4200)])
 FlatProductEq(z,__1,__0)
 new variables:
@@ -48,7 +48,7 @@ new constraints:
 
 --
 
-(__0 <= 14), 
+__0 <= 14
    ~~> leq_to_ineq ([("Minion", 4100)])
 Ineq(__0, 14, 0)
 

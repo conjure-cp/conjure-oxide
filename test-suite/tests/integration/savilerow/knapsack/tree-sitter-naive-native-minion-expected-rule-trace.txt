@@ -4,27 +4,27 @@ letting n be 102
 letting num_entries be 11
 letting values be [15,100,90,60,40,15,10,1,12,12,100;int(1..11)]
 letting weights be [2,20,20,30,40,30,60,10,21,12,2;int(1..11)]
-find x: matrix indexed by [int(1..num_entries)] of bool
+find x: matrix indexed by [int(1..(num_entries))] of bool
 find z: int(0..10000)
 
 such that
 
-(z = sum([ product([toInt(x[i]),values[i];int(1..)]) | i : int(1..num_entries) ])),
-(sum([ product([toInt(x[i]),weights[i];int(1..)]) | i : int(1..num_entries) ]) <= n)
+z = sum([ product([toInt(x[i]),values[i];int(1..)]) | i : int(1..(num_entries)) ]),
+sum([ product([toInt(x[i]),weights[i];int(1..)]) | i : int(1..(num_entries)) ]) <= n
 
 --
 
-n, 
+n
    ~~> constant_evaluator ([("Constant", 9001)])
 102
 
 --
 
-(z = sum([ product([toInt(x[i]),values[i];int(1..)]) | i : int(1..num_entries) ])),
-(sum([ product([toInt(x[i]),weights[i];int(1..)]) | i : int(1..num_entries) ]) <= 102), 
+z = sum([ product([toInt(x[i]),values[i];int(1..)]) | i : int(1..(num_entries)) ]),
+sum([ product([toInt(x[i]),weights[i];int(1..)]) | i : int(1..(num_entries)) ]) <= 102
    ~~> select_representation_matrix ([("Representations", 8001)])
-(z = sum([ product([toInt(x[i]),values[i];int(1..)]) | i : int(1..num_entries) ])),
-(sum([ product([toInt(x[i]),weights[i];int(1..)]) | i : int(1..num_entries) ]) <= 102)
+z = sum([ product([toInt(x[i]),values[i];int(1..)]) | i : int(1..(num_entries)) ]),
+sum([ product([toInt(x[i]),weights[i];int(1..)]) | i : int(1..(num_entries)) ]) <= 102
 new variables:
   find x#matrix_to_atom_1: bool
   find x#matrix_to_atom_10: bool
@@ -40,167 +40,167 @@ new variables:
 
 --
 
-[ product([toInt(x[i]),values[i];int(1..)]) | i : int(1..num_entries) ], 
+[ product([toInt(x[i]),values[i];int(1..)]) | i : int(1..(num_entries)) ]
    ~~> expand_comprehension_native ([("Base", 2000)])
 [product([toInt(x[1]),15;int(1..)]),product([toInt(x[2]),100;int(1..)]),product([toInt(x[3]),90;int(1..)]),product([toInt(x[4]),60;int(1..)]),product([toInt(x[5]),40;int(1..)]),product([toInt(x[6]),15;int(1..)]),product([toInt(x[7]),10;int(1..)]),product([toInt(x[8]),1;int(1..)]),product([toInt(x[9]),12;int(1..)]),product([toInt(x[10]),12;int(1..)]),product([toInt(x[11]),100;int(1..)]);int(1..)]
 
 --
 
-product([toInt(x[1]),15;int(1..)]), 
+product([toInt(x[1]),15;int(1..)])
    ~~> reorder_product ([("Base", 8800)])
 product([15,toInt(x[1]);int(1..)])
 
 --
 
-product([toInt(x[2]),100;int(1..)]), 
+product([toInt(x[2]),100;int(1..)])
    ~~> reorder_product ([("Base", 8800)])
 product([100,toInt(x[2]);int(1..)])
 
 --
 
-product([toInt(x[3]),90;int(1..)]), 
+product([toInt(x[3]),90;int(1..)])
    ~~> reorder_product ([("Base", 8800)])
 product([90,toInt(x[3]);int(1..)])
 
 --
 
-product([toInt(x[4]),60;int(1..)]), 
+product([toInt(x[4]),60;int(1..)])
    ~~> reorder_product ([("Base", 8800)])
 product([60,toInt(x[4]);int(1..)])
 
 --
 
-product([toInt(x[5]),40;int(1..)]), 
+product([toInt(x[5]),40;int(1..)])
    ~~> reorder_product ([("Base", 8800)])
 product([40,toInt(x[5]);int(1..)])
 
 --
 
-product([toInt(x[6]),15;int(1..)]), 
+product([toInt(x[6]),15;int(1..)])
    ~~> reorder_product ([("Base", 8800)])
 product([15,toInt(x[6]);int(1..)])
 
 --
 
-product([toInt(x[7]),10;int(1..)]), 
+product([toInt(x[7]),10;int(1..)])
    ~~> reorder_product ([("Base", 8800)])
 product([10,toInt(x[7]);int(1..)])
 
 --
 
-product([toInt(x[8]),1;int(1..)]), 
+product([toInt(x[8]),1;int(1..)])
    ~~> reorder_product ([("Base", 8800)])
 product([toInt(x[8]);int(1..)])
 
 --
 
-product([toInt(x[8]);int(1..)]), 
+product([toInt(x[8]);int(1..)])
    ~~> remove_unit_vector_products ([("Base", 8800)])
 toInt(x[8])
 
 --
 
-product([toInt(x[9]),12;int(1..)]), 
+product([toInt(x[9]),12;int(1..)])
    ~~> reorder_product ([("Base", 8800)])
 product([12,toInt(x[9]);int(1..)])
 
 --
 
-product([toInt(x[10]),12;int(1..)]), 
+product([toInt(x[10]),12;int(1..)])
    ~~> reorder_product ([("Base", 8800)])
 product([12,toInt(x[10]);int(1..)])
 
 --
 
-product([toInt(x[11]),100;int(1..)]), 
+product([toInt(x[11]),100;int(1..)])
    ~~> reorder_product ([("Base", 8800)])
 product([100,toInt(x[11]);int(1..)])
 
 --
 
-(z = sum([product([15,toInt(x#matrix_to_atom[1]);int(1..)]),product([100,toInt(x#matrix_to_atom[2]);int(1..)]),product([90,toInt(x#matrix_to_atom[3]);int(1..)]),product([60,toInt(x#matrix_to_atom[4]);int(1..)]),product([40,toInt(x#matrix_to_atom[5]);int(1..)]),product([15,toInt(x#matrix_to_atom[6]);int(1..)]),product([10,toInt(x#matrix_to_atom[7]);int(1..)]),toInt(x#matrix_to_atom[8]),product([12,toInt(x#matrix_to_atom[9]);int(1..)]),product([12,toInt(x#matrix_to_atom[10]);int(1..)]),product([100,toInt(x#matrix_to_atom[11]);int(1..)]);int(1..)])),
-(sum([ product([toInt(x#matrix_to_atom[i]),weights[i];int(1..)]) | i : int(1..num_entries) ]) <= 102), 
+z = sum([product([15,toInt(x#matrix_to_atom[1]);int(1..)]),product([100,toInt(x#matrix_to_atom[2]);int(1..)]),product([90,toInt(x#matrix_to_atom[3]);int(1..)]),product([60,toInt(x#matrix_to_atom[4]);int(1..)]),product([40,toInt(x#matrix_to_atom[5]);int(1..)]),product([15,toInt(x#matrix_to_atom[6]);int(1..)]),product([10,toInt(x#matrix_to_atom[7]);int(1..)]),toInt(x#matrix_to_atom[8]),product([12,toInt(x#matrix_to_atom[9]);int(1..)]),product([12,toInt(x#matrix_to_atom[10]);int(1..)]),product([100,toInt(x#matrix_to_atom[11]);int(1..)]);int(1..)]),
+sum([ product([toInt(x#matrix_to_atom[i]),weights[i];int(1..)]) | i : int(1..(num_entries)) ]) <= 102
    ~~> select_representation_matrix ([("Representations", 8001)])
-(z = sum([product([15,toInt(x#matrix_to_atom[1]);int(1..)]),product([100,toInt(x#matrix_to_atom[2]);int(1..)]),product([90,toInt(x#matrix_to_atom[3]);int(1..)]),product([60,toInt(x#matrix_to_atom[4]);int(1..)]),product([40,toInt(x#matrix_to_atom[5]);int(1..)]),product([15,toInt(x#matrix_to_atom[6]);int(1..)]),product([10,toInt(x#matrix_to_atom[7]);int(1..)]),toInt(x#matrix_to_atom[8]),product([12,toInt(x#matrix_to_atom[9]);int(1..)]),product([12,toInt(x#matrix_to_atom[10]);int(1..)]),product([100,toInt(x#matrix_to_atom[11]);int(1..)]);int(1..)])),
-(sum([ product([toInt(x#matrix_to_atom[i]),weights[i];int(1..)]) | i : int(1..num_entries) ]) <= 102)
+z = sum([product([15,toInt(x#matrix_to_atom[1]);int(1..)]),product([100,toInt(x#matrix_to_atom[2]);int(1..)]),product([90,toInt(x#matrix_to_atom[3]);int(1..)]),product([60,toInt(x#matrix_to_atom[4]);int(1..)]),product([40,toInt(x#matrix_to_atom[5]);int(1..)]),product([15,toInt(x#matrix_to_atom[6]);int(1..)]),product([10,toInt(x#matrix_to_atom[7]);int(1..)]),toInt(x#matrix_to_atom[8]),product([12,toInt(x#matrix_to_atom[9]);int(1..)]),product([12,toInt(x#matrix_to_atom[10]);int(1..)]),product([100,toInt(x#matrix_to_atom[11]);int(1..)]);int(1..)]),
+sum([ product([toInt(x#matrix_to_atom[i]),weights[i];int(1..)]) | i : int(1..(num_entries)) ]) <= 102
 
 --
 
-x#matrix_to_atom[1], 
+x#matrix_to_atom[1]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(x#matrix_to_atom,[1])
 
 --
 
-x#matrix_to_atom[2], 
+x#matrix_to_atom[2]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(x#matrix_to_atom,[2])
 
 --
 
-x#matrix_to_atom[3], 
+x#matrix_to_atom[3]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(x#matrix_to_atom,[3])
 
 --
 
-x#matrix_to_atom[4], 
+x#matrix_to_atom[4]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(x#matrix_to_atom,[4])
 
 --
 
-x#matrix_to_atom[5], 
+x#matrix_to_atom[5]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(x#matrix_to_atom,[5])
 
 --
 
-x#matrix_to_atom[6], 
+x#matrix_to_atom[6]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(x#matrix_to_atom,[6])
 
 --
 
-x#matrix_to_atom[7], 
+x#matrix_to_atom[7]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(x#matrix_to_atom,[7])
 
 --
 
-x#matrix_to_atom[8], 
+x#matrix_to_atom[8]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(x#matrix_to_atom,[8])
 
 --
 
-x#matrix_to_atom[9], 
+x#matrix_to_atom[9]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(x#matrix_to_atom,[9])
 
 --
 
-x#matrix_to_atom[10], 
+x#matrix_to_atom[10]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(x#matrix_to_atom,[10])
 
 --
 
-x#matrix_to_atom[11], 
+x#matrix_to_atom[11]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(x#matrix_to_atom,[11])
 
 --
 
-(z = sum([product([15,toInt(SafeIndex(x#matrix_to_atom,[1]));int(1..)]),product([100,toInt(SafeIndex(x#matrix_to_atom,[2]));int(1..)]),product([90,toInt(SafeIndex(x#matrix_to_atom,[3]));int(1..)]),product([60,toInt(SafeIndex(x#matrix_to_atom,[4]));int(1..)]),product([40,toInt(SafeIndex(x#matrix_to_atom,[5]));int(1..)]),product([15,toInt(SafeIndex(x#matrix_to_atom,[6]));int(1..)]),product([10,toInt(SafeIndex(x#matrix_to_atom,[7]));int(1..)]),toInt(SafeIndex(x#matrix_to_atom,[8])),product([12,toInt(SafeIndex(x#matrix_to_atom,[9]));int(1..)]),product([12,toInt(SafeIndex(x#matrix_to_atom,[10]));int(1..)]),product([100,toInt(SafeIndex(x#matrix_to_atom,[11]));int(1..)]);int(1..)])),
-(sum([ product([toInt(x#matrix_to_atom[i]),weights[i];int(1..)]) | i : int(1..num_entries) ]) <= 102), 
+z = sum([product([15,toInt(SafeIndex(x#matrix_to_atom,[1]));int(1..)]),product([100,toInt(SafeIndex(x#matrix_to_atom,[2]));int(1..)]),product([90,toInt(SafeIndex(x#matrix_to_atom,[3]));int(1..)]),product([60,toInt(SafeIndex(x#matrix_to_atom,[4]));int(1..)]),product([40,toInt(SafeIndex(x#matrix_to_atom,[5]));int(1..)]),product([15,toInt(SafeIndex(x#matrix_to_atom,[6]));int(1..)]),product([10,toInt(SafeIndex(x#matrix_to_atom,[7]));int(1..)]),toInt(SafeIndex(x#matrix_to_atom,[8])),product([12,toInt(SafeIndex(x#matrix_to_atom,[9]));int(1..)]),product([12,toInt(SafeIndex(x#matrix_to_atom,[10]));int(1..)]),product([100,toInt(SafeIndex(x#matrix_to_atom,[11]));int(1..)]);int(1..)]),
+sum([ product([toInt(x#matrix_to_atom[i]),weights[i];int(1..)]) | i : int(1..(num_entries)) ]) <= 102
    ~~> index_matrix_to_atom ([("Base", 5000)])
-(z = sum([product([15,toInt(x#matrix_to_atom_1);int(1..)]),product([100,toInt(x#matrix_to_atom_2);int(1..)]),product([90,toInt(x#matrix_to_atom_3);int(1..)]),product([60,toInt(x#matrix_to_atom_4);int(1..)]),product([40,toInt(x#matrix_to_atom_5);int(1..)]),product([15,toInt(x#matrix_to_atom_6);int(1..)]),product([10,toInt(x#matrix_to_atom_7);int(1..)]),toInt(x#matrix_to_atom_8),product([12,toInt(x#matrix_to_atom_9);int(1..)]),product([12,toInt(x#matrix_to_atom_10);int(1..)]),product([100,toInt(x#matrix_to_atom_11);int(1..)]);int(1..)])),
-(sum([ product([toInt(x#matrix_to_atom[i]),weights[i];int(1..)]) | i : int(1..num_entries) ]) <= 102)
+z = sum([product([15,toInt(x#matrix_to_atom_1);int(1..)]),product([100,toInt(x#matrix_to_atom_2);int(1..)]),product([90,toInt(x#matrix_to_atom_3);int(1..)]),product([60,toInt(x#matrix_to_atom_4);int(1..)]),product([40,toInt(x#matrix_to_atom_5);int(1..)]),product([15,toInt(x#matrix_to_atom_6);int(1..)]),product([10,toInt(x#matrix_to_atom_7);int(1..)]),toInt(x#matrix_to_atom_8),product([12,toInt(x#matrix_to_atom_9);int(1..)]),product([12,toInt(x#matrix_to_atom_10);int(1..)]),product([100,toInt(x#matrix_to_atom_11);int(1..)]);int(1..)]),
+sum([ product([toInt(x#matrix_to_atom[i]),weights[i];int(1..)]) | i : int(1..(num_entries)) ]) <= 102
 
 --
 
-(z = sum([product([15,toInt(x#matrix_to_atom_1);int(1..)]),product([100,toInt(x#matrix_to_atom_2);int(1..)]),product([90,toInt(x#matrix_to_atom_3);int(1..)]),product([60,toInt(x#matrix_to_atom_4);int(1..)]),product([40,toInt(x#matrix_to_atom_5);int(1..)]),product([15,toInt(x#matrix_to_atom_6);int(1..)]),product([10,toInt(x#matrix_to_atom_7);int(1..)]),toInt(x#matrix_to_atom_8),product([12,toInt(x#matrix_to_atom_9);int(1..)]),product([12,toInt(x#matrix_to_atom_10);int(1..)]),product([100,toInt(x#matrix_to_atom_11);int(1..)]);int(1..)])), 
+z = sum([product([15,toInt(x#matrix_to_atom_1);int(1..)]),product([100,toInt(x#matrix_to_atom_2);int(1..)]),product([90,toInt(x#matrix_to_atom_3);int(1..)]),product([60,toInt(x#matrix_to_atom_4);int(1..)]),product([40,toInt(x#matrix_to_atom_5);int(1..)]),product([15,toInt(x#matrix_to_atom_6);int(1..)]),product([10,toInt(x#matrix_to_atom_7);int(1..)]),toInt(x#matrix_to_atom_8),product([12,toInt(x#matrix_to_atom_9);int(1..)]),product([12,toInt(x#matrix_to_atom_10);int(1..)]),product([100,toInt(x#matrix_to_atom_11);int(1..)]);int(1..)])
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
 and([FlatWeightedSumLeq([15, 100, 100, 90, 60, 40, 15, 10, 1, 12, 12],[__0, __1, __10, __2, __3, __4, __5, __6, __7, __8, __9],z),FlatWeightedSumGeq([15, 100, 100, 90, 60, 40, 15, 10, 1, 12, 12],[__0, __1, __10, __2, __3, __4, __5, __6, __7, __8, __9],z);int(1..)])
 new variables:
@@ -216,184 +216,244 @@ new variables:
   find __9: int(0..1)
   find __10: int(0..1)
 new constraints:
-  __0 =aux toInt(x#matrix_to_atom_1)
-  __1 =aux toInt(x#matrix_to_atom_2)
-  __2 =aux toInt(x#matrix_to_atom_3)
-  __3 =aux toInt(x#matrix_to_atom_4)
-  __4 =aux toInt(x#matrix_to_atom_5)
-  __5 =aux toInt(x#matrix_to_atom_6)
-  __6 =aux toInt(x#matrix_to_atom_7)
+  __0 =aux product([toInt(x#matrix_to_atom_1);int(1..)])
+  __1 =aux product([toInt(x#matrix_to_atom_2);int(1..)])
+  __2 =aux product([toInt(x#matrix_to_atom_3);int(1..)])
+  __3 =aux product([toInt(x#matrix_to_atom_4);int(1..)])
+  __4 =aux product([toInt(x#matrix_to_atom_5);int(1..)])
+  __5 =aux product([toInt(x#matrix_to_atom_6);int(1..)])
+  __6 =aux product([toInt(x#matrix_to_atom_7);int(1..)])
   __7 =aux toInt(x#matrix_to_atom_8)
-  __8 =aux toInt(x#matrix_to_atom_9)
-  __9 =aux toInt(x#matrix_to_atom_10)
-  __10 =aux toInt(x#matrix_to_atom_11)
+  __8 =aux product([toInt(x#matrix_to_atom_9);int(1..)])
+  __9 =aux product([toInt(x#matrix_to_atom_10);int(1..)])
+  __10 =aux product([toInt(x#matrix_to_atom_11);int(1..)])
 
 --
 
 and([FlatWeightedSumLeq([15, 100, 100, 90, 60, 40, 15, 10, 1, 12, 12],[__0, __1, __10, __2, __3, __4, __5, __6, __7, __8, __9],z),FlatWeightedSumGeq([15, 100, 100, 90, 60, 40, 15, 10, 1, 12, 12],[__0, __1, __10, __2, __3, __4, __5, __6, __7, __8, __9],z);int(1..)]),
-(sum([ product([toInt(x#matrix_to_atom[i]),weights[i];int(1..)]) | i : int(1..num_entries) ]) <= 102),
-__0 =aux toInt(x#matrix_to_atom_1),
-__1 =aux toInt(x#matrix_to_atom_2),
-__2 =aux toInt(x#matrix_to_atom_3),
-__3 =aux toInt(x#matrix_to_atom_4),
-__4 =aux toInt(x#matrix_to_atom_5),
-__5 =aux toInt(x#matrix_to_atom_6),
-__6 =aux toInt(x#matrix_to_atom_7),
+sum([ product([toInt(x#matrix_to_atom[i]),weights[i];int(1..)]) | i : int(1..(num_entries)) ]) <= 102,
+__0 =aux product([toInt(x#matrix_to_atom_1);int(1..)]),
+__1 =aux product([toInt(x#matrix_to_atom_2);int(1..)]),
+__2 =aux product([toInt(x#matrix_to_atom_3);int(1..)]),
+__3 =aux product([toInt(x#matrix_to_atom_4);int(1..)]),
+__4 =aux product([toInt(x#matrix_to_atom_5);int(1..)]),
+__5 =aux product([toInt(x#matrix_to_atom_6);int(1..)]),
+__6 =aux product([toInt(x#matrix_to_atom_7);int(1..)]),
 __7 =aux toInt(x#matrix_to_atom_8),
-__8 =aux toInt(x#matrix_to_atom_9),
-__9 =aux toInt(x#matrix_to_atom_10),
-__10 =aux toInt(x#matrix_to_atom_11), 
+__8 =aux product([toInt(x#matrix_to_atom_9);int(1..)]),
+__9 =aux product([toInt(x#matrix_to_atom_10);int(1..)]),
+__10 =aux product([toInt(x#matrix_to_atom_11);int(1..)])
    ~~> constant_evaluator ([("Constant", 9001)])
 FlatWeightedSumLeq([15, 100, 100, 90, 60, 40, 15, 10, 1, 12, 12],[__0, __1, __10, __2, __3, __4, __5, __6, __7, __8, __9],z),
 FlatWeightedSumGeq([15, 100, 100, 90, 60, 40, 15, 10, 1, 12, 12],[__0, __1, __10, __2, __3, __4, __5, __6, __7, __8, __9],z),
-(sum([ product([toInt(x#matrix_to_atom[i]),weights[i];int(1..)]) | i : int(1..num_entries) ]) <= 102),
-__0 =aux toInt(x#matrix_to_atom_1),
-__1 =aux toInt(x#matrix_to_atom_2),
-__2 =aux toInt(x#matrix_to_atom_3),
-__3 =aux toInt(x#matrix_to_atom_4),
-__4 =aux toInt(x#matrix_to_atom_5),
-__5 =aux toInt(x#matrix_to_atom_6),
-__6 =aux toInt(x#matrix_to_atom_7),
+sum([ product([toInt(x#matrix_to_atom[i]),weights[i];int(1..)]) | i : int(1..(num_entries)) ]) <= 102,
+__0 =aux product([toInt(x#matrix_to_atom_1);int(1..)]),
+__1 =aux product([toInt(x#matrix_to_atom_2);int(1..)]),
+__2 =aux product([toInt(x#matrix_to_atom_3);int(1..)]),
+__3 =aux product([toInt(x#matrix_to_atom_4);int(1..)]),
+__4 =aux product([toInt(x#matrix_to_atom_5);int(1..)]),
+__5 =aux product([toInt(x#matrix_to_atom_6);int(1..)]),
+__6 =aux product([toInt(x#matrix_to_atom_7);int(1..)]),
 __7 =aux toInt(x#matrix_to_atom_8),
-__8 =aux toInt(x#matrix_to_atom_9),
-__9 =aux toInt(x#matrix_to_atom_10),
-__10 =aux toInt(x#matrix_to_atom_11)
+__8 =aux product([toInt(x#matrix_to_atom_9);int(1..)]),
+__9 =aux product([toInt(x#matrix_to_atom_10);int(1..)]),
+__10 =aux product([toInt(x#matrix_to_atom_11);int(1..)])
 
 --
 
-[ product([toInt(x#matrix_to_atom[i]),weights[i];int(1..)]) | i : int(1..num_entries) ], 
+product([toInt(x#matrix_to_atom_1);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#matrix_to_atom_1)
+
+--
+
+product([toInt(x#matrix_to_atom_2);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#matrix_to_atom_2)
+
+--
+
+product([toInt(x#matrix_to_atom_3);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#matrix_to_atom_3)
+
+--
+
+product([toInt(x#matrix_to_atom_4);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#matrix_to_atom_4)
+
+--
+
+product([toInt(x#matrix_to_atom_5);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#matrix_to_atom_5)
+
+--
+
+product([toInt(x#matrix_to_atom_6);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#matrix_to_atom_6)
+
+--
+
+product([toInt(x#matrix_to_atom_7);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#matrix_to_atom_7)
+
+--
+
+product([toInt(x#matrix_to_atom_9);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#matrix_to_atom_9)
+
+--
+
+product([toInt(x#matrix_to_atom_10);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#matrix_to_atom_10)
+
+--
+
+product([toInt(x#matrix_to_atom_11);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#matrix_to_atom_11)
+
+--
+
+[ product([toInt(x#matrix_to_atom[i]),weights[i];int(1..)]) | i : int(1..(num_entries)) ]
    ~~> expand_comprehension_native ([("Base", 2000)])
 [product([toInt(x#matrix_to_atom[1]),2;int(1..)]),product([toInt(x#matrix_to_atom[2]),20;int(1..)]),product([toInt(x#matrix_to_atom[3]),20;int(1..)]),product([toInt(x#matrix_to_atom[4]),30;int(1..)]),product([toInt(x#matrix_to_atom[5]),40;int(1..)]),product([toInt(x#matrix_to_atom[6]),30;int(1..)]),product([toInt(x#matrix_to_atom[7]),60;int(1..)]),product([toInt(x#matrix_to_atom[8]),10;int(1..)]),product([toInt(x#matrix_to_atom[9]),21;int(1..)]),product([toInt(x#matrix_to_atom[10]),12;int(1..)]),product([toInt(x#matrix_to_atom[11]),2;int(1..)]);int(1..)]
 
 --
 
-product([toInt(x#matrix_to_atom[1]),2;int(1..)]), 
+product([toInt(x#matrix_to_atom[1]),2;int(1..)])
    ~~> reorder_product ([("Base", 8800)])
 product([2,toInt(x#matrix_to_atom[1]);int(1..)])
 
 --
 
-product([toInt(x#matrix_to_atom[2]),20;int(1..)]), 
+product([toInt(x#matrix_to_atom[2]),20;int(1..)])
    ~~> reorder_product ([("Base", 8800)])
 product([20,toInt(x#matrix_to_atom[2]);int(1..)])
 
 --
 
-product([toInt(x#matrix_to_atom[3]),20;int(1..)]), 
+product([toInt(x#matrix_to_atom[3]),20;int(1..)])
    ~~> reorder_product ([("Base", 8800)])
 product([20,toInt(x#matrix_to_atom[3]);int(1..)])
 
 --
 
-product([toInt(x#matrix_to_atom[4]),30;int(1..)]), 
+product([toInt(x#matrix_to_atom[4]),30;int(1..)])
    ~~> reorder_product ([("Base", 8800)])
 product([30,toInt(x#matrix_to_atom[4]);int(1..)])
 
 --
 
-product([toInt(x#matrix_to_atom[5]),40;int(1..)]), 
+product([toInt(x#matrix_to_atom[5]),40;int(1..)])
    ~~> reorder_product ([("Base", 8800)])
 product([40,toInt(x#matrix_to_atom[5]);int(1..)])
 
 --
 
-product([toInt(x#matrix_to_atom[6]),30;int(1..)]), 
+product([toInt(x#matrix_to_atom[6]),30;int(1..)])
    ~~> reorder_product ([("Base", 8800)])
 product([30,toInt(x#matrix_to_atom[6]);int(1..)])
 
 --
 
-product([toInt(x#matrix_to_atom[7]),60;int(1..)]), 
+product([toInt(x#matrix_to_atom[7]),60;int(1..)])
    ~~> reorder_product ([("Base", 8800)])
 product([60,toInt(x#matrix_to_atom[7]);int(1..)])
 
 --
 
-product([toInt(x#matrix_to_atom[8]),10;int(1..)]), 
+product([toInt(x#matrix_to_atom[8]),10;int(1..)])
    ~~> reorder_product ([("Base", 8800)])
 product([10,toInt(x#matrix_to_atom[8]);int(1..)])
 
 --
 
-product([toInt(x#matrix_to_atom[9]),21;int(1..)]), 
+product([toInt(x#matrix_to_atom[9]),21;int(1..)])
    ~~> reorder_product ([("Base", 8800)])
 product([21,toInt(x#matrix_to_atom[9]);int(1..)])
 
 --
 
-product([toInt(x#matrix_to_atom[10]),12;int(1..)]), 
+product([toInt(x#matrix_to_atom[10]),12;int(1..)])
    ~~> reorder_product ([("Base", 8800)])
 product([12,toInt(x#matrix_to_atom[10]);int(1..)])
 
 --
 
-product([toInt(x#matrix_to_atom[11]),2;int(1..)]), 
+product([toInt(x#matrix_to_atom[11]),2;int(1..)])
    ~~> reorder_product ([("Base", 8800)])
 product([2,toInt(x#matrix_to_atom[11]);int(1..)])
 
 --
 
-x#matrix_to_atom[1], 
+x#matrix_to_atom[1]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(x#matrix_to_atom,[1])
 
 --
 
-x#matrix_to_atom[2], 
+x#matrix_to_atom[2]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(x#matrix_to_atom,[2])
 
 --
 
-x#matrix_to_atom[3], 
+x#matrix_to_atom[3]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(x#matrix_to_atom,[3])
 
 --
 
-x#matrix_to_atom[4], 
+x#matrix_to_atom[4]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(x#matrix_to_atom,[4])
 
 --
 
-x#matrix_to_atom[5], 
+x#matrix_to_atom[5]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(x#matrix_to_atom,[5])
 
 --
 
-x#matrix_to_atom[6], 
+x#matrix_to_atom[6]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(x#matrix_to_atom,[6])
 
 --
 
-x#matrix_to_atom[7], 
+x#matrix_to_atom[7]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(x#matrix_to_atom,[7])
 
 --
 
-x#matrix_to_atom[8], 
+x#matrix_to_atom[8]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(x#matrix_to_atom,[8])
 
 --
 
-x#matrix_to_atom[9], 
+x#matrix_to_atom[9]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(x#matrix_to_atom,[9])
 
 --
 
-x#matrix_to_atom[10], 
+x#matrix_to_atom[10]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(x#matrix_to_atom,[10])
 
 --
 
-x#matrix_to_atom[11], 
+x#matrix_to_atom[11]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(x#matrix_to_atom,[11])
 
@@ -401,7 +461,7 @@ SafeIndex(x#matrix_to_atom,[11])
 
 FlatWeightedSumLeq([15, 100, 100, 90, 60, 40, 15, 10, 1, 12, 12],[__0, __1, __10, __2, __3, __4, __5, __6, __7, __8, __9],z),
 FlatWeightedSumGeq([15, 100, 100, 90, 60, 40, 15, 10, 1, 12, 12],[__0, __1, __10, __2, __3, __4, __5, __6, __7, __8, __9],z),
-(sum([product([2,toInt(SafeIndex(x#matrix_to_atom,[1]));int(1..)]),product([20,toInt(SafeIndex(x#matrix_to_atom,[2]));int(1..)]),product([20,toInt(SafeIndex(x#matrix_to_atom,[3]));int(1..)]),product([30,toInt(SafeIndex(x#matrix_to_atom,[4]));int(1..)]),product([40,toInt(SafeIndex(x#matrix_to_atom,[5]));int(1..)]),product([30,toInt(SafeIndex(x#matrix_to_atom,[6]));int(1..)]),product([60,toInt(SafeIndex(x#matrix_to_atom,[7]));int(1..)]),product([10,toInt(SafeIndex(x#matrix_to_atom,[8]));int(1..)]),product([21,toInt(SafeIndex(x#matrix_to_atom,[9]));int(1..)]),product([12,toInt(SafeIndex(x#matrix_to_atom,[10]));int(1..)]),product([2,toInt(SafeIndex(x#matrix_to_atom,[11]));int(1..)]);int(1..)]) <= 102),
+sum([product([2,toInt(SafeIndex(x#matrix_to_atom,[1]));int(1..)]),product([20,toInt(SafeIndex(x#matrix_to_atom,[2]));int(1..)]),product([20,toInt(SafeIndex(x#matrix_to_atom,[3]));int(1..)]),product([30,toInt(SafeIndex(x#matrix_to_atom,[4]));int(1..)]),product([40,toInt(SafeIndex(x#matrix_to_atom,[5]));int(1..)]),product([30,toInt(SafeIndex(x#matrix_to_atom,[6]));int(1..)]),product([60,toInt(SafeIndex(x#matrix_to_atom,[7]));int(1..)]),product([10,toInt(SafeIndex(x#matrix_to_atom,[8]));int(1..)]),product([21,toInt(SafeIndex(x#matrix_to_atom,[9]));int(1..)]),product([12,toInt(SafeIndex(x#matrix_to_atom,[10]));int(1..)]),product([2,toInt(SafeIndex(x#matrix_to_atom,[11]));int(1..)]);int(1..)]) <= 102,
 __0 =aux toInt(x#matrix_to_atom_1),
 __1 =aux toInt(x#matrix_to_atom_2),
 __2 =aux toInt(x#matrix_to_atom_3),
@@ -412,11 +472,11 @@ __6 =aux toInt(x#matrix_to_atom_7),
 __7 =aux toInt(x#matrix_to_atom_8),
 __8 =aux toInt(x#matrix_to_atom_9),
 __9 =aux toInt(x#matrix_to_atom_10),
-__10 =aux toInt(x#matrix_to_atom_11), 
+__10 =aux toInt(x#matrix_to_atom_11)
    ~~> index_matrix_to_atom ([("Base", 5000)])
 FlatWeightedSumLeq([15, 100, 100, 90, 60, 40, 15, 10, 1, 12, 12],[__0, __1, __10, __2, __3, __4, __5, __6, __7, __8, __9],z),
 FlatWeightedSumGeq([15, 100, 100, 90, 60, 40, 15, 10, 1, 12, 12],[__0, __1, __10, __2, __3, __4, __5, __6, __7, __8, __9],z),
-(sum([product([2,toInt(x#matrix_to_atom_1);int(1..)]),product([20,toInt(x#matrix_to_atom_2);int(1..)]),product([20,toInt(x#matrix_to_atom_3);int(1..)]),product([30,toInt(x#matrix_to_atom_4);int(1..)]),product([40,toInt(x#matrix_to_atom_5);int(1..)]),product([30,toInt(x#matrix_to_atom_6);int(1..)]),product([60,toInt(x#matrix_to_atom_7);int(1..)]),product([10,toInt(x#matrix_to_atom_8);int(1..)]),product([21,toInt(x#matrix_to_atom_9);int(1..)]),product([12,toInt(x#matrix_to_atom_10);int(1..)]),product([2,toInt(x#matrix_to_atom_11);int(1..)]);int(1..)]) <= 102),
+sum([product([2,toInt(x#matrix_to_atom_1);int(1..)]),product([20,toInt(x#matrix_to_atom_2);int(1..)]),product([20,toInt(x#matrix_to_atom_3);int(1..)]),product([30,toInt(x#matrix_to_atom_4);int(1..)]),product([40,toInt(x#matrix_to_atom_5);int(1..)]),product([30,toInt(x#matrix_to_atom_6);int(1..)]),product([60,toInt(x#matrix_to_atom_7);int(1..)]),product([10,toInt(x#matrix_to_atom_8);int(1..)]),product([21,toInt(x#matrix_to_atom_9);int(1..)]),product([12,toInt(x#matrix_to_atom_10);int(1..)]),product([2,toInt(x#matrix_to_atom_11);int(1..)]);int(1..)]) <= 102,
 __0 =aux toInt(x#matrix_to_atom_1),
 __1 =aux toInt(x#matrix_to_atom_2),
 __2 =aux toInt(x#matrix_to_atom_3),
@@ -431,7 +491,7 @@ __10 =aux toInt(x#matrix_to_atom_11)
 
 --
 
-(sum([product([2,toInt(x#matrix_to_atom_1);int(1..)]),product([20,toInt(x#matrix_to_atom_2);int(1..)]),product([20,toInt(x#matrix_to_atom_3);int(1..)]),product([30,toInt(x#matrix_to_atom_4);int(1..)]),product([40,toInt(x#matrix_to_atom_5);int(1..)]),product([30,toInt(x#matrix_to_atom_6);int(1..)]),product([60,toInt(x#matrix_to_atom_7);int(1..)]),product([10,toInt(x#matrix_to_atom_8);int(1..)]),product([21,toInt(x#matrix_to_atom_9);int(1..)]),product([12,toInt(x#matrix_to_atom_10);int(1..)]),product([2,toInt(x#matrix_to_atom_11);int(1..)]);int(1..)]) <= 102), 
+sum([product([2,toInt(x#matrix_to_atom_1);int(1..)]),product([20,toInt(x#matrix_to_atom_2);int(1..)]),product([20,toInt(x#matrix_to_atom_3);int(1..)]),product([30,toInt(x#matrix_to_atom_4);int(1..)]),product([40,toInt(x#matrix_to_atom_5);int(1..)]),product([30,toInt(x#matrix_to_atom_6);int(1..)]),product([60,toInt(x#matrix_to_atom_7);int(1..)]),product([10,toInt(x#matrix_to_atom_8);int(1..)]),product([21,toInt(x#matrix_to_atom_9);int(1..)]),product([12,toInt(x#matrix_to_atom_10);int(1..)]),product([2,toInt(x#matrix_to_atom_11);int(1..)]);int(1..)]) <= 102
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
 FlatWeightedSumLeq([2, 20, 20, 30, 40, 30, 60, 10, 21, 12, 2],[__11, __12, __13, __14, __15, __16, __17, __18, __19, __20, __21],102)
 new variables:
@@ -447,17 +507,83 @@ new variables:
   find __20: int(0..1)
   find __21: int(0..1)
 new constraints:
-  __11 =aux toInt(x#matrix_to_atom_1)
-  __12 =aux toInt(x#matrix_to_atom_2)
-  __13 =aux toInt(x#matrix_to_atom_3)
-  __14 =aux toInt(x#matrix_to_atom_4)
-  __15 =aux toInt(x#matrix_to_atom_5)
-  __16 =aux toInt(x#matrix_to_atom_6)
-  __17 =aux toInt(x#matrix_to_atom_7)
-  __18 =aux toInt(x#matrix_to_atom_8)
-  __19 =aux toInt(x#matrix_to_atom_9)
-  __20 =aux toInt(x#matrix_to_atom_10)
-  __21 =aux toInt(x#matrix_to_atom_11)
+  __11 =aux product([toInt(x#matrix_to_atom_1);int(1..)])
+  __12 =aux product([toInt(x#matrix_to_atom_2);int(1..)])
+  __13 =aux product([toInt(x#matrix_to_atom_3);int(1..)])
+  __14 =aux product([toInt(x#matrix_to_atom_4);int(1..)])
+  __15 =aux product([toInt(x#matrix_to_atom_5);int(1..)])
+  __16 =aux product([toInt(x#matrix_to_atom_6);int(1..)])
+  __17 =aux product([toInt(x#matrix_to_atom_7);int(1..)])
+  __18 =aux product([toInt(x#matrix_to_atom_8);int(1..)])
+  __19 =aux product([toInt(x#matrix_to_atom_9);int(1..)])
+  __20 =aux product([toInt(x#matrix_to_atom_10);int(1..)])
+  __21 =aux product([toInt(x#matrix_to_atom_11);int(1..)])
+
+--
+
+product([toInt(x#matrix_to_atom_1);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#matrix_to_atom_1)
+
+--
+
+product([toInt(x#matrix_to_atom_2);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#matrix_to_atom_2)
+
+--
+
+product([toInt(x#matrix_to_atom_3);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#matrix_to_atom_3)
+
+--
+
+product([toInt(x#matrix_to_atom_4);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#matrix_to_atom_4)
+
+--
+
+product([toInt(x#matrix_to_atom_5);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#matrix_to_atom_5)
+
+--
+
+product([toInt(x#matrix_to_atom_6);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#matrix_to_atom_6)
+
+--
+
+product([toInt(x#matrix_to_atom_7);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#matrix_to_atom_7)
+
+--
+
+product([toInt(x#matrix_to_atom_8);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#matrix_to_atom_8)
+
+--
+
+product([toInt(x#matrix_to_atom_9);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#matrix_to_atom_9)
+
+--
+
+product([toInt(x#matrix_to_atom_10);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#matrix_to_atom_10)
+
+--
+
+product([toInt(x#matrix_to_atom_11);int(1..)])
+   ~~> remove_unit_vector_products ([("Base", 8800)])
+toInt(x#matrix_to_atom_11)
 
 --
 
@@ -467,7 +593,7 @@ letting n be 102
 letting num_entries be 11
 letting values be [15,100,90,60,40,15,10,1,12,12,100;int(1..11)]
 letting weights be [2,20,20,30,40,30,60,10,21,12,2;int(1..11)]
-find x: matrix indexed by [int(1..num_entries)] of bool
+find x: matrix indexed by [int(1..(num_entries))] of bool
 find z: int(0..10000)
 find x#matrix_to_atom_1: bool
 find x#matrix_to_atom_2: bool

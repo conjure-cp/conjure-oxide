@@ -5,46 +5,46 @@ find m2: matrix indexed by [int(1)] of bool
 
 such that
 
-(m != m2)
+m != m2
 
 --
 
-(m#matrix_to_atom != m2#matrix_to_atom), 
+m#matrix_to_atom != m2#matrix_to_atom
    ~~> select_representation_matrix ([("Representations", 8001)])
-(m#matrix_to_atom != m2#matrix_to_atom)
+m#matrix_to_atom != m2#matrix_to_atom
 new variables:
   find m#matrix_to_atom_1: bool
   find m2#matrix_to_atom_1: bool
 
 --
 
-(m#matrix_to_atom != m2#matrix_to_atom), 
+m#matrix_to_atom != m2#matrix_to_atom
    ~~> flatten_matrix_eq_neq ([("Base", 3000)])
-or([(m#matrix_to_atom[1] != m2#matrix_to_atom[1]);int(1..)])
+or([m#matrix_to_atom[1] != m2#matrix_to_atom[1];int(1..)])
 
 --
 
-or([(m#matrix_to_atom[1] != m2#matrix_to_atom[1]);int(1..)]), 
+or([m#matrix_to_atom[1] != m2#matrix_to_atom[1];int(1..)])
    ~~> remove_unit_vector_or ([("Base", 8800)])
-(m#matrix_to_atom[1] != m2#matrix_to_atom[1])
+m#matrix_to_atom[1] != m2#matrix_to_atom[1]
 
 --
 
-m#matrix_to_atom[1], 
+m#matrix_to_atom[1]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(m#matrix_to_atom,[1])
 
 --
 
-m2#matrix_to_atom[1], 
+m2#matrix_to_atom[1]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(m2#matrix_to_atom,[1])
 
 --
 
-(SafeIndex(m#matrix_to_atom,[1]) != SafeIndex(m2#matrix_to_atom,[1])), 
+SafeIndex(m#matrix_to_atom,[1]) != SafeIndex(m2#matrix_to_atom,[1])
    ~~> index_matrix_to_atom ([("Base", 5000)])
-(m#matrix_to_atom_1 != m2#matrix_to_atom_1)
+m#matrix_to_atom_1 != m2#matrix_to_atom_1
 
 --
 
@@ -57,5 +57,5 @@ find m2#matrix_to_atom_1: bool
 
 such that
 
-(m#matrix_to_atom_1 != m2#matrix_to_atom_1)
+m#matrix_to_atom_1 != m2#matrix_to_atom_1
 

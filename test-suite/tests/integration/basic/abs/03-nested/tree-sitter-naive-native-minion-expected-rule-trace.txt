@@ -6,47 +6,47 @@ find z: int(-5..2)
 
 such that
 
-(sum([|(sum([(x / 2),y;int(1..)]) - z)|,(|y| / 2);int(1..)]) = 10)
+sum([|(sum([(x / 2),y;int(1..)]) - z)|,(|y| / 2);int(1..)]) = 10
 
 --
 
-(sum([(x / 2),y;int(1..)]) - z), 
+(sum([(x / 2),y;int(1..)]) - z)
    ~~> minus_to_sum ([("Base", 8400)])
 sum([sum([(x / 2),y;int(1..)]),-(z);int(1..)])
 
 --
 
-sum([sum([(x / 2),y;int(1..)]),-(z);int(1..)]), 
+sum([sum([(x / 2),y;int(1..)]),-(z);int(1..)])
    ~~> normalise_associative_commutative ([("Base", 8900)])
 sum([(x / 2),y,-(z);int(1..)])
 
 --
 
-(x / 2), 
+(x / 2)
    ~~> div_to_bubble ([("Bubble", 6000)])
-{SafeDiv(x, 2) @ (2 != 0)}
+{SafeDiv(x, 2) @ 2 != 0}
 
 --
 
-(sum([|sum([{SafeDiv(x, 2) @ (2 != 0)},y,-(z);int(1..)])|,(|y| / 2);int(1..)]) = 10), 
+sum([|sum([{SafeDiv(x, 2) @ 2 != 0},y,-(z);int(1..)])|,(|y| / 2);int(1..)]) = 10
    ~~> constant_evaluator ([("Constant", 9001)])
-(sum([|sum([SafeDiv(x, 2),y,-(z);int(1..)])|,(|y| / 2);int(1..)]) = 10)
+sum([|sum([SafeDiv(x, 2),y,-(z);int(1..)])|,(|y| / 2);int(1..)]) = 10
 
 --
 
-(|y| / 2), 
+(|y| / 2)
    ~~> div_to_bubble ([("Bubble", 6000)])
-{SafeDiv(|y|, 2) @ (2 != 0)}
+{SafeDiv(|y|, 2) @ 2 != 0}
 
 --
 
-(sum([|sum([SafeDiv(x, 2),y,-(z);int(1..)])|,{SafeDiv(|y|, 2) @ (2 != 0)};int(1..)]) = 10), 
+sum([|sum([SafeDiv(x, 2),y,-(z);int(1..)])|,{SafeDiv(|y|, 2) @ 2 != 0};int(1..)]) = 10
    ~~> constant_evaluator ([("Constant", 9001)])
-(sum([|sum([SafeDiv(x, 2),y,-(z);int(1..)])|,SafeDiv(|y|, 2);int(1..)]) = 10)
+sum([|sum([SafeDiv(x, 2),y,-(z);int(1..)])|,SafeDiv(|y|, 2);int(1..)]) = 10
 
 --
 
-(sum([|sum([SafeDiv(x, 2),y,-(z);int(1..)])|,SafeDiv(|y|, 2);int(1..)]) = 10), 
+sum([|sum([SafeDiv(x, 2),y,-(z);int(1..)])|,SafeDiv(|y|, 2);int(1..)]) = 10
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
 and([SumLeq([__0, __1], 10),SumGeq([__0, __1], 10);int(1..)])
 new variables:
@@ -60,7 +60,7 @@ new constraints:
 
 and([SumLeq([__0, __1], 10),SumGeq([__0, __1], 10);int(1..)]),
 __0 =aux |sum([SafeDiv(x, 2),y,-(z);int(1..)])|,
-__1 =aux SafeDiv(|y|, 2), 
+__1 =aux SafeDiv(|y|, 2)
    ~~> constant_evaluator ([("Constant", 9001)])
 SumLeq([__0, __1], 10),
 SumGeq([__0, __1], 10),
@@ -69,7 +69,7 @@ __1 =aux SafeDiv(|y|, 2)
 
 --
 
-|sum([SafeDiv(x, 2),y,-(z);int(1..)])|, 
+|sum([SafeDiv(x, 2),y,-(z);int(1..)])|
    ~~> flatten_generic ([("Minion", 4200)])
 |__2|
 new variables:
@@ -79,7 +79,7 @@ new constraints:
 
 --
 
-__2 =aux sum([SafeDiv(x, 2),y,-(z);int(1..)]), 
+__2 =aux sum([SafeDiv(x, 2),y,-(z);int(1..)])
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
 and([FlatWeightedSumLeq([1, 1, -1],[__3, y, z],__2),FlatWeightedSumGeq([1, 1, -1],[__3, y, z],__2);int(1..)])
 new variables:
@@ -94,7 +94,7 @@ SumGeq([__0, __1], 10),
 __0 =aux |__2|,
 __1 =aux SafeDiv(|y|, 2),
 and([FlatWeightedSumLeq([1, 1, -1],[__3, y, z],__2),FlatWeightedSumGeq([1, 1, -1],[__3, y, z],__2);int(1..)]),
-__3 =aux SafeDiv(x, 2), 
+__3 =aux SafeDiv(x, 2)
    ~~> constant_evaluator ([("Constant", 9001)])
 SumLeq([__0, __1], 10),
 SumGeq([__0, __1], 10),
@@ -106,13 +106,13 @@ __3 =aux SafeDiv(x, 2)
 
 --
 
-__0 =aux |__2|, 
+__0 =aux |__2|
    ~~> introduce_abseq ([("Minion", 4400)])
 AbsEq(__0,__2)
 
 --
 
-SafeDiv(|y|, 2), 
+SafeDiv(|y|, 2)
    ~~> flatten_generic ([("Minion", 4200)])
 SafeDiv(__4, 2)
 new variables:
@@ -122,19 +122,19 @@ new constraints:
 
 --
 
-__4 =aux |y|, 
+__4 =aux |y|
    ~~> introduce_abseq ([("Minion", 4400)])
 AbsEq(__4,y)
 
 --
 
-__1 =aux SafeDiv(__4, 2), 
+__1 =aux SafeDiv(__4, 2)
    ~~> introduce_diveq ([("Minion", 4200)])
 DivEq(__4, 2, __1)
 
 --
 
-__3 =aux SafeDiv(x, 2), 
+__3 =aux SafeDiv(x, 2)
    ~~> introduce_diveq ([("Minion", 4200)])
 DivEq(x, 2, __3)
 

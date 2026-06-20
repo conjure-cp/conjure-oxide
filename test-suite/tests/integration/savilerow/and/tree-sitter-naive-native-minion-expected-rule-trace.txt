@@ -7,27 +7,27 @@ find z: bool
 
 such that
 
-and([and([t,(z = x);int(1..)]),y;int(1..)])
+and([and([t,z = x;int(1..)]),y;int(1..)])
 
 --
 
-and([and([t,(z = x);int(1..)]),y;int(1..)]), 
+and([and([t,z = x;int(1..)]),y;int(1..)])
    ~~> constant_evaluator ([("Constant", 9001)])
-and([t,(z = x);int(1..)]),
+and([t,z = x;int(1..)]),
 y
 
 --
 
-and([t,(z = x);int(1..)]),
-y, 
+and([t,z = x;int(1..)]),
+y
    ~~> constant_evaluator ([("Constant", 9001)])
 t,
-(z = x),
+z = x,
 y
 
 --
 
-(z = x), 
+z = x
    ~~> bool_eq_to_reify ([("Minion", 4400)])
 Reify(x, z)
 

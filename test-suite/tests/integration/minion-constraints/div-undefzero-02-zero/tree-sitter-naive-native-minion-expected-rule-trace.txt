@@ -6,36 +6,36 @@ find z: int(1..2)
 
 such that
 
-((x / y) = z)
+(x / y) = z
 
 --
 
-(x / y), 
+(x / y)
    ~~> div_to_bubble ([("Bubble", 6000)])
-{SafeDiv(x, y) @ (y != 0)}
+{SafeDiv(x, y) @ y != 0}
 
 --
 
-({SafeDiv(x, y) @ (y != 0)} = z), 
+{SafeDiv(x, y) @ y != 0} = z
    ~~> bubble_up ([("Bubble", 8800)])
-{(SafeDiv(x, y) = z) @ (y != 0)}
+{SafeDiv(x, y) = z @ y != 0}
 
 --
 
-{(SafeDiv(x, y) = z) @ (y != 0)}, 
+{SafeDiv(x, y) = z @ y != 0}
    ~~> expand_bubble ([("Bubble", 8900)])
-and([(SafeDiv(x, y) = z),(y != 0);int(1..)])
+and([SafeDiv(x, y) = z,y != 0;int(1..)])
 
 --
 
-and([(SafeDiv(x, y) = z),(y != 0);int(1..)]), 
+and([SafeDiv(x, y) = z,y != 0;int(1..)])
    ~~> constant_evaluator ([("Constant", 9001)])
-(SafeDiv(x, y) = z),
-(y != 0)
+SafeDiv(x, y) = z,
+y != 0
 
 --
 
-(SafeDiv(x, y) = z), 
+SafeDiv(x, y) = z
    ~~> introduce_diveq ([("Minion", 4200)])
 DivEq(x, y, z)
 
@@ -50,5 +50,5 @@ find z: int(1..2)
 such that
 
 DivEq(x, y, z),
-(y != 0)
+y != 0
 

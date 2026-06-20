@@ -47,6 +47,7 @@
                           }
                         ]
                       },
+                      "skip_operator": "Sum",
                       "symbols": {
                         "id": {
                           "object_id": 3,
@@ -232,7 +233,7 @@ find __1: matrix indexed by [int(1..)] of int(1..4)
 
 such that
 
-(sum(flatten([__0,__1;int(1..)])) = 2),
+sum(flatten([__0,__1;int(1..)])) = 2,
 __0 =aux [ i | i <- a ],
 __1 =aux [ i | i <- b, !(i in a) ]
 
@@ -243,17 +244,17 @@ find b: set  of int(1..4)
 
 such that
 
-(sum([ i | i <- (a union b) ]) = 2)
+sum([ i | i <- (a union b) ]) = 2
 
 --
 
-[ i | i <- (a union b) ], 
+[ i | i <- (a union b) ]
    ~~> union_set ([("Base", 8700)])
 flatten([[ i | i <- a ],[ i | i <- b, !(i in a) ];int(1..)])
 
 --
 
-flatten([[ i | i <- a ],[ i | i <- b, !(i in a) ];int(1..)]), 
+flatten([[ i | i <- a ],[ i | i <- b, !(i in a) ];int(1..)])
    ~~> flatten_matrix_literal ([("Minion", 1000)])
 flatten([__0,__1;int(1..)])
 new variables:
@@ -274,7 +275,7 @@ find __1: matrix indexed by [int(1..)] of int(1..4)
 
 such that
 
-(sum(flatten([__0,__1;int(1..)])) = 2),
+sum(flatten([__0,__1;int(1..)])) = 2,
 __0 =aux [ i | i <- a ],
 __1 =aux [ i | i <- b, !(i in a) ]
 

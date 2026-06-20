@@ -5,11 +5,11 @@ find b: int(1..7)
 
 such that
 
-(sum([min([a,b;int(1..2)]),6;int(1..)]) <= 10)
+sum([min([a,b;int(1..2)]),6;int(1..)]) <= 10
 
 --
 
-(sum([min([a,b;int(1..2)]),6;int(1..)]) <= 10), 
+sum([min([a,b;int(1..2)]),6;int(1..)]) <= 10
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
 SumLeq([6, __0], 10)
 new variables:
@@ -19,31 +19,31 @@ new constraints:
 
 --
 
-min([a,b;int(1..2)]), 
+min([a,b;int(1..2)])
    ~~> matrix_to_list ([("Base", 2000)])
 min([a,b;int(1..)])
 
 --
 
-min([a,b;int(1..)]), 
+min([a,b;int(1..)])
    ~~> min_to_var ([("Base", 6000)])
 __1
 new variables:
   find __1: int(1..7)
 new constraints:
-  (__1 <= a)
-  (__1 <= b)
-  or([(__1 = a),(__1 = b);int(1..)])
+  __1 <= a
+  __1 <= b
+  or([__1 = a,__1 = b;int(1..)])
 
 --
 
-(__1 <= a), 
+__1 <= a
    ~~> leq_to_ineq ([("Minion", 4100)])
 Ineq(__1, a, 0)
 
 --
 
-(__1 <= b), 
+__1 <= b
    ~~> leq_to_ineq ([("Minion", 4100)])
 Ineq(__1, b, 0)
 
@@ -62,5 +62,5 @@ SumLeq([6, __0], 10),
 __0 =aux __1,
 Ineq(__1, a, 0),
 Ineq(__1, b, 0),
-or([(__1 = a),(__1 = b);int(1..)])
+or([__1 = a,__1 = b;int(1..)])
 

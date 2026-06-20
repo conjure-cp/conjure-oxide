@@ -9,24 +9,24 @@ find s: int(1..24)
 such that
 
 allDifferent(flatten(square)),
-and([ (sum([ square[r, c] | c : Index ]) = s) | r : Index ]),
-and([ (sum([ square[r, c] | r : Index ]) = s) | c : Index ]),
-(sum([ square[d, d] | d : Index ]) = s),
-(sum([ square[d, (4 - d)] | d : Index ]) = s)
+and([ sum([ square[r, c] | c : Index ]) = s | r : Index ]),
+and([ sum([ square[r, c] | r : Index ]) = s | c : Index ]),
+sum([ square[d, d] | d : Index ]) = s,
+sum([ square[d, (4 - d)] | d : Index ]) = s
 
 --
 
 allDifferent(flatten(square#matrix_to_atom)),
-and([ (sum([ square#matrix_to_atom[r, c] | c : Index ]) = s) | r : Index ]),
-and([ (sum([ square#matrix_to_atom[r, c] | r : Index ]) = s) | c : Index ]),
-(sum([ square#matrix_to_atom[d, d] | d : Index ]) = s),
-(sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s), 
+and([ sum([ square#matrix_to_atom[r, c] | c : Index ]) = s | r : Index ]),
+and([ sum([ square#matrix_to_atom[r, c] | r : Index ]) = s | c : Index ]),
+sum([ square#matrix_to_atom[d, d] | d : Index ]) = s,
+sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s
    ~~> select_representation_matrix ([("Representations", 8001)])
 allDifferent(flatten(square#matrix_to_atom)),
-and([ (sum([ square#matrix_to_atom[r, c] | c : Index ]) = s) | r : Index ]),
-and([ (sum([ square#matrix_to_atom[r, c] | r : Index ]) = s) | c : Index ]),
-(sum([ square#matrix_to_atom[d, d] | d : Index ]) = s),
-(sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s)
+and([ sum([ square#matrix_to_atom[r, c] | c : Index ]) = s | r : Index ]),
+and([ sum([ square#matrix_to_atom[r, c] | r : Index ]) = s | c : Index ]),
+sum([ square#matrix_to_atom[d, d] | d : Index ]) = s,
+sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s
 new variables:
   find square#matrix_to_atom_1_1: int(1..9)
   find square#matrix_to_atom_1_2: int(1..9)
@@ -40,83 +40,83 @@ new variables:
 
 --
 
-flatten(square#matrix_to_atom), 
+flatten(square#matrix_to_atom)
    ~~> flatten_matrix ([("Base", 8000)])
 [square#matrix_to_atom_1_1,square#matrix_to_atom_1_2,square#matrix_to_atom_1_3,square#matrix_to_atom_2_1,square#matrix_to_atom_2_2,square#matrix_to_atom_2_3,square#matrix_to_atom_3_1,square#matrix_to_atom_3_2,square#matrix_to_atom_3_3;int(1..)]
 
 --
 
-allDifferent([square#matrix_to_atom_1_1,square#matrix_to_atom_1_2,square#matrix_to_atom_1_3,square#matrix_to_atom_2_1,square#matrix_to_atom_2_2,square#matrix_to_atom_2_3,square#matrix_to_atom_3_1,square#matrix_to_atom_3_2,square#matrix_to_atom_3_3;int(1..)]), 
+allDifferent([square#matrix_to_atom_1_1,square#matrix_to_atom_1_2,square#matrix_to_atom_1_3,square#matrix_to_atom_2_1,square#matrix_to_atom_2_2,square#matrix_to_atom_2_3,square#matrix_to_atom_3_1,square#matrix_to_atom_3_2,square#matrix_to_atom_3_3;int(1..)])
    ~~> introduce_flat_alldiff ([("Minion", 4200)])
 __flat_alldiff([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#matrix_to_atom_1_3, square#matrix_to_atom_2_1, square#matrix_to_atom_2_2, square#matrix_to_atom_2_3, square#matrix_to_atom_3_1, square#matrix_to_atom_3_2, square#matrix_to_atom_3_3])
 
 --
 
-[ (sum([ square#matrix_to_atom[r, c] | c : Index ]) = s) | r : Index ], 
+[ sum([ square#matrix_to_atom[r, c] | c : Index ]) = s | r : Index ]
    ~~> expand_comprehension_native ([("Base", 2000)])
-[(sum([ square#matrix_to_atom[1, c] | c : Index ]) = s),(sum([ square#matrix_to_atom[2, c] | c : Index ]) = s),(sum([ square#matrix_to_atom[3, c] | c : Index ]) = s);int(1..)]
+[sum([ square#matrix_to_atom[1, c] | c : Index ]) = s,sum([ square#matrix_to_atom[2, c] | c : Index ]) = s,sum([ square#matrix_to_atom[3, c] | c : Index ]) = s;int(1..)]
 
 --
 
 __flat_alldiff([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#matrix_to_atom_1_3, square#matrix_to_atom_2_1, square#matrix_to_atom_2_2, square#matrix_to_atom_2_3, square#matrix_to_atom_3_1, square#matrix_to_atom_3_2, square#matrix_to_atom_3_3]),
-and([(sum([ square#matrix_to_atom[1, c] | c : Index ]) = s),(sum([ square#matrix_to_atom[2, c] | c : Index ]) = s),(sum([ square#matrix_to_atom[3, c] | c : Index ]) = s);int(1..)]),
-and([ (sum([ square#matrix_to_atom[r, c] | r : Index ]) = s) | c : Index ]),
-(sum([ square#matrix_to_atom[d, d] | d : Index ]) = s),
-(sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s), 
+and([sum([ square#matrix_to_atom[1, c] | c : Index ]) = s,sum([ square#matrix_to_atom[2, c] | c : Index ]) = s,sum([ square#matrix_to_atom[3, c] | c : Index ]) = s;int(1..)]),
+and([ sum([ square#matrix_to_atom[r, c] | r : Index ]) = s | c : Index ]),
+sum([ square#matrix_to_atom[d, d] | d : Index ]) = s,
+sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s
    ~~> constant_evaluator ([("Constant", 9001)])
 __flat_alldiff([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#matrix_to_atom_1_3, square#matrix_to_atom_2_1, square#matrix_to_atom_2_2, square#matrix_to_atom_2_3, square#matrix_to_atom_3_1, square#matrix_to_atom_3_2, square#matrix_to_atom_3_3]),
-(sum([ square#matrix_to_atom[1, c] | c : Index ]) = s),
-(sum([ square#matrix_to_atom[2, c] | c : Index ]) = s),
-(sum([ square#matrix_to_atom[3, c] | c : Index ]) = s),
-and([ (sum([ square#matrix_to_atom[r, c] | r : Index ]) = s) | c : Index ]),
-(sum([ square#matrix_to_atom[d, d] | d : Index ]) = s),
-(sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s)
+sum([ square#matrix_to_atom[1, c] | c : Index ]) = s,
+sum([ square#matrix_to_atom[2, c] | c : Index ]) = s,
+sum([ square#matrix_to_atom[3, c] | c : Index ]) = s,
+and([ sum([ square#matrix_to_atom[r, c] | r : Index ]) = s | c : Index ]),
+sum([ square#matrix_to_atom[d, d] | d : Index ]) = s,
+sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s
 
 --
 
-[ square#matrix_to_atom[1, c] | c : Index ], 
+[ square#matrix_to_atom[1, c] | c : Index ]
    ~~> expand_comprehension_native ([("Base", 2000)])
 [square#matrix_to_atom[1, 1],square#matrix_to_atom[1, 2],square#matrix_to_atom[1, 3];int(1..)]
 
 --
 
-square#matrix_to_atom[1, 1], 
+square#matrix_to_atom[1, 1]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(square#matrix_to_atom,[1, 1])
 
 --
 
-square#matrix_to_atom[1, 2], 
+square#matrix_to_atom[1, 2]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(square#matrix_to_atom,[1, 2])
 
 --
 
-square#matrix_to_atom[1, 3], 
+square#matrix_to_atom[1, 3]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(square#matrix_to_atom,[1, 3])
 
 --
 
 __flat_alldiff([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#matrix_to_atom_1_3, square#matrix_to_atom_2_1, square#matrix_to_atom_2_2, square#matrix_to_atom_2_3, square#matrix_to_atom_3_1, square#matrix_to_atom_3_2, square#matrix_to_atom_3_3]),
-(sum([SafeIndex(square#matrix_to_atom,[1, 1]),SafeIndex(square#matrix_to_atom,[1, 2]),SafeIndex(square#matrix_to_atom,[1, 3]);int(1..)]) = s),
-(sum([ square#matrix_to_atom[2, c] | c : Index ]) = s),
-(sum([ square#matrix_to_atom[3, c] | c : Index ]) = s),
-and([ (sum([ square#matrix_to_atom[r, c] | r : Index ]) = s) | c : Index ]),
-(sum([ square#matrix_to_atom[d, d] | d : Index ]) = s),
-(sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s), 
+sum([SafeIndex(square#matrix_to_atom,[1, 1]),SafeIndex(square#matrix_to_atom,[1, 2]),SafeIndex(square#matrix_to_atom,[1, 3]);int(1..)]) = s,
+sum([ square#matrix_to_atom[2, c] | c : Index ]) = s,
+sum([ square#matrix_to_atom[3, c] | c : Index ]) = s,
+and([ sum([ square#matrix_to_atom[r, c] | r : Index ]) = s | c : Index ]),
+sum([ square#matrix_to_atom[d, d] | d : Index ]) = s,
+sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s
    ~~> index_matrix_to_atom ([("Base", 5000)])
 __flat_alldiff([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#matrix_to_atom_1_3, square#matrix_to_atom_2_1, square#matrix_to_atom_2_2, square#matrix_to_atom_2_3, square#matrix_to_atom_3_1, square#matrix_to_atom_3_2, square#matrix_to_atom_3_3]),
-(sum([square#matrix_to_atom_1_1,square#matrix_to_atom_1_2,square#matrix_to_atom_1_3;int(1..)]) = s),
-(sum([ square#matrix_to_atom[2, c] | c : Index ]) = s),
-(sum([ square#matrix_to_atom[3, c] | c : Index ]) = s),
-and([ (sum([ square#matrix_to_atom[r, c] | r : Index ]) = s) | c : Index ]),
-(sum([ square#matrix_to_atom[d, d] | d : Index ]) = s),
-(sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s)
+sum([square#matrix_to_atom_1_1,square#matrix_to_atom_1_2,square#matrix_to_atom_1_3;int(1..)]) = s,
+sum([ square#matrix_to_atom[2, c] | c : Index ]) = s,
+sum([ square#matrix_to_atom[3, c] | c : Index ]) = s,
+and([ sum([ square#matrix_to_atom[r, c] | r : Index ]) = s | c : Index ]),
+sum([ square#matrix_to_atom[d, d] | d : Index ]) = s,
+sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s
 
 --
 
-(sum([square#matrix_to_atom_1_1,square#matrix_to_atom_1_2,square#matrix_to_atom_1_3;int(1..)]) = s), 
+sum([square#matrix_to_atom_1_1,square#matrix_to_atom_1_2,square#matrix_to_atom_1_3;int(1..)]) = s
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
 and([SumLeq([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#matrix_to_atom_1_3], s),SumGeq([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#matrix_to_atom_1_3], s);int(1..)])
 
@@ -124,42 +124,42 @@ and([SumLeq([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#matrix
 
 __flat_alldiff([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#matrix_to_atom_1_3, square#matrix_to_atom_2_1, square#matrix_to_atom_2_2, square#matrix_to_atom_2_3, square#matrix_to_atom_3_1, square#matrix_to_atom_3_2, square#matrix_to_atom_3_3]),
 and([SumLeq([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#matrix_to_atom_1_3], s),SumGeq([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#matrix_to_atom_1_3], s);int(1..)]),
-(sum([ square#matrix_to_atom[2, c] | c : Index ]) = s),
-(sum([ square#matrix_to_atom[3, c] | c : Index ]) = s),
-and([ (sum([ square#matrix_to_atom[r, c] | r : Index ]) = s) | c : Index ]),
-(sum([ square#matrix_to_atom[d, d] | d : Index ]) = s),
-(sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s), 
+sum([ square#matrix_to_atom[2, c] | c : Index ]) = s,
+sum([ square#matrix_to_atom[3, c] | c : Index ]) = s,
+and([ sum([ square#matrix_to_atom[r, c] | r : Index ]) = s | c : Index ]),
+sum([ square#matrix_to_atom[d, d] | d : Index ]) = s,
+sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s
    ~~> constant_evaluator ([("Constant", 9001)])
 __flat_alldiff([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#matrix_to_atom_1_3, square#matrix_to_atom_2_1, square#matrix_to_atom_2_2, square#matrix_to_atom_2_3, square#matrix_to_atom_3_1, square#matrix_to_atom_3_2, square#matrix_to_atom_3_3]),
 SumLeq([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#matrix_to_atom_1_3], s),
 SumGeq([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#matrix_to_atom_1_3], s),
-(sum([ square#matrix_to_atom[2, c] | c : Index ]) = s),
-(sum([ square#matrix_to_atom[3, c] | c : Index ]) = s),
-and([ (sum([ square#matrix_to_atom[r, c] | r : Index ]) = s) | c : Index ]),
-(sum([ square#matrix_to_atom[d, d] | d : Index ]) = s),
-(sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s)
+sum([ square#matrix_to_atom[2, c] | c : Index ]) = s,
+sum([ square#matrix_to_atom[3, c] | c : Index ]) = s,
+and([ sum([ square#matrix_to_atom[r, c] | r : Index ]) = s | c : Index ]),
+sum([ square#matrix_to_atom[d, d] | d : Index ]) = s,
+sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s
 
 --
 
-[ square#matrix_to_atom[2, c] | c : Index ], 
+[ square#matrix_to_atom[2, c] | c : Index ]
    ~~> expand_comprehension_native ([("Base", 2000)])
 [square#matrix_to_atom[2, 1],square#matrix_to_atom[2, 2],square#matrix_to_atom[2, 3];int(1..)]
 
 --
 
-square#matrix_to_atom[2, 1], 
+square#matrix_to_atom[2, 1]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(square#matrix_to_atom,[2, 1])
 
 --
 
-square#matrix_to_atom[2, 2], 
+square#matrix_to_atom[2, 2]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(square#matrix_to_atom,[2, 2])
 
 --
 
-square#matrix_to_atom[2, 3], 
+square#matrix_to_atom[2, 3]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(square#matrix_to_atom,[2, 3])
 
@@ -168,24 +168,24 @@ SafeIndex(square#matrix_to_atom,[2, 3])
 __flat_alldiff([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#matrix_to_atom_1_3, square#matrix_to_atom_2_1, square#matrix_to_atom_2_2, square#matrix_to_atom_2_3, square#matrix_to_atom_3_1, square#matrix_to_atom_3_2, square#matrix_to_atom_3_3]),
 SumLeq([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#matrix_to_atom_1_3], s),
 SumGeq([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#matrix_to_atom_1_3], s),
-(sum([SafeIndex(square#matrix_to_atom,[2, 1]),SafeIndex(square#matrix_to_atom,[2, 2]),SafeIndex(square#matrix_to_atom,[2, 3]);int(1..)]) = s),
-(sum([ square#matrix_to_atom[3, c] | c : Index ]) = s),
-and([ (sum([ square#matrix_to_atom[r, c] | r : Index ]) = s) | c : Index ]),
-(sum([ square#matrix_to_atom[d, d] | d : Index ]) = s),
-(sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s), 
+sum([SafeIndex(square#matrix_to_atom,[2, 1]),SafeIndex(square#matrix_to_atom,[2, 2]),SafeIndex(square#matrix_to_atom,[2, 3]);int(1..)]) = s,
+sum([ square#matrix_to_atom[3, c] | c : Index ]) = s,
+and([ sum([ square#matrix_to_atom[r, c] | r : Index ]) = s | c : Index ]),
+sum([ square#matrix_to_atom[d, d] | d : Index ]) = s,
+sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s
    ~~> index_matrix_to_atom ([("Base", 5000)])
 __flat_alldiff([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#matrix_to_atom_1_3, square#matrix_to_atom_2_1, square#matrix_to_atom_2_2, square#matrix_to_atom_2_3, square#matrix_to_atom_3_1, square#matrix_to_atom_3_2, square#matrix_to_atom_3_3]),
 SumLeq([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#matrix_to_atom_1_3], s),
 SumGeq([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#matrix_to_atom_1_3], s),
-(sum([square#matrix_to_atom_2_1,square#matrix_to_atom_2_2,square#matrix_to_atom_2_3;int(1..)]) = s),
-(sum([ square#matrix_to_atom[3, c] | c : Index ]) = s),
-and([ (sum([ square#matrix_to_atom[r, c] | r : Index ]) = s) | c : Index ]),
-(sum([ square#matrix_to_atom[d, d] | d : Index ]) = s),
-(sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s)
+sum([square#matrix_to_atom_2_1,square#matrix_to_atom_2_2,square#matrix_to_atom_2_3;int(1..)]) = s,
+sum([ square#matrix_to_atom[3, c] | c : Index ]) = s,
+and([ sum([ square#matrix_to_atom[r, c] | r : Index ]) = s | c : Index ]),
+sum([ square#matrix_to_atom[d, d] | d : Index ]) = s,
+sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s
 
 --
 
-(sum([square#matrix_to_atom_2_1,square#matrix_to_atom_2_2,square#matrix_to_atom_2_3;int(1..)]) = s), 
+sum([square#matrix_to_atom_2_1,square#matrix_to_atom_2_2,square#matrix_to_atom_2_3;int(1..)]) = s
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
 and([SumLeq([square#matrix_to_atom_2_1, square#matrix_to_atom_2_2, square#matrix_to_atom_2_3], s),SumGeq([square#matrix_to_atom_2_1, square#matrix_to_atom_2_2, square#matrix_to_atom_2_3], s);int(1..)])
 
@@ -195,42 +195,42 @@ __flat_alldiff([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#mat
 SumLeq([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#matrix_to_atom_1_3], s),
 SumGeq([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#matrix_to_atom_1_3], s),
 and([SumLeq([square#matrix_to_atom_2_1, square#matrix_to_atom_2_2, square#matrix_to_atom_2_3], s),SumGeq([square#matrix_to_atom_2_1, square#matrix_to_atom_2_2, square#matrix_to_atom_2_3], s);int(1..)]),
-(sum([ square#matrix_to_atom[3, c] | c : Index ]) = s),
-and([ (sum([ square#matrix_to_atom[r, c] | r : Index ]) = s) | c : Index ]),
-(sum([ square#matrix_to_atom[d, d] | d : Index ]) = s),
-(sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s), 
+sum([ square#matrix_to_atom[3, c] | c : Index ]) = s,
+and([ sum([ square#matrix_to_atom[r, c] | r : Index ]) = s | c : Index ]),
+sum([ square#matrix_to_atom[d, d] | d : Index ]) = s,
+sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s
    ~~> constant_evaluator ([("Constant", 9001)])
 __flat_alldiff([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#matrix_to_atom_1_3, square#matrix_to_atom_2_1, square#matrix_to_atom_2_2, square#matrix_to_atom_2_3, square#matrix_to_atom_3_1, square#matrix_to_atom_3_2, square#matrix_to_atom_3_3]),
 SumLeq([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#matrix_to_atom_1_3], s),
 SumGeq([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#matrix_to_atom_1_3], s),
 SumLeq([square#matrix_to_atom_2_1, square#matrix_to_atom_2_2, square#matrix_to_atom_2_3], s),
 SumGeq([square#matrix_to_atom_2_1, square#matrix_to_atom_2_2, square#matrix_to_atom_2_3], s),
-(sum([ square#matrix_to_atom[3, c] | c : Index ]) = s),
-and([ (sum([ square#matrix_to_atom[r, c] | r : Index ]) = s) | c : Index ]),
-(sum([ square#matrix_to_atom[d, d] | d : Index ]) = s),
-(sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s)
+sum([ square#matrix_to_atom[3, c] | c : Index ]) = s,
+and([ sum([ square#matrix_to_atom[r, c] | r : Index ]) = s | c : Index ]),
+sum([ square#matrix_to_atom[d, d] | d : Index ]) = s,
+sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s
 
 --
 
-[ square#matrix_to_atom[3, c] | c : Index ], 
+[ square#matrix_to_atom[3, c] | c : Index ]
    ~~> expand_comprehension_native ([("Base", 2000)])
 [square#matrix_to_atom[3, 1],square#matrix_to_atom[3, 2],square#matrix_to_atom[3, 3];int(1..)]
 
 --
 
-square#matrix_to_atom[3, 1], 
+square#matrix_to_atom[3, 1]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(square#matrix_to_atom,[3, 1])
 
 --
 
-square#matrix_to_atom[3, 2], 
+square#matrix_to_atom[3, 2]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(square#matrix_to_atom,[3, 2])
 
 --
 
-square#matrix_to_atom[3, 3], 
+square#matrix_to_atom[3, 3]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(square#matrix_to_atom,[3, 3])
 
@@ -241,24 +241,24 @@ SumLeq([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#matrix_to_a
 SumGeq([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#matrix_to_atom_1_3], s),
 SumLeq([square#matrix_to_atom_2_1, square#matrix_to_atom_2_2, square#matrix_to_atom_2_3], s),
 SumGeq([square#matrix_to_atom_2_1, square#matrix_to_atom_2_2, square#matrix_to_atom_2_3], s),
-(sum([SafeIndex(square#matrix_to_atom,[3, 1]),SafeIndex(square#matrix_to_atom,[3, 2]),SafeIndex(square#matrix_to_atom,[3, 3]);int(1..)]) = s),
-and([ (sum([ square#matrix_to_atom[r, c] | r : Index ]) = s) | c : Index ]),
-(sum([ square#matrix_to_atom[d, d] | d : Index ]) = s),
-(sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s), 
+sum([SafeIndex(square#matrix_to_atom,[3, 1]),SafeIndex(square#matrix_to_atom,[3, 2]),SafeIndex(square#matrix_to_atom,[3, 3]);int(1..)]) = s,
+and([ sum([ square#matrix_to_atom[r, c] | r : Index ]) = s | c : Index ]),
+sum([ square#matrix_to_atom[d, d] | d : Index ]) = s,
+sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s
    ~~> index_matrix_to_atom ([("Base", 5000)])
 __flat_alldiff([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#matrix_to_atom_1_3, square#matrix_to_atom_2_1, square#matrix_to_atom_2_2, square#matrix_to_atom_2_3, square#matrix_to_atom_3_1, square#matrix_to_atom_3_2, square#matrix_to_atom_3_3]),
 SumLeq([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#matrix_to_atom_1_3], s),
 SumGeq([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#matrix_to_atom_1_3], s),
 SumLeq([square#matrix_to_atom_2_1, square#matrix_to_atom_2_2, square#matrix_to_atom_2_3], s),
 SumGeq([square#matrix_to_atom_2_1, square#matrix_to_atom_2_2, square#matrix_to_atom_2_3], s),
-(sum([square#matrix_to_atom_3_1,square#matrix_to_atom_3_2,square#matrix_to_atom_3_3;int(1..)]) = s),
-and([ (sum([ square#matrix_to_atom[r, c] | r : Index ]) = s) | c : Index ]),
-(sum([ square#matrix_to_atom[d, d] | d : Index ]) = s),
-(sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s)
+sum([square#matrix_to_atom_3_1,square#matrix_to_atom_3_2,square#matrix_to_atom_3_3;int(1..)]) = s,
+and([ sum([ square#matrix_to_atom[r, c] | r : Index ]) = s | c : Index ]),
+sum([ square#matrix_to_atom[d, d] | d : Index ]) = s,
+sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s
 
 --
 
-(sum([square#matrix_to_atom_3_1,square#matrix_to_atom_3_2,square#matrix_to_atom_3_3;int(1..)]) = s), 
+sum([square#matrix_to_atom_3_1,square#matrix_to_atom_3_2,square#matrix_to_atom_3_3;int(1..)]) = s
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
 and([SumLeq([square#matrix_to_atom_3_1, square#matrix_to_atom_3_2, square#matrix_to_atom_3_3], s),SumGeq([square#matrix_to_atom_3_1, square#matrix_to_atom_3_2, square#matrix_to_atom_3_3], s);int(1..)])
 
@@ -270,9 +270,9 @@ SumGeq([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#matrix_to_a
 SumLeq([square#matrix_to_atom_2_1, square#matrix_to_atom_2_2, square#matrix_to_atom_2_3], s),
 SumGeq([square#matrix_to_atom_2_1, square#matrix_to_atom_2_2, square#matrix_to_atom_2_3], s),
 and([SumLeq([square#matrix_to_atom_3_1, square#matrix_to_atom_3_2, square#matrix_to_atom_3_3], s),SumGeq([square#matrix_to_atom_3_1, square#matrix_to_atom_3_2, square#matrix_to_atom_3_3], s);int(1..)]),
-and([ (sum([ square#matrix_to_atom[r, c] | r : Index ]) = s) | c : Index ]),
-(sum([ square#matrix_to_atom[d, d] | d : Index ]) = s),
-(sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s), 
+and([ sum([ square#matrix_to_atom[r, c] | r : Index ]) = s | c : Index ]),
+sum([ square#matrix_to_atom[d, d] | d : Index ]) = s,
+sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s
    ~~> constant_evaluator ([("Constant", 9001)])
 __flat_alldiff([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#matrix_to_atom_1_3, square#matrix_to_atom_2_1, square#matrix_to_atom_2_2, square#matrix_to_atom_2_3, square#matrix_to_atom_3_1, square#matrix_to_atom_3_2, square#matrix_to_atom_3_3]),
 SumLeq([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#matrix_to_atom_1_3], s),
@@ -281,15 +281,15 @@ SumLeq([square#matrix_to_atom_2_1, square#matrix_to_atom_2_2, square#matrix_to_a
 SumGeq([square#matrix_to_atom_2_1, square#matrix_to_atom_2_2, square#matrix_to_atom_2_3], s),
 SumLeq([square#matrix_to_atom_3_1, square#matrix_to_atom_3_2, square#matrix_to_atom_3_3], s),
 SumGeq([square#matrix_to_atom_3_1, square#matrix_to_atom_3_2, square#matrix_to_atom_3_3], s),
-and([ (sum([ square#matrix_to_atom[r, c] | r : Index ]) = s) | c : Index ]),
-(sum([ square#matrix_to_atom[d, d] | d : Index ]) = s),
-(sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s)
+and([ sum([ square#matrix_to_atom[r, c] | r : Index ]) = s | c : Index ]),
+sum([ square#matrix_to_atom[d, d] | d : Index ]) = s,
+sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s
 
 --
 
-[ (sum([ square#matrix_to_atom[r, c] | r : Index ]) = s) | c : Index ], 
+[ sum([ square#matrix_to_atom[r, c] | r : Index ]) = s | c : Index ]
    ~~> expand_comprehension_native ([("Base", 2000)])
-[(sum([ square#matrix_to_atom[r, 1] | r : Index ]) = s),(sum([ square#matrix_to_atom[r, 2] | r : Index ]) = s),(sum([ square#matrix_to_atom[r, 3] | r : Index ]) = s);int(1..)]
+[sum([ square#matrix_to_atom[r, 1] | r : Index ]) = s,sum([ square#matrix_to_atom[r, 2] | r : Index ]) = s,sum([ square#matrix_to_atom[r, 3] | r : Index ]) = s;int(1..)]
 
 --
 
@@ -300,9 +300,9 @@ SumLeq([square#matrix_to_atom_2_1, square#matrix_to_atom_2_2, square#matrix_to_a
 SumGeq([square#matrix_to_atom_2_1, square#matrix_to_atom_2_2, square#matrix_to_atom_2_3], s),
 SumLeq([square#matrix_to_atom_3_1, square#matrix_to_atom_3_2, square#matrix_to_atom_3_3], s),
 SumGeq([square#matrix_to_atom_3_1, square#matrix_to_atom_3_2, square#matrix_to_atom_3_3], s),
-and([(sum([ square#matrix_to_atom[r, 1] | r : Index ]) = s),(sum([ square#matrix_to_atom[r, 2] | r : Index ]) = s),(sum([ square#matrix_to_atom[r, 3] | r : Index ]) = s);int(1..)]),
-(sum([ square#matrix_to_atom[d, d] | d : Index ]) = s),
-(sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s), 
+and([sum([ square#matrix_to_atom[r, 1] | r : Index ]) = s,sum([ square#matrix_to_atom[r, 2] | r : Index ]) = s,sum([ square#matrix_to_atom[r, 3] | r : Index ]) = s;int(1..)]),
+sum([ square#matrix_to_atom[d, d] | d : Index ]) = s,
+sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s
    ~~> constant_evaluator ([("Constant", 9001)])
 __flat_alldiff([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#matrix_to_atom_1_3, square#matrix_to_atom_2_1, square#matrix_to_atom_2_2, square#matrix_to_atom_2_3, square#matrix_to_atom_3_1, square#matrix_to_atom_3_2, square#matrix_to_atom_3_3]),
 SumLeq([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#matrix_to_atom_1_3], s),
@@ -311,33 +311,33 @@ SumLeq([square#matrix_to_atom_2_1, square#matrix_to_atom_2_2, square#matrix_to_a
 SumGeq([square#matrix_to_atom_2_1, square#matrix_to_atom_2_2, square#matrix_to_atom_2_3], s),
 SumLeq([square#matrix_to_atom_3_1, square#matrix_to_atom_3_2, square#matrix_to_atom_3_3], s),
 SumGeq([square#matrix_to_atom_3_1, square#matrix_to_atom_3_2, square#matrix_to_atom_3_3], s),
-(sum([ square#matrix_to_atom[r, 1] | r : Index ]) = s),
-(sum([ square#matrix_to_atom[r, 2] | r : Index ]) = s),
-(sum([ square#matrix_to_atom[r, 3] | r : Index ]) = s),
-(sum([ square#matrix_to_atom[d, d] | d : Index ]) = s),
-(sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s)
+sum([ square#matrix_to_atom[r, 1] | r : Index ]) = s,
+sum([ square#matrix_to_atom[r, 2] | r : Index ]) = s,
+sum([ square#matrix_to_atom[r, 3] | r : Index ]) = s,
+sum([ square#matrix_to_atom[d, d] | d : Index ]) = s,
+sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s
 
 --
 
-[ square#matrix_to_atom[r, 1] | r : Index ], 
+[ square#matrix_to_atom[r, 1] | r : Index ]
    ~~> expand_comprehension_native ([("Base", 2000)])
 [square#matrix_to_atom[1, 1],square#matrix_to_atom[2, 1],square#matrix_to_atom[3, 1];int(1..)]
 
 --
 
-square#matrix_to_atom[1, 1], 
+square#matrix_to_atom[1, 1]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(square#matrix_to_atom,[1, 1])
 
 --
 
-square#matrix_to_atom[2, 1], 
+square#matrix_to_atom[2, 1]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(square#matrix_to_atom,[2, 1])
 
 --
 
-square#matrix_to_atom[3, 1], 
+square#matrix_to_atom[3, 1]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(square#matrix_to_atom,[3, 1])
 
@@ -350,11 +350,11 @@ SumLeq([square#matrix_to_atom_2_1, square#matrix_to_atom_2_2, square#matrix_to_a
 SumGeq([square#matrix_to_atom_2_1, square#matrix_to_atom_2_2, square#matrix_to_atom_2_3], s),
 SumLeq([square#matrix_to_atom_3_1, square#matrix_to_atom_3_2, square#matrix_to_atom_3_3], s),
 SumGeq([square#matrix_to_atom_3_1, square#matrix_to_atom_3_2, square#matrix_to_atom_3_3], s),
-(sum([SafeIndex(square#matrix_to_atom,[1, 1]),SafeIndex(square#matrix_to_atom,[2, 1]),SafeIndex(square#matrix_to_atom,[3, 1]);int(1..)]) = s),
-(sum([ square#matrix_to_atom[r, 2] | r : Index ]) = s),
-(sum([ square#matrix_to_atom[r, 3] | r : Index ]) = s),
-(sum([ square#matrix_to_atom[d, d] | d : Index ]) = s),
-(sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s), 
+sum([SafeIndex(square#matrix_to_atom,[1, 1]),SafeIndex(square#matrix_to_atom,[2, 1]),SafeIndex(square#matrix_to_atom,[3, 1]);int(1..)]) = s,
+sum([ square#matrix_to_atom[r, 2] | r : Index ]) = s,
+sum([ square#matrix_to_atom[r, 3] | r : Index ]) = s,
+sum([ square#matrix_to_atom[d, d] | d : Index ]) = s,
+sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s
    ~~> index_matrix_to_atom ([("Base", 5000)])
 __flat_alldiff([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#matrix_to_atom_1_3, square#matrix_to_atom_2_1, square#matrix_to_atom_2_2, square#matrix_to_atom_2_3, square#matrix_to_atom_3_1, square#matrix_to_atom_3_2, square#matrix_to_atom_3_3]),
 SumLeq([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#matrix_to_atom_1_3], s),
@@ -363,15 +363,15 @@ SumLeq([square#matrix_to_atom_2_1, square#matrix_to_atom_2_2, square#matrix_to_a
 SumGeq([square#matrix_to_atom_2_1, square#matrix_to_atom_2_2, square#matrix_to_atom_2_3], s),
 SumLeq([square#matrix_to_atom_3_1, square#matrix_to_atom_3_2, square#matrix_to_atom_3_3], s),
 SumGeq([square#matrix_to_atom_3_1, square#matrix_to_atom_3_2, square#matrix_to_atom_3_3], s),
-(sum([square#matrix_to_atom_1_1,square#matrix_to_atom_2_1,square#matrix_to_atom_3_1;int(1..)]) = s),
-(sum([ square#matrix_to_atom[r, 2] | r : Index ]) = s),
-(sum([ square#matrix_to_atom[r, 3] | r : Index ]) = s),
-(sum([ square#matrix_to_atom[d, d] | d : Index ]) = s),
-(sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s)
+sum([square#matrix_to_atom_1_1,square#matrix_to_atom_2_1,square#matrix_to_atom_3_1;int(1..)]) = s,
+sum([ square#matrix_to_atom[r, 2] | r : Index ]) = s,
+sum([ square#matrix_to_atom[r, 3] | r : Index ]) = s,
+sum([ square#matrix_to_atom[d, d] | d : Index ]) = s,
+sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s
 
 --
 
-(sum([square#matrix_to_atom_1_1,square#matrix_to_atom_2_1,square#matrix_to_atom_3_1;int(1..)]) = s), 
+sum([square#matrix_to_atom_1_1,square#matrix_to_atom_2_1,square#matrix_to_atom_3_1;int(1..)]) = s
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
 and([SumLeq([square#matrix_to_atom_1_1, square#matrix_to_atom_2_1, square#matrix_to_atom_3_1], s),SumGeq([square#matrix_to_atom_1_1, square#matrix_to_atom_2_1, square#matrix_to_atom_3_1], s);int(1..)])
 
@@ -385,10 +385,10 @@ SumGeq([square#matrix_to_atom_2_1, square#matrix_to_atom_2_2, square#matrix_to_a
 SumLeq([square#matrix_to_atom_3_1, square#matrix_to_atom_3_2, square#matrix_to_atom_3_3], s),
 SumGeq([square#matrix_to_atom_3_1, square#matrix_to_atom_3_2, square#matrix_to_atom_3_3], s),
 and([SumLeq([square#matrix_to_atom_1_1, square#matrix_to_atom_2_1, square#matrix_to_atom_3_1], s),SumGeq([square#matrix_to_atom_1_1, square#matrix_to_atom_2_1, square#matrix_to_atom_3_1], s);int(1..)]),
-(sum([ square#matrix_to_atom[r, 2] | r : Index ]) = s),
-(sum([ square#matrix_to_atom[r, 3] | r : Index ]) = s),
-(sum([ square#matrix_to_atom[d, d] | d : Index ]) = s),
-(sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s), 
+sum([ square#matrix_to_atom[r, 2] | r : Index ]) = s,
+sum([ square#matrix_to_atom[r, 3] | r : Index ]) = s,
+sum([ square#matrix_to_atom[d, d] | d : Index ]) = s,
+sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s
    ~~> constant_evaluator ([("Constant", 9001)])
 __flat_alldiff([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#matrix_to_atom_1_3, square#matrix_to_atom_2_1, square#matrix_to_atom_2_2, square#matrix_to_atom_2_3, square#matrix_to_atom_3_1, square#matrix_to_atom_3_2, square#matrix_to_atom_3_3]),
 SumLeq([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#matrix_to_atom_1_3], s),
@@ -399,32 +399,32 @@ SumLeq([square#matrix_to_atom_3_1, square#matrix_to_atom_3_2, square#matrix_to_a
 SumGeq([square#matrix_to_atom_3_1, square#matrix_to_atom_3_2, square#matrix_to_atom_3_3], s),
 SumLeq([square#matrix_to_atom_1_1, square#matrix_to_atom_2_1, square#matrix_to_atom_3_1], s),
 SumGeq([square#matrix_to_atom_1_1, square#matrix_to_atom_2_1, square#matrix_to_atom_3_1], s),
-(sum([ square#matrix_to_atom[r, 2] | r : Index ]) = s),
-(sum([ square#matrix_to_atom[r, 3] | r : Index ]) = s),
-(sum([ square#matrix_to_atom[d, d] | d : Index ]) = s),
-(sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s)
+sum([ square#matrix_to_atom[r, 2] | r : Index ]) = s,
+sum([ square#matrix_to_atom[r, 3] | r : Index ]) = s,
+sum([ square#matrix_to_atom[d, d] | d : Index ]) = s,
+sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s
 
 --
 
-[ square#matrix_to_atom[r, 2] | r : Index ], 
+[ square#matrix_to_atom[r, 2] | r : Index ]
    ~~> expand_comprehension_native ([("Base", 2000)])
 [square#matrix_to_atom[1, 2],square#matrix_to_atom[2, 2],square#matrix_to_atom[3, 2];int(1..)]
 
 --
 
-square#matrix_to_atom[1, 2], 
+square#matrix_to_atom[1, 2]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(square#matrix_to_atom,[1, 2])
 
 --
 
-square#matrix_to_atom[2, 2], 
+square#matrix_to_atom[2, 2]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(square#matrix_to_atom,[2, 2])
 
 --
 
-square#matrix_to_atom[3, 2], 
+square#matrix_to_atom[3, 2]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(square#matrix_to_atom,[3, 2])
 
@@ -439,10 +439,10 @@ SumLeq([square#matrix_to_atom_3_1, square#matrix_to_atom_3_2, square#matrix_to_a
 SumGeq([square#matrix_to_atom_3_1, square#matrix_to_atom_3_2, square#matrix_to_atom_3_3], s),
 SumLeq([square#matrix_to_atom_1_1, square#matrix_to_atom_2_1, square#matrix_to_atom_3_1], s),
 SumGeq([square#matrix_to_atom_1_1, square#matrix_to_atom_2_1, square#matrix_to_atom_3_1], s),
-(sum([SafeIndex(square#matrix_to_atom,[1, 2]),SafeIndex(square#matrix_to_atom,[2, 2]),SafeIndex(square#matrix_to_atom,[3, 2]);int(1..)]) = s),
-(sum([ square#matrix_to_atom[r, 3] | r : Index ]) = s),
-(sum([ square#matrix_to_atom[d, d] | d : Index ]) = s),
-(sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s), 
+sum([SafeIndex(square#matrix_to_atom,[1, 2]),SafeIndex(square#matrix_to_atom,[2, 2]),SafeIndex(square#matrix_to_atom,[3, 2]);int(1..)]) = s,
+sum([ square#matrix_to_atom[r, 3] | r : Index ]) = s,
+sum([ square#matrix_to_atom[d, d] | d : Index ]) = s,
+sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s
    ~~> index_matrix_to_atom ([("Base", 5000)])
 __flat_alldiff([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#matrix_to_atom_1_3, square#matrix_to_atom_2_1, square#matrix_to_atom_2_2, square#matrix_to_atom_2_3, square#matrix_to_atom_3_1, square#matrix_to_atom_3_2, square#matrix_to_atom_3_3]),
 SumLeq([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#matrix_to_atom_1_3], s),
@@ -453,14 +453,14 @@ SumLeq([square#matrix_to_atom_3_1, square#matrix_to_atom_3_2, square#matrix_to_a
 SumGeq([square#matrix_to_atom_3_1, square#matrix_to_atom_3_2, square#matrix_to_atom_3_3], s),
 SumLeq([square#matrix_to_atom_1_1, square#matrix_to_atom_2_1, square#matrix_to_atom_3_1], s),
 SumGeq([square#matrix_to_atom_1_1, square#matrix_to_atom_2_1, square#matrix_to_atom_3_1], s),
-(sum([square#matrix_to_atom_1_2,square#matrix_to_atom_2_2,square#matrix_to_atom_3_2;int(1..)]) = s),
-(sum([ square#matrix_to_atom[r, 3] | r : Index ]) = s),
-(sum([ square#matrix_to_atom[d, d] | d : Index ]) = s),
-(sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s)
+sum([square#matrix_to_atom_1_2,square#matrix_to_atom_2_2,square#matrix_to_atom_3_2;int(1..)]) = s,
+sum([ square#matrix_to_atom[r, 3] | r : Index ]) = s,
+sum([ square#matrix_to_atom[d, d] | d : Index ]) = s,
+sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s
 
 --
 
-(sum([square#matrix_to_atom_1_2,square#matrix_to_atom_2_2,square#matrix_to_atom_3_2;int(1..)]) = s), 
+sum([square#matrix_to_atom_1_2,square#matrix_to_atom_2_2,square#matrix_to_atom_3_2;int(1..)]) = s
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
 and([SumLeq([square#matrix_to_atom_1_2, square#matrix_to_atom_2_2, square#matrix_to_atom_3_2], s),SumGeq([square#matrix_to_atom_1_2, square#matrix_to_atom_2_2, square#matrix_to_atom_3_2], s);int(1..)])
 
@@ -476,9 +476,9 @@ SumGeq([square#matrix_to_atom_3_1, square#matrix_to_atom_3_2, square#matrix_to_a
 SumLeq([square#matrix_to_atom_1_1, square#matrix_to_atom_2_1, square#matrix_to_atom_3_1], s),
 SumGeq([square#matrix_to_atom_1_1, square#matrix_to_atom_2_1, square#matrix_to_atom_3_1], s),
 and([SumLeq([square#matrix_to_atom_1_2, square#matrix_to_atom_2_2, square#matrix_to_atom_3_2], s),SumGeq([square#matrix_to_atom_1_2, square#matrix_to_atom_2_2, square#matrix_to_atom_3_2], s);int(1..)]),
-(sum([ square#matrix_to_atom[r, 3] | r : Index ]) = s),
-(sum([ square#matrix_to_atom[d, d] | d : Index ]) = s),
-(sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s), 
+sum([ square#matrix_to_atom[r, 3] | r : Index ]) = s,
+sum([ square#matrix_to_atom[d, d] | d : Index ]) = s,
+sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s
    ~~> constant_evaluator ([("Constant", 9001)])
 __flat_alldiff([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#matrix_to_atom_1_3, square#matrix_to_atom_2_1, square#matrix_to_atom_2_2, square#matrix_to_atom_2_3, square#matrix_to_atom_3_1, square#matrix_to_atom_3_2, square#matrix_to_atom_3_3]),
 SumLeq([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#matrix_to_atom_1_3], s),
@@ -491,31 +491,31 @@ SumLeq([square#matrix_to_atom_1_1, square#matrix_to_atom_2_1, square#matrix_to_a
 SumGeq([square#matrix_to_atom_1_1, square#matrix_to_atom_2_1, square#matrix_to_atom_3_1], s),
 SumLeq([square#matrix_to_atom_1_2, square#matrix_to_atom_2_2, square#matrix_to_atom_3_2], s),
 SumGeq([square#matrix_to_atom_1_2, square#matrix_to_atom_2_2, square#matrix_to_atom_3_2], s),
-(sum([ square#matrix_to_atom[r, 3] | r : Index ]) = s),
-(sum([ square#matrix_to_atom[d, d] | d : Index ]) = s),
-(sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s)
+sum([ square#matrix_to_atom[r, 3] | r : Index ]) = s,
+sum([ square#matrix_to_atom[d, d] | d : Index ]) = s,
+sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s
 
 --
 
-[ square#matrix_to_atom[r, 3] | r : Index ], 
+[ square#matrix_to_atom[r, 3] | r : Index ]
    ~~> expand_comprehension_native ([("Base", 2000)])
 [square#matrix_to_atom[1, 3],square#matrix_to_atom[2, 3],square#matrix_to_atom[3, 3];int(1..)]
 
 --
 
-square#matrix_to_atom[1, 3], 
+square#matrix_to_atom[1, 3]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(square#matrix_to_atom,[1, 3])
 
 --
 
-square#matrix_to_atom[2, 3], 
+square#matrix_to_atom[2, 3]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(square#matrix_to_atom,[2, 3])
 
 --
 
-square#matrix_to_atom[3, 3], 
+square#matrix_to_atom[3, 3]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(square#matrix_to_atom,[3, 3])
 
@@ -532,9 +532,9 @@ SumLeq([square#matrix_to_atom_1_1, square#matrix_to_atom_2_1, square#matrix_to_a
 SumGeq([square#matrix_to_atom_1_1, square#matrix_to_atom_2_1, square#matrix_to_atom_3_1], s),
 SumLeq([square#matrix_to_atom_1_2, square#matrix_to_atom_2_2, square#matrix_to_atom_3_2], s),
 SumGeq([square#matrix_to_atom_1_2, square#matrix_to_atom_2_2, square#matrix_to_atom_3_2], s),
-(sum([SafeIndex(square#matrix_to_atom,[1, 3]),SafeIndex(square#matrix_to_atom,[2, 3]),SafeIndex(square#matrix_to_atom,[3, 3]);int(1..)]) = s),
-(sum([ square#matrix_to_atom[d, d] | d : Index ]) = s),
-(sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s), 
+sum([SafeIndex(square#matrix_to_atom,[1, 3]),SafeIndex(square#matrix_to_atom,[2, 3]),SafeIndex(square#matrix_to_atom,[3, 3]);int(1..)]) = s,
+sum([ square#matrix_to_atom[d, d] | d : Index ]) = s,
+sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s
    ~~> index_matrix_to_atom ([("Base", 5000)])
 __flat_alldiff([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#matrix_to_atom_1_3, square#matrix_to_atom_2_1, square#matrix_to_atom_2_2, square#matrix_to_atom_2_3, square#matrix_to_atom_3_1, square#matrix_to_atom_3_2, square#matrix_to_atom_3_3]),
 SumLeq([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#matrix_to_atom_1_3], s),
@@ -547,13 +547,13 @@ SumLeq([square#matrix_to_atom_1_1, square#matrix_to_atom_2_1, square#matrix_to_a
 SumGeq([square#matrix_to_atom_1_1, square#matrix_to_atom_2_1, square#matrix_to_atom_3_1], s),
 SumLeq([square#matrix_to_atom_1_2, square#matrix_to_atom_2_2, square#matrix_to_atom_3_2], s),
 SumGeq([square#matrix_to_atom_1_2, square#matrix_to_atom_2_2, square#matrix_to_atom_3_2], s),
-(sum([square#matrix_to_atom_1_3,square#matrix_to_atom_2_3,square#matrix_to_atom_3_3;int(1..)]) = s),
-(sum([ square#matrix_to_atom[d, d] | d : Index ]) = s),
-(sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s)
+sum([square#matrix_to_atom_1_3,square#matrix_to_atom_2_3,square#matrix_to_atom_3_3;int(1..)]) = s,
+sum([ square#matrix_to_atom[d, d] | d : Index ]) = s,
+sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s
 
 --
 
-(sum([square#matrix_to_atom_1_3,square#matrix_to_atom_2_3,square#matrix_to_atom_3_3;int(1..)]) = s), 
+sum([square#matrix_to_atom_1_3,square#matrix_to_atom_2_3,square#matrix_to_atom_3_3;int(1..)]) = s
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
 and([SumLeq([square#matrix_to_atom_1_3, square#matrix_to_atom_2_3, square#matrix_to_atom_3_3], s),SumGeq([square#matrix_to_atom_1_3, square#matrix_to_atom_2_3, square#matrix_to_atom_3_3], s);int(1..)])
 
@@ -571,8 +571,8 @@ SumGeq([square#matrix_to_atom_1_1, square#matrix_to_atom_2_1, square#matrix_to_a
 SumLeq([square#matrix_to_atom_1_2, square#matrix_to_atom_2_2, square#matrix_to_atom_3_2], s),
 SumGeq([square#matrix_to_atom_1_2, square#matrix_to_atom_2_2, square#matrix_to_atom_3_2], s),
 and([SumLeq([square#matrix_to_atom_1_3, square#matrix_to_atom_2_3, square#matrix_to_atom_3_3], s),SumGeq([square#matrix_to_atom_1_3, square#matrix_to_atom_2_3, square#matrix_to_atom_3_3], s);int(1..)]),
-(sum([ square#matrix_to_atom[d, d] | d : Index ]) = s),
-(sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s), 
+sum([ square#matrix_to_atom[d, d] | d : Index ]) = s,
+sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s
    ~~> constant_evaluator ([("Constant", 9001)])
 __flat_alldiff([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#matrix_to_atom_1_3, square#matrix_to_atom_2_1, square#matrix_to_atom_2_2, square#matrix_to_atom_2_3, square#matrix_to_atom_3_1, square#matrix_to_atom_3_2, square#matrix_to_atom_3_3]),
 SumLeq([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#matrix_to_atom_1_3], s),
@@ -587,30 +587,30 @@ SumLeq([square#matrix_to_atom_1_2, square#matrix_to_atom_2_2, square#matrix_to_a
 SumGeq([square#matrix_to_atom_1_2, square#matrix_to_atom_2_2, square#matrix_to_atom_3_2], s),
 SumLeq([square#matrix_to_atom_1_3, square#matrix_to_atom_2_3, square#matrix_to_atom_3_3], s),
 SumGeq([square#matrix_to_atom_1_3, square#matrix_to_atom_2_3, square#matrix_to_atom_3_3], s),
-(sum([ square#matrix_to_atom[d, d] | d : Index ]) = s),
-(sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s)
+sum([ square#matrix_to_atom[d, d] | d : Index ]) = s,
+sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s
 
 --
 
-[ square#matrix_to_atom[d, d] | d : Index ], 
+[ square#matrix_to_atom[d, d] | d : Index ]
    ~~> expand_comprehension_native ([("Base", 2000)])
 [square#matrix_to_atom[1, 1],square#matrix_to_atom[2, 2],square#matrix_to_atom[3, 3];int(1..)]
 
 --
 
-square#matrix_to_atom[1, 1], 
+square#matrix_to_atom[1, 1]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(square#matrix_to_atom,[1, 1])
 
 --
 
-square#matrix_to_atom[2, 2], 
+square#matrix_to_atom[2, 2]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(square#matrix_to_atom,[2, 2])
 
 --
 
-square#matrix_to_atom[3, 3], 
+square#matrix_to_atom[3, 3]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(square#matrix_to_atom,[3, 3])
 
@@ -629,8 +629,8 @@ SumLeq([square#matrix_to_atom_1_2, square#matrix_to_atom_2_2, square#matrix_to_a
 SumGeq([square#matrix_to_atom_1_2, square#matrix_to_atom_2_2, square#matrix_to_atom_3_2], s),
 SumLeq([square#matrix_to_atom_1_3, square#matrix_to_atom_2_3, square#matrix_to_atom_3_3], s),
 SumGeq([square#matrix_to_atom_1_3, square#matrix_to_atom_2_3, square#matrix_to_atom_3_3], s),
-(sum([SafeIndex(square#matrix_to_atom,[1, 1]),SafeIndex(square#matrix_to_atom,[2, 2]),SafeIndex(square#matrix_to_atom,[3, 3]);int(1..)]) = s),
-(sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s), 
+sum([SafeIndex(square#matrix_to_atom,[1, 1]),SafeIndex(square#matrix_to_atom,[2, 2]),SafeIndex(square#matrix_to_atom,[3, 3]);int(1..)]) = s,
+sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s
    ~~> index_matrix_to_atom ([("Base", 5000)])
 __flat_alldiff([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#matrix_to_atom_1_3, square#matrix_to_atom_2_1, square#matrix_to_atom_2_2, square#matrix_to_atom_2_3, square#matrix_to_atom_3_1, square#matrix_to_atom_3_2, square#matrix_to_atom_3_3]),
 SumLeq([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#matrix_to_atom_1_3], s),
@@ -645,12 +645,12 @@ SumLeq([square#matrix_to_atom_1_2, square#matrix_to_atom_2_2, square#matrix_to_a
 SumGeq([square#matrix_to_atom_1_2, square#matrix_to_atom_2_2, square#matrix_to_atom_3_2], s),
 SumLeq([square#matrix_to_atom_1_3, square#matrix_to_atom_2_3, square#matrix_to_atom_3_3], s),
 SumGeq([square#matrix_to_atom_1_3, square#matrix_to_atom_2_3, square#matrix_to_atom_3_3], s),
-(sum([square#matrix_to_atom_1_1,square#matrix_to_atom_2_2,square#matrix_to_atom_3_3;int(1..)]) = s),
-(sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s)
+sum([square#matrix_to_atom_1_1,square#matrix_to_atom_2_2,square#matrix_to_atom_3_3;int(1..)]) = s,
+sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s
 
 --
 
-(sum([square#matrix_to_atom_1_1,square#matrix_to_atom_2_2,square#matrix_to_atom_3_3;int(1..)]) = s), 
+sum([square#matrix_to_atom_1_1,square#matrix_to_atom_2_2,square#matrix_to_atom_3_3;int(1..)]) = s
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
 and([SumLeq([square#matrix_to_atom_1_1, square#matrix_to_atom_2_2, square#matrix_to_atom_3_3], s),SumGeq([square#matrix_to_atom_1_1, square#matrix_to_atom_2_2, square#matrix_to_atom_3_3], s);int(1..)])
 
@@ -670,7 +670,7 @@ SumGeq([square#matrix_to_atom_1_2, square#matrix_to_atom_2_2, square#matrix_to_a
 SumLeq([square#matrix_to_atom_1_3, square#matrix_to_atom_2_3, square#matrix_to_atom_3_3], s),
 SumGeq([square#matrix_to_atom_1_3, square#matrix_to_atom_2_3, square#matrix_to_atom_3_3], s),
 and([SumLeq([square#matrix_to_atom_1_1, square#matrix_to_atom_2_2, square#matrix_to_atom_3_3], s),SumGeq([square#matrix_to_atom_1_1, square#matrix_to_atom_2_2, square#matrix_to_atom_3_3], s);int(1..)]),
-(sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s), 
+sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s
    ~~> constant_evaluator ([("Constant", 9001)])
 __flat_alldiff([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#matrix_to_atom_1_3, square#matrix_to_atom_2_1, square#matrix_to_atom_2_2, square#matrix_to_atom_2_3, square#matrix_to_atom_3_1, square#matrix_to_atom_3_2, square#matrix_to_atom_3_3]),
 SumLeq([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#matrix_to_atom_1_3], s),
@@ -687,29 +687,29 @@ SumLeq([square#matrix_to_atom_1_3, square#matrix_to_atom_2_3, square#matrix_to_a
 SumGeq([square#matrix_to_atom_1_3, square#matrix_to_atom_2_3, square#matrix_to_atom_3_3], s),
 SumLeq([square#matrix_to_atom_1_1, square#matrix_to_atom_2_2, square#matrix_to_atom_3_3], s),
 SumGeq([square#matrix_to_atom_1_1, square#matrix_to_atom_2_2, square#matrix_to_atom_3_3], s),
-(sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s)
+sum([ square#matrix_to_atom[d, (4 - d)] | d : Index ]) = s
 
 --
 
-[ square#matrix_to_atom[d, (4 - d)] | d : Index ], 
+[ square#matrix_to_atom[d, (4 - d)] | d : Index ]
    ~~> expand_comprehension_native ([("Base", 2000)])
 [square#matrix_to_atom[1, 3],square#matrix_to_atom[2, 2],square#matrix_to_atom[3, 1];int(1..)]
 
 --
 
-square#matrix_to_atom[1, 3], 
+square#matrix_to_atom[1, 3]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(square#matrix_to_atom,[1, 3])
 
 --
 
-square#matrix_to_atom[2, 2], 
+square#matrix_to_atom[2, 2]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(square#matrix_to_atom,[2, 2])
 
 --
 
-square#matrix_to_atom[3, 1], 
+square#matrix_to_atom[3, 1]
    ~~> index_to_bubble ([("Bubble", 6000)])
 SafeIndex(square#matrix_to_atom,[3, 1])
 
@@ -730,7 +730,7 @@ SumLeq([square#matrix_to_atom_1_3, square#matrix_to_atom_2_3, square#matrix_to_a
 SumGeq([square#matrix_to_atom_1_3, square#matrix_to_atom_2_3, square#matrix_to_atom_3_3], s),
 SumLeq([square#matrix_to_atom_1_1, square#matrix_to_atom_2_2, square#matrix_to_atom_3_3], s),
 SumGeq([square#matrix_to_atom_1_1, square#matrix_to_atom_2_2, square#matrix_to_atom_3_3], s),
-(sum([SafeIndex(square#matrix_to_atom,[1, 3]),SafeIndex(square#matrix_to_atom,[2, 2]),SafeIndex(square#matrix_to_atom,[3, 1]);int(1..)]) = s), 
+sum([SafeIndex(square#matrix_to_atom,[1, 3]),SafeIndex(square#matrix_to_atom,[2, 2]),SafeIndex(square#matrix_to_atom,[3, 1]);int(1..)]) = s
    ~~> index_matrix_to_atom ([("Base", 5000)])
 __flat_alldiff([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#matrix_to_atom_1_3, square#matrix_to_atom_2_1, square#matrix_to_atom_2_2, square#matrix_to_atom_2_3, square#matrix_to_atom_3_1, square#matrix_to_atom_3_2, square#matrix_to_atom_3_3]),
 SumLeq([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#matrix_to_atom_1_3], s),
@@ -747,11 +747,11 @@ SumLeq([square#matrix_to_atom_1_3, square#matrix_to_atom_2_3, square#matrix_to_a
 SumGeq([square#matrix_to_atom_1_3, square#matrix_to_atom_2_3, square#matrix_to_atom_3_3], s),
 SumLeq([square#matrix_to_atom_1_1, square#matrix_to_atom_2_2, square#matrix_to_atom_3_3], s),
 SumGeq([square#matrix_to_atom_1_1, square#matrix_to_atom_2_2, square#matrix_to_atom_3_3], s),
-(sum([square#matrix_to_atom_1_3,square#matrix_to_atom_2_2,square#matrix_to_atom_3_1;int(1..)]) = s)
+sum([square#matrix_to_atom_1_3,square#matrix_to_atom_2_2,square#matrix_to_atom_3_1;int(1..)]) = s
 
 --
 
-(sum([square#matrix_to_atom_1_3,square#matrix_to_atom_2_2,square#matrix_to_atom_3_1;int(1..)]) = s), 
+sum([square#matrix_to_atom_1_3,square#matrix_to_atom_2_2,square#matrix_to_atom_3_1;int(1..)]) = s
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)])
 and([SumLeq([square#matrix_to_atom_1_3, square#matrix_to_atom_2_2, square#matrix_to_atom_3_1], s),SumGeq([square#matrix_to_atom_1_3, square#matrix_to_atom_2_2, square#matrix_to_atom_3_1], s);int(1..)])
 
@@ -772,7 +772,7 @@ SumLeq([square#matrix_to_atom_1_3, square#matrix_to_atom_2_3, square#matrix_to_a
 SumGeq([square#matrix_to_atom_1_3, square#matrix_to_atom_2_3, square#matrix_to_atom_3_3], s),
 SumLeq([square#matrix_to_atom_1_1, square#matrix_to_atom_2_2, square#matrix_to_atom_3_3], s),
 SumGeq([square#matrix_to_atom_1_1, square#matrix_to_atom_2_2, square#matrix_to_atom_3_3], s),
-and([SumLeq([square#matrix_to_atom_1_3, square#matrix_to_atom_2_2, square#matrix_to_atom_3_1], s),SumGeq([square#matrix_to_atom_1_3, square#matrix_to_atom_2_2, square#matrix_to_atom_3_1], s);int(1..)]), 
+and([SumLeq([square#matrix_to_atom_1_3, square#matrix_to_atom_2_2, square#matrix_to_atom_3_1], s),SumGeq([square#matrix_to_atom_1_3, square#matrix_to_atom_2_2, square#matrix_to_atom_3_1], s);int(1..)])
    ~~> constant_evaluator ([("Constant", 9001)])
 __flat_alldiff([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#matrix_to_atom_1_3, square#matrix_to_atom_2_1, square#matrix_to_atom_2_2, square#matrix_to_atom_2_3, square#matrix_to_atom_3_1, square#matrix_to_atom_3_2, square#matrix_to_atom_3_3]),
 SumLeq([square#matrix_to_atom_1_1, square#matrix_to_atom_1_2, square#matrix_to_atom_1_3], s),

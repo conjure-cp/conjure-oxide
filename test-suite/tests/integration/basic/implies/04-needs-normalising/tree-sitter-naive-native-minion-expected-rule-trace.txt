@@ -20,7 +20,7 @@ such that
 
 --
 
-!((!(x)) -> (!(y))), 
+!((!(x)) -> (!(y)))
    ~~> normalise_implies_negation ([("Base", 8800)])
 and([!(x),!(!(y));int(1..)])
 
@@ -29,7 +29,7 @@ and([!(x),!(!(y));int(1..)])
 and([!(x),!(!(y));int(1..)]),
 (!(a)) -> (!(b)),
 (c) -> ((d) -> (e)),
-((h) -> (f)) -> ((h) -> (g)), 
+((h) -> (f)) -> ((h) -> (g))
    ~~> constant_evaluator ([("Constant", 9001)])
 !(x),
 !(!(y)),
@@ -39,43 +39,43 @@ and([!(x),!(!(y));int(1..)]),
 
 --
 
-(!(a)) -> (!(b)), 
+(!(a)) -> (!(b))
    ~~> normalise_implies_contrapositive ([("Base", 8800)])
 (b) -> (a)
 
 --
 
-((h) -> (f)) -> ((h) -> (g)), 
+((h) -> (f)) -> ((h) -> (g))
    ~~> normalise_implies_left_distributivity ([("Base", 8800)])
 (h) -> ((f) -> (g))
 
 --
 
-!(!(y)), 
+!(!(y))
    ~~> remove_double_negation ([("Base", 8400)])
 y
 
 --
 
-(c) -> ((d) -> (e)), 
+(c) -> ((d) -> (e))
    ~~> normalise_implies_uncurry ([("Base", 8400)])
 (and([c,d;int(1..)])) -> (e)
 
 --
 
-(h) -> ((f) -> (g)), 
+(h) -> ((f) -> (g))
    ~~> normalise_implies_uncurry ([("Base", 8400)])
 (and([h,f;int(1..)])) -> (g)
 
 --
 
-(b) -> (a), 
+(b) -> (a)
    ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
 Ineq(b, a, 0)
 
 --
 
-(and([c,d;int(1..)])) -> (e), 
+(and([c,d;int(1..)])) -> (e)
    ~~> flatten_imply ([("Minion", 4200)])
 (__0) -> (e)
 new variables:
@@ -85,19 +85,19 @@ new constraints:
 
 --
 
-(__0) -> (e), 
+(__0) -> (e)
    ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
 Ineq(__0, e, 0)
 
 --
 
-__0 =aux and([c,d;int(1..)]), 
+__0 =aux and([c,d;int(1..)])
    ~~> bool_eq_to_reify ([("Minion", 4400)])
 Reify(and([c,d;int(1..)]), __0)
 
 --
 
-(and([h,f;int(1..)])) -> (g), 
+(and([h,f;int(1..)])) -> (g)
    ~~> flatten_imply ([("Minion", 4200)])
 (__1) -> (g)
 new variables:
@@ -107,19 +107,19 @@ new constraints:
 
 --
 
-(__1) -> (g), 
+(__1) -> (g)
    ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)])
 Ineq(__1, g, 0)
 
 --
 
-__1 =aux and([h,f;int(1..)]), 
+__1 =aux and([h,f;int(1..)])
    ~~> bool_eq_to_reify ([("Minion", 4400)])
 Reify(and([h,f;int(1..)]), __1)
 
 --
 
-!(x), 
+!(x)
    ~~> not_literal_to_wliteral ([("Minion", 4100)])
 WatchedLiteral(x,false)
 

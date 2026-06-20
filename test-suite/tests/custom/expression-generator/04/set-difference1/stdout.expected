@@ -47,6 +47,7 @@
                           }
                         ]
                       },
+                      "skip_operator": "Sum",
                       "symbols": {
                         "id": {
                           "object_id": 3,
@@ -230,7 +231,7 @@ find y: set  of int(1..6)
 
 such that
 
-(sum([ i | i <- x, !(i in y) ]) = 2)
+sum([ i | i <- x, !(i in y) ]) = 2
 
 Model before rewriting:
 
@@ -239,11 +240,11 @@ find y: set  of int(1..6)
 
 such that
 
-(sum([ i | i <- (x - y) ]) = 2)
+sum([ i | i <- (x - y) ]) = 2
 
 --
 
-[ i | i <- (x - y) ], 
+[ i | i <- (x - y) ]
    ~~> difference_set ([("Base", 8700)])
 [ i | i <- x, !(i in y) ]
 
@@ -256,5 +257,5 @@ find y: set  of int(1..6)
 
 such that
 
-(sum([ i | i <- x, !(i in y) ]) = 2)
+sum([ i | i <- x, !(i in y) ]) = 2
 
