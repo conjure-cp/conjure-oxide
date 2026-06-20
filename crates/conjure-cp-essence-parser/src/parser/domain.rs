@@ -115,14 +115,15 @@ fn parse_int_domain(
     int_domain: Node,
 ) -> Result<Option<DomainPtr>, FatalParseError> {
     let int_keyword_node = child!(int_domain, 0, "int");
-    if int_domain.child_count() == 1 {
-        // for domains of just 'int' with no range
-        ctx.add_span_and_doc_hover(&int_keyword_node, "L_int", SymbolKind::Domain, None, None);
-        return Ok(Some(Domain::int(vec![Range::Bounded(i32::MIN, i32::MAX)])));
-    }
 
-    let Some(range_list) = field!(recover, ctx, int_domain, "ranges") else {
-        return Ok(None);
+    let Some(range_list) = int_domain.child_by_field_name("ranges") else {
+        ctx.add_span_and_doc_hover(&int_keyword_node, "L_int", SymbolKind::Domain, None, None);
+        let int_text = ctx.source_code[int_domain.start_byte()..int_domain.end_byte()].trim();
+        return if int_text == "int" {
+            Ok(Some(Domain::int(vec![Range::Bounded(i32::MIN, i32::MAX)])))
+        } else {
+            Ok(Some(Domain::int_ground(vec![])))
+        };
     };
     let mut ranges_unresolved: Vec<Range<IntVal>> = Vec::new();
     let mut all_resolved = true;

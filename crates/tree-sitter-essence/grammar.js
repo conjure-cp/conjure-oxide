@@ -94,7 +94,7 @@ module.exports = grammar ({
       "int",
       optional(seq(
         "(",
-        field("ranges", $.range_list),
+        optional(field("ranges", $.range_list)),
         ")"
       ))
     ),
@@ -522,7 +522,7 @@ module.exports = grammar ({
       "int",
       optional(seq(
         "(",
-        field("ranges", $.annotation_range_list),
+        optional(field("ranges", $.annotation_range_list)),
         ")"
       ))
     ),

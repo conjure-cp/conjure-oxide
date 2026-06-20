@@ -284,6 +284,26 @@ mod test {
     }
 
     #[test]
+    pub fn test_parse_bare_int_domain_is_full() {
+        let src = "given a : int";
+        let (model, _source_map) = parse_essence(src).unwrap();
+
+        let st = model.symbols();
+        let a = st.lookup(&Name::user("a")).unwrap();
+        assert_eq!(a.domain(), Some(domain_int!(i32::MIN..i32::MAX)));
+    }
+
+    #[test]
+    pub fn test_parse_empty_int_domain() {
+        let src = "find x : int()";
+        let (model, _source_map) = parse_essence(src).unwrap();
+
+        let st = model.symbols();
+        let x = st.lookup(&Name::user("x")).unwrap();
+        assert_eq!(x.domain(), Some(domain_int!()));
+    }
+
+    #[test]
     pub fn test_parse_letting_index() {
         let src = "
         letting a be [ [ 1,2,3 ; int(1,2,4) ], [ 1,3,2 ; int(1,2,4) ], [ 3,2,1 ; int(1,2,4) ] ; int(-2..0) ]
