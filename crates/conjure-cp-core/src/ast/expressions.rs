@@ -869,28 +869,42 @@ impl Expression {
             Expression::AbstractComprehension(_, comprehension) => comprehension.domain_of(),
             Expression::UnsafeIndex(_, matrix, index) | Expression::SafeIndex(_, matrix, index) => {
                 let dom = matrix.domain_of()?;
-                if let Some((elem_domain, _)) = dom.as_matrix() {
+                let resolved_dom = dom.resolve().map(Domain::Ground);
+                if let Some((elem_domain, _)) = dom
+                    .as_matrix()
+                    .or_else(|| resolved_dom.as_ref()?.as_matrix())
+                {
                     return Some(elem_domain);
                 }
 
                 // may actually use the value in the future
                 #[allow(clippy::redundant_pattern_matching)]
-                if let Some(_) = dom.as_tuple() {
+                if dom.as_tuple().is_some()
+                    || resolved_dom
+                        .as_ref()
+                        .is_some_and(|dom| dom.as_tuple().is_some())
+                {
                     // TODO: We can implement proper indexing for tuples
                     return None;
                 }
 
-                if let Some(doms) = dom.as_variant().or(dom.as_record()) {
+                if let Some(doms) = dom.as_variant().or(dom.as_record()).or_else(|| {
+                    let resolved_dom = resolved_dom.as_ref()?;
+                    resolved_dom.as_variant().or(resolved_dom.as_record())
+                }) {
                     let index_expr = index.first()?;
                     return match index_expr {
-                        Expression::Atomic(_, atom) => {
-                            let decl = atom.clone().into_declaration();
+                        Expression::Atomic(_, Atom::Reference(reference)) => {
                             for inner_dom in doms {
-                                if *decl.name() == inner_dom.name {
+                                if *reference.name() == inner_dom.name {
                                     return Some(inner_dom.domain);
                                 }
                             }
                             None
+                        }
+                        Expression::Atomic(_, Atom::Literal(Literal::Int(index))) => {
+                            let index: usize = (*index - 1).try_into().ok()?;
+                            doms.get(index).map(|inner_dom| inner_dom.domain.clone())
                         }
                         _ => None,
                     };
