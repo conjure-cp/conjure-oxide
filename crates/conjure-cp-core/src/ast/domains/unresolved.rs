@@ -447,6 +447,11 @@ impl UnresolvedDomain {
             UnresolvedDomain::Int(rngs) => rngs
                 .iter()
                 .map(Range::<IntVal>::resolve)
+                .filter_map(|range| match range {
+                    Some(Range::Bounded(l, u)) if l > u => None,
+                    Some(range) => Some(Some(range)),
+                    None => Some(None),
+                })
                 .collect::<Option<_>>()
                 .map(GroundDomain::Int),
             UnresolvedDomain::Set(attr, inner) => {

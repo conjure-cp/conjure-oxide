@@ -266,7 +266,7 @@ impl GroundDomain {
             GroundDomain::Bool => Ok(2),
             GroundDomain::Int(ranges) => {
                 if ranges.is_empty() {
-                    return Err(DomainOpError::Unbounded);
+                    return Ok(0);
                 }
 
                 let mut length = 0u64;
@@ -388,9 +388,8 @@ impl GroundDomain {
             },
             GroundDomain::Int(ranges) => match lit {
                 Literal::Int(x) => {
-                    // unconstrained int domain - contains all integers
                     if ranges.is_empty() {
-                        return Ok(true);
+                        return Ok(false);
                     };
 
                     Ok(ranges.iter().any(|range| range.contains(x)))
@@ -630,7 +629,7 @@ impl GroundDomain {
         };
 
         if ranges.is_empty() {
-            return Err(DomainOpError::Unbounded);
+            return Ok(vec![]);
         }
 
         let mut values = vec![];
@@ -775,10 +774,6 @@ impl GroundDomain {
     pub fn is_finite(&self) -> bool {
         for domain in self.universe() {
             if let GroundDomain::Int(ranges) = domain {
-                if ranges.is_empty() {
-                    return false;
-                }
-
                 if ranges.iter().any(|range| {
                     matches!(
                         range,

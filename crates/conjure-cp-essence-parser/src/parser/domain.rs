@@ -161,18 +161,7 @@ fn parse_int_domain(
 
                 match (lower_bound, upper_bound) {
                     (Some(lower), Some(upper)) => {
-                        // Check if both bounds are constants and validate lower <= upper
-                        if let (IntVal::Const(l), IntVal::Const(u)) = (&lower, &upper) {
-                            if l > u {
-                                ctx.record_error(crate::errors::RecoverableParseError::new(
-                                    format!(
-                                        "Invalid integer range: lower bound {} is greater than upper bound {}",
-                                        l, u
-                                    ),
-                                    Some(domain_component.range()),
-                                ));
-                            }
-                        } else {
+                        if !matches!((&lower, &upper), (IntVal::Const(_), IntVal::Const(_))) {
                             all_resolved = false;
                         }
                         ranges_unresolved.push(Range::Bounded(lower, upper));
@@ -216,12 +205,13 @@ fn parse_int_domain(
     if all_resolved {
         let ranges: Vec<Range<i32>> = ranges_unresolved
             .into_iter()
-            .map(|r| match r {
-                Range::Single(IntVal::Const(v)) => Range::Single(v),
-                Range::Bounded(IntVal::Const(l), IntVal::Const(u)) => Range::Bounded(l, u),
-                Range::UnboundedR(IntVal::Const(l)) => Range::UnboundedR(l),
-                Range::UnboundedL(IntVal::Const(u)) => Range::UnboundedL(u),
-                Range::Unbounded => Range::Unbounded,
+            .filter_map(|r| match r {
+                Range::Single(IntVal::Const(v)) => Some(Range::Single(v)),
+                Range::Bounded(IntVal::Const(l), IntVal::Const(u)) if l > u => None,
+                Range::Bounded(IntVal::Const(l), IntVal::Const(u)) => Some(Range::Bounded(l, u)),
+                Range::UnboundedR(IntVal::Const(l)) => Some(Range::UnboundedR(l)),
+                Range::UnboundedL(IntVal::Const(u)) => Some(Range::UnboundedL(u)),
+                Range::Unbounded => Some(Range::Unbounded),
                 _ => unreachable!("all_resolved should be true only if all are Const"),
             })
             .collect();

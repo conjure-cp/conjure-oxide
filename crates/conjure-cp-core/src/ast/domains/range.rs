@@ -153,6 +153,7 @@ impl<A: Num + Ord + Clone> Range<A> {
     pub fn length(&self) -> Option<A> {
         match self {
             Range::Single(_) => Some(A::one()),
+            Range::Bounded(i, j) if i > j => Some(A::zero()),
             Range::Bounded(i, j) => Some(j.clone() - i.clone() + A::one()),
             Range::UnboundedR(_) | Range::UnboundedL(_) | Range::Unbounded => None,
         }

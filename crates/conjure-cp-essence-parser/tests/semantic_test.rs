@@ -61,10 +61,8 @@ fn range_points_to_error_location() {
     );
 }
 
-// not enforced in conjure
-#[ignore]
 #[test]
-fn domain_start_greater_than_end() {
+fn domain_start_greater_than_end_is_empty() {
     let source = "find x: int(10..1)";
     let (cst, _) = get_tree(&source).unwrap();
 
@@ -72,19 +70,8 @@ fn domain_start_greater_than_end() {
 
     assert_eq!(
         diagnostics.len(),
-        1,
-        "Expected exactly one diagnostic for undefined variable"
-    );
-
-    let diag = &diagnostics[0];
-
-    check_diagnostic(
-        diag,
         0,
-        12,
-        0,
-        17,
-        "Start value greater than end value in 'domain'",
+        "Expected reversed integer ranges to be accepted as empty domains"
     );
 }
 
