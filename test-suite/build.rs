@@ -215,12 +215,15 @@ fn read_config_or_default(path: &str) -> TestConfig {
 
 fn max_expected_time_limit() -> io::Result<Option<u64>> {
     match std::env::var("MAX_EXPECTED_TIME") {
-        Ok(value) => value.parse::<u64>().map(Some).map_err(|err| {
-            io::Error::new(
-                io::ErrorKind::InvalidInput,
-                format!("invalid MAX_EXPECTED_TIME value '{value}': {err}"),
-            )
-        }),
+        Ok(value) => {
+            let limit = value.parse::<u64>().map_err(|err| {
+                io::Error::new(
+                    io::ErrorKind::InvalidInput,
+                    format!("invalid MAX_EXPECTED_TIME value '{value}': {err}"),
+                )
+            })?;
+            Ok((limit != 0).then_some(limit))
+        }
         Err(std::env::VarError::NotPresent) => Ok(None),
         Err(err) => Err(io::Error::other(err)),
     }
