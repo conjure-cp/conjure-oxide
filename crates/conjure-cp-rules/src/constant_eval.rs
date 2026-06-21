@@ -80,7 +80,9 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     run_partial_evaluator(expr)
 }
 
-#[register_rule("Constant", 9001, [Root])]
+/// Applies everywhere because this folds constants and partial-evaluates any expression variant,
+/// not just `Root`.
+#[register_rule("Constant", 9001)]
 fn constant_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // I break the rules a bit here: this is a global rule on roots.
     //
