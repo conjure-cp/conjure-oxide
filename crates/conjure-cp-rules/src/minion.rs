@@ -1581,7 +1581,7 @@ fn introduce_wininterval_set_from_indomain(expr: &Expr, _: &SymbolTable) -> Appl
 ///
 /// 1. the subject is a list literal
 /// 2. the subject is one dimensional
-#[register_rule("Minion", 4400, [Eq, AuxDeclaration])]
+#[register_rule("Minion", 4400, [Eq, AuxDeclaration, SafeIndex])]
 fn introduce_element_from_index(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (equalto, subject, indices) = match expr.clone() {
         Expr::Eq(_, e1, e2) => match (Moo::unwrap_or_clone(e1), Moo::unwrap_or_clone(e2)) {
