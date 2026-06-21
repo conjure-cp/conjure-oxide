@@ -268,6 +268,10 @@ pub fn get_solutions(
     for sol in sols.iter_mut() {
         // Get the value of complex variables using their auxiliary variables
         for (name, representation) in representations.iter() {
+            if sol.contains_key(name) {
+                continue;
+            }
+
             let value = representation.value_up(sol).map_err(|err| {
                 anyhow::anyhow!(
                     "failed to reconstruct value for variable {name} from solver solution: {err}"

@@ -981,6 +981,21 @@ mod tests {
     use crate::{domain_int, range};
 
     #[test]
+    fn unresolved_int_domain_resolve_squeezes_ranges() {
+        let domain = UnresolvedDomain::Int(vec![
+            Range::Single(IntVal::Const(5)),
+            Range::Bounded(IntVal::Const(3), IntVal::Const(7)),
+            Range::Bounded(IntVal::Const(5), IntVal::Const(3)),
+            Range::Single(IntVal::Const(7)),
+        ]);
+
+        assert_eq!(
+            domain.resolve(),
+            Some(GroundDomain::Int(vec![Range::Bounded(3, 7)]))
+        );
+    }
+
+    #[test]
     fn test_negative_product() {
         let d1 = Domain::int(vec![Range::Bounded(-2, 1)]);
         let d2 = Domain::int(vec![Range::Bounded(-2, 1)]);

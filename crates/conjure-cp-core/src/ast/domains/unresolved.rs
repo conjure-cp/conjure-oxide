@@ -452,8 +452,8 @@ impl UnresolvedDomain {
                     Some(range) => Some(Some(range)),
                     None => Some(None),
                 })
-                .collect::<Option<_>>()
-                .map(GroundDomain::Int),
+                .collect::<Option<Vec<_>>>()
+                .map(|ranges| GroundDomain::Int(Range::squeeze(&ranges))),
             UnresolvedDomain::Set(attr, inner) => {
                 Some(GroundDomain::Set(attr.resolve()?, inner.resolve()?))
             }
