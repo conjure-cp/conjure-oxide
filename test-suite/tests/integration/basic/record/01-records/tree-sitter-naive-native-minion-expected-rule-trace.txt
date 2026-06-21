@@ -7,26 +7,26 @@ find z: R
 
 such that
 
-(x[a] = true),
-(x[b] = 3),
-(y = record {a = false,b = 4}),
-(y = z)
+x[a] = true,
+x[b] = 3,
+y = record {a = false,b = 4},
+y = z
 
 --
 
-(x[a] = true),
-(x[b] = 3),
-(y = record {a = false,b = 4}),
-(y = z), 
+x[a] = true,
+x[b] = 3,
+y = record {a = false,b = 4},
+y = z
    ~~> constant_evaluator ([("Constant", 9001)])
-(x[a] = true),
-(x[b] = 3),
-(y = record {a = false,b = 4}),
-(y = z)
+x[a] = true,
+x[b] = 3,
+y = record {a = false,b = 4},
+y = z
 
 --
 
-x, 
+x
    ~~> select_representation ([("Representations", 8000)])
 x#record_to_atom
 new variables:
@@ -35,49 +35,49 @@ new variables:
 
 --
 
-x#record_to_atom[a], 
+x#record_to_atom[a]
    ~~> record_index_to_bubble ([("Bubble", 8000)])
-{SafeIndex(x#record_to_atom,[1]) @ and([(1 <= 2),(1 >= 1);int(1..)])}
+{SafeIndex(x#record_to_atom,[1]) @ and([1 <= 2,1 >= 1;int(1..)])}
 
 --
 
-({SafeIndex(x#record_to_atom,[1]) @ and([(1 <= 2),(1 >= 1);int(1..)])} = true),
-(x[b] = 3),
-(y = record {a = false,b = 4}),
-(y = z), 
+{SafeIndex(x#record_to_atom,[1]) @ and([1 <= 2,1 >= 1;int(1..)])} = true,
+x[b] = 3,
+y = record {a = false,b = 4},
+y = z
    ~~> constant_evaluator ([("Constant", 9001)])
-(SafeIndex(x#record_to_atom,[1]) = true),
-(x[b] = 3),
-(y = record {a = false,b = 4}),
-(y = z)
+SafeIndex(x#record_to_atom,[1]) = true,
+x[b] = 3,
+y = record {a = false,b = 4},
+y = z
 
 --
 
-x, 
+x
    ~~> select_representation ([("Representations", 8000)])
 x#record_to_atom
 
 --
 
-x#record_to_atom[b], 
+x#record_to_atom[b]
    ~~> record_index_to_bubble ([("Bubble", 8000)])
-{SafeIndex(x#record_to_atom,[2]) @ and([(2 <= 2),(2 >= 1);int(1..)])}
+{SafeIndex(x#record_to_atom,[2]) @ and([2 <= 2,2 >= 1;int(1..)])}
 
 --
 
-(SafeIndex(x#record_to_atom,[1]) = true),
-({SafeIndex(x#record_to_atom,[2]) @ and([(2 <= 2),(2 >= 1);int(1..)])} = 3),
-(y = record {a = false,b = 4}),
-(y = z), 
+SafeIndex(x#record_to_atom,[1]) = true,
+{SafeIndex(x#record_to_atom,[2]) @ and([2 <= 2,2 >= 1;int(1..)])} = 3,
+y = record {a = false,b = 4},
+y = z
    ~~> constant_evaluator ([("Constant", 9001)])
-(SafeIndex(x#record_to_atom,[1]) = true),
-(SafeIndex(x#record_to_atom,[2]) = 3),
-(y = record {a = false,b = 4}),
-(y = z)
+SafeIndex(x#record_to_atom,[1]) = true,
+SafeIndex(x#record_to_atom,[2]) = 3,
+y = record {a = false,b = 4},
+y = z
 
 --
 
-y, 
+y
    ~~> select_representation ([("Representations", 8000)])
 y#record_to_atom
 new variables:
@@ -86,13 +86,13 @@ new variables:
 
 --
 
-y, 
+y
    ~~> select_representation ([("Representations", 8000)])
 y#record_to_atom
 
 --
 
-z, 
+z
    ~~> select_representation ([("Representations", 8000)])
 z#record_to_atom
 new variables:
@@ -101,107 +101,107 @@ new variables:
 
 --
 
-SafeIndex(x#record_to_atom,[1]), 
+SafeIndex(x#record_to_atom,[1])
    ~~> index_record_to_atom ([("Base", 2000)])
 x#record_to_atom_1
 
 --
 
-(x#record_to_atom_1 = true), 
+x#record_to_atom_1 = true
    ~~> bool_eq_to_reify ([("Minion", 4400)])
 Reify(true, x#record_to_atom_1)
 
 --
 
-SafeIndex(x#record_to_atom,[2]), 
+SafeIndex(x#record_to_atom,[2])
    ~~> index_record_to_atom ([("Base", 2000)])
 x#record_to_atom_2
 
 --
 
-(y#record_to_atom = record {a = false,b = 4}), 
+y#record_to_atom = record {a = false,b = 4}
    ~~> record_to_const ([("Base", 2000)])
-and([(SafeIndex(y#record_to_atom,[1]) = SafeIndex(record {a = false,b = 4},[1])),(SafeIndex(y#record_to_atom,[2]) = SafeIndex(record {a = false,b = 4},[2]));int(1..)])
+and([SafeIndex(y#record_to_atom,[1]) = SafeIndex(record {a = false,b = 4},[1]),SafeIndex(y#record_to_atom,[2]) = SafeIndex(record {a = false,b = 4},[2]);int(1..)])
 
 --
 
 Reify(true, x#record_to_atom_1),
-(x#record_to_atom_2 = 3),
-and([(SafeIndex(y#record_to_atom,[1]) = SafeIndex(record {a = false,b = 4},[1])),(SafeIndex(y#record_to_atom,[2]) = SafeIndex(record {a = false,b = 4},[2]));int(1..)]),
-(y#record_to_atom = z#record_to_atom), 
+x#record_to_atom_2 = 3,
+and([SafeIndex(y#record_to_atom,[1]) = SafeIndex(record {a = false,b = 4},[1]),SafeIndex(y#record_to_atom,[2]) = SafeIndex(record {a = false,b = 4},[2]);int(1..)]),
+y#record_to_atom = z#record_to_atom
    ~~> constant_evaluator ([("Constant", 9001)])
 Reify(true, x#record_to_atom_1),
-(x#record_to_atom_2 = 3),
-(SafeIndex(y#record_to_atom,[1]) = false),
-(SafeIndex(y#record_to_atom,[2]) = 4),
-(y#record_to_atom = z#record_to_atom)
+x#record_to_atom_2 = 3,
+SafeIndex(y#record_to_atom,[1]) = false,
+SafeIndex(y#record_to_atom,[2]) = 4,
+y#record_to_atom = z#record_to_atom
 
 --
 
-SafeIndex(y#record_to_atom,[1]), 
+SafeIndex(y#record_to_atom,[1])
    ~~> index_record_to_atom ([("Base", 2000)])
 y#record_to_atom_1
 
 --
 
-(y#record_to_atom_1 = false), 
+y#record_to_atom_1 = false
    ~~> bool_eq_to_reify ([("Minion", 4400)])
 Reify(false, y#record_to_atom_1)
 
 --
 
-SafeIndex(y#record_to_atom,[2]), 
+SafeIndex(y#record_to_atom,[2])
    ~~> index_record_to_atom ([("Base", 2000)])
 y#record_to_atom_2
 
 --
 
-(y#record_to_atom = z#record_to_atom), 
+y#record_to_atom = z#record_to_atom
    ~~> record_equality ([("Base", 2000)])
-and([(SafeIndex(y#record_to_atom,[1]) = SafeIndex(z#record_to_atom,[1])),(SafeIndex(y#record_to_atom,[2]) = SafeIndex(z#record_to_atom,[2]));int(1..)])
+and([SafeIndex(y#record_to_atom,[1]) = SafeIndex(z#record_to_atom,[1]),SafeIndex(y#record_to_atom,[2]) = SafeIndex(z#record_to_atom,[2]);int(1..)])
 
 --
 
 Reify(true, x#record_to_atom_1),
-(x#record_to_atom_2 = 3),
+x#record_to_atom_2 = 3,
 Reify(false, y#record_to_atom_1),
-(y#record_to_atom_2 = 4),
-and([(SafeIndex(y#record_to_atom,[1]) = SafeIndex(z#record_to_atom,[1])),(SafeIndex(y#record_to_atom,[2]) = SafeIndex(z#record_to_atom,[2]));int(1..)]), 
+y#record_to_atom_2 = 4,
+and([SafeIndex(y#record_to_atom,[1]) = SafeIndex(z#record_to_atom,[1]),SafeIndex(y#record_to_atom,[2]) = SafeIndex(z#record_to_atom,[2]);int(1..)])
    ~~> constant_evaluator ([("Constant", 9001)])
 Reify(true, x#record_to_atom_1),
-(x#record_to_atom_2 = 3),
+x#record_to_atom_2 = 3,
 Reify(false, y#record_to_atom_1),
-(y#record_to_atom_2 = 4),
-(SafeIndex(y#record_to_atom,[1]) = SafeIndex(z#record_to_atom,[1])),
-(SafeIndex(y#record_to_atom,[2]) = SafeIndex(z#record_to_atom,[2]))
+y#record_to_atom_2 = 4,
+SafeIndex(y#record_to_atom,[1]) = SafeIndex(z#record_to_atom,[1]),
+SafeIndex(y#record_to_atom,[2]) = SafeIndex(z#record_to_atom,[2])
 
 --
 
-SafeIndex(y#record_to_atom,[1]), 
+SafeIndex(y#record_to_atom,[1])
    ~~> index_record_to_atom ([("Base", 2000)])
 y#record_to_atom_1
 
 --
 
-SafeIndex(z#record_to_atom,[1]), 
+SafeIndex(z#record_to_atom,[1])
    ~~> index_record_to_atom ([("Base", 2000)])
 z#record_to_atom_1
 
 --
 
-(y#record_to_atom_1 = z#record_to_atom_1), 
+y#record_to_atom_1 = z#record_to_atom_1
    ~~> bool_eq_to_reify ([("Minion", 4400)])
 Reify(z#record_to_atom_1, y#record_to_atom_1)
 
 --
 
-SafeIndex(y#record_to_atom,[2]), 
+SafeIndex(y#record_to_atom,[2])
    ~~> index_record_to_atom ([("Base", 2000)])
 y#record_to_atom_2
 
 --
 
-SafeIndex(z#record_to_atom,[2]), 
+SafeIndex(z#record_to_atom,[2])
    ~~> index_record_to_atom ([("Base", 2000)])
 z#record_to_atom_2
 
@@ -223,9 +223,9 @@ find z#record_to_atom_2: int(0..9)
 such that
 
 Reify(true, x#record_to_atom_1),
-(x#record_to_atom_2 = 3),
+x#record_to_atom_2 = 3,
 Reify(false, y#record_to_atom_1),
-(y#record_to_atom_2 = 4),
+y#record_to_atom_2 = 4,
 Reify(z#record_to_atom_1, y#record_to_atom_1),
-(y#record_to_atom_2 = z#record_to_atom_2)
+y#record_to_atom_2 = z#record_to_atom_2
 
