@@ -2,12 +2,12 @@
 #
 # discard-config-time-changes.sh
 #
-# Revert *-time fields in config.toml files to their committed (HEAD) values,
+# Revert *-time fields in config.toml and stats.toml files to their committed (HEAD) values,
 # while keeping any other local edits.
 #
 # Usage:
-#   ./tools/discard-config-time-changes.sh              # modified config.toml only
-#   ./tools/discard-config-time-changes.sh --all      # every tracked config.toml
+#   ./tools/discard-config-time-changes.sh            # modified config.toml/stats.toml only
+#   ./tools/discard-config-time-changes.sh --all      # every tracked config.toml/stats.toml
 #                     (skips files whose top-level status changed to ok)
 #   ./tools/discard-config-time-changes.sh --dry-run  # show what would change
 #
@@ -24,10 +24,10 @@ usage() {
 Usage: discard-config-time-changes.sh [options]
 
 Revert keys ending in "-time" (e.g. translation-time, solve-time, expected-time)
-to their values in HEAD. Other lines in each config.toml are left unchanged.
+to their values in HEAD. Other lines in each config.toml or stats.toml are left unchanged.
 
 Options:
-  --all       Process every tracked config.toml (default: only modified files).
+  --all       Process every tracked config.toml and stats.toml (default: only modified files).
               Skips a file when its top-level status= changed to ok since HEAD.
   --dry-run   Print paths and diffs; do not write files
   -h, --help  Show this help
@@ -146,9 +146,9 @@ cd "$REPO_ROOT"
 
 list_config_files() {
   if [[ "$all_files" == true ]]; then
-    git ls-files -- '**/config.toml'
+    git ls-files -- '**/config.toml' '**/stats.toml'
   else
-    git diff --name-only --diff-filter=ACMR HEAD -- '**/config.toml'
+    git diff --name-only --diff-filter=ACMR HEAD -- '**/config.toml' '**/stats.toml'
   fi
 }
 
@@ -210,7 +210,7 @@ while IFS= read -r rel || [[ -n "$rel" ]]; do
 done < <(list_config_files)
 
 if [[ "$found" -eq 0 ]]; then
-  echo "No config.toml files to process."
+  echo "No config.toml or stats.toml files to process."
   exit 0
 fi
 
