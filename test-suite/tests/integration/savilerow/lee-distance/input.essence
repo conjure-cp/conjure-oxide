@@ -4,7 +4,7 @@ $ Find if there are 'm' lists of length 'n' whose distance under
 $ the Lee metric is at least 'lim'.
 $
 $ The lee distance is defined pointwise on arrays, and is defined
-$ on two integers x and y as min(|x-y|, 4-|x-y|)
+$ on two integers x and y as min([|x-y|, 4-|x-y|])
 
 language ESSENCE' 1.0
 
@@ -18,7 +18,9 @@ such that
 
 forAll i : int(1..m).
   forAll j : int(i+1..m). (
-    makeTable((sum k : int(1..n). min(|S[i,k]-S[j,k]|, 4 - |S[i,k]-S[j,k]|)) >= lim)
+    $ commented out for now, until we have makeTable support!
+    $ makeTable((sum k : int(1..n). min([|S[i,k]-S[j,k]|, 4 - |S[i,k]-S[j,k]|])) >= lim)
+    (sum k : int(1..n). min([|S[i,k]-S[j,k]|, 4 - |S[i,k]-S[j,k]|])) >= lim
     ),
 
 $ symmetry breaking
