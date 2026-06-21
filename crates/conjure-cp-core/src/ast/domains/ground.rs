@@ -452,6 +452,14 @@ impl GroundDomain {
                         // Matrix literals are represented as nested 1d matrices, so the elements of
                         // the matrix literal will be the inner dimensions of the matrix.
 
+                        if elems.is_empty()
+                            && index_domains
+                                .iter()
+                                .any(|index_domain| index_domain.length() == Ok(0))
+                        {
+                            return Ok(true);
+                        }
+
                         let Some((current_index_domain, remaining_index_domains)) =
                             index_domains.split_first()
                         else {
